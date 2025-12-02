@@ -12,3 +12,6 @@ Saved/
 # Visual Studio
 .vs/
 *.sln
+
+# Obsidian config
+/docs/.obsidian/

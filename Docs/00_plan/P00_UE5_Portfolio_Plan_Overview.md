@@ -137,10 +137,10 @@
 - 문서화: Obsidian
 
 ### 5. 디렉터리 개요 (문서화 관련)
-- docs/
-    - 00_plan/ → 계획 / 마일스톤 / 워크플로우
-    - 01_daily/ → Daily Checklist
-    - 02_design/ → 시스템 설계 및 다이어그램
-    - 03_notes/ → 기타 문서 (작업 기록, 실험 결과, 회고 등)
+	- docs/
+		- 00_plan/ → 계획 / 마일스톤 / 워크플로우
+		- 01_daily/ → Daily Checklist
+		- 02_design/ → 시스템 설계 및 다이어그램
+		- 03_notes/ → 기타 문서 (작업 기록, 실험 결과, 회고 등)
 
 ---
