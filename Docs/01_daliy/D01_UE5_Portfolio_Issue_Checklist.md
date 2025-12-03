@@ -1,4 +1,4 @@
-# UE5 Portfolio – Daily Checklist
+# UE5 Portfolio – Issue Checklist
 
 ### Date
 - Day 1
