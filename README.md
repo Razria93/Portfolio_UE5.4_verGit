@@ -1,146 +1,186 @@
-# UE5 Portfolio – Plan Overview
+# **UE5 Portfolio – Plan Overview**
 
-## Keywords
-- UE5 포트폴리오 프로젝트 개요 및 목표 정의
-- 구현 범위 설정
-- 목표 기간 설정
-- 사용 툴 개요
-- 디렉터리 구조 개요
+## **Keywords**
+
+- UE5 portfolio project overview and goal summary
+- Scope definition
+- Timeline & milestone planning
+- Tools overview
+- Documentation directory structure
+
 
 ---
-## Details
+## **Details**
 
-### 1. 프로젝트 개요
+### **1. Project Overview**
 
-- **프로젝트명**: UE5 Combat Portfolio
-- **엔진 버전**: Unreal Engine 5.4 (또는 5.5, 최종 확정값 기록)
-- **목표 플랫폼**: Windows PC (에디터 실행 기준)
-- **프로젝트 기간:** 1달 (필수 범위) + @ (확장 범위)
+- **Project Name:** UE5 Combat Portfolio
+- **Engine Version:** Unreal Engine 5.4
+- **Target Platform:** Windows PC (editor execution)
+- **Project Duration:** 1 month (MVP scope) + @ (extended scope)
 
-#### 목표 요약
-
-- **장르**: 
-	- 3인칭 액션 전투 데모 제작
-- **목표**: 
-	1. 게임의 최소 구성 요소를 이해하고 설계하여 구현하는 것
-	2. Git / Issue / Document까지 포함된 **실무 스타일 작업 흐름**을 경험하고 적용해보는 것
 
 ---
 
-### 2. 구현 범위(Scope)
+### **2. Goal Summary**
 
-#### 2.1 필수(MVP) 범위
+- **Genre**:
+    - Third-person action combat demo
+    
+- **Primary Goals**:
+    1. Understand and implement the essential components of a UE5 gameplay project
+    2. Practice a `production-like workflow` including Git, Issues, PRs, and documentation
+  
 
-1. 플레이어 캐릭터
-	- 이동 / 점프 / 회피(구르기)
+---
 
-2. 카메라 & 조작
-	- 3인칭 카메라
-	- Lock-on
+### **3. Scope Definition**
 
-3. 전투 시스템(기본)
-	- 단일 무기 장착 / 해제
-	- 기본 공격, 콤보 공격
-	- 기본 적 (더미 + 간단한 전투 AI)
-	- 근접 피격 판정 (피격 판정 + 피격 리액션)
-	- 데미지 시스템 (HP 감소 + 사망 + 파괴)
+#### **3.1 MVP Scope (Required)**
+
+1. **Player Character**
+    - Movement / Jump / Dodge (Roll)
+
+2. **Camera & Input**
+    - Third-person camera
+    - Lock-on system
+
+3. **Combat System (Basic)**
+
+    - Equip / Unequip a single melee weapon
+    - Basic attacks + combo chain
+    - Basic enemy (dummy + simple combat AI)
+    - Melee hit detection (hit events + hit reactions)
+    - Damage system (HP reduction, death, destruction)
+
+4. **Presentation**
+
+    - Attack and hit VFX (Niagara or Particle)
+    - Resource UI (HP + conditional resource)
+    - Damage UI
+    - Additional UI required for development
+
+5. **Level Setup**
+
+    - Test Room (feature-specific testing area)
+    - Main World (demo play environment)
+  
+
+---
+
+#### **3.2 Extended Scope (Optional Candidates)**
+
+1. **Advanced Combat**
+
+    - Hit stop
+    - Aerial attacks & air combos
+    - Down attacks
+    - Execution system
+    - Parry / Guard / Perfect Dodge
+    - Weapon switching (melee / ranged / magic)
+    - Skill activation
+
+2. **AI Expansion**
+
+    - Enhanced combat behaviors (idle / alert / attack / defend / evade / retreat)
+    - AI team behavior & faction recognition
+    - Multiple enemy types (melee / ranged / magic)
+    - Wave system
+    - Mini-boss
+
+3. **Movement & Parkour**
+
+    - Parkour actions
+    - Teleport movement
+
+4. **Advanced Animation**
+
+    - Foot IK / Hand IK
+    - ALS-style movement system
+    - 8-way directional animations
+
+5. **Systems**
+
+    - Item interaction & usage
+    - Inventory system
+    - Village / Town
+    - NPCs
+    - Shop system
+    - Quest system
+    - Spawn system
+    - Extended levels & level transitions
+
+6. **FX & UI**
+
+    - Destroy Particle Effect
+    - outline effect
+    - Simple cinematic sequences
+    - Menu / Options / Retry UI
  
-4. 표현
-	- 공격 및 피격 VFX (파티클 or 나이아가라)
-	- 리소스 UI (체력 + 조건부 자원)
-	- 데미지 UI
-	- 기타 개발에 필요한 UI
 
-5. 구성
-	- Test Room (단위별 기능 테스트 공간)
-	- World (게임 데모 실행 공간)
-
-#### 2.2 확장(Extended) 후보
-
-1. 고급 전투
-	- 히트 스탑
-	- 공중 공격 및 콤보
-	- 다운 공격 및 콤보
-	- 처형
-	- 패링 / 가드 / 완벽 회피
-	- 무기 변경 (근거리 / 원거리 / 마법)
-	- 스킬 발동
-
-2. AI 확장
-	- 전투 알고리즘 강화 (대기 / 경계 / 공격 / 방어 / 회피 / 도주)
-	- AI 그룹 구성 및 피아 식별
-	- 역할별 적 타입 (근접 / 원거리 / 마법 등)
-	- 웨이브 시스템
-	- 미니 보스
-
-3. 이동 & 파쿠르 확장
-	- 파쿠르 액션 (벽타기, 장애물 넘기, 낙법 등)
-	- 텔레포트
-
-4. 고급 애니메이션
-	- 풋 IK / 핸드 IK
-	- ALS 시스템
-	- 8-way 애니메이션
-
-5. 시스템
-	- 아이템 상호작용 및 사용 시스템
-	- 인벤토리 시스템
-	- 마을
-	- NPC
-	- 상점 시스템
-	- 퀘스트 시스템
-	- 스폰 시스템
-	- 레벨 확장 및 이동
-
-6. 연출 & UI
-	- 파괴 애니메이션
-	- 림 이펙트 (외곽선)
-	- 간단 시네마틱 인/아웃
-	- 메뉴 / 옵션 / 리트라이
-
-> 확장 범위는 **MVP 완성 이후**, 시간 여유에 따라 단계적으로 추가
+> Extended features will be added **after the MVP** depending on available time.
 
 ---
+ 
+### **4. Timeline & Milestones**
+ 
+#### **Target Duration**
+  
+- **MVP:** 1 month (2025.12.01 ~ 2025.12.31)
 
-### 3. 기간 및 작업 모드
+- **Extended:** After MVP completion
+  
+#### **Weekly Plan**
+  
+- **Dec 1 ~ Dec 7 (W1)**
 
-#### 작업 목표 기간: 
-- 필수 범위 : 1달 (2025.12.01 ~ 2025.12.31)
-- 확장 범위 : '필수 범위' 작업 이후 계획
-	  
-#### 작업 계획: 
-- 25.12.01 ~ 25.12.07 (W1)
-	- M1: Character & Combat Core (v0.1)
+    - **M1:** Character & Combat Core (v0.1)
 
-- 25.12.08 ~ 25.12.14 (W2)
-	- M2 – Hit, Damage, Dummy Enemy, Targeting (v0.2)
+- **Dec 8 ~ Dec 14 (W2)**
 
-- 25.12.15 ~ 25.12.21 (W3)
-	- M3 – Enemy AI & Advanced Combat (v0.3)
+    - **M2:** Hit Reaction, Damage, Dummy Enemy, Targeting (v0.2)
 
-- 25.12.22 ~ 25.12.28 (W4)
-	- M4 – VFX & UI (v0.4)
+- **Dec 15 ~ Dec 21 (W3)**
 
-- 25.12.28 ~ 25.12.31 (W5)
-	- M5 – Polish & Documentation (v0.5)
+    - **M3:** Enemy AI & Advanced Combat (v0.3)
 
+- **Dec 22 ~ Dec 28 (W4)**
 
-> **자세한 계획은 마일스톤에 작성 (P01_UE5_Portfolio_Milestones)**
+    - **M4:** VFX & UI (v0.4)
+
+- **Dec 28 ~ Dec 31 (W5)**
+
+    - **M5:** Polish & Documentation (v0.5)
+
+  
+> Detailed milestones are managed in: **P01_UE5_Portfolio_Milestones**
+    
+---
+  
+### **5. Tools Overview**
+  
+- **Engine:** Unreal Engine 5.4
+
+- **IDE:** Visual Studio 2022
+
+- **Version Control:** Git + GitHub
+
+- **Issues / Kanban:** GitHub Issues & Projects
+
+- **Documentation:** Obsidian
+  
 
 ---
-
-### 4. 사용 툴 개요
-- 엔진: Unreal Engine 5.4
-- IDE: Visual Studio 2022
-- 버전 관리: Git + GitHub
-- 이슈/칸반: GitHub Issues & Projects
-- 문서화: Obsidian
-
-### 5. 디렉터리 개요 (문서화 관련)
-- docs/
-    - 00_plan/ → 계획 / 마일스톤 / 워크플로우
-    - 01_daily/ → Daily Checklist
-    - 02_design/ → 시스템 설계 및 다이어그램
-    - 03_notes/ → 기타 문서 (작업 기록, 실험 결과, 회고 등)
+  
+### **6. Documentation Directory Structure**
+  
+```
+docs/
+ ├─ 00_plan/     → Project plans, milestones, workflows
+ ├─ 01_daily/    → Daily checklists
+ ├─ 02_design/   → System design & diagrams
+ └─ 03_notes/    → Additional notes, experiments, retrospectives
+```
+  
 
 ---
