@@ -5,6 +5,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
+#include "Component/CMovementComponent.h"
+
 ACPlayer::ACPlayer()
 {
 	// Init CapsuleComp
@@ -30,6 +32,8 @@ ACPlayer::ACPlayer()
 	CameraComp->SetupAttachment(SpringArmComp);
 	CameraComp->SetRelativeLocation(FVector(0.0f, 40.0f, 0.0f));
 	CameraComp->bUsePawnControlRotation = false;
+
+	MovementComp = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 }
 
 void ACPlayer::BeginPlay()
@@ -40,4 +44,26 @@ void ACPlayer::BeginPlay()
 void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void ACPlayer::HandleMoveForward(const float InAxisValue)
+{
+	if (Controller != nullptr)
+	{
+		if (MovementComp)
+		{
+			MovementComp->OnMoveForward(InAxisValue);
+		}
+	}
+}
+
+void ACPlayer::HandleMoveRight(const float InAxisValue)
+{
+	if (Controller != nullptr)
+	{
+		if (MovementComp)
+		{
+			MovementComp->OnMoveRight(InAxisValue);
+		}
+	}
 }
