@@ -12,18 +12,18 @@ Divided into 14 major stages + extra systems.
 
 ### **Default Level Setup (Order 0)**
 
- - [ ] Default Level Setup
+ - [x] Default Level Setup
     
 
 ### **Player Setup (Order 1)**
 
-- [ ] Mesh / Camera setup
+- [x] Mesh / Camera setup
     
-- [ ] Place character in level
+- [x] Place character in level
     
-- [ ] Basic movement + camera control
+- [x] Basic movement + camera control
     
-- [ ] Implement Idle / Walk / Sprint / Jump
+- [x] Implement Idle / Walk / Sprint / Jump
     
 
 ### **Basic Combat (Order 2)**

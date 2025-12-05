@@ -20,18 +20,18 @@
 
 ### **Tasks**
 
-- [ ] Install UE5.4 and create a new project
+- [x] Install UE5.4 and create a new project
     
-- [ ] Set up Git/GitHub repository and `.gitignore`
+- [x] Set up Git/GitHub repository and `.gitignore`
     
-- [ ] Set up Obsidian `docs/` structure
+- [x] Set up Obsidian `docs/` structure
     - `00_plan`, `01_daily`, `02_design`, `03_notes`
         
-- [ ] Set up GitHub Issues & Kanban board
+- [x] Set up GitHub Issues & Kanban board
     
-- [ ] Add Git/GitHub workflow docs
+- [x] Add Git/GitHub workflow docs
     
-- [ ] Add Plan-Overview, Milestones, Issue-Checklist docs
+- [x] Add Plan-Overview, Milestones, Issue-Checklist docs
     
 
 **Git Tag:** `v0.0-setup`
@@ -44,11 +44,11 @@
 
 ### **Tasks**
 
-- [ ] Implement `PlayerCharacter` / `PlayerController` (C++)
+- [x] Implement `PlayerCharacter` / `PlayerController` (C++)
     
-- [ ] Add third-person camera (SpringArm)
+- [x] Add third-person camera (SpringArm)
     
-- [ ] Basic movement (move/jump)
+- [x] Basic movement (move/jump)
     
 - [ ] Weapon equip/unequip
     
