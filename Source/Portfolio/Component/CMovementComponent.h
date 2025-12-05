@@ -36,6 +36,7 @@ private:
 	float CurrentDirection = 0.f;
 
 	bool bCanMove = true;
+	bool bIsFalling = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -44,6 +45,8 @@ protected:
 public:
 	FORCEINLINE float GetCurrentSpeed() const { return CurrentSpeed; }
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
+
+	FORCEINLINE bool IsFalling() const { return bIsFalling; }
 
 public:
 	void OnMoveForward(float InValue);

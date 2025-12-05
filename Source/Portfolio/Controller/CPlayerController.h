@@ -19,6 +19,9 @@ protected:
 	void InputLookYaw(float InAxisValue);
 	void InputLookPitch(float InAxisValue);
 
-	void InputWalk();
-	void InputRun();
+	void Press_Walk();
+	void Release_Walk();
+
+	void Press_Jump();
+	void Release_Jump();
 };

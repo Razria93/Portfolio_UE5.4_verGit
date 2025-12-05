@@ -82,3 +82,15 @@ void ACPlayer::HandleRun()
 	if (IsValid(Controller) && IsValid(MovementComp))
 		MovementComp->OnRun();
 }
+
+void ACPlayer::HandleJump()
+{
+	if(IsValid(Controller) && IsValid(MovementComp))
+	Jump();
+}
+ 
+void ACPlayer::HandleStopJump()
+{
+	if (IsValid(Controller) && IsValid(MovementComp))
+	StopJumping();
+}

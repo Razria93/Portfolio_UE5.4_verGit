@@ -30,6 +30,8 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 	CalculateSpeed();
 	CalculateDirection();
+
+	bIsFalling = CharacterMovementComp_Cached->IsFalling();
 }
 
 void UCMovementComponent::OnMoveForward(float InValue)

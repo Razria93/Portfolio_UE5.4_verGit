@@ -16,6 +16,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Settings")
 	float Direction;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Settings")
+	bool bIsInAir;
+
 private:
 	class ACharacter* OwnerCharacter_Cached;
 	class UCMovementComponent* MovementComp_Cached;

@@ -24,4 +24,5 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	Speed = MovementComp_Cached->GetCurrentSpeed();
 	Direction = MovementComp_Cached->GetCurrentDirection();
+	bIsInAir = MovementComp_Cached->IsFalling();
 }
