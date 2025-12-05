@@ -18,6 +18,7 @@ protected:
 
 private:
 	class ACharacter* OwnerCharacter_Cached;
+	class UCMovementComponent* MovementComp_Cached;
 
 public:
 	void NativeBeginPlay() override;

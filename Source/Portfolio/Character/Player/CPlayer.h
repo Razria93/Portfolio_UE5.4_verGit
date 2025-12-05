@@ -31,4 +31,6 @@ public:
 public:
 	void HandleMoveForward(const float InAxisValue);
 	void HandleMoveRight(const float InAxisValue);
+	void HandleWalk();
+	void HandleRun();
 };

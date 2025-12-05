@@ -13,10 +13,12 @@ protected:
 	virtual void SetupInputComponent() override;
 
 protected:
-	void OnMoveForward(float InAxisValue);
-	void OnMoveRight(float InAxisValue);
+	void InputMoveForward(float InAxisValue);
+	void InputMoveRight(float InAxisValue);
 	
-	void OnLookYaw(float InAxisValue);
-	void OnLookPitch(float InAxisValue);
+	void InputLookYaw(float InAxisValue);
+	void InputLookPitch(float InAxisValue);
 
+	void InputWalk();
+	void InputRun();
 };

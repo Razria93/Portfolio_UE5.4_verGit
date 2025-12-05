@@ -20,7 +20,7 @@ ACPlayer::ACPlayer()
 	check(MeshComp);
 	MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // FRotator: (Pitch, Yaw, Roll)
-	
+
 	// Init CharacterMovementComp
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
 	check(characterMovementComp);
@@ -61,22 +61,24 @@ void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACPlayer::HandleMoveForward(const float InAxisValue)
 {
-	if (IsValid(Controller))
-	{
-		if (MovementComp)
-		{
-			MovementComp->OnMoveForward(InAxisValue);
-		}
-	}
+	if (IsValid(Controller) && IsValid(MovementComp))
+		MovementComp->OnMoveForward(InAxisValue);
 }
 
 void ACPlayer::HandleMoveRight(const float InAxisValue)
 {
-	if (IsValid(Controller))
-	{
-		if (MovementComp)
-		{
-			MovementComp->OnMoveRight(InAxisValue);
-		}
-	}
+	if (IsValid(Controller) && IsValid(MovementComp))
+		MovementComp->OnMoveRight(InAxisValue);
+}
+
+void ACPlayer::HandleWalk()
+{
+	if (IsValid(Controller) && IsValid(MovementComp))
+		MovementComp->OnWalk();
+}
+
+void ACPlayer::HandleRun()
+{
+	if (IsValid(Controller) && IsValid(MovementComp))
+		MovementComp->OnRun();
 }

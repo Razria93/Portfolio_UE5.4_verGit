@@ -3,29 +3,25 @@
 
 #include "GameFramework/Character.h"
 
+#include "Component/CMovementComponent.h"
+
 void UCAnimInstance::NativeBeginPlay()
 {
 	Super::NativeBeginPlay();
 
 	OwnerCharacter_Cached = Cast<ACharacter>(TryGetPawnOwner());
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	check(OwnerCharacter_Cached);
+
+	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass()));
+	check(MovementComp_Cached);
 }
 
 void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached)) return;
 
-	// Calculate Speed
-	Speed = OwnerCharacter_Cached->GetVelocity().Size2D();
-
-	if (Speed < KINDA_SMALL_NUMBER)
-	{
-		Direction = 0.f;
-		return;
-	}
-
-	// Calculate Direction
-	Direction = CalculateDirection(OwnerCharacter_Cached->GetVelocity(), OwnerCharacter_Cached->GetActorRotation());
+	Speed = MovementComp_Cached->GetCurrentSpeed();
+	Direction = MovementComp_Cached->GetCurrentDirection();
 }
