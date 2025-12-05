@@ -21,18 +21,18 @@
 
 ### **내용**
 
-- [ ] UE5.4 설치 및 신규 프로젝트 생성
+- [x] UE5.4 설치 및 신규 프로젝트 생성
     
-- [ ] Git/GitHub 리포지토리 생성 및 `.gitignore` 정리
+- [x] Git/GitHub 리포지토리 생성 및 `.gitignore` 정리
     
-- [ ] Obsidian `docs/` 폴더 구조 구성
+- [x] Obsidian `docs/` 폴더 구조 구성
     - `00_plan`, `01_daily`, `02_design`, `03_notes`
         
-- [ ] GitHub Issues / Projects(칸반) 기본 구성
+- [x] GitHub Issues / Projects(칸반) 기본 구성
     
-- [ ] Git & GitHub 워크플로우 문서 추가
+- [x] Git & GitHub 워크플로우 문서 추가
     
-- [ ] Plan-Overview, Milestones, Issue-Checklist 문서 추가
+- [x] Plan-Overview, Milestones, Issue-Checklist 문서 추가
     
 
 **Git 태그:** `v0.0-setup`
@@ -45,11 +45,11 @@
 
 ### **내용**
 
-- [ ] `PlayerCharacter` / `PlayerController` C++ 클래스 구현
+- [x] `PlayerCharacter` / `PlayerController` C++ 클래스 구현
     
-- [ ] 3인칭 카메라(SpringArm) 구성
+- [x] 3인칭 카메라(SpringArm) 구성
     
-- [ ] 기본 이동(move/jump) 구현
+- [x] 기본 이동(move/jump) 구현
     
 - [ ] 무기 장착/해제 로직
     

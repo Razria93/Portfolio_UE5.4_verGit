@@ -9,10 +9,19 @@ class PORTFOLIO_API ACPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-  protected:
+protected:
 	virtual void SetupInputComponent() override;
 
-  protected:
-	void OnLookYaw(float InAxisValue);
-	void OnLookPitch(float InAxisValue);
+protected:
+	void InputMoveForward(float InAxisValue);
+	void InputMoveRight(float InAxisValue);
+	
+	void InputLookYaw(float InAxisValue);
+	void InputLookPitch(float InAxisValue);
+
+	void Press_Walk();
+	void Release_Walk();
+
+	void Press_Jump();
+	void Release_Jump();
 };
