@@ -14,13 +14,16 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-	class USpringArmComponent* SpringArmComp;
+	class USpringArmComponent* SpringArmComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-	class UCameraComponent* CameraComp;
+	class UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-	class UCMovementComponent* MovementComp;
+	class UCMovementComponent* MovementComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UCWeaponComponent* WeaponComponent;
 
 protected:
 	virtual void BeginPlay() override;

@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 
 #include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
 
 ACPlayer::ACPlayer()
 {
@@ -30,23 +31,27 @@ ACPlayer::ACPlayer()
 	bUseControllerRotationYaw = false;
 
 	// Init SpringArmComp
-	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	check(SpringArmComp);
-	SpringArmComp->SetupAttachment(GetCapsuleComponent());
-	SpringArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 55.0f));
-	SpringArmComp->TargetArmLength = 300.0f;
-	SpringArmComp->bUsePawnControlRotation = true;
+	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	check(SpringArmComponent);
+	SpringArmComponent->SetupAttachment(GetCapsuleComponent());
+	SpringArmComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 55.0f));
+	SpringArmComponent->TargetArmLength = 300.0f;
+	SpringArmComponent->bUsePawnControlRotation = true;
 
 	// Init CameraComp
-	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	check(CameraComp);
-	CameraComp->SetupAttachment(SpringArmComp);
-	CameraComp->SetRelativeLocation(FVector(0.0f, 40.0f, 0.0f));
-	CameraComp->bUsePawnControlRotation = false;
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	check(CameraComponent);
+	CameraComponent->SetupAttachment(SpringArmComponent);
+	CameraComponent->SetRelativeLocation(FVector(0.0f, 40.0f, 0.0f));
+	CameraComponent->bUsePawnControlRotation = false;
 
 	// Init MovementComp (Custom)
-	MovementComp = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
-	check(MovementComp);
+	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
+	check(MovementComponent);
+
+	// Init WeaponComp
+	WeaponComponent = CreateDefaultSubobject<UCWeaponComponent>(TEXT("Weapon"));
+	check(WeaponComponent);
 }
 
 void ACPlayer::BeginPlay()
@@ -61,36 +66,36 @@ void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACPlayer::HandleMoveForward(const float InAxisValue)
 {
-	if (IsValid(Controller) && IsValid(MovementComp))
-		MovementComp->OnMoveForward(InAxisValue);
+	if (IsValid(Controller) && IsValid(MovementComponent))
+		MovementComponent->OnMoveForward(InAxisValue);
 }
 
 void ACPlayer::HandleMoveRight(const float InAxisValue)
 {
-	if (IsValid(Controller) && IsValid(MovementComp))
-		MovementComp->OnMoveRight(InAxisValue);
+	if (IsValid(Controller) && IsValid(MovementComponent))
+		MovementComponent->OnMoveRight(InAxisValue);
 }
 
 void ACPlayer::HandleWalk()
 {
-	if (IsValid(Controller) && IsValid(MovementComp))
-		MovementComp->OnWalk();
+	if (IsValid(Controller) && IsValid(MovementComponent))
+		MovementComponent->OnWalk();
 }
 
 void ACPlayer::HandleRun()
 {
-	if (IsValid(Controller) && IsValid(MovementComp))
-		MovementComp->OnRun();
+	if (IsValid(Controller) && IsValid(MovementComponent))
+		MovementComponent->OnRun();
 }
 
 void ACPlayer::HandleJump()
 {
-	if(IsValid(Controller) && IsValid(MovementComp))
+	if(IsValid(Controller) && IsValid(MovementComponent))
 	Jump();
 }
  
 void ACPlayer::HandleStopJump()
 {
-	if (IsValid(Controller) && IsValid(MovementComp))
+	if (IsValid(Controller) && IsValid(MovementComponent))
 	StopJumping();
 }
