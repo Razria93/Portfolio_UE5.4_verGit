@@ -13,11 +13,13 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("LookYaw", this, &ACPlayerController::InputLookYaw);
 	InputComponent->BindAxis("LookPitch", this, &ACPlayerController::InputLookPitch);
 
-	InputComponent->BindAction("Walk", EInputEvent::IE_Pressed, this, &ACPlayerController::Press_Walk);
-	InputComponent->BindAction("Walk", EInputEvent::IE_Released, this, &ACPlayerController::Release_Walk);
+	InputComponent->BindAction("Walk", EInputEvent::IE_Pressed, this, &ACPlayerController::PressWalk);
+	InputComponent->BindAction("Walk", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseWalk);
 
-	InputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ACPlayerController::Press_Jump);
-	InputComponent->BindAction("Jump", EInputEvent::IE_Released, this, &ACPlayerController::Release_Jump);
+	InputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ACPlayerController::PressJump);
+	InputComponent->BindAction("Jump", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseJump);
+
+	InputComponent->BindAction("Sword", EInputEvent::IE_Pressed, this, &ACPlayerController::PressSword);
 }
 
 void ACPlayerController::InputMoveForward(float inAxisValue)
@@ -42,26 +44,34 @@ void ACPlayerController::InputLookPitch(float inAxisValue)
 	AddPitchInput(inAxisValue);
 }
 
-void ACPlayerController::Press_Walk()
+void ACPlayerController::PressWalk()
 {
 	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
 		player->HandleWalk();
 }
 
-void ACPlayerController::Release_Walk()
+void ACPlayerController::ReleaseWalk()
 {
 	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
 		player->HandleRun();
 }
 
-void ACPlayerController::Press_Jump()
+void ACPlayerController::PressJump()
 {
 	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
 		player->HandleJump();
 }
 
-void ACPlayerController::Release_Jump()
+void ACPlayerController::ReleaseJump()
 {
 	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
 		player->HandleStopJump();
+}
+
+void ACPlayerController::PressSword()
+{
+	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
+	{
+		player->HandleSword();
+	}
 }

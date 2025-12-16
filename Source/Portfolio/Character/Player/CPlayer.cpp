@@ -64,6 +64,16 @@ void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+UCMovementComponent* ACPlayer::GetMovementComp() const
+{
+	return IsValid(MovementComponent) ? MovementComponent : nullptr;
+}
+
+UCWeaponComponent* ACPlayer::GetWeaponComp() const
+{
+	return IsValid(WeaponComponent) ? WeaponComponent : nullptr;
+}
+
 void ACPlayer::HandleMoveForward(const float InAxisValue)
 {
 	if (IsValid(Controller) && IsValid(MovementComponent))
@@ -90,12 +100,16 @@ void ACPlayer::HandleRun()
 
 void ACPlayer::HandleJump()
 {
-	if(IsValid(Controller) && IsValid(MovementComponent))
-	Jump();
+	if (IsValid(Controller) && IsValid(MovementComponent))
+		Jump();
 }
- 
+
 void ACPlayer::HandleStopJump()
 {
 	if (IsValid(Controller) && IsValid(MovementComponent))
-	StopJumping();
+		StopJumping();
+}
+
+void ACPlayer::HandleSword()
+{
 }

@@ -10,7 +10,6 @@ UCMovementComponent::UCMovementComponent()
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 }
 
-
 void UCMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -26,7 +25,8 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached))
+		return;
 
 	CalculateSpeed();
 	CalculateDirection();
@@ -36,9 +36,14 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UCMovementComponent::OnMoveForward(float InValue)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!bCanMove) return;
-	if (FMath::IsNearlyZero(InValue)) return;
+	if (!IsValid(OwnerCharacter_Cached))
+		return;
+
+	if (!bCanMove)
+		return;
+
+	if (FMath::IsNearlyZero(InValue))
+		return;
 
 	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
 	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
@@ -49,9 +54,14 @@ void UCMovementComponent::OnMoveForward(float InValue)
 
 void UCMovementComponent::OnMoveRight(float InValue)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!bCanMove) return;
-	if (FMath::IsNearlyZero(InValue)) return;
+	if (!IsValid(OwnerCharacter_Cached))
+		return;
+
+	if (!bCanMove)
+		return;
+
+	if (FMath::IsNearlyZero(InValue))
+		return;
 
 	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
 	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
@@ -77,7 +87,8 @@ void UCMovementComponent::OnSprint()
 
 void UCMovementComponent::SetSpeedType(ESpeedType InType)
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached))
+		return;
 
 	float newSpeed = SpeedMap[InType];
 	CharacterMovementComp_Cached->MaxWalkSpeed = newSpeed;
@@ -85,11 +96,17 @@ void UCMovementComponent::SetSpeedType(ESpeedType InType)
 
 void UCMovementComponent::CalculateSpeed()
 {
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached))
+		return;
+
 	CurrentSpeed = OwnerCharacter_Cached->GetVelocity().Size2D();
 }
 
 void UCMovementComponent::CalculateDirection()
 {
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached))
+		return;
+
 	if (CurrentSpeed < KINDA_SMALL_NUMBER)
 	{
 		CurrentDirection = 0.f;
@@ -99,10 +116,10 @@ void UCMovementComponent::CalculateDirection()
 	{
 		const FVector velocityNormal = OwnerCharacter_Cached->GetVelocity().GetSafeNormal2D();
 		const FVector forwardNormal = OwnerCharacter_Cached->GetActorForwardVector().GetSafeNormal2D();
-		
+
 		float angleRad = FMath::Acos(FVector::DotProduct(forwardNormal, velocityNormal));
 		float angleDeg = FMath::RadiansToDegrees(angleRad);
-		
+
 		// determine left or right
 		FVector crossProduct = FVector::CrossProduct(forwardNormal, velocityNormal);
 		if (crossProduct.Z < 0)

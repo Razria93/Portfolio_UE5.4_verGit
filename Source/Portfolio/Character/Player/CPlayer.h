@@ -13,16 +13,16 @@ public:
 	ACPlayer();
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere)
 	class USpringArmComponent* SpringArmComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* CameraComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere)
 	class UCMovementComponent* MovementComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere)
 	class UCWeaponComponent* WeaponComponent;
 
 protected:
@@ -30,6 +30,10 @@ protected:
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+public:
+	UCMovementComponent* GetMovementComp() const;
+	UCWeaponComponent* GetWeaponComp() const;
 
 public:
 	void HandleMoveForward(const float InAxisValue);
@@ -40,4 +44,6 @@ public:
 
 	void HandleJump();
 	void HandleStopJump();
+
+	void HandleSword();
 };

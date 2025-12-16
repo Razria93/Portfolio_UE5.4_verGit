@@ -28,15 +28,16 @@ private:
 	TMap<ESpeedType, float> SpeedMap;	// Init in Blueprint
 
 private:
-	class ACharacter* OwnerCharacter_Cached;
-	class UCharacterMovementComponent* CharacterMovementComp_Cached;
-
-private:
 	float CurrentSpeed = 0.f;
 	float CurrentDirection = 0.f;
 
 	bool bCanMove = true;
 	bool bIsFalling = false;
+
+private:
+	// Cached
+	class ACharacter* OwnerCharacter_Cached;
+	class UCharacterMovementComponent* CharacterMovementComp_Cached;
 
 protected:
 	virtual void BeginPlay() override;
@@ -46,6 +47,7 @@ public:
 	FORCEINLINE float GetCurrentSpeed() const { return CurrentSpeed; }
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
 
+public:
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
 
 public:
