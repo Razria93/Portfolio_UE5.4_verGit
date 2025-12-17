@@ -63,6 +63,11 @@ void UCWeaponComponent::SetSwordMode()
 	ChangeWeaponMode(EWeaponType::Sword);
 }
 
+void UCWeaponComponent::DoAction()
+{
+	// TODO: DoAction
+}
+
 void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment))

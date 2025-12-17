@@ -62,6 +62,9 @@ public:
 	void SetSwordMode();
 
 public:
+	void DoAction();
+
+public:
 	FORCEINLINE bool CheckCurType(EWeaponType InNewWeaponType) { return CurrentWeaponType == InNewWeaponType; }
 
 private:
