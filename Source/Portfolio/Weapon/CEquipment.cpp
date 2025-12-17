@@ -5,7 +5,7 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 
-void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, const FEquipmentData& InEquipmentData)
+void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, FEquipmentData InEquipmentData)
 {
 	EquipmentData_Cached = InEquipmentData;
 	OwnerCharacter_Cached = InOwnerCharacter;
@@ -48,11 +48,8 @@ void UCEquipment::Begin_Equip()
 
 void UCEquipment::End_Equip()
 {
-
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
-
-	FLog::Log(L"End_Equip");
 
 	bBeginEquip = false;
 	bEquipped = true;

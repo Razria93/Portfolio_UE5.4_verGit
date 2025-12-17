@@ -30,7 +30,7 @@ public:
 	FEquipmentEndEquip OnEquipmentEndEquip;
 
 public:
-	void InitializeEquipment(class ACharacter* InOwnerCharacter, const FEquipmentData& InEquipmentData);
+	void InitializeEquipment(class ACharacter* InOwnerCharacter, FEquipmentData InEquipmentData);
 
 public:
 	// Trigger: PressKey

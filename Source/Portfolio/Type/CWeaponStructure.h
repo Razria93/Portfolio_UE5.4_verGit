@@ -12,7 +12,7 @@ enum class EWeaponType : uint8
 	Max,
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FEquipmentData
 
 {

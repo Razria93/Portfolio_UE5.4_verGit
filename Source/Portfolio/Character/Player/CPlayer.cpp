@@ -127,7 +127,6 @@ void ACPlayer::HandleSword()
 {
 	if (IsValid(Controller) && IsValid(WeaponComponent) && IsValid(StateComponent))
 	{
-		
 		if (StateComponent->CheckCurType(EStateType::Idle))
 		{
 			if (WeaponComponent->CheckCurType(EWeaponType::Unarmed))
