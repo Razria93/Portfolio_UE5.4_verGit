@@ -1,0 +1,123 @@
+#include "Component/CWeaponComponent.h"
+#include "ProjectGlobal.h"
+
+#include "GameFramework/Character.h"
+#include "Weapon/CAttachment.h"
+#include "Weapon/CEquipment.h"
+
+UCWeaponComponent::UCWeaponComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+
+	CurrentWeaponType = EWeaponType::Unarmed;
+}
+
+void UCWeaponComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
+	check(OwnerCharacter_Cached);
+
+	// Attachment
+	CreateAttachment(OwnerCharacter_Cached);
+
+	if (IsValid(Attachment))
+		Attachment->InitializeAttachment();
+
+	// Equipment
+	CreateEquipment(OwnerCharacter_Cached);
+
+	if (IsValid(Equipment))
+		Equipment->InitializeEquipment(OwnerCharacter_Cached, EquipmentData, UnequipmentData);
+
+	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Equipment))
+	{
+		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip);		// [Bind] Attachment -> Equipment
+		Equipment->OnEquipmentBeginUnequip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginUnequip);	// [Bind] Attachment -> Equipment
+	}
+}
+
+void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+ACAttachment* UCWeaponComponent::GetAttachment()
+{
+	return IsValid(Attachment) ? Attachment : nullptr;
+}
+
+UCEquipment* UCWeaponComponent::GetEquipment()
+{
+	return IsValid(Equipment) ? Equipment : nullptr;
+}
+
+void UCWeaponComponent::SetUnarmedMode()
+{
+	ChangeWeaponMode(EWeaponType::Unarmed);
+}
+
+void UCWeaponComponent::SetSwordMode()
+{
+	ChangeWeaponMode(EWeaponType::Sword);
+}
+
+void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
+{
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment))
+		return;
+
+	if (InNewWeaponType == EWeaponType::Unarmed)
+	{
+		Equipment->Unequip();
+	}
+	else
+	{
+		Equipment->Equip();
+	}
+
+	ChangeWeaponType(InNewWeaponType);
+}
+
+void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
+{
+	if (!IsValid(OwnerCharacter_Cached))
+		return;
+
+	EWeaponType prevWeaponType = CurrentWeaponType;
+	CurrentWeaponType = InNewWeaponType;
+
+	if (OnWeaponTypeChanged.IsBound())
+		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType);
+}
+
+void UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter)
+{
+	if (!IsValid(InOwnerCharacter) || !IsValid(AttachmentClass))
+		return;
+
+	UWorld* World = InOwnerCharacter->GetWorld();
+
+	if (!World)
+		return;
+
+	// 1) SpawnParams
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = InOwnerCharacter;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	// 2) Spawn Attachment
+	Attachment = World->SpawnActor<ACAttachment>(AttachmentClass, SpawnParams);
+	check(Attachment);
+}
+
+void UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter)
+{
+	if (!IsValid(InOwnerCharacter) || !IsValid(EquipmentClass))
+		return;
+
+	// 1) Create Equipment
+	Equipment = NewObject<UCEquipment>(this, EquipmentClass);
+	check(Equipment);
+}
