@@ -1,6 +1,10 @@
 # UE5 Portfolio – Issue Checklist
 
-### Date
+## 제목
+
+**M1-03: CPlayerCharacter 이동/점프 및 기본 AnimBP 세팅**
+
+### 날짜
 
 - **Day 3**
 
@@ -9,7 +13,7 @@
 
 ---
 
-### Objective
+### 목표
 
 - CPlayerCharacter 이동(Idle/Walk/Run) 기본 로직 구현
 
@@ -18,7 +22,7 @@
 - AnimBP 기반 기본 Locomotion(Idle/Move) 뼈대 구성
 
 
-### Branch
+### 브랜치
 
 - feature/character-move-core
 
@@ -80,4 +84,5 @@
     고급 이동 시스템 참조 및 기능 통합을 위해 ALS 기반 설계 일부를 도입하는 방향을 검토 중임
 
 
+---
 ---

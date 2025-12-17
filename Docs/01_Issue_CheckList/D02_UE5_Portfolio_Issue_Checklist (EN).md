@@ -1,11 +1,15 @@
 # UE5 Portfolio – Issue Checklist
 
+## Title
+
+**M1-02: Implement character base, player controller and third-person camera**
+
 ### **Date**
 
 - **Day 2**
     
 - **2025.12.02**
-    
+
 
 ---
 
@@ -36,8 +40,6 @@
 - [x] Added floor, walls, and simple blockout props (boxes, stairs)
     
 
----
-
 #### **2. Character & Controller**
 
 - [x] Created APortfolioPlayerController C++ class
@@ -46,8 +48,6 @@
 
 - [x] Configured capsule, skeletal mesh, and movement component defaults
     
-
----
 
 #### **3. Camera**
 

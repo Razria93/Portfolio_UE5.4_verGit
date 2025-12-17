@@ -1,11 +1,15 @@
 # UE5 Portfolio – Issue Checklist
 
+## Title
+
+**M1-01: Set up UE5 project environment, documentation structure and workflow**
+
 ### **Date**
 
 - **Day 1**
     
 - **2025.12.01**
-    
+
 
 ---
 
@@ -38,8 +42,6 @@
 - [x] Check and organize **.gitignore**, **.vsconfig**, and base Config files
     
 
----
-
 #### **2. Git & GitHub**
 
 - [x] Initialize Git repository (`git init`)
@@ -47,9 +49,7 @@
 - [x] Create GitHub repository and connect `local & origin`
     
 - [x] Make the first commit (`:tada: initial commit`) and push to `main`
-    
 
----
 
 #### **3. Obsidian & Documentation Structure**
 
@@ -64,9 +64,7 @@
 - [x] Add `git-documents`
     
 - [x] Add `README`
-    
 
----
 
 #### **4. GitHub Issues & Project Board**
 

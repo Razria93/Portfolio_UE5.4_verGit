@@ -50,16 +50,16 @@
     
 - [x] Basic movement (move/jump)
     
-- [ ] Weapon equip/unequip
+- [x] Weapon equip/unequip
     
-- [ ] Implement Basic combo attack system
+- [ ] Implement Basic attack system
     
-- [ ] Create “Test Room” for early combat testing
+- [x] Create “Test Room” for early combat testing
     
 
 ### **Completion Criteria**
 
-- [ ] Player can move, jump, dodge, and perform basic combos
+- [x] Player can move, jump, dodge, and perform basic combos
     
 - [ ] Attack availability changes depending on weapon state
     
@@ -75,7 +75,9 @@
 ### **Tasks**
 
 #### Implement hit & hit-reaction
-
+	
+- [ ] Implement combo attack system
+    
 - [ ] Add Dummy Enemy
 
 - [ ] Implement Hit detection

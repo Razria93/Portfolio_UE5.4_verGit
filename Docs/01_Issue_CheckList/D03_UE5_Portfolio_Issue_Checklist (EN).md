@@ -1,5 +1,9 @@
 # UE5 Portfolio – Issue Checklist
 
+## Title
+
+**M1-03: CPlayerCharacter Movement/Jump & Basic AnimBP Setup**
+
 ### Date
 
 - **Day 3**
@@ -80,4 +84,5 @@
     Considering partial adoption of ALS (Advanced Locomotion System) patterns
 
 
+---
 ---

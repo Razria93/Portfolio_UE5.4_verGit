@@ -1,12 +1,19 @@
 # UE5 Portfolio – Issue Checklist
 
-### Date
+## 제목
+
+**M1-02: 캐릭터 베이스, 플레이어 컨트롤러 및 3인칭 카메라 구현**
+
+### 날짜
 
 - Day 2
 
 - Date : 2025.12.02
 
-### Objective
+
+---
+
+### 목표
 
 - PlayerCharacter / PlayerController C++ 클래스 생성
 
@@ -15,7 +22,7 @@
 - Test Room 기본 레벨 생성
 
 
-### Branch
+### 브랜치
 
 - feature/character-camera-core
 
@@ -25,6 +32,7 @@
 ### TODO List
 
 #### 1. Test Room
+
 - [x] `TestRoom` 레벨 생성
 
 - [x] 바닥, 벽, 간단 장애물(박스/계단) 배치
@@ -46,6 +54,7 @@
 - [x] 카메라 위치/각도(높이, 뒤쪽 거리) 기본값 세팅
 
 - [x] 마우스 이동으로 카메라 회전
+
 
 ---
 

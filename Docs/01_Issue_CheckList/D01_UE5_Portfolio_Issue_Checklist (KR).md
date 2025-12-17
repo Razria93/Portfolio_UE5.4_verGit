@@ -1,6 +1,10 @@
 # UE5 Portfolio – Issue Checklist
 
-### Date
+## 제목
+
+**M1-01: UE5 프로젝트 환경, 문서 구조 및 워크플로우 설정**
+
+### 날짜
 
 - **Day 1**
 
@@ -9,7 +13,7 @@
 
 ---
 
-### Objective
+### 목표
 
 - UE5 / Git / Obsidian / GitHub 환경 세팅
 
@@ -20,7 +24,7 @@
 
 ---
 
-### Branch
+### 브랜치
 
 - 없음
 
@@ -38,8 +42,6 @@
 - [x] .gitignore / .vsconfig / 기본 Config 확인 및 정리
 
 
----
-
 #### 2. Git & GitHub
 
 - [x] Git 리포지토리 초기화 (`git init`)
@@ -48,8 +50,6 @@
 
 - [x] 첫 커밋 (`:tada: initial commit`) 및 `main` push
 
-
----
 
 #### 3. Obsidian & docs 구조
 
@@ -65,8 +65,6 @@
 
 - [x] `README` 추가
 
-
----
 
 #### 4. GitHub Issues & Project
 
