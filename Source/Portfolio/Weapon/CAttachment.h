@@ -41,6 +41,9 @@ public:
 	UFUNCTION()
 	void OnEquipmentBeginEquip();
 
+	UFUNCTION()
+	void OnEquipmentBeginUnequip();
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Attachment")
 	void AttachToOwnerSocket(FName InSocketName);

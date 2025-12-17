@@ -26,8 +26,14 @@ private:
 	UPROPERTY(EditAnywhere)
 	FEquipmentData EquipmentData;
 
+	UPROPERTY(EditAnywhere)
+	FEquipmentData UnequipmentData;
+
 private:
+	UPROPERTY(Transient)
 	class ACAttachment* Attachment;
+	
+	UPROPERTY(Transient)
 	class UCEquipment* Equipment;
 
 private:
@@ -52,6 +58,7 @@ public:
 	class UCEquipment* GetEquipment();
 
 public:
+	void SetUnarmedMode();
 	void SetSwordMode();
 
 public:

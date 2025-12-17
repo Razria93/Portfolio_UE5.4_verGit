@@ -133,6 +133,10 @@ void ACPlayer::HandleSword()
 			{
 				WeaponComponent->SetSwordMode();
 			}
+			else if (WeaponComponent->CheckCurType(EWeaponType::Sword))
+			{
+				WeaponComponent->SetUnarmedMode();
+			}
 		}
 	}
 }

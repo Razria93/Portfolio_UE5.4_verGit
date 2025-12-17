@@ -29,11 +29,12 @@ void UCWeaponComponent::BeginPlay()
 	CreateEquipment(OwnerCharacter_Cached);
 
 	if (IsValid(Equipment))
-		Equipment->InitializeEquipment(OwnerCharacter_Cached, EquipmentData);
+		Equipment->InitializeEquipment(OwnerCharacter_Cached, EquipmentData, UnequipmentData);
 
 	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Equipment))
 	{
-		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip); // [Bind] Attachment -> Equipment
+		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip);		// [Bind] Attachment -> Equipment
+		Equipment->OnEquipmentBeginUnequip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginUnequip);	// [Bind] Attachment -> Equipment
 	}
 }
 
@@ -52,6 +53,11 @@ UCEquipment* UCWeaponComponent::GetEquipment()
 	return IsValid(Equipment) ? Equipment : nullptr;
 }
 
+void UCWeaponComponent::SetUnarmedMode()
+{
+	ChangeWeaponMode(EWeaponType::Unarmed);
+}
+
 void UCWeaponComponent::SetSwordMode()
 {
 	ChangeWeaponMode(EWeaponType::Sword);
@@ -59,10 +65,17 @@ void UCWeaponComponent::SetSwordMode()
 
 void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
 {
-	if (!IsValid(OwnerCharacter_Cached) && !IsValid(Equipment))
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment))
 		return;
 
-	Equipment->Equip();
+	if (InNewWeaponType == EWeaponType::Unarmed)
+	{
+		Equipment->Unequip();
+	}
+	else
+	{
+		Equipment->Equip();
+	}
 
 	ChangeWeaponType(InNewWeaponType);
 }
