@@ -8,6 +8,10 @@
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
+#include "Component/CStateComponent.h"
+
+#include "Type/CWeaponStructure.h"
+#include "Type/CStateStructure.h"
 
 ACPlayer::ACPlayer()
 {
@@ -52,6 +56,10 @@ ACPlayer::ACPlayer()
 	// Init WeaponComp
 	WeaponComponent = CreateDefaultSubobject<UCWeaponComponent>(TEXT("Weapon"));
 	check(WeaponComponent);
+
+	// Init StateComp
+	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
+	check(StateComponent);
 }
 
 void ACPlayer::BeginPlay()
@@ -72,6 +80,11 @@ UCMovementComponent* ACPlayer::GetMovementComp() const
 UCWeaponComponent* ACPlayer::GetWeaponComp() const
 {
 	return IsValid(WeaponComponent) ? WeaponComponent : nullptr;
+}
+
+UCStateComponent* ACPlayer::GetStateComp() const
+{
+	return IsValid(StateComponent) ? StateComponent : nullptr;
 }
 
 void ACPlayer::HandleMoveForward(const float InAxisValue)
@@ -112,4 +125,15 @@ void ACPlayer::HandleStopJump()
 
 void ACPlayer::HandleSword()
 {
+	if (IsValid(Controller) && IsValid(WeaponComponent) && IsValid(StateComponent))
+	{
+		
+		if (StateComponent->CheckCurType(EStateType::Idle))
+		{
+			if (WeaponComponent->CheckCurType(EWeaponType::Unarmed))
+			{
+				WeaponComponent->SetSwordMode();
+			}
+		}
+	}
 }

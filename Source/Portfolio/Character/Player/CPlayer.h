@@ -25,6 +25,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCWeaponComponent* WeaponComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCStateComponent* StateComponent;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -34,6 +37,7 @@ public:
 public:
 	UCMovementComponent* GetMovementComp() const;
 	UCWeaponComponent* GetWeaponComp() const;
+	UCStateComponent* GetStateComp() const;
 
 public:
 	void HandleMoveForward(const float InAxisValue);

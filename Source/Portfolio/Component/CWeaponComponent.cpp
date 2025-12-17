@@ -3,10 +3,13 @@
 
 #include "GameFramework/Character.h"
 #include "Weapon/CAttachment.h"
+#include "Weapon/CEquipment.h"
 
 UCWeaponComponent::UCWeaponComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+
+	CurrentWeaponType = EWeaponType::Unarmed;
 }
 
 void UCWeaponComponent::BeginPlay()
@@ -16,7 +19,8 @@ void UCWeaponComponent::BeginPlay()
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
 
-	CreateAttachment();
+	// Attachment
+	CreateAttachment(OwnerCharacter_Cached);
 
 	if (IsValid(Attachment))
 		Attachment->InitializeAttachment();
@@ -27,22 +31,53 @@ void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UCWeaponComponent::CreateAttachment()
+ACAttachment* UCWeaponComponent::GetAttachment()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !AttachmentClass)
+	return IsValid(Attachment) ? Attachment : nullptr;
+}
+
+void UCWeaponComponent::SetSwordMode()
+{
+	ChangeWeaponMode(EWeaponType::Sword);
+}
+
+void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
+{
+	if (!IsValid(OwnerCharacter_Cached))
 		return;
 
-	UWorld* World = OwnerCharacter_Cached->GetWorld();
+	ChangeWeaponType(InNewWeaponType);
+}
+
+void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
+{
+	if (!IsValid(OwnerCharacter_Cached))
+		return;
+
+	EWeaponType prevWeaponType = CurrentWeaponType;
+	CurrentWeaponType = InNewWeaponType;
+
+	if (OnWeaponTypeChanged.IsBound())
+		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType);
+}
+
+void UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter)
+{
+	if (!IsValid(InOwnerCharacter) || !IsValid(AttachmentClass))
+		return;
+
+	UWorld* World = InOwnerCharacter->GetWorld();
 
 	if (!World)
 		return;
 
 	// 1) SpawnParams
 	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = OwnerCharacter_Cached;
+	SpawnParams.Owner = InOwnerCharacter;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	// 2) Spawn Attachment
 	Attachment = World->SpawnActor<ACAttachment>(AttachmentClass, SpawnParams);
+	check(Attachment);
 }
 
