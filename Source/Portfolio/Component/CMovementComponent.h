@@ -48,6 +48,10 @@ public:
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
 
 public:
+	FORCEINLINE void SetStop() { bCanMove = false; }
+	FORCEINLINE void SetMove() { bCanMove = true; }
+
+public:
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
 
 public:

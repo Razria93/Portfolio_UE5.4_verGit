@@ -32,6 +32,11 @@ void ACAttachment::InitializeAttachment()
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
+void ACAttachment::OnEquipmentBeginEquip()
+{
+	AttachToOwnerSocket(SocketName_Hand);
+}
+
 void ACAttachment::AttachToOwnerSocket(FName InSocketName)
 {
 	AttachToComponent(OwnerCharacter_Cached->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);

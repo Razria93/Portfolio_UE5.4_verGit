@@ -14,23 +14,32 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
-	FName SocketName_Holster;
+	FName SocketName_Holster;	// Initialize on Editor
+
+	UPROPERTY(EditAnywhere)
+	FName SocketName_Hand;		// Initialize on Editor
 
 protected:
 	UPROPERTY(VisibleAnywhere)
 	class USceneComponent* Root;
 
 private:
+	// Cached
 	class ACharacter* OwnerCharacter_Cached;
 
 protected:
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
 	void InitializeAttachment();
+
+public:
+	// Bind Delegate
+	UFUNCTION()
+	void OnEquipmentBeginEquip();
 
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Attachment")

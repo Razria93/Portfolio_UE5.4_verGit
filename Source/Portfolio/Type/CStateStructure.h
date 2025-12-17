@@ -8,6 +8,7 @@ UENUM(BlueprintType)
 enum class EStateType : uint8
 {
 	Idle = 0,
+	Equip,
 	Max,
 };
 

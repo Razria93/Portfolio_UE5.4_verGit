@@ -12,9 +12,26 @@ enum class EWeaponType : uint8
 	Max,
 };
 
+USTRUCT()
+struct FEquipmentData
+
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	class UAnimMontage* Montage;
+
+	UPROPERTY(EditAnywhere)
+	float PlayRate = 1.0f;
+
+	UPROPERTY(EditAnywhere)
+	bool bCanMove = true;
+};
+
 UCLASS()
 class PORTFOLIO_API UCWeaponStructure : public UObject
 {
 	GENERATED_BODY()
-	
+
 };

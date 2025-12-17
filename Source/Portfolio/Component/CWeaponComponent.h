@@ -19,9 +19,16 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACAttachment> AttachmentClass;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCEquipment> EquipmentClass;
+
+private:
+	UPROPERTY(EditAnywhere)
+	FEquipmentData EquipmentData;
 
 private:
 	class ACAttachment* Attachment;
+	class UCEquipment* Equipment;
 
 private:
 	EWeaponType CurrentWeaponType;
@@ -42,6 +49,7 @@ public:
 
 public:
 	class ACAttachment* GetAttachment();
+	class UCEquipment* GetEquipment();
 
 public:
 	void SetSwordMode();
@@ -52,7 +60,8 @@ public:
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);
 	void ChangeWeaponMode(EWeaponType InNewWeaponType);
-	
+
 private:
 	void CreateAttachment(AActor* InOwnerCharacter);
-}; 
+	void CreateEquipment(AActor* InOwnerCharacter);
+};

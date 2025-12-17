@@ -24,6 +24,17 @@ void UCWeaponComponent::BeginPlay()
 
 	if (IsValid(Attachment))
 		Attachment->InitializeAttachment();
+
+	// Equipment
+	CreateEquipment(OwnerCharacter_Cached);
+
+	if (IsValid(Equipment))
+		Equipment->InitializeEquipment(OwnerCharacter_Cached, EquipmentData);
+
+	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Equipment))
+	{
+		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip); // [Bind] Attachment -> Equipment
+	}
 }
 
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -36,6 +47,11 @@ ACAttachment* UCWeaponComponent::GetAttachment()
 	return IsValid(Attachment) ? Attachment : nullptr;
 }
 
+UCEquipment* UCWeaponComponent::GetEquipment()
+{
+	return IsValid(Equipment) ? Equipment : nullptr;
+}
+
 void UCWeaponComponent::SetSwordMode()
 {
 	ChangeWeaponMode(EWeaponType::Sword);
@@ -43,8 +59,10 @@ void UCWeaponComponent::SetSwordMode()
 
 void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
 {
-	if (!IsValid(OwnerCharacter_Cached))
+	if (!IsValid(OwnerCharacter_Cached) && !IsValid(Equipment))
 		return;
+
+	Equipment->Equip();
 
 	ChangeWeaponType(InNewWeaponType);
 }
@@ -81,3 +99,12 @@ void UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter)
 	check(Attachment);
 }
 
+void UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter)
+{
+	if (!IsValid(InOwnerCharacter) || !IsValid(EquipmentClass))
+		return;
+
+	// 1) Create Equipment
+	Equipment = NewObject<UCEquipment>(this, EquipmentClass);
+	check(Equipment);
+}
