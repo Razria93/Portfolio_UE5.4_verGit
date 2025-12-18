@@ -36,6 +36,7 @@ public:
 	void SetIdleMode();
 	void SetEquipMode();
 	void SetUnequipMode();
+	void SetActionMode();
 
 public:
 	FORCEINLINE bool CheckCurType(EStateType InNewStateType) { return CurrentStateType == InNewStateType; }

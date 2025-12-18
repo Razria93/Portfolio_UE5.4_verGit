@@ -47,6 +47,14 @@ void UCStateComponent::SetUnequipMode()
 
 	ChangeStateMode(EStateType::Unequip);
 }
+
+void UCStateComponent::SetActionMode()
+{
+	if (!IsValid(OwnerCharacter_Cached))
+		return;
+
+	ChangeStateMode(EStateType::Action);
+}
  
 void UCStateComponent::ChangeStateType(EStateType InNewStateType)
 {

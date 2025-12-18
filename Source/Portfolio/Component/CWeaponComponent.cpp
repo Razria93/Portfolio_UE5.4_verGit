@@ -73,7 +73,7 @@ void UCWeaponComponent::SetSwordMode()
 
 void UCWeaponComponent::DoAction()
 {
-	// TODO: DoAction
+	Action->DoAction();
 }
 
 void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)

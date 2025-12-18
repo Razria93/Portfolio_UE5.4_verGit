@@ -5,7 +5,7 @@
 #include "Type/CWeaponStructure.h"
 #include "CAction.generated.h"
 
-UCLASS()
+UCLASS(Abstract) // Base Action Class
 class PORTFOLIO_API UCAction : public UObject
 {
 	GENERATED_BODY()
@@ -19,6 +19,15 @@ protected:
 	// Cached
 	class UCStateComponent* StateComp_Cached;
 
+private:
+	bool bBeginAction;
+	bool bIsAction;
+
 public:
 	virtual void InitializeAction(ACharacter* InOwnerCharacter, FActionData InFActionData);
+
+public:
+	virtual void DoAction();
+	virtual void Begin_DoAction();
+	virtual void End_DoAction();
 };
