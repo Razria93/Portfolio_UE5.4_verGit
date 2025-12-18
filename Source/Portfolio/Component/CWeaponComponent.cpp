@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Weapon/CAttachment.h"
 #include "Weapon/CEquipment.h"
+#include "Weapon/CAction.h"
 
 UCWeaponComponent::UCWeaponComponent()
 {
@@ -31,11 +32,18 @@ void UCWeaponComponent::BeginPlay()
 	if (IsValid(Equipment))
 		Equipment->InitializeEquipment(OwnerCharacter_Cached, EquipmentData, UnequipmentData);
 
+	// Bind to Equipment
 	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Equipment))
 	{
 		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip);		// [Bind] Attachment -> Equipment
 		Equipment->OnEquipmentBeginUnequip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginUnequip);	// [Bind] Attachment -> Equipment
 	}
+
+	// Action
+	CreateAction(OwnerCharacter_Cached);
+
+	if (IsValid(Action))
+		Action->InitializeAction(OwnerCharacter_Cached, FActionData);
 }
 
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -125,4 +133,14 @@ void UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter)
 	// 1) Create Equipment
 	Equipment = NewObject<UCEquipment>(this, EquipmentClass);
 	check(Equipment);
+}
+
+void UCWeaponComponent::CreateAction(AActor* InOwnerCharacter)
+{
+	if (!IsValid(InOwnerCharacter) || !IsValid(ActionClass))
+		return;
+
+	// 1) Create Equipment
+	Action = NewObject<UCAction>(this, ActionClass);
+	check(Action);
 }

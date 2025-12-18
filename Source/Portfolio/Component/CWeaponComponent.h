@@ -22,12 +22,18 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UCEquipment> EquipmentClass;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCAction> ActionClass;
+
 private:
 	UPROPERTY(EditAnywhere)
-	FEquipmentData EquipmentData;
+	FEquipmentData EquipmentData;	// Inject to UCEquipment
+
+	UPROPERTY(EditAnywhere) 
+	FEquipmentData UnequipmentData;	// Inject to UCEquipment
 
 	UPROPERTY(EditAnywhere)
-	FEquipmentData UnequipmentData;
+	FActionData FActionData;		// Inject to UCAction
 
 private:
 	UPROPERTY(Transient)
@@ -35,6 +41,9 @@ private:
 	
 	UPROPERTY(Transient)
 	class UCEquipment* Equipment;
+
+	UPROPERTY(Transient)
+	class UCAction* Action;
 
 private:
 	EWeaponType CurrentWeaponType;
@@ -74,4 +83,5 @@ private:
 private:
 	void CreateAttachment(AActor* InOwnerCharacter);
 	void CreateEquipment(AActor* InOwnerCharacter);
+	void CreateAction(AActor* InOwnerCharacter);
 };

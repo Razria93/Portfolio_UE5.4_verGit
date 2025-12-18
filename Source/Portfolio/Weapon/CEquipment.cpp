@@ -7,60 +7,60 @@
 
 void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData)
 {
-	EquipmentData_Cached = InEquipmentData;
-	UnquipmentData_Cached = InUnequipmentData;
-	OwnerCharacter_Cached = InOwnerCharacter;
+	OwnerCharacter_Injected = InOwnerCharacter;
+	check(OwnerCharacter_Injected);
+
+	EquipmentData_Injected = InEquipmentData;
+	UnquipmentData_Injected = InUnequipmentData;
 
 	bBeginEquip = false;
 	bBeginUnequip = false;
 	bEquipped = false;
 
-	check(OwnerCharacter_Cached);
-
-	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass())); // TODO: Refactor Interface
+	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Injected->GetComponentByClass(UCMovementComponent::StaticClass())); // TODO: Refactor Interface
 	check(MovementComp_Cached);
 
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Cached->GetComponentByClass(UCStateComponent::StaticClass())); // TODO: Refactor Interface
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass())); // TODO: Refactor Interface
 	check(StateComp_Cached);
 }
 
 void UCEquipment::Equip()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
 	StateComp_Cached->SetEquipMode();
 	
-	if (EquipmentData_Cached.bCanMove == false)
+	if (EquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetStop();
 	
-	if (IsValid(EquipmentData_Cached.Montage))
+	if (IsValid(EquipmentData_Injected.Montage))
 	{
-		OwnerCharacter_Cached->PlayAnimMontage(EquipmentData_Cached.Montage, EquipmentData_Cached.PlayRate);
+		OwnerCharacter_Injected->PlayAnimMontage(EquipmentData_Injected.Montage, EquipmentData_Injected.PlayRate);
 		return;
 	}
 }
 
 void UCEquipment::Unequip()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
 	StateComp_Cached->SetUnequipMode();
 
-	if (UnquipmentData_Cached.bCanMove == false)
+	if (UnquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetStop();
 
-	if (IsValid(UnquipmentData_Cached.Montage))
+	if (IsValid(UnquipmentData_Injected.Montage))
 	{
-		OwnerCharacter_Cached->PlayAnimMontage(UnquipmentData_Cached.Montage, UnquipmentData_Cached.PlayRate);
+		OwnerCharacter_Injected->PlayAnimMontage(UnquipmentData_Injected.Montage, UnquipmentData_Injected.PlayRate);
 		return;
 	}
 }
 
 void UCEquipment::Begin_Equip()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
 	bBeginEquip = true;
@@ -71,13 +71,13 @@ void UCEquipment::Begin_Equip()
 
 void UCEquipment::End_Equip()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
 	bBeginEquip = false;
 	bEquipped = true;
 
-	if (EquipmentData_Cached.bCanMove == false)
+	if (EquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetMove();
 
 	if (OnEquipmentEndEquip.IsBound())
@@ -88,7 +88,7 @@ void UCEquipment::End_Equip()
 
 void UCEquipment::Begin_Unequip()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
 	bBeginUnequip = true;
@@ -99,13 +99,13 @@ void UCEquipment::Begin_Unequip()
 
 void UCEquipment::End_Unequip()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
 	bBeginUnequip = false;
 	bEquipped = false;
 
-	if (UnquipmentData_Cached.bCanMove == false)
+	if (UnquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetMove();
 
 	if (OnEquipmentEndUnequip.IsBound())
