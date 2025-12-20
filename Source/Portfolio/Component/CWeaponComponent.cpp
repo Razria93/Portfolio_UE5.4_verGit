@@ -61,6 +61,11 @@ UCEquipment* UCWeaponComponent::GetEquipment()
 	return IsValid(Equipment) ? Equipment : nullptr;
 }
 
+UCAction* UCWeaponComponent::GetAction()
+{
+	return IsValid(Action) ? Action : nullptr;
+}
+
 void UCWeaponComponent::SetUnarmedMode()
 {
 	ChangeWeaponMode(EWeaponType::Unarmed);

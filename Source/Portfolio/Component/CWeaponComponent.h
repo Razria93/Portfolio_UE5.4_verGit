@@ -65,6 +65,7 @@ public:
 public:
 	class ACAttachment* GetAttachment();
 	class UCEquipment* GetEquipment();
+	class UCAction* GetAction();
 
 public:
 	void SetUnarmedMode();
