@@ -16,31 +16,34 @@ void UCAction::InitializeAction(ACharacter* InOwnerCharacter, FActionData InActi
 	check(StateComp_Cached);
 }
 
-void UCAction::DoAction()
+void UCAction::PlayAction()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
 
 	bIsAction = true;
 
 	StateComp_Cached->SetActionMode();
 
-	// To be implemented detail by derived classes
+	// NOTE: To be implemented detail by derived classes
 }
 
-void UCAction::Begin_DoAction()
+void UCAction::Begin_PlayAction()
 {
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
+
 	bBeginAction = true;
 
-	// To be implemented detail by derived classes
+	// NOTE: To be implemented detail by derived classes
 }
 
-void UCAction::End_DoAction()
+void UCAction::End_PlayAction()
 {
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
+
 	bIsAction = false;
 	bBeginAction = false;
 
 	StateComp_Cached->SetIdleMode();
 
-	// To be implemented detail by derived classes
+	// NOTE: To be implemented detail by derived classes
 }

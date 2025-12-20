@@ -29,16 +29,7 @@ void UCAnimNotify_Unequip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenc
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin:
-	{
-		equipment->Begin_Unequip();
-		return;
+	case EAnimNotifyFlow::Begin: equipment->Begin_Unequip(); return;
+	case EAnimNotifyFlow::End: equipment->End_Unequip(); return;
 	}
-
-	case EAnimNotifyFlow::End:
-	{
-		equipment->End_Unequip();
-		return;
-	}
-	} // switch
 }

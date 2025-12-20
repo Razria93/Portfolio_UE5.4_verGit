@@ -33,7 +33,7 @@ private:
 	FEquipmentData UnequipmentData;	// Inject to UCEquipment
 
 	UPROPERTY(EditAnywhere)
-	FActionData FActionData;		// Inject to UCAction
+	FActionData ActionData;			// Inject to UCAction
 
 private:
 	UPROPERTY(Transient)
@@ -71,7 +71,7 @@ public:
 	void SetSwordMode();
 
 public:
-	void DoAction();
+	void PlayAction();
 
 public:
 	FORCEINLINE bool CheckCurType(EWeaponType InNewWeaponType) { return CurrentWeaponType == InNewWeaponType; }

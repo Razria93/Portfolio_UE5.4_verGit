@@ -20,14 +20,14 @@ protected:
 	class UCStateComponent* StateComp_Cached;
 
 private:
-	bool bBeginAction;
-	bool bIsAction;
+	bool bBeginAction{ false };	// Action start triggered
+	bool bIsAction{ false };	// Action is active
 
 public:
 	virtual void InitializeAction(ACharacter* InOwnerCharacter, FActionData InFActionData);
 
 public:
-	virtual void DoAction();
-	virtual void Begin_DoAction();
-	virtual void End_DoAction();
+	virtual void PlayAction();
+	virtual void Begin_PlayAction();
+	virtual void End_PlayAction();
 };

@@ -19,26 +19,15 @@ void UCAnimNotify_Equip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 
 	UCWeaponComponent* weaponComp = GetWeaponComponent(MeshComp);
 
-	if (!weaponComp)
-		return;
+	if (!weaponComp) return;
 
 	UCEquipment* equipment = weaponComp->GetEquipment();
 
-	if (!equipment)
-		return;
+	if (!equipment) return;
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin:
-	{
-		equipment->Begin_Equip();
-		return;
+	case EAnimNotifyFlow::Begin: equipment->Begin_Equip(); return;
+	case EAnimNotifyFlow::End: equipment->End_Equip(); return;
 	}
-
-	case EAnimNotifyFlow::End:
-	{
-		equipment->End_Equip();
-		return;
-	}
-	} // switch
 }

@@ -127,7 +127,7 @@ void ACPlayer::HandleAction()
 {
 	if (IsValid(Controller) && IsValid(WeaponComponent))
 	{
-		WeaponComponent->DoAction();
+		WeaponComponent->PlayAction();
 	}
 }
 

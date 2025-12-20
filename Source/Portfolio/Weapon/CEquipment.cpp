@@ -60,8 +60,7 @@ void UCEquipment::Unequip()
 
 void UCEquipment::Begin_Equip()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached)) return;
 
 	bBeginEquip = true;
 
@@ -71,8 +70,7 @@ void UCEquipment::Begin_Equip()
 
 void UCEquipment::End_Equip()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached)) return;
 
 	bBeginEquip = false;
 	bEquipped = true;
@@ -88,8 +86,7 @@ void UCEquipment::End_Equip()
 
 void UCEquipment::Begin_Unequip()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached)) return;
 
 	bBeginUnequip = true;
 
@@ -99,8 +96,7 @@ void UCEquipment::Begin_Unequip()
 
 void UCEquipment::End_Unequip()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached)) return;
 
 	bBeginUnequip = false;
 	bEquipped = false;

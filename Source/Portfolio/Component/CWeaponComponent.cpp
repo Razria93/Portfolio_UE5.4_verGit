@@ -43,7 +43,7 @@ void UCWeaponComponent::BeginPlay()
 	CreateAction(OwnerCharacter_Cached);
 
 	if (IsValid(Action))
-		Action->InitializeAction(OwnerCharacter_Cached, FActionData);
+		Action->InitializeAction(OwnerCharacter_Cached, ActionData);
 }
 
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -71,15 +71,16 @@ void UCWeaponComponent::SetSwordMode()
 	ChangeWeaponMode(EWeaponType::Sword);
 }
 
-void UCWeaponComponent::DoAction()
+void UCWeaponComponent::PlayAction()
 {
-	Action->DoAction();
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Action)) return;
+
+	Action->PlayAction();
 }
 
 void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment))
-		return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment)) return;
 
 	if (InNewWeaponType == EWeaponType::Unarmed)
 	{
@@ -95,8 +96,7 @@ void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
 
 void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	EWeaponType prevWeaponType = CurrentWeaponType;
 	CurrentWeaponType = InNewWeaponType;
@@ -107,13 +107,11 @@ void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 
 void UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter)
 {
-	if (!IsValid(InOwnerCharacter) || !IsValid(AttachmentClass))
-		return;
+	if (!IsValid(InOwnerCharacter) || !IsValid(AttachmentClass)) return;
 
 	UWorld* World = InOwnerCharacter->GetWorld();
 
-	if (!World)
-		return;
+	if (!World) return;
 
 	// 1) SpawnParams
 	FActorSpawnParameters SpawnParams;
@@ -127,8 +125,7 @@ void UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter)
 
 void UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter)
 {
-	if (!IsValid(InOwnerCharacter) || !IsValid(EquipmentClass))
-		return;
+	if (!IsValid(InOwnerCharacter) || !IsValid(EquipmentClass)) return;
 
 	// 1) Create Equipment
 	Equipment = NewObject<UCEquipment>(this, EquipmentClass);
@@ -137,8 +134,7 @@ void UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter)
 
 void UCWeaponComponent::CreateAction(AActor* InOwnerCharacter)
 {
-	if (!IsValid(InOwnerCharacter) || !IsValid(ActionClass))
-		return;
+	if (!IsValid(InOwnerCharacter) || !IsValid(ActionClass)) return;
 
 	// 1) Create Equipment
 	Action = NewObject<UCAction>(this, ActionClass);

@@ -26,40 +26,35 @@ void UCStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UCStateComponent::SetIdleMode()
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	ChangeStateMode(EStateType::Idle);
 }
 
 void UCStateComponent::SetEquipMode()
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	ChangeStateMode(EStateType::Equip);
 }
 
 void UCStateComponent::SetUnequipMode()
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	ChangeStateMode(EStateType::Unequip);
 }
 
 void UCStateComponent::SetActionMode()
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	ChangeStateMode(EStateType::Action);
 }
  
 void UCStateComponent::ChangeStateType(EStateType InNewStateType)
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	EStateType prevStateType = CurrentStateType;
 	
@@ -71,8 +66,7 @@ void UCStateComponent::ChangeStateType(EStateType InNewStateType)
 
 void UCStateComponent::ChangeStateMode(EStateType InNewStateType)
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	ChangeStateType(InNewStateType);
 }
