@@ -55,6 +55,10 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bCanMove;
+
+public:
+	void Begin_PlayMontage(class ACharacter* InOwnerCharacter);
+	void End_PlayMontage(class ACharacter* InOwnerCharacter);
 };
 
 UCLASS()

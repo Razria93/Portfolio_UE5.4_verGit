@@ -25,6 +25,7 @@ private:
 
 public:
 	virtual void InitializeAction(ACharacter* InOwnerCharacter, FActionData InFActionData);
+	virtual void Tick(float InDeltaTime) {}
 
 public:
 	virtual void PlayAction();

@@ -33,6 +33,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	FORCEINLINE EStateType GetCurType() { return CurrentStateType; }
+
+public:
 	void SetIdleMode();
 	void SetEquipMode();
 	void SetUnequipMode();

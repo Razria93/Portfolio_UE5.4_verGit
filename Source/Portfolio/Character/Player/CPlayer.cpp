@@ -127,6 +127,7 @@ void ACPlayer::HandleAction()
 {
 	if (IsValid(Controller) && IsValid(WeaponComponent))
 	{
+		if (WeaponComponent->CheckCurType(EWeaponType::Sword))
 		WeaponComponent->PlayAction();
 	}
 }

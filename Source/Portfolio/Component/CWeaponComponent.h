@@ -68,6 +68,9 @@ public:
 	class UCAction* GetAction();
 
 public:
+	FORCEINLINE EWeaponType GetCurType() { return CurrentWeaponType; }
+
+public:
 	void SetUnarmedMode();
 	void SetSwordMode();
 
