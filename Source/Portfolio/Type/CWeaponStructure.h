@@ -19,14 +19,46 @@ struct FEquipmentData
 	GENERATED_BODY()
 
 public:
+	FEquipmentData()
+		: Montage(nullptr), PlayRate(1.0f), bCanMove(true)
+	{
+	}
+
+public:
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* Montage;
 
 	UPROPERTY(EditAnywhere)
-	float PlayRate = 1.0f;
+	float PlayRate;
 
 	UPROPERTY(EditAnywhere)
-	bool bCanMove = true;
+	bool bCanMove;
+};
+
+USTRUCT()
+struct FActionData
+{
+	GENERATED_BODY()
+
+public:
+	FActionData()
+		: Montage(nullptr), PlayRate(1.0f), bCanMove(true)
+	{
+	}
+
+public:
+	UPROPERTY(EditAnywhere)
+	class UAnimMontage* Montage;
+
+	UPROPERTY(EditAnywhere)
+	float PlayRate;
+
+	UPROPERTY(EditAnywhere)
+	bool bCanMove;
+
+public:
+	void Begin_PlayMontage(class ACharacter* InOwnerCharacter);
+	void End_PlayMontage(class ACharacter* InOwnerCharacter);
 };
 
 UCLASS()

@@ -26,8 +26,7 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached)) 
-		return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached)) return;
 
 	Speed = MovementComp_Cached->GetCurrentSpeed();
 	Direction = MovementComp_Cached->GetCurrentDirection();

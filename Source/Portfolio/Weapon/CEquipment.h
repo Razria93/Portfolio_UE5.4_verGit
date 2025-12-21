@@ -21,12 +21,14 @@ private:
 	bool bEquipped;
 
 private:
+	// Dependency Injection
+	class ACharacter* OwnerCharacter_Injected;
+	FEquipmentData EquipmentData_Injected;
+	FEquipmentData UnquipmentData_Injected;
+
 	// Cached
-	class ACharacter* OwnerCharacter_Cached;
 	class UCMovementComponent* MovementComp_Cached;
 	class UCStateComponent* StateComp_Cached;
-	FEquipmentData EquipmentData_Cached;
-	FEquipmentData UnquipmentData_Cached;
 
 public:
 	// delegate

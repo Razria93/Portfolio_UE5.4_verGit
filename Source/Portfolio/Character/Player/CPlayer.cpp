@@ -123,6 +123,15 @@ void ACPlayer::HandleStopJump()
 		StopJumping();
 }
 
+void ACPlayer::HandleAction()
+{
+	if (IsValid(Controller) && IsValid(WeaponComponent))
+	{
+		if (WeaponComponent->CheckCurType(EWeaponType::Sword))
+		WeaponComponent->PlayAction();
+	}
+}
+
 void ACPlayer::HandleSword()
 {
 	if (IsValid(Controller) && IsValid(WeaponComponent) && IsValid(StateComponent))

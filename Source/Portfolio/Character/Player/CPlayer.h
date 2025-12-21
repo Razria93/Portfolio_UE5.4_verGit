@@ -49,5 +49,7 @@ public:
 	void HandleJump();
 	void HandleStopJump();
 
+	void HandleAction();
+
 	void HandleSword();
 };
