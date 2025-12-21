@@ -22,6 +22,8 @@
 - Add a basic **equip state flag** and connect it to the character state flow
 
 
+---
+
 ### Branch
 
 - `feature/character-weapon-equip`

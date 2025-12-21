@@ -20,7 +20,9 @@
 - Implement jump and do a first pass on movement-related parameter tuning
     
 - Build a basic AnimBP-driven locomotion (Idle/Move) state machine skeleton
-    
+
+
+---
 
 ### Branch
 
