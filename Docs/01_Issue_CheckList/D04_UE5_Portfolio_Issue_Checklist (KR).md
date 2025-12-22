@@ -22,6 +22,8 @@
 - 장착 상태 플래그 및 캐릭터 상태와의 연동 기초
 
 
+---
+
 ### 브랜치
 
 - feature/character-weapon-equip

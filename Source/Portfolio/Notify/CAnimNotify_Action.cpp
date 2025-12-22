@@ -29,5 +29,6 @@ void UCAnimNotify_Action::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 	{
 	case EAnimNotifyFlow::Begin: action->Begin_PlayAction(); return;
 	case EAnimNotifyFlow::End: action->End_PlayAction(); return;
+	case EAnimNotifyFlow::Next: action->Next_PlayAction(); return;
 	}
 }

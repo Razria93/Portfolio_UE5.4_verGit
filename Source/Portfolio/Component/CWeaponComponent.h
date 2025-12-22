@@ -27,13 +27,13 @@ private:
 
 private:
 	UPROPERTY(EditAnywhere)
-	FEquipmentData EquipmentData;	// Inject to UCEquipment
+	FEquipmentData EquipmentData;		// Inject to UCEquipment
 
 	UPROPERTY(EditAnywhere) 
-	FEquipmentData UnequipmentData;	// Inject to UCEquipment
+	FEquipmentData UnequipmentData;		// Inject to UCEquipment
 
 	UPROPERTY(EditAnywhere)
-	FActionData ActionData;			// Inject to UCAction
+	TArray<FActionData> ActionDatas;	// Inject to UCAction
 
 private:
 	UPROPERTY(Transient)

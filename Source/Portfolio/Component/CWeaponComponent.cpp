@@ -43,12 +43,14 @@ void UCWeaponComponent::BeginPlay()
 	CreateAction(OwnerCharacter_Cached);
 
 	if (IsValid(Action))
-		Action->InitializeAction(OwnerCharacter_Cached, ActionData);
+		Action->InitializeAction(OwnerCharacter_Cached, ActionDatas);
 }
 
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	Action->Tick(DeltaTime);
 }
 
 ACAttachment* UCWeaponComponent::GetAttachment()
