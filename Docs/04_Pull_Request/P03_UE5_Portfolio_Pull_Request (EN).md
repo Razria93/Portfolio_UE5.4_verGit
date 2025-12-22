@@ -168,4 +168,5 @@
         
 - `FEquipmentData` is now structured for safe editor usage and can be reused across other weapons.
 
+
 ---

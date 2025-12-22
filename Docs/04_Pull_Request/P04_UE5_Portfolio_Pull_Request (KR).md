@@ -134,7 +134,7 @@
 
 ## 관련 이슈 / 브랜치
 
-- 브랜치: `feature/character-weapon-equip`
+- 브랜치: `feature/combat-light-attack`
 
 - 이슈: #12
 

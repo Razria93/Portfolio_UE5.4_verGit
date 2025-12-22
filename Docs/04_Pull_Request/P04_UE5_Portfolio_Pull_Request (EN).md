@@ -132,6 +132,7 @@
 
 - Issue: #12 
 
+
 ---
 
 ## Notes
@@ -149,3 +150,6 @@
   - `UCAnimNotify_Action`: animation-timed Begin/End triggers
 
 - `HandleAction()` currently triggers actions only in Sword mode (can be extended per weapon type later)
+
+
+---

@@ -10,6 +10,7 @@
   
 - 또한 `FEquipmentData`를 `USTRUCT(BlueprintType)`으로 지정하고 USTRUCT를 `const&`로 전달하던 부분을 **값 전달로 변경**하여, **Property Editor 평가 과정에서 발생하던 USTRUCT 참조 수명(lifetime) 문제로 인한 에디터 크래시를 방지**함
 
+
 ---
 
 ## 완료 항목
