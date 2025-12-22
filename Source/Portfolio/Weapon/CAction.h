@@ -32,4 +32,5 @@ public:
 	virtual void PlayAction();
 	virtual void Begin_PlayAction();
 	virtual void End_PlayAction();
+	virtual void Next_PlayAction() {};
 };

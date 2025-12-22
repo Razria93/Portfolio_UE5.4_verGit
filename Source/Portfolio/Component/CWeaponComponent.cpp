@@ -49,6 +49,8 @@ void UCWeaponComponent::BeginPlay()
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	Action->Tick(DeltaTime);
 }
 
 ACAttachment* UCWeaponComponent::GetAttachment()
