@@ -6,12 +6,12 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 
-void UCAction::InitializeAction(ACharacter* InOwnerCharacter, FActionData InActionData)
+void UCAction::InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
 	check(OwnerCharacter_Injected);
 
-	ActionData_Injected = InActionData;
+	ActionDatas_Injected = InActionDatas;
 
 	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));	// TODO: Refactor Interface
 	check(WeaponComp_Cached);

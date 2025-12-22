@@ -43,7 +43,7 @@ void UCWeaponComponent::BeginPlay()
 	CreateAction(OwnerCharacter_Cached);
 
 	if (IsValid(Action))
-		Action->InitializeAction(OwnerCharacter_Cached, ActionData);
+		Action->InitializeAction(OwnerCharacter_Cached, ActionDatas);
 }
 
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

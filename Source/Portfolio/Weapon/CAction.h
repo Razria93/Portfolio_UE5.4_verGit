@@ -13,7 +13,7 @@ class PORTFOLIO_API UCAction : public UObject
 protected:
 	// Dependency Injection
 	class ACharacter* OwnerCharacter_Injected;
-	FActionData ActionData_Injected;
+	TArray<FActionData> ActionDatas_Injected;
 
 protected:
 	// Cached
@@ -25,7 +25,7 @@ private:
 	bool bIsAction{ false };	// Action is active
 
 public:
-	virtual void InitializeAction(ACharacter* InOwnerCharacter, FActionData InFActionData);
+	virtual void InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas);
 	virtual void Tick(float InDeltaTime) {}
 
 public:
