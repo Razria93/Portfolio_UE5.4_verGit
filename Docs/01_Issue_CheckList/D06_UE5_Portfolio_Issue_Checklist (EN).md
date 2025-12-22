@@ -33,29 +33,29 @@
 
 #### 1. Combo structure design
 
-- [ ] Design the combo structure where Light Attack 1st hit can chain into 2nd and 3rd hits
+- [x] Design the combo structure where Light Attack 1st hit can chain into 2nd and 3rd hits
 
-- [ ] Define variables for managing combo stages (e.g. AttackIndex)
+- [x] Define variables for managing combo stages (e.g. AttackIndex)
 
-- [ ] Define reset rules when there is no input or when timing fails
+- [x] Define reset rules when there is no input or when timing fails
 
 
 #### 2. Animation & montage
 
-- [ ] Prepare animations or montage sections for 2nd and 3rd hits
+- [x] Prepare animations or montage sections for 2nd and 3rd hits
 
-- [ ] Configure the montage to smoothly connect 1st → 2nd → 3rd hit
+- [x] Configure the montage to smoothly connect 1st → 2nd → 3rd hit
 
-- [ ] Use AnimNotifies or section end events to mark the input window for the next hit
+- [x] Use AnimNotifies or section end events to mark the input window for the next hit
 
 
 #### 3. Input handling & state integration
 
-- [ ] Implement logic for combo input (input buffering or “press again to advance to the next hit”)
+- [x] Implement logic for combo input (input buffering or “press again to advance to the next hit”)
 
-- [ ] Ensure combo progression is only allowed while in Attack state
+- [x] Ensure combo progression is only allowed while in Attack state
 
-- [ ] Reset internal counters and return to Idle/Move when the combo finishes
+- [x] Reset internal counters and return to Idle/Move when the combo finishes
 
 
 ---
