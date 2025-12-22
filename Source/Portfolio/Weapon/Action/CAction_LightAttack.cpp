@@ -3,8 +3,10 @@
 
 #include "GameFramework/Character.h"
 
+#include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 
+#include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
 
 void UCAction_LightAttack::Tick(float InDeltaTime)
@@ -14,10 +16,11 @@ void UCAction_LightAttack::Tick(float InDeltaTime)
 
 void UCAction_LightAttack::PlayAction()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
+	if (WeaponComp_Cached->CheckCurType(EWeaponType::Unarmed)) return;
 	if (!StateComp_Cached->CheckCurType(EStateType::Idle)) return;
 	if (!IsValid(ActionData_Injected.Montage)) return;
-
+	
 	Super::PlayAction();		// bIsAction = true
 
 	ActionData_Injected.Begin_PlayMontage(OwnerCharacter_Injected);

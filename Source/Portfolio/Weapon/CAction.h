@@ -17,6 +17,7 @@ protected:
 
 protected:
 	// Cached
+	class UCWeaponComponent* WeaponComp_Cached;
 	class UCStateComponent* StateComp_Cached;
 
 private:

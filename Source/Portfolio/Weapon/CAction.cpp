@@ -3,6 +3,7 @@
 
 #include "GameFramework/Character.h"
 
+#include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 
 void UCAction::InitializeAction(ACharacter* InOwnerCharacter, FActionData InActionData)
@@ -12,7 +13,10 @@ void UCAction::InitializeAction(ACharacter* InOwnerCharacter, FActionData InActi
 
 	ActionData_Injected = InActionData;
 
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass())); // TODO: Refactor Interface
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));	// TODO: Refactor Interface
+	check(WeaponComp_Cached);
+
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));		// TODO: Refactor Interface
 	check(StateComp_Cached);
 }
 
