@@ -55,6 +55,10 @@ public:
 	UFUNCTION()
 	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+public:
+	void OnCollision(FName InName);
+	void OffCollision();
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Attachment")
 	void AttachToOwnerSocket(FName InSocketName);

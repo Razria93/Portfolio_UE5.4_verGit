@@ -35,6 +35,8 @@ void ACAttachment::BeginPlay()
 		shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
 
 		Collisions_Cached.Add(shape);
+
+		OffCollision();
 	}
 }
 
@@ -60,11 +62,42 @@ void ACAttachment::OnEquipmentBeginUnequip()
 
 void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (OtherActor == OwnerCharacter_Cached) return;
+
 	Print_BeginOverlapEventInfo(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if (OtherActor == OwnerCharacter_Cached) return;
+
+	Print_EndOverlapEventInfo(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
+}
+
+void ACAttachment::OnCollision(FName InName)
+{
+	if (!InName.IsNone()) 
+	{
+		for (UShapeComponent* collision : Collisions_Cached)
+		{
+			if (collision->GetFName() == InName)
+			{
+				collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				return;
+			}
+		}
+	}
+	else // InName == None: OnCollision_ALL
+	{
+		for (UShapeComponent* collision : Collisions_Cached)
+			collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+}
+
+void ACAttachment::OffCollision()
+{
+	for (UShapeComponent* collision : Collisions_Cached)
+		collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ACAttachment::AttachToOwnerSocket(FName InSocketName)
