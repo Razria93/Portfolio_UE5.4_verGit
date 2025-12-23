@@ -11,13 +11,13 @@ void UCAnimInstance::NativeBeginPlay()
 	Super::NativeBeginPlay();
 
 	OwnerCharacter_Cached = Cast<ACharacter>(TryGetPawnOwner());
-	check(OwnerCharacter_Cached);
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass()));
-	check(MovementComp_Cached);
+	if (!IsValid(MovementComp_Cached)) return;
 
 	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
-	check(WeaponComp_Cached);
+	if (!IsValid(WeaponComp_Cached)) return;
 
 	WeaponComp_Cached->OnWeaponTypeChanged.AddDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
 }
@@ -35,6 +35,7 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType)
 {
-	if (IsValid(OwnerCharacter_Cached) && IsValid(InOwnerCharacter) && (OwnerCharacter_Cached == InOwnerCharacter))
-		WeaponType = InNewWeaponType;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(InOwnerCharacter) || (OwnerCharacter_Cached != InOwnerCharacter)) return;
+
+	WeaponType = InNewWeaponType;
 }
