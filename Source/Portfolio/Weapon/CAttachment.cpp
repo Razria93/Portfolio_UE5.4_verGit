@@ -19,7 +19,23 @@ void ACAttachment::BeginPlay()
 	Super::BeginPlay();
 
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+
+	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(Root)) return;
+
+	TArray<USceneComponent*> children;
+	Root->GetChildrenComponents(true, children);
+
+	for (USceneComponent* child : children)
+	{
+		UShapeComponent* shape = Cast<UShapeComponent>(child); // UShapeComponent base for shape collision components (Sphere / Box / Capsule)
+		if (!IsValid(shape)) continue;
+
+		shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
+		shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
+
+		Collisions_Cached.Add(shape);
+	}
 }
 
 void ACAttachment::Tick(float DeltaTime)
@@ -42,7 +58,37 @@ void ACAttachment::OnEquipmentBeginUnequip()
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
+void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	Print_BeginOverlapEventInfo(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+}
+
+void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+}
+
 void ACAttachment::AttachToOwnerSocket(FName InSocketName)
 {
 	AttachToComponent(OwnerCharacter_Cached->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
+}
+
+void ACAttachment::Print_BeginOverlapEventInfo(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	FLog::Log(TEXT("========== Begin Overlap =========="));
+	FLog::Log(FString::Printf(TEXT("OverlappedComponent : %s"), OverlappedComponent ? *OverlappedComponent->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("OtherActor          : %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("OtherComp           : %s"), OtherComp ? *OtherComp->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("OtherBodyIndex      : %d"), OtherBodyIndex));
+	FLog::Log(FString::Printf(TEXT("bFromSweep          : %s"), bFromSweep ? TEXT("true") : TEXT("false")));
+	FLog::Log(TEXT("==================================="));
+}
+
+void ACAttachment::Print_EndOverlapEventInfo(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	FLog::Log(TEXT("=========== End Overlap ==========="));
+	FLog::Log(FString::Printf(TEXT("OverlappedComponent : %s"), OverlappedComponent ? *OverlappedComponent->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("OtherActor          : %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("OtherComp           : %s"), OtherComp ? *OtherComp->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("OtherBodyIndex      : %d"), OtherBodyIndex));
+	FLog::Log(TEXT("==================================="));
 }

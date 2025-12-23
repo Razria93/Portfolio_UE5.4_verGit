@@ -26,6 +26,7 @@ protected:
 private:
 	// Cached
 	class ACharacter* OwnerCharacter_Cached;
+	TArray<class UShapeComponent*> Collisions_Cached;
 
 protected:
 	virtual void BeginPlay() override;
@@ -37,14 +38,28 @@ public:
 	void InitializeAttachment();
 
 public:
-	// Bind Delegate
+	// Called when 'Equipment' broadcasts 'OnEquipmentBeginEquip()' event
 	UFUNCTION()
 	void OnEquipmentBeginEquip();
 
+	// Called when 'Equipment' broadcasts 'OnEquipmentBeginUnequip()' event
 	UFUNCTION()
 	void OnEquipmentBeginUnequip();
+
+public:
+	// Called when 'UShapeComponent' broadcasts 'OnComponentBeginOverlap()' event
+	UFUNCTION()
+	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// Called when 'UShapeComponent' broadcasts 'OnComponentEndOverlap()' event
+	UFUNCTION()
+	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Attachment")
 	void AttachToOwnerSocket(FName InSocketName);
+
+private:
+	void Print_BeginOverlapEventInfo(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void Print_EndOverlapEventInfo(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };
