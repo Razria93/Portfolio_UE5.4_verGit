@@ -21,19 +21,23 @@ private:
 	bool bEquipped;
 
 private:
-	// Dependency Injection
+	/* === Injection Objects === */
 	class ACharacter* OwnerCharacter_Injected;
 	FEquipmentData EquipmentData_Injected;
 	FEquipmentData UnquipmentData_Injected;
 
-	// Cached
+private:
+	/* === Cached Objects === */
 	class UCMovementComponent* MovementComp_Cached;
 	class UCStateComponent* StateComp_Cached;
 
 public:
-	// delegate
+	/* === [OUT] Custom Delgate Events === */
+	// BeginEquip
 	FEquipmentBeginEquip OnEquipmentBeginEquip;
 	FEquipmentEndEquip OnEquipmentEndEquip;
+	
+	// EndEquip
 	FEquipmentBeginUnequip OnEquipmentBeginUnequip;
 	FEquipmentEndUnequip OnEquipmentEndUnequip;
 
@@ -42,11 +46,12 @@ public:
 	void InitializeEquipment(class ACharacter* InOwnerCharacter, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData);
 
 public:
-	// Trigger: PressKey
 	void Equip();
 	void Unequip();
 
-	// Trigger: Notify
+public:
+	/* === AnimNotify Events === */
+	// UCAnimNotify_Unequip
 	void Begin_Equip();
 	void End_Equip();
 	void Begin_Unequip();

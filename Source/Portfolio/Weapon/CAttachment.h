@@ -16,22 +16,26 @@ public:
 	ACAttachment();
 
 public:
+	/* === Editor Settings === */
 	UPROPERTY(EditAnywhere)
-	FName SocketName_Holster;	// Initialize on Editor
+	FName SocketName_Holster;
 
 	UPROPERTY(EditAnywhere)
-	FName SocketName_Hand;		// Initialize on Editor
+	FName SocketName_Hand;
 
 protected:
+	/* === Components === */
 	UPROPERTY(VisibleAnywhere)
 	class USceneComponent* Root;
 
 private:
-	// Cached
+	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 	TArray<class UShapeComponent*> Collisions_Cached;
 
 public:
+	/* === [OUT] Custom Delgate Events === */
+	// Collision
 	FAttachmentCollisionEnabled OnAttachmentCollisionEnabled;
 	FAttachmentCollisionDisabled OnAttachmentCollisionDisabled;
 
@@ -48,6 +52,8 @@ public:
 	void AttachToOwnerSocket(FName InSocketName);
 
 public:
+	/* === [IN] Engine Delgate Events === */
+	// UShapeComponent
 	UFUNCTION()
 	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -55,6 +61,8 @@ public:
 	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:
+	/* === [IN] Custom Delgate Events === */
+	// CEquipment
 	UFUNCTION()
 	void OnEquipmentBeginEquip();
 
@@ -62,6 +70,8 @@ public:
 	void OnEquipmentBeginUnequip();
 
 public:
+	/* === AnimNotify Events === */
+	// CAnimNotify_Collision
 	void CollisionEnabled(FName InName);
 	void CollisionDisabled();
 

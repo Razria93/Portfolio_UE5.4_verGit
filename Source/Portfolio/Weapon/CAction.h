@@ -11,12 +11,12 @@ class PORTFOLIO_API UCAction : public UObject
 	GENERATED_BODY()
 
 protected:
-	// Dependency Injection
+	/* === Injection Objects === */
 	class ACharacter* OwnerCharacter_Injected;
 	TArray<FActionData> ActionDatas_Injected;
 
 protected:
-	// Cached
+	/* === Cached Objects === */
 	class UCWeaponComponent* WeaponComp_Cached;
 	class UCStateComponent* StateComp_Cached;
 
@@ -35,6 +35,8 @@ public:
 	virtual void Next_PlayAction() {};
 
 public:
+	/* === [IN] Custom Delgate Events === */
+	// CAttachment
 	UFUNCTION()
 	virtual void OnAttachmentCollisionEnabled() {};
 

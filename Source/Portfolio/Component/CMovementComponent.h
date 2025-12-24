@@ -24,8 +24,9 @@ public:
 	UCMovementComponent();
 
 private:
+	/* === Editor Settings === */
 	UPROPERTY(EditAnywhere, Category = "Speed")
-	TMap<ESpeedType, float> SpeedMap;	// Init in Blueprint
+	TMap<ESpeedType, float> SpeedMap;
 
 private:
 	float CurrentSpeed = 0.f;
@@ -35,7 +36,7 @@ private:
 	bool bIsFalling = false;
 
 private:
-	// Cached
+	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 	class UCharacterMovementComponent* CharacterMovementComp_Cached;
 
@@ -44,14 +45,17 @@ protected:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	/* === Getter === */
 	FORCEINLINE float GetCurrentSpeed() const { return CurrentSpeed; }
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
 
 public:
+	/* === Setter === */
 	FORCEINLINE void SetStop() { bCanMove = false; }
 	FORCEINLINE void SetMove() { bCanMove = true; }
 
 public:
+	/* === Check / Query === */
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
 
 public:
