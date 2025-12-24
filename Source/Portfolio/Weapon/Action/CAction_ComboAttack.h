@@ -27,6 +27,16 @@ public:
 	void Next_PlayAction() override;
 
 public:
+	/* === [IN] Custom Delgate Events === */
+	// CAttachment_Collision (Enabled/Disabled)
+	void OnAttachmentCollisionEnabled() override;
+	void OnAttachmentCollisionDisabled() override;
+	
+	// CAttachment_Overlap
+	void OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent) override;
+	void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) override;
+
+public:
 	FORCEINLINE void OnEnablePreInput() { bEnablePreInput = true; }
 	FORCEINLINE void OffEnablePreInput() { bEnablePreInput = false; }
 };

@@ -50,6 +50,9 @@ void UCWeaponComponent::BeginPlay()
 	{
 		Attachment->OnAttachmentCollisionEnabled.AddDynamic(Action, &UCAction::OnAttachmentCollisionEnabled);
 		Attachment->OnAttachmentCollisionDisabled.AddDynamic(Action, &UCAction::OnAttachmentCollisionDisabled);
+
+		Attachment->OnAttachmentBeginOverlap.AddDynamic(Action, &UCAction::OnAttachmentBeginOverlap);
+		Attachment->OnAttachmentEndOverlap.AddDynamic(Action, &UCAction::OnAttachmentEndOverlap);
 	}
 }
 

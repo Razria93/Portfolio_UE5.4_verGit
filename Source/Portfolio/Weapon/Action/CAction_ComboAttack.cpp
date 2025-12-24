@@ -82,3 +82,23 @@ void UCAction_ComboAttack::Next_PlayAction()
 		ActionDatas_Injected[Index].Begin_PlayMontage(OwnerCharacter_Injected);
 	}
 }
+
+void UCAction_ComboAttack::OnAttachmentCollisionEnabled()
+{
+	// TODO
+}
+
+void UCAction_ComboAttack::OnAttachmentCollisionDisabled()
+{
+	// TODO
+}
+
+void UCAction_ComboAttack::OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent)
+{
+	// TODO
+}
+
+void UCAction_ComboAttack::OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor)
+{
+	// TODO
+}

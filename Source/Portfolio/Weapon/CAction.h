@@ -42,4 +42,11 @@ public:
 
 	UFUNCTION()
 	virtual void OnAttachmentCollisionDisabled() {};
+
+	// CAttachment
+	UFUNCTION()
+	virtual void OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent) {};
+	
+	UFUNCTION()
+	virtual void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) {};
 };

@@ -7,6 +7,9 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttachmentCollisionEnabled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttachmentCollisionDisabled);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FAttachmentBeginOverlap, AActor*, InAttackerActor, AActor*, InDamageCauser, UShapeComponent*, InAttackCollision, AActor*, InTargetActor, UPrimitiveComponent*, InHitComponent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAttachmentEndOverlap, AActor*, InAttackerActor, AActor*, InTargetActor);
+
 UCLASS()
 class PORTFOLIO_API ACAttachment : public AActor
 {
@@ -35,9 +38,13 @@ private:
 
 public:
 	/* === [OUT] Custom Delgate Events === */
-	// Collision
+	// Collision (Enabled/Disabled)
 	FAttachmentCollisionEnabled OnAttachmentCollisionEnabled;
 	FAttachmentCollisionDisabled OnAttachmentCollisionDisabled;
+
+	// Overlap
+	FAttachmentBeginOverlap OnAttachmentBeginOverlap;
+	FAttachmentEndOverlap OnAttachmentEndOverlap;
 
 protected:
 	virtual void BeginPlay() override;
@@ -76,6 +83,6 @@ public:
 	void CollisionDisabled();
 
 private:
-	void Print_BeginOverlapEventInfo(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	void Print_EndOverlapEventInfo(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void Print_BeginOverlapEventInfo(ACharacter* attacker, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent, int32 OtherBodyIndex, bool bFromSweep);
+	void Print_EndOverlapEventInfo(ACharacter* attacker, AActor* targetActor);
 };
