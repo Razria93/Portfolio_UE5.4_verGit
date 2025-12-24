@@ -27,7 +27,7 @@ void UCAnimNotify_Collision::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin: attachment->OnCollision(CollisionName); return;
-	case EAnimNotifyFlow::End: attachment->OffCollision(); return;
+	case EAnimNotifyFlow::Begin: attachment->CollisionEnabled(CollisionName); return;
+	case EAnimNotifyFlow::End: attachment->CollisionDisabled(); return;
 	}
 }

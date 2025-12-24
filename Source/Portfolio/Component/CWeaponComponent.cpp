@@ -20,30 +20,37 @@ void UCWeaponComponent::BeginPlay()
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
 
-	// Attachment
+	// CAttachment
 	CreateAttachment(OwnerCharacter_Cached);
 
 	if (IsValid(Attachment))
 		Attachment->InitializeAttachment();
 
-	// Equipment
+	// CEquipment
 	CreateEquipment(OwnerCharacter_Cached);
 
 	if (IsValid(Equipment))
 		Equipment->InitializeEquipment(OwnerCharacter_Cached, EquipmentData, UnequipmentData);
 
-	// Bind to Equipment
+	// Bind to CEquipment from CAttachment
 	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Equipment))
 	{
-		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip);		// [Bind] Attachment -> Equipment
-		Equipment->OnEquipmentBeginUnequip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginUnequip);	// [Bind] Attachment -> Equipment
+		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip);		
+		Equipment->OnEquipmentBeginUnequip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginUnequip);	
 	}
 
-	// Action
+	// CAction
 	CreateAction(OwnerCharacter_Cached);
 
 	if (IsValid(Action))
 		Action->InitializeAction(OwnerCharacter_Cached, ActionDatas);
+
+	// Bind to CAttachment from CAction
+	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Action))
+	{
+		Attachment->OnAttachmentCollisionEnabled.AddDynamic(Action, &UCAction::OnAttachmentCollisionEnabled);
+		Attachment->OnAttachmentCollisionDisabled.AddDynamic(Action, &UCAction::OnAttachmentCollisionDisabled);
+	}
 }
 
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

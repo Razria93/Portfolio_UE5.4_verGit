@@ -25,10 +25,10 @@ void ACAttachment::BeginPlay()
 
 	TArray<USceneComponent*> children;
 	Root->GetChildrenComponents(true, children);
-
+	
 	for (USceneComponent* child : children)
 	{
-		UShapeComponent* shape = Cast<UShapeComponent>(child); // UShapeComponent base for shape collision components (Sphere / Box / Capsule)
+		UShapeComponent* shape = Cast<UShapeComponent>(child); //  UShapeComponent base for shape collision components (Sphere / Box / Capsule)
 		if (!IsValid(shape)) continue;
 
 		shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
@@ -36,7 +36,7 @@ void ACAttachment::BeginPlay()
 
 		Collisions_Cached.Add(shape);
 
-		OffCollision();
+		CollisionDisabled();
 	}
 }
 
@@ -50,6 +50,29 @@ void ACAttachment::InitializeAttachment()
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
+void ACAttachment::AttachToOwnerSocket(FName InSocketName)
+{
+	AttachToComponent(OwnerCharacter_Cached->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
+}
+
+void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor == OwnerCharacter_Cached) return;
+
+	Print_BeginOverlapEventInfo(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+
+	// TODO
+}
+
+void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor == OwnerCharacter_Cached) return;
+
+	Print_EndOverlapEventInfo(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
+
+	// TODO
+}
+
 void ACAttachment::OnEquipmentBeginEquip()
 {
 	AttachToOwnerSocket(SocketName_Hand);
@@ -60,22 +83,12 @@ void ACAttachment::OnEquipmentBeginUnequip()
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
-void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+
+void ACAttachment::CollisionEnabled(FName InName)
 {
-	if (OtherActor == OwnerCharacter_Cached) return;
+	if (OnAttachmentCollisionEnabled.IsBound())
+		OnAttachmentCollisionEnabled.Broadcast();
 
-	Print_BeginOverlapEventInfo(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
-}
-
-void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (OtherActor == OwnerCharacter_Cached) return;
-
-	Print_EndOverlapEventInfo(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
-}
-
-void ACAttachment::OnCollision(FName InName)
-{
 	if (!InName.IsNone()) 
 	{
 		for (UShapeComponent* collision : Collisions_Cached)
@@ -94,15 +107,13 @@ void ACAttachment::OnCollision(FName InName)
 	}
 }
 
-void ACAttachment::OffCollision()
+void ACAttachment::CollisionDisabled()
 {
+	if (OnAttachmentCollisionDisabled.IsBound())
+		OnAttachmentCollisionDisabled.Broadcast();
+
 	for (UShapeComponent* collision : Collisions_Cached)
 		collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-}
-
-void ACAttachment::AttachToOwnerSocket(FName InSocketName)
-{
-	AttachToComponent(OwnerCharacter_Cached->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
 }
 
 void ACAttachment::Print_BeginOverlapEventInfo(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

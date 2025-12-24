@@ -21,16 +21,23 @@ protected:
 	class UCStateComponent* StateComp_Cached;
 
 private:
-	bool bBeginAction{ false };	// Action start triggered
-	bool bIsAction{ false };	// Action is active
+	bool bBeginAction;	// Action start triggered
+	bool bIsAction;		// Action is active
 
 public:
 	virtual void InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas);
-	virtual void Tick(float InDeltaTime) {}
+	virtual void Tick(float InDeltaTime) {};
 
 public:
 	virtual void PlayAction();
 	virtual void Begin_PlayAction();
 	virtual void End_PlayAction();
 	virtual void Next_PlayAction() {};
+
+public:
+	UFUNCTION()
+	virtual void OnAttachmentCollisionEnabled() {};
+
+	UFUNCTION()
+	virtual void OnAttachmentCollisionDisabled() {};
 };
