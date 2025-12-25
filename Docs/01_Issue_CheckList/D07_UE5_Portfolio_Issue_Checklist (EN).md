@@ -24,6 +24,7 @@
 
 ### Branch
 
+- feature/combat-hit-collision
 - feature/combat-hit-damage
 
 
@@ -33,11 +34,11 @@
 
 #### 1. Dummy Enemy base setup
 
-- [ ] Create a C++ or BP-based enemy character (`CDummy`)
+- [x] Create a C++ or BP-based enemy character (`CDummy`)
 
-- [ ] Configure Mesh / Capsule / MovementComponent defaults
+- [x] Configure Mesh / Capsule defaults
 
-- [ ] Place multiple Dummy Enemies in the test level
+- [x] Place multiple Dummy Enemies in the test level
 
 
 #### 2. HP / Stat structure
