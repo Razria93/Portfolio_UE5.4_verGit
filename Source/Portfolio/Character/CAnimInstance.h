@@ -11,6 +11,7 @@ class PORTFOLIO_API UCAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 protected:
+	/* === Injection Datas === */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Settings")
 	float Speed;
 
@@ -25,6 +26,7 @@ protected:
 	EWeaponType WeaponType = EWeaponType::Max;
 
 private:
+	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 	class UCMovementComponent* MovementComp_Cached;
 	class UCWeaponComponent* WeaponComp_Cached;
@@ -34,7 +36,8 @@ public:
 	void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
-	// Bind Delegate
+	/* === [IN] Custom Delgate Events === */
+	// CWeaponComponent
 	UFUNCTION()
 	void OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType);
 

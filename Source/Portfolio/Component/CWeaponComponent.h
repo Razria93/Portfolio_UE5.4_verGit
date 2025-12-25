@@ -16,6 +16,7 @@ public:
 	UCWeaponComponent();
 
 private:
+	/* === Editor Settings === */
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACAttachment> AttachmentClass;
 
@@ -26,6 +27,7 @@ private:
 	TSubclassOf<class UCAction> ActionClass;
 
 private:
+	/* === Injection Objects === */
 	UPROPERTY(EditAnywhere)
 	FEquipmentData EquipmentData;		// Inject to UCEquipment
 
@@ -46,14 +48,15 @@ private:
 	class UCAction* Action;
 
 private:
+	/* === State === */
 	EWeaponType CurrentWeaponType;
 
 private:
-	// Cached
+	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 
 public:
-	// Delegate
+	/* === [Out] Custom Delgate Events === */
 	FWeaponTypeChanged OnWeaponTypeChanged;
 
 protected:
@@ -63,29 +66,33 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	/* === Getter === */
 	class ACAttachment* GetAttachment();
 	class UCEquipment* GetEquipment();
 	class UCAction* GetAction();
 
 public:
+	/* === Getter === */
 	FORCEINLINE EWeaponType GetCurType() { return CurrentWeaponType; }
 
 public:
+	/* === Setter === */
 	void SetUnarmedMode();
 	void SetSwordMode();
 
 public:
-	void PlayAction();
+	/* === Check / Query === */
+	FORCEINLINE bool CheckCurType(EWeaponType InNewWeaponType) { return CurrentWeaponType == InNewWeaponType; }
 
 public:
-	FORCEINLINE bool CheckCurType(EWeaponType InNewWeaponType) { return CurrentWeaponType == InNewWeaponType; }
+	void PlayAction();
 
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);
 	void ChangeWeaponMode(EWeaponType InNewWeaponType);
 
 private:
-	void CreateAttachment(AActor* InOwnerCharacter);
-	void CreateEquipment(AActor* InOwnerCharacter);
-	void CreateAction(AActor* InOwnerCharacter);
+	bool CreateAttachment(AActor* InOwnerCharacter);
+	bool CreateEquipment(AActor* InOwnerCharacter);
+	bool CreateAction(AActor* InOwnerCharacter);
 };

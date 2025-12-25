@@ -16,14 +16,15 @@ public:
 	UCStateComponent();
 
 private:
+	/* === State === */
 	EStateType CurrentStateType;
 
 private:
-	// Cached
+	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 
 public:
-	// Delegate
+	/* === [Out] Custom Delgate Events === */
 	FStateTypeChanged OnStateTypeChanged;
 
 protected:
@@ -33,15 +34,18 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	/* === Getter === */
 	FORCEINLINE EStateType GetCurType() { return CurrentStateType; }
 
 public:
+	/* === Setter === */
 	void SetIdleMode();
 	void SetEquipMode();
 	void SetUnequipMode();
 	void SetActionMode();
 
 public:
+	/* === Check / Query === */
 	FORCEINLINE bool CheckCurType(EStateType InNewStateType) { return CurrentStateType == InNewStateType; }
 
 private:
