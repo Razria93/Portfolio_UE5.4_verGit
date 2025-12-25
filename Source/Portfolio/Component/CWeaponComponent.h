@@ -92,7 +92,7 @@ private:
 	void ChangeWeaponMode(EWeaponType InNewWeaponType);
 
 private:
-	void CreateAttachment(AActor* InOwnerCharacter);
-	void CreateEquipment(AActor* InOwnerCharacter);
-	void CreateAction(AActor* InOwnerCharacter);
+	bool CreateAttachment(AActor* InOwnerCharacter);
+	bool CreateEquipment(AActor* InOwnerCharacter);
+	bool CreateAction(AActor* InOwnerCharacter);
 };

@@ -33,10 +33,9 @@ void ACAttachment::BeginPlay()
 
 		shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
 		shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
-
+		shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Collision_Disabled
+		
 		Collisions_Cached.Add(shape);
-
-		CollisionDisabled();
 	}
 }
 
@@ -111,9 +110,6 @@ void ACAttachment::OnEquipmentBeginUnequip()
 
 void ACAttachment::CollisionEnabled(FName InName)
 {
-	if (OnAttachmentCollisionEnabled.IsBound())
-		OnAttachmentCollisionEnabled.Broadcast();
-
 	if (!InName.IsNone())
 	{
 		for (UShapeComponent* collision : Collisions_Cached)
@@ -130,15 +126,18 @@ void ACAttachment::CollisionEnabled(FName InName)
 		for (UShapeComponent* collision : Collisions_Cached)
 			collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
+
+	if (OnAttachmentCollisionEnabled.IsBound())
+		OnAttachmentCollisionEnabled.Broadcast();
 }
 
 void ACAttachment::CollisionDisabled()
 {
-	if (OnAttachmentCollisionDisabled.IsBound())
-		OnAttachmentCollisionDisabled.Broadcast();
-
 	for (UShapeComponent* collision : Collisions_Cached)
 		collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (OnAttachmentCollisionDisabled.IsBound())
+		OnAttachmentCollisionDisabled.Broadcast();
 }
 
 void ACAttachment::Print_BeginOverlapEventInfo(ACharacter* attacker, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent, int32 OtherBodyIndex, bool bFromSweep)
