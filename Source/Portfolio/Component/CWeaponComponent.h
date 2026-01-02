@@ -5,7 +5,7 @@
 #include "Type/CWeaponStructure.h"
 #include "CWeaponComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWeaponTypeChanged, class ACharacter*, InOwnerCharacter, EWeaponType, InPrevWeaponType, EWeaponType, InNewWeaponType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttachmentTypeChanged, class ACharacter*, InOwnerCharacter, EAttachmentType, InPrevAttachmentType, EAttachmentType, InNewAttachmentType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCWeaponComponent : public UActorComponent
@@ -15,27 +15,30 @@ class PORTFOLIO_API UCWeaponComponent : public UActorComponent
 public:
 	UCWeaponComponent();
 
+
+	// === WeaponData ======================================= //
 private:
-	/* === Editor Settings === */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "AttachmentData")
+	EAttachmentType AttachmentType;
+
+	UPROPERTY(EditAnywhere, Category = "EquipmentData")
+	EEquipmentType EquipmentType;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "AttachmentData")
 	TSubclassOf<class ACAttachment> AttachmentClass;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "EquipmentData")
 	TSubclassOf<class UCEquipment> EquipmentClass;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UCAction> ActionClass;
-
 private:
-	/* === Injection Objects === */
-	UPROPERTY(EditAnywhere)
-	FEquipmentData EquipmentData;		// Inject to UCEquipment
+	UPROPERTY(EditAnywhere, Category = "EquipmentData")
+	FEquipmentData EquipmentData;
 
-	UPROPERTY(EditAnywhere) 
-	FEquipmentData UnequipmentData;		// Inject to UCEquipment
+	UPROPERTY(EditAnywhere, Category = "EquipmentData")
+	FEquipmentData UnequipmentData;
 
-	UPROPERTY(EditAnywhere)
-	TArray<FActionData> ActionDatas;	// Inject to UCAction
+	// ====================================================== //
 
 private:
 	UPROPERTY(Transient)
@@ -44,12 +47,10 @@ private:
 	UPROPERTY(Transient)
 	class UCEquipment* Equipment;
 
-	UPROPERTY(Transient)
-	class UCAction* Action;
-
 private:
 	/* === State === */
-	EWeaponType CurrentWeaponType;
+	EAttachmentType CurrentAttachmentType_Cached;
+	EEquipmentType CurrentEquipmentType_Cached;
 
 private:
 	/* === Cached Objects === */
@@ -57,7 +58,8 @@ private:
 
 public:
 	/* === [Out] Custom Delgate Events === */
-	FWeaponTypeChanged OnWeaponTypeChanged;
+	FAttachmentTypeChanged OnAttachmentTypeChanged;
+	// TODO: FEquipmentTypeChanged OnEquipmentTypeChanged;
 
 protected:
 	virtual void BeginPlay() override;
@@ -69,11 +71,11 @@ public:
 	/* === Getter === */
 	class ACAttachment* GetAttachment();
 	class UCEquipment* GetEquipment();
-	class UCAction* GetAction();
 
 public:
 	/* === Getter === */
-	FORCEINLINE EWeaponType GetCurType() { return CurrentWeaponType; }
+	FORCEINLINE EAttachmentType GetCurAttachmentType() { return CurrentAttachmentType_Cached; }
+	FORCEINLINE EEquipmentType GetCurEquipmentType() { return CurrentEquipmentType_Cached; }
 
 public:
 	/* === Setter === */
@@ -82,17 +84,15 @@ public:
 
 public:
 	/* === Check / Query === */
-	FORCEINLINE bool CheckCurType(EWeaponType InNewWeaponType) { return CurrentWeaponType == InNewWeaponType; }
-
-public:
-	void PlayAction();
+	FORCEINLINE bool CheckCurAttachmentType(EAttachmentType InNewAttachmentType) { return CurrentAttachmentType_Cached == InNewAttachmentType; }
 
 private:
-	void ChangeWeaponType(EWeaponType InNewWeaponType);
-	void ChangeWeaponMode(EWeaponType InNewWeaponType);
+	void ChangeAttachmentType(EAttachmentType InNewAttachmentType);
+	void ChangeAttachmentMode(EAttachmentType InNewAttachmentType);
+	// TODO: ChangeEquipmentType/Mode
+
 
 private:
-	bool CreateAttachment(AActor* InOwnerCharacter);
-	bool CreateEquipment(AActor* InOwnerCharacter);
-	bool CreateAction(AActor* InOwnerCharacter);
+	bool CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass);
+	bool CreateEquipment(AActor* InOwnerCharacter, EEquipmentType InEquipmentType, TSubclassOf<UCEquipment> InEquipmentClass, const FEquipmentData& InEquipmentDatas, const FEquipmentData& InUnequipmentDatas);
 };

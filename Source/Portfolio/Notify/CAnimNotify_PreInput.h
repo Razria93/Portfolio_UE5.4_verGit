@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotify.h"
+#include "Type/CWeaponStructure.h"
 #include "CAnimNotify_PreInput.generated.h"
 
 UCLASS()

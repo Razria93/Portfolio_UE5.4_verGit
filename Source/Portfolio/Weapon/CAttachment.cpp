@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 
+#include "Type/CWeaponStructure.h"
+
 ACAttachment::ACAttachment()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -34,7 +36,7 @@ void ACAttachment::BeginPlay()
 		shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
 		shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
 		shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Collision_Disabled
-		
+
 		Collisions_Cached.Add(shape);
 	}
 }
@@ -44,9 +46,21 @@ void ACAttachment::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ACAttachment::InitializeAttachment()
+void ACAttachment::InitializeAttachment(EAttachmentType InAttachmentType)
 {
+	SetAttachmentType(InAttachmentType);
+
 	AttachToOwnerSocket(SocketName_Holster);
+}
+
+EAttachmentType ACAttachment::GetAttachmentType() const
+{
+	return AttachmentType;
+}
+
+void ACAttachment::SetAttachmentType(EAttachmentType InAttachmentType)
+{
+	AttachmentType = InAttachmentType;
 }
 
 void ACAttachment::AttachToOwnerSocket(FName InSocketName)
@@ -56,27 +70,13 @@ void ACAttachment::AttachToOwnerSocket(FName InSocketName)
 
 void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// Attack
-	ACharacter* attacker = OwnerCharacter_Cached;
-	AActor* damageCauser = this;
-	UShapeComponent* attackCollision = Cast<UShapeComponent>(OverlappedComponent);
-	
-	// Hit (keep Actor/Component to support non-character objects)
-	AActor* targetActor = OtherActor;
-	UPrimitiveComponent* hitComponent = OtherComp;
-
-	if (!IsValid(attacker)	||
-		!IsValid(damageCauser) ||
-		!IsValid(attackCollision) ||
-		!IsValid(targetActor) ||
-		!IsValid(hitComponent)) return;
-
-	if (attacker == targetActor) return;
+	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
+	if (!IsValid(overlapComp)) return;
 
 	if (OnAttachmentBeginOverlap.IsBound())
-		OnAttachmentBeginOverlap.Broadcast(attacker, damageCauser, attackCollision, targetActor, hitComponent);
+		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	Print_BeginOverlapEventInfo(attacker, damageCauser, attackCollision, targetActor, hitComponent, OtherBodyIndex, bFromSweep);
+	Print_BeginOverlapEventInfo(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep);
 }
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -91,6 +91,7 @@ void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponen
 
 	if (attacker == targetActor) return;
 
+	// Regacy
 	if (OnAttachmentEndOverlap.IsBound())
 		OnAttachmentEndOverlap.Broadcast(attacker, targetActor);
 
@@ -127,6 +128,7 @@ void ACAttachment::CollisionEnabled(FName InName)
 			collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 
+	// Regacy
 	if (OnAttachmentCollisionEnabled.IsBound())
 		OnAttachmentCollisionEnabled.Broadcast();
 }
@@ -136,19 +138,20 @@ void ACAttachment::CollisionDisabled()
 	for (UShapeComponent* collision : Collisions_Cached)
 		collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Regacy
 	if (OnAttachmentCollisionDisabled.IsBound())
 		OnAttachmentCollisionDisabled.Broadcast();
 }
 
-void ACAttachment::Print_BeginOverlapEventInfo(ACharacter* attacker, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent, int32 OtherBodyIndex, bool bFromSweep)
+void ACAttachment::Print_BeginOverlapEventInfo(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 OtherBodyIndex, bool bFromSweep)
 {
 	FLog::Log(TEXT("========== Begin Overlap =========="));
-	FLog::Log(FString::Printf(TEXT("Attacker        : %s"), attacker ? *attacker->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("DamageCauser    : %s"), damageCauser ? *damageCauser->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("AttackCollision : %s"), attackCollision ? *attackCollision->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("TargetActor     : %s"), targetActor ? *targetActor->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("HitComponent    : %s"), hitComponent ? *hitComponent->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("OtherBodyIndex	: %d"), OtherBodyIndex)); 
+	FLog::Log(FString::Printf(TEXT("Attacker        : %s"), InAttackerActor ? *InAttackerActor->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("DamageCauser    : %s"), InDamageCauser ? *InDamageCauser->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("AttackCollision : %s"), InAttackCollision ? *InAttackCollision->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("TargetActor     : %s"), InTargetActor ? *InTargetActor->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("HitComponent    : %s"), InHitComponent ? *InHitComponent->GetName() : TEXT("NULL")));
+	FLog::Log(FString::Printf(TEXT("OtherBodyIndex	: %d"), OtherBodyIndex));
 	FLog::Log(FString::Printf(TEXT("bFromSweep		: %s"), bFromSweep ? TEXT("true") : TEXT("false")));
 	FLog::Log(TEXT("==================================="));
 }

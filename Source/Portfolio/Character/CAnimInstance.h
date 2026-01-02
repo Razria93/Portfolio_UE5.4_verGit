@@ -23,7 +23,7 @@ protected:
 
 protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Type")
-	EWeaponType WeaponType = EWeaponType::Max;
+	EAttachmentType AttachmentType = EAttachmentType::Max;
 
 private:
 	/* === Cached Objects === */
@@ -39,6 +39,6 @@ private:
 	/* === [IN] Custom Delgate Events === */
 	// CWeaponComponent
 	UFUNCTION()
-	void OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType);
+	void OnAttachmentTypeChanged(ACharacter* InOwnerCharacter, EAttachmentType InPrevAttachmentType, EAttachmentType InNewAttachmentType);
 
 };

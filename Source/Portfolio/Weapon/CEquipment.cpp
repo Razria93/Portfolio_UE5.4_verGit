@@ -5,8 +5,10 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 
-void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData)
+void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, EEquipmentType InEquipmentType, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData)
 {
+	SetEquipmentType(InEquipmentType);
+
 	OwnerCharacter_Injected = InOwnerCharacter;
 	check(OwnerCharacter_Injected);
 
@@ -22,6 +24,16 @@ void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, FEquipmentDa
 
 	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass())); // TODO: Refactor Interface
 	check(StateComp_Cached);
+}
+
+EEquipmentType UCEquipment::GetEquipmentType() const
+{
+	return EquipmentType;
+}
+
+void UCEquipment::SetEquipmentType(EEquipmentType InEquipmentType)
+{
+	EquipmentType = InEquipmentType;
 }
 
 void UCEquipment::Equip()

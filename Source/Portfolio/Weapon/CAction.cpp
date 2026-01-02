@@ -5,19 +5,37 @@
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CActionComponent.h"
 
-void UCAction::InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas)
+#include "Type/CWeaponStructure.h"
+
+void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
 {
+	SetActionType(InActionType);
+
 	OwnerCharacter_Injected = InOwnerCharacter;
 	check(OwnerCharacter_Injected);
 
 	ActionDatas_Injected = InActionDatas;
 
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));	// TODO: Refactor Interface
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));					// TODO: Refactor Interface
 	check(WeaponComp_Cached);
 
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));		// TODO: Refactor Interface
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));						// TODO: Refactor Interface
 	check(StateComp_Cached);
+
+	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionComponent::StaticClass()));						// TODO: Refactor Interface
+	check(ActionComp_Cached);
+}
+
+EActionType UCAction::GetActionType() const
+{
+	return ActionType;
+}
+
+void UCAction::SetActionType(EActionType InActionType)
+{
+	ActionType = InActionType;
 }
 
 void UCAction::PlayAction()

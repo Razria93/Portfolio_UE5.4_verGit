@@ -17,8 +17,8 @@ void UCAction_LightAttack::Tick(float InDeltaTime)
 void UCAction_LightAttack::PlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
-	if (WeaponComp_Cached->CheckCurType(EWeaponType::Unarmed)) return;
-	if (!StateComp_Cached->CheckCurType(EStateType::Idle)) return;
+	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
 	if (!IsValid(ActionDatas_Injected[0].Montage)) return;
 	
 	Super::PlayAction();		// bIsAction = true

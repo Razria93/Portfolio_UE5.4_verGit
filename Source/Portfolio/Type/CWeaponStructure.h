@@ -5,60 +5,74 @@
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
-enum class EWeaponType : uint8
+enum class EAttachmentType : uint8
 {
 	Unarmed = 0,
 	Sword,
 	Max,
 };
 
+UENUM(BlueprintType)
+enum class EEquipmentType : uint8
+{
+	None = 0,
+	Sword,
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionType : uint8
+{
+	Idle = 0,
+	LightAttack,
+	ComboAttack,
+	Max,
+};
+
 USTRUCT(BlueprintType)
 struct FEquipmentData
-
 {
 	GENERATED_BODY()
 
 public:
-	FEquipmentData()
-		: Montage(nullptr), PlayRate(1.0f), bCanMove(true)
-	{
-	}
-
-public:
 	UPROPERTY(EditAnywhere)
-	class UAnimMontage* Montage;
+	class UAnimMontage* Montage = nullptr;
 
 	UPROPERTY(EditAnywhere)
-	float PlayRate;
+	float PlayRate = 1.0f;
 
 	UPROPERTY(EditAnywhere)
-	bool bCanMove;
+	bool bCanMove = false;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FActionData
 {
 	GENERATED_BODY()
 
 public:
-	FActionData()
-		: Montage(nullptr), PlayRate(1.0f), bCanMove(true)
-	{
-	}
-
-public:
 	UPROPERTY(EditAnywhere)
-	class UAnimMontage* Montage;
+	class UAnimMontage* Montage = nullptr;
 
 	UPROPERTY(EditAnywhere)
-	float PlayRate;
+	float PlayRate = 1.0f;
 
 	UPROPERTY(EditAnywhere)
-	bool bCanMove;
+	bool bCanMove = false;
 
 public:
 	void Begin_PlayMontage(class ACharacter* InOwnerCharacter);
 	void End_PlayMontage(class ACharacter* InOwnerCharacter);
+};
+
+USTRUCT(BlueprintType)
+struct FDamageSpecData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	float DamageAmount = 0.0f;
 };
 
 UCLASS()

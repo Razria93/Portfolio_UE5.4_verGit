@@ -25,7 +25,7 @@ protected:
 	void PressJump();
 	void ReleaseJump();
 
-	void PressAction();
+	void PressComboAction();
 
 	void PressSword();
 };

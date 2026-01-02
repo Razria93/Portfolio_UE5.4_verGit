@@ -4,9 +4,6 @@
 #include "Components/ActorComponent.h"
 #include "CMovementComponent.generated.h"
 
-class ACharacter;
-class UCharacterMovementComponent;
-
 UENUM(BlueprintType)
 enum class ESpeedType : uint8
 {

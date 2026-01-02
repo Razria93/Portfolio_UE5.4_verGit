@@ -19,7 +19,7 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ACPlayerController::PressJump);
 	InputComponent->BindAction("Jump", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseJump);
 
-	InputComponent->BindAction("Action", EInputEvent::IE_Pressed, this, &ACPlayerController::PressAction);	
+	InputComponent->BindAction("ComboAction", EInputEvent::IE_Pressed, this, &ACPlayerController::PressComboAction);
 	InputComponent->BindAction("Sword", EInputEvent::IE_Pressed, this, &ACPlayerController::PressSword);
 }
 
@@ -69,11 +69,11 @@ void ACPlayerController::ReleaseJump()
 		player->HandleStopJump();
 }
 
-void ACPlayerController::PressAction()
+void ACPlayerController::PressComboAction()
 {
 	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
 	{
-		player->HandleAction();
+		player->HandleComboAction();
 	}
 }
 

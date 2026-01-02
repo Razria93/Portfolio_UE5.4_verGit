@@ -2,12 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Type/CWeaponStructure.h"
 #include "CAttachment.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttachmentCollisionEnabled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttachmentCollisionDisabled);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FAttachmentBeginOverlap, AActor*, InAttackerActor, AActor*, InDamageCauser, UShapeComponent*, InAttackCollision, AActor*, InTargetActor, UPrimitiveComponent*, InHitComponent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_EightParams(FAttachmentBeginOverlap, AActor*, InAttackerActor, AActor*, InDamageCauser, UShapeComponent*, InAttackCollision, AActor*, InTargetActor, UPrimitiveComponent*, InHitComponent, int32, InOtherBodyIndex, bool, InbFromSweep, const FHitResult&, InSweepResult);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAttachmentEndOverlap, AActor*, InAttackerActor, AActor*, InTargetActor);
 
 UCLASS()
@@ -32,6 +33,10 @@ protected:
 	class USceneComponent* Root;
 
 private:
+	UPROPERTY(Transient)
+	EAttachmentType AttachmentType;
+
+private:
 	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 	TArray<class UShapeComponent*> Collisions_Cached;
@@ -42,7 +47,7 @@ public:
 	FAttachmentCollisionEnabled OnAttachmentCollisionEnabled;
 	FAttachmentCollisionDisabled OnAttachmentCollisionDisabled;
 
-	// Overlap
+	// Overlap (Raw Overlap)
 	FAttachmentBeginOverlap OnAttachmentBeginOverlap;
 	FAttachmentEndOverlap OnAttachmentEndOverlap;
 
@@ -53,7 +58,15 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	void InitializeAttachment();
+	void InitializeAttachment(EAttachmentType InAttachmentType);
+
+public:
+	/* === Getter === */
+	EAttachmentType GetAttachmentType() const;
+
+public:
+	/* === Setter === */
+	void SetAttachmentType(EAttachmentType InAttachmentType);
 
 public:
 	void AttachToOwnerSocket(FName InSocketName);
@@ -83,6 +96,6 @@ public:
 	void CollisionDisabled();
 
 private:
-	void Print_BeginOverlapEventInfo(ACharacter* attacker, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent, int32 OtherBodyIndex, bool bFromSweep);
+	void Print_BeginOverlapEventInfo(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 OtherBodyIndex, bool bFromSweep);
 	void Print_EndOverlapEventInfo(ACharacter* attacker, AActor* targetActor);
 };

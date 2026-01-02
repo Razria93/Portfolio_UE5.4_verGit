@@ -17,7 +17,7 @@ private:
 	bool bExistPreInput;
 
 public:
-	void InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas) override;
+	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas) override;
 	void Tick(float InDeltaTime) override;
 
 public:
@@ -28,12 +28,12 @@ public:
 
 public:
 	/* === [IN] Custom Delgate Events === */
-	// CAttachment_Collision (Enabled/Disabled)
+	// CAttachment_Collision (Enabled/Disabled) [Regacy]
 	void OnAttachmentCollisionEnabled() override;
 	void OnAttachmentCollisionDisabled() override;
 	
-	// CAttachment_Overlap
-	void OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent) override;
+	// CAttachment_Overlap [Regacy]
+	void OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) override;
 	void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) override;
 
 public:

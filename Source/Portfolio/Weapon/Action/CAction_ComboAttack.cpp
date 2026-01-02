@@ -9,12 +9,12 @@
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
 
-void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas)
+void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
 {
-	Super::InitializeAction(InOwnerCharacter, InActionDatas);
+	Super::InitializeAction(InOwnerCharacter, InActionType, InActionDatas);
 
 	Index = 0;
-	
+
 	bEnablePreInput = false;
 	bExistPreInput = false;
 }
@@ -26,19 +26,19 @@ void UCAction_ComboAttack::Tick(float InDeltaTime)
 
 void UCAction_ComboAttack::PlayAction()
 {
-	// [Re invocation] Convert 're-invoked PlayAction()' into 'buffered pre-input'
+	// [Re-call] Convert 're-invoked PlayAction()' into 'buffered pre-input'
 	if (bEnablePreInput)
 	{
-		bEnablePreInput = false;	// Enabled by CAnimNotify_ComboEnable
-		bExistPreInput = true;		// Mark pre-input for next combo step
-		
+		bEnablePreInput = false; // Enabled by CAnimNotify_ComboEnable
+		bExistPreInput = true;	 // Mark pre-input for next combo step
+
 		return;
 	}
 
-	// [First invocation] Validate execution conditions & Execute first combo action
+	// [First-call] Validate execution conditions & Execute first combo action
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
-	if (WeaponComp_Cached->CheckCurType(EWeaponType::Unarmed)) return;
-	if (!StateComp_Cached->CheckCurType(EStateType::Idle)) return;
+	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
 	if (ActionDatas_Injected.Num() <= 0) return;
 
 	Super::PlayAction();		// bIsAction = true
@@ -85,20 +85,20 @@ void UCAction_ComboAttack::Next_PlayAction()
 
 void UCAction_ComboAttack::OnAttachmentCollisionEnabled()
 {
-	// TODO
+	Super::OnAttachmentCollisionEnabled();
 }
 
 void UCAction_ComboAttack::OnAttachmentCollisionDisabled()
 {
-	// TODO
+	Super::OnAttachmentCollisionDisabled();
 }
 
-void UCAction_ComboAttack::OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent)
+void UCAction_ComboAttack::OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult)
 {
-	// TODO
+	Super::OnAttachmentBeginOverlap(InAttackerActor, InDamageCauser, InAttackCollision, InTargetActor, InHitComponent, InOtherBodyIndex, InbFromSweep, InSweepResult);
 }
 
 void UCAction_ComboAttack::OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor)
 {
-	// TODO
+	Super::OnAttachmentEndOverlap(InAttackerActor, InTargetActor);
 }

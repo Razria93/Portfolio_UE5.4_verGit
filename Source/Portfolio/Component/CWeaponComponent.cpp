@@ -4,13 +4,12 @@
 #include "GameFramework/Character.h"
 #include "Weapon/CAttachment.h"
 #include "Weapon/CEquipment.h"
-#include "Weapon/CAction.h"
+
+#include "Type/CWeaponStructure.h"
 
 UCWeaponComponent::UCWeaponComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
-	CurrentWeaponType = EWeaponType::Unarmed;
 }
 
 void UCWeaponComponent::BeginPlay()
@@ -21,12 +20,12 @@ void UCWeaponComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 
 	// CAttachment
-	if (CreateAttachment(OwnerCharacter_Cached))
-		Attachment->InitializeAttachment();
+	CreateAttachment(OwnerCharacter_Cached, AttachmentType, AttachmentClass);
+	CurrentAttachmentType_Cached = EAttachmentType::Unarmed;
 
 	// CEquipment
-	if (CreateEquipment(OwnerCharacter_Cached))
-		Equipment->InitializeEquipment(OwnerCharacter_Cached, EquipmentData, UnequipmentData);
+	CreateEquipment(OwnerCharacter_Cached, EquipmentType, EquipmentClass, EquipmentData, UnequipmentData);
+	CurrentEquipmentType_Cached = EEquipmentType::None;
 
 	// Bind to CEquipment from CAttachment
 	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Equipment))
@@ -34,28 +33,11 @@ void UCWeaponComponent::BeginPlay()
 		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip);
 		Equipment->OnEquipmentBeginUnequip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginUnequip);
 	}
-
-	// CAction
-	if (CreateAction(OwnerCharacter_Cached))
-		Action->InitializeAction(OwnerCharacter_Cached, ActionDatas);
-
-	// Bind to CAttachment from CAction
-	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Action))
-	{
-		Attachment->OnAttachmentCollisionEnabled.AddDynamic(Action, &UCAction::OnAttachmentCollisionEnabled);
-		Attachment->OnAttachmentCollisionDisabled.AddDynamic(Action, &UCAction::OnAttachmentCollisionDisabled);
-
-		Attachment->OnAttachmentBeginOverlap.AddDynamic(Action, &UCAction::OnAttachmentBeginOverlap);
-		Attachment->OnAttachmentEndOverlap.AddDynamic(Action, &UCAction::OnAttachmentEndOverlap);
-	}
 }
 
 void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (IsValid(Action))
-		Action->Tick(DeltaTime);
 }
 
 ACAttachment* UCWeaponComponent::GetAttachment()
@@ -68,33 +50,21 @@ UCEquipment* UCWeaponComponent::GetEquipment()
 	return IsValid(Equipment) ? Equipment : nullptr;
 }
 
-UCAction* UCWeaponComponent::GetAction()
-{
-	return IsValid(Action) ? Action : nullptr;
-}
-
 void UCWeaponComponent::SetUnarmedMode()
 {
-	ChangeWeaponMode(EWeaponType::Unarmed);
+	ChangeAttachmentMode(EAttachmentType::Unarmed);
 }
 
 void UCWeaponComponent::SetSwordMode()
 {
-	ChangeWeaponMode(EWeaponType::Sword);
+	ChangeAttachmentMode(EAttachmentType::Sword);
 }
 
-void UCWeaponComponent::PlayAction()
-{
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Action)) return;
-
-	Action->PlayAction();
-}
-
-void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
+void UCWeaponComponent::ChangeAttachmentMode(EAttachmentType InNewAttachmentType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment)) return;
 
-	if (InNewWeaponType == EWeaponType::Unarmed)
+	if (InNewAttachmentType == EAttachmentType::Unarmed)
 	{
 		Equipment->Unequip();
 	}
@@ -103,26 +73,26 @@ void UCWeaponComponent::ChangeWeaponMode(EWeaponType InNewWeaponType)
 		Equipment->Equip();
 	}
 
-	ChangeWeaponType(InNewWeaponType);
+	ChangeAttachmentType(InNewAttachmentType);
 }
 
-void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
+void UCWeaponComponent::ChangeAttachmentType(EAttachmentType InNewAttachmentType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	EWeaponType prevWeaponType = CurrentWeaponType;
-	CurrentWeaponType = InNewWeaponType;
+	EAttachmentType prevAttachmentType = CurrentAttachmentType_Cached;
+	CurrentAttachmentType_Cached = InNewAttachmentType;
 
-	if (OnWeaponTypeChanged.IsBound())
-		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType);
+	if (OnAttachmentTypeChanged.IsBound())
+		OnAttachmentTypeChanged.Broadcast(OwnerCharacter_Cached, prevAttachmentType, CurrentAttachmentType_Cached);
 }
 
-bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter)
+bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass)
 {
 	if (!IsValid(InOwnerCharacter)) return false;
 
-	checkf(IsValid(AttachmentClass),
-		TEXT("UCWeaponComponent: AttachmentClass is not set."));
+	if (!ensureMsgf(*InAttachmentClass, TEXT("UCWeaponComponent: InAttachmentClass is not set.")))
+		return false;
 
 	UWorld* World = InOwnerCharacter->GetWorld();
 	if (!World) return false;
@@ -133,56 +103,42 @@ bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter)
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	// 2) Spawn Attachment
-	Attachment = World->SpawnActor<ACAttachment>(AttachmentClass, SpawnParams);
+	// TODO : Deffered Spawn
+	ACAttachment* attachment = World->SpawnActor<ACAttachment>(InAttachmentClass, SpawnParams);
 
 	// 3) Check Attachment Validation
-	if (!ensureMsgf(Attachment, TEXT("UCWeaponComponent: Attachment was not created")))
-	{
-		Attachment = nullptr;
+	if (!ensureMsgf(IsValid(attachment), TEXT("UCWeaponComponent: Attachment was not created")))
 		return false;
-	}
+
+	attachment->InitializeAttachment(InAttachmentType);
+
+	Attachment = attachment;
 
 	return true;
 }
 
-bool UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter)
+bool UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter, EEquipmentType InEquipmentType, TSubclassOf<UCEquipment> InEquipmentClass, const FEquipmentData& InEquipmentDatas, const FEquipmentData& InUnequipmentDatas)
 {
 	if (!IsValid(InOwnerCharacter)) return false;
 
-	checkf(IsValid(EquipmentClass),
-		TEXT("UCWeaponComponent: EquipmentClass is not set."));
-
+	if (!ensureMsgf(*InEquipmentClass, TEXT("UCWeaponComponent: InEquipmentClass is not set.")))
+		return false;
 
 	// 1) Create Equipment
-	Equipment = NewObject<UCEquipment>(this, EquipmentClass);
+	UCEquipment* equipment = NewObject<UCEquipment>(this, InEquipmentClass);
 
 	// 2) Check Equipment Validation
-	if (!ensureMsgf(Equipment, TEXT("UCWeaponComponent: Equipment was not created")))
-	{
-		Equipment = nullptr;
+	if (!ensureMsgf(IsValid(equipment), TEXT("UCWeaponComponent: Equipment was not created.")))
 		return false;
-	}
+
+	ACharacter* character = Cast<ACharacter>(InOwnerCharacter);
+
+	if (!ensureMsgf(IsValid(character), TEXT("UCActionComponent:InOwnerCharacter cast failed.")))
+		return false;
+
+	equipment->InitializeEquipment(character, InEquipmentType, InEquipmentDatas, InUnequipmentDatas);
+
+	Equipment = equipment;
 
 	return true;
-}
-
-bool UCWeaponComponent::CreateAction(AActor* InOwnerCharacter)
-{
-	if (!IsValid(InOwnerCharacter)) return false;
-
-	checkf(IsValid(ActionClass),
-		TEXT("UCWeaponComponent: ActionClass is not set."));
-
-	// 1) Create Action
-	Action = NewObject<UCAction>(this, ActionClass);
-
-	// 2) Check Action Validation
-	if (!ensureMsgf(Action, TEXT("UCWeaponComponent: Action was not created")))
-	{
-		Action = nullptr;
-		return false;
-	}
-
-	return true;
-
 }

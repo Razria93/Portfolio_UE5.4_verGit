@@ -21,6 +21,10 @@ private:
 	bool bEquipped;
 
 private:
+	UPROPERTY(Transient)
+	EEquipmentType EquipmentType;
+
+private:
 	/* === Injection Objects === */
 	class ACharacter* OwnerCharacter_Injected;
 	FEquipmentData EquipmentData_Injected;
@@ -43,7 +47,15 @@ public:
 
 
 public:
-	void InitializeEquipment(class ACharacter* InOwnerCharacter, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData);
+	void InitializeEquipment(class ACharacter* InOwnerCharacter, EEquipmentType InEquipmentType, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData);
+
+public:
+	/* === Getter === */
+	EEquipmentType GetEquipmentType() const;
+
+public:
+	/* === Setter === */
+	void SetEquipmentType(EEquipmentType InEquipmentType);
 
 public:
 	void Equip();

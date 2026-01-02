@@ -28,6 +28,12 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCStateComponent* StateComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCActionComponent* ActionComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCApplyDamageComponent* ApplyDamageComponent;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -38,6 +44,7 @@ public:
 	UCMovementComponent* GetMovementComp() const;
 	UCWeaponComponent* GetWeaponComp() const;
 	UCStateComponent* GetStateComp() const;
+	UCActionComponent* GetActionComp() const;
 
 public:
 	void HandleMoveForward(const float InAxisValue);
@@ -49,7 +56,7 @@ public:
 	void HandleJump();
 	void HandleStopJump();
 
-	void HandleAction();
+	void HandleComboAction();
 
 	void HandleSword();
 };

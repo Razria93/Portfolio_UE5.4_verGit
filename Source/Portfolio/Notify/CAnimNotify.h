@@ -27,4 +27,5 @@ protected:
 
 protected:
 	class UCWeaponComponent* GetWeaponComponent(class USkeletalMeshComponent* MeshComp);
+	class UCActionComponent* GetActionComponent(class USkeletalMeshComponent* MeshComp);
 };
