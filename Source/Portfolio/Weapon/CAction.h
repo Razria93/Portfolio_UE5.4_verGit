@@ -46,14 +46,14 @@ public:
 
 public:
 	/* === [IN] Custom Delgate Events === */
-	// CAttachment
+	// [Regacy] CAttachment
 	UFUNCTION()
 	virtual void OnAttachmentCollisionEnabled() {};
 
 	UFUNCTION()
 	virtual void OnAttachmentCollisionDisabled() {};
 
-	// CAttachment
+	// [Regacy] CAttachment
 	UFUNCTION()
 	virtual void OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
 

@@ -10,7 +10,7 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 	GENERATED_BODY()
 
 private:
-	uint32 Index;
+	int32 Index;
 
 private:
 	bool bEnablePreInput;
@@ -26,15 +26,6 @@ public:
 	void End_PlayAction() override;
 	void Next_PlayAction() override;
 
-public:
-	/* === [IN] Custom Delgate Events === */
-	// CAttachment_Collision (Enabled/Disabled) [Regacy]
-	void OnAttachmentCollisionEnabled() override;
-	void OnAttachmentCollisionDisabled() override;
-	
-	// CAttachment_Overlap [Regacy]
-	void OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) override;
-	void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) override;
 
 public:
 	FORCEINLINE void OnEnablePreInput() { bEnablePreInput = true; }

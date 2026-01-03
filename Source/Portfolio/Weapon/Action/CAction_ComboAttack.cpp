@@ -58,8 +58,13 @@ void UCAction_ComboAttack::End_PlayAction()
 
 	Super::End_PlayAction();	// bIsAction, bBeginAction = false
 
-	if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-	ActionDatas_Injected[Index].End_PlayMontage(OwnerCharacter_Injected);
+	const int32 num = ActionDatas_Injected.Num();
+
+	if (num > 0 && Index >= 0 && Index < num)
+	{
+		if (IsValid(ActionDatas_Injected[Index].Montage))
+			ActionDatas_Injected[Index].EndPlayMontage(OwnerCharacter_Injected);
+	}
 
 	Index = 0;
 
@@ -75,30 +80,16 @@ void UCAction_ComboAttack::Next_PlayAction()
 
 		bExistPreInput = false;
 
-		Index++;
-		if ((int32)Index >= ActionDatas_Injected.Num()) return;
+		const int32 num = ActionDatas_Injected.Num();
+		if (num <= 0) return;
+
+		const int32 nextIndex = Index + 1;
+		if (nextIndex >= num) return;
+
+		Index = nextIndex;
 
 		if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-		ActionDatas_Injected[Index].Begin_PlayMontage(OwnerCharacter_Injected);
-	}
-}
+		ActionDatas_Injected[Index].BeginPlayMontage(OwnerCharacter_Injected);
 
-void UCAction_ComboAttack::OnAttachmentCollisionEnabled()
-{
-	Super::OnAttachmentCollisionEnabled();
-}
 
-void UCAction_ComboAttack::OnAttachmentCollisionDisabled()
-{
-	Super::OnAttachmentCollisionDisabled();
-}
-
-void UCAction_ComboAttack::OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult)
-{
-	Super::OnAttachmentBeginOverlap(InAttackerActor, InDamageCauser, InAttackCollision, InTargetActor, InHitComponent, InOtherBodyIndex, InbFromSweep, InSweepResult);
-}
-
-void UCAction_ComboAttack::OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor)
-{
-	Super::OnAttachmentEndOverlap(InAttackerActor, InTargetActor);
 }

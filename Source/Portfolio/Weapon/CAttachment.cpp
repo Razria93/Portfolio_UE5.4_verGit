@@ -73,6 +73,10 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
 
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
+	if (OwnerCharacter_Cached == OtherActor) return;
+
+	// Regacy
 	if (OnAttachmentBeginOverlap.IsBound())
 		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
@@ -81,21 +85,17 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor == OwnerCharacter_Cached) return;
+	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
+	if (!IsValid(overlapComp)) return;
 
-	ACharacter* attacker = OwnerCharacter_Cached;
-	AActor* targetActor = OtherActor;
-
-	if (!IsValid(attacker) ||
-		!IsValid(targetActor)) return;
-
-	if (attacker == targetActor) return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
+	if (OwnerCharacter_Cached == OtherActor) return;
 
 	// Regacy
 	if (OnAttachmentEndOverlap.IsBound())
-		OnAttachmentEndOverlap.Broadcast(attacker, targetActor);
+		OnAttachmentEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
 
-	Print_EndOverlapEventInfo(attacker, targetActor);
+	Print_EndOverlapEventInfo(OwnerCharacter_Cached, OtherActor);
 }
 
 void ACAttachment::OnEquipmentBeginEquip()
