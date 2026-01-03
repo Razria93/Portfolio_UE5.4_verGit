@@ -44,19 +44,19 @@ void UCAction_ComboAttack::PlayAction()
 	Super::PlayAction();		// bIsAction = true
 
 	if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-	ActionDatas_Injected[Index].Begin_PlayMontage(OwnerCharacter_Injected);
+	ActionDatas_Injected[Index].BeginPlayMontage(OwnerCharacter_Injected);
 }
 
-void UCAction_ComboAttack::Begin_PlayAction()
+void UCAction_ComboAttack::BeginPlayAction()
 {
-	Super::Begin_PlayAction();	// bBeginAction = true
+	Super::BeginPlayAction();	// bBeginAction = true
 }
 
-void UCAction_ComboAttack::End_PlayAction()
+void UCAction_ComboAttack::EndPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	Super::End_PlayAction();	// bIsAction, bBeginAction = false
+	Super::EndPlayAction();	// bIsAction, bBeginAction = false
 
 	const int32 num = ActionDatas_Injected.Num();
 
@@ -72,11 +72,11 @@ void UCAction_ComboAttack::End_PlayAction()
 	bExistPreInput = false;
 }
 
-void UCAction_ComboAttack::Next_PlayAction()
+void UCAction_ComboAttack::NextPlayAction()
 {
 	if (bExistPreInput)
 	{
-		Super::Next_PlayAction();
+		Super::NextPlayAction();
 
 		bExistPreInput = false;
 

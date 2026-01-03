@@ -5,7 +5,7 @@
 
 #include "Component/CMovementComponent.h"
 
-void FActionData::Begin_PlayMontage(ACharacter* InOwnerCharacter)
+void FActionData::BeginPlayMontage(ACharacter* InOwnerCharacter)
 {
 	UActorComponent* temp = InOwnerCharacter->GetComponentByClass(UCMovementComponent::StaticClass());
 	if (!IsValid(temp)) return;
@@ -20,7 +20,7 @@ void FActionData::Begin_PlayMontage(ACharacter* InOwnerCharacter)
 		InOwnerCharacter->PlayAnimMontage(Montage, PlayRate);
 }
 
-void FActionData::End_PlayMontage(ACharacter* InOwnerCharacter)
+void FActionData::EndPlayMontage(ACharacter* InOwnerCharacter)
 {
 	UActorComponent* temp = InOwnerCharacter->GetComponentByClass(UCMovementComponent::StaticClass());
 	if (!IsValid(temp)) return;

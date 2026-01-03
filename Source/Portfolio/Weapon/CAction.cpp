@@ -49,7 +49,7 @@ void UCAction::PlayAction()
 	// NOTE: To be implemented detail by derived classes
 }
 
-void UCAction::Begin_PlayAction()
+void UCAction::BeginPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
 
@@ -58,7 +58,7 @@ void UCAction::Begin_PlayAction()
 	// NOTE: To be implemented detail by derived classes
 }
 
-void UCAction::End_PlayAction()
+void UCAction::EndPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
 

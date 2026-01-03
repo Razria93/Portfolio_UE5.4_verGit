@@ -21,7 +21,7 @@ protected:
 	class UCStateComponent* StateComp_Cached;
 	class UCActionComponent* ActionComp_Cached;
 
-private:
+protected:
 	EActionType ActionType;
 
 private:
@@ -40,9 +40,9 @@ public:
 
 public:
 	virtual void PlayAction();
-	virtual void Begin_PlayAction();
-	virtual void End_PlayAction();
-	virtual void Next_PlayAction() {};
+	virtual void BeginPlayAction();
+	virtual void EndPlayAction();
+	virtual void NextPlayAction() {};
 
 public:
 	/* === [IN] Custom Delgate Events === */

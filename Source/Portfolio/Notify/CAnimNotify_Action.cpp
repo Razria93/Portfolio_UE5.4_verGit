@@ -27,8 +27,8 @@ void UCAnimNotify_Action::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin: action->Begin_PlayAction(); return;
-	case EAnimNotifyFlow::End: action->End_PlayAction(); return;
-	case EAnimNotifyFlow::Next: action->Next_PlayAction(); return;
+	case EAnimNotifyFlow::Begin: action->BeginPlayAction(); return;
+	case EAnimNotifyFlow::End: action->EndPlayAction(); return;
+	case EAnimNotifyFlow::Next: action->NextPlayAction(); return;
 	}
 }

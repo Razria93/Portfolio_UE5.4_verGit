@@ -61,8 +61,8 @@ public:
 	bool bCanMove = false;
 
 public:
-	void Begin_PlayMontage(class ACharacter* InOwnerCharacter);
-	void End_PlayMontage(class ACharacter* InOwnerCharacter);
+	void BeginPlayMontage(class ACharacter* InOwnerCharacter);
+	void EndPlayMontage(class ACharacter* InOwnerCharacter);
 };
 
 USTRUCT(BlueprintType)

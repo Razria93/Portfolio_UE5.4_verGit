@@ -23,19 +23,19 @@ void UCAction_LightAttack::PlayAction()
 	
 	Super::PlayAction();		// bIsAction = true
 
-	ActionDatas_Injected[0].Begin_PlayMontage(OwnerCharacter_Injected);
+	ActionDatas_Injected[0].BeginPlayMontage(OwnerCharacter_Injected);
 }
 
-void UCAction_LightAttack::Begin_PlayAction()
+void UCAction_LightAttack::BeginPlayAction()
 {
-	Super::Begin_PlayAction();	// bBeginAction = true
+	Super::BeginPlayAction();	// bBeginAction = true
 }
 
-void UCAction_LightAttack::End_PlayAction()
+void UCAction_LightAttack::EndPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
 
-	Super::End_PlayAction();	// bIsAction, bBeginAction = false
+	Super::EndPlayAction();	// bIsAction, bBeginAction = false
 
-	ActionDatas_Injected[0].End_PlayMontage(OwnerCharacter_Injected);
+	ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
 }
