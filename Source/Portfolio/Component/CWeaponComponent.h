@@ -69,8 +69,8 @@ public:
 
 public:
 	/* === Getter === */
-	class ACAttachment* GetAttachment();
-	class UCEquipment* GetEquipment();
+	class UObject* GetAttachment();
+	class UObject* GetEquipment();
 
 public:
 	/* === Getter === */

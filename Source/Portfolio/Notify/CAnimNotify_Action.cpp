@@ -21,9 +21,11 @@ void UCAnimNotify_Action::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!actionComp) return;
-	
-	UCAction* action = actionComp->GetAction(actionComp->GetCurActionType());
-	if (!action) return;
+
+	UObject* uobject = actionComp->GetAction(actionComp->GetCurActionType());
+	if (!uobject) return;
+
+	UCAction* action = Cast<UCAction>(uobject);
 
 	switch (FlowType)
 	{

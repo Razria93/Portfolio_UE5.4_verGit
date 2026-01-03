@@ -42,7 +42,7 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-UCAction* UCActionComponent::GetAction(EActionType InNewActionType)
+UObject* UCActionComponent::GetAction(EActionType InNewActionType)
 {
 	UCAction** actionPtr = ActionContainer.Find(InNewActionType);
 

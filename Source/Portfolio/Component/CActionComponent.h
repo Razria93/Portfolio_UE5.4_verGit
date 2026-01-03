@@ -55,7 +55,7 @@ public:
 
 public:
 	/* === Getter === */
-	class UCAction* GetAction(EActionType InNewActionType);
+	class UObject* GetAction(EActionType InNewActionType);
 
 public:
 	/* === Getter === */

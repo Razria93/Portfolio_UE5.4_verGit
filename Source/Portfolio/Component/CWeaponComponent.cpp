@@ -40,12 +40,12 @@ void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-ACAttachment* UCWeaponComponent::GetAttachment()
+UObject* UCWeaponComponent::GetAttachment()
 {
 	return IsValid(Attachment) ? Attachment : nullptr;
 }
 
-UCEquipment* UCWeaponComponent::GetEquipment()
+UObject* UCWeaponComponent::GetEquipment()
 {
 	return IsValid(Equipment) ? Equipment : nullptr;
 }
