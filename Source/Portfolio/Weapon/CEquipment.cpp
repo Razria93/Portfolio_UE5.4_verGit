@@ -5,6 +5,8 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 
+#include "Interface/HitContextProducer.h"
+
 void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, EEquipmentType InEquipmentType, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData)
 {
 	SetEquipmentType(InEquipmentType);
@@ -120,4 +122,38 @@ void UCEquipment::End_Unequip()
 		OnEquipmentEndUnequip.Broadcast();
 
 	StateComp_Cached->SetIdleMode();
+}
+
+void UCEquipment::OnBeginPlayAction()
+{
+	FEquipmentContext equipmentContext;
+	equipmentContext.CurrentEquipmentType = EquipmentType;
+
+	PushEquipmentContext(equipmentContext);
+}
+
+void UCEquipment::OnEndPlayAction()
+{
+	FEquipmentContext equipmentContext = FEquipmentContext();
+
+	PushEquipmentContext(equipmentContext);
+}
+
+void UCEquipment::OnNextPlayAction()
+{
+	FEquipmentContext equipmentContext;
+	equipmentContext.CurrentEquipmentType = EquipmentType;
+
+	PushEquipmentContext(equipmentContext);
+}
+
+void UCEquipment::PushEquipmentContext(const FEquipmentContext& InEquipmentContext)
+{
+	UObject* uobject = WeaponComp_Cached->GetAttachment();
+	if (!IsValid(uobject)) return;
+
+	IHitContextProducer* producer = Cast<IHitContextProducer>(uobject);
+	if (!producer) return;
+
+	producer->SetEquipmentContext(InEquipmentContext);
 }

@@ -50,6 +50,12 @@ void UCAction_ComboAttack::PlayAction()
 void UCAction_ComboAttack::BeginPlayAction()
 {
 	Super::BeginPlayAction();	// bBeginAction = true
+
+	FActionContext actionContext;
+	actionContext.CurrentActionType = ActionType;
+	actionContext.Index = Index;
+
+	PushActionContext(actionContext);
 }
 
 void UCAction_ComboAttack::EndPlayAction()
@@ -70,6 +76,10 @@ void UCAction_ComboAttack::EndPlayAction()
 
 	bEnablePreInput = false;
 	bExistPreInput = false;
+
+	FActionContext actionContext = FActionContext();
+
+	PushActionContext(actionContext);
 }
 
 void UCAction_ComboAttack::NextPlayAction()
@@ -91,5 +101,10 @@ void UCAction_ComboAttack::NextPlayAction()
 		if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
 		ActionDatas_Injected[Index].BeginPlayMontage(OwnerCharacter_Injected);
 
+		FActionContext actionContext;
+		actionContext.CurrentActionType = ActionType;
+		actionContext.Index = Index; // Increased Index
 
+		PushActionContext(actionContext);
+	}
 }

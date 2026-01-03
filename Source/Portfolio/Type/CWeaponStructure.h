@@ -75,6 +75,39 @@ public:
 	float DamageAmount = 0.0f;
 };
 
+USTRUCT(BlueprintType)
+struct FAttachmentContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	EAttachmentType CurrentAttachmentType = EAttachmentType::Max;
+};
+
+USTRUCT(BlueprintType)
+struct FEquipmentContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	EEquipmentType CurrentEquipmentType = EEquipmentType::Max;
+};
+
+USTRUCT(BlueprintType)
+struct FActionContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	EActionType CurrentActionType = EActionType::Max;
+
+	UPROPERTY(EditAnywhere)
+	int32 Index = INDEX_NONE;
+};
+
 UCLASS()
 class PORTFOLIO_API UCWeaponStructure : public UObject
 {

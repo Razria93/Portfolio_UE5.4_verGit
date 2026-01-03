@@ -68,4 +68,17 @@ public:
 	void End_Equip();
 	void Begin_Unequip();
 	void End_Unequip();
+
+public:
+	UFUNCTION()
+	void OnBeginPlayAction();
+
+	UFUNCTION()
+	void OnEndPlayAction();
+
+	UFUNCTION()
+	void OnNextPlayAction();
+
+private:
+	void PushEquipmentContext(const FEquipmentContext& InEquipmentContext);
 };

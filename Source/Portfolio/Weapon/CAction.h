@@ -44,6 +44,9 @@ public:
 	virtual void EndPlayAction();
 	virtual void NextPlayAction() {};
 
+protected:
+	void PushActionContext(const FActionContext& InActionContext);
+
 public:
 	/* === [IN] Custom Delgate Events === */
 	// [Regacy] CAttachment

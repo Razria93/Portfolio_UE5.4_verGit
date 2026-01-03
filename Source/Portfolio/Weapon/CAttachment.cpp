@@ -53,6 +53,36 @@ void ACAttachment::InitializeAttachment(EAttachmentType InAttachmentType)
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
+FAttachmentContext ACAttachment::GetAttachmentContext() const
+{
+	return AttachmentContext;
+}
+
+FEquipmentContext ACAttachment::GetEquipmentContext() const
+{
+	return EquipmentContext;
+}
+
+FActionContext ACAttachment::GetActionContext() const
+{
+	return ActionContext;
+}
+
+void ACAttachment::SetAttachmentContext(FAttachmentContext InAttachmentContext)
+{
+	AttachmentContext = InAttachmentContext;
+}
+
+void ACAttachment::SetEquipmentContext(FEquipmentContext InEquipmentContext)
+{
+	EquipmentContext = InEquipmentContext;
+}
+
+void ACAttachment::SetActionContext(FActionContext InActionContext)
+{
+	ActionContext = InActionContext;
+}
+
 EAttachmentType ACAttachment::GetAttachmentType() const
 {
 	return AttachmentType;
@@ -68,6 +98,34 @@ void ACAttachment::AttachToOwnerSocket(FName InSocketName)
 	AttachToComponent(OwnerCharacter_Cached->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
 }
 
+void ACAttachment::OnBeginPlayAction()
+{
+	FAttachmentContext attachmentContext;
+	attachmentContext.CurrentAttachmentType = AttachmentType;
+
+	PushAttachmentContext(attachmentContext);
+}
+
+void ACAttachment::OnEndPlayAction()
+{
+	FAttachmentContext attachmentContext = FAttachmentContext();
+
+	PushAttachmentContext(attachmentContext);
+}
+
+void ACAttachment::OnNextPlayAction()
+{
+	FAttachmentContext attachmentContext;
+	attachmentContext.CurrentAttachmentType = AttachmentType;
+
+	PushAttachmentContext(attachmentContext);
+}
+
+void ACAttachment::PushAttachmentContext(const FAttachmentContext& InAttachmentContext)
+{
+	AttachmentContext = InAttachmentContext;
+}
+
 void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
@@ -81,6 +139,7 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	Print_BeginOverlapEventInfo(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep);
+	Print_ActionContextInfo(ActionContext);
 }
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -96,6 +155,7 @@ void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponen
 		OnAttachmentEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
 
 	Print_EndOverlapEventInfo(OwnerCharacter_Cached, OtherActor);
+	Print_ActionContextInfo(ActionContext);
 }
 
 void ACAttachment::OnEquipmentBeginEquip()
@@ -162,4 +222,12 @@ void ACAttachment::Print_EndOverlapEventInfo(ACharacter* attacker, AActor* targe
 	FLog::Log(FString::Printf(TEXT("Attacker    : %s"), attacker ? *attacker->GetName() : TEXT("NULL")));
 	FLog::Log(FString::Printf(TEXT("TargetActor : %s"), targetActor ? *targetActor->GetName() : TEXT("NULL")));
 	FLog::Log(TEXT("==================================="));
+}
+
+void ACAttachment::Print_ActionContextInfo(FActionContext InActionContext)
+{
+	FLog::Log(TEXT("========== Action Context =========="));
+	FLog::Log(FString::Printf(TEXT("CurrentActionType : %s"), *UEnum::GetValueAsString(InActionContext.CurrentActionType)));
+	FLog::Log(FString::Printf(TEXT("Index             : %s"), (InActionContext.Index == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.Index)));
+	FLog::Log(TEXT("===================================="));
 }

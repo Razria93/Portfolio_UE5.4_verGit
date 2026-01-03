@@ -7,6 +7,8 @@
 #include "Component/CStateComponent.h"
 #include "Component/CActionComponent.h"
 
+#include "Interface/HitContextProducer.h"
+
 #include "Type/CWeaponStructure.h"
 
 void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
@@ -36,6 +38,17 @@ EActionType UCAction::GetActionType() const
 void UCAction::SetActionType(EActionType InActionType)
 {
 	ActionType = InActionType;
+}
+
+void UCAction::PushActionContext(const FActionContext& InActionContext)
+{
+	UObject* uobject = WeaponComp_Cached->GetAttachment();
+	if (!IsValid(uobject)) return;
+
+	IHitContextProducer* producer = Cast<IHitContextProducer>(uobject);
+	if (!producer) return;
+
+	producer->SetActionContext(InActionContext);
 }
 
 void UCAction::PlayAction()
