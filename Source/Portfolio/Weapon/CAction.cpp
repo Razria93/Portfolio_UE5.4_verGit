@@ -40,15 +40,18 @@ void UCAction::SetActionType(EActionType InActionType)
 	ActionType = InActionType;
 }
 
-void UCAction::PushActionContext(const FActionContext& InActionContext)
+void UCAction::PushContextToAttachment(const FActionContext& InActionContext)
 {
-	UObject* uobject = WeaponComp_Cached->GetAttachment();
-	if (!IsValid(uobject)) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
 
-	IHitContextProducer* producer = Cast<IHitContextProducer>(uobject);
-	if (!producer) return;
+	WeaponComp_Cached->PushContextToAttachment(InActionContext);
+}
 
-	producer->SetActionContext(InActionContext);
+void UCAction::ClearContextToAttachment()
+{
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
+
+	WeaponComp_Cached->ClearContextToAttachment();
 }
 
 void UCAction::PlayAction()

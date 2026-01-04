@@ -10,6 +10,7 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CActionComponent.h"
+#include "Component/CApplyDamageComponent.h"
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
@@ -65,6 +66,10 @@ ACPlayer::ACPlayer()
 	// Init UCACtionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
 	check(ActionComponent);
+
+	// Init ApplyDamageComp
+	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
+	check(ApplyDamageComponent);
 }
 
 void ACPlayer::BeginPlay()

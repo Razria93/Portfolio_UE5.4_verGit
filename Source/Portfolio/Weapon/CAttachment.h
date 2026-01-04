@@ -38,18 +38,23 @@ private:
 	EAttachmentType AttachmentType;
 
 public:
+	/* === Context Carrier === */
 	UPROPERTY(Transient)
-	FAttachmentContext AttachmentContext;
+	FOverlapContext LastOverlapContext;
 
 	UPROPERTY(Transient)
-	FEquipmentContext EquipmentContext;
-	
+	FAttachmentContext LastAttachmentContext;
+
 	UPROPERTY(Transient)
-	FActionContext ActionContext;
+	FEquipmentContext LastEquipmentContext;
+
+	UPROPERTY(Transient)
+	FActionContext LastActionContext;
 
 private:
 	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
+	class UCApplyDamageComponent* ApplyDamageComp_Cached;
 	TArray<class UShapeComponent*> Collisions_Cached;
 
 public:
@@ -73,15 +78,17 @@ public:
 
 public:
 	/* === IHitContextProducer (Getter) === */
-	virtual FAttachmentContext GetAttachmentContext() const override;
-	virtual FEquipmentContext GetEquipmentContext() const override;
-	virtual FActionContext GetActionContext() const override;
+	virtual const FOverlapContext& GetLastOverlapContext() const override;
+	virtual const FAttachmentContext& GetLastAttachmentContext() const override;
+	virtual const FEquipmentContext& GetLastEquipmentContext() const override;
+	virtual const FActionContext& GetLastActionContext() const override;
 
 public:
 	/* === IHitContextProducer (Setter) === */
-	virtual void SetAttachmentContext(FAttachmentContext InAttachmentContext) override;
-	virtual void SetEquipmentContext(FEquipmentContext InEquipmentContext) override;
-	virtual void SetActionContext(FActionContext InActionContext) override;
+	virtual void SetLastOverlapContext(const FOverlapContext& InOverlapContext) override;
+	virtual void SetLastAttachmentContext(const FAttachmentContext& InAttachmentContext) override;
+	virtual void SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext) override;
+	virtual void SetLastActionContext(const FActionContext& InActionContext) override;
 
 public:
 	/* === Getter === */
@@ -93,19 +100,6 @@ public:
 
 public:
 	void AttachToOwnerSocket(FName InSocketName);
-
-public:
-	UFUNCTION()
-	void OnBeginPlayAction();
-	
-	UFUNCTION()
-	void OnEndPlayAction();
-	
-	UFUNCTION()
-	void OnNextPlayAction();
-
-protected:
-	void PushAttachmentContext(const FAttachmentContext& InAttachmentContext);
 
 public:
 	/* === [IN] Engine Delgate Events === */
@@ -132,7 +126,12 @@ public:
 	void CollisionDisabled();
 
 private:
-	void Print_BeginOverlapEventInfo(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 OtherBodyIndex, bool bFromSweep);
-	void Print_EndOverlapEventInfo(ACharacter* attacker, AActor* targetActor);
-	void Print_ActionContextInfo(FActionContext InActionContext);
+	FOverlapContext BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const;
+
+private:
+	void PrintBeginOverlapContextInfo(const FHitContext& InHitContext);
+	void PrintEndOverlapContextInfo(const FHitContext& InHitContext);
+
+	void PrintOverlapContextInfo(const FOverlapContext& Context);
+	void Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
 };

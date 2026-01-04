@@ -2,8 +2,19 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+#include "Components/ShapeComponent.h"
 
 #include "Component/CMovementComponent.h"
+
+bool FEquipmentData::IsValidMinimal() const
+{
+	return IsValid(Montage);
+}
+
+bool FActionData::IsValidMinimal() const
+{
+	return IsValid(Montage);
+}
 
 void FActionData::BeginPlayMontage(ACharacter* InOwnerCharacter)
 {
@@ -30,4 +41,9 @@ void FActionData::EndPlayMontage(ACharacter* InOwnerCharacter)
 
 	if (bCanMove == false)
 		moveComp->SetMove();
+}
+
+bool FOverlapContext::IsValidMinimal() const
+{
+	return IsValid(OwnerActor) && IsValid(DamageCauser) && IsValid(OtherActor) && IsValid(OverlapShape);
 }

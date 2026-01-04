@@ -3,6 +3,7 @@
 
 #include "GameFramework/Character.h"
 #include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 
 #include "Interface/HitContextProducer.h"
@@ -21,10 +22,13 @@ void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, EEquipmentTy
 	bBeginUnequip = false;
 	bEquipped = false;
 
-	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Injected->GetComponentByClass(UCMovementComponent::StaticClass())); // TODO: Refactor Interface
+	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Injected->GetComponentByClass(UCMovementComponent::StaticClass()));	// TODO: Refactor Interface
 	check(MovementComp_Cached);
 
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass())); // TODO: Refactor Interface
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));		// TODO: Refactor Interface
+	check(WeaponComp_Cached);
+
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));			// TODO: Refactor Interface
 	check(StateComp_Cached);
 }
 
@@ -122,38 +126,4 @@ void UCEquipment::End_Unequip()
 		OnEquipmentEndUnequip.Broadcast();
 
 	StateComp_Cached->SetIdleMode();
-}
-
-void UCEquipment::OnBeginPlayAction()
-{
-	FEquipmentContext equipmentContext;
-	equipmentContext.CurrentEquipmentType = EquipmentType;
-
-	PushEquipmentContext(equipmentContext);
-}
-
-void UCEquipment::OnEndPlayAction()
-{
-	FEquipmentContext equipmentContext = FEquipmentContext();
-
-	PushEquipmentContext(equipmentContext);
-}
-
-void UCEquipment::OnNextPlayAction()
-{
-	FEquipmentContext equipmentContext;
-	equipmentContext.CurrentEquipmentType = EquipmentType;
-
-	PushEquipmentContext(equipmentContext);
-}
-
-void UCEquipment::PushEquipmentContext(const FEquipmentContext& InEquipmentContext)
-{
-	UObject* uobject = WeaponComp_Cached->GetAttachment();
-	if (!IsValid(uobject)) return;
-
-	IHitContextProducer* producer = Cast<IHitContextProducer>(uobject);
-	if (!producer) return;
-
-	producer->SetEquipmentContext(InEquipmentContext);
 }

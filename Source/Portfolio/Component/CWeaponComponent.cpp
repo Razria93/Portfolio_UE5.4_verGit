@@ -52,39 +52,41 @@ UObject* UCWeaponComponent::GetEquipment()
 
 void UCWeaponComponent::SetUnarmedMode()
 {
-	ChangeAttachmentMode(EAttachmentType::Unarmed);
+	ChangeMode(EAttachmentType::Unarmed);
 }
 
 void UCWeaponComponent::SetSwordMode()
 {
-	ChangeAttachmentMode(EAttachmentType::Sword);
+	ChangeMode(EAttachmentType::Sword);
 }
 
-void UCWeaponComponent::ChangeAttachmentMode(EAttachmentType InNewAttachmentType)
+void UCWeaponComponent::PushContextToAttachment(const FActionContext& InActionContext)
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment)) return;
+	if (!IsValid(Attachment) || !IsValid(Equipment)) return;
 
-	if (InNewAttachmentType == EAttachmentType::Unarmed)
-	{
-		Equipment->Unequip();
-	}
-	else
-	{
-		Equipment->Equip();
-	}
+	IHitContextProducer* producer = Cast<IHitContextProducer>(Attachment);
+	if (!producer) return;
 
-	ChangeAttachmentType(InNewAttachmentType);
+	// 1) Build contexts from current state
+	const FAttachmentContext attachmentContext = BuildAttachmentContext();
+	const FEquipmentContext  equipmentContext = BuildEquipmentContext();
+
+	// 2) Push/Cache into the carrier
+	producer->SetLastAttachmentContext(attachmentContext);
+	producer->SetLastEquipmentContext(equipmentContext);
+	producer->SetLastActionContext(InActionContext);
 }
 
-void UCWeaponComponent::ChangeAttachmentType(EAttachmentType InNewAttachmentType)
+void UCWeaponComponent::ClearContextToAttachment()
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(Attachment) || !IsValid(Equipment)) return;
 
-	EAttachmentType prevAttachmentType = CurrentAttachmentType_Cached;
-	CurrentAttachmentType_Cached = InNewAttachmentType;
+	IHitContextProducer* producer = Cast<IHitContextProducer>(Attachment);
+	if (!producer) return;
 
-	if (OnAttachmentTypeChanged.IsBound())
-		OnAttachmentTypeChanged.Broadcast(OwnerCharacter_Cached, prevAttachmentType, CurrentAttachmentType_Cached);
+	producer->SetLastOverlapContext(FOverlapContext());
+	producer->SetLastAttachmentContext(FAttachmentContext());
+	producer->SetLastEquipmentContext(FEquipmentContext());
 }
 
 bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass)
@@ -141,4 +143,68 @@ bool UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter, EEquipmentType
 	Equipment = equipment;
 
 	return true;
+}
+
+void UCWeaponComponent::ChangeMode(EAttachmentType InNewAttachmentType)
+{
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment)) return;
+
+	EAttachmentType newAttachmentType = InNewAttachmentType;
+	EEquipmentType newEquipmentType = EEquipmentType::Max;
+
+	switch (newAttachmentType)
+	{
+	case EAttachmentType::Unarmed:
+		newEquipmentType = EEquipmentType::None;
+		Equipment->Unequip();
+		break;
+	
+	case EAttachmentType::Sword:
+		newEquipmentType = EEquipmentType::Sword;
+		Equipment->Equip();
+		break;
+
+	default:
+		newEquipmentType = EEquipmentType::Max;
+	}
+
+	ChangeAttachmentType(newAttachmentType);
+	ChangeEquipmentType(newEquipmentType);
+}
+
+void UCWeaponComponent::ChangeAttachmentType(EAttachmentType InNewAttachmentType)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	EAttachmentType prevAttachmentType = CurrentAttachmentType_Cached;
+	CurrentAttachmentType_Cached = InNewAttachmentType;
+
+	if (OnAttachmentTypeChanged.IsBound())
+		OnAttachmentTypeChanged.Broadcast(OwnerCharacter_Cached, prevAttachmentType, CurrentAttachmentType_Cached);
+}
+
+
+void UCWeaponComponent::ChangeEquipmentType(EEquipmentType InNewEquipmentType)
+{
+	EEquipmentType PrevEquipmentType = CurrentEquipmentType_Cached;
+	CurrentEquipmentType_Cached = InNewEquipmentType;
+
+	if (OnEquipmentTypeChanged.IsBound())
+		OnEquipmentTypeChanged.Broadcast(OwnerCharacter_Cached, PrevEquipmentType, CurrentEquipmentType_Cached);
+}
+
+FAttachmentContext UCWeaponComponent::BuildAttachmentContext() const
+{
+	FAttachmentContext attachmentContext;
+	attachmentContext.CurrentAttachmentType = CurrentAttachmentType_Cached;
+
+	return attachmentContext;
+}
+
+FEquipmentContext UCWeaponComponent::BuildEquipmentContext() const
+{
+	FEquipmentContext equipmentContext;
+	equipmentContext.CurrentEquipmentType = CurrentEquipmentType_Cached;
+
+	return equipmentContext;
 }

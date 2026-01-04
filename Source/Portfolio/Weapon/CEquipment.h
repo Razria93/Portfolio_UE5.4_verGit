@@ -33,6 +33,7 @@ private:
 private:
 	/* === Cached Objects === */
 	class UCMovementComponent* MovementComp_Cached;
+	class UCWeaponComponent* WeaponComp_Cached;
 	class UCStateComponent* StateComp_Cached;
 
 public:
@@ -68,17 +69,4 @@ public:
 	void End_Equip();
 	void Begin_Unequip();
 	void End_Unequip();
-
-public:
-	UFUNCTION()
-	void OnBeginPlayAction();
-
-	UFUNCTION()
-	void OnEndPlayAction();
-
-	UFUNCTION()
-	void OnNextPlayAction();
-
-private:
-	void PushEquipmentContext(const FEquipmentContext& InEquipmentContext);
 };

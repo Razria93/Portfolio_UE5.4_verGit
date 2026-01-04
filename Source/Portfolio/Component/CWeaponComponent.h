@@ -6,6 +6,7 @@
 #include "CWeaponComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttachmentTypeChanged, class ACharacter*, InOwnerCharacter, EAttachmentType, InPrevAttachmentType, EAttachmentType, InNewAttachmentType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FEquipmentTypeChanged, class ACharacter*, InOwnerCharacter, EEquipmentType, InPrevEquipmentType, EEquipmentType, InNewEquipmentType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCWeaponComponent : public UActorComponent
@@ -14,7 +15,6 @@ class PORTFOLIO_API UCWeaponComponent : public UActorComponent
 
 public:
 	UCWeaponComponent();
-
 
 	// === WeaponData ======================================= //
 private:
@@ -59,7 +59,7 @@ private:
 public:
 	/* === [Out] Custom Delgate Events === */
 	FAttachmentTypeChanged OnAttachmentTypeChanged;
-	// TODO: FEquipmentTypeChanged OnEquipmentTypeChanged;
+	FEquipmentTypeChanged OnEquipmentTypeChanged;
 
 protected:
 	virtual void BeginPlay() override;
@@ -86,13 +86,22 @@ public:
 	/* === Check / Query === */
 	FORCEINLINE bool CheckCurAttachmentType(EAttachmentType InNewAttachmentType) { return CurrentAttachmentType_Cached == InNewAttachmentType; }
 
-private:
-	void ChangeAttachmentType(EAttachmentType InNewAttachmentType);
-	void ChangeAttachmentMode(EAttachmentType InNewAttachmentType);
-	// TODO: ChangeEquipmentType/Mode
-
+public:
+	void PushContextToAttachment(const FActionContext& InActionContext);
+	void ClearContextToAttachment();
 
 private:
 	bool CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass);
 	bool CreateEquipment(AActor* InOwnerCharacter, EEquipmentType InEquipmentType, TSubclassOf<UCEquipment> InEquipmentClass, const FEquipmentData& InEquipmentDatas, const FEquipmentData& InUnequipmentDatas);
+
+private:
+	void ChangeMode(EAttachmentType InNewAttachmentType);
+
+private:
+	void ChangeAttachmentType(EAttachmentType InNewAttachmentType);
+	void ChangeEquipmentType(EEquipmentType InNewEquipmentType);
+
+private:
+	FAttachmentContext BuildAttachmentContext() const;
+	FEquipmentContext BuildEquipmentContext() const;
 };

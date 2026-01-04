@@ -55,7 +55,7 @@ void UCAction_ComboAttack::BeginPlayAction()
 	actionContext.CurrentActionType = ActionType;
 	actionContext.Index = Index;
 
-	PushActionContext(actionContext);
+	PushContextToAttachment(actionContext);
 }
 
 void UCAction_ComboAttack::EndPlayAction()
@@ -77,9 +77,7 @@ void UCAction_ComboAttack::EndPlayAction()
 	bEnablePreInput = false;
 	bExistPreInput = false;
 
-	FActionContext actionContext = FActionContext();
-
-	PushActionContext(actionContext);
+	ClearContextToAttachment();
 }
 
 void UCAction_ComboAttack::NextPlayAction()
@@ -105,6 +103,6 @@ void UCAction_ComboAttack::NextPlayAction()
 		actionContext.CurrentActionType = ActionType;
 		actionContext.Index = Index; // Increased Index
 
-		PushActionContext(actionContext);
+		PushContextToAttachment(actionContext);
 	}
 }

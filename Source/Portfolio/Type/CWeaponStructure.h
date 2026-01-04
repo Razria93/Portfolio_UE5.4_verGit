@@ -43,6 +43,12 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bCanMove = false;
+
+public:
+	FEquipmentData() = default;
+
+public:
+	bool IsValidMinimal() const;
 };
 
 USTRUCT(BlueprintType)
@@ -61,6 +67,12 @@ public:
 	bool bCanMove = false;
 
 public:
+	FActionData() = default;
+
+public:
+	bool IsValidMinimal() const;
+
+public:
 	void BeginPlayMontage(class ACharacter* InOwnerCharacter);
 	void EndPlayMontage(class ACharacter* InOwnerCharacter);
 };
@@ -73,6 +85,9 @@ struct FDamageSpecData
 public:
 	UPROPERTY(EditAnywhere)
 	float DamageAmount = 0.0f;
+
+public:
+	FDamageSpecData() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -83,6 +98,9 @@ struct FAttachmentContext
 public:
 	UPROPERTY(EditAnywhere)
 	EAttachmentType CurrentAttachmentType = EAttachmentType::Max;
+
+public:
+	FAttachmentContext() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -93,6 +111,9 @@ struct FEquipmentContext
 public:
 	UPROPERTY(EditAnywhere)
 	EEquipmentType CurrentEquipmentType = EEquipmentType::Max;
+
+public:
+	FEquipmentContext() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -106,6 +127,68 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	int32 Index = INDEX_NONE;
+
+public:
+	FActionContext() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FOverlapContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	class AActor* OwnerActor = nullptr;							// AttackActor
+
+	UPROPERTY(Transient)
+	class AActor* DamageCauser = nullptr;						// Attachment
+
+	UPROPERTY(Transient)
+	class UPrimitiveComponent* OverlappedComponent = nullptr;	// Hit Collision of Attachment
+
+	UPROPERTY(Transient)
+	class UShapeComponent* OverlapShape = nullptr;			// Cast result: UShapeComponent (nullptr if cast fails)
+
+	UPROPERTY(Transient)
+	class AActor* OtherActor = nullptr;							// DamagedActor
+
+	UPROPERTY(Transient)
+	class UPrimitiveComponent* OtherComponent = nullptr;		// DamagedComponent
+
+	UPROPERTY(Transient)
+	int32 OtherBodyIndex = INDEX_NONE;
+
+	UPROPERTY(Transient)
+	bool bFromSweep = false;
+
+	UPROPERTY(Transient)
+	FHitResult SweepResult;
+
+public:
+	FOverlapContext() = default;
+
+public:
+	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FHitContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FOverlapContext OverlapContext;
+
+	UPROPERTY(Transient)
+	FAttachmentContext AttachmentContext;
+
+	UPROPERTY(Transient)
+	FEquipmentContext  EquipmentContext;
+
+	UPROPERTY(Transient)
+	FActionContext     ActionContext;
 };
 
 UCLASS()
