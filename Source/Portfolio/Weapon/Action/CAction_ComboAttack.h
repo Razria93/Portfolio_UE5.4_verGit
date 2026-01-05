@@ -10,7 +10,7 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 	GENERATED_BODY()
 
 private:
-	int32 Index;
+	int32 ActionIndex;
 
 private:
 	bool bEnablePreInput;

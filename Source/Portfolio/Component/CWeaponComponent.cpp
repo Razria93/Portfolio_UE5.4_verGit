@@ -160,7 +160,7 @@ void UCWeaponComponent::ChangeMode(EAttachmentType InNewAttachmentType)
 		break;
 	
 	case EAttachmentType::Sword:
-		newEquipmentType = EEquipmentType::Sword;
+		newEquipmentType = EEquipmentType::Default;
 		Equipment->Equip();
 		break;
 

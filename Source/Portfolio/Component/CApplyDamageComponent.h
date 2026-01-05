@@ -11,9 +11,9 @@ class PORTFOLIO_API UCApplyDamageComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-private:
+public:
 	UPROPERTY(EditAnywhere)
-	TMap<FName, FDamageSpecData> DamageSpecData;
+	TMap<FDamageSpecKey, FDamageSpec> DamageSpecMap;	// TODO: Seperate DataAsset (DB)
 
 public:
 	UCApplyDamageComponent();
@@ -29,15 +29,24 @@ public:
 	void RequestStopDamage(const FHitContext& InHitContext);
 
 private:
+	void ProcessApplyDamage(const FHitContext& InHitContext);
+
+private:
 	bool ValidateRequest(const FHitContext& InHitContext) const;
 	bool CheckHitRule(const FHitContext& InHitContext) const;
+	bool ResolveDamageSpec(const FHitContext& InHitContext,FDamageSpec& OutDamageSpec) const;
+	bool ComputeDamageResult(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, FDamageResult& OutDamageResult) const;
+	bool ApplyDamageToTarget(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult) const;
 
 private:
-	bool FindDamageSpecData(const FHitContext& InHitContext) const;
+	FDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 
 private:
-	void PrintApplyDamageContextInfo(const FHitContext& InHitContext);
+	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult);
 
+private:
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext);
 	void Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+	void PrintDamageSpec(const FDamageSpec& InDamageSpec);
+	void PrintDamageResult(const FDamageResult& InDamageResult);
 };

@@ -45,5 +45,5 @@ void FActionData::EndPlayMontage(ACharacter* InOwnerCharacter)
 
 bool FOverlapContext::IsValidMinimal() const
 {
-	return IsValid(OwnerActor) && IsValid(DamageCauser) && IsValid(OtherActor) && IsValid(OverlapShape);
+	return IsValid(OwnerActor) && IsValid(DamageCauser) && IsValid(OtherActor);
 }

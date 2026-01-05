@@ -281,6 +281,6 @@ void ACAttachment::Print_HitContextInfo(const FAttachmentContext& InAttachmentCo
 
 	FLog::Log(TEXT("[ActionContext]"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentActionType"), *UEnum::GetValueAsString(InActionContext.CurrentActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), (InActionContext.Index == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.Index)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), (InActionContext.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.ActionIndex)));
 	FLog::Log(TEXT("---------------------------------"));
 }

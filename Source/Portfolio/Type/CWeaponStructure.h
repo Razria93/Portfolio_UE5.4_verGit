@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Engine/DamageEvents.h"
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
@@ -16,7 +17,7 @@ UENUM(BlueprintType)
 enum class EEquipmentType : uint8
 {
 	None = 0,
-	Sword,
+	Default,
 	Max,
 };
 
@@ -78,19 +79,6 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FDamageSpecData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	float DamageAmount = 0.0f;
-
-public:
-	FDamageSpecData() = default;
-};
-
-USTRUCT(BlueprintType)
 struct FAttachmentContext
 {
 	GENERATED_BODY()
@@ -126,7 +114,7 @@ public:
 	EActionType CurrentActionType = EActionType::Max;
 
 	UPROPERTY(EditAnywhere)
-	int32 Index = INDEX_NONE;
+	int32 ActionIndex = INDEX_NONE;
 
 public:
 	FActionContext() = default;
@@ -179,16 +167,107 @@ struct FHitContext
 
 public:
 	UPROPERTY(Transient)
-	FOverlapContext OverlapContext;
+	FOverlapContext OverlapContext = FOverlapContext();
 
 	UPROPERTY(Transient)
-	FAttachmentContext AttachmentContext;
+	FAttachmentContext AttachmentContext = FAttachmentContext();
 
 	UPROPERTY(Transient)
-	FEquipmentContext  EquipmentContext;
+	FEquipmentContext  EquipmentContext = FEquipmentContext();
 
 	UPROPERTY(Transient)
-	FActionContext     ActionContext;
+	FActionContext ActionContext = FActionContext();
+};
+
+USTRUCT(BlueprintType)
+struct FDamageSpecKey
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	EAttachmentType AttachmentType = EAttachmentType::Max;
+
+	UPROPERTY(EditAnywhere)
+	EEquipmentType EquipmentType = EEquipmentType::Max;
+
+	UPROPERTY(EditAnywhere)
+	EActionType ActionType = EActionType::Max;
+
+	UPROPERTY(EditAnywhere)
+	int32 ActionIndex = INDEX_NONE;
+
+public:
+	bool operator==(const FDamageSpecKey& Other) const
+	{
+		return EquipmentType == Other.EquipmentType
+			&& AttachmentType == Other.AttachmentType
+			&& ActionType == Other.ActionType
+			&& ActionIndex == Other.ActionIndex;
+	}
+
+public:
+	friend FORCEINLINE uint32 GetTypeHash(const FDamageSpecKey& Key)
+	{
+		uint32 H = 0;
+		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.AttachmentType)));
+		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.EquipmentType)));
+		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.ActionType)));
+		H = HashCombine(H, ::GetTypeHash(Key.ActionIndex));
+		return H;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FDamageSpec
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	float BaseDamage = 0.f;
+};
+
+USTRUCT(BlueprintType)
+struct FDamageResult
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	float FinalDamage = 0.f;
+
+	UPROPERTY()
+	class AActor* Attacker = nullptr;
+
+	UPROPERTY()
+	class AActor* DamageCauser = nullptr;
+
+	UPROPERTY()
+	class AActor* Target = nullptr;
+};
+
+USTRUCT()
+struct FCustomDamageEvent : public FDamageEvent
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	FDamageResult DamageResult = FDamageResult();
+
+public:
+	UPROPERTY(EditAnywhere)
+	EAttachmentType AttachmentType = EAttachmentType::Max;
+
+	UPROPERTY(EditAnywhere)
+	EEquipmentType EquipmentType = EEquipmentType::Max;
+
+	UPROPERTY(EditAnywhere)
+	EActionType ActionType = EActionType::Max;
+
+	UPROPERTY(EditAnywhere)
+	int32 ActionIndex = INDEX_NONE;
 };
 
 UCLASS()

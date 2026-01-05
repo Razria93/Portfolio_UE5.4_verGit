@@ -13,7 +13,7 @@ void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActio
 {
 	Super::InitializeAction(InOwnerCharacter, InActionType, InActionDatas);
 
-	Index = 0;
+	ActionIndex = 0;
 
 	bEnablePreInput = false;
 	bExistPreInput = false;
@@ -43,8 +43,8 @@ void UCAction_ComboAttack::PlayAction()
 
 	Super::PlayAction();		// bIsAction = true
 
-	if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-	ActionDatas_Injected[Index].BeginPlayMontage(OwnerCharacter_Injected);
+	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
+	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 }
 
 void UCAction_ComboAttack::BeginPlayAction()
@@ -53,7 +53,7 @@ void UCAction_ComboAttack::BeginPlayAction()
 
 	FActionContext actionContext;
 	actionContext.CurrentActionType = ActionType;
-	actionContext.Index = Index;
+	actionContext.ActionIndex = ActionIndex;
 
 	PushContextToAttachment(actionContext);
 }
@@ -66,13 +66,13 @@ void UCAction_ComboAttack::EndPlayAction()
 
 	const int32 num = ActionDatas_Injected.Num();
 
-	if (num > 0 && Index >= 0 && Index < num)
+	if (num > 0 && ActionIndex >= 0 && ActionIndex < num)
 	{
-		if (IsValid(ActionDatas_Injected[Index].Montage))
-			ActionDatas_Injected[Index].EndPlayMontage(OwnerCharacter_Injected);
+		if (IsValid(ActionDatas_Injected[ActionIndex].Montage))
+			ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
 	}
 
-	Index = 0;
+	ActionIndex = 0;
 
 	bEnablePreInput = false;
 	bExistPreInput = false;
@@ -91,17 +91,17 @@ void UCAction_ComboAttack::NextPlayAction()
 		const int32 num = ActionDatas_Injected.Num();
 		if (num <= 0) return;
 
-		const int32 nextIndex = Index + 1;
-		if (nextIndex >= num) return;
+		const int32 nextActionIndex = ActionIndex + 1;
+		if (nextActionIndex >= num) return;
 
-		Index = nextIndex;
+		ActionIndex = nextActionIndex;
 
-		if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-		ActionDatas_Injected[Index].BeginPlayMontage(OwnerCharacter_Injected);
+		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
+		ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 
 		FActionContext actionContext;
 		actionContext.CurrentActionType = ActionType;
-		actionContext.Index = Index; // Increased Index
+		actionContext.ActionIndex = ActionIndex; // Increased ActionIndex
 
 		PushContextToAttachment(actionContext);
 	}
