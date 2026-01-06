@@ -2,59 +2,51 @@
 
 ## Title
 
-**M2-02: Implement Dummy Enemy base & HP structure**
+**M2-02: Implement Dummy Enemy base (hit test target)**
 
 ### Date
 
 - **Day 7**
 
-- **Date : 2025.12.23
+- **Date : 2025.12.23**
 
 
 ---
 
 ### Objective
 
-- Implement a Enemy character for hit testing
+- Implement a minimal Enemy character to be used as a stable hit test target in the test level
 
-- Design a basic HP/Stat structure that can be shared with the player
+- Configure Mesh / Capsule / MovementComponent defaults and ensure consistent Collision/Overlap behavior
 
-- Prepare a “hit target container” for the Hit/Damage system
+- Provide a clean baseline for follow-up issues (M2-03~05) to integrate Hit/Damage/HP/UI
 
+
+---
 
 ### Branch
 
 - feature/combat-hit-collision
-- feature/combat-hit-damage
 
 
 ---
 
 ### TODO List
 
-#### 1. Dummy Enemy base setup
+#### 1. Enemy base setup
 
-- [x] Create a C++ or BP-based enemy character (`CDummy`)
+- [x] Create an Enemy character (C++ or BP-based) (`CEnemy`)
 
-- [x] Configure Mesh / Capsule defaults
+- [x] Configure Mesh / Capsule / MovementComponent defaults
 
-- [x] Place multiple Dummy Enemies in the test level
-
-
-#### 2. HP / Stat structure
-
-- [ ] Define an HP/Stat structure (or component) for the enemy
-
-- [ ] Design it so it can be shared or made compatible with the player later
-
-- [ ] Implement HP reduction and a simple “is dead” flag when HP ≤ 0
+- [x] Define the default Collision/Overlap policy for hit testing
 
 
-#### 3. Hit receive preparation
+#### 2. Hit test readiness (visibility)
 
-- [ ] Connect an interface or component to receive Damage/Hit (only the entry point; full logic will be done in M2-03)
+- [x] Add a minimal target identifier output (name/tag/log)
 
-- [ ] Add a simple temporary reaction (log, color change, etc.) to verify that the enemy can receive hit events
+- [x] Add a temporary log to confirm overlap/hit entry (verification only)
 
 
 ---

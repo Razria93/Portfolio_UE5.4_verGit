@@ -14,7 +14,7 @@
 
 - Applied self-overlap exclusions (ignore OwnerCharacter/Attacker collisions) to prevent false hits caused by self-collision
 
-- Bound Attachment events in `UCWeaponComponent` and routed them into `UCAction`, providing an extensible entry point for follow-up work (interface-based queries / damage pipeline)
+- Bound `ACAttachment` events in `UCWeaponComponent` and routed them into `UCAction`, providing an extensible entry point for follow-up work (interface-based queries / damage pipeline)
 
 
 ---
@@ -72,7 +72,7 @@
 
 ### 4. Attachment events → Action routing (WeaponComponent binding)
 
-- Connected Attachment delegates to `UCAction` callbacks in `UCWeaponComponent`
+- Connected `ACAttachment` delegates to `UCAction` callbacks in `UCWeaponComponent`
 
 - Routed events as follows  
 
@@ -202,3 +202,6 @@
 - [ ] Define target filtering (team/state/invulnerability) and hit policies (pierce/multi-hit, etc.)
 
 - [ ] Improve debug logs/visualization (window enable range, overlapped targets, active CollisionName, etc.)
+
+
+---

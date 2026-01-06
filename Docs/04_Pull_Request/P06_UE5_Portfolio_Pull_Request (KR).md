@@ -14,7 +14,7 @@
 
 - Overlap 처리에서 자기 자신 예외 처리(OwnerCharacter/Attacker 대상 충돌 무시)를 적용하여 자기 충돌로 인한 오작동을 차단함
 
-- Attachment에서 발생한 이벤트를 `UCWeaponComponent`에서 받아 `UCAction`으로 라우팅하도록 바인딩하여, 후속 PR에서 인터페이스 기반 조회/데미지 처리로 확장 가능한 진입점을 마련함
+- `ACAttachment`에서 발생한 이벤트를 `UCWeaponComponent`에서 받아 `UCAction`으로 라우팅하도록 바인딩하여, 후속 PR에서 인터페이스 기반 조회/데미지 처리로 확장 가능한 진입점을 마련함
 
 
 ---
@@ -72,7 +72,7 @@
 
 ### 4. Attachment 이벤트 → Action 라우팅 (WeaponComponent 바인딩)
 
-- `UCWeaponComponent`에서 Attachment의 델리게이트를 `UCAction` 콜백으로 연결함
+- `UCWeaponComponent`에서 `ACAttachment`의 델리게이트를 `UCAction` 콜백으로 연결함
 
 - 라우팅 이벤트를 다음과 같이 구성함  
 
@@ -169,7 +169,7 @@
 
 ---
 
-## In Scope (이번 PR 포함)
+## In Scope_This PR 
 
 - Dummy Target(`ACEnemy`) 추가함
 
@@ -186,13 +186,12 @@
 
 ---
 
-## Out of Scope (이번 PR 제외)
+## Out of Scope_This PR (TODO)
 
-- DamageComponent / ReceiveDamageComponent 구현 및 Overlap 시 실제 데미지 적용 제외함
+- DamageComponent / ReceiveDamageComponent 구현 및 Overlap 시 실제 데미지 적용
+- 외부와 인터페이스 기반으로 조회/전달하는 시스템 구현
 
-- 외부와 인터페이스 기반으로 조회/전달하는 시스템 구현 제외함
-
-- 중복 히트 방지(동일 타깃 1회 히트 보장), 팀/상태 기반 타깃 필터링, 히트 리액션 등 전투 로직 완성 단계 제외함
+- 중복 히트 방지(동일 타깃 1회 히트 보장), 팀/상태 기반 타깃 필터링, 히트 리액션 등 전투 로직 완성
 
 
 ---

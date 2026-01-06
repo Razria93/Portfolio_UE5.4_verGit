@@ -16,6 +16,7 @@
 
 - Implemented `UCAction_LightAttack` to execute a montage-based light attack from Idle and properly clean up state/movement on finish
 
+
 ---
 
 ## Completed Items
@@ -29,6 +30,7 @@
 - `CPlayer::HandleAction()` calls `CWeaponComponent::PlayAction()` when the current weapon type is Sword
 
 - `CWeaponComponent::PlayAction()` executes `UCAction::PlayAction()`
+
 
 ---
 
@@ -45,6 +47,7 @@
   - When `bCanMove == false`, movement is restricted via `UCMovementComponent::SetStop/SetMove`
 
   - If a montage is valid, `Begin_PlayMontage()` plays it via `PlayAnimMontage(Montage, PlayRate)`
+
 
 ---
 
@@ -63,6 +66,7 @@
   - Created the action via `NewObject<UCAction>()` using `ActionClass` (TSubclassOf)
 
   - Injected data via `InitializeAction(OwnerCharacter, ActionData)`
+
 
 ---
 
@@ -84,6 +88,7 @@
 
     - `FlowType == End` → `End_PlayAction()`
 
+
 ---
 
 ### 5. Implement `UCAction_LightAttack`
@@ -101,6 +106,7 @@
     - Returns to Idle via `Super::End_PlayAction()`
 
     - Releases movement restriction via `ActionData.End_PlayMontage()`
+
 
 ---
 
@@ -123,6 +129,7 @@
 5. Verify AnimNotify behavior with `UCAnimNotify_Action` (Begin/End) placed on the montage:
 
    - Confirm `Begin_PlayAction / End_PlayAction` are triggered at the correct notify timing
+
 
 ---
 
