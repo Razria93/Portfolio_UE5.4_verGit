@@ -21,7 +21,9 @@ void UCAnimNotify_Collision::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 
 	if (!weaponComp) return;
 
-	ACAttachment* attachment = weaponComp->GetAttachment();
+	UObject* uobject = weaponComp->GetAttachment();
+
+	ACAttachment* attachment = Cast<ACAttachment>(uobject);
 
 	if (!attachment) return;
 

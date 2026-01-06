@@ -22,7 +22,9 @@ void UCAnimNotify_Unequip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenc
 	if (!weaponComp)
 		return;
 
-	UCEquipment* equipment = weaponComp->GetEquipment();
+	UObject* uobject = weaponComp->GetEquipment();
+
+	UCEquipment* equipment = Cast<UCEquipment>(uobject);
 
 	if (!equipment)
 		return;

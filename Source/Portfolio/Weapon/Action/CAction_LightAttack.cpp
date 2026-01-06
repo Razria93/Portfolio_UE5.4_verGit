@@ -17,25 +17,25 @@ void UCAction_LightAttack::Tick(float InDeltaTime)
 void UCAction_LightAttack::PlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
-	if (WeaponComp_Cached->CheckCurType(EWeaponType::Unarmed)) return;
-	if (!StateComp_Cached->CheckCurType(EStateType::Idle)) return;
+	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
 	if (!IsValid(ActionDatas_Injected[0].Montage)) return;
 	
 	Super::PlayAction();		// bIsAction = true
 
-	ActionDatas_Injected[0].Begin_PlayMontage(OwnerCharacter_Injected);
+	ActionDatas_Injected[0].BeginPlayMontage(OwnerCharacter_Injected);
 }
 
-void UCAction_LightAttack::Begin_PlayAction()
+void UCAction_LightAttack::BeginPlayAction()
 {
-	Super::Begin_PlayAction();	// bBeginAction = true
+	Super::BeginPlayAction();	// bBeginAction = true
 }
 
-void UCAction_LightAttack::End_PlayAction()
+void UCAction_LightAttack::EndPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
 
-	Super::End_PlayAction();	// bIsAction, bBeginAction = false
+	Super::EndPlayAction();	// bIsAction, bBeginAction = false
 
-	ActionDatas_Injected[0].End_PlayMontage(OwnerCharacter_Injected);
+	ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
 }

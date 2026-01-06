@@ -2,6 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CWeaponComponent.h"
+#include "Component/CActionComponent.h"
 
 UCAnimNotify::UCAnimNotify()
 {
@@ -39,4 +40,22 @@ UCWeaponComponent* UCAnimNotify::GetWeaponComponent(USkeletalMeshComponent* Mesh
 		return nullptr;
 
 	return weaponComp;
+}
+
+UCActionComponent* UCAnimNotify::GetActionComponent(USkeletalMeshComponent* MeshComp)
+{
+	if (!IsValid(MeshComp) || !IsValid(MeshComp->GetOwner()))
+		return nullptr;
+
+	UActorComponent* tempComp = MeshComp->GetOwner()->GetComponentByClass(UCActionComponent::StaticClass());
+
+	if (!tempComp)
+		return nullptr;
+
+	UCActionComponent* actionComp = Cast<UCActionComponent>(tempComp);
+
+	if (!actionComp)
+		return nullptr;
+
+	return actionComp;
 }

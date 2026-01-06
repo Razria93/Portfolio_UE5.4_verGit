@@ -4,6 +4,10 @@
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 
+#include "Component/CApplyDamageComponent.h"
+
+#include "Type/CWeaponStructure.h"
+
 ACAttachment::ACAttachment()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,6 +27,9 @@ void ACAttachment::BeginPlay()
 	if (!IsValid(OwnerCharacter_Cached)) return;
 	if (!IsValid(Root)) return;
 
+	ApplyDamageComp_Cached = Cast<UCApplyDamageComponent>(OwnerCharacter_Cached->GetComponentByClass(UCApplyDamageComponent::StaticClass()));	// TODO: Refactor Interface
+	check(ApplyDamageComp_Cached);
+
 	TArray<USceneComponent*> children;
 	Root->GetChildrenComponents(true, children);
 
@@ -34,7 +41,7 @@ void ACAttachment::BeginPlay()
 		shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
 		shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
 		shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Collision_Disabled
-		
+
 		Collisions_Cached.Add(shape);
 	}
 }
@@ -44,9 +51,61 @@ void ACAttachment::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ACAttachment::InitializeAttachment()
+void ACAttachment::InitializeAttachment(EAttachmentType InAttachmentType)
 {
+	SetAttachmentType(InAttachmentType);
+
 	AttachToOwnerSocket(SocketName_Holster);
+}
+
+const FOverlapContext& ACAttachment::GetLastOverlapContext() const
+{
+	return LastOverlapContext;
+}
+
+const FAttachmentContext& ACAttachment::GetLastAttachmentContext() const
+{
+	return LastAttachmentContext;
+}
+
+const FEquipmentContext& ACAttachment::GetLastEquipmentContext() const
+{
+	return LastEquipmentContext;
+}
+
+const FActionContext& ACAttachment::GetLastActionContext() const
+{
+	return LastActionContext;
+}
+
+void ACAttachment::SetLastOverlapContext(const FOverlapContext& InOverlapContext)
+{
+	LastOverlapContext = InOverlapContext;
+}
+
+void ACAttachment::SetLastAttachmentContext(const FAttachmentContext& InAttachmentContext)
+{
+	LastAttachmentContext = InAttachmentContext;
+}
+
+void ACAttachment::SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext)
+{
+	LastEquipmentContext = InEquipmentContext;
+}
+
+void ACAttachment::SetLastActionContext(const FActionContext& InActionContext)
+{
+	LastActionContext = InActionContext;
+}
+
+EAttachmentType ACAttachment::GetAttachmentType() const
+{
+	return AttachmentType;
+}
+
+void ACAttachment::SetAttachmentType(EAttachmentType InAttachmentType)
+{
+	AttachmentType = InAttachmentType;
 }
 
 void ACAttachment::AttachToOwnerSocket(FName InSocketName)
@@ -56,45 +115,56 @@ void ACAttachment::AttachToOwnerSocket(FName InSocketName)
 
 void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// Attack
-	ACharacter* attacker = OwnerCharacter_Cached;
-	AActor* damageCauser = this;
-	UShapeComponent* attackCollision = Cast<UShapeComponent>(OverlappedComponent);
-	
-	// Hit (keep Actor/Component to support non-character objects)
-	AActor* targetActor = OtherActor;
-	UPrimitiveComponent* hitComponent = OtherComp;
+	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
+	if (!IsValid(overlapComp)) return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
+	if (OwnerCharacter_Cached == OtherActor) return;
+	if (!IsValid(ApplyDamageComp_Cached)) return;
 
-	if (!IsValid(attacker)	||
-		!IsValid(damageCauser) ||
-		!IsValid(attackCollision) ||
-		!IsValid(targetActor) ||
-		!IsValid(hitComponent)) return;
+	FOverlapContext lastOverlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	if (attacker == targetActor) return;
+	FHitContext hitContext;
 
+	hitContext.OverlapContext = lastOverlapContext;
+	hitContext.AttachmentContext = LastAttachmentContext;
+	hitContext.EquipmentContext = LastEquipmentContext;
+	hitContext.ActionContext = LastActionContext;
+
+	// Legacy delegate
 	if (OnAttachmentBeginOverlap.IsBound())
-		OnAttachmentBeginOverlap.Broadcast(attacker, damageCauser, attackCollision, targetActor, hitComponent);
+		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	Print_BeginOverlapEventInfo(attacker, damageCauser, attackCollision, targetActor, hitComponent, OtherBodyIndex, bFromSweep);
+	PrintBeginOverlapContextInfo(hitContext);
+
+	ApplyDamageComp_Cached->RequestApplyDamage(hitContext);
+	LastOverlapContext = lastOverlapContext;
 }
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor == OwnerCharacter_Cached) return;
+	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
+	if (!IsValid(overlapComp)) return;
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
+	if (OwnerCharacter_Cached == OtherActor) return;
+	if (!IsValid(ApplyDamageComp_Cached)) return;
 
-	ACharacter* attacker = OwnerCharacter_Cached;
-	AActor* targetActor = OtherActor;
+	FOverlapContext lastOverlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, false, FHitResult());
+	
+	FHitContext hitContext;
 
-	if (!IsValid(attacker) ||
-		!IsValid(targetActor)) return;
+	hitContext.OverlapContext = lastOverlapContext;
+	hitContext.AttachmentContext = LastAttachmentContext;
+	hitContext.EquipmentContext = LastEquipmentContext;
+	hitContext.ActionContext = LastActionContext;
 
-	if (attacker == targetActor) return;
-
+	// Legacy delegate
 	if (OnAttachmentEndOverlap.IsBound())
-		OnAttachmentEndOverlap.Broadcast(attacker, targetActor);
+		OnAttachmentEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
 
-	Print_EndOverlapEventInfo(attacker, targetActor);
+	PrintEndOverlapContextInfo(hitContext);
+
+	ApplyDamageComp_Cached->RequestStopDamage(hitContext); // Not implemented
+	LastOverlapContext = lastOverlapContext;
 }
 
 void ACAttachment::OnEquipmentBeginEquip()
@@ -106,7 +176,6 @@ void ACAttachment::OnEquipmentBeginUnequip()
 {
 	AttachToOwnerSocket(SocketName_Holster);
 }
-
 
 void ACAttachment::CollisionEnabled(FName InName)
 {
@@ -127,6 +196,7 @@ void ACAttachment::CollisionEnabled(FName InName)
 			collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 
+	// Legacy delegate
 	if (OnAttachmentCollisionEnabled.IsBound())
 		OnAttachmentCollisionEnabled.Broadcast();
 }
@@ -136,27 +206,81 @@ void ACAttachment::CollisionDisabled()
 	for (UShapeComponent* collision : Collisions_Cached)
 		collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Legacy delegate
 	if (OnAttachmentCollisionDisabled.IsBound())
 		OnAttachmentCollisionDisabled.Broadcast();
 }
 
-void ACAttachment::Print_BeginOverlapEventInfo(ACharacter* attacker, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent, int32 OtherBodyIndex, bool bFromSweep)
+FOverlapContext ACAttachment::BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const
 {
-	FLog::Log(TEXT("========== Begin Overlap =========="));
-	FLog::Log(FString::Printf(TEXT("Attacker        : %s"), attacker ? *attacker->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("DamageCauser    : %s"), damageCauser ? *damageCauser->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("AttackCollision : %s"), attackCollision ? *attackCollision->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("TargetActor     : %s"), targetActor ? *targetActor->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("HitComponent    : %s"), hitComponent ? *hitComponent->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("OtherBodyIndex	: %d"), OtherBodyIndex)); 
-	FLog::Log(FString::Printf(TEXT("bFromSweep		: %s"), bFromSweep ? TEXT("true") : TEXT("false")));
-	FLog::Log(TEXT("==================================="));
+	FOverlapContext overlapContext;
+	
+	overlapContext.OwnerActor = InOwnerActor;
+	overlapContext.DamageCauser = InDamageCauser;
+	overlapContext.OverlappedComponent = OverlappedComponent;
+	overlapContext.OverlapShape = Cast<UShapeComponent>(OverlappedComponent);
+	overlapContext.OtherActor = OtherActor;
+	overlapContext.OtherComponent = OtherComp;
+	overlapContext.OtherBodyIndex = OtherBodyIndex;
+	overlapContext.bFromSweep = bFromSweep;
+	
+	overlapContext.SweepResult = bFromSweep ? SweepResult : FHitResult();
+
+	return overlapContext;
 }
 
-void ACAttachment::Print_EndOverlapEventInfo(ACharacter* attacker, AActor* targetActor)
+void ACAttachment::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)
 {
-	FLog::Log(TEXT("=========== End Overlap ==========="));
-	FLog::Log(FString::Printf(TEXT("Attacker    : %s"), attacker ? *attacker->GetName() : TEXT("NULL")));
-	FLog::Log(FString::Printf(TEXT("TargetActor : %s"), targetActor ? *targetActor->GetName() : TEXT("NULL")));
-	FLog::Log(TEXT("==================================="));
+	FLog::Log(TEXT("========= Begin Overlap ========="));
+	PrintOverlapContextInfo(InHitContext.OverlapContext);
+	Print_HitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	FLog::Log(TEXT("================================="));
+}
+
+void ACAttachment::PrintEndOverlapContextInfo(const FHitContext& InHitContext)
+{
+	FLog::Log(TEXT("========== End Overlap =========="));
+	PrintOverlapContextInfo(InHitContext.OverlapContext);
+	Print_HitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	FLog::Log(TEXT("================================="));
+}
+
+void ACAttachment::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext)
+{
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
+
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InOverlapContext.DamageCauser)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlappedComponent"), *GetNameSafe(InOverlapContext.OverlappedComponent)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlapShape"), *GetNameSafe(InOverlapContext.OverlapShape))); // cast result (can be NULL)
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherActor"), *GetNameSafe(InOverlapContext.OtherActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherComponent"), *GetNameSafe(InOverlapContext.OtherComponent)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("OtherBodyIndex"), InOverlapContext.OtherBodyIndex));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bFromSweep"), InOverlapContext.bFromSweep ? TEXT("true") : TEXT("false")));
+
+	if (InOverlapContext.bFromSweep)
+	{
+		const FHitResult& hitResult = InOverlapContext.SweepResult;
+
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BlockingHit"), hitResult.bBlockingHit ? TEXT("true") : TEXT("false")));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Actor"), *GetNameSafe(hitResult.GetActor())));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Component"), *GetNameSafe(hitResult.GetComponent())));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BoneName"), *hitResult.BoneName.ToString()));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactPoint"), *hitResult.ImpactPoint.ToString()));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactNormal"), *hitResult.ImpactNormal.ToString()));
+	}
+}
+
+void ACAttachment::Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
+{
+	FLog::Log(TEXT("---------- Hit Context ----------"));
+	FLog::Log(TEXT("[AttachmentContext]"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentAttachmentType"), *UEnum::GetValueAsString(InAttachmentContext.CurrentAttachmentType)));
+
+	FLog::Log(TEXT("[EquipmentContext]"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentEquipmentType"), *UEnum::GetValueAsString(InEquipmentContext.CurrentEquipmentType)));
+
+	FLog::Log(TEXT("[ActionContext]"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentActionType"), *UEnum::GetValueAsString(InActionContext.CurrentActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), (InActionContext.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.ActionIndex)));
+	FLog::Log(TEXT("---------------------------------"));
 }

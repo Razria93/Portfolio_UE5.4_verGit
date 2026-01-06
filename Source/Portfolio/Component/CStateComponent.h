@@ -35,7 +35,7 @@ public:
 
 public:
 	/* === Getter === */
-	FORCEINLINE EStateType GetCurType() { return CurrentStateType; }
+	FORCEINLINE EStateType GetCurStateType() { return CurrentStateType; }
 
 public:
 	/* === Setter === */
@@ -46,7 +46,7 @@ public:
 
 public:
 	/* === Check / Query === */
-	FORCEINLINE bool CheckCurType(EStateType InNewStateType) { return CurrentStateType == InNewStateType; }
+	FORCEINLINE bool CheckCurStateType(EStateType InNewStateType) { return CurrentStateType == InNewStateType; }
 
 private:
 	void ChangeStateType(EStateType InNewStateType);

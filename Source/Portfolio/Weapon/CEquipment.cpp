@@ -3,10 +3,15 @@
 
 #include "GameFramework/Character.h"
 #include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 
-void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData)
+#include "Interface/HitContextProducer.h"
+
+void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, EEquipmentType InEquipmentType, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData)
 {
+	SetEquipmentType(InEquipmentType);
+
 	OwnerCharacter_Injected = InOwnerCharacter;
 	check(OwnerCharacter_Injected);
 
@@ -17,11 +22,24 @@ void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, FEquipmentDa
 	bBeginUnequip = false;
 	bEquipped = false;
 
-	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Injected->GetComponentByClass(UCMovementComponent::StaticClass())); // TODO: Refactor Interface
+	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Injected->GetComponentByClass(UCMovementComponent::StaticClass()));	// TODO: Refactor Interface
 	check(MovementComp_Cached);
 
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass())); // TODO: Refactor Interface
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));		// TODO: Refactor Interface
+	check(WeaponComp_Cached);
+
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));			// TODO: Refactor Interface
 	check(StateComp_Cached);
+}
+
+EEquipmentType UCEquipment::GetEquipmentType() const
+{
+	return EquipmentType;
+}
+
+void UCEquipment::SetEquipmentType(EEquipmentType InEquipmentType)
+{
+	EquipmentType = InEquipmentType;
 }
 
 void UCEquipment::Equip()

@@ -9,12 +9,12 @@
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
 
-void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas)
+void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
 {
-	Super::InitializeAction(InOwnerCharacter, InActionDatas);
+	Super::InitializeAction(InOwnerCharacter, InActionType, InActionDatas);
 
-	Index = 0;
-	
+	ActionIndex = 0;
+
 	bEnablePreInput = false;
 	bExistPreInput = false;
 }
@@ -26,79 +26,83 @@ void UCAction_ComboAttack::Tick(float InDeltaTime)
 
 void UCAction_ComboAttack::PlayAction()
 {
-	// [Re invocation] Convert 're-invoked PlayAction()' into 'buffered pre-input'
+	// [Re-call] Convert 're-invoked PlayAction()' into 'buffered pre-input'
 	if (bEnablePreInput)
 	{
-		bEnablePreInput = false;	// Enabled by CAnimNotify_ComboEnable
-		bExistPreInput = true;		// Mark pre-input for next combo step
-		
+		bEnablePreInput = false; // Enabled by CAnimNotify_ComboEnable
+		bExistPreInput = true;	 // Mark pre-input for next combo step
+
 		return;
 	}
 
-	// [First invocation] Validate execution conditions & Execute first combo action
+	// [First-call] Validate execution conditions & Execute first combo action
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
-	if (WeaponComp_Cached->CheckCurType(EWeaponType::Unarmed)) return;
-	if (!StateComp_Cached->CheckCurType(EStateType::Idle)) return;
+	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
 	if (ActionDatas_Injected.Num() <= 0) return;
 
 	Super::PlayAction();		// bIsAction = true
 
-	if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-	ActionDatas_Injected[Index].Begin_PlayMontage(OwnerCharacter_Injected);
+	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
+	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 }
 
-void UCAction_ComboAttack::Begin_PlayAction()
+void UCAction_ComboAttack::BeginPlayAction()
 {
-	Super::Begin_PlayAction();	// bBeginAction = true
+	Super::BeginPlayAction();	// bBeginAction = true
+
+	FActionContext actionContext;
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = ActionIndex;
+
+	PushContextToAttachment(actionContext);
 }
 
-void UCAction_ComboAttack::End_PlayAction()
+void UCAction_ComboAttack::EndPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	Super::End_PlayAction();	// bIsAction, bBeginAction = false
+	Super::EndPlayAction();	// bIsAction, bBeginAction = false
 
-	if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-	ActionDatas_Injected[Index].End_PlayMontage(OwnerCharacter_Injected);
+	const int32 num = ActionDatas_Injected.Num();
 
-	Index = 0;
+	if (num > 0 && ActionIndex >= 0 && ActionIndex < num)
+	{
+		if (IsValid(ActionDatas_Injected[ActionIndex].Montage))
+			ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
+	}
+
+	ActionIndex = 0;
 
 	bEnablePreInput = false;
 	bExistPreInput = false;
+
+	ClearContextToAttachment();
 }
 
-void UCAction_ComboAttack::Next_PlayAction()
+void UCAction_ComboAttack::NextPlayAction()
 {
 	if (bExistPreInput)
 	{
-		Super::Next_PlayAction();
+		Super::NextPlayAction();
 
 		bExistPreInput = false;
 
-		Index++;
-		if ((int32)Index >= ActionDatas_Injected.Num()) return;
+		const int32 num = ActionDatas_Injected.Num();
+		if (num <= 0) return;
 
-		if (!IsValid(ActionDatas_Injected[Index].Montage)) return;
-		ActionDatas_Injected[Index].Begin_PlayMontage(OwnerCharacter_Injected);
+		const int32 nextActionIndex = ActionIndex + 1;
+		if (nextActionIndex >= num) return;
+
+		ActionIndex = nextActionIndex;
+
+		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
+		ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
+
+		FActionContext actionContext;
+		actionContext.CurrentActionType = ActionType;
+		actionContext.ActionIndex = ActionIndex; // Increased ActionIndex
+
+		PushContextToAttachment(actionContext);
 	}
-}
-
-void UCAction_ComboAttack::OnAttachmentCollisionEnabled()
-{
-	// TODO
-}
-
-void UCAction_ComboAttack::OnAttachmentCollisionDisabled()
-{
-	// TODO
-}
-
-void UCAction_ComboAttack::OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent)
-{
-	// TODO
-}
-
-void UCAction_ComboAttack::OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor)
-{
-	// TODO
 }

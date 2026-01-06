@@ -19,7 +19,7 @@ void UCAnimInstance::NativeBeginPlay()
 	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
 	if (!IsValid(WeaponComp_Cached)) return;
 
-	WeaponComp_Cached->OnWeaponTypeChanged.AddDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+	WeaponComp_Cached->OnAttachmentTypeChanged.AddDynamic(this, &UCAnimInstance::OnAttachmentTypeChanged);
 }
 
 void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -33,9 +33,9 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsInAir = MovementComp_Cached->IsFalling();
 }
 
-void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType)
+void UCAnimInstance::OnAttachmentTypeChanged(ACharacter* InOwnerCharacter, EAttachmentType InPrevAttachmentType, EAttachmentType InNewAttachmentType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(InOwnerCharacter) || (OwnerCharacter_Cached != InOwnerCharacter)) return;
 
-	WeaponType = InNewWeaponType;
+	AttachmentType = InNewAttachmentType;
 }

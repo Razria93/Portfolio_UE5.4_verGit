@@ -2,10 +2,21 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+#include "Components/ShapeComponent.h"
 
 #include "Component/CMovementComponent.h"
 
-void FActionData::Begin_PlayMontage(ACharacter* InOwnerCharacter)
+bool FEquipmentData::IsValidMinimal() const
+{
+	return IsValid(Montage);
+}
+
+bool FActionData::IsValidMinimal() const
+{
+	return IsValid(Montage);
+}
+
+void FActionData::BeginPlayMontage(ACharacter* InOwnerCharacter)
 {
 	UActorComponent* temp = InOwnerCharacter->GetComponentByClass(UCMovementComponent::StaticClass());
 	if (!IsValid(temp)) return;
@@ -20,7 +31,7 @@ void FActionData::Begin_PlayMontage(ACharacter* InOwnerCharacter)
 		InOwnerCharacter->PlayAnimMontage(Montage, PlayRate);
 }
 
-void FActionData::End_PlayMontage(ACharacter* InOwnerCharacter)
+void FActionData::EndPlayMontage(ACharacter* InOwnerCharacter)
 {
 	UActorComponent* temp = InOwnerCharacter->GetComponentByClass(UCMovementComponent::StaticClass());
 	if (!IsValid(temp)) return;
@@ -30,4 +41,9 @@ void FActionData::End_PlayMontage(ACharacter* InOwnerCharacter)
 
 	if (bCanMove == false)
 		moveComp->SetMove();
+}
+
+bool FOverlapContext::IsValidMinimal() const
+{
+	return IsValid(OwnerActor) && IsValid(DamageCauser) && IsValid(OtherActor);
 }

@@ -19,34 +19,48 @@ protected:
 	/* === Cached Objects === */
 	class UCWeaponComponent* WeaponComp_Cached;
 	class UCStateComponent* StateComp_Cached;
+	class UCActionComponent* ActionComp_Cached;
+
+protected:
+	EActionType ActionType;
 
 private:
 	bool bBeginAction;	// Action start triggered
 	bool bIsAction;		// Action is active
 
 public:
-	virtual void InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas);
+	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas);
 	virtual void Tick(float InDeltaTime) {};
 
 public:
+	EActionType GetActionType() const;
+
+public:
+	void SetActionType(EActionType InActionType);
+
+public:
 	virtual void PlayAction();
-	virtual void Begin_PlayAction();
-	virtual void End_PlayAction();
-	virtual void Next_PlayAction() {};
+	virtual void BeginPlayAction();
+	virtual void EndPlayAction();
+	virtual void NextPlayAction() {};
+
+protected:
+	void PushContextToAttachment(const FActionContext& InActionContext);
+	void ClearContextToAttachment();
 
 public:
 	/* === [IN] Custom Delgate Events === */
-	// CAttachment
+	// [Legacy delegate] CAttachment
 	UFUNCTION()
 	virtual void OnAttachmentCollisionEnabled() {};
 
 	UFUNCTION()
 	virtual void OnAttachmentCollisionDisabled() {};
 
-	// CAttachment
+	// [Legacy delegate] CAttachment
 	UFUNCTION()
-	virtual void OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent) {};
-	
+	virtual void OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
+
 	UFUNCTION()
 	virtual void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) {};
 };

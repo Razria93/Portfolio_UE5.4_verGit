@@ -1,8 +1,10 @@
 #include "Notify/CAnimNotify_Action.h"
 #include "ProjectGlobal.h"
 
-#include "Component/CWeaponComponent.h"
+#include "Component/CActionComponent.h"
 #include "Weapon/CAction.h"
+
+#include "Type/CWeaponStructure.h"
 
 UCAnimNotify_Action::UCAnimNotify_Action()
 {
@@ -17,18 +19,18 @@ void UCAnimNotify_Action::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	UCWeaponComponent* weaponComp = GetWeaponComponent(MeshComp);
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!actionComp) return;
 
-	if (!weaponComp) return;
+	UObject* uobject = actionComp->GetAction(actionComp->GetCurActionType());
+	if (!uobject) return;
 
-	UCAction* action = weaponComp->GetAction();
-
-	if (!action) return;
+	UCAction* action = Cast<UCAction>(uobject);
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin: action->Begin_PlayAction(); return;
-	case EAnimNotifyFlow::End: action->End_PlayAction(); return;
-	case EAnimNotifyFlow::Next: action->Next_PlayAction(); return;
+	case EAnimNotifyFlow::Begin: action->BeginPlayAction(); return;
+	case EAnimNotifyFlow::End: action->EndPlayAction(); return;
+	case EAnimNotifyFlow::Next: action->NextPlayAction(); return;
 	}
 }

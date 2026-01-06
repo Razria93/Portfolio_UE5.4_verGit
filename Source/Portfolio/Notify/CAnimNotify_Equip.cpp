@@ -21,7 +21,9 @@ void UCAnimNotify_Equip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 
 	if (!weaponComp) return;
 
-	UCEquipment* equipment = weaponComp->GetEquipment();
+	UObject* uobject = weaponComp->GetEquipment();
+
+	UCEquipment* equipment = Cast<UCEquipment>(uobject);
 
 	if (!equipment) return;
 

@@ -14,6 +14,6 @@ public:
 
 public:
 	void PlayAction() override;
-	void Begin_PlayAction() override;
-	void End_PlayAction() override;
+	void BeginPlayAction() override;
+	void EndPlayAction() override;
 };

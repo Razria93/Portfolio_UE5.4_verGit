@@ -10,31 +10,21 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 	GENERATED_BODY()
 
 private:
-	uint32 Index;
+	int32 ActionIndex;
 
 private:
 	bool bEnablePreInput;
 	bool bExistPreInput;
 
 public:
-	void InitializeAction(ACharacter* InOwnerCharacter, const TArray<FActionData> InActionDatas) override;
+	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas) override;
 	void Tick(float InDeltaTime) override;
 
 public:
 	void PlayAction() override;
-	void Begin_PlayAction() override;
-	void End_PlayAction() override;
-	void Next_PlayAction() override;
-
-public:
-	/* === [IN] Custom Delgate Events === */
-	// CAttachment_Collision (Enabled/Disabled)
-	void OnAttachmentCollisionEnabled() override;
-	void OnAttachmentCollisionDisabled() override;
-	
-	// CAttachment_Overlap
-	void OnAttachmentBeginOverlap(AActor* attackerActor, AActor* damageCauser, UShapeComponent* attackCollision, AActor* targetActor, UPrimitiveComponent* hitComponent) override;
-	void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) override;
+	void BeginPlayAction() override;
+	void EndPlayAction() override;
+	void NextPlayAction() override;
 
 public:
 	FORCEINLINE void OnEnablePreInput() { bEnablePreInput = true; }

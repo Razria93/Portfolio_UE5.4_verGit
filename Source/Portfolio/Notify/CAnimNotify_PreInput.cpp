@@ -1,7 +1,7 @@
 #include "Notify/CAnimNotify_PreInput.h"
 #include "ProjectGlobal.h"
 
-#include "Component/CWeaponComponent.h"
+#include "Component/CActionComponent.h"
 #include "Weapon/Action/CAction_ComboAttack.h"
 
 UCAnimNotify_PreInput::UCAnimNotify_PreInput()
@@ -17,12 +17,10 @@ void UCAnimNotify_PreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	UCWeaponComponent* weaponComp = GetWeaponComponent(MeshComp);
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!actionComp) return;
 
-	if (!weaponComp) return;
-
-	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(weaponComp->GetAction());
-
+	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(actionComp->GetAction(actionComp->GetCurActionType()));
 	if (!action_ComboAttack) return;
 
 	switch (FlowType)
@@ -31,4 +29,3 @@ void UCAnimNotify_PreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 	case EAnimNotifyFlow::End: action_ComboAttack->OffEnablePreInput(); return;
 	}
 }
-
