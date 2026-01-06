@@ -58,45 +58,26 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 {
 	// Minimal validation
 	if (DamageAmount <= 0.f) return 0.f;
-	if (!IsValid(TakeDamageComponent)) return 0.f;
 
 	// TODO: Check DeadFlag and early return
 
-	// TODO: Migrate to TakeDamageComponent
-	// if (DamageEvent.IsOfType(FDefaultDamageEvent::ClassID))
-	// {
-	// 	const FDefaultDamageEvent& damageEvent = static_cast<const FDefaultDamageEvent&>(DamageEvent);
-	// 	return HandleDefaultDamage(damageEvent, EventInstigator, DamageCauser);
-	// }
+	float finalDamage = DamageAmount;
+	
+	if (IsValid(TakeDamageComponent))
+	{
+		finalDamage = TakeDamageComponent->RequestTakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	}
+	else
+	{
+		// [FallBack]
+		finalDamage = DamageAmount;
+	}
 
-	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
+	
+
+
+	return finalDamage;
 }
 
-// TODO: Migrate to TakeDamageComponent
-// float ACEnemy::HandleDefaultDamage(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
-// {
-// 	if (!IsValid(InDamageCauser)) return 0.f;
-// 
-// 	const FDamageSpecKey& damageSpecKey = InDefaultDamageEvent.DamageSpecKey;
-// 	const FDamageResult& damageResult = InDefaultDamageEvent.DamageResult;
-// 
-// 	// Calculate Damage (Minimal)
-// 	const float takedDamage = FMath::Max(0.f, damageResult.FinalDamage);
-// 
-// 	// Print_HandleDamageResult
-// 	FLog::Log(TEXT("[@ TAKE DAMAGE]"));
-// 	FLog::Log(FString::Printf(TEXT("Victim: %s | Key: [AttachmentType: %s / EquipmentType: %s / ActionType: %s / ActionIndex: %d] | TakedDamage: %.3f | Causer: %s"),
-// 		*GetNameSafe(this),
-// 		*UEnum::GetValueAsString(damageSpecKey.AttachmentType),
-// 		*UEnum::GetValueAsString(damageSpecKey.EquipmentType),
-// 		*UEnum::GetValueAsString(damageSpecKey.ActionType),
-// 		damageSpecKey.ActionIndex,
-// 		takedDamage,
-// 		*GetNameSafe(InDamageCauser)
-// 	));
-// 
-// 	// TODO: HP reduction / state transitions / hit reactions (montage, VFX/SFX) / knockback / hit stop (time dilation) / etc.
-// 
-// 	return takedDamage;
-// }
 
