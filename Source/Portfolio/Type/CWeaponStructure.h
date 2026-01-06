@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Engine/DamageEvents.h"
+#include "DamageEventId.h"
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
@@ -237,37 +238,32 @@ public:
 	UPROPERTY()
 	float FinalDamage = 0.f;
 
-	UPROPERTY()
-	class AActor* Attacker = nullptr;
-
-	UPROPERTY()
-	class AActor* DamageCauser = nullptr;
-
-	UPROPERTY()
-	class AActor* Target = nullptr;
+	// TODO:
+	// FVector ImpactPoint;
+	// FVector HitNormal;
 };
 
 USTRUCT()
-struct FCustomDamageEvent : public FDamageEvent
+struct FDefaultDamageEvent : public FDamageEvent
 {
 	GENERATED_BODY()
 
 public:
+	UPROPERTY() 
+	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
+
+	UPROPERTY()
+	FDamageSpec DamageSpec = FDamageSpec();
+
 	UPROPERTY()
 	FDamageResult DamageResult = FDamageResult();
 
 public:
-	UPROPERTY(EditAnywhere)
-	EAttachmentType AttachmentType = EAttachmentType::Max;
+	static const int32 ClassID = (int32)EDamageEventTypeId::DefaultDamage;
 
-	UPROPERTY(EditAnywhere)
-	EEquipmentType EquipmentType = EEquipmentType::Max;
-
-	UPROPERTY(EditAnywhere)
-	EActionType ActionType = EActionType::Max;
-
-	UPROPERTY(EditAnywhere)
-	int32 ActionIndex = INDEX_NONE;
+public:
+	virtual int32 GetTypeID() const override { return ClassID; }
+	virtual bool IsOfType(int32 InID) const override { return InID == ClassID || FDamageEvent::IsOfType(InID); }
 };
 
 UCLASS()

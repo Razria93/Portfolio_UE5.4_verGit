@@ -129,12 +129,8 @@ bool UCApplyDamageComponent::ComputeDamageResult(const FHitContext& InHitContext
 	if (!IsValid(attacker) || !IsValid(damageCauser) || !IsValid(target))
 		return false;
 
-	OutDamageResult = FDamageResult();
-	OutDamageResult.Attacker = attacker;
-	OutDamageResult.DamageCauser = damageCauser;
-	OutDamageResult.Target = target;
-
 	// ComputeDamage (Minimal, [TODO] Implement `ComputeDamage()`)
+	OutDamageResult = FDamageResult();
 	OutDamageResult.FinalDamage = InDamageSpec.BaseDamage;
 
 	return true;
@@ -142,24 +138,29 @@ bool UCApplyDamageComponent::ComputeDamageResult(const FHitContext& InHitContext
 
 bool UCApplyDamageComponent::ApplyDamageToTarget(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult) const
 {
-	AActor* attacker = InDamageResult.Attacker;
-	AActor* damageCauser = InDamageResult.DamageCauser;
-	AActor* target = InDamageResult.Target;
+	AActor* attacker = InHitContext.OverlapContext.OwnerActor;
+	AActor* damageCauser = InHitContext.OverlapContext.DamageCauser;
+	AActor* target = InHitContext.OverlapContext.OtherActor;
 
 	if (!IsValid(attacker) || !IsValid(damageCauser) || !IsValid(target)) return false;
 
-	APawn* pawn = Cast<APawn>(attacker);
-
-	if (!IsValid(attacker)) return false;
-
-	AController* instigatorController = pawn->GetController();
-
+	AController* instigatorController = attacker->GetInstigatorController();
+	if (!IsValid(instigatorController))
+	{
+		// Fallback: if DamageCauser has no valid InstigatorController, derive it from Attacker
+		if (APawn* Pawn = Cast<APawn>(attacker))
+			instigatorController = Pawn->GetController();
+	}
 	if (!IsValid(instigatorController)) return false;
 
-	FCustomDamageEvent customDamageEvent;
-	customDamageEvent.DamageResult = InDamageResult;
+	FDamageSpecKey damageSpectKey = BuildSpecKey(InHitContext);
 
-	const float appliedDamage = target->TakeDamage(InDamageResult.FinalDamage, customDamageEvent, instigatorController, damageCauser);
+	FDefaultDamageEvent damageEvent;
+	damageEvent.DamageSpecKey = damageSpectKey;
+	damageEvent.DamageSpec = InDamageSpec;
+	damageEvent.DamageResult = InDamageResult;
+
+	const float appliedDamage = target->TakeDamage(InDamageResult.FinalDamage, damageEvent, instigatorController, damageCauser);
 
 	FLog::Log("[@ APPLY DAMAGE]");
 	FLog::Log(FString::Printf(TEXT("Target = %s | Request = %.3f | Apply = %.3f"), *GetNameSafe(target), InDamageResult.FinalDamage, appliedDamage));
@@ -240,8 +241,5 @@ void UCApplyDamageComponent::PrintDamageResult(const FDamageResult& InDamageResu
 {
 	FLog::Log(TEXT("--------- Damage Result ---------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalDamage"), InDamageResult.FinalDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Attacker"), *GetNameSafe(InDamageResult.Attacker)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InDamageResult.DamageCauser)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Target"), *GetNameSafe(InDamageResult.Target)));
 	FLog::Log(TEXT("---------------------------------"));
 }
