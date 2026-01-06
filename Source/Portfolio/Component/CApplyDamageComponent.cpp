@@ -184,9 +184,9 @@ void UCApplyDamageComponent::PrintApplyDamageContextInfo(const FHitContext& InHi
 {
 	FLog::Log(TEXT("========= Apply Damage =========="));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	Print_HitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
-	PrintDamageSpec(InDamageSpec);
-	PrintDamageResult(InDamageResult);
+	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintDamageSpecInfo(InDamageSpec);
+	PrintDamageResultInfo(InDamageResult);
 	FLog::Log(TEXT("================================="));
 }
 
@@ -215,7 +215,7 @@ void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOv
 	}
 }
 
-void UCApplyDamageComponent::Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
+void UCApplyDamageComponent::PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
 	FLog::Log(TEXT("[AttachmentContext]"));
@@ -230,14 +230,14 @@ void UCApplyDamageComponent::Print_HitContextInfo(const FAttachmentContext& InAt
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintDamageSpec(const FDamageSpec& InDamageSpec)
+void UCApplyDamageComponent::PrintDamageSpecInfo(const FDamageSpec& InDamageSpec)
 {
 	FLog::Log(TEXT("---------- Damage Spec ----------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InDamageSpec.BaseDamage));
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintDamageResult(const FDamageResult& InDamageResult)
+void UCApplyDamageComponent::PrintDamageResultInfo(const FDamageResult& InDamageResult)
 {
 	FLog::Log(TEXT("--------- Damage Result ---------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalDamage"), InDamageResult.FinalDamage));

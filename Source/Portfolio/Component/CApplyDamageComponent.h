@@ -46,7 +46,7 @@ private:
 
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext);
-	void Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
-	void PrintDamageSpec(const FDamageSpec& InDamageSpec);
-	void PrintDamageResult(const FDamageResult& InDamageResult);
+	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+	void PrintDamageSpecInfo(const FDamageSpec& InDamageSpec);
+	void PrintDamageResultInfo(const FDamageResult& InDamageResult);
 };

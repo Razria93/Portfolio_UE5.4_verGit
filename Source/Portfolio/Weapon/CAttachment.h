@@ -133,5 +133,5 @@ private:
 	void PrintEndOverlapContextInfo(const FHitContext& InHitContext);
 
 	void PrintOverlapContextInfo(const FOverlapContext& Context);
-	void Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
 };
