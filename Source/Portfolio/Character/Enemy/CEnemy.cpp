@@ -69,14 +69,13 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	}
 	else
 	{
-		// [FallBack]
+		// FallBack
 		finalDamage = DamageAmount;
 	}
 
+	// Engine-Event Trigger
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 	
-
-
 	return finalDamage;
 }
 

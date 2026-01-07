@@ -266,6 +266,68 @@ public:
 	virtual bool IsOfType(int32 InID) const override { return InID == ClassID || FDamageEvent::IsOfType(InID); }
 };
 
+USTRUCT(BlueprintType)
+struct FTakeDamagePayload
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere)
+	class AController* EventInstigator = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class AActor* DamageCauser = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
+
+	UPROPERTY(VisibleAnywhere)
+	FDamageSpec DamageSpec = FDamageSpec();
+
+	UPROPERTY(VisibleAnywhere)
+	FDamageResult DamageResult = FDamageResult();
+};
+
+USTRUCT(BlueprintType)
+struct FTakeDamageContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere)
+	class AActor* DamagedActor = nullptr;
+
+	// === Payload ===
+	UPROPERTY(VisibleAnywhere)
+	class AController* EventInstigator = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class AActor* DamageCauser = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
+
+	UPROPERTY(VisibleAnywhere)
+	FDamageSpec DamageSpec = FDamageSpec();
+
+	UPROPERTY(VisibleAnywhere)
+	FDamageResult DamageResult = FDamageResult();
+
+	// === Damage values ===
+	UPROPERTY(VisibleAnywhere)
+	float TakedDamage = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	float FinalDamage = 0.f;
+
+	// === TakeDamage-side Flags ===
+	UPROPERTY(VisibleAnywhere)
+	bool bCanApplyDamage = true;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bIsDead = false;
+};
+
 UCLASS()
 class PORTFOLIO_API UCWeaponStructure : public UObject
 {

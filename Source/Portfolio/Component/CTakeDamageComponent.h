@@ -30,5 +30,8 @@ private:
 	float HandleDefaultDamage(const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
 
 private:
-	void PrintDefaultDamageEvent(float InTakeDamage, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser);
+	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser);
+
+private:
+	void PrintDefaultDamageEvent(AActor* InDamagedActor, AController* InDamageInstigator, AActor* InDamageCauser, const FDamageSpecKey& InDamageSpecKey, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult, float InTakedDamage, float InFinalDamage);
 };

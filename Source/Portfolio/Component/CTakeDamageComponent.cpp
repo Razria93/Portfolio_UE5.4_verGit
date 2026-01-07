@@ -38,30 +38,105 @@ float UCTakeDamageComponent::HandleDefaultDamage(const FDefaultDamageEvent& InDe
 {
 	if (!IsValid(InDamageCauser)) return 0.f;
 
-	const FDamageSpecKey& damageSpecKey = InDefaultDamageEvent.DamageSpecKey;
-	const FDamageResult& damageResult = InDefaultDamageEvent.DamageResult;
+	// Payload: Save Raw InputData (BeforeData)
+	FTakeDamagePayload takeDamagePayload = FTakeDamagePayload();
 
-	// Calculate Damage (Minimal)
-	const float takedDamage = FMath::Max(0.f, damageResult.FinalDamage);
+	takeDamagePayload.EventInstigator = InDamageInstigator;
+	takeDamagePayload.DamageCauser = InDamageCauser;
+	takeDamagePayload.DamageSpecKey = InDefaultDamageEvent.DamageSpecKey;
+	takeDamagePayload.DamageSpec = InDefaultDamageEvent.DamageSpec;
+	takeDamagePayload.DamageResult = InDefaultDamageEvent.DamageResult;
 
-	// TODO: HP reduction / state transitions / hit reactions (montage, VFX/SFX) / knockback / hit stop (time dilation) / etc.
+	// Context: Save HandleData (AfterData)
+	FTakeDamageContext takeDamageContext = FTakeDamageContext();
 
-	PrintDefaultDamageEvent(takedDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
+	takeDamageContext.DamagedActor = GetOwner();
+	takeDamageContext.EventInstigator = ResolveInstigatorController(takeDamagePayload.EventInstigator, takeDamagePayload.DamageCauser);
+	takeDamageContext.DamageCauser = takeDamagePayload.DamageCauser;
+	takeDamageContext.DamageSpecKey = takeDamagePayload.DamageSpecKey;
+	takeDamageContext.DamageSpec = takeDamagePayload.DamageSpec;
+	takeDamageContext.DamageResult = takeDamagePayload.DamageResult;
 
-	return takedDamage;
+	takeDamageContext.TakedDamage = takeDamagePayload.DamageResult.FinalDamage;
+	takeDamageContext.FinalDamage = FMath::Max(0.f, takeDamagePayload.DamageResult.FinalDamage); // Set init FinalDamage
+
+	// TODO:
+	// takeDamageContext.bCanApplyDamage = (...);
+	// takeDamageContext.bIsDead = (...);
+
+	// TODO: 
+	// Calculate-damage function
+
+	// TODO: 
+	// HP reduction / state transitions / hit reactions (montage, VFX/SFX) / knockback / hit stop (time dilation) / etc.
+
+	PrintDefaultDamageEvent
+	(
+		takeDamageContext.DamagedActor,
+		takeDamageContext.EventInstigator,
+		takeDamageContext.DamageCauser,
+		takeDamageContext.DamageSpecKey,
+		takeDamageContext.DamageSpec,
+		takeDamageContext.DamageResult,
+		takeDamageContext.TakedDamage,
+		takeDamageContext.FinalDamage
+	);
+
+	return takeDamageContext.FinalDamage;
 }
 
-void UCTakeDamageComponent::PrintDefaultDamageEvent(float InTakeDamage, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
+AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser)
 {
-	const FDamageSpecKey& damageSpecKey = InDefaultDamageEvent.DamageSpecKey;
-	const FDamageSpec& damageSpec = InDefaultDamageEvent.DamageSpec;
-	const FDamageResult& damageResult = InDefaultDamageEvent.DamageResult;
+	// 1) Best case: engine provided instigator
+	if (IsValid(EventInstigator))
+		return EventInstigator;
+
+	// 2) Fallback needs a valid causer
+	if (!IsValid(DamageCauser))
+		return nullptr;
+
+	/* === Fallback Process (DamageCauser-based) === */
+
+	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / attachment / trap)
+	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
+		return causerInstigator;
+
+	// 2-2) Case 02: Direct hit (the causer itself is a Pawn/Character)
+	if (APawn* causerPawn = Cast<APawn>(DamageCauser))
+	{
+		if (AController* causerController = causerPawn->GetController())
+			return causerController;
+	}
+
+	// 2-3) Case 03: Proxy case (projectile / trap / attachment owned by another actor)
+	if (AActor* causerOwner = DamageCauser->GetOwner())
+	{
+		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / attachment / trap)
+		if (AController* ownerInstigator = causerOwner->GetInstigatorController())
+			return ownerInstigator;
+
+		// 2-3-1) Case 03-02: Fallback (Owner is Pawn/Character)
+		if (APawn* ownerPawn = Cast<APawn>(causerOwner))
+		{
+			if (AController* ownerController = ownerPawn->GetController())
+				return ownerController;
+		}
+	}
+
+	return nullptr;
+}
+
+void UCTakeDamageComponent::PrintDefaultDamageEvent(AActor* InDamagedActor, AController* InEventInstigator, AActor* InDamageCauser, const FDamageSpecKey& InDamageSpecKey, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult, float InTakedDamage, float InFinalDamage)
+{
+	const FDamageSpecKey& damageSpecKey = InDamageSpecKey;
+	const FDamageSpec& damageSpec = InDamageSpec;
+	const FDamageResult& damageResult = InDamageResult;
 
 	// Print ObjectInfo
 	FLog::Log(TEXT("[@ TAKE DAMAGE]"));
-	FLog::Log(FString::Printf(TEXT("Victim = %s | Instigator = %s | Causer = %s"),
-		*GetNameSafe(IsValid(GetOwner()) ? GetOwner() : nullptr),
-		*GetNameSafe(InDamageInstigator),
+	FLog::Log(FString::Printf(TEXT("DamagedActor = %s | Instigator = %s | DamageCauser = %s"),
+		*GetNameSafe(InDamagedActor),
+		*GetNameSafe(InEventInstigator),
 		*GetNameSafe(InDamageCauser)
 	));
 
@@ -74,10 +149,9 @@ void UCTakeDamageComponent::PrintDefaultDamageEvent(float InTakeDamage, const FD
 	));
 
 	// Print DamageInfo
-	FLog::Log(FString::Printf(TEXT("Base Damage = %.3f | Applied Damage = %.3f | Taked Damage = %.3f"),
-		damageSpec.BaseDamage,
-		damageResult.FinalDamage,
-		InTakeDamage
+	FLog::Log(FString::Printf(TEXT("Taked Damage = %.3f | Final Damage = %.3f"),
+		InTakedDamage,
+		InFinalDamage
 	));
 }
 
