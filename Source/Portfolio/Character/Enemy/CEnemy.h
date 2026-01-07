@@ -20,6 +20,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCTakeDamageComponent* TakeDamageComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCHealthComponent* HealthComponent;
+
 protected:
 	virtual void BeginPlay() override;
 

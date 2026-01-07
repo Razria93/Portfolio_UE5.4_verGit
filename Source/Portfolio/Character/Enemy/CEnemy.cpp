@@ -6,6 +6,7 @@
 
 #include "Component/CStateComponent.h"
 #include "Component/CTakeDamageComponent.h"
+#include "Component/CHealthComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -37,6 +38,10 @@ ACEnemy::ACEnemy()
 	// Init StateComp
 	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
 	check(TakeDamageComponent);
+
+	// Init HealthComp
+	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
+	check(HealthComponent);
 }
 
 void ACEnemy::BeginPlay()
