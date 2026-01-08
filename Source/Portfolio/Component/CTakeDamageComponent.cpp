@@ -1,6 +1,10 @@
 #include "Component/CTakeDamageComponent.h"
 #include "ProjectGlobal.h"
 
+#include "GameFramework/Character.h"
+
+#include "Component/CHealthComponent.h"
+
 #include "Type/CWeaponStructure.h"
 
 UCTakeDamageComponent::UCTakeDamageComponent()
@@ -11,6 +15,12 @@ UCTakeDamageComponent::UCTakeDamageComponent()
 void UCTakeDamageComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	OwnerActor_Cached = Cast<AActor>(GetOwner());
+	check(OwnerActor_Cached);
+
+	HealthComp_Cached = Cast<UCHealthComponent>(OwnerActor_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
+	check(HealthComp_Cached);
 }
 
 void UCTakeDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -36,6 +46,11 @@ float UCTakeDamageComponent::ProcessTakeDamage(float DamageAmount, FDamageEvent 
 
 float UCTakeDamageComponent::HandleDefaultDamage(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
+	// [Function Object]
+	// 'FDefaultDamageEvent + @(FTakeDamagePayload) -> FTakeDamageContext' and TakeDamage it-self
+
+	if (!IsValid(OwnerActor_Cached)) return 0.f;
+	if (!IsValid(HealthComp_Cached)) return 0.f;
 	if (!IsValid(InDamageCauser)) return 0.f;
 
 	// Payload: Save Raw InputData (BeforeData)
@@ -62,13 +77,16 @@ float UCTakeDamageComponent::HandleDefaultDamage(const FDefaultDamageEvent& InDe
 
 	// TODO:
 	// takeDamageContext.bCanApplyDamage = (...);
-	// takeDamageContext.bIsDead = (...);
+	takeDamageContext.bIsDead = HealthComp_Cached->IsDead();
 
 	// TODO: 
 	// Calculate-damage function
 
+	// HP Reduction
+	takeDamageContext.FinalDamage = HealthComp_Cached->TakeDamage(takeDamageContext.TakenDamage);
+
 	// TODO: 
-	// HP reduction / state transitions / hit reactions (montage, VFX/SFX) / knockback / hit stop (time dilation) / etc.
+	// state transitions / hit reactions (montage, VFX/SFX) / knockback / hit stop (time dilation) / etc.
 
 	PrintTakeDamageSummaryInfo(takeDamageContext);
 	// PrintTakeDamageContextInfo(takeDamageContext);

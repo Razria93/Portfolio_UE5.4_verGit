@@ -14,6 +14,11 @@ class PORTFOLIO_API UCTakeDamageComponent : public UActorComponent
 public:
 	UCTakeDamageComponent();
 
+private:
+	/* === Cached Objects === */
+	class AActor* OwnerActor_Cached;
+	class UCHealthComponent* HealthComp_Cached;
+
 protected:
 	virtual void BeginPlay() override;
 
