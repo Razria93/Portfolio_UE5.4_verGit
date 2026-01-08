@@ -178,6 +178,9 @@ public:
 
 	UPROPERTY(Transient)
 	FActionContext ActionContext = FActionContext();
+
+public:
+	FHitContext() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -197,6 +200,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	int32 ActionIndex = INDEX_NONE;
+
+public:
+	FDamageSpecKey() = default;
 
 public:
 	bool operator==(const FDamageSpecKey& Other) const
@@ -227,6 +233,9 @@ struct FDamageSpec
 public:
 	UPROPERTY(EditAnywhere)
 	float BaseDamage = 0.f;
+
+public:
+	FDamageSpec() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -241,9 +250,12 @@ public:
 	// TODO:
 	// FVector ImpactPoint;
 	// FVector HitNormal;
+
+public:
+	FDamageResult() = default;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FDefaultDamageEvent : public FDamageEvent
 {
 	GENERATED_BODY()
@@ -260,6 +272,9 @@ public:
 
 public:
 	static const int32 ClassID = (int32)EDamageEventTypeId::DefaultDamage;
+
+public:
+	FDefaultDamageEvent() = default;
 
 public:
 	virtual int32 GetTypeID() const override { return ClassID; }
@@ -286,6 +301,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	FDamageResult DamageResult = FDamageResult();
+
+public:
+	FTakeDamagePayload() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -315,7 +333,7 @@ public:
 
 	// === Damage values ===
 	UPROPERTY(VisibleAnywhere)
-	float TakedDamage = 0.f;
+	float TakenDamage = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
 	float FinalDamage = 0.f;
@@ -326,6 +344,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	bool bIsDead = false;
+
+public:
+	FTakeDamageContext() = default;
 };
 
 UCLASS()

@@ -134,7 +134,7 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	if (OnAttachmentBeginOverlap.IsBound())
 		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	PrintBeginOverlapContextInfo(hitContext);
+	// PrintBeginOverlapContextInfo(hitContext);
 
 	ApplyDamageComp_Cached->RequestApplyDamage(hitContext);
 	LastOverlapContext = lastOverlapContext;
@@ -161,7 +161,7 @@ void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponen
 	if (OnAttachmentEndOverlap.IsBound())
 		OnAttachmentEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
 
-	PrintEndOverlapContextInfo(hitContext);
+	// PrintEndOverlapContextInfo(hitContext);
 
 	ApplyDamageComp_Cached->RequestStopDamage(hitContext); // Not implemented
 	LastOverlapContext = lastOverlapContext;

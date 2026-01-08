@@ -5,7 +5,7 @@
 
 UCTakeDamageComponent::UCTakeDamageComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCTakeDamageComponent::BeginPlay()
@@ -57,7 +57,7 @@ float UCTakeDamageComponent::HandleDefaultDamage(const FDefaultDamageEvent& InDe
 	takeDamageContext.DamageSpec = takeDamagePayload.DamageSpec;
 	takeDamageContext.DamageResult = takeDamagePayload.DamageResult;
 
-	takeDamageContext.TakedDamage = takeDamagePayload.DamageResult.FinalDamage;
+	takeDamageContext.TakenDamage = takeDamagePayload.DamageResult.FinalDamage;
 	takeDamageContext.FinalDamage = FMath::Max(0.f, takeDamagePayload.DamageResult.FinalDamage); // Set init FinalDamage
 
 	// TODO:
@@ -70,17 +70,8 @@ float UCTakeDamageComponent::HandleDefaultDamage(const FDefaultDamageEvent& InDe
 	// TODO: 
 	// HP reduction / state transitions / hit reactions (montage, VFX/SFX) / knockback / hit stop (time dilation) / etc.
 
-	PrintDefaultDamageEvent
-	(
-		takeDamageContext.DamagedActor,
-		takeDamageContext.EventInstigator,
-		takeDamageContext.DamageCauser,
-		takeDamageContext.DamageSpecKey,
-		takeDamageContext.DamageSpec,
-		takeDamageContext.DamageResult,
-		takeDamageContext.TakedDamage,
-		takeDamageContext.FinalDamage
-	);
+	PrintTakeDamageSummaryInfo(takeDamageContext);
+	// PrintTakeDamageContextInfo(takeDamageContext);
 
 	return takeDamageContext.FinalDamage;
 }
@@ -126,32 +117,76 @@ AController* UCTakeDamageComponent::ResolveInstigatorController(AController* Eve
 	return nullptr;
 }
 
-void UCTakeDamageComponent::PrintDefaultDamageEvent(AActor* InDamagedActor, AController* InEventInstigator, AActor* InDamageCauser, const FDamageSpecKey& InDamageSpecKey, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult, float InTakedDamage, float InFinalDamage)
+void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamageContext& InTakeDamageContext) const
 {
-	const FDamageSpecKey& damageSpecKey = InDamageSpecKey;
-	const FDamageSpec& damageSpec = InDamageSpec;
-	const FDamageResult& damageResult = InDamageResult;
-
-	// Print ObjectInfo
+	FLog::Log(TEXT("====== Take Damage Summary ======"));
 	FLog::Log(TEXT("[@ TAKE DAMAGE]"));
+
 	FLog::Log(FString::Printf(TEXT("DamagedActor = %s | Instigator = %s | DamageCauser = %s"),
-		*GetNameSafe(InDamagedActor),
-		*GetNameSafe(InEventInstigator),
-		*GetNameSafe(InDamageCauser)
+		*GetNameSafe(InTakeDamageContext.DamagedActor),
+		*GetNameSafe(InTakeDamageContext.EventInstigator),
+		*GetNameSafe(InTakeDamageContext.DamageCauser)
 	));
 
-	// Print KeyInfo
-	FLog::Log(FString::Printf(TEXT("AttachmentType = %s | EquipmentType = %s | ActionType = %s | ActionIndex = %d"),
-		*UEnum::GetValueAsString(damageSpecKey.AttachmentType),
-		*UEnum::GetValueAsString(damageSpecKey.EquipmentType),
-		*UEnum::GetValueAsString(damageSpecKey.ActionType),
-		damageSpecKey.ActionIndex
+	FLog::Log(FString::Printf(TEXT("TakenDamage = %.3f | FinalDamage = %.3f"),
+		InTakeDamageContext.TakenDamage,
+		InTakeDamageContext.FinalDamage
 	));
+	FLog::Log(TEXT("================================="));
+}
 
-	// Print DamageInfo
-	FLog::Log(FString::Printf(TEXT("Taked Damage = %.3f | Final Damage = %.3f"),
-		InTakedDamage,
-		InFinalDamage
-	));
+void UCTakeDamageComponent::PrintTakeDamageContextInfo(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FLog::Log(TEXT("/////- Take Damage Context -/////"));
+	PrintTakeDamageObjectInfo(InTakeDamageContext);
+	PrintTakeDamageSpecKeyInfo(InTakeDamageContext);
+	PrintTakeDamageSpecInfo(InTakeDamageContext);
+	PrintTakeDamageResultInfo(InTakeDamageContext);
+	PrintTakeDamageAmountInfo(InTakeDamageContext);
+	FLog::Log(TEXT("/////////////////////////////////"));
+}
+
+void UCTakeDamageComponent::PrintTakeDamageObjectInfo(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FLog::Log(TEXT("---------- Object Info ----------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamagedActor"), *GetNameSafe(InTakeDamageContext.DamagedActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Instigator"), *GetNameSafe(InTakeDamageContext.EventInstigator)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InTakeDamageContext.DamageCauser)));
+	FLog::Log(TEXT("---------------------------------"));
+}
+
+void UCTakeDamageComponent::PrintTakeDamageSpecKeyInfo(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FLog::Log(TEXT("----------- Key Info ------------"));
+	const FDamageSpecKey& damageSpecKey = InTakeDamageContext.DamageSpecKey;
+	const FString actionIndexText = (damageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(damageSpecKey.ActionIndex);
+
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(damageSpecKey.AttachmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(damageSpecKey.EquipmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(damageSpecKey.ActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
+	FLog::Log(TEXT("---------------------------------"));
+}
+
+void UCTakeDamageComponent::PrintTakeDamageSpecInfo(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FLog::Log(TEXT("---------- Damage Spec ----------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InTakeDamageContext.DamageSpec.BaseDamage));
+	FLog::Log(TEXT("---------------------------------"));
+}
+
+void UCTakeDamageComponent::PrintTakeDamageResultInfo(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FLog::Log(TEXT("--------- Damage Result ---------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalDamage"), InTakeDamageContext.DamageResult.FinalDamage));
+	FLog::Log(TEXT("---------------------------------"));
+}
+
+void UCTakeDamageComponent::PrintTakeDamageAmountInfo(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FLog::Log(TEXT("---------- Amount Info ----------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("TakenDamage"), InTakeDamageContext.TakenDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalDamage"), InTakeDamageContext.FinalDamage));
+	FLog::Log(TEXT("---------------------------------"));
 }
 

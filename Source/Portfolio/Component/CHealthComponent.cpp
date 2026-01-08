@@ -2,7 +2,7 @@
 
 UCHealthComponent::UCHealthComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCHealthComponent::BeginPlay()

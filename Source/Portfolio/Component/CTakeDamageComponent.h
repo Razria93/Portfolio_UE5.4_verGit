@@ -33,5 +33,13 @@ private:
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser);
 
 private:
-	void PrintDefaultDamageEvent(AActor* InDamagedActor, AController* InDamageInstigator, AActor* InDamageCauser, const FDamageSpecKey& InDamageSpecKey, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult, float InTakedDamage, float InFinalDamage);
+	void PrintTakeDamageSummaryInfo(const FTakeDamageContext& InTakeDamageContext) const;
+	void PrintTakeDamageContextInfo(const FTakeDamageContext& InTakeDamageContext) const;
+
+private:
+	void PrintTakeDamageObjectInfo(const FTakeDamageContext& InTakeDamageContext) const;
+	void PrintTakeDamageSpecKeyInfo(const FTakeDamageContext& InTakeDamageContext) const;
+	void PrintTakeDamageSpecInfo(const FTakeDamageContext& InTakeDamageContext) const;
+	void PrintTakeDamageResultInfo(const FTakeDamageContext& InTakeDamageContext) const;
+	void PrintTakeDamageAmountInfo(const FTakeDamageContext& InTakeDamageContext) const;
 };

@@ -18,6 +18,10 @@ public:
 public:
 	UCApplyDamageComponent();
 
+private:
+	/* === Cached Objects === */
+	class ACharacter* OwnerCharacter_Cached;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -42,11 +46,12 @@ private:
 	FDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 
 private:
-	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult);
+	void PrintApplyDamageSummaryInfo(const FHitContext& inHitContext, const FDamageSpec& inDamageSpec, const FDamageResult& inDamageResult) const;
+	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult) const;
 
 private:
-	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext);
-	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
-	void PrintDamageSpecInfo(const FDamageSpec& InDamageSpec);
-	void PrintDamageResultInfo(const FDamageResult& InDamageResult);
+	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
+	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const;
+	void PrintDamageSpecInfo(const FDamageSpec& InDamageSpec) const;
+	void PrintDamageResultInfo(const FDamageResult& InDamageResult) const;
 };
