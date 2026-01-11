@@ -23,6 +23,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCHealthComponent* HealthComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCReactionComponent* ReactionComponent;
+
 protected:
 	virtual void BeginPlay() override;
 

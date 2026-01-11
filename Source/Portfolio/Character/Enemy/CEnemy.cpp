@@ -7,6 +7,7 @@
 #include "Component/CStateComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -42,6 +43,10 @@ ACEnemy::ACEnemy()
 	// Init HealthComp
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
+
+	// Init ReactionComp
+	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
+	check(ReactionComponent);
 }
 
 void ACEnemy::BeginPlay()
