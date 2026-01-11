@@ -13,7 +13,7 @@ class PORTFOLIO_API UCApplyDamageComponent : public UActorComponent
 
 public:
 	UPROPERTY(EditAnywhere)
-	TMap<FDamageSpecKey, FDamageSpec> DamageSpecMap;	// TODO: Seperate DataAsset (DB)
+	TMap<FApplyDamageSpecKey, FApplyDamageSpec> DamageSpecMap;	// TODO: Seperate DataAsset (DB)
 
 public:
 	UCApplyDamageComponent();
@@ -37,21 +37,21 @@ private:
 
 private:
 	bool ValidateRequest(const FHitContext& InHitContext) const;
-	bool CheckHitRule(const FHitContext& InHitContext) const;
-	bool ResolveDamageSpec(const FHitContext& InHitContext,FDamageSpec& OutDamageSpec) const;
-	bool ComputeDamageResult(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, FDamageResult& OutDamageResult) const;
-	bool ApplyDamageToTarget(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult) const;
+	bool CheckApplyDamageRule(const FHitContext& InHitContext) const;
+	bool ResolveApplyDamageSpec(const FHitContext& InHitContext, FApplyDamageSpec & OutApplyDamageSpec) const;
+	bool ComputeApplyDamageResult(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, FApplyDamageResult& OutApplyDamageResult) const;
+	bool ApplyDamageToTarget(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
 
 private:
-	FDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
+	FApplyDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 
 private:
-	void PrintApplyDamageSummaryInfo(const FHitContext& inHitContext, const FDamageSpec& inDamageSpec, const FDamageResult& inDamageResult) const;
-	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult) const;
+	void PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
+	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
 
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
 	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const;
-	void PrintDamageSpecInfo(const FDamageSpec& InDamageSpec) const;
-	void PrintDamageResultInfo(const FDamageResult& InDamageResult) const;
+	void PrintDamageSpecInfo(const FApplyDamageSpec & InApplyDamageSpec) const;
+	void PrintDamageResultInfo(const FApplyDamageResult & InApplyDamageResult) const;
 };

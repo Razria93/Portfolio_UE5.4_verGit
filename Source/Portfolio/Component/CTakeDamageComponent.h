@@ -26,25 +26,35 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	// API
 	float RequestTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
 
 private:
 	float ProcessTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
 
 private:
-	float HandleDefaultDamage(const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
+	float HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
 
 private:
-	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser);
+	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
+	FTakeDamagePayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
+	FTakeDamageContext BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const;
+	void EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext, FTakeDamageResult& OutTakeDamageResult) const;
+	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext, FTakeDamageResult& InOutTakeDamageResult) const;
 
 private:
-	void PrintTakeDamageSummaryInfo(const FTakeDamageContext& InTakeDamageContext) const;
-	void PrintTakeDamageContextInfo(const FTakeDamageContext& InTakeDamageContext) const;
+	// FHealthApplyRequest BuildHealthApplyRequest(...);
+	// FReactionRequest  BuildReactionRequest(...);
 
 private:
-	void PrintTakeDamageObjectInfo(const FTakeDamageContext& InTakeDamageContext) const;
-	void PrintTakeDamageSpecKeyInfo(const FTakeDamageContext& InTakeDamageContext) const;
-	void PrintTakeDamageSpecInfo(const FTakeDamageContext& InTakeDamageContext) const;
-	void PrintTakeDamageResultInfo(const FTakeDamageContext& InTakeDamageContext) const;
-	void PrintTakeDamageAmountInfo(const FTakeDamageContext& InTakeDamageContext) const;
+	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
+
+private:
+	void PrintTakeDamageSummaryInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void PrintTakeDamageContextInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+
+private:
+	void PrintObjectInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void PrintSpecKeyInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void PrintDamageAmountInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
 };
