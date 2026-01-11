@@ -134,7 +134,7 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	if (OnAttachmentBeginOverlap.IsBound())
 		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	PrintBeginOverlapContextInfo(hitContext);
+	// PrintBeginOverlapContextInfo(hitContext);
 
 	ApplyDamageComp_Cached->RequestApplyDamage(hitContext);
 	LastOverlapContext = lastOverlapContext;
@@ -161,7 +161,7 @@ void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponen
 	if (OnAttachmentEndOverlap.IsBound())
 		OnAttachmentEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
 
-	PrintEndOverlapContextInfo(hitContext);
+	// PrintEndOverlapContextInfo(hitContext);
 
 	ApplyDamageComp_Cached->RequestStopDamage(hitContext); // Not implemented
 	LastOverlapContext = lastOverlapContext;
@@ -233,7 +233,7 @@ void ACAttachment::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)
 {
 	FLog::Log(TEXT("========= Begin Overlap ========="));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	Print_HitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	FLog::Log(TEXT("================================="));
 }
 
@@ -241,7 +241,7 @@ void ACAttachment::PrintEndOverlapContextInfo(const FHitContext& InHitContext)
 {
 	FLog::Log(TEXT("========== End Overlap =========="));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	Print_HitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	FLog::Log(TEXT("================================="));
 }
 
@@ -270,7 +270,7 @@ void ACAttachment::PrintOverlapContextInfo(const FOverlapContext& InOverlapConte
 	}
 }
 
-void ACAttachment::Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
+void ACAttachment::PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
 	FLog::Log(TEXT("[AttachmentContext]"));

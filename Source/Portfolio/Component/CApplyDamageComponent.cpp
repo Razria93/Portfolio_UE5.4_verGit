@@ -1,18 +1,22 @@
 #include "Component/CApplyDamageComponent.h"
 #include "ProjectGlobal.h"
 
+#include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
 UCApplyDamageComponent::UCApplyDamageComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCApplyDamageComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
+	check(OwnerCharacter_Cached);
 }
 
 void UCApplyDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -35,25 +39,29 @@ void UCApplyDamageComponent::RequestStopDamage(const FHitContext& InHitContext)
 
 void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 {
+	// [Function Object]
+	// FApplyDamageContext -> 'FDefaultDamageEvent + @' and ApplyDamage to Target
+
+	// TODO:
+	// Implement FApplyDamageContext { InHitContext(DamagedActor / EventInstigator / DamageCauser ...), damageSpecKey, damageSpec, applyDamageResult }
+	// Refactor debug output to use FApplyDamageContext (Reference: CTakeDamageComponent)
+
 	// 1) Check Valid of Request
 	if (!ValidateRequest(InHitContext)) return;
 
-	// 2) Check Hit Rules
-	if (!CheckHitRule(InHitContext)) return;
+	// 2) Check ApplyDamage Rules
+	if (!CheckApplyDamageRule(InHitContext)) return;
 
-	// 3) Resolve DamageSpec
-	FDamageSpec damageSpec = FDamageSpec();
-	if (!ResolveDamageSpec(InHitContext, damageSpec)) return;
+	// 3) Resolve ApplyDamage Spec
+	FApplyDamageSpec damageSpec = FApplyDamageSpec();
+	if (!ResolveApplyDamageSpec(InHitContext, damageSpec)) return;
 
-	// 4) Compute DamageResult
-	FDamageResult damageResult = FDamageResult();
-	if (!ComputeDamageResult(InHitContext, damageSpec, damageResult)) return;
+	// 4) Compute ApplyDamage Result
+	FApplyDamageResult applyDamageResult = FApplyDamageResult();
+	if (!ComputeApplyDamageResult(InHitContext, damageSpec, applyDamageResult)) return;
 
 	// 5) Apply Damage (Call Target->TakeDamage)
-	if (!ApplyDamageToTarget(InHitContext, damageSpec, damageResult)) return;
-
-	// Debugging
-	PrintApplyDamageContextInfo(InHitContext, damageSpec, damageResult);
+	if (!ApplyDamageToTarget(InHitContext, damageSpec, applyDamageResult)) return;
 }
 
 bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) const
@@ -95,7 +103,7 @@ bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) co
 	return true;
 }
 
-bool UCApplyDamageComponent::CheckHitRule(const FHitContext& InDamageRequestData) const
+bool UCApplyDamageComponent::CheckApplyDamageRule(const FHitContext& InHitContext) const
 {
 	// TODO:
 	// P1: CheckAlreadyHit
@@ -104,21 +112,21 @@ bool UCApplyDamageComponent::CheckHitRule(const FHitContext& InDamageRequestData
 	return true;
 }
 
-bool UCApplyDamageComponent::ResolveDamageSpec(const FHitContext& InHitContext, FDamageSpec& OutDamageSpec) const
+bool UCApplyDamageComponent::ResolveApplyDamageSpec(const FHitContext& InHitContext, FApplyDamageSpec& OutApplyDamageSpec) const
 {
-	const FDamageSpecKey damageSpectKey = BuildSpecKey(InHitContext);
+	const FApplyDamageSpecKey applyDamageSpectKey = BuildSpecKey(InHitContext);
 
-	if (const FDamageSpec* foundDamageSpec = DamageSpecMap.Find(damageSpectKey))
+	if (const FApplyDamageSpec* foundApplyDamageSpec = DamageSpecMap.Find(applyDamageSpectKey))
 	{
-		OutDamageSpec = FDamageSpec();
-		OutDamageSpec = *foundDamageSpec;
+		OutApplyDamageSpec = FApplyDamageSpec();
+		OutApplyDamageSpec = *foundApplyDamageSpec;
 		return true;
 	}
 
 	return false;
 }
 
-bool UCApplyDamageComponent::ComputeDamageResult(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, FDamageResult& OutDamageResult) const
+bool UCApplyDamageComponent::ComputeApplyDamageResult(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, FApplyDamageResult& OutApplyDamageResult) const
 {
 	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
 
@@ -129,14 +137,15 @@ bool UCApplyDamageComponent::ComputeDamageResult(const FHitContext& InHitContext
 	if (!IsValid(attacker) || !IsValid(damageCauser) || !IsValid(target))
 		return false;
 
-	// ComputeDamage (Minimal, [TODO] Implement `ComputeDamage()`)
-	OutDamageResult = FDamageResult();
-	OutDamageResult.FinalDamage = InDamageSpec.BaseDamage;
+	// ComputeDamage (Minimal):
+	// [TODO] Implement `ComputeDamage()`
+	OutApplyDamageResult = FApplyDamageResult();
+	OutApplyDamageResult.RequestDamage = InApplyDamageSpec.BaseDamage;
 
 	return true;
 }
 
-bool UCApplyDamageComponent::ApplyDamageToTarget(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult) const
+bool UCApplyDamageComponent::ApplyDamageToTarget(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
 {
 	AActor* attacker = InHitContext.OverlapContext.OwnerActor;
 	AActor* damageCauser = InHitContext.OverlapContext.DamageCauser;
@@ -153,47 +162,65 @@ bool UCApplyDamageComponent::ApplyDamageToTarget(const FHitContext& InHitContext
 	}
 	if (!IsValid(instigatorController)) return false;
 
-	FDamageSpecKey damageSpectKey = BuildSpecKey(InHitContext);
+	FApplyDamageSpecKey applyDamageSpectKey = BuildSpecKey(InHitContext);
 
 	FDefaultDamageEvent damageEvent;
-	damageEvent.DamageSpecKey = damageSpectKey;
-	damageEvent.DamageSpec = InDamageSpec;
-	damageEvent.DamageResult = InDamageResult;
+	damageEvent.ApplyDamageSpecKey = applyDamageSpectKey;
+	damageEvent.ApplyDamageSpec = InApplyDamageSpec;
+	damageEvent.ApplyDamageResult = InApplyDamageResult;
 
-	const float appliedDamage = target->TakeDamage(InDamageResult.FinalDamage, damageEvent, instigatorController, damageCauser);
+	// Debugging
+	PrintApplyDamageSummaryInfo(InHitContext, damageEvent.ApplyDamageSpec, damageEvent.ApplyDamageResult);
+	// PrintApplyDamageContextInfo(InHitContext, damageEvent.ApplyDamageSpec, damageEvent.ApplyDamageResult);
 
-	FLog::Log("[@ APPLY DAMAGE]");
-	FLog::Log(FString::Printf(TEXT("Target = %s | Request = %.3f | Apply = %.3f"), *GetNameSafe(target), InDamageResult.FinalDamage, appliedDamage));
+	const float appliedDamage = target->TakeDamage(InApplyDamageResult.RequestDamage, damageEvent, instigatorController, damageCauser);
 
 	return true;
 }
 
-FDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHitContext) const
+FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHitContext) const
 {
-	FDamageSpecKey damageSpecKey;
+	FApplyDamageSpecKey applyDamageSpecKey;
 
-	damageSpecKey.AttachmentType = InHitContext.AttachmentContext.CurrentAttachmentType;
-	damageSpecKey.EquipmentType = InHitContext.EquipmentContext.CurrentEquipmentType;
-	damageSpecKey.ActionType = InHitContext.ActionContext.CurrentActionType;
-	damageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
+	applyDamageSpecKey.AttachmentType = InHitContext.AttachmentContext.CurrentAttachmentType;
+	applyDamageSpecKey.EquipmentType = InHitContext.EquipmentContext.CurrentEquipmentType;
+	applyDamageSpecKey.ActionType = InHitContext.ActionContext.CurrentActionType;
+	applyDamageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
 
-	return damageSpecKey;
+	return applyDamageSpecKey;
 }
 
-void UCApplyDamageComponent::PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FDamageResult& InDamageResult)
+void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
 {
-	FLog::Log(TEXT("========= Apply Damage =========="));
-	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	Print_HitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
-	PrintDamageSpec(InDamageSpec);
-	PrintDamageResult(InDamageResult);
+	FLog::Log(TEXT("===== Apply Damage Summary ======"));
+	FLog::Log(TEXT("[@ APPLY DAMAGE]"));
+
+	AActor* targetActor = InHitContext.OverlapContext.OtherActor;
+	
+	const float baseDamage = InApplyDamageSpec.BaseDamage;
+	const float requestDamage = InApplyDamageResult.RequestDamage;
+
+	FLog::Log(FString::Printf(TEXT("Target = %s | Base = %.3f | Request = %.3f"),
+		*GetNameSafe(targetActor),
+		baseDamage,
+		requestDamage
+	));
 	FLog::Log(TEXT("================================="));
 }
 
-void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext)
+void UCApplyDamageComponent::PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
+{
+	FLog::Log(TEXT("////- Apply Damage Context -/////"));
+	PrintOverlapContextInfo(InHitContext.OverlapContext);
+	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintDamageSpecInfo(InApplyDamageSpec);
+	PrintDamageResultInfo(InApplyDamageResult);
+	FLog::Log(TEXT("/////////////////////////////////"));
+}
+
+void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const
 {
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
-
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InOverlapContext.DamageCauser)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlappedComponent"), *GetNameSafe(InOverlapContext.OverlappedComponent)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlapShape"), *GetNameSafe(InOverlapContext.OverlapShape))); // cast result (can be NULL)
@@ -215,7 +242,7 @@ void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOv
 	}
 }
 
-void UCApplyDamageComponent::Print_HitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
+void UCApplyDamageComponent::PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
 	FLog::Log(TEXT("[AttachmentContext]"));
@@ -230,16 +257,16 @@ void UCApplyDamageComponent::Print_HitContextInfo(const FAttachmentContext& InAt
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintDamageSpec(const FDamageSpec& InDamageSpec)
+void UCApplyDamageComponent::PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const
 {
 	FLog::Log(TEXT("---------- Damage Spec ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InDamageSpec.BaseDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InApplyDamageSpec.BaseDamage));
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintDamageResult(const FDamageResult& InDamageResult)
+void UCApplyDamageComponent::PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("--------- Damage Result ---------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalDamage"), InDamageResult.FinalDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InApplyDamageResult.RequestDamage));
 	FLog::Log(TEXT("---------------------------------"));
 }

@@ -6,7 +6,7 @@
 
 UCStateComponent::UCStateComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	CurrentStateType = EStateType::Idle;
 }

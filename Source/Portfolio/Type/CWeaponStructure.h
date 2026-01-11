@@ -31,6 +31,26 @@ enum class EActionType : uint8
 	Max,
 };
 
+UENUM(BlueprintType)
+enum class ETakeDamageRejectReason : uint8
+{
+	None,
+
+	InvalidTarget,
+	InvalidCauser,
+	InvalidInstigator,
+
+	AlreadyDead,
+	// Invulnerable,
+	// FriendlyFire,
+
+	// Blocked,
+	// Parried,
+
+	// DamageCooldown,
+	ZeroDamage,
+};
+
 USTRUCT(BlueprintType)
 struct FEquipmentData
 {
@@ -178,10 +198,13 @@ public:
 
 	UPROPERTY(Transient)
 	FActionContext ActionContext = FActionContext();
+
+public:
+	FHitContext() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FDamageSpecKey
+struct FApplyDamageSpecKey
 {
 	GENERATED_BODY()
 
@@ -199,7 +222,10 @@ public:
 	int32 ActionIndex = INDEX_NONE;
 
 public:
-	bool operator==(const FDamageSpecKey& Other) const
+	FApplyDamageSpecKey() = default;
+
+public:
+	bool operator==(const FApplyDamageSpecKey& Other) const
 	{
 		return EquipmentType == Other.EquipmentType
 			&& AttachmentType == Other.AttachmentType
@@ -208,7 +234,7 @@ public:
 	}
 
 public:
-	friend FORCEINLINE uint32 GetTypeHash(const FDamageSpecKey& Key)
+	friend FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& Key)
 	{
 		uint32 H = 0;
 		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.AttachmentType)));
@@ -220,50 +246,182 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FDamageSpec
+struct FApplyDamageSpec
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
 	float BaseDamage = 0.f;
+
+public:
+	FApplyDamageSpec() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FDamageResult
+struct FApplyDamageResult
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY()
-	float FinalDamage = 0.f;
+	float RequestDamage = 0.f;
 
 	// TODO:
 	// FVector ImpactPoint;
 	// FVector HitNormal;
+
+public:
+	FApplyDamageResult() = default;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FDefaultDamageEvent : public FDamageEvent
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY() 
-	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 	UPROPERTY()
-	FDamageSpec DamageSpec = FDamageSpec();
+	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
 
 	UPROPERTY()
-	FDamageResult DamageResult = FDamageResult();
+	FApplyDamageResult ApplyDamageResult = FApplyDamageResult();
 
 public:
 	static const int32 ClassID = (int32)EDamageEventTypeId::DefaultDamage;
 
 public:
+	FDefaultDamageEvent() = default;
+
+public:
 	virtual int32 GetTypeID() const override { return ClassID; }
 	virtual bool IsOfType(int32 InID) const override { return InID == ClassID || FDamageEvent::IsOfType(InID); }
+};
+
+USTRUCT(BlueprintType)
+struct FTakeDamagePayload
+{
+	GENERATED_BODY()
+
+public:
+	// ObjectData
+	UPROPERTY(VisibleAnywhere)
+	class AActor* DamagedActor = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class AController* EventInstigator = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class AActor* DamageCauser = nullptr;
+
+	// Damage MetaData
+	UPROPERTY(VisibleAnywhere)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
+	UPROPERTY(VisibleAnywhere)
+	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
+
+	UPROPERTY(VisibleAnywhere)
+	FApplyDamageResult ApplyDamageResult = FApplyDamageResult();
+
+	//Damage AmountData
+	UPROPERTY(VisibleAnywhere)
+	float RequestedDamage = 0.f;
+
+public:
+	FTakeDamagePayload() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FTakeDamageContext
+{
+	GENERATED_BODY()
+
+public:
+	// Resolved objects
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<AActor> DamagedActor = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class AController* Instigator = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class AActor* DamageCauser = nullptr;
+
+	// Pre-state snapshot
+	UPROPERTY(VisibleAnywhere)
+	bool bWasDead = false;
+
+	UPROPERTY(VisibleAnywhere)
+	float HealthPoint_Before = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	float HealthPoint_After = 0.f;
+
+	// DamageAmounts (derived)
+	UPROPERTY(VisibleAnywhere)
+	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
+
+	UPROPERTY(VisibleAnywhere)
+	float MitigatedDamage = 0.f;		// Post-mitigation damage after target defenses. (ex. [guard/resistance] 100 -> 70)
+
+	UPROPERTY(VisibleAnywhere)
+	float FinalTakenDamage = 0.f;		// Final damage decided by Take evaluation rules. (ex. [clamp max/min damage-limit] 70 -> 60)
+
+	UPROPERTY(VisibleAnywhere)
+	float FinalAppliedDamage = 0.f;		// Actual HP loss committed to Health. (ex. [shield absorbs] 60 -> HP: -30 / SP: -30)
+
+	// TODO:
+	// - HitBoneName
+	// - HitDirection
+	// - HitImpulseVector
+	// - TeamId / Attribute
+	// - StateSnapshot
+	// - Cached Component (Minimal)
+
+public:
+	FTakeDamageContext() = default;
+};
+
+USTRUCT()
+struct FTakeDamageResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere)
+	bool bAccepted = true;
+
+	UPROPERTY(VisibleAnywhere)
+	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bKilled = false;
+
+	// Damage Amount
+	UPROPERTY(VisibleAnywhere)
+	float RequestDamage = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	float MitigatedDamage = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	float FinalTakenDamage = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	float FinalAppliedDamage = 0.f;
+
+	// Dispatch flags
+	UPROPERTY()
+	bool bTriggerHitReaction = true;
+
+	UPROPERTY()
+	bool bTriggerDeathReaction = true;
+
+public:
+	FTakeDamageResult() = default;
 };
 
 UCLASS()
