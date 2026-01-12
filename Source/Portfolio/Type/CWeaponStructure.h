@@ -11,6 +11,7 @@ enum class EAttachmentType : uint8
 {
 	Unarmed = 0,
 	Sword,
+	All,
 	Max,
 };
 
@@ -19,6 +20,7 @@ enum class EEquipmentType : uint8
 {
 	None = 0,
 	Default,
+	All,
 	Max,
 };
 
@@ -28,7 +30,16 @@ enum class EActionType : uint8
 	Idle = 0,
 	LightAttack,
 	ComboAttack,
+	All,
 	Max,
+};
+
+UENUM()
+enum class EReactionType : uint8
+{
+	None = 0,
+	Hit,
+	Dead,
 };
 
 UENUM(BlueprintType)
@@ -225,25 +236,35 @@ public:
 	FApplyDamageSpecKey() = default;
 
 public:
-	bool operator==(const FApplyDamageSpecKey& Other) const
+	bool operator==(const FApplyDamageSpecKey& InOther) const
 	{
-		return EquipmentType == Other.EquipmentType
-			&& AttachmentType == Other.AttachmentType
-			&& ActionType == Other.ActionType
-			&& ActionIndex == Other.ActionIndex;
-	}
-
-public:
-	friend FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& Key)
-	{
-		uint32 H = 0;
-		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.AttachmentType)));
-		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.EquipmentType)));
-		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.ActionType)));
-		H = HashCombine(H, ::GetTypeHash(Key.ActionIndex));
-		return H;
+		return EquipmentType == InOther.EquipmentType
+			&& AttachmentType == InOther.AttachmentType
+			&& ActionType == InOther.ActionType
+			&& ActionIndex == InOther.ActionIndex;
 	}
 };
+
+FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InKey)
+{
+	uint32 H = 0;
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.AttachmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.EquipmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionType)));
+	H = HashCombine(H, GetTypeHash(InKey.ActionIndex));
+	return H;
+}
+
+ /***
+  * [EN]
+  * USTRUCT Set/Map key checklist:
+  * 1) operator==
+  * 2) GetTypeHash
+  *
+  * GetTypeHash notes:
+  * - Prefer a normal overload at namespace/global scope (avoid hidden-friend in the struct).
+  * - Avoid ::GetTypeHash(...); call GetTypeHash(...) to keep ADL available.
+  ***/
 
 USTRUCT(BlueprintType)
 struct FApplyDamageSpec
@@ -281,7 +302,7 @@ struct FDefaultDamageEvent : public FDamageEvent
 	GENERATED_BODY()
 
 public:
-	UPROPERTY() 
+	UPROPERTY()
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 	UPROPERTY()
@@ -422,6 +443,64 @@ struct FTakeDamageResult
 
 public:
 	FTakeDamageResult() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FReactionKey
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	FApplyDamageSpecKey ApplyDamageSpecKey;
+
+	UPROPERTY()
+	EReactionType ReactionType = EReactionType::None;
+
+public:
+	bool operator==(const FReactionKey& InOther) const
+	{
+		return ReactionType == InOther.ReactionType && ApplyDamageSpecKey == InOther.ApplyDamageSpecKey;
+	}
+};
+
+FORCEINLINE uint32 GetTypeHash(const FReactionKey& InKey)
+{
+	uint32 H = 0;
+	H = HashCombine(H, GetTypeHash(InKey.ApplyDamageSpecKey));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ReactionType)));
+	return H;
+}
+
+USTRUCT(BlueprintType)
+struct FReactionData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Key")
+	FApplyDamageSpecKey ApplyDamageSpecKey;
+
+	UPROPERTY(EditAnywhere, Category = "Key")
+	EReactionType ReactionType = EReactionType::Hit;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	UAnimMontage* Montage = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	float PlayRate = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	bool bCanMove = false;
+
+	// UPROPERTY(EditAnywhere, Category = "Policy")
+	// int32 priority = 0;
+
+public:
+	bool IsValidMinimal() const
+	{
+		return Montage != nullptr;
+	}
 };
 
 UCLASS()
