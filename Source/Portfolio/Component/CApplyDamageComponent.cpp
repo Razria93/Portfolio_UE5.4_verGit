@@ -116,7 +116,7 @@ bool UCApplyDamageComponent::ResolveApplyDamageSpec(const FHitContext& InHitCont
 {
 	const FApplyDamageSpecKey applyDamageSpectKey = BuildSpecKey(InHitContext);
 
-	if (const FApplyDamageSpec* foundApplyDamageSpec = DamageSpecMap.Find(applyDamageSpectKey))
+	if (const FApplyDamageSpec* foundApplyDamageSpec = ApplyDamageSpecContainer.Find(applyDamageSpectKey))
 	{
 		OutApplyDamageSpec = FApplyDamageSpec();
 		OutApplyDamageSpec = *foundApplyDamageSpec;

@@ -46,7 +46,12 @@ UObject* UCActionComponent::GetAction(EActionType InNewActionType)
 {
 	UCAction** actionPtr = ActionContainer.Find(InNewActionType);
 
-	return IsValid(*actionPtr) ? *actionPtr : nullptr;
+	if (!actionPtr) return nullptr;
+
+	UCAction* action = *actionPtr;
+	if (!IsValid(action)) return nullptr;
+
+	return action;
 }
 
 void UCActionComponent::SetIdleMode()

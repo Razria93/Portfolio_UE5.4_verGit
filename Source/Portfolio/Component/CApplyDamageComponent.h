@@ -13,7 +13,7 @@ class PORTFOLIO_API UCApplyDamageComponent : public UActorComponent
 
 public:
 	UPROPERTY(EditAnywhere)
-	TMap<FApplyDamageSpecKey, FApplyDamageSpec> DamageSpecMap;	// TODO: Seperate DataAsset (DB)
+	TMap<FApplyDamageSpecKey, FApplyDamageSpec> ApplyDamageSpecContainer;	// TODO: Seperate DataAsset (DB)
 
 public:
 	UCApplyDamageComponent();
@@ -29,10 +29,12 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	// Entry API
 	void RequestApplyDamage(const FHitContext& InHitContext);
 	void RequestStopDamage(const FHitContext& InHitContext);
 
 private:
+	// Pipeline
 	void ProcessApplyDamage(const FHitContext& InHitContext);
 
 private:
