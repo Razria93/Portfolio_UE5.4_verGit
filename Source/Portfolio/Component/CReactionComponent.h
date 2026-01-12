@@ -36,5 +36,13 @@ private:
 	void BuildReactionContainer();
 
 private:
+	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
+	bool FindReaction(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData) const;
+
+private:
 	void PrintReactionContainerInfo() const;
+
+	void PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey) const;
+	void PrintReactionKeyInfo(const FReactionKey& InReactionKey) const;
+	void PrintReactionDataInfo(const FReactionData& InReactionData) const;
 };
