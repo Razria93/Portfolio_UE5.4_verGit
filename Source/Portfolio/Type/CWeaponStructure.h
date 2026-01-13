@@ -386,7 +386,6 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	bool bWasDeadBefore = false;
 
-
 	// DamageAmounts [Set EvaluateTakeDamage & CommitTakeDamage]
 	UPROPERTY(VisibleAnywhere)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)

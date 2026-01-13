@@ -138,7 +138,7 @@ bool UCReactionComponent::FindReaction(const FApplyDamageSpecKey& InApplyDamageS
 void UCReactionComponent::PrintReactionContainerInfo() const
 {
 	FLog::Log(TEXT("==== ReactionContainer Info ====="));
-	
+
 	const int32 count = ReactionContainer.Num();
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Count"), count));
 
@@ -158,7 +158,7 @@ void UCReactionComponent::PrintReactionContainerInfo() const
 		const FReactionData& value = pair.Value;
 
 		FLog::Log(FString::Printf(TEXT("[%s: %d]"), TEXT("PairIndex"), index++));
-		
+
 		PrintReactionKeyInfo(key);
 		PrintReactionDataInfo(value);
 		FLog::Log(TEXT("================================="));
@@ -195,7 +195,7 @@ void UCReactionComponent::PrintReactionDataInfo(const FReactionData& InReactionD
 {
 	const FApplyDamageSpecKey& applyDamageSpecKey = InReactionData.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(applyDamageSpecKey.ActionIndex);
-	
+
 	FLog::Log(TEXT("------ ReactionData Info --------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.AttachmentType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.EquipmentType)));

@@ -12,11 +12,11 @@ class PORTFOLIO_API UCApplyDamageComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	UCApplyDamageComponent();
+
+private:
 	UPROPERTY(EditAnywhere)
 	TMap<FApplyDamageSpecKey, FApplyDamageSpec> ApplyDamageSpecContainer;	// TODO: Seperate DataAsset (DB)
-
-public:
-	UCApplyDamageComponent();
 
 private:
 	/* === Cached Objects === */

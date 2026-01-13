@@ -10,10 +10,14 @@ class PORTFOLIO_API UCReactionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+	// === ReactionData ===================================== //
 private:
 	UPROPERTY(EditAnywhere)
 	TArray<FReactionData> ReactionDatas;
 
+	// ====================================================== //
+
+private:
 	UPROPERTY(Transient)
 	TMap<FReactionKey, FReactionData> ReactionContainer;
 

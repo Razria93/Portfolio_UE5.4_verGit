@@ -12,9 +12,7 @@ class PORTFOLIO_API UCActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-private:
 	// === ActionData ======================================= //
-
 private:
 	UPROPERTY(EditAnywhere, Category = "ActionData")
 	EActionType ActionType;
@@ -29,7 +27,7 @@ private:
 
 	// ====================================================== //
 
-public:
+private:
 	UPROPERTY(Transient)
 	TMap<EActionType, class UCAction*> ActionContainer;
 
