@@ -269,6 +269,7 @@ FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload&
 	takeDamageContext.DamagedActor = InTakeDamagePayload.DamagedActor;
 	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
 	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
+	takeDamageContext.ApplyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
 	takeDamageContext.RequestedDamage = InTakeDamagePayload.RequestedDamage;
 
 	return takeDamageContext;
@@ -280,6 +281,8 @@ FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& I
 
 	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
 	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
+
+	takeDamageResult.ApplyDamageSpecKey = InTakeDamageContext.ApplyDamageSpecKey;
 
 	takeDamageResult.RequestDamage = InTakeDamageContext.RequestedDamage;
 	takeDamageResult.MitigatedDamage = InTakeDamageContext.MitigatedDamage;
@@ -318,7 +321,7 @@ void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload&
 void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
 {
 	// TODO: OnTakeDamageCommitted broadcast
-	ReactionComp_Cached->RequestReaction(InTakeDamagePayload, InTakeDamageContext, InTakeDamageResult);
+	ReactionComp_Cached->RequestReaction(InTakeDamageResult);
 
 	// TODO:
 	// - VFX/SFX

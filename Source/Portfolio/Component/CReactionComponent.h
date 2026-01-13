@@ -22,10 +22,15 @@ private:
 	TMap<FReactionKey, FReactionData> ReactionContainer;
 
 private:
-	// bool bIsReaction = false;
+	/* === State === */
+	EReactionType CurrentReactionType_Cached;
 
 private:
-	// ACharacter* OwnerCharacter_Cached = nullptr;
+	/* === Cached Objects === */
+	class ACharacter* OwnerCharacter_Cached;
+
+private:
+	bool bIsReaction = false;
 
 public:
 	UCReactionComponent();
@@ -38,18 +43,21 @@ public:
 
 public:
 	// Entry API
-	void RequestReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult);
+	void RequestReaction(const FTakeDamageResult& InTakeDamageResult);
 
 private:
 	// Pipeline
-	void ProcessReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult);
+	void ProcessReaction(const FTakeDamageResult& InTakeDamageResult);
+
+private:
+	bool ValidateRequest(const FTakeDamageResult& takeDamageResult) const;
+	EReactionType ResolveReactionType(const FTakeDamageResult& takeDamageResult) const;
+	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
+	bool FindReaction(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData) const;
+	void CommitReaction(const FReactionData& reactionData);
 
 private:
 	void BuildReactionContainer();
-
-private:
-	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
-	bool FindReaction(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData) const;
 
 private:
 	void PrintReactionContainerInfo() const;

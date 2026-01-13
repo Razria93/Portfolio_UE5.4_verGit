@@ -1,6 +1,8 @@
 #include "Component/CReactionComponent.h"
 #include "ProjectGlobal.h"
 
+#include "GameFramework/Character.h"
+
 #include "Type/CWeaponStructure.h"
 
 UCReactionComponent::UCReactionComponent()
@@ -12,6 +14,9 @@ void UCReactionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
+	check(OwnerCharacter_Cached);
+
 	BuildReactionContainer();
 	PrintReactionContainerInfo();
 }
@@ -21,35 +26,51 @@ void UCReactionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UCReactionComponent::RequestReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult)
+void UCReactionComponent::RequestReaction(const FTakeDamageResult& InTakeDamageResult)
 {
-	ProcessReaction(InTakeDamagePayload, takeDamageContext, takeDamageResult);
+	ProcessReaction(InTakeDamageResult);
 }
 
-void UCReactionComponent::ProcessReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult)
+void UCReactionComponent::ProcessReaction(const FTakeDamageResult& InTakeDamageResult)
 {
-	// TODO:
-}
+	// NOTE: Use only the result of the commit
 
-void UCReactionComponent::BuildReactionContainer()
-{
-	ReactionContainer.Reset();
+	if (!ValidateRequest(InTakeDamageResult)) return;
 
-	for (const FReactionData& reactionData : ReactionDatas)
+	const EReactionType newReactionType = ResolveReactionType(InTakeDamageResult);
+	if (newReactionType == EReactionType::None) return;
+
+	if (bIsReaction)
 	{
-		if (!reactionData.IsValidMinimal()) continue;
-
-		FReactionKey reactionKey;
-		reactionKey.ApplyDamageSpecKey = reactionData.ApplyDamageSpecKey;
-		reactionKey.ReactionType = reactionData.ReactionType;
-
-		if (ReactionContainer.Contains(reactionKey))
-		{
-			FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
-		}
-
-		ReactionContainer.Add(reactionKey, reactionData);
+		// Dead > Hit
+		if (CurrentReactionType_Cached == EReactionType::Dead && newReactionType == EReactionType::Hit) return;
+		// if (newReactionType == EReactionType::Hit) return;
 	}
+
+	FReactionData reactionData;
+	if (!FindReaction(InTakeDamageResult.ApplyDamageSpecKey, newReactionType, reactionData)) return;
+
+	CommitReaction(reactionData);
+}
+
+bool UCReactionComponent::ValidateRequest(const FTakeDamageResult& takeDamageResult) const
+{
+	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!takeDamageResult.bAccepted) return false;	
+
+	return true;
+}
+
+EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& takeDamageResult) const
+{
+	// Enforce Dead Type if bKilled
+	if (takeDamageResult.bKilled || takeDamageResult.bTriggerDeathReaction)
+		return EReactionType::Dead;
+
+	if (takeDamageResult.bTriggerHitReaction)
+		return EReactionType::Hit;
+
+	return EReactionType::None;
 }
 
 void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const
@@ -133,6 +154,48 @@ bool UCReactionComponent::FindReaction(const FApplyDamageSpecKey& InApplyDamageS
 
 	FLog::Log(TEXT("================================="));
 	return false;
+}
+
+void UCReactionComponent::CommitReaction(const FReactionData& reactionData)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Cached->GetMesh();
+	if (!IsValid(meshComp)) return;
+
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return;
+
+	if (!IsValid(reactionData.Montage)) return;
+
+	const float playRate = FMath::Max(0.01f, reactionData.PlayRate);
+	animInstance->Montage_Play(reactionData.Montage, playRate);
+
+	// TODO: clear bIsReaction on AnimNotify_ReactionEnd
+
+	bIsReaction = true;
+	CurrentReactionType_Cached = reactionData.ReactionType;
+}
+
+void UCReactionComponent::BuildReactionContainer()
+{
+	ReactionContainer.Reset();
+
+	for (const FReactionData& reactionData : ReactionDatas)
+	{
+		if (!reactionData.IsValidMinimal()) continue;
+
+		FReactionKey reactionKey;
+		reactionKey.ApplyDamageSpecKey = reactionData.ApplyDamageSpecKey;
+		reactionKey.ReactionType = reactionData.ReactionType;
+
+		if (ReactionContainer.Contains(reactionKey))
+		{
+			FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
+		}
+
+		ReactionContainer.Add(reactionKey, reactionData);
+	}
 }
 
 void UCReactionComponent::PrintReactionContainerInfo() const

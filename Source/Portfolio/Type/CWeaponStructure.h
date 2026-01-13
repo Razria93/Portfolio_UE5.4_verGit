@@ -372,6 +372,10 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class AActor* DamageCauser = nullptr;
 
+	// Damage MetaData [Set BuildContext]
+	UPROPERTY(VisibleAnywhere)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
 	// Query Acceptable [Set EvaluateTakeDamage]
 	UPROPERTY(VisibleAnywhere)
 	bool bAccepted = true;
@@ -428,6 +432,10 @@ struct FTakeDamageResult
 
 	UPROPERTY(VisibleAnywhere)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
+
+	// Damage MetaData
+	UPROPERTY(VisibleAnywhere)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 	// Damage Amount
 	UPROPERTY(VisibleAnywhere)
