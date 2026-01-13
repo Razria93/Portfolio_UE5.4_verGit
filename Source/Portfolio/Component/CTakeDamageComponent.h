@@ -38,17 +38,23 @@ private:
 
 private:
 	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
-	FTakeDamagePayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
-	FTakeDamageContext BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const;
-	void EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext, FTakeDamageResult& OutTakeDamageResult) const;
-	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext, FTakeDamageResult& InOutTakeDamageResult) const;
-
-private:
-	// FHealthApplyRequest BuildHealthApplyRequest(...);
-	// FReactionRequest  BuildReactionRequest(...);
+	void EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
+	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
 
 private:
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
+	float ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const;
+	float ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const;
+	float ApplyDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const;
+
+private:
+	FTakeDamagePayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
+	FTakeDamageContext BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const;
+	FTakeDamageResult BuildResult(const FTakeDamageContext& InTakeDamageContext) const;
+
+private:
+	void DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
 
 private:
 	void PrintTakeDamageSummaryInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;

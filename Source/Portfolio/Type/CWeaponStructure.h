@@ -362,7 +362,7 @@ struct FTakeDamageContext
 	GENERATED_BODY()
 
 public:
-	// Resolved objects
+	// Resolved objects [Set BuildContext]
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AActor> DamagedActor = nullptr;
 
@@ -372,17 +372,22 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class AActor* DamageCauser = nullptr;
 
-	// Pre-state snapshot
+	// Query Acceptable [Set EvaluateTakeDamage]
 	UPROPERTY(VisibleAnywhere)
-	bool bWasDead = false;
+	bool bAccepted = true;
 
 	UPROPERTY(VisibleAnywhere)
-	float HealthPoint_Before = 0.f;
+	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
+
+	// Pre-state Snapshot [Set EvaluateTakeDamage]
+	UPROPERTY(VisibleAnywhere)
+	float HealthPointBefore = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	float HealthPoint_After = 0.f;
+	bool bWasDeadBefore = false;
 
-	// DamageAmounts (derived)
+
+	// DamageAmounts [Set EvaluateTakeDamage & CommitTakeDamage]
 	UPROPERTY(VisibleAnywhere)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
 
@@ -394,6 +399,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	float FinalAppliedDamage = 0.f;		// Actual HP loss committed to Health. (ex. [shield absorbs] 60 -> HP: -30 / SP: -30)
+
+	// Post-state Snapshot [Set BuildResult]
+	UPROPERTY(VisibleAnywhere)
+	float HealthPointAfter = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bIsDeadAfter = false;
 
 	// TODO:
 	// - HitBoneName
@@ -418,9 +430,6 @@ struct FTakeDamageResult
 	UPROPERTY(VisibleAnywhere)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
 
-	UPROPERTY(VisibleAnywhere)
-	bool bKilled = false;
-
 	// Damage Amount
 	UPROPERTY(VisibleAnywhere)
 	float RequestDamage = 0.f;
@@ -433,6 +442,9 @@ struct FTakeDamageResult
 
 	UPROPERTY(VisibleAnywhere)
 	float FinalAppliedDamage = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bKilled = false;
 
 	// Dispatch flags
 	UPROPERTY()
