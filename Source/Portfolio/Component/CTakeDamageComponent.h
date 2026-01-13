@@ -17,7 +17,9 @@ public:
 private:
 	/* === Cached Objects === */
 	class AActor* OwnerActor_Cached;
+
 	class UCHealthComponent* HealthComp_Cached;
+	class UCReactionComponent* ReactionComp_Cached;
 
 protected:
 	virtual void BeginPlay() override;

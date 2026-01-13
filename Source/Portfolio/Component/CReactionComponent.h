@@ -32,6 +32,14 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+public:
+	// Entry API
+	void RequestReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult);
+
+private:
+	// Pipeline
+	void ProcessReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult);
+
 private:
 	void BuildReactionContainer();
 

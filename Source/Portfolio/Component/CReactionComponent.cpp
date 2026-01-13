@@ -14,20 +14,21 @@ void UCReactionComponent::BeginPlay()
 
 	BuildReactionContainer();
 	PrintReactionContainerInfo();
-
-	FApplyDamageSpecKey applyDamageSpecKey;
-	applyDamageSpecKey.AttachmentType = EAttachmentType::Sword;
-	applyDamageSpecKey.EquipmentType = EEquipmentType::Default;
-	applyDamageSpecKey.ActionType = EActionType::ComboAttack;
-	applyDamageSpecKey.ActionIndex = 0;
-
-	FReactionData reactionData;
-	FindReaction(applyDamageSpecKey, EReactionType::Hit, reactionData);
 }
 
 void UCReactionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+void UCReactionComponent::RequestReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult)
+{
+	ProcessReaction(InTakeDamagePayload, takeDamageContext, takeDamageResult);
+}
+
+void UCReactionComponent::ProcessReaction(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& takeDamageContext, const FTakeDamageResult& takeDamageResult)
+{
+	// TODO:
 }
 
 void UCReactionComponent::BuildReactionContainer()

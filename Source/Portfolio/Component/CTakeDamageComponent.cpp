@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -21,6 +22,9 @@ void UCTakeDamageComponent::BeginPlay()
 
 	HealthComp_Cached = Cast<UCHealthComponent>(OwnerActor_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
 	check(HealthComp_Cached);
+
+	ReactionComp_Cached = Cast<UCReactionComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionComponent::StaticClass()));
+	check(ReactionComp_Cached);
 }
 
 void UCTakeDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -314,6 +318,7 @@ void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload&
 void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
 {
 	// TODO: OnTakeDamageCommitted broadcast
+	ReactionComp_Cached->RequestReaction(InTakeDamagePayload, InTakeDamageContext, InTakeDamageResult);
 
 	// TODO:
 	// - VFX/SFX
