@@ -40,20 +40,6 @@ void UCAction::SetActionType(EActionType InActionType)
 	ActionType = InActionType;
 }
 
-void UCAction::PushContextToAttachment(const FActionContext& InActionContext)
-{
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
-
-	WeaponComp_Cached->PushContextToAttachment(InActionContext);
-}
-
-void UCAction::ClearContextToAttachment()
-{
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
-
-	WeaponComp_Cached->ClearContextToAttachment();
-}
-
 void UCAction::PlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
@@ -84,4 +70,18 @@ void UCAction::EndPlayAction()
 	StateComp_Cached->SetIdleMode();
 
 	// NOTE: To be implemented detail by derived classes
+}
+
+void UCAction::PushContextToAttachment(const FActionContext& InActionContext)
+{
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
+
+	WeaponComp_Cached->PushContextToAttachment(InActionContext);
+}
+
+void UCAction::ClearContextToAttachment()
+{
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
+
+	WeaponComp_Cached->ClearContextToAttachment();
 }
