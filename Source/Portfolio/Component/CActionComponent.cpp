@@ -3,7 +3,7 @@
 
 #include "GameFramework/Character.h"
 
-#include "Weapon/CAction.h"
+#include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
 

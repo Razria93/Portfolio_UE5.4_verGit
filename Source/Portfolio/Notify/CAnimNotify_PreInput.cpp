@@ -2,7 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CActionComponent.h"
-#include "Weapon/Action/CAction_ComboAttack.h"
+#include "Action/CAction_ComboAttack.h"
 
 UCAnimNotify_PreInput::UCAnimNotify_PreInput()
 {

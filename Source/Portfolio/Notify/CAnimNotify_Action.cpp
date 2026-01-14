@@ -2,7 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CActionComponent.h"
-#include "Weapon/CAction.h"
+#include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
 

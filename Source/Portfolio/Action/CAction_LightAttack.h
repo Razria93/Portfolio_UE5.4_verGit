@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapon/CAction.h"
+#include "Action/CAction.h"
 #include "CAction_LightAttack.generated.h"
 
 UCLASS(Blueprintable)
