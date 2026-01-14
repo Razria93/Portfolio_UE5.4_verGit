@@ -43,6 +43,7 @@ public:
 	void SetEquipMode();
 	void SetUnequipMode();
 	void SetActionMode();
+	void SetReactionMode();
 
 public:
 	/* === Check / Query === */

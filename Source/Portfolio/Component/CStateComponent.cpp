@@ -52,6 +52,13 @@ void UCStateComponent::SetActionMode()
 	ChangeStateMode(EStateType::Action);
 }
  
+void UCStateComponent::SetReactionMode()
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	ChangeStateMode(EStateType::Reaction);
+}
+
 void UCStateComponent::ChangeStateType(EStateType InNewStateType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
