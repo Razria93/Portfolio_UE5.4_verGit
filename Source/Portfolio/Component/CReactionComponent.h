@@ -10,6 +10,9 @@ class PORTFOLIO_API UCReactionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+public:
+	UCReactionComponent();
+
 	// === ReactionData ===================================== //
 private:
 	UPROPERTY(EditAnywhere)
@@ -33,7 +36,6 @@ private:
 	bool bIsReaction = false;
 
 public:
-	UCReactionComponent();
 
 protected:
 	virtual void BeginPlay() override;

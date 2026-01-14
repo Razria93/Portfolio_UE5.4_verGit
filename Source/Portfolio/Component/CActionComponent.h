@@ -12,6 +12,9 @@ class PORTFOLIO_API UCActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+public:
+	UCActionComponent();
+
 	// === ActionData ======================================= //
 private:
 	UPROPERTY(EditAnywhere, Category = "ActionData")
@@ -42,9 +45,6 @@ private:
 public:
 	FActionTypeChanged OnActionTypeChanged;
 
-public:	
-	UCActionComponent();
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -67,9 +67,6 @@ public:
 public:
 	/* === Check / Query === */
 	FORCEINLINE bool CheckCurActionType(EActionType InNewActionType) { return CurrentActionType_Cached == InNewActionType; }
-
-public:
-	void PlayAction();
 
 private:
 	void ChangeActionMode(EActionType InNewActionType);
