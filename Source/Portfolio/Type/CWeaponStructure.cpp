@@ -5,6 +5,7 @@
 #include "Components/ShapeComponent.h"
 
 #include "Component/CMovementComponent.h"
+#include "Reaction/CReaction.h"
 
 bool FEquipmentData::IsValidMinimal() const
 {
@@ -46,4 +47,9 @@ void FActionData::EndPlayMontage(ACharacter* InOwnerCharacter)
 bool FOverlapContext::IsValidMinimal() const
 {
 	return IsValid(OwnerActor) && IsValid(DamageCauser) && IsValid(OtherActor);
+}
+
+bool FReactionData::IsValidMinimal() const
+{
+	return IsValid(ReactionExecutorKey) && IsValid(Montage);
 }

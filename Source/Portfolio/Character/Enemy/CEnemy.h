@@ -15,6 +15,9 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere)
+	class UCMovementComponent* MovementComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCStateComponent* StateComponent;
 
 	UPROPERTY(VisibleAnywhere)

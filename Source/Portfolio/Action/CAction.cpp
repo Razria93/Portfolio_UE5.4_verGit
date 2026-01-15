@@ -5,7 +5,7 @@
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
-#include "Component/CActionComponent.h"
+#include "Component/CActionComponent.h" // TODO: Injected to UCActionComponent (+Chore)
 
 #include "Interface/HitContextProducer.h"
 

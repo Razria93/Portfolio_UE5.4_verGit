@@ -45,7 +45,7 @@ enum class EReactionType : uint8
 UENUM(BlueprintType)
 enum class ETakeDamageRejectReason : uint8
 {
-	None,
+	None = 0,
 
 	InvalidTarget,
 	InvalidCauser,
@@ -60,6 +60,14 @@ enum class ETakeDamageRejectReason : uint8
 
 	// DamageCooldown,
 	ZeroDamage,
+};
+
+UENUM(BlueprintType)
+enum class EReactionStopReason : uint8
+{
+	None = 0,
+	Interrupted,
+	Cancelled,
 };
 
 USTRUCT(BlueprintType)
@@ -454,10 +462,10 @@ struct FTakeDamageResult
 	bool bKilled = false;
 
 	// Dispatch flags
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	bool bTriggerHitReaction = true;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	bool bTriggerDeathReaction = true;
 
 public:
@@ -465,25 +473,28 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FReactionKey
+struct FReactionDataKey
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
-	FApplyDamageSpecKey ApplyDamageSpecKey;
+	UPROPERTY(EditAnywhere)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	EReactionType ReactionType = EReactionType::None;
 
 public:
-	bool operator==(const FReactionKey& InOther) const
+	FReactionDataKey() = default;
+
+public:
+	bool operator==(const FReactionDataKey& InOther) const
 	{
 		return ReactionType == InOther.ReactionType && ApplyDamageSpecKey == InOther.ApplyDamageSpecKey;
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FReactionKey& InKey)
+FORCEINLINE uint32 GetTypeHash(const FReactionDataKey& InKey)
 {
 	uint32 H = 0;
 	H = HashCombine(H, GetTypeHash(InKey.ApplyDamageSpecKey));
@@ -498,10 +509,10 @@ struct FReactionData
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Key")
-	FApplyDamageSpecKey ApplyDamageSpecKey;
+	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
 	UPROPERTY(EditAnywhere, Category = "Key")
-	EReactionType ReactionType = EReactionType::Hit;
+	TSubclassOf<class UCReaction> ReactionExecutorKey;
 
 	UPROPERTY(EditAnywhere, Category = "Reaction")
 	UAnimMontage* Montage = nullptr;
@@ -516,10 +527,8 @@ public:
 	// int32 priority = 0;
 
 public:
-	bool IsValidMinimal() const
-	{
-		return Montage != nullptr;
-	}
+	bool IsValidMinimal() const;
+
 };
 
 UCLASS()

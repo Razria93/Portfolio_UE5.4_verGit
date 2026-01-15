@@ -5,15 +5,18 @@
 #include "Type/CWeaponStructure.h"
 #include "CReaction.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class PORTFOLIO_API UCReaction : public UObject
 {
 	GENERATED_BODY()
 
 protected:
-	/* === Injection Objects === */
+	/* === Owner Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected;
-	TArray<FReactionData> ReactionDatas_Injected;
+
+	UPROPERTY(Transient)
+	class UCReactionComponent* OwnerReactionComponent_Injected;
 
 protected:
 	/* === Cached Objects === */
@@ -25,11 +28,21 @@ private:
 	bool bIsReaction;		// Reaction is active
 
 public:
-	virtual void InitializeReaction(ACharacter* InOwnerCharacter, const TArray<FReactionData> InReactionDatas);
+	virtual void InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent);
 	virtual void Tick(float InDeltaTime) {};
 
 public:
-	virtual void PlayReaction();
-	virtual void BeginPlayReaction();
-	virtual void EndPlayReaction();
+	// Policy
+	virtual bool CanInterrupt(const FReactionData& InActiveReactionData, const FReactionData& InNewReactionData) { return false; };
+	virtual bool CanBeInterrupted(const FReactionData& InActiveReactionData, const FReactionData& InNewReactionData) { return false; };
+
+public:
+	// Excution
+	virtual bool PlayReaction(const FReactionData& reactionData);
+	virtual void Stop(EReactionStopReason InStopReason, const UCReaction* InNewReaction);
+
+public:
+	// AnimNotify Entry API
+	virtual void OnAnimNotify_ReactionBegin() {};
+	virtual void OnAnimNotify_ReactionEnd() {};
 };

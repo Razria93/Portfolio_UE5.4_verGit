@@ -3,51 +3,43 @@
 
 #include "GameFramework/Character.h"
 
-#include "Component/CStateComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CStateComponent.h"
 
-void UCReaction::InitializeReaction(ACharacter* InOwnerCharacter, const TArray<FReactionData> InReactionDatas)
+void UCReaction::InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
 	check(OwnerCharacter_Injected);
 
-	ReactionDatas_Injected = InReactionDatas;
+	OwnerReactionComponent_Injected = InOwnerReactionComponent;
+	check(OwnerReactionComponent_Injected);
 
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));						// TODO: Refactor Interface
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));				// TODO: Refactor Interface
 	check(StateComp_Cached);
 
-	ReactionComp_Cached = Cast<UCReactionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCReactionComponent::StaticClass()));						// TODO: Refactor Interface
+	ReactionComp_Cached = Cast<UCReactionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCReactionComponent::StaticClass()));		// TODO: Refactor Interface
 	check(ReactionComp_Cached);
 }
 
-void UCReaction::PlayReaction()
+bool UCReaction::PlayReaction(const FReactionData& reactionData)
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(OwnerReactionComponent_Injected)) return false;
+	if (!IsValid(reactionData.Montage)) return false;
 
-	bIsReaction = true;
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return false;
 
-	StateComp_Cached->SetReactionMode();
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return false;
 
-	// NOTE: To be implemented detail by derived classes
+	const float playRate = FMath::Max(0.01f, reactionData.PlayRate);
+	animInstance->Montage_Play(reactionData.Montage, playRate);
+
+	return true;
 }
 
-void UCReaction::BeginPlayReaction()
+void UCReaction::Stop(EReactionStopReason InStopReason, const UCReaction* InNewReaction)
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
-
-	bBeginReaction = true;
-
-	// NOTE: To be implemented detail by derived classes
-}
-
-void UCReaction::EndPlayReaction()
-{
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached)) return;
-
-	bIsReaction = false;
-	bBeginReaction = false;
-
-	StateComp_Cached->SetIdleMode();
-
-	// NOTE: To be implemented detail by derived classes
+	// TODO:
 }
