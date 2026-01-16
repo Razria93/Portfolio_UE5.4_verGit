@@ -13,4 +13,6 @@ public:
 	void InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent) override;
 	void Tick(float InDeltaTime) override;
 
+public:
+	bool Begin(const FReactionData& reactionData) override;
 };

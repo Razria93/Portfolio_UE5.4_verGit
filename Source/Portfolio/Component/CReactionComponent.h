@@ -33,29 +33,31 @@ private:
 	TMap<class UClass*, class UCReaction*> ReactionExcutorMap; // TODO: Refactor from UCReaction* to TObjectPtr<UCReaction>
 
 private:
-	bool bIsReaction = false;
+	/* === Component State === */
+	UPROPERTY(Transient)
+	EReactionType CurrentReactionType_Cached;
+
+	UPROPERTY(Transient)
+	bool bHasActiveReaction = false;
 
 private:
-	/* === State === */
-	UPROPERTY(Transient)
-	FReactionDataKey ActiveReactionDataKey_Cached;
-
+	/* === ActiveReaction State === */
 	UPROPERTY(Transient)
 	FReactionData ActiveReactionData_Cached;
 
-private:
-	UPROPERTY(Transient)
-	class UClass* ActiveReactionExcutorKey_Cached;
-
 	UPROPERTY(Transient)
 	class UCReaction* ActiveReactionExcutor_Cached;
-
-
 
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
+
+	UPROPERTY(Transient)
+	class UCMovementComponent* MovementComp_Cached;
+
+	UPROPERTY(Transient)
+	class UCStateComponent* StateComp_Cached;
 
 public:
 	/* === Delegate === */
@@ -68,13 +70,13 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	// AnimNotify Entry API
-	void AnimNotify_ReactionBegin();
-	void AnimNotify_ReactionEnd();
-
-public:
 	// Entry API
 	void RequestReaction(const FTakeDamageResult& InTakeDamageResult);
+
+public:
+	// AnimNotify Entry API
+	void OnReactionBegin();
+	void OnReactionEnd(const UCReaction* InReaction, bool bInterrupted);
 
 private:
 	// Pipeline
@@ -89,9 +91,6 @@ private:
 	void PlayReaction(UCReaction* InNewReaction, const FReactionData& InReactionData);
 
 private:
-	void ChangeActiveReaction(UCReaction* InNewReaction, const FReactionData& InReactionData);
-
-private:
 	void BuildReactionDataMap(bool bRebuildAll);	// true: Rebuild | false: Append
 	void BuildReactionMap(bool bRebuildAll);		// true: Rebuild | false: Append
 	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
@@ -101,9 +100,22 @@ private:
 	UCReaction* FindReaction(const UClass* InClass);
 
 private:
-	void PrintReactionDataMapInfo() const;
+	void ChangeActiveReaction(UCReaction* InNewReaction, const FReactionData& InReactionData);
+	void ClearActiveReaction();
 
+private:
+	void RestoreMovementToMovable();
+	void RestoreStateToIdle();
+
+private:
+	void PrintReactionInfoSummary() const;
+	void PrintReactionDataMap() const;
+
+private:
+	void PrintComponentStateInfo() const;
 	void PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey) const;
 	void PrintReactionDataKeyInfo(const FReactionDataKey& InReactionDataKey) const;
 	void PrintReactionDataInfo(const FReactionData& InReactionData) const;
+	void PrintReactionExcutorInfo(const UCReaction* InReaction) const;
+	void PrintReactionExecutorRuntimeInfo(const UCReaction* InReaction) const;
 };
