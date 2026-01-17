@@ -42,19 +42,21 @@ bool UCReaction::Begin(const FReactionData& reactionData)
 	if (duration <= 0.f) return false;
 
 	bIsActive = true;
-	ChangeStateToReaction();
+	UpdateStateToReaction();
+
 	ActiveMontage_Cached = reactionData.Montage;
 
-	bInterruptibleNow = false;
-	bCancelableNow = false;
+	bInterruptible = false;
+	bCancelable = false;
 
-	ChangeMovementToImmovable(reactionData.bCanMove);
+	if(!reactionData.bCanMove) 
+		UpdateMovementToImmovable();
 
 	FOnMontageEnded montageEnd;
-	
+
 	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
 	CachedSerial_ActivePlay = thisPlaySerial;
-	
+
 	montageEnd.BindUObject(this, &UCReaction::OnMontageEnd, thisPlaySerial); // Capture Serial at this time
 	animInstance->Montage_SetEndDelegate(montageEnd, ActiveMontage_Cached);
 
@@ -80,6 +82,8 @@ void UCReaction::Stop(EReactionStopReason InStopReason, const UCReaction* InNewR
 			*GetNameSafe(ActiveMontage_Cached),
 			*GetNameSafe(InNewReaction)
 		));
+
+		PrintReactionExecutorRuntimeInfo();
 	}
 
 	// [Interrupted / Canceled / Force Events]
@@ -92,11 +96,12 @@ void UCReaction::End(bool bInterrupted)
 	if (!bIsActive) return;
 
 	// Clean up inner state CReaction (Not outer state)
+
 	bIsActive = false;
 	ActiveMontage_Cached = nullptr;
 
-	bInterruptibleNow = false;
-	bCancelableNow = false;
+	bInterruptible = false;
+	bCancelable = false;
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
@@ -115,18 +120,15 @@ void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, ui
 	End(bInterrupted);
 }
 
-void UCReaction::ChangeMovementToImmovable(bool bCanMove)
+void UCReaction::UpdateMovementToImmovable()
 {
 	if (!IsValid(MovementComp_Cached)) return;
 
-	if (bCanMove == false)
-	{
-		// Apply: Reaction | Restore: Component
-		MovementComp_Cached->SetStop();
-	}
+	// Apply: Reaction | Restore: Component
+	MovementComp_Cached->SetStop();
 }
 
-void UCReaction::ChangeStateToReaction()
+void UCReaction::UpdateStateToReaction()
 {
 	if (!IsValid(StateComp_Cached)) return;
 
@@ -139,8 +141,8 @@ void UCReaction::PrintReactionExecutorRuntimeInfo() const
 	FLog::Log(TEXT("----- ReactionRuntime Info ------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveMontage_Cached)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsActive"), bIsActive ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bInterruptibleNow"), bInterruptibleNow ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCancelableNow"), bCancelableNow ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bInterruptible"), bInterruptible ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCancelable"), bCancelable ? TEXT("true") : TEXT("false")));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_CurrentPlay"), Serial_CurrentPlay));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_ActivePlay"), CachedSerial_ActivePlay));
 	FLog::Log(TEXT("---------------------------------"));

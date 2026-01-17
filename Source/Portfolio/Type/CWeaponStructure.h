@@ -70,6 +70,24 @@ enum class EReactionStopReason : uint8
 	Cancelled,
 };
 
+UENUM(BlueprintType)
+enum class EReactionWindowType : uint8
+{
+	None = 0,
+
+	// [System-Driven] 
+	// Current reaction replaced by a new, stronger Reaction (ex. Hit Stun)
+	Interruptible,
+
+	// [Player-Driven] 
+	// Current reaction canceled by a conscious Player Action (ex. Parry/Dodge)
+	Cancelable,
+
+	// [Ignore All] 
+	// Solid state. Current reaction ignores any incoming Reactions.
+	ImmuneToReaction,
+};
+
 USTRUCT(BlueprintType)
 struct FEquipmentData
 {

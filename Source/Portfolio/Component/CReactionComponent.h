@@ -38,7 +38,7 @@ private:
 	EReactionType CurrentReactionType_Cached;
 
 	UPROPERTY(Transient)
-	bool bHasActiveReaction = false;
+	bool bHasActive = false;
 
 private:
 	/* === ActiveReaction State === */
@@ -74,9 +74,14 @@ public:
 	void RequestReaction(const FTakeDamageResult& InTakeDamageResult);
 
 public:
-	// AnimNotify Entry API
+	// CReaction API
 	void OnReactionBegin();
 	void OnReactionEnd(const UCReaction* InReaction, bool bInterrupted);
+
+public:
+	// AnimNotify API
+	void OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
+	void OnReactionWindowEnd(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
 
 private:
 	// Pipeline

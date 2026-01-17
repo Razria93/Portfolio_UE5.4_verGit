@@ -34,10 +34,10 @@ private:
 	bool bIsActive = false;
 
 	UPROPERTY(Transient)
-	bool bInterruptibleNow = false;		// Setted by AnimNotify
+	bool bInterruptible = false;		// Setted by AnimNotify
 
 	UPROPERTY(Transient)
-	bool bCancelableNow = false;		// Setted by AnimNotify
+	bool bCancelable = false;		// Setted by AnimNotify
 
 protected:
 	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Reaction
@@ -61,24 +61,29 @@ public:
 	UAnimMontage* GetActiveMontage() const { return ActiveMontage_Cached; }
 
 public:
-	void SetInterruptibleNow(bool bValue) { bInterruptibleNow = bValue; }
-	void SetCancelableNow(bool bValue) { bCancelableNow = bValue; }
+	bool IsActive() { return bIsActive; }
 
 public:
-	bool IsActive() const { return bIsActive; }
-
-public:
+	// To Be Implement for override (Must be Implement)
 	virtual bool CanInterrupt() const { return true; }
-	virtual bool CanBeInterrupted(const UCReaction* newReaction) const { return bInterruptibleNow; }
-	virtual bool CanBeCanceled(const UCReaction* newReaction) const { return bCancelableNow; }
+	virtual bool CanCancel() const { return true; }
+
+public:
+	virtual bool CanBeInterrupted() const { return bInterruptible; }
+	virtual bool CanBeCanceled() const { return bCancelable; }
+
+public:
+	void SetIsActive(bool bValue) { bIsActive = bValue; }
+	void SetInterruptible(bool bValue) { bInterruptible = bValue; }
+	void SetCancelable(bool bValue) { bCancelable = bValue; }
 
 protected:
 	UFUNCTION()
-	void OnMontageEnd(UAnimMontage* montage, bool bInterrupted, uint32 InSerial);
+	void OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial);
 
 private:
-	void ChangeMovementToImmovable(bool bCanMove);
-	void ChangeStateToReaction();
+	void UpdateMovementToImmovable();
+	void UpdateStateToReaction();
 
 public:
 	void PrintReactionExecutorRuntimeInfo() const;

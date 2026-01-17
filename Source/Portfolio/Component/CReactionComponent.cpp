@@ -62,6 +62,59 @@ void UCReactionComponent::OnReactionEnd(const UCReaction* InReaction, bool bInte
 	ClearActiveReaction();
 }
 
+void UCReactionComponent::OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* Animation)
+{
+	if (InReactionWindowType == EReactionWindowType::None) return;
+
+	switch (InReactionWindowType)
+	{
+	case EReactionWindowType::Interruptible:
+		if (IsValid(ActiveReactionExcutor_Cached))
+			ActiveReactionExcutor_Cached->SetInterruptible(true);
+		break;
+
+	case EReactionWindowType::Cancelable:
+		if (IsValid(ActiveReactionExcutor_Cached))
+			ActiveReactionExcutor_Cached->SetCancelable(true);
+		break;
+
+	case EReactionWindowType::ImmuneToReaction:
+		if (IsValid(ActiveReactionExcutor_Cached))
+		{
+			ActiveReactionExcutor_Cached->SetInterruptible(false);
+			ActiveReactionExcutor_Cached->SetCancelable(false);
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void UCReactionComponent::OnReactionWindowEnd(EReactionWindowType InReactionWindowType, UAnimSequenceBase* Animation)
+{
+	if (InReactionWindowType == EReactionWindowType::None) return;
+
+	switch (InReactionWindowType)
+	{
+	case EReactionWindowType::Interruptible:
+		if (IsValid(ActiveReactionExcutor_Cached))
+			ActiveReactionExcutor_Cached->SetInterruptible(false);
+		break;
+
+	case EReactionWindowType::Cancelable:
+		if (IsValid(ActiveReactionExcutor_Cached))
+			ActiveReactionExcutor_Cached->SetCancelable(false);
+		break;
+
+	case EReactionWindowType::ImmuneToReaction:
+		break;
+
+	default:
+		break;
+	}
+}
+
 void UCReactionComponent::ProcessReaction(const FTakeDamageResult& InTakeDamageResult)
 {
 	// NOTE: Use only the result of the commit
@@ -197,7 +250,7 @@ bool UCReactionComponent::QueryAcceptNewReaction(UCReaction* InActiveReaction, U
 		// return false;
 	}
 
-	if (!InActiveReaction->CanBeInterrupted(InNewReaction))
+	if (!InActiveReaction->CanBeInterrupted())
 	{
 		FLog::Log(FString::Printf(TEXT("[RejectNewReaction] Not interruptible (Active=%s, New=%s)"),
 			*GetNameSafe(InActiveReaction), *GetNameSafe(InNewReaction)));
@@ -377,7 +430,7 @@ void UCReactionComponent::ChangeActiveReaction(UCReaction* InNewReaction, const 
 
 	const EReactionType prevReactionType = CurrentReactionType_Cached;
 
-	bHasActiveReaction = true;
+	bHasActive = true;
 
 	CurrentReactionType_Cached = InReactionData.ReactionDataKey.ReactionType;
 	ActiveReactionData_Cached = InReactionData;
@@ -391,7 +444,7 @@ void UCReactionComponent::ClearActiveReaction()
 {
 	const EReactionType prevReactionType = CurrentReactionType_Cached;
 
-	bHasActiveReaction = false;
+	bHasActive = false;
 
 	CurrentReactionType_Cached = EReactionType::None;
 	ActiveReactionExcutor_Cached = nullptr;
@@ -492,7 +545,7 @@ void UCReactionComponent::PrintReactionDataMap() const
 void UCReactionComponent::PrintComponentStateInfo() const
 {
 	FLog::Log(TEXT("-------- Component State --------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HasActive"), bHasActiveReaction ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bHasActive"), bHasActive ? TEXT("true") : TEXT("false")));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(CurrentReactionType_Cached)));
 	FLog::Log(TEXT("---------------------------------"));
 }
