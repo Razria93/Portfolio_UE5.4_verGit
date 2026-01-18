@@ -3,7 +3,7 @@
 
 #include "GameFramework/Character.h"
 
-#include "Weapon/CAction.h"
+#include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -46,7 +46,12 @@ UObject* UCActionComponent::GetAction(EActionType InNewActionType)
 {
 	UCAction** actionPtr = ActionContainer.Find(InNewActionType);
 
-	return IsValid(*actionPtr) ? *actionPtr : nullptr;
+	if (!actionPtr) return nullptr;
+
+	UCAction* action = *actionPtr;
+	if (!IsValid(action)) return nullptr;
+
+	return action;
 }
 
 void UCActionComponent::SetIdleMode()

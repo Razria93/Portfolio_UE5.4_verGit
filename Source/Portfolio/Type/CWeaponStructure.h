@@ -11,6 +11,7 @@ enum class EAttachmentType : uint8
 {
 	Unarmed = 0,
 	Sword,
+	All,
 	Max,
 };
 
@@ -19,6 +20,7 @@ enum class EEquipmentType : uint8
 {
 	None = 0,
 	Default,
+	All,
 	Max,
 };
 
@@ -28,13 +30,22 @@ enum class EActionType : uint8
 	Idle = 0,
 	LightAttack,
 	ComboAttack,
+	All,
 	Max,
+};
+
+UENUM()
+enum class EReactionType : uint8
+{
+	None = 0,
+	Hit,
+	Dead,
 };
 
 UENUM(BlueprintType)
 enum class ETakeDamageRejectReason : uint8
 {
-	None,
+	None = 0,
 
 	InvalidTarget,
 	InvalidCauser,
@@ -49,6 +60,32 @@ enum class ETakeDamageRejectReason : uint8
 
 	// DamageCooldown,
 	ZeroDamage,
+};
+
+UENUM(BlueprintType)
+enum class EReactionStopReason : uint8
+{
+	None = 0,
+	Interrupted,
+	Cancelled,
+};
+
+UENUM(BlueprintType)
+enum class EReactionWindowType : uint8
+{
+	None = 0,
+
+	// [System-Driven] 
+	// Current reaction replaced by a new, stronger Reaction (ex. Hit Stun)
+	Interruptible,
+
+	// [Player-Driven] 
+	// Current reaction canceled by a conscious Player Action (ex. Parry/Dodge)
+	Cancelable,
+
+	// [Ignore All] 
+	// Solid state. Current reaction ignores any incoming Reactions.
+	ImmuneToReaction,
 };
 
 USTRUCT(BlueprintType)
@@ -225,25 +262,35 @@ public:
 	FApplyDamageSpecKey() = default;
 
 public:
-	bool operator==(const FApplyDamageSpecKey& Other) const
+	bool operator==(const FApplyDamageSpecKey& InOther) const
 	{
-		return EquipmentType == Other.EquipmentType
-			&& AttachmentType == Other.AttachmentType
-			&& ActionType == Other.ActionType
-			&& ActionIndex == Other.ActionIndex;
-	}
-
-public:
-	friend FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& Key)
-	{
-		uint32 H = 0;
-		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.AttachmentType)));
-		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.EquipmentType)));
-		H = HashCombine(H, ::GetTypeHash(static_cast<uint8>(Key.ActionType)));
-		H = HashCombine(H, ::GetTypeHash(Key.ActionIndex));
-		return H;
+		return EquipmentType == InOther.EquipmentType
+			&& AttachmentType == InOther.AttachmentType
+			&& ActionType == InOther.ActionType
+			&& ActionIndex == InOther.ActionIndex;
 	}
 };
+
+FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InKey)
+{
+	uint32 H = 0;
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.AttachmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.EquipmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionType)));
+	H = HashCombine(H, GetTypeHash(InKey.ActionIndex));
+	return H;
+}
+
+ /***
+  * [EN]
+  * USTRUCT Set/Map key checklist:
+  * 1) operator==
+  * 2) GetTypeHash
+  *
+  * GetTypeHash notes:
+  * - Prefer a normal overload at namespace/global scope (avoid hidden-friend in the struct).
+  * - Avoid ::GetTypeHash(...); call GetTypeHash(...) to keep ADL available.
+  ***/
 
 USTRUCT(BlueprintType)
 struct FApplyDamageSpec
@@ -281,7 +328,7 @@ struct FDefaultDamageEvent : public FDamageEvent
 	GENERATED_BODY()
 
 public:
-	UPROPERTY() 
+	UPROPERTY()
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 	UPROPERTY()
@@ -341,7 +388,7 @@ struct FTakeDamageContext
 	GENERATED_BODY()
 
 public:
-	// Resolved objects
+	// Resolved objects [Set BuildContext]
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AActor> DamagedActor = nullptr;
 
@@ -351,17 +398,25 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class AActor* DamageCauser = nullptr;
 
-	// Pre-state snapshot
+	// Damage MetaData [Set BuildContext]
 	UPROPERTY(VisibleAnywhere)
-	bool bWasDead = false;
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
+	// Query Acceptable [Set EvaluateTakeDamage]
+	UPROPERTY(VisibleAnywhere)
+	bool bAccepted = true;
 
 	UPROPERTY(VisibleAnywhere)
-	float HealthPoint_Before = 0.f;
+	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
+
+	// Pre-state Snapshot [Set EvaluateTakeDamage]
+	UPROPERTY(VisibleAnywhere)
+	float HealthPointBefore = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	float HealthPoint_After = 0.f;
+	bool bWasDeadBefore = false;
 
-	// DamageAmounts (derived)
+	// DamageAmounts [Set EvaluateTakeDamage & CommitTakeDamage]
 	UPROPERTY(VisibleAnywhere)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
 
@@ -373,6 +428,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	float FinalAppliedDamage = 0.f;		// Actual HP loss committed to Health. (ex. [shield absorbs] 60 -> HP: -30 / SP: -30)
+
+	// Post-state Snapshot [Set BuildResult]
+	UPROPERTY(VisibleAnywhere)
+	float HealthPointAfter = 0.f;
+
+	UPROPERTY(VisibleAnywhere)
+	bool bIsDeadAfter = false;
 
 	// TODO:
 	// - HitBoneName
@@ -397,8 +459,9 @@ struct FTakeDamageResult
 	UPROPERTY(VisibleAnywhere)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
 
+	// Damage MetaData
 	UPROPERTY(VisibleAnywhere)
-	bool bKilled = false;
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 	// Damage Amount
 	UPROPERTY(VisibleAnywhere)
@@ -413,15 +476,104 @@ struct FTakeDamageResult
 	UPROPERTY(VisibleAnywhere)
 	float FinalAppliedDamage = 0.f;
 
+	UPROPERTY(VisibleAnywhere)
+	bool bKilled = false;
+
 	// Dispatch flags
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	bool bTriggerHitReaction = true;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	bool bTriggerDeathReaction = true;
 
 public:
 	FTakeDamageResult() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FReactionDataKey
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
+	UPROPERTY(EditAnywhere)
+	EReactionType ReactionType = EReactionType::None;
+
+public:
+	FReactionDataKey() = default;
+
+public:
+	bool operator==(const FReactionDataKey& InOther) const
+	{
+		return ReactionType == InOther.ReactionType && ApplyDamageSpecKey == InOther.ApplyDamageSpecKey;
+	}
+};
+
+FORCEINLINE uint32 GetTypeHash(const FReactionDataKey& InKey)
+{
+	uint32 H = 0;
+	H = HashCombine(H, GetTypeHash(InKey.ApplyDamageSpecKey));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ReactionType)));
+	return H;
+}
+
+USTRUCT(BlueprintType)
+struct FReactionData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Key")
+	FReactionDataKey ReactionDataKey = FReactionDataKey();
+
+	UPROPERTY(EditAnywhere, Category = "Key")
+	TSubclassOf<class UCReaction> ReactionExecutorKey;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	UAnimMontage* Montage = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	float PlayRate = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	bool bCanMove = false;
+
+	// UPROPERTY(EditAnywhere, Category = "Policy")
+	// int32 priority = 0;
+
+public:
+	FReactionData() = default;
+
+public:
+	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FReactionQueryContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	UCReaction* ActiveReaction = nullptr;
+
+	UPROPERTY(Transient)
+	UCReaction* NewReaction = nullptr;
+
+	UPROPERTY(Transient)
+	FReactionData ActiveReactionData = FReactionData();
+
+	UPROPERTY(Transient)
+	FReactionData NewReactionData = FReactionData();
+
+public:
+	FReactionQueryContext() = default;
+
+public:
+	bool IsValidMinimal() const;
 };
 
 UCLASS()

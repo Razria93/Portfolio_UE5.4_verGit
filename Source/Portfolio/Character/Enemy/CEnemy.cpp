@@ -4,9 +4,11 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -31,6 +33,10 @@ ACEnemy::ACEnemy()
 	characterMovementComp->bOrientRotationToMovement = true;
 	characterMovementComp->MaxWalkSpeed = 600.0f;
 
+	// Init MovementComp (Custom)
+	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
+	check(MovementComponent);
+
 	// Init StateComp
 	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
 	check(StateComponent);
@@ -42,6 +48,10 @@ ACEnemy::ACEnemy()
 	// Init HealthComp
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
+
+	// Init ReactionComp
+	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
+	check(ReactionComponent);
 }
 
 void ACEnemy::BeginPlay()

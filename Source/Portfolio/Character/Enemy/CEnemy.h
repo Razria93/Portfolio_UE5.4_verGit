@@ -15,6 +15,9 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere)
+	class UCMovementComponent* MovementComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCStateComponent* StateComponent;
 
 	UPROPERTY(VisibleAnywhere)
@@ -22,6 +25,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class UCHealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCReactionComponent* ReactionComponent;
 
 protected:
 	virtual void BeginPlay() override;

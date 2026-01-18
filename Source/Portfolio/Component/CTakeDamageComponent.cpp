@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -21,6 +22,9 @@ void UCTakeDamageComponent::BeginPlay()
 
 	HealthComp_Cached = Cast<UCHealthComponent>(OwnerActor_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
 	check(HealthComp_Cached);
+
+	ReactionComp_Cached = Cast<UCReactionComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionComponent::StaticClass()));
+	check(ReactionComp_Cached);
 }
 
 void UCTakeDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -49,31 +53,34 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	// [Function Object]
 	// 'FDefaultDamageEvent + @(FTakeDamagePayload) -> FTakeDamageContext' and TakeDamage it-self
 
-	// 1) Validate Object
-	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser))
-		return 0.f;
+	// 1) Validate Request (Objects / Inputs)
+	if (!FMath::IsFinite(DamageAmount)) return 0.f;
+	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
 
-	// 2) Build Payload & Context
+	// 2) Build Payload / Context (Snapshot: inputs)
 	FTakeDamagePayload takeDamagePayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
 	FTakeDamageContext takeDamageContext = BuildContext(takeDamagePayload);
 
-	// 4) Build Result
-	FTakeDamageResult takeDamageResult;
-	EvaluateTakeDamage(takeDamageContext, takeDamageResult);
+	// 3) Evaluate (Gate + Compute: Query Accepted and Compute mitigationDamage & finalTakenDamage)
+	EvaluateTakeDamage(takeDamageContext);
 
-	// 5) Apply Result
-	CommitTakeDamage(takeDamageContext, takeDamageResult);
+	if (!takeDamageContext.bAccepted)
+	{
+		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
+		PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, rejectedResult);
+		DispatchTakeDamageRejected(takeDamagePayload, takeDamageContext, rejectedResult);
+		return 0.f;
+	}
 
-	// 6) TODO: DispatchAcceptedDamage / DispatchRejectedDamage
-	// - Delegates only 
-	// - Do not play montage, vfx here
-	// - Accepted -> killed / damaged
-	// - Rejected
+	// 4) Commit (Apply to health + post snapshot + build result)
+	CommitTakeDamage(takeDamageContext);
 
-	PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, takeDamageResult);
+	const FTakeDamageResult committedResult = BuildResult(takeDamageContext);
+	PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, committedResult);
 	// PrintTakeDamageContextInfo(takeDamagePayload, takeDamageContext, takeDamageResult);
+	DispatchTakeDamageCommitted(takeDamagePayload, takeDamageContext, committedResult);
 
-	return takeDamageResult.FinalTakenDamage;
+	return committedResult.FinalTakenDamage;
 }
 
 bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
@@ -82,141 +89,81 @@ bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefault
 	if (!IsValid(HealthComp_Cached)) return false;
 	if (!IsValid(InDamageCauser)) return false;
 
-	// TODO: 
-	// Validate DefaultDamageEvent Function
+	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageSpec.BaseDamage)) return false;
+	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageResult.RequestDamage)) return false;
 
 	return true;
 }
 
-FTakeDamagePayload UCTakeDamageComponent::BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
+void UCTakeDamageComponent::EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const
 {
-	FTakeDamagePayload takeDamagePayload = FTakeDamagePayload();
-
-	takeDamagePayload.DamagedActor = OwnerActor_Cached;
-	takeDamagePayload.EventInstigator = InDamageInstigator;
-	takeDamagePayload.DamageCauser = InDamageCauser;
-
-	takeDamagePayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
-	takeDamagePayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
-	takeDamagePayload.ApplyDamageResult = InDefaultDamageEvent.ApplyDamageResult;
-
-	takeDamagePayload.RequestedDamage = DamageAmount;
-
-	return takeDamagePayload;
-}
-
-FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const
-{
-	FTakeDamageContext takeDamageContext = FTakeDamageContext();
-
-	takeDamageContext.DamagedActor = InTakeDamagePayload.DamagedActor;
-	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
-	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
-
-	// Check IsDead -> Check HP
-	takeDamageContext.bWasDead = HealthComp_Cached->IsDead();
-	takeDamageContext.HealthPoint_Before = HealthComp_Cached->GetCurrentHP();
-
-	takeDamageContext.RequestedDamage = InTakeDamagePayload.RequestedDamage;
-
-	return takeDamageContext;
-}
-
-void UCTakeDamageComponent::EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext, FTakeDamageResult& OutTakeDamageResult) const
-{
-	OutTakeDamageResult = FTakeDamageResult();
+	// Process 1: Take Pre-state Snapshot
+	InOutTakeDamageContext.bWasDeadBefore = HealthComp_Cached->IsDead();
+	InOutTakeDamageContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
 
 	// Gate 1: validate
 	if (!IsValid(InOutTakeDamageContext.DamagedActor))
 	{
-		OutTakeDamageResult.bAccepted = false;
-		OutTakeDamageResult.RejectReason = ETakeDamageRejectReason::InvalidTarget;
+		InOutTakeDamageContext.bAccepted = false;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidTarget;
 		return;
 	}
 
 	if (!IsValid(InOutTakeDamageContext.DamageCauser))
 	{
-		OutTakeDamageResult.bAccepted = false;
-		OutTakeDamageResult.RejectReason = ETakeDamageRejectReason::InvalidCauser;
+		InOutTakeDamageContext.bAccepted = false;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidCauser;
 		return;
 	}
 
 	if (!IsValid(InOutTakeDamageContext.Instigator))
 	{
-		OutTakeDamageResult.bAccepted = false;
-		OutTakeDamageResult.RejectReason = ETakeDamageRejectReason::InvalidInstigator;
+		InOutTakeDamageContext.bAccepted = false;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidInstigator;
 		return;
 	}
 
 	// Gate 2: already dead
-	if (InOutTakeDamageContext.bWasDead)
+	if (InOutTakeDamageContext.bWasDeadBefore)
 	{
-		OutTakeDamageResult.bAccepted = false;
-		OutTakeDamageResult.RejectReason = ETakeDamageRejectReason::AlreadyDead;
+		InOutTakeDamageContext.bAccepted = false;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::AlreadyDead;
 		return;
 	}
 
 	// TODO:
-	// Gate 3: invulnerable / friendly fire / cooldown ...
+	// Gate 3: invulnerable / friendly fire / cooldown / self-damage...
 
-	// TODO:
-	// Process 1: Compute Mitigation Damage
-	// InOutTakeDamageContext.MitigatedDamage = ComputeMitigatedDamage(InOutTakeDamageContext);
+	// Process 2: Compute Mitigation Damage
+	InOutTakeDamageContext.MitigatedDamage = ComputeMitigatedDamage(InOutTakeDamageContext);	// TODO
 
-	// TODO:
 	// Gate 4: Zero damage
-	// if (InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
-	// {
-	// 	OutTakeDamageResult.bAccepted = false;
-	// 	OutTakeDamageResult.RejectReason = ETakeDamageRejectReason::ZeroDamage;
-	// 	return;
-	// }
-
-	// TODO:
-	// Process 2: Finalize Taken Damage
-	// InOutTakeDamageContext.FinalTakenDamage = FinalizeTakenDamage(InOutTakeDamageContext);
-
-	// Temp: Process Minimal (Not Implement 'Process 1 + 2')
-	InOutTakeDamageContext.FinalTakenDamage = InOutTakeDamageContext.RequestedDamage;
-
-	OutTakeDamageResult.bAccepted = true;
-	OutTakeDamageResult.RejectReason = ETakeDamageRejectReason::None;
-
-	// TODO: Dispatch Flag (Reaction Hint)
-	// OutTakeDamageResult.bTriggerHitReaction = true;
-	// OutTakeDamageResult.bTriggerDeathReaction = true;
-}
-
-void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext, FTakeDamageResult& InOutTakeDamageResult) const
-{
-	// TODO:
-	// Process 3: Apply Damage To Health
-	// float appliedDamage = ApplyDamageToHealth(InOutTakeDamageContext);
-
-	// Temp:  Apply Damage To Health (TODO: Shield / Mana / Stemina etc..)
-	float appliedDamage = HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
-
-	InOutTakeDamageContext.FinalAppliedDamage = appliedDamage;
-
-	InOutTakeDamageResult.RequestDamage = InOutTakeDamageContext.RequestedDamage;
-	InOutTakeDamageResult.MitigatedDamage = InOutTakeDamageContext.MitigatedDamage;
-	InOutTakeDamageResult.FinalTakenDamage = InOutTakeDamageContext.FinalTakenDamage;
-	InOutTakeDamageResult.FinalAppliedDamage = InOutTakeDamageContext.FinalAppliedDamage;
-
-	// Check HP -> Check IsDead
-	InOutTakeDamageContext.HealthPoint_After = HealthComp_Cached->GetCurrentHP();
-	
-	InOutTakeDamageContext.bWasDead = HealthComp_Cached->IsDead();
-	InOutTakeDamageResult.bKilled = InOutTakeDamageContext.bWasDead;
-
-	if (InOutTakeDamageResult.bKilled)
+	if (InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
-		InOutTakeDamageResult.bTriggerHitReaction = false;
-		InOutTakeDamageResult.bTriggerDeathReaction = true;
+		InOutTakeDamageContext.bAccepted = false;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::ZeroDamage;
+		return;
 	}
 
-	// TODO:
-	// state transitions / hit reactions (montage, VFX/SFX) / knockback / hit stop (time dilation) / etc
+	InOutTakeDamageContext.bAccepted = true;
+	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+
+	// Process 3: Compute FinalTaken Damage
+	InOutTakeDamageContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutTakeDamageContext);	// TODO
+}
+
+void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext)
+{
+	if (!IsValid(HealthComp_Cached)) return;
+
+	// Process 4: Apply Damage To Health
+	InOutTakeDamageContext.FinalAppliedDamage = ApplyDamageToHealth(InOutTakeDamageContext);
+
+	// TODO: Shield / Mana / Stemina etc + Commit Order
+
+	// Post-state Snapshot: Set BuildResult
+	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
+	InOutTakeDamageContext.bIsDeadAfter = HealthComp_Cached->IsDead();
 }
 
 AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
@@ -257,7 +204,130 @@ AController* UCTakeDamageComponent::ResolveInstigatorController(AController* Eve
 		}
 	}
 
+	/* ============================================= */
+
 	return nullptr;
+}
+
+float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const
+{
+	const float requestedDamage = InOutTakeDamageContext.RequestedDamage;
+
+	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	if (!FMath::IsFinite(requestedDamage)) return 0.f;
+
+	const float mitigatedDamage = requestedDamage;
+
+	// TODO: Defense / Armor / Resistance Policy
+
+	return FMath::Max(0.f, mitigatedDamage);
+}
+
+float UCTakeDamageComponent::ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const
+{
+
+	const float mitigatedDamage = InOutTakeDamageContext.MitigatedDamage;
+
+	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	if (!FMath::IsFinite(mitigatedDamage)) return 0.f;
+
+	const float finalTakenDamage = mitigatedDamage;
+
+	// TODO: Critical / Guard / Headshot etc Policy
+
+	return FMath::Max(0.f, finalTakenDamage);
+}
+
+float UCTakeDamageComponent::ApplyDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
+{
+	if (!IsValid(HealthComp_Cached)) return 0.0;
+
+	return HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
+}
+
+FTakeDamagePayload UCTakeDamageComponent::BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
+{
+	FTakeDamagePayload takeDamagePayload = FTakeDamagePayload();
+
+	takeDamagePayload.DamagedActor = OwnerActor_Cached;
+	takeDamagePayload.EventInstigator = InDamageInstigator;
+	takeDamagePayload.DamageCauser = InDamageCauser;
+
+	takeDamagePayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
+	takeDamagePayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
+	takeDamagePayload.ApplyDamageResult = InDefaultDamageEvent.ApplyDamageResult;
+
+	takeDamagePayload.RequestedDamage = DamageAmount;
+
+	return takeDamagePayload;
+}
+
+FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const
+{
+	FTakeDamageContext takeDamageContext = FTakeDamageContext();
+
+	takeDamageContext.DamagedActor = InTakeDamagePayload.DamagedActor;
+	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
+	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
+	takeDamageContext.ApplyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
+	takeDamageContext.RequestedDamage = InTakeDamagePayload.RequestedDamage;
+
+	return takeDamageContext;
+}
+
+FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FTakeDamageResult takeDamageResult = FTakeDamageResult();
+
+	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
+	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
+
+	takeDamageResult.ApplyDamageSpecKey = InTakeDamageContext.ApplyDamageSpecKey;
+
+	takeDamageResult.RequestDamage = InTakeDamageContext.RequestedDamage;
+	takeDamageResult.MitigatedDamage = InTakeDamageContext.MitigatedDamage;
+	takeDamageResult.FinalTakenDamage = InTakeDamageContext.FinalTakenDamage;
+	takeDamageResult.FinalAppliedDamage = InTakeDamageContext.FinalAppliedDamage;
+
+	if (!takeDamageResult.bAccepted)
+	{
+		takeDamageResult.bKilled = false;
+		takeDamageResult.bTriggerHitReaction = false;
+		takeDamageResult.bTriggerDeathReaction = false;
+		return takeDamageResult;
+	}
+
+	takeDamageResult.bKilled = (!InTakeDamageContext.bWasDeadBefore && InTakeDamageContext.bIsDeadAfter);
+
+	if (takeDamageResult.bKilled)
+	{
+		takeDamageResult.bTriggerHitReaction = false;
+		takeDamageResult.bTriggerDeathReaction = true;
+	}
+	else
+	{
+		takeDamageResult.bTriggerHitReaction = true;
+		takeDamageResult.bTriggerDeathReaction = false;
+	}
+
+	return takeDamageResult;
+}
+
+void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+{
+	// TODO: OnTakeDamageRejected broadcast
+}
+
+void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+{
+	// TODO: OnTakeDamageCommitted broadcast
+	ReactionComp_Cached->RequestReaction(InTakeDamageResult);
+
+	// TODO:
+	// - VFX/SFX
+	// - Knockback
+	// - HitStop
+	// - UI Damage Number
 }
 
 void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const

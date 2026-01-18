@@ -1,4 +1,4 @@
-#include "Weapon/Action/CAction_LightAttack.h"
+#include "Action/CAction_LightAttack.h"
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"

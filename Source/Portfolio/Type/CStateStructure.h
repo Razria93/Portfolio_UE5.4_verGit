@@ -11,6 +11,7 @@ enum class EStateType : uint8
 	Equip,
 	Unequip,
 	Action,
+	Reaction,
 	Max,
 };
 

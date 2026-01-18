@@ -39,72 +39,62 @@
 
 #### 1. CEnemy::TakeDamage receive entry (override)
 
-- [ ] Override `CEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)`
+- [x] Override `CEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)`
 
-- [ ] Perform minimal validation only (null/self/amount/required pointers), then delegate immediately
+- [x] Perform minimal validation only (null/self/amount/required pointers), then delegate immediately
 
-- [ ] Explicitly branch event types via `DamageEvent.GetTypeID()`  
+- [x] Explicitly branch event types via `DamageEvent.GetTypeID()`  
   - Handle default path (default event)  
   - Include project custom event id path (if used)
 
-- [ ] Delegate call: resolve `UCTakeDamageComponent` and forward to `HandleTakeDamage(...)` only
+- [x] Delegate call: resolve `UCTakeDamageComponent` and forward to `HandleTakeDamage(...)` only
 
 
 #### 2. UCTakeDamageComponent setup and processing pipeline
 
-- [ ] Create `UCTakeDamageComponent` and ensure it is attached/initialized on Enemy
+- [x] Create `UCTakeDamageComponent` and ensure it is attached/initialized on Enemy
 
-- [ ] Define the component entry point: `HandleTakeDamage(...)`
+- [x] Define the component entry point: `HandleTakeDamage(...)`
   - Input: `DamageAmount`, `DamageEvent`, `EventInstigator`, `DamageCauser`  
   - Output: final applied damage (or a processing result struct)
 
-- [ ] Define target-state-based mitigation/validation inside `HandleTakeDamage(...)`
+- [x] Define target-state-based mitigation/validation inside `HandleTakeDamage(...)`
   - Examples: invincibility/guard/defense/status restrictions (minimal implementation only for this milestone)
 
 
 #### 3. Health processing (minimal integration with CHealthComponent)
 
-- [ ] Create `CHealthComponent` or connect an existing component
+- [x] Create `CHealthComponent` or connect an existing component
 
-- [ ] Finalize HP reduction API (e.g., `TakeDamageToHealthPoint(float FinalDamage)`)
+- [x] Finalize HP reduction API (e.g., `TakeDamageToHealthPoint(float FinalDamage)`)
 
-- [ ] Connect HP reduction and dead flag handling (HP <= 0)
+- [x] Connect HP reduction and dead flag handling (HP <= 0)
 
-- [ ] Validate via logs (before/after values)
-
-
-#### 4. Reaction processing (minimal integration with CReactionComponent)
-
-- [ ] Create `CReactionComponent` or connect an existing component
-
-- [ ] Finalize minimal hit reaction API  
-  - e.g., `OnHitReact(const FHitReactContext&)` or `PlayHitReaction(...)`
-
-- [ ] Implement minimal reaction only for this milestone  
-  - Required: log output  
+- [x] Validate via logs (before/after values)
 
 
-#### 5. Structured logs and debug output (verification feedback)
 
-- [ ] Enforce “one receive log per TakeDamage call” to prevent duplicate spam
+#### 4. Structured logs and debug output (verification feedback)
 
-- [ ] Standardize log format and minimum fields  
+- [x] Enforce “one receive log per TakeDamage call” to prevent duplicate spam
+
+- [x] Standardize log format and minimum fields  
   - Target, DamageAmount  
   - EventInstigator, DamageCauser  
   - DamageEvent TypeID (+ Custom Id / SpecKey if available)
 
 
-#### 6. Integration validation scenarios (with M2-03)
+#### 5. Integration validation scenarios (with M2-03)
 
-- [ ] Verify `CApplyDamageComponent::ApplyDamageToTarget(...)` → `CEnemy::TakeDamage(...)` linkage
+- [x] Verify `CApplyDamageComponent::ApplyDamageToTarget(...)` → `CEnemy::TakeDamage(...)` linkage
 
-- [ ] Verify `CEnemy::TakeDamage(...)` → `UCTakeDamageComponent::HandleTakeDamage(...)` delegation
+- [x] Verify `CEnemy::TakeDamage(...)` → `UCTakeDamageComponent::HandleTakeDamage(...)` delegation
 
-- [ ] Verify `UCTakeDamageComponent` → `CHealthComponent` / `CReactionComponent` calls
+- [x] Verify `UCTakeDamageComponent` → `CHealthComponent` calls
 
-- [ ] Validate call frequency per intended hit event (check unintended duplicates within a single overlap window)
+- [x] Validate call frequency per intended hit event (check unintended duplicates within a single overlap window)
 
-- [ ] Validate multi-target scenarios (multiple Enemies placed in the test level)
+- [x] Validate multi-target scenarios (multiple Enemies placed in the test level)
 
 
 ---

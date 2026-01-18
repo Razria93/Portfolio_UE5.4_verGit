@@ -11,6 +11,9 @@ class PORTFOLIO_API UCAction : public UObject
 	GENERATED_BODY()
 
 protected:
+	EActionType ActionType;
+
+protected:
 	/* === Injection Objects === */
 	class ACharacter* OwnerCharacter_Injected;
 	TArray<FActionData> ActionDatas_Injected;
@@ -20,9 +23,6 @@ protected:
 	class UCWeaponComponent* WeaponComp_Cached;
 	class UCStateComponent* StateComp_Cached;
 	class UCActionComponent* ActionComp_Cached;
-
-protected:
-	EActionType ActionType;
 
 private:
 	bool bBeginAction;	// Action start triggered

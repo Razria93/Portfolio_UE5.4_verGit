@@ -37,7 +37,7 @@
 
 ---
 
-## Completed Items
+## Completed Tasks
 
 ### 1. ApplyDamage pipeline entry: Attachment → ApplyDamageComponent request path
 
