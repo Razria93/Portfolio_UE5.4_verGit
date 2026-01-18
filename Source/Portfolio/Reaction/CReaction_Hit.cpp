@@ -1,21 +1,33 @@
 #include "Reaction/CReaction_Hit.h"
 #include "ProjectGlobal.h"
 
-#include "Component/CStateComponent.h"
-
-void UCReaction_Hit::InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent)
+bool UCReaction_Hit::WantToInterrupt(const FReactionQueryContext& InContext) const
 {
-	Super::InitializeReaction(InOwnerCharacter, InOwnerReactionComponent);
+	// Hit reaction can interrupt others
+	return true;
 }
 
-void UCReaction_Hit::Tick(float InDeltaTime)
+bool UCReaction_Hit::WantToCancel(const FReactionQueryContext& InContext) const
 {
-	Super::Tick(InDeltaTime);
+	// Hit reaction cannot be canceled by policy
+	return false;
 }
 
-bool UCReaction_Hit::Begin(const FReactionData& reactionData)
+bool UCReaction_Hit::AllowInterruptionBy(const FReactionQueryContext& InContext) const
 {
-	// TODO: Hit-only: Movement / VFX Triggers etc
+	if (InContext.NewReactionData.IsValidMinimal()
+		&& InContext.NewReactionData.ReactionDataKey.ReactionType == EReactionType::Dead)
+	{
+		// Allow death reaction to interrupt hit
+		return true;
+	}
 
-	return Super::Begin(reactionData);
+	// Follow current interruptible window
+	return IsInterruptibleNow();
+}
+
+bool UCReaction_Hit::AllowCancelBy(const FReactionQueryContext& InContext) const
+{
+	// Follow current cancelable window
+	return IsCancelableNow();
 }

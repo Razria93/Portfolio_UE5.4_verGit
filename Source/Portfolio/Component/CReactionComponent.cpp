@@ -57,9 +57,7 @@ void UCReactionComponent::OnReactionEnd(const UCReaction* InReaction, bool bInte
 	// Stale callback guard
 	if (InReaction != ActiveReactionExcutor_Cached) return;
 
-	RestoreMovementToMovable();
-	RestoreStateToIdle();
-	ClearActiveReaction();
+	EndReaction(ActiveReactionExcutor_Cached, ActiveReactionData_Cached);
 }
 
 void UCReactionComponent::OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* Animation)
@@ -238,28 +236,30 @@ bool UCReactionComponent::QueryAcceptNewReaction(UCReaction* InActiveReaction, U
 	if (!InNewReactionData.IsValidMinimal()) return false;
 	if (!InActiveReactionData.IsValidMinimal()) return true; // FirstReaction
 
+	FReactionQueryContext reactionQueryContext = FReactionQueryContext();
+	reactionQueryContext.ActiveReaction = InActiveReaction;
+	reactionQueryContext.NewReaction = InNewReaction;
+	reactionQueryContext.ActiveReactionData = InActiveReactionData;
+	reactionQueryContext.NewReactionData = InNewReactionData;
+
 	// [POLICY] Duplicate ReactionDataKey: Currently set to 'restart'.
 	// (Options: ignore | restart | stop-then-play)
 	if (InNewReactionData.ReactionDataKey == InActiveReactionData.ReactionDataKey)
 	{
-		// FLog::Log(FString::Printf(TEXT("[RejectNewReaction] Duplicate key (Active=%s, New=%s)"),
-		// 	*GetNameSafe(InActiveReaction), *GetNameSafe(InNewReaction)));
-		// PrintReactionDataInfo(InNewReactionData);
-		// PrintReactionDataInfo(InActiveReactionData);
-
-		// return false;
+		FLog::Log(FString::Printf(TEXT("[CheckNewReaction] Duplicate key (Active = %s, New = %s)"),
+			*GetNameSafe(InActiveReaction), *GetNameSafe(InNewReaction)));
 	}
 
-	if (!InActiveReaction->CanBeInterrupted())
+	if (!InActiveReaction->AllowInterruptionBy(reactionQueryContext))
 	{
-		FLog::Log(FString::Printf(TEXT("[RejectNewReaction] Not interruptible (Active=%s, New=%s)"),
+		FLog::Log(FString::Printf(TEXT("[RejectNewReaction] Not interruptible (Active = %s, New = %s)"),
 			*GetNameSafe(InActiveReaction), *GetNameSafe(InNewReaction)));
 		return false;
 	}
 
-	if (!InNewReaction->CanInterrupt())
+	if (!InNewReaction->WantToInterrupt(reactionQueryContext))
 	{
-		FLog::Log(FString::Printf(TEXT("[RejectNewReaction] New cannot interrupt now (New=%s)"),
+		FLog::Log(FString::Printf(TEXT("[RejectNewReaction] New cannot interrupt now (New = %s)"),
 			*GetNameSafe(InNewReaction)));
 		return false;
 	}
@@ -269,8 +269,28 @@ bool UCReactionComponent::QueryAcceptNewReaction(UCReaction* InActiveReaction, U
 
 void UCReactionComponent::PlayReaction(UCReaction* InNewReaction, const FReactionData& InReactionData)
 {
+	if (!InNewReaction->Validate(InReactionData)) return;
+	if (!InNewReaction->Initialize(InReactionData)) return;
+
+	UpdateMovementToImmovable(InReactionData);
+	UpdateStateToReaction();
+
 	if (InNewReaction->Begin(InReactionData))
+	{
 		ChangeActiveReaction(InNewReaction, InReactionData);
+	}
+	else // Begin is Failed
+	{
+		FLog::Log(TEXT("[PlayReaction] be Failed"));
+		EndReaction(InNewReaction, InReactionData);
+	}
+}
+
+void UCReactionComponent::EndReaction(UCReaction* InEndReaction, const FReactionData& InReactionData)
+{
+	RestoreMovementToMovable(InReactionData);
+	RestoreStateToIdle();
+	ClearActiveReaction();
 }
 
 void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
@@ -454,22 +474,38 @@ void UCReactionComponent::ClearActiveReaction()
 		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, CurrentReactionType_Cached);
 }
 
-void UCReactionComponent::RestoreMovementToMovable()
+
+void UCReactionComponent::UpdateMovementToImmovable(const FReactionData& InReactionData)
 {
 	if (!IsValid(MovementComp_Cached)) return;
 
-	if (ActiveReactionData_Cached.bCanMove == false)
+	if (InReactionData.bCanMove == false)
 	{
-		// Apply: Reaction | Restore: Component
+		MovementComp_Cached->SetStop();
+	}
+}
+
+void UCReactionComponent::RestoreMovementToMovable(const FReactionData& InReactionData)
+{
+	if (!IsValid(MovementComp_Cached)) return;
+
+	if (InReactionData.bCanMove == false)
+	{
 		MovementComp_Cached->SetMove();
 	}
+}
+
+void UCReactionComponent::UpdateStateToReaction()
+{
+	if (!IsValid(StateComp_Cached)) return;
+
+	StateComp_Cached->SetReactionMode();
 }
 
 void UCReactionComponent::RestoreStateToIdle()
 {
 	if (!IsValid(StateComp_Cached)) return;
 
-	// Apply: Reaction | Restore: Component
 	StateComp_Cached->SetIdleMode();
 }
 
@@ -614,5 +650,5 @@ void UCReactionComponent::PrintReactionExcutorInfo(const UCReaction* InReaction)
 void UCReactionComponent::PrintReactionExecutorRuntimeInfo(const UCReaction* InReaction) const
 {
 	if (!IsValid(InReaction)) return;
-	InReaction->PrintReactionExecutorRuntimeInfo();
+	InReaction->PrintReactionExecutorRuntimeInfo_Public();
 }

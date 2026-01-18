@@ -3,9 +3,8 @@
 
 #include "GameFramework/Character.h"
 
-#include "Component/CMovementComponent.h"
-#include "Component/CStateComponent.h"
 #include "Component/CReactionComponent.h"
+#include "CReaction_Hit.h"
 
 
 void UCReaction::InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent)
@@ -15,19 +14,13 @@ void UCReaction::InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComp
 
 	OwnerReactionComp_Injected = InOwnerReactionComponent;
 	check(OwnerReactionComp_Injected);
-
-	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Injected->GetComponentByClass(UCMovementComponent::StaticClass()));
-	check(MovementComp_Cached);
-
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));
-	check(StateComp_Cached);
 }
 
-bool UCReaction::Begin(const FReactionData& reactionData)
+bool UCReaction::Validate(const FReactionData& InReactionData)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!IsValid(OwnerReactionComp_Injected)) return false;
-	if (!IsValid(reactionData.Montage)) return false;
+	if (!InReactionData.IsValidMinimal()) return false;	// Montage / ExcutorKey
 
 	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
 	if (!IsValid(meshComp)) return false;
@@ -35,28 +28,38 @@ bool UCReaction::Begin(const FReactionData& reactionData)
 	UAnimInstance* animInstance = meshComp->GetAnimInstance();
 	if (!IsValid(animInstance)) return false;
 
-	const float playRate = FMath::Max(0.01f, reactionData.PlayRate);
+	return true;
+}
 
-	// Play Montage
-	const float duration = animInstance->Montage_Play(reactionData.Montage, playRate);
-	if (duration <= 0.f) return false;
-
-	bIsActive = true;
-	UpdateStateToReaction();
-
-	ActiveMontage_Cached = reactionData.Montage;
+bool UCReaction::Initialize(const FReactionData& InReactionData)
+{
+	bIsActive = false;
+	ActiveMontage_Cached = nullptr;
 
 	bInterruptible = false;
 	bCancelable = false;
 
-	if(!reactionData.bCanMove) 
-		UpdateMovementToImmovable();
+	return true;
+}
 
-	FOnMontageEnded montageEnd;
+bool UCReaction::Begin(const FReactionData& InReactionData)
+{
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+
+	const float playRate = FMath::Max(0.01f, InReactionData.PlayRate);
+
+	// Play Montage (Use Montage/PlayRate in InReactionData)
+	const float duration = animInstance->Montage_Play(InReactionData.Montage, playRate);
+	if (duration <= 0.f) return false;
+
+	bIsActive = true;
+	ActiveMontage_Cached = InReactionData.Montage;
 
 	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
 	CachedSerial_ActivePlay = thisPlaySerial;
 
+	FOnMontageEnded montageEnd;
 	montageEnd.BindUObject(this, &UCReaction::OnMontageEnd, thisPlaySerial); // Capture Serial at this time
 	animInstance->Montage_SetEndDelegate(montageEnd, ActiveMontage_Cached);
 
@@ -76,13 +79,7 @@ void UCReaction::Stop(EReactionStopReason InStopReason, const UCReaction* InNewR
 		// Stop Montage
 		animInstance->Montage_Stop(0.1f, ActiveMontage_Cached);
 
-		FLog::Log(FString::Printf(TEXT("[Reaction::Stop] Reason=%s | Active=%s | Montage=%s | New=%s"),
-			*UEnum::GetValueAsString(InStopReason),
-			*GetNameSafe(this),
-			*GetNameSafe(ActiveMontage_Cached),
-			*GetNameSafe(InNewReaction)
-		));
-
+		PrintStopReasonInfo(InStopReason, InNewReaction);
 		PrintReactionExecutorRuntimeInfo();
 	}
 
@@ -94,8 +91,6 @@ void UCReaction::Stop(EReactionStopReason InStopReason, const UCReaction* InNewR
 void UCReaction::End(bool bInterrupted)
 {
 	if (!bIsActive) return;
-
-	// Clean up inner state CReaction (Not outer state)
 
 	bIsActive = false;
 	ActiveMontage_Cached = nullptr;
@@ -109,6 +104,11 @@ void UCReaction::End(bool bInterrupted)
 	}
 }
 
+void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
+{
+	PrintReactionExecutorRuntimeInfo();
+}
+
 void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
 {
 	// Serial Token Guard
@@ -118,22 +118,6 @@ void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, ui
 	if (InAnimMontage != ActiveMontage_Cached) return;
 
 	End(bInterrupted);
-}
-
-void UCReaction::UpdateMovementToImmovable()
-{
-	if (!IsValid(MovementComp_Cached)) return;
-
-	// Apply: Reaction | Restore: Component
-	MovementComp_Cached->SetStop();
-}
-
-void UCReaction::UpdateStateToReaction()
-{
-	if (!IsValid(StateComp_Cached)) return;
-
-	// Apply: Reaction | Restore: Component
-	StateComp_Cached->SetReactionMode();
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo() const
@@ -146,4 +130,13 @@ void UCReaction::PrintReactionExecutorRuntimeInfo() const
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_CurrentPlay"), Serial_CurrentPlay));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_ActivePlay"), CachedSerial_ActivePlay));
 	FLog::Log(TEXT("---------------------------------"));
+}
+
+void UCReaction::PrintStopReasonInfo(EReactionStopReason InStopReason, const UCReaction* InNewReaction) const
+{
+	FLog::Log(FString::Printf(TEXT("[Reaction::Stop] Reason = %s | ActiveReaction = %s | NewReaction = %s"),
+		*UEnum::GetValueAsString(InStopReason),
+		*GetNameSafe(this),			// ActiveReaction
+		*GetNameSafe(InNewReaction) // ActiveReaction
+	));
 }

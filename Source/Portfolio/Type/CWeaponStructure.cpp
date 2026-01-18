@@ -53,3 +53,8 @@ bool FReactionData::IsValidMinimal() const
 {
 	return IsValid(ReactionExecutorKey) && IsValid(Montage);
 }
+
+bool FReactionQueryContext::IsValidMinimal() const
+{
+	return IsValid(ActiveReaction) && IsValid(NewReaction);
+}

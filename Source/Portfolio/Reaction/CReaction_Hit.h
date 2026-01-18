@@ -8,11 +8,10 @@ UCLASS()
 class PORTFOLIO_API UCReaction_Hit : public UCReaction
 {
 	GENERATED_BODY()
-	
-public:
-	void InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent) override;
-	void Tick(float InDeltaTime) override;
 
 public:
-	bool Begin(const FReactionData& reactionData) override;
+	bool WantToInterrupt(const FReactionQueryContext& InReactionQueryContext) const override;
+	bool WantToCancel(const FReactionQueryContext& InReactionQueryContext) const override;
+	bool AllowInterruptionBy(const FReactionQueryContext& InReactionQueryContext) const override;
+	bool AllowCancelBy(const FReactionQueryContext& InReactionQueryContext) const override;
 };

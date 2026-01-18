@@ -545,8 +545,35 @@ public:
 	// int32 priority = 0;
 
 public:
-	bool IsValidMinimal() const;
+	FReactionData() = default;
 
+public:
+	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FReactionQueryContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	UCReaction* ActiveReaction = nullptr;
+
+	UPROPERTY(Transient)
+	UCReaction* NewReaction = nullptr;
+
+	UPROPERTY(Transient)
+	FReactionData ActiveReactionData = FReactionData();
+
+	UPROPERTY(Transient)
+	FReactionData NewReactionData = FReactionData();
+
+public:
+	FReactionQueryContext() = default;
+
+public:
+	bool IsValidMinimal() const;
 };
 
 UCLASS()

@@ -94,6 +94,7 @@ private:
 	UCReaction* ResolveReaction(const FReactionData& InReactionData);
 	bool QueryAcceptNewReaction(UCReaction* InActiveReaction, UCReaction* InNewReaction, const FReactionData& InActiveReactionData, const FReactionData& InNewReactionData);
 	void PlayReaction(UCReaction* InNewReaction, const FReactionData& InReactionData);
+	void EndReaction(UCReaction* InEndReaction, const FReactionData& InReactionData);
 
 private:
 	void BuildReactionDataMap(bool bRebuildAll);	// true: Rebuild | false: Append
@@ -109,7 +110,10 @@ private:
 	void ClearActiveReaction();
 
 private:
-	void RestoreMovementToMovable();
+	void UpdateMovementToImmovable(const FReactionData& InReactionData);
+	void RestoreMovementToMovable(const FReactionData& InReactionData);
+
+	void UpdateStateToReaction();
 	void RestoreStateToIdle();
 
 private:

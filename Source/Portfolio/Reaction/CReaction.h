@@ -19,16 +19,8 @@ protected:
 	class UCReactionComponent* OwnerReactionComp_Injected;
 
 protected:
-	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class UCMovementComponent* MovementComp_Cached;
-
-	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached;
-
-private:
-	UPROPERTY(Transient)
-	TObjectPtr<UAnimMontage> ActiveMontage_Cached = nullptr;
+	class UAnimMontage* ActiveMontage_Cached;
 
 	UPROPERTY(Transient)
 	bool bIsActive = false;
@@ -37,7 +29,7 @@ private:
 	bool bInterruptible = false;		// Setted by AnimNotify
 
 	UPROPERTY(Transient)
-	bool bCancelable = false;		// Setted by AnimNotify
+	bool bCancelable = false;			// Setted by AnimNotify
 
 protected:
 	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Reaction
@@ -48,8 +40,14 @@ public:
 	virtual void Tick(float InDeltaTime) {};
 
 public:
+	// Validate: Validate Object (Object Validation)
+	virtual bool Validate(const FReactionData& InReactionData);
+
+	// Initialize: Initialize State (bIsActive / bInterruptible / bCancelable)
+	virtual bool Initialize(const FReactionData& InReactionData);
+
 	// Begin: Execute (Play montage and Bind delegate)
-	virtual bool Begin(const FReactionData& reactionData);
+	virtual bool Begin(const FReactionData& InReactionData);
 
 	// Stop: Force Stop (Interrupt / Cancelled)
 	virtual void Stop(EReactionStopReason InStopReason, const UCReaction* InNewReaction);
@@ -62,29 +60,29 @@ public:
 
 public:
 	bool IsActive() { return bIsActive; }
+	bool IsInterruptibleNow() const { return bInterruptible; }
+	bool IsCancelableNow() const { return bCancelable; }
 
 public:
-	// To Be Implement for override (Must be Implement)
-	virtual bool CanInterrupt() const { return true; }
-	virtual bool CanCancel() const { return true; }
+	// To Be Implement for override (this is Minimal)
+	virtual bool WantToInterrupt(const FReactionQueryContext& InReactionQueryContext) const { return true; }
+	virtual bool WantToCancel(const FReactionQueryContext& InReactionQueryContext) const { return true; }
+	virtual bool AllowInterruptionBy(const FReactionQueryContext& InReactionQueryContext) const { return bInterruptible; }
+	virtual bool AllowCancelBy(const FReactionQueryContext& InReactionQueryContext) const { return bCancelable; }
 
 public:
-	virtual bool CanBeInterrupted() const { return bInterruptible; }
-	virtual bool CanBeCanceled() const { return bCancelable; }
-
-public:
-	void SetIsActive(bool bValue) { bIsActive = bValue; }
 	void SetInterruptible(bool bValue) { bInterruptible = bValue; }
 	void SetCancelable(bool bValue) { bCancelable = bValue; }
+	
+public:
+	// PrintInfo API
+	void PrintReactionExecutorRuntimeInfo_Public() const;
 
 protected:
 	UFUNCTION()
 	void OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial);
 
 private:
-	void UpdateMovementToImmovable();
-	void UpdateStateToReaction();
-
-public:
 	void PrintReactionExecutorRuntimeInfo() const;
+	void PrintStopReasonInfo(EReactionStopReason InStopReason, const UCReaction* InNewReaction) const;
 };
