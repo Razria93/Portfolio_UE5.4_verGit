@@ -17,6 +17,7 @@ public class Portfolio : ModuleRules
             "Engine",
             "InputCore",
             "EnhancedInput",
+            "AIModule",
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });
