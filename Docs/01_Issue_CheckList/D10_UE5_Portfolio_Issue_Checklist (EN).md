@@ -35,23 +35,23 @@
 
 #### 1. Define standardized Reaction data structures
 
-- [ ] Define `FReactionPayload / FReactionContext / FReactionResult`
+- [x] Define `FReactionPayload / FReactionContext / FReactionResult`
     
-- [ ] Finalize principles for struct responsibility separation
+- [x] Finalize principles for struct responsibility separation
     
-    - [ ] Payload: raw input
+    - [x] Payload: raw input
         
 	    - Attacker / DamageCauser / SpecKey / TakeDamageResult, etc
         
-    - [ ] Context: resolved objects + state snapshot + per-stage derived values
+    - [x] Context: resolved objects + state snapshot + per-stage derived values
         
 		- ex. HitDirection, KnockbackStrength
         
-    - [ ] Result: final decision
+    - [x] Result: final decision
         
 	    - Executed/Rejected, RejectReason, PlayedMontage, bKilledReaction, etc
         
-- [ ] Review whether Reaction needs its own RejectReason separate from `ETakeDamageRejectReason`
+- [x] Review whether Reaction needs its own RejectReason separate from `ETakeDamageRejectReason`
     
     - ex. `NoReactionComp`, `AlreadyReacting`, `NoMontage`, `DeadStateBlocked`, `RuleBlocked`
         
@@ -60,13 +60,13 @@
 
 #### 2. Create UCReactionComponent and define entry APIs
 
-- [ ] Create `UCReactionComponent` and secure an attach path on Enemy (or any Damageable Actor)
+- [x] Create `UCReactionComponent` and secure an attach path on Enemy (or any Damageable Actor)
     
-- [ ] Define entry API
+- [x] Define entry API
     
     - `RequestReaction(const FTakeDamagePayload& Payload, const FTakeDamageContext& Context, const FTakeDamageResult& Result)`
         
-- [ ] Define tick policy
+- [x] Define tick policy
     
     - Keep `PrimaryComponentTick.bCanEverTick = false`
         
@@ -77,11 +77,11 @@
 
 #### 3. Finalize the TakeDamageComponent → ReactionComponent integration point
 
-- [ ] Generate and delegate the Reaction request from a single point **after Commit** in `UCTakeDamageComponent`
+- [x] Generate and delegate the Reaction request from a single point **after Commit** in `UCTakeDamageComponent`
     
     - Recommended location: after `CommitTakeDamage()` succeeds or after a `Finalize` stage
         
-- [ ] Finalize integration rules
+- [x] Finalize integration rules
     
     - Proceed with Reaction only when `FTakeDamageResult.Accepted == true`
         
@@ -89,32 +89,32 @@
         
         - ex. allow only “minor reactions” when Shield reduces it to 0
         
-- [ ] Finalize component lookup / caching rules
+- [x] Finalize component lookup / caching rules
     
-    - [ ] Cache `ReactionComp_Cached` during Enemy initialization
+    - [x] Cache `ReactionComp_Cached` during Enemy initialization
         
-    - [ ] If missing, safely reject + print logs
+    - [x] If missing, safely reject + print logs
         
 
 ---
 
 #### 4. Implement Reaction routing and minimum reactions
 
-- [ ] Implement minimum routing rules for DefaultDamageEvent
+- [x] Implement minimum routing rules for DefaultDamageEvent
     
     - Input: `DamageEventTypeID`, `SpecKey`, `FinalAppliedDamage`, `bKilled`
         
-- [ ] Minimum Reaction 1: HitReaction
+- [x] Minimum Reaction 1: HitReaction
     
-    - [ ] Play Hit montage (or animation)
+    - [x] Play Hit montage (or animation)
         
-    - [ ] Add a rule to prevent duplicate playback on consecutive hits (cooldown or an “AlreadyReacting” flag)
+    - [x] Add a rule to prevent duplicate playback on consecutive hits (cooldown or an “AlreadyReacting” flag)
         
-- [ ] Minimum Reaction 2: DeadReaction
+- [x] Minimum Reaction 2: DeadReaction
     
-    - [ ] Execute death reaction when `bKilled == true` or `Health <= 0`
+    - [x] Execute death reaction when `bKilled == true` or `Health <= 0`
         
-    - [ ] Finalize priority so HitReaction is blocked while dead (Dead > Hit)
+    - [x] Finalize priority so HitReaction is blocked while dead (Dead > Hit)
         
 - [ ] Optional implementation: Knockback / Launch / HitStop
     
@@ -127,13 +127,13 @@
 
 #### 5. Design Reaction data sources (for future extensibility)
 
-- [ ] Initial: implement with `TMap<FDamageSpecKey, FReactionSpec>` or simple conditional branching
+- [x] Initial: implement with `TMap<FDamageSpecKey, FReactionSpec>` or simple conditional branching
     
-- [ ] For follow-up extensibility: secure a DataAsset split point
+- [x] For follow-up extensibility: secure a DataAsset split point
     
     - ex. `UReactionSpecDataAsset` or `UReactionProfileDataAsset`
         
-- [ ] Finalize fallback policy when `SpecKey` is missing or matching fails
+- [x] Finalize fallback policy when `SpecKey` is missing or matching fails
     
     - ex. Default HitReaction, or reject
         
@@ -142,15 +142,15 @@
 
 #### 6. Ensure debug output and traceability
 
-- [ ] Implement `UCReactionComponent::PrintReactionSummaryInfo()`
+- [x] Implement `UCReactionComponent::PrintReactionSummaryInfo()`
     
     - Target, Instigator, DamageCauser, SpecKey, ExecutedReactionType, bKilledReaction, etc
         
-- [ ] Implement `UCReactionComponent::PrintReactionContextInfo()`
+- [x] Implement `UCReactionComponent::PrintReactionContextInfo()`
     
     - Detailed output for Payload/Context/Result
         
-- [ ] Apply the rule “one Reaction log per single hit event”
+- [x] Apply the rule “one Reaction log per single hit event”
     
     - Apply the same duplicate-prevention strategy as TakeDamage
         
@@ -159,17 +159,17 @@
 
 #### 7. Integration validation scenarios
 
-- [ ] Verify call flow: Apply → TakeDamage → Health → Reaction
+- [x] Verify call flow: Apply → TakeDamage → Health → Reaction
     
-- [ ] Scenario 1: single valid hit
+- [x] Scenario 1: single valid hit
     
     - HitReaction executes once + one log
         
-- [ ] Scenario 2: consecutive hits (duplicate within overlap window)
+- [x] Scenario 2: consecutive hits (duplicate within overlap window)
     
     - Duplicate reactions are blocked or limited by policy
         
-- [ ] Scenario 3: killing hit
+- [x] Scenario 3: killing hit
     
     - DeadReaction executes, and HitReaction priority policy is verified
         
