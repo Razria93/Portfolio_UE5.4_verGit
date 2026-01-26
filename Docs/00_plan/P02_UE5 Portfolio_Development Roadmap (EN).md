@@ -28,11 +28,11 @@ Divided into 14 major stages + extra systems.
 
 ### **Basic Combat (Order 2)**
 
-- [ ] Weapon equip / unequip
+- [x] Weapon equip / unequip
     
-- [ ] Attack animations
+- [x] Attack animations
     
-- [ ] Hitbox / collision setup
+- [x] Hitbox / collision setup
     
 
 ---
@@ -41,30 +41,34 @@ Divided into 14 major stages + extra systems.
 
 ### **Enemy Setup (Order 3)**
 
-- [ ] Mesh / Animations / Colliders
+- [x] Mesh / Animations / Colliders
     
 
 ### **Basic UI (Order 4)**
 
-- [ ] Player / Enemy HP UI
+- [x] Player / Enemy HP UI
     
 
 ### **Combat System Foundation (Order 5)**
 
-- [ ] Hit and HitReact
+- [x] Hit and HitReact
     
-- [ ] HP system
+- [x] HP system
     
-- [ ] Damage application
+- [x] Damage application
     
-- [ ] Enemy Death + Destroy
+- [x] Enemy Death
+	
+- [ ] Enemy Destroy
     
 
 ### **Player Hit & Death (Order 6)**
 
 - [ ] Player Hit & React
     
-- [ ] Player Death + Destroy
+- [ ] Player Death
+	
+- [ ] Destroy
     
 
 ### **Targeting System (Order 7)**

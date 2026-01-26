@@ -52,7 +52,7 @@
     
 - [x] Weapon equip/unequip
     
-- [ ] Implement Basic attack system
+- [x] Implement Basic attack system
     
 - [x] Create “Test Room” for early combat testing
     
@@ -61,7 +61,7 @@
 
 - [x] Player can move, jump, dodge, and perform basic combos
     
-- [ ] Attack availability changes depending on weapon state
+- [x] Attack availability changes depending on weapon state
     
 
 **Git Tag:** `v0.1-character-combat-core`
@@ -76,15 +76,15 @@
 
 #### Implement hit & hit-reaction
 	
-- [ ] Implement combo attack system
+- [x] Implement combo attack system
     
-- [ ] Add Dummy Enemy
+- [x] Add Dummy Enemy
 
-- [ ] Implement Hit detection
+- [x] Implement Hit detection
     
-- [ ] Implement Damage system (HP decrease, death, destructible object)
+- [x] Implement Damage system (HP decrease, death, destructible object)
     
-- [ ] Implement hit/death reaction (player / enemy)
+- [x] Implement hit/death reaction (player / enemy)
       
 
 #### Implement lock-on targeting system
@@ -94,7 +94,7 @@
 
 ### **Completion Criteria**
 
-- [ ] Functional 1v1 combat loop (player vs dummy enemy)
+- [x] Functional 1v1 combat loop (player vs dummy enemy)
     
 - [ ] Camera and character correctly track locked target
     
