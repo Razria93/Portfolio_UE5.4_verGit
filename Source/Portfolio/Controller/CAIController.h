@@ -27,6 +27,11 @@ protected:
 	UPROPERTY(Transient)
 	class APawn* ControlledPawn_Cached;
 
+protected:
+	/* --- Config --- */
+	UPROPERTY()
+	class UAISenseConfig_Sight* SightConfig;
+
 public:
 	ACAIController();
 
@@ -36,6 +41,9 @@ protected:
 protected:
 	void OnPossess(APawn* InPawn) override;
 	void OnUnPossess() override;
+
+protected:
+	virtual bool InitializeSightConfig();
 
 private:
 	bool InitializeBlackBoard();

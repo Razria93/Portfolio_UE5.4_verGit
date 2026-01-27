@@ -2,12 +2,18 @@
 #include "ProjectGlobal.h"
 
 #include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
+
 
 ACAIController::ACAIController()
 {
 	// Init AIPerceptionComp
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	check(AIPerceptionComp);
+
+	InitializeSightConfig();
+
+	AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
 }
 
 void ACAIController::BeginPlay()
@@ -30,6 +36,28 @@ void ACAIController::OnPossess(APawn* InPawn)
 void ACAIController::OnUnPossess()
 {
 	Super::OnUnPossess();
+}
+
+bool ACAIController::InitializeSightConfig()
+{
+	if (!IsValid(AIPerceptionComp)) return false;
+
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("SightConfig");
+	if (!IsValid(SightConfig)) return false;
+
+	// Set Default (Overridable in Blueprint Editor)
+	SightConfig->SightRadius = 500.f;
+	SightConfig->LoseSightRadius = 600.f;
+	SightConfig->PeripheralVisionAngleDegrees = 45.f;
+	SightConfig->SetMaxAge(2.f);
+
+	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
+
+	AIPerceptionComp->ConfigureSense(*SightConfig);
+
+	return true;
 }
 
 bool ACAIController::InitializeBlackBoard()
