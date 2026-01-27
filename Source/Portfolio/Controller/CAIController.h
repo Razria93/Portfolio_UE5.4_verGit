@@ -10,6 +10,7 @@ class PORTFOLIO_API ACAIController : public AAIController
 	GENERATED_BODY()
 
 protected:
+	/* --- Asset --- */
 	UPROPERTY(EditDefaultsOnly)
 	class UBlackboardData* BlackboardAsset;
 
@@ -17,10 +18,12 @@ protected:
 	class UBehaviorTree* BehaviorTreeAsset;
 
 protected:
+	/* --- Component --- */
 	UPROPERTY(VisibleAnywhere)
 	class UAIPerceptionComponent* AIPerceptionComp;
 
 protected:
+	/* --- Cached --- */
 	UPROPERTY(Transient)
 	class APawn* ControlledPawn_Cached;
 
