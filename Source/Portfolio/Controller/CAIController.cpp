@@ -22,8 +22,9 @@ void ACAIController::OnPossess(APawn* InPawn)
 	if (!IsValid(InPawn)) return;
 
 	ControlledPawn_Cached = InPawn;
-	
-	InitializeBlackboardAndTree();
+
+	if (!InitializeBlackBoard()) return;
+	if (!InitializeBehaviorTree()) return;
 }
 
 void ACAIController::OnUnPossess()
@@ -31,16 +32,19 @@ void ACAIController::OnUnPossess()
 	Super::OnUnPossess();
 }
 
-void ACAIController::InitializeBlackboardAndTree()
+bool ACAIController::InitializeBlackBoard()
 {
-	if (BlackboardAsset)
-	{
-		UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-		UseBlackboard(BlackboardAsset, blackboardComp);
-	}
+	if (!BlackboardAsset) return false;
 
-	if (BehaviorTreeAsset)
-	{
-		RunBehaviorTree(BehaviorTreeAsset);
-	}
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	UseBlackboard(BlackboardAsset, blackboardComp);
+	return true;
+}
+
+bool ACAIController::InitializeBehaviorTree()
+{
+	if (!BehaviorTreeAsset) return false;
+
+	RunBehaviorTree(BehaviorTreeAsset);
+	return true;
 }

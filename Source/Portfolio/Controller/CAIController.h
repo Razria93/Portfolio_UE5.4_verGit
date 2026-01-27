@@ -38,5 +38,6 @@ protected:
 	void OnUnPossess() override;
 
 private:
-	void InitializeBlackboardAndTree();
+	bool InitializeBlackBoard();
+	bool InitializeBehaviorTree();
 };
