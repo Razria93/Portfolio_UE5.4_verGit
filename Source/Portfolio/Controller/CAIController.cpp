@@ -36,6 +36,8 @@ void ACAIController::OnPossess(APawn* InPawn)
 void ACAIController::OnUnPossess()
 {
 	Super::OnUnPossess();
+
+	ControlledPawn_Cached = nullptr;
 }
 
 bool ACAIController::InitializeSightConfig()
