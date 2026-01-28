@@ -39,7 +39,7 @@ protected:
 	void BeginPlay() override;
 
 protected:
-	void OnPossess(APawn* InPawn) override;
+	void OnPossess(class APawn* InPawn) override;
 	void OnUnPossess() override;
 
 protected:

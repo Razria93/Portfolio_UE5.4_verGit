@@ -4,7 +4,6 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
-
 ACAIController::ACAIController()
 {
 	// Init AIPerceptionComp
