@@ -32,9 +32,9 @@ FString UCAnimNotifyState_Reaction::MakeNotifyName(FString InName) const
     return InName;
 }
 
-void UCAnimNotifyState_Reaction::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration)
+void UCAnimNotifyState_Reaction::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
-    Super::NotifyBegin(MeshComp, Animation, TotalDuration);
+    Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
     if (!IsValid(MeshComp)) return;
 
@@ -48,9 +48,9 @@ void UCAnimNotifyState_Reaction::NotifyBegin(USkeletalMeshComponent* MeshComp, U
     reactionComp->OnReactionWindowBegin(ReactionWindowType, Animation);
 }
 
-void UCAnimNotifyState_Reaction::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
+void UCAnimNotifyState_Reaction::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-    Super::NotifyEnd(MeshComp, Animation);
+    Super::NotifyEnd(MeshComp, Animation, EventReference);
 
     if (!IsValid(MeshComp)) return;
 
