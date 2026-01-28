@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "CAIController.generated.h"
 
 UCLASS()
@@ -46,6 +47,17 @@ protected:
 	virtual bool InitializeSightConfig();
 
 private:
+	bool InitializePerception();
 	bool InitializeBlackBoard();
 	bool InitializeBehaviorTree();
+
+private:
+	UFUNCTION()
+	void OnPerceptionUpdated(const TArray<class AActor*>& InUpdatedActors);
+
+	UFUNCTION()
+	void OnTargetPerceptionUpdated(class AActor* Actor, FAIStimulus Stimulus);
+
+	UFUNCTION()
+	void OnTargetPerceptionForgotten(class AActor* Actor);
 };

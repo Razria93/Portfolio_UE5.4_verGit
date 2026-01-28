@@ -3,6 +3,7 @@
 
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "Perception/AIPerceptionTypes.h"
 
 ACAIController::ACAIController()
 {
@@ -28,6 +29,7 @@ void ACAIController::OnPossess(APawn* InPawn)
 
 	ControlledPawn_Cached = InPawn;
 
+	if (!InitializePerception()) return;
 	if (!InitializeBlackBoard()) return;
 	if (!InitializeBehaviorTree()) return;
 }
@@ -61,6 +63,17 @@ bool ACAIController::InitializeSightConfig()
 	return true;
 }
 
+bool ACAIController::InitializePerception()
+{
+	if (!IsValid(AIPerceptionComp)) return false;
+
+	AIPerceptionComp->OnPerceptionUpdated.AddDynamic(this, &ACAIController::OnPerceptionUpdated);
+	AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &ACAIController::OnTargetPerceptionUpdated);
+	AIPerceptionComp->OnTargetPerceptionForgotten.AddDynamic(this, &ACAIController::OnTargetPerceptionForgotten);
+
+	return true;
+}
+
 bool ACAIController::InitializeBlackBoard()
 {
 	if (!BlackboardAsset) return false;
@@ -76,4 +89,16 @@ bool ACAIController::InitializeBehaviorTree()
 
 	RunBehaviorTree(BehaviorTreeAsset);
 	return true;
+}
+
+void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
+{
+}
+ 
+void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+}
+
+void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
+{
 }
