@@ -60,4 +60,9 @@ private:
 
 	UFUNCTION()
 	void OnTargetPerceptionForgotten(class AActor* Actor);
+
+private:
+	void PrintPerceptionUpdatedSummary(const TArray<class AActor*>& UpdatedActors) const;
+	void PrintTargetPerceptionUpdatedSummary(class AActor* Actor, const FAIStimulus& Stimulus) const;
+	void PrintTargetPerceptionForgotten(AActor* Actor) const;
 };
