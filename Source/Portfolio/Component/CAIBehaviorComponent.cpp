@@ -22,6 +22,23 @@ bool UCAIBehaviorComponent::Initialize(UBlackboardComponent* InBlackboardCompone
 {
 	if (!IsValid(InBlackboardComponent)) return false;
 
+	// [EngineAPI / UBlackboardComponent] GetKeyID
+	// true  : returns 'a valid FKey'
+	// false : returns 'FBlackboard::InvalidKey'
+	const bool bHasAIStateTypeKey = InBlackboardComponent->GetKeyID(AIStateTypeKey) != FBlackboard::InvalidKey;
+	const bool bHasTargetKey = InBlackboardComponent->GetKeyID(TargetActorKey) != FBlackboard::InvalidKey;
+
+	// [Fail] Blackboard key mismatch: 'Blackboard' vs 'This'
+	if (!bHasAIStateTypeKey || !bHasTargetKey)
+	{
+		FLog::Log(FString::Printf(TEXT("[Error] Missing Blackboard Keys : AIStateTypeKey = %s | TargetActorKey = %s"),
+			*AIStateTypeKey.ToString(),
+			*TargetActorKey.ToString()));
+
+		BlackboardComp_Injected = nullptr;
+		return false;
+	}
+
 	BlackboardComp_Injected = InBlackboardComponent;
 	return true;
 }

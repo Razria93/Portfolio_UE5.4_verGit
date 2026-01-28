@@ -9,6 +9,14 @@ class PORTFOLIO_API UCAIBehaviorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+protected:
+	/* --- Key --- */
+	UPROPERTY(EditAnywhere, Category = "Blackboard Key")
+	FName AIStateTypeKey = "AIStateType";
+
+	UPROPERTY(EditAnywhere, Category = "Blackboard Key")
+	FName TargetActorKey = "TargetActor";
+
 private:
 	/* === Injected Objects === */
 	class UBlackboardComponent* BlackboardComp_Injected;
