@@ -21,7 +21,10 @@ ACAIController::ACAIController()
 
 	InitializeSightConfig();
 
-	AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
+	if (IsValid(SightConfig))
+	{
+		AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
+	}
 }
 
 void ACAIController::BeginPlay()
@@ -59,7 +62,6 @@ bool ACAIController::InitializeSightConfig()
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("SightConfig");
 	if (!IsValid(SightConfig)) return false;
 
-	// Set Default (Overridable in Blueprint Editor)
 	SightConfig->SightRadius = 500.f;
 	SightConfig->LoseSightRadius = 600.f;
 	SightConfig->PeripheralVisionAngleDegrees = 45.f;
