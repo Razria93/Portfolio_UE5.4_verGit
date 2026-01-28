@@ -23,6 +23,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UAIPerceptionComponent* AIPerceptionComp;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCAIBehaviorComponent* AIBehaviorComp;
+
 protected:
 	/* --- Cached --- */
 	UPROPERTY(Transient)
@@ -50,6 +53,10 @@ private:
 	bool InitializePerception();
 	bool InitializeBlackBoard();
 	bool InitializeBehaviorTree();
+
+private:
+	bool InitializeBlackBoardComponent();
+	bool InitializeAIBehaviorComponent();
 
 private:
 	UFUNCTION()

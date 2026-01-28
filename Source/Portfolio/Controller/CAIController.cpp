@@ -5,12 +5,19 @@
 #include "Perception/AIPerceptionSystem.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "BehaviorTree/BlackboardComponent.h"
+
+#include "Component/CAIBehaviorComponent.h"
 
 ACAIController::ACAIController()
 {
 	// Init AIPerceptionComp
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	check(AIPerceptionComp);
+
+	// Init AIPerceptionComp
+	AIBehaviorComp = CreateDefaultSubobject<UCAIBehaviorComponent>(TEXT("AIBehavior"));
+	check(AIBehaviorComp);
 
 	InitializeSightConfig();
 
@@ -33,6 +40,9 @@ void ACAIController::OnPossess(APawn* InPawn)
 	if (!InitializePerception()) return;
 	if (!InitializeBlackBoard()) return;
 	if (!InitializeBehaviorTree()) return;
+
+	if (!InitializeBlackBoardComponent()) return;
+	if (!InitializeAIBehaviorComponent()) return;
 }
 
 void ACAIController::OnUnPossess()
@@ -80,16 +90,48 @@ bool ACAIController::InitializeBlackBoard()
 	if (!BlackboardAsset) return false;
 
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-	UseBlackboard(BlackboardAsset, blackboardComp);
-	return true;
+	bool bUsed = UseBlackboard(BlackboardAsset, blackboardComp);
+
+	return bUsed && IsValid(blackboardComp);
 }
 
 bool ACAIController::InitializeBehaviorTree()
 {
 	if (!BehaviorTreeAsset) return false;
 
-	RunBehaviorTree(BehaviorTreeAsset);
+	return RunBehaviorTree(BehaviorTreeAsset);
+}
+
+// -----------------------------------------------------------------------------
+// [AI Perception & Blackboard Initialization]
+// 1. Controller		: Perception and interpretation (like human awareness)
+// 2. Blackboard		: Storage of perceived facts
+// 3. BehaviorTree		: Decision making based on facts
+// 
+// 4. Service Node		: Periodically maintains perceived facts
+// 5. Decorator Node	: Evaluates logical conditions on perceived facts
+// 6. Task Node			: Executes the decided actions
+// -----------------------------------------------------------------------------
+
+bool ACAIController::InitializeBlackBoardComponent()
+{
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return false;
+
+	// TODO: Initialize blackboard value
+	// Write controller-perceived facts to the Blackboard (SetValueAsBool etc..)
+	
 	return true;
+}
+
+bool ACAIController::InitializeAIBehaviorComponent()
+{
+	if (!IsValid(AIBehaviorComp)) return false;
+
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return false;
+
+	return AIBehaviorComp->Initialize(blackboardComp);
 }
 
 void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)

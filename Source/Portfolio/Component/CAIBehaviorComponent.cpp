@@ -1,8 +1,11 @@
 #include "Component/CAIBehaviorComponent.h"
+#include "ProjectGlobal.h"
+
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCAIBehaviorComponent::UCAIBehaviorComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCAIBehaviorComponent::BeginPlay()
@@ -15,3 +18,10 @@ void UCAIBehaviorComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+bool UCAIBehaviorComponent::Initialize(UBlackboardComponent* InBlackboardComponent)
+{
+	if (!IsValid(InBlackboardComponent)) return false;
+
+	BlackboardComp_Injected = InBlackboardComponent;
+	return true;
+}
