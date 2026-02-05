@@ -77,6 +77,6 @@ private:
 	void PrintTakeHealContextInfo();
 
 private:
-	void PrintHealthContextInfo( const FString& InLabel = TEXT("")) const;
+	void PrintHealthContextInfo(const FString& InLabel = TEXT("")) const;
 	void PrintDeadContextInfo(const FString& InLabel = TEXT("")) const;
 };

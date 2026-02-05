@@ -27,9 +27,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
+
 public:
 	bool Initialize(class UBlackboardComponent* InBlackboardComponent);
 };

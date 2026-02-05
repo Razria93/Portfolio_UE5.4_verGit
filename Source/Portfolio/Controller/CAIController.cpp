@@ -76,6 +76,17 @@ bool ACAIController::InitializeSightConfig()
 	return true;
 }
 
+// -----------------------------------------------------------------------------
+// [AI Perception & Blackboard Initialization]
+// 1. Controller		: Perception and interpretation (like human awareness)
+// 2. Blackboard		: Storage of perceived facts
+// 3. BehaviorTree		: Decision making based on facts
+// 
+// 4. Service Node		: Periodically maintains perceived facts
+// 5. Decorator Node	: Evaluates logical conditions on perceived facts
+// 6. Task Node			: Executes the decided actions
+// -----------------------------------------------------------------------------
+
 bool ACAIController::InitializePerception()
 {
 	if (!IsValid(AIPerceptionComp)) return false;
@@ -104,16 +115,6 @@ bool ACAIController::InitializeBehaviorTree()
 	return RunBehaviorTree(BehaviorTreeAsset);
 }
 
-// -----------------------------------------------------------------------------
-// [AI Perception & Blackboard Initialization]
-// 1. Controller		: Perception and interpretation (like human awareness)
-// 2. Blackboard		: Storage of perceived facts
-// 3. BehaviorTree		: Decision making based on facts
-// 
-// 4. Service Node		: Periodically maintains perceived facts
-// 5. Decorator Node	: Evaluates logical conditions on perceived facts
-// 6. Task Node			: Executes the decided actions
-// -----------------------------------------------------------------------------
 
 bool ACAIController::InitializeBlackBoardComponent()
 {
@@ -140,7 +141,7 @@ void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
 	PrintPerceptionUpdatedSummary(UpdatedActors);
 }
- 
+
 void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	PrintTargetPerceptionUpdatedSummary(Actor, Stimulus);
@@ -164,7 +165,7 @@ void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& Update
 	{
 		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("UpdateActors"), UpdatedActors.Num()));
 
-		// NOTE: List of actors whose perception state changed during this frame 
+		// NOTE: List of actors whose perception state changed during this frame
 		// - ex. added / updated / removed
 		for (const AActor* updatedActor : UpdatedActors)
 		{

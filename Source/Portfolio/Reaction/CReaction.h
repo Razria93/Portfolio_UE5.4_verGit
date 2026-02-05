@@ -73,7 +73,7 @@ public:
 public:
 	void SetInterruptible(bool bValue) { bInterruptible = bValue; }
 	void SetCancelable(bool bValue) { bCancelable = bValue; }
-	
+
 public:
 	// PrintInfo API
 	void PrintReactionExecutorRuntimeInfo_Public() const;

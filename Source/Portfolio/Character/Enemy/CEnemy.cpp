@@ -77,7 +77,7 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	// TODO: Check DeadFlag and early return
 
 	float finalDamage = DamageAmount;
-	
+
 	if (IsValid(TakeDamageComponent))
 	{
 		finalDamage = TakeDamageComponent->RequestTakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
@@ -90,7 +90,7 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 
 	// Engine-Event Trigger
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
-	
+
 	return finalDamage;
 }
 

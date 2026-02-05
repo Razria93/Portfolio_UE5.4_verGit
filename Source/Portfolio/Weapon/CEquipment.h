@@ -41,7 +41,7 @@ public:
 	// BeginEquip
 	FEquipmentBeginEquip OnEquipmentBeginEquip;
 	FEquipmentEndEquip OnEquipmentEndEquip;
-	
+
 	// EndEquip
 	FEquipmentBeginUnequip OnEquipmentBeginUnequip;
 	FEquipmentEndUnequip OnEquipmentEndUnequip;

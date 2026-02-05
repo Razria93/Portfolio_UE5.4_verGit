@@ -196,7 +196,7 @@ void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHi
 	FLog::Log(TEXT("[@ APPLY DAMAGE]"));
 
 	AActor* targetActor = InHitContext.OverlapContext.OtherActor;
-	
+
 	const float baseDamage = InApplyDamageSpec.BaseDamage;
 	const float requestDamage = InApplyDamageResult.RequestDamage;
 

@@ -172,7 +172,7 @@ void UCHealthComponent::PrintHealthContextInfo(const FString& InLabel) const
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("MaxHP"), MaxHP));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("PreviousHP"), PreviousHP));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CurrentHP"), CurrentHP));
-	
+
 	float hpDelta = PreviousHP - CurrentHP;
 	float hpPercent = 0.f;
 

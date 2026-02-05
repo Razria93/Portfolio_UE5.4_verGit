@@ -7,12 +7,12 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FStateTypeChanged, class ACharacter*, InOwnerCharacter, EStateType, InPrevStateType, EStateType, InNewStateType);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCStateComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UCStateComponent();
 
 private:

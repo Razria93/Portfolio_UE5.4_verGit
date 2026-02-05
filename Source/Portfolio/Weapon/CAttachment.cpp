@@ -149,7 +149,7 @@ void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponen
 	if (!IsValid(ApplyDamageComp_Cached)) return;
 
 	FOverlapContext lastOverlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, false, FHitResult());
-	
+
 	FHitContext hitContext;
 
 	hitContext.OverlapContext = lastOverlapContext;
@@ -214,7 +214,7 @@ void ACAttachment::CollisionDisabled()
 FOverlapContext ACAttachment::BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const
 {
 	FOverlapContext overlapContext;
-	
+
 	overlapContext.OwnerActor = InOwnerActor;
 	overlapContext.DamageCauser = InDamageCauser;
 	overlapContext.OverlappedComponent = OverlappedComponent;
@@ -223,7 +223,7 @@ FOverlapContext ACAttachment::BuildOverlapContext(AActor* InOwnerActor, AActor* 
 	overlapContext.OtherComponent = OtherComp;
 	overlapContext.OtherBodyIndex = OtherBodyIndex;
 	overlapContext.bFromSweep = bFromSweep;
-	
+
 	overlapContext.SweepResult = bFromSweep ? SweepResult : FHitResult();
 
 	return overlapContext;

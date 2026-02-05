@@ -40,20 +40,20 @@ private:
 private:
 	bool ValidateRequest(const FHitContext& InHitContext) const;
 	bool CheckApplyDamageRule(const FHitContext& InHitContext) const;
-	bool ResolveApplyDamageSpec(const FHitContext& InHitContext, FApplyDamageSpec & OutApplyDamageSpec) const;
-	bool ComputeApplyDamageResult(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, FApplyDamageResult& OutApplyDamageResult) const;
-	bool ApplyDamageToTarget(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
+	bool ResolveApplyDamageSpec(const FHitContext& InHitContext, FApplyDamageSpec& OutApplyDamageSpec) const;
+	bool ComputeApplyDamageResult(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, FApplyDamageResult& OutApplyDamageResult) const;
+	bool ApplyDamageToTarget(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
 
 private:
 	FApplyDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 
 private:
-	void PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
-	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec & InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
+	void PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
+	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
 
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
 	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const;
-	void PrintDamageSpecInfo(const FApplyDamageSpec & InApplyDamageSpec) const;
-	void PrintDamageResultInfo(const FApplyDamageResult & InApplyDamageResult) const;
+	void PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const;
+	void PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const;
 };
