@@ -7,17 +7,14 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "Component/CAIBehaviorComponent.h"
+#include "Type/CAIStateStructure.h"
+#include "AI/BlackBoard/CAIKeys.h"
 
 ACAIController::ACAIController()
 {
 	// Init AIPerceptionComp
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	check(AIPerceptionComp);
-
-	// Init AIPerceptionComp
-	AIBehaviorComp = CreateDefaultSubobject<UCAIBehaviorComponent>(TEXT("AIBehavior"));
-	check(AIBehaviorComp);
 
 	InitializeSightConfig();
 
@@ -43,9 +40,7 @@ void ACAIController::OnPossess(APawn* InPawn)
 	if (!InitializePerception()) return;
 	if (!InitializeBlackBoard()) return;
 	if (!InitializeBehaviorTree()) return;
-
-	if (!InitializeBlackBoardComponent()) return;
-	if (!InitializeAIBehaviorComponent()) return;
+	if (!InitializeBlackBoardValue()) return;
 }
 
 void ACAIController::OnUnPossess()
@@ -102,7 +97,25 @@ bool ACAIController::InitializeBlackBoard()
 {
 	if (!BlackboardAsset) return false;
 
-	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	/* --- Blackboard Key Validate --- */
+	// [EngineAPI] GetKeyID (UBlackboardData / UBlackboardComponent)
+	// - true  : returns 'a valid FKey'
+	// - false : returns 'FBlackboard::InvalidKey'
+	const bool bHasAIStateTypeKey = BlackboardAsset->GetKeyID(CAIKeys::AIStateType) != FBlackboard::InvalidKey;
+	const bool bHasTargetKey = BlackboardAsset->GetKeyID(CAIKeys::TargetActor) != FBlackboard::InvalidKey;
+
+	// [Error] Missing Blackboard keys
+	if (!bHasAIStateTypeKey || !bHasTargetKey)
+	{
+		FLog::Log(FString::Printf(TEXT("[Error] Missing Blackboard Keys : AIStateTypeKey = %s | TargetActorKey = %s"),
+			*CAIKeys::AIStateType.ToString(),
+			*CAIKeys::TargetActor.ToString()));
+
+		return false;
+	}
+
+	// blackboardComp: Out Parameter
+	UBlackboardComponent* blackboardComp = nullptr;	
 	bool bUsed = UseBlackboard(BlackboardAsset, blackboardComp);
 
 	return bUsed && IsValid(blackboardComp);
@@ -115,26 +128,15 @@ bool ACAIController::InitializeBehaviorTree()
 	return RunBehaviorTree(BehaviorTreeAsset);
 }
 
-
-bool ACAIController::InitializeBlackBoardComponent()
+bool ACAIController::InitializeBlackBoardValue()
 {
-	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return false;
+	UBlackboardComponent* blackboardComponent = GetBlackboardComponent();
+	if (!IsValid(blackboardComponent)) return false;
 
-	// TODO: Initialize blackboard value
-	// Write controller-perceived facts to the Blackboard (SetValueAsBool etc..)
-	
+	blackboardComponent->ClearValue(CAIKeys::TargetActor);
+	blackboardComponent->SetValueAsEnum(CAIKeys::AIStateType, static_cast<uint8>(EAIStateType::Wait));
+
 	return true;
-}
-
-bool ACAIController::InitializeAIBehaviorComponent()
-{
-	if (!IsValid(AIBehaviorComp)) return false;
-
-	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return false;
-
-	return AIBehaviorComp->Initialize(blackboardComp);
 }
 
 void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
@@ -145,11 +147,28 @@ void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	PrintTargetPerceptionUpdatedSummary(Actor, Stimulus);
+
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!blackboardComp) return;
+
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		blackboardComp->SetValueAsObject(CAIKeys::TargetActor, Actor);
+	}
+	else
+	{
+		blackboardComp->ClearValue(CAIKeys::TargetActor);
+	}
 }
 
 void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 {
 	PrintTargetPerceptionForgotten(Actor);
+
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!blackboardComp) return;
+
+	blackboardComp->ClearValue(CAIKeys::TargetActor);
 }
 
 void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& UpdatedActors) const
