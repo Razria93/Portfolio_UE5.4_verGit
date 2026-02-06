@@ -4,8 +4,8 @@
 
 namespace CAIKeys
 {
-	static const FName AIStateType = "AIStateType";
-	static const FName TargetActor = "TargetActor";
+	inline const FName AIStateType = "AIStateType";
+	inline const FName TargetActor = "TargetActor";
 
 	// TODO: Migrate to AIConfig
 }
