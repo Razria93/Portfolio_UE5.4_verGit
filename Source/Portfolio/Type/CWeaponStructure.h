@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "Engine/DamageEvents.h"
 #include "DamageEventId.h"
 #include "CWeaponStructure.generated.h"
@@ -574,11 +573,4 @@ public:
 
 public:
 	bool IsValidMinimal() const;
-};
-
-UCLASS()
-class PORTFOLIO_API UCWeaponStructure : public UObject
-{
-	GENERATED_BODY()
-
 };
