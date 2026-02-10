@@ -15,7 +15,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Set AIState")
-	FBlackboardKeySelector KeySeletor;
+	FBlackboardKeySelector KeySeletor; // Cached KeyName
 
 	UPROPERTY(EditAnywhere, Category = "Set AIState")
 	EAIStateType SetState = EAIStateType::Wait;
