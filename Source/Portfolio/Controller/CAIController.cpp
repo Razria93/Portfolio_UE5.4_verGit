@@ -54,9 +54,11 @@ bool ACAIController::InitializeSightConfig()
 {
 	if (!IsValid(AIPerceptionComp)) return false;
 
+	// TODO: Move perception config to data-driven asset.
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("SightConfig");
 	if (!IsValid(SightConfig)) return false;
 
+	// Set Default (Overridable in Blueprint Editor)
 	SightConfig->SightRadius = 500.f;
 	SightConfig->LoseSightRadius = 600.f;
 	SightConfig->PeripheralVisionAngleDegrees = 45.f;
