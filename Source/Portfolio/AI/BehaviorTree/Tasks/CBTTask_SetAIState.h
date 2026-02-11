@@ -14,11 +14,11 @@ public:
 	UCBTTask_SetAIState();
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Set AIState")
-	FBlackboardKeySelector KeySeletor; // Cached KeyName
-
-	UPROPERTY(EditAnywhere, Category = "Set AIState")
+	UPROPERTY(EditAnywhere, Category = "Blackboard|Set")
 	EAIStateType SetState = EAIStateType::Wait;
+
+	UPROPERTY(EditAnywhere, Category = "Blackboard|Write")
+	FBlackboardKeySelector AIStateTypeKey; // Cached KeyName
 
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

@@ -13,7 +13,7 @@ public:
 	UCBTDecorator_HasTarget();
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Blackboard")
+	UPROPERTY(EditAnywhere, Category = "Blackboard|Read")
 	FBlackboardKeySelector TargetActorKey; // Cached KeyName
 
 protected:

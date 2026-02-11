@@ -3,12 +3,12 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKeys.h"
+#include "AI/BlackBoard/CAIKey.h"
 
 UCBTTask_SetAIState::UCBTTask_SetAIState()
 {
 	NodeName = "Set AI State";
-	KeySeletor.SelectedKeyName = CAIKeys::AIStateType;
+	AIStateTypeKey.SelectedKeyName = CAIKey::AIStateType;
 }
 
 EBTNodeResult::Type UCBTTask_SetAIState::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -16,7 +16,7 @@ EBTNodeResult::Type UCBTTask_SetAIState::ExecuteTask(UBehaviorTreeComponent& Own
 	UBlackboardComponent* blackboard = OwnerComp.GetBlackboardComponent();
 	if (!blackboard) return EBTNodeResult::Failed;
 
-	blackboard->SetValueAsEnum(KeySeletor.SelectedKeyName, static_cast<uint8>(SetState));
+	blackboard->SetValueAsEnum(AIStateTypeKey.SelectedKeyName, static_cast<uint8>(SetState));
 
 	return EBTNodeResult::Succeeded;
 }

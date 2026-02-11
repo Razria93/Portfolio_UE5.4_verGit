@@ -3,12 +3,12 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKeys.h"
+#include "AI/BlackBoard/CAIKey.h"
 
 UCBTDecorator_HasTarget::UCBTDecorator_HasTarget()
 {
 	NodeName = "Has Target";
-	TargetActorKey.SelectedKeyName = CAIKeys::TargetActor;
+	TargetActorKey.SelectedKeyName = CAIKey::TargetActor;
 }
 
 bool UCBTDecorator_HasTarget::CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const
