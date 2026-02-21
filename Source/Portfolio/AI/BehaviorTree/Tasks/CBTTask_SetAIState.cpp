@@ -8,7 +8,7 @@
 UCBTTask_SetAIState::UCBTTask_SetAIState()
 {
 	NodeName = "Set AI State";
-	AIStateTypeKey.SelectedKeyName = CAIKey::StateType::AIStateType;
+	AIStateTypeKey.SelectedKeyName = CAIKey::State::AIStateType;
 }
 
 EBTNodeResult::Type UCBTTask_SetAIState::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

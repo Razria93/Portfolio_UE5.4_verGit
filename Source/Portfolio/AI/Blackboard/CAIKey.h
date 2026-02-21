@@ -9,7 +9,7 @@ namespace CAIKey
 		static const FName TargetActor = "TargetActor";					// Object(Actor)
 	}
 
-	namespace StateType
+	namespace State
 	{
 		static const FName AIStateType = "AIStateType";					// Enum(EAIStateType)
 	}
@@ -29,13 +29,13 @@ namespace CAIKey
 
 	namespace Combat
 	{
+		// Condition
+		static const FName bIsInCombatRange = "bIsInCombatRange";		// Bool
+		static const FName bCanEngageTarget = "bCanEngageTarget";		// Bool
+
 		// State
 		static const FName bIsEncounterActive = "bIsEncounterActive";	// Bool
 		static const FName bIsEngagementActive = "bIsEngagementActive";	// Bool
-		static const FName bIsInCombatRange = "bIsInCombatRange";		// Bool
-
-		// Able
-		static const FName bCanEngageTarget = "bCanEngageTarget";		// Bool
 	}
 
 	namespace Reaction

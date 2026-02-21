@@ -123,7 +123,7 @@ bool ACAIController::InitializeBlackBoardValue()
 	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
 
 	// State_StateType
-	blackboardComp->SetValueAsEnum(CAIKey::StateType::AIStateType, static_cast<uint8>(EAIStateType::Wait));
+	blackboardComp->SetValueAsEnum(CAIKey::State::AIStateType, static_cast<uint8>(EAIStateType::Wait));
 
 	// State_Perception
 	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
@@ -202,7 +202,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bHasTargetActorKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Targeting::TargetActor);
 
 	// StateType
-	const bool bHasAIStateTypeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::StateType::AIStateType);
+	const bool bHasAIStateTypeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::State::AIStateType);
 
 	// Perception
 	const bool bHasHasLOSKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::bHasLOS);
