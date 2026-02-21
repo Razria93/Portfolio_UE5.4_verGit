@@ -65,7 +65,13 @@ private:
 	void OnTargetPerceptionForgotten(class AActor* Actor);
 
 private:
+	bool ValidateBlackboardKeys(const UBlackboardData* BlackboardAsset) const;
+	bool ValidateBlackboardBKey(const UBlackboardData* BlackboardAsset, const FName& keyName) const;
+
+private:
 	void PrintPerceptionUpdatedSummary(const TArray<class AActor*>& UpdatedActors) const;
 	void PrintTargetPerceptionUpdatedSummary(class AActor* Actor, const FAIStimulus& Stimulus) const;
 	void PrintTargetPerceptionForgotten(AActor* Actor) const;
 };
+
+

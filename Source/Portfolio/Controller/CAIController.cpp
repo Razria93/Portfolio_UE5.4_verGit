@@ -98,26 +98,10 @@ bool ACAIController::InitializePerception()
 bool ACAIController::InitializeBlackBoard()
 {
 	if (!BlackboardAsset) return false;
-
-	/* --- Blackboard Key Validate --- */
-	// [EngineAPI] GetKeyID (UBlackboardData / UBlackboardComponent)
-	// - true  : returns 'a valid FKey'
-	// - false : returns 'FBlackboard::InvalidKey'
-	const bool bHasAIStateTypeKey = BlackboardAsset->GetKeyID(CAIKey::AIStateType) != FBlackboard::InvalidKey;
-	const bool bHasTargetKey = BlackboardAsset->GetKeyID(CAIKey::TargetActor) != FBlackboard::InvalidKey;
-
-	// [Error] Missing Blackboard keys
-	if (!bHasAIStateTypeKey || !bHasTargetKey)
-	{
-		FLog::Log(FString::Printf(TEXT("[Error] Missing Blackboard Keys : AIStateTypeKey = %s | TargetActorKey = %s"),
-			*CAIKey::AIStateType.ToString(),
-			*CAIKey::TargetActor.ToString()));
-
-		return false;
-	}
+	if (!ValidateBlackboardKeys(BlackboardAsset)) return false;
 
 	// blackboardComp: Out Parameter
-	UBlackboardComponent* blackboardComp = nullptr;	
+	UBlackboardComponent* blackboardComp = nullptr;
 	bool bUsed = UseBlackboard(BlackboardAsset, blackboardComp);
 
 	return bUsed && IsValid(blackboardComp);
@@ -132,11 +116,34 @@ bool ACAIController::InitializeBehaviorTree()
 
 bool ACAIController::InitializeBlackBoardValue()
 {
-	UBlackboardComponent* blackboardComponent = GetBlackboardComponent();
-	if (!IsValid(blackboardComponent)) return false;
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return false;
 
-	blackboardComponent->ClearValue(CAIKey::TargetActor);
-	blackboardComponent->SetValueAsEnum(CAIKey::AIStateType, static_cast<uint8>(EAIStateType::Wait));
+	// Targeting 
+	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
+
+	// State_StateType
+	blackboardComp->SetValueAsEnum(CAIKey::StateType::AIStateType, static_cast<uint8>(EAIStateType::Wait));
+
+	// State_Perception
+	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+
+	// State_Combat
+	blackboardComp->SetValueAsBool(CAIKey::Combat::bIsEncounterActive, false);
+	blackboardComp->SetValueAsBool(CAIKey::Combat::bIsEngagementActive, false);
+	blackboardComp->SetValueAsBool(CAIKey::Combat::bIsInCombatRange, false);
+	blackboardComp->SetValueAsBool(CAIKey::Combat::bCanEngageTarget, false);
+
+	// State_Reaction
+	blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
+
+	// State_Lifecycle
+	blackboardComp->SetValueAsBool(CAIKey::Lifecycle::bIsDead, false);
+
+	if (APawn* ownerPawn = GetPawn())
+	{
+		blackboardComp->SetValueAsVector(CAIKey::Perception::HomeLocation, ownerPawn->GetActorLocation());
+	}
 
 	return true;
 }
@@ -150,16 +157,29 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 {
 	PrintTargetPerceptionUpdatedSummary(Actor, Stimulus);
 
+	UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!blackboardComp) return;
 
 	if (Stimulus.WasSuccessfullySensed())
 	{
-		blackboardComp->SetValueAsObject(CAIKey::TargetActor, Actor);
+		// Initialize Value ([NOTE] Update Value in Service)
+
+		// Targeting
+		blackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor, Actor);
+
+		// Perception
+		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, true);
+		blackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime, world->GetTimeSeconds());
+		blackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation, Stimulus.StimulusLocation);
+
+		blackboardComp->SetValueAsBool(CAIKey::Combat::bIsEncounterActive, true);
 	}
-	else
+	else // WasSuccessfullySensed() == false
 	{
-		blackboardComp->ClearValue(CAIKey::TargetActor);
+		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
 	}
 }
 
@@ -170,7 +190,85 @@ void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!blackboardComp) return;
 
-	blackboardComp->ClearValue(CAIKey::TargetActor);
+	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
+	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+}
+
+bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const
+{
+	if (!IsValid(InBlackboardAsset)) return false;
+
+	// Targeting
+	const bool bHasTargetActorKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Targeting::TargetActor);
+
+	// StateType
+	const bool bHasAIStateTypeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::StateType::AIStateType);
+
+	// Perception
+	const bool bHasHasLOSKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::bHasLOS);
+	const bool bHasLastSeenTimeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::LastSeenTime);
+	const bool bHasLastKnownLocationKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::LastKnownLocation);
+	const bool bHasHomeLocationKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::HomeLocation);
+
+	// Metric
+	const bool bHasDistanceToTargetKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Metric::DistanceToTarget);
+
+	// Combat | State
+	const bool bHasIsEncounterActiveKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bIsEncounterActive);
+	const bool bHasIsEngagementActiveKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bIsEngagementActive);
+	const bool bHasIsInCombatRangeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bIsInCombatRange);
+
+	// Combat | Able
+	const bool bHasCanEngageTargetKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bCanEngageTarget);
+
+	// Reaction | State
+	const bool bHasIsHitReactingKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Reaction::bIsHitReacting);
+
+	// Lifecycle | State
+	const bool bHasIsDeadKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Lifecycle::bIsDead);
+
+	bool bAllValid = true;
+
+	bAllValid &= bHasTargetActorKey;
+
+	bAllValid &= bHasAIStateTypeKey;
+
+	bAllValid &= bHasHasLOSKey;
+	bAllValid &= bHasLastSeenTimeKey;
+	bAllValid &= bHasLastKnownLocationKey;
+	bAllValid &= bHasHomeLocationKey;
+
+	bAllValid &= bHasDistanceToTargetKey;
+
+	bAllValid &= bHasIsEncounterActiveKey;
+	bAllValid &= bHasIsEngagementActiveKey;
+	bAllValid &= bHasIsInCombatRangeKey;
+
+	bAllValid &= bHasCanEngageTargetKey;
+
+	bAllValid &= bHasIsHitReactingKey;
+
+	bAllValid &= bHasIsDeadKey;
+
+	if (!bAllValid)
+	{
+		FLog::Log(FString::Printf(TEXT("%-20s"), TEXT("[Error|ACAIController] Missing Blackboard keys.")));
+		return false;
+	}
+
+	return true;
+}
+
+bool ACAIController::ValidateBlackboardBKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const
+{
+	// -----------------------------------------------------------------------------
+	// [Blackboard Key Validate]
+	// [EngineAPI] GetKeyID (UBlackboardData / UBlackboardComponent)
+	// - true  : returns 'a valid FKey'
+	// - false : returns 'FBlackboard::InvalidKey'
+	// -----------------------------------------------------------------------------
+
+	return IsValid(InBlackboardAsset) && (InBlackboardAsset->GetKeyID(InKeyName) != FBlackboard::InvalidKey);
 }
 
 void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& UpdatedActors) const
@@ -197,8 +295,7 @@ void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& Update
 	FLog::Log(TEXT("================================="));
 }
 
-void ACAIController::PrintTargetPerceptionUpdatedSummary(AActor* Actor, const FAIStimulus& Stimulus
-) const
+void ACAIController::PrintTargetPerceptionUpdatedSummary(AActor* Actor, const FAIStimulus& Stimulus) const
 {
 	FLog::Log(TEXT("=== Target Perception Updated ==="));
 

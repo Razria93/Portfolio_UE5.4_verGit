@@ -8,7 +8,7 @@
 UCBTDecorator_HasTarget::UCBTDecorator_HasTarget()
 {
 	NodeName = "Has Target";
-	TargetActorKey.SelectedKeyName = CAIKey::TargetActor;
+	TargetActorKey.SelectedKeyName = CAIKey::Targeting::TargetActor;
 }
 
 bool UCBTDecorator_HasTarget::CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const
