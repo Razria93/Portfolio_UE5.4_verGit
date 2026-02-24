@@ -18,7 +18,6 @@ namespace CAIKey
 	namespace Perception
 	{
 		static const FName bHasLOS = "bHasLOS";								// Bool
-		static const FName bHasMemory = "bHasMemory";						// Bool
 		static const FName LastSeenTime = "LastSeenTime";					// Float
 		static const FName LastKnownLocation = "LastKnownLocation";			// Vector
 	}

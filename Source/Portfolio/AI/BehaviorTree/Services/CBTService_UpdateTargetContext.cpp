@@ -21,5 +21,6 @@ void UCBTService_UpdateTargetContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	ACAIController* aiController = Cast<ACAIController>(temp);
 	if (!aiController) return;
 
+	aiController->UpdateTargetDataMap();
 	aiController->UpdateBlackboardContext();
 }

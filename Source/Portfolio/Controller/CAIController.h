@@ -34,7 +34,7 @@ public:
 public:
 	bool IsValidData() const
 	{
-		return IsValid(TargetActor) && TargetPriority != INT_MAX;
+		return IsValid(TargetActor);
 	}
 };
 
@@ -113,6 +113,7 @@ private:
 
 public:
 	// Blackboard Service API
+	void UpdateTargetDataMap();
 	void UpdateBlackboardContext();
 
 private:
@@ -121,7 +122,6 @@ private:
 
 private:
 	bool SelectTopPriority(FTargetData& OutTargetData);
-	void CleanUpTargetDataMap(float InNowTime);
 
 private:
 	void PrintPerceptionUpdatedSummary(const TArray<class AActor*>& UpdatedActors) const;
