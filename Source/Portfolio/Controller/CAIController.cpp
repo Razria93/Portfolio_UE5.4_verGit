@@ -7,6 +7,8 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "Interface/TargetContextProducer.h"
+
 #include "Type/CAIStateStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
 
@@ -121,28 +123,32 @@ bool ACAIController::InitializeBlackBoardValue()
 
 	// Targeting 
 	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
+	blackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority, INT_MAX);
 
-	// State_StateType
-	blackboardComp->SetValueAsEnum(CAIKey::State::AIStateType, static_cast<uint8>(EAIStateType::Wait));
+	// State
+	blackboardComp->SetValueAsEnum(CAIKey::State::AIStateType, static_cast<uint8>(EAIStateType::Idle));
 
-	// State_Perception
+	// Perception
 	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasMemory, false);
 
-	// State_Combat
-	blackboardComp->SetValueAsBool(CAIKey::Combat::bIsEncounterActive, false);
-	blackboardComp->SetValueAsBool(CAIKey::Combat::bIsEngagementActive, false);
-	blackboardComp->SetValueAsBool(CAIKey::Combat::bIsInCombatRange, false);
-	blackboardComp->SetValueAsBool(CAIKey::Combat::bCanEngageTarget, false);
+	// Navigation
+	blackboardComp->SetValueAsBool(CAIKey::Navigation::bUsePatrol, false);
+	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, false);
 
-	// State_Reaction
+	// Combat
+	blackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, false);
+	blackboardComp->SetValueAsBool(CAIKey::Combat::bCanAttack, false);
+
+	// Reaction
 	blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
 
-	// State_Lifecycle
+	// Lifecycle
 	blackboardComp->SetValueAsBool(CAIKey::Lifecycle::bIsDead, false);
 
 	if (APawn* ownerPawn = GetPawn())
 	{
-		blackboardComp->SetValueAsVector(CAIKey::Perception::HomeLocation, ownerPawn->GetActorLocation());
+		blackboardComp->SetValueAsVector(CAIKey::Navigation::HomeLocation, ownerPawn->GetActorLocation());
 	}
 
 	return true;
@@ -150,48 +156,160 @@ bool ACAIController::InitializeBlackBoardValue()
 
 void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
-	PrintPerceptionUpdatedSummary(UpdatedActors);
+	// [Disable OnPerceptionUpdated]
 }
 
 void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	PrintTargetPerceptionUpdatedSummary(Actor, Stimulus);
 
+	if (!IsValid(Actor)) return;
+
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return;
 
-	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-	if (!blackboardComp) return;
+	FTargetData& data = TargetDataMap.FindOrAdd(Actor);
 
 	if (Stimulus.WasSuccessfullySensed())
 	{
-		// Initialize Value ([NOTE] Update Value in Service)
+		ITargetContextProducer* producer = Cast<ITargetContextProducer>(Actor);
+		if (!producer) return;
 
-		// Targeting
-		blackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor, Actor);
-
-		// Perception
-		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, true);
-		blackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime, world->GetTimeSeconds());
-		blackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation, Stimulus.StimulusLocation);
-
-		blackboardComp->SetValueAsBool(CAIKey::Combat::bIsEncounterActive, true);
+		// Update Cache Only (Not Update Blackoard)
+		data.TargetActor = Actor;
+		data.TargetPriority = producer->GetTargetPriority();
+		data.bHasLOS = true;
+		data.LastSeenTime = world->GetTimeSeconds();
+		data.LastKnownLocation = Stimulus.StimulusLocation;
 	}
 	else // WasSuccessfullySensed() == false
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+		data.bHasLOS = false;
 	}
+
+	FLog::Log("OnTargetPerceptionUpdated");
+	PrintAllTargetData();
 }
 
 void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 {
-	PrintTargetPerceptionForgotten(Actor);
+	// [Disable OnTargetPerceptionForgotten]
+	// - TargetForgotten is Controlled by bHasLOS and bHasMemory
+}
 
+// Blackboard Service API
+void ACAIController::UpdateBlackboardContext()
+{
+	// -----------------------------------------------------------------------------
+	// [Target Perception Level]
+	// 1. Active Target 
+	//	- TargetActor	: Valid
+	//	- bHasLOS		: true
+	//	- bHasMemory	: true
+	// 
+	// 2. Lost Target but Remembered 
+	//	- TargetActor	: Invalid
+	//	- bHasLOS		: false
+	//	- bHasMemory	: true
+	// 
+	// 3. Timeout and Expired
+	//	- TargetActor	: Invalid
+	//	- bHasLOS		: false
+	//	- bHasMemory	: false
+	// -----------------------------------------------------------------------------
+
+	// Update Blackboard
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-	if (!blackboardComp) return;
+	if (!IsValid(blackboardComp)) return;
 
-	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
-	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+	UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	float nowTime = world->GetTimeSeconds();
+
+	// Update TargetDataMap
+	CleanUpTargetDataMap(nowTime);
+
+	FTargetData newTargetData;
+	bool bHasTopPriority = SelectTopPriority(newTargetData);
+
+	AActor* currentTarget = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
+
+	// ----------------------------------------------------------
+	// Case 01 : Valid TopPriority
+	// - Change to New TargetActor
+	// - Check New TargetActor
+	// ----------------------------------------------------------
+	if (bHasTopPriority && newTargetData.IsValidData())
+	{
+		// Change TargetActor (Current != New)
+		if (currentTarget != newTargetData.TargetActor)
+		{
+			blackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor, newTargetData.TargetActor);
+		}
+
+		if (newTargetData.bHasLOS)
+		{
+			blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, true);
+			blackboardComp->SetValueAsBool(CAIKey::Perception::bHasMemory, true);
+			blackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime, nowTime);
+			blackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation, newTargetData.LastKnownLocation);
+		}
+		else // bHasLOS == false
+		{
+			float lastSeenTime = blackboardComp->GetValueAsFloat(CAIKey::Perception::LastSeenTime);
+			bool bMemoryValid = false;
+
+			if (lastSeenTime > 0.0f)
+			{
+				bMemoryValid = ((nowTime - lastSeenTime) <= TargetMemoryTimeout);
+			}
+
+			blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+			blackboardComp->SetValueAsBool(CAIKey::Perception::bHasMemory, bMemoryValid);
+
+			if (!bMemoryValid)
+			{
+				blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
+			}
+		}
+
+		return;
+	}
+	// ----------------------------------------------------------
+	// CASE 02 : Invalid TopPriority
+	// - Check Current TargetActor in Blackboard
+	// ----------------------------------------------------------
+	else if (IsValid(currentTarget))
+	{
+		float lastSeenTime = blackboardComp->GetValueAsFloat(CAIKey::Perception::LastSeenTime);
+		bool bMemoryValid = false;
+
+		if (lastSeenTime > 0.0f)
+		{
+			bMemoryValid = ((nowTime - lastSeenTime) <= TargetMemoryTimeout);
+		}
+
+		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasMemory, bMemoryValid);
+
+		if (!bMemoryValid)
+		{
+			blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
+		}
+
+		return;
+	}
+	// ----------------------------------------------------------
+	// CASE 03 :  Invalid TopPriority && Invalid currentTarget
+	// ----------------------------------------------------------
+	else
+	{
+		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+		blackboardComp->SetValueAsBool(CAIKey::Perception::bHasMemory, false);
+
+		return;
+	}
 }
 
 bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const
@@ -199,52 +317,58 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	if (!IsValid(InBlackboardAsset)) return false;
 
 	// Targeting
-	const bool bHasTargetActorKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Targeting::TargetActor);
+	const bool bTargetActorKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Targeting::TargetActor);
+	const bool bTargetPriorityKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Targeting::TargetPriority);
 
 	// StateType
-	const bool bHasAIStateTypeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::State::AIStateType);
+	const bool bAIStateTypeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::State::AIStateType);
 
 	// Perception
-	const bool bHasHasLOSKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::bHasLOS);
-	const bool bHasLastSeenTimeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::LastSeenTime);
-	const bool bHasLastKnownLocationKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::LastKnownLocation);
-	const bool bHasHomeLocationKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Perception::HomeLocation);
+	const bool bHasLOSKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::bHasLOS);
+	const bool bHasMemoryKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::bHasMemory);
+	const bool bLastSeenTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::LastSeenTime);
+	const bool bLastKnownLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::LastKnownLocation);
 
 	// Metric
-	const bool bHasDistanceToTargetKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Metric::DistanceToTarget);
+	const bool bDistanceToTargetKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Metric::DistanceToTarget);
+	const bool bDistanceToHomeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Metric::DistanceToHome);
 
-	// Combat | State
-	const bool bHasIsEncounterActiveKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bIsEncounterActive);
-	const bool bHasIsEngagementActiveKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bIsEngagementActive);
-	const bool bHasIsInCombatRangeKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bIsInCombatRange);
+	// Navigation
+	const bool bHomeLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Navigation::HomeLocation);
+	const bool bUsePatrolKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Navigation::bUsePatrol);
+	const bool bReturnHomeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Navigation::bReturnHome);
 
-	// Combat | Able
-	const bool bHasCanEngageTargetKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Combat::bCanEngageTarget);
+	// Combat
+	const bool bInRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bInRange);
+	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bCanAttack);
 
-	// Reaction | State
-	const bool bHasIsHitReactingKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Reaction::bIsHitReacting);
+	// Reaction
+	const bool bHasIsHitReactingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bIsHitReacting);
 
-	// Lifecycle | State
-	const bool bHasIsDeadKey = ValidateBlackboardBKey(InBlackboardAsset, CAIKey::Lifecycle::bIsDead);
+	// Lifecycle
+	const bool bHasIsDeadKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Lifecycle::bIsDead);
 
 	bool bAllValid = true;
 
-	bAllValid &= bHasTargetActorKey;
+	bAllValid &= bTargetActorKey;
+	bAllValid &= bTargetPriorityKey;
 
-	bAllValid &= bHasAIStateTypeKey;
+	bAllValid &= bAIStateTypeKey;
 
-	bAllValid &= bHasHasLOSKey;
-	bAllValid &= bHasLastSeenTimeKey;
-	bAllValid &= bHasLastKnownLocationKey;
-	bAllValid &= bHasHomeLocationKey;
+	bAllValid &= bHasLOSKey;
+	bAllValid &= bHasMemoryKey;
+	bAllValid &= bLastSeenTimeKey;
+	bAllValid &= bLastKnownLocationKey;
 
-	bAllValid &= bHasDistanceToTargetKey;
+	bAllValid &= bDistanceToTargetKey;
+	bAllValid &= bDistanceToHomeKey;
 
-	bAllValid &= bHasIsEncounterActiveKey;
-	bAllValid &= bHasIsEngagementActiveKey;
-	bAllValid &= bHasIsInCombatRangeKey;
+	bAllValid &= bHomeLocationKey;
+	bAllValid &= bUsePatrolKey;
+	bAllValid &= bReturnHomeKey;
 
-	bAllValid &= bHasCanEngageTargetKey;
+	bAllValid &= bInRangeKey;
+	bAllValid &= bCanAttackKey;
 
 	bAllValid &= bHasIsHitReactingKey;
 
@@ -259,7 +383,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	return true;
 }
 
-bool ACAIController::ValidateBlackboardBKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const
+bool ACAIController::ValidateBlackboardKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const
 {
 	// -----------------------------------------------------------------------------
 	// [Blackboard Key Validate]
@@ -269,6 +393,79 @@ bool ACAIController::ValidateBlackboardBKey(const UBlackboardData* InBlackboardA
 	// -----------------------------------------------------------------------------
 
 	return IsValid(InBlackboardAsset) && (InBlackboardAsset->GetKeyID(InKeyName) != FBlackboard::InvalidKey);
+}
+
+bool ACAIController::SelectTopPriority(FTargetData& OutTargetData)
+{
+	if (TargetDataMap.IsEmpty()) return false;
+
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return false;
+
+	int bestPriority = INT_MAX;
+	FTargetData bestData = FTargetData();
+
+	for (TPair<AActor*, FTargetData>& pair : TargetDataMap)
+	{
+		AActor* actorKey = pair.Key;
+		FTargetData& data = pair.Value;
+
+		if (!IsValid(actorKey) || !data.IsValidData()) continue;
+
+		if (data.TargetPriority < bestPriority)
+		{
+			bestPriority = data.TargetPriority;
+			bestData = data;
+			continue;
+		}
+	}
+
+	if (bestPriority == INT_MAX || !bestData.IsValidData()) return false;
+
+	OutTargetData = bestData;
+	return true;
+}
+
+void ACAIController::CleanUpTargetDataMap(float InNowTime)
+{
+	FLog::Log("CleanUpTargetDataMap_Before");
+	PrintAllTargetData();
+
+	TArray<AActor*> removeKeys;
+
+	for (TPair<AActor*, FTargetData>& pair : TargetDataMap)
+	{
+		AActor* actorKey = pair.Key;
+		FTargetData& data = pair.Value;
+
+		if (!IsValid(actorKey) || !data.IsValidData())
+		{
+			removeKeys.Add(actorKey);
+			continue;
+		}
+
+		if (data.bHasLOS) continue;
+		else // bHasLOS == false
+		{
+			// CleanUp Timeout
+			bool bExpired = ((InNowTime - data.LastSeenTime) > TargetMemoryTimeout);
+
+			if (bExpired)
+			{
+				removeKeys.Add(actorKey);
+				continue;
+			}
+		}
+	}
+
+	for (AActor* removeKey : removeKeys)
+	{
+		FLog::Log(FString::Printf(TEXT("RemoveActor = %s"), *GetNameSafe(removeKey)));
+		TargetDataMap.Remove(removeKey);
+	}
+
+	FLog::Log("CleanUpTargetDataMap_After");
+	PrintAllTargetData();
 }
 
 void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& UpdatedActors) const
@@ -316,4 +513,35 @@ void ACAIController::PrintTargetPerceptionForgotten(AActor* Actor) const
 	FLog::Log(FString::Printf(TEXT("TargetActor = %s"), *GetNameSafe(Actor)));
 
 	FLog::Log(TEXT("================================="));
+}
+
+void ACAIController::PrintAllTargetData() const
+{
+	FLog::Log(TEXT("========= TargetDataMap ========="));
+
+	for (const TPair<AActor*, FTargetData>& pair : TargetDataMap)
+	{
+		PrintTargetData(pair.Value);
+	}
+
+	FLog::Log(TEXT("================================="));
+}
+
+void ACAIController::PrintTargetData(const FTargetData& InData) const
+{
+	FLog::Log(TEXT("---------- TargetData -----------"));
+
+	if (!InData.IsValidData())
+	{
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetData"), TEXT("InValid")));
+		FLog::Log(TEXT("---------------------------------"));
+		return;
+	}
+
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InData.TargetActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("TargetPriority"), InData.TargetPriority));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bHasLOS"), InData.bHasLOS ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("LastSeenTime"), InData.LastSeenTime));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("LastKnownLocation"), *InData.LastKnownLocation.ToCompactString()));
+	FLog::Log(TEXT("---------------------------------"));
 }

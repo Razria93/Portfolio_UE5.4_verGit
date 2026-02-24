@@ -2,15 +2,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interface/TargetContextProducer.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACPlayer : public ACharacter
+class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProducer
 {
 	GENERATED_BODY()
 
 public:
 	ACPlayer();
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Priority")
+	int Priority = INT_MAX;
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -45,6 +50,10 @@ public:
 	UCWeaponComponent* GetWeaponComp() const;
 	UCStateComponent* GetStateComp() const;
 	UCActionComponent* GetActionComp() const;
+
+public:
+	// Interface API
+	virtual int GetTargetPriority() const override { return Priority; }
 
 public:
 	void HandleMoveForward(const float InAxisValue);
