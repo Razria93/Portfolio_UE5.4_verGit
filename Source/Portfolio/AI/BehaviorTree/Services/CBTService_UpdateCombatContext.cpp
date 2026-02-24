@@ -26,26 +26,27 @@ void UCBTService_UpdateCombatContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	if (!IsValid(blackboardComp)) return;
 
 	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
+	if (!IsValid(ownerPawn)) return;
+
+	FVector ownerLocation = ownerPawn ? ownerPawn->GetActorLocation() : FVector::ZeroVector;
+
 	AActor* target = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
-
-	if (IsValid(ownerPawn) && IsValid(target))
-	{
-		FVector ownerLocation = ownerPawn ? ownerPawn->GetActorLocation() : FVector::ZeroVector;
-		FVector targetLocation = target ? target->GetActorLocation() : FVector::ZeroVector;
-		
-		float dist = FVector::Dist(ownerLocation, targetLocation);
-		// TODO: DistanceToHome
-
-		blackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget, dist);
-		blackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, dist <= AttackRange);
-		// TODO: bCanAttack
-
-		return;
-	}
-	else // Invalid target
+	if (!IsValid(target))
 	{
 		blackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
-		blackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, false);
-		// TODO: bCanAttack
+		blackboardComp->ClearValue(CAIKey::Combat::bInRange);
+		return;
 	}
+	
+	FVector targetLocation = target->GetActorLocation();
+	float dist_target = FVector::Dist(ownerLocation, targetLocation);
+
+	blackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, dist_target <= AttackRange);
+	blackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget, dist_target);
+
+	FVector homeLocation = blackboardComp->GetValueAsVector(CAIKey::Navigation::HomeLocation);
+	float dist_home = FVector::Dist(ownerLocation, homeLocation);
+
+	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, dist_home > MovableRange);
+	blackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToHome, dist_home);
 }

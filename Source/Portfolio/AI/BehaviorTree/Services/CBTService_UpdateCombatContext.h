@@ -16,6 +16,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Config")
 	float AttackRange = 200.f;
 
+	UPROPERTY(EditAnywhere, Category = "Config")
+	float MovableRange = 1000.f;
+
 protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 };
