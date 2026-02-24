@@ -6,47 +6,49 @@ namespace CAIKey
 {
 	namespace Targeting
 	{
-		static const FName TargetActor = "TargetActor";					// Object(Actor)
+		static const FName TargetActor = "TargetActor";						// Object(Actor)
+		static const FName TargetPriority = "TargetPriority";				// Float
 	}
 
 	namespace State
 	{
-		static const FName AIStateType = "AIStateType";					// Enum(EAIStateType)
+		static const FName AIStateType = "AIStateType";						// Enum(EAIStateType)
 	}
 
 	namespace Perception
 	{
-		static const FName bHasLOS = "bHasLOS";							// Bool
-		static const FName LastSeenTime = "LastSeenTime";				// Float
-		static const FName LastKnownLocation = "LastKnownLocation";		// Vector
-		static const FName HomeLocation = "HomeLocation";				// Vector
+		static const FName bHasLOS = "bHasLOS";								// Bool
+		static const FName bHasMemory = "bHasMemory";						// Bool
+		static const FName LastSeenTime = "LastSeenTime";					// Float
+		static const FName LastKnownLocation = "LastKnownLocation";			// Vector
 	}
 
 	namespace Metric
 	{
-		static const FName DistanceToTarget = "DistanceToTarget";		// Float
+		static const FName DistanceToTarget = "DistanceToTarget";			// Float
+		static const FName DistanceToHome = "DistanceToHome";				// Float
+	}
+
+	namespace Navigation
+	{
+		static const FName bUsePatrol = "bUsePatrol";						// Bool
+		static const FName bReturnHome = "bReturnHome";						// Bool
+		static const FName HomeLocation = "HomeLocation";					// Vector
 	}
 
 	namespace Combat
 	{
-		// Condition
-		static const FName bIsInCombatRange = "bIsInCombatRange";		// Bool
-		static const FName bCanEngageTarget = "bCanEngageTarget";		// Bool
-
-		// State
-		static const FName bIsEncounterActive = "bIsEncounterActive";	// Bool
-		static const FName bIsEngagementActive = "bIsEngagementActive";	// Bool
+		static const FName bInRange = "bInRange";							// Bool
+		static const FName bCanAttack = "bCanAttack";						// Bool
 	}
 
 	namespace Reaction
 	{
-		// State
-		static const FName bIsHitReacting = "bIsHitReacting";			// Bool
+		static const FName bIsHitReacting = "bIsHitReacting";				// Bool
 	}
 
 	namespace Lifecycle
 	{
-		// State
-		static const FName bIsDead = "bIsDead";							// Bool
+		static const FName bIsDead = "bIsDead";								// Bool
 	}
 }

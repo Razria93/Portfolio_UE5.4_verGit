@@ -6,12 +6,13 @@
 UENUM(BlueprintType)
 enum class EAIStateType : uint8
 {
-	Wait = 0,
+	Idle = 0,
 	Patrol,
-	Equip,
-	Unequip,
-	Approach,
-	Action,
-	Reaction,
+	Investigate,
+	Chase,
+	Alert,
+	Combat,
+	HitReact,
+	Dead,
 	Max,
 };
