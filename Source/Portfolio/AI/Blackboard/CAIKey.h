@@ -22,17 +22,21 @@ namespace CAIKey
 		static const FName LastKnownLocation = "LastKnownLocation";			// Vector
 	}
 
+	namespace Navigation
+	{
+		static const FName bReturnHome = "bReturnHome";						// Bool
+		static const FName HomeLocation = "HomeLocation";					// Vector
+	}
+
+	namespace Patrol
+	{
+		static const FName bUsePatrol = "bUsePatrol";						// Bool
+	}
+
 	namespace Metric
 	{
 		static const FName DistanceToTarget = "DistanceToTarget";			// Float
 		static const FName DistanceToHome = "DistanceToHome";				// Float
-	}
-
-	namespace Navigation
-	{
-		static const FName bUsePatrol = "bUsePatrol";						// Bool
-		static const FName bReturnHome = "bReturnHome";						// Bool
-		static const FName HomeLocation = "HomeLocation";					// Vector
 	}
 
 	namespace Combat
