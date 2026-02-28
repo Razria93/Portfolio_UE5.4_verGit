@@ -205,6 +205,7 @@ void ACAIController::UpdateTargetDataMap()
 	//	- bHasMemory	: false
 	// -----------------------------------------------------------------------------
 
+	// Used BT_Service API
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
@@ -259,7 +260,7 @@ void ACAIController::UpdateTargetDataMap()
 	}
 }
 
-// Blackboard Service API
+// Used BT_Service API
 void ACAIController::UpdateBlackboardContext()
 {
 	// -----------------------------------------------------------------------------
@@ -285,7 +286,7 @@ void ACAIController::UpdateBlackboardContext()
 	if (!IsValid(blackboardComp)) return;
 
 
-	FTargetData newTargetData;
+	FTargetData newTargetData; // Out: Data for the highest priority target
 	bool bHasTopPriority = SelectTopPriority(newTargetData);
 
 	AActor* currentTarget = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
