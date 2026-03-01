@@ -3,40 +3,8 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "Type/CAIStructure.h"
 #include "CAIController.generated.h"
-
-USTRUCT()
-struct FTargetData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	AActor* TargetActor = nullptr;
-
-	UPROPERTY()
-	int TargetPriority = INT_MAX;
-
-	UPROPERTY()
-	bool bHasLOS = false;
-
-	UPROPERTY()
-	float LastSeenTime = -1.0f;
-
-	UPROPERTY()
-	FVector LastKnownLocation = FVector::ZeroVector;
-
-public:
-	FTargetData() = default;
-	FTargetData(const FTargetData&) = default;
-	FTargetData& operator=(const FTargetData&) = default;
-
-public:
-	bool IsValidData() const
-	{
-		return IsValid(TargetActor);
-	}
-};
 
 UCLASS()
 class PORTFOLIO_API ACAIController : public AAIController
@@ -112,15 +80,14 @@ private:
 	void OnTargetPerceptionForgotten(class AActor* Actor);
 
 public:
-	// Blackboard Service API
-	void UpdateTargetDataMap();
-	void UpdateBlackboardContext();
+	bool BuildPerceptionContext(FTargetData& OutTargetData);
 
 private:
 	bool ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const;
 	bool ValidateBlackboardKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const;
 
 private:
+	void UpdateTargetDataMap();
 	bool SelectTopPriority(FTargetData& OutTargetData);
 
 private:
