@@ -31,18 +31,18 @@ void UCBTService_UpdateAIState::TickNode(UBehaviorTreeComponent& OwnerComp, uint
 
 EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardComponent* InBlackboard, float InCurrentTime) const
 {
-	// -------------------------------------------------
+	// -----------------------------------------------------------------------------
 	// 1. Absolute States
-	// -------------------------------------------------
+	// -----------------------------------------------------------------------------
 	if (InBlackboard->GetValueAsBool(CAIKey::Lifecycle::bIsDead))
 		return EAIStateType::Dead;
 
 	if (InBlackboard->GetValueAsBool(CAIKey::Reaction::bIsHitReacting))
 		return EAIStateType::HitReact;
 
-	// -------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
 	// 2.  Context
-	// -------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
 	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor));
 
 	const bool bHasTarget = IsValid(target);
@@ -51,9 +51,9 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	const bool bInRange = InBlackboard->GetValueAsBool(CAIKey::Combat::bInRange);
 	const bool bCanAttack = InBlackboard->GetValueAsBool(CAIKey::Combat::bCanAttack);
 
-	// -------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
 	// 3) Decide Next AIStateType
-	// -------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
 	// 3-1. Invalid Target -> Idle
 	if (!bHasTarget)
 	{
