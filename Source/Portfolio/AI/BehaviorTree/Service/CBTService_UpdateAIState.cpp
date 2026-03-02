@@ -82,13 +82,13 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	return EAIStateType::Combat;
 }
 
-bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackboard, EAIStateType InNextAIStateType) const
+bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType) const
 {
-	const uint8 currentAIStateType = static_cast<uint8>(InBlackboard->GetValueAsEnum(CAIKey::State::AIStateType));
+	const uint8 currentAIStateType = static_cast<uint8>(InBlackboardComp->GetValueAsEnum(CAIKey::State::AIStateType));
 	const uint8 nextAIStateType = static_cast<uint8>(InNextAIStateType);
 
 	if (currentAIStateType == nextAIStateType) return false;
 
-	InBlackboard->SetValueAsEnum(CAIKey::State::AIStateType, nextAIStateType);
+	InBlackboardComp->SetValueAsEnum(CAIKey::State::AIStateType, nextAIStateType);
 	return true;
 }
