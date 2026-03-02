@@ -57,7 +57,7 @@ bool UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAI
 bool UCBTService_UpdateAIContext::ComputeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
 {
 	if (!InOutAIContext.IsValidContext()) return false;
-	if (!!IsValid(InOutAIContext.TargetActor)) return false;
+	if (!IsValid(InOutAIContext.TargetActor)) return false;
 
 	FVector ownerLocation = InOwnerPawn ? InOwnerPawn->GetActorLocation() : FVector::ZeroVector;
 	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
