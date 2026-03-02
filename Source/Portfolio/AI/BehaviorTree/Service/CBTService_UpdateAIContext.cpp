@@ -1,4 +1,4 @@
-#include "AI/BehaviorTree/Services/CBTService_UpdateAIContext.h"
+#include "AI/BehaviorTree/Service/CBTService_UpdateAIContext.h"
 #include "ProjectGlobal.h"
 
 #include "AIController.h"

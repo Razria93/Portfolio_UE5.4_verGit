@@ -1,4 +1,4 @@
-#include "AI/BehaviorTree/Services/CBTService_UpdateAIState.h"
+#include "AI/BehaviorTree/Service/CBTService_UpdateAIState.h"
 #include "ProjectGlobal.h"
 
 #include "BehaviorTree/BlackboardComponent.h"

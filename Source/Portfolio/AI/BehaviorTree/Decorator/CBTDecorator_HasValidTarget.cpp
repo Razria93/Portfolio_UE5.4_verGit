@@ -1,4 +1,4 @@
-#include "AI/BehaviorTree/Decorators/CBTDecorator_HasValidTarget.h"
+#include "AI/BehaviorTree/Decorator/CBTDecorator_HasValidTarget.h"
 #include "ProjectGlobal.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
