@@ -4,6 +4,15 @@
 #include "GameFramework/Actor.h"
 #include "CAIStructure.generated.h"
 
+UENUM(BlueprintType)
+enum class EPatrolMode : uint8
+{
+    None = 0,
+    Random,
+    Loop,
+    Reverse
+};
+
 USTRUCT()
 struct FTargetData
 {
@@ -82,4 +91,30 @@ public:
     {
         return IsValid(TargetActor);
     }
+};
+
+USTRUCT(BlueprintType)
+struct FPatrolPointData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(Transient)
+    FVector Location = FVector::ZeroVector;
+
+    UPROPERTY(Transient)
+    float ExtraWaitTime = 0.f;
+
+    UPROPERTY(Transient)
+    bool bFaceOnArrive = false;
+
+    UPROPERTY(Transient)
+    float FaceYaw = 0.f;
+
+    UPROPERTY(Transient)
+    FName PointTag = NAME_None;
+
+public:
+    FPatrolPointData() = default;
+    FPatrolPointData(const FPatrolPointData&) = default;
+    FPatrolPointData& operator=(const FPatrolPointData&) = default;
 };

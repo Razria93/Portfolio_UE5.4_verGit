@@ -7,9 +7,13 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "Character/Enemy/CEnemy.h"
+#include "AI/Patrol/CPatrolPath.h"
+
 #include "Interface/TargetContextProducer.h"
 
 #include "Type/CAIStateStructure.h"
+#include "Type/CAIStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
 
 ACAIController::ACAIController()
@@ -135,7 +139,6 @@ bool ACAIController::InitializeBlackBoardValue()
 	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, false);
 
 	// Patrol
-	blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol, false);
 	blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
 
 	// Combat
@@ -151,6 +154,21 @@ bool ACAIController::InitializeBlackBoardValue()
 	if (APawn* ownerPawn = GetPawn())
 	{
 		blackboardComp->SetValueAsVector(CAIKey::Navigation::HomeLocation, ownerPawn->GetActorLocation());
+
+		// Patrol
+		if (ACEnemy* enemy = Cast<ACEnemy>(ownerPawn))
+		{
+			bool bUsePatrol = enemy->GetbUsePatrol();
+			ACPatrolPath* patrolPath = enemy->GetPatrolPath();
+			EPatrolMode patrolMode = enemy->GetPatrolMode();
+
+			blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol, bUsePatrol);
+			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPathActor, patrolPath ? patrolPath : nullptr);
+			blackboardComp->SetValueAsEnum(CAIKey::Patrol::PatrolMode, static_cast<uint8>(patrolMode));
+			blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, -1);
+			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
+			blackboardComp->ClearValue(CAIKey::Patrol::PatrolLocation);
+		}
 	}
 
 	return true;
@@ -191,7 +209,7 @@ bool ACAIController::BuildPerceptionContext(FTargetData& OutTargetData)
 {
 	UpdateTargetDataMap();
 	bool result = SelectTopPriority(OutTargetData);
-	
+
 	return result;
 }
 
@@ -223,6 +241,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bUsePatrolKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bUsePatrol);
 	const bool bPatrolReverseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bPatrolReverse);
 	const bool bPatrolPathActorKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolPathActor);
+	const bool bPatrolModeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolMode);
 	const bool bPatrolLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolLocation);
 	const bool bPatrolIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolIndex);
 
@@ -370,7 +389,7 @@ bool ACAIController::SelectTopPriority(FTargetData& OutTargetData)
 	if (!IsValid(blackboardComp)) return false;
 
 	int bestPriority = INT_MAX;
-	
+
 	FTargetData topData;
 	for (TPair<AActor*, FTargetData>& pair : TargetDataMap)
 	{
