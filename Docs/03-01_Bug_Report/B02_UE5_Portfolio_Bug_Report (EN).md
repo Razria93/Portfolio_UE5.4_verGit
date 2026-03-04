@@ -7,42 +7,39 @@
 ### Date
 
 - **Day 5**
-    
+
 - **2025.12.16**
-    
 
 ### Type
 
 - Bug
-    
 
 ### Status
 
--  Resolved
-    
+- [x] Resolved
 
 ### Branch
 
 - `feature/character-weapon-equip`
-    
+
 
 ---
 
 ## Summary
 
 - Fixed an **editor crash in the Property Editor** caused by using `const&` parameters with a reflected `USTRUCT` (`FEquipmentData`) in initialization / function parameters.
-    
+
 
 ---
 
 ## Environment
 
 - Engine: Unreal Engine 5.4
-    
+  
 - Editor area: Details Panel / Property Editor (editing struct data)
-    
+  
 - Affected data: `FEquipmentData` (montage, play rate, movement flag)
-    
+
 
 ---
 
@@ -55,11 +52,11 @@
 3. Use a function signature that takes the struct as a **reference parameter**, e.g.:
     
     - `InitializeEquipment(ACharacter* InOwnerCharacter, const FEquipmentData& InEquipData, const FEquipmentData& InUnequipData)`
-        
+	
 4. Open the editor Details panel and interact with the properties related to `FEquipmentData`.
     
 5. The editor intermittently crashes.
-    
+
 
 ---
 
@@ -68,23 +65,21 @@
 **Expected**
 
 - Editing `FEquipmentData` in the Details panel should be stable and never crash the editor.
-    
 
 **Actual**
 
 - The editor crashes during Property Editor evaluation with an access violation when `FEquipmentData` is passed as `const&` through reflected/editor paths.
-    
+
 
 ---
 
 ## Root Cause
 
 - Passing `USTRUCT` parameters by `const&` in a context that is touched by **reflection/editor evaluation** can lead to **lifetime issues**:
-    
-    - the Details panel / property system may construct temporary struct instances or evaluate values in a way that does not guarantee the referenced memory stays valid for the full call chain.
-        
+  the Details panel / property system may construct temporary struct instances or evaluate values in a way that does not guarantee the referenced memory stays valid for the full call chain.
+	
 - As a result, a `const&` parameter may end up referencing memory that is no longer valid (dangling reference), which can trigger crashes in the Property Editor.
-    
+
 
 ---
 
@@ -99,7 +94,7 @@
     - `const FEquipmentData&` → `FEquipmentData`
         
 3. Verified that `FEquipmentData` can be edited in the Details panel without causing crashes.
-    
+
 
 ---
 
@@ -118,7 +113,7 @@
     - No Property Editor crash occurs
         
     - Updated values apply correctly at runtime (equip/unequip flow still works)
-        
+
 
 ---
 
@@ -131,3 +126,6 @@
 - If a struct is intended for editor use, ensure it is:
     
     - `USTRUCT(BlueprintType)` and its members are `UPROPERTY`-annotated.
+
+
+---
