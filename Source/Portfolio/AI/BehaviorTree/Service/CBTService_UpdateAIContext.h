@@ -24,11 +24,17 @@ protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 private:
-	bool BuildPerceptionContext(class APawn* InOwnerPawn, FAIContext& OutAIContext);
-	bool ComputeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
+	EContextBuildResult BuildPerceptionContext(class APawn* InOwnerPawn, FAIContext& OutAIContext);
+	EContextBuildResult ComputeCombatMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
+	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 
 private:
 	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateCombatContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateNavigationContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
+	void UpdateCombatMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
+	void UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
+
+private:
+	void ClearPerceptionContext(UBlackboardComponent* InBlackboardComp);
+	void ClearCombatMetricContext(UBlackboardComponent* InBlackboardComp);
+	void ClearHomeMetricContext(UBlackboardComponent* InBlackboardComp);
 };

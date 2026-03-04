@@ -80,7 +80,7 @@ private:
 	void OnTargetPerceptionForgotten(class AActor* Actor);
 
 public:
-	bool BuildPerceptionContext(FTargetData& OutTargetData);
+	EPerceptionBuildResult BuildPerceptionContext(FTargetData& OutTargetData);
 
 private:
 	bool ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const;
@@ -88,7 +88,7 @@ private:
 
 private:
 	void UpdateTargetDataMap();
-	bool SelectTopPriority(FTargetData& OutTargetData);
+	EPerceptionBuildResult SelectTopPriority(FTargetData& OutTargetData);
 
 private:
 	void PrintPerceptionUpdatedSummary(const TArray<class AActor*>& UpdatedActors) const;

@@ -163,11 +163,11 @@ bool ACAIController::InitializeBlackBoardValue()
 			EPatrolMode patrolMode = enemy->GetPatrolMode();
 
 			blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol, bUsePatrol);
+			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
 			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPathActor, patrolPath ? patrolPath : nullptr);
 			blackboardComp->SetValueAsEnum(CAIKey::Patrol::PatrolMode, static_cast<uint8>(patrolMode));
+			blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, FVector(0.f));
 			blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, -1);
-			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
-			blackboardComp->ClearValue(CAIKey::Patrol::PatrolLocation);
 		}
 	}
 
@@ -191,7 +191,6 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 	{
 		data.bHasLOS = true;
 		data.TargetActor = Actor;
-		data.LastKnownLocation = Stimulus.StimulusLocation;
 	}
 	else // WasSuccessfullySensed() == false
 	{
@@ -205,12 +204,10 @@ void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 	// - TargetForgotten is Controlled by bHasLOS and bHasMemory
 }
 
-bool ACAIController::BuildPerceptionContext(FTargetData& OutTargetData)
+EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetData& OutTargetData)
 {
 	UpdateTargetDataMap();
-	bool result = SelectTopPriority(OutTargetData);
-
-	return result;
+	return SelectTopPriority(OutTargetData);
 }
 
 bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const
@@ -354,6 +351,7 @@ void ACAIController::UpdateTargetDataMap()
 
 			data.TargetPriority = producer->GetTargetPriority();
 			data.LastSeenTime = nowTime;
+			data.LastKnownLocation = data.TargetActor->GetActorLocation();
 		}
 		else // bHasLOS == false
 		{
@@ -381,16 +379,18 @@ void ACAIController::UpdateTargetDataMap()
 	}
 }
 
-bool ACAIController::SelectTopPriority(FTargetData& OutTargetData)
+EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetData& OutTargetData)
 {
-	if (TargetDataMap.IsEmpty()) return false;
+	OutTargetData = FTargetData();
 
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return false;
+	if (!IsValid(blackboardComp)) return EPerceptionBuildResult::Error;
+
+	if (TargetDataMap.IsEmpty()) return EPerceptionBuildResult::NoData;
 
 	int bestPriority = INT_MAX;
-
 	FTargetData topData;
+	
 	for (TPair<AActor*, FTargetData>& pair : TargetDataMap)
 	{
 		AActor* actorKey = pair.Key;
@@ -402,14 +402,13 @@ bool ACAIController::SelectTopPriority(FTargetData& OutTargetData)
 		{
 			bestPriority = data.TargetPriority;
 			topData = data;
-			continue;
 		}
 	}
 
-	if (bestPriority == INT_MAX || !topData.IsValidData()) return false;
+	if (bestPriority == INT_MAX || !topData.IsValidData()) return EPerceptionBuildResult::NoData;
 
 	OutTargetData = topData;
-	return true;
+	return EPerceptionBuildResult::Success;
 }
 
 

@@ -13,6 +13,20 @@ enum class EPatrolMode : uint8
     Reverse
 };
 
+enum class EPerceptionBuildResult : uint8
+{
+    Success,    // Target valid
+    NoData,     // Target Invalid
+    Error       // Error
+};
+
+enum class EContextBuildResult : uint8
+{
+    Success,
+    NoData,
+    Error
+};
+
 USTRUCT()
 struct FTargetData
 {

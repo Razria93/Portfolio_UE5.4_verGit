@@ -26,24 +26,70 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	if (!IsValid(blackboardComp)) return;
 
 	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
-	if (!IsValid(ownerPawn)) return;
+	if (!IsValid(ownerPawn))
+	{
+		ClearPerceptionContext(blackboardComp);
+		ClearCombatMetricContext(blackboardComp);
+		ClearHomeMetricContext(blackboardComp);
+
+		return;
+	}
 
 	FAIContext aiContext; // OutParameter
-	if (!BuildPerceptionContext(ownerPawn, aiContext)) return;
-	if (!ComputeMetricContext(ownerPawn, blackboardComp, aiContext)) return;
+	EContextBuildResult contextBuildResult = BuildPerceptionContext(ownerPawn, aiContext);
+
+	if (contextBuildResult == EContextBuildResult::Error)
+	{
+		ClearPerceptionContext(blackboardComp);
+		ClearCombatMetricContext(blackboardComp);
+		ClearHomeMetricContext(blackboardComp);
+
+		return;
+	}
+
+	if (contextBuildResult == EContextBuildResult::NoData)
+	{
+		ClearPerceptionContext(blackboardComp);
+		ClearCombatMetricContext(blackboardComp);
+
+		EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
+
+		if (homeResult == EContextBuildResult::Success)
+			UpdateHomeMetricContext(blackboardComp, aiContext);
+		else
+			ClearHomeMetricContext(blackboardComp);
+		
+		return;
+	}
 
 	UpdatePerceptionContext(blackboardComp, aiContext);
-	UpdateCombatContext(blackboardComp, aiContext);
-	UpdateNavigationContext(blackboardComp, aiContext);
+
+	EContextBuildResult combatResult = ComputeCombatMetricContext(ownerPawn, blackboardComp, aiContext);
+
+	if (combatResult == EContextBuildResult::Success)
+		UpdateCombatMetricContext(blackboardComp, aiContext);
+	else
+		ClearCombatMetricContext(blackboardComp);
+	
+	EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
+
+	if (homeResult == EContextBuildResult::Success)
+		UpdateHomeMetricContext(blackboardComp, aiContext);
+	else
+		ClearHomeMetricContext(blackboardComp);
 }
 
-bool UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAIContext& OutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAIContext& OutAIContext)
 {
 	ACAIController* aiController = Cast<ACAIController>(InOwnerPawn->GetController());
-	if (!IsValid(aiController)) return false;
+	if (!IsValid(aiController)) return EContextBuildResult::Error;
 
 	FTargetData topData;
-	if (!aiController->BuildPerceptionContext(topData) || !topData.IsValidData()) return false;
+
+	const EPerceptionBuildResult Result = aiController->BuildPerceptionContext(topData);
+
+	if (Result == EPerceptionBuildResult::Error) return EContextBuildResult::Error;
+	if (Result == EPerceptionBuildResult::NoData) return EContextBuildResult::NoData;
 
 	OutAIContext.TargetActor = topData.TargetActor;
 	OutAIContext.TargetPriority = topData.TargetPriority;
@@ -51,84 +97,84 @@ bool UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAI
 	OutAIContext.LastSeenTime = topData.LastSeenTime;
 	OutAIContext.LastKnownLocation = topData.LastKnownLocation;
 
-	return true;
+	return EContextBuildResult::Success;
 }
 
-bool UCBTService_UpdateAIContext::ComputeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
 {
-	if (!InOutAIContext.IsValidContext()) return false;
-	if (!IsValid(InOutAIContext.TargetActor)) return false;
+	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
+	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
 
-	FVector ownerLocation = InOwnerPawn ? InOwnerPawn->GetActorLocation() : FVector::ZeroVector;
+	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
-	FVector homeLocation = InBlackboardComp->GetValueAsVector(CAIKey::Navigation::HomeLocation);
-	
+
 	float dist_target = FVector::Dist(ownerLocation, targetLocation);
-	float dist_home = FVector::Dist(ownerLocation, homeLocation);
 
 	InOutAIContext.DistanceToTarget = dist_target;
 	InOutAIContext.bInRange = dist_target <= AttackRange;
+
+	return EContextBuildResult::Success;
+}
+
+EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+{
+	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
+
+	FVector ownerLocation = InOwnerPawn->GetActorLocation();
+	FVector homeLocation = InBlackboardComp->GetValueAsVector(CAIKey::Navigation::HomeLocation);
+
+	float dist_home = FVector::Dist(ownerLocation, homeLocation);
+
 	InOutAIContext.DistanceToHome = dist_home;
 	InOutAIContext.bReturnHome = dist_home > MovableRange;
 
-	return true;
+	return EContextBuildResult::Success;
 }
 
 void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
-	AActor* currentTarget = Cast<AActor>(InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
+	if (!IsValid(InBlackboardComp)) return;
+	if (!IsValid(InAIContext.TargetActor)) return; 
 
-	if (InAIContext.IsValidContext())
-	{
-		// Change TargetActor (Current != New)
-		if (currentTarget != InAIContext.TargetActor)
-		{
-			InBlackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor, InAIContext.TargetActor);
-			InBlackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority, InAIContext.TargetPriority);
-		}
-
-		if (InAIContext.bHasLOS)
-		{
-			InBlackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, InAIContext.bHasLOS);
-			InBlackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime, InAIContext.LastSeenTime);
-			InBlackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation, InAIContext.LastKnownLocation);
-		}
-		else // bHasLOS == false
-		{
-			InBlackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, InAIContext.bHasLOS);
-		}
-
-		return;
-	}
-	else
-	{
-		InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
-		InBlackboardComp->ClearValue(CAIKey::Targeting::TargetPriority);
-		InBlackboardComp->ClearValue(CAIKey::Perception::bHasLOS);
-		InBlackboardComp->ClearValue(CAIKey::Perception::LastSeenTime);
-		InBlackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation);
-
-		return;
-	}
-
+	InBlackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor, InAIContext.TargetActor);
+	InBlackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority, InAIContext.TargetPriority);
+	InBlackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, InAIContext.bHasLOS);
+	InBlackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime, InAIContext.LastSeenTime);
+	InBlackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation, InAIContext.LastKnownLocation);
 }
 
-void UCBTService_UpdateAIContext::UpdateCombatContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateCombatMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!InAIContext.IsValidContext()) return;
-	if (!IsValid(InAIContext.TargetActor))
-	{
-		InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
-		InBlackboardComp->ClearValue(CAIKey::Combat::bInRange);
-		return;
-	}
+	if (!IsValid(InAIContext.TargetActor)) return;
 
 	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget, InAIContext.DistanceToTarget);
 	InBlackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, InAIContext.bInRange);
 }
 
-void UCBTService_UpdateAIContext::UpdateNavigationContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	InBlackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, InAIContext.bReturnHome);
 	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToHome, InAIContext.DistanceToHome);
+}
+
+void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* InBlackboardComp)
+{
+	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
+	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetPriority);
+	InBlackboardComp->ClearValue(CAIKey::Perception::bHasLOS);
+	InBlackboardComp->ClearValue(CAIKey::Perception::LastSeenTime);
+	InBlackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation);
+}
+
+void UCBTService_UpdateAIContext::ClearCombatMetricContext(UBlackboardComponent* InBlackboardComp)
+{
+	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
+	InBlackboardComp->ClearValue(CAIKey::Combat::bInRange);
+}
+
+void UCBTService_UpdateAIContext::ClearHomeMetricContext(UBlackboardComponent* InBlackboardComp)
+{
+	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToHome);
+	InBlackboardComp->ClearValue(CAIKey::Navigation::bReturnHome);
 }
