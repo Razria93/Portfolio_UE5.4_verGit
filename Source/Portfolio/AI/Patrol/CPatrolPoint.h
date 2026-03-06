@@ -24,4 +24,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Config")
 	FName PointTag = NAME_None;
+
+private:
+	UPROPERTY(VisibleAnywhere)
+	class UTextRenderComponent* TextRenderComp;
 };
