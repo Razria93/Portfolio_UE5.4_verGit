@@ -1,6 +1,8 @@
 #include "AI/BehaviorTree/Task/CBTTask_SelectPatrolPoint.h"
 #include "ProjectGlobal.h"
 
+#include "AIController.h"
+#include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/Patrol/CPatrolPath.h"
@@ -18,9 +20,11 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-	bool bUsePatrol = blackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol);
+	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
+	if (!IsValid(ownerPawn)) return EBTNodeResult::Failed;
 
-	ACPatrolPath* patrolPath = Cast<ACPatrolPath>(blackboardComp->GetValueAsObject(CAIKey::Patrol::PatrolPathActor));
+	bool bUsePatrol = blackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol);
+	ACPatrolPath* patrolPath = Cast<ACPatrolPath>(blackboardComp->GetValueAsObject(CAIKey::Patrol::PatrolPath));
 	EPatrolMode patrolMode = static_cast<EPatrolMode>(blackboardComp->GetValueAsEnum(CAIKey::Patrol::PatrolMode));
 
 	if (!bUsePatrol || !IsValid(patrolPath) || patrolPath->Num() <= 0 || patrolMode == EPatrolMode::None) return EBTNodeResult::Failed;

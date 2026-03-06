@@ -45,8 +45,8 @@ void ACAIController::OnPossess(APawn* InPawn)
 
 	if (!InitializePerception()) return;
 	if (!InitializeBlackBoard()) return;
-	if (!InitializeBehaviorTree()) return;
 	if (!InitializeBlackBoardValue()) return;
+	if (!InitializeBehaviorTree()) return;
 }
 
 void ACAIController::OnUnPossess()
@@ -161,12 +161,15 @@ bool ACAIController::InitializeBlackBoardValue()
 			bool bUsePatrol = enemy->GetbUsePatrol();
 			ACPatrolPath* patrolPath = enemy->GetPatrolPath();
 			EPatrolMode patrolMode = enemy->GetPatrolMode();
-
+			 
+			// Set
 			blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol, bUsePatrol);
-			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
-			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPathActor, patrolPath ? patrolPath : nullptr);
+			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPath, patrolPath ? patrolPath : nullptr);
 			blackboardComp->SetValueAsEnum(CAIKey::Patrol::PatrolMode, static_cast<uint8>(patrolMode));
-			blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, FVector(0.f));
+			
+			// Init
+			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
+			blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, ownerPawn->GetActorLocation());
 			blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, -1);
 		}
 	}
@@ -236,9 +239,10 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	// Patrol
 	const bool bUsePatrolKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bUsePatrol);
-	const bool bPatrolReverseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bPatrolReverse);
-	const bool bPatrolPathActorKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolPathActor);
+	const bool bPatrolPathKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolPath);
 	const bool bPatrolModeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolMode);
+	
+	const bool bPatrolReverseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bPatrolReverse);
 	const bool bPatrolLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolLocation);
 	const bool bPatrolIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolIndex);
 
@@ -270,8 +274,10 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bReturnHomeKey;
 
 	bAllValid &= bUsePatrolKey;
+	bAllValid &= bPatrolPathKey;
+	bAllValid &= bPatrolModeKey;
+
 	bAllValid &= bPatrolReverseKey;
-	bAllValid &= bPatrolPathActorKey;
 	bAllValid &= bPatrolLocationKey;
 	bAllValid &= bPatrolIndexKey;
 

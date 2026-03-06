@@ -36,9 +36,9 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	}
 
 	FAIContext aiContext; // OutParameter
-	EContextBuildResult contextBuildResult = BuildPerceptionContext(ownerPawn, aiContext);
+	EContextBuildResult buildResult = BuildPerceptionContext(ownerPawn, aiContext);
 
-	if (contextBuildResult == EContextBuildResult::Error)
+	if (buildResult == EContextBuildResult::Error)
 	{
 		ClearPerceptionContext(blackboardComp);
 		ClearCombatMetricContext(blackboardComp);
@@ -47,7 +47,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		return;
 	}
 
-	if (contextBuildResult == EContextBuildResult::NoData)
+	if (buildResult == EContextBuildResult::NoData)
 	{
 		ClearPerceptionContext(blackboardComp);
 		ClearCombatMetricContext(blackboardComp);

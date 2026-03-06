@@ -31,9 +31,10 @@ namespace CAIKey
 	namespace Patrol
 	{
 		static const FName bUsePatrol = "bUsePatrol";						// Bool
-		static const FName bPatrolReverse = "bPatrolReverse";				// Bool
-		static const FName PatrolPathActor = "PatrolPathActor";				// Object(ACPatrolPath)
+		static const FName PatrolPath = "PatrolPath";						// Object(ACPatrolPath)
 		static const FName PatrolMode = "PatrolMode";						// Enum(EPatrolMode)
+
+		static const FName bPatrolReverse = "bPatrolReverse";				// Bool
 		static const FName PatrolLocation = "PatrolLocation";				// Vector
 		static const FName PatrolIndex = "PatrolIndex";						// Int
 	}

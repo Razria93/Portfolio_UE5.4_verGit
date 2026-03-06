@@ -25,6 +25,8 @@ protected:
 
 private:
 	EContextBuildResult BuildPerceptionContext(class APawn* InOwnerPawn, FAIContext& OutAIContext);
+
+private:
 	EContextBuildResult ComputeCombatMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 
