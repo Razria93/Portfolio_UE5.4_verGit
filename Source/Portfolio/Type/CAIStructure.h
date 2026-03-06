@@ -132,3 +132,37 @@ public:
     FPatrolPointData(const FPatrolPointData&) = default;
     FPatrolPointData& operator=(const FPatrolPointData&) = default;
 };
+
+USTRUCT(BlueprintType)
+struct FPatrolContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bUsePatrol = false;
+
+	UPROPERTY(Transient)
+	bool bPatrolReverse = false;
+
+	UPROPERTY(Transient)
+	class ACPatrolPath* PatrolPath = nullptr;
+
+	UPROPERTY(Transient)
+	EPatrolMode PatrolMode = EPatrolMode::None;
+
+	UPROPERTY(Transient)
+	int32 CurrentIndex = -1;
+
+	UPROPERTY(Transient)
+	int32 NextIndex = -1;
+
+	UPROPERTY(Transient)
+	FVector CurrentPatrolLocation = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	FVector NextPatrolLocation = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	bool bNeedNextPoint = false;
+};
