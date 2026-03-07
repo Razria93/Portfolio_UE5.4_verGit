@@ -12,7 +12,7 @@
 
 UCBTService_UpdatePatrolContext::UCBTService_UpdatePatrolContext()
 {
-	NodeName = "Update PatrolContext";
+	NodeName = "Update Patrol Context";
 	bNotifyTick = true;
 
 	Interval = 0.1f;

@@ -12,7 +12,7 @@
 
 UCBTTask_SelectPatrolPoint::UCBTTask_SelectPatrolPoint()
 {
-	NodeName = TEXT("Select PatrolPoint");
+	NodeName = TEXT("Select Patrol Point");
 }
 
 EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

@@ -7,7 +7,7 @@
 
 UCBTDecorator_HasValidTarget::UCBTDecorator_HasValidTarget()
 {
-	NodeName = "Has ValidTarget";
+	NodeName = "Has Valid Target";
 }
 
 bool UCBTDecorator_HasValidTarget::CalculateRawConditionValue(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) const
