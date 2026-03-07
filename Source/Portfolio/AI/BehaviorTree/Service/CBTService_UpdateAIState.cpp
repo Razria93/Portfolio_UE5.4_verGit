@@ -47,6 +47,7 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 
 	const bool bHasTarget = IsValid(target);
 	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS);
+	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating);
 
 	const bool bInRange = InBlackboard->GetValueAsBool(CAIKey::Combat::bInRange);
 	const bool bCanAttack = InBlackboard->GetValueAsBool(CAIKey::Combat::bCanAttack);
@@ -55,7 +56,7 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	// 3) Decide Next AIStateType
 	// -----------------------------------------------------------------------------
 	// 3-1. Invalid Target -> Idle
-	if (!bHasTarget)
+	if (!bHasTarget && !bIsInvestigating)
 	{
 		return EAIStateType::Idle;
 	}
