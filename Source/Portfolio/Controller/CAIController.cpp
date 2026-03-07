@@ -138,9 +138,6 @@ bool ACAIController::InitializeBlackBoardValue()
 	// Navigation
 	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, false);
 
-	// Patrol
-	blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
-
 	// Combat
 	blackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, false);
 	blackboardComp->SetValueAsBool(CAIKey::Combat::bCanAttack, false);
@@ -155,9 +152,9 @@ bool ACAIController::InitializeBlackBoardValue()
 	{
 		blackboardComp->SetValueAsVector(CAIKey::Navigation::HomeLocation, ownerPawn->GetActorLocation());
 
-		// Patrol
 		if (ACEnemy* enemy = Cast<ACEnemy>(ownerPawn))
 		{
+			// Patrol
 			bool bUsePatrol = enemy->GetbUsePatrol();
 			ACPatrolPath* patrolPath = enemy->GetPatrolPath();
 			EPatrolMode patrolMode = enemy->GetPatrolMode();
