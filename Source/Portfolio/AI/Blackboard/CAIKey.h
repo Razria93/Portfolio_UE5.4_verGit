@@ -39,6 +39,18 @@ namespace CAIKey
 		static const FName PatrolIndex = "PatrolIndex";						// Int
 	}
 
+	namespace Investigate
+	{
+		static const FName bUseInvestigate = "bUseInvestigate";				// Bool
+		static const FName InvestigateDuration = "InvestigateDuration";		// Float
+		static const FName InvestigateRadius = "InvestigateRadius";			// Float
+		static const FName InvestigateMaxIndex = "InvestigateMaxIndex";		// Int
+
+		static const FName bIsInvestigating = "bIsInvestigating";			// Bool
+		static const FName InvestigateLocation = "InvestigateLocation";		// Vector
+		static const FName InvestigateIndex = "InvestigateIndex";			// Int
+	}
+
 	namespace Metric
 	{
 		static const FName DistanceToTarget = "DistanceToTarget";			// Float

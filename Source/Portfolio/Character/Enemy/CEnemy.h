@@ -21,8 +21,21 @@ private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
 	class ACPatrolPath* PatrolPath;
 
-	UPROPERTY(EditInstanceOnly, Category = "Config")
+	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
 	EPatrolMode PatrolMode = EPatrolMode::None;
+
+private:
+	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	bool bUseInvestigate;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	float InvestigateDuration;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	float InvestigateRadius;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	int32 InvestigateMaxIndex;
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -51,6 +64,12 @@ public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }
 	FORCEINLINE ACPatrolPath* GetPatrolPath() const { return PatrolPath; }
 	FORCEINLINE EPatrolMode GetPatrolMode() const { return PatrolMode; }
+
+public:
+	FORCEINLINE bool GetbUseInvestigate() const { return bUseInvestigate; }
+	FORCEINLINE float GetInvestigateDuration() const { return InvestigateDuration; }
+	FORCEINLINE float GetInvestigateRadius() const { return InvestigateRadius; }
+	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
