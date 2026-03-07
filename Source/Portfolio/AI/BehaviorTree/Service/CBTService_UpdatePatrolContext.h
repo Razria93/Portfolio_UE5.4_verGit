@@ -10,6 +10,13 @@ class PORTFOLIO_API UCBTService_UpdatePatrolContext : public UBTService
 {
 	GENERATED_BODY()
 	
+	/********************************************
+	*
+	* [NOTE] Regacy Task
+	* - replaced UCBTTask_SelectPatrolPoint
+	* 
+	********************************************/
+
 public:
 	UCBTService_UpdatePatrolContext();
 

@@ -9,13 +9,6 @@ class PORTFOLIO_API UCBTTask_SelectPatrolPoint : public UBTTaskNode
 {
 	GENERATED_BODY()
 
-	/********************************************
-	*
-	* [NOTE] Regacy Task
-	* - replaced UCBTService_UpdatePatrolContext
-	* 
-	********************************************/
-
 public:
 	UCBTTask_SelectPatrolPoint();
 

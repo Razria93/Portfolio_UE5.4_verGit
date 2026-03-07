@@ -33,13 +33,13 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	bool bPatrolReverse = blackboardComp->GetValueAsBool(CAIKey::Patrol::bPatrolReverse);
 	
 	const int32 count = patrolPath->Num();
-	int32 nextIndex = 0;
+	int32 nextIndex = -1;
 
 	switch (patrolMode)
 	{
 	case EPatrolMode::Random:
 	{
-		// Random
+		// Select Point [Random]
 		nextIndex = FMath::RandRange(0, count - 1);
 
 		// Reroll
@@ -53,7 +53,7 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	{
 		if (currentIndex < 0) currentIndex = 0;
 
-		// Loop
+		// Select Point [Loop]
 		nextIndex = (currentIndex + 1) % count;
 
 		break;
@@ -63,6 +63,7 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	{
 		if (currentIndex < 0) currentIndex = 0;
 
+		// Select Point [Reverse]
 		nextIndex = bPatrolReverse ? currentIndex - 1 : currentIndex + 1;
 
 		// Reverse in last point (count - 1 -> count - 2)
@@ -81,15 +82,17 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 
 
 		nextIndex = FMath::Clamp(nextIndex, 0, count - 1);
-
-		blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, bPatrolReverse);
+		
 		break;
 	}
+	default:
+		return EBTNodeResult::Failed;
 	}
 
 	FPatrolPointData nextPatrolPointData;
 	if (!patrolPath->GetPointData(nextIndex, nextPatrolPointData)) return EBTNodeResult::Failed;
 
+	blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, bPatrolReverse);
 	blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, nextIndex);
 	blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, nextPatrolPointData.Location);
 
