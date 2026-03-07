@@ -34,7 +34,9 @@
 ## Reproduction Steps
 
 1. Bind the `OnTargetPerceptionForgotten` delegate in `ACAIController::InitializePerception()`.
+   
 2. Transition an AI Perception stimulus into the **Lost** state.
+   
 3. Wait until the stimulus **Age** expires.
 
 
@@ -51,7 +53,7 @@
 
 ---
 
-## Issue Details (Code)
+## Issue Code
 
 ```cpp
 bool ACAIController::InitializePerception()
@@ -112,7 +114,9 @@ Custom_FLog: Display: =================================
 ## Root Cause
 
 - Whether `OnTargetPerceptionForgotten` fires depends on the `bForgetStaleActors` flag inside `UAIPerceptionComponent`.
+  
 - `bForgetStaleActors` is a **private** variable with no public setter on the component.
+  
 - This behavior must be configured at the project level via `AIModule.AISystem`.
 
 
@@ -162,6 +166,7 @@ Custom_FLog: Display: =================================
 ## Conclusion
 
 - `OnTargetPerceptionForgotten` fires **only when** the stimulus expiration policy (`bForgetStaleActors`) is enabled.
+  
 - Because the setting is project-wide, verify the **AIModule.AISystem** configuration when diagnosing similar issues.
 
 
@@ -171,9 +176,12 @@ Custom_FLog: Display: =================================
 
 - Related fix commit: 
 	1. `chore(ai-behaviortree-core): turn on bForgetStaleActors in AISystem settings (#26, #27)`
+	   
 - Related refactor commits: 
 	1. `refactor(ai-behaviortree-core): rename BP_CAIController_Melee to BP_CAIController (#26)`
+	   
 	2. `feat(ai-behaviortree-core): add debug print functions (#26)`
+	   
 	3. `refactor(ai-behaviortree-core): bind perception delegates without handler implementation (#26)`
 
 

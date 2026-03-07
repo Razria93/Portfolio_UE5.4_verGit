@@ -34,7 +34,9 @@
 ## 재현 절차
 
 1. `ACAIController::InitializePerception()`에서 `OnTargetPerceptionForgotten` 델리게이트 바인딩
+   
 2. AI Perception의 Stimulus가 **Lost** 상태로 전환됨
+   
 3. 일정 시간 경과 후 Stimulus **Age**가 Expired 되는 상황을 기다림
 
 
@@ -51,7 +53,7 @@
 
 ---
 
-## Issue Details (Code)
+## 이슈 코드
 
 ```cpp
 bool ACAIController::InitializePerception()
@@ -83,7 +85,7 @@ void ACAIController::PrintTargetPerceptionForgotten(AActor* Actor) const
 
 ---
 
-## 실행 결과 (문제 상황)
+## 실행 결과
 
 ```cpp
 Custom_FLog: Display: === Target Perception Updated ===
@@ -109,16 +111,18 @@ Custom_FLog: Display: =================================
 
 ---
 
-## 원인 분석 (Root Cause)
+## 원인 분석
 
 - `OnTargetPerceptionForgotten` 호출 여부는 `UAIPerceptionComponent` 내부 변수인 `bForgetStaleActors` 값에 의해 결정됨.
+  
 - `bForgetStaleActors`는 `UAIPerceptionComponent` 내부 **private 변수**로, 개별 컴포넌트에서 직접 설정할 수 없음.
+  
 - 해당 값은 프로젝트 단위 정책으로 `AIModule.AISystem`에서 설정해야 함.
 
 
 ---
 
-## 해결 방법 (Resolution)
+## 해결 방법
 
 프로젝트 설정 파일에 아래 값을 추가/수정하여 `bForgetStaleActors`를 활성화:
 
@@ -162,6 +166,7 @@ Custom_FLog: Display: =================================
 ## 결론
 
 - `OnTargetPerceptionForgotten`는 **Stimulus 만료 처리 정책(`bForgetStaleActors`)이 활성화되어야만** 호출됨
+  
 - 해당 정책은 컴포넌트별 설정이 아니라 프로젝트 단위 설정이므로, 추후 유사 문제에 대비해 **AIModule.AISystem** 설정을 확인해야 함
 
 
@@ -171,9 +176,12 @@ Custom_FLog: Display: =================================
 
 - 관련 기능 변경 커밋: 
 	1. `chore(ai-behaviortree-core): turn on bForgetStaleActors in AISystem settings (#26, #27)`
+	   
 - 관련 리팩터링 커밋: 
 	1. `refactor(ai-behaviortree-core): rename BP_CAIController_Melee to BP_CAIController (#26)`
+	   
 	2. `feat(ai-behaviortree-core): add debug print functions (#26)`
+	   
 	3. `refactor(ai-behaviortree-core): bind perception delegates without handler implementation (#26)`
 
 
