@@ -51,6 +51,15 @@ namespace CAIKey
 		static const FName InvestigateIndex = "InvestigateIndex";			// Int
 	}
 
+	namespace Chase
+	{
+		static const FName ChaseOffsetDintance = "ChaseOffsetDintance";		// Float
+		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";			// Float
+		static const FName ChaseExitBuffer = "ChaseExitBuffer";				// Float
+
+		static const FName bCanChase = "bCanChase";							// Bool
+	}
+
 	namespace Metric
 	{
 		static const FName DistanceToTarget = "DistanceToTarget";			// Float

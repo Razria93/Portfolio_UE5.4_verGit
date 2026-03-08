@@ -35,6 +35,16 @@ private:
 	int32 InvestigateMaxIndex;
 
 private:
+	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	float ChaseOffsetDintance = 200.f;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	float ChaseEnterBuffer = 100.f;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	float ChaseExitBuffer = 50.f;
+
+private:
 	UPROPERTY(VisibleAnywhere)
 	class UCMovementComponent* MovementComponent;
 
@@ -66,6 +76,11 @@ public:
 	FORCEINLINE bool GetbUseInvestigate() const { return bUseInvestigate; }
 	FORCEINLINE float GetInvestigateDuration() const { return InvestigateDuration; }
 	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
+
+public:
+	FORCEINLINE float GetChaseOffsetDistance() const { return ChaseOffsetDintance; }
+	FORCEINLINE float GetChaseEnterBuffer() const { return ChaseEnterBuffer; }
+	FORCEINLINE float GetChaseExitBuffer() const { return ChaseExitBuffer; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;

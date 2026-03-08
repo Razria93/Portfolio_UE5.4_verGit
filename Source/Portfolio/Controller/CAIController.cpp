@@ -184,6 +184,19 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating, false);
 			blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation, ownerPawn->GetActorLocation());
 			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, -1);
+
+			// --- Chase ---
+			float chaseoffsetDistance = enemy->GetChaseOffsetDistance();
+			float chaseEnterBuffer = enemy->GetChaseEnterBuffer();
+			float chaseExitBuffer = enemy->GetChaseExitBuffer();
+
+			// Set
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetDintance, chaseoffsetDistance);
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer, chaseEnterBuffer);
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer, chaseExitBuffer);
+
+			// Init
+			blackboardComp->SetValueAsBool(CAIKey::Chase::bCanChase, false);
 		}
 	}
 
@@ -269,6 +282,13 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bInvestigateLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateLocation);
 	const bool bInvestigateIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateIndex);
 
+	// Chase
+	const bool bChaseOffsetDintanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseOffsetDintance);
+	const bool bChaseEnterBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseEnterBuffer);
+	const bool bChaseExitBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseExitBuffer);
+
+	const bool bCanChaseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::bCanChase);
+
 	// Combat
 	const bool bInRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bInRange);
 	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bCanAttack);
@@ -312,6 +332,12 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bIsInvestigatingKey;
 	bAllValid &= bInvestigateLocationKey;
 	bAllValid &= bInvestigateIndexKey;
+
+	bAllValid &= bChaseOffsetDintanceKey;
+	bAllValid &= bChaseEnterBufferKey;
+	bAllValid &= bChaseExitBufferKey;
+
+	bAllValid &= bCanChaseKey;
 
 	bAllValid &= bInRangeKey;
 	bAllValid &= bCanAttackKey;
