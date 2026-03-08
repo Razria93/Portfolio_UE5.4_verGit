@@ -2,15 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "CBTTask_StartInvestigate.generated.h"
+#include "CBTTask_BeginInvestigate.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCBTTask_StartInvestigate : public UBTTaskNode
+class PORTFOLIO_API UCBTTask_BeginInvestigate : public UBTTaskNode
 {
 	GENERATED_BODY()
 	
 public:
-	UCBTTask_StartInvestigate();
+	UCBTTask_BeginInvestigate();
 
 public:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

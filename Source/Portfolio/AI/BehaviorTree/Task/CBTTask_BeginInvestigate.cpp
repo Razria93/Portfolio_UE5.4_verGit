@@ -1,16 +1,16 @@
-#include "AI/BehaviorTree/Task/CBTTask_StartInvestigate.h"
+#include "AI/BehaviorTree/Task/CBTTask_BeginInvestigate.h"
 #include "ProjectGlobal.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/BlackBoard/CAIKey.h"
 
-UCBTTask_StartInvestigate::UCBTTask_StartInvestigate()
+UCBTTask_BeginInvestigate::UCBTTask_BeginInvestigate()
 {
-	NodeName = TEXT("Start Investigate");
+	NodeName = TEXT("Begin Investigate");
 }
 
-EBTNodeResult::Type UCBTTask_StartInvestigate::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UCBTTask_BeginInvestigate::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
@@ -20,7 +20,9 @@ EBTNodeResult::Type UCBTTask_StartInvestigate::ExecuteTask(UBehaviorTreeComponen
 
 	const FVector lastKnownLocation = blackboardComp->GetValueAsVector(CAIKey::Perception::LastKnownLocation);
 
+	blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate, true);
 	blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating, true);
+
 	blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation, lastKnownLocation);
 	blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, 0);
 
