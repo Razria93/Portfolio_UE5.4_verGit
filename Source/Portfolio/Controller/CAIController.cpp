@@ -154,22 +154,22 @@ bool ACAIController::InitializeBlackBoardValue()
 
 		if (ACEnemy* enemy = Cast<ACEnemy>(ownerPawn))
 		{
-			// Patrol
+			// --- Patrol ---
 			bool bUsePatrol = enemy->GetbUsePatrol();
 			ACPatrolPath* patrolPath = enemy->GetPatrolPath();
 			EPatrolMode patrolMode = enemy->GetPatrolMode();
-			 
+
 			// Set
 			blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol, bUsePatrol);
 			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPath, patrolPath ? patrolPath : nullptr);
 			blackboardComp->SetValueAsEnum(CAIKey::Patrol::PatrolMode, static_cast<uint8>(patrolMode));
-			
+
 			// Init
 			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
 			blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, ownerPawn->GetActorLocation());
 			blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, -1);
 
-			// Investigate
+			// --- Investigate ---
 			bool bUseInvestigate = enemy->GetbUseInvestigate();
 			float investigateDuration = enemy->GetInvestigateDuration();
 			int  investigateMaxIndex = enemy->GetInvestigateMaxIndex();
@@ -254,7 +254,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bUsePatrolKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bUsePatrol);
 	const bool bPatrolPathKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolPath);
 	const bool bPatrolModeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolMode);
-	
+
 	const bool bPatrolReverseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bPatrolReverse);
 	const bool bPatrolLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolLocation);
 	const bool bPatrolIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolIndex);
@@ -428,7 +428,7 @@ EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetData& OutTargetD
 
 	int bestPriority = INT_MAX;
 	FTargetData topData;
-	
+
 	for (TPair<AActor*, FTargetData>& pair : TargetDataMap)
 	{
 		AActor* actorKey = pair.Key;
