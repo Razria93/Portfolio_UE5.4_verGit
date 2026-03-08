@@ -87,6 +87,9 @@ public:
     float DistanceToTarget = 0.f;
 
     UPROPERTY(Transient)
+    bool bCanChase = false;
+
+    UPROPERTY(Transient)
     bool bInRange = false;
 
     UPROPERTY(Transient)

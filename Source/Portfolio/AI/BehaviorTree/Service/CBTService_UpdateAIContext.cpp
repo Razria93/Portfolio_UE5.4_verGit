@@ -105,12 +105,31 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APaw
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
 
+	float chaseoffsetDistance = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseOffsetDintance);
+	float chaseEnterBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer);
+	float chaseExitBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseExitBuffer);
+
+	bool bCanChase = InBlackboardComp->GetValueAsBool(CAIKey::Chase::bCanChase);
+
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
 
 	float dist_target = FVector::Dist(ownerLocation, targetLocation);
 
+	float chaseEnterDist = chaseoffsetDistance + chaseEnterBuffer;
+	float chaseExitDist = FMath::Max(0.f, chaseoffsetDistance - chaseExitBuffer);
+
+	if (!bCanChase)
+	{
+		if (dist_target > chaseEnterDist) bCanChase = true;
+	}
+	else
+	{
+		if (dist_target <= chaseExitDist) bCanChase = false;
+	}
+
 	InOutAIContext.DistanceToTarget = dist_target;
+	InOutAIContext.bCanChase = bCanChase;
 	InOutAIContext.bInRange = dist_target <= AttackRange;
 
 	return EContextBuildResult::Success;
@@ -149,6 +168,7 @@ void UCBTService_UpdateAIContext::UpdateCombatMetricContext(class UBlackboardCom
 	if (!IsValid(InAIContext.TargetActor)) return;
 
 	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget, InAIContext.DistanceToTarget);
+	InBlackboardComp->SetValueAsBool(CAIKey::Chase::bCanChase, InAIContext.bCanChase);
 	InBlackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, InAIContext.bInRange);
 }
 
@@ -168,6 +188,7 @@ void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* I
 void UCBTService_UpdateAIContext::ClearCombatMetricContext(UBlackboardComponent* InBlackboardComp)
 {
 	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
+	InBlackboardComp->ClearValue(CAIKey::Chase::bCanChase);
 	InBlackboardComp->ClearValue(CAIKey::Combat::bInRange);
 }
 

@@ -49,7 +49,7 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS);
 	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating);
 
-	const bool bInRange = InBlackboard->GetValueAsBool(CAIKey::Combat::bInRange);
+	const bool bCanChase = InBlackboard->GetValueAsBool(CAIKey::Chase::bCanChase);
 	const bool bCanAttack = InBlackboard->GetValueAsBool(CAIKey::Combat::bCanAttack);
 
 	// -----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	}
 
 	// 3-3. Valid Target and LOS But Out of Range
-	if (!bInRange)
+	if (bCanChase)
 	{
 		return EAIStateType::Chase;
 	}
