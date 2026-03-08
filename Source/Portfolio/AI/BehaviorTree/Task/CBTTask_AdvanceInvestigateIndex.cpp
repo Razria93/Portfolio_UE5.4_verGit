@@ -21,12 +21,11 @@ EBTNodeResult::Type UCBTTask_AdvanceInvestigateIndex::ExecuteTask(UBehaviorTreeC
 
 	if (nextIndex > maxIndex)
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating, false);
+		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate, false);
 		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, currentIndex);
 	}
 	else
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating, true);
 		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, nextIndex);
 	}
 

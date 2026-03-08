@@ -46,6 +46,7 @@ namespace CAIKey
 		static const FName InvestigateRadius = "InvestigateRadius";			// Float
 		static const FName InvestigateMaxIndex = "InvestigateMaxIndex";		// Int
 
+		static const FName bCanInvestigate = "bCanInvestigate";				// Bool
 		static const FName bIsInvestigating = "bIsInvestigating";			// Bool
 		static const FName InvestigateLocation = "InvestigateLocation";		// Vector
 		static const FName InvestigateIndex = "InvestigateIndex";			// Int
