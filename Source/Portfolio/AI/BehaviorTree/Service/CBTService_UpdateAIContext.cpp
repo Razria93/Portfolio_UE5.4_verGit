@@ -163,8 +163,6 @@ void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* I
 	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
 	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetPriority);
 	InBlackboardComp->ClearValue(CAIKey::Perception::bHasLOS);
-	InBlackboardComp->ClearValue(CAIKey::Perception::LastSeenTime);
-	// InBlackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation);
 }
 
 void UCBTService_UpdateAIContext::ClearCombatMetricContext(UBlackboardComponent* InBlackboardComp)
