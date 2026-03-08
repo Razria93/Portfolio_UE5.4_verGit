@@ -172,13 +172,11 @@ bool ACAIController::InitializeBlackBoardValue()
 			// Investigate
 			bool bUseInvestigate = enemy->GetbUseInvestigate();
 			float investigateDuration = enemy->GetInvestigateDuration();
-			float investigateRadius = enemy->GetInvestigateRadius();
 			int  investigateMaxIndex = enemy->GetInvestigateMaxIndex();
 
 			// Set
 			blackboardComp->SetValueAsBool(CAIKey::Investigate::bUseInvestigate, bUseInvestigate);
 			blackboardComp->SetValueAsFloat(CAIKey::Investigate::InvestigateDuration, investigateDuration);
-			blackboardComp->SetValueAsFloat(CAIKey::Investigate::InvestigateRadius, investigateRadius);
 			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex, investigateMaxIndex);
 
 			// Init
@@ -264,7 +262,6 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	// Investigate
 	const bool bUseInvestigateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::bUseInvestigate);
 	const bool bInvestigateDurationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateDuration);
-	const bool bInvestigateRadiusKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateRadius);
 	const bool bInvestigateMaxIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateMaxIndex);
 
 	const bool bCanInvestigateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::bCanInvestigate);
@@ -309,7 +306,6 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	bAllValid &= bUseInvestigateKey;
 	bAllValid &= bInvestigateDurationKey;
-	bAllValid &= bInvestigateRadiusKey;
 	bAllValid &= bInvestigateMaxIndexKey;
 
 	bAllValid &= bCanInvestigateKey;

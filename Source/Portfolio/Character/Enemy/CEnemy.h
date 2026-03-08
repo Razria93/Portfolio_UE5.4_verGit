@@ -32,9 +32,6 @@ private:
 	float InvestigateDuration;
 
 	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
-	float InvestigateRadius;
-
-	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
 	int32 InvestigateMaxIndex;
 
 private:
@@ -68,7 +65,6 @@ public:
 public:
 	FORCEINLINE bool GetbUseInvestigate() const { return bUseInvestigate; }
 	FORCEINLINE float GetInvestigateDuration() const { return InvestigateDuration; }
-	FORCEINLINE float GetInvestigateRadius() const { return InvestigateRadius; }
 	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
 
 public:
