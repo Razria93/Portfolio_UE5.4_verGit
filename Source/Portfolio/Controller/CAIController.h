@@ -15,12 +15,6 @@ protected:
 	UPROPERTY(EditAnywhere)
 	float TargetMemoryTimeout = 3.0f;
 
-	UPROPERTY(EditAnywhere)
-	float AttackRangeEnter = 250.0f;
-
-	UPROPERTY(EditAnywhere)
-	float AttackRangeExit = 300.0f;
-
 protected:
 	UPROPERTY(Transient)
 	TMap<AActor*, FTargetData> TargetDataMap;
