@@ -12,6 +12,6 @@ class PORTFOLIO_API UCBTTask_BeginInvestigate : public UBTTaskNode
 public:
 	UCBTTask_BeginInvestigate();
 
-public:
+protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };
