@@ -9,4 +9,9 @@ class PORTFOLIO_API UCBTTask_ClearFocus : public UBTTaskNode
 {
 	GENERATED_BODY()
 	
+public:
+	UCBTTask_ClearFocus();
+
+protected:
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };
