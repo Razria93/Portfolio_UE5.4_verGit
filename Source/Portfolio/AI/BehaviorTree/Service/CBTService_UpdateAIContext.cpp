@@ -105,7 +105,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APaw
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
 
-	float chaseoffsetDistance = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseOffsetDintance);
+	float chaseOffsetRange = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseOffsetRange);
 	float chaseEnterBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer);
 	float chaseExitBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseExitBuffer);
 
@@ -116,8 +116,8 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APaw
 
 	float dist_target = FVector::Dist(ownerLocation, targetLocation);
 
-	float chaseEnterDist = chaseoffsetDistance + chaseEnterBuffer;
-	float chaseExitDist = FMath::Max(0.f, chaseoffsetDistance - chaseExitBuffer);
+	float chaseEnterDist = chaseOffsetRange + chaseEnterBuffer;
+	float chaseExitDist = FMath::Max(0.f, chaseOffsetRange - chaseExitBuffer);
 
 	if (!bCanChase)
 	{

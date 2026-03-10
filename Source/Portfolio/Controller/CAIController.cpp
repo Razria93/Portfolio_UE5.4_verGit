@@ -146,7 +146,7 @@ bool ACAIController::InitializeBlackBoardValue()
 	blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
 
 	// Lifecycle
-	blackboardComp->SetValueAsBool(CAIKey::Lifecycle::bIsDead, false);
+	blackboardComp->SetValueAsBool(CAIKey::Dead::bIsDead, false);
 
 	if (APawn* ownerPawn = GetPawn())
 	{
@@ -191,7 +191,7 @@ bool ACAIController::InitializeBlackBoardValue()
 			float chaseExitBuffer = enemy->GetChaseExitBuffer();
 
 			// Set
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetDintance, chaseoffsetDistance);
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetRange, chaseoffsetDistance);
 			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer, chaseEnterBuffer);
 			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer, chaseExitBuffer);
 
@@ -283,7 +283,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bInvestigateIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateIndex);
 
 	// Chase
-	const bool bChaseOffsetDintanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseOffsetDintance);
+	const bool bChaseOffsetDintanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseOffsetRange);
 	const bool bChaseEnterBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseEnterBuffer);
 	const bool bChaseExitBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseExitBuffer);
 
@@ -296,8 +296,8 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	// Reaction
 	const bool bHasIsHitReactingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bIsHitReacting);
 
-	// Lifecycle
-	const bool bHasIsDeadKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Lifecycle::bIsDead);
+	// Dead
+	const bool bHasIsDeadKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Dead::bIsDead);
 
 	bool bAllValid = true;
 

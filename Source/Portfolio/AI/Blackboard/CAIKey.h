@@ -22,6 +22,12 @@ namespace CAIKey
 		static const FName LastKnownLocation = "LastKnownLocation";			// Vector
 	}
 
+	namespace Metric
+	{
+		static const FName DistanceToTarget = "DistanceToTarget";			// Float
+		static const FName DistanceToHome = "DistanceToHome";				// Float
+	}
+
 	namespace Navigation
 	{
 		static const FName bReturnHome = "bReturnHome";						// Bool
@@ -53,17 +59,11 @@ namespace CAIKey
 
 	namespace Chase
 	{
-		static const FName ChaseOffsetDintance = "ChaseOffsetDintance";		// Float
+		static const FName ChaseOffsetRange = "ChaseOffsetRange";			// Float
 		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";			// Float
 		static const FName ChaseExitBuffer = "ChaseExitBuffer";				// Float
 
 		static const FName bCanChase = "bCanChase";							// Bool
-	}
-
-	namespace Metric
-	{
-		static const FName DistanceToTarget = "DistanceToTarget";			// Float
-		static const FName DistanceToHome = "DistanceToHome";				// Float
 	}
 
 	namespace Combat
@@ -77,7 +77,7 @@ namespace CAIKey
 		static const FName bIsHitReacting = "bIsHitReacting";				// Bool
 	}
 
-	namespace Lifecycle
+	namespace Dead
 	{
 		static const FName bIsDead = "bIsDead";								// Bool
 	}

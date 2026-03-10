@@ -36,13 +36,13 @@ private:
 
 private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
-	float ChaseOffsetDintance = 200.f;
+	float ChaseOffsetRange;
 
 	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
-	float ChaseEnterBuffer = 100.f;
+	float ChaseEnterBuffer;
 
 	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
-	float ChaseExitBuffer = 50.f;
+	float ChaseExitBuffer;
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -78,7 +78,7 @@ public:
 	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
 
 public:
-	FORCEINLINE float GetChaseOffsetDistance() const { return ChaseOffsetDintance; }
+	FORCEINLINE float GetChaseOffsetDistance() const { return ChaseOffsetRange; }
 	FORCEINLINE float GetChaseEnterBuffer() const { return ChaseEnterBuffer; }
 	FORCEINLINE float GetChaseExitBuffer() const { return ChaseExitBuffer; }
 
