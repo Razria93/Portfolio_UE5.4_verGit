@@ -301,21 +301,27 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	bool bAllValid = true;
 
+	// Targeting
 	bAllValid &= bTargetActorKey;
 	bAllValid &= bTargetPriorityKey;
 
+	// StateType
 	bAllValid &= bAIStateTypeKey;
 
+	// Perception
 	bAllValid &= bHasLOSKey;
 	bAllValid &= bLastSeenTimeKey;
 	bAllValid &= bLastKnownLocationKey;
 
+	// Metric
 	bAllValid &= bDistanceToTargetKey;
 	bAllValid &= bDistanceToHomeKey;
 
+	// Navigation
 	bAllValid &= bHomeLocationKey;
 	bAllValid &= bReturnHomeKey;
 
+	// Patrol
 	bAllValid &= bUsePatrolKey;
 	bAllValid &= bPatrolPathKey;
 	bAllValid &= bPatrolModeKey;
@@ -324,6 +330,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bPatrolLocationKey;
 	bAllValid &= bPatrolIndexKey;
 
+	// Investigate
 	bAllValid &= bUseInvestigateKey;
 	bAllValid &= bInvestigateDurationKey;
 	bAllValid &= bInvestigateMaxIndexKey;
@@ -333,17 +340,21 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bInvestigateLocationKey;
 	bAllValid &= bInvestigateIndexKey;
 
+	// Chase
 	bAllValid &= bChaseOffsetDintanceKey;
 	bAllValid &= bChaseEnterBufferKey;
 	bAllValid &= bChaseExitBufferKey;
 
 	bAllValid &= bCanChaseKey;
 
+	// Combat
 	bAllValid &= bInRangeKey;
 	bAllValid &= bCanAttackKey;
 
+	// Reaction
 	bAllValid &= bHasIsHitReactingKey;
 
+	// Dead
 	bAllValid &= bHasIsDeadKey;
 
 	if (!bAllValid)
