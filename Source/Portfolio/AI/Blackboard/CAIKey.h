@@ -63,7 +63,7 @@ namespace CAIKey
 		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";			// Float
 		static const FName ChaseExitBuffer = "ChaseExitBuffer";				// Float
 
-		static const FName bCanChase = "bCanChase";							// Bool
+		static const FName bIsChaseEnabled = "bIsChaseEnabled";							// Bool
 	}
 
 	namespace Alert

@@ -109,7 +109,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APaw
 	float chaseEnterBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer);
 	float chaseExitBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseExitBuffer);
 
-	bool bCanChase = InBlackboardComp->GetValueAsBool(CAIKey::Chase::bCanChase);
+	bool bIsChaseEnabled = InBlackboardComp->GetValueAsBool(CAIKey::Chase::bIsChaseEnabled);
 
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
@@ -119,17 +119,17 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APaw
 	float chaseEnterDist = chaseOffsetRange + chaseEnterBuffer;
 	float chaseExitDist = FMath::Max(0.f, chaseOffsetRange - chaseExitBuffer);
 
-	if (!bCanChase)
+	if (!bIsChaseEnabled)
 	{
-		if (dist_target > chaseEnterDist) bCanChase = true;
+		if (dist_target > chaseEnterDist) bIsChaseEnabled = true;
 	}
 	else
 	{
-		if (dist_target <= chaseExitDist) bCanChase = false;
+		if (dist_target <= chaseExitDist) bIsChaseEnabled = false;
 	}
 
 	InOutAIContext.DistanceToTarget = dist_target;
-	InOutAIContext.bCanChase = bCanChase;
+	InOutAIContext.bIsChaseEnabled = bIsChaseEnabled;
 	InOutAIContext.bInRange = dist_target <= AttackRange;
 
 	return EContextBuildResult::Success;
@@ -168,7 +168,7 @@ void UCBTService_UpdateAIContext::UpdateCombatMetricContext(class UBlackboardCom
 	if (!IsValid(InAIContext.TargetActor)) return;
 
 	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget, InAIContext.DistanceToTarget);
-	InBlackboardComp->SetValueAsBool(CAIKey::Chase::bCanChase, InAIContext.bCanChase);
+	InBlackboardComp->SetValueAsBool(CAIKey::Chase::bIsChaseEnabled, InAIContext.bIsChaseEnabled);
 	InBlackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, InAIContext.bInRange);
 }
 
@@ -188,7 +188,7 @@ void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* I
 void UCBTService_UpdateAIContext::ClearCombatMetricContext(UBlackboardComponent* InBlackboardComp)
 {
 	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
-	InBlackboardComp->ClearValue(CAIKey::Chase::bCanChase);
+	InBlackboardComp->ClearValue(CAIKey::Chase::bIsChaseEnabled);
 	InBlackboardComp->ClearValue(CAIKey::Combat::bInRange);
 }
 

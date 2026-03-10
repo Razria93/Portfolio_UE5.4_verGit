@@ -196,7 +196,7 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer, chaseExitBuffer);
 
 			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Chase::bCanChase, false);
+			blackboardComp->SetValueAsBool(CAIKey::Chase::bIsChaseEnabled, false);
 
 			// --- Alert ---
 			bool bUseAlertStep = enemy->GetbUseAlertStep();
@@ -300,7 +300,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bChaseEnterBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseEnterBuffer);
 	const bool bChaseExitBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseExitBuffer);
 
-	const bool bCanChaseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::bCanChase);
+	const bool bIsChaseEnabledKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::bIsChaseEnabled);
 
 	// Alert
 	const bool bUseAlertStepKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::bUseAlertStep);
@@ -365,7 +365,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bChaseEnterBufferKey;
 	bAllValid &= bChaseExitBufferKey;
 
-	bAllValid &= bCanChaseKey;
+	bAllValid &= bIsChaseEnabledKey;
 
 	// Alert
 	bAllValid &= bUseAlertStepKey;
