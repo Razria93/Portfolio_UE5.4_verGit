@@ -66,6 +66,15 @@ namespace CAIKey
 		static const FName bCanChase = "bCanChase";							// Bool
 	}
 
+	namespace Alert
+	{
+		static const FName bUseAlertStep = "bUseAlertStep";					// Bool
+		static const FName StepForwardDistance = "StepForwardDistance";		// Float
+		static const FName StepSideDistance = "StepSideDistance";			// Float
+
+		static const FName AlertStepLocation = "AlertStepLocation";			// Vector
+	}
+
 	namespace Combat
 	{
 		static const FName bInRange = "bInRange";							// Bool

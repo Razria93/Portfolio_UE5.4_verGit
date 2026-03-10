@@ -45,6 +45,16 @@ private:
 	float ChaseExitBuffer;
 
 private:
+	UPROPERTY(EditAnywhere, Category = "AI|Alert")
+	bool bUseAlertStep;
+
+	UPROPERTY(EditAnywhere, Category = "AI|Alert")
+	float StepSideDistance;
+
+	UPROPERTY(EditAnywhere, Category = "AI|Alert")
+	float StepForwardDistance;
+
+private:
 	UPROPERTY(VisibleAnywhere)
 	class UCMovementComponent* MovementComponent;
 
@@ -81,6 +91,11 @@ public:
 	FORCEINLINE float GetChaseOffsetDistance() const { return ChaseOffsetRange; }
 	FORCEINLINE float GetChaseEnterBuffer() const { return ChaseEnterBuffer; }
 	FORCEINLINE float GetChaseExitBuffer() const { return ChaseExitBuffer; }
+
+public:
+	FORCEINLINE bool GetbUseAlertStep() const { return bUseAlertStep; }
+	FORCEINLINE float GetStepSideDistance() const { return StepSideDistance; }
+	FORCEINLINE float GetStepForwardDistance() const { return StepForwardDistance; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;

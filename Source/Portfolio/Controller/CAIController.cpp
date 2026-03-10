@@ -197,6 +197,19 @@ bool ACAIController::InitializeBlackBoardValue()
 
 			// Init
 			blackboardComp->SetValueAsBool(CAIKey::Chase::bCanChase, false);
+
+			// --- Alert ---
+			bool bUseAlertStep = enemy->GetbUseAlertStep();
+			float stepForwardDistance = enemy->GetStepForwardDistance();
+			float stepSideDistance = enemy->GetStepSideDistance();
+
+			// Set
+			blackboardComp->SetValueAsBool(CAIKey::Alert::bUseAlertStep, bUseAlertStep);
+			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepForwardDistance, stepForwardDistance);
+			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepSideDistance, stepSideDistance);
+
+			// Init
+			blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation, ownerPawn->GetActorLocation());
 		}
 	}
 
@@ -289,6 +302,13 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	const bool bCanChaseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::bCanChase);
 
+	// Alert
+	const bool bUseAlertStepKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::bUseAlertStep);
+	const bool bStepForwardDistanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::StepForwardDistance);
+	const bool bStepSideDistanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::StepSideDistance);
+
+	const bool bAlertStepLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::AlertStepLocation);
+
 	// Combat
 	const bool bInRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bInRange);
 	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bCanAttack);
@@ -346,6 +366,13 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bChaseExitBufferKey;
 
 	bAllValid &= bCanChaseKey;
+
+	// Alert
+	bAllValid &= bUseAlertStepKey;
+	bAllValid &= bStepForwardDistanceKey;
+	bAllValid &= bStepSideDistanceKey;
+
+	bAllValid &= bAlertStepLocationKey;
 
 	// Combat
 	bAllValid &= bInRangeKey;
