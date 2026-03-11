@@ -195,9 +195,6 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer, chaseEnterBuffer);
 			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer, chaseExitBuffer);
 
-			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Chase::bIsChaseEnabled, false);
-
 			// --- Alert ---
 			bool bUseAlertStep = enemy->GetbUseAlertStep();
 			float stepForwardDistance = enemy->GetStepForwardDistance();
@@ -209,6 +206,7 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepSideDistance, stepSideDistance);
 
 			// Init
+			blackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange, false);
 			blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation, ownerPawn->GetActorLocation());
 		}
 	}
@@ -300,13 +298,12 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bChaseEnterBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseEnterBuffer);
 	const bool bChaseExitBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseExitBuffer);
 
-	const bool bIsChaseEnabledKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::bIsChaseEnabled);
-
 	// Alert
 	const bool bUseAlertStepKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::bUseAlertStep);
 	const bool bStepForwardDistanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::StepForwardDistance);
 	const bool bStepSideDistanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::StepSideDistance);
 
+	const bool bInAlertRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::bInAlertRange);
 	const bool bAlertStepLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::AlertStepLocation);
 
 	// Combat
@@ -365,7 +362,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bChaseEnterBufferKey;
 	bAllValid &= bChaseExitBufferKey;
 
-	bAllValid &= bIsChaseEnabledKey;
+	bAllValid &= bInAlertRangeKey;
 
 	// Alert
 	bAllValid &= bUseAlertStepKey;

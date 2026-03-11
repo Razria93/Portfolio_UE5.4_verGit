@@ -62,8 +62,6 @@ namespace CAIKey
 		static const FName ChaseOffsetRange = "ChaseOffsetRange";			// Float
 		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";			// Float
 		static const FName ChaseExitBuffer = "ChaseExitBuffer";				// Float
-
-		static const FName bIsChaseEnabled = "bIsChaseEnabled";							// Bool
 	}
 
 	namespace Alert
@@ -72,6 +70,7 @@ namespace CAIKey
 		static const FName StepForwardDistance = "StepForwardDistance";		// Float
 		static const FName StepSideDistance = "StepSideDistance";			// Float
 
+		static const FName bInAlertRange = "bInAlertRange";					// Bool
 		static const FName AlertStepLocation = "AlertStepLocation";			// Vector
 	}
 
