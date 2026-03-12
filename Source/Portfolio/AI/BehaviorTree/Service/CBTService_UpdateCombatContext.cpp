@@ -24,7 +24,7 @@ void UCBTService_UpdateCombatContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	if (!IsValid(blackBoardComp)) return;
 
 	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
-	if (!!IsValid(ownerPawn))
+	if (!IsValid(ownerPawn))
 	{
 		ClearCombatContext(blackBoardComp);
 		return;
@@ -97,6 +97,8 @@ EContextBuildResult UCBTService_UpdateCombatContext::ComputeCombatContext(APawn*
 	InOutCombatContext.DistanceToTarget = dist_target;
 	InOutCombatContext.bInAttackRange = bInAttackRange;
 	InOutCombatContext.bCanAttack = currentTime >= InOutCombatContext.AttackableTime;
+
+	// PrintCombatContext(InOwnerPawn, InOutCombatContext, currentTime);
 
 	return EContextBuildResult::Success;
 }
