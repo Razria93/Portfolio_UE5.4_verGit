@@ -15,9 +15,6 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Config")
-	float AttackRange = 200.f;
-
-	UPROPERTY(EditAnywhere, Category = "Config")
 	float MovableRange = 1000.f;
 
 protected:

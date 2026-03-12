@@ -9,6 +9,7 @@
 #include "AI/Patrol/CPatrolPath.h"
 
 #include "AI/BlackBoard/CAIKey.h"
+#include "Type/CAIStructure.h"
 
 UCBTService_UpdatePatrolContext::UCBTService_UpdatePatrolContext()
 {
@@ -25,7 +26,11 @@ void UCBTService_UpdatePatrolContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	if (!IsValid(blackBoardComp)) return;
 
 	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
-	if (!IsValid(ownerPawn)) return;
+	if (!IsValid(ownerPawn))
+	{
+		ClearPatrolContext(blackBoardComp);
+		return;
+	}
 
 	FPatrolContext patrolContext; // OutParameter
 	const EContextBuildResult buildResult = BuildPatrolContext(ownerPawn, blackBoardComp, patrolContext);

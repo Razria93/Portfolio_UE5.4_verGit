@@ -29,7 +29,7 @@ void UCBTService_UpdateAIState::TickNode(UBehaviorTreeComponent& OwnerComp, uint
 	ChangeAIStateType(blackboardComp, nextAIStateType);
 }
 
-EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardComponent* InBlackboard, float InCurrentTime) const
+EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardComponent* InBlackboard, float InCurrentTime)
 {
 	// -----------------------------------------------------------------------------
 	// 1. Absolute States
@@ -71,7 +71,7 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	return EAIStateType::Combat;
 }
 
-bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType) const
+bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType)
 {
 	const uint8 currentAIStateType = static_cast<uint8>(InBlackboardComp->GetValueAsEnum(CAIKey::State::AIStateType));
 	const uint8 nextAIStateType = static_cast<uint8>(InNextAIStateType);

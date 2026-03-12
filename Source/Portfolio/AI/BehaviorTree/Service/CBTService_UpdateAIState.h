@@ -17,6 +17,6 @@ protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 private:
-	EAIStateType DecideNextAIStateType(UBlackboardComponent* InBlackboardComp, float InCurrentTime) const;
-	bool ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType) const;
+	EAIStateType DecideNextAIStateType(UBlackboardComponent* InBlackboardComp, float InCurrentTime);
+	bool ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType);
 };

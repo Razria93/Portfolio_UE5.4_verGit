@@ -14,7 +14,7 @@ UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 	RandomDeviation = 0.0f;
 }
 
-void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8*, float)
+void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	UWorld* world = OwnerComp.GetWorld();
 	if (!IsValid(world)) return;
