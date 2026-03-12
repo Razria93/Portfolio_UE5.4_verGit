@@ -84,8 +84,8 @@ namespace CAIKey
 		static const FName bShouldEngage = "bShouldEngage";					// Bool
 		static const FName bInAttackRange = "bInAttackRange";				// Bool
 		static const FName bCanAttack = "bCanAttack";						// Bool
-		static const FName NextAttackTime = "NextAttackTime";				// Float
-		static const FName NextAttackIndex = "NextAttackIndex";				// Int
+		static const FName AttackableTime = "AttackableTime";				// Float
+		static const FName AttackIndex = "AttackIndex";						// Int
 	}
 
 	namespace Reaction
