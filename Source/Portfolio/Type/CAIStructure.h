@@ -13,6 +13,7 @@ enum class EPatrolMode : uint8
     Reverse
 };
 
+UENUM(BlueprintType)
 enum class EPerceptionBuildResult : uint8
 {
     Success,    // Target valid
@@ -20,6 +21,7 @@ enum class EPerceptionBuildResult : uint8
     Error       // Error
 };
 
+UENUM(BlueprintType)
 enum class EContextBuildResult : uint8
 {
     Success,
@@ -27,7 +29,7 @@ enum class EContextBuildResult : uint8
     Error
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FTargetData
 {
     GENERATED_BODY()

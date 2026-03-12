@@ -33,7 +33,7 @@ enum class EActionType : uint8
 	Max,
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class EReactionType : uint8
 {
 	None = 0,
@@ -447,7 +447,7 @@ public:
 	FTakeDamageContext() = default;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FTakeDamageResult
 {
 	GENERATED_BODY()
