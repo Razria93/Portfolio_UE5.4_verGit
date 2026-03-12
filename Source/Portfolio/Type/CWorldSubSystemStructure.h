@@ -4,7 +4,7 @@
 #include "CWorldSubSystemStructure.generated.h"
 
 UENUM(BlueprintType)
-enum class EEngageRole : uint8
+enum class ECombatRole : uint8
 {
 	None,
 	Engage,
@@ -12,7 +12,7 @@ enum class EEngageRole : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FEngageRequestContext
+struct FCombatRequestContext
 {
 	GENERATED_BODY()
 
@@ -27,11 +27,33 @@ public:
 	int TargetPriority = INT_MAX;
 
 	UPROPERTY(Transient)
-	float LastSeenTime = 0.f;
-
-	UPROPERTY(Transient)
 	float DistanceToTarget = 0.f;
 
+	UPROPERTY(Transient)
+	bool bWasEngaged = false;
+
 public:
-	FEngageRequestContext() = default;
+	FCombatRequestContext() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FCombatAssignmentContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	AActor* TargetActor = nullptr;
+
+	UPROPERTY(Transient)
+	ECombatRole CombatRole = ECombatRole::None;
+
+public:
+	FCombatAssignmentContext() = default;
+
+public:
+	bool IsValidAssignment() const
+	{
+		return IsValid(TargetActor) && CombatRole != ECombatRole::None;
+	}
 };
