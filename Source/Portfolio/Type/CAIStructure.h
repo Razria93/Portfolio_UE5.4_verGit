@@ -36,7 +36,7 @@ struct FTargetData
 
 public:
     UPROPERTY(Transient)
-    AActor* TargetActor = nullptr;
+    class AActor* TargetActor = nullptr;
 
     UPROPERTY(Transient)
     int TargetPriority = INT_MAX;
@@ -172,4 +172,50 @@ public:
 
 	UPROPERTY(Transient)
 	bool bNeedNextPoint = false;
+};
+
+USTRUCT(BlueprintType)
+struct FCombatContext
+{
+    GENERATED_BODY()
+
+public:
+    // Combat Context
+    UPROPERTY(Transient)
+    class AActor* TargetActor = nullptr;
+
+    UPROPERTY(Transient)
+    float DistanceToTarget = 0.f;
+
+    UPROPERTY(Transient)
+    float CombatOffsetRange = 0.f;
+
+    UPROPERTY(Transient)
+    float CombatEnterBuffer = 0.f;
+
+    UPROPERTY(Transient)
+    float CombatExitBuffer = 0.f;
+
+    UPROPERTY(Transient)
+    float AttackableTime = -1.f;
+
+    UPROPERTY(Transient)
+    bool bPrevInAttackRange = false;
+
+    UPROPERTY(Transient)
+    bool bInAttackRange = false;
+
+    UPROPERTY(Transient)
+    bool bCanAttack = false;
+
+public:
+    FCombatContext() = default;
+    FCombatContext(const FCombatContext&) = default;
+    FCombatContext& operator=(const FCombatContext&) = default;
+
+public:
+    bool IsValidContext() const
+    {
+        return IsValid(TargetActor);
+    }
 };
