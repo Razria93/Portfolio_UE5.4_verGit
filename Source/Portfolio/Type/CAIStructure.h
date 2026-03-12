@@ -84,21 +84,23 @@ public:
     UPROPERTY(Transient)
     FVector LastKnownLocation = FVector::ZeroVector;
 
-    // Metric Context
+    // Home Metric Context
+    UPROPERTY(Transient)
+    float DistanceToHome = 0.f;
+
+    UPROPERTY(Transient)
+    bool bReturnHome = false;
+
+    // Combat Metric Context
     UPROPERTY(Transient)
     float DistanceToTarget = 0.f;
 
     UPROPERTY(Transient)
     bool bInAlertRange = false;
 
+    // Combat Assignment Context
     UPROPERTY(Transient)
-    bool bInRange = false;
-
-    UPROPERTY(Transient)
-    float DistanceToHome = 0.f;
-
-    UPROPERTY(Transient)
-    bool bReturnHome = false;
+    bool bShouldEngage = false;
 
 public:
     FAIContext() = default;

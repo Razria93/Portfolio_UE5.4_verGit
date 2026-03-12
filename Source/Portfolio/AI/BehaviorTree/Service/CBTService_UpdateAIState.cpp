@@ -50,34 +50,22 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating);
 
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange);
-	const bool bCanAttack = InBlackboard->GetValueAsBool(CAIKey::Combat::bCanAttack);
+	const bool bShouldEngage = InBlackboard->GetValueAsBool(CAIKey::Combat::bShouldEngage);
 
 	// -----------------------------------------------------------------------------
 	// 3) Decide Next AIStateType
 	// -----------------------------------------------------------------------------
 	// 3-1. Invalid Target -> Idle
-	if (!bHasTarget && !bIsInvestigating)
-	{
-		return EAIStateType::Idle;
-	}
+	if (!bHasTarget && !bIsInvestigating) return EAIStateType::Idle;
 
 	// 3-2. Valid target But Invalid LOS
-	if (!bHasLOS)
-	{
-		return EAIStateType::Investigate;
-	}
+	if (!bHasLOS) return EAIStateType::Investigate;
 
 	// 3-3. Valid Target and LOS But Out of Range
-	if (bInAlertRange)
-	{
-		return EAIStateType::Chase;
-	}
+	if (!bInAlertRange) return EAIStateType::Chase;
 
 	// 3-4. in Range But attack disable
-	if (!bCanAttack)
-	{
-		return EAIStateType::Alert;
-	}
+	if (!bShouldEngage) return EAIStateType::Alert;
 
 	// 3-5. in Range and Attackable
 	return EAIStateType::Combat;
