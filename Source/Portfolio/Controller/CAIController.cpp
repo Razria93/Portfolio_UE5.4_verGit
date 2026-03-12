@@ -186,12 +186,12 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, -1);
 
 			// --- Chase ---
-			float chaseoffsetDistance = enemy->GetChaseOffsetDistance();
+			float chaseoffsetRange = enemy->GetChaseOffsetRange();
 			float chaseEnterBuffer = enemy->GetChaseEnterBuffer();
 			float chaseExitBuffer = enemy->GetChaseExitBuffer();
 
 			// Set
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetRange, chaseoffsetDistance);
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetRange, chaseoffsetRange);
 			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer, chaseEnterBuffer);
 			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer, chaseExitBuffer);
 

@@ -88,7 +88,7 @@ public:
 	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
 
 public:
-	FORCEINLINE float GetChaseOffsetDistance() const { return ChaseOffsetRange; }
+	FORCEINLINE float GetChaseOffsetRange() const { return ChaseOffsetRange; }
 	FORCEINLINE float GetChaseEnterBuffer() const { return ChaseEnterBuffer; }
 	FORCEINLINE float GetChaseExitBuffer() const { return ChaseExitBuffer; }
 
