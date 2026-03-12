@@ -116,3 +116,32 @@ void UCBTService_UpdateCombatContext::ClearCombatContext(UBlackboardComponent* I
 	InBlackboardComp->ClearValue(CAIKey::Combat::bInAttackRange);
 	InBlackboardComp->ClearValue(CAIKey::Combat::bCanAttack);
 }
+
+void UCBTService_UpdateCombatContext::PrintCombatContext(const APawn* InOwnerPawn, const FCombatContext& InCombatContext, const float InCurrentTime)
+{
+	if (!IsValid(InOwnerPawn)) return;
+
+	const FVector ownerLocation = InOwnerPawn->GetActorLocation();
+	const FVector targetLocation = IsValid(InCombatContext.TargetActor) ? InCombatContext.TargetActor->GetActorLocation() : FVector::ZeroVector;
+
+	const float combatOuterRange = InCombatContext.CombatOffsetRange + InCombatContext.CombatEnterBuffer;
+	const float combatInnerRange = FMath::Max(0.f, InCombatContext.CombatOffsetRange - InCombatContext.CombatExitBuffer);
+
+	FLog::Log(TEXT("======== CombatContext ========"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerPawn"), *GetNameSafe(InOwnerPawn)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InCombatContext.TargetActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerLocation"), *ownerLocation.ToCompactString()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetLocation"), *targetLocation.ToCompactString()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("DistanceToTarget"), InCombatContext.DistanceToTarget));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CombatOffsetRange"), InCombatContext.CombatOffsetRange));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CombatEnterBuffer"), InCombatContext.CombatEnterBuffer));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CombatExitBuffer"), InCombatContext.CombatExitBuffer));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CombatOuterRange"), combatOuterRange));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CombatInnerRange"), combatInnerRange));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PrevInAttackRange"), InCombatContext.bPrevInAttackRange ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bInAttackRange"), InCombatContext.bInAttackRange ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CurrentTime"), InCurrentTime));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("AttackableTime"), InCombatContext.AttackableTime));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCanAttack"), InCombatContext.bCanAttack ? TEXT("true") : TEXT("false")));
+	FLog::Log(TEXT("================================"));
+}

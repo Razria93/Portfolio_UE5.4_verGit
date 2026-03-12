@@ -27,4 +27,7 @@ private:
 
 private:
 	void ClearCombatContext(UBlackboardComponent* InBlackboardComp);
+
+private:
+	void PrintCombatContext(const APawn* InOwnerPawn, const FCombatContext& InCombatContext, const float InCurrentTime);
 };
