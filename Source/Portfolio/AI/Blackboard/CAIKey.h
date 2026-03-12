@@ -76,8 +76,16 @@ namespace CAIKey
 
 	namespace Combat
 	{
-		static const FName bInRange = "bInRange";							// Bool
+		static const FName CombatOffsetRange = "CombatOffsetRange";			// Float
+		static const FName CombatEnterBuffer = "CombatEnterBuffer";			// Float
+		static const FName CombatExitBuffer = "CombatExitBuffer";			// Float
+		static const FName AttackCooldown = "AttackCooldown";				// Float
+
+		static const FName bShouldEngage = "bShouldEngage";					// Bool
+		static const FName bInAttackRange = "bInAttackRange";				// Bool
 		static const FName bCanAttack = "bCanAttack";						// Bool
+		static const FName NextAttackTime = "NextAttackTime";				// Float
+		static const FName NextAttackIndex = "NextAttackIndex";				// Int
 	}
 
 	namespace Reaction

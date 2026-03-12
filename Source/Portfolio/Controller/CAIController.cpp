@@ -138,10 +138,6 @@ bool ACAIController::InitializeBlackBoardValue()
 	// Navigation
 	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, false);
 
-	// Combat
-	blackboardComp->SetValueAsBool(CAIKey::Combat::bInRange, false);
-	blackboardComp->SetValueAsBool(CAIKey::Combat::bCanAttack, false);
-
 	// Reaction
 	blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
 
@@ -208,6 +204,25 @@ bool ACAIController::InitializeBlackBoardValue()
 			// Init
 			blackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange, false);
 			blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation, ownerPawn->GetActorLocation());
+
+			// --- Combat ---
+			float combatOffsetRange = enemy->GetCombatOffsetRange();
+			float combatEnterBuffer = enemy->GetCombatEnterBuffer();
+			float combatExitBuffer = enemy->GetCombatExitBuffer();
+			float attackCooldown = enemy->GetAttackCooldown();
+
+			// Set
+			blackboardComp->SetValueAsFloat(CAIKey::Combat::CombatOffsetRange, combatOffsetRange);
+			blackboardComp->SetValueAsFloat(CAIKey::Combat::CombatEnterBuffer, combatEnterBuffer);
+			blackboardComp->SetValueAsFloat(CAIKey::Combat::CombatExitBuffer, combatExitBuffer);
+			blackboardComp->SetValueAsFloat(CAIKey::Combat::AttackCooldown, attackCooldown);
+
+			// Init
+			blackboardComp->SetValueAsBool(CAIKey::Combat::bShouldEngage, false);
+			blackboardComp->SetValueAsBool(CAIKey::Combat::bInAttackRange, false);
+			blackboardComp->SetValueAsBool(CAIKey::Combat::bCanAttack, false);
+			blackboardComp->SetValueAsFloat(CAIKey::Combat::NextAttackTime, -1.f);
+			blackboardComp->SetValueAsInt(CAIKey::Combat::NextAttackIndex, -1);
 		}
 	}
 
@@ -307,8 +322,16 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bAlertStepLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::AlertStepLocation);
 
 	// Combat
-	const bool bInRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bInRange);
+	const bool bCombatOffsetRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::CombatOffsetRange);
+	const bool bCombatEnterBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::CombatEnterBuffer);
+	const bool bCombatExitBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::CombatExitBuffer);
+	const bool bAttackCooldownKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::AttackCooldown);
+
+	const bool bShouldEngageKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bShouldEngage);
+	const bool bInAttackRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bInAttackRange);
 	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bCanAttack);
+	const bool bNextAttackTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::NextAttackTime);
+	const bool bNextAttackIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::NextAttackIndex);
 
 	// Reaction
 	const bool bHasIsHitReactingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bIsHitReacting);
@@ -372,8 +395,16 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bAlertStepLocationKey;
 
 	// Combat
-	bAllValid &= bInRangeKey;
+	bAllValid &= bCombatOffsetRangeKey;
+	bAllValid &= bCombatEnterBufferKey;
+	bAllValid &= bCombatExitBufferKey;
+	bAllValid &= bAttackCooldownKey;
+
+	bAllValid &= bShouldEngageKey;
+	bAllValid &= bInAttackRangeKey;
 	bAllValid &= bCanAttackKey;
+	bAllValid &= bNextAttackTimeKey;
+	bAllValid &= bNextAttackIndexKey;
 
 	// Reaction
 	bAllValid &= bHasIsHitReactingKey;

@@ -55,6 +55,19 @@ private:
 	float StepForwardDistance;
 
 private:
+	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
+	float CombatOffsetRange;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
+	float CombatEnterBuffer;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
+	float CombatExitBuffer;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
+	float AttackCooldown;
+
+private:
 	UPROPERTY(VisibleAnywhere)
 	class UCMovementComponent* MovementComponent;
 
@@ -96,6 +109,12 @@ public:
 	FORCEINLINE bool GetbUseAlertStep() const { return bUseAlertStep; }
 	FORCEINLINE float GetStepSideDistance() const { return StepSideDistance; }
 	FORCEINLINE float GetStepForwardDistance() const { return StepForwardDistance; }
+
+public:
+	FORCEINLINE float GetCombatOffsetRange() const { return CombatOffsetRange; }
+	FORCEINLINE float GetCombatEnterBuffer() const { return CombatEnterBuffer; }
+	FORCEINLINE float GetCombatExitBuffer() const { return CombatExitBuffer; }
+	FORCEINLINE float GetAttackCooldown() const { return AttackCooldown; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
