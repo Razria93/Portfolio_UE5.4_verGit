@@ -219,6 +219,7 @@ bool ACAIController::InitializeBlackBoardValue()
 
 			// Init
 			blackboardComp->SetValueAsBool(CAIKey::Combat::bShouldEngage, false);
+			blackboardComp->SetValueAsBool(CAIKey::Combat::bCombatInitialized, false);
 			blackboardComp->SetValueAsBool(CAIKey::Combat::bInAttackRange, false);
 			blackboardComp->SetValueAsBool(CAIKey::Combat::bCanAttack, false);
 			blackboardComp->SetValueAsFloat(CAIKey::Combat::AttackableTime, -1.f);
@@ -328,6 +329,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bAttackCooldownKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::AttackCooldown);
 
 	const bool bShouldEngageKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bShouldEngage);
+	const bool bCombatInitializedKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bCombatInitialized);
 	const bool bInAttackRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bInAttackRange);
 	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::bCanAttack);
 	const bool bAttackableTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Combat::AttackableTime);
@@ -399,8 +401,9 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bCombatEnterBufferKey;
 	bAllValid &= bCombatExitBufferKey;
 	bAllValid &= bAttackCooldownKey;
-
+	
 	bAllValid &= bShouldEngageKey;
+	bAllValid &= bCombatInitializedKey;
 	bAllValid &= bInAttackRangeKey;
 	bAllValid &= bCanAttackKey;
 	bAllValid &= bAttackableTimeKey;

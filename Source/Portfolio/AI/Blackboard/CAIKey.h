@@ -82,6 +82,7 @@ namespace CAIKey
 		static const FName AttackCooldown = "AttackCooldown";				// Float
 
 		static const FName bShouldEngage = "bShouldEngage";					// Bool
+		static const FName bCombatInitialized = "bCombatInitialized";		// Bool
 		static const FName bInAttackRange = "bInAttackRange";				// Bool
 		static const FName bCanAttack = "bCanAttack";						// Bool
 		static const FName AttackableTime = "AttackableTime";				// Float

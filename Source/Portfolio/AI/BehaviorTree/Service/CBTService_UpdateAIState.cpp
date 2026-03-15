@@ -79,5 +79,18 @@ bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackb
 	if (currentAIStateType == nextAIStateType) return false;
 
 	InBlackboardComp->SetValueAsEnum(CAIKey::State::AIStateType, nextAIStateType);
+
+	UpdateAIStateTransition(InBlackboardComp, static_cast<EAIStateType>(currentAIStateType), static_cast<EAIStateType>(nextAIStateType));
 	return true;
+}
+
+void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* InBlackboardComp, EAIStateType InCurrentAIStateType, EAIStateType InNextAIStateType)
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	// Combat -> Non-Combat
+	if (InCurrentAIStateType == EAIStateType::Combat && InNextAIStateType != EAIStateType::Combat)
+	{
+		InBlackboardComp->SetValueAsBool(CAIKey::Combat::bCombatInitialized, false);
+	}
 }

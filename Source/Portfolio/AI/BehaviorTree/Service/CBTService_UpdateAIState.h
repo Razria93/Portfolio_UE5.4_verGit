@@ -19,4 +19,5 @@ protected:
 private:
 	EAIStateType DecideNextAIStateType(UBlackboardComponent* InBlackboardComp, float InCurrentTime);
 	bool ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType);
+	void UpdateAIStateTransition(UBlackboardComponent* InBlackboardComp, EAIStateType InCurrentAIStateType, EAIStateType InNextAIStateType);
 };
