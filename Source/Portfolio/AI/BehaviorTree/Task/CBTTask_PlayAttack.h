@@ -12,6 +12,16 @@ class PORTFOLIO_API UCBTTask_PlayAttack : public UBTTaskNode
 public:
 	UCBTTask_PlayAttack();
 
+private:
+	UPROPERTY(EditAnywhere, Category = "Config")
+	UAnimMontage* AttackMontage = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Config")
+	TArray<FName> AttackSections;
+
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
+private:
+	bool ResolveAttackSection(UBlackboardComponent* InBlackboardComp, FName& OutSectionName) const;
 };
