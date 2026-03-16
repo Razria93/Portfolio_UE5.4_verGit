@@ -72,7 +72,13 @@ private:
 	class UCMovementComponent* MovementComponent;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCWeaponComponent* WeaponComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCStateComponent* StateComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCApplyDamageComponent* ApplyDamageComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCTakeDamageComponent* TakeDamageComponent;
@@ -89,6 +95,9 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+public:
+	FORCEINLINE UCWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
 
 public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }

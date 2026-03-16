@@ -5,7 +5,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionComponent.h"
@@ -37,11 +39,19 @@ ACEnemy::ACEnemy()
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
 
+	// Init WeaponComp
+	WeaponComponent = CreateDefaultSubobject<UCWeaponComponent>(TEXT("Weapon"));
+	check(WeaponComponent);
+
 	// Init StateComp
 	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
 	check(StateComponent);
 
-	// Init StateComp
+	// Init ApplyDamageComp
+	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
+	check(ApplyDamageComponent);
+
+	// Init TakeDamageComp
 	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
 	check(TakeDamageComponent);
 
@@ -57,6 +67,11 @@ ACEnemy::ACEnemy()
 void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (IsValid(WeaponComponent))
+	{
+		WeaponComponent->SetSwordMode();
+	}
 }
 
 void ACEnemy::Tick(float DeltaTime)
