@@ -36,24 +36,24 @@ protected:
 	uint32 CachedSerial_ActivePlay = 0;	// Cached Serial of Active Play Raction
 
 public:
-	virtual void InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent);
+	virtual void Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent);
 	virtual void Tick(float InDeltaTime) {};
 
 public:
 	// Validate: Validate Object (Object Validation)
-	virtual bool Validate(const FReactionData& InReactionData);
-
-	// Initialize: Initialize State (bIsActive / bInterruptible / bCancelable)
-	virtual bool Initialize(const FReactionData& InReactionData);
+	virtual bool IsValidMinimal();
 
 	// Begin: Execute (Play montage and Bind delegate)
 	virtual bool Begin(const FReactionData& InReactionData);
 
 	// Stop: Force Stop (Interrupt / Cancelled)
-	virtual void Stop(EReactionStopReason InStopReason, const UCReaction* InNewReaction);
+	virtual void Stop(EReactionStopReason InStopReason);
 
 	// End: Clean Up
 	virtual void End(bool bInterrupted);
+
+	// Clear: Clear State (bIsActive / bInterruptible / bCancelable)
+	virtual void Clear();
 
 public:
 	UAnimMontage* GetActiveMontage() const { return ActiveMontage_Cached; }
@@ -84,5 +84,5 @@ protected:
 
 private:
 	void PrintReactionExecutorRuntimeInfo() const;
-	void PrintStopReasonInfo(EReactionStopReason InStopReason, const UCReaction* InNewReaction) const;
+	void PrintStopReasonInfo(EReactionStopReason InStopReason) const;
 };
