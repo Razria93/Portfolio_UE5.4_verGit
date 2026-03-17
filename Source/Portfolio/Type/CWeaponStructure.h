@@ -389,7 +389,7 @@ struct FTakeDamageContext
 public:
 	// Resolved objects [Set BuildContext]
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<AActor> DamagedActor = nullptr;
+	class AActor* DamagedActor = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
 	class AController* Instigator = nullptr;
@@ -557,19 +557,38 @@ struct FReactionQueryContext
 
 public:
 	UPROPERTY(Transient)
-	UCReaction* ActiveReaction = nullptr;
+	class UCReaction* CurrentReactionExecutor = nullptr;
 
 	UPROPERTY(Transient)
-	UCReaction* NewReaction = nullptr;
+	class UCReaction* IncomingReactionExecutor = nullptr;
 
 	UPROPERTY(Transient)
-	FReactionData ActiveReactionData = FReactionData();
+	FReactionData CurrentReactionData = FReactionData();
 
 	UPROPERTY(Transient)
-	FReactionData NewReactionData = FReactionData();
+	FReactionData IncomingReactionData = FReactionData();
 
 public:
 	FReactionQueryContext() = default;
+
+public:
+	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FReactionContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FReactionData ReactionData = FReactionData();
+
+	UPROPERTY(Transient)
+	class UCReaction* ReactionExecutor = nullptr;
+
+public:
+	FReactionContext() = default;
 
 public:
 	bool IsValidMinimal() const;
