@@ -29,7 +29,7 @@ void UCReactionComponent::BeginPlay()
 
 	// Rebuild All
 	BuildReactionDataMap(true);
-	BuildReactionMap(true);
+	BuildReactionExecutorMap(true);
 
 	// [Debug] DataMap
 	// PrintReactionDataMap();
@@ -40,9 +40,120 @@ void UCReactionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UCReactionComponent::RequestReaction(const FTakeDamageResult& InTakeDamageResult)
+bool UCReactionComponent::HasPendingReactionContext() const
 {
-	ProcessReaction(InTakeDamageResult);
+	return PendingReactionContext_Cached.IsValidMinimal();
+}
+
+bool UCReactionComponent::HasActiveReactionContext() const
+{
+	return ActiveReactionContext_Cached.IsValidMinimal();
+}
+
+bool UCReactionComponent::IsReacting() const
+{
+	return HasPendingReactionContext() || HasActiveReactionContext();
+}
+
+bool UCReactionComponent::SetPendingReaction(const FTakeDamageResult& InTakeDamageResult)
+{
+	FReactionContext newReactionContext; // OutParameter
+	if (!BuildReactionContext(InTakeDamageResult, newReactionContext)) return false;
+
+	// Case01. Invalid pending reaction
+	if (!HasPendingReactionContext())
+	{
+		PendingReactionContext_Cached = newReactionContext;
+		return true;
+	}
+
+	// Case02. Valid pending reaction
+	// Case02-01. Compare 'current pending vs new pending'
+	if (!QueryReplaceReaction(
+		PendingReactionContext_Cached.ReactionExecutor, newReactionContext.ReactionExecutor,
+		PendingReactionContext_Cached.ReactionData, newReactionContext.ReactionData))
+	{
+		return false;
+	}
+
+	// Case02-02. Replace current pending with new pending
+	PendingReactionContext_Cached = newReactionContext;
+	return true;
+}
+
+bool UCReactionComponent::GetPendingReaction(FReactionContext& OutReactionContext) const
+{
+	OutReactionContext = FReactionContext();
+
+	if (!HasPendingReactionContext()) return false;
+
+	OutReactionContext = PendingReactionContext_Cached;
+	return true;
+}
+
+
+void UCReactionComponent::ClearPendingReaction()
+{
+	PendingReactionContext_Cached = FReactionContext();
+}
+
+
+bool UCReactionComponent::ExecuteReaction(const FReactionContext& InReactionContext)
+{
+	if (!InReactionContext.IsValidMinimal()) return false;
+
+	UCReaction* newReactionExecutor = InReactionContext.ReactionExecutor;
+	const FReactionData& newReactionData = InReactionContext.ReactionData;
+
+	// Clear active reaction context for switching
+	if (HasActiveReactionContext())
+	{
+		// Compare 'current active vs new active'
+		if (!QueryReplaceReaction(
+			ActiveReactionContext_Cached.ReactionExecutor, newReactionExecutor,
+			ActiveReactionContext_Cached.ReactionData, newReactionData))
+		{
+			return false;
+		}
+
+		if (IsValid(ActiveReactionContext_Cached.ReactionExecutor))
+		{
+			// [Interrupted Flow]
+			// Stop() -> OnReactionEnd() -> FinishReaction() -> ClearActiveReaction()
+			ActiveReactionContext_Cached.ReactionExecutor->Stop(EReactionStopReason::Interrupted);
+		}
+		else // Fallback
+		{
+			FLog::Log(TEXT("[ExecuteReaction] ActiveReactionContext is valid but executor is invalid. Clear stale active reaction."));
+			ClearActiveReaction();
+		}
+	}
+
+	// Set new reaction state
+	UpdateMovementToImmovable(newReactionData);
+	UpdateStateToReaction();
+
+	// Execute Failed
+	if (!newReactionExecutor->Begin(newReactionData))
+	{
+		// Clear new reaction
+		UpdateMovementToMovable(newReactionData);
+		UpdateStateToIdle();
+		return false;
+	}
+
+	// Execute Success
+	ChangeActiveReaction(InReactionContext);
+	return true;
+}
+
+void UCReactionComponent::FinishReaction()
+{
+	if (!HasActiveReactionContext()) return;
+
+	UpdateMovementToMovable(ActiveReactionContext_Cached.ReactionData);
+	UpdateStateToIdle();
+	ClearActiveReaction();
 }
 
 void UCReactionComponent::OnReactionBegin()
@@ -50,14 +161,15 @@ void UCReactionComponent::OnReactionBegin()
 	// TODO:
 }
 
-void UCReactionComponent::OnReactionEnd(const UCReaction* InReaction, bool bInterrupted)
+void UCReactionComponent::OnReactionEnd(const UCReaction* InReaction, bool bInterrupted) // Non-Used bInterrupted
 {
+	if (!HasActiveReactionContext()) return;
 	if (!IsValid(InReaction)) return;
 
 	// Stale callback guard
-	if (InReaction != ActiveReactionExcutor_Cached) return;
+	if (InReaction != ActiveReactionContext_Cached.ReactionExecutor) return;
 
-	EndReaction(ActiveReactionExcutor_Cached, ActiveReactionData_Cached);
+	FinishReaction();
 }
 
 void UCReactionComponent::OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* Animation)
@@ -67,20 +179,20 @@ void UCReactionComponent::OnReactionWindowBegin(EReactionWindowType InReactionWi
 	switch (InReactionWindowType)
 	{
 	case EReactionWindowType::Interruptible:
-		if (IsValid(ActiveReactionExcutor_Cached))
-			ActiveReactionExcutor_Cached->SetInterruptible(true);
+		if (IsValid(ActiveReactionContext_Cached.ReactionExecutor))
+			ActiveReactionContext_Cached.ReactionExecutor->SetInterruptible(true);
 		break;
 
 	case EReactionWindowType::Cancelable:
-		if (IsValid(ActiveReactionExcutor_Cached))
-			ActiveReactionExcutor_Cached->SetCancelable(true);
+		if (IsValid(ActiveReactionContext_Cached.ReactionExecutor))
+			ActiveReactionContext_Cached.ReactionExecutor->SetCancelable(true);
 		break;
 
 	case EReactionWindowType::ImmuneToReaction:
-		if (IsValid(ActiveReactionExcutor_Cached))
+		if (IsValid(ActiveReactionContext_Cached.ReactionExecutor))
 		{
-			ActiveReactionExcutor_Cached->SetInterruptible(false);
-			ActiveReactionExcutor_Cached->SetCancelable(false);
+			ActiveReactionContext_Cached.ReactionExecutor->SetInterruptible(false);
+			ActiveReactionContext_Cached.ReactionExecutor->SetCancelable(false);
 		}
 		break;
 
@@ -96,13 +208,13 @@ void UCReactionComponent::OnReactionWindowEnd(EReactionWindowType InReactionWind
 	switch (InReactionWindowType)
 	{
 	case EReactionWindowType::Interruptible:
-		if (IsValid(ActiveReactionExcutor_Cached))
-			ActiveReactionExcutor_Cached->SetInterruptible(false);
+		if (IsValid(ActiveReactionContext_Cached.ReactionExecutor))
+			ActiveReactionContext_Cached.ReactionExecutor->SetInterruptible(false);
 		break;
 
 	case EReactionWindowType::Cancelable:
-		if (IsValid(ActiveReactionExcutor_Cached))
-			ActiveReactionExcutor_Cached->SetCancelable(false);
+		if (IsValid(ActiveReactionContext_Cached.ReactionExecutor))
+			ActiveReactionContext_Cached.ReactionExecutor->SetCancelable(false);
 		break;
 
 	case EReactionWindowType::ImmuneToReaction:
@@ -113,41 +225,39 @@ void UCReactionComponent::OnReactionWindowEnd(EReactionWindowType InReactionWind
 	}
 }
 
-void UCReactionComponent::ProcessReaction(const FTakeDamageResult& InTakeDamageResult)
+bool UCReactionComponent::BuildReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext)
 {
 	// NOTE: Use only the result of the commit
-	FLog::Log(TEXT("!==== ProcessReaction Info =====!"));
+	// FLog::Log(TEXT("!==== BuildReactionContext Info =====!"));
 
-	if (!ValidateRequest(InTakeDamageResult)) return;
+	OutReactionContext = FReactionContext();
+
+	if (!ValidateRequest(InTakeDamageResult)) return false;
 
 	const EReactionType newReactionType = ResolveReactionType(InTakeDamageResult);
-	if (newReactionType == EReactionType::None) return;
+	if (newReactionType == EReactionType::None) return false;
 
-	FReactionData reactionData;
-	if (!ResolveReactionData(InTakeDamageResult.ApplyDamageSpecKey, newReactionType, reactionData)) return;
+	FReactionData newReactionData; // OutParameter
+	if (!ResolveReactionData(InTakeDamageResult.ApplyDamageSpecKey, newReactionType, newReactionData)) return false;
 
-	UCReaction* newReaction = ResolveReaction(reactionData);
-	if (!IsValid(newReaction)) return;
+	UCReaction* newReactionExecutor = ResolveReactionExecutor(newReactionData);
+	if (!IsValid(newReactionExecutor)) return false;
 
-	// Case 01: InValid ActiveReaction
-	if (!IsValid(ActiveReactionExcutor_Cached))
+	if (HasActiveReactionContext())
 	{
-		PlayReaction(newReaction, reactionData);
-
-		// [Debug] TotalInfo Summary
-		PrintReactionInfoSummary();
-		return;
+		// Compare 'current active vs new incomming'
+		if (!QueryReplaceReaction(
+			ActiveReactionContext_Cached.ReactionExecutor, newReactionExecutor,
+			ActiveReactionContext_Cached.ReactionData, newReactionData))
+		{
+			return false;
+		}
 	}
 
-	// Case 02: Valid ActiveReaction && New reactions disabled
-	if (!QueryAcceptNewReaction(ActiveReactionExcutor_Cached, newReaction, ActiveReactionData_Cached, reactionData)) return;
+	OutReactionContext.ReactionData = newReactionData;
+	OutReactionContext.ReactionExecutor = newReactionExecutor;
 
-	// Case 03: Valid ActiveReaction && New reactions abled
-	ActiveReactionExcutor_Cached->Stop(EReactionStopReason::Interrupted, newReaction);
-	PlayReaction(newReaction, reactionData);
-
-	// [Debug] TotalInfo Summary
-	PrintReactionInfoSummary();
+	return true;
 }
 
 bool UCReactionComponent::ValidateRequest(const FTakeDamageResult& takeDamageResult) const
@@ -170,40 +280,29 @@ EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& 
 bool UCReactionComponent::ResolveReactionData(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData)
 {
 	// [Debug] Title
-	// FLog::Log(TEXT("===== ResolveReaction Info ======"));
-
-	// [Debug] Input
-	// PrintApplyDamageSpecKeyInfo(InApplyDamageSpecKey);
+	// FLog::Log(TEXT("===== ResolveReactionData Info ======"));
 
 	OutReactionData = FReactionData();
 
-	TArray<FApplyDamageSpecKey> candidateKeys;
+	TArray<FApplyDamageSpecKey> candidateKeys; // OutParameter
 	BuildCandidateSpecKeys(InApplyDamageSpecKey, candidateKeys);
 
 	for (const FApplyDamageSpecKey& candidateKey : candidateKeys)
 	{
 		FReactionDataKey reactionDataKey;
-		reactionDataKey.ApplyDamageSpecKey = candidateKey;
-		reactionDataKey.ReactionType = InReactionType;
-
-		// [Debug] ReactionDataKey
-		// PrintReactionDataKeyInfo(reactionDataKey);
+		reactionDataKey.ApplyDamageSpecKey = candidateKey;	// ApplyDamage Part Condition
+		reactionDataKey.ReactionType = InReactionType;		// ReactionType
 
 		// 1) Find ReactionData
-		const FReactionData* reactionDataPtr = ReactionDataMap.Find(reactionDataKey);
-		if (!reactionDataPtr)
-		{
-			// [Debug] InValid ReactionData
-			// FLog::Log(TEXT("Not Found"));
-			continue;
-		}
+		const FReactionData* found = ReactionDataMap.Find(reactionDataKey);
+		if (!found) continue;
 
-		// Valid ReactionData
-		const FReactionData& reactionData = *reactionDataPtr;
-		OutReactionData = reactionData;
+		const FReactionData& reactionData = *found;
 
 		// [Debug] ReactionData
 		// PrintReactionDataInfo(reactionData);
+
+		OutReactionData = reactionData;
 
 		return true;
 	}
@@ -215,82 +314,64 @@ bool UCReactionComponent::ResolveReactionData(const FApplyDamageSpecKey& InApply
 	return false;
 }
 
-UCReaction* UCReactionComponent::ResolveReaction(const FReactionData& InReactionData)
+UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& InReactionData)
 {
 	// 1) Try reuse cached Reaction; return if valid
-	UCReaction* foundReaction = FindReaction(InReactionData.ReactionExecutorKey.Get());
+	UCReaction* foundReaction = FindReactionExecutor(InReactionData.ReactionExecutorKey.Get());
 	if (IsValid(foundReaction)) return foundReaction;
 
 	// 2) [Policy] Try create and cache Reaction; return if valid
-	UCReaction* newReaction = CreateReaction(InReactionData.ReactionExecutorKey);
-	if (IsValid(newReaction)) return newReaction;
+	UCReaction* addReaction = AddReactionExecutor(InReactionData.ReactionExecutorKey);
+	if (IsValid(addReaction)) return addReaction;
 
 	// [Debug] ReactionData is Valid; but Find and Create Failed
-	// FLog::Log(TEXT("[ResolveReaction] Valid ReactionData, but failed to resolve Reaction (find/create failed)."));
+	// FLog::Log(TEXT("[ResolveReactionExecutor] Valid ReactionData, but failed to resolve Reaction (find/create failed)."));
 
 	return nullptr;
 }
 
-bool UCReactionComponent::QueryAcceptNewReaction(UCReaction* InActiveReaction, UCReaction* InNewReaction, const FReactionData& InActiveReactionData, const FReactionData& InNewReactionData)
+bool UCReactionComponent::QueryReplaceReaction(UCReaction* InCurrentReactionExecutor, UCReaction* InIncomingReactionExecutor, const FReactionData& InCurrentReactionData, const FReactionData& InIncomingReactionData)
 {
-	if (!InNewReactionData.IsValidMinimal()) return false;
-	if (!InActiveReactionData.IsValidMinimal()) return true; // FirstReaction
+	if (!InIncomingReactionData.IsValidMinimal()) return false;
+	if (!IsValid(InIncomingReactionExecutor)) return false;
+
+	if (!InCurrentReactionData.IsValidMinimal()) return true;
+	if (!IsValid(InCurrentReactionExecutor)) return false;
 
 	FReactionQueryContext reactionQueryContext = FReactionQueryContext();
-	reactionQueryContext.ActiveReaction = InActiveReaction;
-	reactionQueryContext.NewReaction = InNewReaction;
-	reactionQueryContext.ActiveReactionData = InActiveReactionData;
-	reactionQueryContext.NewReactionData = InNewReactionData;
+	reactionQueryContext.CurrentReactionExecutor = InCurrentReactionExecutor;
+	reactionQueryContext.IncomingReactionExecutor = InIncomingReactionExecutor;
+	reactionQueryContext.CurrentReactionData = InCurrentReactionData;
+	reactionQueryContext.IncomingReactionData = InIncomingReactionData;
 
 	// [POLICY] Duplicate ReactionDataKey: Currently set to 'restart'.
 	// (Options: ignore | restart | stop-then-play)
-	if (InNewReactionData.ReactionDataKey == InActiveReactionData.ReactionDataKey)
+	if (reactionQueryContext.CurrentReactionData.ReactionDataKey == reactionQueryContext.IncomingReactionData.ReactionDataKey)
 	{
-		FLog::Log(FString::Printf(TEXT("[CheckNewReaction] Duplicate key (Active = %s, New = %s)"),
-			*GetNameSafe(InActiveReaction), *GetNameSafe(InNewReaction)));
+		FLog::Log(FString::Printf(
+			TEXT("[QueryReplaceReaction] Duplicate key (Current = %s, Incoming = %s)"),
+			*GetNameSafe(reactionQueryContext.CurrentReactionExecutor),
+			*GetNameSafe(reactionQueryContext.IncomingReactionExecutor)));
 	}
 
-	if (!InActiveReaction->AllowInterruptionBy(reactionQueryContext))
+	if (!reactionQueryContext.CurrentReactionExecutor->AllowInterruptionBy(reactionQueryContext))
 	{
-		FLog::Log(FString::Printf(TEXT("[RejectNewReaction] Not interruptible (Active = %s, New = %s)"),
-			*GetNameSafe(InActiveReaction), *GetNameSafe(InNewReaction)));
+		FLog::Log(FString::Printf(
+			TEXT("[RejectIncomingReaction] Not interruptible (Current = %s, Incoming = %s)"),
+			*GetNameSafe(reactionQueryContext.CurrentReactionExecutor),
+			*GetNameSafe(reactionQueryContext.IncomingReactionExecutor)));
 		return false;
 	}
 
-	if (!InNewReaction->WantToInterrupt(reactionQueryContext))
+	if (!reactionQueryContext.IncomingReactionExecutor->WantToInterrupt(reactionQueryContext))
 	{
-		FLog::Log(FString::Printf(TEXT("[RejectNewReaction] New cannot interrupt now (New = %s)"),
-			*GetNameSafe(InNewReaction)));
+		FLog::Log(FString::Printf(
+			TEXT("[RejectIncomingReaction] Incoming cannot interrupt now (Incoming = %s)"),
+			*GetNameSafe(reactionQueryContext.IncomingReactionExecutor)));
 		return false;
 	}
 
 	return true;
-}
-
-void UCReactionComponent::PlayReaction(UCReaction* InNewReaction, const FReactionData& InReactionData)
-{
-	if (!InNewReaction->Validate(InReactionData)) return;
-	if (!InNewReaction->Initialize(InReactionData)) return;
-
-	UpdateMovementToImmovable(InReactionData);
-	UpdateStateToReaction();
-
-	if (InNewReaction->Begin(InReactionData))
-	{
-		ChangeActiveReaction(InNewReaction, InReactionData);
-	}
-	else // Begin is Failed
-	{
-		FLog::Log(TEXT("[PlayReaction] be Failed"));
-		EndReaction(InNewReaction, InReactionData);
-	}
-}
-
-void UCReactionComponent::EndReaction(UCReaction* InEndReaction, const FReactionData& InReactionData)
-{
-	RestoreMovementToMovable(InReactionData);
-	RestoreStateToIdle();
-	ClearActiveReaction();
 }
 
 void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
@@ -316,14 +397,13 @@ void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 		{
 			if (bRebuildAll)
 			{
-				// [Debug] Duplicate key
+				// [Debug] Duplicate key: Override data
 				FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
 				ReactionDataMap[reactionDataKey] = reactionData;
 			}
 			else // bRebuildAll == false
 			{
-				// [POLICY] Duplicate ReactionDataKey: Currently set to 'skip'.
-				// (Options: ignore | restart | stop-then-play)
+				// [Policy] Currently set to 'skip'. (Options: ignore | restart | stop-then-play)
 				continue;
 			}
 		}
@@ -334,7 +414,7 @@ void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 	}
 }
 
-void UCReactionComponent::BuildReactionMap(bool bRebuildAll)
+void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
@@ -355,16 +435,15 @@ void UCReactionComponent::BuildReactionMap(bool bRebuildAll)
 		// 1) Find existing cached Reaction
 		if (!bRebuildAll)
 		{
-			const UCReaction* foundReaction = FindReaction(reactionExcutorKey);
-			if (IsValid(foundReaction)) continue;
+			const UCReaction* found = FindReactionExecutor(reactionExcutorKey);
+			if (IsValid(found)) continue;
 		}
 
-		// 2) Create and Cache Reaction
-		UCReaction* createdReaction = CreateReaction(reactionClass);
-		if (!IsValid(createdReaction))
+		// 2) Add cached Reaction
+		UCReaction* add = AddReactionExecutor(reactionClass);
+		if (!IsValid(add))
 		{
-			// [Debug] ReactionData is Valid; but Find and Create Failed
-			// FLog::Log(TEXT("[Reaction] Valid ReactionData, but failed to find/create Reaction."));
+			FLog::Log(FString::Printf(TEXT("[BuildReactionExecutorMap] Failed to add ReactionExecutor. ReactionClass = %s"), *GetNameSafe(reactionClass.Get())));
 			continue;
 		}
 	}
@@ -412,28 +491,28 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InAp
 	}
 }
 
-UCReaction* UCReactionComponent::CreateReaction(const TSubclassOf<class UCReaction> InSubClass)
+UCReaction* UCReactionComponent::AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass)
 {
 	UClass* keyClass = InSubClass.Get();
 	if (!IsValid(keyClass)) return nullptr;
 
-	UCReaction* newReaction = NewObject<UCReaction>(this, InSubClass);
-	if (!IsValid(newReaction)) return nullptr;
+	UCReaction* addReactionExecutor = NewObject<UCReaction>(this, InSubClass);
+	if (!IsValid(addReactionExecutor)) return nullptr;
 
-	newReaction->InitializeReaction(OwnerCharacter_Cached, this);
-	ReactionExcutorMap.Add(keyClass, newReaction);
+	addReactionExecutor->Initialize(OwnerCharacter_Cached, this);
+	ReactionExcutorMap.Add(keyClass, addReactionExecutor);
 
-	return newReaction;
+	return addReactionExecutor;
 }
 
-UCReaction* UCReactionComponent::FindReaction(const UClass* InClass)
+UCReaction* UCReactionComponent::FindReactionExecutor(const UClass* InClass)
 {
 	UCReaction** found = ReactionExcutorMap.Find(InClass);
 	if (!found) return nullptr;
 
-	UCReaction* foundReaction = *found;
+	UCReaction* foundReactionExecutor = *found;
 
-	if (!IsValid(foundReaction))
+	if (!IsValid(foundReactionExecutor))
 	{
 		// Remove Invalid Entry
 		ReactionExcutorMap.Remove(InClass);
@@ -441,37 +520,31 @@ UCReaction* UCReactionComponent::FindReaction(const UClass* InClass)
 		return nullptr;
 	}
 
-	return foundReaction;
+	return foundReactionExecutor;
 }
 
-void UCReactionComponent::ChangeActiveReaction(UCReaction* InNewReaction, const FReactionData& InReactionData)
+void UCReactionComponent::ChangeActiveReaction(const FReactionContext& InReactionContext)
 {
-	if (!IsValid(InNewReaction)) return;
+	if (!InReactionContext.IsValidMinimal()) return;
 
-	const EReactionType prevReactionType = CurrentReactionType_Cached;
+	EReactionType prevReactionType = ActiveReactionType_Cached;
+	ActiveReactionType_Cached = InReactionContext.ReactionData.ReactionDataKey.ReactionType;
 
-	bHasActive = true;
-
-	CurrentReactionType_Cached = InReactionData.ReactionDataKey.ReactionType;
-	ActiveReactionData_Cached = InReactionData;
-	ActiveReactionExcutor_Cached = InNewReaction;
+	ActiveReactionContext_Cached = InReactionContext;
 
 	if (OnReactionTypeChanged.IsBound())
-		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, CurrentReactionType_Cached);
+		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType_Cached);
 }
 
 void UCReactionComponent::ClearActiveReaction()
 {
-	const EReactionType prevReactionType = CurrentReactionType_Cached;
+	EReactionType prevReactionType = ActiveReactionType_Cached;
+	ActiveReactionType_Cached = EReactionType::None;
 
-	bHasActive = false;
-
-	CurrentReactionType_Cached = EReactionType::None;
-	ActiveReactionExcutor_Cached = nullptr;
-	ActiveReactionData_Cached = FReactionData();
+	ActiveReactionContext_Cached = FReactionContext();
 
 	if (OnReactionTypeChanged.IsBound())
-		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, CurrentReactionType_Cached);
+		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType_Cached);
 }
 
 
@@ -485,7 +558,7 @@ void UCReactionComponent::UpdateMovementToImmovable(const FReactionData& InReact
 	}
 }
 
-void UCReactionComponent::RestoreMovementToMovable(const FReactionData& InReactionData)
+void UCReactionComponent::UpdateMovementToMovable(const FReactionData& InReactionData)
 {
 	if (!IsValid(MovementComp_Cached)) return;
 
@@ -502,7 +575,7 @@ void UCReactionComponent::UpdateStateToReaction()
 	StateComp_Cached->SetReactionMode();
 }
 
-void UCReactionComponent::RestoreStateToIdle()
+void UCReactionComponent::UpdateStateToIdle()
 {
 	if (!IsValid(StateComp_Cached)) return;
 
@@ -520,13 +593,13 @@ void UCReactionComponent::PrintReactionInfoSummary() const
 	{
 		FLog::Log(TEXT("=== Active ReactionData Info ===="));
 
-		if (!ActiveReactionData_Cached.IsValidMinimal())
+		if (!ActiveReactionContext_Cached.ReactionData.IsValidMinimal())
 		{
 			FLog::Log(TEXT("[ActiveReactionData] Invalid / Empty"));
 		}
 		else
 		{
-			PrintReactionDataInfo(ActiveReactionData_Cached);
+			PrintReactionDataInfo(ActiveReactionContext_Cached.ReactionData);
 		}
 	}
 
@@ -534,14 +607,14 @@ void UCReactionComponent::PrintReactionInfoSummary() const
 	{
 		FLog::Log(TEXT("== Active ReactionExcutor Info =="));
 
-		if (!IsValid(ActiveReactionExcutor_Cached))
+		if (!IsValid(ActiveReactionContext_Cached.ReactionExecutor))
 		{
 			FLog::Log(TEXT("[ActiveExecutor] None"));
 		}
 		else
 		{
-			PrintReactionExcutorInfo(ActiveReactionExcutor_Cached);
-			PrintReactionExecutorRuntimeInfo(ActiveReactionExcutor_Cached);
+			PrintReactionExcutorInfo(ActiveReactionContext_Cached.ReactionExecutor);
+			PrintReactionExecutorRuntimeInfo(ActiveReactionContext_Cached.ReactionExecutor);
 		}
 	}
 
@@ -581,8 +654,9 @@ void UCReactionComponent::PrintReactionDataMap() const
 void UCReactionComponent::PrintComponentStateInfo() const
 {
 	FLog::Log(TEXT("-------- Component State --------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bHasActive"), bHasActive ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(CurrentReactionType_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HasPendingReactionContext"), HasPendingReactionContext() ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HasActiveReactionContext"), HasActiveReactionContext() ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(ActiveReactionType_Cached)));
 	FLog::Log(TEXT("---------------------------------"));
 }
 

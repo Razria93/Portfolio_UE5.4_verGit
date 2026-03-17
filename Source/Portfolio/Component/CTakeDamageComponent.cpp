@@ -321,7 +321,7 @@ void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload&
 void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
 {
 	// TODO: OnTakeDamageCommitted broadcast
-	ReactionComp_Cached->RequestReaction(InTakeDamageResult);
+	ReactionComp_Cached->SetPendingReaction(InTakeDamageResult);
 
 	// TODO:
 	// - VFX/SFX
