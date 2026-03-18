@@ -55,10 +55,10 @@ bool UCReactionComponent::IsReacting() const
 	return HasPendingReactionContext() || HasActiveReactionContext();
 }
 
-bool UCReactionComponent::SetPendingReaction(const FTakeDamageResult& InTakeDamageResult)
+bool UCReactionComponent::TryRequestPendingReaction(const FTakeDamageResult& InTakeDamageResult)
 {
 	FReactionContext newReactionContext; // OutParameter
-	if (!BuildReactionContext(InTakeDamageResult, newReactionContext)) return false;
+	if (!TryBuildReactionContext(InTakeDamageResult, newReactionContext)) return false;
 
 	// Case01. Invalid pending reaction
 	if (!HasPendingReactionContext())
@@ -81,24 +81,18 @@ bool UCReactionComponent::SetPendingReaction(const FTakeDamageResult& InTakeDama
 	return true;
 }
 
-bool UCReactionComponent::GetPendingReaction(FReactionContext& OutReactionContext) const
+bool UCReactionComponent::TryConsumePendingReaction(FReactionContext& OutReactionContext)
 {
 	OutReactionContext = FReactionContext();
 
 	if (!HasPendingReactionContext()) return false;
 
 	OutReactionContext = PendingReactionContext_Cached;
+	PendingReactionContext_Cached = FReactionContext();
 	return true;
 }
 
-
-void UCReactionComponent::ClearPendingReaction()
-{
-	PendingReactionContext_Cached = FReactionContext();
-}
-
-
-bool UCReactionComponent::ExecuteReaction(const FReactionContext& InReactionContext)
+bool UCReactionComponent::TryExecuteReaction(const FReactionContext& InReactionContext)
 {
 	if (!InReactionContext.IsValidMinimal()) return false;
 
@@ -124,7 +118,7 @@ bool UCReactionComponent::ExecuteReaction(const FReactionContext& InReactionCont
 		}
 		else // Fallback
 		{
-			FLog::Log(TEXT("[ExecuteReaction] ActiveReactionContext is valid but executor is invalid. Clear stale active reaction."));
+			FLog::Log(TEXT("[TryExecuteReaction] ActiveReactionContext is valid but executor is invalid. Clear stale active reaction."));
 			ClearActiveReaction();
 		}
 	}
@@ -225,11 +219,8 @@ void UCReactionComponent::OnReactionWindowEnd(EReactionWindowType InReactionWind
 	}
 }
 
-bool UCReactionComponent::BuildReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext)
+bool UCReactionComponent::TryBuildReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext)
 {
-	// NOTE: Use only the result of the commit
-	// FLog::Log(TEXT("!==== BuildReactionContext Info =====!"));
-
 	OutReactionContext = FReactionContext();
 
 	if (!ValidateRequest(InTakeDamageResult)) return false;
@@ -242,17 +233,6 @@ bool UCReactionComponent::BuildReactionContext(const FTakeDamageResult& InTakeDa
 
 	UCReaction* newReactionExecutor = ResolveReactionExecutor(newReactionData);
 	if (!IsValid(newReactionExecutor)) return false;
-
-	if (HasActiveReactionContext())
-	{
-		// Compare 'current active vs new incomming'
-		if (!QueryReplaceReaction(
-			ActiveReactionContext_Cached.ReactionExecutor, newReactionExecutor,
-			ActiveReactionContext_Cached.ReactionData, newReactionData))
-		{
-			return false;
-		}
-	}
 
 	OutReactionContext.ReactionData = newReactionData;
 	OutReactionContext.ReactionExecutor = newReactionExecutor;
@@ -279,9 +259,6 @@ EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& 
 
 bool UCReactionComponent::ResolveReactionData(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData)
 {
-	// [Debug] Title
-	// FLog::Log(TEXT("===== ResolveReactionData Info ======"));
-
 	OutReactionData = FReactionData();
 
 	TArray<FApplyDamageSpecKey> candidateKeys; // OutParameter
@@ -293,7 +270,7 @@ bool UCReactionComponent::ResolveReactionData(const FApplyDamageSpecKey& InApply
 		reactionDataKey.ApplyDamageSpecKey = candidateKey;	// ApplyDamage Part Condition
 		reactionDataKey.ReactionType = InReactionType;		// ReactionType
 
-		// 1) Find ReactionData
+		// Find ReactionData
 		const FReactionData* found = ReactionDataMap.Find(reactionDataKey);
 		if (!found) continue;
 
@@ -307,10 +284,6 @@ bool UCReactionComponent::ResolveReactionData(const FApplyDamageSpecKey& InApply
 		return true;
 	}
 
-	// [Debug] InValid ReactionData in ReactionDataMap
-	// FLog::Log(TEXT("[ResolveReactionData] Fail to resolve ReactionData"));
-	// FLog::Log(TEXT("================================="));
-
 	return false;
 }
 
@@ -320,13 +293,11 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 	UCReaction* foundReaction = FindReactionExecutor(InReactionData.ReactionExecutorKey.Get());
 	if (IsValid(foundReaction)) return foundReaction;
 
-	// 2) [Policy] Try create and cache Reaction; return if valid
+	// 2) [Policy] Try Add and cache Reaction; return if valid
 	UCReaction* addReaction = AddReactionExecutor(InReactionData.ReactionExecutorKey);
 	if (IsValid(addReaction)) return addReaction;
 
-	// [Debug] ReactionData is Valid; but Find and Create Failed
-	// FLog::Log(TEXT("[ResolveReactionExecutor] Valid ReactionData, but failed to resolve Reaction (find/create failed)."));
-
+	// [Debug] ReactionData is Valid; but Find and Add Failed
 	return nullptr;
 }
 

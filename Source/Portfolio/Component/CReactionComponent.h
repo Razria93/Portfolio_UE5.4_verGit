@@ -78,13 +78,9 @@ public:
 
 public:
 	// Pending API
-	bool SetPendingReaction(const FTakeDamageResult& InTakeDamageResult);
-	bool GetPendingReaction(FReactionContext& OutReactionContext) const;
-	void ClearPendingReaction();
-
-public:
-	// Execute API
-	bool ExecuteReaction(const FReactionContext& InReactionContext);
+	bool TryRequestPendingReaction(const FTakeDamageResult& InTakeDamageResult);
+	bool TryConsumePendingReaction(FReactionContext& OutReactionContext);
+	bool TryExecuteReaction(const FReactionContext& InReactionContext);
 	void FinishReaction();
 
 public:
@@ -96,7 +92,7 @@ public:
 
 private:
 	// Bulid Pipeline
-	bool BuildReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext);
+	bool TryBuildReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext);
 
 private:
 	bool ValidateRequest(const FTakeDamageResult& takeDamageResult) const;
