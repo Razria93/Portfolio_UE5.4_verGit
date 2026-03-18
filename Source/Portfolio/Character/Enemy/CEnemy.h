@@ -98,6 +98,7 @@ public:
 
 public:
 	FORCEINLINE UCWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
+	FORCEINLINE UCReactionComponent* GetReactionComponent() const { return ReactionComponent; }
 
 public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }

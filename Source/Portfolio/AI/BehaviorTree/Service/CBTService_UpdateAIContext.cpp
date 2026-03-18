@@ -204,7 +204,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 
 	InOutAIContext.bHasPendingReaction = reactionComp->HasPendingReactionContext();
 	InOutAIContext.bHasActiveReaction = reactionComp->HasActiveReactionContext();
-	InOutAIContext.bIsHitReacting = InOutAIContext.bHasActiveReaction;	// [Policy]  AIState HitReact is driven by active reaction
+	InOutAIContext.bIsHitReacting = InOutAIContext.bHasPendingReaction || InOutAIContext.bHasActiveReaction;
 
 	return EContextBuildResult::Success;
 }
