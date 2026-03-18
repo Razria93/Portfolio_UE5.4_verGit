@@ -529,13 +529,13 @@ public:
 	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
 	UPROPERTY(EditAnywhere, Category = "Key")
-	TSubclassOf<class UCReaction> ReactionExecutorKey;
+	TSubclassOf<class UCReaction> ReactionExecutorKey = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Reaction")
 	UAnimMontage* Montage = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Reaction")
-	float PlayRate = 1.0f;
+	float PlayRate = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Reaction")
 	bool bCanMove = false;
