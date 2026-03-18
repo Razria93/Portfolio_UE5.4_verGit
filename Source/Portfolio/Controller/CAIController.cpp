@@ -138,12 +138,6 @@ bool ACAIController::InitializeBlackBoardValue()
 	// Navigation
 	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, false);
 
-	// Reaction
-	blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
-
-	// Lifecycle
-	blackboardComp->SetValueAsBool(CAIKey::Dead::bIsDead, false);
-
 	if (APawn* ownerPawn = GetPawn())
 	{
 		blackboardComp->SetValueAsVector(CAIKey::Navigation::HomeLocation, ownerPawn->GetActorLocation());
@@ -224,6 +218,14 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsBool(CAIKey::Combat::bCanAttack, false);
 			blackboardComp->SetValueAsFloat(CAIKey::Combat::AttackableTime, -1.f);
 			blackboardComp->SetValueAsInt(CAIKey::Combat::AttackIndex, -1);
+
+			// --- Reaction ---
+			// Init
+			blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
+
+			// --- Dead ---
+			// Init
+			blackboardComp->SetValueAsBool(CAIKey::Dead::bIsDead, false);
 		}
 	}
 

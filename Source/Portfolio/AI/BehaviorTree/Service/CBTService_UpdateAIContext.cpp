@@ -39,43 +39,30 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	}
 
 	FAIContext aiContext; // OutParameter
+
+	// Based OwnerPawn
+	EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
+
+	if (homeResult == EContextBuildResult::Success)
+		UpdateHomeMetricContext(blackboardComp, aiContext);
+	else
+		ClearHomeMetricContext(blackboardComp);
+
+	// Based Perception
 	EContextBuildResult buildResult = BuildPerceptionContext(ownerPawn, aiContext);
 
-	if (buildResult == EContextBuildResult::Error)
-	{
-		ClearPerceptionContext(blackboardComp);
-		ClearHomeMetricContext(blackboardComp);
-		ClearCombatMetricContext(blackboardComp);
-		ClearCombatAssignmentContext(blackboardComp);
-
-		return;
-	}
-
-	if (buildResult == EContextBuildResult::NoData)
+	if (buildResult != EContextBuildResult::Success)
 	{
 		ClearPerceptionContext(blackboardComp);
 		ClearCombatMetricContext(blackboardComp);
 		ClearCombatAssignmentContext(blackboardComp);
-
-		EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
-
-		if (homeResult == EContextBuildResult::Success)
-			UpdateHomeMetricContext(blackboardComp, aiContext);
-		else
-			ClearHomeMetricContext(blackboardComp);
 
 		return;
 	}
 
 	UpdatePerceptionContext(blackboardComp, aiContext);
 
-	EContextBuildResult homeMetricResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
-
-	if (homeMetricResult == EContextBuildResult::Success)
-		UpdateHomeMetricContext(blackboardComp, aiContext);
-	else
-		ClearHomeMetricContext(blackboardComp);
-
+	// Based TargetActor
 	EContextBuildResult combatMetricResult = ComputeCombatMetricContext(ownerPawn, blackboardComp, aiContext);
 
 	if (combatMetricResult == EContextBuildResult::Success)
@@ -84,6 +71,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		ClearCombatMetricContext(blackboardComp);
 
 	EContextBuildResult combatAssignmentResult = ComputeCombatAssignmentContext(ownerPawn, blackboardComp, aiContext);
+
 	if (combatAssignmentResult == EContextBuildResult::Success)
 		UpdateCombatAssignmentContext(blackboardComp, aiContext);
 	else
@@ -202,7 +190,7 @@ void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* 
 	InBlackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation, InAIContext.LastKnownLocation);
 }
 
-void UCBTService_UpdateAIContext::UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
@@ -210,10 +198,9 @@ void UCBTService_UpdateAIContext::UpdateHomeMetricContext(class UBlackboardCompo
 	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToHome, InAIContext.DistanceToHome);
 }
 
-void UCBTService_UpdateAIContext::UpdateCombatMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateCombatMetricContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
-	if (!IsValid(InAIContext.TargetActor)) return;
 
 	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget, InAIContext.DistanceToTarget);
 	InBlackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange, InAIContext.bInAlertRange);

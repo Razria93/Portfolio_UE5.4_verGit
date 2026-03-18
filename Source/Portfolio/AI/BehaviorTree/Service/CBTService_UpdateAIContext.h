@@ -35,8 +35,8 @@ private:
 	void UpdateCombatAssignmentContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 
 private:
-	void ClearPerceptionContext(UBlackboardComponent* InBlackboardComp);
-	void ClearHomeMetricContext(UBlackboardComponent* InBlackboardComp);
-	void ClearCombatMetricContext(UBlackboardComponent* InBlackboardComp);
-	void ClearCombatAssignmentContext(UBlackboardComponent* InBlackboardComp);
+	void ClearPerceptionContext(class UBlackboardComponent* InBlackboardComp);
+	void ClearHomeMetricContext(class UBlackboardComponent* InBlackboardComp);
+	void ClearCombatMetricContext(class UBlackboardComponent* InBlackboardComp);
+	void ClearCombatAssignmentContext(class UBlackboardComponent* InBlackboardComp);
 };
