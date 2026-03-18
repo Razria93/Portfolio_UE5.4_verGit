@@ -102,6 +102,16 @@ public:
     UPROPERTY(Transient)
     bool bShouldEngage = false;
 
+    // Reaction Context
+    UPROPERTY(Transient)
+    bool bHasPendingReaction = false;
+
+    UPROPERTY(Transient)
+    bool bHasActiveReaction = false;
+
+    UPROPERTY(Transient)
+    bool bIsHitReacting = false;
+
 public:
     FAIContext() = default;
     FAIContext(const FAIContext&) = default;

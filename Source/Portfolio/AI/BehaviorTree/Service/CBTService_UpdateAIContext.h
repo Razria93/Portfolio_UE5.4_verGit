@@ -27,16 +27,19 @@ private:
 	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 	EContextBuildResult ComputeCombatMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 	EContextBuildResult ComputeCombatAssignmentContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
+	EContextBuildResult ComputeReactionContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 
 private:
 	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 	void UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 	void UpdateCombatMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 	void UpdateCombatAssignmentContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
+	void UpdateReactionContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 
 private:
 	void ClearPerceptionContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearHomeMetricContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearCombatMetricContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearCombatAssignmentContext(class UBlackboardComponent* InBlackboardComp);
+	void ClearReactionContext(class UBlackboardComponent* InBlackboardComp);
 };

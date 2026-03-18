@@ -7,6 +7,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "Controller/CAIController.h"
+#include "Component/CReactionComponent.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 
 #include "AI/BlackBoard/CAIKey.h"
@@ -34,6 +35,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		ClearHomeMetricContext(blackboardComp);
 		ClearCombatMetricContext(blackboardComp);
 		ClearCombatAssignmentContext(blackboardComp);
+		ClearReactionContext(blackboardComp);
 
 		return;
 	}
@@ -47,6 +49,13 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		UpdateHomeMetricContext(blackboardComp, aiContext);
 	else
 		ClearHomeMetricContext(blackboardComp);
+
+	EContextBuildResult reactionResult = ComputeReactionContext(ownerPawn, blackboardComp, aiContext);
+
+	if (reactionResult == EContextBuildResult::Success)
+		UpdateReactionContext(blackboardComp, aiContext);
+	else
+		ClearReactionContext(blackboardComp);
 
 	// Based Perception
 	EContextBuildResult buildResult = BuildPerceptionContext(ownerPawn, aiContext);
@@ -178,6 +187,28 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatAssignmentContext(
 	return EContextBuildResult::Success;
 }
 
+EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+{
+	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
+
+	UCReactionComponent* reactionComp = Cast<UCReactionComponent>(InOwnerPawn->GetComponentByClass(UCReactionComponent::StaticClass()));
+
+	if (!IsValid(reactionComp))
+	{
+		InOutAIContext.bHasPendingReaction = false;
+		InOutAIContext.bHasActiveReaction = false;
+		InOutAIContext.bIsHitReacting = false;
+
+		return EContextBuildResult::NoData;
+	}
+
+	InOutAIContext.bHasPendingReaction = reactionComp->HasPendingReactionContext();
+	InOutAIContext.bHasActiveReaction = reactionComp->HasActiveReactionContext();
+	InOutAIContext.bIsHitReacting = InOutAIContext.bHasActiveReaction;	// [Policy]  AIState HitReact is driven by active reaction
+
+	return EContextBuildResult::Success;
+}
+
 void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
@@ -214,6 +245,15 @@ void UCBTService_UpdateAIContext::UpdateCombatAssignmentContext(UBlackboardCompo
 	InBlackboardComp->SetValueAsBool(CAIKey::Combat::bShouldEngage, InAIContext.bShouldEngage);
 }
 
+void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasPendingReaction, InAIContext.bHasPendingReaction);
+	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasActiveReaction, InAIContext.bHasActiveReaction);
+	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, InAIContext.bIsHitReacting);
+}
+
 void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
@@ -244,4 +284,13 @@ void UCBTService_UpdateAIContext::ClearCombatAssignmentContext(UBlackboardCompon
 	if (!IsValid(InBlackboardComp)) return;
 
 	InBlackboardComp->ClearValue(CAIKey::Combat::bShouldEngage);
+}
+
+void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InBlackboardComp)
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasPendingReaction, false);
+	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasActiveReaction, false);
+	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
 }
