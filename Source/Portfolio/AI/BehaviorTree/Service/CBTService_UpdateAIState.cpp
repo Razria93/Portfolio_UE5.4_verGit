@@ -35,12 +35,13 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	// 1. Absolute States
 	// -----------------------------------------------------------------------------
 	const bool bIsDead = InBlackboard->GetValueAsBool(CAIKey::Dead::bIsDead);
-	const bool bIsHitReacting = InBlackboard->GetValueAsBool(CAIKey::Reaction::bIsHitReacting);
-	
+	const bool bHasPendingReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasPendingReaction);
+	const bool bHasActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasActiveReaction);
+
 	if (bIsDead)
 		return EAIStateType::Dead;
 
-	if (bIsHitReacting)
+	if (bHasPendingReaction || bHasActiveReaction)
 		return EAIStateType::HitReact;
 
 	// -----------------------------------------------------------------------------

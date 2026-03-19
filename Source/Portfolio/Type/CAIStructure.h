@@ -110,7 +110,7 @@ public:
     bool bHasActiveReaction = false;
 
     UPROPERTY(Transient)
-    bool bIsHitReacting = false;
+    int32 PendingReactionVersion = INDEX_NONE;
 
 public:
     FAIContext() = default;

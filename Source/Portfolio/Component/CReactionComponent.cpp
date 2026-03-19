@@ -50,9 +50,9 @@ bool UCReactionComponent::HasActiveReactionContext() const
 	return ActiveReactionContext_Cached.IsValidMinimal();
 }
 
-bool UCReactionComponent::IsReacting() const
+int32 UCReactionComponent::GetPendingReactionVersion() const
 {
-	return HasPendingReactionContext() || HasActiveReactionContext();
+	return PendingReactionVersion_Cached;
 }
 
 bool UCReactionComponent::TryRequestPendingReaction(const FTakeDamageResult& InTakeDamageResult)
@@ -64,6 +64,7 @@ bool UCReactionComponent::TryRequestPendingReaction(const FTakeDamageResult& InT
 	if (!HasPendingReactionContext())
 	{
 		PendingReactionContext_Cached = newReactionContext;
+		++PendingReactionVersion_Cached;
 		return true;
 	}
 	
@@ -77,6 +78,7 @@ bool UCReactionComponent::TryRequestPendingReaction(const FTakeDamageResult& InT
 	// Case02. Valid pending reaction
 	// Replace current pending with new pending
 	PendingReactionContext_Cached = newReactionContext;
+	++PendingReactionVersion_Cached;
 	return true;
 }
 

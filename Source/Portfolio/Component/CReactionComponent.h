@@ -45,6 +45,9 @@ private:
 	UPROPERTY(Transient)
 	FReactionContext ActiveReactionContext_Cached;
 
+	UPROPERTY(Transient)
+	int32 PendingReactionVersion_Cached = INDEX_NONE;
+
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
@@ -67,12 +70,13 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	// Getter API
+	int32 GetPendingReactionVersion() const;
 
 public:
 	// Query API
 	bool HasPendingReactionContext() const;
 	bool HasActiveReactionContext() const;
-	bool IsReacting() const;
 
 public:
 	// Pending API

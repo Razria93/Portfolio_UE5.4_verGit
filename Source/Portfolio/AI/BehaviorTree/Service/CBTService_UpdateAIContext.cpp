@@ -193,18 +193,11 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 
 	UCReactionComponent* reactionComp = Cast<UCReactionComponent>(InOwnerPawn->GetComponentByClass(UCReactionComponent::StaticClass()));
 
-	if (!IsValid(reactionComp))
-	{
-		InOutAIContext.bHasPendingReaction = false;
-		InOutAIContext.bHasActiveReaction = false;
-		InOutAIContext.bIsHitReacting = false;
-
-		return EContextBuildResult::NoData;
-	}
+	if (!IsValid(reactionComp)) return EContextBuildResult::NoData;
 
 	InOutAIContext.bHasPendingReaction = reactionComp->HasPendingReactionContext();
 	InOutAIContext.bHasActiveReaction = reactionComp->HasActiveReactionContext();
-	InOutAIContext.bIsHitReacting = InOutAIContext.bHasPendingReaction || InOutAIContext.bHasActiveReaction;
+	InOutAIContext.PendingReactionVersion = reactionComp->GetPendingReactionVersion();
 
 	return EContextBuildResult::Success;
 }
@@ -251,7 +244,7 @@ void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* In
 
 	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasPendingReaction, InAIContext.bHasPendingReaction);
 	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasActiveReaction, InAIContext.bHasActiveReaction);
-	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, InAIContext.bIsHitReacting);
+	InBlackboardComp->SetValueAsInt(CAIKey::Reaction::PendingReactionVersion, InAIContext.PendingReactionVersion);
 }
 
 void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* InBlackboardComp)
@@ -290,7 +283,7 @@ void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InB
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
 	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasPendingReaction);
 	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasActiveReaction);
+	InBlackboardComp->ClearValue(CAIKey::Reaction::PendingReactionVersion);
 }
