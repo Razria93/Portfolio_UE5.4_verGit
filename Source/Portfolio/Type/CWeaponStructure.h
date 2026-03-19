@@ -540,8 +540,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Reaction")
 	bool bCanMove = false;
 
-	// UPROPERTY(EditAnywhere, Category = "Policy")
-	// int32 priority = 0;
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	int32 Priority = INDEX_NONE;
 
 public:
 	FReactionData() = default;

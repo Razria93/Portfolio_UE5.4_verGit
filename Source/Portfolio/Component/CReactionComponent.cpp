@@ -326,6 +326,17 @@ bool UCReactionComponent::QueryReplaceReaction(UCReaction* InCurrentReactionExec
 			*GetNameSafe(reactionQueryContext.IncomingReactionExecutor)));
 	}
 
+	if (reactionQueryContext.CurrentReactionData.Priority < reactionQueryContext.IncomingReactionData.Priority)
+	{
+		FLog::Log(FString::Printf(
+			TEXT("[RejectIncomingReaction] Lower priority (Current = %s, Incoming = %s, CurrentPriority = %d, IncomingPriority = %d)"),
+			*GetNameSafe(reactionQueryContext.CurrentReactionExecutor),
+			*GetNameSafe(reactionQueryContext.IncomingReactionExecutor),
+			reactionQueryContext.CurrentReactionData.Priority,
+			reactionQueryContext.IncomingReactionData.Priority));
+		return false;
+	}
+
 	if (!reactionQueryContext.CurrentReactionExecutor->AllowInterruptionBy(reactionQueryContext))
 	{
 		FLog::Log(FString::Printf(
