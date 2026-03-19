@@ -38,7 +38,7 @@ private:
 	EReactionType ActiveReactionType_Cached;
 
 private:
-	/* === ActiveReaction State === */
+	/* === ReactionContext State === */
 	UPROPERTY(Transient)
 	FReactionContext PendingReactionContext_Cached;
 
@@ -67,8 +67,6 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	// Request API (TakeDamageComp -> ReactionComp)
-	
 
 public:
 	// Query API

@@ -169,10 +169,10 @@ public:
 	EPatrolMode PatrolMode = EPatrolMode::None;
 
 	UPROPERTY(Transient)
-	int32 CurrentIndex = -1;
+	int32 CurrentIndex = INDEX_NONE;
 
 	UPROPERTY(Transient)
-	int32 NextIndex = -1;
+	int32 NextIndex = INDEX_NONE;
 
 	UPROPERTY(Transient)
 	FVector CurrentPatrolLocation = FVector::ZeroVector;

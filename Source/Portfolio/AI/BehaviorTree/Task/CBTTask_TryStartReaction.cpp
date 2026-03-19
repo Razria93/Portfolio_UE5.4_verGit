@@ -24,24 +24,29 @@ EBTNodeResult::Type UCBTTask_TryStartReaction::ExecuteTask(UBehaviorTreeComponen
 	if (!IsValid(reactionComp)) return EBTNodeResult::Failed;
 
 	FReactionContext reactionContext;
-
-	// No pending reaction
+	
+	// Invalid pending reaction
 	if (!reactionComp->TryConsumePendingReaction(reactionContext))
 	{
+		FLog::Log(TEXT("[TryStartReaction|ExecuteTask] Invalid Pending Reaction"));
+	
 		// If already active, keep waiting on it.
 		return reactionComp->HasActiveReactionContext()
 			? EBTNodeResult::Succeeded	// Go to Waiting
 			: EBTNodeResult::Failed;	// Go to Root
 	}
-
-	// Execution be rejected
+	
+	// Reject Execute reaction
 	if (!reactionComp->TryExecuteReaction(reactionContext))
 	{
+		FLog::Log(TEXT("[TryStartReaction|ExecuteTask] Rejected Execute reaction"));
+	
 		// If already active, keep waiting on it.
 		return reactionComp->HasActiveReactionContext()
 			? EBTNodeResult::Succeeded	// Go to Waiting
 			: EBTNodeResult::Failed;	// Go to Root
 	}
 
+	FLog::Log(TEXT("[TryStartReaction|ExecuteTask] Succeeded Execute reaction"));
 	return EBTNodeResult::Succeeded;
 }

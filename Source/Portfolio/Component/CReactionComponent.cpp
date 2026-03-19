@@ -66,9 +66,7 @@ bool UCReactionComponent::TryRequestPendingReaction(const FTakeDamageResult& InT
 		PendingReactionContext_Cached = newReactionContext;
 		return true;
 	}
-
-	// Case02. Valid pending reaction
-	// Case02-01. Compare 'current pending vs new pending'
+	
 	if (!QueryReplaceReaction(
 		PendingReactionContext_Cached.ReactionExecutor, newReactionContext.ReactionExecutor,
 		PendingReactionContext_Cached.ReactionData, newReactionContext.ReactionData))
@@ -76,7 +74,8 @@ bool UCReactionComponent::TryRequestPendingReaction(const FTakeDamageResult& InT
 		return false;
 	}
 
-	// Case02-02. Replace current pending with new pending
+	// Case02. Valid pending reaction
+	// Replace current pending with new pending
 	PendingReactionContext_Cached = newReactionContext;
 	return true;
 }
@@ -85,6 +84,8 @@ bool UCReactionComponent::TryConsumePendingReaction(FReactionContext& OutReactio
 {
 	OutReactionContext = FReactionContext();
 
+	// [Guard clause]
+	// pending may already have been cleared by a prior consume or tree re-evaluation.
 	if (!HasPendingReactionContext()) return false;
 
 	OutReactionContext = PendingReactionContext_Cached;

@@ -47,57 +47,57 @@ namespace CAIKey
 
 	namespace Investigate
 	{
-		static const FName bUseInvestigate = "bUseInvestigate";				// Bool
-		static const FName InvestigateDuration = "InvestigateDuration";		// Float
-		static const FName InvestigateMaxIndex = "InvestigateMaxIndex";		// Int
+		static const FName bUseInvestigate = "bUseInvestigate";					// Bool
+		static const FName InvestigateDuration = "InvestigateDuration";			// Float
+		static const FName InvestigateMaxIndex = "InvestigateMaxIndex";			// Int
 
-		static const FName bCanInvestigate = "bCanInvestigate";				// Bool
-		static const FName bIsInvestigating = "bIsInvestigating";			// Bool
-		static const FName InvestigateLocation = "InvestigateLocation";		// Vector
-		static const FName InvestigateIndex = "InvestigateIndex";			// Int
+		static const FName bCanInvestigate = "bCanInvestigate";					// Bool
+		static const FName bIsInvestigating = "bIsInvestigating";				// Bool
+		static const FName InvestigateLocation = "InvestigateLocation";			// Vector
+		static const FName InvestigateIndex = "InvestigateIndex";				// Int
 	}
 
 	namespace Chase
 	{
-		static const FName ChaseOffsetRange = "ChaseOffsetRange";			// Float
-		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";			// Float
-		static const FName ChaseExitBuffer = "ChaseExitBuffer";				// Float
+		static const FName ChaseOffsetRange = "ChaseOffsetRange";				// Float
+		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";				// Float
+		static const FName ChaseExitBuffer = "ChaseExitBuffer";					// Float
 	}
 
 	namespace Alert
 	{
-		static const FName bUseAlertStep = "bUseAlertStep";					// Bool
-		static const FName StepForwardDistance = "StepForwardDistance";		// Float
-		static const FName StepSideDistance = "StepSideDistance";			// Float
+		static const FName bUseAlertStep = "bUseAlertStep";						// Bool
+		static const FName StepForwardDistance = "StepForwardDistance";			// Float
+		static const FName StepSideDistance = "StepSideDistance";				// Float
 
-		static const FName bInAlertRange = "bInAlertRange";					// Bool
-		static const FName AlertStepLocation = "AlertStepLocation";			// Vector
+		static const FName bInAlertRange = "bInAlertRange";						// Bool
+		static const FName AlertStepLocation = "AlertStepLocation";				// Vector
 	}
 
 	namespace Combat
 	{
-		static const FName CombatOffsetRange = "CombatOffsetRange";			// Float
-		static const FName CombatEnterBuffer = "CombatEnterBuffer";			// Float
-		static const FName CombatExitBuffer = "CombatExitBuffer";			// Float
-		static const FName AttackCooldown = "AttackCooldown";				// Float
+		static const FName CombatOffsetRange = "CombatOffsetRange";				// Float
+		static const FName CombatEnterBuffer = "CombatEnterBuffer";				// Float
+		static const FName CombatExitBuffer = "CombatExitBuffer";				// Float
+		static const FName AttackCooldown = "AttackCooldown";					// Float
 
-		static const FName bShouldEngage = "bShouldEngage";					// Bool
-		static const FName bCombatInitialized = "bCombatInitialized";		// Bool
-		static const FName bInAttackRange = "bInAttackRange";				// Bool
-		static const FName bCanAttack = "bCanAttack";						// Bool
-		static const FName AttackableTime = "AttackableTime";				// Float
-		static const FName AttackIndex = "AttackIndex";						// Int
+		static const FName bShouldEngage = "bShouldEngage";						// Bool
+		static const FName bCombatInitialized = "bCombatInitialized";			// Bool
+		static const FName bInAttackRange = "bInAttackRange";					// Bool
+		static const FName bCanAttack = "bCanAttack";							// Bool
+		static const FName AttackableTime = "AttackableTime";					// Float
+		static const FName AttackIndex = "AttackIndex";							// Int
 	}
 
 	namespace Reaction
 	{
-		static const FName bHasPendingReaction = "bHasPendingReaction";		// Bool
-		static const FName bHasActiveReaction = "bHasActiveReaction";		// Bool
 		static const FName bIsHitReacting = "bIsHitReacting";				// Bool
+		static const FName bHasPendingReaction = "bHasPendingReaction";			// Bool
+		static const FName bHasActiveReaction = "bHasActiveReaction";			// Bool
 	}
 
 	namespace Dead
 	{
-		static const FName bIsDead = "bIsDead";								// Bool
+		static const FName bIsDead = "bIsDead";									// Bool
 	}
 }

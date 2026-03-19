@@ -18,7 +18,7 @@ EBTNodeResult::Type UCBTTask_SelectAttackIndex::ExecuteTask(UBehaviorTreeCompone
 
 	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Combat::AttackIndex);
 
-	int32 nextIndex = 0;
+	int32 nextIndex = INDEX_NONE;
 
 	if (currentIndex < 0)
 	{

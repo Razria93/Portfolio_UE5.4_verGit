@@ -86,7 +86,7 @@ EContextBuildResult UCBTService_UpdatePatrolContext::ComputePatrolContext(APawn*
 		return EContextBuildResult::Success;
 	}
 
-	int32 NextIndex = -1; // OutParameter
+	int32 NextIndex = INDEX_NONE; // OutParameter
 	if (!ComputeNextIndex(InOutPatrolContext.PatrolPath->Num(), InOutPatrolContext.bPatrolReverse, InOutPatrolContext.PatrolMode, InOutPatrolContext.CurrentIndex, NextIndex))
 		return EContextBuildResult::NoData;
 

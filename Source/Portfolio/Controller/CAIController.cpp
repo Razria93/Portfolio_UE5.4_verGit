@@ -173,7 +173,7 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate, false);
 			blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating, false);
 			blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation, ownerPawn->GetActorLocation());
-			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, -1);
+			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, INDEX_NONE);
 
 			// --- Chase ---
 			float chaseoffsetRange = enemy->GetChaseOffsetRange();
@@ -217,7 +217,7 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsBool(CAIKey::Combat::bInAttackRange, false);
 			blackboardComp->SetValueAsBool(CAIKey::Combat::bCanAttack, false);
 			blackboardComp->SetValueAsFloat(CAIKey::Combat::AttackableTime, -1.f);
-			blackboardComp->SetValueAsInt(CAIKey::Combat::AttackIndex, -1);
+			blackboardComp->SetValueAsInt(CAIKey::Combat::AttackIndex, INDEX_NONE);
 
 			// --- Reaction ---
 			// Init

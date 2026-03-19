@@ -7,7 +7,7 @@
 
 UCBTTask_WaitEndReaction::UCBTTask_WaitEndReaction()
 {
-	NodeName = TEXT("Wait Reaction End");
+	NodeName = TEXT("Wait End Reaction");
 	bNotifyTick = true;
 }
 

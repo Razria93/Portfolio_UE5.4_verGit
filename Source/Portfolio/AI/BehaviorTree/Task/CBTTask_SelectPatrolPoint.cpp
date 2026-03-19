@@ -33,7 +33,7 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	bool bPatrolReverse = blackboardComp->GetValueAsBool(CAIKey::Patrol::bPatrolReverse);
 	
 	const int32 count = patrolPath->Num();
-	int32 nextIndex = -1;
+	int32 nextIndex = INDEX_NONE;
 
 	switch (patrolMode)
 	{

@@ -290,7 +290,7 @@ void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InB
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasPendingReaction, false);
-	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasActiveReaction, false);
 	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsHitReacting, false);
+	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasPendingReaction);
+	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasActiveReaction);
 }
