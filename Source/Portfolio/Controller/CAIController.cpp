@@ -12,7 +12,7 @@
 
 #include "Interface/TargetContextProducer.h"
 
-#include "Type/CAIStateStructure.h"
+#include "Type/CStateStructure.h"
 #include "Type/CAIStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
 
@@ -225,9 +225,7 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsBool(CAIKey::Reaction::bHasActiveReaction, false);
 			blackboardComp->SetValueAsInt(CAIKey::Reaction::PendingReactionVersion, INDEX_NONE);
 
-			// --- Dead ---
-			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Dead::bIsDead, false);
+			blackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState, static_cast<uint8>(EDeadState::Alive));
 		}
 	}
 
@@ -345,7 +343,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bPendingReactionVersionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::PendingReactionVersion);
 
 	// Dead
-	const bool bHasIsDeadKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Dead::bIsDead);
+	const bool bDeadStateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Dead::DeadState);
 
 	bool bAllValid = true;
 
@@ -421,7 +419,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bPendingReactionVersionKey;
 
 	// Dead
-	bAllValid &= bHasIsDeadKey;
+	bAllValid &= bDeadStateKey;
 
 	if (!bAllValid)
 	{

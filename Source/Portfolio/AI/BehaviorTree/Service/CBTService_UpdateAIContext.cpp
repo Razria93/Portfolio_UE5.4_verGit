@@ -8,6 +8,7 @@
 
 #include "Controller/CAIController.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CHealthComponent.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 
 #include "AI/BlackBoard/CAIKey.h"
@@ -31,11 +32,14 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
-		ClearPerceptionContext(blackboardComp);
+		ClearDeadContext(blackboardComp);
+		ClearReactionContext(blackboardComp);
 		ClearHomeMetricContext(blackboardComp);
+
+		ClearPerceptionContext(blackboardComp);
+
 		ClearCombatMetricContext(blackboardComp);
 		ClearCombatAssignmentContext(blackboardComp);
-		ClearReactionContext(blackboardComp);
 
 		return;
 	}
@@ -43,12 +47,12 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	FAIContext aiContext; // OutParameter
 
 	// Based OwnerPawn
-	EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
+	EContextBuildResult deadResult = ComputeDeadContext(ownerPawn, blackboardComp, aiContext);
 
-	if (homeResult == EContextBuildResult::Success)
-		UpdateHomeMetricContext(blackboardComp, aiContext);
+	if (deadResult == EContextBuildResult::Success)
+		UpdateDeadContext(blackboardComp, aiContext);
 	else
-		ClearHomeMetricContext(blackboardComp);
+		ClearDeadContext(blackboardComp);
 
 	EContextBuildResult reactionResult = ComputeReactionContext(ownerPawn, blackboardComp, aiContext);
 
@@ -57,12 +61,21 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	else
 		ClearReactionContext(blackboardComp);
 
+
+	EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
+
+	if (homeResult == EContextBuildResult::Success)
+		UpdateHomeMetricContext(blackboardComp, aiContext);
+	else
+		ClearHomeMetricContext(blackboardComp);
+
 	// Based Perception
 	EContextBuildResult buildResult = BuildPerceptionContext(ownerPawn, aiContext);
 
 	if (buildResult != EContextBuildResult::Success)
 	{
 		ClearPerceptionContext(blackboardComp);
+
 		ClearCombatMetricContext(blackboardComp);
 		ClearCombatAssignmentContext(blackboardComp);
 
@@ -192,12 +205,23 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
 	UCReactionComponent* reactionComp = Cast<UCReactionComponent>(InOwnerPawn->GetComponentByClass(UCReactionComponent::StaticClass()));
-
 	if (!IsValid(reactionComp)) return EContextBuildResult::NoData;
 
 	InOutAIContext.bHasPendingReaction = reactionComp->HasPendingReactionContext();
 	InOutAIContext.bHasActiveReaction = reactionComp->HasActiveReactionContext();
 	InOutAIContext.PendingReactionVersion = reactionComp->GetPendingReactionVersion();
+
+	return EContextBuildResult::Success;
+}
+
+EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+{
+	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
+
+	UCHealthComponent* healthComp = Cast<UCHealthComponent>(InOwnerPawn->GetComponentByClass(UCHealthComponent::StaticClass()));
+	if (!IsValid(healthComp)) return EContextBuildResult::NoData;
+
+	InOutAIContext.DeadState = healthComp->GetDeadState();
 
 	return EContextBuildResult::Success;
 }
@@ -247,6 +271,13 @@ void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* In
 	InBlackboardComp->SetValueAsInt(CAIKey::Reaction::PendingReactionVersion, InAIContext.PendingReactionVersion);
 }
 
+void UCBTService_UpdateAIContext::UpdateDeadContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState, static_cast<uint8>(InAIContext.DeadState));
+}
+
 void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
@@ -286,4 +317,9 @@ void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InB
 	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasPendingReaction);
 	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasActiveReaction);
 	InBlackboardComp->ClearValue(CAIKey::Reaction::PendingReactionVersion);
+}
+
+void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlackboardComp)
+{
+	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState, static_cast<uint8>(EDeadState::Alive));
 }

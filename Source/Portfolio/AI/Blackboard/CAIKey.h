@@ -6,43 +6,43 @@ namespace CAIKey
 {
 	namespace Targeting
 	{
-		static const FName TargetActor = "TargetActor";						// Object(Actor)
-		static const FName TargetPriority = "TargetPriority";				// Float
+		static const FName TargetActor = "TargetActor";							// Object(Actor)
+		static const FName TargetPriority = "TargetPriority";					// Float
 	}
 
 	namespace State
 	{
-		static const FName AIStateType = "AIStateType";						// Enum(EAIStateType)
+		static const FName AIStateType = "AIStateType";							// Enum(EAIStateType)
 	}
 
 	namespace Perception
 	{
-		static const FName bHasLOS = "bHasLOS";								// Bool
-		static const FName LastSeenTime = "LastSeenTime";					// Float
-		static const FName LastKnownLocation = "LastKnownLocation";			// Vector
+		static const FName bHasLOS = "bHasLOS";									// Bool
+		static const FName LastSeenTime = "LastSeenTime";						// Float
+		static const FName LastKnownLocation = "LastKnownLocation";				// Vector
 	}
 
 	namespace Metric
 	{
-		static const FName DistanceToTarget = "DistanceToTarget";			// Float
-		static const FName DistanceToHome = "DistanceToHome";				// Float
+		static const FName DistanceToTarget = "DistanceToTarget";				// Float
+		static const FName DistanceToHome = "DistanceToHome";					// Float
 	}
 
 	namespace Navigation
 	{
-		static const FName bReturnHome = "bReturnHome";						// Bool
-		static const FName HomeLocation = "HomeLocation";					// Vector
+		static const FName bReturnHome = "bReturnHome";							// Bool
+		static const FName HomeLocation = "HomeLocation";						// Vector
 	}
 
 	namespace Patrol
 	{
-		static const FName bUsePatrol = "bUsePatrol";						// Bool
-		static const FName PatrolPath = "PatrolPath";						// Object(ACPatrolPath)
-		static const FName PatrolMode = "PatrolMode";						// Enum(EPatrolMode)
+		static const FName bUsePatrol = "bUsePatrol";							// Bool
+		static const FName PatrolPath = "PatrolPath";							// Object(ACPatrolPath)
+		static const FName PatrolMode = "PatrolMode";							// Enum(EPatrolMode)
 
-		static const FName bPatrolReverse = "bPatrolReverse";				// Bool
-		static const FName PatrolLocation = "PatrolLocation";				// Vector
-		static const FName PatrolIndex = "PatrolIndex";						// Int
+		static const FName bPatrolReverse = "bPatrolReverse";					// Bool
+		static const FName PatrolLocation = "PatrolLocation";					// Vector
+		static const FName PatrolIndex = "PatrolIndex";							// Int
 	}
 
 	namespace Investigate
@@ -98,6 +98,6 @@ namespace CAIKey
 
 	namespace Dead
 	{
-		static const FName bIsDead = "bIsDead";									// Bool
+		static const FName DeadState = "DeadState";								// Enum(EDeadState)
 	}
 }

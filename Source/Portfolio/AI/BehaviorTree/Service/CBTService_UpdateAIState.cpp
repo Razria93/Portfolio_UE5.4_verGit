@@ -3,6 +3,8 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "Type/CStateStructure.h"
+#include "Type/CHealthStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
 
 UCBTService_UpdateAIState::UCBTService_UpdateAIState()
@@ -34,11 +36,11 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	// -----------------------------------------------------------------------------
 	// 1. Absolute States
 	// -----------------------------------------------------------------------------
-	const bool bIsDead = InBlackboard->GetValueAsBool(CAIKey::Dead::bIsDead);
+	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState));
 	const bool bHasPendingReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasPendingReaction);
 	const bool bHasActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasActiveReaction);
 
-	if (bIsDead)
+	if (deadState != EDeadState::Alive)
 		return EAIStateType::Dead;
 
 	if (bHasPendingReaction || bHasActiveReaction)

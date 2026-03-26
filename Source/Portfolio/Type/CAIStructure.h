@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Type/CHealthStructure.h"
 #include "CAIStructure.generated.h"
 
 UENUM(BlueprintType)
@@ -111,6 +112,9 @@ public:
 
     UPROPERTY(Transient)
     int32 PendingReactionVersion = INDEX_NONE;
+
+    UPROPERTY(VisibleAnywhere)
+    EDeadState DeadState = EDeadState::Alive;
 
 public:
     FAIContext() = default;
