@@ -78,6 +78,8 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	const FTakeDamageResult committedResult = BuildResult(takeDamageContext);
 	PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, committedResult);
 	// PrintTakeDamageContextInfo(takeDamagePayload, takeDamageContext, takeDamageResult);
+
+	// 5) Dispatch
 	DispatchTakeDamageCommitted(takeDamagePayload, takeDamageContext, committedResult);
 
 	return committedResult.FinalTakenDamage;
@@ -98,7 +100,7 @@ bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefault
 void UCTakeDamageComponent::EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const
 {
 	// Process 1: Take Pre-state Snapshot
-	InOutTakeDamageContext.bWasDeadBefore = HealthComp_Cached->IsDead();
+	InOutTakeDamageContext.DeadState_Before = HealthComp_Cached->GetDeadState();
 	InOutTakeDamageContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
 
 	// Gate 1: validate
@@ -124,7 +126,7 @@ void UCTakeDamageComponent::EvaluateTakeDamage(FTakeDamageContext& InOutTakeDama
 	}
 
 	// Gate 2: already dead
-	if (InOutTakeDamageContext.bWasDeadBefore)
+	if (InOutTakeDamageContext.DeadState_Before != EDeadState::Alive)
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::AlreadyDead;
@@ -162,8 +164,8 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	// TODO: Shield / Mana / Stemina etc + Commit Order
 
 	// Post-state Snapshot: Set BuildResult
+	InOutTakeDamageContext.DeadState_After = HealthComp_Cached->GetDeadState();
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
-	InOutTakeDamageContext.bIsDeadAfter = HealthComp_Cached->IsDead();
 }
 
 AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
@@ -289,26 +291,8 @@ FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& I
 	takeDamageResult.FinalTakenDamage = InTakeDamageContext.FinalTakenDamage;
 	takeDamageResult.FinalAppliedDamage = InTakeDamageContext.FinalAppliedDamage;
 
-	if (!takeDamageResult.bAccepted)
-	{
-		takeDamageResult.bKilled = false;
-		takeDamageResult.bTriggerHitReaction = false;
-		takeDamageResult.bTriggerDeathReaction = false;
-		return takeDamageResult;
-	}
-
-	takeDamageResult.bKilled = (!InTakeDamageContext.bWasDeadBefore && InTakeDamageContext.bIsDeadAfter);
-
-	if (takeDamageResult.bKilled)
-	{
-		takeDamageResult.bTriggerHitReaction = false;
-		takeDamageResult.bTriggerDeathReaction = true;
-	}
-	else
-	{
-		takeDamageResult.bTriggerHitReaction = true;
-		takeDamageResult.bTriggerDeathReaction = false;
-	}
+	takeDamageResult.DeadState_Before = InTakeDamageContext.DeadState_Before;
+	takeDamageResult.DeadState_After = InTakeDamageContext.DeadState_After;
 
 	return takeDamageResult;
 }
@@ -321,7 +305,13 @@ void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload&
 void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
 {
 	// TODO: OnTakeDamageCommitted broadcast
-	ReactionComp_Cached->TryRequestPendingReaction(InTakeDamageResult);
+	if (InTakeDamageResult.bAccepted)
+	{
+		if (IsValid(ReactionComp_Cached))
+		{
+			ReactionComp_Cached->TryRequestPendingDamageReaction(InTakeDamageResult);
+		}
+	}
 
 	// TODO:
 	// - VFX/SFX

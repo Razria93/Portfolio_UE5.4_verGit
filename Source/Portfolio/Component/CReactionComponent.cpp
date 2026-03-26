@@ -55,10 +55,10 @@ int32 UCReactionComponent::GetPendingReactionVersion() const
 	return PendingReactionVersion_Cached;
 }
 
-bool UCReactionComponent::TryRequestPendingReaction(const FTakeDamageResult& InTakeDamageResult)
+bool UCReactionComponent::TryRequestPendingDamageReaction(const FTakeDamageResult& InTakeDamageResult)
 {
 	FReactionContext newReactionContext; // OutParameter
-	if (!TryBuildReactionContext(InTakeDamageResult, newReactionContext)) return false;
+	if (!TryBuildDamageReactionContext(InTakeDamageResult, newReactionContext)) return false;
 
 	// Case01. Invalid pending reaction
 	if (!HasPendingReactionContext())
@@ -222,11 +222,11 @@ void UCReactionComponent::OnReactionWindowEnd(EReactionWindowType InReactionWind
 	}
 }
 
-bool UCReactionComponent::TryBuildReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext)
+bool UCReactionComponent::TryBuildDamageReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext)
 {
 	OutReactionContext = FReactionContext();
 
-	if (!ValidateRequest(InTakeDamageResult)) return false;
+	if (!ValidateDamageRequest(InTakeDamageResult)) return false;
 
 	const EReactionType newReactionType = ResolveReactionType(InTakeDamageResult);
 	if (newReactionType == EReactionType::None) return false;
@@ -243,20 +243,29 @@ bool UCReactionComponent::TryBuildReactionContext(const FTakeDamageResult& InTak
 	return true;
 }
 
-bool UCReactionComponent::ValidateRequest(const FTakeDamageResult& takeDamageResult) const
+bool UCReactionComponent::ValidateDamageRequest(const FTakeDamageResult& InTakeDamageResult) const
 {
 	if (!IsValid(OwnerCharacter_Cached)) return false;
-	if (!takeDamageResult.bAccepted) return false;
+	if (!InTakeDamageResult.bAccepted) return false;
 
 	return true;
 }
 
-EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& takeDamageResult)
+EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& InTakeDamageResult)
 {
-	// Handled by CTakenDamageComponent::BuildResult()
-	if (takeDamageResult.bTriggerDeathReaction) return EReactionType::Dead;
-	if (takeDamageResult.bTriggerHitReaction) return EReactionType::Hit;
+	if (!InTakeDamageResult.bAccepted)				
+	{
+		return EReactionType::None;
+	}
 
+	if (InTakeDamageResult.FinalAppliedDamage > 0.f &&
+		InTakeDamageResult.DeadState_Before == EDeadState::Alive &&
+		InTakeDamageResult.DeadState_After == EDeadState::Alive)
+	{
+		return EReactionType::Hit;
+	}
+
+	// Fallback
 	return EReactionType::None;
 }
 

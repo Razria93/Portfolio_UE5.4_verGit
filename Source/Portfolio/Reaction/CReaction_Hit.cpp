@@ -15,13 +15,6 @@ bool UCReaction_Hit::WantToCancel(const FReactionQueryContext& InContext) const
 
 bool UCReaction_Hit::AllowInterruptionBy(const FReactionQueryContext& InContext) const
 {
-	if (InContext.IncomingReactionData.IsValidMinimal()
-		&& InContext.IncomingReactionData.ReactionDataKey.ReactionType == EReactionType::Dead)
-	{
-		// Allow death reaction to interrupt hit
-		return true;
-	}
-
 	// Follow current interruptible window
 	return IsInterruptibleNow();
 }

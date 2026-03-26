@@ -80,7 +80,7 @@ public:
 
 public:
 	// Pending API
-	bool TryRequestPendingReaction(const FTakeDamageResult& InTakeDamageResult);
+	bool TryRequestPendingDamageReaction(const FTakeDamageResult& InTakeDamageResult);
 	bool TryConsumePendingReaction(FReactionContext& OutReactionContext);
 	bool TryExecuteReaction(const FReactionContext& InReactionContext);
 	void FinishReaction();
@@ -94,11 +94,11 @@ public:
 
 private:
 	// Bulid Pipeline
-	bool TryBuildReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext);
+	bool TryBuildDamageReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext);
 
 private:
-	bool ValidateRequest(const FTakeDamageResult& takeDamageResult) const;
-	EReactionType ResolveReactionType(const FTakeDamageResult& takeDamageResult);
+	bool ValidateDamageRequest(const FTakeDamageResult & InTakeDamageResult) const;
+	EReactionType ResolveReactionType(const FTakeDamageResult & InTakeDamageResult);
 	bool ResolveReactionData(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData);
 	UCReaction* ResolveReactionExecutor(const FReactionData& InReactionData);
 	bool QueryReplaceReaction(UCReaction * InCurrentReactionExecutor, UCReaction * InIncomingReactionExecutor, const FReactionData & InCurrentReactionData, const FReactionData & InIncomingReactionData);
