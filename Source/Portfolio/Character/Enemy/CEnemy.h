@@ -98,6 +98,7 @@ public:
 
 public:
 	FORCEINLINE UCWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
+	FORCEINLINE UCHealthComponent* GetHealthComponent() const { return HealthComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComponent() const { return ReactionComponent; }
 
 public:
@@ -128,4 +129,8 @@ public:
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
+
+public:
+	bool TryStartKill();
+	bool TryStartRevive(float InReviveHP);
 };

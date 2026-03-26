@@ -109,4 +109,16 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	return finalDamage;
 }
 
+bool ACEnemy::TryStartKill()
+{
+	if (!IsValid(HealthComponent)) return false;
+
+	return HealthComponent->TryKill();
+}
+
+bool ACEnemy::TryStartRevive(float InReviveHP)
+{
+	return IsValid(HealthComponent) && HealthComponent->TryRevive(InReviveHP);
+}
+
 
