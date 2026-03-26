@@ -5,32 +5,51 @@
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
+#include "Component/CHealthComponent.h"
 
-void UCAnimInstance::NativeBeginPlay()
+void UCAnimInstance::NativeInitializeAnimation()
 {
-	Super::NativeBeginPlay();
+	Super::NativeInitializeAnimation();
 
 	OwnerCharacter_Cached = Cast<ACharacter>(TryGetPawnOwner());
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass()));
-	if (!IsValid(MovementComp_Cached)) return;
-
 	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
-	if (!IsValid(WeaponComp_Cached)) return;
+	HealthComp_Cached = Cast<UCHealthComponent>(OwnerCharacter_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
 
-	WeaponComp_Cached->OnAttachmentTypeChanged.AddDynamic(this, &UCAnimInstance::OnAttachmentTypeChanged);
+	if (IsValid(WeaponComp_Cached))
+	{
+		WeaponComp_Cached->OnAttachmentTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnAttachmentTypeChanged);
+		AttachmentType = WeaponComp_Cached->GetCurAttachmentType();
+	}
+}
+
+void UCAnimInstance::NativeUninitializeAnimation()
+{
+	if (IsValid(WeaponComp_Cached))
+	{
+		WeaponComp_Cached->OnAttachmentTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnAttachmentTypeChanged);
+	}
+
+	Super::NativeUninitializeAnimation();
 }
 
 void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	if (!IsValid(MovementComp_Cached)) return;
 
 	Speed = MovementComp_Cached->GetCurrentSpeed();
 	Direction = MovementComp_Cached->GetCurrentDirection();
 	bIsInAir = MovementComp_Cached->IsFalling();
+
+	if (!IsValid(HealthComp_Cached)) return;
+
+	DeadState = HealthComp_Cached->GetDeadState();
 }
 
 void UCAnimInstance::OnAttachmentTypeChanged(ACharacter* InOwnerCharacter, EAttachmentType InPrevAttachmentType, EAttachmentType InNewAttachmentType)

@@ -12,27 +12,39 @@ class PORTFOLIO_API UCAnimInstance : public UAnimInstance
 
 protected:
 	/* === Injection Datas === */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Settings")
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float Speed;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Settings")
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float Direction;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Settings")
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsInAir;
 
 protected:
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Type")
+	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EAttachmentType AttachmentType = EAttachmentType::Max;
+
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	EDeadState DeadState = EDeadState::Alive;
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
+
+	UPROPERTY(Transient)
 	class UCMovementComponent* MovementComp_Cached;
+
+	UPROPERTY(Transient)
 	class UCWeaponComponent* WeaponComp_Cached;
 
+	UPROPERTY(Transient)
+	class UCHealthComponent* HealthComp_Cached;
+
 public:
-	void NativeBeginPlay() override;
+	void NativeInitializeAnimation() override;
+	void NativeUninitializeAnimation() override;
 	void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
@@ -40,5 +52,4 @@ private:
 	// CWeaponComponent
 	UFUNCTION()
 	void OnAttachmentTypeChanged(ACharacter* InOwnerCharacter, EAttachmentType InPrevAttachmentType, EAttachmentType InNewAttachmentType);
-
 };
