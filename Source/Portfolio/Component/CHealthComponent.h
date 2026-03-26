@@ -13,7 +13,7 @@ class PORTFOLIO_API UCHealthComponent : public UActorComponent
 public:
 	UCHealthComponent(); // TODO: Extend ResourceComponent
 
-public:
+private:
 	// === Initialize ===
 	UPROPERTY(EditAnywhere, Category = "Initialize", meta = (ClampMin = 0.00))
 	float InitMaxHP = 0.f;
@@ -22,7 +22,7 @@ public:
 	float InitCurrentHP = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "Initialize")
-	bool bFillToInitMaxHP = false;
+	EMaxHPUpdatePolicy MaxHPUpdatePolicy = EMaxHPUpdatePolicy::ClampCurrent;
 
 private:
 	UPROPERTY(Transient)
@@ -49,19 +49,15 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, bool bFillToMaxHP);
+	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
 
 public:
-	/* === Getter === */
-	EDeadState GetDeadState() const { return DeadState; }
-
-	float GetMaxHP() const { return MaxHP; }
-	float GetCurrentHP() const { return CurrentHP; }
-
-public:
-	/* === Setter === */
-	void SetMaxHP(float InNewMaxHP, bool bFillToMaxHP);
-	void SetCurrentHP(float InNewCurrentHP);
+	/* === Skill API === */
+	// (Current not used)
+	bool TryKill();
+	bool TryRevive(float InReviveHP);
+	bool TryCancelRevive();
+	bool TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUpdatePolicy);
 
 public:
 	float TakeDamage(float InTakeDamageAmount);
@@ -71,11 +67,14 @@ public:
 	bool CanKill() const;
 	bool CanRevive() const;
 
-	bool TryKill();
-	bool TryRevive(float InReviveHP);
+public:
+	/* === Getter === */
+	float GetMaxHP() const { return MaxHP; }
+	float GetCurrentHP() const { return CurrentHP; }
+	float GetPreviousHP() const { return PreviousHP; }
+	EDeadState GetDeadState() const { return DeadState; }
 
-	void CancelRevive();
-
+public:
 	void EnterDeadState();
 	void EnterAliveState();
 

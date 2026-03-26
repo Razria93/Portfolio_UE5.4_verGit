@@ -1,8 +1,6 @@
 #include "Component/CHealthComponent.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Type/CHealthStructure.h"
 
 UCHealthComponent::UCHealthComponent()
@@ -17,7 +15,7 @@ void UCHealthComponent::BeginPlay()
 	OwnerActor_Cached = Cast<AActor>(GetOwner());
 	check(OwnerActor_Cached);
 
-	InitializeHealth(InitMaxHP, InitCurrentHP, bFillToInitMaxHP);
+	InitializeHealth(InitMaxHP, InitCurrentHP, MaxHPUpdatePolicy);
 }
 
 void UCHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -25,44 +23,98 @@ void UCHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentHP, bool bFillToMaxHP)
+void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy)
 {
-	SetMaxHP(InInitMaxHP, bFillToMaxHP);
-
-	if (!bFillToMaxHP)
+	if (InInitMaxHP <= 0.f)
 	{
-		SetCurrentHP(InInitCurrentHP);
+		MaxHP = 0.f;
+		PreviousHP = 0.f;
+		CurrentHP = 0.f;
+		DeadState = EDeadState::Dead;
+
+		return;
 	}
+
+	MaxHP = InInitMaxHP;
+
+	if (InUpdatePolicy == EMaxHPUpdatePolicy::FillToMax)
+	{
+		PreviousHP = MaxHP;
+		CurrentHP = MaxHP;
+	}
+	else
+	{
+		float clampedHP = FMath::Clamp(InInitCurrentHP, 0.f, MaxHP);
+
+		PreviousHP = clampedHP;
+		CurrentHP = clampedHP;
+	}
+	
+	DeadState = (CurrentHP > 0.f) ? EDeadState::Alive : EDeadState::Dead;
 }
 
-void UCHealthComponent::SetMaxHP(float InNewMaxHP, bool bFillToMaxHP)
+bool UCHealthComponent::TryKill()
 {
-	// Validate InNewMaxHP
-	if (InNewMaxHP <= 0.f) return;
+	if (!CanKill()) return false;
+
+	PreviousHP = CurrentHP;
+	CurrentHP = 0.f;
+	DeadState = EDeadState::Dying;
+
+	// TODO: `FOnKill` Delegate Broadcast
+
+	return true;
+}
+
+bool UCHealthComponent::TryRevive(float InReviveHP)
+{
+	if (!CanRevive()) return false;
+	if (MaxHP <= 0.f) return false;
+
+	const float reviveHP = FMath::Clamp(InReviveHP, 1.f, MaxHP);
+
+	PreviousHP = CurrentHP;
+	CurrentHP = reviveHP;
+	DeadState = EDeadState::Reviving;
+
+	// TODO: `FOnRevive` Delegate Broadcast
+
+	return true;
+}
+
+bool UCHealthComponent::TryCancelRevive()
+{
+	if (DeadState != EDeadState::Reviving) return false;
+
+	PreviousHP = CurrentHP;
+	CurrentHP = 0.f;
+	DeadState = EDeadState::Dead;
+
+	// TODO: `FOnCancelRevive` Delegate Broadcast
+
+	return true;
+}
+
+bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUpdatePolicy)
+{
+	if (DeadState != EDeadState::Alive) return false;
+	if (InNewMaxHP <= 0.f) return false;
 
 	MaxHP = InNewMaxHP;
+	PreviousHP = CurrentHP;
 
-	if (bFillToMaxHP)
+	if (InUpdatePolicy == EMaxHPUpdatePolicy::FillToMax)
 	{
-		PreviousHP = CurrentHP;
 		CurrentHP = MaxHP;
+	}
+	else
+	{
+		CurrentHP = FMath::Clamp(CurrentHP, 1.f, MaxHP);
 	}
 
 	// TODO: `FOnMaxHealthChanged` Delegate BroadCast
 
-	UpdateDeadState();
-}
-
-void UCHealthComponent::SetCurrentHP(float InNewCurrentHP)
-{
-	if (InNewCurrentHP < 0.f) return;
-
-	PreviousHP = CurrentHP;
-	CurrentHP = FMath::Clamp(InNewCurrentHP, 0.f, MaxHP);
-
-	// TODO: `FOnHealthChanged` Delegate BroadCast
-
-	UpdateDeadState();
+	return true;
 }
 
 float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
@@ -75,7 +127,6 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 
 	float oldHP = CurrentHP;
 	float newHP = FMath::Clamp(CurrentHP - clampedDamage, 0.f, MaxHP);
-
 	float takenDamage = oldHP - newHP;
 
 	if (takenDamage <= 0.f) return 0.f;
@@ -129,44 +180,6 @@ bool UCHealthComponent::CanRevive() const
 	return DeadState == EDeadState::Dead;
 }
 
-bool UCHealthComponent::TryKill()
-{
-	if (!CanKill()) return false;
-
-	PreviousHP = CurrentHP;
-	CurrentHP = 0.f;
-	DeadState = EDeadState::Dying;
-
-	// TODO: `FOnDead` Delegate Broadcast
-
-	return true;
-}
-
-bool UCHealthComponent::TryRevive(float InReviveHP)
-{
-	if (!CanRevive()) return false;
-	if (MaxHP <= 0.f) return false;
-
-	const float reviveHP = FMath::Clamp(InReviveHP, 1.f, MaxHP);
-
-	PreviousHP = CurrentHP;
-	CurrentHP = reviveHP;
-	DeadState = EDeadState::Reviving;
-
-	// TODO: `FOnReviveStarted` Delegate Broadcast
-
-	return true;
-}
-
-void UCHealthComponent::CancelRevive()
-{
-	if (DeadState != EDeadState::Reviving) return;
-
-	PreviousHP = CurrentHP;
-	CurrentHP = 0.f;
-	DeadState = EDeadState::Dead;
-}
-
 void UCHealthComponent::EnterDeadState()
 {
 	DeadState = EDeadState::Dead;
@@ -185,7 +198,8 @@ void UCHealthComponent::UpdateDeadState()
 	if (DeadState == EDeadState::Alive && bDeadFlag)
 	{
 		DeadState = EDeadState::Dying;
-		// TODO: `FOnDead` Delegate Broadcast
+
+		// TODO: `FOnDeadState` Delegate Broadcast
 	}
 }
 

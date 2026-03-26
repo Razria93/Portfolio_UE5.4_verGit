@@ -11,3 +11,10 @@ enum class EDeadState : uint8
 	Dead,
 	Reviving
 };
+
+UENUM(BlueprintType)
+enum class EMaxHPUpdatePolicy : uint8
+{
+	ClampCurrent = 0,
+	FillToMax
+};
