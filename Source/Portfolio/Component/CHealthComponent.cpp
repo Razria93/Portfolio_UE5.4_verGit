@@ -3,6 +3,8 @@
 
 #include "GameFramework/Character.h"
 
+#include "Type/CHealthStructure.h"
+
 UCHealthComponent::UCHealthComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -40,13 +42,13 @@ void UCHealthComponent::SetMaxHP(float InNewMaxHP, bool bFillToMaxHP)
 
 	MaxHP = InNewMaxHP;
 
+	if (bFillToMaxHP)
+	{
+		PreviousHP = CurrentHP;
+		CurrentHP = MaxHP;
+	}
+
 	// TODO: `FOnMaxHealthChanged` Delegate BroadCast
-
-	// TODO : Implement `EMaxHealthUpdatePolicy`
-	float newCurrentHP = bFillToMaxHP ? MaxHP : FMath::Clamp(CurrentHP, 0.f, MaxHP);
-	SetCurrentHP(newCurrentHP);
-
-	// TODO: `FOnHealthChanged` Delegate BroadCast
 
 	UpdateDeadState();
 }
@@ -55,18 +57,8 @@ void UCHealthComponent::SetCurrentHP(float InNewCurrentHP)
 {
 	if (InNewCurrentHP < 0.f) return;
 
+	PreviousHP = CurrentHP;
 	CurrentHP = FMath::Clamp(InNewCurrentHP, 0.f, MaxHP);
-
-	// TODO: `FOnHealthChanged` Delegate BroadCast
-
-	UpdateDeadState();
-}
-
-void UCHealthComponent::SetKill()
-{
-	if (bIsDead) return;
-
-	CurrentHP = 0.f;
 
 	// TODO: `FOnHealthChanged` Delegate BroadCast
 
@@ -75,7 +67,7 @@ void UCHealthComponent::SetKill()
 
 float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 {
-	if (bIsDead) return 0.f;
+	if (DeadState != EDeadState::Alive) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeDamageAmount <= 0.f) return 0.f;
 
@@ -95,14 +87,14 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 
 	UpdateDeadState();
 
-	PrintTakeDamageContextInfo();
+	// PrintTakeDamageContextInfo();
 
 	return takenDamage;
 }
 
 float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 {
-	if (bIsDead) return 0.f;
+	if (DeadState != EDeadState::Alive) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeHealAmount <= 0.f) return 0.f;
 
@@ -122,25 +114,78 @@ float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 
 	UpdateDeadState();
 
-	PrintTakeHealContextInfo();
+	// PrintTakeHealContextInfo();
 
 	return takenHeal;
 }
 
+bool UCHealthComponent::CanKill() const
+{
+	return DeadState == EDeadState::Alive;
+}
+
+bool UCHealthComponent::CanRevive() const
+{
+	return DeadState == EDeadState::Dead;
+}
+
+bool UCHealthComponent::TryKill()
+{
+	if (!CanKill()) return false;
+
+	PreviousHP = CurrentHP;
+	CurrentHP = 0.f;
+	DeadState = EDeadState::Dying;
+
+	// TODO: `FOnDead` Delegate Broadcast
+
+	return true;
+}
+
+bool UCHealthComponent::TryRevive(float InReviveHP)
+{
+	if (!CanRevive()) return false;
+	if (MaxHP <= 0.f) return false;
+
+	const float reviveHP = FMath::Clamp(InReviveHP, 1.f, MaxHP);
+
+	PreviousHP = CurrentHP;
+	CurrentHP = reviveHP;
+	DeadState = EDeadState::Reviving;
+
+	// TODO: `FOnReviveStarted` Delegate Broadcast
+
+	return true;
+}
+
+void UCHealthComponent::CancelRevive()
+{
+	if (DeadState != EDeadState::Reviving) return;
+
+	PreviousHP = CurrentHP;
+	CurrentHP = 0.f;
+	DeadState = EDeadState::Dead;
+}
+
+void UCHealthComponent::EnterDeadState()
+{
+	DeadState = EDeadState::Dead;
+}
+
+void UCHealthComponent::EnterAliveState()
+{
+	DeadState = EDeadState::Alive;
+}
+
 void UCHealthComponent::UpdateDeadState()
 {
-	bool bWasDead = bIsDead;
-	bIsDead = (CurrentHP <= 0.f);	// UpdateDeadState
+	bool bDeadFlag = (CurrentHP <= 0.f);
 
-	if (!bWasDead && bIsDead)
+	// Revive is an explicit gameplay transition handled by SetRevive().
+	if (DeadState == EDeadState::Alive && bDeadFlag)
 	{
-		// Alive -> Dead
-		// TODO: `FOnDead` Delegate BroadCast
-	}
-	else if (bWasDead && !bIsDead)
-	{
-		// Dead -> Alive
-		// TODO: `FOnRevived` Delegate BroadCast
+		DeadState = EDeadState::Dying;
+		// TODO: `FOnDead` Delegate Broadcast
 	}
 }
 
@@ -183,7 +228,7 @@ void UCHealthComponent::PrintHealthContextInfo(const FString& InLabel) const
 
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HPDelta"), hpDelta));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HPPercent"), hpPercent));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsDead"), bIsDead ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DeadState"), *UEnum::GetValueAsString(DeadState)));
 	FLog::Log(TEXT("---------------------------------"));
 }
 
@@ -196,7 +241,7 @@ void UCHealthComponent::PrintDeadContextInfo(const FString& InLabel) const
 	}
 
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsDead"), bIsDead ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DeadState"), *UEnum::GetValueAsString(DeadState)));
 	FLog::Log(TEXT("---------------------------------"));
 }
 

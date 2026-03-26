@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DamageEvents.h"
 #include "DamageEventId.h"
+#include "Type/CHealthStructure.h"
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
@@ -413,7 +414,7 @@ public:
 	float HealthPointBefore = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bWasDeadBefore = false;
+	EDeadState DeadState_Before = EDeadState::Alive;
 
 	// DamageAmounts [Set EvaluateTakeDamage & CommitTakeDamage]
 	UPROPERTY(VisibleAnywhere)
@@ -433,7 +434,7 @@ public:
 	float HealthPointAfter = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bIsDeadAfter = false;
+	EDeadState DeadState_After = EDeadState::Alive;
 
 	// TODO:
 	// - HitBoneName
@@ -476,14 +477,10 @@ struct FTakeDamageResult
 	float FinalAppliedDamage = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bKilled = false;
-
-	// Dispatch flags
-	UPROPERTY(VisibleAnywhere)
-	bool bTriggerHitReaction = true;
+	EDeadState DeadState_Before = EDeadState::Alive;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bTriggerDeathReaction = true;
+	EDeadState DeadState_After = EDeadState::Alive;
 
 public:
 	FTakeDamageResult() = default;

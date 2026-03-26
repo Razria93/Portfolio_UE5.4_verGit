@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CHealthStructure.h"
 #include "CHealthComponent.generated.h"
-
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCHealthComponent : public UActorComponent
@@ -25,17 +25,18 @@ public:
 	bool bFillToInitMaxHP = false;
 
 private:
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = "0.0"))
+	UPROPERTY(Transient)
 	float MaxHP = 0.f;
 
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = "0.0"))
+	UPROPERTY(Transient)
 	float PreviousHP = 0.f;
 
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = "0.0"))
+	UPROPERTY(Transient)
 	float CurrentHP = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
-	bool bIsDead = false;
+private:
+	UPROPERTY(Transient)
+	EDeadState DeadState = EDeadState::Alive;
 
 private:
 	/* === Cached Objects === */
@@ -52,6 +53,8 @@ public:
 
 public:
 	/* === Getter === */
+	EDeadState GetDeadState() const { return DeadState; }
+
 	float GetMaxHP() const { return MaxHP; }
 	float GetCurrentHP() const { return CurrentHP; }
 
@@ -59,15 +62,22 @@ public:
 	/* === Setter === */
 	void SetMaxHP(float InNewMaxHP, bool bFillToMaxHP);
 	void SetCurrentHP(float InNewCurrentHP);
-	void SetKill();
-
-public:
-	/* === Check / Query === */
-	bool IsDead() const { return bIsDead; }
 
 public:
 	float TakeDamage(float InTakeDamageAmount);
 	float TakeHeal(float InTakeHealAmount);
+
+public:
+	bool CanKill() const;
+	bool CanRevive() const;
+
+	bool TryKill();
+	bool TryRevive(float InReviveHP);
+
+	void CancelRevive();
+
+	void EnterDeadState();
+	void EnterAliveState();
 
 private:
 	void UpdateDeadState();
