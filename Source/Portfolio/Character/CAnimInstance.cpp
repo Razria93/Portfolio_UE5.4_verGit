@@ -41,15 +41,17 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	if (!IsValid(MovementComp_Cached)) return;
+	if (IsValid(MovementComp_Cached))
+	{
+		Speed = MovementComp_Cached->GetCurrentSpeed();
+		Direction = MovementComp_Cached->GetCurrentDirection();
+		bIsInAir = MovementComp_Cached->IsFalling();
+	}
 
-	Speed = MovementComp_Cached->GetCurrentSpeed();
-	Direction = MovementComp_Cached->GetCurrentDirection();
-	bIsInAir = MovementComp_Cached->IsFalling();
-
-	if (!IsValid(HealthComp_Cached)) return;
-
-	DeadState = HealthComp_Cached->GetDeadState();
+	if (IsValid(HealthComp_Cached))
+	{
+		DeadState = HealthComp_Cached->GetDeadState();
+	}
 }
 
 void UCAnimInstance::OnAttachmentTypeChanged(ACharacter* InOwnerCharacter, EAttachmentType InPrevAttachmentType, EAttachmentType InNewAttachmentType)

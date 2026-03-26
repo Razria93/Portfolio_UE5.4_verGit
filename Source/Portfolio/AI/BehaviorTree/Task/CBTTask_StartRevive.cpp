@@ -17,5 +17,5 @@ EBTNodeResult::Type UCBTTask_StartRevive::ExecuteTask(UBehaviorTreeComponent& Ow
 	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
 	if (!IsValid(enemy)) return EBTNodeResult::Failed;
 
-	return enemy->TryStartRevive(30.f) ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
+	return enemy->TryStartRevive(ReviveHP) ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

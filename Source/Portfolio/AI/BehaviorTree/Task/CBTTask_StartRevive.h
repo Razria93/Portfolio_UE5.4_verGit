@@ -12,6 +12,10 @@ class PORTFOLIO_API UCBTTask_StartRevive : public UBTTaskNode
 public:
 	UCBTTask_StartRevive();
 
+public:
+	UPROPERTY(EditAnywhere)
+	float ReviveHP = 30.f;
+
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };
