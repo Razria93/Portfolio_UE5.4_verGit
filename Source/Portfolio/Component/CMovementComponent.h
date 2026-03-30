@@ -43,6 +43,7 @@ protected:
 
 public:
 	/* === Getter === */
+	FORCEINLINE bool GetCanMove() const { return bCanMove; }
 	FORCEINLINE float GetCurrentSpeed() const { return CurrentSpeed; }
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
 
