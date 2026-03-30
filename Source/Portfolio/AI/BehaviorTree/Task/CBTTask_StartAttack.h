@@ -2,19 +2,22 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "CBTTask_PlayAttack.generated.h"
+#include "CBTTask_StartAttack.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCBTTask_PlayAttack : public UBTTaskNode
+class PORTFOLIO_API UCBTTask_StartAttack : public UBTTaskNode
 {
 	GENERATED_BODY()
 
 public:
-	UCBTTask_PlayAttack();
+	UCBTTask_StartAttack();
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Config")
 	TArray<UAnimMontage*> AttackMontages;
+
+	UPROPERTY(EditAnywhere, Category = "Config")
+	bool bStopMovementOnStart = true;
 
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
