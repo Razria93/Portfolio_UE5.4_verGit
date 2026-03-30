@@ -20,7 +20,7 @@ void UCAction_LightAttack::PlayAction()
 	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
 	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
 	if (!IsValid(ActionDatas_Injected[0].Montage)) return;
-	
+
 	Super::PlayAction();		// bIsAction = true
 
 	ActionDatas_Injected[0].BeginPlayMontage(OwnerCharacter_Injected);

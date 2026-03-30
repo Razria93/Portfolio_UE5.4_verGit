@@ -48,10 +48,10 @@ void UCEquipment::Equip()
 		return;
 
 	StateComp_Cached->SetEquipMode();
-	
+
 	if (EquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetStop();
-	
+
 	if (IsValid(EquipmentData_Injected.Montage))
 	{
 		OwnerCharacter_Injected->PlayAnimMontage(EquipmentData_Injected.Montage, EquipmentData_Injected.PlayRate);

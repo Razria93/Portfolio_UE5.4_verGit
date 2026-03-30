@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CHealthStructure.h"
 #include "CHealthComponent.generated.h"
-
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCHealthComponent : public UActorComponent
@@ -13,7 +13,7 @@ class PORTFOLIO_API UCHealthComponent : public UActorComponent
 public:
 	UCHealthComponent(); // TODO: Extend ResourceComponent
 
-public:
+private:
 	// === Initialize ===
 	UPROPERTY(EditAnywhere, Category = "Initialize", meta = (ClampMin = 0.00))
 	float InitMaxHP = 0.f;
@@ -22,20 +22,21 @@ public:
 	float InitCurrentHP = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "Initialize")
-	bool bFillToInitMaxHP = false;
+	EMaxHPUpdatePolicy MaxHPUpdatePolicy = EMaxHPUpdatePolicy::ClampCurrent;
 
 private:
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = "0.0"))
+	UPROPERTY(Transient)
 	float MaxHP = 0.f;
 
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = "0.0"))
+	UPROPERTY(Transient)
 	float PreviousHP = 0.f;
 
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = "0.0"))
+	UPROPERTY(Transient)
 	float CurrentHP = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
-	bool bIsDead = false;
+private:
+	UPROPERTY(Transient)
+	EDeadState DeadState = EDeadState::Alive;
 
 private:
 	/* === Cached Objects === */
@@ -48,26 +49,34 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, bool bFillToMaxHP);
+	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
+
+public:
+	/* === Skill API === */
+	// (Current not used)
+	bool TryKill();
+	bool TryRevive(float InReviveHP);
+	bool TryCancelRevive();
+	bool TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUpdatePolicy);
+
+public:
+	float TakeDamage(float InTakeDamageAmount);
+	float TakeHeal(float InTakeHealAmount);
+
+public:
+	bool CanKill() const;
+	bool CanRevive() const;
 
 public:
 	/* === Getter === */
 	float GetMaxHP() const { return MaxHP; }
 	float GetCurrentHP() const { return CurrentHP; }
+	float GetPreviousHP() const { return PreviousHP; }
+	EDeadState GetDeadState() const { return DeadState; }
 
 public:
-	/* === Setter === */
-	void SetMaxHP(float InNewMaxHP, bool bFillToMaxHP);
-	void SetCurrentHP(float InNewCurrentHP);
-	void SetKill();
-
-public:
-	/* === Check / Query === */
-	bool IsDead() const { return bIsDead; }
-
-public:
-	float TakeDamage(float InTakeDamageAmount);
-	float TakeHeal(float InTakeHealAmount);
+	void EnterDeadState();
+	void EnterAliveState();
 
 private:
 	void UpdateDeadState();
@@ -77,6 +86,6 @@ private:
 	void PrintTakeHealContextInfo();
 
 private:
-	void PrintHealthContextInfo( const FString& InLabel = TEXT("")) const;
+	void PrintHealthContextInfo(const FString& InLabel = TEXT("")) const;
 	void PrintDeadContextInfo(const FString& InLabel = TEXT("")) const;
 };

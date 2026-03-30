@@ -15,7 +15,7 @@ protected:
 protected:
 	void InputMoveForward(float InAxisValue);
 	void InputMoveRight(float InAxisValue);
-	
+
 	void InputLookYaw(float InAxisValue);
 	void InputLookPitch(float InAxisValue);
 

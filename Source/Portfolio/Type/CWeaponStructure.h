@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "Engine/DamageEvents.h"
 #include "DamageEventId.h"
+#include "Type/CHealthStructure.h"
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
@@ -34,12 +34,11 @@ enum class EActionType : uint8
 	Max,
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class EReactionType : uint8
 {
 	None = 0,
-	Hit,
-	Dead,
+	Hit
 };
 
 UENUM(BlueprintType)
@@ -281,16 +280,16 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InKey)
 	return H;
 }
 
- /***
-  * [EN]
-  * USTRUCT Set/Map key checklist:
-  * 1) operator==
-  * 2) GetTypeHash
-  *
-  * GetTypeHash notes:
-  * - Prefer a normal overload at namespace/global scope (avoid hidden-friend in the struct).
-  * - Avoid ::GetTypeHash(...); call GetTypeHash(...) to keep ADL available.
-  ***/
+/***
+ * [EN]
+ * USTRUCT Set/Map key checklist:
+ * 1) operator==
+ * 2) GetTypeHash
+ *
+ * GetTypeHash notes:
+ * - Prefer a normal overload at namespace/global scope (avoid hidden-friend in the struct).
+ * - Avoid ::GetTypeHash(...); call GetTypeHash(...) to keep ADL available.
+ ***/
 
 USTRUCT(BlueprintType)
 struct FApplyDamageSpec
@@ -390,7 +389,7 @@ struct FTakeDamageContext
 public:
 	// Resolved objects [Set BuildContext]
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<AActor> DamagedActor = nullptr;
+	class AActor* DamagedActor = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
 	class AController* Instigator = nullptr;
@@ -414,7 +413,7 @@ public:
 	float HealthPointBefore = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bWasDeadBefore = false;
+	EDeadState DeadState_Before = EDeadState::Alive;
 
 	// DamageAmounts [Set EvaluateTakeDamage & CommitTakeDamage]
 	UPROPERTY(VisibleAnywhere)
@@ -434,7 +433,7 @@ public:
 	float HealthPointAfter = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bIsDeadAfter = false;
+	EDeadState DeadState_After = EDeadState::Alive;
 
 	// TODO:
 	// - HitBoneName
@@ -448,7 +447,7 @@ public:
 	FTakeDamageContext() = default;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FTakeDamageResult
 {
 	GENERATED_BODY()
@@ -477,14 +476,10 @@ struct FTakeDamageResult
 	float FinalAppliedDamage = 0.f;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bKilled = false;
-
-	// Dispatch flags
-	UPROPERTY(VisibleAnywhere)
-	bool bTriggerHitReaction = true;
+	EDeadState DeadState_Before = EDeadState::Alive;
 
 	UPROPERTY(VisibleAnywhere)
-	bool bTriggerDeathReaction = true;
+	EDeadState DeadState_After = EDeadState::Alive;
 
 public:
 	FTakeDamageResult() = default;
@@ -530,19 +525,19 @@ public:
 	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
 	UPROPERTY(EditAnywhere, Category = "Key")
-	TSubclassOf<class UCReaction> ReactionExecutorKey;
+	TSubclassOf<class UCReaction> ReactionExecutorKey = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Reaction")
 	UAnimMontage* Montage = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Reaction")
-	float PlayRate = 1.0f;
+	float PlayRate = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Reaction")
 	bool bCanMove = false;
 
-	// UPROPERTY(EditAnywhere, Category = "Policy")
-	// int32 priority = 0;
+	UPROPERTY(EditAnywhere, Category = "Reaction")
+	int32 Priority = INDEX_NONE;
 
 public:
 	FReactionData() = default;
@@ -558,16 +553,16 @@ struct FReactionQueryContext
 
 public:
 	UPROPERTY(Transient)
-	UCReaction* ActiveReaction = nullptr;
+	class UCReaction* CurrentReactionExecutor = nullptr;
 
 	UPROPERTY(Transient)
-	UCReaction* NewReaction = nullptr;
+	class UCReaction* IncomingReactionExecutor = nullptr;
 
 	UPROPERTY(Transient)
-	FReactionData ActiveReactionData = FReactionData();
+	FReactionData CurrentReactionData = FReactionData();
 
 	UPROPERTY(Transient)
-	FReactionData NewReactionData = FReactionData();
+	FReactionData IncomingReactionData = FReactionData();
 
 public:
 	FReactionQueryContext() = default;
@@ -576,9 +571,21 @@ public:
 	bool IsValidMinimal() const;
 };
 
-UCLASS()
-class PORTFOLIO_API UCWeaponStructure : public UObject
+USTRUCT(BlueprintType)
+struct FReactionContext
 {
 	GENERATED_BODY()
 
+public:
+	UPROPERTY(Transient)
+	FReactionData ReactionData = FReactionData();
+
+	UPROPERTY(Transient)
+	class UCReaction* ReactionExecutor = nullptr;
+
+public:
+	FReactionContext() = default;
+
+public:
+	bool IsValidMinimal() const;
 };

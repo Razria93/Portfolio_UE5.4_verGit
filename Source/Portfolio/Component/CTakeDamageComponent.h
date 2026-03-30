@@ -5,7 +5,6 @@
 #include "Type/CWeaponStructure.h"
 #include "CTakeDamageComponent.generated.h"
 
-
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCTakeDamageComponent : public UActorComponent
 {

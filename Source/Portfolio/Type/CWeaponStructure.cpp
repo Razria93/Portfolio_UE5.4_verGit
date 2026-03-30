@@ -56,5 +56,10 @@ bool FReactionData::IsValidMinimal() const
 
 bool FReactionQueryContext::IsValidMinimal() const
 {
-	return IsValid(ActiveReaction) && IsValid(NewReaction);
+	return IsValid(CurrentReactionExecutor) && IsValid(IncomingReactionExecutor);
+}
+
+bool FReactionContext::IsValidMinimal() const
+{
+	return ReactionData.IsValidMinimal() && IsValid(ReactionExecutor);
 }

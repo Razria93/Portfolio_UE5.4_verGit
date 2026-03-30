@@ -7,7 +7,7 @@
 #include "CReaction_Hit.h"
 
 
-void UCReaction::InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent)
+void UCReaction::Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
 	check(OwnerCharacter_Injected);
@@ -16,28 +16,16 @@ void UCReaction::InitializeReaction(ACharacter* InOwnerCharacter, UCReactionComp
 	check(OwnerReactionComp_Injected);
 }
 
-bool UCReaction::Validate(const FReactionData& InReactionData)
+bool UCReaction::IsValidMinimal()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!IsValid(OwnerReactionComp_Injected)) return false;
-	if (!InReactionData.IsValidMinimal()) return false;	// Montage / ExcutorKey
 
 	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
 	if (!IsValid(meshComp)) return false;
 
 	UAnimInstance* animInstance = meshComp->GetAnimInstance();
 	if (!IsValid(animInstance)) return false;
-
-	return true;
-}
-
-bool UCReaction::Initialize(const FReactionData& InReactionData)
-{
-	bIsActive = false;
-	ActiveMontage_Cached = nullptr;
-
-	bInterruptible = false;
-	bCancelable = false;
 
 	return true;
 }
@@ -66,7 +54,7 @@ bool UCReaction::Begin(const FReactionData& InReactionData)
 	return true;
 }
 
-void UCReaction::Stop(EReactionStopReason InStopReason, const UCReaction* InNewReaction)
+void UCReaction::Stop(EReactionStopReason InStopReason)
 {
 	if (!bIsActive) return;
 
@@ -79,7 +67,7 @@ void UCReaction::Stop(EReactionStopReason InStopReason, const UCReaction* InNewR
 		// Stop Montage
 		animInstance->Montage_Stop(0.1f, ActiveMontage_Cached);
 
-		PrintStopReasonInfo(InStopReason, InNewReaction);
+		PrintStopReasonInfo(InStopReason);
 		PrintReactionExecutorRuntimeInfo();
 	}
 
@@ -92,16 +80,21 @@ void UCReaction::End(bool bInterrupted)
 {
 	if (!bIsActive) return;
 
-	bIsActive = false;
-	ActiveMontage_Cached = nullptr;
-
-	bInterruptible = false;
-	bCancelable = false;
+	Clear();
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
 		OwnerReactionComp_Injected->OnReactionEnd(this, bInterrupted);
 	}
+}
+
+void UCReaction::Clear()
+{
+	bIsActive = false;
+	ActiveMontage_Cached = nullptr;
+
+	bInterruptible = false;
+	bCancelable = false;
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
@@ -132,11 +125,7 @@ void UCReaction::PrintReactionExecutorRuntimeInfo() const
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCReaction::PrintStopReasonInfo(EReactionStopReason InStopReason, const UCReaction* InNewReaction) const
+void UCReaction::PrintStopReasonInfo(EReactionStopReason InStopReason) const
 {
-	FLog::Log(FString::Printf(TEXT("[Reaction::Stop] Reason = %s | ActiveReaction = %s | NewReaction = %s"),
-		*UEnum::GetValueAsString(InStopReason),
-		*GetNameSafe(this),			// ActiveReaction
-		*GetNameSafe(InNewReaction) // ActiveReaction
-	));
+	FLog::Log(FString::Printf(TEXT("[Reaction::Stop] Reason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(InStopReason), *GetNameSafe(this)));
 }

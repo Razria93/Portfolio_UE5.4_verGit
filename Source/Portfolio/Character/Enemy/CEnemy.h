@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Type/CWeaponStructure.h"
+#include "Type/CAIStructure.h"
 #include "CEnemy.generated.h"
 
 UCLASS()
@@ -14,11 +15,70 @@ public:
 	ACEnemy();
 
 private:
+	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
+	bool bUsePatrol;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
+	class ACPatrolPath* PatrolPath;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
+	EPatrolMode PatrolMode = EPatrolMode::None;
+
+private:
+	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	bool bUseInvestigate;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	float InvestigateDuration;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	int32 InvestigateMaxIndex;
+
+private:
+	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	float ChaseOffsetRange;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	float ChaseEnterBuffer;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	float ChaseExitBuffer;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "AI|Alert")
+	bool bUseAlertStep;
+
+	UPROPERTY(EditAnywhere, Category = "AI|Alert")
+	float StepSideDistance;
+
+	UPROPERTY(EditAnywhere, Category = "AI|Alert")
+	float StepForwardDistance;
+
+private:
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	float EngageOffsetRange;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	float EngageEnterBuffer;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	float EngageExitBuffer;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	float AttackCooldown;
+
+private:
 	UPROPERTY(VisibleAnywhere)
 	class UCMovementComponent* MovementComponent;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCWeaponComponent* WeaponComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCStateComponent* StateComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCApplyDamageComponent* ApplyDamageComponent;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCTakeDamageComponent* TakeDamageComponent;
@@ -37,5 +97,42 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	FORCEINLINE UCWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
+	FORCEINLINE UCHealthComponent* GetHealthComponent() const { return HealthComponent; }
+	FORCEINLINE UCReactionComponent* GetReactionComponent() const { return ReactionComponent; }
+
+public:
+	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }
+	FORCEINLINE ACPatrolPath* GetPatrolPath() const { return PatrolPath; }
+	FORCEINLINE EPatrolMode GetPatrolMode() const { return PatrolMode; }
+
+public:
+	FORCEINLINE bool GetbUseInvestigate() const { return bUseInvestigate; }
+	FORCEINLINE float GetInvestigateDuration() const { return InvestigateDuration; }
+	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
+
+public:
+	FORCEINLINE float GetChaseOffsetRange() const { return ChaseOffsetRange; }
+	FORCEINLINE float GetChaseEnterBuffer() const { return ChaseEnterBuffer; }
+	FORCEINLINE float GetChaseExitBuffer() const { return ChaseExitBuffer; }
+
+public:
+	FORCEINLINE bool GetbUseAlertStep() const { return bUseAlertStep; }
+	FORCEINLINE float GetStepSideDistance() const { return StepSideDistance; }
+	FORCEINLINE float GetStepForwardDistance() const { return StepForwardDistance; }
+
+public:
+	FORCEINLINE float GetEngageOffsetRange() const { return EngageOffsetRange; }
+	FORCEINLINE float GetEngageEnterBuffer() const { return EngageEnterBuffer; }
+	FORCEINLINE float GetEngageExitBuffer() const { return EngageExitBuffer; }
+
+public:
+	FORCEINLINE float GetAttackCooldown() const { return AttackCooldown; }
+
+public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
+
+public:
+	bool TryStartKill();
+	bool TryStartRevive(float InReviveHP);
 };

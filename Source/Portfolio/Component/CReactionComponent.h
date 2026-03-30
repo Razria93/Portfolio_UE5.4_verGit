@@ -35,18 +35,18 @@ private:
 private:
 	/* === Component State === */
 	UPROPERTY(Transient)
-	EReactionType CurrentReactionType_Cached;
-
-	UPROPERTY(Transient)
-	bool bHasActive = false;
+	EReactionType ActiveReactionType_Cached;
 
 private:
-	/* === ActiveReaction State === */
+	/* === ReactionContext State === */
 	UPROPERTY(Transient)
-	FReactionData ActiveReactionData_Cached;
+	FReactionContext PendingReactionContext_Cached;
 
 	UPROPERTY(Transient)
-	class UCReaction* ActiveReactionExcutor_Cached;
+	FReactionContext ActiveReactionContext_Cached;
+
+	UPROPERTY(Transient)
+	int32 PendingReactionVersion_Cached = INDEX_NONE;
 
 private:
 	/* === Cached Objects === */
@@ -70,51 +70,59 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	// Entry API
-	void RequestReaction(const FTakeDamageResult& InTakeDamageResult);
+	// Getter API
+	int32 GetPendingReactionVersion() const;
 
 public:
-	// CReaction API
+	// Query API
+	bool HasPendingReactionContext() const;
+	bool HasActiveReactionContext() const;
+
+public:
+	// Pending API
+	bool TryRequestPendingDamageReaction(const FTakeDamageResult& InTakeDamageResult);
+	bool TryConsumePendingReaction(FReactionContext& OutReactionContext);
+	bool TryExecuteReaction(const FReactionContext& InReactionContext);
+	void FinishReaction();
+
+public:
+	// Call API
 	void OnReactionBegin();
 	void OnReactionEnd(const UCReaction* InReaction, bool bInterrupted);
-
-public:
-	// AnimNotify API
 	void OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
 	void OnReactionWindowEnd(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
 
 private:
-	// Pipeline
-	void ProcessReaction(const FTakeDamageResult& InTakeDamageResult);
+	// Bulid Pipeline
+	bool TryBuildDamageReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext);
 
 private:
-	bool ValidateRequest(const FTakeDamageResult& takeDamageResult) const;
-	EReactionType ResolveReactionType(const FTakeDamageResult& takeDamageResult);
+	bool ValidateDamageRequest(const FTakeDamageResult & InTakeDamageResult) const;
+	EReactionType ResolveReactionType(const FTakeDamageResult & InTakeDamageResult);
 	bool ResolveReactionData(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData);
-	UCReaction* ResolveReaction(const FReactionData& InReactionData);
-	bool QueryAcceptNewReaction(UCReaction* InActiveReaction, UCReaction* InNewReaction, const FReactionData& InActiveReactionData, const FReactionData& InNewReactionData);
-	void PlayReaction(UCReaction* InNewReaction, const FReactionData& InReactionData);
-	void EndReaction(UCReaction* InEndReaction, const FReactionData& InReactionData);
+	UCReaction* ResolveReactionExecutor(const FReactionData& InReactionData);
+	bool QueryReplaceReaction(UCReaction * InCurrentReactionExecutor, UCReaction * InIncomingReactionExecutor, const FReactionData & InCurrentReactionData, const FReactionData & InIncomingReactionData);
 
 private:
-	void BuildReactionDataMap(bool bRebuildAll);	// true: Rebuild | false: Append
-	void BuildReactionMap(bool bRebuildAll);		// true: Rebuild | false: Append
+	// Bulid Function
+	void BuildReactionDataMap(bool bRebuildAll);			// true: Rebuild | false: Append
+	void BuildReactionExecutorMap(bool bRebuildAll);		// true: Rebuild | false: Append
 	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
 
 private:
-	UCReaction* CreateReaction(const TSubclassOf<class UCReaction> InSubClass);
-	UCReaction* FindReaction(const UClass* InClass);
+	UCReaction* AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass);
+	UCReaction* FindReactionExecutor(const UClass* InClass);
 
 private:
-	void ChangeActiveReaction(UCReaction* InNewReaction, const FReactionData& InReactionData);
+	// Execute Function
+	void ChangeActiveReaction(const FReactionContext& InReactionContext);
 	void ClearActiveReaction();
 
 private:
 	void UpdateMovementToImmovable(const FReactionData& InReactionData);
-	void RestoreMovementToMovable(const FReactionData& InReactionData);
-
+	void UpdateMovementToMovable(const FReactionData& InReactionData);
 	void UpdateStateToReaction();
-	void RestoreStateToIdle();
+	void UpdateStateToIdle();
 
 private:
 	void PrintReactionInfoSummary() const;

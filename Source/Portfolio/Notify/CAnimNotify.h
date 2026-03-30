@@ -14,7 +14,7 @@ UCLASS()
 class PORTFOLIO_API UCAnimNotify : public UAnimNotify
 {
 	GENERATED_BODY()
-	
+
 public:
 	UCAnimNotify();
 

@@ -51,7 +51,7 @@ void UCStateComponent::SetActionMode()
 
 	ChangeStateMode(EStateType::Action);
 }
- 
+
 void UCStateComponent::SetReactionMode()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
@@ -64,7 +64,7 @@ void UCStateComponent::ChangeStateType(EStateType InNewStateType)
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	EStateType prevStateType = CurrentStateType;
-	
+
 	CurrentStateType = InNewStateType;
 
 	if (OnStateTypeChanged.IsBound())

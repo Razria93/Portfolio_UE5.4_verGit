@@ -20,7 +20,7 @@ void UCActionComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 
 	// TODO: Refactor 'for-each'
-	if(!CreateAction(OwnerCharacter_Cached, ActionType, ActionClass, ActionDatas))
+	if (!CreateAction(OwnerCharacter_Cached, ActionType, ActionClass, ActionDatas))
 	{
 		ensureMsgf(false, TEXT("UCActionComponent: CreateAction is failed (%d)."), (int32)ActionType);
 	}

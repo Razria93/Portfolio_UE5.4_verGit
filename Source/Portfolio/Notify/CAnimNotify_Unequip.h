@@ -14,6 +14,5 @@ public:
 
 private:
 	FString GetNotifyName_Implementation() const override; // UAnimNotify::GetNotifyName override
-	void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,const FAnimNotifyEventReference& EventReference) override; // UAnimNotify::Notify override
-
+	void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override; // UAnimNotify::Notify override
 };

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "CStateStructure.generated.h"
 
 UENUM(BlueprintType)
@@ -12,12 +11,20 @@ enum class EStateType : uint8
 	Unequip,
 	Action,
 	Reaction,
-	Max,
+	Dead,
+	Max
 };
 
-UCLASS()
-class PORTFOLIO_API UCStateStructure : public UObject
+UENUM(BlueprintType)
+enum class EAIStateType : uint8
 {
-	GENERATED_BODY()
-
+	Idle = 0,
+	Patrol,
+	Investigate,
+	Chase,
+	Alert,
+	Engage,
+	HitReact,
+	Dead,
+	Max,
 };

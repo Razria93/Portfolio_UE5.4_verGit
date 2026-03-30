@@ -80,8 +80,7 @@ void FLog::Print(const UObject* InValue, int32 InKey, float InDuration, const FC
 	if (!GEngine)
 		return;
 
-	FString Message = InValue ? FString::Printf(TEXT("%s [Valid]"), *InValue->GetName())
-	                          : TEXT("Null Object");
+	FString Message = InValue ? FString::Printf(TEXT("%s [Valid]"), *InValue->GetName()) : TEXT("Null Object");
 
 	GEngine->AddOnScreenDebugMessage(InKey, InDuration, InColor, Message);
 }

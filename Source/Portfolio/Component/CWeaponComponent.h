@@ -43,7 +43,7 @@ private:
 private:
 	UPROPERTY(Transient)
 	class ACAttachment* Attachment;
-	
+
 	UPROPERTY(Transient)
 	class UCEquipment* Equipment;
 
