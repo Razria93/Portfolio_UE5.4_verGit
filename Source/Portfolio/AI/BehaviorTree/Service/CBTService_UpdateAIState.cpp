@@ -1,7 +1,11 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateAIState.h"
 #include "ProjectGlobal.h"
 
+#include "AIController.h"
+#include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
+
+#include "Component/CMovementComponent.h"
 
 #include "Type/CStateStructure.h"
 #include "Type/CHealthStructure.h"
@@ -39,12 +43,17 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState));
 	const bool bHasPendingReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasPendingReaction);
 	const bool bHasActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasActiveReaction);
+	const bool bIsAttacking = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsAttacking);
 
 	if (deadState != EDeadState::Alive)
 		return EAIStateType::Dead;
 
 	if (bHasPendingReaction || bHasActiveReaction)
 		return EAIStateType::HitReact;
+
+	// Keep Engage while current attack action is still active.
+	if (bIsAttacking)
+		return EAIStateType::Engage;
 
 	// -----------------------------------------------------------------------------
 	// 2.  Context
@@ -56,25 +65,25 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating);
 
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange);
-	const bool bShouldEngage = InBlackboard->GetValueAsBool(CAIKey::Combat::bShouldEngage);
+	const bool bShouldEngage = InBlackboard->GetValueAsBool(CAIKey::Engage::bShouldEngage);
 
 	// -----------------------------------------------------------------------------
 	// 3) Decide Next AIStateType
 	// -----------------------------------------------------------------------------
-	// 3-1. Invalid Target -> Idle
+	// 3-1. Invalid Target -> Idle.
 	if (!bHasTarget && !bIsInvestigating) return EAIStateType::Idle;
 
-	// 3-2. Valid target But Invalid LOS
+	// 3-2. Valid target But Invalid LOS.
 	if (!bHasLOS) return EAIStateType::Investigate;
 
-	// 3-3. Valid Target and LOS But Out of Range
+	// 3-3. Valid Target and LOS But Out of Range.
 	if (!bInAlertRange) return EAIStateType::Chase;
 
-	// 3-4. in Range But attack disable
+	// 3-4. in Range But attack disable.
 	if (!bShouldEngage) return EAIStateType::Alert;
 
-	// 3-5. in Range and Attackable
-	return EAIStateType::Combat;
+	// 3-5. in Range and Attackable.
+	return EAIStateType::Engage;
 }
 
 bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType)
@@ -94,9 +103,24 @@ void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* In
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	// Combat -> Non-Combat
-	if (InCurrentAIStateType == EAIStateType::Combat && InNextAIStateType != EAIStateType::Combat)
+	// Engage -> Non-Engage
+	if (InCurrentAIStateType == EAIStateType::Engage && InNextAIStateType != EAIStateType::Engage)
 	{
-		InBlackboardComp->SetValueAsBool(CAIKey::Combat::bCombatInitialized, false);
-	}
+		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
+		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
+		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
+		InBlackboardComp->ClearValue(CAIKey::Engage::AttackIndex);
+
+		if (InNextAIStateType == EAIStateType::Dead || InNextAIStateType == EAIStateType::Idle)
+		{
+			InBlackboardComp->ClearValue(CAIKey::Engage::AttackableTime);
+		}
+
+		if (AAIController* aIController = Cast<AAIController>(InBlackboardComp->GetOwner()))
+			if (APawn* pawn = aIController->GetPawn())
+				if (UCMovementComponent* movementComp = pawn->FindComponentByClass<UCMovementComponent>())
+				{
+					movementComp->SetMove();
+				}
+	} 
 }

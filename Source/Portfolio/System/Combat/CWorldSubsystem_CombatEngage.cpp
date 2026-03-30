@@ -37,22 +37,22 @@ void UCWorldSubsystem_CombatEngage::Deinitialize()
 	Super::Deinitialize();
 }
 
-FCombatAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAIController* InCAIController) const
+FEngageAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAIController* InCAIController) const
 {
-	if (!IsValid(InCAIController)) return FCombatAssignmentContext();
+	if (!IsValid(InCAIController)) return FEngageAssignmentContext();
 
-	const FCombatAssignmentContext* found = AssignmentContainer.Find(InCAIController);
-	if(!found) return FCombatAssignmentContext();
+	const FEngageAssignmentContext* found = AssignmentContainer.Find(InCAIController);
+	if(!found) return FEngageAssignmentContext();
 
 	return *found;
 }
 
-void UCWorldSubsystem_CombatEngage::SubmitRequest(const FCombatRequestContext& InCombatRequestContext)
+void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & InEngageRequestContext)
 {
-	if (!IsValid(InCombatRequestContext.RequestController)) return;
+	if (!IsValid(InEngageRequestContext.RequestController)) return;
 
 	// Override Request
-	RequestContainer.FindOrAdd(InCombatRequestContext.RequestController) = InCombatRequestContext;
+	RequestContainer.FindOrAdd(InEngageRequestContext.RequestController) = InEngageRequestContext;
 }
 
 void UCWorldSubsystem_CombatEngage::RebuildAssignments()
@@ -60,11 +60,11 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	AssignmentContainer.Reset();
 
 	// 1. Build RequestBucket from RequestContainer
-	TMap<AActor*, TArray<FCombatRequestContext>> requestBucket;
-	for (const TPair<ACAIController*, FCombatRequestContext>& pair : RequestContainer)
+	TMap<AActor*, TArray<FEngageRequestContext>> requestBucket;
+	for (const TPair<ACAIController*, FEngageRequestContext>& pair : RequestContainer)
 	{
 		const ACAIController* requestor = pair.Key;
-		const FCombatRequestContext& request = pair.Value;
+		const FEngageRequestContext& request = pair.Value;
 		
 		if (!IsValid(request.RequestController) || !IsValid(request.TargetActor)) continue;
 
@@ -75,9 +75,9 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	for (auto& pair : requestBucket)
 	{
 		AActor* targetActor = pair.Key;
-		TArray<FCombatRequestContext>& rqeusetContexts = pair.Value;
+		TArray<FEngageRequestContext>& rqeusetContexts = pair.Value;
 
-		rqeusetContexts.Sort([](const FCombatRequestContext& A, const FCombatRequestContext& B)
+		rqeusetContexts.Sort([](const FEngageRequestContext& A, const FEngageRequestContext& B)
 			{
 				// SortCondition 1: Priority
 				if (A.TargetPriority != B.TargetPriority)
@@ -98,12 +98,12 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 			ACAIController* requestController = rqeusetContexts[i].RequestController;
 			ECombatRole combatRole = i < MaxEngagersPerTarget ? ECombatRole::Engage : ECombatRole::Alert;
 
-			FCombatAssignmentContext combatAssignmentContext;
+			FEngageAssignmentContext engageAssignmentContext;
 
-			combatAssignmentContext.TargetActor = targetActor;
-			combatAssignmentContext.CombatRole = combatRole;
+			engageAssignmentContext.TargetActor = targetActor;
+			engageAssignmentContext.CombatRole = combatRole;
 
-			AssignmentContainer.Add(requestController, combatAssignmentContext);
+			AssignmentContainer.Add(requestController, engageAssignmentContext);
 			
 			// PrintEngageContext(rqeusetContexts[i].RequestController, rqeusetContexts[i].TargetActor, rqeusetContexts[i].TargetPriority, i, rqeusetContexts[i].DistanceToTarget, combatRole);
 		}
@@ -115,7 +115,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 
 void UCWorldSubsystem_CombatEngage::PrintEngageContext(const ACAIController* InCAIController, const AActor* InActor, const int& InPriority, const int& InIndex, const float& InDistance, const ECombatRole& InCombatRole) const
 {
-	FLog::Log(TEXT("==== CombatAssignmentContext ===="));
+	FLog::Log(TEXT("==== EngageAssignmentContext ===="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AIController"), *GetNameSafe(InCAIController)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InActor)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Priority"), InPriority));

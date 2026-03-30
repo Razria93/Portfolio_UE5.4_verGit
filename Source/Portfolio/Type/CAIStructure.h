@@ -85,21 +85,22 @@ public:
     UPROPERTY(Transient)
     FVector LastKnownLocation = FVector::ZeroVector;
 
-    // Home Metric Context
+    // Metric Context (Home)
     UPROPERTY(Transient)
     float DistanceToHome = 0.f;
 
     UPROPERTY(Transient)
     bool bReturnHome = false;
 
-    // Combat Metric Context
+    // Metric Context (Engage)
     UPROPERTY(Transient)
     float DistanceToTarget = 0.f;
 
+    // Alert Context
     UPROPERTY(Transient)
     bool bInAlertRange = false;
 
-    // Combat Assignment Context
+    // Engage Context
     UPROPERTY(Transient)
     bool bShouldEngage = false;
 
@@ -113,6 +114,7 @@ public:
     UPROPERTY(Transient)
     int32 PendingReactionVersion = INDEX_NONE;
 
+    // Dead Context
     UPROPERTY(VisibleAnywhere)
     EDeadState DeadState = EDeadState::Alive;
 
@@ -189,12 +191,11 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FCombatContext
+struct FEngageContext
 {
     GENERATED_BODY()
 
 public:
-    // Combat Context
     UPROPERTY(Transient)
     class AActor* TargetActor = nullptr;
 
@@ -202,30 +203,36 @@ public:
     float DistanceToTarget = 0.f;
 
     UPROPERTY(Transient)
-    float CombatOffsetRange = 0.f;
+    float EngageOffsetRange = 0.f;
 
     UPROPERTY(Transient)
-    float CombatEnterBuffer = 0.f;
+    float EngageEnterBuffer = 0.f;
 
     UPROPERTY(Transient)
-    float CombatExitBuffer = 0.f;
+    float EngageExitBuffer = 0.f;
 
     UPROPERTY(Transient)
-    float AttackableTime = -1.f;
+    float EngageOuterRange = 0.f;
 
     UPROPERTY(Transient)
-    bool bPrevInAttackRange = false;
+    float EngageInnerRange = 0.f;
 
     UPROPERTY(Transient)
-    bool bInAttackRange = false;
+    bool bPrevInEngageRange = false;
+
+    UPROPERTY(Transient)
+    bool bInEngageRange = false;
 
     UPROPERTY(Transient)
     bool bCanAttack = false;
 
+    UPROPERTY(Transient)
+    float AttackableTime = -1.f;
+
 public:
-    FCombatContext() = default;
-    FCombatContext(const FCombatContext&) = default;
-    FCombatContext& operator=(const FCombatContext&) = default;
+    FEngageContext() = default;
+    FEngageContext(const FEngageContext&) = default;
+    FEngageContext& operator=(const FEngageContext&) = default;
 
 public:
     bool IsValidContext() const

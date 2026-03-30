@@ -55,16 +55,16 @@ private:
 	float StepForwardDistance;
 
 private:
-	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
-	float CombatOffsetRange;
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	float EngageOffsetRange;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
-	float CombatEnterBuffer;
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	float EngageEnterBuffer;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
-	float CombatExitBuffer;
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	float EngageExitBuffer;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Combat")
+	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
 	float AttackCooldown;
 
 private:
@@ -122,9 +122,11 @@ public:
 	FORCEINLINE float GetStepForwardDistance() const { return StepForwardDistance; }
 
 public:
-	FORCEINLINE float GetCombatOffsetRange() const { return CombatOffsetRange; }
-	FORCEINLINE float GetCombatEnterBuffer() const { return CombatEnterBuffer; }
-	FORCEINLINE float GetCombatExitBuffer() const { return CombatExitBuffer; }
+	FORCEINLINE float GetEngageOffsetRange() const { return EngageOffsetRange; }
+	FORCEINLINE float GetEngageEnterBuffer() const { return EngageEnterBuffer; }
+	FORCEINLINE float GetEngageExitBuffer() const { return EngageExitBuffer; }
+
+public:
 	FORCEINLINE float GetAttackCooldown() const { return AttackCooldown; }
 
 public:

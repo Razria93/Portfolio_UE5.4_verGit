@@ -74,21 +74,17 @@ namespace CAIKey
 		static const FName AlertStepLocation = "AlertStepLocation";				// Vector
 	}
 
-	namespace Combat
+	namespace Engage
 	{
-		static const FName CombatOffsetRange = "CombatOffsetRange";				// Float
-		static const FName CombatEnterBuffer = "CombatEnterBuffer";				// Float
-		static const FName CombatExitBuffer = "CombatExitBuffer";				// Float
-		static const FName AttackCooldown = "AttackCooldown";					// Float
+		static const FName bShouldEngage = "bShouldEngage";						// Bool (UpdateAIContext)
 
-		static const FName bShouldEngage = "bShouldEngage";						// Bool
-		static const FName bCombatInitialized = "bCombatInitialized";			// Bool
-		static const FName bInAttackRange = "bInAttackRange";					// Bool
-		static const FName bCanAttack = "bCanAttack";							// Bool
-		static const FName AttackableTime = "AttackableTime";					// Float
-		static const FName AttackIndex = "AttackIndex";							// Int
+		static const FName bInEngageRange = "bInEngageRange";					// Bool  (On/Off : UpdateEngageContext)
+		static const FName bCanAttack = "bCanAttack";							// Bool  (On: UpdateEngageContext / Off: StartAttack)
+		static const FName bIsAttacking = "bIsAttacking";						// Bool (On: StartAttack / Off: AttackEndNotify, AIState clean-up)
+		static const FName AttackableTime = "AttackableTime";					// Float (CommitAttackCooldown)
+		static const FName AttackIndex = "AttackIndex";							// Int	 (SelectAttackIndex)
 	}
-
+	
 	namespace Reaction
 	{
 		static const FName bHasPendingReaction = "bHasPendingReaction";			// Bool

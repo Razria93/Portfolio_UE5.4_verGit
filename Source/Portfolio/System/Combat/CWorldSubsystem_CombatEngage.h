@@ -22,10 +22,10 @@ private:
 
 private:
 	UPROPERTY()
-	TMap<class ACAIController*, FCombatRequestContext> RequestContainer;
+	TMap<class ACAIController*, FEngageRequestContext> RequestContainer;
 
 	UPROPERTY()
-	TMap<class ACAIController*, FCombatAssignmentContext> AssignmentContainer;
+	TMap<class ACAIController*, FEngageAssignmentContext> AssignmentContainer;
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -34,10 +34,10 @@ public:
 	virtual TStatId GetStatId() const override;
 
 public:
-	FCombatAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
+	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
 
 public:
-	void SubmitRequest(const FCombatRequestContext& InCombatRequestContext);
+	void SubmitRequest(const FEngageRequestContext & InEngageRequestContext);
 	void RebuildAssignments();
 
 private:

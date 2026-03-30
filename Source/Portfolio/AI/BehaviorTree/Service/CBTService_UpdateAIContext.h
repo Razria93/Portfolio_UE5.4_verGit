@@ -25,24 +25,24 @@ private:
 
 private:
 	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
-	EContextBuildResult ComputeCombatMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
-	EContextBuildResult ComputeCombatAssignmentContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
+	EContextBuildResult ComputeAlertRangeContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
+	EContextBuildResult ComputeEngageAssignmentContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 	EContextBuildResult ComputeReactionContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 	EContextBuildResult ComputeDeadContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
 
 private:
 	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 	void UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateCombatMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateCombatAssignmentContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
+	void UpdateAlertRangeContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
+	void UpdateEngageAssignmentContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 	void UpdateReactionContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 	void UpdateDeadContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
 
 private:
 	void ClearPerceptionContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearHomeMetricContext(class UBlackboardComponent* InBlackboardComp);
-	void ClearCombatMetricContext(class UBlackboardComponent* InBlackboardComp);
-	void ClearCombatAssignmentContext(class UBlackboardComponent* InBlackboardComp);
+	void ClearAlertRangeContext(class UBlackboardComponent* InBlackboardComp);
+	void ClearEngageAssignmentContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearReactionContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearDeadContext(class UBlackboardComponent* InBlackboardComp);
 };

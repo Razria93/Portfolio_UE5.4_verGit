@@ -38,8 +38,8 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 
 		ClearPerceptionContext(blackboardComp);
 
-		ClearCombatMetricContext(blackboardComp);
-		ClearCombatAssignmentContext(blackboardComp);
+		ClearAlertRangeContext(blackboardComp);
+		ClearEngageAssignmentContext(blackboardComp);
 
 		return;
 	}
@@ -76,8 +76,8 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	{
 		ClearPerceptionContext(blackboardComp);
 
-		ClearCombatMetricContext(blackboardComp);
-		ClearCombatAssignmentContext(blackboardComp);
+		ClearAlertRangeContext(blackboardComp);
+		ClearEngageAssignmentContext(blackboardComp);
 
 		return;
 	}
@@ -85,19 +85,19 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	UpdatePerceptionContext(blackboardComp, aiContext);
 
 	// Based TargetActor
-	EContextBuildResult combatMetricResult = ComputeCombatMetricContext(ownerPawn, blackboardComp, aiContext);
+	EContextBuildResult engageMetricResult = ComputeAlertRangeContext(ownerPawn, blackboardComp, aiContext);
 
-	if (combatMetricResult == EContextBuildResult::Success)
-		UpdateCombatMetricContext(blackboardComp, aiContext);
+	if (engageMetricResult == EContextBuildResult::Success)
+		UpdateAlertRangeContext(blackboardComp, aiContext);
 	else
-		ClearCombatMetricContext(blackboardComp);
+		ClearAlertRangeContext(blackboardComp);
 
-	EContextBuildResult combatAssignmentResult = ComputeCombatAssignmentContext(ownerPawn, blackboardComp, aiContext);
+	EContextBuildResult engageAssignmentResult = ComputeEngageAssignmentContext(ownerPawn, blackboardComp, aiContext);
 
-	if (combatAssignmentResult == EContextBuildResult::Success)
-		UpdateCombatAssignmentContext(blackboardComp, aiContext);
+	if (engageAssignmentResult == EContextBuildResult::Success)
+		UpdateEngageAssignmentContext(blackboardComp, aiContext);
 	else
-		ClearCombatAssignmentContext(blackboardComp);
+		ClearEngageAssignmentContext(blackboardComp);
 }
 
 EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAIContext& OutAIContext)
@@ -135,7 +135,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn*
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
@@ -169,7 +169,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatMetricContext(APaw
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatAssignmentContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
@@ -180,10 +180,11 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatAssignmentContext(
 	UCWorldSubsystem_CombatEngage* subsystem = InOwnerPawn->GetWorld()->GetSubsystem<UCWorldSubsystem_CombatEngage>();
 	if (!IsValid(subsystem)) return EContextBuildResult::Error;
 
-	// Previous Context
-	const FCombatAssignmentContext prevAssignmentContext = subsystem->GetAssignment(aiController);
+	// [TODO]
+	// Change from 'UCWorldSubsystem_CombatEngage' to 'CWorldSubsystem_EngageCoordinator'
+	const FEngageAssignmentContext prevAssignmentContext = subsystem->GetAssignment(aiController); // Previous Context
 
-	FCombatRequestContext requestContext;
+	FEngageRequestContext requestContext;
 	requestContext.RequestController = aiController;
 	requestContext.TargetActor = InOutAIContext.TargetActor;
 	requestContext.TargetPriority = InOutAIContext.TargetPriority;
@@ -192,8 +193,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeCombatAssignmentContext(
 
 	subsystem->SubmitRequest(requestContext);
 
-	// Current Context
-	const FCombatAssignmentContext curAssignmentContext = subsystem->GetAssignment(aiController);
+	const FEngageAssignmentContext curAssignmentContext = subsystem->GetAssignment(aiController); // Current Context
 
 	InOutAIContext.bShouldEngage = curAssignmentContext.IsValidAssignment() && curAssignmentContext.CombatRole == ECombatRole::Engage;
 
@@ -246,7 +246,7 @@ void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* 
 	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToHome, InAIContext.DistanceToHome);
 }
 
-void UCBTService_UpdateAIContext::UpdateCombatMetricContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateAlertRangeContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
@@ -255,11 +255,11 @@ void UCBTService_UpdateAIContext::UpdateCombatMetricContext(UBlackboardComponent
 
 }
 
-void UCBTService_UpdateAIContext::UpdateCombatAssignmentContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Combat::bShouldEngage, InAIContext.bShouldEngage);
+	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage, InAIContext.bShouldEngage);
 }
 
 void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
@@ -295,7 +295,7 @@ void UCBTService_UpdateAIContext::ClearHomeMetricContext(UBlackboardComponent* I
 	InBlackboardComp->ClearValue(CAIKey::Navigation::bReturnHome);
 }
 
-void UCBTService_UpdateAIContext::ClearCombatMetricContext(UBlackboardComponent* InBlackboardComp)
+void UCBTService_UpdateAIContext::ClearAlertRangeContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
@@ -303,11 +303,11 @@ void UCBTService_UpdateAIContext::ClearCombatMetricContext(UBlackboardComponent*
 	InBlackboardComp->ClearValue(CAIKey::Alert::bInAlertRange);
 }
 
-void UCBTService_UpdateAIContext::ClearCombatAssignmentContext(UBlackboardComponent* InBlackboardComp)
+void UCBTService_UpdateAIContext::ClearEngageAssignmentContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Combat::bShouldEngage);
+	InBlackboardComp->ClearValue(CAIKey::Engage::bShouldEngage);
 }
 
 void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InBlackboardComp)

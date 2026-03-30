@@ -16,7 +16,7 @@ EBTNodeResult::Type UCBTTask_SelectAttackIndex::ExecuteTask(UBehaviorTreeCompone
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 	if (AttackCount <= 0) return EBTNodeResult::Failed;
 
-	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Combat::AttackIndex);
+	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Engage::AttackIndex);
 
 	int32 nextIndex = INDEX_NONE;
 
@@ -33,7 +33,7 @@ EBTNodeResult::Type UCBTTask_SelectAttackIndex::ExecuteTask(UBehaviorTreeCompone
 		nextIndex = FMath::Min(currentIndex + 1, AttackCount - 1);
 	}
 
-	blackboardComp->SetValueAsInt(CAIKey::Combat::AttackIndex, nextIndex);
+	blackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, nextIndex);
 
 	return EBTNodeResult::Succeeded;
 }

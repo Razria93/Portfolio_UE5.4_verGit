@@ -12,7 +12,7 @@ enum class ECombatRole : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FCombatRequestContext
+struct FEngageRequestContext
 {
 	GENERATED_BODY()
 
@@ -33,11 +33,11 @@ public:
 	bool bWasEngaged = false;
 
 public:
-	FCombatRequestContext() = default;
+	FEngageRequestContext() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FCombatAssignmentContext
+struct FEngageAssignmentContext
 {
 	GENERATED_BODY()
 
@@ -49,7 +49,7 @@ public:
 	ECombatRole CombatRole = ECombatRole::None;
 
 public:
-	FCombatAssignmentContext() = default;
+	FEngageAssignmentContext() = default;
 
 public:
 	bool IsValidAssignment() const

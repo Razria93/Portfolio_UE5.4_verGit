@@ -23,7 +23,7 @@ enum class EAIStateType : uint8
 	Investigate,
 	Chase,
 	Alert,
-	Combat,
+	Engage,
 	HitReact,
 	Dead,
 	Max,
