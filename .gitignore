@@ -15,4 +15,7 @@ Saved/
 
 # Obsidian config
 /docs/.obsidian/
+
+# ignore Docs
 /docs/ignore/
+/docs/01_Issue_CheckList/ignore/
