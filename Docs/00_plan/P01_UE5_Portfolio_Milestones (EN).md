@@ -111,17 +111,17 @@
 
 #### Implement Enemy AI (FSM)
 
-- [ ] Idle
+- [x] Idle
     
-- [ ] Move
+- [x] Move
     
-- [ ] Chase
+- [x] Chase
     
-- [ ] Attack
+- [x] Attack
     
-- [ ] Hit reaction
+- [x] Hit reaction
     
-- [ ] Death
+- [x] Death
 
 
 #### Implement Advanced Player Combat

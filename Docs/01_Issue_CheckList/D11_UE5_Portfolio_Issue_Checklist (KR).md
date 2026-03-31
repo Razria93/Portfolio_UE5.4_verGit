@@ -2,12 +2,12 @@
 
 ## 제목
 
-**M03-01: AIController + Blackboard + BehaviorTree 기본 파이프라인 구성**
+**M03-01: AI BehaviorTree Core 및 Enemy AI 상태/전투 파이프라인 구성**
 
 ### 날짜
 
 - **Day 11**
-
+  
 - **Date : 2026.01.26**
 
 
@@ -15,132 +15,234 @@
 
 ### 목표
 
-- `AIController` / `Blackboard` / `BehaviorTree`의 기본 구성을 확정하고, Enemy AI의 최소 동작 파이프라인을 구축함.
+- `AIController` / `Blackboard` / `BehaviorTree`의 기본 코어를 구성하고, Enemy AI의 상태 전이 파이프라인을 확정함.
 
-- 전투/추적/대기 상태 전환을 **Blackboard 키와 BehaviorTree 흐름**으로 정리하여 이후 확장(전술/패턴/스킬) 기반을 마련함.
+- `Perception -> AIContext -> AIState -> BT Branch` 흐름을 기준으로 `Idle / Patrol / Investigate / Chase / Alert / Engage / HitReact / Dead` 상태 전환 구조를 정리함.
 
-- 테스트 레벨에서 **단일 Enemy 기준으로 동작 검증**을 완료하고, 로그 기반 추적성을 확보함.
+- 테스트 레벨에서 **단일 Enemy 기준**으로 상태 전이와 전투 흐름을 검증하고, 로그 기반 추적성을 확보함.
 
 
 ---
 
 ### 브랜치
 
-- feature/ai-behaviortree-core
+- `feature/ai-behaviortree-core`
 
 
 ---
 
 ### TODO List
 
-#### 1. AIController 기본 클래스 및 소유 관계 정리
+#### 1. AIController 코어 및 초기화 루틴 구성
 
-- [ ] `CAIController`(가칭) 클래스 생성
-
-- [ ] `OnPossess`에서 Blackboard/BehaviorTree 초기화 루틴 작성
-
-- [ ] 소유 Pawn 캐싱(Enemy 캐스팅 및 유효성 검증)
-
-- [ ] 디버그 출력(Controller, Pawn, BT Asset, BB Asset) 최소 로그 규칙 정의
-
-
----
-
-#### 2. Blackboard 구성(키 규격화)
-
-- [ ] Blackboard Asset 생성 및 기본 키 정의
-
-  - [ ] `TargetActor` (Object)
-
-  - [ ] `HomeLocation` (Vector)
-
-  - [ ] `PatrolLocation` (Vector, 옵션)
-
-  - [ ] `IsInCombat` (Bool)
-
-  - [ ] `IsDead` (Bool)
-
-  - [ ] `LastKnownTargetLocation` (Vector)
-
-- [ ] 키 네이밍 규칙 확정(접두사/타입 포함 여부)
-
-- [ ] 키 초기값 설정 규칙 정의(Spawn/OnPossess 시점)
+- [x] `CAIController` 클래스 구성
+      
+- [x] `OnPossess`에서 Blackboard 초기화
+      
+- [x] `OnPossess`에서 BehaviorTree 실행
+      
+- [x] 소유 Pawn 캐싱 및 Enemy 유효성 검증
+      
+- [x] Blackboard Key 유효성 검증 루틴 추가
+      
+- [x] 초기 Blackboard 값 세팅 규칙 정리
+      
+- [x] 최소 디버그 로그 규칙 정의
 
 
 ---
 
-#### 3. BehaviorTree 골격 구성(최소 동작)
+#### 2. Blackboard 키 체계 정리
 
-- [ ] BT Root → Selector 구조 구성
-
-  - [ ] Dead 상태 Branch (우선순위 최상)
-
-  - [ ] Combat 상태 Branch (추적/공격)
-
-  - [ ] Idle/Patrol Branch (대기/순찰)
-
-- [ ] 각 Branch에 필요한 Decorator 조건 정의
-
-- [ ] 최소 실행 가능한 노드 구성(Wait, MoveTo, Simple Sequence)
+- [x] `CAIKey` namespace 기반 키 체계 정리
+      
+- [x] Targeting / State / Perception / Metric / Navigation 키 정의
+      
+- [x] Patrol / Investigate / Chase / Alert / Engage 키 정의
+      
+- [x] Reaction / Dead 관련 키 정의
+      
+- [x] Spawn / Possess 시점 초기값 세팅 규칙 확정
 
 
 ---
 
-#### 4. BT Task 노드(최소 2종) 구현
+#### 3. AI Perception 및 Target Context 구성
 
-- [ ] Task: `SetTargetFromSense` 또는 `UpdateTarget` (감지 결과 반영)
-
-- [ ] Task: `MoveToTarget` 또는 `MoveToLocation`
-
-- [ ] Task: `ClearTarget` (타겟 상실 시 초기화)
-
-- [ ] Task 수행 결과 로그 출력 규칙 추가(성공/실패 사유)
-
-
----
-
-#### 5. Service/Decorator 최소 설계(상태 갱신)
-
-- [ ] Service: `UpdateCombatState` (거리/라인오브사이트 기준)
-
-- [ ] Decorator: `IsValidTarget` (TargetActor 유효성)
-
-- [ ] Decorator: `IsInCombat` / `IsDead` (Blackboard Bool 기반)
-
-- [ ] 조건 실패 시 흐름 전환 정책 정의(Idle 복귀, Search 등)
+- [x] `AIPerceptionComponent` 연동
+      
+- [x] Sight 설정값 구성
+      
+- [x] Perception 이벤트 수신 처리
+      
+- [x] `TargetDataMap` 기반 타겟 캐시 구성
+      
+- [x] Target priority / LOS / memory timeout 정책 반영
+      
+- [x] `BuildPerceptionContext()` 흐름 구성
 
 
 ---
 
-#### 6. AI Perception 연동(옵션/후속 확장)
+#### 4. AIContext 갱신 서비스 구성
 
-- [ ] `AIPerceptionComponent` 추가 여부 결정
+- [x] `UpdateAIContext` 서비스 구성
+      
+- [x] Perception context 갱신
+      
+- [x] Home metric 갱신
+      
+- [x] Alert range 계산
+      
+- [x] Engage assignment 요청/반영
+      
+- [x] Reaction context 갱신
+      
+- [x] Dead context 갱신
+      
+- [x] 상황별 Blackboard clear 정책 정리
+  
 
-- [ ] 시야/청각 기본 설정값 확정
+---
 
-- [ ] 감지 이벤트 → Blackboard 갱신 규칙 확정
+#### 5. AIState 전이 서비스 구성
+
+- [x] `UpdateAIState` 서비스 구성
+      
+- [x] `Dead > HitReact > Engage > Investigate/Chase/Alert/Idle` 우선순위 정리
+      
+- [x] Target / LOS / AlertRange / Engage 조건 기반 상태 결정
+      
+- [x] 상태 전이 시 Blackboard clean-up 규칙 정리
+      
+- [x] Engage 이탈 시 공격 관련 키 초기화 규칙 정리
+  
+
+---
+
+#### 6. BehaviorTree 상태 브랜치 구성
+
+- [x] Root 기준 상태 브랜치 구조 구성
+      
+	- [x] `Idle`
+	      
+	- [x] `Patrol`
+	      
+	- [x] `Investigate`
+	      
+	- [x] `Chase`
+	      
+	- [x] `Alert`
+	      
+	- [x] `Engage`
+	      
+	- [x] `HitReact`
+	      
+	- [x] `Dead`
+		  
+	- [x] 각 Branch 진입 조건용 Decorator 연결
 
 
 ---
 
-#### 7. 통합 검증 시나리오
+#### 7. Patrol / Investigate / Chase / Alert 흐름 구성
 
-- [ ] 시나리오 1: Enemy Spawn → Idle 유지 (Target 없음)
+- [x] Patrol path / point 기반 순찰 흐름 구성
+      
+- [x] Investigate location / index 기반 탐색 흐름 구성
+      
+- [x] Chase 거리 조건 및 이동 흐름 구성
+      
+- [x] Alert 위치 선정 및 step 이동 흐름 구성
+      
+- [x] 상태별 이동 속도 / focus 제어 노드 구성
 
-- [ ] 시나리오 2: Target 감지 → Combat 전환 → MoveTo 실행
 
-- [ ] 시나리오 3: Target 상실 → Combat 해제 → Idle 복귀
+---
 
-- [ ] 시나리오 4: Dead 상태 전환 시 모든 행동 중단 확인
+#### 8. Engage Assignment 및 전투 흐름 구성
+
+- [x] `UCWorldSubsystem_CombatEngage` 추가
+      
+- [x] Engage request / assignment 구조 구성
+      
+- [x] 다수 AI 대상 Engage / Alert 역할 분배 규칙 반영
+      
+- [x] `UpdateEngageContext`로 `bInEngageRange`, `bCanAttack` 계산
+      
+- [x] Engage positioning subtree 구성
+      
+- [x] Attack subtree 진입 조건 정리
+
+
+---
+
+#### 9. Attack Subtree 및 공격 루프 구성
+
+- [x] `SelectAttackIndex`
+      
+- [x] `StartAttack`
+      
+- [x] `WaitAttackEnd`
+      
+- [x] `CommitAttackCooldown`
+      
+- [x] `AnimNotify_EndEnemyAttack` 연동
+      
+- [x] 공격 중 `bIsAttacking` 유지 규칙 정리
+      
+- [x] 공격 종료 후 재진입 / 쿨다운 검증
+
+
+---
+
+#### 10. Reaction / Dead 상태 흐름 구성
+
+- [x] pending / active reaction 구조 반영
+      
+- [x] `TryStartReaction`, `WaitEndReaction` 구성
+      
+- [x] `HitReact` 상태 진입 및 종료 검증
+      
+- [x] `DeadState` Blackboard 동기화
+      
+- [x] `StayDead`, `WaitDeadState`, `StartRevive` 구성
+      
+- [x] `AnimNotify_EnterDeadState`, `AnimNotify_EnterAliveState` 연동
+  
+
+---
+
+#### 11. 통합 검증 시나리오
+
+- [x] 시나리오 1: Enemy Spawn -> Idle 유지
+      
+- [x] 시나리오 2: Patrol 설정 시 Patrol 순환
+      
+- [x] 시나리오 3: Target 감지 -> Chase 전환
+      
+- [x] 시나리오 4: Alert 거리 진입 -> Alert 전환
+      
+- [x] 시나리오 5: Engage assignment 반영 -> Engage 진입
+      
+- [x] 시나리오 6: 공격 시작 -> 종료 -> 쿨다운 -> 재공격
+      
+- [x] 시나리오 7: 피격 시 HitReact 진입 및 복귀
+      
+- [x] 시나리오 8: 사망 시 모든 행동 중단 및 Dead 상태 유지
+      
+- [x] 시나리오 9: revive 시 Alive 상태 복귀 확인
 
 
 ---
 
 ### Notes
 
-- 초기 BT 구성은 **최소 동작(Idle/Combat/Dead)** 흐름만 확보하고, 공격/패턴/스킬은 후속 이슈에서 확장함.
+- 본 이슈는 **Enemy AI의 BT 코어와 상태 전이 파이프라인**을 닫는 것이 목적이며, 플레이어 전투 루프 자체는 후속 이슈에서 확장함.
 
-- Blackboard 키는 **전투 시스템과 공유 가능한 규격**으로 설계하여 다른 컴포넌트와의 연계를 고려함.
+- 기존 `Combat` 중심 표현은 현재 구조상 `Engage` 기반으로 재정리하는 것이 맞으며, Blackboard 키와 서비스/태스크도 동일한 기준으로 맞춤.
+
+- 이 이슈의 핵심은 단순 BT 자산 생성이 아니라, `Perception -> Context -> State -> Branch -> Action` 흐름을 코드와 Blackboard 기준으로 일관되게 정리하는 데 있음.
 
 
 ---

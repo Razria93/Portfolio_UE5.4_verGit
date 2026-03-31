@@ -82,46 +82,46 @@ Divided into 14 major stages + extra systems.
 
 ### **Team System (Order 8)**
 
-- [ ] Player / Neutral / Enemy factions
+- [x] Player / Neutral / Enemy factions
     
 
 ### **Enemy AI – Movement (Order 9)**
 
 *(AI Navigation, EQS/queries Based)*
 
-- [ ] Point-to-point movement
+- [x] Point-to-point movement
     
-- [ ] Random Query movement
+- [x] Random Query movement
     
-- [ ] Patrol movement
+- [x] Patrol movement
     
-- [ ] Chase movement
+- [x] Chase movement
     
 
 ### **Enemy AI – Behavior & Positioning (Order 10)**
 
-- [ ] Post-chase dispersal logic
+- [x] Post-chase dispersal logic
     
-- [ ] Combat priority assignment
+- [x] Combat priority assignment
     
-    - [ ] Attack Wait
+    - [x] Attack Wait
         
-    - [ ] Guard Wait
+    - [x] Guard Wait
         
-    - [ ] Defense Wait
+    - [x] Defense Wait
         
-- [ ] Look-at-Player behavior
+- [x] Look-at-Player behavior
     
 
 ### **Enemy AI – Attacking (Order 11)**
 
-- [ ] Attack animations
+- [x] Attack animations
     
-- [ ] Damage application
+- [x] Damage application
     
-- [ ] Combo attacks
+- [x] Combo attacks
     
-- [ ] Distance-based & random attack logic
+- [x] Distance-based & random attack logic
     
 
 ### **Player Defensive Mechanics (Order 12)**

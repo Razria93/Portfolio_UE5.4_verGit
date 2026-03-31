@@ -2,12 +2,12 @@
 
 ## Title
 
-**M03-01: Build baseline AIController + Blackboard + BehaviorTree pipeline**
+**M03-01: AI BehaviorTree Core and Enemy AI State/Combat Pipeline Setup**
 
 ### Date
 
 - **Day 11**
-
+  
 - **Date : 2026.01.26**
 
 
@@ -15,132 +15,234 @@
 
 ### Goals
 
-- Confirm the baseline setup for `AIController` / `Blackboard` / `BehaviorTree` and build the minimum Enemy AI pipeline.
+- Establish the core setup of `AIController` / `Blackboard` / `BehaviorTree`, and finalize the Enemy AI state transition pipeline.
 
-- Organize combat/chase/idle state transitions through **Blackboard keys and BehaviorTree flow** to establish the foundation for later expansion (tactics/patterns/skills).
+- Organize the state transition structure of `Idle / Patrol / Investigate / Chase / Alert / Engage / HitReact / Dead` based on the `Perception -> AIContext -> AIState -> BT Branch` flow.
 
-- Validate behavior in a test level for a **single Enemy** and secure log-based traceability.
+- Validate state transitions and combat flow for a **single Enemy** in the test level, and secure log-based traceability.
 
 
 ---
 
 ### Branch
 
-- feature/ai-behaviortree-core
+- `feature/ai-behaviortree-core`
 
 
 ---
 
 ### TODO List
 
-#### 1. Base AIController class and ownership flow
+#### 1. Build AIController Core and Initialization Routine
 
-- [ ] Create a `CAIController` (temporary name) class
-
-- [ ] Implement Blackboard/BehaviorTree initialization in `OnPossess`
-
-- [ ] Cache the owning Pawn (cast to Enemy + validity checks)
-
-- [ ] Define minimal debug log rules (Controller, Pawn, BT Asset, BB Asset)
-
-
----
-
-#### 2. Blackboard setup (key standardization)
-
-- [ ] Create a Blackboard Asset and define base keys
-
-  - [ ] `TargetActor` (Object)
-
-  - [ ] `HomeLocation` (Vector)
-
-  - [ ] `PatrolLocation` (Vector, optional)
-
-  - [ ] `IsInCombat` (Bool)
-
-  - [ ] `IsDead` (Bool)
-
-  - [ ] `LastKnownTargetLocation` (Vector)
-
-- [ ] Confirm key naming rules (prefix/type inclusion)
-
-- [ ] Define key initialization rules (Spawn/OnPossess timing)
+- [x] Implement `CAIController` class
+      
+- [x] Initialize Blackboard in `OnPossess`
+      
+- [x] Run BehaviorTree in `OnPossess`
+      
+- [x] Cache owned Pawn and validate Enemy
+      
+- [x] Add Blackboard Key validation routine
+      
+- [x] Define initial Blackboard value setup rules
+      
+- [x] Define minimal debug log rules
 
 
 ---
 
-#### 3. BehaviorTree skeleton (minimum behavior)
+#### 2. Organize Blackboard Key System
 
-- [ ] Build BT Root → Selector structure
-
-  - [ ] Dead branch (highest priority)
-
-  - [ ] Combat branch (chase/attack)
-
-  - [ ] Idle/Patrol branch (wait/patrol)
-
-- [ ] Define required Decorator conditions for each branch
-
-- [ ] Build minimum runnable nodes (Wait, MoveTo, Simple Sequence)
+- [x] Organize key system based on `CAIKey` namespace
+      
+- [x] Define Targeting / State / Perception / Metric / Navigation keys
+      
+- [x] Define Patrol / Investigate / Chase / Alert / Engage keys
+      
+- [x] Define Reaction / Dead related keys
+      
+- [x] Finalize initial value setup rules at Spawn / Possess timing
 
 
 ---
 
-#### 4. BT Task nodes (at least 2)
+#### 3. Build AI Perception and Target Context
 
-- [ ] Task: `SetTargetFromSense` or `UpdateTarget` (reflect perception output)
-
-- [ ] Task: `MoveToTarget` or `MoveToLocation`
-
-- [ ] Task: `ClearTarget` (reset on target loss)
-
-- [ ] Add log rules for task results (success/failure reason)
-
-
----
-
-#### 5. Service/Decorator minimum design (state updates)
-
-- [ ] Service: `UpdateCombatState` (distance/line-of-sight checks)
-
-- [ ] Decorator: `IsValidTarget` (TargetActor validation)
-
-- [ ] Decorator: `IsInCombat` / `IsDead` (Blackboard Bool-based)
-
-- [ ] Define flow switch policy on condition failure (return to Idle, Search, etc)
+- [x] Integrate `AIPerceptionComponent`
+      
+- [x] Configure Sight settings
+      
+- [x] Handle Perception events
+      
+- [x] Build target cache based on `TargetDataMap`
+      
+- [x] Apply target priority / LOS / memory timeout policies
+      
+- [x] Build `BuildPerceptionContext()` flow
 
 
 ---
 
-#### 6. AI Perception integration (optional / follow-up)
+#### 4. Build AIContext Update Services
 
-- [ ] Decide whether to add `AIPerceptionComponent`
+- [x] Build `UpdateAIContext` service
+      
+- [x] Update Perception context
+      
+- [x] Update Home metric
+      
+- [x] Compute Alert range
+      
+- [x] Request/apply Engage assignment
+      
+- [x] Update Reaction context
+      
+- [x] Update Dead context
+      
+- [x] Organize Blackboard clear policies by situation
+  
 
-- [ ] Confirm default settings for sight/hearing
+---
 
-- [ ] Define rules for perception events → Blackboard updates
+#### 5. Build AIState Transition Service
+
+- [x] Build `UpdateAIState` service
+      
+- [x] Define priority order: `Dead > HitReact > Engage > Investigate/Chase/Alert/Idle`
+      
+- [x] Decide state based on Target / LOS / AlertRange / Engage conditions
+      
+- [x] Organize Blackboard clean-up rules on state transition
+      
+- [x] Organize attack-related key reset rules when leaving Engage
+  
+
+---
+
+#### 6. Build BehaviorTree State Branches
+
+- [x] Build root-based state branch structure
+      
+	- [x] `Idle`
+	      
+	- [x] `Patrol`
+	      
+	- [x] `Investigate`
+	      
+	- [x] `Chase`
+	      
+	- [x] `Alert`
+	      
+	- [x] `Engage`
+	      
+	- [x] `HitReact`
+	      
+	- [x] `Dead`
+		  
+	- [x] Connect Decorators for each Branch entry condition
 
 
 ---
 
-#### 7. Integration validation scenarios
+#### 7. Build Patrol / Investigate / Chase / Alert Flows
 
-- [ ] Scenario 1: Enemy Spawn → Idle maintained (no target)
+- [x] Build patrol flow based on patrol path / point
+      
+- [x] Build investigate flow based on investigate location / index
+      
+- [x] Build chase flow based on distance conditions and movement
+      
+- [x] Build alert flow based on alert point selection and step movement
+      
+- [x] Build movement speed / focus control nodes per state
 
-- [ ] Scenario 2: Target detected → Combat transition → MoveTo executed
 
-- [ ] Scenario 3: Target lost → Combat cleared → return to Idle
+---
 
-- [ ] Scenario 4: Dead state → verify all actions stop
+#### 8. Build Engage Assignment and Combat Flow
+
+- [x] Add `UCWorldSubsystem_CombatEngage`
+      
+- [x] Build Engage request / assignment structure
+      
+- [x] Apply Engage / Alert role distribution rules for multiple AI against the same target
+      
+- [x] Compute `bInEngageRange`, `bCanAttack` through `UpdateEngageContext`
+      
+- [x] Build Engage positioning subtree
+      
+- [x] Organize Attack subtree entry conditions
+
+
+---
+
+#### 9. Build Attack Subtree and Attack Loop
+
+- [x] `SelectAttackIndex`
+      
+- [x] `StartAttack`
+      
+- [x] `WaitAttackEnd`
+      
+- [x] `CommitAttackCooldown`
+      
+- [x] Link `AnimNotify_EndEnemyAttack`
+      
+- [x] Organize `bIsAttacking` maintenance rule during attack
+      
+- [x] Validate re-entry / cooldown after attack ends
+
+
+---
+
+#### 10. Build Reaction / Dead State Flow
+
+- [x] Apply pending / active reaction structure
+      
+- [x] Build `TryStartReaction`, `WaitEndReaction`
+      
+- [x] Validate `HitReact` state entry and exit
+      
+- [x] Synchronize `DeadState` with Blackboard
+      
+- [x] Build `StayDead`, `WaitDeadState`, `StartRevive`
+      
+- [x] Link `AnimNotify_EnterDeadState`, `AnimNotify_EnterAliveState`
+  
+
+---
+
+#### 11. Integrated Validation Scenarios
+
+- [x] Scenario 1: Enemy Spawn -> remain Idle
+      
+- [x] Scenario 2: Patrol loops when Patrol is configured
+      
+- [x] Scenario 3: Detect Target -> transition to Chase
+      
+- [x] Scenario 4: Enter Alert distance -> transition to Alert
+      
+- [x] Scenario 5: Engage assignment applied -> transition to Engage
+      
+- [x] Scenario 6: Attack start -> end -> cooldown -> re-attack
+      
+- [x] Scenario 7: Enter HitReact on hit and return
+      
+- [x] Scenario 8: Stop all behavior on death and remain in Dead state
+      
+- [x] Scenario 9: Confirm return to Alive state on revive
 
 
 ---
 
 ### Notes
 
-- The initial BT focuses only on the **minimum flow (Idle/Combat/Dead)**, while attack/pattern/skill expansions are handled in follow-up issues.
+- The purpose of this issue is to close the **Enemy AI BT core and state transition pipeline**, while the player combat loop itself will be expanded in follow-up issues.
 
-- Design Blackboard keys with a **shared standard** in mind so they integrate with the combat system and other components.
+- The existing `Combat`-centric terminology should be reorganized around `Engage` in the current structure, and Blackboard keys as well as services/tasks should follow the same convention.
+
+- The core of this issue is not simply creating BT assets, but consistently organizing the `Perception -> Context -> State -> Branch -> Action` flow based on both code and Blackboard.
 
 
 ---

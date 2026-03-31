@@ -112,17 +112,17 @@
 
 #### 적 AI (FSM)
 
-- [ ] Idle
+- [x] Idle
     
-- [ ] Move
+- [x] Move
     
-- [ ] Chase
+- [x] Chase
     
-- [ ] Attack
+- [x] Attack
     
-- [ ] Hit Reaction
+- [x] Hit Reaction
     
-- [ ] Death
+- [x] Death
     
 
 #### 플레이어 고급 전투 시스템
@@ -222,16 +222,3 @@
 |**M5**|`v0.5-polish-and-docs`|문서화 & 마무리 작업|W5||
 
 ---
-
-### 필요하면 아래도 추가 제작 가능
-
-- 한국어 ↔ 영어 병기 버전
-    
-- Obsidian 전용 Backlink-friendly 버전
-    
-- “Extended Scope” (2026 이후 확장 계획)
-    
-- GitHub Wiki 최적화 버전
-    
-
-원하면 말해줘!
