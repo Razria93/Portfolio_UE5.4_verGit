@@ -39,6 +39,15 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCApplyDamageComponent* ApplyDamageComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCTakeDamageComponent* TakeDamageComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCHealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCReactionComponent* ReactionComponent;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -46,10 +55,14 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	UCMovementComponent* GetMovementComp() const;
-	UCWeaponComponent* GetWeaponComp() const;
-	UCStateComponent* GetStateComp() const;
-	UCActionComponent* GetActionComp() const;
+	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
+	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
+	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
+	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
+	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
+	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
+	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
+	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 
 public:
 	// Interface API

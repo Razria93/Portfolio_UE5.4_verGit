@@ -11,6 +11,9 @@
 #include "Component/CStateComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CApplyDamageComponent.h"
+#include "Component/CTakeDamageComponent.h"
+#include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
@@ -70,6 +73,18 @@ ACPlayer::ACPlayer()
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
 	check(ApplyDamageComponent);
+
+	// Init TakeDamageComp
+	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
+	check(TakeDamageComponent);
+
+	// Init HealthComp
+	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
+	check(HealthComponent);
+
+	// Init ReactionComp
+	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
+	check(ReactionComponent);
 }
 
 void ACPlayer::BeginPlay()
@@ -80,26 +95,6 @@ void ACPlayer::BeginPlay()
 void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
-
-UCMovementComponent* ACPlayer::GetMovementComp() const
-{
-	return IsValid(MovementComponent) ? MovementComponent : nullptr;
-}
-
-UCWeaponComponent* ACPlayer::GetWeaponComp() const
-{
-	return IsValid(WeaponComponent) ? WeaponComponent : nullptr;
-}
-
-UCStateComponent* ACPlayer::GetStateComp() const
-{
-	return IsValid(StateComponent) ? StateComponent : nullptr;
-}
-
-UCActionComponent* ACPlayer::GetActionComp() const
-{
-	return IsValid(ActionComponent) ? ActionComponent : nullptr;
 }
 
 void ACPlayer::HandleMoveForward(const float InAxisValue)
