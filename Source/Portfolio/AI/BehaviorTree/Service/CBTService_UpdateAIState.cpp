@@ -109,7 +109,7 @@ void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* In
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
-		InBlackboardComp->ClearValue(CAIKey::Engage::AttackIndex);
+		InBlackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
 
 		if (InNextAIStateType == EAIStateType::Dead || InNextAIStateType == EAIStateType::Idle)
 		{
