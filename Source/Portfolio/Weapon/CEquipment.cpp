@@ -47,7 +47,7 @@ void UCEquipment::Equip()
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
-	StateComp_Cached->SetEquipMode();
+	StateComp_Cached->SetEquipState();
 
 	if (EquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetStop();
@@ -64,7 +64,7 @@ void UCEquipment::Unequip()
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
-	StateComp_Cached->SetUnequipMode();
+	StateComp_Cached->SetUnequipState();
 
 	if (UnquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetStop();
@@ -99,7 +99,7 @@ void UCEquipment::End_Equip()
 	if (OnEquipmentEndEquip.IsBound())
 		OnEquipmentEndEquip.Broadcast();
 
-	StateComp_Cached->SetIdleMode();
+	StateComp_Cached->SetIdleState();
 }
 
 void UCEquipment::Begin_Unequip()
@@ -125,5 +125,5 @@ void UCEquipment::End_Unequip()
 	if (OnEquipmentEndUnequip.IsBound())
 		OnEquipmentEndUnequip.Broadcast();
 
-	StateComp_Cached->SetIdleMode();
+	StateComp_Cached->SetIdleState();
 }

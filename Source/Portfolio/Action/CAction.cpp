@@ -46,7 +46,7 @@ void UCAction::PlayAction()
 
 	bIsAction = true;
 
-	StateComp_Cached->SetActionMode();
+	StateComp_Cached->SetActionState();
 
 	// NOTE: To be implemented detail by derived classes
 }
@@ -67,7 +67,7 @@ void UCAction::EndPlayAction()
 	bIsAction = false;
 	bBeginAction = false;
 
-	StateComp_Cached->SetIdleMode();
+	StateComp_Cached->SetIdleState();
 
 	// NOTE: To be implemented detail by derived classes
 }

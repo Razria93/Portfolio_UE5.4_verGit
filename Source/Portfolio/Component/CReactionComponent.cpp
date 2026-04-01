@@ -566,14 +566,14 @@ void UCReactionComponent::UpdateStateToReaction()
 {
 	if (!IsValid(StateComp_Cached)) return;
 
-	StateComp_Cached->SetReactionMode();
+	StateComp_Cached->SetReactionState();
 }
 
 void UCReactionComponent::UpdateStateToIdle()
 {
 	if (!IsValid(StateComp_Cached)) return;
 
-	StateComp_Cached->SetIdleMode();
+	StateComp_Cached->SetIdleState();
 }
 
 void UCReactionComponent::PrintReactionInfoSummary() const
