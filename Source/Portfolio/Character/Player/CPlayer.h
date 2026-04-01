@@ -50,6 +50,10 @@ private:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+public:
+	virtual void Tick(float DeltaTime) override;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -63,6 +67,9 @@ public:
 	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
+
+public:
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
 
 public:
 	// Interface API
@@ -81,4 +88,10 @@ public:
 	void HandleComboAction();
 
 	void HandleSword();
+
+private:
+	void ConsumePendingReaction();
+
+private:
+	bool CanActionInput() const;
 };
