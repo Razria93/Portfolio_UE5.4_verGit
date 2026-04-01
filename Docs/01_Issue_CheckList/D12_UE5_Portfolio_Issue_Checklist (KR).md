@@ -35,57 +35,57 @@
 
 #### 1. Player 수신 컴포넌트 구성
 
-- [ ] `ACPlayer`에 `TakeDamageComponent` 추가
+- [x] `ACPlayer`에 `TakeDamageComponent` 추가
 
-- [ ] `ACPlayer`에 `HealthComponent` 추가
+- [x] `ACPlayer`에 `HealthComponent` 추가
 
-- [ ] `ACPlayer`에 `ReactionComponent` 추가
+- [x] `ACPlayer`에 `ReactionComponent` 추가
 
-- [ ] Player 생성자 기준 컴포넌트 초기화 순서 정리
+- [x] Player 생성자 기준 컴포넌트 초기화 순서 정리
 
 
 #### 2. Player Damage 진입점 연결
 
-- [ ] `ACPlayer::TakeDamage()` 오버라이드 추가
+- [x] `ACPlayer::TakeDamage()` 오버라이드 추가
 
-- [ ] `TakeDamageComponent` 경유 처리 흐름 연결
+- [x] `TakeDamageComponent` 경유 처리 흐름 연결
 
-- [ ] fallback 처리 정책 정리
+- [x] fallback 처리 정책 정리
 
-- [ ] Player 기준 최소 로그 출력 확인
+- [x] Player 기준 최소 로그 출력 확인
 
 
 #### 3. Health / Dead 상태 연결
 
-- [ ] 피격 시 HP 감소 반영 확인
+- [x] 피격 시 HP 감소 반영 확인
 
-- [ ] `DeadState` 진입 규칙 정리
+- [x] `DeadState` 진입 규칙 정리
 
-- [ ] Dead 상태 재피격 정책 정리
+- [x] Dead 상태 재피격 정책 정리
 
-- [ ] Anim/State와 DeadState 동기화 방향 정리
+- [x] Anim/State와 DeadState 동기화 방향 정리
 
 
 #### 4. Reaction 상태 연결
 
-- [ ] 플레이어 피격 시 Reaction 요청 확인
+- [x] 플레이어 피격 시 Reaction 요청 확인
 
-- [ ] HitReact 진입 조건 검증
+- [x] HitReact 진입 조건 검증
 
-- [ ] Reaction 종료 후 Idle/기본 상태 복귀 규칙 정리
+- [x] Reaction 종료 후 Idle/기본 상태 복귀 규칙 정리
 
-- [ ] Player 기준 movement/state 제어 영향 확인
+- [x] Player 기준 movement/state 제어 영향 확인
 
 
 #### 5. 통합 검증
 
-- [ ] 시나리오 1: AI 공격 -> 플레이어 HP 감소
+- [x] 시나리오 1: AI 공격 -> 플레이어 HP 감소
 
-- [ ] 시나리오 2: AI 공격 -> 플레이어 HitReact 진입
+- [x] 시나리오 2: AI 공격 -> 플레이어 HitReact 진입
 
-- [ ] 시나리오 3: 누적 피격 -> DeadState 진입
+- [x] 시나리오 3: 누적 피격 -> DeadState 진입
 
-- [ ] 시나리오 4: Dead 상태에서 추가 피격 처리 확인
+- [x] 시나리오 4: Dead 상태에서 추가 피격 처리 확인
 
 
 ---
