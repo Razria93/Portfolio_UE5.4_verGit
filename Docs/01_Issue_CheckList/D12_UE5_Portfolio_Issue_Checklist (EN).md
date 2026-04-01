@@ -35,57 +35,57 @@
 
 #### 1. Build Player Receive Components
 
-- [ ] Add `TakeDamageComponent` to `ACPlayer`
+- [x] Add `TakeDamageComponent` to `ACPlayer`
 
-- [ ] Add `HealthComponent` to `ACPlayer`
+- [x] Add `HealthComponent` to `ACPlayer`
 
-- [ ] Add `ReactionComponent` to `ACPlayer`
+- [x] Add `ReactionComponent` to `ACPlayer`
 
-- [ ] Organize component initialization order in the Player constructor
+- [x] Organize component initialization order in the Player constructor
 
 
 #### 2. Connect Player Damage Entry Point
 
-- [ ] Add `ACPlayer::TakeDamage()` override
+- [x] Add `ACPlayer::TakeDamage()` override
 
-- [ ] Connect the processing flow through `TakeDamageComponent`
+- [x] Connect the processing flow through `TakeDamageComponent`
 
-- [ ] Organize fallback handling policy
+- [x] Organize fallback handling policy
 
-- [ ] Confirm minimal player-side debug logging
+- [x] Confirm minimal player-side debug logging
 
 
 #### 3. Connect Health / Dead States
 
-- [ ] Confirm HP decrease is applied on hit
+- [x] Confirm HP decrease is applied on hit
 
-- [ ] Organize `DeadState` entry rules
+- [x] Organize `DeadState` entry rules
 
-- [ ] Organize dead-state re-hit policy
+- [x] Organize dead-state re-hit policy
 
-- [ ] Organize synchronization direction between Anim/State and DeadState
+- [x] Organize synchronization direction between Anim/State and DeadState
 
 
 #### 4. Connect Reaction State
 
-- [ ] Confirm reaction request on player hit
+- [x] Confirm reaction request on player hit
 
-- [ ] Validate HitReact entry conditions
+- [x] Validate HitReact entry conditions
 
-- [ ] Organize return rules to Idle/default state after Reaction ends
+- [x] Organize return rules to Idle/default state after Reaction ends
 
-- [ ] Confirm movement/state control impact on the player side
+- [x] Confirm movement/state control impact on the player side
 
 
 #### 5. Integrated Validation
 
-- [ ] Scenario 1: AI attack -> player HP decreases
+- [x] Scenario 1: AI attack -> player HP decreases
 
-- [ ] Scenario 2: AI attack -> player enters HitReact
+- [x] Scenario 2: AI attack -> player enters HitReact
 
-- [ ] Scenario 3: accumulated hits -> enter DeadState
+- [x] Scenario 3: accumulated hits -> enter DeadState
 
-- [ ] Scenario 4: confirm additional hit handling in Dead state
+- [x] Scenario 4: confirm additional hit handling in Dead state
 
 
 ---
