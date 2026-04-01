@@ -5,6 +5,8 @@
 #include "Type/CHealthStructure.h"
 #include "CHealthComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDeadStateChanged, EDeadState, EDeadState);
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCHealthComponent : public UActorComponent
 {
@@ -42,6 +44,9 @@ private:
 	/* === Cached Objects === */
 	class AActor* OwnerActor_Cached;
 
+public:
+	FOnDeadStateChanged OnDeadStateChanged;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -64,6 +69,8 @@ public:
 	float TakeHeal(float InTakeHealAmount);
 
 public:
+	bool IsAlive() const;
+	bool IsDead() const;
 	bool CanKill() const;
 	bool CanRevive() const;
 
@@ -80,6 +87,7 @@ public:
 
 private:
 	void UpdateDeadState();
+	void ChangeDeadState(EDeadState InNewDeadState);
 
 private:
 	void PrintTakeDamageContextInfo();
