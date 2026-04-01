@@ -9,6 +9,7 @@
 #include "Animation/AnimMontage.h"
 
 #include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
 
 #include "AI/BlackBoard/CAIKey.h"
 
@@ -34,6 +35,8 @@ EBTNodeResult::Type UCBTTask_StartAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 
 	const int32 attackIndex = blackboardComp->GetValueAsInt(CAIKey::Engage::AttackIndex);
 	if (!AttackMontages.IsValidIndex(attackIndex)) return EBTNodeResult::Failed;
+
+	if (AttackActionType == EActionType::Max) return EBTNodeResult::Failed;
 
 	UAnimMontage* attackMontage = AttackMontages[attackIndex];
 	if (!IsValid(attackMontage)) return EBTNodeResult::Failed;
@@ -62,6 +65,15 @@ EBTNodeResult::Type UCBTTask_StartAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 
 	const float duration = animInstance->Montage_Play(attackMontage);
 	if (duration <= 0.f) return EBTNodeResult::Failed;
+
+	if (UCWeaponComponent* weaponComp = character->FindComponentByClass<UCWeaponComponent>())
+	{
+		FActionContext actionContext;
+		actionContext.CurrentActionType = AttackActionType;
+		actionContext.ActionIndex = attackIndex;
+
+		weaponComp->PushContextToAttachment(actionContext);
+	}
 
 	if (bStopMovementOnStart)
 	{
