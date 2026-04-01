@@ -3,6 +3,7 @@
 
 #include "GameFramework/Character.h"
 #include "Type/CStateStructure.h"
+#include "Type/CHealthStructure.h"
 
 UCStateComponent::UCStateComponent()
 {
@@ -24,56 +25,94 @@ void UCStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UCStateComponent::SetIdleMode()
+void UCStateComponent::OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateMode(EStateType::Idle);
+	switch (InNewDeadState)
+	{
+	case EDeadState::Alive:
+		if (CheckCurStateType(EStateType::Dead))
+		{
+			SetIdleState();
+		}
+		break;
+
+	case EDeadState::Dying:
+	case EDeadState::Dead:
+	case EDeadState::Reviving:
+		SetDeadState();
+		break;
+
+	default:
+		break;
+	}
 }
 
-void UCStateComponent::SetEquipMode()
+void UCStateComponent::SetIdleState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateMode(EStateType::Equip);
+	ChangeStateType(EStateType::Idle);
 }
 
-void UCStateComponent::SetUnequipMode()
+void UCStateComponent::SetEquipState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateMode(EStateType::Unequip);
+	ChangeStateType(EStateType::Equip);
 }
 
-void UCStateComponent::SetActionMode()
+void UCStateComponent::SetUnequipState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateMode(EStateType::Action);
+	ChangeStateType(EStateType::Unequip);
 }
 
-void UCStateComponent::SetReactionMode()
+void UCStateComponent::SetActionState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateMode(EStateType::Reaction);
+	ChangeStateType(EStateType::Action);
+}
+
+void UCStateComponent::SetReactionState()
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	ChangeStateType(EStateType::Reaction);
+}
+
+void UCStateComponent::SetDeadState()
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	ChangeStateType(EStateType::Dead);
 }
 
 void UCStateComponent::ChangeStateType(EStateType InNewStateType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (CurrentStateType == InNewStateType) return;
 
 	EStateType prevStateType = CurrentStateType;
-
 	CurrentStateType = InNewStateType;
 
+	PrintStateChangedInfo(prevStateType, CurrentStateType);
+
 	if (OnStateTypeChanged.IsBound())
+	{
 		OnStateTypeChanged.Broadcast(OwnerCharacter_Cached, prevStateType, CurrentStateType);
+	}
 }
 
-void UCStateComponent::ChangeStateMode(EStateType InNewStateType)
+void UCStateComponent::PrintStateChangedInfo(EStateType InPrevStateType, EStateType InNewStateType) const
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	ChangeStateType(InNewStateType);
+	FLog::Log(FString::Printf(
+		TEXT("[StateChanged] Owner = %s | PrevState = %s | NewState = %s"),
+		*GetNameSafe(OwnerCharacter_Cached),
+		*UEnum::GetValueAsString(InPrevStateType),
+		*UEnum::GetValueAsString(InNewStateType)
+	));
 }

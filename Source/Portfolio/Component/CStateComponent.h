@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CStateStructure.h"
+#include "Type/CHealthStructure.h"
 #include "CStateComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FStateTypeChanged, class ACharacter*, InOwnerCharacter, EStateType, InPrevStateType, EStateType, InNewStateType);
@@ -34,16 +35,20 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	void OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState);
+
+public:
 	/* === Getter === */
-	FORCEINLINE EStateType GetCurStateType() { return CurrentStateType; }
+	FORCEINLINE EStateType GetCurStateType() const { return CurrentStateType; }
 
 public:
 	/* === Setter === */
-	void SetIdleMode();
-	void SetEquipMode();
-	void SetUnequipMode();
-	void SetActionMode();
-	void SetReactionMode();
+	void SetIdleState();
+	void SetEquipState();
+	void SetUnequipState();
+	void SetActionState();
+	void SetReactionState();
+	void SetDeadState();
 
 public:
 	/* === Check / Query === */
@@ -51,5 +56,8 @@ public:
 
 private:
 	void ChangeStateType(EStateType InNewStateType);
-	void ChangeStateMode(EStateType InNewStateType);
+
+private:
+	void PrintStateChangedInfo(EStateType InPrevStateType, EStateType InNewStateType) const;
+	
 };

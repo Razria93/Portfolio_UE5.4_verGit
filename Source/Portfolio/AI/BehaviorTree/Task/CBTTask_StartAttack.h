@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
+#include "Type/CWeaponStructure.h"
 #include "CBTTask_StartAttack.generated.h"
 
 UCLASS()
@@ -15,6 +16,9 @@ public:
 private:
 	UPROPERTY(EditAnywhere, Category = "Config")
 	TArray<UAnimMontage*> AttackMontages;
+
+	UPROPERTY(EditAnywhere, Category = "Config")
+	EActionType AttackActionType = EActionType::Max;
 
 	UPROPERTY(EditAnywhere, Category = "Config")
 	bool bStopMovementOnStart = true;

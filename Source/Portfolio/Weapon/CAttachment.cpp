@@ -117,8 +117,10 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
+	
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
 	if (OwnerCharacter_Cached == OtherActor) return;
+	
 	if (!IsValid(ApplyDamageComp_Cached)) return;
 
 	FOverlapContext lastOverlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
@@ -134,7 +136,7 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	if (OnAttachmentBeginOverlap.IsBound())
 		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	// PrintBeginOverlapContextInfo(hitContext);
+	PrintBeginOverlapContextInfo(hitContext);
 
 	ApplyDamageComp_Cached->RequestApplyDamage(hitContext);
 	LastOverlapContext = lastOverlapContext;

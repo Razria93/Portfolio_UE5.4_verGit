@@ -30,7 +30,7 @@ void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentH
 		MaxHP = 0.f;
 		PreviousHP = 0.f;
 		CurrentHP = 0.f;
-		DeadState = EDeadState::Dead;
+		ChangeDeadState(EDeadState::Dead);
 
 		return;
 	}
@@ -49,8 +49,15 @@ void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentH
 		PreviousHP = clampedHP;
 		CurrentHP = clampedHP;
 	}
-	
-	DeadState = (CurrentHP > 0.f) ? EDeadState::Alive : EDeadState::Dead;
+
+	if (CurrentHP > 0.f)
+	{
+		ChangeDeadState(EDeadState::Alive);
+	}
+	else
+	{
+		ChangeDeadState(EDeadState::Dead);
+	}
 }
 
 bool UCHealthComponent::TryKill()
@@ -59,9 +66,7 @@ bool UCHealthComponent::TryKill()
 
 	PreviousHP = CurrentHP;
 	CurrentHP = 0.f;
-	DeadState = EDeadState::Dying;
-
-	// TODO: `FOnKill` Delegate Broadcast
+	ChangeDeadState(EDeadState::Dying);
 
 	return true;
 }
@@ -75,9 +80,7 @@ bool UCHealthComponent::TryRevive(float InReviveHP)
 
 	PreviousHP = CurrentHP;
 	CurrentHP = reviveHP;
-	DeadState = EDeadState::Reviving;
-
-	// TODO: `FOnRevive` Delegate Broadcast
+	ChangeDeadState(EDeadState::Reviving);
 
 	return true;
 }
@@ -88,16 +91,14 @@ bool UCHealthComponent::TryCancelRevive()
 
 	PreviousHP = CurrentHP;
 	CurrentHP = 0.f;
-	DeadState = EDeadState::Dead;
-
-	// TODO: `FOnCancelRevive` Delegate Broadcast
+	ChangeDeadState(EDeadState::Dead);
 
 	return true;
 }
 
 bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUpdatePolicy)
 {
-	if (DeadState != EDeadState::Alive) return false;
+	if (!IsAlive()) return false;
 	if (InNewMaxHP <= 0.f) return false;
 
 	MaxHP = InNewMaxHP;
@@ -119,7 +120,7 @@ bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUp
 
 float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 {
-	if (DeadState != EDeadState::Alive) return 0.f;
+	if (!IsAlive()) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeDamageAmount <= 0.f) return 0.f;
 
@@ -138,14 +139,14 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 
 	UpdateDeadState();
 
-	// PrintTakeDamageContextInfo();
+	PrintTakeDamageContextInfo();
 
 	return takenDamage;
 }
 
 float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 {
-	if (DeadState != EDeadState::Alive) return 0.f;
+	if (!IsAlive()) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeHealAmount <= 0.f) return 0.f;
 
@@ -170,24 +171,34 @@ float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 	return takenHeal;
 }
 
-bool UCHealthComponent::CanKill() const
+bool UCHealthComponent::IsAlive() const
 {
 	return DeadState == EDeadState::Alive;
 }
 
-bool UCHealthComponent::CanRevive() const
+bool UCHealthComponent::IsDead() const
 {
 	return DeadState == EDeadState::Dead;
 }
 
+bool UCHealthComponent::CanKill() const
+{
+	return IsAlive();
+}
+
+bool UCHealthComponent::CanRevive() const
+{
+	return IsDead();
+}
+
 void UCHealthComponent::EnterDeadState()
 {
-	DeadState = EDeadState::Dead;
+	ChangeDeadState(EDeadState::Dead);
 }
 
 void UCHealthComponent::EnterAliveState()
 {
-	DeadState = EDeadState::Alive;
+	ChangeDeadState(EDeadState::Alive);
 }
 
 void UCHealthComponent::UpdateDeadState()
@@ -197,9 +208,20 @@ void UCHealthComponent::UpdateDeadState()
 	// Revive is an explicit gameplay transition handled by SetRevive().
 	if (DeadState == EDeadState::Alive && bDeadFlag)
 	{
-		DeadState = EDeadState::Dying;
+		ChangeDeadState(EDeadState::Dying);
+	}
+}
 
-		// TODO: `FOnDeadState` Delegate Broadcast
+void UCHealthComponent::ChangeDeadState(EDeadState InNewDeadState)
+{
+	if (DeadState == InNewDeadState) return;
+
+	const EDeadState prevDeadState = DeadState;
+	DeadState = InNewDeadState;
+
+	if (OnDeadStateChanged.IsBound())
+	{
+		OnDeadStateChanged.Broadcast(prevDeadState, DeadState);
 	}
 }
 

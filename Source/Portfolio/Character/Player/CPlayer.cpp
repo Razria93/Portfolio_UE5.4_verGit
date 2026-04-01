@@ -11,12 +11,17 @@
 #include "Component/CStateComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CApplyDamageComponent.h"
+#include "Component/CTakeDamageComponent.h"
+#include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
 
 ACPlayer::ACPlayer()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Init CapsuleComp
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
 	check(CapsuleComp);
@@ -70,11 +75,46 @@ ACPlayer::ACPlayer()
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
 	check(ApplyDamageComponent);
+
+	// Init TakeDamageComp
+	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
+	check(TakeDamageComponent);
+
+	// Init HealthComp
+	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
+	check(HealthComponent);
+
+	// Init ReactionComp
+	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
+	check(ReactionComponent);
 }
 
 void ACPlayer::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (IsValid(HealthComponent) && IsValid(StateComponent))
+	{
+		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
+	}
+}
+
+void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(HealthComponent))
+	{
+		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void ACPlayer::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// Consume and Execute pending reaction
+	ConsumePendingReaction();
 }
 
 void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -82,84 +122,137 @@ void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-UCMovementComponent* ACPlayer::GetMovementComp() const
+float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	return IsValid(MovementComponent) ? MovementComponent : nullptr;
-}
+	// Minimal validation
+	if (DamageAmount <= 0.f) return 0.f;
 
-UCWeaponComponent* ACPlayer::GetWeaponComp() const
-{
-	return IsValid(WeaponComponent) ? WeaponComponent : nullptr;
-}
+	// TODO: Check DeadFlag and early return
 
-UCStateComponent* ACPlayer::GetStateComp() const
-{
-	return IsValid(StateComponent) ? StateComponent : nullptr;
-}
+	float finalDamage = DamageAmount;
 
-UCActionComponent* ACPlayer::GetActionComp() const
-{
-	return IsValid(ActionComponent) ? ActionComponent : nullptr;
+	if (IsValid(TakeDamageComponent))
+	{
+		finalDamage = TakeDamageComponent->RequestTakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	}
+	else
+	{
+		// FallBack
+		finalDamage = DamageAmount;
+	}
+
+	// Engine-Event Trigger
+	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
+
+	return finalDamage;
 }
 
 void ACPlayer::HandleMoveForward(const float InAxisValue)
 {
-	if (IsValid(Controller) && IsValid(MovementComponent))
-		MovementComponent->OnMoveForward(InAxisValue);
+	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
+	if (!HealthComponent || !HealthComponent->IsAlive()) return;
+
+	MovementComponent->OnMoveForward(InAxisValue);
 }
 
 void ACPlayer::HandleMoveRight(const float InAxisValue)
 {
-	if (IsValid(Controller) && IsValid(MovementComponent))
-		MovementComponent->OnMoveRight(InAxisValue);
+	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
+	if (!HealthComponent || !HealthComponent->IsAlive()) return;
+
+	MovementComponent->OnMoveRight(InAxisValue);
 }
 
 void ACPlayer::HandleWalk()
 {
-	if (IsValid(Controller) && IsValid(MovementComponent))
-		MovementComponent->OnWalk();
+	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
+	if (!CanActionInput()) return;
+
+	MovementComponent->OnWalk();
 }
 
 void ACPlayer::HandleRun()
 {
-	if (IsValid(Controller) && IsValid(MovementComponent))
-		MovementComponent->OnRun();
+	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
+	if (!CanActionInput()) return;
+
+	MovementComponent->OnRun();
 }
 
 void ACPlayer::HandleJump()
 {
-	if (IsValid(Controller) && IsValid(MovementComponent))
-		Jump();
+	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
+	if (!CanActionInput()) return;
+
+	Jump();
 }
 
 void ACPlayer::HandleStopJump()
 {
-	if (IsValid(Controller) && IsValid(MovementComponent))
-		StopJumping();
+	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
+
+	StopJumping();
 }
 
 void ACPlayer::HandleComboAction()
 {
-	if (IsValid(Controller) && IsValid(WeaponComponent))
-	{
-		ActionComponent->SetComboAttackMode();
-	}
+	if (!IsValid(Controller) || !IsValid(ActionComponent)) return;
+	if (!CanActionInput()) return;
+
+	ActionComponent->SetComboAttackMode();
 }
 
 void ACPlayer::HandleSword()
 {
-	if (IsValid(Controller) && IsValid(WeaponComponent) && IsValid(StateComponent))
+	if (!IsValid(Controller) || !IsValid(WeaponComponent) || !IsValid(StateComponent)) return;
+	if (!CanActionInput()) return;
+
+	if (StateComponent->CheckCurStateType(EStateType::Idle))
 	{
-		if (StateComponent->CheckCurStateType(EStateType::Idle))
+		if (WeaponComponent->CheckCurAttachmentType(EAttachmentType::Unarmed))
 		{
-			if (WeaponComponent->CheckCurAttachmentType(EAttachmentType::Unarmed))
-			{
-				WeaponComponent->SetSwordMode();
-			}
-			else if (WeaponComponent->CheckCurAttachmentType(EAttachmentType::Sword))
-			{
-				WeaponComponent->SetUnarmedMode();
-			}
+			WeaponComponent->SetSwordMode();
+		}
+		else if (WeaponComponent->CheckCurAttachmentType(EAttachmentType::Sword))
+		{
+			WeaponComponent->SetUnarmedMode();
 		}
 	}
+}
+
+void ACPlayer::ConsumePendingReaction()
+{
+	if (!IsValid(HealthComponent)) return;
+	if (!IsValid(ReactionComponent)) return;
+
+	if (!HealthComponent->IsAlive()) return;
+
+	if (!ReactionComponent->HasPendingReactionContext()) return;
+
+	FReactionContext reactionContext;
+	if (!ReactionComponent->TryConsumePendingReaction(reactionContext))
+	{
+		FLog::Log(TEXT("[Player|ConsumePendingReaction] Invalid Pending Reaction"));
+		return;
+	}
+
+	if (!ReactionComponent->TryExecuteReaction(reactionContext))
+	{
+		FLog::Log(TEXT("[Player|ConsumePendingReaction] Rejected Execute Reaction"));
+		return;
+	}
+}
+
+bool ACPlayer::CanActionInput() const
+{
+	if (!IsValid(HealthComponent)) return false;
+	if (!IsValid(StateComponent)) return true;
+
+	if (!HealthComponent->IsAlive()) return false;
+
+	const EStateType stateType = StateComponent->GetCurStateType();
+	if (stateType == EStateType::Reaction) return false;
+	if (stateType == EStateType::Dead) return false;
+
+	return true;
 }
