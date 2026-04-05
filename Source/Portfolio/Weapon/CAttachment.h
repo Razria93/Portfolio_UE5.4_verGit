@@ -52,6 +52,13 @@ public:
 	FActionContext LastActionContext;
 
 private:
+	UPROPERTY(Transient)
+	bool bHitWindowOpened = false;
+
+	UPROPERTY(Transient)
+	int32 CurrentHitWindowId = INDEX_NONE;
+
+private:
 	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 	class UCApplyDamageComponent* ApplyDamageComp_Cached;
@@ -127,6 +134,7 @@ public:
 
 private:
 	FOverlapContext BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const;
+	FHitContext BuildHitContext(const FOverlapContext& InOverlapContext) const;
 
 private:
 	void PrintBeginOverlapContextInfo(const FHitContext& InHitContext);

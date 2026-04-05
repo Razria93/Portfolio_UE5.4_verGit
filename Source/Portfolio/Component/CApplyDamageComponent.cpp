@@ -24,6 +24,31 @@ void UCApplyDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
+{
+	if (!IsValid(InDamageCauser)) return;
+	if (InHitWindowId == INDEX_NONE) return;
+
+	FApplyDamageHitWindowKey applyDamageHitWindowKey;
+	applyDamageHitWindowKey.DamageCauser = InDamageCauser;
+	applyDamageHitWindowKey.HitWindowId = InHitWindowId;
+
+	DamagedTargetContainer.Remove(applyDamageHitWindowKey);
+	DamagedTargetContainer.FindOrAdd(applyDamageHitWindowKey);
+}
+
+void UCApplyDamageComponent::NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId)
+{
+	if (!IsValid(InDamageCauser)) return;
+	if (InHitWindowId == INDEX_NONE) return;
+
+	FApplyDamageHitWindowKey applyDamageHitWindowKey;
+	applyDamageHitWindowKey.DamageCauser = InDamageCauser;
+	applyDamageHitWindowKey.HitWindowId = InHitWindowId;
+
+	DamagedTargetContainer.Remove(applyDamageHitWindowKey);
+}
+
 void UCApplyDamageComponent::RequestApplyDamage(const FHitContext& InHitContext)
 {
 	ProcessApplyDamage(InHitContext);
@@ -71,6 +96,9 @@ bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) co
 	// V0: Validate Minimal actors (OwnerActor / DamageCauser / OtherActor)
 	if (!overlapContext.IsValidMinimal()) return false;
 
+	// V0-1: Hit window must be opened before overlap is processed
+	if (overlapContext.HitWindowId == INDEX_NONE) return false;
+
 	// V1: Request owner must match this component owner
 	AActor* myOwner = GetOwner();
 	if (!IsValid(myOwner) || myOwner != overlapContext.OwnerActor) return false;
@@ -108,6 +136,9 @@ bool UCApplyDamageComponent::CheckApplyDamageRule(const FHitContext& InHitContex
 	// TODO:
 	// P1: CheckAlreadyHit
 	// P2: CheckTeam
+
+	if (IsDuplicateHit(InHitContext))
+		return false;
 
 	return true;
 }
@@ -175,7 +206,32 @@ bool UCApplyDamageComponent::ApplyDamageToTarget(const FHitContext& InHitContext
 
 	const float appliedDamage = target->TakeDamage(InApplyDamageResult.RequestDamage, damageEvent, instigatorController, damageCauser);
 
+	if (appliedDamage > 0.f)
+	{
+		CacheDamagedTargetInWindow(InHitContext);
+	}
+
 	return true;
+}
+
+bool UCApplyDamageComponent::IsDuplicateHit(const FHitContext& InHitContext) const
+{
+	const FApplyDamageHitWindowKey applyDamageHitWindowKey = BuildHitWindowKey(InHitContext);
+	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(applyDamageHitWindowKey);
+
+	if (!foundTargets) return false;
+
+	return foundTargets->Contains(InHitContext.OverlapContext.OtherActor);
+}
+
+FApplyDamageHitWindowKey UCApplyDamageComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
+{
+	FApplyDamageHitWindowKey applyDamageWindowKey;
+
+	applyDamageWindowKey.DamageCauser = InHitContext.OverlapContext.DamageCauser;
+	applyDamageWindowKey.HitWindowId = InHitContext.OverlapContext.HitWindowId;
+
+	return applyDamageWindowKey;
 }
 
 FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHitContext) const
@@ -188,6 +244,16 @@ FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHi
 	applyDamageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
 
 	return applyDamageSpecKey;
+}
+
+void UCApplyDamageComponent::CacheDamagedTargetInWindow(const FHitContext& InHitContext)
+{
+	AActor* targetActor = InHitContext.OverlapContext.OtherActor;
+	if (!IsValid(targetActor)) return;
+
+	const FApplyDamageHitWindowKey key = BuildHitWindowKey(InHitContext);
+	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(key);
+	damagedTargets.Add(targetActor);
 }
 
 void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
@@ -228,6 +294,7 @@ void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOv
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherComponent"), *GetNameSafe(InOverlapContext.OtherComponent)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("OtherBodyIndex"), InOverlapContext.OtherBodyIndex));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bFromSweep"), InOverlapContext.bFromSweep ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("HitWindowId"), InOverlapContext.HitWindowId));
 
 	if (InOverlapContext.bFromSweep)
 	{

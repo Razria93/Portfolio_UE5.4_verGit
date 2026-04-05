@@ -210,6 +210,9 @@ public:
 	UPROPERTY(Transient)
 	FHitResult SweepResult;
 
+	UPROPERTY(Transient)
+	int32 HitWindowId = INDEX_NONE;
+
 public:
 	FOverlapContext() = default;
 
@@ -238,6 +241,33 @@ public:
 public:
 	FHitContext() = default;
 };
+
+USTRUCT()
+struct FApplyDamageHitWindowKey
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	class AActor* DamageCauser = nullptr;
+
+	UPROPERTY(Transient)
+	int32 HitWindowId = INDEX_NONE;
+
+	bool operator==(const FApplyDamageHitWindowKey& InOther) const
+	{
+		return DamageCauser == InOther.DamageCauser
+			&& HitWindowId == InOther.HitWindowId;
+	}
+};
+
+FORCEINLINE uint32 GetTypeHash(const FApplyDamageHitWindowKey& InOther)
+{
+	uint32 H = 0;
+	H = HashCombine(H, GetTypeHash(InOther.DamageCauser));
+	H = HashCombine(H, GetTypeHash(InOther.HitWindowId));
+	return H;
+}
 
 USTRUCT(BlueprintType)
 struct FApplyDamageSpecKey

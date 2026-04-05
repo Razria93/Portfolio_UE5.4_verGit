@@ -19,6 +19,9 @@ private:
 	TMap<FApplyDamageSpecKey, FApplyDamageSpec> ApplyDamageSpecContainer;	// TODO: Seperate DataAsset (DB)
 
 private:
+	TMap<FApplyDamageHitWindowKey, TSet<AActor*>> DamagedTargetContainer;
+
+private:
 	/* === Cached Objects === */
 	class ACharacter* OwnerCharacter_Cached;
 
@@ -27,6 +30,11 @@ protected:
 
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+public:
+	// HitWindow API
+	void NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId);
+	void NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId);
 
 public:
 	// Entry API
@@ -45,7 +53,14 @@ private:
 	bool ApplyDamageToTarget(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
 
 private:
+	bool IsDuplicateHit(const FHitContext& InHitContext) const;
+
+private:
+	FApplyDamageHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
 	FApplyDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
+
+private:
+	void CacheDamagedTargetInWindow(const FHitContext& InHitContext);
 
 private:
 	void PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
