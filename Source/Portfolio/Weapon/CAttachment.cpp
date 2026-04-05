@@ -163,6 +163,30 @@ void ACAttachment::OnEquipmentBeginUnequip()
 
 void ACAttachment::CollisionEnabled(FName InName)
 {
+	TArray<UShapeComponent*> collisionsToEnable;
+
+	if (!InName.IsNone())
+	{
+		for (UShapeComponent* collision : Collisions_Cached)
+		{
+			if (collision->GetFName() == InName)
+			{
+				collisionsToEnable.Add(collision);
+				break;
+			}
+		}
+	}
+	else
+	{
+		for (UShapeComponent* collision : Collisions_Cached)
+		{
+			collisionsToEnable.Add(collision);
+		}
+	}
+
+	// Early-Return
+	if (collisionsToEnable.IsEmpty()) return;
+
 	if (!bHitWindowOpened)
 	{
 		++CurrentHitWindowId;
@@ -174,30 +198,10 @@ void ACAttachment::CollisionEnabled(FName InName)
 		}
 	}
 
-	bool bCollisionEnabled = false;
-
-	if (!InName.IsNone())
+	for (UShapeComponent* collision : collisionsToEnable)
 	{
-		for (UShapeComponent* collision : Collisions_Cached)
-		{
-			if (collision->GetFName() == InName)
-			{
-				collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-				bCollisionEnabled = true;
-				break;
-			}
-		}
+		collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
-	else
-	{
-		for (UShapeComponent* collision : Collisions_Cached)
-		{
-			collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			bCollisionEnabled = true;
-		}
-	}
-
-	if (!bCollisionEnabled) return;
 
 	if (OnAttachmentCollisionEnabled.IsBound())
 		OnAttachmentCollisionEnabled.Broadcast();
