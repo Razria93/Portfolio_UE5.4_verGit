@@ -45,7 +45,7 @@ float UCTakeDamageComponent::ProcessTakeDamage(float DamageAmount, FDamageEvent 
 		return HandleDefaultDamageEvent(DamageAmount, damageEvent, EventInstigator, DamageCauser);
 	}
 
-	return DamageAmount;
+	return 0.f;
 }
 
 float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
@@ -53,16 +53,38 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	// [Function Object]
 	// 'FDefaultDamageEvent + @(FTakeDamagePayload) -> FTakeDamageContext' and TakeDamage it-self
 
-	// 1) Validate Request (Objects / Inputs)
+	// 1) Validate Request
 	if (!FMath::IsFinite(DamageAmount)) return 0.f;
 	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
 
-	// 2) Build Payload / Context (Snapshot: inputs)
+	// 2) Build Payload / Context
 	FTakeDamagePayload takeDamagePayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
 	FTakeDamageContext takeDamageContext = BuildContext(takeDamagePayload);
 
-	// 3) Evaluate (Gate + Compute: Query Accepted and Compute mitigationDamage & finalTakenDamage)
-	EvaluateTakeDamage(takeDamageContext);
+	// 3) Validate Context
+	if (!ValidateContext(takeDamageContext))
+	{
+		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
+		PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, rejectedResult);
+		DispatchTakeDamageRejected(takeDamagePayload, takeDamageContext, rejectedResult);
+		return 0.f;
+	}
+
+	// 4) Take Pre-state Snapshot
+	takeDamageContext.DeadState_Before = HealthComp_Cached->GetDeadState();
+	takeDamageContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
+
+	// 5) Validate Policy
+	if (!CanTakeDamage(takeDamageContext))
+	{
+		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
+		PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, rejectedResult);
+		DispatchTakeDamageRejected(takeDamagePayload, takeDamageContext, rejectedResult);
+		return 0.f;
+	}
+
+	// 6) Compute TakeDamage
+	ComputeTakeDamage(takeDamageContext);
 
 	if (!takeDamageContext.bAccepted)
 	{
@@ -72,20 +94,17 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		return 0.f;
 	}
 
-	// 4) Commit (Apply to health + post snapshot + build result)
+	// 7) Commit
 	CommitTakeDamage(takeDamageContext);
 
 	const FTakeDamageResult committedResult = BuildResult(takeDamageContext);
 	PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, committedResult);
-	// PrintTakeDamageContextInfo(takeDamagePayload, takeDamageContext, takeDamageResult);
-
-	// 5) Dispatch
 	DispatchTakeDamageCommitted(takeDamagePayload, takeDamageContext, committedResult);
 
-	return committedResult.FinalTakenDamage;
+	return committedResult.CommittedDamage;
 }
 
-bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
+bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
 	if (!IsValid(OwnerActor_Cached)) return false;
 	if (!IsValid(HealthComp_Cached)) return false;
@@ -97,60 +116,79 @@ bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefault
 	return true;
 }
 
-void UCTakeDamageComponent::EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const
+bool UCTakeDamageComponent::ValidateContext(FTakeDamageContext& InOutTakeDamageContext)
 {
-	// Process 1: Take Pre-state Snapshot
-	InOutTakeDamageContext.DeadState_Before = HealthComp_Cached->GetDeadState();
-	InOutTakeDamageContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
-
-	// Gate 1: validate
 	if (!IsValid(InOutTakeDamageContext.DamagedActor))
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidTarget;
-		return;
+
+		return false;
 	}
 
 	if (!IsValid(InOutTakeDamageContext.DamageCauser))
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidCauser;
-		return;
+
+		return false;
 	}
 
 	if (!IsValid(InOutTakeDamageContext.Instigator))
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidInstigator;
-		return;
+
+		return false;
 	}
 
-	// Gate 2: already dead
+	InOutTakeDamageContext.bAccepted = true;
+	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+
+	return true;
+}
+
+bool UCTakeDamageComponent::CanTakeDamage(FTakeDamageContext& InOutTakeDamageContext)
+{
+	// Gate 1: already dead
 	if (InOutTakeDamageContext.DeadState_Before != EDeadState::Alive)
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::AlreadyDead;
-		return;
+
+		return false;
 	}
 
 	// TODO:
-	// Gate 3: invulnerable / friendly fire / cooldown / self-damage...
+	// Gate 2: invulnerable / iframe / god-mode state
+	// Gate 3: defensive friendly-fire check on receiver side
+	// Gate 4: receiver-side damage cooldown / hit immunity window
+	// Gate 5: defensive self-damage policy
 
-	// Process 2: Compute Mitigation Damage
+	InOutTakeDamageContext.bAccepted = true;
+	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+
+	return true;
+}
+
+void UCTakeDamageComponent::ComputeTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const
+{
+	// Process 1: Compute Mitigation Damage
 	InOutTakeDamageContext.MitigatedDamage = ComputeMitigatedDamage(InOutTakeDamageContext);	// TODO
 
-	// Gate 4: Zero damage
+	// Gate 1: Zero damage
 	if (InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::ZeroDamage;
+
 		return;
 	}
 
 	InOutTakeDamageContext.bAccepted = true;
 	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
 
-	// Process 3: Compute FinalTaken Damage
+	// Process 2: Compute FinalTaken Damage
 	InOutTakeDamageContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutTakeDamageContext);	// TODO
 }
 
@@ -159,7 +197,7 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	if (!IsValid(HealthComp_Cached)) return;
 
 	// Process 4: Apply Damage To Health
-	InOutTakeDamageContext.FinalAppliedDamage = ApplyDamageToHealth(InOutTakeDamageContext);
+	InOutTakeDamageContext.CommittedDamage = CommitDamageToHealth(InOutTakeDamageContext);
 
 	// TODO: Shield / Mana / Stemina etc + Commit Order
 
@@ -240,7 +278,7 @@ float UCTakeDamageComponent::ComputeFinalTakenDamage(FTakeDamageContext& InOutTa
 	return FMath::Max(0.f, finalTakenDamage);
 }
 
-float UCTakeDamageComponent::ApplyDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
+float UCTakeDamageComponent::CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
 {
 	if (!IsValid(HealthComp_Cached)) return 0.0;
 
@@ -289,17 +327,12 @@ FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& I
 	takeDamageResult.RequestDamage = InTakeDamageContext.RequestedDamage;
 	takeDamageResult.MitigatedDamage = InTakeDamageContext.MitigatedDamage;
 	takeDamageResult.FinalTakenDamage = InTakeDamageContext.FinalTakenDamage;
-	takeDamageResult.FinalAppliedDamage = InTakeDamageContext.FinalAppliedDamage;
+	takeDamageResult.CommittedDamage = InTakeDamageContext.CommittedDamage;
 
 	takeDamageResult.DeadState_Before = InTakeDamageContext.DeadState_Before;
 	takeDamageResult.DeadState_After = InTakeDamageContext.DeadState_After;
 
 	return takeDamageResult;
-}
-
-void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
-{
-	// TODO: OnTakeDamageRejected broadcast
 }
 
 void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
@@ -320,6 +353,11 @@ void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload
 	// - UI Damage Number
 }
 
+void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+{
+	// TODO: OnTakeDamageRejected broadcast
+}
+
 void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
 {
 	FLog::Log(TEXT("====== Take Damage Summary ======"));
@@ -331,11 +369,11 @@ void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePayload&
 		*GetNameSafe(InTakeDamageContext.DamageCauser)
 	));
 
-	FLog::Log(FString::Printf(TEXT("RequestDamage = %.3f | MitigatedDamage = %.3f | FinalTakenDamage = %.3f | FinalAppliedDamage = %.3f"),
+	FLog::Log(FString::Printf(TEXT("RequestDamage = %.3f | MitigatedDamage = %.3f | FinalTakenDamage = %.3f | CommittedDamage = %.3f"),
 		InTakeDamageResult.RequestDamage,
 		InTakeDamageResult.MitigatedDamage,
 		InTakeDamageResult.FinalTakenDamage,
-		InTakeDamageResult.FinalAppliedDamage
+		InTakeDamageResult.CommittedDamage
 	));
 	FLog::Log(TEXT("================================="));
 }

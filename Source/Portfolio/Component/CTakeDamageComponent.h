@@ -38,15 +38,17 @@ private:
 	float HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
 
 private:
-	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
-	void EvaluateTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
+	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser);
+	bool ValidateContext(FTakeDamageContext& InOutTakeDamageContext);
+	bool CanTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
+	void ComputeTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
 
 private:
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
 	float ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	float ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const;
-	float ApplyDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const;
+	float CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const;
 
 private:
 	FTakeDamagePayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
@@ -54,8 +56,8 @@ private:
 	FTakeDamageResult BuildResult(const FTakeDamageContext& InTakeDamageContext) const;
 
 private:
-	void DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
 	void DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
 
 private:
 	void PrintTakeDamageSummaryInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;

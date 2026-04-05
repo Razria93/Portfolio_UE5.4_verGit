@@ -47,16 +47,17 @@ enum class EApplyDamageRejectReason : uint8
 	None = 0,
 
 	InvalidRequest,
-
+	
 	InvalidAttacker,
 	InvalidDamageCauser,
 	InvalidTarget,
 	InvalidInstigator,
-
+	
 	SpecNotFound,
 	ComputeFailed,
 	CommitFailed,
 
+	// Reject Reason of 'CanApplyDamage'
 	InvalidOwner,
 	SelfTarget,
 	DuplicateHitInWindow,
@@ -74,7 +75,6 @@ enum class ETakeDamageRejectReason : uint8
 
 	AlreadyDead,
 	// Invulnerable,
-	// FriendlyFire,
 
 	// Blocked,
 	// Parried,
@@ -329,6 +329,7 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.EquipmentType)));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.ActionType)));
 	H = HashCombine(H, GetTypeHash(InOther.ActionIndex));
+
 	return H;
 }
 
@@ -449,25 +450,25 @@ struct FApplyDamageResult
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(VisibleAnywhere, Transient)
+	UPROPERTY(Transient)
 	bool bAccepted = true;
 
-	UPROPERTY(VisibleAnywhere, Transient)
+	UPROPERTY(Transient)
 	EApplyDamageRejectReason RejectReason = EApplyDamageRejectReason::None;
 
-	UPROPERTY(VisibleAnywhere, Transient)
+	UPROPERTY(Transient)
 	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
 
-	UPROPERTY(VisibleAnywhere, Transient)
+	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
-	UPROPERTY(VisibleAnywhere, Transient)
+	UPROPERTY(Transient)
 	float BaseDamage = 0.f;
 
-	UPROPERTY(VisibleAnywhere, Transient)
+	UPROPERTY(Transient)
 	float RequestDamage = 0.f;
 
-	UPROPERTY(VisibleAnywhere, Transient)
+	UPROPERTY(Transient)
 	float CommittedDamage = 0.f;
 
 public:
@@ -480,10 +481,10 @@ struct FDefaultDamageEvent : public FDamageEvent
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
+	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
-	UPROPERTY()
+	UPROPERTY(Transient)
 	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
 
 	UPROPERTY(Transient)
@@ -507,27 +508,27 @@ struct FTakeDamagePayload
 
 public:
 	// ObjectData
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	class AActor* DamagedActor = nullptr;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	class AController* EventInstigator = nullptr;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	class AActor* DamageCauser = nullptr;
 
 	// Damage MetaData
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
 
 	UPROPERTY(Transient)
 	FApplyDamageAmount ApplyDamageAmount = FApplyDamageAmount();
 
 	//Damage AmountData
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;
 
 public:
@@ -541,51 +542,51 @@ struct FTakeDamageContext
 
 public:
 	// Resolved objects [Set BuildContext]
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	class AActor* DamagedActor = nullptr;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	class AController* Instigator = nullptr;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	class AActor* DamageCauser = nullptr;
 
 	// Damage MetaData [Set BuildContext]
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
-	// Query Acceptable [Set EvaluateTakeDamage]
-	UPROPERTY(VisibleAnywhere)
+	// Query Acceptable [Set ValidateContext / CanTakeDamage / ComputeTakeDamage]
+	UPROPERTY(Transient)
 	bool bAccepted = true;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
 
-	// Pre-state Snapshot [Set EvaluateTakeDamage]
-	UPROPERTY(VisibleAnywhere)
+	// Pre-state Snapshot [Set HandleDefaultDamageEvent before ValidatePolicy]
+	UPROPERTY(Transient)
 	float HealthPointBefore = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	EDeadState DeadState_Before = EDeadState::Alive;
 
-	// DamageAmounts [Set EvaluateTakeDamage & CommitTakeDamage]
-	UPROPERTY(VisibleAnywhere)
+	// DamageAmounts [Set ComputeTakeDamage & CommitTakeDamage]
+	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	float MitigatedDamage = 0.f;		// Post-mitigation damage after target defenses. (ex. [guard/resistance] 100 -> 70)
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	float FinalTakenDamage = 0.f;		// Final damage decided by Take evaluation rules. (ex. [clamp max/min damage-limit] 70 -> 60)
 
-	UPROPERTY(VisibleAnywhere)
-	float FinalAppliedDamage = 0.f;		// Actual HP loss committed to Health. (ex. [shield absorbs] 60 -> HP: -30 / SP: -30)
+	UPROPERTY(Transient)
+	float CommittedDamage = 0.f;		// Actual HP loss committed to Health. (ex. [shield absorbs] 60 -> HP: -30 / SP: -30)
 
 	// Post-state Snapshot [Set BuildResult]
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	float HealthPointAfter = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	EDeadState DeadState_After = EDeadState::Alive;
 
 	// TODO:
@@ -605,33 +606,34 @@ struct FTakeDamageResult
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere)
+public:
+	UPROPERTY(Transient)
 	bool bAccepted = true;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
 
 	// Damage MetaData
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 	// Damage Amount
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	float RequestDamage = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	float MitigatedDamage = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	float FinalTakenDamage = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
-	float FinalAppliedDamage = 0.f;
+	UPROPERTY(Transient)
+	float CommittedDamage = 0.f;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	EDeadState DeadState_Before = EDeadState::Alive;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Transient)
 	EDeadState DeadState_After = EDeadState::Alive;
 
 public:
