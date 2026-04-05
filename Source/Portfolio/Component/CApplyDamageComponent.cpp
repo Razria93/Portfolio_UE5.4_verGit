@@ -33,6 +33,7 @@ void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32
 	applyDamageHitWindowKey.DamageCauser = InDamageCauser;
 	applyDamageHitWindowKey.HitWindowId = InHitWindowId;
 
+	// Reset stale record for the same hit window key
 	DamagedTargetContainer.Remove(applyDamageHitWindowKey);
 	DamagedTargetContainer.FindOrAdd(applyDamageHitWindowKey);
 }
@@ -54,66 +55,78 @@ void UCApplyDamageComponent::RequestApplyDamage(const FHitContext& InHitContext)
 	ProcessApplyDamage(InHitContext);
 }
 
-void UCApplyDamageComponent::RequestStopDamage(const FHitContext& InHitContext)
-{
-	// TODO Example:
-	// 1) Remove target from active overlap / active damage set
-	// 2) Cancel timers for repeated hits (DoT)
-	// 3) Remove sustained effects (slow, burning, etc.) if they depend on overlap
-}
-
 void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 {
-	// [Function Object]
-	// FApplyDamageContext -> 'FDefaultDamageEvent + @' and ApplyDamage to Target
+	if (!ValidateRequest(InHitContext))
+	{
+		PrintApplyDamageRejectedSummaryInfo(InHitContext, EApplyDamageRejectReason::InvalidRequest);
+		return;
+	}
 
-	// TODO:
-	// Implement FApplyDamageContext { InHitContext(DamagedActor / EventInstigator / DamageCauser ...), damageSpecKey, damageSpec, applyDamageResult }
-	// Refactor debug output to use FApplyDamageContext (Reference: CTakeDamageComponent)
+	FApplyDamagePayload applyDamagePayload = BuildPayload(InHitContext);
+	FApplyDamageContext applyDamageContext = BuildContext(applyDamagePayload);
 
-	// 1) Check Valid of Request
-	if (!ValidateRequest(InHitContext)) return;
+	if (!ValidateContext(applyDamageContext))
+	{
+		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		return;
+	}
 
-	// 2) Check ApplyDamage Rules
-	if (!CheckApplyDamageRule(InHitContext)) return;
+	if (!CanApplyDamage(applyDamageContext))
+	{
+		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		return;
+	}
 
-	// 3) Resolve ApplyDamage Spec
-	FApplyDamageSpec damageSpec = FApplyDamageSpec();
-	if (!ResolveApplyDamageSpec(InHitContext, damageSpec)) return;
+	ResolveApplyDamageSpec(applyDamageContext);
+	if (!applyDamageContext.bAccepted)
+	{
+		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		return;
+	}
 
-	// 4) Compute ApplyDamage Result
-	FApplyDamageResult applyDamageResult = FApplyDamageResult();
-	if (!ComputeApplyDamageResult(InHitContext, damageSpec, applyDamageResult)) return;
+	ComputeApplyDamage(applyDamageContext);
+	if (!applyDamageContext.bAccepted)
+	{
+		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		return;
+	}
 
-	// 5) Apply Damage (Call Target->TakeDamage)
-	if (!ApplyDamageToTarget(InHitContext, damageSpec, applyDamageResult)) return;
+	CommitApplyDamage(applyDamageContext);
+	if (!applyDamageContext.bAccepted)
+	{
+		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		return;
+	}
+
+	const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+	PrintApplyDamageSummaryInfo(applyDamageContext.HitContext, applyDamageResult);
 }
+
 
 bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) const
 {
 	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
 
-	// V0: Validate Minimal actors (OwnerActor / DamageCauser / OtherActor)
+	// V1: Validate core actors (OwnerActor / DamageCauser / OtherActor)
 	if (!overlapContext.IsValidMinimal()) return false;
 
-	// V0-1: Hit window must be opened before overlap is processed
+	// V2: Check Valid Hit Window
 	if (overlapContext.HitWindowId == INDEX_NONE) return false;
 
-	// V1: Request owner must match this component owner
-	AActor* myOwner = GetOwner();
-	if (!IsValid(myOwner) || myOwner != overlapContext.OwnerActor) return false;
-
-	// V2: Prevent self-hit
-	if (overlapContext.OtherActor == overlapContext.OwnerActor)
-		return false;
-
-	// V3: Check Valid
+	// V3: Check Valid Object
 	// 3-1): Validate Components (current policy)
 	if (!IsValid(overlapContext.OverlappedComponent) || !IsValid(overlapContext.OtherComponent))
 		return false;
 
 	// 3-2): Attack collision must be ShapeComponent (current policy)
-	if (!IsValid(overlapContext.OverlapShape)) return false;
+	if (!IsValid(overlapContext.OverlapShape))
+		return false;
 
 	// V4: Check ownership
 	 // 4-1) DamageCauser must be owned by the attacker
@@ -131,97 +144,176 @@ bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) co
 	return true;
 }
 
-bool UCApplyDamageComponent::CheckApplyDamageRule(const FHitContext& InHitContext) const
+bool UCApplyDamageComponent::ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const
 {
-	// TODO:
-	// P1: CheckAlreadyHit
-	// P2: CheckTeam
-
-	if (IsDuplicateHit(InHitContext))
+	if (!IsValid(InOutApplyDamageContext.Attacker))
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::InvalidAttacker;
 		return false;
+	}
 
+	if (!IsValid(InOutApplyDamageContext.DamageCauser))
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::InvalidDamageCauser;
+		return false;
+	}
+
+	if (!IsValid(InOutApplyDamageContext.TargetActor))
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::InvalidTarget;
+		return false;
+	}
+
+	if (!IsValid(InOutApplyDamageContext.Instigator))
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::InvalidInstigator;
+		return false;
+	}
+
+	// Valid Context
+	InOutApplyDamageContext.bAccepted = true;
+	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
 	return true;
 }
 
-bool UCApplyDamageComponent::ResolveApplyDamageSpec(const FHitContext& InHitContext, FApplyDamageSpec& OutApplyDamageSpec) const
+bool UCApplyDamageComponent::CanApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const
 {
-	const FApplyDamageSpecKey applyDamageSpectKey = BuildSpecKey(InHitContext);
+	const FOverlapContext& overlapContext = InOutApplyDamageContext.HitContext.OverlapContext;
 
-	if (const FApplyDamageSpec* foundApplyDamageSpec = ApplyDamageSpecContainer.Find(applyDamageSpectKey))
+	AActor* myOwner = GetOwner();
+	if (!IsValid(myOwner) || myOwner != overlapContext.OwnerActor)
 	{
-		OutApplyDamageSpec = FApplyDamageSpec();
-		OutApplyDamageSpec = *foundApplyDamageSpec;
-		return true;
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::InvalidOwner;
+		return false;
 	}
 
-	return false;
-}
-
-bool UCApplyDamageComponent::ComputeApplyDamageResult(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, FApplyDamageResult& OutApplyDamageResult) const
-{
-	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
-
-	AActor* attacker = overlapContext.OwnerActor;
-	AActor* damageCauser = overlapContext.DamageCauser;
-	AActor* target = overlapContext.OtherActor;
-
-	if (!IsValid(attacker) || !IsValid(damageCauser) || !IsValid(target))
+	if (overlapContext.OtherActor == overlapContext.OwnerActor)
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::SelfTarget;
 		return false;
+	}
 
-	// ComputeDamage (Minimal):
-	// [TODO] Implement `ComputeDamage()`
-	OutApplyDamageResult = FApplyDamageResult();
-	OutApplyDamageResult.RequestDamage = InApplyDamageSpec.BaseDamage;
+	if (IsDuplicateHit(InOutApplyDamageContext))
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::DuplicateHitInWindow;
+		return false;
+	}
 
+	if (IsFriendlyTarget(InOutApplyDamageContext))
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::FriendlyTarget;
+		return false;
+	}
+
+	InOutApplyDamageContext.bAccepted = true;
+	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
 	return true;
 }
 
-bool UCApplyDamageComponent::ApplyDamageToTarget(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
+void UCApplyDamageComponent::ResolveApplyDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const
 {
-	AActor* attacker = InHitContext.OverlapContext.OwnerActor;
-	AActor* damageCauser = InHitContext.OverlapContext.DamageCauser;
-	AActor* target = InHitContext.OverlapContext.OtherActor;
+	const FApplyDamageSpec* foundApplyDamageSpec = ApplyDamageSpecContainer.Find(InOutApplyDamageContext.ApplyDamageSpecKey);
 
-	if (!IsValid(attacker) || !IsValid(damageCauser) || !IsValid(target)) return false;
-
-	AController* instigatorController = attacker->GetInstigatorController();
-	if (!IsValid(instigatorController))
+	if (!foundApplyDamageSpec)
 	{
-		// Fallback: if DamageCauser has no valid InstigatorController, derive it from Attacker
-		if (APawn* Pawn = Cast<APawn>(attacker))
-			instigatorController = Pawn->GetController();
+		InOutApplyDamageContext.ApplyDamageSpec = FApplyDamageSpec();
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::SpecNotFound;
+		return;
 	}
-	if (!IsValid(instigatorController)) return false;
 
-	FApplyDamageSpecKey applyDamageSpectKey = BuildSpecKey(InHitContext);
+	InOutApplyDamageContext.ApplyDamageSpec = *foundApplyDamageSpec;
+	InOutApplyDamageContext.bAccepted = true;
+	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
+}
+
+void UCApplyDamageComponent::ComputeApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const
+{
+	if (!IsValid(InOutApplyDamageContext.Attacker) || !IsValid(InOutApplyDamageContext.DamageCauser) || !IsValid(InOutApplyDamageContext.TargetActor))
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::ComputeFailed;
+		return;
+	}
+
+	// [NOTE] Minimal sender-side request damage.
+	InOutApplyDamageContext.ApplyDamageAmount = FApplyDamageAmount();
+	InOutApplyDamageContext.ApplyDamageAmount.RequestDamage = InOutApplyDamageContext.ApplyDamageSpec.BaseDamage;
+
+	InOutApplyDamageContext.bAccepted = true;
+	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
+}
+
+void UCApplyDamageComponent::CommitApplyDamage(FApplyDamageContext& InOutApplyDamageContext)
+{
+	InOutApplyDamageContext.CommittedDamage = ApplyDamageToTarget(InOutApplyDamageContext);
+
+	if (InOutApplyDamageContext.CommittedDamage <= 0.f)
+	{
+		InOutApplyDamageContext.bAccepted = false;
+		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::CommitFailed;
+		return;
+	}
+
+	InOutApplyDamageContext.bAccepted = true;
+	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
+
+	CacheDamagedTargetInWindow(InOutApplyDamageContext);
+}
+
+
+float UCApplyDamageComponent::ApplyDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const
+{
+	if (!IsValid(InApplyDamageContext.TargetActor) || !IsValid(InApplyDamageContext.DamageCauser) || !IsValid(InApplyDamageContext.Instigator))
+		return 0.f;
 
 	FDefaultDamageEvent damageEvent;
-	damageEvent.ApplyDamageSpecKey = applyDamageSpectKey;
-	damageEvent.ApplyDamageSpec = InApplyDamageSpec;
-	damageEvent.ApplyDamageResult = InApplyDamageResult;
+	damageEvent.ApplyDamageSpecKey = InApplyDamageContext.ApplyDamageSpecKey;
+	damageEvent.ApplyDamageSpec = InApplyDamageContext.ApplyDamageSpec;
+	damageEvent.ApplyDamageAmount = InApplyDamageContext.ApplyDamageAmount;
 
-	// Debugging
-	PrintApplyDamageSummaryInfo(InHitContext, damageEvent.ApplyDamageSpec, damageEvent.ApplyDamageResult);
-	// PrintApplyDamageContextInfo(InHitContext, damageEvent.ApplyDamageSpec, damageEvent.ApplyDamageResult);
-
-	const float appliedDamage = target->TakeDamage(InApplyDamageResult.RequestDamage, damageEvent, instigatorController, damageCauser);
-
-	if (appliedDamage > 0.f)
-	{
-		CacheDamagedTargetInWindow(InHitContext);
-	}
-
-	return true;
+	return InApplyDamageContext.TargetActor->TakeDamage(InApplyDamageContext.ApplyDamageAmount.RequestDamage, damageEvent, InApplyDamageContext.Instigator, InApplyDamageContext.DamageCauser);
 }
 
-bool UCApplyDamageComponent::IsDuplicateHit(const FHitContext& InHitContext) const
+bool UCApplyDamageComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const
 {
-	const FApplyDamageHitWindowKey applyDamageHitWindowKey = BuildHitWindowKey(InHitContext);
-	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(applyDamageHitWindowKey);
+	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(InApplyDamageContext.HitWindowKey);
 
 	if (!foundTargets) return false;
 
-	return foundTargets->Contains(InHitContext.OverlapContext.OtherActor);
+	return foundTargets->Contains(InApplyDamageContext.TargetActor);
+}
+
+bool UCApplyDamageComponent::IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const
+{
+	AActor* ownerActor = InApplyDamageContext.Attacker;
+	AActor* targetActor = InApplyDamageContext.TargetActor;
+
+	if (!IsValid(ownerActor) || !IsValid(targetActor)) return false;
+
+	// TODO:
+	// Team / Friendly Fire policy
+	//
+	// Suggested direction:
+	// 1. Resolve team source from ownerActor
+	// 2. Resolve team source from targetActor
+	// 3. Compare team ids or attitudes
+	// 4. Return true when friendly-fire should be blocked
+	//
+	// Example candidates:
+	// - Team component on character
+	// - Team interface on actor
+	// - Gameplay tag based faction policy
+
+	return false;
 }
 
 FApplyDamageHitWindowKey UCApplyDamageComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
@@ -246,30 +338,113 @@ FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHi
 	return applyDamageSpecKey;
 }
 
-void UCApplyDamageComponent::CacheDamagedTargetInWindow(const FHitContext& InHitContext)
+FApplyDamagePayload UCApplyDamageComponent::BuildPayload(const FHitContext& InHitContext) const
 {
-	AActor* targetActor = InHitContext.OverlapContext.OtherActor;
+	FApplyDamagePayload applyDamagePayload;
+
+	applyDamagePayload.HitContext = InHitContext;
+	applyDamagePayload.Attacker = InHitContext.OverlapContext.OwnerActor;
+	applyDamagePayload.DamageCauser = InHitContext.OverlapContext.DamageCauser;
+	applyDamagePayload.TargetActor = InHitContext.OverlapContext.OtherActor;
+	applyDamagePayload.HitWindowKey = BuildHitWindowKey(InHitContext);
+	applyDamagePayload.ApplyDamageSpecKey = BuildSpecKey(InHitContext);
+
+	return applyDamagePayload;
+}
+
+FApplyDamageContext UCApplyDamageComponent::BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const
+{
+	FApplyDamageContext applyDamageContext;
+
+	applyDamageContext.HitContext = InApplyDamagePayload.HitContext;
+	applyDamageContext.Attacker = InApplyDamagePayload.Attacker;
+	applyDamageContext.DamageCauser = InApplyDamagePayload.DamageCauser;
+	applyDamageContext.TargetActor = InApplyDamagePayload.TargetActor;
+	applyDamageContext.HitWindowKey = InApplyDamagePayload.HitWindowKey;
+	applyDamageContext.ApplyDamageSpecKey = InApplyDamagePayload.ApplyDamageSpecKey;
+	applyDamageContext.Instigator = ResolveInstigatorController(InApplyDamagePayload.Attacker, InApplyDamagePayload.DamageCauser);
+
+	return applyDamageContext;
+}
+
+FApplyDamageResult UCApplyDamageComponent::BuildResult(const FApplyDamageContext& InApplyDamageContext) const
+{
+	FApplyDamageResult applyDamageResult;
+
+	applyDamageResult.bAccepted = InApplyDamageContext.bAccepted;
+	applyDamageResult.RejectReason = InApplyDamageContext.RejectReason;
+	applyDamageResult.HitWindowKey = InApplyDamageContext.HitWindowKey;
+	applyDamageResult.ApplyDamageSpecKey = InApplyDamageContext.ApplyDamageSpecKey;
+	applyDamageResult.BaseDamage = InApplyDamageContext.ApplyDamageSpec.BaseDamage;
+	applyDamageResult.RequestDamage = InApplyDamageContext.ApplyDamageAmount.RequestDamage;
+	applyDamageResult.CommittedDamage = InApplyDamageContext.CommittedDamage;
+
+	return applyDamageResult;
+}
+
+AController* UCApplyDamageComponent::ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const
+{
+	if (IsValid(InAttacker))
+	{
+		// 1) Preferred: attacker-provided instigator
+		if (AController* attackerInstigator = InAttacker->GetInstigatorController())
+			return attackerInstigator;
+
+		// 2) Fallback: attacker is a pawn/character
+		if (APawn* attackerPawn = Cast<APawn>(InAttacker))
+		{
+			if (AController* attackerController = attackerPawn->GetController())
+				return attackerController;
+		}
+	}
+
+	if (IsValid(InDamageCauser))
+	{
+		// 3) Fallback: causer-provided instigator
+		if (AController* causerInstigator = InDamageCauser->GetInstigatorController())
+			return causerInstigator;
+
+		if (AActor* causerOwner = InDamageCauser->GetOwner())
+		{
+			// 4) Fallback: owner of the causer provides the instigator
+			if (AController* ownerInstigator = causerOwner->GetInstigatorController())
+				return ownerInstigator;
+
+			// 5) Final fallback: owner of the causer is a pawn/character
+			if (APawn* ownerPawn = Cast<APawn>(causerOwner))
+			{
+				if (AController* ownerController = ownerPawn->GetController())
+					return ownerController;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+void UCApplyDamageComponent::CacheDamagedTargetInWindow(const FApplyDamageContext& InApplyDamageContext)
+{
+	AActor* targetActor = InApplyDamageContext.TargetActor;
 	if (!IsValid(targetActor)) return;
 
-	const FApplyDamageHitWindowKey key = BuildHitWindowKey(InHitContext);
-	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(key);
+	// Cached
+	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(InApplyDamageContext.HitWindowKey);
 	damagedTargets.Add(targetActor);
 }
 
-void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
+void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("===== Apply Damage Summary ======"));
 	FLog::Log(TEXT("[@ APPLY DAMAGE]"));
 
-	AActor* targetActor = InHitContext.OverlapContext.OtherActor;
-
-	const float baseDamage = InApplyDamageSpec.BaseDamage;
-	const float requestDamage = InApplyDamageResult.RequestDamage;
-
-	FLog::Log(FString::Printf(TEXT("Target = %s | Base = %.3f | Request = %.3f"),
-		*GetNameSafe(targetActor),
-		baseDamage,
-		requestDamage
+	FLog::Log(FString::Printf(
+		TEXT("DamageCauser = %s | Target = %s | HitWindowId = %d | Base = %.3f | Request = %.3f | Committed = %.3f"),
+		*GetNameSafe(InHitContext.OverlapContext.DamageCauser),
+		*GetNameSafe(InHitContext.OverlapContext.OtherActor),
+		InHitContext.OverlapContext.HitWindowId,
+		InApplyDamageResult.BaseDamage,
+		InApplyDamageResult.RequestDamage,
+		InApplyDamageResult.CommittedDamage
 	));
 	FLog::Log(TEXT("================================="));
 }
@@ -284,8 +459,33 @@ void UCApplyDamageComponent::PrintApplyDamageContextInfo(const FHitContext& InHi
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
+void UCApplyDamageComponent::PrintApplyDamageRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
+{
+	FLog::Log(TEXT("= Apply Damage Rejected Summary ="));
+	FLog::Log(TEXT("[@ REJECT DAMAGE]"));
+
+	FLog::Log(FString::Printf(
+		TEXT("RejectReason = %s | DamageCauser = %s | Target = %s | HitWindowId = %d"),
+		*UEnum::GetValueAsString(InRejectReason),
+		*GetNameSafe(InHitContext.OverlapContext.DamageCauser),
+		*GetNameSafe(InHitContext.OverlapContext.OtherActor),
+		InHitContext.OverlapContext.HitWindowId
+	));
+	FLog::Log(TEXT("================================="));
+}
+
+void UCApplyDamageComponent::PrintApplyDamageRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
+{
+	FLog::Log(TEXT("////- Reject Damage Context -////"));
+	PrintRejectReasonInfo(InRejectReason);
+	PrintOverlapContextInfo(InHitContext.OverlapContext);
+	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	FLog::Log(TEXT("/////////////////////////////////"));
+}
+
 void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const
 {
+	FLog::Log(TEXT("-------- Overlap Context --------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InOverlapContext.DamageCauser)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlappedComponent"), *GetNameSafe(InOverlapContext.OverlappedComponent)));
@@ -307,6 +507,7 @@ void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOv
 		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactPoint"), *hitResult.ImpactPoint.ToString()));
 		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactNormal"), *hitResult.ImpactNormal.ToString()));
 	}
+	FLog::Log(TEXT("---------------------------------"));
 }
 
 void UCApplyDamageComponent::PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const
@@ -334,6 +535,17 @@ void UCApplyDamageComponent::PrintDamageSpecInfo(const FApplyDamageSpec& InApply
 void UCApplyDamageComponent::PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("--------- Damage Result ---------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InApplyDamageResult.BaseDamage));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InApplyDamageResult.RequestDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CommittedDamage"), InApplyDamageResult.CommittedDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bAccepted"), InApplyDamageResult.bAccepted ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("RejectReason"), *UEnum::GetValueAsString(InApplyDamageResult.RejectReason)));
+	FLog::Log(TEXT("---------------------------------"));
+}
+
+void UCApplyDamageComponent::PrintRejectReasonInfo(EApplyDamageRejectReason InRejectReason) const
+{
+	FLog::Log(TEXT("--------- Reject Reason ---------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("RejectReason"), *UEnum::GetValueAsString(InRejectReason)));
 	FLog::Log(TEXT("---------------------------------"));
 }

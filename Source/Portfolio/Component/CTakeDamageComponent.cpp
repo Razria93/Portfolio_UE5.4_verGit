@@ -92,7 +92,7 @@ bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefault
 	if (!IsValid(InDamageCauser)) return false;
 
 	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageSpec.BaseDamage)) return false;
-	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageResult.RequestDamage)) return false;
+	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageAmount.RequestDamage)) return false;
 
 	return true;
 }
@@ -257,7 +257,7 @@ FTakeDamagePayload UCTakeDamageComponent::BuildPayload(float DamageAmount, const
 
 	takeDamagePayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
 	takeDamagePayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
-	takeDamagePayload.ApplyDamageResult = InDefaultDamageEvent.ApplyDamageResult;
+	takeDamagePayload.ApplyDamageAmount = InDefaultDamageEvent.ApplyDamageAmount;
 
 	takeDamagePayload.RequestedDamage = DamageAmount;
 
@@ -381,7 +381,7 @@ void UCTakeDamageComponent::PrintDamageAmountInfo(const FTakeDamagePayload& InTa
 	FLog::Log(TEXT("======= DamageAmount Info ======="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InTakeDamagePayload.ApplyDamageSpec.BaseDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InTakeDamagePayload.ApplyDamageResult.RequestDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InTakeDamagePayload.ApplyDamageAmount.RequestDamage));
 	FLog::Log(TEXT("---------- Amount Info ----------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalTakenDamage"), InTakeDamageResult.FinalTakenDamage));
 	FLog::Log(TEXT("================================="));

@@ -38,7 +38,29 @@ UENUM(BlueprintType)
 enum class EReactionType : uint8
 {
 	None = 0,
-	Hit
+	Hit,
+};
+
+UENUM(BlueprintType)
+enum class EApplyDamageRejectReason : uint8
+{
+	None = 0,
+
+	InvalidRequest,
+
+	InvalidAttacker,
+	InvalidDamageCauser,
+	InvalidTarget,
+	InvalidInstigator,
+
+	SpecNotFound,
+	ComputeFailed,
+	CommitFailed,
+
+	InvalidOwner,
+	SelfTarget,
+	DuplicateHitInWindow,
+	FriendlyTarget,
 };
 
 UENUM(BlueprintType)
@@ -300,13 +322,13 @@ public:
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InKey)
+FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
 {
 	uint32 H = 0;
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.AttachmentType)));
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.EquipmentType)));
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionType)));
-	H = HashCombine(H, GetTypeHash(InKey.ActionIndex));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.AttachmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.EquipmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.ActionType)));
+	H = HashCombine(H, GetTypeHash(InOther.ActionIndex));
 	return H;
 }
 
@@ -335,17 +357,118 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FApplyDamageAmount
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	float RequestDamage = 0.f;
+
+public:
+	FApplyDamageAmount() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FApplyDamagePayload
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FHitContext HitContext = FHitContext();
+
+	UPROPERTY(Transient)
+	AActor* Attacker = nullptr;
+
+	UPROPERTY(Transient)
+	AActor* DamageCauser = nullptr;
+
+	UPROPERTY(Transient)
+	AActor* TargetActor = nullptr;
+
+	UPROPERTY(Transient)
+	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
+
+	UPROPERTY(Transient)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
+public:
+	FApplyDamagePayload() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FApplyDamageContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bAccepted = true;
+
+	UPROPERTY(Transient)
+	EApplyDamageRejectReason RejectReason = EApplyDamageRejectReason::None;
+
+	UPROPERTY(Transient)
+	FHitContext HitContext = FHitContext();
+
+	UPROPERTY(Transient)
+	AActor* Attacker = nullptr;
+
+	UPROPERTY(Transient)
+	AController* Instigator = nullptr;
+
+	UPROPERTY(Transient)
+	AActor* DamageCauser = nullptr;
+
+	UPROPERTY(Transient)
+	AActor* TargetActor = nullptr;
+
+	UPROPERTY(Transient)
+	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
+
+	UPROPERTY(Transient)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
+	UPROPERTY(Transient)
+	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
+
+	UPROPERTY(Transient)
+	FApplyDamageAmount ApplyDamageAmount = FApplyDamageAmount();
+
+	UPROPERTY(Transient)
+	float CommittedDamage = 0.f;
+
+public:
+	FApplyDamageContext() = default;
+};
+
+USTRUCT(BlueprintType)
 struct FApplyDamageResult
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, Transient)
+	bool bAccepted = true;
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	EApplyDamageRejectReason RejectReason = EApplyDamageRejectReason::None;
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
+	UPROPERTY(VisibleAnywhere, Transient)
+	float BaseDamage = 0.f;
+
+	UPROPERTY(VisibleAnywhere, Transient)
 	float RequestDamage = 0.f;
 
-	// TODO:
-	// FVector ImpactPoint;
-	// FVector HitNormal;
+	UPROPERTY(VisibleAnywhere, Transient)
+	float CommittedDamage = 0.f;
 
 public:
 	FApplyDamageResult() = default;
@@ -363,8 +486,8 @@ public:
 	UPROPERTY()
 	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
 
-	UPROPERTY()
-	FApplyDamageResult ApplyDamageResult = FApplyDamageResult();
+	UPROPERTY(Transient)
+	FApplyDamageAmount ApplyDamageAmount = FApplyDamageAmount();
 
 public:
 	static const int32 ClassID = (int32)EDamageEventTypeId::DefaultDamage;
@@ -400,8 +523,8 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
 
-	UPROPERTY(VisibleAnywhere)
-	FApplyDamageResult ApplyDamageResult = FApplyDamageResult();
+	UPROPERTY(Transient)
+	FApplyDamageAmount ApplyDamageAmount = FApplyDamageAmount();
 
 	//Damage AmountData
 	UPROPERTY(VisibleAnywhere)
