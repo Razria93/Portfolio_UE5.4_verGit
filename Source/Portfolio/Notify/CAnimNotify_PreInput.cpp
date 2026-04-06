@@ -25,7 +25,17 @@ void UCAnimNotify_PreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin: action_ComboAttack->OnEnablePreInput(); return;
-	case EAnimNotifyFlow::End: action_ComboAttack->OffEnablePreInput(); return;
+	case EAnimNotifyFlow::Begin:
+	{
+		FLog::Log(TEXT("[AnimNotify|PreInput] Begin"));
+		action_ComboAttack->OnEnablePreInput();
+		break;
+	}
+	case EAnimNotifyFlow::End:
+	{
+		FLog::Log(TEXT("[AnimNotify|PreInput] End"));
+		action_ComboAttack->OffEnablePreInput();
+		break;
+	}
 	}
 }

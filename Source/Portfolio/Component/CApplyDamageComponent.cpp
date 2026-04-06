@@ -26,6 +26,8 @@ void UCApplyDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
 {
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("NotifyHitWindowOpened|InHitWindowId"), InHitWindowId));
+
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
 
@@ -40,6 +42,8 @@ void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32
 
 void UCApplyDamageComponent::NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId)
 {
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("NotifyHitWindowClosed|InHitWindowId"), InHitWindowId));
+
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
 
