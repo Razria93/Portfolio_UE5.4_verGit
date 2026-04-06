@@ -1,4 +1,4 @@
-# UE5 Portfolio – Issue Checklist
+# UE5 Portfolio Issue Checklist
 
 ## Title
 
@@ -19,7 +19,7 @@
 
 - Organize the responsibilities and minimum policies across the `HitContext -> ApplyDamage -> DefaultDamageEvent -> TakeDamage -> Health -> Reaction` flow.
 
-- Structure the system so damage is processed under the same rules regardless of whether the target is the player or an Enemy.
+- Structure the system so damage is processed under the same rules regardless of whether the target is the Player or an Enemy.
 
 
 ---
@@ -35,64 +35,70 @@
 
 #### 1. Organize ApplyDamage Responsibilities
 
-- [ ] Organize input/output responsibilities of the `ApplyDamage` stage
+- [x] Organize input/output responsibilities of the `ApplyDamage` stage
 
-- [ ] Finalize spec lookup policy based on `FApplyDamageSpecKey`
+- [x] Finalize spec lookup policy based on `FApplyDamageSpecKey`
 
-- [ ] Organize spec miss handling policy
+- [x] Organize spec miss handling policy
 
-- [ ] Organize minimal debug log flow
-
-
-#### 2. Organize Duplicate Hit and Attack Rules
-
-- [ ] Add duplicate hit prevention policy within the same attack window
-
-- [ ] Preserve self-hit prohibition rule
-
-- [ ] Organize duplicate target overlap handling policy
-
-- [ ] Organize follow-up policy for stop damage / overlap end
+- [x] Organize minimal debug log flow
 
 
-#### 3. Organize Team / Friendly Fire Policy
+#### 2. Organize Hit Window and Duplicate Hit Rules
 
-- [ ] Decide whether to introduce a team identification structure
+- [x] Add hit window based attack window identification rules
 
-- [ ] Decide whether friendly fire is allowed
+- [x] Add duplicate hit prevention policy within the same attack window
 
-- [ ] Apply stub policy if not implemented yet
+- [x] Preserve self-hit prohibition rule
 
+- [x] Organize duplicate target overlap handling policy
 
-#### 4. Organize TakeDamage Responsibilities
-
-- [ ] Fix the meaning of `Requested / Mitigated / FinalTaken / FinalApplied`
-
-- [ ] Organize request reject conditions
-
-- [ ] Organize accepted / rejected follow-up direction
-
-- [ ] Organize dead target handling policy
+- [x] Organize hit window open / close follow-up policy
 
 
-#### 5. Organize Reaction Connection Rules
+#### 3. Organize TakeDamage Responsibilities
 
-- [ ] Organize minimum conditions for reaction entry
+- [x] Fix the meaning of `Requested / Mitigated / FinalTaken / Committed`
 
-- [ ] Organize connection rules from damage result to reaction request
+- [x] Organize request reject conditions
 
-- [ ] Organize priority between death transition and reaction
+- [x] Organize accepted / rejected follow-up direction
+
+- [x] Organize dead target handling policy
 
 
-#### 6. Integrated Validation
+#### 4. Organize Reaction Connection Rules
 
-- [ ] Scenario 1: confirm Player/Enemy damage processing under the same rules
+- [x] Organize minimum conditions for reaction entry
 
-- [ ] Scenario 2: confirm duplicate hit prevention within the same attack window
+- [x] Organize connection rules from damage result to reaction request
 
-- [ ] Scenario 3: confirm invalid request rejection
+- [x] Organize priority between death transition and reaction
 
-- [ ] Scenario 4: confirm additional damage handling policy on dead targets
+
+#### 5. Integrated Validation
+
+- [x] Scenario 1: confirm Player / Enemy damage processing under the same rules
+
+- [x] Scenario 2: confirm duplicate hit prevention within the same attack flow
+
+- [x] Scenario 3: confirm normal damage processing from attack start to first hit
+
+- [x] Scenario 4: confirm follow-up flow including reaction / death transition after damage
+
+- [x] Scenario 5: confirm additional damage handling policy on dead targets
+
+
+---
+
+### Current Outcome
+
+- Both `ApplyDamage` and `TakeDamage` have been organized into a shared `Payload / Context / Result` flow.
+
+- Hit window based duplicate-hit prevention, invalid request rejection, and dead target protection have been reflected in the current branch.
+
+- `Reaction` has been connected using `CommittedDamage` and dead-state before/after conditions.
 
 
 ---
@@ -101,7 +107,18 @@
 
 - The goal of this issue is **to organize shared combat rules and minimum policies**, rather than advanced numeric design.
 
-- Later extensions such as Guard, Armor, Resistance, Team, and Friendly Fire should be designed to build on top of these rules.
+- Later extensions such as Guard, Armor, and Resistance should be designed to build on top of the current shared combat core.
+
+
+---
+
+### Follow-Up TODO
+
+  - Decide whether to introduce a team identification structure
+
+  - Decide Friendly Fire allowance and resolution policy
+
+  - Connect extended receiver-side policies such as Guard / Armor / Resistance
 
 
 ---
