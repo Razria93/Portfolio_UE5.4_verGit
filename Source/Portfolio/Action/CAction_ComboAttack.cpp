@@ -32,6 +32,7 @@ void UCAction_ComboAttack::PlayAction()
 		bEnablePreInput = false; // Enabled by CAnimNotify_ComboEnable
 		bExistPreInput = true;	 // Mark pre-input for next combo step
 
+		FLog::Log(TEXT("[ComboAttack|PlayAction] Buffered PreInput"));
 		return;
 	}
 
@@ -96,6 +97,8 @@ void UCAction_ComboAttack::NextPlayAction()
 
 		ActionIndex = nextActionIndex;
 
+		FLog::Log(FString::Printf(TEXT("[ComboAttack|NextPlayAction] AdvanceCombo | ActionIndex = %d"), ActionIndex));
+
 		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
 		ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 
@@ -104,5 +107,9 @@ void UCAction_ComboAttack::NextPlayAction()
 		actionContext.ActionIndex = ActionIndex; // Increased ActionIndex
 
 		PushContextToAttachment(actionContext);
+	}
+	else
+	{
+		FLog::Log(TEXT("[ComboAttack|NextPlayAction] No Buffered PreInput"));
 	}
 }
