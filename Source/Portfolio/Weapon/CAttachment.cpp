@@ -10,7 +10,7 @@
 
 ACAttachment::ACAttachment()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	Root = CreateDefaultSubobject<USceneComponent>("Root");
 	check(Root);
@@ -117,56 +117,38 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
-	
+
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
 	if (OwnerCharacter_Cached == OtherActor) return;
-	
+
 	if (!IsValid(ApplyDamageComp_Cached)) return;
 
-	FOverlapContext lastOverlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	FHitContext hitContext = BuildHitContext(overlapContext);
 
-	FHitContext hitContext;
-
-	hitContext.OverlapContext = lastOverlapContext;
-	hitContext.AttachmentContext = LastAttachmentContext;
-	hitContext.EquipmentContext = LastEquipmentContext;
-	hitContext.ActionContext = LastActionContext;
+	PrintBeginOverlapContextInfo(hitContext);
 
 	// Legacy delegate
 	if (OnAttachmentBeginOverlap.IsBound())
 		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	PrintBeginOverlapContextInfo(hitContext);
-
 	ApplyDamageComp_Cached->RequestApplyDamage(hitContext);
-	LastOverlapContext = lastOverlapContext;
+	LastOverlapContext = overlapContext;
 }
 
 void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
+
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
 	if (OwnerCharacter_Cached == OtherActor) return;
+
 	if (!IsValid(ApplyDamageComp_Cached)) return;
-
-	FOverlapContext lastOverlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, false, FHitResult());
-
-	FHitContext hitContext;
-
-	hitContext.OverlapContext = lastOverlapContext;
-	hitContext.AttachmentContext = LastAttachmentContext;
-	hitContext.EquipmentContext = LastEquipmentContext;
-	hitContext.ActionContext = LastActionContext;
 
 	// Legacy delegate
 	if (OnAttachmentEndOverlap.IsBound())
 		OnAttachmentEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
-
-	// PrintEndOverlapContextInfo(hitContext);
-
-	ApplyDamageComp_Cached->RequestStopDamage(hitContext); // Not implemented
-	LastOverlapContext = lastOverlapContext;
 }
 
 void ACAttachment::OnEquipmentBeginEquip()
@@ -181,32 +163,65 @@ void ACAttachment::OnEquipmentBeginUnequip()
 
 void ACAttachment::CollisionEnabled(FName InName)
 {
+	TArray<UShapeComponent*> collisionsToEnable;
+
 	if (!InName.IsNone())
 	{
 		for (UShapeComponent* collision : Collisions_Cached)
 		{
 			if (collision->GetFName() == InName)
 			{
-				collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-				return;
+				collisionsToEnable.Add(collision);
+				break;
 			}
 		}
 	}
-	else // InName == None: OnCollision_ALL
+	else
 	{
 		for (UShapeComponent* collision : Collisions_Cached)
-			collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		{
+			collisionsToEnable.Add(collision);
+		}
 	}
 
-	// Legacy delegate
+	// Early-Return
+	if (collisionsToEnable.IsEmpty()) return;
+
+	if (!bHitWindowOpened)
+	{
+		++CurrentHitWindowId;
+		bHitWindowOpened = true;
+
+		if (IsValid(ApplyDamageComp_Cached))
+		{
+			ApplyDamageComp_Cached->NotifyHitWindowOpened(this, CurrentHitWindowId);
+		}
+	}
+
+	for (UShapeComponent* collision : collisionsToEnable)
+	{
+		collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+
 	if (OnAttachmentCollisionEnabled.IsBound())
 		OnAttachmentCollisionEnabled.Broadcast();
 }
 
 void ACAttachment::CollisionDisabled()
 {
+	if (!bHitWindowOpened) return;
+
 	for (UShapeComponent* collision : Collisions_Cached)
+	{
 		collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	bHitWindowOpened = false;
+
+	if (IsValid(ApplyDamageComp_Cached) && CurrentHitWindowId != INDEX_NONE)
+	{
+		ApplyDamageComp_Cached->NotifyHitWindowClosed(this, CurrentHitWindowId);
+	}
 
 	// Legacy delegate
 	if (OnAttachmentCollisionDisabled.IsBound())
@@ -225,10 +240,22 @@ FOverlapContext ACAttachment::BuildOverlapContext(AActor* InOwnerActor, AActor* 
 	overlapContext.OtherComponent = OtherComp;
 	overlapContext.OtherBodyIndex = OtherBodyIndex;
 	overlapContext.bFromSweep = bFromSweep;
-
 	overlapContext.SweepResult = bFromSweep ? SweepResult : FHitResult();
+	overlapContext.HitWindowId = CurrentHitWindowId;
 
 	return overlapContext;
+}
+
+FHitContext ACAttachment::BuildHitContext(const FOverlapContext& InOverlapContext) const
+{
+	FHitContext hitContext;
+
+	hitContext.OverlapContext = InOverlapContext;
+	hitContext.AttachmentContext = LastAttachmentContext;
+	hitContext.EquipmentContext = LastEquipmentContext;
+	hitContext.ActionContext = LastActionContext;
+
+	return hitContext;
 }
 
 void ACAttachment::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)

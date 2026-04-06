@@ -258,7 +258,7 @@ EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& 
 		return EReactionType::None;
 	}
 
-	if (InTakeDamageResult.FinalAppliedDamage > 0.f &&
+	if (InTakeDamageResult.CommittedDamage > 0.f &&
 		InTakeDamageResult.DeadState_Before == EDeadState::Alive &&
 		InTakeDamageResult.DeadState_After == EDeadState::Alive)
 	{
