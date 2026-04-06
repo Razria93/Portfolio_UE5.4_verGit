@@ -36,7 +36,7 @@
 
 ---
 
-## 배경
+## 환경
 
 - Engine: Unreal Engine 5.4
 
@@ -102,8 +102,6 @@
 ---
 
 ## 원인
-
-문제 구간은 다음과 같았음.
 
 ```cpp
 InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
