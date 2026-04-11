@@ -207,6 +207,8 @@
   
 - 문서화: Obsidian
 
+- AI 툴: ChatGPT (~M2) / CodeX (M3 ~)
+
 
 ---
 
