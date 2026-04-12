@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M03-05: Combat Feedback 구현 및 정리**
+**M04-01: Combat Feedback 구현 및 정리**
 
 ### 날짜
 
@@ -16,6 +16,7 @@
 ### 목표
 
 - 전투가 구조만 보이는 상태에서 벗어나, 피격 결과가 실제 체감으로 보이도록 **Combat Feedback**을 구현하고 정리함.
+  
 - `TakeDamage -> Reaction -> ReactionFX` 흐름을 기준으로 피격 이후 후속 연출을 일관되게 연결함.
 
 

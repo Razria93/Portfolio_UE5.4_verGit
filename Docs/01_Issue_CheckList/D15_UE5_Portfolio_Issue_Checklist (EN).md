@@ -1,100 +1,86 @@
-# UE5 Portfolio – Issue Checklist
+# UE5 Portfolio Issue Checklist
 
 ## Title
 
-**M03-05: Validate and Organize Enemy Combat Receiver**
+**M04-01: Implement and Organize Combat Feedback**
 
 ### Date
 
 - **Day 15**
-
-- **Date : 2026.04.07**
+  
+- **Date : 2026.04.11**
 
 
 ---
 
 ### Goals
 
-- Re-validate the Enemy's existing `TakeDamage / Health / Reaction` structure against real combat usage and supplement missing policies.
-
-- Organize hit, reaction, death, and revive flows so they close stably in actual combat situations.
-
-- Validate that the Player attack loop and Enemy receive loop connect consistently.
+- Move combat beyond a structure-only presentation and implement and organize **Combat Feedback** so that hit results are actually readable and tangible in play.
+  
+- Connect the post-hit presentation flow consistently around `TakeDamage -> Reaction -> ReactionFX`.
 
 
 ---
 
 ### Branch
-
-- `feature/enemy-combat-receiver`
+- `feature/combat-feedback`
 
 
 ---
 
 ### TODO List
 
-#### 1. Validate Damage Receive Flow
+#### 1. Organize Feedback Structure
 
-- [ ] Validate the current `TakeDamage -> Health -> Reaction` flow
-
-- [ ] Confirm `TakeDamageComponent` entry conditions
-
-- [ ] Confirm invalid request handling
-
-- [ ] Confirm minimal Enemy-side logging
-
-
-#### 2. Validate Dead State Transitions
-
-- [ ] Validate `Alive -> Dying -> Dead` transitions
-
-- [ ] Validate synchronization with `AnimNotify_EnterDeadState`
-
-- [ ] Confirm movement/action stop in Dead state
-
-- [ ] Validate re-hit handling policy in Dead state
+- [ ] Re-check current responsibilities of `ReactionComponent` and `ReactionFXComponent`
+      
+- [ ] Organize the feedback trigger point after `TakeDamageCommitted`
+      
+- [ ] Organize the execution order between Reaction and Feedback
+      
+- [ ] Organize feedback block or finish rules for Dead / Revive
 
 
-#### 3. Review Revive Flow
+#### 2. Implement First-Pass Hit Feedback
 
-- [ ] Review revive entry scenario
-
-- [ ] Review revive cancel scenario
-
-- [ ] Validate synchronization with `AnimNotify_EnterAliveState`
-
-- [ ] Confirm state reset policy after revive
-
-
-#### 4. Validate Reaction Flow
-
-- [ ] Validate HitReact entry on hit
-
-- [ ] Validate state return after Reaction ends
-
-- [ ] Review conflict between death transition and reaction
-
-- [ ] Review additional hit policy during reaction
+- [ ] Apply Hit Stop
+      
+- [ ] Apply Hit VFX
+      
+- [ ] Apply Hit Sound
+      
+- [ ] Apply Camera Shake
+      
+- [ ] Check whether strong hits / weak hits need differentiated feedback
 
 
-#### 5. Integrated Validation
+#### 3. Check Perceived Combat Quality
 
-- [ ] Scenario 1: player attack -> Enemy HP decreases
+- [ ] Check the feel of a basic single-hit reaction
+      
+- [ ] Check chained feedback during combo hits
+      
+- [ ] Check feedback behavior right before Dead / after Dead
+      
+- [ ] Check whether the end of Reaction feels natural
 
-- [ ] Scenario 2: player attack -> Enemy enters HitReact
 
-- [ ] Scenario 3: accumulated hits -> Enemy transitions to Dead
-
-- [ ] Scenario 4: confirm return to Alive state after revive
+#### 4. Minimal Validation
+- [ ] Scenario 1: Player attack -> Enemy HitReact + Feedback
+      
+- [ ] Scenario 2: Combo attack -> chained feedback works correctly
+      
+- [ ] Scenario 3: Dead transition -> feedback finish rule works correctly
+      
+- [ ] Scenario 4: Feedback reset after Revive
 
 
 ---
 
 ### Notes
 
-- This issue focuses more on **validating whether the existing Enemy receive loop is actually closed** than on adding new features.
-
-- Later AI combat loop validation should proceed based on the results of this issue.
+- This issue focuses on **making combat actually visible and tangible in play**, rather than adding new combat rules.
+- Treat this branch as the presentation baseline for later `Combat Validation`, `AI Combat Loop`, and `CounterAction` work.
 
 
 ---
