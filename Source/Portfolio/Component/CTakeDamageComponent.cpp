@@ -5,6 +5,7 @@
 
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CReactionFXComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -25,6 +26,9 @@ void UCTakeDamageComponent::BeginPlay()
 
 	ReactionComp_Cached = Cast<UCReactionComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionComponent::StaticClass()));
 	check(ReactionComp_Cached);
+
+	ReactionFXComp_Cached = Cast<UCReactionFXComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionFXComponent::StaticClass()));
+	check(ReactionFXComp_Cached);
 }
 
 void UCTakeDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

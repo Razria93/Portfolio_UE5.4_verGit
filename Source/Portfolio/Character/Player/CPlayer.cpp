@@ -14,6 +14,7 @@
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CReactionFXComponent.h"
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
@@ -87,6 +88,10 @@ ACPlayer::ACPlayer()
 	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
+
+	// Init ReactionComp
+	ReactionFXComponent = CreateDefaultSubobject<UCReactionFXComponent>(TEXT("ReactionFX"));
+	check(ReactionFXComponent);
 }
 
 void ACPlayer::BeginPlay()

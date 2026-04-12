@@ -11,6 +11,7 @@
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CReactionFXComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -62,6 +63,10 @@ ACEnemy::ACEnemy()
 	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
+
+	// Init ReactionFXComp
+	ReactionFXComponent = CreateDefaultSubobject<UCReactionFXComponent>(TEXT("ReactionFX"));
+	check(ReactionFXComponent);
 }
 
 void ACEnemy::BeginPlay()

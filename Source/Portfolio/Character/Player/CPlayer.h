@@ -48,6 +48,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCReactionComponent* ReactionComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCReactionFXComponent* ReactionFXComponent;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;

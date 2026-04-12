@@ -15,10 +15,17 @@ public:
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class AActor* OwnerActor_Cached;
 
+	UPROPERTY(Transient)
 	class UCHealthComponent* HealthComp_Cached;
+	
+	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached;
+	
+	UPROPERTY(Transient)
+	class UCReactionFXComponent* ReactionFXComp_Cached;
 
 protected:
 	virtual void BeginPlay() override;
