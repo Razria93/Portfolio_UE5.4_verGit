@@ -348,13 +348,16 @@ void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload
 		{
 			ReactionComp_Cached->TryRequestPendingDamageReaction(InTakeDamageResult);
 		}
+
+		if (IsValid(ReactionFXComp_Cached))
+		{
+			ReactionFXComp_Cached->PlayDamageFeedback(InTakeDamageResult);
+		}
 	}
 
 	// TODO:
-	// - VFX/SFX
-	// - Knockback
-	// - HitStop
-	// - UI Damage Number
+	// - UI Feedback
+	// - OnTakeDamageCommitted broadcast
 }
 
 void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
