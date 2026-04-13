@@ -55,10 +55,10 @@ int32 UCReactionComponent::GetPendingReactionVersion() const
 	return PendingReactionVersion_Cached;
 }
 
-bool UCReactionComponent::TryRequestPendingDamageReaction(const FTakeDamageResult& InTakeDamageResult)
+bool UCReactionComponent::TryRequestPendingDamageReaction(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	FReactionContext newReactionContext; // OutParameter
-	if (!TryBuildDamageReactionContext(InTakeDamageResult, newReactionContext)) return false;
+	if (!TryBuildDamageReactionContext(InTakeDamagePacket.Result, newReactionContext)) return false;
 
 	// Case01. Invalid pending reaction
 	if (!HasPendingReactionContext())

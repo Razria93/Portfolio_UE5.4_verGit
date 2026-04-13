@@ -5,7 +5,7 @@
 
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionComponent.h"
-#include "Component/CReactionFXComponent.h"
+#include "Component/CReactionFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -27,8 +27,8 @@ void UCTakeDamageComponent::BeginPlay()
 	ReactionComp_Cached = Cast<UCReactionComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionComponent::StaticClass()));
 	check(ReactionComp_Cached);
 
-	ReactionFXComp_Cached = Cast<UCReactionFXComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionFXComponent::StaticClass()));
-	check(ReactionFXComp_Cached);
+	ReactionFeedbackComp_Cached = Cast<UCReactionFeedbackComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionFeedbackComponent::StaticClass()));
+	check(ReactionFeedbackComp_Cached);
 }
 
 void UCTakeDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -69,8 +69,10 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	if (!ValidateContext(takeDamageContext))
 	{
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
-		PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, rejectedResult);
-		DispatchTakeDamageRejected(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+
+		PrintTakeDamageSummaryInfo(takeDamagePacket);
+		DispatchTakeDamageRejected(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -82,8 +84,10 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	if (!CanTakeDamage(takeDamageContext))
 	{
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
-		PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, rejectedResult);
-		DispatchTakeDamageRejected(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+
+		PrintTakeDamageSummaryInfo(takeDamagePacket);
+		DispatchTakeDamageRejected(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -93,8 +97,10 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	if (!takeDamageContext.bAccepted)
 	{
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
-		PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, rejectedResult);
-		DispatchTakeDamageRejected(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+
+		PrintTakeDamageSummaryInfo(takeDamagePacket);
+		DispatchTakeDamageRejected(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -102,8 +108,10 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	CommitTakeDamage(takeDamageContext);
 
 	const FTakeDamageResult committedResult = BuildResult(takeDamageContext);
-	PrintTakeDamageSummaryInfo(takeDamagePayload, takeDamageContext, committedResult);
-	DispatchTakeDamageCommitted(takeDamagePayload, takeDamageContext, committedResult);
+	const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
+
+	PrintTakeDamageSummaryInfo(takeDamagePacket);
+	DispatchTakeDamageCommitted(takeDamagePacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -114,6 +122,8 @@ bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefault
 	if (!IsValid(HealthComp_Cached)) return false;
 	if (!IsValid(InDamageCauser)) return false;
 
+	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerActor_Cached) return false;
+
 	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageSpec.BaseDamage)) return false;
 	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageAmount.RequestDamage)) return false;
 
@@ -122,7 +132,7 @@ bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefault
 
 bool UCTakeDamageComponent::ValidateContext(FTakeDamageContext& InOutTakeDamageContext)
 {
-	if (!IsValid(InOutTakeDamageContext.DamagedActor))
+	if (!IsValid(InOutTakeDamageContext.TargetActor))
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidTarget;
@@ -293,7 +303,8 @@ FTakeDamagePayload UCTakeDamageComponent::BuildPayload(float DamageAmount, const
 {
 	FTakeDamagePayload takeDamagePayload = FTakeDamagePayload();
 
-	takeDamagePayload.DamagedActor = OwnerActor_Cached;
+	takeDamagePayload.SourceActor = InDefaultDamageEvent.SourceActor;
+	takeDamagePayload.TargetActor = OwnerActor_Cached;
 	takeDamagePayload.EventInstigator = InDamageInstigator;
 	takeDamagePayload.DamageCauser = InDamageCauser;
 
@@ -310,7 +321,8 @@ FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload&
 {
 	FTakeDamageContext takeDamageContext = FTakeDamageContext();
 
-	takeDamageContext.DamagedActor = InTakeDamagePayload.DamagedActor;
+	takeDamageContext.SourceActor = InTakeDamagePayload.SourceActor;
+	takeDamageContext.TargetActor = InTakeDamagePayload.TargetActor;
 	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
 	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
 	takeDamageContext.ApplyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
@@ -339,79 +351,91 @@ FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& I
 	return takeDamageResult;
 }
 
-void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
 {
-	// TODO: OnTakeDamageCommitted broadcast
-	if (InTakeDamageResult.bAccepted)
-	{
-		if (IsValid(ReactionComp_Cached))
-		{
-			ReactionComp_Cached->TryRequestPendingDamageReaction(InTakeDamageResult);
-		}
+	FTakeDamagePacket takeDamagePacket;
 
-		if (IsValid(ReactionFXComp_Cached))
-		{
-			ReactionFXComp_Cached->PlayDamageFeedback(InTakeDamageResult);
-		}
+	takeDamagePacket.Payload = InTakeDamagePayload;
+	takeDamagePacket.Context = InTakeDamageContext;
+	takeDamagePacket.Result = InTakeDamageResult;
+
+	return takeDamagePacket;
+}
+
+void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket)  const
+{
+	if (!InTakeDamagePacket.Result.bAccepted) return;
+
+	if (IsValid(ReactionComp_Cached))
+	{
+		ReactionComp_Cached->TryRequestPendingDamageReaction(InTakeDamagePacket);
+	}
+
+	if (IsValid(ReactionFeedbackComp_Cached))
+	{
+		ReactionFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
 	}
 
 	// TODO:
-	// - UI Feedback
+	// - Debug/UI Feedback
 	// - OnTakeDamageCommitted broadcast
 }
 
-void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket)  const
 {
-	// TODO: OnTakeDamageRejected broadcast
+	// - Debug/UI rejected feedback
+	// - OnTakeDamageRejected broadcast
 }
 
-void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("====== Take Damage Summary ======"));
 	FLog::Log(TEXT("[@ TAKE DAMAGE]"));
 
-	FLog::Log(FString::Printf(TEXT("DamagedActor = %s | Instigator = %s | DamageCauser = %s"),
-		*GetNameSafe(InTakeDamageContext.DamagedActor),
-		*GetNameSafe(InTakeDamageContext.Instigator),
-		*GetNameSafe(InTakeDamageContext.DamageCauser)
+	FLog::Log(FString::Printf(TEXT("SourceActor = %s | TargetActor = %s | Instigator = %s | DamageCauser = %s"),
+		*GetNameSafe(InTakeDamagePacket.Context.SourceActor),
+		*GetNameSafe(InTakeDamagePacket.Context.TargetActor),
+		*GetNameSafe(InTakeDamagePacket.Context.Instigator),
+		*GetNameSafe(InTakeDamagePacket.Context.DamageCauser)
 	));
 
 	FLog::Log(FString::Printf(TEXT("RequestDamage = %.3f | MitigatedDamage = %.3f | FinalTakenDamage = %.3f | CommittedDamage = %.3f"),
-		InTakeDamageResult.RequestDamage,
-		InTakeDamageResult.MitigatedDamage,
-		InTakeDamageResult.FinalTakenDamage,
-		InTakeDamageResult.CommittedDamage
+		InTakeDamagePacket.Result.RequestDamage,
+		InTakeDamagePacket.Result.MitigatedDamage,
+		InTakeDamagePacket.Result.FinalTakenDamage,
+		InTakeDamagePacket.Result.CommittedDamage
 	));
 	FLog::Log(TEXT("================================="));
 }
 
-void UCTakeDamageComponent::PrintTakeDamageContextInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+void UCTakeDamageComponent::PrintTakeDamageContextInfo(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("/////- Take Damage Context -/////"));
-	PrintObjectInfo(InTakeDamagePayload, InTakeDamageContext, InTakeDamageResult);
-	PrintSpecKeyInfo(InTakeDamagePayload, InTakeDamageContext, InTakeDamageResult);
-	PrintDamageAmountInfo(InTakeDamagePayload, InTakeDamageContext, InTakeDamageResult);
+	PrintObjectInfo(InTakeDamagePacket);
+	PrintSpecKeyInfo(InTakeDamagePacket);
+	PrintDamageAmountInfo(InTakeDamagePacket);
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
-void UCTakeDamageComponent::PrintObjectInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+void UCTakeDamageComponent::PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("========== Object Info =========="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] EventInstigator"), *GetNameSafe(InTakeDamagePayload.EventInstigator)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] DamageCauser"), *GetNameSafe(InTakeDamagePayload.DamageCauser)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] EventInstigator"), *GetNameSafe(InTakeDamagePacket.Payload.EventInstigator)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] DamageCauser"), *GetNameSafe(InTakeDamagePacket.Payload.DamageCauser)));
 	FLog::Log(TEXT("--------- Context Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] DamagedActor"), *GetNameSafe(InTakeDamageContext.DamagedActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] Instigator"), *GetNameSafe(InTakeDamageContext.Instigator)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] DamageCauser"), *GetNameSafe(InTakeDamageContext.DamageCauser)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] SourceActor"), *GetNameSafe(InTakeDamagePacket.Context.SourceActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] TargetActor"), *GetNameSafe(InTakeDamagePacket.Context.TargetActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] Instigator"), *GetNameSafe(InTakeDamagePacket.Context.Instigator)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] DamageCauser"), *GetNameSafe(InTakeDamagePacket.Context.DamageCauser)));
 	FLog::Log(TEXT("================================="));
 }
 
-void UCTakeDamageComponent::PrintSpecKeyInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+void UCTakeDamageComponent::PrintSpecKeyInfo(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("========= SpecKey Info =========="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
-	const FApplyDamageSpecKey& applyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
+	const FApplyDamageSpecKey& applyDamageSpecKey = InTakeDamagePacket.Payload.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(applyDamageSpecKey.ActionIndex);
 
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.AttachmentType)));
@@ -421,14 +445,14 @@ void UCTakeDamageComponent::PrintSpecKeyInfo(const FTakeDamagePayload& InTakeDam
 	FLog::Log(TEXT("================================="));
 }
 
-void UCTakeDamageComponent::PrintDamageAmountInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+void UCTakeDamageComponent::PrintDamageAmountInfo(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("======= DamageAmount Info ======="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InTakeDamagePayload.ApplyDamageSpec.BaseDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InTakeDamagePayload.ApplyDamageAmount.RequestDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InTakeDamagePacket.Payload.ApplyDamageSpec.BaseDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InTakeDamagePacket.Payload.ApplyDamageAmount.RequestDamage));
 	FLog::Log(TEXT("---------- Amount Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalTakenDamage"), InTakeDamageResult.FinalTakenDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalTakenDamage"), InTakeDamagePacket.Result.FinalTakenDamage));
 	FLog::Log(TEXT("================================="));
 }
 

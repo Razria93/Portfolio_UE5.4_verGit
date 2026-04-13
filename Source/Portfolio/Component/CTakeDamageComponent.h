@@ -20,12 +20,12 @@ private:
 
 	UPROPERTY(Transient)
 	class UCHealthComponent* HealthComp_Cached;
-	
+
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached;
-	
+
 	UPROPERTY(Transient)
-	class UCReactionFXComponent* ReactionFXComp_Cached;
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Cached;
 
 protected:
 	virtual void BeginPlay() override;
@@ -61,17 +61,18 @@ private:
 	FTakeDamagePayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
 	FTakeDamageContext BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const;
 	FTakeDamageResult BuildResult(const FTakeDamageContext& InTakeDamageContext) const;
+	FTakeDamagePacket BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
 
 private:
-	void DispatchTakeDamageCommitted(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
-	void DispatchTakeDamageRejected(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
-	void PrintTakeDamageSummaryInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
-	void PrintTakeDamageContextInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintTakeDamageContextInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
-	void PrintObjectInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
-	void PrintSpecKeyInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
-	void PrintDamageAmountInfo(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	void PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintSpecKeyInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintDamageAmountInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 };

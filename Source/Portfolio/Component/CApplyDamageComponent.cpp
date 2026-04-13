@@ -150,7 +150,7 @@ bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) co
 
 bool UCApplyDamageComponent::ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const
 {
-	if (!IsValid(InOutApplyDamageContext.Attacker))
+	if (!IsValid(InOutApplyDamageContext.SourceActor))
 	{
 		InOutApplyDamageContext.bAccepted = false;
 		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::InvalidAttacker;
@@ -241,7 +241,7 @@ void UCApplyDamageComponent::ResolveApplyDamageSpec(FApplyDamageContext& InOutAp
 
 void UCApplyDamageComponent::ComputeApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const
 {
-	if (!IsValid(InOutApplyDamageContext.Attacker) || !IsValid(InOutApplyDamageContext.DamageCauser) || !IsValid(InOutApplyDamageContext.TargetActor))
+	if (!IsValid(InOutApplyDamageContext.SourceActor) || !IsValid(InOutApplyDamageContext.DamageCauser) || !IsValid(InOutApplyDamageContext.TargetActor))
 	{
 		InOutApplyDamageContext.bAccepted = false;
 		InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::ComputeFailed;
@@ -280,6 +280,8 @@ float UCApplyDamageComponent::ApplyDamageToTarget(const FApplyDamageContext& InA
 		return 0.f;
 
 	FDefaultDamageEvent damageEvent;
+	damageEvent.SourceActor = InApplyDamageContext.SourceActor;
+	damageEvent.TargetActor = InApplyDamageContext.TargetActor;
 	damageEvent.ApplyDamageSpecKey = InApplyDamageContext.ApplyDamageSpecKey;
 	damageEvent.ApplyDamageSpec = InApplyDamageContext.ApplyDamageSpec;
 	damageEvent.ApplyDamageAmount = InApplyDamageContext.ApplyDamageAmount;
@@ -298,7 +300,7 @@ bool UCApplyDamageComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDa
 
 bool UCApplyDamageComponent::IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const
 {
-	AActor* ownerActor = InApplyDamageContext.Attacker;
+	AActor* ownerActor = InApplyDamageContext.SourceActor;
 	AActor* targetActor = InApplyDamageContext.TargetActor;
 
 	if (!IsValid(ownerActor) || !IsValid(targetActor)) return false;
@@ -347,7 +349,7 @@ FApplyDamagePayload UCApplyDamageComponent::BuildPayload(const FHitContext& InHi
 	FApplyDamagePayload applyDamagePayload;
 
 	applyDamagePayload.HitContext = InHitContext;
-	applyDamagePayload.Attacker = InHitContext.OverlapContext.OwnerActor;
+	applyDamagePayload.SourceActor = InHitContext.OverlapContext.OwnerActor;
 	applyDamagePayload.DamageCauser = InHitContext.OverlapContext.DamageCauser;
 	applyDamagePayload.TargetActor = InHitContext.OverlapContext.OtherActor;
 	applyDamagePayload.HitWindowKey = BuildHitWindowKey(InHitContext);
@@ -361,12 +363,12 @@ FApplyDamageContext UCApplyDamageComponent::BuildContext(const FApplyDamagePaylo
 	FApplyDamageContext applyDamageContext;
 
 	applyDamageContext.HitContext = InApplyDamagePayload.HitContext;
-	applyDamageContext.Attacker = InApplyDamagePayload.Attacker;
+	applyDamageContext.SourceActor = InApplyDamagePayload.SourceActor;
 	applyDamageContext.DamageCauser = InApplyDamagePayload.DamageCauser;
 	applyDamageContext.TargetActor = InApplyDamagePayload.TargetActor;
 	applyDamageContext.HitWindowKey = InApplyDamagePayload.HitWindowKey;
 	applyDamageContext.ApplyDamageSpecKey = InApplyDamagePayload.ApplyDamageSpecKey;
-	applyDamageContext.Instigator = ResolveInstigatorController(InApplyDamagePayload.Attacker, InApplyDamagePayload.DamageCauser);
+	applyDamageContext.Instigator = ResolveInstigatorController(InApplyDamagePayload.SourceActor, InApplyDamagePayload.DamageCauser);
 
 	return applyDamageContext;
 }

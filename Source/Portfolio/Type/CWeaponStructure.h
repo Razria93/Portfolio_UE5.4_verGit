@@ -380,7 +380,7 @@ public:
 	FHitContext HitContext = FHitContext();
 
 	UPROPERTY(Transient)
-	AActor* Attacker = nullptr;
+	AActor* SourceActor = nullptr;
 
 	UPROPERTY(Transient)
 	AActor* DamageCauser = nullptr;
@@ -414,7 +414,7 @@ public:
 	FHitContext HitContext = FHitContext();
 
 	UPROPERTY(Transient)
-	AActor* Attacker = nullptr;
+	AActor* SourceActor = nullptr;
 
 	UPROPERTY(Transient)
 	AController* Instigator = nullptr;
@@ -482,6 +482,12 @@ struct FDefaultDamageEvent : public FDamageEvent
 
 public:
 	UPROPERTY(Transient)
+	AActor* SourceActor = nullptr;
+
+	UPROPERTY(Transient)
+	AActor* TargetActor = nullptr;
+
+	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 	UPROPERTY(Transient)
@@ -509,7 +515,10 @@ struct FTakeDamagePayload
 public:
 	// ObjectData
 	UPROPERTY(Transient)
-	class AActor* DamagedActor = nullptr;
+	class AActor* SourceActor = nullptr;
+
+	UPROPERTY(Transient)
+	class AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
 	class AController* EventInstigator = nullptr;
@@ -543,7 +552,10 @@ struct FTakeDamageContext
 public:
 	// Resolved objects [Set BuildContext]
 	UPROPERTY(Transient)
-	class AActor* DamagedActor = nullptr;
+	class AActor* SourceActor = nullptr;
+
+	UPROPERTY(Transient)
+	class AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
 	class AController* Instigator = nullptr;
@@ -638,6 +650,21 @@ public:
 
 public:
 	FTakeDamageResult() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FTakeDamagePacket
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient)
+	FTakeDamagePayload Payload;
+
+	UPROPERTY(Transient)
+	FTakeDamageContext Context;
+
+	UPROPERTY(Transient)
+	FTakeDamageResult Result;
 };
 
 USTRUCT(BlueprintType)

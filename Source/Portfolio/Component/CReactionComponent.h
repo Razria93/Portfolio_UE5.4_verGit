@@ -80,7 +80,7 @@ public:
 
 public:
 	// Pending API
-	bool TryRequestPendingDamageReaction(const FTakeDamageResult& InTakeDamageResult);
+	bool TryRequestPendingDamageReaction(const FTakeDamagePacket& InTakeDamagePacket);
 	bool TryConsumePendingReaction(FReactionContext& OutReactionContext);
 	bool TryExecuteReaction(const FReactionContext& InReactionContext);
 	void FinishReaction();
