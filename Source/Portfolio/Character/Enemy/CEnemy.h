@@ -90,7 +90,7 @@ private:
 	class UCReactionComponent* ReactionComponent;
 
 	UPROPERTY(VisibleAnywhere)
-	class UCReactionFXComponent* ReactionFXComponent;
+	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 protected:
 	virtual void BeginPlay() override;

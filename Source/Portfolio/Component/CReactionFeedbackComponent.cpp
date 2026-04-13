@@ -1,0 +1,180 @@
+#include "Component/CReactionFeedbackComponent.h"
+#include "ProjectGlobal.h"
+
+#include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "Sound/SoundBase.h"
+#include "Camera/CameraShakeBase.h"
+
+#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
+
+#include "Type/CWeaponStructure.h"
+
+UCReactionFeedbackComponent::UCReactionFeedbackComponent()
+{
+	PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UCReactionFeedbackComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OwnerActor_Cached = GetOwner();
+	check(OwnerActor_Cached);
+
+	OwnerCharacter_Cached = Cast<ACharacter>(OwnerActor_Cached);
+	check(OwnerCharacter_Cached);
+}
+
+void UCReactionFeedbackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+bool UCReactionFeedbackComponent::CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	if (!IsValid(OwnerActor_Cached)) return false;
+	if (!InTakeDamagePacket.Result.bAccepted) return false;
+	if (InTakeDamagePacket.Result.CommittedDamage <= KINDA_SMALL_NUMBER) return false;
+
+	return true;
+}
+
+void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket)
+{
+	if (!CanPlayDamageFeedback(InTakeDamagePacket)) return;
+
+	PlayHitStop(InTakeDamagePacket);
+	PlayHitVFX(InTakeDamagePacket);
+	PlayHitSound(InTakeDamagePacket);
+	PlayCameraShake(InTakeDamagePacket);
+}
+
+void UCReactionFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket)
+{
+	if (!GetWorld()) return;
+	if (HitStopDuration <= 0.f) return;
+
+	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
+	if (!IsValid(feedbackSubsystem)) return;
+
+	FHitStopRequest hitStopRequest;
+	hitStopRequest.HitStopType = HitStopType;
+	hitStopRequest.HitStopDuration = HitStopDuration;
+	hitStopRequest.HitStopDilation = HitStopDilation;
+
+	hitStopRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
+	hitStopRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
+	
+	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitStop"));
+	PrintHitStopRequestInfo(hitStopRequest);
+
+	feedbackSubsystem->RequestHitStop(hitStopRequest);
+}
+
+void UCReactionFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamagePacket)
+{
+	if (!IsValid(GetWorld())) return;
+	if (!IsValid(OwnerActor_Cached)) return;
+
+	if (!IsValid(HitVFX))
+	{
+		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitVFX."));
+		return;
+	}
+
+	const FVector location = OwnerActor_Cached->GetActorLocation();
+	const FRotator rotation = OwnerActor_Cached->GetActorRotation();
+
+	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitVFX"));
+	PrintHitVFXRequestInfo(HitVFX, location, rotation);
+
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
+}
+
+void UCReactionFeedbackComponent::PlayHitSound(const FTakeDamagePacket& InTakeDamagePacket)
+{
+	if (!IsValid(OwnerActor_Cached)) return;
+
+	if (!IsValid(HitSound))
+	{
+		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitSound."));
+		return;
+	}
+
+	const FVector location = OwnerActor_Cached->GetActorLocation();
+
+	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitSound"));
+	PrintHitSoundRequestInfo(HitSound, location);
+
+	UGameplayStatics::PlaySoundAtLocation(this, HitSound, location);
+}
+
+void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
+{
+	if (!GetWorld()) return;
+
+	if (!IsValid(CameraShakeClass))
+	{
+		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid CameraShakeClass."));
+		return;
+	}
+
+	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
+	if (!IsValid(feedbackSubsystem)) return;
+
+	FCameraShakeRequest cameraShakeRequest;
+
+	cameraShakeRequest.CameraShakeClass = CameraShakeClass;
+	cameraShakeRequest.CameraShakeBaseScale = CameraShakeBaseScale;
+	cameraShakeRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
+	cameraShakeRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
+	cameraShakeRequest.EventLocation = IsValid(InTakeDamagePacket.Context.TargetActor) ? InTakeDamagePacket.Context.TargetActor->GetActorLocation() : GetOwner()->GetActorLocation();
+
+	FLog::Log(TEXT("[UCReactionFeedbackComponent] PlayCameraShake"));
+	PrintCameraShakeRequestInfo(cameraShakeRequest);
+
+	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
+}
+
+void UCReactionFeedbackComponent::PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const
+{
+	FLog::Log(TEXT("========== HitStop Info ========="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HitStopType"), *UEnum::GetValueAsString(InHitStopRequest.HitStopType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InHitStopRequest.SourceActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InHitStopRequest.TargetActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HitStopDuration"), InHitStopRequest.HitStopDuration));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HitStopDilation"), InHitStopRequest.HitStopDilation));
+	FLog::Log(TEXT("================================="));
+}
+
+void UCReactionFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const
+{
+	FLog::Log(TEXT("========== HitVFX Info =========="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitVFX)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: X=%.2f Y=%.2f Z=%.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
+	FLog::Log(FString::Printf(TEXT("%-20s: P=%.2f Y=%.2f R=%.2f"), TEXT("Rotation"), InRotation.Pitch, InRotation.Yaw, InRotation.Roll));
+	FLog::Log(TEXT("================================="));
+}
+
+void UCReactionFeedbackComponent::PrintHitSoundRequestInfo(USoundBase* InHitSound, const FVector& InLocation) const
+{
+	FLog::Log(TEXT("========= HitSound Info ========="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitSound)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: X = %.2f Y = %.2f Z = %.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
+	FLog::Log(TEXT("================================="));
+}
+
+void UCReactionFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const
+{
+	FLog::Log(TEXT("======== CameraShake Info ======="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Class"), *GetNameSafe(InCameraShakeRequest.CameraShakeClass)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InCameraShakeRequest.SourceActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InCameraShakeRequest.TargetActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("CameraShakeBaseScale"), InCameraShakeRequest.CameraShakeBaseScale));
+	FLog::Log(TEXT("================================="));
+}
