@@ -11,6 +11,15 @@ enum class ECombatRole : uint8
 	Alert
 };
 
+UENUM(BlueprintType)
+enum class EHitStopType : uint8
+{
+	None,
+	Self,
+	Victim,
+	Mutual
+};
+
 USTRUCT(BlueprintType)
 struct FEngageRequestContext
 {
@@ -56,4 +65,48 @@ public:
 	{
 		return IsValid(TargetActor) && CombatRole != ECombatRole::None;
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FHitStopRequest
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	float HitStopDuration = 0.04f;
+
+	UPROPERTY(EditAnywhere)
+	float HitStopDilation = 0.05f;
+
+	UPROPERTY(EditAnywhere)
+	EHitStopType HitStopType = EHitStopType::Mutual;
+
+	UPROPERTY(EditAnywhere)
+	class AActor* SourceActor = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	class AActor* TargetActor = nullptr;
+};
+
+USTRUCT(BlueprintType)
+struct FCameraShakeRequest
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UCameraShakeBase> CameraShakeClass = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	float CameraShakeBaseScale = 1.f;
+
+	UPROPERTY(EditAnywhere)
+	class AActor* SourceActor = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	class AActor* TargetActor = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	FVector EventLocation = FVector::ZeroVector;
 };
