@@ -33,15 +33,6 @@ void UCReactionFeedbackComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-bool UCReactionFeedbackComponent::CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const
-{
-	if (!IsValid(OwnerActor_Cached)) return false;
-	if (!InTakeDamagePacket.Result.bAccepted) return false;
-	if (InTakeDamagePacket.Result.CommittedDamage <= KINDA_SMALL_NUMBER) return false;
-
-	return true;
-}
-
 void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	if (!CanPlayDamageFeedback(InTakeDamagePacket)) return;
@@ -54,7 +45,7 @@ void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& In
 
 void UCReactionFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket)
 {
-	if (!CanPlayHitStop()) return;
+	if (!CanPlayHitStop(InTakeDamagePacket)) return;
 
 	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
 	if (!IsValid(feedbackSubsystem)) return;
@@ -107,7 +98,7 @@ void UCReactionFeedbackComponent::PlayHitSound(const FTakeDamagePacket& InTakeDa
 
 void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
 {
-	if (!CanPlayCameraShake()) return;
+	if (!CanPlayCameraShake(InTakeDamagePacket)) return;
 
 	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
 	if (!IsValid(feedbackSubsystem)) return;
@@ -120,7 +111,16 @@ void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTak
 	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
 }
 
-bool UCReactionFeedbackComponent::CanPlayHitStop() const
+bool UCReactionFeedbackComponent::CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	if (!IsValid(OwnerActor_Cached)) return false;
+	if (!InTakeDamagePacket.Result.bAccepted) return false;
+	if (InTakeDamagePacket.Result.CommittedDamage <= KINDA_SMALL_NUMBER) return false;
+
+	return true;
+}
+
+bool UCReactionFeedbackComponent::CanPlayHitStop(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!GetWorld()) return false;
 
@@ -133,7 +133,7 @@ bool UCReactionFeedbackComponent::CanPlayHitStop() const
 	return true;
 }
 
-bool UCReactionFeedbackComponent::CanPlayCameraShake() const
+bool UCReactionFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!GetWorld()) return false;
 	if (!bEnableCameraShake) return false;

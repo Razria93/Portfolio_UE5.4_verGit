@@ -58,7 +58,6 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	bool CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket);
 
 private:
@@ -68,8 +67,9 @@ private:
 	void PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket);
 
 private:
-	bool CanPlayHitStop() const;
-	bool CanPlayCameraShake() const;
+	bool CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const;
+	bool CanPlayHitStop(const FTakeDamagePacket& InTakeDamagePacket) const;
+	bool CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	FHitStopRequest BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const;
