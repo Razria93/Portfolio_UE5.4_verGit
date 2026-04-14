@@ -2,6 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+
 #include "Type/CStateStructure.h"
 #include "Type/CHealthStructure.h"
 

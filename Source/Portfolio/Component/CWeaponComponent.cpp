@@ -2,6 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+
 #include "Weapon/CAttachment.h"
 #include "Weapon/CEquipment.h"
 
