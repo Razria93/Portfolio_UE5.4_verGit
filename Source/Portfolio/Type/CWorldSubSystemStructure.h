@@ -12,12 +12,12 @@ enum class ECombatRole : uint8
 };
 
 UENUM(BlueprintType)
-enum class EHitStopType : uint8
+enum class EFeedbackAudience : uint8
 {
 	None,
-	Self,
-	Victim,
-	Mutual
+	Source,
+	Target,
+	Both
 };
 
 USTRUCT(BlueprintType)
@@ -80,7 +80,7 @@ public:
 	float HitStopDilation = 0.05f;
 
 	UPROPERTY(EditAnywhere)
-	EHitStopType HitStopType = EHitStopType::Mutual;
+	EFeedbackAudience HitStopAudience = EFeedbackAudience::Both;
 
 	UPROPERTY(EditAnywhere)
 	class AActor* SourceActor = nullptr;
@@ -100,6 +100,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float CameraShakeBaseScale = 1.f;
+
+	UPROPERTY(EditAnywhere)
+	EFeedbackAudience CameraShakeAudience = EFeedbackAudience::Both;
 
 	UPROPERTY(EditAnywhere)
 	class AActor* SourceActor = nullptr;

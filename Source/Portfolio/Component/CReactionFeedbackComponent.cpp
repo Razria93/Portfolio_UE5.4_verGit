@@ -54,20 +54,13 @@ void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& In
 
 void UCReactionFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket)
 {
-	if (!GetWorld()) return;
-	if (HitStopDuration <= 0.f) return;
+	if (!CanPlayHitStop()) return;
 
 	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
 	if (!IsValid(feedbackSubsystem)) return;
 
-	FHitStopRequest hitStopRequest;
-	hitStopRequest.HitStopType = HitStopType;
-	hitStopRequest.HitStopDuration = HitStopDuration;
-	hitStopRequest.HitStopDilation = HitStopDilation;
+	const FHitStopRequest hitStopRequest = BuildHitStopRequest(InTakeDamagePacket);
 
-	hitStopRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
-	hitStopRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
-	
 	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitStop"));
 	PrintHitStopRequestInfo(hitStopRequest);
 
@@ -114,24 +107,12 @@ void UCReactionFeedbackComponent::PlayHitSound(const FTakeDamagePacket& InTakeDa
 
 void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
 {
-	if (!GetWorld()) return;
-
-	if (!IsValid(CameraShakeClass))
-	{
-		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid CameraShakeClass."));
-		return;
-	}
+	if (!CanPlayCameraShake()) return;
 
 	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
 	if (!IsValid(feedbackSubsystem)) return;
 
-	FCameraShakeRequest cameraShakeRequest;
-
-	cameraShakeRequest.CameraShakeClass = CameraShakeClass;
-	cameraShakeRequest.CameraShakeBaseScale = CameraShakeBaseScale;
-	cameraShakeRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
-	cameraShakeRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
-	cameraShakeRequest.EventLocation = IsValid(InTakeDamagePacket.Context.TargetActor) ? InTakeDamagePacket.Context.TargetActor->GetActorLocation() : GetOwner()->GetActorLocation();
+	const FCameraShakeRequest cameraShakeRequest = BuildCameraShakeRequest(InTakeDamagePacket);
 
 	FLog::Log(TEXT("[UCReactionFeedbackComponent] PlayCameraShake"));
 	PrintCameraShakeRequestInfo(cameraShakeRequest);
@@ -139,10 +120,63 @@ void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTak
 	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
 }
 
+bool UCReactionFeedbackComponent::CanPlayHitStop() const
+{
+	if (!GetWorld()) return false;
+
+	if (HitStopAudience == EFeedbackAudience::None) return false;
+	if (!FMath::IsFinite(HitStopDuration)) return false;
+	if (!FMath::IsFinite(HitStopDilation)) return false;
+	if (HitStopDuration <= KINDA_SMALL_NUMBER) return false;
+	if (HitStopDilation < 0.f) return false;
+
+	return true;
+}
+
+bool UCReactionFeedbackComponent::CanPlayCameraShake() const
+{
+	if (!GetWorld()) return false;
+	if (!bEnableCameraShake) return false;
+	
+	if (CameraShakeAudience == EFeedbackAudience::None) return false;
+	if (!IsValid(CameraShakeClass)) return false;
+	if (!FMath::IsFinite(CameraShakeBaseScale)) return false;
+	if (CameraShakeBaseScale <= KINDA_SMALL_NUMBER) return false;
+
+	return true;
+}
+
+FHitStopRequest UCReactionFeedbackComponent::BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	FHitStopRequest hitStopRequest;
+
+	hitStopRequest.HitStopAudience = HitStopAudience;
+	hitStopRequest.HitStopDuration = HitStopDuration;
+	hitStopRequest.HitStopDilation = HitStopDilation;
+	hitStopRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
+	hitStopRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
+
+	return hitStopRequest;
+}
+
+FCameraShakeRequest UCReactionFeedbackComponent::BuildCameraShakeRequest(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	FCameraShakeRequest cameraShakeRequest;
+
+	cameraShakeRequest.CameraShakeClass = CameraShakeClass;
+	cameraShakeRequest.CameraShakeBaseScale = CameraShakeBaseScale;
+	cameraShakeRequest.CameraShakeAudience = CameraShakeAudience;
+	cameraShakeRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
+	cameraShakeRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
+	cameraShakeRequest.EventLocation = IsValid(InTakeDamagePacket.Context.TargetActor) ? InTakeDamagePacket.Context.TargetActor->GetActorLocation() : GetOwner()->GetActorLocation();
+
+	return cameraShakeRequest;
+}
+
 void UCReactionFeedbackComponent::PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const
 {
-	FLog::Log(TEXT("========== HitStop Info ========="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HitStopType"), *UEnum::GetValueAsString(InHitStopRequest.HitStopType)));
+	FLog::Log(TEXT("====== HitStop Request Info ====="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HitStopAudience"), *UEnum::GetValueAsString(InHitStopRequest.HitStopAudience)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InHitStopRequest.SourceActor)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InHitStopRequest.TargetActor)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HitStopDuration"), InHitStopRequest.HitStopDuration));
@@ -171,7 +205,8 @@ void UCReactionFeedbackComponent::PrintHitSoundRequestInfo(USoundBase* InHitSoun
 
 void UCReactionFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const
 {
-	FLog::Log(TEXT("======== CameraShake Info ======="));
+	FLog::Log(TEXT("=== CameraShake Request Info ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Audience"), *UEnum::GetValueAsString(InCameraShakeRequest.CameraShakeAudience)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Class"), *GetNameSafe(InCameraShakeRequest.CameraShakeClass)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InCameraShakeRequest.SourceActor)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InCameraShakeRequest.TargetActor)));

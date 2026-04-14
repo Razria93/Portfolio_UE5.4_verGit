@@ -16,7 +16,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	EHitStopType HitStopType = EHitStopType::Mutual;
+	EFeedbackAudience HitStopAudience = EFeedbackAudience::Both;
 
 	UPROPERTY(EditAnywhere)
 	float HitStopDuration = 0.04f;
@@ -31,10 +31,17 @@ private:
 	class USoundBase* HitSound = nullptr;
 
 	UPROPERTY(EditAnywhere)
+	EFeedbackAudience CameraShakeAudience = EFeedbackAudience::Both;
+
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UCameraShakeBase> CameraShakeClass;
 
 	UPROPERTY(EditAnywhere)
 	float CameraShakeBaseScale = 1.f;
+
+private:
+	UPROPERTY(EditAnywhere)
+	bool bEnableCameraShake = true;
 
 private:
 	/* === Cached Objects === */
@@ -59,6 +66,14 @@ private:
 	void PlayHitVFX(const FTakeDamagePacket& InTakeDamagePacket);
 	void PlayHitSound(const FTakeDamagePacket& InTakeDamagePacket);
 	void PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket);
+
+private:
+	bool CanPlayHitStop() const;
+	bool CanPlayCameraShake() const;
+
+private:
+	FHitStopRequest BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const;
+	FCameraShakeRequest BuildCameraShakeRequest(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	void PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const;

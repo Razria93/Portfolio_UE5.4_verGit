@@ -28,6 +28,5 @@ private:
 	void RestoreHitStop(AActor* InActor);
 
 private:
-	void PrintHitStopRuntimeInfo(AActor* InActor, float InDuration, float InDilation) const;
-	void PrintCameraShakeRuntimeInfo(const FCameraShakeRequest& InCameraShakeRequest) const;
+	void PrintHitStopConsumeInfo(AActor* InActor, float InDuration, float InDilation) const;
 };
