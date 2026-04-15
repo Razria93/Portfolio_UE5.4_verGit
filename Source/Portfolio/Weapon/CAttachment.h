@@ -22,16 +22,23 @@ public:
 
 public:
 	/* === Editor Settings === */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Attach|SocketName")
 	FName SocketName_Holster;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Attach|SocketName")
 	FName SocketName_Hand;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Feedback|Trail")
+	bool bDisableTrailOnBeginPlay = true;
 
 protected:
 	/* === Components === */
 	UPROPERTY(VisibleAnywhere)
-	class USceneComponent* Root;
+	class USceneComponent* RootSceneComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class UNiagaraComponent* TrailComponent = nullptr;
 
 private:
 	UPROPERTY(Transient)
@@ -104,6 +111,7 @@ public:
 public:
 	/* === Setter === */
 	void SetAttachmentType(EAttachmentType InAttachmentType);
+	void SetActionTrailActive(bool bEnable);
 
 public:
 	void AttachToOwnerSocket(FName InSocketName);

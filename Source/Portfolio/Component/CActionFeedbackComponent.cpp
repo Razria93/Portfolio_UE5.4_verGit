@@ -7,6 +7,9 @@
 #include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
 
+#include "Component/CWeaponComponent.h"
+#include "Weapon/CAttachment.h"
+
 UCActionFeedbackComponent::UCActionFeedbackComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -21,42 +24,45 @@ void UCActionFeedbackComponent::BeginPlay()
 
 	OwnerCharacter_Cached = Cast<ACharacter>(OwnerActor_Cached);
 	check(OwnerCharacter_Cached);
+
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerActor_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
+	check(WeaponComp_Cached);
 }
 
-void UCActionFeedbackComponent::PlayActionFeedback(const FHitContext& InHitContext, EActionFeedbackPhase InActionFeedbackPhase)
+void UCActionFeedbackComponent::PlayActionFeedback(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase)
 {
-	if (!CanPlayActionFeedback(InHitContext, InActionFeedbackPhase)) return;
+	if (!CanPlayActionFeedback(InActionFeedbackPhase)) return;
 
-	switch (InActionFeedbackPhase)
+	// Debug
+	PrintActionFeedbackRequestInfo(InApplyDamageSpecKey, InActionFeedbackPhase);
+
+	FActionFeedbackData actionFeedbackData;
+	if (!ResolveActionFeedbackData(InActionFeedbackPhase, actionFeedbackData))
 	{
-	case EActionFeedbackPhase::ActionStart:
-		PlayActionStartVFX(InHitContext);
-		PlayActionStartSound(InHitContext);
-		break;
-
-	case EActionFeedbackPhase::AttackWindowBegin:
-		PlayAttackWindowBeginFeedback(InHitContext);
-		break;
-
-	case EActionFeedbackPhase::AttackWindowEnd:
-		PlayAttackWindowEndFeedback(InHitContext);
-		break;
-
-	case EActionFeedbackPhase::ActionEnd:
-		SetWeaponTrailEnabled(false);
-		break;
-
-	default:
-		break;
+		FLog::Log(FString::Printf(TEXT("[PlayActionFeedback] Failed to resolve data. Phase = %s"), *UEnum::GetValueAsString(InActionFeedbackPhase)));
+		return;
 	}
+
+	// Debug
+	PrintActionFeedbackDataInfo(actionFeedbackData);
+
+	ExecuteActionFeedback(actionFeedbackData);
 }
 
-void UCActionFeedbackComponent::PlayActionStartVFX(const FHitContext& InHitContext)
+void UCActionFeedbackComponent::ExecuteActionFeedback(const FActionFeedbackData& InActionFeedbackData)
 {
-	if (!IsValid(ActionStartVFX)) return;
+	PlayActionVFX(InActionFeedbackData.ActionVFX);
+	PlayActionSFX(InActionFeedbackData.ActionSFX);
+	SetActionTrailActive(InActionFeedbackData.bTrailActive);
+}
+
+void UCActionFeedbackComponent::PlayActionVFX(UNiagaraSystem* InActionVFX)
+{
+	if (!IsValid(InActionVFX)) return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	UNiagaraFunctionLibrary::SpawnSystemAttached(
-		ActionStartVFX,							// NiagaraSystem
+		InActionVFX,							// NiagaraSystem
 		OwnerCharacter_Cached->GetMesh(),		// AttachComponent
 		NAME_None,								// SocketName
 		FVector::ZeroVector,					// Location
@@ -66,24 +72,31 @@ void UCActionFeedbackComponent::PlayActionStartVFX(const FHitContext& InHitConte
 	);
 }
 
-void UCActionFeedbackComponent::PlayActionStartSound(const FHitContext& InHitContext)
+void UCActionFeedbackComponent::PlayActionSFX(USoundBase* InActionSFX)
 {
-	if (!IsValid(ActionStartSound)) return;
+	if (!IsValid(InActionSFX)) return;
+	if (!IsValid(OwnerActor_Cached)) return;
 
-	UGameplayStatics::PlaySoundAtLocation(this, ActionStartSound, OwnerActor_Cached->GetActorLocation());
+	UGameplayStatics::PlaySoundAtLocation(this, InActionSFX, OwnerActor_Cached->GetActorLocation());
 }
 
-void UCActionFeedbackComponent::PlayAttackWindowBeginFeedback(const FHitContext& InHitContext)
+void UCActionFeedbackComponent::SetActionTrailActive(bool bActive)
 {
-	SetWeaponTrailEnabled(true);
+	if (!IsValid(WeaponComp_Cached)) return;
+
+	UObject* uobject = WeaponComp_Cached->GetAttachment();
+	if (!IsValid(uobject)) return;
+
+	ACAttachment* attachment = Cast<ACAttachment>(uobject);
+	if (!IsValid(attachment)) return;
+
+	// Debug
+	PrintActionTrailInfo(bActive, attachment);
+	
+	attachment->SetActionTrailActive(bActive);
 }
 
-void UCActionFeedbackComponent::PlayAttackWindowEndFeedback(const FHitContext& InHitContext)
-{
-	SetWeaponTrailEnabled(false);
-}
-
-bool UCActionFeedbackComponent::CanPlayActionFeedback(const FHitContext& InHitContext, EActionFeedbackPhase InActionFeedbackPhase) const
+bool UCActionFeedbackComponent::CanPlayActionFeedback(EActionFeedbackPhase InActionFeedbackPhase) const
 {
 	if (!IsValid(OwnerActor_Cached)) return false;
 	if (!IsValid(GetWorld())) return false;
@@ -92,22 +105,60 @@ bool UCActionFeedbackComponent::CanPlayActionFeedback(const FHitContext& InHitCo
 	return true;
 }
 
-FApplyDamageSpecKey UCActionFeedbackComponent::BuildActionFeedbackSpecKey(const FHitContext& InHitContext) const
+bool UCActionFeedbackComponent::ResolveActionFeedbackData(EActionFeedbackPhase InActionFeedbackPhase, FActionFeedbackData& OutActionFeedbackData) const
 {
-	FApplyDamageSpecKey applyDamageSpecKey;
+	switch (InActionFeedbackPhase)
+	{
+	case EActionFeedbackPhase::ActionStart:
+		OutActionFeedbackData = ActionStartFeedback;
+		return true;
 
-	applyDamageSpecKey.AttachmentType = InHitContext.AttachmentContext.CurrentAttachmentType;
-	applyDamageSpecKey.EquipmentType = InHitContext.EquipmentContext.CurrentEquipmentType;
-	applyDamageSpecKey.ActionType = InHitContext.ActionContext.CurrentActionType;
-	applyDamageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
+	case EActionFeedbackPhase::TrailWindowBegin:
+		OutActionFeedbackData = TrailWindowBeginFeedback;
+		return true;
 
-	return applyDamageSpecKey;
+	case EActionFeedbackPhase::TrailWindowEnd:
+		OutActionFeedbackData = TrailWindowEndFeedback;
+		return true;
+
+	case EActionFeedbackPhase::ActionEnd:
+		OutActionFeedbackData = ActionEndFeedback;
+		return true;
+
+	default:
+		break;
+	}
+
+	return false;
 }
 
-void UCActionFeedbackComponent::SetWeaponTrailEnabled(bool bEnable)
+void UCActionFeedbackComponent::PrintActionFeedbackRequestInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase) const
 {
-	if (!bUseWeaponTrail) return;
+	FLog::Log(TEXT("==== ActionFeedback Request ====="));
+	FLog::Log(TEXT("------ ApplyDamage SpecKey ------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.AttachmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.EquipmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.ActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("ActionIndex"), InApplyDamageSpecKey.ActionIndex));
+	FLog::Log(TEXT("----- ActionFeedback Phase ------"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionFeedbackPhase"), *UEnum::GetValueAsString(InActionFeedbackPhase)));
+	FLog::Log(TEXT("================================="));
+}
 
-	// TODO:
-	// Attachment/Equipment trail toggle
+void UCActionFeedbackComponent::PrintActionFeedbackDataInfo(const FActionFeedbackData& InActionFeedbackData) const
+{
+	FLog::Log(TEXT("====== ActionFeedback Data ======"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionVFX"), *GetNameSafe(InActionFeedbackData.ActionVFX)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionSFX"), *GetNameSafe(InActionFeedbackData.ActionSFX)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bTrailActive"), InActionFeedbackData.bTrailActive ? TEXT("true") : TEXT("false")));
+	FLog::Log(TEXT("================================="));
+}
+
+void UCActionFeedbackComponent::PrintActionTrailInfo(bool bActive, const ACAttachment* InAttachment) const
+{
+	FLog::Log(TEXT("======= ActionTrail Info ========"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Attachment"), *GetNameSafe(InAttachment)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailActive"), bActive ? TEXT("true") : TEXT("false")));
+	FLog::Log(TEXT("================================="));
 }

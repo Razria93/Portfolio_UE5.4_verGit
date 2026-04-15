@@ -3,6 +3,7 @@
 
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
+#include "NiagaraComponent.h"
 
 #include "Component/CApplyDamageComponent.h"
 
@@ -12,10 +13,16 @@ ACAttachment::ACAttachment()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	Root = CreateDefaultSubobject<USceneComponent>("Root");
-	check(Root);
+	RootSceneComponent = CreateDefaultSubobject<USceneComponent>("RootScene");
+	check(RootSceneComponent);
 
-	SetRootComponent(Root);
+	SetRootComponent(RootSceneComponent);
+
+	TrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Trail"));
+	check(TrailComponent);
+
+	TrailComponent->SetupAttachment(RootSceneComponent);
+	TrailComponent->bAutoActivate = false;
 }
 
 void ACAttachment::BeginPlay()
@@ -23,26 +30,36 @@ void ACAttachment::BeginPlay()
 	Super::BeginPlay();
 
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-
 	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!IsValid(Root)) return;
 
 	ApplyDamageComp_Cached = Cast<UCApplyDamageComponent>(OwnerCharacter_Cached->GetComponentByClass(UCApplyDamageComponent::StaticClass()));	// TODO: Refactor Interface
-	check(ApplyDamageComp_Cached);
+	if (!IsValid(ApplyDamageComp_Cached)) return;
 
-	TArray<USceneComponent*> children;
-	Root->GetChildrenComponents(true, children);
-
-	for (USceneComponent* child : children)
+	if (IsValid(RootSceneComponent))
 	{
-		UShapeComponent* shape = Cast<UShapeComponent>(child); //  UShapeComponent base for shape collision components (Sphere / Box / Capsule)
-		if (!IsValid(shape)) continue;
+		TArray<USceneComponent*> children;
+		RootSceneComponent->GetChildrenComponents(true, children);
 
-		shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
-		shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
-		shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Collision_Disabled
+		for (USceneComponent* child : children)
+		{
+			UShapeComponent* shape = Cast<UShapeComponent>(child); //  UShapeComponent base for shape collision components (Sphere / Box / Capsule)
+			if (!IsValid(shape)) continue;
 
-		Collisions_Cached.Add(shape);
+			shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
+			shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
+			shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Collision_Disabled
+
+			Collisions_Cached.Add(shape);
+		}
+	}
+
+	if (IsValid(TrailComponent))
+	{
+		if (bDisableTrailOnBeginPlay)
+		{
+			TrailComponent->Deactivate();
+			TrailComponent->SetVisibility(false);
+		}
 	}
 }
 
@@ -106,6 +123,24 @@ EAttachmentType ACAttachment::GetAttachmentType() const
 void ACAttachment::SetAttachmentType(EAttachmentType InAttachmentType)
 {
 	AttachmentType = InAttachmentType;
+}
+
+void ACAttachment::SetActionTrailActive(bool bEnable)
+{
+	if (!IsValid(TrailComponent)) return;
+
+	if (bEnable)
+	{
+		TrailComponent->SetVisibility(true);
+		TrailComponent->Activate(true);
+		FLog::Log(TEXT("[Attachment] Trail Active"));
+	}
+	else
+	{
+		TrailComponent->Deactivate();
+		TrailComponent->SetVisibility(false);
+		FLog::Log(TEXT("[Attachment] Trail InActive"));
+	}
 }
 
 void ACAttachment::AttachToOwnerSocket(FName InSocketName)

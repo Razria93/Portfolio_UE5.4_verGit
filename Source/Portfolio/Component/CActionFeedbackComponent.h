@@ -5,33 +5,28 @@
 #include "Type/CWeaponStructure.h"
 #include "CActionFeedbackComponent.generated.h"
 
-UENUM(BlueprintType)
-enum class EActionFeedbackPhase : uint8
-{
-	None,
-	ActionStart,
-	AttackWindowBegin,
-	AttackWindowEnd,
-	ActionEnd
-};
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionFeedbackComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UCActionFeedbackComponent();
 
 private:
-	UPROPERTY(EditAnywhere)
-	class UNiagaraSystem* ActionStartVFX = nullptr;
+	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
+	FActionFeedbackData ActionStartFeedback;
 
-	UPROPERTY(EditAnywhere)
-	class USoundBase* ActionStartSound = nullptr;
+	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
+	FActionFeedbackData TrailWindowBeginFeedback;
 
-	UPROPERTY(EditAnywhere)
-	bool bUseWeaponTrail = true;
+	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
+	FActionFeedbackData TrailWindowEndFeedback;
+
+	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
+	FActionFeedbackData ActionEndFeedback;
 
 private:
 	UPROPERTY(Transient)
@@ -40,24 +35,29 @@ private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
+	UPROPERTY(Transient)
+	class UCWeaponComponent* WeaponComp_Cached = nullptr;
+
 protected:
 	virtual void BeginPlay() override;
 
 public:
-	void PlayActionFeedback(const FHitContext& InHitContext, EActionFeedbackPhase InActionFeedbackPhase);
+	void PlayActionFeedback(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase);
 
 private:
-	void PlayActionStartVFX(const FHitContext& InHitContext);
-	void PlayActionStartSound(const FHitContext& InHitContext);
-	void PlayAttackWindowBeginFeedback(const FHitContext& InHitContext);
-	void PlayAttackWindowEndFeedback(const FHitContext& InHitContext);
+	void ExecuteActionFeedback(const FActionFeedbackData& InActionFeedbackData);
+	void PlayActionVFX(class UNiagaraSystem* InActionVFX);
+	void PlayActionSFX(class USoundBase* InActionSFX);
 
 private:
-	bool CanPlayActionFeedback(const FHitContext& InHitContext, EActionFeedbackPhase InActionFeedbackPhase) const;
+	void SetActionTrailActive(bool bActive);
 
 private:
-	FApplyDamageSpecKey BuildActionFeedbackSpecKey(const FHitContext& InHitContext) const;
+	bool CanPlayActionFeedback(EActionFeedbackPhase InActionFeedbackPhase) const;
+	bool ResolveActionFeedbackData(EActionFeedbackPhase InActionFeedbackPhase, FActionFeedbackData& OutActionFeedbackData) const;
 
 private:
-	void SetWeaponTrailEnabled(bool bEnable);
+	void PrintActionFeedbackRequestInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase) const;
+	void PrintActionFeedbackDataInfo(const FActionFeedbackData& InActionFeedbackData) const;
+	void PrintActionTrailInfo(bool bActive, const class ACAttachment* InAttachment) const;
 };

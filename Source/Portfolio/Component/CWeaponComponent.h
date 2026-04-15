@@ -49,11 +49,15 @@ private:
 
 private:
 	/* === State === */
+	UPROPERTY(Transient)
 	EAttachmentType CurrentAttachmentType_Cached;
+	
+	UPROPERTY(Transient)
 	EEquipmentType CurrentEquipmentType_Cached;
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
 
 public:
@@ -89,6 +93,9 @@ public:
 public:
 	void PushContextToAttachment(const FActionContext& InActionContext);
 	void ClearContextToAttachment();
+
+public:
+	FApplyDamageSpecKey BuildApplyDamageSpecKey(const FActionContext& InActionContext) const;
 
 private:
 	bool CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass);

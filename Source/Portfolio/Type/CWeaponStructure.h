@@ -47,12 +47,12 @@ enum class EApplyDamageRejectReason : uint8
 	None = 0,
 
 	InvalidRequest,
-	
+
 	InvalidAttacker,
 	InvalidDamageCauser,
 	InvalidTarget,
 	InvalidInstigator,
-	
+
 	SpecNotFound,
 	ComputeFailed,
 	CommitFailed,
@@ -107,6 +107,16 @@ enum class EReactionWindowType : uint8
 	// [Ignore All] 
 	// Solid state. Current reaction ignores any incoming Reactions.
 	ImmuneToReaction,
+};
+
+UENUM(BlueprintType)
+enum class EActionFeedbackPhase : uint8
+{
+	None,
+	ActionStart,
+	TrailWindowBegin,
+	TrailWindowEnd,
+	ActionEnd
 };
 
 USTRUCT(BlueprintType)
@@ -770,4 +780,20 @@ public:
 
 public:
 	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FActionFeedbackData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* ActionVFX = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	class USoundBase* ActionSFX = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	bool bTrailActive = false;
 };

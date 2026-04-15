@@ -88,6 +88,19 @@ void UCWeaponComponent::ClearContextToAttachment()
 	producer->SetLastOverlapContext(FOverlapContext());
 	producer->SetLastAttachmentContext(FAttachmentContext());
 	producer->SetLastEquipmentContext(FEquipmentContext());
+	producer->SetLastActionContext(FActionContext());
+}
+
+FApplyDamageSpecKey UCWeaponComponent::BuildApplyDamageSpecKey(const FActionContext& InActionContext) const
+{
+	FApplyDamageSpecKey applyDamageSpecKey;
+
+	applyDamageSpecKey.AttachmentType = BuildAttachmentContext().CurrentAttachmentType;
+	applyDamageSpecKey.EquipmentType = BuildEquipmentContext().CurrentEquipmentType;
+	applyDamageSpecKey.ActionType = InActionContext.CurrentActionType;
+	applyDamageSpecKey.ActionIndex = InActionContext.ActionIndex;
+
+	return applyDamageSpecKey;
 }
 
 bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass)
