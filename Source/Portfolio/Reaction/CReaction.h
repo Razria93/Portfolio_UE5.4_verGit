@@ -71,8 +71,8 @@ public:
 	virtual bool AllowCancelBy(const FReactionQueryContext& InReactionQueryContext) const { return bCancelable; }
 
 public:
-	void SetInterruptible(bool bValue) { bInterruptible = bValue; }
-	void SetCancelable(bool bValue) { bCancelable = bValue; }
+	void SetInterruptible(bool bEnable) { bInterruptible = bEnable; }
+	void SetCancelable(bool bEnable) { bCancelable = bEnable; }
 
 public:
 	// PrintInfo API

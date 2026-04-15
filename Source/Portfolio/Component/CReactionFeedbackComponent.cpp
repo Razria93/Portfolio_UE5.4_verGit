@@ -39,7 +39,7 @@ void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& In
 
 	PlayHitStop(InTakeDamagePacket);
 	PlayHitVFX(InTakeDamagePacket);
-	PlayHitSound(InTakeDamagePacket);
+	PlayHitSFX(InTakeDamagePacket);
 	PlayCameraShake(InTakeDamagePacket);
 }
 
@@ -78,22 +78,22 @@ void UCReactionFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDama
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
 }
 
-void UCReactionFeedbackComponent::PlayHitSound(const FTakeDamagePacket& InTakeDamagePacket)
+void UCReactionFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	if (!IsValid(OwnerActor_Cached)) return;
 
-	if (!IsValid(HitSound))
+	if (!IsValid(HitSFX))
 	{
-		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitSound."));
+		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitSFX."));
 		return;
 	}
 
 	const FVector location = OwnerActor_Cached->GetActorLocation();
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitSound"));
-	PrintHitSoundRequestInfo(HitSound, location);
+	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitSFX"));
+	PrintHitSFXRequestInfo(HitSFX, location);
 
-	UGameplayStatics::PlaySoundAtLocation(this, HitSound, location);
+	UGameplayStatics::PlaySoundAtLocation(this, HitSFX, location);
 }
 
 void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
@@ -194,10 +194,10 @@ void UCReactionFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVF
 	FLog::Log(TEXT("================================="));
 }
 
-void UCReactionFeedbackComponent::PrintHitSoundRequestInfo(USoundBase* InHitSound, const FVector& InLocation) const
+void UCReactionFeedbackComponent::PrintHitSFXRequestInfo(USoundBase* InHitSFX, const FVector& InLocation) const
 {
-	FLog::Log(TEXT("========= HitSound Info ========="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitSound)));
+	FLog::Log(TEXT("========= HitSFX Info ========="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitSFX)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
 	FLog::Log(FString::Printf(TEXT("%-20s: X = %.2f Y = %.2f Z = %.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
 	FLog::Log(TEXT("================================="));

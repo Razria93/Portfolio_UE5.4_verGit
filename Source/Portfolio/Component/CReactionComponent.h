@@ -17,11 +17,12 @@ public:
 
 	// === ReactionData ===================================== //
 private:
-	UPROPERTY(EditAnywhere)
-	TArray<FReactionData> ReactionDatas;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Reaction|Excutor")
 	TArray<TSubclassOf<class UCReaction>> ReactionClasses;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction|Data")
+	TArray<FReactionData> ReactionDatas;
 
 	// ====================================================== //
 

@@ -15,28 +15,28 @@ public:
 	UCReactionFeedbackComponent();
 
 private:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")
 	EFeedbackAudience HitStopAudience = EFeedbackAudience::Both;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")
 	float HitStopDuration = 0.04f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")
 	float HitStopDilation = 0.05f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Feedback|VFX")
 	class UNiagaraSystem* HitVFX = nullptr;
 
-	UPROPERTY(EditAnywhere)
-	class USoundBase* HitSound = nullptr;
+	UPROPERTY(EditAnywhere, Category = "Feedback|SFX")
+	class USoundBase* HitSFX = nullptr;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
 	EFeedbackAudience CameraShakeAudience = EFeedbackAudience::Both;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
 	TSubclassOf<class UCameraShakeBase> CameraShakeClass;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
 	float CameraShakeBaseScale = 1.f;
 
 private:
@@ -63,7 +63,7 @@ public:
 private:
 	void PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket);
 	void PlayHitVFX(const FTakeDamagePacket& InTakeDamagePacket);
-	void PlayHitSound(const FTakeDamagePacket& InTakeDamagePacket);
+	void PlayHitSFX(const FTakeDamagePacket& InTakeDamagePacket);
 	void PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket);
 
 private:
@@ -78,6 +78,6 @@ private:
 private:
 	void PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const;
 	void PrintHitVFXRequestInfo(class UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const;
-	void PrintHitSoundRequestInfo(class USoundBase* InHitSound, const FVector& InLocation) const;
+	void PrintHitSFXRequestInfo(USoundBase * InHitSFX, const FVector& InLocation) const;
 	void PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const;
 };

@@ -17,13 +17,13 @@ public:
 
 private:
 	// === Initialize ===
-	UPROPERTY(EditAnywhere, Category = "Initialize", meta = (ClampMin = 0.00))
+	UPROPERTY(EditAnywhere, Category = "Health|HP", meta = (ClampMin = 0.00))
 	float InitMaxHP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Initialize", meta = (ClampMin = 0.00))
+	UPROPERTY(EditAnywhere, Category = "Health|HP", meta = (ClampMin = 0.00))
 	float InitCurrentHP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Initialize")
+	UPROPERTY(EditAnywhere, Category = "Health|HP")
 	EMaxHPUpdatePolicy MaxHPUpdatePolicy = EMaxHPUpdatePolicy::ClampCurrent;
 
 private:

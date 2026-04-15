@@ -22,19 +22,28 @@ public:
 
 private:
 	/* === Editor Settings === */
-	UPROPERTY(EditAnywhere, Category = "Speed")
+	UPROPERTY(EditAnywhere, Category = "Movement|Speed")
 	TMap<ESpeedType, float> SpeedMap;
 
 private:
+	UPROPERTY(Transient)
 	float CurrentSpeed = 0.f;
+	
+	UPROPERTY(Transient)
 	float CurrentDirection = 0.f;
 
+	UPROPERTY(Transient)
 	bool bCanMove = true;
+	
+	UPROPERTY(Transient)
 	bool bIsFalling = false;
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
+
+	UPROPERTY(Transient)
 	class UCharacterMovementComponent* CharacterMovementComp_Cached;
 
 protected:

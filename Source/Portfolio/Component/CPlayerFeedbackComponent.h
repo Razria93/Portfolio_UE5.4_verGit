@@ -14,10 +14,10 @@ public:
 	UCPlayerFeedbackComponent();
 
 private:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
 	float LocalTargetShakeScale = 1.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
 	float LocalSourceShakeScale = 0.5f;
 
 private:
