@@ -5,7 +5,8 @@
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
-#include "Component/CActionComponent.h" // TODO: Injected to UCActionComponent (+Chore)
+#include "Component/CActionComponent.h"
+#include "Component/CActionFeedbackComponent.h"
 
 #include "Interface/HitContextProducer.h"
 
@@ -13,21 +14,23 @@
 
 void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
 {
-	SetActionType(InActionType);
-
 	OwnerCharacter_Injected = InOwnerCharacter;
-	check(OwnerCharacter_Injected);
-
+	ActionType = InActionType;
 	ActionDatas_Injected = InActionDatas;
 
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));					// TODO: Refactor Interface
+	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));							// TODO: Refactor Interface
 	check(WeaponComp_Cached);
 
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));						// TODO: Refactor Interface
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Injected->GetComponentByClass(UCStateComponent::StaticClass()));								// TODO: Refactor Interface
 	check(StateComp_Cached);
 
-	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionComponent::StaticClass()));						// TODO: Refactor Interface
+	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionComponent::StaticClass()));							// TODO: Refactor Interface
 	check(ActionComp_Cached);
+
+	ActionFeedbackComp_Cached = Cast<UCActionFeedbackComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionFeedbackComponent::StaticClass()));	// TODO: Refactor Interface
+	check(ActionFeedbackComp_Cached);
 }
 
 EActionType UCAction::GetActionType() const
@@ -72,6 +75,24 @@ void UCAction::EndPlayAction()
 	// NOTE: To be implemented detail by derived classes
 }
 
+void UCAction::NotifyActionTrailBegin()
+{
+	FActionContext actionContext;
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = INDEX_NONE;
+
+	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::TrailWindowBegin);
+}
+
+void UCAction::NotifyActionTrailEnd()
+{
+	FActionContext actionContext;
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = INDEX_NONE;
+
+	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::TrailWindowEnd);
+}
+
 void UCAction::PushContextToAttachment(const FActionContext& InActionContext)
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
@@ -84,4 +105,13 @@ void UCAction::ClearContextToAttachment()
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
 
 	WeaponComp_Cached->ClearContextToAttachment();
+}
+
+void UCAction::RequestPlayActionFeedback(const FActionContext& InActionContext, EActionFeedbackPhase InPhase)
+{
+	if (!IsValid(ActionFeedbackComp_Cached)) return;
+	if (!IsValid(WeaponComp_Cached)) return;
+
+	const FApplyDamageSpecKey applyDamageSpecKey = WeaponComp_Cached->BuildApplyDamageSpecKey(InActionContext);
+	ActionFeedbackComp_Cached->PlayActionFeedback(applyDamageSpecKey, InPhase);
 }

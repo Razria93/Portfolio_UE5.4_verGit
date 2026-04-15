@@ -49,6 +49,9 @@ private:
 	class UCReactionComponent* ReactionComponent;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCActionFeedbackComponent* ActionFeedbackComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 protected:

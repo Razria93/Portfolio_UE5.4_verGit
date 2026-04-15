@@ -27,6 +27,10 @@ public:
 	void NextPlayAction() override;
 
 public:
+	virtual void NotifyActionTrailBegin() override;
+	virtual void NotifyActionTrailEnd() override;
+
+public:
 	FORCEINLINE void OnEnablePreInput() { bEnablePreInput = true; }
 	FORCEINLINE void OffEnablePreInput() { bEnablePreInput = false; }
 };

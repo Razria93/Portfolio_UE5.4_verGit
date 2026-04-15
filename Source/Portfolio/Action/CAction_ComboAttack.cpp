@@ -5,6 +5,8 @@
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CActionComponent.h"
+#include "Component/CActionFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
@@ -52,16 +54,25 @@ void UCAction_ComboAttack::BeginPlayAction()
 {
 	Super::BeginPlayAction();	// bBeginAction = true
 
+	if (!IsValid(OwnerCharacter_Injected)) return;
+
 	FActionContext actionContext;
 	actionContext.CurrentActionType = ActionType;
 	actionContext.ActionIndex = ActionIndex;
 
 	PushContextToAttachment(actionContext);
+	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::ActionStart);
 }
 
 void UCAction_ComboAttack::EndPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	FActionContext actionContext;
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = ActionIndex;
+
+	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::ActionEnd);
 
 	Super::EndPlayAction();	// bIsAction, bBeginAction = false
 
@@ -112,4 +123,22 @@ void UCAction_ComboAttack::NextPlayAction()
 	{
 		FLog::Log(TEXT("[ComboAttack|NextPlayAction] No Buffered PreInput"));
 	}
+}
+
+void UCAction_ComboAttack::NotifyActionTrailBegin()
+{
+	FActionContext actionContext;
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = ActionIndex; // override
+
+	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::TrailWindowBegin);
+}
+
+void UCAction_ComboAttack::NotifyActionTrailEnd()
+{
+	FActionContext actionContext;
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = ActionIndex; // override
+
+	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::TrailWindowEnd);
 }

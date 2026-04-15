@@ -17,15 +17,13 @@ public:
 
 	// === ActionData ======================================= //
 private:
-	UPROPERTY(EditAnywhere, Category = "ActionData")
+	UPROPERTY(EditAnywhere, Category = "Action|Type")
 	EActionType ActionType;
 
-private:
-	UPROPERTY(EditAnywhere, Category = "ActionData")
+	UPROPERTY(EditAnywhere, Category = "Action|Class")
 	TSubclassOf<class UCAction> ActionClass;
 
-private:
-	UPROPERTY(EditAnywhere, Category = "ActionData")
+	UPROPERTY(EditAnywhere, Category = "Action|Data")
 	TArray<FActionData> ActionDatas;
 
 	// ====================================================== //
@@ -36,10 +34,12 @@ private:
 
 private:
 	/* === State === */
+	UPROPERTY(Transient)
 	EActionType CurrentActionType_Cached;
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
 
 public:
@@ -53,7 +53,7 @@ public:
 
 public:
 	/* === Getter === */
-	class UObject* GetAction(EActionType InNewActionType);
+	class UObject* GetCurAction();
 
 public:
 	/* === Getter === */

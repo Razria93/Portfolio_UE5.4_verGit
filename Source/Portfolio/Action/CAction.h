@@ -14,19 +14,30 @@ protected:
 	EActionType ActionType;
 
 protected:
+	bool bBeginAction;	// Action start triggered
+	bool bIsAction;		// Action is active
+
+protected:
 	/* === Injection Objects === */
-	class ACharacter* OwnerCharacter_Injected;
+	UPROPERTY(Transient)
+	class ACharacter* OwnerCharacter_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	TArray<FActionData> ActionDatas_Injected;
 
 protected:
 	/* === Cached Objects === */
-	class UCWeaponComponent* WeaponComp_Cached;
-	class UCStateComponent* StateComp_Cached;
-	class UCActionComponent* ActionComp_Cached;
+	UPROPERTY(Transient)
+	class UCWeaponComponent* WeaponComp_Cached = nullptr;
 
-private:
-	bool bBeginAction;	// Action start triggered
-	bool bIsAction;		// Action is active
+	UPROPERTY(Transient)
+	class UCStateComponent* StateComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCActionComponent* ActionComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
 	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas);
@@ -44,9 +55,16 @@ public:
 	virtual void EndPlayAction();
 	virtual void NextPlayAction() {};
 
+public:
+	virtual void NotifyActionTrailBegin();
+	virtual void NotifyActionTrailEnd();
+
 protected:
 	void PushContextToAttachment(const FActionContext& InActionContext);
 	void ClearContextToAttachment();
+
+protected:
+	void RequestPlayActionFeedback(const FActionContext& InActionContext, EActionFeedbackPhase InPhase);
 
 public:
 	/* === [IN] Custom Delgate Events === */
