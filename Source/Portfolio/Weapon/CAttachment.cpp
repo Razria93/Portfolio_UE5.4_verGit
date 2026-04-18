@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 
 #include "Component/CApplyDamageComponent.h"
 
@@ -125,21 +126,21 @@ void ACAttachment::SetAttachmentType(EAttachmentType InAttachmentType)
 	AttachmentType = InAttachmentType;
 }
 
-void ACAttachment::SetActionTrailActive(bool bEnable)
+void ACAttachment::SetTrailActive(bool bEnable)
 {
 	if (!IsValid(TrailComponent)) return;
+
+	PrintTrailInfo(bEnable);
 
 	if (bEnable)
 	{
 		TrailComponent->SetVisibility(true);
 		TrailComponent->Activate(true);
-		FLog::Log(TEXT("[Attachment] Trail Active"));
 	}
 	else
 	{
 		TrailComponent->Deactivate();
 		TrailComponent->SetVisibility(false);
-		FLog::Log(TEXT("[Attachment] Trail InActive"));
 	}
 }
 
@@ -348,4 +349,20 @@ void ACAttachment::PrintHitContextInfo(const FAttachmentContext& InAttachmentCon
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentActionType"), *UEnum::GetValueAsString(InActionContext.CurrentActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), (InActionContext.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.ActionIndex)));
 	FLog::Log(TEXT("---------------------------------"));
+}
+
+void ACAttachment::PrintTrailInfo(bool bEnable) const
+{
+	if (!IsValid(TrailComponent)) return;
+	
+	UNiagaraSystem* trailAsset = TrailComponent->GetAsset();
+	
+	const FString trailCompName = TrailComponent->GetName();
+	FString trailAssetName = IsValid(trailAsset) ? trailAsset->GetName() : TEXT("None");
+	
+	FLog::Log(TEXT("====== Attachment Trail Info ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bEnable ? TEXT("Active") : TEXT("Inactive")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailComponent"), *trailCompName));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailAsset"), *trailAssetName));
+	FLog::Log(TEXT("================================="));
 }

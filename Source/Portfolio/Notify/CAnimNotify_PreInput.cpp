@@ -20,10 +20,10 @@ void UCAnimNotify_PreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!actionComp) return;
 
-	UObject* uobject = actionComp->GetCurAction();
-	if (!uobject) return;
+	UCAction* curAction = actionComp->GetCurAction();
+	if (!curAction) return;
 
-	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(uobject);
+	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(curAction);
 	if (!action_ComboAttack) return;
 
 	switch (FlowType)

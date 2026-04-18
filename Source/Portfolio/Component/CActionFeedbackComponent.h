@@ -5,8 +5,6 @@
 #include "Type/CWeaponStructure.h"
 #include "CActionFeedbackComponent.generated.h"
 
-
-
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionFeedbackComponent : public UActorComponent
 {
@@ -17,16 +15,13 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
-	FActionFeedbackData ActionStartFeedback;
+	TArray<FTrailFeedbackData> TrailFeedbackDatas;
 
 	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
-	FActionFeedbackData TrailWindowBeginFeedback;
+	TArray<FActionVFXFeedbackData> VFXFeedbackDatas;
 
 	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
-	FActionFeedbackData TrailWindowEndFeedback;
-
-	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
-	FActionFeedbackData ActionEndFeedback;
+	TArray<FActionSFXFeedbackData> SFXFeedbackDatas;
 
 private:
 	UPROPERTY(Transient)
@@ -35,29 +30,37 @@ private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
-	UPROPERTY(Transient)
-	class UCWeaponComponent* WeaponComp_Cached = nullptr;
-
 protected:
 	virtual void BeginPlay() override;
 
 public:
-	void PlayActionFeedback(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase);
+	void PlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);
 
 private:
-	void ExecuteActionFeedback(const FActionFeedbackData& InActionFeedbackData);
-	void PlayActionVFX(class UNiagaraSystem* InActionVFX);
-	void PlayActionSFX(class USoundBase* InActionSFX);
+	bool CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const;
 
 private:
-	void SetActionTrailActive(bool bActive);
+	EActionFeedbackMatchTier CalculateMatchTier(const FActionFeedbackKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const;
 
 private:
-	bool CanPlayActionFeedback(EActionFeedbackPhase InActionFeedbackPhase) const;
-	bool ResolveActionFeedbackData(EActionFeedbackPhase InActionFeedbackPhase, FActionFeedbackData& OutActionFeedbackData) const;
+	FActionVFXExecutionKey BuildActionVFXExecutionKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const;
+	FActionSFXExecutionKey BuildActionSFXExecutionKey(const FActionSFXFeedbackData& InActionSFXFeedbackData) const;
 
 private:
-	void PrintActionFeedbackRequestInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase) const;
-	void PrintActionFeedbackDataInfo(const FActionFeedbackData& InActionFeedbackData) const;
-	void PrintActionTrailInfo(bool bActive, const class ACAttachment* InAttachment) const;
+	void ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
+	void ExecuteVFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
+	void ExecuteSFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
+
+private:
+	void PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData);
+	void PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData);
+	void SetTrailActive(bool bActive);
+
+private:
+	void PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const;
+
+private:
+	void PrintActionVFXInfo(const FActionVFXFeedbackData& InActionVFXFeedbackData) const;
+	void PrintActionSFXInfo(const FActionSFXFeedbackData& InActionSFXFeedbackData) const;
+	void PrintTrailInfo(bool bActive, const class ACAttachment* InAttachment) const;
 };

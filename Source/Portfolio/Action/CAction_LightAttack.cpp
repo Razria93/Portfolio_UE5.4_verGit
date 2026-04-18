@@ -14,16 +14,17 @@ void UCAction_LightAttack::Tick(float InDeltaTime)
 	Super::Tick(InDeltaTime);
 }
 
-void UCAction_LightAttack::PlayAction()
+bool UCAction_LightAttack::PlayAction()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
-	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
-	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
-	if (!IsValid(ActionDatas_Injected[0].Montage)) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return false;
+	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return false;
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return false;
+	if (!IsValid(ActionDatas_Injected[0].Montage)) return false;
 
-	Super::PlayAction();		// bIsAction = true
+	if(!Super::PlayAction()) return false;		// bIsAction = true
 
 	ActionDatas_Injected[0].BeginPlayMontage(OwnerCharacter_Injected);
+	return true;
 }
 
 void UCAction_LightAttack::BeginPlayAction()

@@ -53,7 +53,7 @@ public:
 
 public:
 	/* === Getter === */
-	class UObject* GetCurAction();
+	class UCAction* GetCurAction() const;
 
 public:
 	/* === Getter === */

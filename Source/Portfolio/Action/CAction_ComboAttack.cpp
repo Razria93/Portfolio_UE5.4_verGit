@@ -5,8 +5,6 @@
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
-#include "Component/CActionComponent.h"
-#include "Component/CActionFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
@@ -26,7 +24,7 @@ void UCAction_ComboAttack::Tick(float InDeltaTime)
 	Super::Tick(InDeltaTime);
 }
 
-void UCAction_ComboAttack::PlayAction()
+bool UCAction_ComboAttack::PlayAction()
 {
 	// [Re-call] Convert 're-invoked PlayAction()' into 'buffered pre-input'
 	if (bEnablePreInput)
@@ -35,19 +33,21 @@ void UCAction_ComboAttack::PlayAction()
 		bExistPreInput = true;	 // Mark pre-input for next combo step
 
 		FLog::Log(TEXT("[ComboAttack|PlayAction] Buffered PreInput"));
-		return;
+		return true;
 	}
 
 	// [First-call] Validate execution conditions & Execute first combo action
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
-	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
-	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
-	if (ActionDatas_Injected.Num() <= 0) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return false;
+	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return false;
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return false;
+	if (ActionDatas_Injected.Num() <= 0) return false;
 
-	Super::PlayAction();		// bIsAction = true
+	if (!Super::PlayAction()) return false;
 
-	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
+	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return false;
+
 	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
+	return true;
 }
 
 void UCAction_ComboAttack::BeginPlayAction()
@@ -56,23 +56,14 @@ void UCAction_ComboAttack::BeginPlayAction()
 
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	FActionContext actionContext;
-	actionContext.CurrentActionType = ActionType;
-	actionContext.ActionIndex = ActionIndex;
+	FActionContext actionContext = BuildActionContext();
 
 	PushContextToAttachment(actionContext);
-	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::ActionStart);
 }
 
 void UCAction_ComboAttack::EndPlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
-
-	FActionContext actionContext;
-	actionContext.CurrentActionType = ActionType;
-	actionContext.ActionIndex = ActionIndex;
-
-	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::ActionEnd);
 
 	Super::EndPlayAction();	// bIsAction, bBeginAction = false
 
@@ -125,20 +116,24 @@ void UCAction_ComboAttack::NextPlayAction()
 	}
 }
 
-void UCAction_ComboAttack::NotifyActionTrailBegin()
+FActionContext UCAction_ComboAttack::BuildActionContext() const
 {
 	FActionContext actionContext;
-	actionContext.CurrentActionType = ActionType;
-	actionContext.ActionIndex = ActionIndex; // override
 
-	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::TrailWindowBegin);
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = ActionIndex;
+
+	return actionContext;
 }
 
-void UCAction_ComboAttack::NotifyActionTrailEnd()
+FActionFeedbackRequest UCAction_ComboAttack::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
 {
-	FActionContext actionContext;
-	actionContext.CurrentActionType = ActionType;
-	actionContext.ActionIndex = ActionIndex; // override
+	FActionFeedbackRequest actionFeedbackRequest;
 
-	RequestPlayActionFeedback(actionContext, EActionFeedbackPhase::TrailWindowEnd);
+	actionFeedbackRequest.ActionFeedbackKey.ActionType = ActionType;
+	actionFeedbackRequest.ActionFeedbackKey.ActionIndex = ActionIndex;
+	actionFeedbackRequest.ActionFeedbackTiming = InTiming;
+	actionFeedbackRequest.TriggerKey = InTriggerKey;
+
+	return actionFeedbackRequest;
 }

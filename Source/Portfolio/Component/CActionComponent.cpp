@@ -42,10 +42,9 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-UObject* UCActionComponent::GetCurAction()
+UCAction* UCActionComponent::GetCurAction() const
 {
-	UCAction** curActionPtr = ActionContainer.Find(CurrentActionType_Cached);
-
+	auto curActionPtr = ActionContainer.Find(CurrentActionType_Cached);
 	if (!curActionPtr) return nullptr;
 
 	UCAction* curAction = *curActionPtr;
@@ -74,7 +73,7 @@ void UCActionComponent::ChangeActionMode(EActionType InNewActionType)
 	UCAction* action = *actionPtr;
 	if (action == nullptr) return;
 
-	action->PlayAction();
+	if(!action->PlayAction()) return;
 
 	ChangeActionType(InNewActionType);
 }

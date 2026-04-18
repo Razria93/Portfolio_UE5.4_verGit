@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Action/CAction.h"
+#include "Type/CWeaponStructure.h"
 #include "CAction_ComboAttack.generated.h"
 
 UCLASS()
@@ -10,10 +11,14 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 	GENERATED_BODY()
 
 private:
+	UPROPERTY(Transient)
 	int32 ActionIndex;
 
 private:
+	UPROPERTY(Transient)
 	bool bEnablePreInput;
+
+	UPROPERTY(Transient)
 	bool bExistPreInput;
 
 public:
@@ -21,14 +26,14 @@ public:
 	void Tick(float InDeltaTime) override;
 
 public:
-	void PlayAction() override;
+	bool PlayAction() override;
 	void BeginPlayAction() override;
 	void EndPlayAction() override;
 	void NextPlayAction() override;
 
-public:
-	virtual void NotifyActionTrailBegin() override;
-	virtual void NotifyActionTrailEnd() override;
+protected:
+	FActionContext BuildActionContext() const override;
+	FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const override;
 
 public:
 	FORCEINLINE void OnEnablePreInput() { bEnablePreInput = true; }

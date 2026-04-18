@@ -1,8 +1,10 @@
 #include "Character/Enemy/CEnemy.h"
 #include "ProjectGlobal.h"
 
+#include "AIController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -15,6 +17,7 @@
 #include "Component/CReactionFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
+#include "AI/Blackboard/CAIKey.h"
 
 ACEnemy::ACEnemy()
 {
@@ -117,6 +120,31 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;
+}
+
+bool ACEnemy::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const
+{
+	if (!bHasActiveActionFeedbackKey) return false;
+
+	OutActionFeedbackRequest.ActionFeedbackKey = ActiveActionFeedbackKey;
+	OutActionFeedbackRequest.ActionFeedbackTiming = InActionFeedbackTiming;
+	OutActionFeedbackRequest.TriggerKey = InTriggerKey;
+
+	return true;
+}
+
+void ACEnemy::CacheActiveActionFeedbackKey(EActionType InActionType, int32 InActionIndex)
+{
+	ActiveActionFeedbackKey.ActionType = InActionType;
+	ActiveActionFeedbackKey.ActionIndex = InActionIndex;
+	bHasActiveActionFeedbackKey = true;
+}
+
+void ACEnemy::ClearActiveActionFeedbackKey()
+{
+	ActiveActionFeedbackKey.ActionType = EActionType::Max;
+	ActiveActionFeedbackKey.ActionIndex = INDEX_NONE;
+	bHasActiveActionFeedbackKey = false;
 }
 
 bool ACEnemy::TryStartKill()

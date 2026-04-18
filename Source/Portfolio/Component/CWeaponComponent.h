@@ -94,9 +94,6 @@ public:
 	void PushContextToAttachment(const FActionContext& InActionContext);
 	void ClearContextToAttachment();
 
-public:
-	FApplyDamageSpecKey BuildApplyDamageSpecKey(const FActionContext& InActionContext) const;
-
 private:
 	bool CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass);
 	bool CreateEquipment(AActor* InOwnerCharacter, EEquipmentType InEquipmentType, TSubclassOf<UCEquipment> InEquipmentClass, const FEquipmentData& InEquipmentDatas, const FEquipmentData& InUnequipmentDatas);

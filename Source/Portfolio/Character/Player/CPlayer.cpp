@@ -17,6 +17,8 @@
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
+#include "Action/CAction.h"
+
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
 
@@ -155,6 +157,19 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;
+}
+
+bool ACPlayer::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const
+{
+	if (!IsValid(ActionComponent)) return false;
+
+	UCAction* curAction = ActionComponent->GetCurAction();
+	if (!IsValid(curAction)) return false;
+
+	// Export
+	OutActionFeedbackRequest = curAction->BuildActionFeedbackRequest(InActionFeedbackTiming, InTriggerKey);
+
+	return true;
 }
 
 void ACPlayer::HandleMoveForward(const float InAxisValue)

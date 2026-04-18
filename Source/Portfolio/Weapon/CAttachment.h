@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Interface/HitContextProducer.h"
+#include "Interface/HitContextProvider.h"
 #include "Type/CWeaponStructure.h"
 #include "CAttachment.generated.h"
 
@@ -13,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_EightParams(FAttachmentBeginOverlap, AActor*,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAttachmentEndOverlap, AActor*, InAttackerActor, AActor*, InTargetActor);
 
 UCLASS()
-class PORTFOLIO_API ACAttachment : public AActor, public IHitContextProducer
+class PORTFOLIO_API ACAttachment : public AActor, public IHitContextProvider
 {
 	GENERATED_BODY()
 
@@ -111,7 +111,7 @@ public:
 public:
 	/* === Setter === */
 	void SetAttachmentType(EAttachmentType InAttachmentType);
-	void SetActionTrailActive(bool bEnable);
+	void SetTrailActive(bool bEnable);
 
 public:
 	void AttachToOwnerSocket(FName InSocketName);
@@ -151,4 +151,7 @@ private:
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& Context);
 	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+
+private:
+	void PrintTrailInfo(bool bEnable) const;
 };

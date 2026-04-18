@@ -2,15 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotifyState.h"
-#include "CAnimNotifyState_ActionTrail.generated.h"
+#include "CAnimNotifyState_ActionFeedback.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotifyState_ActionTrail : public UCAnimNotifyState
+class PORTFOLIO_API UCAnimNotifyState_ActionFeedback : public UCAnimNotifyState
 {
 	GENERATED_BODY()
 
 public:
-	UCAnimNotifyState_ActionTrail();
+	UCAnimNotifyState_ActionFeedback();
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Feedback")
+	FName TriggerKey = NAME_None;
 
 public:
 	FString GetNotifyName_Implementation() const override;

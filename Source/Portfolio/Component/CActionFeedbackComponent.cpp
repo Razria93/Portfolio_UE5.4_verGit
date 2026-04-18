@@ -24,141 +24,345 @@ void UCActionFeedbackComponent::BeginPlay()
 
 	OwnerCharacter_Cached = Cast<ACharacter>(OwnerActor_Cached);
 	check(OwnerCharacter_Cached);
-
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerActor_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
-	check(WeaponComp_Cached);
 }
 
-void UCActionFeedbackComponent::PlayActionFeedback(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase)
+void UCActionFeedbackComponent::PlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
-	if (!CanPlayActionFeedback(InActionFeedbackPhase)) return;
+	if (!CanPlayActionFeedback(InActionFeedbackRequest)) return;
 
-	// Debug
-	PrintActionFeedbackRequestInfo(InApplyDamageSpecKey, InActionFeedbackPhase);
+	PrintActionFeedbackRequestInfo(InActionFeedbackRequest);
 
-	FActionFeedbackData actionFeedbackData;
-	if (!ResolveActionFeedbackData(InActionFeedbackPhase, actionFeedbackData))
+	ExecuteTrailFeedbacks(InActionFeedbackRequest);
+	ExecuteVFXFeedbacks(InActionFeedbackRequest);
+	ExecuteSFXFeedbacks(InActionFeedbackRequest);
+}
+
+bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const
+{
+	if (!IsValid(OwnerActor_Cached)) return false;
+	if (!IsValid(GetWorld())) return false;
+	if (InActionFeedbackRequest.ActionFeedbackTiming == EActionFeedbackTiming::None) return false;
+
+	return true;
+}
+
+EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FActionFeedbackKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const
+{
+	// Exact
+	if (InDataTiming != InActionFeedbackRequest.ActionFeedbackTiming)
+		return EActionFeedbackMatchTier::None;
+
+	if (InDataTriggerKey != InActionFeedbackRequest.TriggerKey)
+		return EActionFeedbackMatchTier::None;
+
+	// Exact & Wildcard
+	const bool bActionExact = (InDataKey.ActionType == InActionFeedbackRequest.ActionFeedbackKey.ActionType);
+	const bool bActionAny = (InDataKey.ActionType == EActionType::All);
+
+	const bool bIndexExact = (InDataKey.ActionIndex == InActionFeedbackRequest.ActionFeedbackKey.ActionIndex);
+	const bool bIndexAny = (InDataKey.ActionIndex == INDEX_NONE);
+
+	// Tier 0
+	if (bActionExact && bIndexExact)
+		return EActionFeedbackMatchTier::ExactActionExactIndex;
+
+	// Tier 1	
+	if (bActionExact && bIndexAny)
+		return EActionFeedbackMatchTier::ExactActionAnyIndex;
+
+	// Tier 2
+	if (bActionAny && bIndexAny)
+		return EActionFeedbackMatchTier::AnyActionAnyIndex;
+
+	return EActionFeedbackMatchTier::None;
+}
+
+FActionVFXExecutionKey UCActionFeedbackComponent::BuildActionVFXExecutionKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const
+{
+	FActionVFXExecutionKey executionKey;
+
+	executionKey.ActionFeedbackKey = InActionVFXFeedbackData.ActionFeedbackKey;
+	executionKey.ActionFeedbackTiming = InActionVFXFeedbackData.ActionFeedbackTiming;
+	executionKey.TriggerKey = InActionVFXFeedbackData.TriggerKey;
+	executionKey.VFXPlayType = InActionVFXFeedbackData.VFXPlayType;
+	executionKey.VFX = InActionVFXFeedbackData.VFX;
+	executionKey.SocketName = InActionVFXFeedbackData.SocketName;
+	executionKey.RelativeLocation = InActionVFXFeedbackData.RelativeLocation;
+	executionKey.RelativeRotation = InActionVFXFeedbackData.RelativeRotation;
+	executionKey.RelativeScale = InActionVFXFeedbackData.RelativeScale;
+
+	return executionKey;
+}
+
+FActionSFXExecutionKey UCActionFeedbackComponent::BuildActionSFXExecutionKey(const FActionSFXFeedbackData& InActionSFXFeedbackData) const
+{
+	FActionSFXExecutionKey executionKey;
+
+	executionKey.ActionFeedbackKey = InActionSFXFeedbackData.ActionFeedbackKey;
+	executionKey.ActionFeedbackTiming = InActionSFXFeedbackData.ActionFeedbackTiming;
+	executionKey.TriggerKey = InActionSFXFeedbackData.TriggerKey;
+	executionKey.SFXPlayType = InActionSFXFeedbackData.SFXPlayType;
+	executionKey.SFX = InActionSFXFeedbackData.SFX;
+
+	return executionKey;
+}
+
+void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
+{
+	// Cached Score and Data
+	EActionFeedbackMatchTier bestTier = EActionFeedbackMatchTier::None;
+	const FTrailFeedbackData* bestData = nullptr;
+	int32 bestMatchCount = 0;
+
+	for (const FTrailFeedbackData& trailFeedbackData : TrailFeedbackDatas)
 	{
-		FLog::Log(FString::Printf(TEXT("[PlayActionFeedback] Failed to resolve data. Phase = %s"), *UEnum::GetValueAsString(InActionFeedbackPhase)));
+		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(trailFeedbackData.ActionFeedbackKey, trailFeedbackData.ActionFeedbackTiming, trailFeedbackData.TriggerKey, InActionFeedbackRequest);
+
+		if (matchTier == EActionFeedbackMatchTier::None) continue;
+		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
+
+		// New high score: Reset and update
+		if (static_cast<uint8>(matchTier) > static_cast<uint8>(bestTier))
+		{
+			bestTier = matchTier;
+			bestData = &trailFeedbackData;
+			bestMatchCount = 1;
+			continue;
+		}
+
+		// Tie: Error (Architect Miss)
+		++bestMatchCount;
+	}
+
+	if (!bestData)
+	{
+		FLog::Log(TEXT("[ActionFeedback] Trail | No Matched Data")); // Invalid
 		return;
 	}
 
-	// Debug
-	PrintActionFeedbackDataInfo(actionFeedbackData);
+	if (bestMatchCount > 1)
+	{
+		FLog::Log(TEXT("[ActionFeedback] Duplicate highest-priority trail feedback matches")); // Error
+		return;
+	}
 
-	ExecuteActionFeedback(actionFeedbackData);
+	FLog::Log(TEXT("[ActionFeedback] Trail | Matched Data")); // Valid
+	SetTrailActive(bestData->bTrailActive);
 }
 
-void UCActionFeedbackComponent::ExecuteActionFeedback(const FActionFeedbackData& InActionFeedbackData)
+void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
-	PlayActionVFX(InActionFeedbackData.ActionVFX);
-	PlayActionSFX(InActionFeedbackData.ActionSFX);
-	SetActionTrailActive(InActionFeedbackData.bTrailActive);
+	EActionFeedbackMatchTier bestTier = EActionFeedbackMatchTier::None;
+	TArray<const FActionVFXFeedbackData*> matchedDatas;
+
+	for (const FActionVFXFeedbackData& actionVFXFeedbackData : VFXFeedbackDatas)
+	{
+		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(actionVFXFeedbackData.ActionFeedbackKey, actionVFXFeedbackData.ActionFeedbackTiming, actionVFXFeedbackData.TriggerKey, InActionFeedbackRequest);
+
+		if (matchTier == EActionFeedbackMatchTier::None) continue;
+		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
+
+		// New high score: Reset and update
+		if (static_cast<uint8>(matchTier) > static_cast<uint8>(bestTier))
+		{
+			bestTier = matchTier;
+			matchedDatas.Reset();
+			matchedDatas.Add(&actionVFXFeedbackData);
+			continue;
+		}
+
+		// Tie: Add to list
+		matchedDatas.Add(&actionVFXFeedbackData);
+	}
+
+	if (matchedDatas.Num() <= 0)
+	{
+		FLog::Log(TEXT("[ActionFeedback] VFX | No Matched Data"));
+		return;
+	}
+
+	TSet<FActionVFXExecutionKey> executionKeys;
+
+	for (const FActionVFXFeedbackData* data : matchedDatas)
+	{
+		const FActionVFXExecutionKey executionKey = BuildActionVFXExecutionKey(*data);
+
+		if (executionKeys.Contains(executionKey))
+		{
+			FLog::Log(TEXT("[ActionFeedback] Duplicate VFX execution key skipped"));
+			continue;
+		}
+
+		FLog::Log(TEXT("[ActionFeedback] VFX | Matched Data"));
+		executionKeys.Add(executionKey);
+		PlayActionVFX(*data);
+	}
 }
 
-void UCActionFeedbackComponent::PlayActionVFX(UNiagaraSystem* InActionVFX)
+void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
-	if (!IsValid(InActionVFX)) return;
+	EActionFeedbackMatchTier bestTier = EActionFeedbackMatchTier::None;
+	TArray<const FActionSFXFeedbackData*> matchedDatas;
+
+	for (const FActionSFXFeedbackData& actionSFXFeedbackData : SFXFeedbackDatas)
+	{
+		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(actionSFXFeedbackData.ActionFeedbackKey, actionSFXFeedbackData.ActionFeedbackTiming, actionSFXFeedbackData.TriggerKey, InActionFeedbackRequest);
+
+		if (matchTier == EActionFeedbackMatchTier::None) continue;
+		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
+
+		// New high score: Reset and update
+		if (static_cast<uint8>(matchTier) > static_cast<uint8>(bestTier))
+		{
+			bestTier = matchTier;
+			matchedDatas.Reset();
+			matchedDatas.Add(&actionSFXFeedbackData);
+			continue;
+		}
+
+		// Tie: Add to list
+		matchedDatas.Add(&actionSFXFeedbackData);
+	}
+
+	if (matchedDatas.Num() <= 0)
+	{
+		FLog::Log(TEXT("[ActionFeedback] SFX | No Matched Data"));
+		return;
+	}
+
+	TSet<FActionSFXExecutionKey> executionKeys;
+
+	for (const FActionSFXFeedbackData* data : matchedDatas)
+	{
+		const FActionSFXExecutionKey executionKey = BuildActionSFXExecutionKey(*data);
+
+		if (executionKeys.Contains(executionKey))
+		{
+			FLog::Log(TEXT("[ActionFeedback] Duplicate SFX execution key skipped"));
+			continue;
+		}
+
+		FLog::Log(TEXT("[ActionFeedback] SFX | Matched Data"));
+		executionKeys.Add(executionKey);
+		PlayActionSFX(*data);
+	}
+}
+
+void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData)
+{
+	if (!IsValid(InActionVFXFeedbackData.VFX)) return;
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	UNiagaraFunctionLibrary::SpawnSystemAttached(
-		InActionVFX,							// NiagaraSystem
-		OwnerCharacter_Cached->GetMesh(),		// AttachComponent
-		NAME_None,								// SocketName
-		FVector::ZeroVector,					// Location
-		FRotator::ZeroRotator,					// Rotation
-		EAttachLocation::KeepRelativeOffset,	// LocationType
-		true									// bAutoDestroy
-	);
+	switch (InActionVFXFeedbackData.VFXPlayType)
+	{
+	case EActionVFXPlayType::Once:
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			InActionVFXFeedbackData.VFX,
+			OwnerCharacter_Cached->GetMesh(),
+			InActionVFXFeedbackData.SocketName,
+			InActionVFXFeedbackData.RelativeLocation,
+			InActionVFXFeedbackData.RelativeRotation,
+			InActionVFXFeedbackData.RelativeScale,
+			EAttachLocation::KeepRelativeOffset,
+			true,
+			ENCPoolMethod::None);
+
+		PrintActionVFXInfo(InActionVFXFeedbackData);
+
+		return;
+	}
+
+	case EActionVFXPlayType::Loop:
+	{
+		// TODO: Implement Loop
+		return;
+	}
+
+	default:
+		return;
+	}
 }
 
-void UCActionFeedbackComponent::PlayActionSFX(USoundBase* InActionSFX)
+void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData)
 {
-	if (!IsValid(InActionSFX)) return;
+	if (!IsValid(InActionSFXFeedbackData.SFX)) return;
 	if (!IsValid(OwnerActor_Cached)) return;
 
-	UGameplayStatics::PlaySoundAtLocation(this, InActionSFX, OwnerActor_Cached->GetActorLocation());
+	switch (InActionSFXFeedbackData.SFXPlayType)
+	{
+	case EActionSFXPlayType::Once:
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			InActionSFXFeedbackData.SFX,
+			OwnerActor_Cached->GetActorLocation());
+
+		PrintActionSFXInfo(InActionSFXFeedbackData);
+
+		return;
+	}
+
+	case EActionSFXPlayType::Loop:
+	{
+		// TODO: Implement Loop
+		return;
+	}
+
+	default:
+		return;
+	}
 }
 
-void UCActionFeedbackComponent::SetActionTrailActive(bool bActive)
+void UCActionFeedbackComponent::SetTrailActive(bool bActive)
 {
-	if (!IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	UObject* uobject = WeaponComp_Cached->GetAttachment();
+	UCWeaponComponent* weaponComp = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
+	if (!IsValid(weaponComp)) return;
+
+	UObject* uobject = weaponComp->GetAttachment();
 	if (!IsValid(uobject)) return;
 
 	ACAttachment* attachment = Cast<ACAttachment>(uobject);
 	if (!IsValid(attachment)) return;
 
-	// Debug
-	PrintActionTrailInfo(bActive, attachment);
-	
-	attachment->SetActionTrailActive(bActive);
+	PrintTrailInfo(bActive, attachment);
+
+	attachment->SetTrailActive(bActive);
 }
 
-bool UCActionFeedbackComponent::CanPlayActionFeedback(EActionFeedbackPhase InActionFeedbackPhase) const
-{
-	if (!IsValid(OwnerActor_Cached)) return false;
-	if (!IsValid(GetWorld())) return false;
-	if (InActionFeedbackPhase == EActionFeedbackPhase::None) return false;
-
-	return true;
-}
-
-bool UCActionFeedbackComponent::ResolveActionFeedbackData(EActionFeedbackPhase InActionFeedbackPhase, FActionFeedbackData& OutActionFeedbackData) const
-{
-	switch (InActionFeedbackPhase)
-	{
-	case EActionFeedbackPhase::ActionStart:
-		OutActionFeedbackData = ActionStartFeedback;
-		return true;
-
-	case EActionFeedbackPhase::TrailWindowBegin:
-		OutActionFeedbackData = TrailWindowBeginFeedback;
-		return true;
-
-	case EActionFeedbackPhase::TrailWindowEnd:
-		OutActionFeedbackData = TrailWindowEndFeedback;
-		return true;
-
-	case EActionFeedbackPhase::ActionEnd:
-		OutActionFeedbackData = ActionEndFeedback;
-		return true;
-
-	default:
-		break;
-	}
-
-	return false;
-}
-
-void UCActionFeedbackComponent::PrintActionFeedbackRequestInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey, EActionFeedbackPhase InActionFeedbackPhase) const
+void UCActionFeedbackComponent::PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
 	FLog::Log(TEXT("==== ActionFeedback Request ====="));
-	FLog::Log(TEXT("------ ApplyDamage SpecKey ------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.AttachmentType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.EquipmentType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("ActionIndex"), InApplyDamageSpecKey.ActionIndex));
-	FLog::Log(TEXT("----- ActionFeedback Phase ------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionFeedbackPhase"), *UEnum::GetValueAsString(InActionFeedbackPhase)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackKey.ActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("ActionIndex"), InActionFeedbackRequest.ActionFeedbackKey.ActionIndex));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionFeedbackTiming"), *UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackTiming)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TriggerKey"), *InActionFeedbackRequest.TriggerKey.ToString()));
 	FLog::Log(TEXT("================================="));
 }
 
-void UCActionFeedbackComponent::PrintActionFeedbackDataInfo(const FActionFeedbackData& InActionFeedbackData) const
+void UCActionFeedbackComponent::PrintActionVFXInfo(const FActionVFXFeedbackData& InActionVFXFeedbackData) const
 {
-	FLog::Log(TEXT("====== ActionFeedback Data ======"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionVFX"), *GetNameSafe(InActionFeedbackData.ActionVFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionSFX"), *GetNameSafe(InActionFeedbackData.ActionSFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bTrailActive"), InActionFeedbackData.bTrailActive ? TEXT("true") : TEXT("false")));
+	FLog::Log(TEXT("==== ActionFeedback VFX Info ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InActionVFXFeedbackData.VFXPlayType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InActionVFXFeedbackData.VFX)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Socket"), *InActionVFXFeedbackData.SocketName.ToString()));
 	FLog::Log(TEXT("================================="));
 }
 
-void UCActionFeedbackComponent::PrintActionTrailInfo(bool bActive, const ACAttachment* InAttachment) const
+void UCActionFeedbackComponent::PrintActionSFXInfo(const FActionSFXFeedbackData& InActionSFXFeedbackData) const
 {
-	FLog::Log(TEXT("======= ActionTrail Info ========"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(TEXT("==== ActionFeedback SFX Info ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InActionSFXFeedbackData.SFXPlayType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InActionSFXFeedbackData.SFX)));
+	FLog::Log(TEXT("================================="));
+}
+
+void UCActionFeedbackComponent::PrintTrailInfo(bool bActive, const ACAttachment* InAttachment) const
+{
+	FLog::Log(TEXT("=== ActionFeedback Trail Info ==="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bActive ? TEXT("Active") : TEXT("Inactive")));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Attachment"), *GetNameSafe(InAttachment)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailActive"), bActive ? TEXT("true") : TEXT("false")));
 	FLog::Log(TEXT("================================="));
 }
