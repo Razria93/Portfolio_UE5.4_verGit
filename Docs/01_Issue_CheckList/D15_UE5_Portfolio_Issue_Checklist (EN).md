@@ -2,7 +2,7 @@
 
 ## Title
 
-**M04-01: Implement and Organize Combat Feedback**
+**M04-01: Build the Combat Feedback Pipeline**
 
 ### Date
 
@@ -15,9 +15,11 @@
 
 ### Goals
 
-- Move combat beyond a structure-only presentation and implement and organize **Combat Feedback** so that hit results are actually readable and tangible in play.
-  
-- Connect the post-hit presentation flow consistently around `TakeDamage -> Reaction -> ReactionFX`.
+- Organize the first-pass **Combat Feedback** structure around combat results and action timing.
+
+- Separate the roles of **reaction-feedback / action-feedback / player-feedback** and review a flow that can be shared across Player-side and Enemy-side execution.
+
+- Define the feedback execution path and minimum validation criteria as a baseline for later combat structure expansion.
 
 
 ---
@@ -30,57 +32,60 @@
 
 ### TODO List
 
-#### 1. Organize Feedback Structure
+#### 1. Organize Feedback Structure and Responsibilities
 
-- [ ] Re-check current responsibilities of `ReactionComponent` and `ReactionFXComponent`
+- [x] Organize the separation between `reaction-feedback / action-feedback / player-feedback`
       
-- [ ] Organize the feedback trigger point after `TakeDamageCommitted`
+- [x] Organize the scope of shared feedback and player-local feedback
       
-- [ ] Organize the execution order between Reaction and Feedback
-      
-- [ ] Organize feedback block or finish rules for Dead / Revive
+- [x] Organize the connection points between combat-result feedback and notify-based feedback
 
 
-#### 2. Implement First-Pass Hit Feedback
+#### 2. First-Pass Reaction / Player Feedback Integration
 
-- [ ] Apply Hit Stop
+- [x] Organize the reaction-feedback path after `TakeDamage`
       
-- [ ] Apply Hit VFX
+- [x] Review first-pass hit VFX / hit SFX / hit stop application
       
-- [ ] Apply Hit Sound
-      
-- [ ] Apply Camera Shake
-      
-- [ ] Check whether strong hits / weak hits need differentiated feedback
+- [x] Review player-local feedback application points
 
 
-#### 3. Check Perceived Combat Quality
+#### 3. First-Pass Action Feedback Integration
 
-- [ ] Check the feel of a basic single-hit reaction
+- [x] Review Trail and action SFX / VFX application flow
       
-- [ ] Check chained feedback during combo hits
+- [x] Organize notify-based action-feedback timing
       
-- [ ] Check feedback behavior right before Dead / after Dead
-      
-- [ ] Check whether the end of Reaction feels natural
+- [x] Review whether action-start / action-end feedback hooks are needed
 
 
-#### 4. Minimal Validation
-- [ ] Scenario 1: Player attack -> Enemy HitReact + Feedback
+#### 4. Review Shared Player / Enemy Flow
+
+- [x] Verify the Player-side action-feedback execution path
       
-- [ ] Scenario 2: Combo attack -> chained feedback works correctly
+- [x] Verify the Enemy-side action-feedback execution path
       
-- [ ] Scenario 3: Dead transition -> feedback finish rule works correctly
+- [x] Review cleanup flow after enemy attack end
+
+
+#### 5. Organize Minimum Validation Criteria
+
+- [x] Scenario 1: Player attack -> Enemy hit feedback
       
-- [ ] Scenario 4: Feedback reset after Revive
+- [x] Scenario 2: Player action -> action-feedback output
+      
+- [x] Scenario 3: Enemy action -> action-feedback output
+      
+- [x] Scenario 4: Player-local feedback output
 
 
 ---
 
 ### Notes
 
-- This issue focuses on **making combat actually visible and tangible in play**, rather than adding new combat rules.
-- Treat this branch as the presentation baseline for later `Combat Validation`, `AI Combat Loop`, and `CounterAction` work.
+- This issue focuses on **connecting feedback structure so that combat results and action timing become tangible in play**, rather than adding new combat rules.
+
+- Treat this branch as the feedback baseline for later validation and action-structure expansion work.
 
 
 ---

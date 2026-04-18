@@ -41,7 +41,7 @@
 
 ## **M1 – 캐릭터 & 전투 코어 (v0.1)**
 
-**기간:** Week 1 (2025.12.01 ~ 12.07)
+**기간:** Month 1 (~ 2025.12.31)
 
 ### **내용**
 
@@ -71,7 +71,7 @@
 
 ## **M2 – 히트/데미지/더미 적/타게팅 (v0.2)**
 
-**기간:** Week 2 (2025.12.08 ~ 12.14)
+**기간:** Month 2 (~ 2026.01.31)
 
 ### **내용**
 
@@ -106,7 +106,7 @@
 
 ## **M3 – Enemy AI & 고급 전투 (v0.3)**
 
-**기간:** Week 3 (2025.12.15 ~ 12.21)
+**기간:** Month 3 (~ 2026.02.28)
 
 ### **내용**
 
@@ -152,7 +152,7 @@
 
 ## **M4 – VFX & UI (v0.4)**
 
-**기간:** Week 4 (2025.12.22 ~ 12.28)
+**기간:** Month 4 (~ 2026.03.31)
 
 ### **내용**
 
@@ -188,9 +188,39 @@
 
 ---
 
-## **M5 – Polish & 문서화 (v0.5)**
+## **M5 – Combat Orchestration Structure (v0.5)**
 
-**기간:** Week 5 (2025.12.29 ~ 12.31)
+**기간:** Month 5 (~ 2026.04.30)
+
+### **내용**
+
+- [ ] Player 입력에서 Action 실행까지의 흐름을 Orchestrator 중심으로 정리
+    
+- [ ] 상태 전이 확정과 Action 실행 순서 분리
+    
+- [ ] `ActionComponent` / `CAction` 책임 재정의
+    
+- [ ] Action 실행 실패 시 rollback 흐름 정리
+    
+- [ ] 이후 AI / Reaction / Guard / Parry 확장을 고려한 실행 구조 기반 마련
+    
+
+### **완료 기준**
+
+- [ ] Player action 실행 흐름이 `입력 -> Orchestrator -> 상태 전이 -> Action 실행` 구조로 설명 가능
+    
+- [ ] `CAction`이 상태 변경 책임을 직접 갖지 않도록 정리
+    
+- [ ] 기존 ComboAttack / LightAttack 동작 유지
+    
+
+**Git 태그:** `v0.5-combat-orchestration`
+
+---
+
+## **M6 – Polish & 문서화 (v0.6)**
+
+**기간:** 이후 정리 단계
 
 ### **내용**
 
@@ -206,7 +236,7 @@
 - [ ] GitHub Repo + 영상 + 문서만으로 포트폴리오 설명 가능
     
 
-**Git 태그:** `v0.5-polish-and-docs`
+**Git 태그:** `v0.6-polish-and-docs`
 
 ---
 
@@ -219,6 +249,7 @@
 |**M2**|`v0.2-hit-damage-targeting`|히트/데미지/더미 적/타게팅|W2||
 |**M3**|`v0.3-enemy-ai-and-advanced-combat`|적 AI & 고급 전투 (가드/패링/회피)|W3||
 |**M4**|`v0.4-vfx-and-ui`|VFX/UI/데모|W4~W5||
-|**M5**|`v0.5-polish-and-docs`|문서화 & 마무리 작업|W5||
+|**M5**|`v0.5-combat-orchestration`|Combat Orchestration 구조 정리|W5||
+|**M6**|`v0.6-polish-and-docs`|문서화 & 마무리 작업|Final||
 
 ---

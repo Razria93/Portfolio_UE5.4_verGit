@@ -16,7 +16,7 @@
 # **1. Version Tag / Milestone Overview**
 ## **M0 – Initial Environment & Workflow Setup**
 
-**Date:** 2025.12.01 (Day 1)
+**Duration:** 2025.12.01 (Day 1)
 
 ### **Tasks**
 
@@ -40,7 +40,7 @@
 
 ## **M1 – Character & Combat Core (v0.1)**
 
-**Duration:** Week 1 (2025.12.01 ~ 12.07)
+**Duration:** Month 1 (~ 2025.12.31)
 
 ### **Tasks**
 
@@ -70,7 +70,7 @@
 
 ## **M2 – Hit, Damage, Dummy Enemy, Targeting (v0.2)**
 
-**Duration:** Week 2 (2025.12.08 ~ 12.14)
+**Duration:** Month 2 (~ 2026.01.31)
 
 ### **Tasks**
 
@@ -105,7 +105,7 @@
 
 ## **M3 – Enemy AI & Advanced Combat (v0.3)**
 
-**Duration:** Week 3 (2025.12.15 ~ 12.21)
+**Duration:** Month 3 (~ 2026.02.28)
 
 ### **Tasks**
 
@@ -151,7 +151,7 @@
 
 ## **M4 – VFX & UI (v0.4)**
 
-**Duration:** Week 4 (2025.12.22 ~ 12.28)
+**Duration:** Month 4 (~ 2026.03.31)
 
 ### **Tasks**
 
@@ -187,9 +187,39 @@
 
 ---
 
-## **M5 – Polish & Documentation (v0.5)**
+## **M5 – Combat Orchestration Structure (v0.5)**
 
-**Duration:** Week 5 (2025.12.29 ~ 12.31)
+**Duration:** Month 5 (~ 2026.04.30)
+
+### **Tasks**
+
+- [ ] Organize the flow from Player input to Action execution around the Orchestrator
+    
+- [ ] Separate state transition confirmation from Action execution
+    
+- [ ] Redefine responsibilities of `ActionComponent` and `CAction`
+    
+- [ ] Organize rollback flow when Action execution fails
+    
+- [ ] Prepare the execution structure for later AI / Reaction / Guard / Parry expansion
+    
+
+### **Completion Criteria**
+
+- [ ] Player action execution flow can be explained as `Input -> Orchestrator -> State Transition -> Action Execution`
+    
+- [ ] `CAction` no longer owns direct state transition responsibility
+    
+- [ ] Existing ComboAttack / LightAttack behavior remains intact
+    
+
+**Git Tag:** `v0.5-combat-orchestration`
+
+---
+
+## **M6 – Polish & Documentation (v0.6)**
+
+**Duration:** Final cleanup phase
 
 ### **Tasks**
 
@@ -205,7 +235,7 @@
 - [ ] Portfolio fully understandable from GitHub repo + video + docs
     
 
-**Git Tag:** `v0.5-polish-and-docs`
+**Git Tag:** `v0.6-polish-and-docs`
 
 ---
 
@@ -218,6 +248,8 @@
 | **M2**    | `v0.2-hit-damage-targeting`   | Hit/Damage/Enemy/Targeting                     | W2   |      |
 | **M3**    | `v0.3-ai-and-advanced-combat` | Enemy AI & Advanced Combat (Guard/Parry/Dodge) | W3   |      |
 | **M4**    | `v0.4-vfx-and-ui`             | VFX/UI/Documentation                           | W4~5 |      |
+| **M5**    | `v0.5-combat-orchestration`   | Combat Orchestration structure                 | W5   |      |
+| **M6**    | `v0.6-polish-and-docs`        | Polish & Documentation                         | Final|      |
 
 ---
 ---
