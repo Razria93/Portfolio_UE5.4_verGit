@@ -6,7 +6,7 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 
-#include "Interface/HitContextProducer.h"
+#include "Interface/HitContextProvider.h"
 
 void UCEquipment::InitializeEquipment(ACharacter* InOwnerCharacter, EEquipmentType InEquipmentType, FEquipmentData InEquipmentData, FEquipmentData InUnequipmentData)
 {

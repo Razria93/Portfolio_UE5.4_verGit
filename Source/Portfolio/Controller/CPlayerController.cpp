@@ -3,6 +3,15 @@
 
 #include "Character/Player/CPlayer.h"
 
+#include "Component/CPlayerFeedbackComponent.h"
+#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
+
+ACPlayerController::ACPlayerController()
+{
+	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
+	check(PlayerFeedbackComponent);
+}
+
 void ACPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();

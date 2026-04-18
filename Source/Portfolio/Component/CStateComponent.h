@@ -18,10 +18,12 @@ public:
 
 private:
 	/* === State === */
+	UPROPERTY(Transient)
 	EStateType CurrentStateType;
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
 
 public:

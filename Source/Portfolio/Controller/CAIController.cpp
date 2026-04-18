@@ -10,7 +10,7 @@
 #include "Character/Enemy/CEnemy.h"
 #include "AI/Patrol/CPatrolPath.h"
 
-#include "Interface/TargetContextProducer.h"
+#include "Interface/TargetContextProvider.h"
 
 #include "Type/CStateStructure.h"
 #include "Type/CAIStructure.h"
@@ -206,7 +206,10 @@ bool ACAIController::InitializeBlackBoardValue()
 			blackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
 			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
 			blackboardComp->SetValueAsFloat(CAIKey::Engage::AttackableTime, -1.f);
+			blackboardComp->SetValueAsInt(CAIKey::Engage::LastAttackIndex, INDEX_NONE);
+
 			blackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
+			blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
 
 			// --- Reaction ---
 			// Init
@@ -321,7 +324,11 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bCanAttack);
 	const bool bIsAttackingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bIsAttacking);
 	const bool bAttackableTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackableTime);
+	const bool bLastAttackIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::LastAttackIndex);
+
 	const bool bAttackIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackIndex);
+	const bool bAttackActionTypeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackActionType);
+	
 
 	// Reaction
 	const bool bHasPendingReactionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bHasPendingReaction);
@@ -392,7 +399,12 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bCanAttackKey;
 	bAllValid &= bIsAttackingKey;
 	bAllValid &= bAttackableTimeKey;
+	bAllValid &= bAttackActionTypeKey;
+	bAllValid &= bLastAttackIndexKey;
+	
 	bAllValid &= bAttackIndexKey;
+	bAllValid &= bAttackActionTypeKey;
+	
 
 	// Reaction
 	bAllValid &= bHasPendingReactionKey;
@@ -466,10 +478,10 @@ void ACAIController::UpdateTargetDataMap()
 
 		if (data.bHasLOS)
 		{
-			ITargetContextProducer* producer = Cast<ITargetContextProducer>(data.TargetActor);
-			if (!producer) continue;
+			ITargetContextProvider* provider = Cast<ITargetContextProvider>(data.TargetActor);
+			if (!provider) continue;
 
-			data.TargetPriority = producer->GetTargetPriority();
+			data.TargetPriority = provider->GetTargetPriority();
 			data.LastSeenTime = nowTime;
 			data.LastKnownLocation = data.TargetActor->GetActorLocation();
 		}

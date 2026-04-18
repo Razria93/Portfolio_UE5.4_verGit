@@ -8,6 +8,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 
@@ -23,12 +24,9 @@ EBTNodeResult::Type UCBTTask_StartAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-
-	if (blackboardComp->GetValueAsBool(CAIKey::Engage::bIsAttacking))
-	{
-		// Early Retrun
-		return EBTNodeResult::Succeeded;
-	}
+	// Early Return
+	const bool bIsAttacking = blackboardComp->GetValueAsBool(CAIKey::Engage::bIsAttacking);
+	if (bIsAttacking) return EBTNodeResult::Succeeded;
 
 	const bool bCanAttack = blackboardComp->GetValueAsBool(CAIKey::Engage::bCanAttack);
 	if (!bCanAttack) return EBTNodeResult::Failed;
@@ -63,6 +61,7 @@ EBTNodeResult::Type UCBTTask_StartAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 		}
 	}
 
+	// Play Attack
 	const float duration = animInstance->Montage_Play(attackMontage);
 	if (duration <= 0.f) return EBTNodeResult::Failed;
 
@@ -75,6 +74,11 @@ EBTNodeResult::Type UCBTTask_StartAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 		weaponComp->PushContextToAttachment(actionContext);
 	}
 
+	if (ACEnemy* enemy = Cast<ACEnemy>(character))
+	{
+		enemy->CacheActiveActionFeedbackKey(AttackActionType, attackIndex);
+	}
+
 	if (bStopMovementOnStart)
 	{
 		if (UCMovementComponent* movementComp = character->FindComponentByClass<UCMovementComponent>())
@@ -82,6 +86,10 @@ EBTNodeResult::Type UCBTTask_StartAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 			movementComp->SetStop();
 		}
 	}
+
+	blackboardComp->SetValueAsInt(CAIKey::Engage::LastAttackIndex, attackIndex);
+	blackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, attackIndex);
+	blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(AttackActionType));
 
 	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, true);
 	blackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);

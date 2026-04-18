@@ -3,15 +3,15 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "Type/CWeaponStructure.h"
-#include "HitContextProducer.generated.h"
+#include "HitContextProvider.generated.h"
 
 UINTERFACE(MinimalAPI)
-class UHitContextProducer : public UInterface
+class UHitContextProvider : public UInterface
 {
 	GENERATED_BODY()
 };
 
-class PORTFOLIO_API IHitContextProducer
+class PORTFOLIO_API IHitContextProvider
 {
 	GENERATED_BODY()
 

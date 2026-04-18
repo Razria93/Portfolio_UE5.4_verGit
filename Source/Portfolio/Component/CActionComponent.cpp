@@ -42,16 +42,15 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-UObject* UCActionComponent::GetAction(EActionType InNewActionType)
+UCAction* UCActionComponent::GetCurAction() const
 {
-	UCAction** actionPtr = ActionContainer.Find(InNewActionType);
+	auto curActionPtr = ActionContainer.Find(CurrentActionType_Cached);
+	if (!curActionPtr) return nullptr;
 
-	if (!actionPtr) return nullptr;
+	UCAction* curAction = *curActionPtr;
+	if (!IsValid(curAction)) return nullptr;
 
-	UCAction* action = *actionPtr;
-	if (!IsValid(action)) return nullptr;
-
-	return action;
+	return curAction;
 }
 
 void UCActionComponent::SetIdleMode()
@@ -74,7 +73,7 @@ void UCActionComponent::ChangeActionMode(EActionType InNewActionType)
 	UCAction* action = *actionPtr;
 	if (action == nullptr) return;
 
-	action->PlayAction();
+	if(!action->PlayAction()) return;
 
 	ChangeActionType(InNewActionType);
 }

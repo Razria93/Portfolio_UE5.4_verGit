@@ -17,11 +17,12 @@ public:
 
 	// === ReactionData ===================================== //
 private:
-	UPROPERTY(EditAnywhere)
-	TArray<FReactionData> ReactionDatas;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Reaction|Excutor")
 	TArray<TSubclassOf<class UCReaction>> ReactionClasses;
+
+	UPROPERTY(EditAnywhere, Category = "Reaction|Data")
+	TArray<FReactionData> ReactionDatas;
 
 	// ====================================================== //
 
@@ -80,7 +81,7 @@ public:
 
 public:
 	// Pending API
-	bool TryRequestPendingDamageReaction(const FTakeDamageResult& InTakeDamageResult);
+	bool TryRequestPendingDamageReaction(const FTakeDamagePacket& InTakeDamagePacket);
 	bool TryConsumePendingReaction(FReactionContext& OutReactionContext);
 	bool TryExecuteReaction(const FReactionContext& InReactionContext);
 	void FinishReaction();

@@ -5,9 +5,12 @@
 #include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
 
 #include "Type/CStateStructure.h"
+#include "Type/CWeaponStructure.h"
 #include "Type/CHealthStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
 
@@ -99,6 +102,7 @@ bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackb
 	return true;
 }
 
+// [NOTE] Safety-net cleanup for unexpected State exit.
 void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* InBlackboardComp, EAIStateType InCurrentAIStateType, EAIStateType InNextAIStateType)
 {
 	if (!IsValid(InBlackboardComp)) return;
@@ -108,8 +112,12 @@ void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* In
 	{
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
+
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
+		InBlackboardComp->SetValueAsInt(CAIKey::Engage::LastAttackIndex, INDEX_NONE);
+		
 		InBlackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
+		InBlackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
 
 		if (InNextAIStateType == EAIStateType::Dead || InNextAIStateType == EAIStateType::Idle)
 		{
@@ -117,10 +125,24 @@ void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* In
 		}
 
 		if (AAIController* aIController = Cast<AAIController>(InBlackboardComp->GetOwner()))
+		{
 			if (APawn* pawn = aIController->GetPawn())
+			{
+				if (UCWeaponComponent* weaponComp = pawn->FindComponentByClass<UCWeaponComponent>())
+				{
+					weaponComp->ClearContextToAttachment();
+				}
+
+				if (ACEnemy* enemy = Cast<ACEnemy>(pawn))
+				{
+					enemy->ClearActiveActionFeedbackKey();
+				}
+
 				if (UCMovementComponent* movementComp = pawn->FindComponentByClass<UCMovementComponent>())
 				{
 					movementComp->SetMove();
 				}
+			}
+		}
 	} 
 }

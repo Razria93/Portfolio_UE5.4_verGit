@@ -24,7 +24,7 @@ void UCAction_ComboAttack::Tick(float InDeltaTime)
 	Super::Tick(InDeltaTime);
 }
 
-void UCAction_ComboAttack::PlayAction()
+bool UCAction_ComboAttack::PlayAction()
 {
 	// [Re-call] Convert 're-invoked PlayAction()' into 'buffered pre-input'
 	if (bEnablePreInput)
@@ -33,28 +33,30 @@ void UCAction_ComboAttack::PlayAction()
 		bExistPreInput = true;	 // Mark pre-input for next combo step
 
 		FLog::Log(TEXT("[ComboAttack|PlayAction] Buffered PreInput"));
-		return;
+		return true;
 	}
 
 	// [First-call] Validate execution conditions & Execute first combo action
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return;
-	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return;
-	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return;
-	if (ActionDatas_Injected.Num() <= 0) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return false;
+	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return false;
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return false;
+	if (ActionDatas_Injected.Num() <= 0) return false;
 
-	Super::PlayAction();		// bIsAction = true
+	if (!Super::PlayAction()) return false;
 
-	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
+	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return false;
+
 	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
+	return true;
 }
 
 void UCAction_ComboAttack::BeginPlayAction()
 {
 	Super::BeginPlayAction();	// bBeginAction = true
 
-	FActionContext actionContext;
-	actionContext.CurrentActionType = ActionType;
-	actionContext.ActionIndex = ActionIndex;
+	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	FActionContext actionContext = BuildActionContext();
 
 	PushContextToAttachment(actionContext);
 }
@@ -112,4 +114,26 @@ void UCAction_ComboAttack::NextPlayAction()
 	{
 		FLog::Log(TEXT("[ComboAttack|NextPlayAction] No Buffered PreInput"));
 	}
+}
+
+FActionContext UCAction_ComboAttack::BuildActionContext() const
+{
+	FActionContext actionContext;
+
+	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionIndex = ActionIndex;
+
+	return actionContext;
+}
+
+FActionFeedbackRequest UCAction_ComboAttack::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+{
+	FActionFeedbackRequest actionFeedbackRequest;
+
+	actionFeedbackRequest.ActionFeedbackKey.ActionType = ActionType;
+	actionFeedbackRequest.ActionFeedbackKey.ActionIndex = ActionIndex;
+	actionFeedbackRequest.ActionFeedbackTiming = InTiming;
+	actionFeedbackRequest.TriggerKey = InTriggerKey;
+
+	return actionFeedbackRequest;
 }

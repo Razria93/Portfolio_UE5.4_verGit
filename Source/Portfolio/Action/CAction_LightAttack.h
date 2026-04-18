@@ -13,7 +13,7 @@ public:
 	void Tick(float InDeltaTime) override;
 
 public:
-	void PlayAction() override;
+	bool PlayAction() override;
 	void BeginPlayAction() override;
 	void EndPlayAction() override;
 };

@@ -14,6 +14,10 @@
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CActionFeedbackComponent.h"
+#include "Component/CReactionFeedbackComponent.h"
+
+#include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
@@ -87,6 +91,14 @@ ACPlayer::ACPlayer()
 	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
+
+	// Init ActionFeedbackComp
+	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
+	check(ActionFeedbackComponent);
+
+	// Init ReactionFeedbackComp
+	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
+	check(ReactionFeedbackComponent);
 }
 
 void ACPlayer::BeginPlay()
@@ -145,6 +157,19 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;
+}
+
+bool ACPlayer::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const
+{
+	if (!IsValid(ActionComponent)) return false;
+
+	UCAction* curAction = ActionComponent->GetCurAction();
+	if (!IsValid(curAction)) return false;
+
+	// Export
+	OutActionFeedbackRequest = curAction->BuildActionFeedbackRequest(InActionFeedbackTiming, InTriggerKey);
+
+	return true;
 }
 
 void ACPlayer::HandleMoveForward(const float InAxisValue)

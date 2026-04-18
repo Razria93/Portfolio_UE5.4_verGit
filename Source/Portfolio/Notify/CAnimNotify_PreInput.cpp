@@ -20,20 +20,23 @@ void UCAnimNotify_PreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!actionComp) return;
 
-	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(actionComp->GetAction(actionComp->GetCurActionType()));
+	UCAction* curAction = actionComp->GetCurAction();
+	if (!curAction) return;
+
+	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(curAction);
 	if (!action_ComboAttack) return;
 
 	switch (FlowType)
 	{
 	case EAnimNotifyFlow::Begin:
 	{
-		FLog::Log(TEXT("[AnimNotify|PreInput] Begin"));
+		// FLog::Log(TEXT("[AnimNotify|PreInput] Begin"));
 		action_ComboAttack->OnEnablePreInput();
 		break;
 	}
 	case EAnimNotifyFlow::End:
 	{
-		FLog::Log(TEXT("[AnimNotify|PreInput] End"));
+		// FLog::Log(TEXT("[AnimNotify|PreInput] End"));
 		action_ComboAttack->OffEnablePreInput();
 		break;
 	}

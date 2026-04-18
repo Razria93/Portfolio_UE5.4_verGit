@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Interface/HitContextProducer.h"
+#include "Interface/HitContextProvider.h"
 #include "Type/CWeaponStructure.h"
 #include "CAttachment.generated.h"
 
@@ -13,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_EightParams(FAttachmentBeginOverlap, AActor*,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAttachmentEndOverlap, AActor*, InAttackerActor, AActor*, InTargetActor);
 
 UCLASS()
-class PORTFOLIO_API ACAttachment : public AActor, public IHitContextProducer
+class PORTFOLIO_API ACAttachment : public AActor, public IHitContextProvider
 {
 	GENERATED_BODY()
 
@@ -22,16 +22,23 @@ public:
 
 public:
 	/* === Editor Settings === */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Attach|SocketName")
 	FName SocketName_Holster;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Attach|SocketName")
 	FName SocketName_Hand;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Feedback|Trail")
+	bool bDisableTrailOnBeginPlay = true;
 
 protected:
 	/* === Components === */
 	UPROPERTY(VisibleAnywhere)
-	class USceneComponent* Root;
+	class USceneComponent* RootSceneComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class UNiagaraComponent* TrailComponent = nullptr;
 
 private:
 	UPROPERTY(Transient)
@@ -104,6 +111,7 @@ public:
 public:
 	/* === Setter === */
 	void SetAttachmentType(EAttachmentType InAttachmentType);
+	void SetTrailActive(bool bEnable);
 
 public:
 	void AttachToOwnerSocket(FName InSocketName);
@@ -143,4 +151,7 @@ private:
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& Context);
 	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+
+private:
+	void PrintTrailInfo(bool bEnable) const;
 };

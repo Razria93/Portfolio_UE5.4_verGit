@@ -2,15 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "TargetContextProducer.generated.h"
+#include "TargetContextProvider.generated.h"
 
 UINTERFACE(MinimalAPI)
-class UTargetContextProducer : public UInterface
+class UTargetContextProvider : public UInterface
 {
 	GENERATED_BODY()
 };
 
-class PORTFOLIO_API ITargetContextProducer
+class PORTFOLIO_API ITargetContextProvider
 {
 	GENERATED_BODY()
 

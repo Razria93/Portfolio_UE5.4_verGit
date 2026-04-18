@@ -49,11 +49,15 @@ private:
 
 private:
 	/* === State === */
+	UPROPERTY(Transient)
 	EAttachmentType CurrentAttachmentType_Cached;
+	
+	UPROPERTY(Transient)
 	EEquipmentType CurrentEquipmentType_Cached;
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
 
 public:

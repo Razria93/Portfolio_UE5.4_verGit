@@ -9,6 +9,13 @@ class PORTFOLIO_API ACPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	ACPlayerController();
+
+private:
+	UPROPERTY(VisibleAnywhere)
+	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
+
 protected:
 	virtual void SetupInputComponent() override;
 

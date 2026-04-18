@@ -2,11 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Interface/TargetContextProducer.h"
+#include "Interface/TargetContextProvider.h"
+#include "Interface/ActionFeedbackRequestProvider.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProducer
+class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider, public IActionFeedbackRequestProvider
 {
 	GENERATED_BODY()
 
@@ -48,6 +49,12 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCReactionComponent* ReactionComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCActionFeedbackComponent* ActionFeedbackComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -73,7 +80,11 @@ public:
 
 public:
 	// Interface API
-	virtual int GetTargetPriority() const override { return Priority; }
+	int GetTargetPriority() const override { return Priority; }
+
+public:
+	// Interface API
+	bool BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const override;
 
 public:
 	void HandleMoveForward(const float InAxisValue);

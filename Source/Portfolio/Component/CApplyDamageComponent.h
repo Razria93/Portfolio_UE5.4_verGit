@@ -23,6 +23,7 @@ private:
 
 private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
 
 protected:

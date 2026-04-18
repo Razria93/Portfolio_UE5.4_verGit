@@ -2,6 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+
 #include "Weapon/CAttachment.h"
 #include "Weapon/CEquipment.h"
 
@@ -64,29 +65,30 @@ void UCWeaponComponent::PushContextToAttachment(const FActionContext& InActionCo
 {
 	if (!IsValid(Attachment) || !IsValid(Equipment)) return;
 
-	IHitContextProducer* producer = Cast<IHitContextProducer>(Attachment);
-	if (!producer) return;
+	IHitContextProvider* provider = Cast<IHitContextProvider>(Attachment);
+	if (!provider) return;
 
 	// 1) Build contexts from current state
 	const FAttachmentContext attachmentContext = BuildAttachmentContext();
 	const FEquipmentContext  equipmentContext = BuildEquipmentContext();
 
 	// 2) Push/Cache into the carrier
-	producer->SetLastAttachmentContext(attachmentContext);
-	producer->SetLastEquipmentContext(equipmentContext);
-	producer->SetLastActionContext(InActionContext);
+	provider->SetLastAttachmentContext(attachmentContext);
+	provider->SetLastEquipmentContext(equipmentContext);
+	provider->SetLastActionContext(InActionContext);
 }
 
 void UCWeaponComponent::ClearContextToAttachment()
 {
 	if (!IsValid(Attachment) || !IsValid(Equipment)) return;
 
-	IHitContextProducer* producer = Cast<IHitContextProducer>(Attachment);
-	if (!producer) return;
+	IHitContextProvider* provider = Cast<IHitContextProvider>(Attachment);
+	if (!provider) return;
 
-	producer->SetLastOverlapContext(FOverlapContext());
-	producer->SetLastAttachmentContext(FAttachmentContext());
-	producer->SetLastEquipmentContext(FEquipmentContext());
+	provider->SetLastOverlapContext(FOverlapContext());
+	provider->SetLastAttachmentContext(FAttachmentContext());
+	provider->SetLastEquipmentContext(FEquipmentContext());
+	provider->SetLastActionContext(FActionContext());
 }
 
 bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass)

@@ -4,10 +4,11 @@
 #include "GameFramework/Character.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CAIStructure.h"
+#include "Interface/ActionFeedbackRequestProvider.h"
 #include "CEnemy.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACEnemy : public ACharacter
+class PORTFOLIO_API ACEnemy : public ACharacter, public IActionFeedbackRequestProvider
 {
 	GENERATED_BODY()
 
@@ -68,6 +69,13 @@ private:
 	float AttackCooldown;
 
 private:
+	UPROPERTY(Transient)
+	FActionFeedbackKey ActiveActionFeedbackKey = FActionFeedbackKey();
+
+	UPROPERTY(Transient)
+	bool bHasActiveActionFeedbackKey = false;
+
+private:
 	UPROPERTY(VisibleAnywhere)
 	class UCMovementComponent* MovementComponent;
 
@@ -88,6 +96,12 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class UCReactionComponent* ReactionComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCActionFeedbackComponent* ActionFeedbackComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 protected:
 	virtual void BeginPlay() override;
@@ -131,6 +145,14 @@ public:
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
+
+public:
+	// Interface API
+	bool BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const override;
+
+public:
+	void CacheActiveActionFeedbackKey(EActionType InActionType, int32 InActionIndex);
+	void ClearActiveActionFeedbackKey();
 
 public:
 	bool TryStartKill();

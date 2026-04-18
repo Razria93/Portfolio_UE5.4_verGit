@@ -22,15 +22,13 @@ void UCAnimNotify_Action::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!actionComp) return;
 
-	UObject* uobject = actionComp->GetAction(actionComp->GetCurActionType());
-	if (!uobject) return;
-
-	UCAction* action = Cast<UCAction>(uobject);
+	UCAction* curAction = actionComp->GetCurAction();
+	if (!curAction) return;
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin: action->BeginPlayAction(); return;
-	case EAnimNotifyFlow::End: action->EndPlayAction(); return;
-	case EAnimNotifyFlow::Next: action->NextPlayAction(); return;
+	case EAnimNotifyFlow::Begin: curAction->BeginPlayAction(); return;
+	case EAnimNotifyFlow::End: curAction->EndPlayAction(); return;
+	case EAnimNotifyFlow::Next: curAction->NextPlayAction(); return;
 	}
 }
