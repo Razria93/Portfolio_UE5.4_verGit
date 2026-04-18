@@ -16,7 +16,7 @@ EBTNodeResult::Type UCBTTask_SelectAttackIndex::ExecuteTask(UBehaviorTreeCompone
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 	if (AttackCount <= 0) return EBTNodeResult::Failed;
 
-	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Engage::AttackIndex);
+	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Engage::LastAttackIndex);
 
 	int32 nextIndex = INDEX_NONE;
 

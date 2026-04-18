@@ -5,8 +5,6 @@
 #include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "Component/CMovementComponent.h"
-
 #include "AI/BlackBoard/CAIKey.h"
 
 UCAnimNotify_EndEnemyAttack::UCAnimNotify_EndEnemyAttack()
@@ -33,11 +31,7 @@ void UCAnimNotify_EndEnemyAttack::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	if (IsValid(blackboardComp))
 	{
 		blackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
-	}
-	
-	UCMovementComponent* movementComp = pawn->FindComponentByClass<UCMovementComponent>();
-	if (IsValid(movementComp))
-	{
-		movementComp->SetMove();
+
+		FLog::Log(TEXT("[EndEnemyAttack_Notify] End Enemy Attack"));
 	}
 }
