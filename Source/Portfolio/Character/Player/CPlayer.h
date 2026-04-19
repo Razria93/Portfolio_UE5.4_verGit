@@ -25,37 +25,37 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* CameraComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
 	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	class UCMovementComponent* MovementComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	class UCWeaponComponent* WeaponComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "State")
 	class UCStateComponent* StateComponent;
 
-	UPROPERTY(VisibleAnywhere)
-	class UCActionComponent* ActionComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	class UCApplyDamageComponent* ApplyDamageComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	class UCTakeDamageComponent* TakeDamageComponent;
-
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Resource")
 	class UCHealthComponent* HealthComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
+	class UCApplyDamageComponent* ApplyDamageComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
+	class UCTakeDamageComponent* TakeDamageComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Execution")
+	class UCActionComponent* ActionComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Execution")
 	class UCReactionComponent* ReactionComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 protected:
@@ -70,14 +70,17 @@ public:
 
 public:
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
+	
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
-	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
+	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
 	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
-	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
+	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
+	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
+	FORCEINLINE UCReactionFeedbackComponent* GetReactionFeedbackComp() const { return ReactionFeedbackComponent; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
@@ -87,26 +90,27 @@ public:
 	int GetTargetPriority() const override { return Priority; }
 
 public:
-	// Interface API
+	// Interface API [Notify -> ActionFeedbackComp]
 	bool BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const override;
+
+public:
+	void HandleJump();
+	void HandleStopJump();
 
 public:
 	void HandleMoveForward(const float InAxisValue);
 	void HandleMoveRight(const float InAxisValue);
 
+	// [MovementComp] Handle Switch Movement Speed
 	void HandleWalk();
 	void HandleRun();
 
-	void HandleJump();
-	void HandleStopJump();
-
-	void HandleComboAction();
-
+	// [WeaponComp] Handle Switch Equipment
 	void HandleSword();
+
+	// [ActionComp] Handle Play Action
+	void HandleComboAction();
 
 private:
 	void ConsumePendingReaction();
-
-private:
-	bool CanActionInput() const;
 };

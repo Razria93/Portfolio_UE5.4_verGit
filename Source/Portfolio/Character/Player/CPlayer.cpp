@@ -7,13 +7,14 @@
 #include "Camera/CameraComponent.h"
 
 #include "Component/CActionOrchestratorComponent.h"
+
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
-#include "Component/CActionComponent.h"
+#include "Component/CHealthComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
-#include "Component/CHealthComponent.h"
+#include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
@@ -78,9 +79,9 @@ ACPlayer::ACPlayer()
 	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
 	check(StateComponent);
 
-	// Init UCACtionComp
-	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
-	check(ActionComponent);
+	// Init HealthComp
+	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
+	check(HealthComponent);
 
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
@@ -90,9 +91,9 @@ ACPlayer::ACPlayer()
 	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
 	check(TakeDamageComponent);
 
-	// Init HealthComp
-	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
-	check(HealthComponent);
+	// Init UCACtionComp
+	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
+	check(ActionComponent);
 
 	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
@@ -178,6 +179,30 @@ bool ACPlayer::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedback
 	return true;
 }
 
+void ACPlayer::HandleJump()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return;
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Jump;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+void ACPlayer::HandleStopJump()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return;
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::StopJump;
+	request.IntentEvent = EActionIntentEvent::Completed;
+
+	ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
 void ACPlayer::HandleMoveForward(const float InAxisValue)
 {
 	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
@@ -218,28 +243,16 @@ void ACPlayer::HandleRun()
 	ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleJump()
+void ACPlayer::HandleSword()
 {
 	if (!IsValid(ActionOrchestratorComponent)) return;
 
-	FMovementActionRequest request;
+	FEquipmentActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
-	request.IntentType = EMovementActionIntent::Jump;
+	request.IntentType = EEquipmentActionIntent::Toggle;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	ActionOrchestratorComponent->RequestMovementAction(request);
-}
-
-void ACPlayer::HandleStopJump()
-{
-	if (!IsValid(ActionOrchestratorComponent)) return;
-
-	FMovementActionRequest request;
-	request.IntentSource = EActionIntentSource::PlayerInput;
-	request.IntentType = EMovementActionIntent::StopJump;
-	request.IntentEvent = EActionIntentEvent::Completed;
-
-	ActionOrchestratorComponent->RequestMovementAction(request);
+	ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
 void ACPlayer::HandleComboAction()
@@ -252,18 +265,6 @@ void ACPlayer::HandleComboAction()
 	request.IntentEvent = EActionIntentEvent::Started;
 
 	ActionOrchestratorComponent->RequestCombatAction(request);
-}
-
-void ACPlayer::HandleSword()
-{
-	if (!IsValid(ActionOrchestratorComponent)) return;
-
-	FEquipmentActionRequest request;
-	request.IntentSource = EActionIntentSource::PlayerInput;
-	request.IntentType = EEquipmentActionIntent::Toggle;
-	request.IntentEvent = EActionIntentEvent::Started;
-
-	ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
 void ACPlayer::ConsumePendingReaction()
@@ -287,18 +288,4 @@ void ACPlayer::ConsumePendingReaction()
 		FLog::Log(TEXT("[Player|ConsumePendingReaction] Rejected Execute Reaction"));
 		return;
 	}
-}
-
-bool ACPlayer::CanActionInput() const
-{
-	if (!IsValid(HealthComponent)) return false;
-	if (!IsValid(StateComponent)) return true;
-
-	if (!HealthComponent->IsAlive()) return false;
-
-	const EStateType stateType = StateComponent->GetCurStateType();
-	if (stateType == EStateType::Reaction) return false;
-	if (stateType == EStateType::Dead) return false;
-
-	return true;
 }

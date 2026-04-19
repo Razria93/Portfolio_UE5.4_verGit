@@ -22,12 +22,12 @@ void UCActionOrchestratorComponent::BeginPlay()
 
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
-
-	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass()));
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
-	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Cached->GetComponentByClass(UCStateComponent::StaticClass()));
-	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Cached->GetComponentByClass(UCActionComponent::StaticClass()));
-	HealthComp_Cached = Cast<UCHealthComponent>(OwnerCharacter_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
+	
+	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
+	WeaponComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
+	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
+	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
+	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 }
 
 void UCActionOrchestratorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
