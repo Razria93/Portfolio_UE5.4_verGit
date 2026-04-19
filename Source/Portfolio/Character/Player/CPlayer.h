@@ -26,6 +26,9 @@ private:
 	class UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCMovementComponent* MovementComponent;
 
 	UPROPERTY(VisibleAnywhere)
@@ -66,6 +69,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }

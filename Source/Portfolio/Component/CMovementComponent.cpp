@@ -74,6 +74,20 @@ void UCMovementComponent::OnSprint()
 	SetSpeedType(ESpeedType::Sprint);
 }
 
+void UCMovementComponent::OnJump()
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	OwnerCharacter_Cached->Jump();
+}
+
+void UCMovementComponent::OnStopJump()
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	OwnerCharacter_Cached->StopJumping();
+}
+
 void UCMovementComponent::SetSpeedType(ESpeedType InType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;

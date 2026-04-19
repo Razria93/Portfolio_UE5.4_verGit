@@ -150,7 +150,7 @@ enum class EActionRequestRejectReason : uint8
 
 	InvalidOwner,
 	InvalidRequest,
-	MissingComponent,
+	InvalidComponent,
 
 	Dead,
 	InReaction,

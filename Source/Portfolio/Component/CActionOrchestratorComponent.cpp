@@ -1,6 +1,14 @@
 #include "Component/CActionOrchestratorComponent.h"
 #include "ProjectGlobal.h"
 
+#include "GameFramework/Character.h"
+
+#include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
+#include "Component/CStateComponent.h"
+#include "Component/CActionComponent.h"
+#include "Component/CHealthComponent.h"
+
 #include "Type/CActionOrchestrationStructure.h"
 
 UCActionOrchestratorComponent::UCActionOrchestratorComponent()
@@ -11,6 +19,15 @@ UCActionOrchestratorComponent::UCActionOrchestratorComponent()
 void UCActionOrchestratorComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
+	check(OwnerCharacter_Cached);
+
+	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass()));
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
+	StateComp_Cached = Cast<UCStateComponent>(OwnerCharacter_Cached->GetComponentByClass(UCStateComponent::StaticClass()));
+	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Cached->GetComponentByClass(UCActionComponent::StaticClass()));
+	HealthComp_Cached = Cast<UCHealthComponent>(OwnerCharacter_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
 }
 
 void UCActionOrchestratorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -20,16 +37,162 @@ void UCActionOrchestratorComponent::TickComponent(float DeltaTime, ELevelTick Ti
 
 FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InRequest)
 {
-	return FActionRequestResult();
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached))
+		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
+
+	switch (InRequest.IntentType)
+	{
+	case EMovementActionIntent::StopJump:
+		MovementComp_Cached->OnStopJump();
+		return BuildExecutedResult();
+
+	default:
+		break;
+	}
+
+	// Out Parameter
+	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
+	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
+
+	// TODO
+	switch (InRequest.IntentType)
+	{
+	case EMovementActionIntent::Walk:
+		MovementComp_Cached->OnWalk();
+		return BuildExecutedResult();
+
+	case EMovementActionIntent::Run:
+		MovementComp_Cached->OnRun();
+		return BuildExecutedResult();
+
+	case EMovementActionIntent::Jump:
+		MovementComp_Cached->OnJump();
+		return BuildExecutedResult();
+
+	default:
+		return BuildIgnoredResult();
+	}
 }
 
 FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const FEquipmentActionRequest& InRequest)
 {
-	return FActionRequestResult();
+	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
+	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
+
+	if (!IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached))
+		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
+
+	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle))
+		return BuildRejectedResult(EActionRequestRejectReason::InvalidState);
+
+	// TODO
+	switch (InRequest.IntentType)
+	{
+	case EEquipmentActionIntent::Toggle:
+		if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed))
+		{
+			WeaponComp_Cached->SetSwordMode();
+			return BuildExecutedResult();
+		}
+
+		if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Sword))
+		{
+			WeaponComp_Cached->SetUnarmedMode();
+			return BuildExecutedResult();
+		}
+
+		return BuildRejectedResult(EActionRequestRejectReason::InvalidEquipment);
+
+	default:
+		return BuildIgnoredResult();
+	}
 }
 
 FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InRequest)
 {
-	return FActionRequestResult();
+	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
+	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
+
+	if (!IsValid(ActionComp_Cached))
+		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
+
+	// TODO
+	switch (InRequest.IntentType)
+	{
+	case ECombatActionIntent::ComboAttack:
+		ActionComp_Cached->SetComboAttackMode();
+		return BuildExecutedResult(EActionType::ComboAttack);
+
+	default:
+		return BuildIgnoredResult();
+	}
+}
+
+bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
+{
+	OutRejectReason = EActionRequestRejectReason::None;
+
+	if (!IsValid(OwnerCharacter_Cached))
+	{
+		OutRejectReason = EActionRequestRejectReason::InvalidOwner;
+		return false;
+	}
+
+	if (!IsValid(HealthComp_Cached) || !IsValid(StateComp_Cached))
+	{
+		OutRejectReason = EActionRequestRejectReason::InvalidComponent;
+		return false;
+	}
+
+	if (!HealthComp_Cached->IsAlive())
+	{
+		OutRejectReason = EActionRequestRejectReason::Dead;
+		return false;
+	}
+
+	const EStateType stateType = StateComp_Cached->GetCurStateType();
+
+	if (stateType == EStateType::Reaction)
+	{
+		OutRejectReason = EActionRequestRejectReason::InReaction;
+		return false;
+	}
+
+	if (stateType == EStateType::Dead)
+	{
+		OutRejectReason = EActionRequestRejectReason::Dead;
+		return false;
+	}
+
+	return true;
+}
+
+FActionRequestResult UCActionOrchestratorComponent::BuildExecutedResult(EActionType InExecutedActionType) const
+{
+	FActionRequestResult result;
+
+	result.ResultType = EActionRequestResultType::Executed;
+	result.ExecutedActionType = InExecutedActionType; // Execute Factor
+	
+	return result;
+}
+
+FActionRequestResult UCActionOrchestratorComponent::BuildRejectedResult(EActionRequestRejectReason InRejectReason) const
+{
+	FActionRequestResult result;
+
+	result.ResultType = EActionRequestResultType::Rejected;
+	result.RejectReason = InRejectReason; // Reject Factor
+	
+	return result;
+}
+
+FActionRequestResult UCActionOrchestratorComponent::BuildIgnoredResult() const
+{
+	FActionRequestResult result;
+
+	result.ResultType = EActionRequestResultType::Ignored;
+	
+	return result;
 }
 
