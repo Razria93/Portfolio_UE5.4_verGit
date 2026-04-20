@@ -47,7 +47,7 @@ void UCEquipment::Equip()
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
-	StateComp_Cached->SetEquipState();
+	StateComp_Cached->SetActionState();
 
 	if (EquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetStop();
@@ -64,7 +64,7 @@ void UCEquipment::Unequip()
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Cached) || !IsValid(StateComp_Cached))
 		return;
 
-	StateComp_Cached->SetUnequipState();
+	StateComp_Cached->SetActionState();
 
 	if (UnquipmentData_Injected.bCanMove == false)
 		MovementComp_Cached->SetStop();

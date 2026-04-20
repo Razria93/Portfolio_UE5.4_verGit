@@ -10,7 +10,7 @@ UCStateComponent::UCStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	CurrentStateType = EStateType::Idle;
+	CurrentExecutionState = EExecutionState::Idle;
 }
 
 void UCStateComponent::BeginPlay()
@@ -21,11 +21,7 @@ void UCStateComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 }
 
-void UCStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
+// Sync Health 'dead-state' changes into the 'execution state'.
 void UCStateComponent::OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
@@ -33,17 +29,27 @@ void UCStateComponent::OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState
 	switch (InNewDeadState)
 	{
 	case EDeadState::Alive:
-		if (CheckCurStateType(EStateType::Dead))
+	{
+		if (CheckCurExecutionState(EExecutionState::Dead))
 		{
+			// [Health: Alive] [Execution: Dead] -> restore Idle
 			SetIdleState();
+			break;
 		}
-		break;
 
+		// [Health: Alive] [Execution: Non-Dead] -> keep current execution
+		break;
+	}
+
+	// Dying / Dead / Reviving : Non-Alive
 	case EDeadState::Dying:
 	case EDeadState::Dead:
 	case EDeadState::Reviving:
+	{
+		// [Health: Non-Alive] [Execution: Any] -> force Dead
 		SetDeadState();
 		break;
+	}
 
 	default:
 		break;
@@ -54,66 +60,51 @@ void UCStateComponent::SetIdleState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateType(EStateType::Idle);
-}
-
-void UCStateComponent::SetEquipState()
-{
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	ChangeStateType(EStateType::Equip);
-}
-
-void UCStateComponent::SetUnequipState()
-{
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	ChangeStateType(EStateType::Unequip);
+	ChangeExecutionState(EExecutionState::Idle);
 }
 
 void UCStateComponent::SetActionState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateType(EStateType::Action);
+	ChangeExecutionState(EExecutionState::Action);
 }
 
 void UCStateComponent::SetReactionState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateType(EStateType::Reaction);
+	ChangeExecutionState(EExecutionState::Reaction);
 }
 
 void UCStateComponent::SetDeadState()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ChangeStateType(EStateType::Dead);
+	ChangeExecutionState(EExecutionState::Dead);
 }
 
-void UCStateComponent::ChangeStateType(EStateType InNewStateType)
+void UCStateComponent::ChangeExecutionState(EExecutionState InNewExecutionState)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (CurrentStateType == InNewStateType) return;
+	if (CurrentExecutionState == InNewExecutionState) return;
 
-	EStateType prevStateType = CurrentStateType;
-	CurrentStateType = InNewStateType;
+	EExecutionState prevExecutionState = CurrentExecutionState;
+	CurrentExecutionState = InNewExecutionState;
 
-	PrintStateChangedInfo(prevStateType, CurrentStateType);
+	PrintExecutionStateChangedInfo(prevExecutionState, CurrentExecutionState);
 
-	if (OnStateTypeChanged.IsBound())
+	if (OnExecutionStateChanged.IsBound())
 	{
-		OnStateTypeChanged.Broadcast(OwnerCharacter_Cached, prevStateType, CurrentStateType);
+		OnExecutionStateChanged.Broadcast(OwnerCharacter_Cached, prevExecutionState, CurrentExecutionState);
 	}
 }
 
-void UCStateComponent::PrintStateChangedInfo(EStateType InPrevStateType, EStateType InNewStateType) const
+void UCStateComponent::PrintExecutionStateChangedInfo(EExecutionState InPrevExecutionState, EExecutionState InNewExecutionState) const
 {
 	FLog::Log(FString::Printf(
-		TEXT("[StateChanged] Owner = %s | PrevState = %s | NewState = %s"),
+		TEXT("[ExecutionStateChanged] Owner = %s | PrevState = %s | NewState = %s"),
 		*GetNameSafe(OwnerCharacter_Cached),
-		*UEnum::GetValueAsString(InPrevStateType),
-		*UEnum::GetValueAsString(InNewStateType)
-	));
+		*UEnum::GetValueAsString(InPrevExecutionState),
+		*UEnum::GetValueAsString(InNewExecutionState)));
 }

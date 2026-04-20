@@ -18,7 +18,7 @@ bool UCAction_LightAttack::PlayAction()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return false;
 	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return false;
-	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return false;
+	if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Idle)) return false;
 	if (!IsValid(ActionDatas_Injected[0].Montage)) return false;
 
 	if(!Super::PlayAction()) return false;		// bIsAction = true

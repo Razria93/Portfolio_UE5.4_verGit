@@ -82,7 +82,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	if (!IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached))
 		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
 
-	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle))
+	if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Idle))
 		return BuildRejectedResult(EActionRequestRejectReason::InvalidState);
 
 	// TODO
@@ -150,15 +150,15 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 		return false;
 	}
 
-	const EStateType stateType = StateComp_Cached->GetCurStateType();
+	const EExecutionState executionState = StateComp_Cached->GetCurExecutionState();
 
-	if (stateType == EStateType::Reaction)
+	if (executionState == EExecutionState::Reaction)
 	{
 		OutRejectReason = EActionRequestRejectReason::InReaction;
 		return false;
 	}
 
-	if (stateType == EStateType::Dead)
+	if (executionState == EExecutionState::Dead)
 	{
 		OutRejectReason = EActionRequestRejectReason::Dead;
 		return false;
