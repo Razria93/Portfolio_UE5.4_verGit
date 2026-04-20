@@ -7,7 +7,7 @@
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
-enum class EWeaponActorType : uint8
+enum class EWeaponType : uint8
 {
 	Unarmed = 0,
 	Sword,
@@ -197,7 +197,7 @@ struct FWeaponActorContext
 
 public:
 	UPROPERTY(EditAnywhere)
-	EWeaponActorType CurrentWeaponActorType = EWeaponActorType::Max;
+	EWeaponType CurrentWeaponType = EWeaponType::Max;
 
 public:
 	FWeaponActorContext() = default;
@@ -333,7 +333,7 @@ struct FApplyDamageSpecKey
 
 public:
 	UPROPERTY(EditAnywhere)
-	EWeaponActorType WeaponActorType = EWeaponActorType::Max;
+	EWeaponType WeaponType = EWeaponType::Max;
 
 	UPROPERTY(EditAnywhere)
 	EEquipmentType EquipmentType = EEquipmentType::Max;
@@ -351,7 +351,7 @@ public:
 	bool operator==(const FApplyDamageSpecKey& InOther) const
 	{
 		return EquipmentType == InOther.EquipmentType
-			&& WeaponActorType == InOther.WeaponActorType
+			&& WeaponType == InOther.WeaponType
 			&& ActionType == InOther.ActionType
 			&& ActionIndex == InOther.ActionIndex;
 	}
@@ -361,7 +361,7 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
 {
 	uint32 H = 0;
 
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.WeaponActorType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.WeaponType)));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.EquipmentType)));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.ActionType)));
 	H = HashCombine(H, GetTypeHash(InOther.ActionIndex));

@@ -21,8 +21,8 @@ void UCWeaponComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 
 	// CWeaponActor
-	CreateWeaponActor(OwnerCharacter_Cached, WeaponActorType, WeaponActorClass);
-	CurrentWeaponActorType_Cached = EWeaponActorType::Unarmed;
+	CreateWeaponActor(OwnerCharacter_Cached, WeaponType, WeaponActorClass);
+	CurrentWeaponType_Cached = EWeaponType::Unarmed;
 
 	// CEquipment
 	CreateEquipment(OwnerCharacter_Cached, EquipmentType, EquipmentClass, EquipmentData, UnequipmentData);
@@ -48,12 +48,12 @@ UObject* UCWeaponComponent::GetEquipment()
 
 void UCWeaponComponent::SetUnarmedMode()
 {
-	ChangeMode(EWeaponActorType::Unarmed);
+	ChangeMode(EWeaponType::Unarmed);
 }
 
 void UCWeaponComponent::SetSwordMode()
 {
-	ChangeMode(EWeaponActorType::Sword);
+	ChangeMode(EWeaponType::Sword);
 }
 
 void UCWeaponComponent::PushContextToWeaponActor(const FActionContext& InActionContext)
@@ -86,7 +86,7 @@ void UCWeaponComponent::ClearContextToWeaponActor()
 	provider->SetLastActionContext(FActionContext());
 }
 
-bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponActorType InWeaponActorType, TSubclassOf<ACWeaponActor> InWeaponActorClass)
+bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass)
 {
 	if (!IsValid(InOwnerCharacter)) return false;
 
@@ -109,7 +109,7 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponActor
 	if (!ensureMsgf(IsValid(weaponActor), TEXT("UCWeaponComponent: WeaponActor was not created")))
 		return false;
 
-	weaponActor->InitializeWeaponActor(InWeaponActorType);
+	weaponActor->InitializeWeaponActor(InWeaponType);
 
 	WeaponActor = weaponActor;
 
@@ -142,21 +142,21 @@ bool UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter, EEquipmentType
 	return true;
 }
 
-void UCWeaponComponent::ChangeMode(EWeaponActorType InNewWeaponActorType)
+void UCWeaponComponent::ChangeMode(EWeaponType InNewWeaponType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment)) return;
 
-	EWeaponActorType newWeaponActorType = InNewWeaponActorType;
+	EWeaponType newWeaponType = InNewWeaponType;
 	EEquipmentType newEquipmentType = EEquipmentType::Max;
 
-	switch (newWeaponActorType)
+	switch (newWeaponType)
 	{
-	case EWeaponActorType::Unarmed:
+	case EWeaponType::Unarmed:
 		newEquipmentType = EEquipmentType::None;
 		Equipment->Unequip();
 		break;
 
-	case EWeaponActorType::Sword:
+	case EWeaponType::Sword:
 		newEquipmentType = EEquipmentType::Default;
 		Equipment->Equip();
 		break;
@@ -165,19 +165,19 @@ void UCWeaponComponent::ChangeMode(EWeaponActorType InNewWeaponActorType)
 		newEquipmentType = EEquipmentType::Max;
 	}
 
-	ChangeWeaponActorType(newWeaponActorType);
+	ChangeWeaponType(newWeaponType);
 	ChangeEquipmentType(newEquipmentType);
 }
 
-void UCWeaponComponent::ChangeWeaponActorType(EWeaponActorType InNewWeaponActorType)
+void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	EWeaponActorType prevWeaponActorType = CurrentWeaponActorType_Cached;
-	CurrentWeaponActorType_Cached = InNewWeaponActorType;
+	EWeaponType prevWeaponType = CurrentWeaponType_Cached;
+	CurrentWeaponType_Cached = InNewWeaponType;
 
-	if (OnWeaponActorTypeChanged.IsBound())
-		OnWeaponActorTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponActorType, CurrentWeaponActorType_Cached);
+	if (OnWeaponTypeChanged.IsBound())
+		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType_Cached);
 }
 
 
@@ -193,7 +193,7 @@ void UCWeaponComponent::ChangeEquipmentType(EEquipmentType InNewEquipmentType)
 FWeaponActorContext UCWeaponComponent::BuildWeaponActorContext() const
 {
 	FWeaponActorContext weaponActorContext;
-	weaponActorContext.CurrentWeaponActorType = CurrentWeaponActorType_Cached;
+	weaponActorContext.CurrentWeaponType = CurrentWeaponType_Cached;
 
 	return weaponActorContext;
 }

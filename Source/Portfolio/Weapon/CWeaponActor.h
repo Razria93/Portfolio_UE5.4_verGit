@@ -42,7 +42,7 @@ protected:
 
 private:
 	UPROPERTY(Transient)
-	EWeaponActorType WeaponActorType;
+	EWeaponType WeaponType;
 
 public:
 	/* === Context Carrier === */
@@ -88,7 +88,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	void InitializeWeaponActor(EWeaponActorType InWeaponActorType);
+	void InitializeWeaponActor(EWeaponType InWeaponType);
 
 public:
 	/* === IHitContextProducer (Getter) === */
@@ -106,11 +106,11 @@ public:
 
 public:
 	/* === Getter === */
-	EWeaponActorType GetWeaponActorType() const;
+	EWeaponType GetWeaponType() const;
 
 public:
 	/* === Setter === */
-	void SetWeaponActorType(EWeaponActorType InWeaponActorType);
+	void SetWeaponType(EWeaponType InWeaponType);
 	void SetTrailActive(bool bEnable);
 
 public:

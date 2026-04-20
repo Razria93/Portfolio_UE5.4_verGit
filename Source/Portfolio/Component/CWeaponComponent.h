@@ -5,7 +5,7 @@
 #include "Type/CWeaponStructure.h"
 #include "CWeaponComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWeaponActorTypeChanged, class ACharacter*, InOwnerCharacter, EWeaponActorType, InPrevWeaponActorType, EWeaponActorType, InNewWeaponActorType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWeaponTypeChanged, class ACharacter*, InOwnerCharacter, EWeaponType, InPrevWeaponType, EWeaponType, InNewWeaponType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FEquipmentTypeChanged, class ACharacter*, InOwnerCharacter, EEquipmentType, InPrevEquipmentType, EEquipmentType, InNewEquipmentType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -19,7 +19,7 @@ public:
 	// === WeaponData ======================================= //
 private:
 	UPROPERTY(EditAnywhere, Category = "WeaponActor|Data")
-	EWeaponActorType WeaponActorType;
+	EWeaponType WeaponType;
 
 	UPROPERTY(EditAnywhere, Category = "Equipment|Data")
 	EEquipmentType EquipmentType;
@@ -43,7 +43,7 @@ private:
 private:
 	/* === State === */
 	UPROPERTY(Transient)
-	EWeaponActorType CurrentWeaponActorType_Cached;
+	EWeaponType CurrentWeaponType_Cached;
 
 	UPROPERTY(Transient)
 	EEquipmentType CurrentEquipmentType_Cached;
@@ -62,7 +62,7 @@ private:
 
 public:
 	/* === [Out] Custom Delgate Events === */
-	FWeaponActorTypeChanged OnWeaponActorTypeChanged;
+	FWeaponTypeChanged OnWeaponTypeChanged;
 	FEquipmentTypeChanged OnEquipmentTypeChanged;
 
 protected:
@@ -70,7 +70,7 @@ protected:
 
 public:
 	/* === Check / Query === */
-	FORCEINLINE bool CheckCurWeaponActorType(EWeaponActorType InNewWeaponActorType) const { return CurrentWeaponActorType_Cached == InNewWeaponActorType; }
+	FORCEINLINE bool CheckCurWeaponType(EWeaponType InNewWeaponType) const { return CurrentWeaponType_Cached == InNewWeaponType; }
 
 public:
 	/* === Getter === */
@@ -79,7 +79,7 @@ public:
 
 public:
 	/* === Getter === */
-	FORCEINLINE EWeaponActorType GetCurWeaponActorType() { return CurrentWeaponActorType_Cached; }
+	FORCEINLINE EWeaponType GetCurWeaponType() { return CurrentWeaponType_Cached; }
 	FORCEINLINE EEquipmentType GetCurEquipmentType() { return CurrentEquipmentType_Cached; }
 
 public:
@@ -92,14 +92,14 @@ public:
 	void ClearContextToWeaponActor();
 
 private:
-	bool CreateWeaponActor(AActor* InOwnerCharacter, EWeaponActorType InWeaponActorType, TSubclassOf<ACWeaponActor> InWeaponActorClass);
+	bool CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass);
 	bool CreateEquipment(AActor* InOwnerCharacter, EEquipmentType InEquipmentType, TSubclassOf<UCEquipment> InEquipmentClass, const FEquipmentData& InEquipmentDatas, const FEquipmentData& InUnequipmentDatas);
 
 private:
-	void ChangeMode(EWeaponActorType InNewWeaponActorType);
+	void ChangeMode(EWeaponType InNewWeaponType);
 
 private:
-	void ChangeWeaponActorType(EWeaponActorType InNewWeaponActorType);
+	void ChangeWeaponType(EWeaponType InNewWeaponType);
 	void ChangeEquipmentType(EEquipmentType InNewEquipmentType);
 
 private:

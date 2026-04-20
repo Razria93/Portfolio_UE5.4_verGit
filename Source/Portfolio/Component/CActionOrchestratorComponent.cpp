@@ -89,13 +89,13 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	switch (InRequest.IntentType)
 	{
 	case EEquipmentActionIntent::Toggle:
-		if (WeaponComp_Cached->CheckCurWeaponActorType(EWeaponActorType::Unarmed))
+		if (WeaponComp_Cached->CheckCurWeaponType(EWeaponType::Unarmed))
 		{
 			WeaponComp_Cached->SetSwordMode();
 			return BuildExecutedResult();
 		}
 
-		if (WeaponComp_Cached->CheckCurWeaponActorType(EWeaponActorType::Sword))
+		if (WeaponComp_Cached->CheckCurWeaponType(EWeaponType::Sword))
 		{
 			WeaponComp_Cached->SetUnarmedMode();
 			return BuildExecutedResult();

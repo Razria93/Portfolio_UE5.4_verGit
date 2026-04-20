@@ -438,7 +438,7 @@ void UCTakeDamageComponent::PrintSpecKeyInfo(const FTakeDamagePacket& InTakeDama
 	const FApplyDamageSpecKey& applyDamageSpecKey = InTakeDamagePacket.Payload.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(applyDamageSpecKey.ActionIndex);
 
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponActorType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponActorType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.EquipmentType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(applyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));

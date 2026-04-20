@@ -38,7 +38,7 @@ bool UCAction_ComboAttack::PlayAction()
 
 	// [First-call] Validate execution conditions & Execute first combo action
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return false;
-	if (WeaponComp_Cached->CheckCurWeaponActorType(EWeaponActorType::Unarmed)) return false;
+	if (WeaponComp_Cached->CheckCurWeaponType(EWeaponType::Unarmed)) return false;
 	if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Idle)) return false;
 	if (ActionDatas_Injected.Num() <= 0) return false;
 

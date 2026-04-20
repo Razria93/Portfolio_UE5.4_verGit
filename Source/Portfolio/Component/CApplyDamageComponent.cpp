@@ -336,7 +336,7 @@ FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHi
 {
 	FApplyDamageSpecKey applyDamageSpecKey;
 
-	applyDamageSpecKey.WeaponActorType = InHitContext.WeaponActorContext.CurrentWeaponActorType;
+	applyDamageSpecKey.WeaponType = InHitContext.WeaponActorContext.CurrentWeaponType;
 	applyDamageSpecKey.EquipmentType = InHitContext.EquipmentContext.CurrentEquipmentType;
 	applyDamageSpecKey.ActionType = InHitContext.ActionContext.CurrentActionType;
 	applyDamageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
@@ -520,7 +520,7 @@ void UCApplyDamageComponent::PrintHitContextInfo(const FWeaponActorContext& InWe
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
 	FLog::Log(TEXT("[WeaponActorContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponActorType"), *UEnum::GetValueAsString(InWeaponActorContext.CurrentWeaponActorType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponType"), *UEnum::GetValueAsString(InWeaponActorContext.CurrentWeaponType)));
 
 	FLog::Log(TEXT("[EquipmentContext]"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentEquipmentType"), *UEnum::GetValueAsString(InEquipmentContext.CurrentEquipmentType)));

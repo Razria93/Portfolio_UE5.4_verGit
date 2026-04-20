@@ -69,9 +69,9 @@ void ACWeaponActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ACWeaponActor::InitializeWeaponActor(EWeaponActorType InWeaponActorType)
+void ACWeaponActor::InitializeWeaponActor(EWeaponType InWeaponType)
 {
-	SetWeaponActorType(InWeaponActorType);
+	SetWeaponType(InWeaponType);
 
 	AttachToOwnerSocket(SocketName_Holster);
 }
@@ -116,14 +116,14 @@ void ACWeaponActor::SetLastActionContext(const FActionContext& InActionContext)
 	LastActionContext = InActionContext;
 }
 
-EWeaponActorType ACWeaponActor::GetWeaponActorType() const
+EWeaponType ACWeaponActor::GetWeaponType() const
 {
-	return WeaponActorType;
+	return WeaponType;
 }
 
-void ACWeaponActor::SetWeaponActorType(EWeaponActorType InWeaponActorType)
+void ACWeaponActor::SetWeaponType(EWeaponType InWeaponType)
 {
-	WeaponActorType = InWeaponActorType;
+	WeaponType = InWeaponType;
 }
 
 void ACWeaponActor::SetTrailActive(bool bEnable)
@@ -340,7 +340,7 @@ void ACWeaponActor::PrintHitContextInfo(const FWeaponActorContext& InWeaponActor
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
 	FLog::Log(TEXT("[WeaponActorContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponActorType"), *UEnum::GetValueAsString(InWeaponActorContext.CurrentWeaponActorType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponType"), *UEnum::GetValueAsString(InWeaponActorContext.CurrentWeaponType)));
 
 	FLog::Log(TEXT("[EquipmentContext]"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentEquipmentType"), *UEnum::GetValueAsString(InEquipmentContext.CurrentEquipmentType)));

@@ -23,7 +23,7 @@ protected:
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	EWeaponActorType WeaponActorType = EWeaponActorType::Max;
+	EWeaponType WeaponType = EWeaponType::Max;
 
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EDeadState DeadState = EDeadState::Alive;
@@ -51,5 +51,5 @@ private:
 	/* === [IN] Custom Delgate Events === */
 	// CWeaponComponent
 	UFUNCTION()
-	void OnWeaponActorTypeChanged(ACharacter* InOwnerCharacter, EWeaponActorType InPrevWeaponActorType, EWeaponActorType InNewWeaponActorType);
+	void OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType);
 };
