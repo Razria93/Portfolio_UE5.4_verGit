@@ -64,11 +64,11 @@ void UCWeaponComponent::PushContextToWeaponActor(const FActionContext& InActionC
 	if (!provider) return;
 
 	// 1) Build contexts from current state
-	const FWeaponActorContext weaponActorContext = BuildWeaponActorContext();
+	const FWeaponContext weaponContext = BuildWeaponContext();
 	const FEquipmentContext  equipmentContext = BuildEquipmentContext();
 
 	// 2) Push/Cache into the carrier
-	provider->SetLastWeaponActorContext(weaponActorContext);
+	provider->SetLastWeaponContext(weaponContext);
 	provider->SetLastEquipmentContext(equipmentContext);
 	provider->SetLastActionContext(InActionContext);
 }
@@ -81,7 +81,7 @@ void UCWeaponComponent::ClearContextToWeaponActor()
 	if (!provider) return;
 
 	provider->SetLastOverlapContext(FOverlapContext());
-	provider->SetLastWeaponActorContext(FWeaponActorContext());
+	provider->SetLastWeaponContext(FWeaponContext());
 	provider->SetLastEquipmentContext(FEquipmentContext());
 	provider->SetLastActionContext(FActionContext());
 }
@@ -190,12 +190,12 @@ void UCWeaponComponent::ChangeEquipmentType(EEquipmentType InNewEquipmentType)
 		OnEquipmentTypeChanged.Broadcast(OwnerCharacter_Cached, PrevEquipmentType, CurrentEquipmentType_Cached);
 }
 
-FWeaponActorContext UCWeaponComponent::BuildWeaponActorContext() const
+FWeaponContext UCWeaponComponent::BuildWeaponContext() const
 {
-	FWeaponActorContext weaponActorContext;
-	weaponActorContext.CurrentWeaponType = CurrentWeaponType_Cached;
+	FWeaponContext weaponContext;
+	weaponContext.CurrentWeaponType = CurrentWeaponType_Cached;
 
-	return weaponActorContext;
+	return weaponContext;
 }
 
 FEquipmentContext UCWeaponComponent::BuildEquipmentContext() const

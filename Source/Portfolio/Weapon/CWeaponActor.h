@@ -22,10 +22,10 @@ public:
 
 public:
 	/* === Editor Settings === */
-	UPROPERTY(EditAnywhere, Category = "Attach|SocketName")
+	UPROPERTY(EditAnywhere, Category = "Weapon|SocketName")
 	FName SocketName_Holster;
 
-	UPROPERTY(EditAnywhere, Category = "Attach|SocketName")
+	UPROPERTY(EditAnywhere, Category = "Weapon|SocketName")
 	FName SocketName_Hand;
 
 private:
@@ -50,7 +50,7 @@ public:
 	FOverlapContext LastOverlapContext;
 
 	UPROPERTY(Transient)
-	FWeaponActorContext LastWeaponActorContext;
+	FWeaponContext LastWeaponContext;
 
 	UPROPERTY(Transient)
 	FEquipmentContext LastEquipmentContext;
@@ -93,14 +93,14 @@ public:
 public:
 	/* === IHitContextProducer (Getter) === */
 	virtual const FOverlapContext& GetLastOverlapContext() const override;
-	virtual const FWeaponActorContext& GetLastWeaponActorContext() const override;
+	virtual const FWeaponContext& GetLastWeaponContext() const override;
 	virtual const FEquipmentContext& GetLastEquipmentContext() const override;
 	virtual const FActionContext& GetLastActionContext() const override;
 
 public:
 	/* === IHitContextProducer (Setter) === */
 	virtual void SetLastOverlapContext(const FOverlapContext& InOverlapContext) override;
-	virtual void SetLastWeaponActorContext(const FWeaponActorContext& InWeaponActorContext) override;
+	virtual void SetLastWeaponContext(const FWeaponContext& InWeaponContext) override;
 	virtual void SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext) override;
 	virtual void SetLastActionContext(const FActionContext& InActionContext) override;
 
@@ -150,7 +150,7 @@ private:
 
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& Context);
-	void PrintHitContextInfo(const FWeaponActorContext& InWeaponActorContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
 
 private:
 	void PrintTrailInfo(bool bEnable) const;

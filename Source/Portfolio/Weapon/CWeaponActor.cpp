@@ -81,9 +81,9 @@ const FOverlapContext& ACWeaponActor::GetLastOverlapContext() const
 	return LastOverlapContext;
 }
 
-const FWeaponActorContext& ACWeaponActor::GetLastWeaponActorContext() const
+const FWeaponContext& ACWeaponActor::GetLastWeaponContext() const
 {
-	return LastWeaponActorContext;
+	return LastWeaponContext;
 }
 
 const FEquipmentContext& ACWeaponActor::GetLastEquipmentContext() const
@@ -101,9 +101,9 @@ void ACWeaponActor::SetLastOverlapContext(const FOverlapContext& InOverlapContex
 	LastOverlapContext = InOverlapContext;
 }
 
-void ACWeaponActor::SetLastWeaponActorContext(const FWeaponActorContext& InWeaponActorContext)
+void ACWeaponActor::SetLastWeaponContext(const FWeaponContext& InWeaponContext)
 {
-	LastWeaponActorContext = InWeaponActorContext;
+	LastWeaponContext = InWeaponContext;
 }
 
 void ACWeaponActor::SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext)
@@ -287,7 +287,7 @@ FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapConte
 	FHitContext hitContext;
 
 	hitContext.OverlapContext = InOverlapContext;
-	hitContext.WeaponActorContext = LastWeaponActorContext;
+	hitContext.WeaponContext = LastWeaponContext;
 	hitContext.EquipmentContext = LastEquipmentContext;
 	hitContext.ActionContext = LastActionContext;
 
@@ -298,7 +298,7 @@ void ACWeaponActor::PrintBeginOverlapContextInfo(const FHitContext& InHitContext
 {
 	FLog::Log(TEXT("========= Begin Overlap ========="));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponActorContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	FLog::Log(TEXT("================================="));
 }
 
@@ -306,7 +306,7 @@ void ACWeaponActor::PrintEndOverlapContextInfo(const FHitContext& InHitContext)
 {
 	FLog::Log(TEXT("========== End Overlap =========="));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponActorContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	FLog::Log(TEXT("================================="));
 }
 
@@ -336,11 +336,11 @@ void ACWeaponActor::PrintOverlapContextInfo(const FOverlapContext& InOverlapCont
 	}
 }
 
-void ACWeaponActor::PrintHitContextInfo(const FWeaponActorContext& InWeaponActorContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
+void ACWeaponActor::PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
-	FLog::Log(TEXT("[WeaponActorContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponType"), *UEnum::GetValueAsString(InWeaponActorContext.CurrentWeaponType)));
+	FLog::Log(TEXT("[WeaponContext]"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponType"), *UEnum::GetValueAsString(InWeaponContext.CurrentWeaponType)));
 
 	FLog::Log(TEXT("[EquipmentContext]"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentEquipmentType"), *UEnum::GetValueAsString(InEquipmentContext.CurrentEquipmentType)));
@@ -360,7 +360,7 @@ void ACWeaponActor::PrintTrailInfo(bool bEnable) const
 	const FString trailCompName = TrailComponent->GetName();
 	FString trailAssetName = IsValid(trailAsset) ? trailAsset->GetName() : TEXT("None");
 	
-	FLog::Log(TEXT("====== WeaponActor Trail Info ===="));
+	FLog::Log(TEXT("======= Weapon Trail Info ======="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bEnable ? TEXT("Active") : TEXT("Inactive")));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailComponent"), *trailCompName));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailAsset"), *trailAssetName));

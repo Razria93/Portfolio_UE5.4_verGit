@@ -191,7 +191,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FWeaponActorContext
+struct FWeaponContext
 {
 	GENERATED_BODY()
 
@@ -200,7 +200,7 @@ public:
 	EWeaponType CurrentWeaponType = EWeaponType::Max;
 
 public:
-	FWeaponActorContext() = default;
+	FWeaponContext() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -285,7 +285,7 @@ public:
 	FOverlapContext OverlapContext = FOverlapContext();
 
 	UPROPERTY(Transient)
-	FWeaponActorContext WeaponActorContext = FWeaponActorContext();
+	FWeaponContext WeaponContext = FWeaponContext();
 
 	UPROPERTY(Transient)
 	FEquipmentContext  EquipmentContext = FEquipmentContext();

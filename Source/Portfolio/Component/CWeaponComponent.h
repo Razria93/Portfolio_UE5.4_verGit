@@ -18,14 +18,14 @@ public:
 
 	// === WeaponData ======================================= //
 private:
-	UPROPERTY(EditAnywhere, Category = "WeaponActor|Data")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Data")
 	EWeaponType WeaponType;
 
 	UPROPERTY(EditAnywhere, Category = "Equipment|Data")
 	EEquipmentType EquipmentType;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "WeaponActor|Data")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Data")
 	TSubclassOf<class ACWeaponActor> WeaponActorClass;
 
 	UPROPERTY(EditAnywhere, Category = "Equipment|Data")
@@ -103,6 +103,6 @@ private:
 	void ChangeEquipmentType(EEquipmentType InNewEquipmentType);
 
 private:
-	FWeaponActorContext BuildWeaponActorContext() const;
+	FWeaponContext BuildWeaponContext() const;
 	FEquipmentContext BuildEquipmentContext() const;
 };

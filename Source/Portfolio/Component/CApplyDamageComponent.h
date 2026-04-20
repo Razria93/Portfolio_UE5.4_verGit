@@ -81,7 +81,7 @@ private:
 
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
-	void PrintHitContextInfo(const FWeaponActorContext& InWeaponActorContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const;
+	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const;
 	void PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const;
 	void PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const;
 	void PrintRejectReasonInfo(EApplyDamageRejectReason InRejectReason) const;
