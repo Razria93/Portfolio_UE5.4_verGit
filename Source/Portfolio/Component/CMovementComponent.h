@@ -56,6 +56,9 @@ protected:
 
 public:
 	/* === Check / Query === */
+	FORCEINLINE bool CheckCurrentMovementGait(EMovementGait InNewMovementGait) const { return CurrentMovementGait == InNewMovementGait; }
+
+public:
 	FORCEINLINE bool CanMove() const { return bCanMove; }
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
 
@@ -86,6 +89,7 @@ public:
 	void OnStopJump();
 
 public:
+	/* === Movement Arbiter === */
 	bool CanAcceptMoveInput() const;
 
 private:
