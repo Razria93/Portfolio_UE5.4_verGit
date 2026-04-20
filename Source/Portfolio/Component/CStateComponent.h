@@ -37,6 +37,10 @@ public:
 	void OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState);
 
 public:
+	/* === Check / Query === */
+	FORCEINLINE bool CheckCurExecutionState(EExecutionState InNewExecutionState) const { return CurrentExecutionState == InNewExecutionState; }
+
+public:
 	/* === Getter === */
 	FORCEINLINE EExecutionState GetCurExecutionState() const { return CurrentExecutionState; }
 
@@ -46,10 +50,6 @@ public:
 	void SetActionState();
 	void SetReactionState();
 	void SetDeadState();
-
-public:
-	/* === Check / Query === */
-	FORCEINLINE bool CheckCurExecutionState(EExecutionState InNewExecutionState) const { return CurrentExecutionState == InNewExecutionState; }
 
 private:
 	void ChangeExecutionState(EExecutionState InNewExecutionState);

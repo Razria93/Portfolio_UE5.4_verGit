@@ -22,7 +22,7 @@ void UCActionOrchestratorComponent::BeginPlay()
 
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
-	
+
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	WeaponComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
@@ -116,7 +116,6 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	if (!IsValid(ActionComp_Cached))
 		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
 
-	// TODO
 	switch (InRequest.IntentType)
 	{
 	case ECombatActionIntent::ComboAttack:
@@ -173,7 +172,7 @@ FActionRequestResult UCActionOrchestratorComponent::BuildExecutedResult(EActionT
 
 	result.ResultType = EActionRequestResultType::Executed;
 	result.ExecutedActionType = InExecutedActionType; // Execute Factor
-	
+
 	return result;
 }
 
@@ -183,7 +182,7 @@ FActionRequestResult UCActionOrchestratorComponent::BuildRejectedResult(EActionR
 
 	result.ResultType = EActionRequestResultType::Rejected;
 	result.RejectReason = InRejectReason; // Reject Factor
-	
+
 	return result;
 }
 
@@ -192,7 +191,7 @@ FActionRequestResult UCActionOrchestratorComponent::BuildIgnoredResult() const
 	FActionRequestResult result;
 
 	result.ResultType = EActionRequestResultType::Ignored;
-	
+
 	return result;
 }
 

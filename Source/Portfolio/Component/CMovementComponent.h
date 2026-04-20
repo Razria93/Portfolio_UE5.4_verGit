@@ -13,12 +13,15 @@ class PORTFOLIO_API UCMovementComponent : public UActorComponent
 public:
 	UCMovementComponent();
 
+	// === MovementData ===================================== //
 private:
-	/* === Editor Settings === */
 	UPROPERTY(EditAnywhere, Category = "Movement|Gait")
 	TMap<EMovementGait, float> GaitSpeedMap;
 
+	// ====================================================== //
+
 private:
+	/* === State === */
 	UPROPERTY(Transient)
 	EMovementGait CurrentMovementGait = EMovementGait::Run;
 
@@ -32,7 +35,7 @@ private:
 private:
 	UPROPERTY(Transient)
 	float CurrentSpeed = 0.f;
-	
+
 	UPROPERTY(Transient)
 	float CurrentDirection = 0.f;
 
@@ -52,17 +55,20 @@ protected:
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	FORCEINLINE EMovementGait GetCurrentMovementGait() const { return CurrentMovementGait; }
-
-public:
+	/* === Check / Query === */
 	FORCEINLINE bool CanMove() const { return bCanMove; }
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
+
+public:
+	/* === Getter === */
+	FORCEINLINE EMovementGait GetCurrentMovementGait() const { return CurrentMovementGait; }
 
 public:
 	FORCEINLINE float GetCurrentSpeed() const { return CurrentSpeed; }
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
 
 public:
+	/* === Setter === */
 	FORCEINLINE void SetStop() { bCanMove = false; }
 	FORCEINLINE void SetMove() { bCanMove = true; }
 

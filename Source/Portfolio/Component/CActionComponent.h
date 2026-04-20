@@ -52,21 +52,20 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	/* === Getter === */
-	class UCAction* GetCurAction() const;
+	/* === Check / Query === */
+	FORCEINLINE bool CheckCurActionType(EActionType InNewActionType) { return CurrentActionType_Cached == InNewActionType; }
 
 public:
 	/* === Getter === */
 	FORCEINLINE EActionType GetCurActionType() { return CurrentActionType_Cached; }
 
 public:
+	class UCAction* GetCurAction() const;
+
+public:
 	/* === Setter === */
 	void SetIdleMode();
 	void SetComboAttackMode();
-
-public:
-	/* === Check / Query === */
-	FORCEINLINE bool CheckCurActionType(EActionType InNewActionType) { return CurrentActionType_Cached == InNewActionType; }
 
 private:
 	void ChangeActionMode(EActionType InNewActionType);
