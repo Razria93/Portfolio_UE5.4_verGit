@@ -28,9 +28,12 @@ UENUM(BlueprintType)
 enum class EActionType : uint8
 {
 	Idle = 0,
+	Equip,
+	Unequip,
 	LightAttack,
 	ComboAttack,
 	All,
+
 	Max,
 };
 
