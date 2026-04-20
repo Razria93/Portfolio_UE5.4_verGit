@@ -22,12 +22,13 @@ protected:
 	bool bIsAction;		// Action is active
 
 protected:
+	UPROPERTY(Transient)
+	TArray<FActionData> ActionDatas_Injected;
+
+protected:
 	/* === Injection Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
-
-	UPROPERTY(Transient)
-	TArray<FActionData> ActionDatas_Injected;
 
 protected:
 	/* === Cached Objects === */

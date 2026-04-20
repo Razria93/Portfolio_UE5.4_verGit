@@ -25,15 +25,26 @@ private:
 	EEquipmentType EquipmentType;
 
 private:
-	/* === Injection Objects === */
-	class ACharacter* OwnerCharacter_Injected;
+	UPROPERTY(Transient)
 	FEquipmentData EquipmentData_Injected;
+
+	UPROPERTY(Transient)
 	FEquipmentData UnquipmentData_Injected;
 
 private:
+	/* === Injection Objects === */
+	UPROPERTY(Transient)
+	class ACharacter* OwnerCharacter_Injected;
+
+private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class UCMovementComponent* MovementComp_Cached;
+
+	UPROPERTY(Transient)
 	class UCWeaponComponent* WeaponComp_Cached;
+
+	UPROPERTY(Transient)
 	class UCStateComponent* StateComp_Cached;
 
 public:
