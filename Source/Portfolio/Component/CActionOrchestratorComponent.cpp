@@ -119,8 +119,14 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	switch (InRequest.IntentType)
 	{
 	case ECombatActionIntent::ComboAttack:
-		ActionComp_Cached->SetComboAttackMode();
-		return BuildExecutedResult(EActionType::ComboAttack);
+	{
+		const bool bStarted = ActionComp_Cached->TryStartAction(EActionType::ComboAttack);
+
+		if (!bStarted)
+			return BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
+		else
+			return BuildExecutedResult(EActionType::ComboAttack);
+	}
 
 	default:
 		return BuildIgnoredResult();

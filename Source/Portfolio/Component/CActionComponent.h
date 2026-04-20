@@ -46,29 +46,27 @@ public:
 	FActionTypeChanged OnActionTypeChanged;
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
 	/* === Check / Query === */
-	FORCEINLINE bool CheckCurActionType(EActionType InNewActionType) { return CurrentActionType_Cached == InNewActionType; }
+	FORCEINLINE bool CheckCurrentActionType(EActionType InNewActionType) const { return CurrentActionType_Cached == InNewActionType; }
 
 public:
 	/* === Getter === */
-	FORCEINLINE EActionType GetCurActionType() { return CurrentActionType_Cached; }
+	FORCEINLINE EActionType GetCurrentActionType() const { return CurrentActionType_Cached; }
 
 public:
-	class UCAction* GetCurAction() const;
+	class UCAction* GetCurrentAction() const;
 
 public:
-	/* === Setter === */
-	void SetIdleMode();
-	void SetComboAttackMode();
+	/* === Try Start API === */
+	bool TryStartAction(EActionType InActionType);
 
 private:
-	void ChangeActionMode(EActionType InNewActionType);
 	void ChangeActionType(EActionType InNewActionType);
 
 private:

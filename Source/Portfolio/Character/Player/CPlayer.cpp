@@ -170,7 +170,7 @@ bool ACPlayer::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedback
 {
 	if (!IsValid(ActionComponent)) return false;
 
-	UCAction* curAction = ActionComponent->GetCurAction();
+	UCAction* curAction = ActionComponent->GetCurrentAction();
 	if (!IsValid(curAction)) return false;
 
 	// Export

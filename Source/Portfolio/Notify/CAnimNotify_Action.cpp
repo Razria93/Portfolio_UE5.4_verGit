@@ -22,7 +22,7 @@ void UCAnimNotify_Action::Notify(USkeletalMeshComponent* MeshComp, UAnimSequence
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!actionComp) return;
 
-	UCAction* curAction = actionComp->GetCurAction();
+	UCAction* curAction = actionComp->GetCurrentAction();
 	if (!curAction) return;
 
 	switch (FlowType)

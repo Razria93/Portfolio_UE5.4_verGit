@@ -42,7 +42,7 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-UCAction* UCActionComponent::GetCurAction() const
+UCAction* UCActionComponent::GetCurrentAction() const
 {
 	auto curActionPtr = ActionContainer.Find(CurrentActionType_Cached);
 	if (!curActionPtr) return nullptr;
@@ -53,40 +53,31 @@ UCAction* UCActionComponent::GetCurAction() const
 	return curAction;
 }
 
-void UCActionComponent::SetIdleMode()
+bool UCActionComponent::TryStartAction(EActionType InActionType)
 {
-	ChangeActionMode(EActionType::Idle);
-}
+	if (!IsValid(OwnerCharacter_Cached)) return false;
 
-void UCActionComponent::SetComboAttackMode()
-{
-	ChangeActionMode(EActionType::ComboAttack);
-}
-
-void UCActionComponent::ChangeActionMode(EActionType InNewActionType)
-{
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	UCAction** actionPtr = ActionContainer.Find(InNewActionType);
-	if (actionPtr == nullptr) return;
+	UCAction** actionPtr = ActionContainer.Find(InActionType);
+	if (actionPtr == nullptr) return false;
 
 	UCAction* action = *actionPtr;
-	if (action == nullptr) return;
+	if (!IsValid(action)) return false;
 
-	if(!action->PlayAction()) return;
+	if (!action->PlayAction()) return false;
 
-	ChangeActionType(InNewActionType);
+	ChangeActionType(InActionType);
+	return true;
 }
 
 void UCActionComponent::ChangeActionType(EActionType InNewActionType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	EActionType prevActionType = CurrentActionType_Cached;
+	EActionType previousActionType = CurrentActionType_Cached;
 	CurrentActionType_Cached = InNewActionType;
 
 	if (OnActionTypeChanged.IsBound())
-		OnActionTypeChanged.Broadcast(OwnerCharacter_Cached, prevActionType, CurrentActionType_Cached);
+		OnActionTypeChanged.Broadcast(OwnerCharacter_Cached, previousActionType, CurrentActionType_Cached);
 }
 
 bool UCActionComponent::CreateAction(AActor* InOwnerCharacter, EActionType InActionType, TSubclassOf<UCAction> InActionClass, const TArray<FActionData> InActionDatas)
