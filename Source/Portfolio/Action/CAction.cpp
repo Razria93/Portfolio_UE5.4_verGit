@@ -97,18 +97,18 @@ FActionFeedbackRequest UCAction::BuildActionFeedbackRequest(EActionFeedbackTimin
 	return ActionFeedbackRequest;
 }
 
-void UCAction::PushContextToAttachment(const FActionContext& InActionContext)
+void UCAction::PushContextToWeaponActor(const FActionContext& InActionContext)
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
 
-	WeaponComp_Cached->PushContextToAttachment(InActionContext);
+	WeaponComp_Cached->PushContextToWeaponActor(InActionContext);
 }
 
-void UCAction::ClearContextToAttachment()
+void UCAction::ClearContextToWeaponActor()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
 
-	WeaponComp_Cached->ClearContextToAttachment();
+	WeaponComp_Cached->ClearContextToWeaponActor();
 }
 
 void UCAction::RequestPlayActionFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey) const

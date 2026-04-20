@@ -62,5 +62,5 @@ private:
 private:
 	void PrintActionVFXInfo(const FActionVFXFeedbackData& InActionVFXFeedbackData) const;
 	void PrintActionSFXInfo(const FActionSFXFeedbackData& InActionSFXFeedbackData) const;
-	void PrintTrailInfo(bool bActive, const class ACAttachment* InAttachment) const;
+	void PrintTrailInfo(bool bActive, const class ACWeaponActor* InWeaponActor) const;
 };

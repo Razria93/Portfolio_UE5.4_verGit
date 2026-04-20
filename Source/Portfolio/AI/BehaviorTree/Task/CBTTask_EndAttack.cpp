@@ -38,7 +38,7 @@ EBTNodeResult::Type UCBTTask_EndAttack::ExecuteTask(UBehaviorTreeComponent& Owne
 
 	if (UCWeaponComponent* weaponComp = character->FindComponentByClass<UCWeaponComponent>())
 	{
-		weaponComp->ClearContextToAttachment();
+		weaponComp->ClearContextToWeaponActor();
 	}
 
 	if (ACEnemy* enemy = Cast<ACEnemy>(character))

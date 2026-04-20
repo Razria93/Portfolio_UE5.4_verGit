@@ -1,4 +1,4 @@
-#include "Weapon/CAttachment.h"
+#include "Weapon/CWeaponActor.h"
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
@@ -10,7 +10,7 @@
 
 #include "Type/CWeaponStructure.h"
 
-ACAttachment::ACAttachment()
+ACWeaponActor::ACWeaponActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -26,7 +26,7 @@ ACAttachment::ACAttachment()
 	TrailComponent->bAutoActivate = false;
 }
 
-void ACAttachment::BeginPlay()
+void ACWeaponActor::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -46,8 +46,8 @@ void ACAttachment::BeginPlay()
 			UShapeComponent* shape = Cast<UShapeComponent>(child); //  UShapeComponent base for shape collision components (Sphere / Box / Capsule)
 			if (!IsValid(shape)) continue;
 
-			shape->OnComponentBeginOverlap.AddDynamic(this, &ACAttachment::OnComponentBeginOverlap);
-			shape->OnComponentEndOverlap.AddDynamic(this, &ACAttachment::OnComponentEndOverlap);
+			shape->OnComponentBeginOverlap.AddDynamic(this, &ACWeaponActor::OnComponentBeginOverlap);
+			shape->OnComponentEndOverlap.AddDynamic(this, &ACWeaponActor::OnComponentEndOverlap);
 			shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Collision_Disabled
 
 			Collisions_Cached.Add(shape);
@@ -64,69 +64,69 @@ void ACAttachment::BeginPlay()
 	}
 }
 
-void ACAttachment::Tick(float DeltaTime)
+void ACWeaponActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void ACAttachment::InitializeAttachment(EAttachmentType InAttachmentType)
+void ACWeaponActor::InitializeWeaponActor(EWeaponActorType InWeaponActorType)
 {
-	SetAttachmentType(InAttachmentType);
+	SetWeaponActorType(InWeaponActorType);
 
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
-const FOverlapContext& ACAttachment::GetLastOverlapContext() const
+const FOverlapContext& ACWeaponActor::GetLastOverlapContext() const
 {
 	return LastOverlapContext;
 }
 
-const FAttachmentContext& ACAttachment::GetLastAttachmentContext() const
+const FWeaponActorContext& ACWeaponActor::GetLastWeaponActorContext() const
 {
-	return LastAttachmentContext;
+	return LastWeaponActorContext;
 }
 
-const FEquipmentContext& ACAttachment::GetLastEquipmentContext() const
+const FEquipmentContext& ACWeaponActor::GetLastEquipmentContext() const
 {
 	return LastEquipmentContext;
 }
 
-const FActionContext& ACAttachment::GetLastActionContext() const
+const FActionContext& ACWeaponActor::GetLastActionContext() const
 {
 	return LastActionContext;
 }
 
-void ACAttachment::SetLastOverlapContext(const FOverlapContext& InOverlapContext)
+void ACWeaponActor::SetLastOverlapContext(const FOverlapContext& InOverlapContext)
 {
 	LastOverlapContext = InOverlapContext;
 }
 
-void ACAttachment::SetLastAttachmentContext(const FAttachmentContext& InAttachmentContext)
+void ACWeaponActor::SetLastWeaponActorContext(const FWeaponActorContext& InWeaponActorContext)
 {
-	LastAttachmentContext = InAttachmentContext;
+	LastWeaponActorContext = InWeaponActorContext;
 }
 
-void ACAttachment::SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext)
+void ACWeaponActor::SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext)
 {
 	LastEquipmentContext = InEquipmentContext;
 }
 
-void ACAttachment::SetLastActionContext(const FActionContext& InActionContext)
+void ACWeaponActor::SetLastActionContext(const FActionContext& InActionContext)
 {
 	LastActionContext = InActionContext;
 }
 
-EAttachmentType ACAttachment::GetAttachmentType() const
+EWeaponActorType ACWeaponActor::GetWeaponActorType() const
 {
-	return AttachmentType;
+	return WeaponActorType;
 }
 
-void ACAttachment::SetAttachmentType(EAttachmentType InAttachmentType)
+void ACWeaponActor::SetWeaponActorType(EWeaponActorType InWeaponActorType)
 {
-	AttachmentType = InAttachmentType;
+	WeaponActorType = InWeaponActorType;
 }
 
-void ACAttachment::SetTrailActive(bool bEnable)
+void ACWeaponActor::SetTrailActive(bool bEnable)
 {
 	if (!IsValid(TrailComponent)) return;
 
@@ -144,12 +144,12 @@ void ACAttachment::SetTrailActive(bool bEnable)
 	}
 }
 
-void ACAttachment::AttachToOwnerSocket(FName InSocketName)
+void ACWeaponActor::AttachToOwnerSocket(FName InSocketName)
 {
 	AttachToComponent(OwnerCharacter_Cached->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
 }
 
-void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
@@ -165,14 +165,14 @@ void ACAttachment::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	PrintBeginOverlapContextInfo(hitContext);
 
 	// Legacy delegate
-	if (OnAttachmentBeginOverlap.IsBound())
-		OnAttachmentBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	if (OnWeaponActorBeginOverlap.IsBound())
+		OnWeaponActorBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	ApplyDamageComp_Cached->RequestApplyDamage(hitContext);
 	LastOverlapContext = overlapContext;
 }
 
-void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ACWeaponActor::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
@@ -183,21 +183,21 @@ void ACAttachment::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponen
 	if (!IsValid(ApplyDamageComp_Cached)) return;
 
 	// Legacy delegate
-	if (OnAttachmentEndOverlap.IsBound())
-		OnAttachmentEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
+	if (OnWeaponActorEndOverlap.IsBound())
+		OnWeaponActorEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
 }
 
-void ACAttachment::OnEquipmentBeginEquip()
+void ACWeaponActor::OnEquipmentBeginEquip()
 {
 	AttachToOwnerSocket(SocketName_Hand);
 }
 
-void ACAttachment::OnEquipmentBeginUnequip()
+void ACWeaponActor::OnEquipmentBeginUnequip()
 {
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
-void ACAttachment::CollisionEnabled(FName InName)
+void ACWeaponActor::CollisionEnabled(FName InName)
 {
 	TArray<UShapeComponent*> collisionsToEnable;
 
@@ -239,11 +239,11 @@ void ACAttachment::CollisionEnabled(FName InName)
 		collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 
-	if (OnAttachmentCollisionEnabled.IsBound())
-		OnAttachmentCollisionEnabled.Broadcast();
+	if (OnWeaponActorCollisionEnabled.IsBound())
+		OnWeaponActorCollisionEnabled.Broadcast();
 }
 
-void ACAttachment::CollisionDisabled()
+void ACWeaponActor::CollisionDisabled()
 {
 	if (!bHitWindowOpened) return;
 
@@ -260,11 +260,11 @@ void ACAttachment::CollisionDisabled()
 	}
 
 	// Legacy delegate
-	if (OnAttachmentCollisionDisabled.IsBound())
-		OnAttachmentCollisionDisabled.Broadcast();
+	if (OnWeaponActorCollisionDisabled.IsBound())
+		OnWeaponActorCollisionDisabled.Broadcast();
 }
 
-FOverlapContext ACAttachment::BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const
+FOverlapContext ACWeaponActor::BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const
 {
 	FOverlapContext overlapContext;
 
@@ -282,35 +282,35 @@ FOverlapContext ACAttachment::BuildOverlapContext(AActor* InOwnerActor, AActor* 
 	return overlapContext;
 }
 
-FHitContext ACAttachment::BuildHitContext(const FOverlapContext& InOverlapContext) const
+FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapContext) const
 {
 	FHitContext hitContext;
 
 	hitContext.OverlapContext = InOverlapContext;
-	hitContext.AttachmentContext = LastAttachmentContext;
+	hitContext.WeaponActorContext = LastWeaponActorContext;
 	hitContext.EquipmentContext = LastEquipmentContext;
 	hitContext.ActionContext = LastActionContext;
 
 	return hitContext;
 }
 
-void ACAttachment::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)
+void ACWeaponActor::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)
 {
 	FLog::Log(TEXT("========= Begin Overlap ========="));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.WeaponActorContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	FLog::Log(TEXT("================================="));
 }
 
-void ACAttachment::PrintEndOverlapContextInfo(const FHitContext& InHitContext)
+void ACWeaponActor::PrintEndOverlapContextInfo(const FHitContext& InHitContext)
 {
 	FLog::Log(TEXT("========== End Overlap =========="));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.WeaponActorContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	FLog::Log(TEXT("================================="));
 }
 
-void ACAttachment::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext)
+void ACWeaponActor::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext)
 {
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
 
@@ -336,11 +336,11 @@ void ACAttachment::PrintOverlapContextInfo(const FOverlapContext& InOverlapConte
 	}
 }
 
-void ACAttachment::PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
+void ACWeaponActor::PrintHitContextInfo(const FWeaponActorContext& InWeaponActorContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext)
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
-	FLog::Log(TEXT("[AttachmentContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentAttachmentType"), *UEnum::GetValueAsString(InAttachmentContext.CurrentAttachmentType)));
+	FLog::Log(TEXT("[WeaponActorContext]"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponActorType"), *UEnum::GetValueAsString(InWeaponActorContext.CurrentWeaponActorType)));
 
 	FLog::Log(TEXT("[EquipmentContext]"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentEquipmentType"), *UEnum::GetValueAsString(InEquipmentContext.CurrentEquipmentType)));
@@ -351,7 +351,7 @@ void ACAttachment::PrintHitContextInfo(const FAttachmentContext& InAttachmentCon
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void ACAttachment::PrintTrailInfo(bool bEnable) const
+void ACWeaponActor::PrintTrailInfo(bool bEnable) const
 {
 	if (!IsValid(TrailComponent)) return;
 	
@@ -360,7 +360,7 @@ void ACAttachment::PrintTrailInfo(bool bEnable) const
 	const FString trailCompName = TrailComponent->GetName();
 	FString trailAssetName = IsValid(trailAsset) ? trailAsset->GetName() : TEXT("None");
 	
-	FLog::Log(TEXT("====== Attachment Trail Info ===="));
+	FLog::Log(TEXT("====== WeaponActor Trail Info ===="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bEnable ? TEXT("Active") : TEXT("Inactive")));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailComponent"), *trailCompName));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailAsset"), *trailAssetName));

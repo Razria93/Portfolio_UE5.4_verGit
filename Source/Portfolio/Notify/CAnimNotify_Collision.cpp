@@ -2,7 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CWeaponComponent.h"
-#include "Weapon/CAttachment.h"
+#include "Weapon/CWeaponActor.h"
 
 UCAnimNotify_Collision::UCAnimNotify_Collision()
 {
@@ -21,15 +21,15 @@ void UCAnimNotify_Collision::Notify(USkeletalMeshComponent* MeshComp, UAnimSeque
 
 	if (!weaponComp) return;
 
-	UObject* uobject = weaponComp->GetAttachment();
+	UObject* uobject = weaponComp->GetWeaponActor();
 
-	ACAttachment* attachment = Cast<ACAttachment>(uobject);
+	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(uobject);
 
-	if (!attachment) return;
+	if (!weaponActor) return;
 
 	switch (FlowType)
 	{
-	case EAnimNotifyFlow::Begin: attachment->CollisionEnabled(CollisionName); return;
-	case EAnimNotifyFlow::End: attachment->CollisionDisabled(); return;
+	case EAnimNotifyFlow::Begin: weaponActor->CollisionEnabled(CollisionName); return;
+	case EAnimNotifyFlow::End: weaponActor->CollisionDisabled(); return;
 	}
 }

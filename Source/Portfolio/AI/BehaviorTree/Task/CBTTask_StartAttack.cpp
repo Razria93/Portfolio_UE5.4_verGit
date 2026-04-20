@@ -71,7 +71,7 @@ EBTNodeResult::Type UCBTTask_StartAttack::ExecuteTask(UBehaviorTreeComponent& Ow
 		actionContext.CurrentActionType = AttackActionType;
 		actionContext.ActionIndex = attackIndex;
 
-		weaponComp->PushContextToAttachment(actionContext);
+		weaponComp->PushContextToWeaponActor(actionContext);
 	}
 
 	if (ACEnemy* enemy = Cast<ACEnemy>(character))

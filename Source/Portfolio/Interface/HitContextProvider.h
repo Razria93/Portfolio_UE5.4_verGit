@@ -17,13 +17,13 @@ class PORTFOLIO_API IHitContextProvider
 
 public:
 	virtual const FOverlapContext& GetLastOverlapContext() const = 0;
-	virtual const FAttachmentContext& GetLastAttachmentContext() const = 0;
+	virtual const FWeaponActorContext& GetLastWeaponActorContext() const = 0;
 	virtual const FEquipmentContext& GetLastEquipmentContext() const = 0;
 	virtual const FActionContext& GetLastActionContext() const = 0;
 
 public:
 	virtual void SetLastOverlapContext(const FOverlapContext& InOverlapContext) = 0;
-	virtual void SetLastAttachmentContext(const FAttachmentContext& InAttachmentContext) = 0;
+	virtual void SetLastWeaponActorContext(const FWeaponActorContext& InWeaponActorContext) = 0;
 	virtual void SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext) = 0;
 	virtual void SetLastActionContext(const FActionContext& InActionContext) = 0;
 };

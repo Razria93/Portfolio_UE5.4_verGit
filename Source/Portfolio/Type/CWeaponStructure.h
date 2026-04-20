@@ -7,7 +7,7 @@
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
-enum class EAttachmentType : uint8
+enum class EWeaponActorType : uint8
 {
 	Unarmed = 0,
 	Sword,
@@ -191,16 +191,16 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FAttachmentContext
+struct FWeaponActorContext
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
-	EAttachmentType CurrentAttachmentType = EAttachmentType::Max;
+	EWeaponActorType CurrentWeaponActorType = EWeaponActorType::Max;
 
 public:
-	FAttachmentContext() = default;
+	FWeaponActorContext() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -242,10 +242,10 @@ public:
 	class AActor* OwnerActor = nullptr;							// AttackActor
 
 	UPROPERTY(Transient)
-	class AActor* DamageCauser = nullptr;						// Attachment
+	class AActor* DamageCauser = nullptr;						// WeaponActor
 
 	UPROPERTY(Transient)
-	class UPrimitiveComponent* OverlappedComponent = nullptr;	// Hit Collision of Attachment
+	class UPrimitiveComponent* OverlappedComponent = nullptr;	// Hit Collision of WeaponActor
 
 	UPROPERTY(Transient)
 	class UShapeComponent* OverlapShape = nullptr;			// Cast result: UShapeComponent (nullptr if cast fails)
@@ -285,7 +285,7 @@ public:
 	FOverlapContext OverlapContext = FOverlapContext();
 
 	UPROPERTY(Transient)
-	FAttachmentContext AttachmentContext = FAttachmentContext();
+	FWeaponActorContext WeaponActorContext = FWeaponActorContext();
 
 	UPROPERTY(Transient)
 	FEquipmentContext  EquipmentContext = FEquipmentContext();
@@ -333,7 +333,7 @@ struct FApplyDamageSpecKey
 
 public:
 	UPROPERTY(EditAnywhere)
-	EAttachmentType AttachmentType = EAttachmentType::Max;
+	EWeaponActorType WeaponActorType = EWeaponActorType::Max;
 
 	UPROPERTY(EditAnywhere)
 	EEquipmentType EquipmentType = EEquipmentType::Max;
@@ -351,7 +351,7 @@ public:
 	bool operator==(const FApplyDamageSpecKey& InOther) const
 	{
 		return EquipmentType == InOther.EquipmentType
-			&& AttachmentType == InOther.AttachmentType
+			&& WeaponActorType == InOther.WeaponActorType
 			&& ActionType == InOther.ActionType
 			&& ActionIndex == InOther.ActionIndex;
 	}
@@ -361,7 +361,7 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
 {
 	uint32 H = 0;
 
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.AttachmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.WeaponActorType)));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.EquipmentType)));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.ActionType)));
 	H = HashCombine(H, GetTypeHash(InOther.ActionIndex));

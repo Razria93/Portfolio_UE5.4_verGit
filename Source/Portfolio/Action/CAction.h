@@ -62,25 +62,25 @@ public:
 	virtual FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 protected:
-	void PushContextToAttachment(const FActionContext& InActionContext);
-	void ClearContextToAttachment();
+	void PushContextToWeaponActor(const FActionContext& InActionContext);
+	void ClearContextToWeaponActor();
 
 protected:
 	void RequestPlayActionFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey = NAME_None) const;
 
 public:
 	/* === [IN] Custom Delgate Events === */
-	// [Legacy delegate] CAttachment
+	// [Legacy delegate] CWeaponActor
 	UFUNCTION()
-	virtual void OnAttachmentCollisionEnabled() {};
+	virtual void OnWeaponActorCollisionEnabled() {};
 
 	UFUNCTION()
-	virtual void OnAttachmentCollisionDisabled() {};
+	virtual void OnWeaponActorCollisionDisabled() {};
 
-	// [Legacy delegate] CAttachment
+	// [Legacy delegate] CWeaponActor
 	UFUNCTION()
-	virtual void OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
+	virtual void OnWeaponActorBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
 
 	UFUNCTION()
-	virtual void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) {};
+	virtual void OnWeaponActorEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) {};
 };

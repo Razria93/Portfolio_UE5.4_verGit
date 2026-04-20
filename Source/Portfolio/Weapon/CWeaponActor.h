@@ -4,21 +4,21 @@
 #include "GameFramework/Actor.h"
 #include "Interface/HitContextProvider.h"
 #include "Type/CWeaponStructure.h"
-#include "CAttachment.generated.h"
+#include "CWeaponActor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttachmentCollisionEnabled);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttachmentCollisionDisabled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponActorCollisionEnabled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponActorCollisionDisabled);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_EightParams(FAttachmentBeginOverlap, AActor*, InAttackerActor, AActor*, InDamageCauser, UShapeComponent*, InAttackCollision, AActor*, InTargetActor, UPrimitiveComponent*, InHitComponent, int32, InOtherBodyIndex, bool, InbFromSweep, const FHitResult&, InSweepResult);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAttachmentEndOverlap, AActor*, InAttackerActor, AActor*, InTargetActor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_EightParams(FWeaponActorBeginOverlap, AActor*, InAttackerActor, AActor*, InDamageCauser, UShapeComponent*, InAttackCollision, AActor*, InTargetActor, UPrimitiveComponent*, InHitComponent, int32, InOtherBodyIndex, bool, InbFromSweep, const FHitResult&, InSweepResult);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FWeaponActorEndOverlap, AActor*, InAttackerActor, AActor*, InTargetActor);
 
 UCLASS()
-class PORTFOLIO_API ACAttachment : public AActor, public IHitContextProvider
+class PORTFOLIO_API ACWeaponActor : public AActor, public IHitContextProvider
 {
 	GENERATED_BODY()
 
 public:
-	ACAttachment();
+	ACWeaponActor();
 
 public:
 	/* === Editor Settings === */
@@ -42,7 +42,7 @@ protected:
 
 private:
 	UPROPERTY(Transient)
-	EAttachmentType AttachmentType;
+	EWeaponActorType WeaponActorType;
 
 public:
 	/* === Context Carrier === */
@@ -50,7 +50,7 @@ public:
 	FOverlapContext LastOverlapContext;
 
 	UPROPERTY(Transient)
-	FAttachmentContext LastAttachmentContext;
+	FWeaponActorContext LastWeaponActorContext;
 
 	UPROPERTY(Transient)
 	FEquipmentContext LastEquipmentContext;
@@ -74,12 +74,12 @@ private:
 public:
 	/* === [OUT] Custom Delgate Events === */
 	// Collision (Enabled/Disabled)
-	FAttachmentCollisionEnabled OnAttachmentCollisionEnabled;
-	FAttachmentCollisionDisabled OnAttachmentCollisionDisabled;
+	FWeaponActorCollisionEnabled OnWeaponActorCollisionEnabled;
+	FWeaponActorCollisionDisabled OnWeaponActorCollisionDisabled;
 
 	// Overlap (Raw Overlap)
-	FAttachmentBeginOverlap OnAttachmentBeginOverlap;
-	FAttachmentEndOverlap OnAttachmentEndOverlap;
+	FWeaponActorBeginOverlap OnWeaponActorBeginOverlap;
+	FWeaponActorEndOverlap OnWeaponActorEndOverlap;
 
 protected:
 	virtual void BeginPlay() override;
@@ -88,29 +88,29 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	void InitializeAttachment(EAttachmentType InAttachmentType);
+	void InitializeWeaponActor(EWeaponActorType InWeaponActorType);
 
 public:
 	/* === IHitContextProducer (Getter) === */
 	virtual const FOverlapContext& GetLastOverlapContext() const override;
-	virtual const FAttachmentContext& GetLastAttachmentContext() const override;
+	virtual const FWeaponActorContext& GetLastWeaponActorContext() const override;
 	virtual const FEquipmentContext& GetLastEquipmentContext() const override;
 	virtual const FActionContext& GetLastActionContext() const override;
 
 public:
 	/* === IHitContextProducer (Setter) === */
 	virtual void SetLastOverlapContext(const FOverlapContext& InOverlapContext) override;
-	virtual void SetLastAttachmentContext(const FAttachmentContext& InAttachmentContext) override;
+	virtual void SetLastWeaponActorContext(const FWeaponActorContext& InWeaponActorContext) override;
 	virtual void SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext) override;
 	virtual void SetLastActionContext(const FActionContext& InActionContext) override;
 
 public:
 	/* === Getter === */
-	EAttachmentType GetAttachmentType() const;
+	EWeaponActorType GetWeaponActorType() const;
 
 public:
 	/* === Setter === */
-	void SetAttachmentType(EAttachmentType InAttachmentType);
+	void SetWeaponActorType(EWeaponActorType InWeaponActorType);
 	void SetTrailActive(bool bEnable);
 
 public:
@@ -150,7 +150,7 @@ private:
 
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& Context);
-	void PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+	void PrintHitContextInfo(const FWeaponActorContext& InWeaponActorContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
 
 private:
 	void PrintTrailInfo(bool bEnable) const;

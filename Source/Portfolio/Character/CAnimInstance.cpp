@@ -20,8 +20,8 @@ void UCAnimInstance::NativeInitializeAnimation()
 
 	if (IsValid(WeaponComp_Cached))
 	{
-		WeaponComp_Cached->OnAttachmentTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnAttachmentTypeChanged);
-		AttachmentType = WeaponComp_Cached->GetCurAttachmentType();
+		WeaponComp_Cached->OnWeaponActorTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnWeaponActorTypeChanged);
+		WeaponActorType = WeaponComp_Cached->GetCurWeaponActorType();
 	}
 }
 
@@ -29,7 +29,7 @@ void UCAnimInstance::NativeUninitializeAnimation()
 {
 	if (IsValid(WeaponComp_Cached))
 	{
-		WeaponComp_Cached->OnAttachmentTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnAttachmentTypeChanged);
+		WeaponComp_Cached->OnWeaponActorTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnWeaponActorTypeChanged);
 	}
 
 	Super::NativeUninitializeAnimation();
@@ -54,9 +54,9 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
-void UCAnimInstance::OnAttachmentTypeChanged(ACharacter* InOwnerCharacter, EAttachmentType InPrevAttachmentType, EAttachmentType InNewAttachmentType)
+void UCAnimInstance::OnWeaponActorTypeChanged(ACharacter* InOwnerCharacter, EWeaponActorType InPrevWeaponActorType, EWeaponActorType InNewWeaponActorType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(InOwnerCharacter) || (OwnerCharacter_Cached != InOwnerCharacter)) return;
 
-	AttachmentType = InNewAttachmentType;
+	WeaponActorType = InNewWeaponActorType;
 }

@@ -3,7 +3,7 @@
 
 #include "GameFramework/Character.h"
 
-#include "Weapon/CAttachment.h"
+#include "Weapon/CWeaponActor.h"
 #include "Weapon/CEquipment.h"
 
 #include "Type/CWeaponStructure.h"
@@ -20,30 +20,25 @@ void UCWeaponComponent::BeginPlay()
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
 
-	// CAttachment
-	CreateAttachment(OwnerCharacter_Cached, AttachmentType, AttachmentClass);
-	CurrentAttachmentType_Cached = EAttachmentType::Unarmed;
+	// CWeaponActor
+	CreateWeaponActor(OwnerCharacter_Cached, WeaponActorType, WeaponActorClass);
+	CurrentWeaponActorType_Cached = EWeaponActorType::Unarmed;
 
 	// CEquipment
 	CreateEquipment(OwnerCharacter_Cached, EquipmentType, EquipmentClass, EquipmentData, UnequipmentData);
 	CurrentEquipmentType_Cached = EEquipmentType::None;
 
-	// Bind to CEquipment from CAttachment
-	if (IsValid(OwnerCharacter_Cached) && IsValid(Attachment) && IsValid(Equipment))
+	// Bind to CEquipment from CWeaponActor
+	if (IsValid(OwnerCharacter_Cached) && IsValid(WeaponActor) && IsValid(Equipment))
 	{
-		Equipment->OnEquipmentBeginEquip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginEquip);
-		Equipment->OnEquipmentBeginUnequip.AddDynamic(Attachment, &ACAttachment::OnEquipmentBeginUnequip);
+		Equipment->OnEquipmentBeginEquip.AddDynamic(WeaponActor, &ACWeaponActor::OnEquipmentBeginEquip);
+		Equipment->OnEquipmentBeginUnequip.AddDynamic(WeaponActor, &ACWeaponActor::OnEquipmentBeginUnequip);
 	}
 }
 
-void UCWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+UObject* UCWeaponComponent::GetWeaponActor()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
-UObject* UCWeaponComponent::GetAttachment()
-{
-	return IsValid(Attachment) ? Attachment : nullptr;
+	return IsValid(WeaponActor) ? WeaponActor : nullptr;
 }
 
 UObject* UCWeaponComponent::GetEquipment()
@@ -53,49 +48,49 @@ UObject* UCWeaponComponent::GetEquipment()
 
 void UCWeaponComponent::SetUnarmedMode()
 {
-	ChangeMode(EAttachmentType::Unarmed);
+	ChangeMode(EWeaponActorType::Unarmed);
 }
 
 void UCWeaponComponent::SetSwordMode()
 {
-	ChangeMode(EAttachmentType::Sword);
+	ChangeMode(EWeaponActorType::Sword);
 }
 
-void UCWeaponComponent::PushContextToAttachment(const FActionContext& InActionContext)
+void UCWeaponComponent::PushContextToWeaponActor(const FActionContext& InActionContext)
 {
-	if (!IsValid(Attachment) || !IsValid(Equipment)) return;
+	if (!IsValid(WeaponActor) || !IsValid(Equipment)) return;
 
-	IHitContextProvider* provider = Cast<IHitContextProvider>(Attachment);
+	IHitContextProvider* provider = Cast<IHitContextProvider>(WeaponActor);
 	if (!provider) return;
 
 	// 1) Build contexts from current state
-	const FAttachmentContext attachmentContext = BuildAttachmentContext();
+	const FWeaponActorContext weaponActorContext = BuildWeaponActorContext();
 	const FEquipmentContext  equipmentContext = BuildEquipmentContext();
 
 	// 2) Push/Cache into the carrier
-	provider->SetLastAttachmentContext(attachmentContext);
+	provider->SetLastWeaponActorContext(weaponActorContext);
 	provider->SetLastEquipmentContext(equipmentContext);
 	provider->SetLastActionContext(InActionContext);
 }
 
-void UCWeaponComponent::ClearContextToAttachment()
+void UCWeaponComponent::ClearContextToWeaponActor()
 {
-	if (!IsValid(Attachment) || !IsValid(Equipment)) return;
+	if (!IsValid(WeaponActor) || !IsValid(Equipment)) return;
 
-	IHitContextProvider* provider = Cast<IHitContextProvider>(Attachment);
+	IHitContextProvider* provider = Cast<IHitContextProvider>(WeaponActor);
 	if (!provider) return;
 
 	provider->SetLastOverlapContext(FOverlapContext());
-	provider->SetLastAttachmentContext(FAttachmentContext());
+	provider->SetLastWeaponActorContext(FWeaponActorContext());
 	provider->SetLastEquipmentContext(FEquipmentContext());
 	provider->SetLastActionContext(FActionContext());
 }
 
-bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass)
+bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponActorType InWeaponActorType, TSubclassOf<ACWeaponActor> InWeaponActorClass)
 {
 	if (!IsValid(InOwnerCharacter)) return false;
 
-	if (!ensureMsgf(*InAttachmentClass, TEXT("UCWeaponComponent: InAttachmentClass is not set.")))
+	if (!ensureMsgf(*InWeaponActorClass, TEXT("UCWeaponComponent: InWeaponActorClass is not set.")))
 		return false;
 
 	UWorld* World = InOwnerCharacter->GetWorld();
@@ -106,17 +101,17 @@ bool UCWeaponComponent::CreateAttachment(AActor* InOwnerCharacter, EAttachmentTy
 	SpawnParams.Owner = InOwnerCharacter;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	// 2) Spawn Attachment
+	// 2) Spawn WeaponActor
 	// TODO : Deffered Spawn
-	ACAttachment* attachment = World->SpawnActor<ACAttachment>(InAttachmentClass, SpawnParams);
+	ACWeaponActor* weaponActor = World->SpawnActor<ACWeaponActor>(InWeaponActorClass, SpawnParams);
 
-	// 3) Check Attachment Validation
-	if (!ensureMsgf(IsValid(attachment), TEXT("UCWeaponComponent: Attachment was not created")))
+	// 3) Check WeaponActor Validation
+	if (!ensureMsgf(IsValid(weaponActor), TEXT("UCWeaponComponent: WeaponActor was not created")))
 		return false;
 
-	attachment->InitializeAttachment(InAttachmentType);
+	weaponActor->InitializeWeaponActor(InWeaponActorType);
 
-	Attachment = attachment;
+	WeaponActor = weaponActor;
 
 	return true;
 }
@@ -147,21 +142,21 @@ bool UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter, EEquipmentType
 	return true;
 }
 
-void UCWeaponComponent::ChangeMode(EAttachmentType InNewAttachmentType)
+void UCWeaponComponent::ChangeMode(EWeaponActorType InNewWeaponActorType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment)) return;
 
-	EAttachmentType newAttachmentType = InNewAttachmentType;
+	EWeaponActorType newWeaponActorType = InNewWeaponActorType;
 	EEquipmentType newEquipmentType = EEquipmentType::Max;
 
-	switch (newAttachmentType)
+	switch (newWeaponActorType)
 	{
-	case EAttachmentType::Unarmed:
+	case EWeaponActorType::Unarmed:
 		newEquipmentType = EEquipmentType::None;
 		Equipment->Unequip();
 		break;
 
-	case EAttachmentType::Sword:
+	case EWeaponActorType::Sword:
 		newEquipmentType = EEquipmentType::Default;
 		Equipment->Equip();
 		break;
@@ -170,19 +165,19 @@ void UCWeaponComponent::ChangeMode(EAttachmentType InNewAttachmentType)
 		newEquipmentType = EEquipmentType::Max;
 	}
 
-	ChangeAttachmentType(newAttachmentType);
+	ChangeWeaponActorType(newWeaponActorType);
 	ChangeEquipmentType(newEquipmentType);
 }
 
-void UCWeaponComponent::ChangeAttachmentType(EAttachmentType InNewAttachmentType)
+void UCWeaponComponent::ChangeWeaponActorType(EWeaponActorType InNewWeaponActorType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	EAttachmentType prevAttachmentType = CurrentAttachmentType_Cached;
-	CurrentAttachmentType_Cached = InNewAttachmentType;
+	EWeaponActorType prevWeaponActorType = CurrentWeaponActorType_Cached;
+	CurrentWeaponActorType_Cached = InNewWeaponActorType;
 
-	if (OnAttachmentTypeChanged.IsBound())
-		OnAttachmentTypeChanged.Broadcast(OwnerCharacter_Cached, prevAttachmentType, CurrentAttachmentType_Cached);
+	if (OnWeaponActorTypeChanged.IsBound())
+		OnWeaponActorTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponActorType, CurrentWeaponActorType_Cached);
 }
 
 
@@ -195,12 +190,12 @@ void UCWeaponComponent::ChangeEquipmentType(EEquipmentType InNewEquipmentType)
 		OnEquipmentTypeChanged.Broadcast(OwnerCharacter_Cached, PrevEquipmentType, CurrentEquipmentType_Cached);
 }
 
-FAttachmentContext UCWeaponComponent::BuildAttachmentContext() const
+FWeaponActorContext UCWeaponComponent::BuildWeaponActorContext() const
 {
-	FAttachmentContext attachmentContext;
-	attachmentContext.CurrentAttachmentType = CurrentAttachmentType_Cached;
+	FWeaponActorContext weaponActorContext;
+	weaponActorContext.CurrentWeaponActorType = CurrentWeaponActorType_Cached;
 
-	return attachmentContext;
+	return weaponActorContext;
 }
 
 FEquipmentContext UCWeaponComponent::BuildEquipmentContext() const

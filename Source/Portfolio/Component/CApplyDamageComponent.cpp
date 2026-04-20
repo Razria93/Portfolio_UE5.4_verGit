@@ -336,7 +336,7 @@ FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHi
 {
 	FApplyDamageSpecKey applyDamageSpecKey;
 
-	applyDamageSpecKey.AttachmentType = InHitContext.AttachmentContext.CurrentAttachmentType;
+	applyDamageSpecKey.WeaponActorType = InHitContext.WeaponActorContext.CurrentWeaponActorType;
 	applyDamageSpecKey.EquipmentType = InHitContext.EquipmentContext.CurrentEquipmentType;
 	applyDamageSpecKey.ActionType = InHitContext.ActionContext.CurrentActionType;
 	applyDamageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
@@ -459,7 +459,7 @@ void UCApplyDamageComponent::PrintApplyDamageContextInfo(const FHitContext& InHi
 {
 	FLog::Log(TEXT("////- Apply Damage Context -/////"));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.WeaponActorContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	PrintDamageSpecInfo(InApplyDamageSpec);
 	PrintDamageResultInfo(InApplyDamageResult);
 	FLog::Log(TEXT("/////////////////////////////////"));
@@ -485,7 +485,7 @@ void UCApplyDamageComponent::PrintApplyDamageRejectedContextInfo(const FHitConte
 	FLog::Log(TEXT("////- Reject Damage Context -////"));
 	PrintRejectReasonInfo(InRejectReason);
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.AttachmentContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
+	PrintHitContextInfo(InHitContext.WeaponActorContext, InHitContext.EquipmentContext, InHitContext.ActionContext);
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
@@ -516,11 +516,11 @@ void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOv
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintHitContextInfo(const FAttachmentContext& InAttachmentContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const
+void UCApplyDamageComponent::PrintHitContextInfo(const FWeaponActorContext& InWeaponActorContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext) const
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
-	FLog::Log(TEXT("[AttachmentContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentAttachmentType"), *UEnum::GetValueAsString(InAttachmentContext.CurrentAttachmentType)));
+	FLog::Log(TEXT("[WeaponActorContext]"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentWeaponActorType"), *UEnum::GetValueAsString(InWeaponActorContext.CurrentWeaponActorType)));
 
 	FLog::Log(TEXT("[EquipmentContext]"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentEquipmentType"), *UEnum::GetValueAsString(InEquipmentContext.CurrentEquipmentType)));

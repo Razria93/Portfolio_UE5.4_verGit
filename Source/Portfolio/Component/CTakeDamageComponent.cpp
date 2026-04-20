@@ -232,7 +232,7 @@ AController* UCTakeDamageComponent::ResolveInstigatorController(AController* Eve
 
 	/* === Fallback Process (DamageCauser-based) === */
 
-	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / attachment / trap)
+	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
 	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
 		return causerInstigator;
 
@@ -243,10 +243,10 @@ AController* UCTakeDamageComponent::ResolveInstigatorController(AController* Eve
 			return causerController;
 	}
 
-	// 2-3) Case 03: Proxy case (projectile / trap / attachment owned by another actor)
+	// 2-3) Case 03: Proxy case (projectile / trap / weaponActor owned by another actor)
 	if (AActor* causerOwner = DamageCauser->GetOwner())
 	{
-		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / attachment / trap)
+		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / weaponActor / trap)
 		if (AController* ownerInstigator = causerOwner->GetInstigatorController())
 			return ownerInstigator;
 
@@ -438,7 +438,7 @@ void UCTakeDamageComponent::PrintSpecKeyInfo(const FTakeDamagePacket& InTakeDama
 	const FApplyDamageSpecKey& applyDamageSpecKey = InTakeDamagePacket.Payload.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(applyDamageSpecKey.ActionIndex);
 
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.AttachmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponActorType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponActorType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.EquipmentType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(applyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));

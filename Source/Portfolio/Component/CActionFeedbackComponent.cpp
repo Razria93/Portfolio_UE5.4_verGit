@@ -8,7 +8,7 @@
 #include "Sound/SoundBase.h"
 
 #include "Component/CWeaponComponent.h"
-#include "Weapon/CAttachment.h"
+#include "Weapon/CWeaponActor.h"
 
 UCActionFeedbackComponent::UCActionFeedbackComponent()
 {
@@ -321,15 +321,15 @@ void UCActionFeedbackComponent::SetTrailActive(bool bActive)
 	UCWeaponComponent* weaponComp = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
 	if (!IsValid(weaponComp)) return;
 
-	UObject* uobject = weaponComp->GetAttachment();
+	UObject* uobject = weaponComp->GetWeaponActor();
 	if (!IsValid(uobject)) return;
 
-	ACAttachment* attachment = Cast<ACAttachment>(uobject);
-	if (!IsValid(attachment)) return;
+	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(uobject);
+	if (!IsValid(weaponActor)) return;
 
-	PrintTrailInfo(bActive, attachment);
+	PrintTrailInfo(bActive, weaponActor);
 
-	attachment->SetTrailActive(bActive);
+	weaponActor->SetTrailActive(bActive);
 }
 
 void UCActionFeedbackComponent::PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const
@@ -359,10 +359,10 @@ void UCActionFeedbackComponent::PrintActionSFXInfo(const FActionSFXFeedbackData&
 	FLog::Log(TEXT("================================="));
 }
 
-void UCActionFeedbackComponent::PrintTrailInfo(bool bActive, const ACAttachment* InAttachment) const
+void UCActionFeedbackComponent::PrintTrailInfo(bool bActive, const ACWeaponActor* InWeaponActor) const
 {
 	FLog::Log(TEXT("=== ActionFeedback Trail Info ==="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bActive ? TEXT("Active") : TEXT("Inactive")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Attachment"), *GetNameSafe(InAttachment)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponActor"), *GetNameSafe(InWeaponActor)));
 	FLog::Log(TEXT("================================="));
 }
