@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Component/CStateComponent.h"
+
 UCMovementComponent::UCMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -19,6 +21,9 @@ void UCMovementComponent::BeginPlay()
 
 	CharacterMovementComp_Cached = OwnerCharacter_Cached->GetCharacterMovement();
 	check(CharacterMovementComp_Cached);
+
+	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
+	check(StateComp_Cached);
 }
 
 void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -35,8 +40,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 void UCMovementComponent::OnMoveForward(float InValue)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!bCanMove) return;
+	if (!CanAcceptMoveInput()) return;
 	if (FMath::IsNearlyZero(InValue)) return;
 
 	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
@@ -48,8 +52,7 @@ void UCMovementComponent::OnMoveForward(float InValue)
 
 void UCMovementComponent::OnMoveRight(float InValue)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!bCanMove) return;
+	if (!CanAcceptMoveInput()) return;
 	if (FMath::IsNearlyZero(InValue)) return;
 
 	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
@@ -61,17 +64,17 @@ void UCMovementComponent::OnMoveRight(float InValue)
 
 void UCMovementComponent::OnWalk()
 {
-	SetSpeedType(ESpeedType::Walk);
+	ChangeMovementGait(EMovementGait::Walk);
 }
 
 void UCMovementComponent::OnRun()
 {
-	SetSpeedType(ESpeedType::Run);
+	ChangeMovementGait(EMovementGait::Run);
 }
 
 void UCMovementComponent::OnSprint()
 {
-	SetSpeedType(ESpeedType::Sprint);
+	ChangeMovementGait(EMovementGait::Sprint);
 }
 
 void UCMovementComponent::OnJump()
@@ -88,12 +91,39 @@ void UCMovementComponent::OnStopJump()
 	OwnerCharacter_Cached->StopJumping();
 }
 
-void UCMovementComponent::SetSpeedType(ESpeedType InType)
+// [Final Movement Gate]
+// Axis move input bypasses the orchestrator
+bool UCMovementComponent::CanAcceptMoveInput() const
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!bCanMove) return false;
 
-	float newSpeed = SpeedMap[InType];
-	CharacterMovementComp_Cached->MaxWalkSpeed = newSpeed;
+	if (IsValid(StateComp_Cached))
+	{
+		const EExecutionState executionState = StateComp_Cached->GetCurExecutionState();
+
+		if (executionState == EExecutionState::Dead) return false;
+		if (executionState == EExecutionState::Reaction) return false;
+	}
+
+	return true;
+}
+
+void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
+{
+	if (!IsValid(CharacterMovementComp_Cached)) return;
+	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max) return;
+
+	const float* speed = GaitSpeedMap.Find(InNewMovementGait);
+	if (!speed) return;
+	if (!speed)
+	{
+		FLog::Log(TEXT("[ChangeMovementGait] InValid GaitSpeedMap")); // Error
+		return;
+	}
+
+	CurrentMovementGait = InNewMovementGait;
+	CharacterMovementComp_Cached->MaxWalkSpeed = *speed;
 }
 
 void UCMovementComponent::CalculateSpeed()
