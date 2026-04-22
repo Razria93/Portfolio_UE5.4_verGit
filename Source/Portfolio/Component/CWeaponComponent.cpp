@@ -4,7 +4,6 @@
 #include "GameFramework/Character.h"
 
 #include "Weapon/CWeaponActor.h"
-#include "Weapon/CEquipment.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -21,19 +20,8 @@ void UCWeaponComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 
 	// CWeaponActor
-	CreateWeaponActor(OwnerCharacter_Cached, WeaponType, WeaponActorClass);
-	CurrentWeaponType_Cached = EWeaponType::Unarmed;
-
-	// CEquipment
-	CreateEquipment(OwnerCharacter_Cached, EquipmentType, EquipmentClass, EquipmentData, UnequipmentData);
-	CurrentEquipmentType_Cached = EEquipmentType::None;
-
-	// Bind to CEquipment from CWeaponActor
-	if (IsValid(OwnerCharacter_Cached) && IsValid(WeaponActor) && IsValid(Equipment))
-	{
-		Equipment->OnEquipmentBeginEquip.AddDynamic(WeaponActor, &ACWeaponActor::OnEquipmentBeginEquip);
-		Equipment->OnEquipmentBeginUnequip.AddDynamic(WeaponActor, &ACWeaponActor::OnEquipmentBeginUnequip);
-	}
+	CreateWeaponActor(OwnerCharacter_Cached, WeaponActorClassKey, WeaponActorClass);
+	CurrentWeaponType = EWeaponType::Unarmed;
 }
 
 UObject* UCWeaponComponent::GetWeaponActor()
@@ -41,49 +29,77 @@ UObject* UCWeaponComponent::GetWeaponActor()
 	return IsValid(WeaponActor) ? WeaponActor : nullptr;
 }
 
-UObject* UCWeaponComponent::GetEquipment()
+void UCWeaponComponent::AttachWeaponToHand()
 {
-	return IsValid(Equipment) ? Equipment : nullptr;
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->AttachToHandSocket();
 }
 
-void UCWeaponComponent::SetUnarmedMode()
+void UCWeaponComponent::AttachWeaponToHolster()
 {
-	ChangeMode(EWeaponType::Unarmed);
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->AttachToHolsterSocket();
 }
 
-void UCWeaponComponent::SetSwordMode()
+void UCWeaponComponent::CommitEquipWeapon()
 {
-	ChangeMode(EWeaponType::Sword);
+	if (!IsValid(WeaponActor)) return;
+
+	ChangeWeaponType(WeaponActor->GetWeaponType());
 }
 
-void UCWeaponComponent::PushContextToWeaponActor(const FActionContext& InActionContext)
+void UCWeaponComponent::CommitUnequipWeapon()
 {
-	if (!IsValid(WeaponActor) || !IsValid(Equipment)) return;
+	ChangeWeaponType(EWeaponType::Unarmed);
+}
+
+void UCWeaponComponent::PushContext(const FActionContext& InActionContext)
+{
+	if (!IsValid(WeaponActor)) return;
 
 	IHitContextProvider* provider = Cast<IHitContextProvider>(WeaponActor);
 	if (!provider) return;
 
 	// 1) Build contexts from current state
 	const FWeaponContext weaponContext = BuildWeaponContext();
-	const FEquipmentContext  equipmentContext = BuildEquipmentContext();
 
 	// 2) Push/Cache into the carrier
 	provider->SetLastWeaponContext(weaponContext);
-	provider->SetLastEquipmentContext(equipmentContext);
 	provider->SetLastActionContext(InActionContext);
 }
 
-void UCWeaponComponent::ClearContextToWeaponActor()
+void UCWeaponComponent::ClearContext()
 {
-	if (!IsValid(WeaponActor) || !IsValid(Equipment)) return;
+	if (!IsValid(WeaponActor)) return;
 
 	IHitContextProvider* provider = Cast<IHitContextProvider>(WeaponActor);
 	if (!provider) return;
 
 	provider->SetLastOverlapContext(FOverlapContext());
 	provider->SetLastWeaponContext(FWeaponContext());
-	provider->SetLastEquipmentContext(FEquipmentContext());
 	provider->SetLastActionContext(FActionContext());
+}
+
+void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	EWeaponType prevWeaponType = CurrentWeaponType;
+	CurrentWeaponType = InNewWeaponType;
+
+	if (OnWeaponTypeChanged.IsBound())
+		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType);
+}
+
+FWeaponContext UCWeaponComponent::BuildWeaponContext() const
+{
+	FWeaponContext weaponContext;
+
+	weaponContext.WeaponType = CurrentWeaponType;
+
+	return weaponContext;
 }
 
 bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass)
@@ -114,94 +130,4 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	WeaponActor = weaponActor;
 
 	return true;
-}
-
-bool UCWeaponComponent::CreateEquipment(AActor* InOwnerCharacter, EEquipmentType InEquipmentType, TSubclassOf<UCEquipment> InEquipmentClass, const FEquipmentData& InEquipmentDatas, const FEquipmentData& InUnequipmentDatas)
-{
-	if (!IsValid(InOwnerCharacter)) return false;
-
-	if (!ensureMsgf(*InEquipmentClass, TEXT("UCWeaponComponent: InEquipmentClass is not set.")))
-		return false;
-
-	// 1) Create Equipment
-	UCEquipment* equipment = NewObject<UCEquipment>(this, InEquipmentClass);
-
-	// 2) Check Equipment Validation
-	if (!ensureMsgf(IsValid(equipment), TEXT("UCWeaponComponent: Equipment was not created.")))
-		return false;
-
-	ACharacter* character = Cast<ACharacter>(InOwnerCharacter);
-
-	if (!ensureMsgf(IsValid(character), TEXT("UCActionComponent:InOwnerCharacter cast failed.")))
-		return false;
-
-	equipment->InitializeEquipment(character, InEquipmentType, InEquipmentDatas, InUnequipmentDatas);
-
-	Equipment = equipment;
-
-	return true;
-}
-
-void UCWeaponComponent::ChangeMode(EWeaponType InNewWeaponType)
-{
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(Equipment)) return;
-
-	EWeaponType newWeaponType = InNewWeaponType;
-	EEquipmentType newEquipmentType = EEquipmentType::Max;
-
-	switch (newWeaponType)
-	{
-	case EWeaponType::Unarmed:
-		newEquipmentType = EEquipmentType::None;
-		Equipment->Unequip();
-		break;
-
-	case EWeaponType::Sword:
-		newEquipmentType = EEquipmentType::Default;
-		Equipment->Equip();
-		break;
-
-	default:
-		newEquipmentType = EEquipmentType::Max;
-	}
-
-	ChangeWeaponType(newWeaponType);
-	ChangeEquipmentType(newEquipmentType);
-}
-
-void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
-{
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	EWeaponType prevWeaponType = CurrentWeaponType_Cached;
-	CurrentWeaponType_Cached = InNewWeaponType;
-
-	if (OnWeaponTypeChanged.IsBound())
-		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType_Cached);
-}
-
-
-void UCWeaponComponent::ChangeEquipmentType(EEquipmentType InNewEquipmentType)
-{
-	EEquipmentType PrevEquipmentType = CurrentEquipmentType_Cached;
-	CurrentEquipmentType_Cached = InNewEquipmentType;
-
-	if (OnEquipmentTypeChanged.IsBound())
-		OnEquipmentTypeChanged.Broadcast(OwnerCharacter_Cached, PrevEquipmentType, CurrentEquipmentType_Cached);
-}
-
-FWeaponContext UCWeaponComponent::BuildWeaponContext() const
-{
-	FWeaponContext weaponContext;
-	weaponContext.CurrentWeaponType = CurrentWeaponType_Cached;
-
-	return weaponContext;
-}
-
-FEquipmentContext UCWeaponComponent::BuildEquipmentContext() const
-{
-	FEquipmentContext equipmentContext;
-	equipmentContext.CurrentEquipmentType = CurrentEquipmentType_Cached;
-
-	return equipmentContext;
 }

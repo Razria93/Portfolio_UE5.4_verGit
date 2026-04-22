@@ -12,15 +12,7 @@ enum class EWeaponType : uint8
 	Unarmed = 0,
 	Sword,
 	All,
-	Max,
-};
 
-UENUM(BlueprintType)
-enum class EEquipmentType : uint8
-{
-	None = 0,
-	Default,
-	All,
 	Max,
 };
 
@@ -28,12 +20,14 @@ UENUM(BlueprintType)
 enum class EActionType : uint8
 {
 	Idle = 0,
+
 	Equip,
 	Unequip,
-	LightAttack,
+	
 	ComboAttack,
+	
 	All,
-
+	
 	Max,
 };
 
@@ -42,6 +36,8 @@ enum class EReactionType : uint8
 {
 	None = 0,
 	Hit,
+
+	Max,
 };
 
 UENUM(BlueprintType)
@@ -146,28 +142,6 @@ enum class EActionSFXPlayType : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FEquipmentData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	class UAnimMontage* Montage = nullptr;
-
-	UPROPERTY(EditAnywhere)
-	float PlayRate = 1.0f;
-
-	UPROPERTY(EditAnywhere)
-	bool bCanMove = false;
-
-public:
-	FEquipmentData() = default;
-
-public:
-	bool IsValidMinimal() const;
-};
-
-USTRUCT(BlueprintType)
 struct FActionData
 {
 	GENERATED_BODY()
@@ -194,29 +168,35 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FActionDefinition
+{
+	GENERATED_BODY()
+
+public:
+	// Action ID
+	UPROPERTY(EditAnywhere)
+	EActionType ActionType = EActionType::Max;
+
+	// Action Executor
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCAction> ActionClass = nullptr;
+
+	// Action Playback Data
+	UPROPERTY(EditAnywhere)
+	TArray<FActionData> ActionDatas;
+};
+
+USTRUCT(BlueprintType)
 struct FWeaponContext
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
-	EWeaponType CurrentWeaponType = EWeaponType::Max;
+	EWeaponType WeaponType = EWeaponType::Max;
 
 public:
 	FWeaponContext() = default;
-};
-
-USTRUCT(BlueprintType)
-struct FEquipmentContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	EEquipmentType CurrentEquipmentType = EEquipmentType::Max;
-
-public:
-	FEquipmentContext() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -226,7 +206,7 @@ struct FActionContext
 
 public:
 	UPROPERTY(EditAnywhere)
-	EActionType CurrentActionType = EActionType::Max;
+	EActionType ActionType = EActionType::Max;
 
 	UPROPERTY(EditAnywhere)
 	int32 ActionIndex = INDEX_NONE;
@@ -291,9 +271,6 @@ public:
 	FWeaponContext WeaponContext = FWeaponContext();
 
 	UPROPERTY(Transient)
-	FEquipmentContext  EquipmentContext = FEquipmentContext();
-
-	UPROPERTY(Transient)
 	FActionContext ActionContext = FActionContext();
 
 public:
@@ -339,9 +316,6 @@ public:
 	EWeaponType WeaponType = EWeaponType::Max;
 
 	UPROPERTY(EditAnywhere)
-	EEquipmentType EquipmentType = EEquipmentType::Max;
-
-	UPROPERTY(EditAnywhere)
 	EActionType ActionType = EActionType::Max;
 
 	UPROPERTY(EditAnywhere)
@@ -353,8 +327,7 @@ public:
 public:
 	bool operator==(const FApplyDamageSpecKey& InOther) const
 	{
-		return EquipmentType == InOther.EquipmentType
-			&& WeaponType == InOther.WeaponType
+		return WeaponType == InOther.WeaponType
 			&& ActionType == InOther.ActionType
 			&& ActionIndex == InOther.ActionIndex;
 	}
@@ -365,7 +338,6 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
 	uint32 H = 0;
 
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.WeaponType)));
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.EquipmentType)));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.ActionType)));
 	H = HashCombine(H, GetTypeHash(InOther.ActionIndex));
 

@@ -20,8 +20,8 @@ class PORTFOLIO_API ACWeaponActor : public AActor, public IHitContextProvider
 public:
 	ACWeaponActor();
 
+	// === Weapon Actor Data ================================ //
 public:
-	/* === Editor Settings === */
 	UPROPERTY(EditAnywhere, Category = "Weapon|SocketName")
 	FName SocketName_Holster;
 
@@ -32,31 +32,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Feedback|Trail")
 	bool bDisableTrailOnBeginPlay = true;
 
-protected:
-	/* === Components === */
-	UPROPERTY(VisibleAnywhere)
-	class USceneComponent* RootSceneComponent = nullptr;
-
-	UPROPERTY(VisibleAnywhere)
-	class UNiagaraComponent* TrailComponent = nullptr;
+	// ====================================================== //
 
 private:
 	UPROPERTY(Transient)
 	EWeaponType WeaponType;
-
-public:
-	/* === Context Carrier === */
-	UPROPERTY(Transient)
-	FOverlapContext LastOverlapContext;
-
-	UPROPERTY(Transient)
-	FWeaponContext LastWeaponContext;
-
-	UPROPERTY(Transient)
-	FEquipmentContext LastEquipmentContext;
-
-	UPROPERTY(Transient)
-	FActionContext LastActionContext;
 
 private:
 	UPROPERTY(Transient)
@@ -66,9 +46,35 @@ private:
 	int32 CurrentHitWindowId = INDEX_NONE;
 
 private:
+	/* === Components === */
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* RootSceneComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class UNiagaraComponent* TrailComponent = nullptr;
+
+private:
+	/* === Context Carrier === */
+	UPROPERTY(Transient)
+	FOverlapContext LastOverlapContext_Cached;
+
+	UPROPERTY(Transient)
+	FWeaponContext LastWeaponContext_Cached;
+
+	UPROPERTY(Transient)
+	FActionContext LastActionContext_Cached;
+
+
+private:
 	/* === Cached Objects === */
+	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached;
+
+	UPROPERTY(Transient)
 	class UCApplyDamageComponent* ApplyDamageComp_Cached;
+
+private:
+	UPROPERTY(Transient)
 	TArray<class UShapeComponent*> Collisions_Cached;
 
 public:
@@ -85,36 +91,44 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void Tick(float DeltaTime) override;
-
-public:
 	void InitializeWeaponActor(EWeaponType InWeaponType);
 
 public:
 	/* === IHitContextProducer (Getter) === */
 	virtual const FOverlapContext& GetLastOverlapContext() const override;
 	virtual const FWeaponContext& GetLastWeaponContext() const override;
-	virtual const FEquipmentContext& GetLastEquipmentContext() const override;
 	virtual const FActionContext& GetLastActionContext() const override;
 
 public:
 	/* === IHitContextProducer (Setter) === */
 	virtual void SetLastOverlapContext(const FOverlapContext& InOverlapContext) override;
 	virtual void SetLastWeaponContext(const FWeaponContext& InWeaponContext) override;
-	virtual void SetLastEquipmentContext(const FEquipmentContext& InEquipmentContext) override;
 	virtual void SetLastActionContext(const FActionContext& InActionContext) override;
 
 public:
 	/* === Getter === */
-	EWeaponType GetWeaponType() const;
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+
+public:
+	FORCEINLINE bool IsHitWindowOpened() const { return bHitWindowOpened; }
+	FORCEINLINE int32 GetCurrentHitWindowId() const { return CurrentHitWindowId; }
 
 public:
 	/* === Setter === */
-	void SetWeaponType(EWeaponType InWeaponType);
-	void SetTrailActive(bool bEnable);
+	void ChangeWeaponType(EWeaponType InWeaponType);
+	void ToggleTrailActive(bool bEnable);
 
 public:
-	void AttachToOwnerSocket(FName InSocketName);
+	/* === AnimNotify Events === */
+	// CAnimNotify_Equip / Unequip
+	void AttachToHandSocket();
+	void AttachToHolsterSocket();
+
+public:
+	/* === AnimNotify Events === */
+	// CAnimNotify_Collision
+	void CollisionEnabled(FName InName);
+	void CollisionDisabled();
 
 public:
 	/* === [IN] Engine Delgate Events === */
@@ -125,24 +139,12 @@ public:
 	UFUNCTION()
 	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-public:
-	/* === [IN] Custom Delgate Events === */
-	// CEquipment
-	UFUNCTION()
-	void OnEquipmentBeginEquip();
-
-	UFUNCTION()
-	void OnEquipmentBeginUnequip();
-
-public:
-	/* === AnimNotify Events === */
-	// CAnimNotify_Collision
-	void CollisionEnabled(FName InName);
-	void CollisionDisabled();
-
 private:
 	FOverlapContext BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const;
 	FHitContext BuildHitContext(const FOverlapContext& InOverlapContext) const;
+
+private:
+	void AttachToOwnerSocket(FName InSocketName);
 
 private:
 	void PrintBeginOverlapContextInfo(const FHitContext& InHitContext);
@@ -150,7 +152,7 @@ private:
 
 private:
 	void PrintOverlapContextInfo(const FOverlapContext& Context);
-	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FEquipmentContext& InEquipmentContext, const FActionContext& InActionContext);
+	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext);
 
 private:
 	void PrintTrailInfo(bool bEnable) const;

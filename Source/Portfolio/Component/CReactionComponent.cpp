@@ -447,17 +447,17 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InAp
 {
 	OutApplyDamageSpecKeys.Reset();
 
-	// 1) 'Exact' Key
+	// 1) Exact: Weapon + Action + Index
 	OutApplyDamageSpecKeys.Add(InApplyDamageSpecKey);
 
-	// 2) 'Index Any' Key
+	// 2) Any Index: Weapon + Action + AnyIndex
 	{
 		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
 		candidateKey.ActionIndex = INDEX_NONE;
 		OutApplyDamageSpecKeys.Add(candidateKey);
 	}
 
-	// 3) 'Action + Index Any' Key
+	// 3) Any Action: Weapon + AnyAction + AnyIndex
 	{
 		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
 		candidateKey.ActionType = EActionType::All;
@@ -465,20 +465,10 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InAp
 		OutApplyDamageSpecKeys.Add(candidateKey);
 	}
 
-	// 4) 'Equipment + Action + Index Any' Key
-	{
-		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
-		candidateKey.EquipmentType = EEquipmentType::All;
-		candidateKey.ActionType = EActionType::All;
-		candidateKey.ActionIndex = INDEX_NONE;
-		OutApplyDamageSpecKeys.Add(candidateKey);
-	}
-
-	// 5) 'WeaponActor + Equipment + Action + Index Any' Key (All Any Key)
+	// 4) Any Weapon: AnyWeapon + AnyAction + AnyIndex
 	{
 		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
 		candidateKey.WeaponType = EWeaponType::All;
-		candidateKey.EquipmentType = EEquipmentType::All;
 		candidateKey.ActionType = EActionType::All;
 		candidateKey.ActionIndex = INDEX_NONE;
 		OutApplyDamageSpecKeys.Add(candidateKey);
@@ -660,7 +650,6 @@ void UCReactionComponent::PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey&
 
 	FLog::Log(TEXT("---- ApplyDamageSpecKey Info ----"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.EquipmentType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 	FLog::Log(TEXT("---------------------------------"));
@@ -673,7 +662,6 @@ void UCReactionComponent::PrintReactionDataKeyInfo(const FReactionDataKey& InRea
 
 	FLog::Log(TEXT("----- ReactionDataKey Info ------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.EquipmentType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(applyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InReactionDataKey.ReactionType)));
@@ -688,7 +676,6 @@ void UCReactionComponent::PrintReactionDataInfo(const FReactionData& InReactionD
 	FLog::Log(TEXT("------ ReactionData Info --------"));
 	// ApplyDamageSpec Key
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.EquipmentType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(applyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 
