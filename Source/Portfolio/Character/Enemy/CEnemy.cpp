@@ -80,11 +80,6 @@ ACEnemy::ACEnemy()
 void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (IsValid(WeaponComponent))
-	{
-		WeaponComponent->SetSwordMode();
-	}
 }
 
 void ACEnemy::Tick(float DeltaTime)
@@ -120,17 +115,6 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;
-}
-
-bool ACEnemy::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const
-{
-	if (!bHasActiveActionFeedbackKey) return false;
-
-	OutActionFeedbackRequest.ActionFeedbackKey = ActiveActionFeedbackKey;
-	OutActionFeedbackRequest.ActionFeedbackTiming = InActionFeedbackTiming;
-	OutActionFeedbackRequest.TriggerKey = InTriggerKey;
-
-	return true;
 }
 
 void ACEnemy::CacheActiveActionFeedbackKey(EActionType InActionType, int32 InActionIndex)

@@ -34,7 +34,7 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	void PlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);
+	void PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);
 
 private:
 	bool CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const;
@@ -54,7 +54,7 @@ private:
 private:
 	void PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData);
 	void PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData);
-	void SetTrailActive(bool bActive);
+	void ToggleTrailActive(bool bActive);
 
 private:
 	void PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const;

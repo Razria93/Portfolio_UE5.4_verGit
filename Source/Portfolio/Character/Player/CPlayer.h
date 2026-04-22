@@ -3,11 +3,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interface/TargetContextProvider.h"
-#include "Interface/ActionFeedbackRequestProvider.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider, public IActionFeedbackRequestProvider
+class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider
 {
 	GENERATED_BODY()
 
@@ -88,10 +87,6 @@ public:
 public:
 	// Interface API
 	int GetTargetPriority() const override { return Priority; }
-
-public:
-	// Interface API [Notify -> ActionFeedbackComp]
-	bool BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const override;
 
 public:
 	void HandleJump();

@@ -166,19 +166,6 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	return finalDamage;
 }
 
-bool ACPlayer::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const
-{
-	if (!IsValid(ActionComponent)) return false;
-
-	UCAction* curAction = ActionComponent->GetCurrentAction();
-	if (!IsValid(curAction)) return false;
-
-	// Export
-	OutActionFeedbackRequest = curAction->BuildActionFeedbackRequest(InActionFeedbackTiming, InTriggerKey);
-
-	return true;
-}
-
 void ACPlayer::HandleJump()
 {
 	if (!IsValid(ActionOrchestratorComponent)) return;

@@ -130,7 +130,7 @@ void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* In
 			{
 				if (UCWeaponComponent* weaponComp = pawn->FindComponentByClass<UCWeaponComponent>())
 				{
-					weaponComp->ClearContextToWeaponActor();
+					weaponComp->ClearContext();
 				}
 
 				if (ACEnemy* enemy = Cast<ACEnemy>(pawn))

@@ -26,7 +26,7 @@ void UCActionFeedbackComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 }
 
-void UCActionFeedbackComponent::PlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest)
+void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
 	if (!CanPlayActionFeedback(InActionFeedbackRequest)) return;
 
@@ -147,7 +147,7 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 	}
 
 	FLog::Log(TEXT("[ActionFeedback] Trail | Matched Data")); // Valid
-	SetTrailActive(bestData->bTrailActive);
+	ToggleTrailActive(bestData->bTrailActive);
 }
 
 void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
@@ -314,7 +314,7 @@ void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InAc
 	}
 }
 
-void UCActionFeedbackComponent::SetTrailActive(bool bActive)
+void UCActionFeedbackComponent::ToggleTrailActive(bool bActive)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
@@ -329,7 +329,7 @@ void UCActionFeedbackComponent::SetTrailActive(bool bActive)
 
 	PrintTrailInfo(bActive, weaponActor);
 
-	weaponActor->SetTrailActive(bActive);
+	weaponActor->ToggleTrailActive(bActive);
 }
 
 void UCActionFeedbackComponent::PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const
