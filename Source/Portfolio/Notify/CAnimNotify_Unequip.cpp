@@ -1,8 +1,10 @@
 #include "Notify/CAnimNotify_Unequip.h"
 #include "ProjectGlobal.h"
 
-#include "Component/CWeaponComponent.h"
-#include "Weapon/CEquipment.h"
+#include "GameFramework/Character.h"
+
+#include "Component/CActionComponent.h"
+#include "Action/CAction_Unequip.h"
 
 UCAnimNotify_Unequip::UCAnimNotify_Unequip()
 {
@@ -10,28 +12,23 @@ UCAnimNotify_Unequip::UCAnimNotify_Unequip()
 
 FString UCAnimNotify_Unequip::GetNotifyName_Implementation() const
 {
-	return MakeNotifyName("Unequip");
+	return TEXT("Unequip");
 }
 
 void UCAnimNotify_Unequip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	UCWeaponComponent* weaponComp = GetWeaponComponent(MeshComp);
+	if (!IsValid(MeshComp)) return;
 
-	if (!weaponComp)
-		return;
+	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
+	if (!IsValid(ownerCharacter)) return;
 
-	UObject* uobject = weaponComp->GetEquipment();
+	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
+	if (!actionComp) return;
 
-	UCEquipment* equipment = Cast<UCEquipment>(uobject);
+	UCAction_Unequip* action_Unequip = Cast<UCAction_Unequip>(actionComp->GetCurrentAction());
+	if (!action_Unequip) return;
 
-	if (!equipment)
-		return;
-
-	switch (FlowType)
-	{
-	case EAnimNotifyFlow::Begin: equipment->Begin_Unequip(); return;
-	case EAnimNotifyFlow::End: equipment->End_Unequip(); return;
-	}
+	action_Unequip->DetachWeapon();
 }

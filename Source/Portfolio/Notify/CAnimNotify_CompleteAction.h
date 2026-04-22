@@ -2,15 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotify.h"
-#include "CAnimNotify_Action.generated.h"
+#include "CAnimNotify_CompleteAction.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_Action : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_CompleteAction : public UCAnimNotify
 {
 	GENERATED_BODY()
 
 public:
-	UCAnimNotify_Action();
+	UCAnimNotify_CompleteAction();
 
 private:
 	FString GetNotifyName_Implementation() const override;

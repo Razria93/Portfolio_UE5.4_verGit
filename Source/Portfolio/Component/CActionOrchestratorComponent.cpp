@@ -79,7 +79,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
 
-	if (!IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached))
+	if (!IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached) || !IsValid(ActionComp_Cached))
 		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
 
 	if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Idle))
@@ -89,19 +89,24 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	switch (InRequest.IntentType)
 	{
 	case EEquipmentActionIntent::Toggle:
-		if (WeaponComp_Cached->CheckCurWeaponType(EWeaponType::Unarmed))
+	{
+		if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
 		{
-			WeaponComp_Cached->SetSwordMode();
-			return BuildExecutedResult();
-		}
+			const bool bStarted = ActionComp_Cached->StartAction(EActionType::Equip);
 
-		if (WeaponComp_Cached->CheckCurWeaponType(EWeaponType::Sword))
+			return bStarted
+				? BuildExecutedResult(EActionType::Equip)
+				: BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
+		}
+		else
 		{
-			WeaponComp_Cached->SetUnarmedMode();
-			return BuildExecutedResult();
-		}
+			const bool bStarted = ActionComp_Cached->StartAction(EActionType::Unequip);
 
-		return BuildRejectedResult(EActionRequestRejectReason::InvalidEquipment);
+			return bStarted
+				? BuildExecutedResult(EActionType::Unequip)
+				: BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
+		}
+	}
 
 	default:
 		return BuildIgnoredResult();
@@ -120,7 +125,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	{
 	case ECombatActionIntent::ComboAttack:
 	{
-		const bool bStarted = ActionComp_Cached->TryStartAction(EActionType::ComboAttack);
+		const bool bStarted = ActionComp_Cached->StartAction(EActionType::ComboAttack);
 
 		if (!bStarted)
 			return BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
@@ -155,7 +160,7 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 		return false;
 	}
 
-	const EExecutionState executionState = StateComp_Cached->GetCurExecutionState();
+	const EExecutionState executionState = StateComp_Cached->GetCurrentExecutionState();
 
 	if (executionState == EExecutionState::Reaction)
 	{

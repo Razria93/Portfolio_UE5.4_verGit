@@ -3,8 +3,8 @@
 
 #include "GameFramework/Character.h"
 
-#include "Component/CActionFeedbackComponent.h"
-#include "Interface/ActionFeedbackRequestProvider.h"
+#include "Component/CActionComponent.h"
+#include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -26,16 +26,11 @@ void UCAnimNotify_ActionFeedback::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
 	if (!IsValid(ownerCharacter)) return;
 
-	IActionFeedbackRequestProvider* requestProvider = Cast<IActionFeedbackRequestProvider>(ownerCharacter);
-	if (!requestProvider) return;
+	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
+	if (!IsValid(actionComp)) return;
 
-	UCActionFeedbackComponent* actionFeedbackComp = ownerCharacter->FindComponentByClass<UCActionFeedbackComponent>();
-	if (!IsValid(actionFeedbackComp)) return;
+	UCAction* curAction = actionComp->GetCurrentAction();
+	if (!IsValid(curAction)) return;
 
-	FActionFeedbackRequest actionFeedbackRequest;
-	if (!requestProvider->BuildActionFeedbackRequest(EActionFeedbackTiming::TriggerOnce, TriggerKey, actionFeedbackRequest)) return;
-
-	FLog::Log(FString::Printf(TEXT("[ActionFeedback_NotifyPoint]  ActionFeedbackTiming = %s | TriggerKey = %s"), *UEnum::GetValueAsString(EActionFeedbackTiming::TriggerOnce), *TriggerKey.ToString()));
-
-	actionFeedbackComp->PlayActionFeedback(actionFeedbackRequest);
+	curAction->RequestFeedback(EActionFeedbackTiming::TriggerOnce, TriggerKey);
 }

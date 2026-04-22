@@ -8,5 +8,14 @@ UCLASS()
 class PORTFOLIO_API UCAction_Unequip : public UCAction
 {
 	GENERATED_BODY()
-	
+
+public:
+	bool CanStart() const override;
+
+public:
+	bool Start() override;
+	void Complete() override;
+
+public:
+	void DetachWeapon();
 };

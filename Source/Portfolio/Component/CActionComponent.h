@@ -17,14 +17,8 @@ public:
 
 	// === ActionData ======================================= //
 private:
-	UPROPERTY(EditAnywhere, Category = "Action|Type")
-	EActionType ActionType;
-
-	UPROPERTY(EditAnywhere, Category = "Action|Class")
-	TSubclassOf<class UCAction> ActionClass;
-
-	UPROPERTY(EditAnywhere, Category = "Action|Data")
-	TArray<FActionData> ActionDatas;
+	UPROPERTY(EditAnywhere, Category = "Action")
+	TArray<FActionDefinition> ActionDefinitions;
 
 	// ====================================================== //
 
@@ -35,12 +29,15 @@ private:
 private:
 	/* === State === */
 	UPROPERTY(Transient)
-	EActionType CurrentActionType_Cached;
+	EActionType CurrentActionType = EActionType::Max;
 
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCStateComponent* StateComp_Cached = nullptr;
 
 public:
 	FActionTypeChanged OnActionTypeChanged;
@@ -53,22 +50,29 @@ public:
 
 public:
 	/* === Check / Query === */
-	FORCEINLINE bool CheckCurrentActionType(EActionType InNewActionType) const { return CurrentActionType_Cached == InNewActionType; }
+	FORCEINLINE bool CheckCurrentActionType(EActionType InNewActionType) const { return CurrentActionType == InNewActionType; }
 
 public:
 	/* === Getter === */
-	FORCEINLINE EActionType GetCurrentActionType() const { return CurrentActionType_Cached; }
+	FORCEINLINE EActionType GetCurrentActionType() const { return CurrentActionType; }
 
 public:
 	class UCAction* GetCurrentAction() const;
 
+private:
+	bool CanStartAction() const;
+
 public:
-	/* === Try Start API === */
-	bool TryStartAction(EActionType InActionType);
+	bool StartAction(EActionType InActionType);
+	void CompleteAction();
+
+private:
+	void EnterActionState(EActionType InActionType);
+	void ExitActionState();
 
 private:
 	void ChangeActionType(EActionType InNewActionType);
 
 private:
-	bool CreateAction(AActor* InOwnerCharacter, EActionType InActionType, TSubclassOf<UCAction> InActionClass, const TArray<FActionData> InActionDatas);
+	bool CreateAction(ACharacter* InOwnerCharacter, const FActionDefinition& InActionDefinition);
 };

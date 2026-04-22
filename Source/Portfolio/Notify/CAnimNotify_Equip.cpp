@@ -1,8 +1,10 @@
 #include "Notify/CAnimNotify_Equip.h"
 #include "ProjectGlobal.h"
 
-#include "Component/CWeaponComponent.h"
-#include "Weapon/CEquipment.h"
+#include "GameFramework/Character.h"
+
+#include "Component/CActionComponent.h"
+#include "Action/CAction_Equip.h"
 
 UCAnimNotify_Equip::UCAnimNotify_Equip()
 {
@@ -10,26 +12,23 @@ UCAnimNotify_Equip::UCAnimNotify_Equip()
 
 FString UCAnimNotify_Equip::GetNotifyName_Implementation() const
 {
-	return MakeNotifyName("Equip");
+	return TEXT("Equip");
 }
 
 void UCAnimNotify_Equip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	UCWeaponComponent* weaponComp = GetWeaponComponent(MeshComp);
+	if (!IsValid(MeshComp)) return;
 
-	if (!weaponComp) return;
+	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
+	if (!IsValid(ownerCharacter)) return;
 
-	UObject* uobject = weaponComp->GetEquipment();
+	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
+	if (!actionComp) return;
 
-	UCEquipment* equipment = Cast<UCEquipment>(uobject);
+	UCAction_Equip* action_Equip = Cast<UCAction_Equip>(actionComp->GetCurrentAction());
+	if (!action_Equip) return;
 
-	if (!equipment) return;
-
-	switch (FlowType)
-	{
-	case EAnimNotifyFlow::Begin: equipment->Begin_Equip(); return;
-	case EAnimNotifyFlow::End: equipment->End_Equip(); return;
-	}
+	action_Equip->AttachWeapon();
 }

@@ -16,9 +16,6 @@ protected:
 
 protected:
 	UPROPERTY(Transient)
-	bool bBeginAction;	// Action start triggered
-
-	UPROPERTY(Transient)
 	bool bIsAction;		// Action is active
 
 protected:
@@ -36,9 +33,6 @@ protected:
 	class UCWeaponComponent* WeaponComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached = nullptr;
-
-	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
@@ -52,21 +46,23 @@ public:
 	void SetActionType(EActionType InActionType);
 
 public:
-	virtual bool PlayAction();
-	virtual void BeginPlayAction();
-	virtual void EndPlayAction();
-	virtual void NextPlayAction() {};
+	/* === Action Arbiter === */
+	virtual bool CanStart() const;
 
 public:
+	virtual bool Start();
+	virtual void Complete();
+
+public:
+	void PushHitContext();
+	void ClearHitContext();
+
+public:
+	void RequestFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey = NAME_None) const;
+
+protected:
 	virtual FActionContext BuildActionContext() const;
-	virtual FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
-
-protected:
-	void PushContextToWeaponActor(const FActionContext& InActionContext);
-	void ClearContextToWeaponActor();
-
-protected:
-	void RequestPlayActionFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey = NAME_None) const;
+	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 public:
 	/* === [IN] Custom Delgate Events === */

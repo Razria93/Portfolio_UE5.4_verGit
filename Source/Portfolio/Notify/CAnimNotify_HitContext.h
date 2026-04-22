@@ -2,30 +2,26 @@
 
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotify.h"
-#include "CAnimNotify_Collision.generated.h"
+#include "CAnimNotify_HitContext.generated.h"
 
 UENUM()
-enum class ECollisionNotifyType : uint8
+enum class EHitContextNotifyType : uint8
 {
-	Enabled,
-	Disabled,
+	Push,
+	Clear,
 };
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_Collision : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_HitContext : public UCAnimNotify
 {
 	GENERATED_BODY()
 
-private:
-	UPROPERTY(EditAnywhere)
-	ECollisionNotifyType NotifyType = ECollisionNotifyType::Enabled;
-
-private:
-	UPROPERTY(EditAnywhere)
-	FName CollisionName;
-
 public:
-	UCAnimNotify_Collision();
+	UCAnimNotify_HitContext();
+
+private:
+	UPROPERTY(EditAnywhere)
+	EHitContextNotifyType NotifyType = EHitContextNotifyType::Push;
 
 private:
 	FString GetNotifyName_Implementation() const override;

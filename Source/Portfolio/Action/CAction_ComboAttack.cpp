@@ -4,10 +4,8 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CWeaponComponent.h"
-#include "Component/CStateComponent.h"
 
 #include "Type/CWeaponStructure.h"
-#include "Type/CStateStructure.h"
 
 void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
 {
@@ -19,114 +17,109 @@ void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActio
 	bExistPreInput = false;
 }
 
-void UCAction_ComboAttack::Tick(float InDeltaTime)
+bool UCAction_ComboAttack::CanStart() const
 {
-	Super::Tick(InDeltaTime);
-}
+	if (!Super::CanStart()) return false;
+	if (!IsValid(WeaponComp_Cached)) return false;
 
-bool UCAction_ComboAttack::PlayAction()
-{
-	// [Re-call] Convert 're-invoked PlayAction()' into 'buffered pre-input'
-	if (bEnablePreInput)
-	{
-		bEnablePreInput = false; // Enabled by CAnimNotify_ComboEnable
-		bExistPreInput = true;	 // Mark pre-input for next combo step
+	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return false;
 
-		FLog::Log(TEXT("[ComboAttack|PlayAction] Buffered PreInput"));
-		return true;
-	}
-
-	// [First-call] Validate execution conditions & Execute first combo action
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return false;
-	if (WeaponComp_Cached->CheckCurWeaponType(EWeaponType::Unarmed)) return false;
-	if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Idle)) return false;
-	if (ActionDatas_Injected.Num() <= 0) return false;
-
-	if (!Super::PlayAction()) return false;
-
+	if (!ActionDatas_Injected.IsValidIndex(ActionIndex)) return false;
 	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return false;
 
-	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 	return true;
 }
 
-void UCAction_ComboAttack::BeginPlayAction()
+bool UCAction_ComboAttack::Start()
 {
-	Super::BeginPlayAction();	// bBeginAction = true
+	// [Re-Entry]
+	if (bEnablePreInput)
+	{
+		bEnablePreInput = false;
+		bExistPreInput = true;
 
-	if (!IsValid(OwnerCharacter_Injected)) return;
+		FLog::Log(TEXT("[ComboAttack|Start] Buffered PreInput"));
+		return true;
+	}
 
-	FActionContext actionContext = BuildActionContext();
+	// [First-Entry]
+	if (!CanStart()) return false;
+	if (!Super::Start()) return false;
 
-	PushContextToWeaponActor(actionContext);
+	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
+
+	return true;
 }
 
-void UCAction_ComboAttack::EndPlayAction()
+void UCAction_ComboAttack::Complete()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	Super::EndPlayAction();	// bIsAction, bBeginAction = false
-
-	const int32 num = ActionDatas_Injected.Num();
-
-	if (num > 0 && ActionIndex >= 0 && ActionIndex < num)
+	if (ActionDatas_Injected.IsValidIndex(ActionIndex) && IsValid(ActionDatas_Injected[ActionIndex].Montage))
 	{
-		if (IsValid(ActionDatas_Injected[ActionIndex].Montage))
-			ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
+		ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
 	}
+
+	Super::Complete();	// bIsAction, bBeginAction = false
 
 	ActionIndex = 0;
 
 	bEnablePreInput = false;
 	bExistPreInput = false;
-
-	ClearContextToWeaponActor();
 }
 
-void UCAction_ComboAttack::NextPlayAction()
+void UCAction_ComboAttack::OpenComboPreInput()
 {
-	if (bExistPreInput)
+	bEnablePreInput = true;
+}
+
+void UCAction_ComboAttack::CloseComboPreInput()
+{
+	bEnablePreInput = false;
+}
+
+void UCAction_ComboAttack::AdvanceCombo()
+{
+	if (!bExistPreInput)
 	{
-		Super::NextPlayAction();
-
-		bExistPreInput = false;
-
-		const int32 num = ActionDatas_Injected.Num();
-		if (num <= 0) return;
-
-		const int32 nextActionIndex = ActionIndex + 1;
-		if (nextActionIndex >= num) return;
-
-		ActionIndex = nextActionIndex;
-
-		FLog::Log(FString::Printf(TEXT("[ComboAttack|NextPlayAction] AdvanceCombo | ActionIndex = %d"), ActionIndex));
-
-		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
-		ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
-
-		FActionContext actionContext;
-		actionContext.CurrentActionType = ActionType;
-		actionContext.ActionIndex = ActionIndex; // Increased ActionIndex
-
-		PushContextToWeaponActor(actionContext);
+		FLog::Log(TEXT("[ComboAttack|TryAdvanceCombo] No Buffered PreInput"));
+		return;
 	}
-	else
+
+	bExistPreInput = false;
+
+	const int32 nextActionIndex = ActionIndex + 1;
+
+	if (!ActionDatas_Injected.IsValidIndex(nextActionIndex))
 	{
-		FLog::Log(TEXT("[ComboAttack|NextPlayAction] No Buffered PreInput"));
+		FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Invalid NextActionIndex | NextActionIndex = %d"), nextActionIndex));
+		return;
 	}
+
+	if (!IsValid(ActionDatas_Injected[nextActionIndex].Montage))
+	{
+		FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Invalid Montage | NextActionIndex = %d"), nextActionIndex));
+		return;
+	}
+
+	ActionIndex = nextActionIndex;
+
+	FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] AdvanceCombo | ActionIndex = %d"), ActionIndex));
+
+	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 }
 
 FActionContext UCAction_ComboAttack::BuildActionContext() const
 {
 	FActionContext actionContext;
 
-	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionType = ActionType;
 	actionContext.ActionIndex = ActionIndex;
 
 	return actionContext;
 }
 
-FActionFeedbackRequest UCAction_ComboAttack::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+FActionFeedbackRequest UCAction_ComboAttack::BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
 {
 	FActionFeedbackRequest actionFeedbackRequest;
 

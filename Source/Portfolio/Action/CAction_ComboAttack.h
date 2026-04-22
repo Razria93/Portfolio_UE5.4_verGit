@@ -23,19 +23,26 @@ private:
 
 public:
 	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas) override;
-	void Tick(float InDeltaTime) override;
 
 public:
-	bool PlayAction() override;
-	void BeginPlayAction() override;
-	void EndPlayAction() override;
-	void NextPlayAction() override;
+	bool CanStart() const override;
+
+public:
+	bool Start() override;
+	void Complete() override;
+
+public:
+	void OpenComboPreInput();
+	void CloseComboPreInput();
+
+public:
+	void AdvanceCombo();
 
 protected:
 	FActionContext BuildActionContext() const override;
-	FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const override;
+	FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const override;
 
 public:
-	FORCEINLINE void OnEnablePreInput() { bEnablePreInput = true; }
-	FORCEINLINE void OffEnablePreInput() { bEnablePreInput = false; }
+	FORCEINLINE void EnablePreInput() { bEnablePreInput = true; }
+	FORCEINLINE void DisablePreInput() { bEnablePreInput = false; }
 };

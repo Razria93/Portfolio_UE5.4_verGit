@@ -13,6 +13,6 @@ public:
 	UCAnimNotify_Unequip();
 
 private:
-	FString GetNotifyName_Implementation() const override; // UAnimNotify::GetNotifyName override
-	void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override; // UAnimNotify::Notify override
+	FString GetNotifyName_Implementation() const override;
+	void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 };
