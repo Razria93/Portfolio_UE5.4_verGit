@@ -10,7 +10,7 @@ UCAnimNotify_EnterAliveState::UCAnimNotify_EnterAliveState()
 
 FString UCAnimNotify_EnterAliveState::GetNotifyName_Implementation() const
 {
-	return MakeNotifyName("Enter Alive State");
+	return TEXT("Enter Alive State");
 }
 
 void UCAnimNotify_EnterAliveState::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)

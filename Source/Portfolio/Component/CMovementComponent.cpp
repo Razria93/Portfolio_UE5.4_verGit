@@ -38,6 +38,24 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	bIsFalling = CharacterMovementComp_Cached->IsFalling();
 }
 
+// [Final Movement Gate]
+// Axis move input bypasses the orchestrator
+bool UCMovementComponent::CanAcceptMoveInput() const
+{
+	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!bCanMove) return false;
+
+	if (IsValid(StateComp_Cached))
+	{
+		const EExecutionState executionState = StateComp_Cached->GetCurrentExecutionState();
+
+		if (executionState == EExecutionState::Dead) return false;
+		if (executionState == EExecutionState::Reaction) return false;
+	}
+
+	return true;
+}
+
 void UCMovementComponent::OnMoveForward(float InValue)
 {
 	if (!CanAcceptMoveInput()) return;
@@ -89,24 +107,6 @@ void UCMovementComponent::OnStopJump()
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	OwnerCharacter_Cached->StopJumping();
-}
-
-// [Final Movement Gate]
-// Axis move input bypasses the orchestrator
-bool UCMovementComponent::CanAcceptMoveInput() const
-{
-	if (!IsValid(OwnerCharacter_Cached)) return false;
-	if (!bCanMove) return false;
-
-	if (IsValid(StateComp_Cached))
-	{
-		const EExecutionState executionState = StateComp_Cached->GetCurExecutionState();
-
-		if (executionState == EExecutionState::Dead) return false;
-		if (executionState == EExecutionState::Reaction) return false;
-	}
-
-	return true;
 }
 
 void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)

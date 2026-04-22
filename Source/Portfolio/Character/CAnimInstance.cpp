@@ -21,7 +21,7 @@ void UCAnimInstance::NativeInitializeAnimation()
 	if (IsValid(WeaponComp_Cached))
 	{
 		WeaponComp_Cached->OnWeaponTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
-		WeaponType = WeaponComp_Cached->GetCurWeaponType();
+		CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
 	}
 }
 
@@ -58,5 +58,5 @@ void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponTy
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(InOwnerCharacter) || (OwnerCharacter_Cached != InOwnerCharacter)) return;
 
-	WeaponType = InNewWeaponType;
+	CurrentWeaponType = InNewWeaponType;
 }

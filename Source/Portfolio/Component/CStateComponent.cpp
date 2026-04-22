@@ -9,8 +9,6 @@
 UCStateComponent::UCStateComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-
-	CurrentExecutionState = EExecutionState::Idle;
 }
 
 void UCStateComponent::BeginPlay()

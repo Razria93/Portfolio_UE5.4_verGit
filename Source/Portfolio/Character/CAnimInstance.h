@@ -23,7 +23,7 @@ protected:
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	EWeaponType WeaponType = EWeaponType::Max;
+	EWeaponType CurrentWeaponType = EWeaponType::Max;
 
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EDeadState DeadState = EDeadState::Alive;

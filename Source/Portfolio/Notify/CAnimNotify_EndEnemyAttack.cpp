@@ -13,7 +13,7 @@ UCAnimNotify_EndEnemyAttack::UCAnimNotify_EndEnemyAttack()
 
 FString UCAnimNotify_EndEnemyAttack::GetNotifyName_Implementation() const
 {
-	return MakeNotifyName("End Enemy Attack");
+	return TEXT("End Enemy Attack");
 }
 
 void UCAnimNotify_EndEnemyAttack::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)

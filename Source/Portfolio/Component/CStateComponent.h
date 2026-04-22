@@ -19,12 +19,12 @@ public:
 private:
 	/* === State === */
 	UPROPERTY(Transient)
-	EExecutionState CurrentExecutionState;
+	EExecutionState CurrentExecutionState = EExecutionState::Idle;
 
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 public:
 	/* === [Out] Custom Delgate Events === */
@@ -42,7 +42,7 @@ public:
 
 public:
 	/* === Getter === */
-	FORCEINLINE EExecutionState GetCurExecutionState() const { return CurrentExecutionState; }
+	FORCEINLINE EExecutionState GetCurrentExecutionState() const { return CurrentExecutionState; }
 
 public:
 	/* === Setter === */
