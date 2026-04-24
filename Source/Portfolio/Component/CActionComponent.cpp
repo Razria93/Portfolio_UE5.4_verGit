@@ -61,51 +61,62 @@ UCAction* UCActionComponent::GetCurrentAction() const
 	return curAction;
 }
 
-bool UCActionComponent::CanStartAction() const
+FActionExecutionResult UCActionComponent::ExecuteAction(EActionType InActionType)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return false;
-	if (!IsValid(StateComp_Cached)) return false;
-
-	if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Idle)) return false;
-	if (CurrentActionType != EActionType::Idle) return false;
-
-	return true;
-}
-
-bool UCActionComponent::StartAction(EActionType InActionType)
-{
-	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Cached)) 
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
 
 	UCAction** actionPtr = ActionContainer.Find(InActionType);
-	if (actionPtr == nullptr) return false;
+	if (actionPtr == nullptr) 
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
 
-	UCAction* action = *actionPtr;
-	if (!IsValid(action)) return false;
+	UCAction* incomingAction = *actionPtr;
+	if (!IsValid(incomingAction)) 
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
 
-	// [Exception] Combo Attack
-	if (CurrentActionType == InActionType)
+	const FActionExecutionQuery actionExecutionQuery = BuildActionExecutionQuery(InActionType, incomingAction);
+	const EActionExecutionDecision actionExecutionDecision = incomingAction->DecideExecution(actionExecutionQuery);
+
+	switch (actionExecutionDecision)
 	{
-		if (!IsValid(StateComp_Cached)) return false;
-		if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Action)) return false;
-		if (CurrentActionType != EActionType::ComboAttack || InActionType != EActionType::ComboAttack) return false;
-
-		return action->Start();
+	case EActionExecutionDecision::Start:
+	{
+		return StartAction(incomingAction, InActionType)
+			? BuildActionExecutionResult(EActionExecutionDecision::Start, InActionType)
+			: BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
 	}
 
-	if (!CanStartAction()) return false;
-
-	EnterActionState(InActionType);
-
-	if (!action->Start())
+	case EActionExecutionDecision::Chain:
 	{
-		ExitActionState();
-		return false;
+		return ApplyActionChain(incomingAction, actionExecutionQuery)
+			? BuildActionExecutionResult(EActionExecutionDecision::Chain, InActionType)
+			: BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
 	}
 
-	return true;
+	case EActionExecutionDecision::Enqueue:
+	{
+		// TODO: Implement action enqueue.
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+	}
+
+	case EActionExecutionDecision::Interrupt:
+	{
+		// TODO: Implement action interrupt.
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+	}
+
+	case EActionExecutionDecision::Ignore:
+	{
+		return BuildActionExecutionResult(EActionExecutionDecision::Ignore, InActionType);
+	}
+
+	case EActionExecutionDecision::Reject:
+	default:
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+	}
 }
 
-void UCActionComponent::CompleteAction()
+void UCActionComponent::CompleteCurrentAction()
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
@@ -115,6 +126,50 @@ void UCActionComponent::CompleteAction()
 	currentAction->Complete();
 
 	ExitActionState();
+}
+
+bool UCActionComponent::StartAction(UCAction* InAction, EActionType InActionType)
+{
+	if (!IsValid(InAction)) return false;
+
+	EnterActionState(InActionType);
+
+	if (!InAction->Start())
+	{
+		ExitActionState();
+		return false;
+	}
+
+	return true;
+}
+
+bool UCActionComponent::ApplyActionChain(UCAction* InAction, const FActionExecutionQuery& InActionExecuteQuery)
+{
+	if (!IsValid(InAction)) return false;
+
+	return InAction->ApplyChain(InActionExecuteQuery);
+}
+
+FActionExecutionQuery UCActionComponent::BuildActionExecutionQuery(EActionType InIncomingActionType, UCAction* InIncomingAction) const
+{
+	FActionExecutionQuery actionExecutionQuery;
+
+	actionExecutionQuery.ExecutionState = IsValid(StateComp_Cached)
+		? StateComp_Cached->GetCurrentExecutionState()
+		: EExecutionState::Dead;
+
+	actionExecutionQuery.CurrentActionType = CurrentActionType;
+	actionExecutionQuery.CurrentAction = GetCurrentAction();
+
+	actionExecutionQuery.IncomingActionType = InIncomingActionType;
+	actionExecutionQuery.IncomingAction = InIncomingAction;
+
+	return actionExecutionQuery;
+}
+
+FActionExecutionResult UCActionComponent::BuildActionExecutionResult(EActionExecutionDecision InActionExecutionDecision, EActionType InActionType) const
+{
+	return FActionExecutionResult(InActionExecutionDecision, InActionType);
 }
 
 void UCActionComponent::EnterActionState(EActionType InActionType)

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DamageEvents.h"
 #include "DamageEventId.h"
+#include "Type/CStateStructure.h"
 #include "Type/CHealthStructure.h"
 #include "CWeaponStructure.generated.h"
 
@@ -36,6 +37,20 @@ enum class EReactionType : uint8
 {
 	None = 0,
 	Hit,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionExecutionDecision : uint8
+{
+	Reject = 0,
+	Ignore,
+
+	Start,
+	Chain,
+	Enqueue,
+	Interrupt,
 
 	Max,
 };
@@ -177,13 +192,89 @@ public:
 	UPROPERTY(EditAnywhere)
 	EActionType ActionType = EActionType::Max;
 
-	// Action Executor
+	// Action Implementation Class
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UCAction> ActionClass = nullptr;
 
 	// Action Playback Data
 	UPROPERTY(EditAnywhere)
 	TArray<FActionData> ActionDatas;
+};
+
+USTRUCT(BlueprintType)
+struct FActionExecutionQuery
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionState ExecutionState = EExecutionState::Idle;
+
+	UPROPERTY(Transient)
+	EActionType CurrentActionType = EActionType::Idle;
+
+	UPROPERTY(Transient)
+	class UCAction* CurrentAction = nullptr;
+
+	UPROPERTY(Transient)
+	EActionType IncomingActionType = EActionType::Idle;
+
+	UPROPERTY(Transient)
+	class UCAction* IncomingAction = nullptr;
+
+public:
+	FActionExecutionQuery() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FActionExecutionResult
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EActionExecutionDecision Decision = EActionExecutionDecision::Reject;
+
+	UPROPERTY(Transient)
+	EActionType ActionType = EActionType::Max;
+
+public:
+	FActionExecutionResult() = default;
+
+	FActionExecutionResult(EActionExecutionDecision InDecision, EActionType InActionType)
+		: Decision(InDecision)
+		, ActionType(InActionType)
+	{
+	}
+
+public:
+	bool IsAccepted() const
+	{
+		return Decision == EActionExecutionDecision::Start
+			|| Decision == EActionExecutionDecision::Chain
+			|| Decision == EActionExecutionDecision::Enqueue
+			|| Decision == EActionExecutionDecision::Interrupt;
+	}
+
+	bool IsStarted() const
+	{
+		return Decision == EActionExecutionDecision::Start;
+	}
+
+	bool IsChained() const
+	{
+		return Decision == EActionExecutionDecision::Chain;
+	}
+
+	bool IsEnqueued() const
+	{
+		return Decision == EActionExecutionDecision::Enqueue;
+	}
+
+	bool IsInterrupted() const
+	{
+		return Decision == EActionExecutionDecision::Interrupt;
+	}
 };
 
 USTRUCT(BlueprintType)

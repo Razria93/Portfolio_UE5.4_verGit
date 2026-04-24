@@ -7,22 +7,26 @@
 
 #include "Type/CWeaponStructure.h"
 
-bool UCAction_Equip::CanStart() const
+EActionExecutionDecision UCAction_Equip::DecideExecution(const FActionExecutionQuery & InActionExecuteQuery) const
 {
-	if (!Super::CanStart()) return false;
-	if (!IsValid(WeaponComp_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
+	if (!IsValid(WeaponComp_Cached)) return EActionExecutionDecision::Reject;
 
-	if (!WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return false;
+	if (!WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return EActionExecutionDecision::Reject;
 
-	if (!ActionDatas_Injected.IsValidIndex(0)) return false;
-	if (!IsValid(ActionDatas_Injected[0].Montage)) return false;
+	if (!ActionDatas_Injected.IsValidIndex(0)) return EActionExecutionDecision::Reject;
+	if (!IsValid(ActionDatas_Injected[0].Montage)) return EActionExecutionDecision::Reject;
+	
+	if (InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle)
+	{
+		return EActionExecutionDecision::Start;
+	}
 
-	return true;
+	return EActionExecutionDecision::Reject;
 }
 
 bool UCAction_Equip::Start()
 {
-	if (!CanStart()) return false;
 	if (!Super::Start()) return false;
 
 	ActionDatas_Injected[0].BeginPlayMontage(OwnerCharacter_Injected);

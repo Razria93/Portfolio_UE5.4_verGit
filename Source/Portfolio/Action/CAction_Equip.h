@@ -10,10 +10,13 @@ class PORTFOLIO_API UCAction_Equip : public UCAction
 	GENERATED_BODY()
 
 public:
-	bool CanStart() const override;
+	/* === Action Arbitration === */
+	EActionExecutionDecision DecideExecution(const FActionExecutionQuery & InActionExecuteQuery) const override;
 
 public:
 	bool Start() override;
+
+public:
 	void Complete() override;
 
 public:

@@ -59,12 +59,17 @@ public:
 public:
 	class UCAction* GetCurrentAction() const;
 
-private:
-	bool CanStartAction() const;
-
 public:
-	bool StartAction(EActionType InActionType);
-	void CompleteAction();
+	FActionExecutionResult ExecuteAction(EActionType InActionType);
+	void CompleteCurrentAction();
+
+private:
+	bool StartAction(class UCAction* InAction, EActionType InActionType);
+	bool ApplyActionChain(class UCAction* InAction, const FActionExecutionQuery& InActionExecuteQuery);
+
+private:
+	FActionExecutionQuery BuildActionExecutionQuery(EActionType InIncomingActionType, class UCAction* InIncomingAction) const;
+	FActionExecutionResult BuildActionExecutionResult(EActionExecutionDecision InActionExecutionDecision, EActionType InActionType) const;
 
 private:
 	void EnterActionState(EActionType InActionType);

@@ -12,11 +12,10 @@ class PORTFOLIO_API UCAction : public UObject
 
 protected:
 	UPROPERTY(Transient)
-	EActionType ActionType;
+	EActionType ActionType = EActionType::Max;
 
-protected:
 	UPROPERTY(Transient)
-	bool bIsAction;		// Action is active
+	bool bIsAction = false;
 
 protected:
 	UPROPERTY(Transient)
@@ -36,7 +35,7 @@ protected:
 	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
-	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas);
+	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas);
 	virtual void Tick(float InDeltaTime) {};
 
 public:
@@ -46,11 +45,14 @@ public:
 	void SetActionType(EActionType InActionType);
 
 public:
-	/* === Action Arbiter === */
-	virtual bool CanStart() const;
+	/* === Action Arbitration === */
+	virtual EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const;
 
 public:
 	virtual bool Start();
+	virtual bool ApplyChain(const FActionExecutionQuery& InActionExecuteQuery);
+
+public:
 	virtual void Complete();
 
 public:

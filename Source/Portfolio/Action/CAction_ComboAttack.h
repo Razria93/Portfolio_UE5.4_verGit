@@ -22,13 +22,17 @@ private:
 	bool bExistPreInput;
 
 public:
-	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas) override;
+	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas) override;
 
 public:
-	bool CanStart() const override;
+	/* === Action Arbitration === */
+	EActionExecutionDecision DecideExecution(const FActionExecutionQuery & InActionExecuteQuery) const override;
 
 public:
 	bool Start() override;
+	bool ApplyChain(const FActionExecutionQuery& InActionExecuteQuery) override;
+
+public:
 	void Complete() override;
 
 public:

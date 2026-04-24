@@ -7,7 +7,7 @@
 
 #include "Type/CWeaponStructure.h"
 
-void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
+void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas)
 {
 	Super::InitializeAction(InOwnerCharacter, InActionType, InActionDatas);
 
@@ -17,36 +17,51 @@ void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActio
 	bExistPreInput = false;
 }
 
-bool UCAction_ComboAttack::CanStart() const
+EActionExecutionDecision UCAction_ComboAttack::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
 {
-	if (!Super::CanStart()) return false;
-	if (!IsValid(WeaponComp_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
+	if (!IsValid(WeaponComp_Cached)) return EActionExecutionDecision::Reject;
 
-	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return false;
+	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return EActionExecutionDecision::Reject;
 
-	if (!ActionDatas_Injected.IsValidIndex(ActionIndex)) return false;
-	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return false;
+	const bool bFirstEntry = InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle;
 
-	return true;
+	if (bFirstEntry)
+	{
+		if (!ActionDatas_Injected.IsValidIndex(ActionIndex)) return EActionExecutionDecision::Reject;
+		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return EActionExecutionDecision::Reject;
+
+		return EActionExecutionDecision::Start;
+	}
+
+	const bool bCanChain = InActionExecuteQuery.CurrentActionType == ActionType && bEnablePreInput;
+
+	if (bCanChain)
+	{
+		return EActionExecutionDecision::Chain;
+	}
+
+	return EActionExecutionDecision::Reject;
 }
 
 bool UCAction_ComboAttack::Start()
 {
-	// [Re-Entry]
-	if (bEnablePreInput)
-	{
-		bEnablePreInput = false;
-		bExistPreInput = true;
-
-		FLog::Log(TEXT("[ComboAttack|Start] Buffered PreInput"));
-		return true;
-	}
-
-	// [First-Entry]
-	if (!CanStart()) return false;
 	if (!Super::Start()) return false;
 
 	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
+
+	return true;
+}
+
+bool UCAction_ComboAttack::ApplyChain(const FActionExecutionQuery& InActionExecuteQuery)
+{
+	if (InActionExecuteQuery.CurrentActionType != ActionType) return false;
+	if (!bEnablePreInput) return false;
+
+	bEnablePreInput = false;
+	bExistPreInput = true;
+
+	FLog::Log(TEXT("[ComboAttack|Chain] Buffered PreInput"));
 
 	return true;
 }

@@ -8,7 +8,7 @@
 
 #include "Type/CWeaponStructure.h"
 
-void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
+void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
 	ActionType = InActionType;
@@ -33,22 +33,32 @@ void UCAction::SetActionType(EActionType InActionType)
 	ActionType = InActionType;
 }
 
-bool UCAction::CanStart() const
+EActionExecutionDecision UCAction::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
 {
-	return IsValid(OwnerCharacter_Injected);
+	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
+
+	if (InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle)
+	{
+		return EActionExecutionDecision::Start;
+	}
+
+	return EActionExecutionDecision::Reject;
 }
 
 bool UCAction::Start()
 {
-	if (!CanStart()) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
 
 	bIsAction = true;
 
 	RequestFeedback(EActionFeedbackTiming::ActionStart, NAME_None);
 
-	// NOTE: To be implemented detail by derived classes
-
 	return true;
+}
+
+bool UCAction::ApplyChain(const FActionExecutionQuery& InActionExecuteQuery)
+{
+	return false;
 }
 
 void UCAction::Complete()
@@ -58,8 +68,6 @@ void UCAction::Complete()
 	RequestFeedback(EActionFeedbackTiming::ActionEnd, NAME_None);
 
 	bIsAction = false;
-
-	// NOTE: To be implemented detail by derived classes
 }
 
 void UCAction::PushHitContext()
