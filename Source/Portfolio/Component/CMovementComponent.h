@@ -74,12 +74,11 @@ public:
 	FORCEINLINE void SetMove() { bCanMove = true; }
 
 public:
-	/* === Movement Arbiter === */
+	/* === Movement Arbitration === */
 	bool CanAcceptMoveInput() const;
 
 public:
-	void OnMoveForward(float InValue);
-	void OnMoveRight(float InValue);
+	void OnMove(const FVector2D& InAxis2D);
 
 public:
 	void OnWalk();

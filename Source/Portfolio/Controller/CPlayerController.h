@@ -16,15 +16,23 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
 
+private:
+	FVector2D CachedMoveAxis2D = FVector2D::ZeroVector;
+
 protected:
+	virtual void PlayerTick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
 
 protected:
 	void InputMoveForward(float InAxisValue);
 	void InputMoveRight(float InAxisValue);
-
+	
+protected:
 	void InputLookYaw(float InAxisValue);
 	void InputLookPitch(float InAxisValue);
+
+protected:
+	void FlushMoveInput();
 
 	void PressWalk();
 	void ReleaseWalk();

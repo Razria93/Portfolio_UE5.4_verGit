@@ -8,8 +8,17 @@
 
 ACPlayerController::ACPlayerController()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
 	check(PlayerFeedbackComponent);
+}
+
+void ACPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+	
+	FlushMoveInput();
 }
 
 void ACPlayerController::SetupInputComponent()
@@ -32,16 +41,14 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Sword", EInputEvent::IE_Pressed, this, &ACPlayerController::PressSword);
 }
 
-void ACPlayerController::InputMoveForward(float inAxisValue)
+void ACPlayerController::InputMoveForward(float InAxisValue)
 {
-	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
-		player->HandleMoveForward(inAxisValue);
+	CachedMoveAxis2D.Y = InAxisValue;
 }
 
-void ACPlayerController::InputMoveRight(float inAxisValue)
+void ACPlayerController::InputMoveRight(float InAxisValue)
 {
-	if (ACPlayer* player = Cast<ACPlayer>(GetPawn()))
-		player->HandleMoveRight(inAxisValue);
+	CachedMoveAxis2D.X = InAxisValue;
 }
 
 void ACPlayerController::InputLookYaw(float inAxisValue)
@@ -52,6 +59,16 @@ void ACPlayerController::InputLookYaw(float inAxisValue)
 void ACPlayerController::InputLookPitch(float inAxisValue)
 {
 	AddPitchInput(inAxisValue);
+}
+
+void ACPlayerController::FlushMoveInput()
+{
+	if (CachedMoveAxis2D.IsNearlyZero()) return;
+
+	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	if (!IsValid(player)) return;
+
+	player->HandleMove(CachedMoveAxis2D);
 }
 
 void ACPlayerController::PressWalk()

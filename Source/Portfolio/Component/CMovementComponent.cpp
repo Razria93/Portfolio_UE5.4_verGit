@@ -39,7 +39,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 }
 
 // [Final Movement Gate]
-// Axis move input bypasses the orchestrator
+// Final movement gate for axis input accepted by the orchestrator.
 bool UCMovementComponent::CanAcceptMoveInput() const
 {
 	if (!IsValid(OwnerCharacter_Cached)) return false;
@@ -56,28 +56,20 @@ bool UCMovementComponent::CanAcceptMoveInput() const
 	return true;
 }
 
-void UCMovementComponent::OnMoveForward(float InValue)
+void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 {
 	if (!CanAcceptMoveInput()) return;
-	if (FMath::IsNearlyZero(InValue)) return;
+	if (InAxis2D.IsNearlyZero()) return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
 	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
 	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
-	const FVector Direction = FRotationMatrix(yawRot).GetUnitAxis(EAxis::X);
 
-	OwnerCharacter_Cached->AddMovementInput(Direction, InValue);
-}
+	const FVector forwardDirection = FRotationMatrix(yawRot).GetUnitAxis(EAxis::X);
+	const FVector rightDirection = FRotationMatrix(yawRot).GetUnitAxis(EAxis::Y);
 
-void UCMovementComponent::OnMoveRight(float InValue)
-{
-	if (!CanAcceptMoveInput()) return;
-	if (FMath::IsNearlyZero(InValue)) return;
-
-	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
-	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
-	const FVector Direction = FRotationMatrix(yawRot).GetUnitAxis(EAxis::Y);
-
-	OwnerCharacter_Cached->AddMovementInput(Direction, InValue);
+	OwnerCharacter_Cached->AddMovementInput(forwardDirection, InAxis2D.Y);
+	OwnerCharacter_Cached->AddMovementInput(rightDirection, InAxis2D.X);
 }
 
 void UCMovementComponent::OnWalk()

@@ -89,21 +89,21 @@ public:
 	int GetTargetPriority() const override { return Priority; }
 
 public:
+	void HandleMove(const FVector2D& InAxis2D);
+
+public:
+	void HandleWalk();
+	void HandleRun();
+	void HandleSprint();
+
+public:
 	void HandleJump();
 	void HandleStopJump();
 
 public:
-	void HandleMoveForward(const float InAxisValue);
-	void HandleMoveRight(const float InAxisValue);
-
-	// [MovementComp] Handle Switch Movement Speed
-	void HandleWalk();
-	void HandleRun();
-
-	// [WeaponComp] Handle Switch Equipment
 	void HandleSword();
 
-	// [ActionComp] Handle Play Action
+public:
 	void HandleComboAction();
 
 private:

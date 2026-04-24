@@ -166,44 +166,17 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	return finalDamage;
 }
 
-void ACPlayer::HandleJump()
+void ACPlayer::HandleMove(const FVector2D& InAxis2D)
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(Controller) || !IsValid(ActionOrchestratorComponent)) return;
 
 	FMovementActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
-	request.IntentType = EMovementActionIntent::Jump;
-	request.IntentEvent = EActionIntentEvent::Started;
+	request.IntentType = EMovementActionIntent::Move;
+	request.IntentEvent = EActionIntentEvent::Updated;
+	request.Axis2D = InAxis2D;
 
 	ActionOrchestratorComponent->RequestMovementAction(request);
-}
-
-void ACPlayer::HandleStopJump()
-{
-	if (!IsValid(ActionOrchestratorComponent)) return;
-
-	FMovementActionRequest request;
-	request.IntentSource = EActionIntentSource::PlayerInput;
-	request.IntentType = EMovementActionIntent::StopJump;
-	request.IntentEvent = EActionIntentEvent::Completed;
-
-	ActionOrchestratorComponent->RequestMovementAction(request);
-}
-
-void ACPlayer::HandleMoveForward(const float InAxisValue)
-{
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
-	if (!HealthComponent || !HealthComponent->IsAlive()) return;
-
-	MovementComponent->OnMoveForward(InAxisValue);
-}
-
-void ACPlayer::HandleMoveRight(const float InAxisValue)
-{
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
-	if (!HealthComponent || !HealthComponent->IsAlive()) return;
-
-	MovementComponent->OnMoveRight(InAxisValue);
 }
 
 void ACPlayer::HandleWalk()
@@ -226,6 +199,42 @@ void ACPlayer::HandleRun()
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = EMovementActionIntent::Run;
 	request.IntentEvent = EActionIntentEvent::Started;
+
+	ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+void ACPlayer::HandleSprint()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return;
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Sprint;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+void ACPlayer::HandleJump()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return;
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Jump;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+void ACPlayer::HandleStopJump()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return;
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::StopJump;
+	request.IntentEvent = EActionIntentEvent::Completed;
 
 	ActionOrchestratorComponent->RequestMovementAction(request);
 }
