@@ -35,77 +35,51 @@ void UCActionOrchestratorComponent::TickComponent(float DeltaTime, ELevelTick Ti
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InRequest)
+FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InActionRequest)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached))
 		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
 
-	switch (InRequest.IntentType)
+	// Release-style cleanup is allowed before hard-block checks.
+	if (InActionRequest.IntentType == EMovementActionIntent::StopJump)
 	{
-	case EMovementActionIntent::StopJump:
 		MovementComp_Cached->OnStopJump();
-		return BuildExecutedResult();
-
-	default:
-		break;
+		return BuildHandledResult();
 	}
 
-	// Out Parameter
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
 
-	// TODO
-	switch (InRequest.IntentType)
+	switch (InActionRequest.IntentType)
 	{
+	case EMovementActionIntent::Move:
+	{
+		MovementComp_Cached->OnMove(InActionRequest.Axis2D);
+		return BuildHandledResult();
+	}
+
 	case EMovementActionIntent::Walk:
+	{
 		MovementComp_Cached->OnWalk();
-		return BuildExecutedResult();
+		return BuildHandledResult();
+	}
 
 	case EMovementActionIntent::Run:
+	{
 		MovementComp_Cached->OnRun();
-		return BuildExecutedResult();
+		return BuildHandledResult();
+	}
+
+	case EMovementActionIntent::Sprint:
+	{
+		MovementComp_Cached->OnSprint();
+		return BuildHandledResult();
+	}
 
 	case EMovementActionIntent::Jump:
+	{
 		MovementComp_Cached->OnJump();
-		return BuildExecutedResult();
-
-	default:
-		return BuildIgnoredResult();
-	}
-}
-
-FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const FEquipmentActionRequest& InRequest)
-{
-	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
-	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
-
-	if (!IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached) || !IsValid(ActionComp_Cached))
-		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
-
-	if (!StateComp_Cached->CheckCurExecutionState(EExecutionState::Idle))
-		return BuildRejectedResult(EActionRequestRejectReason::InvalidState);
-
-	// TODO
-	switch (InRequest.IntentType)
-	{
-	case EEquipmentActionIntent::Toggle:
-	{
-		if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
-		{
-			const bool bStarted = ActionComp_Cached->StartAction(EActionType::Equip);
-
-			return bStarted
-				? BuildExecutedResult(EActionType::Equip)
-				: BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
-		}
-		else
-		{
-			const bool bStarted = ActionComp_Cached->StartAction(EActionType::Unequip);
-
-			return bStarted
-				? BuildExecutedResult(EActionType::Unequip)
-				: BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
-		}
+		return BuildHandledResult();
 	}
 
 	default:
@@ -113,24 +87,34 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	}
 }
 
-FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InRequest)
+FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const FEquipmentActionRequest& InActionRequest)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
 
-	if (!IsValid(ActionComp_Cached))
+	if (!IsValid(WeaponComp_Cached) || !IsValid(ActionComp_Cached)) 
 		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
 
-	switch (InRequest.IntentType)
+	const EActionType resolvedActionType = ResolveEquipmentActionType(InActionRequest);
+	if (resolvedActionType == EActionType::Max) return BuildIgnoredResult();
+
+	const FActionExecutionResult actionExecutionResult = ActionComp_Cached->ExecuteAction(resolvedActionType);
+	return BuildRequestResult(actionExecutionResult);
+}
+
+FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InActionRequest)
+{
+	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
+	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
+
+	if (!IsValid(ActionComp_Cached)) return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
+
+	switch (InActionRequest.IntentType)
 	{
 	case ECombatActionIntent::ComboAttack:
 	{
-		const bool bStarted = ActionComp_Cached->StartAction(EActionType::ComboAttack);
-
-		if (!bStarted)
-			return BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
-		else
-			return BuildExecutedResult(EActionType::ComboAttack);
+		const FActionExecutionResult actionExecutionResult = ActionComp_Cached->ExecuteAction(EActionType::ComboAttack);
+		return BuildRequestResult(actionExecutionResult);
 	}
 
 	default:
@@ -177,32 +161,92 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	return true;
 }
 
-FActionRequestResult UCActionOrchestratorComponent::BuildExecutedResult(EActionType InExecutedActionType) const
+FActionRequestResult UCActionOrchestratorComponent::BuildRequestResult(const FActionExecutionResult& InActionExecutionResult) const
+{
+	switch (InActionExecutionResult.Decision)
+	{
+	case EActionExecutionDecision::Start:		return BuildStartedResult(InActionExecutionResult.ActionType);
+	case EActionExecutionDecision::Chain:		return BuildChainedResult(InActionExecutionResult.ActionType);
+	case EActionExecutionDecision::Enqueue:		return BuildEnqueuedResult(InActionExecutionResult.ActionType);
+	case EActionExecutionDecision::Interrupt:	return BuildInterruptedResult(InActionExecutionResult.ActionType);
+	case EActionExecutionDecision::Ignore:		return BuildIgnoredResult();
+	case EActionExecutionDecision::Reject:
+	default:
+		return BuildRejectedResult(EActionRequestRejectReason::NoExecutableAction);
+	}
+}
+
+FActionRequestResult UCActionOrchestratorComponent::BuildHandledResult(EActionType InResolvedActionType) const
 {
 	FActionRequestResult result;
+	result.ResultType = EActionRequestResultType::Handled;
+	result.ResolvedActionType = InResolvedActionType;
+	return result;
+}
 
-	result.ResultType = EActionRequestResultType::Executed;
-	result.ExecutedActionType = InExecutedActionType; // Execute Factor
+FActionRequestResult UCActionOrchestratorComponent::BuildStartedResult(EActionType InResolvedActionType) const
+{
+	FActionRequestResult result;
+	result.ResultType = EActionRequestResultType::Started;
+	result.ResolvedActionType = InResolvedActionType;
+	return result;
+}
 
+FActionRequestResult UCActionOrchestratorComponent::BuildChainedResult(EActionType InResolvedActionType) const
+{
+	FActionRequestResult result;
+	result.ResultType = EActionRequestResultType::Chained;
+	result.ResolvedActionType = InResolvedActionType;
+	return result;
+}
+
+FActionRequestResult UCActionOrchestratorComponent::BuildEnqueuedResult(EActionType InResolvedActionType) const
+{
+	FActionRequestResult result;
+	result.ResultType = EActionRequestResultType::Enqueued;
+	result.ResolvedActionType = InResolvedActionType;
+	return result;
+}
+
+FActionRequestResult UCActionOrchestratorComponent::BuildInterruptedResult(EActionType InResolvedActionType) const
+{
+	FActionRequestResult result;
+	result.ResultType = EActionRequestResultType::Interrupted;
+	result.ResolvedActionType = InResolvedActionType;
 	return result;
 }
 
 FActionRequestResult UCActionOrchestratorComponent::BuildRejectedResult(EActionRequestRejectReason InRejectReason) const
 {
 	FActionRequestResult result;
-
 	result.ResultType = EActionRequestResultType::Rejected;
-	result.RejectReason = InRejectReason; // Reject Factor
-
+	result.RejectReason = InRejectReason;
 	return result;
 }
 
 FActionRequestResult UCActionOrchestratorComponent::BuildIgnoredResult() const
 {
 	FActionRequestResult result;
-
 	result.ResultType = EActionRequestResultType::Ignored;
-
 	return result;
 }
 
+EActionType UCActionOrchestratorComponent::ResolveEquipmentActionType(const FEquipmentActionRequest& InActionRequest) const
+{
+	switch (InActionRequest.IntentType)
+	{
+	case EEquipmentActionIntent::Equip:		return EActionType::Equip;
+	case EEquipmentActionIntent::Unequip:	return EActionType::Unequip;
+	case EEquipmentActionIntent::Toggle:
+	{
+		if (!IsValid(WeaponComp_Cached)) return EActionType::Max;
+
+		return WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)
+			? EActionType::Equip
+			: EActionType::Unequip;
+	}
+
+	default:
+		return EActionType::Max;
+	}
+}

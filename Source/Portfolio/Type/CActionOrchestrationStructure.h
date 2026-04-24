@@ -8,7 +8,7 @@ UENUM(BlueprintType)
 enum class EActionIntentSource : uint8
 {
 	None = 0,
-	
+
 	PlayerInput,
 	AI,
 
@@ -34,8 +34,11 @@ enum class EMovementActionIntent : uint8
 	None = 0,
 
 	Move,
+	
 	Walk,
 	Run,
+	Sprint,
+
 	Jump,
 	StopJump,
 
@@ -67,6 +70,45 @@ enum class ECombatActionIntent : uint8
 	Max,
 };
 
+
+UENUM(BlueprintType)
+enum class EActionRequestResultType : uint8
+{
+	None = 0,
+
+	Rejected,
+	Ignored,
+
+	Handled,
+	Started,
+	Chained,
+	Enqueued,
+	Interrupted,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionRequestRejectReason : uint8
+{
+	None = 0,
+
+	InvalidOwner,
+	InvalidRequest,
+	InvalidComponent,
+
+	Dead,
+	InReaction,
+	InvalidState,
+	InvalidEquipment,
+	InvalidCombatAction,
+
+	AlreadyPlaying,
+	NoExecutableAction,
+
+	Max,
+};
+
 USTRUCT(BlueprintType)
 struct FMovementActionRequest
 {
@@ -84,9 +126,6 @@ public:
 	// How: intent event
 	UPROPERTY(Transient)
 	EActionIntentEvent IntentEvent = EActionIntentEvent::None;
-
-	UPROPERTY(Transient)
-	float AxisValue = 0.f;
 
 	UPROPERTY(Transient)
 	FVector2D Axis2D = FVector2D::ZeroVector;
@@ -130,40 +169,6 @@ public:
 	EActionIntentEvent IntentEvent = EActionIntentEvent::None;
 };
 
-UENUM(BlueprintType)
-enum class EActionRequestResultType : uint8
-{
-	None = 0,
-
-	Executed,
-	Buffered,
-	Rejected,
-	Ignored,
-
-	Max,
-};
-
-UENUM(BlueprintType)
-enum class EActionRequestRejectReason : uint8
-{
-	None = 0,
-
-	InvalidOwner,
-	InvalidRequest,
-	InvalidComponent,
-
-	Dead,
-	InReaction,
-	InvalidState,
-	InvalidEquipment,
-	InvalidCombatAction,
-
-	AlreadyPlaying,
-	NoExecutableAction,
-
-	Max,
-};
-
 USTRUCT(BlueprintType)
 struct FActionRequestResult
 {
@@ -176,11 +181,14 @@ struct FActionRequestResult
 	EActionRequestRejectReason RejectReason = EActionRequestRejectReason::None;
 
 	UPROPERTY(Transient)
-	EActionType ExecutedActionType = EActionType::Max;
+	EActionType ResolvedActionType = EActionType::Max;
 
 	bool IsAccepted() const
 	{
-		return ResultType == EActionRequestResultType::Executed
-			|| ResultType == EActionRequestResultType::Buffered;
+		return ResultType == EActionRequestResultType::Handled
+			|| ResultType == EActionRequestResultType::Started
+			|| ResultType == EActionRequestResultType::Chained
+			|| ResultType == EActionRequestResultType::Enqueued
+			|| ResultType == EActionRequestResultType::Interrupted;
 	}
 };

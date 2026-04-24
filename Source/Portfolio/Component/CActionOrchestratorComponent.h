@@ -46,7 +46,18 @@ public:
 private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
 
-	FActionRequestResult BuildExecutedResult(EActionType InExecutedActionType = EActionType::Max) const;
+private:
+	FActionRequestResult BuildRequestResult(const FActionExecutionResult& InActionExecutionResult) const;
+
+private:
+	FActionRequestResult BuildHandledResult(EActionType InResolvedActionType = EActionType::Max) const;
+	FActionRequestResult BuildStartedResult(EActionType InResolvedActionType = EActionType::Max) const;
+	FActionRequestResult BuildChainedResult(EActionType InResolvedActionType = EActionType::Max) const;
+	FActionRequestResult BuildEnqueuedResult(EActionType InResolvedActionType = EActionType::Max) const;
+	FActionRequestResult BuildInterruptedResult(EActionType InResolvedActionType = EActionType::Max) const;
 	FActionRequestResult BuildRejectedResult(EActionRequestRejectReason InRejectReason) const;
 	FActionRequestResult BuildIgnoredResult() const;
+
+private:
+	EActionType ResolveEquipmentActionType(const FEquipmentActionRequest& InActionRequest) const;
 };
