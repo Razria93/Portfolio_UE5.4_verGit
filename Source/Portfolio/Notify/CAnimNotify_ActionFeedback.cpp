@@ -29,8 +29,8 @@ void UCAnimNotify_ActionFeedback::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!IsValid(actionComp)) return;
 
-	UCAction* curAction = actionComp->GetCurrentAction();
-	if (!IsValid(curAction)) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!IsValid(currentAction)) return;
 
-	curAction->RequestFeedback(EActionFeedbackTiming::TriggerOnce, TriggerKey);
+	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerOnce, TriggerKey);
 }

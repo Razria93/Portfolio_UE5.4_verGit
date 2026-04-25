@@ -29,10 +29,10 @@ void UCAnimNotifyState_ActionFeedback::NotifyBegin(USkeletalMeshComponent* MeshC
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!IsValid(actionComp)) return;
 
-	UCAction* curAction = actionComp->GetCurrentAction();
-	if (!IsValid(curAction)) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!IsValid(currentAction)) return;
 
-	curAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowBegin, TriggerKey);
+	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowBegin, TriggerKey);
 }
 
 void UCAnimNotifyState_ActionFeedback::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
@@ -47,8 +47,8 @@ void UCAnimNotifyState_ActionFeedback::NotifyEnd(USkeletalMeshComponent* MeshCom
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!IsValid(actionComp)) return;
 
-	UCAction* curAction = actionComp->GetCurrentAction();
-	if (!IsValid(curAction)) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!IsValid(currentAction)) return;
 
-	curAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowEnd, TriggerKey);
+	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowEnd, TriggerKey);
 }

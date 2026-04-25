@@ -37,12 +37,12 @@ void UCAnimNotify_HitContext::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!actionComp) return;
 
-	UCAction* curAction = actionComp->GetCurrentAction();
-	if (!curAction) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!currentAction) return;
 
 	switch (NotifyType)
 	{
-	case EHitContextNotifyType::Push: curAction->PushHitContext(); return;
-	case EHitContextNotifyType::Clear: curAction->ClearHitContext(); return;
+	case EHitContextNotifyType::Push: currentAction->PushHitContext(); return;
+	case EHitContextNotifyType::Clear: currentAction->ClearHitContext(); return;
 	}
 }

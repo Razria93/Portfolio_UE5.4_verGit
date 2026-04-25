@@ -60,7 +60,7 @@ public:
 	class UCAction* GetCurrentAction() const;
 
 public:
-	FActionExecutionResult ExecuteAction(EActionType InActionType);
+	FActionExecutionResult ExecuteAction(EActionType IncomingActionType);
 	void CompleteCurrentAction();
 
 private:

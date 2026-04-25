@@ -52,67 +52,67 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 UCAction* UCActionComponent::GetCurrentAction() const
 {
-	auto curActionPtr = ActionContainer.Find(CurrentActionType);
-	if (!curActionPtr) return nullptr;
+	auto currentActionPtr = ActionContainer.Find(CurrentActionType);
+	if (!currentActionPtr) return nullptr;
 
-	UCAction* curAction = *curActionPtr;
-	if (!IsValid(curAction)) return nullptr;
+	UCAction* currentAction = *currentActionPtr;
+	if (!IsValid(currentAction)) return nullptr;
 
-	return curAction;
+	return currentAction;
 }
 
-FActionExecutionResult UCActionComponent::ExecuteAction(EActionType InActionType)
+FActionExecutionResult UCActionComponent::ExecuteAction(EActionType IncomingActionType)
 {
-	if (!IsValid(OwnerCharacter_Cached)) 
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+	if (!IsValid(OwnerCharacter_Cached))
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 
-	UCAction** actionPtr = ActionContainer.Find(InActionType);
-	if (actionPtr == nullptr) 
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+	UCAction** actionPtr = ActionContainer.Find(IncomingActionType);
+	if (actionPtr == nullptr)
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 
 	UCAction* incomingAction = *actionPtr;
-	if (!IsValid(incomingAction)) 
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+	if (!IsValid(incomingAction))
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 
-	const FActionExecutionQuery actionExecutionQuery = BuildActionExecutionQuery(InActionType, incomingAction);
+	const FActionExecutionQuery actionExecutionQuery = BuildActionExecutionQuery(IncomingActionType, incomingAction);
 	const EActionExecutionDecision actionExecutionDecision = incomingAction->DecideExecution(actionExecutionQuery);
 
 	switch (actionExecutionDecision)
 	{
 	case EActionExecutionDecision::Start:
 	{
-		return StartAction(incomingAction, InActionType)
-			? BuildActionExecutionResult(EActionExecutionDecision::Start, InActionType)
-			: BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+		return StartAction(incomingAction, IncomingActionType)
+			? BuildActionExecutionResult(EActionExecutionDecision::Start, IncomingActionType)
+			: BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 	}
 
 	case EActionExecutionDecision::Chain:
 	{
 		return ApplyActionChain(incomingAction, actionExecutionQuery)
-			? BuildActionExecutionResult(EActionExecutionDecision::Chain, InActionType)
-			: BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+			? BuildActionExecutionResult(EActionExecutionDecision::Chain, IncomingActionType)
+			: BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 	}
 
 	case EActionExecutionDecision::Enqueue:
 	{
 		// TODO: Implement action enqueue.
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 	}
 
 	case EActionExecutionDecision::Interrupt:
 	{
 		// TODO: Implement action interrupt.
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 	}
 
 	case EActionExecutionDecision::Ignore:
 	{
-		return BuildActionExecutionResult(EActionExecutionDecision::Ignore, InActionType);
+		return BuildActionExecutionResult(EActionExecutionDecision::Ignore, IncomingActionType);
 	}
 
 	case EActionExecutionDecision::Reject:
 	default:
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, InActionType);
+		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
 	}
 }
 
@@ -154,9 +154,7 @@ FActionExecutionQuery UCActionComponent::BuildActionExecutionQuery(EActionType I
 {
 	FActionExecutionQuery actionExecutionQuery;
 
-	actionExecutionQuery.ExecutionState = IsValid(StateComp_Cached)
-		? StateComp_Cached->GetCurrentExecutionState()
-		: EExecutionState::Dead;
+	actionExecutionQuery.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
 
 	actionExecutionQuery.CurrentActionType = CurrentActionType;
 	actionExecutionQuery.CurrentAction = GetCurrentAction();

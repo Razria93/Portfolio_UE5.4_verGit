@@ -119,7 +119,7 @@ void UCAction_ComboAttack::AdvanceCombo()
 
 	ActionIndex = nextActionIndex;
 
-	FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] AdvanceCombo | ActionIndex = %d"), ActionIndex));
+	FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Advance Combo | ActionIndex = %d"), ActionIndex));
 
 	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 }

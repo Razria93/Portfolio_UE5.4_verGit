@@ -92,7 +92,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 	if (!CanAcceptActionRequest(rejectReason)) return BuildRejectedResult(rejectReason);
 
-	if (!IsValid(WeaponComp_Cached) || !IsValid(ActionComp_Cached)) 
+	if (!IsValid(WeaponComp_Cached) || !IsValid(ActionComp_Cached))
 		return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
 
 	const EActionType resolvedActionType = ResolveEquipmentActionType(InActionRequest);
@@ -240,10 +240,7 @@ EActionType UCActionOrchestratorComponent::ResolveEquipmentActionType(const FEqu
 	case EEquipmentActionIntent::Toggle:
 	{
 		if (!IsValid(WeaponComp_Cached)) return EActionType::Max;
-
-		return WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)
-			? EActionType::Equip
-			: EActionType::Unequip;
+		return WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed) ? EActionType::Equip : EActionType::Unequip;
 	}
 
 	default:
