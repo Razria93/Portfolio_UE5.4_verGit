@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotify.h"
-#include "CAnimNotify_PreInput.generated.h"
+#include "CAnimNotify_ComboPreInput.generated.h"
 
 UENUM()
 enum class EPreInputNotifyType : uint8
@@ -12,12 +12,12 @@ enum class EPreInputNotifyType : uint8
 };
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_PreInput : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_ComboPreInput : public UCAnimNotify
 {
 	GENERATED_BODY()
 
 public:
-	UCAnimNotify_PreInput();
+	UCAnimNotify_ComboPreInput();
 
 private:
 	UPROPERTY(EditAnywhere)

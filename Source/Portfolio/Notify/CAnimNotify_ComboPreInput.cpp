@@ -1,4 +1,4 @@
-#include "Notify/CAnimNotify_PreInput.h"
+#include "Notify/CAnimNotify_ComboPreInput.h"
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
@@ -6,26 +6,26 @@
 #include "Component/CActionComponent.h"
 #include "Action/CAction_ComboAttack.h"
 
-UCAnimNotify_PreInput::UCAnimNotify_PreInput()
+UCAnimNotify_ComboPreInput::UCAnimNotify_ComboPreInput()
 {
 }
 
-FString UCAnimNotify_PreInput::GetNotifyName_Implementation() const
+FString UCAnimNotify_ComboPreInput::GetNotifyName_Implementation() const
 {
 	switch (NotifyType)
 	{
 	case EPreInputNotifyType::Enabled:
-		return TEXT("PreInput(Enabled)");
+		return TEXT("Combo PreInput(Enabled)");
 
 	case EPreInputNotifyType::Disabled:
-		return TEXT("PreInput(Disabled)");
+		return TEXT("Combo PreInput(Disabled)");
 
 	default:
-		return TEXT("PreInput");
+		return TEXT("Combo PreInput");
 	}
 }
 
-void UCAnimNotify_PreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+void UCAnimNotify_ComboPreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
@@ -37,10 +37,10 @@ void UCAnimNotify_PreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!actionComp) return;
 
-	UCAction* curAction = actionComp->GetCurrentAction();
-	if (!curAction) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!currentAction) return;
 
-	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(curAction);
+	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(currentAction);
 	if (!action_ComboAttack) return;
 
 	switch (NotifyType)
