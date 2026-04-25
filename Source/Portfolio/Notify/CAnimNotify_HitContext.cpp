@@ -40,6 +40,8 @@ void UCAnimNotify_HitContext::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 	UCAction* currentAction = actionComp->GetCurrentAction();
 	if (!currentAction) return;
 
+	if (!CanProcessActionNotify(currentAction)) return;
+
 	switch (NotifyType)
 	{
 	case EHitContextNotifyType::Push: currentAction->PushHitContext(); return;

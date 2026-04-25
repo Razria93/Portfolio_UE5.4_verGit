@@ -26,5 +26,10 @@ void UCAnimNotify_CompleteAction::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!actionComp) return;
 
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!currentAction) return;
+
+	if (!CanProcessActionNotify(currentAction)) return;
+
 	actionComp->CompleteCurrentAction();
 }

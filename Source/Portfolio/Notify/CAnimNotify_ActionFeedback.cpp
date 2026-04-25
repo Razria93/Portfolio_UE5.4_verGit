@@ -32,5 +32,7 @@ void UCAnimNotify_ActionFeedback::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	UCAction* currentAction = actionComp->GetCurrentAction();
 	if (!IsValid(currentAction)) return;
 
+	if (!CanProcessActionNotify(currentAction)) return;
+
 	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerOnce, TriggerKey);
 }

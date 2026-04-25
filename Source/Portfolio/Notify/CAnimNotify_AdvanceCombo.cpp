@@ -30,8 +30,10 @@ void UCAnimNotify_AdvanceCombo::Notify(USkeletalMeshComponent* MeshComp, UAnimSe
 	UCAction* currentAction = actionComp->GetCurrentAction();
 	if (!IsValid(currentAction)) return;
 
-	UCAction_ComboAttack* comboAttack = Cast<UCAction_ComboAttack>(currentAction);
-	if (!IsValid(comboAttack)) return;
+	UCAction_ComboAttack* currentAction_ComboAttack = Cast<UCAction_ComboAttack>(currentAction);
+	if (!IsValid(currentAction_ComboAttack)) return;
+	
+	if (!CanProcessActionNotify(currentAction_ComboAttack)) return;
 
-	comboAttack->AdvanceCombo();
+	currentAction_ComboAttack->AdvanceCombo();
 }

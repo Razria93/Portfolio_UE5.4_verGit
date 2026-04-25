@@ -32,6 +32,8 @@ void UCAnimNotifyState_ActionFeedback::NotifyBegin(USkeletalMeshComponent* MeshC
 	UCAction* currentAction = actionComp->GetCurrentAction();
 	if (!IsValid(currentAction)) return;
 
+	if (!CanProcessActionNotify(currentAction)) return;
+
 	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowBegin, TriggerKey);
 }
 
@@ -49,6 +51,8 @@ void UCAnimNotifyState_ActionFeedback::NotifyEnd(USkeletalMeshComponent* MeshCom
 
 	UCAction* currentAction = actionComp->GetCurrentAction();
 	if (!IsValid(currentAction)) return;
+
+	if (!CanProcessActionNotify(currentAction)) return;
 
 	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowEnd, TriggerKey);
 }

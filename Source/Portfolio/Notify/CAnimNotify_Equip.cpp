@@ -27,8 +27,13 @@ void UCAnimNotify_Equip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!actionComp) return;
 
-	UCAction_Equip* action_Equip = Cast<UCAction_Equip>(actionComp->GetCurrentAction());
-	if (!action_Equip) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!currentAction) return;
 
-	action_Equip->AttachWeapon();
+	UCAction_Equip* currentaction_Equip = Cast<UCAction_Equip>(currentAction);
+	if (!currentaction_Equip) return;
+
+	if (!CanProcessActionNotify(currentaction_Equip)) return;
+
+	currentaction_Equip->AttachWeapon();
 }

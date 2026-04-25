@@ -40,6 +40,7 @@ public:
 
 public:
 	EActionType GetActionType() const;
+	FActionContext GetActionContext() const;
 
 public:
 	void SetActionType(EActionType InActionType);

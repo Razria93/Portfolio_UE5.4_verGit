@@ -28,6 +28,11 @@ EActionType UCAction::GetActionType() const
 	return ActionType;
 }
 
+FActionContext UCAction::GetActionContext() const
+{
+	return BuildActionContext();
+}
+
 void UCAction::SetActionType(EActionType InActionType)
 {
 	ActionType = InActionType;

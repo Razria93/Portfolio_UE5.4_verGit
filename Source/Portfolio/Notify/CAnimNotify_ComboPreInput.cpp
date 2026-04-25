@@ -40,21 +40,23 @@ void UCAnimNotify_ComboPreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 	UCAction* currentAction = actionComp->GetCurrentAction();
 	if (!currentAction) return;
 
-	UCAction_ComboAttack* action_ComboAttack = Cast<UCAction_ComboAttack>(currentAction);
-	if (!action_ComboAttack) return;
+	UCAction_ComboAttack* currentAction_ComboAttack = Cast<UCAction_ComboAttack>(currentAction);
+	if (!currentAction_ComboAttack) return;
+
+	if (!CanProcessActionNotify(currentAction_ComboAttack)) return;
 
 	switch (NotifyType)
 	{
 	case EPreInputNotifyType::Enabled:
 	{
 		// FLog::Log(TEXT("[AnimNotify|PreInput] Enabled"));
-		action_ComboAttack->EnablePreInput();
+		currentAction_ComboAttack->EnablePreInput();
 		break;
 	}
 	case EPreInputNotifyType::Disabled:
 	{
 		// FLog::Log(TEXT("[AnimNotify|PreInput] Disabled"));
-		action_ComboAttack->DisablePreInput();
+		currentAction_ComboAttack->DisablePreInput();
 		break;
 	}
 	}

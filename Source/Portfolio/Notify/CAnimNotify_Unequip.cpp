@@ -27,8 +27,13 @@ void UCAnimNotify_Unequip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenc
 	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
 	if (!actionComp) return;
 
-	UCAction_Unequip* action_Unequip = Cast<UCAction_Unequip>(actionComp->GetCurrentAction());
-	if (!action_Unequip) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!currentAction) return;
 
-	action_Unequip->DetachWeapon();
+	UCAction_Unequip* currentaction_Unequip = Cast<UCAction_Unequip>(currentAction);
+	if (!currentaction_Unequip) return;
+
+	if (!CanProcessActionNotify(currentaction_Unequip)) return;
+
+	currentaction_Unequip->DetachWeapon();
 }
