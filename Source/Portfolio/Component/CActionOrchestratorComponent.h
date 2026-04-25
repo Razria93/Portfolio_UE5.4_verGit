@@ -60,4 +60,5 @@ private:
 
 private:
 	EActionType ResolveEquipmentActionType(const FEquipmentActionRequest& InActionRequest) const;
+	EActionType ResolveCombatActionType(const FCombatActionRequest& InActionRequest) const;
 };

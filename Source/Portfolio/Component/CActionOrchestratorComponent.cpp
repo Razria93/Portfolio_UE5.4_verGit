@@ -109,17 +109,11 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 
 	if (!IsValid(ActionComp_Cached)) return BuildRejectedResult(EActionRequestRejectReason::InvalidComponent);
 
-	switch (InActionRequest.IntentType)
-	{
-	case ECombatActionIntent::ComboAttack:
-	{
-		const FActionExecutionResult actionExecutionResult = ActionComp_Cached->ExecuteAction(EActionType::ComboAttack);
-		return BuildRequestResult(actionExecutionResult);
-	}
+	const EActionType resolvedActionType = ResolveCombatActionType(InActionRequest);
+	if (resolvedActionType == EActionType::Max) return BuildIgnoredResult();
 
-	default:
-		return BuildIgnoredResult();
-	}
+	const FActionExecutionResult actionExecutionResult = ActionComp_Cached->ExecuteAction(resolvedActionType);
+	return BuildRequestResult(actionExecutionResult);
 }
 
 bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
@@ -242,6 +236,18 @@ EActionType UCActionOrchestratorComponent::ResolveEquipmentActionType(const FEqu
 		if (!IsValid(WeaponComp_Cached)) return EActionType::Max;
 		return WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed) ? EActionType::Equip : EActionType::Unequip;
 	}
+
+	default:
+		return EActionType::Max;
+	}
+}
+
+EActionType UCActionOrchestratorComponent::ResolveCombatActionType(const FCombatActionRequest& InActionRequest) const
+{
+	switch (InActionRequest.IntentType)
+	{
+	case ECombatActionIntent::ComboAttack:
+		return EActionType::ComboAttack;
 
 	default:
 		return EActionType::Max;
