@@ -26,7 +26,7 @@ public:
 
 public:
 	/* === Action Arbitration === */
-	EActionExecutionDecision DecideExecution(const FActionExecutionQuery & InActionExecuteQuery) const override;
+	EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const override;
 
 public:
 	bool Start() override;
@@ -34,6 +34,7 @@ public:
 
 public:
 	void Complete() override;
+	void Abort(EActionAbortReason InActionAbortReason) override;
 
 public:
 	void OpenComboPreInput();

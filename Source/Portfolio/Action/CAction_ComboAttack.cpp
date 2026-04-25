@@ -75,7 +75,28 @@ void UCAction_ComboAttack::Complete()
 		ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
 	}
 
-	Super::Complete();	// bIsAction, bBeginAction = false
+	Super::Complete();
+
+	ActionIndex = 0;
+
+	bEnablePreInput = false;
+	bExistPreInput = false;
+}
+
+void UCAction_ComboAttack::Abort(EActionAbortReason InActionAbortReason)
+{
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		Super::Abort(InActionAbortReason);
+		return;
+	}
+
+	if (ActionDatas_Injected.IsValidIndex(ActionIndex) && IsValid(ActionDatas_Injected[ActionIndex].Montage))
+	{
+		ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
+	}
+
+	Super::Abort(InActionAbortReason);
 
 	ActionIndex = 0;
 

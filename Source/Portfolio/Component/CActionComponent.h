@@ -61,7 +61,10 @@ public:
 
 public:
 	FActionExecutionResult ExecuteAction(EActionType IncomingActionType);
+
+public:
 	void CompleteCurrentAction();
+	void AbortCurrentAction(EActionAbortReason InActionAbortReason);
 
 private:
 	bool StartAction(class UCAction* InAction, EActionType InActionType);

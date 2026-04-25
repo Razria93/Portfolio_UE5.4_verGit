@@ -24,11 +24,11 @@ enum class EActionType : uint8
 
 	Equip,
 	Unequip,
-	
+
 	ComboAttack,
-	
+
 	All,
-	
+
 	Max,
 };
 
@@ -51,6 +51,20 @@ enum class EActionExecutionDecision : uint8
 	Chain,
 	Enqueue,
 	Interrupt,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionAbortReason : uint8
+{
+	None = 0,
+
+	Reaction,
+	Dead,
+
+	Interrupted,
+	ExternalCancel,
 
 	Max,
 };
@@ -798,7 +812,7 @@ FORCEINLINE uint32 GetTypeHash(const FReactionDataKey& InKey)
 
 	H = HashCombine(H, GetTypeHash(InKey.ApplyDamageSpecKey));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ReactionType)));
-	
+
 	return H;
 }
 

@@ -7,7 +7,7 @@
 
 #include "Type/CWeaponStructure.h"
 
-EActionExecutionDecision UCAction_Equip::DecideExecution(const FActionExecutionQuery & InActionExecuteQuery) const
+EActionExecutionDecision UCAction_Equip::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
 {
 	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
 	if (!IsValid(WeaponComp_Cached)) return EActionExecutionDecision::Reject;
@@ -16,7 +16,7 @@ EActionExecutionDecision UCAction_Equip::DecideExecution(const FActionExecutionQ
 
 	if (!ActionDatas_Injected.IsValidIndex(0)) return EActionExecutionDecision::Reject;
 	if (!IsValid(ActionDatas_Injected[0].Montage)) return EActionExecutionDecision::Reject;
-	
+
 	if (InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle)
 	{
 		return EActionExecutionDecision::Start;
@@ -43,7 +43,23 @@ void UCAction_Equip::Complete()
 		ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
 	}
 
-	Super::Complete();	// bIsAction, bBeginAction = false
+	Super::Complete();
+}
+
+void UCAction_Equip::Abort(EActionAbortReason InActionAbortReason)
+{
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		Super::Abort(InActionAbortReason);
+		return;
+	}
+
+	if (ActionDatas_Injected.IsValidIndex(0) && IsValid(ActionDatas_Injected[0].Montage))
+	{
+		ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
+	}
+
+	Super::Abort(InActionAbortReason);
 }
 
 void UCAction_Equip::AttachWeapon()

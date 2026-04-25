@@ -70,6 +70,13 @@ void UCAction::Complete()
 	bIsAction = false;
 }
 
+void UCAction::Abort(EActionAbortReason InActionAbortReason)
+{
+	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	bIsAction = false;
+}
+
 void UCAction::PushHitContext()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;

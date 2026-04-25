@@ -7,7 +7,7 @@
 
 #include "Type/CWeaponStructure.h"
 
-EActionExecutionDecision UCAction_Unequip::DecideExecution(const FActionExecutionQuery & InActionExecuteQuery) const
+EActionExecutionDecision UCAction_Unequip::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
 {
 	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
 	if (!IsValid(WeaponComp_Cached)) return EActionExecutionDecision::Reject;
@@ -43,7 +43,23 @@ void UCAction_Unequip::Complete()
 		ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
 	}
 
-	Super::Complete();	// bIsAction, bBeginAction = false
+	Super::Complete();
+}
+
+void UCAction_Unequip::Abort(EActionAbortReason InActionAbortReason)
+{
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		Super::Abort(InActionAbortReason);
+		return;
+	}
+
+	if (ActionDatas_Injected.IsValidIndex(0) && IsValid(ActionDatas_Injected[0].Montage))
+	{
+		ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
+	}
+
+	Super::Abort(InActionAbortReason);
 }
 
 void UCAction_Unequip::DetachWeapon()

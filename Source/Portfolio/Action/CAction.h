@@ -54,6 +54,7 @@ public:
 
 public:
 	virtual void Complete();
+	virtual void Abort(EActionAbortReason InActionAbortReason);
 
 public:
 	void PushHitContext();

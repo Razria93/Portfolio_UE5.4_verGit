@@ -128,6 +128,18 @@ void UCActionComponent::CompleteCurrentAction()
 	ExitActionState();
 }
 
+void UCActionComponent::AbortCurrentAction(EActionAbortReason InActionAbortReason)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	UCAction* currentAction = GetCurrentAction();
+	if (!IsValid(currentAction)) return;
+
+	currentAction->Abort(InActionAbortReason);
+
+	ExitActionState();
+}
+
 bool UCActionComponent::StartAction(UCAction* InAction, EActionType InActionType)
 {
 	if (!IsValid(InAction)) return false;

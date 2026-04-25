@@ -11,13 +11,14 @@ class PORTFOLIO_API UCAction_Unequip : public UCAction
 
 public:
 	/* === Action Arbitration === */
-	EActionExecutionDecision DecideExecution(const FActionExecutionQuery & InActionExecuteQuery) const override;
+	EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const override;
 
 public:
 	bool Start() override;
 
 public:
 	void Complete() override;
+	void Abort(EActionAbortReason InActionAbortReason) override;
 
 public:
 	void DetachWeapon();
