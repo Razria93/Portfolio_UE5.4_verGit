@@ -182,14 +182,14 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 
 	// [TODO]
 	// Change from 'UCWorldSubsystem_CombatEngage' to 'CWorldSubsystem_EngageCoordinator'
-	const FEngageAssignmentContext prevAssignmentContext = subsystem->GetAssignment(aiController); // Previous Context
+	const FEngageAssignmentContext previousAssignmentContext = subsystem->GetAssignment(aiController); // Previous Context
 
 	FEngageRequestContext requestContext;
 	requestContext.RequestController = aiController;
 	requestContext.TargetActor = InOutAIContext.TargetActor;
 	requestContext.TargetPriority = InOutAIContext.TargetPriority;
 	requestContext.DistanceToTarget = InOutAIContext.DistanceToTarget;
-	requestContext.bWasEngaged = prevAssignmentContext.IsValidAssignment() && prevAssignmentContext.CombatRole == ECombatRole::Engage;
+	requestContext.bWasEngaged = previousAssignmentContext.IsValidAssignment() && previousAssignmentContext.CombatRole == ECombatRole::Engage;
 
 	subsystem->SubmitRequest(requestContext);
 

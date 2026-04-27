@@ -2,23 +2,20 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "Type/CWeaponStructure.h"
-#include "CBTTask_StartAttack.generated.h"
+#include "Type/CActionOrchestrationStructure.h"
+#include "CBTTask_StartAction.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCBTTask_StartAttack : public UBTTaskNode
+class PORTFOLIO_API UCBTTask_StartAction : public UBTTaskNode
 {
 	GENERATED_BODY()
 
 public:
-	UCBTTask_StartAttack();
+	UCBTTask_StartAction();
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Config")
-	TArray<UAnimMontage*> AttackMontages;
-
-	UPROPERTY(EditAnywhere, Category = "Config")
-	EActionType AttackActionType = EActionType::Max;
+	ECombatActionIntent CombatActionIntent = ECombatActionIntent::ComboAttack;
 
 	UPROPERTY(EditAnywhere, Category = "Config")
 	bool bStopMovementOnStart = true;

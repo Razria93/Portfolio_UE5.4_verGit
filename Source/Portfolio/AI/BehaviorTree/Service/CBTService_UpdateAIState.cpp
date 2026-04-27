@@ -114,35 +114,11 @@ void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* In
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
 
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
-		InBlackboardComp->SetValueAsInt(CAIKey::Engage::LastAttackIndex, INDEX_NONE);
-		
-		InBlackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
 		InBlackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
 
 		if (InNextAIStateType == EAIStateType::Dead || InNextAIStateType == EAIStateType::Idle)
 		{
 			InBlackboardComp->ClearValue(CAIKey::Engage::AttackableTime);
-		}
-
-		if (AAIController* aIController = Cast<AAIController>(InBlackboardComp->GetOwner()))
-		{
-			if (APawn* pawn = aIController->GetPawn())
-			{
-				if (UCWeaponComponent* weaponComp = pawn->FindComponentByClass<UCWeaponComponent>())
-				{
-					weaponComp->ClearContext();
-				}
-
-				if (ACEnemy* enemy = Cast<ACEnemy>(pawn))
-				{
-					enemy->ClearActiveActionFeedbackKey();
-				}
-
-				if (UCMovementComponent* movementComp = pawn->FindComponentByClass<UCMovementComponent>())
-				{
-					movementComp->SetMove();
-				}
-			}
 		}
 	} 
 }
