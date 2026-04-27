@@ -2,8 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Type/CWeaponStructure.h"
 #include "Type/CAIStructure.h"
+#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CWeaponStructure.h"
 #include "CEnemy.generated.h"
 
 UCLASS()
@@ -25,23 +26,23 @@ private:
 	EPatrolMode PatrolMode = EPatrolMode::None;
 
 private:
-	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	UPROPERTY(EditAnywhere, Category = "AI|Investigate")
 	bool bUseInvestigate;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	UPROPERTY(EditAnywhere, Category = "AI|Investigate")
 	float InvestigateDuration;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Investigate")
+	UPROPERTY(EditAnywhere, Category = "AI|Investigate")
 	int32 InvestigateMaxIndex;
 
 private:
-	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	UPROPERTY(EditAnywhere, Category = "AI|Chase")
 	float ChaseOffsetRange;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	UPROPERTY(EditAnywhere, Category = "AI|Chase")
 	float ChaseEnterBuffer;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Chase")
+	UPROPERTY(EditAnywhere, Category = "AI|Chase")
 	float ChaseExitBuffer;
 
 private:
@@ -55,64 +56,75 @@ private:
 	float StepForwardDistance;
 
 private:
-	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	UPROPERTY(EditAnywhere, Category = "AI|Engage")
 	float EngageOffsetRange;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	UPROPERTY(EditAnywhere, Category = "AI|Engage")
 	float EngageEnterBuffer;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	UPROPERTY(EditAnywhere, Category = "AI|Engage")
 	float EngageExitBuffer;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI|Engage")
+	UPROPERTY(EditAnywhere, Category = "AI|Engage")
 	float AttackCooldown;
 
 private:
-	UPROPERTY(Transient)
-	FActionFeedbackKey ActiveActionFeedbackKey = FActionFeedbackKey();
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
+	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
 
-	UPROPERTY(Transient)
-	bool bHasActiveActionFeedbackKey = false;
-
-private:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	class UCMovementComponent* MovementComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	class UCWeaponComponent* WeaponComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "State")
 	class UCStateComponent* StateComponent;
 
-	UPROPERTY(VisibleAnywhere)
-	class UCApplyDamageComponent* ApplyDamageComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	class UCTakeDamageComponent* TakeDamageComponent;
-
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Resource")
 	class UCHealthComponent* HealthComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
+	class UCApplyDamageComponent* ApplyDamageComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
+	class UCTakeDamageComponent* TakeDamageComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Execution")
+	class UCActionComponent* ActionComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Execution")
 	class UCReactionComponent* ReactionComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void Tick(float DeltaTime) override;
 
 public:
-	FORCEINLINE UCWeaponComponent* GetWeaponComponent() const { return WeaponComponent; }
-	FORCEINLINE UCHealthComponent* GetHealthComponent() const { return HealthComponent; }
-	FORCEINLINE UCReactionComponent* GetReactionComponent() const { return ReactionComponent; }
+	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+public:
+	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
+
+	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
+	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
+	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
+	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
+	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
+	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
+	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
+	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
+	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
+	FORCEINLINE UCReactionFeedbackComponent* GetReactionFeedbackComp() const { return ReactionFeedbackComponent; }
 
 public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }
@@ -146,10 +158,24 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
 
 public:
-	void CacheActiveActionFeedbackKey(EActionType InActionType, int32 InActionIndex);
-	void ClearActiveActionFeedbackKey();
+	FActionRequestResult HandleAIWalk();
+	FActionRequestResult HandleAIRun();
+	FActionRequestResult HandleAISprint();
+
+	FActionRequestResult HandleAIJump();
+	FActionRequestResult HandleAIStopJump();
+
+	FActionRequestResult HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
+	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent);
 
 public:
 	bool TryStartKill();
 	bool TryStartRevive(float InReviveHP);
+
+private:
+	bool IsCombatActionType(EActionType InActionType) const;
+
+private:
+	UFUNCTION()
+	void OnActionTypeChanged(class ACharacter* InOwnerCharacter, EActionType InPreviousActionType, EActionType InNewActionType);
 };

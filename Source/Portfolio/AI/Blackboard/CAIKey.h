@@ -78,15 +78,12 @@ namespace CAIKey
 	{
 		static const FName bShouldEngage = "bShouldEngage";						// Bool (UpdateAIContext)
 
-		static const FName bInEngageRange = "bInEngageRange";					// Bool  (On/Off : UpdateEngageContext)
-		static const FName bCanAttack = "bCanAttack";							// Bool  (On: UpdateEngageContext / Off: StartAttack)
-		static const FName bIsAttacking = "bIsAttacking";						// Bool  (On: StartAttack / Off: AttackEndNotify, AIState clean-up)
-		static const FName AttackableTime = "AttackableTime";					// Float (CommitAttackCooldown)
-		static const FName LastAttackIndex = "LastAttackIndex";					// Int	 (SelectAttackIndex)
+		static const FName AttackableTime = "AttackableTime";					// Float ([CommitAttackCooldown] ExecuteTask)
+		static const FName bInEngageRange = "bInEngageRange";					// Bool  (On/Off : [UpdateAIContext] TickNode)
+		static const FName bCanAttack = "bCanAttack";							// Bool  (On: [UpdateAIContext] TickNode / Off: [StartAttack] ExecuteTask)
 
-		static const FName AttackIndex = "AttackIndex";							// Int	 
-		static const FName AttackActionType = "AttackActionType";				// Enum  (EActionType)
-		
+		static const FName bIsAttacking = "bIsAttacking";						// Bool  ([ACEnemy] OnActionTypeChanged)
+		static const FName AttackActionType = "AttackActionType";				// Enum  ([ACEnemy] OnActionTypeChanged)
 	}
 	
 	namespace Reaction

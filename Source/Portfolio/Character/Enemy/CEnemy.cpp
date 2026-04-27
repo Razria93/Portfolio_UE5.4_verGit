@@ -1,17 +1,21 @@
 #include "Character/Enemy/CEnemy.h"
 #include "ProjectGlobal.h"
 
-#include "AIController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "Controller/CAIController.h"
+
+#include "Component/CActionOrchestratorComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CHealthComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
-#include "Component/CHealthComponent.h"
+#include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
@@ -40,6 +44,10 @@ ACEnemy::ACEnemy()
 	characterMovementComp->bOrientRotationToMovement = true;
 	characterMovementComp->MaxWalkSpeed = 600.0f;
 
+	// Init ActionOrchestratorComp
+	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
+	check(ActionOrchestratorComponent);
+
 	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -52,6 +60,10 @@ ACEnemy::ACEnemy()
 	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
 	check(StateComponent);
 
+	// Init HealthComp
+	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
+	check(HealthComponent);
+
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
 	check(ApplyDamageComponent);
@@ -60,9 +72,9 @@ ACEnemy::ACEnemy()
 	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
 	check(TakeDamageComponent);
 
-	// Init HealthComp
-	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
-	check(HealthComponent);
+	// Init UCACtionComp
+	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
+	check(ActionComponent);
 
 	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
@@ -80,6 +92,34 @@ ACEnemy::ACEnemy()
 void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (IsValid(ActionComponent))
+	{
+		// Update blackboard
+		ActionComponent->OnActionTypeChanged.AddDynamic(this, &ACEnemy::OnActionTypeChanged);
+	}
+
+	if (IsValid(HealthComponent) && IsValid(StateComponent))
+	{
+		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
+	}
+
+	HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
+}
+
+void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(ActionComponent))
+	{
+		ActionComponent->OnActionTypeChanged.RemoveAll(this);
+	}
+
+	if (IsValid(HealthComponent))
+	{
+		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ACEnemy::Tick(float DeltaTime)
@@ -117,18 +157,88 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	return finalDamage;
 }
 
-void ACEnemy::CacheActiveActionFeedbackKey(EActionType InActionType, int32 InActionIndex)
+FActionRequestResult ACEnemy::HandleAIWalk()
 {
-	ActiveActionFeedbackKey.ActionType = InActionType;
-	ActiveActionFeedbackKey.ActionIndex = InActionIndex;
-	bHasActiveActionFeedbackKey = true;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::AI;
+	request.IntentType = EMovementActionIntent::Walk;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACEnemy::ClearActiveActionFeedbackKey()
+FActionRequestResult ACEnemy::HandleAIRun()
 {
-	ActiveActionFeedbackKey.ActionType = EActionType::Max;
-	ActiveActionFeedbackKey.ActionIndex = INDEX_NONE;
-	bHasActiveActionFeedbackKey = false;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::AI;
+	request.IntentType = EMovementActionIntent::Run;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+FActionRequestResult ACEnemy::HandleAISprint()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::AI;
+	request.IntentType = EMovementActionIntent::Sprint;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+FActionRequestResult ACEnemy::HandleAIJump()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::AI;
+	request.IntentType = EMovementActionIntent::Jump;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+FActionRequestResult ACEnemy::HandleAIStopJump()
+{
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::AI;
+	request.IntentType = EMovementActionIntent::StopJump;
+	request.IntentEvent = EActionIntentEvent::Completed;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+FActionRequestResult ACEnemy::HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent)
+{
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+
+	FEquipmentActionRequest request;
+	request.IntentSource = EActionIntentSource::AI;
+	request.IntentType = InEquipmentActionIntent;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestEquipmentAction(request);
+}
+
+FActionRequestResult ACEnemy::HandleAICombatAction(ECombatActionIntent InCombatActionIntent)
+{
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+
+	FCombatActionRequest request;
+	request.IntentSource = EActionIntentSource::AI;
+	request.IntentType = InCombatActionIntent;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestCombatAction(request);
 }
 
 bool ACEnemy::TryStartKill()
@@ -143,4 +253,37 @@ bool ACEnemy::TryStartRevive(float InReviveHP)
 	return IsValid(HealthComponent) && HealthComponent->TryRevive(InReviveHP);
 }
 
+bool ACEnemy::IsCombatActionType(EActionType InActionType) const
+{
+	switch (InActionType)
+	{
+	case EActionType::ComboAttack:
+		return true;
 
+	
+	default:
+		return false; // Idle / Equip / Unequip etc..
+	}
+}
+
+void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPreviousActionType, EActionType InNewActionType)
+{
+	ACAIController* aiController = Cast<ACAIController>(GetController());
+	if (!IsValid(aiController)) return;
+
+	UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return;
+
+	const bool bIsAttacking = IsCombatActionType(InNewActionType);
+
+	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, bIsAttacking);
+
+	if (!bIsAttacking)
+	{
+		blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
+	}
+	else
+	{
+		blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(InNewActionType));
+	}
+}

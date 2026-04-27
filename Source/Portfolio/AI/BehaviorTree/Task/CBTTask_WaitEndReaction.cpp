@@ -55,7 +55,7 @@ void UCBTTask_WaitEndReaction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8
 		return;
 	}
 
-	UCReactionComponent* reactionComp = enemy->GetReactionComponent();
+	UCReactionComponent* reactionComp = enemy->GetReactionComp();
 	if (!IsValid(reactionComp))
 	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);

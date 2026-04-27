@@ -202,13 +202,12 @@ bool ACAIController::InitializeBlackBoardValue()
 			// --- Engage ---
 			// Init
 			blackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage, false);
+
+			blackboardComp->SetValueAsFloat(CAIKey::Engage::AttackableTime, -1.f);
 			blackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
 			blackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
+			
 			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
-			blackboardComp->SetValueAsFloat(CAIKey::Engage::AttackableTime, -1.f);
-			blackboardComp->SetValueAsInt(CAIKey::Engage::LastAttackIndex, INDEX_NONE);
-
-			blackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
 			blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
 
 			// --- Reaction ---
@@ -320,15 +319,13 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	// Engage
 	const bool bShouldEngageKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bShouldEngage);
+
+	const bool bAttackableTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackableTime);
 	const bool bInEngageRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bInEngageRange);
 	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bCanAttack);
-	const bool bIsAttackingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bIsAttacking);
-	const bool bAttackableTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackableTime);
-	const bool bLastAttackIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::LastAttackIndex);
 
-	const bool bAttackIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackIndex);
+	const bool bIsAttackingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bIsAttacking);
 	const bool bAttackActionTypeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackActionType);
-	
 
 	// Reaction
 	const bool bHasPendingReactionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bHasPendingReaction);
@@ -395,16 +392,13 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	// Engage
 	bAllValid &= bShouldEngageKey;
+
+	bAllValid &= bAttackableTimeKey;
 	bAllValid &= bInEngageRangeKey;
 	bAllValid &= bCanAttackKey;
+
 	bAllValid &= bIsAttackingKey;
-	bAllValid &= bAttackableTimeKey;
 	bAllValid &= bAttackActionTypeKey;
-	bAllValid &= bLastAttackIndexKey;
-	
-	bAllValid &= bAttackIndexKey;
-	bAllValid &= bAttackActionTypeKey;
-	
 
 	// Reaction
 	bAllValid &= bHasPendingReactionKey;
