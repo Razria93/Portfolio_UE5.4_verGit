@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interface/TargetContextProvider.h"
+#include "Type/CActionOrchestrationStructure.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
@@ -89,22 +90,18 @@ public:
 	int GetTargetPriority() const override { return Priority; }
 
 public:
-	void HandleMove(const FVector2D& InAxis2D);
+	FActionRequestResult HandleMove(const FVector2D& InAxis2D);
 
 public:
-	void HandleWalk();
-	void HandleRun();
-	void HandleSprint();
+	FActionRequestResult HandleWalk();
+	FActionRequestResult HandleRun();
+	FActionRequestResult HandleSprint();
 
-public:
-	void HandleJump();
-	void HandleStopJump();
+	FActionRequestResult HandleJump();
+	FActionRequestResult HandleStopJump();
 
-public:
-	void HandleSword();
-
-public:
-	void HandleComboAction();
+	FActionRequestResult HandleEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
+	FActionRequestResult HandleCombatAction(ECombatActionIntent InCombatActionIntent);
 
 private:
 	void ConsumePendingReaction();

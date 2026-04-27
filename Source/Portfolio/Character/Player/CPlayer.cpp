@@ -3,6 +3,7 @@
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
@@ -166,9 +167,9 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	return finalDamage;
 }
 
-void ACPlayer::HandleMove(const FVector2D& InAxis2D)
+FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
 {
-	if (!IsValid(Controller) || !IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(Controller) || !IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FMovementActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
@@ -176,91 +177,91 @@ void ACPlayer::HandleMove(const FVector2D& InAxis2D)
 	request.IntentEvent = EActionIntentEvent::Updated;
 	request.Axis2D = InAxis2D;
 
-	ActionOrchestratorComponent->RequestMovementAction(request);
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleWalk()
+FActionRequestResult ACPlayer::HandleWalk()
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FMovementActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = EMovementActionIntent::Walk;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	ActionOrchestratorComponent->RequestMovementAction(request);
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleRun()
+FActionRequestResult ACPlayer::HandleRun()
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FMovementActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = EMovementActionIntent::Run;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	ActionOrchestratorComponent->RequestMovementAction(request);
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleSprint()
+FActionRequestResult ACPlayer::HandleSprint()
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FMovementActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = EMovementActionIntent::Sprint;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	ActionOrchestratorComponent->RequestMovementAction(request);
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleJump()
+FActionRequestResult ACPlayer::HandleJump()
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FMovementActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = EMovementActionIntent::Jump;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	ActionOrchestratorComponent->RequestMovementAction(request);
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleStopJump()
+FActionRequestResult ACPlayer::HandleStopJump()
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FMovementActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = EMovementActionIntent::StopJump;
 	request.IntentEvent = EActionIntentEvent::Completed;
 
-	ActionOrchestratorComponent->RequestMovementAction(request);
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleSword()
+FActionRequestResult ACPlayer::HandleEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent)
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FEquipmentActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
-	request.IntentType = EEquipmentActionIntent::Toggle;
+	request.IntentType = InEquipmentActionIntent;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	ActionOrchestratorComponent->RequestEquipmentAction(request);
+	return ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
-void ACPlayer::HandleComboAction()
+FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatActionIntent)
 {
-	if (!IsValid(ActionOrchestratorComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FCombatActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
-	request.IntentType = ECombatActionIntent::ComboAttack;
+	request.IntentType = InCombatActionIntent;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	ActionOrchestratorComponent->RequestCombatAction(request);
+	return ActionOrchestratorComponent->RequestCombatAction(request);
 }
 
 void ACPlayer::ConsumePendingReaction()

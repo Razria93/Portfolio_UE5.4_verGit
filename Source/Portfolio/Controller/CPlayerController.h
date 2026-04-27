@@ -24,23 +24,23 @@ protected:
 	virtual void SetupInputComponent() override;
 
 protected:
-	void InputMoveForward(float InAxisValue);
-	void InputMoveRight(float InAxisValue);
-	
-protected:
 	void InputLookYaw(float InAxisValue);
 	void InputLookPitch(float InAxisValue);
 
 protected:
-	void FlushMoveInput();
+	void InputMoveForward(float InAxisValue);
+	void InputMoveRight(float InAxisValue);
 
+protected:
 	void PressWalk();
 	void ReleaseWalk();
 
 	void PressJump();
 	void ReleaseJump();
 
+	void PressSwordToggle();
 	void PressComboAction();
 
-	void PressSword();
+protected:
+	void FlushMoveInput();
 };
