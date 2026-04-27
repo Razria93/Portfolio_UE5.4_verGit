@@ -1,17 +1,17 @@
-#include "AI/BehaviorTree/Task/CBTTask_WaitAttackEnd.h"
+#include "AI/BehaviorTree/Task/CBTTask_WaitEndAction.h"
 #include "ProjectGlobal.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/BlackBoard/CAIKey.h"
 
-UCBTTask_WaitAttackEnd::UCBTTask_WaitAttackEnd()
+UCBTTask_WaitEndAction::UCBTTask_WaitEndAction()
 {
-	NodeName = TEXT("Wait Attack End");
+	NodeName = TEXT("Wait End Action");
 	bNotifyTick = true;
 }
 
-EBTNodeResult::Type UCBTTask_WaitAttackEnd::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UCBTTask_WaitEndAction::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp))
@@ -27,7 +27,7 @@ EBTNodeResult::Type UCBTTask_WaitAttackEnd::ExecuteTask(UBehaviorTreeComponent& 
 	return EBTNodeResult::InProgress;
 }
 
-void UCBTTask_WaitAttackEnd::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void UCBTTask_WaitEndAction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp))

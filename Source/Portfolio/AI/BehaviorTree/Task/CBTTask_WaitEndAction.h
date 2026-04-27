@@ -2,15 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "CBTTask_WaitAttackEnd.generated.h"
+#include "CBTTask_WaitEndAction.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCBTTask_WaitAttackEnd : public UBTTaskNode
+class PORTFOLIO_API UCBTTask_WaitEndAction : public UBTTaskNode
 {
 	GENERATED_BODY()
 	
 public:
-	UCBTTask_WaitAttackEnd();
+	UCBTTask_WaitEndAction();
 
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

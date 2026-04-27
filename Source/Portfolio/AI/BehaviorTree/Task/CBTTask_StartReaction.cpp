@@ -1,18 +1,19 @@
-#include "AI/BehaviorTree/Task/CBTTask_TryStartReaction.h"
+#include "AI/BehaviorTree/Task/CBTTask_StartReaction.h"
 #include "ProjectGlobal.h"
 
 #include "AIController.h"
 #include "Character/Enemy/CEnemy.h"
+#include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
-UCBTTask_TryStartReaction::UCBTTask_TryStartReaction()
+UCBTTask_StartReaction::UCBTTask_StartReaction()
 {
-	NodeName = TEXT("Try Start Reaction");
+	NodeName = TEXT("Start Reaction");
 }
 
-EBTNodeResult::Type UCBTTask_TryStartReaction::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UCBTTask_StartReaction::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* aiController = OwnerComp.GetAIOwner();
 	if (!IsValid(aiController)) return EBTNodeResult::Failed;
@@ -20,7 +21,7 @@ EBTNodeResult::Type UCBTTask_TryStartReaction::ExecuteTask(UBehaviorTreeComponen
 	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
 	if (!IsValid(enemy)) return EBTNodeResult::Failed;
 
-	UCReactionComponent* reactionComp = enemy->GetReactionComponent();
+	UCReactionComponent* reactionComp = enemy->GetReactionComp();
 	if (!IsValid(reactionComp)) return EBTNodeResult::Failed;
 
 	FReactionContext reactionContext;
@@ -28,7 +29,7 @@ EBTNodeResult::Type UCBTTask_TryStartReaction::ExecuteTask(UBehaviorTreeComponen
 	// Invalid pending reaction
 	if (!reactionComp->TryConsumePendingReaction(reactionContext))
 	{
-		FLog::Log(TEXT("[TryStartReaction|ExecuteTask] Invalid Pending Reaction"));
+		FLog::Log(TEXT("[StartReaction|ExecuteTask] Invalid Pending Reaction"));
 	
 		// If already active, keep waiting on it.
 		return reactionComp->HasActiveReactionContext()
@@ -36,10 +37,9 @@ EBTNodeResult::Type UCBTTask_TryStartReaction::ExecuteTask(UBehaviorTreeComponen
 			: EBTNodeResult::Failed;	// Go to Root
 	}
 	
-	// Reject Execute reaction
 	if (!reactionComp->TryExecuteReaction(reactionContext))
 	{
-		FLog::Log(TEXT("[TryStartReaction|ExecuteTask] Rejected Execute reaction"));
+		FLog::Log(TEXT("[StartReaction|ExecuteTask] Rejected Execute reaction"));
 	
 		// If already active, keep waiting on it.
 		return reactionComp->HasActiveReactionContext()
@@ -47,6 +47,6 @@ EBTNodeResult::Type UCBTTask_TryStartReaction::ExecuteTask(UBehaviorTreeComponen
 			: EBTNodeResult::Failed;	// Go to Root
 	}
 
-	FLog::Log(TEXT("[TryStartReaction|ExecuteTask] Succeeded Execute reaction"));
+	FLog::Log(TEXT("[StartReaction|ExecuteTask] Succeeded Execute reaction"));
 	return EBTNodeResult::Succeeded;
 }
