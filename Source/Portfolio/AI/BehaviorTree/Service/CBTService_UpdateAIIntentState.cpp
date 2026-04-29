@@ -1,4 +1,4 @@
-#include "AI/BehaviorTree/Service/CBTService_UpdateAIState.h"
+#include "AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.h"
 #include "ProjectGlobal.h"
 
 #include "AIController.h"
@@ -14,16 +14,16 @@
 #include "Type/CHealthStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
 
-UCBTService_UpdateAIState::UCBTService_UpdateAIState()
+UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 {
-	NodeName = "Update AIState";
+	NodeName = "Update AI Intent State";
 	bNotifyTick = true;
 
-	Interval = 0.1f;
-	RandomDeviation = 0.02f;
+	Interval = 0.2f;
+	RandomDeviation = 0.f;
 }
 
-void UCBTService_UpdateAIState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return;
@@ -33,12 +33,12 @@ void UCBTService_UpdateAIState::TickNode(UBehaviorTreeComponent& OwnerComp, uint
 
 	const float currentTime = world->GetTimeSeconds();
 
-	const EAIStateType nextAIStateType = DecideNextAIStateType(blackboardComp, currentTime);
+	const EAIIntentState nextAIIntentState = DecideNextAIIntentState(blackboardComp, currentTime);
 
-	ChangeAIStateType(blackboardComp, nextAIStateType);
+	ChangeAIIntentState(blackboardComp, nextAIIntentState);
 }
 
-EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardComponent* InBlackboard, float InCurrentTime)
+EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackboardComponent* InBlackboard, float InCurrentTime)
 {
 	// -----------------------------------------------------------------------------
 	// 1. Absolute States
@@ -46,17 +46,17 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState));
 	const bool bHasPendingReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasPendingReaction);
 	const bool bHasActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasActiveReaction);
-	const bool bIsAttacking = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsAttacking);
+	const bool bIsCombatAction = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsCombatAction);
 
 	if (deadState != EDeadState::Alive)
-		return EAIStateType::Dead;
+		return EAIIntentState::Dead;
 
 	if (bHasPendingReaction || bHasActiveReaction)
-		return EAIStateType::HitReact;
+		return EAIIntentState::HitReact;
 
 	// Keep Engage while current attack action is still active.
-	if (bIsAttacking)
-		return EAIStateType::Engage;
+	if (bIsCombatAction)
+		return EAIIntentState::Engage;
 
 	// -----------------------------------------------------------------------------
 	// 2.  Context
@@ -71,54 +71,51 @@ EAIStateType UCBTService_UpdateAIState::DecideNextAIStateType(UBlackboardCompone
 	const bool bShouldEngage = InBlackboard->GetValueAsBool(CAIKey::Engage::bShouldEngage);
 
 	// -----------------------------------------------------------------------------
-	// 3) Decide Next AIStateType
+	// 3) Decide Next AIIntentState
 	// -----------------------------------------------------------------------------
 	// 3-1. Invalid Target -> Idle.
-	if (!bHasTarget && !bIsInvestigating) return EAIStateType::Idle;
+	if (!bHasTarget && !bIsInvestigating) return EAIIntentState::Idle;
 
 	// 3-2. Valid target But Invalid LOS.
-	if (!bHasLOS) return EAIStateType::Investigate;
+	if (!bHasLOS) return EAIIntentState::Investigate;
 
 	// 3-3. Valid Target and LOS But Out of Range.
-	if (!bInAlertRange) return EAIStateType::Chase;
+	if (!bInAlertRange) return EAIIntentState::Chase;
 
 	// 3-4. in Range But attack disable.
-	if (!bShouldEngage) return EAIStateType::Alert;
+	if (!bShouldEngage) return EAIIntentState::Alert;
 
 	// 3-5. in Range and Attackable.
-	return EAIStateType::Engage;
+	return EAIIntentState::Engage;
 }
 
-bool UCBTService_UpdateAIState::ChangeAIStateType(UBlackboardComponent* InBlackboardComp, EAIStateType InNextAIStateType)
+bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState)
 {
-	const uint8 currentAIStateType = static_cast<uint8>(InBlackboardComp->GetValueAsEnum(CAIKey::State::AIStateType));
-	const uint8 nextAIStateType = static_cast<uint8>(InNextAIStateType);
+	const uint8 currentAIIntentState = static_cast<uint8>(InBlackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState));
+	const uint8 nextAIIntentState = static_cast<uint8>(InNextAIIntentState);
 
-	if (currentAIStateType == nextAIStateType) return false;
+	if (currentAIIntentState == nextAIIntentState) return false;
 
-	InBlackboardComp->SetValueAsEnum(CAIKey::State::AIStateType, nextAIStateType);
+	InBlackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState, nextAIIntentState);
 
-	UpdateAIStateTransition(InBlackboardComp, static_cast<EAIStateType>(currentAIStateType), static_cast<EAIStateType>(nextAIStateType));
+	UpdateAIIntentStateTransition(InBlackboardComp, static_cast<EAIIntentState>(currentAIIntentState), static_cast<EAIIntentState>(nextAIIntentState));
 	return true;
 }
 
 // [NOTE] Safety-net cleanup for unexpected State exit.
-void UCBTService_UpdateAIState::UpdateAIStateTransition(UBlackboardComponent* InBlackboardComp, EAIStateType InCurrentAIStateType, EAIStateType InNextAIStateType)
+void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardComponent* InBlackboardComp, EAIIntentState InCurrentAIIntentState, EAIIntentState InNextAIIntentState)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
 	// Engage -> Non-Engage
-	if (InCurrentAIStateType == EAIStateType::Engage && InNextAIStateType != EAIStateType::Engage)
+	if (InCurrentAIIntentState == EAIIntentState::Engage && InNextAIIntentState != EAIIntentState::Engage)
 	{
 		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
-		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
+		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction, false);
 
-		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
-		InBlackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
-
-		if (InNextAIStateType == EAIStateType::Dead || InNextAIStateType == EAIStateType::Idle)
+		if (InNextAIIntentState == EAIIntentState::Dead || InNextAIIntentState == EAIIntentState::Idle)
 		{
-			InBlackboardComp->ClearValue(CAIKey::Engage::AttackableTime);
+			InBlackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime);
 		}
 	} 
 }

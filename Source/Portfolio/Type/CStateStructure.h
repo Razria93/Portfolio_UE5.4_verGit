@@ -15,7 +15,7 @@ enum class EExecutionState : uint8
 };
 
 UENUM(BlueprintType)
-enum class EAIStateType : uint8
+enum class EAIIntentState : uint8
 {
 	Idle = 0,
 	Patrol,

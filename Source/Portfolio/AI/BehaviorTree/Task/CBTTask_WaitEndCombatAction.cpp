@@ -1,17 +1,17 @@
-#include "AI/BehaviorTree/Task/CBTTask_WaitEndAction.h"
+#include "AI/BehaviorTree/Task/CBTTask_WaitEndCombatAction.h"
 #include "ProjectGlobal.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/BlackBoard/CAIKey.h"
 
-UCBTTask_WaitEndAction::UCBTTask_WaitEndAction()
+UCBTTask_WaitEndCombatAction::UCBTTask_WaitEndCombatAction()
 {
-	NodeName = TEXT("Wait End Action");
+	NodeName = TEXT("Wait End Combat Action");
 	bNotifyTick = true;
 }
 
-EBTNodeResult::Type UCBTTask_WaitEndAction::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UCBTTask_WaitEndCombatAction::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp))
@@ -19,7 +19,7 @@ EBTNodeResult::Type UCBTTask_WaitEndAction::ExecuteTask(UBehaviorTreeComponent& 
 		return EBTNodeResult::Failed;
 	}
 
-	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsAttacking))
+	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction))
 	{
 		return EBTNodeResult::Succeeded;
 	}
@@ -27,7 +27,7 @@ EBTNodeResult::Type UCBTTask_WaitEndAction::ExecuteTask(UBehaviorTreeComponent& 
 	return EBTNodeResult::InProgress;
 }
 
-void UCBTTask_WaitEndAction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void UCBTTask_WaitEndCombatAction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp))
@@ -36,7 +36,7 @@ void UCBTTask_WaitEndAction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* 
 		return;
 	}
 
-	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsAttacking))
+	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction))
 	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		return;

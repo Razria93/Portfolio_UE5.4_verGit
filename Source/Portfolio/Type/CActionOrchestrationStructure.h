@@ -62,7 +62,6 @@ enum class ECombatActionIntent : uint8
 {
 	None = 0,
 
-	LightAttack,
 	ComboAttack,
 	Guard,
 	Dodge,

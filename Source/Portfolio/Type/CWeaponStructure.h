@@ -56,6 +56,21 @@ enum class EActionExecutionDecision : uint8
 };
 
 UENUM(BlueprintType)
+enum class EActionEventType : uint8
+{
+	None = 0,
+
+	ChainWindowOpened,
+	ChainWindowClosed,
+	
+	ActionStarted,
+	ActionCompleted,
+	ActionAborted,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EActionAbortReason : uint8
 {
 	None = 0,
