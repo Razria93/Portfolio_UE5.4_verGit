@@ -2,7 +2,7 @@
 
 ## Title
 
-**M2-04: Implement TakeDamage receiver (override + temporary verification feedback)**
+**M02-04: Implement TakeDamage receiver (override + temporary verification feedback)**
 
 ### Date
 

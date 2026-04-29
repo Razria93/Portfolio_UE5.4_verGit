@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M3-B01: UpdateAIContext early-return로 인한 상태 전환 지연 수정**
+**M03-B01: UpdateAIContext early-return로 인한 상태 전환 지연 수정**
 
 ### Date
 

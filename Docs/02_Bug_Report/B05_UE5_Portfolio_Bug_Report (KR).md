@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M3-B05: `CurrentHitWindowId` 증가 타이밍 문제로 인한 첫 타격 `InvalidRequest` 리젝트 버그 수정**
+**M03-B03: `CurrentHitWindowId` 증가 타이밍 문제로 인한 첫 타격 `InvalidRequest` 리젝트 버그 수정**
 
 ### Date
 

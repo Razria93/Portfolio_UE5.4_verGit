@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M3-B02: AIState 전이 시 `AttackIndex` 초기화 누락으로 인한 공격 패턴 고착 버그 수정**
+**M03-B02: AIState 전이 시 `AttackIndex` 초기화 누락으로 인한 공격 패턴 고착 버그 수정**
 
 ### Date
 

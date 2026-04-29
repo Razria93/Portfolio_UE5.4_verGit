@@ -2,7 +2,7 @@
 
 ## Title
 
-**M2-03: Implement ApplyDamage pipeline (Request → CalculateDamage)**
+**M02-03: Implement ApplyDamage pipeline (Request → CalculateDamage)**
 
 ### Date
 

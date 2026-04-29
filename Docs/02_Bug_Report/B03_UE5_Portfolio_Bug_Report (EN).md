@@ -2,7 +2,7 @@
 
 ## Title
 
-**M3-B01: Fix delayed state transition and stale Blackboard data caused by early-return in UpdateAIContext**
+**M03-B01: Fix delayed state transition and stale Blackboard data caused by early-return in UpdateAIContext**
 
 ### Date
 

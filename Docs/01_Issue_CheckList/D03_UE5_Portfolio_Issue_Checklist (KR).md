@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M1-03: CPlayerCharacter 이동/점프 및 기본 AnimBP 세팅**
+**M01-03: CPlayerCharacter 이동/점프 및 기본 AnimBP 세팅**
 
 ### 날짜
 

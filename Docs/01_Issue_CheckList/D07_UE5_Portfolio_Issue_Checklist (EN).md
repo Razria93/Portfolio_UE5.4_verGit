@@ -2,7 +2,7 @@
 
 ## Title
 
-**M2-02: Implement Dummy Enemy base (hit test target)**
+**M02-02: Implement Dummy Enemy base (hit test target)**
 
 ### Date
 

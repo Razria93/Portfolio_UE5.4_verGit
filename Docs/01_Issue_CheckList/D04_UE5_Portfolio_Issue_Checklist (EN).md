@@ -2,7 +2,7 @@
 
 ## Title
 
-**M1-04: implement weapon equip/unequip system and socket-based attachment**
+**M01-04: implement weapon equip/unequip system and socket-based attachment**
 
 ### Date
 

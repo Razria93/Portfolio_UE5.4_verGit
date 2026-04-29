@@ -2,7 +2,7 @@
 
 ## Title
 
-**M1-02: Implement character base, player controller and third-person camera**
+**M01-02: Implement character base, player controller and third-person camera**
 
 ### **Date**
 

@@ -2,7 +2,7 @@
 
 ## Title
 
-**M4-B08: AI combat flow breaks after reaction when hit during an active combo action**
+**M05-B03: AI combat flow breaks after reaction when hit during an active combo action**
 
 ### Date
 

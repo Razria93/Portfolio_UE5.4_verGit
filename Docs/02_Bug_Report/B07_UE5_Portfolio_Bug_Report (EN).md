@@ -2,7 +2,7 @@
 
 ## Title
 
-**M4-B07: AI ComboAttack repeats only the first hit and never chains to the next combo step**
+**M05-B02: AI ComboAttack repeats only the first hit and never chains to the next combo step**
 
 ### Date
 

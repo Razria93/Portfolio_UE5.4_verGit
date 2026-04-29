@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M04-02: Action Orchestration 구조 정리 및 AI Combo / Reaction 연동 보강**
+**M05-01: Action Orchestration 구조 정리 및 AI Combo / Reaction 연동 보강**
 
 ### 날짜
 

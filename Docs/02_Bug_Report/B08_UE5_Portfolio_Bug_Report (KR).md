@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M4-B08: AI가 combo action 도중 피격되면 reaction 이후 action 상태가 꼬여 전투 흐름이 고장남**
+**M05-B03: AI가 combo action 도중 피격되면 reaction 이후 action 상태가 꼬여 전투 흐름이 고장남**
 
 ### Date
 

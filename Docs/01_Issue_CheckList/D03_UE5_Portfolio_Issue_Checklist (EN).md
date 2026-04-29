@@ -2,7 +2,7 @@
 
 ## Title
 
-**M1-03: CPlayerCharacter Movement/Jump & Basic AnimBP Setup**
+**M01-03: CPlayerCharacter Movement/Jump & Basic AnimBP Setup**
 
 ### Date
 

@@ -2,7 +2,7 @@
 
 ## Title
 
-**M1-05: Implement light attack core system**
+**M01-05: Implement light attack core system**
 
 ### Date
 

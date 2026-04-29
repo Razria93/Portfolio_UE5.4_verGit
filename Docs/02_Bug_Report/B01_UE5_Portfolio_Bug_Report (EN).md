@@ -2,7 +2,7 @@
 
 ## Title
 
-**M1-B01: Fix distorted poses after assigning Mannequin animations to Quinn skeleton**
+**M01-B01: Fix distorted poses after assigning Mannequin animations to Quinn skeleton**
 
 ### Date
 

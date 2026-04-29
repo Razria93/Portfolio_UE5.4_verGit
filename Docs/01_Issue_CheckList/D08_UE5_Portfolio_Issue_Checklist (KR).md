@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M2-03: ApplyDamage 파이프라인 구현 (Request → CalculateDamage)**
+**M02-03: ApplyDamage 파이프라인 구현 (Request → CalculateDamage)**
 
 ### 날짜
 

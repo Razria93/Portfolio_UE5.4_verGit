@@ -2,7 +2,7 @@
 
 ## Title
 
-**M3-B02: Fix for attack pattern lock caused by missing `AttackIndex` initialization during AIState transition**
+**M03-B02: Fix for attack pattern lock caused by missing `AttackIndex` initialization during AIState transition**
 
 ### Date
 

@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M4-B06: C++ 클래스 rename 이후 기존 Weapon Blueprint 부모 클래스 로드 실패**
+**M05-B01: C++ 클래스 rename 이후 기존 Weapon Blueprint 부모 클래스 로드 실패**
 
 ### Date
 

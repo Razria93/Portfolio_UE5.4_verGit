@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M2-05: TakeDamage 후속 Reaction 파이프라인 구현 (CReactionComponent 도입 + Result 기반 오케스트레이션)**
+**M02-05: TakeDamage 후속 Reaction 파이프라인 구현 (CReactionComponent 도입 + Result 기반 오케스트레이션)**
 
 ### 날짜
 

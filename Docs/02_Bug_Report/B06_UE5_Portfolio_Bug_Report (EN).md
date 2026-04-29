@@ -2,7 +2,7 @@
 
 ## Title
 
-**M4-B06: Existing Weapon Blueprint parent class load failure after C++ class rename**
+**M05-B01: Existing Weapon Blueprint parent class load failure after C++ class rename**
 
 ### Date
 

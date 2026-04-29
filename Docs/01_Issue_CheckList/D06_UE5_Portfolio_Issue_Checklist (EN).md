@@ -2,7 +2,7 @@
 
 ## Title
 
-**M2-01: Implement combo attack (2–3 hit) system**
+**M02-01: Implement combo attack (2–3 hit) system**
 
 ### Date
 

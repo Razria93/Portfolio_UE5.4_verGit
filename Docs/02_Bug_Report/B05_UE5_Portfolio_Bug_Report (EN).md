@@ -2,7 +2,7 @@
 
 ## Title
 
-**M3-B05: Fix first-hit `InvalidRequest` reject caused by `CurrentHitWindowId` increment timing issue**
+**M03-B03: Fix first-hit `InvalidRequest` reject caused by `CurrentHitWindowId` increment timing issue**
 
 ### Date
 

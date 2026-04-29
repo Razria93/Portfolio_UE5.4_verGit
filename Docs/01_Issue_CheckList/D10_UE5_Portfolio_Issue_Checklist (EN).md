@@ -2,7 +2,7 @@
 
 ## Title
 
-**M2-05: Implement post-TakeDamage Reaction pipeline (Introduce CReactionComponent + Result-based orchestration)**
+**M02-05: Implement post-TakeDamage Reaction pipeline (Introduce CReactionComponent + Result-based orchestration)**
 
 ### Date
 
