@@ -184,6 +184,7 @@ private:
 	void OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
 
 private:
+	// ActionEvent API (Event -> Intent -> Handle)
 	void RequestChainCombatAction(EActionType InActionType, int32 InActionIndex);
 	ECombatActionIntent ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const;
 };

@@ -299,16 +299,17 @@ void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionTy
 	}
 }
 
-// Request Chain API
+// Request API (ActionData -> Intent -> Handle)
 void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionIndex)
 {
 	const ECombatActionIntent combatActionIntent = ResolveChainCombatIntent(InActionType, InActionIndex);
 	if (combatActionIntent == ECombatActionIntent::None) return;
 
-	HandleAICombatAction(combatActionIntent);
+	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent);
+	if (!actionRequestResult.IsAccepted() || actionRequestResult.ResultType != EActionRequestResultType::Chained) return;
 }
 
-// Mapping API from ActionType to ActionIntent
+// Mapping API (ActionData -> Intent)
 ECombatActionIntent ACEnemy::ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const
 {
 	// TODO: Use InActionIndex when ai combo branch
