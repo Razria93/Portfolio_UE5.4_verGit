@@ -1,4 +1,4 @@
-#include "Notify/CAnimNotify_ComboPreInput.h"
+#include "Notify/CAnimNotify_ChainWindow.h"
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
@@ -6,26 +6,26 @@
 #include "Component/CActionComponent.h"
 #include "Action/CAction_ComboAttack.h"
 
-UCAnimNotify_ComboPreInput::UCAnimNotify_ComboPreInput()
+UCAnimNotify_ChainWindow::UCAnimNotify_ChainWindow()
 {
 }
 
-FString UCAnimNotify_ComboPreInput::GetNotifyName_Implementation() const
+FString UCAnimNotify_ChainWindow::GetNotifyName_Implementation() const
 {
 	switch (NotifyType)
 	{
-	case EPreInputNotifyType::Enabled:
-		return TEXT("Combo PreInput(Enabled)");
+	case EChainWindowNotifyType::Opened:
+		return TEXT("Chain Window(Opened)");
 
-	case EPreInputNotifyType::Disabled:
-		return TEXT("Combo PreInput(Disabled)");
+	case EChainWindowNotifyType::Closed:
+		return TEXT("Chain Window(Closed)");
 
 	default:
-		return TEXT("Combo PreInput");
+		return TEXT("Chain Window");
 	}
 }
 
-void UCAnimNotify_ComboPreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+void UCAnimNotify_ChainWindow::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
@@ -47,16 +47,14 @@ void UCAnimNotify_ComboPreInput::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 
 	switch (NotifyType)
 	{
-	case EPreInputNotifyType::Enabled:
+	case EChainWindowNotifyType::Opened:
 	{
-		// FLog::Log(TEXT("[AnimNotify|PreInput] Enabled"));
-		currentAction_ComboAttack->EnablePreInput();
+		currentAction_ComboAttack->OpenChainWindow();
 		break;
 	}
-	case EPreInputNotifyType::Disabled:
+	case EChainWindowNotifyType::Closed:
 	{
-		// FLog::Log(TEXT("[AnimNotify|PreInput] Disabled"));
-		currentAction_ComboAttack->DisablePreInput();
+		currentAction_ComboAttack->CloseChainWindow();
 		break;
 	}
 	}

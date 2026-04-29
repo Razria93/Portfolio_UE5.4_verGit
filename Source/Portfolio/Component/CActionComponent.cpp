@@ -61,6 +61,16 @@ UCAction* UCActionComponent::GetCurrentAction() const
 	return currentAction;
 }
 
+void UCActionComponent::BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	if (OnActionEvent.IsBound())
+	{
+		OnActionEvent.Broadcast(OwnerCharacter_Cached, InActionType, InActionIndex, InActionEventType);
+	}
+}
+
 FActionExecutionResult UCActionComponent::ExecuteAction(EActionType IncomingActionType)
 {
 	if (!IsValid(OwnerCharacter_Cached))
@@ -174,6 +184,8 @@ FActionExecutionQuery UCActionComponent::BuildActionExecutionQuery(EActionType I
 	actionExecutionQuery.IncomingActionType = InIncomingActionType;
 	actionExecutionQuery.IncomingAction = InIncomingAction;
 
+	// PrintActionExecutionQuery(actionExecutionQuery);
+
 	return actionExecutionQuery;
 }
 
@@ -245,4 +257,15 @@ bool UCActionComponent::CreateAction(ACharacter* InOwnerCharacter, const FAction
 	ActionContainer.Add(InActionDefinition.ActionType, action);
 
 	return true;
+}
+
+void UCActionComponent::PrintActionExecutionQuery(const FActionExecutionQuery& InActionExecutionQuery) const
+{
+	FLog::Log(TEXT("==== ActionExecutionQuery ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ExecutionState"), *UEnum::GetValueAsString(InActionExecutionQuery.ExecutionState)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentActionType"), *UEnum::GetValueAsString(InActionExecutionQuery.CurrentActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentAction"), *GetNameSafe(InActionExecutionQuery.CurrentAction)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IncomingActionType"), *UEnum::GetValueAsString(InActionExecutionQuery.IncomingActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IncomingAction"), *GetNameSafe(InActionExecutionQuery.IncomingAction)));
+	FLog::Log(TEXT("================================"));
 }

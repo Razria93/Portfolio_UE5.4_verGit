@@ -97,6 +97,7 @@ void ACEnemy::BeginPlay()
 	{
 		// Update blackboard
 		ActionComponent->OnActionTypeChanged.AddDynamic(this, &ACEnemy::OnActionTypeChanged);
+		ActionComponent->OnActionEvent.AddDynamic(this, &ACEnemy::OnActionEvent);
 	}
 
 	if (IsValid(HealthComponent) && IsValid(StateComponent))
@@ -104,7 +105,11 @@ void ACEnemy::BeginPlay()
 		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
 	}
 
-	HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
+	const FActionRequestResult actionRequestResult = HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
+	if (!actionRequestResult.IsAccepted())
+	{
+		FLog::Log(TEXT("[Enemy|BeginPlay] Initial equip-action request rejected."));
+	}
 }
 
 void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -112,6 +117,7 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (IsValid(ActionComponent))
 	{
 		ActionComponent->OnActionTypeChanged.RemoveAll(this);
+		ActionComponent->OnActionEvent.RemoveAll(this);
 	}
 
 	if (IsValid(HealthComponent))
@@ -260,7 +266,7 @@ bool ACEnemy::IsCombatActionType(EActionType InActionType) const
 	case EActionType::ComboAttack:
 		return true;
 
-	
+
 	default:
 		return false; // Idle / Equip / Unequip etc..
 	}
@@ -274,16 +280,45 @@ void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPr
 	UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
-	const bool bIsAttacking = IsCombatActionType(InNewActionType);
+	const bool bIsCombatAction = IsCombatActionType(InNewActionType);
+	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction, bIsCombatAction);
+}
 
-	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, bIsAttacking);
-
-	if (!bIsAttacking)
+void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)
+{
+	switch (InActionEventType)
 	{
-		blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
+	case EActionEventType::ChainWindowOpened:
+	{
+		RequestChainCombatAction(InActionType, InActionIndex);
+		break;
 	}
-	else
+
+	default:
+		break;
+	}
+}
+
+// Request Chain API
+void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionIndex)
+{
+	const ECombatActionIntent combatActionIntent = ResolveChainCombatIntent(InActionType, InActionIndex);
+	if (combatActionIntent == ECombatActionIntent::None) return;
+
+	HandleAICombatAction(combatActionIntent);
+}
+
+// Mapping API from ActionType to ActionIntent
+ECombatActionIntent ACEnemy::ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const
+{
+	// TODO: Use InActionIndex when ai combo branch
+
+	switch (InActionType)
 	{
-		blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(InNewActionType));
+	case EActionType::ComboAttack:
+		return ECombatActionIntent::ComboAttack;
+
+	default:
+		return ECombatActionIntent::None;
 	}
 }

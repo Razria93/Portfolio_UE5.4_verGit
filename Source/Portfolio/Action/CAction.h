@@ -32,6 +32,9 @@ protected:
 	class UCWeaponComponent* WeaponComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCActionComponent* ActionComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
@@ -66,7 +69,10 @@ public:
 
 protected:
 	virtual FActionContext BuildActionContext() const;
-	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+	virtual FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+
+protected:
+	void EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex = INDEX_NONE) const;
 
 public:
 	/* === [IN] Custom Delgate Events === */

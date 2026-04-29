@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CWeaponComponent.h"
+#include "Component/CActionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
@@ -16,10 +17,13 @@ void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActi
 
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));							// TODO: Refactor Interface
+	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));
 	check(WeaponComp_Cached);
 
-	ActionFeedbackComp_Cached = Cast<UCActionFeedbackComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionFeedbackComponent::StaticClass()));	// TODO: Refactor Interface
+	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionComponent::StaticClass()));
+	check(ActionComp_Cached);
+
+	ActionFeedbackComp_Cached = Cast<UCActionFeedbackComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionFeedbackComponent::StaticClass()));
 	check(ActionFeedbackComp_Cached);
 }
 
@@ -57,7 +61,7 @@ bool UCAction::Start()
 	bIsAction = true;
 
 	RequestFeedback(EActionFeedbackTiming::ActionStart, NAME_None);
-
+	EmitActionEvent(EActionEventType::ActionStarted, INDEX_NONE);
 	return true;
 }
 
@@ -71,6 +75,7 @@ void UCAction::Complete()
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	RequestFeedback(EActionFeedbackTiming::ActionEnd, NAME_None);
+	EmitActionEvent(EActionEventType::ActionCompleted, INDEX_NONE);
 
 	bIsAction = false;
 }
@@ -78,6 +83,8 @@ void UCAction::Complete()
 void UCAction::Abort(EActionAbortReason InActionAbortReason)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	EmitActionEvent(EActionEventType::ActionAborted, INDEX_NONE);
 
 	bIsAction = false;
 }
@@ -100,7 +107,7 @@ void UCAction::RequestFeedback(EActionFeedbackTiming InActionFeedbackTiming, FNa
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(ActionFeedbackComp_Cached)) return;
 
-	ActionFeedbackComp_Cached->PlayFeedback(BuildFeedbackRequest(InActionFeedbackTiming, InTriggerKey));
+	ActionFeedbackComp_Cached->PlayFeedback(BuildActionFeedbackRequest(InActionFeedbackTiming, InTriggerKey));
 }
 
 FActionContext UCAction::BuildActionContext() const
@@ -113,7 +120,7 @@ FActionContext UCAction::BuildActionContext() const
 	return actionContext;
 }
 
-FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+FActionFeedbackRequest UCAction::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
 {
 	FActionFeedbackRequest ActionFeedbackRequest;
 
@@ -123,4 +130,14 @@ FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTi
 	ActionFeedbackRequest.TriggerKey = InTriggerKey;
 
 	return ActionFeedbackRequest;
+}
+
+void UCAction::EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex) const
+{
+	if (!IsValid(ActionComp_Cached)) return;
+
+	const FActionContext actionContext = BuildActionContext();
+	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : actionContext.ActionIndex;
+
+	ActionComp_Cached->BroadcastActionEvent(ActionType, actionIndex, InActionEventType);
 }

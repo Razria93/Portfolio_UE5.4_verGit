@@ -2,26 +2,26 @@
 
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotify.h"
-#include "CAnimNotify_ComboPreInput.generated.h"
+#include "CAnimNotify_ChainWindow.generated.h"
 
 UENUM()
-enum class EPreInputNotifyType : uint8
+enum class EChainWindowNotifyType : uint8
 {
-	Enabled,
-	Disabled,
+	Opened,
+	Closed,
 };
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_ComboPreInput : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_ChainWindow : public UCAnimNotify
 {
 	GENERATED_BODY()
 
 public:
-	UCAnimNotify_ComboPreInput();
+	UCAnimNotify_ChainWindow();
 
 private:
 	UPROPERTY(EditAnywhere)
-	EPreInputNotifyType NotifyType = EPreInputNotifyType::Enabled;
+	EChainWindowNotifyType NotifyType = EChainWindowNotifyType::Opened;
 
 private:
 	FString GetNotifyName_Implementation() const override;

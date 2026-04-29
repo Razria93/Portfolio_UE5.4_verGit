@@ -13,8 +13,8 @@ void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActio
 
 	ActionIndex = 0;
 
-	bEnablePreInput = false;
-	bExistPreInput = false;
+	bChainWindowOpened = false;
+	bHasChainedInput = false;
 }
 
 EActionExecutionDecision UCAction_ComboAttack::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
@@ -34,7 +34,7 @@ EActionExecutionDecision UCAction_ComboAttack::DecideExecution(const FActionExec
 		return EActionExecutionDecision::Start;
 	}
 
-	const bool bCanChain = InActionExecuteQuery.CurrentActionType == ActionType && bEnablePreInput;
+	const bool bCanChain = InActionExecuteQuery.CurrentActionType == ActionType && bChainWindowOpened;
 
 	if (bCanChain)
 	{
@@ -49,20 +49,18 @@ bool UCAction_ComboAttack::Start()
 	if (!Super::Start()) return false;
 
 	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
-
 	return true;
 }
 
 bool UCAction_ComboAttack::ApplyChain(const FActionExecutionQuery& InActionExecuteQuery)
 {
 	if (InActionExecuteQuery.CurrentActionType != ActionType) return false;
-	if (!bEnablePreInput) return false;
+	if (!bChainWindowOpened) return false;
 
-	bEnablePreInput = false;
-	bExistPreInput = true;
+	bChainWindowOpened = false;
+	bHasChainedInput = true;
 
-	FLog::Log(TEXT("[ComboAttack|Chain] Buffered PreInput"));
-
+	FLog::Log(TEXT("[ComboAttack|Chain] Buffered chained input"));
 	return true;
 }
 
@@ -79,8 +77,8 @@ void UCAction_ComboAttack::Complete()
 
 	ActionIndex = 0;
 
-	bEnablePreInput = false;
-	bExistPreInput = false;
+	bChainWindowOpened = false;
+	bHasChainedInput = false;
 }
 
 void UCAction_ComboAttack::Abort(EActionAbortReason InActionAbortReason)
@@ -100,45 +98,39 @@ void UCAction_ComboAttack::Abort(EActionAbortReason InActionAbortReason)
 
 	ActionIndex = 0;
 
-	bEnablePreInput = false;
-	bExistPreInput = false;
+	bChainWindowOpened = false;
+	bHasChainedInput = false;
 }
 
-void UCAction_ComboAttack::OpenComboPreInput()
+void UCAction_ComboAttack::OpenChainWindow()
 {
-	bEnablePreInput = true;
+	if (!CanAdvanceCombo()) return;
+
+	bChainWindowOpened = true;
+	
+	EmitActionEvent(EActionEventType::ChainWindowOpened, INDEX_NONE);
 }
 
-void UCAction_ComboAttack::CloseComboPreInput()
+void UCAction_ComboAttack::CloseChainWindow()
 {
-	bEnablePreInput = false;
+	bChainWindowOpened = false;
+
+	EmitActionEvent(EActionEventType::ChainWindowClosed, INDEX_NONE);
 }
 
 void UCAction_ComboAttack::AdvanceCombo()
 {
-	if (!bExistPreInput)
+	if (!bHasChainedInput)
 	{
-		FLog::Log(TEXT("[ComboAttack|TryAdvanceCombo] No Buffered PreInput"));
+		FLog::Log(TEXT("[ComboAttack|AdvanceCombo] No chained input"));
 		return;
 	}
 
-	bExistPreInput = false;
+	bHasChainedInput = false;
 
-	const int32 nextActionIndex = ActionIndex + 1;
+	if (!CanAdvanceCombo()) return;
 
-	if (!ActionDatas_Injected.IsValidIndex(nextActionIndex))
-	{
-		FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Invalid NextActionIndex | NextActionIndex = %d"), nextActionIndex));
-		return;
-	}
-
-	if (!IsValid(ActionDatas_Injected[nextActionIndex].Montage))
-	{
-		FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Invalid Montage | NextActionIndex = %d"), nextActionIndex));
-		return;
-	}
-
-	ActionIndex = nextActionIndex;
+	++ActionIndex;
 
 	FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Advance Combo | ActionIndex = %d"), ActionIndex));
 
@@ -155,7 +147,7 @@ FActionContext UCAction_ComboAttack::BuildActionContext() const
 	return actionContext;
 }
 
-FActionFeedbackRequest UCAction_ComboAttack::BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+FActionFeedbackRequest UCAction_ComboAttack::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
 {
 	FActionFeedbackRequest actionFeedbackRequest;
 
@@ -165,4 +157,11 @@ FActionFeedbackRequest UCAction_ComboAttack::BuildFeedbackRequest(EActionFeedbac
 	actionFeedbackRequest.TriggerKey = InTriggerKey;
 
 	return actionFeedbackRequest;
+}
+
+bool UCAction_ComboAttack::CanAdvanceCombo() const
+{
+	const int32 nextActionIndex = ActionIndex + 1;
+
+	return ActionDatas_Injected.IsValidIndex(nextActionIndex) && IsValid(ActionDatas_Injected[nextActionIndex].Montage);
 }

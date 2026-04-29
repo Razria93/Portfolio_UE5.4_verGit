@@ -12,14 +12,14 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 
 private:
 	UPROPERTY(Transient)
-	int32 ActionIndex;
+	int32 ActionIndex = 0;
 
 private:
 	UPROPERTY(Transient)
-	bool bEnablePreInput;
+	bool bChainWindowOpened = false;
 
 	UPROPERTY(Transient)
-	bool bExistPreInput;
+	bool bHasChainedInput = false;
 
 public:
 	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas) override;
@@ -37,17 +37,16 @@ public:
 	void Abort(EActionAbortReason InActionAbortReason) override;
 
 public:
-	void OpenComboPreInput();
-	void CloseComboPreInput();
+	void OpenChainWindow();
+	void CloseChainWindow();
 
 public:
 	void AdvanceCombo();
 
 protected:
 	FActionContext BuildActionContext() const override;
-	FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const override;
+	FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const override;
 
-public:
-	FORCEINLINE void EnablePreInput() { bEnablePreInput = true; }
-	FORCEINLINE void DisablePreInput() { bEnablePreInput = false; }
+private:
+	bool CanAdvanceCombo() const;
 };

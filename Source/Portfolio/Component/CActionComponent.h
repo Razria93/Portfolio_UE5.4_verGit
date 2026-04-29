@@ -6,6 +6,7 @@
 #include "CActionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FActionTypeChanged, class ACharacter*, InOwnerCharacter, EActionType, InPrevActionType, EActionType, InNewActionType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FActionEventSignature, class ACharacter*, InOwnerCharacter, EActionType, InActionType, int32, InActionIndex, EActionEventType, InActionEventType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionComponent : public UActorComponent
@@ -41,6 +42,7 @@ private:
 
 public:
 	FActionTypeChanged OnActionTypeChanged;
+	FActionEventSignature OnActionEvent;
 
 protected:
 	void BeginPlay() override;
@@ -58,6 +60,9 @@ public:
 
 public:
 	class UCAction* GetCurrentAction() const;
+
+public:
+	void BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
 
 public:
 	FActionExecutionResult ExecuteAction(EActionType IncomingActionType);
@@ -83,4 +88,7 @@ private:
 
 private:
 	bool CreateAction(ACharacter* InOwnerCharacter, const FActionDefinition& InActionDefinition);
+
+private:
+	void PrintActionExecutionQuery(const FActionExecutionQuery& InActionExecutionQuery) const;
 };

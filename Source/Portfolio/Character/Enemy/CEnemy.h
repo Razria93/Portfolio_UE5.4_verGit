@@ -66,7 +66,7 @@ private:
 	float EngageExitBuffer;
 
 	UPROPERTY(EditAnywhere, Category = "AI|Engage")
-	float AttackCooldown;
+	float CombatActionCooldown;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
@@ -152,7 +152,7 @@ public:
 	FORCEINLINE float GetEngageExitBuffer() const { return EngageExitBuffer; }
 
 public:
-	FORCEINLINE float GetAttackCooldown() const { return AttackCooldown; }
+	FORCEINLINE float GetCombatActionCooldown() const { return CombatActionCooldown; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
@@ -178,4 +178,12 @@ private:
 private:
 	UFUNCTION()
 	void OnActionTypeChanged(class ACharacter* InOwnerCharacter, EActionType InPreviousActionType, EActionType InNewActionType);
+
+private:
+	UFUNCTION()
+	void OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
+
+private:
+	void RequestChainCombatAction(EActionType InActionType, int32 InActionIndex);
+	ECombatActionIntent ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const;
 };
