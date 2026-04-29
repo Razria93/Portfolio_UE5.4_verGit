@@ -77,7 +77,7 @@ namespace CAIKey
 	namespace Engage
 	{
 		static const FName bShouldEngage = "bShouldEngage";						// Bool	 (UpdateAIContext)
-		static const FName bCanCombatAction = "bCanCombatAction";				// Bool	 (UpdateAIContext)
+		static const FName bCanCombatAction = "bCanCombatAction";				// Bool	 (UpdateEngageContext)
 		
 		static const FName bIsCombatAction = "bIsCombatAction";					// Bool	 (OnActionTypeChanged)
 		static const FName bInEngageRange = "bInEngageRange";					// Bool	 (UpdateAIContext)
