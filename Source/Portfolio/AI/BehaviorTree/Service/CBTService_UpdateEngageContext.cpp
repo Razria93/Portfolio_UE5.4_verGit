@@ -65,9 +65,9 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 	OutEngageContext.EngageOffsetRange = enemy->GetEngageOffsetRange();
 	OutEngageContext.EngageEnterBuffer = enemy->GetEngageEnterBuffer();
 	OutEngageContext.EngageExitBuffer = enemy->GetEngageExitBuffer();
-	
+
 	OutEngageContext.bPrevInEngageRange = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bInEngageRange);
-	OutEngageContext.AttackableTime = InBlackboardComp->GetValueAsFloat(CAIKey::Engage::AttackableTime);
+	OutEngageContext.NextCombatActionTime = InBlackboardComp->GetValueAsFloat(CAIKey::Engage::NextCombatActionTime);
 
 	return EContextBuildResult::Success;
 }
@@ -97,14 +97,24 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 	}
 
 	float currentTime = InOwnerPawn->GetWorld()->GetTimeSeconds();
-	const bool bCooldownElapsed = currentTime >= InOutEngageContext.AttackableTime;
+	const bool bCooldownElapsed = currentTime >= InOutEngageContext.NextCombatActionTime;
+
+	const bool bIsCombatAction = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction);
+	const bool bHasPendingReaction = InBlackboardComp->GetValueAsBool(CAIKey::Reaction::bHasPendingReaction);
+	const bool bHasActiveReaction = InBlackboardComp->GetValueAsBool(CAIKey::Reaction::bHasActiveReaction);
 
 	InOutEngageContext.EngageOuterRange = engageOuterRange;
 	InOutEngageContext.EngageInnerRange = engageInnerRange;
 	InOutEngageContext.DistanceToTarget = dist_target;
 
+	// Result
 	InOutEngageContext.bInEngageRange = bInEngageRange;
-	InOutEngageContext.bCanAttack = bInEngageRange && bCooldownElapsed;
+	InOutEngageContext.bCanCombatAction = 
+		bInEngageRange				// for ActionRange Check
+		&& bCooldownElapsed			// for ActionCooldown Check
+		&& !bIsCombatAction			// for ActionType Check
+		&& !bHasPendingReaction		// for PendingReaction Check
+		&& !bHasActiveReaction;		// for ActiveReaction Check
 
 	// PrintEngageContext(InOwnerPawn, InOutEngageContext, currentTime);
 
@@ -116,7 +126,7 @@ void UCBTService_UpdateEngageContext::UpdateEngageContext(UBlackboardComponent* 
 	if (!IsValid(InBlackboardComp)) return;
 
 	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, InEngageContext.bInEngageRange);
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, InEngageContext.bCanAttack);
+	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction, InEngageContext.bCanCombatAction);
 }
 
 void UCBTService_UpdateEngageContext::ClearEngageContext(UBlackboardComponent* InBlackboardComp)
@@ -124,7 +134,7 @@ void UCBTService_UpdateEngageContext::ClearEngageContext(UBlackboardComponent* I
 	if (!IsValid(InBlackboardComp)) return;
 
 	InBlackboardComp->ClearValue(CAIKey::Engage::bInEngageRange);
-	InBlackboardComp->ClearValue(CAIKey::Engage::bCanAttack);
+	InBlackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction);
 }
 
 void UCBTService_UpdateEngageContext::PrintEngageContext(const APawn* InOwnerPawn, const FEngageContext& InEngageContext, const float InCurrentTime)
@@ -147,8 +157,8 @@ void UCBTService_UpdateEngageContext::PrintEngageContext(const APawn* InOwnerPaw
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("EngageInnerRange"), InEngageContext.EngageInnerRange));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bPrevInEngageRange"), InEngageContext.bPrevInEngageRange ? TEXT("true") : TEXT("false")));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bInEngageRange"), InEngageContext.bInEngageRange ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCanAttack"), InEngageContext.bCanAttack ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("AttackableTime"), InEngageContext.AttackableTime));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCanCombatAction"), InEngageContext.bCanCombatAction ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("NextCombatActionTime"), InEngageContext.NextCombatActionTime));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CurrentTime"), InCurrentTime));
 	FLog::Log(TEXT("================================"));
 }

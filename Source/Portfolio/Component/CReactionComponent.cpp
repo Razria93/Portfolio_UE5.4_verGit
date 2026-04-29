@@ -5,6 +5,7 @@
 
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CActionComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -67,7 +68,7 @@ bool UCReactionComponent::TryRequestPendingDamageReaction(const FTakeDamagePacke
 		++PendingReactionVersion_Cached;
 		return true;
 	}
-	
+
 	if (!QueryReplaceReaction(
 		PendingReactionContext_Cached.ReactionExecutor, newReactionContext.ReactionExecutor,
 		PendingReactionContext_Cached.ReactionData, newReactionContext.ReactionData))
@@ -123,6 +124,14 @@ bool UCReactionComponent::TryExecuteReaction(const FReactionContext& InReactionC
 		{
 			FLog::Log(TEXT("[TryExecuteReaction] ActiveReactionContext is valid but executor is invalid. Clear stale active reaction."));
 			ClearActiveReaction();
+		}
+	}
+
+	if (UCActionComponent* actionComp = OwnerCharacter_Cached ? OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>() : nullptr)
+	{
+		if (actionComp->GetCurrentActionType() != EActionType::Idle)
+		{
+			actionComp->AbortCurrentAction(EActionAbortReason::Reaction);
 		}
 	}
 
@@ -253,7 +262,7 @@ bool UCReactionComponent::ValidateDamageRequest(const FTakeDamageResult& InTakeD
 
 EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& InTakeDamageResult)
 {
-	if (!InTakeDamageResult.bAccepted)				
+	if (!InTakeDamageResult.bAccepted)
 	{
 		return EReactionType::None;
 	}
