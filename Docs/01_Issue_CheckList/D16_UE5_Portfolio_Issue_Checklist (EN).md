@@ -2,7 +2,7 @@
 
 ## Title
 
-**M04-02: Organize Player Action Orchestration Structure**
+**M04-02: Organize Action Orchestration Structure and strengthen AI Combo / Reaction integration**
 
 ### Date
 
@@ -19,7 +19,9 @@
 
 - Separate state transition and action execution so the flow clearly follows `confirm state transition -> execute action`.
 
-- Prepare a foundation for later AI synchronization, Reaction orchestration, and special actions such as Guard / Parry / Counter.
+- Reorganize the flow so that Player and AI reuse the same combat request path and combo chain execution path.
+
+- Add a minimum safety structure so that combat flow remains stable after Reaction takeover during an active combo action.
 
 
 ---
@@ -34,62 +36,86 @@
 
 #### 1. Organize Player Input Flow
 
-- [ ] Review direct Player input calls into `ActionComponent`
+- [x] Review direct Player input calls into `ActionComponent`
 
-- [ ] Review the flow for forwarding input requests to the Orchestrator
+- [x] Review the flow for forwarding input requests to the Orchestrator
 
-- [ ] Organize the separation between global input blocks and action-specific execution conditions
+- [x] Organize the separation between global input blocks and action-specific execution conditions
 
 
 #### 2. Build First-Pass Orchestrator Structure
 
-- [ ] Design Player action request handling flow
+- [x] Design Player action request handling flow
 
-- [ ] Organize where global rules are checked
+- [x] Organize where global rules are checked
 
-- [ ] Separate state transition decision from state transition confirmation
+- [x] Separate state transition decision from state transition confirmation
 
-- [ ] Review rollback flow when action execution fails
+- [x] Finalize a generic rollback policy for execution failure
 
 
 #### 3. Organize ActionComponent Responsibilities
 
-- [ ] Organize responsibilities for action storage, lookup, and current action management
+- [x] Organize responsibilities for action storage, lookup, and current action management
 
-- [ ] Review action execution request APIs
+- [x] Review action execution request APIs
 
-- [ ] Redefine the role of `ChangeActionMode`-style APIs
+- [x] Redefine the role of `ChangeActionMode`-style APIs
 
 
 #### 4. Organize CAction Responsibilities
 
-- [ ] Review removing direct state changes from `CAction`
+- [x] Review removing direct state changes from `CAction`
 
-- [ ] Separate action-specific execution conditions from execution logic
+- [x] Separate action-specific execution conditions from execution logic
 
-- [ ] Verify that existing ComboAttack / LightAttack behavior remains intact
+- [x] Verify that existing ComboAttack behavior remains intact
 
 
-#### 5. Organize Minimum Validation Criteria
+#### 5. Organize AI Combo Integration
 
-- [ ] Scenario 1: Player input -> Orchestrator -> Action execution
+- [x] Reorganize AI combat blackboard keys (`bCanCombatAction`, `bIsCombatAction`, `NextCombatActionTime`)
 
-- [ ] Scenario 2: Confirm action execution after state transition
+- [x] Apply `StartCombatAction` / `WaitEndCombatAction` structure
 
-- [ ] Scenario 3: Verify state rollback when action execution fails
+- [x] Connect AI combo chain follow-up through action event callbacks
 
-- [ ] Scenario 4: Verify existing ComboAttack / LightAttack behavior
+- [x] Confirm that Player and AI now share the same combo chain execution path
+
+
+#### 6. Strengthen Reaction Takeover Safety
+
+- [x] Add active action abort on reaction entry
+
+- [x] Reflect reaction state in combat availability calculation
+
+- [x] Verify combat flow recovery after being hit during an active combo action
+
+
+#### 7. Organize Minimum Validation Criteria
+
+- [x] Scenario 1: Player input -> Orchestrator -> Action execution
+
+- [x] Scenario 2: Confirm action execution after state transition
+
+- [x] Scenario 3: Finalize a generic rollback policy for execution failure
+
+- [x] Scenario 4: Verify Player ComboAttack behavior
+
+- [x] Scenario 5: Verify that AI ComboAttack chains to the next combo step
+
+- [x] Scenario 6: Verify combat flow recovery after reaction during an active combo action
 
 
 ---
 
 ### Notes
 
-- This issue focuses on **separating responsibilities in the Player action execution flow**, rather than adding new actions.
+- This issue focuses on **separating responsibilities in the shared action execution flow**, rather than adding new actions.
 
-- AI, Reaction, Guard / Parry / Counter will be expanded in later branches based on this structure.
+- AI combo chain integration and minimum reaction takeover safety are included in this branch scope.
 
-- Arbiter will not be implemented as a complete system in this branch; its required scope will be reviewed while organizing the Orchestrator decision flow.
+- Guard / Parry / Counter, advanced Reaction orchestration, and a higher-level coordination layer remain follow-up work for later branches.
 
 
 ---

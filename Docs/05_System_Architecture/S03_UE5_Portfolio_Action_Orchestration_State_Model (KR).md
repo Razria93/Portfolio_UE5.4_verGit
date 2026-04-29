@@ -2,18 +2,38 @@
 
 ## 1. 목적
 
-본 문서는 Player와 AI가 공통으로 사용할 수 있는 액션 실행 구조에서 `State`, `Type`, `Intent`의 책임 경계를 정의함.
+본 문서는 Player와 AI가 공통으로 사용할 수 있는 액션 실행 구조를 설계하기 위해,  
+`State`, `Type`, `Intent`를 어떤 기준으로 나누어야 하는지 정리하는 기술 문서임.
 
 핵심 목표는 다음과 같음.
 
-- 캐릭터의 최상위 실행 상태를 단순하게 유지함.
-- 이동, 주도 행동, 무기 상태, 리액션, AI 판단 상태를 서로 다른 축으로 분리함.
-- Player 입력과 AI BehaviorTree 요청이 같은 실행 관문을 사용할 수 있도록 함.
-- `State` enum이 구체 행동 목록으로 비대해지는 것을 방지함.
+- 캐릭터의 최상위 실행 상태를 단순하게 유지함
+- 이동, 주도 행동, 무기 상태, 리액션, AI 판단 상태를 서로 다른 축으로 분리함
+- Player 입력과 AI Behavior Tree 요청이 같은 실행 관문을 사용할 수 있도록 함
+- `State` enum이 구체 행동 목록으로 비대해지는 것을 방지함
+
 
 ---
 
-## 2. 핵심 분리 기준
+## 2. 문제 인식
+
+상태 모델을 설계할 때 현재 문제로 보는 부분은 다음과 같음.
+
+- 최상위 실행 상태와 구체 행동 상태가 한 enum 안에 섞일 수 있음
+- 이동, 무기, 공격, 리액션, AI 판단이 모두 `State`에 들어가면 상태 의미가 흐려짐
+- Player와 AI가 같은 캐릭터 실행 구조를 공유하기 어려워짐
+- Equip / Attack / Reaction / Patrol 같은 서로 다른 성격의 값들이 같은 축에 쌓일 수 있음
+- 이후 기능이 늘어날수록 상태 enum이 행동 목록처럼 커질 위험이 있음
+
+즉 문제는 상태가 부족한 것이 아니라,  
+서로 다른 종류의 상태를 한 축에 몰아넣으려는 구조에 있음.
+
+
+---
+
+## 3. 핵심 분리 기준
+
+상태 모델은 다음 기준으로 분리하는 것이 적절하다고 봄.
 
 ```text
 ExecutionState = 캐릭터 몸의 최상위 실행 상태
@@ -24,9 +44,9 @@ Reaction       = 외부 자극에 의해 발생한 반응
 AIIntent       = AI의 상위 판단 상태
 ```
 
-각 축은 동시에 존재할 수 있음.
+각 축은 서로 다른 문제를 설명함.
 
-예를 들어 AI가 전투 의도를 가진 상태에서 공격 액션을 실행 중일 수 있음.
+예를 들어 다음 값들은 동시에 존재할 수 있음.
 
 ```text
 AIIntentState  = Engage
@@ -37,7 +57,7 @@ WeaponState    = Equipped
 AttachmentType = Sword
 ```
 
-또는 캐릭터가 자유 상태에서 이동 중일 수 있음.
+또는 다음처럼 자유 상태에서 이동 중일 수 있음.
 
 ```text
 ExecutionState = Idle
@@ -45,13 +65,14 @@ MovementState  = Moving
 SpeedType      = Run
 ```
 
-따라서 위 값들을 하나의 `State`로 통합하지 않음.
+따라서 위 값들을 하나의 `State`로 통합하는 방식은 적절하지 않음.
+
 
 ---
 
-## 3. StateComp
+## 4. StateComp
 
-`StateComp`는 캐릭터의 최상위 실행 상태만 관리함.
+`StateComp`는 캐릭터의 최상위 실행 상태만 관리하는 것이 적절함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -74,19 +95,21 @@ Reaction = 외부 자극에 대한 반응 실행 중
 Dead     = 사망 또는 비활성 상태
 ```
 
-`ExecutionState`에는 `Move`, `Walk`, `Run`, `Jump`, `Equip`, `Unequip`, `Dodge`, `Guard`, `LockOn`, `Patrol` 같은 구체 행동이나 판단 상태를 넣지 않음.
+`ExecutionState`에는 `Move`, `Walk`, `Run`, `Jump`, `Equip`, `Unequip`, `Dodge`, `Guard`, `LockOn`, `Patrol` 같은 구체 행동이나 판단 상태를 넣지 않는 것을 원칙으로 함.
 
 이유는 `ExecutionState`가 최상위 배타 상태여야 하기 때문임.
 
+
 ---
 
-## 4. MovementComp
+## 5. MovementComp
 
-`MovementComp`는 이동 입력, 이동 모드, 이동 물리 상태를 관리함.
+`MovementComp`는 이동 입력, 이동 모드, 이동 물리 상태를 관리하는 축으로 분리하는 것이 적절함.
 
 이동은 항상 `ActionComp`의 액션으로 취급하지 않음.
 
-`Move`, `Walk`, `Run`, `Jump`, `StopJump`는 우선 `MovementIntent`로 들어오고, 오케스트레이터가 현재 상태를 확인한 뒤 `MovementComp` 또는 `CharacterMovementComponent`로 전달함.
+`Move`, `Walk`, `Run`, `Jump`, `StopJump`는 우선 `MovementIntent`로 들어오고,  
+오케스트레이터가 현재 상태를 확인한 뒤 `MovementComp` 또는 `CharacterMovementComponent`로 전달하는 방향이 적절함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -119,7 +142,7 @@ enum class EMovementState : uint8
 };
 ```
 
-속도 모드가 더 중요한 경우 `SpeedType`을 별도로 관리함.
+속도 모드가 더 중요하면 `SpeedType`을 별도로 둠.
 
 ```cpp
 UENUM(BlueprintType)
@@ -131,6 +154,9 @@ enum class ESpeedType : uint8
 	Max,
 };
 ```
+
+
+---
 
 ### MovementIntent와 ActionType의 관계
 
@@ -165,13 +191,16 @@ MovementIntent::Jump
 -> 점프 공격 또는 회피 점프면 ActionType으로 승격 가능
 ```
 
+
 ---
 
-## 5. ActionComp
+## 6. ActionComp
 
-`ActionComp`는 캐릭터가 스스로 시작한 주도 행동을 관리함.
+`ActionComp`는 캐릭터가 스스로 시작한 주도 행동을 관리하는 축으로 두는 것이 적절함.
 
-장착과 해제도 캐릭터가 직접 시작한 행동이므로 액션으로 취급함.
+장착과 해제도 캐릭터가 직접 시작한 행동이므로 액션으로 취급할 수 있음.
+
+예시 모델:
 
 ```cpp
 UENUM(BlueprintType)
@@ -192,7 +221,7 @@ enum class EActionType : uint8
 };
 ```
 
-액션의 실행 상태는 처음에는 최소 단위로 둠.
+액션의 실행 상태는 처음에는 최소 단위로 두는 것이 적절함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -206,7 +235,7 @@ enum class EActionState : uint8
 
 필요해지면 이후 `Pending`, `Buffered`, `Recovery`, `Canceled` 같은 상태를 추가함.
 
-실제 정책 없이 enum만 먼저 늘리지 않음.
+실제 정책 없이 enum만 먼저 늘리지 않는 것을 원칙으로 함.
 
 ### 예시
 
@@ -226,11 +255,12 @@ ActionType     = Equip
 ActionState    = Playing
 ```
 
+
 ---
 
-## 6. WeaponComp
+## 7. WeaponComp
 
-`WeaponComp`는 현재 장착 형태와 무기 전환 상태를 관리함.
+`WeaponComp`는 현재 장착 형태와 무기 전환 상태를 관리하는 축으로 분리하는 것이 적절함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -243,9 +273,9 @@ enum class EAttachmentType : uint8
 };
 ```
 
-`EquipmentType`은 장비 실행 객체 또는 장비 데이터의 큰 분류로 사용함.
+`EquipmentType`은 장비 실행 객체 또는 장비 데이터의 큰 분류로 사용할 수 있음.
 
-실제 장비 동작이 `UObject` 기반으로 확장된다면 enum을 과도하게 늘리지 않음.
+실제 장비 동작이 `UObject` 기반으로 확장된다면 enum을 과도하게 늘리지 않는 것이 적절함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -258,7 +288,8 @@ enum class EEquipmentType : uint8
 };
 ```
 
-장착 모션 중간에 실제 무기 부착 또는 해제 타이밍이 있으므로 `WeaponState`는 액션 상태와 별도로 둠.
+실제 attach / detach 시점은 equip montage 중간에 일어날 수 있으므로,  
+`WeaponState`는 action state와 분리하는 것이 적절함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -272,13 +303,16 @@ enum class EWeaponState : uint8
 };
 ```
 
+
+---
+
 ### ActionState와 WeaponState를 분리하는 이유
 
-`ActionState::Playing`은 액션이 재생 중이라는 뜻임.
+`ActionState::Playing`은 액션이 재생 중이라는 뜻일 뿐임.
 
-`WeaponState`는 실제 무기가 사용 가능한 상태인지, 아직 전환 중인지 표현함.
+`WeaponState`는 실제 무기를 사용할 수 있는지, 아직 전환 중인지를 설명함.
 
-장착 액션 시작 직후:
+예:
 
 ```text
 ExecutionState = Action
@@ -288,7 +322,7 @@ WeaponState    = Equipping
 AttachmentType = Unarmed
 ```
 
-장착 몽타주 중간 Notify에서 무기가 손에 붙은 순간:
+중간 Notify에서 실제 장착이 일어나면:
 
 ```text
 ExecutionState = Action
@@ -298,23 +332,14 @@ WeaponState    = Equipped
 AttachmentType = Sword
 ```
 
-장착 액션 완료:
+즉 Action 축과 Weapon 축은 분리하는 것이 맞음.
 
-```text
-ExecutionState = Idle
-ActionType     = None
-ActionState    = Idle
-WeaponState    = Equipped
-AttachmentType = Sword
-```
-
-해제도 같은 방식으로 처리함.
 
 ---
 
-## 7. ReactionComp
+## 8. ReactionComp
 
-`ReactionComp`는 외부 자극에 의해 발생한 반응을 관리함.
+`ReactionComp`는 외부 자극에 의해 발생한 반응을 관리하는 축으로 분리하는 것이 적절함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -335,15 +360,16 @@ ExecutionState = Reaction
 ReactionType   = Hit
 ```
 
-사망 반응은 최종적으로 `ExecutionState::Dead`로 수렴함.
+Dead reaction은 최종적으로 `ExecutionState::Dead`에 수렴하는 구조를 목표로 함.
+
 
 ---
 
-## 8. AI Intent
+## 9. AI Intent
 
-AI의 상위 판단 상태는 `StateComp`에 넣지 않음.
+AI의 상위 판단 상태는 `StateComp`에 넣지 않는 것이 적절함.
 
-AI 판단 상태는 BehaviorTree, Blackboard, AIController가 관리함.
+AI 판단 상태는 Behavior Tree, Blackboard, AIController 축에서 관리함.
 
 ```cpp
 UENUM(BlueprintType)
@@ -360,31 +386,33 @@ enum class EAIIntentState : uint8
 };
 ```
 
-`EAIIntentState`는 AI가 무엇을 하려고 판단 중인지 나타냄.
+`EAIIntentState`는 AI가 무엇을 하려고 하는가를 나타냄.
 
-`EExecutionState`는 캐릭터 몸이 실제로 어떤 실행 상태인지 나타냄.
+`EExecutionState`는 캐릭터 몸이 실제로 어떤 실행 상태에 있는가를 나타냄.
 
-예시:
+예:
 
 ```text
 AIIntentState  = Engage
 ExecutionState = Idle
 ```
 
-공격 요청 가능.
+공격 요청 가능 상태임.
 
 ```text
 AIIntentState  = Engage
 ExecutionState = Reaction
 ```
 
-피격 반응 중이므로 공격 요청 거절.
+피격 반응 중이므로 공격 요청은 거절되어야 함.
+
 
 ---
 
-## 9. Orchestrator 판단 기준
+## 10. 오케스트레이터 판단 기준
 
-`ActionOrchestratorComponent`는 Player 입력 또는 AI Task에서 생성한 요청을 받아 공통 실행 규칙을 적용함.
+`ActionOrchestratorComponent`는 Player 입력 또는 AI Task에서 만들어진 요청을 받아,  
+공통 실행 규칙을 적용하는 구조를 목표로 함.
 
 ### Movement 요청
 
@@ -393,7 +421,7 @@ RequestMovementAction
 - ExecutionState 확인
 - MovementIntent 확인
 - 이동 가능 여부 확인
-- MovementComp 또는 CharacterMovementComponent 실행
+- MovementComp 또는 CharacterMovementComponent를 통해 실행
 ```
 
 예:
@@ -411,7 +439,7 @@ RequestCombatAction
 - WeaponState 확인
 - ActionState 확인
 - CombatIntent를 ActionType으로 변환
-- ActionComp 실행
+- ActionComp를 통해 실행
 ```
 
 예:
@@ -426,9 +454,9 @@ CombatIntent = ComboAttack
 ```text
 RequestEquipmentAction
 - ExecutionState 확인
-- WeaponState 확인
+- 현재 WeaponState / AttachmentType 확인
 - EquipmentIntent를 ActionType::Equip 또는 ActionType::Unequip으로 변환
-- ActionComp와 WeaponComp 실행
+- ActionComp와 WeaponComp를 통해 실행
 ```
 
 예:
@@ -439,9 +467,10 @@ WeaponState     = Unequipped
 -> ActionType   = Equip
 ```
 
+
 ---
 
-## 10. 최종 구조
+## 11. 최종 상태 모델 방향
 
 ```text
 [StateComp]
@@ -530,34 +559,35 @@ EAIIntentState
 - Max
 ```
 
+
 ---
 
-## 11. 설계 원칙
+## 12. 설계 원칙
 
 ```text
 ExecutionState = 최상위 배타 실행 상태
 MovementState  = 이동 물리 또는 이동 진행 상태
 SpeedType      = 이동 속도 모드
-ActionType     = 캐릭터가 스스로 시작한 행동 종류
+ActionType     = 캐릭터가 시작한 행동 종류
 ActionState    = 액션 실행 상태
 WeaponState    = 무기 전환 및 실제 사용 가능 상태
-AttachmentType = 현재 장착물 종류
+AttachmentType = 현재 장착 형태
 ReactionType   = 외부 반응 종류
 AIIntentState  = AI 판단 상태
 ```
 
-`State`로 모든 것을 통합하지 않음.
+모든 것을 하나의 `State`로 합치지 않음.
 
-`State`, `Type`, `Intent`, `Result`의 책임을 분리함.
+`State`, `Type`, `Intent`, `Result`의 책임을 분리하는 것을 기준으로 함.
 
 ```text
 State  = 현재 머무르는 상태
 Type   = 종류 또는 식별자
-Intent = 아직 실행되기 전의 요청 의도
+Intent = 실행 전 요청 의도
 Result = 처리 결과
 ```
 
-의도와 실행은 반드시 1:1로 매칭되지 않음.
+의도와 실행은 반드시 1:1로 대응하지 않음.
 
 ```text
 EquipmentIntent::Toggle
@@ -570,4 +600,5 @@ CombatIntent::ComboAttack
 -> ActionType::ComboAttack
 ```
 
-이 구조는 Player와 AI가 서로 다른 의사결정 경로를 가지더라도 같은 실행 상태와 액션 실행 규칙을 공유할 수 있도록 함.
+이 구조를 따르면 Player와 AI는 서로 다른 판단 경로를 가지더라도,  
+같은 실행 상태와 같은 액션 실행 규칙을 공유할 수 있음.
