@@ -6,7 +6,7 @@
 #include "Type/CHealthStructure.h"
 #include "CStateComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FStateTypeChanged, class ACharacter*, InOwnerCharacter, EStateType, InPrevStateType, EStateType, InNewStateType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FExecutionStateChanged, class ACharacter*, InOwnerCharacter, EExecutionState, InPrevExecutionState, EExecutionState, InNewExecutionState);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCStateComponent : public UActorComponent
@@ -19,47 +19,42 @@ public:
 private:
 	/* === State === */
 	UPROPERTY(Transient)
-	EStateType CurrentStateType;
+	EExecutionState CurrentExecutionState = EExecutionState::Idle;
 
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 public:
 	/* === [Out] Custom Delgate Events === */
-	FStateTypeChanged OnStateTypeChanged;
+	FExecutionStateChanged OnExecutionStateChanged;
 
 protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void BeginPlay() override;
 
 public:
 	void OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState);
 
 public:
+	/* === Check / Query === */
+	FORCEINLINE bool CheckCurExecutionState(EExecutionState InNewExecutionState) const { return CurrentExecutionState == InNewExecutionState; }
+
+public:
 	/* === Getter === */
-	FORCEINLINE EStateType GetCurStateType() const { return CurrentStateType; }
+	FORCEINLINE EExecutionState GetCurrentExecutionState() const { return CurrentExecutionState; }
 
 public:
 	/* === Setter === */
 	void SetIdleState();
-	void SetEquipState();
-	void SetUnequipState();
 	void SetActionState();
 	void SetReactionState();
 	void SetDeadState();
 
-public:
-	/* === Check / Query === */
-	FORCEINLINE bool CheckCurStateType(EStateType InNewStateType) { return CurrentStateType == InNewStateType; }
+private:
+	void ChangeExecutionState(EExecutionState InNewExecutionState);
 
 private:
-	void ChangeStateType(EStateType InNewStateType);
-
-private:
-	void PrintStateChangedInfo(EStateType InPrevStateType, EStateType InNewStateType) const;
+	void PrintExecutionStateChangedInfo(EExecutionState InPrevExecutionState, EExecutionState InNewExecutionState) const;
 	
 };

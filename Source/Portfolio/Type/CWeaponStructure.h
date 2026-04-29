@@ -3,24 +3,17 @@
 #include "CoreMinimal.h"
 #include "Engine/DamageEvents.h"
 #include "DamageEventId.h"
+#include "Type/CStateStructure.h"
 #include "Type/CHealthStructure.h"
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)
-enum class EAttachmentType : uint8
+enum class EWeaponType : uint8
 {
 	Unarmed = 0,
 	Sword,
 	All,
-	Max,
-};
 
-UENUM(BlueprintType)
-enum class EEquipmentType : uint8
-{
-	None = 0,
-	Default,
-	All,
 	Max,
 };
 
@@ -28,9 +21,14 @@ UENUM(BlueprintType)
 enum class EActionType : uint8
 {
 	Idle = 0,
-	LightAttack,
+
+	Equip,
+	Unequip,
+
 	ComboAttack,
+
 	All,
+
 	Max,
 };
 
@@ -39,6 +37,51 @@ enum class EReactionType : uint8
 {
 	None = 0,
 	Hit,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionExecutionDecision : uint8
+{
+	Reject = 0,
+	Ignore,
+
+	Start,
+	Chain,
+	Enqueue,
+	Interrupt,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionEventType : uint8
+{
+	None = 0,
+
+	ChainWindowOpened,
+	ChainWindowClosed,
+	
+	ActionStarted,
+	ActionCompleted,
+	ActionAborted,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionAbortReason : uint8
+{
+	None = 0,
+
+	Reaction,
+	Dead,
+
+	Interrupted,
+	ExternalCancel,
+
+	Max,
 };
 
 UENUM(BlueprintType)
@@ -143,28 +186,6 @@ enum class EActionSFXPlayType : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FEquipmentData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	class UAnimMontage* Montage = nullptr;
-
-	UPROPERTY(EditAnywhere)
-	float PlayRate = 1.0f;
-
-	UPROPERTY(EditAnywhere)
-	bool bCanMove = false;
-
-public:
-	FEquipmentData() = default;
-
-public:
-	bool IsValidMinimal() const;
-};
-
-USTRUCT(BlueprintType)
 struct FActionData
 {
 	GENERATED_BODY()
@@ -191,29 +212,111 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FAttachmentContext
+struct FActionDefinition
 {
 	GENERATED_BODY()
 
 public:
+	// Action ID
 	UPROPERTY(EditAnywhere)
-	EAttachmentType CurrentAttachmentType = EAttachmentType::Max;
+	EActionType ActionType = EActionType::Max;
 
-public:
-	FAttachmentContext() = default;
+	// Action Implementation Class
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UCAction> ActionClass = nullptr;
+
+	// Action Playback Data
+	UPROPERTY(EditAnywhere)
+	TArray<FActionData> ActionDatas;
 };
 
 USTRUCT(BlueprintType)
-struct FEquipmentContext
+struct FActionExecutionQuery
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionState ExecutionState = EExecutionState::Idle;
+
+	UPROPERTY(Transient)
+	EActionType CurrentActionType = EActionType::Idle;
+
+	UPROPERTY(Transient)
+	class UCAction* CurrentAction = nullptr;
+
+	UPROPERTY(Transient)
+	EActionType IncomingActionType = EActionType::Idle;
+
+	UPROPERTY(Transient)
+	class UCAction* IncomingAction = nullptr;
+
+public:
+	FActionExecutionQuery() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FActionExecutionResult
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EActionExecutionDecision Decision = EActionExecutionDecision::Reject;
+
+	UPROPERTY(Transient)
+	EActionType ActionType = EActionType::Max;
+
+public:
+	FActionExecutionResult() = default;
+
+	FActionExecutionResult(EActionExecutionDecision InDecision, EActionType InActionType)
+		: Decision(InDecision)
+		, ActionType(InActionType)
+	{
+	}
+
+public:
+	bool IsAccepted() const
+	{
+		return Decision == EActionExecutionDecision::Start
+			|| Decision == EActionExecutionDecision::Chain
+			|| Decision == EActionExecutionDecision::Enqueue
+			|| Decision == EActionExecutionDecision::Interrupt;
+	}
+
+	bool IsStarted() const
+	{
+		return Decision == EActionExecutionDecision::Start;
+	}
+
+	bool IsChained() const
+	{
+		return Decision == EActionExecutionDecision::Chain;
+	}
+
+	bool IsEnqueued() const
+	{
+		return Decision == EActionExecutionDecision::Enqueue;
+	}
+
+	bool IsInterrupted() const
+	{
+		return Decision == EActionExecutionDecision::Interrupt;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FWeaponContext
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
-	EEquipmentType CurrentEquipmentType = EEquipmentType::Max;
+	EWeaponType WeaponType = EWeaponType::Max;
 
 public:
-	FEquipmentContext() = default;
+	FWeaponContext() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -223,7 +326,7 @@ struct FActionContext
 
 public:
 	UPROPERTY(EditAnywhere)
-	EActionType CurrentActionType = EActionType::Max;
+	EActionType ActionType = EActionType::Max;
 
 	UPROPERTY(EditAnywhere)
 	int32 ActionIndex = INDEX_NONE;
@@ -242,10 +345,10 @@ public:
 	class AActor* OwnerActor = nullptr;							// AttackActor
 
 	UPROPERTY(Transient)
-	class AActor* DamageCauser = nullptr;						// Attachment
+	class AActor* DamageCauser = nullptr;						// WeaponActor
 
 	UPROPERTY(Transient)
-	class UPrimitiveComponent* OverlappedComponent = nullptr;	// Hit Collision of Attachment
+	class UPrimitiveComponent* OverlappedComponent = nullptr;	// Hit Collision of WeaponActor
 
 	UPROPERTY(Transient)
 	class UShapeComponent* OverlapShape = nullptr;			// Cast result: UShapeComponent (nullptr if cast fails)
@@ -285,10 +388,7 @@ public:
 	FOverlapContext OverlapContext = FOverlapContext();
 
 	UPROPERTY(Transient)
-	FAttachmentContext AttachmentContext = FAttachmentContext();
-
-	UPROPERTY(Transient)
-	FEquipmentContext  EquipmentContext = FEquipmentContext();
+	FWeaponContext WeaponContext = FWeaponContext();
 
 	UPROPERTY(Transient)
 	FActionContext ActionContext = FActionContext();
@@ -333,10 +433,7 @@ struct FApplyDamageSpecKey
 
 public:
 	UPROPERTY(EditAnywhere)
-	EAttachmentType AttachmentType = EAttachmentType::Max;
-
-	UPROPERTY(EditAnywhere)
-	EEquipmentType EquipmentType = EEquipmentType::Max;
+	EWeaponType WeaponType = EWeaponType::Max;
 
 	UPROPERTY(EditAnywhere)
 	EActionType ActionType = EActionType::Max;
@@ -350,8 +447,7 @@ public:
 public:
 	bool operator==(const FApplyDamageSpecKey& InOther) const
 	{
-		return EquipmentType == InOther.EquipmentType
-			&& AttachmentType == InOther.AttachmentType
+		return WeaponType == InOther.WeaponType
 			&& ActionType == InOther.ActionType
 			&& ActionIndex == InOther.ActionIndex;
 	}
@@ -361,8 +457,7 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
 {
 	uint32 H = 0;
 
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.AttachmentType)));
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.EquipmentType)));
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.WeaponType)));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.ActionType)));
 	H = HashCombine(H, GetTypeHash(InOther.ActionIndex));
 
@@ -732,7 +827,7 @@ FORCEINLINE uint32 GetTypeHash(const FReactionDataKey& InKey)
 
 	H = HashCombine(H, GetTypeHash(InKey.ApplyDamageSpecKey));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ReactionType)));
-	
+
 	return H;
 }
 

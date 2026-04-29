@@ -6,6 +6,7 @@
 #include "CActionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FActionTypeChanged, class ACharacter*, InOwnerCharacter, EActionType, InPrevActionType, EActionType, InNewActionType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FActionEventSignature, class ACharacter*, InOwnerCharacter, EActionType, InActionType, int32, InActionIndex, EActionEventType, InActionEventType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionComponent : public UActorComponent
@@ -17,14 +18,8 @@ public:
 
 	// === ActionData ======================================= //
 private:
-	UPROPERTY(EditAnywhere, Category = "Action|Type")
-	EActionType ActionType;
-
-	UPROPERTY(EditAnywhere, Category = "Action|Class")
-	TSubclassOf<class UCAction> ActionClass;
-
-	UPROPERTY(EditAnywhere, Category = "Action|Data")
-	TArray<FActionData> ActionDatas;
+	UPROPERTY(EditAnywhere, Category = "Action")
+	TArray<FActionDefinition> ActionDefinitions;
 
 	// ====================================================== //
 
@@ -35,43 +30,65 @@ private:
 private:
 	/* === State === */
 	UPROPERTY(Transient)
-	EActionType CurrentActionType_Cached;
+	EActionType CurrentActionType = EActionType::Max;
 
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCStateComponent* StateComp_Cached = nullptr;
 
 public:
 	FActionTypeChanged OnActionTypeChanged;
+	FActionEventSignature OnActionEvent;
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-public:
-	/* === Getter === */
-	class UCAction* GetCurAction() const;
-
-public:
-	/* === Getter === */
-	FORCEINLINE EActionType GetCurActionType() { return CurrentActionType_Cached; }
-
-public:
-	/* === Setter === */
-	void SetIdleMode();
-	void SetComboAttackMode();
+	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
 	/* === Check / Query === */
-	FORCEINLINE bool CheckCurActionType(EActionType InNewActionType) { return CurrentActionType_Cached == InNewActionType; }
+	FORCEINLINE bool CheckCurrentActionType(EActionType InNewActionType) const { return CurrentActionType == InNewActionType; }
+
+public:
+	/* === Getter === */
+	FORCEINLINE EActionType GetCurrentActionType() const { return CurrentActionType; }
+
+public:
+	class UCAction* GetCurrentAction() const;
+
+public:
+	void BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
+
+public:
+	FActionExecutionResult ExecuteAction(EActionType IncomingActionType);
+
+public:
+	void CompleteCurrentAction();
+	void AbortCurrentAction(EActionAbortReason InActionAbortReason);
 
 private:
-	void ChangeActionMode(EActionType InNewActionType);
+	bool StartAction(class UCAction* InAction, EActionType InActionType);
+	bool ApplyActionChain(class UCAction* InAction, const FActionExecutionQuery& InActionExecuteQuery);
+
+private:
+	FActionExecutionQuery BuildActionExecutionQuery(EActionType InIncomingActionType, class UCAction* InIncomingAction) const;
+	FActionExecutionResult BuildActionExecutionResult(EActionExecutionDecision InActionExecutionDecision, EActionType InActionType) const;
+
+private:
+	void EnterActionState(EActionType InActionType);
+	void ExitActionState();
+
+private:
 	void ChangeActionType(EActionType InNewActionType);
 
 private:
-	bool CreateAction(AActor* InOwnerCharacter, EActionType InActionType, TSubclassOf<UCAction> InActionClass, const TArray<FActionData> InActionDatas);
+	bool CreateAction(ACharacter* InOwnerCharacter, const FActionDefinition& InActionDefinition);
+
+private:
+	void PrintActionExecutionQuery(const FActionExecutionQuery& InActionExecutionQuery) const;
 };

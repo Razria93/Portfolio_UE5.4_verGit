@@ -3,16 +3,19 @@
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+
+#include "Component/CActionOrchestratorComponent.h"
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
-#include "Component/CActionComponent.h"
+#include "Component/CHealthComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
-#include "Component/CHealthComponent.h"
+#include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
@@ -21,6 +24,7 @@
 
 #include "Type/CWeaponStructure.h"
 #include "Type/CStateStructure.h"
+#include "Type/CActionOrchestrationStructure.h"
 
 ACPlayer::ACPlayer()
 {
@@ -60,6 +64,10 @@ ACPlayer::ACPlayer()
 	CameraComponent->SetRelativeLocation(FVector(0.0f, 40.0f, 0.0f));
 	CameraComponent->bUsePawnControlRotation = false;
 
+	// Init ActionOrchestratorComp
+	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
+	check(ActionOrchestratorComponent);
+
 	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -72,9 +80,9 @@ ACPlayer::ACPlayer()
 	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
 	check(StateComponent);
 
-	// Init UCACtionComp
-	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
-	check(ActionComponent);
+	// Init HealthComp
+	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
+	check(HealthComponent);
 
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
@@ -84,9 +92,9 @@ ACPlayer::ACPlayer()
 	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
 	check(TakeDamageComponent);
 
-	// Init HealthComp
-	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
-	check(HealthComponent);
+	// Init UCACtionComp
+	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
+	check(ActionComponent);
 
 	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
@@ -159,90 +167,101 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	return finalDamage;
 }
 
-bool ACPlayer::BuildActionFeedbackRequest(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey, FActionFeedbackRequest& OutActionFeedbackRequest) const
+FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
 {
-	if (!IsValid(ActionComponent)) return false;
+	if (!IsValid(Controller) || !IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	UCAction* curAction = ActionComponent->GetCurAction();
-	if (!IsValid(curAction)) return false;
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Move;
+	request.IntentEvent = EActionIntentEvent::Updated;
+	request.Axis2D = InAxis2D;
 
-	// Export
-	OutActionFeedbackRequest = curAction->BuildActionFeedbackRequest(InActionFeedbackTiming, InTriggerKey);
-
-	return true;
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleMoveForward(const float InAxisValue)
+FActionRequestResult ACPlayer::HandleWalk()
 {
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
-	if (!HealthComponent || !HealthComponent->IsAlive()) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	MovementComponent->OnMoveForward(InAxisValue);
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Walk;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleMoveRight(const float InAxisValue)
+FActionRequestResult ACPlayer::HandleRun()
 {
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
-	if (!HealthComponent || !HealthComponent->IsAlive()) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	MovementComponent->OnMoveRight(InAxisValue);
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Run;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleWalk()
+FActionRequestResult ACPlayer::HandleSprint()
 {
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
-	if (!CanActionInput()) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	MovementComponent->OnWalk();
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Sprint;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleRun()
+FActionRequestResult ACPlayer::HandleJump()
 {
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
-	if (!CanActionInput()) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	MovementComponent->OnRun();
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::Jump;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleJump()
+FActionRequestResult ACPlayer::HandleStopJump()
 {
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
-	if (!CanActionInput()) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	Jump();
+	FMovementActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = EMovementActionIntent::StopJump;
+	request.IntentEvent = EActionIntentEvent::Completed;
+
+	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-void ACPlayer::HandleStopJump()
+FActionRequestResult ACPlayer::HandleEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent)
 {
-	if (!IsValid(Controller) || !IsValid(MovementComponent)) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	StopJumping();
+	FEquipmentActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = InEquipmentActionIntent;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	return ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
-void ACPlayer::HandleComboAction()
+FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatActionIntent)
 {
-	if (!IsValid(Controller) || !IsValid(ActionComponent)) return;
-	if (!CanActionInput()) return;
+	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
-	ActionComponent->SetComboAttackMode();
-}
+	FCombatActionRequest request;
+	request.IntentSource = EActionIntentSource::PlayerInput;
+	request.IntentType = InCombatActionIntent;
+	request.IntentEvent = EActionIntentEvent::Started;
 
-void ACPlayer::HandleSword()
-{
-	if (!IsValid(Controller) || !IsValid(WeaponComponent) || !IsValid(StateComponent)) return;
-	if (!CanActionInput()) return;
-
-	if (StateComponent->CheckCurStateType(EStateType::Idle))
-	{
-		if (WeaponComponent->CheckCurAttachmentType(EAttachmentType::Unarmed))
-		{
-			WeaponComponent->SetSwordMode();
-		}
-		else if (WeaponComponent->CheckCurAttachmentType(EAttachmentType::Sword))
-		{
-			WeaponComponent->SetUnarmedMode();
-		}
-	}
+	return ActionOrchestratorComponent->RequestCombatAction(request);
 }
 
 void ACPlayer::ConsumePendingReaction()
@@ -266,18 +285,4 @@ void ACPlayer::ConsumePendingReaction()
 		FLog::Log(TEXT("[Player|ConsumePendingReaction] Rejected Execute Reaction"));
 		return;
 	}
-}
-
-bool ACPlayer::CanActionInput() const
-{
-	if (!IsValid(HealthComponent)) return false;
-	if (!IsValid(StateComponent)) return true;
-
-	if (!HealthComponent->IsAlive()) return false;
-
-	const EStateType stateType = StateComponent->GetCurStateType();
-	if (stateType == EStateType::Reaction) return false;
-	if (stateType == EStateType::Dead) return false;
-
-	return true;
 }

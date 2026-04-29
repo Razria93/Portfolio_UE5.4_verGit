@@ -32,7 +32,7 @@ void UCBTTask_WaitDeadState::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* 
 		return;
 	}
 
-	UCHealthComponent* healthComp = enemy->GetHealthComponent();
+	UCHealthComponent* healthComp = enemy->GetHealthComp();
 	if (!IsValid(healthComp))
 	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);

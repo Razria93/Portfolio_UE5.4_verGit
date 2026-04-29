@@ -5,6 +5,7 @@
 
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CActionComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -67,7 +68,7 @@ bool UCReactionComponent::TryRequestPendingDamageReaction(const FTakeDamagePacke
 		++PendingReactionVersion_Cached;
 		return true;
 	}
-	
+
 	if (!QueryReplaceReaction(
 		PendingReactionContext_Cached.ReactionExecutor, newReactionContext.ReactionExecutor,
 		PendingReactionContext_Cached.ReactionData, newReactionContext.ReactionData))
@@ -123,6 +124,14 @@ bool UCReactionComponent::TryExecuteReaction(const FReactionContext& InReactionC
 		{
 			FLog::Log(TEXT("[TryExecuteReaction] ActiveReactionContext is valid but executor is invalid. Clear stale active reaction."));
 			ClearActiveReaction();
+		}
+	}
+
+	if (UCActionComponent* actionComp = OwnerCharacter_Cached ? OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>() : nullptr)
+	{
+		if (actionComp->GetCurrentActionType() != EActionType::Idle)
+		{
+			actionComp->AbortCurrentAction(EActionAbortReason::Reaction);
 		}
 	}
 
@@ -253,7 +262,7 @@ bool UCReactionComponent::ValidateDamageRequest(const FTakeDamageResult& InTakeD
 
 EReactionType UCReactionComponent::ResolveReactionType(const FTakeDamageResult& InTakeDamageResult)
 {
-	if (!InTakeDamageResult.bAccepted)				
+	if (!InTakeDamageResult.bAccepted)
 	{
 		return EReactionType::None;
 	}
@@ -447,17 +456,17 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InAp
 {
 	OutApplyDamageSpecKeys.Reset();
 
-	// 1) 'Exact' Key
+	// 1) Exact: Weapon + Action + Index
 	OutApplyDamageSpecKeys.Add(InApplyDamageSpecKey);
 
-	// 2) 'Index Any' Key
+	// 2) Any Index: Weapon + Action + AnyIndex
 	{
 		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
 		candidateKey.ActionIndex = INDEX_NONE;
 		OutApplyDamageSpecKeys.Add(candidateKey);
 	}
 
-	// 3) 'Action + Index Any' Key
+	// 3) Any Action: Weapon + AnyAction + AnyIndex
 	{
 		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
 		candidateKey.ActionType = EActionType::All;
@@ -465,20 +474,10 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InAp
 		OutApplyDamageSpecKeys.Add(candidateKey);
 	}
 
-	// 4) 'Equipment + Action + Index Any' Key
+	// 4) Any Weapon: AnyWeapon + AnyAction + AnyIndex
 	{
 		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
-		candidateKey.EquipmentType = EEquipmentType::All;
-		candidateKey.ActionType = EActionType::All;
-		candidateKey.ActionIndex = INDEX_NONE;
-		OutApplyDamageSpecKeys.Add(candidateKey);
-	}
-
-	// 5) 'Attachment + Equipment + Action + Index Any' Key (All Any Key)
-	{
-		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
-		candidateKey.AttachmentType = EAttachmentType::All;
-		candidateKey.EquipmentType = EEquipmentType::All;
+		candidateKey.WeaponType = EWeaponType::All;
 		candidateKey.ActionType = EActionType::All;
 		candidateKey.ActionIndex = INDEX_NONE;
 		OutApplyDamageSpecKeys.Add(candidateKey);
@@ -659,8 +658,7 @@ void UCReactionComponent::PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey&
 	const FString actionIndexText = (InApplyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(InApplyDamageSpecKey.ActionIndex);
 
 	FLog::Log(TEXT("---- ApplyDamageSpecKey Info ----"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.AttachmentType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.EquipmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.WeaponType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 	FLog::Log(TEXT("---------------------------------"));
@@ -672,8 +670,7 @@ void UCReactionComponent::PrintReactionDataKeyInfo(const FReactionDataKey& InRea
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(applyDamageSpecKey.ActionIndex);
 
 	FLog::Log(TEXT("----- ReactionDataKey Info ------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.AttachmentType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.EquipmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(applyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InReactionDataKey.ReactionType)));
@@ -687,8 +684,7 @@ void UCReactionComponent::PrintReactionDataInfo(const FReactionData& InReactionD
 
 	FLog::Log(TEXT("------ ReactionData Info --------"));
 	// ApplyDamageSpec Key
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AttachmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.AttachmentType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("EquipmentType"), *UEnum::GetValueAsString(applyDamageSpecKey.EquipmentType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(applyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 

@@ -3,9 +3,8 @@
 
 #include "GameFramework/Character.h"
 
-#include "Component/CActionFeedbackComponent.h"
-
-#include "Interface/ActionFeedbackRequestProvider.h"
+#include "Component/CActionComponent.h"
+#include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -27,18 +26,15 @@ void UCAnimNotifyState_ActionFeedback::NotifyBegin(USkeletalMeshComponent* MeshC
 	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
 	if (!IsValid(ownerCharacter)) return;
 
-	IActionFeedbackRequestProvider* requestProvider = Cast<IActionFeedbackRequestProvider>(ownerCharacter);
-	if (!requestProvider) return;
+	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
+	if (!IsValid(actionComp)) return;
 
-	UCActionFeedbackComponent* actionFeedbackComp = ownerCharacter->FindComponentByClass<UCActionFeedbackComponent>();
-	if (!IsValid(actionFeedbackComp)) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!IsValid(currentAction)) return;
 
-	FActionFeedbackRequest actionFeedbackRequest;
-	if (!requestProvider->BuildActionFeedbackRequest(EActionFeedbackTiming::TriggerWindowBegin, TriggerKey, actionFeedbackRequest)) return;
+	if (!CanProcessActionNotify(currentAction)) return;
 
-	FLog::Log(FString::Printf(TEXT("[ActionFeedback_NotifyBegin] ActionFeedbackTiming = %s | TriggerKey = %s"), *UEnum::GetValueAsString(actionFeedbackRequest.ActionFeedbackTiming), *actionFeedbackRequest.TriggerKey.ToString()));
-
-	actionFeedbackComp->PlayActionFeedback(actionFeedbackRequest);
+	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowBegin, TriggerKey);
 }
 
 void UCAnimNotifyState_ActionFeedback::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
@@ -50,17 +46,13 @@ void UCAnimNotifyState_ActionFeedback::NotifyEnd(USkeletalMeshComponent* MeshCom
 	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
 	if (!IsValid(ownerCharacter)) return;
 
-	IActionFeedbackRequestProvider* requestProvider = Cast<IActionFeedbackRequestProvider>(ownerCharacter);
-	if (!requestProvider) return;
+	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
+	if (!IsValid(actionComp)) return;
 
-	UCActionFeedbackComponent* actionFeedbackComp = ownerCharacter->FindComponentByClass<UCActionFeedbackComponent>();
-	if (!IsValid(actionFeedbackComp)) return;
+	UCAction* currentAction = actionComp->GetCurrentAction();
+	if (!IsValid(currentAction)) return;
 
-	FActionFeedbackRequest actionFeedbackRequest;
-	if (!requestProvider->BuildActionFeedbackRequest(EActionFeedbackTiming::TriggerWindowEnd, TriggerKey, actionFeedbackRequest)) return;
+	if (!CanProcessActionNotify(currentAction)) return;
 
-	FLog::Log(FString::Printf(TEXT("[ActionFeedback_NotifyEnd] ActionFeedbackTiming = %s | TriggerKey = %s"), *UEnum::GetValueAsString(actionFeedbackRequest.ActionFeedbackTiming), *actionFeedbackRequest.TriggerKey.ToString()));
-
-	actionFeedbackComp->PlayActionFeedback(actionFeedbackRequest);
-
+	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowEnd, TriggerKey);
 }

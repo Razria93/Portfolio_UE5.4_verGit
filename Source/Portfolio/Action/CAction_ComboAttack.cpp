@@ -4,123 +4,144 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CWeaponComponent.h"
-#include "Component/CStateComponent.h"
 
 #include "Type/CWeaponStructure.h"
-#include "Type/CStateStructure.h"
 
-void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas)
+void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas)
 {
 	Super::InitializeAction(InOwnerCharacter, InActionType, InActionDatas);
 
 	ActionIndex = 0;
 
-	bEnablePreInput = false;
-	bExistPreInput = false;
+	bChainWindowOpened = false;
+	bHasChainedInput = false;
 }
 
-void UCAction_ComboAttack::Tick(float InDeltaTime)
+EActionExecutionDecision UCAction_ComboAttack::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
 {
-	Super::Tick(InDeltaTime);
-}
+	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
+	if (!IsValid(WeaponComp_Cached)) return EActionExecutionDecision::Reject;
 
-bool UCAction_ComboAttack::PlayAction()
-{
-	// [Re-call] Convert 're-invoked PlayAction()' into 'buffered pre-input'
-	if (bEnablePreInput)
+	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return EActionExecutionDecision::Reject;
+
+	const bool bFirstEntry = InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle;
+
+	if (bFirstEntry)
 	{
-		bEnablePreInput = false; // Enabled by CAnimNotify_ComboEnable
-		bExistPreInput = true;	 // Mark pre-input for next combo step
+		if (!ActionDatas_Injected.IsValidIndex(ActionIndex)) return EActionExecutionDecision::Reject;
+		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return EActionExecutionDecision::Reject;
 
-		FLog::Log(TEXT("[ComboAttack|PlayAction] Buffered PreInput"));
-		return true;
+		return EActionExecutionDecision::Start;
 	}
 
-	// [First-call] Validate execution conditions & Execute first combo action
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(StateComp_Cached) || !IsValid(WeaponComp_Cached)) return false;
-	if (WeaponComp_Cached->CheckCurAttachmentType(EAttachmentType::Unarmed)) return false;
-	if (!StateComp_Cached->CheckCurStateType(EStateType::Idle)) return false;
-	if (ActionDatas_Injected.Num() <= 0) return false;
+	const bool bCanChain = InActionExecuteQuery.CurrentActionType == ActionType && bChainWindowOpened;
 
-	if (!Super::PlayAction()) return false;
+	if (bCanChain)
+	{
+		return EActionExecutionDecision::Chain;
+	}
 
-	if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return false;
+	return EActionExecutionDecision::Reject;
+}
+
+bool UCAction_ComboAttack::Start()
+{
+	if (!Super::Start()) return false;
 
 	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 	return true;
 }
 
-void UCAction_ComboAttack::BeginPlayAction()
+bool UCAction_ComboAttack::ApplyChain(const FActionExecutionQuery& InActionExecuteQuery)
 {
-	Super::BeginPlayAction();	// bBeginAction = true
+	if (InActionExecuteQuery.CurrentActionType != ActionType) return false;
+	if (!bChainWindowOpened) return false;
 
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	bChainWindowOpened = false;
+	bHasChainedInput = true;
 
-	FActionContext actionContext = BuildActionContext();
-
-	PushContextToAttachment(actionContext);
+	FLog::Log(TEXT("[ComboAttack|Chain] Buffered chained input"));
+	return true;
 }
 
-void UCAction_ComboAttack::EndPlayAction()
+void UCAction_ComboAttack::Complete()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	Super::EndPlayAction();	// bIsAction, bBeginAction = false
-
-	const int32 num = ActionDatas_Injected.Num();
-
-	if (num > 0 && ActionIndex >= 0 && ActionIndex < num)
+	if (ActionDatas_Injected.IsValidIndex(ActionIndex) && IsValid(ActionDatas_Injected[ActionIndex].Montage))
 	{
-		if (IsValid(ActionDatas_Injected[ActionIndex].Montage))
-			ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
+		ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
 	}
+
+	Super::Complete();
 
 	ActionIndex = 0;
 
-	bEnablePreInput = false;
-	bExistPreInput = false;
-
-	ClearContextToAttachment();
+	bChainWindowOpened = false;
+	bHasChainedInput = false;
 }
 
-void UCAction_ComboAttack::NextPlayAction()
+void UCAction_ComboAttack::Abort(EActionAbortReason InActionAbortReason)
 {
-	if (bExistPreInput)
+	if (!IsValid(OwnerCharacter_Injected))
 	{
-		Super::NextPlayAction();
-
-		bExistPreInput = false;
-
-		const int32 num = ActionDatas_Injected.Num();
-		if (num <= 0) return;
-
-		const int32 nextActionIndex = ActionIndex + 1;
-		if (nextActionIndex >= num) return;
-
-		ActionIndex = nextActionIndex;
-
-		FLog::Log(FString::Printf(TEXT("[ComboAttack|NextPlayAction] AdvanceCombo | ActionIndex = %d"), ActionIndex));
-
-		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return;
-		ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
-
-		FActionContext actionContext;
-		actionContext.CurrentActionType = ActionType;
-		actionContext.ActionIndex = ActionIndex; // Increased ActionIndex
-
-		PushContextToAttachment(actionContext);
+		Super::Abort(InActionAbortReason);
+		return;
 	}
-	else
+
+	if (ActionDatas_Injected.IsValidIndex(ActionIndex) && IsValid(ActionDatas_Injected[ActionIndex].Montage))
 	{
-		FLog::Log(TEXT("[ComboAttack|NextPlayAction] No Buffered PreInput"));
+		ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
 	}
+
+	Super::Abort(InActionAbortReason);
+
+	ActionIndex = 0;
+
+	bChainWindowOpened = false;
+	bHasChainedInput = false;
+}
+
+void UCAction_ComboAttack::OpenChainWindow()
+{
+	if (!CanAdvanceCombo()) return;
+
+	bChainWindowOpened = true;
+	
+	EmitActionEvent(EActionEventType::ChainWindowOpened, INDEX_NONE);
+}
+
+void UCAction_ComboAttack::CloseChainWindow()
+{
+	bChainWindowOpened = false;
+
+	EmitActionEvent(EActionEventType::ChainWindowClosed, INDEX_NONE);
+}
+
+void UCAction_ComboAttack::AdvanceCombo()
+{
+	if (!bHasChainedInput)
+	{
+		FLog::Log(TEXT("[ComboAttack|AdvanceCombo] No chained input"));
+		return;
+	}
+
+	bHasChainedInput = false;
+
+	if (!CanAdvanceCombo()) return;
+
+	++ActionIndex;
+
+	FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Advance Combo | ActionIndex = %d"), ActionIndex));
+
+	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
 }
 
 FActionContext UCAction_ComboAttack::BuildActionContext() const
 {
 	FActionContext actionContext;
 
-	actionContext.CurrentActionType = ActionType;
+	actionContext.ActionType = ActionType;
 	actionContext.ActionIndex = ActionIndex;
 
 	return actionContext;
@@ -136,4 +157,11 @@ FActionFeedbackRequest UCAction_ComboAttack::BuildActionFeedbackRequest(EActionF
 	actionFeedbackRequest.TriggerKey = InTriggerKey;
 
 	return actionFeedbackRequest;
+}
+
+bool UCAction_ComboAttack::CanAdvanceCombo() const
+{
+	const int32 nextActionIndex = ActionIndex + 1;
+
+	return ActionDatas_Injected.IsValidIndex(nextActionIndex) && IsValid(ActionDatas_Injected[nextActionIndex].Montage);
 }

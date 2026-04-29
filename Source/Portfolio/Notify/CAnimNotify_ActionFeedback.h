@@ -5,7 +5,7 @@
 #include "CAnimNotify_ActionFeedback.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_ActionFeedback : public UAnimNotify
+class PORTFOLIO_API UCAnimNotify_ActionFeedback : public UCAnimNotify
 {
 	GENERATED_BODY()
 	

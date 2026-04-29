@@ -1,61 +1,35 @@
 #include "Notify/CAnimNotify.h"
 #include "ProjectGlobal.h"
 
-#include "Component/CWeaponComponent.h"
-#include "Component/CActionComponent.h"
+#include "Action/CAction.h"
+
+#include "Type/CWeaponStructure.h"
 
 UCAnimNotify::UCAnimNotify()
 {
 }
 
-FString UCAnimNotify::MakeNotifyName(FString InName) const
+bool UCAnimNotify::CanProcessActionNotify(const UCAction* InCurrentAction) const
 {
-	if (FlowType != EAnimNotifyFlow::Max)
-	{
-		UEnum* metaData = StaticEnum<EAnimNotifyFlow>();
+	if (!IsValid(InCurrentAction)) return false;
 
-		if (metaData)
-		{
-			FString flowName = metaData->GetNameStringByValue((int64)FlowType);
-			return InName + "_" + flowName;
-		}
+	if (TriggerActionType == EActionType::Max)
+	{
+		FLog::Log(TEXT("[AnimNotify] TriggerActionType is not configured."));
+		return false;
 	}
 
-	return InName;
-}
+	const FActionContext actionContext = InCurrentAction->GetActionContext();
 
-UCWeaponComponent* UCAnimNotify::GetWeaponComponent(USkeletalMeshComponent* MeshComp)
-{
-	if (!IsValid(MeshComp) || !IsValid(MeshComp->GetOwner()))
-		return nullptr;
+	if (TriggerActionType != EActionType::All && actionContext.ActionType != TriggerActionType)
+	{
+		return false;
+	}
 
-	UActorComponent* tempComp = MeshComp->GetOwner()->GetComponentByClass(UCWeaponComponent::StaticClass());
+	if (TriggerActionIndex != INDEX_NONE && actionContext.ActionIndex != TriggerActionIndex)
+	{
+		return false;
+	}
 
-	if (!tempComp)
-		return nullptr;
-
-	UCWeaponComponent* weaponComp = Cast<UCWeaponComponent>(tempComp);
-
-	if (!weaponComp)
-		return nullptr;
-
-	return weaponComp;
-}
-
-UCActionComponent* UCAnimNotify::GetActionComponent(USkeletalMeshComponent* MeshComp)
-{
-	if (!IsValid(MeshComp) || !IsValid(MeshComp->GetOwner()))
-		return nullptr;
-
-	UActorComponent* tempComp = MeshComp->GetOwner()->GetComponentByClass(UCActionComponent::StaticClass());
-
-	if (!tempComp)
-		return nullptr;
-
-	UCActionComponent* actionComp = Cast<UCActionComponent>(tempComp);
-
-	if (!actionComp)
-		return nullptr;
-
-	return actionComp;
+	return true;
 }

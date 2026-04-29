@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Component/CStateComponent.h"
+
 UCMovementComponent::UCMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -19,6 +21,9 @@ void UCMovementComponent::BeginPlay()
 
 	CharacterMovementComp_Cached = OwnerCharacter_Cached->GetCharacterMovement();
 	check(CharacterMovementComp_Cached);
+
+	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
+	check(StateComp_Cached);
 }
 
 void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -33,53 +38,84 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	bIsFalling = CharacterMovementComp_Cached->IsFalling();
 }
 
-void UCMovementComponent::OnMoveForward(float InValue)
+// [Final Movement Gate]
+// Final movement gate for axis input accepted by the orchestrator.
+bool UCMovementComponent::CanAcceptMoveInput() const
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!bCanMove) return;
-	if (FMath::IsNearlyZero(InValue)) return;
+	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!bCanMove) return false;
 
-	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
-	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
-	const FVector Direction = FRotationMatrix(yawRot).GetUnitAxis(EAxis::X);
+	if (IsValid(StateComp_Cached))
+	{
+		const EExecutionState executionState = StateComp_Cached->GetCurrentExecutionState();
 
-	OwnerCharacter_Cached->AddMovementInput(Direction, InValue);
+		if (executionState == EExecutionState::Dead) return false;
+		if (executionState == EExecutionState::Reaction) return false;
+	}
+
+	return true;
 }
 
-void UCMovementComponent::OnMoveRight(float InValue)
+void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 {
+	if (!CanAcceptMoveInput()) return;
+	if (InAxis2D.IsNearlyZero()) return;
 	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!bCanMove) return;
-	if (FMath::IsNearlyZero(InValue)) return;
 
 	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
 	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
-	const FVector Direction = FRotationMatrix(yawRot).GetUnitAxis(EAxis::Y);
 
-	OwnerCharacter_Cached->AddMovementInput(Direction, InValue);
+	const FVector forwardDirection = FRotationMatrix(yawRot).GetUnitAxis(EAxis::X);
+	const FVector rightDirection = FRotationMatrix(yawRot).GetUnitAxis(EAxis::Y);
+
+	OwnerCharacter_Cached->AddMovementInput(forwardDirection, InAxis2D.Y);
+	OwnerCharacter_Cached->AddMovementInput(rightDirection, InAxis2D.X);
 }
 
 void UCMovementComponent::OnWalk()
 {
-	SetSpeedType(ESpeedType::Walk);
+	ChangeMovementGait(EMovementGait::Walk);
 }
 
 void UCMovementComponent::OnRun()
 {
-	SetSpeedType(ESpeedType::Run);
+	ChangeMovementGait(EMovementGait::Run);
 }
 
 void UCMovementComponent::OnSprint()
 {
-	SetSpeedType(ESpeedType::Sprint);
+	ChangeMovementGait(EMovementGait::Sprint);
 }
 
-void UCMovementComponent::SetSpeedType(ESpeedType InType)
+void UCMovementComponent::OnJump()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	float newSpeed = SpeedMap[InType];
-	CharacterMovementComp_Cached->MaxWalkSpeed = newSpeed;
+	OwnerCharacter_Cached->Jump();
+}
+
+void UCMovementComponent::OnStopJump()
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	OwnerCharacter_Cached->StopJumping();
+}
+
+void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
+{
+	if (!IsValid(CharacterMovementComp_Cached)) return;
+	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max) return;
+
+	const float* speed = GaitSpeedMap.Find(InNewMovementGait);
+	if (!speed) return;
+	if (!speed)
+	{
+		FLog::Log(TEXT("[ChangeMovementGait] InValid GaitSpeedMap")); // Error
+		return;
+	}
+
+	CurrentMovementGait = InNewMovementGait;
+	CharacterMovementComp_Cached->MaxWalkSpeed = *speed;
 }
 
 void UCMovementComponent::CalculateSpeed()

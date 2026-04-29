@@ -12,22 +12,19 @@ class PORTFOLIO_API UCAction : public UObject
 
 protected:
 	UPROPERTY(Transient)
-	EActionType ActionType;
+	EActionType ActionType = EActionType::Max;
+
+	UPROPERTY(Transient)
+	bool bIsAction = false;
 
 protected:
 	UPROPERTY(Transient)
-	bool bBeginAction;	// Action start triggered
-
-	UPROPERTY(Transient)
-	bool bIsAction;		// Action is active
+	TArray<FActionData> ActionDatas_Injected;
 
 protected:
 	/* === Injection Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
-
-	UPROPERTY(Transient)
-	TArray<FActionData> ActionDatas_Injected;
 
 protected:
 	/* === Cached Objects === */
@@ -35,51 +32,61 @@ protected:
 	class UCWeaponComponent* WeaponComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached = nullptr;
+	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
-	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData> InActionDatas);
+	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas);
 	virtual void Tick(float InDeltaTime) {};
 
 public:
 	EActionType GetActionType() const;
+	FActionContext GetActionContext() const;
 
 public:
 	void SetActionType(EActionType InActionType);
 
 public:
-	virtual bool PlayAction();
-	virtual void BeginPlayAction();
-	virtual void EndPlayAction();
-	virtual void NextPlayAction() {};
+	/* === Action Arbitration === */
+	virtual EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const;
 
 public:
+	virtual bool Start();
+	virtual bool ApplyChain(const FActionExecutionQuery& InActionExecuteQuery);
+
+public:
+	virtual void Complete();
+	virtual void Abort(EActionAbortReason InActionAbortReason);
+
+public:
+	void PushHitContext();
+	void ClearHitContext();
+
+public:
+	void RequestFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey = NAME_None) const;
+
+protected:
 	virtual FActionContext BuildActionContext() const;
 	virtual FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 protected:
-	void PushContextToAttachment(const FActionContext& InActionContext);
-	void ClearContextToAttachment();
-
-protected:
-	void RequestPlayActionFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey = NAME_None) const;
+	void EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex = INDEX_NONE) const;
 
 public:
 	/* === [IN] Custom Delgate Events === */
-	// [Legacy delegate] CAttachment
+	// [Legacy delegate] CWeaponActor
 	UFUNCTION()
-	virtual void OnAttachmentCollisionEnabled() {};
+	virtual void OnWeaponActorCollisionEnabled() {};
 
 	UFUNCTION()
-	virtual void OnAttachmentCollisionDisabled() {};
+	virtual void OnWeaponActorCollisionDisabled() {};
 
-	// [Legacy delegate] CAttachment
+	// [Legacy delegate] CWeaponActor
 	UFUNCTION()
-	virtual void OnAttachmentBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
+	virtual void OnWeaponActorBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
 
 	UFUNCTION()
-	virtual void OnAttachmentEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) {};
+	virtual void OnWeaponActorEndOverlap(AActor* InAttackerActor, AActor* InTargetActor) {};
 };

@@ -7,11 +7,6 @@
 #include "Component/CMovementComponent.h"
 #include "Reaction/CReaction.h"
 
-bool FEquipmentData::IsValidMinimal() const
-{
-	return IsValid(Montage);
-}
-
 bool FActionData::IsValidMinimal() const
 {
 	return IsValid(Montage);

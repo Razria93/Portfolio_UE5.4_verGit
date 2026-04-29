@@ -130,7 +130,7 @@ bool ACAIController::InitializeBlackBoardValue()
 	blackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority, INT_MAX);
 
 	// State
-	blackboardComp->SetValueAsEnum(CAIKey::State::AIStateType, static_cast<uint8>(EAIStateType::Idle));
+	blackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState, static_cast<uint8>(EAIIntentState::Idle));
 
 	// Perception
 	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
@@ -202,14 +202,11 @@ bool ACAIController::InitializeBlackBoardValue()
 			// --- Engage ---
 			// Init
 			blackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage, false);
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bCanAttack, false);
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsAttacking, false);
-			blackboardComp->SetValueAsFloat(CAIKey::Engage::AttackableTime, -1.f);
-			blackboardComp->SetValueAsInt(CAIKey::Engage::LastAttackIndex, INDEX_NONE);
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction, false);
 
-			blackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
-			blackboardComp->SetValueAsEnum(CAIKey::Engage::AttackActionType, static_cast<uint8>(EActionType::Max));
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction, false);
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
+			blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime, -1.f);
 
 			// --- Reaction ---
 			// Init
@@ -271,7 +268,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bTargetPriorityKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Targeting::TargetPriority);
 
 	// StateType
-	const bool bAIStateTypeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::State::AIStateType);
+	const bool bAIIntentStateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::State::AIIntentState);
 
 	// Perception
 	const bool bHasLOSKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::bHasLOS);
@@ -320,15 +317,11 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	// Engage
 	const bool bShouldEngageKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bShouldEngage);
-	const bool bInEngageRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bInEngageRange);
-	const bool bCanAttackKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bCanAttack);
-	const bool bIsAttackingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bIsAttacking);
-	const bool bAttackableTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackableTime);
-	const bool bLastAttackIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::LastAttackIndex);
+	const bool bCanCombatActionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bCanCombatAction);
 
-	const bool bAttackIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackIndex);
-	const bool bAttackActionTypeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::AttackActionType);
-	
+	const bool bIsCombatActionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bIsCombatAction);
+	const bool bInEngageRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bInEngageRange);
+	const bool bNextCombatActionTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::NextCombatActionTime);
 
 	// Reaction
 	const bool bHasPendingReactionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bHasPendingReaction);
@@ -345,7 +338,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	bAllValid &= bTargetPriorityKey;
 
 	// StateType
-	bAllValid &= bAIStateTypeKey;
+	bAllValid &= bAIIntentStateKey;
 
 	// Perception
 	bAllValid &= bHasLOSKey;
@@ -395,16 +388,11 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 
 	// Engage
 	bAllValid &= bShouldEngageKey;
+	bAllValid &= bCanCombatActionKey;
+
+	bAllValid &= bIsCombatActionKey;
 	bAllValid &= bInEngageRangeKey;
-	bAllValid &= bCanAttackKey;
-	bAllValid &= bIsAttackingKey;
-	bAllValid &= bAttackableTimeKey;
-	bAllValid &= bAttackActionTypeKey;
-	bAllValid &= bLastAttackIndexKey;
-	
-	bAllValid &= bAttackIndexKey;
-	bAllValid &= bAttackActionTypeKey;
-	
+	bAllValid &= bNextCombatActionTimeKey;
 
 	// Reaction
 	bAllValid &= bHasPendingReactionKey;

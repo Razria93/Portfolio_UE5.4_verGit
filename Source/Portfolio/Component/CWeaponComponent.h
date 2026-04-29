@@ -5,8 +5,7 @@
 #include "Type/CWeaponStructure.h"
 #include "CWeaponComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttachmentTypeChanged, class ACharacter*, InOwnerCharacter, EAttachmentType, InPrevAttachmentType, EAttachmentType, InNewAttachmentType);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FEquipmentTypeChanged, class ACharacter*, InOwnerCharacter, EEquipmentType, InPrevEquipmentType, EEquipmentType, InNewEquipmentType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWeaponTypeChanged, class ACharacter*, InOwnerCharacter, EWeaponType, InPrevWeaponType, EWeaponType, InNewWeaponType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCWeaponComponent : public UActorComponent
@@ -18,42 +17,21 @@ public:
 
 	// === WeaponData ======================================= //
 private:
-	UPROPERTY(EditAnywhere, Category = "AttachmentData")
-	EAttachmentType AttachmentType;
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	EWeaponType WeaponActorClassKey = EWeaponType::Max;
 
-	UPROPERTY(EditAnywhere, Category = "EquipmentData")
-	EEquipmentType EquipmentType;
-
-private:
-	UPROPERTY(EditAnywhere, Category = "AttachmentData")
-	TSubclassOf<class ACAttachment> AttachmentClass;
-
-	UPROPERTY(EditAnywhere, Category = "EquipmentData")
-	TSubclassOf<class UCEquipment> EquipmentClass;
-
-private:
-	UPROPERTY(EditAnywhere, Category = "EquipmentData")
-	FEquipmentData EquipmentData;
-
-	UPROPERTY(EditAnywhere, Category = "EquipmentData")
-	FEquipmentData UnequipmentData;
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	TSubclassOf<class ACWeaponActor> WeaponActorClass;
 
 	// ====================================================== //
 
 private:
-	UPROPERTY(Transient)
-	class ACAttachment* Attachment;
-
-	UPROPERTY(Transient)
-	class UCEquipment* Equipment;
-
-private:
 	/* === State === */
 	UPROPERTY(Transient)
-	EAttachmentType CurrentAttachmentType_Cached;
-	
+	EWeaponType CurrentWeaponType = EWeaponType::Unarmed;
+
 	UPROPERTY(Transient)
-	EEquipmentType CurrentEquipmentType_Cached;
+	class ACWeaponActor* WeaponActor = nullptr;
 
 private:
 	/* === Cached Objects === */
@@ -62,50 +40,40 @@ private:
 
 public:
 	/* === [Out] Custom Delgate Events === */
-	FAttachmentTypeChanged OnAttachmentTypeChanged;
-	FEquipmentTypeChanged OnEquipmentTypeChanged;
+	FWeaponTypeChanged OnWeaponTypeChanged;
 
 protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-public:
-	/* === Getter === */
-	class UObject* GetAttachment();
-	class UObject* GetEquipment();
-
-public:
-	/* === Getter === */
-	FORCEINLINE EAttachmentType GetCurAttachmentType() { return CurrentAttachmentType_Cached; }
-	FORCEINLINE EEquipmentType GetCurEquipmentType() { return CurrentEquipmentType_Cached; }
-
-public:
-	/* === Setter === */
-	void SetUnarmedMode();
-	void SetSwordMode();
+	void BeginPlay() override;
 
 public:
 	/* === Check / Query === */
-	FORCEINLINE bool CheckCurAttachmentType(EAttachmentType InNewAttachmentType) { return CurrentAttachmentType_Cached == InNewAttachmentType; }
+	FORCEINLINE bool CheckCurrentWeaponType(EWeaponType InNewWeaponType) const { return CurrentWeaponType == InNewWeaponType; }
 
 public:
-	void PushContextToAttachment(const FActionContext& InActionContext);
-	void ClearContextToAttachment();
+	/* === Getter === */
+	FORCEINLINE EWeaponType GetCurrentWeaponType() { return CurrentWeaponType; }
+
+public:
+	class UObject* GetWeaponActor();
+
+public:
+	void AttachWeaponToHand();
+	void AttachWeaponToHolster();
+
+public:
+	void CommitEquipWeapon();
+	void CommitUnequipWeapon();
+
+public:
+	void PushContext(const FActionContext& InActionContext);
+	void ClearContext();
 
 private:
-	bool CreateAttachment(AActor* InOwnerCharacter, EAttachmentType InAttachmentType, TSubclassOf<ACAttachment> InAttachmentClass);
-	bool CreateEquipment(AActor* InOwnerCharacter, EEquipmentType InEquipmentType, TSubclassOf<UCEquipment> InEquipmentClass, const FEquipmentData& InEquipmentDatas, const FEquipmentData& InUnequipmentDatas);
+	void ChangeWeaponType(EWeaponType InNewWeaponType);
 
 private:
-	void ChangeMode(EAttachmentType InNewAttachmentType);
+	FWeaponContext BuildWeaponContext() const;
 
 private:
-	void ChangeAttachmentType(EAttachmentType InNewAttachmentType);
-	void ChangeEquipmentType(EEquipmentType InNewEquipmentType);
-
-private:
-	FAttachmentContext BuildAttachmentContext() const;
-	FEquipmentContext BuildEquipmentContext() const;
+	bool CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass);
 };

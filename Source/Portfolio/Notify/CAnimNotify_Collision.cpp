@@ -1,8 +1,10 @@
 #include "Notify/CAnimNotify_Collision.h"
 #include "ProjectGlobal.h"
 
+#include "GameFramework/Character.h"
+
 #include "Component/CWeaponComponent.h"
-#include "Weapon/CAttachment.h"
+#include "Weapon/CWeaponActor.h"
 
 UCAnimNotify_Collision::UCAnimNotify_Collision()
 {
@@ -10,26 +12,38 @@ UCAnimNotify_Collision::UCAnimNotify_Collision()
 
 FString UCAnimNotify_Collision::GetNotifyName_Implementation() const
 {
-	return MakeNotifyName("Collision");
+	switch (NotifyType)
+	{
+	case ECollisionNotifyType::Enabled:
+		return TEXT("Collision(Enabled)");
+
+	case ECollisionNotifyType::Disabled:
+		return TEXT("Collision(Disabled)");
+
+	default:
+		return TEXT("Collision");
+	}
 }
 
 void UCAnimNotify_Collision::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	UCWeaponComponent* weaponComp = GetWeaponComponent(MeshComp);
+	if (!IsValid(MeshComp)) return;
 
+	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
+	if (!IsValid(ownerCharacter)) return;
+
+	UCWeaponComponent* weaponComp = ownerCharacter->FindComponentByClass<UCWeaponComponent>();
 	if (!weaponComp) return;
 
-	UObject* uobject = weaponComp->GetAttachment();
+	UObject* uobject = weaponComp->GetWeaponActor();
+	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(uobject);
+	if (!weaponActor) return;
 
-	ACAttachment* attachment = Cast<ACAttachment>(uobject);
-
-	if (!attachment) return;
-
-	switch (FlowType)
+	switch (NotifyType)
 	{
-	case EAnimNotifyFlow::Begin: attachment->CollisionEnabled(CollisionName); return;
-	case EAnimNotifyFlow::End: attachment->CollisionDisabled(); return;
+	case ECollisionNotifyType::Enabled: weaponActor->CollisionEnabled(CollisionName); return;
+	case ECollisionNotifyType::Disabled: weaponActor->CollisionDisabled(); return;
 	}
 }

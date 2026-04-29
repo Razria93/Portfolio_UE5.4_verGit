@@ -224,10 +224,10 @@ public:
     bool bInEngageRange = false;
 
     UPROPERTY(Transient)
-    bool bCanAttack = false;
+    bool bCanCombatAction = false;
 
     UPROPERTY(Transient)
-    float AttackableTime = -1.f;
+    float NextCombatActionTime = -1.f;
 
 public:
     FEngageContext() = default;

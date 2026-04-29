@@ -12,7 +12,7 @@ namespace CAIKey
 
 	namespace State
 	{
-		static const FName AIStateType = "AIStateType";							// Enum(EAIStateType)
+		static const FName AIIntentState = "AIIntentState";						// Enum(EAIIntentState)
 	}
 
 	namespace Perception
@@ -76,17 +76,12 @@ namespace CAIKey
 
 	namespace Engage
 	{
-		static const FName bShouldEngage = "bShouldEngage";						// Bool (UpdateAIContext)
-
-		static const FName bInEngageRange = "bInEngageRange";					// Bool  (On/Off : UpdateEngageContext)
-		static const FName bCanAttack = "bCanAttack";							// Bool  (On: UpdateEngageContext / Off: StartAttack)
-		static const FName bIsAttacking = "bIsAttacking";						// Bool  (On: StartAttack / Off: AttackEndNotify, AIState clean-up)
-		static const FName AttackableTime = "AttackableTime";					// Float (CommitAttackCooldown)
-		static const FName LastAttackIndex = "LastAttackIndex";					// Int	 (SelectAttackIndex)
-
-		static const FName AttackIndex = "AttackIndex";							// Int	 
-		static const FName AttackActionType = "AttackActionType";				// Enum  (EActionType)
+		static const FName bShouldEngage = "bShouldEngage";						// Bool	 (UpdateAIContext)
+		static const FName bCanCombatAction = "bCanCombatAction";				// Bool	 (UpdateEngageContext)
 		
+		static const FName bIsCombatAction = "bIsCombatAction";					// Bool	 (OnActionTypeChanged)
+		static const FName bInEngageRange = "bInEngageRange";					// Bool	 (UpdateAIContext)
+		static const FName NextCombatActionTime = "NextCombatActionTime";		// Float (StartCombatAction)
 	}
 	
 	namespace Reaction

@@ -10,7 +10,7 @@ UCAnimNotify_EnterDeadState::UCAnimNotify_EnterDeadState()
 
 FString UCAnimNotify_EnterDeadState::GetNotifyName_Implementation() const
 {
-	return MakeNotifyName("Enter Dead State");
+	return TEXT("Enter Dead State");
 }
 
 void UCAnimNotify_EnterDeadState::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)

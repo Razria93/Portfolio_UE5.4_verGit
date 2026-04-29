@@ -2,13 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
+#include "Type/CWeaponStructure.h"
 #include "CAnimNotify.generated.h"
-
-UENUM()
-enum class EAnimNotifyFlow : uint8
-{
-	Begin, End, Next, Max,
-};
 
 UCLASS()
 class PORTFOLIO_API UCAnimNotify : public UAnimNotify
@@ -19,13 +14,12 @@ public:
 	UCAnimNotify();
 
 protected:
-	UPROPERTY(EditAnywhere)
-	EAnimNotifyFlow FlowType = EAnimNotifyFlow::Max;
+	UPROPERTY(EditAnywhere, Category = "Trigger")
+	EActionType TriggerActionType = EActionType::Max;
+
+	UPROPERTY(EditAnywhere, Category = "Trigger")
+	int32 TriggerActionIndex = INDEX_NONE;
 
 protected:
-	FString MakeNotifyName(FString InName) const;
-
-protected:
-	class UCWeaponComponent* GetWeaponComponent(class USkeletalMeshComponent* MeshComp);
-	class UCActionComponent* GetActionComponent(class USkeletalMeshComponent* MeshComp);
+	bool CanProcessActionNotify(const class UCAction* InCurrentAction) const;
 };

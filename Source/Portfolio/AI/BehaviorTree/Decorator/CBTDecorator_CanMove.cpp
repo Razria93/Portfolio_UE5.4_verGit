@@ -22,5 +22,5 @@ bool UCBTDecorator_CanMove::CalculateRawConditionValue(UBehaviorTreeComponent& O
 	const UCMovementComponent* movementComp = pawn->FindComponentByClass<UCMovementComponent>();
 	if (!IsValid(movementComp)) return false;
 
-	return movementComp->GetCanMove();
+	return movementComp->CanAcceptMoveInput();
 }
