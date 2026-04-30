@@ -30,11 +30,6 @@ void UCActionOrchestratorComponent::BeginPlay()
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 }
 
-void UCActionOrchestratorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InActionRequest)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached))

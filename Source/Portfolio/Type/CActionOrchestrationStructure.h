@@ -69,7 +69,6 @@ enum class ECombatActionIntent : uint8
 	Max,
 };
 
-
 UENUM(BlueprintType)
 enum class EActionRequestResultType : uint8
 {

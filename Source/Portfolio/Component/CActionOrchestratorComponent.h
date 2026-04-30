@@ -35,9 +35,6 @@ private:
 protected:
 	virtual void BeginPlay() override;
 
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 public:
 	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InActionRequest);
 	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InActionRequest);

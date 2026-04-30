@@ -44,7 +44,9 @@ enum class EReactionType : uint8
 UENUM(BlueprintType)
 enum class EActionExecutionDecision : uint8
 {
-	Reject = 0,
+	None = 0,
+
+	Reject,
 	Ignore,
 
 	Start,
