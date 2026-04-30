@@ -36,7 +36,9 @@ UENUM(BlueprintType)
 enum class EReactionType : uint8
 {
 	None = 0,
+
 	Hit,
+	Dead,
 
 	Max,
 };
