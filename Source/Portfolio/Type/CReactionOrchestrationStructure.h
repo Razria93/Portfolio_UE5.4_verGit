@@ -23,9 +23,8 @@ enum class EReactionRequestResultType : uint8
 	Ignored,
 
 	Started,
-	ReplacedPending,
-	ReplacedActive,
-	Enqueued,
+	SetPending,
+	ReplaceActive,
 
 	Max,
 };
@@ -39,7 +38,6 @@ enum class EReactionRequestRejectReason : uint8
 	InvalidRequest,
 	InvalidComponent,
 
-	Dead,
 	InvalidDamageResult,
 
 	ReactionTypeNotFound,
@@ -63,7 +61,7 @@ public:
 	EReactionIntentSource IntentSource = EReactionIntentSource::TakeDamage;
 
 	UPROPERTY(Transient)
-	FTakeDamagePacket TakeDamagePacket;
+	FTakeDamagePacket TakeDamagePacket = FTakeDamagePacket();
 };
 
 USTRUCT(BlueprintType)
@@ -85,9 +83,8 @@ public:
 	bool IsAccepted() const
 	{
 		return ResultType == EReactionRequestResultType::Started
-			|| ResultType == EReactionRequestResultType::ReplacedPending
-			|| ResultType == EReactionRequestResultType::ReplacedActive
-			|| ResultType == EReactionRequestResultType::Enqueued;
+			|| ResultType == EReactionRequestResultType::SetPending
+			|| ResultType == EReactionRequestResultType::ReplaceActive;
 	}
 };
 
@@ -109,6 +106,22 @@ enum class EReactionOrchestrationDecision : uint8
 };
 
 USTRUCT(BlueprintType)
+struct FReactionExecutionPolicy
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bCanSetPending;
+
+	UPROPERTY(Transient)
+	bool bCansReplaceActive;
+	
+	UPROPERTY(Transient)
+	int32 Priority;
+};
+
+USTRUCT(BlueprintType)
 struct FReactionOrchestrationQuery
 {
 	GENERATED_BODY()
@@ -118,16 +131,19 @@ public:
 	EReactionIntentSource IntentSource = EReactionIntentSource::None;
 
 	UPROPERTY(Transient)
-	EReactionType IncomingReactionType = EReactionType::None;
+	EReactionType IncomingType = EReactionType::None;
 
 	UPROPERTY(Transient)
-	FReactionContext IncomingReactionContext;
+	FReactionContext IncomingContext;
 
 	UPROPERTY(Transient)
-	FReactionContext PendingReactionContext;
+	FReactionExecutionPolicy IncomingPolicy;
 
 	UPROPERTY(Transient)
-	FReactionContext ActiveReactionContext;
+	FReactionContext PendingContext;
+
+	UPROPERTY(Transient)
+	FReactionContext ActiveContext;
 };
 
 USTRUCT(BlueprintType)
