@@ -100,7 +100,6 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 	const bool bCooldownElapsed = currentTime >= InOutEngageContext.NextCombatActionTime;
 
 	const bool bIsCombatAction = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction);
-	const bool bHasPendingReaction = InBlackboardComp->GetValueAsBool(CAIKey::Reaction::bHasPendingReaction);
 	const bool bHasActiveReaction = InBlackboardComp->GetValueAsBool(CAIKey::Reaction::bHasActiveReaction);
 
 	InOutEngageContext.EngageOuterRange = engageOuterRange;
@@ -113,7 +112,6 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 		bInEngageRange				// for ActionRange Check
 		&& bCooldownElapsed			// for ActionCooldown Check
 		&& !bIsCombatAction			// for ActionType Check
-		&& !bHasPendingReaction		// for PendingReaction Check
 		&& !bHasActiveReaction;		// for ActiveReaction Check
 
 	// PrintEngageContext(InOwnerPawn, InOutEngageContext, currentTime);

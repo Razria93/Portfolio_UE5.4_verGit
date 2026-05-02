@@ -28,8 +28,6 @@
 
 ACPlayer::ACPlayer()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
 	// Init CapsuleComp
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
 	check(CapsuleComp);
@@ -127,14 +125,6 @@ void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
-}
-
-void ACPlayer::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	// Consume and Execute pending reaction
-	ConsumePendingReaction();
 }
 
 void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -262,27 +252,4 @@ FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatAc
 	request.IntentEvent = EActionIntentEvent::Started;
 
 	return ActionOrchestratorComponent->RequestCombatAction(request);
-}
-
-void ACPlayer::ConsumePendingReaction()
-{
-	if (!IsValid(HealthComponent)) return;
-	if (!IsValid(ReactionComponent)) return;
-
-	if (!HealthComponent->IsAlive()) return;
-
-	if (!ReactionComponent->HasPendingReactionContext()) return;
-
-	FReactionContext reactionContext;
-	if (!ReactionComponent->TryConsumePendingReaction(reactionContext))
-	{
-		FLog::Log(TEXT("[Player|ConsumePendingReaction] Invalid Pending Reaction"));
-		return;
-	}
-
-	if (!ReactionComponent->TryExecuteReaction(reactionContext))
-	{
-		FLog::Log(TEXT("[Player|ConsumePendingReaction] Rejected Execute Reaction"));
-		return;
-	}
 }

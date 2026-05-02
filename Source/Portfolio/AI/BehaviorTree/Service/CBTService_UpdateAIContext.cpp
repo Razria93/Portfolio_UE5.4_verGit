@@ -207,9 +207,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 	UCReactionComponent* reactionComp = Cast<UCReactionComponent>(InOwnerPawn->GetComponentByClass(UCReactionComponent::StaticClass()));
 	if (!IsValid(reactionComp)) return EContextBuildResult::NoData;
 
-	InOutAIContext.bHasPendingReaction = reactionComp->HasPendingReactionContext();
 	InOutAIContext.bHasActiveReaction = reactionComp->HasActiveReactionContext();
-	InOutAIContext.PendingReactionVersion = reactionComp->GetPendingReactionVersion();
 
 	return EContextBuildResult::Success;
 }
@@ -266,9 +264,7 @@ void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* In
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasPendingReaction, InAIContext.bHasPendingReaction);
 	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bHasActiveReaction, InAIContext.bHasActiveReaction);
-	InBlackboardComp->SetValueAsInt(CAIKey::Reaction::PendingReactionVersion, InAIContext.PendingReactionVersion);
 }
 
 void UCBTService_UpdateAIContext::UpdateDeadContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
@@ -314,9 +310,7 @@ void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InB
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasPendingReaction);
 	InBlackboardComp->ClearValue(CAIKey::Reaction::bHasActiveReaction);
-	InBlackboardComp->ClearValue(CAIKey::Reaction::PendingReactionVersion);
 }
 
 void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlackboardComp)

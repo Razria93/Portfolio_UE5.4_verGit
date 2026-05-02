@@ -24,29 +24,5 @@ EBTNodeResult::Type UCBTTask_StartReaction::ExecuteTask(UBehaviorTreeComponent& 
 	UCReactionComponent* reactionComp = enemy->GetReactionComp();
 	if (!IsValid(reactionComp)) return EBTNodeResult::Failed;
 
-	FReactionContext reactionContext;
-	
-	// Invalid pending reaction
-	if (!reactionComp->TryConsumePendingReaction(reactionContext))
-	{
-		FLog::Log(TEXT("[StartReaction|ExecuteTask] Invalid Pending Reaction"));
-	
-		// If already active, keep waiting on it.
-		return reactionComp->HasActiveReactionContext()
-			? EBTNodeResult::Succeeded	// Go to Waiting
-			: EBTNodeResult::Failed;	// Go to Root
-	}
-	
-	if (!reactionComp->TryExecuteReaction(reactionContext))
-	{
-		FLog::Log(TEXT("[StartReaction|ExecuteTask] Rejected Execute reaction"));
-	
-		// If already active, keep waiting on it.
-		return reactionComp->HasActiveReactionContext()
-			? EBTNodeResult::Succeeded	// Go to Waiting
-			: EBTNodeResult::Failed;	// Go to Root
-	}
-
-	FLog::Log(TEXT("[StartReaction|ExecuteTask] Succeeded Execute reaction"));
-	return EBTNodeResult::Succeeded;
+	return reactionComp->HasActiveReactionContext() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

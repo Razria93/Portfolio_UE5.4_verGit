@@ -106,13 +106,7 @@ public:
 
     // Reaction Context
     UPROPERTY(Transient)
-    bool bHasPendingReaction = false;
-
-    UPROPERTY(Transient)
     bool bHasActiveReaction = false;
-
-    UPROPERTY(Transient)
-    int32 PendingReactionVersion = INDEX_NONE;
 
     // Dead Context
     UPROPERTY(VisibleAnywhere)
