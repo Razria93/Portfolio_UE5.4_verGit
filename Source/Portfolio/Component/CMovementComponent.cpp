@@ -107,7 +107,7 @@ void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
 	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max) return;
 
 	const float* speed = GaitSpeedMap.Find(InNewMovementGait);
-	if (!speed) return;
+
 	if (!speed)
 	{
 		FLog::Log(TEXT("[ChangeMovementGait] InValid GaitSpeedMap")); // Error
