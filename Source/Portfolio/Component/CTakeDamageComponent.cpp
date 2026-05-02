@@ -4,36 +4,30 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CHealthComponent.h"
-#include "Component/CReactionComponent.h"
+#include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
 UCTakeDamageComponent::UCTakeDamageComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCTakeDamageComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerActor_Cached = Cast<AActor>(GetOwner());
+	OwnerActor_Cached = GetOwner();
 	check(OwnerActor_Cached);
 
-	HealthComp_Cached = Cast<UCHealthComponent>(OwnerActor_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
+	HealthComp_Cached = OwnerActor_Cached->FindComponentByClass<UCHealthComponent>();
 	check(HealthComp_Cached);
 
-	ReactionComp_Cached = Cast<UCReactionComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionComponent::StaticClass()));
-	check(ReactionComp_Cached);
+	ReactionOrchestratorComp_Cached = OwnerActor_Cached->FindComponentByClass<UCReactionOrchestratorComponent>();
+	check(ReactionOrchestratorComp_Cached);
 
-	ReactionFeedbackComp_Cached = Cast<UCReactionFeedbackComponent>(OwnerActor_Cached->GetComponentByClass(UCReactionFeedbackComponent::StaticClass()));
+	ReactionFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCReactionFeedbackComponent>();
 	check(ReactionFeedbackComp_Cached);
-}
-
-void UCTakeDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 float UCTakeDamageComponent::RequestTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -366,9 +360,13 @@ void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket&
 {
 	if (!InTakeDamagePacket.Result.bAccepted) return;
 
-	if (IsValid(ReactionComp_Cached))
+	if (IsValid(ReactionOrchestratorComp_Cached))
 	{
-		ReactionComp_Cached->TryRequestPendingDamageReaction(InTakeDamagePacket);
+		FDamageReactionRequest damageReactionRequest;
+		damageReactionRequest.IntentSource = EReactionIntentSource::TakeDamage;
+		damageReactionRequest.TakeDamagePacket = InTakeDamagePacket;
+
+		ReactionOrchestratorComp_Cached->RequestReaction(damageReactionRequest);
 	}
 
 	if (IsValid(ReactionFeedbackComp_Cached))

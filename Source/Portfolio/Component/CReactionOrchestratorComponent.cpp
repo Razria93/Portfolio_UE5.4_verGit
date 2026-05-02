@@ -32,12 +32,12 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestReaction(const FD
 	return FReactionRequestResult();
 }
 
-bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const
+bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRequestRejectReason) const
 {
 	return false;
 }
 
-bool UCReactionOrchestratorComponent::ResolveReactionContext(const FDamageReactionRequest& InRequest, FReactionContext& OutContext, EReactionType& OutReactionType, EReactionRequestRejectReason& OutRejectReason)
+bool UCReactionOrchestratorComponent::ResolveReactionContext(const FDamageReactionRequest& InRequest, FReactionContext& OutContext, EReactionType& OutReactionType, EReactionRequestRejectReason& OutRequestRejectReason)
 {
 	return false;
 }
@@ -57,7 +57,7 @@ FReactionOrchestrationQuery UCReactionOrchestratorComponent::BuildOrchestrationQ
 	return FReactionOrchestrationQuery();
 }
 
-FReactionOrchestrationResult UCReactionOrchestratorComponent::OrchestrateReaction(const FReactionOrchestrationQuery& InQuery) const
+FReactionOrchestrationResult UCReactionOrchestratorComponent::OrchestrateQuery(const FReactionOrchestrationQuery& InQuery) const
 {
 	return FReactionOrchestrationResult();
 }

@@ -23,8 +23,7 @@ enum class EReactionRequestResultType : uint8
 	Ignored,
 
 	Started,
-	SetPending,
-	ReplaceActive,
+	Interrupted,
 
 	Max,
 };
@@ -83,8 +82,7 @@ public:
 	bool IsAccepted() const
 	{
 		return ResultType == EReactionRequestResultType::Started
-			|| ResultType == EReactionRequestResultType::SetPending
-			|| ResultType == EReactionRequestResultType::ReplaceActive;
+			|| ResultType == EReactionRequestResultType::Interrupted;
 	}
 };
 
@@ -98,9 +96,7 @@ enum class EReactionOrchestrationDecision : uint8
 	Ignore,
 
 	Start,
-	ReplacePending,
-	ReplaceActive,
-	Enqueue,
+	Interrupt,
 
 	Max,
 };
@@ -112,13 +108,10 @@ struct FReactionExecutionPolicy
 
 public:
 	UPROPERTY(Transient)
-	bool bCanSetPending;
-
-	UPROPERTY(Transient)
-	bool bCansReplaceActive;
+	bool bCanInterruptActive = false;
 	
 	UPROPERTY(Transient)
-	int32 Priority;
+	int32 Priority = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -134,13 +127,10 @@ public:
 	EReactionType IncomingType = EReactionType::None;
 
 	UPROPERTY(Transient)
-	FReactionContext IncomingContext;
-
-	UPROPERTY(Transient)
 	FReactionExecutionPolicy IncomingPolicy;
 
 	UPROPERTY(Transient)
-	FReactionContext PendingContext;
+	FReactionContext IncomingContext;
 
 	UPROPERTY(Transient)
 	FReactionContext ActiveContext;
@@ -168,8 +158,6 @@ public:
 	bool IsAccepted() const
 	{
 		return Decision == EReactionOrchestrationDecision::Start
-			|| Decision == EReactionOrchestrationDecision::ReplacePending
-			|| Decision == EReactionOrchestrationDecision::ReplaceActive
-			|| Decision == EReactionOrchestrationDecision::Enqueue;
+			|| Decision == EReactionOrchestrationDecision::Interrupt;
 	}
 };

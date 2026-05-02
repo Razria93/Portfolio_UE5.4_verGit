@@ -28,6 +28,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
 	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
+	class UCReactionOrchestratorComponent* ReactionOrchestratorComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	class UCMovementComponent* MovementComponent;
 
@@ -67,6 +70,7 @@ public:
 
 public:
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
+	FORCEINLINE UCReactionOrchestratorComponent* GetReactionOrchestratorComp() const { return ReactionOrchestratorComponent; }
 	
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }

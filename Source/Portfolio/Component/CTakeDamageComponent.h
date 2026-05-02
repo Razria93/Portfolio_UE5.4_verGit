@@ -16,22 +16,19 @@ public:
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class AActor* OwnerActor_Cached;
+	class AActor* OwnerActor_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached;
+	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionComponent* ReactionComp_Cached;
+	class UCReactionOrchestratorComponent* ReactionOrchestratorComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionFeedbackComponent* ReactionFeedbackComp_Cached;
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Cached = nullptr;
 
 protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void BeginPlay() override;
 
 public:
 	// Entry API

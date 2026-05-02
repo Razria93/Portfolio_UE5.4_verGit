@@ -35,12 +35,12 @@ private:
 
 private:
 	bool ResolveReactionContext(const FDamageReactionRequest& InRequest, FReactionContext& OutContext, EReactionType& OutReactionType, EReactionRequestRejectReason& OutRejectReason);
-	EReactionType ResolveReactionType(const FTakeDamageResult& InTakeDamageResult) const;
-	FReactionExecutionPolicy ResolveReactionPolicy(const FReactionContext& InContext, EReactionType InReactionType) const;
+	EReactionType ResolveReactionType(const FTakeDamageResult& InResult) const;
+	FReactionExecutionPolicy ResolveReactionPolicy(const FReactionContext& InContext, EReactionType InType) const;
 
 private:
-	FReactionOrchestrationQuery BuildOrchestrationQuery(EReactionIntentSource InIntentSource, EReactionType InReactionType, const FReactionContext& InContext, const FReactionExecutionPolicy& InPolicy) const;
-	FReactionOrchestrationResult OrchestrateReaction(const FReactionOrchestrationQuery& InQuery) const;
+	FReactionOrchestrationQuery BuildOrchestrationQuery(EReactionIntentSource InIntentSource, EReactionType InType, const FReactionContext& InContext, const FReactionExecutionPolicy& InPolicy) const;
+	FReactionOrchestrationResult OrchestrateQuery(const FReactionOrchestrationQuery& InQuery) const;
 
 private:
 	bool CanReplaceReaction(const FReactionContext& InCurrentContext, const FReactionContext& InIncomingContext, const FReactionExecutionPolicy& InIncomingPolicy, EReactionRequestRejectReason& OutRejectReason) const;
