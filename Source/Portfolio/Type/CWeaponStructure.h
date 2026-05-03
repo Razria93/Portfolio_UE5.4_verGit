@@ -134,6 +134,8 @@ UENUM(BlueprintType)
 enum class EReactionStopReason : uint8
 {
 	None = 0,
+
+	Started,
 	Interrupted,
 	Cancelled,
 };

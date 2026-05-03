@@ -25,7 +25,7 @@ private:
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 public:
 	FReactionRequestResult RequestReaction(const FDamageReactionRequest& InRequest);
@@ -34,19 +34,23 @@ private:
 	bool CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const;
 
 private:
-	bool ResolveReactionContext(const FDamageReactionRequest& InRequest, FReactionContext& OutContext, EReactionType& OutReactionType, EReactionRequestRejectReason& OutRejectReason);
+	bool ResolveReactionContext(const FDamageReactionRequest& InRequest, FReactionContext& OutContext, EReactionType& OutType, EReactionRequestRejectReason& OutRejectReason) const;
+	bool ResolveReactionPolicy(const FReactionContext& InContext, EReactionType InType, FReactionExecutionPolicy& OutPolicy, EReactionRequestRejectReason& OutRejectReason) const;
+
+private:
 	EReactionType ResolveReactionType(const FTakeDamageResult& InResult) const;
-	FReactionExecutionPolicy ResolveReactionPolicy(const FReactionContext& InContext, EReactionType InType) const;
+	bool ResolveReactionData(const FApplyDamageSpecKey & InSpecKey, EReactionType InType, FReactionData & OutData) const;
+	class UCReaction* ResolveReactionExecutor(const FReactionData & InData) const;
 
 private:
 	FReactionOrchestrationQuery BuildOrchestrationQuery(EReactionIntentSource InIntentSource, EReactionType InType, const FReactionContext& InContext, const FReactionExecutionPolicy& InPolicy) const;
 	FReactionOrchestrationResult OrchestrateQuery(const FReactionOrchestrationQuery& InQuery) const;
 
 private:
-	bool CanReplaceReaction(const FReactionContext& InCurrentContext, const FReactionContext& InIncomingContext, const FReactionExecutionPolicy& InIncomingPolicy, EReactionRequestRejectReason& OutRejectReason) const;
+	bool CanInterruptActiveReaction(const FReactionContext& InCurrentContext, const FReactionContext& InIncomingContext, const FReactionExecutionPolicy& InIncomingPolicy, EReactionRequestRejectReason& OutRejectReason) const;
 	
 private:
-	void DispatchReactionDecision(const FReactionOrchestrationResult& InResult);
+	bool DispatchReactionDecision(const FReactionOrchestrationResult& InResult, EReactionRequestRejectReason& OutRejectReason);
 
 private:
 	FReactionRequestResult BuildRequestResult(const FReactionOrchestrationResult& InResult) const;

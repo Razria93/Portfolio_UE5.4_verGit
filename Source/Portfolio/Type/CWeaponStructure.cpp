@@ -46,7 +46,10 @@ bool FOverlapContext::IsValidMinimal() const
 
 bool FReactionData::IsValidMinimal() const
 {
-	return IsValid(ReactionExecutorKey) && IsValid(Montage);
+	return ReactionDataKey.ReactionType != EReactionType::None
+		&& ReactionDataKey.ReactionType != EReactionType::Max
+		&& IsValid(ReactionExecutorKey)
+		&& IsValid(Montage);
 }
 
 bool FReactionQueryContext::IsValidMinimal() const

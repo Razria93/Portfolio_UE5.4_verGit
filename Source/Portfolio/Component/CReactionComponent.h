@@ -70,7 +70,7 @@ protected:
 
 public:
 	// Query API
-	bool HasActiveReactionContext() const;
+	bool IsActiveReaction() const;
 
 public:
 	// Get API
@@ -78,7 +78,7 @@ public:
 
 public:
 	// Orchestrator Decision Apply API
-	void ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
+	bool ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
 
 public:
 	bool StartReaction(const FReactionContext& InReactionContext);
@@ -98,11 +98,12 @@ public:
 	void OnReactionWindowEnd(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
 
 private:
-	bool StartReactionInternal(const FReactionContext& InReactionContext);
-	void EndActiveReactionInternal();
+	bool ReplaceActiveReaction(const FReactionContext& InContext, EReactionStopReason InStopReason);
 
 private:
-	void StopActiveReaction(EReactionStopReason InStopReason);
+	bool StartActiveReactionInternal(const FReactionContext& InReactionContext);
+	void StopActiveReactionInternal(EReactionStopReason InStopReason);
+	void EndActiveReactionInternal();
 
 private:
 	void SetActiveReaction(const FReactionContext& InReactionContext);

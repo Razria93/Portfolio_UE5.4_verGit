@@ -42,10 +42,14 @@ enum class EReactionRequestRejectReason : uint8
 	ReactionTypeNotFound,
 	ReactionDataNotFound,
 	ReactionExecutorNotFound,
+	ReactionPolicyNotFound,
 
 	LowerPriority,
 	CurrentNotInterruptible,
 	IncomingCannotInterrupt,
+
+	ReactionDispatchFailed,
+	ReactionExecutionFailed,
 
 	Max,
 };
@@ -108,8 +112,14 @@ struct FReactionExecutionPolicy
 
 public:
 	UPROPERTY(Transient)
-	bool bCanInterruptActive = false;
-	
+	bool bCanInterrupt = false;
+
+	UPROPERTY(Transient)
+	bool bForceInterrupt = false;
+
+	UPROPERTY(Transient)
+	bool bIgnoreInterruptWindow = false;
+
 	UPROPERTY(Transient)
 	int32 Priority = 0;
 };
