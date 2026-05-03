@@ -210,7 +210,7 @@ bool ACAIController::InitializeBlackBoardValue()
 
 			// --- Reaction ---
 			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Reaction::bHasActiveReaction, false);
+			blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsActiveReaction, false);
 
 			// --- Dead ---
 			// Init
@@ -322,7 +322,7 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 	const bool bNextCombatActionTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::NextCombatActionTime);
 
 	// Reaction
-	const bool bHasActiveReactionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bHasActiveReaction);
+	const bool bHasActiveReactionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bIsActiveReaction);
 
 	// Dead
 	const bool bDeadStateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Dead::DeadState);

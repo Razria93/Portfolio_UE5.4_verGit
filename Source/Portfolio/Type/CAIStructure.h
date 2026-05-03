@@ -106,7 +106,7 @@ public:
 
     // Reaction Context
     UPROPERTY(Transient)
-    bool bHasActiveReaction = false;
+    bool bIsActiveReaction = false;
 
     // Dead Context
     UPROPERTY(VisibleAnywhere)

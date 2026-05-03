@@ -50,7 +50,7 @@ void UCBTTask_WaitEndReaction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8
 		return;
 	}
 
-	if (!reactionComp->HasActiveReactionContext())
+	if (!reactionComp->IsActiveReaction())
 	{
 		FLog::Log(TEXT("[WaitEndReaction|TickTask] Current Reaction Ended"));
 

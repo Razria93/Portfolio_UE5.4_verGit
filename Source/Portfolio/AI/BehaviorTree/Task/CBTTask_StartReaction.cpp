@@ -24,5 +24,5 @@ EBTNodeResult::Type UCBTTask_StartReaction::ExecuteTask(UBehaviorTreeComponent& 
 	UCReactionComponent* reactionComp = enemy->GetReactionComp();
 	if (!IsValid(reactionComp)) return EBTNodeResult::Failed;
 
-	return reactionComp->HasActiveReactionContext() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
+	return reactionComp->IsActiveReaction() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }
