@@ -33,7 +33,7 @@ private:
 	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 public:
 	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InActionRequest);

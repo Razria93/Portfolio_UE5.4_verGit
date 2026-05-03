@@ -5,7 +5,6 @@
 
 UCHealthComponent::UCHealthComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCHealthComponent::BeginPlay()
@@ -16,11 +15,6 @@ void UCHealthComponent::BeginPlay()
 	check(OwnerActor_Cached);
 
 	InitializeHealth(InitMaxHP, InitCurrentHP, MaxHPUpdatePolicy);
-}
-
-void UCHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy)

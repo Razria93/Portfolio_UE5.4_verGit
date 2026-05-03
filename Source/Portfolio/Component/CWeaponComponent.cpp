@@ -9,7 +9,6 @@
 
 UCWeaponComponent::UCWeaponComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCWeaponComponent::BeginPlay()

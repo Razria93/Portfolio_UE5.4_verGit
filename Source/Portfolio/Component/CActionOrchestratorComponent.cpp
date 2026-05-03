@@ -13,7 +13,6 @@
 
 UCActionOrchestratorComponent::UCActionOrchestratorComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UCActionOrchestratorComponent::BeginPlay()

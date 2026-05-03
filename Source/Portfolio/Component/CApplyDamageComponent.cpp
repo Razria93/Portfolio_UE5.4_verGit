@@ -8,7 +8,6 @@
 
 UCApplyDamageComponent::UCApplyDamageComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCApplyDamageComponent::BeginPlay()
@@ -17,11 +16,6 @@ void UCApplyDamageComponent::BeginPlay()
 
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
-}
-
-void UCApplyDamageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)

@@ -52,10 +52,7 @@ private:
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 protected:
-	virtual void BeginPlay() override;
-
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void BeginPlay() override;
 
 public:
 	void PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket);

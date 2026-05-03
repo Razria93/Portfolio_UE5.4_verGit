@@ -9,7 +9,6 @@
 
 UCPlayerFeedbackComponent::UCPlayerFeedbackComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCPlayerFeedbackComponent::BeginPlay()

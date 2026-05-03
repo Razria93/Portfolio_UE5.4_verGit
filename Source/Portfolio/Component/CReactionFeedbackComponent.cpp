@@ -14,7 +14,6 @@
 
 UCReactionFeedbackComponent::UCReactionFeedbackComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCReactionFeedbackComponent::BeginPlay()
@@ -26,11 +25,6 @@ void UCReactionFeedbackComponent::BeginPlay()
 
 	OwnerCharacter_Cached = Cast<ACharacter>(OwnerActor_Cached);
 	check(OwnerCharacter_Cached);
-}
-
-void UCReactionFeedbackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket)
