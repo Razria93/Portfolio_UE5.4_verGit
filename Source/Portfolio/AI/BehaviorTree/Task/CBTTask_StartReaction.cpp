@@ -2,11 +2,9 @@
 #include "ProjectGlobal.h"
 
 #include "AIController.h"
-#include "Character/Enemy/CEnemy.h"
-#include "Component/CActionComponent.h"
-#include "Component/CReactionComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
-#include "Type/CWeaponStructure.h"
+#include "AI/BlackBoard/CAIKey.h"
 
 UCBTTask_StartReaction::UCBTTask_StartReaction()
 {
@@ -15,14 +13,10 @@ UCBTTask_StartReaction::UCBTTask_StartReaction()
 
 EBTNodeResult::Type UCBTTask_StartReaction::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AAIController* aiController = OwnerComp.GetAIOwner();
-	if (!IsValid(aiController)) return EBTNodeResult::Failed;
+	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
-	if (!IsValid(enemy)) return EBTNodeResult::Failed;
+	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
 
-	UCReactionComponent* reactionComp = enemy->GetReactionComp();
-	if (!IsValid(reactionComp)) return EBTNodeResult::Failed;
-
-	return reactionComp->IsActiveReaction() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
+	return bIsActiveReaction ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

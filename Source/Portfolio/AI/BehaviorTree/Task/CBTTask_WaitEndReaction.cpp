@@ -4,9 +4,6 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "Character/Enemy/CEnemy.h"
-#include "Component/CReactionComponent.h"
-
 #include "AI/BlackBoard/CAIKey.h"
 
 UCBTTask_WaitEndReaction::UCBTTask_WaitEndReaction()
@@ -29,32 +26,10 @@ void UCBTTask_WaitEndReaction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8
 		return;
 	}
 
-	AAIController* aiController = OwnerComp.GetAIOwner();
-	if (!IsValid(aiController))
-	{
-		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
-		return;
-	}
+	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
 
-	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
-	if (!IsValid(enemy))
+	if (!bIsActiveReaction)
 	{
-		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
-		return;
-	}
-
-	UCReactionComponent* reactionComp = enemy->GetReactionComp();
-	if (!IsValid(reactionComp))
-	{
-		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
-		return;
-	}
-
-	if (!reactionComp->IsActiveReaction())
-	{
-		FLog::Log(TEXT("[WaitEndReaction|TickTask] Current Reaction Ended"));
-
-		// Current reaction ended
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		return;
 	}
