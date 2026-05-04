@@ -4,15 +4,15 @@
 #include "Components/ActorComponent.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CWorldSubSystemStructure.h"
-#include "CReactionFeedbackComponent.generated.h"
+#include "CDamageFeedbackComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class PORTFOLIO_API UCReactionFeedbackComponent : public UActorComponent
+class PORTFOLIO_API UCDamageFeedbackComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	UCReactionFeedbackComponent();
+	UCDamageFeedbackComponent();
 
 private:
 	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")

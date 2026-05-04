@@ -19,7 +19,7 @@
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
-#include "Component/CReactionFeedbackComponent.h"
+#include "Component/CDamageFeedbackComponent.h"
 
 #include "Action/CAction.h"
 
@@ -107,9 +107,9 @@ ACPlayer::ACPlayer()
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
 	check(ActionFeedbackComponent);
 
-	// Init ReactionFeedbackComp
-	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
-	check(ReactionFeedbackComponent);
+	// Init DamageFeedbackComp
+	DamageFeedbackComponent = CreateDefaultSubobject<UCDamageFeedbackComponent>(TEXT("DamageFeedback"));
+	check(DamageFeedbackComponent);
 }
 
 void ACPlayer::BeginPlay()

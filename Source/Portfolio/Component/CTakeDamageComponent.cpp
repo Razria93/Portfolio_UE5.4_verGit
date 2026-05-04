@@ -5,7 +5,7 @@
 
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionOrchestratorComponent.h"
-#include "Component/CReactionFeedbackComponent.h"
+#include "Component/CDamageFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -26,8 +26,8 @@ void UCTakeDamageComponent::BeginPlay()
 	ReactionOrchestratorComp_Cached = OwnerActor_Cached->FindComponentByClass<UCReactionOrchestratorComponent>();
 	check(ReactionOrchestratorComp_Cached);
 
-	ReactionFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCReactionFeedbackComponent>();
-	check(ReactionFeedbackComp_Cached);
+	DamageFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDamageFeedbackComponent>();
+	check(DamageFeedbackComp_Cached);
 }
 
 float UCTakeDamageComponent::RequestTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -369,9 +369,9 @@ void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket&
 		ReactionOrchestratorComp_Cached->RequestReaction(damageReactionRequest);
 	}
 
-	if (IsValid(ReactionFeedbackComp_Cached))
+	if (IsValid(DamageFeedbackComp_Cached))
 	{
-		ReactionFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
+		DamageFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
 	}
 
 	// TODO:

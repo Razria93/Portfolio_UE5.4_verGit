@@ -25,7 +25,7 @@ private:
 	class UCReactionOrchestratorComponent* ReactionOrchestratorComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionFeedbackComponent* ReactionFeedbackComp_Cached = nullptr;
+	class UCDamageFeedbackComponent* DamageFeedbackComp_Cached = nullptr;
 
 protected:
 	void BeginPlay() override;

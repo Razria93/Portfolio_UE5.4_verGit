@@ -19,7 +19,7 @@
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
-#include "Component/CReactionFeedbackComponent.h"
+#include "Component/CDamageFeedbackComponent.h"
 
 #include "Type/CWeaponStructure.h"
 #include "AI/Blackboard/CAIKey.h"
@@ -89,9 +89,9 @@ ACEnemy::ACEnemy()
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
 	check(ActionFeedbackComponent);
 
-	// Init ReactionFeedbackComp
-	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
-	check(ReactionFeedbackComponent);
+	// Init DamageFeedbackComp
+	DamageFeedbackComponent = CreateDefaultSubobject<UCDamageFeedbackComponent>(TEXT("DamageFeedback"));
+	check(DamageFeedbackComponent);
 }
 
 void ACEnemy::BeginPlay()

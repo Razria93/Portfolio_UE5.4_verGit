@@ -1,4 +1,4 @@
-#include "Component/CReactionFeedbackComponent.h"
+#include "Component/CDamageFeedbackComponent.h"
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
@@ -12,11 +12,11 @@
 
 #include "Type/CWeaponStructure.h"
 
-UCReactionFeedbackComponent::UCReactionFeedbackComponent()
+UCDamageFeedbackComponent::UCDamageFeedbackComponent()
 {
 }
 
-void UCReactionFeedbackComponent::BeginPlay()
+void UCDamageFeedbackComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -27,7 +27,7 @@ void UCReactionFeedbackComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 }
 
-void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket)
+void UCDamageFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	if (!CanPlayDamageFeedback(InTakeDamagePacket)) return;
 
@@ -37,7 +37,7 @@ void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& In
 	PlayCameraShake(InTakeDamagePacket);
 }
 
-void UCReactionFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket)
+void UCDamageFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	if (!CanPlayHitStop(InTakeDamagePacket)) return;
 
@@ -46,51 +46,51 @@ void UCReactionFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDam
 
 	const FHitStopRequest hitStopRequest = BuildHitStopRequest(InTakeDamagePacket);
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitStop"));
+	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitStop"));
 	PrintHitStopRequestInfo(hitStopRequest);
 
 	feedbackSubsystem->RequestHitStop(hitStopRequest);
 }
 
-void UCReactionFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamagePacket)
+void UCDamageFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	if (!IsValid(GetWorld())) return;
 	if (!IsValid(OwnerActor_Cached)) return;
 
 	if (!IsValid(HitVFX))
 	{
-		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitVFX."));
+		FLog::Log(TEXT("[UCDamageFeedbackComponent] Invalid HitVFX."));
 		return;
 	}
 
 	const FVector location = OwnerActor_Cached->GetActorLocation();
 	const FRotator rotation = OwnerActor_Cached->GetActorRotation();
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitVFX"));
+	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitVFX"));
 	PrintHitVFXRequestInfo(HitVFX, location, rotation);
 
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
 }
 
-void UCReactionFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamagePacket)
+void UCDamageFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	if (!IsValid(OwnerActor_Cached)) return;
 
 	if (!IsValid(HitSFX))
 	{
-		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitSFX."));
+		FLog::Log(TEXT("[UCDamageFeedbackComponent] Invalid HitSFX."));
 		return;
 	}
 
 	const FVector location = OwnerActor_Cached->GetActorLocation();
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitSFX"));
+	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitSFX"));
 	PrintHitSFXRequestInfo(HitSFX, location);
 
 	UGameplayStatics::PlaySoundAtLocation(this, HitSFX, location);
 }
 
-void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
+void UCDamageFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
 {
 	if (!CanPlayCameraShake(InTakeDamagePacket)) return;
 
@@ -99,13 +99,13 @@ void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTak
 
 	const FCameraShakeRequest cameraShakeRequest = BuildCameraShakeRequest(InTakeDamagePacket);
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] PlayCameraShake"));
+	FLog::Log(TEXT("[UCDamageFeedbackComponent] PlayCameraShake"));
 	PrintCameraShakeRequestInfo(cameraShakeRequest);
 
 	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
 }
 
-bool UCReactionFeedbackComponent::CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const
+bool UCDamageFeedbackComponent::CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!IsValid(OwnerActor_Cached)) return false;
 	if (!InTakeDamagePacket.Result.bAccepted) return false;
@@ -114,7 +114,7 @@ bool UCReactionFeedbackComponent::CanPlayDamageFeedback(const FTakeDamagePacket&
 	return true;
 }
 
-bool UCReactionFeedbackComponent::CanPlayHitStop(const FTakeDamagePacket& InTakeDamagePacket) const
+bool UCDamageFeedbackComponent::CanPlayHitStop(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!GetWorld()) return false;
 
@@ -127,7 +127,7 @@ bool UCReactionFeedbackComponent::CanPlayHitStop(const FTakeDamagePacket& InTake
 	return true;
 }
 
-bool UCReactionFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const
+bool UCDamageFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!GetWorld()) return false;
 	if (!bEnableCameraShake) return false;
@@ -140,7 +140,7 @@ bool UCReactionFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& In
 	return true;
 }
 
-FHitStopRequest UCReactionFeedbackComponent::BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const
+FHitStopRequest UCDamageFeedbackComponent::BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FHitStopRequest hitStopRequest;
 
@@ -153,7 +153,7 @@ FHitStopRequest UCReactionFeedbackComponent::BuildHitStopRequest(const FTakeDama
 	return hitStopRequest;
 }
 
-FCameraShakeRequest UCReactionFeedbackComponent::BuildCameraShakeRequest(const FTakeDamagePacket& InTakeDamagePacket) const
+FCameraShakeRequest UCDamageFeedbackComponent::BuildCameraShakeRequest(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FCameraShakeRequest cameraShakeRequest;
 
@@ -167,7 +167,7 @@ FCameraShakeRequest UCReactionFeedbackComponent::BuildCameraShakeRequest(const F
 	return cameraShakeRequest;
 }
 
-void UCReactionFeedbackComponent::PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const
+void UCDamageFeedbackComponent::PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const
 {
 	FLog::Log(TEXT("====== HitStop Request Info ====="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HitStopAudience"), *UEnum::GetValueAsString(InHitStopRequest.HitStopAudience)));
@@ -178,7 +178,7 @@ void UCReactionFeedbackComponent::PrintHitStopRequestInfo(const FHitStopRequest&
 	FLog::Log(TEXT("================================="));
 }
 
-void UCReactionFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const
+void UCDamageFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const
 {
 	FLog::Log(TEXT("========== HitVFX Info =========="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitVFX)));
@@ -188,7 +188,7 @@ void UCReactionFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVF
 	FLog::Log(TEXT("================================="));
 }
 
-void UCReactionFeedbackComponent::PrintHitSFXRequestInfo(USoundBase* InHitSFX, const FVector& InLocation) const
+void UCDamageFeedbackComponent::PrintHitSFXRequestInfo(USoundBase* InHitSFX, const FVector& InLocation) const
 {
 	FLog::Log(TEXT("========= HitSFX Info ========="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitSFX)));
@@ -197,7 +197,7 @@ void UCReactionFeedbackComponent::PrintHitSFXRequestInfo(USoundBase* InHitSFX, c
 	FLog::Log(TEXT("================================="));
 }
 
-void UCReactionFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const
+void UCDamageFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const
 {
 	FLog::Log(TEXT("=== CameraShake Request Info ===="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Audience"), *UEnum::GetValueAsString(InCameraShakeRequest.CameraShakeAudience)));

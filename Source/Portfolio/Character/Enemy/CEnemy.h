@@ -103,7 +103,7 @@ private:
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
-	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
+	class UCDamageFeedbackComponent* DamageFeedbackComponent;
 
 protected:
 	void BeginPlay() override;
@@ -128,7 +128,7 @@ public:
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
-	FORCEINLINE UCReactionFeedbackComponent* GetReactionFeedbackComp() const { return ReactionFeedbackComponent; }
+	FORCEINLINE UCDamageFeedbackComponent* GetDamageFeedbackComp() const { return DamageFeedbackComponent; }
 
 public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }
