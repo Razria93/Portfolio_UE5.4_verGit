@@ -155,7 +155,7 @@ bool UCReactionOrchestratorComponent::ResolveReactionPolicy(const FReactionConte
 		return false;
 	}
 
-	if (InType == EReactionType::None || InType == EReactionType::Max)
+	if (InType == EReactionType::None || InType == EReactionType::All || InType == EReactionType::Max)
 	{
 		OutRejectReason = EReactionRequestRejectReason::ReactionPolicyNotFound;
 		return false;
@@ -200,7 +200,7 @@ bool UCReactionOrchestratorComponent::ResolveReactionData(const FApplyDamageSpec
 	OutData = FReactionData();
 
 	if (!IsValid(ReactionComp_Cached)) return false;
-	if (InType == EReactionType::None || InType == EReactionType::Max) return false;
+	if (InType == EReactionType::None || InType == EReactionType::All || InType == EReactionType::Max) return false;
 
 	// Resolve Data
 	return ReactionComp_Cached->ResolveReactionData(InSpecKey, InType, OutData);

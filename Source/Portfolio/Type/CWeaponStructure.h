@@ -12,6 +12,7 @@ enum class EWeaponType : uint8
 {
 	Unarmed = 0,
 	Sword,
+
 	All,
 
 	Max,
@@ -35,12 +36,14 @@ enum class EActionType : uint8
 UENUM(BlueprintType)
 enum class EReactionType : uint8
 {
-	None = 0,
+	None = 0,	// Invalid, Unset
 
 	Hit,
 	Dead,
 
-	Max,
+	All,		// Wildcard
+
+	Max,		// Sentinel
 };
 
 UENUM(BlueprintType)

@@ -45,6 +45,7 @@ void UCReactionComponent::BeginPlay()
 bool UCReactionComponent::IsActiveReaction() const
 {
 	return ActiveReactionType_Cached != EReactionType::None
+		&& ActiveReactionType_Cached != EReactionType::All
 		&& ActiveReactionType_Cached != EReactionType::Max;
 }
 
