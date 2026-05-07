@@ -3,15 +3,15 @@
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotifyState.h"
 #include "Type/CWeaponStructure.h"
-#include "CAnimNotifyState_Reaction.generated.h"
+#include "CAnimNotifyState_ReactionControl.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotifyState_Reaction : public UCAnimNotifyState
+class PORTFOLIO_API UCAnimNotifyState_ReactionControl : public UCAnimNotifyState
 {
 	GENERATED_BODY()
 
 public:
-	UCAnimNotifyState_Reaction();
+	UCAnimNotifyState_ReactionControl();
 
 public:
 	UPROPERTY(EditAnywhere)

@@ -1,4 +1,4 @@
-#include "Notify/CAnimNotifyState_Reaction.h"
+#include "Notify/CAnimNotifyState_ReactionControl.h"
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
@@ -7,16 +7,16 @@
 
 #include "Type/CWeaponStructure.h"
 
-UCAnimNotifyState_Reaction::UCAnimNotifyState_Reaction()
+UCAnimNotifyState_ReactionControl::UCAnimNotifyState_ReactionControl()
 {
 }
 
-FString UCAnimNotifyState_Reaction::GetNotifyName_Implementation() const
+FString UCAnimNotifyState_ReactionControl::GetNotifyName_Implementation() const
 {
 	return MakeNotifyName("Reaction");
 }
 
-FString UCAnimNotifyState_Reaction::MakeNotifyName(FString InName) const
+FString UCAnimNotifyState_ReactionControl::MakeNotifyName(FString InName) const
 {
 	if (ReactionControlWindowType != EReactionControlWindowType::None)
 	{
@@ -32,7 +32,7 @@ FString UCAnimNotifyState_Reaction::MakeNotifyName(FString InName) const
 	return InName;
 }
 
-void UCAnimNotifyState_Reaction::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
+void UCAnimNotifyState_ReactionControl::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
@@ -48,7 +48,7 @@ void UCAnimNotifyState_Reaction::NotifyBegin(USkeletalMeshComponent* MeshComp, U
 	reactionComp->HandleReactionControlWindowBegin(ReactionControlWindowType);
 }
 
-void UCAnimNotifyState_Reaction::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+void UCAnimNotifyState_ReactionControl::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
