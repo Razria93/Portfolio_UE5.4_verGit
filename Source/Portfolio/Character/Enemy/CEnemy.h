@@ -100,10 +100,13 @@ private:
 	class UCReactionComponent* ReactionComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
+	class UCDamageFeedbackComponent* DamageFeedbackComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
-	class UCDamageFeedbackComponent* DamageFeedbackComponent;
+	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 protected:
 	void BeginPlay() override;
