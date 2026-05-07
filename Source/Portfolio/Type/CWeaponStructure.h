@@ -140,6 +140,7 @@ enum class EReactionStopReason : uint8
 
 	Interrupted,
 	Cancelled,
+
 	Aborted,
 };
 
@@ -151,6 +152,7 @@ enum class EReactionFinishReason : uint8
 	Completed,
 	Interrupted,
 	Cancelled,
+
 	Aborted,
 };
 

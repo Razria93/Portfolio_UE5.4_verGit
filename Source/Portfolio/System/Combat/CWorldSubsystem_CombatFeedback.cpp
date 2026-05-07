@@ -12,17 +12,23 @@ void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHi
 	switch (InHitStopRequest.HitStopAudience)
 	{
 	case EFeedbackAudience::Source:
+	{
 		ApplyHitStop(InHitStopRequest.SourceActor, InHitStopRequest.HitStopDuration, InHitStopRequest.HitStopDilation);
 		break;
+	}
 
 	case EFeedbackAudience::Target:
+	{
 		ApplyHitStop(InHitStopRequest.TargetActor, InHitStopRequest.HitStopDuration, InHitStopRequest.HitStopDilation);
 		break;
+	}
 
 	case EFeedbackAudience::Both:
+	{
 		ApplyHitStop(InHitStopRequest.SourceActor, InHitStopRequest.HitStopDuration, InHitStopRequest.HitStopDilation);
 		ApplyHitStop(InHitStopRequest.TargetActor, InHitStopRequest.HitStopDuration, InHitStopRequest.HitStopDilation);
 		break;
+	}
 
 	default:
 		break;

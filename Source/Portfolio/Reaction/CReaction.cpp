@@ -162,17 +162,23 @@ void UCReaction::OnReactionControlWindowBegin(EReactionControlWindowType InReact
 	switch (InReactionWindowType)
 	{
 	case EReactionControlWindowType::Interruptible:
+	{
 		SetInterruptible(true);
 		break;
+	}
 
 	case EReactionControlWindowType::Cancelable:
+	{
 		SetCancelable(true);
 		break;
+	}
 
 	case EReactionControlWindowType::ImmuneToReaction:
+	{
 		SetInterruptible(false);
 		SetCancelable(false);
 		break;
+	}
 
 	default:
 		break;
@@ -184,12 +190,16 @@ void UCReaction::OnReactionControlWindowEnd(EReactionControlWindowType InReactio
 	switch (InReactionWindowType)
 	{
 	case EReactionControlWindowType::Interruptible:
+	{
 		SetInterruptible(false);
 		break;
+	}
 
 	case EReactionControlWindowType::Cancelable:
+	{
 		SetCancelable(false);
 		break;
+	}
 
 	case EReactionControlWindowType::ImmuneToReaction:
 		break;
@@ -337,7 +347,7 @@ void UCReaction::PrintReactionExecutorRuntimeInfo() const
 
 void UCReaction::PrintStopReasonInfo(EReactionStopReason InStopReason) const
 {
-	FLog::Log(FString::Printf(TEXT("[Reaction] Stop. Reason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(InStopReason), *GetNameSafe(this)));
+	FLog::Log(FString::Printf(TEXT("[Reaction] Stopped. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(InStopReason), *GetNameSafe(this)));
 }
 
 void UCReaction::PrintUnexpectedStopReasonInfo() const

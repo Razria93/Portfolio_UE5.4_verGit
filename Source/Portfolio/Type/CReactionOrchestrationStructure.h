@@ -153,7 +153,7 @@ struct FReactionOrchestrationResult
 
 public:
 	UPROPERTY(Transient)
-	EReactionOrchestrationDecision Decision = EReactionOrchestrationDecision::Reject;
+	EReactionOrchestrationDecision Decision = EReactionOrchestrationDecision::None;
 
 	UPROPERTY(Transient)
 	EReactionRequestRejectReason RejectReason = EReactionRequestRejectReason::None;

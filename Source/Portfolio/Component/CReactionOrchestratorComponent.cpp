@@ -237,13 +237,14 @@ FReactionOrchestrationResult UCReactionOrchestratorComponent::OrchestrateQuery(c
 {
 	FReactionOrchestrationResult result;
 
-	result.Decision = EReactionOrchestrationDecision::Reject;
+	result.Decision = EReactionOrchestrationDecision::None;
 	result.RejectReason = EReactionRequestRejectReason::None;
 	result.ReactionType = InQuery.IncomingType;
 	result.ReactionContext = InQuery.IncomingContext;
 
 	if (!InQuery.IncomingContext.IsValidMinimal())
 	{
+		result.Decision = EReactionOrchestrationDecision::Reject;
 		result.RejectReason = EReactionRequestRejectReason::InvalidRequest;
 		return result;
 	}
@@ -364,20 +365,28 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildRequestResult(const
 	switch (InResult.Decision)
 	{
 	case EReactionOrchestrationDecision::Start:
+	{
 		result.ResultType = EReactionRequestResultType::Started;
 		break;
+	}
 
 	case EReactionOrchestrationDecision::Interrupt:
+	{
 		result.ResultType = EReactionRequestResultType::Interrupted;
 		break;
+	}
 
 	case EReactionOrchestrationDecision::Ignore:
+	{
 		result.ResultType = EReactionRequestResultType::Ignored;
 		break;
+	}
 
 	case EReactionOrchestrationDecision::Reject:
+	{
 		result.ResultType = EReactionRequestResultType::Rejected;
 		break;
+	}
 
 	case EReactionOrchestrationDecision::None:
 	default:
