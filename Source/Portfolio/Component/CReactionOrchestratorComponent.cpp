@@ -376,6 +376,13 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildRequestResult(const
 		break;
 	}
 
+	case EReactionOrchestrationDecision::Cancel:
+	{
+		// TODO: Reserved until cancel orchestration policy is implemented.
+		result.ResultType = EReactionRequestResultType::Cancelled;
+		break;
+	}
+
 	case EReactionOrchestrationDecision::Ignore:
 	{
 		result.ResultType = EReactionRequestResultType::Ignored;

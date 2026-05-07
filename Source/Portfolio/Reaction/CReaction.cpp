@@ -64,17 +64,18 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 {
 	if (!bIsReaction) return;
 
-	LastStopReason_Cached = InStopReason;
-
-	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	if (!IsValid(meshComp))
+	if (InStopReason == EReactionStopReason::None)
 	{
 		LastStopReason_Cached = EReactionStopReason::Aborted;
 		FinishAborted();
 		return;
 	}
 
-	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	LastStopReason_Cached = InStopReason;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	UAnimInstance* animInstance = IsValid(meshComp) ? meshComp->GetAnimInstance() : nullptr;
+
 	if (!IsValid(animInstance) || !IsValid(ActiveReactionMontage_Cached))
 	{
 		LastStopReason_Cached = EReactionStopReason::Aborted;
@@ -88,7 +89,31 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 	PrintStopReasonInfo(InStopReason);
 	PrintReactionExecutorRuntimeInfo();
 
-	// [NOTE] The bound montage end delegate will finish this reaction after Montage_Stop.
+	switch (InStopReason)
+	{
+	case EReactionStopReason::Interrupted:
+	{
+		FinishInterrupted();
+		return;
+	}
+
+	case EReactionStopReason::Cancelled:
+	{
+		FinishCancelled();
+		return;
+	}
+
+	case EReactionStopReason::Aborted:
+	{
+		FinishAborted();
+		return;
+	}
+
+	default:
+		LastStopReason_Cached = EReactionStopReason::Aborted;
+		FinishAborted();
+		return;
+	}
 }
 
 void UCReaction::FinishCompleted()
@@ -136,6 +161,8 @@ void UCReaction::FinishCancelled()
 void UCReaction::FinishAborted()
 {
 	if (!bIsReaction) return;
+
+	PrintAbortedStopReasonInfo();
 
 	Clear();
 
@@ -280,13 +307,10 @@ void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
 
 void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
 {
-	if (bInterrupted)
-	{
-		OnMontageStopped(InAnimMontage, InSerial);
-		return;
-	}
+	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
+	if (bInterrupted) return;
 
-	OnMontageCompleted(InAnimMontage, InSerial);
+	FinishCompleted();
 }
 
 bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
@@ -296,41 +320,6 @@ bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) c
 	if (InMontage != ActiveReactionMontage_Cached) return false;
 
 	return true;
-}
-
-void UCReaction::OnMontageCompleted(UAnimMontage* InMontage, uint32 InSerial)
-{
-	if (!CanHandleMontageEnd(InMontage, InSerial)) return;
-
-	FinishCompleted();
-}
-
-void UCReaction::OnMontageStopped(UAnimMontage* InMontage, uint32 InSerial)
-{
-	if (!CanHandleMontageEnd(InMontage, InSerial)) return;
-
-	switch (LastStopReason_Cached)
-	{
-	case EReactionStopReason::Interrupted:
-	{
-		FinishInterrupted();
-		return;
-	}
-	case EReactionStopReason::Cancelled:
-	{
-		FinishCancelled();
-		return;
-	}
-
-	case EReactionStopReason::Aborted:
-	{
-		FinishAborted();
-		return;
-	}
-	default:
-		PrintUnexpectedStopReasonInfo();
-		return;
-	}
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo() const
@@ -350,7 +339,7 @@ void UCReaction::PrintStopReasonInfo(EReactionStopReason InStopReason) const
 	FLog::Log(FString::Printf(TEXT("[Reaction] Stopped. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(InStopReason), *GetNameSafe(this)));
 }
 
-void UCReaction::PrintUnexpectedStopReasonInfo() const
+void UCReaction::PrintAbortedStopReasonInfo() const
 {
-	FLog::Log(FString::Printf(TEXT("[Reaction] Unexpected. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(LastStopReason_Cached), *GetNameSafe(this)));
+	FLog::Log(FString::Printf(TEXT("[Reaction] Aborted. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(LastStopReason_Cached), *GetNameSafe(this)));
 }

@@ -101,10 +101,11 @@ public:
 private:
 	bool TryStartReaction(const FReactionContext& InReactionContext);
 	bool TryInterruptReaction(const FReactionContext& InReactionContext);
+	bool TryCancelReaction(const FReactionContext& InReactionContext);
 
 private:
 	bool StartActiveReactionInternal(const FReactionContext& InReactionContext);
-	void StopActiveReactionInternal(EReactionStopReason InStopReason);
+	bool StopActiveReactionInternal(EReactionStopReason InStopReason);
 	void EndActiveReactionInternal();
 
 private:

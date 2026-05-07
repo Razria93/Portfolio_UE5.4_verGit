@@ -108,13 +108,9 @@ protected:
 protected:
 	bool CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const;
 
-protected:
-	virtual void OnMontageCompleted(UAnimMontage* InMontage, uint32 InSerial);
-	virtual void OnMontageStopped(UAnimMontage* InMontage, uint32 InSerial);
-
 private:
 	void PrintReactionExecutorRuntimeInfo() const;
 
 	void PrintStopReasonInfo(EReactionStopReason InStopReason) const;
-	void PrintUnexpectedStopReasonInfo() const;
+	void PrintAbortedStopReasonInfo() const;
 };

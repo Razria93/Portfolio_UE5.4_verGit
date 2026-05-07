@@ -24,6 +24,7 @@ enum class EReactionRequestResultType : uint8
 
 	Started,
 	Interrupted,
+	Cancelled,
 
 	Max,
 };
@@ -86,7 +87,8 @@ public:
 	bool IsAccepted() const
 	{
 		return ResultType == EReactionRequestResultType::Started
-			|| ResultType == EReactionRequestResultType::Interrupted;
+			|| ResultType == EReactionRequestResultType::Interrupted
+			|| ResultType == EReactionRequestResultType::Cancelled;
 	}
 };
 
@@ -101,6 +103,7 @@ enum class EReactionOrchestrationDecision : uint8
 
 	Start,
 	Interrupt,
+	Cancel,
 
 	Max,
 };
@@ -168,6 +171,7 @@ public:
 	bool IsAccepted() const
 	{
 		return Decision == EReactionOrchestrationDecision::Start
-			|| Decision == EReactionOrchestrationDecision::Interrupt;
+			|| Decision == EReactionOrchestrationDecision::Interrupt
+			|| Decision == EReactionOrchestrationDecision::Cancel;
 	}
 };

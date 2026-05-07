@@ -123,6 +123,9 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionOrchestrationResu
 	case EReactionOrchestrationDecision::Interrupt:
 		return TryInterruptReaction(InReactionOrchestrationResult.ReactionContext);
 
+	case EReactionOrchestrationDecision::Cancel:
+		return TryCancelReaction(InReactionOrchestrationResult.ReactionContext);
+
 	case EReactionOrchestrationDecision::Ignore:
 	case EReactionOrchestrationDecision::Reject:
 	case EReactionOrchestrationDecision::None:
@@ -202,10 +205,18 @@ bool UCReactionComponent::TryInterruptReaction(const FReactionContext& InReactio
 {
 	if (!InReactionContext.IsValidMinimal()) return false;
 
-	if (IsActiveReaction())
-	{
-		StopActiveReactionInternal(EReactionStopReason::Interrupted);
-	}
+	if (IsActiveReaction() &&
+		!StopActiveReactionInternal(EReactionStopReason::Interrupted)) return false;
+
+	return StartActiveReactionInternal(InReactionContext);
+}
+
+bool UCReactionComponent::TryCancelReaction(const FReactionContext& InReactionContext)
+{
+	if (!InReactionContext.IsValidMinimal()) return false;
+
+	if (IsActiveReaction() &&
+		!StopActiveReactionInternal(EReactionStopReason::Cancelled)) return false;
 
 	return StartActiveReactionInternal(InReactionContext);
 }
@@ -232,14 +243,22 @@ bool UCReactionComponent::StartActiveReactionInternal(const FReactionContext& In
 	return true;
 }
 
-void UCReactionComponent::StopActiveReactionInternal(EReactionStopReason InStopReason)
+bool UCReactionComponent::StopActiveReactionInternal(EReactionStopReason InStopReason)
 {
-	if (!IsActiveReaction()) return;
+	if (!IsActiveReaction()) return true;
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		// Stale Guard
+		EndActiveReactionInternal();
+
+		return !IsActiveReaction();
+	}
 
 	activeExecutor->Stop(InStopReason);
+
+	return !IsActiveReaction();
 }
 
 void UCReactionComponent::EndActiveReactionInternal()
