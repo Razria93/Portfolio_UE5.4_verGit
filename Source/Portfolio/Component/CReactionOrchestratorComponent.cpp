@@ -224,9 +224,10 @@ FReactionOrchestrationQuery UCReactionOrchestratorComponent::BuildOrchestrationQ
 	query.IncomingPolicy = InPolicy;
 	query.IncomingContext = InContext;
 
-	if (IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActiveReaction())
+	FReactionContext activeContext;
+	if (IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActiveReaction() && ReactionComp_Cached->GetActiveReactionContext(activeContext))
 	{
-		query.ActiveContext = ReactionComp_Cached->GetActiveReactionContext();
+		query.ActiveContext = activeContext;
 	}
 
 	return query;

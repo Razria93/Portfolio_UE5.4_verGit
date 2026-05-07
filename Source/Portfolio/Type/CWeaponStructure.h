@@ -138,13 +138,24 @@ enum class EReactionStopReason : uint8
 {
 	None = 0,
 
-	Started,
 	Interrupted,
 	Cancelled,
+	Aborted,
 };
 
 UENUM(BlueprintType)
-enum class EReactionWindowType : uint8
+enum class EReactionFinishReason : uint8
+{
+	None = 0,
+
+	Completed,
+	Interrupted,
+	Cancelled,
+	Aborted,
+};
+
+UENUM(BlueprintType)
+enum class EReactionControlWindowType : uint8
 {
 	None = 0,
 

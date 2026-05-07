@@ -11,8 +11,10 @@ enum class EReactionFeedbackTiming : uint8
 	None = 0,
 
 	ReactionStart,
-	ReactionEnd,
+
+	ReactionCompleted,
 	ReactionInterrupted,
+	ReactionCancelled,
 
 	WindowBegin,
 	WindowEnd,
@@ -132,6 +134,7 @@ struct FReactionVFXExecutionKey
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(Transient)
 	EActionVFXPlayType VFXPlayType = EActionVFXPlayType::Once;
 
 	UPROPERTY(Transient)
@@ -193,6 +196,7 @@ struct FReactionSFXExecutionKey
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(Transient)
 	EActionSFXPlayType SFXPlayType = EActionSFXPlayType::Once;
 
 	UPROPERTY(Transient)

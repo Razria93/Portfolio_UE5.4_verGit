@@ -122,14 +122,14 @@ FActionContext UCAction::BuildActionContext() const
 
 FActionFeedbackRequest UCAction::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
 {
-	FActionFeedbackRequest ActionFeedbackRequest;
+	FActionFeedbackRequest actionFeedbackRequest;
 
-	ActionFeedbackRequest.ActionFeedbackKey.ActionType = ActionType;
-	ActionFeedbackRequest.ActionFeedbackKey.ActionIndex = INDEX_NONE;
-	ActionFeedbackRequest.ActionFeedbackTiming = InTiming;
-	ActionFeedbackRequest.TriggerKey = InTriggerKey;
+	actionFeedbackRequest.ActionFeedbackKey.ActionType = ActionType;
+	actionFeedbackRequest.ActionFeedbackKey.ActionIndex = INDEX_NONE;
+	actionFeedbackRequest.ActionFeedbackTiming = InTiming;
+	actionFeedbackRequest.TriggerKey = InTriggerKey;
 
-	return ActionFeedbackRequest;
+	return actionFeedbackRequest;
 }
 
 void UCAction::EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex) const

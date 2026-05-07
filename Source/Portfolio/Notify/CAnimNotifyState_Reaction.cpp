@@ -18,13 +18,13 @@ FString UCAnimNotifyState_Reaction::GetNotifyName_Implementation() const
 
 FString UCAnimNotifyState_Reaction::MakeNotifyName(FString InName) const
 {
-	if (ReactionWindowType != EReactionWindowType::None)
+	if (ReactionControlWindowType != EReactionControlWindowType::None)
 	{
-		UEnum* metaData = StaticEnum<EReactionWindowType>();
+		UEnum* metaData = StaticEnum<EReactionControlWindowType>();
 
 		if (metaData)
 		{
-			FString windowTypeName = metaData->GetNameStringByValue((int64)ReactionWindowType);
+			FString windowTypeName = metaData->GetNameStringByValue((int64)ReactionControlWindowType);
 			return InName + "_" + windowTypeName;
 		}
 	}
@@ -45,7 +45,7 @@ void UCAnimNotifyState_Reaction::NotifyBegin(USkeletalMeshComponent* MeshComp, U
 	UCReactionComponent* reactionComp = ownerCharacter->FindComponentByClass<UCReactionComponent>();
 	if (!IsValid(reactionComp)) return;
 
-	reactionComp->OnReactionWindowBegin(ReactionWindowType, Animation);
+	reactionComp->HandleReactionControlWindowBegin(ReactionControlWindowType);
 }
 
 void UCAnimNotifyState_Reaction::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
@@ -61,5 +61,5 @@ void UCAnimNotifyState_Reaction::NotifyEnd(USkeletalMeshComponent* MeshComp, UAn
 	UCReactionComponent* reactionComp = ownerCharacter->FindComponentByClass<UCReactionComponent>();
 	if (!IsValid(reactionComp)) return;
 
-	reactionComp->OnReactionWindowEnd(ReactionWindowType, Animation);
+	reactionComp->HandleReactionControlWindowEnd(ReactionControlWindowType);
 }

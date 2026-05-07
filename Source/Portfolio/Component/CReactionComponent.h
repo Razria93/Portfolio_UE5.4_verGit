@@ -74,16 +74,8 @@ public:
 
 public:
 	// Get API
-	const FReactionContext& GetActiveReactionContext() const { return ActiveReactionContext_Cached; }
-
-public:
-	// Orchestrator Decision Apply API
-	bool ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
-
-public:
-	bool StartReaction(const FReactionContext& InReactionContext);
-	bool InterruptReaction(const FReactionContext& InReactionContext);
-	void EndReaction();
+	bool GetActiveReactionContext(FReactionContext& OutReactionContext) const;
+	UCReaction* GetActiveReactionExecutor() const;
 
 public:
 	// Temporary data provider API (Move to DataAsset).
@@ -91,14 +83,24 @@ public:
 	UCReaction* ResolveReactionExecutor(const FReactionData& InReactionData);
 
 public:
-	// Notify Call API
-	void OnReactionBegin();
-	void OnReactionEnd(const UCReaction* InReaction, bool bInterrupted);
-	void OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
-	void OnReactionWindowEnd(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
+	/* === EntryPoint API === */
+	// Entry points used by orchestration/external systems to drive reaction execution.
+	bool ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
+
+public:
+	void HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason);
+
+public:
+	void HandleReactionControlWindowBegin(EReactionControlWindowType InReactionWindowType);
+	void HandleReactionControlWindowEnd(EReactionControlWindowType InReactionWindowType);
+
+	void HandleReactionFeedbackWindowBegin(FName InTriggerKey);
+	void HandleReactionFeedbackWindowEnd(FName InTriggerKey);
+	void HandleReactionFeedback(FName InTriggerKey);
 
 private:
-	bool ReplaceActiveReaction(const FReactionContext& InContext, EReactionStopReason InStopReason);
+	bool TryStartReaction(const FReactionContext& InReactionContext);
+	bool TryInterruptReaction(const FReactionContext& InReactionContext);
 
 private:
 	bool StartActiveReactionInternal(const FReactionContext& InReactionContext);
@@ -130,7 +132,6 @@ private:
 	void PrintReactionInfoSummary() const;
 	void PrintReactionDataMap() const;
 
-private:
 	void PrintComponentStateInfo() const;
 	void PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey) const;
 	void PrintReactionDataKeyInfo(const FReactionDataKey& InReactionDataKey) const;

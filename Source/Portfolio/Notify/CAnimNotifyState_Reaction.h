@@ -15,7 +15,7 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
-	EReactionWindowType ReactionWindowType = EReactionWindowType::None;
+	EReactionControlWindowType ReactionControlWindowType = EReactionControlWindowType::None;
 
 public:
 	FString GetNotifyName_Implementation() const override;

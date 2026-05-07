@@ -49,37 +49,25 @@ bool UCReactionComponent::IsActiveReaction() const
 		&& ActiveReactionType_Cached != EReactionType::Max;
 }
 
-bool UCReactionComponent::ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult)
+bool UCReactionComponent::GetActiveReactionContext(FReactionContext& OutReactionContext) const
 {
-	switch (InReactionOrchestrationResult.Decision)
-	{
-	case EReactionOrchestrationDecision::Start:
-		return StartReaction(InReactionOrchestrationResult.ReactionContext);
+	OutReactionContext = FReactionContext();
 
-	case EReactionOrchestrationDecision::Interrupt:
-		return InterruptReaction(InReactionOrchestrationResult.ReactionContext);
+	if (!IsActiveReaction()) return false;
+	if (!ActiveReactionContext_Cached.IsValidMinimal()) return false;
 
-	case EReactionOrchestrationDecision::Ignore:
-	case EReactionOrchestrationDecision::Reject:
-	case EReactionOrchestrationDecision::None:
-	default:
-		return false;
-	}
+	OutReactionContext = ActiveReactionContext_Cached;
+	return true;
 }
 
-bool UCReactionComponent::StartReaction(const FReactionContext& InReactionContext)
+UCReaction* UCReactionComponent::GetActiveReactionExecutor() const
 {
-	return ReplaceActiveReaction(InReactionContext, EReactionStopReason::Started);
-}
+	if (!IsActiveReaction()) return nullptr;
 
-bool UCReactionComponent::InterruptReaction(const FReactionContext& InReactionContext)
-{
-	return ReplaceActiveReaction(InReactionContext, EReactionStopReason::Interrupted);
-}
+	UCReaction* activeExecutor = ActiveReactionContext_Cached.ReactionExecutor;
+	if (!IsValid(activeExecutor)) return nullptr;
 
-void UCReactionComponent::EndReaction()
-{
-	EndActiveReactionInternal();
+	return activeExecutor;
 }
 
 bool UCReactionComponent::ResolveReactionData(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData)
@@ -125,88 +113,101 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 	// [Debug] ReactionData is Valid; but Find and Add Failed
 	return nullptr;
 }
-
-void UCReactionComponent::OnReactionBegin()
+bool UCReactionComponent::ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult)
 {
+	switch (InReactionOrchestrationResult.Decision)
+	{
+	case EReactionOrchestrationDecision::Start:
+		return TryStartReaction(InReactionOrchestrationResult.ReactionContext);
+
+	case EReactionOrchestrationDecision::Interrupt:
+		return TryInterruptReaction(InReactionOrchestrationResult.ReactionContext);
+
+	case EReactionOrchestrationDecision::Ignore:
+	case EReactionOrchestrationDecision::Reject:
+	case EReactionOrchestrationDecision::None:
+	default:
+		return false;
+	}
 }
 
-void UCReactionComponent::OnReactionEnd(const UCReaction* InReaction, bool bInterrupted) // Non-Used bInterrupted
+void UCReactionComponent::HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason)
 {
 	if (!IsActiveReaction()) return;
 	if (!IsValid(InReaction)) return;
+	if (InReaction != GetActiveReactionExecutor()) return;
 
-	// Stale callback guard
-	if (InReaction != ActiveReactionContext_Cached.ReactionExecutor) return;
-
-	EndReaction();
-}
-
-void UCReactionComponent::OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* Animation)
-{
-	if (InReactionWindowType == EReactionWindowType::None) return;
-	if (!IsActiveReaction()) return;
-
-	UCReaction* activeExecutor = ActiveReactionContext_Cached.ReactionExecutor;
-	if (!IsValid(activeExecutor)) return;
-
-	switch (InReactionWindowType)
-	{
-	case EReactionWindowType::Interruptible:
-		activeExecutor->SetInterruptible(true);
-		break;
-
-	case EReactionWindowType::Cancelable:
-		activeExecutor->SetCancelable(true);
-		break;
-
-	case EReactionWindowType::ImmuneToReaction:
-		activeExecutor->SetInterruptible(false);
-		activeExecutor->SetCancelable(false);
-		break;
-
-	default:
-		break;
-	}
-}
-
-void UCReactionComponent::OnReactionWindowEnd(EReactionWindowType InReactionWindowType, UAnimSequenceBase* Animation)
-{
-	if (InReactionWindowType == EReactionWindowType::None) return;
-	if (!IsActiveReaction()) return;
-
-	UCReaction* activeExecutor = ActiveReactionContext_Cached.ReactionExecutor;
-	if (!IsValid(activeExecutor)) return;
-
-	switch (InReactionWindowType)
-	{
-	case EReactionWindowType::Interruptible:
-	{
-		activeExecutor->SetInterruptible(false);
-		break;
-	}
-
-	case EReactionWindowType::Cancelable:
-	{
-		activeExecutor->SetCancelable(false);
-		break;
-	}
-
-	case EReactionWindowType::ImmuneToReaction:
-		break;
-
-	default:
-		break;
-	}
-}
-
-bool UCReactionComponent::ReplaceActiveReaction(const FReactionContext& InContext, EReactionStopReason InStopReason)
-{
-	if (!InContext.IsValidMinimal()) return false;
-
-	StopActiveReactionInternal(InStopReason);
 	EndActiveReactionInternal();
+}
 
-	return StartActiveReactionInternal(InContext);
+void UCReactionComponent::HandleReactionControlWindowBegin(EReactionControlWindowType InReactionWindowType)
+{
+	if (InReactionWindowType == EReactionControlWindowType::None) return;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->OnReactionControlWindowBegin(InReactionWindowType);
+}
+
+void UCReactionComponent::HandleReactionControlWindowEnd(EReactionControlWindowType InReactionWindowType)
+{
+	if (InReactionWindowType == EReactionControlWindowType::None) return;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->OnReactionControlWindowEnd(InReactionWindowType);
+}
+
+void UCReactionComponent::HandleReactionFeedbackWindowBegin(FName InTriggerKey)
+{
+	if (InTriggerKey.IsNone()) return;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->OnReactionFeedbackWindowBegin(InTriggerKey);
+}
+
+void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
+{
+	if (InTriggerKey.IsNone()) return;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->OnReactionFeedbackWindowEnd(InTriggerKey);
+}
+
+void UCReactionComponent::HandleReactionFeedback(FName InTriggerKey)
+{
+	if (InTriggerKey.IsNone()) return;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->OnReactionFeedback(InTriggerKey);
+}
+
+bool UCReactionComponent::TryStartReaction(const FReactionContext& InReactionContext)
+{
+	if (!InReactionContext.IsValidMinimal()) return false;
+	if (IsActiveReaction()) return false;
+
+	return StartActiveReactionInternal(InReactionContext);
+}
+
+bool UCReactionComponent::TryInterruptReaction(const FReactionContext& InReactionContext)
+{
+	if (!InReactionContext.IsValidMinimal()) return false;
+
+	if (IsActiveReaction())
+	{
+		StopActiveReactionInternal(EReactionStopReason::Interrupted);
+	}
+
+	return StartActiveReactionInternal(InReactionContext);
 }
 
 bool UCReactionComponent::StartActiveReactionInternal(const FReactionContext& InReactionContext)
@@ -221,7 +222,7 @@ bool UCReactionComponent::StartActiveReactionInternal(const FReactionContext& In
 	AbortActiveActionForReaction();
 	EnterReactionState(reactionData);
 
-	if (!reactionExecutor->Begin(reactionData))
+	if (!reactionExecutor->Start(reactionData))
 	{
 		ExitReactionState(reactionData);
 		return false;
@@ -235,12 +236,10 @@ void UCReactionComponent::StopActiveReactionInternal(EReactionStopReason InStopR
 {
 	if (!IsActiveReaction()) return;
 
-	UCReaction* activeExecutor = ActiveReactionContext_Cached.ReactionExecutor;
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
 
-	if (IsValid(activeExecutor))
-	{
-		activeExecutor->Stop(InStopReason);
-	}
+	activeExecutor->Stop(InStopReason);
 }
 
 void UCReactionComponent::EndActiveReactionInternal()
