@@ -35,7 +35,7 @@ Player / AI Request
 ```text
 Hit 중 다시 Hit
 Hit 중 Dead
-Pending Hit이 있는데 더 강한 Hit
+Hit 중 더 강한 Hit
 Interruptible window 밖에서 incoming reaction
 ```
 
@@ -53,7 +53,6 @@ Interruptible window 밖에서 incoming reaction
 ReactionDatas 보관
 ReactionDataMap 구성
 ReactionExecutorMap 캐싱
-PendingReactionContext 보관
 ActiveReactionContext 보관
 current vs incoming 판정
 movement / state / action abort 적용
@@ -69,7 +68,6 @@ Reaction definition data
 Reaction priority
 Reaction executor class
 ActiveReactionContext
-PendingReactionContext
 Interruptible / cancelable policy
 ```
 
@@ -138,11 +136,11 @@ ReactionOrchestratorComponent
 -> request gate
 -> damage result -> reaction intent
 -> data lookup
--> active / pending conflict resolution
+-> active / incoming conflict resolution
 -> decision generation
 
 ReactionComponent
--> active / pending runtime state
+-> active runtime state
 -> executor instance cache
 -> ApplyReactionDecision
 -> movement / state / action abort application
@@ -157,7 +155,7 @@ CReaction
 
 ```text
 GetActiveReactionContext()
-GetPendingReactionContext()
+GetActiveReactionExecutor()
 ```
 
 반면 다음 책임은 장기적으로 component 밖으로 올리는 것이 적절함.
@@ -235,7 +233,7 @@ Orchestrator는 경쟁 상태를 평가하기 위해 여러 정보를 함께 봐
 ```text
 incoming reaction definition
 active reaction context
-pending reaction context
+incoming reaction context
 priority
 interruptible window
 current executor policy
@@ -318,7 +316,7 @@ CAction
 현재 Reaction Orchestration 1차 범위에서는 다음 기준을 적용하는 것이 적절함.
 
 ```text
-1. Pending / Active runtime state는 ReactionComponent에 유지함.
+1. Active runtime state는 ReactionComponent에 유지함.
 2. Executor instance cache도 ReactionComponent에 유지함.
 3. Reaction definition data는 DataAsset 또는 Orchestrator 계층으로 올리는 방향을 잡음.
 4. Conflict resolution은 ReactionOrchestrator에서 담당함.

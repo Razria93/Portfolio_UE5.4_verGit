@@ -25,8 +25,8 @@ Resolve
 Decide
 Apply
 Execute
-Pending
-Replace
+Interrupt
+Cancel
 Finish
 ```
 
@@ -35,7 +35,7 @@ Finish
 ```text
 무엇을 실행할 것인가?
 어떤 방식으로 실행되고 싶은가?
-현재 active / pending 상태에서 실행 가능한가?
+현재 active 상태에서 실행 가능한가?
 실행 가능하다면 실제 상태를 누가 바꿀 것인가?
 실제 montage lifecycle은 누가 관리할 것인가?
 ```
@@ -60,10 +60,10 @@ RequestExecution()
 -> DispatchExecutionDecision()
 
 [Component]
--> Component Execute / Pending / Replace / Enqueue
+-> Component Apply / Start / Interrupt / Cancel
 
 [Execution]
--> Execution Object Begin / Stop / End
+-> Execution Object Start / Stop / Finish
 ```
 
 각 단계의 의미는 다음과 같음.
@@ -84,7 +84,7 @@ ResolveExecutionPolicy
 
 OrchestrateExecution
 - 현재 runtime state에서 가능한지 판단함
-- active / pending / current state와 policy를 비교해 최종 decision을 생성함
+- active / current state와 policy를 비교해 최종 decision을 생성함
 
 DispatchExecutionDecision
 - orchestration decision을 Component API로 위임함
@@ -123,9 +123,9 @@ Component는 Orchestrator의 decision을 실제 캐릭터 runtime state에 적�
 Component는 다음 책임을 가짐.
 
 ```text
-1. active / pending / queued execution state 관리
+1. active execution state 관리
 2. executor instance cache 관리
-3. Start / Pending / Replace / Enqueue decision 적용
+3. Start / Interrupt / Cancel decision 적용
 4. movement / state / action abort 같은 side effect 적용
 5. execution finish 처리
 ```
@@ -134,14 +134,13 @@ Component API는 Orchestrator decision과 대응되도록 구성하는 것이 �
 
 ```text
 StartExecution()
-SetPendingExecution()
-ReplaceActiveExecution()
-EnqueueExecution()
+InterruptExecution()
+CancelExecution()
 FinishExecution()
 ```
 
-단순히 `Execute`, `Pending`, `Replace`처럼 짧게 둘 수도 있지만,  
-API 의미를 명확히 하려면 `StartExecution`, `SetPendingExecution`, `ReplaceActiveExecution`처럼 구체적으로 두는 것이 적절함.
+단순히 `Execute`, `Stop`처럼 짧게 둘 수도 있지만,
+API 의미를 명확히 하려면 `StartExecution`, `InterruptExecution`, `CancelExecution`처럼 구체적으로 두는 것이 적절함.
 
 
 ---
@@ -192,13 +191,14 @@ bool ResolveReactionContext(
 	EReactionType& OutReactionType,
 	EReactionRequestRejectReason& OutRejectReason);
 
-FReactionExecutionPolicy ResolveReactionPolicy(
+bool ResolveReactionPolicy(
 	const FReactionContext& InContext,
-	EReactionType InReactionType) const;
+	EReactionType InReactionType,
+	FReactionExecutionPolicy& OutPolicy,
+	EReactionRequestRejectReason& OutRejectReason) const;
 
-FReactionOrchestrationResult OrchestrateReaction(
-	const FReactionContext& InContext,
-	const FReactionExecutionPolicy& InPolicy) const;
+FReactionOrchestrationResult OrchestrateQuery(
+	const FReactionOrchestrationQuery& InQuery) const;
 
 void DispatchReactionDecision(const FReactionOrchestrationResult& InResult);
 ```
@@ -206,22 +206,22 @@ void DispatchReactionDecision(const FReactionOrchestrationResult& InResult);
 ### ReactionComponent
 
 ```cpp
-bool StartReaction(const FReactionContext& InContext);
-bool SetPendingReaction(const FReactionContext& InContext);
-bool ReplaceActiveReaction(const FReactionContext& InContext);
-bool EnqueueReaction(const FReactionContext& InContext);
-void FinishReaction();
+bool ApplyReactionDecision(const FReactionOrchestrationResult& InResult);
 
-const FReactionContext& GetPendingReactionContext() const;
-const FReactionContext& GetActiveReactionContext() const;
+bool IsActiveReaction() const;
+bool GetActiveReactionContext(FReactionContext& OutContext) const;
+UCReaction* GetActiveReactionExecutor() const;
 ```
 
 ### CReaction
 
 ```cpp
-bool Begin(const FReactionData& InData);
+bool Start(const FReactionData& InData);
 void Stop(EReactionStopReason InReason);
-void End(bool bInterrupted);
+void FinishCompleted();
+void FinishInterrupted();
+void FinishCancelled();
+void FinishAborted();
 
 bool WantToInterrupt(const FReactionQueryContext& InContext) const;
 bool AllowInterruptionBy(const FReactionQueryContext& InContext) const;
@@ -244,20 +244,20 @@ struct FReactionExecutionPolicy
 
 public:
 	UPROPERTY(Transient)
-	bool bWantsReplaceActive = false;
+	bool bCanInterrupt = false;
 
 	UPROPERTY(Transient)
-	bool bCanUsePending = true;
+	bool bForceInterrupt = false;
 
 	UPROPERTY(Transient)
-	bool bCanUseQueue = false;
+	bool bIgnoreInterruptWindow = false;
 
 	UPROPERTY(Transient)
-	int32 Priority = INDEX_NONE;
+	int32 Priority = 0;
 };
 ```
 
-다만 1차 구현에서는 별도 policy struct 없이 `FReactionData.Priority`와 `CReaction` local hook으로 바로 판단해도 됨.
+현재 1차 구현에서는 policy struct를 유지하되, `FReactionData.Priority`와 `CReaction` local hook을 조합해 얇게 판단함.
 
 API 구조를 명확히 유지하려면 policy struct를 두는 편이 좋고,  
 구현 복잡도를 줄이려면 `ResolveReactionPolicy()`를 얇게 두거나 후속 단계로 미룰 수 있음.
@@ -281,12 +281,12 @@ ResolveReactionContext
 - 최종 FReactionContext 구성
 
 ResolveReactionPolicy
-- incoming reaction의 priority / pending 가능성 / replace 성향을 해석함
+- incoming reaction의 priority / interrupt 권한 / force 성향을 해석함
 
-OrchestrateReaction
-- active / pending context와 incoming context를 비교함
+OrchestrateQuery
+- active context와 incoming context를 비교함
 - priority와 interruptible window를 확인함
-- Start / ReplaceActive / ReplacePending / Enqueue / Ignore / Reject 결정함
+- Start / Interrupt / Cancel / Ignore / Reject 결정함
 
 DispatchReactionDecision
 - 결정 결과에 따라 ReactionComponent의 API를 호출함
@@ -304,7 +304,7 @@ DispatchReactionDecision
 - `Orchestrate`는 현재 상태와 충돌을 평가하는 단계임.
 - `Dispatch / Apply`는 실제 runtime state를 변경하는 단계임.
 - `Execution Object`는 실제 lifecycle을 수행하는 단계임.
-- Orchestrator는 decision을 만들지만 active / pending state를 직접 commit하지 않음.
+- Orchestrator는 decision을 만들지만 active state를 직접 commit하지 않음.
 - Component는 decision을 적용하지만 request 해석과 경쟁 판정의 중심이 되지 않음.
 
 
@@ -323,10 +323,10 @@ Orchestrator
 -> Dispatch
 
 Component
--> Start / Pending / Replace / Enqueue / Finish
+-> Start / Interrupt / Cancel / Finish
 
 Execution Object
--> Begin / Stop / End / Cleanup / Local Policy
+-> Start / Stop / Finish / Cleanup / Local Policy
 ```
 
 이 구조를 따르면 API 이름과 책임이 분리되고,  

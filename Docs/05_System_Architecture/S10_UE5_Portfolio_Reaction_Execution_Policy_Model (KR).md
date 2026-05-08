@@ -31,7 +31,9 @@ CReaction::WantToInterrupt()와 CReaction::AllowInterruptionBy()에서 이미 �
 ```cpp
 struct FReactionExecutionPolicy
 {
-	bool bCanInterruptToActive = false;
+	bool bCanInterrupt = false;
+	bool bForceInterrupt = false;
+	bool bIgnoreInterruptWindow = false;
 	int32 Priority = 0;
 };
 ```
@@ -178,7 +180,7 @@ incoming hit reaction executor는 interrupt를 원할 수 있음.
 그러나 body state가 super armor라면 orchestrator policy는 incoming hit reaction을 interrupt 후보로 올리지 않을 수 있음.
 
 ```cpp
-policy.bCanInterruptToActive = false;
+policy.bCanInterrupt = false;
 ```
 
 즉 executor가 interrupt를 원해도 orchestration 단계에서 막을 수 있음.
@@ -208,12 +210,14 @@ policy.bIgnoreInterruptWindow = true;
 ```cpp
 struct FReactionExecutionPolicy
 {
-	bool bCanInterruptToActive = false;
+	bool bCanInterrupt = false;
+	bool bForceInterrupt = false;
+	bool bIgnoreInterruptWindow = false;
 	int32 Priority = 0;
 };
 ```
 
-이 단계에서 `bCanInterruptToActive`는 최종 interrupt 가능 여부를 단독으로 결정하지 않음.
+이 단계에서 `bCanInterrupt`는 최종 interrupt 가능 여부를 단독으로 결정하지 않음.
 
 현재 의미는 다음처럼 제한하는 것이 적절함.
 

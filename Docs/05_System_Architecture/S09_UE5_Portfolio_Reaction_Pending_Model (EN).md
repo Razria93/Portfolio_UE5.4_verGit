@@ -113,8 +113,8 @@ TakeDamage
 -> ReactionOrchestrator::RequestReaction()
 -> ResolveReactionContext()
 -> ResolveReactionPolicy()
--> OrchestrateReaction()
--> ReactionComponent::StartReaction() / InterruptReaction() / RejectReaction()
+-> OrchestrateQuery()
+-> ReactionComponent::ApplyReactionDecision()
 -> CReaction execution
 ```
 
@@ -309,4 +309,3 @@ Let ReactionOrchestrator own reaction request decisions
 Keep ReactionComponent focused on active runtime state and execution application
 Keep CReaction responsible for montage lifecycle and local runtime flags
 ```
-

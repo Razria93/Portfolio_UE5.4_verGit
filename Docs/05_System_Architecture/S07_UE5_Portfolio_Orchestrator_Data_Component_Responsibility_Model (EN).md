@@ -35,7 +35,7 @@ Reaction immediately exposes competing states.
 ```text
 Hit while already in Hit
 Dead while in Hit
-Stronger Hit while a pending Hit exists
+Stronger Hit while already in Hit
 Incoming reaction outside an interruptible window
 ```
 
@@ -53,7 +53,6 @@ In the current Reaction structure, `UCReactionComponent` owns several responsibi
 Stores ReactionDatas
 Builds ReactionDataMap
 Caches ReactionExecutorMap
-Stores PendingReactionContext
 Stores ActiveReactionContext
 Judges current vs incoming
 Applies movement / state / action abort
@@ -69,7 +68,6 @@ Reaction definition data
 Reaction priority
 Reaction executor class
 ActiveReactionContext
-PendingReactionContext
 Interruptible / cancelable policy
 ```
 
@@ -138,11 +136,11 @@ ReactionOrchestratorComponent
 -> request gate
 -> damage result -> reaction intent
 -> data lookup
--> active / pending conflict resolution
+-> active / incoming conflict resolution
 -> decision generation
 
 ReactionComponent
--> active / pending runtime state
+-> active runtime state
 -> executor instance cache
 -> ApplyReactionDecision
 -> movement / state / action abort application
@@ -157,7 +155,7 @@ In this structure, the information exposed by `ReactionComponent` should be cent
 
 ```text
 GetActiveReactionContext()
-GetPendingReactionContext()
+GetActiveReactionExecutor()
 ```
 
 The following responsibilities should move outside the component in the long term.
@@ -235,7 +233,7 @@ The orchestrator needs to see multiple kinds of information together to evaluate
 ```text
 incoming reaction definition
 active reaction context
-pending reaction context
+incoming reaction context
 priority
 interruptible window
 current executor policy
@@ -318,7 +316,7 @@ In this sense, Reaction work can become a more mature model for future Action Or
 For the first pass of Reaction Orchestration, the following criteria are appropriate.
 
 ```text
-1. Keep Pending / Active runtime state in ReactionComponent.
+1. Keep active runtime state in ReactionComponent.
 2. Keep executor instance cache in ReactionComponent.
 3. Move Reaction definition data toward DataAsset or Orchestrator layer.
 4. Put conflict resolution in ReactionOrchestrator.

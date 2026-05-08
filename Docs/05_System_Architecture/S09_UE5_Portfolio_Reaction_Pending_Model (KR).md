@@ -112,8 +112,8 @@ TakeDamage
 -> ReactionOrchestrator::RequestReaction()
 -> ResolveReactionContext()
 -> ResolveReactionPolicy()
--> OrchestrateReaction()
--> ReactionComponent::StartReaction() / InterruptReaction() / RejectReaction()
+-> OrchestrateQuery()
+-> ReactionComponent::ApplyReactionDecision()
 -> CReaction 실행
 ```
 
@@ -177,8 +177,9 @@ orchestrator는 reaction request를 평가하고 실행 방향을 결정함.
 ```text
 ActiveReactionContext를 저장함
 reaction executor instance를 캐싱함
-StartReaction을 실제 적용함
-InterruptReaction을 실제 적용함
+Start decision을 실제 active reaction 시작으로 적용함
+Interrupt decision을 active reaction 중단 후 incoming reaction 시작으로 적용함
+Cancel decision을 active reaction 중단으로 적용함
 movement / state / action abort side effect를 처리함
 reaction 종료 시 active context를 정리함
 ```

@@ -26,8 +26,8 @@ Resolve
 Decide
 Apply
 Execute
-Pending
-Replace
+Interrupt
+Cancel
 Finish
 ```
 
@@ -36,7 +36,7 @@ Especially in Reaction Orchestration, several questions can end up inside one fu
 ```text
 What should be executed?
 How does this execution candidate want to be handled?
-Can it run under the current active / pending state?
+Can it run under the current active state?
 Who mutates the actual runtime state?
 Who owns the actual montage lifecycle?
 ```
@@ -61,10 +61,10 @@ RequestExecution()
 -> DispatchExecutionDecision()
 
 [Component]
--> Component Execute / Pending / Replace / Enqueue
+-> Component Apply / Start / Interrupt / Cancel
 
 [Execution]
--> Execution Object Begin / Stop / End
+-> Execution Object Start / Stop / Finish
 ```
 
 Each stage has the following meaning.
@@ -85,7 +85,7 @@ ResolveExecutionPolicy
 
 OrchestrateExecution
 - Determines whether it is possible under current runtime state
-- Compares active / pending / current state with policy and produces final decision
+- Compares active / current state with policy and produces final decision
 
 DispatchExecutionDecision
 - Delegates the orchestration decision to Component API
@@ -124,9 +124,9 @@ The Component applies the Orchestrator's decision to actual character runtime st
 The Component owns the following responsibilities.
 
 ```text
-1. Manage active / pending / queued execution state
+1. Manage active execution state
 2. Manage executor instance cache
-3. Apply Start / Pending / Replace / Enqueue decisions
+3. Apply Start / Interrupt / Cancel decisions
 4. Apply side effects such as movement / state / action abort
 5. Handle execution finish
 ```
@@ -135,14 +135,13 @@ Component APIs should correspond to Orchestrator decisions.
 
 ```text
 StartExecution()
-SetPendingExecution()
-ReplaceActiveExecution()
-EnqueueExecution()
+InterruptExecution()
+CancelExecution()
 FinishExecution()
 ```
 
-Short names such as `Execute`, `Pending`, and `Replace` are possible,  
-but explicit names such as `StartExecution`, `SetPendingExecution`, and `ReplaceActiveExecution` make API meaning clearer.
+Short names such as `Execute` and `Stop` are possible,
+but explicit names such as `StartExecution`, `InterruptExecution`, and `CancelExecution` make API meaning clearer.
 
 
 ---
@@ -193,13 +192,14 @@ bool ResolveReactionContext(
 	EReactionType& OutReactionType,
 	EReactionRequestRejectReason& OutRejectReason);
 
-FReactionExecutionPolicy ResolveReactionPolicy(
+bool ResolveReactionPolicy(
 	const FReactionContext& InContext,
-	EReactionType InReactionType) const;
+	EReactionType InReactionType,
+	FReactionExecutionPolicy& OutPolicy,
+	EReactionRequestRejectReason& OutRejectReason) const;
 
-FReactionOrchestrationResult OrchestrateReaction(
-	const FReactionContext& InContext,
-	const FReactionExecutionPolicy& InPolicy) const;
+FReactionOrchestrationResult OrchestrateQuery(
+	const FReactionOrchestrationQuery& InQuery) const;
 
 void DispatchReactionDecision(const FReactionOrchestrationResult& InResult);
 ```
@@ -207,22 +207,22 @@ void DispatchReactionDecision(const FReactionOrchestrationResult& InResult);
 ### ReactionComponent
 
 ```cpp
-bool StartReaction(const FReactionContext& InContext);
-bool SetPendingReaction(const FReactionContext& InContext);
-bool ReplaceActiveReaction(const FReactionContext& InContext);
-bool EnqueueReaction(const FReactionContext& InContext);
-void FinishReaction();
+bool ApplyReactionDecision(const FReactionOrchestrationResult& InResult);
 
-const FReactionContext& GetPendingReactionContext() const;
-const FReactionContext& GetActiveReactionContext() const;
+bool IsActiveReaction() const;
+bool GetActiveReactionContext(FReactionContext& OutContext) const;
+UCReaction* GetActiveReactionExecutor() const;
 ```
 
 ### CReaction
 
 ```cpp
-bool Begin(const FReactionData& InData);
+bool Start(const FReactionData& InData);
 void Stop(EReactionStopReason InReason);
-void End(bool bInterrupted);
+void FinishCompleted();
+void FinishInterrupted();
+void FinishCancelled();
+void FinishAborted();
 
 bool WantToInterrupt(const FReactionQueryContext& InContext) const;
 bool AllowInterruptionBy(const FReactionQueryContext& InContext) const;
@@ -245,21 +245,20 @@ struct FReactionExecutionPolicy
 
 public:
 	UPROPERTY(Transient)
-	bool bWantsReplaceActive = false;
+	bool bCanInterrupt = false;
 
 	UPROPERTY(Transient)
-	bool bCanUsePending = true;
+	bool bForceInterrupt = false;
 
 	UPROPERTY(Transient)
-	bool bCanUseQueue = false;
+	bool bIgnoreInterruptWindow = false;
 
 	UPROPERTY(Transient)
-	int32 Priority = INDEX_NONE;
+	int32 Priority = 0;
 };
 ```
 
-For the first implementation pass, this struct is optional.  
-The system can directly use `FReactionData.Priority` and `CReaction` local hooks instead.
+In the current first implementation pass, the policy struct is kept thin and combined with `FReactionData.Priority` and `CReaction` local hooks.
 
 If the API should stay explicit, keeping a policy struct is useful.  
 If implementation simplicity matters more, `ResolveReactionPolicy()` can stay thin or be deferred.
@@ -283,12 +282,12 @@ ResolveReactionContext
 - Builds final FReactionContext
 
 ResolveReactionPolicy
-- Interprets incoming reaction priority / pending availability / replacement tendency
+- Interprets incoming reaction priority / interrupt authority / force tendency
 
-OrchestrateReaction
-- Compares active / pending context against incoming context
+OrchestrateQuery
+- Compares active context against incoming context
 - Checks priority and interruptible window
-- Decides Start / ReplaceActive / ReplacePending / Enqueue / Ignore / Reject
+- Decides Start / Interrupt / Cancel / Ignore / Reject
 
 DispatchReactionDecision
 - Calls ReactionComponent API according to the decision
@@ -306,7 +305,7 @@ The principles of this API model are:
 - `Orchestrate` evaluates conflict against current state.
 - `Dispatch / Apply` mutates actual runtime state.
 - `Execution Object` performs actual lifecycle.
-- The Orchestrator creates decisions but does not directly commit active / pending state.
+- The Orchestrator creates decisions but does not directly commit active state.
 - The Component applies decisions but should not be the center of request interpretation and conflict judgment.
 
 
@@ -325,10 +324,10 @@ Orchestrator
 -> Dispatch
 
 Component
--> Start / Pending / Replace / Enqueue / Finish
+-> Start / Interrupt / Cancel / Finish
 
 Execution Object
--> Begin / Stop / End / Cleanup / Local Policy
+-> Start / Stop / Finish / Cleanup / Local Policy
 ```
 
 This structure separates API names and responsibilities,  

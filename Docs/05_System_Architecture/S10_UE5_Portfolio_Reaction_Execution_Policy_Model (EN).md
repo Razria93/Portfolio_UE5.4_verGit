@@ -33,7 +33,9 @@ it can look redundant with `CReaction` hooks.
 ```cpp
 struct FReactionExecutionPolicy
 {
-	bool bCanInterruptToActive = false;
+	bool bCanInterrupt = false;
+	bool bForceInterrupt = false;
+	bool bIgnoreInterruptWindow = false;
 	int32 Priority = 0;
 };
 ```
@@ -181,7 +183,7 @@ However, if the body state is super armor, the orchestrator policy may prevent t
 from becoming an interrupt candidate.
 
 ```cpp
-policy.bCanInterruptToActive = false;
+policy.bCanInterrupt = false;
 ```
 
 The orchestration layer can block the request even if the executor wants interruption.
@@ -212,12 +214,14 @@ Therefore, `FReactionExecutionPolicy` can remain thin.
 ```cpp
 struct FReactionExecutionPolicy
 {
-	bool bCanInterruptToActive = false;
+	bool bCanInterrupt = false;
+	bool bForceInterrupt = false;
+	bool bIgnoreInterruptWindow = false;
 	int32 Priority = 0;
 };
 ```
 
-At this stage, `bCanInterruptToActive` does not decide final interrupt availability by itself.
+At this stage, `bCanInterrupt` does not decide final interrupt availability by itself.
 
 Its current meaning should be limited to:
 
@@ -262,4 +266,3 @@ FReactionExecutionPolicy
 The policy may look redundant while it stays thin.  
 However, once body state, hit resolution, guard, poise, or super armor is introduced,  
 the policy becomes the layer that carries higher-level decisions that executor hooks cannot express alone.
-

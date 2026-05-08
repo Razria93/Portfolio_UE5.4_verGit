@@ -115,7 +115,6 @@ DeadState_Before
 DeadState_After
 ApplyDamageSpecKey
 Current Active Reaction
-Current Pending Reaction
 Incoming Reaction
 Priority
 Interruptible Window
@@ -129,7 +128,6 @@ The more important questions are:
 
 - Is a new reaction coming in while another reaction is already active?
 - Can the incoming reaction replace the active reaction?
-- Can the incoming reaction replace an already pending reaction?
 - Should Dead reaction override Hit reaction?
 - Is the current montage window interruptible?
 - Does the current executor allow interruption?
@@ -172,7 +170,7 @@ It lets callers read “how the request was handled” in a consistent way.
 Rejected
 Ignored
 Started
-Chained / Replaced / Enqueued
+Chained / Interrupted / Cancelled
 ```
 
 Common gate functions and result builder shapes can also remain symmetric.
@@ -240,15 +238,14 @@ Examples include:
 
 ```text
 Start
-ReplacePending
-ReplaceActive
-Enqueue
+Interrupt
+Cancel
 Ignore
 Reject
 ```
 
-`ReplaceActive` and `ReplacePending` are not intrinsic progression rules of a single reaction.  
-They are results of coordinating the relationship between active / pending reaction and incoming reaction.
+`Interrupt` and `Cancel` are not intrinsic progression rules of a single reaction.
+They are results of coordinating the relationship between active reaction and incoming reaction or an external cancel request.
 
 Therefore, reaction internal decisions should live in `ReactionOrchestrator`.
 
@@ -410,12 +407,12 @@ ReactionOrchestrator
 -> Request gate
 -> Damage result -> Reaction intent
 -> Reaction type / data / executor resolve
--> Active / pending conflict resolution
+-> Active / incoming conflict resolution
 -> Decision generation
 
 ReactionComponent
 -> Reaction data / executor ownership
--> Active / pending / queue state
+-> Active runtime state
 -> ApplyReactionDecision
 -> Movement / state / action abort application
 

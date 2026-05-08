@@ -114,7 +114,6 @@ DeadState_Before
 DeadState_After
 ApplyDamageSpecKey
 Current Active Reaction
-Current Pending Reaction
 Incoming Reaction
 Priority
 Interruptible Window
@@ -128,7 +127,6 @@ Reaction에서 중요한 문제는 단순히 “이 reaction을 실행할 수 �
 
 - 이미 reaction 중인데 새 reaction이 들어왔는가?
 - 새 reaction이 active reaction을 대체할 수 있는가?
-- pending reaction이 있을 때 incoming reaction이 이를 교체할 수 있는가?
 - Dead reaction은 Hit reaction보다 우선해야 하는가?
 - 현재 montage window가 interruptible 상태인가?
 - current executor는 interruption을 허용하는가?
@@ -171,7 +169,7 @@ FReactionRequestResult
 Rejected
 Ignored
 Started
-Chained / Replaced / Enqueued
+Chained / Interrupted / Cancelled
 ```
 
 또한 공통 gate 함수와 result builder 형태도 대칭적으로 가져갈 수 있음.
@@ -239,15 +237,14 @@ FReactionOrchestrationResult
 
 ```text
 Start
-ReplacePending
-ReplaceActive
-Enqueue
+Interrupt
+Cancel
 Ignore
 Reject
 ```
 
-`ReplaceActive`와 `ReplacePending`은 특정 reaction 하나의 고유 실행 규칙이라기보다,  
-현재 active / pending reaction과 incoming reaction의 관계를 조정한 결과임.
+`Interrupt`와 `Cancel`은 특정 reaction 하나의 고유 실행 규칙이라기보다,
+현재 active reaction과 incoming reaction 또는 외부 cancel 요청의 관계를 조정한 결과임.
 
 따라서 reaction 내부 decision은 `ReactionOrchestrator` 쪽에 두는 것이 적절함.
 
@@ -408,12 +405,12 @@ ReactionOrchestrator
 -> Request gate
 -> Damage result -> Reaction intent
 -> Reaction type / data / executor resolve
--> Active / pending conflict resolution
+-> Active / incoming conflict resolution
 -> Decision generation
 
 ReactionComponent
 -> Reaction data / executor ownership
--> Active / pending / queue state
+-> Active runtime state
 -> ApplyReactionDecision
 -> Movement / state / action abort application
 
