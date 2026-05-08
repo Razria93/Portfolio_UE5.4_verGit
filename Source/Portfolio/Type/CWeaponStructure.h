@@ -12,6 +12,7 @@ enum class EWeaponType : uint8
 {
 	Unarmed = 0,
 	Sword,
+
 	All,
 
 	Max,
@@ -35,16 +36,22 @@ enum class EActionType : uint8
 UENUM(BlueprintType)
 enum class EReactionType : uint8
 {
-	None = 0,
-	Hit,
+	None = 0,	// Invalid, Unset
 
-	Max,
+	Hit,
+	Dead,
+
+	All,		// Wildcard
+
+	Max,		// Sentinel
 };
 
 UENUM(BlueprintType)
 enum class EActionExecutionDecision : uint8
 {
-	Reject = 0,
+	None = 0,
+
+	Reject,
 	Ignore,
 
 	Start,
@@ -62,7 +69,7 @@ enum class EActionEventType : uint8
 
 	ChainWindowOpened,
 	ChainWindowClosed,
-	
+
 	ActionStarted,
 	ActionCompleted,
 	ActionAborted,
@@ -80,6 +87,17 @@ enum class EActionAbortReason : uint8
 
 	Interrupted,
 	ExternalCancel,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EDamageImpactInfoSource : uint8
+{
+	None = 0,
+
+	SweepResult,
+	ClosestPoint,
 
 	Max,
 };
@@ -130,12 +148,27 @@ UENUM(BlueprintType)
 enum class EReactionStopReason : uint8
 {
 	None = 0,
+
 	Interrupted,
 	Cancelled,
+
+	Aborted,
 };
 
 UENUM(BlueprintType)
-enum class EReactionWindowType : uint8
+enum class EReactionFinishReason : uint8
+{
+	None = 0,
+
+	Completed,
+	Interrupted,
+	Cancelled,
+
+	Aborted,
+};
+
+UENUM(BlueprintType)
+enum class EReactionControlWindowType : uint8
 {
 	None = 0,
 
@@ -307,35 +340,6 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FWeaponContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	EWeaponType WeaponType = EWeaponType::Max;
-
-public:
-	FWeaponContext() = default;
-};
-
-USTRUCT(BlueprintType)
-struct FActionContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	EActionType ActionType = EActionType::Max;
-
-	UPROPERTY(EditAnywhere)
-	int32 ActionIndex = INDEX_NONE;
-
-public:
-	FActionContext() = default;
-};
-
-USTRUCT(BlueprintType)
 struct FOverlapContext
 {
 	GENERATED_BODY()
@@ -379,6 +383,63 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FWeaponContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	EWeaponType WeaponType = EWeaponType::Max;
+
+public:
+	FWeaponContext() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FActionContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	EActionType ActionType = EActionType::Max;
+
+	UPROPERTY(EditAnywhere)
+	int32 ActionIndex = INDEX_NONE;
+
+public:
+	FActionContext() = default;
+};
+
+USTRUCT(BlueprintType)
+struct FDamageImpactInfo
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bHasHitResult = false;
+
+
+	UPROPERTY(Transient)
+	EDamageImpactInfoSource Source = EDamageImpactInfoSource::None;
+
+	UPROPERTY(Transient)
+	FHitResult HitResult = FHitResult();
+
+public:
+	FDamageImpactInfo() = default;
+
+public:
+	bool IsValidMinimal() const
+	{
+		return bHasHitResult
+			&& Source != EDamageImpactInfoSource::None
+			&& Source != EDamageImpactInfoSource::Max;
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FHitContext
 {
 	GENERATED_BODY()
@@ -392,6 +453,9 @@ public:
 
 	UPROPERTY(Transient)
 	FActionContext ActionContext = FActionContext();
+
+	UPROPERTY(Transient)
+	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 public:
 	FHitContext() = default;
@@ -523,6 +587,9 @@ public:
 	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
 
 	UPROPERTY(Transient)
+	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+
+	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 public:
@@ -558,6 +625,9 @@ public:
 
 	UPROPERTY(Transient)
 	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
+
+	UPROPERTY(Transient)
+	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
@@ -618,6 +688,10 @@ public:
 	UPROPERTY(Transient)
 	AActor* TargetActor = nullptr;
 
+	// Damage MetaData
+	UPROPERTY(Transient)
+	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+
 	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
@@ -658,6 +732,10 @@ public:
 	class AActor* DamageCauser = nullptr;
 
 	// Damage MetaData
+
+	UPROPERTY(Transient)
+	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+
 	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
@@ -695,6 +773,9 @@ public:
 	class AActor* DamageCauser = nullptr;
 
 	// Damage MetaData [Set BuildContext]
+	UPROPERTY(Transient)
+	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+
 	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 

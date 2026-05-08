@@ -27,10 +27,7 @@ private:
 	class ACharacter* OwnerCharacter_Cached;
 
 protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void BeginPlay() override;
 
 public:
 	// HitWindow API
@@ -47,24 +44,24 @@ private:
 
 private:
 	bool ValidateRequest(const FHitContext& InHitContext) const;
-	bool ValidateContext(FApplyDamageContext & InOutApplyDamageContext) const;
-	bool CanApplyDamage(FApplyDamageContext & InOutApplyDamageContext) const;
-	void ResolveApplyDamageSpec(FApplyDamageContext & InOutApplyDamageContext) const;
-	void ComputeApplyDamage(FApplyDamageContext & InOutApplyDamageContext) const;
-	void CommitApplyDamage(FApplyDamageContext & InOutApplyDamageContext);
+	bool ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const;
+	bool CanApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const;
+	void ResolveApplyDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const;
+	void ComputeApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const;
+	void CommitApplyDamage(FApplyDamageContext& InOutApplyDamageContext);
 
 private:
 	float ApplyDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const;
 
 private:
-	bool IsDuplicateHit(const FApplyDamageContext & InApplyDamageContext) const;
-	bool IsFriendlyTarget(const FApplyDamageContext & InApplyDamageContext) const;
+	bool IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const;
+	bool IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const;
 
 private:
 	FApplyDamageHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
 	FApplyDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
-	FApplyDamagePayload BuildPayload(const FHitContext & InHitContext) const;
-	FApplyDamageContext BuildContext(const FApplyDamagePayload & InApplyDamagePayload) const;
+	FApplyDamagePayload BuildPayload(const FHitContext& InHitContext) const;
+	FApplyDamageContext BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const;
 	FApplyDamageResult BuildResult(const FApplyDamageContext& InApplyDamageContext) const;
 
 private:

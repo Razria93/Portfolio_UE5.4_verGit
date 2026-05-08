@@ -13,7 +13,6 @@
 
 UCActionOrchestratorComponent::UCActionOrchestratorComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UCActionOrchestratorComponent::BeginPlay()
@@ -28,11 +27,6 @@ void UCActionOrchestratorComponent::BeginPlay()
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
-}
-
-void UCActionOrchestratorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InActionRequest)

@@ -9,6 +9,7 @@
 #include "Controller/CAIController.h"
 
 #include "Component/CActionOrchestratorComponent.h"
+#include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -17,6 +18,7 @@
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CDamageFeedbackComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
@@ -47,6 +49,10 @@ ACEnemy::ACEnemy()
 	// Init ActionOrchestratorComp
 	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
 	check(ActionOrchestratorComponent);
+
+	// Init ReactionOrchestratorComp
+	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
+	check(ReactionOrchestratorComponent);
 
 	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
@@ -79,6 +85,10 @@ ACEnemy::ACEnemy()
 	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
+
+	// Init DamageFeedbackComp
+	DamageFeedbackComponent = CreateDefaultSubobject<UCDamageFeedbackComponent>(TEXT("DamageFeedback"));
+	check(DamageFeedbackComponent);
 
 	// Init ActionFeedbackComp
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));

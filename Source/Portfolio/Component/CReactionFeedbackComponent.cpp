@@ -4,17 +4,24 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
-#include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
-#include "Camera/CameraShakeBase.h"
 
-#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
+#include "Type/CReactionFeedbackStructure.h"
 
-#include "Type/CWeaponStructure.h"
+// Internal linkage
+namespace
+{
+	namespace ReactionFeedbackScore
+	{
+		constexpr int32 ReactionExact	= 10000;
+		constexpr int32 WeaponExact		= 1000;
+		constexpr int32 ActionExact		= 100;
+		constexpr int32 IndexExact		= 10;
+	}
+}
 
 UCReactionFeedbackComponent::UCReactionFeedbackComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCReactionFeedbackComponent::BeginPlay()
@@ -28,188 +35,321 @@ void UCReactionFeedbackComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 }
 
-void UCReactionFeedbackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (!CanPlayReactionFeedback(InReactionFeedbackRequest)) return;
+
+	// PrintReactionFeedbackRequestInfo(InReactionFeedbackRequest);
+
+	ExecuteVFXFeedbacks(InReactionFeedbackRequest);
+	ExecuteSFXFeedbacks(InReactionFeedbackRequest);
 }
 
-void UCReactionFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket)
+bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
 {
-	if (!CanPlayDamageFeedback(InTakeDamagePacket)) return;
+	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::None) return false;
+	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::Max) return false;
 
-	PlayHitStop(InTakeDamagePacket);
-	PlayHitVFX(InTakeDamagePacket);
-	PlayHitSFX(InTakeDamagePacket);
-	PlayCameraShake(InTakeDamagePacket);
+	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::None) return false;
+	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::All) return false;
+	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::Max) return false;
+
+	return true;
 }
 
-void UCReactionFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket)
+bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedbackKey& InDataKey, EReactionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FReactionFeedbackRequest& InReactionFeedbackRequest, int32& OutScore) const
 {
-	if (!CanPlayHitStop(InTakeDamagePacket)) return;
+	OutScore = 0;
 
-	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
-	if (!IsValid(feedbackSubsystem)) return;
+	if (InDataTiming != InReactionFeedbackRequest.ReactionFeedbackTiming)
+		return false;
 
-	const FHitStopRequest hitStopRequest = BuildHitStopRequest(InTakeDamagePacket);
+	if (InDataTriggerKey != InReactionFeedbackRequest.TriggerKey)
+		return false;
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitStop"));
-	PrintHitStopRequestInfo(hitStopRequest);
+	const FReactionFeedbackKey& requestKey = InReactionFeedbackRequest.ReactionFeedbackKey;
 
-	feedbackSubsystem->RequestHitStop(hitStopRequest);
-}
-
-void UCReactionFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamagePacket)
-{
-	if (!IsValid(GetWorld())) return;
-	if (!IsValid(OwnerActor_Cached)) return;
-
-	if (!IsValid(HitVFX))
+	// ReactionType
+	if (InDataKey.ReactionType == requestKey.ReactionType)
 	{
-		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitVFX."));
+		OutScore += ReactionFeedbackScore::ReactionExact;
+	}
+	else if (InDataKey.ReactionType == EReactionType::All)
+	{
+		// [Pass] Wildcard match.
+	}
+	else
+	{
+		return false;
+	}
+
+	// WeaponType
+	if (InDataKey.ApplyDamageSpecKey.WeaponType == requestKey.ApplyDamageSpecKey.WeaponType)
+	{
+		OutScore += ReactionFeedbackScore::WeaponExact;
+	}
+	else if (InDataKey.ApplyDamageSpecKey.WeaponType == EWeaponType::All)
+	{
+		// [Pass] Wildcard match.
+	}
+	else
+	{
+		return false;
+	}
+
+	// ActionType
+	if (InDataKey.ApplyDamageSpecKey.ActionType == requestKey.ApplyDamageSpecKey.ActionType)
+	{
+		OutScore += ReactionFeedbackScore::ActionExact;
+	}
+	else if (InDataKey.ApplyDamageSpecKey.ActionType == EActionType::All)
+	{
+		// [Pass] Wildcard match.
+	}
+	else
+	{
+		return false;
+	}
+
+	// ActionIndex
+	if (InDataKey.ApplyDamageSpecKey.ActionIndex == requestKey.ApplyDamageSpecKey.ActionIndex)
+	{
+		OutScore += ReactionFeedbackScore::IndexExact;
+	}
+	else if (InDataKey.ApplyDamageSpecKey.ActionIndex == INDEX_NONE)
+	{
+		// [Pass] Wildcard match.
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
+}
+
+FReactionVFXExecutionKey UCReactionFeedbackComponent::BuildReactionVFXExecutionKey(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const
+{
+	FReactionVFXExecutionKey executionKey;
+
+	executionKey.VFXPlayType = InReactionVFXFeedbackData.VFXPlayType;
+	executionKey.VFX = InReactionVFXFeedbackData.VFX;
+	executionKey.SocketName = InReactionVFXFeedbackData.SocketName;
+	executionKey.RelativeLocation = InReactionVFXFeedbackData.RelativeLocation;
+	executionKey.RelativeRotation = InReactionVFXFeedbackData.RelativeRotation;
+	executionKey.RelativeScale = InReactionVFXFeedbackData.RelativeScale;
+
+	return executionKey;
+}
+
+FReactionSFXExecutionKey UCReactionFeedbackComponent::BuildReactionSFXExecutionKey(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const
+{
+	FReactionSFXExecutionKey executionKey;
+
+	executionKey.SFXPlayType = InReactionSFXFeedbackData.SFXPlayType;
+	executionKey.SFX = InReactionSFXFeedbackData.SFX;
+
+	return executionKey;
+}
+
+void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackRequest& InReactionFeedbackRequest)
+{
+	int32 bestScore = INDEX_NONE;
+	TArray<const FReactionVFXFeedbackData*> matchedDatas;
+
+	for (const FReactionVFXFeedbackData& data : VFXFeedbackDatas)
+	{
+		int32 matchScore = INDEX_NONE;
+
+		if (!TryCalculateMatchScore(data.ReactionFeedbackKey, data.ReactionFeedbackTiming, data.TriggerKey, InReactionFeedbackRequest, matchScore))
+		{
+			continue;
+		}
+
+		if (matchScore < bestScore) continue;
+
+		// New-High score: Reset and Update List
+		if (matchScore > bestScore)
+		{
+			bestScore = matchScore;
+			matchedDatas.Reset();
+			matchedDatas.Add(&data);
+			continue;
+		}
+
+		// Tie score: Add to list
+		matchedDatas.Add(&data);
+	}
+
+	if (matchedDatas.Num() <= 0)
+	{
+		FLog::Log(TEXT("[ReactionFeedback] VFX | No Matched Data"));
 		return;
 	}
 
-	const FVector location = OwnerActor_Cached->GetActorLocation();
-	const FRotator rotation = OwnerActor_Cached->GetActorRotation();
+	TSet<FReactionVFXExecutionKey> executionKeys;
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitVFX"));
-	PrintHitVFXRequestInfo(HitVFX, location, rotation);
+	for (const FReactionVFXFeedbackData* matchedData : matchedDatas)
+	{
+		if (!matchedData) continue;
 
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
+		const FReactionVFXExecutionKey executionKey = BuildReactionVFXExecutionKey(*matchedData);
+
+		if (executionKeys.Contains(executionKey))
+		{
+			FLog::Log(TEXT("[ReactionFeedback] Duplicate VFX execution key skipped"));
+			continue;
+		}
+
+		FLog::Log(TEXT("[ReactionFeedback] VFX | Matched Data"));
+		executionKeys.Add(executionKey);
+		PlayReactionVFX(*matchedData);
+	}
 }
 
-void UCReactionFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamagePacket)
+void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackRequest& InReactionFeedbackRequest)
 {
-	if (!IsValid(OwnerActor_Cached)) return;
+	int32 bestScore = INDEX_NONE;
+	TArray<const FReactionSFXFeedbackData*> matchedDatas;
 
-	if (!IsValid(HitSFX))
+	for (const FReactionSFXFeedbackData& data : SFXFeedbackDatas)
 	{
-		FLog::Log(TEXT("[UCReactionFeedbackComponent] Invalid HitSFX."));
+		int32 matchScore = INDEX_NONE;
+
+		if (!TryCalculateMatchScore(data.ReactionFeedbackKey, data.ReactionFeedbackTiming, data.TriggerKey, InReactionFeedbackRequest, matchScore))
+		{
+			continue;
+		}
+
+		if (matchScore < bestScore) continue;
+
+		// New-High score: Reset and Update List
+		if (matchScore > bestScore)
+		{
+			bestScore = matchScore;
+			matchedDatas.Reset();
+			matchedDatas.Add(&data);
+			continue;
+		}
+
+		// Tie score: Add to list
+		matchedDatas.Add(&data);
+	}
+
+	if (matchedDatas.Num() <= 0)
+	{
+		FLog::Log(TEXT("[ReactionFeedback] SFX | No Matched Data"));
 		return;
 	}
 
-	const FVector location = OwnerActor_Cached->GetActorLocation();
+	TSet<FReactionSFXExecutionKey> executionKeys;
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] Play HitSFX"));
-	PrintHitSFXRequestInfo(HitSFX, location);
+	for (const FReactionSFXFeedbackData* matchedData : matchedDatas)
+	{
+		if (!matchedData) continue;
 
-	UGameplayStatics::PlaySoundAtLocation(this, HitSFX, location);
+		const FReactionSFXExecutionKey executionKey = BuildReactionSFXExecutionKey(*matchedData);
+
+		if (executionKeys.Contains(executionKey))
+		{
+			FLog::Log(TEXT("[ReactionFeedback] Duplicate SFX execution key skipped"));
+			continue;
+		}
+
+		FLog::Log(TEXT("[ReactionFeedback] SFX | Matched Data"));
+		executionKeys.Add(executionKey);
+		PlayReactionSFX(*matchedData);
+	}
 }
 
-void UCReactionFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
+void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData& InReactionVFXFeedbackData)
 {
-	if (!CanPlayCameraShake(InTakeDamagePacket)) return;
+	if (!IsValid(InReactionVFXFeedbackData.VFX)) return;
+	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	UCWorldSubsystem_CombatFeedback* feedbackSubsystem = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>();
-	if (!IsValid(feedbackSubsystem)) return;
+	switch (InReactionVFXFeedbackData.VFXPlayType)
+	{
+	case EActionVFXPlayType::Once:
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			InReactionVFXFeedbackData.VFX,
+			OwnerCharacter_Cached->GetMesh(),
+			InReactionVFXFeedbackData.SocketName,
+			InReactionVFXFeedbackData.RelativeLocation,
+			InReactionVFXFeedbackData.RelativeRotation,
+			InReactionVFXFeedbackData.RelativeScale,
+			EAttachLocation::KeepRelativeOffset,
+			true,
+			ENCPoolMethod::None);
 
-	const FCameraShakeRequest cameraShakeRequest = BuildCameraShakeRequest(InTakeDamagePacket);
+		// PrintReactionVFXInfo(InReactionVFXFeedbackData);
 
-	FLog::Log(TEXT("[UCReactionFeedbackComponent] PlayCameraShake"));
-	PrintCameraShakeRequestInfo(cameraShakeRequest);
+		return;
+	}
 
-	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
+	case EActionVFXPlayType::Loop:
+	{
+		// TODO: Implement Loop
+		return;
+	}
+
+	default:
+		return;
+	}
 }
 
-bool UCReactionFeedbackComponent::CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData& InReactionSFXFeedbackData)
 {
-	if (!IsValid(OwnerActor_Cached)) return false;
-	if (!InTakeDamagePacket.Result.bAccepted) return false;
-	if (InTakeDamagePacket.Result.CommittedDamage <= KINDA_SMALL_NUMBER) return false;
+	if (!IsValid(InReactionSFXFeedbackData.SFX)) return;
+	if (!IsValid(OwnerActor_Cached)) return;
 
-	return true;
+	switch (InReactionSFXFeedbackData.SFXPlayType)
+	{
+	case EActionSFXPlayType::Once:
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			InReactionSFXFeedbackData.SFX,
+			OwnerActor_Cached->GetActorLocation());
+
+		// PrintReactionSFXInfo(InReactionSFXFeedbackData);
+
+		return;
+	}
+
+	case EActionSFXPlayType::Loop:
+	{
+		// TODO: Implement Loop
+		return;
+	}
+
+	default:
+		return;
+	}
 }
 
-bool UCReactionFeedbackComponent::CanPlayHitStop(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCReactionFeedbackComponent::PrintReactionFeedbackRequestInfo(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
 {
-	if (!GetWorld()) return false;
-
-	if (HitStopAudience == EFeedbackAudience::None) return false;
-	if (!FMath::IsFinite(HitStopDuration)) return false;
-	if (!FMath::IsFinite(HitStopDilation)) return false;
-	if (HitStopDuration <= KINDA_SMALL_NUMBER) return false;
-	if (HitStopDilation < 0.f) return false;
-
-	return true;
+	FLog::Log(TEXT("==== ReactionFeedback Request ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Timing"), *UEnum::GetValueAsString(InReactionFeedbackRequest.ReactionFeedbackTiming)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TriggerKey"), *InReactionFeedbackRequest.TriggerKey.ToString()));
+	FLog::Log(TEXT("----------------------------------"));
 }
 
-bool UCReactionFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCReactionFeedbackComponent::PrintReactionVFXInfo(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const
 {
-	if (!GetWorld()) return false;
-	if (!bEnableCameraShake) return false;
-	
-	if (CameraShakeAudience == EFeedbackAudience::None) return false;
-	if (!IsValid(CameraShakeClass)) return false;
-	if (!FMath::IsFinite(CameraShakeBaseScale)) return false;
-	if (CameraShakeBaseScale <= KINDA_SMALL_NUMBER) return false;
-
-	return true;
+	FLog::Log(TEXT("==== ReactionFeedback VFX Info ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InReactionVFXFeedbackData.VFXPlayType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InReactionVFXFeedbackData.VFX)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Socket"), *InReactionVFXFeedbackData.SocketName.ToString()));
+	FLog::Log(TEXT("-----------------------------------"));
 }
 
-FHitStopRequest UCReactionFeedbackComponent::BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCReactionFeedbackComponent::PrintReactionSFXInfo(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const
 {
-	FHitStopRequest hitStopRequest;
-
-	hitStopRequest.HitStopAudience = HitStopAudience;
-	hitStopRequest.HitStopDuration = HitStopDuration;
-	hitStopRequest.HitStopDilation = HitStopDilation;
-	hitStopRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
-	hitStopRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
-
-	return hitStopRequest;
-}
-
-FCameraShakeRequest UCReactionFeedbackComponent::BuildCameraShakeRequest(const FTakeDamagePacket& InTakeDamagePacket) const
-{
-	FCameraShakeRequest cameraShakeRequest;
-
-	cameraShakeRequest.CameraShakeClass = CameraShakeClass;
-	cameraShakeRequest.CameraShakeBaseScale = CameraShakeBaseScale;
-	cameraShakeRequest.CameraShakeAudience = CameraShakeAudience;
-	cameraShakeRequest.SourceActor = InTakeDamagePacket.Context.SourceActor;
-	cameraShakeRequest.TargetActor = InTakeDamagePacket.Context.TargetActor;
-	cameraShakeRequest.EventLocation = IsValid(InTakeDamagePacket.Context.TargetActor) ? InTakeDamagePacket.Context.TargetActor->GetActorLocation() : GetOwner()->GetActorLocation();
-
-	return cameraShakeRequest;
-}
-
-void UCReactionFeedbackComponent::PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const
-{
-	FLog::Log(TEXT("====== HitStop Request Info ====="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HitStopAudience"), *UEnum::GetValueAsString(InHitStopRequest.HitStopAudience)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InHitStopRequest.SourceActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InHitStopRequest.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HitStopDuration"), InHitStopRequest.HitStopDuration));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HitStopDilation"), InHitStopRequest.HitStopDilation));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCReactionFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const
-{
-	FLog::Log(TEXT("========== HitVFX Info =========="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitVFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
-	FLog::Log(FString::Printf(TEXT("%-20s: X=%.2f Y=%.2f Z=%.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
-	FLog::Log(FString::Printf(TEXT("%-20s: P=%.2f Y=%.2f R=%.2f"), TEXT("Rotation"), InRotation.Pitch, InRotation.Yaw, InRotation.Roll));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCReactionFeedbackComponent::PrintHitSFXRequestInfo(USoundBase* InHitSFX, const FVector& InLocation) const
-{
-	FLog::Log(TEXT("========= HitSFX Info ========="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitSFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
-	FLog::Log(FString::Printf(TEXT("%-20s: X = %.2f Y = %.2f Z = %.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCReactionFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const
-{
-	FLog::Log(TEXT("=== CameraShake Request Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Audience"), *UEnum::GetValueAsString(InCameraShakeRequest.CameraShakeAudience)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Class"), *GetNameSafe(InCameraShakeRequest.CameraShakeClass)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InCameraShakeRequest.SourceActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InCameraShakeRequest.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("CameraShakeBaseScale"), InCameraShakeRequest.CameraShakeBaseScale));
-	FLog::Log(TEXT("================================="));
+	FLog::Log(TEXT("==== ReactionFeedback SFX Info ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InReactionSFXFeedbackData.SFXPlayType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InReactionSFXFeedbackData.SFX)));
+	FLog::Log(TEXT("-----------------------------------"));
 }

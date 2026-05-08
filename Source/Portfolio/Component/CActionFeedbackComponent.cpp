@@ -12,7 +12,6 @@
 
 UCActionFeedbackComponent::UCActionFeedbackComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UCActionFeedbackComponent::BeginPlay()

@@ -86,9 +86,7 @@ namespace CAIKey
 	
 	namespace Reaction
 	{
-		static const FName bHasPendingReaction = "bHasPendingReaction";			// Bool
-		static const FName bHasActiveReaction = "bHasActiveReaction";			// Bool
-		static const FName PendingReactionVersion = "PendingReactionVersion";	// Int
+		static const FName bIsActiveReaction = "bIsActiveReaction";				// Bool
 	}
 
 	namespace Dead

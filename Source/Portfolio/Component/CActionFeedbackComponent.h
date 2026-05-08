@@ -31,7 +31,7 @@ private:
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 protected:
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 public:
 	void PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);

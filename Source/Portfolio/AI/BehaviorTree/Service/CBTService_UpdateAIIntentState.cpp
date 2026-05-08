@@ -44,14 +44,13 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	// 1. Absolute States
 	// -----------------------------------------------------------------------------
 	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState));
-	const bool bHasPendingReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasPendingReaction);
-	const bool bHasActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bHasActiveReaction);
+	const bool bIsActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
 	const bool bIsCombatAction = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsCombatAction);
 
 	if (deadState != EDeadState::Alive)
 		return EAIIntentState::Dead;
 
-	if (bHasPendingReaction || bHasActiveReaction)
+	if (bIsActiveReaction)
 		return EAIIntentState::HitReact;
 
 	// Keep Engage while current attack action is still active.

@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 
 #include "Component/CActionOrchestratorComponent.h"
+#include "Component/CReactionOrchestratorComponent.h"
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -17,6 +18,7 @@
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CDamageFeedbackComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
@@ -28,8 +30,6 @@
 
 ACPlayer::ACPlayer()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
 	// Init CapsuleComp
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
 	check(CapsuleComp);
@@ -68,6 +68,10 @@ ACPlayer::ACPlayer()
 	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
 	check(ActionOrchestratorComponent);
 
+	// Init ReactionOrchestratorComp
+	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
+	check(ReactionOrchestratorComponent);
+
 	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -100,6 +104,10 @@ ACPlayer::ACPlayer()
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
 
+	// Init DamageFeedbackComp
+	DamageFeedbackComponent = CreateDefaultSubobject<UCDamageFeedbackComponent>(TEXT("DamageFeedback"));
+	check(DamageFeedbackComponent);
+
 	// Init ActionFeedbackComp
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
 	check(ActionFeedbackComponent);
@@ -127,14 +135,6 @@ void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
-}
-
-void ACPlayer::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	// Consume and Execute pending reaction
-	ConsumePendingReaction();
 }
 
 void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -262,27 +262,4 @@ FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatAc
 	request.IntentEvent = EActionIntentEvent::Started;
 
 	return ActionOrchestratorComponent->RequestCombatAction(request);
-}
-
-void ACPlayer::ConsumePendingReaction()
-{
-	if (!IsValid(HealthComponent)) return;
-	if (!IsValid(ReactionComponent)) return;
-
-	if (!HealthComponent->IsAlive()) return;
-
-	if (!ReactionComponent->HasPendingReactionContext()) return;
-
-	FReactionContext reactionContext;
-	if (!ReactionComponent->TryConsumePendingReaction(reactionContext))
-	{
-		FLog::Log(TEXT("[Player|ConsumePendingReaction] Invalid Pending Reaction"));
-		return;
-	}
-
-	if (!ReactionComponent->TryExecuteReaction(reactionContext))
-	{
-		FLog::Log(TEXT("[Player|ConsumePendingReaction] Rejected Execute Reaction"));
-		return;
-	}
 }

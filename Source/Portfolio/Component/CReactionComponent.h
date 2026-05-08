@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CWeaponStructure.h"
+#include "Type/CReactionOrchestrationStructure.h"
 #include "CReactionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReactionTypeChanged, class ACharacter*, InOwnerCharacter, EReactionType, InPrevReactionType, EReactionType, InNewReactionType);
@@ -31,83 +32,97 @@ private:
 	TMap<FReactionDataKey, FReactionData> ReactionDataMap;
 
 	UPROPERTY(Transient)
-	TMap<class UClass*, class UCReaction*> ReactionExcutorMap; // TODO: Refactor from UCReaction* to TObjectPtr<UCReaction>
+	TMap<class UClass*, class UCReaction*> ReactionExcutorMap;
 
 private:
 	/* === Component State === */
 	UPROPERTY(Transient)
-	EReactionType ActiveReactionType_Cached;
+	EReactionType ActiveReactionType_Cached = EReactionType::None;
 
 private:
 	/* === ReactionContext State === */
 	UPROPERTY(Transient)
-	FReactionContext PendingReactionContext_Cached;
-
-	UPROPERTY(Transient)
 	FReactionContext ActiveReactionContext_Cached;
-
-	UPROPERTY(Transient)
-	int32 PendingReactionVersion_Cached = INDEX_NONE;
 
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCMovementComponent* MovementComp_Cached;
+	class UCMovementComponent* MovementComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached;
+	class UCStateComponent* StateComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCActionComponent* ActionComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 public:
 	/* === Delegate === */
 	FReactionTypeChanged OnReactionTypeChanged;
 
 protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-public:
-	// Getter API
-	int32 GetPendingReactionVersion() const;
+	void BeginPlay() override;
 
 public:
 	// Query API
-	bool HasPendingReactionContext() const;
-	bool HasActiveReactionContext() const;
+	bool IsActiveReaction() const;
 
 public:
-	// Pending API
-	bool TryRequestPendingDamageReaction(const FTakeDamagePacket& InTakeDamagePacket);
-	bool TryConsumePendingReaction(FReactionContext& OutReactionContext);
-	bool TryExecuteReaction(const FReactionContext& InReactionContext);
-	void FinishReaction();
+	// Get API
+	bool GetActiveReactionContext(FReactionContext& OutReactionContext) const;
+	UCReaction* GetActiveReactionExecutor() const;
 
 public:
-	// Call API
-	void OnReactionBegin();
-	void OnReactionEnd(const UCReaction* InReaction, bool bInterrupted);
-	void OnReactionWindowBegin(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
-	void OnReactionWindowEnd(EReactionWindowType InReactionWindowType, UAnimSequenceBase* InAnimation);
-
-private:
-	// Bulid Pipeline
-	bool TryBuildDamageReactionContext(const FTakeDamageResult& InTakeDamageResult, FReactionContext& OutReactionContext);
-
-private:
-	bool ValidateDamageRequest(const FTakeDamageResult & InTakeDamageResult) const;
-	EReactionType ResolveReactionType(const FTakeDamageResult & InTakeDamageResult);
+	// Temporary data provider API (Move to DataAsset).
 	bool ResolveReactionData(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData);
 	UCReaction* ResolveReactionExecutor(const FReactionData& InReactionData);
-	bool QueryReplaceReaction(UCReaction * InCurrentReactionExecutor, UCReaction * InIncomingReactionExecutor, const FReactionData & InCurrentReactionData, const FReactionData & InIncomingReactionData);
+
+public:
+	/* === EntryPoint API === */
+	// Entry points used by orchestration/external systems to drive reaction execution.
+	bool ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
+
+public:
+	void HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason);
+
+public:
+	void HandleReactionControlWindowBegin(EReactionControlWindowType InReactionWindowType);
+	void HandleReactionControlWindowEnd(EReactionControlWindowType InReactionWindowType);
+
+	void HandleReactionFeedbackWindowBegin(FName InTriggerKey);
+	void HandleReactionFeedbackWindowEnd(FName InTriggerKey);
+	void HandleReactionFeedback(FName InTriggerKey);
 
 private:
-	// Bulid Function
-	void BuildReactionDataMap(bool bRebuildAll);			// true: Rebuild | false: Append
-	void BuildReactionExecutorMap(bool bRebuildAll);		// true: Rebuild | false: Append
+	bool TryStartReaction(const FReactionContext& InReactionContext);
+	bool TryInterruptReaction(const FReactionContext& InReactionContext);
+	bool TryCancelReaction(const FReactionContext& InReactionContext);
+
+private:
+	bool StartActiveReactionInternal(const FReactionContext& InReactionContext);
+	bool StopActiveReactionInternal(EReactionStopReason InStopReason);
+	void EndActiveReactionInternal();
+
+private:
+	void SetActiveReaction(const FReactionContext& InReactionContext);
+	void ClearActiveReaction();
+
+private:
+	void EnterReactionState(const FReactionData& InReactionData);
+	void ExitReactionState(const FReactionData& InReactionData);
+
+private:
+	void AbortActiveActionForReaction();
+
+private:
+	// Temporary data build API (Move to DataAsset).
+	void BuildReactionDataMap(bool bRebuildAll);
+	void BuildReactionExecutorMap(bool bRebuildAll);
 	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
 
 private:
@@ -115,21 +130,9 @@ private:
 	UCReaction* FindReactionExecutor(const UClass* InClass);
 
 private:
-	// Execute Function
-	void ChangeActiveReaction(const FReactionContext& InReactionContext);
-	void ClearActiveReaction();
-
-private:
-	void UpdateMovementToImmovable(const FReactionData& InReactionData);
-	void UpdateMovementToMovable(const FReactionData& InReactionData);
-	void UpdateStateToReaction();
-	void UpdateStateToIdle();
-
-private:
 	void PrintReactionInfoSummary() const;
 	void PrintReactionDataMap() const;
 
-private:
 	void PrintComponentStateInfo() const;
 	void PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey) const;
 	void PrintReactionDataKeyInfo(const FReactionDataKey& InReactionDataKey) const;

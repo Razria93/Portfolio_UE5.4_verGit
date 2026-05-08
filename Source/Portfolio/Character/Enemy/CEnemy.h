@@ -72,6 +72,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
 	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
+	class UCReactionOrchestratorComponent* ReactionOrchestratorComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	class UCMovementComponent* MovementComponent;
 
@@ -97,6 +100,9 @@ private:
 	class UCReactionComponent* ReactionComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
+	class UCDamageFeedbackComponent* DamageFeedbackComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
@@ -114,6 +120,7 @@ public:
 
 public:
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
+	FORCEINLINE UCReactionOrchestratorComponent* GetReactionOrchestratorComp() const { return ReactionOrchestratorComponent; }
 
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
@@ -124,7 +131,7 @@ public:
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
-	FORCEINLINE UCReactionFeedbackComponent* GetReactionFeedbackComp() const { return ReactionFeedbackComponent; }
+	FORCEINLINE UCDamageFeedbackComponent* GetDamageFeedbackComp() const { return DamageFeedbackComponent; }
 
 public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }
