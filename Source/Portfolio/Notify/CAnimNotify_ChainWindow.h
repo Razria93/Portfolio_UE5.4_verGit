@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Notify/CAnimNotify.h"
+#include "Notify/CAnimNotify_ActionBase.h"
 #include "CAnimNotify_ChainWindow.generated.h"
 
 UENUM()
@@ -12,7 +12,7 @@ enum class EChainWindowNotifyType : uint8
 };
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_ChainWindow : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_ChainWindow : public UCAnimNotify_ActionBase
 {
 	GENERATED_BODY()
 

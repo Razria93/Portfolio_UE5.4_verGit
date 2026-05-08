@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Notify/CAnimNotify.h"
+#include "Notify/CAnimNotify_ActionBase.h"
 #include "CAnimNotify_Collision.generated.h"
 
 UENUM()
@@ -12,7 +12,7 @@ enum class ECollisionNotifyType : uint8
 };
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_Collision : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_Collision : public UCAnimNotify_ActionBase
 {
 	GENERATED_BODY()
 

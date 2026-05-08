@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Notify/CAnimNotify.h"
+#include "Notify/CAnimNotify_ActionBase.h"
 #include "CAnimNotify_ActionFeedback.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_ActionFeedback : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_ActionFeedback : public UCAnimNotify_ActionBase
 {
 	GENERATED_BODY()
 	
