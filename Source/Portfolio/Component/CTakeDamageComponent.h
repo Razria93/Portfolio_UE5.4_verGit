@@ -47,9 +47,12 @@ private:
 	bool CanTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
 	void ComputeTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
+	void DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
+
 	float ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	float ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	float CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const;
@@ -59,10 +62,6 @@ private:
 	FTakeDamageContext BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const;
 	FTakeDamageResult BuildResult(const FTakeDamageContext& InTakeDamageContext) const;
 	FTakeDamagePacket BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
-
-private:
-	void DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket) const;
-	void DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	void PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const;

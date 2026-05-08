@@ -214,6 +214,33 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
+void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket)  const
+{
+	if (!InTakeDamagePacket.Result.bAccepted) return;
+
+	if (IsValid(ReactionOrchestratorComp_Cached))
+	{
+		FDamageReactionRequest damageReactionRequest;
+		damageReactionRequest.IntentSource = EReactionIntentSource::TakeDamage;
+		damageReactionRequest.TakeDamagePacket = InTakeDamagePacket;
+
+		ReactionOrchestratorComp_Cached->RequestReaction(damageReactionRequest);
+	}
+
+	if (IsValid(DamageFeedbackComp_Cached))
+	{
+		DamageFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
+	}
+
+	// TODO:
+	// - Debug/UI Feedback
+}
+
+void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket)  const
+{
+	// - Debug/UI rejected feedback
+}
+
 AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
 {
 	// 1) Best case: engine provided instigator
@@ -302,6 +329,7 @@ FTakeDamagePayload UCTakeDamageComponent::BuildPayload(float DamageAmount, const
 	takeDamagePayload.EventInstigator = InDamageInstigator;
 	takeDamagePayload.DamageCauser = InDamageCauser;
 
+	takeDamagePayload.DamageImpactInfo = InDefaultDamageEvent.DamageImpactInfo;
 	takeDamagePayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
 	takeDamagePayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
 	takeDamagePayload.ApplyDamageAmount = InDefaultDamageEvent.ApplyDamageAmount;
@@ -319,7 +347,10 @@ FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload&
 	takeDamageContext.TargetActor = InTakeDamagePayload.TargetActor;
 	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
 	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
+
+	takeDamageContext.DamageImpactInfo = InTakeDamagePayload.DamageImpactInfo;
 	takeDamageContext.ApplyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
+
 	takeDamageContext.RequestedDamage = InTakeDamagePayload.RequestedDamage;
 
 	return takeDamageContext;
@@ -354,35 +385,6 @@ FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& I
 	takeDamagePacket.Result = InTakeDamageResult;
 
 	return takeDamagePacket;
-}
-
-void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket)  const
-{
-	if (!InTakeDamagePacket.Result.bAccepted) return;
-
-	if (IsValid(ReactionOrchestratorComp_Cached))
-	{
-		FDamageReactionRequest damageReactionRequest;
-		damageReactionRequest.IntentSource = EReactionIntentSource::TakeDamage;
-		damageReactionRequest.TakeDamagePacket = InTakeDamagePacket;
-
-		ReactionOrchestratorComp_Cached->RequestReaction(damageReactionRequest);
-	}
-
-	if (IsValid(DamageFeedbackComp_Cached))
-	{
-		DamageFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
-	}
-
-	// TODO:
-	// - Debug/UI Feedback
-	// - OnTakeDamageCommitted broadcast
-}
-
-void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket)  const
-{
-	// - Debug/UI rejected feedback
-	// - OnTakeDamageRejected broadcast
 }
 
 void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const
@@ -452,4 +454,3 @@ void UCTakeDamageComponent::PrintDamageAmountInfo(const FTakeDamagePacket& InTak
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalTakenDamage"), InTakeDamagePacket.Result.FinalTakenDamage));
 	FLog::Log(TEXT("================================="));
 }
-

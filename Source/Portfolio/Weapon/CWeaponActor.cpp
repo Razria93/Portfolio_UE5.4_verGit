@@ -256,6 +256,64 @@ FOverlapContext ACWeaponActor::BuildOverlapContext(AActor* InOwnerActor, AActor*
 	return overlapContext;
 }
 
+FDamageImpactInfo ACWeaponActor::BuildDamageImpactInfo(const FOverlapContext& InOverlapContext) const
+{
+	FDamageImpactInfo damageImpactInfo;
+
+	if (!IsValid(InOverlapContext.OverlappedComponent) || !IsValid(InOverlapContext.OtherComponent))
+	{
+		// Invalid
+		return damageImpactInfo;
+	}
+
+	if (InOverlapContext.bFromSweep)
+	{
+		damageImpactInfo.bHasHitResult = true;
+		damageImpactInfo.Source = EDamageImpactInfoSource::SweepResult;
+		damageImpactInfo.HitResult = InOverlapContext.SweepResult;
+
+		return damageImpactInfo;
+	}
+
+	const FVector queryLocation = InOverlapContext.OverlappedComponent->GetComponentLocation();
+
+	FVector closestPoint = FVector::ZeroVector;
+	const float distance = InOverlapContext.OtherComponent->GetClosestPointOnCollision(queryLocation, closestPoint);
+
+	if (distance < 0.f)
+	{
+		// Invalid
+		return damageImpactInfo;
+	}
+
+	FHitResult hitResult;
+
+	hitResult.bBlockingHit = false;
+	hitResult.ImpactPoint = closestPoint;
+	hitResult.Location = closestPoint;
+
+	if (IsValid(InOverlapContext.OtherActor))
+	{
+		hitResult.HitObjectHandle = FActorInstanceHandle(InOverlapContext.OtherActor);
+	}
+
+	if (IsValid(InOverlapContext.OtherComponent))
+	{
+		hitResult.Component = InOverlapContext.OtherComponent;
+	}
+
+	FVector impactNormal = (queryLocation - closestPoint).GetSafeNormal();
+
+	hitResult.ImpactNormal = impactNormal;
+	hitResult.Normal = impactNormal;
+
+	damageImpactInfo.bHasHitResult = true;
+	damageImpactInfo.Source = EDamageImpactInfoSource::ClosestPoint;
+	damageImpactInfo.HitResult = hitResult;
+
+	return damageImpactInfo;
+}
+
 FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapContext) const
 {
 	FHitContext hitContext;
@@ -263,6 +321,7 @@ FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapConte
 	hitContext.OverlapContext = InOverlapContext;
 	hitContext.WeaponContext = LastWeaponContext_Cached;
 	hitContext.ActionContext = LastActionContext_Cached;
+	hitContext.DamageImpactInfo = BuildDamageImpactInfo(InOverlapContext);
 
 	return hitContext;
 }

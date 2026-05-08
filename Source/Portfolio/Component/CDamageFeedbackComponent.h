@@ -69,6 +69,10 @@ private:
 	bool CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
+	FVector ResolveHitFeedbackLocation(const FTakeDamagePacket& InTakeDamagePacket) const;
+	FRotator ResolveHitFeedbackRotation(const FTakeDamagePacket& InTakeDamagePacket) const;
+
+private:
 	FHitStopRequest BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const;
 	FCameraShakeRequest BuildCameraShakeRequest(const FTakeDamagePacket& InTakeDamagePacket) const;
 
@@ -77,4 +81,5 @@ private:
 	void PrintHitVFXRequestInfo(class UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const;
 	void PrintHitSFXRequestInfo(USoundBase * InHitSFX, const FVector& InLocation) const;
 	void PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const;
+	void PrintDamageHitInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 };

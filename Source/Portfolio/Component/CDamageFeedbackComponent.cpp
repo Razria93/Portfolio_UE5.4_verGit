@@ -31,6 +31,8 @@ void UCDamageFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTa
 {
 	if (!CanPlayDamageFeedback(InTakeDamagePacket)) return;
 
+	PrintDamageHitInfo(InTakeDamagePacket);
+
 	PlayHitStop(InTakeDamagePacket);
 	PlayHitVFX(InTakeDamagePacket);
 	PlayHitSFX(InTakeDamagePacket);
@@ -63,8 +65,8 @@ void UCDamageFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamage
 		return;
 	}
 
-	const FVector location = OwnerActor_Cached->GetActorLocation();
-	const FRotator rotation = OwnerActor_Cached->GetActorRotation();
+	const FVector location = ResolveHitFeedbackLocation(InTakeDamagePacket);
+	const FRotator rotation = ResolveHitFeedbackRotation(InTakeDamagePacket);
 
 	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitVFX"));
 	PrintHitVFXRequestInfo(HitVFX, location, rotation);
@@ -82,7 +84,7 @@ void UCDamageFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamage
 		return;
 	}
 
-	const FVector location = OwnerActor_Cached->GetActorLocation();
+	const FVector location = ResolveHitFeedbackLocation(InTakeDamagePacket);
 
 	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitSFX"));
 	PrintHitSFXRequestInfo(HitSFX, location);
@@ -138,6 +140,30 @@ bool UCDamageFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& InTa
 	if (CameraShakeBaseScale <= KINDA_SMALL_NUMBER) return false;
 
 	return true;
+}
+
+FVector UCDamageFeedbackComponent::ResolveHitFeedbackLocation(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	const FDamageImpactInfo& damageHitInfo = InTakeDamagePacket.Context.DamageImpactInfo;
+
+	if (damageHitInfo.bHasHitResult)
+	{
+		return damageHitInfo.HitResult.ImpactPoint;
+	}
+
+	return IsValid(OwnerActor_Cached) ? OwnerActor_Cached->GetActorLocation() : FVector::ZeroVector;
+}
+
+FRotator UCDamageFeedbackComponent::ResolveHitFeedbackRotation(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	const FDamageImpactInfo& damageHitInfo = InTakeDamagePacket.Context.DamageImpactInfo;
+
+	if (damageHitInfo.bHasHitResult)
+	{
+		return damageHitInfo.HitResult.ImpactNormal.Rotation();
+	}
+
+	return IsValid(OwnerActor_Cached) ? OwnerActor_Cached->GetActorRotation() : FRotator::ZeroRotator;
 }
 
 FHitStopRequest UCDamageFeedbackComponent::BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const
@@ -205,5 +231,25 @@ void UCDamageFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeRe
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InCameraShakeRequest.SourceActor)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InCameraShakeRequest.TargetActor)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("CameraShakeBaseScale"), InCameraShakeRequest.CameraShakeBaseScale));
+	FLog::Log(TEXT("================================="));
+}
+
+void UCDamageFeedbackComponent::PrintDamageHitInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	if (!InTakeDamagePacket.Context.DamageImpactInfo.bHasHitResult)
+	{
+		FLog::Log(TEXT("[DamageFeedback] HitInfo: None"));
+		return;
+	}
+
+	const FHitResult& hitResult = InTakeDamagePacket.Context.DamageImpactInfo.HitResult;
+
+	FLog::Log(TEXT("======== Damage Hit Info ========"));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ImpactPoint"), *hitResult.ImpactPoint.ToCompactString()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ImpactNormal"), *hitResult.ImpactNormal.ToCompactString()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Location"), *hitResult.Location.ToCompactString()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Normal"), *hitResult.Normal.ToCompactString()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("BoneName"), *hitResult.BoneName.ToString()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Component"), *GetNameSafe(hitResult.GetComponent())));
 	FLog::Log(TEXT("================================="));
 }

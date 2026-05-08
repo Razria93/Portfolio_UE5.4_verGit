@@ -274,9 +274,11 @@ float UCApplyDamageComponent::ApplyDamageToTarget(const FApplyDamageContext& InA
 		return 0.f;
 
 	FDefaultDamageEvent damageEvent;
+
 	damageEvent.SourceActor = InApplyDamageContext.SourceActor;
 	damageEvent.TargetActor = InApplyDamageContext.TargetActor;
 	damageEvent.ApplyDamageSpecKey = InApplyDamageContext.ApplyDamageSpecKey;
+	damageEvent.DamageImpactInfo = InApplyDamageContext.DamageImpactInfo;
 	damageEvent.ApplyDamageSpec = InApplyDamageContext.ApplyDamageSpec;
 	damageEvent.ApplyDamageAmount = InApplyDamageContext.ApplyDamageAmount;
 
@@ -345,6 +347,7 @@ FApplyDamagePayload UCApplyDamageComponent::BuildPayload(const FHitContext& InHi
 	applyDamagePayload.SourceActor = InHitContext.OverlapContext.OwnerActor;
 	applyDamagePayload.DamageCauser = InHitContext.OverlapContext.DamageCauser;
 	applyDamagePayload.TargetActor = InHitContext.OverlapContext.OtherActor;
+	applyDamagePayload.DamageImpactInfo = InHitContext.DamageImpactInfo;
 	applyDamagePayload.HitWindowKey = BuildHitWindowKey(InHitContext);
 	applyDamagePayload.ApplyDamageSpecKey = BuildSpecKey(InHitContext);
 
@@ -360,6 +363,7 @@ FApplyDamageContext UCApplyDamageComponent::BuildContext(const FApplyDamagePaylo
 	applyDamageContext.DamageCauser = InApplyDamagePayload.DamageCauser;
 	applyDamageContext.TargetActor = InApplyDamagePayload.TargetActor;
 	applyDamageContext.HitWindowKey = InApplyDamagePayload.HitWindowKey;
+	applyDamageContext.DamageImpactInfo = InApplyDamagePayload.DamageImpactInfo;
 	applyDamageContext.ApplyDamageSpecKey = InApplyDamagePayload.ApplyDamageSpecKey;
 	applyDamageContext.Instigator = ResolveInstigatorController(InApplyDamagePayload.SourceActor, InApplyDamagePayload.DamageCauser);
 
