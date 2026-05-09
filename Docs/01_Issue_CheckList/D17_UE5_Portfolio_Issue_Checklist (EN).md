@@ -38,98 +38,98 @@
 
 #### 1. Organize the Current Reaction Flow
 
-- [ ] Organize the current `TakeDamage -> Reaction request -> execute` path
+- [x] Organized the execution path as `TakeDamage -> ReactionOrchestrator -> ReactionComponent -> CReaction`
 
-- [ ] Organize the current Player Tick / Enemy BT dependency points
+- [x] Organized Player Tick / Enemy BT dependency points caused by pending reaction consumption
 
-- [ ] Organize the current `ReactionComponent` responsibilities and problem points
+- [x] Organized the problem where `ReactionComponent` mixed pending storage, execution decision, and execution application responsibilities
 
 
 #### 2. Finalize the ReactionOrchestrator Structure
 
-- [ ] Organize `ReactionOrchestrator` as the top-level entry point for reaction requests
+- [x] Organized `UCReactionOrchestratorComponent::RequestReaction()` as the top-level entry point for reaction requests
 
-- [ ] Organize the responsibility for converting damage results into reaction intents
+- [x] Organized reaction type resolution from damage result into `Hit / Dead` inside the orchestrator
 
-- [ ] Organize the responsibility for generating reaction type / priority / decision inside the orchestrator
+- [x] Organized reaction type / data / executor / policy / decision generation inside the orchestrator
 
 
 #### 3. Redefine ReactionComponent Responsibilities
 
-- [ ] Reduce `ReactionComponent` to the role of reaction runtime-state manager
+- [x] Reduced `ReactionComponent` to active reaction state management and decision application
 
-- [ ] Organize ownership of active / pending reaction contexts
+- [x] Removed pending reaction context and reorganized the component around active reaction context
 
-- [ ] Organize responsibility for action abort, movement lock, and execution-state transition on reaction start / end
+- [x] Organized action abort, movement lock, and execution-state transition responsibility around the component lifecycle
 
 
 #### 4. Keep CReaction as the Execution Unit
 
-- [ ] Keep `CReaction` responsible for montage lifecycle / notify window / interruption policy
+- [x] Kept `CReaction` responsible for montage lifecycle / control window / feedback notify / local policy hooks
 
-- [ ] Organize how executor runtime flags connect to orchestration decisions
+- [x] Organized the difference between executor runtime flags, `FReactionExecutionPolicy`, and executor hooks
 
-- [ ] Confirm that executor-specific policies such as `Hit / Dead` do not conflict with the shared flow
+- [x] Confirmed that `Hit / Dead` reaction types work inside the shared orchestration flow
 
 
 #### 5. Organize Reaction Decision Policy
 
-- [ ] Finalize the first-pass scope for `Reject / Ignore / Start / Replace / Pending`
+- [x] Finalized the first-pass decision scope as `Reject / Ignore / Start / Interrupt / Cancel`
 
-- [ ] Organize the priority / interruption evaluation rule when a new hit arrives during an active reaction
+- [x] Organized active reaction priority / interruption evaluation around `CanInterruptActiveReaction()`
 
-- [ ] Organize pending replacement and queue scope
+- [x] Removed pending replacement and queue from the first-pass scope and separated them as follow-up expansion topics
 
 
 #### 6. Organize TakeDamage / Feedback Integration
 
-- [ ] Organize the connection boundary between `TakeDamageComponent` and reaction requests
+- [x] Connected `TakeDamageComponent` to request reaction through `ReactionOrchestrator` after accepted damage
 
-- [ ] Organize zero-damage / rejected-damage / dead-state conditions
+- [x] Organized zero-damage / rejected-damage / dead-state conditions through take damage result and reaction type resolution
 
-- [ ] Organize the relationship between reaction-feedback and actual reaction execution
+- [x] Separated `ReactionFeedback` by reaction execution timing and `DamageFeedback` by damage event / impact metadata
 
 
 #### 7. Organize the Shared Player / Enemy Execution Path
 
-- [ ] Organize Player / Enemy to use the same reaction request path
+- [x] Organized Player / Enemy to use the same reaction request path
 
-- [ ] Organize the direction for removing Player Tick-based pending consume
+- [x] Removed Player Tick-based pending consume flow
 
-- [ ] Organize the direction for reducing BT ownership over reaction execution
+- [x] Reduced Enemy BT so it observes active reaction state instead of owning reaction execution
 
 
 #### 8. Organize Dead Reaction and State Transition
 
-- [ ] Organize the relationship between dead reaction and dead-state transition
+- [x] Organized dead-state transition result to resolve into `EReactionType::Dead`
 
-- [ ] Organize cleanup / additional request handling rules in dead-state
+- [x] Organized dead-state follow-up action / reaction request handling through gate or priority policy
 
-- [ ] Organize whether `EReactionType::Dead` should be included
+- [x] Connected `EReactionType::Dead` and assigned top-level priority / force interrupt policy
 
 
 #### 9. Organize the First-Pass Scope
 
-- [ ] Limit the first pass to hit / dead reaction orchestration and shared execution-path unification
+- [x] Limited the first pass to hit / dead reaction orchestration and shared execution-path unification
 
-- [ ] Separate Guard / Parry / Counter / Launch / KnockDown / queue expansion scope
+- [x] Separated Guard / Parry / Counter / Launch / KnockDown / queue expansion scope into follow-up work
 
-- [ ] Organize the existing combat / action / feedback stability rules that must be preserved in this branch
+- [x] Preserved existing combat / action / feedback stability while separating reaction feedback and damage feedback
 
 
 #### 10. Organize Minimum Validation Criteria
 
-- [ ] Scenario 1: Player gets hit -> reaction starts through `ReactionOrchestrator`
+- [x] Scenario 1: Player gets hit -> reaction starts through `ReactionOrchestrator`
 
-- [ ] Scenario 2: Enemy gets hit -> reaction starts without depending on the BT start task
+- [x] Scenario 2: Enemy gets hit -> reaction starts without depending on the BT start task
 
-- [ ] Scenario 3: Verify action abort during reaction takeover while an active action is running
+- [x] Scenario 3: Verified action abort during reaction takeover while an active action is running
 
-- [ ] Scenario 4: Verify priority / interruption policy when a new hit arrives during an active reaction
+- [x] Scenario 4: Verified priority / interruption policy when a new hit arrives during an active reaction
 
-- [ ] Scenario 5: Verify that dead damage results connect correctly to dead reaction / dead-state flow
+- [x] Scenario 5: Verified that dead damage results connect correctly to dead reaction / dead-state flow
 
-- [ ] Scenario 6: Verify that movement / execution state is restored only when valid after reaction ends
+- [x] Scenario 6: Verified that movement / execution state is restored only when valid after reaction ends
 
 
 ---
@@ -142,7 +142,11 @@
 
 - `CReaction` remains the execution unit that handles montage lifecycle and timing events.
 
-- If queue behavior is not needed in the first pass, keep only the decision type and defer queue storage / processing to follow-up work.
+- Pending / queue behavior was removed from the first-pass scope and should be revisited as a separate model only if needed.
+
+- Hit feedback is handled by `DamageFeedback`, while reaction execution feedback is handled by `ReactionFeedback`.
+
+- AI BT is now treated as an active reaction state observer, not the owner of reaction execution.
 
 
 ---
