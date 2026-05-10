@@ -40,13 +40,15 @@
 
 #### 1. Analyze Current Action Flow
 
-- [ ] Document the current `ActionOrchestrator -> ActionComponent::ExecuteAction() -> CAction::DecideExecution()` flow from code
+- [x] Document the current `ActionOrchestrator -> ActionComponent::ExecuteAction() -> CAction::DecideExecution()` flow from code
 
-- [ ] Separate decision responsibility and lifecycle responsibility of `CAction_ComboAttack`, `CAction_Equip`, and `CAction_Unequip`
+- [x] Separate decision responsibility and lifecycle responsibility of `CAction_ComboAttack`, `CAction_Equip`, and `CAction_Unequip`
 
-- [ ] Organize Player input / AI BT combat action request entry paths
+- [x] Organize Player input / AI BT combat action request entry paths
 
-- [ ] Identify gameplay result points that must not change in existing chain / start / abort / complete flow
+- [x] Identify gameplay result points that must not change in existing chain / start / abort / complete flow
+
+> Current action execution flow analysis is documented in `S12_UE5_Portfolio_Current_Action_Execution_Flow`.
 
 
 #### 2. Define Action Orchestration Structures

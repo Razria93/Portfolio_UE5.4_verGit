@@ -40,13 +40,15 @@
 
 #### 1. 현재 Action 흐름 분석
 
-- [ ] `ActionOrchestrator -> ActionComponent::ExecuteAction() -> CAction::DecideExecution()` 흐름을 코드 기준으로 정리함
+- [x] `ActionOrchestrator -> ActionComponent::ExecuteAction() -> CAction::DecideExecution()` 흐름을 코드 기준으로 정리함
 
-- [ ] `CAction_ComboAttack`, `CAction_Equip`, `CAction_Unequip`의 decision 책임과 lifecycle 책임을 분리해 기록함
+- [x] `CAction_ComboAttack`, `CAction_Equip`, `CAction_Unequip`의 decision 책임과 lifecycle 책임을 분리해 기록함
 
-- [ ] Player input / AI BT combat action request가 action request로 진입하는 경로를 정리함
+- [x] Player input / AI BT combat action request가 action request로 진입하는 경로를 정리함
 
-- [ ] 기존 chain / start / abort / complete 흐름에서 gameplay 결과가 바뀌면 안 되는 지점을 정리함
+- [x] 기존 chain / start / abort / complete 흐름에서 gameplay 결과가 바뀌면 안 되는 지점을 정리함
+
+> 현재 action 실행 흐름 분석은 `S12_UE5_Portfolio_Current_Action_Execution_Flow` 문서를 기준으로 정리함.
 
 
 #### 2. Action Orchestration Structure 정의
