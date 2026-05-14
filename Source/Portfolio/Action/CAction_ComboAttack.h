@@ -12,41 +12,37 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 
 private:
 	UPROPERTY(Transient)
-	int32 ActionIndex = 0;
-
-private:
-	UPROPERTY(Transient)
 	bool bChainWindowOpened = false;
 
 	UPROPERTY(Transient)
 	bool bHasChainedInput = false;
 
-public:
-	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas) override;
+	UPROPERTY(Transient)
+	FActionData PendingChainData_Cached = FActionData();
 
 public:
-	/* === Action Arbitration === */
-	EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const override;
+	void InitializeAction(ACharacter* InOwnerCharacter, class UCActionComponent* InOwnerActionComp) override;
 
 public:
-	bool Start() override;
-	bool ApplyChain(const FActionExecutionQuery& InActionExecuteQuery) override;
+	EActionLocalLevelDecision ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const override;
 
 public:
+	bool Start(const FActionData& InData) override;
+	bool ApplyChain(const FActionData& InData) override;
+	void Stop(EActionStopReason InStopReason) override;
 	void Complete() override;
-	void Abort(EActionAbortReason InActionAbortReason) override;
+
+public:
+	void AdvanceCombo();
 
 public:
 	void OpenChainWindow();
 	void CloseChainWindow();
 
-public:
-	void AdvanceCombo();
-
-protected:
-	FActionContext BuildActionContext() const override;
-	FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const override;
+private:
+	void ClearComboRuntime();
 
 private:
+	bool CanAcceptChain(const FActionData& InData) const;
 	bool CanAdvanceCombo() const;
 };

@@ -2,142 +2,231 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+#include "Animation/AnimInstance.h"
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 
-#include "Type/CWeaponStructure.h"
-
-void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas)
+void UCAction::InitializeAction(ACharacter* InOwnerCharacter, UCActionComponent* InOwnerActionComp)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
-	ActionType = InActionType;
-	ActionDatas_Injected = InActionDatas;
+	OwnerActionComp_Injected = InOwnerActionComp;
 
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));
+	WeaponComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
 	check(WeaponComp_Cached);
 
-	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionComponent::StaticClass()));
-	check(ActionComp_Cached);
-
-	ActionFeedbackComp_Cached = Cast<UCActionFeedbackComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionFeedbackComponent::StaticClass()));
+	ActionFeedbackComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCActionFeedbackComponent>();
 	check(ActionFeedbackComp_Cached);
 }
 
-EActionType UCAction::GetActionType() const
+EActionLocalLevelDecision UCAction::ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const
 {
-	return ActionType;
-}
+	if (!IsValid(OwnerCharacter_Injected)) return EActionLocalLevelDecision::Reject;
 
-FActionContext UCAction::GetActionContext() const
-{
-	return BuildActionContext();
-}
+	const bool bIsIdle = InQuery.ExecutionState == EExecutionState::Idle;
+	const bool bIsActiveAction = InQuery.bIsActiveAction;
 
-void UCAction::SetActionType(EActionType InActionType)
-{
-	ActionType = InActionType;
-}
-
-EActionExecutionDecision UCAction::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
-{
-	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
-
-	if (InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle)
+	if (bIsIdle && !bIsActiveAction)
 	{
-		return EActionExecutionDecision::Start;
+		return EActionLocalLevelDecision::Start;
 	}
 
-	return EActionExecutionDecision::Reject;
+	return EActionLocalLevelDecision::Reject;
 }
 
-bool UCAction::Start()
+bool UCAction::Start(const FActionData& InData)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!InData.IsValidMinimal()) return false;
+	if (bIsActive) return false;
 
-	bIsAction = true;
+	ActiveDataKey_Cached = InData.ActionDataKey;
+	ActiveData_Cached = InData;
+	ActiveMontage_Cached = InData.Montage;
 
-	RequestFeedback(EActionFeedbackTiming::ActionStart, NAME_None);
-	EmitActionEvent(EActionEventType::ActionStarted, INDEX_NONE);
+	if (!PlayMontage(InData))
+	{
+		ClearRuntime();
+		return false;
+	}
+
+	bIsActive = true;
+
+	RequestFeedback(EActionFeedbackTiming::ActionStart);
+	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached.ActionIndex);
+
 	return true;
 }
 
-bool UCAction::ApplyChain(const FActionExecutionQuery& InActionExecuteQuery)
+bool UCAction::ApplyChain(const FActionData& InData)
 {
 	return false;
 }
 
-void UCAction::Complete()
+void UCAction::Stop(EActionStopReason InStopReason)
 {
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!bIsActive) return;
 
-	RequestFeedback(EActionFeedbackTiming::ActionEnd, NAME_None);
-	EmitActionEvent(EActionEventType::ActionCompleted, INDEX_NONE);
+	EActionEventType eventType = EActionEventType::None;
+	EActionFinishReason finishReason = EActionFinishReason::None;
 
-	bIsAction = false;
+	switch (InStopReason)
+	{
+	case EActionStopReason::Interrupted:
+	{
+		eventType = EActionEventType::ActionInterrupted;
+		finishReason = EActionFinishReason::Interrupted;
+		break;
+	}
+	case EActionStopReason::Cancelled:
+	{
+		eventType = EActionEventType::ActionCancelled;
+		finishReason = EActionFinishReason::Cancelled;
+		break;
+	}
+	default:
+		eventType = EActionEventType::ActionIgnored;
+		finishReason = EActionFinishReason::Ignored;
+		break;
+	}
+
+	StopMontage();
+
+	EmitActionEvent(eventType, ActiveDataKey_Cached.ActionIndex);
+
+	ClearRuntime();
+
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		OwnerActionComp_Injected->HandleActionFinished(this, finishReason);
+	}
 }
 
-void UCAction::Abort(EActionAbortReason InActionAbortReason)
+void UCAction::Complete()
+{
+	if (!bIsActive) return;
+
+	RequestFeedback(EActionFeedbackTiming::ActionComplete);
+	EmitActionEvent(EActionEventType::ActionCompleted, ActiveDataKey_Cached.ActionIndex);
+
+	ClearRuntime();
+
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		OwnerActionComp_Injected->HandleActionFinished(this, EActionFinishReason::Completed);
+	}
+}
+
+void UCAction::ClearRuntime()
+{
+	bIsActive = false;
+
+	ActiveDataKey_Cached = FActionDataKey();
+	ActiveData_Cached = FActionData();
+	ActiveMontage_Cached = nullptr;
+}
+
+bool UCAction::PlayMontage(const FActionData& InData)
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(InData.Montage)) return false;
+
+	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
+
+	return duration > 0.0f;
+}
+
+void UCAction::StopMontage(float InBlendOutTime)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(ActiveMontage_Cached)) return;
 
-	EmitActionEvent(EActionEventType::ActionAborted, INDEX_NONE);
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return;
 
-	bIsAction = false;
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return;
+
+	animInstance->Montage_Stop(InBlendOutTime, ActiveMontage_Cached);
+}
+
+void UCAction::HandleNotifyCommand(EActionNotifyCommand InCommand)
+{
+	switch (InCommand)
+	{
+	case EActionNotifyCommand::Complete:
+		Complete();
+		return;
+
+	case EActionNotifyCommand::PushHitContext:
+		PushHitContext();
+		return;
+
+	case EActionNotifyCommand::ClearHitContext:
+		ClearHitContext();
+		return;
+
+	default:
+		return;
+	}
+}
+
+void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey)
+{
+	RequestFeedback(InTiming, InTriggerKey);
 }
 
 void UCAction::PushHitContext()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Cached)) return;
 
 	WeaponComp_Cached->PushContext(BuildActionContext());
 }
 
 void UCAction::ClearHitContext()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Cached)) return;
 
 	WeaponComp_Cached->ClearContext();
 }
 
-void UCAction::RequestFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey) const
+void UCAction::RequestFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey) const
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(ActionFeedbackComp_Cached)) return;
+	if (!IsValid(ActionFeedbackComp_Cached)) return;
 
-	ActionFeedbackComp_Cached->PlayFeedback(BuildActionFeedbackRequest(InActionFeedbackTiming, InTriggerKey));
+	ActionFeedbackComp_Cached->PlayFeedback(BuildFeedbackRequest(InTiming, InTriggerKey));
 }
 
 FActionContext UCAction::BuildActionContext() const
 {
-	FActionContext actionContext;
+	FActionContext context;
 
-	actionContext.ActionType = ActionType;
-	actionContext.ActionIndex = INDEX_NONE;
-
-	return actionContext;
+	context.ActionType = ActiveDataKey_Cached.ActionType;
+	context.ActionIndex = ActiveDataKey_Cached.ActionIndex;
+	
+	return context;
 }
 
-FActionFeedbackRequest UCAction::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
 {
-	FActionFeedbackRequest actionFeedbackRequest;
+	FActionFeedbackRequest request;
 
-	actionFeedbackRequest.ActionFeedbackKey.ActionType = ActionType;
-	actionFeedbackRequest.ActionFeedbackKey.ActionIndex = INDEX_NONE;
-	actionFeedbackRequest.ActionFeedbackTiming = InTiming;
-	actionFeedbackRequest.TriggerKey = InTriggerKey;
-
-	return actionFeedbackRequest;
+	request.ActionFeedbackKey.ActionType = ActiveDataKey_Cached.ActionType;
+	request.ActionFeedbackKey.ActionIndex = ActiveDataKey_Cached.ActionIndex;
+	request.ActionFeedbackTiming = InTiming;
+	request.TriggerKey = InTriggerKey;
+	
+	return request;
 }
 
-void UCAction::EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex) const
+void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const
 {
-	if (!IsValid(ActionComp_Cached)) return;
+	if (!IsValid(OwnerActionComp_Injected)) return;
 
-	const FActionContext actionContext = BuildActionContext();
-	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : actionContext.ActionIndex;
+	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : ActiveDataKey_Cached.ActionIndex;
 
-	ActionComp_Cached->BroadcastActionEvent(ActionType, actionIndex, InActionEventType);
+	OwnerActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, InEventType);
 }

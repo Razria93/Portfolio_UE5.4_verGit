@@ -3,7 +3,10 @@
 
 #include "GameFramework/Character.h"
 
+#include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CReactionComponent.h"
+#include "Component/CHealthComponent.h"
 #include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -20,45 +23,140 @@ void UCActionComponent::BeginPlay()
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
 
+	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
-	check(StateComp_Cached);
+	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
+	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 
-	for (const FActionDefinition& actionDefinition : ActionDefinitions)
-	{
-		if (!CreateAction(OwnerCharacter_Cached, actionDefinition))
-		{
-			FLog::Log(FString::Printf(TEXT("[ActionComponent] CreateAction failed. ActionType = %d"), (int32)actionDefinition.ActionType));
+	// Rebuild All
+	BuildActionDataMap(true);
+	BuildActionExecutorMap(true);
 
-			continue;
-		}
-	}
-
-	CurrentActionType = EActionType::Idle;
+	// Init Action State
+	ActiveActionType = EActionType::Idle;
 }
 
 void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	for (TPair<EActionType, UCAction*>& Pair : ActionContainer)
+	for (TPair<UClass*, UCAction*>& pair : ActionExecutorMap)
 	{
-		UCAction* Action = Pair.Value;
+		UCAction* actionExecutor = pair.Value;
+		if (!IsValid(actionExecutor)) continue;
 
-		if (!IsValid(Action)) continue;
-
-		Action->Tick(DeltaTime);
+		actionExecutor->Tick(DeltaTime);
 	}
 }
 
-UCAction* UCActionComponent::GetCurrentAction() const
+bool UCActionComponent::IsActive() const
 {
-	auto currentActionPtr = ActionContainer.Find(CurrentActionType);
-	if (!currentActionPtr) return nullptr;
+	return ActiveActionType != EActionType::None
+		&& ActiveActionType != EActionType::Idle
+		&& ActiveActionType != EActionType::All
+		&& ActiveActionType != EActionType::Max;
+}
 
-	UCAction* currentAction = *currentActionPtr;
-	if (!IsValid(currentAction)) return nullptr;
+EActionType UCActionComponent::GetActiveActionType() const
+{
+	return ActiveActionType;
+}
 
-	return currentAction;
+int32 UCActionComponent::GetActiveActionIndex() const
+{
+	return ActiveActionIndex;
+}
+
+bool UCActionComponent::GetActiveActionData(FActionData& OutActionData) const
+{
+	OutActionData = FActionData();
+
+	if (!IsActive()) return false;
+	if (!ActiveActionData.IsValidMinimal()) return false;
+
+	OutActionData = ActiveActionData;
+	return true;
+}
+
+UCAction* UCActionComponent::GetActiveActionExecutor() const
+{
+	if (!IsActive()) return nullptr;
+	if (!IsValid(ActiveActionExecutor)) return nullptr;
+
+	return ActiveActionExecutor;
+}
+
+bool UCActionComponent::ResolveActionData(const FActionDataKey& InActionDataKey, FActionData& OutActionData)
+{
+	OutActionData = FActionData();
+
+	if (!InActionDataKey.IsValidExactKey()) return false;
+
+	FActionData const* foundPtr = ActionDataMap.Find(InActionDataKey);
+	if (foundPtr == nullptr) return false;
+
+	FActionData found = *foundPtr;
+
+	OutActionData = found;
+
+	return found.IsValidMinimal();
+}
+
+UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InActionData)
+{
+	// 1) Try reuse cached Reaction; return if valid
+	UCAction* foundAction = FindActionExecutor(InActionData.ActionExecutorKey.Get());
+	if (IsValid(foundAction)) return foundAction;
+
+	// 2) [Policy] Try Add and cache Reaction; return if valid
+	UCAction* addAction = AddActionExecutor(InActionData.ActionExecutorKey);
+	if (IsValid(addAction)) return addAction;
+
+	// [Debug] ReactionData is Valid; but Find and Add Failed
+	return nullptr;
+}
+
+bool UCActionComponent::ApplyActionDecision(const FActionOrchestrationLevelResult& InActionOrchestrationResult)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!InActionOrchestrationResult.IsAcceptedDecision()) return false;
+
+	if (!ApplyReactionStopDirective(InActionOrchestrationResult)) return false;
+
+	switch (InActionOrchestrationResult.Decision)
+	{
+	case EActionOrchestrationLevelDecision::Start:
+		return TryStartAction(InActionOrchestrationResult.ResolvedContext);
+
+	case EActionOrchestrationLevelDecision::Chain:
+		return TryChainAction(InActionOrchestrationResult.ResolvedContext);
+
+	case EActionOrchestrationLevelDecision::Enqueue:
+		return TryEnqueueAction(InActionOrchestrationResult.ResolvedContext);
+
+	case EActionOrchestrationLevelDecision::Interrupt:
+		return TryReplaceAction(InActionOrchestrationResult.ResolvedContext, EActionStopReason::Interrupted);
+
+	case EActionOrchestrationLevelDecision::Cancel:
+		return TryStartAction(InActionOrchestrationResult.ResolvedContext);
+
+	default:
+		return false;
+	}
+}
+
+bool UCActionComponent::RequestStopActiveAction(EActionStopReason InActionStopReason)
+{
+	return TryStopActiveAction(InActionStopReason);
+}
+
+void UCActionComponent::HandleActionFinished(const UCAction* InAction, EActionFinishReason InActionFinishReason)
+{
+	if (!IsActive()) return;
+	if (!IsValid(InAction)) return;
+	if (InAction != GetActiveActionExecutor()) return;
+
+	EndActiveActionInternal(InActionFinishReason);
 }
 
 void UCActionComponent::BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)
@@ -71,201 +169,382 @@ void UCActionComponent::BroadcastActionEvent(EActionType InActionType, int32 InA
 	}
 }
 
-FActionExecutionResult UCActionComponent::ExecuteAction(EActionType IncomingActionType)
+void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand)
 {
-	if (!IsValid(OwnerCharacter_Cached))
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
+	if (InNotifyCommand == EActionNotifyCommand::None || InNotifyCommand == EActionNotifyCommand::Max) return;
 
-	UCAction** actionPtr = ActionContainer.Find(IncomingActionType);
-	if (actionPtr == nullptr)
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return;
 
-	UCAction* incomingAction = *actionPtr;
-	if (!IsValid(incomingAction))
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
-
-	const FActionExecutionQuery actionExecutionQuery = BuildActionExecutionQuery(IncomingActionType, incomingAction);
-	const EActionExecutionDecision actionExecutionDecision = incomingAction->DecideExecution(actionExecutionQuery);
-
-	switch (actionExecutionDecision)
-	{
-	case EActionExecutionDecision::Start:
-	{
-		return StartAction(incomingAction, IncomingActionType)
-			? BuildActionExecutionResult(EActionExecutionDecision::Start, IncomingActionType)
-			: BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
-	}
-
-	case EActionExecutionDecision::Chain:
-	{
-		return ApplyActionChain(incomingAction, actionExecutionQuery)
-			? BuildActionExecutionResult(EActionExecutionDecision::Chain, IncomingActionType)
-			: BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
-	}
-
-	case EActionExecutionDecision::Enqueue:
-	{
-		// TODO: Implement action enqueue.
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
-	}
-
-	case EActionExecutionDecision::Interrupt:
-	{
-		// TODO: Implement action interrupt.
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
-	}
-
-	case EActionExecutionDecision::Ignore:
-	{
-		return BuildActionExecutionResult(EActionExecutionDecision::Ignore, IncomingActionType);
-	}
-
-	case EActionExecutionDecision::Reject:
-	default:
-		return BuildActionExecutionResult(EActionExecutionDecision::Reject, IncomingActionType);
-	}
+	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
-void UCActionComponent::CompleteCurrentAction()
+void UCActionComponent::HandleActionFeedback(FName InTriggerKey)
+{
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerOnce, InTriggerKey);
+}
+
+void UCActionComponent::HandleActionFeedbackWindowBegin(FName InTriggerKey)
+{
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowBegin, InTriggerKey);
+}
+
+void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
+{
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
+}
+
+void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	UCAction* currentAction = GetCurrentAction();
-	if (!IsValid(currentAction)) return;
+	// bRebuildAll == true: Rebuild 
+	// bRebuildAll == false: Append
 
-	currentAction->Complete();
+	if (bRebuildAll)
+	{
+		ActionDataMap.Reset();
+	}
 
-	ExitActionState();
+	for (const FActionData& actionData : ActionDatas)
+	{
+		if (!actionData.IsValidMinimal()) continue;
+
+		const FActionDataKey& actionDataKey = actionData.ActionDataKey;
+		if (!actionDataKey.IsValidExactKey()) continue;
+
+		if (ActionDataMap.Contains(actionDataKey))
+		{
+			if (bRebuildAll)
+			{
+				// [Debug] Duplicate key: Override data
+				FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
+				ActionDataMap[actionDataKey] = actionData;
+			}
+			else // bRebuildAll == false
+			{
+				// [Policy] Currently set to 'skip'. (Options: ignore | restart | stop-then-play)
+				continue;
+			}
+		}
+		else // Contains(actionDataKey) == false
+		{
+			ActionDataMap.Add(actionDataKey, actionData);
+		}
+	}
 }
 
-void UCActionComponent::AbortCurrentAction(EActionAbortReason InActionAbortReason)
+void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	UCAction* currentAction = GetCurrentAction();
-	if (!IsValid(currentAction)) return;
+	// bRebuildAll == true: Rebuild 
+	// bRebuildAll == false: Append
 
-	currentAction->Abort(InActionAbortReason);
+	if (bRebuildAll)
+	{
+		ActionExecutorMap.Reset();
+	}
 
-	ExitActionState();
+	for (const FActionData& actionData : ActionDatas)
+	{
+		if (!actionData.IsValidMinimal()) continue;
+
+		UClass* keyClass = actionData.ActionExecutorKey.Get();
+		if (!IsValid(keyClass)) continue;
+
+		// 1) Find existing cached Reaction
+		if (!bRebuildAll)
+		{
+			const UCAction* found = FindActionExecutor(keyClass);
+			if (IsValid(found)) continue;
+		}
+
+		// 2) Add cached Reaction
+		UCAction* add = AddActionExecutor(keyClass);
+		if (!IsValid(add))
+		{
+			FLog::Log(FString::Printf(TEXT("[BuildActionExecutorMap] Failed to add ActionExecutor. ActionExecutorKey = %s"), *GetNameSafe(actionData.ActionExecutorKey.Get())));
+			continue;
+		}
+	}
 }
 
-bool UCActionComponent::StartAction(UCAction* InAction, EActionType InActionType)
+UCAction* UCActionComponent::AddActionExecutor(const TSubclassOf<class UCAction> InSubClass)
 {
-	if (!IsValid(InAction)) return false;
+	UClass* keyClass = InSubClass.Get();
+	if (!IsValid(keyClass)) return nullptr;
 
-	EnterActionState(InActionType);
+	UCAction* add = NewObject<UCAction>(this, InSubClass);
+	if (!IsValid(add)) return nullptr;
 
-	if (!InAction->Start())
+	add->InitializeAction(OwnerCharacter_Cached, this);
+	ActionExecutorMap.Add(keyClass, add);
+
+	return add;
+}
+
+UCAction* UCActionComponent::FindActionExecutor(const UClass* InClass)
+{
+	UCAction* const* foundPtr = ActionExecutorMap.Find(InClass);
+	if (!foundPtr) return nullptr;
+
+	UCAction* found = *foundPtr;
+
+	if (!IsValid(found))
 	{
-		ExitActionState();
+		// Remove Invalid Entry
+		ActionExecutorMap.Remove(InClass);
+
+		return nullptr;
+	}
+
+	return found;
+}
+
+bool UCActionComponent::TryStartAction(const FActionResolvedContext& InActionResolvedContext)
+{
+	if (IsActive()) return false;
+	if (!InActionResolvedContext.IsValidMinimal()) return false;
+
+	return StartActiveActionInternal(InActionResolvedContext);
+}
+
+bool UCActionComponent::TryChainAction(const FActionResolvedContext& InActionResolvedContext)
+{
+	if (!IsActive()) return false;
+	if (!InActionResolvedContext.IsValidMinimal()) return false;
+
+	return ChainActiveActionInternal(InActionResolvedContext);
+}
+
+bool UCActionComponent::TryEnqueueAction(const FActionResolvedContext& InActionResolvedContext)
+{
+	return false;
+}
+
+bool UCActionComponent::TryReplaceAction(const FActionResolvedContext& InActionResolvedContext, EActionStopReason InStopReason)
+{
+	if (!IsActive()) return false;
+	if (!InActionResolvedContext.IsValidMinimal()) return false;
+
+	if (!StopActiveActionInternal(InStopReason)) return false;
+
+	return StartActiveActionInternal(InActionResolvedContext);
+}
+
+bool UCActionComponent::TryStopActiveAction(EActionStopReason InStopReason)
+{
+	if (!IsActive()) return true;
+
+	if (!StopActiveActionInternal(InStopReason)) return false;
+
+	const EActionFinishReason finishReason = ConvertStopReasonToFinishReason(InStopReason);
+
+	return EndActiveActionInternal(finishReason);
+}
+
+bool UCActionComponent::StartActiveActionInternal(const FActionResolvedContext& InActionResolvedContext)
+{
+	if (!InActionResolvedContext.IsValidMinimal()) return false;
+
+	UCAction* actionExecutor = InActionResolvedContext.ActionExecutor;
+	if (!IsValid(actionExecutor)) return false;
+
+	const FActionData& incomingActionData = InActionResolvedContext.ActionData;
+
+	EnterActionState(incomingActionData);
+
+	if (!actionExecutor->Start(incomingActionData))
+	{
+		ExitActionState(incomingActionData);
 		return false;
 	}
 
+	SetActiveActionContext(InActionResolvedContext);
 	return true;
 }
 
-bool UCActionComponent::ApplyActionChain(UCAction* InAction, const FActionExecutionQuery& InActionExecuteQuery)
+bool UCActionComponent::ChainActiveActionInternal(const FActionResolvedContext& InActionResolvedContext)
 {
-	if (!IsValid(InAction)) return false;
+	UCAction* actionExecutor = InActionResolvedContext.ActionExecutor;
+	if (!IsValid(actionExecutor)) return false;
 
-	return InAction->ApplyChain(InActionExecuteQuery);
+	const FActionData& incomingActionData = InActionResolvedContext.ActionData;
+
+	return actionExecutor->ApplyChain(incomingActionData);
 }
 
-FActionExecutionQuery UCActionComponent::BuildActionExecutionQuery(EActionType InIncomingActionType, UCAction* InIncomingAction) const
+bool UCActionComponent::StopActiveActionInternal(EActionStopReason InStopReason)
 {
-	FActionExecutionQuery actionExecutionQuery;
+	if (!IsActive()) return true;
 
-	actionExecutionQuery.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
+	UCAction* actionExecutor = GetActiveActionExecutor();
+	if (!IsValid(actionExecutor))
+	{
+		// Stale Guard
+		const EActionFinishReason finishReason = ConvertStopReasonToFinishReason(InStopReason);
+		EndActiveActionInternal(finishReason);
 
-	actionExecutionQuery.CurrentActionType = CurrentActionType;
-	actionExecutionQuery.CurrentAction = GetCurrentAction();
+		return !IsActive();
+	}
 
-	actionExecutionQuery.IncomingActionType = InIncomingActionType;
-	actionExecutionQuery.IncomingAction = InIncomingAction;
+	actionExecutor->Stop(InStopReason);
 
-	// PrintActionExecutionQuery(actionExecutionQuery);
-
-	return actionExecutionQuery;
+	return !IsActive();
 }
 
-FActionExecutionResult UCActionComponent::BuildActionExecutionResult(EActionExecutionDecision InActionExecutionDecision, EActionType InActionType) const
+bool UCActionComponent::EndActiveActionInternal(EActionFinishReason InFinishReason)
 {
-	return FActionExecutionResult(InActionExecutionDecision, InActionType);
+	if (!IsActive()) return true;
+
+	// None Reference. Snapshot before clearing active context.
+	const FActionData activeData = ActiveActionData;
+
+	if (activeData.IsValidMinimal())
+	{
+		ExitActionState(activeData);
+	}
+
+	ClearActiveActionContext();
+
+	return !IsActive();
 }
 
-void UCActionComponent::EnterActionState(EActionType InActionType)
+void UCActionComponent::SetActiveActionContext(const FActionResolvedContext& InActionResolvedContext)
 {
-	if (!IsValid(StateComp_Cached)) return;
+	if (!InActionResolvedContext.IsValidMinimal()) return;
 
-	StateComp_Cached->SetActionState();
-	ChangeActionType(InActionType);
-}
+	const EActionType prevActionType = ActiveActionType;
 
-void UCActionComponent::ExitActionState()
-{
-	if (!IsValid(StateComp_Cached)) return;
-
-	ChangeActionType(EActionType::Idle);
-	StateComp_Cached->SetIdleState();
-}
-
-void UCActionComponent::ChangeActionType(EActionType InNewActionType)
-{
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	EActionType previousActionType = CurrentActionType;
-	CurrentActionType = InNewActionType;
+	ActiveActionType = InActionResolvedContext.ActionData.ActionDataKey.ActionType;
+	ActiveActionIndex = InActionResolvedContext.ActionData.ActionDataKey.ActionIndex;
+	ActiveActionData = InActionResolvedContext.ActionData;
+	ActiveActionExecutor = InActionResolvedContext.ActionExecutor;
 
 	if (OnActionTypeChanged.IsBound())
-		OnActionTypeChanged.Broadcast(OwnerCharacter_Cached, previousActionType, CurrentActionType);
+	{
+		OnActionTypeChanged.Broadcast(OwnerCharacter_Cached, prevActionType, ActiveActionType);
+	}
 }
 
-// InActionDefinition : ActionType / CAction Class / Datas
-bool UCActionComponent::CreateAction(ACharacter* InOwnerCharacter, const FActionDefinition& InActionDefinition)
+void UCActionComponent::ClearActiveActionContext()
 {
-	if (!IsValid(InOwnerCharacter)) return false;
+	const EActionType prevActionType = ActiveActionType;
 
-	if (InActionDefinition.ActionType == EActionType::Max)
+	ActiveActionType = EActionType::None;
+	ActiveActionIndex = INDEX_NONE;
+	ActiveActionData = FActionData();
+	ActiveActionExecutor = nullptr;
+
+	if (OnActionTypeChanged.IsBound())
 	{
-		FLog::Log(TEXT("[ActionComponent] ActionType is not set."));
-		return false;
+		OnActionTypeChanged.Broadcast(OwnerCharacter_Cached, prevActionType, ActiveActionType);
+	}
+}
+
+void UCActionComponent::EnterActionState(const FActionData& InActionData)
+{
+	if (IsValid(MovementComp_Cached) && !InActionData.bCanMove)
+	{
+		MovementComp_Cached->SetStop();
 	}
 
-	if (!IsValid(InActionDefinition.ActionClass))
+	if (IsValid(StateComp_Cached))
 	{
-		FLog::Log(TEXT("[ActionComponent] ActionClass is not set."));
-		return false;
+		StateComp_Cached->SetActionState();
+	}
+}
+
+void UCActionComponent::ExitActionState(const FActionData& InActionData)
+{
+	const bool bAlive = IsValid(HealthComp_Cached) && HealthComp_Cached->IsAlive();
+	const bool bDeadExecution = IsValid(StateComp_Cached) && StateComp_Cached->GetCurrentExecutionState() == EExecutionState::Dead;
+
+	if (!bAlive || bDeadExecution) return;
+
+	if (IsValid(MovementComp_Cached) && !InActionData.bCanMove)
+	{
+		MovementComp_Cached->SetMove();
 	}
 
-	if (ActionContainer.Contains(InActionDefinition.ActionType))
+	if (IsValid(StateComp_Cached))
 	{
-		FLog::Log(FString::Printf(TEXT("[ActionComponent] ActionType already exists. ActionType = %d"), (int32)InActionDefinition.ActionType));
-		return false;
+		StateComp_Cached->SetIdleState();
 	}
+}
 
-	UCAction* action = NewObject<UCAction>(this, InActionDefinition.ActionClass);
+bool UCActionComponent::HandleActionChained(const UCAction* InAction, const FActionData& InActionData)
+{
+	if (!IsActive()) return false;
+	if (!IsValid(InAction)) return false;
+	if (InAction != GetActiveActionExecutor()) return false;
+	if (!InActionData.IsValidMinimal()) return false;
 
-	if (!IsValid(action))
-	{
-		FLog::Log(TEXT("[ActionComponent]  Action was not created."));
-		return false;
-	}
-
-	action->InitializeAction(InOwnerCharacter, InActionDefinition.ActionType, InActionDefinition.ActionDatas);
-
-	ActionContainer.Add(InActionDefinition.ActionType, action);
+	ActiveActionType = InActionData.ActionDataKey.ActionType;
+	ActiveActionIndex = InActionData.ActionDataKey.ActionIndex;
+	ActiveActionData = InActionData;
 
 	return true;
 }
 
-void UCActionComponent::PrintActionExecutionQuery(const FActionExecutionQuery& InActionExecutionQuery) const
+bool UCActionComponent::ApplyReactionStopDirective(const FActionOrchestrationLevelResult& InActionOrchestrationResult)
 {
-	FLog::Log(TEXT("==== ActionExecutionQuery ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ExecutionState"), *UEnum::GetValueAsString(InActionExecutionQuery.ExecutionState)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentActionType"), *UEnum::GetValueAsString(InActionExecutionQuery.CurrentActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CurrentAction"), *GetNameSafe(InActionExecutionQuery.CurrentAction)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IncomingActionType"), *UEnum::GetValueAsString(InActionExecutionQuery.IncomingActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IncomingAction"), *GetNameSafe(InActionExecutionQuery.IncomingAction)));
+	if (!InActionOrchestrationResult.StopDirective.IsValidRequest()) return true;
+	if (!IsValid(ReactionComp_Cached)) return true;
+
+	const EReactionType activeReactionType = ReactionComp_Cached->GetActiveReactionType();
+
+	if (activeReactionType == EReactionType::None
+		|| activeReactionType == EReactionType::Idle
+		|| activeReactionType == EReactionType::All
+		|| activeReactionType == EReactionType::Max)
+	{
+		return true;
+	}
+
+	if (activeReactionType == EReactionType::Dead)
+	{
+		return false;
+	}
+
+	return ReactionComp_Cached->RequestStopActiveReaction(InActionOrchestrationResult.StopDirective);
+}
+
+EActionFinishReason UCActionComponent::ConvertStopReasonToFinishReason(EActionStopReason InStopReason) const
+{
+	switch (InStopReason)
+	{
+	case EActionStopReason::Interrupted:
+		return EActionFinishReason::Interrupted;
+
+	case EActionStopReason::Cancelled:
+		return EActionFinishReason::Cancelled;
+
+	case EActionStopReason::Ignored:
+		return EActionFinishReason::Ignored;
+
+	default:
+		return EActionFinishReason::Ignored;
+	}
+}
+
+void UCActionComponent::PrintActionLocalLevelQuery(const FActionLocalLevelQuery& InQuery) const
+{
+	FLog::Log(TEXT("==== ActionLocalLevelQuery ===="));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ExecutionState"), *UEnum::GetValueAsString(InQuery.ExecutionState)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveActionType"), *UEnum::GetValueAsString(InQuery.ActiveContext.ActionDataKey.ActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveActionExecutor"), *GetNameSafe(InQuery.ActiveContext.ActionExecutor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IncomingActionType"), *UEnum::GetValueAsString(InQuery.IncomingContext.ActionDataKey.ActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IncomingActionExecutor"), *GetNameSafe(InQuery.IncomingContext.ActionExecutor)));
 	FLog::Log(TEXT("================================"));
 }

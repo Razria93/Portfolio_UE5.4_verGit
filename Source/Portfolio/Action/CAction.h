@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Type/CWeaponStructure.h"
+#include "Type/CActionOrchestrationStructure.h"
 #include "CAction.generated.h"
 
 UCLASS(Abstract) // Base Action Class
@@ -12,78 +13,89 @@ class PORTFOLIO_API UCAction : public UObject
 
 protected:
 	UPROPERTY(Transient)
-	EActionType ActionType = EActionType::Max;
-
-	UPROPERTY(Transient)
-	bool bIsAction = false;
+	bool bIsActive = false;
 
 protected:
 	UPROPERTY(Transient)
-	TArray<FActionData> ActionDatas_Injected;
+	FActionDataKey ActiveDataKey_Cached = FActionDataKey();
+
+	UPROPERTY(Transient)
+	FActionData ActiveData_Cached = FActionData();
+
+	UPROPERTY(Transient)
+	UAnimMontage* ActiveMontage_Cached = nullptr;
 
 protected:
-	/* === Injection Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCActionComponent* OwnerActionComp_Injected = nullptr;
+
 protected:
-	/* === Cached Objects === */
 	UPROPERTY(Transient)
 	class UCWeaponComponent* WeaponComp_Cached = nullptr;
-
-	UPROPERTY(Transient)
-	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
-	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas);
-	virtual void Tick(float InDeltaTime) {};
+	virtual void InitializeAction(ACharacter* InOwnerCharacter, class UCActionComponent* InOwnerActionComp);
+	virtual void Tick(float InDeltaTime) {}
 
 public:
-	EActionType GetActionType() const;
-	FActionContext GetActionContext() const;
+	bool IsActive() const { return bIsActive; }
 
 public:
-	void SetActionType(EActionType InActionType);
+	const FActionDataKey& GetActiveDataKey() const { return ActiveDataKey_Cached; }
+	const FActionData& GetActiveData() const { return ActiveData_Cached; }
 
 public:
-	/* === Action Arbitration === */
-	virtual EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const;
+	// Action local rule
+	virtual EActionLocalLevelDecision ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const;
 
 public:
-	virtual bool Start();
-	virtual bool ApplyChain(const FActionExecutionQuery& InActionExecuteQuery);
-
-public:
+	virtual bool Start(const FActionData& InData);
+	virtual bool ApplyChain(const FActionData& InData);
+	virtual void Stop(EActionStopReason InStopReason);
 	virtual void Complete();
-	virtual void Abort(EActionAbortReason InActionAbortReason);
+
+protected:
+	virtual void ClearRuntime();
+
+protected:
+	virtual bool PlayMontage(const FActionData& InData);
+	virtual void StopMontage(float InBlendOutTime = 0.1f);
 
 public:
-	void PushHitContext();
-	void ClearHitContext();
+	void HandleNotifyCommand(EActionNotifyCommand InCommand);
 
 public:
-	void RequestFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey = NAME_None) const;
+	void HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None);
 
 protected:
 	virtual FActionContext BuildActionContext() const;
-	virtual FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 protected:
-	void EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex = INDEX_NONE) const;
+	// Action-only hit context
+	void PushHitContext();
+	void ClearHitContext();
+
+protected:
+	void RequestFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+
+protected:
+	void EmitActionEvent(EActionEventType InEventType, int32 InActionIndex = INDEX_NONE) const;
 
 public:
-	/* === [IN] Custom Delgate Events === */
-	// [Legacy delegate] CWeaponActor
+	// [Legacy delegate]
 	UFUNCTION()
 	virtual void OnWeaponActorCollisionEnabled() {};
 
 	UFUNCTION()
 	virtual void OnWeaponActorCollisionDisabled() {};
 
-	// [Legacy delegate] CWeaponActor
 	UFUNCTION()
 	virtual void OnWeaponActorBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
 

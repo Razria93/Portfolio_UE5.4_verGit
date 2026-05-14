@@ -5,12 +5,12 @@
 #include "Type/CActionOrchestrationStructure.h"
 #include "CActionOrchestratorComponent.generated.h"
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionOrchestratorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UCActionOrchestratorComponent();
 
 private:
@@ -30,32 +30,52 @@ private:
 	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCReactionComponent* ReactionComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 protected:
 	void BeginPlay() override;
 
 public:
-	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InActionRequest);
-	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InActionRequest);
-	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InActionRequest);
+	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InRequest);
+	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InRequest);
+	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InRequest);
 
 private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	FActionRequestResult BuildRequestResult(const FActionExecutionResult& InActionExecutionResult) const;
+	bool ResolveCombatActionCandidate(const FCombatActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	FActionRequestResult BuildHandledResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildStartedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildChainedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildEnqueuedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildInterruptedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildRejectedResult(EActionRequestRejectReason InRejectReason) const;
-	FActionRequestResult BuildIgnoredResult() const;
+	FActionRequestResult ExecuteActionCandidate(EActionIntentSource InSource, const FActionCandidate& InCandidate);
 
 private:
-	EActionType ResolveEquipmentActionType(const FEquipmentActionRequest& InActionRequest) const;
-	EActionType ResolveCombatActionType(const FCombatActionRequest& InActionRequest) const;
+	bool ResolveActionContext(const FActionCandidate& InCandidate, FActionResolvedContext& OutContext, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData) const;
+	class UCAction* ResolveActionExecutor(const FActionData& InData) const;
+
+private:
+	FActionLocalLevelQuery BuildLocalLevelQuery(const FActionResolvedContext& InIncoming) const;
+	FActionLocalLevelResult ResolveLocalLevelResult(const FActionLocalLevelQuery& InLocalQuery) const;
+
+private:
+	bool ResolveActionPolicy(const FActionLocalLevelQuery& InLocalQuery, const FActionLocalLevelResult& InLocalResult, FActionResolvedPolicy& OutPolicy, EActionRequestRejectReason& OutRejectReason) const;
+
+private:
+	FActionOrchestrationLevelQuery BuildOrchestrationLevelQuery(EActionIntentSource InSource, const FActionLocalLevelQuery& InLocalQuery, const FActionLocalLevelResult& InLocalResult, const FActionResolvedPolicy& InPolicy) const;
+	FActionOrchestrationLevelResult ResolveOrchestrationLevelResult(const FActionOrchestrationLevelQuery& InOrchestrationQuery) const;
+
+private:
+	void ResolveReactionStopDirective(FActionOrchestrationLevelResult& InOutResult) const;
+
+private:
+	FActionRequestResult DispatchActionDecision(const FActionOrchestrationLevelResult& InResult);
+
+private:
+	EActionRequestResultType ConvertDecisionToResultType(EActionOrchestrationLevelDecision InDecision) const;
+	FActionRequestResult BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason = EActionRequestRejectReason::None) const;
 };

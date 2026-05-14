@@ -10,15 +10,7 @@ class PORTFOLIO_API UCAction_Unequip : public UCAction
 	GENERATED_BODY()
 
 public:
-	/* === Action Arbitration === */
-	EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const override;
-
-public:
-	bool Start() override;
-
-public:
-	void Complete() override;
-	void Abort(EActionAbortReason InActionAbortReason) override;
+	EActionLocalLevelDecision ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const override;
 
 public:
 	void DetachWeapon();

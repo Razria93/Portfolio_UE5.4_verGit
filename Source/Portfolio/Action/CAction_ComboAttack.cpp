@@ -4,164 +4,168 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CWeaponComponent.h"
+#include "Component/CActionComponent.h"
 
-#include "Type/CWeaponStructure.h"
-
-void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas)
+void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, UCActionComponent* InOwnerActionComp)
 {
-	Super::InitializeAction(InOwnerCharacter, InActionType, InActionDatas);
+	Super::InitializeAction(InOwnerCharacter, InOwnerActionComp);
 
-	ActionIndex = 0;
-
-	bChainWindowOpened = false;
-	bHasChainedInput = false;
+	ClearComboRuntime();
 }
 
-EActionExecutionDecision UCAction_ComboAttack::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
+EActionLocalLevelDecision UCAction_ComboAttack::ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
-	if (!IsValid(WeaponComp_Cached)) return EActionExecutionDecision::Reject;
+	if (!IsValid(OwnerCharacter_Injected)) return EActionLocalLevelDecision::Reject;
+	if (!IsValid(WeaponComp_Cached)) return EActionLocalLevelDecision::Reject;
 
-	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return EActionExecutionDecision::Reject;
-
-	const bool bFirstEntry = InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle;
-
-	if (bFirstEntry)
+	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
 	{
-		if (!ActionDatas_Injected.IsValidIndex(ActionIndex)) return EActionExecutionDecision::Reject;
-		if (!IsValid(ActionDatas_Injected[ActionIndex].Montage)) return EActionExecutionDecision::Reject;
-
-		return EActionExecutionDecision::Start;
+		return EActionLocalLevelDecision::Reject;
 	}
 
-	const bool bCanChain = InActionExecuteQuery.CurrentActionType == ActionType && bChainWindowOpened;
+	const bool bIsIdle = InQuery.ExecutionState == EExecutionState::Idle;
+	const bool bIsActiveAction = InQuery.bIsActiveAction;
 
-	if (bCanChain)
+	if (bIsIdle && !bIsActiveAction)
 	{
-		return EActionExecutionDecision::Chain;
+		return EActionLocalLevelDecision::Start;
 	}
 
-	return EActionExecutionDecision::Reject;
+	if (!bIsActiveAction)
+	{
+		return EActionLocalLevelDecision::Reject;
+	}
+
+	if (!InQuery.ActiveContext.IsValidMinimal())
+	{
+		return EActionLocalLevelDecision::Reject;
+	}
+
+	const bool bIsEqualAction = InQuery.ActiveContext.ActionDataKey.ActionType == InQuery.IncomingContext.ActionDataKey.ActionType;
+
+	if (bIsEqualAction && bChainWindowOpened)
+	{
+		return EActionLocalLevelDecision::Chain;
+	}
+
+	return EActionLocalLevelDecision::Reject;
 }
 
-bool UCAction_ComboAttack::Start()
+bool UCAction_ComboAttack::Start(const FActionData& InData)
 {
-	if (!Super::Start()) return false;
+	ClearComboRuntime();
 
-	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
-	return true;
+	bool result = Super::Start(InData);
+
+	return result;
 }
 
-bool UCAction_ComboAttack::ApplyChain(const FActionExecutionQuery& InActionExecuteQuery)
+bool UCAction_ComboAttack::ApplyChain(const FActionData& InData)
 {
-	if (InActionExecuteQuery.CurrentActionType != ActionType) return false;
-	if (!bChainWindowOpened) return false;
+	if (!CanAcceptChain(InData)) return false;
 
-	bChainWindowOpened = false;
+	PendingChainData_Cached = InData;
 	bHasChainedInput = true;
+	bChainWindowOpened = false;
 
-	FLog::Log(TEXT("[ComboAttack|Chain] Buffered chained input"));
+	FLog::Log(TEXT("[ComboAttack] Chain input buffered."));
+
 	return true;
+}
+
+void UCAction_ComboAttack::Stop(EActionStopReason InReason)
+{
+	Super::Stop(InReason);
+
+	ClearComboRuntime();
 }
 
 void UCAction_ComboAttack::Complete()
 {
-	if (!IsValid(OwnerCharacter_Injected)) return;
-
-	if (ActionDatas_Injected.IsValidIndex(ActionIndex) && IsValid(ActionDatas_Injected[ActionIndex].Montage))
-	{
-		ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
-	}
-
 	Super::Complete();
 
-	ActionIndex = 0;
-
-	bChainWindowOpened = false;
-	bHasChainedInput = false;
-}
-
-void UCAction_ComboAttack::Abort(EActionAbortReason InActionAbortReason)
-{
-	if (!IsValid(OwnerCharacter_Injected))
-	{
-		Super::Abort(InActionAbortReason);
-		return;
-	}
-
-	if (ActionDatas_Injected.IsValidIndex(ActionIndex) && IsValid(ActionDatas_Injected[ActionIndex].Montage))
-	{
-		ActionDatas_Injected[ActionIndex].EndPlayMontage(OwnerCharacter_Injected);
-	}
-
-	Super::Abort(InActionAbortReason);
-
-	ActionIndex = 0;
-
-	bChainWindowOpened = false;
-	bHasChainedInput = false;
-}
-
-void UCAction_ComboAttack::OpenChainWindow()
-{
-	if (!CanAdvanceCombo()) return;
-
-	bChainWindowOpened = true;
-	
-	EmitActionEvent(EActionEventType::ChainWindowOpened, INDEX_NONE);
-}
-
-void UCAction_ComboAttack::CloseChainWindow()
-{
-	bChainWindowOpened = false;
-
-	EmitActionEvent(EActionEventType::ChainWindowClosed, INDEX_NONE);
+	ClearComboRuntime();
 }
 
 void UCAction_ComboAttack::AdvanceCombo()
 {
-	if (!bHasChainedInput)
+	if (!CanAdvanceCombo())
 	{
-		FLog::Log(TEXT("[ComboAttack|AdvanceCombo] No chained input"));
+		FLog::Log(TEXT("[ComboAttack] No valid pending chain action."));
 		return;
 	}
 
+	const FActionData nextData = PendingChainData_Cached;
+
+	PendingChainData_Cached = FActionData();
 	bHasChainedInput = false;
+	bChainWindowOpened = false;
 
-	if (!CanAdvanceCombo()) return;
+	ActiveData_Cached = nextData;
+	ActiveDataKey_Cached = nextData.ActionDataKey;
+	ActiveMontage_Cached = nextData.Montage;
 
-	++ActionIndex;
+	if (!PlayMontage(nextData))
+	{
+		Stop(EActionStopReason::Ignored);
+		return;
+	}
 
-	FLog::Log(FString::Printf(TEXT("[ComboAttack|AdvanceCombo] Advance Combo | ActionIndex = %d"), ActionIndex));
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		if (!OwnerActionComp_Injected->HandleActionChained(this, nextData))
+		{
+			Stop(EActionStopReason::Ignored);
+			return;
+		}
+	}
 
-	ActionDatas_Injected[ActionIndex].BeginPlayMontage(OwnerCharacter_Injected);
+	RequestFeedback(EActionFeedbackTiming::ActionChain);
+	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached.ActionIndex);
+
+	FLog::Log(FString::Printf(TEXT("[ComboAttack] Advance combo. ActionIndex = %d"), ActiveDataKey_Cached.ActionIndex));
 }
 
-FActionContext UCAction_ComboAttack::BuildActionContext() const
+void UCAction_ComboAttack::OpenChainWindow()
 {
-	FActionContext actionContext;
+	if (!bIsActive) return;
 
-	actionContext.ActionType = ActionType;
-	actionContext.ActionIndex = ActionIndex;
+	bChainWindowOpened = true;
 
-	return actionContext;
+	EmitActionEvent(EActionEventType::ChainWindowOpened, ActiveDataKey_Cached.ActionIndex);
 }
 
-FActionFeedbackRequest UCAction_ComboAttack::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+void UCAction_ComboAttack::CloseChainWindow()
 {
-	FActionFeedbackRequest actionFeedbackRequest;
+	if (!bChainWindowOpened) return;
 
-	actionFeedbackRequest.ActionFeedbackKey.ActionType = ActionType;
-	actionFeedbackRequest.ActionFeedbackKey.ActionIndex = ActionIndex;
-	actionFeedbackRequest.ActionFeedbackTiming = InTiming;
-	actionFeedbackRequest.TriggerKey = InTriggerKey;
+	bChainWindowOpened = false;
 
-	return actionFeedbackRequest;
+	EmitActionEvent(EActionEventType::ChainWindowClosed, ActiveDataKey_Cached.ActionIndex);
+}
+
+void UCAction_ComboAttack::ClearComboRuntime()
+{
+	bChainWindowOpened = false;
+	bHasChainedInput = false;
+	PendingChainData_Cached = FActionData();
+}
+
+bool UCAction_ComboAttack::CanAcceptChain(const FActionData& InData) const
+{
+	if (!bIsActive) return false;
+	if (!bChainWindowOpened) return false;
+	if (!InData.IsValidMinimal()) return false;
+
+	const FActionDataKey& incomingKey = InData.ActionDataKey;
+
+	if (incomingKey.ActionType != ActiveDataKey_Cached.ActionType) return false;
+	if (incomingKey.ActionIndex <= ActiveDataKey_Cached.ActionIndex) return false;
+
+	return true;
 }
 
 bool UCAction_ComboAttack::CanAdvanceCombo() const
 {
-	const int32 nextActionIndex = ActionIndex + 1;
-
-	return ActionDatas_Injected.IsValidIndex(nextActionIndex) && IsValid(ActionDatas_Injected[nextActionIndex].Montage);
+	return bIsActive && bHasChainedInput && PendingChainData_Cached.IsValidMinimal();
 }
