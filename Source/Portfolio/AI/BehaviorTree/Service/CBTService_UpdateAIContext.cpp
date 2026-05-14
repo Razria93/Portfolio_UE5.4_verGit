@@ -207,7 +207,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 	UCReactionComponent* reactionComp = Cast<UCReactionComponent>(InOwnerPawn->GetComponentByClass(UCReactionComponent::StaticClass()));
 	if (!IsValid(reactionComp)) return EContextBuildResult::NoData;
 
-	InOutAIContext.bIsActiveReaction = reactionComp->IsActiveReaction();
+	InOutAIContext.bIsActiveReaction = reactionComp->IsActive();
 
 	return EContextBuildResult::Success;
 }
