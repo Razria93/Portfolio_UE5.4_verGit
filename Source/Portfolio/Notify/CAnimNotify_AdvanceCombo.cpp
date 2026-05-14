@@ -1,13 +1,11 @@
 #include "Notify/CAnimNotify_AdvanceCombo.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CActionComponent.h"
-#include "Action/CAction_ComboAttack.h"
 
 UCAnimNotify_AdvanceCombo::UCAnimNotify_AdvanceCombo()
 {
+	TriggerActionType = EActionType::ComboAttack;
 }
 
 FString UCAnimNotify_AdvanceCombo::GetNotifyName_Implementation() const
@@ -19,21 +17,8 @@ void UCAnimNotify_AdvanceCombo::Notify(USkeletalMeshComponent* MeshComp, UAnimSe
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!CanProcessActionNotify(actionComp)) return;
 
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
-	if (!IsValid(actionComp)) return;
-
-	UCAction* currentAction = actionComp->GetCurrentAction();
-	if (!IsValid(currentAction)) return;
-
-	UCAction_ComboAttack* currentAction_ComboAttack = Cast<UCAction_ComboAttack>(currentAction);
-	if (!IsValid(currentAction_ComboAttack)) return;
-	
-	if (!CanProcessActionNotify(currentAction_ComboAttack)) return;
-
-	currentAction_ComboAttack->AdvanceCombo();
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::AdvanceCombo);
 }

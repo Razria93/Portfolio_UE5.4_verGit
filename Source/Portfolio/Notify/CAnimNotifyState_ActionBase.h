@@ -15,11 +15,14 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Trigger")
-	EActionType TriggerActionType = EActionType::Max;
+	EActionType TriggerActionType = EActionType::All;
 
 	UPROPERTY(EditAnywhere, Category = "Trigger")
 	int32 TriggerActionIndex = INDEX_NONE;
 
 protected:
-	bool CanProcessActionNotify(const class UCAction* InCurrentAction) const;
+	bool CanProcessActionNotify(const class UCActionComponent* InActionComp) const;
+
+protected:
+	class UCActionComponent* GetActionComponent(USkeletalMeshComponent* InMeshComp) const;
 };
