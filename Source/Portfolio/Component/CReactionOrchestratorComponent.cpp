@@ -225,7 +225,7 @@ FReactionOrchestrationQuery UCReactionOrchestratorComponent::BuildOrchestrationQ
 	query.IncomingContext = InContext;
 
 	FReactionContext activeContext;
-	if (IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActiveReaction() && ReactionComp_Cached->GetActiveReactionContext(activeContext))
+	if (IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActive() && ReactionComp_Cached->GetActiveReactionContext(activeContext))
 	{
 		query.ActiveContext = activeContext;
 	}
@@ -263,6 +263,7 @@ FReactionOrchestrationResult UCReactionOrchestratorComponent::OrchestrateQuery(c
 		return result;
 	}
 
+	// TODO: Cancel
 	result.Decision = EReactionOrchestrationDecision::Interrupt;
 	return result;
 }
@@ -280,14 +281,14 @@ bool UCReactionOrchestratorComponent::CanInterruptActiveReaction(const FReaction
 	// Early Return
 	if (!InCurrentContext.IsValidMinimal()) return true;
 
-	const FReactionData& currentData = InCurrentContext.ReactionData;
+	const FReactionData& activeData = InCurrentContext.ReactionData;
 	const FReactionData& incomingData = InIncomingContext.ReactionData;
 
-	UCReaction* currentExecutor = InCurrentContext.ReactionExecutor;
+	UCReaction* activeExecutor = InCurrentContext.ReactionExecutor;
 	UCReaction* incomingExecutor = InIncomingContext.ReactionExecutor;
 
 	// Early Return
-	if (!IsValid(currentExecutor)) return true;
+	if (!IsValid(activeExecutor)) return true;
 
 	if (!IsValid(incomingExecutor))
 	{
@@ -302,7 +303,7 @@ bool UCReactionOrchestratorComponent::CanInterruptActiveReaction(const FReaction
 	}
 
 	// [Policy] Higher value means higher priority.
-	if (InIncomingPolicy.Priority < currentData.Priority)
+	if (InIncomingPolicy.Priority < activeData.Priority)
 	{
 		OutRejectReason = EReactionRequestRejectReason::LowerPriority;
 		return false;
@@ -310,14 +311,14 @@ bool UCReactionOrchestratorComponent::CanInterruptActiveReaction(const FReaction
 
 	FReactionQueryContext queryContext;
 
-	queryContext.CurrentReactionExecutor = currentExecutor;
+	queryContext.ActiveReactionExecutor = activeExecutor;
 	queryContext.IncomingReactionExecutor = incomingExecutor;
-	queryContext.CurrentReactionData = currentData;
+	queryContext.ActiveReactionData = activeData;
 	queryContext.IncomingReactionData = incomingData;
 
-	if (!InIncomingPolicy.bIgnoreInterruptWindow && !currentExecutor->AllowInterruptionBy(queryContext))
+	if (!InIncomingPolicy.bIgnoreInterruptWindow && !activeExecutor->AllowInterruptionBy(queryContext))
 	{
-		OutRejectReason = EReactionRequestRejectReason::CurrentNotInterruptible;
+		OutRejectReason = EReactionRequestRejectReason::ActiveNotInterruptible;
 		return false;
 	}
 

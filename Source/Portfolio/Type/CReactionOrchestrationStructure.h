@@ -46,7 +46,7 @@ enum class EReactionRequestRejectReason : uint8
 	ReactionPolicyNotFound,
 
 	LowerPriority,
-	CurrentNotInterruptible,
+	ActiveNotInterruptible,
 	IncomingCannotInterrupt,
 
 	ReactionDispatchFailed,

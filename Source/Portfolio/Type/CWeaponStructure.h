@@ -21,12 +21,16 @@ enum class EWeaponType : uint8
 UENUM(BlueprintType)
 enum class EActionType : uint8
 {
-	Idle = 0,
+	None = 0,	// Invalid, Unset
+
+	Idle,
 
 	Equip,
 	Unequip,
 
 	ComboAttack,
+
+	Dodge,
 
 	All,
 
@@ -38,6 +42,8 @@ enum class EReactionType : uint8
 {
 	None = 0,	// Invalid, Unset
 
+	Idle,
+
 	Hit,
 	Dead,
 
@@ -47,17 +53,21 @@ enum class EReactionType : uint8
 };
 
 UENUM(BlueprintType)
-enum class EActionExecutionDecision : uint8
+enum class EActionNotifyCommand : uint8
 {
 	None = 0,
 
-	Reject,
-	Ignore,
+	Complete,
 
-	Start,
-	Chain,
-	Enqueue,
-	Interrupt,
+	PushHitContext,
+	ClearHitContext,
+
+	OpenChainWindow,
+	CloseChainWindow,
+	AdvanceCombo,
+
+	Equip,
+	Unequip,
 
 	Max,
 };
@@ -72,21 +82,51 @@ enum class EActionEventType : uint8
 
 	ActionStarted,
 	ActionCompleted,
-	ActionAborted,
+
+	ActionChained,
+
+	ActionInterrupted,
+	ActionCancelled,
+	ActionIgnored,
 
 	Max,
 };
 
 UENUM(BlueprintType)
-enum class EActionAbortReason : uint8
+enum class EActionStopSource : uint8
 {
 	None = 0,
 
-	Reaction,
-	Dead,
+	ActionOrchestration,
+	ReactionOrchestration,
+
+	System,
+	External,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionStopReason : uint8
+{
+	None = 0,
 
 	Interrupted,
-	ExternalCancel,
+	Cancelled,
+	Ignored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionFinishReason : uint8
+{
+	None = 0,
+
+	Completed,
+	Interrupted,
+	Cancelled,
+	Ignored,
 
 	Max,
 };
@@ -145,14 +185,29 @@ enum class ETakeDamageRejectReason : uint8
 };
 
 UENUM(BlueprintType)
+enum class EReactionStopSource : uint8
+{
+	None = 0,
+
+	ActionOrchestration,
+	ReactionOrchestration,
+
+	System,
+	External,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EReactionStopReason : uint8
 {
 	None = 0,
 
 	Interrupted,
 	Cancelled,
+	Ignored,
 
-	Aborted,
+	Max,
 };
 
 UENUM(BlueprintType)
@@ -163,8 +218,9 @@ enum class EReactionFinishReason : uint8
 	Completed,
 	Interrupted,
 	Cancelled,
+	Ignored,
 
-	Aborted,
+	Max,
 };
 
 UENUM(BlueprintType)
@@ -173,15 +229,15 @@ enum class EReactionControlWindowType : uint8
 	None = 0,
 
 	// [System-Driven] 
-	// Current reaction replaced by a new, stronger Reaction (ex. Hit Stun)
+	// Active reaction replaced by a new, stronger Reaction (ex. Hit Stun)
 	Interruptible,
 
 	// [Player-Driven] 
-	// Current reaction canceled by a conscious Player Action (ex. Parry/Dodge)
+	// Active reaction canceled by a conscious Player Action (ex. Parry/Dodge)
 	Cancelable,
 
 	// [Ignore All] 
-	// Solid state. Current reaction ignores any incoming Reactions.
+	// Solid state. Active reaction ignores any incoming Reactions.
 	ImmuneToReaction,
 };
 
@@ -190,7 +246,10 @@ enum class EActionFeedbackTiming : uint8
 {
 	None,
 	ActionStart,
-	ActionEnd,
+	ActionComplete,
+
+	ActionChain,
+
 	TriggerOnce,
 	TriggerWindowBegin,
 	TriggerWindowEnd
@@ -219,18 +278,58 @@ enum class EActionSFXPlayType : uint8
 };
 
 USTRUCT(BlueprintType)
+struct FActionDataKey
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Key")
+	EActionType ActionType = EActionType::Max;
+
+	UPROPERTY(EditAnywhere, Category = "Key")
+	int32 ActionIndex = INDEX_NONE;
+
+public:
+	bool IsValidTypeOnlyKey() const;
+	bool IsValidExactKey() const;
+
+public:
+	bool operator==(const FActionDataKey& InOther) const
+	{
+		return ActionType == InOther.ActionType
+			&& ActionIndex == InOther.ActionIndex;
+	}
+};
+
+FORCEINLINE uint32 GetTypeHash(const FActionDataKey& InKey)
+{
+	uint32 H = 0;
+
+	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionType)));
+	H = HashCombine(H, GetTypeHash(InKey.ActionIndex));
+
+	return H;
+}
+
+USTRUCT(BlueprintType)
 struct FActionData
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Key")
+	FActionDataKey ActionDataKey = FActionDataKey();
+
+	UPROPERTY(EditAnywhere, Category = "Key")
+	TSubclassOf<class UCAction> ActionExecutorKey = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
 	class UAnimMontage* Montage = nullptr;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Data")
 	float PlayRate = 1.0f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
 
 public:
@@ -238,105 +337,6 @@ public:
 
 public:
 	bool IsValidMinimal() const;
-
-public:
-	void BeginPlayMontage(class ACharacter* InOwnerCharacter);
-	void EndPlayMontage(class ACharacter* InOwnerCharacter);
-};
-
-USTRUCT(BlueprintType)
-struct FActionDefinition
-{
-	GENERATED_BODY()
-
-public:
-	// Action ID
-	UPROPERTY(EditAnywhere)
-	EActionType ActionType = EActionType::Max;
-
-	// Action Implementation Class
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UCAction> ActionClass = nullptr;
-
-	// Action Playback Data
-	UPROPERTY(EditAnywhere)
-	TArray<FActionData> ActionDatas;
-};
-
-USTRUCT(BlueprintType)
-struct FActionExecutionQuery
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	EExecutionState ExecutionState = EExecutionState::Idle;
-
-	UPROPERTY(Transient)
-	EActionType CurrentActionType = EActionType::Idle;
-
-	UPROPERTY(Transient)
-	class UCAction* CurrentAction = nullptr;
-
-	UPROPERTY(Transient)
-	EActionType IncomingActionType = EActionType::Idle;
-
-	UPROPERTY(Transient)
-	class UCAction* IncomingAction = nullptr;
-
-public:
-	FActionExecutionQuery() = default;
-};
-
-USTRUCT(BlueprintType)
-struct FActionExecutionResult
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	EActionExecutionDecision Decision = EActionExecutionDecision::Reject;
-
-	UPROPERTY(Transient)
-	EActionType ActionType = EActionType::Max;
-
-public:
-	FActionExecutionResult() = default;
-
-	FActionExecutionResult(EActionExecutionDecision InDecision, EActionType InActionType)
-		: Decision(InDecision)
-		, ActionType(InActionType)
-	{
-	}
-
-public:
-	bool IsAccepted() const
-	{
-		return Decision == EActionExecutionDecision::Start
-			|| Decision == EActionExecutionDecision::Chain
-			|| Decision == EActionExecutionDecision::Enqueue
-			|| Decision == EActionExecutionDecision::Interrupt;
-	}
-
-	bool IsStarted() const
-	{
-		return Decision == EActionExecutionDecision::Start;
-	}
-
-	bool IsChained() const
-	{
-		return Decision == EActionExecutionDecision::Chain;
-	}
-
-	bool IsEnqueued() const
-	{
-		return Decision == EActionExecutionDecision::Enqueue;
-	}
-
-	bool IsInterrupted() const
-	{
-		return Decision == EActionExecutionDecision::Interrupt;
-	}
 };
 
 USTRUCT(BlueprintType)
@@ -950,13 +950,13 @@ struct FReactionQueryContext
 
 public:
 	UPROPERTY(Transient)
-	class UCReaction* CurrentReactionExecutor = nullptr;
+	class UCReaction* ActiveReactionExecutor = nullptr;
 
 	UPROPERTY(Transient)
 	class UCReaction* IncomingReactionExecutor = nullptr;
 
 	UPROPERTY(Transient)
-	FReactionData CurrentReactionData = FReactionData();
+	FReactionData ActiveReactionData = FReactionData();
 
 	UPROPERTY(Transient)
 	FReactionData IncomingReactionData = FReactionData();
@@ -985,6 +985,37 @@ public:
 
 public:
 	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionInterventionDirective
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bRequested = false;
+
+	UPROPERTY(Transient)
+	EReactionStopReason StopReason = EReactionStopReason::None;
+
+	UPROPERTY(Transient)
+	EReactionStopSource StopSource = EReactionStopSource::None;
+
+public:
+	bool IsRequested() const
+	{
+		return bRequested;
+	}
+
+	bool IsValidRequest() const
+	{
+		return bRequested
+			&& StopReason != EReactionStopReason::None
+			&& StopReason != EReactionStopReason::Max
+			&& StopSource != EReactionStopSource::None
+			&& StopSource != EReactionStopSource::Max;
+	}
 };
 
 USTRUCT(BlueprintType)

@@ -66,8 +66,8 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 
 	if (InStopReason == EReactionStopReason::None)
 	{
-		LastStopReason_Cached = EReactionStopReason::Aborted;
-		FinishAborted();
+		LastStopReason_Cached = EReactionStopReason::Ignored;
+		FinishIgnored();
 		return;
 	}
 
@@ -78,8 +78,8 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 
 	if (!IsValid(animInstance) || !IsValid(ActiveReactionMontage_Cached))
 	{
-		LastStopReason_Cached = EReactionStopReason::Aborted;
-		FinishAborted();
+		LastStopReason_Cached = EReactionStopReason::Ignored;
+		FinishIgnored();
 		return;
 	}
 
@@ -103,15 +103,15 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 		return;
 	}
 
-	case EReactionStopReason::Aborted:
+	case EReactionStopReason::Ignored:
 	{
-		FinishAborted();
+		FinishIgnored();
 		return;
 	}
 
 	default:
-		LastStopReason_Cached = EReactionStopReason::Aborted;
-		FinishAborted();
+		LastStopReason_Cached = EReactionStopReason::Ignored;
+		FinishIgnored();
 		return;
 	}
 }
@@ -158,17 +158,17 @@ void UCReaction::FinishCancelled()
 	}
 }
 
-void UCReaction::FinishAborted()
+void UCReaction::FinishIgnored()
 {
 	if (!bIsReaction) return;
 
-	PrintAbortedStopReasonInfo();
+	PrintIgnoredStopReasonInfo();
 
 	Clear();
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Aborted);
+		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Ignored);
 	}
 }
 
@@ -339,7 +339,7 @@ void UCReaction::PrintStopReasonInfo(EReactionStopReason InStopReason) const
 	FLog::Log(FString::Printf(TEXT("[Reaction] Stopped. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(InStopReason), *GetNameSafe(this)));
 }
 
-void UCReaction::PrintAbortedStopReasonInfo() const
+void UCReaction::PrintIgnoredStopReasonInfo() const
 {
-	FLog::Log(FString::Printf(TEXT("[Reaction] Aborted. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(LastStopReason_Cached), *GetNameSafe(this)));
+	FLog::Log(FString::Printf(TEXT("[Reaction] Ignored. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(LastStopReason_Cached), *GetNameSafe(this)));
 }

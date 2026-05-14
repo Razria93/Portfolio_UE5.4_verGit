@@ -23,7 +23,7 @@ void UCWeaponComponent::BeginPlay()
 	CurrentWeaponType = EWeaponType::Unarmed;
 }
 
-UObject* UCWeaponComponent::GetWeaponActor()
+ACWeaponActor* UCWeaponComponent::GetWeaponActor()
 {
 	return IsValid(WeaponActor) ? WeaponActor : nullptr;
 }

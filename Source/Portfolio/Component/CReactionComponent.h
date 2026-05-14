@@ -32,7 +32,7 @@ private:
 	TMap<FReactionDataKey, FReactionData> ReactionDataMap;
 
 	UPROPERTY(Transient)
-	TMap<class UClass*, class UCReaction*> ReactionExcutorMap;
+	TMap<class UClass*, class UCReaction*> ReactionExcutorMap; // Naming Check
 
 private:
 	/* === Component State === */
@@ -70,10 +70,11 @@ protected:
 
 public:
 	// Query API
-	bool IsActiveReaction() const;
+	bool IsActive() const;
 
 public:
 	// Get API
+	EReactionType GetActiveReactionType() const;
 	bool GetActiveReactionContext(FReactionContext& OutReactionContext) const;
 	UCReaction* GetActiveReactionExecutor() const;
 
@@ -83,9 +84,8 @@ public:
 	UCReaction* ResolveReactionExecutor(const FReactionData& InReactionData);
 
 public:
-	/* === EntryPoint API === */
-	// Entry points used by orchestration/external systems to drive reaction execution.
 	bool ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
+	bool RequestStopActiveReaction(const FExecutionInterventionDirective& InReactionStopDirective);
 
 public:
 	void HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason);
@@ -99,9 +99,25 @@ public:
 	void HandleReactionFeedback(FName InTriggerKey);
 
 private:
+	// Temporary data build API (Move to DataAsset).
+	void BuildReactionDataMap(bool bRebuildAll);
+	void BuildReactionExecutorMap(bool bRebuildAll);
+
+private:
+	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
+
+private:
+	UCReaction* AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass);
+	UCReaction* FindReactionExecutor(const UClass* InClass);
+
+private:
 	bool TryStartReaction(const FReactionContext& InReactionContext);
 	bool TryInterruptReaction(const FReactionContext& InReactionContext);
 	bool TryCancelReaction(const FReactionContext& InReactionContext);
+
+private:
+	bool TryInterruptAndEndReaction();
+	bool TryCancelAndEndReaction();
 
 private:
 	bool StartActiveReactionInternal(const FReactionContext& InReactionContext);
@@ -117,17 +133,7 @@ private:
 	void ExitReactionState(const FReactionData& InReactionData);
 
 private:
-	void AbortActiveActionForReaction();
-
-private:
-	// Temporary data build API (Move to DataAsset).
-	void BuildReactionDataMap(bool bRebuildAll);
-	void BuildReactionExecutorMap(bool bRebuildAll);
-	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const;
-
-private:
-	UCReaction* AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass);
-	UCReaction* FindReactionExecutor(const UClass* InClass);
+	void StopActiveActionForReaction();
 
 private:
 	void PrintReactionInfoSummary() const;

@@ -5,38 +5,28 @@
 #include "Components/ShapeComponent.h"
 
 #include "Component/CMovementComponent.h"
+
+#include "Action/CAction.h"
 #include "Reaction/CReaction.h"
+
+bool FActionDataKey::IsValidTypeOnlyKey() const
+{
+	return ActionType != EActionType::None
+		&& ActionType != EActionType::All
+		&& ActionType != EActionType::Max;
+}
+
+bool FActionDataKey::IsValidExactKey() const
+{
+	return ActionType != EActionType::None
+		&& ActionType != EActionType::Max;
+}
 
 bool FActionData::IsValidMinimal() const
 {
-	return IsValid(Montage);
-}
-
-void FActionData::BeginPlayMontage(ACharacter* InOwnerCharacter)
-{
-	UActorComponent* temp = InOwnerCharacter->GetComponentByClass(UCMovementComponent::StaticClass());
-	if (!IsValid(temp)) return;
-
-	UCMovementComponent* moveComp = Cast<UCMovementComponent>(temp);
-	if (!IsValid(moveComp)) return;
-
-	if (bCanMove == false)
-		moveComp->SetStop();
-
-	if (IsValid(Montage))
-		InOwnerCharacter->PlayAnimMontage(Montage, PlayRate);
-}
-
-void FActionData::EndPlayMontage(ACharacter* InOwnerCharacter)
-{
-	UActorComponent* temp = InOwnerCharacter->GetComponentByClass(UCMovementComponent::StaticClass());
-	if (!IsValid(temp)) return;
-
-	UCMovementComponent* moveComp = Cast<UCMovementComponent>(temp);
-	if (!IsValid(moveComp)) return;
-
-	if (bCanMove == false)
-		moveComp->SetMove();
+	return ActionDataKey.IsValidExactKey()
+		&& IsValid(ActionExecutorKey.Get())
+		&& IsValid(Montage);
 }
 
 bool FOverlapContext::IsValidMinimal() const
@@ -55,7 +45,7 @@ bool FReactionData::IsValidMinimal() const
 
 bool FReactionQueryContext::IsValidMinimal() const
 {
-	return IsValid(CurrentReactionExecutor) && IsValid(IncomingReactionExecutor);
+	return IsValid(ActiveReactionExecutor) && IsValid(IncomingReactionExecutor);
 }
 
 bool FReactionContext::IsValidMinimal() const

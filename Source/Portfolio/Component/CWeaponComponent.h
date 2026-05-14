@@ -54,7 +54,7 @@ public:
 	FORCEINLINE EWeaponType GetCurrentWeaponType() { return CurrentWeaponType; }
 
 public:
-	class UObject* GetWeaponActor();
+	class ACWeaponActor* GetWeaponActor();
 
 public:
 	void AttachWeaponToHand();

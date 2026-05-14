@@ -71,7 +71,7 @@ protected:
 	virtual void FinishCompleted();
 	virtual void FinishInterrupted();
 	virtual void FinishCancelled();
-	virtual void FinishAborted();
+	virtual void FinishIgnored();
 
 protected:
 	virtual void Clear();
@@ -112,5 +112,5 @@ private:
 	void PrintReactionExecutorRuntimeInfo() const;
 
 	void PrintStopReasonInfo(EReactionStopReason InStopReason) const;
-	void PrintAbortedStopReasonInfo() const;
+	void PrintIgnoredStopReasonInfo() const;
 };
