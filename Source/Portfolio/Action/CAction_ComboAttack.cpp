@@ -113,7 +113,7 @@ void UCAction_ComboAttack::AdvanceCombo()
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
-		if (!OwnerActionComp_Injected->HandleActionChained(this, nextData))
+		if (!OwnerActionComp_Injected->HandleApplyActionChained(this, nextData))
 		{
 			Stop(EActionStopReason::Ignored);
 			return;

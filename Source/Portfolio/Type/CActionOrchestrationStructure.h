@@ -368,7 +368,7 @@ public:
 
 public:
 	UPROPERTY(Transient)
-	FReactionStopDirective StopDirective = FReactionStopDirective();
+	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
 
 public:
 	bool IsAcceptedDecision() const

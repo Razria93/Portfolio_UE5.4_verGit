@@ -95,6 +95,55 @@ enum class EActionEventType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EExecutionDomain : uint8
+{
+	None = 0,
+
+	Action,
+	Reaction,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EExecutionStopReason : uint8
+{
+	None = 0,
+
+	Interrupted,
+	Cancelled,
+	Ignored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EExecutionStopSource : uint8
+{
+	None = 0,
+
+	ActionOrchestration,
+	ReactionOrchestration,
+
+	System,
+	External,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EExecutionAfterStopAction : uint8
+{
+	None = 0,
+
+	StopOnly,
+	StartIncoming,
+
+	Max,
+};
+
+// [NOTE] Temp
+UENUM(BlueprintType)
 enum class EActionStopSource : uint8
 {
 	None = 0,
@@ -108,6 +157,7 @@ enum class EActionStopSource : uint8
 	Max,
 };
 
+// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EActionStopReason : uint8
 {
@@ -186,6 +236,7 @@ enum class ETakeDamageRejectReason : uint8
 	ZeroDamage,
 };
 
+// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EReactionStopSource : uint8
 {
@@ -200,6 +251,7 @@ enum class EReactionStopSource : uint8
 	Max,
 };
 
+// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EReactionStopReason : uint8
 {
@@ -990,7 +1042,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FReactionStopDirective
+struct FExecutionInterventionDirective
 {
 	GENERATED_BODY()
 
@@ -999,10 +1051,16 @@ public:
 	bool bRequested = false;
 
 	UPROPERTY(Transient)
-	EReactionStopReason StopReason = EReactionStopReason::None;
+	EExecutionDomain TargetDomain = EExecutionDomain::None;
 
 	UPROPERTY(Transient)
-	EReactionStopSource StopSource = EReactionStopSource::None;
+	EExecutionStopReason StopReason = EExecutionStopReason::None;
+
+	UPROPERTY(Transient)
+	EExecutionStopSource StopSource = EExecutionStopSource::None;
+
+	UPROPERTY(Transient)
+	EExecutionAfterStopAction AfterStopAction = EExecutionAfterStopAction::None;
 
 public:
 	bool IsRequested() const
@@ -1013,10 +1071,12 @@ public:
 	bool IsValidRequest() const
 	{
 		return bRequested
-			&& StopReason != EReactionStopReason::None
-			&& StopReason != EReactionStopReason::Max
-			&& StopSource != EReactionStopSource::None
-			&& StopSource != EReactionStopSource::Max;
+			&& TargetDomain != EExecutionDomain::None
+			&& TargetDomain != EExecutionDomain::Max
+			&& StopReason != EExecutionStopReason::None
+			&& StopReason != EExecutionStopReason::Max
+			&& StopSource != EExecutionStopSource::None
+			&& StopSource != EExecutionStopSource::Max;
 	}
 };
 

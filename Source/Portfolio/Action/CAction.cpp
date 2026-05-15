@@ -101,7 +101,7 @@ void UCAction::Stop(EActionStopReason InStopReason)
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
-		OwnerActionComp_Injected->HandleActionFinished(this, finishReason);
+		OwnerActionComp_Injected->HandleApplyActionFinished(this, finishReason);
 	}
 }
 
@@ -116,7 +116,7 @@ void UCAction::Complete()
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
-		OwnerActionComp_Injected->HandleActionFinished(this, EActionFinishReason::Completed);
+		OwnerActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
 	}
 }
 

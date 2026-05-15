@@ -70,7 +70,7 @@ private:
 	FActionOrchestrationLevelResult ResolveOrchestrationLevelResult(const FActionOrchestrationLevelQuery& InOrchestrationQuery) const;
 
 private:
-	void ResolveReactionStopDirective(FActionOrchestrationLevelResult& InOutResult) const;
+	void ResolveExecutionInterventionDirective(FActionOrchestrationLevelResult& InOutResult) const;
 
 private:
 	FActionRequestResult DispatchActionDecision(const FActionOrchestrationLevelResult& InResult);

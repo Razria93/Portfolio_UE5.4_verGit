@@ -92,14 +92,11 @@ public:
 
 public:
 	bool ApplyActionDecision(const FActionOrchestrationLevelResult& InActionOrchestrationResult);
-	bool RequestStopActiveAction(EActionStopReason InActionStopReason);
+	bool RequestStopActiveAction(const FExecutionInterventionDirective& InInterventionDirective);
 
 public:
-	bool HandleActionChained(const UCAction* InAction, const FActionData& InActionData);
-	void HandleActionFinished(const class UCAction* InAction, EActionFinishReason InActionFinishReason);
-
-public:
-	void BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
+	bool HandleApplyActionChained(const UCAction* InAction, const FActionData& InActionData);
+	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InActionFinishReason);
 
 public:
 	void HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand);
@@ -107,6 +104,9 @@ public:
 	void HandleActionFeedback(FName InTriggerKey);
 	void HandleActionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleActionFeedbackWindowEnd(FName InTriggerKey);
+
+public:
+	void BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
 
 private:
 	// Temporary data build API (Move to DataAsset).
@@ -118,17 +118,13 @@ private:
 	UCAction* FindActionExecutor(const UClass* InClass);
 
 private:
-	bool TryStartAction(const FActionResolvedContext& InActionResolvedContext);
-	bool TryChainAction(const FActionResolvedContext& InActionResolvedContext);
-	bool TryEnqueueAction(const FActionResolvedContext& InActionResolvedContext);
-	bool TryReplaceAction(const FActionResolvedContext& InActionResolvedContext, EActionStopReason InStopReason);
-	bool TryStopActiveAction(EActionStopReason InStopReason);
+	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InInterventionDirective);
 
 private:
-	bool StartActiveActionInternal(const FActionResolvedContext& InActionResolvedContext);
-	bool ChainActiveActionInternal(const FActionResolvedContext& InActionResolvedContext);
-	bool StopActiveActionInternal(EActionStopReason InStopReason);
-	bool EndActiveActionInternal(EActionFinishReason InFinishReason);
+	bool StartAction(const FActionResolvedContext& InActionResolvedContext);
+	bool ChainActiveAction(const FActionResolvedContext& InActionResolvedContext);
+	bool StopActiveAction(const FExecutionInterventionDirective& InInterventionDirective);
+	bool EndActiveAction(EActionFinishReason InFinishReason);
 
 private:
 	void SetActiveActionContext(const FActionResolvedContext& InActionResolvedContext);
@@ -139,10 +135,8 @@ private:
 	void ExitActionState(const FActionData& InActionData);
 
 private:
-	bool ApplyReactionStopDirective(const FActionOrchestrationLevelResult& InActionOrchestrationResult);
-
-private:
-	EActionFinishReason ConvertStopReasonToFinishReason(EActionStopReason InStopReason) const;
+	EActionStopReason ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const;
+	EActionFinishReason ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const;
 
 private:
 	void PrintActionLocalLevelQuery(const FActionLocalLevelQuery& InQuery) const;

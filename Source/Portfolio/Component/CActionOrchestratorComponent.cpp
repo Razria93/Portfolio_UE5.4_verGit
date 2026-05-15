@@ -267,7 +267,7 @@ FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(EActi
 	FActionOrchestrationLevelQuery orchestrationQuery = BuildOrchestrationLevelQuery(InSource, localQuery, localResult, policy);
 	FActionOrchestrationLevelResult orchestrationResult = ResolveOrchestrationLevelResult(orchestrationQuery);
 
-	ResolveReactionStopDirective(orchestrationResult);
+	ResolveExecutionInterventionDirective(orchestrationResult);
 
 	return DispatchActionDecision(orchestrationResult);
 }
@@ -525,9 +525,9 @@ FActionOrchestrationLevelResult UCActionOrchestratorComponent::ResolveOrchestrat
 	return result;
 }
 
-void UCActionOrchestratorComponent::ResolveReactionStopDirective(FActionOrchestrationLevelResult& InOutResult) const
+void UCActionOrchestratorComponent::ResolveExecutionInterventionDirective(FActionOrchestrationLevelResult& InOutResult) const
 {
-	InOutResult.StopDirective = FReactionStopDirective();
+	InOutResult.InterventionDirective = FExecutionInterventionDirective();
 
 	if (!InOutResult.IsAcceptedDecision()) return;
 	if (!IsValid(ReactionComp_Cached)) return;
@@ -554,13 +554,19 @@ void UCActionOrchestratorComponent::ResolveReactionStopDirective(FActionOrchestr
 	{
 	case EActionOrchestrationLevelDecision::Cancel:
 	{
-		InOutResult.StopDirective.bRequested = true;
-		InOutResult.StopDirective.StopReason = EReactionStopReason::Cancelled;
-		InOutResult.StopDirective.StopSource = EReactionStopSource::ActionOrchestration;
+		InOutResult.InterventionDirective.bRequested = true;
+		InOutResult.InterventionDirective.TargetDomain = EExecutionDomain::Reaction;	// [TODO] 어떤걸 캔슬 할 수 있는지는 Local에서 축정해야하지 않나?
+		InOutResult.InterventionDirective.StopReason = EExecutionStopReason::Cancelled;
+		InOutResult.InterventionDirective.StopSource = EExecutionStopSource::ActionOrchestration;
+		InOutResult.InterventionDirective.AfterStopAction = EExecutionAfterStopAction::StartIncoming;
 		break;
 	}
 
-	// TODO: Interrupt
+	case EActionOrchestrationLevelDecision::Interrupt:
+	{
+		// Later: action -> action or action -> reaction interrupt.
+		break;
+	}
 
 	default:
 		break;

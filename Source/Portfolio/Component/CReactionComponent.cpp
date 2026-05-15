@@ -132,29 +132,10 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionOrchestrationResu
 	}
 }
 
-bool UCReactionComponent::RequestStopActiveReaction(const FReactionStopDirective& InReactionStopDirective)
+bool UCReactionComponent::RequestStopActiveReaction(const FExecutionInterventionDirective& InInterventionDirective)
 {
-	if (!IsActive()) return true;
-	if (!InReactionStopDirective.IsValidRequest()) return true;
-
-	switch (InReactionStopDirective.StopReason)
-	{
-	case EReactionStopReason::Interrupted:
-		return TryInterruptAndEndReaction();
-
-	case EReactionStopReason::Cancelled:
-		return TryCancelAndEndReaction();
-
-	case EReactionStopReason::Ignored:
-	{
-		if (!StopActiveReactionInternal(EReactionStopReason::Ignored)) return false;
-		EndActiveReactionInternal();
-		return !IsActive();
-	}
-
-	default:
-		return false;
-	}
+	// TODO
+	return false;
 }
 
 void UCReactionComponent::HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason)
@@ -355,6 +336,12 @@ UCReaction* UCReactionComponent::FindReactionExecutor(const UClass* InClass)
 	return foundReactionExecutor;
 }
 
+bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InInterventionDirective)
+{
+	// TODO
+	return false;
+}
+
 bool UCReactionComponent::TryStartReaction(const FReactionContext& InReactionContext)
 {
 	if (!InReactionContext.IsValidMinimal()) return false;
@@ -412,7 +399,6 @@ bool UCReactionComponent::StartActiveReactionInternal(const FReactionContext& In
 
 	const FReactionData& reactionData = InReactionContext.ReactionData;
 
-	StopActiveActionForReaction();
 	EnterReactionState(reactionData);
 
 	if (!reactionExecutor->Start(reactionData))
@@ -514,17 +500,6 @@ void UCReactionComponent::ExitReactionState(const FReactionData& InReactionData)
 	{
 		StateComp_Cached->SetIdleState();
 	}
-}
-
-void UCReactionComponent::StopActiveActionForReaction()
-{
-	if (!IsValid(ActionComp_Cached)) return;
-
-	EActionType activeActionType = ActionComp_Cached->GetActiveActionType();
-	if (activeActionType == EActionType::None || activeActionType == EActionType::All || activeActionType == EActionType::Max) return;
-	if (activeActionType == EActionType::Idle) return;
-
-	ActionComp_Cached->RequestStopActiveAction(EActionStopReason::Interrupted);
 }
 
 void UCReactionComponent::PrintReactionInfoSummary() const

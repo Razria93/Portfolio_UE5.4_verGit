@@ -85,7 +85,7 @@ public:
 
 public:
 	bool ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
-	bool RequestStopActiveReaction(const FReactionStopDirective& InReactionStopDirective);
+	bool RequestStopActiveReaction(const FExecutionInterventionDirective& InInterventionDirective);
 
 public:
 	void HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason);
@@ -111,6 +111,9 @@ private:
 	UCReaction* FindReactionExecutor(const UClass* InClass);
 
 private:
+	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InReactionStopDirective);
+
+private:
 	bool TryStartReaction(const FReactionContext& InReactionContext);
 	bool TryInterruptReaction(const FReactionContext& InReactionContext);
 	bool TryCancelReaction(const FReactionContext& InReactionContext);
@@ -131,9 +134,6 @@ private:
 private:
 	void EnterReactionState(const FReactionData& InReactionData);
 	void ExitReactionState(const FReactionData& InReactionData);
-
-private:
-	void StopActiveActionForReaction();
 
 private:
 	void PrintReactionInfoSummary() const;

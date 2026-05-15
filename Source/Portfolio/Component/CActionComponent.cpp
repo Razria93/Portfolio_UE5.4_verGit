@@ -121,52 +121,52 @@ bool UCActionComponent::ApplyActionDecision(const FActionOrchestrationLevelResul
 	if (!IsValid(OwnerCharacter_Cached)) return false;
 	if (!InActionOrchestrationResult.IsAcceptedDecision()) return false;
 
-	if (!ApplyReactionStopDirective(InActionOrchestrationResult)) return false;
+	if (!ApplyExecutionInterventionDirective(InActionOrchestrationResult.InterventionDirective)) return false;
 
 	switch (InActionOrchestrationResult.Decision)
 	{
 	case EActionOrchestrationLevelDecision::Start:
-		return TryStartAction(InActionOrchestrationResult.ResolvedContext);
+	case EActionOrchestrationLevelDecision::Interrupt:
+	case EActionOrchestrationLevelDecision::Cancel:
+		return StartAction(InActionOrchestrationResult.ResolvedContext);
 
 	case EActionOrchestrationLevelDecision::Chain:
-		return TryChainAction(InActionOrchestrationResult.ResolvedContext);
-
-	case EActionOrchestrationLevelDecision::Enqueue:
-		return TryEnqueueAction(InActionOrchestrationResult.ResolvedContext);
-
-	case EActionOrchestrationLevelDecision::Interrupt:
-		return TryReplaceAction(InActionOrchestrationResult.ResolvedContext, EActionStopReason::Interrupted);
-
-	case EActionOrchestrationLevelDecision::Cancel:
-		return TryStartAction(InActionOrchestrationResult.ResolvedContext);
+		return ChainActiveAction(InActionOrchestrationResult.ResolvedContext);
 
 	default:
 		return false;
 	}
 }
 
-bool UCActionComponent::RequestStopActiveAction(EActionStopReason InActionStopReason)
+bool UCActionComponent::RequestStopActiveAction(const FExecutionInterventionDirective& InInterventionDirective)
 {
-	return TryStopActiveAction(InActionStopReason);
+	if (!InInterventionDirective.IsValidRequest()) return false;
+	if (InInterventionDirective.TargetDomain != EExecutionDomain::Action) return false;
+
+	return StopActiveAction(InInterventionDirective);
 }
 
-void UCActionComponent::HandleActionFinished(const UCAction* InAction, EActionFinishReason InActionFinishReason)
+bool UCActionComponent::HandleApplyActionChained(const UCAction* InAction, const FActionData& InActionData)
+{
+	if (!IsActive()) return false;
+	if (!IsValid(InAction)) return false;
+	if (InAction != GetActiveActionExecutor()) return false;
+	if (!InActionData.IsValidMinimal()) return false;
+
+	ActiveActionType = InActionData.ActionDataKey.ActionType;
+	ActiveActionIndex = InActionData.ActionDataKey.ActionIndex;
+	ActiveActionData = InActionData;
+
+	return true;
+}
+
+void UCActionComponent::HandleApplyActionFinished(const UCAction* InAction, EActionFinishReason InActionFinishReason)
 {
 	if (!IsActive()) return;
 	if (!IsValid(InAction)) return;
 	if (InAction != GetActiveActionExecutor()) return;
 
-	EndActiveActionInternal(InActionFinishReason);
-}
-
-void UCActionComponent::BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)
-{
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	if (OnActionEvent.IsBound())
-	{
-		OnActionEvent.Broadcast(OwnerCharacter_Cached, InActionType, InActionIndex, InActionEventType);
-	}
+	EndActiveAction(InActionFinishReason);
 }
 
 void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand)
@@ -201,6 +201,16 @@ void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
 	if (!IsValid(activeExecutor)) return;
 
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
+}
+
+void UCActionComponent::BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	if (OnActionEvent.IsBound())
+	{
+		OnActionEvent.Broadcast(OwnerCharacter_Cached, InActionType, InActionIndex, InActionEventType);
+	}
 }
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
@@ -311,50 +321,29 @@ UCAction* UCActionComponent::FindActionExecutor(const UClass* InClass)
 	return found;
 }
 
-bool UCActionComponent::TryStartAction(const FActionResolvedContext& InActionResolvedContext)
+bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InInterventionDirective)
+{
+	if (!InInterventionDirective.IsRequested()) return true;
+	if (!InInterventionDirective.IsValidRequest()) return true;
+
+	const EReactionType activeReactionType = ReactionComp_Cached->GetActiveReactionType();
+
+	switch (InInterventionDirective.TargetDomain)
+	{
+	case EExecutionDomain::Action:
+		return StopActiveAction(InInterventionDirective);
+
+	case EExecutionDomain::Reaction:
+		return IsValid(ReactionComp_Cached) && ReactionComp_Cached->RequestStopActiveReaction(InInterventionDirective);
+
+	default:
+		return false;
+	}
+}
+
+bool UCActionComponent::StartAction(const FActionResolvedContext& InActionResolvedContext)
 {
 	if (IsActive()) return false;
-	if (!InActionResolvedContext.IsValidMinimal()) return false;
-
-	return StartActiveActionInternal(InActionResolvedContext);
-}
-
-bool UCActionComponent::TryChainAction(const FActionResolvedContext& InActionResolvedContext)
-{
-	if (!IsActive()) return false;
-	if (!InActionResolvedContext.IsValidMinimal()) return false;
-
-	return ChainActiveActionInternal(InActionResolvedContext);
-}
-
-bool UCActionComponent::TryEnqueueAction(const FActionResolvedContext& InActionResolvedContext)
-{
-	return false;
-}
-
-bool UCActionComponent::TryReplaceAction(const FActionResolvedContext& InActionResolvedContext, EActionStopReason InStopReason)
-{
-	if (!IsActive()) return false;
-	if (!InActionResolvedContext.IsValidMinimal()) return false;
-
-	if (!StopActiveActionInternal(InStopReason)) return false;
-
-	return StartActiveActionInternal(InActionResolvedContext);
-}
-
-bool UCActionComponent::TryStopActiveAction(EActionStopReason InStopReason)
-{
-	if (!IsActive()) return true;
-
-	if (!StopActiveActionInternal(InStopReason)) return false;
-
-	const EActionFinishReason finishReason = ConvertStopReasonToFinishReason(InStopReason);
-
-	return EndActiveActionInternal(finishReason);
-}
-
-bool UCActionComponent::StartActiveActionInternal(const FActionResolvedContext& InActionResolvedContext)
-{
 	if (!InActionResolvedContext.IsValidMinimal()) return false;
 
 	UCAction* actionExecutor = InActionResolvedContext.ActionExecutor;
@@ -374,8 +363,11 @@ bool UCActionComponent::StartActiveActionInternal(const FActionResolvedContext& 
 	return true;
 }
 
-bool UCActionComponent::ChainActiveActionInternal(const FActionResolvedContext& InActionResolvedContext)
+bool UCActionComponent::ChainActiveAction(const FActionResolvedContext& InActionResolvedContext)
 {
+	if (!IsActive()) return false;
+	if (!InActionResolvedContext.IsValidMinimal()) return false;
+
 	UCAction* actionExecutor = InActionResolvedContext.ActionExecutor;
 	if (!IsValid(actionExecutor)) return false;
 
@@ -384,35 +376,40 @@ bool UCActionComponent::ChainActiveActionInternal(const FActionResolvedContext& 
 	return actionExecutor->ApplyChain(incomingActionData);
 }
 
-bool UCActionComponent::StopActiveActionInternal(EActionStopReason InStopReason)
+bool UCActionComponent::StopActiveAction(const FExecutionInterventionDirective& InInterventionDirective)
 {
 	if (!IsActive()) return true;
+
+	const EActionStopReason stopReason = ConvertExecutionStopReasonToActionStopReason(InInterventionDirective.StopReason);
+	const EActionFinishReason finishReason = ConvertExecutionStopReasonToActionFinishReason(InInterventionDirective.StopReason);
 
 	UCAction* actionExecutor = GetActiveActionExecutor();
 	if (!IsValid(actionExecutor))
 	{
-		// Stale Guard
-		const EActionFinishReason finishReason = ConvertStopReasonToFinishReason(InStopReason);
-		EndActiveActionInternal(finishReason);
-
-		return !IsActive();
+		// [NOTE] Fallback
+		return EndActiveAction(finishReason);
 	}
 
-	actionExecutor->Stop(InStopReason);
+	actionExecutor->Stop(stopReason);
 
-	return !IsActive();
+	if (IsActive())
+	{
+		// [NOTE] Fallback
+		return EndActiveAction(finishReason);
+	}
+
+	return true;
 }
 
-bool UCActionComponent::EndActiveActionInternal(EActionFinishReason InFinishReason)
+bool UCActionComponent::EndActiveAction(EActionFinishReason InFinishReason)
 {
 	if (!IsActive()) return true;
 
-	// None Reference. Snapshot before clearing active context.
-	const FActionData activeData = ActiveActionData;
+	const FActionData activeActionData = ActiveActionData;
 
-	if (activeData.IsValidMinimal())
+	if (activeActionData.IsValidMinimal())
 	{
-		ExitActionState(activeData);
+		ExitActionState(activeActionData);
 	}
 
 	ClearActiveActionContext();
@@ -483,56 +480,36 @@ void UCActionComponent::ExitActionState(const FActionData& InActionData)
 	}
 }
 
-bool UCActionComponent::HandleActionChained(const UCAction* InAction, const FActionData& InActionData)
-{
-	if (!IsActive()) return false;
-	if (!IsValid(InAction)) return false;
-	if (InAction != GetActiveActionExecutor()) return false;
-	if (!InActionData.IsValidMinimal()) return false;
 
-	ActiveActionType = InActionData.ActionDataKey.ActionType;
-	ActiveActionIndex = InActionData.ActionDataKey.ActionIndex;
-	ActiveActionData = InActionData;
-
-	return true;
-}
-
-bool UCActionComponent::ApplyReactionStopDirective(const FActionOrchestrationLevelResult& InActionOrchestrationResult)
-{
-	if (!InActionOrchestrationResult.StopDirective.IsValidRequest()) return true;
-	if (!IsValid(ReactionComp_Cached)) return true;
-
-	const EReactionType activeReactionType = ReactionComp_Cached->GetActiveReactionType();
-
-	if (activeReactionType == EReactionType::None
-		|| activeReactionType == EReactionType::Idle
-		|| activeReactionType == EReactionType::All
-		|| activeReactionType == EReactionType::Max)
-	{
-		return true;
-	}
-
-	if (activeReactionType == EReactionType::Dead)
-	{
-		return false;
-	}
-
-	return ReactionComp_Cached->RequestStopActiveReaction(InActionOrchestrationResult.StopDirective);
-}
-
-EActionFinishReason UCActionComponent::ConvertStopReasonToFinishReason(EActionStopReason InStopReason) const
+EActionStopReason UCActionComponent::ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const
 {
 	switch (InStopReason)
 	{
-	case EActionStopReason::Interrupted:
+	case EExecutionStopReason::Interrupted:
+		return EActionStopReason::Interrupted;
+
+	case EExecutionStopReason::Cancelled:
+		return EActionStopReason::Cancelled;
+
+	case EExecutionStopReason::Ignored:
+		return EActionStopReason::Ignored;
+
+	default:
+		return EActionStopReason::Ignored;
+	}
+}
+
+EActionFinishReason UCActionComponent::ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const
+{
+	switch (InStopReason)
+	{
+	case EExecutionStopReason::Interrupted:
 		return EActionFinishReason::Interrupted;
 
-	case EActionStopReason::Cancelled:
+	case EExecutionStopReason::Cancelled:
 		return EActionFinishReason::Cancelled;
 
-	case EActionStopReason::Ignored:
-		return EActionFinishReason::Ignored;
-
+	case EExecutionStopReason::Ignored:
 	default:
 		return EActionFinishReason::Ignored;
 	}
