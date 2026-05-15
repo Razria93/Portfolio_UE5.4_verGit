@@ -35,6 +35,8 @@ void UCActionOrchestratorComponent::BeginPlay()
 
 FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InRequest)
 {
+	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
+
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
@@ -44,8 +46,6 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 		MovementComp_Cached->OnStopJump();
 		return BuildActionRequestResult(EActionRequestResultType::Handled);
 	}
-
-	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
@@ -93,11 +93,11 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
-	if (!CanAcceptActionRequest(rejectReason))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
-
 	if (!IsValid(WeaponComp_Cached) || !IsValid(ActionComp_Cached))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
+
+	if (!CanAcceptActionRequest(rejectReason))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
 	FActionCandidate candidate;
 
@@ -111,11 +111,11 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
-	if (!CanAcceptActionRequest(rejectReason))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
-
 	if (!IsValid(ActionComp_Cached))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
+
+	if (!CanAcceptActionRequest(rejectReason))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
 	FActionCandidate candidate;
 
@@ -158,44 +158,6 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	return true;
 }
 
-bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const
-{
-	OutCandidate = FActionCandidate();
-	OutRejectReason = EActionRequestRejectReason::None;
-
-	if (!IsValid(ActionComp_Cached))
-	{
-		OutRejectReason = EActionRequestRejectReason::InvalidComponent;
-		return false;
-	}
-
-	FActionCandidate candidate;
-
-	switch (InRequest.IntentType)
-	{
-	case ECombatActionIntent::ComboAttack:
-	{
-		candidate.ActionDataKey.ActionType = EActionType::ComboAttack;
-		candidate.ActionDataKey.ActionIndex = ActionComp_Cached->CheckActiveActionType(EActionType::ComboAttack) ? ActionComp_Cached->GetActiveActionIndex() + 1 : 0;
-		break;
-	}
-
-	case ECombatActionIntent::Dodge:
-	{
-		candidate.ActionDataKey.ActionType = EActionType::Dodge;
-		candidate.ActionDataKey.ActionIndex = 0;
-		break;
-	}
-
-	default:
-		OutRejectReason = EActionRequestRejectReason::InvalidCombatAction;
-		return false;
-	}
-
-	OutCandidate = candidate;
-	return true;
-}
-
 bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const
 {
 	OutCandidate = FActionCandidate();
@@ -234,6 +196,44 @@ bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquip
 
 	default:
 		OutRejectReason = EActionRequestRejectReason::InvalidEquipment;
+		return false;
+	}
+
+	OutCandidate = candidate;
+	return true;
+}
+
+bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const
+{
+	OutCandidate = FActionCandidate();
+	OutRejectReason = EActionRequestRejectReason::None;
+
+	if (!IsValid(ActionComp_Cached))
+	{
+		OutRejectReason = EActionRequestRejectReason::InvalidComponent;
+		return false;
+	}
+
+	FActionCandidate candidate;
+
+	switch (InRequest.IntentType)
+	{
+	case ECombatActionIntent::ComboAttack:
+	{
+		candidate.ActionDataKey.ActionType = EActionType::ComboAttack;
+		candidate.ActionDataKey.ActionIndex = ActionComp_Cached->IsActiveActionType(EActionType::ComboAttack) ? ActionComp_Cached->GetActiveActionIndex() + 1 : 0;
+		break;
+	}
+
+	case ECombatActionIntent::Dodge:
+	{
+		candidate.ActionDataKey.ActionType = EActionType::Dodge;
+		candidate.ActionDataKey.ActionIndex = 0;
+		break;
+	}
+
+	default:
+		OutRejectReason = EActionRequestRejectReason::InvalidCombatAction;
 		return false;
 	}
 
@@ -527,7 +527,7 @@ FActionOrchestrationLevelResult UCActionOrchestratorComponent::ResolveOrchestrat
 
 void UCActionOrchestratorComponent::ResolveReactionStopDirective(FActionOrchestrationLevelResult& InOutResult) const
 {
-	InOutResult.StopDirective = FExecutionInterventionDirective();
+	InOutResult.StopDirective = FReactionStopDirective();
 
 	if (!InOutResult.IsAcceptedDecision()) return;
 	if (!IsValid(ReactionComp_Cached)) return;

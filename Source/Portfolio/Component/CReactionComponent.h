@@ -85,7 +85,7 @@ public:
 
 public:
 	bool ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult);
-	bool RequestStopActiveReaction(const FExecutionInterventionDirective& InReactionStopDirective);
+	bool RequestStopActiveReaction(const FReactionStopDirective& InReactionStopDirective);
 
 public:
 	void HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason);

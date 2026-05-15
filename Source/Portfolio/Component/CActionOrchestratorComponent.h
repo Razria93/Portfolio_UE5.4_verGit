@@ -47,8 +47,8 @@ private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	bool ResolveCombatActionCandidate(const FCombatActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const;
 	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveCombatActionCandidate(const FCombatActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
 	FActionRequestResult ExecuteActionCandidate(EActionIntentSource InSource, const FActionCandidate& InCandidate);

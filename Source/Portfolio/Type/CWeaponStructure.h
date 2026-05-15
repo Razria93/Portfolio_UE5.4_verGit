@@ -10,7 +10,9 @@
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
-	Unarmed = 0,
+	None = 0,	// Invalid, Unset
+
+	Unarmed,
 	Sword,
 
 	All,
@@ -988,7 +990,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FExecutionInterventionDirective
+struct FReactionStopDirective
 {
 	GENERATED_BODY()
 

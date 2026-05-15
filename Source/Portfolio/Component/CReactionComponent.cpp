@@ -132,7 +132,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionOrchestrationResu
 	}
 }
 
-bool UCReactionComponent::RequestStopActiveReaction(const FExecutionInterventionDirective& InReactionStopDirective)
+bool UCReactionComponent::RequestStopActiveReaction(const FReactionStopDirective& InReactionStopDirective)
 {
 	if (!IsActive()) return true;
 	if (!InReactionStopDirective.IsValidRequest()) return true;

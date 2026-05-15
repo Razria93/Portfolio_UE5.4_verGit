@@ -75,7 +75,7 @@ public:
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	FORCEINLINE bool CheckActiveActionType(EActionType InNewActionType) const { return ActiveActionType == InNewActionType; }
+	FORCEINLINE bool IsActiveActionType(EActionType InActionType) const { return ActiveActionType == InActionType; }
 
 public:
 	bool IsActive() const;
