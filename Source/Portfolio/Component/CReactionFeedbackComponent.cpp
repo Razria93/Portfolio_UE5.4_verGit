@@ -269,7 +269,7 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 
 	switch (InReactionVFXFeedbackData.VFXPlayType)
 	{
-	case EActionVFXPlayType::Once:
+	case EReactionVFXPlayType::Once:
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InReactionVFXFeedbackData.VFX,
@@ -287,7 +287,7 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 		return;
 	}
 
-	case EActionVFXPlayType::Loop:
+	case EReactionVFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
 		return;
@@ -305,7 +305,7 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 
 	switch (InReactionSFXFeedbackData.SFXPlayType)
 	{
-	case EActionSFXPlayType::Once:
+	case EReactionSFXPlayType::Once:
 	{
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
@@ -317,7 +317,7 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 		return;
 	}
 
-	case EActionSFXPlayType::Loop:
+	case EReactionSFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
 		return;

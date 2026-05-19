@@ -1,26 +1,30 @@
 #include "Reaction/CReaction_Dead.h"
 #include "ProjectGlobal.h"
 
-bool UCReaction_Dead::WantToInterrupt(const FReactionQueryContext& InContext) const
+#include "GameFramework/Character.h"
+
+EExecutionDecision UCReaction_Dead::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	// Dead reaction can interrupt others
-	return true;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return EExecutionDecision::Reject;
+
+	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
+	if (incoming.ReactionDataKey.ReactionType != EReactionType::Dead) return EExecutionDecision::Reject;
+
+	return EExecutionDecision::Executable;
 }
 
-bool UCReaction_Dead::WantToCancel(const FReactionQueryContext& InContext) const
+bool UCReaction_Dead::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
-	// Dead reaction cannot be canceled by policy
-	return false;
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
+
+	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
+	if (incoming.ReactionDataKey.ReactionType != EReactionType::Dead) return false;
+
+	return InQuery.StopReason == EExecutionStopReason::Interrupted;
 }
 
-bool UCReaction_Dead::AllowInterruptionBy(const FReactionQueryContext& InContext) const
+bool UCReaction_Dead::AllowInterventionBy(const FExecutionInterventionQuery& InQuery) const
 {
-	// Dead reaction cannot be interrupted
-	return false;
-}
-
-bool UCReaction_Dead::AllowCancelBy(const FReactionQueryContext& InContext) const
-{
-	// Dead reaction cannot be canceled
 	return false;
 }

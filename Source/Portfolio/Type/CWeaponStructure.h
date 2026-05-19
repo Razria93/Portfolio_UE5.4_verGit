@@ -15,9 +15,9 @@ enum class EWeaponType : uint8
 	Unarmed,
 	Sword,
 
-	All,
+	All,		// Wildcard
 
-	Max,
+	Max,		// Sentinel
 };
 
 UENUM(BlueprintType)
@@ -34,9 +34,9 @@ enum class EActionType : uint8
 
 	Dodge,
 
-	All,
+	All,		// Wildcard
 
-	Max,
+	Max,		// Sentinel
 };
 
 UENUM(BlueprintType)
@@ -61,15 +61,49 @@ enum class EActionNotifyCommand : uint8
 
 	Complete,
 
+	OpenInterruptWindow,
+	CloseInterruptWindow,
+
+	OpenCancelWindow,
+	CloseCancelWindow,
+
 	PushHitContext,
 	ClearHitContext,
 
-	OpenChainWindow,
-	CloseChainWindow,
-	AdvanceCombo,
+	OpenReserveChainWindow,
+	CloseReserveChainWindow,
+	ConsumeChain,
 
 	Equip,
 	Unequip,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EReactionNotifyCommand : uint8
+{
+	None = 0,
+
+	Complete,
+
+	OpenInterruptWindow,
+	CloseInterruptWindow,
+
+	OpenCancelWindow,
+	CloseCancelWindow,
+
+	OpenWantInterruptWindow,
+	CloseWantInterruptWindow,
+
+	OpenWantCancelWindow,
+	CloseWantCancelWindow,
+
+	OpenAllowInterruptWindow,
+	CloseAllowInterruptWindow,
+
+	OpenAllowCancelWindow,
+	CloseAllowCancelWindow,
 
 	Max,
 };
@@ -79,8 +113,8 @@ enum class EActionEventType : uint8
 {
 	None = 0,
 
-	ChainWindowOpened,
-	ChainWindowClosed,
+	ReserveChainWindowOpened,
+	ReserveChainWindowClosed,
 
 	ActionStarted,
 	ActionCompleted,
@@ -90,6 +124,20 @@ enum class EActionEventType : uint8
 	ActionInterrupted,
 	ActionCancelled,
 	ActionIgnored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EExecutionDecision : uint8
+{
+	None = 0,
+
+	Reject,
+	Ignore,
+
+	Executable,
+	Chainable,
 
 	Max,
 };
@@ -179,6 +227,56 @@ enum class EActionFinishReason : uint8
 	Interrupted,
 	Cancelled,
 	Ignored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionRequestResultType : uint8
+{
+	None = 0,
+
+	Rejected,
+	Ignored,
+
+	Handled,
+	Started,
+	Chained,
+	Enqueued,
+	Interrupted,
+	Cancelled,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionRequestRejectReason : uint8
+{
+	None = 0,
+
+	InvalidOwner,
+	InvalidRequest,
+	InvalidComponent,
+
+	Dead,
+	
+	InvalidState,
+	InvalidEquipment,
+	InvalidCombatAction,
+
+	AlreadyPlaying,
+	ActionCandidateNotFound,
+	ActionDataNotFound,
+	ActionExecutorNotFound,
+	NoExecutableAction,
+
+	InvalidDecision,
+	InvalidQuery,
+	InvalidStopReason,
+
+	DisableIntervention,
+
+	DispatchFailed,
 
 	Max,
 };
@@ -278,6 +376,49 @@ enum class EReactionFinishReason : uint8
 };
 
 UENUM(BlueprintType)
+enum class EReactionRequestResultType : uint8
+{
+	None = 0,
+
+	Rejected,
+	Ignored,
+
+	Started,
+	Interrupted,
+	Cancelled,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EReactionRequestRejectReason : uint8
+{
+	None = 0,
+
+	InvalidOwner,
+	InvalidRequest,
+	InvalidComponent,
+
+	InvalidDamageResult,
+
+	Dead,
+
+	ReactionCandidateNotFound,
+	ReactionDataNotFound,
+	ReactionExecutorNotFound,
+	NoExecutableReaction,
+
+	LowerPriority,
+	ActiveNotInterruptible,
+	IncomingCannotInterrupt,
+
+	ReactionDispatchFailed,
+	ReactionExecutionFailed,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EReactionControlWindowType : uint8
 {
 	None = 0,
@@ -295,28 +436,36 @@ enum class EReactionControlWindowType : uint8
 	ImmuneToReaction,
 };
 
+// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionFeedbackTiming : uint8
 {
 	None,
-	ActionStart,
-	ActionComplete,
 
-	ActionChain,
+	Start,
+
+	Complete,
+	Interrupt,
+	Cancel,
+
+	Chain,
 
 	TriggerOnce,
 	TriggerWindowBegin,
 	TriggerWindowEnd
 };
 
+// [TODO] Migrate to CActionFeedbackStructure
 enum class EActionFeedbackMatchTier : uint8
 {
 	None = 0,
+
 	AnyActionAnyIndex,
 	ExactActionAnyIndex,
 	ExactActionExactIndex,
 };
 
+// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionVFXPlayType : uint8
 {
@@ -324,6 +473,7 @@ enum class EActionVFXPlayType : uint8
 	Loop
 };
 
+// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionSFXPlayType : uint8
 {
@@ -344,8 +494,7 @@ public:
 	int32 ActionIndex = INDEX_NONE;
 
 public:
-	bool IsValidTypeOnlyKey() const;
-	bool IsValidExactKey() const;
+	bool IsValidMinimal() const;
 
 public:
 	bool operator==(const FActionDataKey& InOther) const
@@ -377,6 +526,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Key")
 	TSubclassOf<class UCAction> ActionExecutorKey = nullptr;
 
+	UPROPERTY(EditAnywhere, Category = "Priority")
+	int32 Priority = INDEX_NONE;
+
 	UPROPERTY(EditAnywhere, Category = "Data")
 	class UAnimMontage* Montage = nullptr;
 
@@ -388,6 +540,25 @@ public:
 
 public:
 	FActionData() = default;
+
+public:
+	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FActionExecutionContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FActionDataKey ActionDataKey = FActionDataKey();
+
+	UPROPERTY(Transient)
+	FActionData ActionData = FActionData();
+
+	UPROPERTY(Transient)
+	class UCAction* ActionExecutor = nullptr;
 
 public:
 	bool IsValidMinimal() const;
@@ -449,6 +620,7 @@ public:
 	FWeaponContext() = default;
 };
 
+// [TODO] Translate to FActionExecutionContext
 USTRUCT(BlueprintType)
 struct FActionContext
 {
@@ -561,6 +733,15 @@ public:
 
 public:
 	FApplyDamageSpecKey() = default;
+
+public:
+	bool IsValidMinimal() const
+	{
+		return WeaponType != EWeaponType::None
+			&& WeaponType != EWeaponType::Max
+			&& ActionType != EActionType::None
+			&& ActionType != EActionType::Max;
+	}
 
 public:
 	bool operator==(const FApplyDamageSpecKey& InOther) const
@@ -949,6 +1130,9 @@ public:
 	FReactionDataKey() = default;
 
 public:
+	bool IsValidMinimal() const;
+
+public:
 	bool operator==(const FReactionDataKey& InOther) const
 	{
 		return ReactionType == InOther.ReactionType
@@ -978,17 +1162,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Key")
 	TSubclassOf<class UCReaction> ReactionExecutorKey = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Reaction")
+	UPROPERTY(EditAnywhere, Category = "Priority")
+	int32 Priority = INDEX_NONE;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
 	UAnimMontage* Montage = nullptr;
 
-	UPROPERTY(EditAnywhere, Category = "Reaction")
+	UPROPERTY(EditAnywhere, Category = "Data")
 	float PlayRate = 1.f;
 
-	UPROPERTY(EditAnywhere, Category = "Reaction")
+	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
-
-	UPROPERTY(EditAnywhere, Category = "Reaction")
-	int32 Priority = INDEX_NONE;
 
 public:
 	FReactionData() = default;
@@ -998,36 +1182,14 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FReactionQueryContext
+struct FReactionExecutionContext
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(Transient)
-	class UCReaction* ActiveReactionExecutor = nullptr;
+	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
-	UPROPERTY(Transient)
-	class UCReaction* IncomingReactionExecutor = nullptr;
-
-	UPROPERTY(Transient)
-	FReactionData ActiveReactionData = FReactionData();
-
-	UPROPERTY(Transient)
-	FReactionData IncomingReactionData = FReactionData();
-
-public:
-	FReactionQueryContext() = default;
-
-public:
-	bool IsValidMinimal() const;
-};
-
-USTRUCT(BlueprintType)
-struct FReactionContext
-{
-	GENERATED_BODY()
-
-public:
 	UPROPERTY(Transient)
 	FReactionData ReactionData = FReactionData();
 
@@ -1035,10 +1197,152 @@ public:
 	class UCReaction* ReactionExecutor = nullptr;
 
 public:
-	FReactionContext() = default;
+	FReactionExecutionContext() = default;
 
 public:
 	bool IsValidMinimal() const;
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionSnapshot
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionState ExecutionState = EExecutionState::Idle;
+
+public:
+	UPROPERTY(Transient)
+	bool bIsDead = false;
+
+	// [TODO]
+	// - bIsParrying
+	// - bIsGuarding
+	// - bIsGuardBroken
+
+public:
+	bool IsIdle() const
+	{
+		return ExecutionState == EExecutionState::Idle;
+	}
+
+	bool IsInAction() const
+	{
+		return ExecutionState == EExecutionState::Action;
+	}
+
+	bool IsInReaction() const
+	{
+		return ExecutionState == EExecutionState::Reaction;
+	}
+
+	bool IsDead() const
+	{
+		return bIsDead || ExecutionState == EExecutionState::Dead;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionParticipant
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bIsValid = false;
+
+	UPROPERTY(Transient)
+	EExecutionDomain ParticipantDomain = EExecutionDomain::None;
+
+	UPROPERTY(Transient)
+	FActionExecutionContext ActionContext = FActionExecutionContext();
+
+	UPROPERTY(Transient)
+	FReactionExecutionContext ReactionContext = FReactionExecutionContext();
+
+public:
+	bool IsValidMinimal() const;
+	bool IsActionParticipant() const;
+	bool IsReactionParticipant() const;
+
+	const FActionExecutionContext& GetActionContext() const;
+	const FReactionExecutionContext& GetReactionContext() const;
+
+	UObject* GetExecutor() const;
+	int32 GetPriority() const;
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionDecisionQuery
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FExecutionSnapshot Snapshot = FExecutionSnapshot();
+
+	UPROPERTY(Transient)
+	FExecutionParticipant IncomingPart = FExecutionParticipant();
+
+	UPROPERTY(Transient)
+	FExecutionParticipant ActivePart = FExecutionParticipant();
+
+public:
+	bool HasIncomingPart() const
+	{
+		return IncomingPart.IsValidMinimal();
+	}
+
+	bool HasActivePart() const
+	{
+		return ActivePart.IsValidMinimal();
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionDecisionResult
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionDecision Decision = EExecutionDecision::None;
+
+public:
+	bool IsAccepted() const
+	{
+		return Decision == EExecutionDecision::Executable
+			|| Decision == EExecutionDecision::Chainable;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionInterventionQuery
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FExecutionSnapshot Snapshot = FExecutionSnapshot();
+
+	UPROPERTY(Transient)
+	FExecutionParticipant IncomingPart = FExecutionParticipant();
+
+	UPROPERTY(Transient)
+	FExecutionParticipant ActivePart = FExecutionParticipant();
+
+	UPROPERTY(Transient)
+	EExecutionStopReason StopReason = EExecutionStopReason::None;
+
+public:
+	bool IsValidMinimal() const
+	{
+		return IncomingPart.IsValidMinimal()
+			&& ActivePart.IsValidMinimal()
+			&& StopReason != EExecutionStopReason::None
+			&& StopReason != EExecutionStopReason::Max;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -1051,13 +1355,16 @@ public:
 	bool bRequested = false;
 
 	UPROPERTY(Transient)
+	EExecutionStopSource StopSource = EExecutionStopSource::None;
+
+	UPROPERTY(Transient)
+	EExecutionDomain SourceDomain = EExecutionDomain::None;
+
+	UPROPERTY(Transient)
 	EExecutionDomain TargetDomain = EExecutionDomain::None;
 
 	UPROPERTY(Transient)
 	EExecutionStopReason StopReason = EExecutionStopReason::None;
-
-	UPROPERTY(Transient)
-	EExecutionStopSource StopSource = EExecutionStopSource::None;
 
 	UPROPERTY(Transient)
 	EExecutionAfterStopAction AfterStopAction = EExecutionAfterStopAction::None;
@@ -1071,12 +1378,75 @@ public:
 	bool IsValidRequest() const
 	{
 		return bRequested
+			&& StopSource != EExecutionStopSource::None
+			&& StopSource != EExecutionStopSource::Max
+			&& SourceDomain != EExecutionDomain::None
+			&& SourceDomain != EExecutionDomain::Max
 			&& TargetDomain != EExecutionDomain::None
 			&& TargetDomain != EExecutionDomain::Max
 			&& StopReason != EExecutionStopReason::None
-			&& StopReason != EExecutionStopReason::Max
-			&& StopSource != EExecutionStopSource::None
-			&& StopSource != EExecutionStopSource::Max;
+			&& StopReason != EExecutionStopReason::Max;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FActionExecutionResult
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionDecision Decision = EExecutionDecision::None;
+
+	UPROPERTY(Transient)
+	EActionRequestRejectReason RejectReason = EActionRequestRejectReason::None;
+
+	UPROPERTY(Transient)
+	FActionExecutionContext ResolvedContext = FActionExecutionContext();
+
+	UPROPERTY(Transient)
+	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
+
+public:
+	bool IsAcceptedDecision() const
+	{
+		return Decision == EExecutionDecision::Executable
+			|| Decision == EExecutionDecision::Chainable;
+	}
+
+	bool RequiresIntervention() const
+	{
+		return InterventionDirective.IsRequested();
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FReactionExecutionResult
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionDecision Decision = EExecutionDecision::None;
+
+	UPROPERTY(Transient)
+	EReactionRequestRejectReason RejectReason = EReactionRequestRejectReason::None;
+
+	UPROPERTY(Transient)
+	FReactionExecutionContext ResolvedContext = FReactionExecutionContext();
+
+	UPROPERTY(Transient)
+	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
+
+public:
+	bool IsAcceptedDecision() const
+	{
+		return Decision == EExecutionDecision::Executable;
+	}
+
+	bool RequiresIntervention() const
+	{
+		return InterventionDirective.IsRequested();
 	}
 };
 

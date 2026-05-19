@@ -12,37 +12,33 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 
 private:
 	UPROPERTY(Transient)
-	bool bChainWindowOpened = false;
+	bool bReserveChainWindowOpened = false;
 
 	UPROPERTY(Transient)
-	bool bHasChainedInput = false;
+	bool bHasReservingChain = false;
 
 	UPROPERTY(Transient)
-	FActionData PendingChainData_Cached = FActionData();
+	FActionData ReservingChainData = FActionData();
 
 public:
-	void InitializeAction(ACharacter* InOwnerCharacter, class UCActionComponent* InOwnerActionComp) override;
+	EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 public:
-	EActionLocalLevelDecision ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const override;
+	bool ReserveChain(const FActionData& InData) override;
+	void ConsumeChain() override;
+
+protected:
+	void ClearRuntime() override;
+
+protected:
+	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
 
 public:
-	bool Start(const FActionData& InData) override;
-	bool ApplyChain(const FActionData& InData) override;
-	void Stop(EActionStopReason InStopReason) override;
-	void Complete() override;
-
-public:
-	void AdvanceCombo();
-
-public:
-	void OpenChainWindow();
-	void CloseChainWindow();
+	void OpenReserveChainWindow();
+	void CloseReserveChainWindow();
 
 private:
-	void ClearComboRuntime();
-
-private:
-	bool CanAcceptChain(const FActionData& InData) const;
-	bool CanAdvanceCombo() const;
+	bool CanResolveChain(const FExecutionDecisionQuery& InQuery) const;	// CheckTiming: Input
+	bool CanReserveChain(const FActionData& InData) const;				// CheckTiming: Reserve
+	bool CanConsumeChain(const FActionData& InData) const;				// CheckTiming: Consume
 };

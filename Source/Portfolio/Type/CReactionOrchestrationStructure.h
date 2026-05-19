@@ -14,45 +14,20 @@ enum class EReactionIntentSource : uint8
 	Max,
 };
 
-UENUM(BlueprintType)
-enum class EReactionRequestResultType : uint8
+USTRUCT(BlueprintType)
+struct FReactionCandidate
 {
-	None = 0,
+	GENERATED_BODY()
 
-	Rejected,
-	Ignored,
+public:
+	UPROPERTY(Transient)
+	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
-	Started,
-	Interrupted,
-	Cancelled,
-
-	Max,
-};
-
-UENUM(BlueprintType)
-enum class EReactionRequestRejectReason : uint8
-{
-	None = 0,
-
-	InvalidOwner,
-	InvalidRequest,
-	InvalidComponent,
-
-	InvalidDamageResult,
-
-	ReactionTypeNotFound,
-	ReactionDataNotFound,
-	ReactionExecutorNotFound,
-	ReactionPolicyNotFound,
-
-	LowerPriority,
-	ActiveNotInterruptible,
-	IncomingCannotInterrupt,
-
-	ReactionDispatchFailed,
-	ReactionExecutionFailed,
-
-	Max,
+public:
+	bool IsValidMinimal() const
+	{
+		return ReactionDataKey.IsValidMinimal();
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -80,98 +55,11 @@ public:
 	UPROPERTY(Transient)
 	EReactionRequestRejectReason RejectReason = EReactionRequestRejectReason::None;
 
-	UPROPERTY(Transient)
-	EReactionType ResolvedReactionType = EReactionType::None;
-
 public:
 	bool IsAccepted() const
 	{
 		return ResultType == EReactionRequestResultType::Started
 			|| ResultType == EReactionRequestResultType::Interrupted
 			|| ResultType == EReactionRequestResultType::Cancelled;
-	}
-};
-
-
-UENUM(BlueprintType)
-enum class EReactionOrchestrationDecision : uint8
-{
-	None = 0,
-
-	Reject,
-	Ignore,
-
-	Start,
-	Interrupt,
-	Cancel,
-
-	Max,
-};
-
-USTRUCT(BlueprintType)
-struct FReactionExecutionPolicy
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	bool bCanInterrupt = false;
-
-	UPROPERTY(Transient)
-	bool bForceInterrupt = false;
-
-	UPROPERTY(Transient)
-	bool bIgnoreInterruptWindow = false;
-
-	UPROPERTY(Transient)
-	int32 Priority = 0;
-};
-
-USTRUCT(BlueprintType)
-struct FReactionOrchestrationQuery
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	EReactionIntentSource IntentSource = EReactionIntentSource::None;
-
-	UPROPERTY(Transient)
-	EReactionType IncomingType = EReactionType::None;
-
-	UPROPERTY(Transient)
-	FReactionExecutionPolicy IncomingPolicy;
-
-	UPROPERTY(Transient)
-	FReactionContext IncomingContext;
-
-	UPROPERTY(Transient)
-	FReactionContext ActiveContext;
-};
-
-USTRUCT(BlueprintType)
-struct FReactionOrchestrationResult
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	EReactionOrchestrationDecision Decision = EReactionOrchestrationDecision::None;
-
-	UPROPERTY(Transient)
-	EReactionRequestRejectReason RejectReason = EReactionRequestRejectReason::None;
-
-	UPROPERTY(Transient)
-	EReactionType ReactionType = EReactionType::None;
-
-	UPROPERTY(Transient)
-	FReactionContext ReactionContext;
-
-public:
-	bool IsAccepted() const
-	{
-		return Decision == EReactionOrchestrationDecision::Start
-			|| Decision == EReactionOrchestrationDecision::Interrupt
-			|| Decision == EReactionOrchestrationDecision::Cancel;
 	}
 };

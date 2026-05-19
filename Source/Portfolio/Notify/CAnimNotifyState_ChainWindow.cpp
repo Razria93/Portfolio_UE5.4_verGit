@@ -20,7 +20,7 @@ void UCAnimNotifyState_ChainWindow::NotifyBegin(USkeletalMeshComponent* MeshComp
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
-	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::OpenChainWindow);
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::OpenReserveChainWindow);
 }
 
 void UCAnimNotifyState_ChainWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
@@ -30,5 +30,5 @@ void UCAnimNotifyState_ChainWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
-	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::CloseChainWindow);
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::CloseReserveChainWindow);
 }

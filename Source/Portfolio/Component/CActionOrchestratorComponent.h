@@ -27,55 +27,64 @@ private:
 	class UCStateComponent* StateComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCHealthComponent* HealthComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
-	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
-
 protected:
 	void BeginPlay() override;
 
 public:
-	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InRequest);
-	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InRequest);
-	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InRequest);
+	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InIncomingRequest);
+	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest);
+	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InIncomingRequest);
 
 private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const;
-	bool ResolveCombatActionCandidate(const FCombatActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	FActionRequestResult ExecuteActionCandidate(EActionIntentSource InSource, const FActionCandidate& InCandidate);
+	FActionRequestResult ExecuteActionCandidate(EActionIntentSource InIncomingIntentSource, const FActionCandidate& InIncomingCandidate);
 
 private:
-	bool ResolveActionContext(const FActionCandidate& InCandidate, FActionResolvedContext& OutContext, EActionRequestRejectReason& OutRejectReason) const;
-	bool ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData) const;
-	class UCAction* ResolveActionExecutor(const FActionData& InData) const;
+	bool ResolveActionContext(const FActionCandidate& InIncomingCandidate, FActionExecutionContext& OutIncomingContext, EActionRequestRejectReason& OutRejectReason) const;
+
+	// Inner API
+	bool ResolveActionData(const FActionDataKey& InIncomingDataKey, FActionData& OutIncomingData) const;
+	class UCAction* ResolveActionExecutor(const FActionData& InIncomingData) const;
 
 private:
-	FActionLocalLevelQuery BuildLocalLevelQuery(const FActionResolvedContext& InIncoming) const;
-	FActionLocalLevelResult ResolveLocalLevelResult(const FActionLocalLevelQuery& InLocalQuery) const;
+	FExecutionDecisionQuery BuildDecisionQuery(const FActionExecutionContext& InIncomingContext) const;
+
+	// Inner API
+	FExecutionSnapshot BuildSnapshot() const;
+	FExecutionParticipant BuildIncomingActionParticipant(const FActionExecutionContext& InIncomingContext) const;
+	FExecutionParticipant BuildActiveExecutionParticipant() const;
 
 private:
-	bool ResolveActionPolicy(const FActionLocalLevelQuery& InLocalQuery, const FActionLocalLevelResult& InLocalResult, FActionResolvedPolicy& OutPolicy, EActionRequestRejectReason& OutRejectReason) const;
+	FExecutionDecisionResult BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	FActionOrchestrationLevelQuery BuildOrchestrationLevelQuery(EActionIntentSource InSource, const FActionLocalLevelQuery& InLocalQuery, const FActionLocalLevelResult& InLocalResult, const FActionResolvedPolicy& InPolicy) const;
-	FActionOrchestrationLevelResult ResolveOrchestrationLevelResult(const FActionOrchestrationLevelQuery& InOrchestrationQuery) const;
+	FActionExecutionResult BuildActionExecutionResult(const FActionExecutionContext& InContext, const FExecutionDecisionResult& InDecisionResult, EActionRequestRejectReason InRejectReason) const;
 
 private:
-	void ResolveExecutionInterventionDirective(FActionOrchestrationLevelResult& InOutResult) const;
+	void ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;
+
+	// Inner API
+	bool BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const;
+	bool BuildInterventionDirective(const FExecutionInterventionQuery& InQuery, EExecutionStopSource InStopSource, EExecutionAfterStopAction InAfterStopAction, FExecutionInterventionDirective& OutDirective) const;
 
 private:
-	FActionRequestResult DispatchActionDecision(const FActionOrchestrationLevelResult& InResult);
+	FActionRequestResult DispatchActionDecision(const FActionExecutionResult& InResult);
 
 private:
-	EActionRequestResultType ConvertDecisionToResultType(EActionOrchestrationLevelDecision InDecision) const;
+	EActionRequestResultType ConvertDecisionToResultType(const FActionExecutionResult& InResult) const;
 	FActionRequestResult BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason = EActionRequestRejectReason::None) const;
 };

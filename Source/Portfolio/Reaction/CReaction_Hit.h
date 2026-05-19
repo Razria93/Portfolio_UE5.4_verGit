@@ -10,8 +10,8 @@ class PORTFOLIO_API UCReaction_Hit : public UCReaction
 	GENERATED_BODY()
 
 public:
-	bool WantToInterrupt(const FReactionQueryContext& InReactionQueryContext) const override;
-	bool WantToCancel(const FReactionQueryContext& InReactionQueryContext) const override;
-	bool AllowInterruptionBy(const FReactionQueryContext& InReactionQueryContext) const override;
-	bool AllowCancelBy(const FReactionQueryContext& InReactionQueryContext) const override;
+	EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
+
+public:
+	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 };

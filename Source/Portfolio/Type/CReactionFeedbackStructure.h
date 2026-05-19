@@ -4,24 +4,37 @@
 #include "Type/CWeaponStructure.h"
 #include "CReactionFeedbackStructure.generated.h"
 
-
 UENUM(BlueprintType)
 enum class EReactionFeedbackTiming : uint8
 {
 	None = 0,
 
-	ReactionStart,
+	Start,
 
-	ReactionCompleted,
-	ReactionInterrupted,
-	ReactionCancelled,
+	Complete,
+	Interrupt,
+	Cancel,
 
-	WindowBegin,
-	WindowEnd,
+	TriggerWindowBegin,
+	TriggerWindowEnd,
 
-	Notify,
+	TriggerOnce,
 
 	Max,
+};
+
+UENUM(BlueprintType)
+enum class EReactionVFXPlayType : uint8
+{
+	Once,
+	Loop
+};
+
+UENUM(BlueprintType)
+enum class EReactionSFXPlayType : uint8
+{
+	Once,
+	Loop
 };
 
 USTRUCT(BlueprintType)
@@ -82,7 +95,7 @@ public:
 	FName TriggerKey = NAME_None;
 
 	UPROPERTY(EditAnywhere)
-	EActionVFXPlayType VFXPlayType = EActionVFXPlayType::Once;
+	EReactionVFXPlayType VFXPlayType = EReactionVFXPlayType::Once;
 
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* VFX = nullptr;
@@ -119,7 +132,7 @@ public:
 	FName TriggerKey = NAME_None;
 
 	UPROPERTY(EditAnywhere)
-	EActionSFXPlayType SFXPlayType = EActionSFXPlayType::Once;
+	EReactionSFXPlayType SFXPlayType = EReactionSFXPlayType::Once;
 
 	UPROPERTY(EditAnywhere)
 	class USoundBase* SFX = nullptr;
@@ -135,7 +148,7 @@ struct FReactionVFXExecutionKey
 
 public:
 	UPROPERTY(Transient)
-	EActionVFXPlayType VFXPlayType = EActionVFXPlayType::Once;
+	EReactionVFXPlayType VFXPlayType = EReactionVFXPlayType::Once;
 
 	UPROPERTY(Transient)
 	TObjectPtr<class UNiagaraSystem> VFX = nullptr;
@@ -197,7 +210,7 @@ struct FReactionSFXExecutionKey
 
 public:
 	UPROPERTY(Transient)
-	EActionSFXPlayType SFXPlayType = EActionSFXPlayType::Once;
+	EReactionSFXPlayType SFXPlayType = EReactionSFXPlayType::Once;
 
 	UPROPERTY(Transient)
 	TObjectPtr<class USoundBase> SFX = nullptr;

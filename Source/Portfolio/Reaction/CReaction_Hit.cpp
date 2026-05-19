@@ -1,26 +1,26 @@
 #include "Reaction/CReaction_Hit.h"
 #include "ProjectGlobal.h"
 
-bool UCReaction_Hit::WantToInterrupt(const FReactionQueryContext& InContext) const
+#include "GameFramework/Character.h"
+
+EExecutionDecision UCReaction_Hit::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	// Hit reaction can interrupt others
-	return true;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return EExecutionDecision::Reject;
+	if (InQuery.Snapshot.IsDead()) return EExecutionDecision::Reject;
+
+	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
+	if (incoming.ReactionDataKey.ReactionType != EReactionType::Hit) return EExecutionDecision::Reject;
+
+	return EExecutionDecision::Executable;
 }
 
-bool UCReaction_Hit::WantToCancel(const FReactionQueryContext& InContext) const
+bool UCReaction_Hit::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
-	// Hit reaction cannot be canceled by policy
-	return false;
-}
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
 
-bool UCReaction_Hit::AllowInterruptionBy(const FReactionQueryContext& InContext) const
-{
-	// Follow current interruptible window
-	return IsInterruptibleNow();
-}
+	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
+	if (incoming.ReactionDataKey.ReactionType != EReactionType::Hit) return false;
 
-bool UCReaction_Hit::AllowCancelBy(const FReactionQueryContext& InContext) const
-{
-	// Follow current cancelable window
-	return IsCancelableNow();
+	return InQuery.StopReason == EExecutionStopReason::Interrupted;
 }

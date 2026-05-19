@@ -6,298 +6,321 @@
 #include "Component/CReactionComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
-void UCReaction::Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent)
+void UCReaction::Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComp)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
-	check(OwnerCharacter_Injected);
+	OwnerReactionComp_Injected = InOwnerReactionComp;
 
-	OwnerReactionComp_Injected = InOwnerReactionComponent;
-	check(OwnerReactionComp_Injected);
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	ReactionFeedbackComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>();
+	check(ReactionFeedbackComp_Cached);
 }
 
-bool UCReaction::IsValidMinimal() const
+EExecutionDecision UCReaction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!IsValid(OwnerReactionComp_Injected)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return EExecutionDecision::Reject;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return EExecutionDecision::Reject;
 
-	const USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	if (!IsValid(meshComp)) return false;
-
-	const UAnimInstance* animInstance = meshComp->GetAnimInstance();
-	if (!IsValid(animInstance)) return false;
-
-	return true;
+	return EExecutionDecision::Executable;
 }
 
-bool UCReaction::Start(const FReactionData& InReactionData)
+bool UCReaction::Start(const FReactionData& InData)
 {
-	if (!IsValidMinimal()) return false;
-	if (!InReactionData.IsValidMinimal()) return false;
+	if (!InData.IsValidMinimal()) return false;
+	if (bIsActive) return false;
 
-	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	UAnimInstance* animInstance = meshComp->GetAnimInstance();
-
-	const float playRate = FMath::Max(0.01f, InReactionData.PlayRate);
-	const float duration = animInstance->Montage_Play(InReactionData.Montage, playRate);
-	if (duration <= 0.f) return false;
-
-	bIsReaction = true;
-	ActiveReactionData_Cached = InReactionData;
-	ActiveReactionMontage_Cached = InReactionData.Montage;
+	ActiveDataKey_Cached = InData.ReactionDataKey;
+	ActiveData_Cached = InData;
+	ActiveMontage_Cached = InData.Montage;
 	LastStopReason_Cached = EReactionStopReason::None;
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionStart);
+	if (!PlayMontage(InData))
+	{
+		ClearRuntime();
+		return false;
+	}
 
-	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
-	CachedSerial_ActivePlay = thisPlaySerial;
+	if (!BindMontageEndDelegate())
+	{
+		StopMontage(0.f);
+		ClearRuntime();
+		return false;
+	}
 
-	FOnMontageEnded montageEnd;
-	montageEnd.BindUObject(this, &UCReaction::OnMontageEnd, thisPlaySerial); // Capture Serial at this time
-	animInstance->Montage_SetEndDelegate(montageEnd, ActiveReactionMontage_Cached);
+	bIsActive = true;
+
+	RequestFeedback(EReactionFeedbackTiming::Start);
 
 	return true;
 }
 
 void UCReaction::Stop(EReactionStopReason InStopReason)
 {
-	if (!bIsReaction) return;
-
-	if (InStopReason == EReactionStopReason::None)
-	{
-		LastStopReason_Cached = EReactionStopReason::Ignored;
-		FinishIgnored();
-		return;
-	}
+	if (!bIsActive) return;
+	if (InStopReason == EReactionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
 
-	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	UAnimInstance* animInstance = IsValid(meshComp) ? meshComp->GetAnimInstance() : nullptr;
+	StopMontage(0.1f);
 
-	if (!IsValid(animInstance) || !IsValid(ActiveReactionMontage_Cached))
-	{
-		LastStopReason_Cached = EReactionStopReason::Ignored;
-		FinishIgnored();
-		return;
-	}
-
-	// Stop Montage
-	animInstance->Montage_Stop(0.1f, ActiveReactionMontage_Cached);
-
-	PrintStopReasonInfo(InStopReason);
-	PrintReactionExecutorRuntimeInfo();
+	EReactionFeedbackTiming feedbackTiming = EReactionFeedbackTiming::None;
+	EReactionFinishReason finishReason = EReactionFinishReason::None;
 
 	switch (InStopReason)
 	{
 	case EReactionStopReason::Interrupted:
 	{
-		FinishInterrupted();
-		return;
+		feedbackTiming = EReactionFeedbackTiming::Interrupt;
+		finishReason = EReactionFinishReason::Interrupted;
+		break;
 	}
-
 	case EReactionStopReason::Cancelled:
 	{
-		FinishCancelled();
-		return;
+		feedbackTiming = EReactionFeedbackTiming::Cancel;
+		finishReason = EReactionFinishReason::Cancelled;
+		break;
 	}
-
-	case EReactionStopReason::Ignored:
-	{
-		FinishIgnored();
-		return;
-	}
-
 	default:
-		LastStopReason_Cached = EReactionStopReason::Ignored;
-		FinishIgnored();
-		return;
+		finishReason = EReactionFinishReason::Ignored;
+		break;
 	}
-}
 
-void UCReaction::FinishCompleted()
-{
-	if (!bIsReaction) return;
+	RequestFeedback(feedbackTiming);
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionCompleted);
-
-	Clear();
+	ClearRuntime();
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Completed);
+		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, finishReason);
 	}
 }
 
-void UCReaction::FinishInterrupted()
+void UCReaction::Complete()
 {
-	if (!bIsReaction) return;
+	if (!bIsActive) return;
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionInterrupted);
+	RequestFeedback(EReactionFeedbackTiming::Complete);
 
-	Clear();
+	ClearRuntime();
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Interrupted);
+		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
 	}
 }
 
-void UCReaction::FinishCancelled()
+void UCReaction::ClearRuntime()
 {
-	if (!bIsReaction) return;
+	bIsActive = false;
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionCancelled);
-
-	Clear();
-
-	if (IsValid(OwnerReactionComp_Injected))
-	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Cancelled);
-	}
-}
-
-void UCReaction::FinishIgnored()
-{
-	if (!bIsReaction) return;
-
-	PrintIgnoredStopReasonInfo();
-
-	Clear();
-
-	if (IsValid(OwnerReactionComp_Injected))
-	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Ignored);
-	}
-}
-
-void UCReaction::Clear()
-{
-	bIsReaction = false;
-
-	ActiveReactionData_Cached = FReactionData();
-	ActiveReactionMontage_Cached = nullptr;
+	ActiveDataKey_Cached = FReactionDataKey();
+	ActiveData_Cached = FReactionData();
+	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EReactionStopReason::None;
 
-	bInterruptible = false;
-	bCancelable = false;
+	bWantInterrupt = false;
+	bWantCancel = false;
+	bAllowInterrupt = false;
+	bAllowCancel = false;
 }
 
-void UCReaction::OnReactionControlWindowBegin(EReactionControlWindowType InReactionWindowType)
+bool UCReaction::PlayMontage(const FReactionData& InData)
 {
-	switch (InReactionWindowType)
-	{
-	case EReactionControlWindowType::Interruptible:
-	{
-		SetInterruptible(true);
-		break;
-	}
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(InData.Montage)) return false;
 
-	case EReactionControlWindowType::Cancelable:
-	{
-		SetCancelable(true);
-		break;
-	}
+	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
 
-	case EReactionControlWindowType::ImmuneToReaction:
+	return duration > 0.0f;
+}
+
+void UCReaction::StopMontage(float InBlendOutTime)
+{
+	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(ActiveMontage_Cached)) return;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return;
+
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return;
+
+	animInstance->Montage_Stop(InBlendOutTime, ActiveMontage_Cached);
+}
+
+bool UCReaction::BindMontageEndDelegate()
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return false;
+
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return false;
+	if (!IsValid(ActiveMontage_Cached)) return false;
+
+	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
+	CachedSerial_ActivePlay = thisPlaySerial;
+
+	FOnMontageEnded montageEnd;
+	montageEnd.BindUObject(this, &UCReaction::OnMontageEnd, thisPlaySerial);
+	animInstance->Montage_SetEndDelegate(montageEnd, ActiveMontage_Cached);
+
+	return true;
+}
+
+void UCReaction::HandleNotifyCommand(EReactionNotifyCommand InCommand)
+{
+	switch (InCommand)
 	{
-		SetInterruptible(false);
-		SetCancelable(false);
-		break;
-	}
+	case EReactionNotifyCommand::Complete:
+		Complete();
+		return;
+
+	case EReactionNotifyCommand::OpenWantInterruptWindow:
+		SetWantInterrupt(true);
+		return;
+
+	case EReactionNotifyCommand::CloseWantInterruptWindow:
+		SetWantInterrupt(false);
+		return;
+
+	case EReactionNotifyCommand::OpenWantCancelWindow:
+		SetWantCancel(true);
+		return;
+
+	case EReactionNotifyCommand::CloseWantCancelWindow:
+		SetWantCancel(false);
+		return;
+
+	case EReactionNotifyCommand::OpenAllowInterruptWindow:
+		SetAllowInterrupt(true);
+		return;
+
+	case EReactionNotifyCommand::CloseAllowInterruptWindow:
+		SetAllowInterrupt(false);
+		return;
+
+	case EReactionNotifyCommand::OpenAllowCancelWindow:
+		SetAllowCancel(true);
+		return;
+
+	case EReactionNotifyCommand::CloseAllowCancelWindow:
+		SetAllowCancel(false);
+		return;
 
 	default:
 		break;
 	}
+
+	HandleSpecificNotifyCommand(InCommand);
 }
 
-void UCReaction::OnReactionControlWindowEnd(EReactionControlWindowType InReactionWindowType)
+void UCReaction::HandleSpecificNotifyCommand(EReactionNotifyCommand InCommand)
 {
-	switch (InReactionWindowType)
+	// [NOTE] 
+	// Specific Reactions override this API.
+}
+
+void UCReaction::HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey)
+{
+	RequestFeedback(InTiming, InTriggerKey);
+}
+
+bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+
+	switch (InQuery.StopReason)
 	{
-	case EReactionControlWindowType::Interruptible:
+	case EExecutionStopReason::Interrupted:
 	{
-		SetInterruptible(false);
-		break;
+		// [NOTE] Base Reaction Incoming Policy
+		// Reactions request interrupt only while the want-interrupt window is open.
+		// Force reactions such as DeadReaction should be handled by orchestration or subclass override.
+		return IsWantInterruptNow();
 	}
 
-	case EReactionControlWindowType::Cancelable:
+	case EExecutionStopReason::Cancelled:
 	{
-		SetCancelable(false);
-		break;
+		// [NOTE] Base Reaction Incoming Cancel Policy
+		// Reactions request cancel only while the want-cancel window is open.
+		return IsWantCancelNow();
 	}
-
-	case EReactionControlWindowType::ImmuneToReaction:
-		break;
 
 	default:
-		break;
+		return false;
 	}
 }
 
-void UCReaction::OnReactionFeedbackWindowBegin(FName InTriggerKey)
+bool UCReaction::AllowInterventionBy(const FExecutionInterventionQuery& InQuery) const
 {
-	if (InTriggerKey.IsNone()) return;
+	if (!InQuery.IsValidMinimal()) return false;
 
-	RequestFeedback(EReactionFeedbackTiming::WindowBegin, InTriggerKey);
-}
+	switch (InQuery.StopReason)
+	{
 
-void UCReaction::OnReactionFeedbackWindowEnd(FName InTriggerKey)
-{
-	if (InTriggerKey.IsNone()) return;
+	case EExecutionStopReason::Interrupted:
+	{
+		// [NOTE] Base Reaction Active Policy
+		// Active reactions allow interrupts only while the allow-interrupt window is open.
+		return IsAllowInterruptNow();
+	}
 
-	RequestFeedback(EReactionFeedbackTiming::WindowEnd, InTriggerKey);
-}
+	case EExecutionStopReason::Cancelled:
+	{
+		// [NOTE] Base Reaction Active Cancel Policy
+		// Active reactions allow intentional cancel only while the allow-cancel window is open.
+		return IsAllowCancelNow();
+	}
 
-void UCReaction::OnReactionFeedback(FName InTriggerKey)
-{
-	if (InTriggerKey.IsNone()) return;
-
-	RequestFeedback(EReactionFeedbackTiming::Notify, InTriggerKey);
-}
-
-bool UCReaction::WantToInterrupt(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return true;
-}
-
-bool UCReaction::WantToCancel(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return true;
-}
-
-bool UCReaction::AllowInterruptionBy(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return IsInterruptibleNow();
-}
-
-bool UCReaction::AllowCancelBy(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return IsCancelableNow();
+	default:
+		return false;
+	}
 }
 
 void UCReaction::RequestFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
 {
 	if (!IsValid(ReactionFeedbackComp_Cached)) return;
-	if (!ActiveReactionData_Cached.IsValidMinimal()) return;
 
-	FReactionFeedbackRequest feedbackRequest = BuildReactionFeedbackRequest(InTiming, InTriggerKey);
-	ReactionFeedbackComp_Cached->PlayFeedback(feedbackRequest);
+	FReactionFeedbackRequest request = BuildFeedbackRequest(InTiming, InTriggerKey);
+	ReactionFeedbackComp_Cached->PlayFeedback(request);
 }
 
-FReactionFeedbackRequest UCReaction::BuildReactionFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
+FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
 {
-	FReactionFeedbackRequest reactionFeedbackRequest;
+	FReactionFeedbackRequest request;
 
-	if (!ActiveReactionData_Cached.IsValidMinimal()) return reactionFeedbackRequest;
+	if (!ActiveDataKey_Cached.IsValidMinimal()) return request;
 
-	reactionFeedbackRequest.ReactionFeedbackKey.ReactionType = ActiveReactionData_Cached.ReactionDataKey.ReactionType;
-	reactionFeedbackRequest.ReactionFeedbackKey.ApplyDamageSpecKey = ActiveReactionData_Cached.ReactionDataKey.ApplyDamageSpecKey;
-	reactionFeedbackRequest.ReactionFeedbackTiming = InTiming;
-	reactionFeedbackRequest.TriggerKey = InTriggerKey;
+	request.ReactionFeedbackKey.ReactionType = ActiveDataKey_Cached.ReactionType;
+	request.ReactionFeedbackKey.ApplyDamageSpecKey = ActiveDataKey_Cached.ApplyDamageSpecKey;
+	request.ReactionFeedbackTiming = InTiming;
+	request.TriggerKey = InTriggerKey;
 
-	return reactionFeedbackRequest;
+	return request;
+}
+
+void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
+{
+	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
+	if (bInterrupted)
+	{
+		FLog::Log(TEXT("[Reaction] Unexpected montage interruption."));
+		return;
+	}
+
+	Complete();
+}
+
+bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
+{
+	if (!bIsActive) return false;
+	if (InSerial != CachedSerial_ActivePlay) return false;
+	if (InMontage != ActiveMontage_Cached) return false;
+
+	return true;
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
@@ -305,30 +328,15 @@ void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
 	PrintReactionExecutorRuntimeInfo();
 }
 
-void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
-{
-	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
-	if (bInterrupted) return;
-
-	FinishCompleted();
-}
-
-bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
-{
-	if (!bIsReaction) return false;
-	if (InSerial != CachedSerial_ActivePlay) return false;
-	if (InMontage != ActiveReactionMontage_Cached) return false;
-
-	return true;
-}
-
 void UCReaction::PrintReactionExecutorRuntimeInfo() const
 {
 	FLog::Log(TEXT("----- ReactionRuntime Info ------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveReactionMontage_Cached)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsReaction"), bIsReaction ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bInterruptible"), bInterruptible ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCancelable"), bCancelable ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveMontage_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsActive"), bIsActive ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bWantInterrupt"), bWantInterrupt ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bWantCancel"), bWantCancel ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bAllowInterrupt"), bAllowInterrupt ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bAllowCancel"), bAllowCancel ? TEXT("true") : TEXT("false")));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_CurrentPlay"), Serial_CurrentPlay));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_ActivePlay"), CachedSerial_ActivePlay));
 	FLog::Log(TEXT("---------------------------------"));

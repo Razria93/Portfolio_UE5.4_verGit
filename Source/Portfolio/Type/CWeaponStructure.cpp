@@ -9,14 +9,7 @@
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
 
-bool FActionDataKey::IsValidTypeOnlyKey() const
-{
-	return ActionType != EActionType::None
-		&& ActionType != EActionType::All
-		&& ActionType != EActionType::Max;
-}
-
-bool FActionDataKey::IsValidExactKey() const
+bool FActionDataKey::IsValidMinimal() const
 {
 	return ActionType != EActionType::None
 		&& ActionType != EActionType::Max;
@@ -24,7 +17,7 @@ bool FActionDataKey::IsValidExactKey() const
 
 bool FActionData::IsValidMinimal() const
 {
-	return ActionDataKey.IsValidExactKey()
+	return ActionDataKey.IsValidMinimal()
 		&& IsValid(ActionExecutorKey.Get())
 		&& IsValid(Montage);
 }
@@ -32,6 +25,13 @@ bool FActionData::IsValidMinimal() const
 bool FOverlapContext::IsValidMinimal() const
 {
 	return IsValid(OwnerActor) && IsValid(DamageCauser) && IsValid(OtherActor);
+}
+
+bool FReactionDataKey::IsValidMinimal() const
+{
+	return ReactionType != EReactionType::None
+		&& ReactionType != EReactionType::Max
+		&& ApplyDamageSpecKey.IsValidMinimal();
 }
 
 bool FReactionData::IsValidMinimal() const
@@ -43,12 +43,63 @@ bool FReactionData::IsValidMinimal() const
 		&& IsValid(Montage);
 }
 
-bool FReactionQueryContext::IsValidMinimal() const
+bool FExecutionParticipant::IsValidMinimal() const
 {
-	return IsValid(ActiveReactionExecutor) && IsValid(IncomingReactionExecutor);
+	if (!bIsValid) return false;
+
+	switch (ParticipantDomain)
+	{
+	case EExecutionDomain::Action:
+		return ActionContext.IsValidMinimal();
+
+	case EExecutionDomain::Reaction:
+		return ReactionContext.IsValidMinimal();
+
+	default:
+		return false;
+	}
 }
 
-bool FReactionContext::IsValidMinimal() const
+bool FExecutionParticipant::IsActionParticipant() const
 {
-	return ReactionData.IsValidMinimal() && IsValid(ReactionExecutor);
+	return bIsValid
+		&& ParticipantDomain == EExecutionDomain::Action
+		&& ActionContext.IsValidMinimal();
+}
+
+bool FExecutionParticipant::IsReactionParticipant() const
+{
+	return bIsValid
+		&& ParticipantDomain == EExecutionDomain::Reaction
+		&& ReactionContext.IsValidMinimal();
+}
+
+const FActionExecutionContext& FExecutionParticipant::GetActionContext() const
+{
+	check(IsActionParticipant());
+
+	return ActionContext;
+}
+
+const FReactionExecutionContext& FExecutionParticipant::GetReactionContext() const
+{
+	check(IsReactionParticipant());
+
+	return ReactionContext;
+}
+
+UObject* FExecutionParticipant::GetExecutor() const
+{
+	if (IsActionParticipant()) return ActionContext.ActionExecutor;
+	if (IsReactionParticipant()) return ReactionContext.ReactionExecutor;
+
+	return nullptr;
+}
+
+int32 FExecutionParticipant::GetPriority() const
+{
+	if (IsActionParticipant()) return ActionContext.ActionData.Priority;
+	if (IsReactionParticipant()) return ReactionContext.ReactionData.Priority;
+
+	return 0;
 }

@@ -224,7 +224,7 @@ void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket&
 		damageReactionRequest.IntentSource = EReactionIntentSource::TakeDamage;
 		damageReactionRequest.TakeDamagePacket = InTakeDamagePacket;
 
-		ReactionOrchestratorComp_Cached->RequestReaction(damageReactionRequest);
+		ReactionOrchestratorComp_Cached->RequestDamageReaction(damageReactionRequest);
 	}
 
 	if (IsValid(DamageFeedbackComp_Cached))

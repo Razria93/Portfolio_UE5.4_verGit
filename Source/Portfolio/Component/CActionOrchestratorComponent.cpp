@@ -6,11 +6,12 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
+#include "Component/CHealthComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
-#include "Component/CHealthComponent.h"
 
 #include "Action/CAction.h"
+#include "Reaction/CReaction.h"
 
 #include "Type/CActionOrchestrationStructure.h"
 
@@ -28,12 +29,12 @@ void UCActionOrchestratorComponent::BeginPlay()
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	WeaponComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
+	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
-	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 }
 
-FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InRequest)
+FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InIncomingRequest)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
@@ -41,7 +42,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
 	// Release-style cleanup is allowed before hard-block checks.
-	if (InRequest.IntentType == EMovementActionIntent::StopJump)
+	if (InIncomingRequest.IntentType == EMovementActionIntent::StopJump)
 	{
 		MovementComp_Cached->OnStopJump();
 		return BuildActionRequestResult(EActionRequestResultType::Handled);
@@ -52,14 +53,14 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 
 	const EExecutionState executionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
 
-	if (executionState == EExecutionState::Reaction)		
+	if (executionState == EExecutionState::Reaction)
 		return BuildActionRequestResult(EActionRequestResultType::Ignored);
 
-	switch (InRequest.IntentType)
+	switch (InIncomingRequest.IntentType)
 	{
 	case EMovementActionIntent::Move:
 	{
-		MovementComp_Cached->OnMove(InRequest.Axis2D);
+		MovementComp_Cached->OnMove(InIncomingRequest.Axis2D);
 		break;
 	}
 	case EMovementActionIntent::Walk:
@@ -89,7 +90,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 	return BuildActionRequestResult(EActionRequestResultType::Handled);
 }
 
-FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const FEquipmentActionRequest& InRequest)
+FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
@@ -99,15 +100,15 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	FActionCandidate candidate;
+	FActionCandidate incomingCandidate;
 
-	if (!ResolveEquipmentActionCandidate(InRequest, candidate, rejectReason))
+	if (!ResolveEquipmentActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteActionCandidate(InRequest.IntentSource, candidate);
+	return ExecuteActionCandidate(InIncomingRequest.IntentSource, incomingCandidate);
 }
 
-FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InRequest)
+FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InIncomingRequest)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
@@ -117,12 +118,12 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	FActionCandidate candidate;
+	FActionCandidate incomingCandidate;
 
-	if (!ResolveCombatActionCandidate(InRequest, candidate, rejectReason))
+	if (!ResolveCombatActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteActionCandidate(InRequest.IntentSource, candidate);
+	return ExecuteActionCandidate(InIncomingRequest.IntentSource, incomingCandidate);
 }
 
 bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
@@ -158,9 +159,9 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	return true;
 }
 
-bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const
+bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const
 {
-	OutCandidate = FActionCandidate();
+	OutIncomingCandidate = FActionCandidate();
 	OutRejectReason = EActionRequestRejectReason::None;
 
 	if (!IsValid(WeaponComp_Cached))
@@ -169,28 +170,28 @@ bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquip
 		return false;
 	}
 
-	FActionCandidate candidate;
+	FActionCandidate incomingCandidate;
 
-	switch (InRequest.IntentType)
+	switch (InIncomingRequest.IntentType)
 	{
 	case EEquipmentActionIntent::Equip:
 	{
-		candidate.ActionDataKey.ActionType = EActionType::Equip;
-		candidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionType = EActionType::Equip;
+		incomingCandidate.ActionDataKey.ActionIndex = 0;
 		break;
 	}
 
 	case EEquipmentActionIntent::Unequip:
 	{
-		candidate.ActionDataKey.ActionType = EActionType::Unequip;
-		candidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionType = EActionType::Unequip;
+		incomingCandidate.ActionDataKey.ActionIndex = 0;
 		break;
 	}
 
 	case EEquipmentActionIntent::Toggle:
 	{
-		candidate.ActionDataKey.ActionType = WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed) ? EActionType::Equip : EActionType::Unequip;
-		candidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionType = WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed) ? EActionType::Equip : EActionType::Unequip;
+		incomingCandidate.ActionDataKey.ActionIndex = 0;
 		break;
 	}
 
@@ -199,13 +200,13 @@ bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquip
 		return false;
 	}
 
-	OutCandidate = candidate;
+	OutIncomingCandidate = incomingCandidate;
 	return true;
 }
 
-bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatActionRequest& InRequest, FActionCandidate& OutCandidate, EActionRequestRejectReason& OutRejectReason) const
+bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const
 {
-	OutCandidate = FActionCandidate();
+	OutIncomingCandidate = FActionCandidate();
 	OutRejectReason = EActionRequestRejectReason::None;
 
 	if (!IsValid(ActionComp_Cached))
@@ -214,21 +215,21 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 		return false;
 	}
 
-	FActionCandidate candidate;
+	FActionCandidate incomingCandidate;
 
-	switch (InRequest.IntentType)
+	switch (InIncomingRequest.IntentType)
 	{
 	case ECombatActionIntent::ComboAttack:
 	{
-		candidate.ActionDataKey.ActionType = EActionType::ComboAttack;
-		candidate.ActionDataKey.ActionIndex = ActionComp_Cached->IsActiveActionType(EActionType::ComboAttack) ? ActionComp_Cached->GetActiveActionIndex() + 1 : 0;
+		incomingCandidate.ActionDataKey.ActionType = EActionType::ComboAttack;
+		incomingCandidate.ActionDataKey.ActionIndex = ActionComp_Cached->IsActiveActionType(EActionType::ComboAttack) ? ActionComp_Cached->GetActiveActionIndex() + 1 : 0;
 		break;
 	}
 
 	case ECombatActionIntent::Dodge:
 	{
-		candidate.ActionDataKey.ActionType = EActionType::Dodge;
-		candidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionType = EActionType::Dodge;
+		incomingCandidate.ActionDataKey.ActionIndex = 0;
 		break;
 	}
 
@@ -237,396 +238,372 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 		return false;
 	}
 
-	OutCandidate = candidate;
+	OutIncomingCandidate = incomingCandidate;
 	return true;
 }
 
-FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(EActionIntentSource InSource, const FActionCandidate& InCandidate)
+FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(EActionIntentSource InIncomingIntentSource, const FActionCandidate& InIncomingCandidate)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
-	FActionResolvedContext context = FActionResolvedContext();
+	FActionExecutionContext incomingContext;
 
-	if (!ResolveActionContext(InCandidate, context, rejectReason))
+	if (!ResolveActionContext(InIncomingCandidate, incomingContext, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	FActionLocalLevelQuery localQuery = BuildLocalLevelQuery(context);
-	FActionLocalLevelResult localResult = ResolveLocalLevelResult(localQuery);
+	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
+	const FExecutionDecisionResult decisionResult = BuildDecisionResult(decisionQuery, rejectReason);
 
-	if (localResult.Decision == EActionLocalLevelDecision::Ignore)
-		return BuildActionRequestResult(EActionRequestResultType::Ignored, EActionRequestRejectReason::None);
+	FActionExecutionResult executionResult = BuildActionExecutionResult(incomingContext, decisionResult, rejectReason);
 
-	if (!localResult.IsAcceptedDecision())
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, localResult.RejectReason);
+	if (executionResult.IsAcceptedDecision())
+	{
+		ResolveInterventionDirective(decisionQuery, executionResult);
+	}
 
-	FActionResolvedPolicy policy;
-
-	if (!ResolveActionPolicy(localQuery, localResult, policy, rejectReason))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
-
-	FActionOrchestrationLevelQuery orchestrationQuery = BuildOrchestrationLevelQuery(InSource, localQuery, localResult, policy);
-	FActionOrchestrationLevelResult orchestrationResult = ResolveOrchestrationLevelResult(orchestrationQuery);
-
-	ResolveExecutionInterventionDirective(orchestrationResult);
-
-	return DispatchActionDecision(orchestrationResult);
+	return DispatchActionDecision(executionResult);
 }
 
-bool UCActionOrchestratorComponent::ResolveActionContext(const FActionCandidate& InCandidate, FActionResolvedContext& OutContext, EActionRequestRejectReason& OutRejectReason) const
+bool UCActionOrchestratorComponent::ResolveActionContext(const FActionCandidate& InIncomingCandidate, FActionExecutionContext& OutIncomingContext, EActionRequestRejectReason& OutRejectReason) const
 {
-	OutContext = FActionResolvedContext();
+	OutIncomingContext = FActionExecutionContext();
 	OutRejectReason = EActionRequestRejectReason::None;
 
-	if (!InCandidate.IsValidMinimal())
+	if (!InIncomingCandidate.IsValidMinimal())
 	{
 		OutRejectReason = EActionRequestRejectReason::InvalidRequest;
 		return false;
 	}
 
-	FActionDataKey actionDataKey = InCandidate.ActionDataKey;
+	FActionDataKey incomingActionDataKey = InIncomingCandidate.ActionDataKey;
 
-	FActionData actionData;
-	if (!ResolveActionData(actionDataKey, actionData))
+	FActionData incomingActionData;
+	if (!ResolveActionData(incomingActionDataKey, incomingActionData))
 	{
 		OutRejectReason = EActionRequestRejectReason::ActionDataNotFound;
 		return false;
 	}
 
-	UCAction* actionExecutor = ResolveActionExecutor(actionData);
-	if (!IsValid(actionExecutor))
+	UCAction* incomingActionExecutor = ResolveActionExecutor(incomingActionData);
+	if (!IsValid(incomingActionExecutor))
 	{
 		OutRejectReason = EActionRequestRejectReason::ActionExecutorNotFound;
 		return false;
 	}
 
-	OutContext.ActionDataKey = actionDataKey;
-	OutContext.ActionData = actionData;
-	OutContext.ActionExecutor = actionExecutor;
+	OutIncomingContext.ActionDataKey = incomingActionDataKey;
+	OutIncomingContext.ActionData = incomingActionData;
+	OutIncomingContext.ActionExecutor = incomingActionExecutor;
 
 	return true;
 }
 
-bool UCActionOrchestratorComponent::ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData) const
+bool UCActionOrchestratorComponent::ResolveActionData(const FActionDataKey& InIncomingDataKey, FActionData& OutIncomingData) const
 {
-	OutData = FActionData();
+	OutIncomingData = FActionData();
 
 	if (!IsValid(ActionComp_Cached)) return false;
-	if (!InDataKey.IsValidExactKey()) return false;
+	if (!InIncomingDataKey.IsValidMinimal()) return false;
 
-	return ActionComp_Cached->ResolveActionData(InDataKey, OutData);
+	return ActionComp_Cached->ResolveActionData(InIncomingDataKey, OutIncomingData);
 }
 
-UCAction* UCActionOrchestratorComponent::ResolveActionExecutor(const FActionData& InData) const
+UCAction* UCActionOrchestratorComponent::ResolveActionExecutor(const FActionData& InIncomingData) const
 {
 	if (!IsValid(ActionComp_Cached)) return nullptr;
 
-	return ActionComp_Cached->ResolveActionExecutor(InData);
+	return ActionComp_Cached->ResolveActionExecutor(InIncomingData);
 }
 
-FActionLocalLevelQuery UCActionOrchestratorComponent::BuildLocalLevelQuery(const FActionResolvedContext& InIncoming) const
+FExecutionDecisionQuery UCActionOrchestratorComponent::BuildDecisionQuery(const FActionExecutionContext& InIncomingContext) const
 {
-	FActionLocalLevelQuery query;
+	FExecutionDecisionQuery query;
 
-	query.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
-	query.IncomingContext = InIncoming;
+	query.Snapshot = BuildSnapshot();
+	query.IncomingPart = BuildIncomingActionParticipant(InIncomingContext);
+	query.ActivePart = BuildActiveExecutionParticipant();
 
-	if (IsValid(ActionComp_Cached))
+	return query;
+}
+
+FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
+{
+	FExecutionSnapshot snapshot;
+
+	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
+	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
+
+	return snapshot;
+}
+
+FExecutionParticipant UCActionOrchestratorComponent::BuildIncomingActionParticipant(const FActionExecutionContext& InIncomingContext) const
+{
+	FExecutionParticipant participant;
+
+	if (!InIncomingContext.IsValidMinimal()) return participant;
+
+	participant.bIsValid = true;
+	participant.ParticipantDomain = EExecutionDomain::Action;
+	participant.ActionContext = InIncomingContext;
+
+	return participant;
+}
+
+FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionParticipant() const
+{
+	FExecutionParticipant participant;
+
+	const bool bHasActiveAction = IsValid(ActionComp_Cached) && ActionComp_Cached->IsActive();
+	const bool bHasActiveReaction = IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActive();
+
+	if (bHasActiveAction && bHasActiveReaction)
 	{
-		query.bIsActiveAction = ActionComp_Cached->IsActive();
+		FLog::Log(TEXT("[ActionOrchestrator] Invalid execution state (action and reaction are both active)."));
+	}
 
-		if (query.bIsActiveAction)
+	// 01. Active Reaction Case
+	if (bHasActiveReaction)
+	{
+		FReactionData activeData;
+
+		if (ReactionComp_Cached->GetActiveReactionData(activeData))
 		{
-			FActionData activeData;
-			if (ActionComp_Cached->GetActiveActionData(activeData))
+			FReactionExecutionContext context;
+
+			context.ReactionDataKey = activeData.ReactionDataKey;
+			context.ReactionData = activeData;
+			context.ReactionExecutor = ReactionComp_Cached->GetActiveReactionExecutor();
+
+			if (context.IsValidMinimal())
 			{
-				query.ActiveContext.ActionDataKey = activeData.ActionDataKey;
-				query.ActiveContext.ActionData = activeData;
-				query.ActiveContext.ActionExecutor = ActionComp_Cached->GetActiveActionExecutor();
+				participant.bIsValid = true;
+				participant.ParticipantDomain = EExecutionDomain::Reaction;
+				participant.ReactionContext = context;
+
+				return participant;
 			}
 		}
 	}
 
-	return query;
+	// 02. Active Action Case
+	if (bHasActiveAction)
+	{
+		FActionData activeData;
+
+		if (ActionComp_Cached->GetActiveActionData(activeData))
+		{
+			FActionExecutionContext context;
+
+			context.ActionDataKey = activeData.ActionDataKey;
+			context.ActionData = activeData;
+			context.ActionExecutor = ActionComp_Cached->GetActiveActionExecutor();
+
+			if (context.IsValidMinimal())
+			{
+				participant.bIsValid = true;
+				participant.ParticipantDomain = EExecutionDomain::Action;
+				participant.ActionContext = context;
+
+				return participant;
+			}
+		}
+	}
+
+	return participant;
 }
 
-FActionLocalLevelResult UCActionOrchestratorComponent::ResolveLocalLevelResult(const FActionLocalLevelQuery& InLocalQuery) const
+FExecutionDecisionResult UCActionOrchestratorComponent::BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EActionRequestRejectReason& OutRejectReason) const
 {
-	FActionLocalLevelResult result;
-
-	if (!InLocalQuery.IncomingContext.IsValidMinimal())
-	{
-		result.Decision = EActionLocalLevelDecision::Reject;
-		result.RejectReason = EActionRequestRejectReason::NoExecutableAction;
-
-		return result;
-	}
-
-	UCAction* incomingExecutor = InLocalQuery.IncomingContext.ActionExecutor;
-	if (!IsValid(incomingExecutor))
-	{
-		result.Decision = EActionLocalLevelDecision::Reject;
-		result.RejectReason = EActionRequestRejectReason::ActionExecutorNotFound;
-
-		return result;
-	}
-
-	result.Decision = incomingExecutor->ResolveLocalLevelDecision(InLocalQuery);
-
-	if (result.Decision == EActionLocalLevelDecision::Reject)
-	{
-		result.RejectReason = EActionRequestRejectReason::NoExecutableAction;
-	}
-
-	return result;
-}
-
-bool UCActionOrchestratorComponent::ResolveActionPolicy(const FActionLocalLevelQuery& InLocalQuery, const FActionLocalLevelResult& InLocalResult, FActionResolvedPolicy& OutPolicy, EActionRequestRejectReason& OutRejectReason) const
-{
-	OutPolicy = FActionResolvedPolicy();
+	FExecutionDecisionResult result;
 	OutRejectReason = EActionRequestRejectReason::None;
 
-	if (!InLocalQuery.IncomingContext.IsValidMinimal())
+	if (!InQuery.HasIncomingPart())
+	{
+		result.Decision = EExecutionDecision::Reject;
+		OutRejectReason = EActionRequestRejectReason::NoExecutableAction;
+
+		return result;
+	}
+
+	if (!InQuery.IncomingPart.IsActionParticipant())
+	{
+		result.Decision = EExecutionDecision::Reject;
+		OutRejectReason = EActionRequestRejectReason::NoExecutableAction;
+
+		return result;
+	}
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+	UCAction* incomingExecutor = incomingContext.ActionExecutor;
+
+	if (!IsValid(incomingExecutor))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		OutRejectReason = EActionRequestRejectReason::ActionExecutorNotFound;
+
+		return result;
+	}
+
+	// Resolve Decision
+	result.Decision = incomingExecutor->ResolveExecutionDecision(InQuery);
+
+	if (result.Decision == EExecutionDecision::Reject)
 	{
 		OutRejectReason = EActionRequestRejectReason::NoExecutableAction;
-		return false;
-	}
-
-	if (!InLocalResult.IsAcceptedDecision())
-	{
-		OutRejectReason = InLocalResult.RejectReason;
-		return false;
-	}
-
-	const EExecutionState executionState = InLocalQuery.ExecutionState;
-
-	const bool bIsIdleState = executionState == EExecutionState::Idle;
-	const bool bIsActionState = executionState == EExecutionState::Action;
-	const bool bIsReactionState = executionState == EExecutionState::Reaction;
-
-	const bool bIsActiveAction = InLocalQuery.bIsActiveAction;
-	const bool bHasActiveActionContext = InLocalQuery.ActiveContext.IsValidMinimal();
-
-	const bool bIsActiveReaction = IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActive();
-
-	switch (InLocalResult.Decision)
-	{
-	case EActionLocalLevelDecision::Start:
-	{
-		OutPolicy.bCanStart = bIsIdleState && !bIsActiveAction && !bIsActiveReaction;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Chain:
-	{
-		OutPolicy.bCanChain = bIsActionState && bIsActiveAction && bHasActiveActionContext;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Enqueue:
-	{
-		OutPolicy.bCanEnqueue = false;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Interrupt:
-	{
-		OutPolicy.bCanInterrupt = bIsActionState && bIsActiveAction && bHasActiveActionContext;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Cancel:
-	{
-		OutPolicy.bCanCancel = !bIsActiveAction && bIsReactionState && bIsActiveReaction;
-		break;
-	}
-
-	default:
-		OutRejectReason = EActionRequestRejectReason::NoExecutableAction;
-		return false;
-	}
-
-	return true;
-}
-
-FActionOrchestrationLevelQuery UCActionOrchestratorComponent::BuildOrchestrationLevelQuery(EActionIntentSource InSource, const FActionLocalLevelQuery& InLocalQuery, const FActionLocalLevelResult& InLocalResult, const FActionResolvedPolicy& InPolicy) const
-{
-	FActionOrchestrationLevelQuery query;
-
-	query.IntentSource = InSource;
-	query.IncomingContext = InLocalQuery.IncomingContext;
-	query.ActiveContext = InLocalQuery.ActiveContext;
-	query.LocalLevelResult = InLocalResult;
-	query.ResolvedPolicy = InPolicy;
-
-	return query;
-}
-
-FActionOrchestrationLevelResult UCActionOrchestratorComponent::ResolveOrchestrationLevelResult(const FActionOrchestrationLevelQuery& InQuery) const
-{
-	FActionOrchestrationLevelResult result;
-
-	result.ResolvedContext = InQuery.IncomingContext;
-
-	switch (InQuery.LocalLevelResult.Decision)
-	{
-	case EActionLocalLevelDecision::Start:
-	{
-		result.Decision = InQuery.ResolvedPolicy.bCanStart
-			? EActionOrchestrationLevelDecision::Start
-			: EActionOrchestrationLevelDecision::Reject;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Chain:
-	{
-		result.Decision = InQuery.ResolvedPolicy.bCanChain
-			? EActionOrchestrationLevelDecision::Chain
-			: EActionOrchestrationLevelDecision::Reject;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Enqueue:
-	{
-		result.Decision = InQuery.ResolvedPolicy.bCanEnqueue
-			? EActionOrchestrationLevelDecision::Enqueue
-			: EActionOrchestrationLevelDecision::Reject;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Interrupt:
-	{
-		result.Decision = InQuery.ResolvedPolicy.bCanInterrupt
-			? EActionOrchestrationLevelDecision::Interrupt
-			: EActionOrchestrationLevelDecision::Reject;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Cancel:
-	{
-		result.Decision = InQuery.ResolvedPolicy.bCanCancel
-			? EActionOrchestrationLevelDecision::Cancel
-			: EActionOrchestrationLevelDecision::Reject;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Ignore:
-	{
-		result.Decision = EActionOrchestrationLevelDecision::Ignore;
-		break;
-	}
-
-	case EActionLocalLevelDecision::Reject:
-	default:
-		result.Decision = EActionOrchestrationLevelDecision::Reject;
-		result.RejectReason = InQuery.LocalLevelResult.RejectReason;
-		break;
 	}
 
 	return result;
 }
 
-void UCActionOrchestratorComponent::ResolveExecutionInterventionDirective(FActionOrchestrationLevelResult& InOutResult) const
+FActionExecutionResult UCActionOrchestratorComponent::BuildActionExecutionResult(const FActionExecutionContext& InContext, const FExecutionDecisionResult& InDecisionResult, EActionRequestRejectReason InRejectReason) const
+{
+	FActionExecutionResult result;
+
+	result.Decision = InDecisionResult.Decision;
+	result.ResolvedContext = InContext;
+	result.RejectReason = InRejectReason;
+
+	return result;
+}
+
+void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
 {
 	InOutResult.InterventionDirective = FExecutionInterventionDirective();
 
 	if (!InOutResult.IsAcceptedDecision()) return;
-	if (!IsValid(ReactionComp_Cached)) return;
-	if (!ReactionComp_Cached->IsActive()) return;
 
-	const EReactionType activeReactionType = ReactionComp_Cached->GetActiveReactionType();
+	// [NOTE] Sequential actions reserve the next execution instead of stopping active execution.
+	if (InOutResult.Decision == EExecutionDecision::Chainable) return;
 
-	// No active reaction to stop
-	if (activeReactionType == EReactionType::None
-		|| activeReactionType == EReactionType::Idle
-		|| activeReactionType == EReactionType::All
-		|| activeReactionType == EReactionType::Max)
+	// [NOTE] Start immediately when there is no active execution.
+	if (!InQuery.HasActivePart()) return;
+
+	FExecutionInterventionQuery interventionQuery;
+	
+	if (!BuildInterventionQuery(InQuery, EExecutionStopReason::Cancelled, interventionQuery))
 	{
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::InvalidQuery;
 		return;
 	}
 
-	// Cannot stop if already dead
-	if (activeReactionType == EReactionType::Dead)
+	const FExecutionParticipant& incoming = interventionQuery.IncomingPart;
+	const FExecutionParticipant& active = interventionQuery.ActivePart;
+
+	bool bIncomingWants = false;
+	bool bActiveAllows = false;
+
+	UCAction* incomingAction = Cast<UCAction>(incoming.GetExecutor());
+	if (!IsValid(incomingAction))
 	{
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::DisableIntervention;
 		return;
 	}
 
-	switch (InOutResult.Decision)
+	bIncomingWants = incomingAction->WantIntervention(interventionQuery);
+
+	if (UCAction* activeAction = Cast<UCAction>(active.GetExecutor()))
 	{
-	case EActionOrchestrationLevelDecision::Cancel:
+		bActiveAllows = activeAction->AllowInterventionBy(interventionQuery);
+	}
+	else if (UCReaction* activeReaction = Cast<UCReaction>(active.GetExecutor()))
 	{
-		InOutResult.InterventionDirective.bRequested = true;
-		InOutResult.InterventionDirective.TargetDomain = EExecutionDomain::Reaction;	// [TODO] 어떤걸 캔슬 할 수 있는지는 Local에서 축정해야하지 않나?
-		InOutResult.InterventionDirective.StopReason = EExecutionStopReason::Cancelled;
-		InOutResult.InterventionDirective.StopSource = EExecutionStopSource::ActionOrchestration;
-		InOutResult.InterventionDirective.AfterStopAction = EExecutionAfterStopAction::StartIncoming;
-		break;
+		bActiveAllows = activeReaction->AllowInterventionBy(interventionQuery);
 	}
 
-	case EActionOrchestrationLevelDecision::Interrupt:
+	if (!bIncomingWants || !bActiveAllows)
 	{
-		// Later: action -> action or action -> reaction interrupt.
-		break;
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::DisableIntervention;
+		return;
 	}
 
-	default:
-		break;
+	FExecutionInterventionDirective directive;
+	
+	if (!BuildInterventionDirective(interventionQuery, EExecutionStopSource::ActionOrchestration, EExecutionAfterStopAction::StartIncoming, directive))
+	{
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::DisableIntervention;
+		return;
 	}
+
+	InOutResult.InterventionDirective = directive;
 }
 
-FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const FActionOrchestrationLevelResult& InResult)
+bool UCActionOrchestratorComponent::BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const
 {
+	OutQuery = FExecutionInterventionQuery();
+
+	if (!InQuery.IncomingPart.IsValidMinimal()) return false;
+	if (!InQuery.ActivePart.IsValidMinimal()) return false;
+
+	if (InStopReason == EExecutionStopReason::None || InStopReason == EExecutionStopReason::Max) return false;
+
+	OutQuery.Snapshot = InQuery.Snapshot;
+	OutQuery.IncomingPart = InQuery.IncomingPart;
+	OutQuery.ActivePart = InQuery.ActivePart;
+	OutQuery.StopReason = InStopReason;
+
+	return OutQuery.IsValidMinimal();
+}
+
+bool UCActionOrchestratorComponent::BuildInterventionDirective(const FExecutionInterventionQuery& InQuery, EExecutionStopSource InStopSource, EExecutionAfterStopAction InAfterStopAction, FExecutionInterventionDirective& OutDirective) const
+{
+	OutDirective = FExecutionInterventionDirective();
+
+	if (!InQuery.IsValidMinimal()) return false;
+
+	if (InStopSource == EExecutionStopSource::None || InStopSource == EExecutionStopSource::Max) return false;
+	if (InAfterStopAction == EExecutionAfterStopAction::None || InAfterStopAction == EExecutionAfterStopAction::Max) return false;
+
+	OutDirective.bRequested = true;
+	OutDirective.StopSource = InStopSource;
+	OutDirective.SourceDomain = InQuery.IncomingPart.ParticipantDomain;
+	OutDirective.TargetDomain = InQuery.ActivePart.ParticipantDomain;
+	OutDirective.StopReason = InQuery.StopReason;
+	OutDirective.AfterStopAction = InAfterStopAction;
+
+	return OutDirective.IsValidRequest();
+}
+
+FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const FActionExecutionResult& InResult)
+{
+	// [NOTE] Request ignore result
+	if (InResult.Decision == EExecutionDecision::Ignore)
+		return BuildActionRequestResult(EActionRequestResultType::Ignored);
+
+	// [NOTE] Request rejected result
 	if (!InResult.IsAcceptedDecision())
-	{
-		if (InResult.Decision == EActionOrchestrationLevelDecision::Ignore)
-		{
-			return BuildActionRequestResult(EActionRequestResultType::Ignored);
-		}
-		else
-		{
-			return BuildActionRequestResult(EActionRequestResultType::Rejected, InResult.RejectReason);
-		}
-	}
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, InResult.RejectReason);
 
 	if (!IsValid(ActionComp_Cached))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
 	if (!ActionComp_Cached->ApplyActionDecision(InResult))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::NoExecutableAction);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::DispatchFailed);
 
-	EActionRequestResultType resultType = ConvertDecisionToResultType(InResult.Decision);
+	EActionRequestResultType resultType = ConvertDecisionToResultType(InResult);
 
 	return BuildActionRequestResult(resultType);
 }
 
-EActionRequestResultType UCActionOrchestratorComponent::ConvertDecisionToResultType(EActionOrchestrationLevelDecision InDecision) const
+EActionRequestResultType UCActionOrchestratorComponent::ConvertDecisionToResultType(const FActionExecutionResult& InResult) const
 {
-	switch (InDecision)
+	switch (InResult.Decision)
 	{
-	case EActionOrchestrationLevelDecision::Handle:
-		return EActionRequestResultType::Handled;
-
-	case EActionOrchestrationLevelDecision::Start:
+	case EExecutionDecision::Executable:
 		return EActionRequestResultType::Started;
 
-	case EActionOrchestrationLevelDecision::Chain:
+	case EExecutionDecision::Chainable:
 		return EActionRequestResultType::Chained;
 
-	case EActionOrchestrationLevelDecision::Enqueue:
-		return EActionRequestResultType::Enqueued;
-
-	case EActionOrchestrationLevelDecision::Interrupt:
-		return EActionRequestResultType::Interrupted;
-
-	case EActionOrchestrationLevelDecision::Cancel:
-		return EActionRequestResultType::Cancelled;
-
-	case EActionOrchestrationLevelDecision::Ignore:
-		return EActionRequestResultType::Ignored;
-
-	case EActionOrchestrationLevelDecision::Reject:
+	case EExecutionDecision::Reject:
 		return EActionRequestResultType::Rejected;
 
-	case EActionOrchestrationLevelDecision::None:
+	case EExecutionDecision::Ignore:
+		return EActionRequestResultType::Ignored;
+
 	default:
 		return EActionRequestResultType::None;
 	}

@@ -5,8 +5,8 @@
 
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
-#include "Component/CActionComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CActionComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -24,147 +24,148 @@ void UCReactionComponent::BeginPlay()
 
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
-	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 
 	// Rebuild All
 	BuildReactionDataMap(true);
 	BuildReactionExecutorMap(true);
 
-	// [Debug] DataMap
-	// PrintReactionDataMap();
+	// Init Reaction State
+	ActiveReactionType = EReactionType::Idle;
 }
 
 bool UCReactionComponent::IsActive() const
 {
-	return ActiveReactionType_Cached != EReactionType::None
-		&& ActiveReactionType_Cached != EReactionType::All
-		&& ActiveReactionType_Cached != EReactionType::Max;
+	return ActiveReactionType != EReactionType::None
+		&& ActiveReactionType != EReactionType::Idle
+		&& ActiveReactionType != EReactionType::All
+		&& ActiveReactionType != EReactionType::Max;
 }
 
 EReactionType UCReactionComponent::GetActiveReactionType() const
 {
-	return ActiveReactionType_Cached;
+	return ActiveReactionType;
 }
 
-bool UCReactionComponent::GetActiveReactionContext(FReactionContext& OutReactionContext) const
+bool UCReactionComponent::GetActiveReactionData(FReactionData& OutData) const
 {
-	OutReactionContext = FReactionContext();
+	OutData = FReactionData();
 
 	if (!IsActive()) return false;
-	if (!ActiveReactionContext_Cached.IsValidMinimal()) return false;
+	if (!ActiveReactionData.IsValidMinimal()) return false;
 
-	OutReactionContext = ActiveReactionContext_Cached;
+	OutData = ActiveReactionData;
 	return true;
 }
 
 UCReaction* UCReactionComponent::GetActiveReactionExecutor() const
 {
 	if (!IsActive()) return nullptr;
+	if (!IsValid(ActiveReactionExecutor)) return nullptr;
 
-	UCReaction* activeExecutor = ActiveReactionContext_Cached.ReactionExecutor;
-	if (!IsValid(activeExecutor)) return nullptr;
-
-	return activeExecutor;
+	return ActiveReactionExecutor;
 }
 
-bool UCReactionComponent::ResolveReactionData(const FApplyDamageSpecKey& InApplyDamageSpecKey, EReactionType InReactionType, FReactionData& OutReactionData)
+bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData)
 {
-	OutReactionData = FReactionData();
+	OutData = FReactionData();
+
+	if (!InDataKey.IsValidMinimal()) return false;
 
 	TArray<FApplyDamageSpecKey> candidateKeys; // OutParameter
-	BuildCandidateSpecKeys(InApplyDamageSpecKey, candidateKeys);
+	EReactionType reactionType = InDataKey.ReactionType;
+	
+	// Candidate SpecKey
+	BuildCandidateSpecKeys(InDataKey.ApplyDamageSpecKey, candidateKeys);
 
 	for (const FApplyDamageSpecKey& candidateKey : candidateKeys)
 	{
 		FReactionDataKey reactionDataKey;
-		reactionDataKey.ApplyDamageSpecKey = candidateKey;	// ApplyDamage Part Condition
-		reactionDataKey.ReactionType = InReactionType;		// ReactionType
+
+		// Rebuild CandidateSpecKey + Type
+		reactionDataKey.ApplyDamageSpecKey = candidateKey;
+		reactionDataKey.ReactionType = reactionType;
 
 		// Find ReactionData
-		const FReactionData* found = ReactionDataMap.Find(reactionDataKey);
-		if (!found) continue;
+		const FReactionData* foundPtr = ReactionDataMap.Find(reactionDataKey);
+		if (!foundPtr) continue;
 
-		const FReactionData& reactionData = *found;
+		const FReactionData& found = *foundPtr;
+		if (!found.IsValidMinimal()) continue;
 
 		// [Debug] ReactionData
-		// PrintReactionDataInfo(reactionData);
+		// PrintReactionDataInfo(found);
 
-		OutReactionData = reactionData;
-
+		OutData = found;
 		return true;
 	}
 
 	return false;
 }
 
-UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& InReactionData)
+UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& InData)
 {
 	// 1) Try reuse cached Reaction; return if valid
-	UCReaction* foundReaction = FindReactionExecutor(InReactionData.ReactionExecutorKey.Get());
-	if (IsValid(foundReaction)) return foundReaction;
+	UCReaction* found = FindReactionExecutor(InData.ReactionExecutorKey.Get());
+	if (IsValid(found)) return found;
 
 	// 2) [Policy] Try Add and cache Reaction; return if valid
-	UCReaction* addReaction = AddReactionExecutor(InReactionData.ReactionExecutorKey);
-	if (IsValid(addReaction)) return addReaction;
+	UCReaction* add = AddReactionExecutor(InData.ReactionExecutorKey);
+	if (IsValid(add)) return add;
 
 	// [Debug] ReactionData is Valid; but Find and Add Failed
 	return nullptr;
 }
-bool UCReactionComponent::ApplyReactionDecision(const FReactionOrchestrationResult& InReactionOrchestrationResult)
+bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& InResult)
 {
-	switch (InReactionOrchestrationResult.Decision)
+	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!InResult.IsAcceptedDecision()) return false;
+
+	if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
+
+	// Stop-only directive is consumed without starting incoming reaction.
+	if (InResult.InterventionDirective.IsRequested()
+		&& InResult.InterventionDirective.AfterStopAction == EExecutionAfterStopAction::StopOnly)
 	{
-	case EReactionOrchestrationDecision::Start:
-		return TryStartReaction(InReactionOrchestrationResult.ReactionContext);
+		return true;
+	}
 
-	case EReactionOrchestrationDecision::Interrupt:
-		return TryInterruptReaction(InReactionOrchestrationResult.ReactionContext);
+	switch (InResult.Decision)
+	{
+	case EExecutionDecision::Executable:
+		return StartReaction(InResult.ResolvedContext);
 
-	case EReactionOrchestrationDecision::Cancel:
-		return TryCancelReaction(InReactionOrchestrationResult.ReactionContext);
-
-	case EReactionOrchestrationDecision::Ignore:
-	case EReactionOrchestrationDecision::Reject:
-	case EReactionOrchestrationDecision::None:
 	default:
 		return false;
 	}
 }
 
-bool UCReactionComponent::RequestStopActiveReaction(const FExecutionInterventionDirective& InInterventionDirective)
+bool UCReactionComponent::RequestStopActiveReaction(const FExecutionInterventionDirective & InDirective)
 {
-	// TODO
-	return false;
+	if (!InDirective.IsValidRequest()) return false;
+	if (InDirective.TargetDomain != EExecutionDomain::Reaction) return false;
+
+	return StopActiveReaction(InDirective);
 }
 
-void UCReactionComponent::HandleReactionFinished(const UCReaction* InReaction, EReactionFinishReason InReactionFinishReason)
+void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason)
 {
 	if (!IsActive()) return;
 	if (!IsValid(InReaction)) return;
 	if (InReaction != GetActiveReactionExecutor()) return;
 
-	EndActiveReactionInternal();
+	EndActiveReaction(InFinishReason);
 }
 
-void UCReactionComponent::HandleReactionControlWindowBegin(EReactionControlWindowType InReactionWindowType)
+void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand)
 {
-	if (InReactionWindowType == EReactionControlWindowType::None) return;
+	if (InNotifyCommand == EReactionNotifyCommand::None || InNotifyCommand == EReactionNotifyCommand::Max) return;
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OnReactionControlWindowBegin(InReactionWindowType);
-}
-
-void UCReactionComponent::HandleReactionControlWindowEnd(EReactionControlWindowType InReactionWindowType)
-{
-	if (InReactionWindowType == EReactionControlWindowType::None) return;
-
-	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
-
-	activeExecutor->OnReactionControlWindowEnd(InReactionWindowType);
+	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
 void UCReactionComponent::HandleReactionFeedback(FName InTriggerKey)
@@ -174,7 +175,7 @@ void UCReactionComponent::HandleReactionFeedback(FName InTriggerKey)
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OnReactionFeedback(InTriggerKey);
+	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerOnce, InTriggerKey);
 }
 
 void UCReactionComponent::HandleReactionFeedbackWindowBegin(FName InTriggerKey)
@@ -184,7 +185,7 @@ void UCReactionComponent::HandleReactionFeedbackWindowBegin(FName InTriggerKey)
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OnReactionFeedbackWindowBegin(InTriggerKey);
+	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerWindowBegin, InTriggerKey);
 }
 
 void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
@@ -194,7 +195,7 @@ void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OnReactionFeedbackWindowEnd(InTriggerKey);
+	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
 }
 
 void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
@@ -246,234 +247,212 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 
 	if (bRebuildAll)
 	{
-		ReactionExcutorMap.Reset();
+		ReactionExecutorMap.Reset();
 	}
 
-	for (const TSubclassOf<class UCReaction> reactionClass : ReactionClasses)
+	for (const FReactionData& reactionData : ReactionDatas)
 	{
-		if (!IsValid(reactionClass)) continue;
+		if (!reactionData.IsValidMinimal()) continue;
 
-		UClass* reactionExcutorKey = reactionClass.Get();
+		UClass* executorkey = reactionData.ReactionExecutorKey.Get();
+		if (!IsValid(executorkey)) continue;
 
 		// 1) Find existing cached Reaction
 		if (!bRebuildAll)
 		{
-			const UCReaction* found = FindReactionExecutor(reactionExcutorKey);
+			const UCReaction* found = FindReactionExecutor(executorkey);
 			if (IsValid(found)) continue;
 		}
 
 		// 2) Add cached Reaction
-		UCReaction* add = AddReactionExecutor(reactionClass);
+		UCReaction* add = AddReactionExecutor(executorkey);
 		if (!IsValid(add))
 		{
-			FLog::Log(FString::Printf(TEXT("[BuildReactionExecutorMap] Failed to add ReactionExecutor. ReactionClass = %s"), *GetNameSafe(reactionClass.Get())));
+			FLog::Log(FString::Printf(TEXT("[BuildReactionExecutorMap] Failed to add ReactionExecutor. ReactionExecutorKey = %s"), *GetNameSafe(reactionData.ReactionExecutorKey.Get())));
 			continue;
 		}
 	}
 }
 
-void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InApplyDamageSpecKey, TArray<FApplyDamageSpecKey>& OutApplyDamageSpecKeys) const
+void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const
 {
-	OutApplyDamageSpecKeys.Reset();
+	OutSpecKeys.Reset();
 
 	// 1) Exact: Weapon + Action + Index
-	OutApplyDamageSpecKeys.Add(InApplyDamageSpecKey);
+	OutSpecKeys.Add(InSpecKey);
 
 	// 2) Any Index: Weapon + Action + AnyIndex
 	{
-		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
+		FApplyDamageSpecKey candidateKey = InSpecKey;
 		candidateKey.ActionIndex = INDEX_NONE;
-		OutApplyDamageSpecKeys.Add(candidateKey);
+		OutSpecKeys.Add(candidateKey);
 	}
 
 	// 3) Any Action: Weapon + AnyAction + AnyIndex
 	{
-		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
+		FApplyDamageSpecKey candidateKey = InSpecKey;
 		candidateKey.ActionType = EActionType::All;
 		candidateKey.ActionIndex = INDEX_NONE;
-		OutApplyDamageSpecKeys.Add(candidateKey);
+		OutSpecKeys.Add(candidateKey);
 	}
 
 	// 4) Any Weapon: AnyWeapon + AnyAction + AnyIndex
 	{
-		FApplyDamageSpecKey candidateKey = InApplyDamageSpecKey;
+		FApplyDamageSpecKey candidateKey = InSpecKey;
 		candidateKey.WeaponType = EWeaponType::All;
 		candidateKey.ActionType = EActionType::All;
 		candidateKey.ActionIndex = INDEX_NONE;
-		OutApplyDamageSpecKeys.Add(candidateKey);
+		OutSpecKeys.Add(candidateKey);
 	}
 }
 
 UCReaction* UCReactionComponent::AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass)
 {
-	UClass* keyClass = InSubClass.Get();
-	if (!IsValid(keyClass)) return nullptr;
+	UClass* executorKey = InSubClass.Get();
+	if (!IsValid(executorKey)) return nullptr;
 
-	UCReaction* addReactionExecutor = NewObject<UCReaction>(this, InSubClass);
-	if (!IsValid(addReactionExecutor)) return nullptr;
+	UCReaction* add = NewObject<UCReaction>(this, InSubClass);
+	if (!IsValid(add)) return nullptr;
 
-	addReactionExecutor->Initialize(OwnerCharacter_Cached, this);
-	ReactionExcutorMap.Add(keyClass, addReactionExecutor);
+	add->Initialize(OwnerCharacter_Cached, this);
+	ReactionExecutorMap.Add(executorKey, add);
 
-	return addReactionExecutor;
+	return add;
 }
 
 UCReaction* UCReactionComponent::FindReactionExecutor(const UClass* InClass)
 {
-	UCReaction** found = ReactionExcutorMap.Find(InClass);
-	if (!found) return nullptr;
+	UCReaction** foundPtr = ReactionExecutorMap.Find(InClass);
+	if (!foundPtr) return nullptr;
 
-	UCReaction* foundReactionExecutor = *found;
+	UCReaction* found = *foundPtr;
 
-	if (!IsValid(foundReactionExecutor))
+	if (!IsValid(found))
 	{
 		// Remove Invalid Entry
-		ReactionExcutorMap.Remove(InClass);
+		ReactionExecutorMap.Remove(InClass);
 
 		return nullptr;
 	}
 
-	return foundReactionExecutor;
+	return found;
 }
 
-bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InInterventionDirective)
+bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective)
 {
-	// TODO
-	return false;
-}
+	if (!InDirective.IsRequested()) return true;
+	if (!InDirective.IsValidRequest()) return false;
 
-bool UCReactionComponent::TryStartReaction(const FReactionContext& InReactionContext)
-{
-	if (!InReactionContext.IsValidMinimal()) return false;
-	if (IsActive()) return false;
-
-	return StartActiveReactionInternal(InReactionContext);
-}
-
-bool UCReactionComponent::TryInterruptReaction(const FReactionContext& InReactionContext)
-{
-	if (!IsActive()) return false;
-	if (!InReactionContext.IsValidMinimal()) return false;
-
-	if (!StopActiveReactionInternal(EReactionStopReason::Interrupted)) return false;
-
-	return StartActiveReactionInternal(InReactionContext);
-}
-
-bool UCReactionComponent::TryCancelReaction(const FReactionContext& InReactionContext)
-{
-	if (!IsActive()) return false;
-	if (!InReactionContext.IsValidMinimal()) return false;
-
-	if (!StopActiveReactionInternal(EReactionStopReason::Cancelled)) return false;
-
-	return StartActiveReactionInternal(InReactionContext);
-}
-
-bool UCReactionComponent::TryInterruptAndEndReaction()
-{
-	if (!IsActive()) return true;
-
-	if (!StopActiveReactionInternal(EReactionStopReason::Interrupted)) return false;
-
-	EndActiveReactionInternal();
-	return true;
-}
-
-bool UCReactionComponent::TryCancelAndEndReaction()
-{
-	if (!IsActive()) return true;
-
-	if (!StopActiveReactionInternal(EReactionStopReason::Cancelled)) return false;
-
-	EndActiveReactionInternal();
-	return true;
-}
-
-bool UCReactionComponent::StartActiveReactionInternal(const FReactionContext& InReactionContext)
-{
-	if (!InReactionContext.IsValidMinimal()) return false;
-
-	UCReaction* reactionExecutor = InReactionContext.ReactionExecutor;
-	if (!IsValid(reactionExecutor)) return false;
-
-	const FReactionData& reactionData = InReactionContext.ReactionData;
-
-	EnterReactionState(reactionData);
-
-	if (!reactionExecutor->Start(reactionData))
+	switch (InDirective.TargetDomain)
 	{
-		ExitReactionState(reactionData);
+	case EExecutionDomain::Action:
+		return IsValid(ActionComp_Cached) && ActionComp_Cached->RequestStopActiveAction(InDirective);
+
+	case EExecutionDomain::Reaction:
+
+		return StopActiveReaction(InDirective);
+
+	default:
+		return false;
+	}
+}
+
+bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InContext)
+{
+	if (IsActive()) return false;
+	if (!InContext.IsValidMinimal()) return false;
+
+	UCReaction* incomingExecutor = InContext.ReactionExecutor;
+	if (!IsValid(incomingExecutor)) return false;
+
+	const FReactionData& incomingData = InContext.ReactionData;
+
+	EnterReactionState(incomingData);
+
+	if (!incomingExecutor->Start(incomingData))
+	{
+		ExitReactionState(incomingData);
 		return false;
 	}
 
-	SetActiveReaction(InReactionContext);
+	SetActiveReactionContext(InContext);
 	return true;
 }
 
-bool UCReactionComponent::StopActiveReactionInternal(EReactionStopReason InStopReason)
+bool UCReactionComponent::StopActiveReaction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!IsActive()) return true;
+
+	const EReactionStopReason stopReason = ConvertExecutionStopReasonToReactionStopReason(InDirective.StopReason);
+	const EReactionFinishReason finishReason = ConvertExecutionStopReasonToReactionFinishReason(InDirective.StopReason);
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor))
 	{
-		// Stale Guard
-		EndActiveReactionInternal();
-
-		return !IsActive();
+		// [NOTE] Fallback when executor Stop() did not clear the active state through callback.
+		return EndActiveReaction(finishReason);
 	}
 
-	activeExecutor->Stop(InStopReason);
+	activeExecutor->Stop(stopReason);
+
+	if (IsActive())
+	{
+		// [NOTE] Fallback when executor Stop() did not clear the active state through callback.
+		return EndActiveReaction(finishReason);
+	}
 
 	return !IsActive();
 }
 
-void UCReactionComponent::EndActiveReactionInternal()
+bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason)
 {
-	if (!IsActive()) return;
+	if (!IsActive()) return true;
 
-	const FReactionData& activeReactionData = ActiveReactionContext_Cached.ReactionData;
+	const FReactionData activeData = ActiveReactionData;
 
-	if (activeReactionData.IsValidMinimal())
+	if (activeData.IsValidMinimal())
 	{
-		ExitReactionState(activeReactionData);
+		ExitReactionState(activeData);
 	}
 
-	ClearActiveReaction();
+	ClearActiveReactionContext();
+
+	return !IsActive();
 }
 
-void UCReactionComponent::SetActiveReaction(const FReactionContext& InReactionContext)
+void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionContext& InContext)
 {
-	if (!InReactionContext.IsValidMinimal()) return;
+	if (!InContext.IsValidMinimal()) return;
 
-	const EReactionType prevReactionType = ActiveReactionType_Cached;
+	const EReactionType prevReactionType = ActiveReactionType;
 
-	ActiveReactionType_Cached = InReactionContext.ReactionData.ReactionDataKey.ReactionType;
-	ActiveReactionContext_Cached = InReactionContext;
+	ActiveReactionType = InContext.ReactionDataKey.ReactionType;
+	ActiveReactionData = InContext.ReactionData;
+	ActiveReactionExecutor = InContext.ReactionExecutor;
 
 	if (OnReactionTypeChanged.IsBound())
 	{
-		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType_Cached);
+		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType);
 	}
 }
 
-void UCReactionComponent::ClearActiveReaction()
+void UCReactionComponent::ClearActiveReactionContext()
 {
-	const EReactionType prevReactionType = ActiveReactionType_Cached;
+	const EReactionType prevReactionType = ActiveReactionType;
 
-	ActiveReactionType_Cached = EReactionType::None;
-	ActiveReactionContext_Cached = FReactionContext();
+	ActiveReactionType = EReactionType::None;
+	ActiveReactionData = FReactionData();
+	ActiveReactionExecutor = nullptr;
 
 	if (OnReactionTypeChanged.IsBound())
 	{
-		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType_Cached);
+		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType);
 	}
 }
 
-void UCReactionComponent::EnterReactionState(const FReactionData& InReactionData)
+void UCReactionComponent::EnterReactionState(const FReactionData& InData)
 {
-	if (IsValid(MovementComp_Cached) && !InReactionData.bCanMove)
+	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
 	{
 		MovementComp_Cached->SetStop();
 	}
@@ -484,14 +463,14 @@ void UCReactionComponent::EnterReactionState(const FReactionData& InReactionData
 	}
 }
 
-void UCReactionComponent::ExitReactionState(const FReactionData& InReactionData)
+void UCReactionComponent::ExitReactionState(const FReactionData& InData)
 {
 	const bool bAlive = IsValid(HealthComp_Cached) && HealthComp_Cached->IsAlive();
 	const bool bDeadExecution = IsValid(StateComp_Cached) && StateComp_Cached->GetCurrentExecutionState() == EExecutionState::Dead;
 
 	if (!bAlive || bDeadExecution) return;
 
-	if (IsValid(MovementComp_Cached) && !InReactionData.bCanMove)
+	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
 	{
 		MovementComp_Cached->SetMove();
 	}
@@ -499,6 +478,36 @@ void UCReactionComponent::ExitReactionState(const FReactionData& InReactionData)
 	if (IsValid(StateComp_Cached))
 	{
 		StateComp_Cached->SetIdleState();
+	}
+}
+
+EReactionStopReason UCReactionComponent::ConvertExecutionStopReasonToReactionStopReason(EExecutionStopReason InStopReason) const
+{
+	switch (InStopReason)
+	{
+	case EExecutionStopReason::Interrupted:
+		return EReactionStopReason::Interrupted;
+
+	case EExecutionStopReason::Cancelled:
+		return EReactionStopReason::Cancelled;
+
+	default:
+		return EReactionStopReason::Ignored;
+	}
+}
+
+EReactionFinishReason UCReactionComponent::ConvertExecutionStopReasonToReactionFinishReason(EExecutionStopReason InStopReason) const
+{
+	switch (InStopReason)
+	{
+	case EExecutionStopReason::Interrupted:
+		return EReactionFinishReason::Interrupted;
+
+	case EExecutionStopReason::Cancelled:
+		return EReactionFinishReason::Cancelled;
+
+	default:
+		return EReactionFinishReason::Ignored;
 	}
 }
 
@@ -513,13 +522,13 @@ void UCReactionComponent::PrintReactionInfoSummary() const
 	{
 		FLog::Log(TEXT("=== Active ReactionData Info ===="));
 
-		if (!ActiveReactionContext_Cached.ReactionData.IsValidMinimal())
+		if (!ActiveReactionData.IsValidMinimal())
 		{
 			FLog::Log(TEXT("[ActiveReactionData] Invalid / Empty"));
 		}
 		else
 		{
-			PrintReactionDataInfo(ActiveReactionContext_Cached.ReactionData);
+			PrintReactionDataInfo(ActiveReactionData);
 		}
 	}
 
@@ -527,14 +536,14 @@ void UCReactionComponent::PrintReactionInfoSummary() const
 	{
 		FLog::Log(TEXT("== Active ReactionExcutor Info =="));
 
-		if (!IsValid(ActiveReactionContext_Cached.ReactionExecutor))
+		if (!IsValid(ActiveReactionExecutor))
 		{
 			FLog::Log(TEXT("[ActiveExecutor] None"));
 		}
 		else
 		{
-			PrintReactionExcutorInfo(ActiveReactionContext_Cached.ReactionExecutor);
-			PrintReactionExecutorRuntimeInfo(ActiveReactionContext_Cached.ReactionExecutor);
+			PrintReactionExcutorInfo(ActiveReactionExecutor);
+			PrintReactionExecutorRuntimeInfo(ActiveReactionExecutor);
 		}
 	}
 
@@ -575,37 +584,37 @@ void UCReactionComponent::PrintComponentStateInfo() const
 {
 	FLog::Log(TEXT("-------- Component State --------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IsActive"), IsActive() ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(ActiveReactionType_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(ActiveReactionType)));
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCReactionComponent::PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InApplyDamageSpecKey) const
+void UCReactionComponent::PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InSpecKey) const
 {
-	const FString actionIndexText = (InApplyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(InApplyDamageSpecKey.ActionIndex);
+	const FString actionIndexText = (InSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(InSpecKey.ActionIndex);
 
 	FLog::Log(TEXT("---- ApplyDamageSpecKey Info ----"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InApplyDamageSpecKey.ActionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InSpecKey.WeaponType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCReactionComponent::PrintReactionDataKeyInfo(const FReactionDataKey& InReactionDataKey) const
+void UCReactionComponent::PrintReactionDataKeyInfo(const FReactionDataKey& InDataKey) const
 {
-	const FApplyDamageSpecKey& applyDamageSpecKey = InReactionDataKey.ApplyDamageSpecKey;
+	const FApplyDamageSpecKey& applyDamageSpecKey = InDataKey.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(applyDamageSpecKey.ActionIndex);
 
 	FLog::Log(TEXT("----- ReactionDataKey Info ------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(applyDamageSpecKey.ActionType)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InReactionDataKey.ReactionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InDataKey.ReactionType)));
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCReactionComponent::PrintReactionDataInfo(const FReactionData& InReactionData) const
+void UCReactionComponent::PrintReactionDataInfo(const FReactionData& InData) const
 {
-	const FApplyDamageSpecKey& applyDamageSpecKey = InReactionData.ReactionDataKey.ApplyDamageSpecKey;
+	const FApplyDamageSpecKey& applyDamageSpecKey = InData.ReactionDataKey.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(applyDamageSpecKey.ActionIndex);
 
 	FLog::Log(TEXT("------ ReactionData Info --------"));
@@ -615,16 +624,16 @@ void UCReactionComponent::PrintReactionDataInfo(const FReactionData& InReactionD
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
 
 	// ReactionType Key
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InReactionData.ReactionDataKey.ReactionType)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InData.ReactionDataKey.ReactionType)));
 
 	// RactionExecutor Key
-	UClass* executorClass = InReactionData.ReactionExecutorKey.Get();
+	UClass* executorClass = InData.ReactionExecutorKey.Get();
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ExecutorKey"), *GetNameSafe(executorClass)));
 
 	// Raction Montage Data
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Montage"), *GetNameSafe(InReactionData.Montage)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("PlayRate"), InReactionData.PlayRate));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("bCanMove"), InReactionData.bCanMove ? 1 : 0));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Montage"), *GetNameSafe(InData.Montage)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("PlayRate"), InData.PlayRate));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("bCanMove"), InData.bCanMove ? 1 : 0));
 	FLog::Log(TEXT("---------------------------------"));
 
 }

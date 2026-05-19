@@ -58,10 +58,10 @@ private:
 	class UCStateComponent* StateComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionComponent* ReactionComp_Cached = nullptr;
+	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
+	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
 public:
 	/* === Delegate === */
@@ -75,7 +75,10 @@ public:
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	FORCEINLINE bool IsActiveActionType(EActionType InActionType) const { return ActiveActionType == InActionType; }
+	FORCEINLINE bool IsActiveActionType(EActionType InType) const { return ActiveActionType == InType; }
+
+public:
+	bool CanCommitChain(const UCAction* InAction, const FActionData& InData) const;
 
 public:
 	bool IsActive() const;
@@ -83,20 +86,20 @@ public:
 public:
 	EActionType GetActiveActionType() const;
 	int32 GetActiveActionIndex() const;
-	bool GetActiveActionData(FActionData& OutActionData) const;
+	bool GetActiveActionData(FActionData& OutData) const;
 	class UCAction* GetActiveActionExecutor() const;
 
 public:
-	bool ResolveActionData(const FActionDataKey& InActionDataKey, FActionData& OutActionData);
-	class UCAction* ResolveActionExecutor(const FActionData& InActionData);
+	bool ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData);
+	class UCAction* ResolveActionExecutor(const FActionData& InData);
 
 public:
-	bool ApplyActionDecision(const FActionOrchestrationLevelResult& InActionOrchestrationResult);
-	bool RequestStopActiveAction(const FExecutionInterventionDirective& InInterventionDirective);
+	bool ApplyActionDecision(const FActionExecutionResult& InResult);
+	bool RequestStopActiveAction(const FExecutionInterventionDirective& InDirective);
 
 public:
-	bool HandleApplyActionChained(const UCAction* InAction, const FActionData& InActionData);
-	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InActionFinishReason);
+	bool HandleApplyActionChained(const UCAction* InAction, const FActionData& InData);
+	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InFinishReason);
 
 public:
 	void HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand);
@@ -106,7 +109,7 @@ public:
 	void HandleActionFeedbackWindowEnd(FName InTriggerKey);
 
 public:
-	void BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
+	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
 
 private:
 	// Temporary data build API (Move to DataAsset).
@@ -118,26 +121,23 @@ private:
 	UCAction* FindActionExecutor(const UClass* InClass);
 
 private:
-	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InInterventionDirective);
+	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
 
 private:
-	bool StartAction(const FActionResolvedContext& InActionResolvedContext);
-	bool ChainActiveAction(const FActionResolvedContext& InActionResolvedContext);
-	bool StopActiveAction(const FExecutionInterventionDirective& InInterventionDirective);
+	bool StartAction(const FActionExecutionContext& InContext);
+	bool ChainActiveAction(const FActionExecutionContext& InContext);
+	bool StopActiveAction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveAction(EActionFinishReason InFinishReason);
 
 private:
-	void SetActiveActionContext(const FActionResolvedContext& InActionResolvedContext);
+	void SetActiveActionContext(const FActionExecutionContext& InContext);
 	void ClearActiveActionContext();
 
 private:
-	void EnterActionState(const FActionData& InActionData);
-	void ExitActionState(const FActionData& InActionData);
+	void EnterActionState(const FActionData& InData);
+	void ExitActionState(const FActionData& InData);
 
 private:
 	EActionStopReason ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const;
 	EActionFinishReason ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const;
-
-private:
-	void PrintActionLocalLevelQuery(const FActionLocalLevelQuery& InQuery) const;
 };

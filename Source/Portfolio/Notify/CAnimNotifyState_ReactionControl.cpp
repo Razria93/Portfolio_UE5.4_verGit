@@ -45,7 +45,25 @@ void UCAnimNotifyState_ReactionControl::NotifyBegin(USkeletalMeshComponent* Mesh
 	UCReactionComponent* reactionComp = ownerCharacter->FindComponentByClass<UCReactionComponent>();
 	if (!IsValid(reactionComp)) return;
 
-	reactionComp->HandleReactionControlWindowBegin(ReactionControlWindowType);
+	EReactionNotifyCommand command = EReactionNotifyCommand::None;
+
+	switch (ReactionControlWindowType)
+	{
+	case EReactionControlWindowType::Interruptible:
+	{
+		command = EReactionNotifyCommand::OpenInterruptWindow;
+		break;
+	}
+	case EReactionControlWindowType::Cancelable:
+	{
+		command = EReactionNotifyCommand::OpenCancelWindow;
+		break;
+	}
+	default:
+		break;
+	}
+
+	reactionComp->HandleReactionNotifyCommand(command);
 }
 
 void UCAnimNotifyState_ReactionControl::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
@@ -61,5 +79,23 @@ void UCAnimNotifyState_ReactionControl::NotifyEnd(USkeletalMeshComponent* MeshCo
 	UCReactionComponent* reactionComp = ownerCharacter->FindComponentByClass<UCReactionComponent>();
 	if (!IsValid(reactionComp)) return;
 
-	reactionComp->HandleReactionControlWindowEnd(ReactionControlWindowType);
+	EReactionNotifyCommand command = EReactionNotifyCommand::None;
+
+	switch (ReactionControlWindowType)
+	{
+	case EReactionControlWindowType::Interruptible:
+	{
+		command = EReactionNotifyCommand::CloseInterruptWindow;
+		break;
+	}
+	case EReactionControlWindowType::Cancelable:
+	{
+		command = EReactionNotifyCommand::CloseCancelWindow;
+		break;
+	}
+	default:
+		break;
+	}
+
+	reactionComp->HandleReactionNotifyCommand(command);
 }

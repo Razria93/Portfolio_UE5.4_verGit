@@ -298,7 +298,7 @@ void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionTy
 {
 	switch (InActionEventType)
 	{
-	case EActionEventType::ChainWindowOpened:
+	case EActionEventType::ReserveChainWindowOpened:
 	{
 		RequestChainCombatAction(InActionType, InActionIndex);
 		break;

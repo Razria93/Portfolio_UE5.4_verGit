@@ -5,25 +5,29 @@
 
 #include "Component/CWeaponComponent.h"
 
-EActionLocalLevelDecision UCAction_Equip::ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const
+EExecutionDecision UCAction_Equip::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EActionLocalLevelDecision::Reject;
-	if (!IsValid(WeaponComp_Cached)) return EActionLocalLevelDecision::Reject;
+	if (!IsValid(OwnerCharacter_Injected)) return EExecutionDecision::Reject;
+	if (!IsValid(WeaponComp_Cached)) return EExecutionDecision::Reject;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return EExecutionDecision::Reject;
 
-	if (!WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	if (!InQuery.Snapshot.IsIdle()) return EExecutionDecision::Reject;
+	if (!WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return EExecutionDecision::Reject;
+
+	return EExecutionDecision::Executable;
+}
+
+void UCAction_Equip::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
+{
+	switch (InCommand)
 	{
-		return EActionLocalLevelDecision::Reject;
+	case EActionNotifyCommand::Equip:
+		AttachWeapon();
+		return;
+
+	default:
+		return;
 	}
-
-	const bool bIsIdle = InQuery.ExecutionState == EExecutionState::Idle;
-	const bool bIsActiveAction = InQuery.bIsActiveAction;
-
-	if (bIsIdle && !bIsActiveAction)
-	{
-		return EActionLocalLevelDecision::Start;
-	}
-
-	return EActionLocalLevelDecision::Reject;
 }
 
 void UCAction_Equip::AttachWeapon()

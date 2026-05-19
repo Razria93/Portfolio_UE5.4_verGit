@@ -20,5 +20,5 @@ void UCAnimNotify_AdvanceCombo::Notify(USkeletalMeshComponent* MeshComp, UAnimSe
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
-	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::AdvanceCombo);
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::ConsumeChain);
 }

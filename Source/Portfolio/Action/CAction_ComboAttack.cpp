@@ -6,104 +6,103 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CActionComponent.h"
 
-void UCAction_ComboAttack::InitializeAction(ACharacter* InOwnerCharacter, UCActionComponent* InOwnerActionComp)
+EExecutionDecision UCAction_ComboAttack::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	Super::InitializeAction(InOwnerCharacter, InOwnerActionComp);
+	if (!IsValid(OwnerCharacter_Injected)) return EExecutionDecision::Reject;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return EExecutionDecision::Reject;
 
-	ClearComboRuntime();
+	if (CanResolveChain(InQuery))
+	{
+		return EExecutionDecision::Chainable;
+	}
+
+	if (InQuery.Snapshot.IsIdle())
+	{
+		return EExecutionDecision::Executable;
+	}
+
+	return EExecutionDecision::Reject;
 }
 
-EActionLocalLevelDecision UCAction_ComboAttack::ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const
+bool UCAction_ComboAttack::ReserveChain(const FActionData& InData)
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EActionLocalLevelDecision::Reject;
-	if (!IsValid(WeaponComp_Cached)) return EActionLocalLevelDecision::Reject;
+	if (!CanReserveChain(InData)) return false;
 
-	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
-	{
-		return EActionLocalLevelDecision::Reject;
-	}
-
-	const bool bIsIdle = InQuery.ExecutionState == EExecutionState::Idle;
-	const bool bIsActiveAction = InQuery.bIsActiveAction;
-
-	if (bIsIdle && !bIsActiveAction)
-	{
-		return EActionLocalLevelDecision::Start;
-	}
-
-	if (!bIsActiveAction)
-	{
-		return EActionLocalLevelDecision::Reject;
-	}
-
-	if (!InQuery.ActiveContext.IsValidMinimal())
-	{
-		return EActionLocalLevelDecision::Reject;
-	}
-
-	const bool bIsEqualAction = InQuery.ActiveContext.ActionDataKey.ActionType == InQuery.IncomingContext.ActionDataKey.ActionType;
-
-	if (bIsEqualAction && bChainWindowOpened)
-	{
-		return EActionLocalLevelDecision::Chain;
-	}
-
-	return EActionLocalLevelDecision::Reject;
-}
-
-bool UCAction_ComboAttack::Start(const FActionData& InData)
-{
-	ClearComboRuntime();
-
-	bool result = Super::Start(InData);
-
-	return result;
-}
-
-bool UCAction_ComboAttack::ApplyChain(const FActionData& InData)
-{
-	if (!CanAcceptChain(InData)) return false;
-
-	PendingChainData_Cached = InData;
-	bHasChainedInput = true;
-	bChainWindowOpened = false;
+	ReservingChainData = InData;
+	bHasReservingChain = true;
+	bReserveChainWindowOpened = false;
 
 	FLog::Log(TEXT("[ComboAttack] Chain input buffered."));
 
 	return true;
 }
 
-void UCAction_ComboAttack::Stop(EActionStopReason InReason)
+void UCAction_ComboAttack::ClearRuntime()
 {
-	Super::Stop(InReason);
+	Super::ClearRuntime();
 
-	ClearComboRuntime();
+	ReservingChainData = FActionData();
+	bHasReservingChain = false;
+	bReserveChainWindowOpened = false;
 }
 
-void UCAction_ComboAttack::Complete()
+void UCAction_ComboAttack::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
-	Super::Complete();
-
-	ClearComboRuntime();
-}
-
-void UCAction_ComboAttack::AdvanceCombo()
-{
-	if (!CanAdvanceCombo())
+	switch (InCommand)
 	{
-		FLog::Log(TEXT("[ComboAttack] No valid pending chain action."));
+	case EActionNotifyCommand::OpenReserveChainWindow:
+		OpenReserveChainWindow();
+		return;
+
+	case EActionNotifyCommand::CloseReserveChainWindow:
+		CloseReserveChainWindow();
+		return;
+
+	case EActionNotifyCommand::ConsumeChain:
+		ConsumeChain();
+		return;
+
+	default:
 		return;
 	}
+}
 
-	const FActionData nextData = PendingChainData_Cached;
+void UCAction_ComboAttack::OpenReserveChainWindow()
+{
+	if (!bIsActive) return;
 
-	PendingChainData_Cached = FActionData();
-	bHasChainedInput = false;
-	bChainWindowOpened = false;
+	bReserveChainWindowOpened = true;
 
-	ActiveData_Cached = nextData;
+	EmitActionEvent(EActionEventType::ReserveChainWindowOpened, ActiveDataKey_Cached.ActionIndex);
+}
+
+void UCAction_ComboAttack::CloseReserveChainWindow()
+{
+	if (!bReserveChainWindowOpened) return;
+
+	bReserveChainWindowOpened = false;
+
+	EmitActionEvent(EActionEventType::ReserveChainWindowClosed, ActiveDataKey_Cached.ActionIndex);
+}
+
+void UCAction_ComboAttack::ConsumeChain()
+{
+	const FActionData nextData = ReservingChainData;
+
+	if (!CanConsumeChain(nextData))
+	{
+		FLog::Log(TEXT("[ComboAttack] Failed to consume chain."));
+		return;
+	}
+	
+	ReservingChainData = FActionData();
+	bHasReservingChain = false;
+	bReserveChainWindowOpened = false;
+
 	ActiveDataKey_Cached = nextData.ActionDataKey;
+	ActiveData_Cached = nextData;
 	ActiveMontage_Cached = nextData.Montage;
+	LastStopReason_Cached = EActionStopReason::None;
 
 	if (!PlayMontage(nextData))
 	{
@@ -111,8 +110,15 @@ void UCAction_ComboAttack::AdvanceCombo()
 		return;
 	}
 
+	if (!BindMontageEndDelegate())
+	{
+		Stop(EActionStopReason::Ignored);
+		return;
+	}
+
 	if (IsValid(OwnerActionComp_Injected))
 	{
+		// Sync with ActionComponent
 		if (!OwnerActionComp_Injected->HandleApplyActionChained(this, nextData))
 		{
 			Stop(EActionStopReason::Ignored);
@@ -120,52 +126,52 @@ void UCAction_ComboAttack::AdvanceCombo()
 		}
 	}
 
-	RequestFeedback(EActionFeedbackTiming::ActionChain);
+	RequestFeedback(EActionFeedbackTiming::Chain);
 	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached.ActionIndex);
 
-	FLog::Log(FString::Printf(TEXT("[ComboAttack] Advance combo. ActionIndex = %d"), ActiveDataKey_Cached.ActionIndex));
+	FLog::Log(FString::Printf(TEXT("[ComboAttack] Consume Chain. ActionIndex = %d"), ActiveDataKey_Cached.ActionIndex));
 }
 
-void UCAction_ComboAttack::OpenChainWindow()
+bool UCAction_ComboAttack::CanResolveChain(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!bIsActive) return;
+	if (!InQuery.Snapshot.IsInAction()) return false;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+	if (!InQuery.ActivePart.IsActionParticipant()) return false;
 
-	bChainWindowOpened = true;
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
 
-	EmitActionEvent(EActionEventType::ChainWindowOpened, ActiveDataKey_Cached.ActionIndex);
+	const FActionDataKey& incomingKey = incomingContext.ActionDataKey;
+	const FActionDataKey& activeKey = activeContext.ActionDataKey;
+
+	if (activeKey.ActionType != EActionType::ComboAttack) return false;
+	if (incomingKey.ActionType != activeKey.ActionType) return false;
+	if (incomingKey.ActionIndex != activeKey.ActionIndex + 1) return false;
+
+	return true;
 }
 
-void UCAction_ComboAttack::CloseChainWindow()
-{
-	if (!bChainWindowOpened) return;
-
-	bChainWindowOpened = false;
-
-	EmitActionEvent(EActionEventType::ChainWindowClosed, ActiveDataKey_Cached.ActionIndex);
-}
-
-void UCAction_ComboAttack::ClearComboRuntime()
-{
-	bChainWindowOpened = false;
-	bHasChainedInput = false;
-	PendingChainData_Cached = FActionData();
-}
-
-bool UCAction_ComboAttack::CanAcceptChain(const FActionData& InData) const
+bool UCAction_ComboAttack::CanReserveChain(const FActionData& InData) const
 {
 	if (!bIsActive) return false;
-	if (!bChainWindowOpened) return false;
+	if (!bReserveChainWindowOpened) return false;
+	if (bHasReservingChain) return false;
 	if (!InData.IsValidMinimal()) return false;
 
 	const FActionDataKey& incomingKey = InData.ActionDataKey;
 
 	if (incomingKey.ActionType != ActiveDataKey_Cached.ActionType) return false;
-	if (incomingKey.ActionIndex <= ActiveDataKey_Cached.ActionIndex) return false;
+	if (incomingKey.ActionIndex != ActiveDataKey_Cached.ActionIndex + 1) return false;
 
 	return true;
 }
 
-bool UCAction_ComboAttack::CanAdvanceCombo() const
+bool UCAction_ComboAttack::CanConsumeChain(const FActionData& InData) const
 {
-	return bIsActive && bHasChainedInput && PendingChainData_Cached.IsValidMinimal();
+	if (!bIsActive) return false;
+	if (!bHasReservingChain || !ReservingChainData.IsValidMinimal()) return false;
+	if (!IsValid(OwnerActionComp_Injected)) return false;
+	if (!OwnerActionComp_Injected->CanCommitChain(this, InData)) return false;
+
+	return true;
 }

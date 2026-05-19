@@ -4,6 +4,7 @@
 #include "UObject/NoExportTypes.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CReactionFeedbackStructure.h"
+#include "Type/CReactionOrchestrationStructure.h"
 #include "CReaction.generated.h"
 
 UCLASS(Abstract)
@@ -14,19 +15,33 @@ class PORTFOLIO_API UCReaction : public UObject
 protected:
 	/* === Runtime State === */
 	UPROPERTY(Transient)
-	bool bIsReaction = false;
+	bool bIsActive = false;
 
 	UPROPERTY(Transient)
-	bool bInterruptible = false;	// Setted by AnimNotify
+	bool bWantInterrupt = false;
 
 	UPROPERTY(Transient)
-	bool bCancelable = false;		// Setted by AnimNotify
+	bool bWantCancel = false;
 
 	UPROPERTY(Transient)
-	FReactionData ActiveReactionData_Cached = FReactionData();
+	bool bAllowInterrupt = false;
 
 	UPROPERTY(Transient)
-	class UAnimMontage* ActiveReactionMontage_Cached = nullptr;
+	bool bAllowCancel = false;
+
+protected:
+	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Reaction
+	uint32 CachedSerial_ActivePlay = 0;	// Cached Serial of Active Play Reaction
+
+protected:
+	UPROPERTY(Transient)
+	FReactionDataKey ActiveDataKey_Cached = FReactionDataKey();
+
+	UPROPERTY(Transient)
+	FReactionData ActiveData_Cached = FReactionData();
+
+	UPROPERTY(Transient)
+	class UAnimMontage* ActiveMontage_Cached = nullptr;
 
 	UPROPERTY(Transient)
 	EReactionStopReason LastStopReason_Cached = EReactionStopReason::None;
@@ -39,74 +54,77 @@ protected:
 	UPROPERTY(Transient)
 	class UCReactionComponent* OwnerReactionComp_Injected = nullptr;
 
+protected:
 	UPROPERTY(Transient)
 	class UCReactionFeedbackComponent* ReactionFeedbackComp_Cached = nullptr;
 
-protected:
-	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Reaction
-	uint32 CachedSerial_ActivePlay = 0;	// Cached Serial of Active Play Raction
-
 public:
-	virtual void Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent);
+	virtual void Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComp);
 	virtual void Tick(float InDeltaTime) {};
 
 public:
-	virtual bool IsValidMinimal() const;
-
-public:
-	bool IsReaction() const { return bIsReaction; }
-
-	UAnimMontage* GetActiveReactionMontage() const { return ActiveReactionMontage_Cached; }
-	const FReactionData& GetActiveReactionData() const { return ActiveReactionData_Cached; }
+	bool IsActive() const { return bIsActive; }
 
 protected:
-	bool IsInterruptibleNow() const { return bInterruptible; }
-	bool IsCancelableNow() const { return bCancelable; }
+	bool IsWantInterruptNow() const { return bWantInterrupt; }
+	bool IsWantCancelNow() const { return bWantCancel; }
+
+	bool IsAllowInterruptNow() const { return bAllowInterrupt; }
+	bool IsAllowCancelNow() const { return bAllowCancel; }
+
+protected:
+	void SetWantInterrupt(bool bEnable) { bWantInterrupt = bEnable; }
+	void SetWantCancel(bool bEnable) { bWantCancel = bEnable; }
+
+	void SetAllowInterrupt(bool bEnable) { bAllowInterrupt = bEnable; }
+	void SetAllowCancel(bool bEnable) { bAllowCancel = bEnable; }
 
 public:
-	virtual bool Start(const FReactionData& InReactionData);
+	const FReactionDataKey& GetActiveDataKey() const { return ActiveDataKey_Cached; }
+	const FReactionData& GetActiveData() const { return ActiveData_Cached; }
+
+public:
+	virtual EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const;
+
+public:
+	virtual bool Start(const FReactionData& InData);
 	virtual void Stop(EReactionStopReason InStopReason);
+	virtual void Complete();
 
 protected:
-	virtual void FinishCompleted();
-	virtual void FinishInterrupted();
-	virtual void FinishCancelled();
-	virtual void FinishIgnored();
+	virtual void ClearRuntime();
 
 protected:
-	virtual void Clear();
+	virtual bool PlayMontage(const FReactionData& InData);
+	virtual void StopMontage(float InBlendOutTime = 0.1f);
+
+protected:
+	virtual bool BindMontageEndDelegate();
 
 public:
-	virtual void OnReactionControlWindowBegin(EReactionControlWindowType InReactionWindowType);
-	virtual void OnReactionControlWindowEnd(EReactionControlWindowType InReactionWindowType);
-
-	virtual void OnReactionFeedbackWindowBegin(FName InTriggerKey);
-	virtual void OnReactionFeedbackWindowEnd(FName InTriggerKey);
-	virtual void OnReactionFeedback(FName InTriggerKey);
-
-public:
-	virtual bool WantToInterrupt(const FReactionQueryContext& InReactionQueryContext) const;
-	virtual bool WantToCancel(const FReactionQueryContext& InReactionQueryContext) const;
-	virtual bool AllowInterruptionBy(const FReactionQueryContext& InReactionQueryContext) const;
-	virtual bool AllowCancelBy(const FReactionQueryContext& InReactionQueryContext) const;
+	void HandleNotifyCommand(EReactionNotifyCommand InCommand);
 
 protected:
-	void SetInterruptible(bool bEnable) { bInterruptible = bEnable; }
-	void SetCancelable(bool bEnable) { bCancelable = bEnable; }
+	virtual void HandleSpecificNotifyCommand(EReactionNotifyCommand InCommand);
+
+public:
+	void HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None);
+
+public:
+	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const;
+	virtual bool AllowInterventionBy(const FExecutionInterventionQuery& InQuery) const;
 
 protected:
 	void RequestFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
-	virtual FReactionFeedbackRequest BuildReactionFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
-
-public:
-	void PrintReactionExecutorRuntimeInfo_Public() const;
+	virtual FReactionFeedbackRequest BuildFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 protected:
 	UFUNCTION()
 	void OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial);
-
-protected:
 	bool CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const;
+
+public:
+	void PrintReactionExecutorRuntimeInfo_Public() const;
 
 private:
 	void PrintReactionExecutorRuntimeInfo() const;

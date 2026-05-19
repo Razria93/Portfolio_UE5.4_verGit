@@ -19,7 +19,13 @@ private:
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCStateComponent* StateComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCHealthComponent* HealthComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
@@ -28,30 +34,52 @@ protected:
 	void BeginPlay() override;
 
 public:
-	FReactionRequestResult RequestReaction(const FDamageReactionRequest& InRequest);
+	FReactionRequestResult RequestDamageReaction(const FDamageReactionRequest& InIncomingRequest);
 
 private:
 	bool CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const;
 
 private:
-	bool ResolveReactionContext(const FDamageReactionRequest& InRequest, FReactionContext& OutContext, EReactionType& OutType, EReactionRequestRejectReason& OutRejectReason) const;
-	bool ResolveReactionPolicy(const FReactionContext& InContext, EReactionType InType, FReactionExecutionPolicy& OutPolicy, EReactionRequestRejectReason& OutRejectReason) const;
-
-private:
-	EReactionType ResolveReactionType(const FTakeDamageResult& InResult) const;
-	bool ResolveReactionData(const FApplyDamageSpecKey & InSpecKey, EReactionType InType, FReactionData & OutData) const;
-	class UCReaction* ResolveReactionExecutor(const FReactionData & InData) const;
-
-private:
-	FReactionOrchestrationQuery BuildOrchestrationQuery(EReactionIntentSource InIntentSource, EReactionType InType, const FReactionContext& InContext, const FReactionExecutionPolicy& InPolicy) const;
-	FReactionOrchestrationResult OrchestrateQuery(const FReactionOrchestrationQuery& InQuery) const;
-
-private:
-	bool CanInterruptActiveReaction(const FReactionContext& InCurrentContext, const FReactionContext& InIncomingContext, const FReactionExecutionPolicy& InIncomingPolicy, EReactionRequestRejectReason& OutRejectReason) const;
+	bool ResolveDamageReactionCandidate(const FDamageReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
 	
-private:
-	bool DispatchReactionDecision(const FReactionOrchestrationResult& InResult, EReactionRequestRejectReason& OutRejectReason);
+	// Inner API
+	EReactionType ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const;
 
 private:
-	FReactionRequestResult BuildRequestResult(const FReactionOrchestrationResult& InResult) const;
+	FReactionRequestResult ExecuteReactionCandidate(EReactionIntentSource InIncomingIntentSource, const FReactionCandidate& InIncomingCandidate);
+
+private:
+	bool ResolveReactionContext(const FReactionCandidate& InIncomingCandidate, FReactionExecutionContext& OutIncomingContext, EReactionRequestRejectReason& OutRejectReason) const;
+
+	// Inner API
+	bool ResolveReactionData(const FReactionDataKey& InIncomingDataKey, FReactionData& OutIncomingData) const;
+	class UCReaction* ResolveReactionExecutor(const FReactionData& InIncomingData) const;
+
+private:
+	FExecutionDecisionQuery BuildDecisionQuery(const FReactionExecutionContext& InIncomingContext) const;
+
+	// Inner API
+	FExecutionSnapshot BuildSnapshot() const;
+	FExecutionParticipant BuildIncomingReactionParticipant(const FReactionExecutionContext& InIncomingContext) const;
+	FExecutionParticipant BuildActiveExecutionParticipant() const;
+
+private:
+	FExecutionDecisionResult BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EReactionRequestRejectReason& OutRejectReason) const;
+
+private:
+	FReactionExecutionResult BuildReactionExecutionResult(const FReactionExecutionContext& InContext, const FExecutionDecisionResult& InDecisionResult, EReactionRequestRejectReason InRejectReason) const;
+
+private:
+	void ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;
+
+	// Inner API
+	bool BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const;
+	bool BuildInterventionDirective(const FExecutionInterventionQuery& InQuery, EExecutionStopSource InStopSource, EExecutionAfterStopAction InAfterStopAction, FExecutionInterventionDirective& OutDirective) const;
+
+private:
+	FReactionRequestResult DispatchReactionDecision(const FReactionExecutionResult& InResult);
+
+private:
+	EReactionRequestResultType ConvertDecisionToResultType(const FReactionExecutionResult& InResult) const;
+	FReactionRequestResult BuildReactionRequestResult(EReactionRequestResultType InResultType, EReactionRequestRejectReason InRejectReason = EReactionRequestRejectReason::None) const;
 };

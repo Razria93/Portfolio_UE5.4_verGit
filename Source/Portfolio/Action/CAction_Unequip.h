@@ -10,8 +10,11 @@ class PORTFOLIO_API UCAction_Unequip : public UCAction
 	GENERATED_BODY()
 
 public:
-	EActionLocalLevelDecision ResolveLocalLevelDecision(const FActionLocalLevelQuery& InQuery) const override;
+	EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
-public:
+protected:
+	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
+
+private:
 	void DetachWeapon();
 };
