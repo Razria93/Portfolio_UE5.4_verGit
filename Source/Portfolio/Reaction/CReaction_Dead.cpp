@@ -3,28 +3,46 @@
 
 #include "GameFramework/Character.h"
 
-EExecutionDecision UCReaction_Dead::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
+FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!InQuery.IncomingPart.IsReactionParticipant()) return EExecutionDecision::Reject;
+	FExecutionDecisionResult result;
 
-	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
-	if (incoming.ReactionDataKey.ReactionType != EReactionType::Dead) return EExecutionDecision::Reject;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
 
-	return EExecutionDecision::Executable;
+	if (!IsIncomingReactionType(InQuery, EReactionType::Dead))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	EExecutionRelationship relationship = EExecutionRelationship::None;
+
+	if (!TryResolveIndependentOrExclusiveRelationship(InQuery, relationship))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = relationship;
+	return result;
 }
 
-bool UCReaction_Dead::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction_Dead::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
-	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
-
-	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
-	if (incoming.ReactionDataKey.ReactionType != EReactionType::Dead) return false;
+	if (Super::MatchesWantIntervention(InQuery)) return true;
+	if (!IsIncomingReactionType(InQuery, EReactionType::Dead)) return false;
 
 	return InQuery.StopReason == EExecutionStopReason::Interrupted;
 }
 
-bool UCReaction_Dead::AllowInterventionBy(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction_Dead::MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
+	// [NOTE] Dead reaction is terminal and cannot be interrupted or cancelled.
 	return false;
 }

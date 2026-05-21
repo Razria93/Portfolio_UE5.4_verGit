@@ -144,10 +144,8 @@ public:
 	{
 		return ResultType == EActionRequestResultType::Handled
 			|| ResultType == EActionRequestResultType::Started
-			|| ResultType == EActionRequestResultType::Chained
-			|| ResultType == EActionRequestResultType::Enqueued
-			|| ResultType == EActionRequestResultType::Interrupted
-			|| ResultType == EActionRequestResultType::Cancelled;
+			|| ResultType == EActionRequestResultType::Reserved
+			|| ResultType == EActionRequestResultType::Intervened;
 	}
 };
 

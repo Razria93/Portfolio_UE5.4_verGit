@@ -17,10 +17,16 @@ protected:
 	bool bIsActive = false;
 
 	UPROPERTY(Transient)
-	bool bInterruptible = false;	// Setted by AnimNotify
+	TArray<FExecutionInterventionParticipantFilter> WantCancelFilters;
 
 	UPROPERTY(Transient)
-	bool bCancelable = false;		// Setted by AnimNotify
+	TArray<FExecutionInterventionParticipantFilter> WantInterruptFilters;
+
+	UPROPERTY(Transient)
+	TArray<FExecutionInterventionParticipantFilter> AllowCancelFilters;
+
+	UPROPERTY(Transient)
+	TArray<FExecutionInterventionParticipantFilter> AllowInterruptFilters;
 
 protected:
 	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Action
@@ -54,28 +60,32 @@ protected:
 	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
+	// Initialize / Tick
 	virtual void InitializeAction(ACharacter* InOwnerCharacter, class UCActionComponent* InOwnerActionComp);
 	virtual void Tick(float InDeltaTime) {}
 
 public:
+	// State Query
 	bool IsActive() const { return bIsActive; }
-
-protected:
-	bool IsInterruptibleNow() const { return bInterruptible; }
-	bool IsCancelableNow() const { return bCancelable; }
-
-protected:
-	void SetInterruptible(bool bEnable) { bInterruptible = bEnable; }
-	void SetCancelable(bool bEnable) { bCancelable = bEnable; }
 
 public:
 	const FActionDataKey& GetActiveDataKey() const { return ActiveDataKey_Cached; }
 	const FActionData& GetActiveData() const { return ActiveData_Cached; }
 
 public:
-	virtual EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const;
+	// Decision
+	virtual FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const;
+
+protected:
+	bool IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const;
+	bool IsIncomingActionType(const FExecutionInterventionQuery& InQuery, EActionType InType) const;
+
+protected:
+	bool CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const;
+	bool TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const;
 
 public:
+	// Lifecycle
 	virtual bool Start(const FActionData& InData);
 	virtual void Stop(EActionStopReason InStopReason);
 	virtual void Complete();
@@ -88,42 +98,60 @@ protected:
 	virtual void ClearRuntime();
 
 protected:
+	// Montage Lifecycle
 	virtual bool PlayMontage(const FActionData& InData);
 	virtual void StopMontage(float InBlendOutTime = 0.1f);
-
-protected:
 	virtual bool BindMontageEndDelegate();
-
-public:
-	void HandleNotifyCommand(EActionNotifyCommand InCommand);
-
-protected:
-	virtual void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand);
-
-public:
-	virtual void HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None);
-
-public:
-	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const;
-	virtual bool AllowInterventionBy(const FExecutionInterventionQuery& InQuery) const;
-
-protected:
-	void RequestFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
-	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
-
-protected:
-	void EmitActionEvent(EActionEventType InEventType, int32 InActionIndex = INDEX_NONE) const;
 
 protected:
 	UFUNCTION()
 	void OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial);
 	bool CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const;
 
+public:
+	// Notify
+	void HandleNotifyCommand(EActionNotifyCommand InCommand);
+
+protected:
+	virtual void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand);
+
+public:
+	// Feedback
+	virtual void HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None);
+
+protected:
+	void RequestFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+
 protected:
 	// Action-only hit context
 	void PushHitContext();
 	void ClearHitContext();
 	virtual FActionContext BuildActionContext() const;
+
+public:
+	// Intervention Window
+	void OpenInterventionWindow(
+		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
+	void CloseInterventionWindow(
+		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
+
+public:
+	// Intervention Match
+	virtual bool MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const;
+	virtual bool MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const;
+
+private:
+	bool MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const;
+	bool MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const;
+
+private:
+	TArray<FExecutionInterventionParticipantFilter>* GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole);
+	const TArray<FExecutionInterventionParticipantFilter>* GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole) const;
+
+protected:
+	// Event
+	void EmitActionEvent(EActionEventType InEventType, int32 InActionIndex = INDEX_NONE) const;
 
 public:
 	// [Legacy delegate]

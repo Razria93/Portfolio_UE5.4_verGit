@@ -98,12 +98,19 @@ public:
 	bool RequestStopActiveAction(const FExecutionInterventionDirective& InDirective);
 
 public:
-	bool HandleApplyActionChained(const UCAction* InAction, const FActionData& InData);
+	bool HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData);
 	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InFinishReason);
 
 public:
 	void HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand);
 
+public:
+	void HandleActionInterventionWindowBegin(
+		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
+	void HandleActionInterventionWindowEnd(
+		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
+
+public:
 	void HandleActionFeedback(FName InTriggerKey);
 	void HandleActionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleActionFeedbackWindowEnd(FName InTriggerKey);
@@ -125,7 +132,7 @@ private:
 
 private:
 	bool StartAction(const FActionExecutionContext& InContext);
-	bool ChainActiveAction(const FActionExecutionContext& InContext);
+	bool ReserveAction(const FActionExecutionContext& InContext);
 	bool StopActiveAction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveAction(EActionFinishReason InFinishReason);
 

@@ -6,22 +6,38 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CActionComponent.h"
 
-EExecutionDecision UCAction_ComboAttack::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
+FExecutionDecisionResult UCAction_ComboAttack::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EExecutionDecision::Reject;
-	if (!InQuery.IncomingPart.IsActionParticipant()) return EExecutionDecision::Reject;
+	FExecutionDecisionResult result;
+
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!IsIncomingActionType(InQuery, EActionType::ComboAttack))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
 
 	if (CanResolveChain(InQuery))
 	{
-		return EExecutionDecision::Chainable;
+		result.Decision = EExecutionDecision::Accept;
+		result.Relationship = EExecutionRelationship::Sequential;
+		return result;
 	}
 
-	if (InQuery.Snapshot.IsIdle())
+	if (!CanResolveIndependentRelationship(InQuery))
 	{
-		return EExecutionDecision::Executable;
+		result.Decision = EExecutionDecision::Reject;
+		return result;
 	}
 
-	return EExecutionDecision::Reject;
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = EExecutionRelationship::Independent;
+	return result;
 }
 
 bool UCAction_ComboAttack::ReserveChain(const FActionData& InData)
@@ -94,7 +110,7 @@ void UCAction_ComboAttack::ConsumeChain()
 		FLog::Log(TEXT("[ComboAttack] Failed to consume chain."));
 		return;
 	}
-	
+
 	ReservingChainData = FActionData();
 	bHasReservingChain = false;
 	bReserveChainWindowOpened = false;
@@ -119,7 +135,7 @@ void UCAction_ComboAttack::ConsumeChain()
 	if (IsValid(OwnerActionComp_Injected))
 	{
 		// Sync with ActionComponent
-		if (!OwnerActionComp_Injected->HandleApplyActionChained(this, nextData))
+		if (!OwnerActionComp_Injected->HandleApplyActionConsumed(this, nextData))
 		{
 			Stop(EActionStopReason::Ignored);
 			return;
@@ -153,10 +169,11 @@ bool UCAction_ComboAttack::CanResolveChain(const FExecutionDecisionQuery& InQuer
 
 bool UCAction_ComboAttack::CanReserveChain(const FActionData& InData) const
 {
-	if (!bIsActive) return false;
-	if (!bReserveChainWindowOpened) return false;
-	if (bHasReservingChain) return false;
 	if (!InData.IsValidMinimal()) return false;
+
+	if (!bIsActive) return false;
+	if (bHasReservingChain) return false;
+	if (!bReserveChainWindowOpened) return false;
 
 	const FActionDataKey& incomingKey = InData.ActionDataKey;
 
@@ -168,8 +185,13 @@ bool UCAction_ComboAttack::CanReserveChain(const FActionData& InData) const
 
 bool UCAction_ComboAttack::CanConsumeChain(const FActionData& InData) const
 {
+	if (!InData.IsValidMinimal()) return false;
+	if (!ReservingChainData.IsValidMinimal()) return false;
+	if (!(InData.ActionDataKey == ReservingChainData.ActionDataKey)) return false;
+
 	if (!bIsActive) return false;
-	if (!bHasReservingChain || !ReservingChainData.IsValidMinimal()) return false;
+	if (!bHasReservingChain) return false;
+
 	if (!IsValid(OwnerActionComp_Injected)) return false;
 	if (!OwnerActionComp_Injected->CanCommitChain(this, InData)) return false;
 

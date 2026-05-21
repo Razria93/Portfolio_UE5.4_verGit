@@ -17,12 +17,78 @@ void UCReaction::Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* I
 	check(ReactionFeedbackComp_Cached);
 }
 
-EExecutionDecision UCReaction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
+FExecutionDecisionResult UCReaction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EExecutionDecision::Reject;
-	if (!InQuery.IncomingPart.IsReactionParticipant()) return EExecutionDecision::Reject;
+	FExecutionDecisionResult result;
 
-	return EExecutionDecision::Executable;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!InQuery.IncomingPart.IsReactionParticipant())
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	EExecutionRelationship relationship = EExecutionRelationship::None;
+
+	if (!TryResolveIndependentOrExclusiveRelationship(InQuery, relationship))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = relationship;
+	return result;
+}
+
+bool UCReaction::IsIncomingReactionType(const FExecutionDecisionQuery& InQuery, EReactionType InType) const
+{
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
+
+	const FReactionExecutionContext& incomingContext = InQuery.IncomingPart.GetReactionContext();
+
+	return incomingContext.ReactionDataKey.ReactionType == InType;
+}
+
+bool UCReaction::IsIncomingReactionType(const FExecutionInterventionQuery& InQuery, EReactionType InType) const
+{
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
+
+	const FReactionExecutionContext& incomingContext = InQuery.IncomingPart.GetReactionContext();
+
+	return incomingContext.ReactionDataKey.ReactionType == InType;
+}
+
+bool UCReaction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// Idle && No ActivePart: Idle
+	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
+}
+
+bool UCReaction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const
+{
+	OutRelationship = EExecutionRelationship::None;
+
+	// Idle && No ActivePart: Idle
+	if (CanResolveIndependentRelationship(InQuery))
+	{
+		OutRelationship = EExecutionRelationship::Independent;
+		return true;
+	}
+
+	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	if (!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart())
+	{
+		OutRelationship = EExecutionRelationship::Exclusive;
+		return true;
+	}
+
+	return false;
 }
 
 bool UCReaction::Start(const FReactionData& InData)
@@ -119,10 +185,10 @@ void UCReaction::ClearRuntime()
 	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EReactionStopReason::None;
 
-	bWantInterrupt = false;
-	bWantCancel = false;
-	bAllowInterrupt = false;
-	bAllowCancel = false;
+	WantCancelFilters.Reset();
+	WantInterruptFilters.Reset();
+	AllowCancelFilters.Reset();
+	AllowInterruptFilters.Reset();
 }
 
 bool UCReaction::PlayMontage(const FReactionData& InData)
@@ -170,44 +236,33 @@ bool UCReaction::BindMontageEndDelegate()
 	return true;
 }
 
+void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
+{
+	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
+	if (bInterrupted)
+	{
+		FLog::Log(TEXT("[Reaction] Unexpected montage interruption."));
+		return;
+	}
+
+	Complete();
+}
+
+bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
+{
+	if (!bIsActive) return false;
+	if (InSerial != CachedSerial_ActivePlay) return false;
+	if (InMontage != ActiveMontage_Cached) return false;
+
+	return true;
+}
+
 void UCReaction::HandleNotifyCommand(EReactionNotifyCommand InCommand)
 {
 	switch (InCommand)
 	{
 	case EReactionNotifyCommand::Complete:
 		Complete();
-		return;
-
-	case EReactionNotifyCommand::OpenWantInterruptWindow:
-		SetWantInterrupt(true);
-		return;
-
-	case EReactionNotifyCommand::CloseWantInterruptWindow:
-		SetWantInterrupt(false);
-		return;
-
-	case EReactionNotifyCommand::OpenWantCancelWindow:
-		SetWantCancel(true);
-		return;
-
-	case EReactionNotifyCommand::CloseWantCancelWindow:
-		SetWantCancel(false);
-		return;
-
-	case EReactionNotifyCommand::OpenAllowInterruptWindow:
-		SetAllowInterrupt(true);
-		return;
-
-	case EReactionNotifyCommand::CloseAllowInterruptWindow:
-		SetAllowInterrupt(false);
-		return;
-
-	case EReactionNotifyCommand::OpenAllowCancelWindow:
-		SetAllowCancel(true);
-		return;
-
-	case EReactionNotifyCommand::CloseAllowCancelWindow:
-		SetAllowCancel(false);
 		return;
 
 	default:
@@ -219,65 +274,12 @@ void UCReaction::HandleNotifyCommand(EReactionNotifyCommand InCommand)
 
 void UCReaction::HandleSpecificNotifyCommand(EReactionNotifyCommand InCommand)
 {
-	// [NOTE] 
 	// Specific Reactions override this API.
 }
 
 void UCReaction::HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey)
 {
 	RequestFeedback(InTiming, InTriggerKey);
-}
-
-bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
-{
-	if (!InQuery.IsValidMinimal()) return false;
-
-	switch (InQuery.StopReason)
-	{
-	case EExecutionStopReason::Interrupted:
-	{
-		// [NOTE] Base Reaction Incoming Policy
-		// Reactions request interrupt only while the want-interrupt window is open.
-		// Force reactions such as DeadReaction should be handled by orchestration or subclass override.
-		return IsWantInterruptNow();
-	}
-
-	case EExecutionStopReason::Cancelled:
-	{
-		// [NOTE] Base Reaction Incoming Cancel Policy
-		// Reactions request cancel only while the want-cancel window is open.
-		return IsWantCancelNow();
-	}
-
-	default:
-		return false;
-	}
-}
-
-bool UCReaction::AllowInterventionBy(const FExecutionInterventionQuery& InQuery) const
-{
-	if (!InQuery.IsValidMinimal()) return false;
-
-	switch (InQuery.StopReason)
-	{
-
-	case EExecutionStopReason::Interrupted:
-	{
-		// [NOTE] Base Reaction Active Policy
-		// Active reactions allow interrupts only while the allow-interrupt window is open.
-		return IsAllowInterruptNow();
-	}
-
-	case EExecutionStopReason::Cancelled:
-	{
-		// [NOTE] Base Reaction Active Cancel Policy
-		// Active reactions allow intentional cancel only while the allow-cancel window is open.
-		return IsAllowCancelNow();
-	}
-
-	default:
-		return false;
-	}
 }
 
 void UCReaction::RequestFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
@@ -302,25 +304,109 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 	return request;
 }
 
-void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
+void UCReaction::OpenInterventionWindow(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
 {
-	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
-	if (bInterrupted)
-	{
-		FLog::Log(TEXT("[Reaction] Unexpected montage interruption."));
-		return;
-	}
+	if (!MatchesInterventionOwner(InOwnerFilter)) return;
 
-	Complete();
+	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
+	if (!container) return;
+
+	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
+	{
+		if (!filter.IsValidMinimal()) continue;
+
+		container->Add(filter);
+	}
 }
 
-bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
+void UCReaction::CloseInterventionWindow(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
 {
-	if (!bIsActive) return false;
-	if (InSerial != CachedSerial_ActivePlay) return false;
-	if (InMontage != ActiveMontage_Cached) return false;
+	if (!MatchesInterventionOwner(InOwnerFilter)) return;
 
-	return true;
+	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
+	if (!container) return;
+
+	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
+	{
+		container->RemoveSingle(filter);
+	}
+}
+
+bool UCReaction::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+
+	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Want);
+
+	return filters && MatchesAnyInterventionFilter(*filters, InQuery.ActivePart);
+}
+
+bool UCReaction::MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+
+	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Allow);
+
+	return filters && MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
+}
+
+bool UCReaction::MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const
+{
+	// Check whether this active executor is the owner targeted by the notify window.
+	if (!bIsActive) return false;
+
+	return InOwnerFilter.MatchesReaction(ActiveDataKey_Cached.ReactionType);
+}
+
+bool UCReaction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const
+{
+	// Match the actual query participant against counterpart filters opened by notify windows.
+	for (const FExecutionInterventionParticipantFilter& filter : InFilters)
+	{
+		if (filter.MatchesParticipant(InParticipant)) return true;
+	}
+
+	return false;
+}
+
+TArray<FExecutionInterventionParticipantFilter>* UCReaction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole)
+{
+	switch (InWindowRole)
+	{
+	case EExecutionInterventionWindowRole::Want:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
+		return nullptr;
+
+	case EExecutionInterventionWindowRole::Allow:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
+		return nullptr;
+
+	default:
+		return nullptr;
+	}
+}
+
+const TArray<FExecutionInterventionParticipantFilter>* UCReaction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole) const
+{
+	switch (InWindowRole)
+	{
+	case EExecutionInterventionWindowRole::Want:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
+		return nullptr;
+
+	case EExecutionInterventionWindowRole::Allow:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
+		return nullptr;
+
+	default:
+		return nullptr;
+	}
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
@@ -333,10 +419,10 @@ void UCReaction::PrintReactionExecutorRuntimeInfo() const
 	FLog::Log(TEXT("----- ReactionRuntime Info ------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveMontage_Cached)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsActive"), bIsActive ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bWantInterrupt"), bWantInterrupt ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bWantCancel"), bWantCancel ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bAllowInterrupt"), bAllowInterrupt ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bAllowCancel"), bAllowCancel ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WantCancelCount"), WantCancelFilters.Num()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WantInterruptCount"), WantInterruptFilters.Num()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AllowCancelCount"), AllowCancelFilters.Num()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AllowInterruptCount"), AllowInterruptFilters.Num()));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_CurrentPlay"), Serial_CurrentPlay));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_ActivePlay"), CachedSerial_ActivePlay));
 	FLog::Log(TEXT("---------------------------------"));

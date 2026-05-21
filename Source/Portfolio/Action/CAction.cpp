@@ -22,12 +22,76 @@ void UCAction::InitializeAction(ACharacter* InOwnerCharacter, UCActionComponent*
 	check(ActionFeedbackComp_Cached);
 }
 
-EExecutionDecision UCAction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
+FExecutionDecisionResult UCAction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EExecutionDecision::Reject;
-	if (!InQuery.IncomingPart.IsActionParticipant()) return EExecutionDecision::Reject;
+	FExecutionDecisionResult result;
 
-	return EExecutionDecision::Executable;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!InQuery.IncomingPart.IsActionParticipant())
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!CanResolveIndependentRelationship(InQuery))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = EExecutionRelationship::Independent;
+	return result;
+}
+
+bool UCAction::IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const
+{
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+
+	return incomingContext.ActionDataKey.ActionType == InType;
+}
+
+bool UCAction::IsIncomingActionType(const FExecutionInterventionQuery& InQuery, EActionType InType) const
+{
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+
+	return incomingContext.ActionDataKey.ActionType == InType;
+}
+
+bool UCAction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// Idle && No ActivePart: Idle
+	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
+}
+
+bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const
+{
+	OutRelationship = EExecutionRelationship::None;
+
+	// Idle && No ActivePart: Idle
+	if (CanResolveIndependentRelationship(InQuery))
+	{
+		OutRelationship = EExecutionRelationship::Independent;
+		return true;
+	}
+
+	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	if (!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart())
+	{
+		OutRelationship = EExecutionRelationship::Exclusive;
+		return true;
+	}
+
+	return false;
 }
 
 bool UCAction::Start(const FActionData& InData)
@@ -123,14 +187,12 @@ void UCAction::Complete()
 
 bool UCAction::ReserveChain(const FActionData& InData)
 {
-	// [NOTE] 
 	// Specific Actions override this API.
 	return false;
 }
 
 void UCAction::ConsumeChain()
 {
-	// [NOTE] 
 	// Specific Actions override this API.
 }
 
@@ -143,8 +205,10 @@ void UCAction::ClearRuntime()
 	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EActionStopReason::None;
 
-	bInterruptible = false;
-	bCancelable = false;
+	WantCancelFilters.Reset();
+	WantInterruptFilters.Reset();
+	AllowCancelFilters.Reset();
+	AllowInterruptFilters.Reset();
 }
 
 bool UCAction::PlayMontage(const FActionData& InData)
@@ -192,28 +256,33 @@ bool UCAction::BindMontageEndDelegate()
 	return true;
 }
 
+void UCAction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
+{
+	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
+	if (bInterrupted)
+	{
+		FLog::Log(TEXT("[Action] Unexpected montage interruption."));
+		return;
+	}
+
+	Complete();
+}
+
+bool UCAction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
+{
+	if (!bIsActive) return false;
+	if (InSerial != CachedSerial_ActivePlay) return false;
+	if (InMontage != ActiveMontage_Cached) return false;
+
+	return true;
+}
+
 void UCAction::HandleNotifyCommand(EActionNotifyCommand InCommand)
 {
 	switch (InCommand)
 	{
 	case EActionNotifyCommand::Complete:
 		Complete();
-		return;
-
-	case EActionNotifyCommand::OpenInterruptWindow:
-		SetInterruptible(true);
-		return;
-
-	case EActionNotifyCommand::CloseInterruptWindow:
-		SetInterruptible(false);
-		return;
-
-	case EActionNotifyCommand::OpenCancelWindow:
-		SetCancelable(true);
-		return;
-
-	case EActionNotifyCommand::CloseCancelWindow:
-		SetCancelable(false);
 		return;
 
 	case EActionNotifyCommand::PushHitContext:
@@ -233,56 +302,12 @@ void UCAction::HandleNotifyCommand(EActionNotifyCommand InCommand)
 
 void UCAction::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
-	// [NOTE] 
 	// Specific Actions override this API.
 }
 
 void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey)
 {
 	RequestFeedback(InTiming, InTriggerKey);
-}
-
-bool UCAction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
-{
-	// [NOTE] Base Action Incoming Policy
-	// Normal actions do not stop active executions by default.
-	// Intentional intervention requires a specific action override.
-	return false;
-}
-
-bool UCAction::AllowInterventionBy(const FExecutionInterventionQuery& InQuery) const
-{
-	if (!InQuery.IsValidMinimal()) return false;
-
-	switch (InQuery.StopReason)
-	{
-	case EExecutionStopReason::Interrupted:
-	{
-		// [NOTE] Base Action Active Policy
-		// Hit/Dead reactions interrupt normal actions by default.
-		// Other interrupt types require an explicit interrupt window.
-		if (InQuery.IncomingPart.IsReactionParticipant())
-		{
-			const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
-
-			if (incoming.ReactionDataKey.ReactionType == EReactionType::Dead) return true;
-			if (incoming.ReactionDataKey.ReactionType == EReactionType::Hit) return true;
-		}
-
-		// Other interrupt types are controlled by the explicit interrupt window.
-		return IsInterruptibleNow();
-	}
-
-	case EExecutionStopReason::Cancelled:
-	{
-		// [NOTE] Base Action Cancel Policy
-		// Intentional cancellation requires an explicit cancel window.
-		return IsCancelableNow();
-	}
-
-	default:
-		return false;
-	}
 }
 
 void UCAction::RequestFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey) const
@@ -307,36 +332,6 @@ FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTi
 	return request;
 }
 
-void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const
-{
-	if (!IsValid(OwnerActionComp_Injected)) return;
-
-	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : ActiveDataKey_Cached.ActionIndex;
-
-	OwnerActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, InEventType);
-}
-
-void UCAction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
-{
-	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
-	if (bInterrupted)
-	{
-		FLog::Log(TEXT("[Action] Unexpected montage interruption."));
-		return;
-	}
-
-	Complete();
-}
-
-bool UCAction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
-{
-	if (!bIsActive) return false;
-	if (InSerial != CachedSerial_ActivePlay) return false;
-	if (InMontage != ActiveMontage_Cached) return false;
-
-	return true;
-}
-
 void UCAction::PushHitContext()
 {
 	if (!IsValid(WeaponComp_Cached)) return;
@@ -359,4 +354,116 @@ FActionContext UCAction::BuildActionContext() const
 	context.ActionIndex = ActiveDataKey_Cached.ActionIndex;
 
 	return context;
+}
+
+void UCAction::OpenInterventionWindow(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+{
+	if (!MatchesInterventionOwner(InOwnerFilter)) return;
+
+	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
+	if (!container) return;
+
+	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
+	{
+		if (!filter.IsValidMinimal()) continue;
+
+		container->Add(filter);
+	}
+}
+
+void UCAction::CloseInterventionWindow(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+{
+	if (!MatchesInterventionOwner(InOwnerFilter)) return;
+
+	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
+	if (!container) return;
+
+	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
+	{
+		container->RemoveSingle(filter);
+	}
+}
+
+bool UCAction::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+
+	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Want);
+
+	return filters && MatchesAnyInterventionFilter(*filters, InQuery.ActivePart);
+}
+
+bool UCAction::MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+
+	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Allow);
+
+	return filters && MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
+}
+
+bool UCAction::MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const
+{
+	if (!bIsActive) return false;
+
+	return InOwnerFilter.MatchesAction(ActiveDataKey_Cached.ActionType, ActiveDataKey_Cached.ActionIndex);
+}
+
+bool UCAction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const
+{
+	for (const FExecutionInterventionParticipantFilter& filter : InFilters)
+	{
+		if (filter.MatchesParticipant(InParticipant)) return true;
+	}
+
+	return false;
+}
+
+TArray<FExecutionInterventionParticipantFilter>* UCAction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole)
+{
+	switch (InWindowRole)
+	{
+	case EExecutionInterventionWindowRole::Want:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
+		return nullptr;
+
+	case EExecutionInterventionWindowRole::Allow:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
+		return nullptr;
+
+	default:
+		return nullptr;
+	}
+}
+
+const TArray<FExecutionInterventionParticipantFilter>* UCAction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole) const
+{
+	switch (InWindowRole)
+	{
+	case EExecutionInterventionWindowRole::Want:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
+		return nullptr;
+
+	case EExecutionInterventionWindowRole::Allow:
+		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
+		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
+		return nullptr;
+
+	default:
+		return nullptr;
+	}
+}
+
+void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const
+{
+	if (!IsValid(OwnerActionComp_Injected)) return;
+
+	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : ActiveDataKey_Cached.ActionIndex;
+
+	OwnerActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, InEventType);
 }

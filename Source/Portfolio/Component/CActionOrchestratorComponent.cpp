@@ -253,13 +253,9 @@ FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(EActi
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
 	const FExecutionDecisionResult decisionResult = BuildDecisionResult(decisionQuery, rejectReason);
-
 	FActionExecutionResult executionResult = BuildActionExecutionResult(incomingContext, decisionResult, rejectReason);
 
-	if (executionResult.IsAcceptedDecision())
-	{
-		ResolveInterventionDirective(decisionQuery, executionResult);
-	}
+	ResolveExecutionApplyMode(decisionQuery, executionResult);
 
 	return DispatchActionDecision(executionResult);
 }
@@ -359,6 +355,7 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 	if (bHasActiveAction && bHasActiveReaction)
 	{
 		FLog::Log(TEXT("[ActionOrchestrator] Invalid execution state (action and reaction are both active)."));
+		return participant;
 	}
 
 	// 01. Active Reaction Case
@@ -420,7 +417,7 @@ FExecutionDecisionResult UCActionOrchestratorComponent::BuildDecisionResult(cons
 	if (!InQuery.HasIncomingPart())
 	{
 		result.Decision = EExecutionDecision::Reject;
-		OutRejectReason = EActionRequestRejectReason::NoExecutableAction;
+		OutRejectReason = EActionRequestRejectReason::InvalidQuery;
 
 		return result;
 	}
@@ -428,7 +425,7 @@ FExecutionDecisionResult UCActionOrchestratorComponent::BuildDecisionResult(cons
 	if (!InQuery.IncomingPart.IsActionParticipant())
 	{
 		result.Decision = EExecutionDecision::Reject;
-		OutRejectReason = EActionRequestRejectReason::NoExecutableAction;
+		OutRejectReason = EActionRequestRejectReason::InvalidQuery;
 
 		return result;
 	}
@@ -444,12 +441,11 @@ FExecutionDecisionResult UCActionOrchestratorComponent::BuildDecisionResult(cons
 		return result;
 	}
 
-	// Resolve Decision
-	result.Decision = incomingExecutor->ResolveExecutionDecision(InQuery);
+	result = incomingExecutor->ResolveExecutionDecision(InQuery);
 
 	if (result.Decision == EExecutionDecision::Reject)
 	{
-		OutRejectReason = EActionRequestRejectReason::NoExecutableAction;
+		OutRejectReason = EActionRequestRejectReason::RejectedByExecutor;
 	}
 
 	return result;
@@ -460,10 +456,87 @@ FActionExecutionResult UCActionOrchestratorComponent::BuildActionExecutionResult
 	FActionExecutionResult result;
 
 	result.Decision = InDecisionResult.Decision;
+	result.Relationship = InDecisionResult.Relationship;
+	result.ApplyMode = EExecutionApplyMode::None;
 	result.ResolvedContext = InContext;
 	result.RejectReason = InRejectReason;
 
 	return result;
+}
+
+void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
+{
+	InOutResult.ApplyMode = EExecutionApplyMode::None;
+	InOutResult.InterventionDirective = FExecutionInterventionDirective();
+
+	// [NOTE] Early return ignore and reject decision
+	if (!InOutResult.IsAcceptedDecision()) return;
+
+	switch (InOutResult.Relationship)
+	{
+	case EExecutionRelationship::Independent:
+	{
+		if (!(InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart()))
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EActionRequestRejectReason::InvalidIndependent;
+			return;
+		}
+
+		InOutResult.ApplyMode = EExecutionApplyMode::Start;
+		return;
+	}
+
+	case EExecutionRelationship::Sequential:
+	{
+		if (!(InQuery.Snapshot.IsInAction() && InQuery.HasActivePart()))
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EActionRequestRejectReason::InvalidSequential;
+			return;
+		}
+
+		// Sequential action is reserved and consumed later by notify timing.
+		InOutResult.ApplyMode = EExecutionApplyMode::Reserve;
+		return;
+	}
+
+	case EExecutionRelationship::Exclusive:
+	{
+		if (!(!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart()))
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EActionRequestRejectReason::InvalidExclusive;
+			return;
+		}
+
+		if (!InQuery.HasActivePart())
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EActionRequestRejectReason::InvalidExclusive;
+			return;
+		}
+
+		ResolveInterventionDirective(InQuery, InOutResult);
+
+		if (!InOutResult.IsAcceptedDecision()) return;
+
+		if (!InOutResult.InterventionDirective.IsRequested())
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EActionRequestRejectReason::InvalidExclusive;
+			return;
+		}
+
+		InOutResult.ApplyMode = EExecutionApplyMode::Intervene;
+		return;
+	}
+
+	default:
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::NoExecutableAction;
+		return;
+	}
 }
 
 void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
@@ -471,15 +544,10 @@ void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutio
 	InOutResult.InterventionDirective = FExecutionInterventionDirective();
 
 	if (!InOutResult.IsAcceptedDecision()) return;
-
-	// [NOTE] Sequential actions reserve the next execution instead of stopping active execution.
-	if (InOutResult.Decision == EExecutionDecision::Chainable) return;
-
-	// [NOTE] Start immediately when there is no active execution.
 	if (!InQuery.HasActivePart()) return;
 
 	FExecutionInterventionQuery interventionQuery;
-	
+
 	if (!BuildInterventionQuery(InQuery, EExecutionStopReason::Cancelled, interventionQuery))
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
@@ -497,34 +565,36 @@ void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutio
 	if (!IsValid(incomingAction))
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EActionRequestRejectReason::DisableIntervention;
+		InOutResult.RejectReason = EActionRequestRejectReason::IncomingCannotIntervene;
 		return;
 	}
 
-	bIncomingWants = incomingAction->WantIntervention(interventionQuery);
+	bIncomingWants = incomingAction->MatchesWantIntervention(interventionQuery);
 
 	if (UCAction* activeAction = Cast<UCAction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeAction->AllowInterventionBy(interventionQuery);
+		bActiveAllows = activeAction->MatchesAllowIntervention(interventionQuery);
 	}
 	else if (UCReaction* activeReaction = Cast<UCReaction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeReaction->AllowInterventionBy(interventionQuery);
+		bActiveAllows = activeReaction->MatchesAllowIntervention(interventionQuery);
 	}
 
 	if (!bIncomingWants || !bActiveAllows)
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EActionRequestRejectReason::DisableIntervention;
+		InOutResult.RejectReason = !bIncomingWants
+			? EActionRequestRejectReason::IncomingCannotIntervene
+			: EActionRequestRejectReason::ActiveCannotAcceptIntervention;
 		return;
 	}
 
 	FExecutionInterventionDirective directive;
-	
+
 	if (!BuildInterventionDirective(interventionQuery, EExecutionStopSource::ActionOrchestration, EExecutionAfterStopAction::StartIncoming, directive))
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EActionRequestRejectReason::DisableIntervention;
+		InOutResult.RejectReason = EActionRequestRejectReason::InterventionDispatchFailed;
 		return;
 	}
 
@@ -581,7 +651,7 @@ FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
 	if (!ActionComp_Cached->ApplyActionDecision(InResult))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::DispatchFailed);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::ActionExecutionFailed);
 
 	EActionRequestResultType resultType = ConvertDecisionToResultType(InResult);
 
@@ -590,19 +660,22 @@ FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const
 
 EActionRequestResultType UCActionOrchestratorComponent::ConvertDecisionToResultType(const FActionExecutionResult& InResult) const
 {
-	switch (InResult.Decision)
-	{
-	case EExecutionDecision::Executable:
-		return EActionRequestResultType::Started;
-
-	case EExecutionDecision::Chainable:
-		return EActionRequestResultType::Chained;
-
-	case EExecutionDecision::Reject:
+	if (InResult.Decision == EExecutionDecision::Reject)
 		return EActionRequestResultType::Rejected;
 
-	case EExecutionDecision::Ignore:
+	if (InResult.Decision == EExecutionDecision::Ignore)
 		return EActionRequestResultType::Ignored;
+
+	switch (InResult.ApplyMode)
+	{
+	case EExecutionApplyMode::Start:
+		return EActionRequestResultType::Started;
+
+	case EExecutionApplyMode::Reserve:
+		return EActionRequestResultType::Reserved;
+
+	case EExecutionApplyMode::Intervene:
+		return EActionRequestResultType::Intervened;
 
 	default:
 		return EActionRequestResultType::None;

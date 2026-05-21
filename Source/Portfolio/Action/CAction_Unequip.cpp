@@ -5,16 +5,43 @@
 
 #include "Component/CWeaponComponent.h"
 
-EExecutionDecision UCAction_Unequip::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
+FExecutionDecisionResult UCAction_Unequip::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EExecutionDecision::Reject;
-	if (!IsValid(WeaponComp_Cached)) return EExecutionDecision::Reject;
-	if (!InQuery.IncomingPart.IsActionParticipant()) return EExecutionDecision::Reject;
+	FExecutionDecisionResult result;
 
-	if (!InQuery.Snapshot.IsIdle()) return EExecutionDecision::Reject;
-	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return EExecutionDecision::Reject;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
 
-	return EExecutionDecision::Executable;
+	if (!IsValid(WeaponComp_Cached))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!IsIncomingActionType(InQuery, EActionType::Unequip))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!CanResolveIndependentRelationship(InQuery))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = EExecutionRelationship::Independent;
+	return result;
 }
 
 void UCAction_Unequip::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)

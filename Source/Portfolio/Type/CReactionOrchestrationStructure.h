@@ -59,7 +59,6 @@ public:
 	bool IsAccepted() const
 	{
 		return ResultType == EReactionRequestResultType::Started
-			|| ResultType == EReactionRequestResultType::Interrupted
-			|| ResultType == EReactionRequestResultType::Cancelled;
+			|| ResultType == EReactionRequestResultType::Intervened;
 	}
 };

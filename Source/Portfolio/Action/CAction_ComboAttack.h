@@ -21,7 +21,7 @@ private:
 	FActionData ReservingChainData = FActionData();
 
 public:
-	EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
+	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 public:
 	bool ReserveChain(const FActionData& InData) override;

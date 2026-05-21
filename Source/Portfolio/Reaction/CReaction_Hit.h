@@ -10,8 +10,8 @@ class PORTFOLIO_API UCReaction_Hit : public UCReaction
 	GENERATED_BODY()
 
 public:
-	EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
+	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 public:
-	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
+	bool MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 };

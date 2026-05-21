@@ -3,24 +3,46 @@
 
 #include "GameFramework/Character.h"
 
-EExecutionDecision UCReaction_Hit::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
+FExecutionDecisionResult UCReaction_Hit::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!InQuery.IncomingPart.IsReactionParticipant()) return EExecutionDecision::Reject;
-	if (InQuery.Snapshot.IsDead()) return EExecutionDecision::Reject;
+	FExecutionDecisionResult result;
 
-	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
-	if (incoming.ReactionDataKey.ReactionType != EReactionType::Hit) return EExecutionDecision::Reject;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
 
-	return EExecutionDecision::Executable;
+	if (!IsIncomingReactionType(InQuery, EReactionType::Hit))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (InQuery.Snapshot.IsDead())
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	EExecutionRelationship relationship = EExecutionRelationship::None;
+
+	if (!TryResolveIndependentOrExclusiveRelationship(InQuery, relationship))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = relationship;
+	return result;
 }
 
-bool UCReaction_Hit::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction_Hit::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
-	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
-
-	const FReactionExecutionContext& incoming = InQuery.IncomingPart.GetReactionContext();
-	if (incoming.ReactionDataKey.ReactionType != EReactionType::Hit) return false;
+	if (Super::MatchesWantIntervention(InQuery)) return true;
+	if (!IsIncomingReactionType(InQuery, EReactionType::Hit)) return false;
 
 	return InQuery.StopReason == EExecutionStopReason::Interrupted;
 }

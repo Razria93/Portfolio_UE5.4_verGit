@@ -120,15 +120,15 @@ bool UCActionComponent::ResolveActionData(const FActionDataKey& InDataKey, FActi
 
 UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 {
-	// 1) Try reuse cached Reaction; return if valid
+	// 1) Try reuse cached Action; return if valid
 	UCAction* found = FindActionExecutor(InData.ActionExecutorKey.Get());
 	if (IsValid(found)) return found;
 
-	// 2) [Policy] Try Add and cache Reaction; return if valid
+	// 2) [Policy] Try Add and cache Action; return if valid
 	UCAction* add = AddActionExecutor(InData.ActionExecutorKey);
 	if (IsValid(add)) return add;
 
-	// [Debug] ReactionData is Valid; but Find and Add Failed
+	// [Debug] ActionData is Valid; but Find and Add Failed
 	return nullptr;
 }
 
@@ -137,22 +137,24 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	if (!IsValid(OwnerCharacter_Cached)) return false;
 	if (!InResult.IsAcceptedDecision()) return false;
 
-	if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
-
-	// [NOTE] Early return on intervention stop request.
-	if (InResult.InterventionDirective.IsRequested()
-		&& InResult.InterventionDirective.AfterStopAction == EExecutionAfterStopAction::StopOnly)
+	switch (InResult.ApplyMode)
 	{
-		return true;
+	case EExecutionApplyMode::Start:
+	{
+		return StartAction(InResult.ResolvedContext);
 	}
 
-	switch (InResult.Decision)
+	case EExecutionApplyMode::Reserve:
 	{
-	case EExecutionDecision::Executable:
-		return StartAction(InResult.ResolvedContext);
+		return ReserveAction(InResult.ResolvedContext);
+	}
 
-	case EExecutionDecision::Chainable:
-		return ChainActiveAction(InResult.ResolvedContext);
+	case EExecutionApplyMode::Intervene:
+	{
+		// [NOTE] Try Apply Intervention
+		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
+		return StartAction(InResult.ResolvedContext);
+	}
 
 	default:
 		return false;
@@ -167,7 +169,7 @@ bool UCActionComponent::RequestStopActiveAction(const FExecutionInterventionDire
 	return StopActiveAction(InDirective);
 }
 
-bool UCActionComponent::HandleApplyActionChained(const UCAction* InAction, const FActionData& InData)
+bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData)
 {
 	if (!IsActive()) return false;
 	if (!IsValid(InAction)) return false;
@@ -198,6 +200,28 @@ void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyC
 	if (!IsValid(activeExecutor)) return;
 
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
+}
+
+void UCActionComponent::HandleActionInterventionWindowBegin(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+{
+	if (InCounterpartFilters.IsEmpty()) return;
+
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->OpenInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
+}
+
+void UCActionComponent::HandleActionInterventionWindowEnd(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+{
+	if (InCounterpartFilters.IsEmpty()) return;
+
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->CloseInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
 }
 
 void UCActionComponent::HandleActionFeedback(FName InTriggerKey)
@@ -388,17 +412,17 @@ bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 	return true;
 }
 
-bool UCActionComponent::ChainActiveAction(const FActionExecutionContext& InContext)
+bool UCActionComponent::ReserveAction(const FActionExecutionContext& InContext)
 {
 	if (!IsActive()) return false;
 	if (!InContext.IsValidMinimal()) return false;
 
-	UCAction* incomingExecutor = InContext.ActionExecutor;
-	if (!IsValid(incomingExecutor)) return false;
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return false;
 
 	const FActionData& incomingData = InContext.ActionData;
 
-	return incomingExecutor->ReserveChain(incomingData);
+	return activeExecutor->ReserveChain(incomingData);
 }
 
 bool UCActionComponent::StopActiveAction(const FExecutionInterventionDirective& InDirective)

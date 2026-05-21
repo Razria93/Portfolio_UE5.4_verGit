@@ -80,6 +80,12 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 		return false;
 	}
 
+	if (!InIncomingRequest.TakeDamagePacket.Result.bAccepted)
+	{
+		OutRejectReason = EReactionRequestRejectReason::InvalidDamageResult;
+		return false;
+	}
+
 	const EReactionType reactionType = ResolveDamageReactionType(InIncomingRequest);
 
 	if (reactionType == EReactionType::None || reactionType == EReactionType::Max)
@@ -123,13 +129,9 @@ FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
 	const FExecutionDecisionResult decisionResult = BuildDecisionResult(decisionQuery, rejectReason);
-
 	FReactionExecutionResult executionResult = BuildReactionExecutionResult(incomingContext, decisionResult, rejectReason);
 
-	if (executionResult.IsAcceptedDecision())
-	{
-		ResolveInterventionDirective(decisionQuery, executionResult);
-	}
+	ResolveExecutionApplyMode(decisionQuery, executionResult);
 
 	return DispatchReactionDecision(executionResult);
 }
@@ -231,6 +233,7 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 	if (bHasActiveAction && bHasActiveReaction)
 	{
 		FLog::Log(TEXT("[ReactionOrchestrator] Invalid execution state (action and reaction are both active)."));
+		return participant;
 	}
 
 	// 01. Active Reaction Case
@@ -292,7 +295,7 @@ FExecutionDecisionResult UCReactionOrchestratorComponent::BuildDecisionResult(co
 	if (!InQuery.HasIncomingPart())
 	{
 		result.Decision = EExecutionDecision::Reject;
-		OutRejectReason = EReactionRequestRejectReason::NoExecutableReaction;
+		OutRejectReason = EReactionRequestRejectReason::InvalidQuery;
 
 		return result;
 	}
@@ -300,7 +303,7 @@ FExecutionDecisionResult UCReactionOrchestratorComponent::BuildDecisionResult(co
 	if (!InQuery.IncomingPart.IsReactionParticipant())
 	{
 		result.Decision = EExecutionDecision::Reject;
-		OutRejectReason = EReactionRequestRejectReason::NoExecutableReaction;
+		OutRejectReason = EReactionRequestRejectReason::InvalidQuery;
 
 		return result;
 	}
@@ -316,12 +319,11 @@ FExecutionDecisionResult UCReactionOrchestratorComponent::BuildDecisionResult(co
 		return result;
 	}
 
-	// Resolve Decision
-	result.Decision = incomingExecutor->ResolveExecutionDecision(InQuery);
+	result = incomingExecutor->ResolveExecutionDecision(InQuery);
 
 	if (result.Decision == EExecutionDecision::Reject)
 	{
-		OutRejectReason = EReactionRequestRejectReason::NoExecutableReaction;
+		OutRejectReason = EReactionRequestRejectReason::RejectedByExecutor;
 	}
 
 	return result;
@@ -332,11 +334,86 @@ FReactionExecutionResult UCReactionOrchestratorComponent::BuildReactionExecution
 	FReactionExecutionResult result;
 
 	result.Decision = InDecisionResult.Decision;
+	result.Relationship = InDecisionResult.Relationship;
+	result.ApplyMode = EExecutionApplyMode::None;
 	result.ResolvedContext = InContext;
 	result.RejectReason = InRejectReason;
 
 	return result;
 }
+
+
+void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
+{
+	InOutResult.ApplyMode = EExecutionApplyMode::None;
+	InOutResult.InterventionDirective = FExecutionInterventionDirective();
+
+	// [NOTE] Early return ignore and reject decision
+	if (!InOutResult.IsAcceptedDecision()) return;
+
+	switch (InOutResult.Relationship)
+	{
+	case EExecutionRelationship::Independent:
+	{
+		if (!(InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart()))
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EReactionRequestRejectReason::InvalidIndependent;
+			return;
+		}
+
+		InOutResult.ApplyMode = EExecutionApplyMode::Start;
+		return;
+	}
+
+	case EExecutionRelationship::Sequential:
+	{
+		// [NOTE] Reaction does not support sequential execution.
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EReactionRequestRejectReason::InvalidSequential;
+		return;
+
+	}
+
+	case EExecutionRelationship::Exclusive:
+	{
+		if (!(!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart()))
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EReactionRequestRejectReason::InvalidExclusive;
+			return;
+		}
+
+		if (!InQuery.HasActivePart())
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EReactionRequestRejectReason::InvalidExclusive;
+			return;
+		}
+
+		ResolveInterventionDirective(InQuery, InOutResult);
+
+		if (!InOutResult.IsAcceptedDecision()) return;
+
+		if (!InOutResult.InterventionDirective.IsRequested())
+		{
+			InOutResult.Decision = EExecutionDecision::Reject;
+			InOutResult.RejectReason = EReactionRequestRejectReason::InvalidExclusive;
+			return;
+		}
+
+		InOutResult.ApplyMode = EExecutionApplyMode::Intervene;
+		return;
+	}
+
+	
+	default:
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EReactionRequestRejectReason::NoExecutableReaction;
+		return;
+	}
+}
+
 
 void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
 {
@@ -352,7 +429,7 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 	if (!BuildInterventionQuery(InQuery, EExecutionStopReason::Interrupted, interventionQuery))
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EReactionRequestRejectReason::InvalidRequest;
+		InOutResult.RejectReason = EReactionRequestRejectReason::InvalidQuery;
 		return;
 	}
 
@@ -365,13 +442,13 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 	{
 		// [NOTE]
 		// Force intervention.
-		// Do not ask incoming WantIntervention or active AllowInterventionBy.
+		// Do not ask incoming MatchesWantIntervention or active MatchesAllowIntervention.
 		FExecutionInterventionDirective directive;
 
 		if (!BuildInterventionDirective(interventionQuery, EExecutionStopSource::ReactionOrchestration, EExecutionAfterStopAction::StartIncoming, directive))
 		{
 			InOutResult.Decision = EExecutionDecision::Reject;
-			InOutResult.RejectReason = EReactionRequestRejectReason::ReactionDispatchFailed;
+			InOutResult.RejectReason = EReactionRequestRejectReason::InterventionDispatchFailed;
 			return;
 		}
 
@@ -390,28 +467,28 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 		return;
 	}
 
-	bIncomingWants = incomingReaction->WantIntervention(interventionQuery);
+	bIncomingWants = incomingReaction->MatchesWantIntervention(interventionQuery);
 
 	if (UCAction* activeAction = Cast<UCAction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeAction->AllowInterventionBy(interventionQuery);
+		bActiveAllows = activeAction->MatchesAllowIntervention(interventionQuery);
 	}
 	else if (UCReaction* activeReaction = Cast<UCReaction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeReaction->AllowInterventionBy(interventionQuery);
+		bActiveAllows = activeReaction->MatchesAllowIntervention(interventionQuery);
 	}
 
 	if (!bIncomingWants)
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EReactionRequestRejectReason::IncomingCannotInterrupt;
+		InOutResult.RejectReason = EReactionRequestRejectReason::IncomingCannotIntervene;
 		return;
 	}
 
 	if (!bActiveAllows)
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EReactionRequestRejectReason::ActiveNotInterruptible;
+		InOutResult.RejectReason = EReactionRequestRejectReason::ActiveCannotAcceptIntervention;
 		return;
 	}
 
@@ -420,7 +497,7 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 	if (!BuildInterventionDirective(interventionQuery, EExecutionStopSource::ReactionOrchestration, EExecutionAfterStopAction::StartIncoming, directive))
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EReactionRequestRejectReason::ReactionDispatchFailed;
+		InOutResult.RejectReason = EReactionRequestRejectReason::InterventionDispatchFailed;
 		return;
 	}
 
@@ -486,19 +563,21 @@ FReactionRequestResult UCReactionOrchestratorComponent::DispatchReactionDecision
 
 EReactionRequestResultType UCReactionOrchestratorComponent::ConvertDecisionToResultType(const FReactionExecutionResult& InResult) const
 {
-	switch (InResult.Decision)
-	{
-	case EExecutionDecision::Executable:
-		return InResult.InterventionDirective.IsRequested()
-			? EReactionRequestResultType::Interrupted
-			: EReactionRequestResultType::Started;
-
-	case EExecutionDecision::Ignore:
-		return EReactionRequestResultType::Ignored;
-
-	case EExecutionDecision::Reject:
+	if (InResult.Decision == EExecutionDecision::Reject)
 		return EReactionRequestResultType::Rejected;
 
+	if (InResult.Decision == EExecutionDecision::Ignore)
+		return EReactionRequestResultType::Ignored;
+
+	switch (InResult.ApplyMode)
+	{
+	case EExecutionApplyMode::Start:
+		return EReactionRequestResultType::Started;
+
+	case EExecutionApplyMode::Intervene:
+		return EReactionRequestResultType::Intervened;
+
+	case EExecutionApplyMode::Reserve:
 	default:
 		return EReactionRequestResultType::None;
 	}

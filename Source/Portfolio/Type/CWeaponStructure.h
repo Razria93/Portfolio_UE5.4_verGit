@@ -61,12 +61,6 @@ enum class EActionNotifyCommand : uint8
 
 	Complete,
 
-	OpenInterruptWindow,
-	CloseInterruptWindow,
-
-	OpenCancelWindow,
-	CloseCancelWindow,
-
 	PushHitContext,
 	ClearHitContext,
 
@@ -86,24 +80,6 @@ enum class EReactionNotifyCommand : uint8
 	None = 0,
 
 	Complete,
-
-	OpenInterruptWindow,
-	CloseInterruptWindow,
-
-	OpenCancelWindow,
-	CloseCancelWindow,
-
-	OpenWantInterruptWindow,
-	CloseWantInterruptWindow,
-
-	OpenWantCancelWindow,
-	CloseWantCancelWindow,
-
-	OpenAllowInterruptWindow,
-	CloseAllowInterruptWindow,
-
-	OpenAllowCancelWindow,
-	CloseAllowCancelWindow,
 
 	Max,
 };
@@ -136,8 +112,31 @@ enum class EExecutionDecision : uint8
 	Reject,
 	Ignore,
 
-	Executable,
-	Chainable,
+	Accept,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EExecutionRelationship : uint8
+{
+	None = 0,
+
+	Independent,
+	Sequential,
+	Exclusive,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EExecutionApplyMode : uint8
+{
+	None = 0,
+
+	Start,
+	Reserve,
+	Intervene,
 
 	Max,
 };
@@ -161,6 +160,17 @@ enum class EExecutionStopReason : uint8
 	Interrupted,
 	Cancelled,
 	Ignored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EExecutionInterventionWindowRole : uint8
+{
+	None = 0,
+
+	Want,
+	Allow,
 
 	Max,
 };
@@ -240,11 +250,10 @@ enum class EActionRequestResultType : uint8
 	Ignored,
 
 	Handled,
+
 	Started,
-	Chained,
-	Enqueued,
-	Interrupted,
-	Cancelled,
+	Reserved,
+	Intervened,
 
 	Max,
 };
@@ -259,24 +268,28 @@ enum class EActionRequestRejectReason : uint8
 	InvalidComponent,
 
 	Dead,
-	
+
 	InvalidState,
 	InvalidEquipment,
 	InvalidCombatAction,
 
-	AlreadyPlaying,
+	InvalidQuery,
+
 	ActionCandidateNotFound,
 	ActionDataNotFound,
 	ActionExecutorNotFound,
+	RejectedByExecutor,
 	NoExecutableAction,
 
-	InvalidDecision,
-	InvalidQuery,
-	InvalidStopReason,
+	InvalidIndependent,
+	InvalidSequential,
+	InvalidExclusive,
 
-	DisableIntervention,
+	IncomingCannotIntervene,
+	ActiveCannotAcceptIntervention,
+	InterventionDispatchFailed,
 
-	DispatchFailed,
+	ActionExecutionFailed,
 
 	Max,
 };
@@ -384,8 +397,7 @@ enum class EReactionRequestResultType : uint8
 	Ignored,
 
 	Started,
-	Interrupted,
-	Cancelled,
+	Intervened,
 
 	Max,
 };
@@ -406,34 +418,20 @@ enum class EReactionRequestRejectReason : uint8
 	ReactionCandidateNotFound,
 	ReactionDataNotFound,
 	ReactionExecutorNotFound,
+	RejectedByExecutor,
 	NoExecutableReaction,
 
-	LowerPriority,
-	ActiveNotInterruptible,
-	IncomingCannotInterrupt,
+	InvalidQuery,
+	InvalidIndependent,
+	InvalidSequential,
+	InvalidExclusive,
 
-	ReactionDispatchFailed,
+	IncomingCannotIntervene,
+	ActiveCannotAcceptIntervention,
+	InterventionDispatchFailed,
 	ReactionExecutionFailed,
 
 	Max,
-};
-
-UENUM(BlueprintType)
-enum class EReactionControlWindowType : uint8
-{
-	None = 0,
-
-	// [System-Driven] 
-	// Active reaction replaced by a new, stronger Reaction (ex. Hit Stun)
-	Interruptible,
-
-	// [Player-Driven] 
-	// Active reaction canceled by a conscious Player Action (ex. Parry/Dodge)
-	Cancelable,
-
-	// [Ignore All] 
-	// Solid state. Active reaction ignores any incoming Reactions.
-	ImmuneToReaction,
 };
 
 // [TODO] Migrate to CActionFeedbackStructure
@@ -1309,11 +1307,49 @@ public:
 	UPROPERTY(Transient)
 	EExecutionDecision Decision = EExecutionDecision::None;
 
+	UPROPERTY(Transient)
+	EExecutionRelationship Relationship = EExecutionRelationship::None;
+
 public:
 	bool IsAccepted() const
 	{
-		return Decision == EExecutionDecision::Executable
-			|| Decision == EExecutionDecision::Chainable;
+		return Decision == EExecutionDecision::Accept;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionInterventionParticipantFilter
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	EExecutionDomain Domain = EExecutionDomain::None;
+
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	EActionType ActionType = EActionType::None;
+
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	EReactionType ReactionType = EReactionType::None;
+
+	// INDEX_NONE means any index. Reaction currently ignores Index.
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	int32 Index = INDEX_NONE;
+
+public:
+	bool IsValidMinimal() const;
+
+	bool MatchesAction(EActionType InActionType, int32 InIndex = INDEX_NONE) const;
+	bool MatchesReaction(EReactionType InReactionType) const;
+	bool MatchesParticipant(const FExecutionParticipant& InParticipant) const;
+
+public:
+	bool operator==(const FExecutionInterventionParticipantFilter& InOther) const
+	{
+		return Domain == InOther.Domain
+			&& ActionType == InOther.ActionType
+			&& ReactionType == InOther.ReactionType
+			&& Index == InOther.Index;
 	}
 };
 
@@ -1343,6 +1379,7 @@ public:
 			&& StopReason != EExecutionStopReason::None
 			&& StopReason != EExecutionStopReason::Max;
 	}
+
 };
 
 USTRUCT(BlueprintType)
@@ -1399,19 +1436,25 @@ public:
 	EExecutionDecision Decision = EExecutionDecision::None;
 
 	UPROPERTY(Transient)
-	EActionRequestRejectReason RejectReason = EActionRequestRejectReason::None;
+	EExecutionRelationship Relationship = EExecutionRelationship::None;
+
+	UPROPERTY(Transient)
+	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
 
 	UPROPERTY(Transient)
 	FActionExecutionContext ResolvedContext = FActionExecutionContext();
 
 	UPROPERTY(Transient)
+	EActionRequestRejectReason RejectReason = EActionRequestRejectReason::None;
+
+	UPROPERTY(Transient)
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
+
 
 public:
 	bool IsAcceptedDecision() const
 	{
-		return Decision == EExecutionDecision::Executable
-			|| Decision == EExecutionDecision::Chainable;
+		return Decision == EExecutionDecision::Accept;
 	}
 
 	bool RequiresIntervention() const
@@ -1430,10 +1473,16 @@ public:
 	EExecutionDecision Decision = EExecutionDecision::None;
 
 	UPROPERTY(Transient)
-	EReactionRequestRejectReason RejectReason = EReactionRequestRejectReason::None;
+	EExecutionRelationship Relationship = EExecutionRelationship::None;
+
+	UPROPERTY(Transient)
+	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
 
 	UPROPERTY(Transient)
 	FReactionExecutionContext ResolvedContext = FReactionExecutionContext();
+
+	UPROPERTY(Transient)
+	EReactionRequestRejectReason RejectReason = EReactionRequestRejectReason::None;
 
 	UPROPERTY(Transient)
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
@@ -1441,7 +1490,7 @@ public:
 public:
 	bool IsAcceptedDecision() const
 	{
-		return Decision == EExecutionDecision::Executable;
+		return Decision == EExecutionDecision::Accept;
 	}
 
 	bool RequiresIntervention() const

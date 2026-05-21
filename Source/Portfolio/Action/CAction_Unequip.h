@@ -10,7 +10,7 @@ class PORTFOLIO_API UCAction_Unequip : public UCAction
 	GENERATED_BODY()
 
 public:
-	EExecutionDecision ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
+	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 protected:
 	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;

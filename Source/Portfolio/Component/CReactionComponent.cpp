@@ -117,25 +117,32 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 	// [Debug] ReactionData is Valid; but Find and Add Failed
 	return nullptr;
 }
+
 bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& InResult)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return false;
 	if (!InResult.IsAcceptedDecision()) return false;
 
-	if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
-
-	// Stop-only directive is consumed without starting incoming reaction.
-	if (InResult.InterventionDirective.IsRequested()
-		&& InResult.InterventionDirective.AfterStopAction == EExecutionAfterStopAction::StopOnly)
+	switch (InResult.ApplyMode)
 	{
-		return true;
+	case EExecutionApplyMode::Start:
+	{
+		return StartReaction(InResult.ResolvedContext);
 	}
 
-	switch (InResult.Decision)
+	case EExecutionApplyMode::Reserve:
 	{
-	case EExecutionDecision::Executable:
-		return StartReaction(InResult.ResolvedContext);
+		// [NOTE] Reaction does not support reserved execution.
+		return false;
+	}
 
+	case EExecutionApplyMode::Intervene:
+	{
+		// [NOTE] Try Apply Intervention
+		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
+		return StartReaction(InResult.ResolvedContext);
+	}
+	
 	default:
 		return false;
 	}
@@ -166,6 +173,28 @@ void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InN
 	if (!IsValid(activeExecutor)) return;
 
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
+}
+
+void UCReactionComponent::HandleReactionInterventionWindowBegin(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+{
+	if (InCounterpartFilters.IsEmpty()) return;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->OpenInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
+}
+
+void UCReactionComponent::HandleReactionInterventionWindowEnd(
+	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+{
+	if (InCounterpartFilters.IsEmpty()) return;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	activeExecutor->CloseInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
 }
 
 void UCReactionComponent::HandleReactionFeedback(FName InTriggerKey)
