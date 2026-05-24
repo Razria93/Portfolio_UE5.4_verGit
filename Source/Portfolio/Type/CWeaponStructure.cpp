@@ -182,8 +182,10 @@ bool FExecutionInterventionParticipantFilter::MatchesParticipant(const FExecutio
 			&& MatchesAction(InParticipant.GetActionContext().ActionDataKey.ActionType, InParticipant.GetActionContext().ActionDataKey.ActionIndex);
 
 	case EExecutionDomain::Reaction:
+	{
 		return InParticipant.IsReactionParticipant()
 			&& MatchesReaction(InParticipant.GetReactionContext().ReactionDataKey.ReactionType);
+	}
 
 	default:
 		return false;

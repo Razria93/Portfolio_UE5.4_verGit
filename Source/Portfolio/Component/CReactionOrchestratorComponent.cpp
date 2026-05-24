@@ -43,6 +43,7 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 	if (!ResolveDamageReactionCandidate(InIncomingRequest, candidate, rejectReason))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
 
+
 	return ExecuteReactionCandidate(InIncomingRequest.IntentSource, candidate);
 }
 
@@ -442,7 +443,7 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 	{
 		// [NOTE]
 		// Force intervention.
-		// Do not ask incoming MatchesWantIntervention or active MatchesAllowIntervention.
+		// Do not ask incoming WantIntervention or active AllowIntervention.
 		FExecutionInterventionDirective directive;
 
 		if (!BuildInterventionDirective(interventionQuery, EExecutionStopSource::ReactionOrchestration, EExecutionAfterStopAction::StartIncoming, directive))
@@ -467,16 +468,22 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 		return;
 	}
 
-	bIncomingWants = incomingReaction->MatchesWantIntervention(interventionQuery);
+	bIncomingWants = incomingReaction->WantIntervention(interventionQuery);
 
 	if (UCAction* activeAction = Cast<UCAction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeAction->MatchesAllowIntervention(interventionQuery);
+		bActiveAllows = activeAction->AllowIntervention(interventionQuery);
 	}
 	else if (UCReaction* activeReaction = Cast<UCReaction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeReaction->MatchesAllowIntervention(interventionQuery);
+		bActiveAllows = activeReaction->AllowIntervention(interventionQuery);
 	}
+
+	FLog::Log(FString::Printf(
+		TEXT("[ResolveInterventionDirective] Owner = %s | bIncomingWants = %s | bActiveAllows = %s"),
+		*GetNameSafe(OwnerCharacter_Cached),
+		bIncomingWants ? TEXT("true") : TEXT("false"),
+		bActiveAllows ? TEXT("true") : TEXT("false")));
 
 	if (!bIncomingWants)
 	{
@@ -589,6 +596,12 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildReactionRequestResu
 
 	result.ResultType = InResultType;
 	result.RejectReason = InRejectReason;
+
+	FLog::Log(FString::Printf(
+		TEXT("[RequestDamageReaction] Owner = %s | EReactionRequestResultType = %s | EReactionRequestRejectReason = %s"),
+		*GetNameSafe(OwnerCharacter_Cached),
+		*UEnum::GetValueAsString(result.ResultType),
+		*UEnum::GetValueAsString(result.RejectReason)));
 
 	if (InResultType == EReactionRequestResultType::Rejected)
 	{

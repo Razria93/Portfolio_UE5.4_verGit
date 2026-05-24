@@ -33,16 +33,31 @@ FExecutionDecisionResult UCReaction_Hit::ResolveExecutionDecision(const FExecuti
 		return result;
 	}
 
+	FLog::Log(FString::Printf(
+		TEXT("[UCReaction_Hit::ResolveExecutionDecision] Owner = %s | Relationship = %s"),
+		*GetNameSafe(OwnerCharacter_Injected),
+		*UEnum::GetValueAsString(relationship)));
+
 	result.Decision = EExecutionDecision::Accept;
 	result.Relationship = relationship;
 	return result;
 }
 
-bool UCReaction_Hit::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction_Hit::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
-	if (Super::MatchesWantIntervention(InQuery)) return true;
 	if (!IsIncomingReactionType(InQuery, EReactionType::Hit)) return false;
 
-	return InQuery.StopReason == EExecutionStopReason::Interrupted;
+	// if (Super::WantIntervention(InQuery)) return true;
+
+	// [Condition of WantIntervention] Just Want Interruption. No Cancel.
+	bool result = InQuery.StopReason == EExecutionStopReason::Interrupted;
+
+	FLog::Log(FString::Printf(
+		TEXT("[UCReaction_Hit::WantIntervention] Owner = %s | StopReason = %s | Want Intervention Result = %s"),
+		*GetNameSafe(OwnerCharacter_Injected),
+		*UEnum::GetValueAsString(InQuery.StopReason),
+		result ? TEXT("true") : TEXT("false")));
+
+	return result;
 }

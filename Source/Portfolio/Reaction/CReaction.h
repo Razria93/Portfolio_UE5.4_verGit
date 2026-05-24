@@ -127,8 +127,8 @@ public:
 
 public:
 	// Intervention Match
-	virtual bool MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const;
-	virtual bool MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const;
+	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const;	// Incoming API
+	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
 
 private:
 	bool MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const;
@@ -141,6 +141,10 @@ private:
 public:
 	// Debug
 	void PrintReactionExecutorRuntimeInfo_Public() const;
+
+private:
+	static void PrintExecutionParticipant(const FExecutionParticipant& InParticipant);
+	static void PrintExecutionInterventionParticipantFilter(const FExecutionInterventionParticipantFilter& InFilter);
 
 private:
 	void PrintReactionExecutorRuntimeInfo() const;

@@ -32,10 +32,10 @@ FExecutionDecisionResult UCAction_Dodge::ResolveExecutionDecision(const FExecuti
 	return result;
 }
 
-bool UCAction_Dodge::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCAction_Dodge::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
-	if (Super::MatchesWantIntervention(InQuery)) return true;
+	if (Super::WantIntervention(InQuery)) return true;
 	if (!IsIncomingActionType(InQuery, EActionType::Dodge)) return false;
 
 	return InQuery.StopReason == EExecutionStopReason::Cancelled;

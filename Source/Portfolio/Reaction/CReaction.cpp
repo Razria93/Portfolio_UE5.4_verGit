@@ -334,22 +334,28 @@ void UCReaction::CloseInterventionWindow(
 	}
 }
 
-bool UCReaction::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
+
+	FLog::Log(TEXT("[UCReaction::WantIntervention]"));
 
 	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Want);
+	if (!filters) return false;
 
-	return filters && MatchesAnyInterventionFilter(*filters, InQuery.ActivePart);
+	return MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
 }
 
-bool UCReaction::MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
 
-	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Allow);
+	FLog::Log(TEXT("[UCReaction::AllowIntervention]"));
 
-	return filters && MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
+	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Allow);
+	if (!filters) return false;
+
+	return MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
 }
 
 bool UCReaction::MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const
@@ -362,12 +368,21 @@ bool UCReaction::MatchesInterventionOwner(const FExecutionInterventionParticipan
 
 bool UCReaction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const
 {
+	PrintExecutionParticipant(InParticipant);
+
 	// Match the actual query participant against counterpart filters opened by notify windows.
 	for (const FExecutionInterventionParticipantFilter& filter : InFilters)
 	{
-		if (filter.MatchesParticipant(InParticipant)) return true;
+		PrintExecutionInterventionParticipantFilter(filter);
+
+		if (filter.MatchesParticipant(InParticipant))
+		{
+			FLog::Log(TEXT("[UCReaction::MatchesAnyInterventionFilter] Match Complete."));
+			return true;
+		}
 	}
 
+	FLog::Log(TEXT("[UCReaction::MatchesAnyInterventionFilter] Match Failed."));
 	return false;
 }
 
@@ -392,6 +407,11 @@ TArray<FExecutionInterventionParticipantFilter>* UCReaction::GetInterventionFilt
 
 const TArray<FExecutionInterventionParticipantFilter>* UCReaction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole) const
 {
+	FLog::Log(FString::Printf(
+		TEXT("[UCReaction::GetInterventionFilterContainer] FilterContainer ID | InStopReason = %s | InWindowRole = %s"),
+		*UEnum::GetValueAsString(InStopReason),
+		*UEnum::GetValueAsString(InWindowRole)));
+
 	switch (InWindowRole)
 	{
 	case EExecutionInterventionWindowRole::Want:
@@ -412,6 +432,78 @@ const TArray<FExecutionInterventionParticipantFilter>* UCReaction::GetInterventi
 void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
 {
 	PrintReactionExecutorRuntimeInfo();
+}
+
+void UCReaction::PrintExecutionParticipant(const FExecutionParticipant& InParticipant)
+{
+	FLog::Log(TEXT("======== Participant ID ========="));
+
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsValid"), InParticipant.bIsValid ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Domain"), *UEnum::GetValueAsString(InParticipant.ParticipantDomain)));
+
+	if (InParticipant.IsActionParticipant())
+	{
+		const FActionExecutionContext& context = InParticipant.GetActionContext();
+
+		FLog::Log(TEXT("--------- Action Context --------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(context.ActionDataKey.ActionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("ActionIndex"), context.ActionDataKey.ActionIndex));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Priority"), context.ActionData.Priority));
+	}
+	else if (InParticipant.IsReactionParticipant())
+	{
+		const FReactionExecutionContext& context = InParticipant.GetReactionContext();
+		const FApplyDamageSpecKey& specKey = context.ReactionDataKey.ApplyDamageSpecKey;
+
+		FLog::Log(TEXT("-------- Reaction Context -------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(context.ReactionDataKey.ReactionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SpecKey|WeaponType"), *UEnum::GetValueAsString(specKey.WeaponType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SpecKey|ActionType"), *UEnum::GetValueAsString(specKey.ActionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("SpecKey|ActionIndex"), specKey.ActionIndex));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Priority"), context.ReactionData.Priority));
+	}
+	else
+	{
+		FLog::Log(TEXT("[ExecutionParticipant] Empty or invalid participant context."));
+	}
+
+	FLog::Log(TEXT("================================="));
+}
+
+void UCReaction::PrintExecutionInterventionParticipantFilter(const FExecutionInterventionParticipantFilter& InFilter)
+{
+	FLog::Log(TEXT("===== Participant Filter ID ====="));
+	
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IsValid"), InFilter.IsValidMinimal() ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Domain"), *UEnum::GetValueAsString(InFilter.Domain)));
+
+	switch (InFilter.Domain)
+	{
+	case EExecutionDomain::Action:
+	{
+		const FString indexText = (InFilter.Index == INDEX_NONE) ? TEXT("ANY") : FString::FromInt(InFilter.Index);
+		
+		FLog::Log(TEXT("--------- Action Filter ---------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InFilter.ActionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), *indexText));
+		break;
+	}
+
+	case EExecutionDomain::Reaction:
+	{
+		FLog::Log(TEXT("-------- Reaction Filter --------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InFilter.ReactionType)));
+		break;
+	}
+
+	default:
+	{
+		FLog::Log(TEXT("[InterventionFilter] Invalid domain."));
+		break;
+	}
+	}
+
+	FLog::Log(TEXT("================================="));
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo() const

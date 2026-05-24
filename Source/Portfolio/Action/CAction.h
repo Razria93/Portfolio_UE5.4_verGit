@@ -138,8 +138,8 @@ public:
 
 public:
 	// Intervention Match
-	virtual bool MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const;
-	virtual bool MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const;
+	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const; 	// Incoming API
+	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
 
 private:
 	bool MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const;

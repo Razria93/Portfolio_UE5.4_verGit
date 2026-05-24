@@ -569,15 +569,15 @@ void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutio
 		return;
 	}
 
-	bIncomingWants = incomingAction->MatchesWantIntervention(interventionQuery);
+	bIncomingWants = incomingAction->WantIntervention(interventionQuery);
 
 	if (UCAction* activeAction = Cast<UCAction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeAction->MatchesAllowIntervention(interventionQuery);
+		bActiveAllows = activeAction->AllowIntervention(interventionQuery);
 	}
 	else if (UCReaction* activeReaction = Cast<UCReaction>(active.GetExecutor()))
 	{
-		bActiveAllows = activeReaction->MatchesAllowIntervention(interventionQuery);
+		bActiveAllows = activeReaction->AllowIntervention(interventionQuery);
 	}
 
 	if (!bIncomingWants || !bActiveAllows)

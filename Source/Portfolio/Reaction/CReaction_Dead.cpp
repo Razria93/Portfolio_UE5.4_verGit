@@ -32,16 +32,26 @@ FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecut
 	return result;
 }
 
-bool UCReaction_Dead::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction_Dead::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
-	if (Super::MatchesWantIntervention(InQuery)) return true;
 	if (!IsIncomingReactionType(InQuery, EReactionType::Dead)) return false;
 
-	return InQuery.StopReason == EExecutionStopReason::Interrupted;
+	// if (Super::WantIntervention(InQuery)) return true;
+
+	// [Condition of WantIntervention] Just Want Interruption. No Cancel.
+	bool result = InQuery.StopReason == EExecutionStopReason::Interrupted;
+
+	FLog::Log(FString::Printf(
+		TEXT("[UCReaction_Dead::WantIntervention] Owner = %s | StopReason = %s | Want Intervention Result = %s"),
+		*GetNameSafe(OwnerCharacter_Injected),
+		*UEnum::GetValueAsString(InQuery.StopReason),
+		result ? TEXT("true") : TEXT("false")));
+
+	return result;
 }
 
-bool UCReaction_Dead::MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCReaction_Dead::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	// [NOTE] Dead reaction is terminal and cannot be interrupted or cancelled.
 	return false;

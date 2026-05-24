@@ -386,7 +386,7 @@ void UCAction::CloseInterventionWindow(
 	}
 }
 
-bool UCAction::MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCAction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
 
@@ -395,7 +395,7 @@ bool UCAction::MatchesWantIntervention(const FExecutionInterventionQuery& InQuer
 	return filters && MatchesAnyInterventionFilter(*filters, InQuery.ActivePart);
 }
 
-bool UCAction::MatchesAllowIntervention(const FExecutionInterventionQuery& InQuery) const
+bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
 

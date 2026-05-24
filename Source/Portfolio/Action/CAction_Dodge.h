@@ -13,5 +13,5 @@ public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 public:
-	bool MatchesWantIntervention(const FExecutionInterventionQuery& InQuery) const override;
+	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 };
