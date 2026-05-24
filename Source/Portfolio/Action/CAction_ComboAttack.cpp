@@ -22,6 +22,18 @@ FExecutionDecisionResult UCAction_ComboAttack::ResolveExecutionDecision(const FE
 		return result;
 	}
 
+	if (!IsValid(WeaponComp_Cached))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
 	if (CanResolveChain(InQuery))
 	{
 		result.Decision = EExecutionDecision::Accept;
