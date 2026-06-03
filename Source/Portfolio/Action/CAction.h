@@ -132,10 +132,9 @@ public:
 	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
 
 private:
-	bool MatchesWantInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const;
-	bool MatchesAllowInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const;
-	bool IsWantInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const;
-	bool IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const;
+	bool MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const;
+	bool MatchesAllowInterventionRules(const TArray<FExecutionInterventionAllowRule>& InRules, const FExecutionParticipant& InParticipant) const;
+	bool IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionAllowRule& InRule) const;
 	bool MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const;
 
 protected:

@@ -212,7 +212,23 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FExecutionInterventionRule
+struct FExecutionInterventionWantRule
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Intervention")
+	TArray<FExecutionInterventionParticipantFilter> ParticipantFilters;
+
+public:
+	bool IsValidMinimal() const
+	{
+		return !ParticipantFilters.IsEmpty();
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionInterventionAllowRule
 {
 	GENERATED_BODY()
 
@@ -592,10 +608,10 @@ public:
 	bool bCanMove = false;
 
 	UPROPERTY(EditAnywhere, Category = "Intervention|Want")
-	TArray<FExecutionInterventionRule> WantInterventionRules;
+	TArray<FExecutionInterventionWantRule> WantInterventionRules;
 
 	UPROPERTY(EditAnywhere, Category = "Intervention|Allow")
-	TArray<FExecutionInterventionRule> AllowInterventionRules;
+	TArray<FExecutionInterventionAllowRule> AllowInterventionRules;
 
 public:
 	FActionData() = default;
@@ -1234,10 +1250,10 @@ public:
 	bool bCanMove = false;
 
 	UPROPERTY(EditAnywhere, Category = "Intervention|Want")
-	TArray<FExecutionInterventionRule> WantInterventionRules;
+	TArray<FExecutionInterventionWantRule> WantInterventionRules;
 
 	UPROPERTY(EditAnywhere, Category = "Intervention|Allow")
-	TArray<FExecutionInterventionRule> AllowInterventionRules;
+	TArray<FExecutionInterventionAllowRule> AllowInterventionRules;
 
 public:
 	FReactionData() = default;

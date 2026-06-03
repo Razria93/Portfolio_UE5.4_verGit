@@ -382,21 +382,20 @@ bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) con
 	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
-bool UCAction::MatchesWantInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const
+bool UCAction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const
 {
-	for (const FExecutionInterventionRule& rule : InRules)
+	for (const FExecutionInterventionWantRule& rule : InRules)
 	{
 		if (!rule.IsValidMinimal()) continue;
-		if (!IsWantInterventionRuleTimingSatisfied(rule)) continue;
 		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
 	}
 
 	return false;
 }
 
-bool UCAction::MatchesAllowInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const
+bool UCAction::MatchesAllowInterventionRules(const TArray<FExecutionInterventionAllowRule>& InRules, const FExecutionParticipant& InParticipant) const
 {
-	for (const FExecutionInterventionRule& rule : InRules)
+	for (const FExecutionInterventionAllowRule& rule : InRules)
 	{
 		if (!rule.IsValidMinimal()) continue;
 		if (!IsAllowInterventionRuleTimingSatisfied(rule)) continue;
@@ -406,12 +405,7 @@ bool UCAction::MatchesAllowInterventionRules(const TArray<FExecutionIntervention
 	return false;
 }
 
-bool UCAction::IsWantInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const
-{
-	return InRule.Timing == EExecutionInterventionTiming::Always;
-}
-
-bool UCAction::IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const
+bool UCAction::IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionAllowRule& InRule) const
 {
 	switch (InRule.Timing)
 	{
