@@ -43,8 +43,7 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 	if (!ResolveDamageReactionCandidate(InIncomingRequest, candidate, rejectReason))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
 
-
-	return ExecuteReactionCandidate(InIncomingRequest.IntentSource, candidate);
+	return ExecuteReactionCandidate(candidate);
 }
 
 bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const
@@ -119,7 +118,7 @@ EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const F
 	return EReactionType::None;
 }
 
-FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate(EReactionIntentSource InIncomingIntentSource, const FReactionCandidate& InIncomingCandidate)
+FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate(const FReactionCandidate& InIncomingCandidate)
 {
 	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
 
@@ -378,14 +377,7 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 
 	case EExecutionRelationship::Exclusive:
 	{
-		if (!(!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart()))
-		{
-			InOutResult.Decision = EExecutionDecision::Reject;
-			InOutResult.RejectReason = EReactionRequestRejectReason::InvalidExclusive;
-			return;
-		}
-
-		if (!InQuery.HasActivePart())
+		if (InQuery.Snapshot.IsIdle() || !InQuery.HasActivePart())
 		{
 			InOutResult.Decision = EExecutionDecision::Reject;
 			InOutResult.RejectReason = EReactionRequestRejectReason::InvalidExclusive;
@@ -597,15 +589,10 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildReactionRequestResu
 	result.ResultType = InResultType;
 	result.RejectReason = InRejectReason;
 
-	FLog::Log(FString::Printf(
-		TEXT("[RequestDamageReaction] Owner = %s | EReactionRequestResultType = %s | EReactionRequestRejectReason = %s"),
-		*GetNameSafe(OwnerCharacter_Cached),
-		*UEnum::GetValueAsString(result.ResultType),
-		*UEnum::GetValueAsString(result.RejectReason)));
-
 	if (InResultType == EReactionRequestResultType::Rejected)
 	{
 		result.RejectReason = (InRejectReason != EReactionRequestRejectReason::None) ? InRejectReason : EReactionRequestRejectReason::NoExecutableReaction;
+		PrintReactionRequestResult(result);
 	}
 	else
 	{
@@ -613,4 +600,14 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildReactionRequestResu
 	}
 
 	return result;
+}
+
+void UCReactionOrchestratorComponent::PrintReactionRequestResult(const FReactionRequestResult& InResult) const
+{
+	FLog::Log(FString::Printf(
+		TEXT("[ReactionRequestResult] Owner = %s | ResultType = %s | RejectReason = %s"),
+		*GetNameSafe(OwnerCharacter_Cached),
+		*UEnum::GetValueAsString(InResult.ResultType),
+		*UEnum::GetValueAsString(InResult.RejectReason)
+	));
 }

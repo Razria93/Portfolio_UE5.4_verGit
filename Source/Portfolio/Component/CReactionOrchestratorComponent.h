@@ -46,7 +46,7 @@ private:
 	EReactionType ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const;
 
 private:
-	FReactionRequestResult ExecuteReactionCandidate(EReactionIntentSource InIncomingIntentSource, const FReactionCandidate& InIncomingCandidate);
+	FReactionRequestResult ExecuteReactionCandidate(const FReactionCandidate& InIncomingCandidate);
 
 private:
 	bool ResolveReactionContext(const FReactionCandidate& InIncomingCandidate, FReactionExecutionContext& OutIncomingContext, EReactionRequestRejectReason& OutRejectReason) const;
@@ -84,4 +84,7 @@ private:
 private:
 	EReactionRequestResultType ConvertDecisionToResultType(const FReactionExecutionResult& InResult) const;
 	FReactionRequestResult BuildReactionRequestResult(EReactionRequestResultType InResultType, EReactionRequestRejectReason InRejectReason = EReactionRequestRejectReason::None) const;
+
+private:
+	void PrintReactionRequestResult(const FReactionRequestResult& InResult) const;
 };

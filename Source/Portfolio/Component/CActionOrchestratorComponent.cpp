@@ -105,7 +105,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	if (!ResolveEquipmentActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteActionCandidate(InIncomingRequest.IntentSource, incomingCandidate);
+	return ExecuteActionCandidate(incomingCandidate);
 }
 
 FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InIncomingRequest)
@@ -123,7 +123,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	if (!ResolveCombatActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteActionCandidate(InIncomingRequest.IntentSource, incomingCandidate);
+	return ExecuteActionCandidate(incomingCandidate);
 }
 
 bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
@@ -242,7 +242,7 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	return true;
 }
 
-FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(EActionIntentSource InIncomingIntentSource, const FActionCandidate& InIncomingCandidate)
+FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(const FActionCandidate& InIncomingCandidate)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
@@ -503,14 +503,7 @@ void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDe
 
 	case EExecutionRelationship::Exclusive:
 	{
-		if (!(!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart()))
-		{
-			InOutResult.Decision = EExecutionDecision::Reject;
-			InOutResult.RejectReason = EActionRequestRejectReason::InvalidExclusive;
-			return;
-		}
-
-		if (!InQuery.HasActivePart())
+		if (InQuery.Snapshot.IsIdle() || !InQuery.HasActivePart())
 		{
 			InOutResult.Decision = EExecutionDecision::Reject;
 			InOutResult.RejectReason = EActionRequestRejectReason::InvalidExclusive;
@@ -692,6 +685,7 @@ FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EAc
 	if (InResultType == EActionRequestResultType::Rejected)
 	{
 		result.RejectReason = (InRejectReason != EActionRequestRejectReason::None) ? InRejectReason : EActionRequestRejectReason::NoExecutableAction;
+		PrintActionRequestResult(result);
 	}
 	else
 	{
@@ -699,4 +693,14 @@ FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EAc
 	}
 
 	return result;
+}
+
+void UCActionOrchestratorComponent::PrintActionRequestResult(const FActionRequestResult& InResult) const
+{
+	FLog::Log(FString::Printf(
+		TEXT("[ActionRequestResult] Owner = %s | ResultType = %s | RejectReason = %s"),
+		*GetNameSafe(OwnerCharacter_Cached),
+		*UEnum::GetValueAsString(InResult.ResultType),
+		*UEnum::GetValueAsString(InResult.RejectReason)
+	));
 }

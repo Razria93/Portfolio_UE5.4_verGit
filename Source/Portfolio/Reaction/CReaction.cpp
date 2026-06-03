@@ -343,7 +343,7 @@ bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) co
 	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Want);
 	if (!filters) return false;
 
-	return MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
+	return MatchesAnyInterventionFilter(*filters, InQuery.ActivePart);
 }
 
 bool UCReaction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const

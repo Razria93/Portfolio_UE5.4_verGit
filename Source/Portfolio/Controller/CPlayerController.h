@@ -40,6 +40,7 @@ protected:
 
 	void PressSwordToggle();
 	void PressComboAction();
+	void PressDodge();
 
 protected:
 	void FlushMoveInput();

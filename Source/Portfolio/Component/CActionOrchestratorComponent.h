@@ -51,7 +51,7 @@ private:
 	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	FActionRequestResult ExecuteActionCandidate(EActionIntentSource InIncomingIntentSource, const FActionCandidate& InIncomingCandidate);
+	FActionRequestResult ExecuteActionCandidate(const FActionCandidate& InIncomingCandidate);
 
 private:
 	bool ResolveActionContext(const FActionCandidate& InIncomingCandidate, FActionExecutionContext& OutIncomingContext, EActionRequestRejectReason& OutRejectReason) const;
@@ -89,4 +89,7 @@ private:
 private:
 	EActionRequestResultType ConvertDecisionToResultType(const FActionExecutionResult& InResult) const;
 	FActionRequestResult BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason = EActionRequestRejectReason::None) const;
+
+private:
+	void PrintActionRequestResult(const FActionRequestResult& InResult) const;
 };

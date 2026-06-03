@@ -48,8 +48,6 @@ bool UCReaction_Hit::WantIntervention(const FExecutionInterventionQuery& InQuery
 	if (!InQuery.IsValidMinimal()) return false;
 	if (!IsIncomingReactionType(InQuery, EReactionType::Hit)) return false;
 
-	// if (Super::WantIntervention(InQuery)) return true;
-
 	// [Condition of WantIntervention] Just Want Interruption. No Cancel.
 	bool result = InQuery.StopReason == EExecutionStopReason::Interrupted;
 

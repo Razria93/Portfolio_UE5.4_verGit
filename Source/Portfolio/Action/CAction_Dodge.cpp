@@ -35,8 +35,9 @@ FExecutionDecisionResult UCAction_Dodge::ResolveExecutionDecision(const FExecuti
 bool UCAction_Dodge::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
-	if (Super::WantIntervention(InQuery)) return true;
 	if (!IsIncomingActionType(InQuery, EActionType::Dodge)) return false;
+
+	if (Super::WantIntervention(InQuery)) return true;
 
 	return InQuery.StopReason == EExecutionStopReason::Cancelled;
 }
