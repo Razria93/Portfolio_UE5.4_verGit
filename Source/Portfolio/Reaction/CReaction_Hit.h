@@ -11,7 +11,4 @@ class PORTFOLIO_API UCReaction_Hit : public UCReaction
 
 public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
-
-public:
-	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 };

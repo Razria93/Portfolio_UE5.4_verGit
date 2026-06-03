@@ -321,29 +321,46 @@ bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) co
 
 	const FReactionExecutionContext& incomingContext = InQuery.IncomingPart.GetReactionContext();
 
-	return MatchesInterventionRules(incomingContext.ReactionData.WantInterventionRules, InQuery.ActivePart);
+	return MatchesWantInterventionRules(incomingContext.ReactionData.WantInterventionRules, InQuery.ActivePart);
 }
 
 bool UCReaction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
 
-	return MatchesInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
+	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
-bool UCReaction::MatchesInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const
+bool UCReaction::MatchesWantInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const
 {
 	for (const FExecutionInterventionRule& rule : InRules)
 	{
 		if (!rule.IsValidMinimal()) continue;
-		if (!IsInterventionRuleTimingSatisfied(rule)) continue;
+		if (!IsWantInterventionRuleTimingSatisfied(rule)) continue;
 		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
 	}
 
 	return false;
 }
 
-bool UCReaction::IsInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const
+bool UCReaction::MatchesAllowInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const
+{
+	for (const FExecutionInterventionRule& rule : InRules)
+	{
+		if (!rule.IsValidMinimal()) continue;
+		if (!IsAllowInterventionRuleTimingSatisfied(rule)) continue;
+		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
+	}
+
+	return false;
+}
+
+bool UCReaction::IsWantInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const
+{
+	return InRule.Timing == EExecutionInterventionTiming::Always;
+}
+
+bool UCReaction::IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const
 {
 	switch (InRule.Timing)
 	{

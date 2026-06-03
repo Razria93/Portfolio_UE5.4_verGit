@@ -37,14 +37,3 @@ FExecutionDecisionResult UCReaction_Hit::ResolveExecutionDecision(const FExecuti
 	result.Relationship = relationship;
 	return result;
 }
-
-bool UCReaction_Hit::WantIntervention(const FExecutionInterventionQuery& InQuery) const
-{
-	if (!InQuery.IsValidMinimal()) return false;
-	if (!IsIncomingReactionType(InQuery, EReactionType::Hit)) return false;
-
-	// [Condition of WantIntervention] Hit reaction only wants interruption.
-	bool result = InQuery.StopReason == EExecutionStopReason::Interrupted;
-
-	return result;
-}
