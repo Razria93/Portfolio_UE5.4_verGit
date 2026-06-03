@@ -90,10 +90,8 @@ public:
 public:
 	void HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand);
 
-	void HandleReactionInterventionWindowBegin(
-		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
-	void HandleReactionInterventionWindowEnd(
-		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
+	void HandleReactionInterventionWindowBegin(FName InWindowKey);
+	void HandleReactionInterventionWindowEnd(FName InWindowKey);
 
 	void HandleReactionFeedback(FName InTriggerKey);
 	void HandleReactionFeedbackWindowBegin(FName InTriggerKey);

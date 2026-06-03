@@ -105,10 +105,8 @@ public:
 	void HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand);
 
 public:
-	void HandleActionInterventionWindowBegin(
-		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
-	void HandleActionInterventionWindowEnd(
-		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
+	void HandleActionInterventionWindowBegin(FName InWindowKey);
+	void HandleActionInterventionWindowEnd(FName InWindowKey);
 
 public:
 	void HandleActionFeedback(FName InTriggerKey);

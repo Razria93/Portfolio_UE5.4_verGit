@@ -202,26 +202,24 @@ void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyC
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
-void UCActionComponent::HandleActionInterventionWindowBegin(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCActionComponent::HandleActionInterventionWindowBegin(FName InWindowKey)
 {
-	if (InCounterpartFilters.IsEmpty()) return;
+	if (InWindowKey.IsNone()) return;
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OpenInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
+	activeExecutor->OpenInterventionWindow(InWindowKey);
 }
 
-void UCActionComponent::HandleActionInterventionWindowEnd(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCActionComponent::HandleActionInterventionWindowEnd(FName InWindowKey)
 {
-	if (InCounterpartFilters.IsEmpty()) return;
+	if (InWindowKey.IsNone()) return;
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->CloseInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
+	activeExecutor->CloseInterventionWindow(InWindowKey);
 }
 
 void UCActionComponent::HandleActionFeedback(FName InTriggerKey)
@@ -536,9 +534,6 @@ EActionStopReason UCActionComponent::ConvertExecutionStopReasonToActionStopReaso
 	case EExecutionStopReason::Interrupted:
 		return EActionStopReason::Interrupted;
 
-	case EExecutionStopReason::Cancelled:
-		return EActionStopReason::Cancelled;
-
 	default:
 		return EActionStopReason::Ignored;
 	}
@@ -550,9 +545,6 @@ EActionFinishReason UCActionComponent::ConvertExecutionStopReasonToActionFinishR
 	{
 	case EExecutionStopReason::Interrupted:
 		return EActionFinishReason::Interrupted;
-
-	case EExecutionStopReason::Cancelled:
-		return EActionFinishReason::Cancelled;
 
 	case EExecutionStopReason::Ignored:
 	default:

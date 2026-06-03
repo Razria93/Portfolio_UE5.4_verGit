@@ -14,17 +14,8 @@ public:
 	UCAnimNotifyState_ExecutionInterventionWindow();
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Owner")
-	FExecutionInterventionParticipantFilter OwnerFilter = FExecutionInterventionParticipantFilter();
-
 	UPROPERTY(EditAnywhere, Category = "Window")
-	EExecutionStopReason StopReason = EExecutionStopReason::None;
-
-	UPROPERTY(EditAnywhere, Category = "Window")
-	EExecutionInterventionWindowRole WindowRole = EExecutionInterventionWindowRole::None;
-
-	UPROPERTY(EditAnywhere, Category = "Counterpart")
-	TArray<FExecutionInterventionParticipantFilter> CounterpartFilters;
+	FName WindowKey = NAME_None;
 
 public:
 	FString GetNotifyName_Implementation() const override;
@@ -36,8 +27,4 @@ public:
 
 private:
 	void HandleWindow(USkeletalMeshComponent* InMeshComp, bool bOpen) const;
-
-private:
-	FString StopReasonToText() const;
-	FString WindowRoleToText() const;
 };

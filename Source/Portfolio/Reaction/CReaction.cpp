@@ -70,6 +70,12 @@ bool UCReaction::CanResolveIndependentRelationship(const FExecutionDecisionQuery
 	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
 }
 
+bool UCReaction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
+}
+
 bool UCReaction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const
 {
 	OutRelationship = EExecutionRelationship::None;
@@ -81,8 +87,7 @@ bool UCReaction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDe
 		return true;
 	}
 
-	// No Idle && Has ActivePart: Active Action OR Active Reaction
-	if (!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart())
+	if (CanResolveExclusiveRelationship(InQuery))
 	{
 		OutRelationship = EExecutionRelationship::Exclusive;
 		return true;
@@ -141,12 +146,6 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 		finishReason = EReactionFinishReason::Interrupted;
 		break;
 	}
-	case EReactionStopReason::Cancelled:
-	{
-		feedbackTiming = EReactionFeedbackTiming::Cancel;
-		finishReason = EReactionFinishReason::Cancelled;
-		break;
-	}
 	default:
 		finishReason = EReactionFinishReason::Ignored;
 		break;
@@ -185,10 +184,7 @@ void UCReaction::ClearRuntime()
 	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EReactionStopReason::None;
 
-	WantCancelFilters.Reset();
-	WantInterruptFilters.Reset();
-	AllowCancelFilters.Reset();
-	AllowInterruptFilters.Reset();
+	ActiveInterventionWindowKeys.Reset();
 }
 
 bool UCReaction::PlayMontage(const FReactionData& InData)
@@ -304,62 +300,62 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 	return request;
 }
 
-void UCReaction::OpenInterventionWindow(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCReaction::OpenInterventionWindow(FName InWindowKey)
 {
-	if (!MatchesInterventionOwner(InOwnerFilter)) return;
+	if (InWindowKey.IsNone()) return;
 
-	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
-	if (!container) return;
-
-	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
-	{
-		if (!filter.IsValidMinimal()) continue;
-
-		container->Add(filter);
-	}
+	ActiveInterventionWindowKeys.Add(InWindowKey);
 }
 
-void UCReaction::CloseInterventionWindow(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCReaction::CloseInterventionWindow(FName InWindowKey)
 {
-	if (!MatchesInterventionOwner(InOwnerFilter)) return;
+	if (InWindowKey.IsNone()) return;
 
-	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
-	if (!container) return;
-
-	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
-	{
-		container->RemoveSingle(filter);
-	}
+	ActiveInterventionWindowKeys.Remove(InWindowKey);
 }
 
 bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
 
-	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Want);
-	if (!filters) return false;
+	const FReactionExecutionContext& incomingContext = InQuery.IncomingPart.GetReactionContext();
 
-	return MatchesAnyInterventionFilter(*filters, InQuery.ActivePart);
+	return MatchesInterventionRules(incomingContext.ReactionData.WantInterventionRules, InQuery.ActivePart);
 }
 
 bool UCReaction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
 
-	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Allow);
-	if (!filters) return false;
-
-	return MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
+	return MatchesInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
-bool UCReaction::MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const
+bool UCReaction::MatchesInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const
 {
-	// Check whether this active executor is the owner targeted by the notify window.
-	if (!bIsActive) return false;
+	for (const FExecutionInterventionRule& rule : InRules)
+	{
+		if (!rule.IsValidMinimal()) continue;
+		if (!IsInterventionRuleTimingSatisfied(rule)) continue;
+		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
+	}
 
-	return InOwnerFilter.MatchesReaction(ActiveDataKey_Cached.ReactionType);
+	return false;
+}
+
+bool UCReaction::IsInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const
+{
+	switch (InRule.Timing)
+	{
+	case EExecutionInterventionTiming::Always:
+		return true;
+
+	case EExecutionInterventionTiming::Window:
+		return !InRule.WindowKey.IsNone() && ActiveInterventionWindowKeys.Contains(InRule.WindowKey);
+
+	default:
+		return false;
+	}
 }
 
 bool UCReaction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const
@@ -376,44 +372,6 @@ bool UCReaction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventio
 
 	FLog::Log(TEXT("[UCReaction::MatchesAnyInterventionFilter] Match Failed."));
 	return false;
-}
-
-TArray<FExecutionInterventionParticipantFilter>* UCReaction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole)
-{
-	switch (InWindowRole)
-	{
-	case EExecutionInterventionWindowRole::Want:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
-		return nullptr;
-
-	case EExecutionInterventionWindowRole::Allow:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
-		return nullptr;
-
-	default:
-		return nullptr;
-	}
-}
-
-const TArray<FExecutionInterventionParticipantFilter>* UCReaction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole) const
-{
-	switch (InWindowRole)
-	{
-	case EExecutionInterventionWindowRole::Want:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
-		return nullptr;
-
-	case EExecutionInterventionWindowRole::Allow:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
-		return nullptr;
-
-	default:
-		return nullptr;
-	}
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
@@ -498,10 +456,7 @@ void UCReaction::PrintReactionExecutorRuntimeInfo() const
 	FLog::Log(TEXT("----- ReactionRuntime Info ------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveMontage_Cached)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsActive"), bIsActive ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WantCancelCount"), WantCancelFilters.Num()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WantInterruptCount"), WantInterruptFilters.Num()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AllowCancelCount"), AllowCancelFilters.Num()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AllowInterruptCount"), AllowInterruptFilters.Num()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WindowKeyCount"), ActiveInterventionWindowKeys.Num()));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_CurrentPlay"), Serial_CurrentPlay));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_ActivePlay"), CachedSerial_ActivePlay));
 	FLog::Log(TEXT("---------------------------------"));

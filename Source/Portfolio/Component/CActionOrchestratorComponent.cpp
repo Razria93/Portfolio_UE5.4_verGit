@@ -541,7 +541,7 @@ void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutio
 
 	FExecutionInterventionQuery interventionQuery;
 
-	if (!BuildInterventionQuery(InQuery, EExecutionStopReason::Cancelled, interventionQuery))
+	if (!BuildInterventionQuery(InQuery, EExecutionStopReason::Interrupted, interventionQuery))
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
 		InOutResult.RejectReason = EActionRequestRejectReason::InvalidQuery;

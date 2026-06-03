@@ -39,5 +39,5 @@ bool UCAction_Dodge::WantIntervention(const FExecutionInterventionQuery& InQuery
 
 	if (Super::WantIntervention(InQuery)) return true;
 
-	return InQuery.StopReason == EExecutionStopReason::Cancelled;
+	return InQuery.StopReason == EExecutionStopReason::Interrupted;
 }

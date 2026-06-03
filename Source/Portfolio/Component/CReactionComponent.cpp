@@ -175,26 +175,24 @@ void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InN
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
-void UCReactionComponent::HandleReactionInterventionWindowBegin(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCReactionComponent::HandleReactionInterventionWindowBegin(FName InWindowKey)
 {
-	if (InCounterpartFilters.IsEmpty()) return;
+	if (InWindowKey.IsNone()) return;
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OpenInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
+	activeExecutor->OpenInterventionWindow(InWindowKey);
 }
 
-void UCReactionComponent::HandleReactionInterventionWindowEnd(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCReactionComponent::HandleReactionInterventionWindowEnd(FName InWindowKey)
 {
-	if (InCounterpartFilters.IsEmpty()) return;
+	if (InWindowKey.IsNone()) return;
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->CloseInterventionWindow(InOwnerFilter, InStopReason, InWindowRole, InCounterpartFilters);
+	activeExecutor->CloseInterventionWindow(InWindowKey);
 }
 
 void UCReactionComponent::HandleReactionFeedback(FName InTriggerKey)
@@ -517,9 +515,6 @@ EReactionStopReason UCReactionComponent::ConvertExecutionStopReasonToReactionSto
 	case EExecutionStopReason::Interrupted:
 		return EReactionStopReason::Interrupted;
 
-	case EExecutionStopReason::Cancelled:
-		return EReactionStopReason::Cancelled;
-
 	default:
 		return EReactionStopReason::Ignored;
 	}
@@ -531,9 +526,6 @@ EReactionFinishReason UCReactionComponent::ConvertExecutionStopReasonToReactionF
 	{
 	case EExecutionStopReason::Interrupted:
 		return EReactionFinishReason::Interrupted;
-
-	case EExecutionStopReason::Cancelled:
-		return EReactionFinishReason::Cancelled;
 
 	default:
 		return EReactionFinishReason::Ignored;

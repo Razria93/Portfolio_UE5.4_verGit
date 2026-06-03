@@ -73,6 +73,12 @@ bool UCAction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& 
 	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
 }
 
+bool UCAction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
+}
+
 bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const
 {
 	OutRelationship = EExecutionRelationship::None;
@@ -84,8 +90,7 @@ bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDeci
 		return true;
 	}
 
-	// No Idle && Has ActivePart: Active Action OR Active Reaction
-	if (!InQuery.Snapshot.IsIdle() && InQuery.HasActivePart())
+	if (CanResolveExclusiveRelationship(InQuery))
 	{
 		OutRelationship = EExecutionRelationship::Exclusive;
 		return true;
@@ -146,13 +151,6 @@ void UCAction::Stop(EActionStopReason InStopReason)
 		finishReason = EActionFinishReason::Interrupted;
 		break;
 	}
-	case EActionStopReason::Cancelled:
-	{
-		feedbackTiming = EActionFeedbackTiming::Cancel;
-		eventType = EActionEventType::ActionCancelled;
-		finishReason = EActionFinishReason::Cancelled;
-		break;
-	}
 	default:
 		eventType = EActionEventType::ActionIgnored;
 		finishReason = EActionFinishReason::Ignored;
@@ -205,10 +203,7 @@ void UCAction::ClearRuntime()
 	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EActionStopReason::None;
 
-	WantCancelFilters.Reset();
-	WantInterruptFilters.Reset();
-	AllowCancelFilters.Reset();
-	AllowInterruptFilters.Reset();
+	ActiveInterventionWindowKeys.Reset();
 }
 
 bool UCAction::PlayMontage(const FActionData& InData)
@@ -356,59 +351,62 @@ FActionContext UCAction::BuildActionContext() const
 	return context;
 }
 
-void UCAction::OpenInterventionWindow(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCAction::OpenInterventionWindow(FName InWindowKey)
 {
-	if (!MatchesInterventionOwner(InOwnerFilter)) return;
+	if (InWindowKey.IsNone()) return;
 
-	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
-	if (!container) return;
-
-	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
-	{
-		if (!filter.IsValidMinimal()) continue;
-
-		container->Add(filter);
-	}
+	ActiveInterventionWindowKeys.Add(InWindowKey);
 }
 
-void UCAction::CloseInterventionWindow(
-	const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters)
+void UCAction::CloseInterventionWindow(FName InWindowKey)
 {
-	if (!MatchesInterventionOwner(InOwnerFilter)) return;
+	if (InWindowKey.IsNone()) return;
 
-	TArray<FExecutionInterventionParticipantFilter>* container = GetInterventionFilterContainer(InStopReason, InWindowRole);
-	if (!container) return;
-
-	for (const FExecutionInterventionParticipantFilter& filter : InCounterpartFilters)
-	{
-		container->RemoveSingle(filter);
-	}
+	ActiveInterventionWindowKeys.Remove(InWindowKey);
 }
 
 bool UCAction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
 
-	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Want);
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 
-	return filters && MatchesAnyInterventionFilter(*filters, InQuery.ActivePart);
+	return MatchesInterventionRules(incomingContext.ActionData.WantInterventionRules, InQuery.ActivePart);
 }
 
 bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
 
-	const TArray<FExecutionInterventionParticipantFilter>* filters = GetInterventionFilterContainer(InQuery.StopReason, EExecutionInterventionWindowRole::Allow);
-
-	return filters && MatchesAnyInterventionFilter(*filters, InQuery.IncomingPart);
+	return MatchesInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
-bool UCAction::MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const
+bool UCAction::MatchesInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const
 {
-	if (!bIsActive) return false;
+	for (const FExecutionInterventionRule& rule : InRules)
+	{
+		if (!rule.IsValidMinimal()) continue;
+		if (!IsInterventionRuleTimingSatisfied(rule)) continue;
+		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
+	}
 
-	return InOwnerFilter.MatchesAction(ActiveDataKey_Cached.ActionType, ActiveDataKey_Cached.ActionIndex);
+	return false;
+}
+
+bool UCAction::IsInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const
+{
+	switch (InRule.Timing)
+	{
+	case EExecutionInterventionTiming::Always:
+		return true;
+
+	case EExecutionInterventionTiming::Window:
+		return !InRule.WindowKey.IsNone() && ActiveInterventionWindowKeys.Contains(InRule.WindowKey);
+
+	default:
+		return false;
+	}
 }
 
 bool UCAction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const
@@ -419,44 +417,6 @@ bool UCAction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionP
 	}
 
 	return false;
-}
-
-TArray<FExecutionInterventionParticipantFilter>* UCAction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole)
-{
-	switch (InWindowRole)
-	{
-	case EExecutionInterventionWindowRole::Want:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
-		return nullptr;
-
-	case EExecutionInterventionWindowRole::Allow:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
-		return nullptr;
-
-	default:
-		return nullptr;
-	}
-}
-
-const TArray<FExecutionInterventionParticipantFilter>* UCAction::GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole) const
-{
-	switch (InWindowRole)
-	{
-	case EExecutionInterventionWindowRole::Want:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &WantCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &WantInterruptFilters;
-		return nullptr;
-
-	case EExecutionInterventionWindowRole::Allow:
-		if (InStopReason == EExecutionStopReason::Cancelled) return &AllowCancelFilters;
-		if (InStopReason == EExecutionStopReason::Interrupted) return &AllowInterruptFilters;
-		return nullptr;
-
-	default:
-		return nullptr;
-	}
 }
 
 void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const

@@ -37,7 +37,7 @@ bool UCReaction_Dead::WantIntervention(const FExecutionInterventionQuery& InQuer
 	if (!InQuery.IsValidMinimal()) return false;
 	if (!IsIncomingReactionType(InQuery, EReactionType::Dead)) return false;
 
-	// [Condition of WantIntervention] Just Want Interruption. No Cancel.
+	// [Condition of WantIntervention] Dead reaction only wants interruption.
 	bool result = InQuery.StopReason == EExecutionStopReason::Interrupted;
 
 	return result;
@@ -45,6 +45,6 @@ bool UCReaction_Dead::WantIntervention(const FExecutionInterventionQuery& InQuer
 
 bool UCReaction_Dead::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
-	// [NOTE] Dead reaction is terminal and cannot be interrupted or cancelled.
+	// [NOTE] Dead reaction is terminal and cannot be interrupted.
 	return false;
 }

@@ -17,16 +17,7 @@ protected:
 	bool bIsActive = false;
 
 	UPROPERTY(Transient)
-	TArray<FExecutionInterventionParticipantFilter> WantCancelFilters;
-
-	UPROPERTY(Transient)
-	TArray<FExecutionInterventionParticipantFilter> WantInterruptFilters;
-
-	UPROPERTY(Transient)
-	TArray<FExecutionInterventionParticipantFilter> AllowCancelFilters;
-
-	UPROPERTY(Transient)
-	TArray<FExecutionInterventionParticipantFilter> AllowInterruptFilters;
+	TSet<FName> ActiveInterventionWindowKeys;
 
 protected:
 	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Action
@@ -82,6 +73,7 @@ protected:
 
 protected:
 	bool CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const;
+	bool CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const;
 	bool TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const;
 
 public:
@@ -131,10 +123,8 @@ protected:
 
 public:
 	// Intervention Window
-	void OpenInterventionWindow(
-		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
-	void CloseInterventionWindow(
-		const FExecutionInterventionParticipantFilter& InOwnerFilter, EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole, const TArray<FExecutionInterventionParticipantFilter>& InCounterpartFilters);
+	void OpenInterventionWindow(FName InWindowKey);
+	void CloseInterventionWindow(FName InWindowKey);
 
 public:
 	// Intervention Match
@@ -142,12 +132,9 @@ public:
 	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
 
 private:
-	bool MatchesInterventionOwner(const FExecutionInterventionParticipantFilter& InOwnerFilter) const;
+	bool MatchesInterventionRules(const TArray<FExecutionInterventionRule>& InRules, const FExecutionParticipant& InParticipant) const;
+	bool IsInterventionRuleTimingSatisfied(const FExecutionInterventionRule& InRule) const;
 	bool MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const;
-
-private:
-	TArray<FExecutionInterventionParticipantFilter>* GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole);
-	const TArray<FExecutionInterventionParticipantFilter>* GetInterventionFilterContainer(EExecutionStopReason InStopReason, EExecutionInterventionWindowRole InWindowRole) const;
 
 protected:
 	// Event

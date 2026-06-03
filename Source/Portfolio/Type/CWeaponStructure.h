@@ -98,7 +98,6 @@ enum class EActionEventType : uint8
 	ActionChained,
 
 	ActionInterrupted,
-	ActionCancelled,
 	ActionIgnored,
 
 	Max,
@@ -158,21 +157,82 @@ enum class EExecutionStopReason : uint8
 	None = 0,
 
 	Interrupted,
-	Cancelled,
 	Ignored,
 
 	Max,
 };
 
 UENUM(BlueprintType)
-enum class EExecutionInterventionWindowRole : uint8
+enum class EExecutionInterventionTiming : uint8
 {
 	None = 0,
 
-	Want,
-	Allow,
+	Always,
+	Window,
 
 	Max,
+};
+
+struct FExecutionParticipant;
+
+USTRUCT(BlueprintType)
+struct FExecutionInterventionParticipantFilter
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	EExecutionDomain Domain = EExecutionDomain::None;
+
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	EActionType ActionType = EActionType::None;
+
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	EReactionType ReactionType = EReactionType::None;
+
+	// INDEX_NONE means any index. Reaction currently ignores Index.
+	UPROPERTY(EditAnywhere, Category = "Filter")
+	int32 Index = INDEX_NONE;
+
+public:
+	bool IsValidMinimal() const;
+
+	bool MatchesAction(EActionType InActionType, int32 InIndex = INDEX_NONE) const;
+	bool MatchesReaction(EReactionType InReactionType) const;
+	bool MatchesParticipant(const FExecutionParticipant& InParticipant) const;
+
+public:
+	bool operator==(const FExecutionInterventionParticipantFilter& InOther) const
+	{
+		return Domain == InOther.Domain
+			&& ActionType == InOther.ActionType
+			&& ReactionType == InOther.ReactionType
+			&& Index == InOther.Index;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionInterventionRule
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Intervention")
+	EExecutionInterventionTiming Timing = EExecutionInterventionTiming::Always;
+
+	UPROPERTY(EditAnywhere, Category = "Intervention")
+	FName WindowKey = NAME_None;
+
+	UPROPERTY(EditAnywhere, Category = "Intervention")
+	TArray<FExecutionInterventionParticipantFilter> ParticipantFilters;
+
+public:
+	bool IsValidMinimal() const
+	{
+		return Timing != EExecutionInterventionTiming::None
+			&& Timing != EExecutionInterventionTiming::Max
+			&& !ParticipantFilters.IsEmpty();
+	}
 };
 
 UENUM(BlueprintType)
@@ -222,7 +282,6 @@ enum class EActionStopReason : uint8
 	None = 0,
 
 	Interrupted,
-	Cancelled,
 	Ignored,
 
 	Max,
@@ -235,7 +294,6 @@ enum class EActionFinishReason : uint8
 
 	Completed,
 	Interrupted,
-	Cancelled,
 	Ignored,
 
 	Max,
@@ -369,7 +427,6 @@ enum class EReactionStopReason : uint8
 	None = 0,
 
 	Interrupted,
-	Cancelled,
 	Ignored,
 
 	Max,
@@ -382,7 +439,6 @@ enum class EReactionFinishReason : uint8
 
 	Completed,
 	Interrupted,
-	Cancelled,
 	Ignored,
 
 	Max,
@@ -444,7 +500,6 @@ enum class EActionFeedbackTiming : uint8
 
 	Complete,
 	Interrupt,
-	Cancel,
 
 	Chain,
 
@@ -535,6 +590,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
+
+	UPROPERTY(EditAnywhere, Category = "Intervention|Want")
+	TArray<FExecutionInterventionRule> WantInterventionRules;
+
+	UPROPERTY(EditAnywhere, Category = "Intervention|Allow")
+	TArray<FExecutionInterventionRule> AllowInterventionRules;
 
 public:
 	FActionData() = default;
@@ -1172,6 +1233,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
 
+	UPROPERTY(EditAnywhere, Category = "Intervention|Want")
+	TArray<FExecutionInterventionRule> WantInterventionRules;
+
+	UPROPERTY(EditAnywhere, Category = "Intervention|Allow")
+	TArray<FExecutionInterventionRule> AllowInterventionRules;
+
 public:
 	FReactionData() = default;
 
@@ -1314,42 +1381,6 @@ public:
 	bool IsAccepted() const
 	{
 		return Decision == EExecutionDecision::Accept;
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FExecutionInterventionParticipantFilter
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, Category = "Filter")
-	EExecutionDomain Domain = EExecutionDomain::None;
-
-	UPROPERTY(EditAnywhere, Category = "Filter")
-	EActionType ActionType = EActionType::None;
-
-	UPROPERTY(EditAnywhere, Category = "Filter")
-	EReactionType ReactionType = EReactionType::None;
-
-	// INDEX_NONE means any index. Reaction currently ignores Index.
-	UPROPERTY(EditAnywhere, Category = "Filter")
-	int32 Index = INDEX_NONE;
-
-public:
-	bool IsValidMinimal() const;
-
-	bool MatchesAction(EActionType InActionType, int32 InIndex = INDEX_NONE) const;
-	bool MatchesReaction(EReactionType InReactionType) const;
-	bool MatchesParticipant(const FExecutionParticipant& InParticipant) const;
-
-public:
-	bool operator==(const FExecutionInterventionParticipantFilter& InOther) const
-	{
-		return Domain == InOther.Domain
-			&& ActionType == InOther.ActionType
-			&& ReactionType == InOther.ReactionType
-			&& Index == InOther.Index;
 	}
 };
 

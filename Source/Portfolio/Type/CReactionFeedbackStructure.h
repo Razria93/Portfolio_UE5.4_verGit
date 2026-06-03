@@ -13,7 +13,6 @@ enum class EReactionFeedbackTiming : uint8
 
 	Complete,
 	Interrupt,
-	Cancel,
 
 	TriggerWindowBegin,
 	TriggerWindowEnd,
