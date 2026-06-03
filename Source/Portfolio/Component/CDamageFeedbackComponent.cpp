@@ -31,7 +31,7 @@ void UCDamageFeedbackComponent::PlayDamageFeedback(const FTakeDamagePacket& InTa
 {
 	if (!CanPlayDamageFeedback(InTakeDamagePacket)) return;
 
-	PrintDamageHitInfo(InTakeDamagePacket);
+	// PrintDamageHitInfo(InTakeDamagePacket);
 
 	PlayHitStop(InTakeDamagePacket);
 	PlayHitVFX(InTakeDamagePacket);
@@ -48,8 +48,8 @@ void UCDamageFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamag
 
 	const FHitStopRequest hitStopRequest = BuildHitStopRequest(InTakeDamagePacket);
 
-	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitStop"));
-	PrintHitStopRequestInfo(hitStopRequest);
+	// FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitStop"));
+	// PrintHitStopRequestInfo(hitStopRequest);
 
 	feedbackSubsystem->RequestHitStop(hitStopRequest);
 }
@@ -68,8 +68,8 @@ void UCDamageFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamage
 	const FVector location = ResolveHitFeedbackLocation(InTakeDamagePacket);
 	const FRotator rotation = ResolveHitFeedbackRotation(InTakeDamagePacket);
 
-	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitVFX"));
-	PrintHitVFXRequestInfo(HitVFX, location, rotation);
+	// FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitVFX"));
+	// PrintHitVFXRequestInfo(HitVFX, location, rotation);
 
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
 }
@@ -86,8 +86,8 @@ void UCDamageFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamage
 
 	const FVector location = ResolveHitFeedbackLocation(InTakeDamagePacket);
 
-	FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitSFX"));
-	PrintHitSFXRequestInfo(HitSFX, location);
+	// FLog::Log(TEXT("[UCDamageFeedbackComponent] Play HitSFX"));
+	// PrintHitSFXRequestInfo(HitSFX, location);
 
 	UGameplayStatics::PlaySoundAtLocation(this, HitSFX, location);
 }
@@ -101,8 +101,8 @@ void UCDamageFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeD
 
 	const FCameraShakeRequest cameraShakeRequest = BuildCameraShakeRequest(InTakeDamagePacket);
 
-	FLog::Log(TEXT("[UCDamageFeedbackComponent] PlayCameraShake"));
-	PrintCameraShakeRequestInfo(cameraShakeRequest);
+	// FLog::Log(TEXT("[UCDamageFeedbackComponent] PlayCameraShake"));
+	// PrintCameraShakeRequestInfo(cameraShakeRequest);
 
 	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
 }

@@ -48,8 +48,8 @@ void UCPlayerFeedbackComponent::HandleCameraShakeRequest(const FCameraShakeReque
 	const float finalScale = ResolveCameraShake(InCameraShakeRequest);
 	if (finalScale <= KINDA_SMALL_NUMBER) return;
 
-	FLog::Log(TEXT("[UCPlayerFeedbackComponent] Handle CameraShakeRequest"));
-	PrintCameraShakeConsumeInfo(InCameraShakeRequest, finalScale);
+	// FLog::Log(TEXT("[UCPlayerFeedbackComponent] Handle CameraShakeRequest"));
+	// PrintCameraShakeConsumeInfo(InCameraShakeRequest, finalScale);
 
 	PlayCameraShake(InCameraShakeRequest, finalScale);
 }

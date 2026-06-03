@@ -133,7 +133,7 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 
 	UpdateDeadState();
 
-	PrintTakeDamageContextInfo();
+	// PrintTakeDamageContextInfo();
 
 	return takenDamage;
 }

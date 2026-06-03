@@ -65,7 +65,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
-		PrintTakeDamageSummaryInfo(takeDamagePacket);
+		// PrintTakeDamageSummaryInfo(takeDamagePacket);
 		DispatchTakeDamageRejected(takeDamagePacket);
 		return 0.f;
 	}
@@ -80,7 +80,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
-		PrintTakeDamageSummaryInfo(takeDamagePacket);
+		// PrintTakeDamageSummaryInfo(takeDamagePacket);
 		DispatchTakeDamageRejected(takeDamagePacket);
 		return 0.f;
 	}
@@ -93,7 +93,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
-		PrintTakeDamageSummaryInfo(takeDamagePacket);
+		// PrintTakeDamageSummaryInfo(takeDamagePacket);
 		DispatchTakeDamageRejected(takeDamagePacket);
 		return 0.f;
 	}
@@ -104,7 +104,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	const FTakeDamageResult committedResult = BuildResult(takeDamageContext);
 	const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
 
-	PrintTakeDamageSummaryInfo(takeDamagePacket);
+	// PrintTakeDamageSummaryInfo(takeDamagePacket);
 	DispatchTakeDamageCommitted(takeDamagePacket);
 
 	return committedResult.CommittedDamage;
