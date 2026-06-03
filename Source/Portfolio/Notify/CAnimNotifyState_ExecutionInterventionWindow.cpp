@@ -12,7 +12,7 @@ UCAnimNotifyState_ExecutionInterventionWindow::UCAnimNotifyState_ExecutionInterv
 
 FString UCAnimNotifyState_ExecutionInterventionWindow::GetNotifyName_Implementation() const
 {
-	return FString::Printf(TEXT("Intervention Window (%s)"), *WindowKey.ToString());
+	return FString::Printf(TEXT("Allow Intervention Window (%s)"), *WindowKey.ToString());
 }
 
 FLinearColor UCAnimNotifyState_ExecutionInterventionWindow::GetEditorColor()
@@ -46,11 +46,11 @@ void UCAnimNotifyState_ExecutionInterventionWindow::HandleWindow(USkeletalMeshCo
 	{
 		if (bOpen)
 		{
-			actionComp->HandleActionInterventionWindowBegin(WindowKey);
+			actionComp->HandleActionAllowInterventionWindowBegin(WindowKey);
 		}
 		else
 		{
-			actionComp->HandleActionInterventionWindowEnd(WindowKey);
+			actionComp->HandleActionAllowInterventionWindowEnd(WindowKey);
 		}
 	}
 
@@ -58,11 +58,11 @@ void UCAnimNotifyState_ExecutionInterventionWindow::HandleWindow(USkeletalMeshCo
 	{
 		if (bOpen)
 		{
-			reactionComp->HandleReactionInterventionWindowBegin(WindowKey);
+			reactionComp->HandleReactionAllowInterventionWindowBegin(WindowKey);
 		}
 		else
 		{
-			reactionComp->HandleReactionInterventionWindowEnd(WindowKey);
+			reactionComp->HandleReactionAllowInterventionWindowEnd(WindowKey);
 		}
 	}
 }

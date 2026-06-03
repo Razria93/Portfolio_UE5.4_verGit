@@ -105,8 +105,8 @@ public:
 	void HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand);
 
 public:
-	void HandleActionInterventionWindowBegin(FName InWindowKey);
-	void HandleActionInterventionWindowEnd(FName InWindowKey);
+	void HandleActionAllowInterventionWindowBegin(FName InWindowKey);
+	void HandleActionAllowInterventionWindowEnd(FName InWindowKey);
 
 public:
 	void HandleActionFeedback(FName InTriggerKey);

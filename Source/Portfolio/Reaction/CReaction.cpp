@@ -184,7 +184,7 @@ void UCReaction::ClearRuntime()
 	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EReactionStopReason::None;
 
-	ActiveInterventionWindowKeys.Reset();
+	AllowInterventionWindowKeys.Reset();
 }
 
 bool UCReaction::PlayMontage(const FReactionData& InData)
@@ -300,18 +300,18 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 	return request;
 }
 
-void UCReaction::OpenInterventionWindow(FName InWindowKey)
+void UCReaction::OpenAllowInterventionWindow(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
-	ActiveInterventionWindowKeys.Add(InWindowKey);
+	AllowInterventionWindowKeys.Add(InWindowKey);
 }
 
-void UCReaction::CloseInterventionWindow(FName InWindowKey)
+void UCReaction::CloseAllowInterventionWindow(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
-	ActiveInterventionWindowKeys.Remove(InWindowKey);
+	AllowInterventionWindowKeys.Remove(InWindowKey);
 }
 
 bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
@@ -362,7 +362,7 @@ bool UCReaction::IsAllowInterventionRuleTimingSatisfied(const FExecutionInterven
 		return true;
 
 	case EExecutionInterventionTiming::Window:
-		return !InRule.WindowKey.IsNone() && ActiveInterventionWindowKeys.Contains(InRule.WindowKey);
+		return !InRule.WindowKey.IsNone() && AllowInterventionWindowKeys.Contains(InRule.WindowKey);
 
 	default:
 		return false;
@@ -467,7 +467,7 @@ void UCReaction::PrintReactionExecutorRuntimeInfo() const
 	FLog::Log(TEXT("----- ReactionRuntime Info ------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveMontage_Cached)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsActive"), bIsActive ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WindowKeyCount"), ActiveInterventionWindowKeys.Num()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AllowWindowKeyCount"), AllowInterventionWindowKeys.Num()));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_CurrentPlay"), Serial_CurrentPlay));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_ActivePlay"), CachedSerial_ActivePlay));
 	FLog::Log(TEXT("---------------------------------"));

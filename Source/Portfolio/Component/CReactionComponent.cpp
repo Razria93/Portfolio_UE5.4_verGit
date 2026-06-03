@@ -175,24 +175,24 @@ void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InN
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
-void UCReactionComponent::HandleReactionInterventionWindowBegin(FName InWindowKey)
+void UCReactionComponent::HandleReactionAllowInterventionWindowBegin(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OpenInterventionWindow(InWindowKey);
+	activeExecutor->OpenAllowInterventionWindow(InWindowKey);
 }
 
-void UCReactionComponent::HandleReactionInterventionWindowEnd(FName InWindowKey)
+void UCReactionComponent::HandleReactionAllowInterventionWindowEnd(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->CloseInterventionWindow(InWindowKey);
+	activeExecutor->CloseAllowInterventionWindow(InWindowKey);
 }
 
 void UCReactionComponent::HandleReactionFeedback(FName InTriggerKey)

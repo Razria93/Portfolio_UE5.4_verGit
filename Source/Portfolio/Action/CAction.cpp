@@ -203,7 +203,7 @@ void UCAction::ClearRuntime()
 	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EActionStopReason::None;
 
-	ActiveInterventionWindowKeys.Reset();
+	AllowInterventionWindowKeys.Reset();
 }
 
 bool UCAction::PlayMontage(const FActionData& InData)
@@ -351,18 +351,18 @@ FActionContext UCAction::BuildActionContext() const
 	return context;
 }
 
-void UCAction::OpenInterventionWindow(FName InWindowKey)
+void UCAction::OpenAllowInterventionWindow(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
-	ActiveInterventionWindowKeys.Add(InWindowKey);
+	AllowInterventionWindowKeys.Add(InWindowKey);
 }
 
-void UCAction::CloseInterventionWindow(FName InWindowKey)
+void UCAction::CloseAllowInterventionWindow(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
-	ActiveInterventionWindowKeys.Remove(InWindowKey);
+	AllowInterventionWindowKeys.Remove(InWindowKey);
 }
 
 bool UCAction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
@@ -413,7 +413,7 @@ bool UCAction::IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventi
 		return true;
 
 	case EExecutionInterventionTiming::Window:
-		return !InRule.WindowKey.IsNone() && ActiveInterventionWindowKeys.Contains(InRule.WindowKey);
+		return !InRule.WindowKey.IsNone() && AllowInterventionWindowKeys.Contains(InRule.WindowKey);
 
 	default:
 		return false;

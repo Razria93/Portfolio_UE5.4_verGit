@@ -17,7 +17,7 @@ protected:
 	bool bIsActive = false;
 
 	UPROPERTY(Transient)
-	TSet<FName> ActiveInterventionWindowKeys;
+	TSet<FName> AllowInterventionWindowKeys;
 
 protected:
 	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Action
@@ -123,8 +123,8 @@ protected:
 
 public:
 	// Intervention Window
-	void OpenInterventionWindow(FName InWindowKey);
-	void CloseInterventionWindow(FName InWindowKey);
+	void OpenAllowInterventionWindow(FName InWindowKey);
+	void CloseAllowInterventionWindow(FName InWindowKey);
 
 public:
 	// Intervention Match

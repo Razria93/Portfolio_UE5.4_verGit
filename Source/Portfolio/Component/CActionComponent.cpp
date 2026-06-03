@@ -202,24 +202,24 @@ void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyC
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
-void UCActionComponent::HandleActionInterventionWindowBegin(FName InWindowKey)
+void UCActionComponent::HandleActionAllowInterventionWindowBegin(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->OpenInterventionWindow(InWindowKey);
+	activeExecutor->OpenAllowInterventionWindow(InWindowKey);
 }
 
-void UCActionComponent::HandleActionInterventionWindowEnd(FName InWindowKey)
+void UCActionComponent::HandleActionAllowInterventionWindowEnd(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
-	activeExecutor->CloseInterventionWindow(InWindowKey);
+	activeExecutor->CloseAllowInterventionWindow(InWindowKey);
 }
 
 void UCActionComponent::HandleActionFeedback(FName InTriggerKey)

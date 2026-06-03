@@ -90,8 +90,8 @@ public:
 public:
 	void HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand);
 
-	void HandleReactionInterventionWindowBegin(FName InWindowKey);
-	void HandleReactionInterventionWindowEnd(FName InWindowKey);
+	void HandleReactionAllowInterventionWindowBegin(FName InWindowKey);
+	void HandleReactionAllowInterventionWindowEnd(FName InWindowKey);
 
 	void HandleReactionFeedback(FName InTriggerKey);
 	void HandleReactionFeedbackWindowBegin(FName InTriggerKey);
