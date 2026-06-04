@@ -1,26 +1,39 @@
 #include "Reaction/CReaction_Dead.h"
 #include "ProjectGlobal.h"
 
-bool UCReaction_Dead::WantToInterrupt(const FReactionQueryContext& InContext) const
+#include "GameFramework/Character.h"
+
+FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	// Dead reaction can interrupt others
-	return true;
+	FExecutionDecisionResult result;
+
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!IsIncomingReactionType(InQuery, EReactionType::Dead))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	EExecutionRelationship relationship = EExecutionRelationship::None;
+
+	if (!TryResolveIndependentOrExclusiveRelationship(InQuery, relationship))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = relationship;
+	return result;
 }
 
-bool UCReaction_Dead::WantToCancel(const FReactionQueryContext& InContext) const
+bool UCReaction_Dead::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
-	// Dead reaction cannot be canceled by policy
-	return false;
-}
-
-bool UCReaction_Dead::AllowInterruptionBy(const FReactionQueryContext& InContext) const
-{
-	// Dead reaction cannot be interrupted
-	return false;
-}
-
-bool UCReaction_Dead::AllowCancelBy(const FReactionQueryContext& InContext) const
-{
-	// Dead reaction cannot be canceled
+	// [NOTE] Dead reaction is terminal and cannot be interrupted.
 	return false;
 }

@@ -23,7 +23,6 @@ enum class EActionIntentEvent : uint8
 	Started,
 	Updated,
 	Completed,
-	Canceled,
 
 	Max,
 };
@@ -34,7 +33,7 @@ enum class EMovementActionIntent : uint8
 	None = 0,
 
 	Move,
-	
+
 	Walk,
 	Run,
 	Sprint,
@@ -65,44 +64,6 @@ enum class ECombatActionIntent : uint8
 	ComboAttack,
 	Guard,
 	Dodge,
-
-	Max,
-};
-
-UENUM(BlueprintType)
-enum class EActionRequestResultType : uint8
-{
-	None = 0,
-
-	Rejected,
-	Ignored,
-
-	Handled,
-	Started,
-	Chained,
-	Enqueued,
-	Interrupted,
-
-	Max,
-};
-
-UENUM(BlueprintType)
-enum class EActionRequestRejectReason : uint8
-{
-	None = 0,
-
-	InvalidOwner,
-	InvalidRequest,
-	InvalidComponent,
-
-	Dead,
-	InReaction,
-	InvalidState,
-	InvalidEquipment,
-	InvalidCombatAction,
-
-	AlreadyPlaying,
-	NoExecutableAction,
 
 	Max,
 };
@@ -172,21 +133,34 @@ struct FActionRequestResult
 {
 	GENERATED_BODY()
 
+public:
 	UPROPERTY(Transient)
 	EActionRequestResultType ResultType = EActionRequestResultType::None;
 
 	UPROPERTY(Transient)
 	EActionRequestRejectReason RejectReason = EActionRequestRejectReason::None;
 
-	UPROPERTY(Transient)
-	EActionType ResolvedActionType = EActionType::Max;
-
 	bool IsAccepted() const
 	{
 		return ResultType == EActionRequestResultType::Handled
 			|| ResultType == EActionRequestResultType::Started
-			|| ResultType == EActionRequestResultType::Chained
-			|| ResultType == EActionRequestResultType::Enqueued
-			|| ResultType == EActionRequestResultType::Interrupted;
+			|| ResultType == EActionRequestResultType::Reserved
+			|| ResultType == EActionRequestResultType::Intervened;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FActionCandidate
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FActionDataKey ActionDataKey = FActionDataKey();
+
+public:
+	bool IsValidMinimal() const
+	{
+		return ActionDataKey.IsValidMinimal();
 	}
 };

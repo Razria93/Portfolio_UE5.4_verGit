@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Type/CWeaponStructure.h"
+// #include "Type/CActionFeedbackStructure.h"
+#include "Type/CActionOrchestrationStructure.h"
 #include "CAction.generated.h"
 
 UCLASS(Abstract) // Base Action Class
@@ -12,78 +14,142 @@ class PORTFOLIO_API UCAction : public UObject
 
 protected:
 	UPROPERTY(Transient)
-	EActionType ActionType = EActionType::Max;
+	bool bIsActive = false;
 
 	UPROPERTY(Transient)
-	bool bIsAction = false;
+	TSet<FName> AllowInterventionWindowKeys;
+
+protected:
+	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Action
+	uint32 CachedSerial_ActivePlay = 0;	// Cached Serial of Active Play Action
 
 protected:
 	UPROPERTY(Transient)
-	TArray<FActionData> ActionDatas_Injected;
+	FActionDataKey ActiveDataKey_Cached = FActionDataKey();
+
+	UPROPERTY(Transient)
+	FActionData ActiveData_Cached = FActionData();
+
+	UPROPERTY(Transient)
+	UAnimMontage* ActiveMontage_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	EActionStopReason LastStopReason_Cached = EActionStopReason::None;
 
 protected:
-	/* === Injection Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCActionComponent* OwnerActionComp_Injected = nullptr;
+
 protected:
-	/* === Cached Objects === */
 	UPROPERTY(Transient)
 	class UCWeaponComponent* WeaponComp_Cached = nullptr;
-
-	UPROPERTY(Transient)
-	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
 
 public:
-	virtual void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas);
-	virtual void Tick(float InDeltaTime) {};
+	// Initialize / Tick
+	virtual void InitializeAction(ACharacter* InOwnerCharacter, class UCActionComponent* InOwnerActionComp);
+	virtual void Tick(float InDeltaTime) {}
 
 public:
-	EActionType GetActionType() const;
-	FActionContext GetActionContext() const;
+	// State Query
+	bool IsActive() const { return bIsActive; }
 
 public:
-	void SetActionType(EActionType InActionType);
+	const FActionDataKey& GetActiveDataKey() const { return ActiveDataKey_Cached; }
+	const FActionData& GetActiveData() const { return ActiveData_Cached; }
 
 public:
-	/* === Action Arbitration === */
-	virtual EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const;
+	// Decision
+	virtual FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const;
+
+protected:
+	bool IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const;
+	bool IsIncomingActionType(const FExecutionInterventionQuery& InQuery, EActionType InType) const;
+
+protected:
+	bool CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const;
+	bool CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const;
+	bool TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const;
 
 public:
-	virtual bool Start();
-	virtual bool ApplyChain(const FActionExecutionQuery& InActionExecuteQuery);
-
-public:
+	// Lifecycle
+	virtual bool Start(const FActionData& InData);
+	virtual void Stop(EActionStopReason InStopReason);
 	virtual void Complete();
-	virtual void Abort(EActionAbortReason InActionAbortReason);
 
 public:
+	virtual bool ReserveChain(const FActionData& InData);
+	virtual void ConsumeChain();
+
+protected:
+	virtual void ClearRuntime();
+	virtual void CleanupRuntimeEffects();
+
+protected:
+	// Montage Lifecycle
+	virtual bool PlayMontage(const FActionData& InData);
+	virtual void StopMontage(float InBlendOutTime = 0.1f);
+	virtual bool BindMontageEndDelegate();
+
+protected:
+	UFUNCTION()
+	void OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial);
+	bool CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const;
+
+public:
+	// Notify
+	void HandleNotifyCommand(EActionNotifyCommand InCommand);
+
+protected:
+	virtual void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand);
+
+public:
+	// Feedback
+	virtual void HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None);
+
+protected:
+	void PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const;
+	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+
+protected:
+	// Action-only hit context
 	void PushHitContext();
 	void ClearHitContext();
-
-public:
-	void RequestFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey = NAME_None) const;
-
-protected:
 	virtual FActionContext BuildActionContext() const;
-	virtual FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
-
-protected:
-	void EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex = INDEX_NONE) const;
 
 public:
-	/* === [IN] Custom Delgate Events === */
-	// [Legacy delegate] CWeaponActor
+	// Intervention Window
+	void OpenAllowInterventionWindow(FName InWindowKey);
+	void CloseAllowInterventionWindow(FName InWindowKey);
+
+public:
+	// Intervention Match
+	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const; 	// Incoming API
+	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
+
+private:
+	bool MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const;
+	bool MatchesAllowInterventionRules(const TArray<FExecutionInterventionAllowRule>& InRules, const FExecutionParticipant& InParticipant) const;
+	bool IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionAllowRule& InRule) const;
+	bool MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const;
+
+protected:
+	// Event
+	void EmitActionEvent(EActionEventType InEventType, int32 InActionIndex = INDEX_NONE) const;
+
+public:
+	// [Legacy delegate]
 	UFUNCTION()
 	virtual void OnWeaponActorCollisionEnabled() {};
 
 	UFUNCTION()
 	virtual void OnWeaponActorCollisionDisabled() {};
 
-	// [Legacy delegate] CWeaponActor
 	UFUNCTION()
 	virtual void OnWeaponActorBeginOverlap(AActor* InAttackerActor, AActor* InDamageCauser, UShapeComponent* InAttackCollision, AActor* InTargetActor, UPrimitiveComponent* InHitComponent, int32 InOtherBodyIndex, bool InbFromSweep, const FHitResult& InSweepResult) {};
 

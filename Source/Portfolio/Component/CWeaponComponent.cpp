@@ -23,7 +23,7 @@ void UCWeaponComponent::BeginPlay()
 	CurrentWeaponType = EWeaponType::Unarmed;
 }
 
-UObject* UCWeaponComponent::GetWeaponActor()
+ACWeaponActor* UCWeaponComponent::GetWeaponActor()
 {
 	return IsValid(WeaponActor) ? WeaponActor : nullptr;
 }
@@ -79,6 +79,16 @@ void UCWeaponComponent::ClearContext()
 	provider->SetLastOverlapContext(FOverlapContext());
 	provider->SetLastWeaponContext(FWeaponContext());
 	provider->SetLastActionContext(FActionContext());
+}
+
+void UCWeaponComponent::ClearRuntimeWeaponState()
+{
+	ClearContext();
+
+	if (IsValid(WeaponActor))
+	{
+		WeaponActor->CollisionDisabled();
+	}
 }
 
 void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)

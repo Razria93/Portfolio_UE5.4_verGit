@@ -36,6 +36,11 @@ void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InAct
 	ExecuteSFXFeedbacks(InActionFeedbackRequest);
 }
 
+void UCActionFeedbackComponent::ClearRuntimeFeedback()
+{
+	ToggleTrailActive(false);
+}
+
 bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
 	if (!IsValid(OwnerActor_Cached)) return false;
@@ -135,7 +140,7 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 
 	if (!bestData)
 	{
-		FLog::Log(TEXT("[ActionFeedback] Trail | No Matched Data")); // Invalid
+		// FLog::Log(TEXT("[ActionFeedback] Trail | No Matched Data")); // Invalid
 		return;
 	}
 
@@ -145,7 +150,7 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 		return;
 	}
 
-	FLog::Log(TEXT("[ActionFeedback] Trail | Matched Data")); // Valid
+	// FLog::Log(TEXT("[ActionFeedback] Trail | Matched Data")); // Valid
 	ToggleTrailActive(bestData->bTrailActive);
 }
 
@@ -176,7 +181,7 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 
 	if (matchedDatas.Num() <= 0)
 	{
-		FLog::Log(TEXT("[ActionFeedback] VFX | No Matched Data"));
+		// FLog::Log(TEXT("[ActionFeedback] VFX | No Matched Data"));
 		return;
 	}
 
@@ -192,7 +197,7 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 			continue;
 		}
 
-		FLog::Log(TEXT("[ActionFeedback] VFX | Matched Data"));
+		// FLog::Log(TEXT("[ActionFeedback] VFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayActionVFX(*data);
 	}
@@ -225,7 +230,7 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 
 	if (matchedDatas.Num() <= 0)
 	{
-		FLog::Log(TEXT("[ActionFeedback] SFX | No Matched Data"));
+		// FLog::Log(TEXT("[ActionFeedback] SFX | No Matched Data"));
 		return;
 	}
 
@@ -241,7 +246,7 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 			continue;
 		}
 
-		FLog::Log(TEXT("[ActionFeedback] SFX | Matched Data"));
+		// FLog::Log(TEXT("[ActionFeedback] SFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayActionSFX(*data);
 	}

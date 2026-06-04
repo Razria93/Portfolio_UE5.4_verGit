@@ -5,12 +5,12 @@
 #include "Type/CActionOrchestrationStructure.h"
 #include "CActionOrchestratorComponent.generated.h"
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionOrchestratorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UCActionOrchestratorComponent();
 
 private:
@@ -27,35 +27,69 @@ private:
 	class UCStateComponent* StateComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCHealthComponent* HealthComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
+	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
 protected:
 	void BeginPlay() override;
 
 public:
-	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InActionRequest);
-	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InActionRequest);
-	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InActionRequest);
+	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InIncomingRequest);
+	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest);
+	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InIncomingRequest);
 
 private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	FActionRequestResult BuildRequestResult(const FActionExecutionResult& InActionExecutionResult) const;
+	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	FActionRequestResult BuildHandledResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildStartedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildChainedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildEnqueuedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildInterruptedResult(EActionType InResolvedActionType = EActionType::Max) const;
-	FActionRequestResult BuildRejectedResult(EActionRequestRejectReason InRejectReason) const;
-	FActionRequestResult BuildIgnoredResult() const;
+	FActionRequestResult ExecuteActionCandidate(const FActionCandidate& InIncomingCandidate);
 
 private:
-	EActionType ResolveEquipmentActionType(const FEquipmentActionRequest& InActionRequest) const;
-	EActionType ResolveCombatActionType(const FCombatActionRequest& InActionRequest) const;
+	bool ResolveActionContext(const FActionCandidate& InIncomingCandidate, FActionExecutionContext& OutIncomingContext, EActionRequestRejectReason& OutRejectReason) const;
+
+	// Inner API
+	bool ResolveActionData(const FActionDataKey& InIncomingDataKey, FActionData& OutIncomingData) const;
+	class UCAction* ResolveActionExecutor(const FActionData& InIncomingData) const;
+
+private:
+	FExecutionDecisionQuery BuildDecisionQuery(const FActionExecutionContext& InIncomingContext) const;
+
+	// Inner API
+	FExecutionSnapshot BuildSnapshot() const;
+	FExecutionParticipant BuildIncomingActionParticipant(const FActionExecutionContext& InIncomingContext) const;
+	FExecutionParticipant BuildActiveExecutionParticipant() const;
+
+private:
+	FExecutionDecisionResult BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EActionRequestRejectReason& OutRejectReason) const;
+
+private:
+	FActionExecutionResult BuildActionExecutionResult(const FActionExecutionContext& InContext, const FExecutionDecisionResult& InDecisionResult, EActionRequestRejectReason InRejectReason) const;
+
+private:
+	void ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;
+
+	// Inner API
+	void ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;
+
+	bool BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const;
+	bool BuildInterventionDirective(const FExecutionInterventionQuery& InQuery, EExecutionStopSource InStopSource, EExecutionAfterStopAction InAfterStopAction, FExecutionInterventionDirective& OutDirective) const;
+
+private:
+	FActionRequestResult DispatchActionDecision(const FActionExecutionResult& InResult);
+
+private:
+	EActionRequestResultType ConvertDecisionToResultType(const FActionExecutionResult& InResult) const;
+	FActionRequestResult BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason = EActionRequestRejectReason::None) const;
+
+private:
+	void PrintActionRequestResult(const FActionRequestResult& InResult) const;
 };

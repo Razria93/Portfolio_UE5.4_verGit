@@ -10,16 +10,11 @@ class PORTFOLIO_API UCAction_Equip : public UCAction
 	GENERATED_BODY()
 
 public:
-	/* === Action Arbitration === */
-	EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const override;
+	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
-public:
-	bool Start() override;
+protected:
+	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
 
-public:
-	void Complete() override;
-	void Abort(EActionAbortReason InActionAbortReason) override;
-
-public:
+private:
 	void AttachWeapon();
 };

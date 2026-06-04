@@ -54,7 +54,7 @@ public:
 	FORCEINLINE EWeaponType GetCurrentWeaponType() { return CurrentWeaponType; }
 
 public:
-	class UObject* GetWeaponActor();
+	class ACWeaponActor* GetWeaponActor();
 
 public:
 	void AttachWeaponToHand();
@@ -67,6 +67,7 @@ public:
 public:
 	void PushContext(const FActionContext& InActionContext);
 	void ClearContext();
+	void ClearRuntimeWeaponState();
 
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);

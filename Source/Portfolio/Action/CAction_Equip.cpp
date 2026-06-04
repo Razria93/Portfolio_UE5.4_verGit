@@ -5,61 +5,56 @@
 
 #include "Component/CWeaponComponent.h"
 
-#include "Type/CWeaponStructure.h"
-
-EActionExecutionDecision UCAction_Equip::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
+FExecutionDecisionResult UCAction_Equip::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
-	if (!IsValid(WeaponComp_Cached)) return EActionExecutionDecision::Reject;
+	FExecutionDecisionResult result;
 
-	if (!WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed)) return EActionExecutionDecision::Reject;
-
-	if (!ActionDatas_Injected.IsValidIndex(0)) return EActionExecutionDecision::Reject;
-	if (!IsValid(ActionDatas_Injected[0].Montage)) return EActionExecutionDecision::Reject;
-
-	if (InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle)
-	{
-		return EActionExecutionDecision::Start;
-	}
-
-	return EActionExecutionDecision::Reject;
-}
-
-bool UCAction_Equip::Start()
-{
-	if (!Super::Start()) return false;
-
-	ActionDatas_Injected[0].BeginPlayMontage(OwnerCharacter_Injected);
-
-	return true;
-}
-
-void UCAction_Equip::Complete()
-{
-	if (!IsValid(OwnerCharacter_Injected)) return;
-
-	if (ActionDatas_Injected.IsValidIndex(0) && IsValid(ActionDatas_Injected[0].Montage))
-	{
-		ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
-	}
-
-	Super::Complete();
-}
-
-void UCAction_Equip::Abort(EActionAbortReason InActionAbortReason)
-{
 	if (!IsValid(OwnerCharacter_Injected))
 	{
-		Super::Abort(InActionAbortReason);
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!IsValid(WeaponComp_Cached))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!IsIncomingActionType(InQuery, EActionType::Equip))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!CanResolveIndependentRelationship(InQuery))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = EExecutionRelationship::Independent;
+	return result;
+}
+
+void UCAction_Equip::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
+{
+	switch (InCommand)
+	{
+	case EActionNotifyCommand::Equip:
+		AttachWeapon();
+		return;
+
+	default:
 		return;
 	}
-
-	if (ActionDatas_Injected.IsValidIndex(0) && IsValid(ActionDatas_Injected[0].Montage))
-	{
-		ActionDatas_Injected[0].EndPlayMontage(OwnerCharacter_Injected);
-	}
-
-	Super::Abort(InActionAbortReason);
 }
 
 void UCAction_Equip::AttachWeapon()

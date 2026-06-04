@@ -20,7 +20,7 @@ void UCApplyDamageComponent::BeginPlay()
 
 void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
 {
-	FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCApplyDamageComponent|NotifyHitWindowOpened]"), TEXT("InHitWindowId"), InHitWindowId));
+	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCApplyDamageComponent|NotifyHitWindowOpened]"), TEXT("InHitWindowId"), InHitWindowId));
 
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
@@ -36,7 +36,7 @@ void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32
 
 void UCApplyDamageComponent::NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId)
 {
-	FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCApplyDamageComponent|NotifyHitWindowClosed]"), TEXT("InHitWindowId"), InHitWindowId));
+	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCApplyDamageComponent|NotifyHitWindowClosed]"), TEXT("InHitWindowId"), InHitWindowId));
 
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
@@ -57,7 +57,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 {
 	if (!ValidateRequest(InHitContext))
 	{
-		PrintApplyDamageRejectedSummaryInfo(InHitContext, EApplyDamageRejectReason::InvalidRequest);
+		// PrintApplyDamageRejectedSummaryInfo(InHitContext, EApplyDamageRejectReason::InvalidRequest);
 		return;
 	}
 
@@ -67,14 +67,14 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 	if (!ValidateContext(applyDamageContext))
 	{
 		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
-		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		// PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
 
 	if (!CanApplyDamage(applyDamageContext))
 	{
 		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
-		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		// PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
 
@@ -82,7 +82,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 	if (!applyDamageContext.bAccepted)
 	{
 		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
-		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		// PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
 
@@ -90,7 +90,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 	if (!applyDamageContext.bAccepted)
 	{
 		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
-		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		// PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
 
@@ -98,12 +98,12 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 	if (!applyDamageContext.bAccepted)
 	{
 		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
-		PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
+		// PrintApplyDamageRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
 
 	const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
-	PrintApplyDamageSummaryInfo(applyDamageContext.HitContext, applyDamageResult);
+	// PrintApplyDamageSummaryInfo(applyDamageContext.HitContext, applyDamageResult);
 }
 
 

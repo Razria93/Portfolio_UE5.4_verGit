@@ -298,7 +298,7 @@ void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionTy
 {
 	switch (InActionEventType)
 	{
-	case EActionEventType::ChainWindowOpened:
+	case EActionEventType::ReserveChainWindowOpened:
 	{
 		RequestChainCombatAction(InActionType, InActionIndex);
 		break;
@@ -316,7 +316,7 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 	if (combatActionIntent == ECombatActionIntent::None) return;
 
 	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent);
-	if (!actionRequestResult.IsAccepted() || actionRequestResult.ResultType != EActionRequestResultType::Chained) return;
+	if (!actionRequestResult.IsAccepted() || actionRequestResult.ResultType != EActionRequestResultType::Reserved) return;
 }
 
 // Mapping API (ActionData -> Intent)

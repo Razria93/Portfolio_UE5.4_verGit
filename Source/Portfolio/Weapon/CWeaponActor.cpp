@@ -109,7 +109,7 @@ void ACWeaponActor::ToggleTrailActive(bool bEnable)
 {
 	if (!IsValid(TrailComponent)) return;
 
-	PrintTrailInfo(bEnable);
+	// PrintTrailInfo(bEnable);
 
 	if (bEnable)
 	{
@@ -213,7 +213,7 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	FHitContext hitContext = BuildHitContext(overlapContext);
 
-	PrintBeginOverlapContextInfo(hitContext);
+	// PrintBeginOverlapContextInfo(hitContext);
 
 	// Legacy delegate
 	if (OnWeaponActorBeginOverlap.IsBound())

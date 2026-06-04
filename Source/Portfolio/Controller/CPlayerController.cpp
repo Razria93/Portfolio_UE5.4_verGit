@@ -39,8 +39,9 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ACPlayerController::PressJump);
 	InputComponent->BindAction("Jump", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseJump);
 
-	InputComponent->BindAction("ComboAction", EInputEvent::IE_Pressed, this, &ACPlayerController::PressComboAction);
 	InputComponent->BindAction("Sword", EInputEvent::IE_Pressed, this, &ACPlayerController::PressSwordToggle);
+	InputComponent->BindAction("ComboAction", EInputEvent::IE_Pressed, this, &ACPlayerController::PressComboAction);
+	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
 }
 
 void ACPlayerController::InputLookYaw(float inAxisValue)
@@ -119,4 +120,12 @@ void ACPlayerController::PressComboAction()
 	if (!IsValid(player)) return;
 	
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::ComboAttack);
+}
+
+void ACPlayerController::PressDodge()
+{
+	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	if (!IsValid(player)) return;
+
+	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
 }

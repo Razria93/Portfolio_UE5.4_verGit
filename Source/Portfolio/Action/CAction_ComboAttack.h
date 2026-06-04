@@ -12,41 +12,33 @@ class PORTFOLIO_API UCAction_ComboAttack : public UCAction
 
 private:
 	UPROPERTY(Transient)
-	int32 ActionIndex = 0;
-
-private:
-	UPROPERTY(Transient)
-	bool bChainWindowOpened = false;
+	bool bReserveChainWindowOpened = false;
 
 	UPROPERTY(Transient)
-	bool bHasChainedInput = false;
+	bool bHasReservingChain = false;
+
+	UPROPERTY(Transient)
+	FActionData ReservingChainData = FActionData();
 
 public:
-	void InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas) override;
+	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 public:
-	/* === Action Arbitration === */
-	EActionExecutionDecision DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const override;
-
-public:
-	bool Start() override;
-	bool ApplyChain(const FActionExecutionQuery& InActionExecuteQuery) override;
-
-public:
-	void Complete() override;
-	void Abort(EActionAbortReason InActionAbortReason) override;
-
-public:
-	void OpenChainWindow();
-	void CloseChainWindow();
-
-public:
-	void AdvanceCombo();
+	bool ReserveChain(const FActionData& InData) override;
+	void ConsumeChain() override;
 
 protected:
-	FActionContext BuildActionContext() const override;
-	FActionFeedbackRequest BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const override;
+	void ClearRuntime() override;
+
+protected:
+	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
+
+public:
+	void OpenReserveChainWindow();
+	void CloseReserveChainWindow();
 
 private:
-	bool CanAdvanceCombo() const;
+	bool CanResolveChain(const FExecutionDecisionQuery& InQuery) const;	// CheckTiming: Input
+	bool CanReserveChain(const FActionData& InData) const;				// CheckTiming: Reserve
+	bool CanConsumeChain(const FActionData& InData) const;				// CheckTiming: Consume
 };

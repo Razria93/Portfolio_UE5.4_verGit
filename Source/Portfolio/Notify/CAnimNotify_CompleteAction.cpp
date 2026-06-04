@@ -1,8 +1,6 @@
 #include "Notify/CAnimNotify_CompleteAction.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CActionComponent.h"
 
 UCAnimNotify_CompleteAction::UCAnimNotify_CompleteAction()
@@ -18,18 +16,8 @@ void UCAnimNotify_CompleteAction::Notify(USkeletalMeshComponent* MeshComp, UAnim
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!CanProcessActionNotify(actionComp)) return;
 
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
-	if (!actionComp) return;
-
-	UCAction* currentAction = actionComp->GetCurrentAction();
-	if (!currentAction) return;
-
-	if (!CanProcessActionNotify(currentAction)) return;
-
-	actionComp->CompleteCurrentAction();
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::Complete);
 }

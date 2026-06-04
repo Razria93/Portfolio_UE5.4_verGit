@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CActionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CActionComponent.generated.h"
 
@@ -16,21 +17,34 @@ class PORTFOLIO_API UCActionComponent : public UActorComponent
 public:
 	UCActionComponent();
 
+
 	// === ActionData ======================================= //
 private:
-	UPROPERTY(EditAnywhere, Category = "Action")
-	TArray<FActionDefinition> ActionDefinitions;
+	UPROPERTY(EditAnywhere, Category = "Action|Data")
+	TArray<FActionData> ActionDatas;
 
 	// ====================================================== //
 
 private:
 	UPROPERTY(Transient)
-	TMap<EActionType, class UCAction*> ActionContainer;
+	TMap<FActionDataKey, FActionData> ActionDataMap;
+
+	UPROPERTY(Transient)
+	TMap<class UClass*, class UCAction*> ActionExecutorMap;
 
 private:
-	/* === State === */
+	/* === Active Action Context === */
 	UPROPERTY(Transient)
-	EActionType CurrentActionType = EActionType::Max;
+	EActionType ActiveActionType = EActionType::Max;
+
+	UPROPERTY(Transient)
+	int32 ActiveActionIndex = INDEX_NONE;
+
+	UPROPERTY(Transient)
+	FActionData ActiveActionData = FActionData();
+
+	UPROPERTY(Transient)
+	class UCAction* ActiveActionExecutor = nullptr;
 
 private:
 	/* === Cached Objects === */
@@ -38,9 +52,19 @@ private:
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCMovementComponent* MovementComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCStateComponent* StateComp_Cached = nullptr;
 
+	UPROPERTY(Transient)
+	class UCHealthComponent* HealthComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCReactionComponent* ReactionComp_Cached = nullptr;
+
 public:
+	/* === Delegate === */
 	FActionTypeChanged OnActionTypeChanged;
 	FActionEventSignature OnActionEvent;
 
@@ -51,44 +75,74 @@ public:
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	/* === Check / Query === */
-	FORCEINLINE bool CheckCurrentActionType(EActionType InNewActionType) const { return CurrentActionType == InNewActionType; }
+	FORCEINLINE bool IsActiveActionType(EActionType InType) const { return ActiveActionType == InType; }
 
 public:
-	/* === Getter === */
-	FORCEINLINE EActionType GetCurrentActionType() const { return CurrentActionType; }
+	bool CanCommitChain(const UCAction* InAction, const FActionData& InData) const;
 
 public:
-	class UCAction* GetCurrentAction() const;
+	bool IsActive() const;
 
 public:
-	void BroadcastActionEvent(EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
+	EActionType GetActiveActionType() const;
+	int32 GetActiveActionIndex() const;
+	bool GetActiveActionData(FActionData& OutData) const;
+	class UCAction* GetActiveActionExecutor() const;
 
 public:
-	FActionExecutionResult ExecuteAction(EActionType IncomingActionType);
+	bool ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData);
+	class UCAction* ResolveActionExecutor(const FActionData& InData);
 
 public:
-	void CompleteCurrentAction();
-	void AbortCurrentAction(EActionAbortReason InActionAbortReason);
+	bool ApplyActionDecision(const FActionExecutionResult& InResult);
+	bool RequestStopActiveAction(const FExecutionInterventionDirective& InDirective);
+
+public:
+	bool HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData);
+	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InFinishReason);
+
+public:
+	void HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand);
+
+public:
+	void HandleActionAllowInterventionWindowBegin(FName InWindowKey);
+	void HandleActionAllowInterventionWindowEnd(FName InWindowKey);
+
+public:
+	void HandleActionFeedback(FName InTriggerKey);
+	void HandleActionFeedbackWindowBegin(FName InTriggerKey);
+	void HandleActionFeedbackWindowEnd(FName InTriggerKey);
+
+public:
+	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
 
 private:
-	bool StartAction(class UCAction* InAction, EActionType InActionType);
-	bool ApplyActionChain(class UCAction* InAction, const FActionExecutionQuery& InActionExecuteQuery);
+	// Temporary data build API (Move to DataAsset).
+	void BuildActionDataMap(bool bRebuildAll);
+	void BuildActionExecutorMap(bool bRebuildAll);
 
 private:
-	FActionExecutionQuery BuildActionExecutionQuery(EActionType InIncomingActionType, class UCAction* InIncomingAction) const;
-	FActionExecutionResult BuildActionExecutionResult(EActionExecutionDecision InActionExecutionDecision, EActionType InActionType) const;
+	UCAction* AddActionExecutor(const TSubclassOf<class UCAction> InSubClass);
+	UCAction* FindActionExecutor(const UClass* InClass);
 
 private:
-	void EnterActionState(EActionType InActionType);
-	void ExitActionState();
+	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
 
 private:
-	void ChangeActionType(EActionType InNewActionType);
+	bool StartAction(const FActionExecutionContext& InContext);
+	bool ReserveAction(const FActionExecutionContext& InContext);
+	bool StopActiveAction(const FExecutionInterventionDirective& InDirective);
+	bool EndActiveAction(EActionFinishReason InFinishReason);
 
 private:
-	bool CreateAction(ACharacter* InOwnerCharacter, const FActionDefinition& InActionDefinition);
+	void SetActiveActionContext(const FActionExecutionContext& InContext);
+	void ClearActiveActionContext();
 
 private:
-	void PrintActionExecutionQuery(const FActionExecutionQuery& InActionExecutionQuery) const;
+	void EnterActionState(const FActionData& InData);
+	void ExitActionState(const FActionData& InData);
+
+private:
+	EActionStopReason ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const;
+	EActionFinishReason ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const;
 };

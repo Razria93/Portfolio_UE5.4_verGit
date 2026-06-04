@@ -7,7 +7,7 @@
 
 void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHitStopRequest)
 {
-	FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] Request HitStop"));
+	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] Request HitStop"));
 
 	switch (InHitStopRequest.HitStopAudience)
 	{
@@ -61,8 +61,8 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &UCWorldSubsystem_CombatFeedback::RestoreHitStop, InActor);
 
-	FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] ApplyHitStop"));
-	PrintHitStopConsumeInfo(InActor, InDuration, InDilation);
+	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] ApplyHitStop"));
+	// PrintHitStopConsumeInfo(InActor, InDuration, InDilation);
 
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, InDuration, false);
 	ActiveHitStopMap.Add(InActor, handle);
@@ -76,8 +76,8 @@ void UCWorldSubsystem_CombatFeedback::RestoreHitStop(AActor* InActor)
 		InActor->CustomTimeDilation = cachedDilation ? *cachedDilation : 1.f;
 	}
 
-	FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] RestoreHitStop"));
-	PrintHitStopConsumeInfo(InActor, 1.f, 0.f);
+	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] RestoreHitStop"));
+	// PrintHitStopConsumeInfo(InActor, 1.f, 0.f);
 
 	// Restore InActor
 	ActiveHitStopMap.Remove(InActor);

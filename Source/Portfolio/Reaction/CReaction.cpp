@@ -6,298 +6,396 @@
 #include "Component/CReactionComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
-void UCReaction::Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComponent)
+void UCReaction::Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComp)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
-	check(OwnerCharacter_Injected);
+	OwnerReactionComp_Injected = InOwnerReactionComp;
 
-	OwnerReactionComp_Injected = InOwnerReactionComponent;
-	check(OwnerReactionComp_Injected);
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	ReactionFeedbackComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>();
+	check(ReactionFeedbackComp_Cached);
 }
 
-bool UCReaction::IsValidMinimal() const
+FExecutionDecisionResult UCReaction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!IsValid(OwnerReactionComp_Injected)) return false;
+	FExecutionDecisionResult result;
 
-	const USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	if (!IsValid(meshComp)) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
 
-	const UAnimInstance* animInstance = meshComp->GetAnimInstance();
-	if (!IsValid(animInstance)) return false;
+	if (!InQuery.IncomingPart.IsReactionParticipant())
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
 
-	return true;
+	EExecutionRelationship relationship = EExecutionRelationship::None;
+
+	if (!TryResolveIndependentOrExclusiveRelationship(InQuery, relationship))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = relationship;
+	return result;
 }
 
-bool UCReaction::Start(const FReactionData& InReactionData)
+bool UCReaction::IsIncomingReactionType(const FExecutionDecisionQuery& InQuery, EReactionType InType) const
 {
-	if (!IsValidMinimal()) return false;
-	if (!InReactionData.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
 
-	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	const FReactionExecutionContext& incomingContext = InQuery.IncomingPart.GetReactionContext();
 
-	const float playRate = FMath::Max(0.01f, InReactionData.PlayRate);
-	const float duration = animInstance->Montage_Play(InReactionData.Montage, playRate);
-	if (duration <= 0.f) return false;
+	return incomingContext.ReactionDataKey.ReactionType == InType;
+}
 
-	bIsReaction = true;
-	ActiveReactionData_Cached = InReactionData;
-	ActiveReactionMontage_Cached = InReactionData.Montage;
+bool UCReaction::IsIncomingReactionType(const FExecutionInterventionQuery& InQuery, EReactionType InType) const
+{
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
+
+	const FReactionExecutionContext& incomingContext = InQuery.IncomingPart.GetReactionContext();
+
+	return incomingContext.ReactionDataKey.ReactionType == InType;
+}
+
+bool UCReaction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// Idle && No ActivePart: Idle
+	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
+}
+
+bool UCReaction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
+}
+
+bool UCReaction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const
+{
+	OutRelationship = EExecutionRelationship::None;
+
+	// Idle && No ActivePart: Idle
+	if (CanResolveIndependentRelationship(InQuery))
+	{
+		OutRelationship = EExecutionRelationship::Independent;
+		return true;
+	}
+
+	if (CanResolveExclusiveRelationship(InQuery))
+	{
+		OutRelationship = EExecutionRelationship::Exclusive;
+		return true;
+	}
+
+	return false;
+}
+
+bool UCReaction::Start(const FReactionData& InData)
+{
+	if (!InData.IsValidMinimal()) return false;
+	if (bIsActive) return false;
+
+	ActiveDataKey_Cached = InData.ReactionDataKey;
+	ActiveData_Cached = InData;
+	ActiveMontage_Cached = InData.Montage;
 	LastStopReason_Cached = EReactionStopReason::None;
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionStart);
+	if (!PlayMontage(InData))
+	{
+		ClearRuntime();
+		return false;
+	}
 
-	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
-	CachedSerial_ActivePlay = thisPlaySerial;
+	if (!BindMontageEndDelegate())
+	{
+		StopMontage(0.f);
+		ClearRuntime();
+		return false;
+	}
 
-	FOnMontageEnded montageEnd;
-	montageEnd.BindUObject(this, &UCReaction::OnMontageEnd, thisPlaySerial); // Capture Serial at this time
-	animInstance->Montage_SetEndDelegate(montageEnd, ActiveReactionMontage_Cached);
+	bIsActive = true;
+
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Start);
+	PlayFeedbackRequest(feedbackRequest);
 
 	return true;
 }
 
 void UCReaction::Stop(EReactionStopReason InStopReason)
 {
-	if (!bIsReaction) return;
-
-	if (InStopReason == EReactionStopReason::None)
-	{
-		LastStopReason_Cached = EReactionStopReason::Aborted;
-		FinishAborted();
-		return;
-	}
+	if (!bIsActive) return;
+	if (InStopReason == EReactionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
 
-	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	UAnimInstance* animInstance = IsValid(meshComp) ? meshComp->GetAnimInstance() : nullptr;
-
-	if (!IsValid(animInstance) || !IsValid(ActiveReactionMontage_Cached))
-	{
-		LastStopReason_Cached = EReactionStopReason::Aborted;
-		FinishAborted();
-		return;
-	}
-
-	// Stop Montage
-	animInstance->Montage_Stop(0.1f, ActiveReactionMontage_Cached);
-
-	PrintStopReasonInfo(InStopReason);
-	PrintReactionExecutorRuntimeInfo();
+	EReactionFeedbackTiming feedbackTiming = EReactionFeedbackTiming::None;
+	EReactionFinishReason finishReason = EReactionFinishReason::None;
 
 	switch (InStopReason)
 	{
 	case EReactionStopReason::Interrupted:
 	{
-		FinishInterrupted();
-		return;
+		feedbackTiming = EReactionFeedbackTiming::Interrupt;
+		finishReason = EReactionFinishReason::Interrupted;
+		break;
 	}
-
-	case EReactionStopReason::Cancelled:
-	{
-		FinishCancelled();
-		return;
-	}
-
-	case EReactionStopReason::Aborted:
-	{
-		FinishAborted();
-		return;
-	}
-
 	default:
-		LastStopReason_Cached = EReactionStopReason::Aborted;
-		FinishAborted();
-		return;
+		finishReason = EReactionFinishReason::Ignored;
+		break;
 	}
-}
 
-void UCReaction::FinishCompleted()
-{
-	if (!bIsReaction) return;
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(feedbackTiming);
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionCompleted);
+	StopMontage(0.1f);
+	CleanupRuntimeEffects();
+	ClearRuntime();
 
-	Clear();
+	PlayFeedbackRequest(feedbackRequest);
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Completed);
+		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, finishReason);
 	}
 }
 
-void UCReaction::FinishInterrupted()
+void UCReaction::Complete()
 {
-	if (!bIsReaction) return;
+	if (!bIsActive) return;
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionInterrupted);
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Complete);
 
-	Clear();
+	CleanupRuntimeEffects();
+	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Interrupted);
+		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
 	}
 }
 
-void UCReaction::FinishCancelled()
+void UCReaction::ClearRuntime()
 {
-	if (!bIsReaction) return;
+	bIsActive = false;
 
-	RequestFeedback(EReactionFeedbackTiming::ReactionCancelled);
-
-	Clear();
-
-	if (IsValid(OwnerReactionComp_Injected))
-	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Cancelled);
-	}
-}
-
-void UCReaction::FinishAborted()
-{
-	if (!bIsReaction) return;
-
-	PrintAbortedStopReasonInfo();
-
-	Clear();
-
-	if (IsValid(OwnerReactionComp_Injected))
-	{
-		OwnerReactionComp_Injected->HandleReactionFinished(this, EReactionFinishReason::Aborted);
-	}
-}
-
-void UCReaction::Clear()
-{
-	bIsReaction = false;
-
-	ActiveReactionData_Cached = FReactionData();
-	ActiveReactionMontage_Cached = nullptr;
+	ActiveDataKey_Cached = FReactionDataKey();
+	ActiveData_Cached = FReactionData();
+	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EReactionStopReason::None;
 
-	bInterruptible = false;
-	bCancelable = false;
+	AllowInterventionWindowKeys.Reset();
 }
 
-void UCReaction::OnReactionControlWindowBegin(EReactionControlWindowType InReactionWindowType)
+void UCReaction::CleanupRuntimeEffects()
 {
-	switch (InReactionWindowType)
+	if (IsValid(ReactionFeedbackComp_Cached))
 	{
-	case EReactionControlWindowType::Interruptible:
+		ReactionFeedbackComp_Cached->ClearRuntimeFeedback();
+	}
+}
+
+bool UCReaction::PlayMontage(const FReactionData& InData)
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(InData.Montage)) return false;
+
+	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
+
+	return duration > 0.0f;
+}
+
+void UCReaction::StopMontage(float InBlendOutTime)
+{
+	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(ActiveMontage_Cached)) return;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return;
+
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return;
+
+	animInstance->Montage_Stop(InBlendOutTime, ActiveMontage_Cached);
+}
+
+bool UCReaction::BindMontageEndDelegate()
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return false;
+
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return false;
+	if (!IsValid(ActiveMontage_Cached)) return false;
+
+	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
+	CachedSerial_ActivePlay = thisPlaySerial;
+
+	FOnMontageEnded montageEnd;
+	montageEnd.BindUObject(this, &UCReaction::OnMontageEnd, thisPlaySerial);
+	animInstance->Montage_SetEndDelegate(montageEnd, ActiveMontage_Cached);
+
+	return true;
+}
+
+void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
+{
+	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
+	if (bInterrupted)
 	{
-		SetInterruptible(true);
-		break;
+		FLog::Log(TEXT("[Reaction] Unexpected montage interruption."));
+		return;
 	}
 
-	case EReactionControlWindowType::Cancelable:
-	{
-		SetCancelable(true);
-		break;
-	}
+	Complete();
+}
 
-	case EReactionControlWindowType::ImmuneToReaction:
+bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
+{
+	if (!bIsActive) return false;
+	if (InSerial != CachedSerial_ActivePlay) return false;
+	if (InMontage != ActiveMontage_Cached) return false;
+
+	return true;
+}
+
+void UCReaction::HandleNotifyCommand(EReactionNotifyCommand InCommand)
+{
+	switch (InCommand)
 	{
-		SetInterruptible(false);
-		SetCancelable(false);
-		break;
-	}
+	case EReactionNotifyCommand::Complete:
+		Complete();
+		return;
 
 	default:
 		break;
 	}
+
+	HandleSpecificNotifyCommand(InCommand);
 }
 
-void UCReaction::OnReactionControlWindowEnd(EReactionControlWindowType InReactionWindowType)
+void UCReaction::HandleSpecificNotifyCommand(EReactionNotifyCommand InCommand)
 {
-	switch (InReactionWindowType)
-	{
-	case EReactionControlWindowType::Interruptible:
-	{
-		SetInterruptible(false);
-		break;
-	}
-
-	case EReactionControlWindowType::Cancelable:
-	{
-		SetCancelable(false);
-		break;
-	}
-
-	case EReactionControlWindowType::ImmuneToReaction:
-		break;
-
-	default:
-		break;
-	}
+	// Specific Reactions override this API.
 }
 
-void UCReaction::OnReactionFeedbackWindowBegin(FName InTriggerKey)
+void UCReaction::HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey)
 {
-	if (InTriggerKey.IsNone()) return;
-
-	RequestFeedback(EReactionFeedbackTiming::WindowBegin, InTriggerKey);
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(InTiming, InTriggerKey);
+	PlayFeedbackRequest(feedbackRequest);
 }
 
-void UCReaction::OnReactionFeedbackWindowEnd(FName InTriggerKey)
-{
-	if (InTriggerKey.IsNone()) return;
-
-	RequestFeedback(EReactionFeedbackTiming::WindowEnd, InTriggerKey);
-}
-
-void UCReaction::OnReactionFeedback(FName InTriggerKey)
-{
-	if (InTriggerKey.IsNone()) return;
-
-	RequestFeedback(EReactionFeedbackTiming::Notify, InTriggerKey);
-}
-
-bool UCReaction::WantToInterrupt(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return true;
-}
-
-bool UCReaction::WantToCancel(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return true;
-}
-
-bool UCReaction::AllowInterruptionBy(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return IsInterruptibleNow();
-}
-
-bool UCReaction::AllowCancelBy(const FReactionQueryContext& InReactionQueryContext) const
-{
-	return IsCancelableNow();
-}
-
-void UCReaction::RequestFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
+void UCReaction::PlayFeedbackRequest(const FReactionFeedbackRequest& InRequest) const
 {
 	if (!IsValid(ReactionFeedbackComp_Cached)) return;
-	if (!ActiveReactionData_Cached.IsValidMinimal()) return;
 
-	FReactionFeedbackRequest feedbackRequest = BuildReactionFeedbackRequest(InTiming, InTriggerKey);
-	ReactionFeedbackComp_Cached->PlayFeedback(feedbackRequest);
+	ReactionFeedbackComp_Cached->PlayFeedback(InRequest);
 }
 
-FReactionFeedbackRequest UCReaction::BuildReactionFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
+FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
 {
-	FReactionFeedbackRequest reactionFeedbackRequest;
+	FReactionFeedbackRequest request;
 
-	if (!ActiveReactionData_Cached.IsValidMinimal()) return reactionFeedbackRequest;
+	if (!ActiveDataKey_Cached.IsValidMinimal()) return request;
 
-	reactionFeedbackRequest.ReactionFeedbackKey.ReactionType = ActiveReactionData_Cached.ReactionDataKey.ReactionType;
-	reactionFeedbackRequest.ReactionFeedbackKey.ApplyDamageSpecKey = ActiveReactionData_Cached.ReactionDataKey.ApplyDamageSpecKey;
-	reactionFeedbackRequest.ReactionFeedbackTiming = InTiming;
-	reactionFeedbackRequest.TriggerKey = InTriggerKey;
+	request.ReactionFeedbackKey.ReactionType = ActiveDataKey_Cached.ReactionType;
+	request.ReactionFeedbackKey.ApplyDamageSpecKey = ActiveDataKey_Cached.ApplyDamageSpecKey;
+	request.ReactionFeedbackTiming = InTiming;
+	request.TriggerKey = InTriggerKey;
 
-	return reactionFeedbackRequest;
+	return request;
+}
+
+void UCReaction::OpenAllowInterventionWindow(FName InWindowKey)
+{
+	if (InWindowKey.IsNone()) return;
+
+	AllowInterventionWindowKeys.Add(InWindowKey);
+}
+
+void UCReaction::CloseAllowInterventionWindow(FName InWindowKey)
+{
+	if (InWindowKey.IsNone()) return;
+
+	AllowInterventionWindowKeys.Remove(InWindowKey);
+}
+
+bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsReactionParticipant()) return false;
+
+	const FReactionExecutionContext& incomingContext = InQuery.IncomingPart.GetReactionContext();
+
+	return MatchesWantInterventionRules(incomingContext.ReactionData.WantInterventionRules, InQuery.ActivePart);
+}
+
+bool UCReaction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+
+	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
+}
+
+bool UCReaction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const
+{
+	for (const FExecutionInterventionWantRule& rule : InRules)
+	{
+		if (!rule.IsValidMinimal()) continue;
+		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
+	}
+
+	return false;
+}
+
+bool UCReaction::MatchesAllowInterventionRules(const TArray<FExecutionInterventionAllowRule>& InRules, const FExecutionParticipant& InParticipant) const
+{
+	for (const FExecutionInterventionAllowRule& rule : InRules)
+	{
+		if (!rule.IsValidMinimal()) continue;
+		if (!IsAllowInterventionRuleTimingSatisfied(rule)) continue;
+		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
+	}
+
+	return false;
+}
+
+bool UCReaction::IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionAllowRule& InRule) const
+{
+	switch (InRule.Timing)
+	{
+	case EExecutionInterventionTiming::Always:
+		return true;
+
+	case EExecutionInterventionTiming::Window:
+		return !InRule.WindowKey.IsNone() && AllowInterventionWindowKeys.Contains(InRule.WindowKey);
+
+	default:
+		return false;
+	}
+}
+
+bool UCReaction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const
+{
+	// PrintExecutionParticipant(InParticipant);
+
+	// Match the actual query participant against counterpart filters opened by notify windows.
+	for (const FExecutionInterventionParticipantFilter& filter : InFilters)
+	{
+		// PrintExecutionInterventionParticipantFilter(filter);
+
+		if (filter.MatchesParticipant(InParticipant)) return true;
+	}
+
+	return false;
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
@@ -305,30 +403,84 @@ void UCReaction::PrintReactionExecutorRuntimeInfo_Public() const
 	PrintReactionExecutorRuntimeInfo();
 }
 
-void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
+void UCReaction::PrintExecutionParticipant(const FExecutionParticipant& InParticipant)
 {
-	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
-	if (bInterrupted) return;
+	FLog::Log(TEXT("======== Participant ID ========="));
 
-	FinishCompleted();
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsValid"), InParticipant.bIsValid ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Domain"), *UEnum::GetValueAsString(InParticipant.ParticipantDomain)));
+
+	if (InParticipant.IsActionParticipant())
+	{
+		const FActionExecutionContext& context = InParticipant.GetActionContext();
+
+		FLog::Log(TEXT("--------- Action Context --------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(context.ActionDataKey.ActionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("ActionIndex"), context.ActionDataKey.ActionIndex));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Priority"), context.ActionData.Priority));
+	}
+	else if (InParticipant.IsReactionParticipant())
+	{
+		const FReactionExecutionContext& context = InParticipant.GetReactionContext();
+		const FApplyDamageSpecKey& specKey = context.ReactionDataKey.ApplyDamageSpecKey;
+
+		FLog::Log(TEXT("-------- Reaction Context -------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(context.ReactionDataKey.ReactionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SpecKey|WeaponType"), *UEnum::GetValueAsString(specKey.WeaponType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SpecKey|ActionType"), *UEnum::GetValueAsString(specKey.ActionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("SpecKey|ActionIndex"), specKey.ActionIndex));
+		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Priority"), context.ReactionData.Priority));
+	}
+	else
+	{
+		FLog::Log(TEXT("[ExecutionParticipant] Empty or invalid participant context."));
+	}
+
+	FLog::Log(TEXT("================================="));
 }
 
-bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
+void UCReaction::PrintExecutionInterventionParticipantFilter(const FExecutionInterventionParticipantFilter& InFilter)
 {
-	if (!bIsReaction) return false;
-	if (InSerial != CachedSerial_ActivePlay) return false;
-	if (InMontage != ActiveReactionMontage_Cached) return false;
+	FLog::Log(TEXT("===== Participant Filter ID ====="));
+	
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IsValid"), InFilter.IsValidMinimal() ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Domain"), *UEnum::GetValueAsString(InFilter.Domain)));
 
-	return true;
+	switch (InFilter.Domain)
+	{
+	case EExecutionDomain::Action:
+	{
+		const FString indexText = (InFilter.Index == INDEX_NONE) ? TEXT("ANY") : FString::FromInt(InFilter.Index);
+		
+		FLog::Log(TEXT("--------- Action Filter ---------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InFilter.ActionType)));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), *indexText));
+		break;
+	}
+
+	case EExecutionDomain::Reaction:
+	{
+		FLog::Log(TEXT("-------- Reaction Filter --------"));
+		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InFilter.ReactionType)));
+		break;
+	}
+
+	default:
+	{
+		FLog::Log(TEXT("[InterventionFilter] Invalid domain."));
+		break;
+	}
+	}
+
+	FLog::Log(TEXT("================================="));
 }
 
 void UCReaction::PrintReactionExecutorRuntimeInfo() const
 {
 	FLog::Log(TEXT("----- ReactionRuntime Info ------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveReactionMontage_Cached)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsReaction"), bIsReaction ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bInterruptible"), bInterruptible ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCancelable"), bCancelable ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActiveMontage"), *GetNameSafe(ActiveMontage_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bIsActive"), bIsActive ? TEXT("true") : TEXT("false")));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AllowWindowKeyCount"), AllowInterventionWindowKeys.Num()));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_CurrentPlay"), Serial_CurrentPlay));
 	FLog::Log(FString::Printf(TEXT("%-20s: %u"), TEXT("Serial_ActivePlay"), CachedSerial_ActivePlay));
 	FLog::Log(TEXT("---------------------------------"));
@@ -339,7 +491,7 @@ void UCReaction::PrintStopReasonInfo(EReactionStopReason InStopReason) const
 	FLog::Log(FString::Printf(TEXT("[Reaction] Stopped. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(InStopReason), *GetNameSafe(this)));
 }
 
-void UCReaction::PrintAbortedStopReasonInfo() const
+void UCReaction::PrintIgnoredStopReasonInfo() const
 {
-	FLog::Log(FString::Printf(TEXT("[Reaction] Aborted. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(LastStopReason_Cached), *GetNameSafe(this)));
+	FLog::Log(FString::Printf(TEXT("[Reaction] Ignored. StopReason = %s | ActiveReaction = %s"), *UEnum::GetValueAsString(LastStopReason_Cached), *GetNameSafe(this)));
 }

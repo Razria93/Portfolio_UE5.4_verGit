@@ -2,142 +2,460 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+#include "Animation/AnimInstance.h"
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 
-#include "Type/CWeaponStructure.h"
-
-void UCAction::InitializeAction(ACharacter* InOwnerCharacter, EActionType InActionType, const TArray<FActionData>& InActionDatas)
+void UCAction::InitializeAction(ACharacter* InOwnerCharacter, UCActionComponent* InOwnerActionComp)
 {
 	OwnerCharacter_Injected = InOwnerCharacter;
-	ActionType = InActionType;
-	ActionDatas_Injected = InActionDatas;
+	OwnerActionComp_Injected = InOwnerActionComp;
 
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Injected->GetComponentByClass(UCWeaponComponent::StaticClass()));
+	WeaponComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
 	check(WeaponComp_Cached);
 
-	ActionComp_Cached = Cast<UCActionComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionComponent::StaticClass()));
-	check(ActionComp_Cached);
-
-	ActionFeedbackComp_Cached = Cast<UCActionFeedbackComponent>(OwnerCharacter_Injected->GetComponentByClass(UCActionFeedbackComponent::StaticClass()));
+	ActionFeedbackComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCActionFeedbackComponent>();
 	check(ActionFeedbackComp_Cached);
 }
 
-EActionType UCAction::GetActionType() const
+FExecutionDecisionResult UCAction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
-	return ActionType;
-}
+	FExecutionDecisionResult result;
 
-FActionContext UCAction::GetActionContext() const
-{
-	return BuildActionContext();
-}
-
-void UCAction::SetActionType(EActionType InActionType)
-{
-	ActionType = InActionType;
-}
-
-EActionExecutionDecision UCAction::DecideExecution(const FActionExecutionQuery& InActionExecuteQuery) const
-{
-	if (!IsValid(OwnerCharacter_Injected)) return EActionExecutionDecision::Reject;
-
-	if (InActionExecuteQuery.ExecutionState == EExecutionState::Idle && InActionExecuteQuery.CurrentActionType == EActionType::Idle)
+	if (!IsValid(OwnerCharacter_Injected))
 	{
-		return EActionExecutionDecision::Start;
+		result.Decision = EExecutionDecision::Reject;
+		return result;
 	}
 
-	return EActionExecutionDecision::Reject;
+	if (!InQuery.IncomingPart.IsActionParticipant())
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!CanResolveIndependentRelationship(InQuery))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	result.Decision = EExecutionDecision::Accept;
+	result.Relationship = EExecutionRelationship::Independent;
+	return result;
 }
 
-bool UCAction::Start()
+bool UCAction::IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
 
-	bIsAction = true;
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 
-	RequestFeedback(EActionFeedbackTiming::ActionStart, NAME_None);
-	EmitActionEvent(EActionEventType::ActionStarted, INDEX_NONE);
+	return incomingContext.ActionDataKey.ActionType == InType;
+}
+
+bool UCAction::IsIncomingActionType(const FExecutionInterventionQuery& InQuery, EActionType InType) const
+{
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+
+	return incomingContext.ActionDataKey.ActionType == InType;
+}
+
+bool UCAction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// Idle && No ActivePart: Idle
+	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
+}
+
+bool UCAction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
+{
+	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
+}
+
+bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDecisionQuery& InQuery, EExecutionRelationship& OutRelationship) const
+{
+	OutRelationship = EExecutionRelationship::None;
+
+	// Idle && No ActivePart: Idle
+	if (CanResolveIndependentRelationship(InQuery))
+	{
+		OutRelationship = EExecutionRelationship::Independent;
+		return true;
+	}
+
+	if (CanResolveExclusiveRelationship(InQuery))
+	{
+		OutRelationship = EExecutionRelationship::Exclusive;
+		return true;
+	}
+
+	return false;
+}
+
+bool UCAction::Start(const FActionData& InData)
+{
+	if (!InData.IsValidMinimal()) return false;
+	if (bIsActive) return false;
+
+	ActiveDataKey_Cached = InData.ActionDataKey;
+	ActiveData_Cached = InData;
+	ActiveMontage_Cached = InData.Montage;
+
+	if (!PlayMontage(InData))
+	{
+		ClearRuntime();
+		return false;
+	}
+
+	if (!BindMontageEndDelegate())
+	{
+		StopMontage();
+		ClearRuntime();
+		return false;
+	}
+
+	bIsActive = true;
+
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
+	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached.ActionIndex);
+
 	return true;
 }
 
-bool UCAction::ApplyChain(const FActionExecutionQuery& InActionExecuteQuery)
+void UCAction::Stop(EActionStopReason InStopReason)
 {
-	return false;
+	if (!bIsActive) return;
+	if (InStopReason == EActionStopReason::None) return;
+
+	LastStopReason_Cached = InStopReason;
+
+	EActionFeedbackTiming feedbackTiming = EActionFeedbackTiming::None;
+	EActionEventType eventType = EActionEventType::None;
+	EActionFinishReason finishReason = EActionFinishReason::None;
+
+	switch (InStopReason)
+	{
+	case EActionStopReason::Interrupted:
+	{
+		feedbackTiming = EActionFeedbackTiming::Interrupt;
+		eventType = EActionEventType::ActionInterrupted;
+		finishReason = EActionFinishReason::Interrupted;
+		break;
+	}
+	default:
+		eventType = EActionEventType::ActionIgnored;
+		finishReason = EActionFinishReason::Ignored;
+		break;
+	}
+
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(feedbackTiming);
+	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
+
+	StopMontage();
+	CleanupRuntimeEffects();
+	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(eventType, actionIndex);
+
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		OwnerActionComp_Injected->HandleApplyActionFinished(this, finishReason);
+	}
 }
 
 void UCAction::Complete()
 {
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!bIsActive) return;
 
-	RequestFeedback(EActionFeedbackTiming::ActionEnd, NAME_None);
-	EmitActionEvent(EActionEventType::ActionCompleted, INDEX_NONE);
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
+	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
 
-	bIsAction = false;
+	CleanupRuntimeEffects();
+	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
+
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		OwnerActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
+	}
 }
 
-void UCAction::Abort(EActionAbortReason InActionAbortReason)
+bool UCAction::ReserveChain(const FActionData& InData)
+{
+	// Specific Actions override this API.
+	return false;
+}
+
+void UCAction::ConsumeChain()
+{
+	// Specific Actions override this API.
+}
+
+void UCAction::ClearRuntime()
+{
+	bIsActive = false;
+
+	ActiveDataKey_Cached = FActionDataKey();
+	ActiveData_Cached = FActionData();
+	ActiveMontage_Cached = nullptr;
+	LastStopReason_Cached = EActionStopReason::None;
+
+	AllowInterventionWindowKeys.Reset();
+}
+
+void UCAction::CleanupRuntimeEffects()
+{
+	if (IsValid(WeaponComp_Cached))
+	{
+		WeaponComp_Cached->ClearRuntimeWeaponState();
+	}
+
+	if (IsValid(ActionFeedbackComp_Cached))
+	{
+		ActionFeedbackComp_Cached->ClearRuntimeFeedback();
+	}
+}
+
+bool UCAction::PlayMontage(const FActionData& InData)
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(InData.Montage)) return false;
+
+	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
+
+	return duration > 0.0f;
+}
+
+void UCAction::StopMontage(float InBlendOutTime)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(ActiveMontage_Cached)) return;
 
-	EmitActionEvent(EActionEventType::ActionAborted, INDEX_NONE);
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return;
 
-	bIsAction = false;
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return;
+
+	animInstance->Montage_Stop(InBlendOutTime, ActiveMontage_Cached);
+}
+
+bool UCAction::BindMontageEndDelegate()
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return false;
+
+	UAnimInstance* animInstance = meshComp->GetAnimInstance();
+	if (!IsValid(animInstance)) return false;
+	if (!IsValid(ActiveMontage_Cached)) return false;
+
+	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
+	CachedSerial_ActivePlay = thisPlaySerial;
+
+	FOnMontageEnded montageEnd;
+	montageEnd.BindUObject(this, &UCAction::OnMontageEnd, thisPlaySerial);
+	animInstance->Montage_SetEndDelegate(montageEnd, ActiveMontage_Cached);
+
+	return true;
+}
+
+void UCAction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
+{
+	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
+	if (bInterrupted)
+	{
+		FLog::Log(TEXT("[Action] Unexpected montage interruption."));
+		return;
+	}
+
+	Complete();
+}
+
+bool UCAction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
+{
+	if (!bIsActive) return false;
+	if (InSerial != CachedSerial_ActivePlay) return false;
+	if (InMontage != ActiveMontage_Cached) return false;
+
+	return true;
+}
+
+void UCAction::HandleNotifyCommand(EActionNotifyCommand InCommand)
+{
+	switch (InCommand)
+	{
+	case EActionNotifyCommand::Complete:
+		Complete();
+		return;
+
+	case EActionNotifyCommand::PushHitContext:
+		PushHitContext();
+		return;
+
+	case EActionNotifyCommand::ClearHitContext:
+		ClearHitContext();
+		return;
+
+	default:
+		break;
+	}
+
+	HandleSpecificNotifyCommand(InCommand);
+}
+
+void UCAction::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
+{
+	// Specific Actions override this API.
+}
+
+void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey)
+{
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(InTiming, InTriggerKey);
+	PlayFeedbackRequest(feedbackRequest);
+}
+
+void UCAction::PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const
+{
+	if (!IsValid(ActionFeedbackComp_Cached)) return;
+
+	ActionFeedbackComp_Cached->PlayFeedback(InRequest);
+}
+
+FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+{
+	FActionFeedbackRequest request;
+
+	if (!ActiveDataKey_Cached.IsValidMinimal()) return request;
+
+	request.ActionFeedbackKey.ActionType = ActiveDataKey_Cached.ActionType;
+	request.ActionFeedbackKey.ActionIndex = ActiveDataKey_Cached.ActionIndex;
+	request.ActionFeedbackTiming = InTiming;
+	request.TriggerKey = InTriggerKey;
+
+	return request;
 }
 
 void UCAction::PushHitContext()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Cached)) return;
 
 	WeaponComp_Cached->PushContext(BuildActionContext());
 }
 
 void UCAction::ClearHitContext()
 {
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Cached)) return;
 
 	WeaponComp_Cached->ClearContext();
 }
 
-void UCAction::RequestFeedback(EActionFeedbackTiming InActionFeedbackTiming, FName InTriggerKey) const
-{
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(ActionFeedbackComp_Cached)) return;
-
-	ActionFeedbackComp_Cached->PlayFeedback(BuildActionFeedbackRequest(InActionFeedbackTiming, InTriggerKey));
-}
-
 FActionContext UCAction::BuildActionContext() const
 {
-	FActionContext actionContext;
+	FActionContext context;
 
-	actionContext.ActionType = ActionType;
-	actionContext.ActionIndex = INDEX_NONE;
+	context.ActionType = ActiveDataKey_Cached.ActionType;
+	context.ActionIndex = ActiveDataKey_Cached.ActionIndex;
 
-	return actionContext;
+	return context;
 }
 
-FActionFeedbackRequest UCAction::BuildActionFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+void UCAction::OpenAllowInterventionWindow(FName InWindowKey)
 {
-	FActionFeedbackRequest actionFeedbackRequest;
+	if (InWindowKey.IsNone()) return;
 
-	actionFeedbackRequest.ActionFeedbackKey.ActionType = ActionType;
-	actionFeedbackRequest.ActionFeedbackKey.ActionIndex = INDEX_NONE;
-	actionFeedbackRequest.ActionFeedbackTiming = InTiming;
-	actionFeedbackRequest.TriggerKey = InTriggerKey;
-
-	return actionFeedbackRequest;
+	AllowInterventionWindowKeys.Add(InWindowKey);
 }
 
-void UCAction::EmitActionEvent(EActionEventType InActionEventType, int32 InActionIndex) const
+void UCAction::CloseAllowInterventionWindow(FName InWindowKey)
 {
-	if (!IsValid(ActionComp_Cached)) return;
+	if (InWindowKey.IsNone()) return;
 
-	const FActionContext actionContext = BuildActionContext();
-	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : actionContext.ActionIndex;
+	AllowInterventionWindowKeys.Remove(InWindowKey);
+}
 
-	ActionComp_Cached->BroadcastActionEvent(ActionType, actionIndex, InActionEventType);
+bool UCAction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+
+	return MatchesWantInterventionRules(incomingContext.ActionData.WantInterventionRules, InQuery.ActivePart);
+}
+
+bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+
+	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
+}
+
+bool UCAction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const
+{
+	for (const FExecutionInterventionWantRule& rule : InRules)
+	{
+		if (!rule.IsValidMinimal()) continue;
+		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
+	}
+
+	return false;
+}
+
+bool UCAction::MatchesAllowInterventionRules(const TArray<FExecutionInterventionAllowRule>& InRules, const FExecutionParticipant& InParticipant) const
+{
+	for (const FExecutionInterventionAllowRule& rule : InRules)
+	{
+		if (!rule.IsValidMinimal()) continue;
+		if (!IsAllowInterventionRuleTimingSatisfied(rule)) continue;
+		if (MatchesAnyInterventionFilter(rule.ParticipantFilters, InParticipant)) return true;
+	}
+
+	return false;
+}
+
+bool UCAction::IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionAllowRule& InRule) const
+{
+	switch (InRule.Timing)
+	{
+	case EExecutionInterventionTiming::Always:
+		return true;
+
+	case EExecutionInterventionTiming::Window:
+		return !InRule.WindowKey.IsNone() && AllowInterventionWindowKeys.Contains(InRule.WindowKey);
+
+	default:
+		return false;
+	}
+}
+
+bool UCAction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionParticipantFilter>& InFilters, const FExecutionParticipant& InParticipant) const
+{
+	for (const FExecutionInterventionParticipantFilter& filter : InFilters)
+	{
+		if (filter.MatchesParticipant(InParticipant)) return true;
+	}
+
+	return false;
+}
+
+void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const
+{
+	if (!IsValid(OwnerActionComp_Injected)) return;
+
+	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : ActiveDataKey_Cached.ActionIndex;
+
+	OwnerActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, InEventType);
 }

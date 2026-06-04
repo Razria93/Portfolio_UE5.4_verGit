@@ -1,13 +1,11 @@
 #include "Notify/CAnimNotify_Equip.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CActionComponent.h"
-#include "Action/CAction_Equip.h"
 
 UCAnimNotify_Equip::UCAnimNotify_Equip()
 {
+	TriggerActionType = EActionType::Equip;
 }
 
 FString UCAnimNotify_Equip::GetNotifyName_Implementation() const
@@ -19,21 +17,8 @@ void UCAnimNotify_Equip::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!CanProcessActionNotify(actionComp)) return;
 
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
-	if (!actionComp) return;
-
-	UCAction* currentAction = actionComp->GetCurrentAction();
-	if (!currentAction) return;
-
-	UCAction_Equip* currentaction_Equip = Cast<UCAction_Equip>(currentAction);
-	if (!currentaction_Equip) return;
-
-	if (!CanProcessActionNotify(currentaction_Equip)) return;
-
-	currentaction_Equip->AttachWeapon();
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::Equip);
 }

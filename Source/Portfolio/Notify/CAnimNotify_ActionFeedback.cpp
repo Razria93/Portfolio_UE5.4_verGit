@@ -1,12 +1,7 @@
 #include "Notify/CAnimNotify_ActionFeedback.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CActionComponent.h"
-#include "Action/CAction.h"
-
-#include "Type/CWeaponStructure.h"
 
 UCAnimNotify_ActionFeedback::UCAnimNotify_ActionFeedback()
 {
@@ -21,18 +16,8 @@ void UCAnimNotify_ActionFeedback::Notify(USkeletalMeshComponent* MeshComp, UAnim
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!CanProcessActionNotify(actionComp)) return;
 
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
-	if (!IsValid(actionComp)) return;
-
-	UCAction* currentAction = actionComp->GetCurrentAction();
-	if (!IsValid(currentAction)) return;
-
-	if (!CanProcessActionNotify(currentAction)) return;
-
-	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerOnce, TriggerKey);
+	actionComp->HandleActionFeedback(TriggerKey);
 }

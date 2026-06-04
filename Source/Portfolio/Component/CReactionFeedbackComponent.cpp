@@ -45,6 +45,10 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 	ExecuteSFXFeedbacks(InReactionFeedbackRequest);
 }
 
+void UCReactionFeedbackComponent::ClearRuntimeFeedback()
+{
+}
+
 bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
 {
 	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::None) return false;
@@ -183,7 +187,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 
 	if (matchedDatas.Num() <= 0)
 	{
-		FLog::Log(TEXT("[ReactionFeedback] VFX | No Matched Data"));
+		// FLog::Log(TEXT("[ReactionFeedback] VFX | No Matched Data"));
 		return;
 	}
 
@@ -201,7 +205,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		FLog::Log(TEXT("[ReactionFeedback] VFX | Matched Data"));
+		// FLog::Log(TEXT("[ReactionFeedback] VFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayReactionVFX(*matchedData);
 	}
@@ -238,7 +242,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 
 	if (matchedDatas.Num() <= 0)
 	{
-		FLog::Log(TEXT("[ReactionFeedback] SFX | No Matched Data"));
+		// FLog::Log(TEXT("[ReactionFeedback] SFX | No Matched Data"));
 		return;
 	}
 
@@ -256,7 +260,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		FLog::Log(TEXT("[ReactionFeedback] SFX | Matched Data"));
+		// FLog::Log(TEXT("[ReactionFeedback] SFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayReactionSFX(*matchedData);
 	}
@@ -269,7 +273,7 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 
 	switch (InReactionVFXFeedbackData.VFXPlayType)
 	{
-	case EActionVFXPlayType::Once:
+	case EReactionVFXPlayType::Once:
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InReactionVFXFeedbackData.VFX,
@@ -287,7 +291,7 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 		return;
 	}
 
-	case EActionVFXPlayType::Loop:
+	case EReactionVFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
 		return;
@@ -305,7 +309,7 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 
 	switch (InReactionSFXFeedbackData.SFXPlayType)
 	{
-	case EActionSFXPlayType::Once:
+	case EReactionSFXPlayType::Once:
 	{
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
@@ -317,7 +321,7 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 		return;
 	}
 
-	case EActionSFXPlayType::Loop:
+	case EReactionSFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
 		return;

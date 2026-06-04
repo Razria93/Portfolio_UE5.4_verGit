@@ -1,12 +1,7 @@
 #include "Notify/CAnimNotifyState_ActionFeedback.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CActionComponent.h"
-#include "Action/CAction.h"
-
-#include "Type/CWeaponStructure.h"
 
 UCAnimNotifyState_ActionFeedback::UCAnimNotifyState_ActionFeedback()
 {
@@ -21,38 +16,18 @@ void UCAnimNotifyState_ActionFeedback::NotifyBegin(USkeletalMeshComponent* MeshC
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	if (!IsValid(MeshComp)) return;
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!CanProcessActionNotify(actionComp)) return;
 
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
-	if (!IsValid(actionComp)) return;
-
-	UCAction* currentAction = actionComp->GetCurrentAction();
-	if (!IsValid(currentAction)) return;
-
-	if (!CanProcessActionNotify(currentAction)) return;
-
-	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowBegin, TriggerKey);
+	actionComp->HandleActionFeedbackWindowBegin(TriggerKey);
 }
 
 void UCAnimNotifyState_ActionFeedback::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
+	UCActionComponent* actionComp = GetActionComponent(MeshComp);
+	if (!CanProcessActionNotify(actionComp)) return;
 
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCActionComponent* actionComp = ownerCharacter->FindComponentByClass<UCActionComponent>();
-	if (!IsValid(actionComp)) return;
-
-	UCAction* currentAction = actionComp->GetCurrentAction();
-	if (!IsValid(currentAction)) return;
-
-	if (!CanProcessActionNotify(currentAction)) return;
-
-	currentAction->RequestFeedback(EActionFeedbackTiming::TriggerWindowEnd, TriggerKey);
+	actionComp->HandleActionFeedbackWindowEnd(TriggerKey);
 }
