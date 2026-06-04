@@ -32,17 +32,6 @@ FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecut
 	return result;
 }
 
-bool UCReaction_Dead::WantIntervention(const FExecutionInterventionQuery& InQuery) const
-{
-	if (!InQuery.IsValidMinimal()) return false;
-	if (!IsIncomingReactionType(InQuery, EReactionType::Dead)) return false;
-
-	// [Condition of WantIntervention] Dead reaction only wants interruption.
-	bool result = InQuery.StopReason == EExecutionStopReason::Interrupted;
-
-	return result;
-}
-
 bool UCReaction_Dead::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	// [NOTE] Dead reaction is terminal and cannot be interrupted.
