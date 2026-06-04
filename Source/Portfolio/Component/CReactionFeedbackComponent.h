@@ -33,6 +33,7 @@ protected:
 
 public:
 	void PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest);
+	void ClearRuntimeFeedback();
 
 private:
 	bool CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const;

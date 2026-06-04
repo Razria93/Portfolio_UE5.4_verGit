@@ -154,7 +154,8 @@ void UCAction_ComboAttack::ConsumeChain()
 		}
 	}
 
-	RequestFeedback(EActionFeedbackTiming::Chain);
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Chain);
+	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached.ActionIndex);
 
 	// FLog::Log(FString::Printf(TEXT("[ComboAttack] Consume Chain. ActionIndex = %d"), ActiveDataKey_Cached.ActionIndex));

@@ -121,7 +121,8 @@ bool UCReaction::Start(const FReactionData& InData)
 
 	bIsActive = true;
 
-	RequestFeedback(EReactionFeedbackTiming::Start);
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Start);
+	PlayFeedbackRequest(feedbackRequest);
 
 	return true;
 }
@@ -132,8 +133,6 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 	if (InStopReason == EReactionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
-
-	StopMontage(0.1f);
 
 	EReactionFeedbackTiming feedbackTiming = EReactionFeedbackTiming::None;
 	EReactionFinishReason finishReason = EReactionFinishReason::None;
@@ -151,9 +150,13 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 		break;
 	}
 
-	RequestFeedback(feedbackTiming);
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(feedbackTiming);
 
+	StopMontage(0.1f);
+	CleanupRuntimeEffects();
 	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
@@ -165,9 +168,12 @@ void UCReaction::Complete()
 {
 	if (!bIsActive) return;
 
-	RequestFeedback(EReactionFeedbackTiming::Complete);
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Complete);
 
+	CleanupRuntimeEffects();
 	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
 
 	if (IsValid(OwnerReactionComp_Injected))
 	{
@@ -185,6 +191,14 @@ void UCReaction::ClearRuntime()
 	LastStopReason_Cached = EReactionStopReason::None;
 
 	AllowInterventionWindowKeys.Reset();
+}
+
+void UCReaction::CleanupRuntimeEffects()
+{
+	if (IsValid(ReactionFeedbackComp_Cached))
+	{
+		ReactionFeedbackComp_Cached->ClearRuntimeFeedback();
+	}
 }
 
 bool UCReaction::PlayMontage(const FReactionData& InData)
@@ -275,15 +289,15 @@ void UCReaction::HandleSpecificNotifyCommand(EReactionNotifyCommand InCommand)
 
 void UCReaction::HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey)
 {
-	RequestFeedback(InTiming, InTriggerKey);
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(InTiming, InTriggerKey);
+	PlayFeedbackRequest(feedbackRequest);
 }
 
-void UCReaction::RequestFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
+void UCReaction::PlayFeedbackRequest(const FReactionFeedbackRequest& InRequest) const
 {
 	if (!IsValid(ReactionFeedbackComp_Cached)) return;
 
-	FReactionFeedbackRequest request = BuildFeedbackRequest(InTiming, InTriggerKey);
-	ReactionFeedbackComp_Cached->PlayFeedback(request);
+	ReactionFeedbackComp_Cached->PlayFeedback(InRequest);
 }
 
 FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey) const

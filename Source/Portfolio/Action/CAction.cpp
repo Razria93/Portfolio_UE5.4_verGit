@@ -123,7 +123,8 @@ bool UCAction::Start(const FActionData& InData)
 
 	bIsActive = true;
 
-	RequestFeedback(EActionFeedbackTiming::Start);
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
+	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached.ActionIndex);
 
 	return true;
@@ -135,8 +136,6 @@ void UCAction::Stop(EActionStopReason InStopReason)
 	if (InStopReason == EActionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
-
-	StopMontage();
 
 	EActionFeedbackTiming feedbackTiming = EActionFeedbackTiming::None;
 	EActionEventType eventType = EActionEventType::None;
@@ -157,10 +156,15 @@ void UCAction::Stop(EActionStopReason InStopReason)
 		break;
 	}
 
-	RequestFeedback(feedbackTiming);
-	EmitActionEvent(eventType, ActiveDataKey_Cached.ActionIndex);
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(feedbackTiming);
+	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
 
+	StopMontage();
+	CleanupRuntimeEffects();
 	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(eventType, actionIndex);
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
@@ -172,10 +176,14 @@ void UCAction::Complete()
 {
 	if (!bIsActive) return;
 
-	RequestFeedback(EActionFeedbackTiming::Complete);
-	EmitActionEvent(EActionEventType::ActionCompleted, ActiveDataKey_Cached.ActionIndex);
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
+	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
 
+	CleanupRuntimeEffects();
 	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
@@ -204,6 +212,19 @@ void UCAction::ClearRuntime()
 	LastStopReason_Cached = EActionStopReason::None;
 
 	AllowInterventionWindowKeys.Reset();
+}
+
+void UCAction::CleanupRuntimeEffects()
+{
+	if (IsValid(WeaponComp_Cached))
+	{
+		WeaponComp_Cached->ClearRuntimeWeaponState();
+	}
+
+	if (IsValid(ActionFeedbackComp_Cached))
+	{
+		ActionFeedbackComp_Cached->ClearRuntimeFeedback();
+	}
 }
 
 bool UCAction::PlayMontage(const FActionData& InData)
@@ -302,15 +323,15 @@ void UCAction::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 
 void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey)
 {
-	RequestFeedback(InTiming, InTriggerKey);
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(InTiming, InTriggerKey);
+	PlayFeedbackRequest(feedbackRequest);
 }
 
-void UCAction::RequestFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey) const
+void UCAction::PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const
 {
 	if (!IsValid(ActionFeedbackComp_Cached)) return;
 
-	FActionFeedbackRequest request = BuildFeedbackRequest(InTiming, InTriggerKey);
-	ActionFeedbackComp_Cached->PlayFeedback(request);
+	ActionFeedbackComp_Cached->PlayFeedback(InRequest);
 }
 
 FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const

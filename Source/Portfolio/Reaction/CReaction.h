@@ -83,6 +83,7 @@ public:
 
 protected:
 	virtual void ClearRuntime();
+	virtual void CleanupRuntimeEffects();
 
 protected:
 	// Montage Lifecycle
@@ -107,7 +108,7 @@ public:
 	void HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None);
 
 protected:
-	void RequestFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+	void PlayFeedbackRequest(const FReactionFeedbackRequest& InRequest) const;
 	virtual FReactionFeedbackRequest BuildFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 public:

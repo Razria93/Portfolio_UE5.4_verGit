@@ -81,6 +81,16 @@ void UCWeaponComponent::ClearContext()
 	provider->SetLastActionContext(FActionContext());
 }
 
+void UCWeaponComponent::ClearRuntimeWeaponState()
+{
+	ClearContext();
+
+	if (IsValid(WeaponActor))
+	{
+		WeaponActor->CollisionDisabled();
+	}
+}
+
 void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;

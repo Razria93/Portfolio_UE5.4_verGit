@@ -67,6 +67,7 @@ public:
 public:
 	void PushContext(const FActionContext& InActionContext);
 	void ClearContext();
+	void ClearRuntimeWeaponState();
 
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);

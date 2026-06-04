@@ -45,6 +45,10 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 	ExecuteSFXFeedbacks(InReactionFeedbackRequest);
 }
 
+void UCReactionFeedbackComponent::ClearRuntimeFeedback()
+{
+}
+
 bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
 {
 	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::None) return false;

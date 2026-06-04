@@ -35,6 +35,7 @@ protected:
 
 public:
 	void PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);
+	void ClearRuntimeFeedback();
 
 private:
 	bool CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const;

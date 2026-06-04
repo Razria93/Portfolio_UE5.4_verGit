@@ -36,6 +36,11 @@ void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InAct
 	ExecuteSFXFeedbacks(InActionFeedbackRequest);
 }
 
+void UCActionFeedbackComponent::ClearRuntimeFeedback()
+{
+	ToggleTrailActive(false);
+}
+
 bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
 	if (!IsValid(OwnerActor_Cached)) return false;
