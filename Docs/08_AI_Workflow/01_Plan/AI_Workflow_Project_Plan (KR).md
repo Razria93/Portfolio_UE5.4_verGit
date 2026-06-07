@@ -14,7 +14,7 @@
 
 본 프로젝트의 이름은 `Project Stella`다.
 
-`Project Stella`는 원작명 `Stella Blade`와 구분되는 포트폴리오 프로젝트명이다. 프로젝트의 설명명은 `Stella Blade Action System Analysis & Implementation Portfolio`로 둔다.
+`Project Stella`는 `Stella Blade` 액션 시스템을 분석하고 포트폴리오 범위에서 핵심 전투 구조를 구현하는 Unreal Engine 기반 프로젝트다.
 
 ```yaml
 프로젝트명

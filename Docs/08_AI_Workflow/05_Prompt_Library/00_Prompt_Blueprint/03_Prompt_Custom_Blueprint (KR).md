@@ -98,7 +98,7 @@ Bug Report
 -> 검증
 ```
 
-Document 유형별 정의와 운영 기준은 `../../02_Operation/AI_Workflow_Operation_Guide (KR).md`와 `../../03_Work_Pipeline/AI_Work_Pipeline (KR).md`를 따른다.
+Document 유형별 정의와 운영 기준은 `../../03_Operation/AI_Workflow_Operation_Guide (KR).md`와 `../../04_Work_Pipeline/AI_Work_Pipeline (KR).md`를 따른다.
 
 ---
 
@@ -107,7 +107,7 @@ Document 유형별 정의와 운영 기준은 `../../02_Operation/AI_Workflow_Op
 Project Stella Prompt Library는 다음 폴더 구조를 기준으로 관리한다.
 
 ```yaml
-04_Prompt_Library/01_Prompt_Files
+05_Prompt_Library/01_Prompt_Files
 -> Prompt Files 루트
 
 01_Working_Rules
@@ -131,7 +131,7 @@ Project Stella Prompt Library는 다음 폴더 구조를 기준으로 관리한�
 
 Prompt Library의 위치, 역할, 상태는 `../../00_Index/AI_Workflow_Index (KR).md`에 반영한다.
 
-후속 작업, 삭제 / Archive 판단 보류 항목, 실사용 검증 후보는 `../../05_Backlog/AI_Workflow_Backlog (KR).md`에 반영한다.
+후속 작업, 삭제 / Archive 판단 보류 항목, 실사용 검증 후보는 `../../06_Backlog/AI_Workflow_Backlog (KR).md`에 반영한다.
 
 ```yaml
 관리 기준

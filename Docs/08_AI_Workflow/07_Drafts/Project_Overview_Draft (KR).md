@@ -1,4 +1,4 @@
-﻿# Project Overview Draft
+# Project Overview Draft
 
 ## 1. 목적
 
@@ -6,7 +6,7 @@
 
 AI가 프로젝트의 장르, 구현 목표, 기술 스택, AI 활용 흐름을 빠르게 이해하고 이후 협업 규칙과 Prompt Library를 구성하는 데 참고할 수 있도록 작성한다.
 
-현재 운영 기준은 `../00_Index/AI_Workflow_Index (KR).md`, `../01_Plan/AI_Workflow_Project_Plan (KR).md`, `../02_Operation/AI_Workflow_Operation_Guide (KR).md`, `../03_Work_Pipeline/AI_Work_Pipeline (KR).md`에서 관리한다. 본 문서는 초기 구상과 원문 근거를 보관하는 Draft다.
+현재 운영 기준은 `../00_Index/AI_Workflow_Index (KR).md`, `../01_Plan/AI_Workflow_Project_Plan (KR).md`, `../03_Operation/AI_Workflow_Operation_Guide (KR).md`, `../04_Work_Pipeline/AI_Work_Pipeline (KR).md`에서 관리한다. 본 문서는 초기 구상과 원문 근거를 보관하는 Draft다.
 
 ---
 

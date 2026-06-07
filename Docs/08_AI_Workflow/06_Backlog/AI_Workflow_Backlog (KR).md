@@ -72,15 +72,6 @@ Backlog 항목은 다음 형식으로 기록한다.
 - 근거 문서: Work Checklist 전환 기준
 - 다음 조치: `Docs/01_Issue_CheckList` 폴더명과 D01-D18 파일명 전환은 Work_Checklist_Writing_Prompt 정리 단계에서 별도 계획 수립
 
-### Project Stella 본 개요 문서 작성
-
-- 분류: Project Stella
-- 내용: Draft가 아닌 현재 기준의 Project Stella 본 개요 문서 작성 여부를 검토해야 함
-- 상태: 대기
-- 우선순위: 권장
-- 근거 문서: Project Overview Draft / Project Plan
-- 다음 조치: Draft가 아닌 현재 기준 프로젝트 개요 문서 작성 여부 검토
-
 ### History 문서 / 운영 방식 구성
 
 - 분류: History
@@ -125,3 +116,9 @@ Backlog 항목은 다음 형식으로 기록한다.
 
 - 분류: Prompt Library
 - 완료 기준: Index와 D19에서 개별 Prompt 파일 생성 상태와 Prompt Files 분류 기준을 분리
+
+### Project Stella 본 개요 문서 작성
+
+- 분류: Project Stella
+- 완료 기준: `02_Project_Context/Project_Stella_Overview (KR).md` 작성 및 AI Workflow Index 연결
+

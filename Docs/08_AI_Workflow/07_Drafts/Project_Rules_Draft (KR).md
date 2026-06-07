@@ -6,7 +6,7 @@
 
 기능 개발, 리팩터링, 검증, 문서화 과정에서 AI가 어떤 기준으로 사용자의 의도를 해석하고 작업을 분리해야 하는지 구상하는 것을 목표로 한다.
 
-현재 운영 기준은 `../00_Index/AI_Workflow_Index (KR).md`, `../02_Operation/AI_Workflow_Operation_Guide (KR).md`, `../03_Work_Pipeline/AI_Work_Pipeline (KR).md`, `../04_Prompt_Library/00_Prompt_Blueprint/`에서 관리한다. 본 문서는 초기 구상과 원문 근거를 보관하는 Draft다.
+현재 운영 기준은 `../00_Index/AI_Workflow_Index (KR).md`, `../03_Operation/AI_Workflow_Operation_Guide (KR).md`, `../04_Work_Pipeline/AI_Work_Pipeline (KR).md`, `../05_Prompt_Library/00_Prompt_Blueprint/`에서 관리한다. 본 문서는 초기 구상과 원문 근거를 보관하는 Draft다.
 
 ---
 

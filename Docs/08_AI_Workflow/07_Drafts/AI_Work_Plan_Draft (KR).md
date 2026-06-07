@@ -4,7 +4,7 @@
 
 본 문서는 Codex를 적극적으로 활용하기 전에 고려한 작업 방식과 운영 후보를 정리한 초기 구상 문서다.
 
-현재 작업 흐름과 운영 기준은 `../02_Operation/AI_Workflow_Operation_Guide (KR).md`와 `../03_Work_Pipeline/AI_Work_Pipeline (KR).md`에서 관리한다. 본 문서는 초기 구상과 원문 근거를 보관하는 Draft다.
+현재 작업 흐름과 운영 기준은 `../03_Operation/AI_Workflow_Operation_Guide (KR).md`와 `../04_Work_Pipeline/AI_Work_Pipeline (KR).md`에서 관리한다. 본 문서는 초기 구상과 원문 근거를 보관하는 Draft다.
 
 AI 기반 작업 흐름은 현재 다음 순서로 고려하고 있다.
 

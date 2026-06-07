@@ -6,7 +6,7 @@
 
 이 문서는 실제 작업을 어떤 순서로 전개하고, 각 단계에서 어떤 입력을 받아 어떤 산출값을 만들지 자체 기준으로 정리한다.
 
-`../02_Operation/AI_Workflow_Operation_Guide (KR).md`는 Pipeline을 운용하기 위한 내부 운영지침이며, `../01_Plan/AI_Workflow_Project_Plan (KR).md`는 AI 기반 작업 운영 체계의 상위 기획 문서다. 본 문서는 실제 작업 흐름에 필요한 단계, 입력, 출력, 완료 기준을 독립적으로 포함한다.
+`../03_Operation/AI_Workflow_Operation_Guide (KR).md`는 Pipeline을 운용하기 위한 내부 운영지침이며, `../01_Plan/AI_Workflow_Project_Plan (KR).md`는 AI 기반 작업 운영 체계의 상위 기획 문서다. 본 문서는 실제 작업 흐름에 필요한 단계, 입력, 출력, 완료 기준을 독립적으로 포함한다.
 
 ---
 
@@ -32,7 +32,7 @@ Pipeline 체크포인트
 -> 문서화 필요성: Work Checklist / Verification Log / PR Document 등 산출물 반영 필요 여부 확인
 ```
 
-이 네 가지는 AI 기반 작업 운영 체계에서 Codex의 작업을 통제하기 위한 핵심 기준이다. 상세 판단 기준은 `../02_Operation/AI_Workflow_Operation_Guide (KR).md`의 `핵심 통제 기준`을 따른다.
+이 네 가지는 AI 기반 작업 운영 체계에서 Codex의 작업을 통제하기 위한 핵심 기준이다. 상세 판단 기준은 `../03_Operation/AI_Workflow_Operation_Guide (KR).md`의 `핵심 통제 기준`을 따른다.
 
 ---
 
@@ -338,7 +338,7 @@ Pipeline은 다음 8단계로 구성한다.
 
 ```yaml
 운영 규칙
--> ../02_Operation/AI_Workflow_Operation_Guide (KR).md
+-> ../03_Operation/AI_Workflow_Operation_Guide (KR).md
 
 작업 범위 / 완료 기준
 -> Work Checklist
@@ -365,3 +365,4 @@ Branch 결과
 History 문서가 아직 정리되지 않은 경우, 구조 / 책임 경계는 `System Architecture`를 우선 참조하고 작업 결정 / 범위 / 검증 상태는 `Work Checklist` 또는 `PR Document`에 남긴다.
 
 Pipeline은 각 산출물을 언제 호출하고 어떤 완료 기준으로 다음 단계로 넘길지 결정하는 작업 흐름 문서다.
+

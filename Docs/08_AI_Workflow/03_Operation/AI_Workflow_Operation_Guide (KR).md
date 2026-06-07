@@ -1,10 +1,10 @@
-﻿# AI Workflow Operation Guide
+# AI Workflow Operation Guide
 
 ## 1. 목적
 
 본 문서는 `Project Stella`에서 Codex와 협업할 때 적용할 내부 운영지침이다.
 
-이 문서는 `../03_Work_Pipeline/AI_Work_Pipeline (KR).md`를 운용할 때 지켜야 할 원칙, 책임 경계, 판단 기준, 산출물 사용 기준, 검증, 기록, Commit / PR 기준을 자체 기준으로 정리한다.
+이 문서는 `../04_Work_Pipeline/AI_Work_Pipeline (KR).md`를 운용할 때 지켜야 할 원칙, 책임 경계, 판단 기준, 산출물 사용 기준, 검증, 기록, Commit / PR 기준을 자체 기준으로 정리한다.
 
 작업 순서는 Work Pipeline에서 관리하고, 본 문서는 Pipeline 각 단계에서 어떤 기준으로 판단하고 진행할지 정의한다.
 
@@ -360,3 +360,4 @@ Branch는 작업 목표와 구현 범위를 관리하는 버전 컨트롤 단위
 ```
 
 여러 선택지가 경쟁하면 `필수 / 우선 / 권장 / 선택 / 보류 / 비권장` 우선순위와 `반복 점검 / 안정화 전 주의 / 문서화 시점 / Commit 시점 / 작업 전환 / 검증 필요` 상태를 필요한 만큼 표시한다.
+
