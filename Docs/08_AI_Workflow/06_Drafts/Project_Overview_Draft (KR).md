@@ -1,10 +1,12 @@
-# Project Overview Draft
+﻿# Project Overview Draft
 
 ## 1. 목적
 
 본 문서는 사용자 본인이 AI와 협업을 통한 결과물을 도출해내기 위해, 프로젝트 목표와 배경 정보를 압축하여 공유하기 위해 작성한 초안이다.
 
 AI가 프로젝트의 장르, 구현 목표, 기술 스택, AI 활용 흐름을 빠르게 이해하고 이후 협업 규칙과 Prompt Library를 구성하는 데 참고할 수 있도록 작성한다.
+
+현재 운영 기준은 `../00_Index/AI_Workflow_Index (KR).md`, `../01_Plan/AI_Workflow_Project_Plan (KR).md`, `../02_Operation/AI_Workflow_Operation_Guide (KR).md`, `../03_Work_Pipeline/AI_Work_Pipeline (KR).md`에서 관리한다. 본 문서는 초기 구상과 원문 근거를 보관하는 Draft다.
 
 ---
 
@@ -107,7 +109,7 @@ Stella Blade 고유 액션
 
 ---
 
-## 8. AI 협업 방식 메모
+## 8. AI 기반 작업 운영 방식 메모
 
 AI 활용 방식은 Milestone에 따라 다음처럼 변화했다.
 
@@ -122,9 +124,9 @@ Milestone 03 ~ 05
 
 Milestone 06 이후
 -> Codex + Prompt Workflow 사용
--> IDE Context, Plan Mode, Goal, Prompt Library 기반의 반복 가능한 AI 협업 체계로 확장
+-> IDE Context, Plan Mode, Goal, Prompt Library 기반의 반복 가능한 AI 기반 작업 운영 체계로 확장
 ```
 
-이 항목은 프로젝트의 기술 목표보다 AI 협업 방식의 변화에 대한 히스토리성 메모로 둔다.
+이 항목은 프로젝트의 기술 목표보다 AI 기반 작업 운영 방식의 변화에 대한 히스토리성 메모로 둔다.
 
 ---
