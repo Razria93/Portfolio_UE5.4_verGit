@@ -18,7 +18,7 @@
 적용 대상
 1. 작업 지시 Prompt
 2. 분석 Prompt
-3. 문서 작성 Prompt
+3. 문서 작성 / 보완 Prompt
 4. 검증 Prompt
 5. 운영 점검 Prompt
 ```

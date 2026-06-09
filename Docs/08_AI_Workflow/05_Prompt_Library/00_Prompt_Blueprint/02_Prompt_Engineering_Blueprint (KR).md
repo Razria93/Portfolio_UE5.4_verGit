@@ -1,4 +1,4 @@
-﻿# Prompt Engineering Blueprint
+# Prompt Engineering Blueprint
 
 ## 1. 목적
 

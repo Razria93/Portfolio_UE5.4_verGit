@@ -1,4 +1,4 @@
-﻿# Prompt Library Maintenance Blueprint
+# Prompt Library Maintenance Blueprint
 
 ## 1. 목적
 
@@ -33,7 +33,7 @@ Prompt Library는 사용 목적과 사용 시점을 기준으로 분류한다.
 분류 기준
 -> 작업 규칙
 -> 분석 / 판단 근거
--> 문서 작성
+-> 문서 작성 / 보완
 -> 기능 전용 작업
 -> 리뷰 / 검증
 -> 운영 점검

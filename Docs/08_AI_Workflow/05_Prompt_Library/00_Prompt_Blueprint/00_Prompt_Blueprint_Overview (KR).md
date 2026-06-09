@@ -18,7 +18,7 @@ Prompt Library
 
 Prompt Blueprint는 Prompt를 만들고 관리하기 위한 기준 문서 묶음이다.
 
-Prompt Files는 작업 세션에 사용하거나 문서 작성 / 검증 / Git 운영에 적용하는 개별 Prompt다.
+Prompt Files는 작업 세션, 작업 계획, 문서 카테고리별 작성 / 보완, 검증, Git 운영에 적용하는 개별 Prompt다.
 
 ---
 
@@ -28,16 +28,19 @@ Prompt Blueprint를 처음 검토할 때는 다음 순서로 읽는다.
 
 ```yaml
 Prompt Blueprint 이해 순서
-1. Prompt Format Blueprint
+1. Prompt Flow and Routing Blueprint
+-> 자연어 요청부터 각 Prompt 호출까지의 흐름 이해
+
+2. Prompt Format Blueprint
 -> Prompt의 형식과 섹션 구조 이해
 
-2. Prompt Engineering Blueprint
+3. Prompt Engineering Blueprint
 -> 각 섹션 안에 들어갈 요청 내용 설계 기준 이해
 
-3. Prompt Library Maintenance Blueprint
+4. Prompt Library Maintenance Blueprint
 -> 작성된 Prompt의 위치, 이름, 상태, 중복, 참조, 수명주기 관리 기준 이해
 
-4. Prompt Custom Blueprint
+5. Prompt Custom Blueprint
 -> Project Stella / AI Workflow 전용 적용 기준 이해
 ```
 
@@ -61,7 +64,7 @@ Prompt 제작 적용 순서
 -> 복사용 Prompt, 입력 기준, 출력 기준, 제약 조건, 검증 기준의 내용 설계
 
 3. Prompt Custom Blueprint
--> Project Stella / AI Workflow 맥락, Document 연결, 사용자 표현 기준 반영
+-> Project Stella / AI Workflow 맥락, 문서 카테고리 연결, 사용자 표현 기준 반영
 
 4. Prompt Library Maintenance Blueprint
 -> 위치, 파일명, 상태, 중복, Backlog 반영 여부 판단
@@ -93,6 +96,9 @@ Prompt Library 구조 정리
 
 Project Stella 전용 기준 반영
 -> Prompt Custom Blueprint
+
+Prompt 사용 흐름 확인
+-> Prompt Flow and Routing Blueprint
 ```
 
 ---
