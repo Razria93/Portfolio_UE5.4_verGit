@@ -1,4 +1,4 @@
-﻿# Project Rules Draft
+# Project Rules Draft
 
 ## 1. 목적
 

@@ -6,7 +6,7 @@
 
 이 문서는 실제 작업을 어떤 순서로 전개하고, 각 단계에서 어떤 입력을 받아 어떤 산출값을 만들지 자체 기준으로 정리한다.
 
-`../03_Operation/AI_Workflow_Operation_Guide (KR).md`는 Pipeline을 운용하기 위한 내부 운영지침이며, `../01_Plan/AI_Workflow_Project_Plan (KR).md`는 AI 기반 작업 운영 체계의 상위 기획 문서다. 본 문서는 실제 작업 흐름에 필요한 단계, 입력, 출력, 완료 기준을 독립적으로 포함한다.
+`../03_Operation/AI_Workflow_Operation_Guide (KR).md`는 Pipeline을 운용하기 위한 내부 운영지침이며, `../01_Overview/AI_Workflow_Overview (KR).md`는 AI 기반 작업 운영 체계의 상위 개요 문서다. 본 문서는 실제 작업 흐름에 필요한 단계, 입력, 출력, 완료 기준을 독립적으로 포함한다.
 
 ---
 
@@ -29,7 +29,7 @@ Pipeline 체크포인트
 -> 작업 목표: 무엇을 끝내야 하는지, 완료 기준과 비범위가 무엇인지 확인
 -> 변경 위험: 코드 / 문서 / Asset / Blueprint / Git 변경 영향 확인
 -> 검증 필요성: Build / Code Flow / PIE / Editor / Asset 검증 필요 여부 확인
--> 문서화 필요성: Work Checklist / Verification Log / PR Document 등 산출물 반영 필요 여부 확인
+-> 문서화 필요성: Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 확인
 ```
 
 이 네 가지는 AI 기반 작업 운영 체계에서 Codex의 작업을 통제하기 위한 핵심 기준이다. 상세 판단 기준은 `../03_Operation/AI_Workflow_Operation_Guide (KR).md`의 `핵심 통제 기준`을 따른다.
@@ -76,6 +76,12 @@ Pipeline은 다음 8단계로 구성한다.
 ```
 
 각 단계는 이전 단계의 출력값을 다음 단계의 입력값으로 사용한다.
+
+Work Brief Intake Prompt는 목표 확인 단계에서 사용자 요청, Codex 해석, 범위, 위험, 미결정 항목을 정리할 때 사용한다.
+
+Feature Work Planning Prompt와 Refactor Work Planning Prompt는 아이디어 계획 / 구조 제안 단계에서 나온 내용을 구현 단위, 변경 단위, 비범위, 위험, 검증 기준으로 정리해 적용 및 수정 단계의 입력으로 넘길 때 사용한다.
+
+Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Library/00_Prompt_Blueprint/05_Prompt_Flow_and_Routing_Blueprint (KR).md`에서 관리한다.
 
 ---
 
@@ -305,8 +311,12 @@ Pipeline은 다음 8단계로 구성한다.
 -> Work Checklist
 -> Bug Report
 -> System Architecture
--> Technical Document
+-> System Design Records
+-> Engine Technique Document
+-> Engine Implementation Records
+-> Verification Log
 -> PR Document
+-> Portfolio Technical Document
 -> AI Workflow Index / Prompt Format Blueprint / Prompt Library Maintenance Blueprint / Prompt Files / Operation Guide
 -> Milestone / Roadmap
 
@@ -317,17 +327,21 @@ Pipeline은 다음 8단계로 구성한다.
 입력 부족 시 처리
 -> History가 부족하면 실제 변경과 검증 결과를 기준으로 최소 요약
 -> 구조 맥락이 필요하면 System Architecture를 우선 참조
+-> 엔진 기능 / API 사용 맥락이 필요하면 Engine Technique Document 또는 관련 코드 / Unreal 문서를 우선 참조
 -> Prompt 개선 항목은 Prompt Library 후속 작업으로 분리
 ```
 
 ```yaml
 산출물 선택 기준
 -> Work Checklist: 작업 목표 / 범위 / 완료 기준 / 검증 상태 관리가 필요할 때
--> System Architecture: 책임 경계 / 실행 흐름 / 데이터 계약 변화가 있을 때
 -> Bug Report: 재현 가능한 문제와 원인 / 수정 / 검증을 남길 때
+-> System Architecture: 현재 시스템 구조 / 책임 경계 / 실행 흐름 / 데이터 계약을 설명할 때
+-> System Design Records: 시스템 구조 설계 결정이나 구조 문제 / 책임 경계 위험을 기록할 때
+-> Engine Technique Document: Unreal Engine 기능 / API / 시스템 사용 방식을 설명할 때
+-> Engine Implementation Records: Unreal Engine 기능 사용 결정이나 엔진 동작 / 설정 / API 이슈를 기록할 때
 -> Verification Log: 수행한 검증과 미검증 항목을 분리 기록할 때
 -> PR Document: Branch 결과와 검증 상태를 제출할 때
--> Technical Document: 여러 작업 기록을 제출용 기술 주제로 압축할 때
+-> Portfolio Technical Document: 여러 작업 기록을 제출용 기술 주제로 압축할 때
 -> AI Workflow Index: AI Workflow 문서의 위치 / 역할 / 상태를 갱신할 때
 -> Prompt Format Blueprint / Prompt Library Maintenance Blueprint / Prompt Files: 반복 가능한 작업 규칙 또는 Prompt Library 관리 기준을 개선할 때
 ```
@@ -343,8 +357,20 @@ Pipeline은 다음 8단계로 구성한다.
 작업 범위 / 완료 기준
 -> Work Checklist
 
+버그 기록
+-> Bug Report
+
 기술적 의도 / 구조 맥락
 -> System Architecture
+
+시스템 설계 결정 / 구조 문제
+-> System Design Records
+
+엔진 기능 / API 사용 맥락
+-> Engine Technique Document
+
+엔진 사용 결정 / 엔진 이슈
+-> Engine Implementation Records
 
 작업 판단 변화 / 맥락
 -> History
@@ -359,10 +385,9 @@ Branch 결과
 -> PR Document
 
 포트폴리오 제출용 정리
--> Technical Document
+-> Portfolio Technical Document
 ```
 
-History 문서가 아직 정리되지 않은 경우, 구조 / 책임 경계는 `System Architecture`를 우선 참조하고 작업 결정 / 범위 / 검증 상태는 `Work Checklist` 또는 `PR Document`에 남긴다.
+History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 `System Architecture`를 우선 참조하고 엔진 기능 / API 사용 방식은 `Engine Technique Document` 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 `Work Checklist` 또는 `PR Document`에 남긴다.
 
 Pipeline은 각 산출물을 언제 호출하고 어떤 완료 기준으로 다음 단계로 넘길지 결정하는 작업 흐름 문서다.
-

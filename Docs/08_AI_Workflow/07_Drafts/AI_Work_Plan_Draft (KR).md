@@ -1,4 +1,4 @@
-﻿# AI Work Plan Draft
+# AI Work Plan Draft
 
 ## 1. 목적
 

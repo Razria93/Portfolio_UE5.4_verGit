@@ -1,4 +1,4 @@
-# AI Workflow Operation Guide
+﻿# AI Workflow Operation Guide
 
 ## 1. 목적
 
@@ -8,7 +8,7 @@
 
 작업 순서는 Work Pipeline에서 관리하고, 본 문서는 Pipeline 각 단계에서 어떤 기준으로 판단하고 진행할지 정의한다.
 
-`../01_Plan/AI_Workflow_Project_Plan (KR).md`는 AI 기반 작업 운영 체계의 상위 기획 문서이며, 본 문서는 실제 운영에 필요한 기준을 독립적으로 포함한다.
+`../01_Overview/AI_Workflow_Overview (KR).md`는 AI 기반 작업 운영 체계의 상위 개요 문서이며, 본 문서는 실제 운영에 필요한 기준을 독립적으로 포함한다.
 
 ---
 
@@ -58,9 +58,9 @@ Pipeline을 운용할 때 Codex는 요청된 작업을 다음 네 가지 기준�
 -> 사용자 Editor 확인이 필요한 항목 분리
 
 문서화 필요성
--> Work Checklist / System Architecture / Verification Log / PR Document 반영 필요 여부 판단
+-> Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 판단
 -> History와 공식 산출물 연결 필요성 판단
--> Technical Document 또는 Prompt Library 후속 반영 필요 여부 판단
+-> Portfolio Technical Document 또는 Prompt Library 후속 반영 필요 여부 판단
 ```
 
 이 기준은 작업을 제한하기 위한 절차가 아니라, Codex가 목표를 오해하거나 검증되지 않은 결과를 완료로 표현하지 않게 하기 위한 최소 체크 기준이다.
@@ -115,7 +115,7 @@ Prompt Library Maintenance Blueprint
 -> Prompt Library의 폴더, 파일명, 상태, 중복, Archive 관리 기준 문서
 
 Prompt Files
--> 개별 작업 규칙 / 검증 / 문서 작성 프롬프트
+-> 개별 작업 규칙 / 작업 계획 / 문서 카테고리별 작성 / 보완 / 검증 / Git 운영 Prompt
 
 Prompt
 -> 작업 전에 반복 적용할 규칙
@@ -128,11 +128,23 @@ History
 Work Checklist
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태, 후속 작업 범위 관리
 
-System Architecture
--> 기술적 의도, 구조 맥락, 책임 경계, 실행 흐름, 데이터 계약 정리
-
 Bug Report
 -> 재현 가능한 문제, 원인, 수정, 검증 기록
+
+System Architecture
+-> 현재 시스템 구조, 책임 경계, 실행 흐름, 데이터 계약 정리
+
+System Design Records
+-> 시스템 구조 설계 결정과 선택 이유 기록
+-> 시스템 구조 / 책임 경계 / 설계 흐름에서 발생한 문제와 위험 기록
+
+Engine Technique Document
+-> Unreal Engine 기능 / API / 시스템 사용 방식 정리
+-> 엔진 기능을 프로젝트에서 어떻게 적용하는지 설명
+
+Engine Implementation Records
+-> Unreal Engine 기능 사용 방식에 대한 결정 기록
+-> Unreal Engine 동작, 설정, API 사용 중 발생한 기술 이슈 분석
 
 Verification Log
 -> 실제 수행한 검증과 미검증 항목 기록
@@ -141,7 +153,7 @@ Verification Log
 PR Document
 -> Branch 결과, 변경 요약, 검증 상태, 미검증 항목, 후속 작업 범위 정리
 
-Technical Document
+Portfolio Technical Document
 -> 여러 작업 기록을 포트폴리오 제출용 기술 주제로 압축
 
 Commit / PR
@@ -193,6 +205,12 @@ Default 작업
 
 Plan Mode는 책임 경계 변경, 여러 파일 영향, 검증 기준 불명확, 사용자 trade-off 결정, 리팩터링 단위 분리, 현재 구조와 목표 구조 사이의 해석 차이가 있을 때 우선 사용한다.
 
+Work Brief Intake Prompt는 작업 시작 전 사용자 요청, Codex 해석, 범위, 위험, 미결정 항목, 준비 상태를 정리할 때 사용한다.
+
+Feature Work Planning Prompt는 새 기능 구현 작업을 구현 단위, 실행 순서, 위험, 검증 기준으로 정리할 때 사용한다.
+
+Refactor Work Planning Prompt는 구조 변경 / 리팩터링 중심 작업을 변경 단위, 책임 경계, 위험, 검증 기준으로 정리할 때 사용한다.
+
 Goal은 여러 세션에 걸칠 가능성이 있고, 단계별 완료 기준이나 중간 산출물 추적이 필요한 경우에만 사용한다.
 
 ---
@@ -220,15 +238,18 @@ History는 판단을 증명할 수 있는 형태로 압축한다.
 
 ```yaml
 History 연결 기준
-판단 변화 -> System Architecture
 작업 범위 결정 -> Work Checklist
-검증 실패 -> Verification Log / Bug Report
+검증 실패 -> Bug Report / Verification Log
+현재 시스템 구조 -> System Architecture
+시스템 구조 판단 변화 -> System Design Records
+엔진 기능 사용 방식 -> Engine Technique Document
+엔진 사용 판단 변화 -> Engine Implementation Records
 구현 결과 -> PR Document
+포트폴리오 요약 -> Portfolio Technical Document
 반복 가능한 규칙 -> Prompt Format Blueprint / Prompt Library Maintenance Blueprint / Prompt Files / Operation Guide
-포트폴리오 요약 -> Technical Document
 ```
 
-History 문서가 아직 정리되지 않은 경우, 구조 / 책임 경계는 System Architecture를 우선 참조하고 작업 결정 / 범위 / 검증 상태는 Work Checklist와 PR Document에 남긴다.
+History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 System Architecture를 우선 참조하고, 엔진 기능 사용 방식은 Engine Technique Document 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 Work Checklist와 PR Document에 남긴다.
 
 ---
 
@@ -360,4 +381,3 @@ Branch는 작업 목표와 구현 범위를 관리하는 버전 컨트롤 단위
 ```
 
 여러 선택지가 경쟁하면 `필수 / 우선 / 권장 / 선택 / 보류 / 비권장` 우선순위와 `반복 점검 / 안정화 전 주의 / 문서화 시점 / Commit 시점 / 작업 전환 / 검증 필요` 상태를 필요한 만큼 표시한다.
-

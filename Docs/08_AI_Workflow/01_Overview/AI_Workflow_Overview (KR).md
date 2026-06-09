@@ -1,12 +1,12 @@
-# AI Workflow Project Plan
+# AI Workflow Overview
 
 ## 1. 목적
 
-이 문서는 UE5 Portfolio 프로젝트에서 AI 기반 작업 운영 체계를 정의하기 위한 상위 기획 문서다.
+이 문서는 UE5 Portfolio 프로젝트에서 AI 기반 작업 운영 체계의 목적, 구성요소, 책임, 작업 단계, 문서 관계를 설명하는 상위 개요 문서다.
 
 `Project Stella`를 진행하는 과정에서 AI 기반 작업 운영을 목표, 책임, 검증, 기록 체계 안에서 통제하는 기준을 정의한다.
 
-문서 위계는 `Project Plan -> Work Pipeline / Operation Guide -> Prompt Library` 순서로 둔다. `Work Pipeline`은 실제 작업 순서와 단계별 완료 기준을 정리하는 작업 흐름 문서, `Operation Guide`는 Pipeline 수행 중 적용할 내부 운영지침, `Prompt Library`는 실제 작업 요청에 적용할 규칙 모음으로 사용한다.
+문서 관계는 `AI Workflow Overview -> Work Pipeline / Operation Guide -> Prompt Library` 흐름으로 이해한다. `Work Pipeline`은 실제 작업 순서와 단계별 완료 기준을 정리하는 작업 흐름 문서, `Operation Guide`는 Pipeline 수행 중 적용할 내부 운영지침, `Prompt Library`는 실제 작업 요청에 적용할 규칙 모음으로 사용한다.
 
 ---
 
@@ -42,8 +42,6 @@
 -> SourceTree
 -> Obsidian
 ```
-
-Project Stella는 Stella Blade의 액션 시스템을 분석하고, 포트폴리오 범위에서 설명 가능한 핵심 전투 구조를 구현하는 프로젝트다.
 
 ```yaml
 기술 구현 목표
@@ -111,7 +109,7 @@ History
 
 Document
 -> 작업 결과와 판단 근거를 공식 산출물로 정리
--> Work Checklist, System Architecture, Bug Report, Verification Log, PR Document, Technical Document 등으로 분리
+-> Work Checklist, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Technical Document 등으로 분리
 
 Work Checklist
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태, 후속 작업 범위 관리
@@ -182,9 +180,9 @@ QA 흐름
 ```yaml
 문서화 흐름
 -> Work Checklist 갱신
--> 필요 시 System Architecture / Bug Report / Verification Log 작성
+-> 필요 시 Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log 작성
 -> PR Document로 Branch 결과와 검증 상태 정리
--> 여러 작업 기록은 Technical Document로 압축
+-> 여러 작업 기록은 Portfolio Technical Document로 압축
 -> Prompt 개선 필요 항목은 Prompt Library 후속 작업으로 분리
 ```
 
@@ -248,11 +246,22 @@ Prompt는 작업 전 규칙을 제공하고, History는 작업 중 판단 과정
 Work Checklist
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태 관리
 
-System Architecture
--> 구조 변경, 책임 경계, 실행 흐름, 데이터 계약 정리
-
 Bug Report
 -> 재현 가능한 문제, 원인, 수정, 검증 기록
+
+System Architecture
+-> 현재 시스템 구조, 책임 경계, 실행 흐름, 데이터 계약 정리
+
+System Design Records
+-> 시스템 구조 설계 결정과 선택 이유 기록
+-> 시스템 구조 / 책임 경계 / 설계 흐름에서 발생한 문제와 위험 기록
+
+Engine Technique Document
+-> Unreal Engine 기능 / API / 시스템 사용 방식 정리
+
+Engine Implementation Records
+-> Unreal Engine 기능 사용 방식에 대한 결정 기록
+-> Unreal Engine 동작, 설정, API 사용 중 발생한 기술 이슈 분석
 
 Verification Log
 -> 실제 수행한 검증과 미검증 항목 기록
@@ -260,7 +269,7 @@ Verification Log
 PR Document
 -> Branch 결과, 변경 요약, 검증 상태, 후속 작업 범위 정리
 
-Technical Document
+Portfolio Technical Document
 -> 여러 작업 기록을 포트폴리오 제출용 기술 주제로 압축
 
 AI Workflow Index
@@ -274,12 +283,12 @@ Prompt Library Maintenance Blueprint
 
 ## 10. 후속 구체화 항목
 
-이 문서는 AI 기반 작업 운영 체계의 압축 개요이자 상위 기획서다. 실제 작업 흐름, 운영 규칙, 프롬프트는 다음 문서에서 구체화한다.
+이 문서는 AI 기반 작업 운영 체계의 압축 개요이자 상위 개요 문서다. 실제 작업 흐름, 운영 규칙, 프롬프트는 다음 문서에서 구체화한다.
 
 ```yaml
 후속 구체화 항목
--> Work Pipeline이 Project Plan의 작업 단계를 작업 흐름으로 구체화하는지 재검토
--> Operation Guide가 Project Plan의 운영 원칙을 내부 규칙으로 구체화하는지 재검토
+-> Work Pipeline이 AI Workflow Overview의 작업 단계를 작업 흐름으로 구체화하는지 재검토
+-> Operation Guide가 AI Workflow Overview의 운영 원칙을 내부 규칙으로 구체화하는지 재검토
 -> AI Workflow Index가 전체 문서의 위치 / 역할 / 상태를 명확히 보여주는지 재검토
 -> Prompt Library Maintenance Blueprint가 Prompt Library 유지보수 기준을 충분히 분리하는지 재검토
 -> 작업 기록 단위를 Work Checklist 기준으로 구체화
