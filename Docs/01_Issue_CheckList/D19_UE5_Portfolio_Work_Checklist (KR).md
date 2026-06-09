@@ -245,9 +245,9 @@ D20 Parry 구현
 
 ### 8.3. Commit / PR 준비 상태
 
-- [ ] 이번 Branch Commit 후보를 `Docs/08_AI_Workflow/`, `Docs/01_Issue_CheckList/D19_UE5_Portfolio_Work_Checklist (KR).md`, `Docs/01_Issue_CheckList/request/`의 D20 예시 문서로 제한
-- [ ] 기존 대량 Docs 변경, `Docs/08_Reference`, unrelated README 변경을 별도 판단 대상으로 분리
-- [ ] PR 문서 작성 시 AI Workflow Overview / Work Pipeline / Operation Guide / AI Workflow Index / D19 Work Checklist / D20 예시 문서를 근거로 연결
+- [x] 이번 Branch Commit 후보를 `Docs/08_AI_Workflow/`, `Docs/01_Issue_CheckList/D19_UE5_Portfolio_Work_Checklist (KR).md`, `Docs/01_Issue_CheckList/request/`의 D20 예시 문서로 제한
+- [x] 기존 대량 Docs 변경, `Docs/08_Reference`, unrelated README 변경을 별도 판단 대상으로 분리
+- [x] PR 문서 작성 시 AI Workflow Overview / Work Pipeline / Operation Guide / AI Workflow Index / D19 Work Checklist / D20 예시 문서를 근거로 연결
 
 ---
 
