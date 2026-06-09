@@ -1,226 +1,184 @@
-# UE5 Portfolio – Plan Overview
+# UE5 Portfolio - 프로젝트 개요
 
-## Keywords
+본 문서는 `UE5 Action RPG Combat Portfolio`의 목표, 범위, 기술 방향, 문서 구조를 요약한다.
 
-- UE5 포트폴리오 프로젝트 개요 및 목표 정의
-
-- 구현 범위 설정
-
-- 목표 기간 설정
-
-- 사용 툴 개요
-
-- 디렉터리 구조 개요
-
+상세 구현 단계는 `P01_UE5_Portfolio_Milestones (KR).md`와 `P02_UE5 Portfolio_Development Roadmap (KR).md`에서 관리한다.
 
 ---
 
-## Details
+## 1. 프로젝트 정보
 
-### 1. 프로젝트 개요
-
-- **프로젝트명**: UE5 Combat Portfolio
-  
-- **엔진 버전**: Unreal Engine 5.4
-  
-- **목표 플랫폼**: Windows PC (에디터 실행 기준)
-  
-- **프로젝트 기간:** 1달 (필수 범위) + @ (확장 범위)
-
-#### 목표 요약
-
-- **장르**: 
-
-	- 3인칭 액션 전투 데모 제작
-	  
-- **목표**: 
-  
-	1. 게임의 최소 구성 요소를 이해하고 설계하여 구현하는 것
-	   
-	2. Git / Issue / Document까지 포함된 **실무 스타일 작업 흐름**을 경험하고 적용해보는 것
-
-
----
-
-### 2. 구현 범위(Scope)
-
-#### 2.1 필수(MVP) 범위
-
-1. 플레이어 캐릭터
-   
-	- 이동 / 점프 / 회피(구르기)
-
-2. 카메라 & 조작
-   
-	- 3인칭 카메라
-	  
-	- Lock-on
-
-3. 전투 시스템(기본)
-   
-	- 단일 무기 장착 / 해제
-	  
-	- 기본 공격, 콤보 공격
-	  
-	- 기본 적 (더미 + 간단한 전투 AI)
-	  
-	- 근접 피격 판정 (피격 판정 + 피격 리액션)
-	  
-	- 데미지 시스템 (HP 감소 + 사망 + 파괴)
- 
-4. 표현
-   
-	- 공격 및 피격 VFX (파티클 or 나이아가라)
-	  
-	- 리소스 UI (체력 + 조건부 자원)
-	  
-	- 데미지 UI
-	  
-	- 기타 개발에 필요한 UI
-
-5. 구성
-   
-	- Test Room (단위별 기능 테스트 공간)
-	  
-	- World (게임 데모 실행 공간)
-
-#### 2.2 확장(Extended) 후보
-
-1. 고급 전투
-   
-	- 히트 스탑
-	  
-	- 공중 공격 및 콤보
-	  
-	- 다운 공격 및 콤보
-	  
-	- 처형
-	  
-	- 패링 / 가드 / 완벽 회피
-	  
-	- 무기 변경 (근거리 / 원거리 / 마법)
-	  
-	- 스킬 발동
-
-2. AI 확장
-   
-	- 전투 알고리즘 강화 (대기 / 경계 / 공격 / 방어 / 회피 / 도주)
-	  
-	- AI 그룹 구성 및 피아 식별
-	  
-	- 역할별 적 타입 (근접 / 원거리 / 마법 등)
-	  
-	- 웨이브 시스템
-	  
-	- 미니 보스
-
-3. 이동 & 파쿠르 확장
-   
-	- 파쿠르 액션 (벽타기, 장애물 넘기, 낙법 등)
-	  
-	- 텔레포트
-
-4. 고급 애니메이션
-   
-	- 풋 IK / 핸드 IK
-	  
-	- ALS 시스템
-	  
-	- 8-way 애니메이션
-
-5. 시스템
-   
-	- 아이템 상호작용 및 사용 시스템
-	  
-	- 인벤토리 시스템
-	  
-	- 마을
-	  
-	- NPC
-	  
-	- 상점 시스템
-	  
-	- 퀘스트 시스템
-	  
-	- 스폰 시스템
-	  
-	- 레벨 확장 및 이동
-
-6. 연출 & UI
-   
-	- 파괴 파티클 이펙트
-	  
-	- 림 이펙트 (외곽선)
-	  
-	- 간단 시네마틱 인/아웃
-	  
-	- 메뉴 / 옵션 / 리트라이
-
-> 확장 범위는 **MVP 완성 이후**, 시간 여유에 따라 단계적으로 추가
-
----
-
-### 3. 기간 및 작업 모드
-
-#### 작업 목표 기간: 
-
-- 필수 범위 : 1달 (2025.12.01 ~ 2025.12.31)
-  
-- 확장 범위 : '필수 범위' 작업 이후 계획
-	  
-#### 작업 계획: 
-
-- 25.12.01 ~ 25.12.07 (W1)
-  
-	- M1: Character & Combat Core (v0.1)
-
-- 25.12.08 ~ 25.12.14 (W2)
-  
-	- M2 – Hit, Damage, Dummy Enemy, Targeting (v0.2)
-
-- 25.12.15 ~ 25.12.21 (W3)
-  
-	- M3 – Enemy AI & Advanced Combat (v0.3)
-
-- 25.12.22 ~ 25.12.28 (W4)
-  
-	- M4 – VFX & UI (v0.4)
-
-- 25.12.28 ~ 25.12.31 (W5)
-  
-	- M5 – Polish & Documentation (v0.5)
-
-
-> **자세한 계획은 마일스톤에 작성 (P01_UE5_Portfolio_Milestones)**
-
----
-
-### 4. 사용 툴 개요
-
-- 엔진: Unreal Engine 5.4
-  
-- IDE: Visual Studio 2022
-  
-- 버전 관리: Git + GitHub
-  
-- 이슈/칸반: GitHub Issues & Projects
-  
-- 문서화: Obsidian
-
-- AI 툴: ChatGPT (~M2) / CodeX (M3 ~)
-
-
----
-
-### 5. 디렉터리 개요 (문서화 관련)
-
-```
-docs/
- ├─ 00_plan/     → 계획 / 마일스톤 / 워크플로우
- ├─ 01_daily/    → Issue checklists
- ├─ 02_design/   → 시스템 설계 및 다이어그램
- └─ 03_notes/    → 기타 문서 (작업 기록, 실험 결과, 회고 등)
+```yaml
+프로젝트명: UE5 Action RPG Combat Portfolio
+엔진: Unreal Engine 5.4
+개발 환경: Visual Studio 2022
+언어 / 구성: C++ / Blueprint
+버전 관리: Git / GitHub
+문서화: Markdown / Obsidian
+목표 플랫폼: Windows PC / Unreal Editor 실행 기준
 ```
 
+---
+
+## 2. 프로젝트 목표
+
+### 장르 목표
+
+3인칭 액션 RPG 전투 시스템 포트폴리오.
+
+### 구현 목표
+
+```yaml
+전투 실행 구조
+- Player / Enemy 공통 Action 실행 흐름
+- Reaction 실행 흐름
+- Damage 처리 흐름
+- Feedback 실행 흐름
+- AI decision source와 실행 계층 연결
+
+작업 방식
+- Git / PR / Issue Checklist 기반 작업 관리
+- Bug Report / System Architecture 기반 기록
+- Technical Document 기반 제출용 설명
+- AI Workflow / Prompt Library 기반 Codex 협업
+```
 
 ---
+
+## 3. 현재 구현 범위
+
+```yaml
+Player
+- Movement / Camera / Input
+- Weapon Equip / Unequip
+- Combo Attack
+- Dodge 기반 intervention 흐름
+
+Combat
+- Hit Collision Window
+- Hit Context / Damage Context
+- ApplyDamage -> FDamageEvent -> TakeDamage 기반 Damage Pipeline
+- Hit / Dead Reaction
+- Damage Feedback / Reaction Feedback
+
+Enemy AI
+- Behavior Tree / Blackboard
+- Patrol / Chase / Attack
+- Combat priority / waiting behavior
+- Action intent dispatch
+
+Documentation
+- Issue Checklist
+- Pull Request
+- Bug Report
+- System Architecture
+- Technical Documents
+- AI Workflow
+```
+
+---
+
+## 4. 핵심 설계 방향
+
+### Action / Reaction 실행 구조
+
+Action과 Reaction을 공통 request / decision / apply / lifecycle 흐름으로 정리한다.
+
+### Damage Pipeline
+
+Unreal Engine 표준 `FDamageEvent`, `AActor::TakeDamage()` 흐름을 유지하면서 프로젝트 전용 hit context, damage result, reaction request, feedback request를 연결한다.
+
+### Cross-Domain Intervention
+
+Action, Reaction, Dodge, HitReaction 사이의 interrupt / cancel / block 관계를 명시적으로 다룬다.
+
+### Data-Driven Resolve
+
+Action, Reaction, Damage, Feedback을 key 기반으로 조회하고 실행 데이터와 executor를 resolve한다.
+
+### Player / AI 공통 실행 구조
+
+Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더라도 실제 실행은 공통 component와 execution pipeline을 사용한다.
+
+---
+
+## 5. 문서 구조
+
+```yaml
+00_plan
+-> 프로젝트 개요 / 마일스톤 / 개발 로드맵
+
+01_Issue_CheckList
+-> 작업 단위별 목표 / 체크 항목 / 검증 기준
+
+02_Bug_Report
+-> 구현 중 발생한 문제 / 원인 / 수정 / 검증 기록
+
+04_Pull_Request
+-> PR 단위 변경 사항 / 검증 / 후속 작업 기록
+
+05_System_Architecture
+-> 시스템 구조 / 책임 경계 / 설계 결정 / 구조 변경 기록
+
+07_Technical_Documents
+-> 제출용 기술 문서
+
+08_AI_Workflow
+-> Codex 기반 작업 흐름 / Prompt Library / Work Brief / Planning
+```
+
+---
+
+## 6. 제출용 기술 문서
+
+```yaml
+T00
+-> 프로젝트 개요
+
+T01
+-> 프로젝트 기술 요약
+
+T02
+-> 전투 데이터 처리 파이프라인
+
+T03
+-> Action / Reaction 실행 파이프라인
+
+T04
+-> Enemy AI 전투 행동 설계
+
+T05
+-> Data-Driven 설계
+
+T06
+-> Troubleshooting
+
+T07
+-> AI 기반 개발 Workflow
+```
+
+---
+
+## 7. 후속 확장 방향
+
+```yaml
+Combat
+- Guard / Parry / Counter 판정
+- Combat Resolution 계층 도입
+- Resource / state system 고도화
+
+Data
+- DataAsset 기반 authoring 구조 정리
+- Action / Reaction / Feedback data 확장
+
+AI
+- Boss pattern
+- Enemy pattern data 확장
+- AI decision source와 공통 execution pipeline 연결 강화
+
+Documentation
+- Documentation Index 갱신
+- System Architecture / Engine Technique 문서 역할 분리
+- 제출용 기술 문서 최종 검수
+- AI Workflow 실사용 기반 refactor
+```

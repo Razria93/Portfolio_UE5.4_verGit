@@ -1,255 +1,534 @@
-# UE5 Portfolio – Milestones & Timeline
+# UE5 Portfolio - Milestones
 
-## **Keywords**
+This document organizes the major implementation stages and current progress of `UE5 Action RPG Combat Portfolio`.
 
-- Milestone definitions & version tag planning
-    
-- Weekly goals for a 1-month period (2025.12.01 ~ 12.31)
-    
-- MVP vs Extended scope
-    
-- Git Tag / Issue / PR workflow guideline
-    
-
----
----
-# **1. Version Tag / Milestone Overview**
-## **M0 – Initial Environment & Workflow Setup**
-
-**Duration:** 2025.12.01 (Day 1)
-
-### **Tasks**
-
-- [x] Install UE5.4 and create a new project
-    
-- [x] Set up Git/GitHub repository and `.gitignore`
-    
-- [x] Set up Obsidian `docs/` structure
-    - `00_plan`, `01_daily`, `02_design`, `03_notes`
-        
-- [x] Set up GitHub Issues & Kanban board
-    
-- [x] Add Git/GitHub workflow docs
-    
-- [x] Add Plan-Overview, Milestones, Issue-Checklist docs
-    
-
-**Git Tag:** `v0.0-setup`
+It is maintained as a milestone document for tracking completed, in-progress, and follow-up expansion scope based on the current project state.
 
 ---
 
-## **M1 – Character & Combat Core (v0.1)**
+## 1. Milestone Criteria
 
-**Duration:** Month 1 (~ 2025.12.31)
+```yaml
+Management Criteria
+- Feature-level implementation status
+- Combat execution structure status
+- Documentation / verification status
+- Follow-up expansion candidates
+```
 
-### **Tasks**
+```yaml
+Status Criteria
+Completed
+-> Main goals are implemented / organized based on current code and documents
 
-- [x] Implement `PlayerCharacter` / `PlayerController` (C++)
-    
-- [x] Add third-person camera (SpringArm)
-    
-- [x] Basic movement (move/jump)
-    
-- [x] Weapon equip/unequip
-    
-- [x] Implement Basic attack system
-    
-- [x] Create “Test Room” for early combat testing
-    
+In Progress
+-> Main structure exists, with implementation, verification, or documentation work remaining
 
-### **Completion Criteria**
-
-- [x] Player can move, jump, dodge, and perform basic combos
-    
-- [x] Attack availability changes depending on weapon state
-    
-
-**Git Tag:** `v0.1-character-combat-core`
+Follow-Up
+-> Scope to be handled in a later branch
+```
 
 ---
 
-## **M2 – Hit, Damage, Dummy Enemy, Targeting (v0.2)**
+## 2. Milestone Summary
 
-**Duration:** Month 2 (~ 2026.01.31)
+```yaml
+M0. Project Environment / Documentation Foundation
+-> Completed
 
-### **Tasks**
+M1. Player Basic Controls / Weapon / Basic Attack
+-> Completed
 
-#### Implement hit & hit-reaction
-	
-- [x] Implement combo attack system
-    
-- [x] Add Dummy Enemy
+M2. Basic Combat Loop and Damage Pipeline
+-> Completed
 
-- [x] Implement Hit detection
-    
-- [x] Implement Damage system (HP decrease, death, destructible object)
-    
-- [x] Implement hit/death reaction (player / enemy)
-      
+M3. Enemy AI Combat Behavior
+-> In Progress
 
-#### Implement lock-on targeting system
-    
-- [ ] Basic lock-on targeting system
-    
+M4. Combat Feedback
+-> In Progress
 
-### **Completion Criteria**
+M5. Action Pipeline Improvement
+-> In Progress
 
-- [x] Functional 1v1 combat loop (player vs dummy enemy)
-    
-- [ ] Camera and character correctly track locked target
-    
+M6. Reaction Pipeline Improvement
+-> In Progress
 
-**Git Tag:** `v0.2-hit-damage-targeting`
+M7. Action / Reaction Execution Intervention
+-> Follow-Up
 
----
+M8. Guard / Parry / Counter Combat Judgment
+-> Follow-Up
 
-## **M3 – Enemy AI & Advanced Combat (v0.3)**
+M9. Portfolio Technical Documents
+-> In Progress
 
-**Duration:** Month 3 (~ 2026.02.28)
-
-### **Tasks**
-
-#### Implement Enemy AI (FSM)
-
-- [x] Idle
-    
-- [x] Move
-    
-- [x] Chase
-    
-- [x] Attack
-    
-- [x] Hit reaction
-    
-- [x] Death
-
-
-#### Implement Advanced Player Combat
-
-- [ ] Guard / Guard Break
-    
-- [ ] Parry
-    
-- [ ] Dodge
-    
-
-#### Integration
-
-- [ ] Player and enemy interact using advanced combat logic
-    
-
-### **Completion Criteria**
-
-- [ ] Stable combat loop with guard, parry, dodge, and basic attacks
-    
-- [ ] Functional 1-vs-multiple enemy scenario
-    
-
-**Git Tag:** `v0.3-enemy-ai-and-advanced-combat`
+M10. AI Workflow / Prompt Library
+-> In Progress
+```
 
 ---
 
-## **M4 – VFX & UI (v0.4)**
+## 3. M0 - Project Environment / Documentation Foundation
 
-**Duration:** Month 4 (~ 2026.03.31)
+### Status
 
-### **Tasks**
+Completed
 
-### VFX
+### Goal
 
-- [ ] Attack impact particles
-    
-- [ ] Hit reaction particles
-    
-- [ ] Simple destruction effects
-    
+Set up the Unreal Engine project, Git / GitHub, and Markdown documentation structure.
 
-### UI
+### Completed Items
 
-- [ ] HP bar
-    
-- [ ] Resource UI
-    
-- [ ] Damage UI
-    
+```yaml
+Implementation / Environment
+- Unreal Engine 5.4 project setup
+- Visual Studio 2022 development environment
+- Git / GitHub repository setup
+- `.gitignore` setup
 
-### Demo
-
-- [ ] Prepare short playable demo
-    
-
-### **Completion Criteria**
-
-- [ ] Playable demo with combat, UI, and VFX feedback
-    
-
-**Git Tag:** `v0.4-vfx-and-ui`
+Documentation
+- Issue Checklist
+- Pull Request
+- Bug Report
+- System Architecture
+- Technical Documents
+- AI Workflow
+```
 
 ---
 
-## **M5 – Combat Orchestration Structure (v0.5)**
+## 4. M1 - Player Basic Controls / Weapon / Basic Attack
 
-**Duration:** Month 5 (~ 2026.04.30)
+### Status
 
-### **Tasks**
+Completed
 
-- [ ] Organize the flow from Player input to Action execution around the Orchestrator
-    
-- [ ] Separate state transition confirmation from Action execution
-    
-- [ ] Redefine responsibilities of `ActionComponent` and `CAction`
-    
-- [ ] Organize rollback flow when Action execution fails
-    
-- [ ] Prepare the execution structure for later AI / Reaction / Guard / Parry expansion
-    
+### Goal
 
-### **Completion Criteria**
+Build the Player character's basic movement, camera, weapon equip, and basic attack flow.
 
-- [ ] Player action execution flow can be explained as `Input -> Orchestrator -> State Transition -> Action Execution`
-    
-- [ ] `CAction` no longer owns direct state transition responsibility
-    
-- [ ] Existing ComboAttack / LightAttack behavior remains intact
-    
+### Completed Items
 
-**Git Tag:** `v0.5-combat-orchestration`
+```yaml
+Player
+- Character / Controller
+- SpringArm-based third-person camera
+- Basic movement / jump / dodge foundation
 
----
+Weapon
+- Weapon equip / unequip
+- WeaponActor / Attachment based weapon connection
 
-## **M6 – Polish & Documentation (v0.6)**
-
-**Duration:** Final cleanup phase
-
-### **Tasks**
-
-- [ ] Capture gameplay demo video
-    
-- [ ] Write technical/design documents (`docs/`)
-    
-- [ ] Write the extended roadmap
-    
-
-### **Completion Criteria**
-
-- [ ] Portfolio fully understandable from GitHub repo + video + docs
-    
-
-**Git Tag:** `v0.6-polish-and-docs`
+Combat
+- Basic Attack
+- Combo Attack
+- Montage-based attack execution
+```
 
 ---
 
-# **2. Tag / Milestone Check Table**
+## 5. M2 - Basic Combat Loop and Damage Pipeline
 
-| Milestone | Tag Name                      | Summary                                        | Week | Done |
-| --------- | ----------------------------- | ---------------------------------------------- | ---- | :--: |
-| **M0**    | –                             | Environment setup & workflow                   | W0   |      |
-| **M1**    | `v0.1-character-combat-core`  | Character/Camera/Movement/Basic Combo          | W1   |      |
-| **M2**    | `v0.2-hit-damage-targeting`   | Hit/Damage/Enemy/Targeting                     | W2   |      |
-| **M3**    | `v0.3-ai-and-advanced-combat` | Enemy AI & Advanced Combat (Guard/Parry/Dodge) | W3   |      |
-| **M4**    | `v0.4-vfx-and-ui`             | VFX/UI/Documentation                           | W4~5 |      |
-| **M5**    | `v0.5-combat-orchestration`   | Combat Orchestration structure                 | W5   |      |
-| **M6**    | `v0.6-polish-and-docs`        | Polish & Documentation                         | Final|      |
+### Status
+
+Completed
+
+### Goal
+
+Build the basic combat loop from hit collision to damage application, hit reaction, and death handling.
+
+### Completed Items
+
+```yaml
+Combat
+- Hit Collision Window
+- Hit Context / Damage Context
+- ApplyDamage -> FDamageEvent -> TakeDamage flow
+- Damage Result processing
+
+Reaction
+- Hit Reaction
+- Dead Reaction
+
+Feedback
+- Damage Feedback
+- Reaction Feedback
+```
 
 ---
+
+## 6. M3 - Enemy AI Combat Behavior
+
+### Status
+
+In Progress
+
+### Goal
+
+Allow Enemy AI to patrol, chase, attack, wait, react, and connect to the shared combat execution structure.
+
+### Current Items
+
+```yaml
+AI
+- Behavior Tree
+- Blackboard
+- Patrol / Chase
+- Attack intent dispatch
+- Combat priority / waiting behavior
+- Look at Player
+```
+
+### Remaining Items
+
+```yaml
+Follow-Up Implementation / Verification
+- Connect Guard / Parry / Counter with Enemy AI reactions
+- Expand boss pattern / enemy pattern data
+- Improve AI decision source integration with common execution pipeline
+```
+
 ---
+
+## 7. M4 - Combat Feedback
+
+### Status
+
+In Progress
+
+### Goal
+
+Connect Action / Reaction / Damage results to combat feedback that the player can perceive.
+
+### Current Items
+
+```yaml
+Action Feedback
+- Action start / end feedback
+- Attack timing feedback
+- Montage event based feedback connection
+
+Reaction Feedback
+- Hit / Dead reaction feedback
+- Reaction result to feedback connection
+- Animation / VFX / SFX connection candidates
+
+Damage Feedback
+- Hit location / direction based feedback
+- Damage impact feedback
+- Feedback request / execution structure
+
+Player Feedback
+- Screen / camera / UI feedback candidates for player readability
+- Visual / audio feedback candidates for combat result readability
+```
+
+### Remaining Items
+
+```yaml
+- Responsibility boundaries for Action / Reaction / Damage / Player Feedback
+- Feedback data authoring structure
+- VFX / SFX / camera feedback polish
+- System Architecture document structure update
+```
+
+---
+
+## 8. M5 - Action Pipeline Improvement
+
+### Status
+
+In Progress
+
+### Goal
+
+Improve the Player / AI Action execution flow through request / decision / apply / lifecycle structure.
+
+### Current Items
+
+```yaml
+Action
+- Action request
+- Action execution decision
+- Action relationship / apply mode
+- Action executor lifecycle
+- Action data resolve
+- Montage lifecycle criteria
+- Action Feedback connection
+```
+
+### Remaining Items
+
+```yaml
+- Improve AI action intent integration with Action Pipeline
+- Organize Action data authoring structure
+- Define Action execution failure / rollback criteria
+- Organize DataAsset-based authoring structure
+```
+
+---
+
+## 9. M6 - Reaction Pipeline Improvement
+
+### Status
+
+In Progress
+
+### Goal
+
+Connect and improve the Reaction execution flow from Damage result, state changes, hit reactions, and feedback.
+
+### Current Items
+
+```yaml
+Reaction
+- Reaction request
+- Reaction execution policy
+- Reaction relationship / apply mode
+- Reaction executor lifecycle
+- Reaction data resolve
+- Hit Reaction
+- Dead Reaction
+- Montage lifecycle criteria
+- Reaction Feedback connection
+```
+
+### Remaining Items
+
+```yaml
+Follow-Up Implementation / Verification
+- Define Damage Result to Reaction Request criteria
+- Improve Reaction policy / execution state criteria
+- Organize Enemy AI Reaction observation / return flow
+- Verify Action / Reaction execution relationships
+- Introduce Combat Resolution layer
+- Connect Resource / state system
+- Connect Guard / Parry / Counter judgment results
+- Update System Architecture document structure
+```
+
+---
+
+## 10. M7 - Action / Reaction Execution Intervention
+
+### Status
+
+Follow-Up
+
+### Goal
+
+Define interrupt / cancel / block / ignore criteria when Action and Reaction run simultaneously or intervene with each other.
+
+### Follow-Up Scope
+
+```yaml
+Execution Relationship Policy
+- Relationship between active Action and new Action
+- Relationship between active Action and Reaction
+- Relationship between active Reaction and new Reaction
+- Action / Reaction priority judgment
+- interrupt / cancel / block / ignore criteria
+
+Execution Intervention Case
+- Dodge-based intervention
+- HitReaction-based Action interrupt
+- Parry Reaction based Action transition candidate
+- ExecutionState transition criteria
+
+Verification
+- Existing Combo / Dodge / HitReaction regression check
+- Player / AI common applicability check
+- Montage lifecycle / delegate cleanup criteria check
+```
+
+### Remaining Items
+
+```yaml
+- Action / Reaction relationship matrix
+- Execution intervention policy
+- Action / Reaction apply mode criteria
+- System Architecture document update
+```
+
+---
+
+## 11. M8 - Guard / Parry / Counter Combat Judgment
+
+### Status
+
+Follow-Up
+
+### Goal
+
+Extend Stella Blade-style Guard / Parry / Counter judgment on top of the current combat execution structure.
+
+### Follow-Up Scope
+
+```yaml
+Guard
+- Guard input / state / judgment
+- Guard Break
+
+Parry
+- Input buffering
+- Parry Window
+- Combat Resolution based judgment
+- Parry Reaction interrupt
+- Damage / Reaction Feedback connection
+
+Counter
+- Counter condition
+- Counter execution flow
+- Action / Reaction relationship processing
+```
+
+### Preparation Documents
+
+```yaml
+D20
+-> Parry Work Brief
+-> Parry Feature Work Planning
+-> Parry Work Checklist Draft
+```
+
+---
+
+## 12. M9 - Portfolio Technical Documents
+
+### Status
+
+In Progress
+
+### Goal
+
+Organize portfolio technical documents and README so evaluators can understand the project structure and implementation intent.
+
+### Current Items
+
+```yaml
+Technical Documents
+- T00 Project Overview
+- T01 Project Technical Summary
+- T02 Combat Data Processing Pipeline
+- T03 Action / Reaction Execution Pipeline
+- T04 Enemy AI Combat Behavior Design
+- T05 Data-Driven Design
+- T06 Troubleshooting
+- T07 AI-Assisted Development Workflow
+
+README
+- Project overview
+- Implementation scope
+- Core design points
+- Documentation navigation
+```
+
+### Remaining Items
+
+```yaml
+Follow-Up Cleanup
+- Project Stella naming decision
+- Documentation Index update
+- System Architecture / Engine Technique role separation
+- Final review of portfolio technical documents
+```
+
+---
+
+## 13. M10 - AI Workflow / Prompt Library
+
+### Status
+
+In Progress
+
+### Goal
+
+Build an AI-based workflow and Prompt Library for working with Codex.
+
+### Current Items
+
+```yaml
+AI Workflow
+- Index
+- Overview
+- Project Context
+- Operation Guide
+- Work Pipeline
+- Backlog
+
+Prompt Library
+- Prompt Blueprint
+- Working Rule
+- Working Reference
+- Work Planning
+- Document Writing
+- Review / Verification
+- Git Operation
+
+D20 Verification
+- Work Brief
+- Feature Work Planning
+- Work Checklist Draft
+```
+
+### Remaining Items
+
+```yaml
+- Prompt Flow / Routing layer cleanup
+- Work Brief / Planning / Checklist field contract cleanup
+- Document Writing Prompt cleanup
+- Prompt sentence quality review
+- Re-verify Workflow in actual D20 implementation branch
+```
+
+---
+
+## 14. Tag Candidates
+
+```yaml
+v0.1-player-combat-core
+-> Player / Weapon / Basic Attack
+
+v0.2-basic-combat-damage-pipeline
+-> Basic Combat Loop and Damage Pipeline
+
+v0.3-enemy-ai-combat
+-> Enemy AI Combat Behavior
+
+v0.4-combat-feedback
+-> Combat Feedback
+
+v0.5-action-pipeline
+-> Action Pipeline Improvement
+
+v0.6-reaction-pipeline
+-> Reaction Pipeline Improvement
+
+v0.7-action-reaction-intervention
+-> Action / Reaction Execution Intervention
+
+v0.8-guard-parry-counter
+-> Guard / Parry / Counter expansion
+
+v0.9-portfolio-docs
+-> Portfolio technical documents / README
+
+v0.10-ai-workflow
+-> AI Workflow / Prompt Library
+```
+
+---
+
+## 15. Current Priorities
+
+```yaml
+1. Update README / Technical Documents
+2. Update Documentation Index
+3. Organize existing System Architecture document structure
+4. Define Action / Reaction execution intervention criteria
+5. Implement Parry
+6. Implement Guard / Counter
+7. Write Verification Log / PR Document based on implementation results
+```

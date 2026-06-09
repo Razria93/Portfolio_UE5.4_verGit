@@ -1,507 +1,363 @@
-# UE5 Portfolio – Development Roadmap
+# UE5 Portfolio - Development Roadmap
 
-## Overview
+This document organizes the implementation roadmap of `UE5 Action RPG Combat Portfolio` based on the current project state.
 
-A step-by-step roadmap for building a full UE5 action RPG-style portfolio project.  
-Divided into 14 major stages + extra systems.
-
----
----
-
-# **Stage 1: Core Player Systems**
-
-### **Default Level Setup (Order 0)**
-
- - [x] Default Level Setup
-    
-
-### **Player Setup (Order 1)**
-
-- [x] Mesh / Camera setup
-    
-- [x] Place character in level
-    
-- [x] Basic movement + camera control
-    
-- [x] Implement Idle / Walk / Sprint / Jump
-    
-
-### **Basic Combat (Order 2)**
-
-- [x] Weapon equip / unequip
-    
-- [x] Attack animations
-    
-- [x] Hitbox / collision setup
-    
+Milestones manage the status of major stages, while this roadmap manages the order of upcoming implementation, documentation, and verification work.
 
 ---
 
-# **Stage 2: Basic Combat Loop**
+## 1. Roadmap Criteria
 
-### **Enemy Setup (Order 3)**
+```yaml
+Management Criteria
+- Organize next work order based on currently implemented features
+- Track combat execution structure and documentation work together
+- Separate feature / document / verification scope for follow-up branches
+```
 
-- [x] Mesh / Animations / Colliders
-    
+```yaml
+Status Criteria
+Completed
+-> Closed based on current code and documents
 
-### **Basic UI (Order 4)**
+In Progress
+-> Structure or documents exist, with implementation / verification / cleanup remaining
 
-- [x] Player / Enemy HP UI
-    
+Next Work
+-> Items for the next branch or near follow-up work
 
-### **Combat System Foundation (Order 5)**
-
-- [x] Hit and HitReact
-    
-- [x] HP system
-    
-- [x] Damage application
-    
-- [x] Enemy Death
-	
-- [ ] Enemy Destroy
-    
-
-### **Player Hit & Death (Order 6)**
-
-- [ ] Player Hit & React
-    
-- [ ] Player Death
-	
-- [ ] Destroy
-    
-
-### **Targeting System (Order 7)**
-
-- [ ] Basic Lock-on targeting
-    
+Follow-Up Candidate
+-> Expansion candidates outside the current priority
+```
 
 ---
 
-# **Stage 3: AI Implementation**
+## 2. Current Roadmap Summary
 
-### **Team System (Order 8)**
+```yaml
+1. Player / Basic Combat Loop and Damage Pipeline
+-> Completed
 
-- [x] Player / Neutral / Enemy factions
-    
+2. Enemy AI Combat Behavior
+-> In Progress
 
-### **Enemy AI – Movement (Order 9)**
+3. Combat Feedback
+-> In Progress
 
-*(AI Navigation, EQS/queries Based)*
+4. Action Pipeline Improvement
+-> In Progress
 
-- [x] Point-to-point movement
-    
-- [x] Random Query movement
-    
-- [x] Patrol movement
-    
-- [x] Chase movement
-    
+5. Reaction Pipeline Improvement
+-> In Progress
 
-### **Enemy AI – Behavior & Positioning (Order 10)**
+6. Action / Reaction Execution Intervention
+-> Next Work
 
-- [x] Post-chase dispersal logic
-    
-- [x] Combat priority assignment
-    
-    - [x] Attack Wait
-        
-    - [x] Guard Wait
-        
-    - [x] Defense Wait
-        
-- [x] Look-at-Player behavior
-    
+7. Guard / Parry / Counter
+-> Next Work
 
-### **Enemy AI – Attacking (Order 11)**
+8. Portfolio Technical Documents
+-> Next Work
 
-- [x] Attack animations
-    
-- [x] Damage application
-    
-- [x] Combo attacks
-    
-- [x] Distance-based & random attack logic
-    
+9. System Architecture / Engine Technique Document Structure
+-> Next Work
 
-### **Player Defensive Mechanics (Order 12)**
+10. AI Workflow Refactor Based on Real Usage
+-> Follow-Up Candidate
 
-#### **Guard System**
-
-- [ ] Guard
-    
-- [ ] Perfect Guard
-    
-- [ ] Guard Break
-    
-
-#### **Parry System**
-
-- [ ] Parry
-    
-- [ ] Perfect Parry
-    
-
-#### **Dodge System**
-
-- [ ] Dodge
-    
-- [ ] Perfect Dodge
-    
-
-### **Enemy Defensive Mechanics (Order 13)**
-
-#### Guard
-
-- [ ] Guard
-    
-- [ ] Guard Break
-    
-
-#### Parry
-
-- [ ] Parry
-    
-
-#### Dodge
-
-- [ ] Dodge
-    
+11. Boss / Pattern / Advanced Combat
+-> Follow-Up Candidate
+```
 
 ---
 
-# **Stage 4: AI Expansion**
+## 3. Completed Foundation Work
 
-### **Friendly AI (Order 14)**
+### Player / Weapon / Basic Attack
 
-- [ ] Reuse enemy AI logic for allies
-    
+```yaml
+Status
+-> Completed
 
-### **Group Combat System (Order 15)**
+Items
+- Player Character / Controller
+- SpringArm-based third-person camera
+- Basic movement / jump / dodge foundation
+- Weapon Equip / Unequip
+- Combo Attack
+- Montage-based attack execution
+```
 
-- [ ] Ally/Enemy identification
-    
-- [ ] AI vs AI combat matching system
-    
-- [ ] Post-kill behavior logic
-    
+### Basic Combat Loop and Damage Pipeline
 
----
+```yaml
+Status
+-> Completed
 
-# **Stage 5: Items / NPC / Interaction**
-
-### **Interaction Systems**
-
-- [ ] Item interaction & usage (Order 16)
-    
-- [ ] Inventory system (Order 17)
-    
-
-### **World / NPC Systems**
-
-- [ ] Village area (Order 18)
-    
-- [ ] NPCs (Order 19)
-    
-- [ ] Shop system (Order 20)
-    
-- [ ] Quest system (Order 21)
-    
-- [ ] Spawn system (Order 22)
-    
-- [ ] Level transitions (Order 23)
-    
+Items
+- Hit Collision Window
+- Hit Context / Damage Context
+- ApplyDamage -> FDamageEvent -> TakeDamage flow
+- Hit Reaction
+- Dead Reaction
+- Basic Damage Feedback
+```
 
 ---
 
-# **Stage 6: Advanced Animation Systems**
+## 4. In-Progress Core Structures
 
-### **IK Systems**
+### Combat Feedback
 
-- [ ] Foot IK (Order 24)
-    
-- [ ] Hand IK (Order 24)
-    
+```yaml
+Status
+-> In Progress
 
-### **Movement System**
+Current Direction
+- Action Feedback connection
+- Reaction Feedback connection
+- Damage Impact Feedback connection
+- Player screen / camera / UI feedback candidates
+- Animation / VFX / SFX / camera feedback connection candidates
 
-- [ ] ALS-style locomotion (Order 25)
-    
-- [ ] Parkour / environment interaction (Order 26)
-    
+Remaining Items
+- Responsibility boundaries for Action / Reaction / Damage / Player Feedback
+- Feedback data authoring structure
+- VFX / SFX / camera feedback polish
+- System Architecture document update
+```
 
-### **Physics-Based Animation (Order 27)**
+### Action Pipeline Improvement
 
-- [ ] Hit reactions
-    
-- [ ] Throwing
-    
-- [ ] Pushing
-    
-- [ ] Ragdoll blending (with partial skeletal override)
-    
+```yaml
+Status
+-> In Progress
 
-### **Environment Detection (Order 28)**
+Current Direction
+- Separate Action request / decision / apply / lifecycle
+- Organize Action relationship / apply mode
+- Organize Player / AI Action execution flow
+- Action data resolve
+- Action execution failure / rollback criteria
+- Montage lifecycle criteria
+- Action Feedback connection
 
-- [ ] Ground detection (linked with Foot IK)
-    
-- [ ] Climbable surface detection (linked with Parkour)
-    
-- [ ] Physics/environment interaction detection module
-    
+Remaining Items
+- Improve AI action intent integration with Action Pipeline
+- Organize Action data authoring structure
+- Organize DataAsset-based authoring structure
+```
 
-### **Cinematic Effects (Order 29)**
+### Reaction Pipeline Improvement
 
-- [ ] Slow motion / time distortion
-    
-- [ ] Camera effects (shake, zoom, lock-on adjustments)
-    
+```yaml
+Status
+-> In Progress
 
----
+Current Direction
+- Separate Reaction request / policy / lifecycle
+- Organize Reaction relationship / apply mode
+- Damage Result based Reaction Request connection
+- Reaction data resolve
+- Hit / Dead Reaction
+- Reaction Feedback connection
+- Montage lifecycle criteria
 
-# **Stage 7: VFX Implementation**
+Remaining Items
+- Improve Reaction policy / execution state criteria
+- Organize Enemy AI Reaction observation / return flow
+- Verify Action / Reaction execution relationship
+- Introduce Combat Resolution layer
+- Connect Resource / state processing
+- Connect Guard / Parry / Counter judgment result
+- Update System Architecture documents
+```
 
-### Combat VFX 
-    
-- [ ] Hit effects / Critical effects (Order 30)
-    
-- [ ] Damage number FX (Order 31)
-    
-- [ ] Charging effect (Order 32)
-    
-- [ ] Status ailment VFX (burn / freeze / shock) (Order 33)
-    
-- [ ] Ultimate effect (cutscene / camera shake / large-scale particles) (Order 39)
-        
+### Enemy AI Combat Behavior
 
-### Environmental Interaction VFX
-    
-- [ ] Footstep / dust / water splash interaction (Order 34)
-    
-- [ ] Destruction VFX (debris / dust / smoke) (Order 40)
-        
+```yaml
+Status
+-> In Progress
 
-### Camera & Screen Effects
-    
-- [ ] Slow motion / shockwave effects (Order 35)
-    
-- [ ] Rim lighting / shield effect (outline / shield highlight) (Order 36)
-    
+Current Direction
+- Behavior Tree / Blackboard based AI behavior
+- Patrol / Chase / Attack
+- Combat priority / waiting behavior
+- AI action intent dispatch
 
-### UI & HUD Integrated VFX
-
-- [ ] Level-up / EXP effects (Order 37)
-    
-- [ ] Decal effects (bullet holes / footprints / blood) (Order 38)
-    
-
-### Special Effects VFX
-
-- [ ] Gravity / black hole effect (vector field) (Order 41)
-    
-- [ ] Network-synced VFX (multiplayer synchronization) (Order 42)
-        
-
-### **Environmental VFX**
-
-- [ ] Footstep / Dust / Water splash (Medium, Order 34)
-    
-- [ ] Object destruction FX (High, Order 40)
-    
-
-### **Camera & Screen VFX**
-
-- [ ] Slow motion + shockwave (Medium, Order 35)
-    
-- [ ] Rim light / Shield FX (Medium, Order 36)
-    
-
-### **UI & HUD VFX**
-
-- [ ] Level-up / XP gain FX (Medium, Order 37)
-    
-- [ ] Decal effects (bullet holes, footprints, blood) (Low, Order 38)
-    
-
-### **Special Effects**
-
-- [ ] Gravity / Black Hole FX (High, Order 41)
-    
-- [ ] Network-synced VFX (Very High, Order 42)
-    
+Remaining Items
+- Connect Guard / Parry / Counter with AI reactions
+- Expand boss pattern / enemy pattern data
+- Improve AI decision source integration with execution pipeline
+```
 
 ---
 
-# **Stage 8: Advanced Combat Features**
+## 5. Next Implementation Roadmap
 
-- [ ] Weapon switching
-    
-- [ ] Aerial attacks / hits
-    
-- [ ] Down attacks / hits
-    
-- [ ] Execution system
-    
-- [ ] Skill system
-    
+### 5.1. Action / Reaction Execution Intervention
 
----
+```yaml
+Status
+-> Next Work
 
-# **Stage 9: Boss Battle Implementation**
+Goal
+- Organize Action and Reaction execution relationships
+- Organize Execution Relationship Policy
+- Organize Execution Intervention Case
+- Define interrupt / cancel / block / ignore criteria
+- Write Action / Reaction relationship matrix
+- Write Execution intervention policy
 
-- [ ] Boss arena
-    
-- [ ] Boss mesh/animation setup
-    
-- [ ] Boss attack patterns
-    
-- [ ] Boss clear sequence
-    
+Verification Criteria
+- Existing Combo / Dodge / HitReaction regression check
+- Player / AI common applicability check
+- Montage lifecycle / delegate cleanup criteria check
+```
 
----
+### 5.2. Parry Implementation
 
-# **Stage 10: Combat System Expansion**
+```yaml
+Status
+-> Next Work
 
-### **Minimum Features**
+Goal
+- Input-buffered Parry Action
+- Parry Window
+- Combat Resolution based judgment
+- Damage nullification on Parry success
+- Parry Reaction interrupt
+- Damage Feedback / Reaction Feedback connection
 
-- [ ] Critical hit system
-    
-- [ ] Status effect system (Burn/Ice/Shock)
-    
-- [ ] Full character stats (HP/MP/Stamina)
-    
-- [ ] XP/Level-up system
-    
+Preparation Documents
+- D20 Work Brief
+- D20 Feature Work Planning
+- D20 Work Checklist Draft
 
-### **Extended Features**
+Verification Criteria
+- Build
+- Code Flow
+- PIE
+- Editor / Asset
+```
 
-- [ ] Charged attacks
-    
-- [ ] Backstab / rear bonus
-    
-- [ ] Groggy / stagger system
-    
-- [ ] Precise hit reactions (per-body-part impact)
-    
-- [ ] Aerial combo system
-    
+### 5.3. Guard Implementation
 
----
+```yaml
+Status
+-> Next Work
 
-# **Stage 11: Skills & Weapons**
+Goal
+- Guard input / state
+- Guard condition
+- Guard success / failure handling
+- Guard Break candidate structure
+- Damage / Resource / Feedback connection
+```
 
-### Minimum
+### 5.4. Counter Implementation
 
-- [ ] Weapon asset management (Data/Resource Management System)
-    
-- [ ] Skill asset management (Data/Resource Management System)
-    
-- [ ] Ultimate skill system
-    
+```yaml
+Status
+-> Next Work
 
-### Extended
-
-- [ ] Special item effects
-    
-- [ ] Homing / auto-target skills
-    
-- [ ] Summoning skills
-    
-
----
-
-# **Stage 12: Movement & Parkour**
-
-### Minimum
-
-- [ ] Parkour / landing recovery
-    
-
-### Extended
-
-- [ ] Stealth system
-    
-- [ ] Flight system
-    
+Goal
+- Counter condition
+- Counter Action execution
+- Action / Reaction relationship processing
+- Feedback connection
+```
 
 ---
 
-# **Stage 13: Environment & World**
+## 6. Documentation Roadmap
 
-### Minimum
+### README / Portfolio Technical Documents
 
-- [ ] Time-of-day / weather (simple version)
-    
-- [ ] Small sample map
-    
+```yaml
+Status
+-> Next Work
 
-### Extended
+Targets
+- README
+- T00 ~ T07 Technical Documents
+- Documentation Index
 
-- [ ] Nanite demo-level optimization
-    
+Goal
+- Organize first-entry portfolio document
+- Compress portfolio technical explanation
+- Organize representative document navigation
+```
+
+### System Architecture / Engine Technique
+
+```yaml
+Status
+-> Next Work
+
+Goal
+- Separate pure System Architecture explanation from decision / issue records
+- Separate Engine Technique explanation from Engine Decision / Issue records
+- Reclassify existing System Architecture documents
+- Define Architecture Decision Record / Architecture Issue Report criteria
+```
+
+### AI Workflow
+
+```yaml
+Status
+-> Follow-Up Candidate
+
+Goal
+- Re-verify Work Brief / Planning / Checklist flow in actual D20 implementation branch
+- Improve Prompt Flow / Routing layer
+- Organize Work Checklist update rules
+- Clean up Document Writing Prompts
+```
+
+---
+
+## 7. Follow-Up Expansion Candidates
+
+```yaml
+Advanced Combat
+- Perfect Parry / Normal Parry
+- Perfect Dodge
+- Execution
+- Aerial Attack
+- Down Attack
+- Skill System
+
+Enemy / Boss
+- Boss pattern
+- Enemy pattern data
+- Wave system
+- Group combat
+
+Animation / Movement
+- Foot IK
+- ALS-style locomotion
+- Parkour
+- Camera direction animation
+
+VFX / UI
+- Final hit VFX / SFX polish
+- Damage UI
+- Resource UI
+- Camera shake / hit stop
+```
 
 ---
 
-# **Stage 14: Presentation & UI**
+## 8. Current Priorities
 
-### Minimum
-
-- [ ] HUD / Menu widgets
-    
-- [ ] Debug UI
-    
-- [ ] Camera collision
-    
-
-### Extended
-
-- [ ] Cinematics
-    
-- [ ] Wall transparency system
-    
-- [ ] Editor tools / plugins
-    
-
----
-
-# **Additional Systems**
-
-### Combat Behavior Extensions
-
-- [ ] Enemy Just Guard Attack
-    
-- [ ] Enemy Just Parry Attack
-    
-- [ ] Enemy Just Dodge Attack
-    
-
-### Player Reaction Enhancements
-
-- [ ] Player Just Guard React
-    
-- [ ] Player Just Parry React
-    
-- [ ] Player Just Dodge React
-    
-
-### Other Systems
-
-- [ ] AI Party System
-    
-- [ ] Character Switching System
-    
-- [ ] Pet System
-    
-- [ ] Mount System
-    
-- [ ] Assist System
-    
-- [ ] Command Queue System
-    
-- [ ] Post Process effects
-    
-- [ ] Camera movement presets
-    
-
----
----
+```yaml
+1. Update README / P00 / P01 / P02
+2. Update Documentation Index
+3. Review T00 ~ T07 Technical Documents
+4. Organize System Architecture / Engine Technique document structure
+5. Define Action / Reaction execution intervention criteria
+6. Implement Parry
+7. Implement Guard / Counter
+8. Refactor AI Workflow based on real usage
+```
