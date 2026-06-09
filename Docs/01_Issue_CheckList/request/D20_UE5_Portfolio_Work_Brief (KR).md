@@ -22,6 +22,7 @@
 
 - 즉시 구현 착수 가능 상태는 아님
 - Feature Work Planning 결과에서 구현 단위 / 선행 조건 / 검증 기준을 정리한 뒤 판단
+- Parry Animation 입력 Asset과 후속 Architecture baseline은 구현 착수 전에 확인해야 함
 
 ### Planning Prompt
 
@@ -68,7 +69,7 @@
 - Parry 성공 시 Damage 완전 무효화
 - Parry Reaction interrupt
 - 기본 DamageFeedback / ReactionFeedback 연결
-- `Content/03_Animation/GuardAndParry/`의 후보 Animation을 검토해 `Montage_Parry` 신규 작성
+- Parry Animation 입력 Asset을 확인해 `Montage_Parry` 신규 작성
 - 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델 활용 또는 확장
 
 ### D20 후속 범위
@@ -91,6 +92,7 @@
 - Parry 성공 시 Player Damage를 완전 무효화한다.
 - Parry Window는 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델을 활용한다.
 - 전용 `Montage_Parry` Asset은 현재 없음.
+- `Content/03_Animation/GuardAndParry/`는 현재 PR 커밋 범위에 포함되지 않은 입력 Asset 후보로 보며, 실제 구현 Branch에서 존재 여부를 확인한다.
 - `Montage_Parry`는 `FActionData.Montage`를 통해 `CAction_Parry`에 연결한다.
 - Parry Window는 `Montage_Parry` 안의 `UCAnimNotifyState_ExecutionInterventionWindow`가 `WindowKey`를 열고 닫는 방식으로 연결한다.
 - D20의 기본 `WindowKey`는 `Parry`로 둔다.
@@ -100,9 +102,10 @@
 - `TakeDamageComponent`는 resolved damage payload를 소비해 Health commit을 수행하는 계층으로 축소한다.
 - D20에서는 `TakeDamageComponent`의 기존 reaction / feedback dispatch는 fallback 경로에만 남긴다.
 - System Design Records는 즉시 신규 작성하지 않는다.
-- 현재 D20 구현 방향은 S26 / S27 / S28 기준과 충돌하지 않는다.
+- S26 / S27 / S28은 현재 PR 커밋 범위에 포함되지 않은 후속 Architecture baseline 후보로 둔다.
+- D20 문서는 S26 / S27 / S28의 존재를 전제하지 않는다.
 - S28의 Policy / Gate 전체 리팩터링은 D20 범위에 포함하지 않는다.
-- 구현 중 S26 / S27 / S28 기준과 충돌이 확인될 때만 문서 보완 대상으로 기록한다.
+- 실제 구현 Branch에서 S26 / S27 / S28이 추가되거나 확인되면 그 기준과의 충돌 여부를 다시 검토한다.
 
 ---
 
@@ -122,8 +125,13 @@
 - 기존 Action / Reaction interrupt 구조 확인
 - 기존 Feedback 실행 구조 확인
 - 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / WindowKey 적용 방식 확인
-- `Content/03_Animation/GuardAndParry/`의 후보 Animation으로 `Montage_Parry`를 구성할 수 있는지 확인
+- Parry Animation 입력 Asset 또는 `Content/03_Animation/GuardAndParry/` 후보 폴더 존재 여부 확인
 - S28 Policy / Gate 전체 리팩터링은 후속 범위로 유지
+
+### 구현 착수 전 확인 항목
+
+- Parry Animation 입력 Asset 또는 `Content/03_Animation/GuardAndParry/` 후보 폴더
+- S26 / S27 / S28 Architecture baseline 존재 여부 또는 신규 작성 여부
 
 ---
 
@@ -190,7 +198,7 @@ Work Checklist Writing
 
 실행 계층 후보
 -> 구현 계층: Codex 구현 수행, 구현 Prompt 없음
--> 문서화 계층: Verification Log / PR Document / S26 / S27 / S28 보완 필요 여부 확인
+-> 문서화 계층: Verification Log / PR Document / 후속 Architecture baseline 보완 필요 여부 확인
 -> 검증 계층: Build / Code Flow / PIE / Asset Blueprint Validation
 -> Commit / PR 계층: Git Commit PR Preflight Prompt
 ```

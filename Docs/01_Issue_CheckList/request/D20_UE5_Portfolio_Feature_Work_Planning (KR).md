@@ -9,10 +9,9 @@
 Planning Prompt
 -> Docs/08_AI_Workflow/05_Prompt_Library/01_Prompt_Files/03_Work_Planning/02_Feature_Work_Planning_Prompt (KR).md
 
-관련 System Architecture
--> Docs/05_System_Architecture/S26_UE5_Portfolio_Combat_Resolution_Responsibility_Decision (KR).md
--> Docs/05_System_Architecture/S27_UE5_Portfolio_Execution_Intervention_Key_Window_Model (KR).md
--> Docs/05_System_Architecture/S28_UE5_Portfolio_Execution_Intervention_Policy_Gate_Refactor (KR).md
+관련 System Architecture 후보
+-> S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 포함되지 않음
+-> 실제 D20 구현 Branch에서 존재 여부를 확인하거나 신규 작성 여부를 결정
 
 관련 코드 후보
 -> Source/Portfolio/Component/CActionComponent.*
@@ -25,6 +24,7 @@ Planning Prompt
 
 관련 Asset 후보
 -> Content/03_Animation/GuardAndParry/
+-> 현재 PR 커밋 범위에 포함되지 않은 입력 Asset 후보이므로 실제 구현 Branch에서 존재 여부 확인 필요
 ```
 
 현재 Planning은 D20 Work Brief 기준으로 작성한다.
@@ -46,6 +46,7 @@ Planning Prompt
 - `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출한다.
 - 과도기 fallback으로 기존 `TakeDamageComponent->RequestTakeDamage()` 경로를 유지한다.
 - S28 Policy / Gate 전체 리팩터링은 D20 범위에 포함하지 않는다.
+- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 없으므로 D20 Planning의 확정 Source of Truth로 취급하지 않는다.
 
 ### 계획차단 항목
 
@@ -86,12 +87,13 @@ Actor::TakeDamage() Combat Resolution / fallback 조건 분리
 -> 핵심 구현 단위
 -> Parry Window Open / Close 기준
 
-GuardAndParry Animation 후보
+Parry Animation 입력 Asset 후보
 -> Asset 확인 항목
 -> Montage_Parry 구성 가능 여부 확인
 
 S28 Policy / Gate 전체 리팩터링
 -> 후속 범위 유지
+-> S28 baseline이 실제로 존재하거나 작성된 뒤 기준 충돌 여부 재검토
 ```
 
 ---
@@ -128,13 +130,10 @@ S28 Policy / Gate 전체 리팩터링
 
 ### Asset / Editor 탐색
 
-- `Content/03_Animation/GuardAndParry/`
-  - `Block_In_Anim`
-  - `Block_Hold_Anim`
-  - `Block_Hit_Anim`
-  - `Block_CounterAttacks_Anim`
-  - `Block_Out_Anim`
-- 위 후보로 `Montage_Parry` 구성 가능 여부 확인
+- Parry Animation 입력 Asset 후보
+  - `Content/03_Animation/GuardAndParry/`
+  - 현재 PR 커밋 범위에 포함되지 않은 폴더이므로 실제 구현 Branch에서 존재 여부 확인
+- 후보 Animation으로 `Montage_Parry` 구성 가능 여부 확인
 - Montage 안에 `UCAnimNotifyState_ExecutionInterventionWindow`와 `WindowKey = Parry` 설정 가능 여부 확인
 
 ---
@@ -191,7 +190,7 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> Build: 해당 없음
 -> Code Flow: 기존 Action / TakeDamage / Window / Feedback 흐름 확인
 -> PIE: 해당 없음
--> Editor: GuardAndParry Animation 후보 확인
+-> Editor: Parry Animation 입력 Asset 후보 확인
 -> Asset: `Montage_Parry` 구성 후보 확인
 
 문서화 필요 여부
@@ -228,7 +227,7 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 
 사용자 결정 필요 여부
 -> 불필요
--> 단, enum 확장 방식이 S26 / S27 / S28 또는 기존 Action 설계와 충돌하면 재검토
+-> 단, enum 확장 방식이 기존 Action 설계 또는 후속 Architecture baseline과 충돌하면 재검토
 
 검증 기준
 -> Build: enum / Action class compile
@@ -244,7 +243,7 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 ### 구현 단위 2. Parry Montage / Window 연결
 
 선행 조건
--> `Content/03_Animation/GuardAndParry/` 후보 Animation 확인
+-> Parry Animation 입력 Asset 후보 확인
 -> 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 적용 방식 확인
 
 목표
@@ -277,14 +276,14 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 
 문서화 필요 여부
 -> Verification Log: Editor / Asset 미검증 여부 기록
--> System Design Records: S27 기준과 충돌 시 보완
+-> System Design Records: 후속 Architecture baseline과 충돌 시 보완
 
 ### 구현 단위 3. UCCombatResolutionComponent 최소 구성
 
 선행 조건
 -> `Actor::TakeDamage()` 진입부 확인
 -> `CTakeDamageComponent` 기존 책임 확인
--> S26 기준 확인
+-> 후속 Architecture baseline 확인
 
 목표
 -> DamagePacket 유입 시 Health commit 전에 Parry 성공 여부를 판정한다.
@@ -318,7 +317,7 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> Asset: 해당 없음
 
 문서화 필요 여부
--> System Design Records: S26 기준과 충돌할 경우 보완
+-> System Design Records: 후속 Architecture baseline과 충돌할 경우 보완
 -> Verification Log: Parry success / fallback 검증 결과 기록
 
 ### 구현 단위 4. Parry 성공 처리 / Reaction interrupt 연결
@@ -377,6 +376,8 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 
 구현 착수 전 조건
 -> 기존 Action / TakeDamage / Window / Feedback 흐름 확인
+-> Parry Animation 입력 Asset 또는 후보 폴더 존재 여부 확인
+-> 후속 Architecture baseline 존재 여부 또는 신규 작성 여부 확인
 -> `Montage_Parry` 구성 후보 확인
 -> `Actor::TakeDamage()` Combat Resolution 선처리 위치 확인
 ```
@@ -551,7 +552,7 @@ System Architecture
 -> D20 구현 후 현재 구조 설명 문서가 필요하면 후보
 
 System Design Records
--> S26 / S27 / S28 기준과 충돌할 경우 보완
+-> 후속 Architecture baseline과 충돌할 경우 보완
 -> 신규 ADR / Architecture Issue Report는 현재 불필요
 
 Engine Technique Document

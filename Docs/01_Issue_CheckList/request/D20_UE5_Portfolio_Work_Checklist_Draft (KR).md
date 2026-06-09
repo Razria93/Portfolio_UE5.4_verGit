@@ -51,7 +51,7 @@
 - UCCombatResolutionComponent 신규 구성
 - CAction_Parry 구현
 - Parry Action 타입 / ActionData 연결
-- Montage_Parry 신규 작성
+- Parry Animation 입력 Asset 확인 후 Montage_Parry 신규 작성
 - Parry Window Open / Close 제어
 - Parry 성공 판정
 - Parry 성공 시 Damage 완전 무효화
@@ -90,6 +90,7 @@
 - `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출하는 방향으로 계획함
 - 과도기 fallback으로 기존 `TakeDamageComponent->RequestTakeDamage()` 경로를 유지함
 - S28 Policy / Gate 전체 리팩터링은 D20 범위에 포함하지 않음
+- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 포함되지 않은 후속 기준 후보로 둠
 
 ---
 
@@ -102,7 +103,7 @@
 - [ ] 기존 `CTakeDamageComponent`의 Health commit / reaction / feedback 처리 책임 확인
 - [ ] 기존 `CDamageFeedbackComponent` / `CReactionFeedbackComponent` 호출 방식 확인
 - [ ] 기존 `CWeaponActor` / Weapon overlap / DamagePacket 유입 흐름 확인
-- [ ] `Content/03_Animation/GuardAndParry/` 후보 Animation 확인
+- [ ] Parry Animation 입력 Asset 또는 `Content/03_Animation/GuardAndParry/` 후보 폴더 존재 여부 확인
 - [ ] `Montage_Parry` 구성 가능 여부 확인
 
 ---
@@ -120,7 +121,7 @@
 
 ### 구현 단위 2. Parry Montage / Window 연결
 
-- [ ] `Content/03_Animation/GuardAndParry/` 후보 Animation 기반으로 `Montage_Parry` 구성
+- [ ] Parry Animation 입력 Asset 후보 기반으로 `Montage_Parry` 구성
 - [ ] `Montage_Parry`에 `UCAnimNotifyState_ExecutionInterventionWindow` 설정
 - [ ] `WindowKey = Parry` 설정
 - [ ] Parry Window open / close 상태가 코드에서 조회 가능한지 확인
@@ -187,7 +188,7 @@
 - [ ] Work Checklist 공식 문서 승격 여부 결정
 - [ ] Verification Log 작성
 - [ ] PR Document 작성
-- [ ] S26 / S27 / S28 기준과 충돌할 경우 System Design Records 보완
+- [ ] 후속 Architecture baseline과 충돌할 경우 System Design Records 보완
 - [ ] D20 완료 후 System Architecture 현재 구조 설명 필요 여부 판단
 - [ ] Portfolio Technical Document 작성 가치가 있는지 후속 판단
 
@@ -204,6 +205,7 @@
 - 기존 WeaponActor Overlap / DamagePacket 유입 흐름
 - 기존 Action / Reaction interrupt API
 - 기존 DamageFeedback / ReactionFeedback 호출 방식
+- Parry Animation 입력 Asset 존재 여부
 - Montage_Parry 구성 가능 여부
 - Editor에서 WindowKey 설정 가능 여부
 ```
@@ -229,7 +231,7 @@
 - [ ] Verification Log 작성 완료
 - [ ] PR Document 작성 완료
 - [ ] D20 후속 범위가 분리되어 있음
-- [ ] 구현 중 S26 / S27 / S28 기준과 충돌한 항목이 있으면 문서 보완 후보로 기록됨
+- [ ] 구현 중 후속 Architecture baseline과 충돌한 항목이 있으면 문서 보완 후보로 기록됨
 
 ---
 
