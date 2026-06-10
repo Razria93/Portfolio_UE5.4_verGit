@@ -1,59 +1,55 @@
-# UE5 Portfolio – Issue Analysis Report
+# UE5 Portfolio Issue Analysis Report
 
-## Title
+## 제목
 
-**M03-I01: OnTargetPerceptionForgotten event not firing analysis**
+**I01: OnTargetPerceptionForgotten 이벤트 미호출 이슈 분석**
 
-### Date
+## 날짜
 
-- **2026.01.28**
+**2026.01.28**
 
-### Type
+## 상태
 
-- Issue Analysis
+- [x] **완료**
 
-### Status
+---
 
-- [x] Analysis completed
-- [x] Resolution verified
+## 브랜치
 
-### Branch
+- `feature/ai-behaviortree-core`
 
-- feature/ai-behaviortree-core
+---
+
+## 요약
+
+- `OnTargetPerceptionForgotten` 델리게이트가 호출되지 않는 현상을 분석하고, 프로젝트 설정에서 `bForgetStaleActors`를 활성화하여 정상 호출을 확인했다.
 
 
 ---
 
-## Summary
+## 재현 절차
 
-- Analyzed why the `OnTargetPerceptionForgotten` delegate did not fire and confirmed the fix by enabling `bForgetStaleActors` in project settings.
-
-
----
-
-## Reproduction Steps
-
-1. Bind the `OnTargetPerceptionForgotten` delegate in `ACAIController::InitializePerception()`.
+1. `ACAIController::InitializePerception()`에서 `OnTargetPerceptionForgotten` 델리게이트를 바인딩한다.
    
-2. Transition an AI Perception stimulus into the **Lost** state.
+2. AI Perception의 Stimulus가 **Lost** 상태로 전환된다.
    
-3. Wait until the stimulus **Age** expires.
+3. 일정 시간 경과 후 Stimulus **Age**가 Expired 되는 상황을 기다린다.
 
 
 ---
 
-## Expected vs Actual
+## 기대 동작 vs 실제 동작
 
-**Expected**
-- When the stimulus expires and is forgotten, `PrintTargetPerceptionForgotten()` should be called and log output should appear.
+**기대 동작**
+- Stimulus가 Expired 되어 Forget 되었을 때 `PrintTargetPerceptionForgotten()`가 호출되어 로그가 출력되어야 한다.
 
-**Actual**
-- `OnTargetPerceptionForgotten` is never called; only the **Gained/Lost** logs from the `Updated` event appear.
+**실제 동작**
+- `OnTargetPerceptionForgotten`가 호출되지 않고, `Updated` 이벤트의 **Gained/Lost** 로그만 출력됐다.
 
 
 ---
 
-## Issue Code
+## 이슈 코드
 
 ```cpp
 bool ACAIController::InitializePerception()
@@ -61,8 +57,8 @@ bool ACAIController::InitializePerception()
 	if (!IsValid(AIPerceptionComp)) return false;
 
 	AIPerceptionComp->OnTargetPerceptionForgotten.AddDynamic(
-		this,
-		&ACAIController::OnTargetPerceptionForgotten);
+	this,
+	&ACAIController::OnTargetPerceptionForgotten);
 
 	return true;
 }
@@ -85,7 +81,7 @@ void ACAIController::PrintTargetPerceptionForgotten(AActor* Actor) const
 
 ---
 
-## Observed Output (Issue)
+## 실행 결과
 
 ```cpp
 Custom_FLog: Display: === Target Perception Updated ===
@@ -111,20 +107,20 @@ Custom_FLog: Display: =================================
 
 ---
 
-## Root Cause
+## 원인 분석
 
-- Whether `OnTargetPerceptionForgotten` fires depends on the `bForgetStaleActors` flag inside `UAIPerceptionComponent`.
+- `OnTargetPerceptionForgotten` 호출 여부는 `UAIPerceptionComponent` 내부 변수인 `bForgetStaleActors` 값에 의해 결정된다.
   
-- `bForgetStaleActors` is a **private** variable with no public setter on the component.
+- `bForgetStaleActors`는 `UAIPerceptionComponent` 내부 **private 변수**로, 개별 컴포넌트에서 직접 설정할 수 없다.
   
-- This behavior must be configured at the project level via `AIModule.AISystem`.
+- 해당 값은 프로젝트 단위 정책으로 `AIModule.AISystem`에서 설정해야 한다.
 
 
 ---
 
-## Resolution
+## 해결 방법
 
-Enable `bForgetStaleActors` in the project settings file:
+프로젝트 설정 파일에 아래 값을 추가/수정하여 `bForgetStaleActors`를 활성화한다.
 
 ```ini
 [/Script/AIModule.AISystem]
@@ -134,7 +130,7 @@ bForgetStaleActors=True
 
 ---
 
-## Verified Output
+## 실행 결과 (해결 확인)
 
 ```cpp
 Custom_FLog: Display: === Target Perception Updated ===
@@ -163,21 +159,21 @@ Custom_FLog: Display: =================================
 
 ---
 
-## Conclusion
+## 결론
 
-- `OnTargetPerceptionForgotten` fires **only when** the stimulus expiration policy (`bForgetStaleActors`) is enabled.
+- `OnTargetPerceptionForgotten`는 **Stimulus 만료 처리 정책(`bForgetStaleActors`)이 활성화되어야만** 호출된다.
   
-- Because the setting is project-wide, verify the **AIModule.AISystem** configuration when diagnosing similar issues.
+- 해당 정책은 컴포넌트별 설정이 아니라 프로젝트 단위 설정이므로, 추후 유사 문제에 대비해 **AIModule.AISystem** 설정을 확인해야 한다.
 
 
 ---
 
-## References
+## 참고
 
-- Related fix commit: 
+- 관련 기능 변경 커밋: 
 	1. `chore(ai-behaviortree-core): turn on bForgetStaleActors in AISystem settings (#26, #27)`
 	   
-- Related refactor commits: 
+- 관련 리팩터링 커밋: 
 	1. `refactor(ai-behaviortree-core): rename BP_CAIController_Melee to BP_CAIController (#26)`
 	   
 	2. `feat(ai-behaviortree-core): add debug print functions (#26)`
