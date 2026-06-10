@@ -28,6 +28,14 @@
 
 ---
 
+## 영향 범위
+
+- AI Blackboard context 갱신
+
+- 실패 상태 이후 target / patrol / combat context 정리 흐름
+
+---
+
 ## 환경
 
 - 엔진: Unreal Engine 5.4
@@ -35,6 +43,14 @@
 - 대상: AI BehaviorTree Service (`UpdateAIContext`)
 
 - 관련 키: `TargetActor`, `bHasLOS`, `LastKnownLocation`, `DistanceToTarget`, `bInRange`, `bReturnHome`
+
+---
+
+## 발생 조건
+
+- `TickNode()`에서 context build가 실패했을 때 단순 early return으로 빠지면 발생한다.
+
+- Blackboard 값을 성공 / NoData / Error 상태에 맞게 정리하지 않으면 재현된다.
 
 ---
 
@@ -57,13 +73,13 @@
 **기대 결과**
 
 - 타겟 로스트 시 Blackboard 키가 정책에 맞게 즉시 정리되어야 한다.
-  
+
 - 상태 전환이 `Investigate -> Idle`로 안정적으로 진행되어야 한다.
 
 **실제 결과**
 
 - early-return으로 인해 이전 프레임 데이터가 남아 상태 판단이 꼬였다.
-  
+
 - AI가 `Investigate`에서 `Idle`로 복귀하지 못했다.
 
 ---
@@ -157,6 +173,14 @@ bool ACAIController::SelectTopPriority(FTargetData& OutTargetData)
 
 ---
 
+## 수정 기준
+
+- context build 실패를 단순 early return으로 처리하지 않는다.
+
+- `Success`, `NoData`, `Error` 결과에 따라 Blackboard 값을 명시적으로 유지하거나 정리한다.
+
+---
+
 ## 검증 결과
 
 1. 대상 인식 -> 해제 시나리오 반복 테스트
@@ -171,6 +195,24 @@ bool ACAIController::SelectTopPriority(FTargetData& OutTargetData)
 
 4. 회귀 확인:
 	- 타겟 재인식 시 `Chase/Combat` 재진입이 정상 동작하는 것을 확인했다.
+
+---
+
+## 회귀 방지 기준
+
+- context build 실패 뒤 stale Blackboard value가 남지 않아야 한다.
+
+- AI state transition이 이전 frame 값에 의존하지 않아야 한다.
+
+---
+
+## 관련 PR / 문서
+
+- Issue Checklist: `D11_UE5_Portfolio_Issue_Checklist.md`
+
+- PR: `P10_UE5_Portfolio_Pull_Request (KR).md`
+
+- Portfolio Technical Document: `T04_Enemy AI Combat Behavior Design.md`
 
 ---
 

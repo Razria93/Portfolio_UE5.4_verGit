@@ -30,6 +30,14 @@
 
 ---
 
+## 영향 범위
+
+- weapon collision, hit window, damage validation 흐름
+
+- 첫 overlap의 유효한 hit window 판정
+
+---
+
 ## 환경
 
 - 엔진: Unreal Engine 5.4
@@ -41,6 +49,12 @@
 	- 활성화 직후 첫 overlap이 발생한다.
 	- overlap 시점의 `HitWindowId`가 아직 유효하게 세팅되지 않는다.
 	- `ApplyDamage` 단계에서 첫 타가 `InvalidRequest`로 리젝트된다.
+
+---
+
+## 발생 조건
+
+- collision이 켜진 뒤 `CurrentHitWindowId`가 준비되기 전에 첫 overlap이 들어올 때 발생한다.
 
 ---
 
@@ -68,9 +82,9 @@ HitWindowId = -1
 **기대 결과**
 
 - attachment collision이 실제로 overlap을 발생시키기 전에 유효한 hit window id가 먼저 준비되어야 한다.
-  
+
 - 첫 overlap도 정상적인 `HitWindowId`를 가진 `FHitContext`로 전달되어야 한다.
-  
+
 - 첫 타부터 `ApplyDamage -> TakeDamage` 흐름이 정상적으로 진행되어야 한다.
 
 **실제 결과**
@@ -196,6 +210,14 @@ for (UShapeComponent* collision : collisionsToEnable)
 
 ---
 
+## 수정 기준
+
+- 활성화 대상 collision을 먼저 확인한다.
+
+- 유효한 대상이 있을 때만 hit window를 열고, 그 뒤 collision을 enable한다.
+
+---
+
 ## 검증 결과
 
 1. Player 공격과 Enemy 공격 양쪽에서 공격 시작 직후 첫 overlap 로그를 반복 확인했다.
@@ -207,6 +229,24 @@ for (UShapeComponent* collision : collisionsToEnable)
 4. 첫 타부터 `ApplyDamage` summary 로그가 정상적으로 출력되는지 확인했다.
 
 5. 활성화할 collision이 없는 경우 hit window만 열리는 잘못된 상태가 발생하지 않는지 확인했다.
+
+---
+
+## 회귀 방지 기준
+
+- 첫 overlap에서 `HitWindowId=-1`이 발생하지 않아야 한다.
+
+- 첫 타격이 invalid hit window 때문에 reject되지 않아야 한다.
+
+---
+
+## 관련 PR / 문서
+
+- Issue Checklist: `D13_UE5_Portfolio_Issue_Checklist.md`
+
+- PR: `P12_UE5_Portfolio_Pull_Request (KR).md`
+
+- Portfolio Technical Document: `T02_Combat Data Processing Pipeline.md`
 
 ---
 
@@ -224,10 +264,6 @@ for (UShapeComponent* collision : collisionsToEnable)
 =================================
 ```
 
-- `HitWindowId`의 초기값을 `0`으로 바꾸는 방식도 고려했으나 구조적 문제를 숨기는 임시 대응에 가까워 적용하지 않았다.
-
-- `INDEX_NONE(-1)`는 “아직 유효한 hit window가 열리지 않았다”는 의미로 유지하는 편이 구조적으로 더 안전하다.
-
-- 이 수정의 핵심은 **collision enable 가능 여부 확인 -> hit window open -> 실제 collision enable** 순서로 흐름을 명확히 정렬한 것이다.
+- `INDEX_NONE(-1)`은 “아직 유효한 hit window가 열리지 않았다”는 sentinel 의미로 유지한다.
 
 ---

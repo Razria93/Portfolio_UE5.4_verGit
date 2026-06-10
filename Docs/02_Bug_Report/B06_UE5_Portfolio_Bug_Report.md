@@ -32,6 +32,14 @@
 
 ---
 
+## 영향 범위
+
+- 기존 Weapon Blueprint load와 parent class 복원 흐름
+
+- `ACAttachment`에서 `ACWeaponActor`로 rename한 뒤 asset reference 유지
+
+---
+
 ## 환경
 
 - 엔진: Unreal Engine 5.4
@@ -43,6 +51,14 @@
 
 - 관련 에셋:
 	- `/Game/06_Weapon/BP_CAttachment_Sword`
+
+---
+
+## 발생 조건
+
+- Blueprint가 기존 `ACAttachment` class path를 참조하는 상태에서 C++ class 이름이 변경되면 발생한다.
+
+- CoreRedirect가 없으면 editor load 시 기존 Blueprint parent를 찾지 못해 재현된다.
 
 ---
 
@@ -111,6 +127,14 @@ CreateExport: 'RootScene' 리소스에 대한 BP_CAttachment_Sword_C /Game/06_We
 
 ---
 
+## 수정 기준
+
+- rename된 C++ class에는 CoreRedirect를 제공한다.
+
+- editor에서 기존 Blueprint가 새 parent class로 정상 로드되는지 확인한다.
+
+---
+
 ## 검증 결과
 
 - 에디터를 완전히 종료한 뒤 프로젝트를 다시 빌드하고 에디터를 재실행했다.
@@ -125,20 +149,30 @@ CreateExport: 'RootScene' 리소스에 대한 BP_CAttachment_Sword_C /Game/06_We
 
 ---
 
+## 회귀 방지 기준
+
+- 기존 Weapon Blueprint가 `ACWeaponActor` parent로 정상 로드되어야 한다.
+
+- `BlueprintGeneratedClass` 또는 export load 관련 오류가 없어야 한다.
+
+---
+
+## 관련 PR / 문서
+
+- Issue Checklist: `D16_UE5_Portfolio_Issue_Checklist.md`
+
+- PR: `P15_UE5_Portfolio_Pull_Request (KR).md`
+
+- Portfolio Technical Document: `T03_Action & Reaction Execution Pipeline.md`
+
+---
+
 ## 비고
-
-- 에셋 이름은 필요 시 에디터에서 `BP_CWeaponActor_Sword`로 rename한다.
-
-- C++ 클래스 rename 이후 Blueprint 에셋을 정상 저장했다면 redirect는 당분간 유지한다.
-
-- 모든 참조가 새 이름으로 저장되고 이전 클래스 참조가 남지 않는 것을 확인한 후 redirect를 제거한다.
-
-- 현재 검증 기준에서는 Blueprint가 새 부모 클래스 기준으로 정상 로드되고 동작하는 것을 확인했다.
 
 - C++ 클래스 rename만 수행하는 경우에도 Blueprint 에셋은 기존 부모 클래스 경로를 계속 참조할 수 있다.
 
 - Unreal에서 UCLASS 이름은 `A` / `U` 접두사를 제외한 이름으로 등록되므로 `ACAttachment`의 UClass 이름은 `CAttachment`, `ACWeaponActor`의 UClass 이름은 `CWeaponActor`이다.
 
-- C++ 클래스 rename이 Blueprint 부모 클래스에 영향을 주는 경우, 에셋 재생성보다 `CoreRedirects`를 통한 마이그레이션을 먼저 시도하는 것이 안전하다.
+- 모든 참조가 새 이름으로 저장되고 이전 클래스 참조가 남지 않는 것을 확인한 후 redirect 제거를 검토한다.
 
 ---

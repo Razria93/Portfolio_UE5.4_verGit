@@ -30,6 +30,14 @@
 
 ---
 
+## 영향 범위
+
+- AI attack selection과 combo pattern 재선택 흐름
+
+- Hit 이후 Engage 복귀 시 첫 공격 index 계산 기준
+
+---
+
 ## 환경
 
 - 엔진: Unreal Engine 5.4
@@ -47,6 +55,14 @@
 	- Player에게 피격 또는 타겟 상황 변화 발생
 	- AIState가 일시적으로 Engage 외 상태로 전이
 	- 이후 다시 Engage로 복귀하여 다음 공격 선택 수행
+
+---
+
+## 발생 조건
+
+- Hit 상태에서 Engage 상태로 돌아온 뒤 `AttackIndex`가 `INDEX_NONE`으로 초기화되지 않으면 발생한다.
+
+- Blackboard clear와 sentinel reset의 의미가 분리되지 않으면 재현된다.
 
 ---
 
@@ -69,7 +85,7 @@
 **기대 결과**
 
 - AIState가 Engage 외 상태로 전이될 때 Engage 관련 Blackboard 값이 일관되게 초기화되어야 한다.
-  
+
 - 이후 다시 Engage로 복귀하면 `AttackIndex`는 `INDEX_NONE` 상태에서 시작하여 새 컨텍스트 기준으로 다시 선택되어야 한다.
 
 - Enemy 공격 패턴은 상황에 따라 `0 / 1 / 2` 인덱스를 정상적으로 순환 또는 재선택해야 한다.
@@ -77,9 +93,9 @@
 **실제 결과**
 
 - `AttackIndex`가 명시적으로 무효값으로 초기화되지 않아, 후속 선택 로직에서 `0` 기준값으로 해석되었다.
-  
+
 - 이후 `UCBTTask_SelectAttackIndex`가 해당 값을 기준으로 다음 인덱스를 `1`로 계산했다.
-  
+
 - 결과적으로 Enemy가 피격 이후 `1번` 콤보 공격만 반복 사용하는 패턴 고착 현상이 발생했다.
 
 ---
@@ -128,6 +144,14 @@ InBlackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
 
 ---
 
+## 수정 기준
+
+- 공격 선택이 끝난 뒤 `AttackIndex`는 명시적인 sentinel 값으로 되돌린다.
+
+- Blackboard clear와 `INDEX_NONE` reset의 의미를 분리해서 유지한다.
+
+---
+
 ## 검증 결과
 
 1. Enemy가 Engage 상태에서 공격 수행 후 HitReact 또는 상태 전이를 겪는 시나리오를 반복 테스트했다.
@@ -141,6 +165,24 @@ InBlackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
 5. 기존에 관찰되던 `1번 콤보 반복 사용` 현상이 재현되지 않는 것을 확인했다.
 
 6. 수정 전에는 피격 이후 첫 재공격이 항상 `1번`으로 시작되었으나, 수정 후에는 특정 인덱스 고착 없이 정상 분기되는 것을 확인했다.
+
+---
+
+## 회귀 방지 기준
+
+- Hit 이후 첫 재공격이 이전 index로 고정되지 않아야 한다.
+
+- combo pattern은 Engage 재진입 시점마다 다시 계산되어야 한다.
+
+---
+
+## 관련 PR / 문서
+
+- Issue Checklist: `D11_UE5_Portfolio_Issue_Checklist.md`
+
+- PR: `P10_UE5_Portfolio_Pull_Request (KR).md`
+
+- Portfolio Technical Document: `T04_Enemy AI Combat Behavior Design.md`
 
 ---
 

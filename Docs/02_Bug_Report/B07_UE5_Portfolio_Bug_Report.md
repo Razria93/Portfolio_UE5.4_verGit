@@ -26,9 +26,17 @@
 
 - Player는 기존 `Chain` 경로를 통해 정상적으로 다음 콤보 단계로 진행할 수 있었지만, AI는 같은 흐름을 재사용하지 못해 combo chain이 끊겼다.
 
-- 이를 해결하기 위해 Notify / Action / ActionComponent / Enemy 사이에 action event callback 경로를 구성하고, AI도 동일한 combat request를 다시 호출하여 `Chain` 판정을 받도록 수정했다.
+- 이를 해결하기 위해 Notify / Action / ActionComponent / Enemy 사이에 action event callback 경로를 구성했다.
 
 - 또한 마지막 콤보 단계에서는 chain window를 열지 않도록 정리하여 불필요한 follow-up 요청을 차단했다.
+
+---
+
+## 영향 범위
+
+- AI ComboAttack chain 진행
+
+- Player / AI action event 경로 일관성
 
 ---
 
@@ -56,6 +64,14 @@
 	- `Content/04_Montage/Sword/M_Attack_Sword_0.uasset`
 	- `Content/04_Montage/Sword/M_Attack_Sword_1.uasset`
 	- `Content/04_Montage/Sword/M_Attack_Sword_2.uasset`
+
+---
+
+## 발생 조건
+
+- AI가 `ComboAttack`을 시작한 뒤 Player의 `Chain` 경로를 재사용하지 못할 때 발생한다.
+
+- chain window가 열려도 AI가 다음 combat request를 다시 호출하지 않으면 재현된다.
 
 ---
 
@@ -125,6 +141,14 @@ AnimNotify
 
 ---
 
+## 수정 기준
+
+- AI도 Player와 동일한 Action-driven chain 경로를 재사용한다.
+
+- Notify는 chain timing만 전달하고, 후속 요청은 기존 combat request 경로로 되돌린다.
+
+---
+
 ## 검증 결과
 
 - AI가 `ComboAttack` 시작 후 2타, 3타로 정상적으로 이어지는 것을 확인했다.
@@ -135,14 +159,30 @@ AnimNotify
 
 ---
 
+## 회귀 방지 기준
+
+- AI ComboAttack이 0-1-2 단계로 정상 체인되어야 한다.
+
+- 마지막 콤보 단계에서는 추가 chain window가 열리지 않아야 한다.
+
+---
+
+## 관련 PR / 문서
+
+- Issue Checklist: `D16_UE5_Portfolio_Issue_Checklist.md`
+
+- PR: `P15_UE5_Portfolio_Pull_Request (KR).md`
+
+- Portfolio Technical Document: `T03_Action & Reaction Execution Pipeline.md`
+
+---
+
 ## 비고
 
 - 향후 combo branch가 추가되면 `ActionType + ActionIndex` 기준으로 follow-up 정책을 분기할 수 있다.
 
 - 현재 구조는 직선형 combo chain 기준으로 충분하며, branch combo / enqueue / interrupt는 별도 확장 포인트로 남겨둔다.
 
-- 이 수정의 핵심은 AI도 Player와 동일한 Action-driven chain 경로를 재사용하도록 정리한 것이다.
-
-- Notify는 Action 메서드만 호출하고, Action은 ActionComponent를 통해 event를 노출하며, Enemy는 기존 combat request 경로를 다시 호출하는 역할만 담당한다.
+- Notify는 Action 메서드만 호출하고, Action은 ActionComponent를 통해 event를 노출하며, Enemy는 combat request 경로를 다시 호출한다.
 
 ---

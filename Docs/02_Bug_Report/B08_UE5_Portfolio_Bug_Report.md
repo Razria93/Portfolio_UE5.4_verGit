@@ -32,6 +32,14 @@
 
 ---
 
+## 영향 범위
+
+- AI action / reaction lifecycle 정리
+
+- hit reaction takeover 이후 Enemy combat request 복구 흐름
+
+---
+
 ## 환경
 
 - 엔진: Unreal Engine 5.4
@@ -44,6 +52,14 @@
 
 - 관련 에셋:
 	- `Content/02_Controller/02_Enemy/AI/Blackboard/BB_Default.uasset`
+
+---
+
+## 발생 조건
+
+- AI ComboAttack 도중 hit reaction이 active action cleanup 없이 takeover하면 발생한다.
+
+- ExecutionState는 Idle로 보이지만 CurrentActionType이 남아 있으면 재현된다.
 
 ---
 
@@ -109,8 +125,18 @@ if (UCActionComponent* actionComp = OwnerCharacter_Cached
 추가로 다음 정리를 함께 반영했다.
 
 - reaction 상태를 combat availability 계산에 반영했다.
+
 - combat action cooldown commit 책임을 `StartCombatAction` 쪽으로 정리했다.
+
 - reaction 이후 blackboard와 실제 action state가 다시 엇갈리지 않도록 정리했다.
+
+---
+
+## 수정 기준
+
+- reaction takeover 전에 active action을 abort하고 runtime state를 정리한다.
+
+- ActionComponent, StateComponent, Blackboard cleanup을 같은 전환 단위에서 수행한다.
 
 ---
 
@@ -124,14 +150,28 @@ if (UCActionComponent* actionComp = OwnerCharacter_Cached
 
 ---
 
+## 회귀 방지 기준
+
+- hit reaction 이후 `NoExecutableAction` 반복이 발생하지 않아야 한다.
+
+- AI가 reaction 종료 뒤 정상적으로 다시 attack action을 실행해야 한다.
+
+---
+
+## 관련 PR / 문서
+
+- Issue Checklist: `D16_UE5_Portfolio_Issue_Checklist.md`
+
+- PR: `P15_UE5_Portfolio_Pull_Request (KR).md`
+
+- Portfolio Technical Document: `T03_Action & Reaction Execution Pipeline.md`
+
+---
+
 ## 비고
 
 - 이후 `UCReactionOrchestratorComponent`가 추가되면서 reaction request 판단과 실행 조율 책임은 orchestration surface로 분리되었다.
 
 - 장기적으로는 Action / Reaction takeover를 공통 coordination 구조에서 다룰 수 있도록 정리 여지를 남겨둔다.
-
-- 이 수정의 핵심은 reaction takeover 시 기존 action lifecycle까지 함께 정리해야 한다는 점이다.
-
-- 문제의 직접 원인은 ActionComponent / StateComponent / Blackboard의 상태 불일치였다.
 
 ---
