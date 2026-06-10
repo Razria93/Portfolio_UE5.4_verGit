@@ -2,7 +2,7 @@
 
 ## 제목
 
-**M02-04: TakeDamage 수신부 구현 (오버라이드 + 임시 검증 피드백)**
+**M02-04: TakeDamageComponent 및 TakeDamage Pipeline 구현**
 
 ### 날짜
 
@@ -10,12 +10,15 @@
 
 - **Date : 2026.01.06**
 
+---
+### 브랜치
+
+- feature/combat-take-damage
 
 ---
-
 ### 목표
 
-- `CEnemy::TakeDamage(...)` 오버라이드를 통해 타깃 수신 진입점을 구현하고, `CApplyDamageComponent`(M2-03) 디스패치가 정상적으로 도달하는지 검증함.
+- `CEnemy::TakeDamage(...)` 오버라이드를 통해 타깃 수신 진입점을 구현하고, `CApplyDamageComponent`(M02-03) 디스패치가 정상적으로 도달하는지 검증함.
 
 - `FDamageEvent`은 `DamageEvent.GetTypeID()` 기반의 명시적 분기 유효성을 확인함.
 
@@ -25,17 +28,8 @@
 
 - 최종 결과는 `CHealthComponent`와 `CReactionComponent`에서 처리하며, 본 마일스톤에서는 최소 구현(HP 감소 + 최소 HitReaction)만 확정함.
 
-
 ---
-
-### 브랜치
-
-- feature/combat-take-damage
-
-
----
-
-### TODO List
+### TODO 리스트
 
 #### 1. CEnemy::TakeDamage 수신 진입점(오버라이드)
 
@@ -49,7 +43,6 @@
 
 - [x] 위임 호출: `UCTakeDamageComponent`를 찾아 `HandleTakeDamage(...)`로 전달
 
-
 #### 2. UCTakeDamageComponent 구성 및 처리 파이프라인
 
 - [x] `UCTakeDamageComponent` 클래스 생성 및 Enemy에 부착/초기화 경로 확보
@@ -61,7 +54,6 @@
 - [x] `HandleTakeDamage(...)`에서 수신자 상태 기반 보정/검증 단계 정의
   - 처리 예: 무적/가드/방어력/상태이상/피격 불가 (해당 이슈에서는 최소 구현만 진행)
 
-
 #### 3. Health 처리(CHealthComponent) 최소 구현 연결
 
 - [x] `CHealthComponent` 생성 또는 기존 컴포넌트 연결
@@ -72,7 +64,6 @@
 
 - [x] 감소 전/후 로그 출력으로 적용 결과 검증
 
-
 #### 4. 구조화 로그 및 디버그 출력(검증 피드백)
 
 - [x] `TakeDamage` 수신 로그 1회/호출 규칙 고정(중복 출력 방지)
@@ -82,8 +73,7 @@
   - EventInstigator, DamageCauser  
   - DamageEvent TypeID(+ Custom Id / SpecKey 존재 시 출력)
 
-
-#### 5. M2-03 연동 검증 시나리오
+#### 5. M02-03 연동 검증 시나리오
 
 - [x] `CApplyDamageComponent::ApplyDamageToTarget(...)` → `CEnemy::TakeDamage(...)` 연결 확인
 
@@ -95,11 +85,9 @@
 
 - [x] 다중 타깃 시나리오 점검(테스트 레벨에 Enemy 다수 배치)
 
-
 ---
+### 비고
 
-### Notes
 - 
-
 
 ---

@@ -125,6 +125,9 @@ Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더�
 
 08_AI_Workflow
 -> Codex 기반 작업 흐름 / Prompt Library / Work Brief / Planning
+
+99_Legacy
+-> 이전 Issue Checklist / 과거 문서 구조 보관
 ```
 
 ---

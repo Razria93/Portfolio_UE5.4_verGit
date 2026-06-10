@@ -1,18 +1,21 @@
-# UE5 Portfolio Issue Checklist
+# UE5 Portfolio – Issue Checklist
 
 ## 제목
 
-**M05-01: Action Orchestration 구조 정리 및 AI Combo / Reaction 연동 보강**
+**M05-01: CActionOrchestratorComponent 추가 및 Action 공용 실행 구조 구성**
 
 ### 날짜
 
 - **Day 16**
-  
+
 - **Date : 2026.04.19**
 
+---
+### 브랜치
+
+- feature/action-orchestration
 
 ---
-
 ### 목표
 
 - Player 입력에서 액션 실행까지의 흐름을 **Orchestrator 중심 구조**로 정리함.
@@ -23,16 +26,8 @@
 
 - combo action 도중 피격 시 Reaction takeover 이후에도 전투 흐름이 유지되도록 최소 안전 구조를 추가함.
 
-
 ---
-
-### 브랜치
-- `feature/action-orchestration`
-
-
----
-
-### TODO List
+### TODO 리스트
 
 #### 1. Player 입력 흐름 정리
 
@@ -41,7 +36,6 @@
 - [x] 입력 요청을 Orchestrator로 전달하는 흐름 검토
 
 - [x] 공통 입력 차단 조건과 액션별 실행 조건 분리 방향 정리
-
 
 #### 2. Orchestrator 1차 구조 구성
 
@@ -53,7 +47,6 @@
 
 - [x] 일반적인 실패 시 rollback 정책 확정
 
-
 #### 3. ActionComponent 책임 정리
 
 - [x] 액션 보관 / 조회 / 현재 액션 관리 책임 정리
@@ -62,7 +55,6 @@
 
 - [x] `ChangeActionMode` 계열 API의 역할 재정의
 
-
 #### 4. CAction 책임 정리
 
 - [x] `CAction`에서 직접 상태를 변경하는 구조 제거 방향 검토
@@ -70,7 +62,6 @@
 - [x] 액션 고유 실행 조건과 실행 로직 분리
 
 - [x] ComboAttack 기존 동작 유지 여부 확인
-
 
 #### 5. AI Combo 연동 정리
 
@@ -82,15 +73,13 @@
 
 - [x] Player / AI combo chain 실행 경로 통일 확인
 
-
-#### 6. Reaction Takeover 안전성 보강
+#### 6. Action 중단 후 Reaction 실행 흐름 확인
 
 - [x] reaction 진입 시 active action abort 구조 추가
 
 - [x] reaction 상태를 combat availability 계산에 반영
 
 - [x] combo action 도중 피격 후 reaction 이후 combat flow 복구 확인
-
 
 #### 7. 최소 검증 기준 정리
 
@@ -106,16 +95,13 @@
 
 - [x] Scenario 6: combo action 도중 피격 후 reaction 이후 combat flow 복구 확인
 
-
 ---
-
-### Notes
+### 비고
 
 - 본 이슈는 새 액션 추가보다 **공유 action 실행 흐름의 책임 분리**에 집중함.
 
 - AI combo chain 연동과 reaction takeover 최소 안전 구조까지 이번 브랜치 범위에 포함함.
 
 - Guard / Parry / Counter, 고도화된 Reaction orchestration, 상위 coordination 계층은 이후 브랜치 확장 대상으로 남겨둠.
-
 
 ---

@@ -10,28 +10,22 @@
 
 - **Date : 2025.12.02**
 
+---
+### 브랜치
+
+- feature/character-camera-core
 
 ---
-
 ### 목표
 
-- PlayerCharacter / PlayerController C++ 클래스 생성
+- Player / PlayerController C++ 클래스 생성
 
 - 3인칭 카메라(SpringArm) 기본 세팅
 
 - Test Room 기본 레벨 생성
 
-
 ---
-
-### 브랜치
-
-- feature/character-camera-core
-
-
----
-
-### TODO List
+### TODO 리스트
 
 #### 1. Test Room
 
@@ -39,15 +33,13 @@
 
 - [x] 바닥, 벽, 간단 장애물(박스/계단) 배치
 
-
 #### 2. 캐릭터 & 컨트롤러
 
-- [x] `APortfolioPlayerController` C++ 클래스 생성 및 프로젝트에 등록
+- [x] `CPlayerController` C++ 클래스 생성 및 프로젝트에 등록
 
-- [x] `APortfolioCharacter` C++ 클래스 생성 및 DefaultPawnClass로 설정
+- [x] `CPlayer` C++ 클래스 생성 및 DefaultPawnClass로 설정
 
 - [x] 캡슐 / Mesh / MovementComponent 기본값 설정
-
 
 #### 3. 카메라
 
@@ -57,10 +49,8 @@
 
 - [x] 마우스 이동으로 카메라 회전
 
-
 ---
-
-### Notes
+### 비고
 
 - Git 초기 설정과 첫 커밋 작업이 프로젝트 구조 구성보다 더 많은 시간이 소요되었음
 
@@ -68,6 +58,4 @@
 
 - GitHub의 Issue 및 Project 기능은 작업 구성과 개발 진행 관리에 효율적인 체계를 제공함
 
-
----
 ---

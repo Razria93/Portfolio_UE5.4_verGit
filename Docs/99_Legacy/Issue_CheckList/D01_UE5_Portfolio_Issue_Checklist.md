@@ -10,9 +10,12 @@
 
 - **2025.12.01**
 
+---
+### 브랜치
+
+- 없음
 
 ---
-
 ### 목표
 
 - UE5 / Git / Obsidian / GitHub 환경 세팅
@@ -21,17 +24,8 @@
 
 - 기본 워크플로우(Branch / Issue / Project) 확립
 
-
 ---
-
-### 브랜치
-
-- 없음
-
-
----
-
-### TODO List
+### TODO 리스트
 
 #### 1. 엔진 & 프로젝트
 
@@ -41,7 +35,6 @@
 
 - [x] .gitignore / .vsconfig / 기본 Config 확인 및 정리
 
-
 #### 2. Git & GitHub
 
 - [x] Git 리포지토리 초기화 (`git init`)
@@ -49,7 +42,6 @@
 - [x] GitHub 리포지토리 생성 및 `local & origin` 연결
 
 - [x] 첫 커밋 (`:tada: initial commit`) 및 `main` push
-
 
 #### 3. Obsidian & docs 구조
 
@@ -65,7 +57,6 @@
 
 - [x] `README` 추가
 
-
 #### 4. GitHub Issues & Project
 
 - [x] GitHub Project Board 생성 (`UE5 Portfolio`)
@@ -74,10 +65,10 @@
 
 - [x] 주요 이슈 3개 이상 생성 (예: Project Setup, Character Core, Combat Core)
 
-
 ---
+### 비고
 
-### Notes
+- 본 문서는 초기 프로젝트 세팅 당시의 Issue Checklist 기록이며, 현재 문서 운영 구조와 다를 수 있는 Legacy 기록으로 보관한다.
 
 - 작업 순서
 
@@ -95,6 +86,4 @@
 
 	4. Milestone 단위의 작업이 종료되면 push
 
-
----
 ---

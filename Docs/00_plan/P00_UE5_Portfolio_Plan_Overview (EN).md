@@ -125,6 +125,9 @@ Player input and AI Behavior Tree can use different decision sources while shari
 
 08_AI_Workflow
 -> Codex-based workflow / Prompt Library / Work Brief / Planning
+
+99_Legacy
+-> Legacy Issue Checklists / previous documentation structure archive
 ```
 
 ---
