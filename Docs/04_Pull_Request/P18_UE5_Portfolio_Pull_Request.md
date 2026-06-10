@@ -1,18 +1,26 @@
-﻿# AI Workflow 운영 체계 및 Prompt Library v1 초안 구성
+# UE5 Portfolio Pull Request
 
-## 1. 제목
+## 제목
 
-docs: AI Workflow 운영 체계 및 Prompt Library v1 초안 구성
+**P18: AI Workflow 운영 체계 및 Prompt Library v1 초안 구성**
+
+## 날짜
+
+**2026.06.09**
+
+## 상태
+
+- [x] **완료**
 
 ---
 
-## 2. 관련 브랜치
+## 브랜치
 
 - `feature/ai-workflow`
 
 ---
 
-## 3. 요약
+## 요약
 
 ### 작업 요약
 
@@ -59,7 +67,7 @@ docs: AI Workflow 운영 체계 및 Prompt Library v1 초안 구성
 
 ---
 
-## 4. 변경 범위
+## 변경 범위
 
 ### A. AI Workflow 문서 구조 구성
 
@@ -281,7 +289,7 @@ GuardAndParry Animation Asset
 
 ---
 
-## 5. 주요 커밋
+## 주요 커밋
 
 ```yaml
 be43b53
@@ -302,7 +310,29 @@ fab6874
 
 ---
 
-## 6. 검증
+## 테스트 방법
+
+### 문서 출력 확인
+
+- W01 Work List가 UTF-8 기준으로 정상 출력되는지 확인한다.
+
+### 검색 검증
+
+- Branch 목표, Prompt Library v1, AI Workflow, W02 흐름이 문서에 반영되어 있는지 확인한다.
+
+### 배치 확인
+
+- Prompt Blueprint와 Prompt Files가 역할별 폴더에 배치되어 있는지 확인한다.
+
+### W02 검증
+
+- W02 Work Brief / Feature Work Planning / Work List Draft 문서 흐름을 확인한다.
+
+- W02 Work List Draft에서 실제 구현 / Build / PIE / Editor / Asset 항목이 완료 처리되지 않았는지 확인한다.
+
+---
+
+## 검증 결과
 
 ### 수행한 검증
 
@@ -322,7 +352,9 @@ W02 검증
 -> W02 Work List Draft에서 실제 구현 / Build / PIE / Editor / Asset 항목이 완료 처리되지 않았는지 확인
 ```
 
-### 수행하지 않은 검증
+---
+
+## 미검증 항목
 
 ```yaml
 미수행
@@ -336,7 +368,7 @@ W02 검증
 
 ---
 
-## 7. 비범위
+## 비범위
 
 ```yaml
 이번 PR 비범위
@@ -352,7 +384,7 @@ W02 검증
 
 ---
 
-## 8. 후속 작업
+## 후속 작업
 
 ```yaml
 실제 구현 Branch
@@ -368,27 +400,24 @@ AI Workflow Refactor
 
 ---
 
-## 9. 참고 문서
+## 관련 문서
 
-```yaml
-Work List
--> Docs/01_Work_List/W01_Codex_Workflow/W01_UE5_Portfolio_Work_List.md
+- Work List: `W01_UE5_Portfolio_Work_List.md`
 
-W02 예시
--> Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Work_Brief.md
--> Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Feature_Work_Planning.md
--> Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Work_List_Draft.md
+- Work Brief: `W02_UE5_Portfolio_Work_Brief.md`
 
-AI Workflow
--> Docs/08_AI_Workflow/00_Index/AI_Workflow_Index (KR).md
--> Docs/08_AI_Workflow/01_Overview/AI_Workflow_Overview (KR).md
--> Docs/08_AI_Workflow/03_Operation/AI_Workflow_Operation_Guide (KR).md
--> Docs/08_AI_Workflow/04_Work_Pipeline/AI_Work_Pipeline (KR).md
+- Feature Work Planning: `W02_UE5_Portfolio_Feature_Work_Planning.md`
 
-Prompt Library
--> Docs/08_AI_Workflow/05_Prompt_Library/00_Prompt_Blueprint/05_Prompt_Flow_and_Routing_Blueprint (KR).md
+- Work List Draft: `W02_UE5_Portfolio_Work_List_Draft.md`
 
-Backlog
--> Docs/08_AI_Workflow/06_Backlog/AI_Workflow_Backlog (KR).md
--> Docs/08_AI_Workflow/06_Backlog/AI_Workflow_Refactor_Notes (KR).md
-```
+- AI Workflow:
+	- `AI_Workflow_Index (KR).md`
+	- `AI_Workflow_Overview (KR).md`
+	- `AI_Workflow_Operation_Guide (KR).md`
+	- `AI_Work_Pipeline (KR).md`
+
+- Prompt Blueprint: `05_Prompt_Flow_and_Routing_Blueprint (KR).md`
+
+- Backlog:
+	- `AI_Workflow_Backlog (KR).md`
+	- `AI_Workflow_Refactor_Notes (KR).md`
