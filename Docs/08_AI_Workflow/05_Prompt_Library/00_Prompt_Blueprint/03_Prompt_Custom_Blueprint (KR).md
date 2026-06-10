@@ -71,11 +71,11 @@ Project Stella 기준
 
 ## 5. Document Writing Prompt Custom Rules
 
-Document Writing Prompt는 문서 카테고리별 작성 / 보완에 적용한다. 대상 문서가 Work Checklist, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Technical Document이면 응답에 다음 기준을 반영한다.
+Document Writing Prompt는 문서 카테고리별 작성 / 보완에 적용한다. 대상 문서가 Work List, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Technical Document이면 응답에 다음 기준을 반영한다.
 
 ```yaml
 Document 연결
-Work Checklist
+Work List
 -> 작업 목표
 -> 범위 / 비범위
 -> 완료 기준
@@ -214,17 +214,17 @@ Work Pipeline
 
 ---
 
-## 9. Work Checklist / Backlog 연결
+## 9. Work List / Backlog 연결
 
 ```yaml
-Work Checklist
+Work List
 -> 현재 Prompt Library 검토 범위와 완료 기준 관리
 
 AI Workflow Backlog
 -> Prompt 실사용 검증
 -> Prompt 문장 품질 최종 검수
 -> Feature Work Prompt Archive 기준
--> Work Checklist 명칭 전환
+-> Work List 작성 / 갱신 규칙
 -> 후속 보완 항목
 -> 삭제 / Archive 판단 보류 항목
 ```

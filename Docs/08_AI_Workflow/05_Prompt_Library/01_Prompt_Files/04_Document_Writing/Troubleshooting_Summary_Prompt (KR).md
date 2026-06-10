@@ -1,4 +1,4 @@
-# Troubleshooting Summary Prompt
+﻿# Troubleshooting Summary Prompt
 
 ## 1. 목적
 
@@ -32,7 +32,7 @@
 - [Bxx 문서 / issue]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:
@@ -64,7 +64,7 @@
 ```yaml
 입력 기준
 -> Bug Report / Architecture Issue Report / Engine Issue Report 목록
--> 관련 Work Checklist / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document
+-> 관련 Work List / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document
 -> 문제 유형 후보
 -> 검증 결과
 ```

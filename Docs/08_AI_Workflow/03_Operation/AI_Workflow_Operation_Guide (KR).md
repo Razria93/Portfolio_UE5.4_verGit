@@ -45,7 +45,7 @@ Pipeline을 운용할 때 Codex는 요청된 작업을 다음 네 가지 기준�
 작업 목표
 -> 무엇을 끝내야 하는지 확인
 -> 완료 기준, 범위, 비범위 판단
--> Work Checklist 생성 / 갱신 필요 여부 판단
+-> Work List 생성 / 갱신 필요 여부 판단
 
 변경 위험
 -> 코드 / 문서 / Asset / Blueprint / Git 변경 영향 판단
@@ -58,7 +58,7 @@ Pipeline을 운용할 때 Codex는 요청된 작업을 다음 네 가지 기준�
 -> 사용자 Editor 확인이 필요한 항목 분리
 
 문서화 필요성
--> Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 판단
+-> Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 판단
 -> History와 공식 산출물 연결 필요성 판단
 -> Portfolio Technical Document 또는 Prompt Library 후속 반영 필요 여부 판단
 ```
@@ -125,7 +125,7 @@ History
 -> 작업 중 질문, 판단, 결정 변화, 시행착오를 증명하는 기록
 -> 최종 문서에 필요한 판단 근거
 
-Work Checklist
+Work List
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태, 후속 작업 범위 관리
 
 Bug Report
@@ -238,7 +238,7 @@ History는 판단을 증명할 수 있는 형태로 압축한다.
 
 ```yaml
 History 연결 기준
-작업 범위 결정 -> Work Checklist
+작업 범위 결정 -> Work List
 검증 실패 -> Bug Report / Verification Log
 현재 시스템 구조 -> System Architecture
 시스템 구조 판단 변화 -> System Design Records
@@ -249,7 +249,7 @@ History 연결 기준
 반복 가능한 규칙 -> Prompt Format Blueprint / Prompt Library Maintenance Blueprint / Prompt Files / Operation Guide
 ```
 
-History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 System Architecture를 우선 참조하고, 엔진 기능 사용 방식은 Engine Technique Document 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 Work Checklist와 PR Document에 남긴다.
+History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 System Architecture를 우선 참조하고, 엔진 기능 사용 방식은 Engine Technique Document 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 Work List와 PR Document에 남긴다.
 
 ---
 
@@ -371,7 +371,7 @@ Branch는 작업 목표와 구현 범위를 관리하는 버전 컨트롤 단위
 -> 같은 Branch 안에서 이어갈 수 있는 대안 작업
 
 작업 전환 제안
--> 현재 Work Checklist 범위를 벗어나 새 Work Checklist가 필요한 후속 작업
+-> 현재 Work List 범위를 벗어나 새 Work List가 필요한 후속 작업
 
 점검 / 검토
 -> 불확실성, 중복, 누락, stale 여부 확인

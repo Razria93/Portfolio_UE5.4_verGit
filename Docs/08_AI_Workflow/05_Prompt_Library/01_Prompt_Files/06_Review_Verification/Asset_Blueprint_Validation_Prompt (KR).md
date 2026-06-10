@@ -1,4 +1,4 @@
-# Asset Blueprint Validation Prompt
+﻿# Asset Blueprint Validation Prompt
 
 ## 1. 목적
 
@@ -32,7 +32,7 @@ C++ Build만으로 확인되지 않는 Editor / Asset / Blueprint 영향을 점�
 - [Branch / PR / commit range / changed files / 작업 요약]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:

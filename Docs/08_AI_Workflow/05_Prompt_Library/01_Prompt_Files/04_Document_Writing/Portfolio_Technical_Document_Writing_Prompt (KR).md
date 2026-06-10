@@ -1,4 +1,4 @@
-# Portfolio Technical Document Writing Prompt
+﻿# Portfolio Technical Document Writing Prompt
 
 ## 1. 목적
 
@@ -11,7 +11,7 @@
 ```yaml
 사용 시점
 -> 제출용 기술 문서를 작성할 때
--> 여러 Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document를 하나의 기술 주제로 묶을 때
+-> 여러 Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document를 하나의 기술 주제로 묶을 때
 -> 작업 기록을 문제 정의 / 시스템 구조 / 엔진 사용 방식 / 설계 판단 / 구현 결과 / 검증 흐름으로 재구성할 때
 ```
 
@@ -32,7 +32,7 @@
 - [예: Action / Reaction Execution Pipeline]
 
 관련 입력 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:

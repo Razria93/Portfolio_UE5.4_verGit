@@ -1,4 +1,4 @@
-# Verification Log Prompt
+﻿# Verification Log Prompt
 
 ## 1. 목적
 
@@ -11,7 +11,7 @@
 ```yaml
 사용 시점
 -> 작업 완료 후 검증 결과를 정리할 때
--> PR Document 또는 Work Checklist에 검증 상태를 연결해야 할 때
+-> PR Document 또는 Work List에 검증 상태를 연결해야 할 때
 -> 미검증 항목을 완료 항목과 분리해야 할 때
 ```
 
@@ -32,7 +32,7 @@
 - [Branch / PR / commit range / 작업 요약]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:

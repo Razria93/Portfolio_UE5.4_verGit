@@ -29,7 +29,7 @@ Pipeline 체크포인트
 -> 작업 목표: 무엇을 끝내야 하는지, 완료 기준과 비범위가 무엇인지 확인
 -> 변경 위험: 코드 / 문서 / Asset / Blueprint / Git 변경 영향 확인
 -> 검증 필요성: Build / Code Flow / PIE / Editor / Asset 검증 필요 여부 확인
--> 문서화 필요성: Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 확인
+-> 문서화 필요성: Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 확인
 ```
 
 이 네 가지는 AI 기반 작업 운영 체계에서 Codex의 작업을 통제하기 위한 핵심 기준이다. 상세 판단 기준은 `../03_Operation/AI_Workflow_Operation_Guide (KR).md`의 `핵심 통제 기준`을 따른다.
@@ -118,7 +118,7 @@ Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Libra
 -> 작업 목표
 -> 성공 기준
 -> 비범위 / 후속 작업 범위
--> Work Checklist 생성 / 갱신 필요 여부
+-> Work List 생성 / 갱신 필요 여부
 
 완료 기준
 -> 무엇을 바꾸려는지 설명 가능
@@ -127,7 +127,7 @@ Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Libra
 
 입력 부족 시 처리
 -> 기대 결과가 불명확하면 목표 예시를 요청
--> 범위가 넓으면 Work Checklist 단위로 분리
+-> 범위가 넓으면 Work List 단위로 분리
 -> 구현 여부보다 분석이 먼저 필요하면 현재 구조 탐색으로 이동
 ```
 
@@ -308,7 +308,7 @@ Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Libra
 -> History
 
 출력
--> Work Checklist
+-> Work List
 -> Bug Report
 -> System Architecture
 -> System Design Records
@@ -333,7 +333,7 @@ Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Libra
 
 ```yaml
 산출물 선택 기준
--> Work Checklist: 작업 목표 / 범위 / 완료 기준 / 검증 상태 관리가 필요할 때
+-> Work List: 작업 목표 / 범위 / 완료 기준 / 검증 상태 관리가 필요할 때
 -> Bug Report: 재현 가능한 문제와 원인 / 수정 / 검증을 남길 때
 -> System Architecture: 현재 시스템 구조 / 책임 경계 / 실행 흐름 / 데이터 계약을 설명할 때
 -> System Design Records: 시스템 구조 설계 결정이나 구조 문제 / 책임 경계 위험을 기록할 때
@@ -355,7 +355,7 @@ Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Libra
 -> ../03_Operation/AI_Workflow_Operation_Guide (KR).md
 
 작업 범위 / 완료 기준
--> Work Checklist
+-> Work List
 
 버그 기록
 -> Bug Report
@@ -388,6 +388,6 @@ Branch 결과
 -> Portfolio Technical Document
 ```
 
-History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 `System Architecture`를 우선 참조하고 엔진 기능 / API 사용 방식은 `Engine Technique Document` 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 `Work Checklist` 또는 `PR Document`에 남긴다.
+History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 `System Architecture`를 우선 참조하고 엔진 기능 / API 사용 방식은 `Engine Technique Document` 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 `Work List` 또는 `PR Document`에 남긴다.
 
 Pipeline은 각 산출물을 언제 호출하고 어떤 완료 기준으로 다음 단계로 넘길지 결정하는 작업 흐름 문서다.

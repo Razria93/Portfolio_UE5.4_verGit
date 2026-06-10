@@ -1,4 +1,4 @@
-# Feature Work Planning Prompt
+﻿# Feature Work Planning Prompt
 
 ## 1. 목적
 
@@ -41,7 +41,7 @@ Work Brief Intake에서 작업 유형이 `신규 기능 구현`으로 판정된 
 
 계획 안의 검증 기준과 미검증 항목은 이후 검증 및 안정화 단계의 입력으로 사용한다.
 
-최종 Work Checklist는 이 Prompt의 계획 결과를 바탕으로 `01_Work_Checklist_Writing_Prompt (KR).md`에서 작성한다.
+최종 Work List는 이 Prompt의 계획 결과를 바탕으로 `01_Work_List_Writing_Prompt (KR).md`에서 작성한다.
 
 ---
 
@@ -70,7 +70,7 @@ Work Brief:
 - Project Context:
 - Working Rule:
 - Working Reference:
-- Work Checklist:
+- Work List:
 - System Architecture:
 - System Design Records:
 - Engine Technique Document:
@@ -148,7 +148,7 @@ Work Brief:
 -> Asset:
 
 문서화 필요 여부
--> Work Checklist:
+-> Work List:
 -> Bug Report:
 -> System Architecture:
 -> System Design Records:
@@ -219,7 +219,7 @@ Work Brief:
 
 비범위
 -> 사용자 요청 최초 Intake
--> 최종 Work Checklist 작성
+-> 최종 Work List 작성
 -> 코드 수정
 -> 공식 문서 작성
 -> Git staging / commit
@@ -305,8 +305,8 @@ Feature Work Planning Prompt
 Refactor Work Planning Prompt
 -> 구조 변경 / 리팩터링 중심 작업의 변경 단위 / 위험 / 검증 기준 정리
 
-Work Checklist Writing Prompt
--> Work Brief와 Planning 결과를 최종 Work Checklist로 변환
+Work List Writing Prompt
+-> Work Brief와 Planning 결과를 최종 Work List로 변환
 
 Working Rule / Reference Prompt
 -> 구현 중 적용할 실행 규칙과 책임 경계 판단 기준
@@ -319,6 +319,6 @@ Working Rule / Reference Prompt
 ```yaml
 후속 보완 후보
 -> 실제 Feature Branch 작업 적용 후 구현 단위 양식 보완
--> Work Brief와 Work Checklist 사이의 입력 / 출력 연결 기준 보완
+-> Work Brief와 Work List 사이의 입력 / 출력 연결 기준 보완
 -> Refactor Work Planning Prompt와 중복되는 항목 점검
 ```

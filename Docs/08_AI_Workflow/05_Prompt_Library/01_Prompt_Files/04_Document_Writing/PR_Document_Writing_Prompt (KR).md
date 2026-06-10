@@ -1,4 +1,4 @@
-# PR Document Writing Prompt
+﻿# PR Document Writing Prompt
 
 ## 1. 목적
 
@@ -19,7 +19,7 @@ Branch에서 해결한 문제, 변경 범위, 책임 분리, 주요 Pipeline, �
 
 ## 3. 사용 방법
 
-대상 Branch, 변경 파일, 관련 Work Checklist, 검증 결과를 제공하고 `복사용 Prompt`를 사용한다.
+대상 Branch, 변경 파일, 관련 Work List, 검증 결과를 제공하고 `복사용 Prompt`를 사용한다.
 
 ---
 
@@ -32,7 +32,7 @@ Branch에서 해결한 문제, 변경 범위, 책임 분리, 주요 Pipeline, �
 - [Branch / PR / commit range / changed files]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:
@@ -71,7 +71,7 @@ Branch에서 해결한 문제, 변경 범위, 책임 분리, 주요 Pipeline, �
 입력 기준
 -> Branch명
 -> 변경 파일 또는 commit range
--> 관련 Work Checklist
+-> 관련 Work List
 -> 검증 결과
 -> 관련 구조 문서
 ```
@@ -99,7 +99,7 @@ Branch에서 해결한 문제, 변경 범위, 책임 분리, 주요 Pipeline, �
 -> PR Document 작성 / 보완
 
 비범위
--> Work Checklist 작성
+-> Work List 작성
 -> 코드 리뷰 수행
 -> 실제 GitHub PR 생성
 ```
@@ -132,7 +132,7 @@ Branch에서 해결한 문제, 변경 범위, 책임 분리, 주요 Pipeline, �
 
 ```yaml
 검증 기준
--> Work Checklist 목표와 PR 결과가 연결되는가
+-> Work List 목표와 PR 결과가 연결되는가
 -> 변경 범위와 검증 결과가 일치하는가
 -> 미검증 항목이 PR note로 남을 수 있는가
 ```
@@ -157,7 +157,7 @@ Branch에서 해결한 문제, 변경 범위, 책임 분리, 주요 Pipeline, �
 ## 12. 기존 Prompt와 역할 경계
 
 ```yaml
-01_Work_Checklist_Writing_Prompt
+01_Work_List_Writing_Prompt
 -> 작업 목표 / 완료 기준 관리
 
 PR Document Writing Prompt

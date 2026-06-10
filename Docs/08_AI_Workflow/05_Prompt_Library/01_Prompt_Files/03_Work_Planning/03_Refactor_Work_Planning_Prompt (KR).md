@@ -1,4 +1,4 @@
-# Refactor Work Planning Prompt
+﻿# Refactor Work Planning Prompt
 
 ## 1. 목적
 
@@ -42,7 +42,7 @@ Project Stella 리팩터링 계획을 세워줘.
 - [기능 / 시스템 / 책임 경계 / 문서 경로]
 
 관련 문서:
-- Work Checklist: [문서 경로 또는 없음]
+- Work List: [문서 경로 또는 없음]
 - Bug Report: [문서 경로 또는 없음]
 - System Architecture: [문서 경로 또는 없음]
 - System Design Records: [문서 경로 또는 없음]
@@ -62,7 +62,7 @@ Project Stella 리팩터링 계획을 세워줘.
 - 각 변경 단위마다 목표 / 수정 범위 / 비범위 / 위험 / 검증 기준 / 문서화 필요 여부를 정리해줘.
 - 책임 경계는 Orchestrator / Component / Executor / Data / Asset / Blueprint 기준으로 판단해줘.
 - 임시 대응, 구조적 해결, 후속 보강을 분리해줘.
-- 현재 코드 / System Architecture / Records / Work Checklist 기준이 충돌하면 Source of Truth와 불일치 항목을 분리해줘.
+- 현재 코드 / System Architecture / Records / Work List 기준이 충돌하면 Source of Truth와 불일치 항목을 분리해줘.
 - 사용자 결정이 필요한 항목은 구현 전에 선택지로 분리해줘.
 - Work Pipeline에 입력할 계획 작성용이므로 실제 파일 수정이나 공식 문서 작성은 하지 말아줘.
 
@@ -125,7 +125,7 @@ Project Stella 리팩터링 계획을 세워줘.
 -> Asset:
 
 문서화 필요 여부
--> Work Checklist:
+-> Work List:
 -> Bug Report:
 -> System Architecture:
 -> System Design Records:

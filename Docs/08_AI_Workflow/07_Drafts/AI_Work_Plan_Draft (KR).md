@@ -1,4 +1,4 @@
-# AI Work Plan Draft
+﻿# AI Work Plan Draft
 
 ## 1. 목적
 
@@ -88,7 +88,7 @@ Goal
 
 ```yaml
 문서화 후보
--> Work Checklist
+-> Work List
 -> Bug Report
 -> System Architecture
 -> Technical Document
@@ -101,7 +101,7 @@ Goal
 
 ```yaml
 문서 양식 후보
--> Work Checklist
+-> Work List
 -> Bug Report
 -> System Architecture
 -> Verification Log

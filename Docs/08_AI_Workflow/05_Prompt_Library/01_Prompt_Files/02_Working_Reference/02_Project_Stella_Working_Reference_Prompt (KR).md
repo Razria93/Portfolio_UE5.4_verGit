@@ -1,4 +1,4 @@
-# Project Stella Working Reference Prompt
+﻿# Project Stella Working Reference Prompt
 
 ## 1. 목적
 
@@ -52,7 +52,7 @@ Project Stella의 고유 구조는 Prompt 안에 복사하지 않고, 현재 코
 -> Engine Decision Record / Engine Issue Report 확인
 -> 시스템 설계 결정, 구조 문제, 엔진 사용 결정, 엔진 동작 이슈 확인
 
-5. Work Checklist / Verification Log / PR Document
+5. Work List / Verification Log / PR Document
 -> 현재 Branch 목표, 변경 상태, 검증 상태, 미검증 항목 확인
 ```
 
@@ -62,7 +62,7 @@ Project Stella의 고유 구조는 Prompt 안에 복사하지 않고, 현재 코
 -> System Architecture는 현재 구조 설명 기준으로 사용
 -> Engine Technique Document는 현재 엔진 기능 / API / 시스템 사용 방식 설명 기준으로 사용
 -> System Design Records와 Engine Implementation Records는 의도 / 기록 / 후속 설계 후보로 분리
--> Work Checklist / Verification Log / PR Document는 현재 Branch 상태 확인 기준
+-> Work List / Verification Log / PR Document는 현재 Branch 상태 확인 기준
 -> 기준 충돌은 위험한 차이 또는 문서 정합성 보완 후보로 기록
 -> 확인하지 못한 항목은 미검증으로 표시
 ```
@@ -155,7 +155,7 @@ Project Stella의 현재 코드 / 문서 구조를 분석해줘.
 -> 관련 System Design Records 경로
 -> 관련 Engine Implementation Records 경로
 -> Project Stella Overview
--> 현재 Branch의 Work Checklist / Verification Log / PR Document
+-> 현재 Branch의 Work List / Verification Log / PR Document
 -> 관련 Portfolio Technical Document
 -> 현재 구현인지 후속 설계인지 불명확한 항목
 -> 사용자가 우려하는 책임 경계 또는 검증 위험

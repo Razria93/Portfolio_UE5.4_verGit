@@ -1,4 +1,4 @@
-# Work Brief Intake Prompt
+﻿# Work Brief Intake Prompt
 
 ## 1. 목적
 
@@ -15,7 +15,7 @@
 -> 새 Branch 또는 주요 작업 단위를 시작하기 전
 -> 사용자의 자연어 요청을 작업 가능한 범위로 정리해야 할 때
 -> 목표 / 범위 / 위험 / 미결정 항목을 사용자와 Codex가 함께 조율해야 할 때
--> 바로 Work Checklist를 만들기에는 입력이 부족한지 판단해야 할 때
+-> 바로 Work List를 만들기에는 입력이 부족한지 판단해야 할 때
 -> 기존 Work Brief를 보완하거나 준비 상태를 다시 판정해야 할 때
 ```
 
@@ -31,7 +31,7 @@
 
 `진행 가능` 또는 `준비 완료` 상태가 되면 작업 유형에 맞는 Planning Prompt 또는 실행 Prompt 후보를 제시한다.
 
-Branch 단위 관리 문서가 필요하면 이후 `Work Checklist Writing Prompt`를 사용해 최종 Work Checklist를 작성한다.
+Branch 단위 관리 문서가 필요하면 이후 `Work List Writing Prompt`를 사용해 최종 Work List를 작성한다.
 
 ---
 
@@ -52,7 +52,7 @@ Branch 단위 관리 문서가 필요하면 이후 `Work Checklist Writing Promp
 6. 사용자 결정이 필요한 항목은 `계획차단 / 선택필요` 또는 `비차단 / 선택필요` 섹션으로 분리하고 선택지를 `-` 목록으로 제시해줘.
 7. 이미 결정된 항목은 `확정된 결정`, 이번 Branch 이후로 넘길 항목은 `후속 후보` 섹션으로 분리해줘.
 8. 작업 유형을 `신규 기능 구현 / 기존 기능 보완 / 구조 변경 / 검토 / 검증 / 문서 작성 / Commit PR 준비` 중에서 판정해줘.
-9. 판정 결과를 `Planning Prompt 후보`, `실행 계층 후보`, `Work Checklist Writing 후보 / 판단 위치`로 나눠줘.
+9. 판정 결과를 `Planning Prompt 후보`, `실행 계층 후보`, `Work List Writing 후보 / 판단 위치`로 나눠줘.
 10. Work Brief 준비 상태를 `진행 불가 / 검토 필요 / 진행 가능 / 준비 완료` 중 하나로 판정해줘.
 11. `계획차단 / 검토필요` 항목은 Work Brief 단계에서 닫아야 하고, `비차단 / 검토필요` 항목은 Feature Work Planning의 선행 확인 항목으로 넘길 수 있는지 판단해줘.
 12. `계획차단 / 선택필요`와 `비차단 / 선택필요` 항목은 사용자가 고를 수 있는 선택지와 권장안을 제시하고, 사용자가 선택하면 `확정`으로 이동해줘.
@@ -64,14 +64,14 @@ Branch 단위 관리 문서가 필요하면 이후 `Work Checklist Writing Promp
 - 구현 비용: 새 클래스 / 컴포넌트 / Asset / Blueprint / 기존 흐름 수정 범위가 Branch 단위로 감당 가능한지 확인
 - 변경 위험: 기존 기능, 호출 흐름, 데이터 계약, Blueprint / Asset 참조를 깨뜨릴 가능성 확인
 - 검증 위험: Build / Code Flow / PIE / Editor / Asset 검증으로 완료 여부를 확인할 수 있는지 확인
-- 문서화 영향: Work Checklist / System Architecture / Design Records / Engine Records / Verification Log / PR Document 반영 필요 여부 확인
+- 문서화 영향: Work List / System Architecture / Design Records / Engine Records / Verification Log / PR Document 반영 필요 여부 확인
 - Intake 단계의 진단은 Planning 진입 가능성 판정에 필요한 수준으로 제한하고, 구현 단위 / 실행 순서 / 상세 위험 분해는 Feature Work Planning으로 넘김
 - 작업 유형이 섞이면 범위와 우선순위를 분리
 
 대상 작업:
 - Branch / 작업명:
 - Work Brief 경로:
-- 최종 Work Checklist 경로:
+- 최종 Work List 경로:
 
 입력:
 - [사용자 자연어 요청 또는 기존 Work Brief 내용]
@@ -112,7 +112,7 @@ Intake 단계의 진단은 `Feature Work Planning`으로 넘어갈 수 있는지
 -> 미검증으로 남길 항목과 사용자 확인이 필요한 항목을 분리
 
 문서화 영향
--> Work Checklist / System Architecture / System Design Records 반영 필요 여부 판단
+-> Work List / System Architecture / System Design Records 반영 필요 여부 판단
 -> Engine Technique Document / Engine Implementation Records 반영 필요 여부 판단
 -> Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 판단
 ```
@@ -163,10 +163,10 @@ Planning Prompt 후보
 실행 계층 후보
 -> 구현 계층 후보: Codex 구현 수행 또는 구현 Prompt 없음
 -> 문서화 계층 후보: Document Writing / PR Document Writing Prompt
--> 검증 계층 후보: Code Review / Verification Log / Asset Blueprint Validation / Document Set Audit Prompt
+-> 검증 계층 후보: Code Review / Verification Log / Asset Blueprint Validation / Document Format Normalization / Document Set Audit Prompt
 -> Commit / PR 계층 후보: Git Commit PR Preflight Prompt
 
-Work Checklist Writing 후보 / 판단 위치
+Work List Writing 후보 / 판단 위치
 -> Branch 단위 진행 관리, 완료 기준, 검증 상태, PR 가능 조건을 문서로 추적해야 하면 후보로 표시
 -> 최종 작성 여부는 Work Planning 결과를 보고 확정
 -> 단순 검토, 단일 문서 수정, 짧은 Git 점검처럼 관리 문서가 필요 없으면 생략 가능
@@ -272,7 +272,7 @@ Work Brief에는 대화 과정을 길게 남기지 않고 현재 합의된 작�
 -> 작업 목표 / 작업 유형 / 준비 상태 / Planning Prompt 정리
 
 정리된 기능 흐름
--> 조율된 D20 기능 흐름과 후속 기능 흐름 정리
+-> 조율된 W02 기능 흐름과 후속 기능 흐름 정리
 
 작업 범위
 -> 이번 작업 범위 / 후속 범위 정리
@@ -293,7 +293,7 @@ Work Brief에는 대화 과정을 길게 남기지 않고 현재 합의된 작�
 -> 구조 / 구현 / 검증 위험 정리
 
 Prompt 라우팅 결과
--> Planning Prompt / 실행 계층 후보 / Work Checklist Writing 후보와 판단 위치 정리
+-> Planning Prompt / 실행 계층 후보 / Work List Writing 후보와 판단 위치 정리
 
 다음 단계
 -> 다음에 호출할 Prompt 또는 사용자 답변 필요 항목 정리
@@ -410,7 +410,7 @@ Planning 진입 가능
 -> 위험 항목
 -> Planning Prompt 후보
 -> 실행 계층 후보
--> Work Checklist Writing 후보 / 판단 위치
+-> Work List Writing 후보 / 판단 위치
 -> Work Brief 준비 상태 판정
 -> 후속 Backlog 후보
 ```
@@ -429,7 +429,7 @@ Planning 진입 가능
 -> Work Brief 작업 개요 작성
 
 비범위
--> 최종 Work Checklist 작성
+-> 최종 Work List 작성
 -> 구현 계획 확정
 -> 코드 수정
 -> Verification Log 작성
@@ -461,7 +461,7 @@ Planning 진입 가능
 -> 계획차단 / 비차단 / 검토필요 / 선택필요 / 확정된 결정 / 후속 후보가 섹션으로 분리되어 있는가
 -> Planning Prompt 후보와 실행 계층 후보가 분리되어 있는가
 -> 실행 계층 후보가 구현 / 문서화 / 검증 / Commit PR 계층으로 나뉘어 있는가
--> Work Checklist Writing 후보와 최종 판단 위치가 표시되어 있는가
+-> Work List Writing 후보와 최종 판단 위치가 표시되어 있는가
 -> Work Brief 준비 상태가 명확히 표시되어 있는가
 -> Work Brief 작업 개요가 작업 범위 / 후속 범위 / 완료 기준 후보 / 검증 기준 후보로 나뉘어 있는가
 -> Feature Work Planning으로 넘어갈 수 있는 상태인지 판단되어 있는가
@@ -481,8 +481,11 @@ Feature Work Planning Prompt
 Refactor Work Planning Prompt
 -> 구조 변경 / 리팩터링 중심 작업의 변경 단위 / 위험 / 검증 계획 작성
 
-Work Checklist Writing Prompt
--> 준비된 Work Brief와 Work Planning 결과를 바탕으로 최종 Work Checklist 작성
+Work List Writing Prompt
+-> 준비된 Work Brief와 Work Planning 결과를 바탕으로 최종 Work List 작성
+
+Document Format Normalization Prompt
+-> 문서군 파일명 / 상단 메타 / 문체 / 공백 양식 정리
 
 Document Set Audit Prompt
 -> 문서군 정합성 / 운용 가능성 감사
@@ -494,7 +497,7 @@ Document Set Audit Prompt
 
 ```yaml
 후속 보완 후보
--> 실제 D20 Work Brief / Work Checklist 작성 결과를 기준으로 섹션 분리 기준 보완
+-> 실제 W02 Work Brief / Work List 작성 결과를 기준으로 섹션 분리 기준 보완
 -> Feature Work Planning Prompt와의 역할 중복 여부 검토
--> Work Brief 파일과 최종 Work Checklist 파일의 경로 / 명명 규칙 정리
+-> Work Brief 파일과 최종 Work List 파일의 경로 / 명명 규칙 정리
 ```

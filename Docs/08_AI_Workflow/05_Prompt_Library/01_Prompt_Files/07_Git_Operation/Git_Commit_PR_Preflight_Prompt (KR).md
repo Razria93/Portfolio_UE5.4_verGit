@@ -1,4 +1,4 @@
-# Git Commit PR Preflight Prompt
+﻿# Git Commit PR Preflight Prompt
 
 ## 1. 목적
 
@@ -29,10 +29,10 @@ Commit 또는 PR 직전에 changed files, staged / unstaged / untracked, 관련 
 현재 작업을 Commit / PR 전에 점검해줘.
 
 대상 작업:
-- [Branch / Work Checklist / 작업 요약]
+- [Branch / Work List / 작업 요약]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:
@@ -73,7 +73,7 @@ File Groups
 - Unrelated / 확인 필요:
 
 Document Links
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:

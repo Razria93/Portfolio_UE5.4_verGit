@@ -1,4 +1,4 @@
-# Code Review Prompt
+﻿# Code Review Prompt
 
 ## 1. 목적
 
@@ -32,7 +32,7 @@
 - [PR 번호 / Branch / commit range / changed files]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:

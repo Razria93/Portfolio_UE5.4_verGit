@@ -1,4 +1,4 @@
-# AI Workflow Index
+﻿# AI Workflow Index
 
 ## 1. 목적
 
@@ -200,11 +200,11 @@ AI_Work_Pipeline (KR).md
 
 - 분류 경로: `05_Prompt_Library/01_Prompt_Files/04_Document_Writing/`
 - 역할: 문서 카테고리별 작성 / 보완 Prompt 분류
-- 대상 문서: Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document
+- 대상 문서: Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document
 
 ```yaml
-01_Work_Checklist_Writing_Prompt (KR).md
--> [생성됨 / 검토 필요] 준비된 Work Brief와 Work Planning 결과를 바탕으로 최종 Work Checklist를 작성 / 보완하는 Prompt
+01_Work_List_Writing_Prompt (KR).md
+-> [생성됨 / 검토 필요] 준비된 Work Brief와 Work Planning 결과를 바탕으로 최종 Work List를 작성 / 보완하는 Prompt
 
 Bug_Report_Writing_Prompt (KR).md
 -> [생성됨 / 검토 필요] Bug Report 작성 / 보완 Prompt
@@ -235,9 +235,12 @@ Cross_Domain_Interrupt_Work_Prompt (KR).md
 #### 8.2.6. 06_Review_Verification
 
 - 분류 경로: `05_Prompt_Library/01_Prompt_Files/06_Review_Verification/`
-- 역할: 코드 리뷰, 검증 로그, Asset / Blueprint 검증 Prompt 분류
+- 역할: 코드 리뷰, 문서 양식 / 정합성 감사, 검증 로그, Asset / Blueprint 검증 Prompt 분류
 
 ```yaml
+Document_Format_Normalization_Prompt (KR).md
+-> [생성됨 / 검토 필요] 문서군 파일명 / 상단 메타 / 문체 / 공백 양식 정리 Prompt
+
 Document_Set_Audit_Prompt (KR).md
 -> [생성됨 / 검토 필요] 문서군 정합성 / 운용 가능성 감사 Prompt
 
@@ -296,8 +299,8 @@ AI_Work_Plan_Draft (KR).md
 ## 11. 외부 연결 문서
 
 ```yaml
-Docs/01_Issue_CheckList/D19_UE5_Portfolio_Work_Checklist (KR).md
--> [진행 중] feature/codex-workflow Branch의 목표, 완료 기준, 현재 작업 상태를 관리하는 Work Checklist
+Docs/01_Work_List/W01_Codex_Workflow/W01_UE5_Portfolio_Work_List.md
+-> [완료] feature/codex-workflow Branch의 목표, 완료 기준, 현재 작업 상태를 관리하는 Work List
 ```
 
 ---

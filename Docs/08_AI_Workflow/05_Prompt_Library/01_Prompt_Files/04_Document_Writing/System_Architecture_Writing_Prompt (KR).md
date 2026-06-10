@@ -1,4 +1,4 @@
-# System Architecture Writing Prompt
+﻿# System Architecture Writing Prompt
 
 ## 1. 목적
 
@@ -19,7 +19,7 @@
 
 ## 3. 사용 방법
 
-관련 Branch, Work Checklist, PR Document, 코드 구조를 제공하고 `복사용 Prompt`를 사용한다.
+관련 Branch, Work List, PR Document, 코드 구조를 제공하고 `복사용 Prompt`를 사용한다.
 
 ---
 
@@ -32,7 +32,7 @@
 - [시스템 / 기능 / 책임 분리 주제]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:

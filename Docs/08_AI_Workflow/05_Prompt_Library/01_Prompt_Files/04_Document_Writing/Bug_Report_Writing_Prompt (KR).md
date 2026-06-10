@@ -1,4 +1,4 @@
-# Bug Report Writing Prompt
+﻿# Bug Report Writing Prompt
 
 ## 1. 목적
 
@@ -32,7 +32,7 @@
 - [증상 / 문서 경로 / issue]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:
