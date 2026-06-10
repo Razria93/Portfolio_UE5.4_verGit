@@ -1,17 +1,37 @@
-# D20 Feature Work Planning - Parry
+﻿# UE5 Portfolio - Feature Work Planning
+
+## 제목
+
+**W02: Parry Feature Work Planning**
+
+## 날짜
+
+**추가요망**
+
+## 상태
+
+- [ ] **진행중**
+
+---
+
+## 브랜치
+
+- **추가요망**
+
+---
 
 ## 1. Source of Truth 확인
 
 ```yaml
 기준 입력
--> Docs/01_Issue_CheckList/request/D20_UE5_Portfolio_Work_Brief (KR).md
+-> Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Work_Brief.md
 
 Planning Prompt
 -> Docs/08_AI_Workflow/05_Prompt_Library/01_Prompt_Files/03_Work_Planning/02_Feature_Work_Planning_Prompt (KR).md
 
 관련 System Architecture 후보
--> S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 포함되지 않음
--> 실제 D20 구현 Branch에서 존재 여부를 확인하거나 신규 작성 여부를 결정
+-> S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 포함되지 않는다
+-> 실제 W02 구현 Branch에서 존재 여부를 확인하거나 신규 작성 여부를 결정
 
 관련 코드 후보
 -> Source/Portfolio/Component/CActionComponent.*
@@ -27,7 +47,7 @@ Planning Prompt
 -> 현재 PR 커밋 범위에 포함되지 않은 입력 Asset 후보이므로 실제 구현 Branch에서 존재 여부 확인 필요
 ```
 
-현재 Planning은 D20 Work Brief 기준으로 작성한다.
+현재 Planning은 W02 Work Brief 기준으로 작성한다.
 
 구현 착수 가능 여부는 이 문서의 구현 단위, 선행 조건, 검증 기준을 확인한 뒤 판단한다.
 
@@ -38,19 +58,19 @@ Planning Prompt
 ### 확정된 결정
 
 - `UCCombatResolutionComponent`를 신규 구성한다.
-- D20에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않는다.
+- W02에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않는다.
 - Parry 성공 시 Player Damage를 완전 무효화한다.
 - Parry Window는 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델을 우선 활용한다.
 - `Montage_Parry`는 `FActionData.Montage`를 통해 `CAction_Parry`에 연결한다.
-- D20의 기본 `WindowKey`는 `Parry`로 둔다.
+- W02의 기본 `WindowKey`는 `Parry`로 둔다.
 - `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출한다.
 - 과도기 fallback으로 기존 `TakeDamageComponent->RequestTakeDamage()` 경로를 유지한다.
-- S28 Policy / Gate 전체 리팩터링은 D20 범위에 포함하지 않는다.
-- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 없으므로 D20 Planning의 확정 Source of Truth로 취급하지 않는다.
+- S28 Policy / Gate 전체 리팩터링은 W02 범위에 포함하지 않는다.
+- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 없으므로 W02 Planning의 확정 Source of Truth로 취급하지 않는다.
 
 ### 계획차단 항목
 
-- 현재 없음
+- 현재 없다
 
 ### 비차단 / 검토필요 항목의 Planning 변환
 
@@ -73,7 +93,7 @@ Actor::TakeDamage() Combat Resolution / fallback 조건 분리
 
 기존 WeaponActor Overlap 흐름
 -> 선행 확인 항목
--> D20에서는 기존 DamagePacket 유입 흐름을 유지
+-> W02에서는 기존 DamagePacket 유입 흐름을 유지
 
 기존 Action / Reaction interrupt 구조
 -> 핵심 구현 단위
@@ -140,16 +160,16 @@ S28 Policy / Gate 전체 리팩터링
 
 ## 4. 기능 구현 목표
 
-D20의 목표는 Player 측 Parry 1차 구현이다.
+W02의 목표는 Player 측 Parry 1차 구현이다.
 
 ```yaml
 구현 결과
--> Player가 Parry Action을 실행할 수 있음
+-> Player가 Parry Action을 실행할 수 있다
 -> Parry Montage 구간에서 Parry Window가 열리고 닫힘
--> DamagePacket 유입 시 UCCombatResolutionComponent가 Parry 성공 여부를 먼저 판단함
--> Parry 성공 시 Player Damage가 완전 무효화됨
--> Parry 성공 시 Parry Reaction interrupt와 기본 Feedback이 실행됨
--> 기존 TakeDamage fallback 경로가 유지됨
+-> DamagePacket 유입 시 UCCombatResolutionComponent가 Parry 성공 여부를 먼저 판단한다
+-> Parry 성공 시 Player Damage가 완전 무효화된다
+-> Parry 성공 시 Parry Reaction interrupt와 기본 Feedback이 실행된다
+-> 기존 TakeDamage fallback 경로가 유지된다
 
 비목표
 -> Attacker Signal 송신 / 수신
@@ -167,13 +187,13 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 ### 선행 확인 단위 1. 기존 구조 확인 및 연결 지점 확정
 
 선행 조건
--> 없음
+-> 없다
 
 목표
--> D20 구현이 들어갈 코드 / Asset 연결 지점을 확정한다.
+-> W02 구현이 들어갈 코드 / Asset 연결 지점을 확정한다.
 
 수정 범위
--> 없음
+-> 없다
 -> 코드 / 문서 / Asset 탐색
 
 비범위
@@ -187,14 +207,14 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> 불필요
 
 검증 기준
--> Build: 해당 없음
+-> Build: 해당하지 않는다
 -> Code Flow: 기존 Action / TakeDamage / Window / Feedback 흐름 확인
--> PIE: 해당 없음
+-> PIE: 해당하지 않는다
 -> Editor: Parry Animation 입력 Asset 후보 확인
 -> Asset: `Montage_Parry` 구성 후보 확인
 
 문서화 필요 여부
--> Work Checklist: 선행 확인 항목으로 반영
+-> Work List: 선행 확인 항목으로 반영
 -> System Design Records: 충돌 확인 시에만 보완
 -> Verification Log: 실제 확인 결과 기록 후보
 
@@ -222,8 +242,8 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> Perfect / Normal Parry 분기
 
 위험
--> `EActionType`에 Parry를 추가하는 방식이 기존 intent / action 분리 기준과 충돌할 수 있음
--> ActionData 누락 시 PIE에서 Action 실행이 실패할 수 있음
+-> `EActionType`에 Parry를 추가하는 방식이 기존 intent / action 분리 기준과 충돌할 수 있다
+-> ActionData 누락 시 PIE에서 Action 실행이 실패할 수 있다
 
 사용자 결정 필요 여부
 -> 불필요
@@ -237,7 +257,7 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> Asset: `Montage_Parry` 연결 확인
 
 문서화 필요 여부
--> Work Checklist: 구현 항목 반영
+-> Work List: 구현 항목 반영
 -> Verification Log: 입력 / ActionData / Montage 연결 검증 반영
 
 ### 구현 단위 2. Parry Montage / Window 연결
@@ -260,8 +280,8 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> 최종 Animation polish
 
 위험
--> 기존 Window 모델이 Parry 성공 판정에 필요한 상태를 충분히 표현하지 못할 수 있음
--> Montage Notify 설정은 Codex가 직접 검증하기 어려울 수 있음
+-> 기존 Window 모델이 Parry 성공 판정에 필요한 상태를 충분히 표현하지 못할 수 있다
+-> Montage Notify 설정은 Codex가 직접 검증하기 어려울 수 있다
 
 사용자 결정 필요 여부
 -> 불필요
@@ -300,13 +320,13 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> S28 Policy / Gate 전체 리팩터링
 
 위험
--> Damage 무효화와 fallback damage commit이 중복될 수 있음
--> 기존 Hit / Dead reaction 흐름이 회귀할 수 있음
--> Component 책임이 Parry 전용으로 고정되면 후속 확장성이 낮아질 수 있음
+-> Damage 무효화와 fallback damage commit이 중복될 수 있다
+-> 기존 Hit / Dead reaction 흐름이 회귀할 수 있다
+-> Component 책임이 Parry 전용으로 고정되면 후속 확장성이 낮아질 수 있다
 
 사용자 결정 필요 여부
 -> 불필요
--> D20에서는 최소 Parry outcome 판정 계층으로 구현
+-> W02에서는 최소 Parry outcome 판정 계층으로 구현
 
 검증 기준
 -> Build: 신규 component compile
@@ -314,7 +334,7 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> Code Flow: Parry 실패 / 비Parry 상황에서는 fallback 경로 유지 확인
 -> PIE: Parry Window 중 Damage 유입 시 Damage 무효화 확인
 -> Editor: component attach / Blueprint 설정 확인
--> Asset: 해당 없음
+-> Asset: 해당하지 않는다
 
 문서화 필요 여부
 -> System Design Records: 후속 Architecture baseline과 충돌할 경우 보완
@@ -342,8 +362,8 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> 최종 VFX / SFX polish
 
 위험
--> Action Montage lifecycle과 Reaction interrupt timing이 충돌할 수 있음
--> Feedback 실행 시점이 damage 무효화보다 앞서거나 중복될 수 있음
+-> Action Montage lifecycle과 Reaction interrupt timing이 충돌할 수 있다
+-> Feedback 실행 시점이 damage 무효화보다 앞서거나 중복될 수 있다
 
 사용자 결정 필요 여부
 -> 불필요
@@ -369,10 +389,10 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> 조건부 진행 가능
 
 판단
--> 계획차단 항목은 없음
--> 사용자 선택이 필요한 항목은 현재 없음
+-> 계획차단 항목이 없다
+-> 사용자 선택이 필요한 항목은 현재 없다
 -> 선행 확인 단위 수행 후 실제 구현 착수 가능
--> Editor / Asset 설정은 구현 중 미검증 항목으로 남길 수 있음
+-> Editor / Asset 설정은 구현 중 미검증 항목으로 남길 수 있다
 
 구현 착수 전 조건
 -> 기존 Action / TakeDamage / Window / Feedback 흐름 확인
@@ -396,7 +416,7 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 
 ---
 
-## 9. Work Checklist 작성 판단
+## 9. Work List 작성 판단
 
 ```yaml
 판단
@@ -407,20 +427,20 @@ D20의 목표는 Player 측 Parry 1차 구현이다.
 -> 이 Feature Work Planning 결과를 기준으로 작성
 
 이유
--> D20은 신규 component, 신규 action, montage / notify / asset 설정, TakeDamage 진입부 변경을 포함함
--> Build / Code Flow / PIE / Editor / Asset 검증을 함께 추적해야 함
--> 후속 범위와 D20 범위를 명확히 관리해야 함
+-> W02은 신규 component, 신규 action, montage / notify / asset 설정, TakeDamage 진입부 변경을 포함한다
+-> Build / Code Flow / PIE / Editor / Asset 검증을 함께 추적해야 한다
+-> 후속 범위와 W02 범위를 명확히 관리해야 한다
 
 실행 후 처리
--> 새 Work Checklist를 만들지 않고 기존 D20 Work Checklist의 완료 상태 / 검증 상태 / 후속 범위를 업데이트
+-> 새 Work List를 만들지 않고 기존 W02 Work List의 완료 상태 / 검증 상태 / 후속 범위를 업데이트
 ```
 
 ---
 
-## 10. D20 후속 범위
+## 10. W02 후속 범위
 
 ```yaml
-D20 후속 범위
+W02 후속 범위
 -> Attacker Signal 송신 / 수신
 -> Attacker 측 Combat Resolution 해석 및 처리
 -> Attacker 체간 게이지 / ExecutionState / Reaction 처리
@@ -438,21 +458,21 @@ D20 후속 범위
 
 ### 구조 위험
 
-- `UCCombatResolutionComponent`가 Parry 전용 분기만 담으면 후속 Guard / Counter 확장 시 재설계가 필요할 수 있음.
-- `TakeDamageComponent` fallback 조건이 불명확하면 damage commit이 중복될 수 있음.
-- S28 Policy / Gate 전체 리팩터링을 함께 진행하면 D20 범위가 과도하게 커질 수 있음.
+- `UCCombatResolutionComponent`가 Parry 전용 분기만 담으면 후속 Guard / Counter 확장 시 재설계가 필요할 수 있다.
+- `TakeDamageComponent` fallback 조건이 불명확하면 damage commit이 중복될 수 있다.
+- S28 Policy / Gate 전체 리팩터링을 함께 진행하면 W02 범위가 과도하게 커질 수 있다.
 
 ### 구현 위험
 
 - 기존 `Actor::TakeDamage()` 흐름을 잘못 수정하면 모든 피격 흐름에 영향이 생김.
-- ActionData / Montage / WindowKey 설정 중 하나만 누락되어도 PIE에서 Parry가 실패할 수 있음.
-- Reaction interrupt API가 현재 구조에서 Player Parry Reaction을 바로 표현하지 못할 수 있음.
+- ActionData / Montage / WindowKey 설정 중 하나만 누락되어도 PIE에서 Parry가 실패할 수 있다.
+- Reaction interrupt API가 현재 구조에서 Player Parry Reaction을 바로 표현하지 못할 수 있다.
 
 ### 검증 위험
 
-- Editor / Asset 설정은 Codex가 직접 완료 여부를 확인하지 못할 수 있음.
-- PIE 검증 없이 Code Flow만으로는 Window timing / overlap timing을 확정할 수 없음.
-- Montage Notify timing은 사용자가 Editor에서 최종 확인해야 할 가능성이 큼.
+- Editor / Asset 설정은 Codex가 직접 완료 여부를 확인하지 못할 수 있다.
+- PIE 검증 없이 Code Flow만으로는 Window timing / overlap timing을 확정할 수 없다.
+- Montage Notify timing은 사용자가 Editor에서 최종 확인해야 할 가능성이 크다.
 
 ---
 
@@ -539,7 +559,7 @@ Commit 4
 ## 15. 문서화 필요 여부
 
 ```yaml
-Work Checklist
+Work List
 -> 작성 후보
 -> 이 Planning 결과를 기준으로 실행 전 작성 권장
 
@@ -548,8 +568,8 @@ Bug Report
 -> 구현 중 회귀나 오류가 발견될 경우 작성 후보
 
 System Architecture
--> 즉시 작성하지 않음
--> D20 구현 후 현재 구조 설명 문서가 필요하면 후보
+-> 즉시 작성하지 않는다
+-> W02 구현 후 현재 구조 설명 문서가 필요하면 후보
 
 System Design Records
 -> 후속 Architecture baseline과 충돌할 경우 보완
@@ -570,7 +590,7 @@ PR Document
 -> Branch 완료 시 변경 요약 / 검증 / 미검증 / 후속 범위 정리
 
 Portfolio Technical Document
--> D20 완료 후 Parry 구조가 포트폴리오 설명 가치가 있을 때 후보
+-> W02 완료 후 Parry 구조가 포트폴리오 설명 가치가 있을 때 후보
 ```
 
 ---

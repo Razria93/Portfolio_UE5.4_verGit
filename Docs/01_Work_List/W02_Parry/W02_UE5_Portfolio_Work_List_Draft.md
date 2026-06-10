@@ -1,25 +1,28 @@
-# D20 Work Checklist Draft - Parry
+﻿# UE5 Portfolio - Work List Draft
 
 ## 제목
 
-**D20: Parry v1 구현 준비 체크리스트**
+**W02: Parry v1 구현 준비 워크리스트**
 
-### 날짜
+## 날짜
 
-- **Date : 2026.06.09**
+**2026.06.09**
+
+## 상태
+
+- [ ] **진행중**
 
 ---
 
-### Branch
+## 브랜치
 
-- 실제 구현 Branch에서 확정
-- 현재 문서는 `feature/codex-workflow` Branch의 AI Workflow 검증용 Draft
+- `feature/codex-workflow`
 
 ---
 
 ## 1. Branch 목표
 
-실제 D20 구현 Branch는 Stella Blade 스타일의 `Parry` v1을 구현하기 위한 최소 Combat Resolution 체계를 구축한다.
+실제 W02 구현 Branch는 Stella Blade 스타일의 `Parry` v1을 구현하기 위한 최소 Combat Resolution 체계를 구축한다.
 
 ```yaml
 목표
@@ -31,20 +34,20 @@
 - 기존 TakeDamage fallback 경로 유지
 ```
 
-현재 AI Workflow Branch에서는 실제 구현을 하지 않고, `Work Brief -> Feature Work Planning -> Work Checklist` 변환 흐름만 검증한다.
+현재 AI Workflow Branch에서는 실제 구현을 하지 않고, `Work Brief -> Feature Work Planning -> Work List` 변환 흐름만 검증한다.
 
 ---
 
 ## 2. 입력 문서
 
-- [x] `D20_UE5_Portfolio_Work_Brief (KR).md` 작성
-- [x] `D20_UE5_Portfolio_Feature_Work_Planning (KR).md` 작성
-- [x] D20 Work Brief 기준으로 Feature Work Planning 작성
-- [x] Feature Work Planning 기준으로 Work Checklist Draft 작성
+- [x] `W02_UE5_Portfolio_Work_Brief.md` 작성
+- [x] `W02_UE5_Portfolio_Feature_Work_Planning.md` 작성
+- [x] W02 Work Brief 기준으로 Feature Work Planning 작성
+- [x] Feature Work Planning 기준으로 Work List Draft 작성
 
 ---
 
-## 3. D20 작업 범위
+## 3. W02 작업 범위
 
 ```yaml
 포함 범위
@@ -63,7 +66,7 @@
 
 ---
 
-## 4. D20 후속 범위
+## 4. W02 후속 범위
 
 ```yaml
 후속 범위
@@ -82,15 +85,15 @@
 
 ## 5. 확정된 결정
 
-- 신규 컴포넌트명은 `UCCombatResolutionComponent`로 둠
-- D20에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않음
-- Parry 성공 시 Player Damage를 완전 무효화함
-- Parry Window는 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델을 우선 활용함
-- D20의 기본 `WindowKey`는 `Parry`로 둠
-- `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출하는 방향으로 계획함
-- 과도기 fallback으로 기존 `TakeDamageComponent->RequestTakeDamage()` 경로를 유지함
-- S28 Policy / Gate 전체 리팩터링은 D20 범위에 포함하지 않음
-- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 포함되지 않은 후속 기준 후보로 둠
+- 신규 컴포넌트명은 `UCCombatResolutionComponent`로 둔다
+- W02에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않는다
+- Parry 성공 시 Player Damage를 완전 무효화한다
+- Parry Window는 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델을 우선 활용한다
+- W02의 기본 `WindowKey`는 `Parry`로 둔다
+- `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출하는 방향으로 계획한다
+- 과도기 fallback으로 기존 `TakeDamageComponent->RequestTakeDamage()` 경로를 유지한다
+- S28 Policy / Gate 전체 리팩터링은 W02 범위에 포함하지 않는다
+- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 포함되지 않은 후속 기준 후보로 둔다
 
 ---
 
@@ -185,11 +188,11 @@
 
 ## 9. 문서화 필요 여부
 
-- [ ] Work Checklist 공식 문서 승격 여부 결정
+- [ ] Work List 공식 문서 승격 여부 결정
 - [ ] Verification Log 작성
 - [ ] PR Document 작성
 - [ ] 후속 Architecture baseline과 충돌할 경우 System Design Records 보완
-- [ ] D20 완료 후 System Architecture 현재 구조 설명 필요 여부 판단
+- [ ] W02 완료 후 System Architecture 현재 구조 설명 필요 여부 판단
 - [ ] Portfolio Technical Document 작성 가치가 있는지 후속 판단
 
 ---
@@ -221,35 +224,35 @@
 
 ## 11. PR 가능 조건
 
-실제 D20 구현 Branch는 다음 조건을 만족하면 PR 가능한 상태로 본다.
+실제 W02 구현 Branch는 다음 조건을 만족하면 PR 가능한 상태로 본다.
 
-- [ ] D20 작업 범위의 구현 단위가 완료됨
+- [ ] W02 작업 범위의 구현 단위가 완료된다
 - [ ] Build 검증 완료
 - [ ] Code Flow 검증 완료
 - [ ] PIE 검증 완료
 - [ ] Editor / Asset 검증 결과 또는 미검증 항목 기록 완료
 - [ ] Verification Log 작성 완료
 - [ ] PR Document 작성 완료
-- [ ] D20 후속 범위가 분리되어 있음
-- [ ] 구현 중 후속 Architecture baseline과 충돌한 항목이 있으면 문서 보완 후보로 기록됨
+- [ ] W02 후속 범위가 분리되어 있다
+- [ ] 구현 중 후속 Architecture baseline과 충돌한 항목이 있으면 문서 보완 후보로 기록된다
 
 ---
 
 ## 12. AI Workflow 검증 결과
 
-- [x] 자연어 요청을 `D20 Work Brief`로 정리함
-- [x] `D20 Work Brief`를 `D20 Feature Work Planning`으로 변환함
-- [x] `D20 Feature Work Planning`을 `D20 Work Checklist Draft`로 변환함
-- [x] Work Brief의 확정된 결정 / 검토필요 항목 / 후속 범위가 Work Checklist Draft에 반영됨
-- [x] Feature Work Planning의 선행 확인 단위 / 작업 단위 / 검증 기준이 Work Checklist Draft에 반영됨
-- [x] 실제 코드 / 런타임 / 에셋 검증 항목은 완료 처리하지 않음
+- [x] 자연어 요청을 `W02 Work Brief`로 정리했다
+- [x] `W02 Work Brief`를 `W02 Feature Work Planning`으로 변환했다
+- [x] `W02 Feature Work Planning`을 `W02 Work List Draft`로 변환했다
+- [x] Work Brief의 확정된 결정 / 검토필요 항목 / 후속 범위가 Work List Draft에 반영됐다
+- [x] Feature Work Planning의 선행 확인 단위 / 작업 단위 / 검증 기준이 Work List Draft에 반영됐다
+- [x] 실제 코드 / 런타임 / 에셋 검증 항목은 완료 처리하지 않는다
 
 ---
 
 ## 13. 비고
 
-- 이 문서는 AI Workflow 구축 Branch에서 작성한 D20 Work Checklist Draft다.
+- 이 문서는 AI Workflow 구축 Branch에서 작성한 W02 Work List Draft다.
 - 실제 Parry 구현은 별도 Branch에서 진행한다.
-- 실제 구현 Branch에서는 이 Draft를 `Docs/01_Issue_CheckList/D20_UE5_Portfolio_Work_Checklist (KR).md`로 승격하거나, 구현 Branch 상황에 맞게 재작성한다.
+- 실제 구현 Branch에서는 이 Draft를 `Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Work_List.md`로 승격하거나, 구현 Branch 상황에 맞게 재작성한다.
 - 현재 문서의 `[x]`는 AI Workflow 문서 변환 검증 항목에만 사용한다.
 - 실제 코드 / Asset / Editor / PIE 관련 항목은 모두 미완료 상태로 유지한다.

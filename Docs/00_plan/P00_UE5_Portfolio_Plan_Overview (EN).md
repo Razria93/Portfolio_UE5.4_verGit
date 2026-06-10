@@ -108,8 +108,8 @@ Player input and AI Behavior Tree can use different decision sources while shari
 00_plan
 -> Project overview / milestones / development roadmap
 
-01_Issue_CheckList
--> Work goals / checklist items / verification criteria by work unit
+01_Work_List
+-> Work goals / checklist items / verification criteria / work artifacts by work unit
 
 02_Bug_Report
 -> Implementation issues / causes / fixes / verification records

@@ -108,8 +108,8 @@ Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더�
 00_plan
 -> 프로젝트 개요 / 마일스톤 / 개발 로드맵
 
-01_Issue_CheckList
--> 작업 단위별 목표 / 체크 항목 / 검증 기준
+01_Work_List
+-> 작업 단위별 목표 / 체크 항목 / 검증 기준 / 작업 산출물
 
 02_Bug_Report
 -> 구현 중 발생한 문제 / 원인 / 수정 / 검증 기록
