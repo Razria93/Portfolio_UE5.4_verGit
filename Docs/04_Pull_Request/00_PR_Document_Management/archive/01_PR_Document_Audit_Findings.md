@@ -1,18 +1,40 @@
-# Draft Audit Findings
+# PR Document Audit Findings
 
-현재 기준 범위: P01~P18 draft
+## 아카이브 정보
 
-P01~P18 draft 총검토 결과를 바탕으로, 본문 보완에 사용할 확정 기준과 문서별 finding을 정리한다.
+### 문서 성격
 
-이 문서는 PR draft가 추가될 때마다 갱신하는 audit finding 문서다. 확정된 기준은 본문 일괄 보완에 사용하고, 새 판단이 필요한 항목은 확정 전 별도 후보로 관리한다.
+- P01~P18 PR Draft 승격 전 총검토 과정에서 사용한 audit finding 기록.
 
-## 운영 기준
+### 사용 이력
 
-- 이 문서는 PR draft 본문 보완에 사용할 확정 기준과 문서별 finding을 관리한다.
+- 사용 시점: P01~P18 draft를 정식 PR 문서로 승격하기 전.
+- 사용 목적: 본문 보완 기준, 문서별 finding, 사용자 판단 항목 관리.
+
+### 아카이브 전환
+
+- 전환 시점: 2026.06.14, P01~P18 PR 문서 승격 및 PR 문서 관리 파일 분리 이후.
+- 전환 사유: 확정 기준은 상위 관리 문서로 흡수됐고, 이 문서는 승격 당시 판단 근거 확인용 기록으로 전환됐기 때문.
+
+### 현재 사용 방식
+
+- 새 PR 문서 운영 기준으로 직접 갱신하지 않고, P01~P18 승격 당시 검토 근거가 필요할 때만 참조한다.
+
+---
+
+## 원본 기준 범위
+
+- P01~P18 PR Draft
+- P01~P18 정식 PR 문서 승격 전 본문 보완 기준
+- PR Draft 총검토 과정에서 확정한 공통 기준과 문서별 finding
+
+## 당시 운영 기준
+
+- 이 문서는 P01~P18 PR draft 본문 보완에 사용할 확정 기준과 문서별 finding을 관리했다.
 - 같은 보완 기준이 여러 파일에 반복되면 하나의 공통 항목으로 합친다.
 - 사용자 판단이 끝난 항목은 확정된 기준으로 이동하고, 남은 항목만 별도 표시한다.
 - 사용자 판단이 필요한 항목이 없으면 `없음`으로 명시한다.
-- PR draft가 추가되면 공통 finding, 문서별 finding, 확정 기준을 같은 구조로 갱신한다.
+- PR draft가 추가되면 공통 finding, 문서별 finding, 확정 기준을 같은 구조로 갱신하는 방식이었다.
 
 ---
 
@@ -429,11 +451,11 @@ P01~P18 draft 총검토 결과를 바탕으로, 본문 보완에 사용할 확�
 - P01~P18 draft 총검토에서 확인한 finding은 최종 finding 문서에 반영했다.
 - `orchestration` 소급 금지, feedback 시점 차이, inline code 기준은 확정 기준으로 유지한다.
 - P17/P18에서 확정된 `intervention`, `Documentation` 단일 카테고리, 검증용 예시 문서 기준을 반영했다.
-- 이 문서에는 현재 확정된 기준과 PR draft 본문 finding만 남긴다.
+- 이 문서에는 archive 전환 당시 확정된 기준과 PR draft 본문 finding만 남겼다.
 
-## PR Draft 보완 절차
+## 당시 PR Draft 보완 절차
 
-1. `02_Term_Usage_Map.md` 기준 확정
+1. `02_PR_Term_Usage_Map.md` 기준 확정
 2. 섹션명 / 설명 문장 / 추상 표현 같은 저위험 항목 일괄 수정
 3. P04~P07처럼 확정된 기준은 draft 보완 시 일괄 반영
 4. P14 / P16 / P17 feedback 시점 차이 확인
@@ -467,20 +489,19 @@ P01~P18 draft 총검토 결과를 바탕으로, 본문 보완에 사용할 확�
 판단:
 
 - 위 문서들은 장기 유지 기준 문서가 아니라 P01~P18 draft 총검토 과정에서 생성된 중간 산출물이다.
-- 용어 분류 기준은 `01_Term_Usage_Classification_Guide.md`에 흡수됐다.
-- 실제 용어 목록과 문서별 사용 현황은 `02_Term_Usage_Map.md`에 반영됐다.
+- 용어 분류 기준은 `01_PR_Document_Usage_Guide.md`에 흡수됐다.
+- 실제 용어 목록과 문서별 사용 현황은 `02_PR_Term_Usage_Map.md`에 반영됐다.
 - PR별 목표와 흐름은 `03_PR_Goal_Flow_Map.md`에 반영됐다.
-- 본문 finding과 확정 기준은 `04_Draft_Audit_Findings.md`에 반영됐다.
+- 본문 finding과 확정 기준은 archive 전환 전 `04_Draft_Audit_Findings.md`에 반영됐고, 이후 이 문서로 보관됐다.
 - 삭제 전 미결 항목 검색 결과, 남은 항목은 현재 미결이 아니라 과거 검토 이력으로 판단했다.
 
 처리 방침:
 
 - 중간 audit 산출물은 삭제 완료했다.
-- 이후 새 기준을 추가할 때는 중간 산출물이 아니라 장기 유지 audit 문서 4개에 직접 반영한다.
+- 이후 새 기준을 추가할 때는 중간 산출물이 아니라 현재 PR 문서 관리 문서에 직접 반영한다.
 
-장기 유지 문서:
+현재 PR 문서 관리 문서:
 
-- `01_Term_Usage_Classification_Guide.md`
-- `02_Term_Usage_Map.md`
+- `01_PR_Document_Usage_Guide.md`
+- `02_PR_Term_Usage_Map.md`
 - `03_PR_Goal_Flow_Map.md`
-- `04_Draft_Audit_Findings.md`

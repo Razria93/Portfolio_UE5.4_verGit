@@ -1,10 +1,10 @@
 # PR Goal Flow Map
 
-현재 기준 범위: P01~P18 draft
+현재 기준 범위: P01~P18 PR 문서
 
-P01~P18 draft가 하나의 작업 흐름으로 읽히는지 확인하기 위해, 각 PR의 목표와 앞뒤 연결을 한 곳에 모은다.
+P01~P18 PR 문서가 하나의 작업 흐름으로 읽히는지 확인하기 위해, 각 PR의 목표와 앞뒤 연결을 한 곳에 모은다.
 
-이 문서는 PR draft가 추가될 때마다 갱신하는 목표 / 흐름 기준 문서다. 새 PR이 추가되면 전체 흐름, 의미 단위 흐름, PR별 목표와 흐름을 같은 구조로 갱신한다.
+이 문서는 PR 문서가 추가될 때마다 갱신하는 목표 / 흐름 기준 문서다. 새 PR이 추가되면 전체 흐름, 의미 단위 흐름, PR별 목표와 흐름을 같은 구조로 갱신한다.
 
 ## 운영 기준
 
@@ -421,7 +421,7 @@ P01 TestRoom / Player / Camera
 
 #### 연결 흐름
 
-- 이어받은 것: P17까지의 gameplay PR 문서 작성 경험, Work List / Bug Report / PR draft 보완 과정에서 정리된 문서 운영 방식.
+- 이어받은 것: P17까지의 gameplay PR 문서 작성 경험, Work List / Bug Report / PR 문서 보완 과정에서 정리된 문서 운영 방식.
 - 새로 만든 흐름: 자연어 요청 -> Work Brief -> Feature Work Planning -> Work List.
 - 후속으로 넘긴 범위: W02 Parry 실제 구현, UE 검증, Prompt Library 전면 실사용 검증, AI Workflow / Prompt Library refactor.
 
@@ -447,7 +447,7 @@ P01 TestRoom / Player / Camera
 
 ## 확정 기준
 
-- 전체 PR draft의 관련 문서 섹션명은 `## 관련 문서`로 통일한다.
+- 전체 PR 문서의 관련 문서 섹션명은 `## 관련 문서`로 통일한다.
 - P04~P05는 별도 Pipeline이 아니라 Action Execution Pipeline의 기본 구성과 combo 규칙 확장으로 정리한다.
 - P06의 `현재 실행 중인 action` 표현은 `Action Callback 수신 대상` 중심으로 정리 완료했다.
 - P07 제목은 ApplyDamage Pipeline 중심으로 좁힌다.
