@@ -2,7 +2,7 @@
 
 ## 제목
 
-**P07: Action Execution Pipeline 및 ApplyDamage Pipeline 구현**
+**P07: ApplyDamage Pipeline 및 TakeDamage Boundary 구현**
 
 ## 날짜
 
@@ -22,383 +22,313 @@
 
 ## 요약
 
-### 작업 요약
+이번 PR에서는 **공격 action montage의 collision window에서 target overlap이 발생했을 때, hit가 발생한 조건을 damage 요청으로 전달하는 흐름을 구현했다.**
 
-본 PR은 action 실행 중 발생한 attachment overlap을 target actor의 Unreal `TakeDamage()` 호출로 연결하는 ApplyDamage 송신 pipeline을 구성한 작업이다.
+damage 요청 생성 흐름과 damage 계산 / 전달 흐름의 책임을 나누고, 계산된 damage 결과는 target의 `TakeDamage()` 경계로 넘기도록 정리했다.
 
-```yaml
-Action Montage
--> AnimNotify timing 도달
--> Attachment에 context 저장
--> Attachment overlap 발생
--> FHitContext 구성
+성격별 핵심 변경은 다음과 같다.
+
+### Feature
+
+- **collision window 기반 damage 요청 연결**: 공격 montage의 특정 시점에 collision window를 열고, 해당 구간에서 target overlap이 발생하면 damage 요청으로 이어지도록 구성했다.
+
+- **FHitContext 구성**: target overlap이 발생하면 `ACAttachment`에 저장된 cached context를 합쳐 어떤 조건에서 hit가 발생했는지 설명하는 `FHitContext`를 구성했다.
+
+- **ApplyDamage 처리 흐름 구현**: damage 요청을 검증하고, 현재 공격 action에 맞는 damage 설정을 찾은 뒤, 계산된 damage 결과를 target의 `TakeDamage()`로 전달하도록 구성했다.
+
+### Refactoring
+
+- **Context 구성 책임 분리**:
+  - `UCAction`은 공격 action 정보를 `FActionContext`로 만들고 `UCWeaponComponent`에 전달한다.
+  - `UCWeaponComponent`는 현재 attachment / equipment 상태를 `FAttachmentContext` / `FEquipmentContext`로 만들어 `ACAttachment`에 cache한다.
+  - `ACAttachment`는 target overlap이 발생하면 `FOverlapContext`를 만들고 cached context와 결합해 `FHitContext`를 구성한다.
+
+- **damage 계산 경계 분리**: damage 설정 조회, 결과 계산, target 전달을 `UCApplyDamageComponent` 안에서 처리하도록 정리했다.
+
+- **TakeDamage 호출 지점 고정**: target damage 수신은 여러 곳에서 직접 호출하지 않고, `ApplyDamageToTarget()` 경계를 통해서만 전달하도록 정리했다.
+
+---
+
+## 핵심 개념
+
+이 섹션은 아래 설명에서 반복되는 프로젝트 고유 용어를 먼저 정리한다.
+
+```text
+ApplyDamage Pipeline(damage 송신 흐름)
+-> 공격 실행 중 발생한 overlap을 damage 요청으로 바꾸고 target의 `TakeDamage()` 경계까지 전달하는 흐름
+```
+
+```text
+FAttachmentContext(attachment context)
+-> attachment는 부착물(무기)를 의미함
+-> 현재 공격에 사용 중인 attachment type을 담는 context
+-> damage 설정을 찾을 때 attachment type 기준으로 사용됨
+```
+
+```text
+FEquipmentContext(equipment context)
+-> 현재 공격에 연결된 equipment type을 담는 context
+-> P07 당시 damage 설정을 찾을 때 equipment type 기준으로 사용됨
+```
+
+```text
+FActionContext(action context)
+-> 현재 실행 중인 action type과 action index를 담는 context
+-> combo attack의 단계별 damage 설정을 찾을 때 action type / action index 기준으로 사용됨
+```
+
+```text
+FOverlapContext(overlap context)
+-> target overlap이 발생한 순간의 attacker / damage causer / target 정보를 담는 context
+```
+
+```text
+FHitContext(damage 요청에 필요한 타격 정보)
+-> target overlap 결과와 현재 attachment / equipment / action context를 합쳐 만든 damage 요청 정보
+```
+
+```text
+FDamageSpec(damage 설정)
+-> attachment, equipment, action type, action index 조합에 따라 찾는 기본 damage 설정
+```
+
+```text
+FDamageResult(damage 결과)
+-> target에게 전달할 최종 damage 값과 attacker / damage causer / target 정보를 담은 결과
+```
+
+```text
+TakeDamage Boundary(damage 수신 경계)
+-> 계산된 damage 결과를 Unreal `TakeDamage()` 호출로 넘기는 마지막 전달 지점
+```
+
+---
+
+## 변경 배경
+
+이 섹션은 이번 PR이 필요했던 이유와 기존 구조에서 분리해야 했던 책임을 정리한다.
+
+### Action timing과 damage 요청 연결 필요성
+
+공격 damage는 action montage 전체가 아니라, action montage의 특정 notify timing에서 열린 collision window 안에서만 발생해야 했다.
+
+따라서 notify timing은 collision이 열리는 구간을 만들고, attachment overlap은 실제 hit 발생 여부를 감지하며, damage 처리 component는 overlap 결과를 damage 요청으로 해석하는 구조가 필요했다.
+
+### FHitContext 구성 책임 분리 필요성
+
+Target overlap 결과만으로는 hit가 발생한 시점의 attachment, equipment, action type, action index 같은 overlap 이외의 context를 알 수 없었다.
+
+이를 해결하려면 collision이 발생하기 전에 현재 attachment / equipment / action context를 cache하고, target overlap 발생 시 이 정보와 overlap 결과를 결합해 `FHitContext`를 구성해야 했다.
+
+### ApplyDamage 경계 고정 필요성
+
+Damage 계산과 target의 `TakeDamage()` 호출이 action이나 attachment에 섞이면, 공격 실행 흐름이 target damage 전달 책임까지 직접 가지게 된다.
+
+이번 PR에서는 damage 요청 검증, damage 설정 조회, 결과 계산, target 전달에 대한 책임을 `UCApplyDamageComponent`로 모아 ApplyDamage Pipeline을 분리했다.
+
+---
+
+## 변경 범위
+
+이 섹션은 문제를 어떻게 고쳤고, 그 결과 동작이 어떻게 달라졌는지 정리한다.
+
+### 1. Action timing 기준 context cache 구성
+
+- **왜**:
+  collision window에서 overlap이 발생하기 전에 현재 attachment, equipment, action type / action index를 cache해야 했다.
+  이 context가 없으면 overlap 시점에 어떤 공격 조건으로 hit가 발생했는지 알 수 없어 damage 설정을 찾기 어렵다.
+
+- **어떻게**:
+  공격 action이 시작되거나 다음 combo 단계로 진입할 때 `UCAction_ComboAttack`이 `FActionContext`를 만들고, `UCWeaponComponent::PushContextToAttachment()`를 호출하도록 구성했다.
+  `UCWeaponComponent`는 현재 `FAttachmentContext`, `FEquipmentContext`를 만든 뒤 `FActionContext`와 함께 `ACAttachment`에 cache한다.
+
+- **결과**:
+  `ACAttachment`는 target overlap이 발생한 시점에 cached context를 사용해 hit 처리에 필요한 `FHitContext`를 만들 수 있다.
+
+### 2. attachment overlap 기준 FHitContext 구성
+
+- **왜**:
+  Target overlap은 타깃 접촉만 알려주므로, damage 요청에는 attacker, damage causer, target 정보와 cached attachment / equipment / action context를 함께 담아야 했다.
+
+- **어떻게**:
+  `ACAttachment`가 overlap 발생 시 `FOverlapContext`를 만들고, cached `FAttachmentContext`, `FEquipmentContext`, `FActionContext`와 결합해 `FHitContext`를 구성하도록 했다.
+
+- **결과**:
+  damage 요청은 단순 overlap event가 아니라, damage 설정 조회와 결과 계산에 필요한 context를 가진 요청으로 전달된다.
+
+### 3. ApplyDamage Component 진입점 구성
+
+- **왜**:
+  damage 요청 검증, damage 설정 조회, 결과 계산, target 전달을 한 곳에서 처리해야 action과 attachment가 damage 내부 처리까지 알 필요가 없었다.
+
+- **어떻게**:
+  `UCApplyDamageComponent::RequestApplyDamage()`를 단일 진입점으로 두고, 요청 유효성 검증, hit rule 확인, damage 설정 조회, damage 결과 계산, target 전달을 순서대로 처리하도록 구성했다.
+
+- **결과**:
+  action과 attachment는 damage 요청을 만들고 전달하는 역할에 집중하고, 실제 ApplyDamage Pipeline은 `UCApplyDamageComponent`가 소유한다.
+
+### 4. DamageSpec 조회와 DamageResult 계산 분리
+
+- **왜**:
+  Damage 값은 단순 overlap에서 바로 정할 수 없고, hit가 발생한 timing의 attachment / equipment / action context 조합에 따라 달라져야 했다.
+
+- **어떻게**:
+  `FHitContext`에서 `FDamageSpecKey`를 만들고, `DamageSpecMap`에서 `FDamageSpec`을 조회한 뒤 `FDamageResult`를 계산하도록 분리했다.
+
+- **결과**:
+  Damage 설정 조회와 최종 damage 결과 생성이 분리되어, 이후 damage 공식 확장이나 data asset 분리로 이어질 수 있는 기준이 생겼다.
+
+### 5. TakeDamage 호출 경계 고정
+
+- **왜**:
+  Target damage 수신은 Unreal `TakeDamage()` 경계를 통해 들어가야 하고, 호출 지점이 흩어지면 수신 측 구현과 연결하기 어려워진다.
+
+- **어떻게**:
+  `ApplyDamageToTarget()`에서 `FCustomDamageEvent`에 `FDamageResult`를 담고, `Target->TakeDamage()`를 호출하도록 고정했다.
+
+- **결과**:
+  ApplyDamage Pipeline은 송신 측에서 계산한 damage 결과를 target 수신 경계로 전달하고, 실제 HP / reaction / feedback 처리는 이후 수신 측 흐름에서 확장할 수 있게 됐다.
+
+---
+
+## 주요 처리 흐름
+
+이 섹션은 공격 overlap이 damage 요청과 target의 `TakeDamage()` 호출로 이어지는 대표 흐름을 정리한다.
+
+### action context cache 흐름
+
+```text
+action montage notify timing
+-> 현재 action type / action index 확인
+-> FActionContext 생성
+-> UCWeaponComponent가 현재 attachment / equipment 상태 확인
+-> FAttachmentContext / FEquipmentContext 생성
+-> FAttachmentContext / FEquipmentContext / FActionContext를 ACAttachment에 cache
+```
+
+이 흐름은 notify timing에서 현재 `FActionContext`와 attachment / equipment context를 기록해, 이후 attachment overlap이 발생했을 때 같은 기준으로 damage 요청을 만들 수 있게 준비하는 과정을 의미한다.
+
+### overlap 기반 damage 요청 흐름
+
+```text
+attachment collision enabled
+-> target overlap 발생
+-> FOverlapContext 생성
+-> cached FAttachmentContext / FEquipmentContext / FActionContext 결합
+-> FHitContext 생성
 -> UCApplyDamageComponent::RequestApplyDamage 호출
+```
+
+이 흐름은 target overlap 결과를 damage 요청에 필요한 `FHitContext`로 바꿔 ApplyDamage Pipeline에 전달하는 과정을 의미한다.
+
+### ApplyDamage 처리 흐름
+
+```text
+RequestApplyDamage
+-> 요청 context 유효성 검증
+-> hit rule 확장 지점 통과
+-> DamageSpec 조회
+-> DamageResult 계산
+-> FCustomDamageEvent 구성
 -> Target->TakeDamage 호출
 ```
 
-### 작업 배경
-
-action damage 송신 흐름에서는 collision 감지, damage context 수집, damage 계산, target `TakeDamage()` 호출 경계를 함께 정리해야 한다.
-
-이 처리를 character나 attachment 내부에 직접 구현하면 한 객체가 apply damage pipeline 전체를 소유하게 되어 책임이 비대해질 수 있다.
-
-따라서 다음과 같이 책임을 분리하고자 한다.
-
-```yaml
-UCAction
-- montage timing 처리
-- action context 구성
-
-UCWeaponComponent
-- attachment 접근 경계
-- attachment / equipment context 구성
-
-ACAttachment
-- collision overlap 수신
-- FOverlapContext와 cached action context 결합
-- hit context 구성
-
-UCApplyDamageComponent
-- apply damage request 검증
-- damage spec 조회
-- damage result 계산
-- target TakeDamage 호출
-```
-
-collision은 weapon attachment의 collision component를 montage notify 구간에서 켜고, overlap event를 기준으로 감지함.
-
-다만 attachment가 action / equipment / character 상태를 직접 조회하면 결합도가 높아지므로, action notify timing에서 필요한 context를 `UCWeaponComponent`를 통해 attachment에 미리 push하도록 구성했다.
-
-### 구현 방향
-
-이를 다음 네 가지 축으로 정리했다.
-
-```yaml
-1. Collision 감지 기준 정리
-- montage notify 구간에서 attachment collision을 켜고 overlap event를 사용
-
-2. Context Push 구조 구성
-- action timing에 필요한 context를 attachment에 저장
-
-3. Attachment overlap 기반 HitContext 구성
-- FOverlapContext와 cached action context를 결합하여 FHitContext 구성
-
-4. TakeDamage 호출 경계 고정
-- UCApplyDamageComponent::ApplyDamageToTarget에서만 Target->TakeDamage 호출
-```
+이 흐름은 damage 요청을 검증하고, 설정된 damage 값을 계산한 뒤 target 수신 경계로 넘기는 과정을 의미한다.
 
 ---
-## 변경 범위
 
-### Action Execution / ApplyDamage Pipeline
+## 구현 결과
 
-#### A. AnimNotify 기반 Action Context Push
+- action montage notify timing에서 현재 `FActionContext`와 attachment / equipment context를 `ACAttachment`에 cache할 수 있다.
 
-- action montage notify timing에서 ApplyDamage에 필요한 action context를 attachment에 미리 push하도록 구성했다.
+- attachment overlap은 target overlap 결과와 cached `FAttachmentContext` / `FEquipmentContext` / `FActionContext`를 결합해 `FHitContext`를 만든다.
 
-**Flow**
-```yaml
-Action Montage
--> UCAnimNotify_Action
--> UCActionComponent에서 active action 조회
--> active action의 BeginPlayAction / NextPlayAction 호출
--> UCAction_ComboAttack에서 FActionContext 구성
--> UCWeaponComponent::PushContextToAttachment 호출
--> ACAttachment에 Attachment / Equipment / Action context 저장
-```
+- `UCApplyDamageComponent`는 `FHitContext`를 기준으로 요청을 검증하고, `DamageSpecMap`에서 `FDamageSpec`을 찾는다.
 
-**Structure**
-```yaml
-FActionContext
-- CurrentActionType : 현재 action type
-- ActionIndex       : 현재 action index
+- `FDamageSpec.BaseDamage`는 최소 damage 계산 결과인 `FDamageResult.FinalDamage`로 전달된다.
 
-Cached action context in ACAttachment
-- FAttachmentContext : 현재 attachment type
-- FEquipmentContext  : 현재 equipment type
-- FActionContext     : 현재 action type / action index
-```
-
-#### B. Attachment Overlap / HitContext 구성
-
-- attachment collision overlap이 발생하면 `FOverlapContext`와 cached action context를 결합하여 `FHitContext`를 구성했다.
-
-**Flow**
-```yaml
-Attachment Collision Overlap
--> ACAttachment::BuildOverlapContext 호출
--> FHitContext 구성
--> UCApplyDamageComponent::RequestApplyDamage 호출
-```
-
-**Structure**
-```yaml
-FOverlapContext
-- OwnerActor          : 공격자 actor
-- DamageCauser        : damage causer attachment
-- OverlappedComponent : overlap을 발생시킨 attachment collision
-- OverlapShape        : shape collision cast 결과
-- OtherActor          : 피격 대상 actor
-- OtherComponent      : 피격 component
-- OtherBodyIndex      : overlap body index
-- bFromSweep          : sweep 기반 overlap 여부
-- SweepResult         : sweep hit result
-
-FHitContext
-- OverlapContext
-- AttachmentContext
-- EquipmentContext
-- ActionContext
-```
-
-#### C. UCApplyDamageComponent 진입점 구성
-
-- `UCApplyDamageComponent`를 추가하고, apply damage 요청을 `RequestApplyDamage()` 한 지점으로 받도록 구성했다.
-
-**Flow**
-```yaml
-UCApplyDamageComponent::RequestApplyDamage
--> ProcessApplyDamage
--> ValidateRequest
--> CheckHitRule
--> ResolveDamageSpec
--> ComputeDamageResult
--> ApplyDamageToTarget
-```
-
-**Structure**
-```yaml
-UCApplyDamageComponent
-- RequestApplyDamage : apply damage 외부 진입점
-- ProcessApplyDamage : 검증 / spec 조회 / 계산 / 적용 처리 흐름
-- RequestStopDamage  : overlap end 기반 지속 효과 처리를 위한 확장 지점
-```
-
-#### D. ApplyDamage Request Validation
-
-- `ValidateRequest()`에서 hit context의 actor / component / ownership 관계를 검증하고 invalid request를 조기 반환하도록 구성했다.
-
-**Validation Gate**
-```yaml
-ValidateRequest
-- overlap context 최소 유효성 검증
-- component owner와 overlap owner 일치 여부 확인
-- self-hit 차단
-- overlapped component / other component 유효성 확인
-- overlap shape 유효성 확인
-- damage causer ownership 확인
-- overlapped component ownership 확인
-- target component ownership 확인
-```
-
-#### E. DamageSpec Resolve
-
-- hit context를 기반으로 `FDamageSpecKey`를 구성하고, `DamageSpecMap`에서 damage spec을 조회했다.
-
-**Flow**
-```yaml
-FHitContext
--> BuildSpecKey로 FDamageSpecKey 구성
--> DamageSpecMap에서 FDamageSpec 조회
-```
-
-**Structure**
-```yaml
-FDamageSpecKey
-- AttachmentType
-- EquipmentType
-- ActionType
-- ActionIndex
-
-FDamageSpec
-- BaseDamage
-```
-
-#### F. DamageResult 연산
-
-- damage 계산은 target 상태를 직접 변경하지 않고, `FDamageResult`만 구성하는 단계로 분리했다.
-
-**Flow**
-```yaml
-FHitContext + FDamageSpec
--> ComputeDamageResult 호출
--> OverlapContext에서 Attacker / DamageCauser / Target 조회
--> actor 유효성 확인
--> FDamageSpec.BaseDamage를 FinalDamage로 계산
--> FDamageResult 구성
-```
-
-**Structure**
-```yaml
-FDamageResult
-- FinalDamage  : target의 TakeDamage에 전달할 최종 damage amount
-- Attacker     : 공격을 수행한 actor
-- DamageCauser : damage를 발생시킨 attachment actor
-- Target       : damage를 받을 actor
-```
-
-#### G. Target TakeDamage 호출 경계
-
-- 최종 damage 적용은 `ApplyDamageToTarget()` 한 지점에서만 수행하고, target actor의 Unreal `TakeDamage()` entry로 전달했다.
-
-**Flow**
-```yaml
-ApplyDamageToTarget
--> attacker pawn controller 조회
--> FCustomDamageEvent 구성
--> Target->TakeDamage(FinalDamage, FCustomDamageEvent, InstigatorController, DamageCauser) 호출
-```
-
-**Structure**
-```yaml
-FCustomDamageEvent
-- DamageResult : target TakeDamage로 전달할 damage result
-```
-
-#### H. Collision End / StopDamage Extension Point
-
-- attachment overlap end 시점에는 `RequestStopDamage()`를 호출하도록 경로만 열어두고, 지속 damage / overlap 유지형 효과 처리는 후속 확장 지점으로 남겼다.
-
-**Flow**
-```yaml
-Attachment Collision EndOverlap
--> FHitContext 구성
--> UCApplyDamageComponent::RequestStopDamage
-```
-
-**Extension Point**
-```yaml
-RequestStopDamage
-- active overlap set 제거
-- repeated hit timer 정리
-- sustained effect 해제
-```
+- Target damage 수신은 `ApplyDamageToTarget()`에서 `FCustomDamageEvent`와 함께 `Target->TakeDamage()`를 호출하는 경계로 고정됐다.
 
 ---
-## 주요 Pipeline
 
-### Action Context Push Pipeline
-
-```yaml
-Action Montage
--> UCAnimNotify_Action
--> active action의 BeginPlayAction / NextPlayAction
--> FActionContext 구성
--> UCWeaponComponent::PushContextToAttachment
--> ACAttachment cached action context 갱신
-```
-
-### Overlap to ApplyDamage Pipeline
-
-```yaml
-Collision Notify
--> ACAttachment::CollisionEnabled
--> Attachment Collision Overlap 발생
--> FOverlapContext 구성
--> FHitContext 구성
--> UCApplyDamageComponent::RequestApplyDamage
-```
-
-### ApplyDamage Processing Pipeline
-
-```yaml
-RequestApplyDamage
--> ValidateRequest
--> CheckHitRule
--> ResolveDamageSpec
--> ComputeDamageResult
--> ApplyDamageToTarget
-```
-
-### TakeDamage Boundary Pipeline
-
-```yaml
-ApplyDamageToTarget
--> FCustomDamageEvent
--> Target->TakeDamage
-```
-
----
 ## 테스트 방법
 
-### Component / Data Setup
+### Component / Data 설정
 
-- 캐릭터에 `UCWeaponComponent`, `UCActionComponent`, `UCApplyDamageComponent`가 구성되어 있는지 확인
-- `DamageSpecMap`에 current attachment / equipment / action / index 조합에 맞는 `FDamageSpecKey`가 등록되어 있는지 확인
+- character에 `UCWeaponComponent`, `UCActionComponent`, `UCApplyDamageComponent`가 구성되어 있는지 확인한다.
 
-### Action Context Push
+- `DamageSpecMap`에 현재 attachment / equipment / action / action index 조합에 맞는 `FDamageSpecKey`가 등록되어 있는지 확인한다.
 
-- 공격 montage에서 `UCAnimNotify_Action(Begin / Next)`가 호출되는지 확인
-- `UCAction_ComboAttack::BeginPlayAction()` 또는 `NextPlayAction()`에서 `PushContextToAttachment()`가 호출되는지 확인
-- attachment에 `LastAttachmentContext / LastEquipmentContext / LastActionContext`가 저장되는지 로그로 확인
+### action context cache
 
-### Overlap / HitContext
+- 공격 montage에서 action notify가 호출되는지 확인한다.
 
-- collision notify 구간에서 `ACAttachment::CollisionEnabled()`와 `CollisionDisabled()`가 호출되는지 확인
-- target과 overlap 발생 시 `ACAttachment::OnComponentBeginOverlap()`이 호출되는지 확인
-- `FHitContext`가 `OverlapContext + AttachmentContext + EquipmentContext + ActionContext` 조합으로 구성되는지 확인
+- `UCAction_ComboAttack::BeginPlayAction()` 또는 `NextPlayAction()`에서 현재 `FActionContext`가 생성되는지 확인한다.
 
-### ApplyDamage Processing
+- `UCWeaponComponent::PushContextToAttachment()`를 통해 `FAttachmentContext`, `FEquipmentContext`, `FActionContext`가 `ACAttachment`에 cache되는지 확인한다.
 
-- `RequestApplyDamage -> ValidateRequest -> ResolveDamageSpec -> ComputeDamageResult -> ApplyDamageToTarget` 순서로 처리되는지 확인
-- invalid owner / self-hit / invalid component 상황에서 early return되는지 확인
-- `FDamageSpecKey` 기준으로 `FDamageSpec`이 조회되고, `BaseDamage`가 `FinalDamage`로 전달되는지 확인
+### overlap / FHitContext
 
-### TakeDamage Boundary
+- collision notify 구간에서 attachment collision이 열리고 닫히는지 확인한다.
 
-- `ApplyDamageToTarget()`에서만 `Target->TakeDamage()`가 호출되는지 확인
-- `FCustomDamageEvent`에 `FDamageResult`가 포함되어 target으로 전달되는지 확인
-- 로그에서 request damage와 applied damage가 출력되는지 확인
+- target과 overlap 발생 시 `ACAttachment::OnComponentBeginOverlap()`이 호출되는지 확인한다.
+
+- `FHitContext`가 `FOverlapContext`, `FAttachmentContext`, `FEquipmentContext`, `FActionContext` 조합으로 구성되는지 확인한다.
+
+### ApplyDamage 처리
+
+- `RequestApplyDamage -> ValidateRequest -> CheckHitRule -> ResolveDamageSpec -> ComputeDamageResult -> ApplyDamageToTarget` 순서로 처리되는지 확인한다.
+
+- invalid owner, self-hit, invalid component 상황에서 early return되는지 확인한다.
+
+- `FDamageSpecKey` 기준으로 `FDamageSpec`을 조회하고, `BaseDamage`가 `FinalDamage`로 전달되는지 확인한다.
+
+### TakeDamage 경계
+
+- `ApplyDamageToTarget()`에서만 `Target->TakeDamage()`가 호출되는지 확인한다.
+
+- `FCustomDamageEvent`에 `FDamageResult`가 포함되어 target으로 전달되는지 확인한다.
+
+- 로그에서 request damage와 applied damage가 출력되는지 확인한다.
 
 ---
+
 ## 검증 결과
 
-- action notify timing에서 action context push 동작 확인
-- attachment overlap 시 `FHitContext` 구성 확인
-- `DamageSpecMap` 기반 `FDamageSpec` 조회 확인
-- `BaseDamage -> FinalDamage` 최소 damage 계산 확인
-- `ApplyDamageToTarget()` 경유 `Target->TakeDamage()` 호출 확인
-- overlap end 시 `RequestStopDamage()` 확장 지점 호출 경로 확인
+- action montage notify timing에서 `FActionContext`가 attachment로 전달되는 흐름을 확인했다.
+
+- attachment overlap 발생 시 `FHitContext`가 구성되고 `RequestApplyDamage()`로 전달되는 흐름을 확인했다.
+
+- `DamageSpecMap` 기반 `FDamageSpec` 조회와 `BaseDamage -> FinalDamage` 최소 계산 흐름을 확인했다.
+
+- `ApplyDamageToTarget()` 경유 `Target->TakeDamage()` 호출 흐름을 확인했다.
+
+- overlap end 시점에는 `RequestStopDamage()` 호출 경로만 두고, 지속 damage / 반복 hit 해제 같은 세부 처리는 후속 확장 지점으로 남겼다.
 
 ---
+
+## 비범위
+
+- Target 수신 이후의 HP 반영, reaction, feedback 처리는 이번 PR에서 구현하지 않는다.
+
+- `CheckHitRule()`은 already-hit, team check 확장을 위한 판단 지점으로 두었고, 이번 PR에서는 실제 중복 hit 방지 정책을 완성하지 않는다.
+
+- `RequestStopDamage()`는 overlap end 기반 확장 지점으로 두었고, 지속 damage나 repeated hit timer 해제 정책은 이번 PR 범위에 포함하지 않는다.
+
+- DamageSpec의 data asset 분리는 후속 확장 범위로 남긴다.
+
+---
+
 ## 관련 문서
 
 - Issue Checklist: `D08_UE5_Portfolio_Issue_Checklist.md`
 
 ---
+
 ## 정리
 
-이 PR의 핵심은 action montage timing과 attachment overlap을 결합하여, target `TakeDamage()`까지 이어지는 첫 번째 damage 송신 pipeline을 구성한 것이다.
+- P07은 action montage notify timing과 attachment overlap을 연결해, 공격 실행 중 발생한 hit를 ApplyDamage 요청으로 변환하고 target의 `TakeDamage()` 경계까지 전달하는 PR이다.
 
-구성 후에는 `UCAction`이 damage 적용을 직접 수행하지 않고, montage timing에 맞춰 `FActionContext`를 구성하는 역할에 집중했다.
+- `UCApplyDamageComponent`가 damage 요청 검증, damage 설정 조회, damage 결과 계산, target의 `TakeDamage()` 호출을 담당하도록 정리했다.
 
-`UCWeaponComponent`는 현재 attachment / equipment 상태를 함께 모아 `ACAttachment`에 context를 저장하고, `ACAttachment`는 `FOverlapContext`와 cached action context를 결합해 `FHitContext`를 구성했다.
-
-`UCApplyDamageComponent`는 이 `FHitContext`를 기준으로 request 검증, damage spec 조회, damage result 계산, target `TakeDamage()` 호출을 담당한다.
-
-```yaml
-UCAction
-- montage timing
-- FActionContext 구성
-
-UCWeaponComponent
-- attachment / equipment context 구성
-- context push 경계
-
-ACAttachment
-- collision overlap 수신
-- FOverlapContext와 cached action context 결합
-- FHitContext 구성
-
-UCApplyDamageComponent
-- apply damage request 검증
-- damage spec 조회
-- damage result 계산
-- Target->TakeDamage 호출
-```
-
-이 구조를 통해 action montage에서 시작된 공격 판정이 `FHitContext -> ApplyDamage -> TakeDamage`로 이어지는 기본 송신 흐름을 갖추게 됐다.
-
-수신 측 health commit / reaction / feedback 처리는 이 브랜치에서 직접 구현하지 않고, `Target->TakeDamage()` 이후 단계에서 확장할 수 있는 경계로 남겼다.
-
----
+- 수신 측 HP / reaction / feedback 처리와 중복 hit 정책은 이후 브랜치에서 확장할 수 있도록 경계를 남겼다.

@@ -22,351 +22,333 @@
 
 ## 요약
 
-### 작업 요약
+이번 PR에서는 **Player가 이동 / 점프 입력에 따라 움직이고, 그 움직임이 기본 locomotion animation으로 이어지는 흐름을 구현했다.**
 
-본 PR은 Player movement input을 `UCMovementComponent`로 전달하고, movement runtime 값을 AnimBP에 공급하여 기본 locomotion과 jump animation을 구동하는 movement / locomotion pipeline을 구성한 작업이다.
+입력으로 캐릭터를 움직이고, 현재 이동 상태 값을 animation parameter로 전달해 기본 locomotion animation을 구동할 수 있도록 이동 흐름을 정리했다.
 
-```yaml
-Movement input
--> ACPlayerController input binding
--> ACPlayer movement handler 호출
--> UCMovementComponent movement API 호출
--> CharacterMovementComponent movement 적용
--> UCMovementComponent runtime 값 갱신
--> UCAnimInstance parameter 갱신
--> Locomotion / Jump AnimBP 구동
+성격별 핵심 변경은 다음과 같다.
+
+### Feature
+
+- **Movement input 전달 흐름 구성**: PlayerController의 이동 입력이 Player를 거쳐 MovementComponent로 전달되도록 구성했다.
+
+- **Walk / Run / Jump 동작 연결**: Walk 입력으로 이동 속도를 전환하고, Jump 입력은 Unreal character jump API로 연결했다.
+
+- **Locomotion AnimBP 구동**: movement runtime 값을 AnimInstance로 전달해 Idle / Walk / Run / Jump animation이 상태에 따라 전환되도록 구성했다.
+
+### Refactoring
+
+- **이동 책임 분리**: Player는 입력을 전달하고, 이동 방향 계산과 speed type 적용은 `UCMovementComponent`가 담당하도록 역할을 나눴다.
+
+- **AnimBP parameter 갱신 책임 정리**: AnimBP가 직접 movement를 계산하지 않고, `UCAnimInstance`가 `UCMovementComponent`의 runtime 값을 읽어 animation parameter를 갱신하도록 정리했다.
+
+- **후속 gameplay 확장 기준 마련**: 이후 장착 / 공격 중 movement 제한, speed type 확장, AI movement 확장에 사용할 movement 제어 지점을 분리했다.
+
+### Troubleshooting
+
+- **Animation retarget 안정화**: UE4 Mannequin 기준 animation을 UE5 Quinn skeleton에 맞게 retarget해 pose distortion 문제를 보완했다. 자세한 원인과 검증은 `B01_UE5_Portfolio_Bug_Report.md`에 분리했다.
+
+---
+
+## 핵심 개념
+
+이 섹션은 아래 설명에서 반복되는 프로젝트 고유 용어를 먼저 정리한다.
+
+Movement Runtime Value(이동 runtime 값)
+-> 매 tick 계산되는 현재 이동 속도, 이동 방향, 공중 상태 값
+-> 코드에서는 `CurrentSpeed`, `CurrentDirection`, `bIsFalling`을 사용함
 ```
 
-### 작업 배경
-
-Player 캐릭터가 테스트 레벨에서 기본 이동, 점프, 카메라 조작을 수행하려면 input handling, movement calculation, character movement apply, animation parameter update, locomotion state transition이 분리되어야 했다.
-
-특히 movement 값을 character 내부에서 직접 계산하기보다 `UCMovementComponent`로 분리하여, 이후 walk / run / sprint, action 중 movement policy, AI movement 확장과 연결할 수 있는 기준을 만들 필요가 있었다.
-
-```yaml
-필요한 기준
-- Controller input에서 movement component까지의 호출 경로 구성
-- movement direction / speed / falling 상태 계산
-- walk / run / sprint speed type 적용
-- AnimBP에서 사용할 Speed / Direction / bIsInAir 갱신
-- Idle / Walk / Run / Jump locomotion state 구성
+```text
+Locomotion Parameter(locomotion parameter)
+-> AnimBP가 Idle / Walk / Run / Jump 상태를 전환할 때 사용하는 animation parameter
+-> 코드에서는 `Speed`, `Direction`, `bIsInAir`를 사용함
 ```
 
-### 구현 방향
+```text
+Speed Type(이동 속도 타입)
+-> Walk / Run / Sprint처럼 movement speed를 구분하는 값
+-> 코드에서는 `ESpeedType`과 `SpeedMap`을 사용함
+```
 
-```yaml
-1. Movement Input Routing 구성
-- ACPlayerController -> ACPlayer -> UCMovementComponent로 movement input 전달
-
-2. Movement Component 분리
-- UCMovementComponent에서 movement input 적용과 runtime movement 값 계산
-
-3. Locomotion Parameter 연결
-- UCAnimInstance가 UCMovementComponent 값을 읽어 AnimBP parameter 갱신
-
-4. Locomotion AnimBP 구성
-- Speed / bIsInAir 기반 Idle / Move / Jump state 구성
+```text
+Animation Retarget(animation retarget)
+-> 다른 skeleton 기준 animation을 현재 skeleton에서 재생할 수 있도록 변환하는 작업
 ```
 
 ---
+
+## 변경 배경
+
+이 섹션은 character movement와 기본 locomotion animation을 별도 흐름으로 분리해야 했던 이유를 정리한다.
+
+### Player 이동 입력 처리 필요성
+
+Player는 테스트 레벨에서 WASD 이동, Walk / Run 전환, Jump 입력을 수행할 수 있어야 했다.
+
+이 입력들은 Controller에서 들어오지만, 실제 이동 처리와 속도 정책은 character의 movement 흐름으로 전달되어야 했다.
+
+### Movement 계산 책임 분리 필요성
+
+이동 방향, 현재 속도, 공중 상태 같은 값은 animation과 gameplay 양쪽에서 반복적으로 사용될 수 있다.
+
+따라서 Player class가 직접 모든 값을 계산하기보다 `UCMovementComponent`가 이동 입력 적용과 runtime 값 계산을 담당하는 구조가 필요했다.
+
+### Locomotion parameter 연결 필요성
+
+AnimBP는 Idle / Walk / Run / Jump 상태를 전환하기 위해 현재 속도, 이동 방향, 공중 상태를 알아야 했다.
+
+따라서 `UCAnimInstance`가 `UCMovementComponent`에서 값을 읽어 AnimBP parameter로 전달하는 연결이 필요했다.
+
+### Animation retarget 안정성 필요성
+
+기존 animation을 UE5 Quinn mesh에서 사용하려면 skeleton 차이로 인한 pose distortion을 피해야 했다.
+
+따라서 Mannequin 기준 animation을 Quinn skeleton에 맞게 retarget해 기본 locomotion animation으로 사용할 수 있게 정리해야 했다.
+
+---
+
 ## 변경 범위
 
-### Movement / Locomotion Pipeline
+이 섹션은 문제를 어떻게 고쳤고, 그 결과 동작이 어떻게 달라졌는지 정리한다.
 
-#### A. Movement Input Routing 구성
+### 1. Movement input 전달 흐름 구성
 
-- Player movement input을 controller, player character, movement component 순서로 전달하도록 구성했다.
+- **왜**:
+  Controller에서 들어온 MoveForward / MoveRight 입력이 Player를 거쳐 실제 movement 처리 component까지 전달되어야 했다.
 
-**Flow**
-```yaml
+- **어떻게**:
+  `ACPlayerController`에서 MoveForward / MoveRight axis input을 binding하고, `ACPlayer::HandleMoveForward()` / `HandleMoveRight()`를 거쳐 `UCMovementComponent::OnMoveForward()` / `OnMoveRight()`를 호출하도록 구성했다.
+
+- **결과**:
+  Movement input은 `ACPlayerController -> ACPlayer -> UCMovementComponent` 경로로 전달된다.
+
+### 2. Controller yaw 기준 이동 방향 계산
+
+- **왜**:
+  Player movement는 character의 현재 회전이 아니라 camera / controller yaw 기준으로 앞 / 오른쪽 방향을 계산해야 했다.
+
+- **어떻게**:
+  `UCMovementComponent::OnMoveForward()` / `OnMoveRight()`에서 owner character의 control rotation yaw를 기준으로 방향 vector를 구하고 `AddMovementInput()`을 호출하도록 구성했다.
+
+- **결과**:
+  WASD 이동은 controller yaw 기준 방향으로 적용된다.
+
+### 3. Walk / Run speed type 구성
+
+- **왜**:
+  Walk 입력에 따라 character movement speed가 전환되어야 했다.
+
+- **어떻게**:
+  `ACPlayerController`의 Walk press / release를 `ACPlayer::HandleWalk()` / `HandleRun()`으로 전달하고, `UCMovementComponent::OnWalk()` / `OnRun()`이 `SetSpeedType()`을 통해 `CharacterMovementComponent::MaxWalkSpeed`를 갱신하도록 구성했다.
+
+- **결과**:
+  Walk 입력 상태에 따라 Walk / Run speed type이 적용된다.
+
+### 4. Jump input 연결
+
+- **왜**:
+  Player가 jump input으로 점프를 시작하고, release input으로 jump hold를 종료할 수 있어야 했다.
+
+- **어떻게**:
+  `ACPlayerController::Press_Jump()` / `Release_Jump()`가 `ACPlayer::HandleJump()` / `HandleStopJump()`를 호출하고, Player는 Unreal `Jump()` / `StopJumping()` API를 호출하도록 연결했다.
+
+- **결과**:
+  Jump input은 Unreal character jump 흐름으로 전달된다.
+
+### 5. Movement runtime 값 계산
+
+- **왜**:
+  AnimBP와 후속 gameplay는 현재 speed, direction, falling 상태를 기준으로 동작해야 했다.
+
+- **어떻게**:
+  `UCMovementComponent::TickComponent()`에서 owner velocity로 `CurrentSpeed`를 계산하고, actor forward와 velocity 사이 각도로 `CurrentDirection`을 계산하며, `CharacterMovementComponent::IsFalling()`으로 `bIsFalling`을 갱신하도록 구성했다.
+
+- **결과**:
+  MovementComponent는 AnimBP와 후속 시스템에 전달할 runtime movement 값을 매 tick 갱신한다.
+
+### 6. AnimInstance parameter 연결
+
+- **왜**:
+  AnimBP가 locomotion state를 전환하려면 movement runtime 값을 animation parameter로 받아야 했다.
+
+- **어떻게**:
+  `UCAnimInstance::NativeBeginPlay()`에서 owner character와 `UCMovementComponent`를 cache하고, `NativeUpdateAnimation()`에서 `Speed`, `Direction`, `bIsInAir` 값을 갱신하도록 구성했다.
+
+- **결과**:
+  AnimBP는 `Speed`, `Direction`, `bIsInAir` 값을 기준으로 locomotion / jump state를 구동할 수 있다.
+
+### 7. Locomotion / Jump AnimBP 구성
+
+- **왜**:
+  Player movement가 화면에서 Idle / Walk / Run / Jump animation으로 표현되어야 했다.
+
+- **어떻게**:
+  `Speed` 값에 따라 Idle / Walk / Run animation이 전환되도록 locomotion BlendSpace를 구성했다.
+  `bIsInAir` 값에 따라 Jump Start / Jump Loop / Jump End state로 전환되도록 구성했다.
+  각 state에는 Quinn skeleton 기준으로 retarget한 animation을 적용했다.
+
+- **결과**:
+  Player는 이동 입력과 jump 상태에 따라 기본 locomotion animation을 재생한다.
+
+### 8. Animation retarget 안정화
+
+- **왜**:
+  UE4 Mannequin 기준 animation을 UE5 Quinn skeleton에 직접 연결하면 pose distortion이 발생할 수 있었다.
+
+- **어떻게**:
+  Mannequin animation을 원본 skeleton에서 확인한 뒤 IK Rig / IK Retargeter를 사용해 Quinn skeleton 기준 animation으로 변환했다.
+
+- **결과**:
+  Quinn mesh에서 Idle / Walk / Run / Jump animation이 안정적으로 재생된다.
+
+---
+
+## 주요 처리 흐름
+
+이 섹션은 Player 입력이 movement 적용과 locomotion animation으로 이어지는 대표 흐름을 정리한다.
+
+### Movement input 흐름
+
+```text
 MoveForward / MoveRight input
--> ACPlayerController::InputMoveForward / InputMoveRight 호출
--> ACPlayer::HandleMoveForward / HandleMoveRight 호출
--> UCMovementComponent::OnMoveForward / OnMoveRight 호출
-```
-
-**Structure**
-```yaml
-ACPlayerController
-- MoveForward / MoveRight axis binding
-- Walk / Jump action binding
-- pawn으로 input 전달
-
-ACPlayer
-- movement input handler 제공
-- UCMovementComponent로 movement request 전달
-
-UCMovementComponent
-- movement input 적용
-- speed type 전환
-- movement runtime 값 계산
-```
-
-#### B. UCMovementComponent Movement 처리
-
-- `UCMovementComponent`가 owner character와 `CharacterMovementComponent`를 저장하고, movement input과 speed type을 처리하도록 구성했다.
-
-**Flow**
-```yaml
-UCMovementComponent::BeginPlay
--> owner character 저장
--> CharacterMovementComponent 저장
-```
-
-```yaml
-UCMovementComponent::OnMoveForward / OnMoveRight
--> owner character 유효성 확인
--> bCanMove 확인
--> input value 확인
--> controller yaw 기준 movement direction 계산
--> OwnerCharacter_Cached->AddMovementInput 호출
-```
-
-**Structure**
-```yaml
-UCMovementComponent
-- SpeedMap                    : ESpeedType별 movement speed
-- OwnerCharacter_Cached       : movement owner
-- CharacterMovementComp_Cached: Unreal movement component
-- CurrentSpeed                : AnimBP에 전달할 현재 속도
-- CurrentDirection            : AnimBP에 전달할 현재 방향
-- bCanMove                    : movement 허용 여부
-- bIsFalling                  : falling 상태
-```
-
-#### C. Walk / Run / Sprint Speed Type 구성
-
-- `ESpeedType`과 `SpeedMap`을 통해 movement speed를 변경할 수 있도록 구성했다.
-
-**Flow**
-```yaml
-Walk input
--> ACPlayerController::Press_Walk 호출
--> ACPlayer::HandleWalk 호출
--> UCMovementComponent::OnWalk 호출
--> SetSpeedType(ESpeedType::Walk) 호출
--> CharacterMovementComp_Cached->MaxWalkSpeed 갱신
-```
-
-```yaml
-Walk release
--> ACPlayerController::Release_Walk 호출
--> ACPlayer::HandleRun 호출
--> UCMovementComponent::OnRun 호출
--> SetSpeedType(ESpeedType::Run) 호출
-```
-
-**Structure**
-```yaml
-ESpeedType
-- Walk
-- Run
-- Sprint
-```
-
-#### D. Jump Input 연결
-
-- Jump input을 Unreal `ACharacter::Jump / StopJumping` API로 연결했다.
-
-**Flow**
-```yaml
-Jump pressed
--> ACPlayerController::Press_Jump 호출
--> ACPlayer::HandleJump 호출
--> ACharacter::Jump 호출
-
-Jump released
--> ACPlayerController::Release_Jump 호출
--> ACPlayer::HandleStopJump 호출
--> ACharacter::StopJumping 호출
-```
-
-#### E. Movement Runtime 값 계산
-
-- AnimBP에서 사용할 movement parameter를 매 tick 계산하도록 구성했다.
-
-**Flow**
-```yaml
-UCMovementComponent::TickComponent
--> CalculateSpeed 호출
--> CalculateDirection 호출
--> CharacterMovementComp_Cached->IsFalling 조회
--> bIsFalling 갱신
-```
-
-**Structure**
-```yaml
-Runtime Movement Parameter
-- CurrentSpeed     : OwnerCharacter velocity Size2D
-- CurrentDirection : actor forward와 velocity 사이의 signed angle
-- bIsFalling       : CharacterMovementComponent falling 상태
-```
-
-#### F. AnimInstance Parameter 연결
-
-- `UCAnimInstance`가 `UCMovementComponent`에서 locomotion parameter를 읽어 AnimBP에 전달하도록 구성했다.
-
-**Flow**
-```yaml
-UCAnimInstance::NativeBeginPlay
--> owner character 저장
--> UCMovementComponent 조회 / 저장
-
-UCAnimInstance::NativeUpdateAnimation
--> Speed = MovementComp_Cached->GetCurrentSpeed()
--> Direction = MovementComp_Cached->GetCurrentDirection()
--> bIsInAir = MovementComp_Cached->IsFalling()
-```
-
-**Structure**
-```yaml
-UCAnimInstance
-- Speed     : BlendSpace 구동 속도
-- Direction : movement 방향
-- bIsInAir  : jump state 전환 기준
-```
-
-#### G. Locomotion / Jump AnimBP 구성
-
-- Speed와 falling 상태를 기준으로 기본 locomotion과 jump state를 구성했다.
-
-**Structure**
-```yaml
-Locomotion
-- Idle
-- Walk
-- Run
-- Speed 기반 BlendSpace
-
-Jump
-- Jump Start
-- Jump Loop
-- Jump End
-- bIsInAir 기반 state transition
-```
-
----
-## 안정성 보완
-
-### Animation Retarget 안정화 (B01 보완)
-
-#### A. Mannequin -> Quinn Retarget 구성
-
-- UE4 Mannequin 기준 animation을 UE5 Quinn skeleton에 직접 연결하면서 발생한 pose distortion 문제를 retarget pipeline으로 해결했다.
-- 자세한 원인과 검증 내용은 `B01` Bug Report에서 분리하여 정리했다.
-
-**Flow**
-```yaml
-UE4 Mannequin animation
--> Mannequin skeleton 기준 정상 재생 확인
--> IK Rig / IK Retargeter 구성
--> Quinn skeleton 기준 animation 생성
--> Locomotion AnimBP에 retarget animation 적용
-```
-
-**Structure**
-```yaml
-Retarget Assets
-- IK_AutoGeneratedSource : Mannequin source rig
-- IK_AutoGeneratedTarget : Quinn target rig
-- RTG_AutoGenerated      : IK Retargeter
-```
-
----
-## 주요 Pipeline
-
-### Movement Input Pipeline
-
-```yaml
-Movement input
 -> ACPlayerController input binding
 -> ACPlayer movement handler
 -> UCMovementComponent movement API
+-> controller yaw 기준 direction 계산
 -> AddMovementInput 호출
 ```
 
-### Speed Type Pipeline
+이 흐름은 Player movement input이 controller yaw 기준 이동 방향으로 변환되어 character movement에 적용되는 과정을 의미한다.
 
-```yaml
-Walk / Run input
--> ACPlayer movement handler
+### Speed type 흐름
+
+```text
+Walk input press / release
+-> ACPlayerController
+-> ACPlayer walk / run handler
 -> UCMovementComponent::OnWalk / OnRun
--> SetSpeedType 호출
+-> SetSpeedType
 -> CharacterMovementComponent MaxWalkSpeed 갱신
 ```
 
-### Jump Pipeline
+이 흐름은 Walk 입력 상태에 따라 movement speed가 전환되는 과정을 의미한다.
 
-```yaml
-Jump input
--> ACPlayerController::Press_Jump / Release_Jump
--> ACPlayer::HandleJump / HandleStopJump
--> ACharacter::Jump / StopJumping
--> CharacterMovementComponent falling 상태 갱신
+### Jump 흐름
+
+```text
+Jump input press
+-> ACPlayerController::Press_Jump
+-> ACPlayer::HandleJump
+-> Jump
+
+Jump input release
+-> ACPlayerController::Release_Jump
+-> ACPlayer::HandleStopJump
+-> StopJumping
 ```
 
-### Locomotion Parameter Pipeline
+이 흐름은 Player jump 입력이 Unreal character jump API로 전달되는 과정을 의미한다.
 
-```yaml
-Character velocity / movement state
+### Locomotion parameter 흐름
+
+```text
+Character velocity / falling state
 -> UCMovementComponent::TickComponent
 -> CurrentSpeed / CurrentDirection / bIsFalling 갱신
 -> UCAnimInstance::NativeUpdateAnimation
 -> Speed / Direction / bIsInAir 갱신
--> Locomotion / Jump AnimBP 구동
+-> Locomotion / Jump AnimBP state 전환
 ```
 
-### Animation Retarget Pipeline
-
-```yaml
-UE4 Mannequin animation
--> IK Rig / IK Retargeter
--> UE5 Quinn animation
--> Locomotion AnimBP 적용
-```
+이 흐름은 movement runtime 값이 animation parameter로 전달되어 locomotion animation을 구동하는 과정을 의미한다.
 
 ---
+
+## 구현 결과
+
+- Player movement input은 `ACPlayerController -> ACPlayer -> UCMovementComponent` 경로로 전달된다.
+
+- `UCMovementComponent`는 controller yaw 기준으로 movement direction을 계산하고 `AddMovementInput()`을 호출한다.
+
+- Walk / Run speed type은 `SpeedMap` 값을 기준으로 `CharacterMovementComponent::MaxWalkSpeed`에 반영된다.
+
+- Jump input은 `Jump()` / `StopJumping()`으로 전달된다.
+
+- `UCMovementComponent`는 `CurrentSpeed`, `CurrentDirection`, `bIsFalling`을 매 tick 갱신한다.
+
+- `UCAnimInstance`는 movement runtime 값을 `Speed`, `Direction`, `bIsInAir`로 AnimBP에 전달한다.
+
+- Retarget된 Quinn animation으로 기본 Idle / Walk / Run / Jump locomotion이 동작한다.
+
+---
+
 ## 테스트 방법
 
 ### Movement Input
 
-- WASD 입력 시 `ACPlayerController -> ACPlayer -> UCMovementComponent` 경로로 movement input이 전달되는지 확인
-- Forward / Right input이 controller yaw 기준 방향으로 적용되는지 확인
-- input value가 0에 가까운 경우 movement input이 적용되지 않는지 확인
+- WASD 입력이 `ACPlayerController -> ACPlayer -> UCMovementComponent` 경로로 전달되는지 확인한다.
+
+- Forward / Right input이 controller yaw 기준 방향으로 적용되는지 확인한다.
+
+- input value가 0에 가까운 경우 movement input이 적용되지 않는지 확인한다.
 
 ### Speed Type
 
-- Walk input press / release에 따라 Walk / Run speed type이 전환되는지 확인
-- `SpeedMap` 값이 `CharacterMovementComponent::MaxWalkSpeed`에 반영되는지 확인
+- Walk input press / release에 따라 Walk / Run speed type이 전환되는지 확인한다.
+
+- `SpeedMap` 값이 `CharacterMovementComponent::MaxWalkSpeed`에 반영되는지 확인한다.
 
 ### Jump
 
-- Jump input press 시 `Jump()`가 호출되는지 확인
-- Jump input release 시 `StopJumping()`이 호출되는지 확인
-- 공중 상태에서 `bIsInAir`가 true로 갱신되는지 확인
+- Jump input press 시 `Jump()`가 호출되는지 확인한다.
+
+- Jump input release 시 `StopJumping()`이 호출되는지 확인한다.
+
+- 공중 상태에서 `bIsInAir`가 `true`로 갱신되는지 확인한다.
 
 ### Locomotion AnimBP
 
-- Idle / Walk / Run BlendSpace가 Speed 기준으로 자연스럽게 전환되는지 확인
-- Jump Start / Jump Loop / Jump End state가 falling 상태 기준으로 전환되는지 확인
-- 착지 후 Idle / Move state로 자연스럽게 복귀하는지 확인
+- Idle / Walk / Run BlendSpace가 Speed 기준으로 전환되는지 확인한다.
+
+- Jump Start / Jump Loop / Jump End state가 falling 상태 기준으로 전환되는지 확인한다.
+
+- 착지 후 Idle / Move state로 복귀하는지 확인한다.
 
 ### Animation Retarget
 
-- Quinn mesh에서 retarget animation 재생 시 팔 / 다리 pose distortion이 발생하지 않는지 확인
-- Idle / Walk / Run / Jump animation이 Quinn skeleton 기준으로 정상 재생되는지 확인
+- Quinn mesh에서 retarget animation 재생 시 팔 / 다리 pose distortion이 발생하지 않는지 확인한다.
+
+- Idle / Walk / Run / Jump animation이 Quinn skeleton 기준으로 재생되는지 확인한다.
 
 ---
+
 ## 검증 결과
 
-- WASD movement input이 player movement로 적용되는 동작 확인
-- Walk / Run speed type 전환 확인
-- Jump / StopJumping input 동작 확인
-- `UCMovementComponent`에서 Speed / Direction / bIsFalling 값 갱신 확인
-- `UCAnimInstance`에서 Speed / Direction / bIsInAir 값으로 locomotion AnimBP 구동 확인
-- IK Rig / IK Retargeter 기반 retarget 후 Quinn pose distortion 문제 해결 확인
+- WASD movement input이 player movement로 적용되는 것을 확인했다.
+
+- Walk / Run speed type 전환을 확인했다.
+
+- Jump / StopJumping input 동작을 확인했다.
+
+- `UCMovementComponent`에서 `CurrentSpeed`, `CurrentDirection`, `bIsFalling` 값이 갱신되는 것을 확인했다.
+
+- `UCAnimInstance`에서 `Speed`, `Direction`, `bIsInAir` 값으로 locomotion AnimBP가 구동되는 것을 확인했다.
+
+- IK Rig / IK Retargeter 기반 retarget 이후 Quinn pose distortion 문제가 해결된 것을 확인했다.
 
 ---
+
+## 비범위
+
+- P02에서는 weapon equip / unequip, combat action, hit collision, damage 처리를 구현하지 않는다.
+
+- 장착 / 공격 중 movement 제한 정책은 후속 equipment / action 범위로 남는다.
+
+- 8-way locomotion, motion warping, foot sync 같은 고급 locomotion 기능은 후속 확장 범위로 남는다.
+
+---
+
 ## 관련 문서
 
 - Issue Checklist: `D03_UE5_Portfolio_Issue_Checklist.md`
@@ -374,35 +356,11 @@ UE4 Mannequin animation
 - Bug Report: `B01_UE5_Portfolio_Bug_Report.md`
 
 ---
+
 ## 정리
 
-이 PR의 핵심은 Player movement input을 `UCMovementComponent`로 분리하고, movement runtime 값을 `UCAnimInstance`와 AnimBP에 연결하여 기본 movement / locomotion pipeline을 만든 것이다.
+- P02는 Player movement input을 `UCMovementComponent`로 분리하고, movement runtime 값을 AnimBP에 연결한 기본 movement / locomotion PR이다.
 
-변경 후에는 input handling, movement calculation, speed type control, jump input, locomotion parameter update, animation retarget의 책임이 분리되어 이후 equipment, action, combat 시스템을 얹을 수 있는 character movement 기반이 마련됐다.
+- 이동 입력 적용, speed type 전환, jump 입력, locomotion parameter 갱신, animation retarget을 분리해 이후 equipment와 combat action에서 movement 제어 지점을 사용할 수 있게 했다.
 
-```yaml
-ACPlayerController
-- movement / walk / jump input binding
-- pawn으로 input 전달
-
-ACPlayer
-- movement / jump handler 제공
-- UCMovementComponent 또는 ACharacter jump API 호출
-
-UCMovementComponent
-- movement input 적용
-- speed type control
-- CurrentSpeed / CurrentDirection / bIsFalling 계산
-
-UCAnimInstance
-- UCMovementComponent runtime 값 조회
-- Speed / Direction / bIsInAir 갱신
-
-AnimBP
-- Speed 기반 locomotion BlendSpace
-- bIsInAir 기반 jump state transition
-```
-
-이 브랜치에서는 기본 movement / jump / locomotion을 우선 구현했고, equipment, combat action, advanced locomotion은 후속 브랜치에서 확장할 수 있는 경계로 남겼다.
-
----
+- 이 브랜치의 완료 범위는 기본 movement / jump / locomotion까지이며, 장착과 combat action은 후속 브랜치에서 확장한다.

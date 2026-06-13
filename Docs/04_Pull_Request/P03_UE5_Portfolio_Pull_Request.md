@@ -2,7 +2,7 @@
 
 ## 제목
 
-**P03: Attachment Object 및 Equipment Pipeline 구현**
+**P03: Attachment Object 및 Equipment 실행 흐름 구현**
 
 ## 날짜
 
@@ -22,369 +22,350 @@
 
 ## 요약
 
-### 작업 요약
+이번 PR에서는 **Player의 sword 입력으로 무기를 장착 / 해제하고, montage timing에 맞춰 weapon attachment를 hand socket과 holster socket 사이에서 전환하는 흐름을 구현했다.**
 
-본 PR은 Player의 sword input을 weapon component로 전달하고, montage notify timing에 맞춰 weapon attachment를 hand / holster socket 사이에서 전환하는 equipment pipeline을 구성한 작업이다.
+입력 전달, weapon type 변경, equip / unequip montage 실행, attachment socket 전환 책임을 나누어 이후 공격 실행에서 무기 장착 상태를 기준으로 사용할 수 있게 했다.
 
-```yaml
-Sword input
--> ACPlayerController::PressSword 호출
--> ACPlayer::HandleSword 호출
--> UCWeaponComponent::SetSwordMode / SetUnarmedMode 호출
--> UCEquipment::Equip / Unequip 호출
--> equipment montage 재생
--> UCAnimNotify_Equip / UCAnimNotify_Unequip 호출
--> UCEquipment begin / end timing 처리
--> ACAttachment socket 전환
+성격별 핵심 변경은 다음과 같다.
+
+### Feature
+
+- **Sword 입력 기반 장착 / 해제 흐름 구성**: Player의 sword 입력이 현재 weapon type에 따라 장착 또는 해제 실행으로 이어지도록 구성했다.
+
+- **Equipment montage 실행 구성**: 장착 / 해제 상태로 전환한 뒤 각각의 montage를 재생하고, montage 종료 후 Idle state로 복귀하도록 구성했다.
+
+- **Attachment socket 전환 구성**: 장착 begin timing에는 weapon attachment를 hand socket으로 옮기고, 해제 begin timing에는 holster socket으로 되돌리도록 구성했다.
+
+### Refactoring
+
+- **입력과 장착 실행 책임 분리**: Player 입력 계층은 장착 / 해제 의도를 전달하고, 실제 montage 실행과 state / movement 제어는 `UCEquipment`가 처리하도록 역할을 나눴다.
+
+- **weapon type 관리와 장착 실행 분리**: `UCWeaponComponent`는 현재 weapon type과 attachment / equipment 생성 및 delegate binding을 관리하고, `UCEquipment`는 equip / unequip montage 실행과 state / movement lifecycle을 담당하도록 정리했다.
+
+- **socket 전환 timing 분리**: `UCEquipment`가 notify timing에 맞춰 delegate를 broadcast하고, `ACAttachment`가 socket 재부착을 처리하도록 연결했다.
+
+### Troubleshooting
+
+- **Equipment data editor 안정화**: editor details panel에서 equipment montage 설정을 안전하게 편집할 수 있도록 `FEquipmentData`를 reflection 친화적인 struct로 정리했다. 자세한 원인과 검증은 `B02_UE5_Portfolio_Bug_Report.md`에 분리했다.
+
+---
+
+## 핵심 개념
+
+이 섹션은 아래 설명에서 반복되는 프로젝트 고유 용어를 먼저 정리한다.
+
+```text
+Equipment(장착 실행 객체)
+-> weapon equip / unequip montage 재생, state 전환, movement 제어를 담당하는 UObject 기반 실행 객체
+-> 코드에서는 `UCEquipment`가 이 역할을 담당함
 ```
 
-### 작업 배경
-
-무기 장착 / 해제는 단순히 weapon type flag만 바꾸는 기능이 아니라, montage timing에 맞춰 무기 mesh가 hand socket과 holster socket 사이에서 전환되어야 하는 기능이다.
-
-따라서 input handling, weapon mode transition, equipment lifecycle, attachment socket transition, animation notify timing을 각각 분리해서 구성할 필요가 있었다.
-
-또한 장착 / 해제 중 movement policy와 character state도 함께 제어해야 하므로, `UCEquipment`가 montage 재생과 state / movement 전환을 함께 관리하도록 정리했다.
-
-```yaml
-필요한 기준
-- Sword input에서 equipment execution까지의 호출 경로 구성
-- weapon type과 equipment montage 실행 분리
-- hand / holster socket 기반 attachment 전환
-- montage notify timing 기준 begin / end 처리
-- equip / unequip 중 state / movement policy 제어
+```text
+Attachment(무기 부착 actor)
+-> character mesh의 hand / holster socket에 붙는 weapon actor
+-> 코드에서는 `ACAttachment`가 이 역할을 담당함
 ```
 
-### 구현 방향
+```text
+Weapon Type(무기 상태)
+-> 현재 character가 무기를 들고 있는지 나타내는 상태
+-> 코드에서는 `EWeaponType::Unarmed`, `EWeaponType::Sword`를 사용함
+```
 
-```yaml
-1. Weapon Mode 구성
-- UCWeaponComponent에서 Unarmed / Sword mode 전환 관리
+```text
+FEquipmentData(equipment 실행 데이터)
+-> equip / unequip montage, play rate, movement 허용 여부를 담는 실행 데이터
+```
 
-2. Equipment Lifecycle 구성
-- UCEquipment에서 Equip / Unequip montage와 state / movement policy 처리
-
-3. Attachment Socket 전환
-- ACAttachment가 hand / holster socket으로 재부착
-
-4. Notify Timing 연결
-- UCAnimNotify_Equip / UCAnimNotify_Unequip으로 begin / end timing 전달
+```text
+Equipment Notify(equipment notify)
+-> montage timing에서 equip / unequip의 Begin / End를 알려주는 notify
+-> 코드에서는 `UCAnimNotify_Equip`, `UCAnimNotify_Unequip`이 이 역할을 담당함
 ```
 
 ---
+
+## 변경 배경
+
+이 섹션은 weapon equip / unequip 기능이 필요했던 이유와 socket 전환을 montage timing에 맞춰 분리해야 했던 이유를 정리한다.
+
+### 무기 장착 상태 전환 필요성
+
+Player는 sword 입력으로 무기를 장착하거나 해제할 수 있어야 했다.
+
+이 상태는 단순히 flag만 바꾸는 값이 아니라, 이후 공격 실행에서 sword 장착 여부를 판단하는 기준으로 사용된다.
+
+### Montage timing 기반 socket 전환 필요성
+
+무기 장착 / 해제는 입력 즉시 weapon mesh 위치만 바꾸는 기능이 아니다.
+
+장착 montage가 진행되는 중 특정 timing에 weapon attachment가 holster socket에서 hand socket으로 이동해야 하고, 해제 montage에서는 다시 hand socket에서 holster socket으로 돌아가야 했다.
+
+### Equipment 실행 책임 분리 필요성
+
+장착 / 해제 중에는 state가 Equip / Unequip으로 바뀌고, 설정에 따라 movement도 제한되어야 했다.
+
+따라서 Player나 WeaponComponent가 montage 재생과 state / movement 제어를 직접 처리하지 않고, `UCEquipment`가 equipment lifecycle을 관리하는 구조가 필요했다.
+
+### Equipment data editor 안정성 필요성
+
+Equip / Unequip montage와 movement policy는 editor에서 설정해야 하는 값이다.
+
+따라서 `FEquipmentData`는 details panel과 Blueprint compile / refresh 과정에서 안정적으로 다뤄질 수 있는 editor-facing struct 형태로 정리할 필요가 있었다.
+
+---
+
 ## 변경 범위
 
-### Equipment Pipeline
+이 섹션은 weapon equip / unequip 흐름을 어떤 책임으로 나눠 구성했고, 그 결과 장착 동작이 어떻게 정리됐는지 설명한다.
 
-#### A. Sword Input Routing 구성
+### 1. Sword input 기반 장착 / 해제 진입 흐름 구성
 
-- Player sword input을 player character와 weapon component를 거쳐 equipment execution으로 전달하도록 구성했다.
+- **왜**:
+  Player의 sword 입력이 현재 weapon 상태에 따라 equip 또는 unequip 실행으로 이어져야 했다.
+  또한 장착 / 해제는 Idle state에서만 시작되어야 했다.
 
-**Flow**
-```yaml
-InputComponent Sword input
--> ACPlayerController::PressSword 호출
--> ACPlayer::HandleSword 호출
--> Idle state 확인
--> 현재 weapon type 확인
--> UCWeaponComponent::SetSwordMode / SetUnarmedMode 호출
-```
+- **어떻게**:
+  `ACPlayerController::PressSword()`는 `ACPlayer::HandleSword()`를 호출한다.
+  `ACPlayer`는 Idle state와 현재 weapon type을 확인한다.
+  현재 weapon type에 따라 `UCWeaponComponent::SetSwordMode()` 또는 `SetUnarmedMode()`를 호출한다.
 
-**Structure**
-```yaml
-ACPlayerController
-- Sword input binding
-- PressSword에서 pawn으로 input 전달
+- **결과**:
+  Sword input은 Idle state에서만 equip / unequip 실행으로 이어지고, 현재 weapon type에 따라 장착과 해제가 토글된다.
 
-ACPlayer
-- HandleSword에서 Idle state 확인
-- weapon type 기준으로 equip / unequip 요청
+### 2. WeaponComponent의 attachment / equipment 생성과 연결 구성
 
-UCWeaponComponent
-- CurrentWeaponType 관리
-- SetSwordMode / SetUnarmedMode entry 제공
-```
+- **왜**:
+  WeaponComponent는 현재 weapon type을 관리하면서, 장착 실행 객체와 실제 socket 전환을 담당할 attachment를 함께 소유해야 했다.
 
-#### B. Weapon Type / State Type 변경 흐름
+- **어떻게**:
+  `UCWeaponComponent::BeginPlay()`에서 actor인 `ACAttachment`는 spawn하고, UObject인 `UCEquipment`는 `NewObject`로 생성했다.
+  이후 `UCEquipment`의 begin delegate를 `ACAttachment` callback에 binding해, equipment timing이 attachment socket 전환으로 이어지도록 연결했다.
 
-- weapon type과 character state 변경을 component와 delegate 기준으로 관리하도록 구성했다.
+- **결과**:
+  WeaponComponent는 weapon type, equipment 실행 객체, attachment actor, delegate binding 지점을 관리하는 중심 component가 된다.
 
-**Flow**
-```yaml
-UCWeaponComponent::ChangeWeaponType
--> PreviousWeaponType 저장
--> CurrentWeaponType 갱신
--> OnWeaponTypeChanged broadcast
--> UCAnimInstance::OnWeaponTypeChanged에서 AnimBP 변수 갱신
-```
+### 3. Equipment montage 실행과 state / movement 제어 구성
 
-```yaml
-UCStateComponent::ChangeStateType
--> PreviousStateType 저장
--> CurrentStateType 갱신
--> OnStateTypeChanged broadcast
-```
+- **왜**:
+  Equip / Unequip은 montage 재생과 함께 character state, movement 제한 / 복구를 처리해야 했다.
 
-**Structure**
-```yaml
-EWeaponType
-- Unarmed
-- Sword
+- **어떻게**:
+  `UCEquipment::Equip()`은 `SetEquipMode()`를 호출해 장착 상태로 전환한다.
+  필요한 경우 movement를 제한한 뒤 equip montage를 재생한다.
+  `UCEquipment::Unequip()`도 같은 흐름으로 해제 상태 전환, movement 제한, unequip montage 재생을 처리한다.
 
-EStateType
-- Idle
-- Equip
-- Unequip
-```
+- **결과**:
+  Equip / Unequip 실행 중 character state와 movement policy가 montage 실행 흐름에 맞춰 적용된다.
 
-#### C. FEquipmentData 추가
+### 4. Equipment Notify 기반 begin / end timing 연결
 
-- equipment montage 실행에 필요한 montage data와 movement policy를 `FEquipmentData`로 분리했다.
+- **왜**:
+  Socket 전환과 종료 복구는 montage의 실제 timing에 맞춰 실행되어야 했다.
 
-**Structure**
-```yaml
-FEquipmentData
-- Montage  : equip / unequip montage
-- PlayRate : montage 재생 속도
-- bCanMove : equipment execution 중 movement 허용 여부
-```
+- **어떻게**:
+  `UCAnimNotify_Equip`과 `UCAnimNotify_Unequip`을 추가했다.
+  `UCAnimNotify_Equip`은 `Begin` / `End` flow에 따라 `UCEquipment::Begin_Equip()` 또는 `End_Equip()`을 호출한다.
+  `UCAnimNotify_Unequip`은 `Begin` / `End` flow에 따라 `UCEquipment::Begin_Unequip()` 또는 `End_Unequip()`을 호출한다.
 
-#### D. UCEquipment Lifecycle 구성
+- **결과**:
+  Equip / Unequip montage timing이 equipment lifecycle 처리로 전달된다.
 
-- `UCEquipment`가 equip / unequip montage 재생, state 전환, movement policy 적용을 담당하도록 구성했다.
+### 5. Attachment socket 전환 구성
 
-**Flow**
-```yaml
-UCEquipment::Equip
--> StateComp_Cached->SetEquipMode 호출
--> EquipmentData_Cached.bCanMove 확인
--> 필요한 경우 MovementComp_Cached->SetStop 호출
--> EquipmentData_Cached.Montage 재생
-```
+- **왜**:
+  Weapon attachment는 장착 전에는 holster socket에 있고, 장착 중에는 hand socket으로 이동해야 했다.
 
-```yaml
-UCEquipment::Unequip
--> StateComp_Cached->SetUnequipMode 호출
--> UnquipmentData_Cached.bCanMove 확인
--> 필요한 경우 MovementComp_Cached->SetStop 호출
--> UnquipmentData_Cached.Montage 재생
-```
+- **어떻게**:
+  `ACAttachment::InitializeAttachment()`는 weapon attachment를 holster socket에 먼저 부착한다.
+  `OnEquipmentBeginEquip()`은 weapon attachment를 hand socket으로 재부착한다.
+  `OnEquipmentBeginUnequip()`은 weapon attachment를 holster socket으로 재부착한다.
 
-**Structure**
-```yaml
-UCEquipment
-- OwnerCharacter_Cached  : equipment owner
-- MovementComp_Cached    : movement policy 적용 대상
-- StateComp_Cached       : equipment state 전환 대상
-- EquipmentData_Cached   : equip montage data
-- UnquipmentData_Cached  : unequip montage data
-- bBeginEquip            : equip begin notify 수신 여부
-- bBeginUnequip          : unequip begin notify 수신 여부
-- bEquipped              : 장착 완료 여부
-```
+- **결과**:
+  Weapon attachment는 equipment begin timing에 맞춰 hand / holster socket 사이를 전환한다.
 
-#### E. ACAttachment Socket 전환 구성
+### 6. Equipment 종료 처리와 복구 구성
 
-- `ACAttachment`가 owner mesh의 hand / holster socket으로 재부착되도록 구성했다.
+- **왜**:
+  장착 / 해제가 끝나면 movement 제한을 풀고 character state를 Idle로 되돌려야 했다.
+  또한 장착 완료 여부를 내부 상태로 기록해야 했다.
 
-**Flow**
-```yaml
-ACAttachment::InitializeAttachment
--> SocketName_Holster로 AttachToOwnerSocket 호출
+- **어떻게**:
+  `End_Equip()`은 `bEquipped`를 `true`로 설정한다.
+  필요한 경우 movement를 복구한 뒤 Idle state로 복귀한다.
+  `End_Unequip()`은 `bEquipped`를 `false`로 설정한다.
+  같은 방식으로 movement 복구와 Idle state 복귀를 처리한다.
 
-UCEquipment::Begin_Equip
--> OnEquipmentBeginEquip broadcast
--> ACAttachment::OnEquipmentBeginEquip 호출
--> SocketName_Hand로 AttachToOwnerSocket 호출
+- **결과**:
+  Equip / Unequip 종료 이후 character는 다시 Idle state로 돌아가고, 장착 완료 상태가 갱신된다.
 
-UCEquipment::Begin_Unequip
--> OnEquipmentBeginUnequip broadcast
--> ACAttachment::OnEquipmentBeginUnequip 호출
--> SocketName_Holster로 AttachToOwnerSocket 호출
-```
+### 7. FEquipmentData editor 안정성 보완
 
-**Structure**
-```yaml
-ACAttachment
-- SocketName_Holster     : 보관 위치 socket
-- SocketName_Hand        : 장착 위치 socket
-- OwnerCharacter_Cached  : attachment owner
-- AttachToOwnerSocket    : owner mesh socket 재부착 API
-```
+- **왜**:
+  Equipment montage, play rate, movement policy는 editor details panel에서 설정되어야 했다.
+  기존 struct 노출 방식이 불안정하면 Blueprint compile 또는 details refresh 과정에서 crash로 이어질 수 있었다.
 
-#### F. AnimNotify 기반 Equip / Unequip Timing 연결
+- **어떻게**:
+  `FEquipmentData`를 `USTRUCT(BlueprintType)` / `UPROPERTY(EditAnywhere)` 기반으로 정리했다.
+  `UCEquipment::InitializeEquipment()`에서 `FEquipmentData` 값을 전달받아 cache하도록 구성했다.
 
-- montage notify timing에서 equipment begin / end를 전달하는 notify를 추가했다.
-
-**Flow**
-```yaml
-UCAnimNotify_Equip::Notify
--> GetWeaponComponent로 UCWeaponComponent 조회
--> UCWeaponComponent::GetEquipment 호출
--> FlowType에 따라 equip timing 전달
-```
-
-```yaml
-UCAnimNotify_Unequip::Notify
--> GetWeaponComponent로 UCWeaponComponent 조회
--> UCWeaponComponent::GetEquipment 호출
--> FlowType에 따라 unequip timing 전달
-```
-
-**Structure**
-```yaml
-EAnimNotifyFlow::Begin
-- UCEquipment::Begin_Equip / Begin_Unequip 호출
-
-EAnimNotifyFlow::End
-- UCEquipment::End_Equip / End_Unequip 호출
-```
-
-#### G. Equipment 종료 처리
-
-- montage end notify에서 movement policy를 복구하고 state를 Idle로 되돌리도록 구성했다.
-
-**Flow**
-```yaml
-UCEquipment::End_Equip
--> bBeginEquip false로 갱신
--> bEquipped true로 갱신
--> 필요한 경우 MovementComp_Cached->SetMove 호출
--> OnEquipmentEndEquip broadcast
--> StateComp_Cached->SetIdleMode 호출
-```
-
-```yaml
-UCEquipment::End_Unequip
--> bBeginUnequip false로 갱신
--> bEquipped false로 갱신
--> 필요한 경우 MovementComp_Cached->SetMove 호출
--> OnEquipmentEndUnequip broadcast
--> StateComp_Cached->SetIdleMode 호출
-```
+- **결과**:
+  Equipment 실행 데이터는 editor에서 편집 가능하고, 값 전달 방식으로 equipment object에 안정적으로 주입된다.
 
 ---
-## 안정성 보완
 
-### FEquipmentData Editor 안정성 보완 (B02 보완)
+## 주요 처리 흐름
 
-#### A. Editor-Facing Struct 정리
+이 섹션은 sword 입력이 equip / unequip montage 실행과 attachment socket 전환으로 이어지는 대표 흐름을 정리한다.
 
-- `FEquipmentData`를 editor details panel에서 안전하게 편집할 수 있도록 `USTRUCT(BlueprintType)` / `UPROPERTY` 기준으로 정리했다.
-- 자세한 원인과 검증 내용은 `B02` Bug Report에서 분리하여 정리했다.
+### Sword input 흐름
 
-**Flow**
-```yaml
-FEquipmentData
--> USTRUCT(BlueprintType) 적용
--> field를 UPROPERTY로 노출
--> InitializeEquipment에서 값 전달 방식 사용
--> details panel / reflection 경로의 reference lifetime 문제 회피
-```
-
-**Structure**
-```yaml
-FEquipmentData
-- Montage  : editor에서 지정할 equipment montage
-- PlayRate : editor에서 지정할 montage 재생 속도
-- bCanMove : editor에서 지정할 movement policy
-```
-
----
-## 주요 Pipeline
-
-### Equipment Input Pipeline
-
-```yaml
-Sword input
+```text
+Player sword input
 -> ACPlayerController::PressSword
 -> ACPlayer::HandleSword
 -> Idle state 확인
--> UCWeaponComponent::SetSwordMode / SetUnarmedMode
+   - Idle 아님 -> 실행하지 않음
+   - Idle     -> current weapon type 확인
+                - Unarmed -> UCWeaponComponent::SetSwordMode
+                - Sword   -> UCWeaponComponent::SetUnarmedMode
 ```
 
-### Equip Pipeline
+이 흐름은 Player의 sword 입력이 현재 weapon type에 따라 equip 또는 unequip 실행으로 분기되는 과정을 의미한다.
 
-```yaml
+### Equip 흐름
+
+```text
 UCWeaponComponent::SetSwordMode
 -> UCEquipment::Equip
--> StateComp_Cached->SetEquipMode
+-> state를 Equip으로 변경
 -> movement policy 적용
 -> equip montage 재생
--> UCAnimNotify_Equip(Begin)
+-> UCAnimNotify_Equip Begin
+-> OnEquipmentBeginEquip broadcast
 -> ACAttachment hand socket 재부착
--> UCAnimNotify_Equip(End)
+-> UCAnimNotify_Equip End
 -> movement policy 복구
--> StateComp_Cached->SetIdleMode
+-> state를 Idle로 변경
 ```
 
-### Unequip Pipeline
+이 흐름은 sword 장착 입력이 equip montage 재생과 hand socket 전환, 종료 복구로 이어지는 과정을 의미한다.
 
-```yaml
+### Unequip 흐름
+
+```text
 UCWeaponComponent::SetUnarmedMode
 -> UCEquipment::Unequip
--> StateComp_Cached->SetUnequipMode
+-> state를 Unequip으로 변경
 -> movement policy 적용
 -> unequip montage 재생
--> UCAnimNotify_Unequip(Begin)
+-> UCAnimNotify_Unequip Begin
+-> OnEquipmentBeginUnequip broadcast
 -> ACAttachment holster socket 재부착
--> UCAnimNotify_Unequip(End)
+-> UCAnimNotify_Unequip End
 -> movement policy 복구
--> StateComp_Cached->SetIdleMode
+-> state를 Idle로 변경
 ```
 
-### Attachment Socket Pipeline
+이 흐름은 sword 해제 입력이 unequip montage 재생과 holster socket 전환, 종료 복구로 이어지는 과정을 의미한다.
 
-```yaml
-UCEquipment begin notify
--> equipment begin delegate broadcast
--> ACAttachment delegate callback
--> AttachToOwnerSocket 호출
--> owner mesh socket 재부착
+### Attachment socket binding 흐름
+
+```text
+UCWeaponComponent::BeginPlay
+-> ACAttachment 생성
+-> UCEquipment 생성
+-> Equipment begin delegate를 Attachment callback에 binding
+-> Equipment begin timing에서 delegate broadcast
+-> ACAttachment::AttachToOwnerSocket 호출
 ```
+
+이 흐름은 equipment timing이 delegate binding을 통해 attachment socket 전환으로 전달되는 과정을 의미한다.
 
 ---
+
+## 구현 결과
+
+- Player sword input은 `ACPlayerController -> ACPlayer -> UCWeaponComponent` 경로로 전달된다.
+
+- `UCWeaponComponent`는 current weapon type을 기준으로 equip / unequip 실행을 선택한다.
+
+- `UCEquipment`는 equip / unequip montage 재생, state 전환, movement 제한 / 복구를 처리한다.
+
+- `ACAttachment`는 equipment begin timing에 맞춰 hand / holster socket으로 재부착된다.
+
+- `UCAnimNotify_Equip` / `UCAnimNotify_Unequip`은 montage Begin / End timing을 `UCEquipment`로 전달한다.
+
+- `FEquipmentData`는 editor에서 설정 가능한 equipment 실행 데이터로 사용된다.
+
+---
+
 ## 테스트 방법
 
 ### Input / Entry
 
-- `Sword` input이 `ACPlayerController::PressSword`에 binding 되어 있는지 확인
-- `ACPlayer::HandleSword`에서 Idle state일 때만 equip / unequip으로 이어지는지 확인
-- weapon type이 `Unarmed`이면 `SetSwordMode`, `Sword`이면 `SetUnarmedMode`가 호출되는지 확인
+- `Sword` input이 `ACPlayerController::PressSword()`로 binding되어 있는지 확인한다.
 
-### Equip / Unequip Execution
+- `ACPlayer::HandleSword()`에서 Idle state일 때만 equip / unequip으로 이어지는지 확인한다.
 
-- `SetSwordMode` 호출 시 equip montage가 재생되는지 확인
-- `SetUnarmedMode` 호출 시 unequip montage가 재생되는지 확인
-- equip / unequip 중 `EStateType::Equip / Unequip` state로 전환되는지 확인
-- notify end 이후 Idle state로 복귀하는지 확인
+- weapon type이 `Unarmed`이면 `SetSwordMode()`, `Sword`이면 `SetUnarmedMode()`가 호출되는지 확인한다.
+
+### Equip / Unequip 실행
+
+- `SetSwordMode()` 호출 시 equip montage가 재생되는지 확인한다.
+
+- `SetUnarmedMode()` 호출 시 unequip montage가 재생되는지 확인한다.
+
+- equip / unequip 중 `EStateType::Equip` / `EStateType::Unequip` state로 전환되는지 확인한다.
+
+- notify end 이후 Idle state로 복귀하는지 확인한다.
 
 ### Attachment Socket
 
-- 시작 시 weapon attachment가 holster socket에 부착되는지 확인
-- `UCAnimNotify_Equip(Begin)` timing에 hand socket으로 전환되는지 확인
-- `UCAnimNotify_Unequip(Begin)` timing에 holster socket으로 전환되는지 확인
+- 시작 시 weapon attachment가 holster socket에 부착되는지 확인한다.
+
+- `UCAnimNotify_Equip` `Begin` timing에 hand socket으로 전환되는지 확인한다.
+
+- `UCAnimNotify_Unequip` `Begin` timing에 holster socket으로 전환되는지 확인한다.
 
 ### Movement Policy
 
-- `FEquipmentData::bCanMove == false`인 경우 montage 시작 시 movement가 제한되는지 확인
-- equip / unequip end timing 이후 movement가 복구되는지 확인
+- `FEquipmentData::bCanMove`가 `false`인 경우 montage 시작 시 movement가 제한되는지 확인한다.
+
+- equip / unequip end timing 이후 movement가 복구되는지 확인한다.
 
 ### Editor 안정성
 
-- Details Panel에서 `FEquipmentData`의 Montage / PlayRate / bCanMove 값을 편집할 수 있는지 확인
-- Blueprint compile / details refresh 과정에서 editor crash가 발생하지 않는지 확인
+- Details Panel에서 `FEquipmentData`의 `Montage`, `PlayRate`, `bCanMove` 값을 편집할 수 있는지 확인한다.
+
+- Blueprint compile / details refresh 과정에서 editor crash가 발생하지 않는지 확인한다.
 
 ---
+
 ## 검증 결과
 
-- Sword input이 `ACPlayerController -> ACPlayer -> UCWeaponComponent -> UCEquipment` 경로로 전달되는 동작 확인
-- equip montage와 unequip montage 재생 확인
-- montage notify timing 기준으로 attachment socket 전환 확인
-- equipment execution 중 state / movement policy 적용 및 복구 확인
-- `FEquipmentData` editor 노출과 값 전달 방식 적용 후 editor crash 재발 없음 확인
+- Sword input이 `ACPlayerController -> ACPlayer -> UCWeaponComponent -> UCEquipment` 경로로 전달되는 것을 확인했다.
+
+- equip montage와 unequip montage가 각각 재생되는 것을 확인했다.
+
+- montage notify timing 기준으로 attachment socket이 hand / holster 사이에서 전환되는 것을 확인했다.
+
+- equipment 실행 중 state / movement policy가 적용되고 종료 후 복구되는 것을 확인했다.
+
+- `FEquipmentData` editor 노출과 값 전달 방식 적용 후 editor crash가 재발하지 않는 것을 확인했다.
 
 ---
+
+## 비범위
+
+- P03에서는 combat action 실행, hit collision, damage 계산, hit reaction 처리를 구현하지 않는다.
+
+- Sword 장착 상태를 조건으로 사용하는 실제 공격 실행은 후속 LightAttack 범위로 남는다.
+
+- Attachment collision과 damage 처리는 후속 hit collision / damage 처리 범위로 남는다.
+
+---
+
 ## 관련 문서
 
 - Issue Checklist: `D04_UE5_Portfolio_Issue_Checklist.md`
@@ -392,39 +373,11 @@ UCEquipment begin notify
 - Bug Report: `B02_UE5_Portfolio_Bug_Report.md`
 
 ---
+
 ## 정리
 
-이 PR의 핵심은 sword input에서 시작된 equipment request를 `UCWeaponComponent`와 `UCEquipment`로 전달하고, montage notify timing에 맞춰 `ACAttachment`의 socket 위치를 전환하는 equipment pipeline을 만든 것이다.
+- P03는 Player sword input을 weapon equip / unequip 실행으로 연결하고, montage timing에 맞춰 attachment socket을 hand / holster 사이에서 전환하는 equipment 실행 흐름 PR이다.
 
-변경 후에는 input routing, weapon mode, equipment lifecycle, attachment socket, notify timing, editor-facing equipment data의 책임이 분리되어 이후 combat action에서 weapon equipped state를 조건으로 사용할 수 있는 기준이 마련됐다.
+- `UCWeaponComponent`, `UCEquipment`, `ACAttachment`, equipment notify가 각각 weapon type 관리, equipment lifecycle, socket 재부착, timing 전달 역할을 나눠 갖도록 정리했다.
 
-```yaml
-ACPlayerController
-- Sword input binding
-- pawn으로 input 전달
-
-ACPlayer
-- Idle state 확인
-- weapon type 기준 equip / unequip 요청
-
-UCWeaponComponent
-- CurrentWeaponType 관리
-- UCEquipment / ACAttachment 생성과 소유
-- equipment entry 제공
-
-UCEquipment
-- equip / unequip montage 재생
-- state / movement policy 적용
-- begin / end notify timing 처리
-
-ACAttachment
-- hand / holster socket 이름 보유
-- equipment begin timing에서 socket 재부착
-
-UCAnimNotify_Equip / UCAnimNotify_Unequip
-- montage timing 기준 begin / end 전달
-```
-
-이 브랜치에서는 weapon equip / unequip과 attachment socket 전환을 우선 구현했고, action execution, hit collision, damage apply 처리는 후속 브랜치에서 확장할 수 있는 경계로 남겼다.
-
----
+- 이 브랜치의 완료 범위는 weapon equip / unequip과 attachment socket 전환까지이며, 공격 실행과 hit collision / damage 처리는 후속 브랜치에서 확장한다.

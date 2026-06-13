@@ -2,7 +2,7 @@
 
 ## 제목
 
-**P10: AI BehaviorTree Core 구축 및 AIState 분기별 실행 흐름 구현**
+**P10: 적 AI 행동 결정 흐름 구축 및 상태별 실행 경로 구현**
 
 ## 날짜
 
@@ -22,493 +22,341 @@
 
 ## 요약
 
-### 작업 요약
+이번 PR에서는 **적 AI가 주변 상황에 따라 순찰, 추격, 교전, 피격, 사망 행동을 고르고 실행하도록 연결했다.**
 
-본 PR은 Enemy AI의 `AIController / Blackboard / BehaviorTree` 기반 core를 구성하고,
-AI 판단 흐름을 아래와 같은 구조로 정리한 작업이다.
+또한 행동 결정 정보 갱신 실패나 `AttackIndex`(공격 단계 기록) 잔여값으로 인해 다음 행동 선택이 실제 상황과 어긋날 수 있는 문제도 함께 보완했다.
 
-```yaml
-Perception
--> Update AIContext
--> Resolve AIState
--> Select BT Branch
--> Execute Task / Subtree
+성격별 핵심 변경은 다음과 같다.
+
+### Feature
+
+- **AI 행동 시작 흐름 연결**: AI 컨트롤러가 적 캐릭터를 제어하기 시작한 뒤 BehaviorTree와 Blackboard를 초기화하고 첫 행동을 시작할 수 있도록 진입 흐름을 구성했다.
+
+- **상태별 행동 실행 경로 분리**: 순찰, 조사, 추격, 경계, 교전, 피격, 사망 상태를 각각 독립된 실행 경로로 나눴다.
+
+- **교전 / 공격 흐름 연결**: Engage(교전 상태)에서 Combat Role Assignment(전투 역할 배정) 결과를 반영하고, 실제 공격 실행 흐름으로 이어지도록 구성했다.
+
+### Refactoring
+
+- **교전 / 공격 책임 분리**: 교전 가능 여부를 결정하는 책임과 실제 공격을 실행하는 책임을 분리해, 전투 상태 안에서 역할이 섞이지 않도록 정리했다.
+
+- **AIContext 통합**: 주변 인식, 타깃 기억, 거리, 피격, 사망 정보를 AIContext로 모아, AIState를 고르는 기준을 일관되게 만들었다.
+
+### Troubleshooting
+
+- **이전 타깃 정보 제거(B03)**: 적을 놓치거나 정보 갱신에 실패했을 때 유효하지 않은 타깃 객체와 교전 진입 판단 값이 다음 상태 판단에 남지 않도록 보완했다.
+
+- **`AttackIndex` 초기화(B04)**: Engage에서 벗어난 뒤에도 이전 `AttackIndex`가 남아 같은 공격이 반복될 수 있어, Engage 종료 시 `AttackIndex`를 정리하도록 보완했다.
+
+---
+
+## 핵심 개념
+
+이 섹션은 KR 설명만으로 의미가 흐려지는 핵심 식별자를 제한적으로 소개한다.
+
+```text
+BehaviorTree
+-> AI가 현재 상황에 맞춰 어느 행동 경로로 들어갈지 고르는 UE AI asset
+-> 이 PR에서는 AIState에 따라 순찰, 조사, 추격, 경계, 교전, 피격, 사망 실행 경로를 나누는 기준 구조로 사용됨
 ```
 
-### 작업 배경
+```text
+Blackboard
+-> BehaviorTree가 판단과 실행에 함께 사용하는 값 저장 공간
+-> 타깃, 위치, 이동 가능 여부, 사망 상태 같은 값을 저장하고 각 실행 경로에서 참조함
+```
 
-#### AI 행동 state 확장의 필요성
+```text
+AIContext
+-> AI가 현재 상황에서 행동을 결정할 때 필요한 주변 인식, 타깃, 거리, 교전, 피격, 사망 정보를 모은 값
+-> AIState를 결정할 때 입력으로 사용됨
+```
 
-Enemy AI가 단순 추적 / 단일 attack 수준을 넘어, `Patrol / Investigate / Chase / Alert / Engage / HitReact / Dead` 같은 기본 행동 state를 표현할 수 있어야 했다.
+```text
+AIState
+-> 문서에서는 AI가 지금 어떤 행동을 실행해야 하는지 나타내는 상태를 가리키는 축약 표현
+-> 순찰, 조사, 추격, 경계, 교전, 피격, 사망 실행 경로를 선택하는 기준이 됨
+-> 코드에서는 Blackboard key `AIStateType`과 enum `EAIStateType`으로 관리됨
+```
 
-이를 BehaviorTree branch 단위로 정리하여, state별 진입 조건과 실행 책임을 추적 가능한 구조로 만들고자 했다.
+```text
+Alert(경계 상태)
+-> 타깃을 인식했지만 아직 전투 참여 대상은 아닌 상태
+-> 교전 상태에 들어가기 전 거리와 위치를 조정하는 실행 경로로 사용됨
+```
 
-#### Combat / Engage / Attack 개념 분리
+```text
+Engage(교전 상태)
+-> 적 AI가 전투에 참여 중인 상태
+-> 공격 쿨타임 중에도 Alert로 내려가지 않고, 교전 위치 조정 같은 상세 행동을 수행하며 유지되는 상태
+```
 
-기존에는 전투 관련 상태를 `Combat / Alert` 정도로 나누었지만, `Combat` 안에 실제 attack 실행, attack 대기, range 조정, 전투 참여 여부 판단이 함께 섞일 수 있었다.
+```text
+Combat Role Assignment(전투 역할 배정)
+-> 여러 적이 같은 타깃을 인식했을 때 동시에 모두 공격하지 않도록 교전에 참여할 적과 대기할 적을 나누는 결정
+-> 어떤 적이 Engage에 진입하고 공격 가능 조건을 받을 수 있는지 결정하는 기준이 됨
+```
 
-이를 분리하기 위해 `Combat`은 전투 관련 상위 도메인으로 두고, `Engage`는 combat domain 안에서 실제 교전에 참여하는 state로 정의했다.
-
-실제 attack 실행은 `Engage` 내부의 `SBT_Attack` subtree로 분리했다.
-
-### 구현 방향
-
-이를 다음 네 가지 축으로 정리했다.
-
-```yaml
-1. AI Core 구성
-- ACAIController / Blackboard / BehaviorTree 초기화
-- CAIKey namespace 기반 Blackboard key 체계 구성
-
-2. AIContext / AIState 갱신
-- perception / target memory / range / engage / reaction / dead context 갱신
-- AIState priority 기반 state transition
-
-3. BT State Branch 구성
-- Idle / Patrol / Investigate / Chase / Alert / Engage / HitReact / Dead branch 구성
-
-4. Engage / Attack / Reaction / Dead 흐름 연결
-- Combat Role Assignment 기반 Engage 여부 판단
-- Attack subtree, Reaction branch, Dead branch 연결
+```text
+SBT_Attack(공격 실행 서브트리)
+-> Engage 안에서 실제 공격 실행을 담당하는 BehaviorTree 하위 asset
+-> 공격 가능 조건이 충족됐을 때만 진입하며, 공격 선택, 시작, 종료 대기, 재사용 대기 시간 반영을 처리함
 ```
 
 ---
+
+## 변경 배경
+
+이 섹션은 이번 PR이 필요했던 이유와 기존 구조의 문제를 정리한다.
+
+### AIState 확장 필요성
+
+적 AI가 순찰, 조사, 추격, 경계, 교전, 피격, 사망 상태를 표현하려면 행동 결정 결과와 실제 실행 경로가 명확하게 연결되어야 했다.
+
+### Alert / Engage / Attack 책임 분리 필요성
+
+기존 구조에서는 전투 참여 여부와 실제 공격 실행이 같은 전투 상태 안에서 함께 처리될 수 있어, 교전 상태 유지와 공격 실행 시점을 구분하기 어려웠다.
+
+이를 분리하기 위해 Alert(경계 상태)은 전투에 참여하지 않고 경계 이동을 수행하는 상태로 두고, Engage(교전 상태)는 전투에 참여 중인 상태로 정리했다.
+
+실제 공격은 Engage 안의 상세 행동 중 하나로 보고, 공격 가능 조건과 쿨타임이 충족될 때만 `SBT_Attack`(공격 실행 서브트리)으로 진입하도록 분리했다.
+
+### AIContext / Blackboard / AttackIndex 안정성 보완 필요성
+
+행동 결정 정보 갱신이 실패하거나 AIState가 바뀐 이후에도 유효하지 않은 타깃 객체, 교전 진입 판단 값, `AttackIndex`(공격 단계 기록)가 남으면 다음 AIState 결정과 공격 선택이 실제 상황과 어긋날 수 있었다.
+
+---
+
 ## 변경 범위
 
-### AI BehaviorTree Core
+이 섹션은 문제를 어떻게 고쳤고, 그 결과 동작이 어떻게 달라졌는지 정리한다.
 
-#### A. AIController / Blackboard / BehaviorTree 초기화
+### 1. AI 행동 결정 진입 구조 구성
 
-- Enemy possess 이후 Blackboard를 초기화하고 BehaviorTree를 실행하는 AI core 진입 구조를 구성했다.
+- **왜**:
+  적 AI가 BehaviorTree 기반 행동 결정을 시작하려면 제어가 시작되는 시점에 BehaviorTree와 Blackboard가 안정적으로 초기화되어야 했다.
 
-**Flow**
-```yaml
-Enemy Possess
--> ACAIController::OnPossess
--> Blackboard 초기화
--> Initial Blackboard Value 설정
--> BehaviorTree 실행
-```
+- **어떻게**:
+  `ACAIController`(AI 컨트롤러)에서 제어할 적 캐릭터를 저장하고, BehaviorTree와 Blackboard 설정을 검증한 뒤 초기 값을 설정하고 실행하도록 구성했다.
 
-**Structure**
-```yaml
-ACAIController
-- Enemy pawn cache
-- Blackboard asset & Blackboard key validation
-- initial blackboard value setup
-- BehaviorTree start
+- **결과**:
+  적 AI는 제어가 시작된 이후 동일한 초기화 경로를 통해 AI 행동 결정 흐름에 진입한다.
 
-CAIKey
-- State / Targeting / Perception / Metric / Navigation
-- Patrol / Investigate / Chase / Alert / Engage
-- Reaction / Dead
-```
+### 2. AIState 기반 실행 경로 선택 구조 정리
 
-#### B. Perception / Target Context 구성
+- **왜**:
+  주변 인식, 타깃 기억, 거리, 교전, 피격, 사망 정보를 개별 작업에서 흩어 처리하면 AIState 전이 기준을 추적하기 어렵다.
 
-- AI perception 결과를 target context로 caching하고, `LOS`, `TargetPriority`, `LastKnownLocation`, `memory timeout` 기준을 Blackboard에 반영하도록 구성했다.
+- **어떻게**:
+  BehaviorTree의 주기 갱신 작업에서 현재 상황을 AIContext로 갱신하고, 우선순위 기준으로 AIState를 결정한 뒤 Blackboard에 반영하도록 구성했다.
 
-**Flow**
-```yaml
-AIPerception
--> TargetDataMap update
--> TargetPriority / LOS / memory timeout 계산
--> AIContext update
--> Blackboard update
-```
+- **결과**:
+  AI 행동 결정 흐름은 `주변 인식 -> AIContext 갱신 -> AIState 결정 -> 실행 경로 선택` 순서로 읽히며, 상태별 실행 책임이 분리된다.
 
-**Structure**
-```yaml
-Target Context
-- TargetActor       : 현재 target actor
-- TargetPriority    : target selection priority
-- bHasLOS           : line of sight 여부
-- LastSeenTime      : 마지막 perception time
-- LastKnownLocation : 마지막 known target location
-```
+### 3. 이동 상태별 목적지와 진입 조건 분리
 
-#### C. AIContext 및 AIState 갱신 서비스
+- **왜**:
+  AI의 이동은 상황마다 목적지가 달랐다. 타깃이 없으면 순찰 지점으로 이동해야 하고, 타깃을 놓치면 마지막으로 본 위치를 조사해야 하며, 타깃을 인식한 뒤에는 거리 조건에 따라 추격이나 경계 이동으로 전환해야 했다.
 
-- BehaviorTree service에서 현재 상황을 AIContext로 update하고, 해당 context를 기준으로 AIState를 resolve하도록 구성했다.
+- **어떻게**:
+  순찰 지점, 마지막으로 본 위치, 추격 거리 조건, 경계 이동 위치를 Blackboard 값으로 나누어 저장했다. 각 이동 상태는 자기 목적에 맞는 Blackboard 값을 읽어 이동 목적지와 진입 가능 여부를 판단하도록 구성했다.
 
-**Flow**
-```yaml
-BT Service Tick
--> Update AIContext
--> Resolve AIState
--> Update AIState Blackboard key
--> Select BT Branch
-```
+- **결과**:
+  적 AI는 타깃 인식 상태와 거리 조건에 따라 순찰, 조사, 추격, 경계 이동을 구분해 실행한다.
 
-**Rule**
-```yaml
-AIState Priority
-- Dead
-- HitReact
-- Engage
-- Investigate / Chase / Alert
-- Patrol / Idle
-```
+### 4. Alert / Engage / Attack 책임 분리
 
-#### D. BehaviorTree State Branch 구성
+- **왜**:
+  교전 참여 여부와 실제 공격 실행을 같은 기준으로 처리하면, 공격 쿨타임 중인 적을 Alert(경계 상태)로 내려야 하는지 Engage(교전 상태)에 머물러야 하는지 구분하기 어렵다.
 
-- AIState를 기준으로 BehaviorTree branch를 분기하고, 각 state가 필요한 task / service / decorator를 통해 실행되도록 구성했다.
+- **어떻게**:
+  Combat Role Assignment(전투 역할 배정) 결과로 Engage 진입 여부를 결정하고, Engage 안에서는 공격 가능 거리와 `AttackableTime`(공격 가능 시간)을 기준으로 `SBT_Attack`(공격 실행 서브트리) 진입 여부를 판단하도록 분리했다.
 
-**Flow**
-```yaml
-AIState
--> Selector / Decorator
--> State Branch
--> Task / Subtree 실행
-```
+- **결과**:
+  적 AI는 공격할 수 없는 순간에도 Engage 상태를 유지하며 위치를 조정하고, 공격 가능 조건이 충족됐을 때만 실제 공격 실행 흐름으로 들어간다.
 
-**Structure**
-```yaml
-BT Branch
-- Idle
-- Patrol
-- Investigate
-- Chase
-- Alert
-- Engage
-- HitReact
-- Dead
-```
+### 5. 피격 / 사망 우선 흐름 구성
 
-#### E. Patrol / Investigate / Chase / Alert의 Movement Flow
+- **왜**:
+  피격과 사망은 일반 이동이나 공격보다 높은 우선순위로 AIState를 전환하고, 종료 시점까지 상태를 추적해야 했다.
 
-- Engage 전후의 investigate, chase, alert의 movement flow를 BehaviorTree에서 branch와 service, decorator, task 단위로 구성했다.
+- **어떻게**:
+  피격 경로는 Blackboard에 기록된 아직 실행 전인 피격 반응과 실행 중인 피격 반응 값을 관찰하고, 사망 경로는 사망 상태를 Blackboard에 반영한 뒤 해당 상태를 기준으로 동작하도록 구성했다.
 
-**Flow**
-```yaml
-Patrol
--> PatrolPath / PatrolPoint
--> SelectPatrolPoint
--> MoveTo
+- **결과**:
+  AI는 피격 시 피격 실행 경로로 진입하고, 사망 시 사망 실행 경로에 머무르며 이동 / 공격 경로와 분리된 흐름을 가진다.
 
-Investigate
--> LastKnownLocation
--> StartInvestigate
--> Investigate index advance
--> EndInvestigate
+### 6. 행동 결정 정보와 AttackIndex 안정성 보완
 
-Chase / Alert
--> target distance / alert range
--> chase movement 또는 alert step movement
-```
+- **왜**:
+  행동 결정 정보 갱신 실패나 AIState 전이 이후 유효하지 않은 타깃 객체, 교전 진입 판단 값, `AttackIndex`(공격 단계 기록)가 남으면 AIState 전이와 공격 선택이 잘못 이어질 수 있었다.
 
-**Structure**
-```yaml
-Movement Context
-- PatrolPath / PatrolPoint
-- InvestigateLocation / InvestigateIndex
-- Chase range / hysteresis
-- AlertStepLocation
-```
+- **어떻게**:
+  AIContext 갱신 결과에 따라 Blackboard의 유효하지 않은 타깃 객체와 교전 진입 판단 값을 정리하고, Engage에서 벗어날 때 이전 `AttackIndex`를 정리하도록 했다.
 
-#### F. Combat Role Assignment 및 Engage Context 구성
-
-- 여러 Enemy의 perception target이 같을 때, Combat Role Assignment를 통해 각 AI의 combat role을 나누도록 구성했다.
-
-- Engage role을 받은 AI만 Engage state에서 attack 가능 여부를 계산하고, 실제 attack은 `SBT_Attack` subtree에서 실행하도록 분리했다.
-
-**Flow**
-```yaml
-AIContext
--> Engage Request
--> UCWorldSubsystem_CombatEngage
--> Combat Role Assignment
--> UpdateEngageContext
--> bInEngageRange / bCanCombatAction 계산
-```
-
-**Structure**
-```yaml
-UCWorldSubsystem_CombatEngage
-- Engage request container
-- Combat Role Assignment container
-- target별 Combat Role Assignment
-
-Engage Blackboard
-- bShouldEngage
-- bInEngageRange
-- bCanCombatAction
-- bIsCombatAction
-- NextCombatActionTime
-```
-
-#### G. Attack Subtree 및 Attack Loop 구성
-
-- Attack을 상위 AIState가 아니라 `Engage` 내부의 하위 execution flow로 구성했다.
-
-**Flow**
-```yaml
-Engage Branch
--> SBT_Attack 실행
-
-SBT_Attack
--> SelectAttackIndex
--> StartAttack
--> WaitAttackEnd
--> CommitAttackCooldown
-```
-
-**Structure**
-```yaml
-Attack Flow Element
-- SelectAttackIndex
-- StartAttack
-- WaitAttackEnd
-- CommitAttackCooldown
-- AnimNotify_EndEnemyAttack
-```
-
-#### H. HitReact State Flow 구성
-
-- 피격 이후 AI가 HitReact branch로 진입하고, reaction 종료까지 BehaviorTree가 active reaction state를 관찰할 수 있도록 구성했다.
-
-**Flow**
-```yaml
-TakeDamage / Reaction Request
--> Pending Reaction
--> HitReact Branch
--> StartReaction
--> WaitEndReaction
--> AIState 복귀
-```
-
-**Structure**
-```yaml
-Reaction Context
-- pending reaction
-- active reaction
-- reaction priority
-- bIsActiveReaction
-```
-
-#### I. Dead State Flow 구성
-
-- AI의 dead state flow를 Blackboard와 AnimInstance에 sync하도록 구성했다.
-
-**Flow**
-```yaml
-Health / DeadState 변경
--> Blackboard DeadState update
--> Dead Branch 진입
--> StayDead / WaitDeadState
-```
-
-**Structure**
-```yaml
-DeadState
-- Alive
-- Dying
-- Dead
-
-Dead Task
-- StayDead
-- WaitDeadState
-- AnimNotify_EnterDeadState
-```
-
-#### J. Animation / Montage / Weapon / Asset 정리
-
-- AI state branch에서 사용할 animation, montage, weapon asset을 정리하고 테스트 가능한 상태로 연결했다.
-
-**Changes**
-```yaml
-Animation / Montage
-- Dead / Dying / HitReact montage 정리
-- AI sword attack / draw / sheath montage 추가
-- sword / unarmed animation naming 정리
-
-Weapon / Asset
-- sword weapon asset 교체
-- Blackboard / BehaviorTree / Subtree asset 갱신
-- test level 검증 환경 갱신
-```
+- **결과**:
+  유효하지 않은 타깃 객체, 교전 진입 판단 값, `AttackIndex`가 다음 AI 행동 결정에 남지 않으며, B03 / B04에서 분리한 안정성 문제가 P10 흐름 안에서 보완된다.
 
 ---
-## 안정성 보완
 
-### AIContext Blackboard 정리 안정화 (B03 보완)
+## 주요 처리 흐름
 
-#### A. Service Early-return 이후 Blackboard 잔여값 제거
+이 섹션은 주요 행동 결정과 실행 순서를 코드 구현 전에 흐름으로 먼저 설명한다.
 
-- AIContext update 중 target 정보가 없거나 계산이 실패하는 경우에도 Blackboard가 이전 값을 유지하지 않도록 정리했다.
-- 자세한 재현 조건과 원인은 `B03` Bug Report에서 분리하여 정리했다.
+### AI 행동 결정 흐름
 
-**Flow**
-```yaml
-UCBTService_UpdateAIContext
--> AIContext update result 확인
--> Success / NoData / Error 분기
--> TargetActor / bHasLOS / DistanceToTarget / bInRange 명시적 갱신
+```text
+주변 인식
+-> AIContext 갱신
+-> AIState 결정
+-> 상태에 맞는 실행 경로 선택
+-> 이동 / 공격 / 피격 반응 / 사망 처리
 ```
 
-**Rule**
-```yaml
-Success
-- 현재 AIContext 기준 Blackboard 값 Set
+이 흐름은 적 AI가 감지 결과를 AIState 결정으로 바꾸고, 해당 상태에 맞는 실행 경로를 실행하는 전체 행동 결정 과정을 의미한다.
 
-NoData / Error
-- target 관련 Blackboard 값 Clear
-- 상태 전이 판단에 stale value가 남지 않도록 처리
+### 교전 / 공격 흐름
+
+```text
+타깃 정보
+-> Combat Role Assignment(전투 역할 배정)
+-> Engage(교전 상태) 진입
+-> 공격 가능 조건 확인
+   - No  -> Engage 유지
+         -> 교전 위치 조정
+   - Yes -> SBT_Attack(공격 실행 서브트리) 진입
+         -> 공격 선택
+         -> 공격 시작
+         -> 공격 종료 대기
+         -> 재사용 대기 시간 반영
+         -> Engage 유지
 ```
 
-### AttackIndex 초기화 안정화 (B04 보완)
+이 흐름은 AI가 전투에 참여할 수 있는지 먼저 결정하고, Engage 상태 안에서 공격 가능 조건이 충족될 때만 실제 공격 실행 흐름으로 들어가는 과정을 의미한다.
 
-#### A. AIState 전이 시 AttackIndex 명시 초기화
+### 피격 반응 흐름
 
-- AIState 전이 후 이전 attack context가 남아 ComboAttack이 같은 단계로 반복되는 문제를 정리했다.
-- 자세한 재현 조건과 원인은 `B04` Bug Report에서 분리하여 정리했다.
-
-**Flow**
-```yaml
-AIState 전이
--> Attack context cleanup
--> AttackIndex를 INDEX_NONE으로 갱신
--> 다음 attack 선택 시 새 context 기준으로 SelectAttackIndex 실행
+```text
+피해 처리 결과
+-> 피격 반응 대기값 설정
+-> 피격 반응 정보 갱신
+-> 피격 실행 경로 진입
+-> 피격 반응 시작
+-> 피격 반응 종료 대기
+-> AIState 재결정
 ```
 
-**Rule**
-```yaml
-AttackIndex
-- active attack context가 없으면 INDEX_NONE
-- 새 attack 선택 시 SelectAttackIndex에서 갱신
-- Blackboard ClearValue만으로 초기화하지 않음
+이 흐름은 피격 이후 AI가 일반 이동 / 공격 흐름을 벗어나 피격 반응 경로로 진입하고, 종료 후 다시 AIState 결정으로 복귀하는 과정을 의미한다.
+
+### 사망 흐름
+
+```text
+사망 상태 변경
+-> Blackboard에 사망 상태 반영
+-> 사망 실행 경로 진입
+-> 사망 상태 유지 또는 사망 상태 대기
 ```
+
+이 흐름은 사망 상태가 Blackboard와 BehaviorTree에 반영되어 AI가 사망 흐름으로 고정되는 과정을 의미한다.
 
 ---
-## 주요 Pipeline
 
-### AI Decision Pipeline
+## 구현 결과
 
-```yaml
-Perception
--> Update AIContext
--> Resolve AIState
--> Select BehaviorTree Branch
--> Execute Task / Subtree
--> Movement / Attack / Reaction
-```
+이 섹션은 변경 이후 시스템이 어떤 동작을 보장하게 됐는지 정리한다.
 
-### Engage / Attack Pipeline
+- 적 AI는 제어가 시작된 이후 BehaviorTree와 Blackboard 기반 AI 행동 결정 흐름에 진입한다.
 
-```yaml
-Target Context
--> Combat Role Assignment
--> Engage Branch
--> SBT_Attack
--> StartAttack
--> WaitAttackEnd
--> Cooldown Commit
-```
+- AI 행동 결정은 `AIContext 갱신 -> AIState 결정 -> 실행 경로 선택` 순서로 연결된다.
 
-### Reaction Pipeline
+- Engage(교전 상태) 진입 결정과 실제 공격 실행 조건이 분리된다.
 
-```yaml
-TakeDamage Result
--> Pending Reaction
--> Blackboard Reaction Context
--> HitReact Branch
--> StartReaction
--> WaitEndReaction
--> AIState 복귀
-```
+- 이동 / 공격 / 피격 반응 / 사망 흐름이 상태별 실행 경로 단위로 관리된다.
 
-### Dead Pipeline
-
-```yaml
-DeadState 변경
--> Blackboard DeadState
--> Dead Branch
--> StayDead / WaitDeadState
-```
+- 행동 결정 정보 갱신 실패와 AIState 전이 이후에도 유효하지 않은 타깃 객체, 교전 진입 판단 값, `AttackIndex`(공격 단계 기록)가 다음 행동 결정에 남지 않도록 정리된다.
 
 ---
+
 ## 테스트 방법
 
-### AI Core
+### AI 행동 결정 시작
 
-- Enemy AI가 포함된 test level에서 `ACAIController` possess가 정상 동작하는지 확인
-- `BB_Default`, `BT_Default`가 초기화되고 실행되는지 확인
-- Blackboard key validation과 초기값 설정이 정상 동작하는지 확인
+- 적 AI가 포함된 테스트 레벨에서 `ACAIController`(AI 컨트롤러)가 적 캐릭터를 제어하기 시작한 뒤 BehaviorTree와 Blackboard 초기화가 정상 동작하는지 확인했다.
+
+- Blackboard 항목 검증과 초기값 설정이 정상 동작하는지 확인했다.
 
 ### AIState 전이
 
-- `Idle / Patrol / Investigate / Chase / Alert / Engage / HitReact / Dead` branch 진입 여부 확인
-- target perception, LOS lost, alert range, Combat Role Assignment에 따라 state가 전이되는지 확인
-- 상태 전이 시 관련 Blackboard key가 정리되는지 확인
+- 순찰, 조사, 추격, 경계, 교전, 피격, 사망 실행 경로 진입 조건과 AIState 전이를 확인했다.
 
-### Patrol / Investigate / Chase / Alert
+- 타깃 인식, 시야 상실, 경계 거리, Combat Role Assignment(전투 역할 배정) 결과에 따라 상태가 전이되는지 확인했다.
 
-- patrol path / point 기반 movement가 정상 동작하는지 확인
-- target 상실 후 `LastKnownLocation` 기반 investigate가 실행되는지 확인
-- chase distance 조건과 alert step movement가 정상 동작하는지 확인
+### 이동 경로 동작
 
-### Engage / Attack
+- 순찰 지점 기반 이동이 정상 동작하는지 확인했다.
 
-- `UCWorldSubsystem_CombatEngage`의 Combat Role Assignment 결과가 `bShouldEngage`에 반영되는지 확인
-- `bInEngageRange`, `bCanCombatAction` 계산이 정상 동작하는지 확인
-- `SBT_Attack` 진입 후 `StartAttack -> WaitAttackEnd -> CommitAttackCooldown` 흐름이 정상 종료되는지 확인
+- 타깃 상실 후 마지막으로 본 위치 기반 조사가 실행되는지 확인했다.
 
-### Reaction / Dead
+- 추격 거리 조건과 경계 이동이 정상 동작하는지 확인했다.
 
-- 피격 시 `HitReact` branch에 진입하고 reaction 종료 후 상태가 복귀되는지 확인
-- 사망 시 `DeadState`가 Blackboard / AnimInstance에 동기화되는지 확인
+### 교전 / 공격
 
-### Movement Branch Control
+- Combat Role Assignment 결과가 Engage(교전 상태) 진입 여부에 반영되는지 확인했다.
 
-- `CanMove` decorator가 이동 sequence 진입을 제어하는지 확인
-- 공격, reaction, dead 상태에서 이동 branch가 의도대로 차단되는지 확인
+- Engage 상태에서 교전 거리와 공격 가능 조건 계산이 정상 동작하는지 확인했다.
+
+- `SBT_Attack`(공격 실행 서브트리)의 공격 선택, 시작, 종료 대기, 재사용 대기 시간 반영 흐름이 정상 종료되는지 확인했다.
+
+### 피격 / 사망
+
+- 피격 시 피격 실행 경로에 진입하고 피격 반응 종료 후 상태가 복귀되는지 확인했다.
+
+- 사망 시 사망 상태가 Blackboard에 반영되고, 사망 실행 경로가 해당 상태를 기준으로 동작하는지 확인했다.
+
+### 이동 경로 제어
+
+- `CanMove`(이동 가능 조건)가 movement component 상태를 기준으로 이동 경로 진입을 제어하는지 확인했다.
+
+### 안정성 보완
+
+- 행동 결정 정보 갱신 실패 시 유효하지 않은 타깃 객체와 교전 진입 판단 값이 정리되는지 확인했다.
+
+- Engage에서 벗어난 뒤 `AttackIndex`(공격 단계 기록)가 이전 공격 정보를 유지하지 않는지 확인했다.
 
 ---
+
 ## 검증 결과
 
-- `ACAIController` possess 이후 Blackboard / BehaviorTree 초기화 확인
-- `Perception -> Update AIContext -> Resolve AIState -> Select BT Branch` state transition 확인
-- Patrol / Investigate / Chase / Alert movement branch 동작 확인
-- Combat Role Assignment와 Attack subtree 동작 확인
-- HitReact / Dead 상태 흐름 확인
-- `CanMove` 기반 movement branch gating 확인
+- AI 컨트롤러가 적 캐릭터를 제어하기 시작한 뒤 BehaviorTree / Blackboard 초기화와 AIState 전이가 이어지는 것을 확인했다.
+
+- 타깃 인식 상태와 거리 조건에 따라 순찰 / 조사 / 추격 / 경계 이동 경로가 분리되어 동작하는 것을 확인했다.
+
+- Combat Role Assignment(전투 역할 배정)로 Engage(교전 상태) 진입 여부가 결정되고, 공격 가능 조건이 충족됐을 때 `SBT_Attack`(공격 실행 서브트리) 기반 공격 흐름이 동작하는 것을 확인했다.
+
+- 피격 / 사망 실행 경로가 일반 이동 / 공격 흐름보다 우선 처리되고, 각 상태의 종료 / 유지 흐름이 동작하는 것을 확인했다.
+
+- 행동 결정 정보 갱신 실패와 Engage 종료 이후에도 유효하지 않은 타깃 객체, 교전 진입 판단 값, `AttackIndex`(공격 단계 기록)가 다음 행동 결정에 남지 않는 것을 확인했다.
 
 ---
+
 ## 관련 문서
 
 - Issue Checklist: `D11_UE5_Portfolio_Issue_Checklist.md`
 
 - Issue Analysis Report:
-	- `I01_UE5_Portfolio_Issue_Analysis_Report.md`
-	- `I02_UE5_Portfolio_Issue_Analysis_Report.md`
+  - `I01_UE5_Portfolio_Issue_Analysis_Report.md`
+  - `I02_UE5_Portfolio_Issue_Analysis_Report.md`
 
 - Bug Report:
-	- `B03_UE5_Portfolio_Bug_Report.md`
-	- `B04_UE5_Portfolio_Bug_Report.md`
+  - `B03_UE5_Portfolio_Bug_Report.md`
+  - `B04_UE5_Portfolio_Bug_Report.md`
 
 ---
+
 ## 정리
 
-이 PR의 핵심은 Enemy AI를 단순 추적 / 단일 attack 실행 구조에서, `perception -> AIContext -> AIState -> BT Branch` 기반 실행 구조로 확장한 것이다.
+- P10은 적 AI의 행동 선택 결과와 BehaviorTree 실행 경로를 연결한 PR이다.
 
-변경 후 책임은 다음과 같이 정리됐다.
+- Alert(경계 상태) / Engage(교전 상태) / Attack 책임을 분리해, 교전 상태를 유지하면서 공격 가능 조건에 따라 실제 공격만 별도로 실행하도록 정리했다.
 
-```yaml
-ACAIController
-- Blackboard / BehaviorTree 초기화
-
-BT Service
-- AIContext update
-- AIState resolve
-
-BT Branch
-- state별 task / subtree 실행
-```
-
-또한 기존 `Combat` state가 담당하던 전투 참여 판단을 `Engage` 기준으로 재정리했다.
-
-그 결과 `Alert / Engage`를 포함한 combat 영역 안에서도 실제 attack 실행 가능 여부를 구분할 수 있게 되었고, Attack은 상위 state가 아니라 `Engage` 내부 `SBT_Attack`에서 실행되도록 분리됐다.
-
-이를 통해 movement / attack / reaction / dead flow를 하나의 BehaviorTree 안에서 상태별 branch로 관리할 수 있게 됐다.
-
----
+- B03 / B04에서 분리한 타깃 정보 잔여 문제와 `AttackIndex`(공격 단계 기록) 잔여 문제도 P10 흐름 안에서 함께 보완했다.

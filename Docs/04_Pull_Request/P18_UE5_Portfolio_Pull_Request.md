@@ -22,291 +22,263 @@
 
 ## 요약
 
-### 작업 요약
+본 PR은 Codex를 적극 활용하기 위한 **AI Workflow v1 문서 구조**와 **Prompt Library v1 초안**을 구성한 작업이다.
 
-본 PR은 Codex를 적극 활용하기 위한 `AI Workflow v1` 문서 구조와 `Prompt Library v1` 초안을 구성한 작업이다.
+또한 자연어 요청을 요청 요약(Work Brief), 기능 작업 계획(Feature Work Planning), 작업 목록(Work List)으로 정리하는 문서 흐름을 만들고, Parry 요청을 예시로 해당 흐름이 동작하는지 확인하는 것을 목표로 한다.
 
-이번 작업은 실제 UE C++ 기능 구현이 아니라, 자연어 요청을 `Work Brief -> Feature Work Planning -> Work List Draft`로 변환하는 AI 기반 작업 흐름을 문서화하고 제한적으로 검증하는 것을 목표로 한다.
+P18에서 확인한 문서 변환 흐름은 다음과 같다.
 
-### 이전 구조의 한계점
-
-기존 문서 체계에서는 AI와 함께 작업할 때 다음 기준이 명확히 분리되어 있지 않았다.
-
-```yaml
-한계점
-- AI Workflow 전체 문서 구조
-- Project Stella 자체의 프로젝트 맥락
-- Codex와의 작업 운영 기준
-- 작업 파이프라인 단계
-- Prompt 제작 기준
-- Prompt 호출 흐름과 라우팅 기준
-- Work Brief / Planning / Work List의 역할 경계
-- 후속 Refactor 범위
+```text
+자연어 요청
+-> 요청 요약(Work Brief)
+-> 기능 작업 계획(Feature Work Planning)
+-> 작업 목록(Work List)
 ```
 
-### 현재 구조의 보완사항
+핵심 변경은 다음과 같다.
 
-이를 다음 다섯 축으로 정리했다.
+### Documentation
 
-```yaml
-1. AI Workflow 문서 구조 구성
-- Index / Overview / Project Context / Operation / Work Pipeline / Backlog / Drafts 분리
+- **작업 운영 문서 구성**: AI 협업에 필요한 문서 목록(Index), 개요 문서(Overview), 프로젝트 맥락 문서(Project Context), 운영 지침(Operation Guide), 작업 절차 문서(Work Pipeline), 후속 관리 문서(Backlog), 초안 보관 문서(Drafts)를 나누어 정리했다.
 
-2. Prompt Blueprint 구성
-- Prompt 제작 기준, Custom 기준, 유지보수 기준, Flow / Routing 기준 정리
+- **Prompt 기준과 본문 구성**: 제작 / 관리 기준은 Prompt 기준 문서(Prompt Blueprint)로 정리하고, 실제 작업에 사용할 본문은 Prompt 본문(Prompt Files)으로 분리했다.
 
-3. Prompt Files v1 초안 구성
-- Work Planning / Document Writing / Review Verification / Git Operation Prompt 초안 작성
+- **Prompt 호출 흐름 정리**: 자연어 요청 이후 어떤 Prompt 계층으로 넘어갈지 판단하는 호출 흐름(Flow / Routing) 기준을 정리했다.
 
-4. W02 제한적 실사용 검증
-- Parry 자연어 요청을 Work Brief / Feature Work Planning / Work List Draft로 변환
+- **요청 변환 예시 작성**: Parry 자연어 요청을 요청 요약(Work Brief), 기능 작업 계획(Feature Work Planning), 작업 목록(Work List)으로 변환해 작업 문서 흐름을 예시로 남겼다.
 
-5. 후속 Refactor 범위 분리
-- 실제 구현, 문서 체계 재편, Prompt 품질 검수, History 체계 등을 후속 작업으로 분리
+- **후속 범위 정리**: 실제 Parry 구현, Prompt 실사용 검증, 문서 체계 재정리는 후속 관리 문서(Backlog)와 리팩터링 메모(Refactor Notes)로 분리했다.
+
+---
+
+## 핵심 개념
+
+이 섹션은 아래 설명에서 반복해서 사용할 문서 운영 용어를 먼저 정리한다.
+
+```text
+AI Workflow(AI 작업 운영 흐름)
+-> Codex와 함께 작업할 때 요청 확인, 계획, 실행, 검증, 문서화를 어떤 순서로 진행할지 정리한 운영 흐름
+-> 이 PR에서는 Docs/08_AI_Workflow 문서군으로 구성했다.
 ```
+
+```text
+Prompt Library(Prompt 모음)
+-> 반복 작업에 사용할 Prompt와 Prompt 관리 기준을 역할별로 모아둔 문서 집합
+-> 이 PR에서는 Prompt Blueprint와 Prompt Files v1 초안으로 구성했다.
+```
+
+```text
+Prompt Blueprint(Prompt 기준 문서)
+-> Prompt의 작성 형식, 제작 원칙, 커스텀 기준, 유지보수 기준, 호출 흐름을 정리한 기준 문서
+```
+
+```text
+Prompt Files(Prompt 본문)
+-> 실제 작업 중 호출해 사용할 Prompt 본문 파일
+-> 작업 계획, 문서 작성, 검토, Git 작업처럼 역할별 폴더에 배치했다.
+```
+
+```text
+Project Context(프로젝트 맥락 문서)
+-> 프로젝트 개요와 작업 전제 정보를 AI가 먼저 확인할 수 있게 정리한 문서군
+```
+
+```text
+Work Pipeline(작업 절차 문서)
+-> 요청 확인부터 계획, 실행, 검증, 문서화까지 이어지는 작업 절차를 정리한 문서군
+```
+
+```text
+Drafts(초안 보관 문서)
+-> 검증용 또는 작성 중인 초안 산출물을 임시로 모아두는 문서군
+```
+
+```text
+Work Brief(작업 요청 요약)
+-> 사용자의 자연어 요청을 작업 목적, 범위, 준비 상태, 다음 계획 입력으로 정리한 문서
+```
+
+```text
+Feature Work Planning(기능 작업 계획)
+-> Work Brief를 바탕으로 기능 구현 범위, 실행 순서, 검증 기준을 구체화한 계획 문서
+```
+
+```text
+Work List(작업 목록)
+-> Planning 결과를 실행 상태, 완료 기준, 검증 기준을 확인할 수 있는 작업 목록으로 정리한 문서
+-> P18에서는 W02 예시 문서를 통해 Work List 작성 흐름이 동작하는지만 확인했고, 항목별 구현 정합성은 후속 Parry 구현 Branch에서 검토한다.
+```
+
+```text
+Prompt Flow / Routing(Prompt 호출 흐름)
+-> 자연어 요청을 정리한 뒤 어떤 Prompt 계층으로 넘길지 판단하는 기준
+```
+
+---
+
+## 변경 배경
+
+이 섹션은 AI와의 협업 체계를 구축해야 했던 필요성과, 그 내부 구성을 AI Workflow / Prompt Library / W02 예시 검증으로 나누어 구성한 이유를 요약한다.
+
+### AI 협업 절차 문서화 필요성
+
+Codex와 작업할 때 필요한 목표 확인, 계획, 실행, 검증, 문서화 기준이 대화에만 남으면 Branch마다 작업 방식이 흔들릴 수 있었다.
+
+따라서 AI 협업 절차를 문서화하되, 한 문서에 모두 모으지 않고 문서 위치 확인, 운영 기준, 작업 절차, 후속 관리를 구분할 수 있는 체계로 나눌 필요가 있었다.
+
+### 자연어 요청 변환 흐름 필요성
+
+사용자의 자연어 요청은 바로 구현으로 들어가기 전에 목적, 범위, 위험, 검증 기준으로 정리되어야 했다.
+
+이를 위해 요청을 먼저 요약하고, 계획 단계에서 실행 단위와 검증 기준을 구체화한 뒤, 필요한 경우 작업 목록으로 관리할 수 있는 흐름이 필요했다.
+
+### Prompt 기준과 본문 분리 필요성
+
+Prompt가 늘어나면 작성 기준, 유지보수 기준, 호출 순서, 실제 Prompt 본문이 섞일 수 있었다.
+
+따라서 Prompt를 만들고 관리하는 기준과 실제 작업 중 호출할 본문을 분리할 필요가 있었다.
+
+### W02 예시 검증과 실제 구현 분리 필요성
+
+P18에서는 Parry 요청을 예시로 사용해 자연어 요청이 작업 문서로 변환되는 흐름을 확인했다.
+
+실제 Parry 구현과 UE 검증은 문서 변환 흐름 확인 이후의 작업이므로, 후속 Parry 구현 Branch에서 구체적으로 진행한다.
 
 ---
 
 ## 변경 범위
 
-### A. AI Workflow 문서 구조 구성
+이 섹션은 이번 PR에서 구성한 문서 체계와 각 산출물이 맡는 역할을 정리한다.
 
-`Docs/08_AI_Workflow`를 AI 기반 작업 운영 체계의 루트로 정리했다.
+### 1. AI Workflow 문서 구조 구성
 
-```yaml
-구성 문서
-- AI_Workflow_Index
-- AI_Workflow_Overview
-- Project_Stella_Overview
-- AI_Workflow_Operation_Guide
-- AI_Work_Pipeline
-- AI_Workflow_Backlog
-- AI_Workflow_Refactor_Notes
-- Drafts
-```
+- **왜**:
+  AI 기반 작업 운영 기준에는 문서 위치 확인, 전체 개요, 운영 규칙, 작업 절차, 후속 관리처럼 서로 다른 역할이 필요했다.
 
-각 문서의 역할은 다음 기준으로 분리했다.
+- **어떻게**:
+  `Docs/08_AI_Workflow` 아래에 문서 목록(Index), 개요 문서(Overview), 프로젝트 맥락 문서(Project Context), 운영 지침(Operation Guide), 작업 절차 문서(Work Pipeline), 후속 관리 문서(Backlog), 초안 보관 문서(Drafts)를 나누었다.
 
-```yaml
-Index
--> 위치 / 역할 / 상태 확인
+- **결과**:
+  AI Workflow 문서군은 문서 위치와 상태 확인, 전체 구조 설명, 운영 기준, 작업 절차, 후속 항목 관리를 각각 다른 문서에서 담당한다.
 
-Overview
--> AI Workflow 전체 구조 요약
+### 2. Prompt Blueprint 구성
 
-Project Context
--> Project Stella 자체의 목적 / 범위 / 기술 맥락 설명
+- **왜**:
+  Prompt를 안정적으로 늘리려면 실제 Prompt 본문보다 먼저 작성 형식, 제작 원칙, 커스텀 기준, 유지보수 기준, 호출 흐름 기준이 필요했다.
 
-Operation Guide
--> Codex와 작업할 때의 운영 기준
+- **어떻게**:
+  Prompt 작성 형식(Format), 제작 원칙(Engineering), 프로젝트 적용 기준(Custom), 유지보수 기준(Maintenance), 호출 흐름(Flow / Routing)을 Prompt Blueprint로 구성했다.
 
-Work Pipeline
--> 목표 확인 / 탐색 / 계획 / 적용 / 검증 / 문서화 공정
+- **결과**:
+  Prompt Library v1은 Prompt 본문과 제작 / 관리 기준을 함께 가진 초안 구조가 됐다.
 
-Backlog
--> 후속 작업 / 검토 후보 / 보류 항목 관리
+### 3. Prompt Files v1 초안 구성
 
-Drafts
--> 사용자 원문 기반 구상과 근거 초안 보관
-```
+- **왜**:
+  실제 작업에서 사용할 Prompt는 작업 계획, 문서 작성, 검토, Git 작업처럼 사용 목적별로 찾을 수 있어야 했다.
 
----
+- **어떻게**:
+  Work Planning, Document Writing, Review Verification, Git Operation 등 역할별 폴더를 만들고, Work Brief Intake / Feature Work Planning / Work List Writing / Document Set Audit / Git Commit PR Preflight Prompt 초안을 배치했다.
 
-### B. Prompt Blueprint 구성
+- **결과**:
+  자연어 요청 정리, 기능 계획, 작업 목록 작성, 문서 검토, Git 작업 전 확인에 사용할 Prompt 본문이 역할별로 분리됐다.
 
-Prompt 제작 / 유지보수 / 라우팅 기준을 `00_Prompt_Blueprint` 아래에 정리했다.
+### 4. Prompt Flow / Routing 기준 정리
 
-```yaml
-Prompt Blueprint
-- Prompt Blueprint Overview
-- Prompt Format Blueprint
-- Prompt Engineering Blueprint
-- Prompt Custom Blueprint
-- Prompt Library Maintenance Blueprint
-- Prompt Flow and Routing Blueprint
-```
+- **왜**:
+  사용자의 요청이 들어왔을 때 매번 어떤 Prompt 계층으로 넘어갈지 새로 판단하면 작업 흐름이 흔들릴 수 있었다.
 
-주요 정리 내용은 다음과 같다.
+- **어떻게**:
+  자연어 요청을 Work Brief Intake에서 정리한 뒤, 작업 유형과 준비 상태에 따라 Planning Prompt, Work List Writing, 문서화, 검증, Git 작업 계층으로 이어지는 기준을 정리했다.
 
-```yaml
-Prompt Format Blueprint
--> Prompt의 섹션 구조와 기본 양식 기준
+- **결과**:
+  작업 요청은 목적과 유형에 따라 필요한 Prompt 계층으로 이동할 수 있는 기본 Routing 기준을 갖게 됐다.
 
-Prompt Engineering Blueprint
--> Prompt 내부 요청 내용 설계 기준
+### 5. W02 제한적 실사용 검증
 
-Prompt Custom Blueprint
--> Project Stella / AI Workflow 전용 Prompt 적용 기준
+- **왜**:
+  AI Workflow와 Prompt Library 초안이 실제 자연어 요청을 작업 문서로 변환할 수 있는지 확인할 예시가 필요했다.
 
-Prompt Library Maintenance Blueprint
--> Prompt 파일명 / 폴더 / 상태 / Archive 관리 기준
+- **어떻게**:
+  Parry 자연어 요청을 `W02_UE5_Portfolio_Work_Brief.md`, `W02_UE5_Portfolio_Feature_Work_Planning.md`, `W02_UE5_Portfolio_Work_List_Draft.md`로 변환했다.
 
-Prompt Flow and Routing Blueprint
--> 자연어 요청 이후 어떤 Prompt 계층을 거쳐 처리되는지 설명
-```
+- **결과**:
+  자연어 요청이 Work Brief -> Feature Work Planning -> Work List로 변환되는 흐름을 예시 문서로 확인했다.
+  `Work_List_Draft`는 변환 흐름 확인을 위한 검증용 문서로 남겼다.
+
+### 6. Backlog / Refactor Notes 정리
+
+- **왜**:
+  P18은 AI 협업 작업환경을 처음 구축하고, 계획 생산까지의 흐름을 확인한 단계다.
+  이후에는 실제 사용 데이터를 기준으로 문서 체계와 Prompt Library를 다시 조정해야 했다.
+
+- **어떻게**:
+  `AI_Workflow_Backlog (KR).md`에는 실사용 중 다시 확인할 후속 작업과 검토 후보를 정리하고, `AI_Workflow_Refactor_Notes (KR).md`에는 다음 AI Workflow Refactor에서 조정할 구조 후보를 분리했다.
+
+- **결과**:
+  P18은 AI Workflow 문서 체계와 Prompt Library v1 초안을 초기 작업환경으로 구성하고, 다음 단계에서는 실제 사용 데이터를 바탕으로 후속 Refactor를 진행할 수 있게 했다.
 
 ---
 
-### C. Prompt Files v1 초안 구성
+## 주요 처리 흐름
 
-실제 복사용 Prompt 파일을 역할별 폴더로 구성했다.
+이 섹션은 이번 PR에서 정리한 작업 문서 변환 흐름과 Prompt 호출 흐름을 설명한다.
 
-```yaml
-Prompt Files
-- Working Rules
-- Working Reference
-- Work Planning
-- Document Writing
-- Feature Work Prompts
-- Review Verification
-- Git Operation
-```
-
-이번 PR에서 특히 다음 Prompt 흐름을 구성했다.
-
-```yaml
-Work Brief Intake Prompt
--> 자연어 요청을 Work Brief로 정리하고 작업 유형 / 준비 상태 / 다음 Prompt 후보 판정
-
-Feature Work Planning Prompt
--> Work Brief를 기능 구현 단위 / 실행 순서 / 검증 기준으로 분해
-
-Refactor Work Planning Prompt
--> 구조 변경 / 리팩터링 작업의 변경 단위 / 위험 / 검증 기준 작성
-
-Work List Writing Prompt
--> Work Brief와 Work Planning 결과를 실행 관리용 Work List로 변환
-
-Document Set Audit Prompt
--> 문서군의 역할 / 구조 / 용어 / 연계성 / 운용 가능성 감사
-
-Git Commit PR Preflight Prompt
--> Commit / PR 전 Git 상태와 검증 상태 점검
-```
-
----
-
-### D. Prompt Flow / Routing 기준 정리
-
-자연어 요청 이후의 Prompt 호출 흐름을 다음 계층으로 정리했다.
+### W02 예시 문서 변환 흐름
 
 ```text
-자연어 요청
--> Work Brief Intake
--> 작업 유형 판정
--> 필요한 Planning Prompt 선택
--> Work List Writing 후보 판단
--> Planning 결과 기준으로 필요 시 Work List Writing
--> 작업 수행
--> 필요 시 문서화 계층
--> 필요 시 검증 계층
--> 필요 시 Commit / PR 계층
+사용자 자연어 요청
+-> Work Brief 작성
+-> Feature Work Planning 작성
+-> Work List 작성
 ```
 
-Prompt 계층은 다음 기준으로 분리했다.
+이 흐름은 P18에서 Parry 요청을 예시로 사용해 자연어 요청이 작업 문서로 변환되는 과정을 확인한 것이다.
+P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
+작업 목록 내용 검토와 구현 / 검증 / 문서화는 후속 Parry 구현 Branch에서 진행한다.
 
-```yaml
-입력 / 라우팅 계층
--> Work Brief Intake
+### Prompt Routing 흐름
 
-계획 계층
--> Feature Work Planning
--> Refactor Work Planning
-
-계획 시각화 / 관리 계층
--> Work List Writing
-
-실행 계층
--> 구현
--> 문서화
--> 검증
--> Commit / PR
-
-참조 계층
--> Working Rule
--> Working Reference
+```text
+사용자 자연어 요청
+-> Work Brief Intake에서 요청 목적 / 작업 유형 / 준비 상태 정리
+-> 필요한 Planning Prompt 후보 판단
+-> 선택된 Planning Prompt로 작업 계획 작성
+-> Work List Writing 필요 여부 판단
+-> 실행 / 문서 / 검증 / Git 단계로 이동
 ```
+
+이 흐름은 `Work Brief Intake`가 자연어 요청을 정리하고 다음 Prompt 후보를 판단한 뒤, 작업 유형에 맞는 계층으로 넘기는 과정을 의미한다.
 
 ---
 
-### E. W02 제한적 실사용 검증
+## 구현 결과
 
-Parry 구현 요청을 예시로 사용해 AI Workflow의 문서 변환 흐름을 검증했다.
+이 섹션은 P18 이후 문서 운영 체계와 Prompt Library가 어떤 산출물로 남았는지 정리한다.
 
-```yaml
-W02 문서 흐름
-- W02 Work Brief
-- W02 Feature Work Planning
-- W02 Work List Draft
-```
+- **AI Workflow 문서군**: 문서 목록(Index), 개요 문서(Overview), 프로젝트 맥락(Project Context), 운영 지침(Operation Guide), 작업 절차(Work Pipeline), 후속 관리(Backlog), 초안 보관(Drafts) 문서로 나뉘었다.
 
-검증한 내용은 다음과 같다.
+- **Prompt Blueprint**: Prompt 작성 형식, 제작 원칙, 프로젝트 적용 기준, 유지보수 기준, 호출 흐름 기준을 관리하는 기준 문서로 구성됐다.
 
-```yaml
-검증 내용
-- 자연어 요청을 Work Brief로 정리할 수 있는가
-- Work Brief를 Feature Work Planning으로 변환할 수 있는가
-- Feature Work Planning을 Work List Draft로 변환할 수 있는가
-- 실제 구현 / Build / PIE / Editor / Asset 검증 항목을 완료 처리하지 않고 분리할 수 있는가
-- 실제 구현 Branch로 넘길 범위를 명확히 분리할 수 있는가
-- S26 / S27 / S28과 GuardAndParry 애셋을 현재 PR의 확정 기준이 아니라 실제 구현 Branch에서 확인할 입력 항목으로 분리할 수 있는가
-```
+- **Prompt Files v1**: Work Planning, Document Writing, Review Verification, Git Operation 등 실제 작업 중 호출할 Prompt 본문을 역할별 폴더로 분리했다.
 
-W02 문서 3종은 AI Workflow 제한적 실사용 검증 예시이며, 실제 Parry 구현 완료 문서가 아니다.
+- **W02 예시 문서**: Parry 요청을 Work Brief, Feature Work Planning, Work List까지 변환해 문서 변환 흐름 예시로 남겼다.
 
----
-
-### F. 리뷰 대응 반영
-
-PR 리뷰에서 지적된 W02 입력 기준의 확정성 문제를 반영했다.
-
-```yaml
-S26 / S27 / S28
--> 현재 PR의 확정 기준이 아니라 실제 구현 Branch에서 확인할 후속 Architecture baseline 후보로 정리
-
-GuardAndParry Animation Asset
--> 현재 PR의 전제가 아니라 실제 구현 Branch에서 확인할 입력 Asset 항목으로 정리
-```
-
----
-
-### G. Backlog / Refactor Notes 정리
-
-현재 Branch에서 닫지 않을 범위를 후속 작업으로 분리했다.
-
-```yaml
-후속 Refactor 후보
-- Prompt Flow / Routing 계층과 폴더 구조 정합성 점검
-- Work Brief / Planning / Work List 필드 계약 정리
-- Work List 위치와 갱신 규칙 정리
-- Document Writing Prompt와 문서 카테고리 체계 재정리
-- System Architecture / Engine Technique 문서 역할 분리
-- History 문서 체계 신설 여부 검토
-- Prompt 문장 품질 최종 검수
-```
-
-실제 W02 Parry 구현은 별도 Branch에서 진행하도록 분리했다.
+- **Backlog / Refactor Notes**: 실제 사용 중 다시 확인할 후속 작업과 다음 AI Workflow Refactor에서 조정할 구조 후보를 관리하도록 분리했다.
 
 ---
 
 ## 주요 커밋
 
-```yaml
-be43b53
--> docs(ai-workflow): establish workflow document structure
+- `be43b53`: `docs(ai-workflow): establish workflow document structure`
 
-939ba31
--> docs(prompt): define prompt blueprint and routing model
+- `939ba31`: `docs(prompt): define prompt blueprint and routing model`
 
-fab6874
--> docs(prompt): add work planning prompts
+- `fab6874`: `docs(prompt): add work planning prompts`
 
-8c54eef
--> docs(prompt): add document review and git operation prompts
+- `8c54eef`: `docs(prompt): add document review and git operation prompts`
 
-234a114
--> docs(ai-workflow): record backlog and d20 workflow validation
-```
+- `234a114`: `docs(ai-workflow): record backlog and d20 workflow validation`
 
 ---
 
@@ -314,110 +286,115 @@ fab6874
 
 ### 문서 출력 확인
 
-- W01 Work List가 UTF-8 기준으로 정상 출력되는지 확인한다.
+- W01 Work List와 AI Workflow 문서군이 UTF-8 기준으로 정상 출력되는지 확인했다.
 
 ### 검색 검증
 
-- Branch 목표, Prompt Library v1, AI Workflow, W02 흐름이 문서에 반영되어 있는지 확인한다.
+- Branch 목표, Prompt Library v1, AI Workflow, W02 흐름이 문서에 반영되어 있는지 검색으로 확인했다.
 
 ### 배치 확인
 
-- Prompt Blueprint와 Prompt Files가 역할별 폴더에 배치되어 있는지 확인한다.
+- Prompt Blueprint와 Prompt Files가 역할별 폴더에 배치되어 있는지 확인했다.
 
-### W02 검증
+### W02 흐름 확인
 
-- W02 Work Brief / Feature Work Planning / Work List Draft 문서 흐름을 확인한다.
+- W02 Work Brief / Feature Work Planning / Work List 문서가 자연어 요청 -> 계획 -> 작업 목록 흐름으로 이어지는지 확인했다.
 
-- W02 Work List Draft에서 실제 구현 / Build / PIE / Editor / Asset 항목이 완료 처리되지 않았는지 확인한다.
+- W02 작업 목록에서 실제 구현 / Build / PIE / Editor / Asset 검증 항목이 완료 처리되지 않고 후속 Parry 구현 Branch 범위로 분리되어 있는지 확인했다.
 
 ---
 
 ## 검증 결과
 
-### 수행한 검증
+- W01 Work List와 AI Workflow 문서군의 출력 상태를 확인했다.
 
-```yaml
-문서 출력 확인
--> W01 Work List UTF-8 출력 확인
+- Branch 목표, Prompt Library v1, AI Workflow, W02 문서 흐름이 관련 문서에 반영되어 있음을 확인했다.
 
-검색 검증
--> Branch 목표 / Prompt Library v1 / AI Workflow / W02 흐름 반영 여부 확인
+- Prompt Blueprint 6종과 Prompt Files 역할별 폴더 배치를 확인했다.
 
-배치 확인
--> Prompt Blueprint 6종 파일 배치 확인
--> Prompt Files 역할별 폴더 배치 확인
-
-W02 검증
--> W02 Work Brief / Feature Work Planning / Work List Draft 문서 흐름 확인
--> W02 Work List Draft에서 실제 구현 / Build / PIE / Editor / Asset 항목이 완료 처리되지 않았는지 확인
-```
+- W02 Work Brief / Feature Work Planning / Work List가 제한적 실사용 검증 예시로 남아 있고, 실제 구현 완료 문서처럼 처리되지 않았음을 확인했다.
 
 ---
 
 ## 미검증 항목
 
-```yaml
-미수행
--> UE C++ 빌드
--> PIE 검증
--> Editor / Asset 검증
--> 실제 Parry 구현 검증
-```
+- UE C++ 빌드
 
-본 PR은 문서 / Prompt Library 구성 작업이므로 UE C++ 빌드는 수행하지 않는다.
+- PIE 검증
+
+- Editor / Asset 검증
+
+- 실제 Parry 구현 검증
+
+- Prompt Library v1 전면 실사용 검증
+
+본 PR은 문서 / Prompt Library 구성 작업이므로 UE C++ 빌드와 PIE 검증은 수행하지 않았다.
 
 ---
 
 ## 비범위
 
-```yaml
-이번 PR 비범위
 - W02 Parry 실제 구현
-- Guard / Counter 세부 설계 확정
-- W02 Work List Draft 공식 승격
+
+- Guard / Counter 내부 설계 확정
+
+- W02 작업 목록의 실제 구현 기준 정합성 검토
+
 - Prompt Library v1 전면 실사용 검증
+
 - Prompt 문장 품질 최종 검수
+
 - 기존 Docs 전체 리팩터링
+
 - System Architecture / Engine Technique 문서 체계 재작성
-- UE C++ 코드 변경 및 빌드 검증
-```
+
+- UE C++ 코드 변경과 빌드 검증
 
 ---
 
 ## 후속 작업
 
-```yaml
-실제 구현 Branch
--> W02 Parry 구현
--> W02 Work List Draft 공식 Work List 승격 여부 판단
--> Build / Code Flow / PIE / Editor / Asset 검증
--> Verification Log / PR Document 작성
+- 후속 Parry 구현 Branch에서 W02 작업 목록의 항목별 구현 정합성을 검토한다.
 
-AI Workflow Refactor
--> AI_Workflow_Refactor_Notes 기준으로 Prompt Flow / 문서 체계 / Work List 갱신 규칙 재검토
--> 실제 W02 구현 중 Workflow 사용성 확인 후 필요한 부분만 반영
-```
+- 후속 Parry 구현 Branch에서 Build / Code Flow / PIE / Editor / Asset 검증을 수행한다.
+
+- Prompt Library v1을 실제 작업에 반복 적용하면서 보완 후보를 Backlog와 Refactor Notes에 반영한다.
+
+- AI Workflow Refactor Notes 기준으로 Prompt Flow, 문서 체계, Work List 갱신 규칙을 재검토한다.
 
 ---
 
 ## 관련 문서
 
-- Work List: `W01_UE5_Portfolio_Work_List.md`
+- W01 Work List: `W01_UE5_Portfolio_Work_List.md`
 
 - Work Brief: `W02_UE5_Portfolio_Work_Brief.md`
 
-- Feature Work Planning: `W02_UE5_Portfolio_Feature_Work_Planning.md`
+- Work Planning: `W02_UE5_Portfolio_Feature_Work_Planning.md`
 
-- Work List Draft: `W02_UE5_Portfolio_Work_List_Draft.md`
+- W02 Work List: `W02_UE5_Portfolio_Work_List_Draft.md`
 
 - AI Workflow:
-	- `AI_Workflow_Index (KR).md`
-	- `AI_Workflow_Overview (KR).md`
-	- `AI_Workflow_Operation_Guide (KR).md`
-	- `AI_Work_Pipeline (KR).md`
+  - `AI_Workflow_Index (KR).md`
+  - `AI_Workflow_Overview (KR).md`
+  - `Project_Stella_Overview (KR).md`
+  - `AI_Workflow_Operation_Guide (KR).md`
+  - `AI_Work_Pipeline (KR).md`
+  - `Project_Overview_Draft (KR).md`
+  - `Project_Rules_Draft (KR).md`
+  - `AI_Work_Plan_Draft (KR).md`
 
 - Prompt Blueprint: `05_Prompt_Flow_and_Routing_Blueprint (KR).md`
 
 - Backlog:
-	- `AI_Workflow_Backlog (KR).md`
-	- `AI_Workflow_Refactor_Notes (KR).md`
+  - `AI_Workflow_Backlog (KR).md`
+  - `AI_Workflow_Refactor_Notes (KR).md`
+
+---
+
+## 정리
+
+P18은 Codex 기반 작업을 반복 가능하게 만들기 위한 AI Workflow 문서 체계와 Prompt Library v1 초안을 구성한 문서 PR이다.
+
+W02 Parry 요청은 자연어 요청이 작업 문서로 변환되는 흐름을 확인하기 위한 예시로 사용했다.
+실제 구현과 UE 검증은 후속 Parry 구현 Branch로 분리했다.
