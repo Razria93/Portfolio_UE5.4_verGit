@@ -1,4 +1,4 @@
-﻿# Code Review Prompt
+# Code Review Prompt
 
 ## 1. 목적
 

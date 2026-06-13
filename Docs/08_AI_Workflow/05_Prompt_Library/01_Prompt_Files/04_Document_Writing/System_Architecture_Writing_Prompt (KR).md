@@ -1,4 +1,4 @@
-﻿# System Architecture Writing Prompt
+# System Architecture Writing Prompt
 
 ## 1. 목적
 

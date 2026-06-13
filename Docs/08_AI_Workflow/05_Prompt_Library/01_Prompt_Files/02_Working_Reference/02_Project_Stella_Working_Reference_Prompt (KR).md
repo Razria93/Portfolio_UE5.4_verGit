@@ -1,4 +1,4 @@
-﻿# Project Stella Working Reference Prompt
+# Project Stella Working Reference Prompt
 
 ## 1. 목적
 

@@ -1,4 +1,4 @@
-﻿# UE5 Portfolio - Work List
+# UE5 Portfolio - Work List
 
 ## 제목
 

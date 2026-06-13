@@ -1,4 +1,4 @@
-﻿# AI Workflow Backlog
+# AI Workflow Backlog
 
 ## 1. 목적
 

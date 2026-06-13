@@ -1,4 +1,4 @@
-﻿# Work Brief Intake Prompt
+# Work Brief Intake Prompt
 
 ## 1. 목적
 

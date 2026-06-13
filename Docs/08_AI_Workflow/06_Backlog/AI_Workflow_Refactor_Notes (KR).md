@@ -1,4 +1,4 @@
-﻿# AI Workflow Refactor Notes
+# AI Workflow Refactor Notes
 
 ## 1. 목적
 

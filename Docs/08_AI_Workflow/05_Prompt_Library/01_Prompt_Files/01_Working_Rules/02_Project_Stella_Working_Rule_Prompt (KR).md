@@ -1,4 +1,4 @@
-﻿# Project Stella Working Rule Prompt
+# Project Stella Working Rule Prompt
 
 ## 1. 목적
 

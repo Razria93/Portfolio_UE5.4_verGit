@@ -1,4 +1,4 @@
-﻿# Troubleshooting Summary Prompt
+# Troubleshooting Summary Prompt
 
 ## 1. 목적
 

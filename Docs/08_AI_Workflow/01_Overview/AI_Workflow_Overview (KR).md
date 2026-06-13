@@ -1,4 +1,4 @@
-﻿# AI Workflow Overview
+# AI Workflow Overview
 
 ## 1. 목적
 

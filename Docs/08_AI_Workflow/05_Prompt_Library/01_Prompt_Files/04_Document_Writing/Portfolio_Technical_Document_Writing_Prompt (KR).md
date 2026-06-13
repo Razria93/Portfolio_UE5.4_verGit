@@ -1,4 +1,4 @@
-﻿# Portfolio Technical Document Writing Prompt
+# Portfolio Technical Document Writing Prompt
 
 ## 1. 목적
 

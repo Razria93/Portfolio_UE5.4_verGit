@@ -1,4 +1,4 @@
-﻿# Refactor Work Planning Prompt
+# Refactor Work Planning Prompt
 
 ## 1. 목적
 

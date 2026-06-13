@@ -1,4 +1,4 @@
-﻿# Prompt Custom Blueprint
+# Prompt Custom Blueprint
 
 ## 1. 목적
 

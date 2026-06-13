@@ -1,4 +1,4 @@
-﻿# Verification Log Prompt
+# Verification Log Prompt
 
 ## 1. 목적
 

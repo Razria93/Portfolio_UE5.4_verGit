@@ -1,4 +1,4 @@
-﻿# Feature Work Planning Prompt
+# Feature Work Planning Prompt
 
 ## 1. 목적
 
