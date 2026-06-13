@@ -4,6 +4,8 @@
 
 재현 조건, 영향 범위, 기대 결과, 실제 결과, 원인, 수정, 검증 결과, 회귀 방지 기준을 Bug Report로 정리한다.
 
+이 Prompt의 전용 책임은 개별 버그의 영향 범위, 발생 조건, 재현 방법, 기대 결과 / 실제 결과, 원인, 수정, 수정 기준, 검증 결과, 회귀 방지 기준을 분리하는 것이다.
+
 ---
 
 ## 2. 사용 시점
@@ -20,6 +22,8 @@
 ## 3. 사용 방법
 
 대상 문제, 재현 조건, 관련 코드 / 문서, 수정 결과, 검증 결과를 제공하고 `복사용 Prompt`를 사용한다.
+
+상단 메타, 날짜, 상태, 브랜치, 공백 같은 공통 양식은 `00_Document_Common_Format_Prompt` 기준을 따르되, Bug Report 전용 세부 양식은 이 Prompt를 우선한다.
 
 ---
 
@@ -79,6 +83,8 @@
 ---
 
 ## 5. 작성 기준
+
+아래 상단 메타와 섹션 구성은 `00_Document_Common_Format_Prompt`의 공통 양식을 Bug Report 기준으로 구체화한 양식이다.
 
 ```md
 # UE5 Portfolio Bug Report
@@ -157,6 +163,8 @@
 ```
 
 환경 섹션은 실제 문서에 필요한 항목만 사용한다. 항목명은 KR 기준으로 작성하고, `Branch`, `Related Class`, `Asset`, `Document` 같은 EN 항목명은 사용하지 않는다.
+
+브랜치는 상단 메타의 브랜치 섹션을 기본 기준으로 삼는다. 버그 발생 환경을 설명하는 데 브랜치 정보가 별도로 필요할 때만 환경 섹션에도 작성한다.
 
 ```yaml
 영향 범위
@@ -346,10 +354,12 @@
 ## 13. 기존 Prompt와 역할 경계
 
 ```yaml
+00_Document_Common_Format_Prompt
+-> 파일명 / 상단 메타 / 날짜 / 상태 / 브랜치 / 공백 같은 공통 양식 기준
+
 Bug Report Writing Prompt
 -> 개별 버그 분석 문서 작성
 
 Troubleshooting Summary Prompt
 -> 여러 Bug Report를 유형별 기술 문서로 압축
 ```
-
