@@ -134,7 +134,7 @@
 
 - Issue Checklist: `D03_UE5_Portfolio_Issue_Checklist.md`
 
-- PR: `P02_UE5_Portfolio_Pull_Request (KR).md`
+- PR: `P02_UE5_Portfolio_Pull_Request.md`
 
 ---
 

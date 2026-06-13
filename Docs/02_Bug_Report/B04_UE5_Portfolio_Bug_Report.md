@@ -180,7 +180,7 @@ InBlackboardComp->SetValueAsInt(CAIKey::Engage::AttackIndex, INDEX_NONE);
 
 - Issue Checklist: `D11_UE5_Portfolio_Issue_Checklist.md`
 
-- PR: `P10_UE5_Portfolio_Pull_Request (KR).md`
+- PR: `P10_UE5_Portfolio_Pull_Request.md`
 
 - Portfolio Technical Document: `T04_Enemy AI Combat Behavior Design.md`
 

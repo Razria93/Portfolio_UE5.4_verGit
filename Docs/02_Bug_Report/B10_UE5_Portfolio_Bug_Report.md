@@ -208,7 +208,7 @@ Total execution time: 0.63 seconds
 
 - Issue Checklist: `D18_UE5_Portfolio_Issue_Checklist.md`
 
-- PR: `P17_UE5_Portfolio_Pull_Request (KR).md`
+- PR: `P17_UE5_Portfolio_Pull_Request.md`
 
 ---
 

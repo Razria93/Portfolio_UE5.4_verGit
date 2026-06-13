@@ -244,7 +244,7 @@ for (UShapeComponent* collision : collisionsToEnable)
 
 - Issue Checklist: `D13_UE5_Portfolio_Issue_Checklist.md`
 
-- PR: `P12_UE5_Portfolio_Pull_Request (KR).md`
+- PR: `P12_UE5_Portfolio_Pull_Request.md`
 
 - Portfolio Technical Document: `T02_Combat Data Processing Pipeline.md`
 

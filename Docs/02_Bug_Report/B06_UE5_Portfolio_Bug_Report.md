@@ -161,7 +161,7 @@ CreateExport: 'RootScene' 리소스에 대한 BP_CAttachment_Sword_C /Game/06_We
 
 - Issue Checklist: `D16_UE5_Portfolio_Issue_Checklist.md`
 
-- PR: `P15_UE5_Portfolio_Pull_Request (KR).md`
+- PR: `P15_UE5_Portfolio_Pull_Request.md`
 
 - Portfolio Technical Document: `T03_Action & Reaction Execution Pipeline.md`
 

@@ -162,7 +162,7 @@ if (UCActionComponent* actionComp = OwnerCharacter_Cached
 
 - Issue Checklist: `D16_UE5_Portfolio_Issue_Checklist.md`
 
-- PR: `P15_UE5_Portfolio_Pull_Request (KR).md`
+- PR: `P15_UE5_Portfolio_Pull_Request.md`
 
 - Portfolio Technical Document: `T03_Action & Reaction Execution Pipeline.md`
 
