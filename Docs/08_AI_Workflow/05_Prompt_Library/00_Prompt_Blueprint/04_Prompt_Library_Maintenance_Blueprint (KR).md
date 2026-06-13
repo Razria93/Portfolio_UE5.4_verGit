@@ -17,6 +17,7 @@ Prompt Format Blueprint가 개별 Prompt의 양식과 섹션 구조를 다룬다
 -> Prompt Library 구조
 -> Prompt 파일명 규칙
 -> Prompt 관리 상태
+-> Prompt 변경 관리 문서 연결 기준
 -> 중복 / 구버전 / 역할 충돌 판단
 -> Archive / 삭제 / 대체 기준
 -> 링크 / 참조 갱신
@@ -121,7 +122,24 @@ Archive 후보 -> Archive
 
 ---
 
-## 7. 중복 / 구버전 판단 기준
+## 7. Prompt 변경 관리 문서 연결 기준
+
+Prompt 변경 후보 수집, 승인, 반영 후 유지관리는 별도 Prompt Management 문서에서 관리한다.
+
+```yaml
+연결 문서
+01_Prompt_Change_Management_Rule (KR).md
+-> 최근 문서 패턴 수집, 후보 관리, 승인, 검증, 반영 후 유지관리 기준
+
+02_Prompt_Pattern_Candidates (KR).md
+-> 작업 중 발견한 Prompt 반영 후보와 처리 상태를 기록하는 캐시 문서
+```
+
+Maintenance Blueprint는 Prompt Library의 위치, 이름, 상태, 중복, Archive, 참조 갱신 기준을 담당한다.
+
+---
+
+## 8. 중복 / 구버전 판단 기준
 
 ```yaml
 중복 판단
@@ -138,7 +156,7 @@ Archive 후보 -> Archive
 
 ---
 
-## 8. Archive / 삭제 / 대체 기준
+## 9. Archive / 삭제 / 대체 기준
 
 ```yaml
 Archive 권장
@@ -157,7 +175,7 @@ Archive 권장
 
 ---
 
-## 9. 링크 / 참조 갱신 기준
+## 10. 링크 / 참조 갱신 기준
 
 Prompt 파일명, 폴더명, 역할이 바뀌면 다음을 함께 확인한다.
 
@@ -174,7 +192,7 @@ Prompt 파일명, 폴더명, 역할이 바뀌면 다음을 함께 확인한다.
 
 ---
 
-## 10. 후속 관리 목록 반영 기준
+## 11. 후속 관리 목록 반영 기준
 
 즉시 처리하지 않을 항목은 별도 후속 관리 목록에 기록한다.
 
@@ -191,7 +209,7 @@ Prompt 파일명, 폴더명, 역할이 바뀌면 다음을 함께 확인한다.
 
 ---
 
-## 11. 유지보수 트리거
+## 12. 유지보수 트리거
 
 Prompt Library는 다음 상황에서 점검한다.
 

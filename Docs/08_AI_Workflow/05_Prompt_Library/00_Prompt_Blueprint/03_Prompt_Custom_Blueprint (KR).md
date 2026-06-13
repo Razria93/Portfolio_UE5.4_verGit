@@ -161,6 +161,9 @@ Project Stella Prompt Library는 다음 폴더 구조를 기준으로 관리한�
 
 07_Git_Operation
 -> Commit / PR 전 점검 Prompt
+
+05_Prompt_Library/02_Prompt_Management
+-> Prompt 반영 후보 수집, 승인, 반영 후 유지관리 운영 문서
 ```
 
 Prompt Library의 위치, 역할, 상태는 `../../00_Index/AI_Workflow_Index (KR).md`에 반영한다.
@@ -172,6 +175,7 @@ Prompt Library의 위치, 역할, 상태는 `../../00_Index/AI_Workflow_Index (K
 -> 실제 Prompt Library 폴더 구조는 이 섹션에서 관리
 -> Prompt 위치 / 역할 / 상태는 AI Workflow Index에 반영
 -> Prompt Library에 등록하는 Prompt는 기존 Prompt와 역할 경계를 명시
+-> Prompt 변경 후보 수집과 처리는 Prompt Management 문서에 반영
 -> 실사용 검증 후보, Archive 후보, 명칭 전환 대기 항목은 Backlog에 반영
 -> Prompt 문장 품질 최종 검수 후보는 Backlog에 반영
 -> 개별 Prompt 수정 후보는 Backlog 또는 해당 Prompt 파일에 반영
