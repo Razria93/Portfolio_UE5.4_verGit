@@ -45,11 +45,11 @@ Enemy AI
 - Player / AI 공통 실행 흐름 연결
 
 Documentation
-- Issue Checklist
+- Work List
 - Pull Request
 - Bug Report
 - System Architecture
-- Technical Documents
+- Portfolio Documents
 - AI Workflow / Prompt Library
 ```
 
@@ -89,9 +89,9 @@ Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더�
 
 ## 4. 문서 구조
 
-### 제출용 기술 문서
+### 포트폴리오 문서
 
-[Docs/07_Technical_Documents](Docs/07_Technical_Documents)
+[Docs/07_Portfolio_Documents](Docs/07_Portfolio_Documents)
 
 포트폴리오 제출용으로 압축한 기술 설명 문서입니다.
 
@@ -101,9 +101,9 @@ Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더�
 
 전투 실행 구조, 책임 경계, orchestration, damage / feedback / reaction 흐름을 정리한 문서입니다.
 
-### 작업 관리 문서
+### Work List 문서
 
-[Docs/01_Issue_CheckList](Docs/01_Issue_CheckList)
+[Docs/01_Work_List](Docs/01_Work_List)
 
 작업 단위별 목표, 범위, 체크 항목, 검증 기준을 기록합니다.
 
@@ -131,28 +131,28 @@ Codex와 함께 작업하기 위한 AI 기반 작업 흐름, Prompt Library, Wor
 
 ```yaml
 포트폴리오 개요
--> Docs/07_Technical_Documents/T00_UE5 Portfolio Overview.md
+-> Docs/07_Portfolio_Documents/PF00_UE5_Portfolio_Document.md
 
 프로젝트 기술 요약
--> Docs/07_Technical_Documents/T01_Project Technical Summary.md
+-> Docs/07_Portfolio_Documents/PF01_UE5_Portfolio_Document.md
 
 전투 데이터 처리 파이프라인
--> Docs/07_Technical_Documents/T02_Combat Data Processing Pipeline.md
+-> Docs/07_Portfolio_Documents/PF02_UE5_Portfolio_Document.md
 
 Action / Reaction 실행 파이프라인
--> Docs/07_Technical_Documents/T03_Action & Reaction Execution Pipeline.md
+-> Docs/07_Portfolio_Documents/PF03_UE5_Portfolio_Document.md
 
 Enemy AI 전투 행동 설계
--> Docs/07_Technical_Documents/T04_Enemy AI Combat Behavior Design.md
+-> Docs/07_Portfolio_Documents/PF04_UE5_Portfolio_Document.md
 
 Data-Driven 설계
--> Docs/07_Technical_Documents/T05_Data-Driven Design.md
+-> Docs/07_Portfolio_Documents/PF05_UE5_Portfolio_Document.md
 
 Troubleshooting
--> Docs/07_Technical_Documents/T06_Trouble Shooting.md
+-> Docs/07_Portfolio_Documents/PF06_UE5_Portfolio_Document.md
 
 AI 기반 개발 Workflow
--> Docs/07_Technical_Documents/T07_AI-Assisted Development Workflow.md
+-> Docs/07_Portfolio_Documents/PF07_UE5_Portfolio_Document.md
 ```
 
 ---
