@@ -222,8 +222,8 @@ System_Architecture_Writing_Prompt (KR).md
 PR_Document_Writing_Prompt (KR).md
 -> [생성됨 / 검토 필요] PR Document 작성 / 보완 Prompt
 
-00_Documentation_Index_Writing_Prompt (KR).md
--> [생성됨 / 검토 필요] 전체 Documentation Index와 문서군별 Index 작성 / 보완 Prompt
+00_Index_Writing_Prompt (KR).md
+-> [생성됨 / 검토 필요] 전체 Documentation Index와 문서 유형별 Index 작성 / 보완 Prompt
 
 Portfolio_Document_Writing_Prompt (KR).md
 -> [생성됨 / 검토 필요] Portfolio Document 작성 / 보완 Prompt
