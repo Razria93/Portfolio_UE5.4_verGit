@@ -182,3 +182,31 @@
 - 처리 결과:
   - `Document_Set_Audit_Prompt (KR).md`에 최종 검증 명령 실행 기준, 검색 결과 판정 기준, audit 문서 정리 상태 기준, LF/CRLF warning 보고 기준을 반영했다.
   - P01 파일럿 통과 조건, Windows 환경의 audit 제외 검색 패턴, UTF-8 문서 발췌 기준, `audit만 수정` / `Draft 본문 수정` 작업 모드 분리 기준을 추가 보강했다.
+
+### PC-006
+
+- 상태: 패턴 수집 항목
+- 발견일: 2026.06.14
+- 발견 산출물:
+  - `P19_UE5_Portfolio_Pull_Request.md`
+  - `W02_UE5_Portfolio_Work_List.md`
+- 패턴: 구형 명칭 제거를 설명할 때 단순 문자열 삭제처럼 쓰지 않고, `구형 EN 문서`, `구형 문서명`, `구형 prefix`, `구형 경로` 중 무엇을 제거했는지 목적 중심으로 표현한다.
+- 적용 범위:
+  - PR Document Writing Prompt
+  - Index Writing Prompt
+  - 문서 운영 체계 정리 PR
+- 반복성: 미확정
+- 위험도: 낮음
+- 후보 사유:
+  - W02에서는 `구형 EN 문서와 구형 문서명 흔적 제거`가 목표 수준에 포함됐지만, P19에서는 처음에 `Technical Document` / `Txx` 제거 중심으로만 표현되어 범위가 좁게 읽혔다.
+  - 문서 체계 정리 작업에서 구형 명칭 제거는 단순 문자열 정리가 아니라, 최신 문서 유형 / ID / 탐색 기준과 맞지 않는 흔적을 제거하는 작업이다.
+  - 다만 현재는 P19 문서 맥락에서 확인된 기준이므로, 공통 Prompt에 즉시 반영하기보다 반복 적용 여부를 더 확인한다.
+- 감지 결과:
+  - P19에는 `구형 EN 문서와 구형 문서명` 표현을 반영했다.
+- 사용자 결정:
+  - 후보 기록.
+- 반영 대상 Prompt:
+  - 반복 확인 시 `03_PR_Document_Writing_Prompt (KR).md`
+  - 반복 확인 시 `00_Index_Writing_Prompt (KR).md`
+- 처리 결과:
+  - 현재는 후보 기록만 수행.
