@@ -118,9 +118,13 @@ TakeDamagePacket
     - [x] 현재 `HandleCombatAction()`이 `Started`로 고정되어 있으므로, Guard 종료 요청을 처리할 수 있는 확장 지점을 정한다.
 - [ ] Guard Pressed에서 `Block_In` 실행으로 이어지게 구성한다.
   - 세부 구현 요소:
-    - [ ] `EActionType::Guard`를 추가한다.
-    - [ ] `CActionOrchestratorComponent::ResolveCombatActionCandidate()`에서 `ECombatActionIntent::Guard`를 `EActionType::Guard`로 해석한다.
-    - [ ] Guard 시작 요청은 action index `0`을 기준으로 처리한다.
+    - [x] `EActionType::Guard`를 추가한다.
+    - [x] `CActionOrchestratorComponent::ResolveCombatActionCandidate()`에서 `ECombatActionIntent::Guard`를 `EActionType::Guard`로 해석한다.
+    - [x] Guard 시작 요청은 action index `1`을 기준으로 처리한다.
+    - [ ] 임시로 `IntentEvent`에 따라 Guard `ActionIndex`를 나눠 `Block_In / Block_Out` ActionData를 선택한다.
+      - [ ] `Started -> Guard index 1 -> Block_In`
+      - [ ] `Completed -> Guard index 2 -> Block_Out`
+      - [ ] Guard 전용 phase / variant key가 필요하면 후속 구조 보완 후보로 기록한다.
 - [ ] Guard Held 상태에서 `Block_Hold` 또는 ABP guard hold / locomotion 상태로 유지되게 구성한다.
   - 세부 구현 요소:
     - [ ] v1에서는 Guard Hold를 ABP 상태로 넘기는 방향을 기본으로 둔다.
@@ -138,10 +142,11 @@ TakeDamagePacket
 
 ### 4.2 Guard runtime 상태와 Parry Window 구성
 
-- [ ] Guard Action executor는 `CAction_Block` 또는 `CAction_Guard` 중 하나로 확정한다.
+- [x] Guard Action executor는 `CAction_Block` 또는 `CAction_Guard` 중 하나로 확정한다.
   - 세부 구현 요소:
-    - [ ] Guard가 상위 action이고 Parry는 Guard 내부 window 결과이므로, action executor 이름은 `CAction_Guard`를 우선 후보로 둔다.
-    - [ ] 기존 action executor 패턴(`CAction_ComboAttack`, `CAction_Dodge`)을 따라 Guard 전용 executor skeleton을 만든다.
+    - [x] Guard가 상위 action이고 Parry는 Guard 내부 window 결과이므로, action executor 이름은 `CAction_Guard`를 우선 후보로 둔다.
+    - [x] 기존 action executor 패턴(`CAction_ComboAttack`, `CAction_Dodge`)을 따라 Guard 전용 executor skeleton을 만든다.
+    - [ ] `CAction_Guard` decision은 임시로 기존 action relationship을 사용하고, Hold / Release 구현 시 전용 정책으로 재검토한다.
 - [ ] Guard Action 안에서 `bIsParryable`, `bIsGuarding` 성격의 runtime 상태를 관리한다.
   - 세부 구현 요소:
     - [ ] runtime 상태는 우선 Guard Action 내부에 둔다.

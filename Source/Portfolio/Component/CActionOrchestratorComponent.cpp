@@ -233,6 +233,36 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 		break;
 	}
 
+	case ECombatActionIntent::Guard:
+	{
+		incomingCandidate.ActionDataKey.ActionType = EActionType::Guard;
+
+		switch (InIncomingRequest.IntentEvent)
+		{
+		case EActionIntentEvent::Started:
+		{
+			// Temporary: Started -> Guard index 1 -> Block_In
+			incomingCandidate.ActionDataKey.ActionIndex = 1;
+			break;
+		}
+
+		case EActionIntentEvent::Completed:
+		{
+			// Temporary: Completed -> Guard index 2 -> Block_Out
+			incomingCandidate.ActionDataKey.ActionIndex = 2;
+			break;
+		}
+
+		default:
+		{
+			OutRejectReason = EActionRequestRejectReason::InvalidRequest;
+			return false;
+		}
+		}
+
+		break;
+	}
+
 	default:
 		OutRejectReason = EActionRequestRejectReason::InvalidCombatAction;
 		return false;

@@ -32,6 +32,7 @@ enum class EActionType : uint8
 
 	ComboAttack,
 
+	Guard,
 	Dodge,
 
 	All,		// Wildcard

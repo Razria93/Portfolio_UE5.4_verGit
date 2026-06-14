@@ -261,7 +261,5 @@ FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatAc
 	request.IntentType = InCombatActionIntent;
 	request.IntentEvent = InIntentEvent;
 
-	FLog::Log(FString::Printf(TEXT("[CombatActionRequest] %s"), *request.ToDebugString()));
-
 	return ActionOrchestratorComponent->RequestCombatAction(request);
 }
