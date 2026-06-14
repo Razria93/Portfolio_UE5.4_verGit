@@ -1,4 +1,4 @@
-﻿# Term Usage Map
+# Term Usage Map
 
 현재 기준 범위: P01~P18 PR 문서
 
@@ -1064,7 +1064,7 @@ P01~P18 PR 문서 전체에 공통 적용할 기본 용어 기준이다. 개별 
 
 #### 검토 결과
 
-- `feature/ai-workflow` tip 기준으로 AI Workflow 문서군, Prompt Blueprint, Prompt Files, W02 Work Brief / Feature Work Planning / Work List 예시 문서가 확인됐다.
+- `feature/ai-workflow` tip 기준으로 AI Workflow 문서군, Prompt Blueprint, Prompt Files, W03 Work Brief / Feature Work Planning / Work List 예시 문서가 확인됐다.
 - P18은 gameplay 코드 변경이 아니라 Documentation PR이며, `Documentation` 단일 요약 카테고리를 허용한다.
 - `Work_List_Draft`는 P18의 검증용 파일명일 뿐, Work List 운영에서 Draft 단계를 반드시 거친다는 의미로 확장하지 않는다.
 - UE C++ 빌드 / PIE / Editor / Asset / 실제 Parry 구현 검증은 P18 완료 결과가 아니라 미검증 / 비범위 / 후속 작업으로 유지한다.

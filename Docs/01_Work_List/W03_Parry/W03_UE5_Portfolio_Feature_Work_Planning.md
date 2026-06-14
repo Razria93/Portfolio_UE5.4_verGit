@@ -1,8 +1,8 @@
-﻿# UE5 Portfolio - Feature Work Planning
+# UE5 Portfolio - Feature Work Planning
 
 ## 제목
 
-**W02: Parry Feature Work Planning**
+**W03: Parry Feature Work Planning**
 
 ## 날짜
 
@@ -24,14 +24,14 @@
 
 ```yaml
 기준 입력
--> Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Work_Brief.md
+-> Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_Brief.md
 
 Planning Prompt
 -> Docs/08_AI_Workflow/05_Prompt_Library/01_Prompt_Files/03_Work_Planning/02_Feature_Work_Planning_Prompt (KR).md
 
 관련 System Architecture 후보
 -> S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 포함되지 않는다
--> 실제 W02 구현 Branch에서 존재 여부를 확인하거나 신규 작성 여부를 결정
+-> 실제 W03 구현 Branch에서 존재 여부를 확인하거나 신규 작성 여부를 결정
 
 관련 코드 후보
 -> Source/Portfolio/Component/CActionComponent.*
@@ -47,7 +47,7 @@ Planning Prompt
 -> 현재 PR 커밋 범위에 포함되지 않은 입력 Asset 후보이므로 실제 구현 Branch에서 존재 여부 확인 필요
 ```
 
-현재 Planning은 W02 Work Brief 기준으로 작성한다.
+현재 Planning은 W03 Work Brief 기준으로 작성한다.
 
 구현 착수 가능 여부는 이 문서의 구현 단위, 선행 조건, 검증 기준을 확인한 뒤 판단한다.
 
@@ -58,15 +58,15 @@ Planning Prompt
 ### 확정된 결정
 
 - `UCCombatResolutionComponent`를 신규 구성한다.
-- W02에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않는다.
+- W03에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않는다.
 - Parry 성공 시 Player Damage를 완전 무효화한다.
 - Parry Window는 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델을 우선 활용한다.
 - `Montage_Parry`는 `FActionData.Montage`를 통해 `CAction_Parry`에 연결한다.
-- W02의 기본 `WindowKey`는 `Parry`로 둔다.
+- W03의 기본 `WindowKey`는 `Parry`로 둔다.
 - `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출한다.
 - 과도기 fallback으로 기존 `TakeDamageComponent->RequestTakeDamage()` 경로를 유지한다.
-- S28 Policy / Gate 전체 리팩터링은 W02 범위에 포함하지 않는다.
-- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 없으므로 W02 Planning의 확정 Source of Truth로 취급하지 않는다.
+- S28 Policy / Gate 전체 리팩터링은 W03 범위에 포함하지 않는다.
+- S26 / S27 / S28 Architecture baseline은 현재 PR 커밋 범위에 없으므로 W03 Planning의 확정 Source of Truth로 취급하지 않는다.
 
 ### 계획차단 항목
 
@@ -93,7 +93,7 @@ Actor::TakeDamage() Combat Resolution / fallback 조건 분리
 
 기존 WeaponActor Overlap 흐름
 -> 선행 확인 항목
--> W02에서는 기존 DamagePacket 유입 흐름을 유지
+-> W03에서는 기존 DamagePacket 유입 흐름을 유지
 
 기존 Action / Reaction interrupt 구조
 -> 핵심 구현 단위
@@ -160,7 +160,7 @@ S28 Policy / Gate 전체 리팩터링
 
 ## 4. 기능 구현 목표
 
-W02의 목표는 Player 측 Parry 1차 구현이다.
+W03의 목표는 Player 측 Parry 1차 구현이다.
 
 ```yaml
 구현 결과
@@ -190,7 +190,7 @@ W02의 목표는 Player 측 Parry 1차 구현이다.
 -> 없다
 
 목표
--> W02 구현이 들어갈 코드 / Asset 연결 지점을 확정한다.
+-> W03 구현이 들어갈 코드 / Asset 연결 지점을 확정한다.
 
 수정 범위
 -> 없다
@@ -326,7 +326,7 @@ W02의 목표는 Player 측 Parry 1차 구현이다.
 
 사용자 결정 필요 여부
 -> 불필요
--> W02에서는 최소 Parry outcome 판정 계층으로 구현
+-> W03에서는 최소 Parry outcome 판정 계층으로 구현
 
 검증 기준
 -> Build: 신규 component compile
@@ -427,20 +427,20 @@ W02의 목표는 Player 측 Parry 1차 구현이다.
 -> 이 Feature Work Planning 결과를 기준으로 작성
 
 이유
--> W02은 신규 component, 신규 action, montage / notify / asset 설정, TakeDamage 진입부 변경을 포함한다
+-> W03은 신규 component, 신규 action, montage / notify / asset 설정, TakeDamage 진입부 변경을 포함한다
 -> Build / Code Flow / PIE / Editor / Asset 검증을 함께 추적해야 한다
--> 후속 범위와 W02 범위를 명확히 관리해야 한다
+-> 후속 범위와 W03 범위를 명확히 관리해야 한다
 
 실행 후 처리
--> 새 Work List를 만들지 않고 기존 W02 Work List의 완료 상태 / 검증 상태 / 후속 범위를 업데이트
+-> 새 Work List를 만들지 않고 기존 W03 Work List의 완료 상태 / 검증 상태 / 후속 범위를 업데이트
 ```
 
 ---
 
-## 10. W02 후속 범위
+## 10. W03 후속 범위
 
 ```yaml
-W02 후속 범위
+W03 후속 범위
 -> Attacker Signal 송신 / 수신
 -> Attacker 측 Combat Resolution 해석 및 처리
 -> Attacker 체간 게이지 / ExecutionState / Reaction 처리
@@ -460,7 +460,7 @@ W02 후속 범위
 
 - `UCCombatResolutionComponent`가 Parry 전용 분기만 담으면 후속 Guard / Counter 확장 시 재설계가 필요할 수 있다.
 - `TakeDamageComponent` fallback 조건이 불명확하면 damage commit이 중복될 수 있다.
-- S28 Policy / Gate 전체 리팩터링을 함께 진행하면 W02 범위가 과도하게 커질 수 있다.
+- S28 Policy / Gate 전체 리팩터링을 함께 진행하면 W03 범위가 과도하게 커질 수 있다.
 
 ### 구현 위험
 
@@ -569,7 +569,7 @@ Bug Report
 
 System Architecture
 -> 즉시 작성하지 않는다
--> W02 구현 후 현재 구조 설명 문서가 필요하면 후보
+-> W03 구현 후 현재 구조 설명 문서가 필요하면 후보
 
 System Design Records
 -> 후속 Architecture baseline과 충돌할 경우 보완
@@ -590,7 +590,7 @@ PR Document
 -> Branch 완료 시 변경 요약 / 검증 / 미검증 / 후속 범위 정리
 
 Portfolio Technical Document
--> W02 완료 후 Parry 구조가 포트폴리오 설명 가치가 있을 때 후보
+-> W03 완료 후 Parry 구조가 포트폴리오 설명 가치가 있을 때 후보
 ```
 
 ---

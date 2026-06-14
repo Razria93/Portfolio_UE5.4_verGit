@@ -23,6 +23,7 @@
 | P15 | Action Orchestration | `P15_UE5_Portfolio_Pull_Request.md` | `feature/action-orchestration` |  | D16, B06, B07, B08 |
 | P16 | Reaction Orchestration | `P16_UE5_Portfolio_Pull_Request.md` | `feature/reaction-orchestration` |  | D17 |
 | P17 | Orchestration Refactor | `P17_UE5_Portfolio_Pull_Request.md` | `feature/orchestration-refactor` |  | D18, B09, B10 |
-| P18 | AI Workflow / Prompt Library v1 | `P18_UE5_Portfolio_Pull_Request.md` | `feature/ai-workflow` |  | W01, W02 |
+| P18 | AI Workflow / Prompt Library v1 | `P18_UE5_Portfolio_Pull_Request.md` | `feature/ai-workflow` |  | W01, W03 |
+| P19 | Documentation Workflow Update | `P19_UE5_Portfolio_Pull_Request.md` | `docs/portfolio-documentation-update` |  | W02, N01 |
 
 ---

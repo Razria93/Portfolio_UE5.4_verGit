@@ -423,11 +423,11 @@ P01 TestRoom / Player / Camera
 
 - 이어받은 것: P17까지의 gameplay PR 문서 작성 경험, Work List / Bug Report / PR 문서 보완 과정에서 정리된 문서 운영 방식.
 - 새로 만든 흐름: 자연어 요청 -> Work Brief -> Feature Work Planning -> Work List.
-- 후속으로 넘긴 범위: W02 Parry 실제 구현, UE 검증, Prompt Library 전면 실사용 검증, AI Workflow / Prompt Library refactor.
+- 후속으로 넘긴 범위: W03 Parry 실제 구현, UE 검증, Prompt Library 전면 실사용 검증, AI Workflow / Prompt Library refactor.
 
 #### 브랜치 검증
 
-- `feature/ai-workflow` tip 기준으로 AI Workflow 문서군, Prompt Blueprint, Prompt Files, W02 Work Brief / Feature Work Planning / Work List 예시 문서, Backlog / Refactor Notes가 확인됐다.
+- `feature/ai-workflow` tip 기준으로 AI Workflow 문서군, Prompt Blueprint, Prompt Files, W03 Work Brief / Feature Work Planning / Work List 예시 문서, Backlog / Refactor Notes가 확인됐다.
 
 ---
 

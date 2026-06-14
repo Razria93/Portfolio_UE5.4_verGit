@@ -106,7 +106,7 @@ Feature Work Planning(기능 작업 계획)
 ```text
 Work List(작업 목록)
 -> Planning 결과를 실행 상태, 완료 기준, 검증 기준을 확인할 수 있는 작업 목록으로 정리한 문서
--> P18에서는 W02 예시 문서를 통해 Work List 작성 흐름이 동작하는지만 확인했고, 항목별 구현 정합성은 후속 Parry 구현 Branch에서 검토한다.
+-> P18에서는 W03 예시 문서를 통해 Work List 작성 흐름이 동작하는지만 확인했고, 항목별 구현 정합성은 후속 Parry 구현 Branch에서 검토한다.
 ```
 
 ```text
@@ -118,7 +118,7 @@ Prompt Flow / Routing(Prompt 호출 흐름)
 
 ## 변경 배경
 
-이 섹션은 AI와의 협업 체계를 구축해야 했던 필요성과, 그 내부 구성을 AI Workflow / Prompt Library / W02 예시 검증으로 나누어 구성한 이유를 요약한다.
+이 섹션은 AI와의 협업 체계를 구축해야 했던 필요성과, 그 내부 구성을 AI Workflow / Prompt Library / W03 예시 검증으로 나누어 구성한 이유를 요약한다.
 
 ### AI 협업 절차 문서화 필요성
 
@@ -138,7 +138,7 @@ Prompt가 늘어나면 작성 기준, 유지보수 기준, 호출 순서, 실제
 
 따라서 Prompt를 만들고 관리하는 기준과 실제 작업 중 호출할 본문을 분리할 필요가 있었다.
 
-### W02 예시 검증과 실제 구현 분리 필요성
+### W03 예시 검증과 실제 구현 분리 필요성
 
 P18에서는 Parry 요청을 예시로 사용해 자연어 요청이 작업 문서로 변환되는 흐름을 확인했다.
 
@@ -194,13 +194,13 @@ P18에서는 Parry 요청을 예시로 사용해 자연어 요청이 작업 문�
 - **결과**:
   작업 요청은 목적과 유형에 따라 필요한 Prompt 계층으로 이동할 수 있는 기본 Routing 기준을 갖게 됐다.
 
-### 5. W02 제한적 실사용 검증
+### 5. W03 제한적 실사용 검증
 
 - **왜**:
   AI Workflow와 Prompt Library 초안이 실제 자연어 요청을 작업 문서로 변환할 수 있는지 확인할 예시가 필요했다.
 
 - **어떻게**:
-  Parry 자연어 요청을 `W02_UE5_Portfolio_Work_Brief.md`, `W02_UE5_Portfolio_Feature_Work_Planning.md`, `W02_UE5_Portfolio_Work_List_Draft.md`로 변환했다.
+  Parry 자연어 요청을 `W03_UE5_Portfolio_Work_Brief.md`, `W03_UE5_Portfolio_Feature_Work_Planning.md`, `W03_UE5_Portfolio_Work_List_Draft.md`로 변환했다.
 
 - **결과**:
   자연어 요청이 Work Brief -> Feature Work Planning -> Work List로 변환되는 흐름을 예시 문서로 확인했다.
@@ -224,7 +224,7 @@ P18에서는 Parry 요청을 예시로 사용해 자연어 요청이 작업 문�
 
 이 섹션은 이번 PR에서 정리한 작업 문서 변환 흐름과 Prompt 호출 흐름을 설명한다.
 
-### W02 예시 문서 변환 흐름
+### W03 예시 문서 변환 흐름
 
 ```text
 사용자 자연어 요청
@@ -262,7 +262,7 @@ P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
 
 - **Prompt Files v1**: Work Planning, Document Writing, Review Verification, Git Operation 등 실제 작업 중 호출할 Prompt 본문을 역할별 폴더로 분리했다.
 
-- **W02 예시 문서**: Parry 요청을 Work Brief, Feature Work Planning, Work List까지 변환해 문서 변환 흐름 예시로 남겼다.
+- **W03 예시 문서**: Parry 요청을 Work Brief, Feature Work Planning, Work List까지 변환해 문서 변환 흐름 예시로 남겼다.
 
 - **Backlog / Refactor Notes**: 실제 사용 중 다시 확인할 후속 작업과 다음 AI Workflow Refactor에서 조정할 구조 후보를 관리하도록 분리했다.
 
@@ -290,17 +290,17 @@ P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
 
 ### 검색 검증
 
-- Branch 목표, Prompt Library v1, AI Workflow, W02 흐름이 문서에 반영되어 있는지 검색으로 확인했다.
+- Branch 목표, Prompt Library v1, AI Workflow, W03 흐름이 문서에 반영되어 있는지 검색으로 확인했다.
 
 ### 배치 확인
 
 - Prompt Blueprint와 Prompt Files가 역할별 폴더에 배치되어 있는지 확인했다.
 
-### W02 흐름 확인
+### W03 흐름 확인
 
-- W02 Work Brief / Feature Work Planning / Work List 문서가 자연어 요청 -> 계획 -> 작업 목록 흐름으로 이어지는지 확인했다.
+- W03 Work Brief / Feature Work Planning / Work List 문서가 자연어 요청 -> 계획 -> 작업 목록 흐름으로 이어지는지 확인했다.
 
-- W02 작업 목록에서 실제 구현 / Build / PIE / Editor / Asset 검증 항목이 완료 처리되지 않고 후속 Parry 구현 Branch 범위로 분리되어 있는지 확인했다.
+- W03 작업 목록에서 실제 구현 / Build / PIE / Editor / Asset 검증 항목이 완료 처리되지 않고 후속 Parry 구현 Branch 범위로 분리되어 있는지 확인했다.
 
 ---
 
@@ -308,11 +308,11 @@ P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
 
 - W01 Work List와 AI Workflow 문서군의 출력 상태를 확인했다.
 
-- Branch 목표, Prompt Library v1, AI Workflow, W02 문서 흐름이 관련 문서에 반영되어 있음을 확인했다.
+- Branch 목표, Prompt Library v1, AI Workflow, W03 문서 흐름이 관련 문서에 반영되어 있음을 확인했다.
 
 - Prompt Blueprint 6종과 Prompt Files 역할별 폴더 배치를 확인했다.
 
-- W02 Work Brief / Feature Work Planning / Work List가 제한적 실사용 검증 예시로 남아 있고, 실제 구현 완료 문서처럼 처리되지 않았음을 확인했다.
+- W03 Work Brief / Feature Work Planning / Work List가 제한적 실사용 검증 예시로 남아 있고, 실제 구현 완료 문서처럼 처리되지 않았음을 확인했다.
 
 ---
 
@@ -334,11 +334,11 @@ P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
 
 ## 비범위
 
-- W02 Parry 실제 구현
+- W03 Parry 실제 구현
 
 - Guard / Counter 내부 설계 확정
 
-- W02 작업 목록의 실제 구현 기준 정합성 검토
+- W03 작업 목록의 실제 구현 기준 정합성 검토
 
 - Prompt Library v1 전면 실사용 검증
 
@@ -354,7 +354,7 @@ P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
 
 ## 후속 작업
 
-- 후속 Parry 구현 Branch에서 W02 작업 목록의 항목별 구현 정합성을 검토한다.
+- 후속 Parry 구현 Branch에서 W03 작업 목록의 항목별 구현 정합성을 검토한다.
 
 - 후속 Parry 구현 Branch에서 Build / Code Flow / PIE / Editor / Asset 검증을 수행한다.
 
@@ -368,11 +368,11 @@ P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
 
 - W01 Work List: `W01_UE5_Portfolio_Work_List.md`
 
-- Work Brief: `W02_UE5_Portfolio_Work_Brief.md`
+- Work Brief: `W03_UE5_Portfolio_Work_Brief.md`
 
-- Work Planning: `W02_UE5_Portfolio_Feature_Work_Planning.md`
+- Work Planning: `W03_UE5_Portfolio_Feature_Work_Planning.md`
 
-- W02 Work List: `W02_UE5_Portfolio_Work_List_Draft.md`
+- W03 Work List: `W03_UE5_Portfolio_Work_List_Draft.md`
 
 - AI Workflow:
   - `AI_Workflow_Index (KR).md`
@@ -396,5 +396,5 @@ P18에서는 작업 목록이 생성되는 흐름까지만 확인했다.
 
 P18은 Codex 기반 작업을 반복 가능하게 만들기 위한 AI Workflow 문서 체계와 Prompt Library v1 초안을 구성한 문서 PR이다.
 
-W02 Parry 요청은 자연어 요청이 작업 문서로 변환되는 흐름을 확인하기 위한 예시로 사용했다.
+W03 Parry 요청은 자연어 요청이 작업 문서로 변환되는 흐름을 확인하기 위한 예시로 사용했다.
 실제 구현과 UE 검증은 후속 Parry 구현 Branch로 분리했다.

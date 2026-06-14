@@ -38,7 +38,7 @@
 목표 수준
 - AI Workflow 문서군은 위치 / 역할 / 상태를 확인할 수 있는 구조로 둔다
 - Prompt Library v1은 구조와 역할 기준을 갖춘 초안 라이브러리로 둔다
-- W02 Parry 예시는 Workflow 변환 흐름을 검증하기 위한 예시로 둔다
+- W03 Parry 예시는 Workflow 변환 흐름을 검증하기 위한 예시로 둔다
 - Prompt 품질 최종 검수와 실제 기능 구현 검증은 후속 Branch 범위로 넘긴다
 ```
 
@@ -54,7 +54,7 @@
 - Prompt Blueprint 6종의 역할이 분리되어 있다
 - Prompt Files v1 초안과 역할별 폴더 구조가 구성되어 있다
 - AI Workflow Backlog와 Refactor Notes가 후속 범위를 관리한다
-- W02 예시 문서 3종으로 Work Brief -> Feature Work Planning -> Work List Draft 흐름이 확인됐다
+- W03 예시 문서 3종으로 Work Brief -> Feature Work Planning -> Work List Draft 흐름이 확인됐다
 - 실제 Parry 구현 / UE C++ 빌드 / PIE / Asset 검증이 이번 Branch 범위에서 제외되어 있다
 - Commit 대상과 제외 대상이 분리되어 있다
 ```
@@ -87,11 +87,11 @@ Prompt Library
 ```
 
 ```yaml
-Work List / W02 예시
+Work List / W03 예시
 - Docs/01_Work_List/W01_Codex_Workflow/W01_UE5_Portfolio_Work_List.md
-- Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Work_Brief.md
-- Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Feature_Work_Planning.md
-- Docs/01_Work_List/W02_Parry/W02_UE5_Portfolio_Work_List_Draft.md
+- Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_Brief.md
+- Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Feature_Work_Planning.md
+- Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List_Draft.md
 ```
 
 ---
@@ -130,20 +130,20 @@ Work List / W02 예시
 - [x] `07_Git_Operation` 폴더와 Prompt 초안 구성
 - [x] Prompt Library v1을 초안 라이브러리로 명시
 
-### 4.4. W02 제한적 실사용 검증
+### 4.4. W03 제한적 실사용 검증
 
-- [x] W02 Parry 자연어 요청을 `W02_UE5_Portfolio_Work_Brief.md`로 정리
-- [x] W02 Work Brief를 `W02_UE5_Portfolio_Feature_Work_Planning.md`로 변환
-- [x] W02 Feature Work Planning을 `W02_UE5_Portfolio_Work_List_Draft.md`로 변환
+- [x] W03 Parry 자연어 요청을 `W03_UE5_Portfolio_Work_Brief.md`로 정리
+- [x] W03 Work Brief를 `W03_UE5_Portfolio_Feature_Work_Planning.md`로 변환
+- [x] W03 Feature Work Planning을 `W03_UE5_Portfolio_Work_List_Draft.md`로 변환
 - [x] Work Brief / Feature Work Planning / Work List Draft의 입력-출력 연결 확인
 - [x] 실제 Parry 구현 / Build / PIE / Editor / Asset 검증 항목은 완료 처리하지 않도록 분리
-- [x] W02 실제 구현은 별도 Branch 후속 작업으로 분리
+- [x] W03 실제 구현은 별도 Branch 후속 작업으로 분리
 
 ### 4.5. 후속 범위 인계
 
 - [x] `AI_Workflow_Refactor_Notes (KR).md`에 다음 AI Workflow Refactor 후보 정리
 - [x] `AI_Workflow_Backlog (KR).md`에 Refactor Notes 연결
-- [x] W02 실제 구현과 Work List Draft 공식 승격을 후속 Branch 범위로 분리
+- [x] W03 실제 구현과 Work List Draft 공식 승격을 후속 Branch 범위로 분리
 - [x] Document Writing / History / System Architecture / Engine Technique 체계 보완을 후속 Refactor 범위로 분리
 
 ---
@@ -186,11 +186,11 @@ Prompt Library
 
 ## 6. 실제 구현 Branch 인계 범위
 
-다음 항목은 실제 W02 구현 Branch 범위에서 처리한다.
+다음 항목은 실제 W03 구현 Branch 범위에서 처리한다.
 
 ```yaml
-W02 Parry 구현
-- W02 Work List Draft 공식 Work List 승격 여부 판단
+W03 Parry 구현
+- W03 Work List Draft 공식 Work List 승격 여부 판단
 - UCCombatResolutionComponent 최소 구성
 - CAction_Parry 구현
 - Parry Montage / Window 연결
@@ -213,9 +213,9 @@ W02 Parry 구현
 
 ```yaml
 이번 Branch 제외 범위
-- W02 Parry 실제 구현
+- W03 Parry 실제 구현
 - Guard / Counter 세부 설계 확정
-- W02 Work List Draft 공식 승격
+- W03 Work List Draft 공식 승격
 - Prompt Library v1 전면 실사용 검증
 - Prompt 문장 품질 최종 검수
 - 기존 Docs 전체 리팩터링
@@ -235,22 +235,22 @@ W02 Parry 구현
 - [x] Prompt Files v1 초안 구성 완료
 - [x] Backlog / Refactor Notes 작성 완료
 - [x] W01 Work List 작성 완료
-- [x] W02 Work Brief / Feature Work Planning / Work List Draft 작성 완료
+- [x] W03 Work Brief / Feature Work Planning / Work List Draft 작성 완료
 
 ### 8.2. 검증 상태
 
 - [x] W01 Work List가 UTF-8로 정상 출력되는지 확인
-- [x] 핵심 항목 검색으로 Branch 목표 / Prompt Library v1 / AI Workflow / W02 흐름 반영 여부 확인
+- [x] 핵심 항목 검색으로 Branch 목표 / Prompt Library v1 / AI Workflow / W03 흐름 반영 여부 확인
 - [x] Prompt Blueprint 6종 파일 배치 확인
 - [x] Prompt Files 역할별 폴더 배치 확인
-- [x] W02 Work List Draft에서 실제 구현 / Build / PIE / Editor / Asset 항목이 완료 처리되지 않았는지 확인
+- [x] W03 Work List Draft에서 실제 구현 / Build / PIE / Editor / Asset 항목이 완료 처리되지 않았는지 확인
 - [x] 문서 작업이므로 UE C++ 빌드를 수행하지 않는 것으로 검증 범위 명시
 
 ### 8.3. Commit / PR 준비 상태
 
-- [x] 이번 Branch Commit 후보를 `Docs/08_AI_Workflow/`, `Docs/01_Work_List/W01_Codex_Workflow/W01_UE5_Portfolio_Work_List.md`, `Docs/01_Work_List/W02_Parry/`의 W02 예시 문서로 제한
+- [x] 이번 Branch Commit 후보를 `Docs/08_AI_Workflow/`, `Docs/01_Work_List/W01_Codex_Workflow/W01_UE5_Portfolio_Work_List.md`, `Docs/01_Work_List/W03_Parry/`의 W03 예시 문서로 제한
 - [x] 기존 대량 Docs 변경, `Docs/08_Reference`, unrelated README 변경을 별도 판단 대상으로 분리
-- [x] PR 문서 작성 시 AI Workflow Overview / Work Pipeline / Operation Guide / AI Workflow Index / W01 Work List / W02 예시 문서를 근거로 연결
+- [x] PR 문서 작성 시 AI Workflow Overview / Work Pipeline / Operation Guide / AI Workflow Index / W01 Work List / W03 예시 문서를 근거로 연결
 
 ---
 
@@ -258,6 +258,6 @@ W02 Parry 구현
 
 - W01는 AI Workflow v1 구조와 Prompt Library v1 초안을 닫기 위한 Work List다.
 - Prompt Library v1은 실제 작업에 적용하기 전의 초안 구조로 관리한다.
-- W02 Parry 문서 3종은 AI Workflow 제한적 실사용 검증 예시이며, 실제 Parry 구현 완료 문서가 아니다.
+- W03 Parry 문서 3종은 AI Workflow 제한적 실사용 검증 예시이며, 실제 Parry 구현 완료 문서가 아니다.
 - 다음 AI Workflow Refactor 범위는 `AI_Workflow_Refactor_Notes (KR).md`에서 관리한다.
 - `Docs/08_Reference` 자료는 작업 구상용 참고 자료로 보고, 이번 Branch Commit 대상에서는 제외한다.

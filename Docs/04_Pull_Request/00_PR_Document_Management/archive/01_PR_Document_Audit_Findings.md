@@ -439,10 +439,10 @@
 - 문서 PR은 Documentation 단일 카테고리를 허용한다.
 - Prompt Blueprint / Prompt Files, Work Brief / Feature Work Planning / Work List 역할 구분을 유지한다.
 - `Work_List_Draft`는 파일명 또는 검증용 산출물 설명에서만 사용한다.
-- 브랜치 검증 결과, `feature/ai-workflow`에는 AI Workflow 문서군, Prompt Blueprint, Prompt Files, W02 Work Brief / Feature Work Planning / Work List 예시 문서가 포함된다.
+- 브랜치 검증 결과, `feature/ai-workflow`에는 AI Workflow 문서군, Prompt Blueprint, Prompt Files, W03 Work Brief / Feature Work Planning / Work List 예시 문서가 포함된다.
 - P18은 실제 UE C++ 기능 구현 PR이 아니므로 Build / PIE / Editor / Asset / Parry 구현 검증은 완료 결과가 아니라 미검증 항목, 비범위, 후속 작업으로 유지한다.
 - `Work_List_Draft`는 P18의 검증용 파일명이며, 일반 Work List 작성 프로세스가 항상 Draft 단계를 거친다는 의미로 확장하지 않는다.
-- Prompt Library v1은 전면 실사용이 아니라 초안 구성과 제한적 W02 변환 검증 단계로 설명한다.
+- Prompt Library v1은 전면 실사용이 아니라 초안 구성과 제한적 W03 변환 검증 단계로 설명한다.
 - `Project Context`, `Work Pipeline`, `Drafts`는 AI Workflow 문서군 안의 역할을 설명하는 병기 대상이다.
 - Prompt Files 하위 카테고리인 Work Planning / Document Writing / Review Verification / Git Operation은 통합 용어 기준으로 올리지 않고, 필요하면 P18 본문 안의 세부 구성 설명으로만 쓴다.
 

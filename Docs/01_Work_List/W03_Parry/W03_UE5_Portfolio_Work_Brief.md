@@ -1,8 +1,8 @@
-﻿# UE5 Portfolio - Work Brief
+# UE5 Portfolio - Work Brief
 
 ## 제목
 
-**W02: Parry Work Brief**
+**W03: Parry Work Brief**
 
 ## 날짜
 
@@ -70,13 +70,13 @@
 4. Attacker ExecutionState Reaction 전환
 5. Attacker Reaction 처리
 
-위 후속 흐름은 W02에서 구현하지 않는다.
+위 후속 흐름은 W03에서 구현하지 않는다.
 
 ---
 
 ## 3. 작업 범위
 
-### W02 작업 범위
+### W03 작업 범위
 
 - `UCCombatResolutionComponent` 신규 구성
 - `CAction_Parry` 구현
@@ -88,7 +88,7 @@
 - Parry Animation 입력 Asset을 확인해 `Montage_Parry` 신규 작성
 - 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델 활용 또는 확장
 
-### W02 후속 범위
+### W03 후속 범위
 
 - Attacker Signal 송신 / 수신 방식 결정 및 구현
 - Attacker 측 Combat Resolution 해석 및 처리 흐름 구현
@@ -104,23 +104,23 @@
 ## 4. 확정된 결정
 
 - 신규 컴포넌트명은 `UCCombatResolutionComponent`로 정한다.
-- W02에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않는다.
+- W03에서는 Resource / Stamina / Posture / Guard Gauge 변화를 처리하지 않는다.
 - Parry 성공 시 Player Damage를 완전 무효화한다.
 - Parry Window는 기존 `UCAnimNotifyState_ExecutionInterventionWindow` / `WindowKey` 모델을 활용한다.
 - 전용 `Montage_Parry` Asset은 현재 없다.
 - `Content/03_Animation/GuardAndParry/`는 현재 PR 커밋 범위에 포함되지 않은 입력 Asset 후보로 보며, 실제 구현 Branch에서 존재 여부를 확인한다.
 - `Montage_Parry`는 `FActionData.Montage`를 통해 `CAction_Parry`에 연결한다.
 - Parry Window는 `Montage_Parry` 안의 `UCAnimNotifyState_ExecutionInterventionWindow`가 `WindowKey`를 열고 닫는 방식으로 연결한다.
-- W02의 기본 `WindowKey`는 `Parry`로 둔다.
-- W02에서는 `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출한다.
+- W03의 기본 `WindowKey`는 `Parry`로 둔다.
+- W03에서는 `Actor::TakeDamage()` 진입부에서 `UCCombatResolutionComponent`를 먼저 호출한다.
 - 과도기 fallback으로 기존 `TakeDamageComponent->RequestTakeDamage()` 경로를 유지한다.
 - `UCCombatResolutionComponent`는 combat outcome을 판정하는 계층으로 둔다.
 - `TakeDamageComponent`는 resolved damage payload를 소비해 Health commit을 수행하는 계층으로 축소한다.
-- W02에서는 `TakeDamageComponent`의 기존 reaction / feedback dispatch는 fallback 경로에만 남긴다.
+- W03에서는 `TakeDamageComponent`의 기존 reaction / feedback dispatch는 fallback 경로에만 남긴다.
 - System Design Records는 즉시 신규 작성하지 않는다.
 - S26 / S27 / S28은 현재 PR 커밋 범위에 포함되지 않은 후속 Architecture baseline 후보로 둔다.
-- W02 문서는 S26 / S27 / S28의 존재를 전제하지 않는다.
-- S28의 Policy / Gate 전체 리팩터링은 W02 범위에 포함하지 않는다.
+- W03 문서는 S26 / S27 / S28의 존재를 전제하지 않는다.
+- S28의 Policy / Gate 전체 리팩터링은 W03 범위에 포함하지 않는다.
 - 실제 구현 Branch에서 S26 / S27 / S28이 추가되거나 확인되면 그 기준과의 충돌 여부를 다시 검토한다.
 
 ---
@@ -170,7 +170,7 @@
 - DamagePipeline 진입점 변경으로 기존 피격 흐름에 영향 가능
 - `UCCombatResolutionComponent`가 Parry 전용 구현으로 고정되면 Guard / Counter 등 후속 확장 시 구조 변경이 필요할 수 있다
 - fallback 유지 조건이 불명확하면 Combat Resolution 처리 결과와 기존 TakeDamage 처리 결과가 중복 적용될 수 있다
-- W02에서 `TakeDamageComponent`의 기존 reaction / feedback dispatch를 완전히 제거하면 기존 Hit / Dead 피격 흐름 회귀 위험이 크다
+- W03에서 `TakeDamageComponent`의 기존 reaction / feedback dispatch를 완전히 제거하면 기존 Hit / Dead 피격 흐름 회귀 위험이 크다
 - S28의 Policy / Gate 리팩터링까지 W02에 포함하면 작업 범위가 과도하게 커질 수 있다
 
 ### 구현 위험
@@ -210,7 +210,7 @@ Planning Prompt
 Work List Writing
 -> 작성 후보
 -> Feature Work Planning 결과에서 최종 작성 여부 판단
--> 작성하는 경우 실행 전에 W02 Work List 작성
+-> 작성하는 경우 실행 전에 W03 Work List 작성
 
 실행 계층 후보
 -> 구현 계층: Codex 구현 수행, 구현 Prompt가 없다
@@ -226,4 +226,4 @@ Work List Writing
 1. Feature Work Planning 수행
 2. Feature Work Planning에서 비차단 / 검토필요 항목을 선행 확인 항목으로 변환
 3. 구현 단위 / 검증 기준 / 문서화 필요 여부 정리
-4. Feature Work Planning 결과를 기준으로 W02 Work List 작성 여부 확정
+4. Feature Work Planning 결과를 기준으로 W03 Work List 작성 여부 확정
