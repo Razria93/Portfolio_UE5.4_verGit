@@ -1,4 +1,4 @@
-# PR Document Usage Guide
+# PR Term Usage Guide
 
 현재 기준 범위: P01~P18 PR 문서
 

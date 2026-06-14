@@ -489,7 +489,7 @@
 판단:
 
 - 위 문서들은 장기 유지 기준 문서가 아니라 P01~P18 draft 총검토 과정에서 생성된 중간 산출물이다.
-- 용어 분류 기준은 `01_PR_Document_Usage_Guide.md`에 흡수됐다.
+- 용어 분류 기준은 `01_PR_Term_Usage_Guide.md`에 흡수됐다.
 - 실제 용어 목록과 문서별 사용 현황은 `02_PR_Term_Usage_Map.md`에 반영됐다.
 - PR별 목표와 흐름은 `03_PR_Goal_Flow_Map.md`에 반영됐다.
 - 본문 finding과 확정 기준은 archive 전환 전 `04_Draft_Audit_Findings.md`에 반영됐고, 이후 이 문서로 보관됐다.
@@ -502,6 +502,6 @@
 
 현재 PR 문서 관리 문서:
 
-- `01_PR_Document_Usage_Guide.md`
+- `01_PR_Term_Usage_Guide.md`
 - `02_PR_Term_Usage_Map.md`
 - `03_PR_Goal_Flow_Map.md`
