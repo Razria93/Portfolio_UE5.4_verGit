@@ -280,8 +280,8 @@
 
 대상
 - README
-- T00 ~ T07 Technical Documents
-- Documentation Index
+- PF00 ~ PF07 Portfolio Documents
+- Documentation Index / 문서군별 Index
 
 목표
 - 포트폴리오 첫 진입 문서 정리
@@ -353,8 +353,8 @@ VFX / UI
 
 ```yaml
 1. README / P00 / P01 / P02 최신화
-2. Documentation Index 갱신
-3. 제출용 기술 문서 T00 ~ T07 검수
+2. Documentation Index / 문서군별 Index 갱신
+3. 제출용 Portfolio Documents PF00 ~ PF07 검수
 4. System Architecture / Engine Technique 문서 체계 정리
 5. Action / Reaction 실행 간섭 처리 기준 정리
 6. Parry 구현

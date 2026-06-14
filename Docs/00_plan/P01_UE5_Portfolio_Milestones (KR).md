@@ -93,7 +93,7 @@ Unreal Engine 프로젝트, Git / GitHub, Markdown 문서 체계를 구성한다
 - Pull Request
 - Bug Report
 - System Architecture
-- Technical Documents
+- Portfolio Documents
 - AI Workflow
 ```
 
@@ -408,15 +408,15 @@ D20
 ### 현재 구성된 항목
 
 ```yaml
-Technical Documents
-- T00 Project Overview
-- T01 Project Technical Summary
-- T02 Combat Data Processing Pipeline
-- T03 Action / Reaction Execution Pipeline
-- T04 Enemy AI Combat Behavior Design
-- T05 Data-Driven Design
-- T06 Troubleshooting
-- T07 AI-Assisted Development Workflow
+Portfolio Documents
+- PF00 Portfolio Overview
+- PF01 Project Summary
+- PF02 Combat Data Pipeline
+- PF03 Action / Reaction Execution
+- PF04 Enemy AI Combat Behavior
+- PF05 Data-Driven Design
+- PF06 Troubleshooting
+- PF07 AI-Assisted Workflow
 
 README
 - 프로젝트 개요
@@ -430,7 +430,7 @@ README
 ```yaml
 후속 정리
 - Project Stella 명칭 반영 여부 정리
-- Documentation Index 갱신
+- Documentation Index / 문서군별 Index 갱신
 - System Architecture / Engine Technique 문서 역할 분리
 - 제출용 기술 문서 최종 검수
 ```
@@ -524,8 +524,8 @@ v0.10-ai-workflow
 ## 15. 현재 우선순위
 
 ```yaml
-1. 제출용 README / Technical Documents 정리
-2. Documentation Index 갱신
+1. 제출용 README / Portfolio Documents 정리
+2. Documentation Index / 문서군별 Index 갱신
 3. 기존 System Architecture 문서 체계 정리
 4. Action / Reaction 실행 간섭 처리 기준 정리
 5. Parry 구현

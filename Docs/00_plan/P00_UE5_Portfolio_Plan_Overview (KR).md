@@ -39,7 +39,7 @@
 작업 방식
 - Git / PR / Issue Checklist 기반 작업 관리
 - Bug Report / System Architecture 기반 기록
-- Technical Document 기반 제출용 설명
+- Portfolio Document 기반 제출용 설명
 - AI Workflow / Prompt Library 기반 Codex 협업
 ```
 
@@ -72,7 +72,7 @@ Documentation
 - Pull Request
 - Bug Report
 - System Architecture
-- Technical Documents
+- Portfolio Documents
 - AI Workflow
 ```
 
@@ -120,7 +120,7 @@ Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더�
 05_System_Architecture
 -> 시스템 구조 / 책임 경계 / 설계 결정 / 구조 변경 기록
 
-07_Technical_Documents
+07_Portfolio_Documents
 -> 제출용 기술 문서
 
 08_AI_Workflow
@@ -135,28 +135,28 @@ Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더�
 ## 6. 제출용 기술 문서
 
 ```yaml
-T00
+PF00
 -> 프로젝트 개요
 
-T01
+PF01
 -> 프로젝트 기술 요약
 
-T02
+PF02
 -> 전투 데이터 처리 파이프라인
 
-T03
+PF03
 -> Action / Reaction 실행 파이프라인
 
-T04
+PF04
 -> Enemy AI 전투 행동 설계
 
-T05
+PF05
 -> Data-Driven 설계
 
-T06
+PF06
 -> Troubleshooting
 
-T07
+PF07
 -> AI 기반 개발 Workflow
 ```
 
@@ -180,7 +180,7 @@ AI
 - AI decision source와 공통 execution pipeline 연결 강화
 
 Documentation
-- Documentation Index 갱신
+- Documentation Index / 문서군별 Index 갱신
 - System Architecture / Engine Technique 문서 역할 분리
 - 제출용 기술 문서 최종 검수
 - AI Workflow 실사용 기반 refactor
