@@ -14,7 +14,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 
 ```yaml
 분류
--> Prompt Library / Prompt Files / Work List / Operation / Pipeline / Project Stella / History / Document Category / Portfolio Technical Document
+-> Prompt Library / Prompt Files / Work List / Operation / Pipeline / Project Stella / History / Document Category / Portfolio Document
 
 내용
 -> 처리해야 할 작업 또는 검토해야 할 항목
@@ -51,8 +51,8 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 내용: AI Workflow v1 구축 중 발견한 계층 구조, Prompt Flow, Work Brief / Planning / Work List, 문서 카테고리, History, 검증, Commit / PR 보완 후보를 다음 Refactor 범위에서 검토해야 함
 - 상태: 대기
 - 우선순위: 우선
-- 근거 문서: `AI_Workflow_Refactor_Notes (KR).md` / W02 Work Brief / W02 Feature Work Planning / W02 Work List Draft
-- 다음 조치: W02 실제 구현 Branch에서 Workflow 사용성을 확인한 뒤, Refactor Notes 기준으로 우선순위를 재정렬하고 필요한 항목만 반영
+- 근거 문서: `AI_Workflow_Refactor_Notes (KR).md` / W03 Work Brief / W03 Feature Work Planning / W03 Work List Draft
+- 다음 조치: W03 실제 구현 Branch에서 Workflow 사용성을 확인한 뒤, Refactor Notes 기준으로 우선순위를 재정렬하고 필요한 항목만 반영
 
 ### Working Rules / Reference Prompt 실사용 검토
 
@@ -124,7 +124,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 상태: 대기
 - 우선순위: 우선
 - 근거 문서: 문서 카테고리 기준 / Prompt Custom Blueprint / Document Writing Prompt
-- 다음 조치: System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Portfolio Technical Document 기준으로 Writing Prompt와 기존 문서 재분류 계획 수립
+- 다음 조치: System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Portfolio Document 기준으로 Writing Prompt와 기존 문서 재분류 계획 수립
 
 ### Document Writing Prompt 재구성
 
@@ -133,7 +133,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 상태: 대기
 - 우선순위: 우선
 - 근거 문서: Document Writing Prompt / Prompt Custom Blueprint
-- 다음 조치: System Architecture는 현재 구조 설명 전용으로 축소하고, Architecture Decision Record / Architecture Issue Report / Engine Technique Document / Engine Decision Record / Engine Issue Report / Portfolio Technical Document 작성 Prompt를 추가 또는 변경
+- 다음 조치: System Architecture는 현재 구조 설명 전용으로 축소하고, Architecture Decision Record / Architecture Issue Report / Engine Technique Document / Engine Decision Record / Engine Issue Report / Portfolio Document 작성 Prompt를 추가 또는 변경
 
 ### Prompt Library 실사용 검증
 
@@ -190,7 +190,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 ### 문서 카테고리 기준 확정
 
 - 분류: Document Category
-- 완료 기준: Refactor Report를 공식 카테고리에서 제외하고 Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 기준으로 확정
+- 완료 기준: Refactor Report를 공식 카테고리에서 제외하고 Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Document 기준으로 확정
 
 ### 36ce73b Prompt 추가 반영
 

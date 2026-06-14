@@ -1,4 +1,4 @@
-﻿# Git Commit PR Preflight Prompt
+# Git Commit PR Preflight Prompt
 
 ## 1. 목적
 
@@ -40,13 +40,15 @@ Commit 또는 PR 직전에 changed files, staged / unstaged / untracked, 관련 
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 - Code Review:
 - Asset Blueprint Validation:
 
 점검 목표:
 - git status와 changed files를 먼저 확인해줘.
 - staged / unstaged / untracked 상태를 분리해서 정리해줘.
+- staged 변경은 `git diff --cached --stat`, `git diff --cached --name-status`, 필요 시 파일별 cached diff로 확인해줘.
+- staged 변경이 실제 내용 변경인지, BOM / line ending / whitespace-only 같은 format-only 변경인지 구분해줘.
 - 사용자 변경과 AI 작업 변경을 섞어 되돌리지 말아줘.
 - 변경 파일을 Code / Docs / Prompt / Asset / Config / Generated 기준으로 그룹화해줘.
 - 관련 없는 변경이 섞였으면 별도 그룹으로 분리해줘.
@@ -62,6 +64,7 @@ Preflight Summary
 - Staged:
 - Unstaged:
 - Untracked:
+- Staged diff summary:
 
 File Groups
 - Code:
@@ -81,7 +84,7 @@ Document Links
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 - Code Review:
 - Asset Blueprint Validation:
 
@@ -96,6 +99,7 @@ Verification Status
 Commit Recommendation
 - 포함 추천:
 - 제외 추천:
+- 별도 커밋 추천:
 - 추가 확인:
 
 PR Readiness
@@ -153,6 +157,7 @@ PR Readiness
 -> git reset / checkout -- / 강제 삭제 제안 금지
 -> staged 상태가 불명확하면 commit 권장하지 않음
 -> 수행하지 않은 검증을 완료로 표현하지 않음
+-> BOM / line ending / whitespace-only 변경을 내용 변경과 섞어 설명하지 않음
 ```
 
 ---
@@ -163,6 +168,8 @@ PR Readiness
 모호한 경우
 -> 관련 변경 / unrelated 변경을 분리
 -> staged 대상이 불명확하면 확인 필요로 표시
+-> staged 변경이 format-only이면 작업 목적과 직접 관련 있는지 별도 판단
+-> 작업 목적과 무관한 format-only 변경은 제외 또는 별도 커밋 후보로 표시
 ```
 
 ---
@@ -172,6 +179,7 @@ PR Readiness
 ```yaml
 검증 기준
 -> changed files가 그룹화되었는가
+-> staged diff의 실제 변경 성격이 확인되었는가
 -> commit 포함 / 제외 추천이 분리되었는가
 -> PR readiness가 검증 상태와 연결되는가
 ```
@@ -210,6 +218,6 @@ PR Document Writing Prompt
 ```yaml
 후속 보완 후보
 -> Commit message 추천 기준
--> staged split 기준
+-> staged split 기준 상세화
 ```
 

@@ -1,4 +1,4 @@
-﻿# Project Rules Draft
+# Project Rules Draft
 
 ## 1. 목적
 
@@ -89,7 +89,7 @@ QA는 단순히 "문제가 없는지" 확인하는 단계가 아니라, 어떤 �
 -> Work List
 -> Bug Report
 -> System Architecture
--> Technical Document
+-> Portfolio Document
 -> PR Document
 -> Verification Log
 ```

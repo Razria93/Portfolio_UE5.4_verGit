@@ -40,7 +40,7 @@
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 
 리뷰 목표:
 - 변경 요약보다 버그, 회귀, 책임 경계 위반, Unreal C++ 관례 위반, 누락 검증을 먼저 찾아줘.

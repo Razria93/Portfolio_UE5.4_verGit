@@ -49,7 +49,7 @@ Branch에서 해결한 문제, 변경 의도, 책임 분리, 주요 처리 흐�
 - Issue Checklist:
 - Bug Report:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 - Verification Log:
 - Code Review:
 
@@ -387,7 +387,7 @@ Fix PR 경량 구조:
 ```yaml
 관련 문서
 -> Work List 또는 Issue Checklist를 Bug Report보다 먼저 작성
--> 연결 문서 카테고리에 맞춰 `Work List`, `Issue Checklist`, `Bug Report`, `후속 문서`, `Portfolio Technical Document`, `Verification Log` 같은 항목명을 사용
+-> 연결 문서 카테고리에 맞춰 `Work List`, `Issue Checklist`, `Bug Report`, `후속 문서`, `Portfolio Document`, `Verification Log` 같은 항목명을 사용
 -> 같은 카테고리 문서가 여러 개이고 역할이 다르면 `W01 Work List`, `W02 Work List`처럼 구체 라벨을 붙임
 -> PR 문서 자체의 관련 문서 섹션에는 PR 항목을 만들지 않음
 -> 단일 항목은 `- Issue Checklist: 파일명.md` 형태로 작성하고 파일명은 인라인 코드로 감쌈
@@ -415,7 +415,7 @@ Fix PR 경량 구조:
 -> Branch명
 -> 변경 파일 또는 commit range
 -> 관련 Work List / Issue Checklist
--> 관련 Bug Report / PR Document / Portfolio Technical Document / Verification Log
+-> 관련 Bug Report / PR Document / Portfolio Document / Verification Log
 -> PR 성격 후보
 -> KR 초안에서 의미가 흐려지는 용어 후보
 -> KR 유지 / KR + EN 병기 / EN 유지 후보

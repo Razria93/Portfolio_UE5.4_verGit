@@ -40,7 +40,7 @@
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 - Code Review:
 
 검증 목표:

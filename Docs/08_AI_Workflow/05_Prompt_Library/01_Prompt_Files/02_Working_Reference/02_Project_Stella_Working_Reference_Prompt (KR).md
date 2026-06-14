@@ -156,7 +156,7 @@ Project Stella의 현재 코드 / 문서 구조를 분석해줘.
 -> 관련 Engine Implementation Records 경로
 -> Project Stella Overview
 -> 현재 Branch의 Work List / Verification Log / PR Document
--> 관련 Portfolio Technical Document
+-> 관련 Portfolio Document
 -> 현재 구현인지 후속 설계인지 불명확한 항목
 -> 사용자가 우려하는 책임 경계 또는 검증 위험
 ```

@@ -1,4 +1,4 @@
-﻿# AI Work Pipeline
+# AI Work Pipeline
 
 ## 1. 목적
 
@@ -29,7 +29,7 @@ Pipeline 체크포인트
 -> 작업 목표: 무엇을 끝내야 하는지, 완료 기준과 비범위가 무엇인지 확인
 -> 변경 위험: 코드 / 문서 / Asset / Blueprint / Git 변경 영향 확인
 -> 검증 필요성: Build / Code Flow / PIE / Editor / Asset 검증 필요 여부 확인
--> 문서화 필요성: Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 확인
+-> 문서화 필요성: Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Document 반영 필요 여부 확인
 ```
 
 이 네 가지는 AI 기반 작업 운영 체계에서 Codex의 작업을 통제하기 위한 핵심 기준이다. 상세 판단 기준은 `../03_Operation/AI_Workflow_Operation_Guide (KR).md`의 `핵심 통제 기준`을 따른다.
@@ -316,7 +316,7 @@ Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Libra
 -> Engine Implementation Records
 -> Verification Log
 -> PR Document
--> Portfolio Technical Document
+-> Portfolio Document
 -> AI Workflow Index / Prompt Format Blueprint / Prompt Library Maintenance Blueprint / Prompt Files / Operation Guide
 -> Milestone / Roadmap
 
@@ -341,7 +341,7 @@ Prompt 호출 흐름과 작업 유형별 라우팅 기준은 `../05_Prompt_Libra
 -> Engine Implementation Records: Unreal Engine 기능 사용 결정이나 엔진 동작 / 설정 / API 이슈를 기록할 때
 -> Verification Log: 수행한 검증과 미검증 항목을 분리 기록할 때
 -> PR Document: Branch 결과와 검증 상태를 제출할 때
--> Portfolio Technical Document: 여러 작업 기록을 제출용 기술 주제로 압축할 때
+-> Portfolio Document: 여러 작업 기록을 제출용 기술 주제로 압축할 때
 -> AI Workflow Index: AI Workflow 문서의 위치 / 역할 / 상태를 갱신할 때
 -> Prompt Format Blueprint / Prompt Library Maintenance Blueprint / Prompt Files: 반복 가능한 작업 규칙 또는 Prompt Library 관리 기준을 개선할 때
 ```
@@ -385,7 +385,7 @@ Branch 결과
 -> PR Document
 
 포트폴리오 제출용 정리
--> Portfolio Technical Document
+-> Portfolio Document
 ```
 
 History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 `System Architecture`를 우선 참조하고 엔진 기능 / API 사용 방식은 `Engine Technique Document` 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 `Work List` 또는 `PR Document`에 남긴다.

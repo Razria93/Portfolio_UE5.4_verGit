@@ -18,7 +18,7 @@
 - Work Brief Intake
 - Feature Work Planning
 - Work List Writing
-- W02 Parry 예시 흐름
+- W03 Parry 예시 흐름
 
 현재 Branch에서 검증한 것
 - 자연어 요청을 Work Brief로 정리
@@ -147,7 +147,7 @@ Work Planning
 
 ## 7. Work Brief 운영 보완
 
-W02에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방식이 더 적합하다는 점이 확인됐다.
+W03에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방식이 더 적합하다는 점이 확인됐다.
 
 다음 기준은 유지한다.
 
@@ -174,7 +174,7 @@ W02에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방�
 
 ## 8. Work Planning 보완
 
-`Feature Work Planning`은 W02에서 유효했지만, 실제 구현 브랜치에서 사용성이 검증되지는 않았다.
+`Feature Work Planning`은 W03에서 유효했지만, 실제 구현 브랜치에서 사용성이 검증되지는 않았다.
 
 다음 Refactor에서는 실제 구현 결과를 바탕으로 다음 항목을 점검한다.
 
@@ -198,7 +198,7 @@ W02에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방�
 - 안정성 검토
 ```
 
-이 분류는 아직 확정 기준이 아니며, W02 실제 구현에서 적합성을 확인한다.
+이 분류는 아직 확정 기준이 아니며, W03 실제 구현에서 적합성을 확인한다.
 
 ---
 
@@ -290,7 +290,7 @@ System Architecture와 Engine Technique 계층은 다음 Refactor에서 정리�
 - Engine Issue Report
 
 포트폴리오 설명
-- Portfolio Technical Document
+- Portfolio Document
 ```
 
 검토할 항목은 다음이다.
@@ -302,7 +302,7 @@ System Architecture와 Engine Technique 계층은 다음 Refactor에서 정리�
 - Architecture Issue Report는 구조 문제 / 책임 경계 이슈를 담당하는가
 - Engine Technique Document는 Unreal 기능 / API 사용 방식을 설명하는가
 - Engine Decision Record와 Engine Issue Report가 System 계열과 같은 위계로 다뤄지는가
-- Technical Document라는 넓은 이름이 필요한가
+- Portfolio Document가 내부 원천 문서와 분리된 제출용 문서로 충분히 정의됐는가
 ```
 
 ---
@@ -327,7 +327,7 @@ History를 생략할 수 있는 경우
 
 권장 기본값은 `보류`다.
 
-W02 실제 구현 후 기록 추적이 부족하다고 느껴질 때 별도 체계로 분리한다.
+W03 실제 구현 후 기록 추적이 부족하다고 느껴질 때 별도 체계로 분리한다.
 
 ---
 
@@ -412,14 +412,14 @@ Git / PR 계층은 존재하지만, 실제 커밋 분리와 staging 판단에 �
 
 ---
 
-## 16. W02 예시의 한계
+## 16. W03 예시의 한계
 
-W02는 좋은 실험이었지만, 실제 운용 기준으로는 과하게 자세한 부분이 있다.
+W03은 좋은 실험이었지만, 실제 운용 기준으로는 과하게 자세한 부분이 있다.
 
 다음 구현 Branch에서 확인할 항목은 다음이다.
 
 ```yaml
-W02에서 확인할 것
+W03에서 확인할 것
 - Work Brief가 충분히 짧은가
 - Feature Work Planning이 실제 구현에 도움이 되는가
 - Work List Draft가 실행 관리에 유용한가
@@ -427,7 +427,7 @@ W02에서 확인할 것
 - Planning 결과가 구현 중 얼마나 자주 바뀌는가
 ```
 
-W02는 표준 완성형이라기보다 v1 실험 사례로 본다.
+W03은 표준 완성형이라기보다 v1 실험 사례로 본다.
 
 실제 구현 후 더 짧고 반복 가능한 양식으로 축약한다.
 
@@ -463,7 +463,7 @@ W02는 표준 완성형이라기보다 v1 실험 사례로 본다.
 
 ```text
 1. 현재 AI Workflow Branch 마감
-2. W02 실제 Parry 구현 Branch 진행
+2. W03 실제 Parry 구현 Branch 진행
 3. 구현 중 Work Brief / Planning / Work List 사용성 기록
 4. 구현 완료 후 Verification Log / PR Document 작성
 5. 실제 사용 결과를 바탕으로 AI Workflow Refactor 진행

@@ -2,7 +2,7 @@
 
 ## 1. 목적
 
-여러 Bug Report, Architecture Issue Report, Engine Issue Report를 문제 유형, 공통 원인, 수정 패턴, 재발 방지 기준 중심의 Portfolio Technical Document 하위 Troubleshooting 유형으로 압축한다.
+여러 Bug Report, Architecture Issue Report, Engine Issue Report를 문제 유형, 공통 원인, 수정 패턴, 재발 방지 기준 중심의 Portfolio Document 하위 Troubleshooting 유형으로 압축한다.
 
 ---
 
@@ -12,7 +12,7 @@
 사용 시점
 -> 여러 Bug Report / Architecture Issue Report / Engine Issue Report를 제출용 Troubleshooting 기술 문서로 묶을 때
 -> 개별 이슈보다 원인 유형과 해결 패턴을 설명해야 할 때
--> Portfolio Technical Document 안에서 문제 해결 패턴을 별도 주제로 압축해야 할 때
+-> Portfolio Document 안에서 문제 해결 패턴을 별도 주제로 압축해야 할 때
 ```
 
 ---
@@ -26,7 +26,7 @@
 ## 4. 복사용 Prompt
 
 ````text
-아래 Bug Report / Architecture Issue Report / Engine Issue Report 묶음을 기반으로 Portfolio Technical Document 하위 Troubleshooting 유형 문서를 작성 또는 보완해줘.
+아래 Bug Report / Architecture Issue Report / Engine Issue Report 묶음을 기반으로 Portfolio Document 하위 Troubleshooting 유형 문서를 작성 또는 보완해줘.
 
 관련 이슈 문서:
 - [Bxx 문서 / issue]
@@ -40,7 +40,7 @@
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 
 작성 목표:
 - 개별 이슈 문서를 시간순으로 나열하지 말고 문제 유형별로 묶어줘.
@@ -90,7 +90,7 @@
 ```yaml
 범위
 -> 여러 Bug Report / Architecture Issue Report / Engine Issue Report 압축 / 재구성
--> Portfolio Technical Document 하위 Troubleshooting 유형 작성
+-> Portfolio Document 하위 Troubleshooting 유형 작성
 
 비범위
 -> 개별 Bug Report 작성
@@ -136,7 +136,7 @@
 
 ```yaml
 완료
--> Bug Report / Architecture Issue Report / Engine Issue Report 묶음이 Portfolio Technical Document 하위 Troubleshooting 유형으로 재구성됨
+-> Bug Report / Architecture Issue Report / Engine Issue Report 묶음이 Portfolio Document 하위 Troubleshooting 유형으로 재구성됨
 
 실패
 -> Bug Report / Architecture Issue Report / Engine Issue Report 근거 부족
@@ -160,7 +160,7 @@ Engine Issue Report Writing Prompt
 -> Unreal Engine 동작, 설정, API 사용 중 발생한 기술 이슈 분석
 
 Troubleshooting Summary Prompt
--> 여러 Bug Report / Architecture Issue Report / Engine Issue Report를 Portfolio Technical Document 하위 Troubleshooting 유형으로 압축
+-> 여러 Bug Report / Architecture Issue Report / Engine Issue Report를 Portfolio Document 하위 Troubleshooting 유형으로 압축
 ```
 
 ---
@@ -170,5 +170,5 @@ Troubleshooting Summary Prompt
 ```yaml
 후속 보완 후보
 -> Troubleshooting 유형 분류 기준
--> Portfolio Technical Document 내부 유형으로 유지할지 별도 Prompt로 유지할지 실사용 후 재검토
+-> Portfolio Document 내부 유형으로 유지할지 별도 Prompt로 유지할지 실사용 후 재검토
 ```

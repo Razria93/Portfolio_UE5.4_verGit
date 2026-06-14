@@ -1,4 +1,4 @@
-﻿# Asset Blueprint Validation Prompt
+# Asset Blueprint Validation Prompt
 
 ## 1. 목적
 
@@ -40,7 +40,7 @@ C++ Build만으로 확인되지 않는 Editor / Asset / Blueprint 영향을 점�
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 - Code Review:
 
 검증 목표:

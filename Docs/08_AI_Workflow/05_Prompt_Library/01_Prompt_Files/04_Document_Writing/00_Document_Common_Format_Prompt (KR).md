@@ -85,7 +85,7 @@
 ### 제목
 
 - 본문 제목은 파일명 또는 문서 ID와 일치시킨다.
-- 문서 ID가 있는 문서군은 `Dxx`, `Pxx`, `Bxx`, `Sxx`, `Txx` 기준을 유지한다.
+- 문서 ID가 있는 문서군은 `Dxx`, `Pxx`, `Bxx`, `Sxx`, `PFxx` 기준을 유지한다.
 - 제목에 gitmoji, issue 번호, milestone 번호가 필요한 문서 타입인지 확인한다.
 - PR 문서처럼 GitHub 게시 제목을 포함해야 하는 문서 타입은 해당 문서 작성 Prompt를 우선한다.
 

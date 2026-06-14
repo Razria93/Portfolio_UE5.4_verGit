@@ -1,4 +1,4 @@
-﻿# Work List Writing Prompt
+# Work List Writing Prompt
 
 ## 1. 목적
 
@@ -78,7 +78,7 @@ Branch 작업 개요:
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 
 작성 목표:
 - 작업 결과 설명보다 목표 / 범위 / 완료 기준 / 검증 상태 / 후속 작업 범위를 우선 정리해줘.
@@ -485,7 +485,7 @@ Document Set Audit Prompt
 
 ```yaml
 후속 보완 후보
--> W02 Work List 작성 결과를 기준으로 작성 양식 보완
+-> W03 Work List 작성 결과를 기준으로 작성 양식 보완
 -> Work List 양식을 별도 Format Reference로 분리할지 검토
 -> Work Brief Intake Prompt와 Feature Work Planning Prompt의 입력 / 출력 연결 기준 점검
 ```

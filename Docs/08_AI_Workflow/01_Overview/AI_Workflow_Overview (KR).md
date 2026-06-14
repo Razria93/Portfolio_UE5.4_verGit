@@ -109,7 +109,7 @@ History
 
 Document
 -> 작업 결과와 판단 근거를 공식 산출물로 정리
--> Work List, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Technical Document 등으로 분리
+-> Work List, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Document 등으로 분리
 
 Work List
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태, 후속 작업 범위 관리
@@ -182,7 +182,7 @@ QA 흐름
 -> Work List 갱신
 -> 필요 시 Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log 작성
 -> PR Document로 Branch 결과와 검증 상태 정리
--> 여러 작업 기록은 Portfolio Technical Document로 압축
+-> 여러 작업 기록은 Portfolio Document로 압축
 -> Prompt 개선 필요 항목은 Prompt Library 후속 작업으로 분리
 ```
 
@@ -269,7 +269,7 @@ Verification Log
 PR Document
 -> Branch 결과, 변경 요약, 검증 상태, 후속 작업 범위 정리
 
-Portfolio Technical Document
+Portfolio Document
 -> 여러 작업 기록을 포트폴리오 제출용 기술 주제로 압축
 
 AI Workflow Index

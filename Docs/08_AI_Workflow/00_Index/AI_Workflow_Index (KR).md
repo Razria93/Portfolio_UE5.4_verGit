@@ -204,7 +204,7 @@ AI_Work_Pipeline (KR).md
 
 - 분류 경로: `05_Prompt_Library/01_Prompt_Files/04_Document_Writing/`
 - 역할: 문서 카테고리별 작성 / 보완 Prompt 분류
-- 대상 문서: Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document
+- 대상 문서: Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Document
 
 ```yaml
 00_Document_Common_Format_Prompt (KR).md
@@ -222,11 +222,14 @@ System_Architecture_Writing_Prompt (KR).md
 PR_Document_Writing_Prompt (KR).md
 -> [생성됨 / 검토 필요] PR Document 작성 / 보완 Prompt
 
-Portfolio_Technical_Document_Writing_Prompt (KR).md
--> [생성됨 / 검토 필요] Portfolio Technical Document 작성 / 보완 Prompt
+00_Documentation_Index_Writing_Prompt (KR).md
+-> [생성됨 / 검토 필요] 전체 Documentation Index와 문서군별 Index 작성 / 보완 Prompt
+
+Portfolio_Document_Writing_Prompt (KR).md
+-> [생성됨 / 검토 필요] Portfolio Document 작성 / 보완 Prompt
 
 Troubleshooting_Summary_Prompt (KR).md
--> [생성됨 / 검토 필요] 여러 Bug Report / Architecture Issue Report / Engine Issue Report를 Portfolio Technical Document 하위 Troubleshooting 유형으로 압축하는 Prompt
+-> [생성됨 / 검토 필요] 여러 Bug Report / Architecture Issue Report / Engine Issue Report를 Portfolio Document 하위 Troubleshooting 유형으로 압축하는 Prompt
 ```
 
 #### 8.2.5. 05_Feature_Work_Prompts

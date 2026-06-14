@@ -1,8 +1,8 @@
-# Portfolio Technical Document Writing Prompt
+# Portfolio Document Writing Prompt
 
 ## 1. 목적
 
-여러 작업 문서에 축적된 내용을 평가자에게 보여줄 포트폴리오 기술 주제 중심의 Portfolio Technical Document로 압축 / 재구성한다.
+여러 작업 문서에 축적된 내용을 평가자에게 보여줄 포트폴리오 제출용 주제 중심의 Portfolio Document로 압축 / 재구성한다.
 
 ---
 
@@ -10,8 +10,8 @@
 
 ```yaml
 사용 시점
--> 제출용 기술 문서를 작성할 때
--> 여러 Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document를 하나의 기술 주제로 묶을 때
+-> 제출용 포트폴리오 문서를 작성할 때
+-> 여러 Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document를 하나의 포트폴리오 주제로 묶을 때
 -> 작업 기록을 문제 정의 / 시스템 구조 / 엔진 사용 방식 / 설계 판단 / 구현 결과 / 검증 흐름으로 재구성할 때
 ```
 
@@ -26,7 +26,7 @@
 ## 4. 복사용 Prompt
 
 ````text
-아래 자료를 기반으로 Portfolio Technical Document를 작성 또는 보완해줘.
+아래 자료를 기반으로 Portfolio Document를 작성 또는 보완해줘.
 
 대상 기술 주제:
 - [예: Action / Reaction Execution Pipeline]
@@ -96,7 +96,7 @@
 
 ```yaml
 범위
--> Portfolio Technical Document 작성 / 보완
+-> Portfolio Document 작성 / 보완
 
 비범위
 -> 개별 PR Document 작성
@@ -160,8 +160,8 @@
 ## 12. 기존 Prompt와 역할 경계
 
 ```yaml
-Portfolio Technical Document Writing Prompt
--> 여러 작업 문서를 포트폴리오 기술 주제로 압축
+Portfolio Document Writing Prompt
+-> 여러 작업 문서를 포트폴리오 제출용 주제로 압축
 
 System Architecture Writing Prompt
 -> 현재 시스템 구조 / 책임 경계 / 실행 흐름 문서 작성

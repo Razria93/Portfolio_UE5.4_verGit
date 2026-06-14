@@ -71,7 +71,7 @@ Work List를 작성하기로 한 Branch 단위 작업은 실행 전에 Work List
 문서화 계층
 -> Document Writing Prompt
 -> PR Document Writing Prompt
--> System Architecture / Design Records / Engine Records / Portfolio Technical Document 작성
+-> System Architecture / Design Records / Engine Records / Portfolio Document 작성
 
 검증 계층
 -> Code Review Prompt

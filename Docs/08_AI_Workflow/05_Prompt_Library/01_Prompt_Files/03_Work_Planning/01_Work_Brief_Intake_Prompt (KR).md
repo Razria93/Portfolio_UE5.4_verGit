@@ -114,7 +114,7 @@ Intake 단계의 진단은 `Feature Work Planning`으로 넘어갈 수 있는지
 문서화 영향
 -> Work List / System Architecture / System Design Records 반영 필요 여부 판단
 -> Engine Technique Document / Engine Implementation Records 반영 필요 여부 판단
--> Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 판단
+-> Verification Log / PR Document / Portfolio Document 반영 필요 여부 판단
 ```
 
 ---
@@ -272,7 +272,7 @@ Work Brief에는 대화 과정을 길게 남기지 않고 현재 합의된 작�
 -> 작업 목표 / 작업 유형 / 준비 상태 / Planning Prompt 정리
 
 정리된 기능 흐름
--> 조율된 W02 기능 흐름과 후속 기능 흐름 정리
+-> 조율된 W03 기능 흐름과 후속 기능 흐름 정리
 
 작업 범위
 -> 이번 작업 범위 / 후속 범위 정리
@@ -497,7 +497,7 @@ Document Set Audit Prompt
 
 ```yaml
 후속 보완 후보
--> 실제 W02 Work Brief / Work List 작성 결과를 기준으로 섹션 분리 기준 보완
+-> 실제 W03 Work Brief / Work List 작성 결과를 기준으로 섹션 분리 기준 보완
 -> Feature Work Planning Prompt와의 역할 중복 여부 검토
 -> Work Brief 파일과 최종 Work List 파일의 경로 / 명명 규칙 정리
 ```

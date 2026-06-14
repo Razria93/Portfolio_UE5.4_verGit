@@ -1,4 +1,4 @@
-﻿# Bug Report Writing Prompt
+# Bug Report Writing Prompt
 
 ## 1. 목적
 
@@ -40,7 +40,7 @@
 - Issue Checklist:
 - Bug Report:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 - Verification Log:
 
 작성 목표:
@@ -196,7 +196,7 @@
 -> Work List 또는 Issue Checklist:
 -> PR:
 -> Verification Log:
--> Portfolio Technical Document:
+-> Portfolio Document:
 ```
 
 관련 PR / 문서는 Work List 또는 Issue Checklist를 PR보다 먼저 작성한다.
@@ -229,7 +229,7 @@
 -> 실제 결과
 -> 관련 코드 / 문서
 -> 관련 PR
--> 관련 Work List / Issue Checklist / PR Document / Portfolio Technical Document / Verification Log
+-> 관련 Work List / Issue Checklist / PR Document / Portfolio Document / Verification Log
 -> 수정 내용
 -> 검증 결과
 ```
@@ -268,7 +268,7 @@
 비범위
 -> 버그 수정 구현
 -> PR Document 작성
--> Portfolio Technical Document 압축
+-> Portfolio Document 압축
 ```
 
 ---

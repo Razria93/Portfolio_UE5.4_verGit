@@ -29,7 +29,7 @@
 
 계획 결과는 Work Pipeline의 구조 제안 / 적용 및 수정 / 검증 및 안정화 단계 입력으로 사용한다.
 
-리팩터링 결과를 공식 문서로 남길 때는 성격에 따라 System Architecture, Architecture Decision Record, Architecture Issue Report, Engine Decision Record, Engine Issue Report, Verification Log, PR Document, Portfolio Technical Document로 분리한다.
+리팩터링 결과를 공식 문서로 남길 때는 성격에 따라 System Architecture, Architecture Decision Record, Architecture Issue Report, Engine Decision Record, Engine Issue Report, Verification Log, PR Document, Portfolio Document로 분리한다.
 
 ---
 
@@ -54,7 +54,7 @@ Project Stella 리팩터링 계획을 세워줘.
 - Engine Issue Report: [문서 경로 또는 없음]
 - Verification Log: [문서 경로 또는 없음]
 - PR Document: [문서 경로 또는 없음]
-- Portfolio Technical Document: [문서 경로 또는 없음]
+- Portfolio Document: [문서 경로 또는 없음]
 
 계획 목표:
 - 관련 코드, 문서, 현재 구조, 목표 구조를 먼저 확인해줘.
@@ -137,7 +137,7 @@ Project Stella 리팩터링 계획을 세워줘.
 -> Engine Issue Report:
 -> Verification Log:
 -> PR Document:
--> Portfolio Technical Document:
+-> Portfolio Document:
 
 문서화 연결 대상
 -> [계획 결과 또는 실행 결과를 연결해야 할 문서]

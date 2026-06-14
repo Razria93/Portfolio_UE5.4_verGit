@@ -40,7 +40,7 @@
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 
 작성 목표:
 - 현재 기준 시스템 구조를 설명해줘.
@@ -104,7 +104,7 @@
 -> Engine Technique Document 작성
 -> Engine Decision Record / Engine Issue Report 작성
 -> PR Document 작성
--> Portfolio Technical Document 압축
+-> Portfolio Document 압축
 ```
 
 ---
@@ -181,7 +181,7 @@ Engine Decision Record Writing Prompt
 Engine Issue Report Writing Prompt
 -> Unreal Engine 동작, 설정, API 사용 중 발생한 기술 이슈 분석
 
-Portfolio Technical Document Writing Prompt
+Portfolio Document Writing Prompt
 -> 여러 작업 기록을 포트폴리오용 기술 주제로 압축
 ```
 
