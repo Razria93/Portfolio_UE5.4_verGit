@@ -252,14 +252,16 @@ FActionRequestResult ACPlayer::HandleEquipmentAction(EEquipmentActionIntent InEq
 	return ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
-FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatActionIntent)
+FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatActionIntent, EActionIntentEvent InIntentEvent)
 {
 	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FCombatActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = InCombatActionIntent;
-	request.IntentEvent = EActionIntentEvent::Started;
+	request.IntentEvent = InIntentEvent;
+
+	FLog::Log(FString::Printf(TEXT("[CombatActionRequest] %s"), *request.ToDebugString()));
 
 	return ActionOrchestratorComponent->RequestCombatAction(request);
 }

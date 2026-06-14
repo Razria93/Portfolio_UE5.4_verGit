@@ -126,6 +126,17 @@ public:
 	// How: intent event
 	UPROPERTY(Transient)
 	EActionIntentEvent IntentEvent = EActionIntentEvent::None;
+
+public:
+	FString ToDebugString() const
+	{
+		return FString::Printf(
+			TEXT("Source=%s | Intent=%s | Event=%s"),
+			*UEnum::GetValueAsString(IntentSource),
+			*UEnum::GetValueAsString(IntentType),
+			*UEnum::GetValueAsString(IntentEvent)
+		);
+	}
 };
 
 USTRUCT(BlueprintType)
