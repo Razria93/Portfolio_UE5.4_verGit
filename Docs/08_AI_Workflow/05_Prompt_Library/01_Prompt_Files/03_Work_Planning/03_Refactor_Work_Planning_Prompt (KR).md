@@ -29,7 +29,7 @@
 
 계획 결과는 Work Pipeline의 구조 제안 / 적용 및 수정 / 검증 및 안정화 단계 입력으로 사용한다.
 
-리팩터링 결과를 공식 문서로 남길 때는 성격에 따라 System Architecture, Architecture Decision Record, Architecture Issue Report, Engine Decision Record, Engine Issue Report, Verification Log, PR Document, Portfolio Technical Document로 분리한다.
+리팩터링 결과를 공식 문서로 남길 때는 성격에 따라 System Architecture, Architecture Decision Record, Architecture Issue Report, Engine Decision Record, Engine Issue Report, Verification Log, PR Document, Portfolio Document로 분리한다.
 
 ---
 
@@ -42,7 +42,7 @@ Project Stella 리팩터링 계획을 세워줘.
 - [기능 / 시스템 / 책임 경계 / 문서 경로]
 
 관련 문서:
-- Work Checklist: [문서 경로 또는 없음]
+- Work List: [문서 경로 또는 없음]
 - Bug Report: [문서 경로 또는 없음]
 - System Architecture: [문서 경로 또는 없음]
 - System Design Records: [문서 경로 또는 없음]
@@ -54,7 +54,7 @@ Project Stella 리팩터링 계획을 세워줘.
 - Engine Issue Report: [문서 경로 또는 없음]
 - Verification Log: [문서 경로 또는 없음]
 - PR Document: [문서 경로 또는 없음]
-- Portfolio Technical Document: [문서 경로 또는 없음]
+- Portfolio Document: [문서 경로 또는 없음]
 
 계획 목표:
 - 관련 코드, 문서, 현재 구조, 목표 구조를 먼저 확인해줘.
@@ -62,7 +62,7 @@ Project Stella 리팩터링 계획을 세워줘.
 - 각 변경 단위마다 목표 / 수정 범위 / 비범위 / 위험 / 검증 기준 / 문서화 필요 여부를 정리해줘.
 - 책임 경계는 Orchestrator / Component / Executor / Data / Asset / Blueprint 기준으로 판단해줘.
 - 임시 대응, 구조적 해결, 후속 보강을 분리해줘.
-- 현재 코드 / System Architecture / Records / Work Checklist 기준이 충돌하면 Source of Truth와 불일치 항목을 분리해줘.
+- 현재 코드 / System Architecture / Records / Work List 기준이 충돌하면 Source of Truth와 불일치 항목을 분리해줘.
 - 사용자 결정이 필요한 항목은 구현 전에 선택지로 분리해줘.
 - Work Pipeline에 입력할 계획 작성용이므로 실제 파일 수정이나 공식 문서 작성은 하지 말아줘.
 
@@ -125,7 +125,7 @@ Project Stella 리팩터링 계획을 세워줘.
 -> Asset:
 
 문서화 필요 여부
--> Work Checklist:
+-> Work List:
 -> Bug Report:
 -> System Architecture:
 -> System Design Records:
@@ -137,7 +137,7 @@ Project Stella 리팩터링 계획을 세워줘.
 -> Engine Issue Report:
 -> Verification Log:
 -> PR Document:
--> Portfolio Technical Document:
+-> Portfolio Document:
 
 문서화 연결 대상
 -> [계획 결과 또는 실행 결과를 연결해야 할 문서]

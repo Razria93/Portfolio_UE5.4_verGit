@@ -1,4 +1,4 @@
-﻿# Prompt Format Blueprint
+# Prompt Format Blueprint
 
 ## 1. 목적
 

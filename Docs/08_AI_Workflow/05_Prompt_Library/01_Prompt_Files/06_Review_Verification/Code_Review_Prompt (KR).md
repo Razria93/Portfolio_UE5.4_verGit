@@ -32,7 +32,7 @@
 - [PR 번호 / Branch / commit range / changed files]
 
 관련 문서:
-- Work Checklist:
+- Work List:
 - Bug Report:
 - System Architecture:
 - System Design Records:
@@ -40,7 +40,7 @@
 - Engine Implementation Records:
 - Verification Log:
 - PR Document:
-- Portfolio Technical Document:
+- Portfolio Document:
 
 리뷰 목표:
 - 변경 요약보다 버그, 회귀, 책임 경계 위반, Unreal C++ 관례 위반, 누락 검증을 먼저 찾아줘.
@@ -58,6 +58,30 @@ Findings 작성 기준:
 - 파일 / 함수 / 라인 또는 구체 코드 위치 포함
 - 문제 현상, 발생 조건, 영향, 수정 방향 연결
 - 문제가 없으면 주요 코드 리뷰 이슈는 찾지 못했다고 명시하고 Test Gaps만 정리
+- Finding이 여러 개이면 각 Finding을 `### Finding N. 제목` H3로 분리
+- 각 Finding에는 `Severity`, `위치`, `문제`, `권장 수정`을 분리해서 작성
+- `문제`와 `권장 수정`은 굵은 소제목으로 구분해, 권장 bullet과 다음 Finding 제목이 시각적으로 섞이지 않게 작성
+- Finding 사이에는 `---` 구분선을 둠
+
+Findings 출력 예시:
+
+```md
+### Finding 1. 책임 경계 누락
+
+- **Severity**: 중간
+- **위치**: `File.cpp:42`
+
+**문제**
+
+현재 component가 request 구성과 실제 실행 책임을 동시에 가진 것처럼 보인다.
+
+**권장 수정**
+
+- request 구성과 실행 주체를 문장과 코드 기준으로 분리한다.
+- 실행 주체가 별도라면 `실행한다`가 아니라 `요청한다` 또는 `전달한다`로 표현한다.
+
+---
+```
 
 중점 리뷰 기준:
 - Orchestrator / Component / Executor / AnimNotify 책임 경계

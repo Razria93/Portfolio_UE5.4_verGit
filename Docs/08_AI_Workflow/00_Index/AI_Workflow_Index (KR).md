@@ -125,6 +125,10 @@ AI_Work_Pipeline (KR).md
     05_Feature_Work_Prompts/
     06_Review_Verification/
     07_Git_Operation/
+
+  02_Prompt_Management/
+    01_Prompt_Change_Management_Rule (KR).md
+    02_Prompt_Pattern_Candidates (KR).md
 ```
 
 ### 8.1. Prompt Blueprint
@@ -200,11 +204,14 @@ AI_Work_Pipeline (KR).md
 
 - 분류 경로: `05_Prompt_Library/01_Prompt_Files/04_Document_Writing/`
 - 역할: 문서 카테고리별 작성 / 보완 Prompt 분류
-- 대상 문서: Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document
+- 대상 문서: Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Document
 
 ```yaml
-01_Work_Checklist_Writing_Prompt (KR).md
--> [생성됨 / 검토 필요] 준비된 Work Brief와 Work Planning 결과를 바탕으로 최종 Work Checklist를 작성 / 보완하는 Prompt
+00_Document_Common_Format_Prompt (KR).md
+-> [생성됨 / 검토 필요] 모든 문서 작성에 공통으로 적용할 파일명 / 상단 메타 / 문체 / 공백 양식 기준 Prompt
+
+01_Work_List_Writing_Prompt (KR).md
+-> [생성됨 / 검토 필요] 준비된 Work Brief와 Work Planning 결과를 바탕으로 최종 Work List를 작성 / 보완하는 Prompt
 
 Bug_Report_Writing_Prompt (KR).md
 -> [생성됨 / 검토 필요] Bug Report 작성 / 보완 Prompt
@@ -215,11 +222,14 @@ System_Architecture_Writing_Prompt (KR).md
 PR_Document_Writing_Prompt (KR).md
 -> [생성됨 / 검토 필요] PR Document 작성 / 보완 Prompt
 
-Portfolio_Technical_Document_Writing_Prompt (KR).md
--> [생성됨 / 검토 필요] Portfolio Technical Document 작성 / 보완 Prompt
+00_Index_Writing_Prompt (KR).md
+-> [생성됨 / 검토 필요] 전체 Documentation Index와 문서 유형별 Index 작성 / 보완 Prompt
+
+Portfolio_Document_Writing_Prompt (KR).md
+-> [생성됨 / 검토 필요] Portfolio Document 작성 / 보완 Prompt
 
 Troubleshooting_Summary_Prompt (KR).md
--> [생성됨 / 검토 필요] 여러 Bug Report / Architecture Issue Report / Engine Issue Report를 Portfolio Technical Document 하위 Troubleshooting 유형으로 압축하는 Prompt
+-> [생성됨 / 검토 필요] 여러 Bug Report / Architecture Issue Report / Engine Issue Report를 Portfolio Document 하위 Troubleshooting 유형으로 압축하는 Prompt
 ```
 
 #### 8.2.5. 05_Feature_Work_Prompts
@@ -235,9 +245,12 @@ Cross_Domain_Interrupt_Work_Prompt (KR).md
 #### 8.2.6. 06_Review_Verification
 
 - 분류 경로: `05_Prompt_Library/01_Prompt_Files/06_Review_Verification/`
-- 역할: 코드 리뷰, 검증 로그, Asset / Blueprint 검증 Prompt 분류
+- 역할: 코드 리뷰, 문서 양식 / 정합성 감사, 검증 로그, Asset / Blueprint 검증 Prompt 분류
 
 ```yaml
+Document_Format_Review_Prompt (KR).md
+-> [생성됨 / 검토 필요] 공통 양식과 문서 타입별 작성 규칙 기준의 단계형 문서 검토 Prompt
+
 Document_Set_Audit_Prompt (KR).md
 -> [생성됨 / 검토 필요] 문서군 정합성 / 운용 가능성 감사 Prompt
 
@@ -259,6 +272,19 @@ Asset_Blueprint_Validation_Prompt (KR).md
 ```yaml
 Git_Commit_PR_Preflight_Prompt (KR).md
 -> [생성됨 / 검토 필요] Commit / PR 전 Git 상태와 검증 상태 점검 Prompt
+```
+
+### 8.3. Prompt Management
+
+- 분류 경로: `05_Prompt_Library/02_Prompt_Management/`
+- 역할: Prompt 반영 후보 수집, 승인, 반영 후 유지관리 상태를 관리하는 운영 문서 분류
+
+```yaml
+01_Prompt_Change_Management_Rule (KR).md
+-> [생성됨 / 검토 필요] 최근 문서 패턴 수집, 후보 관리, 승인, 검증, 반영 후 유지관리 기준
+
+02_Prompt_Pattern_Candidates (KR).md
+-> [생성됨 / 검토 필요] 작업 중 발견한 Prompt 반영 후보와 처리 상태를 기록하는 캐시 문서
 ```
 
 ---
@@ -296,8 +322,8 @@ AI_Work_Plan_Draft (KR).md
 ## 11. 외부 연결 문서
 
 ```yaml
-Docs/01_Issue_CheckList/D19_UE5_Portfolio_Work_Checklist (KR).md
--> [진행 중] feature/codex-workflow Branch의 목표, 완료 기준, 현재 작업 상태를 관리하는 Work Checklist
+Docs/01_Work_List/W01_Codex_Workflow/W01_UE5_Portfolio_Work_List.md
+-> [완료] feature/codex-workflow Branch의 목표, 완료 기준, 현재 작업 상태를 관리하는 Work List
 ```
 
 ---

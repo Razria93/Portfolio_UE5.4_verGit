@@ -21,7 +21,7 @@
 4. 문서화
 ```
 
-이 4가지는 역할자가 아니라 작업 단계다. 실제 책임 주체는 사용자와 Codex이며, Prompt / History / Document / Work Checklist는 작업을 통제하고 기록하기 위한 운영 산출물로 본다.
+이 4가지는 역할자가 아니라 작업 단계다. 실제 책임 주체는 사용자와 Codex이며, Prompt / History / Document / Work List는 작업을 통제하고 기록하기 위한 운영 산출물로 본다.
 
 ---
 
@@ -86,10 +86,10 @@ QA는 단순히 "문제가 없는지" 확인하는 단계가 아니라, 어떤 �
 
 ```yaml
 문서화 요청
--> Work Checklist
+-> Work List
 -> Bug Report
 -> System Architecture
--> Technical Document
+-> Portfolio Document
 -> PR Document
 -> Verification Log
 ```

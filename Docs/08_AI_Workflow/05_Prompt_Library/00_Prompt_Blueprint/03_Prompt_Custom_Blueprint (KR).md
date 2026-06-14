@@ -1,4 +1,4 @@
-﻿# Prompt Custom Blueprint
+# Prompt Custom Blueprint
 
 ## 1. 목적
 
@@ -71,11 +71,11 @@ Project Stella 기준
 
 ## 5. Document Writing Prompt Custom Rules
 
-Document Writing Prompt는 문서 카테고리별 작성 / 보완에 적용한다. 대상 문서가 Work Checklist, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Technical Document이면 응답에 다음 기준을 반영한다.
+Document Writing Prompt는 문서 카테고리별 작성 / 보완에 적용한다. 대상 문서가 Work List, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Document이면 응답에 다음 기준을 반영한다.
 
 ```yaml
 Document 연결
-Work Checklist
+Work List
 -> 작업 목표
 -> 범위 / 비범위
 -> 완료 기준
@@ -124,12 +124,26 @@ PR Document
 -> 미검증 항목
 -> 후속 작업 범위
 
-Portfolio Technical Document
+Portfolio Document
 -> 평가자에게 보여줄 기술 주제 중심 설명
 -> 문제 정의 / 설계 판단 / 구현 구조 / 검증 결과 압축
 ```
 
 문서 카테고리별 정의와 운영 기준은 `../../03_Operation/AI_Workflow_Operation_Guide (KR).md`와 `../../04_Work_Pipeline/AI_Work_Pipeline (KR).md`를 따른다.
+
+문서 위치를 판단할 때는 문서의 목적과 지속성을 먼저 본다.
+
+```yaml
+문서 위치 기준
+00_plan
+-> 프로젝트 전체 계획, 마일스톤, 로드맵처럼 프로젝트 운영의 상위 계획을 둠
+
+06_notes
+-> 특정 문서군 재분류, 다음 브랜치 준비 메모, 작업 판단 노트처럼 프로젝트 전체 계획은 아니지만 보존할 가치가 있는 정리 문서를 둠
+
+Document Index
+-> 전체 Index는 문서군 라우터로 두고, 상세 목록은 각 문서군별 Index에 둠
+```
 
 ---
 
@@ -161,6 +175,9 @@ Project Stella Prompt Library는 다음 폴더 구조를 기준으로 관리한�
 
 07_Git_Operation
 -> Commit / PR 전 점검 Prompt
+
+05_Prompt_Library/02_Prompt_Management
+-> Prompt 반영 후보 수집, 승인, 반영 후 유지관리 운영 문서
 ```
 
 Prompt Library의 위치, 역할, 상태는 `../../00_Index/AI_Workflow_Index (KR).md`에 반영한다.
@@ -172,6 +189,7 @@ Prompt Library의 위치, 역할, 상태는 `../../00_Index/AI_Workflow_Index (K
 -> 실제 Prompt Library 폴더 구조는 이 섹션에서 관리
 -> Prompt 위치 / 역할 / 상태는 AI Workflow Index에 반영
 -> Prompt Library에 등록하는 Prompt는 기존 Prompt와 역할 경계를 명시
+-> Prompt 변경 후보 수집과 처리는 Prompt Management 문서에 반영
 -> 실사용 검증 후보, Archive 후보, 명칭 전환 대기 항목은 Backlog에 반영
 -> Prompt 문장 품질 최종 검수 후보는 Backlog에 반영
 -> 개별 Prompt 수정 후보는 Backlog 또는 해당 Prompt 파일에 반영
@@ -214,17 +232,17 @@ Work Pipeline
 
 ---
 
-## 9. Work Checklist / Backlog 연결
+## 9. Work List / Backlog 연결
 
 ```yaml
-Work Checklist
+Work List
 -> 현재 Prompt Library 검토 범위와 완료 기준 관리
 
 AI Workflow Backlog
 -> Prompt 실사용 검증
 -> Prompt 문장 품질 최종 검수
 -> Feature Work Prompt Archive 기준
--> Work Checklist 명칭 전환
+-> Work List 작성 / 갱신 규칙
 -> 후속 보완 항목
 -> 삭제 / Archive 판단 보류 항목
 ```

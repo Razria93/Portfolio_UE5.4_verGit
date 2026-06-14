@@ -17,18 +17,18 @@
 - Prompt Files 초안
 - Work Brief Intake
 - Feature Work Planning
-- Work Checklist Writing
-- D20 Parry 예시 흐름
+- Work List Writing
+- W03 Parry 예시 흐름
 
 현재 Branch에서 검증한 것
 - 자연어 요청을 Work Brief로 정리
 - Work Brief를 Feature Work Planning으로 변환
-- Feature Work Planning을 Work Checklist Draft로 변환
+- Feature Work Planning을 Work List Draft로 변환
 - 실제 구현 없이 문서 변환 흐름만 검증
 
 현재 Branch에서 검증하지 않은 것
 - 실제 기능 구현 중 Prompt 사용성
-- Work Checklist의 장기 갱신성
+- Work List의 장기 갱신성
 - Verification Log / PR Document 연계
 - System Architecture / Engine Technique 문서 체계
 - Prompt Library 전체 품질
@@ -50,7 +50,7 @@ AI Workflow는 다음 계층으로 다시 정리할 필요가 있다.
    -> Review / Verification Planning
    -> Document Writing Planning
    -> Git Operation Planning
--> 필요 시 Work Checklist Writing
+-> 필요 시 Work List Writing
 -> 실행 공정
    -> 구현
    -> Document Writing
@@ -58,10 +58,10 @@ AI Workflow는 다음 계층으로 다시 정리할 필요가 있다.
    -> Verification Log
    -> PR Document Writing
    -> Git Operation
--> Work Checklist Update
+-> Work List Update
 ```
 
-현재 v1은 `Work Brief Intake`, `Feature Work Planning`, `Refactor Work Planning`, `Work Checklist Writing`을 우선 구성했다.
+현재 v1은 `Work Brief Intake`, `Feature Work Planning`, `Refactor Work Planning`, `Work List Writing`을 우선 구성했다.
 
 다음 Refactor에서는 위 계층과 실제 폴더 / Prompt 이름 / 문서 역할이 같은 모델을 공유하는지 점검해야 한다.
 
@@ -118,7 +118,7 @@ Overview는 운영 규칙을 직접 소유하지 않고, `Operation Guide`, `Wor
 
 ## 6. Prompt Flow / Routing 보강 후보
 
-현재 `Prompt Flow and Routing Blueprint`는 입력 / 라우팅 / 계획 / 체크리스트 / 실행 / 참조 계층을 설명한다.
+현재 `Prompt Flow and Routing Blueprint`는 입력 / 라우팅 / 계획 / Work List / 실행 / 참조 계층을 설명한다.
 
 다음 Refactor에서는 더 정교한 공정 분기를 검토한다.
 
@@ -147,7 +147,7 @@ Work Planning
 
 ## 7. Work Brief 운영 보완
 
-D20에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방식이 더 적합하다는 점이 확인됐다.
+W03에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방식이 더 적합하다는 점이 확인됐다.
 
 다음 기준은 유지한다.
 
@@ -174,7 +174,7 @@ D20에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방�
 
 ## 8. Work Planning 보완
 
-`Feature Work Planning`은 D20에서 유효했지만, 실제 구현 브랜치에서 사용성이 검증되지는 않았다.
+`Feature Work Planning`은 W03에서 유효했지만, 실제 구현 브랜치에서 사용성이 검증되지는 않았다.
 
 다음 Refactor에서는 실제 구현 결과를 바탕으로 다음 항목을 점검한다.
 
@@ -182,7 +182,7 @@ D20에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방�
 점검 항목
 - 선행 확인 단위가 과도하게 길지 않은가
 - 구현 단위가 실제 Commit 단위와 맞는가
-- 검증 기준이 Work Checklist로 잘 변환되는가
+- 검증 기준이 Work List로 잘 변환되는가
 - 사용자 결정 필요 항목이 적절한 시점에 드러나는가
 - 문서화 필요 여부가 과도하게 넓지 않은가
 ```
@@ -198,34 +198,33 @@ D20에서 Work Brief는 사용자 입력 양식보다 채팅 주도 운영 방�
 - 안정성 검토
 ```
 
-이 분류는 아직 확정 기준이 아니며, D20 실제 구현에서 적합성을 확인한다.
+이 분류는 아직 확정 기준이 아니며, W03 실제 구현에서 적합성을 확인한다.
 
 ---
 
-## 9. Work Checklist 위치와 갱신 규칙
+## 9. Work List 위치와 갱신 규칙
 
-Work Checklist는 실행 공정 자체가 아니라 계획을 시각화 / 관리 / 기록하는 상태 문서다.
+Work List는 실행 공정 자체가 아니라 계획을 시각화 / 관리 / 기록하는 상태 문서다.
 
 권장 흐름은 다음이다.
 
 ```text
 Work Brief
 -> Work Planning
--> Work Checklist 필요 여부 판단
--> 필요 시 실행 전 Work Checklist 작성
--> 각 실행 공정 후 Work Checklist Update
--> PR 전 Work Checklist 기준으로 완료 / 검증 상태 확인
+-> Work List 필요 여부 판단
+-> 필요 시 실행 전 Work List 작성
+-> 각 실행 공정 후 Work List Update
+-> PR 전 Work List 기준으로 완료 / 검증 상태 확인
 ```
 
 다음 Refactor에서 정리할 항목은 다음이다.
 
 ```yaml
 정리 필요
-- Work Checklist를 언제 생략할 수 있는가
-- Work Checklist Draft와 공식 Work Checklist 승격 기준
-- 실행 후 Work Checklist Update 형식
+- Work List를 언제 생략할 수 있는가
+- Work List Draft와 공식 Work List 승격 기준
+- 실행 후 Work List Update 형식
 - Verification Log / PR Document와 중복되는 항목
-- Work Brief / Work Checklist 용어 통일
 ```
 
 ---
@@ -249,13 +248,13 @@ AI 작업은 코드 호출 흐름처럼 추적이 어렵기 때문에, 작업별
 - 후속 작업
 ```
 
-이 정보는 `History`, `Work Checklist`, `Verification Log`, `PR Document` 중 어디에서 관리할지 결정해야 한다.
+이 정보는 `History`, `Work List`, `Verification Log`, `PR Document` 중 어디에서 관리할지 결정해야 한다.
 
 권장 방향은 다음과 같다.
 
 ```yaml
 권장 방향
-- Work Checklist: 진행 상태와 변경 관리
+- Work List: 진행 상태와 변경 관리
 - Verification Log: 검증 / 미검증 기록
 - PR Document: 최종 변경 요약
 - History: 장기 작업 맥락과 의사결정 흐름
@@ -271,7 +270,7 @@ System Architecture와 Engine Technique 계층은 다음 Refactor에서 정리�
 
 ```yaml
 작업 / 상태
-- Work Checklist
+- Work List
 - Verification Log
 - PR Document
 
@@ -291,7 +290,7 @@ System Architecture와 Engine Technique 계층은 다음 Refactor에서 정리�
 - Engine Issue Report
 
 포트폴리오 설명
-- Portfolio Technical Document
+- Portfolio Document
 ```
 
 검토할 항목은 다음이다.
@@ -303,7 +302,7 @@ System Architecture와 Engine Technique 계층은 다음 Refactor에서 정리�
 - Architecture Issue Report는 구조 문제 / 책임 경계 이슈를 담당하는가
 - Engine Technique Document는 Unreal 기능 / API 사용 방식을 설명하는가
 - Engine Decision Record와 Engine Issue Report가 System 계열과 같은 위계로 다뤄지는가
-- Technical Document라는 넓은 이름이 필요한가
+- Portfolio Document가 내부 원천 문서와 분리된 제출용 문서로 충분히 정의됐는가
 ```
 
 ---
@@ -322,13 +321,13 @@ History가 필요한 경우
 - 포트폴리오 설명에서 사고 과정을 보여줄 가치가 있음
 
 History를 생략할 수 있는 경우
-- Work Checklist / Verification Log / PR Document로 충분히 추적 가능함
+- Work List / Verification Log / PR Document로 충분히 추적 가능함
 - 의사결정은 ADR / Records로 충분히 설명됨
 ```
 
 권장 기본값은 `보류`다.
 
-D20 실제 구현 후 기록 추적이 부족하다고 느껴질 때 별도 체계로 분리한다.
+W03 실제 구현 후 기록 추적이 부족하다고 느껴질 때 별도 체계로 분리한다.
 
 ---
 
@@ -340,7 +339,7 @@ D20 실제 구현 후 기록 추적이 부족하다고 느껴질 때 별도 체�
 보강 후보
 - 상태 전이 규칙 검토
 - Prompt 계층 충돌 검토
-- Work Brief / Planning / Checklist 필드 계약 검토
+- Work Brief / Planning / Work List 필드 계약 검토
 - 실행 공정 후 문서 갱신 누락 검토
 - Prompt Flow와 실제 사용 흐름 불일치 검토
 ```
@@ -389,7 +388,7 @@ Git / PR 계층은 존재하지만, 실제 커밋 분리와 staging 판단에 �
 ```yaml
 분리 후보
 - Work Brief Format
-- Work Checklist Format
+- Work List Format
 - Verification Log Format
 - PR Document Format
 - Document Set Audit Output Format
@@ -413,22 +412,22 @@ Git / PR 계층은 존재하지만, 실제 커밋 분리와 staging 판단에 �
 
 ---
 
-## 16. D20 예시의 한계
+## 16. W03 예시의 한계
 
-D20은 좋은 실험이었지만, 실제 운용 기준으로는 과하게 자세한 부분이 있다.
+W03은 좋은 실험이었지만, 실제 운용 기준으로는 과하게 자세한 부분이 있다.
 
 다음 구현 Branch에서 확인할 항목은 다음이다.
 
 ```yaml
-D20에서 확인할 것
+W03에서 확인할 것
 - Work Brief가 충분히 짧은가
 - Feature Work Planning이 실제 구현에 도움이 되는가
-- Work Checklist Draft가 실행 관리에 유용한가
+- Work List Draft가 실행 관리에 유용한가
 - 문서 작성 시간이 구현 시간을 과도하게 침식하지 않는가
 - Planning 결과가 구현 중 얼마나 자주 바뀌는가
 ```
 
-D20은 표준 완성형이라기보다 v1 실험 사례로 본다.
+W03은 표준 완성형이라기보다 v1 실험 사례로 본다.
 
 실제 구현 후 더 짧고 반복 가능한 양식으로 축약한다.
 
@@ -440,9 +439,9 @@ D20은 표준 완성형이라기보다 v1 실험 사례로 본다.
 
 ```yaml
 1순위
-- Work Brief / Feature Work Planning / Work Checklist 실사용 결과 반영
+- Work Brief / Feature Work Planning / Work List 실사용 결과 반영
 - Prompt Flow / Routing 계층과 폴더 구조 정합성 점검
-- Work Checklist 위치 / 갱신 규칙 정리
+- Work List 위치 / 갱신 규칙 정리
 
 2순위
 - Document Writing Prompt와 문서 카테고리 체계 재정리
@@ -464,8 +463,8 @@ D20은 표준 완성형이라기보다 v1 실험 사례로 본다.
 
 ```text
 1. 현재 AI Workflow Branch 마감
-2. D20 실제 Parry 구현 Branch 진행
-3. 구현 중 Work Brief / Planning / Checklist 사용성 기록
+2. W03 실제 Parry 구현 Branch 진행
+3. 구현 중 Work Brief / Planning / Work List 사용성 기록
 4. 구현 완료 후 Verification Log / PR Document 작성
 5. 실제 사용 결과를 바탕으로 AI Workflow Refactor 진행
 ```

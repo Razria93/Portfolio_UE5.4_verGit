@@ -1,476 +1,363 @@
-# UE5 Portfolio – 개발 로드맵
+# UE5 Portfolio - 개발 로드맵
 
-## 개요 (Overview)
+본 문서는 `UE5 Action RPG Combat Portfolio`의 구현 로드맵을 현재 프로젝트 기준으로 정리한다.
 
-UE5 기반의 액션 RPG 스타일 포트폴리오 프로젝트를 단계별로 구축하기 위한 로드맵입니다.
-전체 프로젝트는 14개의 주요 단계와 추가 시스템으로 구성되며, 각 단계는 순서 기반으로 정리되어 있습니다.
-
----
----
-
-# **1단계: 코어 플레이어 시스템 (Stage 1: Core Player Systems)**
-
-### **기본 레벨 세팅 (Order 0)**
-
-- [x] 기본 레벨 세팅
-
-
-### **플레이어 세팅 (Order 1)**
-
-- [x] 메시 / 카메라 세팅
-
-- [x] 캐릭터 레벨 배치
-
-- [x] 기본 이동 + 카메라 조작
-
-- [x] FSM 구현 (Idle / Walk / Sprint / Jump)
-
-
-### **기본 전투 (Order 2)**
-
-- [x] 무기 장착/해제
-
-- [x] 공격 애니메이션
-
-- [x] 충돌체
-
+마일스톤은 큰 단계의 상태를 관리하고, 로드맵은 앞으로 어떤 순서로 구현 / 정리 / 검증을 진행할지 관리한다.
 
 ---
 
-# **2단계: 기본 전투 루프 (Stage 2: Basic Combat Loop)**
+## 1. 로드맵 기준
 
-### **적 기본 구성 (Order 3)**
+```yaml
+관리 기준
+- 현재 구현된 기능을 기반으로 다음 작업 순서를 정리
+- 전투 실행 구조와 문서화 작업을 함께 추적
+- 후속 Branch에서 다룰 기능 / 문서 / 검증 범위 분리
+```
 
-- [x] 메시 / 애니메이션 / 충돌체 세팅
+```yaml
+상태 기준
+완료
+-> 현재 코드와 문서 기준으로 닫힌 항목
 
+진행 중
+-> 구조 또는 문서는 있으나 구현 / 검증 / 정리가 남은 항목
 
-### **기본 UI 구성 (Order 4)**
+다음 작업
+-> 다음 Branch 또는 가까운 후속 작업에서 다룰 항목
 
-- [x] 플레이어 / 적 HP 및 상태 UI 구성
-
-
-### **전투 시스템 기초 (Order 5)**
-
-- [x] Hit & HitReact
-
-- [x] HP 시스템
-
-- [x] 데미지 적용 시스템
-
-- [x] 적 Death
-
-- [ ] 적 Destroy
-
-
-### **플레이어 Hit & Death (Order 6)**
-
-- [ ] 플레이어 Hit & React
-
-- [ ] 플레이어 Death + Destroy
-
-
-### **타겟팅 시스템 (Order 7)**
-
-- [ ] 기본 Lock-on 시스템
-
+후속 후보
+-> 현재 우선순위에서 떨어져 있는 확장 후보
+```
 
 ---
 
-# **3단계: AI 구현 (Stage 3: AI Implementation)**
+## 2. 현재 기준 로드맵 요약
 
-### **팀 시스템 (Order 8)**
+```yaml
+1. Player / 기본 전투 루프 및 Damage Pipeline
+-> 완료
 
-- [x] 플레이어 / 중립 / 적 진영
+2. Enemy AI 전투 행동
+-> 진행 중
 
+3. 전투 Feedback 구축
+-> 진행 중
 
-### **적 AI – 이동 (Order 9)**
+4. Action Pipeline 고도화
+-> 진행 중
 
--(Navigation / EQS / Query 기반)-
+5. Reaction Pipeline 고도화
+-> 진행 중
 
-- [x] 포인트 이동
+6. Action / Reaction 실행 간섭 처리
+-> 다음 작업
 
-- [x] 랜덤 쿼리 이동
+7. Guard / Parry / Counter
+-> 다음 작업
 
-- [x] 순찰 이동 (Patrol)
+8. 제출용 기술 문서 정리
+-> 다음 작업
 
-- [x] 추적 이동(Chase)
+9. System Architecture / Engine Technique 문서 체계 정리
+-> 다음 작업
 
+10. AI Workflow 실사용 기반 Refactor
+-> 후속 후보
 
-### **적 AI – 행동 & 포지셔닝 (Order 10)**
-
-- [x] 추적 후 분산(Dispersal) 로직
-
-- [x] 전투 우선순위 시스템
-
-  - [x] 공격 예정 대기
-
-  - [x] 경계 대기
-
-  - [x] 수비 대기
-
-- [x] 플레이어 바라보기(Look-at)
-
-
-### **적 AI – 공격 (Order 11)**
-
-- [x] 공격 애니메이션
-
-- [x] 데미지 적용 시스템
-
-- [x] 콤보 공격
-
-- [x] 거리 기반 / 랜덤 공격 로직
-
-
-### **플레이어 방어 시스템 (Order 12)**
-
-**플레이어 가드 시스템**
-
-- [ ] 가드
-
-- [ ] 퍼펙트 가드
-
-- [ ] 가드 브레이크
-
-
-**플레이어 페리 시스템**
-
-- [ ] 페리
-
-- [ ] 퍼펙트 패리
-
-
-**플레이어 회피 시스템**
-
-- [ ] 회피
-
-- [ ] 퍼펙트 회피
-
-
-### **적 AI 방어 시스템 (Order 13)**
-
-**적 가드 시스템**
-
-- [ ] 가드
-
-- [ ] 가드 브레이크
-
-
-**적 패리 시스템**
-
-- [ ] 패리
-
-
-**적 회피 시스템**
-
-- [ ] 회피
-
+11. Boss / Pattern / Advanced Combat
+-> 후속 후보
+```
 
 ---
 
-# **4단계: AI 확장 (Stage 4: AI Expansion)**
+## 3. 완료된 기반 작업
 
-### **아군 AI (Order 14)**
+### Player / Weapon / 기본 공격
 
-- [ ] 적 AI 로직 재활용하여 아군 구현
+```yaml
+상태
+-> 완료
 
+구성 항목
+- Player Character / Controller
+- SpringArm 기반 3인칭 카메라
+- 기본 이동 / 점프 / 회피 기반
+- Weapon Equip / Unequip
+- Combo Attack
+- Montage 기반 공격 실행
+```
 
-### **그룹 전투 시스템 (Order 15)**
+### 기본 전투 루프 및 Damage Pipeline 구축
 
-- [ ] 피아 식별
+```yaml
+상태
+-> 완료
 
-- [ ] AI 간 전투 매칭 시스템
-
-- [ ] AI 처치 후 추가적인 행동 로직 구현
-
-
----
-
-# **5단계: 아이템 / NPC / 상호작용 (Stage 5)**
-
-### **상호작용 시스템**
-
-- [ ] 아이템 상호작용 및 사용 (Order 16)
-
-- [ ] 인벤토리 시스템 (Order 17)
-
-
-### **월드 / NPC 시스템**
-
-- [ ] 마을(Village) 구성 (Order 18)
-
-- [ ] NPC 시스템 (Order 19)
-
-- [ ] 상점 시스템 (Order 20)
-
-- [ ] 퀘스트 시스템 (Order 21)
-
-- [ ] 스폰 시스템 (Order 22)
-
-- [ ] 레벨 이동 (Order 23)
-
+구성 항목
+- Hit Collision Window
+- Hit Context / Damage Context
+- ApplyDamage -> FDamageEvent -> TakeDamage 흐름
+- Hit Reaction
+- Dead Reaction
+- 기본 Damage Feedback
+```
 
 ---
 
-# **6단계: 고급 애니메이션 시스템 (Stage 6: Advanced Animation Systems)**
+## 4. 진행 중인 핵심 구조
 
-### **IK 시스템**
+### 전투 Feedback 구축
 
-- [ ] Foot IK (Order 24)
+```yaml
+상태
+-> 진행 중
 
-- [ ] Hand IK (Order 24)
+현재 방향
+- Action Feedback 연결
+- Reaction Feedback 연결
+- Damage Impact Feedback 연결
+- Player 화면 / 카메라 / UI Feedback 후보 정리
+- Animation / VFX / SFX / camera feedback 연결 후보 정리
 
+남은 항목
+- Action / Reaction / Damage / Player Feedback 책임 경계 정리
+- Feedback data authoring 구조 정리
+- VFX / SFX / camera feedback polish
+- System Architecture 문서 재정리
+```
 
-### **이동 시스템**
+### Action Pipeline 고도화
 
-- [ ] ALS 스타일 로코모션 (Order 25)
+```yaml
+상태
+-> 진행 중
 
-- [ ] 파쿠르 / 환경 상호작용 (Order 26)
+현재 방향
+- Action request / decision / apply / lifecycle 분리
+- Action relationship / apply mode 정리
+- Player / AI Action 실행 흐름 정리
+- Action data resolve
+- Action execution failure / rollback 기준 정리
+- Montage lifecycle 기준 정리
+- Action Feedback 연결
 
+남은 항목
+- AI action intent와 Action Pipeline 연결 고도화
+- Action data authoring 구조 정리
+- DataAsset 기반 authoring 구조 정리
+```
 
-### **물리 기반 애니메이션 (Order 27)**
+### Reaction Pipeline 고도화
 
-- [ ] 피격 반응
+```yaml
+상태
+-> 진행 중
 
-- [ ] 던지기
+현재 방향
+- Reaction request / policy / lifecycle 분리
+- Reaction relationship / apply mode 정리
+- Damage Result 기반 Reaction Request 연결
+- Reaction data resolve
+- Hit / Dead Reaction
+- Reaction Feedback 연결
+- Montage lifecycle 기준 정리
 
-- [ ] 밀기
+남은 항목
+- Reaction policy / execution state 기준 고도화
+- Enemy AI Reaction 관찰 / 복귀 흐름 정리
+- Action / Reaction 실행 관계 최종 검증
+- Combat Resolution 계층 도입
+- Resource / state 처리 연결
+- Guard / Parry / Counter 판정 결과 연결
+- System Architecture 문서 재정리
+```
 
-- [ ] 래그돌 블랜딩 (부위별 리깅 포함)
+### Enemy AI 전투 행동
 
+```yaml
+상태
+-> 진행 중
 
-### **환경 감지 (Order 28)**
+현재 방향
+- Behavior Tree / Blackboard 기반 AI 행동
+- Patrol / Chase / Attack
+- Combat priority / waiting behavior
+- AI action intent dispatch
 
-- [ ] 지형 감지 (Foot IK 연동)
-
-- [ ] 파쿠르 가능 감지 (Parkour 연동)
-
-- [ ] 물리/환경 상호작용 감지 모듈
-
-
-### **시네마틱 연출 (Order 29)**
-
-- [ ] 슬로우 모션 / 시간 왜곡
-
-- [ ] 카메라 연출 (카메라 흔들림, 줌, 타겟 락온)
-
-
----
-
-# **7단계: VFX 구현 (Stage 7: VFX Implementation)**
-
-### **전투 VFX**
-
-- [ ] 히트 / 크리티컬 이펙트 (Order 30)
-
-- [ ] 데미지 넘버 FX (Order 31)
-
-- [ ] 차징 이펙트 (Order 32)
-
-- [ ] 상태이상 VFX (화상/빙결/감전) (Order 33)
-
-- [ ] 궁극기 이펙트 (컷신, 카메라 흔들림, 대규모 파티클) (Order 39)
-
-
-### **환경 상호작용 VFX**
-
-- [ ] 발자국 / 먼지 / 물 튀김 (지형 타입 별 상호작용) (Order 34)
-
-- [ ] 파괴 VFX (오브젝트 파괴 시 파편, 먼지, 연기 등) (Order 40)
-
-
-### **카메라 & 화면 효과**
-
-- [ ] 슬로우모션 / 충격파 (시간 왜곡 + 화면 PostProcess) (Order 35)
-
-- [ ] 림라이트 / 실드 FX (외곽선, 보호막 반짝임) (Order 36)
-
-
-### **UI & HUD 연동 VFX**
-
-- [ ] 레벨업 / 경험치 FX (Order 37)
-
-- [ ] 데칼 FX (총알, 발자국, 피) (Order 38)
-
-
-### **특수 효과**
-
-- [ ] 중력 / 블랙홀 FX (벡터장을 통한 흡입 효과) (Order 41)
-
-- [ ] 네트워크 싱크 VFX (Order 42)
-
+남은 항목
+- Guard / Parry / Counter에 대한 AI 반응 연결
+- Boss pattern / enemy pattern data 확장
+- AI decision source와 execution pipeline 연결 고도화
+```
 
 ---
 
-# **8단계: 전투 시스템 고도화 (Stage 8: Advanced Combat Features)**
+## 5. 다음 구현 로드맵
 
-- [ ] 무기 스왑
+### 5.1. Action / Reaction 실행 간섭 처리
 
-- [ ] 공중 공격 / 공중 피격
+```yaml
+상태
+-> 다음 작업
 
-- [ ] 다운 공격 / 다운 피격
+목표
+- Action과 Reaction의 실행 관계 정리
+- Execution Relationship Policy 정리
+- Execution Intervention Case 정리
+- interrupt / cancel / block / ignore 기준 정리
+- Action / Reaction relationship matrix 작성
+- Execution intervention policy 작성
 
-- [ ] 처형 시스템
+검증 기준
+- 기존 Combo / Dodge / HitReaction 회귀 확인
+- Player / AI 공통 적용 가능성 확인
+- Montage lifecycle / delegate 정리 기준 확인
+```
 
-- [ ] 스킬 시스템
+### 5.2. Parry 구현
 
+```yaml
+상태
+-> 다음 작업
 
----
+목표
+- 선입력 기반 Parry Action
+- Parry Window
+- Combat Resolution 기반 판정
+- Parry 성공 시 Damage 무효화
+- Parry Reaction interrupt
+- Damage Feedback / Reaction Feedback 연결
 
-# **9단계: 보스전 (Stage 9: Boss Battle)**
+준비 문서
+- D20 Work Brief
+- D20 Feature Work Planning
+- D20 Work Checklist Draft
 
-- [ ] 보스 필드
+검증 기준
+- Build
+- Code Flow
+- PIE
+- Editor / Asset
+```
 
-- [ ] 보스 매시/애니메이션
+### 5.3. Guard 구현
 
-- [ ] 보스 패턴
+```yaml
+상태
+-> 다음 작업
 
-- [ ] 클리어 연출
+목표
+- Guard 입력 / 상태
+- Guard 가능 조건
+- Guard 성공 / 실패 처리
+- Guard Break 후보 구조
+- Damage / Resource / Feedback 연결
+```
 
+### 5.4. Counter 구현
 
----
+```yaml
+상태
+-> 다음 작업
 
-# **10단계: 전투 확장 시스템 (Stage 10: Combat System Expansion)**
-
-### **최소 구현**
-
-- [ ] 크리티컬 히트 시스템
-
-- [ ] 상태이상 시스템
-
-- [ ] 캐릭터 스탯 시스템 (HP/MP/Stamina)
-
-- [ ] XP / 레벨업 시스템
-
-
-### **확장 구현**
-
-- [ ] 차징 어택
-
-- [ ] 백어택 보너스
-
-- [ ] 그로기 / 경직 / 다운 처리
-
-- [ ] 부위별 정밀 피격 리액션
-
-- [ ] 공중 콤보
-
-
----
-
-# **11단계: 스킬 & 무기 (Stage 11: Skills & Weapons)**
-
-### **최소 구현**
-
-- [ ] 무기 데이터/리소스 관리
-
-- [ ] 스킬 데이터/리소스 관리
-
-- [ ] 궁극기 시스템
-
-
-### **확장 구현**
-
-- [ ] 특수 아이템 효과
-
-- [ ] 호밍 / 자동 타겟 스킬
-
-- [ ] 소환 스킬
-
-
----
-
-# **12단계: 이동 & 파쿠르 (Stage 12)**
-
-### **최소 구현**
-
-- [ ] 파쿠르 / 낙법 시스템
-
-
-### **확장 구현**
-
-- [ ] 은신 시스템
-
-- [ ] 비행 시스템
-
+목표
+- Counter 가능 조건
+- Counter Action 실행
+- Action / Reaction 관계 처리
+- Feedback 연결
+```
 
 ---
 
-# **13단계: 환경 & 월드 (Stage 13)**
+## 6. 문서 정리 로드맵
 
-### **최소 구현**
+### README / 제출용 기술 문서
 
-- [ ] 낮/밤 / 날씨 시스템 (간단히)
+```yaml
+상태
+-> 다음 작업
 
-- [ ] 소규모 샘플 맵
+대상
+- README
+- PF00 ~ PF07 Portfolio Documents
+- Documentation Index / 문서군별 Index
 
+목표
+- 포트폴리오 첫 진입 문서 정리
+- 제출용 기술 설명 압축
+- 대표 문서 탐색 경로 정리
+```
 
-### **확장 구현**
+### System Architecture / Engine Technique
 
-- [ ] 나나이트 (렌더링 최적화 데모 수준)
+```yaml
+상태
+-> 다음 작업
 
+목표
+- 순수 System Architecture 설명 문서와 결정 / 이슈 기록 분리
+- Engine Technique 설명 문서와 Engine Decision / Issue 기록 분리
+- 기존 System Architecture 문서 재분류
+- Architecture Decision Record / Architecture Issue Report 기준 정리
+```
+
+### AI Workflow
+
+```yaml
+상태
+-> 후속 후보
+
+목표
+- D20 실제 구현 Branch에서 Work Brief / Planning / Checklist 흐름 재검증
+- Prompt Flow / Routing 계층 보완
+- Work Checklist 갱신 규칙 정리
+- Document Writing Prompt 정리
+```
+
+---
+
+## 7. 후속 확장 후보
+
+```yaml
+Advanced Combat
+- Perfect Parry / Normal Parry
+- Perfect Dodge
+- Execution
+- Aerial Attack
+- Down Attack
+- Skill System
+
+Enemy / Boss
+- Boss pattern
+- Enemy pattern data
+- Wave system
+- Group combat
+
+Animation / Movement
+- Foot IK
+- ALS-style locomotion
+- Parkour
+- Camera direction animation
+
+VFX / UI
+- Final hit VFX / SFX polish
+- Damage UI
+- Resource UI
+- Camera shake / hit stop
+```
 
 ---
 
-# **14단계: 프레젠테이션 & UI (Stage 14)**
+## 8. 현재 우선순위
 
-### **최소 구현**
-
-- [ ] HUD / 메뉴 UI
-
-- [ ] 디버그 UI
-
-- [ ] 카메라 충돌 처리
-
-
-### **확장 구현**
-
-- [ ] 시네마틱
-
-- [ ] 벽 투명 처리
-
-- [ ] 에디터 툴 / 플러그인
-
-
----
-
-# **추가 시스템 (Additional Systems)**
-
-### 전투 확장
-
-- [ ] 저스트 가드 어택	
-
-- [ ] 저스트 패리 어택
-
-- [ ] 저스트 회피 어택
-
-
-### 플레이어 리액션 강화
-
-- [ ] 저스트 가드 리액트
-
-- [ ] 저스트 패리 리액트
-
-- [ ] 저스트 회피 리액트
-
-
-### 기타 시스템
-
-- [ ] AI 파티 시스템
-
-- [ ] 캐릭터 교체 시스템
-
-- [ ] 펫 시스템
-
-- [ ] 라이딩 시스템
-
-- [ ] 어시스트 시스템
-
-- [ ] 커맨드 큐 시스템
-
-- [ ] 포스트 프로세싱
-
-- [ ] 카메라 무브 프리셋
-
-
----
+```yaml
+1. README / P00 / P01 / P02 최신화
+2. Documentation Index / 문서군별 Index 갱신
+3. 제출용 Portfolio Documents PF00 ~ PF07 검수
+4. System Architecture / Engine Technique 문서 체계 정리
+5. Action / Reaction 실행 간섭 처리 기준 정리
+6. Parry 구현
+7. Guard / Counter 구현
+8. AI Workflow 실사용 기반 refactor
+```

@@ -109,9 +109,9 @@ History
 
 Document
 -> 작업 결과와 판단 근거를 공식 산출물로 정리
--> Work Checklist, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Technical Document 등으로 분리
+-> Work List, Bug Report, System Architecture, System Design Records, Engine Technique Document, Engine Implementation Records, Verification Log, PR Document, Portfolio Document 등으로 분리
 
-Work Checklist
+Work List
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태, 후속 작업 범위 관리
 ```
 
@@ -140,7 +140,7 @@ AI 기반 작업은 다음 단계로 진행한다.
 -> 기술적 언어로 해석
 -> 구현 단계 분리
 -> 우선순위와 비범위 결정
--> 필요한 경우 Work Checklist 작성
+-> 필요한 경우 Work List 작성
 ```
 
 ### 2) 기술 구현
@@ -179,10 +179,10 @@ QA 흐름
 
 ```yaml
 문서화 흐름
--> Work Checklist 갱신
+-> Work List 갱신
 -> 필요 시 Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log 작성
 -> PR Document로 Branch 결과와 검증 상태 정리
--> 여러 작업 기록은 Portfolio Technical Document로 압축
+-> 여러 작업 기록은 Portfolio Document로 압축
 -> Prompt 개선 필요 항목은 Prompt Library 후속 작업으로 분리
 ```
 
@@ -210,7 +210,7 @@ QA
 
 문서화
 입력 -> 작업 목표, 변경 결과, 검증 결과, History
-출력 -> Work Checklist, PR Document, 기타 필요 문서
+출력 -> Work List, PR Document, 기타 필요 문서
 완료 기준 -> 작업 결과와 판단 근거를 추적 가능
 ```
 
@@ -243,7 +243,7 @@ Prompt는 작업 전 규칙을 제공하고, History는 작업 중 판단 과정
 모든 작업을 같은 밀도로 문서화하지 않는다. 산출물은 목적에 따라 분리한다.
 
 ```yaml
-Work Checklist
+Work List
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태 관리
 
 Bug Report
@@ -269,7 +269,7 @@ Verification Log
 PR Document
 -> Branch 결과, 변경 요약, 검증 상태, 후속 작업 범위 정리
 
-Portfolio Technical Document
+Portfolio Document
 -> 여러 작업 기록을 포트폴리오 제출용 기술 주제로 압축
 
 AI Workflow Index
@@ -291,6 +291,6 @@ Prompt Library Maintenance Blueprint
 -> Operation Guide가 AI Workflow Overview의 운영 원칙을 내부 규칙으로 구체화하는지 재검토
 -> AI Workflow Index가 전체 문서의 위치 / 역할 / 상태를 명확히 보여주는지 재검토
 -> Prompt Library Maintenance Blueprint가 Prompt Library 유지보수 기준을 충분히 분리하는지 재검토
--> 작업 기록 단위를 Work Checklist 기준으로 구체화
+-> 작업 기록 단위를 Work List 기준으로 구체화
 -> 산출물별 작성 타이밍과 완료 기준 구체화
 ```

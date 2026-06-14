@@ -88,10 +88,10 @@ Goal
 
 ```yaml
 문서화 후보
--> Work Checklist
+-> Work List
 -> Bug Report
 -> System Architecture
--> Technical Document
+-> Portfolio Document
 -> PR Document
 -> Prompt
 -> Milestone / Roadmap
@@ -101,12 +101,12 @@ Goal
 
 ```yaml
 문서 양식 후보
--> Work Checklist
+-> Work List
 -> Bug Report
 -> System Architecture
 -> Verification Log
 -> PR Document
--> Technical Document
+-> Portfolio Document
 ```
 
 문서 양식 후보는 별도 작성 양식과 작성 타이밍을 정리해야 하는 산출물 목록이다.

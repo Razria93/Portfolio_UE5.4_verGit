@@ -15,8 +15,8 @@
 -> Work Brief Intake
 -> 작업 유형 판정
 -> 필요한 Planning Prompt 선택
--> Work Checklist Writing 후보 판단
--> Planning 결과 기준으로 필요 시 Work Checklist Writing
+-> Work List Writing 후보 판단
+-> Planning 결과 기준으로 필요 시 Work List Writing
 -> 작업 수행
 -> 필요 시 문서화 계층
 -> 필요 시 검증 계층
@@ -27,13 +27,13 @@
 
 작업 성격에 따라 필요한 Prompt만 선택하되, 선택된 계층은 기본적으로 `구현 -> 문서화 / 검증 -> Commit / PR` 순서를 따른다.
 
-Work Brief 단계에서는 Work Checklist Writing 필요성을 후보로 표시할 수 있다.
+Work Brief 단계에서는 Work List Writing 필요성을 후보로 표시할 수 있다.
 
 최종 작성 여부는 Planning 결과에서 작업 단위, 완료 기준, 검증 기준, PR 가능 조건이 정리된 뒤 판단한다.
 
-Work Checklist를 작성하기로 한 Branch 단위 작업은 실행 전에 Work Checklist를 먼저 만든다.
+Work List를 작성하기로 한 Branch 단위 작업은 실행 전에 Work List를 먼저 만든다.
 
-실행 이후에는 새 Work Checklist를 뒤늦게 만드는 것이 아니라, 기존 Work Checklist의 완료 상태 / 검증 상태 / 후속 범위를 업데이트한다.
+실행 이후에는 새 Work List를 뒤늦게 만드는 것이 아니라, 기존 Work List의 완료 상태 / 검증 상태 / 후속 범위를 업데이트한다.
 
 ---
 
@@ -54,7 +54,7 @@ Work Checklist를 작성하기로 한 Branch 단위 작업은 실행 전에 Work
 -> 작업을 실행 가능한 단위, 순서, 위험, 검증 기준으로 분해
 
 계획 시각화 / 관리 계층
--> Work Checklist Writing Prompt
+-> Work List Writing Prompt
 -> Planning 결과를 진행 관리, 완료 기준, PR 가능 조건 확인용 문서로 정리
 
 실행 계층
@@ -71,12 +71,13 @@ Work Checklist를 작성하기로 한 Branch 단위 작업은 실행 전에 Work
 문서화 계층
 -> Document Writing Prompt
 -> PR Document Writing Prompt
--> System Architecture / Design Records / Engine Records / Portfolio Technical Document 작성
+-> System Architecture / Design Records / Engine Records / Portfolio Document 작성
 
 검증 계층
 -> Code Review Prompt
 -> Verification Log Prompt
 -> Asset Blueprint Validation Prompt
+-> Document Format Normalization Prompt
 -> Document Set Audit Prompt
 
 Commit / PR 계층
@@ -104,7 +105,7 @@ Commit / PR 계층
 -> 부족한 입력을 계획차단 / 검토필요, 비차단 / 검토필요, 계획차단 / 선택필요, 비차단 / 선택필요로 분리
 -> Planning Prompt 후보 제시
 -> 실행 Prompt 후보 제시
--> Work Checklist Writing 후보와 최종 판단 위치 제시
+-> Work List Writing 후보와 최종 판단 위치 제시
 ```
 
 준비 상태가 `진행 불가` 또는 `검토 필요`이면 세부 Prompt로 넘어가지 않고 Work Brief를 보완한다.
@@ -198,9 +199,9 @@ Commit / PR 준비
 
 ---
 
-## 7. Work Checklist Writing 위치
+## 7. Work List Writing 위치
 
-`Work Checklist Writing Prompt`는 실행 Prompt가 아니라 Planning 결과를 시각화 / 관리 / 기록하는 선택 계층이다.
+`Work List Writing Prompt`는 실행 Prompt가 아니라 Planning 결과를 시각화 / 관리 / 기록하는 선택 계층이다.
 
 ```yaml
 사용하는 경우
@@ -216,17 +217,17 @@ Commit / PR 준비
 -> 관리 문서가 필요 없는 일회성 작업
 ```
 
-Work Checklist는 작업을 수행하는 Prompt가 아니라, Planning 결과를 실행 가능한 관리 문서로 변환하는 Prompt다.
+Work List는 작업을 수행하는 Prompt가 아니라, Planning 결과를 실행 가능한 관리 문서로 변환하는 Prompt다.
 
-Work Brief에서는 Work Checklist Writing을 후보로 표시할 수 있다.
+Work Brief에서는 Work List Writing을 후보로 표시할 수 있다.
 
 Work Planning 결과에서 최종 작성 여부를 판단한다.
 
-Work Checklist를 사용하기로 한 작업은 실행 전에 작성한다.
+Work List를 사용하기로 한 작업은 실행 전에 작성한다.
 
-실행 후에는 Work Checklist를 새로 만드는 것이 아니라 기존 Work Checklist의 체크 상태, 검증 상태, PR 가능 조건, 후속 범위를 갱신한다.
+실행 후에는 Work List를 새로 만드는 것이 아니라 기존 Work List의 체크 상태, 검증 상태, PR 가능 조건, 후속 범위를 갱신한다.
 
-Work Checklist 작성 이후에도 실제 실행 계층은 작업 성격에 따라 `구현 계층`, `문서화 계층`, `검증 계층`, `Commit / PR 계층`으로 나뉜다.
+Work List 작성 이후에도 실제 실행 계층은 작업 성격에 따라 `구현 계층`, `문서화 계층`, `검증 계층`, `Commit / PR 계층`으로 나뉜다.
 
 ---
 
@@ -278,7 +279,7 @@ Planning, Implementation, Verification 단계에서 구조 판단이 필요하�
 새 기능 구현 요청
 -> Work Brief Intake
 -> Feature Work Planning
--> 필요 시 Work Checklist Writing
+-> 필요 시 Work List Writing
 -> 구현 계층
 -> 필요 시 검증 계층
 -> 필요 시 문서화 계층
@@ -287,7 +288,7 @@ Planning, Implementation, Verification 단계에서 구조 판단이 필요하�
 리팩터링 요청
 -> Work Brief Intake
 -> Refactor Work Planning
--> 필요 시 Work Checklist Writing
+-> 필요 시 Work List Writing
 -> 구현 계층
 -> 필요 시 검증 계층
 -> 필요 시 문서화 계층
@@ -295,13 +296,13 @@ Planning, Implementation, Verification 단계에서 구조 판단이 필요하�
 
 문서 정리 요청
 -> Work Brief Intake
--> 필요 시 Work Checklist Writing
+-> 필요 시 Work List Writing
 -> 문서화 계층
 -> 필요 시 검증 계층
 
 검증 요청
 -> Work Brief Intake
--> 필요 시 Work Checklist Writing
+-> 필요 시 Work List Writing
 -> 검증 계층
 -> 필요 시 문서화 계층
 -> 필요 시 Commit / PR 계층
@@ -334,5 +335,5 @@ Prompt Flow는 Pipeline을 대체하지 않고, Pipeline 안에서 Prompt를 선
 -> Review / Verification Planning Prompt 필요 여부
 -> Document Writing Planning Prompt 필요 여부
 -> Work Brief Intake Prompt의 작업 유형 판정 기준과 동기화
--> Work Checklist Writing 사용 / 생략 기준의 실제 운용 결과 확인
+-> Work List Writing 사용 / 생략 기준의 실제 운용 결과 확인
 ```

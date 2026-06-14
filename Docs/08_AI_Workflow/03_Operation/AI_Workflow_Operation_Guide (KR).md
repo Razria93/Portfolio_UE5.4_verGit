@@ -1,4 +1,4 @@
-﻿# AI Workflow Operation Guide
+# AI Workflow Operation Guide
 
 ## 1. 목적
 
@@ -45,7 +45,7 @@ Pipeline을 운용할 때 Codex는 요청된 작업을 다음 네 가지 기준�
 작업 목표
 -> 무엇을 끝내야 하는지 확인
 -> 완료 기준, 범위, 비범위 판단
--> Work Checklist 생성 / 갱신 필요 여부 판단
+-> Work List 생성 / 갱신 필요 여부 판단
 
 변경 위험
 -> 코드 / 문서 / Asset / Blueprint / Git 변경 영향 판단
@@ -58,9 +58,9 @@ Pipeline을 운용할 때 Codex는 요청된 작업을 다음 네 가지 기준�
 -> 사용자 Editor 확인이 필요한 항목 분리
 
 문서화 필요성
--> Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 반영 필요 여부 판단
+-> Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Document 반영 필요 여부 판단
 -> History와 공식 산출물 연결 필요성 판단
--> Portfolio Technical Document 또는 Prompt Library 후속 반영 필요 여부 판단
+-> Portfolio Document 또는 Prompt Library 후속 반영 필요 여부 판단
 ```
 
 이 기준은 작업을 제한하기 위한 절차가 아니라, Codex가 목표를 오해하거나 검증되지 않은 결과를 완료로 표현하지 않게 하기 위한 최소 체크 기준이다.
@@ -125,7 +125,7 @@ History
 -> 작업 중 질문, 판단, 결정 변화, 시행착오를 증명하는 기록
 -> 최종 문서에 필요한 판단 근거
 
-Work Checklist
+Work List
 -> 현재 작업 단위의 목표, 범위, 완료 기준, 검증 상태, 후속 작업 범위 관리
 
 Bug Report
@@ -153,7 +153,7 @@ Verification Log
 PR Document
 -> Branch 결과, 변경 요약, 검증 상태, 미검증 항목, 후속 작업 범위 정리
 
-Portfolio Technical Document
+Portfolio Document
 -> 여러 작업 기록을 포트폴리오 제출용 기술 주제로 압축
 
 Commit / PR
@@ -238,22 +238,53 @@ History는 판단을 증명할 수 있는 형태로 압축한다.
 
 ```yaml
 History 연결 기준
-작업 범위 결정 -> Work Checklist
+작업 범위 결정 -> Work List
 검증 실패 -> Bug Report / Verification Log
 현재 시스템 구조 -> System Architecture
 시스템 구조 판단 변화 -> System Design Records
 엔진 기능 사용 방식 -> Engine Technique Document
 엔진 사용 판단 변화 -> Engine Implementation Records
 구현 결과 -> PR Document
-포트폴리오 요약 -> Portfolio Technical Document
+포트폴리오 요약 -> Portfolio Document
 반복 가능한 규칙 -> Prompt Format Blueprint / Prompt Library Maintenance Blueprint / Prompt Files / Operation Guide
 ```
 
-History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 System Architecture를 우선 참조하고, 엔진 기능 사용 방식은 Engine Technique Document 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 Work Checklist와 PR Document에 남긴다.
+History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 System Architecture를 우선 참조하고, 엔진 기능 사용 방식은 Engine Technique Document 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 Work List와 PR Document에 남긴다.
 
 ---
 
-## 9. 검증과 오류 검출 기준
+## 9. Prompt 반영 후보 보고 기준
+
+작업 단위가 끝나면 이번 작업에서 Prompt 반영 후보가 생겼는지 짧게 점검한다.
+
+```yaml
+보고 시점
+-> 코드 구현 / 검증 완료
+-> 문서 작성 / 문서군 정리 완료
+-> audit / 검증 작업 완료
+-> Commit / PR 전 변경 범위 정리 완료
+-> 사용자가 같은 기준을 반복 교정한 작업 완료
+```
+
+보고는 작업 흐름을 끊지 않도록 짧게 작성한다.
+
+```yaml
+보고 형식
+프롬프트 후보: 없음
+-> 새로 기록하거나 반영할 기준이 없음
+
+프롬프트 후보: 후보 기록 권장
+-> 반복 가능성이 있으나 적용 범위 / 위험도 판단이 더 필요함
+
+프롬프트 후보: 즉시 반영 권장
+-> 반복됐거나 결과물 품질에 큰 영향을 주므로 Prompt 반영 검토가 필요함
+```
+
+후보 기록과 반영 기준은 `05_Prompt_Library/00_Prompt_Management/01_Prompt_Change_Management_Rule (KR).md`를 따른다.
+
+---
+
+## 10. 검증과 오류 검출 기준
 
 검증은 작업 완료 조건이다.
 
@@ -293,7 +324,7 @@ Asset
 
 ---
 
-## 10. 리팩터링 권유 기준
+## 11. 리팩터링 권유 기준
 
 리팩터링은 Codex가 임의로 수행하지 않고, 필요성과 비용을 먼저 설명한 뒤 사용자와 결정한다.
 
@@ -311,7 +342,7 @@ Asset
 
 ---
 
-## 11. 문서화 / Git / PR 기준
+## 12. 문서화 / Git / PR 기준
 
 문서화는 작업 단위의 판단과 결과를 추적하기 위한 연결 구조다.
 
@@ -337,7 +368,7 @@ Branch는 작업 목표와 구현 범위를 관리하는 버전 컨트롤 단위
 
 ---
 
-## 12. 최소 운영 규칙
+## 13. 최소 운영 규칙
 
 ```yaml
 주석 작성 최소 기준
@@ -359,7 +390,7 @@ Branch는 작업 목표와 구현 범위를 관리하는 버전 컨트롤 단위
 
 ---
 
-## 13. 다음 선택지 기준
+## 14. 다음 선택지 기준
 
 응답 마지막의 추천은 현재 대화 흐름만 따르지 않고 사용자가 다음 행동을 선택할 수 있게 제시한다.
 
@@ -371,7 +402,7 @@ Branch는 작업 목표와 구현 범위를 관리하는 버전 컨트롤 단위
 -> 같은 Branch 안에서 이어갈 수 있는 대안 작업
 
 작업 전환 제안
--> 현재 Work Checklist 범위를 벗어나 새 Work Checklist가 필요한 후속 작업
+-> 현재 Work List 범위를 벗어나 새 Work List가 필요한 후속 작업
 
 점검 / 검토
 -> 불확실성, 중복, 누락, stale 여부 확인

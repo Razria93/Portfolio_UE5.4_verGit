@@ -1,255 +1,534 @@
-# UE5 Portfolio – 마일스톤 & 타임라인
+# UE5 Portfolio - 마일스톤
 
-## **Keywords**
+본 문서는 `UE5 Action RPG Combat Portfolio`의 주요 구현 단계와 현재 진행 상태를 정리한다.
 
-- 마일스톤 정의 및 버전 태그 계획
-    
-- 1개월(2025.12.01 ~ 12.31) 기준 주차별 목표
-    
-- 필수(MVP) 및 확장(Extended) 구분
-    
-- Git 태그 / Issue / PR 운영 기준
-    
-
----
----
-# **1. 버전 태그 / 마일스톤 개요**
-
-## **M0 – 초기 환경 & 워크플로우 세팅**
-
-**기간:** 2025.12.01 (Day 1)
-
-### **내용**
-
-- [x] UE5.4 설치 및 신규 프로젝트 생성
-    
-- [x] Git/GitHub 리포지토리 생성 및 `.gitignore` 정리
-    
-- [x] Obsidian `docs/` 폴더 구조 구성
-    - `00_plan`, `01_daily`, `02_design`, `03_notes`
-        
-- [x] GitHub Issues / Projects(칸반) 기본 구성
-    
-- [x] Git & GitHub 워크플로우 문서 추가
-    
-- [x] Plan-Overview, Milestones, Issue-Checklist 문서 추가
-    
-
-**Git 태그:** `v0.0-setup`
+현재 프로젝트 기준에서 구현 완료 / 진행 중 / 후속 확장 범위를 확인하기 위한 마일스톤 문서로 관리한다.
 
 ---
 
-## **M1 – 캐릭터 & 전투 코어 (v0.1)**
+## 1. 마일스톤 기준
 
-**기간:** Month 1 (~ 2025.12.31)
+```yaml
+관리 기준
+- 기능 단위 구현 상태
+- 전투 실행 구조 정리 상태
+- 문서화 / 검증 상태
+- 후속 확장 후보
+```
 
-### **내용**
+```yaml
+상태 기준
+완료
+-> 현재 코드와 문서 기준으로 주요 목표가 구현 / 정리된 상태
 
-- [x] `PlayerCharacter` / `PlayerController` C++ 클래스 구현
-    
-- [x] 3인칭 카메라(SpringArm) 구성
-    
-- [x] 기본 이동(move/jump) 구현
-    
-- [x] 무기 장착/해제 로직
-	
-- [x] 기본 공격 구현
-      
-- [x] 전투 테스트용 “Test Room” 레벨 구성
-    
+진행 중
+-> 주요 구조는 있으나 보완 구현, 검증, 문서화가 남은 상태
 
-### **완료 기준**
-
-- [x] 플레이어가 이동, 점프, 회피, 기본 콤보를 수행할 수 있음
-    
-- [x] 무기 장착 상태에 따라 공격 가능 여부가 달라짐
-    
-
-**Git 태그:** `v0.1-character-combat-core`
+후속
+-> 이후 Branch에서 다룰 상태
+```
 
 ---
 
-## **M2 – 히트/데미지/더미 적/타게팅 (v0.2)**
+## 2. 전체 마일스톤 요약
 
-**기간:** Month 2 (~ 2026.01.31)
+```yaml
+M0. 프로젝트 환경 / 문서 기반 구성
+-> 완료
 
-### **내용**
+M1. Player 기본 조작 / 무기 / 기본 공격
+-> 완료
 
-#### 근접 전투 판정
+M2. 기본 전투 루프 및 Damage Pipeline 구축
+-> 완료
 
-- [x] 콤보 공격 구현
-	
-- [x] Dummy Enemy 추가
-    
-- [x] 근접 Hit 판정 구현
-    
-- [x] 데미지 시스템 (HP 감소, 사망, 파괴 가능한 오브젝트 1종)
-    
-- [x] 플레이어/적의 피격 및 사망 애니메이션 연동
-    
+M3. Enemy AI 전투 행동
+-> 진행 중
 
-#### 타게팅 시스템
+M4. 전투 Feedback 구축
+-> 진행 중
 
-- [ ] 기본 Lock-on 타게팅 시스템 구현
-    
+M5. Action Pipeline 고도화
+-> 진행 중
 
-### **완료 기준**
+M6. Reaction Pipeline 고도화
+-> 진행 중
 
-- [x] 플레이어 vs 더미 적 1:1 전투 루프 가능
-    
-- [ ] Lock-on 상태에서 카메라 및 캐릭터가 적을 안정적으로 추적
-    
+M7. Action / Reaction 실행 간섭 처리
+-> 후속
 
-**Git 태그:** `v0.2-hit-damage-targeting`
+M8. Guard / Parry / Counter 전투 판정
+-> 후속
 
----
+M9. 제출용 기술 문서 / 포트폴리오 정리
+-> 진행 중
 
-## **M3 – Enemy AI & 고급 전투 (v0.3)**
-
-**기간:** Month 3 (~ 2026.02.28)
-
-### **내용**
-
-#### 적 AI (FSM)
-
-- [x] Idle
-    
-- [x] Move
-    
-- [x] Chase
-    
-- [x] Attack
-    
-- [x] Hit Reaction
-    
-- [x] Death
-    
-
-#### 플레이어 고급 전투 시스템
-
-- [ ] Guard / Guard Break
-    
-- [ ] Parry
-    
-- [ ] Dodge
-    
-
-#### 통합
-
-- [ ] 적 AI와 플레이어 고급 전투 시스템을 상호작용 가능하도록 통합
-    
-
-### **완료 기준**
-
-- [ ] 가드/패링/회피/공격이 모두 포함된 전투 루프 구성
-    
-- [ ] 1대 다수 상황에서도 큰 문제 없이 작동
-    
-
-**Git 태그:** `v0.3-enemy-ai-and-advanced-combat`
+M10. AI Workflow / Prompt Library
+-> 진행 중
+```
 
 ---
 
-## **M4 – VFX & UI (v0.4)**
+## 3. M0 - 프로젝트 환경 / 문서 기반 구성
 
-**기간:** Month 4 (~ 2026.03.31)
+### 상태
 
-### **내용**
+완료
 
-#### VFX
+### 목표
 
-- [ ] 공격 이펙트
-    
-- [ ] 피격 이펙트
-    
-- [ ] 간단한 파괴 이펙트
-    
+Unreal Engine 프로젝트, Git / GitHub, Markdown 문서 체계를 구성한다.
 
-#### UI
+### 완료된 항목
 
-- [ ] HP Bar
-    
-- [ ] Resource UI
-    
-- [ ] Damage UI
-    
+```yaml
+구현 / 환경
+- Unreal Engine 5.4 프로젝트 구성
+- Visual Studio 2022 개발 환경 구성
+- Git / GitHub 저장소 구성
+- `.gitignore` 정리
 
-#### Demo
-
-- [ ] 짧은 플레이어블 데모 구성
-    
-
-### **완료 기준**
-
-- [ ] 전투, UI, VFX 피드백이 포함된 데모 플레이 가능
-    
-
-**Git 태그:** `v0.4-vfx-and-ui`
+문서
+- Issue Checklist
+- Pull Request
+- Bug Report
+- System Architecture
+- Portfolio Documents
+- AI Workflow
+```
 
 ---
 
-## **M5 – Combat Orchestration Structure (v0.5)**
+## 4. M1 - Player 기본 조작 / 무기 / 기본 공격
 
-**기간:** Month 5 (~ 2026.04.30)
+### 상태
 
-### **내용**
+완료
 
-- [ ] Player 입력에서 Action 실행까지의 흐름을 Orchestrator 중심으로 정리
-    
-- [ ] 상태 전이 확정과 Action 실행 순서 분리
-    
-- [ ] `ActionComponent` / `CAction` 책임 재정의
-    
-- [ ] Action 실행 실패 시 rollback 흐름 정리
-    
-- [ ] 이후 AI / Reaction / Guard / Parry 확장을 고려한 실행 구조 기반 마련
-    
+### 목표
 
-### **완료 기준**
+Player 캐릭터의 기본 이동, 카메라, 무기 장착, 기본 공격 흐름을 구성한다.
 
-- [ ] Player action 실행 흐름이 `입력 -> Orchestrator -> 상태 전이 -> Action 실행` 구조로 설명 가능
-    
-- [ ] `CAction`이 상태 변경 책임을 직접 갖지 않도록 정리
-    
-- [ ] 기존 ComboAttack / LightAttack 동작 유지
-    
+### 완료된 항목
 
-**Git 태그:** `v0.5-combat-orchestration`
+```yaml
+Player
+- Character / Controller 구성
+- SpringArm 기반 3인칭 카메라
+- 이동 / 점프 / 회피 기반 구성
 
----
+Weapon
+- 무기 장착 / 해제
+- WeaponActor / Attachment 기반 무기 연결
 
-## **M6 – Polish & 문서화 (v0.6)**
-
-**기간:** 이후 정리 단계
-
-### **내용**
-
-- [ ] 포트폴리오 시연 영상 촬영/업로드
-    
-- [ ] 기술/설계 문서 정리 (`docs/` 구조 기반)
-    
-- [ ] 확장 로드맵 작성
-    
-
-### **완료 기준**
-
-- [ ] GitHub Repo + 영상 + 문서만으로 포트폴리오 설명 가능
-    
-
-**Git 태그:** `v0.6-polish-and-docs`
+Combat
+- 기본 공격
+- Combo Attack
+- Montage 기반 공격 실행
+```
 
 ---
 
-# **2. 태그 / 마일스톤 체크 테이블**
+## 5. M2 - 기본 전투 루프 및 Damage Pipeline 구축
 
-|Milestone|Tag Name|요약|목표 주차|완료|
-|---|---|---|---|:-:|
-|**M0**|`v0.0-setup`|초기 환경 설정 & 워크플로우 구성|W0||
-|**M1**|`v0.1-character-combat-core`|캐릭터/카메라/이동/기본 콤보|W1||
-|**M2**|`v0.2-hit-damage-targeting`|히트/데미지/더미 적/타게팅|W2||
-|**M3**|`v0.3-enemy-ai-and-advanced-combat`|적 AI & 고급 전투 (가드/패링/회피)|W3||
-|**M4**|`v0.4-vfx-and-ui`|VFX/UI/데모|W4~W5||
-|**M5**|`v0.5-combat-orchestration`|Combat Orchestration 구조 정리|W5||
-|**M6**|`v0.6-polish-and-docs`|문서화 & 마무리 작업|Final||
+### 상태
+
+완료
+
+### 목표
+
+공격 충돌, 데미지 적용, 피격 반응, 사망 처리까지 이어지는 기본 전투 루프를 구성한다.
+
+### 완료된 항목
+
+```yaml
+Combat
+- Hit Collision Window
+- Hit Context / Damage Context
+- ApplyDamage -> FDamageEvent -> TakeDamage 흐름
+- Damage Result 처리
+
+Reaction
+- Hit Reaction
+- Dead Reaction
+
+Feedback
+- Damage Feedback
+- Reaction Feedback
+```
 
 ---
+
+## 6. M3 - Enemy AI 전투 행동
+
+### 상태
+
+진행 중
+
+### 목표
+
+Enemy AI가 탐색, 추적, 공격, 대기, 반응을 수행하고 Player와 공통 전투 실행 구조로 연결되도록 구성한다.
+
+### 현재 구성된 항목
+
+```yaml
+AI
+- Behavior Tree
+- Blackboard
+- Patrol / Chase
+- Attack intent dispatch
+- Combat priority / waiting behavior
+- Player 바라보기
+```
+
+### 남은 항목
+
+```yaml
+후속 구현 / 검증
+- Guard / Parry / Counter와 Enemy AI 반응 연결
+- Boss pattern / enemy pattern data 확장
+- AI decision source와 공통 execution pipeline 연결 고도화
+```
+
+---
+
+## 7. M4 - 전투 Feedback 구축
+
+### 상태
+
+진행 중
+
+### 목표
+
+Action / Reaction / Damage 결과를 플레이어가 인지할 수 있는 전투 Feedback으로 연결한다.
+
+### 현재 구성된 항목
+
+```yaml
+Action Feedback
+- Action 실행 시작 / 종료 Feedback
+- Attack timing Feedback
+- Montage event 기반 Feedback 연결
+
+Reaction Feedback
+- Hit / Dead Reaction Feedback
+- Reaction 실행 결과와 Feedback 연결
+- Animation / VFX / SFX 연결 후보
+
+Damage Feedback
+- 피격 위치 / 방향 기반 Feedback
+- Damage Impact Feedback
+- Feedback request / execution 구조
+
+Player Feedback
+- Player가 인지해야 하는 화면 / 카메라 / UI Feedback 후보
+- 전투 결과를 읽을 수 있는 시각 / 청각 Feedback 후보
+```
+
+### 남은 항목
+
+```yaml
+- Action / Reaction / Damage / Player Feedback 책임 경계 정리
+- Feedback data authoring 구조 정리
+- VFX / SFX / camera feedback polish
+- System Architecture 문서 체계 재정리
+```
+
+---
+
+## 8. M5 - Action Pipeline 고도화
+
+### 상태
+
+진행 중
+
+### 목표
+
+Player / AI의 Action 실행 흐름을 request / decision / apply / lifecycle 구조로 고도화한다.
+
+### 현재 구성된 항목
+
+```yaml
+Action
+- Action request
+- Action execution decision
+- Action relationship / apply mode
+- Action executor lifecycle
+- Action data resolve
+- Montage lifecycle 기준
+- Action Feedback 연결
+```
+
+### 남은 항목
+
+```yaml
+- AI action intent와 Action Pipeline 연결 고도화
+- Action data authoring 구조 정리
+- Action execution failure / rollback 기준 정리
+- DataAsset 기반 authoring 구조 정리
+```
+
+---
+
+## 9. M6 - Reaction Pipeline 고도화
+
+### 상태
+
+진행 중
+
+### 목표
+
+Damage 결과, 상태 변화, 피격 반응, Feedback을 Reaction 실행 흐름으로 연결하고 고도화한다.
+
+### 현재 구성된 항목
+
+```yaml
+Reaction
+- Reaction request
+- Reaction execution policy
+- Reaction relationship / apply mode
+- Reaction executor lifecycle
+- Reaction data resolve
+- Hit Reaction
+- Dead Reaction
+- Montage lifecycle 기준
+- Reaction Feedback 연결
+```
+
+### 남은 항목
+
+```yaml
+후속 구현 / 검증
+- Damage Result와 Reaction Request 연결 기준 정리
+- Reaction policy / execution state 기준 고도화
+- Enemy AI Reaction 관찰 / 복귀 흐름 정리
+- Action / Reaction 실행 관계 최종 검증
+- Combat Resolution 계층 도입
+- Resource / state system 연결
+- Guard / Parry / Counter 판정 결과 연결
+- System Architecture 문서 체계 재정리
+```
+
+---
+
+## 10. M7 - Action / Reaction 실행 간섭 처리
+
+### 상태
+
+후속
+
+### 목표
+
+Action과 Reaction이 동시에 실행되거나 서로 개입할 때의 interrupt / cancel / block / ignore 기준을 정리한다.
+
+### 후속 범위
+
+```yaml
+Execution Relationship Policy
+- 현재 실행 중인 Action과 신규 Action의 관계 처리
+- 현재 실행 중인 Action과 Reaction의 관계 처리
+- 현재 실행 중인 Reaction과 신규 Reaction의 관계 처리
+- Action / Reaction 우선순위 판단
+- interrupt / cancel / block / ignore 기준
+
+Execution Intervention Case
+- Dodge 기반 intervention
+- HitReaction 기반 Action interrupt
+- Parry Reaction 기반 Action 전환 후보
+- ExecutionState 전환 기준
+
+Verification
+- 기존 Combo / Dodge / HitReaction 회귀 확인
+- Player / AI 공통 적용 가능성 확인
+- Montage lifecycle / delegate 정리 기준 확인
+```
+
+### 남은 항목
+
+```yaml
+- Action / Reaction relationship matrix 정리
+- Execution intervention policy 작성
+- Action / Reaction apply mode 기준 보강
+- System Architecture 문서 체계 반영
+```
+
+---
+
+## 11. M8 - Guard / Parry / Counter 전투 판정
+
+### 상태
+
+후속
+
+### 목표
+
+Stella Blade 스타일의 Guard / Parry / Counter 판정을 현재 전투 실행 구조 위에 확장한다.
+
+### 후속 범위
+
+```yaml
+Guard
+- Guard 입력 / 상태 / 판정
+- Guard Break
+
+Parry
+- 선입력
+- Parry Window
+- Combat Resolution 기반 판정
+- Parry Reaction interrupt
+- Damage / Reaction Feedback 연결
+
+Counter
+- Counter 가능 조건
+- Counter 실행 흐름
+- Action / Reaction 관계 처리
+```
+
+### 관련 준비 문서
+
+```yaml
+D20
+-> Parry Work Brief
+-> Parry Feature Work Planning
+-> Parry Work Checklist Draft
+```
+
+---
+
+## 12. M9 - 제출용 기술 문서 / 포트폴리오 정리
+
+### 상태
+
+진행 중
+
+### 목표
+
+프로젝트 구조와 구현 의도를 평가자가 이해할 수 있도록 제출용 기술 문서와 README를 정리한다.
+
+### 현재 구성된 항목
+
+```yaml
+Portfolio Documents
+- PF00 Portfolio Overview
+- PF01 Project Summary
+- PF02 Combat Data Pipeline
+- PF03 Action / Reaction Execution
+- PF04 Enemy AI Combat Behavior
+- PF05 Data-Driven Design
+- PF06 Troubleshooting
+- PF07 AI-Assisted Workflow
+
+README
+- 프로젝트 개요
+- 구현 범위
+- 핵심 설계 포인트
+- 문서 탐색 경로
+```
+
+### 남은 항목
+
+```yaml
+후속 정리
+- Project Stella 명칭 반영 여부 정리
+- Documentation Index / 문서군별 Index 갱신
+- System Architecture / Engine Technique 문서 역할 분리
+- 제출용 기술 문서 최종 검수
+```
+
+---
+
+## 13. M10 - AI Workflow / Prompt Library 구축
+
+### 상태
+
+진행 중
+
+### 목표
+
+Codex와 함께 작업하기 위한 AI 기반 작업 흐름과 Prompt Library를 구성한다.
+
+### 현재 구성된 항목
+
+```yaml
+AI Workflow
+- Index
+- Overview
+- Project Context
+- Operation Guide
+- Work Pipeline
+- Backlog
+
+Prompt Library
+- Prompt Blueprint
+- Working Rule
+- Working Reference
+- Work Planning
+- Document Writing
+- Review / Verification
+- Git Operation
+
+D20 검증
+- Work Brief
+- Feature Work Planning
+- Work Checklist Draft
+```
+
+### 남은 항목
+
+```yaml
+- Prompt Flow / Routing 계층 재정리
+- Work Brief / Planning / Checklist 필드 계약 정리
+- Document Writing Prompt 정리
+- Prompt 문장 품질 검수
+- 실제 D20 구현 Branch에서 Workflow 재검증
+```
+
+---
+
+## 14. 태그 후보
+
+```yaml
+v0.1-player-combat-core
+-> Player / Weapon / 기본 공격
+
+v0.2-basic-combat-damage-pipeline
+-> 기본 전투 루프 및 Damage Pipeline 구축
+
+v0.3-enemy-ai-combat
+-> Enemy AI 전투 행동
+
+v0.4-combat-feedback
+-> 전투 Feedback 구축
+
+v0.5-action-pipeline
+-> Action Pipeline 고도화
+
+v0.6-reaction-pipeline
+-> Reaction Pipeline 고도화
+
+v0.7-action-reaction-intervention
+-> Action / Reaction 실행 간섭 처리
+
+v0.8-guard-parry-counter
+-> Guard / Parry / Counter 확장
+
+v0.9-portfolio-docs
+-> 제출용 기술 문서 / README 정리
+
+v0.10-ai-workflow
+-> AI Workflow / Prompt Library
+```
+
+---
+
+## 15. 현재 우선순위
+
+```yaml
+1. 제출용 README / Portfolio Documents 정리
+2. Documentation Index / 문서군별 Index 갱신
+3. 기존 System Architecture 문서 체계 정리
+4. Action / Reaction 실행 간섭 처리 기준 정리
+5. Parry 구현
+6. Guard / Counter 구현
+7. 구현 결과 기반 Verification Log / PR Document 작성
+```

@@ -14,7 +14,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 
 ```yaml
 분류
--> Prompt Library / Prompt Files / Work Checklist / Operation / Pipeline / Project Stella / History / Document Category / Portfolio Technical Document
+-> Prompt Library / Prompt Files / Work List / Operation / Pipeline / Project Stella / History / Document Category / Portfolio Document
 
 내용
 -> 처리해야 할 작업 또는 검토해야 할 항목
@@ -42,17 +42,17 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 내용: 생성된 Prompt Files의 복사용 Prompt 내용, 출력 품질, Custom 적용 기준, 실제 사용성을 폴더별로 정밀 검토해야 함
 - 상태: 검토 필요
 - 우선순위: 우선
-- 근거 문서: AI Workflow Index / D19 Work Checklist / Prompt Blueprint
-- 다음 조치: Working Rules / Working Reference / Work Planning / Document Writing / Feature Work / Review Verification / Git Operation Prompt를 폴더별로 검토하고, 내용 품질 검토 완료 여부를 Index와 D19에 반영
+- 근거 문서: AI Workflow Index / W01 Work List / Prompt Blueprint
+- 다음 조치: Working Rules / Working Reference / Work Planning / Document Writing / Feature Work / Review Verification / Git Operation Prompt를 폴더별로 검토하고, 내용 품질 검토 완료 여부를 Index와 W01에 반영
 
 ### AI Workflow Refactor 요구사항 정리
 
 - 분류: Pipeline
-- 내용: AI Workflow v1 구축 중 발견한 계층 구조, Prompt Flow, Work Brief / Planning / Checklist, 문서 카테고리, History, 검증, Commit / PR 보완 후보를 다음 Refactor 범위에서 검토해야 함
+- 내용: AI Workflow v1 구축 중 발견한 계층 구조, Prompt Flow, Work Brief / Planning / Work List, 문서 카테고리, History, 검증, Commit / PR 보완 후보를 다음 Refactor 범위에서 검토해야 함
 - 상태: 대기
 - 우선순위: 우선
-- 근거 문서: `AI_Workflow_Refactor_Notes (KR).md` / D20 Work Brief / D20 Feature Work Planning / D20 Work Checklist Draft
-- 다음 조치: D20 실제 구현 Branch에서 Workflow 사용성을 확인한 뒤, Refactor Notes 기준으로 우선순위를 재정렬하고 필요한 항목만 반영
+- 근거 문서: `AI_Workflow_Refactor_Notes (KR).md` / W03 Work Brief / W03 Feature Work Planning / W03 Work List Draft
+- 다음 조치: W03 실제 구현 Branch에서 Workflow 사용성을 확인한 뒤, Refactor Notes 기준으로 우선순위를 재정렬하고 필요한 항목만 반영
 
 ### Working Rules / Reference Prompt 실사용 검토
 
@@ -78,7 +78,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 내용: Work Pipeline에 입력할 작업 계획을 만들기 위한 Work Planning Prompt 확장 여부를 검토해야 함
 - 상태: 대기
 - 우선순위: 권장
-- 근거 문서: AI Work Pipeline / D19 Work Checklist
+- 근거 문서: AI Work Pipeline / W01 Work List
 - 다음 조치: `Update_Work_Planning_Prompt`, `Review_Verification_Planning_Prompt`, `Document_Writing_Planning_Prompt`, `Document_Restructure_Work_Planning_Prompt`, `Prompt_Library_Reorganization_Work_Planning_Prompt`, `Pipeline_Implementation_Planning_Prompt` 작성 여부 검토
 
 ### Document Set Audit Prompt 검토
@@ -99,14 +99,14 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 근거 문서: Prompt Library Maintenance Blueprint
 - 다음 조치: Feature Work Prompt 실사용 여부를 확인한 뒤 Archive / 유지 / 삭제 후보 기준 확정
 
-### Issue Checklist / Work Checklist 명칭 병행 기준
+### Legacy Issue Checklist / Work List 명칭 정리
 
-- 분류: Work Checklist
-- 내용: D01-D18은 Issue Checklist, D19는 Work Checklist로 남아 있어 두 명칭의 병행 기준을 정해야 함
-- 상태: 보류
-- 우선순위: 보류
-- 근거 문서: D01-D19 Work Checklist / Issue Checklist 파일명과 제목 정합성
-- 다음 조치: D19 이후에도 Work Checklist를 유지할지, 기존 Issue Checklist 체계로 되돌릴지 별도 명칭 정리 작업에서 결정
+- 분류: Work List
+- 내용: D01-D18은 Legacy Issue Checklist로 보관하고, W01 이후 작업 관리 문서는 Work List로 유지하기로 정리함
+- 상태: 완료
+- 우선순위: 완료
+- 근거 문서: `Docs/99_Legacy/Issue_CheckList/` / `Docs/01_Work_List/`
+- 다음 조치: 신규 작업 문서와 관련 Prompt에서는 Work List 명칭을 사용
 
 ### History 문서 / 운영 방식 구성
 
@@ -115,7 +115,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 상태: 대기
 - 우선순위: 권장
 - 근거 문서: Operation Guide / Work Pipeline
-- 다음 조치: History를 별도 문서로 둘지, Work Checklist / Verification Log / PR Document 기록으로 대체할지 결정
+- 다음 조치: History를 별도 문서로 둘지, Work List / Verification Log / PR Document 기록으로 대체할지 결정
 
 ### 문서 카테고리 기준 적용
 
@@ -124,7 +124,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 상태: 대기
 - 우선순위: 우선
 - 근거 문서: 문서 카테고리 기준 / Prompt Custom Blueprint / Document Writing Prompt
-- 다음 조치: System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Portfolio Technical Document 기준으로 Writing Prompt와 기존 문서 재분류 계획 수립
+- 다음 조치: System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Portfolio Document 기준으로 Writing Prompt와 기존 문서 재분류 계획 수립
 
 ### Document Writing Prompt 재구성
 
@@ -133,7 +133,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 상태: 대기
 - 우선순위: 우선
 - 근거 문서: Document Writing Prompt / Prompt Custom Blueprint
-- 다음 조치: System Architecture는 현재 구조 설명 전용으로 축소하고, Architecture Decision Record / Architecture Issue Report / Engine Technique Document / Engine Decision Record / Engine Issue Report / Portfolio Technical Document 작성 Prompt를 추가 또는 변경
+- 다음 조치: System Architecture는 현재 구조 설명 전용으로 축소하고, Architecture Decision Record / Architecture Issue Report / Engine Technique Document / Engine Decision Record / Engine Issue Report / Portfolio Document 작성 Prompt를 추가 또는 변경
 
 ### Prompt Library 실사용 검증
 
@@ -141,7 +141,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 내용: Prompt Library를 실제 작업에 적용하고 보완 필요성을 확인해야 함
 - 상태: 대기
 - 우선순위: 보류
-- 근거 문서: D19 Work Checklist
+- 근거 문서: W01 Work List
 - 다음 조치: Prompt Files 검토가 끝난 뒤 실제 작업에 적용하고, 출력 품질 / 누락 입력 / 미검증 처리 방식을 점검
 
 ### Prompt 문장 품질 최종 검수
@@ -150,7 +150,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 - 내용: Prompt Library v1 구조 확정 후 문장 품질을 최종 검수해야 함
 - 상태: 대기
 - 우선순위: 보류
-- 근거 문서: D19 Work Checklist / Prompt Blueprint
+- 근거 문서: W01 Work List / Prompt Blueprint
 - 다음 조치: v1 구조와 Prompt Files 검토가 끝난 뒤 반박형 메타 문장, 불명확한 용어, 과도한 설명을 최종 검수
 
 ---
@@ -160,7 +160,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 ### Prompt Files 상태 체계 정리
 
 - 분류: Prompt Library
-- 완료 기준: Index와 D19에서 개별 Prompt 파일 생성 상태와 Prompt Files 분류 기준을 분리
+- 완료 기준: Index와 W01에서 개별 Prompt 파일 생성 상태와 Prompt Files 분류 기준을 분리
 
 ### Prompt Files Format 구조 1차 검토
 
@@ -190,7 +190,7 @@ Backlog 항목은 다음 기준으로 기록한다.
 ### 문서 카테고리 기준 확정
 
 - 분류: Document Category
-- 완료 기준: Refactor Report를 공식 카테고리에서 제외하고 Work Checklist / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Technical Document 기준으로 확정
+- 완료 기준: Refactor Report를 공식 카테고리에서 제외하고 Work List / Bug Report / System Architecture / System Design Records / Engine Technique Document / Engine Implementation Records / Verification Log / PR Document / Portfolio Document 기준으로 확정
 
 ### 36ce73b Prompt 추가 반영
 
@@ -200,4 +200,4 @@ Backlog 항목은 다음 기준으로 기록한다.
 ### Work Brief / Feature Work Planning Prompt 작성
 
 - 분류: Prompt Files
-- 완료 기준: `01_Work_Brief_Intake_Prompt (KR).md`와 `02_Feature_Work_Planning_Prompt (KR).md`를 작성하고, `01_Work_Checklist_Writing_Prompt (KR).md`를 Work Brief / Work Planning 결과 기반의 최종 Work Checklist 작성 역할로 정리
+- 완료 기준: `01_Work_Brief_Intake_Prompt (KR).md`와 `02_Feature_Work_Planning_Prompt (KR).md`를 작성하고, `01_Work_List_Writing_Prompt (KR).md`를 Work Brief / Work Planning 결과 기반의 최종 Work List 작성 역할로 정리
