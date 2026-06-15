@@ -147,6 +147,37 @@ FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDefer
 	return ProcessActionCandidate(candidate);
 }
 
+void UCActionOrchestratorComponent::ClearAllDeferredActions()
+{
+	DeferredActionCandidates.Reset();
+}
+
+void UCActionOrchestratorComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey)
+{
+	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max) return;
+
+	DeferredActionCandidates.RemoveAll(
+		[InConsumeKey](const FDeferredActionCandidate& InEntry)
+		{
+			return InEntry.ConsumeKey == InConsumeKey;
+		});
+}
+
+void UCActionOrchestratorComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey, const FActionDataKey& InActionDataKey)
+{
+	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max) return;
+	if (!InActionDataKey.IsValidMinimal()) return;
+
+	FActionCandidate candidate;
+	candidate.ActionDataKey = InActionDataKey;
+
+	DeferredActionCandidates.RemoveAll(
+		[InConsumeKey, candidate](const FDeferredActionCandidate& InEntry)
+		{
+			return InEntry.MatchesIdentity(InConsumeKey, candidate);
+		});
+}
+
 bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
 {
 	OutRejectReason = EActionRequestRejectReason::None;

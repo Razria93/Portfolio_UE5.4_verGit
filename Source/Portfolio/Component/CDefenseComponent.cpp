@@ -76,14 +76,14 @@ void UCDefenseComponent::HandleGuardOutStarted()
 	PrintGuardStateInfo();
 }
 
-void UCDefenseComponent::HandleGuardInterrupted(EActionStopReason InStopReason)
+void UCDefenseComponent::HandleGuardOutCompleted()
 {
 	ResetGuardState();
 
 	PrintGuardStateInfo();
 }
 
-void UCDefenseComponent::HandleGuardEnded()
+void UCDefenseComponent::HandleGuardInterrupted(EActionStopReason InStopReason)
 {
 	ResetGuardState();
 

@@ -55,6 +55,7 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		DeadState = HealthComp_Cached->GetDeadState();
 	}
 
+	FLog::Log(TEXT("[NativeUpdateAnimation] Update bIsGuardingPose"));
 	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
 }
 

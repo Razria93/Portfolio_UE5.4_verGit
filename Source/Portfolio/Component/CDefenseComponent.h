@@ -50,8 +50,8 @@ public:
 public:
 	void HandleGuardInStarted();
 	void HandleGuardOutStarted();
+	void HandleGuardOutCompleted();
 	void HandleGuardInterrupted(EActionStopReason InStopReason);
-	void HandleGuardEnded();
 
 public:
 	void PrintGuardStateInfo() const;

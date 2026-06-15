@@ -50,7 +50,7 @@ void UCAction_Guard::Complete()
 	}
 	else if (activeActionIndex == 2)
 	{
-		OwnerActionComp_Injected->NotifyGuardEnded();
+		OwnerActionComp_Injected->NotifyGuardOutCompleted();
 	}
 }
 

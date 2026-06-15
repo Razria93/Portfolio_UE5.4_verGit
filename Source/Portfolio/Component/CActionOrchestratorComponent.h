@@ -50,6 +50,11 @@ public:
 public:
 	FActionRequestResult ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey);
 
+public:
+	void ClearAllDeferredActions();
+	void ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey);
+	void ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey, const FActionDataKey& InActionDataKey);
+
 private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
 

@@ -143,11 +143,13 @@ TakeDamagePacket
     - [x] `Block_In` complete 이후 deferred Guard Out candidate를 공통 `ProcessActionCandidate()` 경로로 재처리한다.
     - [x] deferred candidate 소비 시 active context 정리 이후 재평가되도록 `CAction_Guard::Complete()` 순서를 조정한다.
     - [x] `Reserved`와 별개로 `Deferred` result type을 분리한다.
+    - [x] deferred candidate 정리를 위해 전체 제거 / consume key 기준 제거 / consume key + action key 기준 제거 API를 구성한다.
     - [ ] `Block_In` 중 release 시 Hold에 고정되지 않고 `Block_Out`으로 이어지는지 PIE에서 확인한다.
 - [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:
     - [x] `CAction_Guard::Stop()`에서 `Block_In` 중단 시 guard runtime 값을 정리한다.
     - [ ] action stop / intervention / reaction takeover에서 Guard 상태가 남지 않는지 확인한다.
+    - [x] interrupt / forced stop 시 `GuardInCompleted` deferred candidate를 정리하도록 호출 지점을 연결한다.
 
 ### 4.2 Guard runtime 상태와 Parry Window 구성
 
@@ -249,6 +251,11 @@ TakeDamagePacket
     - [ ] dead / invulnerable / iframe / guard / parry처럼 “damage를 받을 수 있는가”를 결정하는 정책을 분류한다.
     - [ ] health commit이나 damage feedback처럼 결과 적용 책임은 Combat Resolution 후보에서 제외한다.
 - [ ] Parry / Guard / Block / iframe / invulnerable 같은 수신자 측 방어 판단의 책임 위치를 검토한다.
+- [ ] deferred action candidate의 장기 확장 정책을 후속 후보로 기록한다.
+  - 세부 구현 요소:
+    - [ ] `SourceExecutionId` 기반 lifecycle 정리 필요 여부를 검토한다.
+    - [ ] filter struct 기반 deferred clear API가 필요한 시점을 검토한다.
+    - [ ] retry / timeout / expire 정책이 필요한 deferred 유형을 분류한다.
 - [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
 
 ---

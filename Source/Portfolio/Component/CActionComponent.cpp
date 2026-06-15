@@ -287,15 +287,20 @@ void UCActionComponent::NotifyGuardInCompleted()
 	ActionOrchestratorComp_Cached->ConsumeDeferredAction(EDeferredActionConsumeKey::GuardInCompleted);
 }
 
-void UCActionComponent::NotifyGuardEnded()
+void UCActionComponent::NotifyGuardOutCompleted()
 {
 	if (!IsValid(DefenseComp_Cached)) return;
 
-	DefenseComp_Cached->HandleGuardEnded();
+	DefenseComp_Cached->HandleGuardOutCompleted();
 }
 
 void UCActionComponent::NotifyGuardInterrupted(EActionStopReason InStopReason)
 {
+	if (IsValid(ActionOrchestratorComp_Cached))
+	{
+		ActionOrchestratorComp_Cached->ClearDeferredActions(EDeferredActionConsumeKey::GuardInCompleted);
+	}
+
 	if (!IsValid(DefenseComp_Cached)) return;
 
 	DefenseComp_Cached->HandleGuardInterrupted(InStopReason);
