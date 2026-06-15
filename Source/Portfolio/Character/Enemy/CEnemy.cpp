@@ -316,7 +316,7 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 	if (combatActionIntent == ECombatActionIntent::None) return;
 
 	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent);
-	if (!actionRequestResult.IsAccepted() || actionRequestResult.ResultType != EActionRequestResultType::Reserved) return;
+	if (!actionRequestResult.IsReservedResult()) return;
 }
 
 // Mapping API (ActionData -> Intent)

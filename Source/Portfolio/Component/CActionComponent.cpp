@@ -284,7 +284,7 @@ void UCActionComponent::NotifyGuardInCompleted()
 {
 	if (!IsValid(ActionOrchestratorComp_Cached)) return;
 
-	ActionOrchestratorComp_Cached->ConsumePendingGuardOutRequest();
+	ActionOrchestratorComp_Cached->ConsumeDeferredAction(EDeferredActionConsumeKey::GuardInCompleted);
 }
 
 void UCActionComponent::NotifyGuardEnded()

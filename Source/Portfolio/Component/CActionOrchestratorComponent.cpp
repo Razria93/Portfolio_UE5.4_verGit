@@ -105,7 +105,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	if (!ResolveEquipmentActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteActionCandidate(incomingCandidate);
+	return ProcessActionCandidate(incomingCandidate);
 }
 
 FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InIncomingRequest)
@@ -118,33 +118,33 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	if (ShouldDeferGuardOutRequest(InIncomingRequest))
-	{
-		DeferGuardOutRequest(InIncomingRequest);
-		return BuildActionRequestResult(EActionRequestResultType::Reserved);
-	}
-
 	FActionCandidate incomingCandidate;
 
 	if (!ResolveCombatActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteActionCandidate(incomingCandidate);
+	return ProcessActionCandidate(incomingCandidate);
 }
 
-FActionRequestResult UCActionOrchestratorComponent::ConsumePendingGuardOutRequest()
+FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
 {
-	if (!bHasPendingGuardOutRequest)
+	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max)
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
+
+	// Find the deferred candidate for this consume key.
+	const int32 foundIndex = DeferredActionCandidates.IndexOfByPredicate(
+		[InConsumeKey](const FDeferredActionCandidate& InEntry)
+		{
+			return InEntry.ConsumeKey == InConsumeKey && InEntry.IsValidMinimal();
+		});
+
+	if (foundIndex == INDEX_NONE)
 		return BuildActionRequestResult(EActionRequestResultType::Ignored);
 
-	const FCombatActionRequest request = PendingGuardOutRequest;
-	ClearPendingGuardOutRequest();
+	const FActionCandidate candidate = DeferredActionCandidates[foundIndex].Candidate;
+	DeferredActionCandidates.RemoveAt(foundIndex);
 
-	bIsConsumingPendingGuardOutRequest = true;
-	const FActionRequestResult result = RequestCombatAction(request);
-	bIsConsumingPendingGuardOutRequest = false;
-
-	return result;
+	return ProcessActionCandidate(candidate);
 }
 
 bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
@@ -178,36 +178,6 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	}
 
 	return true;
-}
-
-bool UCActionOrchestratorComponent::IsGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const
-{
-	return InIncomingRequest.IntentType == ECombatActionIntent::Guard
-		&& InIncomingRequest.IntentEvent == EActionIntentEvent::Completed;
-}
-
-bool UCActionOrchestratorComponent::ShouldDeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const
-{
-	if (bIsConsumingPendingGuardOutRequest) return false;
-	if (!IsGuardOutRequest(InIncomingRequest)) return false;
-	if (!IsValid(ActionComp_Cached)) return false;
-
-	return ActionComp_Cached->IsActiveActionType(EActionType::Guard)
-		&& ActionComp_Cached->GetActiveActionIndex() == 1;
-}
-
-void UCActionOrchestratorComponent::DeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest)
-{
-	PendingGuardOutRequest = InIncomingRequest;
-	bHasPendingGuardOutRequest = true;
-
-	FLog::Log(TEXT("[ActionOrchestrator] Deferred Guard Out request until Guard In completes."));
-}
-
-void UCActionOrchestratorComponent::ClearPendingGuardOutRequest()
-{
-	PendingGuardOutRequest = FCombatActionRequest();
-	bHasPendingGuardOutRequest = false;
 }
 
 bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const
@@ -323,7 +293,7 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	return true;
 }
 
-FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(const FActionCandidate& InIncomingCandidate)
+FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const FActionCandidate& InIncomingCandidate)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
@@ -333,6 +303,14 @@ FActionRequestResult UCActionOrchestratorComponent::ExecuteActionCandidate(const
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
+
+	// Branch point for deferred candidates.
+	EDeferredActionConsumeKey consumeKey = EDeferredActionConsumeKey::None;
+	if (TryResolveDeferredActionConsumeKey(InIncomingCandidate, decisionQuery, consumeKey))
+	{
+		return DeferActionCandidate(InIncomingCandidate, consumeKey);
+	}
+
 	const FExecutionDecisionResult decisionResult = BuildDecisionResult(decisionQuery, rejectReason);
 	FActionExecutionResult executionResult = BuildActionExecutionResult(incomingContext, decisionResult, rejectReason);
 
@@ -488,6 +466,64 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 	}
 
 	return participant;
+}
+
+bool UCActionOrchestratorComponent::TryResolveDeferredActionConsumeKey(const FActionCandidate& InIncomingCandidate, const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const
+{
+	OutConsumeKey = EDeferredActionConsumeKey::None;
+
+	if (!InIncomingCandidate.IsValidMinimal()) return false;
+
+	if (!InQuery.HasActivePart()) return false;
+	if (!InQuery.ActivePart.IsActionParticipant()) return false;
+
+	const FActionDataKey& incomingKey = InIncomingCandidate.ActionDataKey;
+	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+
+	if (incomingKey.ActionType == EActionType::Guard && incomingKey.ActionIndex == 2)
+	{
+		if (activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 1)
+		{
+			// bIsGuardOutCandidate && bIsActiveGuardIn
+			OutConsumeKey = EDeferredActionConsumeKey::GuardInCompleted;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+FActionRequestResult UCActionOrchestratorComponent::DeferActionCandidate(const FActionCandidate& InIncomingCandidate, EDeferredActionConsumeKey InConsumeKey)
+{
+	if (!InIncomingCandidate.IsValidMinimal())
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
+
+	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max)
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
+
+	FDeferredActionCandidate deferredCandidate;
+	deferredCandidate.Candidate = InIncomingCandidate;
+	deferredCandidate.ConsumeKey = InConsumeKey;
+
+	if (!deferredCandidate.IsValidMinimal())
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
+
+	// Clear the same deferred candidate before storing the latest one.
+	DeferredActionCandidates.RemoveAll(
+		[InConsumeKey, InIncomingCandidate](const FDeferredActionCandidate& InEntry)
+		{
+			return InEntry.MatchesIdentity(InConsumeKey, InIncomingCandidate);
+		});
+
+	DeferredActionCandidates.Add(deferredCandidate);
+
+	FLog::Log(FString::Printf(
+		TEXT("[ActionOrchestrator] Deferred action candidate. ConsumeKey = %s | ActionType = %s | ActionIndex = %d"),
+		*UEnum::GetValueAsString(InConsumeKey),
+		*UEnum::GetValueAsString(InIncomingCandidate.ActionDataKey.ActionType),
+		InIncomingCandidate.ActionDataKey.ActionIndex));
+
+	return BuildActionRequestResult(EActionRequestResultType::Deferred);
 }
 
 FExecutionDecisionResult UCActionOrchestratorComponent::BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EActionRequestRejectReason& OutRejectReason) const

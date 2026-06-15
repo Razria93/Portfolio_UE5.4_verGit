@@ -38,7 +38,7 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	}
 
 	const FActionRequestResult requestResult = enemy->HandleAICombatAction(CombatActionIntent);
-	if (!requestResult.IsAccepted() || requestResult.ResultType != EActionRequestResultType::Started) return EBTNodeResult::Failed;
+	if (!requestResult.IsStartedResult()) return EBTNodeResult::Failed;
 
 	const float currentTime = OwnerComp.GetWorld()->GetTimeSeconds();
 	const float nextCombatActionTime = currentTime + enemy->GetCombatActionCooldown();

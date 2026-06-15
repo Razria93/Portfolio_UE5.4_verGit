@@ -1,11 +1,11 @@
-# Guard Release Deferred Request Note
+# Guard Release Deferred Action Candidate Note
 
 ## 1. 목적
 
-본 문서는 `Guard In` 실행 중 `Guard Released` 입력이 들어왔을 때 발생할 수 있는 상태 고정 문제와, 이를 해결하기 위한 deferred request 구조 필요성을 기록한다.
+본 문서는 `Guard In` 실행 중 `Guard Released` 입력이 들어왔을 때 발생할 수 있는 상태 고정 문제와, 이를 해결하기 위한 deferred action candidate 구조 필요성을 기록한다.
 
 현재 브랜치에서는 우선 Guard / Parry v1 동작을 안정화한다.
-공통 Orchestrator 수준의 deferred request pipeline은 구조 확정 후 별도 작업으로 분리한다.
+공통 Orchestrator 수준의 deferred action candidate consume 구조는 현재 브랜치에서 Guard release 문제를 기준으로 최소 도입한다.
 
 ---
 
@@ -67,7 +67,7 @@ Released 입력
 -> Block_In 완료 시점에 자동 소비
 ```
 
-따라서 Guard release 문제는 단순 재호출보다 deferred request 저장 / 소비 / 재평가 구조에 가깝다.
+따라서 Guard release 문제는 단순 재호출보다 resolved candidate를 보관하고, consume trigger 시점에 다시 처리하는 deferred action candidate 구조에 가깝다.
 
 ---
 
@@ -83,24 +83,25 @@ Released 입력
 - weapon state나 action data가 바뀐 뒤 과거 request가 현재 상태와 맞지 않게 실행된다.
 - owner 또는 component가 invalid 상태인데 보관된 request가 실행된다.
 
-따라서 deferred request는 소비 시점에도 기존 request 판단 경로를 다시 통과해야 한다.
+따라서 deferred action candidate는 소비 시점에도 현재 상태 기준의 orchestration 판단을 다시 통과해야 한다.
 
 ---
 
 ## 6. 권장 구조
 
-장기적으로는 Orchestrator가 deferred request를 관리하는 구조가 적합하다.
+장기적으로는 Orchestrator가 deferred action candidate를 관리하는 구조가 적합하다.
 
 ```text
 Action Request
--> 즉시 실행 가능?
+-> Action Candidate resolve
+-> 즉시 처리 가능?
    - Yes -> 실행
    - No, 버릴 요청인가? -> Reject / Ignore
-   - No, 나중에 소비할 요청인가? -> Deferred 저장
+   - No, 나중에 소비할 수 있는 candidate인가? -> Deferred Candidate 저장
 
 Action lifecycle event
 -> Consume trigger 발생
--> Deferred request 재평가
+-> Deferred candidate consume
 -> 가능하면 실행
 -> 불가능하면 Reject / Ignore / Expire
 ```
@@ -110,53 +111,53 @@ Guard release 기준의 예시는 다음과 같다.
 ```text
 Guard Released
 -> FCombatActionRequest(Guard, Completed)
--> 현재 Block_In 실행 중이라 deferred 저장
+-> FActionCandidate(Guard, index 2) resolve
+-> 현재 Block_In 실행 중이라 GuardInCompleted key로 deferred 저장
 
 Block_In Complete 또는 exit notify
--> ConsumeDeferredRequests(GuardInCompleted)
--> 저장된 Guard Completed request를 기존 request pipeline으로 재평가
+-> ConsumeDeferredAction(GuardInCompleted)
+-> 저장된 Guard Out candidate를 공통 ProcessActionCandidate 경로로 재처리
 -> 가능하면 Block_Out 실행
 ```
 
 중요한 점은 notify가 `Block_Out`을 직접 실행하지 않는 것이다.
 
-notify 또는 action lifecycle event는 소비 가능한 시점을 알려주고, Orchestrator가 보관된 request를 다시 판단한다.
+notify 또는 action lifecycle event는 소비 가능한 시점을 알려주고, Orchestrator가 보관된 candidate를 다시 처리한다.
 
 ---
 
 ## 7. v1 대응 방향
 
-현재 Guard / Parry v1에서는 바로 범용 deferred request pipeline을 만들기보다, Guard 전용 pending release로 문제를 좁혀 검증한다.
+현재 Guard / Parry v1에서는 Guard release 문제를 기준으로 deferred action candidate 저장 / 소비 구조를 최소 도입한다.
 
 ```text
 Released 입력
+-> Guard Out candidate resolve
 -> 현재 Guard In 실행 중인가?
-   - Yes -> Guard Out pending 저장
-   - No  -> 즉시 Block_Out 요청
+   - Yes -> GuardInCompleted key로 deferred candidate 저장
+   - No  -> 공통 ProcessActionCandidate 경로로 즉시 처리
 
 Guard In Complete 또는 지정 notify
--> pending Guard Out이 있는가?
-   - Yes -> pending 소비 후 기존 request pipeline으로 재평가
+-> GuardInCompleted deferred candidate가 있는가?
+   - Yes -> candidate consume 후 공통 ProcessActionCandidate 경로로 재처리
    - No  -> Guard Hold 유지
 ```
 
-이 방식은 Guard 동작을 먼저 안정화하면서, 이후 Orchestrator로 일반화할 근거를 남긴다.
+이 방식은 Guard 동작을 먼저 안정화하면서, 이후 다른 action에도 같은 consume key 모델을 확장할 근거를 남긴다.
 
 ---
 
 ## 8. 후속 작업 후보
 
-- Guard 전용 pending release 구현
+- deferred action candidate 만료 / 우선순위 정책 검토
 - `GuardInCompleted` 또는 `GuardCanExit` consume trigger 후보 검토
-- deferred request 저장소와 request 만료 조건 설계
-- deferred request 소비 시 기존 `RequestCombatAction` 판단 경로 재사용
-- Combo reserved / Guard pending / Dodge cancel / Parry counter를 하나의 deferred request 모델로 통합할 수 있는지 검토
+- Combo reserved / Guard deferred / Dodge cancel / Parry counter를 하나의 delayed execution 모델로 통합할 수 있는지 검토
 - System Architecture 재분류 이후 System Design Record로 승격 여부 판단
 
 ---
 
 ## 9. 현재 결론
 
-`Guard Released during Block_In` 문제는 단순 입력 누락 버그가 아니라, action lifecycle 중 지연 실행해야 하는 request를 어떻게 보관하고 안전하게 소비할지에 대한 구조 문제다.
+`Guard Released during Block_In` 문제는 단순 입력 누락 버그가 아니라, action lifecycle 중 지연 처리해야 하는 candidate를 어떻게 보관하고 안전하게 소비할지에 대한 구조 문제다.
 
-현재 브랜치에서는 Guard v1을 우선 안정화하고, deferred request pipeline은 Orchestrator 확장 후보로 남긴다.
+현재 브랜치에서는 Guard v1을 우선 안정화하고, deferred action candidate 구조는 Orchestrator의 확장 지점으로 유지한다.

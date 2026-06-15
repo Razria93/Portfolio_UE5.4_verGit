@@ -136,11 +136,13 @@ TakeDamagePacket
     - [x] Guard 종료 요청은 별도 action request로 들어와 `Block_Out` ActionData를 선택한다.
     - [x] `Block_Out`은 key release 기반 action 종료 흐름으로 실행한다.
     - [x] `Block_Out` 시작 시 `CanGuard`와 `CanParry`를 false로 내리고, Guard pose 상태도 함께 종료한다.
-- [x] `Block_In` 실행 중 release 입력이 들어오면 Guard Out 요청을 pending으로 보관한다.
+- [x] `Block_In` 실행 중 release 입력이 들어오면 Guard Out candidate를 deferred로 보관한다.
   - 세부 구현 요소:
-    - [x] `Guard Completed` request가 active Guard index 1 상태에서 들어오면 즉시 실행하지 않고 pending request로 저장한다.
-    - [x] `Block_In` complete 이후 pending Guard Out request를 기존 `RequestCombatAction()` 경로로 재평가한다.
-    - [x] pending request 소비 시 active context 정리 이후 재평가되도록 `CAction_Guard::Complete()` 순서를 조정한다.
+    - [x] `Guard Completed` request를 먼저 Guard Out candidate로 해석한다.
+    - [x] active Guard index 1 상태라면 `GuardInCompleted` key로 deferred candidate를 저장한다.
+    - [x] `Block_In` complete 이후 deferred Guard Out candidate를 공통 `ProcessActionCandidate()` 경로로 재처리한다.
+    - [x] deferred candidate 소비 시 active context 정리 이후 재평가되도록 `CAction_Guard::Complete()` 순서를 조정한다.
+    - [x] `Reserved`와 별개로 `Deferred` result type을 분리한다.
     - [ ] `Block_In` 중 release 시 Hold에 고정되지 않고 `Block_Out`으로 이어지는지 PIE에서 확인한다.
 - [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:

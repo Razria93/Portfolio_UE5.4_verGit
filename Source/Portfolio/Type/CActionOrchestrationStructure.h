@@ -68,6 +68,16 @@ enum class ECombatActionIntent : uint8
 	Max,
 };
 
+UENUM(BlueprintType)
+enum class EDeferredActionConsumeKey : uint8
+{
+	None = 0,
+
+	GuardInCompleted,
+
+	Max,
+};
+
 USTRUCT(BlueprintType)
 struct FMovementActionRequest
 {
@@ -156,7 +166,33 @@ public:
 		return ResultType == EActionRequestResultType::Handled
 			|| ResultType == EActionRequestResultType::Started
 			|| ResultType == EActionRequestResultType::Reserved
+			|| ResultType == EActionRequestResultType::Deferred
 			|| ResultType == EActionRequestResultType::Intervened;
+	}
+
+	bool IsHandledResult() const
+	{
+		return ResultType == EActionRequestResultType::Handled;
+	}
+
+	bool IsStartedResult() const
+	{
+		return ResultType == EActionRequestResultType::Started;
+	}
+
+	bool IsReservedResult() const
+	{
+		return ResultType == EActionRequestResultType::Reserved;
+	}
+
+	bool IsDeferredResult() const
+	{
+		return ResultType == EActionRequestResultType::Deferred;
+	}
+
+	bool IsIntervenedResult() const
+	{
+		return ResultType == EActionRequestResultType::Intervened;
 	}
 };
 
@@ -173,5 +209,32 @@ public:
 	bool IsValidMinimal() const
 	{
 		return ActionDataKey.IsValidMinimal();
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FDeferredActionCandidate
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EDeferredActionConsumeKey ConsumeKey = EDeferredActionConsumeKey::None;
+
+	UPROPERTY(Transient)
+	FActionCandidate Candidate = FActionCandidate();
+
+public:
+	bool IsValidMinimal() const
+	{
+		return ConsumeKey != EDeferredActionConsumeKey::None
+			&& ConsumeKey != EDeferredActionConsumeKey::Max
+			&& Candidate.IsValidMinimal();
+	}
+
+	bool MatchesIdentity(EDeferredActionConsumeKey InConsumeKey, const FActionCandidate& InCandidate) const
+	{
+		return ConsumeKey == InConsumeKey
+			&& Candidate.ActionDataKey == InCandidate.ActionDataKey;
 	}
 };

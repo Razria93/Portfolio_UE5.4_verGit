@@ -37,13 +37,7 @@ private:
 
 private:
 	UPROPERTY(Transient)
-	bool bHasPendingGuardOutRequest = false;
-
-	UPROPERTY(Transient)
-	FCombatActionRequest PendingGuardOutRequest = FCombatActionRequest();
-
-	UPROPERTY(Transient)
-	bool bIsConsumingPendingGuardOutRequest = false;
+	TArray<FDeferredActionCandidate> DeferredActionCandidates;
 
 protected:
 	void BeginPlay() override;
@@ -52,7 +46,9 @@ public:
 	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InIncomingRequest);
 	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest);
 	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InIncomingRequest);
-	FActionRequestResult ConsumePendingGuardOutRequest();
+
+public:
+	FActionRequestResult ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey);
 
 private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
@@ -62,13 +58,7 @@ private:
 	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
-	bool IsGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const;
-	bool ShouldDeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const;
-	void DeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest);
-	void ClearPendingGuardOutRequest();
-
-private:
-	FActionRequestResult ExecuteActionCandidate(const FActionCandidate& InIncomingCandidate);
+	FActionRequestResult ProcessActionCandidate(const FActionCandidate& InIncomingCandidate);
 
 private:
 	bool ResolveActionContext(const FActionCandidate& InIncomingCandidate, FActionExecutionContext& OutIncomingContext, EActionRequestRejectReason& OutRejectReason) const;
@@ -86,6 +76,10 @@ private:
 	FExecutionParticipant BuildActiveExecutionParticipant() const;
 
 private:
+	bool TryResolveDeferredActionConsumeKey(const FActionCandidate& InIncomingCandidate, const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const;
+	FActionRequestResult DeferActionCandidate(const FActionCandidate& InIncomingCandidate, EDeferredActionConsumeKey InConsumeKey);
+
+private:
 	FExecutionDecisionResult BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
@@ -96,7 +90,6 @@ private:
 
 	// Inner API
 	void ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;
-
 	bool BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const;
 	bool BuildInterventionDirective(const FExecutionInterventionQuery& InQuery, EExecutionStopSource InStopSource, EExecutionAfterStopAction InAfterStopAction, FExecutionInterventionDirective& OutDirective) const;
 

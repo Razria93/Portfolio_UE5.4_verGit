@@ -328,6 +328,7 @@ enum class EActionRequestResultType : uint8
 
 	Started,
 	Reserved,
+	Deferred,
 	Intervened,
 
 	Max,

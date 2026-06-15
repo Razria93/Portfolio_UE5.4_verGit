@@ -26,9 +26,9 @@
 
 - 원인은 release 입력이 `Block_In` 실행 중에 들어왔을 때, 해당 종료 의도를 보관했다가 안전한 시점에 다시 처리하는 v1 경로가 없기 때문이다.
 
-- v1에서는 Guard 전용 pending release를 두고, `Block_In` 완료 또는 exit 시점에 기존 action request 판단 경로로 다시 제출하는 방식으로 해결한다.
+- v1에서는 Guard Out candidate를 `GuardInCompleted` consume key로 deferred 저장하고, `Block_In` 완료 시 공통 candidate 처리 경로로 다시 소비하는 방식으로 해결한다.
 
-- deferred request를 Orchestrator 수준으로 일반화하는 구조 논의는 `N02_Guard_Release_Deferred_Request_Note.md`에서 별도로 다룬다.
+- deferred action candidate 구조의 장기 확장 논의는 `N02_Guard_Release_Deferred_Request_Note.md`에서 별도로 다룬다.
 
 ---
 
@@ -110,48 +110,49 @@
 
 - Guard release는 “새 공격 입력”이 아니라 현재 Guard 유지 의도를 종료하는 입력이다.
 
-- 현재 실행 중인 `Block_In` 때문에 release 요청을 즉시 실행할 수 없을 때, 해당 요청을 pending 상태로 보관하는 경로가 없다.
+- 현재 실행 중인 `Block_In` 때문에 release 요청을 즉시 실행할 수 없을 때, 해석된 Guard Out candidate를 deferred 상태로 보관하는 경로가 없다.
 
 - 보관된 요청을 완료 시점에 바로 실행하면 reaction takeover, dead state, cinematic lock, action relationship 정책을 우회할 수 있다.
 
-- 따라서 pending release는 소비 시점에도 기존 action request 판단 경로를 다시 통과해야 한다.
+- 따라서 deferred candidate는 소비 시점에도 현재 상태 기준의 action orchestration 판단을 다시 통과해야 한다.
 
 ---
 
 ## 수정 방향
 
-v1에서는 Guard 전용 pending release로 범위를 좁힌다.
+v1에서는 Guard release 문제를 deferred action candidate 저장 / 소비 구조로 처리한다.
 
 ```text
 Guard Released
+-> Guard Out candidate resolve
 -> 현재 Guard In 실행 중인가?
-   - Yes -> Guard Out pending 저장
-   - No  -> 기존 Guard Out request 실행
+   - Yes -> GuardInCompleted key로 deferred candidate 저장
+   - No  -> 공통 candidate 처리 경로로 즉시 처리
 
 Guard In Complete 또는 exit notify
--> pending Guard Out이 있는가?
-   - Yes -> pending 소비
-        -> 기존 request pipeline으로 Guard Completed request 재평가
+-> GuardInCompleted deferred candidate가 있는가?
+   - Yes -> candidate consume
+        -> 공통 ProcessActionCandidate 경로로 재처리
    - No  -> Guard Hold 유지
 ```
 
-장기적으로는 Orchestrator의 deferred request pipeline으로 일반화할 수 있다.
+장기적으로는 다른 action에도 consume key 기반 deferred action candidate 모델을 확장할 수 있다.
 
 ---
 
 ## 수정
 
-v1에서는 Guard 전용 pending release 경로를 추가했다.
+v1에서는 deferred action candidate 경로를 추가했다.
 
-- `UCActionOrchestratorComponent`에 pending Guard Out request 저장소를 추가했다.
+- `UCActionOrchestratorComponent`에 deferred action candidate 저장소를 추가했다.
 
-- `Guard Completed` request가 active Guard index 1 상태에서 들어오면 즉시 실행하지 않고 pending request로 보관한다.
+- `Guard Completed` request를 먼저 Guard Out candidate로 해석하고, active Guard index 1 상태라면 `GuardInCompleted` key로 보관한다.
 
-- `CAction_Guard::Complete()`에서 `Block_In` complete 이후 `UCActionComponent`를 통해 pending Guard Out request 소비를 요청한다.
+- `CAction_Guard::Complete()`에서 `Block_In` complete 이후 `UCActionComponent`를 통해 `GuardInCompleted` deferred candidate 소비를 요청한다.
 
-- pending request는 직접 실행하지 않고 기존 `RequestCombatAction()` 경로로 다시 들어가 현재 상태 기준으로 재평가된다.
+- deferred candidate는 직접 실행하지 않고 공통 `ProcessActionCandidate()` 경로로 다시 들어가 현재 상태 기준으로 재처리된다.
 
-- consume 과정에서 같은 request가 다시 pending으로 들어가지 않도록 pending 소비 중인 상태를 구분한다.
+- `Reserved`는 combo chain window 의미로 유지하고, deferred 저장 결과는 `Deferred` result type으로 분리했다.
 
 ---
 
@@ -159,11 +160,11 @@ v1에서는 Guard 전용 pending release 경로를 추가했다.
 
 - release 입력은 `Block_In` 실행 중에 들어와도 버려지지 않는다.
 
-- pending release 소비는 기존 action request 판단 경로를 우회하지 않는다.
+- deferred candidate 소비는 공통 action candidate 처리 경로를 우회하지 않는다.
 
-- `Block_Out` 실행이 불가능한 상태라면 pending request는 reject / ignore / expire 처리될 수 있어야 한다.
+- `Block_Out` 실행이 불가능한 상태라면 deferred candidate는 reject / ignore / expire 처리될 수 있어야 한다.
 
-- Guard 전용 pending 구현은 이후 Orchestrator deferred request 구조로 승격 가능한 형태로 둔다.
+- Guard release v1 구현은 이후 Orchestrator deferred action candidate 구조를 확장할 수 있는 형태로 둔다.
 
 ---
 
@@ -177,7 +178,7 @@ v1에서는 Guard 전용 pending release 경로를 추가했다.
 
 - [ ] release 이후 `CanGuard=false`, `CanParry=false`, `IsGuardingPose=false`로 정리되는지 확인한다.
 
-- [ ] reaction takeover 또는 action stop 상황에서 pending release가 잘못 실행되지 않는지 확인한다.
+- [ ] reaction takeover 또는 action stop 상황에서 deferred Guard Out candidate가 잘못 실행되지 않는지 확인한다.
 
 ---
 
@@ -187,7 +188,7 @@ v1에서는 Guard 전용 pending release 경로를 추가했다.
 
 - Guard pose / guard 판정 / parry 판정 상태는 release 또는 interrupt 이후 stale state로 남지 않아야 한다.
 
-- pending release는 직접 실행이 아니라 기존 request 판단 경로로 재평가되어야 한다.
+- deferred candidate는 직접 실행이 아니라 공통 candidate 처리 경로로 재평가되어야 한다.
 
 ---
 
@@ -203,6 +204,6 @@ v1에서는 Guard 전용 pending release 경로를 추가했다.
 
 - 본 Bug Report는 v1에서 해결할 Guard release 유실 문제를 추적한다.
 
-- deferred request 구조의 장기 설계 근거는 N02 Note에서 관리한다.
+- deferred action candidate 구조의 장기 설계 근거는 N02 Note에서 관리한다.
 
 ---
