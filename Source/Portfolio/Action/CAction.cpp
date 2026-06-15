@@ -49,6 +49,12 @@ FExecutionDecisionResult UCAction::ResolveExecutionDecision(const FExecutionDeci
 	return result;
 }
 
+bool UCAction::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const
+{
+	OutConsumeKey = EDeferredActionConsumeKey::None;
+	return false;
+}
+
 bool UCAction::IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const
 {
 	if (!InQuery.IncomingPart.IsActionParticipant()) return false;

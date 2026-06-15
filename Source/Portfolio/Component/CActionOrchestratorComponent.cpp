@@ -473,24 +473,10 @@ bool UCActionOrchestratorComponent::TryResolveDeferredActionConsumeKey(const FAc
 	OutConsumeKey = EDeferredActionConsumeKey::None;
 
 	if (!InIncomingCandidate.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+	if (!IsValid(InQuery.IncomingPart.GetActionContext().ActionExecutor)) return false;
 
-	if (!InQuery.HasActivePart()) return false;
-	if (!InQuery.ActivePart.IsActionParticipant()) return false;
-
-	const FActionDataKey& incomingKey = InIncomingCandidate.ActionDataKey;
-	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
-
-	if (incomingKey.ActionType == EActionType::Guard && incomingKey.ActionIndex == 2)
-	{
-		if (activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 1)
-		{
-			// bIsGuardOutCandidate && bIsActiveGuardIn
-			OutConsumeKey = EDeferredActionConsumeKey::GuardInCompleted;
-			return true;
-		}
-	}
-
-	return false;
+	return InQuery.IncomingPart.GetActionContext().ActionExecutor->TryResolveDeferredConsumeKey(InQuery, OutConsumeKey);
 }
 
 FActionRequestResult UCActionOrchestratorComponent::DeferActionCandidate(const FActionCandidate& InIncomingCandidate, EDeferredActionConsumeKey InConsumeKey)

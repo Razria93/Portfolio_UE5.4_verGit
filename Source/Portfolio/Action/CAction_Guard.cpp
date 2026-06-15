@@ -86,3 +86,27 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 	result.Relationship = EExecutionRelationship::Independent;
 	return result;
 }
+
+bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const
+{
+	OutConsumeKey = EDeferredActionConsumeKey::None;
+
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+
+	if (!InQuery.HasActivePart()) return false;
+	if (!InQuery.ActivePart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+
+	const bool bIsGuardOutCandidate = incomingContext.ActionDataKey.ActionType == EActionType::Guard && incomingContext.ActionDataKey.ActionIndex == 2;
+	const bool bIsActiveGuardIn = activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 1;
+
+	if (bIsGuardOutCandidate && bIsActiveGuardIn)
+	{
+		OutConsumeKey = EDeferredActionConsumeKey::GuardInCompleted;
+		return true;
+	}
+
+	return false;
+}

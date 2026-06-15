@@ -64,8 +64,9 @@ public:
 	const FActionData& GetActiveData() const { return ActiveData_Cached; }
 
 public:
-	// Decision
+	// Resolve
 	virtual FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const;
+	virtual bool TryResolveDeferredConsumeKey(const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const;
 
 protected:
 	bool IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const;
