@@ -38,12 +38,20 @@ void UCAction_Guard::Stop(EActionStopReason InStopReason)
 
 void UCAction_Guard::Complete()
 {
-	if (ActiveDataKey_Cached.ActionIndex == 2 && IsValid(OwnerActionComp_Injected))
+	const int32 activeActionIndex = ActiveDataKey_Cached.ActionIndex;
+
+	Super::Complete();
+
+	if (!IsValid(OwnerActionComp_Injected)) return;
+
+	if (activeActionIndex == 1)
+	{
+		OwnerActionComp_Injected->NotifyGuardInCompleted();
+	}
+	else if (activeActionIndex == 2)
 	{
 		OwnerActionComp_Injected->NotifyGuardEnded();
 	}
-
-	Super::Complete();
 }
 
 FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const

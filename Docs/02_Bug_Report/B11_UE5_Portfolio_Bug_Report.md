@@ -139,6 +139,22 @@ Guard In Complete 또는 exit notify
 
 ---
 
+## 수정
+
+v1에서는 Guard 전용 pending release 경로를 추가했다.
+
+- `UCActionOrchestratorComponent`에 pending Guard Out request 저장소를 추가했다.
+
+- `Guard Completed` request가 active Guard index 1 상태에서 들어오면 즉시 실행하지 않고 pending request로 보관한다.
+
+- `CAction_Guard::Complete()`에서 `Block_In` complete 이후 `UCActionComponent`를 통해 pending Guard Out request 소비를 요청한다.
+
+- pending request는 직접 실행하지 않고 기존 `RequestCombatAction()` 경로로 다시 들어가 현재 상태 기준으로 재평가된다.
+
+- consume 과정에서 같은 request가 다시 pending으로 들어가지 않도록 pending 소비 중인 상태를 구분한다.
+
+---
+
 ## 수정 기준
 
 - release 입력은 `Block_In` 실행 중에 들어와도 버려지지 않는다.

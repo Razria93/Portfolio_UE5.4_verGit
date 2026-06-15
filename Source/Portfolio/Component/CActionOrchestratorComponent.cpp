@@ -118,12 +118,33 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
+	if (ShouldDeferGuardOutRequest(InIncomingRequest))
+	{
+		DeferGuardOutRequest(InIncomingRequest);
+		return BuildActionRequestResult(EActionRequestResultType::Reserved);
+	}
+
 	FActionCandidate incomingCandidate;
 
 	if (!ResolveCombatActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
 	return ExecuteActionCandidate(incomingCandidate);
+}
+
+FActionRequestResult UCActionOrchestratorComponent::ConsumePendingGuardOutRequest()
+{
+	if (!bHasPendingGuardOutRequest)
+		return BuildActionRequestResult(EActionRequestResultType::Ignored);
+
+	const FCombatActionRequest request = PendingGuardOutRequest;
+	ClearPendingGuardOutRequest();
+
+	bIsConsumingPendingGuardOutRequest = true;
+	const FActionRequestResult result = RequestCombatAction(request);
+	bIsConsumingPendingGuardOutRequest = false;
+
+	return result;
 }
 
 bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
@@ -157,6 +178,36 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	}
 
 	return true;
+}
+
+bool UCActionOrchestratorComponent::IsGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const
+{
+	return InIncomingRequest.IntentType == ECombatActionIntent::Guard
+		&& InIncomingRequest.IntentEvent == EActionIntentEvent::Completed;
+}
+
+bool UCActionOrchestratorComponent::ShouldDeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const
+{
+	if (bIsConsumingPendingGuardOutRequest) return false;
+	if (!IsGuardOutRequest(InIncomingRequest)) return false;
+	if (!IsValid(ActionComp_Cached)) return false;
+
+	return ActionComp_Cached->IsActiveActionType(EActionType::Guard)
+		&& ActionComp_Cached->GetActiveActionIndex() == 1;
+}
+
+void UCActionOrchestratorComponent::DeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest)
+{
+	PendingGuardOutRequest = InIncomingRequest;
+	bHasPendingGuardOutRequest = true;
+
+	FLog::Log(TEXT("[ActionOrchestrator] Deferred Guard Out request until Guard In completes."));
+}
+
+void UCActionOrchestratorComponent::ClearPendingGuardOutRequest()
+{
+	PendingGuardOutRequest = FCombatActionRequest();
+	bHasPendingGuardOutRequest = false;
 }
 
 bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const

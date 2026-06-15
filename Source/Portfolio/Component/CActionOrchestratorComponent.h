@@ -35,6 +35,16 @@ private:
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
+private:
+	UPROPERTY(Transient)
+	bool bHasPendingGuardOutRequest = false;
+
+	UPROPERTY(Transient)
+	FCombatActionRequest PendingGuardOutRequest = FCombatActionRequest();
+
+	UPROPERTY(Transient)
+	bool bIsConsumingPendingGuardOutRequest = false;
+
 protected:
 	void BeginPlay() override;
 
@@ -42,6 +52,7 @@ public:
 	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InIncomingRequest);
 	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest);
 	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InIncomingRequest);
+	FActionRequestResult ConsumePendingGuardOutRequest();
 
 private:
 	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
@@ -49,6 +60,12 @@ private:
 private:
 	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
+
+private:
+	bool IsGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const;
+	bool ShouldDeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest) const;
+	void DeferGuardOutRequest(const FCombatActionRequest& InIncomingRequest);
+	void ClearPendingGuardOutRequest();
 
 private:
 	FActionRequestResult ExecuteActionCandidate(const FActionCandidate& InIncomingCandidate);

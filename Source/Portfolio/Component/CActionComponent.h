@@ -61,6 +61,9 @@ private:
 	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCActionOrchestratorComponent* ActionOrchestratorComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCDefenseComponent* DefenseComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
@@ -122,6 +125,7 @@ public:
 public:
 	void NotifyGuardInStarted();
 	void NotifyGuardOutStarted();
+	void NotifyGuardInCompleted();
 	void NotifyGuardEnded();
 	void NotifyGuardInterrupted(EActionStopReason InStopReason);
 

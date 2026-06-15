@@ -6,6 +6,7 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CActionOrchestratorComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Action/CAction.h"
@@ -27,6 +28,7 @@ void UCActionComponent::BeginPlay()
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	ActionOrchestratorComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionOrchestratorComponent>();
 	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 
@@ -276,6 +278,13 @@ void UCActionComponent::NotifyGuardOutStarted()
 	if (!IsValid(DefenseComp_Cached)) return;
 
 	DefenseComp_Cached->HandleGuardOutStarted();
+}
+
+void UCActionComponent::NotifyGuardInCompleted()
+{
+	if (!IsValid(ActionOrchestratorComp_Cached)) return;
+
+	ActionOrchestratorComp_Cached->ConsumePendingGuardOutRequest();
 }
 
 void UCActionComponent::NotifyGuardEnded()
