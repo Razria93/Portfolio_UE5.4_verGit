@@ -6,6 +6,7 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
 
 void UCAnimInstance::NativeInitializeAnimation()
 {
@@ -17,6 +18,7 @@ void UCAnimInstance::NativeInitializeAnimation()
 	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass()));
 	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
 	HealthComp_Cached = Cast<UCHealthComponent>(OwnerCharacter_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
+	DefenseComp_Cached = Cast<UCDefenseComponent>(OwnerCharacter_Cached->GetComponentByClass(UCDefenseComponent::StaticClass()));
 
 	if (IsValid(WeaponComp_Cached))
 	{
@@ -52,6 +54,8 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		DeadState = HealthComp_Cached->GetDeadState();
 	}
+
+	bIsGuarding = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuarding();
 }
 
 void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType)

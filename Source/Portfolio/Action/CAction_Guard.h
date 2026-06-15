@@ -10,5 +10,9 @@ class PORTFOLIO_API UCAction_Guard : public UCAction
 	GENERATED_BODY()
 
 public:
+	bool Start(const FActionData& InData) override;
+	void Stop(EActionStopReason InStopReason) override;
+
+public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 };

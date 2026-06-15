@@ -6,6 +6,7 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Action/CAction.h"
 
@@ -26,6 +27,7 @@ void UCActionComponent::BeginPlay()
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 
 	// Rebuild All
@@ -260,6 +262,22 @@ void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, 
 	{
 		OnActionEvent.Broadcast(OwnerCharacter_Cached, InType, InIndex, InEventType);
 	}
+}
+
+void UCActionComponent::NotifyGuardStarted()
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->SetGuarding(true);
+	DefenseComp_Cached->PrintGuardingInfo();
+}
+
+void UCActionComponent::NotifyGuardEnded()
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->SetGuarding(false);
+	DefenseComp_Cached->PrintGuardingInfo();
 }
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)

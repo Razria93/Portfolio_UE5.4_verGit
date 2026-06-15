@@ -61,6 +61,9 @@ private:
 	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
 public:
@@ -115,6 +118,10 @@ public:
 
 public:
 	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
+
+public:
+	void NotifyGuardStarted();
+	void NotifyGuardEnded();
 
 private:
 	// Temporary data build API (Move to DataAsset).

@@ -14,6 +14,7 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
@@ -87,6 +88,10 @@ ACPlayer::ACPlayer()
 	// Init HealthComp
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
+
+	// Init DefenseComp
+	DefenseComponent = CreateDefaultSubobject<UCDefenseComponent>(TEXT("Defense"));
+	check(DefenseComponent);
 
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));

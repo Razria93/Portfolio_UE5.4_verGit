@@ -116,28 +116,29 @@ TakeDamagePacket
     - [x] `E` Pressed는 Guard 시작 요청으로, `E` Released는 Guard 종료 요청으로 연결한다.
     - [x] `CPlayer`의 combat action 요청 경로가 `Started` / `Completed` intent event를 구분할 수 있는지 확인한다.
     - [x] 현재 `HandleCombatAction()`이 `Started`로 고정되어 있으므로, Guard 종료 요청을 처리할 수 있는 확장 지점을 정한다.
-- [ ] Guard Pressed에서 `Block_In` 실행으로 이어지게 구성한다.
+- [x] Guard Pressed에서 `Block_In` 실행으로 이어지게 구성한다.
   - 세부 구현 요소:
     - [x] `EActionType::Guard`를 추가한다.
     - [x] `CActionOrchestratorComponent::ResolveCombatActionCandidate()`에서 `ECombatActionIntent::Guard`를 `EActionType::Guard`로 해석한다.
     - [x] Guard 시작 요청은 action index `1`을 기준으로 처리한다.
-    - [ ] 임시로 `IntentEvent`에 따라 Guard `ActionIndex`를 나눠 `Block_In / Block_Out` ActionData를 선택한다.
-      - [ ] `Started -> Guard index 1 -> Block_In`
-      - [ ] `Completed -> Guard index 2 -> Block_Out`
+    - [x] 임시로 `IntentEvent`에 따라 Guard `ActionIndex`를 나눠 `Block_In / Block_Out` ActionData를 선택한다.
+      - [x] `Started -> Guard index 1 -> Block_In`
+      - [x] `Completed -> Guard index 2 -> Block_Out`
       - [ ] Guard 전용 phase / variant key가 필요하면 후속 구조 보완 후보로 기록한다.
-- [ ] Guard Held 상태에서 `Block_Hold` 또는 ABP guard hold / locomotion 상태로 유지되게 구성한다.
+- [x] Guard Held 상태에서 `Block_Hold` 또는 ABP guard hold / locomotion 상태로 유지되게 구성한다.
   - 세부 구현 요소:
-    - [ ] v1에서는 Guard Hold를 ABP 상태로 넘기는 방향을 기본으로 둔다.
-    - [ ] `Block_In` 종료 이후 Guard Hold 상태가 유지될 수 있도록 action runtime 상태와 animation parameter 연결 후보를 확인한다.
+    - [x] v1에서는 Guard Hold를 ABP 상태로 넘기는 방향을 기본으로 둔다.
+    - [x] `Block_In` 종료 이후 Guard Hold 상태가 유지될 수 있도록 `UCDefenseComponent::IsGuarding()`과 AnimInstance `bIsGuarding`을 연결한다.
+    - [x] Guard 상태 전달은 `CAction_Guard -> UCActionComponent notify -> UCDefenseComponent` 경로로 라우팅한다.
     - [ ] `Block_Hold` montage는 ABP 전환 전 검증용 또는 임시 fallback으로 사용할 수 있는지 확인한다.
-- [ ] Guard Released에서 `Block_Out` 실행으로 이어지게 구성한다.
+- [x] Guard Released에서 `Block_Out` 실행으로 이어지게 구성한다.
   - 세부 구현 요소:
-    - [ ] Guard 종료 요청이 active Guard Action에 전달되는 경로를 정한다.
-    - [ ] `Block_Out`은 key release 기반 action 종료 흐름으로 실행한다.
-    - [ ] Guard 종료가 완료되면 action runtime 상태와 guard animation 상태가 함께 정리되게 한다.
+    - [x] Guard 종료 요청은 별도 action request로 들어와 `Block_Out` ActionData를 선택한다.
+    - [x] `Block_Out`은 key release 기반 action 종료 흐름으로 실행한다.
+    - [x] `Block_Out` 요청 시 guard animation 상태가 정리되게 한다.
 - [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:
-    - [ ] `UCAction::ClearRuntime()` 또는 Guard 전용 cleanup 지점에서 guard/parry runtime 값을 정리한다.
+    - [x] `CAction_Guard::Stop()`에서 `Block_In` 중단 시 guard runtime 값을 정리한다.
     - [ ] action stop / intervention / reaction takeover에서 Guard 상태가 남지 않는지 확인한다.
 
 ### 4.2 Guard runtime 상태와 Parry Window 구성
@@ -147,10 +148,11 @@ TakeDamagePacket
     - [x] Guard가 상위 action이고 Parry는 Guard 내부 window 결과이므로, action executor 이름은 `CAction_Guard`를 우선 후보로 둔다.
     - [x] 기존 action executor 패턴(`CAction_ComboAttack`, `CAction_Dodge`)을 따라 Guard 전용 executor skeleton을 만든다.
     - [ ] `CAction_Guard` decision은 임시로 기존 action relationship을 사용하고, Hold / Release 구현 시 전용 정책으로 재검토한다.
-- [ ] Guard Action 안에서 `bIsParryable`, `bIsGuarding` 성격의 runtime 상태를 관리한다.
+- [ ] Guard / Parry runtime 상태 조회 경계를 구성한다.
   - 세부 구현 요소:
-    - [ ] runtime 상태는 우선 Guard Action 내부에 둔다.
-    - [ ] `IsParryWindowOpen()` / `IsGuarding()`처럼 `TakeDamage` 쪽에서 조회할 수 있는 최소 accessor 후보를 정한다.
+    - [x] Guard Hold 상태는 v1에서 `UCDefenseComponent::IsGuarding()`으로 노출한다.
+    - [x] `UCActionComponent`는 Guard action lifecycle event를 DefenseComponent로 전달하는 라우팅 지점으로 둔다.
+    - [ ] Parry Window 상태는 `IsParryWindowOpen()`처럼 `TakeDamage` 쪽에서 조회할 수 있는 최소 accessor 후보를 정한다.
     - [ ] 이후 Combat Resolution 분리 시 해당 상태 조회 경계를 그대로 옮길 수 있게 만든다.
 - [ ] Block_In 시작 직후 Parry Window를 열 수 있게 한다.
   - 세부 구현 요소:
