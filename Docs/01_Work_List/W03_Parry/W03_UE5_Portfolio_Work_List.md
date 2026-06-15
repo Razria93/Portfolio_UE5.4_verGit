@@ -128,14 +128,14 @@ TakeDamagePacket
 - [x] Guard Held 상태에서 `Block_Hold` 또는 ABP guard hold / locomotion 상태로 유지되게 구성한다.
   - 세부 구현 요소:
     - [x] v1에서는 Guard Hold를 ABP 상태로 넘기는 방향을 기본으로 둔다.
-    - [x] `Block_In` 종료 이후 Guard Hold 상태가 유지될 수 있도록 `UCDefenseComponent::IsGuarding()`과 AnimInstance `bIsGuarding`을 연결한다.
+    - [x] `Block_In` 종료 이후 Guard Hold pose가 유지될 수 있도록 `UCDefenseComponent::IsGuardingPose()`와 AnimInstance `bIsGuardingPose`를 연결한다.
     - [x] Guard 상태 전달은 `CAction_Guard -> UCActionComponent notify -> UCDefenseComponent` 경로로 라우팅한다.
     - [ ] `Block_Hold` montage는 ABP 전환 전 검증용 또는 임시 fallback으로 사용할 수 있는지 확인한다.
 - [x] Guard Released에서 `Block_Out` 실행으로 이어지게 구성한다.
   - 세부 구현 요소:
     - [x] Guard 종료 요청은 별도 action request로 들어와 `Block_Out` ActionData를 선택한다.
     - [x] `Block_Out`은 key release 기반 action 종료 흐름으로 실행한다.
-    - [x] `Block_Out` 요청 시 guard animation 상태가 정리되게 한다.
+    - [x] `Block_Out` 시작 시 `CanGuard`와 `CanParry`를 false로 내리고, Guard pose 상태도 함께 종료한다.
 - [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:
     - [x] `CAction_Guard::Stop()`에서 `Block_In` 중단 시 guard runtime 값을 정리한다.
@@ -148,26 +148,28 @@ TakeDamagePacket
     - [x] Guard가 상위 action이고 Parry는 Guard 내부 window 결과이므로, action executor 이름은 `CAction_Guard`를 우선 후보로 둔다.
     - [x] 기존 action executor 패턴(`CAction_ComboAttack`, `CAction_Dodge`)을 따라 Guard 전용 executor skeleton을 만든다.
     - [ ] `CAction_Guard` decision은 임시로 기존 action relationship을 사용하고, Hold / Release 구현 시 전용 정책으로 재검토한다.
-- [ ] Guard / Parry runtime 상태 조회 경계를 구성한다.
+- [x] Guard / Parry runtime 상태 조회 경계를 구성한다.
   - 세부 구현 요소:
-    - [x] Guard Hold 상태는 v1에서 `UCDefenseComponent::IsGuarding()`으로 노출한다.
+    - [x] Guard 입력 의도는 v1에서 `UCDefenseComponent::WantsGuarding()`으로 노출한다.
+    - [x] Guard Hold pose 상태는 v1에서 `UCDefenseComponent::IsGuardingPose()`로 노출한다.
+    - [x] 실제 Guard 판정 상태는 v1에서 `UCDefenseComponent::CanGuard()`로 노출한다.
+    - [x] 실제 Parry 판정 상태는 v1에서 `UCDefenseComponent::CanParry()`로 노출한다.
     - [x] `UCActionComponent`는 Guard action lifecycle event를 DefenseComponent로 전달하는 라우팅 지점으로 둔다.
-    - [ ] Parry Window 상태는 `IsParryWindowOpen()`처럼 `TakeDamage` 쪽에서 조회할 수 있는 최소 accessor 후보를 정한다.
     - [ ] 이후 Combat Resolution 분리 시 해당 상태 조회 경계를 그대로 옮길 수 있게 만든다.
-- [ ] Block_In 시작 직후 Parry Window를 열 수 있게 한다.
+- [x] Block_In 시작 직후 Parry Window를 열 수 있게 한다.
   - 세부 구현 요소:
-    - [ ] `Block_In` 시작 시점 또는 notify state begin에서 Parry Window를 연다.
-    - [ ] Parry Window는 Guard Hold 전체가 아니라 Guard In 초반 구간에만 유효하게 둔다.
+    - [x] `Block_In` 시작 시점에 `bCanParry`를 true로 연다.
+    - [x] Parry Window는 Guard Hold 전체가 아니라 Guard In 초반 구간에만 유효하게 둘 계획이다.
 - [ ] `AN_SwitchToGuard` 또는 동등한 notify 시점에서 Parry Window를 닫고 Guard Hold 상태로 전환한다.
   - 세부 구현 요소:
-    - [ ] 단발 notify로 Parry 가능 상태를 닫고 Guard 유지 상태를 연다.
+    - [ ] 단발 notify로 Parry 가능 상태를 닫고 Guard 판정 상태를 연다.
     - [ ] notify 이름은 실제 구현 시 `SwitchToGuard` 성격이 드러나게 정한다.
-- [ ] `UCAnimNotifyState_ExecutionInterventionWindow`와 `WindowKey = Parry`를 우선 활용할 수 있는지 확인한다.
+- [ ] Guard / Parry 판정은 notify state window가 아니라 단발 notify 기반 상태 전환으로 구성한다.
   - 세부 구현 요소:
-    - [ ] 기존 window notify가 action executor에 window key를 전달할 수 있는지 확인한다.
-    - [ ] intervention 허용 window와 defensive 판정 window를 같은 저장소로 쓸 때 의미 충돌이 없는지 확인한다.
-- [ ] 기존 intervention 허용 window와 Parry 판정 window를 같은 모델로 사용해도 되는지 검증한다.
-- [ ] 전용 Parry notify 또는 Guard state notify가 필요한 경우는 후속 보완 후보로 기록한다.
+    - [x] montage 경계 사이의 판정 공백을 피하기 위해 Parry / Guard 상태를 duration window가 아니라 상태값으로 유지한다.
+    - [ ] `SwitchToGuard` 단발 notify에서 Parry를 닫고 Guard 판정을 켠다.
+    - [x] `Block_Out` 시작 시점에 Guard pose를 종료해 Out montage와 ABP Guard pose가 겹치지 않게 한다.
+    - [ ] `GuardPoseEnd` 단발 notify는 Out 시작 정리만으로 부족한 경우의 fallback 후보로 검토한다.
 
 ### 4.3 Guard Hold 중 피격 처리 연결
 

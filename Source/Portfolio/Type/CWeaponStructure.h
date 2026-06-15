@@ -1299,8 +1299,9 @@ public:
 	bool bIsDead = false;
 
 	// [TODO]
-	// - bIsParrying
-	// - bIsGuarding
+	// - bCanParry
+	// - bIsGuardingPose
+	// - bCanGuard
 	// - bIsGuardBroken
 
 public:

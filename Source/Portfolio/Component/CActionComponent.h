@@ -120,8 +120,10 @@ public:
 	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
 
 public:
-	void NotifyGuardStarted();
+	void NotifyGuardInStarted();
+	void NotifyGuardOutStarted();
 	void NotifyGuardEnded();
+	void NotifyGuardInterrupted(EActionStopReason InStopReason);
 
 private:
 	// Temporary data build API (Move to DataAsset).

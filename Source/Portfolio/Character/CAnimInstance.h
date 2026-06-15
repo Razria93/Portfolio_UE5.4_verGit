@@ -29,7 +29,7 @@ protected:
 	EDeadState DeadState = EDeadState::Alive;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Action")
-	bool bIsGuarding = false;
+	bool bIsGuardingPose = false;
 
 private:
 	/* === Cached Objects === */

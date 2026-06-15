@@ -264,20 +264,32 @@ void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, 
 	}
 }
 
-void UCActionComponent::NotifyGuardStarted()
+void UCActionComponent::NotifyGuardInStarted()
 {
 	if (!IsValid(DefenseComp_Cached)) return;
 
-	DefenseComp_Cached->SetGuarding(true);
-	DefenseComp_Cached->PrintGuardingInfo();
+	DefenseComp_Cached->HandleGuardInStarted();
+}
+
+void UCActionComponent::NotifyGuardOutStarted()
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->HandleGuardOutStarted();
 }
 
 void UCActionComponent::NotifyGuardEnded()
 {
 	if (!IsValid(DefenseComp_Cached)) return;
 
-	DefenseComp_Cached->SetGuarding(false);
-	DefenseComp_Cached->PrintGuardingInfo();
+	DefenseComp_Cached->HandleGuardEnded();
+}
+
+void UCActionComponent::NotifyGuardInterrupted(EActionStopReason InStopReason)
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->HandleGuardInterrupted(InStopReason);
 }
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)

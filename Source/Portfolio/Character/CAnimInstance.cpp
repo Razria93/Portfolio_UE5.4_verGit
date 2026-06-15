@@ -55,7 +55,7 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		DeadState = HealthComp_Cached->GetDeadState();
 	}
 
-	bIsGuarding = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuarding();
+	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
 }
 
 void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType)

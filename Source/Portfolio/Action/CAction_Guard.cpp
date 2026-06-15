@@ -15,11 +15,11 @@ bool UCAction_Guard::Start(const FActionData& InData)
 	{
 		if (InData.ActionDataKey.ActionIndex == 1)
 		{
-			OwnerActionComp_Injected->NotifyGuardStarted();
+			OwnerActionComp_Injected->NotifyGuardInStarted();
 		}
 		else if (InData.ActionDataKey.ActionIndex == 2)
 		{
-			OwnerActionComp_Injected->NotifyGuardEnded();
+			OwnerActionComp_Injected->NotifyGuardOutStarted();
 		}
 	}
 
@@ -28,12 +28,22 @@ bool UCAction_Guard::Start(const FActionData& InData)
 
 void UCAction_Guard::Stop(EActionStopReason InStopReason)
 {
-	if (ActiveDataKey_Cached.ActionIndex == 1 && IsValid(OwnerActionComp_Injected))
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		OwnerActionComp_Injected->NotifyGuardInterrupted(InStopReason);
+	}
+
+	Super::Stop(InStopReason);
+}
+
+void UCAction_Guard::Complete()
+{
+	if (ActiveDataKey_Cached.ActionIndex == 2 && IsValid(OwnerActionComp_Injected))
 	{
 		OwnerActionComp_Injected->NotifyGuardEnded();
 	}
 
-	Super::Stop(InStopReason);
+	Super::Complete();
 }
 
 FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const

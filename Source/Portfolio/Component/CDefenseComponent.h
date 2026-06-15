@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CWeaponStructure.h"
 #include "CDefenseComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -14,12 +15,44 @@ public:
 
 private:
 	UPROPERTY(Transient)
-	bool bIsGuarding = false;
+	bool bWantsGuarding = false;
+
+	UPROPERTY(Transient)
+	bool bIsGuardingPose = false;
+
+	UPROPERTY(Transient)
+	bool bCanGuard = false;
+
+	UPROPERTY(Transient)
+	bool bCanParry = false;
 
 public:
-	FORCEINLINE bool IsGuarding() const { return bIsGuarding; }
-	FORCEINLINE void SetGuarding(bool bInGuarding) { bIsGuarding = bInGuarding; }
+	FORCEINLINE bool WantsGuarding() const { return bWantsGuarding; }
+	FORCEINLINE bool IsGuardingPose() const { return bIsGuardingPose; }
+	FORCEINLINE bool CanGuard() const { return bCanGuard; }
+	FORCEINLINE bool CanParry() const { return bCanParry; }
 
 public:
-	void PrintGuardingInfo() const;
+	void BeginGuardIntent();
+	void EndGuardIntent();
+
+	void BeginGuardPose();
+	void EndGuardPose();
+
+	void OpenGuardWindow();
+	void CloseGuardWindow();
+
+	void OpenParryWindow();
+	void CloseParryWindow();
+
+	void ResetGuardState();
+
+public:
+	void HandleGuardInStarted();
+	void HandleGuardOutStarted();
+	void HandleGuardInterrupted(EActionStopReason InStopReason);
+	void HandleGuardEnded();
+
+public:
+	void PrintGuardStateInfo() const;
 };
