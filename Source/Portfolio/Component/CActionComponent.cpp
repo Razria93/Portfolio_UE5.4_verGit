@@ -145,6 +145,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 	case EExecutionApplyMode::Start:
 	{
+		if (!ApplyObservableOverlayHandling(InResult.OverlayHandling)) return false;
 		return StartAction(InResult.ResolvedContext);
 	}
 
@@ -157,6 +158,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
+		if (!ApplyObservableOverlayHandling(InResult.OverlayHandling)) return false;
 		return StartAction(InResult.ResolvedContext);
 	}
 
@@ -426,6 +428,26 @@ bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInte
 
 	case EExecutionDomain::Reaction:
 		return IsValid(ReactionComp_Cached) && ReactionComp_Cached->RequestStopActiveReaction(InDirective);
+
+	default:
+		return false;
+	}
+}
+
+bool UCActionComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
+{
+	switch (InHandling)
+	{
+	case EObservableOverlayHandling::None:
+		return true;
+
+	case EObservableOverlayHandling::ClearGuardOverlayBeforeStart:
+	{
+		if (!IsValid(DefenseComp_Cached)) return false;
+
+		DefenseComp_Cached->ClearGuardOverlay();
+		return true;
+	}
 
 	default:
 		return false;

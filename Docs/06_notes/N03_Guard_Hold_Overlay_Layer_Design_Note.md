@@ -170,32 +170,29 @@ Incoming Request
 
 ## 5. v1 적용 기준
 
-현재 브랜치에서는 `Defense Domain` 전체 도입이나 observable overlay participant 전체 구현을 하지 않는다.
+현재 브랜치에서는 `Defense Domain` 전체 도입이나 observable overlay participant 전체 일반화를 하지 않는다.
 
 v1의 우선순위는 다음과 같다.
 
 - Guard / Parry 입력과 animation 흐름을 안정화한다.
 - `Block_In` 중 release 문제는 deferred action candidate 구조로 처리한다.
-- `Guard Hold`가 cleanup되지 않는 문제는 최종 구조 후보를 문서화하고, v1 구현 범위 안에서 최소 대응한다.
+- `Guard Hold`가 cleanup되지 않는 문제는 `ExecutionState` 확장이 아니라 `FExecutionSnapshot`의 observable overlay state로 관측한다.
+- Action / Reaction start 직전에 Guard overlay를 정리할 수 있는 최소 handling flag를 둔다.
 - Combat Resolution은 이번 단계에서 완성하지 않고, 이후 damage packet interception 단계에서 연결한다.
 
-A-2 방식인 `Guard Hold = Action index 3`은 빠른 bridge로 가능하다. 하지만 논의 결과 장기 구조 후보는 `Observable Overlay Layer`가 더 적절하다.
+`Guard Hold = Action index 3` 방식은 빠른 bridge로 가능하지만, 이번 v1에서는 해당 방식을 선택하지 않는다.
 
-따라서 구현 선택지는 다음처럼 정리한다.
+이번 v1에서는 `Guard Hold`를 action으로 편입하지 않고, snapshot / result handling을 사용하는 구조적 v1을 선택한다.
 
 ```text
-빠른 v1
--> Guard Hold를 임시 Action index 3으로 둔다.
--> 기존 action orchestration으로 interrupt 문제를 빠르게 줄인다.
--> 후속에서 overlay layer로 이관한다.
-
 구조적 v1
 -> Guard Hold를 action으로 편입하지 않는다.
 -> execution decision query에서 observable overlay state를 최소로 관측한다.
 -> 첫 대상은 Guard Hold만 둔다.
+-> Action / Reaction start 전에 필요한 경우 Guard overlay를 clear한다.
 ```
 
-현재 논의 기준에서는 구조적 v1이 더 자연스럽다. 다만 구현 범위가 커지면 빠른 v1을 선택하고, 그 결정을 명시적인 기술 부채로 남긴다.
+이 구현은 full overlay participant 모델이 아니다. v1에서는 `FExecutionParticipant`를 확장하지 않고, snapshot과 result handling만으로 Guard overlay cleanup 문제를 먼저 해결한다.
 
 ---
 

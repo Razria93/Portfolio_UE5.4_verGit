@@ -7,6 +7,7 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 
@@ -30,6 +31,7 @@ void UCActionOrchestratorComponent::BeginPlay()
 	WeaponComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 }
@@ -419,6 +421,13 @@ FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
 	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
 	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
 
+	if (IsValid(DefenseComp_Cached))
+	{
+		snapshot.ObservableOverlayState.bIsGuardingPose = DefenseComp_Cached->IsGuardingPose();
+		snapshot.ObservableOverlayState.bCanGuard = DefenseComp_Cached->CanGuard();
+		snapshot.ObservableOverlayState.bCanParry = DefenseComp_Cached->CanParry();
+	}
+
 	return snapshot;
 }
 
@@ -617,6 +626,8 @@ void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDe
 			return;
 		}
 
+		if (!ResolveObservableOverlayHandling(InQuery, InOutResult)) return;
+
 		InOutResult.ApplyMode = EExecutionApplyMode::Start;
 		return;
 	}
@@ -664,6 +675,43 @@ void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDe
 		InOutResult.RejectReason = EActionRequestRejectReason::NoExecutableAction;
 		return;
 	}
+}
+
+bool UCActionOrchestratorComponent::ResolveObservableOverlayHandling(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
+{
+	InOutResult.OverlayHandling = EObservableOverlayHandling::None;
+
+	if (!InQuery.Snapshot.HasObservableOverlay()) return true;
+
+	// Guard Hold is an overlay in v1, so only allowed transitions may clear it before start.
+	if (!InQuery.Snapshot.HasGuardOverlay())
+	{
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::InvalidIndependent;
+		return false;
+	}
+
+	if (!InQuery.IncomingPart.IsActionParticipant())
+	{
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::InvalidQuery;
+		return false;
+	}
+
+	const FActionDataKey& incomingKey = InQuery.IncomingPart.GetActionContext().ActionDataKey;
+
+	const bool bIsGuardOut = incomingKey.ActionType == EActionType::Guard && incomingKey.ActionIndex == 2;
+	const bool bIsDodge = incomingKey.ActionType == EActionType::Dodge;
+
+	if (!bIsGuardOut && !bIsDodge)
+	{
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EActionRequestRejectReason::InvalidIndependent;
+		return false;
+	}
+
+	InOutResult.OverlayHandling = EObservableOverlayHandling::ClearGuardOverlayBeforeStart;
+	return true;
 }
 
 void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const

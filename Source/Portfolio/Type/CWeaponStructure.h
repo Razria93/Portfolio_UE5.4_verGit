@@ -142,6 +142,16 @@ enum class EExecutionApplyMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class EObservableOverlayHandling : uint8
+{
+	None = 0,
+
+	ClearGuardOverlayBeforeStart,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EExecutionDomain : uint8
 {
 	None = 0,
@@ -1287,6 +1297,33 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FObservableOverlayState
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bIsGuardingPose = false;
+
+	UPROPERTY(Transient)
+	bool bCanGuard = false;
+
+	UPROPERTY(Transient)
+	bool bCanParry = false;
+
+public:
+	bool HasGuardOverlay() const
+	{
+		return bIsGuardingPose || bCanGuard || bCanParry;
+	}
+
+	bool HasAnyOverlay() const
+	{
+		return HasGuardOverlay();
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FExecutionSnapshot
 {
 	GENERATED_BODY()
@@ -1299,11 +1336,8 @@ public:
 	UPROPERTY(Transient)
 	bool bIsDead = false;
 
-	// [TODO]
-	// - bCanParry
-	// - bIsGuardingPose
-	// - bCanGuard
-	// - bIsGuardBroken
+	UPROPERTY(Transient)
+	FObservableOverlayState ObservableOverlayState = FObservableOverlayState();
 
 public:
 	bool IsIdle() const
@@ -1324,6 +1358,16 @@ public:
 	bool IsDead() const
 	{
 		return bIsDead || ExecutionState == EExecutionState::Dead;
+	}
+
+	bool HasObservableOverlay() const
+	{
+		return ObservableOverlayState.HasAnyOverlay();
+	}
+
+	bool HasGuardOverlay() const
+	{
+		return ObservableOverlayState.HasGuardOverlay();
 	}
 };
 
@@ -1500,6 +1544,9 @@ public:
 	UPROPERTY(Transient)
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
 
+	UPROPERTY(Transient)
+	EObservableOverlayHandling OverlayHandling = EObservableOverlayHandling::None;
+
 
 public:
 	bool IsAcceptedDecision() const
@@ -1536,6 +1583,9 @@ public:
 
 	UPROPERTY(Transient)
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
+
+	UPROPERTY(Transient)
+	EObservableOverlayHandling OverlayHandling = EObservableOverlayHandling::None;
 
 public:
 	bool IsAcceptedDecision() const

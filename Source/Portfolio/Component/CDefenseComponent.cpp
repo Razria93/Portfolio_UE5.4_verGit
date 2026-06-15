@@ -54,6 +54,13 @@ void UCDefenseComponent::ResetGuardState()
 	bCanParry = false;
 }
 
+void UCDefenseComponent::ClearGuardOverlay()
+{
+	bIsGuardingPose = false;
+	bCanGuard = false;
+	bCanParry = false;
+}
+
 void UCDefenseComponent::HandleGuardInStarted()
 {
 	BeginGuardIntent();

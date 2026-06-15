@@ -25,6 +25,9 @@ private:
 	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
@@ -71,6 +74,7 @@ private:
 
 private:
 	void ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;
+	bool ResolveObservableOverlayHandling(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;
 
 	// Inner API
 	void ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;

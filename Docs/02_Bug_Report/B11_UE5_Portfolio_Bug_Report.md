@@ -154,6 +154,8 @@ v1에서는 deferred action candidate 경로를 추가했다.
 
 - `Reserved`는 combo chain window 의미로 유지하고, deferred 저장 결과는 `Deferred` result type으로 분리했다.
 
+- 정상 Hold 이후에는 active action이 없더라도 Guard Hold overlay가 남을 수 있으므로, `FExecutionSnapshot`에서 observable overlay state를 관측하고 action / reaction start 직전에 Guard overlay를 정리할 수 있게 했다.
+
 ---
 
 ## 수정 기준
@@ -161,6 +163,8 @@ v1에서는 deferred action candidate 경로를 추가했다.
 - release 입력은 `Block_In` 실행 중에 들어와도 버려지지 않는다.
 
 - deferred candidate 소비는 공통 action candidate 처리 경로를 우회하지 않는다.
+
+- Guard Hold는 별도 action으로 편입하지 않고, action / reaction start 시점에 stale overlay로 남지 않도록 정리한다.
 
 - `Block_Out` 실행이 불가능한 상태라면 deferred candidate는 reject / ignore / expire 처리될 수 있어야 한다.
 
@@ -179,6 +183,8 @@ v1에서는 deferred action candidate 경로를 추가했다.
 - [ ] release 이후 `CanGuard=false`, `CanParry=false`, `IsGuardingPose=false`로 정리되는지 확인한다.
 
 - [ ] reaction takeover 또는 action stop 상황에서 deferred Guard Out candidate가 잘못 실행되지 않는지 확인한다.
+
+- [ ] Guard Hold 상태에서 dodge / reaction이 시작될 때 Guard overlay가 stale state로 남지 않는지 확인한다.
 
 ---
 

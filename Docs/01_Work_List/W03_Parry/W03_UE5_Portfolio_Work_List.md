@@ -148,7 +148,9 @@ TakeDamagePacket
 - [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:
     - [x] `CAction_Guard::Stop()`에서 `Block_In` 중단 시 guard runtime 값을 정리한다.
-    - [ ] action stop / intervention / reaction takeover에서 Guard 상태가 남지 않는지 확인한다.
+    - [x] action / reaction start 직전에 `FExecutionSnapshot`의 observable overlay state를 확인해 Guard overlay를 정리할 수 있게 한다.
+    - [x] `ExecutionState`를 확장하지 않고 Guard Hold를 observable overlay state로 관측하는 v1 경계를 구성한다.
+    - [ ] dodge / reaction takeover에서 Guard 상태가 남지 않는지 PIE에서 확인한다.
     - [x] interrupt / forced stop 시 `GuardInCompleted` deferred candidate를 정리하도록 호출 지점을 연결한다.
 
 ### 4.2 Guard runtime 상태와 Parry Window 구성
@@ -164,6 +166,7 @@ TakeDamagePacket
     - [x] Guard Hold pose 상태는 v1에서 `UCDefenseComponent::IsGuardingPose()`로 노출한다.
     - [x] 실제 Guard 판정 상태는 v1에서 `UCDefenseComponent::CanGuard()`로 노출한다.
     - [x] 실제 Parry 판정 상태는 v1에서 `UCDefenseComponent::CanParry()`로 노출한다.
+    - [x] `FExecutionSnapshot`에 Guard overlay state를 포함해 Orchestrator decision에서 관측할 수 있게 한다.
     - [x] `UCActionComponent`는 Guard action lifecycle event를 DefenseComponent로 전달하는 라우팅 지점으로 둔다.
     - [ ] 이후 Combat Resolution 분리 시 해당 상태 조회 경계를 그대로 옮길 수 있게 만든다.
 - [x] Block_In 시작 직후 Parry Window를 열 수 있게 한다.

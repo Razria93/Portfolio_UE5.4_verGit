@@ -55,6 +55,9 @@ private:
 	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCActionComponent* ActionComp_Cached = nullptr;
 
 public:
@@ -111,6 +114,7 @@ private:
 
 private:
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
+	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:
 	bool StartReaction(const FReactionExecutionContext& InContext);

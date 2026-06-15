@@ -6,6 +6,7 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Component/CActionComponent.h"
 #include "Reaction/CReaction.h"
 
@@ -25,6 +26,7 @@ void UCReactionComponent::BeginPlay()
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 
 	// Rebuild All
@@ -127,6 +129,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	{
 	case EExecutionApplyMode::Start:
 	{
+		if (!ApplyObservableOverlayHandling(InResult.OverlayHandling)) return false;
 		return StartReaction(InResult.ResolvedContext);
 	}
 
@@ -140,6 +143,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	{
 		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
+		if (!ApplyObservableOverlayHandling(InResult.OverlayHandling)) return false;
 		return StartReaction(InResult.ResolvedContext);
 	}
 	
@@ -378,6 +382,26 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 	case EExecutionDomain::Reaction:
 
 		return StopActiveReaction(InDirective);
+
+	default:
+		return false;
+	}
+}
+
+bool UCReactionComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
+{
+	switch (InHandling)
+	{
+	case EObservableOverlayHandling::None:
+		return true;
+
+	case EObservableOverlayHandling::ClearGuardOverlayBeforeStart:
+	{
+		if (!IsValid(DefenseComp_Cached)) return false;
+
+		DefenseComp_Cached->ClearGuardOverlay();
+		return true;
+	}
 
 	default:
 		return false;

@@ -31,6 +31,7 @@ public:
 	FORCEINLINE bool IsGuardingPose() const { return bIsGuardingPose; }
 	FORCEINLINE bool CanGuard() const { return bCanGuard; }
 	FORCEINLINE bool CanParry() const { return bCanParry; }
+	FORCEINLINE bool HasGuardOverlay() const { return bIsGuardingPose || bCanGuard || bCanParry; }
 
 public:
 	void BeginGuardIntent();
@@ -46,6 +47,7 @@ public:
 	void CloseParryWindow();
 
 	void ResetGuardState();
+	void ClearGuardOverlay();
 
 public:
 	void HandleGuardInStarted();

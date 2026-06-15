@@ -140,6 +140,7 @@ private:
 
 private:
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
+	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:
 	bool StartAction(const FActionExecutionContext& InContext);
