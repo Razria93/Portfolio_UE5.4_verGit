@@ -72,19 +72,21 @@ void UCDefenseComponent::ResolveObservableOverlayDecision(const FObservableOverl
 	const bool bNeedsExecutionStart = InQuery.ApplyMode == EExecutionApplyMode::Start || InQuery.ApplyMode == EExecutionApplyMode::Intervene;
 	if (!bNeedsExecutionStart) return;
 
-	if (InQuery.IncomingPart.IsReactionParticipant())
+	const FExecutionParticipant& incomingPart = InQuery.DecisionQuery.IncomingPart;
+
+	if (incomingPart.IsReactionParticipant())
 	{
-		OutDecision.Handling = EObservableOverlayHandling::ClearGuardOverlayBeforeStart;
+		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
 		return;
 	}
 
-	if (!InQuery.IncomingPart.IsActionParticipant())
+	if (!incomingPart.IsActionParticipant())
 	{
 		OutDecision.bAllowed = false;
 		return;
 	}
 
-	const FActionDataKey& incomingActionKey = InQuery.IncomingPart.GetActionContext().ActionDataKey;
+	const FActionDataKey& incomingActionKey = incomingPart.GetActionContext().ActionDataKey;
 
 	const bool bIsGuardOut = incomingActionKey.ActionType == EActionType::Guard && incomingActionKey.ActionIndex == 2;
 	const bool bIsDodge = incomingActionKey.ActionType == EActionType::Dodge;
@@ -95,7 +97,7 @@ void UCDefenseComponent::ResolveObservableOverlayDecision(const FObservableOverl
 		return;
 	}
 
-	OutDecision.Handling = EObservableOverlayHandling::ClearGuardOverlayBeforeStart;
+	OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
 }
 
 void UCDefenseComponent::HandleGuardInStarted()

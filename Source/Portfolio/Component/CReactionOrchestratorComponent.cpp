@@ -428,7 +428,7 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 
 void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
 {
-	InOutResult.OverlayHandling = EObservableOverlayHandling::None;
+	InOutResult.OverlayHandlings.Empty();
 
 	if (!InOutResult.IsAcceptedDecision()) return;
 
@@ -436,8 +436,7 @@ void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecut
 	if (!bNeedsExecutionStart) return;
 
 	FObservableOverlayQuery overlayQuery;
-	overlayQuery.Snapshot = InQuery.Snapshot;
-	overlayQuery.IncomingPart = InQuery.IncomingPart;
+	overlayQuery.DecisionQuery = InQuery;
 	overlayQuery.ApplyMode = InOutResult.ApplyMode;
 
 	bool bResolvedOverlayPolicy = false;
@@ -460,16 +459,11 @@ void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecut
 			return;
 		}
 
-		if (overlayDecision.Handling != EObservableOverlayHandling::None)
+		for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
 		{
-			if (InOutResult.OverlayHandling != EObservableOverlayHandling::None && InOutResult.OverlayHandling != overlayDecision.Handling)
-			{
-				InOutResult.Decision = EExecutionDecision::Reject;
-				InOutResult.RejectReason = EReactionRequestRejectReason::InvalidIndependent;
-				return;
-			}
+			if (handling == EObservableOverlayHandling::None) continue;
 
-			InOutResult.OverlayHandling = overlayDecision.Handling;
+			InOutResult.OverlayHandlings.AddUnique(handling);
 		}
 	}
 

@@ -146,7 +146,7 @@ enum class EObservableOverlayHandling : uint8
 {
 	None = 0,
 
-	ClearGuardOverlayBeforeStart,
+	ClearGuardOverlay,
 
 	Max,
 };
@@ -1362,22 +1362,6 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FObservableOverlayQuery
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	FExecutionSnapshot Snapshot = FExecutionSnapshot();
-
-	UPROPERTY(Transient)
-	FExecutionParticipant IncomingPart = FExecutionParticipant();
-
-	UPROPERTY(Transient)
-	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
-};
-
-USTRUCT(BlueprintType)
 struct FObservableOverlayDecision
 {
 	GENERATED_BODY()
@@ -1390,7 +1374,7 @@ public:
 	bool bAllowed = true;
 
 	UPROPERTY(Transient)
-	EObservableOverlayHandling Handling = EObservableOverlayHandling::None;
+	TArray<EObservableOverlayHandling> Handlings;
 };
 
 USTRUCT(BlueprintType)
@@ -1418,6 +1402,19 @@ public:
 	{
 		return ActivePart.IsValidMinimal();
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FObservableOverlayQuery
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FExecutionDecisionQuery DecisionQuery = FExecutionDecisionQuery();
+
+	UPROPERTY(Transient)
+	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
 };
 
 USTRUCT(BlueprintType)
@@ -1537,7 +1534,7 @@ public:
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
 
 	UPROPERTY(Transient)
-	EObservableOverlayHandling OverlayHandling = EObservableOverlayHandling::None;
+	TArray<EObservableOverlayHandling> OverlayHandlings;
 
 
 public:
@@ -1577,7 +1574,7 @@ public:
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
 
 	UPROPERTY(Transient)
-	EObservableOverlayHandling OverlayHandling = EObservableOverlayHandling::None;
+	TArray<EObservableOverlayHandling> OverlayHandlings;
 
 public:
 	bool IsAcceptedDecision() const

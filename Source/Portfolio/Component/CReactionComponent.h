@@ -114,6 +114,7 @@ private:
 
 private:
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
+	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:

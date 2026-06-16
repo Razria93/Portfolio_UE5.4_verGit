@@ -145,7 +145,8 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 	case EExecutionApplyMode::Start:
 	{
-		if (!ApplyObservableOverlayHandling(InResult.OverlayHandling)) return false;
+		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings)) return false;
+
 		return StartAction(InResult.ResolvedContext);
 	}
 
@@ -158,7 +159,8 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
-		if (!ApplyObservableOverlayHandling(InResult.OverlayHandling)) return false;
+		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings)) return false;
+
 		return StartAction(InResult.ResolvedContext);
 	}
 
@@ -434,6 +436,16 @@ bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInte
 	}
 }
 
+bool UCActionComponent::ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
+{
+	for (const EObservableOverlayHandling handling : InHandlings)
+	{
+		if (!ApplyObservableOverlayHandling(handling)) return false;
+	}
+
+	return true;
+}
+
 bool UCActionComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
 {
 	switch (InHandling)
@@ -441,7 +453,7 @@ bool UCActionComponent::ApplyObservableOverlayHandling(EObservableOverlayHandlin
 	case EObservableOverlayHandling::None:
 		return true;
 
-	case EObservableOverlayHandling::ClearGuardOverlayBeforeStart:
+	case EObservableOverlayHandling::ClearGuardOverlay:
 	{
 		if (!IsValid(DefenseComp_Cached)) return false;
 

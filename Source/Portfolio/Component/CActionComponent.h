@@ -140,6 +140,9 @@ private:
 
 private:
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
+
+private:
+	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:

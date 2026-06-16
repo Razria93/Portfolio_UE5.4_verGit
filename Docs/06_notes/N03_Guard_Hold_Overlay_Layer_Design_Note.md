@@ -197,7 +197,39 @@ v1의 우선순위는 다음과 같다.
 
 ---
 
-## 6. Combat Resolution과의 관계
+## 6. Block_Hit 복귀 정책
+
+`Block_Hit`을 별도 Reaction으로 사용할 경우, Guard Hold 상태를 그대로 유지한 채 맞는 것이 아니라 `Guard Hold`를 일시적으로 대체하는 피격 반응으로 본다.
+
+따라서 `Block_Hit` 시작 시에는 Guard pose overlay와 guard / parry 판정을 정리하고, `Block_Hit` 종료 시에는 Guard 입력 의도에 따라 복귀 여부를 판단해야 한다.
+
+권장 흐름은 다음과 같다.
+
+```text
+Guard Hold 중 피격
+-> Damage / Defense 판정에서 Block_Hit 선택
+-> Block_Hit Reaction 시작
+   -> Guard pose overlay clear
+   -> guard 판정 false
+   -> parry 판정 false
+   -> guard 입력 의도는 유지
+-> Block_Hit Reaction 종료
+   -> guard 입력 의도가 유지 중이면 Guard Hold 복구
+   -> guard 입력이 해제되어 있으면 Guard Out 또는 Idle 복귀
+```
+
+`Complete`와 `Stop / Interrupt`는 다르게 취급한다.
+
+- `Complete`: 정상적인 `Block_Hit` 종료이므로 `bWantsGuarding`을 기준으로 Guard Hold 복구 또는 Guard Out / Idle 복귀를 판단할 수 있다.
+- `Stop / Interrupt`: death, stronger reaction, forced cancel, cinematic 같은 외부 중단일 수 있으므로 기본적으로 보수적인 정리를 우선한다.
+
+몽타주와 notify는 상태 전환 타이밍을 알려주는 역할에 가깝고, 복구 여부 판단은 `DefenseComponent` 또는 Reaction 종료 처리 쪽에서 담당하는 것이 적절하다.
+
+v1에서는 먼저 `Block_Hit`이 별도 Reaction으로 실행될 수 있는 구조를 확인하고, 입력 유지 시 Guard Hold 복귀와 입력 해제 시 Guard Out 연결은 단계적으로 확정한다.
+
+---
+
+## 7. Combat Resolution과의 관계
 
 Observable Overlay Layer는 Combat Resolution을 대체하지 않는다. 다만 두 구조는 같은 설계 패턴을 공유할 수 있다.
 
@@ -228,7 +260,7 @@ TakeDamage 또는 damage packet 진입
 
 ---
 
-## 7. 관련 문서
+## 8. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`
