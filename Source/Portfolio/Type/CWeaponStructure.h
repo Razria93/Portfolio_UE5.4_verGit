@@ -1402,6 +1402,35 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FObservableOverlayQuery
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FExecutionSnapshot Snapshot = FExecutionSnapshot();
+
+	UPROPERTY(Transient)
+	FExecutionParticipant IncomingPart = FExecutionParticipant();
+
+	UPROPERTY(Transient)
+	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
+};
+
+USTRUCT(BlueprintType)
+struct FObservableOverlayDecision
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bAllowed = true;
+
+	UPROPERTY(Transient)
+	EObservableOverlayHandling Handling = EObservableOverlayHandling::None;
+};
+
+USTRUCT(BlueprintType)
 struct FExecutionDecisionQuery
 {
 	GENERATED_BODY()

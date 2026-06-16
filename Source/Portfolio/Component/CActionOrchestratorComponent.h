@@ -95,7 +95,7 @@ private:
 
 private:
 	void ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;
-	bool ResolveObservableOverlayHandling(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;
+	void ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;
 
 	// Inner API
 	void ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const;

@@ -134,6 +134,7 @@ FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate
 	FReactionExecutionResult executionResult = BuildReactionExecutionResult(incomingContext, decisionResult, rejectReason);
 
 	ResolveExecutionApplyMode(decisionQuery, executionResult);
+	ResolveObservableOverlayGate(decisionQuery, executionResult);
 
 	return DispatchReactionDecision(executionResult);
 }
@@ -371,8 +372,6 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 			return;
 		}
 
-		if (!ResolveObservableOverlayHandling(InQuery, InOutResult)) return;
-
 		InOutResult.ApplyMode = EExecutionApplyMode::Start;
 		return;
 	}
@@ -418,29 +417,39 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 	}
 }
 
-bool UCReactionOrchestratorComponent::ResolveObservableOverlayHandling(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
+void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
 {
 	InOutResult.OverlayHandling = EObservableOverlayHandling::None;
 
-	if (!InQuery.Snapshot.HasObservableOverlay()) return true;
+	if (!InOutResult.IsAcceptedDecision()) return;
 
-	// Reaction may take over Guard Hold, but the guard overlay must not remain stale.
-	if (!InQuery.Snapshot.HasGuardOverlay())
+	const bool bNeedsExecutionStart = InOutResult.ApplyMode == EExecutionApplyMode::Start || InOutResult.ApplyMode == EExecutionApplyMode::Intervene;
+	if (!bNeedsExecutionStart) return;
+
+	if (!InQuery.Snapshot.HasObservableOverlay()) return;
+
+	if (!IsValid(DefenseComp_Cached))
+	{
+		InOutResult.Decision = EExecutionDecision::Reject;
+		InOutResult.RejectReason = EReactionRequestRejectReason::InvalidComponent;
+		return;
+	}
+
+	FObservableOverlayQuery overlayQuery;
+	overlayQuery.Snapshot = InQuery.Snapshot;
+	overlayQuery.IncomingPart = InQuery.IncomingPart;
+	overlayQuery.ApplyMode = InOutResult.ApplyMode;
+
+	FObservableOverlayDecision overlayDecision;
+	DefenseComp_Cached->ResolveObservableOverlayDecision(overlayQuery, overlayDecision);
+	if (!overlayDecision.bAllowed)
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
 		InOutResult.RejectReason = EReactionRequestRejectReason::InvalidIndependent;
-		return false;
+		return;
 	}
 
-	if (!InQuery.IncomingPart.IsReactionParticipant())
-	{
-		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EReactionRequestRejectReason::InvalidQuery;
-		return false;
-	}
-
-	InOutResult.OverlayHandling = EObservableOverlayHandling::ClearGuardOverlayBeforeStart;
-	return true;
+	InOutResult.OverlayHandling = overlayDecision.Handling;
 }
 
 

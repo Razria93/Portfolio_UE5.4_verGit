@@ -61,6 +61,47 @@ void UCDefenseComponent::ClearGuardOverlay()
 	bCanParry = false;
 }
 
+void UCDefenseComponent::ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const
+{
+	OutDecision = FObservableOverlayDecision();
+
+	if (!InQuery.Snapshot.HasObservableOverlay()) return;
+
+	if (!InQuery.Snapshot.HasGuardOverlay())
+	{
+		OutDecision.bAllowed = false;
+		return;
+	}
+
+	const bool bNeedsExecutionStart = InQuery.ApplyMode == EExecutionApplyMode::Start || InQuery.ApplyMode == EExecutionApplyMode::Intervene;
+	if (!bNeedsExecutionStart) return;
+
+	if (InQuery.IncomingPart.IsReactionParticipant())
+	{
+		OutDecision.Handling = EObservableOverlayHandling::ClearGuardOverlayBeforeStart;
+		return;
+	}
+
+	if (!InQuery.IncomingPart.IsActionParticipant())
+	{
+		OutDecision.bAllowed = false;
+		return;
+	}
+
+	const FActionDataKey& incomingActionKey = InQuery.IncomingPart.GetActionContext().ActionDataKey;
+
+	const bool bIsGuardOut = incomingActionKey.ActionType == EActionType::Guard && incomingActionKey.ActionIndex == 2;
+	const bool bIsDodge = incomingActionKey.ActionType == EActionType::Dodge;
+
+	if (!bIsGuardOut && !bIsDodge)
+	{
+		OutDecision.bAllowed = false;
+		return;
+	}
+
+	OutDecision.Handling = EObservableOverlayHandling::ClearGuardOverlayBeforeStart;
+}
+
 void UCDefenseComponent::HandleGuardInStarted()
 {
 	BeginGuardIntent();

@@ -48,6 +48,7 @@ public:
 
 	void ResetGuardState();
 	void ClearGuardOverlay();
+	void ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const;
 
 public:
 	void HandleGuardInStarted();

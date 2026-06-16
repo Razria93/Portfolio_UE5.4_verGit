@@ -74,7 +74,7 @@ private:
 
 private:
 	void ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;
-	bool ResolveObservableOverlayHandling(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;
+	void ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;
 
 	// Inner API
 	void ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const;
