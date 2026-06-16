@@ -61,17 +61,23 @@ void UCDefenseComponent::ClearGuardOverlay()
 	bCanParry = false;
 }
 
+void UCDefenseComponent::WriteObservableOverlayState(FObservableOverlayState& InOutOverlayState) const
+{
+	InOutOverlayState.bIsGuardingPose = IsGuardingPose();
+	InOutOverlayState.bCanGuard = CanGuard();
+	InOutOverlayState.bCanParry = CanParry();
+}
+
+bool UCDefenseComponent::HasRelevantOverlay(const FExecutionSnapshot& InSnapshot) const
+{
+	return InSnapshot.HasGuardOverlay();
+}
+
 void UCDefenseComponent::ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayDecision();
 
-	if (!InQuery.Snapshot.HasObservableOverlay()) return;
-
-	if (!InQuery.Snapshot.HasGuardOverlay())
-	{
-		OutDecision.bAllowed = false;
-		return;
-	}
+	if (!HasRelevantOverlay(InQuery.Snapshot)) return;
 
 	const bool bNeedsExecutionStart = InQuery.ApplyMode == EExecutionApplyMode::Start || InQuery.ApplyMode == EExecutionApplyMode::Intervene;
 	if (!bNeedsExecutionStart) return;

@@ -3,10 +3,11 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CWeaponStructure.h"
+#include "Interface/ObservableOverlayPolicy.h"
 #include "CDefenseComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class PORTFOLIO_API UCDefenseComponent : public UActorComponent
+class PORTFOLIO_API UCDefenseComponent : public UActorComponent, public IObservableOverlayPolicy
 {
 	GENERATED_BODY()
 
@@ -48,7 +49,11 @@ public:
 
 	void ResetGuardState();
 	void ClearGuardOverlay();
-	void ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const;
+
+public:
+	void WriteObservableOverlayState(FObservableOverlayState& InOutOverlayState) const override;
+	bool HasRelevantOverlay(const FExecutionSnapshot& InSnapshot) const override;
+	void ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const override;
 
 public:
 	void HandleGuardInStarted();
