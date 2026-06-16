@@ -76,8 +76,22 @@ void UCDefenseComponent::ResolveObservableOverlayDecision(const FObservableOverl
 
 	if (incomingPart.IsReactionParticipant())
 	{
-		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
-		return;
+		const FReactionDataKey& incomingReactionKey = incomingPart.GetReactionContext().ReactionDataKey;
+
+		switch (incomingReactionKey.ReactionType)
+		{
+		case EReactionType::Hit:
+			// Temporary: keep Guard overlay until Block_Hit / GuardBreak reaction types are separated.
+			return;
+
+		case EReactionType::Dead:
+			OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
+			return;
+
+		default:
+			OutDecision.bAllowed = false;
+			return;
+		}
 	}
 
 	if (!incomingPart.IsActionParticipant())
