@@ -439,15 +439,6 @@ FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
 	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
 	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
 
-	// [NOTE] Each overlay policy writes its runtime state into the shared snapshot.
-	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
-	{
-		const IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
-		if (!overlayPolicy) continue;
-
-		overlayPolicy->WriteObservableOverlayState(snapshot.ObservableOverlayState);
-	}
-
 	return snapshot;
 }
 
@@ -704,8 +695,6 @@ void UCActionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutio
 	const bool bNeedsExecutionStart = InOutResult.ApplyMode == EExecutionApplyMode::Start || InOutResult.ApplyMode == EExecutionApplyMode::Intervene;
 	if (!bNeedsExecutionStart) return;
 
-	if (!InQuery.Snapshot.HasObservableOverlay()) return;
-
 	FObservableOverlayQuery overlayQuery;
 	overlayQuery.Snapshot = InQuery.Snapshot;
 	overlayQuery.IncomingPart = InQuery.IncomingPart;
@@ -717,12 +706,12 @@ void UCActionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutio
 	{
 		const IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
 		if (!overlayPolicy) continue;
-		if (!overlayPolicy->HasRelevantOverlay(InQuery.Snapshot)) continue;
-
-		bResolvedOverlayPolicy = true;
 
 		FObservableOverlayDecision overlayDecision;
 		overlayPolicy->ResolveObservableOverlayDecision(overlayQuery, overlayDecision);
+		if (!overlayDecision.bRelevant) continue;
+
+		bResolvedOverlayPolicy = true;
 
 		if (!overlayDecision.bAllowed)
 		{
@@ -744,12 +733,7 @@ void UCActionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutio
 		}
 	}
 
-	if (!bResolvedOverlayPolicy)
-	{
-		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = EActionRequestRejectReason::InvalidIndependent;
-		return;
-	}
+	if (!bResolvedOverlayPolicy) return;
 }
 
 void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const

@@ -16,8 +16,5 @@ class PORTFOLIO_API IObservableOverlayPolicy
 	GENERATED_BODY()
 
 public:
-	
-	virtual void WriteObservableOverlayState(FObservableOverlayState& InOutOverlayState) const = 0;
-	virtual bool HasRelevantOverlay(const FExecutionSnapshot& InSnapshot) const = 0;
 	virtual void ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const = 0;
 };

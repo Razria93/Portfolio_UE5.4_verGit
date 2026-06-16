@@ -159,25 +159,25 @@ Orchestrator는 장기적으로 다음 순서로 판단한다.
 ```text
 Incoming Request
 -> active Action / Reaction이 있는지 확인
--> 필요한 경우 observable overlay state 확인
--> overlay를 종료 / 유지 / 무시할지 판단
+-> 필요한 경우 observable overlay policy registry 확인
+-> 각 overlay owner가 종료 / 유지 / 무시 여부 판단
 -> 둘 다 없으면 baseline Idle로 처리
 ```
 
-이 구조에서는 `Block_In / Block_Out`은 Action Domain의 전환 action으로 유지한다. `Guard Hold`는 장기적으로 observable overlay participant로 노출하는 방향을 검토한다.
+이 구조에서는 `Block_In / Block_Out`은 Action Domain의 전환 action으로 유지한다. `Guard Hold`는 `ExecutionSnapshot`에 세부 상태를 복사하지 않고, `DefenseComponent` 같은 overlay owner가 policy로 참여해 직접 판단하는 방향을 기준으로 한다.
 
 ---
 
 ## 5. v1 적용 기준
 
-현재 브랜치에서는 `Defense Domain` 전체 도입이나 observable overlay participant 전체 일반화를 하지 않는다.
+현재 브랜치에서는 `Defense Domain` 전체 도입이나 full observable overlay participant 모델을 만들지 않는다.
 
 v1의 우선순위는 다음과 같다.
 
 - Guard / Parry 입력과 animation 흐름을 안정화한다.
 - `Block_In` 중 release 문제는 deferred action candidate 구조로 처리한다.
-- `Guard Hold`가 cleanup되지 않는 문제는 `ExecutionState` 확장이 아니라 `FExecutionSnapshot`의 observable overlay state로 관측한다.
-- Action / Reaction start 직전에 Guard overlay를 정리할 수 있는 최소 handling flag를 둔다.
+- `Guard Hold`가 cleanup되지 않는 문제는 `ExecutionState` 확장이 아니라 observable overlay policy registry로 관측한다.
+- Action / Reaction start 직전에 관련 overlay policy를 조회하고, 필요한 overlay handling을 result에 누적한다.
 - Combat Resolution은 이번 단계에서 완성하지 않고, 이후 damage packet interception 단계에서 연결한다.
 
 `Guard Hold = Action index 3` 방식은 빠른 bridge로 가능하지만, 이번 v1에서는 해당 방식을 선택하지 않는다.
@@ -187,16 +187,48 @@ v1의 우선순위는 다음과 같다.
 ```text
 구조적 v1
 -> Guard Hold를 action으로 편입하지 않는다.
--> execution decision query에서 observable overlay state를 최소로 관측한다.
--> 첫 대상은 Guard Hold만 둔다.
--> Action / Reaction start 전에 필요한 경우 Guard overlay를 clear한다.
+-> ExecutionSnapshot에는 overlay 세부 상태를 넣지 않는다.
+-> observable overlay policy registry를 순회한다.
+-> 첫 policy owner는 DefenseComponent / Guard overlay로 둔다.
+-> Action / Reaction start 전에 필요한 경우 overlay handling을 누적한다.
 ```
 
-이 구현은 full overlay participant 모델이 아니다. v1에서는 `FExecutionParticipant`를 확장하지 않고, snapshot과 result handling만으로 Guard overlay cleanup 문제를 먼저 해결한다.
+이 구현은 full overlay participant 모델이 아니다. v1에서는 `FExecutionParticipant`를 확장하지 않고, policy decision과 result handling으로 Guard overlay cleanup 문제를 먼저 해결한다.
 
 ---
 
-## 6. 관련 문서
+## 6. Combat Resolution과의 관계
+
+Observable Overlay Layer는 Combat Resolution을 대체하지 않는다. 다만 두 구조는 같은 설계 패턴을 공유할 수 있다.
+
+공통 패턴은 다음과 같다.
+
+```text
+공통 진입점
+-> 등록된 policy provider 순회
+-> 각 owner가 자기 runtime state와 query를 기준으로 relevant / allowed / handling 판단
+-> 공통 흐름이 decision을 병합
+```
+
+Overlay gate는 Action / Reaction 시작 직전에 현재 overlay 상태와 새 실행이 공존 가능한지 판단한다.
+
+Combat Resolution은 이후 damage packet 처리 시점에서 parry / guard / invincible / armor / buff 같은 정책이 damage, reaction, feedback 결과에 어떻게 개입할지 판단한다.
+
+따라서 Combat Resolution도 장기적으로는 다음과 유사한 구조가 될 수 있다.
+
+```text
+TakeDamage 또는 damage packet 진입
+-> Combat Resolution policy registry 순회
+-> Defense / Parry / Guard / Invincible / Buff policy 판단
+-> damage block / reduce / continue / parry 결과 병합
+-> Damage / Reaction / Feedback 흐름으로 전달
+```
+
+차이는 결과 복잡도다. Overlay gate는 `allowed`와 overlay handling 누적이 핵심이지만, Combat Resolution은 damage amount 변경, reaction 억제, feedback 요청, attacker reaction, hit stop 같은 결과를 함께 병합해야 한다. 따라서 Combat Resolution에는 overlay gate보다 더 명확한 priority / terminal decision / mutation rule이 필요할 수 있다.
+
+---
+
+## 7. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`

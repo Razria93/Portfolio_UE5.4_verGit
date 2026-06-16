@@ -51,8 +51,6 @@ public:
 	void ClearGuardOverlay();
 
 public:
-	void WriteObservableOverlayState(FObservableOverlayState& InOutOverlayState) const override;
-	bool HasRelevantOverlay(const FExecutionSnapshot& InSnapshot) const override;
 	void ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const override;
 
 public:

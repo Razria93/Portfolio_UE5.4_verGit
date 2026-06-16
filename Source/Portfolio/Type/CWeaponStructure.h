@@ -1297,33 +1297,6 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FObservableOverlayState
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	bool bIsGuardingPose = false;
-
-	UPROPERTY(Transient)
-	bool bCanGuard = false;
-
-	UPROPERTY(Transient)
-	bool bCanParry = false;
-
-public:
-	bool HasGuardOverlay() const
-	{
-		return bIsGuardingPose || bCanGuard || bCanParry;
-	}
-
-	bool HasAnyOverlay() const
-	{
-		return HasGuardOverlay();
-	}
-};
-
-USTRUCT(BlueprintType)
 struct FExecutionSnapshot
 {
 	GENERATED_BODY()
@@ -1335,9 +1308,6 @@ public:
 public:
 	UPROPERTY(Transient)
 	bool bIsDead = false;
-
-	UPROPERTY(Transient)
-	FObservableOverlayState ObservableOverlayState = FObservableOverlayState();
 
 public:
 	bool IsIdle() const
@@ -1358,16 +1328,6 @@ public:
 	bool IsDead() const
 	{
 		return bIsDead || ExecutionState == EExecutionState::Dead;
-	}
-
-	bool HasObservableOverlay() const
-	{
-		return ObservableOverlayState.HasAnyOverlay();
-	}
-
-	bool HasGuardOverlay() const
-	{
-		return ObservableOverlayState.HasGuardOverlay();
 	}
 };
 
@@ -1423,6 +1383,9 @@ struct FObservableOverlayDecision
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(Transient)
+	bool bRelevant = false;
+
 	UPROPERTY(Transient)
 	bool bAllowed = true;
 
