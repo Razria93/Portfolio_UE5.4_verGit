@@ -9,6 +9,7 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
@@ -32,25 +33,7 @@ void UCActionOrchestratorComponent::BeginPlay()
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
-
-	TArray<UActorComponent*> ownerComponents;
-	OwnerCharacter_Cached->GetComponents(ownerComponents);
-
-	for (UActorComponent* component : ownerComponents)
-	{
-		if (!IsValid(component)) continue;
-		if (!component->GetClass()->ImplementsInterface(UObservableOverlayPolicy::StaticClass())) continue;
-
-		// [NOTE] UINTERFACE wrapper: keeps the UObject and interface pointer together.
-		TScriptInterface<IObservableOverlayPolicy> policy;
-		policy.SetObject(component);
-		policy.SetInterface(Cast<IObservableOverlayPolicy>(component));
-
-		if (policy.GetInterface())
-		{
-			ObservableOverlayPolicies.Add(policy);
-		}
-	}
+	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 }
 
 FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InIncomingRequest)
@@ -439,13 +422,9 @@ FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
 	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
 	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
 
-	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
+	if (IsValid(ObservableOverlayComp_Cached))
 	{
-		const IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
-		if (!overlayPolicy) continue;
-
-		// Snapshot captures overlay state once before decision checks.
-		overlayPolicy->WriteObservableOverlaySnapshot(snapshot.ObservableOverlay);
+		ObservableOverlayComp_Cached->WriteObservableOverlaySnapshot(snapshot.ObservableOverlay);
 	}
 
 	return snapshot;

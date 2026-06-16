@@ -223,11 +223,26 @@ v1의 우선순위는 다음과 같다.
 
 하지만 overlay 대상 component가 늘어나는 것은 시간문제이고, Orchestrator가 Guard / LockOn / Aim 같은 세부 정책을 직접 들고 있으면 확장성이 떨어진다.
 
-따라서 Action / Reaction Orchestrator는 snapshot 구성 시점에 `ObservableOverlayPolicies`를 순회한다. 각 policy owner는 자기 runtime state를 `FObservableOverlaySnapshot`에 기록한다.
+따라서 Action / Reaction Orchestrator는 snapshot 구성 시점에 `UCObservableOverlayComponent`를 통해 registered overlay policy를 순회한다. 각 policy owner는 자기 runtime state를 `FObservableOverlaySnapshot`에 기록한다.
 
-v1에서는 Action / Reaction Component도 실행 직전 handling 적용을 위해 같은 policy 목록을 보관한다. 이 구조는 snapshot 구성과 handling 적용 책임이 분리되어 있어 동작은 명확하지만, policy 등록 지점이 중복된다.
+초기 v1에서는 Action / Reaction Component도 실행 직전 handling 적용을 위해 같은 policy 목록을 직접 보관했다. 이 구조는 snapshot 구성과 handling 적용 책임이 분리되어 있어 동작은 명확하지만, policy 등록 지점이 중복됐다.
 
-후속 작업에서는 policy 등록 / snapshot 구성 / handling 적용을 하나의 overlay 관리 component로 모을 수 있는지 검토한다.
+이후 `UCObservableOverlayComponent`를 도입해 policy 등록 / snapshot 구성 / handling 적용 위임을 하나의 component로 모았다.
+
+```text
+UCObservableOverlayComponent
+-> overlay policy registry 소유
+-> WriteObservableOverlaySnapshot() 위임
+-> ApplyObservableOverlayHandlings() 위임
+
+UCDefenseComponent
+-> Guard overlay state 소유
+-> IObservableOverlayPolicy 구현
+-> Guard snapshot 작성
+-> ClearGuardOverlay 적용
+```
+
+이 변경으로 Orchestrator와 Action / Reaction Component는 overlay policy 목록을 직접 들지 않고, `UCObservableOverlayComponent`를 통해 snapshot 구성과 handling 적용을 요청한다.
 
 ### 6.3 축약 query에서 execution decision query 재사용으로 이동
 
@@ -325,6 +340,10 @@ v1의 첫 적용 대상은 `Guard Out`이다. `Guard Out`은 Guard overlay가 �
 Overlay owner
 -> WriteObservableOverlaySnapshot()
 -> 현재 overlay state를 snapshot에 기록
+
+ObservableOverlayComponent
+-> registered overlay policy를 순회
+-> snapshot 작성과 handling 적용을 policy owner에게 위임
 
 Incoming executor
 -> ResolveObservableOverlayExecutionCondition()

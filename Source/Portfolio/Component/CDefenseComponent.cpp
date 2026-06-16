@@ -116,6 +116,8 @@ bool UCDefenseComponent::ApplyObservableOverlayHandling(EObservableOverlayHandli
 
 void UCDefenseComponent::HandleGuardInStarted()
 {
+	FLog::Log(TEXT("[HandleGuardInStarted]"));
+
 	BlockGuardStart();
 
 	BeginGuardIntent();
@@ -129,6 +131,8 @@ void UCDefenseComponent::HandleGuardInStarted()
 
 void UCDefenseComponent::HandleGuardOutStarted()
 {
+	FLog::Log(TEXT("[HandleGuardOutStarted]"));
+
 	AllowGuardStart();
 
 	EndGuardIntent();
@@ -142,6 +146,8 @@ void UCDefenseComponent::HandleGuardOutStarted()
 
 void UCDefenseComponent::HandleGuardOutCompleted()
 {
+	FLog::Log(TEXT("[HandleGuardOutCompleted]"));
+
 	ResetGuardState();
 
 	PrintGuardStateInfo();
@@ -149,6 +155,8 @@ void UCDefenseComponent::HandleGuardOutCompleted()
 
 void UCDefenseComponent::HandleGuardInterrupted(EActionStopReason InStopReason)
 {
+	FLog::Log(TEXT("[HandleGuardInterrupted]"));
+
 	ResetGuardState();
 
 	PrintGuardStateInfo();

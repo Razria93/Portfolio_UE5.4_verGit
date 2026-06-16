@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Interface/ObservableOverlayPolicy.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CReactionOrchestrationStructure.h"
 #include "CReactionComponent.generated.h"
@@ -62,7 +61,7 @@ private:
 	class UCActionComponent* ActionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	TArray<TScriptInterface<IObservableOverlayPolicy>> ObservableOverlayPolicies;
+	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
 
 public:
 	/* === Delegate === */
@@ -119,7 +118,6 @@ private:
 private:
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
 	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
-	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:
 	bool StartReaction(const FReactionExecutionContext& InContext);

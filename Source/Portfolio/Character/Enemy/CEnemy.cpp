@@ -14,6 +14,7 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
@@ -69,6 +70,10 @@ ACEnemy::ACEnemy()
 	// Init HealthComp
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
+
+	// Init ObservableOverlayComp
+	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
+	check(ObservableOverlayComponent);
 
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));

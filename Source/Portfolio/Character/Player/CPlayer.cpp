@@ -15,6 +15,7 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
@@ -92,6 +93,10 @@ ACPlayer::ACPlayer()
 	// Init DefenseComp
 	DefenseComponent = CreateDefaultSubobject<UCDefenseComponent>(TEXT("Defense"));
 	check(DefenseComponent);
+
+	// Init ObservableOverlayComp
+	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
+	check(ObservableOverlayComponent);
 
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));

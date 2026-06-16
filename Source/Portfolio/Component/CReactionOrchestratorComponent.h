@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CReactionOrchestrationStructure.h"
-#include "Interface/ObservableOverlayPolicy.h"
 #include "CReactionOrchestratorComponent.generated.h"
 
 
@@ -32,7 +31,7 @@ private:
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	TArray<TScriptInterface<IObservableOverlayPolicy>> ObservableOverlayPolicies;
+	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
 
 protected:
 	void BeginPlay() override;

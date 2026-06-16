@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CActionOrchestrationStructure.h"
-#include "Interface/ObservableOverlayPolicy.h"
 #include "CActionOrchestratorComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -36,12 +35,12 @@ private:
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
+	UPROPERTY(Transient)
+	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
+
 private:
 	UPROPERTY(Transient)
 	TArray<FDeferredActionCandidate> DeferredActionCandidates;
-
-	UPROPERTY(Transient)
-	TArray<TScriptInterface<IObservableOverlayPolicy>> ObservableOverlayPolicies;
 
 protected:
 	void BeginPlay() override;

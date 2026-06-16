@@ -87,6 +87,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Resource")
 	class UCHealthComponent* HealthComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Overlay")
+	class UCObservableOverlayComponent* ObservableOverlayComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
 	class UCApplyDamageComponent* ApplyDamageComponent;
 
@@ -126,6 +129,7 @@ public:
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
+	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
 	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }

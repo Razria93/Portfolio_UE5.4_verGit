@@ -8,6 +8,7 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CActionComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -28,25 +29,7 @@ void UCReactionComponent::BeginPlay()
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
-
-	TArray<UActorComponent*> ownerComponents;
-	OwnerCharacter_Cached->GetComponents(ownerComponents);
-
-	for (UActorComponent* component : ownerComponents)
-	{
-		if (!IsValid(component)) continue;
-		if (!component->GetClass()->ImplementsInterface(UObservableOverlayPolicy::StaticClass())) continue;
-
-		// [NOTE] UINTERFACE wrapper: keeps the UObject and interface pointer together.
-		TScriptInterface<IObservableOverlayPolicy> policy;
-		policy.SetObject(component);
-		policy.SetInterface(Cast<IObservableOverlayPolicy>(component));
-
-		if (policy.GetInterface())
-		{
-			ObservableOverlayPolicies.Add(policy);
-		}
-	}
+	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 
 	// Rebuild All
 	BuildReactionDataMap(true);
@@ -411,28 +394,8 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 
 bool UCReactionComponent::ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
-	for (const EObservableOverlayHandling handling : InHandlings)
-	{
-		if (!ApplyObservableOverlayHandling(handling)) return false;
-	}
-
-	return true;
-}
-
-bool UCReactionComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
-{
-	if (InHandling == EObservableOverlayHandling::None) return true;
-
-	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
-	{
-		IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
-		if (!overlayPolicy) continue;
-		if (!overlayPolicy->CanApplyObservableOverlayHandling(InHandling)) continue;
-
-		return overlayPolicy->ApplyObservableOverlayHandling(InHandling);
-	}
-
-	return false;
+	if (InHandlings.IsEmpty()) return true;
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyObservableOverlayHandlings(InHandlings);
 }
 
 bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InContext)

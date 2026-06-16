@@ -278,8 +278,11 @@ TakeDamagePacket
     - [ ] retry / timeout / expire 정책이 필요한 deferred 유형을 분류한다.
 - [ ] observable overlay policy registry의 장기 소유 위치를 후속 후보로 기록한다.
   - 세부 구현 요소:
-    - [x] v1에서는 Orchestrator가 snapshot 구성을 위해 policy를 보관하고, Action / Reaction Component가 handling 적용을 위해 같은 policy를 보관한다.
-    - [ ] policy 등록 / snapshot 구성 / handling 적용을 하나의 overlay 관리 component로 모을지 검토한다.
+    - [x] 기존 v1에서는 Orchestrator가 snapshot 구성을 위해 policy를 보관하고, Action / Reaction Component가 handling 적용을 위해 같은 policy를 보관했다.
+    - [x] `UCObservableOverlayComponent`를 추가해 policy 등록 / snapshot 구성 / handling 적용 위임을 하나의 component로 모았다.
+    - [x] Action / Reaction Orchestrator는 `UCObservableOverlayComponent`를 통해 observable overlay snapshot을 구성한다.
+    - [x] Action / Reaction Component는 `UCObservableOverlayComponent`를 통해 requested overlay handling을 적용한다.
+    - [x] `UCDefenseComponent`는 Guard overlay state owner이자 `IObservableOverlayPolicy` 구현체로 유지한다.
 - [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
 
 ---
