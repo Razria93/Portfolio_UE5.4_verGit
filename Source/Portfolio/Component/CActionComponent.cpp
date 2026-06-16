@@ -286,6 +286,13 @@ void UCActionComponent::NotifyGuardOutStarted()
 	DefenseComp_Cached->HandleGuardOutStarted();
 }
 
+void UCActionComponent::NotifySwitchToGuard()
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->HandleSwitchToGuard();
+}
+
 void UCActionComponent::NotifyGuardInCompleted()
 {
 	if (!IsValid(ActionOrchestratorComp_Cached)) return;

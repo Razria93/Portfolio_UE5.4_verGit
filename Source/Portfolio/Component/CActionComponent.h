@@ -128,6 +128,7 @@ public:
 public:
 	void NotifyGuardInStarted();
 	void NotifyGuardOutStarted();
+	void NotifySwitchToGuard();
 	void NotifyGuardInCompleted();
 	void NotifyGuardOutCompleted();
 	void NotifyGuardInterrupted(EActionStopReason InStopReason);

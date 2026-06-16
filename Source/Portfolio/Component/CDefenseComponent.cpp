@@ -144,6 +144,26 @@ void UCDefenseComponent::HandleGuardOutStarted()
 	PrintGuardStateInfo();
 }
 
+void UCDefenseComponent::HandleSwitchToGuard()
+{
+	FLog::Log(TEXT("[HandleSwitchToGuard]"));
+
+	CloseParryWindow();
+
+	if (WantsGuarding())
+	{
+		FLog::Log(TEXT("[WantsGuarding == true]"));
+		OpenGuardWindow();
+	}
+	else
+	{
+		FLog::Log(TEXT("[WantsGuarding == false]"));
+		CloseGuardWindow();
+	}
+
+	PrintGuardStateInfo();
+}
+
 void UCDefenseComponent::HandleGuardOutCompleted()
 {
 	FLog::Log(TEXT("[HandleGuardOutCompleted]"));

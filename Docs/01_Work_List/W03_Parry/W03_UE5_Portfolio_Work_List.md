@@ -184,14 +184,16 @@ TakeDamagePacket
   - 세부 구현 요소:
     - [x] `Block_In` 시작 시점에 `bCanParry`를 true로 연다.
     - [x] Parry Window는 Guard Hold 전체가 아니라 Guard In 초반 구간에만 유효하게 둘 계획이다.
-- [ ] `AN_SwitchToGuard` 또는 동등한 notify 시점에서 Parry Window를 닫고 Guard Hold 상태로 전환한다.
+- [x] `AN_SwitchToGuard` 또는 동등한 notify 시점에서 Parry Window를 닫고 Guard Hold 상태로 전환한다.
   - 세부 구현 요소:
-    - [ ] 단발 notify로 Parry 가능 상태를 닫고 Guard 판정 상태를 연다.
-    - [ ] notify 이름은 실제 구현 시 `SwitchToGuard` 성격이 드러나게 정한다.
+    - [x] 단발 notify로 Parry 가능 상태를 닫고 Guard 판정 상태를 연다.
+    - [x] `UCAnimNotify_SwitchToGuard`를 추가하고 notify 이름은 `SwitchToGuard`로 정한다.
+    - [x] `SwitchToGuard` notify는 Guard `ActionIndex = 1` 기준으로 `Block_In`에서만 처리되도록 구성한다.
+    - [x] release가 `SwitchToGuard` 전에 들어온 경우에는 Parry Window만 닫고 Guard 판정은 열지 않는다.
 - [ ] Guard / Parry 판정은 notify state window가 아니라 단발 notify 기반 상태 전환으로 구성한다.
   - 세부 구현 요소:
     - [x] montage 경계 사이의 판정 공백을 피하기 위해 Parry / Guard 상태를 duration window가 아니라 상태값으로 유지한다.
-    - [ ] `SwitchToGuard` 단발 notify에서 Parry를 닫고 Guard 판정을 켠다.
+    - [x] `SwitchToGuard` 단발 notify에서 Parry를 닫고 Guard 판정을 켠다.
     - [x] `Block_Out` 시작 시점에 Guard pose를 종료해 Out montage와 ABP Guard pose가 겹치지 않게 한다.
     - [ ] `GuardPoseEnd` 단발 notify는 Out 시작 정리만으로 부족한 경우의 fallback 후보로 검토한다.
 

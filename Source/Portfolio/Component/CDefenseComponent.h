@@ -67,6 +67,7 @@ public:
 public:
 	void HandleGuardInStarted();
 	void HandleGuardOutStarted();
+	void HandleSwitchToGuard();
 	void HandleGuardOutCompleted();
 	void HandleGuardInterrupted(EActionStopReason InStopReason);
 
