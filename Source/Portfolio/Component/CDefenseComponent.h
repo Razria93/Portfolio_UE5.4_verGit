@@ -53,6 +53,11 @@ public:
 public:
 	void ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const override;
 
+private:
+	bool NeedsObservableOverlayGate(EExecutionApplyMode InApplyMode) const;
+	void ResolveGuardOverlayForAction(const FActionExecutionContext& InIncomingContext, FObservableOverlayDecision& OutDecision) const;
+	void ResolveGuardOverlayForReaction(const FReactionExecutionContext& InIncomingContext, FObservableOverlayDecision& OutDecision) const;
+
 public:
 	void HandleGuardInStarted();
 	void HandleGuardOutStarted();

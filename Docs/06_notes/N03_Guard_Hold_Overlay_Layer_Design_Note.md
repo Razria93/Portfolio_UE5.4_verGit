@@ -197,7 +197,46 @@ v1의 우선순위는 다음과 같다.
 
 ---
 
-## 6. Block_Hit 복귀 정책
+## 6. Incoming Overlay Requirement 후보
+
+현재 v1 구조는 active overlay owner가 현재 overlay 상태를 기준으로 incoming 실행을 허용할지, 시작 전에 어떤 overlay handling이 필요한지 판단한다.
+
+하지만 장기적으로는 incoming 실행 쪽도 overlay gate decision에 참여해야 한다. 이유는 일부 Action / Reaction이 특정 overlay 상태를 요구하거나, 반대로 특정 overlay 상태가 있으면 실행되면 안 되기 때문이다.
+
+예시는 다음과 같다.
+
+```text
+Guard Out
+-> Guard overlay가 있어야 실행 의미가 있다.
+
+Block_Hit
+-> Guard 상태 또는 guard resolution 결과가 있어야 실행 의미가 있다.
+
+Parry Success
+-> Parry window 또는 parry resolution 결과가 있어야 실행 의미가 있다.
+
+Dodge
+-> Guard overlay가 있어도 실행 가능하지만 시작 전 clear가 필요하다.
+
+ComboAttack
+-> Guard overlay가 남아 있으면 기본적으로 실행되면 안 된다.
+```
+
+따라서 장기 구조에서는 overlay gate를 다음 두 축으로 보는 것이 적절하다.
+
+```text
+Incoming execution requirement
++ Active overlay owner policy
+= Overlay gate decision
+```
+
+Combat Resolution은 damage packet을 해석해 `Hit / Block_Hit / Parry / GuardBreak` 같은 결과 타입을 결정한다. 반면 Orchestration의 overlay gate는 이미 결정된 Action / Reaction을 시작하기 전에, 그 실행이 요구하는 overlay 조건과 현재 overlay owner의 허용 / 정리 정책을 함께 검증한다.
+
+이번 v1에서는 incoming overlay requirement를 구현하지 않는다. 아직 `Block_Hit / Parry / GuardBreak` 같은 incoming type이 충분히 세분화되지 않았고, Combat Resolution도 분리되지 않았기 때문이다. 대신 필요성만 확정하고 후속 설계 후보로 남긴다.
+
+---
+
+## 7. Block_Hit 복귀 정책
 
 `Block_Hit`을 별도 Reaction으로 사용할 경우, Guard Hold 상태를 그대로 유지한 채 맞는 것이 아니라 `Guard Hold`를 일시적으로 대체하는 피격 반응으로 본다.
 
@@ -229,7 +268,7 @@ v1에서는 먼저 `Block_Hit`이 별도 Reaction으로 실행될 수 있는 구
 
 ---
 
-## 7. Combat Resolution과의 관계
+## 8. Combat Resolution과의 관계
 
 Observable Overlay Layer는 Combat Resolution을 대체하지 않는다. 다만 두 구조는 같은 설계 패턴을 공유할 수 있다.
 
@@ -260,7 +299,7 @@ TakeDamage 또는 damage packet 진입
 
 ---
 
-## 8. 관련 문서
+## 9. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`
