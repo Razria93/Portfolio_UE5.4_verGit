@@ -35,6 +35,7 @@ void UCReactionOrchestratorComponent::BeginPlay()
 		if (!IsValid(component)) continue;
 		if (!component->GetClass()->ImplementsInterface(UObservableOverlayPolicy::StaticClass())) continue;
 
+		// [NOTE] UINTERFACE wrapper: keeps the UObject and interface pointer together.
 		TScriptInterface<IObservableOverlayPolicy> policy;
 		policy.SetObject(component);
 		policy.SetInterface(Cast<IObservableOverlayPolicy>(component));
@@ -225,6 +226,15 @@ FExecutionSnapshot UCReactionOrchestratorComponent::BuildSnapshot() const
 
 	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
 	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
+
+	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
+	{
+		const IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
+		if (!overlayPolicy) continue;
+
+		// Snapshot captures overlay state once before decision checks.
+		overlayPolicy->WriteObservableOverlaySnapshot(snapshot.ObservableOverlay);
+	}
 
 	return snapshot;
 }
@@ -439,35 +449,27 @@ void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecut
 	overlayQuery.DecisionQuery = InQuery;
 	overlayQuery.ApplyMode = InOutResult.ApplyMode;
 
-	bool bResolvedOverlayPolicy = false;
-
-	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
+	if (InQuery.IncomingPart.IsReactionParticipant())
 	{
-		const IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
-		if (!overlayPolicy) continue;
-
-		FObservableOverlayDecision overlayDecision;
-		overlayPolicy->ResolveObservableOverlayDecision(overlayQuery, overlayDecision);
-		if (!overlayDecision.bRelevant) continue;
-
-		bResolvedOverlayPolicy = true;
-
-		if (!overlayDecision.bAllowed)
+		if (const UCReaction* incomingReaction = InQuery.IncomingPart.GetReactionContext().ReactionExecutor)
 		{
-			InOutResult.Decision = EExecutionDecision::Reject;
-			InOutResult.RejectReason = EReactionRequestRejectReason::InvalidIndependent;
-			return;
-		}
+			FObservableOverlayExecutionDecision overlayDecision;
+			incomingReaction->ResolveObservableOverlayExecutionCondition(overlayQuery, overlayDecision);
 
-		for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
-		{
-			if (handling == EObservableOverlayHandling::None) continue;
+			if (!overlayDecision.IsAccepted())
+			{
+				InOutResult.Decision = overlayDecision.Decision;
+				return;
+			}
 
-			InOutResult.OverlayHandlings.AddUnique(handling);
+			for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
+			{
+				if (handling == EObservableOverlayHandling::None) continue;
+
+				InOutResult.OverlayHandlings.AddUnique(handling);
+			}
 		}
 	}
-
-	if (!bResolvedOverlayPolicy) return;
 }
 
 

@@ -6,6 +6,16 @@ UCDefenseComponent::UCDefenseComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UCDefenseComponent::AllowGuardStart()
+{
+	bCanStartGuard = true;
+}
+
+void UCDefenseComponent::BlockGuardStart()
+{
+	bCanStartGuard = false;
+}
+
 void UCDefenseComponent::BeginGuardIntent()
 {
 	bWantsGuarding = true;
@@ -48,6 +58,7 @@ void UCDefenseComponent::CloseParryWindow()
 
 void UCDefenseComponent::ResetGuardState()
 {
+	bCanStartGuard = true;
 	bWantsGuarding = false;
 	bIsGuardingPose = false;
 	bCanGuard = false;
@@ -61,73 +72,52 @@ void UCDefenseComponent::ClearGuardOverlay()
 	bCanParry = false;
 }
 
-void UCDefenseComponent::ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const
+void UCDefenseComponent::WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
 {
-	OutDecision = FObservableOverlayDecision();
-
-	if (!HasGuardOverlay()) return;
-
-	OutDecision.bRelevant = true;
-
-	if (!NeedsObservableOverlayGate(InQuery.ApplyMode)) return;
-
-	const FExecutionParticipant& incomingPart = InQuery.DecisionQuery.IncomingPart;
-
-	if (incomingPart.IsReactionParticipant())
-	{
-		ResolveGuardOverlayForReaction(incomingPart.GetReactionContext(), OutDecision);
-		return;
-	}
-
-	if (incomingPart.IsActionParticipant())
-	{
-		ResolveGuardOverlayForAction(incomingPart.GetActionContext(), OutDecision);
-		return;
-	}
-
-	OutDecision.bAllowed = false;
+	OutSnapshot.Guard.bCanStartGuard = bCanStartGuard;
+	OutSnapshot.Guard.bWantsGuarding = bWantsGuarding;
+	OutSnapshot.Guard.bIsGuardingPose = bIsGuardingPose;
+	OutSnapshot.Guard.bCanGuard = bCanGuard;
+	OutSnapshot.Guard.bCanParry = bCanParry;
 }
 
-bool UCDefenseComponent::NeedsObservableOverlayGate(EExecutionApplyMode InApplyMode) const
+bool UCDefenseComponent::CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const
 {
-	return InApplyMode == EExecutionApplyMode::Start || InApplyMode == EExecutionApplyMode::Intervene;
-}
-
-void UCDefenseComponent::ResolveGuardOverlayForAction(const FActionExecutionContext& InIncomingContext, FObservableOverlayDecision& OutDecision) const
-{
-	const FActionDataKey& incomingActionKey = InIncomingContext.ActionDataKey;
-	const bool bIsGuardOut = incomingActionKey.ActionType == EActionType::Guard && incomingActionKey.ActionIndex == 2;
-	const bool bIsDodge = incomingActionKey.ActionType == EActionType::Dodge;
-
-	if (!bIsGuardOut && !bIsDodge)
+	switch (InHandling)
 	{
-		OutDecision.bAllowed = false;
-		return;
-	}
+	case EObservableOverlayHandling::None:
+		return true;
 
-	OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
-}
-
-void UCDefenseComponent::ResolveGuardOverlayForReaction(const FReactionExecutionContext& InIncomingContext, FObservableOverlayDecision& OutDecision) const
-{
-	const FReactionDataKey& incomingReactionKey = InIncomingContext.ReactionDataKey;
-
-	// Temporary: keep Guard overlay until Block_Hit / GuardBreak reaction types are separated.
-	switch (incomingReactionKey.ReactionType)
-	{
-	case EReactionType::Hit:
-	case EReactionType::Dead:
-		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
-		return;
+	case EObservableOverlayHandling::ClearGuardOverlay:
+		return HasGuardOverlay();
 
 	default:
-		OutDecision.bAllowed = false;
-		return;
+		return false;
+	}
+}
+
+bool UCDefenseComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
+{
+	if (!CanApplyObservableOverlayHandling(InHandling)) return false;
+
+	switch (InHandling)
+	{
+	case EObservableOverlayHandling::None:
+		return true;
+
+	case EObservableOverlayHandling::ClearGuardOverlay:
+		ClearGuardOverlay();
+		return true;
+
+	default:
+		return false;
 	}
 }
 
 void UCDefenseComponent::HandleGuardInStarted()
 {
+	BlockGuardStart();
+
 	BeginGuardIntent();
 	BeginGuardPose();
 
@@ -139,6 +129,8 @@ void UCDefenseComponent::HandleGuardInStarted()
 
 void UCDefenseComponent::HandleGuardOutStarted()
 {
+	AllowGuardStart();
+
 	EndGuardIntent();
 	EndGuardPose();
 
@@ -165,7 +157,8 @@ void UCDefenseComponent::HandleGuardInterrupted(EActionStopReason InStopReason)
 void UCDefenseComponent::PrintGuardStateInfo() const
 {
 	FLog::Log(FString::Printf(
-		TEXT("[Defense] WantsGuarding = %s | IsGuardingPose = %s | CanGuard = %s | CanParry = %s"),
+		TEXT("[Defense] CanStartGuard = %s | WantsGuarding = %s | IsGuardingPose = %s | CanGuard = %s | CanParry = %s"),
+		bCanStartGuard ? TEXT("true") : TEXT("false"),
 		bWantsGuarding ? TEXT("true") : TEXT("false"),
 		bIsGuardingPose ? TEXT("true") : TEXT("false"),
 		bCanGuard ? TEXT("true") : TEXT("false"),

@@ -148,8 +148,17 @@ TakeDamagePacket
 - [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:
     - [x] `CAction_Guard::Stop()`에서 `Block_In` 중단 시 guard runtime 값을 정리한다.
-    - [x] action / reaction start 직전에 `FExecutionSnapshot`의 observable overlay state를 확인해 Guard overlay를 정리할 수 있게 한다.
-    - [x] `ExecutionState`를 확장하지 않고 Guard Hold를 observable overlay state로 관측하는 v1 경계를 구성한다.
+    - [x] action / reaction start 직전에 observable overlay snapshot을 기준으로 Guard overlay를 정리할 수 있게 한다.
+    - [x] `ExecutionState`를 확장하지 않고 Guard Hold를 observable overlay policy registry로 관측하는 v1 경계를 구성한다.
+    - [x] overlay owner policy는 snapshot 구성 시점에 자기 runtime state를 `FExecutionSnapshot`의 observable overlay snapshot에 기록하도록 구성한다.
+    - [x] incoming executor는 observable overlay snapshot을 읽고 실행 가능 여부와 필요한 overlay handling을 함께 결정하도록 구성한다.
+    - [x] overlay handling은 단일 값이 아니라 `TArray<EObservableOverlayHandling>`로 누적한다.
+    - [x] `WantObservableOverlayRequirement()` / `AllowObservableOverlayRequirement()` 구조를 제거하고 `ResolveObservableOverlayExecutionCondition()` 기준으로 단순화한다.
+    - [x] requested overlay handling은 실행 직전 overlay owner policy의 `CanApply / Apply` 단계를 거쳐 적용되도록 구성한다.
+    - [x] `ClearGuardOverlay`는 pose / guard / parry overlay만 정리하고, `ResetGuardState`는 입력 의도와 guard 재시작 lock까지 포함해 guard runtime 전체를 초기화하도록 역할을 분리한다.
+    - [x] Guard Out은 Guard overlay가 남아 있을 때만 의미 있는 incoming action으로 보고, overlay가 없으면 ignore되도록 구성한다.
+    - [x] Guard Out의 overlay 정리는 pre-start handling이 아니라 Guard Out action lifecycle에서 처리하도록 둔다.
+    - [x] Dodge / Hit / Dead처럼 Guard overlay를 제거해야 하는 incoming execution은 실행 전에 `ClearGuardOverlay` handling을 요청하도록 구성한다.
     - [ ] dodge / reaction takeover에서 Guard 상태가 남지 않는지 PIE에서 확인한다.
     - [x] interrupt / forced stop 시 `GuardInCompleted` deferred candidate를 정리하도록 호출 지점을 연결한다.
 
@@ -166,8 +175,10 @@ TakeDamagePacket
     - [x] Guard Hold pose 상태는 v1에서 `UCDefenseComponent::IsGuardingPose()`로 노출한다.
     - [x] 실제 Guard 판정 상태는 v1에서 `UCDefenseComponent::CanGuard()`로 노출한다.
     - [x] 실제 Parry 판정 상태는 v1에서 `UCDefenseComponent::CanParry()`로 노출한다.
-    - [x] `FExecutionSnapshot`에 Guard overlay state를 포함해 Orchestrator decision에서 관측할 수 있게 한다.
+    - [x] `FExecutionSnapshot`에는 `FObservableOverlaySnapshot`을 두고, `UCDefenseComponent`가 Guard overlay snapshot을 채우게 한다.
+    - [x] Guard overlay snapshot에는 `bWantsGuarding`, `bIsGuardingPose`, `bCanGuard`, `bCanParry`, `bCanStartGuard`를 포함한다.
     - [x] `UCActionComponent`는 Guard action lifecycle event를 DefenseComponent로 전달하는 라우팅 지점으로 둔다.
+    - [x] `UCActionComponent`와 `UCReactionComponent`는 Orchestrator result에 누적된 overlay handling을 실행 시작 전에 적용한다.
     - [ ] 이후 Combat Resolution 분리 시 해당 상태 조회 경계를 그대로 옮길 수 있게 만든다.
 - [x] Block_In 시작 직후 Parry Window를 열 수 있게 한다.
   - 세부 구현 요소:
@@ -197,8 +208,14 @@ TakeDamagePacket
     - [ ] 이번 단계의 핵심 검증은 Guard Hit 분기와 `Block_Hit` 실행 여부로 둔다.
 - [ ] Guard Hit 결과로 `Block_Hit` montage 또는 guard hit reaction을 실행할 수 있는 요청 경계를 정한다.
   - 세부 구현 요소:
+    - [x] `Block_Hit`은 Guard Hold를 유지한 채 맞는 처리보다 Guard Hold를 일시적으로 대체하는 별도 Reaction으로 보는 방향을 notes에 기록한다.
+    - [x] PIE 검증 결과, reaction 실행 자체는 overlay gate에서 막을 수 없으므로 의사처리계층 전까지는 reaction 시작 시 Guard overlay를 clear하는 방향이 더 안전하다고 판단했다.
+    - [x] 현재 `Hit / Dead` reaction은 각각의 reaction executor에서 Guard overlay를 clear하는 정책으로 정리한다.
+    - [x] reaction base는 공통 clear 정책을 갖지 않고, 세부 reaction executor가 자기 overlay execution condition을 판단하도록 정리한다.
     - [ ] Guard Hit를 기존 Reaction Orchestrator로 보낼지, Guard Action 쪽 실행 요청으로 처리할지 비교한다.
+    - [ ] Damage packet 해석 이후 `Block_Hit / Parry / GuardBreak` 같은 reaction type을 세분화할지 검토한다.
     - [ ] 일반 Hit / Dead reaction과 같은 경로를 쓰면 기존 피격 흐름과 충돌할 수 있으므로 v1에서는 명시적인 요청 경계를 둔다.
+    - [ ] `Block_Hit` 종료 시 `bWantsGuarding`을 기준으로 Guard Hold 복구 또는 Guard Out / Idle 복귀를 판단하는 정책을 정한다.
 - [ ] Guard Hold 중 피격 처리와 기존 Hit / Dead reaction 흐름이 충돌하지 않는지 확인한다.
 
 ### 4.4 TakeDamage 내부 defensive resolution 임시 구현
@@ -259,6 +276,10 @@ TakeDamagePacket
     - [ ] `SourceExecutionId` 기반 lifecycle 정리 필요 여부를 검토한다.
     - [ ] filter struct 기반 deferred clear API가 필요한 시점을 검토한다.
     - [ ] retry / timeout / expire 정책이 필요한 deferred 유형을 분류한다.
+- [ ] observable overlay policy registry의 장기 소유 위치를 후속 후보로 기록한다.
+  - 세부 구현 요소:
+    - [x] v1에서는 Orchestrator가 snapshot 구성을 위해 policy를 보관하고, Action / Reaction Component가 handling 적용을 위해 같은 policy를 보관한다.
+    - [ ] policy 등록 / snapshot 구성 / handling 적용을 하나의 overlay 관리 component로 모을지 검토한다.
 - [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
 
 ---

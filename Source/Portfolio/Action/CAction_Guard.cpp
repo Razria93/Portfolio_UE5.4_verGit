@@ -110,3 +110,57 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 
 	return false;
 }
+
+void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+{
+	OutDecision = FObservableOverlayExecutionDecision();
+
+	const bool bIsGuard = IsIncomingActionType(InQuery.DecisionQuery, EActionType::Guard);
+	if (!bIsGuard)
+	{
+		// Guard only.
+		OutDecision.Decision = EExecutionDecision::Reject;
+		return;
+	}
+
+	const FActionExecutionContext& incomingContext = InQuery.DecisionQuery.IncomingPart.GetActionContext();
+	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard;
+	const bool bIsGuardIn = incomingContext.ActionDataKey.ActionIndex == 1;
+	const bool bIsGuardOut = incomingContext.ActionDataKey.ActionIndex == 2;
+
+	if (bIsGuardIn)
+	{
+		const bool bCanStartGuardIn = !guardSnapshot.bIsGuardingPose && guardSnapshot.bCanStartGuard;
+		if (!bCanStartGuardIn)
+		{
+			// GuardIn blocked by current Guard state.
+			OutDecision.Decision = EExecutionDecision::Ignore;
+			return;
+		}
+
+		// GuardIn Case: Clear stale Guard state before start.
+		OutDecision.Decision = EExecutionDecision::Accept;
+		if (guardSnapshot.HasGuardOverlay())
+		{
+			OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
+		}
+		return;
+	}
+
+	if (bIsGuardOut)
+	{
+		if (!guardSnapshot.bIsGuardingPose)
+		{
+			// GuardOut without GuardPose: No-op.
+			OutDecision.Decision = EExecutionDecision::Ignore;
+			return;
+		}
+
+		// GuardOut Case: allow; GuardOut start clears Guard state.
+		OutDecision.Decision = EExecutionDecision::Accept;
+		return;
+	}
+
+	// Guard Hold / other Guard Case: No overlay cleanup.
+	OutDecision.Decision = EExecutionDecision::Accept;
+}

@@ -409,6 +409,21 @@ bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) con
 	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
+void UCAction::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+{
+	OutDecision = FObservableOverlayExecutionDecision();
+
+	if (!InQuery.DecisionQuery.IncomingPart.IsActionParticipant())
+	{
+		// Action only.
+		OutDecision.Decision = EExecutionDecision::Reject;
+		return;
+	}
+
+	// Default Action Case: No overlay cleanup.
+	OutDecision.Decision = EExecutionDecision::Accept;
+}
+
 bool UCAction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const
 {
 	for (const FExecutionInterventionWantRule& rule : InRules)

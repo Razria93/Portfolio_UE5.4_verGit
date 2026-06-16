@@ -32,6 +32,25 @@ void UCActionComponent::BeginPlay()
 	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 
+	TArray<UActorComponent*> ownerComponents;
+	OwnerCharacter_Cached->GetComponents(ownerComponents);
+
+	for (UActorComponent* component : ownerComponents)
+	{
+		if (!IsValid(component)) continue;
+		if (!component->GetClass()->ImplementsInterface(UObservableOverlayPolicy::StaticClass())) continue;
+
+		// [NOTE] UINTERFACE wrapper: keeps the UObject and interface pointer together.
+		TScriptInterface<IObservableOverlayPolicy> policy;
+		policy.SetObject(component);
+		policy.SetInterface(Cast<IObservableOverlayPolicy>(component));
+
+		if (policy.GetInterface())
+		{
+			ObservableOverlayPolicies.Add(policy);
+		}
+	}
+
 	// Rebuild All
 	BuildActionDataMap(true);
 	BuildActionExecutorMap(true);
@@ -448,22 +467,18 @@ bool UCActionComponent::ApplyObservableOverlayHandlings(const TArray<EObservable
 
 bool UCActionComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
 {
-	switch (InHandling)
-	{
-	case EObservableOverlayHandling::None:
-		return true;
+	if (InHandling == EObservableOverlayHandling::None) return true;
 
-	case EObservableOverlayHandling::ClearGuardOverlay:
+	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
 	{
-		if (!IsValid(DefenseComp_Cached)) return false;
+		IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
+		if (!overlayPolicy) continue;
+		if (!overlayPolicy->CanApplyObservableOverlayHandling(InHandling)) continue;
 
-		DefenseComp_Cached->ClearGuardOverlay();
-		return true;
+		return overlayPolicy->ApplyObservableOverlayHandling(InHandling);
 	}
 
-	default:
-		return false;
-	}
+	return false;
 }
 
 bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)

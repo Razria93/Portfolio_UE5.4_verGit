@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Interface/ObservableOverlayPolicy.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CReactionOrchestrationStructure.h"
 #include "CReactionComponent.generated.h"
@@ -59,6 +60,9 @@ private:
 
 	UPROPERTY(Transient)
 	class UCActionComponent* ActionComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	TArray<TScriptInterface<IObservableOverlayPolicy>> ObservableOverlayPolicies;
 
 public:
 	/* === Delegate === */

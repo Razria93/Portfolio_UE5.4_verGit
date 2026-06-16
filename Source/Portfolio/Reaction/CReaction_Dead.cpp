@@ -32,6 +32,31 @@ FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecut
 	return result;
 }
 
+void UCReaction_Dead::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+{
+	OutDecision = FObservableOverlayExecutionDecision();
+
+	const bool bIsDeadReaction = IsIncomingReactionType(InQuery.DecisionQuery, EReactionType::Dead);
+	if (!bIsDeadReaction)
+	{
+		// Dead only.
+		OutDecision.Decision = EExecutionDecision::Reject;
+		return;
+	}
+
+	const bool bHasGuardOverlay = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardOverlay();
+	if (bHasGuardOverlay)
+	{
+		// GuardOverlay Case: Clear Guard before Dead.
+		OutDecision.Decision = EExecutionDecision::Accept;
+		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
+		return;
+	}
+
+	// Another Case: No overlay cleanup.
+	OutDecision.Decision = EExecutionDecision::Accept;
+}
+
 bool UCReaction_Dead::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	// [NOTE] Dead reaction is terminal and cannot be interrupted.

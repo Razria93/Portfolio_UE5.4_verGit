@@ -15,6 +15,10 @@ public:
 	UCDefenseComponent();
 
 private:
+
+	UPROPERTY(Transient)
+	bool bCanStartGuard = true;
+
 	UPROPERTY(Transient)
 	bool bWantsGuarding = false;
 
@@ -28,6 +32,7 @@ private:
 	bool bCanParry = false;
 
 public:
+	FORCEINLINE bool CanStartGuard() const { return bCanStartGuard; }
 	FORCEINLINE bool WantsGuarding() const { return bWantsGuarding; }
 	FORCEINLINE bool IsGuardingPose() const { return bIsGuardingPose; }
 	FORCEINLINE bool CanGuard() const { return bCanGuard; }
@@ -35,6 +40,10 @@ public:
 	FORCEINLINE bool HasGuardOverlay() const { return bIsGuardingPose || bCanGuard || bCanParry; }
 
 public:
+
+	void AllowGuardStart();
+	void BlockGuardStart();
+
 	void BeginGuardIntent();
 	void EndGuardIntent();
 
@@ -51,12 +60,9 @@ public:
 	void ClearGuardOverlay();
 
 public:
-	void ResolveObservableOverlayDecision(const FObservableOverlayQuery& InQuery, FObservableOverlayDecision& OutDecision) const override;
-
-private:
-	bool NeedsObservableOverlayGate(EExecutionApplyMode InApplyMode) const;
-	void ResolveGuardOverlayForAction(const FActionExecutionContext& InIncomingContext, FObservableOverlayDecision& OutDecision) const;
-	void ResolveGuardOverlayForReaction(const FReactionExecutionContext& InIncomingContext, FObservableOverlayDecision& OutDecision) const;
+	void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const override;
+	bool CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const override;
+	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) override;
 
 public:
 	void HandleGuardInStarted();

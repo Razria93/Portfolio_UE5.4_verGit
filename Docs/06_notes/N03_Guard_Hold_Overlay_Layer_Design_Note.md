@@ -159,12 +159,16 @@ Orchestrator는 장기적으로 다음 순서로 판단한다.
 ```text
 Incoming Request
 -> active Action / Reaction이 있는지 확인
--> 필요한 경우 observable overlay policy registry 확인
--> 각 overlay owner가 종료 / 유지 / 무시 여부 판단
+-> observable overlay snapshot 구성
+-> incoming executor가 overlay 상태에서 실행 가능 여부 판단
+-> 필요한 overlay handling 요청
+-> overlay owner가 handling 적용 가능 여부 확인
 -> 둘 다 없으면 baseline Idle로 처리
 ```
 
-이 구조에서는 `Block_In / Block_Out`은 Action Domain의 전환 action으로 유지한다. `Guard Hold`는 `ExecutionSnapshot`에 세부 상태를 복사하지 않고, `DefenseComponent` 같은 overlay owner가 policy로 참여해 직접 판단하는 방향을 기준으로 한다.
+이 구조에서는 `Block_In / Block_Out`은 Action Domain의 전환 action으로 유지한다. `Guard Hold`는 `FExecutionSnapshot`의 observable overlay snapshot에 기록되지만, Orchestrator가 Guard의 세부 조건을 직접 해석하지 않는다.
+
+Guard In / Guard Out / Dodge / Reaction 같은 incoming executor가 snapshot을 읽어 실행 조건과 필요한 overlay handling을 판단하고, `DefenseComponent` 같은 overlay owner는 요청된 handling을 실제로 적용할 수 있는지 확인한 뒤 상태를 변경한다.
 
 ---
 
@@ -187,21 +191,85 @@ v1의 우선순위는 다음과 같다.
 ```text
 구조적 v1
 -> Guard Hold를 action으로 편입하지 않는다.
--> ExecutionSnapshot에는 overlay 세부 상태를 넣지 않는다.
--> observable overlay policy registry를 순회한다.
--> 첫 policy owner는 DefenseComponent / Guard overlay로 둔다.
+-> ExecutionSnapshot에 observable overlay snapshot을 둔다.
+-> overlay owner policy는 snapshot 구성 시점에 자기 runtime state를 기록한다.
+-> incoming executor는 snapshot을 읽고 실행 가능 여부와 필요한 handling을 결정한다.
 -> Action / Reaction start 전에 필요한 경우 overlay handling을 누적한다.
 ```
 
-이 구현은 full overlay participant 모델이 아니다. v1에서는 `FExecutionParticipant`를 확장하지 않고, policy decision과 result handling으로 Guard overlay cleanup 문제를 먼저 해결한다.
+이 구현은 full overlay participant 모델이 아니다. v1에서는 `FExecutionParticipant`를 확장하지 않고, `FExecutionSnapshot`의 observable overlay snapshot과 result handling으로 Guard overlay cleanup 문제를 먼저 해결한다.
 
 ---
 
-## 6. Incoming Overlay Requirement 후보
+## 6. v1 리팩터링 경과
 
-현재 v1 구조는 active overlay owner가 현재 overlay 상태를 기준으로 incoming 실행을 허용할지, 시작 전에 어떤 overlay handling이 필요한지 판단한다.
+최초 판단 이후에도 PIE 검증과 코드 구현을 거치며 구조를 여러 차례 조정했다. 이 과정은 단순 구현 변경이 아니라 overlay gate의 책임 경계를 확인하는 과정이었다.
 
-하지만 장기적으로는 incoming 실행 쪽도 overlay gate decision에 참여해야 한다. 이유는 일부 Action / Reaction이 특정 overlay 상태를 요구하거나, 반대로 특정 overlay 상태가 있으면 실행되면 안 되기 때문이다.
+### 6.1 Snapshot 제거 검토에서 observable overlay snapshot 재도입으로 이동
+
+초기에는 `FExecutionSnapshot`에 Guard overlay 상태를 복사해 Orchestrator가 직접 확인하는 방식을 검토했다.
+
+하지만 이 방식은 Orchestrator가 각 overlay의 세부 상태를 알게 만들고, 이후 LockOn / Aim / Crouch 같은 overlay가 추가될 때 snapshot이 계속 비대해질 수 있다.
+
+그래서 중간 단계에서는 `ExecutionSnapshot`에서 overlay 세부 상태를 제거하고, `DefenseComponent` 같은 overlay owner가 `IObservableOverlayPolicy`로 직접 판단하는 방향을 검토했다.
+
+그러나 이 방식은 incoming executor가 실행 가능 여부를 판단하려면 결국 overlay별 상태 조건 구조를 따로 받아야 한다는 문제가 있었다. 별도 requirement 구조가 커질 바에는, decision 시점에 사용할 상태를 `FObservableOverlaySnapshot`으로 명시해 `FExecutionSnapshot` 안에 포함하는 편이 더 단순하다.
+
+따라서 v1은 snapshot을 다시 도입하되, Orchestrator가 Guard 세부 조건을 직접 해석하지 않게 한다. overlay owner는 snapshot에 상태를 기록하고, incoming executor가 그 snapshot을 읽어 실행 가능 여부와 필요한 handling을 결정한다.
+
+### 6.2 단일 Guard 분기에서 snapshot writer registry로 이동
+
+초기 구현은 `ResolveObservableOverlayGate()` 안에서 Guard overlay를 직접 판정하는 형태였다.
+
+하지만 overlay 대상 component가 늘어나는 것은 시간문제이고, Orchestrator가 Guard / LockOn / Aim 같은 세부 정책을 직접 들고 있으면 확장성이 떨어진다.
+
+따라서 Action / Reaction Orchestrator는 snapshot 구성 시점에 `ObservableOverlayPolicies`를 순회한다. 각 policy owner는 자기 runtime state를 `FObservableOverlaySnapshot`에 기록한다.
+
+v1에서는 Action / Reaction Component도 실행 직전 handling 적용을 위해 같은 policy 목록을 보관한다. 이 구조는 snapshot 구성과 handling 적용 책임이 분리되어 있어 동작은 명확하지만, policy 등록 지점이 중복된다.
+
+후속 작업에서는 policy 등록 / snapshot 구성 / handling 적용을 하나의 overlay 관리 component로 모을 수 있는지 검토한다.
+
+### 6.3 축약 query에서 execution decision query 재사용으로 이동
+
+초기 `FObservableOverlayQuery`는 `Snapshot`, `IncomingPart`, `ApplyMode`만 들고 있었다.
+
+하지만 overlay 판단은 active part, incoming part, snapshot, apply mode를 모두 참조할 수 있어야 한다. 따라서 query가 기존 `FExecutionDecisionQuery` 전체와 `ApplyMode`를 함께 들도록 바꿨다.
+
+이 변경으로 incoming executor는 현재 overlay snapshot뿐 아니라 active / incoming execution 관계도 함께 보고 실행 조건을 판단할 수 있다.
+
+### 6.4 단일 handling에서 다중 handling 누적으로 이동
+
+초기 `FObservableOverlayDecision`은 단일 `EObservableOverlayHandling`만 반환했다.
+
+하지만 여러 overlay policy가 동시에 참여하거나, 하나의 policy가 여러 후처리를 요구할 수 있다. 따라서 decision과 result 모두 `TArray<EObservableOverlayHandling>` 기반으로 맞췄다.
+
+Action / Reaction Component는 Orchestrator result에 누적된 handling을 실행 시작 전에 순서대로 적용한다.
+
+### 6.5 owner policy 판단에서 incoming execution condition으로 이동
+
+초기 Defense policy는 `ResolveObservableOverlayDecision()` 안에서 Action / Reaction incoming을 한 번에 판단했다.
+
+하지만 overlay gate는 실행과 상태의 관계를 다룬다. 실행 가능 여부는 incoming executor가 판단하고, 상태 변경은 overlay handling으로 요청하는 편이 책임이 분명하다.
+
+따라서 v1에서는 `WantObservableOverlayRequirement()` / `AllowObservableOverlayRequirement()` 구조를 제거하고, incoming executor의 `ResolveObservableOverlayExecutionCondition()`으로 통합했다. 이 함수는 snapshot을 읽어 실행 가능 여부를 결정하고, 필요하면 `ClearGuardOverlay` 같은 handling을 함께 요청한다.
+
+### 6.6 PIE 검증 이후 Reaction clear 정책 재검토
+
+초기에는 `Hit` reaction이 들어오면 Guard overlay를 유지하고, `Dead`만 clear하는 임시 분기를 검토했다.
+
+하지만 PIE 검증 결과, overlay gate가 reaction 실행 자체를 막는 계층이 아니기 때문에 `Hit` reaction을 clear하지 않으면 reaction 종료 후에도 Guard pose / state가 남을 수 있다.
+
+따라서 의사처리계층에서 `Block_Hit / Parry / GuardBreak` 같은 결과 타입을 세분화하기 전까지는 reaction 시작 시 Guard overlay를 clear하는 방향이 더 안전하다고 판단했다.
+
+이 판단은 Combat Resolution 또는 damage packet 해석 계층이 생긴 뒤 다시 세분화한다.
+
+---
+
+## 7. Incoming Overlay Execution Condition
+
+현재 v1 구조는 incoming executor가 observable overlay snapshot을 기준으로 incoming 실행이 가능한지 판단하고, 시작 전에 필요한 overlay handling을 함께 요청한다.
+
+이유는 일부 Action / Reaction이 특정 overlay 상태를 요구하거나, 반대로 특정 overlay 상태가 있으면 실행되면 안 되기 때문이다. 또한 어떤 실행은 overlay 상태가 있어도 실행 가능하지만, 시작 전에 해당 overlay를 정리해야 한다.
 
 예시는 다음과 같다.
 
@@ -222,21 +290,58 @@ ComboAttack
 -> Guard overlay가 남아 있으면 기본적으로 실행되면 안 된다.
 ```
 
-따라서 장기 구조에서는 overlay gate를 다음 두 축으로 보는 것이 적절하다.
+따라서 v1 구조에서는 overlay gate를 다음 흐름으로 본다.
 
 ```text
-Incoming execution requirement
-+ Active overlay owner policy
-= Overlay gate decision
+Overlay owner policy
+-> Snapshot 구성 시 자기 runtime state 기록
+
+Incoming executor
+-> Snapshot을 읽고 실행 가능 여부 판단
+-> 필요한 overlay handling 요청
+
+Orchestrator
+-> incoming decision을 result에 반영
+
+Action / Reaction Component
+-> requested handling을 실행 직전 overlay owner에게 위임
+-> owner가 허용하면 상태 변경 적용
+-> handling 적용 성공 후 execution 시작
 ```
 
-Combat Resolution은 damage packet을 해석해 `Hit / Block_Hit / Parry / GuardBreak` 같은 결과 타입을 결정한다. 반면 Orchestration의 overlay gate는 이미 결정된 Action / Reaction을 시작하기 전에, 그 실행이 요구하는 overlay 조건과 현재 overlay owner의 허용 / 정리 정책을 함께 검증한다.
+Combat Resolution은 damage packet을 해석해 `Hit / Block_Hit / Parry / GuardBreak` 같은 결과 타입을 결정한다. 반면 Orchestration의 overlay gate는 이미 결정된 Action / Reaction을 시작하기 전에, 그 실행이 현재 overlay 상태에서 가능한지와 실행 전에 어떤 overlay cleanup이 필요한지를 판단한다.
 
-이번 v1에서는 incoming overlay requirement를 구현하지 않는다. 아직 `Block_Hit / Parry / GuardBreak` 같은 incoming type이 충분히 세분화되지 않았고, Combat Resolution도 분리되지 않았기 때문이다. 대신 필요성만 확정하고 후속 설계 후보로 남긴다.
+v1의 첫 적용 대상은 `Guard Out`이다. `Guard Out`은 Guard overlay가 남아 있을 때만 의미 있는 종료 action이므로, Guard overlay가 이미 clear된 상태에서 들어온 `Guard Out`은 실행하지 않고 ignore한다.
+
+다만 `Guard Out`은 guard 종료 자체를 수행하는 action lifecycle이므로, `ResolveObservableOverlayExecutionCondition()`에서 `ClearGuardOverlay` handling을 요청하지 않는다. Guard overlay 정리는 `Block_Out` 시작 / 종료 처리에서 담당한다.
+
+`Dodge`는 Guard overlay가 있어도 실행 가능하지만, 시작 전에 `ClearGuardOverlay` handling을 요청한다. `Hit / Dead` reaction도 의사처리계층에서 `Block_Hit / Parry / GuardBreak`가 세분화되기 전까지는 Guard overlay를 clear하는 기본 정책을 따른다.
+
+현재 v1에서는 이 정책을 reaction base가 아니라 `Hit / Dead` reaction executor가 각각 판단한다. base reaction은 공통 clear 정책을 갖지 않고, 세부 reaction executor가 자기 overlay execution condition을 정의한다.
+
+정리하면 v1의 책임 분리는 다음과 같다.
+
+```text
+Overlay owner
+-> WriteObservableOverlaySnapshot()
+-> 현재 overlay state를 snapshot에 기록
+
+Incoming executor
+-> ResolveObservableOverlayExecutionCondition()
+-> 실행 가능 여부와 필요한 overlay handling 결정
+
+Orchestrator
+-> decision과 handling을 execution result에 반영
+
+Action / Reaction Component
+-> CanApplyObservableOverlayHandling()
+-> ApplyObservableOverlayHandling()
+-> owner authorization 이후 상태 변경 적용
+```
 
 ---
 
-## 7. Block_Hit 복귀 정책
+## 8. Block_Hit 복귀 정책
 
 `Block_Hit`을 별도 Reaction으로 사용할 경우, Guard Hold 상태를 그대로 유지한 채 맞는 것이 아니라 `Guard Hold`를 일시적으로 대체하는 피격 반응으로 본다.
 
@@ -268,7 +373,37 @@ v1에서는 먼저 `Block_Hit`이 별도 Reaction으로 실행될 수 있는 구
 
 ---
 
-## 8. Combat Resolution과의 관계
+## 9. Guard Runtime 정리 기준
+
+Guard runtime 정리는 두 단계로 나눈다.
+
+```text
+ClearGuardOverlay
+-> Guard pose / guard 판정 / parry 판정만 정리
+-> guard 입력 의도와 재시작 lock은 유지
+
+ResetGuardState
+-> Guard runtime 전체 초기화
+-> 입력 의도 / pose / guard / parry / 재시작 lock까지 정리
+```
+
+`ClearGuardOverlay`는 Dodge, Hit, Dead처럼 다른 실행이 시작되기 전에 Guard overlay만 걷어내야 하는 경우에 사용한다. 반면 `ResetGuardState`는 interrupt, forced stop, dead 같은 흐름에서 Guard lifecycle 전체를 끝내야 할 때 사용한다.
+
+Guard snapshot은 v1에서 다음 값을 가진다.
+
+```text
+bWantsGuarding
+bIsGuardingPose
+bCanGuard
+bCanParry
+bCanStartGuard
+```
+
+이 중 `bCanStartGuard`는 Guard In 재진입 허용 여부를 나타낸다. Guard In은 `bIsGuardingPose == false`이고 `bCanStartGuard == true`일 때만 실행 의미가 있다.
+
+---
+
+## 10. Combat Resolution과의 관계
 
 Observable Overlay Layer는 Combat Resolution을 대체하지 않는다. 다만 두 구조는 같은 설계 패턴을 공유할 수 있다.
 
@@ -276,9 +411,10 @@ Observable Overlay Layer는 Combat Resolution을 대체하지 않는다. 다만 
 
 ```text
 공통 진입점
--> 등록된 policy provider 순회
--> 각 owner가 자기 runtime state와 query를 기준으로 relevant / allowed / handling 판단
--> 공통 흐름이 decision을 병합
+-> 현재 판단에 필요한 snapshot 구성
+-> incoming 또는 packet 해석자가 snapshot을 기준으로 결과 결정
+-> 필요한 후처리 handling 또는 mutation 요청
+-> 공통 흐름이 decision과 요청된 처리를 적용
 ```
 
 Overlay gate는 Action / Reaction 시작 직전에 현재 overlay 상태와 새 실행이 공존 가능한지 판단한다.
@@ -289,17 +425,17 @@ Combat Resolution은 이후 damage packet 처리 시점에서 parry / guard / in
 
 ```text
 TakeDamage 또는 damage packet 진입
--> Combat Resolution policy registry 순회
--> Defense / Parry / Guard / Invincible / Buff policy 판단
+-> Combat Resolution snapshot 구성
+-> Defense / Parry / Guard / Invincible / Buff 상태를 기준으로 packet 해석
 -> damage block / reduce / continue / parry 결과 병합
 -> Damage / Reaction / Feedback 흐름으로 전달
 ```
 
-차이는 결과 복잡도다. Overlay gate는 `allowed`와 overlay handling 누적이 핵심이지만, Combat Resolution은 damage amount 변경, reaction 억제, feedback 요청, attacker reaction, hit stop 같은 결과를 함께 병합해야 한다. 따라서 Combat Resolution에는 overlay gate보다 더 명확한 priority / terminal decision / mutation rule이 필요할 수 있다.
+차이는 결과 복잡도다. Overlay gate는 실행 가능 여부와 overlay handling 누적이 핵심이지만, Combat Resolution은 damage amount 변경, reaction 억제, feedback 요청, attacker reaction, hit stop 같은 결과를 함께 병합해야 한다. 따라서 Combat Resolution에는 overlay gate보다 더 명확한 priority / terminal decision / mutation rule이 필요할 수 있다.
 
 ---
 
-## 9. 관련 문서
+## 11. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`
