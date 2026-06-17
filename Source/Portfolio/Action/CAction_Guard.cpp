@@ -138,7 +138,7 @@ void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservabl
 			return;
 		}
 
-		// GuardIn Case: Clear stale Guard state before start.
+		// GuardIn Case: suspend stale Guard overlay before start.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		if (guardSnapshot.HasGuardOverlay())
 		{

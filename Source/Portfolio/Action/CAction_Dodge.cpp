@@ -44,12 +44,12 @@ void UCAction_Dodge::ResolveObservableOverlayExecutionCondition(const FObservabl
 		return;
 	}
 
-	// GuardOverlay Case: Clear Guard before Dodge.
+	// GuardOverlay Case: interrupt Guard lifecycle before Dodge.
 	const bool bHasGuardOverlay = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardOverlay();
 	if (bHasGuardOverlay)
 	{
 		OutDecision.Decision = EExecutionDecision::Accept;
-		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
+		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
 		return;
 	}
 

@@ -146,6 +146,7 @@ enum class EObservableOverlayHandling : uint8
 {
 	None = 0,
 
+	ClearGuardState,
 	ClearGuardOverlay,
 
 	Max,

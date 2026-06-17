@@ -318,7 +318,7 @@ void UCActionComponent::NotifyGuardOutCompleted()
 {
 	if (!IsValid(DefenseComp_Cached)) return;
 
-	DefenseComp_Cached->HandleGuardOutCompleted();
+	DefenseComp_Cached->HandleGuardLifecycleCompleted();
 }
 
 void UCActionComponent::NotifyGuardInterrupted(EActionStopReason InStopReason)
@@ -330,7 +330,7 @@ void UCActionComponent::NotifyGuardInterrupted(EActionStopReason InStopReason)
 
 	if (!IsValid(DefenseComp_Cached)) return;
 
-	DefenseComp_Cached->HandleGuardInterrupted(InStopReason);
+	DefenseComp_Cached->HandleGuardLifecycleInterrupted();
 }
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)

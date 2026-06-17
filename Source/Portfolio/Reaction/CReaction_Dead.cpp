@@ -47,9 +47,9 @@ void UCReaction_Dead::ResolveObservableOverlayExecutionCondition(const FObservab
 	const bool bHasGuardOverlay = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardOverlay();
 	if (bHasGuardOverlay)
 	{
-		// GuardOverlay Case: Clear Guard before Dead.
+		// GuardOverlay Case: interrupt Guard lifecycle before Dead.
 		OutDecision.Decision = EExecutionDecision::Accept;
-		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
+		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
 		return;
 	}
 

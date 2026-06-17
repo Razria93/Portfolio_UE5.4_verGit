@@ -38,9 +38,31 @@ public:
 	FORCEINLINE bool CanGuard() const { return bCanGuard; }
 	FORCEINLINE bool CanParry() const { return bCanParry; }
 	FORCEINLINE bool HasGuardOverlay() const { return bIsGuardingPose || bCanGuard || bCanParry; }
+	FORCEINLINE bool HasGuardRuntimeState() const { return !bCanStartGuard || bWantsGuarding || HasGuardOverlay(); }
 
 public:
+	void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const override;
+	bool CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const override;
+	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) override;
 
+public:
+	void HandleGuardInputPressed();
+	void HandleGuardInputReleased();
+
+	void HandleGuardInStarted();
+	void HandleGuardOutStarted();
+
+	void HandleSwitchToGuard();
+
+	void HandleGuardLifecycleCompleted();
+	void HandleGuardLifecycleInterrupted();
+
+public:
+	void ClearGuardState();
+	void ClearGuardOverlay();
+	void RestoreGuardOverlay();
+
+private:
 	void AllowGuardStart();
 	void BlockGuardStart();
 
@@ -56,23 +78,6 @@ public:
 	void OpenParryWindow();
 	void CloseParryWindow();
 
-	void ResetGuardState();
-	void ClearGuardOverlay();
-
-public:
-	void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const override;
-	bool CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const override;
-	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) override;
-
-public:
-	void HandleGuardInputPressed();
-	void HandleGuardInputReleased();
-	void HandleGuardInStarted();
-	void HandleGuardOutStarted();
-	void HandleSwitchToGuard();
-	void HandleGuardOutCompleted();
-	void HandleGuardInterrupted(EActionStopReason InStopReason);
-
-public:
+private:
 	void PrintGuardStateInfo() const;
 };

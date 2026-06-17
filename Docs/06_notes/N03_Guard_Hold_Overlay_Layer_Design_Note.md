@@ -239,7 +239,7 @@ UCDefenseComponent
 -> Guard overlay state 소유
 -> IObservableOverlayPolicy 구현
 -> Guard snapshot 작성
--> ClearGuardOverlay 적용
+-> ClearGuardState / ClearGuardOverlay 적용
 ```
 
 이 변경으로 Orchestrator와 Action / Reaction Component는 overlay policy 목록을 직접 들지 않고, `UCObservableOverlayComponent`를 통해 snapshot 구성과 handling 적용을 요청한다.
@@ -266,7 +266,7 @@ Action / Reaction Component는 Orchestrator result에 누적된 handling을 실�
 
 하지만 overlay gate는 실행과 상태의 관계를 다룬다. 실행 가능 여부는 incoming executor가 판단하고, 상태 변경은 overlay handling으로 요청하는 편이 책임이 분명하다.
 
-따라서 v1에서는 `WantObservableOverlayRequirement()` / `AllowObservableOverlayRequirement()` 구조를 제거하고, incoming executor의 `ResolveObservableOverlayExecutionCondition()`으로 통합했다. 이 함수는 snapshot을 읽어 실행 가능 여부를 결정하고, 필요하면 `ClearGuardOverlay` 같은 handling을 함께 요청한다.
+따라서 v1에서는 `WantObservableOverlayRequirement()` / `AllowObservableOverlayRequirement()` 구조를 제거하고, incoming executor의 `ResolveObservableOverlayExecutionCondition()`으로 통합했다. 이 함수는 snapshot을 읽어 실행 가능 여부를 결정하고, 필요하면 `ClearGuardState` 또는 `ClearGuardOverlay` 같은 handling을 함께 요청한다.
 
 ### 6.6 PIE 검증 이후 Reaction clear 정책 재검토
 
@@ -331,9 +331,9 @@ Combat Resolution은 damage packet을 해석해 `Hit / Block_Hit / Parry / Guard
 
 v1의 첫 적용 대상은 `Guard Out`이다. `Guard Out`은 Guard overlay가 남아 있을 때만 의미 있는 종료 action이므로, Guard overlay가 이미 clear된 상태에서 들어온 `Guard Out`은 실행하지 않고 ignore한다.
 
-다만 `Guard Out`은 guard 종료 자체를 수행하는 action lifecycle이므로, `ResolveObservableOverlayExecutionCondition()`에서 `ClearGuardOverlay` handling을 요청하지 않는다. Guard overlay 정리는 `Block_Out` 시작 / 종료 처리에서 담당한다.
+다만 `Guard Out`은 guard 종료 자체를 수행하는 action lifecycle이므로, `ResolveObservableOverlayExecutionCondition()`에서 별도 overlay cleanup handling을 요청하지 않는다. Guard overlay 정리는 `Block_Out` 시작 / 종료 처리에서 담당한다.
 
-`Dodge`는 Guard overlay가 있어도 실행 가능하지만, 시작 전에 `ClearGuardOverlay` handling을 요청한다. `Hit / Dead` reaction도 의사처리계층에서 `Block_Hit / Parry / GuardBreak`가 세분화되기 전까지는 Guard overlay를 clear하는 기본 정책을 따른다.
+`Dodge`는 Guard overlay가 있어도 실행 가능하지만, 시작 전에 `ClearGuardState` handling을 요청한다. `Hit / Dead` reaction도 의사처리계층에서 `Block_Hit / Parry / GuardBreak`가 세분화되기 전까지는 Guard state를 clear하는 기본 정책을 따른다.
 
 현재 v1에서는 이 정책을 reaction base가 아니라 `Hit / Dead` reaction executor가 각각 판단한다. base reaction은 공통 clear 정책을 갖지 않고, 세부 reaction executor가 자기 overlay execution condition을 정의한다.
 
@@ -439,16 +439,23 @@ v1에서는 먼저 `Block_Hit`이 별도 Reaction으로 실행될 수 있는 구
 Guard runtime 정리는 두 단계로 나눈다.
 
 ```text
+HandleGuardLifecycleCompleted
+-> 정상 종료
+-> 입력 의도 / pose / guard / parry / 재시작 lock까지 정리
+
+HandleGuardLifecycleInterrupted
+-> 간섭 종료
+-> 입력 의도 / pose / guard / parry / 재시작 lock까지 정리
+
 ClearGuardOverlay
--> Guard pose / guard 판정 / parry 판정만 정리
+-> Guard 상태는 유지하되 pose / guard / parry 판정만 잠깐 내림
 -> guard 입력 의도와 재시작 lock은 유지
 
-ResetGuardState
--> Guard runtime 전체 초기화
--> 입력 의도 / pose / guard / parry / 재시작 lock까지 정리
+RestoreGuardOverlay
+-> 입력 의도가 유지 중이면 Guard Hold 상태 복구
 ```
 
-`ClearGuardOverlay`는 Dodge, Hit, Dead처럼 다른 실행이 시작되기 전에 Guard overlay만 걷어내야 하는 경우에 사용한다. 반면 `ResetGuardState`는 interrupt, forced stop, dead 같은 흐름에서 Guard lifecycle 전체를 끝내야 할 때 사용한다.
+`ClearGuardState`는 Dodge, Hit, Dead처럼 다른 실행이 Guard lifecycle을 끝내야 하는 경우에 사용한다. `ClearGuardOverlay`는 `Block_Hit`처럼 입력 의도는 유지하되 pose / guard / parry 판정만 잠깐 내릴 때 사용하고, 이후 `RestoreGuardOverlay`에서 입력 의도를 기준으로 Guard Hold 복구 여부를 판단한다.
 
 Guard snapshot은 v1에서 다음 값을 가진다.
 

@@ -157,10 +157,10 @@ TakeDamagePacket
     - [x] overlay handling은 단일 값이 아니라 `TArray<EObservableOverlayHandling>`로 누적한다.
     - [x] `WantObservableOverlayRequirement()` / `AllowObservableOverlayRequirement()` 구조를 제거하고 `ResolveObservableOverlayExecutionCondition()` 기준으로 단순화한다.
     - [x] requested overlay handling은 실행 직전 overlay owner policy의 `CanApply / Apply` 단계를 거쳐 적용되도록 구성한다.
-    - [x] `ClearGuardOverlay`는 pose / guard / parry overlay만 정리하고, `ResetGuardState`는 입력 의도와 guard 재시작 lock까지 포함해 guard runtime 전체를 초기화하도록 역할을 분리한다.
+    - [x] Guard 정리를 정상 종료 / 간섭 종료 / overlay 정리 / overlay 복구로 나누고, 각각 `HandleGuardLifecycleCompleted`, `HandleGuardLifecycleInterrupted`, `ClearGuardOverlay`, `RestoreGuardOverlay`로 분리한다.
     - [x] Guard Out은 Guard overlay가 남아 있을 때만 의미 있는 incoming action으로 보고, overlay가 없으면 ignore되도록 구성한다.
     - [x] Guard Out의 overlay 정리는 pre-start handling이 아니라 Guard Out action lifecycle에서 처리하도록 둔다.
-    - [x] Dodge / Hit / Dead처럼 Guard overlay를 제거해야 하는 incoming execution은 실행 전에 `ClearGuardOverlay` handling을 요청하도록 구성한다.
+    - [x] Dodge / Hit / Dead처럼 Guard lifecycle을 끝내야 하는 incoming execution은 실행 전에 `ClearGuardState` handling을 요청하도록 구성한다.
     - [ ] dodge / reaction takeover에서 Guard 상태가 남지 않는지 PIE에서 확인한다.
     - [x] interrupt / forced stop 시 `GuardInCompleted` deferred candidate를 정리하도록 호출 지점을 연결한다.
 
