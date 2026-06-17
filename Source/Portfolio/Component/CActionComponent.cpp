@@ -18,6 +18,8 @@ UCActionComponent::UCActionComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+// Lifecycle
+
 void UCActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -53,21 +55,7 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionData& InData) const
-{
-	if (!IsActive()) return false;
-
-	if (!IsValid(InAction)) return false;
-	if (InAction != GetActiveActionExecutor()) return false;
-	if (!InData.IsValidMinimal()) return false;
-
-	if (!IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive()) return false;
-	
-	if (!IsValid(StateComp_Cached)) return false;
-	if (StateComp_Cached->GetCurrentExecutionState() != EExecutionState::Action) return false;
-
-	return true;
-}
+// Query
 
 bool UCActionComponent::IsActive() const
 {
@@ -106,6 +94,8 @@ UCAction* UCActionComponent::GetActiveActionExecutor() const
 	return ActiveActionExecutor;
 }
 
+// Data Resolve
+
 bool UCActionComponent::ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData)
 {
 	OutData = FActionData();
@@ -135,6 +125,24 @@ UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 	// [Debug] ActionData is Valid; but Find and Add Failed
 	return nullptr;
 }
+
+bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionData& InData) const
+{
+	if (!IsActive()) return false;
+
+	if (!IsValid(InAction)) return false;
+	if (InAction != GetActiveActionExecutor()) return false;
+	if (!InData.IsValidMinimal()) return false;
+
+	if (!IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive()) return false;
+
+	if (!IsValid(StateComp_Cached)) return false;
+	if (StateComp_Cached->GetCurrentExecutionState() != EExecutionState::Action) return false;
+
+	return true;
+}
+
+// Execution Entry
 
 bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResult)
 {
@@ -177,6 +185,8 @@ bool UCActionComponent::RequestStopActiveAction(const FExecutionInterventionDire
 	return StopActiveAction(InDirective);
 }
 
+// Execution Result Hooks
+
 bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData)
 {
 	if (!IsActive()) return false;
@@ -199,6 +209,8 @@ void UCActionComponent::HandleApplyActionFinished(const UCAction* InAction, EAct
 
 	EndActiveAction(InFinishReason);
 }
+
+// Notify Routing
 
 void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand)
 {
@@ -260,15 +272,7 @@ void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
 }
 
-void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType)
-{
-	if (!IsValid(OwnerCharacter_Cached)) return;
-
-	if (OnActionEvent.IsBound())
-	{
-		OnActionEvent.Broadcast(OwnerCharacter_Cached, InType, InIndex, InEventType);
-	}
-}
+// Cross-System Dispatch
 
 bool UCActionComponent::NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
@@ -289,6 +293,20 @@ void UCActionComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsume
 		ActionOrchestratorComp_Cached->ClearDeferredActions(InConsumeKey);
 	}
 }
+
+// Event Broadcast
+
+void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType)
+{
+	if (!IsValid(OwnerCharacter_Cached)) return;
+
+	if (OnActionEvent.IsBound())
+	{
+		OnActionEvent.Broadcast(OwnerCharacter_Cached, InType, InIndex, InEventType);
+	}
+}
+
+// Data Build
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 {
@@ -398,6 +416,8 @@ UCAction* UCActionComponent::FindActionExecutor(const UClass* InClass)
 	return found;
 }
 
+// Decision Apply
+
 bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsRequested()) return true;
@@ -421,6 +441,8 @@ bool UCActionComponent::ApplyObservableOverlayHandlings(const TArray<EObservable
 	if (InHandlings.IsEmpty()) return true;
 	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyObservableOverlayHandlings(InHandlings);
 }
+
+// Execution Operations
 
 bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 {
@@ -498,6 +520,8 @@ bool UCActionComponent::EndActiveAction(EActionFinishReason InFinishReason)
 	return !IsActive();
 }
 
+// Active Context
+
 void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& InContext)
 {
 	if (!InContext.IsValidMinimal()) return;
@@ -530,6 +554,8 @@ void UCActionComponent::ClearActiveActionContext()
 	}
 }
 
+// State Transition
+
 void UCActionComponent::EnterActionState(const FActionData& InData)
 {
 	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
@@ -560,6 +586,8 @@ void UCActionComponent::ExitActionState(const FActionData& InData)
 		StateComp_Cached->SetIdleState();
 	}
 }
+
+// Conversion
 
 EActionStopReason UCActionComponent::ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const
 {

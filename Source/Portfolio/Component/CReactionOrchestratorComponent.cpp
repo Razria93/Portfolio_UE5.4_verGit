@@ -16,6 +16,8 @@ UCReactionOrchestratorComponent::UCReactionOrchestratorComponent()
 {
 }
 
+// Lifecycle
+
 void UCReactionOrchestratorComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -29,6 +31,8 @@ void UCReactionOrchestratorComponent::BeginPlay()
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 }
+
+// Request Entry
 
 FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(const FDamageReactionRequest& InIncomingRequest)
 {
@@ -45,8 +49,10 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 	if (!ResolveDamageReactionCandidate(InIncomingRequest, candidate, rejectReason))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteReactionCandidate(candidate);
+	return ProcessReactionCandidate(candidate);
 }
+
+// Request Validation
 
 bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const
 {
@@ -70,6 +76,8 @@ bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestR
 
 	return true;
 }
+
+// Candidate Resolve
 
 bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDamageReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const
 {
@@ -120,7 +128,9 @@ EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const F
 	return EReactionType::None;
 }
 
-FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate(const FReactionCandidate& InIncomingCandidate)
+// Orchestration Pipeline
+
+FReactionRequestResult UCReactionOrchestratorComponent::ProcessReactionCandidate(const FReactionCandidate& InIncomingCandidate)
 {
 	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
 
@@ -138,6 +148,8 @@ FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate
 
 	return DispatchReactionDecision(executionResult);
 }
+
+// Execution Context Resolve
 
 bool UCReactionOrchestratorComponent::ResolveReactionContext(const FReactionCandidate& InIncomingCandidate, FReactionExecutionContext& OutIncomingContext, EReactionRequestRejectReason& OutRejectReason) const
 {
@@ -191,6 +203,8 @@ UCReaction* UCReactionOrchestratorComponent::ResolveReactionExecutor(const FReac
 	// Resolve Executor
 	return ReactionComp_Cached->ResolveReactionExecutor(InIncomingData);
 }
+
+// Decision Query Build
 
 FExecutionDecisionQuery UCReactionOrchestratorComponent::BuildDecisionQuery(const FReactionExecutionContext& InIncomingContext) const
 {
@@ -295,6 +309,8 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 	return participant;
 }
 
+// Decision Build
+
 FExecutionDecisionResult UCReactionOrchestratorComponent::BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EReactionRequestRejectReason& OutRejectReason) const
 {
 	FExecutionDecisionResult result;
@@ -350,6 +366,8 @@ FReactionExecutionResult UCReactionOrchestratorComponent::BuildReactionExecution
 	return result;
 }
 
+
+// Decision Refinement
 
 void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
 {
@@ -414,43 +432,6 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 		return;
 	}
 }
-
-void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
-{
-	InOutResult.OverlayHandlings.Empty();
-
-	if (!InOutResult.IsAcceptedDecision()) return;
-
-	const bool bNeedsExecutionStart = InOutResult.ApplyMode == EExecutionApplyMode::Start || InOutResult.ApplyMode == EExecutionApplyMode::Intervene;
-	if (!bNeedsExecutionStart) return;
-
-	FObservableOverlayQuery overlayQuery;
-	overlayQuery.DecisionQuery = InQuery;
-	overlayQuery.ApplyMode = InOutResult.ApplyMode;
-
-	if (InQuery.IncomingPart.IsReactionParticipant())
-	{
-		if (const UCReaction* incomingReaction = InQuery.IncomingPart.GetReactionContext().ReactionExecutor)
-		{
-			FObservableOverlayExecutionDecision overlayDecision;
-			incomingReaction->ResolveObservableOverlayExecutionCondition(overlayQuery, overlayDecision);
-
-			if (!overlayDecision.IsAccepted())
-			{
-				InOutResult.Decision = overlayDecision.Decision;
-				return;
-			}
-
-			for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
-			{
-				if (handling == EObservableOverlayHandling::None) continue;
-
-				InOutResult.OverlayHandlings.AddUnique(handling);
-			}
-		}
-	}
-}
-
 
 void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
 {
@@ -547,6 +528,44 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 	InOutResult.InterventionDirective = directive;
 }
 
+void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
+{
+	InOutResult.OverlayHandlings.Empty();
+
+	if (!InOutResult.IsAcceptedDecision()) return;
+
+	const bool bNeedsExecutionStart = InOutResult.ApplyMode == EExecutionApplyMode::Start || InOutResult.ApplyMode == EExecutionApplyMode::Intervene;
+	if (!bNeedsExecutionStart) return;
+
+	FObservableOverlayQuery overlayQuery;
+	overlayQuery.DecisionQuery = InQuery;
+	overlayQuery.ApplyMode = InOutResult.ApplyMode;
+
+	if (InQuery.IncomingPart.IsReactionParticipant())
+	{
+		if (const UCReaction* incomingReaction = InQuery.IncomingPart.GetReactionContext().ReactionExecutor)
+		{
+			FObservableOverlayExecutionDecision overlayDecision;
+			incomingReaction->ResolveObservableOverlayExecutionCondition(overlayQuery, overlayDecision);
+
+			if (!overlayDecision.IsAccepted())
+			{
+				InOutResult.Decision = overlayDecision.Decision;
+				return;
+			}
+
+			for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
+			{
+				if (handling == EObservableOverlayHandling::None) continue;
+
+				InOutResult.OverlayHandlings.AddUnique(handling);
+			}
+		}
+	}
+}
+
+// Intervention Build
+
 bool UCReactionOrchestratorComponent::BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const
 {
 	OutQuery = FExecutionInterventionQuery();
@@ -583,6 +602,8 @@ bool UCReactionOrchestratorComponent::BuildInterventionDirective(const FExecutio
 	return OutDirective.IsValidRequest();
 }
 
+// Decision Dispatch
+
 FReactionRequestResult UCReactionOrchestratorComponent::DispatchReactionDecision(const FReactionExecutionResult& InResult)
 {
 	// [NOTE] Request ignore result
@@ -603,6 +624,8 @@ FReactionRequestResult UCReactionOrchestratorComponent::DispatchReactionDecision
 
 	return BuildReactionRequestResult(resultType);
 }
+
+// Result Build
 
 EReactionRequestResultType UCReactionOrchestratorComponent::ConvertDecisionToResultType(const FReactionExecutionResult& InResult) const
 {
@@ -645,6 +668,8 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildReactionRequestResu
 
 	return result;
 }
+
+// Debug
 
 void UCReactionOrchestratorComponent::PrintReactionRequestResult(const FReactionRequestResult& InResult) const
 {

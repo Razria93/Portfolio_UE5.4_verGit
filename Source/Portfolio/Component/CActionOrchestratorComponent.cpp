@@ -20,6 +20,8 @@ UCActionOrchestratorComponent::UCActionOrchestratorComponent()
 {
 }
 
+// Lifecycle
+
 void UCActionOrchestratorComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -35,6 +37,8 @@ void UCActionOrchestratorComponent::BeginPlay()
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 }
+
+// Request Entry
 
 FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const FMovementActionRequest& InIncomingRequest)
 {
@@ -130,6 +134,8 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	return ProcessActionCandidate(incomingCandidate);
 }
 
+// Deferred Entry
+
 FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
 {
 	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max)
@@ -150,6 +156,8 @@ FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDefer
 
 	return ProcessActionCandidate(candidate);
 }
+
+// Deferred Management
 
 void UCActionOrchestratorComponent::ClearAllDeferredActions()
 {
@@ -181,6 +189,8 @@ void UCActionOrchestratorComponent::ClearDeferredActions(EDeferredActionConsumeK
 			return InEntry.MatchesIdentity(InConsumeKey, candidate);
 		});
 }
+
+// Request Validation
 
 bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
 {
@@ -214,6 +224,8 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 
 	return true;
 }
+
+// Candidate Resolve
 
 bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const
 {
@@ -328,6 +340,8 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	return true;
 }
 
+// Request Side Effects
+
 void UCActionOrchestratorComponent::ApplyCombatActionInputSideEffects(const FCombatActionRequest& InIncomingRequest) const
 {
 	if (!IsValid(ActionComp_Cached)) return;
@@ -351,6 +365,8 @@ void UCActionOrchestratorComponent::ApplyCombatActionInputSideEffects(const FCom
 		break;
 	}
 }
+
+// Orchestration Pipeline
 
 FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const FActionCandidate& InIncomingCandidate)
 {
@@ -378,6 +394,8 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 
 	return DispatchActionDecision(executionResult);
 }
+
+// Execution Context Resolve
 
 bool UCActionOrchestratorComponent::ResolveActionContext(const FActionCandidate& InIncomingCandidate, FActionExecutionContext& OutIncomingContext, EActionRequestRejectReason& OutRejectReason) const
 {
@@ -429,6 +447,8 @@ UCAction* UCActionOrchestratorComponent::ResolveActionExecutor(const FActionData
 
 	return ActionComp_Cached->ResolveActionExecutor(InIncomingData);
 }
+
+// Decision Query Build
 
 FExecutionDecisionQuery UCActionOrchestratorComponent::BuildDecisionQuery(const FActionExecutionContext& InIncomingContext) const
 {
@@ -533,6 +553,8 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 	return participant;
 }
 
+// Deferred Resolve
+
 bool UCActionOrchestratorComponent::TryResolveDeferredActionConsumeKey(const FActionCandidate& InIncomingCandidate, const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const
 {
 	OutConsumeKey = EDeferredActionConsumeKey::None;
@@ -576,6 +598,8 @@ FActionRequestResult UCActionOrchestratorComponent::DeferActionCandidate(const F
 
 	return BuildActionRequestResult(EActionRequestResultType::Deferred);
 }
+
+// Decision Build
 
 FExecutionDecisionResult UCActionOrchestratorComponent::BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EActionRequestRejectReason& OutRejectReason) const
 {
@@ -631,6 +655,8 @@ FActionExecutionResult UCActionOrchestratorComponent::BuildActionExecutionResult
 
 	return result;
 }
+
+// Decision Refinement
 
 void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
 {
@@ -700,42 +726,6 @@ void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDe
 	}
 }
 
-void UCActionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
-{
-	InOutResult.OverlayHandlings.Empty();
-
-	if (!InOutResult.IsAcceptedDecision()) return;
-
-	const bool bNeedsExecutionStart = InOutResult.ApplyMode == EExecutionApplyMode::Start || InOutResult.ApplyMode == EExecutionApplyMode::Intervene;
-	if (!bNeedsExecutionStart) return;
-
-	FObservableOverlayQuery overlayQuery;
-	overlayQuery.DecisionQuery = InQuery;
-	overlayQuery.ApplyMode = InOutResult.ApplyMode;
-
-	if (InQuery.IncomingPart.IsActionParticipant())
-	{
-		if (const UCAction* incomingAction = InQuery.IncomingPart.GetActionContext().ActionExecutor)
-		{
-			FObservableOverlayExecutionDecision overlayDecision;
-			incomingAction->ResolveObservableOverlayExecutionCondition(overlayQuery, overlayDecision);
-
-			if (!overlayDecision.IsAccepted())
-			{
-				InOutResult.Decision = overlayDecision.Decision;
-				return;
-			}
-
-			for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
-			{
-				if (handling == EObservableOverlayHandling::None) continue;
-
-				InOutResult.OverlayHandlings.AddUnique(handling);
-			}
-		}
-	}
-}
-
 void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
 {
 	InOutResult.InterventionDirective = FExecutionInterventionDirective();
@@ -798,6 +788,44 @@ void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutio
 	InOutResult.InterventionDirective = directive;
 }
 
+void UCActionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FActionExecutionResult& InOutResult) const
+{
+	InOutResult.OverlayHandlings.Empty();
+
+	if (!InOutResult.IsAcceptedDecision()) return;
+
+	const bool bNeedsExecutionStart = InOutResult.ApplyMode == EExecutionApplyMode::Start || InOutResult.ApplyMode == EExecutionApplyMode::Intervene;
+	if (!bNeedsExecutionStart) return;
+
+	FObservableOverlayQuery overlayQuery;
+	overlayQuery.DecisionQuery = InQuery;
+	overlayQuery.ApplyMode = InOutResult.ApplyMode;
+
+	if (InQuery.IncomingPart.IsActionParticipant())
+	{
+		if (const UCAction* incomingAction = InQuery.IncomingPart.GetActionContext().ActionExecutor)
+		{
+			FObservableOverlayExecutionDecision overlayDecision;
+			incomingAction->ResolveObservableOverlayExecutionCondition(overlayQuery, overlayDecision);
+
+			if (!overlayDecision.IsAccepted())
+			{
+				InOutResult.Decision = overlayDecision.Decision;
+				return;
+			}
+
+			for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
+			{
+				if (handling == EObservableOverlayHandling::None) continue;
+
+				InOutResult.OverlayHandlings.AddUnique(handling);
+			}
+		}
+	}
+}
+
+// Intervention Build
+
 bool UCActionOrchestratorComponent::BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const
 {
 	OutQuery = FExecutionInterventionQuery();
@@ -834,6 +862,8 @@ bool UCActionOrchestratorComponent::BuildInterventionDirective(const FExecutionI
 	return OutDirective.IsValidRequest();
 }
 
+// Decision Dispatch
+
 FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const FActionExecutionResult& InResult)
 {
 	// [NOTE] Request ignore result
@@ -854,6 +884,8 @@ FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const
 
 	return BuildActionRequestResult(resultType);
 }
+
+// Result Build
 
 EActionRequestResultType UCActionOrchestratorComponent::ConvertDecisionToResultType(const FActionExecutionResult& InResult) const
 {
@@ -898,6 +930,8 @@ FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EAc
 
 	return result;
 }
+
+// Debug
 
 void UCActionOrchestratorComponent::PrintActionRequestResult(const FActionRequestResult& InResult) const
 {

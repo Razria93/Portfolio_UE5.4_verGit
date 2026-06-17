@@ -68,32 +68,34 @@ public:
 	FReactionTypeChanged OnReactionTypeChanged;
 
 protected:
+	// Lifecycle
 	void BeginPlay() override;
 
 public:
+	// Query
 	FORCEINLINE bool IsActiveReactionType(EReactionType InType) const { return ActiveReactionType == InType; }
-
-public:
 	bool IsActive() const;
 
-public:
 	EReactionType GetActiveReactionType() const;
 	bool GetActiveReactionData(FReactionData& OutData) const;
 	UCReaction* GetActiveReactionExecutor() const;
 
 public:
-	// Temporary data provider API (Move to DataAsset).
+	// Data Resolve
 	bool ResolveReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData);
 	UCReaction* ResolveReactionExecutor(const FReactionData& InData);
 
 public:
+	// Execution Entry
 	bool ApplyReactionDecision(const FReactionExecutionResult& InResult);
 	bool RequestStopActiveReaction(const FExecutionInterventionDirective& InDirective);
 
 public:
+	// Execution Result Hooks
 	void HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason);
 
 public:
+	// Notify Routing
 	void HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand);
 
 	void HandleReactionAllowInterventionWindowBegin(FName InWindowKey);
@@ -104,42 +106,47 @@ public:
 	void HandleReactionFeedbackWindowEnd(FName InTriggerKey);
 
 private:
-	// Temporary data build API (Move to DataAsset).
+	// Data Build (temporary: move to DataAsset)
 	void BuildReactionDataMap(bool bRebuildAll);
 	void BuildReactionExecutorMap(bool bRebuildAll);
 
-private:
-	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const;
-
-private:
 	UCReaction* AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass);
 	UCReaction* FindReactionExecutor(const UClass* InClass);
 
 private:
+	// Data Resolve Helpers
+	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const;
+
+private:
+	// Decision Apply
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
 	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 
 private:
+	// Execution Operations
 	bool StartReaction(const FReactionExecutionContext& InContext);
 	bool StopActiveReaction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveReaction(EReactionFinishReason InFinishReason);
 
 private:
+	// Active Context
 	void SetActiveReactionContext(const FReactionExecutionContext& InContext);
 	void ClearActiveReactionContext();
 
 private:
+	// State Transition
 	void EnterReactionState(const FReactionData& InData);
 	void ExitReactionState(const FReactionData& InData);
 
 private:
+	// Conversion
 	EReactionStopReason ConvertExecutionStopReasonToReactionStopReason(EExecutionStopReason InStopReason) const;
 	EReactionFinishReason ConvertExecutionStopReasonToReactionFinishReason(EExecutionStopReason InStopReason) const;
 
 private:
+	// Debug
 	void PrintReactionInfoSummary() const;
 	void PrintReactionDataMap() const;
-
 	void PrintComponentStateInfo() const;
 	void PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InSpecKey) const;
 	void PrintReactionDataKeyInfo(const FReactionDataKey& InDataKey) const;

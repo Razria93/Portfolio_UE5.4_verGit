@@ -17,7 +17,6 @@ class PORTFOLIO_API UCActionComponent : public UActorComponent
 public:
 	UCActionComponent();
 
-
 	// === ActionData ======================================= //
 private:
 	UPROPERTY(EditAnywhere, Category = "Action|Data")
@@ -75,88 +74,93 @@ public:
 	FActionEventSignature OnActionEvent;
 
 protected:
+	// Lifecycle
 	void BeginPlay() override;
 
 public:
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	// Query
 	FORCEINLINE bool IsActiveActionType(EActionType InType) const { return ActiveActionType == InType; }
-
-public:
-	bool CanCommitChain(const UCAction* InAction, const FActionData& InData) const;
-
-public:
 	bool IsActive() const;
 
-public:
 	EActionType GetActiveActionType() const;
 	int32 GetActiveActionIndex() const;
 	bool GetActiveActionData(FActionData& OutData) const;
 	class UCAction* GetActiveActionExecutor() const;
 
 public:
+	// Data Resolve
 	bool ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData);
 	class UCAction* ResolveActionExecutor(const FActionData& InData);
 
+	bool CanCommitChain(const UCAction* InAction, const FActionData& InData) const;
+
 public:
+	// Execution Entry
 	bool ApplyActionDecision(const FActionExecutionResult& InResult);
 	bool RequestStopActiveAction(const FExecutionInterventionDirective& InDirective);
 
 public:
+	// Execution Result Hooks
 	bool HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData);
 	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InFinishReason);
 
 public:
+	// Notify Routing
 	void HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand);
 
-public:
 	void HandleActionAllowInterventionWindowBegin(FName InWindowKey);
 	void HandleActionAllowInterventionWindowEnd(FName InWindowKey);
 
-public:
 	void HandleActionFeedback(FName InTriggerKey);
 	void HandleActionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleActionFeedbackWindowEnd(FName InTriggerKey);
 
 public:
-	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
-
-public:
+	// Cross-System Dispatch
 	bool NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext);
+
 	FActionRequestResult ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey);
 	void ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey);
 
+public:
+	// Event Broadcast
+	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
+
 private:
-	// Temporary data build API (Move to DataAsset).
+	// Data Build (temporary: move to DataAsset)
 	void BuildActionDataMap(bool bRebuildAll);
 	void BuildActionExecutorMap(bool bRebuildAll);
 
-private:
 	UCAction* AddActionExecutor(const TSubclassOf<class UCAction> InSubClass);
 	UCAction* FindActionExecutor(const UClass* InClass);
 
 private:
+	// Decision Apply
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
-
-private:
 	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 
 private:
+	// Execution Operations
 	bool StartAction(const FActionExecutionContext& InContext);
 	bool ReserveAction(const FActionExecutionContext& InContext);
 	bool StopActiveAction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveAction(EActionFinishReason InFinishReason);
 
 private:
+	// Active Context
 	void SetActiveActionContext(const FActionExecutionContext& InContext);
 	void ClearActiveActionContext();
 
 private:
+	// State Transition
 	void EnterActionState(const FActionData& InData);
 	void ExitActionState(const FActionData& InData);
 
 private:
+	// Conversion
 	EActionStopReason ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const;
 	EActionFinishReason ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const;
 };
