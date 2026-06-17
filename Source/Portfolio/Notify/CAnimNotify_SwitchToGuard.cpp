@@ -11,13 +11,15 @@ UCAnimNotify_SwitchToGuard::UCAnimNotify_SwitchToGuard()
 
 FString UCAnimNotify_SwitchToGuard::GetNotifyName_Implementation() const
 {
-	return TEXT("SwitchToGuard");
+	return TEXT("Switch To Guard");
 }
 
 void UCAnimNotify_SwitchToGuard::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
+	Super::Notify(MeshComp, Animation, EventReference);
+
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
-	actionComp->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::SwitchToGuard);
 }

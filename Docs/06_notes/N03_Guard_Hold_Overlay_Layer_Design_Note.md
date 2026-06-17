@@ -289,7 +289,7 @@ Action / Reaction Component는 Orchestrator result에 누적된 handling을 실�
 따라서 Guard 상태 전환 event는 다음 경로로 이관한다.
 
 ```text
-Action / Notify / Input side effect
+Action lifecycle / input side effect
 -> UCActionComponent::NotifyObservableOverlayEvent()
 -> UCObservableOverlayComponent::NotifyObservableOverlayEvent()
 -> IObservableOverlayPolicy::HandleObservableOverlayEvent()
@@ -297,6 +297,20 @@ Action / Notify / Input side effect
 ```
 
 이 변경으로 `UCActionComponent`는 Guard 전용 Defense 라우터가 아니라 공통 overlay event 전달 지점으로 축소된다. `UCDefenseComponent`는 Guard overlay state owner로서 `IObservableOverlayPolicy`를 통해 Guard event를 해석하고 실제 상태를 변경한다.
+
+단, montage notify는 overlay event를 직접 만들지 않는다. Notify는 기존 `HandleActionNotifyCommand()` 진입점을 통해 active executor에게 timing command만 전달하고, `CAction_Guard`가 `SwitchToGuard` / `AllowGuardStart`의 의미를 해석한 뒤 필요한 overlay event를 dispatch한다.
+
+```text
+AnimNotify
+-> UCActionComponent::HandleActionNotifyCommand()
+-> active UCAction executor
+-> CAction_Guard::HandleSpecificNotifyCommand()
+-> UCActionComponent::NotifyObservableOverlayEvent()
+-> UCObservableOverlayComponent
+-> UCDefenseComponent
+```
+
+이 규칙은 “notify는 timing만 알리고, 그 timing의 의미는 executor가 해석한다”는 기존 action notify 책임 분리를 유지하기 위한 것이다.
 
 다만 `GuardInCompleted` deferred consume은 overlay 상태 변경이 아니라 action orchestration의 지연 실행 소비이므로 `UCActionOrchestratorComponent` 책임으로 유지한다.
 

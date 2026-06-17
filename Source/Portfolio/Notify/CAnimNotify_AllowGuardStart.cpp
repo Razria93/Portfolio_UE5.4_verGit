@@ -11,13 +11,15 @@ UCAnimNotify_AllowGuardStart::UCAnimNotify_AllowGuardStart()
 
 FString UCAnimNotify_AllowGuardStart::GetNotifyName_Implementation() const
 {
-	return TEXT("AllowGuardStart");
+	return TEXT("Allow Guard Start");
 }
 
 void UCAnimNotify_AllowGuardStart::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
+	Super::Notify(MeshComp, Animation, EventReference);
+
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
-	actionComp->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
+	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::AllowGuardStart);
 }

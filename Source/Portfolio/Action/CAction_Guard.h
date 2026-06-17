@@ -14,6 +14,9 @@ public:
 	void Stop(EActionStopReason InStopReason) override;
 	void Complete() override;
 
+protected:
+	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
+
 public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 	bool TryResolveDeferredConsumeKey(const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const override;

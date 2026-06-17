@@ -61,6 +61,25 @@ void UCAction_Guard::Complete()
 	}
 }
 
+void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
+{
+	if (!IsValid(OwnerActionComp_Injected)) return;
+
+	switch (InCommand)
+	{
+	case EActionNotifyCommand::SwitchToGuard:
+		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
+		return;
+
+	case EActionNotifyCommand::AllowGuardStart:
+		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
+		return;
+
+	default:
+		break;
+	}
+}
+
 FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;

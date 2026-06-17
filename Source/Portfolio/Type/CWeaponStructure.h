@@ -72,6 +72,9 @@ enum class EActionNotifyCommand : uint8
 	Equip,
 	Unequip,
 
+	SwitchToGuard,
+	AllowGuardStart,
+
 	Max,
 };
 
