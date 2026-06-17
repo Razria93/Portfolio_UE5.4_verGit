@@ -26,6 +26,7 @@ protected:
 
 public:
 	void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const;
+	bool NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext);
 	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling);
 

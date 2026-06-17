@@ -64,9 +64,6 @@ private:
 	class UCActionOrchestratorComponent* ActionOrchestratorComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCDefenseComponent* DefenseComp_Cached = nullptr;
-
-	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
@@ -126,19 +123,9 @@ public:
 	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
 
 public:
-	void NotifyGuardInputPressed();
-	void NotifyGuardInputReleased();
-
-	void NotifyGuardInStarted();
-	void NotifyGuardOutStarted();
-
-	void NotifySwitchToGuard();
-
-	void NotifyAllowGuardStart();
-	
-	void NotifyGuardInCompleted();
-	void NotifyGuardOutCompleted();
-	void NotifyGuardInterrupted(EActionStopReason InStopReason);
+	bool NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext);
+	FActionRequestResult ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey);
+	void ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey);
 
 private:
 	// Temporary data build API (Move to DataAsset).

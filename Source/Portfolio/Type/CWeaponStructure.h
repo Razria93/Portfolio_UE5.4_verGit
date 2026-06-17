@@ -175,6 +175,50 @@ enum class EExecutionStopReason : uint8
 };
 
 UENUM(BlueprintType)
+enum class EObservableOverlayEventType : uint8
+{
+	None = 0,
+
+	GuardInputPressed,
+	GuardInputReleased,
+
+	GuardInStarted,
+	GuardOutStarted,
+
+	SwitchToGuard,
+	AllowGuardStart,
+
+	GuardLifecycleCompleted,
+	GuardLifecycleInterrupted,
+
+	Max,
+};
+
+USTRUCT(BlueprintType)
+struct FObservableOverlayEventContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EObservableOverlayEventType EventType = EObservableOverlayEventType::None;
+
+public:
+	FObservableOverlayEventContext() = default;
+
+	explicit FObservableOverlayEventContext(EObservableOverlayEventType InEventType)
+		: EventType(InEventType)
+	{
+	}
+
+public:
+	bool IsValidMinimal() const
+	{
+		return EventType != EObservableOverlayEventType::None && EventType != EObservableOverlayEventType::Max;
+	}
+};
+
+UENUM(BlueprintType)
 enum class EExecutionInterventionTiming : uint8
 {
 	None = 0,

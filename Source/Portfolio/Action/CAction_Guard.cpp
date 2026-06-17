@@ -15,11 +15,11 @@ bool UCAction_Guard::Start(const FActionData& InData)
 	{
 		if (InData.ActionDataKey.ActionIndex == 1)
 		{
-			OwnerActionComp_Injected->NotifyGuardInStarted();
+			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInStarted));
 		}
 		else if (InData.ActionDataKey.ActionIndex == 2)
 		{
-			OwnerActionComp_Injected->NotifyGuardOutStarted();
+			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardOutStarted));
 		}
 	}
 
@@ -35,8 +35,8 @@ void UCAction_Guard::Stop(EActionStopReason InStopReason)
 		const bool bIsGuardOutReentryInterruption = activeActionIndex == 2 && InStopReason == EActionStopReason::Interrupted;
 		if (!bIsGuardOutReentryInterruption)
 		{
-			// Clear Deffered Guard Out Action & Clear Guard Rumtime State
-			OwnerActionComp_Injected->NotifyGuardInterrupted(InStopReason);
+			OwnerActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::GuardInCompleted);
+			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
 		}
 	}
 
@@ -53,11 +53,11 @@ void UCAction_Guard::Complete()
 
 	if (activeActionIndex == 1)
 	{
-		OwnerActionComp_Injected->NotifyGuardInCompleted();
+		OwnerActionComp_Injected->ConsumeDeferredAction(EDeferredActionConsumeKey::GuardInCompleted);
 	}
 	else if (activeActionIndex == 2)
 	{
-		OwnerActionComp_Injected->NotifyGuardOutCompleted();
+		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleCompleted));
 	}
 }
 

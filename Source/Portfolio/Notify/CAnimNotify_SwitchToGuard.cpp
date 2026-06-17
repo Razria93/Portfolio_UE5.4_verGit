@@ -19,5 +19,5 @@ void UCAnimNotify_SwitchToGuard::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
-	actionComp->NotifySwitchToGuard();
+	actionComp->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
 }

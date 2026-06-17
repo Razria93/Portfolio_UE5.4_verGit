@@ -7,7 +7,6 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
-#include "Component/CDefenseComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Action/CAction.h"
@@ -30,7 +29,6 @@ void UCActionComponent::BeginPlay()
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 	ActionOrchestratorComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionOrchestratorComponent>();
-	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 
@@ -272,75 +270,24 @@ void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, 
 	}
 }
 
-void UCActionComponent::NotifyGuardInputPressed()
+bool UCActionComponent::NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
-	if (!IsValid(DefenseComp_Cached)) return;
-
-	DefenseComp_Cached->HandleGuardInputPressed();
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->NotifyObservableOverlayEvent(InContext);
 }
 
-void UCActionComponent::NotifyGuardInputReleased()
+FActionRequestResult UCActionComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
 {
-	if (!IsValid(DefenseComp_Cached)) return;
+	if (!IsValid(ActionOrchestratorComp_Cached)) return FActionRequestResult();
 
-	DefenseComp_Cached->HandleGuardInputReleased();
+	return ActionOrchestratorComp_Cached->ConsumeDeferredAction(InConsumeKey);
 }
 
-void UCActionComponent::NotifyGuardInStarted()
+void UCActionComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey)
 {
-	if (!IsValid(DefenseComp_Cached)) return;
-
-	DefenseComp_Cached->HandleGuardInStarted();
-}
-
-void UCActionComponent::NotifyGuardOutStarted()
-{
-	if (!IsValid(DefenseComp_Cached)) return;
-
-	DefenseComp_Cached->HandleGuardOutStarted();
-}
-
-void UCActionComponent::NotifySwitchToGuard()
-{
-	if (!IsValid(DefenseComp_Cached)) return;
-
-	DefenseComp_Cached->HandleSwitchToGuard();
-}
-
-void UCActionComponent::NotifyAllowGuardStart()
-{
-	if (!IsValid(DefenseComp_Cached)) return;
-
-	DefenseComp_Cached->HandleAllowGuardStart();
-}
-
-void UCActionComponent::NotifyGuardInCompleted()
-{
-	if (!IsValid(ActionOrchestratorComp_Cached)) return;
-
-	ActionOrchestratorComp_Cached->ConsumeDeferredAction(EDeferredActionConsumeKey::GuardInCompleted);
-}
-
-void UCActionComponent::NotifyGuardOutCompleted()
-{
-	if (!IsValid(DefenseComp_Cached)) return;
-
-	// Clear Guard Runtime State
-	DefenseComp_Cached->HandleGuardLifecycleCompleted();
-}
-
-void UCActionComponent::NotifyGuardInterrupted(EActionStopReason InStopReason)
-{
-	// Clear Deferred Guard Out Action
 	if (IsValid(ActionOrchestratorComp_Cached))
 	{
-		ActionOrchestratorComp_Cached->ClearDeferredActions(EDeferredActionConsumeKey::GuardInCompleted);
+		ActionOrchestratorComp_Cached->ClearDeferredActions(InConsumeKey);
 	}
-
-	if (!IsValid(DefenseComp_Cached)) return;
-
-	// Clear Guard Runtime State
-	DefenseComp_Cached->HandleGuardLifecycleInterrupted();
 }
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)

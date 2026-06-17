@@ -42,6 +42,8 @@ public:
 
 public:
 	void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const override;
+	bool CanHandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) const override;
+	bool HandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) override;
 	bool CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const override;
 	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) override;
 

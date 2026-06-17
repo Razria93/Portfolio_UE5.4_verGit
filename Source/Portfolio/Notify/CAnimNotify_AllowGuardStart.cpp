@@ -19,5 +19,5 @@ void UCAnimNotify_AllowGuardStart::Notify(USkeletalMeshComponent* MeshComp, UAni
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
-	actionComp->NotifyAllowGuardStart();
+	actionComp->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
 }

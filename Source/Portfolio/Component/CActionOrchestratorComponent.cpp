@@ -337,13 +337,13 @@ void UCActionOrchestratorComponent::ApplyCombatActionInputSideEffects(const FCom
 	{
 	case EActionIntentEvent::Started:
 	{
-		ActionComp_Cached->NotifyGuardInputPressed();
+		ActionComp_Cached->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputPressed));
 		break;
 	}
 
 	case EActionIntentEvent::Completed:
 	{
-		ActionComp_Cached->NotifyGuardInputReleased();
+		ActionComp_Cached->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputReleased));
 		break;
 	}
 

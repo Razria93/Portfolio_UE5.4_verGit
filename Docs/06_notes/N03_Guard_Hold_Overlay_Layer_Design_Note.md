@@ -280,6 +280,26 @@ Action / Reaction Component는 Orchestrator result에 누적된 handling을 실�
 
 ---
 
+### 6.7 Guard event routing responsibility update
+
+초기 Guard v1 구현에서는 `UCActionComponent`가 `NotifyGuardInputPressed`, `NotifyGuardInStarted`, `NotifySwitchToGuard`, `NotifyAllowGuardStart`, `NotifyGuardInterrupted` 같은 Guard 전용 API를 가지고 있었다.
+
+이 구조는 빠른 연결에는 유리했지만, Guard 하나만으로도 ActionComponent API가 계속 늘어났다. 또한 내부 구현 대부분이 `UCDefenseComponent`의 Guard overlay 상태를 변경하는 호출이었기 때문에, ActionComponent가 overlay owner의 세부 lifecycle을 알고 있는 형태가 됐다.
+
+따라서 Guard 상태 전환 event는 다음 경로로 이관한다.
+
+```text
+Action / Notify / Input side effect
+-> UCActionComponent::NotifyObservableOverlayEvent()
+-> UCObservableOverlayComponent::NotifyObservableOverlayEvent()
+-> IObservableOverlayPolicy::HandleObservableOverlayEvent()
+-> UCDefenseComponent
+```
+
+이 변경으로 `UCActionComponent`는 Guard 전용 Defense 라우터가 아니라 공통 overlay event 전달 지점으로 축소된다. `UCDefenseComponent`는 Guard overlay state owner로서 `IObservableOverlayPolicy`를 통해 Guard event를 해석하고 실제 상태를 변경한다.
+
+다만 `GuardInCompleted` deferred consume은 overlay 상태 변경이 아니라 action orchestration의 지연 실행 소비이므로 `UCActionOrchestratorComponent` 책임으로 유지한다.
+
 ## 7. Incoming Overlay Execution Condition
 
 현재 v1 구조는 incoming executor가 observable overlay snapshot을 기준으로 incoming 실행이 가능한지 판단하고, 시작 전에 필요한 overlay handling을 함께 요청한다.

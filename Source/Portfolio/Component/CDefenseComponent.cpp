@@ -15,6 +15,68 @@ void UCDefenseComponent::WriteObservableOverlaySnapshot(FObservableOverlaySnapsh
 	OutSnapshot.Guard.bCanParry = bCanParry;
 }
 
+bool UCDefenseComponent::CanHandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) const
+{
+	switch (InContext.EventType)
+	{
+	case EObservableOverlayEventType::GuardInputPressed:
+	case EObservableOverlayEventType::GuardInputReleased:
+	case EObservableOverlayEventType::GuardInStarted:
+	case EObservableOverlayEventType::GuardOutStarted:
+	case EObservableOverlayEventType::SwitchToGuard:
+	case EObservableOverlayEventType::AllowGuardStart:
+	case EObservableOverlayEventType::GuardLifecycleCompleted:
+	case EObservableOverlayEventType::GuardLifecycleInterrupted:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+bool UCDefenseComponent::HandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext)
+{
+	if (!CanHandleObservableOverlayEvent(InContext)) return false;
+
+	switch (InContext.EventType)
+	{
+	case EObservableOverlayEventType::GuardInputPressed:
+		HandleGuardInputPressed();
+		return true;
+
+	case EObservableOverlayEventType::GuardInputReleased:
+		HandleGuardInputReleased();
+		return true;
+
+	case EObservableOverlayEventType::GuardInStarted:
+		HandleGuardInStarted();
+		return true;
+
+	case EObservableOverlayEventType::GuardOutStarted:
+		HandleGuardOutStarted();
+		return true;
+
+	case EObservableOverlayEventType::SwitchToGuard:
+		HandleSwitchToGuard();
+		return true;
+
+	case EObservableOverlayEventType::AllowGuardStart:
+		HandleAllowGuardStart();
+		return true;
+
+	case EObservableOverlayEventType::GuardLifecycleCompleted:
+		HandleGuardLifecycleCompleted();
+		return true;
+
+	case EObservableOverlayEventType::GuardLifecycleInterrupted:
+		HandleGuardLifecycleInterrupted();
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 bool UCDefenseComponent::CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const
 {
 	switch (InHandling)

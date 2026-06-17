@@ -29,6 +29,22 @@ void UCObservableOverlayComponent::WriteObservableOverlaySnapshot(FObservableOve
 	}
 }
 
+bool UCObservableOverlayComponent::NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext)
+{
+	if (!InContext.IsValidMinimal()) return false;
+
+	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
+	{
+		IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
+		if (!overlayPolicy) continue;
+		if (!overlayPolicy->CanHandleObservableOverlayEvent(InContext)) continue;
+
+		return overlayPolicy->HandleObservableOverlayEvent(InContext);
+	}
+
+	return false;
+}
+
 bool UCObservableOverlayComponent::ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
 	for (const EObservableOverlayHandling handling : InHandlings)

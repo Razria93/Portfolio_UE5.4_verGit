@@ -130,7 +130,7 @@ TakeDamagePacket
   - 세부 구현 요소:
     - [x] v1에서는 Guard Hold를 ABP 상태로 넘기는 방향을 기본으로 둔다.
     - [x] `Block_In` 종료 이후 Guard Hold pose가 유지될 수 있도록 `UCDefenseComponent::IsGuardingPose()`와 AnimInstance `bIsGuardingPose`를 연결한다.
-    - [x] Guard 상태 전달은 `CAction_Guard -> UCActionComponent notify -> UCDefenseComponent` 경로로 라우팅한다.
+    - [x] Guard 상태 전달은 `CAction_Guard -> UCActionComponent -> UCObservableOverlayComponent -> UCDefenseComponent` 경로의 observable overlay event로 라우팅한다.
     - [ ] `Block_Hold` montage는 ABP 전환 전 검증용 또는 임시 fallback으로 사용할 수 있는지 확인한다.
 - [x] Guard Released에서 `Block_Out` 실행으로 이어지게 구성한다.
   - 세부 구현 요소:
@@ -181,7 +181,7 @@ TakeDamagePacket
     - [x] 실제 Parry 판정 상태는 v1에서 `UCDefenseComponent::CanParry()`로 노출한다.
     - [x] `FExecutionSnapshot`에는 `FObservableOverlaySnapshot`을 두고, `UCDefenseComponent`가 Guard overlay snapshot을 채우게 한다.
     - [x] Guard overlay snapshot에는 `bWantsGuarding`, `bIsGuardingPose`, `bCanGuard`, `bCanParry`, `bCanStartGuard`를 포함한다.
-    - [x] `UCActionComponent`는 Guard action lifecycle event를 DefenseComponent로 전달하는 라우팅 지점으로 둔다.
+    - [x] `UCActionComponent`는 Guard 전용 Defense 라우터가 아니라 observable overlay event 전달 지점으로 축소한다.
     - [x] `UCActionComponent`와 `UCReactionComponent`는 Orchestrator result에 누적된 overlay handling을 실행 시작 전에 적용한다.
     - [ ] 이후 Combat Resolution 분리 시 해당 상태 조회 경계를 그대로 옮길 수 있게 만든다.
 - [x] Block_In 시작 직후 Parry Window를 열 수 있게 한다.
@@ -290,6 +290,7 @@ TakeDamagePacket
     - [x] Action / Reaction Orchestrator는 `UCObservableOverlayComponent`를 통해 observable overlay snapshot을 구성한다.
     - [x] Action / Reaction Component는 `UCObservableOverlayComponent`를 통해 requested overlay handling을 적용한다.
     - [x] `UCDefenseComponent`는 Guard overlay state owner이자 `IObservableOverlayPolicy` 구현체로 유지한다.
+    - [x] Guard input / lifecycle / notify event는 `ActionComponent -> DefenseComponent` 직통 호출이 아니라 `UCObservableOverlayComponent`의 event routing으로 전달한다.
 - [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
 
 ---
