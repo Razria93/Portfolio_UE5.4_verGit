@@ -120,6 +120,8 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
+	ApplyCombatActionInputSideEffects(InIncomingRequest);
+
 	FActionCandidate incomingCandidate;
 
 	if (!ResolveCombatActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
@@ -324,6 +326,30 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 
 	OutIncomingCandidate = incomingCandidate;
 	return true;
+}
+
+void UCActionOrchestratorComponent::ApplyCombatActionInputSideEffects(const FCombatActionRequest& InIncomingRequest) const
+{
+	if (!IsValid(ActionComp_Cached)) return;
+	if (InIncomingRequest.IntentType != ECombatActionIntent::Guard) return;
+
+	switch (InIncomingRequest.IntentEvent)
+	{
+	case EActionIntentEvent::Started:
+	{
+		ActionComp_Cached->NotifyGuardInputPressed();
+		break;
+	}
+
+	case EActionIntentEvent::Completed:
+	{
+		ActionComp_Cached->NotifyGuardInputReleased();
+		break;
+	}
+
+	default:
+		break;
+	}
 }
 
 FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const FActionCandidate& InIncomingCandidate)

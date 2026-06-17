@@ -120,6 +120,7 @@ TakeDamagePacket
   - 세부 구현 요소:
     - [x] `EActionType::Guard`를 추가한다.
     - [x] `CActionOrchestratorComponent::ResolveCombatActionCandidate()`에서 `ECombatActionIntent::Guard`를 `EActionType::Guard`로 해석한다.
+    - [x] `RequestCombatAction()`에서 Guard input press / release side effect를 먼저 반영해 `bWantsGuarding`을 action 실행 lifecycle과 분리한다.
     - [x] Guard 시작 요청은 action index `1`을 기준으로 처리한다.
     - [x] 임시로 `IntentEvent`에 따라 Guard `ActionIndex`를 나눠 `Block_In / Block_Out` ActionData를 선택한다.
       - [x] `Started -> Guard index 1 -> Block_In`
@@ -134,6 +135,7 @@ TakeDamagePacket
 - [x] Guard Released에서 `Block_Out` 실행으로 이어지게 구성한다.
   - 세부 구현 요소:
     - [x] Guard 종료 요청은 별도 action request로 들어와 `Block_Out` ActionData를 선택한다.
+    - [x] Guard release 입력이 들어오면 `Block_Out` 실행 여부와 별개로 `bWantsGuarding=false`를 즉시 반영한다.
     - [x] `Block_Out`은 key release 기반 action 종료 흐름으로 실행한다.
     - [x] `Block_Out` 시작 시 `CanGuard`와 `CanParry`를 false로 내리고, Guard pose 상태도 함께 종료한다.
 - [x] `Block_In` 실행 중 release 입력이 들어오면 Guard Out candidate를 deferred로 보관한다.
@@ -190,6 +192,7 @@ TakeDamagePacket
     - [x] `UCAnimNotify_SwitchToGuard`를 추가하고 notify 이름은 `SwitchToGuard`로 정한다.
     - [x] `SwitchToGuard` notify는 Guard `ActionIndex = 1` 기준으로 `Block_In`에서만 처리되도록 구성한다.
     - [x] release가 `SwitchToGuard` 전에 들어온 경우에는 Parry Window만 닫고 Guard 판정은 열지 않는다.
+    - [x] release가 `SwitchToGuard` 이후 들어온 경우에는 release 전까지 Guard 판정을 인정한다.
 - [ ] Guard / Parry 판정은 notify state window가 아니라 단발 notify 기반 상태 전환으로 구성한다.
   - 세부 구현 요소:
     - [x] montage 경계 사이의 판정 공백을 피하기 위해 Parry / Guard 상태를 duration window가 아니라 상태값으로 유지한다.

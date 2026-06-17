@@ -66,6 +66,9 @@ private:
 	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
+	void ApplyCombatActionInputSideEffects(const FCombatActionRequest& InIncomingRequest) const;
+
+private:
 	FActionRequestResult ProcessActionCandidate(const FActionCandidate& InIncomingCandidate);
 
 private:

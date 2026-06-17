@@ -45,6 +45,20 @@ Block_In 종료
 
 `Guard Released`는 새 combo 입력처럼 다시 들어오는 요청이 아니라, 이미 들어온 종료 의도를 안전한 시점까지 보관해야 하는 요청이다.
 
+v1 보완 이후에는 여기서 말하는 “종료 의도”를 두 층으로 나눈다.
+
+```text
+입력 의도
+-> bWantsGuarding
+-> release request 진입 시점에 즉시 false로 반영
+
+실행 의도
+-> Guard Out candidate
+-> Block_In과 충돌하면 deferred로 보관
+```
+
+즉, release 입력 자체는 지연하지 않는다. 지연되는 것은 `Block_Out` 실행 candidate다.
+
 ---
 
 ## 4. Combo 재호출과의 차이
@@ -61,9 +75,10 @@ ChainWindowOpened
 
 ```text
 Released 입력
+-> bWantsGuarding=false 즉시 반영
 -> Guard Completed request 생성
 -> 현재는 실행 불가
--> request 보관
+-> Guard Out candidate 보관
 -> Block_In 완료 시점에 자동 소비
 ```
 
@@ -111,6 +126,7 @@ Guard release 기준의 예시는 다음과 같다.
 ```text
 Guard Released
 -> FCombatActionRequest(Guard, Completed)
+-> bWantsGuarding=false 즉시 반영
 -> FActionCandidate(Guard, index 2) resolve
 -> 현재 Block_In 실행 중이라 GuardInCompleted key로 deferred 저장
 
@@ -132,6 +148,7 @@ notify 또는 action lifecycle event는 소비 가능한 시점을 알려주고,
 
 ```text
 Released 입력
+-> bWantsGuarding=false 즉시 반영
 -> Guard Out candidate resolve
 -> 현재 Guard In 실행 중인가?
    - Yes -> GuardInCompleted key로 deferred candidate 저장

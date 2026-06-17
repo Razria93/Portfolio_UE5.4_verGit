@@ -65,6 +65,8 @@ public:
 	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) override;
 
 public:
+	void HandleGuardInputPressed();
+	void HandleGuardInputReleased();
 	void HandleGuardInStarted();
 	void HandleGuardOutStarted();
 	void HandleSwitchToGuard();

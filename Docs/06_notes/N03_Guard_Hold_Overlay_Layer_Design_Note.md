@@ -319,7 +319,10 @@ Orchestrator
 -> incoming decision을 result에 반영
 
 Action / Reaction Component
--> requested handling을 실행 직전 overlay owner에게 위임
+-> requested handling을 실행 직전 ObservableOverlayComponent에 위임
+
+ObservableOverlayComponent
+-> policy owner에게 CanApply / Apply 호출
 -> owner가 허용하면 상태 변경 적용
 -> handling 적용 성공 후 execution 시작
 ```
@@ -353,6 +356,9 @@ Orchestrator
 -> decision과 handling을 execution result에 반영
 
 Action / Reaction Component
+-> requested handling 적용을 ObservableOverlayComponent에 요청
+
+ObservableOverlayComponent
 -> CanApplyObservableOverlayHandling()
 -> ApplyObservableOverlayHandling()
 -> owner authorization 이후 상태 변경 적용
@@ -360,7 +366,43 @@ Action / Reaction Component
 
 ---
 
-## 8. Block_Hit 복귀 정책
+## 8. Guard Input Intent와 SwitchToGuard 기준
+
+`bWantsGuarding`은 Guard action lifecycle 상태가 아니라 input intent 상태로 둔다.
+
+따라서 Guard In / Guard Out action이 실제로 시작됐는지와 별개로, Guard input press / release request가 들어온 시점에 먼저 갱신한다.
+
+```text
+Guard Pressed request
+-> bWantsGuarding=true 즉시 반영
+-> Guard In candidate 처리
+
+Guard Released request
+-> bWantsGuarding=false 즉시 반영
+-> Guard Out candidate 처리
+-> Block_In 중이면 GuardOut candidate만 deferred
+```
+
+이 분리로 `Block_In` 중 release가 들어와도 `SwitchToGuard` 시점에서 현재 입력 유지 여부를 정확히 판단할 수 있다.
+
+`SwitchToGuard`는 Strict Switch Rule을 따른다.
+
+```text
+SwitchToGuard 전에 release
+-> Parry Window만 인정
+-> Guard 판정은 열지 않음
+-> Block_In complete 이후 deferred GuardOut consume
+
+SwitchToGuard 이후 release
+-> SwitchToGuard부터 release 전까지 Guard 판정 인정
+-> release 이후 GuardOut 실행 또는 consume
+```
+
+즉, tap은 Parry 시도로 인정하고, hold가 유지된 경우에만 Parry 이후 Guard로 승격한다.
+
+---
+
+## 9. Block_Hit 복귀 정책
 
 `Block_Hit`을 별도 Reaction으로 사용할 경우, Guard Hold 상태를 그대로 유지한 채 맞는 것이 아니라 `Guard Hold`를 일시적으로 대체하는 피격 반응으로 본다.
 
@@ -392,7 +434,7 @@ v1에서는 먼저 `Block_Hit`이 별도 Reaction으로 실행될 수 있는 구
 
 ---
 
-## 9. Guard Runtime 정리 기준
+## 10. Guard Runtime 정리 기준
 
 Guard runtime 정리는 두 단계로 나눈다.
 
@@ -422,7 +464,7 @@ bCanStartGuard
 
 ---
 
-## 10. Combat Resolution과의 관계
+## 11. Combat Resolution과의 관계
 
 Observable Overlay Layer는 Combat Resolution을 대체하지 않는다. 다만 두 구조는 같은 설계 패턴을 공유할 수 있다.
 
@@ -454,7 +496,7 @@ TakeDamage 또는 damage packet 진입
 
 ---
 
-## 11. 관련 문서
+## 12. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`

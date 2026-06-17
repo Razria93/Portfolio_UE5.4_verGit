@@ -126,6 +126,8 @@ public:
 	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
 
 public:
+	void NotifyGuardInputPressed();
+	void NotifyGuardInputReleased();
 	void NotifyGuardInStarted();
 	void NotifyGuardOutStarted();
 	void NotifySwitchToGuard();

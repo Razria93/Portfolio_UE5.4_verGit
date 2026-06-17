@@ -272,6 +272,20 @@ void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, 
 	}
 }
 
+void UCActionComponent::NotifyGuardInputPressed()
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->HandleGuardInputPressed();
+}
+
+void UCActionComponent::NotifyGuardInputReleased()
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->HandleGuardInputReleased();
+}
+
 void UCActionComponent::NotifyGuardInStarted()
 {
 	if (!IsValid(DefenseComp_Cached)) return;
