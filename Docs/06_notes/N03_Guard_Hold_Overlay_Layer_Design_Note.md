@@ -337,6 +337,10 @@ v1의 첫 적용 대상은 `Guard Out`이다. `Guard Out`은 Guard overlay가 �
 
 현재 v1에서는 이 정책을 reaction base가 아니라 `Hit / Dead` reaction executor가 각각 판단한다. base reaction은 공통 clear 정책을 갖지 않고, 세부 reaction executor가 자기 overlay execution condition을 정의한다.
 
+Guard Out 중 재입력은 duration window가 아니라 단발 notify 이후 상태 전환으로 처리한다. `Block_Out` 시작 시에는 `CanStartGuard`를 잠근 상태로 두고, `AllowGuardStart` notify가 호출된 시점부터 `CanStartGuard=true`로 전환한다.
+
+이후 Guard In request가 들어오면 Guard In이 active Guard Out을 intervention으로 끊고 새 Guard In lifecycle을 시작한다. 이 경우 기존 Guard Out stop에서는 Guard state를 clear하지 않고, 새 Guard In start가 pose / parry state를 덮어쓴다. 반대로 Dodge / Hit / Dead처럼 Guard 외부 실행이 Guard Out을 끊는 경우에는 incoming executor가 `ClearGuardState` handling을 요청해 Guard runtime 전체를 정리한다.
+
 정리하면 v1의 책임 분리는 다음과 같다.
 
 ```text

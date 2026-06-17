@@ -90,7 +90,7 @@ void UCDefenseComponent::HandleGuardOutStarted()
 {
 	FLog::Log(TEXT("[HandleGuardOutStarted]"));
 
-	AllowGuardStart();
+	BlockGuardStart();
 
 	EndGuardPose();
 	CloseGuardWindow();
@@ -115,6 +115,15 @@ void UCDefenseComponent::HandleSwitchToGuard()
 		FLog::Log(TEXT("[WantsGuarding == false]"));
 		CloseGuardWindow();
 	}
+
+	PrintGuardStateInfo();
+}
+
+void UCDefenseComponent::HandleAllowGuardStart()
+{
+	FLog::Log(TEXT("[HandleAllowGuardStart]"));
+
+	AllowGuardStart();
 
 	PrintGuardStateInfo();
 }

@@ -1323,6 +1323,11 @@ public:
 	{
 		return bIsGuardingPose || bCanGuard || bCanParry;
 	}
+
+	bool HasGuardRuntimeState() const
+	{
+		return !bCanStartGuard || bWantsGuarding || HasGuardOverlay();
+	}
 };
 
 USTRUCT(BlueprintType)

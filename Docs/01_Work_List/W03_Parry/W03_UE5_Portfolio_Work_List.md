@@ -161,6 +161,8 @@ TakeDamagePacket
     - [x] Guard Out은 Guard overlay가 남아 있을 때만 의미 있는 incoming action으로 보고, overlay가 없으면 ignore되도록 구성한다.
     - [x] Guard Out의 overlay 정리는 pre-start handling이 아니라 Guard Out action lifecycle에서 처리하도록 둔다.
     - [x] Dodge / Hit / Dead처럼 Guard lifecycle을 끝내야 하는 incoming execution은 실행 전에 `ClearGuardState` handling을 요청하도록 구성한다.
+    - [x] Guard Out 시작 시 `CanStartGuard`를 잠그고, `AllowGuardStart` 단발 notify 시점부터 Guard In 재진입을 허용하도록 구성한다.
+    - [x] `AllowGuardStart` notify 이후 Guard In이 들어오면 Guard Out을 intervention으로 끊고 Guard In이 상태를 덮어쓰도록 구성한다.
     - [ ] dodge / reaction takeover에서 Guard 상태가 남지 않는지 PIE에서 확인한다.
     - [x] interrupt / forced stop 시 `GuardInCompleted` deferred candidate를 정리하도록 호출 지점을 연결한다.
 

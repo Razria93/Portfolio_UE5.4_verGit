@@ -128,9 +128,14 @@ public:
 public:
 	void NotifyGuardInputPressed();
 	void NotifyGuardInputReleased();
+
 	void NotifyGuardInStarted();
 	void NotifyGuardOutStarted();
+
 	void NotifySwitchToGuard();
+
+	void NotifyAllowGuardStart();
+	
 	void NotifyGuardInCompleted();
 	void NotifyGuardOutCompleted();
 	void NotifyGuardInterrupted(EActionStopReason InStopReason);

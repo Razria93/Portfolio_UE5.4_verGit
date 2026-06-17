@@ -53,6 +53,7 @@ public:
 	void HandleGuardOutStarted();
 
 	void HandleSwitchToGuard();
+	void HandleAllowGuardStart();
 
 	void HandleGuardLifecycleCompleted();
 	void HandleGuardLifecycleInterrupted();

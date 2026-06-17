@@ -307,6 +307,13 @@ void UCActionComponent::NotifySwitchToGuard()
 	DefenseComp_Cached->HandleSwitchToGuard();
 }
 
+void UCActionComponent::NotifyAllowGuardStart()
+{
+	if (!IsValid(DefenseComp_Cached)) return;
+
+	DefenseComp_Cached->HandleAllowGuardStart();
+}
+
 void UCActionComponent::NotifyGuardInCompleted()
 {
 	if (!IsValid(ActionOrchestratorComp_Cached)) return;
@@ -318,11 +325,13 @@ void UCActionComponent::NotifyGuardOutCompleted()
 {
 	if (!IsValid(DefenseComp_Cached)) return;
 
+	// Clear Guard Runtime State
 	DefenseComp_Cached->HandleGuardLifecycleCompleted();
 }
 
 void UCActionComponent::NotifyGuardInterrupted(EActionStopReason InStopReason)
 {
+	// Clear Deferred Guard Out Action
 	if (IsValid(ActionOrchestratorComp_Cached))
 	{
 		ActionOrchestratorComp_Cached->ClearDeferredActions(EDeferredActionConsumeKey::GuardInCompleted);
@@ -330,6 +339,7 @@ void UCActionComponent::NotifyGuardInterrupted(EActionStopReason InStopReason)
 
 	if (!IsValid(DefenseComp_Cached)) return;
 
+	// Clear Guard Runtime State
 	DefenseComp_Cached->HandleGuardLifecycleInterrupted();
 }
 

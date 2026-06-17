@@ -18,4 +18,8 @@ public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 	bool TryResolveDeferredConsumeKey(const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const override;
 	void ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
+
+public:
+	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
+	bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const override;
 };

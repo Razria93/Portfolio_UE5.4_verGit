@@ -28,9 +28,16 @@ bool UCAction_Guard::Start(const FActionData& InData)
 
 void UCAction_Guard::Stop(EActionStopReason InStopReason)
 {
+	const int32 activeActionIndex = ActiveDataKey_Cached.ActionIndex;
+
 	if (IsValid(OwnerActionComp_Injected))
 	{
-		OwnerActionComp_Injected->NotifyGuardInterrupted(InStopReason);
+		const bool bIsGuardOutReentryInterruption = activeActionIndex == 2 && InStopReason == EActionStopReason::Interrupted;
+		if (!bIsGuardOutReentryInterruption)
+		{
+			// Clear Deffered Guard Out Action & Clear Guard Rumtime State
+			OwnerActionComp_Injected->NotifyGuardInterrupted(InStopReason);
+		}
 	}
 
 	Super::Stop(InStopReason);
@@ -70,7 +77,9 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 		return result;
 	}
 
-	if (!CanResolveIndependentRelationship(InQuery))
+	EExecutionRelationship relationship = EExecutionRelationship::None;
+
+	if (!TryResolveIndependentOrExclusiveRelationship(InQuery, relationship))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -83,7 +92,7 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 	}
 
 	result.Decision = EExecutionDecision::Accept;
-	result.Relationship = EExecutionRelationship::Independent;
+	result.Relationship = relationship;
 	return result;
 }
 
@@ -138,7 +147,7 @@ void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservabl
 			return;
 		}
 
-		// GuardIn Case: suspend stale Guard overlay before start.
+		// GuardIn Case: clear stale Guard overlay before start.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		if (guardSnapshot.HasGuardOverlay())
 		{
@@ -156,11 +165,54 @@ void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservabl
 			return;
 		}
 
-		// GuardOut Case: allow; GuardOut start clears Guard state.
+		// GuardOut Case: allow; GuardOut start clears Guard overlay.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		return;
 	}
 
 	// Guard Hold / other Guard Case: No overlay cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
+}
+
+bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+	if (!InQuery.ActivePart.IsActionParticipant()) return false;
+	if (!IsIncomingActionType(InQuery, EActionType::Guard)) return false;
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
+
+	const bool bIsGuardIn = incomingContext.ActionDataKey.ActionIndex == 1;
+	const bool bIsActiveGuardOut = activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 2;
+
+	if (bIsGuardIn && bIsActiveGuardOut && guardSnapshot.bCanStartGuard)
+	{
+		return true;
+	}
+
+	return Super::WantIntervention(InQuery);
+}
+
+bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
+	if (!InQuery.ActivePart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
+
+	const bool bIsIncomingGuardIn = incomingContext.ActionDataKey.ActionType == EActionType::Guard && incomingContext.ActionDataKey.ActionIndex == 1;
+	const bool bIsActiveGuardOut = activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 2;
+
+	if (bIsIncomingGuardIn && bIsActiveGuardOut && guardSnapshot.bCanStartGuard)
+	{
+		return true;
+	}
+
+	return Super::AllowIntervention(InQuery);
 }
