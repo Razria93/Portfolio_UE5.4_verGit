@@ -120,6 +120,16 @@ EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const F
 		return EReactionType::Dead;
 	}
 
+	if (damageResult.DefenseOutcome == EDamageDefenseOutcome::Parry)
+	{
+		return EReactionType::Parry;
+	}
+
+	if (damageResult.DefenseOutcome == EDamageDefenseOutcome::Guard)
+	{
+		return EReactionType::BlockHit;
+	}
+
 	if (damageResult.CommittedDamage > KINDA_SMALL_NUMBER && damageResult.DeadState_After == EDeadState::Alive)
 	{
 		return EReactionType::Hit;

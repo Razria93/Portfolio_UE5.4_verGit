@@ -63,6 +63,8 @@ enum class EReactionType : uint8
 
 	Hit,
 	Dead,
+	BlockHit,
+	Parry,
 
 	All,		// Wildcard
 
@@ -488,11 +490,19 @@ enum class ETakeDamageRejectReason : uint8
 	AlreadyDead,
 	// Invulnerable,
 
-	// Blocked,
-	Parried,
-
 	// DamageCooldown,
 	ZeroDamage,
+};
+
+UENUM(BlueprintType)
+enum class EDamageDefenseOutcome : uint8
+{
+	None = 0,
+
+	Guard,
+	Parry,
+
+	Max,
 };
 
 // [NOTE] Temp
@@ -1220,6 +1230,12 @@ public:
 	UPROPERTY(Transient)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
 
+	UPROPERTY(Transient)
+	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
+
+	UPROPERTY(Transient)
+	bool bShouldCommitDamage = true;
+
 	// Pre-state Snapshot [Set HandleDefaultDamageEvent before ValidatePolicy]
 	UPROPERTY(Transient)
 	float HealthPointBefore = 0.f;
@@ -1270,6 +1286,12 @@ public:
 
 	UPROPERTY(Transient)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
+
+	UPROPERTY(Transient)
+	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
+
+	UPROPERTY(Transient)
+	bool bShouldCommitDamage = true;
 
 	// Damage MetaData
 	UPROPERTY(Transient)

@@ -109,7 +109,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
 
 	// PrintTakeDamageSummaryInfo(takeDamagePacket);
-	DispatchTakeDamageCommitted(takeDamagePacket);
+	DispatchTakeDamageResolved(takeDamagePacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -176,10 +176,12 @@ bool UCTakeDamageComponent::CanTakeDamage(FTakeDamageContext& InOutTakeDamageCon
 	{
 		FLog::Log(TEXT("[TakeDamage] Parry intercept."));
 
-		InOutTakeDamageContext.bAccepted = false;
-		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::Parried;
+		InOutTakeDamageContext.bAccepted = true;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Parry;
+		InOutTakeDamageContext.bShouldCommitDamage = false;
 
-		return false;
+		return true;
 	}
 
 	// TODO:
@@ -190,6 +192,8 @@ bool UCTakeDamageComponent::CanTakeDamage(FTakeDamageContext& InOutTakeDamageCon
 
 	InOutTakeDamageContext.bAccepted = true;
 	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::None;
+	InOutTakeDamageContext.bShouldCommitDamage = true;
 
 	return true;
 }
@@ -200,7 +204,7 @@ void UCTakeDamageComponent::ComputeTakeDamage(FTakeDamageContext& InOutTakeDamag
 	InOutTakeDamageContext.MitigatedDamage = ComputeMitigatedDamage(InOutTakeDamageContext);	// TODO
 
 	// Gate 1: Zero damage
-	if (InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
+	if (InOutTakeDamageContext.bShouldCommitDamage && InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::ZeroDamage;
@@ -220,7 +224,7 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	if (!IsValid(HealthComp_Cached)) return;
 
 	// Process 4: Apply Damage To Health
-	InOutTakeDamageContext.CommittedDamage = CommitDamageToHealth(InOutTakeDamageContext);
+	InOutTakeDamageContext.CommittedDamage = InOutTakeDamageContext.bShouldCommitDamage ? CommitDamageToHealth(InOutTakeDamageContext) : 0.f;
 
 	// TODO: Shield / Mana / Stemina etc + Commit Order
 
@@ -229,7 +233,7 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
-void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket)  const
+void UCTakeDamageComponent::DispatchTakeDamageResolved(const FTakeDamagePacket& InTakeDamagePacket)  const
 {
 	if (!InTakeDamagePacket.Result.bAccepted) return;
 
@@ -244,7 +248,10 @@ void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket&
 
 	if (IsValid(DamageFeedbackComp_Cached))
 	{
-		DamageFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
+		if (InTakeDamagePacket.Result.bShouldCommitDamage)
+		{
+			DamageFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
+		}
 	}
 
 	// TODO:
@@ -311,6 +318,7 @@ float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTak
 	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
 	{
 		FLog::Log(TEXT("[TakeDamage] Guard mitigation."));
+		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
 		mitigatedDamage *= 0.5f;
 	}
 
@@ -321,6 +329,7 @@ float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTak
 
 float UCTakeDamageComponent::ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const
 {
+	if (!InOutTakeDamageContext.bShouldCommitDamage) return 0.f;
 
 	const float mitigatedDamage = InOutTakeDamageContext.MitigatedDamage;
 
@@ -383,6 +392,8 @@ FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& I
 
 	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
 	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
+	takeDamageResult.DefenseOutcome = InTakeDamageContext.DefenseOutcome;
+	takeDamageResult.bShouldCommitDamage = InTakeDamageContext.bShouldCommitDamage;
 
 	takeDamageResult.ApplyDamageSpecKey = InTakeDamageContext.ApplyDamageSpecKey;
 

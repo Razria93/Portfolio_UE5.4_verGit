@@ -50,7 +50,7 @@ private:
 	bool CanTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
 	void ComputeTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
-	void DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchTakeDamageResolved(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:

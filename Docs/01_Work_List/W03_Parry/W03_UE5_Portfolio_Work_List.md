@@ -87,7 +87,7 @@ target TakeDamage()
 
 - 현재 `UCTakeDamageComponent`는 damage commit 이후에 Reaction / DamageFeedback을 dispatch한다.
 - Parry가 damage 자체를 무효화해야 한다면 Reaction 단계보다 앞에서 처리해야 한다.
-- `ETakeDamageRejectReason::Parried`는 Parry v1 차단 사유로 사용하고, `Blocked` 계열은 Block_Hit / Guard 전용 reaction 정리 시 다시 검토한다.
+- Parry는 reject reason이 아니라 `DefenseOutcome::Parry`와 `bShouldCommitDamage=false`로 표현하고, `Blocked` 계열은 Block_Hit / Guard 전용 reaction 정리 시 다시 검토한다.
 
 ### 현재 Reaction / Feedback 흐름
 
@@ -307,12 +307,25 @@ TakeDamagePacket
 ### 4.10 TakeDamage 방어 분기 v1 구현 결과
 
 - [x] `UCTakeDamageComponent`에서 `UCDefenseComponent` 상태를 읽어 damage commit 이전에 Parry / Guard 분기를 판단한다.
-- [x] `CanParry()`가 true이면 damage commit 이전에 `ETakeDamageRejectReason::Parried`로 차단한다.
+- [x] `CanParry()`가 true이면 `DefenseOutcome::Parry`와 `bShouldCommitDamage=false`로 damage commit을 막는다.
   - v1에서는 기존 Hit / Dead reaction과 DamageFeedback이 실행되지 않는지 확인하는 것을 우선한다.
   - `Block_Parry` reaction / feedback 연결은 후속 작업으로 남긴다.
 - [x] `CanGuard()`가 true이면 damage mitigation 단계에서 incoming damage를 임시로 50% 감소시킨다.
   - v1에서는 Guard packet이 가로채지는지 확인하는 목적이며, Guard Gauge / stamina / Block_Hit 전용 reaction은 후속 작업으로 남긴다.
 - [x] Parry / Guard에 해당하지 않는 경우 기존 `CanTakeDamage() -> ComputeTakeDamage() -> CommitTakeDamage() -> DispatchTakeDamageCommitted()` 흐름을 유지한다.
+
+### 4.11 Defensive Outcome / Reaction 분기 구조
+
+- [x] `EDamageDefenseOutcome`을 추가해 TakeDamage 결과가 `None / Guard / Parry` 중 어떤 방어 판정인지 남기도록 구성한다.
+- [x] `FTakeDamageContext`와 `FTakeDamageResult`에 `DefenseOutcome`을 전달한다.
+- [x] Parry는 `bAccepted=true`, `bShouldCommitDamage=false`, `DefenseOutcome::Parry`로 남겨 reaction candidate를 만들 수 있게 한다.
+- [x] Guard는 `DefenseOutcome::Guard`를 남기고, v1 기준 damage 50% 감소를 유지한다.
+- [x] `EReactionType::BlockHit`, `EReactionType::Parry`를 추가하고 `ResolveDamageReactionType()`에서 defensive outcome 기준으로 분기한다.
+  - `Parry -> Parry`
+  - `Dead transition -> Dead`
+  - `Guard -> BlockHit`
+  - `CommittedDamage > 0 -> Hit`
+- [ ] `BlockHit / Parry`에 대응하는 ReactionData와 asset 연결은 후속 작업에서 진행한다.
 
 ---
 
