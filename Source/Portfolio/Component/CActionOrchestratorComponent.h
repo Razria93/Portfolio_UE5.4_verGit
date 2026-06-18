@@ -96,7 +96,7 @@ private:
 
 private:
 	// Deferred Resolve
-	bool TryResolveDeferredActionConsumeKey(const FActionCandidate& InIncomingCandidate, const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const;
+	bool TryResolveDeferredConsumeKey(const FActionCandidate& InIncomingCandidate, const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const;
 	FActionRequestResult DeferActionCandidate(const FActionCandidate& InIncomingCandidate, EDeferredActionConsumeKey InConsumeKey);
 
 private:

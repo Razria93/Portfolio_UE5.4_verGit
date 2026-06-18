@@ -379,9 +379,9 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
 
-	// Branch point for deferred candidates.
+	// [NOTE] Returns true when the incoming candidate should be deferred and provides its consume key.
 	EDeferredActionConsumeKey consumeKey = EDeferredActionConsumeKey::None;
-	if (TryResolveDeferredActionConsumeKey(InIncomingCandidate, decisionQuery, consumeKey))
+	if (TryResolveDeferredConsumeKey(InIncomingCandidate, decisionQuery, consumeKey))
 	{
 		return DeferActionCandidate(InIncomingCandidate, consumeKey);
 	}
@@ -555,7 +555,7 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 
 // Deferred Resolve
 
-bool UCActionOrchestratorComponent::TryResolveDeferredActionConsumeKey(const FActionCandidate& InIncomingCandidate, const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const
+bool UCActionOrchestratorComponent::TryResolveDeferredConsumeKey(const FActionCandidate& InIncomingCandidate, const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const
 {
 	OutConsumeKey = EDeferredActionConsumeKey::None;
 
@@ -858,6 +858,8 @@ bool UCActionOrchestratorComponent::BuildInterventionDirective(const FExecutionI
 	OutDirective.TargetDomain = InQuery.ActivePart.ParticipantDomain;
 	OutDirective.StopReason = InQuery.StopReason;
 	OutDirective.AfterStopAction = InAfterStopAction;
+	OutDirective.IncomingPart = InQuery.IncomingPart;
+	OutDirective.ActivePart = InQuery.ActivePart;
 
 	return OutDirective.IsValidRequest();
 }
