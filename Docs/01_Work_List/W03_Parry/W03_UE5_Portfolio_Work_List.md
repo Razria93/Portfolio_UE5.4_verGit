@@ -218,6 +218,7 @@ TakeDamagePacket
   - 세부 구현 요소:
     - [x] `UCTakeDamageComponent`에서 damage commit 이전에 `UCDefenseComponent` 상태를 조회한다.
     - [x] Guard Hold 중이면 `DefenseOutcome::Guard`를 남기고 `BlockHit` reaction 후보로 분기한다.
+    - [x] Guard-In의 `SwitchToGuard` 이후 구간도 `CanGuard()` 기준으로 `BlockHit` 후보에 포함한다.
 - [x] Guard Hit에서는 damage를 완전 무효화하지 않고, v1 기준 damage 감소 정책으로 처리한다.
   - 세부 구현 요소:
     - [x] v1 1차 기준은 damage 50% 감소로 둔다.
@@ -227,9 +228,10 @@ TakeDamagePacket
   - 세부 구현 요소:
     - [x] `BlockHit`은 Guard Action 내부 실행이 아니라 damage packet 결과로 발생하는 defender reaction으로 둔다.
     - [x] `EReactionType::BlockHit`과 `CReaction_BlockHit`을 추가한다.
+    - [x] Guard-In guard 구간에서 `BlockHit`이 들어오면 active Guard-In action을 intervention으로 중단한다.
     - [x] BlockHit 중에는 Guard overlay를 유지한다.
     - [x] BlockHit 중 release 입력은 `AfterGuardBlockReaction` key로 Guard Out candidate를 deferred 저장한다.
-    - [x] BlockHit complete 이후 deferred Guard Out candidate를 소비한다.
+    - [x] BlockHit complete 이후 `AfterGuardBlockReaction`과 `AfterGuardInAction` deferred Guard Out candidate를 소비한다.
     - [x] 현재 `Hit / Dead` reaction은 각각의 reaction executor에서 Guard overlay를 clear하는 정책으로 정리한다.
     - [x] reaction base는 공통 clear 정책을 갖지 않고, 세부 reaction executor가 자기 overlay execution condition을 판단하도록 정리한다.
     - [ ] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.

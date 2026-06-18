@@ -29,4 +29,7 @@ protected:
 private:
 	void ClearDeferredGuardActions() const;
 	void ClearGuardState() const;
+
+private:
+	void PrintGuardInterventionDebugInfo(const FString& InStage, EGuardActionPhase InActiveGuardPhase, const FExecutionParticipant& InIncomingPart, bool bResult) const;
 };

@@ -44,15 +44,28 @@ void UCAction_Guard::Interrupt(const FExecutionInterventionDirective& InDirectiv
 		switch (activeGuardPhase)
 		{
 		case EGuardActionPhase::In:
-			ClearDeferredGuardActions();
-			ClearGuardState();
+		{
+			const bool bIsBlockHitIncoming =
+				InDirective.IncomingPart.IsReactionParticipant()
+				&& InDirective.IncomingPart.GetReactionContext().ReactionDataKey.ReactionType == EReactionType::BlockHit;
+
+			PrintGuardInterventionDebugInfo(TEXT("InterruptGuardIn"), activeGuardPhase, InDirective.IncomingPart, bIsBlockHitIncoming);
+
+			if (!bIsBlockHitIncoming)
+			{
+				ClearDeferredGuardActions();
+				ClearGuardState();
+			}
 			break;
+		}
 
 		case EGuardActionPhase::Out:
 		{
 			const bool bIsGuardInIncoming =
 				InDirective.IncomingPart.IsActionParticipant()
 				&& ResolveGuardActionPhase(InDirective.IncomingPart.GetActionContext().ActionDataKey) == EGuardActionPhase::In;
+
+			PrintGuardInterventionDebugInfo(TEXT("InterruptGuardOut"), activeGuardPhase, InDirective.IncomingPart, bIsGuardInIncoming);
 
 			if (!bIsGuardInIncoming)
 			{
@@ -262,6 +275,8 @@ bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery
 	if (!InQuery.ActivePart.IsActionParticipant()) return false;
 	if (!IsIncomingActionType(InQuery, EActionType::Guard)) return false;
 
+	if (Super::WantIntervention(InQuery)) return true;
+
 	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
 	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
@@ -274,28 +289,45 @@ bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery
 		return true;
 	}
 
-	return Super::WantIntervention(InQuery);
+	return false;
 }
 
 bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
-	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
 	if (!InQuery.ActivePart.IsActionParticipant()) return false;
 
+	if (Super::AllowIntervention(InQuery)) return true;
+
 	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
-	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
 
 	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
-	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
-	if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardOverlaySnapshot.bCanStartGuard)
+	if (InQuery.IncomingPart.IsActionParticipant())
 	{
-		return true;
+		const FActionExecutionContext& incomingActionContext = InQuery.IncomingPart.GetActionContext();
+		const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingActionContext.ActionDataKey);
+
+		if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardOverlaySnapshot.bCanStartGuard)
+		{
+			PrintGuardInterventionDebugInfo(TEXT("AllowGuardIn"), activeGuardPhase, InQuery.IncomingPart, true);
+			return true;
+		}
 	}
 
-	return Super::AllowIntervention(InQuery);
+	if (InQuery.IncomingPart.IsReactionParticipant())
+	{
+		const FReactionExecutionContext& incomingReactionContext = InQuery.IncomingPart.GetReactionContext();
+
+		if (activeGuardPhase == EGuardActionPhase::In && incomingReactionContext.ReactionDataKey.ReactionType == EReactionType::BlockHit)
+		{
+			PrintGuardInterventionDebugInfo(TEXT("AllowBlockHit"), activeGuardPhase, InQuery.IncomingPart, true);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void UCAction_Guard::ClearDeferredGuardActions() const
@@ -311,4 +343,32 @@ void UCAction_Guard::ClearGuardState() const
 	if (!IsValid(OwnerActionComp_Injected)) return;
 
 	OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
+}
+
+void UCAction_Guard::PrintGuardInterventionDebugInfo(const FString& InStage, EGuardActionPhase InActiveGuardPhase, const FExecutionParticipant& InIncomingPart, bool bResult) const
+{
+	FString incomingText = TEXT("Invalid");
+
+	if (InIncomingPart.IsActionParticipant())
+	{
+		const FActionExecutionContext& incomingContext = InIncomingPart.GetActionContext();
+		incomingText = FString::Printf(
+			TEXT("Action:%s|Phase:%s"),
+			*UEnum::GetValueAsString(incomingContext.ActionDataKey.ActionType),
+			*UEnum::GetValueAsString(ResolveGuardActionPhase(incomingContext.ActionDataKey)));
+	}
+	else if (InIncomingPart.IsReactionParticipant())
+	{
+		const FReactionExecutionContext& incomingContext = InIncomingPart.GetReactionContext();
+		incomingText = FString::Printf(
+			TEXT("Reaction:%s"),
+			*UEnum::GetValueAsString(incomingContext.ReactionDataKey.ReactionType));
+	}
+
+	FLog::Log(FString::Printf(
+		TEXT("[GuardIntervention] Stage=%s | ActivePhase=%s | Incoming=%s | Result=%s"),
+		*InStage,
+		*UEnum::GetValueAsString(InActiveGuardPhase),
+		*incomingText,
+		bResult ? TEXT("true") : TEXT("false")));
 }

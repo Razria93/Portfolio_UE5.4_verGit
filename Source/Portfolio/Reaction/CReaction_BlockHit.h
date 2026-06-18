@@ -16,5 +16,6 @@ public:
 	void Complete() override;
 
 public:
+	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 	void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
 };

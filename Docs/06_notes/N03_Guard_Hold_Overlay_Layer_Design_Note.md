@@ -469,6 +469,16 @@ Guard Hold 중 피격
    -> release가 없으면 Guard Hold 유지
 ```
 
+Guard-In도 같은 기준을 따른다. `SwitchToGuard` 이후에는 `bCanGuard=true`, `bCanParry=false`가 되므로, 이 구간에서 피격되면 Guard Hold와 동일하게 `DefenseOutcome::Guard -> BlockHit`으로 해석한다.
+
+```text
+Guard-In 중 SwitchToGuard 이후 피격
+-> Damage / Defense 판정에서 BlockHit 선택
+-> BlockHit reaction이 active Guard-In action을 intervention으로 중단
+-> Guard overlay는 유지
+-> Guard-In 중 release로 저장된 AfterGuardInAction deferred Guard Out이 있으면 BlockHit complete 이후 consume
+```
+
 `Complete`와 `Stop / Interrupt`는 여전히 다르게 취급한다.
 
 - `Complete`: 정상적인 `BlockHit` 종료이므로 `AfterGuardBlockReaction` deferred candidate를 소비할 수 있다.

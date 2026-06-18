@@ -43,6 +43,27 @@ void UCReaction_BlockHit::Complete()
 	Super::Complete();
 
 	RequestConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardBlockReaction);
+	RequestConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardInAction);
+}
+
+bool UCReaction_BlockHit::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!IsIncomingReactionType(InQuery, EReactionType::BlockHit)) return false;
+
+	if (Super::WantIntervention(InQuery)) return true;
+
+	if (!InQuery.ActivePart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
+
+	if (activeContext.ActionDataKey.ActionType == EActionType::Guard && activeGuardPhase == EGuardActionPhase::In)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 void UCReaction_BlockHit::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
