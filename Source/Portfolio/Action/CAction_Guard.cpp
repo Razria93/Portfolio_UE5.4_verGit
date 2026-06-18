@@ -13,11 +13,13 @@ bool UCAction_Guard::Start(const FActionData& InData)
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
-		if (InData.ActionDataKey.ActionIndex == 1)
+		const EGuardActionPhase guardPhase = ResolveGuardActionPhase(InData.ActionDataKey);
+
+		if (guardPhase == EGuardActionPhase::In)
 		{
 			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInStarted));
 		}
-		else if (InData.ActionDataKey.ActionIndex == 2)
+		else if (guardPhase == EGuardActionPhase::Out)
 		{
 			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardOutStarted));
 		}
@@ -28,11 +30,12 @@ bool UCAction_Guard::Start(const FActionData& InData)
 
 void UCAction_Guard::Stop(EActionStopReason InStopReason)
 {
-	const int32 activeActionIndex = ActiveDataKey_Cached.ActionIndex;
+	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(ActiveDataKey_Cached);
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
-		const bool bIsGuardOutReentryInterruption = activeActionIndex == 2 && InStopReason == EActionStopReason::Interrupted;
+		const bool bIsGuardOutReentryInterruption = activeGuardPhase == EGuardActionPhase::Out && InStopReason == EActionStopReason::Interrupted;
+
 		if (!bIsGuardOutReentryInterruption)
 		{
 			OwnerActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::GuardInCompleted);
@@ -45,17 +48,17 @@ void UCAction_Guard::Stop(EActionStopReason InStopReason)
 
 void UCAction_Guard::Complete()
 {
-	const int32 activeActionIndex = ActiveDataKey_Cached.ActionIndex;
+	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(ActiveDataKey_Cached);
 
 	Super::Complete();
 
 	if (!IsValid(OwnerActionComp_Injected)) return;
 
-	if (activeActionIndex == 1)
+	if (activeGuardPhase == EGuardActionPhase::In)
 	{
 		OwnerActionComp_Injected->ConsumeDeferredAction(EDeferredActionConsumeKey::GuardInCompleted);
 	}
-	else if (activeActionIndex == 2)
+	else if (activeGuardPhase == EGuardActionPhase::Out)
 	{
 		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleCompleted));
 	}
@@ -124,13 +127,13 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 	if (!InQuery.HasActivePart()) return false;
 	if (!InQuery.ActivePart.IsActionParticipant()) return false;
 
-	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 
-	const bool bIsGuardOutCandidate = incomingContext.ActionDataKey.ActionType == EActionType::Guard && incomingContext.ActionDataKey.ActionIndex == 2;
-	const bool bIsActiveGuardIn = activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 1;
+	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
+	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
-	if (bIsGuardOutCandidate && bIsActiveGuardIn)
+	if (activeGuardPhase == EGuardActionPhase::In && incomingGuardPhase == EGuardActionPhase::Out)
 	{
 		OutConsumeKey = EDeferredActionConsumeKey::GuardInCompleted;
 		return true;
@@ -153,10 +156,9 @@ void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservabl
 
 	const FActionExecutionContext& incomingContext = InQuery.DecisionQuery.IncomingPart.GetActionContext();
 	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard;
-	const bool bIsGuardIn = incomingContext.ActionDataKey.ActionIndex == 1;
-	const bool bIsGuardOut = incomingContext.ActionDataKey.ActionIndex == 2;
+	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
-	if (bIsGuardIn)
+	if (incomingGuardPhase == EGuardActionPhase::In)
 	{
 		const bool bCanStartGuardIn = !guardSnapshot.bIsGuardingPose && guardSnapshot.bCanStartGuard;
 		if (!bCanStartGuardIn)
@@ -175,7 +177,7 @@ void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservabl
 		return;
 	}
 
-	if (bIsGuardOut)
+	if (incomingGuardPhase == EGuardActionPhase::Out)
 	{
 		if (!guardSnapshot.bIsGuardingPose)
 		{
@@ -200,14 +202,14 @@ bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery
 	if (!InQuery.ActivePart.IsActionParticipant()) return false;
 	if (!IsIncomingActionType(InQuery, EActionType::Guard)) return false;
 
-	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
 
-	const bool bIsGuardIn = incomingContext.ActionDataKey.ActionIndex == 1;
-	const bool bIsActiveGuardOut = activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 2;
+	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
+	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
-	if (bIsGuardIn && bIsActiveGuardOut && guardSnapshot.bCanStartGuard)
+	if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardSnapshot.bCanStartGuard)
 	{
 		return true;
 	}
@@ -221,14 +223,14 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
 	if (!InQuery.ActivePart.IsActionParticipant()) return false;
 
-	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
 
-	const bool bIsIncomingGuardIn = incomingContext.ActionDataKey.ActionType == EActionType::Guard && incomingContext.ActionDataKey.ActionIndex == 1;
-	const bool bIsActiveGuardOut = activeContext.ActionDataKey.ActionType == EActionType::Guard && activeContext.ActionDataKey.ActionIndex == 2;
+	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
+	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
-	if (bIsIncomingGuardIn && bIsActiveGuardOut && guardSnapshot.bCanStartGuard)
+	if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardSnapshot.bCanStartGuard)
 	{
 		return true;
 	}

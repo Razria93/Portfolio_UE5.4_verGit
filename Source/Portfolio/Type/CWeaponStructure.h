@@ -41,6 +41,20 @@ enum class EActionType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EGuardActionPhase : uint8
+{
+	None = 0,
+
+	In,
+	Out,
+	Hold,
+	Hit,
+	Parry,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EReactionType : uint8
 {
 	None = 0,	// Invalid, Unset
@@ -641,6 +655,56 @@ FORCEINLINE uint32 GetTypeHash(const FActionDataKey& InKey)
 	H = HashCombine(H, GetTypeHash(InKey.ActionIndex));
 
 	return H;
+}
+
+FORCEINLINE int32 GetGuardActionPhaseIndex(EGuardActionPhase InPhase)
+{
+	switch (InPhase)
+	{
+	case EGuardActionPhase::In:
+		return 1;
+
+	case EGuardActionPhase::Out:
+		return 2;
+
+	case EGuardActionPhase::Hold:
+		return 3;
+
+	case EGuardActionPhase::Hit:
+		return 4;
+
+	case EGuardActionPhase::Parry:
+		return 5;
+
+	default:
+		return INDEX_NONE;
+	}
+}
+
+FORCEINLINE EGuardActionPhase ResolveGuardActionPhase(const FActionDataKey& InKey)
+{
+	if (InKey.ActionType != EActionType::Guard) return EGuardActionPhase::None;
+
+	switch (InKey.ActionIndex)
+	{
+	case 1:
+		return EGuardActionPhase::In;
+
+	case 2:
+		return EGuardActionPhase::Out;
+
+	case 3:
+		return EGuardActionPhase::Hold;
+
+	case 4:
+		return EGuardActionPhase::Hit;
+
+	case 5:
+		return EGuardActionPhase::Parry;
+
+	default:
+		return EGuardActionPhase::None;
+	}
 }
 
 USTRUCT(BlueprintType)

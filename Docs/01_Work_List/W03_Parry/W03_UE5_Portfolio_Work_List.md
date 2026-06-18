@@ -121,11 +121,11 @@ TakeDamagePacket
     - [x] `EActionType::Guard`를 추가한다.
     - [x] `CActionOrchestratorComponent::ResolveCombatActionCandidate()`에서 `ECombatActionIntent::Guard`를 `EActionType::Guard`로 해석한다.
     - [x] `RequestCombatAction()`에서 Guard input press / release side effect를 먼저 반영해 `bWantsGuarding`을 action 실행 lifecycle과 분리한다.
-    - [x] Guard 시작 요청은 action index `1`을 기준으로 처리한다.
-    - [x] 임시로 `IntentEvent`에 따라 Guard `ActionIndex`를 나눠 `Block_In / Block_Out` ActionData를 선택한다.
-      - [x] `Started -> Guard index 1 -> Block_In`
-      - [x] `Completed -> Guard index 2 -> Block_Out`
-      - [ ] Guard 전용 phase / variant key가 필요하면 후속 구조 보완 후보로 기록한다.
+    - [x] Guard 시작 요청은 Guard phase `In` 기준으로 처리한다.
+    - [x] 임시로 `IntentEvent`에 따라 Guard phase를 나눠 `Block_In / Block_Out` ActionData를 선택한다.
+      - [x] `Started -> Guard phase In -> Block_In`
+      - [x] `Completed -> Guard phase Out -> Block_Out`
+      - [x] Guard 전용 phase adapter를 추가해 숫자 `ActionIndex` 비교가 실행 판단에 직접 남지 않도록 정리한다.
 - [x] Guard Held 상태에서 `Block_Hold` 또는 ABP guard hold / locomotion 상태로 유지되게 구성한다.
   - 세부 구현 요소:
     - [x] v1에서는 Guard Hold를 ABP 상태로 넘기는 방향을 기본으로 둔다.
@@ -141,7 +141,7 @@ TakeDamagePacket
 - [x] `Block_In` 실행 중 release 입력이 들어오면 Guard Out candidate를 deferred로 보관한다.
   - 세부 구현 요소:
     - [x] `Guard Completed` request를 먼저 Guard Out candidate로 해석한다.
-    - [x] active Guard index 1 상태라면 `GuardInCompleted` key로 deferred candidate를 저장한다.
+    - [x] active Guard phase `In` 상태라면 `GuardInCompleted` key로 deferred candidate를 저장한다.
     - [x] `Block_In` complete 이후 deferred Guard Out candidate를 공통 `ProcessActionCandidate()` 경로로 재처리한다.
     - [x] deferred candidate 소비 시 active context 정리 이후 재평가되도록 `CAction_Guard::Complete()` 순서를 조정한다.
     - [x] `Reserved`와 별개로 `Deferred` result type을 분리한다.
@@ -192,7 +192,7 @@ TakeDamagePacket
   - 세부 구현 요소:
     - [x] 단발 notify로 Parry 가능 상태를 닫고 Guard 판정 상태를 연다.
     - [x] `UCAnimNotify_SwitchToGuard`를 추가하고 notify 이름은 `SwitchToGuard`로 정한다.
-    - [x] `SwitchToGuard` notify는 Guard `ActionIndex = 1` 기준으로 `Block_In`에서만 처리되도록 구성한다.
+    - [x] `SwitchToGuard` notify는 Guard phase `In` 기준으로 `Block_In`에서만 처리되도록 구성한다.
     - [x] release가 `SwitchToGuard` 전에 들어온 경우에는 Parry Window만 닫고 Guard 판정은 열지 않는다.
     - [x] release가 `SwitchToGuard` 이후 들어온 경우에는 release 전까지 Guard 판정을 인정한다.
 - [ ] Guard / Parry 판정은 notify state window가 아니라 단발 notify 기반 상태 전환으로 구성한다.
@@ -292,6 +292,17 @@ TakeDamagePacket
     - [x] `UCDefenseComponent`는 Guard overlay state owner이자 `IObservableOverlayPolicy` 구현체로 유지한다.
     - [x] Guard input / lifecycle / notify event는 `ActionComponent -> DefenseComponent` 직통 호출이 아니라 `UCObservableOverlayComponent`의 event routing으로 전달한다.
 - [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
+
+### 4.9 판정 흐름 안정화 후 필수 리팩터링 후보
+
+- [ ] Guard phase key 구조를 보완한다.
+  - 현재 v1은 `EGuardActionPhase` adapter를 통해 숫자 `ActionIndex` 직접 비교를 제거했다.
+  - 다만 ActionData 조회 key 자체는 여전히 `ActionIndex`에 의존한다.
+  - Parry / Guard 판정 흐름을 닫은 뒤에는 데이터에 Guard phase / variant를 직접 표현할 수 있는 key 구조를 검토한다.
+- [ ] Guard overlay cleanup ownership을 serial / lifecycle id 기준으로 보완한다.
+  - 현재 v1은 `GuardOut -> GuardIn` 재진입에서 old GuardOut cleanup이 new GuardIn state를 지우지 않도록 케이스 기반 예외를 둔다.
+  - 판정 흐름 안정화 후에는 Guard overlay generation / lifecycle id를 도입해, cleanup 요청이 아직 같은 세대의 Guard state를 대상으로 하는지 검증한다.
+  - 목표는 케이스별 예외가 아니라 “내가 만든 상태만 정리한다”는 ownership 기준으로 cleanup을 제어하는 것이다.
 
 ---
 

@@ -309,15 +309,15 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 		{
 		case EActionIntentEvent::Started:
 		{
-			// Temporary: Started -> Guard index 1 -> Block_In
-			incomingCandidate.ActionDataKey.ActionIndex = 1;
+			// Temporary: Started -> Guard In data key.
+			incomingCandidate.ActionDataKey.ActionIndex = GetGuardActionPhaseIndex(EGuardActionPhase::In);
 			break;
 		}
 
 		case EActionIntentEvent::Completed:
 		{
-			// Temporary: Completed -> Guard index 2 -> Block_Out
-			incomingCandidate.ActionDataKey.ActionIndex = 2;
+			// Temporary: Completed -> Guard Out data key.
+			incomingCandidate.ActionDataKey.ActionIndex = GetGuardActionPhaseIndex(EGuardActionPhase::Out);
 			break;
 		}
 
@@ -767,12 +767,12 @@ void UCActionOrchestratorComponent::ResolveInterventionDirective(const FExecutio
 		bActiveAllows = activeReaction->AllowIntervention(interventionQuery);
 	}
 
-	if (!bIncomingWants || !bActiveAllows)
+	if (!bActiveAllows || !bIncomingWants)
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
-		InOutResult.RejectReason = !bIncomingWants
-			? EActionRequestRejectReason::IncomingCannotIntervene
-			: EActionRequestRejectReason::ActiveCannotAcceptIntervention;
+		InOutResult.RejectReason = !bActiveAllows
+			? EActionRequestRejectReason::ActiveCannotAcceptIntervention
+			: EActionRequestRejectReason::IncomingCannotIntervene;
 		return;
 	}
 

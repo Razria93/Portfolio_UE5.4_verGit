@@ -541,7 +541,50 @@ TakeDamage 또는 damage packet 진입
 
 ---
 
-## 12. 관련 문서
+## 12. Guard Phase Adapter
+
+Guard v1은 `ActionDataKey.ActionIndex`로 `Block_In / Block_Out` 데이터를 선택한다. 다만 executor, deferred, overlay, intervention 판단 코드가 숫자 `1 / 2`를 직접 비교하면 Guard lifecycle 의미가 코드에 드러나지 않고, 이후 `Block_Hold / Block_Hit / Block_Parry`가 추가될 때 조건식이 흔들리기 쉽다.
+
+따라서 Guard 전용 phase adapter를 둔다.
+
+```text
+EGuardActionPhase::In    -> Block_In
+EGuardActionPhase::Out   -> Block_Out
+EGuardActionPhase::Hold  -> Block_Hold 후보
+EGuardActionPhase::Hit   -> Block_Hit 후보
+EGuardActionPhase::Parry -> Block_Parry 후보
+```
+
+`ActionIndex`는 ActionData 조회를 위한 임시 데이터 key로 유지하되, 실행 판단에서는 `ResolveGuardActionPhase()`를 통해 `EGuardActionPhase`로 변환한 뒤 비교한다. Orchestrator의 입력 event 매핑도 `GetGuardActionPhaseIndex()`를 통해 phase 기준으로 index를 선택한다.
+
+이 기준은 Guard phase가 ActionData key와 lifecycle 판단 사이의 adapter 역할을 하게 만들기 위한 것이다. 이후 Guard 전용 key 구조가 생기면 adapter 내부만 바꾸고 executor / overlay / intervention 판단 코드는 phase 기준을 유지할 수 있다.
+
+---
+
+## 13. Guard Overlay Cleanup Ownership
+
+현재 v1은 `GuardOut -> GuardIn` 재진입에서 old `GuardOut::Stop()`이 new GuardIn state를 지우지 않도록 케이스 기반 예외를 둔다. 이 방식은 v1 검증에는 충분하지만, Guard / Parry / Dodge / Reaction 간섭이 늘어나면 cleanup 조건이 케이스별로 흩어질 수 있다.
+
+장기적으로는 Guard overlay에 serial / lifecycle id를 둔다.
+
+```text
+Guard overlay 시작
+-> Guard overlay generation 증가
+-> 실행 중인 Guard action이 generation을 기억
+
+Guard cleanup 요청
+-> 요청자가 기억한 generation과 현재 generation 비교
+-> 같으면 cleanup
+-> 다르면 이미 다른 실행이 새 state를 만들었으므로 skip
+```
+
+이 구조가 들어오면 old action cleanup은 “현재 상태가 아직 내가 만든 상태인가?”만 확인하면 된다. 따라서 `GuardOut reentry interrupt` 같은 특수 조건을 직접 알 필요가 줄어든다.
+
+다만 이 작업은 단순 상태값 추가가 아니라 Guard overlay lifecycle ownership을 새로 정의하는 작업이다. v1에서는 현재 케이스 기반 예외를 유지하고, Parry / Guard 판정 흐름을 먼저 닫은 뒤 필수 리팩터링으로 처리한다.
+
+---
+
+## 14. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`
