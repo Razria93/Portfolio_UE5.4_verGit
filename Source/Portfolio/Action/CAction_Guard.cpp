@@ -6,6 +6,8 @@
 #include "Component/CActionComponent.h"
 #include "Component/CWeaponComponent.h"
 
+// CAction_Guard only owns Guard In/Out transition actions.
+// Guard Hold is an idle overlay state owned by UCDefenseComponent.
 bool UCAction_Guard::Start(const FActionData& InData)
 {
 	const bool bStarted = Super::Start(InData);
@@ -15,35 +17,57 @@ bool UCAction_Guard::Start(const FActionData& InData)
 	{
 		const EGuardActionPhase guardPhase = ResolveGuardActionPhase(InData.ActionDataKey);
 
-		if (guardPhase == EGuardActionPhase::In)
+		switch (guardPhase)
 		{
+		case EGuardActionPhase::In:
 			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInStarted));
-		}
-		else if (guardPhase == EGuardActionPhase::Out)
-		{
+			break;
+
+		case EGuardActionPhase::Out:
 			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardOutStarted));
+			break;
+
+		default:
+			break;
 		}
 	}
 
 	return true;
 }
 
-void UCAction_Guard::Stop(EActionStopReason InStopReason)
+void UCAction_Guard::Interrupt(const FExecutionInterventionDirective& InDirective)
 {
 	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(ActiveDataKey_Cached);
 
 	if (IsValid(OwnerActionComp_Injected))
 	{
-		const bool bIsGuardOutReentryInterruption = activeGuardPhase == EGuardActionPhase::Out && InStopReason == EActionStopReason::Interrupted;
-
-		if (!bIsGuardOutReentryInterruption)
+		switch (activeGuardPhase)
 		{
-			OwnerActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::GuardInCompleted);
-			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
+		case EGuardActionPhase::In:
+			ClearDeferredGuardActions();
+			ClearGuardState();
+			break;
+
+		case EGuardActionPhase::Out:
+		{
+			const bool bIsGuardInIncoming =
+				InDirective.IncomingPart.IsActionParticipant()
+				&& ResolveGuardActionPhase(InDirective.IncomingPart.GetActionContext().ActionDataKey) == EGuardActionPhase::In;
+
+			if (!bIsGuardInIncoming)
+			{
+				ClearDeferredGuardActions();
+				ClearGuardState();
+			}
+			break;
+		}
+
+		default:
+			break;
 		}
 	}
 
-	Super::Stop(InStopReason);
+	Super::Interrupt(InDirective);
 }
 
 void UCAction_Guard::Complete()
@@ -54,29 +78,15 @@ void UCAction_Guard::Complete()
 
 	if (!IsValid(OwnerActionComp_Injected)) return;
 
-	if (activeGuardPhase == EGuardActionPhase::In)
+	switch (activeGuardPhase)
 	{
-		OwnerActionComp_Injected->ConsumeDeferredAction(EDeferredActionConsumeKey::GuardInCompleted);
-	}
-	else if (activeGuardPhase == EGuardActionPhase::Out)
-	{
+	case EGuardActionPhase::In:
+		OwnerActionComp_Injected->ConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardInAction);
+		break;
+
+	case EGuardActionPhase::Out:
 		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleCompleted));
-	}
-}
-
-void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
-{
-	if (!IsValid(OwnerActionComp_Injected)) return;
-
-	switch (InCommand)
-	{
-	case EActionNotifyCommand::SwitchToGuard:
-		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
-		return;
-
-	case EActionNotifyCommand::AllowGuardStart:
-		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
-		return;
+		break;
 
 	default:
 		break;
@@ -94,6 +104,15 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 	}
 
 	if (!IsIncomingActionType(InQuery, EActionType::Guard))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
+	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
+
+	if (incomingGuardPhase != EGuardActionPhase::In && incomingGuardPhase != EGuardActionPhase::Out)
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -124,19 +143,37 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 
 	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
 
-	if (!InQuery.HasActivePart()) return false;
-	if (!InQuery.ActivePart.IsActionParticipant()) return false;
-
-	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
 	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 
-	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
+	// Guard defer only applies to Guard-Out candidates.
 	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
+	if (incomingGuardPhase != EGuardActionPhase::Out) return false;
+	
+	if (!InQuery.HasActivePart()) return false;
 
-	if (activeGuardPhase == EGuardActionPhase::In && incomingGuardPhase == EGuardActionPhase::Out)
+	// Case 1. Guard-In -> Guard-Out
+	if (InQuery.ActivePart.IsActionParticipant())
 	{
-		OutConsumeKey = EDeferredActionConsumeKey::GuardInCompleted;
-		return true;
+		const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+		const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
+
+		if (activeGuardPhase == EGuardActionPhase::In)
+		{
+			OutConsumeKey = EDeferredActionConsumeKey::AfterGuardInAction;
+			return true;
+		}
+	}
+
+	// Case 2. Guard-Block -> Guard-Out
+	if (InQuery.ActivePart.IsReactionParticipant())
+	{
+		const FReactionExecutionContext& activeContext = InQuery.ActivePart.GetReactionContext();
+
+		if (activeContext.ReactionDataKey.ReactionType == EReactionType::BlockHit)
+		{
+			OutConsumeKey = EDeferredActionConsumeKey::AfterGuardBlockReaction;
+			return true;
+		}
 	}
 
 	return false;
@@ -195,8 +232,27 @@ void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQ
 		return;
 	}
 
-	// Guard Hold / other Guard Case: No overlay cleanup.
-	OutDecision.Decision = EExecutionDecision::Accept;
+	// CAction_Guard does not execute Guard Hold / Hit / Parry phases.
+	OutDecision.Decision = EExecutionDecision::Reject;
+}
+
+void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
+{
+	if (!IsValid(OwnerActionComp_Injected)) return;
+
+	switch (InCommand)
+	{
+	case EActionNotifyCommand::SwitchToGuard:
+		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
+		return;
+
+	case EActionNotifyCommand::AllowGuardStart:
+		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
+		return;
+
+	default:
+		break;
+	}
 }
 
 bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery) const
@@ -240,4 +296,19 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 	}
 
 	return Super::AllowIntervention(InQuery);
+}
+
+void UCAction_Guard::ClearDeferredGuardActions() const
+{
+	if (!IsValid(OwnerActionComp_Injected)) return;
+
+	OwnerActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::AfterGuardInAction);
+	OwnerActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::AfterGuardBlockReaction);
+}
+
+void UCAction_Guard::ClearGuardState() const
+{
+	if (!IsValid(OwnerActionComp_Injected)) return;
+
+	OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
 }

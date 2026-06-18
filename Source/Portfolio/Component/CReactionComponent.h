@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CWeaponStructure.h"
+#include "Type/CActionOrchestrationStructure.h"
 #include "Type/CReactionOrchestrationStructure.h"
 #include "CReactionComponent.generated.h"
 
@@ -88,11 +89,15 @@ public:
 public:
 	// Execution Entry
 	bool ApplyReactionDecision(const FReactionExecutionResult& InResult);
-	bool RequestStopActiveReaction(const FExecutionInterventionDirective& InDirective);
+	bool RequestInterruptActiveReaction(const FExecutionInterventionDirective& InDirective);
 
 public:
 	// Execution Result Hooks
 	void HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason);
+
+public:
+	// Cross-System Dispatch
+	void RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey);
 
 public:
 	// Notify Routing
@@ -125,7 +130,7 @@ private:
 private:
 	// Execution Operations
 	bool StartReaction(const FReactionExecutionContext& InContext);
-	bool StopActiveReaction(const FExecutionInterventionDirective& InDirective);
+	bool InterruptActiveReaction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveReaction(EReactionFinishReason InFinishReason);
 
 private:
@@ -140,7 +145,6 @@ private:
 
 private:
 	// Conversion
-	EReactionStopReason ConvertExecutionStopReasonToReactionStopReason(EExecutionStopReason InStopReason) const;
 	EReactionFinishReason ConvertExecutionStopReasonToReactionFinishReason(EExecutionStopReason InStopReason) const;
 
 private:

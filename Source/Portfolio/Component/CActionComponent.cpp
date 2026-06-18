@@ -177,12 +177,12 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	}
 }
 
-bool UCActionComponent::RequestStopActiveAction(const FExecutionInterventionDirective& InDirective)
+bool UCActionComponent::RequestInterruptActiveAction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsValidRequest()) return false;
 	if (InDirective.TargetDomain != EExecutionDomain::Action) return false;
 
-	return StopActiveAction(InDirective);
+	return InterruptActiveAction(InDirective);
 }
 
 // Execution Result Hooks
@@ -426,10 +426,10 @@ bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInte
 	switch (InDirective.TargetDomain)
 	{
 	case EExecutionDomain::Action:
-		return StopActiveAction(InDirective);
+		return InterruptActiveAction(InDirective);
 
 	case EExecutionDomain::Reaction:
-		return IsValid(ReactionComp_Cached) && ReactionComp_Cached->RequestStopActiveReaction(InDirective);
+		return IsValid(ReactionComp_Cached) && ReactionComp_Cached->RequestInterruptActiveReaction(InDirective);
 
 	default:
 		return false;
@@ -479,11 +479,10 @@ bool UCActionComponent::ReserveAction(const FActionExecutionContext& InContext)
 	return activeExecutor->ReserveChain(incomingData);
 }
 
-bool UCActionComponent::StopActiveAction(const FExecutionInterventionDirective& InDirective)
+bool UCActionComponent::InterruptActiveAction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!IsActive()) return true;
 
-	const EActionStopReason stopReason = ConvertExecutionStopReasonToActionStopReason(InDirective.StopReason);
 	const EActionFinishReason finishReason = ConvertExecutionStopReasonToActionFinishReason(InDirective.StopReason);
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
@@ -493,7 +492,7 @@ bool UCActionComponent::StopActiveAction(const FExecutionInterventionDirective& 
 		return EndActiveAction(finishReason);
 	}
 
-	activeExecutor->Stop(stopReason);
+	activeExecutor->Interrupt(InDirective);
 
 	if (IsActive())
 	{
@@ -588,18 +587,6 @@ void UCActionComponent::ExitActionState(const FActionData& InData)
 }
 
 // Conversion
-
-EActionStopReason UCActionComponent::ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const
-{
-	switch (InStopReason)
-	{
-	case EExecutionStopReason::Interrupted:
-		return EActionStopReason::Interrupted;
-
-	default:
-		return EActionStopReason::Ignored;
-	}
-}
 
 EActionFinishReason UCActionComponent::ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const
 {

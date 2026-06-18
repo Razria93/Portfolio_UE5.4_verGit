@@ -312,7 +312,7 @@ AnimNotify
 
 이 규칙은 “notify는 timing만 알리고, 그 timing의 의미는 executor가 해석한다”는 기존 action notify 책임 분리를 유지하기 위한 것이다.
 
-다만 `GuardInCompleted` deferred consume은 overlay 상태 변경이 아니라 action orchestration의 지연 실행 소비이므로 `UCActionOrchestratorComponent` 책임으로 유지한다.
+다만 `AfterGuardInAction` / `AfterGuardBlockReaction` deferred consume은 overlay 상태 변경이 아니라 action orchestration의 지연 실행 소비이므로 `UCActionOrchestratorComponent` 책임으로 유지한다.
 
 ## 7. Incoming Overlay Execution Condition
 
@@ -440,35 +440,41 @@ SwitchToGuard 이후 release
 
 ---
 
-## 9. Block_Hit 복귀 정책
+## 9. BlockHit 중 Guard overlay 유지 기준
 
-`Block_Hit`을 별도 Reaction으로 사용할 경우, Guard Hold 상태를 그대로 유지한 채 맞는 것이 아니라 `Guard Hold`를 일시적으로 대체하는 피격 반응으로 본다.
+초기에는 `BlockHit` 시작 시 Guard overlay를 내리고, reaction 종료 후 입력 의도에 따라 Guard Hold를 복구하는 방식을 검토했다.
 
-따라서 `Block_Hit` 시작 시에는 Guard pose overlay와 guard / parry 판정을 정리하고, `Block_Hit` 종료 시에는 Guard 입력 의도에 따라 복귀 여부를 판단해야 한다.
+PIE 검증 이후 v1 기준은 반대로 정리한다. `BlockHit` 중에도 Guard overlay는 유지한다.
 
-권장 흐름은 다음과 같다.
+이유는 다음과 같다.
+
+- BlockHit 중에도 추가 incoming damage는 guard 상태 기준으로 해석되어야 한다.
+- Guard pose overlay를 내리면 BlockHit 이후 Non-Guard locomotion으로 잠깐 돌아갔다가 다시 Guard locomotion으로 복귀해 pose가 흔들릴 수 있다.
+- BlockHit은 Guard lifecycle을 끝내는 reaction이 아니라 Guard Hold 상태 위에서 발생한 defender reaction이다.
+
+v1 흐름은 다음과 같다.
 
 ```text
 Guard Hold 중 피격
 -> Damage / Defense 판정에서 Block_Hit 선택
 -> Block_Hit Reaction 시작
-   -> Guard pose overlay clear
-   -> guard 판정 false
-   -> parry 판정 false
-   -> guard 입력 의도는 유지
+   -> Guard overlay 유지
+   -> guard 판정 유지
+   -> parry 판정은 SwitchToGuard 이후 false 상태를 유지
+   -> guard 입력 의도 유지
+-> Block_Hit 중 release 입력
+   -> Guard Out candidate를 AfterGuardBlockReaction key로 deferred 저장
 -> Block_Hit Reaction 종료
-   -> guard 입력 의도가 유지 중이면 Guard Hold 복구
-   -> guard 입력이 해제되어 있으면 Guard Out 또는 Idle 복귀
+   -> deferred Guard Out candidate가 있으면 consume
+   -> release가 없으면 Guard Hold 유지
 ```
 
-`Complete`와 `Stop / Interrupt`는 다르게 취급한다.
+`Complete`와 `Stop / Interrupt`는 여전히 다르게 취급한다.
 
-- `Complete`: 정상적인 `Block_Hit` 종료이므로 `bWantsGuarding`을 기준으로 Guard Hold 복구 또는 Guard Out / Idle 복귀를 판단할 수 있다.
+- `Complete`: 정상적인 `BlockHit` 종료이므로 `AfterGuardBlockReaction` deferred candidate를 소비할 수 있다.
 - `Stop / Interrupt`: death, stronger reaction, forced cancel, cinematic 같은 외부 중단일 수 있으므로 기본적으로 보수적인 정리를 우선한다.
 
-몽타주와 notify는 상태 전환 타이밍을 알려주는 역할에 가깝고, 복구 여부 판단은 `DefenseComponent` 또는 Reaction 종료 처리 쪽에서 담당하는 것이 적절하다.
-
-v1에서는 먼저 `Block_Hit`이 별도 Reaction으로 실행될 수 있는 구조를 확인하고, 입력 유지 시 Guard Hold 복귀와 입력 해제 시 Guard Out 연결은 단계적으로 확정한다.
+`ClearGuardOverlay` / `RestoreGuardOverlay`는 BlockHit v1의 기본 정책이 아니라, guard 입력 의도는 유지하되 pose / guard / parry 판정만 잠깐 내려야 하는 별도 overlay 충돌 상황의 후보로 남긴다.
 
 ---
 
@@ -493,7 +499,7 @@ RestoreGuardOverlay
 -> 입력 의도가 유지 중이면 Guard Hold 상태 복구
 ```
 
-`ClearGuardState`는 Dodge, Hit, Dead처럼 다른 실행이 Guard lifecycle을 끝내야 하는 경우에 사용한다. `ClearGuardOverlay`는 `Block_Hit`처럼 입력 의도는 유지하되 pose / guard / parry 판정만 잠깐 내릴 때 사용하고, 이후 `RestoreGuardOverlay`에서 입력 의도를 기준으로 Guard Hold 복구 여부를 판단한다.
+`ClearGuardState`는 Dodge, Hit, Dead처럼 다른 실행이 Guard lifecycle을 끝내야 하는 경우에 사용한다. `ClearGuardOverlay`는 Guard 입력 의도는 유지하되 pose / guard / parry 판정만 잠깐 내려야 하는 별도 overlay 충돌 상황의 후보로 남긴다. 현재 v1의 `BlockHit`은 이 경로를 사용하지 않고 Guard overlay를 유지한다.
 
 Guard snapshot은 v1에서 다음 값을 가진다.
 
@@ -584,7 +590,59 @@ Guard cleanup 요청
 
 ---
 
-## 14. 관련 문서
+## 14. Execution Interrupt / Stop 진입점 분리 기준
+
+Guard Out 재진입 처리 중 `Stop`과 `Interrupt`의 의미가 섞이는 문제가 확인됐다.
+
+초기 구조에서는 `Interrupt`가 `Stop`을 감싸는 형태로 구현될 수 있었다. 이 방식은 `Interrupt`도 결국 실행을 멈추는 처리라는 점에서는 단순하지만, Guard Out -> Guard In 재진입처럼 `IncomingPart / ActivePart` 문맥이 필요한 경우에는 `Stop`이 지나치게 큰 의미를 갖게 된다.
+
+v1 기준은 다음과 같이 정리한다.
+
+```text
+Interrupt
+-> orchestration intervention directive를 거쳐 호출되는 진입점
+-> incoming / active 실행 문맥을 가진다
+-> Guard Out -> Guard In 재진입 같은 간섭 예외를 판단할 수 있다
+
+Stop
+-> intervention directive 없이 호출되는 hard stop / fallback 진입점
+-> 내부 실패, owner cleanup, 강제 정리처럼 incoming 실행 문맥이 없는 경우에 사용한다
+-> Guard 기준으로는 재진입 여부를 알 수 없으므로 보수적으로 lifecycle을 정리한다
+```
+
+따라서 `Interrupt`가 `Stop`을 호출하는 wrapper 구조는 사용하지 않는다.
+
+대신 두 함수는 서로 다른 lifecycle entry로 두고, 실제 공통 종료 파이프라인만 공유한다.
+
+```text
+Interrupt(directive)
+-> directive를 action stop reason으로 변환
+-> HandleActionStop(reason)
+
+Stop(reason)
+-> 문맥 없는 hard stop reason 검증
+-> HandleActionStop(reason)
+
+HandleActionStop(reason)
+-> montage stop
+-> runtime effect cleanup
+-> runtime clear
+-> feedback / event emit
+-> ActionComponent finish callback
+```
+
+이 구조에서 `CAction_Guard::Interrupt()`는 intervention 문맥을 사용해 Guard Out이 Guard In 재진입으로 끊긴 경우만 lifecycle cleanup을 건너뛴다. 현재 `CAction_Guard`는 별도 `Stop()` override를 두지 않고, 문맥 없는 hard stop 요구가 실제로 생기면 그 시점의 요구사항에 맞춰 다시 추가한다.
+
+이 기준은 Action과 Reaction 양쪽에 동일하게 적용한다.
+
+- Action: `UCAction::Interrupt()` / `UCAction::Stop()` / `HandleActionStop()`
+- Reaction: `UCReaction::Interrupt()` / `UCReaction::Stop()` / `HandleReactionStop()`
+
+Guard 재진입이나 Guard lifecycle 정리처럼 incoming 문맥이 필요한 처리는 `Interrupt()`에서만 다룬다.
+
+---
+
+## 15. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`

@@ -11,11 +11,8 @@ class PORTFOLIO_API UCAction_Guard : public UCAction
 
 public:
 	bool Start(const FActionData& InData) override;
-	void Stop(EActionStopReason InStopReason) override;
+	void Interrupt(const FExecutionInterventionDirective& InDirective) override;
 	void Complete() override;
-
-protected:
-	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
 
 public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
@@ -25,4 +22,11 @@ public:
 public:
 	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 	bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const override;
+
+protected:
+	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
+
+private:
+	void ClearDeferredGuardActions() const;
+	void ClearGuardState() const;
 };

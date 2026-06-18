@@ -136,9 +136,67 @@ bool UCAction::Start(const FActionData& InData)
 	return true;
 }
 
+void UCAction::Interrupt(const FExecutionInterventionDirective& InDirective)
+{
+	if (!bIsActive) return;
+	if (!InDirective.IsValidRequest()) return;
+
+	HandleActionStop(ResolveActionStopReason(InDirective));
+}
+
 void UCAction::Stop(EActionStopReason InStopReason)
 {
 	if (!bIsActive) return;
+	if (InStopReason == EActionStopReason::None) return;
+
+	HandleActionStop(InStopReason);
+}
+
+void UCAction::Complete()
+{
+	if (!bIsActive) return;
+
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
+	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
+
+	CleanupRuntimeEffects();
+	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
+
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		OwnerActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
+	}
+}
+
+bool UCAction::ReserveChain(const FActionData& InData)
+{
+	// Specific Actions override this API.
+	return false;
+}
+
+void UCAction::ConsumeChain()
+{
+	// Specific Actions override this API.
+}
+
+EActionStopReason UCAction::ResolveActionStopReason(const FExecutionInterventionDirective& InDirective) const
+{
+	switch (InDirective.StopReason)
+	{
+	case EExecutionStopReason::Interrupted:
+		return EActionStopReason::Interrupted;
+
+	case EExecutionStopReason::Ignored:
+	default:
+		return EActionStopReason::Ignored;
+	}
+}
+
+void UCAction::HandleActionStop(EActionStopReason InStopReason)
+{
 	if (InStopReason == EActionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
@@ -176,36 +234,6 @@ void UCAction::Stop(EActionStopReason InStopReason)
 	{
 		OwnerActionComp_Injected->HandleApplyActionFinished(this, finishReason);
 	}
-}
-
-void UCAction::Complete()
-{
-	if (!bIsActive) return;
-
-	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
-	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
-
-	CleanupRuntimeEffects();
-	ClearRuntime();
-
-	PlayFeedbackRequest(feedbackRequest);
-	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
-
-	if (IsValid(OwnerActionComp_Injected))
-	{
-		OwnerActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
-	}
-}
-
-bool UCAction::ReserveChain(const FActionData& InData)
-{
-	// Specific Actions override this API.
-	return false;
-}
-
-void UCAction::ConsumeChain()
-{
-	// Specific Actions override this API.
 }
 
 void UCAction::ClearRuntime()

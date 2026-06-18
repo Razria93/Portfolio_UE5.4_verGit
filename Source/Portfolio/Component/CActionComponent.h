@@ -100,7 +100,7 @@ public:
 public:
 	// Execution Entry
 	bool ApplyActionDecision(const FActionExecutionResult& InResult);
-	bool RequestStopActiveAction(const FExecutionInterventionDirective& InDirective);
+	bool RequestInterruptActiveAction(const FExecutionInterventionDirective& InDirective);
 
 public:
 	// Execution Result Hooks
@@ -146,7 +146,7 @@ private:
 	// Execution Operations
 	bool StartAction(const FActionExecutionContext& InContext);
 	bool ReserveAction(const FActionExecutionContext& InContext);
-	bool StopActiveAction(const FExecutionInterventionDirective& InDirective);
+	bool InterruptActiveAction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveAction(EActionFinishReason InFinishReason);
 
 private:
@@ -161,6 +161,5 @@ private:
 
 private:
 	// Conversion
-	EActionStopReason ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const;
 	EActionFinishReason ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const;
 };

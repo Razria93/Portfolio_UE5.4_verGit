@@ -1683,6 +1683,12 @@ public:
 	UPROPERTY(Transient)
 	EExecutionAfterStopAction AfterStopAction = EExecutionAfterStopAction::None;
 
+	UPROPERTY(Transient)
+	FExecutionParticipant IncomingPart = FExecutionParticipant();
+
+	UPROPERTY(Transient)
+	FExecutionParticipant ActivePart = FExecutionParticipant();
+
 public:
 	bool IsRequested() const
 	{
@@ -1699,7 +1705,9 @@ public:
 			&& TargetDomain != EExecutionDomain::None
 			&& TargetDomain != EExecutionDomain::Max
 			&& StopReason != EExecutionStopReason::None
-			&& StopReason != EExecutionStopReason::Max;
+			&& StopReason != EExecutionStopReason::Max
+			&& IncomingPart.IsValidMinimal()
+			&& ActivePart.IsValidMinimal();
 	}
 };
 

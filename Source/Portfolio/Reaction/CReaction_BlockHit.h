@@ -11,5 +11,10 @@ class PORTFOLIO_API UCReaction_BlockHit : public UCReaction
 
 public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
+
+public:
+	void Complete() override;
+
+public:
 	void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
 };

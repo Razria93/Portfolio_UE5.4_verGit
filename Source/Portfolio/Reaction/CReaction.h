@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Type/CActionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CReactionFeedbackStructure.h"
 #include "Type/CReactionOrchestrationStructure.h"
@@ -78,8 +79,13 @@ protected:
 public:
 	// Lifecycle
 	virtual bool Start(const FReactionData& InData);
+	virtual void Interrupt(const FExecutionInterventionDirective& InDirective);
 	virtual void Stop(EReactionStopReason InStopReason);
 	virtual void Complete();
+
+protected:
+	EReactionStopReason ResolveReactionStopReason(const FExecutionInterventionDirective& InDirective) const;
+	void HandleReactionStop(EReactionStopReason InStopReason);
 
 protected:
 	virtual void ClearRuntime();
@@ -110,6 +116,10 @@ public:
 protected:
 	void PlayFeedbackRequest(const FReactionFeedbackRequest& InRequest) const;
 	virtual FReactionFeedbackRequest BuildFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
+
+protected:
+	// Cross-System Dispatch
+	void RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey) const;
 
 public:
 	// Intervention Window

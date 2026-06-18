@@ -129,6 +129,7 @@ TakeDamagePacket
 - [x] Guard Held 상태에서 `Block_Hold` 또는 ABP guard hold / locomotion 상태로 유지되게 구성한다.
   - 세부 구현 요소:
     - [x] v1에서는 Guard Hold를 ABP 상태로 넘기는 방향을 기본으로 둔다.
+    - [x] `CAction_Guard`는 Guard In / Guard Out 전환 action만 처리하고, Guard Hold는 `UCDefenseComponent`의 observable overlay 상태로 관리한다.
     - [x] `Block_In` 종료 이후 Guard Hold pose가 유지될 수 있도록 `UCDefenseComponent::IsGuardingPose()`와 AnimInstance `bIsGuardingPose`를 연결한다.
     - [x] Guard 상태 전달은 `CAction_Guard -> UCActionComponent -> UCObservableOverlayComponent -> UCDefenseComponent` 경로의 observable overlay event로 라우팅한다.
     - [ ] `Block_Hold` montage는 ABP 전환 전 검증용 또는 임시 fallback으로 사용할 수 있는지 확인한다.
@@ -141,7 +142,7 @@ TakeDamagePacket
 - [x] `Block_In` 실행 중 release 입력이 들어오면 Guard Out candidate를 deferred로 보관한다.
   - 세부 구현 요소:
     - [x] `Guard Completed` request를 먼저 Guard Out candidate로 해석한다.
-    - [x] active Guard phase `In` 상태라면 `GuardInCompleted` key로 deferred candidate를 저장한다.
+    - [x] active Guard phase `In` 상태라면 `AfterGuardInAction` key로 deferred candidate를 저장한다.
     - [x] `Block_In` complete 이후 deferred Guard Out candidate를 공통 `ProcessActionCandidate()` 경로로 재처리한다.
     - [x] deferred candidate 소비 시 active context 정리 이후 재평가되도록 `CAction_Guard::Complete()` 순서를 조정한다.
     - [x] `Reserved`와 별개로 `Deferred` result type을 분리한다.
@@ -149,7 +150,7 @@ TakeDamagePacket
     - [ ] `Block_In` 중 release 시 Hold에 고정되지 않고 `Block_Out`으로 이어지는지 PIE에서 확인한다.
 - [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:
-    - [x] `CAction_Guard::Stop()`에서 `Block_In` 중단 시 guard runtime 값을 정리한다.
+    - [x] `CAction_Guard::Interrupt()`에서 intervention 문맥 기반으로 Guard runtime 정리와 Guard Out -> Guard In 재진입 예외를 처리한다.
     - [x] action / reaction start 직전에 observable overlay snapshot을 기준으로 Guard overlay를 정리할 수 있게 한다.
     - [x] `ExecutionState`를 확장하지 않고 Guard Hold를 observable overlay policy registry로 관측하는 v1 경계를 구성한다.
     - [x] overlay owner policy는 snapshot 구성 시점에 자기 runtime state를 `FExecutionSnapshot`의 observable overlay snapshot에 기록하도록 구성한다.
@@ -164,7 +165,16 @@ TakeDamagePacket
     - [x] Guard Out 시작 시 `CanStartGuard`를 잠그고, `AllowGuardStart` 단발 notify 시점부터 Guard In 재진입을 허용하도록 구성한다.
     - [x] `AllowGuardStart` notify 이후 Guard In이 들어오면 Guard Out을 intervention으로 끊고 Guard In이 상태를 덮어쓰도록 구성한다.
     - [ ] dodge / reaction takeover에서 Guard 상태가 남지 않는지 PIE에서 확인한다.
-    - [x] interrupt / forced stop 시 `GuardInCompleted` deferred candidate를 정리하도록 호출 지점을 연결한다.
+    - [x] interrupt / forced stop 시 Guard Out deferred candidate를 barrier key 기준으로 정리하도록 호출 지점을 연결한다.
+
+- [x] Action lifecycle에서 `Interrupt`와 `Stop`의 역할을 분리한다.
+  - 내부 구현 요소:
+    - [x] `Interrupt`는 orchestration intervention directive를 거친 incoming / active 간섭 종료 진입점으로 고정한다.
+    - [x] `Stop`은 directive 없이 호출되는 hard stop / fallback 진입점으로 둔다.
+    - [x] `Interrupt`가 `Stop`을 감싸지 않도록 하고, 두 진입점은 공통 `HandleActionStop()` 종료 파이프라인만 공유한다.
+    - [x] Guard Out -> Guard In 재진입 예외는 `Interrupt`에서만 incoming Guard In 여부를 확인해 처리한다.
+    - [x] Reaction lifecycle도 동일하게 `Interrupt` / `Stop` 진입점과 공통 `HandleReactionStop()` 종료 파이프라인으로 정리한다.
+    - [x] 현재 호출 경로가 없는 `CAction_Guard::Stop()` override는 제거한다.
 
 ### 4.2 Guard runtime 상태와 Parry Window 구성
 
@@ -172,7 +182,7 @@ TakeDamagePacket
   - 세부 구현 요소:
     - [x] Guard가 상위 action이고 Parry는 Guard 내부 window 결과이므로, action executor 이름은 `CAction_Guard`를 우선 후보로 둔다.
     - [x] 기존 action executor 패턴(`CAction_ComboAttack`, `CAction_Dodge`)을 따라 Guard 전용 executor skeleton을 만든다.
-    - [ ] `CAction_Guard` decision은 임시로 기존 action relationship을 사용하고, Hold / Release 구현 시 전용 정책으로 재검토한다.
+    - [x] `CAction_Guard` decision은 Guard In / Guard Out phase만 처리하도록 제한한다.
 - [x] Guard / Parry runtime 상태 조회 경계를 구성한다.
   - 세부 구현 요소:
     - [x] Guard 입력 의도는 v1에서 `UCDefenseComponent::WantsGuarding()`으로 노출한다.
@@ -204,26 +214,26 @@ TakeDamagePacket
 
 ### 4.3 Guard Hold 중 피격 처리 연결
 
-- [ ] Guard Hold 상태에서 incoming damage가 들어오면 일반 Hit가 아니라 Guard Hit 흐름으로 분기한다.
+- [x] Guard Hold 상태에서 incoming damage가 들어오면 일반 Hit가 아니라 Guard Hit 흐름으로 분기한다.
   - 세부 구현 요소:
-    - [ ] `UCTakeDamageComponent`에서 commit 이전에 active Guard 상태를 조회할 수 있는 경계를 만든다.
-    - [ ] Guard Hold 중이면 일반 Hit reaction 요청으로 바로 가지 않고 Guard Hit 결과로 분기한다.
-- [ ] Guard Hit에서는 damage를 완전 무효화하지 않고, 기존 damage 흐름을 유지하거나 guard damage 정책 후보로 남긴다.
+    - [x] `UCTakeDamageComponent`에서 damage commit 이전에 `UCDefenseComponent` 상태를 조회한다.
+    - [x] Guard Hold 중이면 `DefenseOutcome::Guard`를 남기고 `BlockHit` reaction 후보로 분기한다.
+- [x] Guard Hit에서는 damage를 완전 무효화하지 않고, v1 기준 damage 감소 정책으로 처리한다.
   - 세부 구현 요소:
-    - [ ] v1 1차 기준은 damage 50% 감소 후보로 둔다.
-    - [ ] Guard Gauge 감소는 구현 비용이 작고 현재 구조에 무리가 없을 때만 2차 후보로 검토한다.
-    - [ ] 이번 단계의 핵심 검증은 Guard Hit 분기와 `Block_Hit` 실행 여부로 둔다.
-- [ ] Guard Hit 결과로 `Block_Hit` montage 또는 guard hit reaction을 실행할 수 있는 요청 경계를 정한다.
+    - [x] v1 1차 기준은 damage 50% 감소로 둔다.
+    - [ ] Guard Gauge / stamina / posture 감소는 후속 후보로 남긴다.
+    - [x] 이번 단계의 핵심 검증은 Guard packet이 가로채지고 `BlockHit` reaction 후보가 생성되는지로 둔다.
+- [x] Guard Hit 결과로 `BlockHit` reaction을 실행할 수 있는 요청 경계를 정한다.
   - 세부 구현 요소:
-    - [x] `Block_Hit`은 Guard Hold를 유지한 채 맞는 처리보다 Guard Hold를 일시적으로 대체하는 별도 Reaction으로 보는 방향을 notes에 기록한다.
-    - [x] PIE 검증 결과, reaction 실행 자체는 overlay gate에서 막을 수 없으므로 의사처리계층 전까지는 reaction 시작 시 Guard overlay를 clear하는 방향이 더 안전하다고 판단했다.
+    - [x] `BlockHit`은 Guard Action 내부 실행이 아니라 damage packet 결과로 발생하는 defender reaction으로 둔다.
+    - [x] `EReactionType::BlockHit`과 `CReaction_BlockHit`을 추가한다.
+    - [x] BlockHit 중에는 Guard overlay를 유지한다.
+    - [x] BlockHit 중 release 입력은 `AfterGuardBlockReaction` key로 Guard Out candidate를 deferred 저장한다.
+    - [x] BlockHit complete 이후 deferred Guard Out candidate를 소비한다.
     - [x] 현재 `Hit / Dead` reaction은 각각의 reaction executor에서 Guard overlay를 clear하는 정책으로 정리한다.
     - [x] reaction base는 공통 clear 정책을 갖지 않고, 세부 reaction executor가 자기 overlay execution condition을 판단하도록 정리한다.
-    - [ ] Guard Hit를 기존 Reaction Orchestrator로 보낼지, Guard Action 쪽 실행 요청으로 처리할지 비교한다.
-    - [ ] Damage packet 해석 이후 `Block_Hit / Parry / GuardBreak` 같은 reaction type을 세분화할지 검토한다.
-    - [ ] 일반 Hit / Dead reaction과 같은 경로를 쓰면 기존 피격 흐름과 충돌할 수 있으므로 v1에서는 명시적인 요청 경계를 둔다.
-    - [ ] `Block_Hit` 종료 시 `bWantsGuarding`을 기준으로 Guard Hold 복구 또는 Guard Out / Idle 복귀를 판단하는 정책을 정한다.
-- [ ] Guard Hold 중 피격 처리와 기존 Hit / Dead reaction 흐름이 충돌하지 않는지 확인한다.
+    - [ ] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.
+- [ ] Guard Hold 중 피격 처리와 기존 Hit / Dead reaction 흐름이 충돌하지 않는지 PIE에서 확인한다.
 
 ### 4.4 TakeDamage 내부 defensive resolution 임시 구현
 
@@ -293,7 +303,7 @@ TakeDamagePacket
     - [x] Guard input / lifecycle / notify event는 `ActionComponent -> DefenseComponent` 직통 호출이 아니라 `UCObservableOverlayComponent`의 event routing으로 전달한다.
 - [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
 
-### 4.9 판정 흐름 안정화 후 필수 리팩터링 후보
+### 4.7 판정 흐름 안정화 후 필수 리팩터링 후보
 
 - [ ] Guard phase key 구조를 보완한다.
   - 현재 v1은 `EGuardActionPhase` adapter를 통해 숫자 `ActionIndex` 직접 비교를 제거했다.
@@ -304,7 +314,7 @@ TakeDamagePacket
   - 판정 흐름 안정화 후에는 Guard overlay generation / lifecycle id를 도입해, cleanup 요청이 아직 같은 세대의 Guard state를 대상으로 하는지 검증한다.
   - 목표는 케이스별 예외가 아니라 “내가 만든 상태만 정리한다”는 ownership 기준으로 cleanup을 제어하는 것이다.
 
-### 4.10 TakeDamage 방어 분기 v1 구현 결과
+### 4.8 TakeDamage 방어 분기 v1 구현 결과
 
 - [x] `UCTakeDamageComponent`에서 `UCDefenseComponent` 상태를 읽어 damage commit 이전에 Parry / Guard 분기를 판단한다.
 - [x] `CanParry()`가 true이면 `DefenseOutcome::Parry`와 `bShouldCommitDamage=false`로 damage commit을 막는다.
@@ -314,7 +324,7 @@ TakeDamagePacket
   - v1에서는 Guard packet이 가로채지는지 확인하는 목적이며, Guard Gauge / stamina / Block_Hit 전용 reaction은 후속 작업으로 남긴다.
 - [x] Parry / Guard에 해당하지 않는 경우 기존 `CanTakeDamage() -> ComputeTakeDamage() -> CommitTakeDamage() -> DispatchTakeDamageCommitted()` 흐름을 유지한다.
 
-### 4.11 Defensive Outcome / Reaction 분기 구조
+### 4.9 Defensive Outcome / Reaction 분기 구조
 
 - [x] `EDamageDefenseOutcome`을 추가해 TakeDamage 결과가 `None / Guard / Parry` 중 어떤 방어 판정인지 남기도록 구성한다.
 - [x] `FTakeDamageContext`와 `FTakeDamageResult`에 `DefenseOutcome`을 전달한다.
@@ -328,6 +338,9 @@ TakeDamagePacket
 - [x] `BlockHit / Parry`에 대응하는 전용 reaction executor를 추가한다.
   - `CReaction_BlockHit`
   - `CReaction_Parry`
+- [x] BlockHit 중 release 입력은 `AfterGuardBlockReaction` key로 Guard Out candidate를 지연 실행한다.
+  - BlockHit 중에는 Guard overlay를 유지한다.
+  - BlockHit complete 이후 deferred Guard Out candidate를 소비한다.
 - [ ] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.
 
 ---

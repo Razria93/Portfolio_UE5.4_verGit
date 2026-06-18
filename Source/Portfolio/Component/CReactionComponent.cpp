@@ -164,12 +164,12 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	}
 }
 
-bool UCReactionComponent::RequestStopActiveReaction(const FExecutionInterventionDirective & InDirective)
+bool UCReactionComponent::RequestInterruptActiveReaction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsValidRequest()) return false;
 	if (InDirective.TargetDomain != EExecutionDomain::Reaction) return false;
 
-	return StopActiveReaction(InDirective);
+	return InterruptActiveReaction(InDirective);
 }
 
 // Execution Result Hooks
@@ -181,6 +181,15 @@ void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReacti
 	if (InReaction != GetActiveReactionExecutor()) return;
 
 	EndActiveReaction(InFinishReason);
+}
+
+// Cross-System Dispatch
+
+void UCReactionComponent::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
+{
+	if (!IsValid(ActionComp_Cached)) return;
+
+	ActionComp_Cached->ConsumeDeferredAction(InConsumeKey);
 }
 
 // Notify Routing
@@ -399,11 +408,10 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 	switch (InDirective.TargetDomain)
 	{
 	case EExecutionDomain::Action:
-		return IsValid(ActionComp_Cached) && ActionComp_Cached->RequestStopActiveAction(InDirective);
+		return IsValid(ActionComp_Cached) && ActionComp_Cached->RequestInterruptActiveAction(InDirective);
 
 	case EExecutionDomain::Reaction:
-
-		return StopActiveReaction(InDirective);
+		return InterruptActiveReaction(InDirective);
 
 	default:
 		return false;
@@ -440,25 +448,24 @@ bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InConte
 	return true;
 }
 
-bool UCReactionComponent::StopActiveReaction(const FExecutionInterventionDirective& InDirective)
+bool UCReactionComponent::InterruptActiveReaction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!IsActive()) return true;
 
-	const EReactionStopReason stopReason = ConvertExecutionStopReasonToReactionStopReason(InDirective.StopReason);
 	const EReactionFinishReason finishReason = ConvertExecutionStopReasonToReactionFinishReason(InDirective.StopReason);
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor))
 	{
-		// [NOTE] Fallback when executor Stop() did not clear the active state through callback.
+		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
 		return EndActiveReaction(finishReason);
 	}
 
-	activeExecutor->Stop(stopReason);
+	activeExecutor->Interrupt(InDirective);
 
 	if (IsActive())
 	{
-		// [NOTE] Fallback when executor Stop() did not clear the active state through callback.
+		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
 		return EndActiveReaction(finishReason);
 	}
 
@@ -547,18 +554,6 @@ void UCReactionComponent::ExitReactionState(const FReactionData& InData)
 }
 
 // Conversion
-
-EReactionStopReason UCReactionComponent::ConvertExecutionStopReasonToReactionStopReason(EExecutionStopReason InStopReason) const
-{
-	switch (InStopReason)
-	{
-	case EExecutionStopReason::Interrupted:
-		return EReactionStopReason::Interrupted;
-
-	default:
-		return EReactionStopReason::Ignored;
-	}
-}
 
 EReactionFinishReason UCReactionComponent::ConvertExecutionStopReasonToReactionFinishReason(EExecutionStopReason InStopReason) const
 {

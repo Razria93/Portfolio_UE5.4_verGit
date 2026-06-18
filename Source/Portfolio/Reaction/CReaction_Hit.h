@@ -11,5 +11,7 @@ class PORTFOLIO_API UCReaction_Hit : public UCReaction
 
 public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
+
+public:
 	void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
 };

@@ -73,7 +73,8 @@ enum class EDeferredActionConsumeKey : uint8
 {
 	None = 0,
 
-	GuardInCompleted,
+	AfterGuardInAction,
+	AfterGuardBlockReaction,
 
 	Max,
 };

@@ -127,9 +127,54 @@ bool UCReaction::Start(const FReactionData& InData)
 	return true;
 }
 
+void UCReaction::Interrupt(const FExecutionInterventionDirective& InDirective)
+{
+	if (!bIsActive) return;
+	if (!InDirective.IsValidRequest()) return;
+
+	HandleReactionStop(ResolveReactionStopReason(InDirective));
+}
+
 void UCReaction::Stop(EReactionStopReason InStopReason)
 {
 	if (!bIsActive) return;
+	if (InStopReason == EReactionStopReason::None) return;
+
+	HandleReactionStop(InStopReason);
+}
+
+void UCReaction::Complete()
+{
+	if (!bIsActive) return;
+
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Complete);
+
+	CleanupRuntimeEffects();
+	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+
+	if (IsValid(OwnerReactionComp_Injected))
+	{
+		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
+	}
+}
+
+EReactionStopReason UCReaction::ResolveReactionStopReason(const FExecutionInterventionDirective& InDirective) const
+{
+	switch (InDirective.StopReason)
+	{
+	case EExecutionStopReason::Interrupted:
+		return EReactionStopReason::Interrupted;
+
+	case EExecutionStopReason::Ignored:
+	default:
+		return EReactionStopReason::Ignored;
+	}
+}
+
+void UCReaction::HandleReactionStop(EReactionStopReason InStopReason)
+{
 	if (InStopReason == EReactionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
@@ -161,23 +206,6 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 	if (IsValid(OwnerReactionComp_Injected))
 	{
 		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, finishReason);
-	}
-}
-
-void UCReaction::Complete()
-{
-	if (!bIsActive) return;
-
-	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Complete);
-
-	CleanupRuntimeEffects();
-	ClearRuntime();
-
-	PlayFeedbackRequest(feedbackRequest);
-
-	if (IsValid(OwnerReactionComp_Injected))
-	{
-		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
 	}
 }
 
@@ -312,6 +340,13 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 	request.TriggerKey = InTriggerKey;
 
 	return request;
+}
+
+void UCReaction::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey) const
+{
+	if (!IsValid(OwnerReactionComp_Injected)) return;
+
+	OwnerReactionComp_Injected->RequestConsumeDeferredAction(InConsumeKey);
 }
 
 void UCReaction::OpenAllowInterventionWindow(FName InWindowKey)

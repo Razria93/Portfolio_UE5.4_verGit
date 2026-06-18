@@ -80,12 +80,17 @@ protected:
 public:
 	// Lifecycle
 	virtual bool Start(const FActionData& InData);
+	virtual void Interrupt(const FExecutionInterventionDirective& InDirective);
 	virtual void Stop(EActionStopReason InStopReason);
 	virtual void Complete();
 
 public:
 	virtual bool ReserveChain(const FActionData& InData);
 	virtual void ConsumeChain();
+
+protected:
+	EActionStopReason ResolveActionStopReason(const FExecutionInterventionDirective& InDirective) const;
+	void HandleActionStop(EActionStopReason InStopReason);
 
 protected:
 	virtual void ClearRuntime();

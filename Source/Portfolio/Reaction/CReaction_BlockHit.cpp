@@ -38,6 +38,13 @@ FExecutionDecisionResult UCReaction_BlockHit::ResolveExecutionDecision(const FEx
 	return result;
 }
 
+void UCReaction_BlockHit::Complete()
+{
+	Super::Complete();
+
+	RequestConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardBlockReaction);
+}
+
 void UCReaction_BlockHit::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -53,9 +60,8 @@ void UCReaction_BlockHit::ResolveObservableOverlayCondition(const FObservableOve
 	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
 	if (bHasGuardState)
 	{
-		// GuardState Case: clear Guard before BlockHit.
+		// GuardState Case: keep Guard during BlockHit.
 		OutDecision.Decision = EExecutionDecision::Accept;
-		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
 		return;
 	}
 

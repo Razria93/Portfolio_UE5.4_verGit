@@ -608,6 +608,8 @@ bool UCReactionOrchestratorComponent::BuildInterventionDirective(const FExecutio
 	OutDirective.TargetDomain = InQuery.ActivePart.ParticipantDomain;
 	OutDirective.StopReason = InQuery.StopReason;
 	OutDirective.AfterStopAction = InAfterStopAction;
+	OutDirective.IncomingPart = InQuery.IncomingPart;
+	OutDirective.ActivePart = InQuery.ActivePart;
 
 	return OutDirective.IsValidRequest();
 }
