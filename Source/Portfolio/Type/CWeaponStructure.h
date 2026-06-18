@@ -489,7 +489,7 @@ enum class ETakeDamageRejectReason : uint8
 	// Invulnerable,
 
 	// Blocked,
-	// Parried,
+	Parried,
 
 	// DamageCooldown,
 	ZeroDamage,

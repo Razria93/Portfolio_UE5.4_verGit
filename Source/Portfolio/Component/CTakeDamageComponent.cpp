@@ -6,6 +6,7 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CDamageFeedbackComponent.h"
+#include "Component/CDefenseComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -28,6 +29,9 @@ void UCTakeDamageComponent::BeginPlay()
 
 	DamageFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDamageFeedbackComponent>();
 	check(DamageFeedbackComp_Cached);
+
+	DefenseComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDefenseComponent>();
+	// check(DefenseComp_Cached);
 }
 
 float UCTakeDamageComponent::RequestTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -167,11 +171,22 @@ bool UCTakeDamageComponent::CanTakeDamage(FTakeDamageContext& InOutTakeDamageCon
 		return false;
 	}
 
+	// Gate 2: Parry window intercepts incoming damage before damage commit.
+	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanParry())
+	{
+		FLog::Log(TEXT("[TakeDamage] Parry intercept."));
+
+		InOutTakeDamageContext.bAccepted = false;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::Parried;
+
+		return false;
+	}
+
 	// TODO:
-	// Gate 2: invulnerable / iframe / god-mode state
-	// Gate 3: defensive friendly-fire check on receiver side
-	// Gate 4: receiver-side damage cooldown / hit immunity window
-	// Gate 5: defensive self-damage policy
+	// Gate 3: invulnerable / iframe / god-mode state
+	// Gate 4: defensive friendly-fire check on receiver side
+	// Gate 5: receiver-side damage cooldown / hit immunity window
+	// Gate 6: defensive self-damage policy
 
 	InOutTakeDamageContext.bAccepted = true;
 	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
@@ -291,7 +306,13 @@ float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTak
 	// Minimal safe policy (Check NaN, +Inf/-Inf)
 	if (!FMath::IsFinite(requestedDamage)) return 0.f;
 
-	const float mitigatedDamage = requestedDamage;
+	float mitigatedDamage = requestedDamage;
+
+	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
+	{
+		FLog::Log(TEXT("[TakeDamage] Guard mitigation."));
+		mitigatedDamage *= 0.5f;
+	}
 
 	// TODO: Defense / Armor / Resistance Policy
 

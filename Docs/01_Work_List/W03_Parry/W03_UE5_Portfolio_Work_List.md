@@ -87,7 +87,7 @@ target TakeDamage()
 
 - 현재 `UCTakeDamageComponent`는 damage commit 이후에 Reaction / DamageFeedback을 dispatch한다.
 - Parry가 damage 자체를 무효화해야 한다면 Reaction 단계보다 앞에서 처리해야 한다.
-- `ETakeDamageRejectReason`의 `Blocked`, `Parried`는 아직 주석 후보로만 남아 있다.
+- `ETakeDamageRejectReason::Parried`는 Parry v1 차단 사유로 사용하고, `Blocked` 계열은 Block_Hit / Guard 전용 reaction 정리 시 다시 검토한다.
 
 ### 현재 Reaction / Feedback 흐름
 
@@ -303,6 +303,16 @@ TakeDamagePacket
   - 현재 v1은 `GuardOut -> GuardIn` 재진입에서 old GuardOut cleanup이 new GuardIn state를 지우지 않도록 케이스 기반 예외를 둔다.
   - 판정 흐름 안정화 후에는 Guard overlay generation / lifecycle id를 도입해, cleanup 요청이 아직 같은 세대의 Guard state를 대상으로 하는지 검증한다.
   - 목표는 케이스별 예외가 아니라 “내가 만든 상태만 정리한다”는 ownership 기준으로 cleanup을 제어하는 것이다.
+
+### 4.10 TakeDamage 방어 분기 v1 구현 결과
+
+- [x] `UCTakeDamageComponent`에서 `UCDefenseComponent` 상태를 읽어 damage commit 이전에 Parry / Guard 분기를 판단한다.
+- [x] `CanParry()`가 true이면 damage commit 이전에 `ETakeDamageRejectReason::Parried`로 차단한다.
+  - v1에서는 기존 Hit / Dead reaction과 DamageFeedback이 실행되지 않는지 확인하는 것을 우선한다.
+  - `Block_Parry` reaction / feedback 연결은 후속 작업으로 남긴다.
+- [x] `CanGuard()`가 true이면 damage mitigation 단계에서 incoming damage를 임시로 50% 감소시킨다.
+  - v1에서는 Guard packet이 가로채지는지 확인하는 목적이며, Guard Gauge / stamina / Block_Hit 전용 reaction은 후속 작업으로 남긴다.
+- [x] Parry / Guard에 해당하지 않는 경우 기존 `CanTakeDamage() -> ComputeTakeDamage() -> CommitTakeDamage() -> DispatchTakeDamageCommitted()` 흐름을 유지한다.
 
 ---
 

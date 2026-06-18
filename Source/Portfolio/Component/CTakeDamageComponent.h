@@ -27,6 +27,9 @@ private:
 	UPROPERTY(Transient)
 	class UCDamageFeedbackComponent* DamageFeedbackComp_Cached = nullptr;
 
+	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Cached = nullptr;
+
 protected:
 	void BeginPlay() override;
 
