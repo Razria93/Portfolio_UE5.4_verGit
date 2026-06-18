@@ -119,132 +119,86 @@ bool UCDefenseComponent::ApplyObservableOverlayHandling(EObservableOverlayHandli
 
 void UCDefenseComponent::HandleGuardInputPressed()
 {
-	FLog::Log(TEXT("[HandleGuardInputPressed]"));
-
 	BeginGuardIntent();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::HandleGuardInputReleased()
 {
-	FLog::Log(TEXT("[HandleGuardInputReleased]"));
-
 	EndGuardIntent();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::HandleGuardInStarted()
 {
-	FLog::Log(TEXT("[HandleGuardInStarted]"));
-
 	BlockGuardStart();
 
 	BeginGuardPose();
 	CloseGuardWindow();
 	OpenParryWindow();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::HandleGuardOutStarted()
 {
-	FLog::Log(TEXT("[HandleGuardOutStarted]"));
-
 	BlockGuardStart();
 
 	EndGuardPose();
 	CloseGuardWindow();
 	CloseParryWindow();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::HandleSwitchToGuard()
 {
-	FLog::Log(TEXT("[HandleSwitchToGuard]"));
-
 	CloseParryWindow();
 
 	if (WantsGuarding())
 	{
-		FLog::Log(TEXT("[WantsGuarding == true]"));
 		OpenGuardWindow();
 	}
 	else
 	{
-		FLog::Log(TEXT("[WantsGuarding == false]"));
 		CloseGuardWindow();
 	}
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::HandleAllowGuardStart()
 {
-	FLog::Log(TEXT("[HandleAllowGuardStart]"));
-
 	AllowGuardStart();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::HandleGuardLifecycleCompleted()
 {
-	FLog::Log(TEXT("[HandleGuardLifecycleCompleted]"));
-
 	ClearGuardState();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::HandleGuardLifecycleInterrupted()
 {
-	FLog::Log(TEXT("[HandleGuardLifecycleInterrupted]"));
-
 	ClearGuardState();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::ClearGuardState()
 {
-	FLog::Log(TEXT("[ClearGuardState]"));
-
 	AllowGuardStart();
 	EndGuardIntent();
 
 	EndGuardPose();
 	CloseGuardWindow();
 	CloseParryWindow();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::ClearGuardOverlay()
 {
-	FLog::Log(TEXT("[ClearGuardOverlay]"));
-
 	EndGuardPose();
 	CloseGuardWindow();
 	CloseParryWindow();
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::RestoreGuardOverlay()
 {
-	FLog::Log(TEXT("[RestoreGuardOverlay]"));
-
 	if (WantsGuarding())
 	{
 		BeginGuardPose();
 		OpenGuardWindow();
 		CloseParryWindow();
 	}
-
-	PrintGuardStateInfo();
 }
 
 void UCDefenseComponent::AllowGuardStart()
