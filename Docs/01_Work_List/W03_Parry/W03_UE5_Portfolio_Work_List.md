@@ -325,7 +325,10 @@ TakeDamagePacket
   - `Dead transition -> Dead`
   - `Guard -> BlockHit`
   - `CommittedDamage > 0 -> Hit`
-- [ ] `BlockHit / Parry`에 대응하는 ReactionData와 asset 연결은 후속 작업에서 진행한다.
+- [x] `BlockHit / Parry`에 대응하는 전용 reaction executor를 추가한다.
+  - `CReaction_BlockHit`
+  - `CReaction_Parry`
+- [ ] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.
 
 ---
 
