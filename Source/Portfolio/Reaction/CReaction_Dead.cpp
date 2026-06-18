@@ -32,7 +32,7 @@ FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecut
 	return result;
 }
 
-void UCReaction_Dead::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+void UCReaction_Dead::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
 

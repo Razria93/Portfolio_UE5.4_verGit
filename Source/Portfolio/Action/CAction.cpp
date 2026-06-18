@@ -409,7 +409,7 @@ bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) con
 	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
-void UCAction::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+void UCAction::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
 

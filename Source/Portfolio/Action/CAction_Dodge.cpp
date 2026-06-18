@@ -32,7 +32,7 @@ FExecutionDecisionResult UCAction_Dodge::ResolveExecutionDecision(const FExecuti
 	return result;
 }
 
-void UCAction_Dodge::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+void UCAction_Dodge::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
 

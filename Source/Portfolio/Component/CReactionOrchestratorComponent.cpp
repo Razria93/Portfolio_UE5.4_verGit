@@ -546,7 +546,7 @@ void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecut
 		if (const UCReaction* incomingReaction = InQuery.IncomingPart.GetReactionContext().ReactionExecutor)
 		{
 			FObservableOverlayExecutionDecision overlayDecision;
-			incomingReaction->ResolveObservableOverlayExecutionCondition(overlayQuery, overlayDecision);
+			incomingReaction->ResolveObservableOverlayCondition(overlayQuery, overlayDecision);
 
 			if (!overlayDecision.IsAccepted())
 			{

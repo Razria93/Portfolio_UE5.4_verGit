@@ -11,7 +11,7 @@ class PORTFOLIO_API UCReaction_Dead : public UCReaction
 
 public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
-	void ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
+	void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
 
 public:
 	bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const override;

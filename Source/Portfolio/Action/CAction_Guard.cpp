@@ -142,7 +142,7 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 	return false;
 }
 
-void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
 
@@ -155,12 +155,14 @@ void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservabl
 	}
 
 	const FActionExecutionContext& incomingContext = InQuery.DecisionQuery.IncomingPart.GetActionContext();
-	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard;
 	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
+	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard;
+
+	// Case Guard-in: check condition
 	if (incomingGuardPhase == EGuardActionPhase::In)
 	{
-		const bool bCanStartGuardIn = !guardSnapshot.bIsGuardingPose && guardSnapshot.bCanStartGuard;
+		const bool bCanStartGuardIn = !guardOverlaySnapshot.bIsGuardingPose && guardOverlaySnapshot.bCanStartGuard;
 		if (!bCanStartGuardIn)
 		{
 			// GuardIn blocked by current Guard state.
@@ -168,25 +170,27 @@ void UCAction_Guard::ResolveObservableOverlayExecutionCondition(const FObservabl
 			return;
 		}
 
-		// GuardIn Case: clear stale Guard overlay before start.
 		OutDecision.Decision = EExecutionDecision::Accept;
-		if (guardSnapshot.HasGuardOverlay())
+		
+		// Clear stale Guard overlay before start.
+		if (guardOverlaySnapshot.HasGuardOverlay())
 		{
 			OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardOverlay);
 		}
 		return;
 	}
 
+	// Case Guard-out: check condition
 	if (incomingGuardPhase == EGuardActionPhase::Out)
 	{
-		if (!guardSnapshot.bIsGuardingPose)
+		if (!guardOverlaySnapshot.bIsGuardingPose)
 		{
 			// GuardOut without GuardPose: No-op.
 			OutDecision.Decision = EExecutionDecision::Ignore;
 			return;
 		}
 
-		// GuardOut Case: allow; GuardOut start clears Guard overlay.
+		// GuardOut start clears Guard overlay.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		return;
 	}
@@ -204,12 +208,12 @@ bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery
 
 	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
 	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
-	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
+	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
 
 	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
 	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
-	if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardSnapshot.bCanStartGuard)
+	if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardOverlaySnapshot.bCanStartGuard)
 	{
 		return true;
 	}
@@ -225,12 +229,12 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 
 	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
 	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
-	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
+	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
 
 	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
 	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
-	if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardSnapshot.bCanStartGuard)
+	if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardOverlaySnapshot.bCanStartGuard)
 	{
 		return true;
 	}

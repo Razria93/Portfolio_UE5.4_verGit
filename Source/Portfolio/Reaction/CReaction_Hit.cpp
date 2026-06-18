@@ -38,7 +38,7 @@ FExecutionDecisionResult UCReaction_Hit::ResolveExecutionDecision(const FExecuti
 	return result;
 }
 
-void UCReaction_Hit::ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+void UCReaction_Hit::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
 

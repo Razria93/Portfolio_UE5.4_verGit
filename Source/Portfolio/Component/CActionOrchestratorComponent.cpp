@@ -806,7 +806,7 @@ void UCActionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutio
 		if (const UCAction* incomingAction = InQuery.IncomingPart.GetActionContext().ActionExecutor)
 		{
 			FObservableOverlayExecutionDecision overlayDecision;
-			incomingAction->ResolveObservableOverlayExecutionCondition(overlayQuery, overlayDecision);
+			incomingAction->ResolveObservableOverlayCondition(overlayQuery, overlayDecision);
 
 			if (!overlayDecision.IsAccepted())
 			{

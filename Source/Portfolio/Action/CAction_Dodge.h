@@ -11,7 +11,7 @@ class PORTFOLIO_API UCAction_Dodge : public UCAction
 
 public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
-	void ResolveObservableOverlayExecutionCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
+	void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
 
 public:
 	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
