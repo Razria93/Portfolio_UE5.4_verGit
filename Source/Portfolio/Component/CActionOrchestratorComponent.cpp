@@ -935,6 +935,25 @@ FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EAc
 
 // Debug
 
+void UCActionOrchestratorComponent::PrintActionCandidateDebugInfo(const FString& InStage, const FActionCandidate& InCandidate) const
+{
+	if (!InCandidate.IsValidMinimal())
+	{
+		FLog::Log(FString::Printf(
+			TEXT("[ActionCandidate] Stage=%s | Invalid"),
+			*InStage));
+		return;
+	}
+
+	const FActionDataKey& actionKey = InCandidate.ActionDataKey;
+	FLog::Log(FString::Printf(
+		TEXT("[ActionCandidate] Stage=%s | ActionType=%s | GuardPhase=%s | ActionIndex=%d"),
+		*InStage,
+		*UEnum::GetValueAsString(actionKey.ActionType),
+		*UEnum::GetValueAsString(ResolveGuardActionPhase(actionKey)),
+		actionKey.ActionIndex));
+}
+
 void UCActionOrchestratorComponent::PrintActionRequestResult(const FActionRequestResult& InResult) const
 {
 	FLog::Log(FString::Printf(
