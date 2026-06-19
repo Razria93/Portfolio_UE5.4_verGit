@@ -49,7 +49,17 @@ bool UCObservableOverlayComponent::ApplyObservableOverlayHandlings(const TArray<
 {
 	for (const EObservableOverlayHandling handling : InHandlings)
 	{
-		if (!ApplyObservableOverlayHandling(handling)) return false;
+		FLog::Log(FString::Printf(
+			TEXT("[OverlayHandling] Try Handling=%s"),
+			*UEnum::GetValueAsString(handling)));
+
+		if (!ApplyObservableOverlayHandling(handling))
+		{
+			FLog::Log(FString::Printf(
+				TEXT("[OverlayHandling] Failed Handling=%s"),
+				*UEnum::GetValueAsString(handling)));
+			return false;
+		}
 	}
 
 	return true;
@@ -63,11 +73,30 @@ bool UCObservableOverlayComponent::ApplyObservableOverlayHandling(EObservableOve
 	{
 		IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
 		if (!overlayPolicy) continue;
-		if (!overlayPolicy->CanApplyObservableOverlayHandling(InHandling)) continue;
+		const UObject* policyObject = policy.GetObject();
+		const FString policyName = IsValid(policyObject) ? policyObject->GetName() : TEXT("InvalidPolicy");
+		const bool bCanApply = overlayPolicy->CanApplyObservableOverlayHandling(InHandling);
 
-		return overlayPolicy->ApplyObservableOverlayHandling(InHandling);
+		FLog::Log(FString::Printf(
+			TEXT("[OverlayHandling] Policy=%s | Handling=%s | CanApply=%s"),
+			*policyName,
+			*UEnum::GetValueAsString(InHandling),
+			bCanApply ? TEXT("true") : TEXT("false")));
+
+		if (!bCanApply) continue;
+
+		const bool bApplied = overlayPolicy->ApplyObservableOverlayHandling(InHandling);
+		FLog::Log(FString::Printf(
+			TEXT("[OverlayHandling] Policy=%s | Handling=%s | Applied=%s"),
+			*policyName,
+			*UEnum::GetValueAsString(InHandling),
+			bApplied ? TEXT("true") : TEXT("false")));
+		return bApplied;
 	}
 
+	FLog::Log(FString::Printf(
+		TEXT("[OverlayHandling] No policy accepted Handling=%s"),
+		*UEnum::GetValueAsString(InHandling)));
 	return false;
 }
 

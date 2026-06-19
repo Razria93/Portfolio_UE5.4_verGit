@@ -45,11 +45,15 @@ void UCAction_Guard::Interrupt(const FExecutionInterventionDirective& InDirectiv
 		{
 		case EGuardActionPhase::In:
 		{
+			const bool bIsParryIncoming =
+				InDirective.IncomingPart.IsReactionParticipant()
+				&& InDirective.IncomingPart.GetReactionContext().ReactionDataKey.ReactionType == EReactionType::Parry;
+
 			const bool bIsBlockHitIncoming =
 				InDirective.IncomingPart.IsReactionParticipant()
 				&& InDirective.IncomingPart.GetReactionContext().ReactionDataKey.ReactionType == EReactionType::BlockHit;
 
-			PrintGuardInterventionDebugInfo(TEXT("InterruptGuardIn"), activeGuardPhase, InDirective.IncomingPart, bIsBlockHitIncoming);
+			PrintGuardInterventionDebugInfo(bIsParryIncoming ? TEXT("InterruptGuardInParry") : TEXT("InterruptGuardIn"), activeGuardPhase, InDirective.IncomingPart, bIsBlockHitIncoming);
 
 			if (!bIsBlockHitIncoming)
 			{
@@ -319,8 +323,15 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 	if (InQuery.IncomingPart.IsReactionParticipant())
 	{
 		const FReactionExecutionContext& incomingReactionContext = InQuery.IncomingPart.GetReactionContext();
+		const EReactionType incomingReactionType = incomingReactionContext.ReactionDataKey.ReactionType;
 
-		if (activeGuardPhase == EGuardActionPhase::In && incomingReactionContext.ReactionDataKey.ReactionType == EReactionType::BlockHit)
+		if (activeGuardPhase == EGuardActionPhase::In && incomingReactionType == EReactionType::Parry)
+		{
+			PrintGuardInterventionDebugInfo(TEXT("AllowParry"), activeGuardPhase, InQuery.IncomingPart, true);
+			return true;
+		}
+
+		if (activeGuardPhase == EGuardActionPhase::In && incomingReactionType == EReactionType::BlockHit)
 		{
 			PrintGuardInterventionDebugInfo(TEXT("AllowBlockHit"), activeGuardPhase, InQuery.IncomingPart, true);
 			return true;
@@ -345,7 +356,7 @@ void UCAction_Guard::ClearGuardState() const
 	OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
 }
 
-void UCAction_Guard::PrintGuardInterventionDebugInfo(const FString& InStage, EGuardActionPhase InActiveGuardPhase, const FExecutionParticipant& InIncomingPart, bool bResult) const
+void UCAction_Guard::PrintGuardInterventionDebugInfo(const FString& InStage, EGuardActionPhase InActiveGuardPhase, const FExecutionParticipant& InIncomingPart, bool bKeepGuardState) const
 {
 	FString incomingText = TEXT("Invalid");
 
@@ -366,9 +377,9 @@ void UCAction_Guard::PrintGuardInterventionDebugInfo(const FString& InStage, EGu
 	}
 
 	FLog::Log(FString::Printf(
-		TEXT("[GuardIntervention] Stage=%s | ActivePhase=%s | Incoming=%s | Result=%s"),
+		TEXT("[GuardIntervention] Stage=%s | ActivePhase=%s | Incoming=%s | KeepGuardState=%s"),
 		*InStage,
 		*UEnum::GetValueAsString(InActiveGuardPhase),
 		*incomingText,
-		bResult ? TEXT("true") : TEXT("false")));
+		bKeepGuardState ? TEXT("true") : TEXT("false")));
 }
