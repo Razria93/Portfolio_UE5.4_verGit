@@ -652,7 +652,37 @@ Guard 재진입이나 Guard lifecycle 정리처럼 incoming 문맥이 필요한 
 
 ---
 
-## 15. 관련 문서
+## 15. Guard Movement Override와 Asset 검증 기준
+
+Guard Hold는 단순 pose가 아니라 Guard 전용 locomotion을 요구한다. 따라서 v1에서는 Guard overlay가 활성화된 동안 `BS_Guard` 기반 8-way locomotion을 사용할 수 있도록 movement override를 함께 적용한다.
+
+책임 기준은 다음과 같이 둔다.
+
+```text
+DefenseComponent
+-> Guard overlay lifecycle 판단
+-> Guard movement override 요청
+
+MovementComponent
+-> gait / rotation mode 조합 적용
+-> default movement mode 복구
+```
+
+즉, DefenseComponent가 `bOrientRotationToMovement`, `bUseControllerDesiredRotation`, walk speed 같은 세부 movement 값을 직접 조립하지 않는다. DefenseComponent는 Guard 상태의 owner로서 “Guard movement mode가 필요하다”는 요청만 하고, 실제 movement 설정 조합은 MovementComponent가 관리한다.
+
+v1 검증 기준은 다음과 같다.
+
+- Guard In / Hold / BlockHit 유지 중에는 Guard locomotion 기준을 사용한다.
+- Guard Out / Dodge / Hit / Parry / interrupt로 Guard가 종료되면 default movement mode로 복구한다.
+- `BS_Guard`와 Guard / BlockHit / Parry montage 참조는 Editor에서 연결한다.
+- animation asset naming은 현재 프로젝트 규칙에 맞춰 정리한다.
+- PIE에서 Guard In / Hold / Out, BlockHit, Parry reaction, Guard locomotion 전환을 확인한다.
+
+이 작업은 overlay layer의 확장 사례이기도 하다. Guard overlay는 combat 판정뿐 아니라 animation pose와 movement mode에도 영향을 주므로, overlay owner가 상태 의미를 보관하고 실제 세부 적용은 각 domain component로 위임하는 기준을 유지한다.
+
+---
+
+## 16. 관련 문서
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/02_Bug_Report/B11_UE5_Portfolio_Bug_Report.md`

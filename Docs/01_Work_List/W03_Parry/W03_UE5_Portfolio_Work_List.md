@@ -234,8 +234,12 @@ TakeDamagePacket
     - [x] BlockHit complete 이후 `AfterGuardBlockReaction`과 `AfterGuardInAction` deferred Guard Out candidate를 소비한다.
     - [x] 현재 `Hit / Dead` reaction은 각각의 reaction executor에서 Guard overlay를 clear하는 정책으로 정리한다.
     - [x] reaction base는 공통 clear 정책을 갖지 않고, 세부 reaction executor가 자기 overlay execution condition을 판단하도록 정리한다.
-    - [ ] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.
-- [ ] Guard Hold 중 피격 처리와 기존 Hit / Dead reaction 흐름이 충돌하지 않는지 PIE에서 확인한다.
+    - [x] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.
+- [x] Guard Hold 중 피격 처리와 기존 Hit / Dead reaction 흐름이 충돌하지 않는지 PIE에서 확인한다.
+  - 세부 구현 요소:
+    - [x] Guard Hold 중 피격 시 `BlockHit` reaction이 실행되는지 확인한다.
+    - [x] Guard-In에서 `SwitchToGuard` 이후 피격 시 `BlockHit` reaction으로 분기되는지 확인한다.
+    - [x] Parry Window 중 피격 시 `Parry` reaction이 실행되는지 확인한다.
 
 ### 4.4 TakeDamage 내부 defensive resolution 임시 구현
 
@@ -343,7 +347,17 @@ TakeDamagePacket
 - [x] BlockHit 중 release 입력은 `AfterGuardBlockReaction` key로 Guard Out candidate를 지연 실행한다.
   - BlockHit 중에는 Guard overlay를 유지한다.
   - BlockHit complete 이후 deferred Guard Out candidate를 소비한다.
-- [ ] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.
+- [x] `BlockHit / Parry`에 대응하는 ReactionData와 montage asset 연결은 Editor에서 진행한다.
+
+### 4.10 Guard Locomotion / Asset 연결 결과
+
+- [x] Guard Hold에서 사용할 `BS_Guard`를 추가하고 ABP Guard pose / locomotion 흐름에 연결한다.
+- [x] Guard 상태에서는 Guard 전용 movement override를 적용한다.
+  - Guard In / Hold / BlockHit 유지 중에는 Guard 8-way locomotion 기준을 사용한다.
+  - Guard Out / Hit / Parry / interrupt로 Guard 상태가 종료되면 기본 movement mode로 복구한다.
+- [x] Guard / BlockHit / Parry 관련 ActionData / ReactionData의 montage 참조를 Editor에서 연결한다.
+- [x] Guard / Block 관련 animation asset naming을 현재 프로젝트 규칙에 맞춰 정리한다.
+- [x] PIE에서 Guard In / Hold / Out, BlockHit, Parry reaction, Guard locomotion 전환을 확인한다.
 
 ---
 
@@ -365,38 +379,42 @@ TakeDamagePacket
 
 ### Build
 
-- [ ] 신규 Guard Action executor compile 확인
-- [ ] Guard enum / ActionData key / WindowKey 변경 compile 확인
-- [ ] TakeDamage defensive resolution 임시 함수 compile 확인
+- [x] 신규 Guard Action executor compile 확인
+- [x] Guard enum / ActionData key / WindowKey 변경 compile 확인
+- [x] TakeDamage defensive resolution 임시 함수 compile 확인
 
 ### Code Flow
 
-- [ ] Player input Pressed -> Guard Action Request -> Action Orchestrator 흐름 확인
-- [ ] Guard Action Request -> Guard Action executor 실행 흐름 확인
-- [ ] Guard Action -> Block_In -> Parry Window open 흐름 확인
-- [ ] SwitchToGuard notify -> Parry Window close -> Guard Hold 상태 전환 확인
-- [ ] Guard Released -> Block_Out 실행 흐름 확인
-- [ ] incoming damage -> TakeDamage defensive resolution -> Parry 성공 분기 확인
-- [ ] incoming damage -> TakeDamage defensive resolution -> Guard Hit 분기 확인
-- [ ] Parry 성공 분기에서 기존 damage commit이 실행되지 않는지 확인
-- [ ] 일반 피격에서 기존 TakeDamage / Reaction / DamageFeedback 흐름이 유지되는지 확인
+- [x] Player input Pressed -> Guard Action Request -> Action Orchestrator 흐름 확인
+- [x] Guard Action Request -> Guard Action executor 실행 흐름 확인
+- [x] Guard Action -> Block_In -> Parry Window open 흐름 확인
+- [x] SwitchToGuard notify -> Parry Window close -> Guard Hold 상태 전환 확인
+- [x] Guard Released -> Block_Out 실행 흐름 확인
+- [x] incoming damage -> TakeDamage defensive resolution -> Parry 성공 분기 확인
+- [x] incoming damage -> TakeDamage defensive resolution -> Guard Hit 분기 확인
+- [x] Parry 성공 분기에서 기존 damage commit이 실행되지 않는지 확인
+- [x] 일반 피격에서 기존 TakeDamage / Reaction / DamageFeedback 흐름이 유지되는지 확인
 
 ### PIE
 
-- [ ] Guard 입력 시 Block_In montage가 재생되는지 확인
-- [ ] Guard 유지 시 Block_Hold 또는 Guard Hold 상태가 유지되는지 확인
-- [ ] Guard release 시 Block_Out montage가 재생되는지 확인
-- [ ] Parry Window 중 피격 시 damage가 무효화되는지 확인
-- [ ] Parry Window 밖 피격 시 기존 피격 처리가 유지되는지 확인
-- [ ] Guard Hold 중 피격 시 Block_Hit 또는 guard hit reaction이 실행되는지 확인
-- [ ] Parry 성공 시 Block_Parry 또는 parry reaction / feedback이 실행되는지 확인
+- [x] Guard 입력 시 Block_In montage가 재생되는지 확인
+- [x] Guard 유지 시 Block_Hold 또는 Guard Hold 상태가 유지되는지 확인
+- [x] Guard release 시 Block_Out montage가 재생되는지 확인
+- [x] Parry Window 중 피격 시 damage가 무효화되는지 확인
+- [x] Parry Window 밖 피격 시 기존 피격 처리가 유지되는지 확인
+- [x] Guard Hold 중 피격 시 Block_Hit 또는 guard hit reaction이 실행되는지 확인
+- [x] Parry 성공 시 Block_Parry 또는 parry reaction / feedback이 실행되는지 확인
+- [x] Guard Hold 중 `BS_Guard` 8-way locomotion이 적용되는지 확인
+- [x] Guard 종료 / interruption 이후 기본 movement mode로 복구되는지 확인
 
 ### Editor / Asset
 
-- [ ] Block_In / Block_Hold / Block_Out / Block_Hit / Block_Parry asset 존재 여부 확인
-- [ ] `FActionData.Montage`에 Guard / Block montage가 연결되어 있는지 확인
-- [ ] `UCAnimNotifyState_ExecutionInterventionWindow` 또는 전환 notify가 montage에 적용되어 있는지 확인
-- [ ] `WindowKey = Parry` 설정이 적용되어 있는지 확인
+- [x] Block_In / Block_Hold / Block_Out / Block_Hit / Block_Parry asset 존재 여부 확인
+- [x] `FActionData.Montage`에 Guard / Block montage가 연결되어 있는지 확인
+- [x] `FReactionData.Montage`에 BlockHit / Parry montage가 연결되어 있는지 확인
+- [x] `UCAnimNotifyState_ExecutionInterventionWindow` 또는 전환 notify가 montage에 적용되어 있는지 확인
+- [x] `WindowKey = Parry` 설정이 적용되어 있는지 확인
+- [x] Guard / Block 관련 animation asset naming을 현재 규칙에 맞춰 정리했는지 확인
 
 ---
 
