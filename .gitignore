@@ -20,3 +20,7 @@ Saved/
 /docs/ignore/
 /docs/01_Issue_CheckList/ignore/
 /docs/05_System_Architecture/ignore/
+
+# Local-only editor scripts and asset staging area
+/Scripts/_Local/
+/Content/_Local/
