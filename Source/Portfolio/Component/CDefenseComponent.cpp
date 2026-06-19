@@ -91,15 +91,6 @@ bool UCDefenseComponent::HandleObservableOverlayEvent(const FObservableOverlayEv
 
 bool UCDefenseComponent::CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const
 {
-	FLog::Log(FString::Printf(
-		TEXT("[DefenseOverlay] CanApply Handling=%s | CanStartGuard=%s | WantsGuarding=%s | IsGuardingPose=%s | CanGuard=%s | CanParry=%s"),
-		*UEnum::GetValueAsString(InHandling),
-		bCanStartGuard ? TEXT("true") : TEXT("false"),
-		bWantsGuarding ? TEXT("true") : TEXT("false"),
-		bIsGuardingPose ? TEXT("true") : TEXT("false"),
-		bCanGuard ? TEXT("true") : TEXT("false"),
-		bCanParry ? TEXT("true") : TEXT("false")));
-
 	switch (InHandling)
 	{
 	case EObservableOverlayHandling::None:

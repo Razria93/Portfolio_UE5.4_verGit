@@ -69,6 +69,7 @@ private:
 private:
 	void PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void PrintTakeDamageContextInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintTakeDamageOutcomeInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	void PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const;

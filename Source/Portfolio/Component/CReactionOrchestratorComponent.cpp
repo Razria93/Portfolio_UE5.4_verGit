@@ -506,12 +506,6 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 		bActiveAllows = activeReaction->AllowIntervention(interventionQuery);
 	}
 
-	FLog::Log(FString::Printf(
-		TEXT("[ResolveInterventionDirective] Owner = %s | bIncomingWants = %s | bActiveAllows = %s"),
-		*GetNameSafe(OwnerCharacter_Cached),
-		bIncomingWants ? TEXT("true") : TEXT("false"),
-		bActiveAllows ? TEXT("true") : TEXT("false")));
-
 	if (!bIncomingWants)
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;

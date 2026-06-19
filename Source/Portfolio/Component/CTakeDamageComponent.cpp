@@ -109,6 +109,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
 
 	// PrintTakeDamageSummaryInfo(takeDamagePacket);
+	PrintTakeDamageOutcomeInfo(takeDamagePacket);
 	DispatchTakeDamageResolved(takeDamagePacket);
 
 	return committedResult.CommittedDamage;
@@ -174,8 +175,6 @@ bool UCTakeDamageComponent::CanTakeDamage(FTakeDamageContext& InOutTakeDamageCon
 	// Gate 2: Parry window intercepts incoming damage before damage commit.
 	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanParry())
 	{
-		FLog::Log(TEXT("[TakeDamage] Parry intercept."));
-
 		InOutTakeDamageContext.bAccepted = true;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
 		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Parry;
@@ -317,7 +316,6 @@ float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTak
 
 	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
 	{
-		FLog::Log(TEXT("[TakeDamage] Guard mitigation."));
 		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
 		mitigatedDamage *= 0.5f;
 	}
@@ -447,6 +445,21 @@ void UCTakeDamageComponent::PrintTakeDamageContextInfo(const FTakeDamagePacket& 
 	PrintSpecKeyInfo(InTakeDamagePacket);
 	PrintDamageAmountInfo(InTakeDamagePacket);
 	FLog::Log(TEXT("/////////////////////////////////"));
+}
+
+void UCTakeDamageComponent::PrintTakeDamageOutcomeInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	const FTakeDamageResult& result = InTakeDamagePacket.Result;
+
+	if (result.DefenseOutcome == EDamageDefenseOutcome::None && result.CommittedDamage <= KINDA_SMALL_NUMBER) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[TakeDamageOutcome] Outcome=%s | Commit=%s | Damage=%.3f | HP=%.3f->%.3f"),
+		*UEnum::GetValueAsString(result.DefenseOutcome),
+		result.bShouldCommitDamage ? TEXT("true") : TEXT("false"),
+		result.CommittedDamage,
+		InTakeDamagePacket.Context.HealthPointBefore,
+		InTakeDamagePacket.Context.HealthPointAfter));
 }
 
 void UCTakeDamageComponent::PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const
