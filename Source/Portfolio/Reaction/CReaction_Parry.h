@@ -13,5 +13,6 @@ public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 public:
+	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 	void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
 };

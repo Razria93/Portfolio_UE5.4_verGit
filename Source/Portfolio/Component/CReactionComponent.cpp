@@ -135,31 +135,64 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	if (!IsValid(OwnerCharacter_Cached)) return false;
 	if (!InResult.IsAcceptedDecision()) return false;
 
+	FLog::Log(FString::Printf(
+		TEXT("[ReactionDecision] ApplyMode=%s | ReactionType=%s"),
+		*UEnum::GetValueAsString(InResult.ApplyMode),
+		*UEnum::GetValueAsString(InResult.ResolvedContext.ReactionDataKey.ReactionType)));
+
 	switch (InResult.ApplyMode)
 	{
 	case EExecutionApplyMode::Start:
 	{
-		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings)) return false;
+		FLog::Log(TEXT("[Start]"));
 
-		return StartReaction(InResult.ResolvedContext);
+		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings))
+		{
+			FLog::Log(TEXT("[ReactionDecision] Overlay handling failed."));
+			return false;
+		}
+
+		const bool bStarted = StartReaction(InResult.ResolvedContext);
+		if (!bStarted)
+		{
+			FLog::Log(TEXT("[ReactionDecision] Start reaction failed."));
+		}
+		return bStarted;
 	}
 
 	case EExecutionApplyMode::Reserve:
 	{
 		// [NOTE] Reaction does not support reserved execution.
+		FLog::Log(TEXT("[ReactionDecision] Reserve is not supported."));
 		return false;
 	}
 
 	case EExecutionApplyMode::Intervene:
 	{
-		// [NOTE] Try Apply Intervention
-		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
-		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings)) return false;
+		FLog::Log(TEXT("[Intervene]"));
 
-		return StartReaction(InResult.ResolvedContext);
+		// [NOTE] Try Apply Intervention
+		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective))
+		{
+			FLog::Log(TEXT("[ReactionDecision] Intervention failed."));
+			return false;
+		}
+		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings))
+		{
+			FLog::Log(TEXT("[ReactionDecision] Overlay handling failed."));
+			return false;
+		}
+
+		const bool bStarted = StartReaction(InResult.ResolvedContext);
+		if (!bStarted)
+		{
+			FLog::Log(TEXT("[ReactionDecision] Start reaction failed."));
+		}
+		return bStarted;
 	}
 	
 	default:
+		FLog::Log(TEXT("[ReactionDecision] Invalid apply mode."));
 		return false;
 	}
 }
@@ -421,6 +454,7 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 bool UCReactionComponent::ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
 	if (InHandlings.IsEmpty()) return true;
+
 	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyObservableOverlayHandlings(InHandlings);
 }
 

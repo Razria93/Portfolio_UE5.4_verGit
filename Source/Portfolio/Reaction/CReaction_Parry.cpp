@@ -36,6 +36,26 @@ FExecutionDecisionResult UCReaction_Parry::ResolveExecutionDecision(const FExecu
 	return result;
 }
 
+bool UCReaction_Parry::WantIntervention(const FExecutionInterventionQuery& InQuery) const
+{
+	if (!InQuery.IsValidMinimal()) return false;
+	if (!IsIncomingReactionType(InQuery, EReactionType::Parry)) return false;
+
+	if (Super::WantIntervention(InQuery)) return true;
+
+	if (!InQuery.ActivePart.IsActionParticipant()) return false;
+
+	const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
+	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(activeContext.ActionDataKey);
+
+	if (activeContext.ActionDataKey.ActionType == EActionType::Guard && activeGuardPhase == EGuardActionPhase::In)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void UCReaction_Parry::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -48,15 +68,6 @@ void UCReaction_Parry::ResolveObservableOverlayCondition(const FObservableOverla
 		return;
 	}
 
-	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
-	if (bHasGuardState)
-	{
-		// GuardState Case: clear Guard before Parry.
-		OutDecision.Decision = EExecutionDecision::Accept;
-		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
-		return;
-	}
-
-	// Another Case: No overlay cleanup.
+	// Guard cleanup is handled by the interrupted Guard action.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }

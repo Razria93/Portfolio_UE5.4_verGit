@@ -78,14 +78,14 @@ void UCReaction_BlockHit::ResolveObservableOverlayCondition(const FObservableOve
 		return;
 	}
 
-	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
-	if (bHasGuardState)
+	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard;
+	if (guardSnapshot.bCanGuard)
 	{
-		// GuardState Case: keep Guard during BlockHit.
+		// Guard Case: keep Guard during BlockHit.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		return;
 	}
 
-	// Another Case: No overlay cleanup.
-	OutDecision.Decision = EExecutionDecision::Accept;
+	// Another Case: BlockHit requires an active Guard window.
+	OutDecision.Decision = EExecutionDecision::Reject;
 }
