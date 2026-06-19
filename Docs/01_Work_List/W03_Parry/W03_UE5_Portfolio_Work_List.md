@@ -364,6 +364,7 @@ TakeDamagePacket
 ## 5. 비범위
 
 - Attacker 측 Parry 성공 signal 송신 / 수신
+- Blink / Repulse cue packet 전달 구조
 - Attacker 측 stagger / reaction / counter 처리
 - Perfect Parry / Normal Parry 구분
 - Resource / Stamina / Posture / Guard Gauge 처리
@@ -424,6 +425,7 @@ TakeDamagePacket
 - [ ] 구현 중 구조 충돌이 발생하면 System Design Record 또는 note 보완 필요 여부를 판단한다.
 - [ ] 검증 과정에서 Editor / Asset 확인이 불완전하면 PR 문서의 미검증 항목에 남긴다.
 - [ ] TakeDamage 내부 defensive resolution 규칙이 Guard / Counter 확장 기준으로 의미가 생기면 System Architecture 후속 보완 후보로 기록한다.
+- [x] Attacker 측 counter signal / Blink / Repulse / cue packet 전달 구조는 `Docs/06_notes/N04_Blink_Repulse_Combat_Packet_Design_Note.md`에 후속 판단 기록으로 분리한다.
 
 ---
 
