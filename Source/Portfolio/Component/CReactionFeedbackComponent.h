@@ -37,6 +37,7 @@ public:
 
 private:
 	bool CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const;
+	bool IsParryFeedbackRequest(const FReactionFeedbackRequest& InReactionFeedbackRequest) const;
 
 private:
 	bool TryCalculateMatchScore(const FReactionFeedbackKey& InDataKey, EReactionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FReactionFeedbackRequest& InReactionFeedbackRequest, int32& OutScore) const;
