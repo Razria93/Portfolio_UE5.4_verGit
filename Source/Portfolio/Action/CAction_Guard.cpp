@@ -135,6 +135,15 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 		return result;
 	}
 
+	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
+	if (incomingGuardPhase == EGuardActionPhase::Out && !guardOverlaySnapshot.HasGuardRuntimeState())
+	{
+		FLog::Log(TEXT("[GuardOut] Ignored stale release."));
+
+		result.Decision = EExecutionDecision::Ignore;
+		return result;
+	}
+
 	EExecutionRelationship relationship = EExecutionRelationship::None;
 
 	if (!TryResolveIndependentOrExclusiveRelationship(InQuery, relationship))
