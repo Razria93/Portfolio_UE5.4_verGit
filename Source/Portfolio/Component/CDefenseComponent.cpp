@@ -1,9 +1,21 @@
 #include "Component/CDefenseComponent.h"
 #include "ProjectGlobal.h"
 
+#include "Component/CMovementComponent.h"
+
 UCDefenseComponent::UCDefenseComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+}
+
+void UCDefenseComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	check(GetOwner());
+
+	MovementComp_Cached = GetOwner()->FindComponentByClass<UCMovementComponent>();
+	check(MovementComp_Cached);
 }
 
 void UCDefenseComponent::WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
@@ -79,6 +91,15 @@ bool UCDefenseComponent::HandleObservableOverlayEvent(const FObservableOverlayEv
 
 bool UCDefenseComponent::CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const
 {
+	FLog::Log(FString::Printf(
+		TEXT("[DefenseOverlay] CanApply Handling=%s | CanStartGuard=%s | WantsGuarding=%s | IsGuardingPose=%s | CanGuard=%s | CanParry=%s"),
+		*UEnum::GetValueAsString(InHandling),
+		bCanStartGuard ? TEXT("true") : TEXT("false"),
+		bWantsGuarding ? TEXT("true") : TEXT("false"),
+		bIsGuardingPose ? TEXT("true") : TEXT("false"),
+		bCanGuard ? TEXT("true") : TEXT("false"),
+		bCanParry ? TEXT("true") : TEXT("false")));
+
 	switch (InHandling)
 	{
 	case EObservableOverlayHandling::None:
@@ -134,6 +155,8 @@ void UCDefenseComponent::HandleGuardInStarted()
 	BeginGuardPose();
 	CloseGuardWindow();
 	OpenParryWindow();
+
+	ApplyGuardMovementOverride();
 }
 
 void UCDefenseComponent::HandleGuardOutStarted()
@@ -143,6 +166,8 @@ void UCDefenseComponent::HandleGuardOutStarted()
 	EndGuardPose();
 	CloseGuardWindow();
 	CloseParryWindow();
+
+	ClearMovementOverride();
 }
 
 void UCDefenseComponent::HandleSwitchToGuard()
@@ -182,6 +207,8 @@ void UCDefenseComponent::ClearGuardState()
 	EndGuardPose();
 	CloseGuardWindow();
 	CloseParryWindow();
+
+	ClearMovementOverride();
 }
 
 void UCDefenseComponent::ClearGuardOverlay()
@@ -189,6 +216,8 @@ void UCDefenseComponent::ClearGuardOverlay()
 	EndGuardPose();
 	CloseGuardWindow();
 	CloseParryWindow();
+
+	ClearMovementOverride();
 }
 
 void UCDefenseComponent::RestoreGuardOverlay()
@@ -198,6 +227,8 @@ void UCDefenseComponent::RestoreGuardOverlay()
 		BeginGuardPose();
 		OpenGuardWindow();
 		CloseParryWindow();
+
+		ApplyGuardMovementOverride();
 	}
 }
 
@@ -249,6 +280,20 @@ void UCDefenseComponent::OpenParryWindow()
 void UCDefenseComponent::CloseParryWindow()
 {
 	bCanParry = false;
+}
+
+void UCDefenseComponent::ApplyGuardMovementOverride()
+{
+	if (!IsValid(MovementComp_Cached)) return;
+
+	MovementComp_Cached->ApplyMovementOverride(EMovementGait::Walk, EMovementRotationMode::ControllerDesired);
+}
+
+void UCDefenseComponent::ClearMovementOverride()
+{
+	if (!IsValid(MovementComp_Cached)) return;
+
+	MovementComp_Cached->ClearMovementOverride();
 }
 
 void UCDefenseComponent::PrintGuardStateInfo() const

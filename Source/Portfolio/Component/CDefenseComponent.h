@@ -14,8 +14,15 @@ class PORTFOLIO_API UCDefenseComponent : public UActorComponent, public IObserva
 public:
 	UCDefenseComponent();
 
-private:
+protected:
+	// Lifecycle
+	void BeginPlay() override;
 
+private:
+	UPROPERTY(Transient)
+	class UCMovementComponent* MovementComp_Cached = nullptr;
+
+private:
 	UPROPERTY(Transient)
 	bool bCanStartGuard = true;
 
@@ -80,6 +87,9 @@ private:
 
 	void OpenParryWindow();
 	void CloseParryWindow();
+
+	void ApplyGuardMovementOverride();
+	void ClearMovementOverride();
 
 private:
 	void PrintGuardStateInfo() const;

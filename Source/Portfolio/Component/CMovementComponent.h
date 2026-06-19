@@ -25,6 +25,12 @@ private:
 	UPROPERTY(Transient)
 	EMovementGait CurrentMovementGait = EMovementGait::Run;
 
+	UPROPERTY(Transient)
+	EMovementGait CachedMovementGait_BeforeOverride = EMovementGait::Run;
+
+	UPROPERTY(Transient)
+	bool bHasMovementModeOverride = false;
+
 private:
 	UPROPERTY(Transient)
 	bool bCanMove = true;
@@ -89,8 +95,16 @@ public:
 	void OnJump();
 	void OnStopJump();
 
+public:
+	/* === Movement Policy === */
+	void ApplyMovementOverride(EMovementGait InGait, EMovementRotationMode InRotationMode);
+	void ClearMovementOverride();
+
 private:
 	void ChangeMovementGait(EMovementGait InNewMovementGait);
+
+private:
+	void ApplyRotationMode(EMovementRotationMode InRotationMode);
 
 private:
 	void CalculateSpeed();
