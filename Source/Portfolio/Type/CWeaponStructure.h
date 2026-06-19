@@ -739,6 +739,9 @@ public:
 	float PlayRate = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Data")
+	FName StartSectionName = NAME_None;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
 
 	UPROPERTY(EditAnywhere, Category = "Intervention|Want")
@@ -1391,6 +1394,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Data")
 	float PlayRate = 1.f;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
+	FName StartSectionName = NAME_None;
 
 	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;

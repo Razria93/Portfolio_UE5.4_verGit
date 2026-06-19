@@ -267,8 +267,20 @@ bool UCAction::PlayMontage(const FActionData& InData)
 	if (!IsValid(InData.Montage)) return false;
 
 	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
+	if (duration <= 0.0f) return false;
 
-	return duration > 0.0f;
+	if (!InData.StartSectionName.IsNone())
+	{
+		USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+		if (!IsValid(meshComp)) return true;
+
+		UAnimInstance* animInstance = meshComp->GetAnimInstance();
+		if (!IsValid(animInstance)) return true;
+
+		animInstance->Montage_JumpToSection(InData.StartSectionName, InData.Montage);
+	}
+
+	return true;
 }
 
 void UCAction::StopMontage(float InBlendOutTime)
