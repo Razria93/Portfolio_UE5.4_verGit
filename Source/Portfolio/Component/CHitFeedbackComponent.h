@@ -4,15 +4,15 @@
 #include "Components/ActorComponent.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CWorldSubSystemStructure.h"
-#include "CDamageFeedbackComponent.generated.h"
+#include "CHitFeedbackComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class PORTFOLIO_API UCDamageFeedbackComponent : public UActorComponent
+class PORTFOLIO_API UCHitFeedbackComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	UCDamageFeedbackComponent();
+	UCHitFeedbackComponent();
 
 private:
 	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")
@@ -55,7 +55,7 @@ protected:
 	void BeginPlay() override;
 
 public:
-	void PlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket);
+	void PlayHitFeedback(const FTakeDamagePacket& InTakeDamagePacket);
 
 private:
 	void PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket);
@@ -64,7 +64,7 @@ private:
 	void PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket);
 
 private:
-	bool CanPlayDamageFeedback(const FTakeDamagePacket& InTakeDamagePacket) const;
+	bool CanPlayHitFeedback(const FTakeDamagePacket& InTakeDamagePacket) const;
 	bool CanPlayHitStop(const FTakeDamagePacket& InTakeDamagePacket) const;
 	bool CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const;
 
@@ -81,5 +81,5 @@ private:
 	void PrintHitVFXRequestInfo(class UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const;
 	void PrintHitSFXRequestInfo(USoundBase * InHitSFX, const FVector& InLocation) const;
 	void PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const;
-	void PrintDamageHitInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintHitInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 };

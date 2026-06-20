@@ -19,7 +19,7 @@
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
-#include "Component/CDamageFeedbackComponent.h"
+#include "Component/CHitFeedbackComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
@@ -91,9 +91,9 @@ ACEnemy::ACEnemy()
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
 
-	// Init DamageFeedbackComp
-	DamageFeedbackComponent = CreateDefaultSubobject<UCDamageFeedbackComponent>(TEXT("DamageFeedback"));
-	check(DamageFeedbackComponent);
+	// Init HitFeedbackComp
+	HitFeedbackComponent = CreateDefaultSubobject<UCHitFeedbackComponent>(TEXT("HitFeedback"));
+	check(HitFeedbackComponent);
 
 	// Init ActionFeedbackComp
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));

@@ -5,7 +5,7 @@
 
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionOrchestratorComponent.h"
-#include "Component/CDamageFeedbackComponent.h"
+#include "Component/CHitFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Interface/CombatResultReceiver.h"
 
@@ -28,8 +28,8 @@ void UCTakeDamageComponent::BeginPlay()
 	ReactionOrchestratorComp_Cached = OwnerActor_Cached->FindComponentByClass<UCReactionOrchestratorComponent>();
 	check(ReactionOrchestratorComp_Cached);
 
-	DamageFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDamageFeedbackComponent>();
-	check(DamageFeedbackComp_Cached);
+	HitFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCHitFeedbackComponent>();
+	check(HitFeedbackComp_Cached);
 
 	DefenseComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDefenseComponent>();
 	// check(DefenseComp_Cached);
@@ -247,11 +247,11 @@ void UCTakeDamageComponent::DispatchAcceptedCombatResult(const FTakeDamagePacket
 		ReactionOrchestratorComp_Cached->RequestDamageReaction(damageReactionRequest);
 	}
 
-	if (IsValid(DamageFeedbackComp_Cached))
+	if (IsValid(HitFeedbackComp_Cached))
 	{
 		if (InTakeDamagePacket.Result.bShouldCommitDamage)
 		{
-			DamageFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
+			HitFeedbackComp_Cached->PlayHitFeedback(InTakeDamagePacket);
 		}
 	}
 

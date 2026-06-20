@@ -63,7 +63,7 @@ private:
 	class UCReactionComponent* ReactionComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
-	class UCDamageFeedbackComponent* DamageFeedbackComponent;
+	class UCHitFeedbackComponent* HitFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
@@ -93,7 +93,7 @@ public:
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
-	FORCEINLINE UCDamageFeedbackComponent* GetDamageFeedbackComp() const { return DamageFeedbackComponent; }
+	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;

@@ -25,7 +25,7 @@ private:
 	class UCReactionOrchestratorComponent* ReactionOrchestratorComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCDamageFeedbackComponent* DamageFeedbackComp_Cached = nullptr;
+	class UCHitFeedbackComponent* HitFeedbackComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
 	class UCDefenseComponent* DefenseComp_Cached = nullptr;
