@@ -526,6 +526,10 @@ UE TakeDamage 수신
 - `TakeDamageComponent` 내부의 책임 구분을 문서화한다.
 - 새로 추가한 `FCombatResultPacket`은 external result packet 후보로 유지한다.
 - `CombatResultReceiver` interface는 attacker result 수신 경계 후보로 유지한다.
+- W03 v1에서는 Parry 성공 시 `CombatResultDispatch` 로그로 전달 시도 / 완료를 확인하고, receiver 쪽 `CombatResult` 로그로 수신 여부와 packet 내용을 분리해 확인한다.
+  - `Receiver`는 result packet을 받은 actor다.
+  - `Requester`는 result packet을 만들어 돌려보낸 쪽이며, 현재 Parry 검증에서는 원본 damage packet을 받은 player다.
+  - `Source`와 `DamageCauser`는 원본 combat / damage packet에서 온 공격 주체와 실제 damage causer다.
 - `CombatResolutionComponent`, `CombatConsequenceCoordinatorComponent`를 즉시 완성하지 않는다.
 - 다음 branch에서 `TakeDamageComponent`의 `Resolve / Coordinate` 경계를 먼저 코드로 분리한다.
 

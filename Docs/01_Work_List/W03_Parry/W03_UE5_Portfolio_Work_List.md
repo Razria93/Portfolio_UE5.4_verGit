@@ -12,8 +12,6 @@
 
 - [ ] **진행중**
 
----
-
 ## 브랜치
 
 - `feature/parry-action`
@@ -377,6 +375,24 @@ TakeDamagePacket
 - [x] Guard / BlockHit / Parry 관련 ActionData / ReactionData의 montage 참조를 Editor에서 연결한다.
 - [x] Guard / Block 관련 animation asset naming을 현재 프로젝트 규칙에 맞춰 정리한다.
 - [x] PIE에서 Guard In / Hold / Out, BlockHit, Parry reaction, Guard locomotion 전환을 확인한다.
+
+---
+
+### 4.11 Parry Result Packet / Receiver Boundary
+
+- [x] Parry 성공 결과를 attacker 측에 되돌려줄 `FCombatResultPacket` 경계를 추가한다.
+  - `DefenseOutcome`, source / target / instigator / damage causer, impact info, committed damage 정보를 포함한다.
+  - v1에서는 `DefenseOutcome::Parry` 결과만 attacker result dispatch 대상으로 둔다.
+- [x] `ICombatResultReceiver` interface를 추가해 attacker 측 result 수신 경계를 만든다.
+  - `ReceiveCombatResultPacket()`은 아직 attacker reaction을 실행하지 않고 수신 로그만 남긴다.
+  - `ACEnemy`와 `ACPlayer`가 v1 receiver를 구현해 양방향 검증이 가능하게 한다.
+- [x] `UCTakeDamageComponent`에서 defender 처리와 attacker result dispatch를 분리한다.
+  - defender 쪽은 기존 reaction / feedback 흐름을 유지한다.
+  - attacker 쪽은 `FCombatResultPacket`을 구성해 result receiver actor에게 전달한다.
+- [x] PIE에서 Parry 성공 시 `[CombatResultDispatch] Delivering / Delivered`, `[CombatResult] Received / Packet` 로그가 출력되는지 확인한다.
+  - result dispatch 흐름과 packet 내부 내용이 분리되어 출력된다.
+  - `Receiver=BP_CEnemy`, `Requester=BP_CPlayer`, `Source=BP_CEnemy`, `DamageCauser=BP_CWeaponActor_Sword` 기준으로 결과 전달을 확인했다.
+  - attacker reaction / stagger 연결은 후속 작업으로 남긴다.
 
 ---
 
