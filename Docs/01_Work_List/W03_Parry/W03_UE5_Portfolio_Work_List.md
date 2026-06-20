@@ -393,6 +393,11 @@ TakeDamagePacket
   - result dispatch 흐름과 packet 내부 내용이 분리되어 출력된다.
   - `Receiver=BP_CEnemy`, `Requester=BP_CPlayer`, `Source=BP_CEnemy`, `DamageCauser=BP_CWeaponActor_Sword` 기준으로 결과 전달을 확인했다.
   - attacker reaction / stagger 연결은 후속 작업으로 남긴다.
+- [x] `DamageFeedbackComponent`를 `HitFeedbackComponent`로 정리해 damage commit이 없는 Parry / Guard / Hit 계열 feedback 확장 여지를 만든다.
+  - 기존 class / property 참조는 `CoreRedirects`로 보존한다.
+- [x] `CombatResultPacket(Parry)` 수신 시 receiver 쪽에 `ParryStack`을 누적한다.
+  - v1에서는 `Count=1/3` 형태의 로그로 누적만 확인한다.
+  - `StaggerReady=true` 이후 실제 stagger executor 연결과 stack reset은 후속 작업으로 남긴다.
 
 ---
 

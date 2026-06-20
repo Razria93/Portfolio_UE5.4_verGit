@@ -530,6 +530,8 @@ UE TakeDamage 수신
   - `Receiver`는 result packet을 받은 actor다.
   - `Requester`는 result packet을 만들어 돌려보낸 쪽이며, 현재 Parry 검증에서는 원본 damage packet을 받은 player다.
   - `Source`와 `DamageCauser`는 원본 combat / damage packet에서 온 공격 주체와 실제 damage causer다.
+- 기존 `DamageFeedbackComponent`는 damage commit 여부에 묶이지 않는 충돌 / 방어 / 피격 feedback 확장을 위해 `HitFeedbackComponent`로 정리한다.
+- W03 v1에서는 `CombatResultPacket(Parry)` 수신자가 `ParryStack`을 누적하고, threshold 도달 이후 stagger executor 연결은 후속 작업으로 남긴다.
 - `CombatResolutionComponent`, `CombatConsequenceCoordinatorComponent`를 즉시 완성하지 않는다.
 - 다음 branch에서 `TakeDamageComponent`의 `Resolve / Coordinate` 경계를 먼저 코드로 분리한다.
 
