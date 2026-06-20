@@ -7,6 +7,7 @@
 #include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CDamageFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Interface/CombatResultReceiver.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -70,7 +71,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintTakeDamageSummaryInfo(takeDamagePacket);
-		DispatchTakeDamageRejected(takeDamagePacket);
+		DispatchRejectedCombatResult(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -85,7 +86,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintTakeDamageSummaryInfo(takeDamagePacket);
-		DispatchTakeDamageRejected(takeDamagePacket);
+		DispatchRejectedCombatResult(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -98,7 +99,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintTakeDamageSummaryInfo(takeDamagePacket);
-		DispatchTakeDamageRejected(takeDamagePacket);
+		DispatchRejectedCombatResult(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -110,7 +111,8 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 
 	// PrintTakeDamageSummaryInfo(takeDamagePacket);
 	PrintTakeDamageOutcomeInfo(takeDamagePacket);
-	DispatchTakeDamageResolved(takeDamagePacket);
+	DispatchCombatResultToDefender(takeDamagePacket);
+	DispatchCombatResultToAttacker(takeDamagePacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -232,7 +234,7 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
-void UCTakeDamageComponent::DispatchTakeDamageResolved(const FTakeDamagePacket& InTakeDamagePacket)  const
+void UCTakeDamageComponent::DispatchCombatResultToDefender(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!InTakeDamagePacket.Result.bAccepted) return;
 
@@ -257,7 +259,45 @@ void UCTakeDamageComponent::DispatchTakeDamageResolved(const FTakeDamagePacket& 
 	// - Debug/UI Feedback
 }
 
-void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket)  const
+void UCTakeDamageComponent::DispatchCombatResultToAttacker(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	if (InTakeDamagePacket.Result.DefenseOutcome != EDamageDefenseOutcome::Parry) return;
+
+	const FCombatResultPacket combatResultPacket = BuildCombatResultPacket(InTakeDamagePacket);
+	if (!combatResultPacket.IsValidMinimal()) return;
+
+	AActor* receiverActor = ResolveCombatResultReceiverActor(InTakeDamagePacket);
+	if (!IsValid(receiverActor))
+	{
+		FLog::Log(FString::Printf(
+			TEXT("[CombatResultPacket] No receiver | Outcome=%s | Source=%s | DamageCauser=%s | Target=%s"),
+			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+			*GetNameSafe(combatResultPacket.SourceActor),
+			*GetNameSafe(combatResultPacket.DamageCauser),
+			*GetNameSafe(combatResultPacket.TargetActor)));
+		return;
+	}
+
+	ICombatResultReceiver* receiver = Cast<ICombatResultReceiver>(receiverActor);
+	if (!receiver)
+	{
+		FLog::Log(FString::Printf(
+			TEXT("[CombatResultPacket] Receiver has no interface | Outcome=%s | Receiver=%s"),
+			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+			*GetNameSafe(receiverActor)));
+		return;
+	}
+
+	receiver->ReceiveCombatResultPacket(combatResultPacket);
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResultPacket] Delivered | Outcome=%s | Receiver=%s | Target=%s"),
+		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+		*GetNameSafe(receiverActor),
+		*GetNameSafe(combatResultPacket.TargetActor)));
+}
+
+void UCTakeDamageComponent::DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	// - Debug/UI rejected feedback
 }
@@ -301,6 +341,25 @@ AController* UCTakeDamageComponent::ResolveInstigatorController(AController* Eve
 	}
 
 	/* ============================================= */
+
+	return nullptr;
+}
+
+AActor* UCTakeDamageComponent::ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	if (IsValid(InTakeDamagePacket.Context.SourceActor)) return InTakeDamagePacket.Context.SourceActor;
+
+	if (IsValid(InTakeDamagePacket.Context.DamageCauser))
+	{
+		AActor* damageCauserOwner = InTakeDamagePacket.Context.DamageCauser->GetOwner();
+		if (IsValid(damageCauserOwner)) return damageCauserOwner;
+	}
+
+	if (IsValid(InTakeDamagePacket.Context.Instigator))
+	{
+		AActor* instigatorPawn = InTakeDamagePacket.Context.Instigator->GetPawn();
+		if (IsValid(instigatorPawn)) return instigatorPawn;
+	}
 
 	return nullptr;
 }
@@ -415,6 +474,23 @@ FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& I
 	takeDamagePacket.Result = InTakeDamageResult;
 
 	return takeDamagePacket;
+}
+
+FCombatResultPacket UCTakeDamageComponent::BuildCombatResultPacket(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	FCombatResultPacket combatResultPacket;
+
+	combatResultPacket.SourceActor = InTakeDamagePacket.Context.SourceActor;
+	combatResultPacket.TargetActor = InTakeDamagePacket.Context.TargetActor;
+	combatResultPacket.Instigator = InTakeDamagePacket.Context.Instigator;
+	combatResultPacket.DamageCauser = InTakeDamagePacket.Context.DamageCauser;
+	combatResultPacket.DamageImpactInfo = InTakeDamagePacket.Context.DamageImpactInfo;
+	combatResultPacket.ApplyDamageSpecKey = InTakeDamagePacket.Result.ApplyDamageSpecKey;
+	combatResultPacket.DefenseOutcome = InTakeDamagePacket.Result.DefenseOutcome;
+	combatResultPacket.bDamageCommitted = InTakeDamagePacket.Result.bShouldCommitDamage;
+	combatResultPacket.CommittedDamage = InTakeDamagePacket.Result.CommittedDamage;
+
+	return combatResultPacket;
 }
 
 void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const
