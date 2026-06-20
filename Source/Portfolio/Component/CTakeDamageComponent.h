@@ -50,9 +50,9 @@ private:
 	bool CanTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
 	void ComputeTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
-	void DispatchCombatResultToDefender(const FTakeDamagePacket& InTakeDamagePacket) const;
-	void DispatchCombatResultToAttacker(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchCombatResultToReceiver(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;

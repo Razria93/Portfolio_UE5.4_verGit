@@ -177,6 +177,21 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	return finalDamage;
 }
 
+void ACPlayer::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
+{
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Received | Receiver=%s | Requester=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor)));
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Packet | Outcome=%s | Source=%s | Requester=%s | DamageCauser=%s"),
+		*UEnum::GetValueAsString(InCombatResultPacket.DefenseOutcome),
+		*GetNameSafe(InCombatResultPacket.SourceActor),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		*GetNameSafe(InCombatResultPacket.DamageCauser)));
+}
+
 FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
 {
 	if (!IsValid(Controller) || !IsValid(ActionOrchestratorComponent)) return FActionRequestResult();

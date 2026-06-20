@@ -5,10 +5,11 @@
 #include "Type/CAIStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
+#include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACEnemy : public ACharacter
+class PORTFOLIO_API ACEnemy : public ACharacter, public ICombatResultReceiver
 {
 	GENERATED_BODY()
 
@@ -167,6 +168,9 @@ public:
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
+
+public:
+	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
 
 public:
 	FActionRequestResult HandleAIWalk();

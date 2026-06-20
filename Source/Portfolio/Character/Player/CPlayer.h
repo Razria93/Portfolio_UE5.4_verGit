@@ -3,11 +3,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interface/TargetContextProvider.h"
+#include "Interface/CombatResultReceiver.h"
 #include "Type/CActionOrchestrationStructure.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider
+class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider, public ICombatResultReceiver
 {
 	GENERATED_BODY()
 
@@ -96,6 +97,9 @@ public:
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
+
+public:
+	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
 
 public:
 	// Interface API

@@ -178,6 +178,21 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	return finalDamage;
 }
 
+void ACEnemy::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
+{
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Received | Receiver=%s | Requester=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor)));
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Packet | Outcome=%s | Source=%s | Requester=%s | DamageCauser=%s"),
+		*UEnum::GetValueAsString(InCombatResultPacket.DefenseOutcome),
+		*GetNameSafe(InCombatResultPacket.SourceActor),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		*GetNameSafe(InCombatResultPacket.DamageCauser)));
+}
+
 FActionRequestResult ACEnemy::HandleAIWalk()
 {
 	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();

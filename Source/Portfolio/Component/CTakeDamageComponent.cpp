@@ -111,8 +111,8 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 
 	// PrintTakeDamageSummaryInfo(takeDamagePacket);
 	PrintTakeDamageOutcomeInfo(takeDamagePacket);
-	DispatchCombatResultToDefender(takeDamagePacket);
-	DispatchCombatResultToAttacker(takeDamagePacket);
+	DispatchAcceptedCombatResult(takeDamagePacket);
+	DispatchCombatResultToReceiver(takeDamagePacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -234,7 +234,7 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
-void UCTakeDamageComponent::DispatchCombatResultToDefender(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCTakeDamageComponent::DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!InTakeDamagePacket.Result.bAccepted) return;
 
@@ -259,7 +259,7 @@ void UCTakeDamageComponent::DispatchCombatResultToDefender(const FTakeDamagePack
 	// - Debug/UI Feedback
 }
 
-void UCTakeDamageComponent::DispatchCombatResultToAttacker(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCTakeDamageComponent::DispatchCombatResultToReceiver(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (InTakeDamagePacket.Result.DefenseOutcome != EDamageDefenseOutcome::Parry) return;
 
@@ -270,7 +270,7 @@ void UCTakeDamageComponent::DispatchCombatResultToAttacker(const FTakeDamagePack
 	if (!IsValid(receiverActor))
 	{
 		FLog::Log(FString::Printf(
-			TEXT("[CombatResultPacket] No receiver | Outcome=%s | Source=%s | DamageCauser=%s | Target=%s"),
+			TEXT("[CombatResultDispatch] No receiver | Outcome=%s | Source=%s | DamageCauser=%s | Requester=%s"),
 			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
 			*GetNameSafe(combatResultPacket.SourceActor),
 			*GetNameSafe(combatResultPacket.DamageCauser),
@@ -282,16 +282,22 @@ void UCTakeDamageComponent::DispatchCombatResultToAttacker(const FTakeDamagePack
 	if (!receiver)
 	{
 		FLog::Log(FString::Printf(
-			TEXT("[CombatResultPacket] Receiver has no interface | Outcome=%s | Receiver=%s"),
+			TEXT("[CombatResultDispatch] Receiver has no interface | Outcome=%s | Receiver=%s"),
 			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
 			*GetNameSafe(receiverActor)));
 		return;
 	}
 
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResultDispatch] Delivering | Outcome=%s | Receiver=%s | Requester=%s"),
+		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+		*GetNameSafe(receiverActor),
+		*GetNameSafe(combatResultPacket.TargetActor)));
+
 	receiver->ReceiveCombatResultPacket(combatResultPacket);
 
 	FLog::Log(FString::Printf(
-		TEXT("[CombatResultPacket] Delivered | Outcome=%s | Receiver=%s | Target=%s"),
+		TEXT("[CombatResultDispatch] Delivered | Outcome=%s | Receiver=%s | Requester=%s"),
 		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
 		*GetNameSafe(receiverActor),
 		*GetNameSafe(combatResultPacket.TargetActor)));
