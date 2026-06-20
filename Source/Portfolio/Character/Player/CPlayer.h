@@ -71,6 +71,13 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
+private:
+	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry")
+	int32 ParryStaggerThreshold = 3;
+
+	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
+	int32 ParryResultCount = 0;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -100,6 +107,9 @@ public:
 
 public:
 	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
+
+private:
+	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
 
 public:
 	// Interface API

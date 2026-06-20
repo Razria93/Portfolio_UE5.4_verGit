@@ -190,6 +190,27 @@ void ACPlayer::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResu
 		*GetNameSafe(InCombatResultPacket.SourceActor),
 		*GetNameSafe(InCombatResultPacket.TargetActor),
 		*GetNameSafe(InCombatResultPacket.DamageCauser)));
+
+	if (InCombatResultPacket.IsParryResult())
+	{
+		HandleParryCombatResult(InCombatResultPacket);
+	}
+}
+
+void ACPlayer::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
+{
+	const int32 threshold = FMath::Max(1, ParryStaggerThreshold);
+	ParryResultCount = FMath::Min(ParryResultCount + 1, threshold);
+
+	const bool bStaggerReady = ParryResultCount >= threshold;
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] ParryStack | Receiver=%s | Requester=%s | Count=%d/%d | StaggerReady=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		ParryResultCount,
+		threshold,
+		bStaggerReady ? TEXT("true") : TEXT("false")));
 }
 
 FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
