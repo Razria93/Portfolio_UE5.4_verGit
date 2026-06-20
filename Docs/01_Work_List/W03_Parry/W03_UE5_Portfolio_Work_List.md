@@ -309,6 +309,25 @@ TakeDamagePacket
     - [x] Guard input / lifecycle / notify event는 `ActionComponent -> DefenseComponent` 직통 호출이 아니라 `UCObservableOverlayComponent`의 event routing으로 전달한다.
 - [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
 
+#### 현재 코드 기준 Combat pipeline 분리 작업 후보
+
+- [x] `ApplyDamageComponent`와 `TakeDamageComponent`의 현재 책임을 `N05` 기준으로 분석한다.
+  - 현재 `ApplyDamageComponent`는 source-side damage 적용자가 아니라 hit context를 combat request로 구성하고 target에게 전달하는 requester 성격이 강하다.
+  - 현재 `TakeDamageComponent`는 receiver adapter, resolution, damage apply, consequence coordination을 모두 가진 압축형 컴포넌트다.
+- [ ] `TakeDamageComponent`를 우선 `Receive / Resolve / Apply / Coordinate` 단계로 함수 경계를 정리한다.
+  - `Receive`: `RequestTakeDamage`, `ProcessTakeDamage`, `HandleDefaultDamageEvent`, `BuildPayload`, `BuildContext`
+  - `Resolve`: `ValidateContext`, `CanTakeDamage`, `ComputeMitigatedDamage`, `ComputeFinalTakenDamage`, defensive outcome 결정
+  - `Apply`: `CommitTakeDamage`, `CommitDamageToHealth`, health / resource 상태 변경
+  - `Coordinate`: defender reaction, feedback, attacker result packet, rejected result 처리
+- [ ] `CombatResolutionResult` 후보 구조를 정한다.
+  - `FTakeDamageResult`를 즉시 폐기하지 않고, `DefenseOutcome`, damage commit 여부, final damage, reaction 후보, feedback 후보, external result 후보의 소유 위치를 정한다.
+- [ ] `CombatConsequenceCoordinator` 후보 경계를 정한다.
+  - 기존 `DispatchCombatResultToDefender`, `DispatchCombatResultToAttacker`, `DispatchRejectedCombatResult`를 후속 coordinator 후보로 본다.
+  - coordinator는 montage / VFX / HP commit을 직접 실행하지 않고 각 domain request를 구성해 전달한다.
+- [ ] `ApplyDamageComponent` 리네임 / 축소는 후속 작업으로 둔다.
+  - `ApplyDamageComponent`는 장기적으로 `CombatRequester` 또는 `CombatRequestSource` 후보지만, 현재 branch에서는 `TakeDamageComponent` 책임 경계 정리가 우선이다.
+  - hit window tracking, duplicate target check, spec resolve, target dispatch가 source-side request pipeline으로 유지될 수 있는지 확인한다.
+
 ### 4.7 판정 흐름 안정화 후 필수 리팩터링 후보
 
 - [ ] Guard phase key 구조를 보완한다.
@@ -426,6 +445,7 @@ TakeDamagePacket
 - [ ] 검증 과정에서 Editor / Asset 확인이 불완전하면 PR 문서의 미검증 항목에 남긴다.
 - [ ] TakeDamage 내부 defensive resolution 규칙이 Guard / Counter 확장 기준으로 의미가 생기면 System Architecture 후속 보완 후보로 기록한다.
 - [x] Attacker 측 counter signal / Blink / Repulse / cue packet 전달 구조는 `Docs/06_notes/N04_Blink_Repulse_Combat_Packet_Design_Note.md`에 후속 판단 기록으로 분리한다.
+- [x] Combat intent / request / resolution / routing 계층 구조는 `Docs/06_notes/N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 후속 판단 기록으로 분리한다.
 
 ---
 
