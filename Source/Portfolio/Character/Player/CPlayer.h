@@ -110,6 +110,7 @@ public:
 
 private:
 	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
+	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
 	// Interface API

@@ -52,6 +52,24 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 	return ProcessReactionCandidate(candidate);
 }
 
+FReactionRequestResult UCReactionOrchestratorComponent::RequestCombatResultReaction(const FCombatResultReactionRequest& InIncomingRequest)
+{
+	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
+
+	if (!IsValid(ReactionComp_Cached))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::InvalidComponent);
+
+	if (!CanAcceptReactionRequest(rejectReason))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
+
+	FReactionCandidate candidate;
+
+	if (!ResolveCombatResultReactionCandidate(InIncomingRequest, candidate, rejectReason))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
+
+	return ProcessReactionCandidate(candidate);
+}
+
 // Request Validation
 
 bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const
@@ -106,6 +124,34 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 
 	OutIncomingCandidate.ReactionDataKey.ApplyDamageSpecKey = InIncomingRequest.TakeDamagePacket.Result.ApplyDamageSpecKey;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = reactionType;
+	return true;
+}
+
+bool UCReactionOrchestratorComponent::ResolveCombatResultReactionCandidate(const FCombatResultReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const
+{
+	OutIncomingCandidate = FReactionCandidate();
+	OutRejectReason = EReactionRequestRejectReason::None;
+
+	if (InIncomingRequest.IntentSource != EReactionIntentSource::CombatResult)
+	{
+		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	if (!InIncomingRequest.CombatResultPacket.IsValidMinimal())
+	{
+		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	if (InIncomingRequest.ReactionType == EReactionType::None || InIncomingRequest.ReactionType == EReactionType::Max)
+	{
+		OutRejectReason = EReactionRequestRejectReason::ReactionCandidateNotFound;
+		return false;
+	}
+
+	OutIncomingCandidate.ReactionDataKey.ApplyDamageSpecKey = InIncomingRequest.CombatResultPacket.ApplyDamageSpecKey;
+	OutIncomingCandidate.ReactionDataKey.ReactionType = InIncomingRequest.ReactionType;
 	return true;
 }
 

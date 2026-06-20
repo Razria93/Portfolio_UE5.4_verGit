@@ -40,6 +40,7 @@ protected:
 public:
 	// Request Entry
 	FReactionRequestResult RequestDamageReaction(const FDamageReactionRequest& InIncomingRequest);
+	FReactionRequestResult RequestCombatResultReaction(const FCombatResultReactionRequest& InIncomingRequest);
 
 private:
 	// Request Validation
@@ -48,6 +49,7 @@ private:
 private:
 	// Candidate Resolve
 	bool ResolveDamageReactionCandidate(const FDamageReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
+	bool ResolveCombatResultReactionCandidate(const FCombatResultReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
 	EReactionType ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const;
 
 private:

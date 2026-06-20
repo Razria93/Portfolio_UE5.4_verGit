@@ -65,6 +65,7 @@ enum class EReactionType : uint8
 	Dead,
 	BlockHit,
 	Parry,
+	Stagger,
 
 	All,		// Wildcard
 

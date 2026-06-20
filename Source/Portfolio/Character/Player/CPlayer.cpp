@@ -211,6 +211,32 @@ void ACPlayer::HandleParryCombatResult(const FCombatResultPacket& InCombatResult
 		ParryResultCount,
 		threshold,
 		bStaggerReady ? TEXT("true") : TEXT("false")));
+
+	if (bStaggerReady && TryRequestParryStaggerReaction(InCombatResultPacket))
+	{
+		ParryResultCount = 0;
+	}
+}
+
+bool ACPlayer::TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket)
+{
+	if (!IsValid(ReactionOrchestratorComponent)) return false;
+
+	FCombatResultReactionRequest request;
+	request.IntentSource = EReactionIntentSource::CombatResult;
+	request.CombatResultPacket = InCombatResultPacket;
+	request.ReactionType = EReactionType::Stagger;
+
+	const FReactionRequestResult result = ReactionOrchestratorComponent->RequestCombatResultReaction(request);
+	const bool bStarted = result.IsAccepted();
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] StaggerRequest | Receiver=%s | Requester=%s | Result=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		bStarted ? TEXT("Accepted") : TEXT("Rejected")));
+
+	return bStarted;
 }
 
 FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)

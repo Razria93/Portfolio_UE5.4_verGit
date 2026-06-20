@@ -397,7 +397,10 @@ TakeDamagePacket
   - 기존 class / property 참조는 `CoreRedirects`로 보존한다.
 - [x] `CombatResultPacket(Parry)` 수신 시 receiver 쪽에 `ParryStack`을 누적한다.
   - v1에서는 `Count=1/3` 형태의 로그로 누적만 확인한다.
-  - `StaggerReady=true` 이후 실제 stagger executor 연결과 stack reset은 후속 작업으로 남긴다.
+- [x] `ParryStack`이 threshold에 도달하면 `CombatResult` 기반 `Stagger` reaction request를 생성한다.
+  - `FCombatResultReactionRequest`를 추가해 damage packet이 아닌 combat result에서도 reaction candidate를 만들 수 있게 했다.
+  - `Stagger` reaction 실행이 accepted되면 `ParryStack`을 reset한다.
+  - Editor에서 `EReactionType::Stagger` ReactionData와 `CReaction_Stagger` executor, stagger montage 연결이 필요하다.
 
 ---
 
