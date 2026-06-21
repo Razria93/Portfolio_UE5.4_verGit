@@ -370,7 +370,7 @@ TakeDamagePacket
 
 - [x] Guard Hold에서 사용할 `BS_Guard`를 추가하고 ABP Guard pose / locomotion 흐름에 연결한다.
 - [x] Guard 상태에서는 Guard 전용 movement override를 적용한다.
-  - Guard In / Hold / BlockHit 유지 중에는 Guard 8-way locomotion 기준을 사용한다.
+  - Guard In / Hold / BlockHit 유지 중에는 카메라 추종 회전 없이 현재 facing을 유지하는 Guard 8-way locomotion 기준을 사용한다.
   - Guard Out / Hit / Parry / interrupt로 Guard 상태가 종료되면 기본 movement mode로 복구한다.
 - [x] Guard / BlockHit / Parry 관련 ActionData / ReactionData의 montage 참조를 Editor에서 연결한다.
 - [x] Guard / Block 관련 animation asset naming을 현재 프로젝트 규칙에 맞춰 정리한다.
@@ -487,6 +487,7 @@ TakeDamagePacket
 - [x] Parry 성공 시 기존 Hit / Dead reaction과 HitFeedback이 같이 실행되지 않는지 확인했다.
 - [x] Guard Out 중 피격은 Guard 판정을 사용하지 않고 일반 Hit reaction으로 전환된다.
 - [x] Guard / Parry / BlockHit / Hit 전환에서 Guard movement mode가 정상 복구되는지 확인했다.
+- [x] Guard 8-way locomotion 중 캐릭터 facing이 카메라를 따라 회전하지 않도록 Guard movement override를 보완했다.
 - [x] `UCObservableOverlayComponent`를 통해 overlay event / handling을 라우팅하고, policy registry는 dirty flag 기준으로 갱신한다.
 - [x] Parry 성공 결과를 `FCombatResultPacket`으로 attacker 측 receiver에 전달한다.
 - [x] attacker 측 receiver는 `ParryStack`을 누적하고 threshold 도달 시 `Stagger` reaction request를 생성한다.
