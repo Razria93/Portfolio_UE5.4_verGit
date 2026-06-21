@@ -503,6 +503,16 @@ TakeDamagePacket
 - [x] PIE에서 Parry 3회 누적 후 enemy Stagger reaction request가 accepted되는 것을 확인했다.
 - [x] asset 참조와 animation naming 정리를 확인했다.
 
+#### 최종 PIE 회귀 검증
+
+- [x] Guard Hold 3회 피격 시 `Outcome=Guard`, `Commit=true`로 처리되고 HP가 순차 감소하는 것을 확인했다.
+- [x] Parry 3회 성공 시 `Outcome=Parry`, `Commit=false`, `Damage=0`, HP 유지가 확인됐다.
+- [x] Parry result가 attacker 측 receiver로 전달되고 `ParryStack`이 `1/3 -> 2/3 -> 3/3`으로 누적되는 것을 확인했다.
+- [x] `ParryStack` threshold 도달 시 `StaggerRequest Result=Accepted`가 출력되는 것을 확인했다.
+- [x] Guard In 중 피격은 `Outcome=Guard`로 처리되는 것을 확인했다.
+- [x] Guard Out 중 피격은 `Outcome=None`, `Commit=true`로 일반 Hit damage 흐름에 들어가는 것을 확인했다.
+- [x] 최종 회귀 검증 로그는 `TakeDamageOutcome`, `CombatResultDispatch`, `CombatResult` 계열만 유지하도록 정리했다.
+
 ### 8.3 최신 비범위 / 후속 분리
 
 - [ ] `UCCombatResolutionComponent` 분리
