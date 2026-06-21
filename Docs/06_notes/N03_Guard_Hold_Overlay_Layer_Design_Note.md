@@ -232,8 +232,8 @@ v1의 우선순위는 다음과 같다.
 ```text
 UCObservableOverlayComponent
 -> overlay policy registry 소유
--> WriteObservableOverlaySnapshot() 위임
--> ApplyObservableOverlayHandlings() 위임
+-> WriteOverlaySnapshot() 위임
+-> ApplyOverlayHandlings() 위임
 
 UCDefenseComponent
 -> Guard overlay state 소유
@@ -290,9 +290,9 @@ Action / Reaction Component는 Orchestrator result에 누적된 handling을 실�
 
 ```text
 Action lifecycle / input side effect
--> UCActionComponent::NotifyObservableOverlayEvent()
--> UCObservableOverlayComponent::NotifyObservableOverlayEvent()
--> IObservableOverlayPolicy::HandleObservableOverlayEvent()
+-> UCActionComponent::ApplyOverlayEvent()
+-> UCObservableOverlayComponent::ApplyOverlayEvent()
+-> IObservableOverlayPolicy::ApplyOverlayEvent()
 -> UCDefenseComponent
 ```
 
@@ -305,7 +305,7 @@ AnimNotify
 -> UCActionComponent::HandleActionNotifyCommand()
 -> active UCAction executor
 -> CAction_Guard::HandleSpecificNotifyCommand()
--> UCActionComponent::NotifyObservableOverlayEvent()
+-> UCActionComponent::ApplyOverlayEvent()
 -> UCObservableOverlayComponent
 -> UCDefenseComponent
 ```
@@ -379,7 +379,7 @@ Guard Out 중 재입력은 duration window가 아니라 단발 notify 이후 상
 
 ```text
 Overlay owner
--> WriteObservableOverlaySnapshot()
+-> WriteOverlaySnapshot()
 -> 현재 overlay state를 snapshot에 기록
 
 ObservableOverlayComponent
@@ -397,8 +397,8 @@ Action / Reaction Component
 -> requested handling 적용을 ObservableOverlayComponent에 요청
 
 ObservableOverlayComponent
--> CanApplyObservableOverlayHandling()
--> ApplyObservableOverlayHandling()
+-> CanApplyOverlayHandling()
+-> ApplyOverlayHandling()
 -> owner authorization 이후 상태 변경 적용
 ```
 
@@ -597,6 +597,24 @@ Guard cleanup 요청
 이 구조가 들어오면 old action cleanup은 “현재 상태가 아직 내가 만든 상태인가?”만 확인하면 된다. 따라서 `GuardOut reentry interrupt` 같은 특수 조건을 직접 알 필요가 줄어든다.
 
 다만 이 작업은 단순 상태값 추가가 아니라 Guard overlay lifecycle ownership을 새로 정의하는 작업이다. v1에서는 현재 케이스 기반 예외를 유지하고, Parry / Guard 판정 흐름을 먼저 닫은 뒤 필수 리팩터링으로 처리한다.
+
+### 13.1 Event와 Handling 역할 구분
+
+`ObservableOverlayPolicy`의 event API와 handling API는 모두 overlay 상태를 변경할 수 있지만, 호출 맥락과 책임이 다르다.
+
+`Event`는 overlay 자신의 정상 lifecycle을 진행시키기 위한 신호다. Guard 기준으로는 `GuardInputPressed`, `GuardInStarted`, `SwitchToGuard`, `GuardOutStarted`, `GuardLifecycleCompleted`처럼 입력, notify, montage lifecycle에서 발생하는 상태 전환을 처리한다. 즉 Defense overlay가 자기 lifecycle을 정상적으로 운용하기 위해 특정 lifecycle event에 대응하는 API다.
+
+`Handling`은 overlay lifecycle의 자연스러운 다음 단계가 아니라, 외부 Action / Reaction / Orchestration이 실행 조건을 맞추기 위해 overlay 상태 변경을 요청하는 API다. 예를 들어 `Dodge`, `Hit`, `Stagger`가 시작되기 전에 `ClearGuardState` 또는 `ClearGuardOverlay`를 요청하는 경우가 여기에 해당한다.
+
+따라서 기준은 다음과 같이 둔다.
+
+- Event: input / notify / montage lifecycle에서 발생한 정상 상태 전환.
+- Handling: 외부 실행이 시작되기 전에 필요한 overlay cleanup 또는 상태 조정.
+- Clear 계열 handling은 상태가 이미 정리되어 있어도 성공해야 하는 멱등 cleanup으로 본다.
+
+특히 Guard Out 중 Hit가 들어오는 경우처럼 active Guard action의 interrupt가 먼저 Guard state를 정리하고, 이어서 incoming Hit reaction이 `ClearGuardState` handling을 다시 요청할 수 있다. 이때 `ClearGuardState`는 "상태가 있을 때만 성공하는 동작"이 아니라 "Guard state가 없는 상태를 보장하는 동작"이어야 하므로 멱등 처리한다.
+
+이 구분을 유지해야 Guard lifecycle 진행과 외부 실행에 의한 강제 정리가 섞이지 않는다.
 
 ---
 
