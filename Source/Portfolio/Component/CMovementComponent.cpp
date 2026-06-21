@@ -110,7 +110,7 @@ void UCMovementComponent::ApplyMovementOverride(EMovementGait InGait, EMovementR
 	}
 
 	ApplyRotationMode(InRotationMode);
-	ChangeMovementGait(InGait);
+	ApplyMovementGait(InGait);
 }
 
 void UCMovementComponent::ClearMovementOverride()
@@ -119,11 +119,23 @@ void UCMovementComponent::ClearMovementOverride()
 
 	if (!bHasMovementModeOverride) return;
 
-	ChangeMovementGait(CachedMovementGait_BeforeOverride);
 	bHasMovementModeOverride = false;
+	ApplyMovementGait(CachedMovementGait_BeforeOverride);
 }
 
 void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
+{
+	if (bHasMovementModeOverride)
+	{
+		// Keep override speed active, but remember the base gait to restore later.
+		CachedMovementGait_BeforeOverride = InNewMovementGait;
+		return;
+	}
+
+	ApplyMovementGait(InNewMovementGait);
+}
+
+void UCMovementComponent::ApplyMovementGait(EMovementGait InNewMovementGait)
 {
 	if (!IsValid(CharacterMovementComp_Cached)) return;
 	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max) return;

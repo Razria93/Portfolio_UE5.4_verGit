@@ -102,6 +102,7 @@ public:
 
 private:
 	void ChangeMovementGait(EMovementGait InNewMovementGait);
+	void ApplyMovementGait(EMovementGait InNewMovementGait);
 
 private:
 	void ApplyRotationMode(EMovementRotationMode InRotationMode);
