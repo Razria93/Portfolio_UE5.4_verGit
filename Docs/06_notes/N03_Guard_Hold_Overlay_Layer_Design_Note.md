@@ -616,6 +616,66 @@ Guard cleanup 요청
 
 이 구분을 유지해야 Guard lifecycle 진행과 외부 실행에 의한 강제 정리가 섞이지 않는다.
 
+### 13.2 Overlay Policy Registry Dirty Flag 기준
+
+`UCObservableOverlayComponent`는 overlay policy 목록을 long-lived registry로 유지한다. 이 registry는 매 요청마다 actor component를 다시 훑는 per-call rebuild가 아니라, 한 번 구성한 policy 목록을 재사용하는 cache 성격을 가진다.
+
+따라서 핵심 문제는 "handling 실패 시 다시 rebuild할 것인가"가 아니라 "registry가 현재 actor component 구성과 동기화되어 있는가"다. 실패를 rebuild 트리거로 쓰면 `policy가 실제로 거부한 경우`와 `registry가 stale인 경우`가 같은 흐름에 섞인다.
+
+v1 기준은 다음처럼 정리한다.
+
+```text
+ObservableOverlayPolicies
+-> long-lived policy registry
+
+bOverlayPolicyRegistryDirty
+-> registry가 현재 component 구성과 어긋날 수 있음을 표시
+
+WriteOverlaySnapshot / ApplyOverlayEvent / ApplyOverlayHandling
+-> registry 사용 전 dirty면 refresh
+-> dirty가 아니면 기존 registry 재사용
+```
+
+이 구조에서는 `BeginPlay`에서 registry를 dirty로 표시하고 첫 사용 전에 build한다. 이후 동적 overlay policy 추가 / 제거 / 교체가 생기면 해당 시점에 dirty flag를 올리고, 다음 overlay 요청에서 registry를 갱신한다.
+
+즉 기존의 실패 기반 복구는 다음 기준으로 대체한다.
+
+```text
+기존 보강
+-> cache로 처리
+-> 실패하면 rebuild 후 재시도
+
+dirty flag 기준
+-> 변경 가능성이 생기면 dirty 표시
+-> 사용 직전 dirty면 rebuild
+-> 실패는 실제 처리 실패로 본다
+```
+
+이 기준이 cache 전략의 의미와도 맞다. registry는 효율을 위해 재사용하고, 갱신은 실패가 아니라 변경 가능성에 의해 발생해야 한다.
+
+### 13.3 API Naming 기준
+
+Overlay API를 정리하면서 외부 호출 API와 내부 helper API의 이름 기준을 다음처럼 둔다.
+
+```text
+외부 호출 API
+-> 호출자가 다른 계층 / 다른 컴포넌트 문맥에서 읽는다
+-> 계층명, 도메인명, 책임명이 드러나야 한다
+-> 예: ApplyOverlayEvent, ApplyOverlayHandling, RequestCombatAction, ResolveReactionData
+
+내부 helper API
+-> 같은 클래스 내부 문맥에서 읽는다
+-> 클래스명이나 멤버 문맥과 중복되는 단어는 줄인다
+-> 예: MarkPolicyRegistryDirty, RefreshPolicyRegistry, RebuildPolicyRegistry
+```
+
+이 기준은 "짧은 이름" 자체가 목표가 아니라 호출 위치에서 의미가 보이는지를 우선한다. 외부 API는 계층 경계를 드러내고, 내부 helper는 이미 공유된 클래스 문맥을 활용해 반복을 줄인다.
+
+예외 기준은 다음과 같다.
+
+- 내부 helper라도 한 클래스 안에 여러 도메인이 섞이면 도메인명을 유지한다.
+- 외부 API라도 타입 / 인자 / 호출 계층만으로 의미가 충분히 명확하면 과한 반복은 피한다.
+
 ---
 
 ## 14. Execution Interrupt / Stop 진입점 분리 기준
