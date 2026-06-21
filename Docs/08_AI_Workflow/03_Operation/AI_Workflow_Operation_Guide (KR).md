@@ -27,6 +27,7 @@
 -> 목표와 완료 기준을 먼저 고정
 -> 책임 경계를 먼저 판단
 -> 구현 범위와 비범위를 분리
+-> 큰 작업은 사용자가 검증 가능한 작은 단위로 나눔
 -> 구현과 함께 검증 가능성을 판단
 -> 확인하지 못한 항목은 미검증으로 남김
 -> 사용자 결정이 필요한 항목은 다음 선택지로 분리
@@ -34,6 +35,10 @@
 ```
 
 AI 기반 작업 운영은 구현 속도보다 판단의 명확성, 변경 범위 통제, 검증 가능성을 우선한다.
+
+복잡한 기능 구현이나 리팩터링은 한 번에 완성하려 하지 않고, 현재 흐름 확인, 최소 연결, 검증, 책임 분리, 문서화 단위로 쪼갠다. 각 단위는 사용자가 로그, PIE, diff, 문서 상태로 확인할 수 있어야 한다.
+
+임시 구현을 제안할 때는 임시인 이유, 허용 범위, 제거 또는 구조화 조건을 함께 명시한다. 사용자가 책임 경계나 구조에 이의를 제기하면 즉시 수정하기보다 현재 구조의 문제, 대안, 권장안을 책임 주체 / 데이터 소유 / 호출 경계 / 장기 확장성 기준으로 다시 정리한다.
 
 ---
 
@@ -251,6 +256,8 @@ History 연결 기준
 
 History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 책임 경계는 System Architecture를 우선 참조하고, 엔진 기능 사용 방식은 Engine Technique Document 또는 관련 코드 / Unreal 문서를 우선 참조한다. 작업 결정 / 범위 / 검증 상태는 Work List와 PR Document에 남긴다.
 
+설계 판단이 계속 바뀌는 작업은 Note를 장기 기억 장치로 사용한다. 구체 증상과 재현 조건, 원인, 해결 기준이 명확하면 Bug Report로 분리하고, Branch 범위와 완료 기준은 Work List에 남기며, 최종 변경 의미는 PR Document에 정리한다.
+
 ---
 
 ## 9. Prompt 반영 후보 보고 기준
@@ -282,6 +289,8 @@ History 문서가 아직 정리되지 않은 경우, 현재 시스템 구조와 
 
 후보 기록과 반영 기준은 `05_Prompt_Library/00_Prompt_Management/01_Prompt_Change_Management_Rule (KR).md`를 따른다.
 
+Branch가 길거나 구조 논의가 반복되는 경우에는 별도 Prompt 반영 후보 Note 또는 `02_Prompt_Pattern_Candidates (KR).md`에 후보를 누적한다. 최종 단계에서 기억에 의존해 복원하지 않도록, 발견 시점 / 마찰 지점 / 채택한 기준 / 반영 대상 Prompt / 처리 상태를 함께 남긴다.
+
 ---
 
 ## 10. 검증과 오류 검출 기준
@@ -309,6 +318,8 @@ Asset
 ```
 
 검증을 늘릴 때는 항목을 기계적으로 추가하지 않고 변경 위험과 연결한다. 책임 경계, public API / struct / enum, montage lifecycle, Asset / Blueprint reference, AI behavior / Blackboard, damage / feedback / execution pipeline 영향이 있으면 검증 강도를 높인다.
+
+디버깅 로그는 문제 위치를 특정하기 위한 임시 로그와 최종 회귀 로그를 구분한다. 임시 로그는 request / resolve / decision / apply / outcome 흐름을 드러내도록 넣고, 검증 후에는 Work List와 PR 검증에 필요한 회귀 로그만 남긴다.
 
 ```yaml
 최소 검증 기준
@@ -365,6 +376,8 @@ Commit 보류 시점
 Commit / PR 전에는 changed files, staged / unstaged / untracked, 관련 문서, 검증 상태, 미검증 항목, unrelated 변경 제외 여부를 확인한다.
 
 Branch는 작업 목표와 구현 범위를 관리하는 버전 컨트롤 단위이고, PR은 작업 결과와 검증 상태를 제출하는 단위이며, Merge는 PR에서 설명한 변경과 검증 상태를 기준으로 결정한다.
+
+Branch 종료 전에는 남길 로그, 제거할 로그, 현재 Branch에서 닫을 범위, 다음 Branch로 넘길 범위, Work List 완료 상태, PR Document 작성 상태, Prompt 반영 후보를 함께 점검한다.
 
 ---
 
