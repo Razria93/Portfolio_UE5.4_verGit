@@ -53,8 +53,6 @@ void UCAction_Guard::Interrupt(const FExecutionInterventionDirective& InDirectiv
 				InDirective.IncomingPart.IsReactionParticipant()
 				&& InDirective.IncomingPart.GetReactionContext().ReactionDataKey.ReactionType == EReactionType::BlockHit;
 
-			PrintGuardInterventionDebugInfo(bIsParryIncoming ? TEXT("InterruptGuardInParry") : TEXT("InterruptGuardIn"), activeGuardPhase, InDirective.IncomingPart, bIsBlockHitIncoming);
-
 			if (!bIsBlockHitIncoming)
 			{
 				ClearDeferredGuardActions();
@@ -68,8 +66,6 @@ void UCAction_Guard::Interrupt(const FExecutionInterventionDirective& InDirectiv
 			const bool bIsGuardInIncoming =
 				InDirective.IncomingPart.IsActionParticipant()
 				&& ResolveGuardActionPhase(InDirective.IncomingPart.GetActionContext().ActionDataKey) == EGuardActionPhase::In;
-
-			PrintGuardInterventionDebugInfo(TEXT("InterruptGuardOut"), activeGuardPhase, InDirective.IncomingPart, bIsGuardInIncoming);
 
 			if (!bIsGuardInIncoming)
 			{
@@ -138,8 +134,6 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.Snapshot.ObservableOverlay.Guard;
 	if (incomingGuardPhase == EGuardActionPhase::Out && !guardOverlaySnapshot.HasGuardRuntimeState())
 	{
-		FLog::Log(TEXT("[GuardOut] Ignored stale release."));
-
 		result.Decision = EExecutionDecision::Ignore;
 		return result;
 	}
@@ -324,7 +318,6 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 
 		if (activeGuardPhase == EGuardActionPhase::Out && incomingGuardPhase == EGuardActionPhase::In && guardOverlaySnapshot.bCanStartGuard)
 		{
-			PrintGuardInterventionDebugInfo(TEXT("AllowGuardIn"), activeGuardPhase, InQuery.IncomingPart, true);
 			return true;
 		}
 	}
@@ -336,13 +329,11 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 
 		if (activeGuardPhase == EGuardActionPhase::In && incomingReactionType == EReactionType::Parry)
 		{
-			PrintGuardInterventionDebugInfo(TEXT("AllowParry"), activeGuardPhase, InQuery.IncomingPart, true);
 			return true;
 		}
 
 		if (activeGuardPhase == EGuardActionPhase::In && incomingReactionType == EReactionType::BlockHit)
 		{
-			PrintGuardInterventionDebugInfo(TEXT("AllowBlockHit"), activeGuardPhase, InQuery.IncomingPart, true);
 			return true;
 		}
 	}
@@ -363,32 +354,4 @@ void UCAction_Guard::ClearGuardState() const
 	if (!IsValid(OwnerActionComp_Injected)) return;
 
 	OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
-}
-
-void UCAction_Guard::PrintGuardInterventionDebugInfo(const FString& InStage, EGuardActionPhase InActiveGuardPhase, const FExecutionParticipant& InIncomingPart, bool bKeepGuardState) const
-{
-	FString incomingText = TEXT("Invalid");
-
-	if (InIncomingPart.IsActionParticipant())
-	{
-		const FActionExecutionContext& incomingContext = InIncomingPart.GetActionContext();
-		incomingText = FString::Printf(
-			TEXT("Action:%s|Phase:%s"),
-			*UEnum::GetValueAsString(incomingContext.ActionDataKey.ActionType),
-			*UEnum::GetValueAsString(ResolveGuardActionPhase(incomingContext.ActionDataKey)));
-	}
-	else if (InIncomingPart.IsReactionParticipant())
-	{
-		const FReactionExecutionContext& incomingContext = InIncomingPart.GetReactionContext();
-		incomingText = FString::Printf(
-			TEXT("Reaction:%s"),
-			*UEnum::GetValueAsString(incomingContext.ReactionDataKey.ReactionType));
-	}
-
-	FLog::Log(FString::Printf(
-		TEXT("[GuardIntervention] Stage=%s | ActivePhase=%s | Incoming=%s | KeepGuardState=%s"),
-		*InStage,
-		*UEnum::GetValueAsString(InActiveGuardPhase),
-		*incomingText,
-		bKeepGuardState ? TEXT("true") : TEXT("false")));
 }

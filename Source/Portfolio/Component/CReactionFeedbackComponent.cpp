@@ -40,14 +40,6 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 	if (!CanPlayReactionFeedback(InReactionFeedbackRequest)) return;
 
 	// PrintReactionFeedbackRequestInfo(InReactionFeedbackRequest);
-	if (IsParryFeedbackRequest(InReactionFeedbackRequest))
-	{
-		FLog::Log(FString::Printf(
-			TEXT("[ParryFeedback] Request | Timing=%s | TriggerKey=%s"),
-			*UEnum::GetValueAsString(InReactionFeedbackRequest.ReactionFeedbackTiming),
-			*InReactionFeedbackRequest.TriggerKey.ToString()));
-	}
-
 	ExecuteVFXFeedbacks(InReactionFeedbackRequest);
 	ExecuteSFXFeedbacks(InReactionFeedbackRequest);
 }
@@ -66,11 +58,6 @@ bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbac
 	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::Max) return false;
 
 	return true;
-}
-
-bool UCReactionFeedbackComponent::IsParryFeedbackRequest(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
-{
-	return InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::Parry;
 }
 
 bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedbackKey& InDataKey, EReactionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FReactionFeedbackRequest& InReactionFeedbackRequest, int32& OutScore) const
@@ -199,16 +186,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 
 	if (matchedDatas.Num() <= 0)
 	{
-		if (IsParryFeedbackRequest(InReactionFeedbackRequest))
-		{
-			FLog::Log(TEXT("[ParryFeedback] VFX=None"));
-		}
 		return;
-	}
-
-	if (IsParryFeedbackRequest(InReactionFeedbackRequest))
-	{
-		FLog::Log(FString::Printf(TEXT("[ParryFeedback] VFX=Matched | Count=%d"), matchedDatas.Num()));
 	}
 
 	TSet<FReactionVFXExecutionKey> executionKeys;
@@ -262,16 +240,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 
 	if (matchedDatas.Num() <= 0)
 	{
-		if (IsParryFeedbackRequest(InReactionFeedbackRequest))
-		{
-			FLog::Log(TEXT("[ParryFeedback] SFX=None"));
-		}
 		return;
-	}
-
-	if (IsParryFeedbackRequest(InReactionFeedbackRequest))
-	{
-		FLog::Log(FString::Printf(TEXT("[ParryFeedback] SFX=Matched | Count=%d"), matchedDatas.Num()));
 	}
 
 	TSet<FReactionSFXExecutionKey> executionKeys;
