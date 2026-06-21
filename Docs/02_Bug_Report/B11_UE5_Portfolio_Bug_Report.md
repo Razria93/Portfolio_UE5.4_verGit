@@ -10,13 +10,13 @@
 
 ## 상태
 
-- [ ] **진행중**
+- [x] **완료**
 
 ---
 
 ## 브랜치
 
-- `feature/parry-action`
+- `feature/combat-guard-parry`
 
 ---
 
@@ -47,7 +47,7 @@
 - 엔진: Unreal Engine 5.4
 
 - 관련 브랜치:
-  - `feature/parry-action`
+  - `feature/combat-guard-parry`
 
 - 관련 코드:
   - `Source/Portfolio/Action/CAction_Guard.cpp`
@@ -185,6 +185,16 @@ v1에서는 deferred action candidate 경로를 추가했다.
 - [ ] reaction takeover 또는 action stop 상황에서 deferred Guard Out candidate가 잘못 실행되지 않는지 확인한다.
 
 - [ ] Guard Hold 상태에서 dodge / reaction이 시작될 때 Guard overlay가 stale state로 남지 않는지 확인한다.
+
+---
+
+## 2026.06.21 완료 확인
+
+- [x] Guard In 중 release 입력이 들어오면 Guard Out candidate가 deferred 저장된다.
+- [x] Guard In 완료 이후 deferred Guard Out candidate가 공통 candidate 처리 경로로 소비된다.
+- [x] 정상 Guard Hold 이후 release는 deferred 없이 Guard Out으로 이어진다.
+- [x] Parry / BlockHit / Hit / Dodge 전환 이후 Guard overlay가 stale state로 남지 않는지 확인했다.
+- [x] Guard Out 중 Hit reaction 전환에서 overlay handling 실패가 발생하지 않도록 B12에서 멱등 cleanup과 dirty flag registry 기준을 보완했다.
 
 ---
 

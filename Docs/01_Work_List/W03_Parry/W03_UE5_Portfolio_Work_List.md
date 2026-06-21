@@ -14,7 +14,7 @@
 
 ## 브랜치
 
-- `feature/parry-action`
+- `feature/combat-guard-parry`
 
 ---
 
@@ -400,7 +400,9 @@ TakeDamagePacket
 - [x] `ParryStack`이 threshold에 도달하면 `CombatResult` 기반 `Stagger` reaction request를 생성한다.
   - `FCombatResultReactionRequest`를 추가해 damage packet이 아닌 combat result에서도 reaction candidate를 만들 수 있게 했다.
   - `Stagger` reaction 실행이 accepted되면 `ParryStack`을 reset한다.
-  - Editor에서 `EReactionType::Stagger` ReactionData와 `CReaction_Stagger` executor, stagger montage 연결이 필요하다.
+  - Editor에서 `EReactionType::Stagger` ReactionData와 `CReaction_Stagger` executor, stagger montage 연결을 확인했다.
+
+> 2026.06.21 최신화: 4.11 작성 이후 attacker 측 `ParryStack -> Stagger` v1 연결과 `CReaction_Stagger` / `EReactionType::Stagger` / stagger montage 연결 확인까지 완료했다.
 
 ---
 
@@ -473,12 +475,60 @@ TakeDamagePacket
 
 ---
 
-## 8. 정리
+## 8. 2026.06.21 최신화
 
-W03은 Guard / Parry Action v1을 기존 combat 실행 구조에 안전하게 연결하는 작업이다.
+### 8.1 현재 구현 완료 범위
 
-이번 Branch는 Combat Resolution을 처음부터 완성된 component로 분리하기보다, Guard Action 안에서 Parry Window와 Guard Hold 상태 전환을 먼저 안정화하고 `TakeDamage` 내부에서 Parry / Guard 분기를 임시로 검증하는 데 집중한다.
+- [x] Guard 입력이 `Pressed -> Guard In`, `Released -> Guard Out` 흐름으로 연결되어 있다.
+- [x] Guard Hold는 별도 action이 아니라 `UCDefenseComponent`의 observable overlay state로 유지된다.
+- [x] `SwitchToGuard` notify 기준으로 Parry Window를 닫고 Guard 판정을 연다.
+- [x] Guard In / Guard Hold 중 피격은 `DefenseOutcome::Guard -> BlockHit`으로 분기한다.
+- [x] Parry Window 중 피격은 `DefenseOutcome::Parry`, `bShouldCommitDamage=false`, `ReactionType::Parry`로 분기한다.
+- [x] Parry 성공 시 기존 Hit / Dead reaction과 HitFeedback이 같이 실행되지 않는지 확인했다.
+- [x] Guard Out 중 피격은 Guard 판정을 사용하지 않고 일반 Hit reaction으로 전환된다.
+- [x] Guard / Parry / BlockHit / Hit 전환에서 Guard movement mode가 정상 복구되는지 확인했다.
+- [x] `UCObservableOverlayComponent`를 통해 overlay event / handling을 라우팅하고, policy registry는 dirty flag 기준으로 갱신한다.
+- [x] Parry 성공 결과를 `FCombatResultPacket`으로 attacker 측 receiver에 전달한다.
+- [x] attacker 측 receiver는 `ParryStack`을 누적하고 threshold 도달 시 `Stagger` reaction request를 생성한다.
+- [x] `CReaction_Stagger`와 `EReactionType::Stagger`를 추가하고, Editor에서 Stagger reaction data / montage 연결을 확인했다.
 
-이 규칙이 안정되면 Parry / Guard 판정 책임을 `UCCombatResolutionComponent`로 분리하고, Counter / Perfect Parry / resource 계열 확장은 후속 Branch에서 이어간다.
+### 8.2 검증 완료 상태
+
+- [x] `PortfolioEditor Win64 Development` 빌드가 통과했다.
+- [x] PIE에서 Guard In / Hold / Out 흐름을 확인했다.
+- [x] PIE에서 Guard Hold / Guard In guard 구간의 BlockHit 분기를 확인했다.
+- [x] PIE에서 Parry Window 중 damage commit 차단과 Parry reaction / feedback을 확인했다.
+- [x] PIE에서 Guard Out 중 Hit가 일반 Hit reaction으로 전환되는 것을 확인했다.
+- [x] PIE에서 Parry 3회 누적 후 enemy Stagger reaction request가 accepted되는 것을 확인했다.
+- [x] asset 참조와 animation naming 정리를 확인했다.
+
+### 8.3 최신 비범위 / 후속 분리
+
+- [ ] `UCCombatResolutionComponent` 분리
+- [ ] `CombatConsequenceCoordinator` 분리
+- [ ] `ApplyDamageComponent`의 CombatRequester 성격 정리 / 리네임
+- [ ] Guard ActionData index 기반 phase 선택 제거
+- [ ] Guard overlay serial / lifecycle id 기반 precise cleanup
+- [ ] Counter executor / attacker counter action 처리
+- [ ] Blink / Repulse cue packet 구현
+- [ ] Perfect Parry / Normal Parry 구분
+- [ ] Guard Gauge / stamina / posture / resource 처리
+
+### 8.4 관련 문서 최신화 상태
+
+- [x] `N03_Guard_Hold_Overlay_Layer_Design_Note.md`에 Observable Overlay Layer, dirty flag registry, API naming 기준을 반영했다.
+- [x] `N04_Blink_Repulse_Combat_Packet_Design_Note.md`에 Blink / Repulse / cue packet 책임 분리 기준을 분리했다.
+- [x] `N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 Combat Request / Resolution / Routing 후속 구조를 정리했다.
+- [x] `B12_UE5_Portfolio_Bug_Report.md`에 Guard Out 중 Hit reaction overlay handling 실패와 dirty flag 해결 기준을 기록했다.
+
+---
+
+## 9. 정리
+
+W03은 Guard / Parry Action v1을 기존 combat 실행 구조에 안전하게 연결하고, damage packet이 Parry / Guard / Hit 결과로 안정적으로 분기되는지 검증한 작업이다.
+
+이번 Branch에서는 Guard In / Hold / Out lifecycle, observable overlay 기반 Guard Hold, Parry / BlockHit reaction, Parry feedback, attacker 측 CombatResultPacket 전달, ParryStack 기반 Stagger request까지 v1 범위로 정리했다.
+
+Combat Resolution component 분리, CombatConsequenceCoordinator 분리, Guard ActionData phase key 정리, overlay serial 기반 precise cleanup, Counter / Blink / Repulse 계열 확장은 후속 Branch에서 이어간다.
 
 ---

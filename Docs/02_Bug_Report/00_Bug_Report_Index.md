@@ -17,6 +17,6 @@
 | B08 | Reaction takeover cleanup 보강 | `B08_UE5_Portfolio_Bug_Report.md` | P15 | Action / Reaction state | 해결 |
 | B09 | Intervention window 설정 기준 보완 | `B09_UE5_Portfolio_Bug_Report.md` | P17 | Orchestration / Intervention | 해결 |
 | B10 | Runtime cleanup / feedback snapshot 순서 보강 | `B10_UE5_Portfolio_Bug_Report.md` | P17 | Runtime cleanup | 해결 |
-| B11 | Guard In 중 Release 입력 시 Guard Hold 고정 | `B11_UE5_Portfolio_Bug_Report.md` | - | Guard / Deferred request | 진행중 |
+| B11 | Guard In 중 Release 입력 시 Guard Hold 고정 | `B11_UE5_Portfolio_Bug_Report.md` | - | Guard / Deferred request | 완료 |
 | B12 | Guard Out 중 Hit reaction Overlay handling 실패 | `B12_UE5_Portfolio_Bug_Report.md` | - | Guard / Observable overlay | 완료 |
 ---
