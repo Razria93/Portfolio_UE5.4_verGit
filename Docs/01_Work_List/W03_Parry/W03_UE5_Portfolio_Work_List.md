@@ -10,7 +10,7 @@
 
 ## 상태
 
-- [ ] **진행중**
+- [x] **완료**
 
 ## 브랜치
 
@@ -41,14 +41,14 @@
 
 ## 2. 완료 기준
 
-- [ ] 현재 Action / TakeDamage / Reaction / Feedback 호출 흐름이 정리되어 있다.
-- [ ] Player 입력에서 Guard Action 요청과 `CAction_Block` 또는 `CAction_Guard` 실행으로 이어진다.
-- [ ] Pressed / Held / Released 입력에 따라 Block_In / Block_Hold / Block_Out 흐름이 연결되어 있다.
-- [ ] Guard Action 초반 Parry Window와 이후 Guard Hold 상태 전환이 확인되어 있다.
-- [ ] Guard Hold 상태에서 피격 시 Block_Hit 흐름으로 분기한다.
-- [ ] Parry Window 중 피격 시 Block_Parry 흐름으로 분기하고 damage commit 이전에 기존 damage 처리를 중단할 수 있다.
-- [ ] Parry 성공 시 damage 무효화, parry reaction, 기본 feedback 흐름이 검증되어 있다.
-- [ ] Attacker 처리, Perfect Parry, resource 계열, 최종 polish는 후속 범위로 분리되어 있다.
+- [x] 현재 Action / TakeDamage / Reaction / Feedback 호출 흐름이 정리되어 있다.
+- [x] Player 입력에서 Guard Action 요청과 `CAction_Guard` 실행으로 이어진다.
+- [x] Pressed / Held / Released 입력에 따라 Guard In / Guard Hold / Guard Out 흐름이 연결되어 있다.
+- [x] Guard Action 초반 Parry Window와 이후 Guard Hold 상태 전환이 확인되어 있다.
+- [x] Guard Hold 상태에서 피격 시 BlockHit 흐름으로 분기한다.
+- [x] Parry Window 중 피격 시 Parry 흐름으로 분기하고 damage commit 이전에 기존 damage 처리를 중단할 수 있다.
+- [x] Parry 성공 시 damage 무효화, parry reaction, 기본 feedback 흐름이 검증되어 있다.
+- [x] Counter executor, Perfect Parry, resource 계열, 최종 polish는 후속 범위로 분리되어 있다.
 
 ---
 
@@ -130,7 +130,7 @@ TakeDamagePacket
     - [x] `CAction_Guard`는 Guard In / Guard Out 전환 action만 처리하고, Guard Hold는 `UCDefenseComponent`의 observable overlay 상태로 관리한다.
     - [x] `Block_In` 종료 이후 Guard Hold pose가 유지될 수 있도록 `UCDefenseComponent::IsGuardingPose()`와 AnimInstance `bIsGuardingPose`를 연결한다.
     - [x] Guard 상태 전달은 `CAction_Guard -> UCActionComponent -> UCObservableOverlayComponent -> UCDefenseComponent` 경로의 observable overlay event로 라우팅한다.
-    - [ ] `Block_Hold` montage는 ABP 전환 전 검증용 또는 임시 fallback으로 사용할 수 있는지 확인한다.
+    - [x] `Block_Hold` montage fallback 대신 ABP Guard Hold / locomotion 기준으로 유지하는 방향을 확인한다.
 - [x] Guard Released에서 `Block_Out` 실행으로 이어지게 구성한다.
   - 세부 구현 요소:
     - [x] Guard 종료 요청은 별도 action request로 들어와 `Block_Out` ActionData를 선택한다.
@@ -145,8 +145,8 @@ TakeDamagePacket
     - [x] deferred candidate 소비 시 active context 정리 이후 재평가되도록 `CAction_Guard::Complete()` 순서를 조정한다.
     - [x] `Reserved`와 별개로 `Deferred` result type을 분리한다.
     - [x] deferred candidate 정리를 위해 전체 제거 / consume key 기준 제거 / consume key + action key 기준 제거 API를 구성한다.
-    - [ ] `Block_In` 중 release 시 Hold에 고정되지 않고 `Block_Out`으로 이어지는지 PIE에서 확인한다.
-- [ ] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
+    - [x] `Block_In` 중 release 시 Hold에 고정되지 않고 `Block_Out`으로 이어지는지 PIE에서 확인한다.
+- [x] 정상 release뿐 아니라 interrupt / dead / dodge / action stop 상황에서도 방어 runtime 상태가 정리되게 한다.
   - 세부 구현 요소:
     - [x] `CAction_Guard::Interrupt()`에서 intervention 문맥 기반으로 Guard runtime 정리와 Guard Out -> Guard In 재진입 예외를 처리한다.
     - [x] action / reaction start 직전에 observable overlay snapshot을 기준으로 Guard overlay를 정리할 수 있게 한다.
@@ -162,7 +162,7 @@ TakeDamagePacket
     - [x] Dodge / Hit / Dead처럼 Guard lifecycle을 끝내야 하는 incoming execution은 실행 전에 `ClearGuardState` handling을 요청하도록 구성한다.
     - [x] Guard Out 시작 시 `CanStartGuard`를 잠그고, `AllowGuardStart` 단발 notify 시점부터 Guard In 재진입을 허용하도록 구성한다.
     - [x] `AllowGuardStart` notify 이후 Guard In이 들어오면 Guard Out을 intervention으로 끊고 Guard In이 상태를 덮어쓰도록 구성한다.
-    - [ ] dodge / reaction takeover에서 Guard 상태가 남지 않는지 PIE에서 확인한다.
+    - [x] dodge / reaction takeover에서 Guard 상태가 남지 않는지 PIE에서 확인한다.
     - [x] interrupt / forced stop 시 Guard Out deferred candidate를 barrier key 기준으로 정리하도록 호출 지점을 연결한다.
 
 - [x] Action lifecycle에서 `Interrupt`와 `Stop`의 역할을 분리한다.
@@ -191,7 +191,7 @@ TakeDamagePacket
     - [x] Guard overlay snapshot에는 `bWantsGuarding`, `bIsGuardingPose`, `bCanGuard`, `bCanParry`, `bCanStartGuard`를 포함한다.
     - [x] `UCActionComponent`는 Guard 전용 Defense 라우터가 아니라 observable overlay event 전달 지점으로 축소한다.
     - [x] `UCActionComponent`와 `UCReactionComponent`는 Orchestrator result에 누적된 overlay handling을 실행 시작 전에 적용한다.
-    - [ ] 이후 Combat Resolution 분리 시 해당 상태 조회 경계를 그대로 옮길 수 있게 만든다.
+    - [x] 이후 Combat Resolution 분리 시 해당 상태 조회 경계를 그대로 옮길 수 있도록 후속 구조 후보를 기록한다.
 - [x] Block_In 시작 직후 Parry Window를 열 수 있게 한다.
   - 세부 구현 요소:
     - [x] `Block_In` 시작 시점에 `bCanParry`를 true로 연다.
@@ -203,12 +203,12 @@ TakeDamagePacket
     - [x] `SwitchToGuard` notify는 Guard phase `In` 기준으로 `Block_In`에서만 처리되도록 구성한다.
     - [x] release가 `SwitchToGuard` 전에 들어온 경우에는 Parry Window만 닫고 Guard 판정은 열지 않는다.
     - [x] release가 `SwitchToGuard` 이후 들어온 경우에는 release 전까지 Guard 판정을 인정한다.
-- [ ] Guard / Parry 판정은 notify state window가 아니라 단발 notify 기반 상태 전환으로 구성한다.
+- [x] Guard / Parry 판정은 notify state window가 아니라 단발 notify 기반 상태 전환으로 구성한다.
   - 세부 구현 요소:
     - [x] montage 경계 사이의 판정 공백을 피하기 위해 Parry / Guard 상태를 duration window가 아니라 상태값으로 유지한다.
     - [x] `SwitchToGuard` 단발 notify에서 Parry를 닫고 Guard 판정을 켠다.
     - [x] `Block_Out` 시작 시점에 Guard pose를 종료해 Out montage와 ABP Guard pose가 겹치지 않게 한다.
-    - [ ] `GuardPoseEnd` 단발 notify는 Out 시작 정리만으로 부족한 경우의 fallback 후보로 검토한다.
+    - [x] `GuardPoseEnd` 단발 notify 없이 Out 시작 정리로 충분한지 v1 기준으로 확인한다.
 
 ### 4.3 Guard Hold 중 피격 처리 연결
 
@@ -241,63 +241,63 @@ TakeDamagePacket
 
 ### 4.4 TakeDamage 내부 defensive resolution 임시 구현
 
-- [ ] `UCTakeDamageComponent` 내부에 Parry / Guard 판정을 위한 작은 private 함수 단위를 만든다.
+- [x] `UCTakeDamageComponent` 내부에 Parry / Guard 판정을 위한 작은 함수 단위를 만든다.
   - 세부 구현 요소:
-    - [ ] `ValidateContext` 이후, `ComputeTakeDamage` / `CommitTakeDamage` 이전을 우선 삽입 후보로 둔다.
-    - [ ] `CanTakeDamage()` 기존 정책과 섞기보다, 별도 defensive resolution 함수로 분리해 둔다.
-    - [ ] 함수 결과는 Parry / Guard / None을 구분할 수 있는 최소 enum 또는 result 구조로 둔다.
-- [ ] Parry Window 중 incoming damage가 들어오면 Parry 성공 분기로 라우팅한다.
+    - [x] `ValidateContext` 이후, `ComputeTakeDamage` / `CommitTakeDamage` 이전에 방어 판정을 배치한다.
+    - [x] 기존 `CanTakeDamage()` 흐름 안에서 v1 defensive outcome을 계산하되, 후속 Combat Resolution 분리 후보로 기록한다.
+    - [x] 함수 결과는 `Parry / Guard / None`을 구분할 수 있는 `EDamageDefenseOutcome` 기준으로 둔다.
+- [x] Parry Window 중 incoming damage가 들어오면 Parry 성공 분기로 라우팅한다.
   - 세부 구현 요소:
-    - [ ] active Guard Action의 Parry Window 상태를 확인한다.
-    - [ ] Parry 성공이면 기존 damage commit으로 진행하지 않는다.
-- [ ] Guard Hold 중 incoming damage가 들어오면 Guard Hit 분기로 라우팅한다.
+    - [x] `UCDefenseComponent::CanParry()` 상태를 확인한다.
+    - [x] Parry 성공이면 기존 damage commit으로 진행하지 않는다.
+- [x] Guard Hold 중 incoming damage가 들어오면 Guard Hit 분기로 라우팅한다.
   - 세부 구현 요소:
-    - [ ] active Guard Action이 있고 Parry Window가 닫힌 상태면 Guard Hit 후보로 처리한다.
-    - [ ] Guard Hit damage 감소 정책은 v1에서 최소값으로 둔다.
-- [ ] Parry / Guard에 해당하지 않으면 기존 TakeDamage 흐름을 유지한다.
+    - [x] `UCDefenseComponent::CanGuard()` 상태면 Guard Hit 후보로 처리한다.
+    - [x] Guard Hit damage 감소 정책은 v1에서 최소값으로 둔다.
+- [x] Parry / Guard에 해당하지 않으면 기존 TakeDamage 흐름을 유지한다.
   - 세부 구현 요소:
-    - [ ] 기존 `CanTakeDamage()`, `ComputeTakeDamage()`, `CommitTakeDamage()`, `DispatchTakeDamageCommitted()` 순서를 유지한다.
-    - [ ] 일반 피격의 Reaction / DamageFeedback 결과가 회귀하지 않는지 확인한다.
-- [ ] Parry 성공 시 damage commit 이전에 기존 damage 처리를 중단할 수 있는지 확인한다.
-- [ ] 임시 함수들은 이후 `UCCombatResolutionComponent`로 옮기기 쉬운 형태로 둔다.
+    - [x] 기존 `CanTakeDamage()`, `ComputeTakeDamage()`, `CommitTakeDamage()`, `DispatchTakeDamageCommitted()` 흐름을 일반 피격 fallback으로 유지한다.
+    - [x] 일반 피격의 Reaction / HitFeedback 결과가 회귀하지 않는지 확인한다.
+- [x] Parry 성공 시 damage commit 이전에 기존 damage 처리를 중단할 수 있는지 확인한다.
+- [x] 임시 함수들은 이후 `UCCombatResolutionComponent`로 옮기기 쉬운 형태로 후속 후보에 남긴다.
 
 ### 4.5 Parry 성공 처리 연결
 
-- [ ] Parry 성공 시 damage를 0으로 처리하거나 damage commit 자체를 차단하는 방식을 확정한다.
+- [x] Parry 성공 시 damage를 0으로 처리하거나 damage commit 자체를 차단하는 방식을 확정한다.
   - 세부 구현 요소:
-    - [ ] 권장 기본값은 damage commit 자체를 차단하는 방식으로 둔다.
-    - [ ] return damage 값은 `0.f`로 반환하되, 기존 damage reject와 구분 가능한 reason 후보를 남긴다.
-- [ ] Parry 성공 시 기존 Hit reaction이 실행되지 않게 한다.
+    - [x] v1 기본값은 damage commit 자체를 차단하는 방식으로 둔다.
+    - [x] `CommittedDamage=0.f`, `bShouldCommitDamage=false`, `DefenseOutcome::Parry`로 기존 damage reject와 구분한다.
+- [x] Parry 성공 시 기존 Hit reaction이 실행되지 않게 한다.
   - 세부 구현 요소:
-    - [ ] `DispatchTakeDamageCommitted()`가 호출되지 않도록 하거나, Parry 전용 dispatch 경계를 따로 둔다.
-    - [ ] 기존 Hit / Dead reaction이 Parry 성공과 동시에 실행되지 않는지 확인한다.
-- [ ] Parry 성공 시 `Block_Parry` montage 또는 parry reaction을 실행할 수 있는 요청 경계를 정한다.
+    - [x] Parry는 damage commit 없이 Parry reaction과 CombatResult dispatch로 이어지게 한다.
+    - [x] 기존 Hit / Dead reaction이 Parry 성공과 동시에 실행되지 않는지 확인한다.
+- [x] Parry 성공 시 `Block_Parry` montage 또는 parry reaction을 실행할 수 있는 요청 경계를 정한다.
   - 세부 구현 요소:
-    - [ ] `Block_Parry`는 Guard Action executor가 직접 처리할지, reaction 요청으로 처리할지 비교한다.
-    - [ ] v1에서는 defender 쪽 성공 animation 확인을 우선한다.
-- [ ] Parry 성공 feedback을 기존 DamageFeedback / ReactionFeedback과 충돌하지 않게 연결한다.
+    - [x] `Block_Parry`는 Guard Action executor가 아니라 `CReaction_Parry` reaction 요청으로 처리한다.
+    - [x] v1에서는 defender 쪽 Parry reaction과 feedback 확인을 우선한다.
+- [x] Parry 성공 feedback을 기존 HitFeedback / ReactionFeedback과 충돌하지 않게 연결한다.
   - 세부 구현 요소:
-    - [ ] Parry success feedback은 기존 damage feedback과 별도 요청으로 둘지 확인한다.
-    - [ ] attacker reaction / counter feedback은 후속 범위로 남긴다.
-- [ ] Parry 실패 또는 Parry Window 밖 damage는 기존 TakeDamage fallback으로 이어지게 유지한다.
+    - [x] Parry success feedback은 damage commit 기반 feedback이 아니라 ReactionFeedback 경로로 확인한다.
+    - [x] attacker reaction / counter feedback은 후속 범위로 남긴다.
+- [x] Parry 실패 또는 Parry Window 밖 damage는 기존 TakeDamage fallback으로 이어지게 유지한다.
 
 ### 4.6 Combat Resolution 분리 후보 기록
 
-- [ ] `UCTakeDamageComponent` 내부에 임시로 둔 Parry / Guard 판정 함수를 Combat Resolution 후보로 기록한다.
+- [x] `UCTakeDamageComponent` 내부에 임시로 둔 Parry / Guard 판정 함수를 Combat Resolution 후보로 기록한다.
   - 세부 구현 요소:
-    - [ ] 이번 Branch에서는 `UCCombatResolutionComponent`를 완성하지 않는다.
-    - [ ] Parry / Guard 판정 함수의 입력값과 출력값을 후속 component API 후보로 기록한다.
-- [ ] `UCTakeDamageComponent::CanTakeDamage()`의 기존 정책 중 Combat Resolution으로 옮길 후보를 기록한다.
+    - [x] 이번 Branch에서는 `UCCombatResolutionComponent`를 완성하지 않는다.
+    - [x] Parry / Guard 판정 함수의 입력값과 출력값을 후속 component API 후보로 기록한다.
+- [x] `UCTakeDamageComponent::CanTakeDamage()`의 기존 정책 중 Combat Resolution으로 옮길 후보를 기록한다.
   - 세부 구현 요소:
-    - [ ] dead / invulnerable / iframe / guard / parry처럼 “damage를 받을 수 있는가”를 결정하는 정책을 분류한다.
-    - [ ] health commit이나 damage feedback처럼 결과 적용 책임은 Combat Resolution 후보에서 제외한다.
-- [ ] Parry / Guard / Block / iframe / invulnerable 같은 수신자 측 방어 판단의 책임 위치를 검토한다.
-- [ ] deferred action candidate의 장기 확장 정책을 후속 후보로 기록한다.
+    - [x] dead / invulnerable / iframe / guard / parry처럼 “damage를 받을 수 있는가”를 결정하는 정책을 분류한다.
+    - [x] health commit이나 feedback처럼 결과 적용 책임은 Combat Resolution 후보에서 제외한다.
+- [x] Parry / Guard / Block / iframe / invulnerable 같은 수신자 측 방어 판단의 책임 위치를 검토한다.
+- [x] deferred action candidate의 장기 확장 정책을 후속 후보로 기록한다.
   - 세부 구현 요소:
-    - [ ] `SourceExecutionId` 기반 lifecycle 정리 필요 여부를 검토한다.
-    - [ ] filter struct 기반 deferred clear API가 필요한 시점을 검토한다.
-    - [ ] retry / timeout / expire 정책이 필요한 deferred 유형을 분류한다.
-- [ ] observable overlay policy registry의 장기 소유 위치를 후속 후보로 기록한다.
+    - [x] `SourceExecutionId` 기반 lifecycle 정리 필요 여부를 검토한다.
+    - [x] filter struct 기반 deferred clear API가 필요한 시점을 검토한다.
+    - [x] retry / timeout / expire 정책이 필요한 deferred 유형을 분류한다.
+- [x] observable overlay policy registry의 장기 소유 위치를 후속 후보로 기록한다.
   - 세부 구현 요소:
     - [x] 기존 v1에서는 Orchestrator가 snapshot 구성을 위해 policy를 보관하고, Action / Reaction Component가 handling 적용을 위해 같은 policy를 보관했다.
     - [x] `UCObservableOverlayComponent`를 추가해 policy 등록 / snapshot 구성 / handling 적용 위임을 하나의 component로 모았다.
@@ -305,7 +305,7 @@ TakeDamagePacket
     - [x] Action / Reaction Component는 `UCObservableOverlayComponent`를 통해 requested overlay handling을 적용한다.
     - [x] `UCDefenseComponent`는 Guard overlay state owner이자 `IObservableOverlayPolicy` 구현체로 유지한다.
     - [x] Guard input / lifecycle / notify event는 `ActionComponent -> DefenseComponent` 직통 호출이 아니라 `UCObservableOverlayComponent`의 event routing으로 전달한다.
-- [ ] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
+- [x] 이번 Branch에서 실제 이관할 항목과 후속 Branch로 넘길 항목을 분리한다.
 
 #### 현재 코드 기준 Combat pipeline 분리 작업 후보
 
@@ -466,10 +466,10 @@ TakeDamagePacket
 
 ## 7. 문서화 기준
 
-- [ ] 구현 완료 후 `P20_UE5_Portfolio_Pull_Request.md`를 작성한다.
-- [ ] 구현 중 구조 충돌이 발생하면 System Design Record 또는 note 보완 필요 여부를 판단한다.
-- [ ] 검증 과정에서 Editor / Asset 확인이 불완전하면 PR 문서의 미검증 항목에 남긴다.
-- [ ] TakeDamage 내부 defensive resolution 규칙이 Guard / Counter 확장 기준으로 의미가 생기면 System Architecture 후속 보완 후보로 기록한다.
+- [x] 구현 완료 후 `P20_UE5_Portfolio_Pull_Request.md`를 작성한다.
+- [x] 구현 중 구조 충돌이 발생하면 System Design Record 또는 note 보완 필요 여부를 판단한다.
+- [x] 검증 과정에서 Editor / Asset 확인이 불완전하면 PR 문서의 미검증 항목에 남긴다.
+- [x] TakeDamage 내부 defensive resolution 규칙이 Guard / Counter 확장 기준으로 의미가 생기면 System Architecture 후속 보완 후보로 기록한다.
 - [x] Attacker 측 counter signal / Blink / Repulse / cue packet 전달 구조는 `Docs/06_notes/N04_Blink_Repulse_Combat_Packet_Design_Note.md`에 후속 판단 기록으로 분리한다.
 - [x] Combat intent / request / resolution / routing 계층 구조는 `Docs/06_notes/N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 후속 판단 기록으로 분리한다.
 
@@ -527,6 +527,7 @@ TakeDamagePacket
 
 ### 8.4 관련 문서 최신화 상태
 
+- [x] `P20_UE5_Portfolio_Pull_Request.md`에 Guard / Parry v1 변경 흐름과 최종 검증 결과를 정리했다.
 - [x] `N03_Guard_Hold_Overlay_Layer_Design_Note.md`에 Observable Overlay Layer, dirty flag registry, API naming 기준을 반영했다.
 - [x] `N04_Blink_Repulse_Combat_Packet_Design_Note.md`에 Blink / Repulse / cue packet 책임 분리 기준을 분리했다.
 - [x] `N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 Combat Request / Resolution / Routing 후속 구조를 정리했다.
