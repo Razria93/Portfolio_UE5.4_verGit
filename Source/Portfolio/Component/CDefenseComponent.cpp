@@ -18,6 +18,7 @@ void UCDefenseComponent::BeginPlay()
 	check(MovementComp_Cached);
 }
 
+// Overlay Policy
 void UCDefenseComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
 {
 	OutSnapshot.Guard.bCanStartGuard = bCanStartGuard;
@@ -129,6 +130,7 @@ bool UCDefenseComponent::ApplyOverlayHandling(EObservableOverlayHandling InHandl
 	}
 }
 
+// Guard Event Entry
 void UCDefenseComponent::HandleGuardInputPressed()
 {
 	BeginGuardIntent();
@@ -190,6 +192,7 @@ void UCDefenseComponent::HandleGuardLifecycleInterrupted()
 	ClearGuardState();
 }
 
+// Guard State Cleanup
 void UCDefenseComponent::ClearGuardState()
 {
 	AllowGuardStart();
@@ -223,6 +226,7 @@ void UCDefenseComponent::RestoreGuardOverlay()
 	}
 }
 
+// Guard State Primitive
 void UCDefenseComponent::AllowGuardStart()
 {
 	bCanStartGuard = true;
@@ -273,6 +277,7 @@ void UCDefenseComponent::CloseParryWindow()
 	bCanParry = false;
 }
 
+// Movement Override
 void UCDefenseComponent::ApplyGuardMovementOverride()
 {
 	if (!IsValid(MovementComp_Cached)) return;
@@ -287,6 +292,7 @@ void UCDefenseComponent::ClearMovementOverride()
 	MovementComp_Cached->ClearMovementOverride();
 }
 
+// Debug
 void UCDefenseComponent::PrintGuardStateInfo() const
 {
 	FLog::Log(FString::Printf(

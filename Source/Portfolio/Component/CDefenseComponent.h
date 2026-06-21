@@ -39,6 +39,7 @@ private:
 	bool bCanParry = false;
 
 public:
+	// Query
 	FORCEINLINE bool CanStartGuard() const { return bCanStartGuard; }
 	FORCEINLINE bool WantsGuarding() const { return bWantsGuarding; }
 	FORCEINLINE bool IsGuardingPose() const { return bIsGuardingPose; }
@@ -56,6 +57,7 @@ public:
 	bool ApplyOverlayHandling(EObservableOverlayHandling InHandling) override;
 
 public:
+	// Guard Event Entry
 	void HandleGuardInputPressed();
 	void HandleGuardInputReleased();
 
@@ -69,11 +71,13 @@ public:
 	void HandleGuardLifecycleInterrupted();
 
 public:
+	// Guard State Cleanup
 	void ClearGuardState();
 	void ClearGuardOverlay();
 	void RestoreGuardOverlay();
 
 private:
+	// Guard State Primitive
 	void AllowGuardStart();
 	void BlockGuardStart();
 
@@ -90,9 +94,11 @@ private:
 	void CloseParryWindow();
 
 private:
+	// Movement Override
 	void ApplyGuardMovementOverride();
 	void ClearMovementOverride();
 
 private:
+	// Debug
 	void PrintGuardStateInfo() const;
 };
