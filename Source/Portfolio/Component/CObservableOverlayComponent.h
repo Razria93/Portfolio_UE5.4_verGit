@@ -21,15 +21,20 @@ private:
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IObservableOverlayPolicy>> ObservableOverlayPolicies;
 
+	UPROPERTY(Transient)
+	bool bOverlayPolicyRegistryDirty = true;
+
 protected:
 	void BeginPlay() override;
 
 public:
-	void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const;
+	void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot);
 	bool ApplyOverlayEvent(const FObservableOverlayEventContext& InContext);
 	bool ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 	bool ApplyOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:
-	void BuildObservableOverlayPolicies();
+	void MarkPolicyRegistryDirty();
+	void RefreshPolicyRegistry();
+	void RebuildPolicyRegistry();
 };

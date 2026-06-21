@@ -14,11 +14,14 @@ void UCObservableOverlayComponent::BeginPlay()
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	check(OwnerCharacter_Cached);
 
-	BuildObservableOverlayPolicies();
+	MarkPolicyRegistryDirty();
+	RefreshPolicyRegistry();
 }
 
-void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
+void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot)
 {
+	RefreshPolicyRegistry();
+
 	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
 	{
 		const IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
@@ -32,6 +35,8 @@ void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapsh
 bool UCObservableOverlayComponent::ApplyOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
 	if (!InContext.IsValidMinimal()) return false;
+
+	RefreshPolicyRegistry();
 
 	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
 	{
@@ -65,25 +70,17 @@ bool UCObservableOverlayComponent::ApplyOverlayHandling(EObservableOverlayHandli
 {
 	if (InHandling == EObservableOverlayHandling::None) return true;
 
-	auto tryApplyHandling = [InHandling](const TArray<TScriptInterface<IObservableOverlayPolicy>>& InPolicies) -> bool
+	RefreshPolicyRegistry();
+
+	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
 	{
-		for (const TScriptInterface<IObservableOverlayPolicy>& policy : InPolicies)
-		{
-			IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
-			if (!overlayPolicy) continue;
+		IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
+		if (!overlayPolicy) continue;
 
-			if (!overlayPolicy->CanApplyOverlayHandling(InHandling)) continue;
+		if (!overlayPolicy->CanApplyOverlayHandling(InHandling)) continue;
 
-			return overlayPolicy->ApplyOverlayHandling(InHandling);
-		}
-
-		return false;
-	};
-
-	if (tryApplyHandling(ObservableOverlayPolicies)) return true;
-
-	BuildObservableOverlayPolicies();
-	if (tryApplyHandling(ObservableOverlayPolicies)) return true;
+		return overlayPolicy->ApplyOverlayHandling(InHandling);
+	}
 
 	FLog::Log(FString::Printf(
 		TEXT("[OverlayHandling] No policy accepted Handling=%s"),
@@ -91,7 +88,19 @@ bool UCObservableOverlayComponent::ApplyOverlayHandling(EObservableOverlayHandli
 	return false;
 }
 
-void UCObservableOverlayComponent::BuildObservableOverlayPolicies()
+void UCObservableOverlayComponent::MarkPolicyRegistryDirty()
+{
+	bOverlayPolicyRegistryDirty = true;
+}
+
+void UCObservableOverlayComponent::RefreshPolicyRegistry()
+{
+	if (!bOverlayPolicyRegistryDirty) return;
+
+	RebuildPolicyRegistry();
+}
+
+void UCObservableOverlayComponent::RebuildPolicyRegistry()
 {
 	ObservableOverlayPolicies.Empty();
 
@@ -113,4 +122,6 @@ void UCObservableOverlayComponent::BuildObservableOverlayPolicies()
 			ObservableOverlayPolicies.Add(policy);
 		}
 	}
+
+	bOverlayPolicyRegistryDirty = false;
 }
