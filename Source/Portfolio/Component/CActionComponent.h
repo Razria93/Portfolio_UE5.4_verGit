@@ -120,7 +120,7 @@ public:
 
 public:
 	// Cross-System Dispatch
-	bool NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext);
+	bool ApplyOverlayEvent(const FObservableOverlayEventContext& InContext);
 
 	FActionRequestResult ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey);
 	void ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey);
@@ -140,7 +140,7 @@ private:
 private:
 	// Decision Apply
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
-	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
+	bool ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 
 private:
 	// Execution Operations

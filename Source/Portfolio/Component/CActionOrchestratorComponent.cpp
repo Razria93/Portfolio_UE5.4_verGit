@@ -351,13 +351,13 @@ void UCActionOrchestratorComponent::ApplyCombatActionInputSideEffects(const FCom
 	{
 	case EActionIntentEvent::Started:
 	{
-		ActionComp_Cached->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputPressed));
+		ActionComp_Cached->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputPressed));
 		break;
 	}
 
 	case EActionIntentEvent::Completed:
 	{
-		ActionComp_Cached->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputReleased));
+		ActionComp_Cached->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputReleased));
 		break;
 	}
 
@@ -470,7 +470,7 @@ FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
 
 	if (IsValid(ObservableOverlayComp_Cached))
 	{
-		ObservableOverlayComp_Cached->WriteObservableOverlaySnapshot(snapshot.ObservableOverlay);
+		ObservableOverlayComp_Cached->WriteOverlaySnapshot(snapshot.ObservableOverlay);
 	}
 
 	return snapshot;

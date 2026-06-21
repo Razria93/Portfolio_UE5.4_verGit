@@ -16,9 +16,9 @@ class PORTFOLIO_API IObservableOverlayPolicy
 	GENERATED_BODY()
 
 public:
-	virtual void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const = 0;
-	virtual bool CanHandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) const = 0;
-	virtual bool HandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) = 0;
-	virtual bool CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const = 0;
-	virtual bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) = 0;
+	virtual void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const = 0;
+	virtual bool CanApplyOverlayEvent(const FObservableOverlayEventContext& InContext) const = 0;
+	virtual bool ApplyOverlayEvent(const FObservableOverlayEventContext& InContext) = 0;
+	virtual bool CanApplyOverlayHandling(EObservableOverlayHandling InHandling) const = 0;
+	virtual bool ApplyOverlayHandling(EObservableOverlayHandling InHandling) = 0;
 };

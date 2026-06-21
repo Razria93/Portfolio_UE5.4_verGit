@@ -282,7 +282,7 @@ FExecutionSnapshot UCReactionOrchestratorComponent::BuildSnapshot() const
 
 	if (IsValid(ObservableOverlayComp_Cached))
 	{
-		ObservableOverlayComp_Cached->WriteObservableOverlaySnapshot(snapshot.ObservableOverlay);
+		ObservableOverlayComp_Cached->WriteOverlaySnapshot(snapshot.ObservableOverlay);
 	}
 
 	return snapshot;

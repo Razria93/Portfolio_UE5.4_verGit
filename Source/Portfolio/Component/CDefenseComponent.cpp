@@ -18,7 +18,7 @@ void UCDefenseComponent::BeginPlay()
 	check(MovementComp_Cached);
 }
 
-void UCDefenseComponent::WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
+void UCDefenseComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
 {
 	OutSnapshot.Guard.bCanStartGuard = bCanStartGuard;
 	OutSnapshot.Guard.bWantsGuarding = bWantsGuarding;
@@ -27,7 +27,7 @@ void UCDefenseComponent::WriteObservableOverlaySnapshot(FObservableOverlaySnapsh
 	OutSnapshot.Guard.bCanParry = bCanParry;
 }
 
-bool UCDefenseComponent::CanHandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) const
+bool UCDefenseComponent::CanApplyOverlayEvent(const FObservableOverlayEventContext& InContext) const
 {
 	switch (InContext.EventType)
 	{
@@ -46,9 +46,9 @@ bool UCDefenseComponent::CanHandleObservableOverlayEvent(const FObservableOverla
 	}
 }
 
-bool UCDefenseComponent::HandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext)
+bool UCDefenseComponent::ApplyOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
-	if (!CanHandleObservableOverlayEvent(InContext)) return false;
+	if (!CanApplyOverlayEvent(InContext)) return false;
 
 	switch (InContext.EventType)
 	{
@@ -89,7 +89,7 @@ bool UCDefenseComponent::HandleObservableOverlayEvent(const FObservableOverlayEv
 	}
 }
 
-bool UCDefenseComponent::CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const
+bool UCDefenseComponent::CanApplyOverlayHandling(EObservableOverlayHandling InHandling) const
 {
 	switch (InHandling)
 	{
@@ -97,19 +97,19 @@ bool UCDefenseComponent::CanApplyObservableOverlayHandling(EObservableOverlayHan
 		return true;
 
 	case EObservableOverlayHandling::ClearGuardState:
-		return HasGuardRuntimeState();
+		return true;
 
 	case EObservableOverlayHandling::ClearGuardOverlay:
-		return HasGuardOverlay();
+		return true;
 
 	default:
 		return false;
 	}
 }
 
-bool UCDefenseComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
+bool UCDefenseComponent::ApplyOverlayHandling(EObservableOverlayHandling InHandling)
 {
-	if (!CanApplyObservableOverlayHandling(InHandling)) return false;
+	if (!CanApplyOverlayHandling(InHandling)) return false;
 
 	switch (InHandling)
 	{

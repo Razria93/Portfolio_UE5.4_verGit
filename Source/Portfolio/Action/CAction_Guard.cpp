@@ -20,11 +20,11 @@ bool UCAction_Guard::Start(const FActionData& InData)
 		switch (guardPhase)
 		{
 		case EGuardActionPhase::In:
-			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInStarted));
+			OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInStarted));
 			break;
 
 		case EGuardActionPhase::Out:
-			OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardOutStarted));
+			OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardOutStarted));
 			break;
 
 		default:
@@ -102,7 +102,7 @@ void UCAction_Guard::Complete()
 		break;
 
 	case EGuardActionPhase::Out:
-		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleCompleted));
+		OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleCompleted));
 		break;
 
 	default:
@@ -269,11 +269,11 @@ void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 	switch (InCommand)
 	{
 	case EActionNotifyCommand::SwitchToGuard:
-		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
+		OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
 		return;
 
 	case EActionNotifyCommand::AllowGuardStart:
-		OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
+		OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
 		return;
 
 	default:
@@ -362,7 +362,7 @@ void UCAction_Guard::ClearGuardState() const
 {
 	if (!IsValid(OwnerActionComp_Injected)) return;
 
-	OwnerActionComp_Injected->NotifyObservableOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
+	OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
 }
 
 void UCAction_Guard::PrintGuardInterventionDebugInfo(const FString& InStage, EGuardActionPhase InActiveGuardPhase, const FExecutionParticipant& InIncomingPart, bool bKeepGuardState) const

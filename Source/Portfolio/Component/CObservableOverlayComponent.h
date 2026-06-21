@@ -25,10 +25,10 @@ protected:
 	void BeginPlay() override;
 
 public:
-	void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const;
-	bool NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext);
-	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
-	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling);
+	void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const;
+	bool ApplyOverlayEvent(const FObservableOverlayEventContext& InContext);
+	bool ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
+	bool ApplyOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:
 	void BuildObservableOverlayPolicies();

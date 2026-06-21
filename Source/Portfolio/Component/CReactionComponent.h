@@ -125,7 +125,7 @@ private:
 private:
 	// Decision Apply
 	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
-	bool ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
+	bool ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 
 private:
 	// Execution Operations

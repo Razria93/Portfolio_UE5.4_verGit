@@ -17,7 +17,7 @@ void UCObservableOverlayComponent::BeginPlay()
 	BuildObservableOverlayPolicies();
 }
 
-void UCObservableOverlayComponent::WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
+void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
 {
 	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
 	{
@@ -25,11 +25,11 @@ void UCObservableOverlayComponent::WriteObservableOverlaySnapshot(FObservableOve
 		if (!overlayPolicy) continue;
 
 		// Each overlay policy writes its runtime state into the shared snapshot.
-		overlayPolicy->WriteObservableOverlaySnapshot(OutSnapshot);
+		overlayPolicy->WriteOverlaySnapshot(OutSnapshot);
 	}
 }
 
-bool UCObservableOverlayComponent::NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext)
+bool UCObservableOverlayComponent::ApplyOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
 	if (!InContext.IsValidMinimal()) return false;
 
@@ -37,19 +37,19 @@ bool UCObservableOverlayComponent::NotifyObservableOverlayEvent(const FObservabl
 	{
 		IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
 		if (!overlayPolicy) continue;
-		if (!overlayPolicy->CanHandleObservableOverlayEvent(InContext)) continue;
+		if (!overlayPolicy->CanApplyOverlayEvent(InContext)) continue;
 
-		return overlayPolicy->HandleObservableOverlayEvent(InContext);
+		return overlayPolicy->ApplyOverlayEvent(InContext);
 	}
 
 	return false;
 }
 
-bool UCObservableOverlayComponent::ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
+bool UCObservableOverlayComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
 	for (const EObservableOverlayHandling handling : InHandlings)
 	{
-		if (!ApplyObservableOverlayHandling(handling))
+		if (!ApplyOverlayHandling(handling))
 		{
 			FLog::Log(FString::Printf(
 				TEXT("[OverlayHandling] Failed Handling=%s"),
@@ -61,19 +61,29 @@ bool UCObservableOverlayComponent::ApplyObservableOverlayHandlings(const TArray<
 	return true;
 }
 
-bool UCObservableOverlayComponent::ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling)
+bool UCObservableOverlayComponent::ApplyOverlayHandling(EObservableOverlayHandling InHandling)
 {
 	if (InHandling == EObservableOverlayHandling::None) return true;
 
-	for (const TScriptInterface<IObservableOverlayPolicy>& policy : ObservableOverlayPolicies)
+	auto tryApplyHandling = [InHandling](const TArray<TScriptInterface<IObservableOverlayPolicy>>& InPolicies) -> bool
 	{
-		IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
-		if (!overlayPolicy) continue;
+		for (const TScriptInterface<IObservableOverlayPolicy>& policy : InPolicies)
+		{
+			IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
+			if (!overlayPolicy) continue;
 
-		if (!overlayPolicy->CanApplyObservableOverlayHandling(InHandling)) continue;
+			if (!overlayPolicy->CanApplyOverlayHandling(InHandling)) continue;
 
-		return overlayPolicy->ApplyObservableOverlayHandling(InHandling);
-	}
+			return overlayPolicy->ApplyOverlayHandling(InHandling);
+		}
+
+		return false;
+	};
+
+	if (tryApplyHandling(ObservableOverlayPolicies)) return true;
+
+	BuildObservableOverlayPolicies();
+	if (tryApplyHandling(ObservableOverlayPolicies)) return true;
 
 	FLog::Log(FString::Printf(
 		TEXT("[OverlayHandling] No policy accepted Handling=%s"),

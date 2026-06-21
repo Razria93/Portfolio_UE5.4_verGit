@@ -153,7 +153,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 	case EExecutionApplyMode::Start:
 	{
-		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings)) return false;
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings)) return false;
 
 		return StartAction(InResult.ResolvedContext);
 	}
@@ -167,7 +167,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
-		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings)) return false;
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings)) return false;
 
 		return StartAction(InResult.ResolvedContext);
 	}
@@ -274,9 +274,9 @@ void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
 
 // Cross-System Dispatch
 
-bool UCActionComponent::NotifyObservableOverlayEvent(const FObservableOverlayEventContext& InContext)
+bool UCActionComponent::ApplyOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
-	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->NotifyObservableOverlayEvent(InContext);
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayEvent(InContext);
 }
 
 FActionRequestResult UCActionComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
@@ -436,10 +436,10 @@ bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInte
 	}
 }
 
-bool UCActionComponent::ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
+bool UCActionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
 	if (InHandlings.IsEmpty()) return true;
-	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyObservableOverlayHandlings(InHandlings);
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayHandlings(InHandlings);
 }
 
 // Execution Operations

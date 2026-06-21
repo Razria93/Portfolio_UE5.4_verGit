@@ -48,11 +48,12 @@ public:
 	FORCEINLINE bool HasGuardRuntimeState() const { return !bCanStartGuard || bWantsGuarding || HasGuardOverlay(); }
 
 public:
-	void WriteObservableOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const override;
-	bool CanHandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) const override;
-	bool HandleObservableOverlayEvent(const FObservableOverlayEventContext& InContext) override;
-	bool CanApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) const override;
-	bool ApplyObservableOverlayHandling(EObservableOverlayHandling InHandling) override;
+	// Overlay Policy
+	void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const override;
+	bool CanApplyOverlayEvent(const FObservableOverlayEventContext& InContext) const override;
+	bool ApplyOverlayEvent(const FObservableOverlayEventContext& InContext) override;
+	bool CanApplyOverlayHandling(EObservableOverlayHandling InHandling) const override;
+	bool ApplyOverlayHandling(EObservableOverlayHandling InHandling) override;
 
 public:
 	void HandleGuardInputPressed();
@@ -88,6 +89,7 @@ private:
 	void OpenParryWindow();
 	void CloseParryWindow();
 
+private:
 	void ApplyGuardMovementOverride();
 	void ClearMovementOverride();
 

@@ -144,7 +144,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	{
 	case EExecutionApplyMode::Start:
 	{
-		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings))
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
 		{
 			FLog::Log(TEXT("[ReactionDecision] Overlay handling failed."));
 			return false;
@@ -173,7 +173,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 			FLog::Log(TEXT("[ReactionDecision] Intervention failed."));
 			return false;
 		}
-		if (!ApplyObservableOverlayHandlings(InResult.OverlayHandlings))
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
 		{
 			FLog::Log(TEXT("[ReactionDecision] Overlay handling failed."));
 			return false;
@@ -447,11 +447,11 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 	}
 }
 
-bool UCReactionComponent::ApplyObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
+bool UCReactionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
 	if (InHandlings.IsEmpty()) return true;
 
-	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyObservableOverlayHandlings(InHandlings);
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayHandlings(InHandlings);
 }
 
 // Execution Operations
