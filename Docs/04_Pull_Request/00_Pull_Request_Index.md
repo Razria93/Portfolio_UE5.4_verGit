@@ -25,5 +25,6 @@
 | P17 | Orchestration Refactor | `P17_UE5_Portfolio_Pull_Request.md` | `feature/orchestration-refactor` |  | D18, B09, B10 |
 | P18 | AI Workflow / Prompt Library v1 | `P18_UE5_Portfolio_Pull_Request.md` | `feature/ai-workflow` |  | W01, W03 |
 | P19 | Documentation Workflow Update | `P19_UE5_Portfolio_Pull_Request.md` | `docs/portfolio-documentation-update` |  | W02, N01 |
+| P20 | Guard / Parry Action v1 | `P20_UE5_Portfolio_Pull_Request.md` | `feature/combat-guard-parry` |  | W03, B11, B12, N02, N03, N04, N05 |
 
 ---
