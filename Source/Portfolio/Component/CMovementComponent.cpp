@@ -158,6 +158,12 @@ void UCMovementComponent::ApplyRotationMode(EMovementRotationMode InRotationMode
 		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
 		break;
 
+	case EMovementRotationMode::FixedFacing:
+		CharacterMovementComp_Cached->bOrientRotationToMovement = false;
+		CharacterMovementComp_Cached->bUseControllerDesiredRotation = false;
+		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
+		break;
+
 	default:
 		break;
 	}

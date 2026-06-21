@@ -22,6 +22,7 @@ enum class EMovementRotationMode : uint8
 
 	OrientToMovement,
 	ControllerDesired,
+	FixedFacing,
 
 	Max
 };

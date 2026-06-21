@@ -282,7 +282,7 @@ void UCDefenseComponent::ApplyGuardMovementOverride()
 {
 	if (!IsValid(MovementComp_Cached)) return;
 
-	MovementComp_Cached->ApplyMovementOverride(EMovementGait::Walk, EMovementRotationMode::ControllerDesired);
+	MovementComp_Cached->ApplyMovementOverride(EMovementGait::Walk, EMovementRotationMode::FixedFacing);
 }
 
 void UCDefenseComponent::ClearMovementOverride()
