@@ -32,11 +32,26 @@ enum class EActionType : uint8
 
 	ComboAttack,
 
+	Guard,
 	Dodge,
 
 	All,		// Wildcard
 
 	Max,		// Sentinel
+};
+
+UENUM(BlueprintType)
+enum class EGuardActionPhase : uint8
+{
+	None = 0,
+
+	In,
+	Out,
+	Hold,
+	Hit,
+	Parry,
+
+	Max,
 };
 
 UENUM(BlueprintType)
@@ -48,6 +63,9 @@ enum class EReactionType : uint8
 
 	Hit,
 	Dead,
+	BlockHit,
+	Parry,
+	Stagger,
 
 	All,		// Wildcard
 
@@ -70,6 +88,9 @@ enum class EActionNotifyCommand : uint8
 
 	Equip,
 	Unequip,
+
+	SwitchToGuard,
+	AllowGuardStart,
 
 	Max,
 };
@@ -141,6 +162,17 @@ enum class EExecutionApplyMode : uint8
 };
 
 UENUM(BlueprintType)
+enum class EObservableOverlayHandling : uint8
+{
+	None = 0,
+
+	ClearGuardState,
+	ClearGuardOverlay,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EExecutionDomain : uint8
 {
 	None = 0,
@@ -160,6 +192,50 @@ enum class EExecutionStopReason : uint8
 	Ignored,
 
 	Max,
+};
+
+UENUM(BlueprintType)
+enum class EObservableOverlayEventType : uint8
+{
+	None = 0,
+
+	GuardInputPressed,
+	GuardInputReleased,
+
+	GuardInStarted,
+	GuardOutStarted,
+
+	SwitchToGuard,
+	AllowGuardStart,
+
+	GuardLifecycleCompleted,
+	GuardLifecycleInterrupted,
+
+	Max,
+};
+
+USTRUCT(BlueprintType)
+struct FObservableOverlayEventContext
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EObservableOverlayEventType EventType = EObservableOverlayEventType::None;
+
+public:
+	FObservableOverlayEventContext() = default;
+
+	explicit FObservableOverlayEventContext(EObservableOverlayEventType InEventType)
+		: EventType(InEventType)
+	{
+	}
+
+public:
+	bool IsValidMinimal() const
+	{
+		return EventType != EObservableOverlayEventType::None && EventType != EObservableOverlayEventType::Max;
+	}
 };
 
 UENUM(BlueprintType)
@@ -327,6 +403,7 @@ enum class EActionRequestResultType : uint8
 
 	Started,
 	Reserved,
+	Deferred,
 	Intervened,
 
 	Max,
@@ -414,11 +491,19 @@ enum class ETakeDamageRejectReason : uint8
 	AlreadyDead,
 	// Invulnerable,
 
-	// Blocked,
-	// Parried,
-
 	// DamageCooldown,
 	ZeroDamage,
+};
+
+UENUM(BlueprintType)
+enum class EDamageDefenseOutcome : uint8
+{
+	None = 0,
+
+	Guard,
+	Parry,
+
+	Max,
 };
 
 // [NOTE] Temp
@@ -583,6 +668,56 @@ FORCEINLINE uint32 GetTypeHash(const FActionDataKey& InKey)
 	return H;
 }
 
+FORCEINLINE int32 GetGuardActionPhaseIndex(EGuardActionPhase InPhase)
+{
+	switch (InPhase)
+	{
+	case EGuardActionPhase::In:
+		return 1;
+
+	case EGuardActionPhase::Out:
+		return 2;
+
+	case EGuardActionPhase::Hold:
+		return 3;
+
+	case EGuardActionPhase::Hit:
+		return 4;
+
+	case EGuardActionPhase::Parry:
+		return 5;
+
+	default:
+		return INDEX_NONE;
+	}
+}
+
+FORCEINLINE EGuardActionPhase ResolveGuardActionPhase(const FActionDataKey& InKey)
+{
+	if (InKey.ActionType != EActionType::Guard) return EGuardActionPhase::None;
+
+	switch (InKey.ActionIndex)
+	{
+	case 1:
+		return EGuardActionPhase::In;
+
+	case 2:
+		return EGuardActionPhase::Out;
+
+	case 3:
+		return EGuardActionPhase::Hold;
+
+	case 4:
+		return EGuardActionPhase::Hit;
+
+	case 5:
+		return EGuardActionPhase::Parry;
+
+	default:
+		return EGuardActionPhase::None;
+	}
+}
+
 USTRUCT(BlueprintType)
 struct FActionData
 {
@@ -603,6 +738,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Data")
 	float PlayRate = 1.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
+	FName StartSectionName = NAME_None;
 
 	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
@@ -1096,6 +1234,12 @@ public:
 	UPROPERTY(Transient)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
 
+	UPROPERTY(Transient)
+	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
+
+	UPROPERTY(Transient)
+	bool bShouldCommitDamage = true;
+
 	// Pre-state Snapshot [Set HandleDefaultDamageEvent before ValidatePolicy]
 	UPROPERTY(Transient)
 	float HealthPointBefore = 0.f;
@@ -1147,6 +1291,12 @@ public:
 	UPROPERTY(Transient)
 	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
 
+	UPROPERTY(Transient)
+	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
+
+	UPROPERTY(Transient)
+	bool bShouldCommitDamage = true;
+
 	// Damage MetaData
 	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
@@ -1187,6 +1337,54 @@ struct FTakeDamagePacket
 
 	UPROPERTY(Transient)
 	FTakeDamageResult Result;
+};
+
+USTRUCT(BlueprintType)
+struct FCombatResultPacket
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	class AActor* SourceActor = nullptr;
+
+	UPROPERTY(Transient)
+	class AActor* TargetActor = nullptr;
+
+	UPROPERTY(Transient)
+	class AController* Instigator = nullptr;
+
+	UPROPERTY(Transient)
+	class AActor* DamageCauser = nullptr;
+
+	UPROPERTY(Transient)
+	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+
+	UPROPERTY(Transient)
+	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+
+	UPROPERTY(Transient)
+	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
+
+	UPROPERTY(Transient)
+	bool bDamageCommitted = false;
+
+	UPROPERTY(Transient)
+	float CommittedDamage = 0.f;
+
+public:
+	FCombatResultPacket() = default;
+
+public:
+	bool IsValidMinimal() const
+	{
+		return IsValid(SourceActor) && IsValid(TargetActor) && DefenseOutcome != EDamageDefenseOutcome::None;
+	}
+
+	bool IsParryResult() const
+	{
+		return DefenseOutcome == EDamageDefenseOutcome::Parry;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -1247,6 +1445,9 @@ public:
 	float PlayRate = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Data")
+	FName StartSectionName = NAME_None;
+
+	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
 
 	UPROPERTY(EditAnywhere, Category = "Intervention|Want")
@@ -1285,6 +1486,55 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FGuardObservableOverlaySnapshot
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bWantsGuarding = false;
+
+	UPROPERTY(Transient)
+	bool bIsGuardingPose = false;
+
+	UPROPERTY(Transient)
+	bool bCanGuard = false;
+
+	UPROPERTY(Transient)
+	bool bCanParry = false;
+
+	UPROPERTY(Transient)
+	bool bCanStartGuard = true;
+
+public:
+	bool HasGuardOverlay() const
+	{
+		return bIsGuardingPose || bCanGuard || bCanParry;
+	}
+
+	bool HasGuardRuntimeState() const
+	{
+		return !bCanStartGuard || bWantsGuarding || HasGuardOverlay();
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FObservableOverlaySnapshot
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FGuardObservableOverlaySnapshot Guard = FGuardObservableOverlaySnapshot();
+
+public:
+	bool HasObservableOverlay() const
+	{
+		return Guard.HasGuardOverlay();
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FExecutionSnapshot
 {
 	GENERATED_BODY()
@@ -1297,10 +1547,8 @@ public:
 	UPROPERTY(Transient)
 	bool bIsDead = false;
 
-	// [TODO]
-	// - bIsParrying
-	// - bIsGuarding
-	// - bIsGuardBroken
+	UPROPERTY(Transient)
+	FObservableOverlaySnapshot ObservableOverlay = FObservableOverlaySnapshot();
 
 public:
 	bool IsIdle() const
@@ -1321,6 +1569,11 @@ public:
 	bool IsDead() const
 	{
 		return bIsDead || ExecutionState == EExecutionState::Dead;
+	}
+
+	bool HasObservableOverlay() const
+	{
+		return ObservableOverlay.HasObservableOverlay();
 	}
 };
 
@@ -1355,6 +1608,25 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FObservableOverlayExecutionDecision
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionDecision Decision = EExecutionDecision::None;
+
+	UPROPERTY(Transient)
+	TArray<EObservableOverlayHandling> Handlings;
+
+public:
+	bool IsAccepted() const
+	{
+		return Decision == EExecutionDecision::Accept;
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FExecutionDecisionQuery
 {
 	GENERATED_BODY()
@@ -1379,6 +1651,19 @@ public:
 	{
 		return ActivePart.IsValidMinimal();
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FObservableOverlayQuery
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FExecutionDecisionQuery DecisionQuery = FExecutionDecisionQuery();
+
+	UPROPERTY(Transient)
+	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
 };
 
 USTRUCT(BlueprintType)
@@ -1453,6 +1738,12 @@ public:
 	UPROPERTY(Transient)
 	EExecutionAfterStopAction AfterStopAction = EExecutionAfterStopAction::None;
 
+	UPROPERTY(Transient)
+	FExecutionParticipant IncomingPart = FExecutionParticipant();
+
+	UPROPERTY(Transient)
+	FExecutionParticipant ActivePart = FExecutionParticipant();
+
 public:
 	bool IsRequested() const
 	{
@@ -1469,7 +1760,9 @@ public:
 			&& TargetDomain != EExecutionDomain::None
 			&& TargetDomain != EExecutionDomain::Max
 			&& StopReason != EExecutionStopReason::None
-			&& StopReason != EExecutionStopReason::Max;
+			&& StopReason != EExecutionStopReason::Max
+			&& IncomingPart.IsValidMinimal()
+			&& ActivePart.IsValidMinimal();
 	}
 };
 
@@ -1496,6 +1789,9 @@ public:
 
 	UPROPERTY(Transient)
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
+
+	UPROPERTY(Transient)
+	TArray<EObservableOverlayHandling> OverlayHandlings;
 
 
 public:
@@ -1533,6 +1829,9 @@ public:
 
 	UPROPERTY(Transient)
 	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
+
+	UPROPERTY(Transient)
+	TArray<EObservableOverlayHandling> OverlayHandlings;
 
 public:
 	bool IsAcceptedDecision() const

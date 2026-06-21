@@ -6,7 +6,9 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Component/CActionComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -14,6 +16,8 @@
 UCReactionComponent::UCReactionComponent()
 {
 }
+
+// Lifecycle
 
 void UCReactionComponent::BeginPlay()
 {
@@ -25,7 +29,9 @@ void UCReactionComponent::BeginPlay()
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
+	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 
 	// Rebuild All
 	BuildReactionDataMap(true);
@@ -34,6 +40,8 @@ void UCReactionComponent::BeginPlay()
 	// Init Reaction State
 	ActiveReactionType = EReactionType::Idle;
 }
+
+// Query
 
 bool UCReactionComponent::IsActive() const
 {
@@ -66,6 +74,8 @@ UCReaction* UCReactionComponent::GetActiveReactionExecutor() const
 
 	return ActiveReactionExecutor;
 }
+
+// Data Resolve
 
 bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData)
 {
@@ -118,6 +128,8 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 	return nullptr;
 }
 
+// Execution Entry
+
 bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& InResult)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return false;
@@ -127,6 +139,11 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	{
 	case EExecutionApplyMode::Start:
 	{
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
+		{
+			return false;
+		}
+
 		return StartReaction(InResult.ResolvedContext);
 	}
 
@@ -139,7 +156,15 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	case EExecutionApplyMode::Intervene:
 	{
 		// [NOTE] Try Apply Intervention
-		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
+		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective))
+		{
+			return false;
+		}
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
+		{
+			return false;
+		}
+
 		return StartReaction(InResult.ResolvedContext);
 	}
 	
@@ -148,13 +173,15 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	}
 }
 
-bool UCReactionComponent::RequestStopActiveReaction(const FExecutionInterventionDirective & InDirective)
+bool UCReactionComponent::RequestInterruptActiveReaction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsValidRequest()) return false;
 	if (InDirective.TargetDomain != EExecutionDomain::Reaction) return false;
 
-	return StopActiveReaction(InDirective);
+	return InterruptActiveReaction(InDirective);
 }
+
+// Execution Result Hooks
 
 void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason)
 {
@@ -164,6 +191,17 @@ void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReacti
 
 	EndActiveReaction(InFinishReason);
 }
+
+// Cross-System Dispatch
+
+void UCReactionComponent::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
+{
+	if (!IsValid(ActionComp_Cached)) return;
+
+	ActionComp_Cached->ConsumeDeferredAction(InConsumeKey);
+}
+
+// Notify Routing
 
 void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand)
 {
@@ -224,6 +262,8 @@ void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
 
 	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
 }
+
+// Data Build
 
 void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 {
@@ -301,38 +341,6 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 	}
 }
 
-void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const
-{
-	OutSpecKeys.Reset();
-
-	// 1) Exact: Weapon + Action + Index
-	OutSpecKeys.Add(InSpecKey);
-
-	// 2) Any Index: Weapon + Action + AnyIndex
-	{
-		FApplyDamageSpecKey candidateKey = InSpecKey;
-		candidateKey.ActionIndex = INDEX_NONE;
-		OutSpecKeys.Add(candidateKey);
-	}
-
-	// 3) Any Action: Weapon + AnyAction + AnyIndex
-	{
-		FApplyDamageSpecKey candidateKey = InSpecKey;
-		candidateKey.ActionType = EActionType::All;
-		candidateKey.ActionIndex = INDEX_NONE;
-		OutSpecKeys.Add(candidateKey);
-	}
-
-	// 4) Any Weapon: AnyWeapon + AnyAction + AnyIndex
-	{
-		FApplyDamageSpecKey candidateKey = InSpecKey;
-		candidateKey.WeaponType = EWeaponType::All;
-		candidateKey.ActionType = EActionType::All;
-		candidateKey.ActionIndex = INDEX_NONE;
-		OutSpecKeys.Add(candidateKey);
-	}
-}
-
 UCReaction* UCReactionComponent::AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass)
 {
 	UClass* executorKey = InSubClass.Get();
@@ -365,6 +373,42 @@ UCReaction* UCReactionComponent::FindReactionExecutor(const UClass* InClass)
 	return found;
 }
 
+// Data Resolve Helpers
+
+void UCReactionComponent::BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const
+{
+	OutSpecKeys.Reset();
+
+	// 1) Exact: Weapon + Action + Index
+	OutSpecKeys.Add(InSpecKey);
+
+	// 2) Any Index: Weapon + Action + AnyIndex
+	{
+		FApplyDamageSpecKey candidateKey = InSpecKey;
+		candidateKey.ActionIndex = INDEX_NONE;
+		OutSpecKeys.Add(candidateKey);
+	}
+
+	// 3) Any Action: Weapon + AnyAction + AnyIndex
+	{
+		FApplyDamageSpecKey candidateKey = InSpecKey;
+		candidateKey.ActionType = EActionType::All;
+		candidateKey.ActionIndex = INDEX_NONE;
+		OutSpecKeys.Add(candidateKey);
+	}
+
+	// 4) Any Weapon: AnyWeapon + AnyAction + AnyIndex
+	{
+		FApplyDamageSpecKey candidateKey = InSpecKey;
+		candidateKey.WeaponType = EWeaponType::All;
+		candidateKey.ActionType = EActionType::All;
+		candidateKey.ActionIndex = INDEX_NONE;
+		OutSpecKeys.Add(candidateKey);
+	}
+}
+
+// Decision Apply
+
 bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsRequested()) return true;
@@ -373,16 +417,24 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 	switch (InDirective.TargetDomain)
 	{
 	case EExecutionDomain::Action:
-		return IsValid(ActionComp_Cached) && ActionComp_Cached->RequestStopActiveAction(InDirective);
+		return IsValid(ActionComp_Cached) && ActionComp_Cached->RequestInterruptActiveAction(InDirective);
 
 	case EExecutionDomain::Reaction:
-
-		return StopActiveReaction(InDirective);
+		return InterruptActiveReaction(InDirective);
 
 	default:
 		return false;
 	}
 }
+
+bool UCReactionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
+{
+	if (InHandlings.IsEmpty()) return true;
+
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayHandlings(InHandlings);
+}
+
+// Execution Operations
 
 bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InContext)
 {
@@ -406,25 +458,24 @@ bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InConte
 	return true;
 }
 
-bool UCReactionComponent::StopActiveReaction(const FExecutionInterventionDirective& InDirective)
+bool UCReactionComponent::InterruptActiveReaction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!IsActive()) return true;
 
-	const EReactionStopReason stopReason = ConvertExecutionStopReasonToReactionStopReason(InDirective.StopReason);
 	const EReactionFinishReason finishReason = ConvertExecutionStopReasonToReactionFinishReason(InDirective.StopReason);
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor))
 	{
-		// [NOTE] Fallback when executor Stop() did not clear the active state through callback.
+		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
 		return EndActiveReaction(finishReason);
 	}
 
-	activeExecutor->Stop(stopReason);
+	activeExecutor->Interrupt(InDirective);
 
 	if (IsActive())
 	{
-		// [NOTE] Fallback when executor Stop() did not clear the active state through callback.
+		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
 		return EndActiveReaction(finishReason);
 	}
 
@@ -446,6 +497,8 @@ bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason
 
 	return !IsActive();
 }
+
+// Active Context
 
 void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionContext& InContext)
 {
@@ -476,6 +529,8 @@ void UCReactionComponent::ClearActiveReactionContext()
 		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType);
 	}
 }
+
+// State Transition
 
 void UCReactionComponent::EnterReactionState(const FReactionData& InData)
 {
@@ -508,17 +563,7 @@ void UCReactionComponent::ExitReactionState(const FReactionData& InData)
 	}
 }
 
-EReactionStopReason UCReactionComponent::ConvertExecutionStopReasonToReactionStopReason(EExecutionStopReason InStopReason) const
-{
-	switch (InStopReason)
-	{
-	case EExecutionStopReason::Interrupted:
-		return EReactionStopReason::Interrupted;
-
-	default:
-		return EReactionStopReason::Ignored;
-	}
-}
+// Conversion
 
 EReactionFinishReason UCReactionComponent::ConvertExecutionStopReasonToReactionFinishReason(EExecutionStopReason InStopReason) const
 {
@@ -531,6 +576,8 @@ EReactionFinishReason UCReactionComponent::ConvertExecutionStopReasonToReactionF
 		return EReactionFinishReason::Ignored;
 	}
 }
+
+// Debug
 
 void UCReactionComponent::PrintReactionInfoSummary() const
 {

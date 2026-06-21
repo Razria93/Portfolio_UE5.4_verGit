@@ -5,7 +5,9 @@
 
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionOrchestratorComponent.h"
-#include "Component/CDamageFeedbackComponent.h"
+#include "Component/CHitFeedbackComponent.h"
+#include "Component/CDefenseComponent.h"
+#include "Interface/CombatResultReceiver.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -26,8 +28,11 @@ void UCTakeDamageComponent::BeginPlay()
 	ReactionOrchestratorComp_Cached = OwnerActor_Cached->FindComponentByClass<UCReactionOrchestratorComponent>();
 	check(ReactionOrchestratorComp_Cached);
 
-	DamageFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDamageFeedbackComponent>();
-	check(DamageFeedbackComp_Cached);
+	HitFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCHitFeedbackComponent>();
+	check(HitFeedbackComp_Cached);
+
+	DefenseComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDefenseComponent>();
+	// check(DefenseComp_Cached);
 }
 
 float UCTakeDamageComponent::RequestTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -66,7 +71,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintTakeDamageSummaryInfo(takeDamagePacket);
-		DispatchTakeDamageRejected(takeDamagePacket);
+		DispatchRejectedCombatResult(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -81,7 +86,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintTakeDamageSummaryInfo(takeDamagePacket);
-		DispatchTakeDamageRejected(takeDamagePacket);
+		DispatchRejectedCombatResult(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -94,7 +99,7 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintTakeDamageSummaryInfo(takeDamagePacket);
-		DispatchTakeDamageRejected(takeDamagePacket);
+		DispatchRejectedCombatResult(takeDamagePacket);
 		return 0.f;
 	}
 
@@ -105,7 +110,9 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 	const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
 
 	// PrintTakeDamageSummaryInfo(takeDamagePacket);
-	DispatchTakeDamageCommitted(takeDamagePacket);
+	PrintTakeDamageOutcomeInfo(takeDamagePacket);
+	DispatchAcceptedCombatResult(takeDamagePacket);
+	DispatchCombatResultToReceiver(takeDamagePacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -167,14 +174,27 @@ bool UCTakeDamageComponent::CanTakeDamage(FTakeDamageContext& InOutTakeDamageCon
 		return false;
 	}
 
+	// Gate 2: Parry window intercepts incoming damage before damage commit.
+	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanParry())
+	{
+		InOutTakeDamageContext.bAccepted = true;
+		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Parry;
+		InOutTakeDamageContext.bShouldCommitDamage = false;
+
+		return true;
+	}
+
 	// TODO:
-	// Gate 2: invulnerable / iframe / god-mode state
-	// Gate 3: defensive friendly-fire check on receiver side
-	// Gate 4: receiver-side damage cooldown / hit immunity window
-	// Gate 5: defensive self-damage policy
+	// Gate 3: invulnerable / iframe / god-mode state
+	// Gate 4: defensive friendly-fire check on receiver side
+	// Gate 5: receiver-side damage cooldown / hit immunity window
+	// Gate 6: defensive self-damage policy
 
 	InOutTakeDamageContext.bAccepted = true;
 	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::None;
+	InOutTakeDamageContext.bShouldCommitDamage = true;
 
 	return true;
 }
@@ -185,7 +205,7 @@ void UCTakeDamageComponent::ComputeTakeDamage(FTakeDamageContext& InOutTakeDamag
 	InOutTakeDamageContext.MitigatedDamage = ComputeMitigatedDamage(InOutTakeDamageContext);	// TODO
 
 	// Gate 1: Zero damage
-	if (InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
+	if (InOutTakeDamageContext.bShouldCommitDamage && InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
 		InOutTakeDamageContext.bAccepted = false;
 		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::ZeroDamage;
@@ -205,7 +225,7 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	if (!IsValid(HealthComp_Cached)) return;
 
 	// Process 4: Apply Damage To Health
-	InOutTakeDamageContext.CommittedDamage = CommitDamageToHealth(InOutTakeDamageContext);
+	InOutTakeDamageContext.CommittedDamage = InOutTakeDamageContext.bShouldCommitDamage ? CommitDamageToHealth(InOutTakeDamageContext) : 0.f;
 
 	// TODO: Shield / Mana / Stemina etc + Commit Order
 
@@ -214,7 +234,7 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
-void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket)  const
+void UCTakeDamageComponent::DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (!InTakeDamagePacket.Result.bAccepted) return;
 
@@ -227,16 +247,63 @@ void UCTakeDamageComponent::DispatchTakeDamageCommitted(const FTakeDamagePacket&
 		ReactionOrchestratorComp_Cached->RequestDamageReaction(damageReactionRequest);
 	}
 
-	if (IsValid(DamageFeedbackComp_Cached))
+	if (IsValid(HitFeedbackComp_Cached))
 	{
-		DamageFeedbackComp_Cached->PlayDamageFeedback(InTakeDamagePacket);
+		if (InTakeDamagePacket.Result.bShouldCommitDamage)
+		{
+			HitFeedbackComp_Cached->PlayHitFeedback(InTakeDamagePacket);
+		}
 	}
 
 	// TODO:
 	// - Debug/UI Feedback
 }
 
-void UCTakeDamageComponent::DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket)  const
+void UCTakeDamageComponent::DispatchCombatResultToReceiver(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	if (InTakeDamagePacket.Result.DefenseOutcome != EDamageDefenseOutcome::Parry) return;
+
+	const FCombatResultPacket combatResultPacket = BuildCombatResultPacket(InTakeDamagePacket);
+	if (!combatResultPacket.IsValidMinimal()) return;
+
+	AActor* receiverActor = ResolveCombatResultReceiverActor(InTakeDamagePacket);
+	if (!IsValid(receiverActor))
+	{
+		FLog::Log(FString::Printf(
+			TEXT("[CombatResultDispatch] No receiver | Outcome=%s | Source=%s | DamageCauser=%s | Requester=%s"),
+			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+			*GetNameSafe(combatResultPacket.SourceActor),
+			*GetNameSafe(combatResultPacket.DamageCauser),
+			*GetNameSafe(combatResultPacket.TargetActor)));
+		return;
+	}
+
+	ICombatResultReceiver* receiver = Cast<ICombatResultReceiver>(receiverActor);
+	if (!receiver)
+	{
+		FLog::Log(FString::Printf(
+			TEXT("[CombatResultDispatch] Receiver has no interface | Outcome=%s | Receiver=%s"),
+			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+			*GetNameSafe(receiverActor)));
+		return;
+	}
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResultDispatch] Delivering | Outcome=%s | Receiver=%s | Requester=%s"),
+		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+		*GetNameSafe(receiverActor),
+		*GetNameSafe(combatResultPacket.TargetActor)));
+
+	receiver->ReceiveCombatResultPacket(combatResultPacket);
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResultDispatch] Delivered | Outcome=%s | Receiver=%s | Requester=%s"),
+		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
+		*GetNameSafe(receiverActor),
+		*GetNameSafe(combatResultPacket.TargetActor)));
+}
+
+void UCTakeDamageComponent::DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	// - Debug/UI rejected feedback
 }
@@ -284,6 +351,25 @@ AController* UCTakeDamageComponent::ResolveInstigatorController(AController* Eve
 	return nullptr;
 }
 
+AActor* UCTakeDamageComponent::ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	if (IsValid(InTakeDamagePacket.Context.SourceActor)) return InTakeDamagePacket.Context.SourceActor;
+
+	if (IsValid(InTakeDamagePacket.Context.DamageCauser))
+	{
+		AActor* damageCauserOwner = InTakeDamagePacket.Context.DamageCauser->GetOwner();
+		if (IsValid(damageCauserOwner)) return damageCauserOwner;
+	}
+
+	if (IsValid(InTakeDamagePacket.Context.Instigator))
+	{
+		AActor* instigatorPawn = InTakeDamagePacket.Context.Instigator->GetPawn();
+		if (IsValid(instigatorPawn)) return instigatorPawn;
+	}
+
+	return nullptr;
+}
+
 float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const
 {
 	const float requestedDamage = InOutTakeDamageContext.RequestedDamage;
@@ -291,7 +377,13 @@ float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTak
 	// Minimal safe policy (Check NaN, +Inf/-Inf)
 	if (!FMath::IsFinite(requestedDamage)) return 0.f;
 
-	const float mitigatedDamage = requestedDamage;
+	float mitigatedDamage = requestedDamage;
+
+	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
+	{
+		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
+		mitigatedDamage *= 0.5f;
+	}
 
 	// TODO: Defense / Armor / Resistance Policy
 
@@ -300,6 +392,7 @@ float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTak
 
 float UCTakeDamageComponent::ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const
 {
+	if (!InOutTakeDamageContext.bShouldCommitDamage) return 0.f;
 
 	const float mitigatedDamage = InOutTakeDamageContext.MitigatedDamage;
 
@@ -362,6 +455,8 @@ FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& I
 
 	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
 	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
+	takeDamageResult.DefenseOutcome = InTakeDamageContext.DefenseOutcome;
+	takeDamageResult.bShouldCommitDamage = InTakeDamageContext.bShouldCommitDamage;
 
 	takeDamageResult.ApplyDamageSpecKey = InTakeDamageContext.ApplyDamageSpecKey;
 
@@ -385,6 +480,23 @@ FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& I
 	takeDamagePacket.Result = InTakeDamageResult;
 
 	return takeDamagePacket;
+}
+
+FCombatResultPacket UCTakeDamageComponent::BuildCombatResultPacket(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	FCombatResultPacket combatResultPacket;
+
+	combatResultPacket.SourceActor = InTakeDamagePacket.Context.SourceActor;
+	combatResultPacket.TargetActor = InTakeDamagePacket.Context.TargetActor;
+	combatResultPacket.Instigator = InTakeDamagePacket.Context.Instigator;
+	combatResultPacket.DamageCauser = InTakeDamagePacket.Context.DamageCauser;
+	combatResultPacket.DamageImpactInfo = InTakeDamagePacket.Context.DamageImpactInfo;
+	combatResultPacket.ApplyDamageSpecKey = InTakeDamagePacket.Result.ApplyDamageSpecKey;
+	combatResultPacket.DefenseOutcome = InTakeDamagePacket.Result.DefenseOutcome;
+	combatResultPacket.bDamageCommitted = InTakeDamagePacket.Result.bShouldCommitDamage;
+	combatResultPacket.CommittedDamage = InTakeDamagePacket.Result.CommittedDamage;
+
+	return combatResultPacket;
 }
 
 void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const
@@ -415,6 +527,21 @@ void UCTakeDamageComponent::PrintTakeDamageContextInfo(const FTakeDamagePacket& 
 	PrintSpecKeyInfo(InTakeDamagePacket);
 	PrintDamageAmountInfo(InTakeDamagePacket);
 	FLog::Log(TEXT("/////////////////////////////////"));
+}
+
+void UCTakeDamageComponent::PrintTakeDamageOutcomeInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	const FTakeDamageResult& result = InTakeDamagePacket.Result;
+
+	if (result.DefenseOutcome == EDamageDefenseOutcome::None && result.CommittedDamage <= KINDA_SMALL_NUMBER) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[TakeDamageOutcome] Outcome=%s | Commit=%s | Damage=%.3f | HP=%.3f->%.3f"),
+		*UEnum::GetValueAsString(result.DefenseOutcome),
+		result.bShouldCommitDamage ? TEXT("true") : TEXT("false"),
+		result.CommittedDamage,
+		InTakeDamagePacket.Context.HealthPointBefore,
+		InTakeDamagePacket.Context.HealthPointAfter));
 }
 
 void UCTakeDamageComponent::PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const

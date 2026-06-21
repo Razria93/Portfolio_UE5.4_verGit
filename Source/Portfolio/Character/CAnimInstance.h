@@ -28,6 +28,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EDeadState DeadState = EDeadState::Alive;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Action")
+	bool bIsGuardingPose = false;
+
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
@@ -41,6 +44,9 @@ private:
 
 	UPROPERTY(Transient)
 	class UCHealthComponent* HealthComp_Cached;
+
+	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Cached;
 
 public:
 	void NativeInitializeAnimation() override;

@@ -14,3 +14,15 @@ enum class EMovementGait : uint8
 
 	Max
 };
+
+UENUM(BlueprintType)
+enum class EMovementRotationMode : uint8
+{
+	None = 0,
+
+	OrientToMovement,
+	ControllerDesired,
+	FixedFacing,
+
+	Max
+};

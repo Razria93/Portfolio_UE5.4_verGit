@@ -3,11 +3,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interface/TargetContextProvider.h"
+#include "Interface/CombatResultReceiver.h"
 #include "Type/CActionOrchestrationStructure.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider
+class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider, public ICombatResultReceiver
 {
 	GENERATED_BODY()
 
@@ -43,6 +44,12 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Resource")
 	class UCHealthComponent* HealthComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Defense")
+	class UCDefenseComponent* DefenseComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Overlay")
+	class UCObservableOverlayComponent* ObservableOverlayComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
 	class UCApplyDamageComponent* ApplyDamageComponent;
 
@@ -56,13 +63,20 @@ private:
 	class UCReactionComponent* ReactionComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
-	class UCDamageFeedbackComponent* DamageFeedbackComponent;
+	class UCHitFeedbackComponent* HitFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry")
+	int32 ParryStaggerThreshold = 3;
+
+	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
+	int32 ParryResultCount = 0;
 
 protected:
 	virtual void BeginPlay() override;
@@ -79,15 +93,24 @@ public:
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
+	FORCEINLINE UCDefenseComponent* GetDefenseComp() const { return DefenseComponent; }
+	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
 	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
-	FORCEINLINE UCDamageFeedbackComponent* GetDamageFeedbackComp() const { return DamageFeedbackComponent; }
+	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
+
+public:
+	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
+
+private:
+	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
+	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
 	// Interface API
@@ -105,5 +128,5 @@ public:
 	FActionRequestResult HandleStopJump();
 
 	FActionRequestResult HandleEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
-	FActionRequestResult HandleCombatAction(ECombatActionIntent InCombatActionIntent);
+	FActionRequestResult HandleCombatAction(ECombatActionIntent InCombatActionIntent, EActionIntentEvent InIntentEvent = EActionIntentEvent::Started);
 };

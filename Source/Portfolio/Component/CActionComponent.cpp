@@ -6,7 +6,9 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CActionOrchestratorComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 #include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -15,6 +17,8 @@ UCActionComponent::UCActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
+
+// Lifecycle
 
 void UCActionComponent::BeginPlay()
 {
@@ -26,7 +30,9 @@ void UCActionComponent::BeginPlay()
 	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	ActionOrchestratorComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionOrchestratorComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
+	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 
 	// Rebuild All
 	BuildActionDataMap(true);
@@ -49,21 +55,7 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionData& InData) const
-{
-	if (!IsActive()) return false;
-
-	if (!IsValid(InAction)) return false;
-	if (InAction != GetActiveActionExecutor()) return false;
-	if (!InData.IsValidMinimal()) return false;
-
-	if (!IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive()) return false;
-	
-	if (!IsValid(StateComp_Cached)) return false;
-	if (StateComp_Cached->GetCurrentExecutionState() != EExecutionState::Action) return false;
-
-	return true;
-}
+// Query
 
 bool UCActionComponent::IsActive() const
 {
@@ -102,6 +94,8 @@ UCAction* UCActionComponent::GetActiveActionExecutor() const
 	return ActiveActionExecutor;
 }
 
+// Data Resolve
+
 bool UCActionComponent::ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData)
 {
 	OutData = FActionData();
@@ -132,6 +126,24 @@ UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 	return nullptr;
 }
 
+bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionData& InData) const
+{
+	if (!IsActive()) return false;
+
+	if (!IsValid(InAction)) return false;
+	if (InAction != GetActiveActionExecutor()) return false;
+	if (!InData.IsValidMinimal()) return false;
+
+	if (!IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive()) return false;
+
+	if (!IsValid(StateComp_Cached)) return false;
+	if (StateComp_Cached->GetCurrentExecutionState() != EExecutionState::Action) return false;
+
+	return true;
+}
+
+// Execution Entry
+
 bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResult)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return false;
@@ -141,6 +153,8 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 	case EExecutionApplyMode::Start:
 	{
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings)) return false;
+
 		return StartAction(InResult.ResolvedContext);
 	}
 
@@ -153,6 +167,8 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	{
 		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings)) return false;
+
 		return StartAction(InResult.ResolvedContext);
 	}
 
@@ -161,13 +177,15 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 	}
 }
 
-bool UCActionComponent::RequestStopActiveAction(const FExecutionInterventionDirective& InDirective)
+bool UCActionComponent::RequestInterruptActiveAction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsValidRequest()) return false;
 	if (InDirective.TargetDomain != EExecutionDomain::Action) return false;
 
-	return StopActiveAction(InDirective);
+	return InterruptActiveAction(InDirective);
 }
+
+// Execution Result Hooks
 
 bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData)
 {
@@ -191,6 +209,8 @@ void UCActionComponent::HandleApplyActionFinished(const UCAction* InAction, EAct
 
 	EndActiveAction(InFinishReason);
 }
+
+// Notify Routing
 
 void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand)
 {
@@ -252,6 +272,30 @@ void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
 }
 
+// Cross-System Dispatch
+
+bool UCActionComponent::ApplyOverlayEvent(const FObservableOverlayEventContext& InContext)
+{
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayEvent(InContext);
+}
+
+FActionRequestResult UCActionComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
+{
+	if (!IsValid(ActionOrchestratorComp_Cached)) return FActionRequestResult();
+
+	return ActionOrchestratorComp_Cached->ConsumeDeferredAction(InConsumeKey);
+}
+
+void UCActionComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey)
+{
+	if (IsValid(ActionOrchestratorComp_Cached))
+	{
+		ActionOrchestratorComp_Cached->ClearDeferredActions(InConsumeKey);
+	}
+}
+
+// Event Broadcast
+
 void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType)
 {
 	if (!IsValid(OwnerCharacter_Cached)) return;
@@ -261,6 +305,8 @@ void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, 
 		OnActionEvent.Broadcast(OwnerCharacter_Cached, InType, InIndex, InEventType);
 	}
 }
+
+// Data Build
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 {
@@ -370,6 +416,8 @@ UCAction* UCActionComponent::FindActionExecutor(const UClass* InClass)
 	return found;
 }
 
+// Decision Apply
+
 bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsRequested()) return true;
@@ -378,15 +426,23 @@ bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInte
 	switch (InDirective.TargetDomain)
 	{
 	case EExecutionDomain::Action:
-		return StopActiveAction(InDirective);
+		return InterruptActiveAction(InDirective);
 
 	case EExecutionDomain::Reaction:
-		return IsValid(ReactionComp_Cached) && ReactionComp_Cached->RequestStopActiveReaction(InDirective);
+		return IsValid(ReactionComp_Cached) && ReactionComp_Cached->RequestInterruptActiveReaction(InDirective);
 
 	default:
 		return false;
 	}
 }
+
+bool UCActionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
+{
+	if (InHandlings.IsEmpty()) return true;
+	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayHandlings(InHandlings);
+}
+
+// Execution Operations
 
 bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 {
@@ -423,11 +479,10 @@ bool UCActionComponent::ReserveAction(const FActionExecutionContext& InContext)
 	return activeExecutor->ReserveChain(incomingData);
 }
 
-bool UCActionComponent::StopActiveAction(const FExecutionInterventionDirective& InDirective)
+bool UCActionComponent::InterruptActiveAction(const FExecutionInterventionDirective& InDirective)
 {
 	if (!IsActive()) return true;
 
-	const EActionStopReason stopReason = ConvertExecutionStopReasonToActionStopReason(InDirective.StopReason);
 	const EActionFinishReason finishReason = ConvertExecutionStopReasonToActionFinishReason(InDirective.StopReason);
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
@@ -437,7 +492,7 @@ bool UCActionComponent::StopActiveAction(const FExecutionInterventionDirective& 
 		return EndActiveAction(finishReason);
 	}
 
-	activeExecutor->Stop(stopReason);
+	activeExecutor->Interrupt(InDirective);
 
 	if (IsActive())
 	{
@@ -463,6 +518,8 @@ bool UCActionComponent::EndActiveAction(EActionFinishReason InFinishReason)
 
 	return !IsActive();
 }
+
+// Active Context
 
 void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& InContext)
 {
@@ -496,6 +553,8 @@ void UCActionComponent::ClearActiveActionContext()
 	}
 }
 
+// State Transition
+
 void UCActionComponent::EnterActionState(const FActionData& InData)
 {
 	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
@@ -527,17 +586,7 @@ void UCActionComponent::ExitActionState(const FActionData& InData)
 	}
 }
 
-EActionStopReason UCActionComponent::ConvertExecutionStopReasonToActionStopReason(EExecutionStopReason InStopReason) const
-{
-	switch (InStopReason)
-	{
-	case EExecutionStopReason::Interrupted:
-		return EActionStopReason::Interrupted;
-
-	default:
-		return EActionStopReason::Ignored;
-	}
-}
+// Conversion
 
 EActionFinishReason UCActionComponent::ConvertExecutionStopReasonToActionFinishReason(EExecutionStopReason InStopReason) const
 {

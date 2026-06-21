@@ -101,7 +101,41 @@ void UCMovementComponent::OnStopJump()
 	OwnerCharacter_Cached->StopJumping();
 }
 
+void UCMovementComponent::ApplyMovementOverride(EMovementGait InGait, EMovementRotationMode InRotationMode)
+{
+	if (!bHasMovementModeOverride)
+	{
+		CachedMovementGait_BeforeOverride = CurrentMovementGait;
+		bHasMovementModeOverride = true;
+	}
+
+	ApplyRotationMode(InRotationMode);
+	ApplyMovementGait(InGait);
+}
+
+void UCMovementComponent::ClearMovementOverride()
+{
+	ApplyRotationMode(EMovementRotationMode::OrientToMovement);
+
+	if (!bHasMovementModeOverride) return;
+
+	bHasMovementModeOverride = false;
+	ApplyMovementGait(CachedMovementGait_BeforeOverride);
+}
+
 void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
+{
+	if (bHasMovementModeOverride)
+	{
+		// Keep override speed active, but remember the base gait to restore later.
+		CachedMovementGait_BeforeOverride = InNewMovementGait;
+		return;
+	}
+
+	ApplyMovementGait(InNewMovementGait);
+}
+
+void UCMovementComponent::ApplyMovementGait(EMovementGait InNewMovementGait)
 {
 	if (!IsValid(CharacterMovementComp_Cached)) return;
 	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max) return;
@@ -116,6 +150,35 @@ void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
 
 	CurrentMovementGait = InNewMovementGait;
 	CharacterMovementComp_Cached->MaxWalkSpeed = *speed;
+}
+
+void UCMovementComponent::ApplyRotationMode(EMovementRotationMode InRotationMode)
+{
+	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+
+	switch (InRotationMode)
+	{
+	case EMovementRotationMode::OrientToMovement:
+		CharacterMovementComp_Cached->bOrientRotationToMovement = true;
+		CharacterMovementComp_Cached->bUseControllerDesiredRotation = false;
+		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
+		break;
+
+	case EMovementRotationMode::ControllerDesired:
+		CharacterMovementComp_Cached->bOrientRotationToMovement = false;
+		CharacterMovementComp_Cached->bUseControllerDesiredRotation = true;
+		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
+		break;
+
+	case EMovementRotationMode::FixedFacing:
+		CharacterMovementComp_Cached->bOrientRotationToMovement = false;
+		CharacterMovementComp_Cached->bUseControllerDesiredRotation = false;
+		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
+		break;
+
+	default:
+		break;
+	}
 }
 
 void UCMovementComponent::CalculateSpeed()

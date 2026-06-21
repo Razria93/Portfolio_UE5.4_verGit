@@ -49,6 +49,12 @@ FExecutionDecisionResult UCAction::ResolveExecutionDecision(const FExecutionDeci
 	return result;
 }
 
+bool UCAction::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const
+{
+	OutConsumeKey = EDeferredActionConsumeKey::None;
+	return false;
+}
+
 bool UCAction::IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const
 {
 	if (!InQuery.IncomingPart.IsActionParticipant()) return false;
@@ -130,9 +136,67 @@ bool UCAction::Start(const FActionData& InData)
 	return true;
 }
 
+void UCAction::Interrupt(const FExecutionInterventionDirective& InDirective)
+{
+	if (!bIsActive) return;
+	if (!InDirective.IsValidRequest()) return;
+
+	HandleActionStop(ResolveActionStopReason(InDirective));
+}
+
 void UCAction::Stop(EActionStopReason InStopReason)
 {
 	if (!bIsActive) return;
+	if (InStopReason == EActionStopReason::None) return;
+
+	HandleActionStop(InStopReason);
+}
+
+void UCAction::Complete()
+{
+	if (!bIsActive) return;
+
+	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
+	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
+
+	CleanupRuntimeEffects();
+	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
+
+	if (IsValid(OwnerActionComp_Injected))
+	{
+		OwnerActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
+	}
+}
+
+bool UCAction::ReserveChain(const FActionData& InData)
+{
+	// Specific Actions override this API.
+	return false;
+}
+
+void UCAction::ConsumeChain()
+{
+	// Specific Actions override this API.
+}
+
+EActionStopReason UCAction::ResolveActionStopReason(const FExecutionInterventionDirective& InDirective) const
+{
+	switch (InDirective.StopReason)
+	{
+	case EExecutionStopReason::Interrupted:
+		return EActionStopReason::Interrupted;
+
+	case EExecutionStopReason::Ignored:
+	default:
+		return EActionStopReason::Ignored;
+	}
+}
+
+void UCAction::HandleActionStop(EActionStopReason InStopReason)
+{
 	if (InStopReason == EActionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
@@ -172,36 +236,6 @@ void UCAction::Stop(EActionStopReason InStopReason)
 	}
 }
 
-void UCAction::Complete()
-{
-	if (!bIsActive) return;
-
-	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
-	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
-
-	CleanupRuntimeEffects();
-	ClearRuntime();
-
-	PlayFeedbackRequest(feedbackRequest);
-	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
-
-	if (IsValid(OwnerActionComp_Injected))
-	{
-		OwnerActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
-	}
-}
-
-bool UCAction::ReserveChain(const FActionData& InData)
-{
-	// Specific Actions override this API.
-	return false;
-}
-
-void UCAction::ConsumeChain()
-{
-	// Specific Actions override this API.
-}
-
 void UCAction::ClearRuntime()
 {
 	bIsActive = false;
@@ -233,8 +267,20 @@ bool UCAction::PlayMontage(const FActionData& InData)
 	if (!IsValid(InData.Montage)) return false;
 
 	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
+	if (duration <= 0.0f) return false;
 
-	return duration > 0.0f;
+	if (!InData.StartSectionName.IsNone())
+	{
+		USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+		if (!IsValid(meshComp)) return true;
+
+		UAnimInstance* animInstance = meshComp->GetAnimInstance();
+		if (!IsValid(animInstance)) return true;
+
+		animInstance->Montage_JumpToSection(InData.StartSectionName, InData.Montage);
+	}
+
+	return true;
 }
 
 void UCAction::StopMontage(float InBlendOutTime)
@@ -401,6 +447,21 @@ bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) con
 	if (!InQuery.IsValidMinimal()) return false;
 
 	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
+}
+
+void UCAction::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+{
+	OutDecision = FObservableOverlayExecutionDecision();
+
+	if (!InQuery.DecisionQuery.IncomingPart.IsActionParticipant())
+	{
+		// Action only.
+		OutDecision.Decision = EExecutionDecision::Reject;
+		return;
+	}
+
+	// Default Action Case: No overlay cleanup.
+	OutDecision.Decision = EExecutionDecision::Accept;
 }
 
 bool UCAction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const

@@ -5,10 +5,11 @@
 #include "Type/CAIStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
+#include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
 
 UCLASS()
-class PORTFOLIO_API ACEnemy : public ACharacter
+class PORTFOLIO_API ACEnemy : public ACharacter, public ICombatResultReceiver
 {
 	GENERATED_BODY()
 
@@ -87,6 +88,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Resource")
 	class UCHealthComponent* HealthComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Overlay")
+	class UCObservableOverlayComponent* ObservableOverlayComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
 	class UCApplyDamageComponent* ApplyDamageComponent;
 
@@ -100,13 +104,20 @@ private:
 	class UCReactionComponent* ReactionComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
-	class UCDamageFeedbackComponent* DamageFeedbackComponent;
+	class UCHitFeedbackComponent* HitFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCActionFeedbackComponent* ActionFeedbackComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry")
+	int32 ParryStaggerThreshold = 3;
+
+	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
+	int32 ParryResultCount = 0;
 
 protected:
 	void BeginPlay() override;
@@ -126,12 +137,13 @@ public:
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
+	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
 	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
-	FORCEINLINE UCDamageFeedbackComponent* GetDamageFeedbackComp() const { return DamageFeedbackComponent; }
+	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 
 public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }
@@ -163,6 +175,13 @@ public:
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
+
+public:
+	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
+
+private:
+	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
+	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
 	FActionRequestResult HandleAIWalk();

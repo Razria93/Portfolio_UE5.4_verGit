@@ -37,3 +37,28 @@ FExecutionDecisionResult UCReaction_Hit::ResolveExecutionDecision(const FExecuti
 	result.Relationship = relationship;
 	return result;
 }
+
+void UCReaction_Hit::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+{
+	OutDecision = FObservableOverlayExecutionDecision();
+
+	const bool bIsHitReaction = IsIncomingReactionType(InQuery.DecisionQuery, EReactionType::Hit);
+	if (!bIsHitReaction)
+	{
+		// Hit only.
+		OutDecision.Decision = EExecutionDecision::Reject;
+		return;
+	}
+
+	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
+	if (bHasGuardState)
+	{
+		// GuardState Case: clear Guard before Hit.
+		OutDecision.Decision = EExecutionDecision::Accept;
+		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
+		return;
+	}
+
+	// Another Case: No overlay cleanup.
+	OutDecision.Decision = EExecutionDecision::Accept;
+}

@@ -64,8 +64,9 @@ public:
 	const FActionData& GetActiveData() const { return ActiveData_Cached; }
 
 public:
-	// Decision
+	// Resolve
 	virtual FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const;
+	virtual bool TryResolveDeferredConsumeKey(const FExecutionDecisionQuery& InQuery, EDeferredActionConsumeKey& OutConsumeKey) const;
 
 protected:
 	bool IsIncomingActionType(const FExecutionDecisionQuery& InQuery, EActionType InType) const;
@@ -79,12 +80,17 @@ protected:
 public:
 	// Lifecycle
 	virtual bool Start(const FActionData& InData);
+	virtual void Interrupt(const FExecutionInterventionDirective& InDirective);
 	virtual void Stop(EActionStopReason InStopReason);
 	virtual void Complete();
 
 public:
 	virtual bool ReserveChain(const FActionData& InData);
 	virtual void ConsumeChain();
+
+protected:
+	EActionStopReason ResolveActionStopReason(const FExecutionInterventionDirective& InDirective) const;
+	void HandleActionStop(EActionStopReason InStopReason);
 
 protected:
 	virtual void ClearRuntime();
@@ -131,6 +137,10 @@ public:
 	// Intervention Match
 	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const; 	// Incoming API
 	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
+
+public:
+	// Observable Overlay Match
+	virtual void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const;	// Incoming API
 
 private:
 	bool MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const;

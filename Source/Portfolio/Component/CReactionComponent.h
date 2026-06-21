@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CWeaponStructure.h"
+#include "Type/CActionOrchestrationStructure.h"
 #include "Type/CReactionOrchestrationStructure.h"
 #include "CReactionComponent.generated.h"
 
@@ -55,39 +56,51 @@ private:
 	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCActionComponent* ActionComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
 
 public:
 	/* === Delegate === */
 	FReactionTypeChanged OnReactionTypeChanged;
 
 protected:
+	// Lifecycle
 	void BeginPlay() override;
 
 public:
+	// Query
 	FORCEINLINE bool IsActiveReactionType(EReactionType InType) const { return ActiveReactionType == InType; }
-
-public:
 	bool IsActive() const;
 
-public:
 	EReactionType GetActiveReactionType() const;
 	bool GetActiveReactionData(FReactionData& OutData) const;
 	UCReaction* GetActiveReactionExecutor() const;
 
 public:
-	// Temporary data provider API (Move to DataAsset).
+	// Data Resolve
 	bool ResolveReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData);
 	UCReaction* ResolveReactionExecutor(const FReactionData& InData);
 
 public:
+	// Execution Entry
 	bool ApplyReactionDecision(const FReactionExecutionResult& InResult);
-	bool RequestStopActiveReaction(const FExecutionInterventionDirective& InDirective);
+	bool RequestInterruptActiveReaction(const FExecutionInterventionDirective& InDirective);
 
 public:
+	// Execution Result Hooks
 	void HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason);
 
 public:
+	// Cross-System Dispatch
+	void RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey);
+
+public:
+	// Notify Routing
 	void HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand);
 
 	void HandleReactionAllowInterventionWindowBegin(FName InWindowKey);
@@ -98,41 +111,46 @@ public:
 	void HandleReactionFeedbackWindowEnd(FName InTriggerKey);
 
 private:
-	// Temporary data build API (Move to DataAsset).
+	// Data Build (temporary: move to DataAsset)
 	void BuildReactionDataMap(bool bRebuildAll);
 	void BuildReactionExecutorMap(bool bRebuildAll);
 
-private:
-	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const;
-
-private:
 	UCReaction* AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass);
 	UCReaction* FindReactionExecutor(const UClass* InClass);
 
 private:
-	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
+	// Data Resolve Helpers
+	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const;
 
 private:
+	// Decision Apply
+	bool ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective);
+	bool ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
+
+private:
+	// Execution Operations
 	bool StartReaction(const FReactionExecutionContext& InContext);
-	bool StopActiveReaction(const FExecutionInterventionDirective& InDirective);
+	bool InterruptActiveReaction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveReaction(EReactionFinishReason InFinishReason);
 
 private:
+	// Active Context
 	void SetActiveReactionContext(const FReactionExecutionContext& InContext);
 	void ClearActiveReactionContext();
 
 private:
+	// State Transition
 	void EnterReactionState(const FReactionData& InData);
 	void ExitReactionState(const FReactionData& InData);
 
 private:
-	EReactionStopReason ConvertExecutionStopReasonToReactionStopReason(EExecutionStopReason InStopReason) const;
+	// Conversion
 	EReactionFinishReason ConvertExecutionStopReasonToReactionFinishReason(EExecutionStopReason InStopReason) const;
 
 private:
+	// Debug
 	void PrintReactionInfoSummary() const;
 	void PrintReactionDataMap() const;
-
 	void PrintComponentStateInfo() const;
 	void PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InSpecKey) const;
 	void PrintReactionDataKeyInfo(const FReactionDataKey& InDataKey) const;

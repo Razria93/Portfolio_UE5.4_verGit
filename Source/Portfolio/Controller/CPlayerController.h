@@ -40,6 +40,8 @@ protected:
 
 	void PressSwordToggle();
 	void PressComboAction();
+	void PressGuard();
+	void ReleaseGuard();
 	void PressDodge();
 
 protected:

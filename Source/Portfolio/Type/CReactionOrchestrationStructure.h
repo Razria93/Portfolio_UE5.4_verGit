@@ -10,6 +10,7 @@ enum class EReactionIntentSource : uint8
 	None = 0,
 
 	TakeDamage,
+	CombatResult,
 
 	Max,
 };
@@ -41,6 +42,22 @@ public:
 
 	UPROPERTY(Transient)
 	FTakeDamagePacket TakeDamagePacket = FTakeDamagePacket();
+};
+
+USTRUCT(BlueprintType)
+struct FCombatResultReactionRequest
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EReactionIntentSource IntentSource = EReactionIntentSource::CombatResult;
+
+	UPROPERTY(Transient)
+	FCombatResultPacket CombatResultPacket = FCombatResultPacket();
+
+	UPROPERTY(Transient)
+	EReactionType ReactionType = EReactionType::None;
 };
 
 USTRUCT(BlueprintType)

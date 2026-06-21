@@ -7,6 +7,7 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
@@ -14,6 +15,8 @@
 UCReactionOrchestratorComponent::UCReactionOrchestratorComponent()
 {
 }
+
+// Lifecycle
 
 void UCReactionOrchestratorComponent::BeginPlay()
 {
@@ -26,7 +29,10 @@ void UCReactionOrchestratorComponent::BeginPlay()
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
+	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 }
+
+// Request Entry
 
 FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(const FDamageReactionRequest& InIncomingRequest)
 {
@@ -43,8 +49,28 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 	if (!ResolveDamageReactionCandidate(InIncomingRequest, candidate, rejectReason))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
 
-	return ExecuteReactionCandidate(candidate);
+	return ProcessReactionCandidate(candidate);
 }
+
+FReactionRequestResult UCReactionOrchestratorComponent::RequestCombatResultReaction(const FCombatResultReactionRequest& InIncomingRequest)
+{
+	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
+
+	if (!IsValid(ReactionComp_Cached))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::InvalidComponent);
+
+	if (!CanAcceptReactionRequest(rejectReason))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
+
+	FReactionCandidate candidate;
+
+	if (!ResolveCombatResultReactionCandidate(InIncomingRequest, candidate, rejectReason))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
+
+	return ProcessReactionCandidate(candidate);
+}
+
+// Request Validation
 
 bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const
 {
@@ -68,6 +94,8 @@ bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestR
 
 	return true;
 }
+
+// Candidate Resolve
 
 bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDamageReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const
 {
@@ -99,6 +127,34 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 	return true;
 }
 
+bool UCReactionOrchestratorComponent::ResolveCombatResultReactionCandidate(const FCombatResultReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const
+{
+	OutIncomingCandidate = FReactionCandidate();
+	OutRejectReason = EReactionRequestRejectReason::None;
+
+	if (InIncomingRequest.IntentSource != EReactionIntentSource::CombatResult)
+	{
+		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	if (!InIncomingRequest.CombatResultPacket.IsValidMinimal())
+	{
+		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	if (InIncomingRequest.ReactionType == EReactionType::None || InIncomingRequest.ReactionType == EReactionType::Max)
+	{
+		OutRejectReason = EReactionRequestRejectReason::ReactionCandidateNotFound;
+		return false;
+	}
+
+	OutIncomingCandidate.ReactionDataKey.ApplyDamageSpecKey = InIncomingRequest.CombatResultPacket.ApplyDamageSpecKey;
+	OutIncomingCandidate.ReactionDataKey.ReactionType = InIncomingRequest.ReactionType;
+	return true;
+}
+
 EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const
 {
 	const FTakeDamageResult& damageResult = InIncomingRequest.TakeDamagePacket.Result;
@@ -110,6 +166,16 @@ EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const F
 		return EReactionType::Dead;
 	}
 
+	if (damageResult.DefenseOutcome == EDamageDefenseOutcome::Parry)
+	{
+		return EReactionType::Parry;
+	}
+
+	if (damageResult.DefenseOutcome == EDamageDefenseOutcome::Guard)
+	{
+		return EReactionType::BlockHit;
+	}
+
 	if (damageResult.CommittedDamage > KINDA_SMALL_NUMBER && damageResult.DeadState_After == EDeadState::Alive)
 	{
 		return EReactionType::Hit;
@@ -118,7 +184,9 @@ EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const F
 	return EReactionType::None;
 }
 
-FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate(const FReactionCandidate& InIncomingCandidate)
+// Orchestration Pipeline
+
+FReactionRequestResult UCReactionOrchestratorComponent::ProcessReactionCandidate(const FReactionCandidate& InIncomingCandidate)
 {
 	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
 
@@ -132,9 +200,12 @@ FReactionRequestResult UCReactionOrchestratorComponent::ExecuteReactionCandidate
 	FReactionExecutionResult executionResult = BuildReactionExecutionResult(incomingContext, decisionResult, rejectReason);
 
 	ResolveExecutionApplyMode(decisionQuery, executionResult);
+	ResolveObservableOverlayGate(decisionQuery, executionResult);
 
 	return DispatchReactionDecision(executionResult);
 }
+
+// Execution Context Resolve
 
 bool UCReactionOrchestratorComponent::ResolveReactionContext(const FReactionCandidate& InIncomingCandidate, FReactionExecutionContext& OutIncomingContext, EReactionRequestRejectReason& OutRejectReason) const
 {
@@ -189,6 +260,8 @@ UCReaction* UCReactionOrchestratorComponent::ResolveReactionExecutor(const FReac
 	return ReactionComp_Cached->ResolveReactionExecutor(InIncomingData);
 }
 
+// Decision Query Build
+
 FExecutionDecisionQuery UCReactionOrchestratorComponent::BuildDecisionQuery(const FReactionExecutionContext& InIncomingContext) const
 {
 	FExecutionDecisionQuery query;
@@ -206,6 +279,11 @@ FExecutionSnapshot UCReactionOrchestratorComponent::BuildSnapshot() const
 
 	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
 	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
+
+	if (IsValid(ObservableOverlayComp_Cached))
+	{
+		ObservableOverlayComp_Cached->WriteOverlaySnapshot(snapshot.ObservableOverlay);
+	}
 
 	return snapshot;
 }
@@ -287,6 +365,8 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 	return participant;
 }
 
+// Decision Build
+
 FExecutionDecisionResult UCReactionOrchestratorComponent::BuildDecisionResult(const FExecutionDecisionQuery& InQuery, EReactionRequestRejectReason& OutRejectReason) const
 {
 	FExecutionDecisionResult result;
@@ -342,6 +422,8 @@ FReactionExecutionResult UCReactionOrchestratorComponent::BuildReactionExecution
 	return result;
 }
 
+
+// Decision Refinement
 
 void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
 {
@@ -407,7 +489,6 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 	}
 }
 
-
 void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
 {
 	InOutResult.InterventionDirective = FExecutionInterventionDirective();
@@ -471,12 +552,6 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 		bActiveAllows = activeReaction->AllowIntervention(interventionQuery);
 	}
 
-	FLog::Log(FString::Printf(
-		TEXT("[ResolveInterventionDirective] Owner = %s | bIncomingWants = %s | bActiveAllows = %s"),
-		*GetNameSafe(OwnerCharacter_Cached),
-		bIncomingWants ? TEXT("true") : TEXT("false"),
-		bActiveAllows ? TEXT("true") : TEXT("false")));
-
 	if (!bIncomingWants)
 	{
 		InOutResult.Decision = EExecutionDecision::Reject;
@@ -502,6 +577,44 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 
 	InOutResult.InterventionDirective = directive;
 }
+
+void UCReactionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
+{
+	InOutResult.OverlayHandlings.Empty();
+
+	if (!InOutResult.IsAcceptedDecision()) return;
+
+	const bool bNeedsExecutionStart = InOutResult.ApplyMode == EExecutionApplyMode::Start || InOutResult.ApplyMode == EExecutionApplyMode::Intervene;
+	if (!bNeedsExecutionStart) return;
+
+	FObservableOverlayQuery overlayQuery;
+	overlayQuery.DecisionQuery = InQuery;
+	overlayQuery.ApplyMode = InOutResult.ApplyMode;
+
+	if (InQuery.IncomingPart.IsReactionParticipant())
+	{
+		if (const UCReaction* incomingReaction = InQuery.IncomingPart.GetReactionContext().ReactionExecutor)
+		{
+			FObservableOverlayExecutionDecision overlayDecision;
+			incomingReaction->ResolveObservableOverlayCondition(overlayQuery, overlayDecision);
+
+			if (!overlayDecision.IsAccepted())
+			{
+				InOutResult.Decision = overlayDecision.Decision;
+				return;
+			}
+
+			for (const EObservableOverlayHandling handling : overlayDecision.Handlings)
+			{
+				if (handling == EObservableOverlayHandling::None) continue;
+
+				InOutResult.OverlayHandlings.AddUnique(handling);
+			}
+		}
+	}
+}
+
+// Intervention Build
 
 bool UCReactionOrchestratorComponent::BuildInterventionQuery(const FExecutionDecisionQuery& InQuery, EExecutionStopReason InStopReason, FExecutionInterventionQuery& OutQuery) const
 {
@@ -535,9 +648,13 @@ bool UCReactionOrchestratorComponent::BuildInterventionDirective(const FExecutio
 	OutDirective.TargetDomain = InQuery.ActivePart.ParticipantDomain;
 	OutDirective.StopReason = InQuery.StopReason;
 	OutDirective.AfterStopAction = InAfterStopAction;
+	OutDirective.IncomingPart = InQuery.IncomingPart;
+	OutDirective.ActivePart = InQuery.ActivePart;
 
 	return OutDirective.IsValidRequest();
 }
+
+// Decision Dispatch
 
 FReactionRequestResult UCReactionOrchestratorComponent::DispatchReactionDecision(const FReactionExecutionResult& InResult)
 {
@@ -559,6 +676,8 @@ FReactionRequestResult UCReactionOrchestratorComponent::DispatchReactionDecision
 
 	return BuildReactionRequestResult(resultType);
 }
+
+// Result Build
 
 EReactionRequestResultType UCReactionOrchestratorComponent::ConvertDecisionToResultType(const FReactionExecutionResult& InResult) const
 {
@@ -592,7 +711,6 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildReactionRequestResu
 	if (InResultType == EReactionRequestResultType::Rejected)
 	{
 		result.RejectReason = (InRejectReason != EReactionRequestRejectReason::None) ? InRejectReason : EReactionRequestRejectReason::NoExecutableReaction;
-		PrintReactionRequestResult(result);
 	}
 	else
 	{
@@ -600,14 +718,4 @@ FReactionRequestResult UCReactionOrchestratorComponent::BuildReactionRequestResu
 	}
 
 	return result;
-}
-
-void UCReactionOrchestratorComponent::PrintReactionRequestResult(const FReactionRequestResult& InResult) const
-{
-	FLog::Log(FString::Printf(
-		TEXT("[ReactionRequestResult] Owner = %s | ResultType = %s | RejectReason = %s"),
-		*GetNameSafe(OwnerCharacter_Cached),
-		*UEnum::GetValueAsString(InResult.ResultType),
-		*UEnum::GetValueAsString(InResult.RejectReason)
-	));
 }

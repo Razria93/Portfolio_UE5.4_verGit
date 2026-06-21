@@ -127,9 +127,54 @@ bool UCReaction::Start(const FReactionData& InData)
 	return true;
 }
 
+void UCReaction::Interrupt(const FExecutionInterventionDirective& InDirective)
+{
+	if (!bIsActive) return;
+	if (!InDirective.IsValidRequest()) return;
+
+	HandleReactionStop(ResolveReactionStopReason(InDirective));
+}
+
 void UCReaction::Stop(EReactionStopReason InStopReason)
 {
 	if (!bIsActive) return;
+	if (InStopReason == EReactionStopReason::None) return;
+
+	HandleReactionStop(InStopReason);
+}
+
+void UCReaction::Complete()
+{
+	if (!bIsActive) return;
+
+	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Complete);
+
+	CleanupRuntimeEffects();
+	ClearRuntime();
+
+	PlayFeedbackRequest(feedbackRequest);
+
+	if (IsValid(OwnerReactionComp_Injected))
+	{
+		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
+	}
+}
+
+EReactionStopReason UCReaction::ResolveReactionStopReason(const FExecutionInterventionDirective& InDirective) const
+{
+	switch (InDirective.StopReason)
+	{
+	case EExecutionStopReason::Interrupted:
+		return EReactionStopReason::Interrupted;
+
+	case EExecutionStopReason::Ignored:
+	default:
+		return EReactionStopReason::Ignored;
+	}
+}
+
+void UCReaction::HandleReactionStop(EReactionStopReason InStopReason)
+{
 	if (InStopReason == EReactionStopReason::None) return;
 
 	LastStopReason_Cached = InStopReason;
@@ -164,23 +209,6 @@ void UCReaction::Stop(EReactionStopReason InStopReason)
 	}
 }
 
-void UCReaction::Complete()
-{
-	if (!bIsActive) return;
-
-	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Complete);
-
-	CleanupRuntimeEffects();
-	ClearRuntime();
-
-	PlayFeedbackRequest(feedbackRequest);
-
-	if (IsValid(OwnerReactionComp_Injected))
-	{
-		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
-	}
-}
-
 void UCReaction::ClearRuntime()
 {
 	bIsActive = false;
@@ -207,8 +235,20 @@ bool UCReaction::PlayMontage(const FReactionData& InData)
 	if (!IsValid(InData.Montage)) return false;
 
 	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
+	if (duration <= 0.0f) return false;
 
-	return duration > 0.0f;
+	if (!InData.StartSectionName.IsNone())
+	{
+		USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+		if (!IsValid(meshComp)) return true;
+
+		UAnimInstance* animInstance = meshComp->GetAnimInstance();
+		if (!IsValid(animInstance)) return true;
+
+		animInstance->Montage_JumpToSection(InData.StartSectionName, InData.Montage);
+	}
+
+	return true;
 }
 
 void UCReaction::StopMontage(float InBlendOutTime)
@@ -314,6 +354,13 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 	return request;
 }
 
+void UCReaction::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey) const
+{
+	if (!IsValid(OwnerReactionComp_Injected)) return;
+
+	OwnerReactionComp_Injected->RequestConsumeDeferredAction(InConsumeKey);
+}
+
 void UCReaction::OpenAllowInterventionWindow(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
@@ -343,6 +390,21 @@ bool UCReaction::AllowIntervention(const FExecutionInterventionQuery& InQuery) c
 	if (!InQuery.IsValidMinimal()) return false;
 
 	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
+}
+
+void UCReaction::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
+{
+	OutDecision = FObservableOverlayExecutionDecision();
+
+	if (!InQuery.DecisionQuery.IncomingPart.IsReactionParticipant())
+	{
+		// Reaction only.
+		OutDecision.Decision = EExecutionDecision::Reject;
+		return;
+	}
+
+	// Default Reaction Case: No overlay cleanup.
+	OutDecision.Decision = EExecutionDecision::Accept;
 }
 
 bool UCReaction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const

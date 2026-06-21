@@ -210,3 +210,49 @@
   - 반복 확인 시 `00_Index_Writing_Prompt (KR).md`
 - 처리 결과:
   - 현재는 후보 기록만 수행.
+
+### PC-007
+
+- 상태: 반영 완료
+- 발견일: 2026.06.21
+- 발견 산출물:
+  - `W03_UE5_Portfolio_Work_List.md`
+  - `P20_UE5_Portfolio_Pull_Request.md`
+  - `B11_UE5_Portfolio_Bug_Report.md`
+  - `B12_UE5_Portfolio_Bug_Report.md`
+  - `N02_Guard_Release_Deferred_Request_Note.md`
+  - `N03_Guard_Hold_Overlay_Layer_Design_Note.md`
+  - `N04_Blink_Repulse_Combat_Packet_Design_Note.md`
+  - `N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`
+- 패턴: 복잡한 기능 / 리팩터링 Branch는 검증 가능한 작은 단위로 나누고, 임시 구현은 수명과 구조화 조건을 명시하며, 디버깅 로그는 임시 추적 로그와 최종 회귀 로그를 분리한다.
+- 적용 범위:
+  - AI Workflow Operation Guide
+  - Work List Writing Prompt
+  - Bug Report Writing Prompt
+  - Verification Log Prompt
+  - PR Document Writing Prompt
+- 반복성: 높음
+- 위험도: 중간
+- 후보 사유:
+  - Guard / Parry 작업은 Action, Reaction, Damage, Overlay, Feedback, Asset, 문서가 얽힌 Branch였고, 한 번에 완성하려 하면 책임 경계와 검증 기준이 흐려질 위험이 컸다.
+  - 입력 흐름 확인, Guard In / Out, Hold 상태, TakeDamage interception, Defensive Outcome, Reaction, Feedback, CombatResult, 최종 PIE 회귀처럼 작은 검증 단위로 나눈 방식이 작업 안정성에 직접 기여했다.
+  - `PendingGuardOutRequest`, 직접 Defense 상태 제어, 단순 overlay handling 같은 임시 구조는 사용자 문제 제기를 거쳐 `Deferred Action Candidate`, Observable Overlay 정책, dirty flag registry 같은 구조로 수렴했다.
+  - 디버깅 과정에서는 request / resolve / decision / apply / outcome 로그가 문제 위치를 특정하는 데 유효했고, 최종 단계에서는 `TakeDamageOutcome`, `CombatResult` 계열 회귀 로그만 남기는 방식이 적절했다.
+  - Note / Bug Report / Work List / PR 문서의 역할 분리가 실제 작업 중 설계 판단, 구체 버그, 완료 기준, 최종 변경 기록을 분리하는 데 효과적이었다.
+- 감지 결과:
+  - 복잡한 작업일수록 결과물보다 협업 운영 기준을 Prompt에 남기는 편이 재사용 가치가 높다.
+  - `v1` 표현은 후속 범위가 명확히 분리되어 있고 현재 Branch 목표가 검증 가능하게 닫혔을 때만 의미가 있다.
+- 사용자 결정:
+  - feature/combat-guard-parry Branch 회고 결과를 Prompt에 반영 승인.
+- 반영 대상 Prompt:
+  - `AI_Workflow_Operation_Guide (KR).md`
+  - `01_Work_List_Writing_Prompt (KR).md`
+  - `02_Bug_Report_Writing_Prompt (KR).md`
+  - `Verification_Log_Prompt (KR).md`
+  - `03_PR_Document_Writing_Prompt (KR).md`
+- 처리 결과:
+  - Operation Guide에 작은 작업 단위 분해, 임시 구현 수명 명시, 구조 이의 제기 시 책임 경계 재검토, Note / Bug Report / Work List / PR 역할 분리, Prompt 후보 누적, 디버깅 로그 운용, Branch closeout 기준을 추가했다.
+  - Work List Prompt에 검증 가능한 작업 단위, v1 범위 조건, 결과값 중심 완료 기준, 최종 로그 점검 기준을 추가했다.
+  - Bug Report Prompt에 구조 판단 가치가 있는 문제의 현상 / 선택지 / 해결 기준 / 후속 구조 의미 분리 기준을 추가했다.
+  - Verification Log Prompt에 outcome / commit / state / reaction / feedback / packet 결과값 기준과 임시 로그 / 회귀 로그 구분 기준을 추가했다.
+  - PR Document Prompt에 이번 Branch에서 가능해진 운영 단위 설명, v1 사용 조건, closeout 점검, PIE 결과값 검증 대조 기준을 추가했다.

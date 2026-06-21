@@ -41,6 +41,8 @@ void ACPlayerController::SetupInputComponent()
 
 	InputComponent->BindAction("Sword", EInputEvent::IE_Pressed, this, &ACPlayerController::PressSwordToggle);
 	InputComponent->BindAction("ComboAction", EInputEvent::IE_Pressed, this, &ACPlayerController::PressComboAction);
+	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
+	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
 }
 
@@ -120,6 +122,22 @@ void ACPlayerController::PressComboAction()
 	if (!IsValid(player)) return;
 	
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::ComboAttack);
+}
+
+void ACPlayerController::PressGuard()
+{
+	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	if (!IsValid(player)) return;
+
+	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Started);
+}
+
+void ACPlayerController::ReleaseGuard()
+{
+	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	if (!IsValid(player)) return;
+
+	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Completed);
 }
 
 void ACPlayerController::PressDodge()

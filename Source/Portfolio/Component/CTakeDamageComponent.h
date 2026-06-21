@@ -25,7 +25,10 @@ private:
 	class UCReactionOrchestratorComponent* ReactionOrchestratorComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCDamageFeedbackComponent* DamageFeedbackComp_Cached = nullptr;
+	class UCHitFeedbackComponent* HitFeedbackComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Cached = nullptr;
 
 protected:
 	void BeginPlay() override;
@@ -47,11 +50,13 @@ private:
 	bool CanTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
 	void ComputeTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
-	void DispatchTakeDamageCommitted(const FTakeDamagePacket& InTakeDamagePacket) const;
-	void DispatchTakeDamageRejected(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void DispatchCombatResultToReceiver(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
+	AActor* ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 	float ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	float ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const;
@@ -62,10 +67,12 @@ private:
 	FTakeDamageContext BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const;
 	FTakeDamageResult BuildResult(const FTakeDamageContext& InTakeDamageContext) const;
 	FTakeDamagePacket BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	FCombatResultPacket BuildCombatResultPacket(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	void PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void PrintTakeDamageContextInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintTakeDamageOutcomeInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	void PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const;

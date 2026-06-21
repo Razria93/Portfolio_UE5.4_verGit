@@ -14,11 +14,12 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
-#include "Component/CDamageFeedbackComponent.h"
+#include "Component/CHitFeedbackComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
@@ -70,6 +71,10 @@ ACEnemy::ACEnemy()
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
 
+	// Init ObservableOverlayComp
+	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
+	check(ObservableOverlayComponent);
+
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
 	check(ApplyDamageComponent);
@@ -86,9 +91,9 @@ ACEnemy::ACEnemy()
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
 
-	// Init DamageFeedbackComp
-	DamageFeedbackComponent = CreateDefaultSubobject<UCDamageFeedbackComponent>(TEXT("DamageFeedback"));
-	check(DamageFeedbackComponent);
+	// Init HitFeedbackComp
+	HitFeedbackComponent = CreateDefaultSubobject<UCHitFeedbackComponent>(TEXT("HitFeedback"));
+	check(HitFeedbackComponent);
 
 	// Init ActionFeedbackComp
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
@@ -171,6 +176,68 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;
+}
+
+void ACEnemy::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
+{
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Received | Receiver=%s | Requester=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor)));
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Packet | Outcome=%s | Source=%s | Requester=%s | DamageCauser=%s"),
+		*UEnum::GetValueAsString(InCombatResultPacket.DefenseOutcome),
+		*GetNameSafe(InCombatResultPacket.SourceActor),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		*GetNameSafe(InCombatResultPacket.DamageCauser)));
+
+	if (InCombatResultPacket.IsParryResult())
+	{
+		HandleParryCombatResult(InCombatResultPacket);
+	}
+}
+
+void ACEnemy::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
+{
+	const int32 threshold = FMath::Max(1, ParryStaggerThreshold);
+	ParryResultCount = FMath::Min(ParryResultCount + 1, threshold);
+
+	const bool bStaggerReady = ParryResultCount >= threshold;
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] ParryStack | Receiver=%s | Requester=%s | Count=%d/%d | StaggerReady=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		ParryResultCount,
+		threshold,
+		bStaggerReady ? TEXT("true") : TEXT("false")));
+
+	if (bStaggerReady && TryRequestParryStaggerReaction(InCombatResultPacket))
+	{
+		ParryResultCount = 0;
+	}
+}
+
+bool ACEnemy::TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket)
+{
+	if (!IsValid(ReactionOrchestratorComponent)) return false;
+
+	FCombatResultReactionRequest request;
+	request.IntentSource = EReactionIntentSource::CombatResult;
+	request.CombatResultPacket = InCombatResultPacket;
+	request.ReactionType = EReactionType::Stagger;
+
+	const FReactionRequestResult result = ReactionOrchestratorComponent->RequestCombatResultReaction(request);
+	const bool bStarted = result.IsAccepted();
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] StaggerRequest | Receiver=%s | Requester=%s | Result=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		bStarted ? TEXT("Accepted") : TEXT("Rejected")));
+
+	return bStarted;
 }
 
 FActionRequestResult ACEnemy::HandleAIWalk()
@@ -316,7 +383,7 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 	if (combatActionIntent == ECombatActionIntent::None) return;
 
 	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent);
-	if (!actionRequestResult.IsAccepted() || actionRequestResult.ResultType != EActionRequestResultType::Reserved) return;
+	if (!actionRequestResult.IsReservedResult()) return;
 }
 
 // Mapping API (ActionData -> Intent)

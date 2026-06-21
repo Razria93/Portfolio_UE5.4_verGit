@@ -1,0 +1,21 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Reaction/CReaction.h"
+#include "CReaction_BlockHit.generated.h"
+
+UCLASS()
+class PORTFOLIO_API UCReaction_BlockHit : public UCReaction
+{
+	GENERATED_BODY()
+
+public:
+	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
+
+public:
+	void Complete() override;
+
+public:
+	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
+	void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const override;
+};

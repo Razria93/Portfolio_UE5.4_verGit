@@ -14,11 +14,13 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 #include "Component/CApplyDamageComponent.h"
 #include "Component/CTakeDamageComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
-#include "Component/CDamageFeedbackComponent.h"
+#include "Component/CHitFeedbackComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
@@ -88,6 +90,14 @@ ACPlayer::ACPlayer()
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
 
+	// Init DefenseComp
+	DefenseComponent = CreateDefaultSubobject<UCDefenseComponent>(TEXT("Defense"));
+	check(DefenseComponent);
+
+	// Init ObservableOverlayComp
+	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
+	check(ObservableOverlayComponent);
+
 	// Init ApplyDamageComp
 	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
 	check(ApplyDamageComponent);
@@ -104,9 +114,9 @@ ACPlayer::ACPlayer()
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
 
-	// Init DamageFeedbackComp
-	DamageFeedbackComponent = CreateDefaultSubobject<UCDamageFeedbackComponent>(TEXT("DamageFeedback"));
-	check(DamageFeedbackComponent);
+	// Init HitFeedbackComp
+	HitFeedbackComponent = CreateDefaultSubobject<UCHitFeedbackComponent>(TEXT("HitFeedback"));
+	check(HitFeedbackComponent);
 
 	// Init ActionFeedbackComp
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
@@ -165,6 +175,68 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;
+}
+
+void ACPlayer::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
+{
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Received | Receiver=%s | Requester=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor)));
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] Packet | Outcome=%s | Source=%s | Requester=%s | DamageCauser=%s"),
+		*UEnum::GetValueAsString(InCombatResultPacket.DefenseOutcome),
+		*GetNameSafe(InCombatResultPacket.SourceActor),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		*GetNameSafe(InCombatResultPacket.DamageCauser)));
+
+	if (InCombatResultPacket.IsParryResult())
+	{
+		HandleParryCombatResult(InCombatResultPacket);
+	}
+}
+
+void ACPlayer::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
+{
+	const int32 threshold = FMath::Max(1, ParryStaggerThreshold);
+	ParryResultCount = FMath::Min(ParryResultCount + 1, threshold);
+
+	const bool bStaggerReady = ParryResultCount >= threshold;
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] ParryStack | Receiver=%s | Requester=%s | Count=%d/%d | StaggerReady=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		ParryResultCount,
+		threshold,
+		bStaggerReady ? TEXT("true") : TEXT("false")));
+
+	if (bStaggerReady && TryRequestParryStaggerReaction(InCombatResultPacket))
+	{
+		ParryResultCount = 0;
+	}
+}
+
+bool ACPlayer::TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket)
+{
+	if (!IsValid(ReactionOrchestratorComponent)) return false;
+
+	FCombatResultReactionRequest request;
+	request.IntentSource = EReactionIntentSource::CombatResult;
+	request.CombatResultPacket = InCombatResultPacket;
+	request.ReactionType = EReactionType::Stagger;
+
+	const FReactionRequestResult result = ReactionOrchestratorComponent->RequestCombatResultReaction(request);
+	const bool bStarted = result.IsAccepted();
+
+	FLog::Log(FString::Printf(
+		TEXT("[CombatResult] StaggerRequest | Receiver=%s | Requester=%s | Result=%s"),
+		*GetNameSafe(this),
+		*GetNameSafe(InCombatResultPacket.TargetActor),
+		bStarted ? TEXT("Accepted") : TEXT("Rejected")));
+
+	return bStarted;
 }
 
 FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
@@ -252,14 +324,14 @@ FActionRequestResult ACPlayer::HandleEquipmentAction(EEquipmentActionIntent InEq
 	return ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
-FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatActionIntent)
+FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatActionIntent, EActionIntentEvent InIntentEvent)
 {
 	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
 
 	FCombatActionRequest request;
 	request.IntentSource = EActionIntentSource::PlayerInput;
 	request.IntentType = InCombatActionIntent;
-	request.IntentEvent = EActionIntentEvent::Started;
+	request.IntentEvent = InIntentEvent;
 
 	return ActionOrchestratorComponent->RequestCombatAction(request);
 }
