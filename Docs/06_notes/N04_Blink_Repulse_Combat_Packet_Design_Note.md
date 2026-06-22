@@ -1,5 +1,7 @@
 # Blink / Repulse Combat Packet Design Note
 
+> Status update: W04에서 전투 송수신 경계를 `CombatSignal Source / Target` 기준으로 재정의했다. 이 문서의 `Combat packet`, `Request`, `Receiver`, `Resolution` 표현은 후속 작업에서 `CombatSignal`, `CombatSignalSource`, `CombatSignalTarget`, target-side evaluation 기준으로 재해석한다. 최신 기준은 `N05_Combat_Signal_Boundary_Design_Note.md`를 따른다.
+
 ## 1. 목적
 
 본 문서는 Blink / Repulse와 cue 기반 combat packet 전달 구조를 정리한다.
@@ -231,7 +233,7 @@ W03에서는 Guard / Parry v1만 마무리한다.
 
 - `Docs/01_Work_List/W03_Parry/W03_UE5_Portfolio_Work_List.md`
 - `Docs/06_notes/N03_Guard_Hold_Overlay_Layer_Design_Note.md`
-- `Docs/06_notes/N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`
+- `Docs/06_notes/archive/NA01_Combat_Intent_Request_Resolution_Routing_Design_Note.md`
 - `Docs/05_System_Architecture/S27_UE5_Portfolio_System_Architecture.md`
 
 ---

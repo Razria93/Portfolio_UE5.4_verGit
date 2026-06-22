@@ -1,5 +1,7 @@
 # Combat Intent / Request / Resolution / Routing Design Note
 
+> Status update: W04에서 이 문서의 공용 `Intent / Request / Routing` 중심 구조를 보류하고, 전투 파이프라인은 `CombatSignal Source / Target` 기준으로 다시 정리했다. 이 문서는 W03 이후 논의 기록으로 보존하며, 최신 작업 기준은 `N05_Combat_Signal_Boundary_Design_Note.md`와 `N06_Combat_Signal_Branch_Implementation_Plan.md`를 따른다.
+
 ## 1. 목적
 
 본 문서는 전투 처리 흐름을 `Intent -> Request -> Resolution -> Routing -> Domain` 계층으로 나누는 장기 구조를 정리한다.
