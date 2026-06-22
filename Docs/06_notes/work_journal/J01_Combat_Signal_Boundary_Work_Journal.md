@@ -14,7 +14,9 @@ Intent
 -> Domain
 ```
 
-그러나 설계가 진행될수록 현재 문제를 해결하기 전에 계층이 과하게 늘어나는 느낌이 강해졌다.
+그러나 설계가 진행될수록 입력, damage, timing cue, system event를 모두 하나의 `Request` 파이프라인으로 묶는 것이 현재 문제보다 넓은 일반화라는 점이 드러났다.
+
+각 event source는 발생 원인과 해석 기준이 다르다. 이를 하나의 Gateway / Coordinator가 판정하고 분배하면 해당 객체가 각 domain rule을 과도하게 알게 되고, 반대로 모든 축을 세밀하게 분리하면 현재 규모에 비해 adapter와 계층이 과도하게 늘어난다.
 
 ## 2. Options
 
@@ -90,7 +92,7 @@ FCombatSignalApplyResult
 FCombatSignalResult
 ```
 
-기존 `GameplayIntentGateway / GameplayCoordinator` 구조는 이번 W04 주도 구조에서 제외한다.
+기존 `GameplayIntentGateway / GameplayCoordinator` 구조는 이번 W04 주도 구조에서 제외한다. 이는 일반화 자체를 부정하는 결정이 아니라, 입력 처리 축 / combat 처리 축 / timing cue 처리 축이 안정된 뒤 다시 검토하기 위한 보류다.
 
 ## 5. Reason
 
@@ -98,7 +100,7 @@ FCombatSignalResult
 
 현재 `UCApplyDamageComponent`는 damage applier가 아니라 source-side signal builder / delivery 역할에 가깝고, `UCTakeDamageComponent`는 target-side receive / evaluate / apply / notify 역할을 모두 가진다.
 
-따라서 먼저 두 컴포넌트의 책임을 `CombatSignalSource / Target`으로 재정의하고, 이후 타입 추가와 내부 단계 분리로 들어가는 것이 가장 작고 안전하다.
+따라서 먼저 두 컴포넌트의 책임을 `CombatSignalSource / Target`으로 재정의하고, 이후 타입 추가와 내부 단계 분리로 들어가는 것이 가장 작고 안전하다. 공용 상태 변경 파이프라인은 이 축의 반복 패턴이 안정된 뒤 다시 판단한다.
 
 ## 6. Follow-up
 

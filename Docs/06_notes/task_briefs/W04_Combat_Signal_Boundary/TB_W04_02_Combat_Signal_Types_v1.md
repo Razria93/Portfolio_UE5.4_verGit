@@ -38,6 +38,7 @@ W04-01에서 전투 송수신 경계를 `CombatSignal Source / Target` 기준으
 - `FCombatSignalApplyResult` 정의
 - `FCombatSignalResult` 정의
 - 각 struct에 `IsValidMinimal()` 기준 추가
+- `AActor` 포인터 사용을 위한 전방 선언 추가
 
 ## 제외 범위
 
@@ -64,6 +65,7 @@ W04-01에서 전투 송수신 경계를 `CombatSignal Source / Target` 기준으
 - 새 타입 파일이 추가되어 있다.
 - 기존 gameplay 흐름에 연결되지 않는다.
 - 기존 combat/action/reaction 코드 변경이 없다.
+- `AActor` 포인터 선언이 header self-contained 기준을 해치지 않는다.
 - Unreal build가 성공한다.
 
 ## 검증

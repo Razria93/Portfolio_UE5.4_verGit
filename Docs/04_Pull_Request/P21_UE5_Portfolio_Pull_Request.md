@@ -32,7 +32,9 @@
 
 Guard / Parry v1 이후 damage 처리 흐름에는 hit 전달, 수신 측 방어 판정, damage commit, reaction / feedback, attacker result 전달 책임이 함께 모여 있었다.
 
-초기에는 이를 일반화된 `Intent / Request / Receiver / Resolution / Coordinator` 구조로 분리하는 방향을 검토했다. 하지만 현재 브랜치에서는 해당 기획을 구현하지 않고, 후속 리팩터링의 기준으로 사용할 `CombatSignal Source / Target` 경계만 정리했다.
+초기에는 이를 일반화된 `Intent / Request / Receiver / Resolution / Coordinator` 구조로 분리하는 방향을 검토했다. 하지만 입력, damage, timing cue, system event는 발생 원인과 해석 기준이 달라 하나의 공용 `Request` 파이프라인으로 먼저 묶기에는 범위가 넓었다.
+
+따라서 현재 브랜치에서는 공용 상태 변경 파이프라인 일반화를 보류하고, 후속 리팩터링의 기준으로 사용할 `CombatSignal Source / Target` 경계만 정리했다.
 
 ---
 

@@ -14,7 +14,7 @@ refactor/combat-signal-boundary
 
 ## 목표
 
-기존 `GameplayIntentGateway / GameplayCoordinator` 중심 계획을 보류하고, 전투 송수신 경계를 `CombatSignal Source / Target` 기준으로 재정의한다.
+공용 상태 변경 파이프라인 일반화를 보류하고, 전투 송수신 경계를 `CombatSignal Source / Target` 기준으로 재정의한다.
 
 이번 작업은 코드 구현이 아니라 다음 코드 작업이 흔들리지 않도록 이름, 책임, 흐름, 작업 순서를 확정하는 문서 정리 작업이다.
 
@@ -30,7 +30,11 @@ Intent
 -> Domain
 ```
 
-하지만 검토 결과 현재 코드에서 가장 직접적인 문제는 공용 intent routing 부재가 아니라 `ApplyDamageComponent`와 `TakeDamageComponent`의 책임 및 이름 혼재였다.
+초기 구조는 객체의 상태를 바꾸는 모든 흐름을 하나의 `Request` 파이프라인으로 통일하려는 접근이었다. 하지만 검토 결과 입력, damage, timing cue, system event는 발생 원인과 해석 기준이 서로 달랐다.
+
+이를 하나의 Gateway / Coordinator가 판정하고 분배하면 해당 객체가 각 domain rule을 과도하게 알게 되어 God Object가 될 위험이 크다. 반대로 모든 축을 세밀하게 분리하면 현재 프로젝트 규모에 비해 adapter와 계층이 과도하게 늘어난다.
+
+따라서 공용 상태 변경 파이프라인을 먼저 만들지 않고, 입력 처리 축 / combat 처리 축 / timing cue 처리 축을 분리해서 바라보기로 했다. 그중 현재 코드에서 가장 직접적인 문제는 `ApplyDamageComponent`와 `TakeDamageComponent`의 책임 및 이름 혼재였다.
 
 특히 `Request`, `Attack`, `Damage`는 각각 다음 한계를 가진다.
 
@@ -84,9 +88,11 @@ CombatConsequenceCoordinator
 
 보류 이유:
 
-- 현재 단계에서 공용 라우팅 계층을 만들면 God Object 위험이 크다.
+- 모든 상태 변경 요청을 하나의 `Request` 파이프라인으로 통일하기에는 입력, damage, timing cue, system event의 성격이 다르다.
+- 공용 Gateway / Coordinator가 이를 모두 판정하고 분배하면 God Object 위험이 크다.
+- 모든 축을 세밀하게 분리하면 현재 규모에 비해 adapter와 계층이 과도하게 늘어난다.
 - 전투 파이프라인의 핵심 문제는 source-side / target-side boundary 정리다.
-- 더 작은 두 컴포넌트 축으로 시작하는 편이 기존 코드와 맞다.
+- 따라서 공용 일반화보다 `CombatSignal Source / Target` 축을 먼저 안정화한다.
 
 ## 완료조건
 

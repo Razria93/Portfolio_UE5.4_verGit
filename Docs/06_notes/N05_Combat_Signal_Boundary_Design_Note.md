@@ -4,9 +4,13 @@
 
 이 문서는 W03 이후 전투 처리 구조를 `CombatSignal` 기준으로 다시 정리한다.
 
-기존 논의에서는 `Intent -> Request -> Resolution -> Routing -> Domain` 또는 공용 `GameplayIntentGateway / GameplayCoordinator`가 후보였다. 
+기존 논의에서는 `Intent -> Request -> Resolution -> Routing -> Domain` 또는 공용 `GameplayIntentGateway / GameplayCoordinator`가 후보였다.
 
-그러나 현재 코드의 직접적인 문제는 공용 routing 계층 부재가 아니라, `ApplyDamageComponent`와 `TakeDamageComponent` 안에 전투 신호 생성 / 전달 / 수신 / 판정 / 적용 / 결과 통지가 압축되어 있다는 점이다.
+이 구조는 객체의 상태를 바꾸는 흐름을 하나의 공용 파이프라인으로 통일하려는 장기 방향이었다. 하지만 입력, damage, timing cue, system event는 발생 원인과 해석 기준이 다르다. 이를 하나의 Gateway / Coordinator가 판정하고 분배하면 해당 객체가 각 domain rule을 과도하게 알게 되어 God Object가 될 위험이 크다.
+
+반대로 모든 흐름을 세밀한 adapter / coordinator로 나누면 현재 프로젝트 규모에 비해 계층이 과도하게 늘어난다.
+
+따라서 공용 상태 변경 파이프라인 일반화는 뒤로 미루고, 입력 처리 축 / combat 처리 축 / timing cue 처리 축을 분리해서 바라본다. 그중 현재 코드의 직접적인 문제는 `ApplyDamageComponent`와 `TakeDamageComponent` 안에 전투 신호 생성 / 전달 / 수신 / 판정 / 적용 / 결과 통지가 압축되어 있다는 점이다.
 
 따라서 이번 설계 기준은 다음과 같다.
 
@@ -27,7 +31,7 @@ CombatSignalSource
 
 하지만 현재 전투 흐름은 source가 "이 신호를 처리해 달라"고 보내고, target이 자신의 상태를 기준으로 outcome을 판단하는 구조다. 결과가 source에게 돌아갈 수는 있지만, 모든 signal이 request-response API로 닫혀야 하는 것은 아니다.
 
-따라서 핵심 파이프라인 이름에는 `Request`를 쓰지 않는다.
+따라서 combat 핵심 파이프라인 이름에는 `Request`를 쓰지 않는다. 공용 상태 변경 요청을 모두 `Request`로 묶는 일반화는 domain 경계가 안정된 뒤 다시 검토한다.
 
 ### 2.2 Attack 용어를 핵심 이름에서 제외한다
 
@@ -308,7 +312,7 @@ AActor::TakeDamage
 - source-side component 후보는 `UCCombatSignalSourceComponent`다.
 - target-side component 후보는 `UCCombatSignalTargetComponent`다.
 - `Request`, `Attack`, `Damage`는 핵심 파이프라인 이름에서 제외한다.
-- 기존 `GameplayIntentGateway / GameplayCoordinator` 계획은 W04 주도 구조로 사용하지 않는다.
+- 기존 `GameplayIntentGateway / GameplayCoordinator` 계획은 W04 주도 구조로 사용하지 않는다. 일반화 자체를 부정한 것이 아니라, combat source / target 경계가 안정된 뒤 재검토한다.
 
 후속:
 

@@ -62,7 +62,7 @@ refactor/combat-signal-boundary
 목표:
 
 ```text
-기존 Intent Gateway / Coordinator 중심 계획을 보류하고 CombatSignal Source / Target 기준을 문서와 최소 타입으로 확정한다.
+공용 상태 변경 파이프라인 일반화를 보류하고 CombatSignal Source / Target 기준을 문서와 최소 타입으로 확정한다.
 ```
 
 핵심 범위:
@@ -87,6 +87,7 @@ refactor/combat-signal-boundary
 
 - `Request`, `Attack`, `Damage` 중심 이름이 핵심 파이프라인에서 제거된다.
 - `CombatSignal Source / Target` 책임 경계가 문서화되어 있다.
+- 입력 처리 축 / combat 처리 축 / timing cue 처리 축을 하나의 공용 Request 파이프라인으로 묶지 않는 이유가 문서화되어 있다.
 - CombatSignal 최소 타입이 추가되어 있다.
 - 기존 gameplay 동작 변화가 없다.
 - Unreal build 성공.

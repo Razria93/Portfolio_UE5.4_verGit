@@ -21,5 +21,5 @@ TB는 코드만 보고는 드러나지 않는 작업 의도, 범위, 완료조�
 ## 다음 후보
 
 ```text
-TB_W04_03_Combat_Signal_Target_Boundary_v1.md
+TB_W04_04_Combat_Signal_Target_Boundary_v1.md
 ```
