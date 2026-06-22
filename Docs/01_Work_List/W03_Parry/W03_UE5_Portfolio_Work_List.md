@@ -309,7 +309,7 @@ TakeDamagePacket
 
 #### 현재 코드 기준 Combat pipeline 분리 작업 후보
 
-- [x] `ApplyDamageComponent`와 `TakeDamageComponent`의 현재 책임을 `N05` 기준으로 분석한다.
+- [x] `ApplyDamageComponent`와 `TakeDamageComponent`의 현재 책임을 archived `NA01` 기준으로 분석한다.
   - 현재 `ApplyDamageComponent`는 source-side damage 적용자가 아니라 hit context를 combat request로 구성하고 target에게 전달하는 requester 성격이 강하다.
   - 현재 `TakeDamageComponent`는 receiver adapter, resolution, damage apply, consequence coordination을 모두 가진 압축형 컴포넌트다.
 - [ ] `TakeDamageComponent`를 우선 `Receive / Resolve / Apply / Coordinate` 단계로 함수 경계를 정리한다.
@@ -471,7 +471,7 @@ TakeDamagePacket
 - [x] 검증 과정에서 Editor / Asset 확인이 불완전하면 PR 문서의 미검증 항목에 남긴다.
 - [x] TakeDamage 내부 defensive resolution 규칙이 Guard / Counter 확장 기준으로 의미가 생기면 System Architecture 후속 보완 후보로 기록한다.
 - [x] Attacker 측 counter signal / Blink / Repulse / cue packet 전달 구조는 `Docs/06_notes/N04_Blink_Repulse_Combat_Packet_Design_Note.md`에 후속 판단 기록으로 분리한다.
-- [x] Combat intent / request / resolution / routing 계층 구조는 `Docs/06_notes/N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 후속 판단 기록으로 분리한다.
+- [x] Combat intent / request / resolution / routing 계층 구조는 `Docs/06_notes/archive/NA01_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 후속 판단 기록으로 분리한다.
 
 ---
 
@@ -530,7 +530,7 @@ TakeDamagePacket
 - [x] `P20_UE5_Portfolio_Pull_Request.md`에 Guard / Parry v1 변경 흐름과 최종 검증 결과를 정리했다.
 - [x] `N03_Guard_Hold_Overlay_Layer_Design_Note.md`에 Observable Overlay Layer, dirty flag registry, API naming 기준을 반영했다.
 - [x] `N04_Blink_Repulse_Combat_Packet_Design_Note.md`에 Blink / Repulse / cue packet 책임 분리 기준을 분리했다.
-- [x] `N05_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 Combat Request / Resolution / Routing 후속 구조를 정리했다.
+- [x] `NA01_Combat_Intent_Request_Resolution_Routing_Design_Note.md`에 Combat Request / Resolution / Routing 후속 구조를 정리했다.
 - [x] `B12_UE5_Portfolio_Bug_Report.md`에 Guard Out 중 Hit reaction overlay handling 실패와 dirty flag 해결 기준을 기록했다.
 
 ---
