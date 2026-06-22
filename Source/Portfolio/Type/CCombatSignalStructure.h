@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CCombatSignalStructure.generated.h"
 
+class AActor;
+
 UENUM(BlueprintType)
 enum class ECombatSignalType : uint8
 {
