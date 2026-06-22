@@ -26,5 +26,6 @@
 | P18 | AI Workflow / Prompt Library v1 | `P18_UE5_Portfolio_Pull_Request.md` | `feature/ai-workflow` |  | W01, W03 |
 | P19 | Documentation Workflow Update | `P19_UE5_Portfolio_Pull_Request.md` | `docs/portfolio-documentation-update` |  | W02, N01 |
 | P20 | Guard / Parry Action v1 | `P20_UE5_Portfolio_Pull_Request.md` | `feature/combat-guard-parry` |  | W03, B11, B12, N02, N03, N04, N05 |
+| P21 | Combat Signal Boundary v1 | `P21_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-boundary` |  | W04, N05, N06, NA01 |
 
 ---
