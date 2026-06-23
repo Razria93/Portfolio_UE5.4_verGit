@@ -500,8 +500,8 @@ FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const
 
 void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	FLog::Log(TEXT("====== Take Damage Summary ======"));
-	FLog::Log(TEXT("[@ TAKE DAMAGE]"));
+	FLog::Log(TEXT("====== Combat Signal Target Summary ======"));
+	FLog::Log(TEXT("[@ COMBAT SIGNAL TARGET]"));
 
 	FLog::Log(FString::Printf(TEXT("SourceActor = %s | TargetActor = %s | Instigator = %s | DamageCauser = %s"),
 		*GetNameSafe(InCombatSignalTargetPacket.Context.SourceActor),
@@ -521,7 +521,7 @@ void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FCo
 
 void UCCombatSignalTargetComponent::PrintCombatSignalTargetContextInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	FLog::Log(TEXT("/////- Take Damage Context -/////"));
+	FLog::Log(TEXT("/////- Combat Signal Target Context -/////"));
 	PrintObjectInfo(InCombatSignalTargetPacket);
 	PrintSpecKeyInfo(InCombatSignalTargetPacket);
 	PrintDamageAmountInfo(InCombatSignalTargetPacket);
@@ -535,7 +535,7 @@ void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FCo
 	if (result.DefenseOutcome == EDamageDefenseOutcome::None && result.CommittedDamage <= KINDA_SMALL_NUMBER) return;
 
 	FLog::Log(FString::Printf(
-		TEXT("[TakeDamageOutcome] Outcome=%s | Commit=%s | Damage=%.3f | HP=%.3f->%.3f"),
+		TEXT("[CombatSignalTargetOutcome] Outcome=%s | Commit=%s | Damage=%.3f | HP=%.3f->%.3f"),
 		*UEnum::GetValueAsString(result.DefenseOutcome),
 		result.bShouldCommitDamage ? TEXT("true") : TEXT("false"),
 		result.CommittedDamage,

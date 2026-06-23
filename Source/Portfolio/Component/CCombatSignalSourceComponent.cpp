@@ -440,8 +440,8 @@ bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FCombatSignalSourceCo
 
 void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InCombatSignalSourceResult) const
 {
-	FLog::Log(TEXT("===== Apply Damage Summary ======"));
-	FLog::Log(TEXT("[@ APPLY DAMAGE]"));
+	FLog::Log(TEXT("===== Combat Signal Source Summary ======"));
+	FLog::Log(TEXT("[@ COMBAT SIGNAL SOURCE]"));
 
 	FLog::Log(FString::Printf(
 		TEXT("DamageCauser = %s | Target = %s | HitWindowId = %d | Base = %.3f | Request = %.3f | Committed = %.3f"),
@@ -457,7 +457,7 @@ void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHi
 
 void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const
 {
-	FLog::Log(TEXT("////- Apply Damage Context -/////"));
+	FLog::Log(TEXT("////- Combat Signal Source Context -/////"));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
 	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
 	PrintDamageSpecInfo(InApplyDamageSpec);
@@ -467,8 +467,8 @@ void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHi
 
 void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
 {
-	FLog::Log(TEXT("= Apply Damage Rejected Summary ="));
-	FLog::Log(TEXT("[@ REJECT DAMAGE]"));
+	FLog::Log(TEXT("= Combat Signal Source Rejected Summary ="));
+	FLog::Log(TEXT("[@ COMBAT SIGNAL SOURCE REJECTED]"));
 
 	FLog::Log(FString::Printf(
 		TEXT("RejectReason = %s | DamageCauser = %s | Target = %s | HitWindowId = %d"),
@@ -482,7 +482,7 @@ void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedSummaryInfo(c
 
 void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
 {
-	FLog::Log(TEXT("////- Reject Damage Context -////"));
+	FLog::Log(TEXT("////- Combat Signal Source Rejected Context -////"));
 	PrintRejectReasonInfo(InRejectReason);
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
 	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
