@@ -83,32 +83,11 @@ Receive
 
 ## 결과 타입 관계
 
-`FTakeDamageResult`는 현재 damage flow 내부의 target-side authoritative result다.
+`FTakeDamageResult`는 현재 damage flow 내부의 target-side authoritative result다. damage 수신 허용 여부, reject reason, defense outcome, damage commit 여부, damage amount, dead state snapshot을 가진다.
 
-주요 책임:
+`FCombatSignalResult`는 장기적으로 combat signal 처리 결과를 외부에 요약해서 전달하기 위한 summary result 후보다.
 
-```text
-damage 수신 허용 여부
-reject reason
-defense outcome
-damage commit 여부
-request / mitigated / final / committed damage
-dead state 전후 snapshot
-```
-
-`FCombatSignalResult`는 장기적으로 combat signal 처리 결과를 외부에 요약해서 전달하기 위한 summary result다.
-
-주요 책임:
-
-```text
-signal metadata
-handled / rejected / ignored 같은 처리 상태
-combat outcome 요약
-handled / succeeded flag
-result tag
-```
-
-따라서 두 타입의 관계는 1:1 교체가 아니라 내부 결과와 외부 송출 요약의 관계로 본다.
+따라서 두 타입은 1:1 교체 관계가 아니라 내부 결과와 외부 송출 요약의 관계로 본다.
 
 ```text
 FTakeDamageResult
@@ -118,86 +97,21 @@ FCombatSignalResult
 = combat signal 처리 결과를 외부 경계에서 읽기 위한 요약 결과
 ```
 
-현재 damage flow에서는 `FTakeDamageResult`를 기반으로 `FCombatSignalResult`를 생성하는 방향을 기본 후보로 둔다.
-
-다만 모든 combat signal이 `TakeDamage` flow를 타는 것은 아니다. Parry, GuardBreak, Blink, Repulse 같은 흐름이 별도 내부 결과를 갖게 되면, 각 flow의 내부 결과를 기반으로 동일한 외부 송출용 `FCombatSignalResult`를 만들 수 있다.
-
-```text
-Damage flow
--> FTakeDamageResult
--> FCombatSignalResult
-
-Parry flow
--> FParryResult 후보
--> FCombatSignalResult
-
-GuardBreak flow
--> FGuardBreakResult 후보
--> FCombatSignalResult
-```
-
 핵심 원칙:
 
 ```text
-내부 판정은 flow별 result가 authoritative source다.
+내부 판정은 flow별 result가 authoritative result다.
 외부 송출은 CombatSignalResult로 요약한다.
 CombatSignalResult는 판정을 다시 수행하지 않는다.
 ```
 
-후보 매핑:
-
-```text
-FTakeDamageResult.bAccepted
--> FCombatSignalResult.ResultType
-
-FTakeDamageResult.DefenseOutcome
--> FCombatSignalResult.Outcome
-
-FTakeDamageResult.RejectReason
--> FCombatSignalResult.ResultTag 또는 domain-specific detail
-
-FTakeDamageResult.bShouldCommitDamage / CommittedDamage
--> FCombatSignalResult.bSucceeded 판단 재료
-```
-
-변환 함수 후보 위치:
-
-```text
-BuildResult
-= TakeDamage flow 내부 authoritative result 생성
-
-BuildPacket
-= payload / context / result 묶음 생성
-
-BuildCombatSignalResult 후보
-= 외부 송출용 summary result 생성
-```
-
-따라서 변환 후보는 `BuildResult()` 내부가 아니라, `FTakeDamagePacket`이 구성된 뒤 `Notify` 경계에서 두는 편이 자연스럽다.
-
-이유:
-
-- `BuildResult()`는 damage target 내부 결과만 만들어야 한다.
-- 외부 송출 summary는 actor lineage, signal metadata, result tag 같은 context 정보가 함께 필요하다.
-- `FTakeDamagePacket` 이후에는 payload / context / result를 모두 참조할 수 있다.
-- 기존 `BuildCombatResultPacket()`도 이 위치에서 source-side result packet을 구성한다.
-
-후속 함수 후보:
-
-```text
-BuildCombatSignalResult(const FTakeDamagePacket& InTakeDamagePacket)
-```
-
-단, 이번 branch에서는 선언하거나 구현하지 않는다.
-
-이번 branch에서는 이 변환을 구현하지 않는다.
+현재 damage flow에서 `FCombatSignalResult`가 필요해지면 `FTakeDamageResult`를 기반으로 생성하는 방향이 기본 후보다. 다만 이번 branch에서는 변환 함수를 선언하거나 구현하지 않는다.
 
 이유:
 
 - 현재 목표는 `UCTakeDamageComponent` 내부 target-side 경계를 정리하는 것이다.
-- `FCombatSignalResult`를 바로 연결하면 기존 damage flow가 아직 확정되지 않은 상위 signal 타입에 의존한다.
-- 실제 변환 위치는 `CombatSignalTarget` rename 또는 adapter 도입 시점에 결정하는 편이 안전하다.
-- 이번 branch에서는 결과 관계를 먼저 고정하고, 변환 함수 도입은 후속 작업으로 분리한다.
+- `FCombatSignalResult` 연결은 현재 브랜치의 정리 범위를 넘는다.
+- 실제 변환 위치는 `CombatSignalTarget` rename 또는 adapter 도입 시점에 결정한다.
 
 ## 단계 분류 기준
 
@@ -294,7 +208,6 @@ TakeDamage Header Target Sections v1 완료
 TakeDamage Default Event Flow Labels v1 완료
 TakeDamage Source Definition Order Alignment 완료
 TakeDamage Result Boundary Documentation 완료
-TakeDamage Result Conversion Point Documentation 완료
 ```
 
 확인 내용:
@@ -307,13 +220,12 @@ TakeDamage Result Conversion Point Documentation 완료
 - 함수 구현 로직은 변경하지 않았다.
 - `FCombatSignal`은 기존 damage flow에 연결하지 않았다.
 - `FTakeDamageResult`와 `FCombatSignalResult`를 교체 관계가 아닌 변환/요약 후보 관계로 정리했다.
-- `FCombatSignalResult` 변환 후보 위치를 `FTakeDamagePacket` 구성 이후의 Notify 경계로 정리했다.
 
 정적 확인:
 
 ```text
 git diff -- Source/Portfolio/Component/CTakeDamageComponent.h Source/Portfolio/Component/CTakeDamageComponent.cpp
-rg -n "Receive|Evaluate|Apply|Notify|FCombatSignalResult|FTakeDamageResult" Source/Portfolio/Component/CTakeDamageComponent.* Docs/06_notes/task_briefs/W04_Combat_Signal_Boundary/TB_W04_03_Combat_Signal_Target_Boundary_v1.md
+rg -n "Receive|Evaluate|Apply|Notify|FCombatSignalResult|FTakeDamageResult" Source/Portfolio/Component/CTakeDamageComponent.h Source/Portfolio/Component/CTakeDamageComponent.cpp Docs/06_notes/task_briefs/W04_Combat_Signal_Boundary/TB_W04_03_Combat_Signal_Target_Boundary_v1.md
 ```
 
 빌드 확인:
