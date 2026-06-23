@@ -9,7 +9,7 @@ enum class EReactionIntentSource : uint8
 {
 	None = 0,
 
-	TakeDamage,
+	CombatSignalTarget,
 	CombatResult,
 
 	Max,
@@ -38,10 +38,10 @@ struct FDamageReactionRequest
 
 public:
 	UPROPERTY(Transient)
-	EReactionIntentSource IntentSource = EReactionIntentSource::TakeDamage;
+	EReactionIntentSource IntentSource = EReactionIntentSource::CombatSignalTarget;
 
 	UPROPERTY(Transient)
-	FTakeDamagePacket TakeDamagePacket = FTakeDamagePacket();
+	FCombatSignalTargetPacket CombatSignalTargetPacket = FCombatSignalTargetPacket();
 };
 
 USTRUCT(BlueprintType)

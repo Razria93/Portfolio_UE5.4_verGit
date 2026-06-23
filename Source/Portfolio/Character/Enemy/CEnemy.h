@@ -91,11 +91,11 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Overlay")
 	class UCObservableOverlayComponent* ObservableOverlayComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
-	class UCApplyDamageComponent* ApplyDamageComponent;
+	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
+	class UCCombatSignalSourceComponent* CombatSignalSourceComponent;
 
-	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
-	class UCTakeDamageComponent* TakeDamageComponent;
+	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
+	class UCCombatSignalTargetComponent* CombatSignalTargetComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Execution")
 	class UCActionComponent* ActionComponent;
@@ -123,6 +123,10 @@ protected:
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+private:
+	// Init Helper
+	void ResolveComponentReferences();
+
 public:
 	void Tick(float DeltaTime) override;
 
@@ -138,8 +142,8 @@ public:
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
-	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
-	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
+	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
+	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }

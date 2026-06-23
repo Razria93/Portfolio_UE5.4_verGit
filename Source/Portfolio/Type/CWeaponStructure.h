@@ -472,7 +472,7 @@ enum class EApplyDamageRejectReason : uint8
 	ComputeFailed,
 	CommitFailed,
 
-	// Reject Reason of 'CanApplyDamage'
+	// Reject Reason of 'CanSendCombatSignal'
 	InvalidOwner,
 	SelfTarget,
 	DuplicateHitInWindow,
@@ -1014,7 +1014,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FApplyDamagePayload
+struct FCombatSignalSourcePayload
 {
 	GENERATED_BODY()
 
@@ -1041,11 +1041,11 @@ public:
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
 public:
-	FApplyDamagePayload() = default;
+	FCombatSignalSourcePayload() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FApplyDamageContext
+struct FCombatSignalSourceContext
 {
 	GENERATED_BODY()
 
@@ -1090,11 +1090,11 @@ public:
 	float CommittedDamage = 0.f;
 
 public:
-	FApplyDamageContext() = default;
+	FCombatSignalSourceContext() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FApplyDamageResult
+struct FCombatSignalSourceResult
 {
 	GENERATED_BODY()
 
@@ -1121,7 +1121,7 @@ public:
 	float CommittedDamage = 0.f;
 
 public:
-	FApplyDamageResult() = default;
+	FCombatSignalSourceResult() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -1161,7 +1161,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FTakeDamagePayload
+struct FCombatSignalTargetPayload
 {
 	GENERATED_BODY()
 
@@ -1198,11 +1198,11 @@ public:
 	float RequestedDamage = 0.f;
 
 public:
-	FTakeDamagePayload() = default;
+	FCombatSignalTargetPayload() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FTakeDamageContext
+struct FCombatSignalTargetContext
 {
 	GENERATED_BODY()
 
@@ -1227,7 +1227,7 @@ public:
 	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
-	// Query Acceptable [Set ValidateContext / CanTakeDamage / ComputeTakeDamage]
+	// Query Acceptable [Set ValidateContext / CanReceiveCombatSignal / ComputeTargetDamage]
 	UPROPERTY(Transient)
 	bool bAccepted = true;
 
@@ -1247,7 +1247,7 @@ public:
 	UPROPERTY(Transient)
 	EDeadState DeadState_Before = EDeadState::Alive;
 
-	// DamageAmounts [Set ComputeTakeDamage & CommitTakeDamage]
+	// DamageAmounts [Set ComputeTargetDamage & CommitCombatSignalTarget]
 	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
 
@@ -1276,11 +1276,11 @@ public:
 	// - Cached Component (Minimal)
 
 public:
-	FTakeDamageContext() = default;
+	FCombatSignalTargetContext() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FTakeDamageResult
+struct FCombatSignalTargetResult
 {
 	GENERATED_BODY()
 
@@ -1321,22 +1321,22 @@ public:
 	EDeadState DeadState_After = EDeadState::Alive;
 
 public:
-	FTakeDamageResult() = default;
+	FCombatSignalTargetResult() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FTakeDamagePacket
+struct FCombatSignalTargetPacket
 {
 	GENERATED_BODY()
 
 	UPROPERTY(Transient)
-	FTakeDamagePayload Payload;
+	FCombatSignalTargetPayload Payload;
 
 	UPROPERTY(Transient)
-	FTakeDamageContext Context;
+	FCombatSignalTargetContext Context;
 
 	UPROPERTY(Transient)
-	FTakeDamageResult Result;
+	FCombatSignalTargetResult Result;
 };
 
 USTRUCT(BlueprintType)

@@ -16,8 +16,8 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CObservableOverlayComponent.h"
-#include "Component/CApplyDamageComponent.h"
-#include "Component/CTakeDamageComponent.h"
+#include "Component/CCombatSignalSourceComponent.h"
+#include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHitFeedbackComponent.h"
@@ -98,13 +98,13 @@ ACPlayer::ACPlayer()
 	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
 	check(ObservableOverlayComponent);
 
-	// Init ApplyDamageComp
-	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
-	check(ApplyDamageComponent);
+	// Init CombatSignalSourceComp
+	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
+	check(CombatSignalSourceComponent);
 
-	// Init TakeDamageComp
-	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
-	check(TakeDamageComponent);
+	// Init CombatSignalTargetComp
+	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
+	check(CombatSignalTargetComponent);
 
 	// Init UCACtionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
@@ -131,9 +131,24 @@ void ACPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ResolveComponentReferences();
+
 	if (IsValid(HealthComponent) && IsValid(StateComponent))
 	{
 		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
+	}
+}
+
+void ACPlayer::ResolveComponentReferences()
+{
+	if (!IsValid(CombatSignalSourceComponent))
+	{
+		CombatSignalSourceComponent = FindComponentByClass<UCCombatSignalSourceComponent>();
+	}
+
+	if (!IsValid(CombatSignalTargetComponent))
+	{
+		CombatSignalTargetComponent = FindComponentByClass<UCCombatSignalTargetComponent>();
 	}
 }
 
@@ -161,12 +176,17 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 	float finalDamage = DamageAmount;
 
-	if (IsValid(TakeDamageComponent))
+	if (IsValid(CombatSignalTargetComponent))
 	{
-		finalDamage = TakeDamageComponent->RequestTakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+		finalDamage = CombatSignalTargetComponent->RequestCombatSignalTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 	else
 	{
+		FLog::Log(FString::Printf(
+			TEXT("[Player] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
+			*GetNameSafe(this),
+			DamageAmount));
+
 		// FallBack
 		finalDamage = DamageAmount;
 	}

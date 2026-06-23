@@ -102,13 +102,13 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 	OutIncomingCandidate = FReactionCandidate();
 	OutRejectReason = EReactionRequestRejectReason::None;
 
-	if (InIncomingRequest.IntentSource != EReactionIntentSource::TakeDamage)
+	if (InIncomingRequest.IntentSource != EReactionIntentSource::CombatSignalTarget)
 	{
 		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
 		return false;
 	}
 
-	if (!InIncomingRequest.TakeDamagePacket.Result.bAccepted)
+	if (!InIncomingRequest.CombatSignalTargetPacket.Result.bAccepted)
 	{
 		OutRejectReason = EReactionRequestRejectReason::InvalidDamageResult;
 		return false;
@@ -122,7 +122,7 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 		return false;
 	}
 
-	OutIncomingCandidate.ReactionDataKey.ApplyDamageSpecKey = InIncomingRequest.TakeDamagePacket.Result.ApplyDamageSpecKey;
+	OutIncomingCandidate.ReactionDataKey.ApplyDamageSpecKey = InIncomingRequest.CombatSignalTargetPacket.Result.ApplyDamageSpecKey;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = reactionType;
 	return true;
 }
@@ -157,26 +157,26 @@ bool UCReactionOrchestratorComponent::ResolveCombatResultReactionCandidate(const
 
 EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const
 {
-	const FTakeDamageResult& damageResult = InIncomingRequest.TakeDamagePacket.Result;
+	const FCombatSignalTargetResult& combatSignalTargetResult = InIncomingRequest.CombatSignalTargetPacket.Result;
 
-	if (!damageResult.bAccepted) return EReactionType::None;
+	if (!combatSignalTargetResult.bAccepted) return EReactionType::None;
 
-	if (damageResult.DeadState_Before == EDeadState::Alive && damageResult.DeadState_After != EDeadState::Alive)
+	if (combatSignalTargetResult.DeadState_Before == EDeadState::Alive && combatSignalTargetResult.DeadState_After != EDeadState::Alive)
 	{
 		return EReactionType::Dead;
 	}
 
-	if (damageResult.DefenseOutcome == EDamageDefenseOutcome::Parry)
+	if (combatSignalTargetResult.DefenseOutcome == EDamageDefenseOutcome::Parry)
 	{
 		return EReactionType::Parry;
 	}
 
-	if (damageResult.DefenseOutcome == EDamageDefenseOutcome::Guard)
+	if (combatSignalTargetResult.DefenseOutcome == EDamageDefenseOutcome::Guard)
 	{
 		return EReactionType::BlockHit;
 	}
 
-	if (damageResult.CommittedDamage > KINDA_SMALL_NUMBER && damageResult.DeadState_After == EDeadState::Alive)
+	if (combatSignalTargetResult.CommittedDamage > KINDA_SMALL_NUMBER && combatSignalTargetResult.DeadState_After == EDeadState::Alive)
 	{
 		return EReactionType::Hit;
 	}

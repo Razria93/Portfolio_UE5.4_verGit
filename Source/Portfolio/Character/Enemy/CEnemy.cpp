@@ -15,8 +15,8 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CObservableOverlayComponent.h"
-#include "Component/CApplyDamageComponent.h"
-#include "Component/CTakeDamageComponent.h"
+#include "Component/CCombatSignalSourceComponent.h"
+#include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHitFeedbackComponent.h"
@@ -75,13 +75,13 @@ ACEnemy::ACEnemy()
 	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
 	check(ObservableOverlayComponent);
 
-	// Init ApplyDamageComp
-	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
-	check(ApplyDamageComponent);
+	// Init CombatSignalSourceComp
+	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
+	check(CombatSignalSourceComponent);
 
-	// Init TakeDamageComp
-	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
-	check(TakeDamageComponent);
+	// Init CombatSignalTargetComp
+	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
+	check(CombatSignalTargetComponent);
 
 	// Init UCACtionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
@@ -108,6 +108,8 @@ void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ResolveComponentReferences();
+
 	if (IsValid(ActionComponent))
 	{
 		// Update blackboard
@@ -124,6 +126,19 @@ void ACEnemy::BeginPlay()
 	if (!actionRequestResult.IsAccepted())
 	{
 		FLog::Log(TEXT("[Enemy|BeginPlay] Initial equip-action request rejected."));
+	}
+}
+
+void ACEnemy::ResolveComponentReferences()
+{
+	if (!IsValid(CombatSignalSourceComponent))
+	{
+		CombatSignalSourceComponent = FindComponentByClass<UCCombatSignalSourceComponent>();
+	}
+
+	if (!IsValid(CombatSignalTargetComponent))
+	{
+		CombatSignalTargetComponent = FindComponentByClass<UCCombatSignalTargetComponent>();
 	}
 }
 
@@ -162,12 +177,17 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 
 	float finalDamage = DamageAmount;
 
-	if (IsValid(TakeDamageComponent))
+	if (IsValid(CombatSignalTargetComponent))
 	{
-		finalDamage = TakeDamageComponent->RequestTakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+		finalDamage = CombatSignalTargetComponent->RequestCombatSignalTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 	else
 	{
+		FLog::Log(FString::Printf(
+			TEXT("[Enemy] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
+			*GetNameSafe(this),
+			DamageAmount));
+
 		// FallBack
 		finalDamage = DamageAmount;
 	}
