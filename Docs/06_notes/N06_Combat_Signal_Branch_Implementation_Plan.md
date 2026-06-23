@@ -212,7 +212,47 @@ refactor/combat-signal-component-rename
 - reference recovery 범위가 rename 대상 combat signal component로 제한된다.
 - B13 / N07에 현상, 원인, 해결 방식이 기록된다.
 
-## 8. Branch 5: Combat Signal Cue v1
+## 8. Branch 5: Combat Damage Data Types
+
+브랜치명:
+
+```text
+refactor/combat-damage-data-types
+```
+
+목표:
+
+```text
+CombatSignalSource / CombatSignalTarget 리네임 이후 남아 있는 damage data 타입명을 실제 책임 기준으로 정리한다.
+```
+
+핵심 범위:
+
+- `FApplyDamageSpecKey` -> `FDamageSpecKey`
+- `FApplyDamageSpec` -> `FDamageSpec`
+- `FApplyDamageAmount` -> `FDamageAmount`
+- `FApplyDamageHitWindowKey` -> `FCombatSignalHitWindowKey`
+- `EApplyDamageRejectReason` -> `ECombatSignalSourceRejectReason`
+- `ETakeDamageRejectReason` -> `ECombatSignalTargetRejectReason`
+- damage spec / amount 사용처 이름 정리
+- debug label / commit 주석 정리
+
+제외 범위:
+
+- UE `TakeDamage()` boundary rename
+- `UCHealthComponent::TakeDamage` rename
+- `FCombatResultPacket` 구조 변경
+- combat damage 계산 로직 변경
+- Guard / Parry / Defensive Outcome 변경
+
+완료조건:
+
+- damage data 타입명이 source component 이름에 과하게 종속되지 않는다.
+- source-side hit window key와 source / target reject reason이 책임 기준 이름을 갖는다.
+- 기존 combat runtime 동작이 바뀌지 않는다.
+- Unreal build 성공.
+
+## 9. Branch 6: Combat Signal Cue v1
 
 브랜치명:
 
@@ -240,28 +280,11 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름으로 
 - cue 전용 예외 파이프라인을 만들지 않는다.
 - Blink / Repulse 성공 outcome이 reaction / movement / feedback / result로 분배될 수 있다.
 
-## 9. 다음 작업 제안
-
-다음 작업은 현재 브랜치 안에서 `Combat Signal Types v1`을 진행하는 것이다.
-
-작업 명세:
+## 10. 후속 순서
 
 ```text
-Task:
-Combat Signal Types v1
-
-목표:
-CombatSignal Source / Target이 공유할 최소 타입 vocabulary를 추가한다.
-
-핵심 범위:
-- CCombatSignalStructure.h/.cpp 추가
-- Signal / Context / Evaluation / ApplyResult / Result 타입 정의
-- Minimal validity helper 정의
-- 기존 ApplyDamage / TakeDamage 흐름 연결 없음
-
-완료조건:
-- 기존 gameplay 동작 변화 없음
-- Unreal build 성공
-- TB_W04_02 작성
-- prompt update check 기록
+1. Combat Signal Cue v1
+2. Combat Signal Result Out
+3. Combat Feedback Boundary
+4. Combat Signal Reference Validation
 ```

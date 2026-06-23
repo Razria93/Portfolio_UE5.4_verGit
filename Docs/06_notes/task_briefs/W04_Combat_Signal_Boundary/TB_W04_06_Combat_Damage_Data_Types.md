@@ -107,6 +107,51 @@ FCombatResultPacket
 - `FDefaultDamageEvent`, `FDamageImpactInfo`는 engine damage event / impact data 의미가 남아 있다.
 - `FCombatResultPacket`은 result-out / attacker-side 흐름 정리 브랜치에서 따로 검토한다.
 
+## Damage 용어 유지 / 후속 검토 기준
+
+이번 브랜치 이후에도 `Damage` 용어를 모두 제거하지 않는다.
+
+유지 기준:
+
+```text
+Damage data
+Damage amount
+Damage event
+Damage causer
+Damage impact
+Health TakeDamage
+UE TakeDamage
+```
+
+위 항목은 실제 damage 수치, damage event, damage commit, engine boundary를 뜻하므로 유지한다.
+
+후속 검토 기준:
+
+```text
+DamageReaction*
+DamageFeedback*
+FCombatResultPacket
+result-out packet 내부 naming
+FDamageImpactInfo가 damage 외 cue impact까지 확장되는 경우
+```
+
+위 항목은 실제 damage 수치보다 reaction / feedback / result-out / cue outcome에 가까워질 수 있다.
+
+따라서 이번 브랜치에서 억지로 바꾸지 않고, 다음 브랜치들의 책임이 더 명확해진 뒤 검토한다.
+
+후속 분리:
+
+```text
+Combat Signal Cue v1
+-> FDamageImpactInfo가 cue impact까지 담아야 하는지 확인
+
+Combat Signal Result Out
+-> FCombatResultPacket / bDamageCommitted / CommittedDamage naming 확인
+
+Combat Feedback Boundary
+-> DamageReaction* / DamageFeedback* naming 확인
+```
+
 ## 제외 범위
 
 - combat damage 계산 로직 변경
@@ -209,6 +254,17 @@ prompt update 필요 여부
 - `FCombatResultPacket`은 이번 브랜치에서 건드리지 않는다.
 - `TakeDamage()` 계열 engine / resource API는 유지한다.
 
+작업 완료 기준 결정:
+
+- `FApplyDamageSpecKey / FApplyDamageSpec / FApplyDamageAmount`는 `FDamageSpecKey / FDamageSpec / FDamageAmount`로 변경했다.
+- `FApplyDamageHitWindowKey`는 source-side hit window / duplicate hit cache 책임을 드러내도록 `FCombatSignalHitWindowKey`로 변경했다.
+- `EApplyDamageRejectReason / ETakeDamageRejectReason`은 처리 단계 기준을 드러내도록 `ECombatSignalSourceRejectReason / ECombatSignalTargetRejectReason`으로 변경했다.
+- `ApplyDamageSpecKey / ApplyDamageSpec / ApplyDamageAmount` 사용처 이름은 `DamageSpecKey / DamageSpec / DamageAmount`로 정리했다.
+- `Apply Damage To Health` 주석은 실제 resource commit 의미에 맞게 `Commit Damage To Health`로 정리했다.
+- UE `TakeDamage()` boundary와 `UCHealthComponent::TakeDamage()` resource API는 유지했다.
+- `DamageReaction*`, `DamageFeedback*`, `FCombatResultPacket`, `FDamageImpactInfo` 확장 여부는 후속 브랜치로 분리했다.
+- runtime behavior, damage 계산, Guard / Parry 판정은 변경하지 않았다.
+
 ## 검증 계획
 
 ```text
@@ -218,6 +274,14 @@ PortfolioEditor Win64 Development build
 Player -> Enemy hit 확인
 Enemy -> Player hit 확인
 Guard / Parry 기존 flow 확인
+```
+
+## 검증 결과
+
+```text
+rg old type / field / label scan 통과
+git diff --check 통과
+PortfolioEditor Win64 Development 빌드 성공
 ```
 
 ## 커밋 분할 후보
@@ -233,10 +297,12 @@ docs(combat): document combat damage data type rename
 
 ## 프롬프트 업데이트 확인
 
-작업 후 다음 기준을 PU01 또는 후속 prompt update note에 반영할지 확인한다.
+이번 작업에서 확인한 후보:
 
 ```text
 컴포넌트 책임명과 data 타입명을 무조건 같은 접두어로 맞추지 않는다.
 data 타입은 실제 데이터의 소유 계층과 재사용 범위를 기준으로 이름을 정한다.
 engine boundary / resource boundary 이름은 프로젝트 책임명과 다르게 유지할 수 있다.
 ```
+
+위 기준은 PU01에 반영한다.
