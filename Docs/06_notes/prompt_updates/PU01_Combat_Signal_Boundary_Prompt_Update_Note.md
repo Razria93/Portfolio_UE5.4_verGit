@@ -45,6 +45,7 @@ W04-05 rename 작업 기준:
 - 리네임 브랜치는 기능 변경이 아니라 책임 정렬 결과를 이름에 반영하는 작업으로 제한한다.
 - damage data, engine API, resource commit API처럼 기존 domain 의미가 남아 있는 이름은 별도 후속 작업으로 분리한다.
 - serialized reference가 있는 Unreal component rename은 class redirect와 property redirect를 함께 검토한다.
+- native component rename 후에는 Actor에 실제 component가 존재해도 C++ UPROPERTY 멤버 포인터가 비어 있을 수 있으므로, BeginPlay 단계의 참조 검증 / 복구 필요성을 점검한다.
 ```
 
 ## Reason
