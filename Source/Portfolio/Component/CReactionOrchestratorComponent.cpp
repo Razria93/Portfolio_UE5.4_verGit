@@ -157,7 +157,7 @@ bool UCReactionOrchestratorComponent::ResolveCombatResultReactionCandidate(const
 
 EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const
 {
-	const FTakeDamageResult& damageResult = InIncomingRequest.TakeDamagePacket.Result;
+	const FCombatSignalTargetResult& damageResult = InIncomingRequest.TakeDamagePacket.Result;
 
 	if (!damageResult.bAccepted) return EReactionType::None;
 

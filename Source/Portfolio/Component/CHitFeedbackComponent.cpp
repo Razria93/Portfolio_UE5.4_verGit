@@ -27,7 +27,7 @@ void UCHitFeedbackComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 }
 
-void UCHitFeedbackComponent::PlayHitFeedback(const FTakeDamagePacket& InTakeDamagePacket)
+void UCHitFeedbackComponent::PlayHitFeedback(const FCombatSignalTargetPacket& InTakeDamagePacket)
 {
 	if (!CanPlayHitFeedback(InTakeDamagePacket)) return;
 
@@ -39,7 +39,7 @@ void UCHitFeedbackComponent::PlayHitFeedback(const FTakeDamagePacket& InTakeDama
 	PlayCameraShake(InTakeDamagePacket);
 }
 
-void UCHitFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePacket)
+void UCHitFeedbackComponent::PlayHitStop(const FCombatSignalTargetPacket& InTakeDamagePacket)
 {
 	if (!CanPlayHitStop(InTakeDamagePacket)) return;
 
@@ -54,7 +54,7 @@ void UCHitFeedbackComponent::PlayHitStop(const FTakeDamagePacket& InTakeDamagePa
 	feedbackSubsystem->RequestHitStop(hitStopRequest);
 }
 
-void UCHitFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamagePacket)
+void UCHitFeedbackComponent::PlayHitVFX(const FCombatSignalTargetPacket& InTakeDamagePacket)
 {
 	if (!IsValid(GetWorld())) return;
 	if (!IsValid(OwnerActor_Cached)) return;
@@ -74,7 +74,7 @@ void UCHitFeedbackComponent::PlayHitVFX(const FTakeDamagePacket& InTakeDamagePac
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
 }
 
-void UCHitFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamagePacket)
+void UCHitFeedbackComponent::PlayHitSFX(const FCombatSignalTargetPacket& InTakeDamagePacket)
 {
 	if (!IsValid(OwnerActor_Cached)) return;
 
@@ -92,7 +92,7 @@ void UCHitFeedbackComponent::PlayHitSFX(const FTakeDamagePacket& InTakeDamagePac
 	UGameplayStatics::PlaySoundAtLocation(this, HitSFX, location);
 }
 
-void UCHitFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket)
+void UCHitFeedbackComponent::PlayCameraShake(const FCombatSignalTargetPacket& InTakeDamagePacket)
 {
 	if (!CanPlayCameraShake(InTakeDamagePacket)) return;
 
@@ -107,7 +107,7 @@ void UCHitFeedbackComponent::PlayCameraShake(const FTakeDamagePacket& InTakeDama
 	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
 }
 
-bool UCHitFeedbackComponent::CanPlayHitFeedback(const FTakeDamagePacket& InTakeDamagePacket) const
+bool UCHitFeedbackComponent::CanPlayHitFeedback(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	if (!IsValid(OwnerActor_Cached)) return false;
 	if (!InTakeDamagePacket.Result.bAccepted) return false;
@@ -116,7 +116,7 @@ bool UCHitFeedbackComponent::CanPlayHitFeedback(const FTakeDamagePacket& InTakeD
 	return true;
 }
 
-bool UCHitFeedbackComponent::CanPlayHitStop(const FTakeDamagePacket& InTakeDamagePacket) const
+bool UCHitFeedbackComponent::CanPlayHitStop(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	if (!GetWorld()) return false;
 
@@ -129,7 +129,7 @@ bool UCHitFeedbackComponent::CanPlayHitStop(const FTakeDamagePacket& InTakeDamag
 	return true;
 }
 
-bool UCHitFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& InTakeDamagePacket) const
+bool UCHitFeedbackComponent::CanPlayCameraShake(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	if (!GetWorld()) return false;
 	if (!bEnableCameraShake) return false;
@@ -142,7 +142,7 @@ bool UCHitFeedbackComponent::CanPlayCameraShake(const FTakeDamagePacket& InTakeD
 	return true;
 }
 
-FVector UCHitFeedbackComponent::ResolveHitFeedbackLocation(const FTakeDamagePacket& InTakeDamagePacket) const
+FVector UCHitFeedbackComponent::ResolveHitFeedbackLocation(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	const FDamageImpactInfo& damageHitInfo = InTakeDamagePacket.Context.DamageImpactInfo;
 
@@ -154,7 +154,7 @@ FVector UCHitFeedbackComponent::ResolveHitFeedbackLocation(const FTakeDamagePack
 	return IsValid(OwnerActor_Cached) ? OwnerActor_Cached->GetActorLocation() : FVector::ZeroVector;
 }
 
-FRotator UCHitFeedbackComponent::ResolveHitFeedbackRotation(const FTakeDamagePacket& InTakeDamagePacket) const
+FRotator UCHitFeedbackComponent::ResolveHitFeedbackRotation(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	const FDamageImpactInfo& damageHitInfo = InTakeDamagePacket.Context.DamageImpactInfo;
 
@@ -166,7 +166,7 @@ FRotator UCHitFeedbackComponent::ResolveHitFeedbackRotation(const FTakeDamagePac
 	return IsValid(OwnerActor_Cached) ? OwnerActor_Cached->GetActorRotation() : FRotator::ZeroRotator;
 }
 
-FHitStopRequest UCHitFeedbackComponent::BuildHitStopRequest(const FTakeDamagePacket& InTakeDamagePacket) const
+FHitStopRequest UCHitFeedbackComponent::BuildHitStopRequest(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FHitStopRequest hitStopRequest;
 
@@ -179,7 +179,7 @@ FHitStopRequest UCHitFeedbackComponent::BuildHitStopRequest(const FTakeDamagePac
 	return hitStopRequest;
 }
 
-FCameraShakeRequest UCHitFeedbackComponent::BuildCameraShakeRequest(const FTakeDamagePacket& InTakeDamagePacket) const
+FCameraShakeRequest UCHitFeedbackComponent::BuildCameraShakeRequest(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FCameraShakeRequest cameraShakeRequest;
 
@@ -234,7 +234,7 @@ void UCHitFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeReque
 	FLog::Log(TEXT("================================="));
 }
 
-void UCHitFeedbackComponent::PrintHitInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCHitFeedbackComponent::PrintHitInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	if (!InTakeDamagePacket.Context.DamageImpactInfo.bHasHitResult)
 	{

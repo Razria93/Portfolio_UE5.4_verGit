@@ -44,44 +44,44 @@ private:
 private:
 	// Receive
 	bool ValidateRequest(const FHitContext& InHitContext) const;
-	FApplyDamagePayload BuildPayload(const FHitContext& InHitContext) const;
-	FApplyDamageContext BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const;
+	FCombatSignalSourcePayload BuildPayload(const FHitContext& InHitContext) const;
+	FCombatSignalSourceContext BuildContext(const FCombatSignalSourcePayload& InApplyDamagePayload) const;
 
 private:
 	// Resolve
-	bool ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const;
-	bool CanSendCombatSignal(FApplyDamageContext& InOutApplyDamageContext) const;
-	void ResolveSourceDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const;
-	void ComputeSourceDamage(FApplyDamageContext& InOutApplyDamageContext) const;
-	FApplyDamageResult BuildResult(const FApplyDamageContext& InApplyDamageContext) const;
+	bool ValidateContext(FCombatSignalSourceContext& InOutApplyDamageContext) const;
+	bool CanSendCombatSignal(FCombatSignalSourceContext& InOutApplyDamageContext) const;
+	void ResolveSourceDamageSpec(FCombatSignalSourceContext& InOutApplyDamageContext) const;
+	void ComputeSourceDamage(FCombatSignalSourceContext& InOutApplyDamageContext) const;
+	FCombatSignalSourceResult BuildResult(const FCombatSignalSourceContext& InApplyDamageContext) const;
 
 private:
 	// Send
-	void CommitCombatSignalSource(FApplyDamageContext& InOutApplyDamageContext);
-	float SendDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const;
+	void CommitCombatSignalSource(FCombatSignalSourceContext& InOutApplyDamageContext);
+	float SendDamageToTarget(const FCombatSignalSourceContext& InApplyDamageContext) const;
 
 private:
 	// Cache
-	void CacheDamagedTargetInWindow(const FApplyDamageContext& InApplyDamageContext);
+	void CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InApplyDamageContext);
 
 private:
 	// Helper
 	FApplyDamageHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
 	FApplyDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 	AController* ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const;
-	bool IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const;
-	bool IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const;
+	bool IsDuplicateHit(const FCombatSignalSourceContext& InApplyDamageContext) const;
+	bool IsFriendlyTarget(const FCombatSignalSourceContext& InApplyDamageContext) const;
 
 private:
 	// Debug
-	void PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const;
-	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
+	void PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InApplyDamageResult) const;
+	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InApplyDamageResult) const;
 	void PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
 	void PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
 
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
 	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const;
 	void PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const;
-	void PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const;
+	void PrintDamageResultInfo(const FCombatSignalSourceResult& InApplyDamageResult) const;
 	void PrintRejectReasonInfo(EApplyDamageRejectReason InRejectReason) const;
 };

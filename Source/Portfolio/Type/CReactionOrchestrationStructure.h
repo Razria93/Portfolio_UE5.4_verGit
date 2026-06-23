@@ -41,7 +41,7 @@ public:
 	EReactionIntentSource IntentSource = EReactionIntentSource::TakeDamage;
 
 	UPROPERTY(Transient)
-	FTakeDamagePacket TakeDamagePacket = FTakeDamagePacket();
+	FCombatSignalTargetPacket TakeDamagePacket = FCombatSignalTargetPacket();
 };
 
 USTRUCT(BlueprintType)

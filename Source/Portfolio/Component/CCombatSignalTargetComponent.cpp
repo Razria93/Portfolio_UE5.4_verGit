@@ -57,15 +57,15 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	if (!FMath::IsFinite(DamageAmount)) return 0.f;
 	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
 
-	FTakeDamagePayload takeDamagePayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
-	FTakeDamageContext takeDamageContext = BuildContext(takeDamagePayload);
+	FCombatSignalTargetPayload takeDamagePayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
+	FCombatSignalTargetContext takeDamageContext = BuildContext(takeDamagePayload);
 
 	// Evaluate: validate target-side context and defensive policy before applying state changes.
 	if (!ValidateContext(takeDamageContext))
 	{
 		// Packet / Notify: publish rejected target outcome.
-		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
-		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FCombatSignalTargetResult rejectedResult = BuildResult(takeDamageContext);
+		const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
 		DispatchRejectedCombatResult(takeDamagePacket);
@@ -79,8 +79,8 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	if (!CanReceiveCombatSignal(takeDamageContext))
 	{
 		// Packet / Notify: publish rejected target outcome.
-		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
-		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FCombatSignalTargetResult rejectedResult = BuildResult(takeDamageContext);
+		const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
 		DispatchRejectedCombatResult(takeDamagePacket);
@@ -92,8 +92,8 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	if (!takeDamageContext.bAccepted)
 	{
 		// Packet / Notify: publish rejected target outcome.
-		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
-		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FCombatSignalTargetResult rejectedResult = BuildResult(takeDamageContext);
+		const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
 		// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
 		DispatchRejectedCombatResult(takeDamagePacket);
@@ -104,8 +104,8 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	CommitCombatSignalTarget(takeDamageContext);
 
 	// Packet: combine payload, context, and result for notify/debug consumers.
-	const FTakeDamageResult committedResult = BuildResult(takeDamageContext);
-	const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
+	const FCombatSignalTargetResult committedResult = BuildResult(takeDamageContext);
+	const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
 
 	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
 	// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
@@ -130,9 +130,9 @@ bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& I
 	return true;
 }
 
-FTakeDamagePayload UCCombatSignalTargetComponent::BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
+FCombatSignalTargetPayload UCCombatSignalTargetComponent::BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
 {
-	FTakeDamagePayload takeDamagePayload = FTakeDamagePayload();
+	FCombatSignalTargetPayload takeDamagePayload = FCombatSignalTargetPayload();
 
 	takeDamagePayload.SourceActor = InDefaultDamageEvent.SourceActor;
 	takeDamagePayload.TargetActor = OwnerActor_Cached;
@@ -149,9 +149,9 @@ FTakeDamagePayload UCCombatSignalTargetComponent::BuildPayload(float DamageAmoun
 	return takeDamagePayload;
 }
 
-FTakeDamageContext UCCombatSignalTargetComponent::BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const
+FCombatSignalTargetContext UCCombatSignalTargetComponent::BuildContext(const FCombatSignalTargetPayload& InTakeDamagePayload) const
 {
-	FTakeDamageContext takeDamageContext = FTakeDamageContext();
+	FCombatSignalTargetContext takeDamageContext = FCombatSignalTargetContext();
 
 	takeDamageContext.SourceActor = InTakeDamagePayload.SourceActor;
 	takeDamageContext.TargetActor = InTakeDamagePayload.TargetActor;
@@ -166,7 +166,7 @@ FTakeDamageContext UCCombatSignalTargetComponent::BuildContext(const FTakeDamage
 	return takeDamageContext;
 }
 
-bool UCCombatSignalTargetComponent::ValidateContext(FTakeDamageContext& InOutTakeDamageContext)
+bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& InOutTakeDamageContext)
 {
 	if (!IsValid(InOutTakeDamageContext.TargetActor))
 	{
@@ -198,7 +198,7 @@ bool UCCombatSignalTargetComponent::ValidateContext(FTakeDamageContext& InOutTak
 	return true;
 }
 
-bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FTakeDamageContext& InOutTakeDamageContext)
+bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetContext& InOutTakeDamageContext)
 {
 	// Gate 1: already dead
 	if (InOutTakeDamageContext.DeadState_Before != EDeadState::Alive)
@@ -234,7 +234,7 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FTakeDamageContext& I
 	return true;
 }
 
-void UCCombatSignalTargetComponent::ComputeTargetDamage(FTakeDamageContext& InOutTakeDamageContext) const
+void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const
 {
 	// Process 1: Compute Mitigation Damage
 	InOutTakeDamageContext.MitigatedDamage = ComputeMitigatedDamage(InOutTakeDamageContext);	// TODO
@@ -255,7 +255,7 @@ void UCCombatSignalTargetComponent::ComputeTargetDamage(FTakeDamageContext& InOu
 	InOutTakeDamageContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutTakeDamageContext);	// TODO
 }
 
-float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const
+float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const
 {
 	const float requestedDamage = InOutTakeDamageContext.RequestedDamage;
 
@@ -275,7 +275,7 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FTakeDamageContext& 
 	return FMath::Max(0.f, mitigatedDamage);
 }
 
-float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const
+float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const
 {
 	if (!InOutTakeDamageContext.bShouldCommitDamage) return 0.f;
 
@@ -291,9 +291,9 @@ float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FTakeDamageContext&
 	return FMath::Max(0.f, finalTakenDamage);
 }
 
-FTakeDamageResult UCCombatSignalTargetComponent::BuildResult(const FTakeDamageContext& InTakeDamageContext) const
+FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FCombatSignalTargetContext& InTakeDamageContext) const
 {
-	FTakeDamageResult takeDamageResult = FTakeDamageResult();
+	FCombatSignalTargetResult takeDamageResult = FCombatSignalTargetResult();
 
 	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
 	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
@@ -313,7 +313,7 @@ FTakeDamageResult UCCombatSignalTargetComponent::BuildResult(const FTakeDamageCo
 	return takeDamageResult;
 }
 
-void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FTakeDamageContext& InOutTakeDamageContext)
+void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTargetContext& InOutTakeDamageContext)
 {
 	if (!IsValid(HealthComp_Cached)) return;
 
@@ -327,9 +327,9 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FTakeDamageContext&
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
-FTakeDamagePacket UCCombatSignalTargetComponent::BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InTakeDamagePayload, const FCombatSignalTargetContext& InTakeDamageContext, const FCombatSignalTargetResult& InTakeDamageResult) const
 {
-	FTakeDamagePacket takeDamagePacket;
+	FCombatSignalTargetPacket takeDamagePacket;
 
 	takeDamagePacket.Payload = InTakeDamagePayload;
 	takeDamagePacket.Context = InTakeDamageContext;
@@ -338,7 +338,7 @@ FTakeDamagePacket UCCombatSignalTargetComponent::BuildPacket(const FTakeDamagePa
 	return takeDamagePacket;
 }
 
-void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	if (!InTakeDamagePacket.Result.bAccepted) return;
 
@@ -363,12 +363,12 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FTakeDama
 	// - Debug/UI Feedback
 }
 
-void UCCombatSignalTargetComponent::DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	// - Debug/UI rejected feedback
 }
 
-void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	if (InTakeDamagePacket.Result.DefenseOutcome != EDamageDefenseOutcome::Parry) return;
 
@@ -455,14 +455,14 @@ AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AControl
 	return nullptr;
 }
 
-float UCCombatSignalTargetComponent::CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
+float UCCombatSignalTargetComponent::CommitDamageToHealth(const FCombatSignalTargetContext& InOutTakeDamageContext) const
 {
 	if (!IsValid(HealthComp_Cached)) return 0.0;
 
 	return HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
 }
 
-AActor* UCCombatSignalTargetComponent::ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const
+AActor* UCCombatSignalTargetComponent::ResolveCombatResultReceiverActor(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	if (IsValid(InTakeDamagePacket.Context.SourceActor)) return InTakeDamagePacket.Context.SourceActor;
 
@@ -481,7 +481,7 @@ AActor* UCCombatSignalTargetComponent::ResolveCombatResultReceiverActor(const FT
 	return nullptr;
 }
 
-FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const FTakeDamagePacket& InTakeDamagePacket) const
+FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FCombatResultPacket combatResultPacket;
 
@@ -498,7 +498,7 @@ FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const
 	return combatResultPacket;
 }
 
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("====== Take Damage Summary ======"));
 	FLog::Log(TEXT("[@ TAKE DAMAGE]"));
@@ -519,7 +519,7 @@ void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FTa
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetContextInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintCombatSignalTargetContextInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("/////- Take Damage Context -/////"));
 	PrintObjectInfo(InTakeDamagePacket);
@@ -528,9 +528,9 @@ void UCCombatSignalTargetComponent::PrintCombatSignalTargetContextInfo(const FTa
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
-	const FTakeDamageResult& result = InTakeDamagePacket.Result;
+	const FCombatSignalTargetResult& result = InTakeDamagePacket.Result;
 
 	if (result.DefenseOutcome == EDamageDefenseOutcome::None && result.CommittedDamage <= KINDA_SMALL_NUMBER) return;
 
@@ -543,7 +543,7 @@ void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FTa
 		InTakeDamagePacket.Context.HealthPointAfter));
 }
 
-void UCCombatSignalTargetComponent::PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintObjectInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("========== Object Info =========="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
@@ -557,7 +557,7 @@ void UCCombatSignalTargetComponent::PrintObjectInfo(const FTakeDamagePacket& InT
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("========= SpecKey Info =========="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
@@ -570,7 +570,7 @@ void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FTakeDamagePacket& In
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalTargetComponent::PrintDamageAmountInfo(const FTakeDamagePacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintDamageAmountInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
 {
 	FLog::Log(TEXT("======= DamageAmount Info ======="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));

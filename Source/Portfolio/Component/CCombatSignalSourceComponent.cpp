@@ -62,20 +62,20 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 		return;
 	}
 
-	FApplyDamagePayload applyDamagePayload = BuildPayload(InHitContext);
-	FApplyDamageContext applyDamageContext = BuildContext(applyDamagePayload);
+	FCombatSignalSourcePayload applyDamagePayload = BuildPayload(InHitContext);
+	FCombatSignalSourceContext applyDamageContext = BuildContext(applyDamagePayload);
 
 	// Resolve: validate source-side context and sender policy before target delivery.
 	if (!ValidateContext(applyDamageContext))
 	{
-		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		const FCombatSignalSourceResult applyDamageResult = BuildResult(applyDamageContext);
 		// PrintCombatSignalSourceRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
 
 	if (!CanSendCombatSignal(applyDamageContext))
 	{
-		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		const FCombatSignalSourceResult applyDamageResult = BuildResult(applyDamageContext);
 		// PrintCombatSignalSourceRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
@@ -84,7 +84,7 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	ResolveSourceDamageSpec(applyDamageContext);
 	if (!applyDamageContext.bAccepted)
 	{
-		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		const FCombatSignalSourceResult applyDamageResult = BuildResult(applyDamageContext);
 		// PrintCombatSignalSourceRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
@@ -92,7 +92,7 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	ComputeSourceDamage(applyDamageContext);
 	if (!applyDamageContext.bAccepted)
 	{
-		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		const FCombatSignalSourceResult applyDamageResult = BuildResult(applyDamageContext);
 		// PrintCombatSignalSourceRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
@@ -101,13 +101,13 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	CommitCombatSignalSource(applyDamageContext);
 	if (!applyDamageContext.bAccepted)
 	{
-		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+		const FCombatSignalSourceResult applyDamageResult = BuildResult(applyDamageContext);
 		// PrintCombatSignalSourceRejectedSummaryInfo(applyDamageContext.HitContext, applyDamageResult.RejectReason);
 		return;
 	}
 
 	// Debug: build the final source-side result for optional reporting.
-	const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
+	const FCombatSignalSourceResult applyDamageResult = BuildResult(applyDamageContext);
 	// PrintCombatSignalSourceSummaryInfo(applyDamageContext.HitContext, applyDamageResult);
 }
 
@@ -146,9 +146,9 @@ bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitCont
 	return true;
 }
 
-FApplyDamagePayload UCCombatSignalSourceComponent::BuildPayload(const FHitContext& InHitContext) const
+FCombatSignalSourcePayload UCCombatSignalSourceComponent::BuildPayload(const FHitContext& InHitContext) const
 {
-	FApplyDamagePayload applyDamagePayload;
+	FCombatSignalSourcePayload applyDamagePayload;
 
 	applyDamagePayload.HitContext = InHitContext;
 	applyDamagePayload.SourceActor = InHitContext.OverlapContext.OwnerActor;
@@ -161,9 +161,9 @@ FApplyDamagePayload UCCombatSignalSourceComponent::BuildPayload(const FHitContex
 	return applyDamagePayload;
 }
 
-FApplyDamageContext UCCombatSignalSourceComponent::BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const
+FCombatSignalSourceContext UCCombatSignalSourceComponent::BuildContext(const FCombatSignalSourcePayload& InApplyDamagePayload) const
 {
-	FApplyDamageContext applyDamageContext;
+	FCombatSignalSourceContext applyDamageContext;
 
 	applyDamageContext.HitContext = InApplyDamagePayload.HitContext;
 	applyDamageContext.SourceActor = InApplyDamagePayload.SourceActor;
@@ -177,7 +177,7 @@ FApplyDamageContext UCCombatSignalSourceComponent::BuildContext(const FApplyDama
 	return applyDamageContext;
 }
 
-bool UCCombatSignalSourceComponent::ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const
+bool UCCombatSignalSourceComponent::ValidateContext(FCombatSignalSourceContext& InOutApplyDamageContext) const
 {
 	if (!IsValid(InOutApplyDamageContext.SourceActor))
 	{
@@ -213,7 +213,7 @@ bool UCCombatSignalSourceComponent::ValidateContext(FApplyDamageContext& InOutAp
 	return true;
 }
 
-bool UCCombatSignalSourceComponent::CanSendCombatSignal(FApplyDamageContext& InOutApplyDamageContext) const
+bool UCCombatSignalSourceComponent::CanSendCombatSignal(FCombatSignalSourceContext& InOutApplyDamageContext) const
 {
 	const FOverlapContext& overlapContext = InOutApplyDamageContext.HitContext.OverlapContext;
 
@@ -251,7 +251,7 @@ bool UCCombatSignalSourceComponent::CanSendCombatSignal(FApplyDamageContext& InO
 	return true;
 }
 
-void UCCombatSignalSourceComponent::ResolveSourceDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const
+void UCCombatSignalSourceComponent::ResolveSourceDamageSpec(FCombatSignalSourceContext& InOutApplyDamageContext) const
 {
 	const FApplyDamageSpec* foundApplyDamageSpec = ApplyDamageSpecContainer.Find(InOutApplyDamageContext.ApplyDamageSpecKey);
 
@@ -268,7 +268,7 @@ void UCCombatSignalSourceComponent::ResolveSourceDamageSpec(FApplyDamageContext&
 	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
 }
 
-void UCCombatSignalSourceComponent::ComputeSourceDamage(FApplyDamageContext& InOutApplyDamageContext) const
+void UCCombatSignalSourceComponent::ComputeSourceDamage(FCombatSignalSourceContext& InOutApplyDamageContext) const
 {
 	if (!IsValid(InOutApplyDamageContext.SourceActor) || !IsValid(InOutApplyDamageContext.DamageCauser) || !IsValid(InOutApplyDamageContext.TargetActor))
 	{
@@ -285,9 +285,9 @@ void UCCombatSignalSourceComponent::ComputeSourceDamage(FApplyDamageContext& InO
 	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
 }
 
-FApplyDamageResult UCCombatSignalSourceComponent::BuildResult(const FApplyDamageContext& InApplyDamageContext) const
+FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FCombatSignalSourceContext& InApplyDamageContext) const
 {
-	FApplyDamageResult applyDamageResult;
+	FCombatSignalSourceResult applyDamageResult;
 
 	applyDamageResult.bAccepted = InApplyDamageContext.bAccepted;
 	applyDamageResult.RejectReason = InApplyDamageContext.RejectReason;
@@ -300,7 +300,7 @@ FApplyDamageResult UCCombatSignalSourceComponent::BuildResult(const FApplyDamage
 	return applyDamageResult;
 }
 
-void UCCombatSignalSourceComponent::CommitCombatSignalSource(FApplyDamageContext& InOutApplyDamageContext)
+void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSourceContext& InOutApplyDamageContext)
 {
 	InOutApplyDamageContext.CommittedDamage = SendDamageToTarget(InOutApplyDamageContext);
 
@@ -317,7 +317,7 @@ void UCCombatSignalSourceComponent::CommitCombatSignalSource(FApplyDamageContext
 	CacheDamagedTargetInWindow(InOutApplyDamageContext);
 }
 
-float UCCombatSignalSourceComponent::SendDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const
+float UCCombatSignalSourceComponent::SendDamageToTarget(const FCombatSignalSourceContext& InApplyDamageContext) const
 {
 	if (!IsValid(InApplyDamageContext.TargetActor) || !IsValid(InApplyDamageContext.DamageCauser) || !IsValid(InApplyDamageContext.Instigator))
 		return 0.f;
@@ -334,7 +334,7 @@ float UCCombatSignalSourceComponent::SendDamageToTarget(const FApplyDamageContex
 	return InApplyDamageContext.TargetActor->TakeDamage(InApplyDamageContext.ApplyDamageAmount.RequestDamage, damageEvent, InApplyDamageContext.Instigator, InApplyDamageContext.DamageCauser);
 }
 
-void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FApplyDamageContext& InApplyDamageContext)
+void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InApplyDamageContext)
 {
 	AActor* targetActor = InApplyDamageContext.TargetActor;
 	if (!IsValid(targetActor)) return;
@@ -405,7 +405,7 @@ AController* UCCombatSignalSourceComponent::ResolveInstigatorController(AActor* 
 	return nullptr;
 }
 
-bool UCCombatSignalSourceComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const
+bool UCCombatSignalSourceComponent::IsDuplicateHit(const FCombatSignalSourceContext& InApplyDamageContext) const
 {
 	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(InApplyDamageContext.HitWindowKey);
 
@@ -414,7 +414,7 @@ bool UCCombatSignalSourceComponent::IsDuplicateHit(const FApplyDamageContext& In
 	return foundTargets->Contains(InApplyDamageContext.TargetActor);
 }
 
-bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const
+bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FCombatSignalSourceContext& InApplyDamageContext) const
 {
 	AActor* ownerActor = InApplyDamageContext.SourceActor;
 	AActor* targetActor = InApplyDamageContext.TargetActor;
@@ -438,7 +438,7 @@ bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FApplyDamageContext& 
 	return false;
 }
 
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const
+void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("===== Apply Damage Summary ======"));
 	FLog::Log(TEXT("[@ APPLY DAMAGE]"));
@@ -455,7 +455,7 @@ void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHi
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
+void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("////- Apply Damage Context -/////"));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
@@ -535,7 +535,7 @@ void UCCombatSignalSourceComponent::PrintDamageSpecInfo(const FApplyDamageSpec& 
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCCombatSignalSourceComponent::PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const
+void UCCombatSignalSourceComponent::PrintDamageResultInfo(const FCombatSignalSourceResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("--------- Damage Result ---------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InApplyDamageResult.BaseDamage));
