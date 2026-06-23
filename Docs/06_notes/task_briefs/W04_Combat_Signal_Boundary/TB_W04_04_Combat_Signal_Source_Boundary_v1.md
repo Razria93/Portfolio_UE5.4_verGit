@@ -189,7 +189,7 @@ PrintRejectReasonInfo
 
 ```text
 TB_W04_04 생성
-W04 Work List 상태 진행 중 반영
+W04 Work List 상태 완료 반영
 ApplyDamage Header Source Sections v1 완료
 ApplyDamage Source Definition Order Alignment 완료
 ApplyDamage Process Flow Labels v1 완료
@@ -217,9 +217,16 @@ rg -n "Entry|HitWindow|Receive|Resolve|Send|Cache|Debug" Source/Portfolio/Compon
 PortfolioEditor Win64 Development
 ```
 
+결과:
+
+```text
+성공
+Target is up to date
+```
+
 ## 프롬프트 업데이트 확인
 
-추가 프롬프트 업데이트 후보는 작업 후 확인한다.
+추가 프롬프트 업데이트 후보 없음.
 
 후보 기준:
 
