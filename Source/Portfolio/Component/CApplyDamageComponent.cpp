@@ -106,7 +106,6 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 	// PrintApplyDamageSummaryInfo(applyDamageContext.HitContext, applyDamageResult);
 }
 
-
 bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) const
 {
 	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
@@ -140,6 +139,37 @@ bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) co
 		return false;
 
 	return true;
+}
+
+FApplyDamagePayload UCApplyDamageComponent::BuildPayload(const FHitContext& InHitContext) const
+{
+	FApplyDamagePayload applyDamagePayload;
+
+	applyDamagePayload.HitContext = InHitContext;
+	applyDamagePayload.SourceActor = InHitContext.OverlapContext.OwnerActor;
+	applyDamagePayload.DamageCauser = InHitContext.OverlapContext.DamageCauser;
+	applyDamagePayload.TargetActor = InHitContext.OverlapContext.OtherActor;
+	applyDamagePayload.DamageImpactInfo = InHitContext.DamageImpactInfo;
+	applyDamagePayload.HitWindowKey = BuildHitWindowKey(InHitContext);
+	applyDamagePayload.ApplyDamageSpecKey = BuildSpecKey(InHitContext);
+
+	return applyDamagePayload;
+}
+
+FApplyDamageContext UCApplyDamageComponent::BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const
+{
+	FApplyDamageContext applyDamageContext;
+
+	applyDamageContext.HitContext = InApplyDamagePayload.HitContext;
+	applyDamageContext.SourceActor = InApplyDamagePayload.SourceActor;
+	applyDamageContext.DamageCauser = InApplyDamagePayload.DamageCauser;
+	applyDamageContext.TargetActor = InApplyDamagePayload.TargetActor;
+	applyDamageContext.HitWindowKey = InApplyDamagePayload.HitWindowKey;
+	applyDamageContext.DamageImpactInfo = InApplyDamagePayload.DamageImpactInfo;
+	applyDamageContext.ApplyDamageSpecKey = InApplyDamagePayload.ApplyDamageSpecKey;
+	applyDamageContext.Instigator = ResolveInstigatorController(InApplyDamagePayload.SourceActor, InApplyDamagePayload.DamageCauser);
+
+	return applyDamageContext;
 }
 
 bool UCApplyDamageComponent::ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const
@@ -250,6 +280,21 @@ void UCApplyDamageComponent::ComputeApplyDamage(FApplyDamageContext& InOutApplyD
 	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
 }
 
+FApplyDamageResult UCApplyDamageComponent::BuildResult(const FApplyDamageContext& InApplyDamageContext) const
+{
+	FApplyDamageResult applyDamageResult;
+
+	applyDamageResult.bAccepted = InApplyDamageContext.bAccepted;
+	applyDamageResult.RejectReason = InApplyDamageContext.RejectReason;
+	applyDamageResult.HitWindowKey = InApplyDamageContext.HitWindowKey;
+	applyDamageResult.ApplyDamageSpecKey = InApplyDamageContext.ApplyDamageSpecKey;
+	applyDamageResult.BaseDamage = InApplyDamageContext.ApplyDamageSpec.BaseDamage;
+	applyDamageResult.RequestDamage = InApplyDamageContext.ApplyDamageAmount.RequestDamage;
+	applyDamageResult.CommittedDamage = InApplyDamageContext.CommittedDamage;
+
+	return applyDamageResult;
+}
+
 void UCApplyDamageComponent::CommitApplyDamage(FApplyDamageContext& InOutApplyDamageContext)
 {
 	InOutApplyDamageContext.CommittedDamage = ApplyDamageToTarget(InOutApplyDamageContext);
@@ -266,7 +311,6 @@ void UCApplyDamageComponent::CommitApplyDamage(FApplyDamageContext& InOutApplyDa
 
 	CacheDamagedTargetInWindow(InOutApplyDamageContext);
 }
-
 
 float UCApplyDamageComponent::ApplyDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const
 {
@@ -285,37 +329,14 @@ float UCApplyDamageComponent::ApplyDamageToTarget(const FApplyDamageContext& InA
 	return InApplyDamageContext.TargetActor->TakeDamage(InApplyDamageContext.ApplyDamageAmount.RequestDamage, damageEvent, InApplyDamageContext.Instigator, InApplyDamageContext.DamageCauser);
 }
 
-bool UCApplyDamageComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const
+void UCApplyDamageComponent::CacheDamagedTargetInWindow(const FApplyDamageContext& InApplyDamageContext)
 {
-	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(InApplyDamageContext.HitWindowKey);
-
-	if (!foundTargets) return false;
-
-	return foundTargets->Contains(InApplyDamageContext.TargetActor);
-}
-
-bool UCApplyDamageComponent::IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const
-{
-	AActor* ownerActor = InApplyDamageContext.SourceActor;
 	AActor* targetActor = InApplyDamageContext.TargetActor;
+	if (!IsValid(targetActor)) return;
 
-	if (!IsValid(ownerActor) || !IsValid(targetActor)) return false;
-
-	// TODO:
-	// Team / Friendly Fire policy
-	//
-	// Suggested direction:
-	// 1. Resolve team source from ownerActor
-	// 2. Resolve team source from targetActor
-	// 3. Compare team ids or attitudes
-	// 4. Return true when friendly-fire should be blocked
-	//
-	// Example candidates:
-	// - Team component on character
-	// - Team interface on actor
-	// - Gameplay tag based faction policy
-
-	return false;
+	// Cached
+	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(InApplyDamageContext.HitWindowKey);
+	damagedTargets.Add(targetActor);
 }
 
 FApplyDamageHitWindowKey UCApplyDamageComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
@@ -337,52 +358,6 @@ FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHi
 	applyDamageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
 
 	return applyDamageSpecKey;
-}
-
-FApplyDamagePayload UCApplyDamageComponent::BuildPayload(const FHitContext& InHitContext) const
-{
-	FApplyDamagePayload applyDamagePayload;
-
-	applyDamagePayload.HitContext = InHitContext;
-	applyDamagePayload.SourceActor = InHitContext.OverlapContext.OwnerActor;
-	applyDamagePayload.DamageCauser = InHitContext.OverlapContext.DamageCauser;
-	applyDamagePayload.TargetActor = InHitContext.OverlapContext.OtherActor;
-	applyDamagePayload.DamageImpactInfo = InHitContext.DamageImpactInfo;
-	applyDamagePayload.HitWindowKey = BuildHitWindowKey(InHitContext);
-	applyDamagePayload.ApplyDamageSpecKey = BuildSpecKey(InHitContext);
-
-	return applyDamagePayload;
-}
-
-FApplyDamageContext UCApplyDamageComponent::BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const
-{
-	FApplyDamageContext applyDamageContext;
-
-	applyDamageContext.HitContext = InApplyDamagePayload.HitContext;
-	applyDamageContext.SourceActor = InApplyDamagePayload.SourceActor;
-	applyDamageContext.DamageCauser = InApplyDamagePayload.DamageCauser;
-	applyDamageContext.TargetActor = InApplyDamagePayload.TargetActor;
-	applyDamageContext.HitWindowKey = InApplyDamagePayload.HitWindowKey;
-	applyDamageContext.DamageImpactInfo = InApplyDamagePayload.DamageImpactInfo;
-	applyDamageContext.ApplyDamageSpecKey = InApplyDamagePayload.ApplyDamageSpecKey;
-	applyDamageContext.Instigator = ResolveInstigatorController(InApplyDamagePayload.SourceActor, InApplyDamagePayload.DamageCauser);
-
-	return applyDamageContext;
-}
-
-FApplyDamageResult UCApplyDamageComponent::BuildResult(const FApplyDamageContext& InApplyDamageContext) const
-{
-	FApplyDamageResult applyDamageResult;
-
-	applyDamageResult.bAccepted = InApplyDamageContext.bAccepted;
-	applyDamageResult.RejectReason = InApplyDamageContext.RejectReason;
-	applyDamageResult.HitWindowKey = InApplyDamageContext.HitWindowKey;
-	applyDamageResult.ApplyDamageSpecKey = InApplyDamageContext.ApplyDamageSpecKey;
-	applyDamageResult.BaseDamage = InApplyDamageContext.ApplyDamageSpec.BaseDamage;
-	applyDamageResult.RequestDamage = InApplyDamageContext.ApplyDamageAmount.RequestDamage;
-	applyDamageResult.CommittedDamage = InApplyDamageContext.CommittedDamage;
-
-	return applyDamageResult;
 }
 
 AController* UCApplyDamageComponent::ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const
@@ -425,14 +400,37 @@ AController* UCApplyDamageComponent::ResolveInstigatorController(AActor* InAttac
 	return nullptr;
 }
 
-void UCApplyDamageComponent::CacheDamagedTargetInWindow(const FApplyDamageContext& InApplyDamageContext)
+bool UCApplyDamageComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const
 {
-	AActor* targetActor = InApplyDamageContext.TargetActor;
-	if (!IsValid(targetActor)) return;
+	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(InApplyDamageContext.HitWindowKey);
 
-	// Cached
-	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(InApplyDamageContext.HitWindowKey);
-	damagedTargets.Add(targetActor);
+	if (!foundTargets) return false;
+
+	return foundTargets->Contains(InApplyDamageContext.TargetActor);
+}
+
+bool UCApplyDamageComponent::IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const
+{
+	AActor* ownerActor = InApplyDamageContext.SourceActor;
+	AActor* targetActor = InApplyDamageContext.TargetActor;
+
+	if (!IsValid(ownerActor) || !IsValid(targetActor)) return false;
+
+	// TODO:
+	// Team / Friendly Fire policy
+	//
+	// Suggested direction:
+	// 1. Resolve team source from ownerActor
+	// 2. Resolve team source from targetActor
+	// 3. Compare team ids or attitudes
+	// 4. Return true when friendly-fire should be blocked
+	//
+	// Example candidates:
+	// - Team component on character
+	// - Team interface on actor
+	// - Gameplay tag based faction policy
+
+	return false;
 }
 
 void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const
