@@ -173,13 +173,18 @@ PrintDamageAmountInfo
 
 ```text
 TakeDamage Header Target Sections v1 완료
+TakeDamage Default Event Flow Labels v1 완료
+TakeDamage Source Definition Order Alignment 완료
 ```
 
 확인 내용:
 
 - `CTakeDamageComponent.h` private method group을 `Receive / Evaluate / Apply / Notify / Packet / Debug` 기준으로 재배치했다.
 - 기존 public API와 함수명은 유지했다.
-- 함수 구현은 변경하지 않았다.
+- `HandleDefaultDamageEvent` 내부 흐름을 `Receive / Evaluate / Apply / Packet / Notify` 라벨로 정리했다.
+- rejected / accepted packet 생성과 dispatch 위치의 의미를 명시했다.
+- `CTakeDamageComponent.cpp` 정의 순서를 `CTakeDamageComponent.h` 선언 순서와 일치시켰다.
+- 함수 구현 로직은 변경하지 않았다.
 - `FCombatSignal`은 기존 damage flow에 연결하지 않았다.
 
 정적 확인:
@@ -203,7 +208,6 @@ PortfolioEditor Win64 Development
 
 남은 작업:
 
-- `HandleDefaultDamageEvent` 내부 단계 주석과 호출 흐름을 `Receive / Evaluate / Apply / Notify` 기준으로 정리한다.
 - `FTakeDamageResult`와 `FCombatSignalResult` 후보 관계를 문서화한다.
 
 ## 프롬프트 업데이트 확인
