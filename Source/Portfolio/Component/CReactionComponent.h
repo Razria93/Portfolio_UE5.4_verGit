@@ -152,7 +152,7 @@ private:
 	void PrintReactionInfoSummary() const;
 	void PrintReactionDataMap() const;
 	void PrintComponentStateInfo() const;
-	void PrintApplyDamageSpecKeyInfo(const FDamageSpecKey& InSpecKey) const;
+	void PrintDamageSpecKeyInfo(const FDamageSpecKey& InSpecKey) const;
 	void PrintReactionDataKeyInfo(const FReactionDataKey& InDataKey) const;
 	void PrintReactionDataInfo(const FReactionData& InData) const;
 	void PrintReactionExcutorInfo(const UCReaction* InReaction) const;

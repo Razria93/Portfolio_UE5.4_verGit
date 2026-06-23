@@ -16,7 +16,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	TMap<FDamageSpecKey, FDamageSpec> ApplyDamageSpecContainer;	// TODO: Seperate DataAsset (DB)
+	TMap<FDamageSpecKey, FDamageSpec> DamageSpecContainer;	// TODO: Seperate DataAsset (DB)
 
 private:
 	TMap<FCombatSignalHitWindowKey, TSet<AActor*>> DamagedTargetContainer;
@@ -75,13 +75,13 @@ private:
 private:
 	// Debug
 	void PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
-	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
+	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
 	void PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
 	void PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
 
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
 	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const;
-	void PrintDamageSpecInfo(const FDamageSpec& InApplyDamageSpec) const;
+	void PrintDamageSpecInfo(const FDamageSpec& InDamageSpec) const;
 	void PrintDamageResultInfo(const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
 	void PrintRejectReasonInfo(ECombatSignalSourceRejectReason InRejectReason) const;
 };

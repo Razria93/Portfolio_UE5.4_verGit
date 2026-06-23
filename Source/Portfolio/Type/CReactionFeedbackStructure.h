@@ -46,7 +46,7 @@ public:
 	EReactionType ReactionType = EReactionType::Max;
 
 	UPROPERTY(EditAnywhere)
-	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
+	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
 
 public:
 	FReactionFeedbackKey() = default;
@@ -55,7 +55,7 @@ public:
 	bool operator==(const FReactionFeedbackKey& InOther) const
 	{
 		return ReactionType == InOther.ReactionType
-			&& ApplyDamageSpecKey == InOther.ApplyDamageSpecKey;
+			&& DamageSpecKey == InOther.DamageSpecKey;
 	}
 };
 

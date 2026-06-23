@@ -122,7 +122,7 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 		return false;
 	}
 
-	OutIncomingCandidate.ReactionDataKey.ApplyDamageSpecKey = InIncomingRequest.CombatSignalTargetPacket.Result.ApplyDamageSpecKey;
+	OutIncomingCandidate.ReactionDataKey.DamageSpecKey = InIncomingRequest.CombatSignalTargetPacket.Result.DamageSpecKey;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = reactionType;
 	return true;
 }
@@ -150,7 +150,7 @@ bool UCReactionOrchestratorComponent::ResolveCombatResultReactionCandidate(const
 		return false;
 	}
 
-	OutIncomingCandidate.ReactionDataKey.ApplyDamageSpecKey = InIncomingRequest.CombatResultPacket.ApplyDamageSpecKey;
+	OutIncomingCandidate.ReactionDataKey.DamageSpecKey = InIncomingRequest.CombatResultPacket.DamageSpecKey;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = InIncomingRequest.ReactionType;
 	return true;
 }

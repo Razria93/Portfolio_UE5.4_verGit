@@ -156,7 +156,7 @@ FCombatSignalSourcePayload UCCombatSignalSourceComponent::BuildPayload(const FHi
 	combatSignalSourcePayload.TargetActor = InHitContext.OverlapContext.OtherActor;
 	combatSignalSourcePayload.DamageImpactInfo = InHitContext.DamageImpactInfo;
 	combatSignalSourcePayload.HitWindowKey = BuildHitWindowKey(InHitContext);
-	combatSignalSourcePayload.ApplyDamageSpecKey = BuildSpecKey(InHitContext);
+	combatSignalSourcePayload.DamageSpecKey = BuildSpecKey(InHitContext);
 
 	return combatSignalSourcePayload;
 }
@@ -171,7 +171,7 @@ FCombatSignalSourceContext UCCombatSignalSourceComponent::BuildContext(const FCo
 	combatSignalSourceContext.TargetActor = InCombatSignalSourcePayload.TargetActor;
 	combatSignalSourceContext.HitWindowKey = InCombatSignalSourcePayload.HitWindowKey;
 	combatSignalSourceContext.DamageImpactInfo = InCombatSignalSourcePayload.DamageImpactInfo;
-	combatSignalSourceContext.ApplyDamageSpecKey = InCombatSignalSourcePayload.ApplyDamageSpecKey;
+	combatSignalSourceContext.DamageSpecKey = InCombatSignalSourcePayload.DamageSpecKey;
 	combatSignalSourceContext.Instigator = ResolveInstigatorController(InCombatSignalSourcePayload.SourceActor, InCombatSignalSourcePayload.DamageCauser);
 
 	return combatSignalSourceContext;
@@ -253,17 +253,17 @@ bool UCCombatSignalSourceComponent::CanSendCombatSignal(FCombatSignalSourceConte
 
 void UCCombatSignalSourceComponent::ResolveSourceDamageSpec(FCombatSignalSourceContext& InOutCombatSignalSourceContext) const
 {
-	const FDamageSpec* foundApplyDamageSpec = ApplyDamageSpecContainer.Find(InOutCombatSignalSourceContext.ApplyDamageSpecKey);
+	const FDamageSpec* foundDamageSpec = DamageSpecContainer.Find(InOutCombatSignalSourceContext.DamageSpecKey);
 
-	if (!foundApplyDamageSpec)
+	if (!foundDamageSpec)
 	{
-		InOutCombatSignalSourceContext.ApplyDamageSpec = FDamageSpec();
+		InOutCombatSignalSourceContext.DamageSpec = FDamageSpec();
 		InOutCombatSignalSourceContext.bAccepted = false;
 		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::SpecNotFound;
 		return;
 	}
 
-	InOutCombatSignalSourceContext.ApplyDamageSpec = *foundApplyDamageSpec;
+	InOutCombatSignalSourceContext.DamageSpec = *foundDamageSpec;
 	InOutCombatSignalSourceContext.bAccepted = true;
 	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
 }
@@ -278,8 +278,8 @@ void UCCombatSignalSourceComponent::ComputeSourceDamage(FCombatSignalSourceConte
 	}
 
 	// [NOTE] Minimal sender-side request damage.
-	InOutCombatSignalSourceContext.ApplyDamageAmount = FDamageAmount();
-	InOutCombatSignalSourceContext.ApplyDamageAmount.RequestDamage = InOutCombatSignalSourceContext.ApplyDamageSpec.BaseDamage;
+	InOutCombatSignalSourceContext.DamageAmount = FDamageAmount();
+	InOutCombatSignalSourceContext.DamageAmount.RequestDamage = InOutCombatSignalSourceContext.DamageSpec.BaseDamage;
 
 	InOutCombatSignalSourceContext.bAccepted = true;
 	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
@@ -292,9 +292,9 @@ FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FComb
 	combatSignalSourceResult.bAccepted = InCombatSignalSourceContext.bAccepted;
 	combatSignalSourceResult.RejectReason = InCombatSignalSourceContext.RejectReason;
 	combatSignalSourceResult.HitWindowKey = InCombatSignalSourceContext.HitWindowKey;
-	combatSignalSourceResult.ApplyDamageSpecKey = InCombatSignalSourceContext.ApplyDamageSpecKey;
-	combatSignalSourceResult.BaseDamage = InCombatSignalSourceContext.ApplyDamageSpec.BaseDamage;
-	combatSignalSourceResult.RequestDamage = InCombatSignalSourceContext.ApplyDamageAmount.RequestDamage;
+	combatSignalSourceResult.DamageSpecKey = InCombatSignalSourceContext.DamageSpecKey;
+	combatSignalSourceResult.BaseDamage = InCombatSignalSourceContext.DamageSpec.BaseDamage;
+	combatSignalSourceResult.RequestDamage = InCombatSignalSourceContext.DamageAmount.RequestDamage;
 	combatSignalSourceResult.CommittedDamage = InCombatSignalSourceContext.CommittedDamage;
 
 	return combatSignalSourceResult;
@@ -326,12 +326,12 @@ float UCCombatSignalSourceComponent::SendDamageToTarget(const FCombatSignalSourc
 
 	damageEvent.SourceActor = InCombatSignalSourceContext.SourceActor;
 	damageEvent.TargetActor = InCombatSignalSourceContext.TargetActor;
-	damageEvent.ApplyDamageSpecKey = InCombatSignalSourceContext.ApplyDamageSpecKey;
+	damageEvent.DamageSpecKey = InCombatSignalSourceContext.DamageSpecKey;
 	damageEvent.DamageImpactInfo = InCombatSignalSourceContext.DamageImpactInfo;
-	damageEvent.ApplyDamageSpec = InCombatSignalSourceContext.ApplyDamageSpec;
-	damageEvent.ApplyDamageAmount = InCombatSignalSourceContext.ApplyDamageAmount;
+	damageEvent.DamageSpec = InCombatSignalSourceContext.DamageSpec;
+	damageEvent.DamageAmount = InCombatSignalSourceContext.DamageAmount;
 
-	return InCombatSignalSourceContext.TargetActor->TakeDamage(InCombatSignalSourceContext.ApplyDamageAmount.RequestDamage, damageEvent, InCombatSignalSourceContext.Instigator, InCombatSignalSourceContext.DamageCauser);
+	return InCombatSignalSourceContext.TargetActor->TakeDamage(InCombatSignalSourceContext.DamageAmount.RequestDamage, damageEvent, InCombatSignalSourceContext.Instigator, InCombatSignalSourceContext.DamageCauser);
 }
 
 void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InCombatSignalSourceContext)
@@ -356,13 +356,13 @@ FCombatSignalHitWindowKey UCCombatSignalSourceComponent::BuildHitWindowKey(const
 
 FDamageSpecKey UCCombatSignalSourceComponent::BuildSpecKey(const FHitContext& InHitContext) const
 {
-	FDamageSpecKey applyDamageSpecKey;
+	FDamageSpecKey damageSpecKey;
 
-	applyDamageSpecKey.WeaponType = InHitContext.WeaponContext.WeaponType;
-	applyDamageSpecKey.ActionType = InHitContext.ActionContext.ActionType;
-	applyDamageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
+	damageSpecKey.WeaponType = InHitContext.WeaponContext.WeaponType;
+	damageSpecKey.ActionType = InHitContext.ActionContext.ActionType;
+	damageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
 
-	return applyDamageSpecKey;
+	return damageSpecKey;
 }
 
 AController* UCCombatSignalSourceComponent::ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const
@@ -455,12 +455,12 @@ void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHi
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const
+void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const
 {
 	FLog::Log(TEXT("////- Combat Signal Source Context -/////"));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
 	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
-	PrintDamageSpecInfo(InApplyDamageSpec);
+	PrintDamageSpecInfo(InDamageSpec);
 	PrintDamageResultInfo(InCombatSignalSourceResult);
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
@@ -528,10 +528,10 @@ void UCCombatSignalSourceComponent::PrintHitContextInfo(const FWeaponContext& In
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCCombatSignalSourceComponent::PrintDamageSpecInfo(const FDamageSpec& InApplyDamageSpec) const
+void UCCombatSignalSourceComponent::PrintDamageSpecInfo(const FDamageSpec& InDamageSpec) const
 {
 	FLog::Log(TEXT("---------- Damage Spec ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InApplyDamageSpec.BaseDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InDamageSpec.BaseDamage));
 	FLog::Log(TEXT("---------------------------------"));
 }
 

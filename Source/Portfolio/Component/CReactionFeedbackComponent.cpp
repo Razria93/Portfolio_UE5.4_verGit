@@ -87,11 +87,11 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 	}
 
 	// WeaponType
-	if (InDataKey.ApplyDamageSpecKey.WeaponType == requestKey.ApplyDamageSpecKey.WeaponType)
+	if (InDataKey.DamageSpecKey.WeaponType == requestKey.DamageSpecKey.WeaponType)
 	{
 		OutScore += ReactionFeedbackScore::WeaponExact;
 	}
-	else if (InDataKey.ApplyDamageSpecKey.WeaponType == EWeaponType::All)
+	else if (InDataKey.DamageSpecKey.WeaponType == EWeaponType::All)
 	{
 		// [Pass] Wildcard match.
 	}
@@ -101,11 +101,11 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 	}
 
 	// ActionType
-	if (InDataKey.ApplyDamageSpecKey.ActionType == requestKey.ApplyDamageSpecKey.ActionType)
+	if (InDataKey.DamageSpecKey.ActionType == requestKey.DamageSpecKey.ActionType)
 	{
 		OutScore += ReactionFeedbackScore::ActionExact;
 	}
-	else if (InDataKey.ApplyDamageSpecKey.ActionType == EActionType::All)
+	else if (InDataKey.DamageSpecKey.ActionType == EActionType::All)
 	{
 		// [Pass] Wildcard match.
 	}
@@ -115,11 +115,11 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 	}
 
 	// ActionIndex
-	if (InDataKey.ApplyDamageSpecKey.ActionIndex == requestKey.ApplyDamageSpecKey.ActionIndex)
+	if (InDataKey.DamageSpecKey.ActionIndex == requestKey.DamageSpecKey.ActionIndex)
 	{
 		OutScore += ReactionFeedbackScore::IndexExact;
 	}
-	else if (InDataKey.ApplyDamageSpecKey.ActionIndex == INDEX_NONE)
+	else if (InDataKey.DamageSpecKey.ActionIndex == INDEX_NONE)
 	{
 		// [Pass] Wildcard match.
 	}

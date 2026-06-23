@@ -31,7 +31,7 @@ bool FReactionDataKey::IsValidMinimal() const
 {
 	return ReactionType != EReactionType::None
 		&& ReactionType != EReactionType::Max
-		&& ApplyDamageSpecKey.IsValidMinimal();
+		&& DamageSpecKey.IsValidMinimal();
 }
 
 bool FReactionData::IsValidMinimal() const

@@ -347,7 +347,7 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 	if (!ActiveDataKey_Cached.IsValidMinimal()) return request;
 
 	request.ReactionFeedbackKey.ReactionType = ActiveDataKey_Cached.ReactionType;
-	request.ReactionFeedbackKey.ApplyDamageSpecKey = ActiveDataKey_Cached.ApplyDamageSpecKey;
+	request.ReactionFeedbackKey.DamageSpecKey = ActiveDataKey_Cached.DamageSpecKey;
 	request.ReactionFeedbackTiming = InTiming;
 	request.TriggerKey = InTriggerKey;
 
@@ -484,7 +484,7 @@ void UCReaction::PrintExecutionParticipant(const FExecutionParticipant& InPartic
 	else if (InParticipant.IsReactionParticipant())
 	{
 		const FReactionExecutionContext& context = InParticipant.GetReactionContext();
-		const FDamageSpecKey& specKey = context.ReactionDataKey.ApplyDamageSpecKey;
+		const FDamageSpecKey& specKey = context.ReactionDataKey.DamageSpecKey;
 
 		FLog::Log(TEXT("-------- Reaction Context -------"));
 		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(context.ReactionDataKey.ReactionType)));
