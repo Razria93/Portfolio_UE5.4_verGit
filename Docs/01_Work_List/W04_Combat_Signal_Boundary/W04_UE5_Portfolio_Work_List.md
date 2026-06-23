@@ -469,7 +469,7 @@ PortfolioEditor Win64 Development
 
 ## 7. 후속 작업
 
-### 7.1 W04-04 Combat Signal Target Boundary v1
+### 7.1 W04-03 Combat Signal Target Boundary v1
 
 **브랜치**
 
@@ -496,7 +496,7 @@ UCTakeDamageComponent 내부 흐름을 CombatSignalTarget 책임 기준으로 �
 - target-side 책임 단계가 코드에서 명확히 보임
 - Unreal build 성공
 
-### 7.2 W04-05 Combat Signal Source Boundary v1
+### 7.2 W04-04 Combat Signal Source Boundary v1
 
 **브랜치**
 
@@ -524,7 +524,7 @@ UCApplyDamageComponent 내부 흐름을 CombatSignalSource 책임 기준으로 �
 - source-side 책임 단계가 코드에서 명확히 보임
 - Unreal build 성공
 
-### 7.3 W04-06 Combat Signal Component Rename
+### 7.3 W04-05 Combat Signal Component Rename
 
 **브랜치**
 
@@ -551,7 +551,7 @@ refactor/combat-signal-component-rename
 - 기존 전투 회귀 통과
 - Unreal build 성공
 
-### 7.4 W04-07 Combat Signal Cue v1
+### 7.4 W04-06 Combat Signal Cue v1
 
 **브랜치**
 
