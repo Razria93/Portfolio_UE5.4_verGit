@@ -569,12 +569,20 @@ refactor/combat-signal-component-rename
 
 - `UCApplyDamageComponent` -> `UCCombatSignalSourceComponent`
 - `UCTakeDamageComponent` -> `UCCombatSignalTargetComponent`
+- `CApplyDamageComponent.h/.cpp` -> `CCombatSignalSourceComponent.h/.cpp`
+- `CTakeDamageComponent.h/.cpp` -> `CCombatSignalTargetComponent.h/.cpp`
+- source-side / target-side 내부 API명 정리
+- `FApplyDamage*` / `FTakeDamage*` 계열 구조체명 정리
+- 로그 / 디버그 문구 정리
 - Character / Weapon 참조 갱신
 - Blueprint 영향 확인
 
 **완료조건**
 
 - 이름만 바꾼 것이 아니라 이전 브랜치의 책임 정리가 선행되어 있다.
+- Unreal Engine `ApplyDamage` / `TakeDamage` API 이름과 프로젝트 내부 이름이 분리되어 있다.
+- 내부 API명과 구조체명이 CombatSignal Source / Target 책임을 따른다.
+- 기존 combat runtime 동작이 바뀌지 않는다.
 - 기존 전투 회귀 통과
 - Unreal build 성공
 

@@ -37,6 +37,14 @@ W03 이후 전투 처리 구조를 논의하면서 `Request`, `Attack`, `Damage`
 - 새 gameplay behavior를 추가하는가?
 ```
 
+W04-05 rename 작업 후보:
+
+```text
+- 기존 runtime component를 리네임할 때는 컴포넌트명, 내부 API명, 구조체명, 로그 문구를 별도 단계로 나눈다.
+- Unreal Engine API 이름과 프로젝트 내부 이름을 먼저 분리해서 검토한다.
+- 리네임 브랜치는 기능 변경이 아니라 책임 정렬 결과를 이름에 반영하는 작업으로 제한한다.
+```
+
 ## Reason
 
 이 기준은 over-abstraction과 God Object 위험을 줄인다.
