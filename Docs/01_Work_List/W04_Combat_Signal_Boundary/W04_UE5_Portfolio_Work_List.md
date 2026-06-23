@@ -512,7 +512,7 @@ UCTakeDamageComponent 내부 흐름을 CombatSignalTarget 책임 기준으로 �
 **상태**
 
 ```text
-진행 중
+완료
 ```
 
 **브랜치**
@@ -529,16 +529,20 @@ UCApplyDamageComponent 내부 흐름을 CombatSignalSource 책임 기준으로 �
 
 **핵심 범위**
 
-- hit window tracking
-- duplicate target tracking
-- signal build 후보 경계
-- target delivery 경계
-- `RequestApplyDamage` API rename 후보 준비
+- `UCApplyDamageComponent` private API를 HitWindow / Entry / Receive / Resolve / Send / Cache / Helper / Debug 기준으로 재배치
+- `CApplyDamageComponent.cpp` 정의 순서를 header 선언 순서와 일치
+- `ProcessApplyDamage` 내부 흐름을 Receive / Resolve / Send / Debug 라벨로 정리
+- 기존 `RequestApplyDamage` 흐름 유지
+- 기존 weapon overlap damage 흐름 유지
+- target `TakeDamage()` 전달 방식 유지
+- `FCombatSignal` 직접 연결 없음
+- 클래스명 rename은 아직 하지 않음
 
 **완료조건**
 
 - 기존 weapon overlap damage 동작 유지
 - source-side 책임 단계가 코드에서 명확히 보임
+- `ProcessApplyDamage` 흐름이 source-side 단계 기준으로 읽힘
 - Unreal build 성공
 
 ### 7.3 W04-05 Combat Signal Component Rename
@@ -546,7 +550,7 @@ UCApplyDamageComponent 내부 흐름을 CombatSignalSource 책임 기준으로 �
 **상태**
 
 ```text
-예정
+다음 작업
 ```
 
 **브랜치**
