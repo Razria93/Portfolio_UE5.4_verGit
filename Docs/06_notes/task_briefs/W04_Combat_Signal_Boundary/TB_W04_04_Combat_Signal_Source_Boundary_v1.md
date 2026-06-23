@@ -192,12 +192,14 @@ TB_W04_04 생성
 W04 Work List 상태 진행 중 반영
 ApplyDamage Header Source Sections v1 완료
 ApplyDamage Source Definition Order Alignment 완료
+ApplyDamage Process Flow Labels v1 완료
 ```
 
 확인 내용:
 
 - `CApplyDamageComponent.h` private method group을 `HitWindow / Entry / Receive / Resolve / Send / Cache / Helper / Debug` 기준으로 재배치했다.
 - `CApplyDamageComponent.cpp` 정의 순서를 `CApplyDamageComponent.h` 선언 순서와 일치시켰다.
+- `ProcessApplyDamage` 내부 흐름을 `Receive / Resolve / Send / Debug` 라벨로 정리했다.
 - 기존 public API와 함수명은 유지했다.
 - 함수 구현 로직은 변경하지 않았다.
 - `FCombatSignal`은 기존 damage flow에 연결하지 않았다.

@@ -55,6 +55,7 @@ void UCApplyDamageComponent::RequestApplyDamage(const FHitContext& InHitContext)
 
 void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 {
+	// Receive: validate overlap hit input and normalize it into source-side data.
 	if (!ValidateRequest(InHitContext))
 	{
 		// PrintApplyDamageRejectedSummaryInfo(InHitContext, EApplyDamageRejectReason::InvalidRequest);
@@ -64,6 +65,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 	FApplyDamagePayload applyDamagePayload = BuildPayload(InHitContext);
 	FApplyDamageContext applyDamageContext = BuildContext(applyDamagePayload);
 
+	// Resolve: validate source-side context and sender policy before target delivery.
 	if (!ValidateContext(applyDamageContext))
 	{
 		const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
@@ -78,6 +80,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 		return;
 	}
 
+	// Resolve: resolve damage spec and compute request damage.
 	ResolveApplyDamageSpec(applyDamageContext);
 	if (!applyDamageContext.bAccepted)
 	{
@@ -94,6 +97,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 		return;
 	}
 
+	// Send: deliver the source-side damage event to the target damage entry.
 	CommitApplyDamage(applyDamageContext);
 	if (!applyDamageContext.bAccepted)
 	{
@@ -102,6 +106,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 		return;
 	}
 
+	// Debug: build the final source-side result for optional reporting.
 	const FApplyDamageResult applyDamageResult = BuildResult(applyDamageContext);
 	// PrintApplyDamageSummaryInfo(applyDamageContext.HitContext, applyDamageResult);
 }
