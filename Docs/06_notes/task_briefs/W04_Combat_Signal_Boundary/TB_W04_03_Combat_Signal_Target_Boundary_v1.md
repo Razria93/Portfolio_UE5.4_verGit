@@ -79,7 +79,7 @@ Receive
 - packet 교체까지 동시에 진행하면 회귀 위험 축이 커진다.
 - `FTakeDamageResult`와 `FCombatSignalResult`의 대응 관계는 먼저 문서화하고, 실제 교체 여부는 후속 branch에서 판단하는 편이 안전하다.
 
-따라서 v1에서는 기존 타입을 유지한 채 함수 그룹과 호출 흐름만 `Receive / Evaluate / Apply / Notify` 기준으로 정리한다.
+따라서 v1에서는 기존 타입을 유지한 채 함수 그룹과 내부 책임 흐름을 `Receive / Evaluate / Apply / Notify` 기준으로 정리한다.
 
 ## 결과 타입 관계
 
@@ -195,7 +195,7 @@ PrintDamageAmountInfo
 - 기존 `ApplyDamageComponent` / weapon overlap flow와 연결 방식이 유지되어 있다.
 - 기존 Guard / Parry / Hit / Dead 동작 의도가 바뀌지 않는다.
 - `CTakeDamageComponent.h`에서 target-side 단계가 명확히 보인다.
-- `HandleDefaultDamageEvent` 흐름이 Receive / Evaluate / Apply / Notify 기준으로 읽힌다.
+- `HandleDefaultDamageEvent` 흐름이 Receive / Evaluate / Apply / Packet / Notify 기준으로 읽힌다.
 - `FTakeDamageResult`와 `FCombatSignalResult` 후보 관계가 문서화되어 있다.
 - Unreal build가 성공한다.
 

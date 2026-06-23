@@ -471,6 +471,12 @@ PortfolioEditor Win64 Development
 
 ### 7.1 W04-03 Combat Signal Target Boundary v1
 
+**상태**
+
+```text
+완료
+```
+
 **브랜치**
 
 ```text
@@ -485,18 +491,29 @@ UCTakeDamageComponent 내부 흐름을 CombatSignalTarget 책임 기준으로 �
 
 **핵심 범위**
 
-- Receive / Evaluate / Apply / Notify 단계 메서드 분리
+- `UCTakeDamageComponent` private API를 Entry / Receive / Evaluate / Apply / Notify / Packet / Debug 기준으로 재배치
+- `CTakeDamageComponent.cpp` 정의 순서를 header 선언 순서와 일치
+- `HandleDefaultDamageEvent` 내부 흐름을 Receive / Evaluate / Apply / Packet / Notify 라벨로 정리
+- `FTakeDamageResult`와 `FCombatSignalResult` 관계를 내부 authoritative result / 외부 summary result 후보로 정리
 - 기존 `RequestTakeDamage` 흐름 유지
 - UE `TakeDamage()` adapter 유지
+- `FCombatSignal` 직접 연결 없음
 - 클래스명 rename은 아직 하지 않음
 
 **완료조건**
 
 - 기존 Guard / Parry / Hit / Dead 동작 유지
 - target-side 책임 단계가 코드에서 명확히 보임
+- `FTakeDamageResult` / `FCombatSignalResult` 관계가 현재 브랜치 범위 안에서 정리됨
 - Unreal build 성공
 
 ### 7.2 W04-04 Combat Signal Source Boundary v1
+
+**상태**
+
+```text
+다음 작업
+```
 
 **브랜치**
 
@@ -526,6 +543,12 @@ UCApplyDamageComponent 내부 흐름을 CombatSignalSource 책임 기준으로 �
 
 ### 7.3 W04-05 Combat Signal Component Rename
 
+**상태**
+
+```text
+예정
+```
+
 **브랜치**
 
 ```text
@@ -552,6 +575,12 @@ refactor/combat-signal-component-rename
 - Unreal build 성공
 
 ### 7.4 W04-06 Combat Signal Cue v1
+
+**상태**
+
+```text
+예정
+```
 
 **브랜치**
 
