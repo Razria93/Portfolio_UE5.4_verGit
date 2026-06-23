@@ -484,7 +484,7 @@ void UCReaction::PrintExecutionParticipant(const FExecutionParticipant& InPartic
 	else if (InParticipant.IsReactionParticipant())
 	{
 		const FReactionExecutionContext& context = InParticipant.GetReactionContext();
-		const FApplyDamageSpecKey& specKey = context.ReactionDataKey.ApplyDamageSpecKey;
+		const FDamageSpecKey& specKey = context.ReactionDataKey.ApplyDamageSpecKey;
 
 		FLog::Log(TEXT("-------- Reaction Context -------"));
 		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(context.ReactionDataKey.ReactionType)));

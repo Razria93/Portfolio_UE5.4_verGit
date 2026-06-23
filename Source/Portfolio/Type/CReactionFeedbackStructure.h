@@ -46,7 +46,7 @@ public:
 	EReactionType ReactionType = EReactionType::Max;
 
 	UPROPERTY(EditAnywhere)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 public:
 	FReactionFeedbackKey() = default;

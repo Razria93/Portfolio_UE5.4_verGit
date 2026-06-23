@@ -120,7 +120,7 @@ private:
 
 private:
 	// Data Resolve Helpers
-	void BuildCandidateSpecKeys(const FApplyDamageSpecKey& InSpecKey, TArray<FApplyDamageSpecKey>& OutSpecKeys) const;
+	void BuildCandidateSpecKeys(const FDamageSpecKey& InSpecKey, TArray<FDamageSpecKey>& OutSpecKeys) const;
 
 private:
 	// Decision Apply
@@ -152,7 +152,7 @@ private:
 	void PrintReactionInfoSummary() const;
 	void PrintReactionDataMap() const;
 	void PrintComponentStateInfo() const;
-	void PrintApplyDamageSpecKeyInfo(const FApplyDamageSpecKey& InSpecKey) const;
+	void PrintApplyDamageSpecKeyInfo(const FDamageSpecKey& InSpecKey) const;
 	void PrintReactionDataKeyInfo(const FReactionDataKey& InDataKey) const;
 	void PrintReactionDataInfo(const FReactionData& InData) const;
 	void PrintReactionExcutorInfo(const UCReaction* InReaction) const;

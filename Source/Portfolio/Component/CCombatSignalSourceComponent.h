@@ -16,7 +16,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	TMap<FApplyDamageSpecKey, FApplyDamageSpec> ApplyDamageSpecContainer;	// TODO: Seperate DataAsset (DB)
+	TMap<FDamageSpecKey, FDamageSpec> ApplyDamageSpecContainer;	// TODO: Seperate DataAsset (DB)
 
 private:
 	TMap<FApplyDamageHitWindowKey, TSet<AActor*>> DamagedTargetContainer;
@@ -67,7 +67,7 @@ private:
 private:
 	// Helper
 	FApplyDamageHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
-	FApplyDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
+	FDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 	AController* ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const;
 	bool IsDuplicateHit(const FCombatSignalSourceContext& InCombatSignalSourceContext) const;
 	bool IsFriendlyTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext) const;
@@ -75,13 +75,13 @@ private:
 private:
 	// Debug
 	void PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
-	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
+	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
 	void PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
 	void PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
 
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
 	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const;
-	void PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const;
+	void PrintDamageSpecInfo(const FDamageSpec& InApplyDamageSpec) const;
 	void PrintDamageResultInfo(const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
 	void PrintRejectReasonInfo(ECombatSignalSourceRejectReason InRejectReason) const;
 };

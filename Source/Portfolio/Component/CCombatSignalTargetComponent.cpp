@@ -561,7 +561,7 @@ void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FCombatSignalTargetPa
 {
 	FLog::Log(TEXT("========= SpecKey Info =========="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
-	const FApplyDamageSpecKey& applyDamageSpecKey = InCombatSignalTargetPacket.Payload.ApplyDamageSpecKey;
+	const FDamageSpecKey& applyDamageSpecKey = InCombatSignalTargetPacket.Payload.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(applyDamageSpecKey.ActionIndex);
 
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));

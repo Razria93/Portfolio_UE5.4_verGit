@@ -930,7 +930,7 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageHitWindowKey& InOther)
 }
 
 USTRUCT(BlueprintType)
-struct FApplyDamageSpecKey
+struct FDamageSpecKey
 {
 	GENERATED_BODY()
 
@@ -945,7 +945,7 @@ public:
 	int32 ActionIndex = INDEX_NONE;
 
 public:
-	FApplyDamageSpecKey() = default;
+	FDamageSpecKey() = default;
 
 public:
 	bool IsValidMinimal() const
@@ -957,7 +957,7 @@ public:
 	}
 
 public:
-	bool operator==(const FApplyDamageSpecKey& InOther) const
+	bool operator==(const FDamageSpecKey& InOther) const
 	{
 		return WeaponType == InOther.WeaponType
 			&& ActionType == InOther.ActionType
@@ -965,7 +965,7 @@ public:
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
+FORCEINLINE uint32 GetTypeHash(const FDamageSpecKey& InOther)
 {
 	uint32 H = 0;
 
@@ -988,7 +988,7 @@ FORCEINLINE uint32 GetTypeHash(const FApplyDamageSpecKey& InOther)
  ***/
 
 USTRUCT(BlueprintType)
-struct FApplyDamageSpec
+struct FDamageSpec
 {
 	GENERATED_BODY()
 
@@ -997,11 +997,11 @@ public:
 	float BaseDamage = 0.f;
 
 public:
-	FApplyDamageSpec() = default;
+	FDamageSpec() = default;
 };
 
 USTRUCT(BlueprintType)
-struct FApplyDamageAmount
+struct FDamageAmount
 {
 	GENERATED_BODY()
 
@@ -1010,7 +1010,7 @@ public:
 	float RequestDamage = 0.f;
 
 public:
-	FApplyDamageAmount() = default;
+	FDamageAmount() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -1038,7 +1038,7 @@ public:
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 public:
 	FCombatSignalSourcePayload() = default;
@@ -1078,13 +1078,13 @@ public:
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
+	FDamageSpec ApplyDamageSpec = FDamageSpec();
 
 	UPROPERTY(Transient)
-	FApplyDamageAmount ApplyDamageAmount = FApplyDamageAmount();
+	FDamageAmount ApplyDamageAmount = FDamageAmount();
 
 	UPROPERTY(Transient)
 	float CommittedDamage = 0.f;
@@ -1109,7 +1109,7 @@ public:
 	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	UPROPERTY(Transient)
 	float BaseDamage = 0.f;
@@ -1141,13 +1141,13 @@ public:
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
+	FDamageSpec ApplyDamageSpec = FDamageSpec();
 
 	UPROPERTY(Transient)
-	FApplyDamageAmount ApplyDamageAmount = FApplyDamageAmount();
+	FDamageAmount ApplyDamageAmount = FDamageAmount();
 
 public:
 	static const int32 ClassID = (int32)EDamageEventTypeId::DefaultDamage;
@@ -1185,13 +1185,13 @@ public:
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpec ApplyDamageSpec = FApplyDamageSpec();
+	FDamageSpec ApplyDamageSpec = FDamageSpec();
 
 	UPROPERTY(Transient)
-	FApplyDamageAmount ApplyDamageAmount = FApplyDamageAmount();
+	FDamageAmount ApplyDamageAmount = FDamageAmount();
 
 	//Damage AmountData
 	UPROPERTY(Transient)
@@ -1225,7 +1225,7 @@ public:
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	// Query Acceptable [Set ValidateContext / CanReceiveCombatSignal / ComputeTargetDamage]
 	UPROPERTY(Transient)
@@ -1299,7 +1299,7 @@ public:
 
 	// Damage MetaData
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	// Damage Amount
 	UPROPERTY(Transient)
@@ -1361,7 +1361,7 @@ public:
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	UPROPERTY(Transient)
 	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
@@ -1394,7 +1394,7 @@ struct FReactionDataKey
 
 public:
 	UPROPERTY(EditAnywhere)
-	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
+	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();
 
 	UPROPERTY(EditAnywhere)
 	EReactionType ReactionType = EReactionType::None;
