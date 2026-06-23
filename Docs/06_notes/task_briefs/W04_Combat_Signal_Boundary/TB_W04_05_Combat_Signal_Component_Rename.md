@@ -146,20 +146,55 @@ prompt update 필요 여부를 확인한다.
 - `git diff --check`가 통과한다.
 - `PortfolioEditor Win64 Development` 빌드가 성공한다.
 
+## 진행 결과
+
+```text
+컴포넌트 / 파일 / 클래스명 리네임 완료
+내부 flow API 리네임 완료
+Payload / Context / Result / Packet 타입명 리네임 완료
+필드 / local variable 리네임 완료
+디버그 라벨 리네임 완료
+Unreal class / property redirect 추가 완료
+Unreal build 성공
+```
+
+## 결정 사항
+
+- `UCApplyDamageComponent` / `UCTakeDamageComponent`는 각각 `UCCombatSignalSourceComponent` / `UCCombatSignalTargetComponent`로 변경했다.
+- `CApplyDamageComponent.h/.cpp` / `CTakeDamageComponent.h/.cpp`는 각각 `CCombatSignalSourceComponent.h/.cpp` / `CCombatSignalTargetComponent.h/.cpp`로 변경했다.
+- source-side / target-side flow API, 캐싱 필드, local variable, subobject display name은 새 책임명 기준으로 정리했다.
+- `FApplyDamagePayload / Context / Result`와 `FTakeDamagePayload / Context / Result / Packet`은 Combat Signal Source / Target 타입명으로 변경했다.
+- `FApplyDamageSpec`, `FApplyDamageSpecKey`, `FApplyDamageAmount`, `EApplyDamageRejectReason`, `ETakeDamageRejectReason`은 damage data 계층 의미가 남아 있어 후속 브랜치로 분리했다.
+- UE `AActor::TakeDamage`, `Super::TakeDamage`, target `TakeDamage()` 호출, `UCHealthComponent::TakeDamage`는 engine / resource 경계이므로 유지했다.
+- runtime asset reference 보호를 위해 class redirect와 property redirect를 추가했다.
+- debug label은 Combat Signal Source / Target 기준으로 정리하되, 실제 damage amount 출력과 Health commit 단계 표현은 유지했다.
+
+## 검증 결과
+
+```text
+rg old component/API/type/debug label scan 통과
+git diff --check 통과
+PortfolioEditor Win64 Development 빌드 성공
+```
+
 ## 커밋 분할 후보
 
 ```text
 refactor(combat): rename combat signal components
 refactor(combat): rename combat signal flow APIs
 refactor(combat): rename combat signal payload types
+refactor(combat): rename combat signal fields
+refactor(combat): update combat signal debug labels
 docs(combat): document combat signal rename
 ```
 
 ## 프롬프트 업데이트 확인
 
-현재 후보:
+이번 작업에서 확인한 후보:
 
 ```text
 기존 runtime component를 리네임할 때는 컴포넌트명, 내부 API명, 구조체명, 로그 문구를 별도 단계로 나누고,
 Unreal Engine API 이름과 프로젝트 내부 이름을 먼저 분리해서 검토한다.
+damage data, engine API, resource commit API처럼 기존 domain 의미가 남아 있는 이름은 별도 후속 작업으로 분리한다.
+serialized reference가 있는 Unreal component rename은 class redirect와 property redirect를 함께 검토한다.
 ```

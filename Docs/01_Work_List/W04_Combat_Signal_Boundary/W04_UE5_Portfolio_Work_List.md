@@ -550,7 +550,7 @@ UCApplyDamageComponent 내부 흐름을 CombatSignalSource 책임 기준으로 �
 **상태**
 
 ```text
-다음 작업
+완료
 ```
 
 **브랜치**
@@ -567,23 +567,23 @@ refactor/combat-signal-component-rename
 
 **핵심 범위**
 
-- `UCApplyDamageComponent` -> `UCCombatSignalSourceComponent`
-- `UCTakeDamageComponent` -> `UCCombatSignalTargetComponent`
-- `CApplyDamageComponent.h/.cpp` -> `CCombatSignalSourceComponent.h/.cpp`
-- `CTakeDamageComponent.h/.cpp` -> `CCombatSignalTargetComponent.h/.cpp`
-- source-side / target-side 내부 API명 정리
-- `FApplyDamage*` / `FTakeDamage*` 계열 구조체명 정리
-- 로그 / 디버그 문구 정리
-- Character / Weapon 참조 갱신
-- Blueprint 영향 확인
+- 컴포넌트 / 파일 / 클래스명을 `CombatSignalSource` / `CombatSignalTarget` 기준으로 변경
+- Character / Weapon / Feedback / Reaction 참조 갱신
+- Unreal class / property redirect 추가
+- source-side / target-side 내부 API명을 책임 기준으로 정리
+- source-side / target-side payload / context / result / packet 구조체명 정리
+- 캐싱 필드, local variable, subobject display name 정리
+- 로그 / 디버그 문구를 Combat Signal 기준으로 정리
+- damage data 타입명과 UE `TakeDamage()` 경계는 후속 작업으로 분리
 
 **완료조건**
 
 - 이름만 바꾼 것이 아니라 이전 브랜치의 책임 정리가 선행되어 있다.
 - Unreal Engine `ApplyDamage` / `TakeDamage` API 이름과 프로젝트 내부 이름이 분리되어 있다.
 - 내부 API명과 구조체명이 CombatSignal Source / Target 책임을 따른다.
+- 기존 Blueprint / serialized reference 보호를 위한 redirect가 추가되어 있다.
 - 기존 combat runtime 동작이 바뀌지 않는다.
-- 기존 전투 회귀 통과
+- 기존 combat runtime 연결 방식이 유지되어 있다.
 - Unreal build 성공
 
 ### 7.4 W04-06 Combat Signal Cue v1
