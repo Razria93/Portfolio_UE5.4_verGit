@@ -317,7 +317,7 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 {
 	if (!IsValid(HealthComp_Cached)) return;
 
-	// Process 4: Apply Damage To Health
+	// Process 4: Commit Damage To Health
 	InOutCombatSignalTargetContext.CommittedDamage = InOutCombatSignalTargetContext.bShouldCommitDamage ? CommitDamageToHealth(InOutCombatSignalTargetContext) : 0.f;
 
 	// TODO: Shield / Mana / Stemina etc + Commit Order
