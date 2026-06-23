@@ -76,7 +76,31 @@ FApplyDamageHitWindowKey
 
 hit window key는 damage spec이 아니라 source-side hit window와 duplicate hit cache를 식별하므로 CombatSignal source runtime 이름으로 정리했다.
 
-### 4. Usage Name / Debug Label Cleanup
+### 4. CoreRedirect 추가
+
+타입 리네임 이후 기존 Blueprint / asset에 직렬화된 struct / enum 데이터를 유지하기 위해 CoreRedirect를 추가했다.
+
+```text
+FApplyDamageSpecKey
+-> FDamageSpecKey
+
+FApplyDamageSpec
+-> FDamageSpec
+
+FApplyDamageAmount
+-> FDamageAmount
+
+FApplyDamageHitWindowKey
+-> FCombatSignalHitWindowKey
+
+EApplyDamageRejectReason
+-> ECombatSignalSourceRejectReason
+
+ETakeDamageRejectReason
+-> ECombatSignalTargetRejectReason
+```
+
+### 5. Usage Name / Debug Label Cleanup
 
 다음 사용처 이름을 damage data 기준으로 정리했다.
 
@@ -168,6 +192,7 @@ PortfolioEditor Win64 Development
 ### 정적 확인
 
 - old enum / struct / field / debug label 잔여 검색
+- CoreRedirect 추가 확인
 - `git diff --check` 통과
 - UE `TakeDamage()` engine boundary 유지 확인
 - `UCHealthComponent::TakeDamage()` resource boundary 유지 확인

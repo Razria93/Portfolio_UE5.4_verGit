@@ -615,6 +615,7 @@ CombatSignalSource / CombatSignalTarget 리네임 이후에도 ApplyDamage / Tak
 - `FApplyDamageSpecKey` / `FApplyDamageSpec` / `FApplyDamageAmount`를 `FDamageSpecKey` / `FDamageSpec` / `FDamageAmount`로 변경
 - `FApplyDamageHitWindowKey`를 `FCombatSignalHitWindowKey`로 변경
 - `EApplyDamageRejectReason` / `ETakeDamageRejectReason`을 `ECombatSignalSourceRejectReason` / `ECombatSignalTargetRejectReason`으로 변경
+- struct / enum 리네임 이후 기존 Blueprint / asset 직렬화 데이터를 보존하기 위해 CoreRedirect 추가
 - `ApplyDamageSpecKey` / `ApplyDamageSpec` / `ApplyDamageAmount` 사용처 이름을 `DamageSpecKey` / `DamageSpec` / `DamageAmount`로 정리
 - UE `TakeDamage()` engine boundary와 `UCHealthComponent::TakeDamage()` resource boundary 유지
 - `FCombatResultPacket`은 result-out / attacker-side 흐름 정리 브랜치로 분리

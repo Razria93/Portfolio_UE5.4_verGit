@@ -259,6 +259,7 @@ prompt update 필요 여부
 - `FApplyDamageSpecKey / FApplyDamageSpec / FApplyDamageAmount`는 `FDamageSpecKey / FDamageSpec / FDamageAmount`로 변경했다.
 - `FApplyDamageHitWindowKey`는 source-side hit window / duplicate hit cache 책임을 드러내도록 `FCombatSignalHitWindowKey`로 변경했다.
 - `EApplyDamageRejectReason / ETakeDamageRejectReason`은 처리 단계 기준을 드러내도록 `ECombatSignalSourceRejectReason / ECombatSignalTargetRejectReason`으로 변경했다.
+- 기존 Blueprint / asset 직렬화 데이터를 보존하기 위해 변경된 struct / enum에 CoreRedirect를 추가했다.
 - `ApplyDamageSpecKey / ApplyDamageSpec / ApplyDamageAmount` 사용처 이름은 `DamageSpecKey / DamageSpec / DamageAmount`로 정리했다.
 - `Apply Damage To Health` 주석은 실제 resource commit 의미에 맞게 `Commit Damage To Health`로 정리했다.
 - UE `TakeDamage()` boundary와 `UCHealthComponent::TakeDamage()` resource API는 유지했다.
@@ -269,6 +270,7 @@ prompt update 필요 여부
 
 ```text
 rg old type name scan
+CoreRedirect scan
 git diff --check
 PortfolioEditor Win64 Development build
 Player -> Enemy hit 확인
@@ -280,6 +282,7 @@ Guard / Parry 기존 flow 확인
 
 ```text
 rg old type / field / label scan 통과
+CoreRedirect 추가 확인
 git diff --check 통과
 PortfolioEditor Win64 Development 빌드 성공
 ```
