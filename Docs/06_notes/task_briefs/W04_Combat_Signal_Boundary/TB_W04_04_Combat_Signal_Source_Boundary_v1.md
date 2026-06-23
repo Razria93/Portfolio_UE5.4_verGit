@@ -44,12 +44,13 @@ debug 출력
 이번 작업에서는 이 흐름을 다음 단계로 정리한다.
 
 ```text
-Entry
--> HitWindow
+HitWindow
+-> Entry
 -> Receive
 -> Resolve
 -> Send
 -> Cache
+-> Helper
 -> Debug
 ```
 
@@ -93,28 +94,28 @@ Entry
 이번 작업의 기준은 `UCApplyDamageComponent`가 source 입장에서 hit evidence를 target damage 전달로 바꿀 때의 시간 순서와 책임 변화다.
 
 ```text
-Entry
--> HitWindow
+HitWindow
+-> Entry
 -> Receive
 -> Resolve
 -> Send
 -> Cache
+-> Helper
 -> Debug
 ```
 
-`Entry`는 외부에서 이 component로 들어오는 진입점이다.
+`HitWindow`는 montage timing 기반 hit 가능 구간과 window별 hit cache lifecycle을 관리하는 단계다.
 
 ```text
 NotifyHitWindowOpened
 NotifyHitWindowClosed
-RequestApplyDamage
-ProcessApplyDamage
 ```
 
-`HitWindow`는 montage timing 기반 hit 가능 구간과 window별 hit cache를 관리하는 단계다.
+`Entry`는 overlap hit를 damage 송신 처리로 넘기는 진입점이다.
 
 ```text
-BuildHitWindowKey
+RequestApplyDamage
+ProcessApplyDamage
 ```
 
 `Receive`는 overlap에서 들어온 hit context를 내부에서 처리 가능한 자료로 정규화하고 검증하는 단계다.
@@ -123,18 +124,16 @@ BuildHitWindowKey
 ValidateRequest
 BuildPayload
 BuildContext
-ValidateContext
-CanApplyDamage
 ```
 
 `Resolve`는 source-side damage 전달에 필요한 spec, controller, damage amount를 해석하는 단계다.
 
 ```text
-BuildSpecKey
+ValidateContext
+CanApplyDamage
 ResolveApplyDamageSpec
 ComputeApplyDamage
 BuildResult
-ResolveInstigatorController
 ```
 
 `Send`는 target 쪽 `TakeDamage()` entry로 damage event를 전달하는 단계다.
@@ -147,9 +146,17 @@ ApplyDamageToTarget
 `Cache`는 같은 hit window 안에서 동일 target 중복 적용을 막기 위한 기록 단계다.
 
 ```text
+CacheDamagedTargetInWindow
+```
+
+`Helper`는 주요 source-side 흐름에서 호출되는 세부 계산 / 조회 함수다.
+
+```text
+BuildHitWindowKey
+BuildSpecKey
+ResolveInstigatorController
 IsDuplicateHit
 IsFriendlyTarget
-CacheDamagedTargetInWindow
 ```
 
 `Debug`는 runtime decision에 영향을 주지 않는 관찰용 출력이다.
