@@ -36,10 +36,10 @@ public:
 
 public:
 	// Entry
-	void RequestApplyDamage(const FHitContext& InHitContext);
+	void RequestCombatSignalSource(const FHitContext& InHitContext);
 
 private:
-	void ProcessApplyDamage(const FHitContext& InHitContext);
+	void ProcessCombatSignalSource(const FHitContext& InHitContext);
 
 private:
 	// Receive
@@ -50,15 +50,15 @@ private:
 private:
 	// Resolve
 	bool ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const;
-	bool CanApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const;
-	void ResolveApplyDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const;
-	void ComputeApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const;
+	bool CanSendCombatSignal(FApplyDamageContext& InOutApplyDamageContext) const;
+	void ResolveSourceDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const;
+	void ComputeSourceDamage(FApplyDamageContext& InOutApplyDamageContext) const;
 	FApplyDamageResult BuildResult(const FApplyDamageContext& InApplyDamageContext) const;
 
 private:
 	// Send
-	void CommitApplyDamage(FApplyDamageContext& InOutApplyDamageContext);
-	float ApplyDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const;
+	void CommitCombatSignalSource(FApplyDamageContext& InOutApplyDamageContext);
+	float SendDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const;
 
 private:
 	// Cache
@@ -74,10 +74,10 @@ private:
 
 private:
 	// Debug
-	void PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const;
-	void PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
-	void PrintApplyDamageRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
-	void PrintApplyDamageRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
+	void PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const;
+	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const;
+	void PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
+	void PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
 
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
 	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const;

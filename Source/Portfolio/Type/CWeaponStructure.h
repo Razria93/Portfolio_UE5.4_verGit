@@ -472,7 +472,7 @@ enum class EApplyDamageRejectReason : uint8
 	ComputeFailed,
 	CommitFailed,
 
-	// Reject Reason of 'CanApplyDamage'
+	// Reject Reason of 'CanSendCombatSignal'
 	InvalidOwner,
 	SelfTarget,
 	DuplicateHitInWindow,
@@ -1227,7 +1227,7 @@ public:
 	UPROPERTY(Transient)
 	FApplyDamageSpecKey ApplyDamageSpecKey = FApplyDamageSpecKey();
 
-	// Query Acceptable [Set ValidateContext / CanTakeDamage / ComputeTakeDamage]
+	// Query Acceptable [Set ValidateContext / CanReceiveCombatSignal / ComputeTargetDamage]
 	UPROPERTY(Transient)
 	bool bAccepted = true;
 
@@ -1247,7 +1247,7 @@ public:
 	UPROPERTY(Transient)
 	EDeadState DeadState_Before = EDeadState::Alive;
 
-	// DamageAmounts [Set ComputeTakeDamage & CommitTakeDamage]
+	// DamageAmounts [Set ComputeTargetDamage & CommitCombatSignalTarget]
 	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
 

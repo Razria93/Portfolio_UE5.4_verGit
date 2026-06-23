@@ -219,7 +219,7 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	if (OnWeaponActorBeginOverlap.IsBound())
 		OnWeaponActorBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	ApplyDamageComp_Cached->RequestApplyDamage(hitContext);
+	ApplyDamageComp_Cached->RequestCombatSignalSource(hitContext);
 	LastOverlapContext_Cached = overlapContext;
 }
 

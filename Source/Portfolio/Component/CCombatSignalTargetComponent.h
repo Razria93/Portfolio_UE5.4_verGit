@@ -35,10 +35,10 @@ protected:
 
 public:
 	// Entry
-	float RequestTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
+	float RequestCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
 
 private:
-	float ProcessTakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
+	float ProcessCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
 	float HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
 
 private:
@@ -50,15 +50,15 @@ private:
 private:
 	// Evaluate
 	bool ValidateContext(FTakeDamageContext& InOutTakeDamageContext);
-	bool CanTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
-	void ComputeTakeDamage(FTakeDamageContext& InOutTakeDamageContext) const;
+	bool CanReceiveCombatSignal(FTakeDamageContext& InOutTakeDamageContext);
+	void ComputeTargetDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	float ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	float ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const;
 	FTakeDamageResult BuildResult(const FTakeDamageContext& InTakeDamageContext) const;
 
 private:
 	// Apply
-	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
+	void CommitCombatSignalTarget(FTakeDamageContext& InOutTakeDamageContext);
 
 private:
 	// Packet
@@ -79,9 +79,9 @@ private:
 
 private:
 	// Debug
-	void PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
-	void PrintTakeDamageContextInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
-	void PrintTakeDamageOutcomeInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintCombatSignalTargetSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintCombatSignalTargetContextInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
+	void PrintCombatSignalTargetOutcomeInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void PrintObjectInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void PrintSpecKeyInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void PrintDamageAmountInfo(const FTakeDamagePacket& InTakeDamagePacket) const;
