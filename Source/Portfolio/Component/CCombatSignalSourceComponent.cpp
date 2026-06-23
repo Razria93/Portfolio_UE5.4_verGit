@@ -25,7 +25,7 @@ void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
 
-	FApplyDamageHitWindowKey hitWindowKey;
+	FCombatSignalHitWindowKey hitWindowKey;
 	hitWindowKey.DamageCauser = InDamageCauser;
 	hitWindowKey.HitWindowId = InHitWindowId;
 
@@ -41,7 +41,7 @@ void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
 
-	FApplyDamageHitWindowKey hitWindowKey;
+	FCombatSignalHitWindowKey hitWindowKey;
 	hitWindowKey.DamageCauser = InDamageCauser;
 	hitWindowKey.HitWindowId = InHitWindowId;
 
@@ -344,9 +344,9 @@ void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSign
 	damagedTargets.Add(targetActor);
 }
 
-FApplyDamageHitWindowKey UCCombatSignalSourceComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
+FCombatSignalHitWindowKey UCCombatSignalSourceComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
 {
-	FApplyDamageHitWindowKey hitWindowKey;
+	FCombatSignalHitWindowKey hitWindowKey;
 
 	hitWindowKey.DamageCauser = InHitContext.OverlapContext.DamageCauser;
 	hitWindowKey.HitWindowId = InHitContext.OverlapContext.HitWindowId;

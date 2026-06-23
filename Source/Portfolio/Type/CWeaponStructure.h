@@ -901,7 +901,7 @@ public:
 };
 
 USTRUCT()
-struct FApplyDamageHitWindowKey
+struct FCombatSignalHitWindowKey
 {
 	GENERATED_BODY()
 
@@ -912,14 +912,14 @@ public:
 	UPROPERTY(Transient)
 	int32 HitWindowId = INDEX_NONE;
 
-	bool operator==(const FApplyDamageHitWindowKey& InOther) const
+	bool operator==(const FCombatSignalHitWindowKey& InOther) const
 	{
 		return DamageCauser == InOther.DamageCauser
 			&& HitWindowId == InOther.HitWindowId;
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FApplyDamageHitWindowKey& InOther)
+FORCEINLINE uint32 GetTypeHash(const FCombatSignalHitWindowKey& InOther)
 {
 	uint32 H = 0;
 
@@ -1032,7 +1032,7 @@ public:
 	AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
-	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
+	FCombatSignalHitWindowKey HitWindowKey = FCombatSignalHitWindowKey();
 
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
@@ -1072,7 +1072,7 @@ public:
 	AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
-	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
+	FCombatSignalHitWindowKey HitWindowKey = FCombatSignalHitWindowKey();
 
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
@@ -1106,7 +1106,7 @@ public:
 	ECombatSignalSourceRejectReason RejectReason = ECombatSignalSourceRejectReason::None;
 
 	UPROPERTY(Transient)
-	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
+	FCombatSignalHitWindowKey HitWindowKey = FCombatSignalHitWindowKey();
 
 	UPROPERTY(Transient)
 	FDamageSpecKey ApplyDamageSpecKey = FDamageSpecKey();

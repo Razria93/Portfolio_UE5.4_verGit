@@ -19,7 +19,7 @@ private:
 	TMap<FDamageSpecKey, FDamageSpec> ApplyDamageSpecContainer;	// TODO: Seperate DataAsset (DB)
 
 private:
-	TMap<FApplyDamageHitWindowKey, TSet<AActor*>> DamagedTargetContainer;
+	TMap<FCombatSignalHitWindowKey, TSet<AActor*>> DamagedTargetContainer;
 
 private:
 	/* === Cached Objects === */
@@ -66,7 +66,7 @@ private:
 
 private:
 	// Helper
-	FApplyDamageHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
+	FCombatSignalHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
 	FDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 	AController* ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const;
 	bool IsDuplicateHit(const FCombatSignalSourceContext& InCombatSignalSourceContext) const;
