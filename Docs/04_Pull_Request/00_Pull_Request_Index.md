@@ -27,5 +27,6 @@
 | P19 | Documentation Workflow Update | `P19_UE5_Portfolio_Pull_Request.md` | `docs/portfolio-documentation-update` |  | W02, N01 |
 | P20 | Guard / Parry Action v1 | `P20_UE5_Portfolio_Pull_Request.md` | `feature/combat-guard-parry` |  | W03, B11, B12, N02, N03, N04, N05 |
 | P21 | Combat Signal Boundary v1 | `P21_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-boundary` |  | W04, N05, N06, NA01 |
+| P22 | Combat Signal Target Boundary v1 | `P22_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-target-v1` |  | W04, TB_W04_03 |
 
 ---
