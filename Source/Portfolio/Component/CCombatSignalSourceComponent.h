@@ -76,12 +76,12 @@ private:
 	// Debug
 	void PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
 	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
-	void PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
-	void PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const;
+	void PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
+	void PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
 
 	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
 	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const;
 	void PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const;
 	void PrintDamageResultInfo(const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
-	void PrintRejectReasonInfo(EApplyDamageRejectReason InRejectReason) const;
+	void PrintRejectReasonInfo(ECombatSignalSourceRejectReason InRejectReason) const;
 };

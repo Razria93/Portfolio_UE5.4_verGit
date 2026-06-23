@@ -171,7 +171,7 @@ bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& 
 	if (!IsValid(InOutCombatSignalTargetContext.TargetActor))
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
-		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::InvalidTarget;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::InvalidTarget;
 
 		return false;
 	}
@@ -179,7 +179,7 @@ bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& 
 	if (!IsValid(InOutCombatSignalTargetContext.DamageCauser))
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
-		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::InvalidCauser;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::InvalidCauser;
 
 		return false;
 	}
@@ -187,13 +187,13 @@ bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& 
 	if (!IsValid(InOutCombatSignalTargetContext.Instigator))
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
-		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::InvalidInstigator;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::InvalidInstigator;
 
 		return false;
 	}
 
 	InOutCombatSignalTargetContext.bAccepted = true;
-	InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
 
 	return true;
 }
@@ -204,7 +204,7 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 	if (InOutCombatSignalTargetContext.DeadState_Before != EDeadState::Alive)
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
-		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::AlreadyDead;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::AlreadyDead;
 
 		return false;
 	}
@@ -213,7 +213,7 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanParry())
 	{
 		InOutCombatSignalTargetContext.bAccepted = true;
-		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
 		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Parry;
 		InOutCombatSignalTargetContext.bShouldCommitDamage = false;
 
@@ -227,7 +227,7 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 	// Gate 6: defensive self-damage policy
 
 	InOutCombatSignalTargetContext.bAccepted = true;
-	InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
 	InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::None;
 	InOutCombatSignalTargetContext.bShouldCommitDamage = true;
 
@@ -243,13 +243,13 @@ void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetConte
 	if (InOutCombatSignalTargetContext.bShouldCommitDamage && InOutCombatSignalTargetContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
-		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::ZeroDamage;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::ZeroDamage;
 
 		return;
 	}
 
 	InOutCombatSignalTargetContext.bAccepted = true;
-	InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
 
 	// Process 2: Compute FinalTaken Damage
 	InOutCombatSignalTargetContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutCombatSignalTargetContext);	// TODO

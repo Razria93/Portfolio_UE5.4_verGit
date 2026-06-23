@@ -457,7 +457,7 @@ enum class EDamageImpactInfoSource : uint8
 };
 
 UENUM(BlueprintType)
-enum class EApplyDamageRejectReason : uint8
+enum class ECombatSignalSourceRejectReason : uint8
 {
 	None = 0,
 
@@ -480,7 +480,7 @@ enum class EApplyDamageRejectReason : uint8
 };
 
 UENUM(BlueprintType)
-enum class ETakeDamageRejectReason : uint8
+enum class ECombatSignalTargetRejectReason : uint8
 {
 	None = 0,
 
@@ -1054,7 +1054,7 @@ public:
 	bool bAccepted = true;
 
 	UPROPERTY(Transient)
-	EApplyDamageRejectReason RejectReason = EApplyDamageRejectReason::None;
+	ECombatSignalSourceRejectReason RejectReason = ECombatSignalSourceRejectReason::None;
 
 	UPROPERTY(Transient)
 	FHitContext HitContext = FHitContext();
@@ -1103,7 +1103,7 @@ public:
 	bool bAccepted = true;
 
 	UPROPERTY(Transient)
-	EApplyDamageRejectReason RejectReason = EApplyDamageRejectReason::None;
+	ECombatSignalSourceRejectReason RejectReason = ECombatSignalSourceRejectReason::None;
 
 	UPROPERTY(Transient)
 	FApplyDamageHitWindowKey HitWindowKey = FApplyDamageHitWindowKey();
@@ -1232,7 +1232,7 @@ public:
 	bool bAccepted = true;
 
 	UPROPERTY(Transient)
-	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
+	ECombatSignalTargetRejectReason RejectReason = ECombatSignalTargetRejectReason::None;
 
 	UPROPERTY(Transient)
 	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
@@ -1289,7 +1289,7 @@ public:
 	bool bAccepted = true;
 
 	UPROPERTY(Transient)
-	ETakeDamageRejectReason RejectReason = ETakeDamageRejectReason::None;
+	ECombatSignalTargetRejectReason RejectReason = ECombatSignalTargetRejectReason::None;
 
 	UPROPERTY(Transient)
 	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;

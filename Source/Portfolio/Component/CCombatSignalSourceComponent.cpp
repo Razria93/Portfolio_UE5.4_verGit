@@ -58,7 +58,7 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	// Receive: validate overlap hit input and normalize it into source-side data.
 	if (!ValidateRequest(InHitContext))
 	{
-		// PrintCombatSignalSourceRejectedSummaryInfo(InHitContext, EApplyDamageRejectReason::InvalidRequest);
+		// PrintCombatSignalSourceRejectedSummaryInfo(InHitContext, ECombatSignalSourceRejectReason::InvalidRequest);
 		return;
 	}
 
@@ -182,34 +182,34 @@ bool UCCombatSignalSourceComponent::ValidateContext(FCombatSignalSourceContext& 
 	if (!IsValid(InOutCombatSignalSourceContext.SourceActor))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::InvalidAttacker;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::InvalidAttacker;
 		return false;
 	}
 
 	if (!IsValid(InOutCombatSignalSourceContext.DamageCauser))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::InvalidDamageCauser;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::InvalidDamageCauser;
 		return false;
 	}
 
 	if (!IsValid(InOutCombatSignalSourceContext.TargetActor))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::InvalidTarget;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::InvalidTarget;
 		return false;
 	}
 
 	if (!IsValid(InOutCombatSignalSourceContext.Instigator))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::InvalidInstigator;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::InvalidInstigator;
 		return false;
 	}
 
 	// Valid Context
 	InOutCombatSignalSourceContext.bAccepted = true;
-	InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::None;
+	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
 	return true;
 }
 
@@ -221,33 +221,33 @@ bool UCCombatSignalSourceComponent::CanSendCombatSignal(FCombatSignalSourceConte
 	if (!IsValid(myOwner) || myOwner != overlapContext.OwnerActor)
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::InvalidOwner;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::InvalidOwner;
 		return false;
 	}
 
 	if (overlapContext.OtherActor == overlapContext.OwnerActor)
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::SelfTarget;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::SelfTarget;
 		return false;
 	}
 
 	if (IsDuplicateHit(InOutCombatSignalSourceContext))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::DuplicateHitInWindow;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::DuplicateHitInWindow;
 		return false;
 	}
 
 	if (IsFriendlyTarget(InOutCombatSignalSourceContext))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::FriendlyTarget;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::FriendlyTarget;
 		return false;
 	}
 
 	InOutCombatSignalSourceContext.bAccepted = true;
-	InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::None;
+	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
 	return true;
 }
 
@@ -259,13 +259,13 @@ void UCCombatSignalSourceComponent::ResolveSourceDamageSpec(FCombatSignalSourceC
 	{
 		InOutCombatSignalSourceContext.ApplyDamageSpec = FApplyDamageSpec();
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::SpecNotFound;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::SpecNotFound;
 		return;
 	}
 
 	InOutCombatSignalSourceContext.ApplyDamageSpec = *foundApplyDamageSpec;
 	InOutCombatSignalSourceContext.bAccepted = true;
-	InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::None;
+	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
 }
 
 void UCCombatSignalSourceComponent::ComputeSourceDamage(FCombatSignalSourceContext& InOutCombatSignalSourceContext) const
@@ -273,7 +273,7 @@ void UCCombatSignalSourceComponent::ComputeSourceDamage(FCombatSignalSourceConte
 	if (!IsValid(InOutCombatSignalSourceContext.SourceActor) || !IsValid(InOutCombatSignalSourceContext.DamageCauser) || !IsValid(InOutCombatSignalSourceContext.TargetActor))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::ComputeFailed;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::ComputeFailed;
 		return;
 	}
 
@@ -282,7 +282,7 @@ void UCCombatSignalSourceComponent::ComputeSourceDamage(FCombatSignalSourceConte
 	InOutCombatSignalSourceContext.ApplyDamageAmount.RequestDamage = InOutCombatSignalSourceContext.ApplyDamageSpec.BaseDamage;
 
 	InOutCombatSignalSourceContext.bAccepted = true;
-	InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::None;
+	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
 }
 
 FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FCombatSignalSourceContext& InCombatSignalSourceContext) const
@@ -307,12 +307,12 @@ void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSource
 	if (InOutCombatSignalSourceContext.CommittedDamage <= 0.f)
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::CommitFailed;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::CommitFailed;
 		return;
 	}
 
 	InOutCombatSignalSourceContext.bAccepted = true;
-	InOutCombatSignalSourceContext.RejectReason = EApplyDamageRejectReason::None;
+	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
 
 	CacheDamagedTargetInWindow(InOutCombatSignalSourceContext);
 }
@@ -465,7 +465,7 @@ void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHi
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
+void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const
 {
 	FLog::Log(TEXT("= Combat Signal Source Rejected Summary ="));
 	FLog::Log(TEXT("[@ COMBAT SIGNAL SOURCE REJECTED]"));
@@ -480,7 +480,7 @@ void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedSummaryInfo(c
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
+void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const
 {
 	FLog::Log(TEXT("////- Combat Signal Source Rejected Context -////"));
 	PrintRejectReasonInfo(InRejectReason);
@@ -546,7 +546,7 @@ void UCCombatSignalSourceComponent::PrintDamageResultInfo(const FCombatSignalSou
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCCombatSignalSourceComponent::PrintRejectReasonInfo(EApplyDamageRejectReason InRejectReason) const
+void UCCombatSignalSourceComponent::PrintRejectReasonInfo(ECombatSignalSourceRejectReason InRejectReason) const
 {
 	FLog::Log(TEXT("--------- Reject Reason ---------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("RejectReason"), *UEnum::GetValueAsString(InRejectReason)));
