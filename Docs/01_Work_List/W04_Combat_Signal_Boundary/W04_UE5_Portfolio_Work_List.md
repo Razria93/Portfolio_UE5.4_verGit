@@ -512,7 +512,7 @@ UCTakeDamageComponent 내부 흐름을 CombatSignalTarget 책임 기준으로 �
 **상태**
 
 ```text
-다음 작업
+진행 중
 ```
 
 **브랜치**
