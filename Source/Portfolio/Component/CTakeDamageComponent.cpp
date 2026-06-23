@@ -166,49 +166,6 @@ FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload&
 	return takeDamageContext;
 }
 
-AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
-{
-	// 1) Best case: engine provided instigator
-	if (IsValid(EventInstigator))
-		return EventInstigator;
-
-	// 2) Fallback needs a valid causer
-	if (!IsValid(DamageCauser))
-		return nullptr;
-
-	/* === Fallback Process (DamageCauser-based) === */
-
-	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
-	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
-		return causerInstigator;
-
-	// 2-2) Case 02: Direct hit (the causer itself is a Pawn/Character)
-	if (APawn* causerPawn = Cast<APawn>(DamageCauser))
-	{
-		if (AController* causerController = causerPawn->GetController())
-			return causerController;
-	}
-
-	// 2-3) Case 03: Proxy case (projectile / trap / weaponActor owned by another actor)
-	if (AActor* causerOwner = DamageCauser->GetOwner())
-	{
-		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / weaponActor / trap)
-		if (AController* ownerInstigator = causerOwner->GetInstigatorController())
-			return ownerInstigator;
-
-		// 2-3-1) Case 03-02: Fallback (Owner is Pawn/Character)
-		if (APawn* ownerPawn = Cast<APawn>(causerOwner))
-		{
-			if (AController* ownerController = ownerPawn->GetController())
-				return ownerController;
-		}
-	}
-
-	/* ============================================= */
-
-	return nullptr;
-}
-
 bool UCTakeDamageComponent::ValidateContext(FTakeDamageContext& InOutTakeDamageContext)
 {
 	if (!IsValid(InOutTakeDamageContext.TargetActor))
@@ -370,11 +327,15 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
-float UCTakeDamageComponent::CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
+FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
 {
-	if (!IsValid(HealthComp_Cached)) return 0.0;
+	FTakeDamagePacket takeDamagePacket;
 
-	return HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
+	takeDamagePacket.Payload = InTakeDamagePayload;
+	takeDamagePacket.Context = InTakeDamageContext;
+	takeDamagePacket.Result = InTakeDamageResult;
+
+	return takeDamagePacket;
 }
 
 void UCTakeDamageComponent::DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
@@ -451,6 +412,56 @@ void UCTakeDamageComponent::DispatchCombatResultToReceiver(const FTakeDamagePack
 		*GetNameSafe(combatResultPacket.TargetActor)));
 }
 
+AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
+{
+	// 1) Best case: engine provided instigator
+	if (IsValid(EventInstigator))
+		return EventInstigator;
+
+	// 2) Fallback needs a valid causer
+	if (!IsValid(DamageCauser))
+		return nullptr;
+
+	/* === Fallback Process (DamageCauser-based) === */
+
+	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
+	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
+		return causerInstigator;
+
+	// 2-2) Case 02: Direct hit (the causer itself is a Pawn/Character)
+	if (APawn* causerPawn = Cast<APawn>(DamageCauser))
+	{
+		if (AController* causerController = causerPawn->GetController())
+			return causerController;
+	}
+
+	// 2-3) Case 03: Proxy case (projectile / trap / weaponActor owned by another actor)
+	if (AActor* causerOwner = DamageCauser->GetOwner())
+	{
+		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / weaponActor / trap)
+		if (AController* ownerInstigator = causerOwner->GetInstigatorController())
+			return ownerInstigator;
+
+		// 2-3-1) Case 03-02: Fallback (Owner is Pawn/Character)
+		if (APawn* ownerPawn = Cast<APawn>(causerOwner))
+		{
+			if (AController* ownerController = ownerPawn->GetController())
+				return ownerController;
+		}
+	}
+
+	/* ============================================= */
+
+	return nullptr;
+}
+
+float UCTakeDamageComponent::CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
+{
+	if (!IsValid(HealthComp_Cached)) return 0.0;
+
+	return HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
+}
+
 AActor* UCTakeDamageComponent::ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (IsValid(InTakeDamagePacket.Context.SourceActor)) return InTakeDamagePacket.Context.SourceActor;
@@ -485,17 +496,6 @@ FCombatResultPacket UCTakeDamageComponent::BuildCombatResultPacket(const FTakeDa
 	combatResultPacket.CommittedDamage = InTakeDamagePacket.Result.CommittedDamage;
 
 	return combatResultPacket;
-}
-
-FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
-{
-	FTakeDamagePacket takeDamagePacket;
-
-	takeDamagePacket.Payload = InTakeDamagePayload;
-	takeDamagePacket.Context = InTakeDamageContext;
-	takeDamagePacket.Result = InTakeDamageResult;
-
-	return takeDamagePacket;
 }
 
 void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const

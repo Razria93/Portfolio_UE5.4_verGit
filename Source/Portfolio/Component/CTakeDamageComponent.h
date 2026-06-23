@@ -46,7 +46,6 @@ private:
 	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser);
 	FTakeDamagePayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
 	FTakeDamageContext BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const;
-	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
 
 private:
 	// Evaluate
@@ -60,19 +59,23 @@ private:
 private:
 	// Apply
 	void CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext);
-	float CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const;
+
+private:
+	// Packet
+	FTakeDamagePacket BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
 
 private:
 	// Notify
 	void DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const;
 	void DispatchCombatResultToReceiver(const FTakeDamagePacket& InTakeDamagePacket) const;
-	AActor* ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const;
-	FCombatResultPacket BuildCombatResultPacket(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
-	// Packet
-	FTakeDamagePacket BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const;
+	// Helper
+	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
+	float CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const;
+	AActor* ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const;
+	FCombatResultPacket BuildCombatResultPacket(const FTakeDamagePacket& InTakeDamagePacket) const;
 
 private:
 	// Debug
