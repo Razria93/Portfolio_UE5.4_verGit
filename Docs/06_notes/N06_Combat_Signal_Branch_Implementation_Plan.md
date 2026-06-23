@@ -194,11 +194,14 @@ refactor/combat-signal-component-rename
 - include 갱신
 - Character / Weapon 참조 갱신
 - Blueprint 생성 이름 영향 확인
+- renamed native component reference 검증 / 복구
+- native component rename reference issue 문서화
 
 제외 범위:
 
 - 새로운 combat behavior 추가
 - cue feature 추가
+- 전체 character component cache validation 정책 변경
 
 완료조건:
 
@@ -206,6 +209,8 @@ refactor/combat-signal-component-rename
 - 기존 전투 회귀가 통과한다.
 - Unreal build 성공.
 - redirect / Blueprint 영향이 기록된다.
+- reference recovery 범위가 rename 대상 combat signal component로 제한된다.
+- B13 / N07에 현상, 원인, 해결 방식이 기록된다.
 
 ## 8. Branch 5: Combat Signal Cue v1
 

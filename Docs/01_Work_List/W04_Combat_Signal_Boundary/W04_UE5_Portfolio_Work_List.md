@@ -574,6 +574,8 @@ refactor/combat-signal-component-rename
 - source-side / target-side payload / context / result / packet 구조체명 정리
 - 캐싱 필드, local variable, subobject display name 정리
 - 로그 / 디버그 문구를 Combat Signal 기준으로 정리
+- renamed native component의 C++ 멤버 참조를 `BeginPlay()`에서 검증 / 복구
+- native component rename reference issue를 B13 / N07로 기록
 - damage data 타입명과 UE `TakeDamage()` 경계는 후속 작업으로 분리
 
 **완료조건**
@@ -582,6 +584,8 @@ refactor/combat-signal-component-rename
 - Unreal Engine `ApplyDamage` / `TakeDamage` API 이름과 프로젝트 내부 이름이 분리되어 있다.
 - 내부 API명과 구조체명이 CombatSignal Source / Target 책임을 따른다.
 - 기존 Blueprint / serialized reference 보호를 위한 redirect가 추가되어 있다.
+- renamed component reference 복구 범위가 `CombatSignalSourceComponent` / `CombatSignalTargetComponent`로 제한되어 있다.
+- native component rename 이후 C++ 멤버 참조 문제와 해결 방식이 Bug Report / Note에 기록되어 있다.
 - 기존 combat runtime 동작이 바뀌지 않는다.
 - 기존 combat runtime 연결 방식이 유지되어 있다.
 - Unreal build 성공
@@ -624,3 +628,5 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름에 연
 - `Docs/06_notes/archive/NA01_Combat_Intent_Request_Resolution_Routing_Design_Note.md`
 - `Docs/06_notes/N05_Combat_Signal_Boundary_Design_Note.md`
 - `Docs/06_notes/N06_Combat_Signal_Branch_Implementation_Plan.md`
+- `Docs/06_notes/N07_Unreal_Native_Component_Rename_And_Blueprint_Reference_Note.md`
+- `Docs/02_Bug_Report/B13_UE5_Portfolio_Bug_Report.md`

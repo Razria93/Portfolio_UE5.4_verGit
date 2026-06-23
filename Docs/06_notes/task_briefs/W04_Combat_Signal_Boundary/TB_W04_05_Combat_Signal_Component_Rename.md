@@ -155,6 +155,7 @@ Payload / Context / Result / Packet 타입명 리네임 완료
 필드 / local variable 리네임 완료
 디버그 라벨 리네임 완료
 Unreal class / property redirect 추가 완료
+renamed component reference 검증 / 복구 API 추가 완료
 Unreal build 성공
 ```
 
@@ -167,6 +168,8 @@ Unreal build 성공
 - `FApplyDamageSpec`, `FApplyDamageSpecKey`, `FApplyDamageAmount`, `EApplyDamageRejectReason`, `ETakeDamageRejectReason`은 damage data 계층 의미가 남아 있어 후속 브랜치로 분리했다.
 - UE `AActor::TakeDamage`, `Super::TakeDamage`, target `TakeDamage()` 호출, `UCHealthComponent::TakeDamage`는 engine / resource 경계이므로 유지했다.
 - runtime asset reference 보호를 위해 class redirect와 property redirect를 추가했다.
+- native component rename 이후 Actor에는 컴포넌트가 존재하지만 C++ 멤버 포인터가 유효하지 않은 경우가 확인되어, `ACPlayer` / `ACEnemy`의 `BeginPlay()`에서 `ResolveComponentReferences()`로 rename 대상 컴포넌트 참조를 한 번 검증 / 복구한다.
+- 이번 브랜치의 참조 복구 범위는 `CombatSignalSourceComponent` / `CombatSignalTargetComponent`로 제한하고, 전체 character component cache validation은 후속 브랜치 후보로 분리한다.
 - debug label은 Combat Signal Source / Target 기준으로 정리하되, 실제 damage amount 출력과 Health commit 단계 표현은 유지했다.
 
 ## 검증 결과
