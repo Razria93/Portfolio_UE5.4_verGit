@@ -590,7 +590,46 @@ refactor/combat-signal-component-rename
 - 기존 combat runtime 연결 방식이 유지되어 있다.
 - Unreal build 성공
 
-### 7.4 W04-06 Combat Signal Cue v1
+### 7.4 W04-06 Combat Damage Data Types
+
+**상태**
+
+```text
+완료
+```
+
+**브랜치**
+
+```text
+refactor/combat-damage-data-types
+```
+
+**목표**
+
+```text
+CombatSignalSource / CombatSignalTarget 리네임 이후에도 ApplyDamage / TakeDamage 이름으로 남아 있던 damage data 타입명을 실제 책임 기준으로 정리한다.
+```
+
+**핵심 범위**
+
+- `FApplyDamageSpecKey` / `FApplyDamageSpec` / `FApplyDamageAmount`를 `FDamageSpecKey` / `FDamageSpec` / `FDamageAmount`로 변경
+- `FApplyDamageHitWindowKey`를 `FCombatSignalHitWindowKey`로 변경
+- `EApplyDamageRejectReason` / `ETakeDamageRejectReason`을 `ECombatSignalSourceRejectReason` / `ECombatSignalTargetRejectReason`으로 변경
+- struct / enum 리네임 이후 기존 Blueprint / asset 직렬화 데이터를 보존하기 위해 CoreRedirect 추가
+- `ApplyDamageSpecKey` / `ApplyDamageSpec` / `ApplyDamageAmount` 사용처 이름을 `DamageSpecKey` / `DamageSpec` / `DamageAmount`로 정리
+- UE `TakeDamage()` engine boundary와 `UCHealthComponent::TakeDamage()` resource boundary 유지
+- `FCombatResultPacket`은 result-out / attacker-side 흐름 정리 브랜치로 분리
+- `DamageReaction*`, `DamageFeedback*`, cue impact 확장 여부는 후속 브랜치에서 재검토
+
+**완료조건**
+
+- damage data 타입명이 source component 이름에 과하게 종속되지 않는다.
+- source-side hit window key는 CombatSignal source runtime 책임을 드러낸다.
+- source / target reject reason은 처리 단계 기준으로 분리되어 있다.
+- 기존 combat runtime 동작이 바뀌지 않는다.
+- Unreal build 성공
+
+### 7.5 W04-07 Combat Signal Cue v1
 
 **상태**
 
@@ -630,3 +669,4 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름에 연
 - `Docs/06_notes/N06_Combat_Signal_Branch_Implementation_Plan.md`
 - `Docs/06_notes/N07_Unreal_Native_Component_Rename_And_Blueprint_Reference_Note.md`
 - `Docs/02_Bug_Report/B13_UE5_Portfolio_Bug_Report.md`
+- `Docs/06_notes/task_briefs/W04_Combat_Signal_Boundary/TB_W04_06_Combat_Damage_Data_Types.md`

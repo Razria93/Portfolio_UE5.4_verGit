@@ -46,6 +46,16 @@ W04-05 rename 작업 기준:
 - damage data, engine API, resource commit API처럼 기존 domain 의미가 남아 있는 이름은 별도 후속 작업으로 분리한다.
 - serialized reference가 있는 Unreal component rename은 class redirect와 property redirect를 함께 검토한다.
 - native component rename 후에는 Actor에 실제 component가 존재해도 C++ UPROPERTY 멤버 포인터가 비어 있을 수 있으므로, BeginPlay 단계의 참조 검증 / 복구 필요성을 점검한다.
+- USTRUCT / UENUM처럼 asset에 직렬화될 수 있는 reflected type을 리네임할 때는 CoreRedirect 또는 asset migration / resave 필요성을 먼저 점검한다.
+```
+
+W04-06 damage data type 작업 기준:
+
+```text
+- 컴포넌트 책임명과 data 타입명을 무조건 같은 접두어로 맞추지 않는다.
+- data 타입은 실제 데이터의 소유 계층과 재사용 범위를 기준으로 이름을 정한다.
+- source-side runtime key, target-side result, shared damage data는 서로 다른 naming axis로 볼 수 있다.
+- engine boundary / resource boundary 이름은 프로젝트 책임명과 다르게 유지할 수 있다.
 ```
 
 ## Reason
