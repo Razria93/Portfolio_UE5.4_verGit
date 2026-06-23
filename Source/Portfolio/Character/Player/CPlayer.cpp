@@ -98,13 +98,13 @@ ACPlayer::ACPlayer()
 	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
 	check(ObservableOverlayComponent);
 
-	// Init ApplyDamageComp
-	ApplyDamageComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("ApplyDamage"));
-	check(ApplyDamageComponent);
+	// Init CombatSignalSourceComp
+	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
+	check(CombatSignalSourceComponent);
 
-	// Init TakeDamageComp
-	TakeDamageComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("TakeDamage"));
-	check(TakeDamageComponent);
+	// Init CombatSignalTargetComp
+	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
+	check(CombatSignalTargetComponent);
 
 	// Init UCACtionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
@@ -161,9 +161,9 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 	float finalDamage = DamageAmount;
 
-	if (IsValid(TakeDamageComponent))
+	if (IsValid(CombatSignalTargetComponent))
 	{
-		finalDamage = TakeDamageComponent->RequestCombatSignalTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+		finalDamage = CombatSignalTargetComponent->RequestCombatSignalTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 	else
 	{

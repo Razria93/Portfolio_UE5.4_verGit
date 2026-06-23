@@ -55,31 +55,31 @@ protected:
 	void BeginPlay() override;
 
 public:
-	void PlayHitFeedback(const FCombatSignalTargetPacket& InTakeDamagePacket);
+	void PlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
 
 private:
-	void PlayHitStop(const FCombatSignalTargetPacket& InTakeDamagePacket);
-	void PlayHitVFX(const FCombatSignalTargetPacket& InTakeDamagePacket);
-	void PlayHitSFX(const FCombatSignalTargetPacket& InTakeDamagePacket);
-	void PlayCameraShake(const FCombatSignalTargetPacket& InTakeDamagePacket);
+	void PlayHitStop(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
+	void PlayHitVFX(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
+	void PlayHitSFX(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
+	void PlayCameraShake(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
 
 private:
-	bool CanPlayHitFeedback(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	bool CanPlayHitStop(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	bool CanPlayCameraShake(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
+	bool CanPlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	bool CanPlayHitStop(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	bool CanPlayCameraShake(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
 private:
-	FVector ResolveHitFeedbackLocation(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	FRotator ResolveHitFeedbackRotation(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
+	FVector ResolveHitFeedbackLocation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	FRotator ResolveHitFeedbackRotation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
 private:
-	FHitStopRequest BuildHitStopRequest(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	FCameraShakeRequest BuildCameraShakeRequest(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
+	FHitStopRequest BuildHitStopRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	FCameraShakeRequest BuildCameraShakeRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
 private:
 	void PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const;
 	void PrintHitVFXRequestInfo(class UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const;
 	void PrintHitSFXRequestInfo(USoundBase * InHitSFX, const FVector& InLocation) const;
 	void PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const;
-	void PrintHitInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
+	void PrintHitInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 };

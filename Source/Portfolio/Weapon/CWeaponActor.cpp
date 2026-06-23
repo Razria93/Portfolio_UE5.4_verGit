@@ -33,8 +33,8 @@ void ACWeaponActor::BeginPlay()
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ApplyDamageComp_Cached = Cast<UCCombatSignalSourceComponent>(OwnerCharacter_Cached->GetComponentByClass(UCCombatSignalSourceComponent::StaticClass()));
-	if (!IsValid(ApplyDamageComp_Cached)) return;
+	CombatSignalSourceComp_Cached = Cast<UCCombatSignalSourceComponent>(OwnerCharacter_Cached->GetComponentByClass(UCCombatSignalSourceComponent::StaticClass()));
+	if (!IsValid(CombatSignalSourceComp_Cached)) return;
 
 	if (IsValid(RootSceneComponent))
 	{
@@ -164,9 +164,9 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 		++CurrentHitWindowId;
 		bHitWindowOpened = true;
 
-		if (IsValid(ApplyDamageComp_Cached))
+		if (IsValid(CombatSignalSourceComp_Cached))
 		{
-			ApplyDamageComp_Cached->NotifyHitWindowOpened(this, CurrentHitWindowId);
+			CombatSignalSourceComp_Cached->NotifyHitWindowOpened(this, CurrentHitWindowId);
 		}
 	}
 
@@ -190,9 +190,9 @@ void ACWeaponActor::CollisionDisabled()
 
 	bHitWindowOpened = false;
 
-	if (IsValid(ApplyDamageComp_Cached) && CurrentHitWindowId != INDEX_NONE)
+	if (IsValid(CombatSignalSourceComp_Cached) && CurrentHitWindowId != INDEX_NONE)
 	{
-		ApplyDamageComp_Cached->NotifyHitWindowClosed(this, CurrentHitWindowId);
+		CombatSignalSourceComp_Cached->NotifyHitWindowClosed(this, CurrentHitWindowId);
 	}
 
 	// Legacy delegate
@@ -208,7 +208,7 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
 	if (OwnerCharacter_Cached == OtherActor) return;
 
-	if (!IsValid(ApplyDamageComp_Cached)) return;
+	if (!IsValid(CombatSignalSourceComp_Cached)) return;
 
 	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	FHitContext hitContext = BuildHitContext(overlapContext);
@@ -219,7 +219,7 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	if (OnWeaponActorBeginOverlap.IsBound())
 		OnWeaponActorBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	ApplyDamageComp_Cached->RequestCombatSignalSource(hitContext);
+	CombatSignalSourceComp_Cached->RequestCombatSignalSource(hitContext);
 	LastOverlapContext_Cached = overlapContext;
 }
 
@@ -231,7 +231,7 @@ void ACWeaponActor::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCompone
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
 	if (OwnerCharacter_Cached == OtherActor) return;
 
-	if (!IsValid(ApplyDamageComp_Cached)) return;
+	if (!IsValid(CombatSignalSourceComp_Cached)) return;
 
 	// Legacy delegate
 	if (OnWeaponActorEndOverlap.IsBound())

@@ -57,61 +57,61 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	if (!FMath::IsFinite(DamageAmount)) return 0.f;
 	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
 
-	FCombatSignalTargetPayload takeDamagePayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
-	FCombatSignalTargetContext takeDamageContext = BuildContext(takeDamagePayload);
+	FCombatSignalTargetPayload combatSignalTargetPayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
+	FCombatSignalTargetContext combatSignalTargetContext = BuildContext(combatSignalTargetPayload);
 
 	// Evaluate: validate target-side context and defensive policy before applying state changes.
-	if (!ValidateContext(takeDamageContext))
+	if (!ValidateContext(combatSignalTargetContext))
 	{
 		// Packet / Notify: publish rejected target outcome.
-		const FCombatSignalTargetResult rejectedResult = BuildResult(takeDamageContext);
-		const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FCombatSignalTargetResult rejectedResult = BuildResult(combatSignalTargetContext);
+		const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, rejectedResult);
 
-		// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
-		DispatchRejectedCombatResult(takeDamagePacket);
+		// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
+		DispatchRejectedCombatResult(combatSignalTargetPacket);
 		return 0.f;
 	}
 
 	// Evaluate: snapshot target pre-state for outcome/result construction.
-	takeDamageContext.DeadState_Before = HealthComp_Cached->GetDeadState();
-	takeDamageContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
+	combatSignalTargetContext.DeadState_Before = HealthComp_Cached->GetDeadState();
+	combatSignalTargetContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
 
-	if (!CanReceiveCombatSignal(takeDamageContext))
+	if (!CanReceiveCombatSignal(combatSignalTargetContext))
 	{
 		// Packet / Notify: publish rejected target outcome.
-		const FCombatSignalTargetResult rejectedResult = BuildResult(takeDamageContext);
-		const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FCombatSignalTargetResult rejectedResult = BuildResult(combatSignalTargetContext);
+		const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, rejectedResult);
 
-		// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
-		DispatchRejectedCombatResult(takeDamagePacket);
+		// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
+		DispatchRejectedCombatResult(combatSignalTargetPacket);
 		return 0.f;
 	}
 
-	ComputeTargetDamage(takeDamageContext);
+	ComputeTargetDamage(combatSignalTargetContext);
 
-	if (!takeDamageContext.bAccepted)
+	if (!combatSignalTargetContext.bAccepted)
 	{
 		// Packet / Notify: publish rejected target outcome.
-		const FCombatSignalTargetResult rejectedResult = BuildResult(takeDamageContext);
-		const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
+		const FCombatSignalTargetResult rejectedResult = BuildResult(combatSignalTargetContext);
+		const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, rejectedResult);
 
-		// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
-		DispatchRejectedCombatResult(takeDamagePacket);
+		// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
+		DispatchRejectedCombatResult(combatSignalTargetPacket);
 		return 0.f;
 	}
 
 	// Apply: commit accepted damage to target-side resource state.
-	CommitCombatSignalTarget(takeDamageContext);
+	CommitCombatSignalTarget(combatSignalTargetContext);
 
 	// Packet: combine payload, context, and result for notify/debug consumers.
-	const FCombatSignalTargetResult committedResult = BuildResult(takeDamageContext);
-	const FCombatSignalTargetPacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
+	const FCombatSignalTargetResult committedResult = BuildResult(combatSignalTargetContext);
+	const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, committedResult);
 
 	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
-	// PrintCombatSignalTargetSummaryInfo(takeDamagePacket);
-	PrintCombatSignalTargetOutcomeInfo(takeDamagePacket);
-	DispatchAcceptedCombatResult(takeDamagePacket);
-	DispatchCombatResultToReceiver(takeDamagePacket);
+	// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
+	PrintCombatSignalTargetOutcomeInfo(combatSignalTargetPacket);
+	DispatchAcceptedCombatResult(combatSignalTargetPacket);
+	DispatchCombatResultToReceiver(combatSignalTargetPacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -132,79 +132,79 @@ bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& I
 
 FCombatSignalTargetPayload UCCombatSignalTargetComponent::BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
 {
-	FCombatSignalTargetPayload takeDamagePayload = FCombatSignalTargetPayload();
+	FCombatSignalTargetPayload combatSignalTargetPayload = FCombatSignalTargetPayload();
 
-	takeDamagePayload.SourceActor = InDefaultDamageEvent.SourceActor;
-	takeDamagePayload.TargetActor = OwnerActor_Cached;
-	takeDamagePayload.EventInstigator = InDamageInstigator;
-	takeDamagePayload.DamageCauser = InDamageCauser;
+	combatSignalTargetPayload.SourceActor = InDefaultDamageEvent.SourceActor;
+	combatSignalTargetPayload.TargetActor = OwnerActor_Cached;
+	combatSignalTargetPayload.EventInstigator = InDamageInstigator;
+	combatSignalTargetPayload.DamageCauser = InDamageCauser;
 
-	takeDamagePayload.DamageImpactInfo = InDefaultDamageEvent.DamageImpactInfo;
-	takeDamagePayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
-	takeDamagePayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
-	takeDamagePayload.ApplyDamageAmount = InDefaultDamageEvent.ApplyDamageAmount;
+	combatSignalTargetPayload.DamageImpactInfo = InDefaultDamageEvent.DamageImpactInfo;
+	combatSignalTargetPayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
+	combatSignalTargetPayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
+	combatSignalTargetPayload.ApplyDamageAmount = InDefaultDamageEvent.ApplyDamageAmount;
 
-	takeDamagePayload.RequestedDamage = DamageAmount;
+	combatSignalTargetPayload.RequestedDamage = DamageAmount;
 
-	return takeDamagePayload;
+	return combatSignalTargetPayload;
 }
 
-FCombatSignalTargetContext UCCombatSignalTargetComponent::BuildContext(const FCombatSignalTargetPayload& InTakeDamagePayload) const
+FCombatSignalTargetContext UCCombatSignalTargetComponent::BuildContext(const FCombatSignalTargetPayload& InCombatSignalTargetPayload) const
 {
-	FCombatSignalTargetContext takeDamageContext = FCombatSignalTargetContext();
+	FCombatSignalTargetContext combatSignalTargetContext = FCombatSignalTargetContext();
 
-	takeDamageContext.SourceActor = InTakeDamagePayload.SourceActor;
-	takeDamageContext.TargetActor = InTakeDamagePayload.TargetActor;
-	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
-	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
+	combatSignalTargetContext.SourceActor = InCombatSignalTargetPayload.SourceActor;
+	combatSignalTargetContext.TargetActor = InCombatSignalTargetPayload.TargetActor;
+	combatSignalTargetContext.Instigator = ResolveInstigatorController(InCombatSignalTargetPayload.EventInstigator, InCombatSignalTargetPayload.DamageCauser);
+	combatSignalTargetContext.DamageCauser = InCombatSignalTargetPayload.DamageCauser;
 
-	takeDamageContext.DamageImpactInfo = InTakeDamagePayload.DamageImpactInfo;
-	takeDamageContext.ApplyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
+	combatSignalTargetContext.DamageImpactInfo = InCombatSignalTargetPayload.DamageImpactInfo;
+	combatSignalTargetContext.ApplyDamageSpecKey = InCombatSignalTargetPayload.ApplyDamageSpecKey;
 
-	takeDamageContext.RequestedDamage = InTakeDamagePayload.RequestedDamage;
+	combatSignalTargetContext.RequestedDamage = InCombatSignalTargetPayload.RequestedDamage;
 
-	return takeDamageContext;
+	return combatSignalTargetContext;
 }
 
-bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& InOutTakeDamageContext)
+bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
-	if (!IsValid(InOutTakeDamageContext.TargetActor))
+	if (!IsValid(InOutCombatSignalTargetContext.TargetActor))
 	{
-		InOutTakeDamageContext.bAccepted = false;
-		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidTarget;
+		InOutCombatSignalTargetContext.bAccepted = false;
+		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::InvalidTarget;
 
 		return false;
 	}
 
-	if (!IsValid(InOutTakeDamageContext.DamageCauser))
+	if (!IsValid(InOutCombatSignalTargetContext.DamageCauser))
 	{
-		InOutTakeDamageContext.bAccepted = false;
-		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidCauser;
+		InOutCombatSignalTargetContext.bAccepted = false;
+		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::InvalidCauser;
 
 		return false;
 	}
 
-	if (!IsValid(InOutTakeDamageContext.Instigator))
+	if (!IsValid(InOutCombatSignalTargetContext.Instigator))
 	{
-		InOutTakeDamageContext.bAccepted = false;
-		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::InvalidInstigator;
+		InOutCombatSignalTargetContext.bAccepted = false;
+		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::InvalidInstigator;
 
 		return false;
 	}
 
-	InOutTakeDamageContext.bAccepted = true;
-	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutCombatSignalTargetContext.bAccepted = true;
+	InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
 
 	return true;
 }
 
-bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetContext& InOutTakeDamageContext)
+bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
 	// Gate 1: already dead
-	if (InOutTakeDamageContext.DeadState_Before != EDeadState::Alive)
+	if (InOutCombatSignalTargetContext.DeadState_Before != EDeadState::Alive)
 	{
-		InOutTakeDamageContext.bAccepted = false;
-		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::AlreadyDead;
+		InOutCombatSignalTargetContext.bAccepted = false;
+		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::AlreadyDead;
 
 		return false;
 	}
@@ -212,10 +212,10 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 	// Gate 2: Parry window intercepts incoming damage before damage commit.
 	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanParry())
 	{
-		InOutTakeDamageContext.bAccepted = true;
-		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
-		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Parry;
-		InOutTakeDamageContext.bShouldCommitDamage = false;
+		InOutCombatSignalTargetContext.bAccepted = true;
+		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
+		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Parry;
+		InOutCombatSignalTargetContext.bShouldCommitDamage = false;
 
 		return true;
 	}
@@ -226,38 +226,38 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 	// Gate 5: receiver-side damage cooldown / hit immunity window
 	// Gate 6: defensive self-damage policy
 
-	InOutTakeDamageContext.bAccepted = true;
-	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
-	InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::None;
-	InOutTakeDamageContext.bShouldCommitDamage = true;
+	InOutCombatSignalTargetContext.bAccepted = true;
+	InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::None;
+	InOutCombatSignalTargetContext.bShouldCommitDamage = true;
 
 	return true;
 }
 
-void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const
+void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
 	// Process 1: Compute Mitigation Damage
-	InOutTakeDamageContext.MitigatedDamage = ComputeMitigatedDamage(InOutTakeDamageContext);	// TODO
+	InOutCombatSignalTargetContext.MitigatedDamage = ComputeMitigatedDamage(InOutCombatSignalTargetContext);	// TODO
 
 	// Gate 1: Zero damage
-	if (InOutTakeDamageContext.bShouldCommitDamage && InOutTakeDamageContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
+	if (InOutCombatSignalTargetContext.bShouldCommitDamage && InOutCombatSignalTargetContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
-		InOutTakeDamageContext.bAccepted = false;
-		InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::ZeroDamage;
+		InOutCombatSignalTargetContext.bAccepted = false;
+		InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::ZeroDamage;
 
 		return;
 	}
 
-	InOutTakeDamageContext.bAccepted = true;
-	InOutTakeDamageContext.RejectReason = ETakeDamageRejectReason::None;
+	InOutCombatSignalTargetContext.bAccepted = true;
+	InOutCombatSignalTargetContext.RejectReason = ETakeDamageRejectReason::None;
 
 	// Process 2: Compute FinalTaken Damage
-	InOutTakeDamageContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutTakeDamageContext);	// TODO
+	InOutCombatSignalTargetContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutCombatSignalTargetContext);	// TODO
 }
 
-float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const
+float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
-	const float requestedDamage = InOutTakeDamageContext.RequestedDamage;
+	const float requestedDamage = InOutCombatSignalTargetContext.RequestedDamage;
 
 	// Minimal safe policy (Check NaN, +Inf/-Inf)
 	if (!FMath::IsFinite(requestedDamage)) return 0.f;
@@ -266,7 +266,7 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 
 	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
 	{
-		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
+		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
 		mitigatedDamage *= 0.5f;
 	}
 
@@ -275,11 +275,11 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 	return FMath::Max(0.f, mitigatedDamage);
 }
 
-float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const
+float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
-	if (!InOutTakeDamageContext.bShouldCommitDamage) return 0.f;
+	if (!InOutCombatSignalTargetContext.bShouldCommitDamage) return 0.f;
 
-	const float mitigatedDamage = InOutTakeDamageContext.MitigatedDamage;
+	const float mitigatedDamage = InOutCombatSignalTargetContext.MitigatedDamage;
 
 	// Minimal safe policy (Check NaN, +Inf/-Inf)
 	if (!FMath::IsFinite(mitigatedDamage)) return 0.f;
@@ -291,71 +291,71 @@ float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTarget
 	return FMath::Max(0.f, finalTakenDamage);
 }
 
-FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FCombatSignalTargetContext& InTakeDamageContext) const
+FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const
 {
-	FCombatSignalTargetResult takeDamageResult = FCombatSignalTargetResult();
+	FCombatSignalTargetResult combatSignalTargetResult = FCombatSignalTargetResult();
 
-	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
-	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
-	takeDamageResult.DefenseOutcome = InTakeDamageContext.DefenseOutcome;
-	takeDamageResult.bShouldCommitDamage = InTakeDamageContext.bShouldCommitDamage;
+	combatSignalTargetResult.bAccepted = InCombatSignalTargetContext.bAccepted;
+	combatSignalTargetResult.RejectReason = InCombatSignalTargetContext.RejectReason;
+	combatSignalTargetResult.DefenseOutcome = InCombatSignalTargetContext.DefenseOutcome;
+	combatSignalTargetResult.bShouldCommitDamage = InCombatSignalTargetContext.bShouldCommitDamage;
 
-	takeDamageResult.ApplyDamageSpecKey = InTakeDamageContext.ApplyDamageSpecKey;
+	combatSignalTargetResult.ApplyDamageSpecKey = InCombatSignalTargetContext.ApplyDamageSpecKey;
 
-	takeDamageResult.RequestDamage = InTakeDamageContext.RequestedDamage;
-	takeDamageResult.MitigatedDamage = InTakeDamageContext.MitigatedDamage;
-	takeDamageResult.FinalTakenDamage = InTakeDamageContext.FinalTakenDamage;
-	takeDamageResult.CommittedDamage = InTakeDamageContext.CommittedDamage;
+	combatSignalTargetResult.RequestDamage = InCombatSignalTargetContext.RequestedDamage;
+	combatSignalTargetResult.MitigatedDamage = InCombatSignalTargetContext.MitigatedDamage;
+	combatSignalTargetResult.FinalTakenDamage = InCombatSignalTargetContext.FinalTakenDamage;
+	combatSignalTargetResult.CommittedDamage = InCombatSignalTargetContext.CommittedDamage;
 
-	takeDamageResult.DeadState_Before = InTakeDamageContext.DeadState_Before;
-	takeDamageResult.DeadState_After = InTakeDamageContext.DeadState_After;
+	combatSignalTargetResult.DeadState_Before = InCombatSignalTargetContext.DeadState_Before;
+	combatSignalTargetResult.DeadState_After = InCombatSignalTargetContext.DeadState_After;
 
-	return takeDamageResult;
+	return combatSignalTargetResult;
 }
 
-void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTargetContext& InOutTakeDamageContext)
+void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
 	if (!IsValid(HealthComp_Cached)) return;
 
 	// Process 4: Apply Damage To Health
-	InOutTakeDamageContext.CommittedDamage = InOutTakeDamageContext.bShouldCommitDamage ? CommitDamageToHealth(InOutTakeDamageContext) : 0.f;
+	InOutCombatSignalTargetContext.CommittedDamage = InOutCombatSignalTargetContext.bShouldCommitDamage ? CommitDamageToHealth(InOutCombatSignalTargetContext) : 0.f;
 
 	// TODO: Shield / Mana / Stemina etc + Commit Order
 
 	// Post-state Snapshot: Set BuildResult
-	InOutTakeDamageContext.DeadState_After = HealthComp_Cached->GetDeadState();
-	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
+	InOutCombatSignalTargetContext.DeadState_After = HealthComp_Cached->GetDeadState();
+	InOutCombatSignalTargetContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
 }
 
-FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InTakeDamagePayload, const FCombatSignalTargetContext& InTakeDamageContext, const FCombatSignalTargetResult& InTakeDamageResult) const
+FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult) const
 {
-	FCombatSignalTargetPacket takeDamagePacket;
+	FCombatSignalTargetPacket combatSignalTargetPacket;
 
-	takeDamagePacket.Payload = InTakeDamagePayload;
-	takeDamagePacket.Context = InTakeDamageContext;
-	takeDamagePacket.Result = InTakeDamageResult;
+	combatSignalTargetPacket.Payload = InCombatSignalTargetPayload;
+	combatSignalTargetPacket.Context = InCombatSignalTargetContext;
+	combatSignalTargetPacket.Result = InCombatSignalTargetResult;
 
-	return takeDamagePacket;
+	return combatSignalTargetPacket;
 }
 
-void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	if (!InTakeDamagePacket.Result.bAccepted) return;
+	if (!InCombatSignalTargetPacket.Result.bAccepted) return;
 
 	if (IsValid(ReactionOrchestratorComp_Cached))
 	{
 		FDamageReactionRequest damageReactionRequest;
-		damageReactionRequest.IntentSource = EReactionIntentSource::TakeDamage;
-		damageReactionRequest.TakeDamagePacket = InTakeDamagePacket;
+		damageReactionRequest.IntentSource = EReactionIntentSource::CombatSignalTarget;
+		damageReactionRequest.CombatSignalTargetPacket = InCombatSignalTargetPacket;
 
 		ReactionOrchestratorComp_Cached->RequestDamageReaction(damageReactionRequest);
 	}
 
 	if (IsValid(HitFeedbackComp_Cached))
 	{
-		if (InTakeDamagePacket.Result.bShouldCommitDamage)
+		if (InCombatSignalTargetPacket.Result.bShouldCommitDamage)
 		{
-			HitFeedbackComp_Cached->PlayHitFeedback(InTakeDamagePacket);
+			HitFeedbackComp_Cached->PlayHitFeedback(InCombatSignalTargetPacket);
 		}
 	}
 
@@ -363,19 +363,19 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 	// - Debug/UI Feedback
 }
 
-void UCCombatSignalTargetComponent::DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	// - Debug/UI rejected feedback
 }
 
-void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	if (InTakeDamagePacket.Result.DefenseOutcome != EDamageDefenseOutcome::Parry) return;
+	if (InCombatSignalTargetPacket.Result.DefenseOutcome != EDamageDefenseOutcome::Parry) return;
 
-	const FCombatResultPacket combatResultPacket = BuildCombatResultPacket(InTakeDamagePacket);
+	const FCombatResultPacket combatResultPacket = BuildCombatResultPacket(InCombatSignalTargetPacket);
 	if (!combatResultPacket.IsValidMinimal()) return;
 
-	AActor* receiverActor = ResolveCombatResultReceiverActor(InTakeDamagePacket);
+	AActor* receiverActor = ResolveCombatResultReceiverActor(InCombatSignalTargetPacket);
 	if (!IsValid(receiverActor))
 	{
 		FLog::Log(FString::Printf(
@@ -455,82 +455,82 @@ AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AControl
 	return nullptr;
 }
 
-float UCCombatSignalTargetComponent::CommitDamageToHealth(const FCombatSignalTargetContext& InOutTakeDamageContext) const
+float UCCombatSignalTargetComponent::CommitDamageToHealth(const FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
 	if (!IsValid(HealthComp_Cached)) return 0.0;
 
-	return HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
+	return HealthComp_Cached->TakeDamage(InOutCombatSignalTargetContext.FinalTakenDamage);
 }
 
-AActor* UCCombatSignalTargetComponent::ResolveCombatResultReceiverActor(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+AActor* UCCombatSignalTargetComponent::ResolveCombatResultReceiverActor(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	if (IsValid(InTakeDamagePacket.Context.SourceActor)) return InTakeDamagePacket.Context.SourceActor;
+	if (IsValid(InCombatSignalTargetPacket.Context.SourceActor)) return InCombatSignalTargetPacket.Context.SourceActor;
 
-	if (IsValid(InTakeDamagePacket.Context.DamageCauser))
+	if (IsValid(InCombatSignalTargetPacket.Context.DamageCauser))
 	{
-		AActor* damageCauserOwner = InTakeDamagePacket.Context.DamageCauser->GetOwner();
+		AActor* damageCauserOwner = InCombatSignalTargetPacket.Context.DamageCauser->GetOwner();
 		if (IsValid(damageCauserOwner)) return damageCauserOwner;
 	}
 
-	if (IsValid(InTakeDamagePacket.Context.Instigator))
+	if (IsValid(InCombatSignalTargetPacket.Context.Instigator))
 	{
-		AActor* instigatorPawn = InTakeDamagePacket.Context.Instigator->GetPawn();
+		AActor* instigatorPawn = InCombatSignalTargetPacket.Context.Instigator->GetPawn();
 		if (IsValid(instigatorPawn)) return instigatorPawn;
 	}
 
 	return nullptr;
 }
 
-FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	FCombatResultPacket combatResultPacket;
 
-	combatResultPacket.SourceActor = InTakeDamagePacket.Context.SourceActor;
-	combatResultPacket.TargetActor = InTakeDamagePacket.Context.TargetActor;
-	combatResultPacket.Instigator = InTakeDamagePacket.Context.Instigator;
-	combatResultPacket.DamageCauser = InTakeDamagePacket.Context.DamageCauser;
-	combatResultPacket.DamageImpactInfo = InTakeDamagePacket.Context.DamageImpactInfo;
-	combatResultPacket.ApplyDamageSpecKey = InTakeDamagePacket.Result.ApplyDamageSpecKey;
-	combatResultPacket.DefenseOutcome = InTakeDamagePacket.Result.DefenseOutcome;
-	combatResultPacket.bDamageCommitted = InTakeDamagePacket.Result.bShouldCommitDamage;
-	combatResultPacket.CommittedDamage = InTakeDamagePacket.Result.CommittedDamage;
+	combatResultPacket.SourceActor = InCombatSignalTargetPacket.Context.SourceActor;
+	combatResultPacket.TargetActor = InCombatSignalTargetPacket.Context.TargetActor;
+	combatResultPacket.Instigator = InCombatSignalTargetPacket.Context.Instigator;
+	combatResultPacket.DamageCauser = InCombatSignalTargetPacket.Context.DamageCauser;
+	combatResultPacket.DamageImpactInfo = InCombatSignalTargetPacket.Context.DamageImpactInfo;
+	combatResultPacket.ApplyDamageSpecKey = InCombatSignalTargetPacket.Result.ApplyDamageSpecKey;
+	combatResultPacket.DefenseOutcome = InCombatSignalTargetPacket.Result.DefenseOutcome;
+	combatResultPacket.bDamageCommitted = InCombatSignalTargetPacket.Result.bShouldCommitDamage;
+	combatResultPacket.CommittedDamage = InCombatSignalTargetPacket.Result.CommittedDamage;
 
 	return combatResultPacket;
 }
 
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	FLog::Log(TEXT("====== Take Damage Summary ======"));
 	FLog::Log(TEXT("[@ TAKE DAMAGE]"));
 
 	FLog::Log(FString::Printf(TEXT("SourceActor = %s | TargetActor = %s | Instigator = %s | DamageCauser = %s"),
-		*GetNameSafe(InTakeDamagePacket.Context.SourceActor),
-		*GetNameSafe(InTakeDamagePacket.Context.TargetActor),
-		*GetNameSafe(InTakeDamagePacket.Context.Instigator),
-		*GetNameSafe(InTakeDamagePacket.Context.DamageCauser)
+		*GetNameSafe(InCombatSignalTargetPacket.Context.SourceActor),
+		*GetNameSafe(InCombatSignalTargetPacket.Context.TargetActor),
+		*GetNameSafe(InCombatSignalTargetPacket.Context.Instigator),
+		*GetNameSafe(InCombatSignalTargetPacket.Context.DamageCauser)
 	));
 
 	FLog::Log(FString::Printf(TEXT("RequestDamage = %.3f | MitigatedDamage = %.3f | FinalTakenDamage = %.3f | CommittedDamage = %.3f"),
-		InTakeDamagePacket.Result.RequestDamage,
-		InTakeDamagePacket.Result.MitigatedDamage,
-		InTakeDamagePacket.Result.FinalTakenDamage,
-		InTakeDamagePacket.Result.CommittedDamage
+		InCombatSignalTargetPacket.Result.RequestDamage,
+		InCombatSignalTargetPacket.Result.MitigatedDamage,
+		InCombatSignalTargetPacket.Result.FinalTakenDamage,
+		InCombatSignalTargetPacket.Result.CommittedDamage
 	));
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetContextInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintCombatSignalTargetContextInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	FLog::Log(TEXT("/////- Take Damage Context -/////"));
-	PrintObjectInfo(InTakeDamagePacket);
-	PrintSpecKeyInfo(InTakeDamagePacket);
-	PrintDamageAmountInfo(InTakeDamagePacket);
+	PrintObjectInfo(InCombatSignalTargetPacket);
+	PrintSpecKeyInfo(InCombatSignalTargetPacket);
+	PrintDamageAmountInfo(InCombatSignalTargetPacket);
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	const FCombatSignalTargetResult& result = InTakeDamagePacket.Result;
+	const FCombatSignalTargetResult& result = InCombatSignalTargetPacket.Result;
 
 	if (result.DefenseOutcome == EDamageDefenseOutcome::None && result.CommittedDamage <= KINDA_SMALL_NUMBER) return;
 
@@ -539,29 +539,29 @@ void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FCo
 		*UEnum::GetValueAsString(result.DefenseOutcome),
 		result.bShouldCommitDamage ? TEXT("true") : TEXT("false"),
 		result.CommittedDamage,
-		InTakeDamagePacket.Context.HealthPointBefore,
-		InTakeDamagePacket.Context.HealthPointAfter));
+		InCombatSignalTargetPacket.Context.HealthPointBefore,
+		InCombatSignalTargetPacket.Context.HealthPointAfter));
 }
 
-void UCCombatSignalTargetComponent::PrintObjectInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintObjectInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	FLog::Log(TEXT("========== Object Info =========="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] EventInstigator"), *GetNameSafe(InTakeDamagePacket.Payload.EventInstigator)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] DamageCauser"), *GetNameSafe(InTakeDamagePacket.Payload.DamageCauser)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] EventInstigator"), *GetNameSafe(InCombatSignalTargetPacket.Payload.EventInstigator)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] DamageCauser"), *GetNameSafe(InCombatSignalTargetPacket.Payload.DamageCauser)));
 	FLog::Log(TEXT("--------- Context Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] SourceActor"), *GetNameSafe(InTakeDamagePacket.Context.SourceActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] TargetActor"), *GetNameSafe(InTakeDamagePacket.Context.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] Instigator"), *GetNameSafe(InTakeDamagePacket.Context.Instigator)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] DamageCauser"), *GetNameSafe(InTakeDamagePacket.Context.DamageCauser)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] SourceActor"), *GetNameSafe(InCombatSignalTargetPacket.Context.SourceActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] TargetActor"), *GetNameSafe(InCombatSignalTargetPacket.Context.TargetActor)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] Instigator"), *GetNameSafe(InCombatSignalTargetPacket.Context.Instigator)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] DamageCauser"), *GetNameSafe(InCombatSignalTargetPacket.Context.DamageCauser)));
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	FLog::Log(TEXT("========= SpecKey Info =========="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
-	const FApplyDamageSpecKey& applyDamageSpecKey = InTakeDamagePacket.Payload.ApplyDamageSpecKey;
+	const FApplyDamageSpecKey& applyDamageSpecKey = InCombatSignalTargetPacket.Payload.ApplyDamageSpecKey;
 	const FString actionIndexText = (applyDamageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(applyDamageSpecKey.ActionIndex);
 
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(applyDamageSpecKey.WeaponType)));
@@ -570,13 +570,13 @@ void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FCombatSignalTargetPa
 	FLog::Log(TEXT("================================="));
 }
 
-void UCCombatSignalTargetComponent::PrintDamageAmountInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const
+void UCCombatSignalTargetComponent::PrintDamageAmountInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	FLog::Log(TEXT("======= DamageAmount Info ======="));
 	FLog::Log(TEXT("--------- Payload Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InTakeDamagePacket.Payload.ApplyDamageSpec.BaseDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InTakeDamagePacket.Payload.ApplyDamageAmount.RequestDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InCombatSignalTargetPacket.Payload.ApplyDamageSpec.BaseDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InCombatSignalTargetPacket.Payload.ApplyDamageAmount.RequestDamage));
 	FLog::Log(TEXT("---------- Amount Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalTakenDamage"), InTakeDamagePacket.Result.FinalTakenDamage));
+	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalTakenDamage"), InCombatSignalTargetPacket.Result.FinalTakenDamage));
 	FLog::Log(TEXT("================================="));
 }

@@ -45,44 +45,44 @@ private:
 	// Receive
 	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser);
 	FCombatSignalTargetPayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
-	FCombatSignalTargetContext BuildContext(const FCombatSignalTargetPayload& InTakeDamagePayload) const;
+	FCombatSignalTargetContext BuildContext(const FCombatSignalTargetPayload& InCombatSignalTargetPayload) const;
 
 private:
 	// Evaluate
-	bool ValidateContext(FCombatSignalTargetContext& InOutTakeDamageContext);
-	bool CanReceiveCombatSignal(FCombatSignalTargetContext& InOutTakeDamageContext);
-	void ComputeTargetDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const;
-	float ComputeMitigatedDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const;
-	float ComputeFinalTakenDamage(FCombatSignalTargetContext& InOutTakeDamageContext) const;
-	FCombatSignalTargetResult BuildResult(const FCombatSignalTargetContext& InTakeDamageContext) const;
+	bool ValidateContext(FCombatSignalTargetContext& InOutCombatSignalTargetContext);
+	bool CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext);
+	void ComputeTargetDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
+	float ComputeMitigatedDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
+	float ComputeFinalTakenDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
+	FCombatSignalTargetResult BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const;
 
 private:
 	// Apply
-	void CommitCombatSignalTarget(FCombatSignalTargetContext& InOutTakeDamageContext);
+	void CommitCombatSignalTarget(FCombatSignalTargetContext& InOutCombatSignalTargetContext);
 
 private:
 	// Packet
-	FCombatSignalTargetPacket BuildPacket(const FCombatSignalTargetPayload& InTakeDamagePayload, const FCombatSignalTargetContext& InTakeDamageContext, const FCombatSignalTargetResult& InTakeDamageResult) const;
+	FCombatSignalTargetPacket BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult) const;
 
 private:
 	// Notify
-	void DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	void DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	void DispatchCombatResultToReceiver(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
+	void DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	void DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	void DispatchCombatResultToReceiver(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
 private:
 	// Helper
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
-	float CommitDamageToHealth(const FCombatSignalTargetContext& InOutTakeDamageContext) const;
-	AActor* ResolveCombatResultReceiverActor(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	FCombatResultPacket BuildCombatResultPacket(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
+	float CommitDamageToHealth(const FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
+	AActor* ResolveCombatResultReceiverActor(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	FCombatResultPacket BuildCombatResultPacket(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
 private:
 	// Debug
-	void PrintCombatSignalTargetSummaryInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	void PrintCombatSignalTargetContextInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	void PrintCombatSignalTargetOutcomeInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	void PrintObjectInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	void PrintSpecKeyInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
-	void PrintDamageAmountInfo(const FCombatSignalTargetPacket& InTakeDamagePacket) const;
+	void PrintCombatSignalTargetSummaryInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	void PrintCombatSignalTargetContextInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	void PrintCombatSignalTargetOutcomeInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	void PrintObjectInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	void PrintSpecKeyInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
+	void PrintDamageAmountInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 };
