@@ -110,6 +110,8 @@ PropertyRedirects:
 
 에디터 asset load / resave 검증은 병합 전 확인 항목으로 남긴다.
 
+Native component rename 이후 Actor에 실제 컴포넌트는 존재하지만 C++ 멤버 포인터가 즉시 유효하지 않은 경우가 확인되었다. 이번 PR에서는 `ACPlayer` / `ACEnemy`의 `BeginPlay()`에서 `ResolveComponentReferences()`를 호출해 rename 대상인 `CombatSignalSourceComponent` / `CombatSignalTargetComponent` 참조만 한 번 검증 / 복구한다.
+
 ---
 
 ## 검증
@@ -132,12 +134,14 @@ PortfolioEditor Win64 Development
 - `git diff --check` 통과
 - UE `TakeDamage()` engine boundary 유지 확인
 - damage data 타입명 유지 범위 확인
+- Player -> Enemy hit 경로에서 `CombatSignalTargetOutcome` / HP commit 확인
 
 ### 추가 확인 필요
 
-- `BP_CPlayer`, `BP_CEnemy`, 관련 map 에디터 로드
+- `BP_CPlayer`, `BP_CEnemy`, 관련 map 에디터 로드 / 저장
 - renamed native component 중복 / 누락 여부 확인
 - 기존 component property 값 보존 여부 확인
+- 전체 character component cache validation 정책은 후속 브랜치에서 별도 검토
 
 ---
 
@@ -170,12 +174,15 @@ refactor/combat-damage-data-types
 - `EApplyDamageRejectReason`, `ETakeDamageRejectReason` 유지 / 변경 기준 결정
 - reflected struct / enum redirect 필요 여부 확인
 - Blueprint / asset migration 결과 반영
+- Player / Enemy 핵심 component cache validation 정책 분리 검토
 
 ---
 
 ## 관련 문서
 
 - `Docs/01_Work_List/W04_Combat_Signal_Boundary/W04_UE5_Portfolio_Work_List.md`
+- `Docs/02_Bug_Report/B13_UE5_Portfolio_Bug_Report.md`
 - `Docs/06_notes/N05_Combat_Signal_Boundary_Design_Note.md`
 - `Docs/06_notes/N06_Combat_Signal_Branch_Implementation_Plan.md`
+- `Docs/06_notes/N07_Unreal_Native_Component_Rename_And_Blueprint_Reference_Note.md`
 - `Docs/06_notes/task_briefs/W04_Combat_Signal_Boundary/TB_W04_05_Combat_Signal_Component_Rename.md`

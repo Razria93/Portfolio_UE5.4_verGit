@@ -29,6 +29,6 @@
 | P21 | Combat Signal Boundary v1 | `P21_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-boundary` |  | W04, N05, N06, NA01 |
 | P22 | Combat Signal Target Boundary v1 | `P22_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-target-v1` |  | W04, TB_W04_03 |
 | P23 | Combat Signal Source Boundary v1 | `P23_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-source-v1` |  | W04, TB_W04_04 |
-| P24 | Combat Signal Component Rename | `P24_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-component-rename` |  | W04, TB_W04_05 |
+| P24 | Combat Signal Component Rename | `P24_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-component-rename` |  | W04, TB_W04_05, B13, N07 |
 
 ---
