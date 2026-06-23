@@ -53,20 +53,17 @@ float UCTakeDamageComponent::ProcessTakeDamage(float DamageAmount, FDamageEvent 
 
 float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
-	// [Function Object]
-	// 'FDefaultDamageEvent + @(FTakeDamagePayload) -> FTakeDamageContext' and TakeDamage it-self
-
-	// 1) Validate Request
+	// Receive: validate engine damage input and normalize it into target-side data.
 	if (!FMath::IsFinite(DamageAmount)) return 0.f;
 	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
 
-	// 2) Build Payload / Context
 	FTakeDamagePayload takeDamagePayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
 	FTakeDamageContext takeDamageContext = BuildContext(takeDamagePayload);
 
-	// 3) Validate Context
+	// Evaluate: validate target-side context and defensive policy before applying state changes.
 	if (!ValidateContext(takeDamageContext))
 	{
+		// Packet / Notify: publish rejected target outcome.
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
@@ -75,13 +72,13 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		return 0.f;
 	}
 
-	// 4) Take Pre-state Snapshot
+	// Evaluate: snapshot target pre-state for outcome/result construction.
 	takeDamageContext.DeadState_Before = HealthComp_Cached->GetDeadState();
 	takeDamageContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
 
-	// 5) Validate Policy
 	if (!CanTakeDamage(takeDamageContext))
 	{
+		// Packet / Notify: publish rejected target outcome.
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
@@ -90,11 +87,11 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		return 0.f;
 	}
 
-	// 6) Compute TakeDamage
 	ComputeTakeDamage(takeDamageContext);
 
 	if (!takeDamageContext.bAccepted)
 	{
+		// Packet / Notify: publish rejected target outcome.
 		const FTakeDamageResult rejectedResult = BuildResult(takeDamageContext);
 		const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, rejectedResult);
 
@@ -103,12 +100,14 @@ float UCTakeDamageComponent::HandleDefaultDamageEvent(float DamageAmount, const 
 		return 0.f;
 	}
 
-	// 7) Commit
+	// Apply: commit accepted damage to target-side resource state.
 	CommitTakeDamage(takeDamageContext);
 
+	// Packet: combine payload, context, and result for notify/debug consumers.
 	const FTakeDamageResult committedResult = BuildResult(takeDamageContext);
 	const FTakeDamagePacket takeDamagePacket = BuildPacket(takeDamagePayload, takeDamageContext, committedResult);
 
+	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
 	// PrintTakeDamageSummaryInfo(takeDamagePacket);
 	PrintTakeDamageOutcomeInfo(takeDamagePacket);
 	DispatchAcceptedCombatResult(takeDamagePacket);
@@ -129,6 +128,85 @@ bool UCTakeDamageComponent::ValidateRequest(const FDefaultDamageEvent& InDefault
 	if (!FMath::IsFinite(InDefaultDamageEvent.ApplyDamageAmount.RequestDamage)) return false;
 
 	return true;
+}
+
+FTakeDamagePayload UCTakeDamageComponent::BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
+{
+	FTakeDamagePayload takeDamagePayload = FTakeDamagePayload();
+
+	takeDamagePayload.SourceActor = InDefaultDamageEvent.SourceActor;
+	takeDamagePayload.TargetActor = OwnerActor_Cached;
+	takeDamagePayload.EventInstigator = InDamageInstigator;
+	takeDamagePayload.DamageCauser = InDamageCauser;
+
+	takeDamagePayload.DamageImpactInfo = InDefaultDamageEvent.DamageImpactInfo;
+	takeDamagePayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
+	takeDamagePayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
+	takeDamagePayload.ApplyDamageAmount = InDefaultDamageEvent.ApplyDamageAmount;
+
+	takeDamagePayload.RequestedDamage = DamageAmount;
+
+	return takeDamagePayload;
+}
+
+FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const
+{
+	FTakeDamageContext takeDamageContext = FTakeDamageContext();
+
+	takeDamageContext.SourceActor = InTakeDamagePayload.SourceActor;
+	takeDamageContext.TargetActor = InTakeDamagePayload.TargetActor;
+	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
+	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
+
+	takeDamageContext.DamageImpactInfo = InTakeDamagePayload.DamageImpactInfo;
+	takeDamageContext.ApplyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
+
+	takeDamageContext.RequestedDamage = InTakeDamagePayload.RequestedDamage;
+
+	return takeDamageContext;
+}
+
+AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
+{
+	// 1) Best case: engine provided instigator
+	if (IsValid(EventInstigator))
+		return EventInstigator;
+
+	// 2) Fallback needs a valid causer
+	if (!IsValid(DamageCauser))
+		return nullptr;
+
+	/* === Fallback Process (DamageCauser-based) === */
+
+	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
+	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
+		return causerInstigator;
+
+	// 2-2) Case 02: Direct hit (the causer itself is a Pawn/Character)
+	if (APawn* causerPawn = Cast<APawn>(DamageCauser))
+	{
+		if (AController* causerController = causerPawn->GetController())
+			return causerController;
+	}
+
+	// 2-3) Case 03: Proxy case (projectile / trap / weaponActor owned by another actor)
+	if (AActor* causerOwner = DamageCauser->GetOwner())
+	{
+		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / weaponActor / trap)
+		if (AController* ownerInstigator = causerOwner->GetInstigatorController())
+			return ownerInstigator;
+
+		// 2-3-1) Case 03-02: Fallback (Owner is Pawn/Character)
+		if (APawn* ownerPawn = Cast<APawn>(causerOwner))
+		{
+			if (AController* ownerController = ownerPawn->GetController())
+				return ownerController;
+		}
+	}
+
+	/* ============================================= */
+
+	return nullptr;
 }
 
 bool UCTakeDamageComponent::ValidateContext(FTakeDamageContext& InOutTakeDamageContext)
@@ -220,6 +298,64 @@ void UCTakeDamageComponent::ComputeTakeDamage(FTakeDamageContext& InOutTakeDamag
 	InOutTakeDamageContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutTakeDamageContext);	// TODO
 }
 
+float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const
+{
+	const float requestedDamage = InOutTakeDamageContext.RequestedDamage;
+
+	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	if (!FMath::IsFinite(requestedDamage)) return 0.f;
+
+	float mitigatedDamage = requestedDamage;
+
+	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
+	{
+		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
+		mitigatedDamage *= 0.5f;
+	}
+
+	// TODO: Defense / Armor / Resistance Policy
+
+	return FMath::Max(0.f, mitigatedDamage);
+}
+
+float UCTakeDamageComponent::ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const
+{
+	if (!InOutTakeDamageContext.bShouldCommitDamage) return 0.f;
+
+	const float mitigatedDamage = InOutTakeDamageContext.MitigatedDamage;
+
+	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	if (!FMath::IsFinite(mitigatedDamage)) return 0.f;
+
+	const float finalTakenDamage = mitigatedDamage;
+
+	// TODO: Critical / Guard / Headshot etc Policy
+
+	return FMath::Max(0.f, finalTakenDamage);
+}
+
+FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& InTakeDamageContext) const
+{
+	FTakeDamageResult takeDamageResult = FTakeDamageResult();
+
+	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
+	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
+	takeDamageResult.DefenseOutcome = InTakeDamageContext.DefenseOutcome;
+	takeDamageResult.bShouldCommitDamage = InTakeDamageContext.bShouldCommitDamage;
+
+	takeDamageResult.ApplyDamageSpecKey = InTakeDamageContext.ApplyDamageSpecKey;
+
+	takeDamageResult.RequestDamage = InTakeDamageContext.RequestedDamage;
+	takeDamageResult.MitigatedDamage = InTakeDamageContext.MitigatedDamage;
+	takeDamageResult.FinalTakenDamage = InTakeDamageContext.FinalTakenDamage;
+	takeDamageResult.CommittedDamage = InTakeDamageContext.CommittedDamage;
+
+	takeDamageResult.DeadState_Before = InTakeDamageContext.DeadState_Before;
+	takeDamageResult.DeadState_After = InTakeDamageContext.DeadState_After;
+
+	return takeDamageResult;
+}
+
 void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamageContext)
 {
 	if (!IsValid(HealthComp_Cached)) return;
@@ -232,6 +368,13 @@ void UCTakeDamageComponent::CommitTakeDamage(FTakeDamageContext& InOutTakeDamage
 	// Post-state Snapshot: Set BuildResult
 	InOutTakeDamageContext.DeadState_After = HealthComp_Cached->GetDeadState();
 	InOutTakeDamageContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
+}
+
+float UCTakeDamageComponent::CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
+{
+	if (!IsValid(HealthComp_Cached)) return 0.0;
+
+	return HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
 }
 
 void UCTakeDamageComponent::DispatchAcceptedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
@@ -257,6 +400,11 @@ void UCTakeDamageComponent::DispatchAcceptedCombatResult(const FTakeDamagePacket
 
 	// TODO:
 	// - Debug/UI Feedback
+}
+
+void UCTakeDamageComponent::DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
+{
+	// - Debug/UI rejected feedback
 }
 
 void UCTakeDamageComponent::DispatchCombatResultToReceiver(const FTakeDamagePacket& InTakeDamagePacket) const
@@ -303,54 +451,6 @@ void UCTakeDamageComponent::DispatchCombatResultToReceiver(const FTakeDamagePack
 		*GetNameSafe(combatResultPacket.TargetActor)));
 }
 
-void UCTakeDamageComponent::DispatchRejectedCombatResult(const FTakeDamagePacket& InTakeDamagePacket) const
-{
-	// - Debug/UI rejected feedback
-}
-
-AController* UCTakeDamageComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
-{
-	// 1) Best case: engine provided instigator
-	if (IsValid(EventInstigator))
-		return EventInstigator;
-
-	// 2) Fallback needs a valid causer
-	if (!IsValid(DamageCauser))
-		return nullptr;
-
-	/* === Fallback Process (DamageCauser-based) === */
-
-	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
-	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
-		return causerInstigator;
-
-	// 2-2) Case 02: Direct hit (the causer itself is a Pawn/Character)
-	if (APawn* causerPawn = Cast<APawn>(DamageCauser))
-	{
-		if (AController* causerController = causerPawn->GetController())
-			return causerController;
-	}
-
-	// 2-3) Case 03: Proxy case (projectile / trap / weaponActor owned by another actor)
-	if (AActor* causerOwner = DamageCauser->GetOwner())
-	{
-		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / weaponActor / trap)
-		if (AController* ownerInstigator = causerOwner->GetInstigatorController())
-			return ownerInstigator;
-
-		// 2-3-1) Case 03-02: Fallback (Owner is Pawn/Character)
-		if (APawn* ownerPawn = Cast<APawn>(causerOwner))
-		{
-			if (AController* ownerController = ownerPawn->GetController())
-				return ownerController;
-		}
-	}
-
-	/* ============================================= */
-
-	return nullptr;
-}
-
 AActor* UCTakeDamageComponent::ResolveCombatResultReceiverActor(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	if (IsValid(InTakeDamagePacket.Context.SourceActor)) return InTakeDamagePacket.Context.SourceActor;
@@ -370,118 +470,6 @@ AActor* UCTakeDamageComponent::ResolveCombatResultReceiverActor(const FTakeDamag
 	return nullptr;
 }
 
-float UCTakeDamageComponent::ComputeMitigatedDamage(FTakeDamageContext& InOutTakeDamageContext) const
-{
-	const float requestedDamage = InOutTakeDamageContext.RequestedDamage;
-
-	// Minimal safe policy (Check NaN, +Inf/-Inf)
-	if (!FMath::IsFinite(requestedDamage)) return 0.f;
-
-	float mitigatedDamage = requestedDamage;
-
-	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
-	{
-		InOutTakeDamageContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
-		mitigatedDamage *= 0.5f;
-	}
-
-	// TODO: Defense / Armor / Resistance Policy
-
-	return FMath::Max(0.f, mitigatedDamage);
-}
-
-float UCTakeDamageComponent::ComputeFinalTakenDamage(FTakeDamageContext& InOutTakeDamageContext) const
-{
-	if (!InOutTakeDamageContext.bShouldCommitDamage) return 0.f;
-
-	const float mitigatedDamage = InOutTakeDamageContext.MitigatedDamage;
-
-	// Minimal safe policy (Check NaN, +Inf/-Inf)
-	if (!FMath::IsFinite(mitigatedDamage)) return 0.f;
-
-	const float finalTakenDamage = mitigatedDamage;
-
-	// TODO: Critical / Guard / Headshot etc Policy
-
-	return FMath::Max(0.f, finalTakenDamage);
-}
-
-float UCTakeDamageComponent::CommitDamageToHealth(const FTakeDamageContext& InOutTakeDamageContext) const
-{
-	if (!IsValid(HealthComp_Cached)) return 0.0;
-
-	return HealthComp_Cached->TakeDamage(InOutTakeDamageContext.FinalTakenDamage);
-}
-
-FTakeDamagePayload UCTakeDamageComponent::BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const
-{
-	FTakeDamagePayload takeDamagePayload = FTakeDamagePayload();
-
-	takeDamagePayload.SourceActor = InDefaultDamageEvent.SourceActor;
-	takeDamagePayload.TargetActor = OwnerActor_Cached;
-	takeDamagePayload.EventInstigator = InDamageInstigator;
-	takeDamagePayload.DamageCauser = InDamageCauser;
-
-	takeDamagePayload.DamageImpactInfo = InDefaultDamageEvent.DamageImpactInfo;
-	takeDamagePayload.ApplyDamageSpecKey = InDefaultDamageEvent.ApplyDamageSpecKey;
-	takeDamagePayload.ApplyDamageSpec = InDefaultDamageEvent.ApplyDamageSpec;
-	takeDamagePayload.ApplyDamageAmount = InDefaultDamageEvent.ApplyDamageAmount;
-
-	takeDamagePayload.RequestedDamage = DamageAmount;
-
-	return takeDamagePayload;
-}
-
-FTakeDamageContext UCTakeDamageComponent::BuildContext(const FTakeDamagePayload& InTakeDamagePayload) const
-{
-	FTakeDamageContext takeDamageContext = FTakeDamageContext();
-
-	takeDamageContext.SourceActor = InTakeDamagePayload.SourceActor;
-	takeDamageContext.TargetActor = InTakeDamagePayload.TargetActor;
-	takeDamageContext.Instigator = ResolveInstigatorController(InTakeDamagePayload.EventInstigator, InTakeDamagePayload.DamageCauser);
-	takeDamageContext.DamageCauser = InTakeDamagePayload.DamageCauser;
-
-	takeDamageContext.DamageImpactInfo = InTakeDamagePayload.DamageImpactInfo;
-	takeDamageContext.ApplyDamageSpecKey = InTakeDamagePayload.ApplyDamageSpecKey;
-
-	takeDamageContext.RequestedDamage = InTakeDamagePayload.RequestedDamage;
-
-	return takeDamageContext;
-}
-
-FTakeDamageResult UCTakeDamageComponent::BuildResult(const FTakeDamageContext& InTakeDamageContext) const
-{
-	FTakeDamageResult takeDamageResult = FTakeDamageResult();
-
-	takeDamageResult.bAccepted = InTakeDamageContext.bAccepted;
-	takeDamageResult.RejectReason = InTakeDamageContext.RejectReason;
-	takeDamageResult.DefenseOutcome = InTakeDamageContext.DefenseOutcome;
-	takeDamageResult.bShouldCommitDamage = InTakeDamageContext.bShouldCommitDamage;
-
-	takeDamageResult.ApplyDamageSpecKey = InTakeDamageContext.ApplyDamageSpecKey;
-
-	takeDamageResult.RequestDamage = InTakeDamageContext.RequestedDamage;
-	takeDamageResult.MitigatedDamage = InTakeDamageContext.MitigatedDamage;
-	takeDamageResult.FinalTakenDamage = InTakeDamageContext.FinalTakenDamage;
-	takeDamageResult.CommittedDamage = InTakeDamageContext.CommittedDamage;
-
-	takeDamageResult.DeadState_Before = InTakeDamageContext.DeadState_Before;
-	takeDamageResult.DeadState_After = InTakeDamageContext.DeadState_After;
-
-	return takeDamageResult;
-}
-
-FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
-{
-	FTakeDamagePacket takeDamagePacket;
-
-	takeDamagePacket.Payload = InTakeDamagePayload;
-	takeDamagePacket.Context = InTakeDamageContext;
-	takeDamagePacket.Result = InTakeDamageResult;
-
-	return takeDamagePacket;
-}
-
 FCombatResultPacket UCTakeDamageComponent::BuildCombatResultPacket(const FTakeDamagePacket& InTakeDamagePacket) const
 {
 	FCombatResultPacket combatResultPacket;
@@ -497,6 +485,17 @@ FCombatResultPacket UCTakeDamageComponent::BuildCombatResultPacket(const FTakeDa
 	combatResultPacket.CommittedDamage = InTakeDamagePacket.Result.CommittedDamage;
 
 	return combatResultPacket;
+}
+
+FTakeDamagePacket UCTakeDamageComponent::BuildPacket(const FTakeDamagePayload& InTakeDamagePayload, const FTakeDamageContext& InTakeDamageContext, const FTakeDamageResult& InTakeDamageResult) const
+{
+	FTakeDamagePacket takeDamagePacket;
+
+	takeDamagePacket.Payload = InTakeDamagePayload;
+	takeDamagePacket.Context = InTakeDamageContext;
+	takeDamagePacket.Result = InTakeDamageResult;
+
+	return takeDamagePacket;
 }
 
 void UCTakeDamageComponent::PrintTakeDamageSummaryInfo(const FTakeDamagePacket& InTakeDamagePacket) const
