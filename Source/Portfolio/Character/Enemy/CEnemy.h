@@ -123,6 +123,10 @@ protected:
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+private:
+	// Init Helper
+	void ResolveComponentReferences();
+
 public:
 	void Tick(float DeltaTime) override;
 

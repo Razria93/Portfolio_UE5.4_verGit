@@ -131,9 +131,24 @@ void ACPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ResolveComponentReferences();
+
 	if (IsValid(HealthComponent) && IsValid(StateComponent))
 	{
 		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
+	}
+}
+
+void ACPlayer::ResolveComponentReferences()
+{
+	if (!IsValid(CombatSignalSourceComponent))
+	{
+		CombatSignalSourceComponent = FindComponentByClass<UCCombatSignalSourceComponent>();
+	}
+
+	if (!IsValid(CombatSignalTargetComponent))
+	{
+		CombatSignalTargetComponent = FindComponentByClass<UCCombatSignalTargetComponent>();
 	}
 }
 
@@ -167,6 +182,11 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	}
 	else
 	{
+		FLog::Log(FString::Printf(
+			TEXT("[Player] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
+			*GetNameSafe(this),
+			DamageAmount));
+
 		// FallBack
 		finalDamage = DamageAmount;
 	}

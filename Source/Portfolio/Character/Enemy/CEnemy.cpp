@@ -108,6 +108,8 @@ void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ResolveComponentReferences();
+
 	if (IsValid(ActionComponent))
 	{
 		// Update blackboard
@@ -124,6 +126,19 @@ void ACEnemy::BeginPlay()
 	if (!actionRequestResult.IsAccepted())
 	{
 		FLog::Log(TEXT("[Enemy|BeginPlay] Initial equip-action request rejected."));
+	}
+}
+
+void ACEnemy::ResolveComponentReferences()
+{
+	if (!IsValid(CombatSignalSourceComponent))
+	{
+		CombatSignalSourceComponent = FindComponentByClass<UCCombatSignalSourceComponent>();
+	}
+
+	if (!IsValid(CombatSignalTargetComponent))
+	{
+		CombatSignalTargetComponent = FindComponentByClass<UCCombatSignalTargetComponent>();
 	}
 }
 
@@ -168,6 +183,11 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	}
 	else
 	{
+		FLog::Log(FString::Printf(
+			TEXT("[Enemy] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
+			*GetNameSafe(this),
+			DamageAmount));
+
 		// FallBack
 		finalDamage = DamageAmount;
 	}
