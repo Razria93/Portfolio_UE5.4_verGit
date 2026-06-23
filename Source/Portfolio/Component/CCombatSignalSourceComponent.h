@@ -3,16 +3,16 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CWeaponStructure.h"
-#include "CApplyDamageComponent.generated.h"
+#include "CCombatSignalSourceComponent.generated.h"
 
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class PORTFOLIO_API UCApplyDamageComponent : public UActorComponent
+class PORTFOLIO_API UCCombatSignalSourceComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UCApplyDamageComponent();
+	UCCombatSignalSourceComponent();
 
 private:
 	UPROPERTY(EditAnywhere)

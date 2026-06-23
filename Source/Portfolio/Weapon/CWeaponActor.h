@@ -71,7 +71,7 @@ private:
 	class ACharacter* OwnerCharacter_Cached;
 
 	UPROPERTY(Transient)
-	class UCApplyDamageComponent* ApplyDamageComp_Cached;
+	class UCCombatSignalSourceComponent* ApplyDamageComp_Cached;
 
 private:
 	UPROPERTY(Transient)

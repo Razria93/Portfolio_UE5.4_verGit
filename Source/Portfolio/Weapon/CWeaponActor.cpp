@@ -6,7 +6,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 
-#include "Component/CApplyDamageComponent.h"
+#include "Component/CCombatSignalSourceComponent.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -33,7 +33,7 @@ void ACWeaponActor::BeginPlay()
 	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
-	ApplyDamageComp_Cached = Cast<UCApplyDamageComponent>(OwnerCharacter_Cached->GetComponentByClass(UCApplyDamageComponent::StaticClass()));
+	ApplyDamageComp_Cached = Cast<UCCombatSignalSourceComponent>(OwnerCharacter_Cached->GetComponentByClass(UCCombatSignalSourceComponent::StaticClass()));
 	if (!IsValid(ApplyDamageComp_Cached)) return;
 
 	if (IsValid(RootSceneComponent))

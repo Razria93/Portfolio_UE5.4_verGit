@@ -92,10 +92,10 @@ private:
 	class UCObservableOverlayComponent* ObservableOverlayComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
-	class UCApplyDamageComponent* ApplyDamageComponent;
+	class UCCombatSignalSourceComponent* ApplyDamageComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "HandlingDamage")
-	class UCTakeDamageComponent* TakeDamageComponent;
+	class UCCombatSignalTargetComponent* TakeDamageComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Execution")
 	class UCActionComponent* ActionComponent;
@@ -138,8 +138,8 @@ public:
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
-	FORCEINLINE UCApplyDamageComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
-	FORCEINLINE UCTakeDamageComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
+	FORCEINLINE UCCombatSignalSourceComponent* GetApplyDamageComp() const { return ApplyDamageComponent; }
+	FORCEINLINE UCCombatSignalTargetComponent* GetTakeDamageComp() const { return TakeDamageComponent; }
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }

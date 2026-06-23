@@ -15,8 +15,8 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CObservableOverlayComponent.h"
-#include "Component/CApplyDamageComponent.h"
-#include "Component/CTakeDamageComponent.h"
+#include "Component/CCombatSignalSourceComponent.h"
+#include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHitFeedbackComponent.h"
@@ -76,11 +76,11 @@ ACEnemy::ACEnemy()
 	check(ObservableOverlayComponent);
 
 	// Init ApplyDamageComp
-	ApplyDamageComponent = CreateDefaultSubobject<UCApplyDamageComponent>(TEXT("ApplyDamage"));
+	ApplyDamageComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("ApplyDamage"));
 	check(ApplyDamageComponent);
 
 	// Init TakeDamageComp
-	TakeDamageComponent = CreateDefaultSubobject<UCTakeDamageComponent>(TEXT("TakeDamage"));
+	TakeDamageComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("TakeDamage"));
 	check(TakeDamageComponent);
 
 	// Init UCACtionComp

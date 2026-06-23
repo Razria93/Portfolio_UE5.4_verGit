@@ -1,4 +1,4 @@
-#include "Component/CApplyDamageComponent.h"
+#include "Component/CCombatSignalSourceComponent.h"
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
@@ -6,11 +6,11 @@
 
 #include "Type/CWeaponStructure.h"
 
-UCApplyDamageComponent::UCApplyDamageComponent()
+UCCombatSignalSourceComponent::UCCombatSignalSourceComponent()
 {
 }
 
-void UCApplyDamageComponent::BeginPlay()
+void UCCombatSignalSourceComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -18,9 +18,9 @@ void UCApplyDamageComponent::BeginPlay()
 	check(OwnerCharacter_Cached);
 }
 
-void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
+void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
 {
-	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCApplyDamageComponent|NotifyHitWindowOpened]"), TEXT("InHitWindowId"), InHitWindowId));
+	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCCombatSignalSourceComponent|NotifyHitWindowOpened]"), TEXT("InHitWindowId"), InHitWindowId));
 
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
@@ -34,9 +34,9 @@ void UCApplyDamageComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32
 	DamagedTargetContainer.FindOrAdd(applyDamageHitWindowKey);
 }
 
-void UCApplyDamageComponent::NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId)
+void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId)
 {
-	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCApplyDamageComponent|NotifyHitWindowClosed]"), TEXT("InHitWindowId"), InHitWindowId));
+	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCCombatSignalSourceComponent|NotifyHitWindowClosed]"), TEXT("InHitWindowId"), InHitWindowId));
 
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
@@ -48,12 +48,12 @@ void UCApplyDamageComponent::NotifyHitWindowClosed(AActor* InDamageCauser, int32
 	DamagedTargetContainer.Remove(applyDamageHitWindowKey);
 }
 
-void UCApplyDamageComponent::RequestApplyDamage(const FHitContext& InHitContext)
+void UCCombatSignalSourceComponent::RequestApplyDamage(const FHitContext& InHitContext)
 {
 	ProcessApplyDamage(InHitContext);
 }
 
-void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
+void UCCombatSignalSourceComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 {
 	// Receive: validate overlap hit input and normalize it into source-side data.
 	if (!ValidateRequest(InHitContext))
@@ -111,7 +111,7 @@ void UCApplyDamageComponent::ProcessApplyDamage(const FHitContext& InHitContext)
 	// PrintApplyDamageSummaryInfo(applyDamageContext.HitContext, applyDamageResult);
 }
 
-bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) const
+bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitContext) const
 {
 	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
 
@@ -146,7 +146,7 @@ bool UCApplyDamageComponent::ValidateRequest(const FHitContext& InHitContext) co
 	return true;
 }
 
-FApplyDamagePayload UCApplyDamageComponent::BuildPayload(const FHitContext& InHitContext) const
+FApplyDamagePayload UCCombatSignalSourceComponent::BuildPayload(const FHitContext& InHitContext) const
 {
 	FApplyDamagePayload applyDamagePayload;
 
@@ -161,7 +161,7 @@ FApplyDamagePayload UCApplyDamageComponent::BuildPayload(const FHitContext& InHi
 	return applyDamagePayload;
 }
 
-FApplyDamageContext UCApplyDamageComponent::BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const
+FApplyDamageContext UCCombatSignalSourceComponent::BuildContext(const FApplyDamagePayload& InApplyDamagePayload) const
 {
 	FApplyDamageContext applyDamageContext;
 
@@ -177,7 +177,7 @@ FApplyDamageContext UCApplyDamageComponent::BuildContext(const FApplyDamagePaylo
 	return applyDamageContext;
 }
 
-bool UCApplyDamageComponent::ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const
+bool UCCombatSignalSourceComponent::ValidateContext(FApplyDamageContext& InOutApplyDamageContext) const
 {
 	if (!IsValid(InOutApplyDamageContext.SourceActor))
 	{
@@ -213,7 +213,7 @@ bool UCApplyDamageComponent::ValidateContext(FApplyDamageContext& InOutApplyDama
 	return true;
 }
 
-bool UCApplyDamageComponent::CanApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const
+bool UCCombatSignalSourceComponent::CanApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const
 {
 	const FOverlapContext& overlapContext = InOutApplyDamageContext.HitContext.OverlapContext;
 
@@ -251,7 +251,7 @@ bool UCApplyDamageComponent::CanApplyDamage(FApplyDamageContext& InOutApplyDamag
 	return true;
 }
 
-void UCApplyDamageComponent::ResolveApplyDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const
+void UCCombatSignalSourceComponent::ResolveApplyDamageSpec(FApplyDamageContext& InOutApplyDamageContext) const
 {
 	const FApplyDamageSpec* foundApplyDamageSpec = ApplyDamageSpecContainer.Find(InOutApplyDamageContext.ApplyDamageSpecKey);
 
@@ -268,7 +268,7 @@ void UCApplyDamageComponent::ResolveApplyDamageSpec(FApplyDamageContext& InOutAp
 	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
 }
 
-void UCApplyDamageComponent::ComputeApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const
+void UCCombatSignalSourceComponent::ComputeApplyDamage(FApplyDamageContext& InOutApplyDamageContext) const
 {
 	if (!IsValid(InOutApplyDamageContext.SourceActor) || !IsValid(InOutApplyDamageContext.DamageCauser) || !IsValid(InOutApplyDamageContext.TargetActor))
 	{
@@ -285,7 +285,7 @@ void UCApplyDamageComponent::ComputeApplyDamage(FApplyDamageContext& InOutApplyD
 	InOutApplyDamageContext.RejectReason = EApplyDamageRejectReason::None;
 }
 
-FApplyDamageResult UCApplyDamageComponent::BuildResult(const FApplyDamageContext& InApplyDamageContext) const
+FApplyDamageResult UCCombatSignalSourceComponent::BuildResult(const FApplyDamageContext& InApplyDamageContext) const
 {
 	FApplyDamageResult applyDamageResult;
 
@@ -300,7 +300,7 @@ FApplyDamageResult UCApplyDamageComponent::BuildResult(const FApplyDamageContext
 	return applyDamageResult;
 }
 
-void UCApplyDamageComponent::CommitApplyDamage(FApplyDamageContext& InOutApplyDamageContext)
+void UCCombatSignalSourceComponent::CommitApplyDamage(FApplyDamageContext& InOutApplyDamageContext)
 {
 	InOutApplyDamageContext.CommittedDamage = ApplyDamageToTarget(InOutApplyDamageContext);
 
@@ -317,7 +317,7 @@ void UCApplyDamageComponent::CommitApplyDamage(FApplyDamageContext& InOutApplyDa
 	CacheDamagedTargetInWindow(InOutApplyDamageContext);
 }
 
-float UCApplyDamageComponent::ApplyDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const
+float UCCombatSignalSourceComponent::ApplyDamageToTarget(const FApplyDamageContext& InApplyDamageContext) const
 {
 	if (!IsValid(InApplyDamageContext.TargetActor) || !IsValid(InApplyDamageContext.DamageCauser) || !IsValid(InApplyDamageContext.Instigator))
 		return 0.f;
@@ -334,7 +334,7 @@ float UCApplyDamageComponent::ApplyDamageToTarget(const FApplyDamageContext& InA
 	return InApplyDamageContext.TargetActor->TakeDamage(InApplyDamageContext.ApplyDamageAmount.RequestDamage, damageEvent, InApplyDamageContext.Instigator, InApplyDamageContext.DamageCauser);
 }
 
-void UCApplyDamageComponent::CacheDamagedTargetInWindow(const FApplyDamageContext& InApplyDamageContext)
+void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FApplyDamageContext& InApplyDamageContext)
 {
 	AActor* targetActor = InApplyDamageContext.TargetActor;
 	if (!IsValid(targetActor)) return;
@@ -344,7 +344,7 @@ void UCApplyDamageComponent::CacheDamagedTargetInWindow(const FApplyDamageContex
 	damagedTargets.Add(targetActor);
 }
 
-FApplyDamageHitWindowKey UCApplyDamageComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
+FApplyDamageHitWindowKey UCCombatSignalSourceComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
 {
 	FApplyDamageHitWindowKey applyDamageWindowKey;
 
@@ -354,7 +354,7 @@ FApplyDamageHitWindowKey UCApplyDamageComponent::BuildHitWindowKey(const FHitCon
 	return applyDamageWindowKey;
 }
 
-FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHitContext) const
+FApplyDamageSpecKey UCCombatSignalSourceComponent::BuildSpecKey(const FHitContext& InHitContext) const
 {
 	FApplyDamageSpecKey applyDamageSpecKey;
 
@@ -365,7 +365,7 @@ FApplyDamageSpecKey UCApplyDamageComponent::BuildSpecKey(const FHitContext& InHi
 	return applyDamageSpecKey;
 }
 
-AController* UCApplyDamageComponent::ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const
+AController* UCCombatSignalSourceComponent::ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const
 {
 	if (IsValid(InAttacker))
 	{
@@ -405,7 +405,7 @@ AController* UCApplyDamageComponent::ResolveInstigatorController(AActor* InAttac
 	return nullptr;
 }
 
-bool UCApplyDamageComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const
+bool UCCombatSignalSourceComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDamageContext) const
 {
 	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(InApplyDamageContext.HitWindowKey);
 
@@ -414,7 +414,7 @@ bool UCApplyDamageComponent::IsDuplicateHit(const FApplyDamageContext& InApplyDa
 	return foundTargets->Contains(InApplyDamageContext.TargetActor);
 }
 
-bool UCApplyDamageComponent::IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const
+bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FApplyDamageContext& InApplyDamageContext) const
 {
 	AActor* ownerActor = InApplyDamageContext.SourceActor;
 	AActor* targetActor = InApplyDamageContext.TargetActor;
@@ -438,7 +438,7 @@ bool UCApplyDamageComponent::IsFriendlyTarget(const FApplyDamageContext& InApply
 	return false;
 }
 
-void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const
+void UCCombatSignalSourceComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHitContext, const FApplyDamageResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("===== Apply Damage Summary ======"));
 	FLog::Log(TEXT("[@ APPLY DAMAGE]"));
@@ -455,7 +455,7 @@ void UCApplyDamageComponent::PrintApplyDamageSummaryInfo(const FHitContext& InHi
 	FLog::Log(TEXT("================================="));
 }
 
-void UCApplyDamageComponent::PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
+void UCCombatSignalSourceComponent::PrintApplyDamageContextInfo(const FHitContext& InHitContext, const FApplyDamageSpec& InApplyDamageSpec, const FApplyDamageResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("////- Apply Damage Context -/////"));
 	PrintOverlapContextInfo(InHitContext.OverlapContext);
@@ -465,7 +465,7 @@ void UCApplyDamageComponent::PrintApplyDamageContextInfo(const FHitContext& InHi
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
-void UCApplyDamageComponent::PrintApplyDamageRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
+void UCCombatSignalSourceComponent::PrintApplyDamageRejectedSummaryInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
 {
 	FLog::Log(TEXT("= Apply Damage Rejected Summary ="));
 	FLog::Log(TEXT("[@ REJECT DAMAGE]"));
@@ -480,7 +480,7 @@ void UCApplyDamageComponent::PrintApplyDamageRejectedSummaryInfo(const FHitConte
 	FLog::Log(TEXT("================================="));
 }
 
-void UCApplyDamageComponent::PrintApplyDamageRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
+void UCCombatSignalSourceComponent::PrintApplyDamageRejectedContextInfo(const FHitContext& InHitContext, EApplyDamageRejectReason InRejectReason) const
 {
 	FLog::Log(TEXT("////- Reject Damage Context -////"));
 	PrintRejectReasonInfo(InRejectReason);
@@ -489,7 +489,7 @@ void UCApplyDamageComponent::PrintApplyDamageRejectedContextInfo(const FHitConte
 	FLog::Log(TEXT("/////////////////////////////////"));
 }
 
-void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const
+void UCCombatSignalSourceComponent::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const
 {
 	FLog::Log(TEXT("-------- Overlap Context --------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
@@ -516,7 +516,7 @@ void UCApplyDamageComponent::PrintOverlapContextInfo(const FOverlapContext& InOv
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const
+void UCCombatSignalSourceComponent::PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const
 {
 	FLog::Log(TEXT("---------- Hit Context ----------"));
 	FLog::Log(TEXT("[WeaponContext]"));
@@ -528,14 +528,14 @@ void UCApplyDamageComponent::PrintHitContextInfo(const FWeaponContext& InWeaponC
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const
+void UCCombatSignalSourceComponent::PrintDamageSpecInfo(const FApplyDamageSpec& InApplyDamageSpec) const
 {
 	FLog::Log(TEXT("---------- Damage Spec ----------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InApplyDamageSpec.BaseDamage));
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const
+void UCCombatSignalSourceComponent::PrintDamageResultInfo(const FApplyDamageResult& InApplyDamageResult) const
 {
 	FLog::Log(TEXT("--------- Damage Result ---------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InApplyDamageResult.BaseDamage));
@@ -546,7 +546,7 @@ void UCApplyDamageComponent::PrintDamageResultInfo(const FApplyDamageResult& InA
 	FLog::Log(TEXT("---------------------------------"));
 }
 
-void UCApplyDamageComponent::PrintRejectReasonInfo(EApplyDamageRejectReason InRejectReason) const
+void UCCombatSignalSourceComponent::PrintRejectReasonInfo(EApplyDamageRejectReason InRejectReason) const
 {
 	FLog::Log(TEXT("--------- Reject Reason ---------"));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("RejectReason"), *UEnum::GetValueAsString(InRejectReason)));
