@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 
+#include "Component/CCombatSignalTargetComponent.h"
+
 #include "Type/CWeaponStructure.h"
 
 namespace
@@ -61,8 +63,7 @@ void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext&
 bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser, float InRequestedDamage)
 {
 	const FCombatSignal combatSignal = BuildCueSignal(InTargetActor, InCueTag, InCueLocation, InDirection, InSignalCauser, InRequestedDamage);
-	if (!ValidateCueSignal(combatSignal))
-		return false;
+	if (!ValidateCueSignal(combatSignal)) return false;
 
 	return SendCueSignal(combatSignal);
 }
@@ -353,8 +354,15 @@ bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatS
 	if (!ValidateCueSignal(InCombatSignal))
 		return false;
 
-	// Target-side FCombatSignal entry is connected in the next step.
-	return false;
+	AActor* targetActor = InCombatSignal.Header.TargetActor;
+	if (!IsValid(targetActor))
+		return false;
+
+	UCCombatSignalTargetComponent* targetComponent = targetActor->FindComponentByClass<UCCombatSignalTargetComponent>();
+	if (!IsValid(targetComponent))
+		return false;
+
+	return targetComponent->RequestCombatSignalTarget(InCombatSignal);
 }
 
 void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InCombatSignalSourceContext)

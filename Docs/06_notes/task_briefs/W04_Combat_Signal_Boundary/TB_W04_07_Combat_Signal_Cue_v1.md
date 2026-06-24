@@ -313,7 +313,13 @@ RequestedDamage = finite non-negative value
 Direction = caller direction or source -> target direction
 ```
 
-`SendCueSignal`은 target-side `FCombatSignal` entry가 아직 없으므로 검증 후 false를 반환하는 준비 지점으로 둔다. 다음 단계에서 `UCCombatSignalTargetComponent`의 `FCombatSignal` entry와 연결한다.
+`SendCueSignal`은 target actor의 `UCCombatSignalTargetComponent`를 찾아 `FCombatSignal` entry로 전달한다.
+
+```text
+SendCueSignal(FCombatSignal)
+-> TargetActor->FindComponentByClass<UCCombatSignalTargetComponent>()
+-> RequestCombatSignalTarget(FCombatSignal)
+```
 
 ### Source entry naming 후속 정리
 
@@ -350,6 +356,35 @@ SendCueSignal
 
 이번 단계에서는 기존 hit 호출부와 cue target hook 연결이 아직 진행 중이므로 public entry rename은 별도 후속 작업으로 미룬다.
 
+### Target entry naming 후속 정리
+
+target public entry도 현재는 임시 overload 상태다.
+
+```text
+RequestCombatSignalTarget(float, FDamageEvent, ...)
+RequestCombatSignalTarget(FCombatSignal)
+```
+
+두 함수는 각각 UE damage event adapter entry와 `FCombatSignal` direct entry로 성격이 다르다.
+
+후속 후보:
+
+```text
+RequestCombatSignalTarget(float, FDamageEvent, ...)
+-> ReceiveDamageEvent
+
+RequestCombatSignalTarget(FCombatSignal)
+-> ReceiveCombatSignal
+
+ProcessCombatSignalTarget(float, FDamageEvent, ...)
+-> ProcessDamageEvent
+
+ProcessCombatSignalTarget(FCombatSignal)
+-> ProcessCombatSignal
+```
+
+이번 단계에서는 cue receive hook 연결을 우선하고, Source / Target entry naming 정렬은 별도 후속 작업으로 미룬다.
+
 ### 3. Target-side cue receive / evaluation hook 추가
 
 `UCCombatSignalTargetComponent`가 `TimingCue` signal을 받을 수 있는 hook을 둔다.
@@ -363,6 +398,27 @@ HitEvidence
 TimingCue
 -> cue evaluation hook
 ```
+
+구현 결과:
+
+```text
+RequestCombatSignalTarget(FCombatSignal)
+-> ProcessCombatSignalTarget(FCombatSignal)
+-> HandleTimingCueSignal(FCombatSignal)
+-> ValidateSignalRequest(FCombatSignal)
+```
+
+현재 `HandleTimingCueSignal`은 receive / validation hook만 제공한다.
+
+```text
+TimingCue signal 수신 성공
+-> true
+
+invalid signal / unsupported signal
+-> false
+```
+
+Blink / Repulse 판정, movement, reaction, feedback, result-out 분배는 아직 수행하지 않는다.
 
 ### 4. Target discovery 범위 제한
 

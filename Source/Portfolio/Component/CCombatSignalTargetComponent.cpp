@@ -11,6 +11,12 @@
 
 #include "Type/CWeaponStructure.h"
 
+namespace
+{
+	const FName CombatCueBlinkTag(TEXT("Combat.Cue.Blink"));
+	const FName CombatCueRepulseTag(TEXT("Combat.Cue.Repulse"));
+}
+
 UCCombatSignalTargetComponent::UCCombatSignalTargetComponent()
 {
 }
@@ -40,6 +46,11 @@ float UCCombatSignalTargetComponent::RequestCombatSignalTarget(float DamageAmoun
 	return ProcessCombatSignalTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
+bool UCCombatSignalTargetComponent::RequestCombatSignalTarget(const FCombatSignal& InCombatSignal)
+{
+	return ProcessCombatSignalTarget(InCombatSignal);
+}
+
 float UCCombatSignalTargetComponent::ProcessCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (DamageEvent.IsOfType(FDefaultDamageEvent::ClassID))
@@ -49,6 +60,16 @@ float UCCombatSignalTargetComponent::ProcessCombatSignalTarget(float DamageAmoun
 	}
 
 	return 0.f;
+}
+
+bool UCCombatSignalTargetComponent::ProcessCombatSignalTarget(const FCombatSignal& InCombatSignal)
+{
+	if (InCombatSignal.Header.SignalType == ECombatSignalType::TimingCue)
+	{
+		return HandleTimingCueSignal(InCombatSignal);
+	}
+
+	return false;
 }
 
 float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
@@ -116,6 +137,27 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	return committedResult.CommittedDamage;
 }
 
+bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& InCombatSignal)
+{
+	if (!ValidateSignalRequest(InCombatSignal))
+		return false;
+
+	if (InCombatSignal.CueTag == CombatCueBlinkTag)
+	{
+		FLog::Log(TEXT("[CombatSignalTimingCue] Blink cue received"));
+		return true;
+	}
+
+	if (InCombatSignal.CueTag == CombatCueRepulseTag)
+	{
+		FLog::Log(TEXT("[CombatSignalTimingCue] Repulse cue received"));
+		return true;
+	}
+
+	// V1 hook only. Blink / Repulse evaluation and effects are added in separate branches.
+	return false;
+}
+
 bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
 	if (!IsValid(OwnerActor_Cached)) return false;
@@ -126,6 +168,19 @@ bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& I
 
 	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage)) return false;
 	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage)) return false;
+
+	return true;
+}
+
+bool UCCombatSignalTargetComponent::ValidateSignalRequest(const FCombatSignal& InCombatSignal) const
+{
+	if (!InCombatSignal.IsValidMinimal()) return false;
+	if (InCombatSignal.Header.SignalType != ECombatSignalType::TimingCue) return false;
+	if (!IsValid(OwnerActor_Cached)) return false;
+	if (!IsValid(InCombatSignal.Header.SourceActor)) return false;
+	if (!IsValid(InCombatSignal.Header.TargetActor)) return false;
+	if (InCombatSignal.Header.TargetActor != OwnerActor_Cached) return false;
+	if (InCombatSignal.CueTag.IsNone()) return false;
 
 	return true;
 }
