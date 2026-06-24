@@ -634,7 +634,7 @@ CombatSignalSource / CombatSignalTarget 리네임 이후에도 ApplyDamage / Tak
 **상태**
 
 ```text
-예정
+진행
 ```
 
 **브랜치**
@@ -660,6 +660,18 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름에 연
 - collision hit와 timing cue가 같은 target receive 흐름을 공유한다.
 - cue 전용 예외 파이프라인을 만들지 않는다.
 
+**W04 종료 기준**
+
+```text
+W04는 W04-07 Combat Signal Cue v1까지 완료한 뒤 종료한다.
+```
+
+W04의 핵심 축은 기존 combat hit 흐름을 `CombatSignal Source / Target` 경계로 정리하고, collision hit와 timing cue가 같은 receive 개념을 공유할 수 있게 만드는 것이다.
+
+`Combat Signal Cue v1`은 기존 파이프라인에 `TimingCue` 분기를 추가하는 확장 작업이므로 W04 범위에 포함한다.
+
+반면 ResultOut, Feedback, Unreal reference validation은 W04에서 이어지는 후속 작업이지만 별도 축으로 분리한다. 해당 작업들은 signal boundary 자체보다 결과 송출, feedback 책임 경계, Unreal asset/reference 안정성에 더 가깝기 때문이다.
+
 ## 8. 관련 문서
 
 - `Docs/06_notes/N03_Guard_Hold_Overlay_Layer_Design_Note.md`
@@ -670,3 +682,4 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름에 연
 - `Docs/06_notes/N07_Unreal_Native_Component_Rename_And_Blueprint_Reference_Note.md`
 - `Docs/02_Bug_Report/B13_UE5_Portfolio_Bug_Report.md`
 - `Docs/06_notes/task_briefs/W04_Combat_Signal_Boundary/TB_W04_06_Combat_Damage_Data_Types.md`
+- `Docs/06_notes/task_briefs/W04_Combat_Signal_Boundary/TB_W04_07_Combat_Signal_Cue_v1.md`
