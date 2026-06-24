@@ -47,6 +47,7 @@ W04-05 rename 작업 기준:
 - serialized reference가 있는 Unreal component rename은 class redirect와 property redirect를 함께 검토한다.
 - native component rename 후에는 Actor에 실제 component가 존재해도 C++ UPROPERTY 멤버 포인터가 비어 있을 수 있으므로, BeginPlay 단계의 참조 검증 / 복구 필요성을 점검한다.
 - USTRUCT / UENUM처럼 asset에 직렬화될 수 있는 reflected type을 리네임할 때는 CoreRedirect 또는 asset migration / resave 필요성을 먼저 점검한다.
+- public source entry는 `Submit...Signal`, private delivery 단계는 `Send...Signal`처럼 호출 계층을 이름으로 구분하는 기준을 검토한다.
 ```
 
 W04-06 damage data type 작업 기준:

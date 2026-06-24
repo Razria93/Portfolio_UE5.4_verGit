@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCombatSignalStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CCombatSignalSourceComponent.generated.h"
 
@@ -37,6 +38,7 @@ public:
 public:
 	// Entry
 	void RequestCombatSignalSource(const FHitContext& InHitContext);
+	bool RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation = FVector::ZeroVector, const FVector& InDirection = FVector::ZeroVector, AActor* InSignalCauser = nullptr, float InRequestedDamage = 0.f);
 
 private:
 	void ProcessCombatSignalSource(const FHitContext& InHitContext);
@@ -59,6 +61,7 @@ private:
 	// Send
 	void CommitCombatSignalSource(FCombatSignalSourceContext& InOutCombatSignalSourceContext);
 	float SendDamageToTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext) const;
+	bool SendCueSignal(const FCombatSignal& InCombatSignal) const;
 
 private:
 	// Cache
@@ -66,6 +69,8 @@ private:
 
 private:
 	// Helper
+	FCombatSignal BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser, float InRequestedDamage) const;
+	bool ValidateCueSignal(const FCombatSignal& InCombatSignal) const;
 	FCombatSignalHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
 	FDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 	AController* ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const;

@@ -6,6 +6,11 @@
 
 #include "Type/CWeaponStructure.h"
 
+namespace
+{
+	const FName CombatTimingCueSignalTag(TEXT("Combat.Signal.TimingCue"));
+}
+
 UCCombatSignalSourceComponent::UCCombatSignalSourceComponent()
 {
 }
@@ -51,6 +56,15 @@ void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser
 void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext& InHitContext)
 {
 	ProcessCombatSignalSource(InHitContext);
+}
+
+bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser, float InRequestedDamage)
+{
+	const FCombatSignal combatSignal = BuildCueSignal(InTargetActor, InCueTag, InCueLocation, InDirection, InSignalCauser, InRequestedDamage);
+	if (!ValidateCueSignal(combatSignal))
+		return false;
+
+	return SendCueSignal(combatSignal);
 }
 
 void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext& InHitContext)
@@ -334,6 +348,15 @@ float UCCombatSignalSourceComponent::SendDamageToTarget(const FCombatSignalSourc
 	return InCombatSignalSourceContext.TargetActor->TakeDamage(InCombatSignalSourceContext.DamageAmount.RequestDamage, damageEvent, InCombatSignalSourceContext.Instigator, InCombatSignalSourceContext.DamageCauser);
 }
 
+bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatSignal) const
+{
+	if (!ValidateCueSignal(InCombatSignal))
+		return false;
+
+	// Target-side FCombatSignal entry is connected in the next step.
+	return false;
+}
+
 void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InCombatSignalSourceContext)
 {
 	AActor* targetActor = InCombatSignalSourceContext.TargetActor;
@@ -342,6 +365,46 @@ void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSign
 	// Cached
 	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(InCombatSignalSourceContext.HitWindowKey);
 	damagedTargets.Add(targetActor);
+}
+
+FCombatSignal UCCombatSignalSourceComponent::BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser, float InRequestedDamage) const
+{
+	FCombatSignal combatSignal;
+
+	AActor* ownerActor = GetOwner();
+	AActor* signalCauser = IsValid(InSignalCauser) ? InSignalCauser : ownerActor;
+
+	combatSignal.Header.SignalType = ECombatSignalType::TimingCue;
+	combatSignal.Header.SourceActor = ownerActor;
+	combatSignal.Header.TargetActor = InTargetActor;
+	combatSignal.Header.InstigatorActor = ownerActor;
+	combatSignal.Header.SignalCauser = signalCauser;
+	combatSignal.Header.DebugTag = CombatTimingCueSignalTag;
+
+	combatSignal.SignalTag = CombatTimingCueSignalTag;
+	combatSignal.CueTag = InCueTag;
+	combatSignal.RequestedDamage = FMath::IsFinite(InRequestedDamage) ? FMath::Max(0.f, InRequestedDamage) : 0.f;
+	combatSignal.ImpactLocation = InCueLocation;
+
+	FVector direction = InDirection;
+	if (direction.IsNearlyZero() && IsValid(ownerActor) && IsValid(InTargetActor))
+	{
+		direction = InTargetActor->GetActorLocation() - ownerActor->GetActorLocation();
+	}
+	combatSignal.Direction = direction.GetSafeNormal();
+
+	return combatSignal;
+}
+
+bool UCCombatSignalSourceComponent::ValidateCueSignal(const FCombatSignal& InCombatSignal) const
+{
+	if (!InCombatSignal.IsValidMinimal()) return false;
+	if (InCombatSignal.Header.SignalType != ECombatSignalType::TimingCue) return false;
+	if (!IsValid(InCombatSignal.Header.SourceActor)) return false;
+	if (!IsValid(InCombatSignal.Header.TargetActor)) return false;
+	if (InCombatSignal.CueTag.IsNone()) return false;
+
+	return true;
 }
 
 FCombatSignalHitWindowKey UCCombatSignalSourceComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
