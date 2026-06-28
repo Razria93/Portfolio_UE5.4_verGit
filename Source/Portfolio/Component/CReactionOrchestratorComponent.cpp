@@ -14,7 +14,7 @@
 
 namespace
 {
-	bool EnsureRequiredReference(const UObject* InObject, const TCHAR* InLabel, const UObject* InOwner, const UObject* InContext)
+	bool EnsureRequiredReactionReference(const UObject* InObject, const TCHAR* InLabel, const UObject* InOwner, const UObject* InContext)
 	{
 		return ensureMsgf(IsValid(InObject), TEXT("Missing required %s | Owner=%s | This=%s"), InLabel, *GetNameSafe(InOwner), *GetNameSafe(InContext));
 	}
@@ -32,13 +32,6 @@ void UCReactionOrchestratorComponent::InitializeReferences(const FCharacterCompo
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	ActionComp_Injected = InReferences.ActionComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
-}
-
-// Lifecycle
-
-void UCReactionOrchestratorComponent::BeginPlay()
-{
-	Super::BeginPlay();
 
 	ValidateRequiredComponentReferences();
 }
@@ -64,7 +57,7 @@ bool UCReactionOrchestratorComponent::ValidateRequiredComponentReferences() cons
 
 	for (const FRequiredComponentReference& reference : requiredReferences)
 	{
-		bValid &= EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+		bValid &= EnsureRequiredReactionReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
 	}
 
 	return bValid;

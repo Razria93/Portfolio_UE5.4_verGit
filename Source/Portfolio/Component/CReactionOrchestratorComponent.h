@@ -15,9 +15,6 @@ class PORTFOLIO_API UCReactionOrchestratorComponent : public UActorComponent
 public:
 	UCReactionOrchestratorComponent();
 
-public:
-	void InitializeReferences(const FCharacterComponentReferences& InReferences);
-
 private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
@@ -37,12 +34,11 @@ private:
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
-protected:
-	// Lifecycle
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
 private:
-	// Component Reference
 	bool ValidateRequiredComponentReferences() const;
 
 public:

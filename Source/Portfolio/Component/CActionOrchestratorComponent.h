@@ -14,9 +14,6 @@ class PORTFOLIO_API UCActionOrchestratorComponent : public UActorComponent
 public:
 	UCActionOrchestratorComponent();
 
-public:
-	void InitializeReferences(const FCharacterComponentReferences& InReferences);
-
 private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
@@ -46,12 +43,11 @@ private:
 	UPROPERTY(Transient)
 	TArray<FDeferredActionCandidate> DeferredActionCandidates;
 
-protected:
-	// Lifecycle
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
 private:
-	// Component Reference
 	bool ValidateRequiredComponentReferences() const;
 
 public:
