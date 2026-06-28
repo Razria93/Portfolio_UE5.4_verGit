@@ -13,14 +13,6 @@
 
 #include "Type/CWeaponStructure.h"
 
-namespace
-{
-	bool EnsureRequiredReactionComponentReference(const UObject* InObject, const TCHAR* InLabel, const UObject* InOwner, const UObject* InContext)
-	{
-		return ensureMsgf(IsValid(InObject), TEXT("Missing required %s | Owner=%s | This=%s"), InLabel, *GetNameSafe(InOwner), *GetNameSafe(InContext));
-	}
-}
-
 UCReactionComponent::UCReactionComponent()
 {
 }
@@ -60,7 +52,7 @@ bool UCReactionComponent::ValidateRequiredComponentReferences() const
 
 	for (const FRequiredComponentReference& reference : requiredReferences)
 	{
-		bValid &= EnsureRequiredReactionComponentReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
 	}
 
 	return bValid;

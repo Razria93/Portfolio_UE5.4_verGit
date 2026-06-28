@@ -12,14 +12,6 @@
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
 
-namespace
-{
-	bool EnsureRequiredReactionReference(const UObject* InObject, const TCHAR* InLabel, const UObject* InOwner, const UObject* InContext)
-	{
-		return ensureMsgf(IsValid(InObject), TEXT("Missing required %s | Owner=%s | This=%s"), InLabel, *GetNameSafe(InOwner), *GetNameSafe(InContext));
-	}
-}
-
 UCReactionOrchestratorComponent::UCReactionOrchestratorComponent()
 {
 }
@@ -57,7 +49,7 @@ bool UCReactionOrchestratorComponent::ValidateRequiredComponentReferences() cons
 
 	for (const FRequiredComponentReference& reference : requiredReferences)
 	{
-		bValid &= EnsureRequiredReactionReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
 	}
 
 	return bValid;

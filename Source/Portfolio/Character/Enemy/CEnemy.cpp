@@ -181,6 +181,11 @@ FCharacterComponentReferences ACEnemy::BuildComponentReferences()
 
 void ACEnemy::InjectComponentReferences(const FCharacterComponentReferences& InReferences)
 {
+	if (IsValid(MovementComponent))
+	{
+		MovementComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(ActionOrchestratorComponent))
 	{
 		ActionOrchestratorComponent->InitializeReferences(InReferences);
