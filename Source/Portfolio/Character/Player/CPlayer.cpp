@@ -7,9 +7,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
-#include "Component/CActionOrchestratorComponent.h"
-#include "Component/CReactionOrchestratorComponent.h"
-
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -18,6 +15,8 @@
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CCombatSignalTargetComponent.h"
+#include "Component/CActionOrchestratorComponent.h"
+#include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHitFeedbackComponent.h"
@@ -66,14 +65,6 @@ ACPlayer::ACPlayer()
 	CameraComponent->SetRelativeLocation(FVector(0.0f, 40.0f, 0.0f));
 	CameraComponent->bUsePawnControlRotation = false;
 
-	// Init ActionOrchestratorComp
-	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
-	check(ActionOrchestratorComponent);
-
-	// Init ReactionOrchestratorComp
-	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
-	check(ReactionOrchestratorComponent);
-
 	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -106,7 +97,15 @@ ACPlayer::ACPlayer()
 	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
 	check(CombatSignalTargetComponent);
 
-	// Init UCACtionComp
+	// Init ActionOrchestratorComp
+	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
+	check(ActionOrchestratorComponent);
+
+	// Init ReactionOrchestratorComp
+	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
+	check(ReactionOrchestratorComponent);
+
+	// Init ActionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
 	check(ActionComponent);
 
@@ -127,11 +126,16 @@ ACPlayer::ACPlayer()
 	check(ReactionFeedbackComponent);
 }
 
+void ACPlayer::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	InjectComponentReferences();
+}
+
 void ACPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-
-	ResolveComponentReferences();
 
 	if (IsValid(HealthComponent) && IsValid(StateComponent))
 	{
@@ -139,16 +143,47 @@ void ACPlayer::BeginPlay()
 	}
 }
 
-void ACPlayer::ResolveComponentReferences()
+FCharacterComponentReferences ACPlayer::BuildComponentReferences()
 {
-	if (!IsValid(CombatSignalSourceComponent))
+	FCharacterComponentReferences references;
+
+	references.OwnerCharacter = this;
+
+	references.MovementComponent = MovementComponent;
+	references.WeaponComponent = WeaponComponent;
+	references.StateComponent = StateComponent;
+	references.HealthComponent = HealthComponent;
+	references.DefenseComponent = DefenseComponent;
+	references.ObservableOverlayComponent = ObservableOverlayComponent;
+
+	references.CombatSignalSourceComponent = CombatSignalSourceComponent;
+	references.CombatSignalTargetComponent = CombatSignalTargetComponent;
+
+	references.ActionOrchestratorComponent = ActionOrchestratorComponent;
+	references.ReactionOrchestratorComponent = ReactionOrchestratorComponent;
+
+	references.ActionComponent = ActionComponent;
+	references.ReactionComponent = ReactionComponent;
+
+	references.HitFeedbackComponent = HitFeedbackComponent;
+	references.ActionFeedbackComponent = ActionFeedbackComponent;
+	references.ReactionFeedbackComponent = ReactionFeedbackComponent;
+
+	return references;
+}
+
+void ACPlayer::InjectComponentReferences()
+{
+	const FCharacterComponentReferences references = BuildComponentReferences();
+
+	if (IsValid(ActionOrchestratorComponent))
 	{
-		CombatSignalSourceComponent = FindComponentByClass<UCCombatSignalSourceComponent>();
+		ActionOrchestratorComponent->InitializeReferences(references);
 	}
 
-	if (!IsValid(CombatSignalTargetComponent))
+	if (IsValid(ReactionOrchestratorComponent))
 	{
-		CombatSignalTargetComponent = FindComponentByClass<UCCombatSignalTargetComponent>();
+		ReactionOrchestratorComponent->InitializeReferences(references);
 	}
 }
 

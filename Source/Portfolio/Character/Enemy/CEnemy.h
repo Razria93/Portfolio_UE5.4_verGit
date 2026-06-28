@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Type/CAIStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
@@ -70,12 +71,6 @@ private:
 	float CombatActionCooldown;
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
-	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
-
-	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
-	class UCReactionOrchestratorComponent* ReactionOrchestratorComponent;
-
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	class UCMovementComponent* MovementComponent;
 
@@ -96,6 +91,12 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
 	class UCCombatSignalTargetComponent* CombatSignalTargetComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
+	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
+	class UCReactionOrchestratorComponent* ReactionOrchestratorComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Execution")
 	class UCActionComponent* ActionComponent;
@@ -120,12 +121,14 @@ private:
 	int32 ParryResultCount = 0;
 
 protected:
+	void PostInitializeComponents() override;
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	// Init Helper
-	void ResolveComponentReferences();
+	FCharacterComponentReferences BuildComponentReferences();
+	void InjectComponentReferences();
 
 public:
 	void Tick(float DeltaTime) override;
@@ -134,9 +137,6 @@ public:
 	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
-	FORCEINLINE UCReactionOrchestratorComponent* GetReactionOrchestratorComp() const { return ReactionOrchestratorComponent; }
-
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
@@ -144,10 +144,12 @@ public:
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
 	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
+	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
+	FORCEINLINE UCReactionOrchestratorComponent* GetReactionOrchestratorComp() const { return ReactionOrchestratorComponent; }
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
-	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
+	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 
 public:
 	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }

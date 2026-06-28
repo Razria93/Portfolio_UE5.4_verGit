@@ -16,8 +16,28 @@
 
 #include "Type/CActionOrchestrationStructure.h"
 
+namespace
+{
+	bool EnsureRequiredReference(const UObject* InObject, const TCHAR* InLabel, const UObject* InOwner, const UObject* InContext)
+	{
+		return ensureMsgf(IsValid(InObject), TEXT("Missing required %s | Owner=%s | This=%s"), InLabel, *GetNameSafe(InOwner), *GetNameSafe(InContext));
+	}
+}
+
 UCActionOrchestratorComponent::UCActionOrchestratorComponent()
 {
+}
+
+void UCActionOrchestratorComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
+{
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	MovementComp_Injected = InReferences.MovementComponent;
+	WeaponComp_Injected = InReferences.WeaponComponent;
+	StateComp_Injected = InReferences.StateComponent;
+	HealthComp_Injected = InReferences.HealthComponent;
+	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
+	ActionComp_Injected = InReferences.ActionComponent;
+	ReactionComp_Injected = InReferences.ReactionComponent;
 }
 
 // Lifecycle
@@ -26,16 +46,36 @@ void UCActionOrchestratorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+	ValidateRequiredComponentReferences();
+}
 
-	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
-	WeaponComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
-	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
-	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
-	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
-	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
-	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
+bool UCActionOrchestratorComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	struct FRequiredComponentReference
+	{
+		const UObject* Object = nullptr;
+		const TCHAR* Label = TEXT("");
+	};
+
+	const FRequiredComponentReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ MovementComp_Injected, TEXT("UCMovementComponent") },
+		{ WeaponComp_Injected, TEXT("UCWeaponComponent") },
+		{ StateComp_Injected, TEXT("UCStateComponent") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+		{ ActionComp_Injected, TEXT("UCActionComponent") },
+		{ ReactionComp_Injected, TEXT("UCReactionComponent") },
+	};
+
+	for (const FRequiredComponentReference& reference : requiredReferences)
+	{
+		bValid &= EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 // Request Entry
@@ -44,20 +84,20 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(MovementComp_Cached))
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(MovementComp_Injected))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
 	// Release-style cleanup is allowed before hard-block checks.
 	if (InIncomingRequest.IntentType == EMovementActionIntent::StopJump)
 	{
-		MovementComp_Cached->OnStopJump();
+		MovementComp_Injected->OnStopJump();
 		return BuildActionRequestResult(EActionRequestResultType::Handled);
 	}
 
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	const EExecutionState executionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
+	const EExecutionState executionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Dead;
 
 	if (executionState == EExecutionState::Reaction)
 		return BuildActionRequestResult(EActionRequestResultType::Ignored);
@@ -66,27 +106,27 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 	{
 	case EMovementActionIntent::Move:
 	{
-		MovementComp_Cached->OnMove(InIncomingRequest.Axis2D);
+		MovementComp_Injected->OnMove(InIncomingRequest.Axis2D);
 		break;
 	}
 	case EMovementActionIntent::Walk:
 	{
-		MovementComp_Cached->OnWalk();
+		MovementComp_Injected->OnWalk();
 		break;
 	}
 	case EMovementActionIntent::Run:
 	{
-		MovementComp_Cached->OnRun();
+		MovementComp_Injected->OnRun();
 		break;
 	}
 	case EMovementActionIntent::Sprint:
 	{
-		MovementComp_Cached->OnSprint();
+		MovementComp_Injected->OnSprint();
 		break;
 	}
 	case EMovementActionIntent::Jump:
 	{
-		MovementComp_Cached->OnJump();
+		MovementComp_Injected->OnJump();
 		break;
 	}
 	default:
@@ -100,7 +140,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
-	if (!IsValid(WeaponComp_Cached) || !IsValid(ActionComp_Cached))
+	if (!IsValid(WeaponComp_Injected) || !IsValid(ActionComp_Injected))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
 	if (!CanAcceptActionRequest(rejectReason))
@@ -118,7 +158,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
-	if (!IsValid(ActionComp_Cached))
+	if (!IsValid(ActionComp_Injected))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
 	if (!CanAcceptActionRequest(rejectReason))
@@ -196,25 +236,25 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 {
 	OutRejectReason = EActionRequestRejectReason::None;
 
-	if (!IsValid(OwnerCharacter_Cached))
+	if (!IsValid(OwnerCharacter_Injected))
 	{
 		OutRejectReason = EActionRequestRejectReason::InvalidOwner;
 		return false;
 	}
 
-	if (!IsValid(HealthComp_Cached) || !IsValid(StateComp_Cached))
+	if (!IsValid(HealthComp_Injected) || !IsValid(StateComp_Injected))
 	{
 		OutRejectReason = EActionRequestRejectReason::InvalidComponent;
 		return false;
 	}
 
-	if (!HealthComp_Cached->IsAlive())
+	if (!HealthComp_Injected->IsAlive())
 	{
 		OutRejectReason = EActionRequestRejectReason::Dead;
 		return false;
 	}
 
-	const EExecutionState executionState = StateComp_Cached->GetCurrentExecutionState();
+	const EExecutionState executionState = StateComp_Injected->GetCurrentExecutionState();
 
 	if (executionState == EExecutionState::Dead)
 	{
@@ -232,7 +272,7 @@ bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquip
 	OutIncomingCandidate = FActionCandidate();
 	OutRejectReason = EActionRequestRejectReason::None;
 
-	if (!IsValid(WeaponComp_Cached))
+	if (!IsValid(WeaponComp_Injected))
 	{
 		OutRejectReason = EActionRequestRejectReason::InvalidComponent;
 		return false;
@@ -258,7 +298,7 @@ bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquip
 
 	case EEquipmentActionIntent::Toggle:
 	{
-		incomingCandidate.ActionDataKey.ActionType = WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed) ? EActionType::Equip : EActionType::Unequip;
+		incomingCandidate.ActionDataKey.ActionType = WeaponComp_Injected->CheckCurrentWeaponType(EWeaponType::Unarmed) ? EActionType::Equip : EActionType::Unequip;
 		incomingCandidate.ActionDataKey.ActionIndex = 0;
 		break;
 	}
@@ -277,7 +317,7 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	OutIncomingCandidate = FActionCandidate();
 	OutRejectReason = EActionRequestRejectReason::None;
 
-	if (!IsValid(ActionComp_Cached))
+	if (!IsValid(ActionComp_Injected))
 	{
 		OutRejectReason = EActionRequestRejectReason::InvalidComponent;
 		return false;
@@ -290,7 +330,7 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	case ECombatActionIntent::ComboAttack:
 	{
 		incomingCandidate.ActionDataKey.ActionType = EActionType::ComboAttack;
-		incomingCandidate.ActionDataKey.ActionIndex = ActionComp_Cached->IsActiveActionType(EActionType::ComboAttack) ? ActionComp_Cached->GetActiveActionIndex() + 1 : 0;
+		incomingCandidate.ActionDataKey.ActionIndex = ActionComp_Injected->IsActiveActionType(EActionType::ComboAttack) ? ActionComp_Injected->GetActiveActionIndex() + 1 : 0;
 		break;
 	}
 
@@ -344,20 +384,20 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 
 void UCActionOrchestratorComponent::ApplyCombatActionInputSideEffects(const FCombatActionRequest& InIncomingRequest) const
 {
-	if (!IsValid(ActionComp_Cached)) return;
+	if (!IsValid(ActionComp_Injected)) return;
 	if (InIncomingRequest.IntentType != ECombatActionIntent::Guard) return;
 
 	switch (InIncomingRequest.IntentEvent)
 	{
 	case EActionIntentEvent::Started:
 	{
-		ActionComp_Cached->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputPressed));
+		ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputPressed));
 		break;
 	}
 
 	case EActionIntentEvent::Completed:
 	{
-		ActionComp_Cached->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputReleased));
+		ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInputReleased));
 		break;
 	}
 
@@ -435,17 +475,17 @@ bool UCActionOrchestratorComponent::ResolveActionData(const FActionDataKey& InIn
 {
 	OutIncomingData = FActionData();
 
-	if (!IsValid(ActionComp_Cached)) return false;
+	if (!IsValid(ActionComp_Injected)) return false;
 	if (!InIncomingDataKey.IsValidMinimal()) return false;
 
-	return ActionComp_Cached->ResolveActionData(InIncomingDataKey, OutIncomingData);
+	return ActionComp_Injected->ResolveActionData(InIncomingDataKey, OutIncomingData);
 }
 
 UCAction* UCActionOrchestratorComponent::ResolveActionExecutor(const FActionData& InIncomingData) const
 {
-	if (!IsValid(ActionComp_Cached)) return nullptr;
+	if (!IsValid(ActionComp_Injected)) return nullptr;
 
-	return ActionComp_Cached->ResolveActionExecutor(InIncomingData);
+	return ActionComp_Injected->ResolveActionExecutor(InIncomingData);
 }
 
 // Decision Query Build
@@ -465,12 +505,12 @@ FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
 {
 	FExecutionSnapshot snapshot;
 
-	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
-	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
+	snapshot.ExecutionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Dead;
+	snapshot.bIsDead = !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive();
 
-	if (IsValid(ObservableOverlayComp_Cached))
+	if (IsValid(ObservableOverlayComp_Injected))
 	{
-		ObservableOverlayComp_Cached->WriteOverlaySnapshot(snapshot.ObservableOverlay);
+		ObservableOverlayComp_Injected->WriteOverlaySnapshot(snapshot.ObservableOverlay);
 	}
 
 	return snapshot;
@@ -493,8 +533,8 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 {
 	FExecutionParticipant participant;
 
-	const bool bHasActiveAction = IsValid(ActionComp_Cached) && ActionComp_Cached->IsActive();
-	const bool bHasActiveReaction = IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActive();
+	const bool bHasActiveAction = IsValid(ActionComp_Injected) && ActionComp_Injected->IsActive();
+	const bool bHasActiveReaction = IsValid(ReactionComp_Injected) && ReactionComp_Injected->IsActive();
 
 	if (bHasActiveAction && bHasActiveReaction)
 	{
@@ -507,13 +547,13 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 	{
 		FReactionData activeData;
 
-		if (ReactionComp_Cached->GetActiveReactionData(activeData))
+		if (ReactionComp_Injected->GetActiveReactionData(activeData))
 		{
 			FReactionExecutionContext context;
 
 			context.ReactionDataKey = activeData.ReactionDataKey;
 			context.ReactionData = activeData;
-			context.ReactionExecutor = ReactionComp_Cached->GetActiveReactionExecutor();
+			context.ReactionExecutor = ReactionComp_Injected->GetActiveReactionExecutor();
 
 			if (context.IsValidMinimal())
 			{
@@ -531,13 +571,13 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 	{
 		FActionData activeData;
 
-		if (ActionComp_Cached->GetActiveActionData(activeData))
+		if (ActionComp_Injected->GetActiveActionData(activeData))
 		{
 			FActionExecutionContext context;
 
 			context.ActionDataKey = activeData.ActionDataKey;
 			context.ActionData = activeData;
-			context.ActionExecutor = ActionComp_Cached->GetActiveActionExecutor();
+			context.ActionExecutor = ActionComp_Injected->GetActiveActionExecutor();
 
 			if (context.IsValidMinimal())
 			{
@@ -870,10 +910,10 @@ FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const
 	if (!InResult.IsAcceptedDecision())
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, InResult.RejectReason);
 
-	if (!IsValid(ActionComp_Cached))
+	if (!IsValid(ActionComp_Injected))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
 
-	if (!ActionComp_Cached->ApplyActionDecision(InResult))
+	if (!ActionComp_Injected->ApplyActionDecision(InResult))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::ActionExecutionFailed);
 
 	EActionRequestResultType resultType = ConvertDecisionToResultType(InResult);

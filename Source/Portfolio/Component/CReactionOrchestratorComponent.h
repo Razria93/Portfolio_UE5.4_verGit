@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CReactionOrchestrationStructure.h"
 #include "CReactionOrchestratorComponent.generated.h"
 
@@ -14,28 +15,35 @@ class PORTFOLIO_API UCReactionOrchestratorComponent : public UActorComponent
 public:
 	UCReactionOrchestratorComponent();
 
+public:
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
 private:
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached = nullptr;
+	class UCStateComponent* StateComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
+	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCActionComponent* ActionComp_Cached = nullptr;
+	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionComponent* ReactionComp_Cached = nullptr;
+	class UCActionComponent* ActionComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
+	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
 protected:
 	// Lifecycle
 	void BeginPlay() override;
+
+private:
+	// Component Reference
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	// Request Entry

@@ -8,8 +8,6 @@
 
 #include "Controller/CAIController.h"
 
-#include "Component/CActionOrchestratorComponent.h"
-#include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -17,6 +15,8 @@
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CCombatSignalTargetComponent.h"
+#include "Component/CActionOrchestratorComponent.h"
+#include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHitFeedbackComponent.h"
@@ -47,14 +47,6 @@ ACEnemy::ACEnemy()
 	characterMovementComp->bOrientRotationToMovement = true;
 	characterMovementComp->MaxWalkSpeed = 600.0f;
 
-	// Init ActionOrchestratorComp
-	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
-	check(ActionOrchestratorComponent);
-
-	// Init ReactionOrchestratorComp
-	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
-	check(ReactionOrchestratorComponent);
-
 	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -83,7 +75,15 @@ ACEnemy::ACEnemy()
 	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
 	check(CombatSignalTargetComponent);
 
-	// Init UCACtionComp
+	// Init ActionOrchestratorComp
+	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
+	check(ActionOrchestratorComponent);
+
+	// Init ReactionOrchestratorComp
+	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
+	check(ReactionOrchestratorComponent);
+
+	// Init ActionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
 	check(ActionComponent);
 
@@ -104,11 +104,16 @@ ACEnemy::ACEnemy()
 	check(ReactionFeedbackComponent);
 }
 
+void ACEnemy::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	InjectComponentReferences();
+}
+
 void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-
-	ResolveComponentReferences();
 
 	if (IsValid(ActionComponent))
 	{
@@ -129,16 +134,46 @@ void ACEnemy::BeginPlay()
 	}
 }
 
-void ACEnemy::ResolveComponentReferences()
+FCharacterComponentReferences ACEnemy::BuildComponentReferences()
 {
-	if (!IsValid(CombatSignalSourceComponent))
+	FCharacterComponentReferences references;
+
+	references.OwnerCharacter = this;
+
+	references.MovementComponent = MovementComponent;
+	references.WeaponComponent = WeaponComponent;
+	references.StateComponent = StateComponent;
+	references.HealthComponent = HealthComponent;
+	references.ObservableOverlayComponent = ObservableOverlayComponent;
+
+	references.CombatSignalSourceComponent = CombatSignalSourceComponent;
+	references.CombatSignalTargetComponent = CombatSignalTargetComponent;
+
+	references.ActionOrchestratorComponent = ActionOrchestratorComponent;
+	references.ReactionOrchestratorComponent = ReactionOrchestratorComponent;
+
+	references.ActionComponent = ActionComponent;
+	references.ReactionComponent = ReactionComponent;
+
+	references.HitFeedbackComponent = HitFeedbackComponent;
+	references.ActionFeedbackComponent = ActionFeedbackComponent;
+	references.ReactionFeedbackComponent = ReactionFeedbackComponent;
+
+	return references;
+}
+
+void ACEnemy::InjectComponentReferences()
+{
+	const FCharacterComponentReferences references = BuildComponentReferences();
+
+	if (IsValid(ActionOrchestratorComponent))
 	{
-		CombatSignalSourceComponent = FindComponentByClass<UCCombatSignalSourceComponent>();
+		ActionOrchestratorComponent->InitializeReferences(references);
 	}
 
-	if (!IsValid(CombatSignalTargetComponent))
+	if (IsValid(ReactionOrchestratorComponent))
 	{
-		CombatSignalTargetComponent = FindComponentByClass<UCCombatSignalTargetComponent>();
+		ReactionOrchestratorComponent->InitializeReferences(references);
 	}
 }
 
