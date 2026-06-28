@@ -1,6 +1,8 @@
 #include "Component/CDefenseComponent.h"
 #include "ProjectGlobal.h"
 
+#include "GameFramework/Character.h"
+
 #include "Component/CMovementComponent.h"
 
 UCDefenseComponent::UCDefenseComponent()
@@ -8,14 +10,36 @@ UCDefenseComponent::UCDefenseComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UCDefenseComponent::BeginPlay()
+void UCDefenseComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	MovementComp_Injected = InReferences.MovementComponent;
 
-	check(GetOwner());
+	ValidateRequiredComponentReferences();
+}
 
-	MovementComp_Cached = GetOwner()->FindComponentByClass<UCMovementComponent>();
-	check(MovementComp_Cached);
+bool UCDefenseComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	struct FRequiredComponentReference
+	{
+		const UObject* Object = nullptr;
+		const TCHAR* Label = TEXT("");
+	};
+
+	const FRequiredComponentReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ MovementComp_Injected, TEXT("UCMovementComponent") },
+	};
+
+	for (const FRequiredComponentReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 // Overlay Policy
@@ -280,16 +304,16 @@ void UCDefenseComponent::CloseParryWindow()
 // Movement Override
 void UCDefenseComponent::ApplyGuardMovementOverride()
 {
-	if (!IsValid(MovementComp_Cached)) return;
+	if (!IsValid(MovementComp_Injected)) return;
 
-	MovementComp_Cached->ApplyMovementOverride(EMovementGait::Walk, EMovementRotationMode::FixedFacing);
+	MovementComp_Injected->ApplyMovementOverride(EMovementGait::Walk, EMovementRotationMode::FixedFacing);
 }
 
 void UCDefenseComponent::ClearMovementOverride()
 {
-	if (!IsValid(MovementComp_Cached)) return;
+	if (!IsValid(MovementComp_Injected)) return;
 
-	MovementComp_Cached->ClearMovementOverride();
+	MovementComp_Injected->ClearMovementOverride();
 }
 
 // Debug

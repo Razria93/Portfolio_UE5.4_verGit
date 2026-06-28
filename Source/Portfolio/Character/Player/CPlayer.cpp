@@ -190,6 +190,11 @@ void ACPlayer::InjectComponentReferences(const FCharacterComponentReferences& In
 		MovementComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(DefenseComponent))
+	{
+		DefenseComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(ActionOrchestratorComponent))
 	{
 		ActionOrchestratorComponent->InitializeReferences(InReferences);
