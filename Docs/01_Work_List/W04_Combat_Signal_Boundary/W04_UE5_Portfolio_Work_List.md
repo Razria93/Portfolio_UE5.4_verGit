@@ -667,6 +667,7 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름에 연
 
 - Enemy attack notify가 `Combat.Cue.Blink`를 ActionComponent / active Action policy resolve를 거쳐 source component에 요청하고, source component가 Player `UCCombatSignalTargetComponent`까지 전달하는 것을 확인했다.
 - 지원하지 않는 cue tag는 `ECombatSignalTargetRejectReason::UnknownCueTag`로 reject 로그를 남긴다.
+- `M_Attack_Sword_2`의 legacy `ExecutionInterventionWindow(WindowKey=None)` 제거 후에도 attack 2 interrupt 동작이 `Always` rule 기준으로 유지됨을 확인했다.
 - `PortfolioEditor Win64 Development` 빌드 성공을 확인했다.
 - 현재 범위는 cue delivery hook 검증이며, Blink movement / Repulse interaction 구현은 후속 브랜치에서 진행한다.
 

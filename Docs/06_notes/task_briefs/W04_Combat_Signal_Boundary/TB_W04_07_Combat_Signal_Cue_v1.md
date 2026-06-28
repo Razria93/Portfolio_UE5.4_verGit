@@ -572,6 +572,8 @@ Enemy AnimNotify
 
 이 단계는 Blink 실행 구현이 아니라 cue delivery hook 검증이다.
 
+`M_Attack_Sword_2`의 `CAnimNotifyState_ExecutionInterventionWindow(WindowKey=None)`는 이전 interruption rule 구조에서 사용하던 legacy notify state였으므로 제거했다. 현재 attack 2 interrupt 동작은 `Always` rule 기준으로 검증했으며, 해당 `None` window에 의존하지 않는다.
+
 ## 후속 ResultOut 결정
 
 `ResultOut`은 이번 cue delivery 브랜치에서 선행 일반화하지 않는다.

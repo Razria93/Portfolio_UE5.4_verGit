@@ -150,6 +150,8 @@ Enemy AnimNotify
 -> HandleTimingCueSignal
 ```
 
+`M_Attack_Sword_2`에서 제거된 `CAnimNotifyState_ExecutionInterventionWindow(WindowKey=None)`는 이전 interruption rule 구조에서 사용하던 legacy notify state다. 현재 attack 2 interrupt 동작은 `Always` rule 기준으로 검증했으며, 더 이상 해당 `None` window에 의존하지 않는다.
+
 ---
 
 ## 제외 범위
