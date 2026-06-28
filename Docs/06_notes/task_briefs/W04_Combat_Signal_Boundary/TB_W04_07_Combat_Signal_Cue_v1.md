@@ -97,7 +97,6 @@ signal identity
 cue identity
 cue 기준 위치
 cue 방향
-optional damage amount
 ```
 
 현재 `FCombatSignal`은 위 정보를 모두 표현할 수 있다.
@@ -113,7 +112,6 @@ optional damage amount
 | cue identity | `CueTag` | Blink / Repulse cue 종류 표현 가능 |
 | cue 기준 위치 | `ImpactLocation` | cue 기준점으로 재사용 가능 |
 | cue 방향 | `Direction` | attacker -> target 또는 cue 방향 표현 가능 |
-| optional damage amount | `RequestedDamage` | damage 없는 cue는 `0`으로 처리 가능 |
 
 ### 이번 브랜치 판단
 
@@ -132,10 +130,13 @@ optional damage amount
 SignalType = TimingCue
 SignalTag = cue signal의 큰 의미
 CueTag = Blink / Repulse 같은 실제 cue 종류
-RequestedDamage = damage 없는 cue이면 0
 ImpactLocation = cue 기준 위치
 Direction = cue 진행 방향 또는 source -> target 방향
 ```
+
+`UCAnimNotify_CombatSignalCue`는 damage 값을 노출하지 않는다.
+
+Notify는 cue 종류와 발생 시점만 제공하며, damage나 resource commit 후보값은 target-side policy / outcome 단계에서 별도로 판단한다.
 
 ### 후속 확장 후보
 
@@ -309,7 +310,6 @@ SourceActor = owner
 TargetActor = caller provided target
 InstigatorActor = owner
 SignalCauser = caller provided causer or owner
-RequestedDamage = finite non-negative value
 Direction = caller direction or source -> target direction
 ```
 
@@ -354,7 +354,7 @@ ValidateCueSignal
 SendCueSignal
 ```
 
-이번 단계에서는 기존 hit 호출부와 cue target hook 연결이 아직 진행 중이므로 public entry rename은 별도 후속 작업으로 미룬다.
+이번 단계에서는 기존 hit 호출부를 유지한 채 cue target hook만 연결한다. public entry rename은 별도 후속 작업으로 미룬다.
 
 ### Target entry naming 후속 정리
 
@@ -426,6 +426,20 @@ Blink / Repulse 판정, movement, reaction, feedback, result-out 분배는 아�
 
 가능하면 기존 cached target actor 또는 직접 전달 가능한 target을 기준으로 cue signal을 전달한다.
 
+구현 결과:
+
+```text
+UCAnimNotify_CombatSignalCue
+-> owner action 상태 검증
+-> owner UCCombatSignalSourceComponent 조회
+-> AI Blackboard TargetActor 조회
+-> RequestCombatSignalCue(...)
+```
+
+`UCAnimNotify_CombatSignalCue`는 TimingCue 전달 검증용 notify다. Enemy attack montage에 배치해 `Combat.Cue.Blink` 또는 `Combat.Cue.Repulse`를 target으로 전달할 수 있다.
+
+현재 target discovery는 AI blackboard의 `CAIKey::Targeting::TargetActor`만 사용한다. Lock-on, targeting service, subsystem 승격은 Blink / Repulse 실제 구현 단계에서 다시 판단한다.
+
 ## 제외 범위
 
 ```text
@@ -442,6 +456,7 @@ Guard / Parry 기존 판정 변경
 
 - `TimingCue` signal이 source에서 구성될 수 있다.
 - cue signal이 target receive 흐름으로 들어갈 수 있다.
+- Enemy attack notify에서 AI blackboard target으로 cue signal을 보낼 수 있다.
 - `HitEvidence`와 `TimingCue`의 분기 위치가 명확하다.
 - cue 전용 별도 최상위 파이프라인을 만들지 않는다.
 - 기존 Player -> Enemy / Enemy -> Player hit 동작이 유지된다.
@@ -456,6 +471,27 @@ PortfolioEditor Win64 Development build
 Player -> Enemy hit 유지 확인
 Enemy -> Player hit 유지 확인
 ```
+
+## 런타임 확인
+
+Enemy attack montage의 `UCAnimNotify_CombatSignalCue`에서 `Combat.Cue.Blink`를 발생시켜 Player target까지 전달되는 것을 확인했다.
+
+```text
+[CombatSignalTimingCue] Blink cue received
+[CombatSignalCueNotify] Sent | Source=BP_CEnemy_C_1 | Target=BP_CPlayer_C_0 | CueTag=Combat.Cue.Blink
+```
+
+확인된 범위:
+
+```text
+Enemy AnimNotify
+-> Enemy UCCombatSignalSourceComponent
+-> FCombatSignal TimingCue 구성
+-> Player UCCombatSignalTargetComponent
+-> HandleTimingCueSignal
+```
+
+이 단계는 Blink 실행 구현이 아니라 cue delivery hook 검증이다.
 
 ## 프롬프트 업데이트 체크
 

@@ -59,6 +59,16 @@ W04-06 damage data type 작업 기준:
 - engine boundary / resource boundary 이름은 프로젝트 책임명과 다르게 유지할 수 있다.
 ```
 
+W04-07 timing cue 작업 기준:
+
+```text
+- TimingCue 전달 기반과 Blink / Repulse 실제 구현을 같은 브랜치에 묶지 않는다.
+- 먼저 source build / validate / send와 target receive / validation / cue tag 분기를 안정화한다.
+- TimingCue v1의 실제 호출 검증은 AnimNotify에서 시작하되, target discovery는 기존 AI blackboard target처럼 이미 존재하는 target reference로 제한한다.
+- Blink는 위치 재배치 중심의 단독 반응형 방어 행동으로 본다.
+- Repulse는 Player action과 Enemy reaction을 맞추는 상호작용형 방어 행동으로 본다.
+```
+
 ## Reason
 
 이 기준은 over-abstraction과 God Object 위험을 줄인다.

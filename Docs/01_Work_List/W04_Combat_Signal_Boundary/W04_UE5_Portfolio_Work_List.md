@@ -653,12 +653,19 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름에 연
 
 - `ECombatSignalType::TimingCue` 사용
 - target discovery 방식 정리
+- `UCAnimNotify_CombatSignalCue` 추가
 - Blink / Repulse evaluation hook 추가
 
 **완료조건**
 
 - collision hit와 timing cue가 같은 target receive 흐름을 공유한다.
+- Enemy attack notify에서 blackboard target으로 cue signal을 전달할 수 있다.
 - cue 전용 예외 파이프라인을 만들지 않는다.
+
+**런타임 확인**
+
+- Enemy attack notify에서 `Combat.Cue.Blink`를 Player `UCCombatSignalTargetComponent`까지 전달하는 것을 확인했다.
+- 현재 범위는 cue delivery hook 검증이며, Blink movement / Repulse interaction 구현은 후속 브랜치에서 진행한다.
 
 **W04 종료 기준**
 
