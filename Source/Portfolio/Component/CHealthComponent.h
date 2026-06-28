@@ -42,7 +42,8 @@ private:
 
 private:
 	/* === Cached Objects === */
-	class AActor* OwnerActor_Cached;
+	UPROPERTY(Transient)
+	class AActor* OwnerActor_Cached = nullptr;
 
 public:
 	FOnDeadStateChanged OnDeadStateChanged;

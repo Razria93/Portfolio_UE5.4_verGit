@@ -88,6 +88,8 @@
 
 모든 raw pointer가 잘못은 아니다. 다만 UObject 계열 포인터는 소유 / 강한 참조 / 약한 참조 / 일시 참조 기준을 코드에서 설명할 수 있어야 한다.
 
+세부 판단 기준은 `N09. Unreal Reference Safety Policy Note`를 따른다.
+
 ### 2.2 Component lookup / check 사용
 
 `check`, `FindComponentByClass`, `GetComponentByClass`가 주요 초기화 경로에 넓게 존재한다.
