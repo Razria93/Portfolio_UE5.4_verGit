@@ -80,14 +80,15 @@ private:
 	int32 ParryResultCount = 0;
 
 protected:
+	// Lifecycle
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-	// Init Helper
+	// Component Reference
 	FCharacterComponentReferences BuildComponentReferences();
-	void InjectComponentReferences();
+	void InjectComponentReferences(const FCharacterComponentReferences& InReferences);
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

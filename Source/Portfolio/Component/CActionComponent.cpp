@@ -14,9 +14,61 @@
 
 #include "Type/CWeaponStructure.h"
 
+namespace
+{
+	bool EnsureRequiredActionComponentReference(const UObject* InObject, const TCHAR* InLabel, const UObject* InOwner, const UObject* InContext)
+	{
+		return ensureMsgf(IsValid(InObject), TEXT("Missing required %s | Owner=%s | This=%s"), InLabel, *GetNameSafe(InOwner), *GetNameSafe(InContext));
+	}
+}
+
 UCActionComponent::UCActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+}
+
+void UCActionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
+{
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	MovementComp_Injected = InReferences.MovementComponent;
+	StateComp_Injected = InReferences.StateComponent;
+	HealthComp_Injected = InReferences.HealthComponent;
+	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
+	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
+	ReactionComp_Injected = InReferences.ReactionComponent;
+	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
+
+	ValidateRequiredComponentReferences();
+}
+
+bool UCActionComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	struct FRequiredComponentReference
+	{
+		const UObject* Object = nullptr;
+		const TCHAR* Label = TEXT("");
+	};
+
+	const FRequiredComponentReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ MovementComp_Injected, TEXT("UCMovementComponent") },
+		{ StateComp_Injected, TEXT("UCStateComponent") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+		{ CombatSignalSourceComp_Injected, TEXT("UCCombatSignalSourceComponent") },
+		{ ActionOrchestratorComp_Injected, TEXT("UCActionOrchestratorComponent") },
+		{ ReactionComp_Injected, TEXT("UCReactionComponent") },
+		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
+	};
+
+	for (const FRequiredComponentReference& reference : requiredReferences)
+	{
+		bValid &= EnsureRequiredActionComponentReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 // Lifecycle
@@ -24,17 +76,6 @@ UCActionComponent::UCActionComponent()
 void UCActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
-
-	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
-	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
-	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
-	ActionOrchestratorComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionOrchestratorComponent>();
-	CombatSignalSourceComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCCombatSignalSourceComponent>();
-	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
-	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 
 	// Rebuild All
 	BuildActionDataMap(true);
@@ -136,10 +177,10 @@ bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionDa
 	if (InAction != GetActiveActionExecutor()) return false;
 	if (!InData.IsValidMinimal()) return false;
 
-	if (!IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive()) return false;
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
 
-	if (!IsValid(StateComp_Cached)) return false;
-	if (StateComp_Cached->GetCurrentExecutionState() != EExecutionState::Action) return false;
+	if (!IsValid(StateComp_Injected)) return false;
+	if (StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Action) return false;
 
 	return true;
 }
@@ -148,7 +189,7 @@ bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionDa
 
 bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResult)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!InResult.IsAcceptedDecision()) return false;
 
 	switch (InResult.ApplyMode)
@@ -285,29 +326,29 @@ bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
 	if (!activeExecutor->ResolveNotifyCombatSignalCue(InCueTag, request)) return false;
 	if (!request.IsValidRequest()) return false;
 
-	if (!IsValid(CombatSignalSourceComp_Cached)) return false;
-	return CombatSignalSourceComp_Cached->RequestAICombatSignalCue(request.CueTag);
+	if (!IsValid(CombatSignalSourceComp_Injected)) return false;
+	return CombatSignalSourceComp_Injected->RequestAICombatSignalCue(request.CueTag);
 }
 
 // Cross-System Dispatch
 
 bool UCActionComponent::ApplyOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
-	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayEvent(InContext);
+	return IsValid(ObservableOverlayComp_Injected) && ObservableOverlayComp_Injected->ApplyOverlayEvent(InContext);
 }
 
 FActionRequestResult UCActionComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
 {
-	if (!IsValid(ActionOrchestratorComp_Cached)) return FActionRequestResult();
+	if (!IsValid(ActionOrchestratorComp_Injected)) return FActionRequestResult();
 
-	return ActionOrchestratorComp_Cached->ConsumeDeferredAction(InConsumeKey);
+	return ActionOrchestratorComp_Injected->ConsumeDeferredAction(InConsumeKey);
 }
 
 void UCActionComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsumeKey)
 {
-	if (IsValid(ActionOrchestratorComp_Cached))
+	if (IsValid(ActionOrchestratorComp_Injected))
 	{
-		ActionOrchestratorComp_Cached->ClearDeferredActions(InConsumeKey);
+		ActionOrchestratorComp_Injected->ClearDeferredActions(InConsumeKey);
 	}
 }
 
@@ -315,11 +356,11 @@ void UCActionComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsume
 
 void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	if (OnActionEvent.IsBound())
 	{
-		OnActionEvent.Broadcast(OwnerCharacter_Cached, InType, InIndex, InEventType);
+		OnActionEvent.Broadcast(OwnerCharacter_Injected, InType, InIndex, InEventType);
 	}
 }
 
@@ -327,7 +368,7 @@ void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, 
 
 void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	// bRebuildAll == true: Rebuild 
 	// bRebuildAll == false: Append
@@ -367,7 +408,7 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 
 void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	// bRebuildAll == true: Rebuild 
 	// bRebuildAll == false: Append
@@ -409,7 +450,7 @@ UCAction* UCActionComponent::AddActionExecutor(const TSubclassOf<class UCAction>
 	UCAction* add = NewObject<UCAction>(this, InSubClass);
 	if (!IsValid(add)) return nullptr;
 
-	add->InitializeAction(OwnerCharacter_Cached, this);
+	add->InitializeAction(OwnerCharacter_Injected, this);
 	ActionExecutorMap.Add(executorKey, add);
 
 	return add;
@@ -446,7 +487,7 @@ bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInte
 		return InterruptActiveAction(InDirective);
 
 	case EExecutionDomain::Reaction:
-		return IsValid(ReactionComp_Cached) && ReactionComp_Cached->RequestInterruptActiveReaction(InDirective);
+		return IsValid(ReactionComp_Injected) && ReactionComp_Injected->RequestInterruptActiveReaction(InDirective);
 
 	default:
 		return false;
@@ -456,7 +497,7 @@ bool UCActionComponent::ApplyExecutionInterventionDirective(const FExecutionInte
 bool UCActionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
 	if (InHandlings.IsEmpty()) return true;
-	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayHandlings(InHandlings);
+	return IsValid(ObservableOverlayComp_Injected) && ObservableOverlayComp_Injected->ApplyOverlayHandlings(InHandlings);
 }
 
 // Execution Operations
@@ -551,7 +592,7 @@ void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& In
 
 	if (OnActionTypeChanged.IsBound())
 	{
-		OnActionTypeChanged.Broadcast(OwnerCharacter_Cached, prevActionType, ActiveActionType);
+		OnActionTypeChanged.Broadcast(OwnerCharacter_Injected, prevActionType, ActiveActionType);
 	}
 }
 
@@ -566,7 +607,7 @@ void UCActionComponent::ClearActiveActionContext()
 
 	if (OnActionTypeChanged.IsBound())
 	{
-		OnActionTypeChanged.Broadcast(OwnerCharacter_Cached, prevActionType, ActiveActionType);
+		OnActionTypeChanged.Broadcast(OwnerCharacter_Injected, prevActionType, ActiveActionType);
 	}
 }
 
@@ -574,32 +615,32 @@ void UCActionComponent::ClearActiveActionContext()
 
 void UCActionComponent::EnterActionState(const FActionData& InData)
 {
-	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
+	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
-		MovementComp_Cached->SetStop();
+		MovementComp_Injected->SetStop();
 	}
 
-	if (IsValid(StateComp_Cached))
+	if (IsValid(StateComp_Injected))
 	{
-		StateComp_Cached->SetActionState();
+		StateComp_Injected->SetActionState();
 	}
 }
 
 void UCActionComponent::ExitActionState(const FActionData& InData)
 {
-	const bool bAlive = IsValid(HealthComp_Cached) && HealthComp_Cached->IsAlive();
-	const bool bDeadExecution = IsValid(StateComp_Cached) && StateComp_Cached->GetCurrentExecutionState() == EExecutionState::Dead;
+	const bool bAlive = IsValid(HealthComp_Injected) && HealthComp_Injected->IsAlive();
+	const bool bDeadExecution = IsValid(StateComp_Injected) && StateComp_Injected->GetCurrentExecutionState() == EExecutionState::Dead;
 
 	if (!bAlive || bDeadExecution) return;
 
-	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
+	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
-		MovementComp_Cached->SetMove();
+		MovementComp_Injected->SetMove();
 	}
 
-	if (IsValid(StateComp_Cached))
+	if (IsValid(StateComp_Injected))
 	{
-		StateComp_Cached->SetIdleState();
+		StateComp_Injected->SetIdleState();
 	}
 }
 

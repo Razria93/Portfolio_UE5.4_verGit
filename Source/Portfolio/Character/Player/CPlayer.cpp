@@ -130,7 +130,8 @@ void ACPlayer::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	InjectComponentReferences();
+	const FCharacterComponentReferences references = BuildComponentReferences();
+	InjectComponentReferences(references);
 }
 
 void ACPlayer::BeginPlay()
@@ -141,6 +142,16 @@ void ACPlayer::BeginPlay()
 	{
 		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
 	}
+}
+
+void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(HealthComponent))
+	{
+		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 FCharacterComponentReferences ACPlayer::BuildComponentReferences()
@@ -172,29 +183,27 @@ FCharacterComponentReferences ACPlayer::BuildComponentReferences()
 	return references;
 }
 
-void ACPlayer::InjectComponentReferences()
+void ACPlayer::InjectComponentReferences(const FCharacterComponentReferences& InReferences)
 {
-	const FCharacterComponentReferences references = BuildComponentReferences();
-
 	if (IsValid(ActionOrchestratorComponent))
 	{
-		ActionOrchestratorComponent->InitializeReferences(references);
+		ActionOrchestratorComponent->InitializeReferences(InReferences);
 	}
 
 	if (IsValid(ReactionOrchestratorComponent))
 	{
-		ReactionOrchestratorComponent->InitializeReferences(references);
+		ReactionOrchestratorComponent->InitializeReferences(InReferences);
 	}
-}
 
-void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	if (IsValid(HealthComponent))
+	if (IsValid(ActionComponent))
 	{
-		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
+		ActionComponent->InitializeReferences(InReferences);
 	}
 
-	Super::EndPlay(EndPlayReason);
+	if (IsValid(ReactionComponent))
+	{
+		ReactionComponent->InitializeReferences(InReferences);
+	}
 }
 
 void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

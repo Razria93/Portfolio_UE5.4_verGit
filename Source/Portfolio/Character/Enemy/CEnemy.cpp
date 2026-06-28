@@ -108,7 +108,8 @@ void ACEnemy::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	InjectComponentReferences();
+	const FCharacterComponentReferences references = BuildComponentReferences();
+	InjectComponentReferences(references);
 }
 
 void ACEnemy::BeginPlay()
@@ -132,6 +133,22 @@ void ACEnemy::BeginPlay()
 	{
 		FLog::Log(TEXT("[Enemy|BeginPlay] Initial equip-action request rejected."));
 	}
+}
+
+void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (IsValid(ActionComponent))
+	{
+		ActionComponent->OnActionTypeChanged.RemoveAll(this);
+		ActionComponent->OnActionEvent.RemoveAll(this);
+	}
+
+	if (IsValid(HealthComponent))
+	{
+		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 FCharacterComponentReferences ACEnemy::BuildComponentReferences()
@@ -162,35 +179,27 @@ FCharacterComponentReferences ACEnemy::BuildComponentReferences()
 	return references;
 }
 
-void ACEnemy::InjectComponentReferences()
+void ACEnemy::InjectComponentReferences(const FCharacterComponentReferences& InReferences)
 {
-	const FCharacterComponentReferences references = BuildComponentReferences();
-
 	if (IsValid(ActionOrchestratorComponent))
 	{
-		ActionOrchestratorComponent->InitializeReferences(references);
+		ActionOrchestratorComponent->InitializeReferences(InReferences);
 	}
 
 	if (IsValid(ReactionOrchestratorComponent))
 	{
-		ReactionOrchestratorComponent->InitializeReferences(references);
+		ReactionOrchestratorComponent->InitializeReferences(InReferences);
 	}
-}
 
-void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
 	if (IsValid(ActionComponent))
 	{
-		ActionComponent->OnActionTypeChanged.RemoveAll(this);
-		ActionComponent->OnActionEvent.RemoveAll(this);
+		ActionComponent->InitializeReferences(InReferences);
 	}
 
-	if (IsValid(HealthComponent))
+	if (IsValid(ReactionComponent))
 	{
-		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
+		ReactionComponent->InitializeReferences(InReferences);
 	}
-
-	Super::EndPlay(EndPlayReason);
 }
 
 void ACEnemy::Tick(float DeltaTime)

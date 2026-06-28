@@ -121,14 +121,15 @@ private:
 	int32 ParryResultCount = 0;
 
 protected:
+	// Lifecycle
 	void PostInitializeComponents() override;
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-	// Init Helper
+	// Component Reference
 	FCharacterComponentReferences BuildComponentReferences();
-	void InjectComponentReferences();
+	void InjectComponentReferences(const FCharacterComponentReferences& InReferences);
 
 public:
 	void Tick(float DeltaTime) override;

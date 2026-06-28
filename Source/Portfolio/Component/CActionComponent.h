@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CActionOrchestrationStructure.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CActionComponent.generated.h"
 
@@ -46,41 +47,46 @@ private:
 	class UCAction* ActiveActionExecutor = nullptr;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCMovementComponent* MovementComp_Cached = nullptr;
+	class UCMovementComponent* MovementComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached = nullptr;
+	class UCStateComponent* StateComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
+	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCActionOrchestratorComponent* ActionOrchestratorComp_Cached = nullptr;
+	class UCActionOrchestratorComponent* ActionOrchestratorComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Cached = nullptr;
+	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionComponent* ReactionComp_Cached = nullptr;
+	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
+	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 public:
 	/* === Delegate === */
 	FActionTypeChanged OnActionTypeChanged;
 	FActionEventSignature OnActionEvent;
 
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
+
 protected:
 	// Lifecycle
 	void BeginPlay() override;
-
-public:
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
