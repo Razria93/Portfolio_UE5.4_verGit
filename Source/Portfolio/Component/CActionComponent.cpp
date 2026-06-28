@@ -7,6 +7,7 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
+#include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Action/CAction.h"
@@ -31,6 +32,7 @@ void UCActionComponent::BeginPlay()
 	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 	ActionOrchestratorComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionOrchestratorComponent>();
+	CombatSignalSourceComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCCombatSignalSourceComponent>();
 	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
 	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 
@@ -270,6 +272,21 @@ void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
 	if (!IsValid(activeExecutor)) return;
 
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
+}
+
+bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
+{
+	if (InCueTag.IsNone()) return false;
+
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return false;
+
+	FActionCombatSignalCueRequest request;
+	if (!activeExecutor->ResolveNotifyCombatSignalCue(InCueTag, request)) return false;
+	if (!request.IsValidRequest()) return false;
+
+	if (!IsValid(CombatSignalSourceComp_Cached)) return false;
+	return CombatSignalSourceComp_Cached->RequestAICombatSignalCue(request.CueTag);
 }
 
 // Cross-System Dispatch

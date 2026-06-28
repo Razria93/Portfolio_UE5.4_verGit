@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCombatSignalStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CCombatSignalTargetComponent.generated.h"
 
@@ -36,14 +37,18 @@ protected:
 public:
 	// Entry
 	float RequestCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
+	bool RequestCombatSignalTarget(const FCombatSignal& InCombatSignal);
 
 private:
 	float ProcessCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
+	bool ProcessCombatSignalTarget(const FCombatSignal& InCombatSignal);
 	float HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
+	bool HandleTimingCueSignal(const FCombatSignal& InCombatSignal);
 
 private:
 	// Receive
 	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser);
+	bool ValidateSignalRequest(const FCombatSignal& InCombatSignal) const;
 	FCombatSignalTargetPayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
 	FCombatSignalTargetContext BuildContext(const FCombatSignalTargetPayload& InCombatSignalTargetPayload) const;
 

@@ -63,6 +63,9 @@ private:
 	class UCActionOrchestratorComponent* ActionOrchestratorComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
+	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
@@ -117,6 +120,8 @@ public:
 	void HandleActionFeedback(FName InTriggerKey);
 	void HandleActionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleActionFeedbackWindowEnd(FName InTriggerKey);
+
+	bool HandleActionCombatSignalCue(FName InCueTag);
 
 public:
 	// Cross-System Dispatch

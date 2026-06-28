@@ -31,5 +31,6 @@
 | P23 | Combat Signal Source Boundary v1 | `P23_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-source-v1` |  | W04, TB_W04_04 |
 | P24 | Combat Signal Component Rename | `P24_UE5_Portfolio_Pull_Request.md` | `refactor/combat-signal-component-rename` |  | W04, TB_W04_05, B13, N07 |
 | P25 | Combat Signal Damage Data Type 정리 | `P25_UE5_Portfolio_Pull_Request.md` | `refactor/combat-damage-data-types` |  | W04, TB_W04_06 |
+| P26 | Combat Signal TimingCue 연결 v1 | `P26_UE5_Portfolio_Pull_Request.md` | `feature/combat-signal-cue-v1` |  | W04, N04, N05, N06, TB_W04_07 |
 
 ---

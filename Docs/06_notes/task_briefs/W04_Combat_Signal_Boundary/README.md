@@ -21,9 +21,12 @@ TB는 코드만 보고는 드러나지 않는 작업 의도, 범위, 완료조�
 | W04-04 | Combat Signal Source Boundary v1 | `TB_W04_04_Combat_Signal_Source_Boundary_v1.md` | 완료 |
 | W04-05 | Combat Signal Component Rename | `TB_W04_05_Combat_Signal_Component_Rename.md` | 완료 |
 | W04-06 | Combat Damage Data Types | `TB_W04_06_Combat_Damage_Data_Types.md` | 완료 |
+| W04-07 | Combat Signal Cue v1 | `TB_W04_07_Combat_Signal_Cue_v1.md` | 진행 |
 
-## 다음 후보
+## W04 이후 Work List 후보
 
 ```text
-TB_W04_07_Combat_Signal_Cue_v1.md
+Combat Signal Result Out
+Combat Feedback Boundary
+Combat Signal Reference Validation
 ```
