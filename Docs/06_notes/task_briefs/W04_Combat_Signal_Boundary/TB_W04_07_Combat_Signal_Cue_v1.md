@@ -13,7 +13,7 @@ feature/combat-signal-cue-v1
 ## 상태
 
 ```text
-준비
+완료
 ```
 
 ## 목적
@@ -275,7 +275,7 @@ UCCombatSignalTargetComponent
 
 - `FCombatSignal` 타입은 source / target component에 아직 연결되어 있지 않다.
 - cue는 `TakeDamage()` 경로가 아니라 `FCombatSignal` 직접 전달 경로가 필요하다.
-- target discovery는 이번 브랜치에서 새 service로 만들지 않고, 호출자가 target actor를 알고 있는 형태부터 시작한다.
+- target discovery는 이번 브랜치에서 새 service로 만들지 않고, source component가 기존 AI blackboard target을 조회하는 형태부터 시작한다.
 - 기존 hit flow는 그대로 유지한다.
 
 ### 2. Source-side cue build API 후보 추가
@@ -294,10 +294,38 @@ SendCueSignal(...)
 구현 결과:
 
 ```text
+UCAction::ResolveNotifyCombatSignalCue(CueTag)
+-> FActionCombatSignalCueRequest
+
+UCActionComponent::HandleActionCombatSignalCue(CueTag)
+-> active action cue request resolve
+-> RequestAICombatSignalCue(ResolvedCueTag)
+
+RequestAICombatSignalCue(CueTag)
+-> source-side target resolve
+-> source-side cue location / direction 구성
+-> RequestCombatSignalCue(TargetActor, CueTag, ...)
+
 RequestCombatSignalCue(...)
 -> BuildCueSignal(...)
 -> ValidateCueSignal(...)
 -> SendCueSignal(...)
+```
+
+`UCCombatSignalSourceComponent` 내부 helper는 hit flow helper와 cue flow helper를 분리해서 배치한다.
+
+```text
+Hit Helper
+-> BuildHitWindowKey
+-> BuildSpecKey
+-> ResolveInstigatorController
+-> IsDuplicateHit
+-> IsFriendlyTarget
+
+Cue Helper
+-> ResolveCueTargetActor
+-> BuildCueSignal
+-> ValidateCueSignal
 ```
 
 현재 `BuildCueSignal`은 `FCombatSignal`의 `TimingCue` 값을 구성한다.
@@ -307,7 +335,7 @@ SignalType = TimingCue
 SignalTag = Combat.Signal.TimingCue
 CueTag = caller provided cue tag
 SourceActor = owner
-TargetActor = caller provided target
+TargetActor = resolved target or caller provided target
 InstigatorActor = owner
 SignalCauser = caller provided causer or owner
 Direction = caller direction or source -> target direction
@@ -431,14 +459,54 @@ Blink / Repulse 판정, movement, reaction, feedback, result-out 분배는 아�
 ```text
 UCAnimNotify_CombatSignalCue
 -> owner action 상태 검증
--> owner UCCombatSignalSourceComponent 조회
+-> UCActionComponent::HandleActionCombatSignalCue(CueTag)
+-> active UCAction::ResolveNotifyCombatSignalCue(CueTag)
+-> UCActionComponent routes resolved request to source component
+
+UCCombatSignalSourceComponent
 -> AI Blackboard TargetActor 조회
--> RequestCombatSignalCue(...)
+-> cue location / direction 구성
+-> FCombatSignal TimingCue 구성
+-> SendCueSignal(...)
 ```
 
-`UCAnimNotify_CombatSignalCue`는 TimingCue 전달 검증용 notify다. Enemy attack montage에 배치해 `Combat.Cue.Blink` 또는 `Combat.Cue.Repulse`를 target으로 전달할 수 있다.
+`UCAnimNotify_CombatSignalCue`는 TimingCue 발생 시점을 알려주는 notify다. Enemy attack montage에 배치해 `Combat.Cue.Blink` 또는 `Combat.Cue.Repulse`를 action notify routing으로 전달한다.
 
-현재 target discovery는 AI blackboard의 `CAIKey::Targeting::TargetActor`만 사용한다. Lock-on, targeting service, subsystem 승격은 Blink / Repulse 실제 구현 단계에서 다시 판단한다.
+전달 규약:
+
+```text
+Notify
+-> ActionComponent
+-> Active Action policy resolve
+-> ActionComponent
+-> CombatSignalSourceComponent
+```
+
+기존 action notify와의 차이:
+
+```text
+기존 action command notify
+-> ActionComponent
+-> Active Action command handling
+-> Action 내부 상태 변경
+
+Action feedback notify
+-> ActionComponent
+-> Active Action feedback handling
+-> Action 생애주기 기반 feedback 출력
+
+CombatSignalCue notify
+-> ActionComponent
+-> Active Action cue policy resolve
+-> ActionComponent routing
+-> CombatSignalSourceComponent send
+```
+
+기존 `Complete`, `Equip`, `Combo`, `HitContext`, `Guard` 계열 notify는 대부분 현재 Action 내부 상태를 변경하는 명령이다. 따라서 `EActionNotifyCommand`로 일방 라우팅해도 의미가 명확하다.
+
+`CombatSignalCue`는 notify 발생 자체가 Action 내부 명령이 아니라 외부 target으로 전달되는 combat signal 송신의 시작점이다. Action은 이 cue를 허용할지, 어떤 cue tag로 해석할지만 결정하고, 실제 target resolve / signal build / send는 source component가 수행한다. 그래서 `Handle`보다 `Resolve -> Route -> Send` 흐름으로 분리한다.
+
+현재 source-side target discovery는 AI blackboard의 `CAIKey::Targeting::TargetActor`만 사용한다. Lock-on, targeting service, subsystem 승격은 Blink / Repulse 실제 구현 단계에서 다시 판단한다.
 
 ## 제외 범위
 
@@ -456,7 +524,7 @@ Guard / Parry 기존 판정 변경
 
 - `TimingCue` signal이 source에서 구성될 수 있다.
 - cue signal이 target receive 흐름으로 들어갈 수 있다.
-- Enemy attack notify에서 AI blackboard target으로 cue signal을 보낼 수 있다.
+- Enemy attack notify에서 ActionComponent / active Action policy resolve를 거쳐 AI blackboard target으로 cue signal을 보낼 수 있다.
 - `HitEvidence`와 `TimingCue`의 분기 위치가 명확하다.
 - cue 전용 별도 최상위 파이프라인을 만들지 않는다.
 - 기존 Player -> Enemy / Enemy -> Player hit 동작이 유지된다.
@@ -472,6 +540,14 @@ Player -> Enemy hit 유지 확인
 Enemy -> Player hit 유지 확인
 ```
 
+검증 결과:
+
+```text
+git diff --check: 통과
+PortfolioEditor Win64 Development build: 성공
+Enemy -> Player TimingCue delivery: 확인
+```
+
 ## 런타임 확인
 
 Enemy attack montage의 `UCAnimNotify_CombatSignalCue`에서 `Combat.Cue.Blink`를 발생시켜 Player target까지 전달되는 것을 확인했다.
@@ -485,6 +561,9 @@ Enemy attack montage의 `UCAnimNotify_CombatSignalCue`에서 `Combat.Cue.Blink`�
 
 ```text
 Enemy AnimNotify
+-> Enemy UCActionComponent
+-> active UCAction cue policy resolve
+-> Enemy UCActionComponent route
 -> Enemy UCCombatSignalSourceComponent
 -> FCombatSignal TimingCue 구성
 -> Player UCCombatSignalTargetComponent
@@ -492,6 +571,30 @@ Enemy AnimNotify
 ```
 
 이 단계는 Blink 실행 구현이 아니라 cue delivery hook 검증이다.
+
+## 후속 ResultOut 결정
+
+`ResultOut`은 이번 cue delivery 브랜치에서 선행 일반화하지 않는다.
+
+Repulse는 성공 결과가 attacker-side reaction으로 되돌아가야 하는 기능이므로, Repulse v1에서 필요한 최소 ResultOut을 함께 구현한다. 이후 Repulse result 사례와 기존 ParryStack / Stagger 흐름을 비교해 `refactor/combat-result-out-v1`에서 공통화한다.
+
+후속 순서:
+
+```text
+1. feature/combat-blink-cue-v1
+2. feature/combat-repulse-cue-v1
+   - minimum ResultOut 포함
+3. refactor/combat-result-out-v1
+   - Repulse / ParryStack / Stagger result 흐름 통합
+```
+
+## Unknown Cue 처리
+
+지원하지 않는 `CueTag`가 target에 도착하면 `ECombatSignalTargetRejectReason::UnknownCueTag` 기준으로 reject 로그를 남긴다.
+
+```text
+[CombatSignalTimingCue] Rejected | Reason=ECombatSignalTargetRejectReason::UnknownCueTag | CueTag=...
+```
 
 ## 프롬프트 업데이트 체크
 

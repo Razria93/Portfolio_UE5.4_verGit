@@ -64,9 +64,15 @@ W04-07 timing cue 작업 기준:
 ```text
 - TimingCue 전달 기반과 Blink / Repulse 실제 구현을 같은 브랜치에 묶지 않는다.
 - 먼저 source build / validate / send와 target receive / validation / cue tag 분기를 안정화한다.
-- TimingCue v1의 실제 호출 검증은 AnimNotify에서 시작하되, target discovery는 기존 AI blackboard target처럼 이미 존재하는 target reference로 제한한다.
+- TimingCue v1의 실제 호출 검증은 AnimNotify에서 시작하되, AnimNotify는 cue timing trigger로 제한한다.
+- action montage에서 발생한 TimingCue notify는 기존 notify 규약에 맞춰 ActionComponent / active Action policy resolve를 거친 뒤 ActionComponent가 source component로 라우팅한다.
+- action notify가 Action 내부 상태 변경 명령이면 command handling으로 두고, 외부 domain 송신의 시작점이면 active Action은 policy resolve만 수행하게 한다.
+- target discovery / cue 위치 / 방향 / send 구성은 source component 책임으로 둔다.
+- target discovery는 기존 AI blackboard target처럼 이미 존재하는 target reference로 제한한다.
+- 지원하지 않는 cue tag는 target-side에서 명시적인 unknown cue reject reason으로 기록한다.
 - Blink는 위치 재배치 중심의 단독 반응형 방어 행동으로 본다.
 - Repulse는 Player action과 Enemy reaction을 맞추는 상호작용형 방어 행동으로 본다.
+- ResultOut은 기능 사례 없이 선행 일반화하지 않는다. Repulse처럼 attacker-side reaction이 필요한 기능 안에서 최소 구현한 뒤 ParryStack / Stagger 흐름과 후속 통합한다.
 ```
 
 ## Reason

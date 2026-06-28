@@ -118,6 +118,10 @@ public:
 	// Feedback
 	virtual void HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None);
 
+public:
+	// Combat Signal
+	virtual bool ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueRequest& OutRequest) const;
+
 protected:
 	void PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const;
 	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;

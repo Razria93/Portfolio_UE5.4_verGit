@@ -263,28 +263,47 @@ feature/combat-signal-cue-v1
 목표:
 
 ```text
-Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름으로 처리한다.
+Blink / Repulse 같은 collision 없는 timing cue가 CombatSignal 흐름으로 전달될 수 있는 최소 연결 지점을 만든다.
 ```
 
 핵심 범위:
 
 - `ECombatSignalType::TimingCue` 사용
-- cached target / lock-on target delivery 정리
-- Blink evaluation hook
-- Repulse evaluation hook
-- source result notification 정리
+- `UCAnimNotify_CombatSignalCue` 추가
+- ActionComponent / active Action policy resolve 경유
+- source-side cue build / validate / send
+- target-side TimingCue receive hook
+- Blink / Repulse cue tag 분기 hook
 
 완료조건:
 
 - collision hit와 timing cue가 같은 target receive 흐름을 공유한다.
 - cue 전용 예외 파이프라인을 만들지 않는다.
-- Blink / Repulse 성공 outcome이 reaction / movement / feedback / result로 분배될 수 있다.
+- Enemy attack notify에서 target으로 TimingCue signal을 전달할 수 있다.
+- Blink / Repulse 실제 movement / interaction 구현은 후속 브랜치로 분리한다.
 
 ## 10. 후속 순서
 
 ```text
-1. Combat Signal Cue v1
-2. Combat Signal Result Out
-3. Combat Feedback Boundary
-4. Combat Signal Reference Validation
+1. feature/combat-blink-cue-v1
+   - Combat.Cue.Blink를 실제 player defensive movement로 소비한다.
+   - enemy 후방 재배치 / 성공 판정 / 기존 hit flow 회귀를 확인한다.
+   - ResultOut은 최소화하거나 보류한다.
+
+2. feature/combat-repulse-cue-v1
+   - Combat.Cue.Repulse를 player action과 enemy reaction이 맞물리는 상호작용형 방어 행동으로 구현한다.
+   - Repulse 성공에 필요한 최소 ResultOut을 이 브랜치 안에 포함한다.
+   - attacker-side RepulseSuccess receive / reaction 연결을 검증한다.
+
+3. refactor/combat-result-out-v1
+   - Repulse에서 만든 최소 ResultOut 사례와 기존 ParryStack / Stagger 흐름을 비교해 공통화한다.
+   - Parry / Repulse / GuardBreak / Counter 계열 결과 반환 기준을 정리한다.
+
+4. refactor/combat-feedback-boundary
+   - HitFeedback / CombatFeedback / DamageFeedback 책임과 명칭을 정리한다.
+
+5. refactor/combat-signal-reference-validation
+   - component reference validation을 전체 정책으로 일반화할지 판단한다.
 ```
+
+`ResultOut`은 기능 사례 없이 선행 일반화하지 않는다. Repulse는 성공 결과가 attacker-side reaction으로 되돌아가야 하는 기능이므로, Repulse v1에서 필요한 최소 결과 반환을 먼저 구현한 뒤 기존 ParryStack / Stagger 흐름과 후속 통합한다.

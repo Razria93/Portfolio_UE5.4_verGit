@@ -1,9 +1,12 @@
 #include "Component/CCombatSignalSourceComponent.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/ShapeComponent.h"
+#include "GameFramework/Character.h"
 
+#include "AI/Blackboard/CAIKey.h"
 #include "Component/CCombatSignalTargetComponent.h"
 
 #include "Type/CWeaponStructure.h"
@@ -60,12 +63,23 @@ void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext&
 	ProcessCombatSignalSource(InHitContext);
 }
 
-bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser, float InRequestedDamage)
+bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser)
 {
-	const FCombatSignal combatSignal = BuildCueSignal(InTargetActor, InCueTag, InCueLocation, InDirection, InSignalCauser, InRequestedDamage);
+	const FCombatSignal combatSignal = BuildCueSignal(InTargetActor, InCueTag, InCueLocation, InDirection, InSignalCauser);
 	if (!ValidateCueSignal(combatSignal)) return false;
 
 	return SendCueSignal(combatSignal);
+}
+
+bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
+{
+	AActor* targetActor = ResolveCueTargetActor();
+	if (!IsValid(targetActor)) return false;
+
+	const FVector cueLocation = IsValid(OwnerCharacter_Cached) ? OwnerCharacter_Cached->GetActorLocation() : FVector::ZeroVector;
+	const FVector cueDirection = IsValid(OwnerCharacter_Cached) ? (targetActor->GetActorLocation() - OwnerCharacter_Cached->GetActorLocation()).GetSafeNormal() : FVector::ZeroVector;
+
+	return RequestCombatSignalCue(targetActor, InCueTag, cueLocation, cueDirection, OwnerCharacter_Cached);
 }
 
 void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext& InHitContext)
@@ -375,45 +389,7 @@ void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSign
 	damagedTargets.Add(targetActor);
 }
 
-FCombatSignal UCCombatSignalSourceComponent::BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser, float InRequestedDamage) const
-{
-	FCombatSignal combatSignal;
-
-	AActor* ownerActor = GetOwner();
-	AActor* signalCauser = IsValid(InSignalCauser) ? InSignalCauser : ownerActor;
-
-	combatSignal.Header.SignalType = ECombatSignalType::TimingCue;
-	combatSignal.Header.SourceActor = ownerActor;
-	combatSignal.Header.TargetActor = InTargetActor;
-	combatSignal.Header.InstigatorActor = ownerActor;
-	combatSignal.Header.SignalCauser = signalCauser;
-	combatSignal.Header.DebugTag = CombatTimingCueSignalTag;
-
-	combatSignal.SignalTag = CombatTimingCueSignalTag;
-	combatSignal.CueTag = InCueTag;
-	combatSignal.RequestedDamage = FMath::IsFinite(InRequestedDamage) ? FMath::Max(0.f, InRequestedDamage) : 0.f;
-	combatSignal.ImpactLocation = InCueLocation;
-
-	FVector direction = InDirection;
-	if (direction.IsNearlyZero() && IsValid(ownerActor) && IsValid(InTargetActor))
-	{
-		direction = InTargetActor->GetActorLocation() - ownerActor->GetActorLocation();
-	}
-	combatSignal.Direction = direction.GetSafeNormal();
-
-	return combatSignal;
-}
-
-bool UCCombatSignalSourceComponent::ValidateCueSignal(const FCombatSignal& InCombatSignal) const
-{
-	if (!InCombatSignal.IsValidMinimal()) return false;
-	if (InCombatSignal.Header.SignalType != ECombatSignalType::TimingCue) return false;
-	if (!IsValid(InCombatSignal.Header.SourceActor)) return false;
-	if (!IsValid(InCombatSignal.Header.TargetActor)) return false;
-	if (InCombatSignal.CueTag.IsNone()) return false;
-
-	return true;
-}
+// Hit Helper
 
 FCombatSignalHitWindowKey UCCombatSignalSourceComponent::BuildHitWindowKey(const FHitContext& InHitContext) const
 {
@@ -508,6 +484,63 @@ bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FCombatSignalSourceCo
 
 	return false;
 }
+
+// Cue Helper
+
+AActor* UCCombatSignalSourceComponent::ResolveCueTargetActor() const
+{
+	if (!IsValid(OwnerCharacter_Cached)) return nullptr;
+
+	const AAIController* aiController = Cast<AAIController>(OwnerCharacter_Cached->GetController());
+	if (!IsValid(aiController)) return nullptr;
+
+	const UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return nullptr;
+
+	return Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
+}
+
+FCombatSignal UCCombatSignalSourceComponent::BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser) const
+{
+	FCombatSignal combatSignal;
+
+	AActor* ownerActor = GetOwner();
+	AActor* signalCauser = IsValid(InSignalCauser) ? InSignalCauser : ownerActor;
+
+	combatSignal.Header.SignalType = ECombatSignalType::TimingCue;
+	combatSignal.Header.SourceActor = ownerActor;
+	combatSignal.Header.TargetActor = InTargetActor;
+	combatSignal.Header.InstigatorActor = ownerActor;
+	combatSignal.Header.SignalCauser = signalCauser;
+	combatSignal.Header.DebugTag = CombatTimingCueSignalTag;
+
+	combatSignal.SignalTag = CombatTimingCueSignalTag;
+	combatSignal.CueTag = InCueTag;
+	combatSignal.RequestedDamage = 0.f;
+	combatSignal.ImpactLocation = InCueLocation;
+
+	FVector direction = InDirection;
+	if (direction.IsNearlyZero() && IsValid(ownerActor) && IsValid(InTargetActor))
+	{
+		direction = InTargetActor->GetActorLocation() - ownerActor->GetActorLocation();
+	}
+	combatSignal.Direction = direction.GetSafeNormal();
+
+	return combatSignal;
+}
+
+bool UCCombatSignalSourceComponent::ValidateCueSignal(const FCombatSignal& InCombatSignal) const
+{
+	if (!InCombatSignal.IsValidMinimal()) return false;
+	if (InCombatSignal.Header.SignalType != ECombatSignalType::TimingCue) return false;
+	if (!IsValid(InCombatSignal.Header.SourceActor)) return false;
+	if (!IsValid(InCombatSignal.Header.TargetActor)) return false;
+	if (InCombatSignal.CueTag.IsNone()) return false;
+
+	return true;
+}
+
+// Debug
 
 void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InCombatSignalSourceResult) const
 {

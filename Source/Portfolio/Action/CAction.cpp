@@ -373,6 +373,18 @@ void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTrig
 	PlayFeedbackRequest(feedbackRequest);
 }
 
+bool UCAction::ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueRequest& OutRequest) const
+{
+	OutRequest = FActionCombatSignalCueRequest();
+
+	if (InCueTag.IsNone()) return false;
+
+	OutRequest.bAccepted = true;
+	OutRequest.CueTag = InCueTag;
+
+	return OutRequest.IsValidRequest();
+}
+
 void UCAction::PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const
 {
 	if (!IsValid(ActionFeedbackComp_Cached)) return;

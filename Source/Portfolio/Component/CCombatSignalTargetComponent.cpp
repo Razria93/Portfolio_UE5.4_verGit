@@ -154,6 +154,11 @@ bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& I
 		return true;
 	}
 
+	FLog::Log(FString::Printf(
+		TEXT("[CombatSignalTimingCue] Rejected | Reason=%s | CueTag=%s"),
+		*UEnum::GetValueAsString(ECombatSignalTargetRejectReason::UnknownCueTag),
+		*InCombatSignal.CueTag.ToString()));
+
 	// V1 hook only. Blink / Repulse evaluation and effects are added in separate branches.
 	return false;
 }

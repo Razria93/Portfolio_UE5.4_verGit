@@ -21,7 +21,4 @@ private:
 
 private:
 	void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
-
-private:
-	AActor* ResolveCueTargetActor(const ACharacter* InOwnerCharacter) const;
 };

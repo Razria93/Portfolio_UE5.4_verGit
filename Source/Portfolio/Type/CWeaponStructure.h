@@ -493,6 +493,8 @@ enum class ECombatSignalTargetRejectReason : uint8
 
 	// DamageCooldown,
 	ZeroDamage,
+
+	UnknownCueTag,
 };
 
 UENUM(BlueprintType)

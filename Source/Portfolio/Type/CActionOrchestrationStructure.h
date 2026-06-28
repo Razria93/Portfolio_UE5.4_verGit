@@ -151,6 +151,26 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FActionCombatSignalCueRequest
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	bool bAccepted = false;
+
+	UPROPERTY(Transient)
+	FName CueTag = NAME_None;
+
+public:
+	bool IsValidRequest() const
+	{
+		return bAccepted
+			&& !CueTag.IsNone();
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FActionRequestResult
 {
 	GENERATED_BODY()

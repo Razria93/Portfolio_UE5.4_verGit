@@ -38,7 +38,11 @@ public:
 public:
 	// Entry
 	void RequestCombatSignalSource(const FHitContext& InHitContext);
-	bool RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation = FVector::ZeroVector, const FVector& InDirection = FVector::ZeroVector, AActor* InSignalCauser = nullptr, float InRequestedDamage = 0.f);
+	bool RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation = FVector::ZeroVector, const FVector& InDirection = FVector::ZeroVector, AActor* InSignalCauser = nullptr);
+
+public:
+	// Entry for AI
+	bool RequestAICombatSignalCue(FName InCueTag);
 
 private:
 	void ProcessCombatSignalSource(const FHitContext& InHitContext);
@@ -68,14 +72,18 @@ private:
 	void CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InCombatSignalSourceContext);
 
 private:
-	// Helper
-	FCombatSignal BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser, float InRequestedDamage) const;
-	bool ValidateCueSignal(const FCombatSignal& InCombatSignal) const;
+	// Hit Helper
 	FCombatSignalHitWindowKey BuildHitWindowKey(const FHitContext& InHitContext) const;
 	FDamageSpecKey BuildSpecKey(const FHitContext& InHitContext) const;
 	AController* ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser) const;
 	bool IsDuplicateHit(const FCombatSignalSourceContext& InCombatSignalSourceContext) const;
 	bool IsFriendlyTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext) const;
+
+private:
+	// Cue Helper
+	AActor* ResolveCueTargetActor() const;
+	FCombatSignal BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser) const;
+	bool ValidateCueSignal(const FCombatSignal& InCombatSignal) const;
 
 private:
 	// Debug

@@ -634,7 +634,7 @@ CombatSignalSource / CombatSignalTarget 리네임 이후에도 ApplyDamage / Tak
 **상태**
 
 ```text
-진행
+완료
 ```
 
 **브랜치**
@@ -655,16 +655,19 @@ Blink / Repulse 같은 collision 없는 timing cue를 CombatSignal 흐름에 연
 - target discovery 방식 정리
 - `UCAnimNotify_CombatSignalCue` 추가
 - Blink / Repulse evaluation hook 추가
+- 기존 action command notify와 달리 `CombatSignalCue`는 Action 내부 상태 변경이 아니라 외부 combat signal 송신의 시작점이므로 `Action resolve -> ActionComponent route -> Source send` 흐름으로 정리
 
 **완료조건**
 
 - collision hit와 timing cue가 같은 target receive 흐름을 공유한다.
-- Enemy attack notify에서 blackboard target으로 cue signal을 전달할 수 있다.
+- Enemy attack notify에서 ActionComponent / active Action policy resolve를 거쳐 source component로 cue signal을 전달할 수 있다.
 - cue 전용 예외 파이프라인을 만들지 않는다.
 
 **런타임 확인**
 
-- Enemy attack notify에서 `Combat.Cue.Blink`를 Player `UCCombatSignalTargetComponent`까지 전달하는 것을 확인했다.
+- Enemy attack notify가 `Combat.Cue.Blink`를 ActionComponent / active Action policy resolve를 거쳐 source component에 요청하고, source component가 Player `UCCombatSignalTargetComponent`까지 전달하는 것을 확인했다.
+- 지원하지 않는 cue tag는 `ECombatSignalTargetRejectReason::UnknownCueTag`로 reject 로그를 남긴다.
+- `PortfolioEditor Win64 Development` 빌드 성공을 확인했다.
 - 현재 범위는 cue delivery hook 검증이며, Blink movement / Repulse interaction 구현은 후속 브랜치에서 진행한다.
 
 **W04 종료 기준**
@@ -677,7 +680,21 @@ W04의 핵심 축은 기존 combat hit 흐름을 `CombatSignal Source / Target` 
 
 `Combat Signal Cue v1`은 기존 파이프라인에 `TimingCue` 분기를 추가하는 확장 작업이므로 W04 범위에 포함한다.
 
-반면 ResultOut, Feedback, Unreal reference validation은 W04에서 이어지는 후속 작업이지만 별도 축으로 분리한다. 해당 작업들은 signal boundary 자체보다 결과 송출, feedback 책임 경계, Unreal asset/reference 안정성에 더 가깝기 때문이다.
+반면 Feedback, Unreal reference validation은 W04에서 이어지는 후속 작업이지만 별도 축으로 분리한다. 해당 작업들은 signal boundary 자체보다 feedback 책임 경계, Unreal asset/reference 안정성에 더 가깝기 때문이다.
+
+ResultOut은 별도 선행 리팩터링으로 먼저 만들지 않는다. Repulse는 성공 결과가 attacker-side reaction으로 되돌아가야 하는 기능이므로, `feature/combat-repulse-cue-v1` 안에서 필요한 최소 ResultOut을 구현한 뒤 기존 ParryStack / Stagger 흐름과 후속 통합한다.
+
+후속 권장 순서:
+
+```text
+1. feature/combat-blink-cue-v1
+2. feature/combat-repulse-cue-v1
+   - 최소 ResultOut 포함
+3. refactor/combat-result-out-v1
+   - Repulse ResultOut과 기존 ParryStack / Stagger 흐름 통합
+4. refactor/combat-feedback-boundary
+5. refactor/combat-signal-reference-validation
+```
 
 ## 8. 관련 문서
 
