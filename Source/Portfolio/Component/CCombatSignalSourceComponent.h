@@ -20,12 +20,12 @@ private:
 	TMap<FDamageSpecKey, FDamageSpec> DamageSpecContainer;	// TODO: Seperate DataAsset (DB)
 
 private:
-	TMap<FCombatSignalHitWindowKey, TSet<AActor*>> DamagedTargetContainer;
+	TMap<FCombatSignalHitWindowKey, TSet<TWeakObjectPtr<AActor>>> DamagedTargetContainer;
 
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 protected:
 	void BeginPlay() override;

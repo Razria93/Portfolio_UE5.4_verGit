@@ -13,8 +13,8 @@ class PORTFOLIO_API UCWorldSubsystem_CombatFeedback : public UWorldSubsystem
 	GENERATED_BODY()
 
 private:
-	TMap<class AActor*, FTimerHandle> ActiveHitStopMap;
-	TMap<class AActor*, float> CachedTimeDilationMap;
+	TMap<TWeakObjectPtr<class AActor>, FTimerHandle> ActiveHitStopMap;
+	TMap<TWeakObjectPtr<class AActor>, float> CachedTimeDilationMap;
 
 public:
 	FOnCombatCameraShakeRequested OnCameraShakeRequested;
@@ -25,7 +25,7 @@ public:
 
 private:
 	void ApplyHitStop(AActor* InActor, float InDuration, float InDilation);
-	void RestoreHitStop(AActor* InActor);
+	void RestoreHitStop(TWeakObjectPtr<AActor> InActorKey);
 
 private:
 	void PrintHitStopConsumeInfo(AActor* InActor, float InDuration, float InDilation) const;

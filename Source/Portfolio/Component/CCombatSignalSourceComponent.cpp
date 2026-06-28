@@ -454,11 +454,11 @@ AController* UCCombatSignalSourceComponent::ResolveInstigatorController(AActor* 
 
 bool UCCombatSignalSourceComponent::IsDuplicateHit(const FCombatSignalSourceContext& InCombatSignalSourceContext) const
 {
-	const TSet<AActor*>* foundTargets = DamagedTargetContainer.Find(InCombatSignalSourceContext.HitWindowKey);
+	const TSet<TWeakObjectPtr<AActor>>* foundTargets = DamagedTargetContainer.Find(InCombatSignalSourceContext.HitWindowKey);
 
 	if (!foundTargets) return false;
 
-	return foundTargets->Contains(InCombatSignalSourceContext.TargetActor);
+	return foundTargets->Contains(TWeakObjectPtr<AActor>(InCombatSignalSourceContext.TargetActor));
 }
 
 bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext) const

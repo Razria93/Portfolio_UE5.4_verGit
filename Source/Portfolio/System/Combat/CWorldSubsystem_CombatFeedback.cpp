@@ -45,34 +45,37 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 	if (!IsValid(InActor)) return;
 	if (InDuration <= 0.f) return;
 
-	if (!CachedTimeDilationMap.Contains(InActor))
+	const TWeakObjectPtr<AActor> actorKey(InActor);
+
+	if (!CachedTimeDilationMap.Contains(actorKey))
 	{
-		CachedTimeDilationMap.Add(InActor, InActor->CustomTimeDilation);
+		CachedTimeDilationMap.Add(actorKey, InActor->CustomTimeDilation);
 	}
 
 	// Slow InActor
 	InActor->CustomTimeDilation = InDilation;
 
-	if (FTimerHandle* existingHandle = ActiveHitStopMap.Find(InActor))
+	if (FTimerHandle* existingHandle = ActiveHitStopMap.Find(actorKey))
 	{
 		GetWorld()->GetTimerManager().ClearTimer(*existingHandle);
 	}
 
 	FTimerHandle handle;
-	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &UCWorldSubsystem_CombatFeedback::RestoreHitStop, InActor);
+	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &UCWorldSubsystem_CombatFeedback::RestoreHitStop, actorKey);
 
 	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] ApplyHitStop"));
 	// PrintHitStopConsumeInfo(InActor, InDuration, InDilation);
 
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, InDuration, false);
-	ActiveHitStopMap.Add(InActor, handle);
+	ActiveHitStopMap.Add(actorKey, handle);
 }
 
-void UCWorldSubsystem_CombatFeedback::RestoreHitStop(AActor* InActor)
+void UCWorldSubsystem_CombatFeedback::RestoreHitStop(TWeakObjectPtr<AActor> InActorKey)
 {
+	AActor* InActor = InActorKey.Get();
 	if (IsValid(InActor))
 	{
-		const float* cachedDilation = CachedTimeDilationMap.Find(InActor);
+		const float* cachedDilation = CachedTimeDilationMap.Find(InActorKey);
 		InActor->CustomTimeDilation = cachedDilation ? *cachedDilation : 1.f;
 	}
 
@@ -80,8 +83,8 @@ void UCWorldSubsystem_CombatFeedback::RestoreHitStop(AActor* InActor)
 	// PrintHitStopConsumeInfo(InActor, 1.f, 0.f);
 
 	// Restore InActor
-	ActiveHitStopMap.Remove(InActor);
-	CachedTimeDilationMap.Remove(InActor);
+	ActiveHitStopMap.Remove(InActorKey);
+	CachedTimeDilationMap.Remove(InActorKey);
 }
 
 void UCWorldSubsystem_CombatFeedback::PrintHitStopConsumeInfo(AActor* InActor, float InDuration, float InDilation) const
