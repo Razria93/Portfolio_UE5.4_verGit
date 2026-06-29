@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CStateStructure.h"
 #include "Type/CHealthStructure.h"
 #include "CStateComponent.generated.h"
@@ -22,16 +23,20 @@ private:
 	EExecutionState CurrentExecutionState = EExecutionState::Idle;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 public:
 	/* === [Out] Custom Delgate Events === */
 	FExecutionStateChanged OnExecutionStateChanged;
 
-protected:
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	void OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState);

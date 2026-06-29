@@ -195,6 +195,11 @@ void ACPlayer::InjectComponentReferences(const FCharacterComponentReferences& In
 		WeaponComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(StateComponent))
+	{
+		StateComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(DefenseComponent))
 	{
 		DefenseComponent->InitializeReferences(InReferences);
