@@ -200,6 +200,11 @@ void ACPlayer::InjectComponentReferences(const FCharacterComponentReferences& In
 		CombatSignalSourceComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(CombatSignalTargetComponent))
+	{
+		CombatSignalTargetComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(ActionOrchestratorComponent))
 	{
 		ActionOrchestratorComponent->InitializeReferences(InReferences);
