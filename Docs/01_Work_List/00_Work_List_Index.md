@@ -10,6 +10,6 @@
 | W02 | AI 협업 기반 문서 운영 체계 정리 | `W02_Documentation_Update/W02_UE5_Portfolio_Work_List.md` | `docs/portfolio-documentation-update` | P19 | 완료 |
 | W03 | Guard / Parry Action v1 구현 | `W03_Parry/W03_UE5_Portfolio_Work_List.md` | `feature/combat-guard-parry` | P20 | 완료 |
 | W04 | Combat Signal Boundary v1 | `W04_Combat_Signal_Boundary/W04_UE5_Portfolio_Work_List.md` | `refactor/combat-signal-boundary` | P21 | 완료 |
-| W05 | Code Quality 정리 계획 | `W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md` | multiple refactor branches | P27-P29 | 진행 |
+| W05 | Code Quality 정리 계획 | `W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md` | multiple refactor branches | P27-P30 | 진행 |
 
 ---

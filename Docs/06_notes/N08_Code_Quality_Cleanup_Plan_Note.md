@@ -107,6 +107,10 @@
 
 세부 판단 기준은 `N10. Component Reference Validation Policy Note`를 따른다.
 
+단, 모든 lookup이 제거 대상은 아니다. Notify, AnimInstance, AI BehaviorTree, CombatSignal target resolve처럼 runtime context에 따라 대상이 달라지는 조회는 DI와 분리해서 판단한다.
+
+runtime lookup 분류 기준은 `N12. Runtime Component Lookup Policy Note`를 따른다.
+
 ### 2.3 Debug log / print 함수
 
 `FLog::Log`, `Print...Info`, `SummaryInfo` 계열 함수가 많다.
@@ -183,6 +187,7 @@ AI BT Service 다수가 `0.1s`, `0.2s` interval로 동작한다.
 P0:
   - Unreal Reference Safety
   - Component Reference / Initialization Policy
+  - Runtime Component Lookup Policy
   - Debug / Logging Policy
   - TODO / 미완성 신호 정리
   - Hardcoded tuning value 1차 정리

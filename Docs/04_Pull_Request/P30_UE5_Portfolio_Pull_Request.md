@@ -1,0 +1,216 @@
+# UE5 Portfolio Pull Request
+
+## 제목
+
+**P30: Runtime Component 조회 정책**
+
+## 날짜
+
+**2026.06.29**
+
+## 상태
+
+- [ ] 진행 중
+
+---
+
+## 브랜치
+
+- `refactor/runtime-component-lookup-policy`
+
+---
+
+## 커밋
+
+```text
+TBD
+```
+
+---
+
+## 요약
+
+이번 PR은 P29에서 정리한 Character component reference DI 이후에도 남는 runtime lookup 경로를 분류하고, 유지 / 수정 / 문서화 기준을 정리한다.
+
+핵심 목표는 모든 lookup 제거가 아니다.
+
+```text
+Character-owned required component
+-> DI / injected reference
+
+runtime target / external actor
+-> request 시점 lookup 유지
+
+AnimInstance owner / mesh-bound reference
+-> animation lifecycle 기준 cache
+
+AI Blackboard / BehaviorTree state
+-> runtime query 유지
+```
+
+---
+
+## 변경 배경
+
+P29에서 Character가 소유한 component reference는 다음 흐름으로 정리했다.
+
+```text
+RecoverReferences
+-> BuildReferences
+-> InjectReferences
+-> InitializeReferences
+-> ValidateRequiredComponentReferences
+```
+
+하지만 프로젝트에는 다음처럼 runtime lookup이 자연스러운 영역이 남아 있다.
+
+```text
+- Notify / NotifyState routing
+- AnimInstance owner / movement component cache
+- AI BT Service / Decorator / Task의 Blackboard / Pawn / component query
+- CombatSignal dynamic target resolve
+- WeaponActor overlap target 해석
+```
+
+이번 PR은 이 영역을 “전부 DI로 바꾸는 작업”이 아니라, lookup이 필요한 이유와 실패 처리 기준을 명확히 하는 작업이다.
+
+---
+
+## 작업 범위
+
+### 1. Notify / NotifyState routing
+
+검토 기준:
+
+```text
+Notify는 timing trigger 이상을 알지 않는다.
+Notify는 domain 판단을 하지 않는다.
+Notify는 필요한 경우 component routing entry까지만 호출한다.
+```
+
+검토 대상:
+
+```text
+Source/Portfolio/Notify
+```
+
+### 2. AnimInstance reference / cache
+
+검토 기준:
+
+```text
+AnimInstance는 ActorComponent DI 흐름과 다르다.
+TryGetPawnOwner() 기반 owner 확인은 animation lifecycle에 맞는 runtime lookup이다.
+NativeUpdateAnimation에서는 invalid owner / component 상황을 safe return으로 처리한다.
+```
+
+검토 대상:
+
+```text
+Source/Portfolio/Animation
+AnimInstance 관련 파일
+```
+
+### 3. AI BehaviorTree lookup
+
+검토 기준:
+
+```text
+Blackboard value 조회는 runtime query로 유지한다.
+Service / Decorator / Task의 역할에 따라 lookup 실패 처리를 분리한다.
+반복 lookup은 필요한 경우 local variable 또는 cache 기준을 둔다.
+```
+
+검토 대상:
+
+```text
+Source/Portfolio/AI
+```
+
+### 4. WeaponActor runtime reference
+
+검토 기준:
+
+```text
+WeaponActor는 Character component가 아니라 runtime actor다.
+Owner / CombatSignalSource는 WeaponComponent가 생성 직후 주입한다.
+Overlap target은 event payload에서 해석한다.
+```
+
+검토 대상:
+
+```text
+Source/Portfolio/Weapon
+```
+
+### 5. Lookup 사용처 분류
+
+대상 API:
+
+```text
+FindComponentByClass
+GetComponentByClass
+TryGetPawnOwner
+GetOwner
+GetController
+Blackboard GetValueAs...
+```
+
+분류:
+
+```text
+DI 대상
+runtime lookup 유지
+cache 필요
+safe return / reject 필요
+후속 브랜치 분리
+```
+
+---
+
+## 주요 파일
+
+```text
+Docs/06_notes/N12_Runtime_Component_Lookup_Policy_Note.md
+Docs/04_Pull_Request/P30_UE5_Portfolio_Pull_Request.md
+Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
+Docs/04_Pull_Request/00_Pull_Request_Index.md
+```
+
+코드 파일은 실제 검토 후 필요한 범위만 추가한다.
+
+---
+
+## 검증 계획
+
+```text
+- rg 기반 lookup 사용처 전수 스캔
+- Notify / AnimInstance / AI / WeaponActor 경로별 코드 확인
+- 변경이 발생한 경우 Unreal C++ build
+- PIE에서 기본 combat loop smoke test
+```
+
+---
+
+## 관련 문서
+
+```text
+Docs/06_notes/N12_Runtime_Component_Lookup_Policy_Note.md
+Docs/06_notes/N10_Component_Reference_Validation_Policy_Note.md
+Docs/06_notes/N11_Unreal_Blueprint_Native_Component_Reference_Mismatch_Note.md
+Docs/02_Bug_Report/B14_UE5_Portfolio_Bug_Report.md
+```
+
+---
+
+## 제외 범위
+
+```text
+- Blink 실제 기능 구현
+- Repulse 실제 기능 구현
+- ResultOut 구조 선행 일반화
+- UE TakeDamage route 제거
+- GAS 도입
+- BehaviorTree 전체 재설계
+- AnimBP 구조 재작성
+```
