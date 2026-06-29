@@ -53,6 +53,10 @@ public:
 private:
 	bool ValidateRequiredComponentReferences() const;
 
+protected:
+	// Lifecycle
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 public:
 	/* === Check / Query === */
 	FORCEINLINE bool CheckCurrentWeaponType(EWeaponType InNewWeaponType) const { return CurrentWeaponType == InNewWeaponType; }
@@ -76,6 +80,10 @@ public:
 	void PushContext(const FActionContext& InActionContext);
 	void ClearContext();
 	void ClearRuntimeWeaponState();
+
+public:
+	void OpenCollisionWindow(FName InCollisionName);
+	void CloseCollisionWindow();
 
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);

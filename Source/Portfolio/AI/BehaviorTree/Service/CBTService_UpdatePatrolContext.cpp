@@ -25,7 +25,8 @@ void UCBTService_UpdatePatrolContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	UBlackboardComponent* blackBoardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackBoardComp)) return;
 
-	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
+	const AAIController* aiOwner = OwnerComp.GetAIOwner();
+	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
 		ClearPatrolContext(blackBoardComp);

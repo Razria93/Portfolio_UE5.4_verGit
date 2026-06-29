@@ -212,6 +212,11 @@ void UCHealthComponent::EnterAliveState()
 	ChangeDeadState(EDeadState::Alive);
 }
 
+void UCHealthComponent::HandleDeadStateNotify(EDeadState InDeadState)
+{
+	ChangeDeadState(InDeadState);
+}
+
 void UCHealthComponent::UpdateDeadState()
 {
 	bool bDeadFlag = (CurrentHP <= 0.f);

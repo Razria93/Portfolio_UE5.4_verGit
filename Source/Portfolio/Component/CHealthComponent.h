@@ -88,6 +88,10 @@ public:
 	void EnterDeadState();
 	void EnterAliveState();
 
+public:
+	// Notify Routing
+	void HandleDeadStateNotify(EDeadState InDeadState);
+
 private:
 	void UpdateDeadState();
 	void ChangeDeadState(EDeadState InNewDeadState);
