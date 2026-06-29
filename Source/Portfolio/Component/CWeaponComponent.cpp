@@ -11,16 +11,37 @@ UCWeaponComponent::UCWeaponComponent()
 {
 }
 
-void UCWeaponComponent::BeginPlay()
+void UCWeaponComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
-
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	ValidateRequiredComponentReferences();
 
 	// CWeaponActor
-	CreateWeaponActor(OwnerCharacter_Cached, WeaponActorClassKey, WeaponActorClass);
+	CreateWeaponActor(OwnerCharacter_Injected, WeaponActorClassKey, WeaponActorClass);
 	CurrentWeaponType = EWeaponType::Unarmed;
+}
+
+bool UCWeaponComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	struct FRequiredComponentReference
+	{
+		const UObject* Object = nullptr;
+		const TCHAR* Label = TEXT("");
+	};
+
+	const FRequiredComponentReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+	};
+
+	for (const FRequiredComponentReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 ACWeaponActor* UCWeaponComponent::GetWeaponActor()
@@ -93,13 +114,13 @@ void UCWeaponComponent::ClearRuntimeWeaponState()
 
 void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	EWeaponType prevWeaponType = CurrentWeaponType;
 	CurrentWeaponType = InNewWeaponType;
 
 	if (OnWeaponTypeChanged.IsBound())
-		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType);
+		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Injected, prevWeaponType, CurrentWeaponType);
 }
 
 FWeaponContext UCWeaponComponent::BuildWeaponContext() const

@@ -186,6 +186,11 @@ void ACEnemy::InjectComponentReferences(const FCharacterComponentReferences& InR
 		MovementComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(WeaponComponent))
+	{
+		WeaponComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(CombatSignalSourceComponent))
 	{
 		CombatSignalSourceComponent->InitializeReferences(InReferences);

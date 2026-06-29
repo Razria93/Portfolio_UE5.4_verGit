@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CWeaponComponent.generated.h"
 
@@ -34,16 +35,20 @@ private:
 	class ACWeaponActor* WeaponActor = nullptr;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 public:
 	/* === [Out] Custom Delgate Events === */
 	FWeaponTypeChanged OnWeaponTypeChanged;
 
-protected:
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	/* === Check / Query === */
