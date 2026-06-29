@@ -20,7 +20,8 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
+	const AAIController* aiOwner = OwnerComp.GetAIOwner();
+	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn)) return EBTNodeResult::Failed;
 
 	bool bUsePatrol = blackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol);

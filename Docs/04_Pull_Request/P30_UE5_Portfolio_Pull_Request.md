@@ -156,6 +156,19 @@ Service / Decorator / Task의 역할에 따라 lookup 실패 처리를 분리한
 Source/Portfolio/AI
 ```
 
+진행 내용:
+
+```text
+BT Service / Task
+-> AI owner / Pawn runtime query 유지
+-> 같은 함수 안의 반복 GetAIOwner()->GetPawn() 패턴을 local variable로 정리
+-> owner component 조회는 FindComponentByClass<T>()로 통일
+
+BT Decorator
+-> Blackboard / Pawn / component 조건 조회 유지
+-> 조회 실패 시 false 반환 정책 유지
+```
+
 ### 4. WeaponActor runtime reference
 
 검토 기준:

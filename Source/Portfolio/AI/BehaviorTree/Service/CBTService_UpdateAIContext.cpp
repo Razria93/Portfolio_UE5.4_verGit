@@ -29,7 +29,8 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
-	APawn* ownerPawn = OwnerComp.GetAIOwner() ? OwnerComp.GetAIOwner()->GetPawn() : nullptr;
+	const AAIController* aiOwner = OwnerComp.GetAIOwner();
+	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
 		ClearDeadContext(blackboardComp);
@@ -204,7 +205,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
-	UCReactionComponent* reactionComp = Cast<UCReactionComponent>(InOwnerPawn->GetComponentByClass(UCReactionComponent::StaticClass()));
+	UCReactionComponent* reactionComp = InOwnerPawn->FindComponentByClass<UCReactionComponent>();
 	if (!IsValid(reactionComp)) return EContextBuildResult::NoData;
 
 	InOutAIContext.bIsActiveReaction = reactionComp->IsActive();
@@ -216,7 +217,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwn
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
-	UCHealthComponent* healthComp = Cast<UCHealthComponent>(InOwnerPawn->GetComponentByClass(UCHealthComponent::StaticClass()));
+	UCHealthComponent* healthComp = InOwnerPawn->FindComponentByClass<UCHealthComponent>();
 	if (!IsValid(healthComp)) return EContextBuildResult::NoData;
 
 	InOutAIContext.DeadState = healthComp->GetDeadState();

@@ -247,6 +247,24 @@ Task
 
 AI component lookup을 무조건 Character DI로 밀어 넣지 않는다.
 
+현재 정리 기준:
+
+```text
+BT Service
+-> OwnerComp에서 Blackboard / AI owner / Pawn을 runtime query로 얻는다.
+-> 같은 tick 안에서는 AI owner / Pawn을 local variable로 보관한다.
+-> owner component 조회가 필요하면 FindComponentByClass<T>()를 사용한다.
+-> 조회 실패 시 관련 blackboard context를 clear한다.
+
+BT Decorator
+-> Blackboard / Pawn / component를 읽어 조건만 반환한다.
+-> 조회 실패는 false로 처리한다.
+
+BT Task
+-> Blackboard / AI owner / Pawn을 runtime query로 얻는다.
+-> 실행 필수 값이 없으면 Failed를 반환한다.
+```
+
 ---
 
 ## 6. WeaponActor
