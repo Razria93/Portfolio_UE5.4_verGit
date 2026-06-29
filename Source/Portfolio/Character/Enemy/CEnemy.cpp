@@ -235,6 +235,11 @@ void ACEnemy::InjectComponentReferences(const FCharacterComponentReferences& InR
 	{
 		ReactionComponent->InitializeReferences(InReferences);
 	}
+
+	if (IsValid(ActionFeedbackComponent))
+	{
+		ActionFeedbackComponent->InitializeReferences(InReferences);
+	}
 }
 
 void ACEnemy::Tick(float DeltaTime)

@@ -14,15 +14,36 @@ UCActionFeedbackComponent::UCActionFeedbackComponent()
 {
 }
 
-void UCActionFeedbackComponent::BeginPlay()
+void UCActionFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	WeaponComp_Injected = InReferences.WeaponComponent;
 
-	OwnerActor_Cached = GetOwner();
-	check(OwnerActor_Cached);
+	ValidateRequiredComponentReferences();
+}
 
-	OwnerCharacter_Cached = Cast<ACharacter>(OwnerActor_Cached);
-	check(OwnerCharacter_Cached);
+bool UCActionFeedbackComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	struct FRequiredComponentReference
+	{
+		const UObject* Object = nullptr;
+		const TCHAR* Label = TEXT("");
+	};
+
+	const FRequiredComponentReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ WeaponComp_Injected, TEXT("UCWeaponComponent") },
+	};
+
+	for (const FRequiredComponentReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest)
@@ -43,7 +64,7 @@ void UCActionFeedbackComponent::ClearRuntimeFeedback()
 
 bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
-	if (!IsValid(OwnerActor_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!IsValid(GetWorld())) return false;
 	if (InActionFeedbackRequest.ActionFeedbackTiming == EActionFeedbackTiming::None) return false;
 
@@ -255,7 +276,7 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData)
 {
 	if (!IsValid(InActionVFXFeedbackData.VFX)) return;
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	switch (InActionVFXFeedbackData.VFXPlayType)
 	{
@@ -263,7 +284,7 @@ void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InAc
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InActionVFXFeedbackData.VFX,
-			OwnerCharacter_Cached->GetMesh(),
+			OwnerCharacter_Injected->GetMesh(),
 			InActionVFXFeedbackData.SocketName,
 			InActionVFXFeedbackData.RelativeLocation,
 			InActionVFXFeedbackData.RelativeRotation,
@@ -291,7 +312,7 @@ void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InAc
 void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData)
 {
 	if (!IsValid(InActionSFXFeedbackData.SFX)) return;
-	if (!IsValid(OwnerActor_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	switch (InActionSFXFeedbackData.SFXPlayType)
 	{
@@ -300,7 +321,7 @@ void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InAc
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			InActionSFXFeedbackData.SFX,
-			OwnerActor_Cached->GetActorLocation());
+			OwnerCharacter_Injected->GetActorLocation());
 
 		// PrintActionSFXInfo(InActionSFXFeedbackData);
 
@@ -320,12 +341,9 @@ void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InAc
 
 void UCActionFeedbackComponent::ToggleTrailActive(bool bActive)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(WeaponComp_Injected)) return;
 
-	UCWeaponComponent* weaponComp = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
-	if (!IsValid(weaponComp)) return;
-
-	UObject* uobject = weaponComp->GetWeaponActor();
+	UObject* uobject = WeaponComp_Injected->GetWeaponActor();
 	if (!IsValid(uobject)) return;
 
 	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(uobject);

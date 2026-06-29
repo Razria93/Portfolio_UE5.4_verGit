@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CActionFeedbackComponent.generated.h"
 
@@ -25,13 +26,17 @@ private:
 
 private:
 	UPROPERTY(Transient)
-	class AActor* OwnerActor_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class UCWeaponComponent* WeaponComp_Injected = nullptr;
 
-protected:
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	void PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);
