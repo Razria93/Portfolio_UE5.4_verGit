@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CWorldSubSystemStructure.h"
 #include "CHitFeedbackComponent.generated.h"
@@ -44,15 +45,16 @@ private:
 	bool bEnableCameraShake = true;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class AActor* OwnerActor_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
-	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
-protected:
-	void BeginPlay() override;
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	void PlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);

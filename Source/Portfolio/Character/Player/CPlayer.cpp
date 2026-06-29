@@ -245,6 +245,11 @@ void ACPlayer::InjectComponentReferences(const FCharacterComponentReferences& In
 		ReactionComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(HitFeedbackComponent))
+	{
+		HitFeedbackComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(ActionFeedbackComponent))
 	{
 		ActionFeedbackComponent->InitializeReferences(InReferences);

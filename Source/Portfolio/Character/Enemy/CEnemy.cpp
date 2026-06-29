@@ -236,6 +236,11 @@ void ACEnemy::InjectComponentReferences(const FCharacterComponentReferences& InR
 		ReactionComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(HitFeedbackComponent))
+	{
+		HitFeedbackComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(ActionFeedbackComponent))
 	{
 		ActionFeedbackComponent->InitializeReferences(InReferences);
