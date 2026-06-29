@@ -200,6 +200,11 @@ void ACPlayer::InjectComponentReferences(const FCharacterComponentReferences& In
 		StateComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(HealthComponent))
+	{
+		HealthComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(DefenseComponent))
 	{
 		DefenseComponent->InitializeReferences(InReferences);
