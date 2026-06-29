@@ -210,6 +210,11 @@ void ACPlayer::InjectComponentReferences(const FCharacterComponentReferences& In
 		DefenseComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(ObservableOverlayComponent))
+	{
+		ObservableOverlayComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(CombatSignalSourceComponent))
 	{
 		CombatSignalSourceComponent->InitializeReferences(InReferences);

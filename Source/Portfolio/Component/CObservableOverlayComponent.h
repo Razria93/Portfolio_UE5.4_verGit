@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Interface/ObservableOverlayPolicy.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CObservableOverlayComponent.generated.h"
 
@@ -16,7 +17,7 @@ public:
 
 private:
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
 	TArray<TScriptInterface<IObservableOverlayPolicy>> ObservableOverlayPolicies;
@@ -24,8 +25,12 @@ private:
 	UPROPERTY(Transient)
 	bool bOverlayPolicyRegistryDirty = true;
 
-protected:
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot);

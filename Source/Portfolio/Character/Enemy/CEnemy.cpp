@@ -201,6 +201,11 @@ void ACEnemy::InjectComponentReferences(const FCharacterComponentReferences& InR
 		HealthComponent->InitializeReferences(InReferences);
 	}
 
+	if (IsValid(ObservableOverlayComponent))
+	{
+		ObservableOverlayComponent->InitializeReferences(InReferences);
+	}
+
 	if (IsValid(CombatSignalSourceComponent))
 	{
 		CombatSignalSourceComponent->InitializeReferences(InReferences);
