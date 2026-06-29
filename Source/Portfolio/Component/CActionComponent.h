@@ -133,6 +133,9 @@ public:
 	void HandleActionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleActionFeedbackWindowEnd(FName InTriggerKey);
 
+	void HandleActionCollisionWindowBegin(FName InCollisionName);
+	void HandleActionCollisionWindowEnd();
+
 	bool HandleActionCombatSignalCue(FName InCueTag);
 
 public:

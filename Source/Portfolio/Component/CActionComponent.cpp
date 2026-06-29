@@ -307,6 +307,23 @@ void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
 }
 
+void UCActionComponent::HandleActionCollisionWindowBegin(FName InCollisionName)
+{
+	if (!IsValid(WeaponComp_Injected)) return;
+
+	UCAction* activeExecutor = GetActiveActionExecutor();
+	if (!IsValid(activeExecutor)) return;
+
+	WeaponComp_Injected->OpenCollisionWindow(InCollisionName);
+}
+
+void UCActionComponent::HandleActionCollisionWindowEnd()
+{
+	if (!IsValid(WeaponComp_Injected)) return;
+
+	WeaponComp_Injected->CloseCollisionWindow();
+}
+
 bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
 {
 	if (InCueTag.IsNone()) return false;

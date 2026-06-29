@@ -110,6 +110,20 @@ void UCWeaponComponent::ClearRuntimeWeaponState()
 	}
 }
 
+void UCWeaponComponent::OpenCollisionWindow(FName InCollisionName)
+{
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->CollisionEnabled(InCollisionName);
+}
+
+void UCWeaponComponent::CloseCollisionWindow()
+{
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->CollisionDisabled();
+}
+
 void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;

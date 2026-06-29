@@ -94,6 +94,25 @@ Notify는 필요한 경우 component routing entry까지만 호출한다.
 Source/Portfolio/Notify
 ```
 
+진행 내용:
+
+```text
+Action Notify
+-> 기존 ActionBase routing 유지
+
+Reaction Feedback Notify
+-> ReactionBase / ReactionStateBase 추가
+-> UCReactionComponent notify routing API 호출로 정리
+
+Health State Notify
+-> HealthBase 추가
+-> UCHealthComponent notify routing API 호출로 정리
+
+Collision Window Notify
+-> WeaponActor 직접 resolve 제거
+-> UCActionComponent -> UCWeaponComponent -> ACWeaponActor 순서로 routing 정리
+```
+
 ### 2. AnimInstance reference / cache
 
 검토 기준:

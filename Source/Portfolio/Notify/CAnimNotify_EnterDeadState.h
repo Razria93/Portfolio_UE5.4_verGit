@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Notify/CAnimNotify.h"
+#include "Notify/CAnimNotify_HealthBase.h"
 #include "CAnimNotify_EnterDeadState.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_EnterDeadState : public UCAnimNotify
+class PORTFOLIO_API UCAnimNotify_EnterDeadState : public UCAnimNotify_HealthBase
 {
 	GENERATED_BODY()
 	

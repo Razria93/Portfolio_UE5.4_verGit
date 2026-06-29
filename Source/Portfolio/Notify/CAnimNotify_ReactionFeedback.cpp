@@ -1,8 +1,6 @@
 #include "Notify/CAnimNotify_ReactionFeedback.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CReactionComponent.h"
 
 UCAnimNotify_ReactionFeedback::UCAnimNotify_ReactionFeedback()
@@ -18,13 +16,8 @@ void UCAnimNotify_ReactionFeedback::Notify(USkeletalMeshComponent* MeshComp, UAn
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
-
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCReactionComponent* reactionComp = ownerCharacter->FindComponentByClass<UCReactionComponent>();
-	if (!IsValid(reactionComp)) return;
+	UCReactionComponent* reactionComp = GetReactionComponent(MeshComp);
+	if (!CanProcessReactionNotify(reactionComp)) return;
 
 	reactionComp->HandleReactionFeedback(TriggerKey);
 }

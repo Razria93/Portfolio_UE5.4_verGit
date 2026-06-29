@@ -119,8 +119,9 @@ Notify는 montage timeline의 timing trigger다.
 정책:
 
 ```text
-Notify는 domain component를 직접 찾지 않는다.
-Notify는 owner actor / mesh context에서 routing entry만 찾는다.
+Notify는 domain 처리를 직접 수행하지 않는다.
+Notify base/helper는 owner actor / mesh context에서 routing component를 찾을 수 있다.
+Notify 본문은 필요한 경우 component routing entry까지만 호출한다.
 실제 판단과 실행은 component / active executor로 넘긴다.
 ```
 
@@ -146,6 +147,27 @@ Notify는 owner actor / mesh context에서 routing entry만 찾는다.
 
 ```text
 Source/Portfolio/Notify
+```
+
+현재 정리 기준:
+
+```text
+Action Notify
+-> UCAnimNotify_ActionBase / UCAnimNotifyState_ActionBase
+-> UCActionComponent notify routing API
+
+Reaction Notify
+-> UCAnimNotify_ReactionBase / UCAnimNotifyState_ReactionBase
+-> UCReactionComponent notify routing API
+
+Health State Notify
+-> UCAnimNotify_HealthBase
+-> UCHealthComponent notify routing API
+
+Collision Window Notify
+-> UCActionComponent collision window routing API
+-> UCWeaponComponent
+-> ACWeaponActor
 ```
 
 ---

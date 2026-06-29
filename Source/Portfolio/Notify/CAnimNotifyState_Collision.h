@@ -22,7 +22,4 @@ public:
 public:
 	void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
-
-private:
-	class ACWeaponActor* GetWeaponActor(USkeletalMeshComponent* InMeshComp) const;
 };

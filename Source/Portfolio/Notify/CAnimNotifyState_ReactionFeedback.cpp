@@ -1,8 +1,6 @@
 #include "Notify/CAnimNotifyState_ReactionFeedback.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CReactionComponent.h"
 
 UCAnimNotifyState_ReactionFeedback::UCAnimNotifyState_ReactionFeedback()
@@ -18,13 +16,8 @@ void UCAnimNotifyState_ReactionFeedback::NotifyBegin(USkeletalMeshComponent* Mes
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	if (!IsValid(MeshComp)) return;
-
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCReactionComponent* reactionComp = ownerCharacter->FindComponentByClass<UCReactionComponent>();
-	if (!IsValid(reactionComp)) return;
+	UCReactionComponent* reactionComp = GetReactionComponent(MeshComp);
+	if (!CanProcessReactionNotify(reactionComp)) return;
 
 	reactionComp->HandleReactionFeedbackWindowBegin(TriggerKey);
 }
@@ -33,13 +26,8 @@ void UCAnimNotifyState_ReactionFeedback::NotifyEnd(USkeletalMeshComponent* MeshC
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
-
-	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
-	if (!IsValid(ownerCharacter)) return;
-
-	UCReactionComponent* reactionComp = ownerCharacter->FindComponentByClass<UCReactionComponent>();
-	if (!IsValid(reactionComp)) return;
+	UCReactionComponent* reactionComp = GetReactionComponent(MeshComp);
+	if (!CanProcessReactionNotify(reactionComp)) return;
 
 	reactionComp->HandleReactionFeedbackWindowEnd(TriggerKey);
 }

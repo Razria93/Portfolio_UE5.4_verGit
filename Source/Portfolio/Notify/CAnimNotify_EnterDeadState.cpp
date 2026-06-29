@@ -1,7 +1,6 @@
 #include "Notify/CAnimNotify_EnterDeadState.h"
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Actor.h"
 #include "Component/CHealthComponent.h"
 
 UCAnimNotify_EnterDeadState::UCAnimNotify_EnterDeadState()
@@ -17,13 +16,8 @@ void UCAnimNotify_EnterDeadState::Notify(USkeletalMeshComponent* MeshComp, UAnim
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	if (!IsValid(MeshComp)) return;
-
-	AActor* ownerActor = MeshComp->GetOwner();
-	if (!IsValid(ownerActor)) return;
-
-	UCHealthComponent* healthComp = Cast<UCHealthComponent>(ownerActor->GetComponentByClass(UCHealthComponent::StaticClass()));
+	UCHealthComponent* healthComp = GetHealthComponent(MeshComp);
 	if (!IsValid(healthComp)) return;
 
-	healthComp->EnterDeadState();
+	healthComp->HandleDeadStateNotify(EDeadState::Dead);
 }

@@ -77,6 +77,10 @@ public:
 	void ClearContext();
 	void ClearRuntimeWeaponState();
 
+public:
+	void OpenCollisionWindow(FName InCollisionName);
+	void CloseCollisionWindow();
+
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);
 
