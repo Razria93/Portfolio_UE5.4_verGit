@@ -10,7 +10,7 @@
 
 ## 상태
 
-- [ ] 진행 중
+- [x] 완료
 
 ---
 
@@ -23,7 +23,11 @@
 ## 커밋
 
 ```text
-TBD
+39d8b024 docs(reference): define runtime component lookup policy
+6908a289 refactor(notify): route timing events through components
+b78cf7eb refactor(animation): clarify anim instance reference cache
+126091b9 refactor(ai): clarify behavior tree runtime lookup
+88075a70 refactor(weapon): clarify spawned actor reference cleanup
 ```
 
 ---
@@ -266,10 +270,11 @@ Docs/04_Pull_Request/00_Pull_Request_Index.md
 ## 검증 계획
 
 ```text
-- rg 기반 lookup 사용처 전수 스캔
-- Notify / AnimInstance / AI / WeaponActor 경로별 코드 확인
-- 변경이 발생한 경우 Unreal C++ build
-- PIE에서 기본 combat loop smoke test
+- rg 기반 lookup 사용처 전수 스캔 완료
+- GetComponentByClass 잔여 사용처 없음 확인
+- Notify / AnimInstance / AI / WeaponActor 경로별 코드 확인 완료
+- PortfolioEditor Win64 Development 빌드 성공
+- PIE 기본 combat loop smoke test는 수동 확인 대상으로 남김
 ```
 
 ---

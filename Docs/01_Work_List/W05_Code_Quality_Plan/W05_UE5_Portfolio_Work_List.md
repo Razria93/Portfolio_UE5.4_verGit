@@ -467,7 +467,7 @@ refactor/runtime-component-lookup-policy
 
 ### P30. Runtime Component Lookup Policy
 
-- 상태: 진행 중
+- 상태: 완료
 - 브랜치: `refactor/runtime-component-lookup-policy`
 - PR: `P30_UE5_Portfolio_Pull_Request.md`
 - 목표: P29 이후에도 남는 runtime lookup 경로를 Notify / AnimInstance / AI / WeaponActor 기준으로 분류하고, DI 대상과 runtime query 유지 대상을 구분한다.
