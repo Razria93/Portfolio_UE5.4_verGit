@@ -6,15 +6,38 @@
 #include "Component/CReactionComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
-void UCReaction::Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComp)
+void UCReaction::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	OwnerCharacter_Injected = InOwnerCharacter;
-	OwnerReactionComp_Injected = InOwnerReactionComp;
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	ReactionComp_Injected = InReferences.ReactionComponent;
+	ReactionFeedbackComp_Injected = InReferences.ReactionFeedbackComponent;
 
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	ValidateRequiredReferences();
+}
 
-	ReactionFeedbackComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>();
-	check(ReactionFeedbackComp_Cached);
+bool UCReaction::ValidateRequiredReferences() const
+{
+	bool bValid = true;
+
+	struct FRequiredReactionReference
+	{
+		const UObject* Object = nullptr;
+		const TCHAR* Label = TEXT("");
+	};
+
+	const FRequiredReactionReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ ReactionComp_Injected, TEXT("UCReactionComponent") },
+		{ ReactionFeedbackComp_Injected, TEXT("UCReactionFeedbackComponent") },
+	};
+
+	for (const FRequiredReactionReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 FExecutionDecisionResult UCReaction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
@@ -154,9 +177,9 @@ void UCReaction::Complete()
 
 	PlayFeedbackRequest(feedbackRequest);
 
-	if (IsValid(OwnerReactionComp_Injected))
+	if (IsValid(ReactionComp_Injected))
 	{
-		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
+		ReactionComp_Injected->HandleApplyReactionFinished(this, EReactionFinishReason::Completed);
 	}
 }
 
@@ -203,9 +226,9 @@ void UCReaction::HandleReactionStop(EReactionStopReason InStopReason)
 
 	PlayFeedbackRequest(feedbackRequest);
 
-	if (IsValid(OwnerReactionComp_Injected))
+	if (IsValid(ReactionComp_Injected))
 	{
-		OwnerReactionComp_Injected->HandleApplyReactionFinished(this, finishReason);
+		ReactionComp_Injected->HandleApplyReactionFinished(this, finishReason);
 	}
 }
 
@@ -223,9 +246,9 @@ void UCReaction::ClearRuntime()
 
 void UCReaction::CleanupRuntimeEffects()
 {
-	if (IsValid(ReactionFeedbackComp_Cached))
+	if (IsValid(ReactionFeedbackComp_Injected))
 	{
-		ReactionFeedbackComp_Cached->ClearRuntimeFeedback();
+		ReactionFeedbackComp_Injected->ClearRuntimeFeedback();
 	}
 }
 
@@ -335,9 +358,9 @@ void UCReaction::HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName In
 
 void UCReaction::PlayFeedbackRequest(const FReactionFeedbackRequest& InRequest) const
 {
-	if (!IsValid(ReactionFeedbackComp_Cached)) return;
+	if (!IsValid(ReactionFeedbackComp_Injected)) return;
 
-	ReactionFeedbackComp_Cached->PlayFeedback(InRequest);
+	ReactionFeedbackComp_Injected->PlayFeedback(InRequest);
 }
 
 FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTiming InTiming, FName InTriggerKey) const
@@ -356,9 +379,9 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 
 void UCReaction::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey) const
 {
-	if (!IsValid(OwnerReactionComp_Injected)) return;
+	if (!IsValid(ReactionComp_Injected)) return;
 
-	OwnerReactionComp_Injected->RequestConsumeDeferredAction(InConsumeKey);
+	ReactionComp_Injected->RequestConsumeDeferredAction(InConsumeKey);
 }
 
 void UCReaction::OpenAllowInterventionWindow(FName InWindowKey)

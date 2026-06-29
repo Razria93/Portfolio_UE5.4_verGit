@@ -8,6 +8,7 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CActionComponent.h"
+#include "Component/CReactionFeedbackComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -24,6 +25,7 @@ void UCReactionComponent::InitializeReferences(const FCharacterComponentReferenc
 	HealthComp_Injected = InReferences.HealthComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	ActionComp_Injected = InReferences.ActionComponent;
+	ReactionFeedbackComp_Injected = InReferences.ReactionFeedbackComponent;
 
 	ValidateRequiredComponentReferences();
 }
@@ -46,6 +48,7 @@ bool UCReactionComponent::ValidateRequiredComponentReferences() const
 		{ HealthComp_Injected, TEXT("UCHealthComponent") },
 		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
 		{ ActionComp_Injected, TEXT("UCActionComponent") },
+		{ ReactionFeedbackComp_Injected, TEXT("UCReactionFeedbackComponent") },
 	};
 
 	for (const FRequiredComponentReference& reference : requiredReferences)
@@ -370,6 +373,17 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 	}
 }
 
+FCharacterComponentReferences UCReactionComponent::BuildReactionExecutorReferences()
+{
+	FCharacterComponentReferences references;
+
+	references.OwnerCharacter = OwnerCharacter_Injected;
+	references.ReactionComponent = this;
+	references.ReactionFeedbackComponent = ReactionFeedbackComp_Injected;
+
+	return references;
+}
+
 UCReaction* UCReactionComponent::AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass)
 {
 	UClass* executorKey = InSubClass.Get();
@@ -378,7 +392,8 @@ UCReaction* UCReactionComponent::AddReactionExecutor(const TSubclassOf<class UCR
 	UCReaction* add = NewObject<UCReaction>(this, InSubClass);
 	if (!IsValid(add)) return nullptr;
 
-	add->Initialize(OwnerCharacter_Injected, this);
+	const FCharacterComponentReferences references = BuildReactionExecutorReferences();
+	add->InitializeReferences(references);
 	ReactionExecutorMap.Add(executorKey, add);
 
 	return add;

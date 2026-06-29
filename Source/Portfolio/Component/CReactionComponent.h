@@ -62,6 +62,9 @@ private:
 	UPROPERTY(Transient)
 	class UCActionComponent* ActionComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
+
 public:
 	/* === Delegate === */
 	FReactionTypeChanged OnReactionTypeChanged;
@@ -120,6 +123,7 @@ private:
 	void BuildReactionDataMap(bool bRebuildAll);
 	void BuildReactionExecutorMap(bool bRebuildAll);
 
+	FCharacterComponentReferences BuildReactionExecutorReferences();
 	UCReaction* AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass);
 	UCReaction* FindReactionExecutor(const UClass* InClass);
 
