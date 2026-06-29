@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CReactionFeedbackStructure.h"
 #include "CReactionFeedbackComponent.generated.h"
 
@@ -23,13 +24,14 @@ private:
 
 private:
 	UPROPERTY(Transient)
-	class AActor* OwnerActor_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
-	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
-protected:
-	void BeginPlay() override;
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	void PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest);
