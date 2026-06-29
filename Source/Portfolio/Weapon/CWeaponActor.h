@@ -106,12 +106,13 @@ protected:
 
 private:
 	// Collision Component
-	void ConfigureCollisionComponents();
+	void InitializeCollisionComponents();
 	void ClearCollisionComponents();
 
 private:
 	// Trail
-	void ConfigureTrailInitialState();
+	void InitializeTrailState();
+	void ClearTrailState();
 
 public:
 	/* === IHitContextProducer (Getter) === */

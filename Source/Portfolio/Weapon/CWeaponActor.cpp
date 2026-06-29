@@ -62,14 +62,15 @@ void ACWeaponActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ConfigureCollisionComponents();
-	ConfigureTrailInitialState();
+	InitializeCollisionComponents();
+	InitializeTrailState();
 }
 
 void ACWeaponActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	CollisionDisabled();
-	ToggleTrailActive(false);
+
+	ClearTrailState();
 	ClearCollisionComponents();
 
 	OwnerCharacter_Injected = nullptr;
@@ -78,7 +79,7 @@ void ACWeaponActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ACWeaponActor::ConfigureCollisionComponents()
+void ACWeaponActor::InitializeCollisionComponents()
 {
 	if (!IsValid(RootSceneComponent)) return;
 
@@ -114,10 +115,17 @@ void ACWeaponActor::ClearCollisionComponents()
 	Collisions_Cached.Empty();
 }
 
-void ACWeaponActor::ConfigureTrailInitialState()
+void ACWeaponActor::InitializeTrailState()
+{
+	if (!bDisableTrailOnBeginPlay) return;
+	if (!IsValid(TrailComponent)) return;
+
+	ToggleTrailActive(false);
+}
+
+void ACWeaponActor::ClearTrailState()
 {
 	if (!IsValid(TrailComponent)) return;
-	if (!bDisableTrailOnBeginPlay) return;
 
 	ToggleTrailActive(false);
 }
