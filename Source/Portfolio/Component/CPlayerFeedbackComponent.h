@@ -21,12 +21,21 @@ private:
 	float LocalSourceShakeScale = 0.5f;
 
 private:
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class APlayerController* OwnerPlayerController_Cached = nullptr;
+	class APlayerController* OwnerPlayerController_Injected = nullptr;
 
 protected:
+	// Lifecycle
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+public:
+	// Component Reference
+	void InitializeReferences(class APlayerController* InOwnerPlayerController);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	void HandleCameraShakeRequest(const FCameraShakeRequest& InCameraShakeRequest);

@@ -6,9 +6,9 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
-#include "Component/CDefenseComponent.h"
-#include "Component/CActionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
+#include "Component/CActionComponent.h"
+#include "Component/CReactionFeedbackComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -17,21 +17,47 @@ UCReactionComponent::UCReactionComponent()
 {
 }
 
+void UCReactionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
+{
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	MovementComp_Injected = InReferences.MovementComponent;
+	StateComp_Injected = InReferences.StateComponent;
+	HealthComp_Injected = InReferences.HealthComponent;
+	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
+	ActionComp_Injected = InReferences.ActionComponent;
+	ReactionFeedbackComp_Injected = InReferences.ReactionFeedbackComponent;
+
+	ValidateRequiredComponentReferences();
+}
+
+bool UCReactionComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ MovementComp_Injected, TEXT("UCMovementComponent") },
+		{ StateComp_Injected, TEXT("UCStateComponent") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
+		{ ActionComp_Injected, TEXT("UCActionComponent") },
+		{ ReactionFeedbackComp_Injected, TEXT("UCReactionFeedbackComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
+}
+
 // Lifecycle
 
 void UCReactionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
-
-	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
-	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
-	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
-	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
-	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
-	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
 
 	// Rebuild All
 	BuildReactionDataMap(true);
@@ -132,7 +158,7 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 
 bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& InResult)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!InResult.IsAcceptedDecision()) return false;
 
 	switch (InResult.ApplyMode)
@@ -196,9 +222,9 @@ void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReacti
 
 void UCReactionComponent::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
 {
-	if (!IsValid(ActionComp_Cached)) return;
+	if (!IsValid(ActionComp_Injected)) return;
 
-	ActionComp_Cached->ConsumeDeferredAction(InConsumeKey);
+	ActionComp_Injected->ConsumeDeferredAction(InConsumeKey);
 }
 
 // Notify Routing
@@ -267,7 +293,7 @@ void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
 
 void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	// bRebuildAll == true: Rebuild 
 	// bRebuildAll == false: Append
@@ -307,7 +333,7 @@ void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 
 void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	// bRebuildAll == true: Rebuild 
 	// bRebuildAll == false: Append
@@ -341,6 +367,17 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 	}
 }
 
+FCharacterComponentReferences UCReactionComponent::BuildReactionExecutorReferences()
+{
+	FCharacterComponentReferences references;
+
+	references.OwnerCharacter = OwnerCharacter_Injected;
+	references.ReactionComponent = this;
+	references.ReactionFeedbackComponent = ReactionFeedbackComp_Injected;
+
+	return references;
+}
+
 UCReaction* UCReactionComponent::AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass)
 {
 	UClass* executorKey = InSubClass.Get();
@@ -349,7 +386,8 @@ UCReaction* UCReactionComponent::AddReactionExecutor(const TSubclassOf<class UCR
 	UCReaction* add = NewObject<UCReaction>(this, InSubClass);
 	if (!IsValid(add)) return nullptr;
 
-	add->Initialize(OwnerCharacter_Cached, this);
+	const FCharacterComponentReferences references = BuildReactionExecutorReferences();
+	add->InitializeReferences(references);
 	ReactionExecutorMap.Add(executorKey, add);
 
 	return add;
@@ -417,7 +455,7 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 	switch (InDirective.TargetDomain)
 	{
 	case EExecutionDomain::Action:
-		return IsValid(ActionComp_Cached) && ActionComp_Cached->RequestInterruptActiveAction(InDirective);
+		return IsValid(ActionComp_Injected) && ActionComp_Injected->RequestInterruptActiveAction(InDirective);
 
 	case EExecutionDomain::Reaction:
 		return InterruptActiveReaction(InDirective);
@@ -431,7 +469,7 @@ bool UCReactionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayH
 {
 	if (InHandlings.IsEmpty()) return true;
 
-	return IsValid(ObservableOverlayComp_Cached) && ObservableOverlayComp_Cached->ApplyOverlayHandlings(InHandlings);
+	return IsValid(ObservableOverlayComp_Injected) && ObservableOverlayComp_Injected->ApplyOverlayHandlings(InHandlings);
 }
 
 // Execution Operations
@@ -512,7 +550,7 @@ void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionConte
 
 	if (OnReactionTypeChanged.IsBound())
 	{
-		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType);
+		OnReactionTypeChanged.Broadcast(OwnerCharacter_Injected, prevReactionType, ActiveReactionType);
 	}
 }
 
@@ -526,7 +564,7 @@ void UCReactionComponent::ClearActiveReactionContext()
 
 	if (OnReactionTypeChanged.IsBound())
 	{
-		OnReactionTypeChanged.Broadcast(OwnerCharacter_Cached, prevReactionType, ActiveReactionType);
+		OnReactionTypeChanged.Broadcast(OwnerCharacter_Injected, prevReactionType, ActiveReactionType);
 	}
 }
 
@@ -534,32 +572,32 @@ void UCReactionComponent::ClearActiveReactionContext()
 
 void UCReactionComponent::EnterReactionState(const FReactionData& InData)
 {
-	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
+	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
-		MovementComp_Cached->SetStop();
+		MovementComp_Injected->SetStop();
 	}
 
-	if (IsValid(StateComp_Cached))
+	if (IsValid(StateComp_Injected))
 	{
-		StateComp_Cached->SetReactionState();
+		StateComp_Injected->SetReactionState();
 	}
 }
 
 void UCReactionComponent::ExitReactionState(const FReactionData& InData)
 {
-	const bool bAlive = IsValid(HealthComp_Cached) && HealthComp_Cached->IsAlive();
-	const bool bDeadExecution = IsValid(StateComp_Cached) && StateComp_Cached->GetCurrentExecutionState() == EExecutionState::Dead;
+	const bool bAlive = IsValid(HealthComp_Injected) && HealthComp_Injected->IsAlive();
+	const bool bDeadExecution = IsValid(StateComp_Injected) && StateComp_Injected->GetCurrentExecutionState() == EExecutionState::Dead;
 
 	if (!bAlive || bDeadExecution) return;
 
-	if (IsValid(MovementComp_Cached) && !InData.bCanMove)
+	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
-		MovementComp_Cached->SetMove();
+		MovementComp_Injected->SetMove();
 	}
 
-	if (IsValid(StateComp_Cached))
+	if (IsValid(StateComp_Injected))
 	{
-		StateComp_Cached->SetIdleState();
+		StateComp_Injected->SetIdleState();
 	}
 }
 

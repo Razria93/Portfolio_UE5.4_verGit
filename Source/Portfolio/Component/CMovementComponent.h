@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CMovementStructure.h"
 #include "CMovementComponent.generated.h"
 
@@ -46,18 +47,25 @@ private:
 	float CurrentDirection = 0.f;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCharacterMovementComponent* CharacterMovementComp_Cached = nullptr;
+	class UCharacterMovementComponent* CharacterMovementComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached = nullptr;
+	class UCStateComponent* StateComp_Injected = nullptr;
+
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 protected:
-	void BeginPlay() override;
+	// Lifecycle
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:

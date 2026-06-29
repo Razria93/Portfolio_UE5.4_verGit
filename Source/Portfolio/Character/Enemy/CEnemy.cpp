@@ -8,8 +8,6 @@
 
 #include "Controller/CAIController.h"
 
-#include "Component/CActionOrchestratorComponent.h"
-#include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -17,6 +15,8 @@
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CCombatSignalTargetComponent.h"
+#include "Component/CActionOrchestratorComponent.h"
+#include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHitFeedbackComponent.h"
@@ -47,14 +47,6 @@ ACEnemy::ACEnemy()
 	characterMovementComp->bOrientRotationToMovement = true;
 	characterMovementComp->MaxWalkSpeed = 600.0f;
 
-	// Init ActionOrchestratorComp
-	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
-	check(ActionOrchestratorComponent);
-
-	// Init ReactionOrchestratorComp
-	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
-	check(ReactionOrchestratorComponent);
-
 	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -83,7 +75,15 @@ ACEnemy::ACEnemy()
 	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
 	check(CombatSignalTargetComponent);
 
-	// Init UCACtionComp
+	// Init ActionOrchestratorComp
+	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
+	check(ActionOrchestratorComponent);
+
+	// Init ReactionOrchestratorComp
+	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
+	check(ReactionOrchestratorComponent);
+
+	// Init ActionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
 	check(ActionComponent);
 
@@ -104,11 +104,20 @@ ACEnemy::ACEnemy()
 	check(ReactionFeedbackComponent);
 }
 
+void ACEnemy::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	RecoverReferences();
+
+	FCharacterComponentReferences references;
+	BuildReferences(references);
+	InjectReferences(references);
+}
+
 void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-
-	ResolveComponentReferences();
 
 	if (IsValid(ActionComponent))
 	{
@@ -129,19 +138,6 @@ void ACEnemy::BeginPlay()
 	}
 }
 
-void ACEnemy::ResolveComponentReferences()
-{
-	if (!IsValid(CombatSignalSourceComponent))
-	{
-		CombatSignalSourceComponent = FindComponentByClass<UCCombatSignalSourceComponent>();
-	}
-
-	if (!IsValid(CombatSignalTargetComponent))
-	{
-		CombatSignalTargetComponent = FindComponentByClass<UCCombatSignalTargetComponent>();
-	}
-}
-
 void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (IsValid(ActionComponent))
@@ -156,6 +152,74 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void ACEnemy::RecoverReferences()
+{
+	FComponentReferenceHelper::RecoverIfInvalid(this, MovementComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, WeaponComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, StateComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, HealthComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ObservableOverlayComponent);
+
+	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalSourceComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalTargetComponent);
+
+	FComponentReferenceHelper::RecoverIfInvalid(this, ActionOrchestratorComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ReactionOrchestratorComponent);
+
+	FComponentReferenceHelper::RecoverIfInvalid(this, ActionComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ReactionComponent);
+
+	FComponentReferenceHelper::RecoverIfInvalid(this, HitFeedbackComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ActionFeedbackComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ReactionFeedbackComponent);
+}
+
+void ACEnemy::BuildReferences(FCharacterComponentReferences& OutReferences)
+{
+	OutReferences.OwnerCharacter = this;
+
+	OutReferences.MovementComponent = MovementComponent;
+	OutReferences.WeaponComponent = WeaponComponent;
+	OutReferences.StateComponent = StateComponent;
+	OutReferences.HealthComponent = HealthComponent;
+	OutReferences.ObservableOverlayComponent = ObservableOverlayComponent;
+
+	OutReferences.CombatSignalSourceComponent = CombatSignalSourceComponent;
+	OutReferences.CombatSignalTargetComponent = CombatSignalTargetComponent;
+
+	OutReferences.ActionOrchestratorComponent = ActionOrchestratorComponent;
+	OutReferences.ReactionOrchestratorComponent = ReactionOrchestratorComponent;
+
+	OutReferences.ActionComponent = ActionComponent;
+	OutReferences.ReactionComponent = ReactionComponent;
+
+	OutReferences.HitFeedbackComponent = HitFeedbackComponent;
+	OutReferences.ActionFeedbackComponent = ActionFeedbackComponent;
+	OutReferences.ReactionFeedbackComponent = ReactionFeedbackComponent;
+}
+
+void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences)
+{
+	FComponentReferenceHelper::InjectIfValid(MovementComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(WeaponComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(StateComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(HealthComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ObservableOverlayComponent, InReferences);
+
+	FComponentReferenceHelper::InjectIfValid(CombatSignalSourceComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(CombatSignalTargetComponent, InReferences);
+
+	FComponentReferenceHelper::InjectIfValid(ActionOrchestratorComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ReactionOrchestratorComponent, InReferences);
+
+	FComponentReferenceHelper::InjectIfValid(ActionComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ReactionComponent, InReferences);
+
+	FComponentReferenceHelper::InjectIfValid(HitFeedbackComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ActionFeedbackComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ReactionFeedbackComponent, InReferences);
 }
 
 void ACEnemy::Tick(float DeltaTime)

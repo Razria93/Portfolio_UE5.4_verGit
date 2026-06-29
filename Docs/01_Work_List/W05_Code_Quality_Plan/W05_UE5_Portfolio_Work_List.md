@@ -21,7 +21,7 @@
 ```yaml
 우선 브랜치 순서
 1. refactor/unreal-reference-safety-v1
-2. refactor/component-reference-validation-policy
+2. refactor/character-component-reference-di
 3. refactor/debug-log-policy-v1
 4. refactor/todo-status-cleanup
 5. refactor/tuning-constants-cleanup
@@ -138,7 +138,7 @@ refactor/unreal-reference-safety-v1
 **추천 브랜치**
 
 ```text
-refactor/component-reference-validation-policy
+refactor/character-component-reference-di
 ```
 
 **외부 리뷰에서 나온 내용**
@@ -425,3 +425,41 @@ refactor/enhanced-input-migration
 ```
 
 Prompt update는 실제 코드 작업을 1회 이상 진행한 뒤 판단한다.
+
+---
+
+## 8. 진행 기록
+
+### P28. Unreal Reference Safety v1
+
+- 상태: 완료
+- 브랜치: `refactor/unreal-reference-safety-v1`
+- PR: `P28_UE5_Portfolio_Pull_Request.md`
+- 결과: UObject / UPROPERTY / Transient / raw pointer / smart pointer 기준을 문서화하고 주요 runtime cache 필드의 reference safety 기준을 정리했다.
+
+### P29. Character Component 참조 주입 / 복구
+
+- 상태: 완료
+- 브랜치: `refactor/character-component-reference-di`
+- PR: `P29_UE5_Portfolio_Pull_Request.md`
+- 결과: Character가 소유한 component reference를 `RecoverReferences -> BuildReferences -> InjectReferences` 흐름으로 정리하고, component / executor / weapon actor 참조 주입과 필수 reference validation 기준을 적용했다.
+- 추가 결과: Blueprint stale native component reference 복구를 `FComponentReferenceHelper`로 분리하고, `BP_CEnemy` asset 갱신 결과를 기록했다.
+- 관련 문서: `N10_Component_Reference_Validation_Policy_Note.md`, `N11_Unreal_Blueprint_Native_Component_Reference_Mismatch_Note.md`, `B14_UE5_Portfolio_Bug_Report.md`
+
+### 후속 분리
+
+다음 항목은 P29 범위에 포함하지 않고 후속 브랜치에서 하나의 runtime lookup policy 작업으로 묶는다.
+
+```text
+refactor/runtime-component-lookup-policy
+```
+
+후속 범위:
+
+```text
+- Notify / NotifyState component lookup 정책
+- AnimInstance component cache 기준
+- BehaviorTree Service / Decorator component query 기준
+- CombatSignal dynamic target lookup 허용 기준
+- Runtime component lookup policy 문서화
+```

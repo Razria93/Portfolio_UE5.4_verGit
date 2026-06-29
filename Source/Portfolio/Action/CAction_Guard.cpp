@@ -13,18 +13,18 @@ bool UCAction_Guard::Start(const FActionData& InData)
 	const bool bStarted = Super::Start(InData);
 	if (!bStarted) return false;
 
-	if (IsValid(OwnerActionComp_Injected))
+	if (IsValid(ActionComp_Injected))
 	{
 		const EGuardActionPhase guardPhase = ResolveGuardActionPhase(InData.ActionDataKey);
 
 		switch (guardPhase)
 		{
 		case EGuardActionPhase::In:
-			OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInStarted));
+			ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardInStarted));
 			break;
 
 		case EGuardActionPhase::Out:
-			OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardOutStarted));
+			ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardOutStarted));
 			break;
 
 		default:
@@ -39,7 +39,7 @@ void UCAction_Guard::Interrupt(const FExecutionInterventionDirective& InDirectiv
 {
 	const EGuardActionPhase activeGuardPhase = ResolveGuardActionPhase(ActiveDataKey_Cached);
 
-	if (IsValid(OwnerActionComp_Injected))
+	if (IsValid(ActionComp_Injected))
 	{
 		switch (activeGuardPhase)
 		{
@@ -89,16 +89,16 @@ void UCAction_Guard::Complete()
 
 	Super::Complete();
 
-	if (!IsValid(OwnerActionComp_Injected)) return;
+	if (!IsValid(ActionComp_Injected)) return;
 
 	switch (activeGuardPhase)
 	{
 	case EGuardActionPhase::In:
-		OwnerActionComp_Injected->ConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardInAction);
+		ActionComp_Injected->ConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardInAction);
 		break;
 
 	case EGuardActionPhase::Out:
-		OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleCompleted));
+		ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleCompleted));
 		break;
 
 	default:
@@ -117,6 +117,12 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 	}
 
 	if (!IsIncomingActionType(InQuery, EActionType::Guard))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
+	if (!IsValid(WeaponComp_Injected))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -146,7 +152,7 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 		return result;
 	}
 
-	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	if (WeaponComp_Injected->CheckCurrentWeaponType(EWeaponType::Unarmed))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -258,16 +264,16 @@ void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQ
 
 void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
-	if (!IsValid(OwnerActionComp_Injected)) return;
+	if (!IsValid(ActionComp_Injected)) return;
 
 	switch (InCommand)
 	{
 	case EActionNotifyCommand::SwitchToGuard:
-		OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
+		ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::SwitchToGuard));
 		return;
 
 	case EActionNotifyCommand::AllowGuardStart:
-		OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
+		ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::AllowGuardStart));
 		return;
 
 	default:
@@ -343,15 +349,15 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 
 void UCAction_Guard::ClearDeferredGuardActions() const
 {
-	if (!IsValid(OwnerActionComp_Injected)) return;
+	if (!IsValid(ActionComp_Injected)) return;
 
-	OwnerActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::AfterGuardInAction);
-	OwnerActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::AfterGuardBlockReaction);
+	ActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::AfterGuardInAction);
+	ActionComp_Injected->ClearDeferredActions(EDeferredActionConsumeKey::AfterGuardBlockReaction);
 }
 
 void UCAction_Guard::ClearGuardState() const
 {
-	if (!IsValid(OwnerActionComp_Injected)) return;
+	if (!IsValid(ActionComp_Injected)) return;
 
-	OwnerActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
+	ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
 }

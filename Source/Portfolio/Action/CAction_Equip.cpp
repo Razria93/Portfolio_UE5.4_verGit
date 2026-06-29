@@ -15,7 +15,7 @@ FExecutionDecisionResult UCAction_Equip::ResolveExecutionDecision(const FExecuti
 		return result;
 	}
 
-	if (!IsValid(WeaponComp_Cached))
+	if (!IsValid(WeaponComp_Injected))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -33,7 +33,7 @@ FExecutionDecisionResult UCAction_Equip::ResolveExecutionDecision(const FExecuti
 		return result;
 	}
 
-	if (!WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	if (!WeaponComp_Injected->CheckCurrentWeaponType(EWeaponType::Unarmed))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -59,8 +59,8 @@ void UCAction_Equip::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 
 void UCAction_Equip::AttachWeapon()
 {
-	if (!IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Injected)) return;
 
-	WeaponComp_Cached->AttachWeaponToHand();
-	WeaponComp_Cached->CommitEquipWeapon();
+	WeaponComp_Injected->AttachWeaponToHand();
+	WeaponComp_Injected->CommitEquipWeapon();
 }

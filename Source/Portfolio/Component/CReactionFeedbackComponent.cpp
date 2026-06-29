@@ -24,15 +24,28 @@ UCReactionFeedbackComponent::UCReactionFeedbackComponent()
 {
 }
 
-void UCReactionFeedbackComponent::BeginPlay()
+void UCReactionFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 
-	OwnerActor_Cached = GetOwner();
-	check(OwnerActor_Cached);
+	ValidateRequiredComponentReferences();
+}
 
-	OwnerCharacter_Cached = Cast<ACharacter>(OwnerActor_Cached);
-	check(OwnerCharacter_Cached);
+bool UCReactionFeedbackComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest)
@@ -266,7 +279,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData& InReactionVFXFeedbackData)
 {
 	if (!IsValid(InReactionVFXFeedbackData.VFX)) return;
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	switch (InReactionVFXFeedbackData.VFXPlayType)
 	{
@@ -274,7 +287,7 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InReactionVFXFeedbackData.VFX,
-			OwnerCharacter_Cached->GetMesh(),
+			OwnerCharacter_Injected->GetMesh(),
 			InReactionVFXFeedbackData.SocketName,
 			InReactionVFXFeedbackData.RelativeLocation,
 			InReactionVFXFeedbackData.RelativeRotation,
@@ -302,7 +315,7 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData& InReactionSFXFeedbackData)
 {
 	if (!IsValid(InReactionSFXFeedbackData.SFX)) return;
-	if (!IsValid(OwnerActor_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	switch (InReactionSFXFeedbackData.SFXPlayType)
 	{
@@ -311,7 +324,7 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			InReactionSFXFeedbackData.SFX,
-			OwnerActor_Cached->GetActorLocation());
+			OwnerCharacter_Injected->GetActorLocation());
 
 		// PrintReactionSFXInfo(InReactionSFXFeedbackData);
 

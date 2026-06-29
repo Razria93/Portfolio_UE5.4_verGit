@@ -5,6 +5,7 @@
 #include "Interface/TargetContextProvider.h"
 #include "Interface/CombatResultReceiver.h"
 #include "Type/CActionOrchestrationStructure.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
@@ -25,12 +26,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* CameraComponent;
-
-	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
-	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
-
-	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
-	class UCReactionOrchestratorComponent* ReactionOrchestratorComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	class UCMovementComponent* MovementComponent;
@@ -56,6 +51,12 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
 	class UCCombatSignalTargetComponent* CombatSignalTargetComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
+	class UCActionOrchestratorComponent* ActionOrchestratorComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Orchestrator")
+	class UCReactionOrchestratorComponent* ReactionOrchestratorComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "Execution")
 	class UCActionComponent* ActionComponent;
 
@@ -79,20 +80,21 @@ private:
 	int32 ParryResultCount = 0;
 
 protected:
+	// Lifecycle
+	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-	// Init Helper
-	void ResolveComponentReferences();
+	// Component Reference
+	void RecoverReferences();
+	void BuildReferences(FCharacterComponentReferences& OutReferences);
+	void InjectReferences(const FCharacterComponentReferences& InReferences);
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
-	FORCEINLINE UCReactionOrchestratorComponent* GetReactionOrchestratorComp() const { return ReactionOrchestratorComponent; }
-	
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
@@ -101,10 +103,12 @@ public:
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
 	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
+	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
+	FORCEINLINE UCReactionOrchestratorComponent* GetReactionOrchestratorComp() const { return ReactionOrchestratorComponent; }
 	FORCEINLINE UCActionComponent* GetActionComp() const { return ActionComponent; }
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
-	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
+	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 
 public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;

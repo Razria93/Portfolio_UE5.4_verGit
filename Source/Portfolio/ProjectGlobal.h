@@ -3,4 +3,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
+#include "Core/Debug/FReferenceValidation.h"
+#include "Core/Debug/FComponentReferenceHelper.h"
 #include "Core/Debug/FLog.h"

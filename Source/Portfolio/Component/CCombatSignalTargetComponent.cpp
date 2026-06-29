@@ -21,24 +21,35 @@ UCCombatSignalTargetComponent::UCCombatSignalTargetComponent()
 {
 }
 
-void UCCombatSignalTargetComponent::BeginPlay()
+void UCCombatSignalTargetComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	HealthComp_Injected = InReferences.HealthComponent;
+	DefenseComp_Injected = InReferences.DefenseComponent;
+	ReactionOrchestratorComp_Injected = InReferences.ReactionOrchestratorComponent;
+	HitFeedbackComp_Injected = InReferences.HitFeedbackComponent;
 
-	OwnerActor_Cached = GetOwner();
-	check(OwnerActor_Cached);
+	ValidateRequiredComponentReferences();
+}
 
-	HealthComp_Cached = OwnerActor_Cached->FindComponentByClass<UCHealthComponent>();
-	check(HealthComp_Cached);
+bool UCCombatSignalTargetComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
 
-	ReactionOrchestratorComp_Cached = OwnerActor_Cached->FindComponentByClass<UCReactionOrchestratorComponent>();
-	check(ReactionOrchestratorComp_Cached);
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+		{ ReactionOrchestratorComp_Injected, TEXT("UCReactionOrchestratorComponent") },
+		{ HitFeedbackComp_Injected, TEXT("UCHitFeedbackComponent") },
+	};
 
-	HitFeedbackComp_Cached = OwnerActor_Cached->FindComponentByClass<UCHitFeedbackComponent>();
-	check(HitFeedbackComp_Cached);
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
 
-	DefenseComp_Cached = OwnerActor_Cached->FindComponentByClass<UCDefenseComponent>();
-	// check(DefenseComp_Cached);
+	return bValid;
 }
 
 float UCCombatSignalTargetComponent::RequestCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -94,8 +105,8 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	}
 
 	// Evaluate: snapshot target pre-state for outcome/result construction.
-	combatSignalTargetContext.DeadState_Before = HealthComp_Cached->GetDeadState();
-	combatSignalTargetContext.HealthPointBefore = HealthComp_Cached->GetCurrentHP();
+	combatSignalTargetContext.DeadState_Before = HealthComp_Injected->GetDeadState();
+	combatSignalTargetContext.HealthPointBefore = HealthComp_Injected->GetCurrentHP();
 
 	if (!CanReceiveCombatSignal(combatSignalTargetContext))
 	{
@@ -165,11 +176,11 @@ bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& I
 
 bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
-	if (!IsValid(OwnerActor_Cached)) return false;
-	if (!IsValid(HealthComp_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(HealthComp_Injected)) return false;
 	if (!IsValid(InDamageCauser)) return false;
 
-	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerActor_Cached) return false;
+	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerCharacter_Injected) return false;
 
 	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage)) return false;
 	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage)) return false;
@@ -181,10 +192,10 @@ bool UCCombatSignalTargetComponent::ValidateSignalRequest(const FCombatSignal& I
 {
 	if (!InCombatSignal.IsValidMinimal()) return false;
 	if (InCombatSignal.Header.SignalType != ECombatSignalType::TimingCue) return false;
-	if (!IsValid(OwnerActor_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!IsValid(InCombatSignal.Header.SourceActor)) return false;
 	if (!IsValid(InCombatSignal.Header.TargetActor)) return false;
-	if (InCombatSignal.Header.TargetActor != OwnerActor_Cached) return false;
+	if (InCombatSignal.Header.TargetActor != OwnerCharacter_Injected) return false;
 	if (InCombatSignal.CueTag.IsNone()) return false;
 
 	return true;
@@ -195,7 +206,7 @@ FCombatSignalTargetPayload UCCombatSignalTargetComponent::BuildPayload(float Dam
 	FCombatSignalTargetPayload combatSignalTargetPayload = FCombatSignalTargetPayload();
 
 	combatSignalTargetPayload.SourceActor = InDefaultDamageEvent.SourceActor;
-	combatSignalTargetPayload.TargetActor = OwnerActor_Cached;
+	combatSignalTargetPayload.TargetActor = OwnerCharacter_Injected;
 	combatSignalTargetPayload.EventInstigator = InDamageInstigator;
 	combatSignalTargetPayload.DamageCauser = InDamageCauser;
 
@@ -270,7 +281,7 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 	}
 
 	// Gate 2: Parry window intercepts incoming damage before damage commit.
-	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanParry())
+	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanParry())
 	{
 		InOutCombatSignalTargetContext.bAccepted = true;
 		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
@@ -324,7 +335,7 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 
 	float mitigatedDamage = requestedDamage;
 
-	if (IsValid(DefenseComp_Cached) && DefenseComp_Cached->CanGuard())
+	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanGuard())
 	{
 		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
 		mitigatedDamage *= 0.5f;
@@ -375,7 +386,7 @@ FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FComb
 
 void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
-	if (!IsValid(HealthComp_Cached)) return;
+	if (!IsValid(HealthComp_Injected)) return;
 
 	// Process 4: Commit Damage To Health
 	InOutCombatSignalTargetContext.CommittedDamage = InOutCombatSignalTargetContext.bShouldCommitDamage ? CommitDamageToHealth(InOutCombatSignalTargetContext) : 0.f;
@@ -383,8 +394,8 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 	// TODO: Shield / Mana / Stemina etc + Commit Order
 
 	// Post-state Snapshot: Set BuildResult
-	InOutCombatSignalTargetContext.DeadState_After = HealthComp_Cached->GetDeadState();
-	InOutCombatSignalTargetContext.HealthPointAfter = HealthComp_Cached->GetCurrentHP();
+	InOutCombatSignalTargetContext.DeadState_After = HealthComp_Injected->GetDeadState();
+	InOutCombatSignalTargetContext.HealthPointAfter = HealthComp_Injected->GetCurrentHP();
 }
 
 FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult) const
@@ -402,20 +413,20 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 {
 	if (!InCombatSignalTargetPacket.Result.bAccepted) return;
 
-	if (IsValid(ReactionOrchestratorComp_Cached))
+	if (IsValid(ReactionOrchestratorComp_Injected))
 	{
 		FDamageReactionRequest damageReactionRequest;
 		damageReactionRequest.IntentSource = EReactionIntentSource::CombatSignalTarget;
 		damageReactionRequest.CombatSignalTargetPacket = InCombatSignalTargetPacket;
 
-		ReactionOrchestratorComp_Cached->RequestDamageReaction(damageReactionRequest);
+		ReactionOrchestratorComp_Injected->RequestDamageReaction(damageReactionRequest);
 	}
 
-	if (IsValid(HitFeedbackComp_Cached))
+	if (IsValid(HitFeedbackComp_Injected))
 	{
 		if (InCombatSignalTargetPacket.Result.bShouldCommitDamage)
 		{
-			HitFeedbackComp_Cached->PlayHitFeedback(InCombatSignalTargetPacket);
+			HitFeedbackComp_Injected->PlayHitFeedback(InCombatSignalTargetPacket);
 		}
 	}
 
@@ -517,9 +528,9 @@ AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AControl
 
 float UCCombatSignalTargetComponent::CommitDamageToHealth(const FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
-	if (!IsValid(HealthComp_Cached)) return 0.0;
+	if (!IsValid(HealthComp_Injected)) return 0.0;
 
-	return HealthComp_Cached->TakeDamage(InOutCombatSignalTargetContext.FinalTakenDamage);
+	return HealthComp_Injected->TakeDamage(InOutCombatSignalTargetContext.FinalTakenDamage);
 }
 
 AActor* UCCombatSignalTargetComponent::ResolveCombatResultReceiverActor(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const

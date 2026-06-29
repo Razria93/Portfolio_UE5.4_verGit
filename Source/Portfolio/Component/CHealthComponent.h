@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CHealthStructure.h"
 #include "CHealthComponent.generated.h"
 
@@ -41,15 +42,19 @@ private:
 	EDeadState DeadState = EDeadState::Alive;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class AActor* OwnerActor_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 public:
 	FOnDeadStateChanged OnDeadStateChanged;
 
-protected:
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);

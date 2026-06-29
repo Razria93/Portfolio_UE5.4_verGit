@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 // #include "Type/CActionFeedbackStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
@@ -41,18 +42,23 @@ protected:
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCActionComponent* OwnerActionComp_Injected = nullptr;
-
-protected:
-	UPROPERTY(Transient)
-	class UCWeaponComponent* WeaponComp_Cached = nullptr;
+	class UCWeaponComponent* WeaponComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCActionFeedbackComponent* ActionFeedbackComp_Cached = nullptr;
+	class UCActionComponent* ActionComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCActionFeedbackComponent* ActionFeedbackComp_Injected = nullptr;
 
 public:
-	// Initialize / Tick
-	virtual void InitializeAction(ACharacter* InOwnerCharacter, class UCActionComponent* InOwnerActionComp);
+	// Component Reference
+	virtual void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredReferences() const;
+
+public:
+	// Tick
 	virtual void Tick(float InDeltaTime) {}
 
 public:

@@ -22,13 +22,13 @@ FExecutionDecisionResult UCAction_ComboAttack::ResolveExecutionDecision(const FE
 		return result;
 	}
 
-	if (!IsValid(WeaponComp_Cached))
+	if (!IsValid(WeaponComp_Injected))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
 	}
 
-	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	if (WeaponComp_Injected->CheckCurrentWeaponType(EWeaponType::Unarmed))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -144,10 +144,10 @@ void UCAction_ComboAttack::ConsumeChain()
 		return;
 	}
 
-	if (IsValid(OwnerActionComp_Injected))
+	if (IsValid(ActionComp_Injected))
 	{
 		// Sync with ActionComponent
-		if (!OwnerActionComp_Injected->HandleApplyActionConsumed(this, nextData))
+		if (!ActionComp_Injected->HandleApplyActionConsumed(this, nextData))
 		{
 			Stop(EActionStopReason::Ignored);
 			return;
@@ -205,8 +205,8 @@ bool UCAction_ComboAttack::CanConsumeChain(const FActionData& InData) const
 	if (!bIsActive) return false;
 	if (!bHasReservingChain) return false;
 
-	if (!IsValid(OwnerActionComp_Injected)) return false;
-	if (!OwnerActionComp_Injected->CanCommitChain(this, InData)) return false;
+	if (!IsValid(ActionComp_Injected)) return false;
+	if (!ActionComp_Injected->CanCommitChain(this, InData)) return false;
 
 	return true;
 }

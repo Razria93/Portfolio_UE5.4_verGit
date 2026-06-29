@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CCombatSignalStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CCombatSignalTargetComponent.generated.h"
@@ -15,24 +16,28 @@ public:
 	UCCombatSignalTargetComponent();
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class AActor* OwnerActor_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
+	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionOrchestratorComponent* ReactionOrchestratorComp_Cached = nullptr;
+	class UCDefenseComponent* DefenseComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHitFeedbackComponent* HitFeedbackComp_Cached = nullptr;
+	class UCReactionOrchestratorComponent* ReactionOrchestratorComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCDefenseComponent* DefenseComp_Cached = nullptr;
+	class UCHitFeedbackComponent* HitFeedbackComp_Injected = nullptr;
 
-protected:
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	// Entry

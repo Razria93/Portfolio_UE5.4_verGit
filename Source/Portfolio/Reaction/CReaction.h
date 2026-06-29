@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CReactionFeedbackStructure.h"
@@ -39,20 +40,25 @@ protected:
 	EReactionStopReason LastStopReason_Cached = EReactionStopReason::None;
 
 protected:
-	/* === Injection Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionComponent* OwnerReactionComp_Injected = nullptr;
+	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
-protected:
 	UPROPERTY(Transient)
-	class UCReactionFeedbackComponent* ReactionFeedbackComp_Cached = nullptr;
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
 
 public:
-	// Initialize / Tick
-	virtual void Initialize(ACharacter* InOwnerCharacter, UCReactionComponent* InOwnerReactionComp);
+	// Component Reference
+	virtual void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredReferences() const;
+
+public:
+	// Tick
 	virtual void Tick(float InDeltaTime) {};
 
 public:

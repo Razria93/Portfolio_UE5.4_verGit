@@ -16,15 +16,28 @@ UCHitFeedbackComponent::UCHitFeedbackComponent()
 {
 }
 
-void UCHitFeedbackComponent::BeginPlay()
+void UCHitFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 
-	OwnerActor_Cached = GetOwner();
-	check(OwnerActor_Cached);
+	ValidateRequiredComponentReferences();
+}
 
-	OwnerCharacter_Cached = Cast<ACharacter>(OwnerActor_Cached);
-	check(OwnerCharacter_Cached);
+bool UCHitFeedbackComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 void UCHitFeedbackComponent::PlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket)
@@ -57,7 +70,7 @@ void UCHitFeedbackComponent::PlayHitStop(const FCombatSignalTargetPacket& InComb
 void UCHitFeedbackComponent::PlayHitVFX(const FCombatSignalTargetPacket& InCombatSignalTargetPacket)
 {
 	if (!IsValid(GetWorld())) return;
-	if (!IsValid(OwnerActor_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	if (!IsValid(HitVFX))
 	{
@@ -76,7 +89,7 @@ void UCHitFeedbackComponent::PlayHitVFX(const FCombatSignalTargetPacket& InComba
 
 void UCHitFeedbackComponent::PlayHitSFX(const FCombatSignalTargetPacket& InCombatSignalTargetPacket)
 {
-	if (!IsValid(OwnerActor_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	if (!IsValid(HitSFX))
 	{
@@ -109,7 +122,7 @@ void UCHitFeedbackComponent::PlayCameraShake(const FCombatSignalTargetPacket& In
 
 bool UCHitFeedbackComponent::CanPlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	if (!IsValid(OwnerActor_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!InCombatSignalTargetPacket.Result.bAccepted) return false;
 	if (InCombatSignalTargetPacket.Result.CommittedDamage <= KINDA_SMALL_NUMBER) return false;
 
@@ -151,7 +164,7 @@ FVector UCHitFeedbackComponent::ResolveHitFeedbackLocation(const FCombatSignalTa
 		return damageHitInfo.HitResult.ImpactPoint;
 	}
 
-	return IsValid(OwnerActor_Cached) ? OwnerActor_Cached->GetActorLocation() : FVector::ZeroVector;
+	return IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetActorLocation() : FVector::ZeroVector;
 }
 
 FRotator UCHitFeedbackComponent::ResolveHitFeedbackRotation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
@@ -163,7 +176,7 @@ FRotator UCHitFeedbackComponent::ResolveHitFeedbackRotation(const FCombatSignalT
 		return damageHitInfo.HitResult.ImpactNormal.Rotation();
 	}
 
-	return IsValid(OwnerActor_Cached) ? OwnerActor_Cached->GetActorRotation() : FRotator::ZeroRotator;
+	return IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetActorRotation() : FRotator::ZeroRotator;
 }
 
 FHitStopRequest UCHitFeedbackComponent::BuildHitStopRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
@@ -188,7 +201,9 @@ FCameraShakeRequest UCHitFeedbackComponent::BuildCameraShakeRequest(const FComba
 	cameraShakeRequest.CameraShakeAudience = CameraShakeAudience;
 	cameraShakeRequest.SourceActor = InCombatSignalTargetPacket.Context.SourceActor;
 	cameraShakeRequest.TargetActor = InCombatSignalTargetPacket.Context.TargetActor;
-	cameraShakeRequest.EventLocation = IsValid(InCombatSignalTargetPacket.Context.TargetActor) ? InCombatSignalTargetPacket.Context.TargetActor->GetActorLocation() : GetOwner()->GetActorLocation();
+	cameraShakeRequest.EventLocation = IsValid(InCombatSignalTargetPacket.Context.TargetActor)
+		? InCombatSignalTargetPacket.Context.TargetActor->GetActorLocation()
+		: (IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetActorLocation() : FVector::ZeroVector);
 
 	return cameraShakeRequest;
 }
@@ -208,7 +223,7 @@ void UCHitFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVFX, co
 {
 	FLog::Log(TEXT("========== HitVFX Info =========="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitVFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
 	FLog::Log(FString::Printf(TEXT("%-20s: X=%.2f Y=%.2f Z=%.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
 	FLog::Log(FString::Printf(TEXT("%-20s: P=%.2f Y=%.2f R=%.2f"), TEXT("Rotation"), InRotation.Pitch, InRotation.Yaw, InRotation.Roll));
 	FLog::Log(TEXT("================================="));
@@ -218,7 +233,7 @@ void UCHitFeedbackComponent::PrintHitSFXRequestInfo(USoundBase* InHitSFX, const 
 {
 	FLog::Log(TEXT("========= HitSFX Info ========="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitSFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
 	FLog::Log(FString::Printf(TEXT("%-20s: X = %.2f Y = %.2f Z = %.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
 	FLog::Log(TEXT("================================="));
 }

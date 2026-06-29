@@ -4,7 +4,6 @@
 #include "Character/Player/CPlayer.h"
 
 #include "Component/CPlayerFeedbackComponent.h"
-#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
 
 #include "Type/CActionOrchestrationStructure.h"
 
@@ -14,6 +13,16 @@ ACPlayerController::ACPlayerController()
 
 	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
 	check(PlayerFeedbackComponent);
+}
+
+void ACPlayerController::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (IsValid(PlayerFeedbackComponent))
+	{
+		PlayerFeedbackComponent->InitializeReferences(this);
+	}
 }
 
 void ACPlayerController::PlayerTick(float DeltaTime)

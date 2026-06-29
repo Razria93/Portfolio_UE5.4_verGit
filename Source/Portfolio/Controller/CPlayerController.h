@@ -20,6 +20,8 @@ private:
 	FVector2D CachedMoveAxis2D = FVector2D::ZeroVector;
 
 protected:
+	// Lifecycle
+	virtual void PostInitializeComponents() override;
 	virtual void PlayerTick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
 

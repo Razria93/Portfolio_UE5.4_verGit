@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CActionOrchestrationStructure.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "CActionOrchestratorComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -15,36 +16,39 @@ public:
 
 private:
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCMovementComponent* MovementComp_Cached = nullptr;
+	class UCMovementComponent* MovementComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCWeaponComponent* WeaponComp_Cached = nullptr;
+	class UCWeaponComponent* WeaponComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached = nullptr;
+	class UCStateComponent* StateComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
+	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCActionComponent* ActionComp_Cached = nullptr;
+	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionComponent* ReactionComp_Cached = nullptr;
+	class UCActionComponent* ActionComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
+	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
 private:
 	UPROPERTY(Transient)
 	TArray<FDeferredActionCandidate> DeferredActionCandidates;
 
-protected:
-	// Lifecycle
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	// Request Entry

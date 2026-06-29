@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Interface/ObservableOverlayPolicy.h"
 #include "CDefenseComponent.generated.h"
@@ -14,13 +15,12 @@ class PORTFOLIO_API UCDefenseComponent : public UActorComponent, public IObserva
 public:
 	UCDefenseComponent();
 
-protected:
-	// Lifecycle
-	void BeginPlay() override;
-
 private:
 	UPROPERTY(Transient)
-	class UCMovementComponent* MovementComp_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCMovementComponent* MovementComp_Injected = nullptr;
 
 private:
 	UPROPERTY(Transient)
@@ -37,6 +37,13 @@ private:
 
 	UPROPERTY(Transient)
 	bool bCanParry = false;
+
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	// Query

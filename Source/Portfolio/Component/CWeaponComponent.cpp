@@ -3,6 +3,7 @@
 
 #include "GameFramework/Character.h"
 
+#include "Component/CCombatSignalSourceComponent.h"
 #include "Weapon/CWeaponActor.h"
 
 #include "Type/CWeaponStructure.h"
@@ -11,16 +12,34 @@ UCWeaponComponent::UCWeaponComponent()
 {
 }
 
-void UCWeaponComponent::BeginPlay()
+void UCWeaponComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
 
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+	ValidateRequiredComponentReferences();
 
 	// CWeaponActor
-	CreateWeaponActor(OwnerCharacter_Cached, WeaponActorClassKey, WeaponActorClass);
+	CreateWeaponActor(OwnerCharacter_Injected, WeaponActorClassKey, WeaponActorClass);
 	CurrentWeaponType = EWeaponType::Unarmed;
+}
+
+bool UCWeaponComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ CombatSignalSourceComp_Injected, TEXT("UCCombatSignalSourceComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 ACWeaponActor* UCWeaponComponent::GetWeaponActor()
@@ -93,13 +112,13 @@ void UCWeaponComponent::ClearRuntimeWeaponState()
 
 void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	EWeaponType prevWeaponType = CurrentWeaponType;
 	CurrentWeaponType = InNewWeaponType;
 
 	if (OnWeaponTypeChanged.IsBound())
-		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Cached, prevWeaponType, CurrentWeaponType);
+		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Injected, prevWeaponType, CurrentWeaponType);
 }
 
 FWeaponContext UCWeaponComponent::BuildWeaponContext() const
@@ -109,6 +128,16 @@ FWeaponContext UCWeaponComponent::BuildWeaponContext() const
 	weaponContext.WeaponType = CurrentWeaponType;
 
 	return weaponContext;
+}
+
+FCharacterComponentReferences UCWeaponComponent::BuildWeaponActorReferences() const
+{
+	FCharacterComponentReferences references;
+
+	references.OwnerCharacter = OwnerCharacter_Injected;
+	references.CombatSignalSourceComponent = CombatSignalSourceComp_Injected;
+
+	return references;
 }
 
 bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass)
@@ -134,7 +163,9 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	if (!ensureMsgf(IsValid(weaponActor), TEXT("UCWeaponComponent: WeaponActor was not created")))
 		return false;
 
-	weaponActor->InitializeWeaponActor(InWeaponType);
+	const FCharacterComponentReferences references = BuildWeaponActorReferences();
+	weaponActor->InitializeReferences(references);
+	weaponActor->ApplyInitialWeaponState(InWeaponType);
 
 	WeaponActor = weaponActor;
 

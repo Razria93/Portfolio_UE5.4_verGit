@@ -34,5 +34,6 @@
 | P26 | Combat Signal TimingCue 연결 v1 | `P26_UE5_Portfolio_Pull_Request.md` | `feature/combat-signal-cue-v1` |  | W04, N04, N05, N06, TB_W04_07 |
 | P27 | Code Quality Cleanup Plan | `P27_UE5_Portfolio_Pull_Request.md` | `docs/code-quality-plan` |  | W05, N08 |
 | P28 | Unreal 참조 안전성 v1 | `P28_UE5_Portfolio_Pull_Request.md` | `refactor/unreal-reference-safety-v1` |  | W05, N08, N09 |
+| P29 | Character Component 참조 주입 / 복구 | `P29_UE5_Portfolio_Pull_Request.md` | `refactor/character-component-reference-di` |  | W05, N10, N11, B14 |
 
 ---

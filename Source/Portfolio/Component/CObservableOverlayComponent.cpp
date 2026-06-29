@@ -7,15 +7,30 @@ UCObservableOverlayComponent::UCObservableOverlayComponent()
 {
 }
 
-void UCObservableOverlayComponent::BeginPlay()
+void UCObservableOverlayComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
-
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	ValidateRequiredComponentReferences();
 
 	MarkPolicyRegistryDirty();
 	RefreshPolicyRegistry();
+}
+
+bool UCObservableOverlayComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot)
@@ -105,7 +120,9 @@ void UCObservableOverlayComponent::RebuildPolicyRegistry()
 	ObservableOverlayPolicies.Empty();
 
 	TArray<UActorComponent*> ownerComponents;
-	OwnerCharacter_Cached->GetComponents(ownerComponents);
+	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	OwnerCharacter_Injected->GetComponents(ownerComponents);
 
 	for (UActorComponent* component : ownerComponents)
 	{

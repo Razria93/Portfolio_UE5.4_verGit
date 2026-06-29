@@ -8,18 +8,34 @@
 #include "Component/CActionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 
-void UCAction::InitializeAction(ACharacter* InOwnerCharacter, UCActionComponent* InOwnerActionComp)
+void UCAction::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	OwnerCharacter_Injected = InOwnerCharacter;
-	OwnerActionComp_Injected = InOwnerActionComp;
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	WeaponComp_Injected = InReferences.WeaponComponent;
+	ActionComp_Injected = InReferences.ActionComponent;
+	ActionFeedbackComp_Injected = InReferences.ActionFeedbackComponent;
 
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	ValidateRequiredReferences();
+}
 
-	WeaponComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
-	check(WeaponComp_Cached);
+bool UCAction::ValidateRequiredReferences() const
+{
+	bool bValid = true;
 
-	ActionFeedbackComp_Cached = OwnerCharacter_Injected->FindComponentByClass<UCActionFeedbackComponent>();
-	check(ActionFeedbackComp_Cached);
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ WeaponComp_Injected, TEXT("UCWeaponComponent") },
+		{ ActionComp_Injected, TEXT("UCActionComponent") },
+		{ ActionFeedbackComp_Injected, TEXT("UCActionFeedbackComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 FExecutionDecisionResult UCAction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
@@ -165,9 +181,9 @@ void UCAction::Complete()
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
 
-	if (IsValid(OwnerActionComp_Injected))
+	if (IsValid(ActionComp_Injected))
 	{
-		OwnerActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
+		ActionComp_Injected->HandleApplyActionFinished(this, EActionFinishReason::Completed);
 	}
 }
 
@@ -230,9 +246,9 @@ void UCAction::HandleActionStop(EActionStopReason InStopReason)
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(eventType, actionIndex);
 
-	if (IsValid(OwnerActionComp_Injected))
+	if (IsValid(ActionComp_Injected))
 	{
-		OwnerActionComp_Injected->HandleApplyActionFinished(this, finishReason);
+		ActionComp_Injected->HandleApplyActionFinished(this, finishReason);
 	}
 }
 
@@ -250,14 +266,14 @@ void UCAction::ClearRuntime()
 
 void UCAction::CleanupRuntimeEffects()
 {
-	if (IsValid(WeaponComp_Cached))
+	if (IsValid(WeaponComp_Injected))
 	{
-		WeaponComp_Cached->ClearRuntimeWeaponState();
+		WeaponComp_Injected->ClearRuntimeWeaponState();
 	}
 
-	if (IsValid(ActionFeedbackComp_Cached))
+	if (IsValid(ActionFeedbackComp_Injected))
 	{
-		ActionFeedbackComp_Cached->ClearRuntimeFeedback();
+		ActionFeedbackComp_Injected->ClearRuntimeFeedback();
 	}
 }
 
@@ -387,9 +403,9 @@ bool UCAction::ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalC
 
 void UCAction::PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const
 {
-	if (!IsValid(ActionFeedbackComp_Cached)) return;
+	if (!IsValid(ActionFeedbackComp_Injected)) return;
 
-	ActionFeedbackComp_Cached->PlayFeedback(InRequest);
+	ActionFeedbackComp_Injected->PlayFeedback(InRequest);
 }
 
 FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey) const
@@ -408,16 +424,16 @@ FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTi
 
 void UCAction::PushHitContext()
 {
-	if (!IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Injected)) return;
 
-	WeaponComp_Cached->PushContext(BuildActionContext());
+	WeaponComp_Injected->PushContext(BuildActionContext());
 }
 
 void UCAction::ClearHitContext()
 {
-	if (!IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Injected)) return;
 
-	WeaponComp_Cached->ClearContext();
+	WeaponComp_Injected->ClearContext();
 }
 
 FActionContext UCAction::BuildActionContext() const
@@ -526,9 +542,9 @@ bool UCAction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionP
 
 void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const
 {
-	if (!IsValid(OwnerActionComp_Injected)) return;
+	if (!IsValid(ActionComp_Injected)) return;
 
 	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : ActiveDataKey_Cached.ActionIndex;
 
-	OwnerActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, InEventType);
+	ActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, InEventType);
 }

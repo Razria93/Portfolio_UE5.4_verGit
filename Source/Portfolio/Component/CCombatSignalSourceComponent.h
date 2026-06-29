@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CCombatSignalStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CCombatSignalSourceComponent.generated.h"
@@ -23,12 +24,16 @@ private:
 	TMap<FCombatSignalHitWindowKey, TSet<TWeakObjectPtr<AActor>>> DamagedTargetContainer;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
-protected:
-	void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 public:
 	// HitWindow

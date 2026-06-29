@@ -26,48 +26,73 @@ ACWeaponActor::ACWeaponActor()
 	TrailComponent->bAutoActivate = false;
 }
 
+void ACWeaponActor::InitializeReferences(const FCharacterComponentReferences& InReferences)
+{
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
+
+	ValidateRequiredReferences();
+}
+
+bool ACWeaponActor::ValidateRequiredReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ CombatSignalSourceComp_Injected, TEXT("UCCombatSignalSourceComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
+}
+
+void ACWeaponActor::ApplyInitialWeaponState(EWeaponType InWeaponType)
+{
+	ChangeWeaponType(InWeaponType);
+	AttachToHolsterSocket();
+}
+
 void ACWeaponActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	ConfigureCollisionComponents();
+	ConfigureTrailComponentState();
+}
 
-	CombatSignalSourceComp_Cached = Cast<UCCombatSignalSourceComponent>(OwnerCharacter_Cached->GetComponentByClass(UCCombatSignalSourceComponent::StaticClass()));
-	if (!IsValid(CombatSignalSourceComp_Cached)) return;
+void ACWeaponActor::ConfigureCollisionComponents()
+{
+	if (!IsValid(RootSceneComponent)) return;
 
-	if (IsValid(RootSceneComponent))
+	TArray<USceneComponent*> children;
+	RootSceneComponent->GetChildrenComponents(true, children);
+
+	for (USceneComponent* child : children)
 	{
-		TArray<USceneComponent*> children;
-		RootSceneComponent->GetChildrenComponents(true, children);
+		UShapeComponent* shape = Cast<UShapeComponent>(child); // UShapeComponent base for shape collision components (Sphere / Box / Capsule)
+		if (!IsValid(shape)) continue;
 
-		for (USceneComponent* child : children)
-		{
-			UShapeComponent* shape = Cast<UShapeComponent>(child); //  UShapeComponent base for shape collision components (Sphere / Box / Capsule)
-			if (!IsValid(shape)) continue;
+		shape->OnComponentBeginOverlap.AddDynamic(this, &ACWeaponActor::OnComponentBeginOverlap);
+		shape->OnComponentEndOverlap.AddDynamic(this, &ACWeaponActor::OnComponentEndOverlap);
+		shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-			shape->OnComponentBeginOverlap.AddDynamic(this, &ACWeaponActor::OnComponentBeginOverlap);
-			shape->OnComponentEndOverlap.AddDynamic(this, &ACWeaponActor::OnComponentEndOverlap);
-			shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Collision_Disabled
-
-			Collisions_Cached.Add(shape);
-		}
-	}
-
-	if (IsValid(TrailComponent))
-	{
-		if (bDisableTrailOnBeginPlay)
-		{
-			TrailComponent->Deactivate();
-			TrailComponent->SetVisibility(false);
-		}
+		Collisions_Cached.Add(shape);
 	}
 }
 
-void ACWeaponActor::InitializeWeaponActor(EWeaponType InWeaponType)
+void ACWeaponActor::ConfigureTrailComponentState()
 {
-	ChangeWeaponType(InWeaponType);
-	AttachToHolsterSocket();
+	if (!IsValid(TrailComponent)) return;
+	if (!bDisableTrailOnBeginPlay) return;
+
+	TrailComponent->Deactivate();
+	TrailComponent->SetVisibility(false);
 }
 
 const FOverlapContext& ACWeaponActor::GetLastOverlapContext() const
@@ -164,9 +189,9 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 		++CurrentHitWindowId;
 		bHitWindowOpened = true;
 
-		if (IsValid(CombatSignalSourceComp_Cached))
+		if (IsValid(CombatSignalSourceComp_Injected))
 		{
-			CombatSignalSourceComp_Cached->NotifyHitWindowOpened(this, CurrentHitWindowId);
+			CombatSignalSourceComp_Injected->NotifyHitWindowOpened(this, CurrentHitWindowId);
 		}
 	}
 
@@ -190,9 +215,9 @@ void ACWeaponActor::CollisionDisabled()
 
 	bHitWindowOpened = false;
 
-	if (IsValid(CombatSignalSourceComp_Cached) && CurrentHitWindowId != INDEX_NONE)
+	if (IsValid(CombatSignalSourceComp_Injected) && CurrentHitWindowId != INDEX_NONE)
 	{
-		CombatSignalSourceComp_Cached->NotifyHitWindowClosed(this, CurrentHitWindowId);
+		CombatSignalSourceComp_Injected->NotifyHitWindowClosed(this, CurrentHitWindowId);
 	}
 
 	// Legacy delegate
@@ -205,21 +230,21 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
 
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
-	if (OwnerCharacter_Cached == OtherActor) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(OtherActor)) return;
+	if (OwnerCharacter_Injected == OtherActor) return;
 
-	if (!IsValid(CombatSignalSourceComp_Cached)) return;
+	if (!IsValid(CombatSignalSourceComp_Injected)) return;
 
-	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Cached, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	FHitContext hitContext = BuildHitContext(overlapContext);
 
 	// PrintBeginOverlapContextInfo(hitContext);
 
 	// Legacy delegate
 	if (OnWeaponActorBeginOverlap.IsBound())
-		OnWeaponActorBeginOverlap.Broadcast(OwnerCharacter_Cached, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+		OnWeaponActorBeginOverlap.Broadcast(OwnerCharacter_Injected, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	CombatSignalSourceComp_Cached->RequestCombatSignalSource(hitContext);
+	CombatSignalSourceComp_Injected->RequestCombatSignalSource(hitContext);
 	LastOverlapContext_Cached = overlapContext;
 }
 
@@ -228,14 +253,14 @@ void ACWeaponActor::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCompone
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
 	if (!IsValid(overlapComp)) return;
 
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(OtherActor)) return;
-	if (OwnerCharacter_Cached == OtherActor) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(OtherActor)) return;
+	if (OwnerCharacter_Injected == OtherActor) return;
 
-	if (!IsValid(CombatSignalSourceComp_Cached)) return;
+	if (!IsValid(CombatSignalSourceComp_Injected)) return;
 
 	// Legacy delegate
 	if (OnWeaponActorEndOverlap.IsBound())
-		OnWeaponActorEndOverlap.Broadcast(OwnerCharacter_Cached, OtherActor);
+		OnWeaponActorEndOverlap.Broadcast(OwnerCharacter_Injected, OtherActor);
 }
 
 FOverlapContext ACWeaponActor::BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const
@@ -328,7 +353,12 @@ FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapConte
 
 void ACWeaponActor::AttachToOwnerSocket(FName InSocketName)
 {
-	AttachToComponent(OwnerCharacter_Cached->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
+	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
+	if (!IsValid(meshComp)) return;
+
+	AttachToComponent(meshComp, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
 }
 
 void ACWeaponActor::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)

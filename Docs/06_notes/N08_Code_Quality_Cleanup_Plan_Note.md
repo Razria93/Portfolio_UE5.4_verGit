@@ -105,6 +105,8 @@
 
 현재 구조는 "있으면 사용한다"보다 "반드시 있어야 한다"에 가깝다. 따라서 필수 의존성은 injection 또는 명시적 validation으로 정리하는 것이 맞다.
 
+세부 판단 기준은 `N10. Component Reference Validation Policy Note`를 따른다.
+
 ### 2.3 Debug log / print 함수
 
 `FLog::Log`, `Print...Info`, `SummaryInfo` 계열 함수가 많다.

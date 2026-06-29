@@ -1,20 +1,37 @@
 #include "Component/CHealthComponent.h"
 #include "ProjectGlobal.h"
 
+#include "GameFramework/Character.h"
+
 #include "Type/CHealthStructure.h"
 
 UCHealthComponent::UCHealthComponent()
 {
 }
 
-void UCHealthComponent::BeginPlay()
+void UCHealthComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
-
-	OwnerActor_Cached = Cast<AActor>(GetOwner());
-	check(OwnerActor_Cached);
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	ValidateRequiredComponentReferences();
 
 	InitializeHealth(InitMaxHP, InitCurrentHP, MaxHPUpdatePolicy);
+}
+
+bool UCHealthComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy)
@@ -243,7 +260,7 @@ void UCHealthComponent::PrintHealthContextInfo(const FString& InLabel) const
 		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Label"), *InLabel));
 	}
 
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("MaxHP"), MaxHP));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("PreviousHP"), PreviousHP));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CurrentHP"), CurrentHP));
@@ -270,7 +287,7 @@ void UCHealthComponent::PrintDeadContextInfo(const FString& InLabel) const
 		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Label"), *InLabel));
 	}
 
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(OwnerActor_Cached)));
+	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DeadState"), *UEnum::GetValueAsString(DeadState)));
 	FLog::Log(TEXT("---------------------------------"));
 }

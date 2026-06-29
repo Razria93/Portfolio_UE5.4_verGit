@@ -12,42 +12,56 @@ UCMovementComponent::UCMovementComponent()
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 }
 
-void UCMovementComponent::BeginPlay()
+void UCMovementComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	CharacterMovementComp_Injected = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetCharacterMovement() : nullptr;
+	StateComp_Injected = InReferences.StateComponent;
 
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+	ValidateRequiredComponentReferences();
+}
 
-	CharacterMovementComp_Cached = OwnerCharacter_Cached->GetCharacterMovement();
-	check(CharacterMovementComp_Cached);
+bool UCMovementComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
 
-	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
-	check(StateComp_Cached);
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ CharacterMovementComp_Injected, TEXT("UCharacterMovementComponent") },
+		{ StateComp_Injected, TEXT("UCStateComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
 
 	CalculateSpeed();
 	CalculateDirection();
 
-	bIsFalling = CharacterMovementComp_Cached->IsFalling();
+	bIsFalling = CharacterMovementComp_Injected->IsFalling();
 }
 
 // [Final Movement Gate]
 // Final movement gate for axis input accepted by the orchestrator.
 bool UCMovementComponent::CanAcceptMoveInput() const
 {
-	if (!IsValid(OwnerCharacter_Cached)) return false;
+	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!bCanMove) return false;
 
-	if (IsValid(StateComp_Cached))
+	if (IsValid(StateComp_Injected))
 	{
-		const EExecutionState executionState = StateComp_Cached->GetCurrentExecutionState();
+		const EExecutionState executionState = StateComp_Injected->GetCurrentExecutionState();
 
 		if (executionState == EExecutionState::Dead) return false;
 		if (executionState == EExecutionState::Reaction) return false;
@@ -60,16 +74,16 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 {
 	if (!CanAcceptMoveInput()) return;
 	if (InAxis2D.IsNearlyZero()) return;
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	const FRotator controlRot = OwnerCharacter_Cached->GetControlRotation();
+	const FRotator controlRot = OwnerCharacter_Injected->GetControlRotation();
 	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
 
 	const FVector forwardDirection = FRotationMatrix(yawRot).GetUnitAxis(EAxis::X);
 	const FVector rightDirection = FRotationMatrix(yawRot).GetUnitAxis(EAxis::Y);
 
-	OwnerCharacter_Cached->AddMovementInput(forwardDirection, InAxis2D.Y);
-	OwnerCharacter_Cached->AddMovementInput(rightDirection, InAxis2D.X);
+	OwnerCharacter_Injected->AddMovementInput(forwardDirection, InAxis2D.Y);
+	OwnerCharacter_Injected->AddMovementInput(rightDirection, InAxis2D.X);
 }
 
 void UCMovementComponent::OnWalk()
@@ -89,16 +103,16 @@ void UCMovementComponent::OnSprint()
 
 void UCMovementComponent::OnJump()
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	OwnerCharacter_Cached->Jump();
+	OwnerCharacter_Injected->Jump();
 }
 
 void UCMovementComponent::OnStopJump()
 {
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	OwnerCharacter_Cached->StopJumping();
+	OwnerCharacter_Injected->StopJumping();
 }
 
 void UCMovementComponent::ApplyMovementOverride(EMovementGait InGait, EMovementRotationMode InRotationMode)
@@ -137,7 +151,7 @@ void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
 
 void UCMovementComponent::ApplyMovementGait(EMovementGait InNewMovementGait)
 {
-	if (!IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(CharacterMovementComp_Injected)) return;
 	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max) return;
 
 	const float* speed = GaitSpeedMap.Find(InNewMovementGait);
@@ -149,31 +163,31 @@ void UCMovementComponent::ApplyMovementGait(EMovementGait InNewMovementGait)
 	}
 
 	CurrentMovementGait = InNewMovementGait;
-	CharacterMovementComp_Cached->MaxWalkSpeed = *speed;
+	CharacterMovementComp_Injected->MaxWalkSpeed = *speed;
 }
 
 void UCMovementComponent::ApplyRotationMode(EMovementRotationMode InRotationMode)
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
 
 	switch (InRotationMode)
 	{
 	case EMovementRotationMode::OrientToMovement:
-		CharacterMovementComp_Cached->bOrientRotationToMovement = true;
-		CharacterMovementComp_Cached->bUseControllerDesiredRotation = false;
-		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
+		CharacterMovementComp_Injected->bOrientRotationToMovement = true;
+		CharacterMovementComp_Injected->bUseControllerDesiredRotation = false;
+		OwnerCharacter_Injected->bUseControllerRotationYaw = false;
 		break;
 
 	case EMovementRotationMode::ControllerDesired:
-		CharacterMovementComp_Cached->bOrientRotationToMovement = false;
-		CharacterMovementComp_Cached->bUseControllerDesiredRotation = true;
-		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
+		CharacterMovementComp_Injected->bOrientRotationToMovement = false;
+		CharacterMovementComp_Injected->bUseControllerDesiredRotation = true;
+		OwnerCharacter_Injected->bUseControllerRotationYaw = false;
 		break;
 
 	case EMovementRotationMode::FixedFacing:
-		CharacterMovementComp_Cached->bOrientRotationToMovement = false;
-		CharacterMovementComp_Cached->bUseControllerDesiredRotation = false;
-		OwnerCharacter_Cached->bUseControllerRotationYaw = false;
+		CharacterMovementComp_Injected->bOrientRotationToMovement = false;
+		CharacterMovementComp_Injected->bUseControllerDesiredRotation = false;
+		OwnerCharacter_Injected->bUseControllerRotationYaw = false;
 		break;
 
 	default:
@@ -183,14 +197,14 @@ void UCMovementComponent::ApplyRotationMode(EMovementRotationMode InRotationMode
 
 void UCMovementComponent::CalculateSpeed()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
 
-	CurrentSpeed = OwnerCharacter_Cached->GetVelocity().Size2D();
+	CurrentSpeed = OwnerCharacter_Injected->GetVelocity().Size2D();
 }
 
 void UCMovementComponent::CalculateDirection()
 {
-	if (!IsValid(OwnerCharacter_Cached) || !IsValid(CharacterMovementComp_Cached)) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
 
 	if (CurrentSpeed < KINDA_SMALL_NUMBER)
 	{
@@ -199,8 +213,8 @@ void UCMovementComponent::CalculateDirection()
 	}
 	else
 	{
-		const FVector velocityNormal = OwnerCharacter_Cached->GetVelocity().GetSafeNormal2D();
-		const FVector forwardNormal = OwnerCharacter_Cached->GetActorForwardVector().GetSafeNormal2D();
+		const FVector velocityNormal = OwnerCharacter_Injected->GetVelocity().GetSafeNormal2D();
+		const FVector forwardNormal = OwnerCharacter_Injected->GetActorForwardVector().GetSafeNormal2D();
 
 		float angleRad = FMath::Acos(FVector::DotProduct(forwardNormal, velocityNormal));
 		float angleDeg = FMath::RadiansToDegrees(angleRad);

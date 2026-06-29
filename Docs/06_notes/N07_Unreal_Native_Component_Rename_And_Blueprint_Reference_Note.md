@@ -399,6 +399,45 @@ void ACEnemy::ResolveComponentReferences()
 - resave 후 recovery code를 유지할지 제거할지
 ```
 
+### Recovery code 유지 / 제거 기준
+
+`ResolveComponentReferences()` 같은 recovery 코드는 기본 dependency wiring 정책이 아니다. native component rename 직후 Blueprint serialized reference와 C++ member pointer가 어긋난 경우를 복구하기 위한 일시적 migration hook이다.
+
+유지할 수 있는 경우:
+
+```text
+rename 직후 Blueprint asset load / compile / save가 끝나지 않음
+PIE에서 C++ UPROPERTY member pointer invalid가 재현됨
+Actor component list에는 renamed component instance가 존재함
+대표 flow 검증 전이라 regression safety net이 필요함
+```
+
+제거할 수 있는 경우:
+
+```text
+관련 Blueprint asset과 map을 load / compile / save함
+Details panel에서 inherited component가 정상 표시됨
+C++ member pointer runtime 유효성을 확인함
+대표 gameplay flow가 정상 동작함
+rename migration 목적 외에 상시 wiring 책임으로 쓰이지 않음
+```
+
+향후 비슷한 문제가 생기면 `ResolveComponentReferences`처럼 일반 wiring처럼 보이는 이름보다 다음처럼 migration 의도가 드러나는 이름을 우선한다.
+
+```text
+RecoverRenamedComponentReferences
+RecoverNativeComponentRenameReferences
+```
+
+이 hook은 다음 원칙을 따른다.
+
+```text
+rename 대상 component만 좁게 복구한다.
+새 component를 생성하지 않고 Actor에 이미 붙은 instance만 찾는다.
+FindComponentByClass를 상시 dependency injection 방식으로 일반화하지 않는다.
+asset migration과 runtime 검증이 끝난 뒤 제거 여부를 다시 판단한다.
+```
+
 ---
 
 ## Native Component Rename 체크리스트
@@ -426,6 +465,7 @@ void ACEnemy::ResolveComponentReferences()
 - Blueprint에 component가 표시되어도 C++ member pointer 유효성을 별도로 확인한다.
 - rename 대상 component는 BeginPlay에서 기존 component instance를 FindComponentByClass로 재연결할 수 있다.
 - 이 복구는 새 component를 생성하는 것이 아니라, 이미 Actor에 붙은 component instance를 C++ 멤버 포인터에 다시 연결하는 것이다.
+- rename recovery hook은 migration 안정화 이후 제거할 수 있으며, 기본 component reference 정책으로 일반화하지 않는다.
 - 모든 component cache 정책 변경은 별도 브랜치로 분리한다.
 ```
 

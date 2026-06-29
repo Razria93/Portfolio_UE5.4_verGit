@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
 #include "Type/CReactionOrchestrationStructure.h"
@@ -42,31 +43,38 @@ private:
 	class UCReaction* ActiveReactionExecutor = nullptr;
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached = nullptr;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCMovementComponent* MovementComp_Cached = nullptr;
+	class UCMovementComponent* MovementComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCStateComponent* StateComp_Cached = nullptr;
+	class UCStateComponent* StateComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached = nullptr;
+	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCDefenseComponent* DefenseComp_Cached = nullptr;
+	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCActionComponent* ActionComp_Cached = nullptr;
+	class UCActionComponent* ActionComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCObservableOverlayComponent* ObservableOverlayComp_Cached = nullptr;
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
 
 public:
 	/* === Delegate === */
 	FReactionTypeChanged OnReactionTypeChanged;
+
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredComponentReferences() const;
 
 protected:
 	// Lifecycle
@@ -115,6 +123,7 @@ private:
 	void BuildReactionDataMap(bool bRebuildAll);
 	void BuildReactionExecutorMap(bool bRebuildAll);
 
+	FCharacterComponentReferences BuildReactionExecutorReferences();
 	UCReaction* AddReactionExecutor(const TSubclassOf<class UCReaction> InSubClass);
 	UCReaction* FindReactionExecutor(const UClass* InClass);
 

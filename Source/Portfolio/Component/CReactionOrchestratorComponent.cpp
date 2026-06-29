@@ -16,20 +16,37 @@ UCReactionOrchestratorComponent::UCReactionOrchestratorComponent()
 {
 }
 
-// Lifecycle
-
-void UCReactionOrchestratorComponent::BeginPlay()
+void UCReactionOrchestratorComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	StateComp_Injected = InReferences.StateComponent;
+	HealthComp_Injected = InReferences.HealthComponent;
+	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
+	ActionComp_Injected = InReferences.ActionComponent;
+	ReactionComp_Injected = InReferences.ReactionComponent;
 
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+	ValidateRequiredComponentReferences();
+}
 
-	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
-	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
-	ActionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCActionComponent>();
-	ReactionComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCReactionComponent>();
-	ObservableOverlayComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCObservableOverlayComponent>();
+bool UCReactionOrchestratorComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ StateComp_Injected, TEXT("UCStateComponent") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+		{ ActionComp_Injected, TEXT("UCActionComponent") },
+		{ ReactionComp_Injected, TEXT("UCReactionComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 // Request Entry
@@ -38,7 +55,7 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 {
 	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
 
-	if (!IsValid(ReactionComp_Cached))
+	if (!IsValid(ReactionComp_Injected))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::InvalidComponent);
 
 	if (!CanAcceptReactionRequest(rejectReason))
@@ -56,7 +73,7 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestCombatResultReact
 {
 	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
 
-	if (!IsValid(ReactionComp_Cached))
+	if (!IsValid(ReactionComp_Injected))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::InvalidComponent);
 
 	if (!CanAcceptReactionRequest(rejectReason))
@@ -76,13 +93,13 @@ bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestR
 {
 	OutRejectReason = EReactionRequestRejectReason::None;
 
-	if (!IsValid(OwnerCharacter_Cached))
+	if (!IsValid(OwnerCharacter_Injected))
 	{
 		OutRejectReason = EReactionRequestRejectReason::InvalidOwner;
 		return false;
 	}
 
-	if (!IsValid(ReactionComp_Cached) || !IsValid(StateComp_Cached) || !IsValid(HealthComp_Cached))
+	if (!IsValid(ReactionComp_Injected) || !IsValid(StateComp_Injected) || !IsValid(HealthComp_Injected))
 	{
 		OutRejectReason = EReactionRequestRejectReason::InvalidComponent;
 		return false;
@@ -245,19 +262,19 @@ bool UCReactionOrchestratorComponent::ResolveReactionData(const FReactionDataKey
 {
 	OutIncomingData = FReactionData();
 
-	if (!IsValid(ReactionComp_Cached)) return false;
+	if (!IsValid(ReactionComp_Injected)) return false;
 	if (!InIncomingDataKey.IsValidMinimal()) return false;
 
-	return ReactionComp_Cached->ResolveReactionData(InIncomingDataKey, OutIncomingData);
+	return ReactionComp_Injected->ResolveReactionData(InIncomingDataKey, OutIncomingData);
 }
 
 UCReaction* UCReactionOrchestratorComponent::ResolveReactionExecutor(const FReactionData& InIncomingData) const
 {
-	if (!IsValid(ReactionComp_Cached)) return nullptr;
+	if (!IsValid(ReactionComp_Injected)) return nullptr;
 	if (!InIncomingData.IsValidMinimal()) return nullptr;
 
 	// Resolve Executor
-	return ReactionComp_Cached->ResolveReactionExecutor(InIncomingData);
+	return ReactionComp_Injected->ResolveReactionExecutor(InIncomingData);
 }
 
 // Decision Query Build
@@ -277,12 +294,12 @@ FExecutionSnapshot UCReactionOrchestratorComponent::BuildSnapshot() const
 {
 	FExecutionSnapshot snapshot;
 
-	snapshot.ExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Dead;
-	snapshot.bIsDead = !IsValid(HealthComp_Cached) || !HealthComp_Cached->IsAlive();
+	snapshot.ExecutionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Dead;
+	snapshot.bIsDead = !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive();
 
-	if (IsValid(ObservableOverlayComp_Cached))
+	if (IsValid(ObservableOverlayComp_Injected))
 	{
-		ObservableOverlayComp_Cached->WriteOverlaySnapshot(snapshot.ObservableOverlay);
+		ObservableOverlayComp_Injected->WriteOverlaySnapshot(snapshot.ObservableOverlay);
 	}
 
 	return snapshot;
@@ -305,8 +322,8 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 {
 	FExecutionParticipant participant;
 
-	const bool bHasActiveAction = IsValid(ActionComp_Cached) && ActionComp_Cached->IsActive();
-	const bool bHasActiveReaction = IsValid(ReactionComp_Cached) && ReactionComp_Cached->IsActive();
+	const bool bHasActiveAction = IsValid(ActionComp_Injected) && ActionComp_Injected->IsActive();
+	const bool bHasActiveReaction = IsValid(ReactionComp_Injected) && ReactionComp_Injected->IsActive();
 
 	if (bHasActiveAction && bHasActiveReaction)
 	{
@@ -319,13 +336,13 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 	{
 		FReactionData activeData;
 
-		if (ReactionComp_Cached->GetActiveReactionData(activeData))
+		if (ReactionComp_Injected->GetActiveReactionData(activeData))
 		{
 			FReactionExecutionContext context;
 
 			context.ReactionDataKey = activeData.ReactionDataKey;
 			context.ReactionData = activeData;
-			context.ReactionExecutor = ReactionComp_Cached->GetActiveReactionExecutor();
+			context.ReactionExecutor = ReactionComp_Injected->GetActiveReactionExecutor();
 
 			if (context.IsValidMinimal())
 			{
@@ -343,13 +360,13 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 	{
 		FActionData activeData;
 
-		if (ActionComp_Cached->GetActiveActionData(activeData))
+		if (ActionComp_Injected->GetActiveActionData(activeData))
 		{
 			FActionExecutionContext context;
 
 			context.ActionDataKey = activeData.ActionDataKey;
 			context.ActionData = activeData;
-			context.ActionExecutor = ActionComp_Cached->GetActiveActionExecutor();
+			context.ActionExecutor = ActionComp_Injected->GetActiveActionExecutor();
 
 			if (context.IsValidMinimal())
 			{
@@ -666,10 +683,10 @@ FReactionRequestResult UCReactionOrchestratorComponent::DispatchReactionDecision
 	if (!InResult.IsAcceptedDecision())
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, InResult.RejectReason);
 
-	if (!IsValid(ReactionComp_Cached))
+	if (!IsValid(ReactionComp_Injected))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::InvalidComponent);
 
-	if (!ReactionComp_Cached->ApplyReactionDecision(InResult))
+	if (!ReactionComp_Injected->ApplyReactionDecision(InResult))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::ReactionExecutionFailed);
 
 	const EReactionRequestResultType resultType = ConvertDecisionToResultType(InResult);

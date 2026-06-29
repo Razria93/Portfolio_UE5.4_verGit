@@ -20,12 +20,28 @@ UCCombatSignalSourceComponent::UCCombatSignalSourceComponent()
 {
 }
 
-void UCCombatSignalSourceComponent::BeginPlay()
+void UCCombatSignalSourceComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	Super::BeginPlay();
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 
-	OwnerCharacter_Cached = Cast<ACharacter>(GetOwner());
-	check(OwnerCharacter_Cached);
+	ValidateRequiredComponentReferences();
+}
+
+bool UCCombatSignalSourceComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
 }
 
 void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
@@ -76,10 +92,10 @@ bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 	AActor* targetActor = ResolveCueTargetActor();
 	if (!IsValid(targetActor)) return false;
 
-	const FVector cueLocation = IsValid(OwnerCharacter_Cached) ? OwnerCharacter_Cached->GetActorLocation() : FVector::ZeroVector;
-	const FVector cueDirection = IsValid(OwnerCharacter_Cached) ? (targetActor->GetActorLocation() - OwnerCharacter_Cached->GetActorLocation()).GetSafeNormal() : FVector::ZeroVector;
+	const FVector cueLocation = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetActorLocation() : FVector::ZeroVector;
+	const FVector cueDirection = IsValid(OwnerCharacter_Injected) ? (targetActor->GetActorLocation() - OwnerCharacter_Injected->GetActorLocation()).GetSafeNormal() : FVector::ZeroVector;
 
-	return RequestCombatSignalCue(targetActor, InCueTag, cueLocation, cueDirection, OwnerCharacter_Cached);
+	return RequestCombatSignalCue(targetActor, InCueTag, cueLocation, cueDirection, OwnerCharacter_Injected);
 }
 
 void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext& InHitContext)
@@ -246,7 +262,7 @@ bool UCCombatSignalSourceComponent::CanSendCombatSignal(FCombatSignalSourceConte
 {
 	const FOverlapContext& overlapContext = InOutCombatSignalSourceContext.HitContext.OverlapContext;
 
-	AActor* myOwner = GetOwner();
+	AActor* myOwner = OwnerCharacter_Injected;
 	if (!IsValid(myOwner) || myOwner != overlapContext.OwnerActor)
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
@@ -489,9 +505,9 @@ bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FCombatSignalSourceCo
 
 AActor* UCCombatSignalSourceComponent::ResolveCueTargetActor() const
 {
-	if (!IsValid(OwnerCharacter_Cached)) return nullptr;
+	if (!IsValid(OwnerCharacter_Injected)) return nullptr;
 
-	const AAIController* aiController = Cast<AAIController>(OwnerCharacter_Cached->GetController());
+	const AAIController* aiController = Cast<AAIController>(OwnerCharacter_Injected->GetController());
 	if (!IsValid(aiController)) return nullptr;
 
 	const UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent();
@@ -504,7 +520,7 @@ FCombatSignal UCCombatSignalSourceComponent::BuildCueSignal(AActor* InTargetActo
 {
 	FCombatSignal combatSignal;
 
-	AActor* ownerActor = GetOwner();
+	AActor* ownerActor = OwnerCharacter_Injected;
 	AActor* signalCauser = IsValid(InSignalCauser) ? InSignalCauser : ownerActor;
 
 	combatSignal.Header.SignalType = ECombatSignalType::TimingCue;
