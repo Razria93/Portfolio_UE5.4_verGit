@@ -6,9 +6,8 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
-#include "Component/CDefenseComponent.h"
-#include "Component/CActionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
+#include "Component/CActionComponent.h"
 #include "Reaction/CReaction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -23,9 +22,8 @@ void UCReactionComponent::InitializeReferences(const FCharacterComponentReferenc
 	MovementComp_Injected = InReferences.MovementComponent;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
-	DefenseComp_Injected = InReferences.DefenseComponent;
-	ActionComp_Injected = InReferences.ActionComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
+	ActionComp_Injected = InReferences.ActionComponent;
 
 	ValidateRequiredComponentReferences();
 }
@@ -46,8 +44,8 @@ bool UCReactionComponent::ValidateRequiredComponentReferences() const
 		{ MovementComp_Injected, TEXT("UCMovementComponent") },
 		{ StateComp_Injected, TEXT("UCStateComponent") },
 		{ HealthComp_Injected, TEXT("UCHealthComponent") },
-		{ ActionComp_Injected, TEXT("UCActionComponent") },
 		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
+		{ ActionComp_Injected, TEXT("UCActionComponent") },
 	};
 
 	for (const FRequiredComponentReference& reference : requiredReferences)

@@ -6,10 +6,10 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
-#include "Component/CActionOrchestratorComponent.h"
-#include "Component/CCombatSignalSourceComponent.h"
-#include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
+#include "Component/CCombatSignalSourceComponent.h"
+#include "Component/CActionOrchestratorComponent.h"
+#include "Component/CReactionComponent.h"
 #include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -25,10 +25,10 @@ void UCActionComponent::InitializeReferences(const FCharacterComponentReferences
 	MovementComp_Injected = InReferences.MovementComponent;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
+	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
 	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
-	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 
 	ValidateRequiredComponentReferences();
 }
@@ -49,10 +49,10 @@ bool UCActionComponent::ValidateRequiredComponentReferences() const
 		{ MovementComp_Injected, TEXT("UCMovementComponent") },
 		{ StateComp_Injected, TEXT("UCStateComponent") },
 		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
 		{ CombatSignalSourceComp_Injected, TEXT("UCCombatSignalSourceComponent") },
 		{ ActionOrchestratorComp_Injected, TEXT("UCActionOrchestratorComponent") },
 		{ ReactionComp_Injected, TEXT("UCReactionComponent") },
-		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
 	};
 
 	for (const FRequiredComponentReference& reference : requiredReferences)

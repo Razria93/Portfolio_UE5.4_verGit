@@ -61,16 +61,16 @@ private:
 	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCActionOrchestratorComponent* ActionOrchestratorComp_Injected = nullptr;
+	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
 	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCReactionComponent* ReactionComp_Injected = nullptr;
+	class UCActionOrchestratorComponent* ActionOrchestratorComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
+	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
 public:
 	/* === Delegate === */
