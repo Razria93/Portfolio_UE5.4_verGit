@@ -39,6 +39,9 @@ private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Injected = nullptr;
+
 public:
 	/* === [Out] Custom Delgate Events === */
 	FWeaponTypeChanged OnWeaponTypeChanged;
@@ -81,5 +84,6 @@ private:
 	FWeaponContext BuildWeaponContext() const;
 
 private:
+	FCharacterComponentReferences BuildWeaponActorReferences() const;
 	bool CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass);
 };

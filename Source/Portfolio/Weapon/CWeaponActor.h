@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interface/HitContextProvider.h"
+#include "Type/CCharacterComponentReferenceStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CWeaponActor.generated.h"
 
@@ -66,12 +67,12 @@ private:
 
 
 private:
-	/* === Cached Objects === */
+	/* === Injected Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Cached;
+	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Injected = nullptr;
 
 private:
 	UPROPERTY(Transient)
@@ -87,11 +88,20 @@ public:
 	FWeaponActorBeginOverlap OnWeaponActorBeginOverlap;
 	FWeaponActorEndOverlap OnWeaponActorEndOverlap;
 
-protected:
-	virtual void BeginPlay() override;
+public:
+	// Component Reference
+	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	bool ValidateRequiredReferences() const;
 
 public:
-	void InitializeWeaponActor(EWeaponType InWeaponType);
+	// Initial State
+	void ApplyInitialWeaponState(EWeaponType InWeaponType);
+
+protected:
+	// Lifecycle
+	virtual void BeginPlay() override;
 
 public:
 	/* === IHitContextProducer (Getter) === */
@@ -138,6 +148,10 @@ public:
 
 	UFUNCTION()
 	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+private:
+	void ConfigureCollisionComponents();
+	void ConfigureTrailComponentState();
 
 private:
 	FOverlapContext BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const;

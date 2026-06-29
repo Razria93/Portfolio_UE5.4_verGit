@@ -3,6 +3,7 @@
 
 #include "GameFramework/Character.h"
 
+#include "Component/CCombatSignalSourceComponent.h"
 #include "Weapon/CWeaponActor.h"
 
 #include "Type/CWeaponStructure.h"
@@ -14,6 +15,8 @@ UCWeaponComponent::UCWeaponComponent()
 void UCWeaponComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
+
 	ValidateRequiredComponentReferences();
 
 	// CWeaponActor
@@ -28,6 +31,7 @@ bool UCWeaponComponent::ValidateRequiredComponentReferences() const
 	const FRequiredReference requiredReferences[] =
 	{
 		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ CombatSignalSourceComp_Injected, TEXT("UCCombatSignalSourceComponent") },
 	};
 
 	for (const FRequiredReference& reference : requiredReferences)
@@ -126,6 +130,16 @@ FWeaponContext UCWeaponComponent::BuildWeaponContext() const
 	return weaponContext;
 }
 
+FCharacterComponentReferences UCWeaponComponent::BuildWeaponActorReferences() const
+{
+	FCharacterComponentReferences references;
+
+	references.OwnerCharacter = OwnerCharacter_Injected;
+	references.CombatSignalSourceComponent = CombatSignalSourceComp_Injected;
+
+	return references;
+}
+
 bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass)
 {
 	if (!IsValid(InOwnerCharacter)) return false;
@@ -149,7 +163,9 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	if (!ensureMsgf(IsValid(weaponActor), TEXT("UCWeaponComponent: WeaponActor was not created")))
 		return false;
 
-	weaponActor->InitializeWeaponActor(InWeaponType);
+	const FCharacterComponentReferences references = BuildWeaponActorReferences();
+	weaponActor->InitializeReferences(references);
+	weaponActor->ApplyInitialWeaponState(InWeaponType);
 
 	WeaponActor = weaponActor;
 

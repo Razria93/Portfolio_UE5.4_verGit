@@ -128,8 +128,9 @@ protected:
 
 private:
 	// Component Reference
-	FCharacterComponentReferences BuildComponentReferences();
-	void InjectComponentReferences(const FCharacterComponentReferences& InReferences);
+	void RecoverReferences();
+	void BuildReferences(FCharacterComponentReferences& OutReferences);
+	void InjectReferences(const FCharacterComponentReferences& InReferences);
 
 public:
 	void Tick(float DeltaTime) override;
