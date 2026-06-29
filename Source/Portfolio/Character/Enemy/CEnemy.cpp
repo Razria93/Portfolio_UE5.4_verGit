@@ -26,6 +26,17 @@
 #include "Type/CWeaponStructure.h"
 #include "AI/Blackboard/CAIKey.h"
 
+namespace
+{
+	template <typename TComponent>
+	void InitializeEnemyReferenceIfValid(TComponent* InComponent, const FCharacterComponentReferences& InReferences)
+	{
+		if (!IsValid(InComponent)) return;
+
+		InComponent->InitializeReferences(InReferences);
+	}
+}
+
 ACEnemy::ACEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -181,75 +192,24 @@ FCharacterComponentReferences ACEnemy::BuildComponentReferences()
 
 void ACEnemy::InjectComponentReferences(const FCharacterComponentReferences& InReferences)
 {
-	if (IsValid(MovementComponent))
-	{
-		MovementComponent->InitializeReferences(InReferences);
-	}
+	InitializeEnemyReferenceIfValid(MovementComponent, InReferences);
+	InitializeEnemyReferenceIfValid(WeaponComponent, InReferences);
+	InitializeEnemyReferenceIfValid(StateComponent, InReferences);
+	InitializeEnemyReferenceIfValid(HealthComponent, InReferences);
+	InitializeEnemyReferenceIfValid(ObservableOverlayComponent, InReferences);
 
-	if (IsValid(WeaponComponent))
-	{
-		WeaponComponent->InitializeReferences(InReferences);
-	}
+	InitializeEnemyReferenceIfValid(CombatSignalSourceComponent, InReferences);
+	InitializeEnemyReferenceIfValid(CombatSignalTargetComponent, InReferences);
 
-	if (IsValid(StateComponent))
-	{
-		StateComponent->InitializeReferences(InReferences);
-	}
+	InitializeEnemyReferenceIfValid(ActionOrchestratorComponent, InReferences);
+	InitializeEnemyReferenceIfValid(ReactionOrchestratorComponent, InReferences);
 
-	if (IsValid(HealthComponent))
-	{
-		HealthComponent->InitializeReferences(InReferences);
-	}
+	InitializeEnemyReferenceIfValid(ActionComponent, InReferences);
+	InitializeEnemyReferenceIfValid(ReactionComponent, InReferences);
 
-	if (IsValid(ObservableOverlayComponent))
-	{
-		ObservableOverlayComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(CombatSignalSourceComponent))
-	{
-		CombatSignalSourceComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(CombatSignalTargetComponent))
-	{
-		CombatSignalTargetComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(ActionOrchestratorComponent))
-	{
-		ActionOrchestratorComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(ReactionOrchestratorComponent))
-	{
-		ReactionOrchestratorComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(ActionComponent))
-	{
-		ActionComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(ReactionComponent))
-	{
-		ReactionComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(HitFeedbackComponent))
-	{
-		HitFeedbackComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(ActionFeedbackComponent))
-	{
-		ActionFeedbackComponent->InitializeReferences(InReferences);
-	}
-
-	if (IsValid(ReactionFeedbackComponent))
-	{
-		ReactionFeedbackComponent->InitializeReferences(InReferences);
-	}
+	InitializeEnemyReferenceIfValid(HitFeedbackComponent, InReferences);
+	InitializeEnemyReferenceIfValid(ActionFeedbackComponent, InReferences);
+	InitializeEnemyReferenceIfValid(ReactionFeedbackComponent, InReferences);
 }
 
 void ACEnemy::Tick(float DeltaTime)
