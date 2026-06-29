@@ -4,12 +4,14 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CMovementComponent.h"
+#include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CActionFeedbackComponent.h"
 #include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
@@ -23,12 +25,14 @@ void UCActionComponent::InitializeReferences(const FCharacterComponentReferences
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 	MovementComp_Injected = InReferences.MovementComponent;
+	WeaponComp_Injected = InReferences.WeaponComponent;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
 	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
+	ActionFeedbackComp_Injected = InReferences.ActionFeedbackComponent;
 
 	ValidateRequiredComponentReferences();
 }
@@ -47,12 +51,14 @@ bool UCActionComponent::ValidateRequiredComponentReferences() const
 	{
 		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
 		{ MovementComp_Injected, TEXT("UCMovementComponent") },
+		{ WeaponComp_Injected, TEXT("UCWeaponComponent") },
 		{ StateComp_Injected, TEXT("UCStateComponent") },
 		{ HealthComp_Injected, TEXT("UCHealthComponent") },
 		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
 		{ CombatSignalSourceComp_Injected, TEXT("UCCombatSignalSourceComponent") },
 		{ ActionOrchestratorComp_Injected, TEXT("UCActionOrchestratorComponent") },
 		{ ReactionComp_Injected, TEXT("UCReactionComponent") },
+		{ ActionFeedbackComp_Injected, TEXT("UCActionFeedbackComponent") },
 	};
 
 	for (const FRequiredComponentReference& reference : requiredReferences)
@@ -434,6 +440,18 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 	}
 }
 
+FCharacterComponentReferences UCActionComponent::BuildActionExecutorReferences()
+{
+	FCharacterComponentReferences references;
+
+	references.OwnerCharacter = OwnerCharacter_Injected;
+	references.WeaponComponent = WeaponComp_Injected;
+	references.ActionComponent = this;
+	references.ActionFeedbackComponent = ActionFeedbackComp_Injected;
+
+	return references;
+}
+
 UCAction* UCActionComponent::AddActionExecutor(const TSubclassOf<class UCAction> InSubClass)
 {
 	UClass* executorKey = InSubClass.Get();
@@ -442,7 +460,8 @@ UCAction* UCActionComponent::AddActionExecutor(const TSubclassOf<class UCAction>
 	UCAction* add = NewObject<UCAction>(this, InSubClass);
 	if (!IsValid(add)) return nullptr;
 
-	add->InitializeAction(OwnerCharacter_Injected, this);
+	const FCharacterComponentReferences references = BuildActionExecutorReferences();
+	add->InitializeReferences(references);
 	ActionExecutorMap.Add(executorKey, add);
 
 	return add;

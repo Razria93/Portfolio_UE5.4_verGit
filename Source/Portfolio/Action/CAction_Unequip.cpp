@@ -15,7 +15,7 @@ FExecutionDecisionResult UCAction_Unequip::ResolveExecutionDecision(const FExecu
 		return result;
 	}
 
-	if (!IsValid(WeaponComp_Cached))
+	if (!IsValid(WeaponComp_Injected))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -33,7 +33,7 @@ FExecutionDecisionResult UCAction_Unequip::ResolveExecutionDecision(const FExecu
 		return result;
 	}
 
-	if (WeaponComp_Cached->CheckCurrentWeaponType(EWeaponType::Unarmed))
+	if (WeaponComp_Injected->CheckCurrentWeaponType(EWeaponType::Unarmed))
 	{
 		result.Decision = EExecutionDecision::Reject;
 		return result;
@@ -59,8 +59,8 @@ void UCAction_Unequip::HandleSpecificNotifyCommand(EActionNotifyCommand InComman
 
 void UCAction_Unequip::DetachWeapon()
 {
-	if (!IsValid(WeaponComp_Cached)) return;
+	if (!IsValid(WeaponComp_Injected)) return;
 
-	WeaponComp_Cached->AttachWeaponToHolster();
-	WeaponComp_Cached->CommitUnequipWeapon();
+	WeaponComp_Injected->AttachWeaponToHolster();
+	WeaponComp_Injected->CommitUnequipWeapon();
 }

@@ -55,6 +55,9 @@ private:
 	class UCMovementComponent* MovementComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCWeaponComponent* WeaponComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCStateComponent* StateComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -71,6 +74,9 @@ private:
 
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCActionFeedbackComponent* ActionFeedbackComp_Injected = nullptr;
 
 public:
 	/* === Delegate === */
@@ -144,6 +150,8 @@ private:
 	// Data Build (temporary: move to DataAsset)
 	void BuildActionDataMap(bool bRebuildAll);
 	void BuildActionExecutorMap(bool bRebuildAll);
+
+	FCharacterComponentReferences BuildActionExecutorReferences();
 
 	UCAction* AddActionExecutor(const TSubclassOf<class UCAction> InSubClass);
 	UCAction* FindActionExecutor(const UClass* InClass);
