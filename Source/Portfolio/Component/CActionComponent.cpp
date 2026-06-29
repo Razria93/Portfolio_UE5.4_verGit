@@ -41,13 +41,7 @@ bool UCActionComponent::ValidateRequiredComponentReferences() const
 {
 	bool bValid = true;
 
-	struct FRequiredComponentReference
-	{
-		const UObject* Object = nullptr;
-		const TCHAR* Label = TEXT("");
-	};
-
-	const FRequiredComponentReference requiredReferences[] =
+	const FRequiredReference requiredReferences[] =
 	{
 		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
 		{ MovementComp_Injected, TEXT("UCMovementComponent") },
@@ -61,7 +55,7 @@ bool UCActionComponent::ValidateRequiredComponentReferences() const
 		{ ActionFeedbackComp_Injected, TEXT("UCActionFeedbackComponent") },
 	};
 
-	for (const FRequiredComponentReference& reference : requiredReferences)
+	for (const FRequiredReference& reference : requiredReferences)
 	{
 		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
 	}

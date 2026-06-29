@@ -19,20 +19,14 @@ bool UCReaction::ValidateRequiredReferences() const
 {
 	bool bValid = true;
 
-	struct FRequiredReactionReference
-	{
-		const UObject* Object = nullptr;
-		const TCHAR* Label = TEXT("");
-	};
-
-	const FRequiredReactionReference requiredReferences[] =
+	const FRequiredReference requiredReferences[] =
 	{
 		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
 		{ ReactionComp_Injected, TEXT("UCReactionComponent") },
 		{ ReactionFeedbackComp_Injected, TEXT("UCReactionFeedbackComponent") },
 	};
 
-	for (const FRequiredReactionReference& reference : requiredReferences)
+	for (const FRequiredReference& reference : requiredReferences)
 	{
 		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
 	}

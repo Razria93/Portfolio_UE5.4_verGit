@@ -2,6 +2,12 @@
 
 #include "CoreMinimal.h"
 
+struct FRequiredReference
+{
+	const UObject* Object = nullptr;
+	const TCHAR* Label = TEXT("");
+};
+
 class FReferenceValidation
 {
 public:

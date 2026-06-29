@@ -22,18 +22,12 @@ bool UCPlayerFeedbackComponent::ValidateRequiredComponentReferences() const
 {
 	bool bValid = true;
 
-	struct FRequiredComponentReference
-	{
-		const UObject* Object = nullptr;
-		const TCHAR* Label = TEXT("");
-	};
-
-	const FRequiredComponentReference requiredReferences[] =
+	const FRequiredReference requiredReferences[] =
 	{
 		{ OwnerPlayerController_Injected, TEXT("APlayerController Owner") },
 	};
 
-	for (const FRequiredComponentReference& reference : requiredReferences)
+	for (const FRequiredReference& reference : requiredReferences)
 	{
 		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerPlayerController_Injected, this);
 	}
