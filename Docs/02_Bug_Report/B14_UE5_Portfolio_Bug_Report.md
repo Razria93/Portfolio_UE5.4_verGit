@@ -16,7 +16,7 @@
 
 ## 브랜치
 
-- `refactor/component-reference-validation-policy`
+- `refactor/character-component-reference-di`
 
 ---
 
@@ -42,7 +42,7 @@ PostInitializeComponents
 ## 영향 범위
 
 - `ACPlayer` / `ACEnemy` component reference 초기화
-- `UCActionComponent` / `UCWeaponComponent` / `ACWeaponActor` reference injection
+- `UCActionComponent` / `UCWeaponComponent` / `ACWeaponActor` 참조 주입
 - `ACEnemy::TakeDamage()`의 `CombatSignalTargetComponent` 접근 경로
 - Blueprint 기반 Character asset의 stale native component reference 방어
 
@@ -117,8 +117,8 @@ void ACEnemy::PostInitializeComponents()
 ```
 
 - `RecoverReferences()`에서 invalid field만 actual component list 기준으로 복구
-- `BuildReferences()`에서 현재 field 기준으로 reference bundle 구성
-- `InjectReferences()`에서 각 component에 reference bundle 주입
+- `BuildReferences()`에서 현재 field 기준으로 참조 묶음 구성
+- `InjectReferences()`에서 각 component에 참조 묶음 주입
 - `UCWeaponComponent`가 weapon actor 생성 후 필요한 reference를 명시적으로 전달
 - `ACWeaponActor`가 `BeginPlay()`에서 owner/component를 직접 lookup하지 않고 injected reference를 사용
 

@@ -2,233 +2,228 @@
 
 ## 목적
 
-이 노트는 `Source/Portfolio`의 component reference 초기화와 검증 기준을 정리한다.
+Character가 소유한 component reference를 어떤 기준으로 주입하고 검증할지 정리한다.
 
-목표는 모든 `check()`를 제거하는 것이 아니다. 컴포넌트 참조가 실패했을 때 어떤 경로에서 crash해야 하고, 어떤 경로에서 원인을 남기고 safe return해야 하는지 기준을 분리하는 것이다.
-
----
-
-## 1. 기본 원칙
-
-컴포넌트 참조는 다음 네 가지로 분류한다.
-
-```text
-필수 owner
-필수 component dependency
-선택 component dependency
-일시 lookup dependency
-```
-
-필수 참조는 초기화 시점에 명시적으로 검증한다. 선택 참조는 기능 사용 시점에 `IsValid`로 확인하고, 없으면 해당 기능만 skip한다.
+이 문서는 프로젝트 전체의 모든 runtime lookup을 제거하는 문서가 아니다. 이번 기준은 `ACPlayer` / `ACEnemy`가 소유한 native component reference를 명시적으로 구성하고, Character component / executor / weapon actor에 안정적으로 전달하는 데 집중한다.
 
 ---
 
-## 2. check 사용 기준
-
-`check()`는 "절대 깨지면 안 되는 C++ 불변식"에만 사용한다.
-
-UE build configuration은 대략 다음처럼 구분한다.
+## 핵심 원칙
 
 ```text
-Debug / DebugGame
--> 디버깅 정보가 많고 상대적으로 느림
+Character-owned component reference
+-> owner-side에서 구성한다.
 
-Development
--> 개발 중 일반적으로 사용하는 빌드
+Required dependency
+-> InitializeReferences에서 주입받고 ValidateRequiredComponentReferences에서 검증한다.
 
-Test
--> Shipping에 가깝지만 일부 테스트 기능 유지
+Optional dependency
+-> 사용 시점에 IsValid로 방어한다.
 
-Shipping
--> 최종 배포용
--> debug code / assert / log 일부가 제거되거나 비활성화될 수 있음
--> 성능과 패키징 기준에 가까움
-```
-
-따라서 runtime 구성 오류를 `check()`에만 의존하면 Development에서는 즉시 crash로 드러나고, Shipping에서는 검증 시점이 흐려질 수 있다.
-
-native subobject는 C++ 생성자에서 `CreateDefaultSubobject` API 호출 직후 생성되는 UObject / Component를 뜻한다. 이 객체들은 C++ class의 기본 구성 일부이며, Blueprint 자식에서도 native component로 이어진다.
-
-허용 후보는 다음과 같다.
-
-```text
-constructor에서 CreateDefaultSubobject 직후 native subobject 생성 확인
-switch / enum 처리에서 도달하면 안 되는 internal invariant
-테스트 중 즉시 중단해야 하는 순수 코드 계약
-```
-
-주의할 점:
-
-```text
-runtime asset / Blueprint 구성 / level 배치 / component 누락 검증에는 check를 기본으로 쓰지 않는다.
-```
-
-이런 경우 `check`는 원인 추적보다 즉시 crash에 가까워지고, Shipping 구성에서는 검증 시점이 흐려질 수 있다.
-
----
-
-## 3. ensure 사용 기준
-
-`ensureMsgf()`는 "잘못된 구성은 알려야 하지만, 이후 코드가 safe return으로 방어할 수 있는 경우"에 사용한다.
-
-좋은 후보는 다음과 같다.
-
-```text
-BeginPlay에서 필수 component dependency 검증
-Initialize 함수의 필수 owner / owning component 검증
-런타임에서 복구 가능한 잘못된 호출 경로
-```
-
-프로젝트 기준:
-
-```text
-필수 component 누락
--> ensureMsgf로 어떤 컴포넌트가 누락됐는지 남김
--> public request 경로에서는 InvalidComponent / safe return으로 방어
+Recovery lookup
+-> 일반 wiring이 아니라 stale Blueprint/native component reference 방어선으로만 사용한다.
 ```
 
 ---
 
-## 4. 필수 component
+## 초기화 흐름
 
-필수 component는 해당 클래스의 핵심 책임을 수행하는 데 없으면 안 되는 dependency다.
-
-예시는 다음과 같다.
+Character 초기화 흐름은 다음 순서를 따른다.
 
 ```text
-ActionOrchestrator
--> MovementComponent
--> WeaponComponent
--> StateComponent
--> HealthComponent
--> ActionComponent
--> ReactionComponent
-
-ReactionOrchestrator
--> StateComponent
--> HealthComponent
--> ActionComponent
--> ReactionComponent
+PostInitializeComponents
+-> RecoverReferences
+-> BuildReferences
+-> InjectReferences
 ```
 
-필수 component는 owner가 알고 있는 native subobject를 명시적으로 주입하고, component는 `BeginPlay()`에서 주입 결과를 검증한다.
+예시:
 
 ```cpp
-const FCharacterComponentReferences references = BuildComponentReferences();
-ActionOrchestratorComponent->InitializeReferences(references);
+void ACPlayer::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    RecoverReferences();
+
+    FCharacterComponentReferences references;
+    BuildReferences(references);
+    InjectReferences(references);
+}
 ```
 
-`FindComponentByClass`는 필수 dependency wiring의 기본 방식으로 쓰지 않는다. 필수 dependency를 소유자가 이미 알고 있다면 owner-side explicit injection을 우선한다.
-
-주입받은 필드는 일반 cache와 구분하기 위해 `_Injected` suffix를 사용한다.
-
-Player / Enemy는 component 주소를 `FCharacterComponentReferences`로 묶어 전달한다. 각 component는 이 구조체에서 필요한 dependency만 꺼내 `_Injected` 필드에 저장한다.
+역할:
 
 ```text
-Player / Enemy
--> BuildComponentReferences
--> InjectComponentReferences
+RecoverReferences
+-> invalid component reference field를 actual component list 기준으로 복구한다.
 
-Injected component
--> InitializeReferences(const FCharacterComponentReferences&)
--> 필요한 참조만 선택적으로 저장
--> BeginPlay에서 required reference validation
-```
+BuildReferences
+-> 현재 Character field 기준으로 FCharacterComponentReferences를 구성한다.
 
-이 방식은 component가 늘어날 때 `InitializeReferences`의 parameter list가 계속 길어지는 문제를 줄이고, component 배열 순서를 `FCharacterComponentReferences` 한 곳에서 맞추기 위한 기준점이 된다.
-
-### Rename migration recovery
-
-`P24 Combat Signal Component Rename`의 `ResolveComponentReferences()`는 상시 dependency wiring이 아니라 native component rename 직후의 migration recovery 코드였다.
-
-```text
-native component rename 직후
--> Blueprint에는 renamed component instance가 존재
--> C++ UPROPERTY member pointer가 invalid일 수 있음
--> FindComponentByClass로 이미 붙어 있는 component instance를 다시 연결
-```
-
-현재 브랜치에서는 rename 안정화 이후의 기준을 정리하므로 이 recovery 경로를 기본 component reference 정책에 포함하지 않는다.
-
-```text
-상시 정책
--> native subobject 생성
--> owner-side explicit injection
--> 각 component의 required reference validation
-
-일시 정책
--> native component rename 직후 문제가 확인된 경우에만 recovery hook 검토
-```
-
-비슷한 문제가 다시 발생하면 `ResolveComponentReferences` 같은 일반 이름보다 `RecoverRenamedComponentReferences`처럼 일시적 migration 성격이 드러나는 이름을 사용한다. 이 코드는 Blueprint asset load / compile / save, runtime member pointer 검증이 끝난 뒤 제거 여부를 다시 판단한다.
-
----
-
-## 5. 선택 component
-
-선택 component는 있으면 부가 기능을 수행하고, 없으면 핵심 실행을 막지 않는 dependency다.
-
-예시는 다음과 같다.
-
-```text
-ObservableOverlayComponent
--> overlay snapshot / overlay gate 같은 부가 관찰 상태
-```
-
-선택 component는 초기화 시점에 필수 검증 대상에 넣지 않는다. 사용 시점에 `IsValid`로 확인하고 없으면 해당 부가 기능만 skip한다.
-
----
-
-## 6. Public request 경로
-
-외부에서 들어오는 request 함수는 필수 dependency가 없을 때 crash하지 않고 명시적인 reject result를 반환한다.
-
-예시는 다음과 같다.
-
-```text
-Action request
--> EActionRequestRejectReason::InvalidComponent
-
-Reaction request
--> EReactionRequestRejectReason::InvalidComponent
-```
-
-이 정책은 초기화 검증과 런타임 방어를 함께 사용하기 위한 것이다.
-
-```text
-BeginPlay
--> 구성 오류를 ensure로 빠르게 노출
-
-Request path
--> null 접근을 막고 reject result 반환
+InjectReferences
+-> 각 component에 동일한 참조 묶음을 전달한다.
 ```
 
 ---
 
-## 7. 현재 브랜치 결정
+## FCharacterComponentReferences
 
-`refactor/component-reference-validation-policy`에서는 가장 영향이 작고 설명력이 높은 두 컴포넌트에 먼저 적용한다.
+`FCharacterComponentReferences`는 Character가 소유한 component reference 묶음이다.
 
-```text
-UCActionOrchestratorComponent
-UCReactionOrchestratorComponent
-```
-
-적용 내용:
+기본 배열 순서는 다음 기준을 따른다.
 
 ```text
-Player / Enemy의 PostInitializeComponents에서 Orchestrator dependency를 명시적으로 주입
-Orchestrator BeginPlay에서는 주입된 owner / component reference를 검증
-필수 component 검증을 ValidateRequiredComponentReferences로 분리
-누락 component 이름이 로그에 드러나도록 ensureMsgf 메시지 작성
-ObservableOverlayComponent는 선택 dependency로 유지
+Movement
+Weapon
+State
+Health / Resource
+Defense
+Overlay
+CombatSignal
+Orchestrator
+Execution / Action / Reaction
+Feedback
 ```
 
-후속 작업:
+Player / Enemy의 field 배치, build, inject 흐름은 가능한 한 이 순서를 따른다.
+
+각 component는 bundle 전체를 받아도 자기 책임에 필요한 reference만 `_Injected` field에 저장한다.
+
+---
+
+## Required Reference Validation
+
+필수 reference는 `InitializeReferences(...)` 직후 검증한다.
+
+```cpp
+void UCActionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
+{
+    OwnerCharacter_Injected = InReferences.OwnerCharacter;
+    WeaponComp_Injected = InReferences.WeaponComponent;
+
+    ValidateRequiredComponentReferences();
+}
+```
+
+검증 메시지는 공용 helper를 사용해 다음 형식을 유지한다.
 
 ```text
-ActionComponent / ReactionComponent 초기화 검증
-CombatSignalSource / CombatSignalTarget 초기화 검증
-Feedback component 초기화 검증
-Notify lookup 경로 검증 정책
+Missing required <ReferenceLabel> | Owner=<Owner> | This=<Context>
 ```
+
+필수 reference 누락은 개발 중 즉시 드러나야 하므로 `ensureMsgf` 기반으로 기록한다. 단 public request 경로는 기존처럼 `InvalidComponent` / reject result로 방어한다.
+
+---
+
+## Injected / Cached Naming
+
+주입받은 장기 reference는 `_Injected` suffix를 사용한다.
+
+```text
+OwnerCharacter_Injected
+WeaponComp_Injected
+CombatSignalSourceComp_Injected
+```
+
+런타임 상태나 마지막 처리 결과처럼 계산 / 이벤트 흐름에서 갱신되는 값은 `_Cached` suffix를 사용한다.
+
+```text
+ActiveData_Cached
+ActiveMontage_Cached
+LastWeaponContext_Cached
+```
+
+---
+
+## Recovery Lookup
+
+`FComponentReferenceHelper::RecoverIfInvalid(...)`는 일반 dependency wiring 방식이 아니다.
+
+용도:
+
+```text
+Blueprint asset에는 native component가 존재하지만
+C++ UPROPERTY component pointer field가 null 또는 stale 상태일 때
+actual component list 기준으로 field를 복구한다.
+```
+
+recovery가 발생하면 다음 로그를 남긴다.
+
+```text
+[ComponentReferenceRecovery] Recovered | Owner=... | Component=... | Resolved=...
+```
+
+이 로그가 보이면 runtime 방어선은 작동한 것이지만, 관련 Blueprint asset의 serialized mapping 상태는 별도로 정리해야 한다.
+
+권장 에셋 조치:
+
+```text
+1. Blueprint asset 열기
+2. Compile / Save
+3. 필요 시 Blueprint asset rename
+4. Rebuild
+5. Editor restart
+6. PIE에서 recovery 로그 반복 여부 확인
+```
+
+---
+
+## FindComponentByClass 기준
+
+`FindComponentByClass` / `GetComponentByClass`는 Character-owned required dependency wiring의 기본 방식으로 사용하지 않는다.
+
+허용되는 경우:
+
+```text
+- stale Blueprint/native component reference recovery
+- dynamic target actor에서 target component resolve
+- Notify / AnimInstance / AI 같은 runtime boundary에서 후속 정책으로 허용된 경우
+```
+
+이번 PR에서는 Notify / AnimInstance / AI lookup 정책을 확정하지 않는다. 해당 범위는 `runtime component lookup policy` 후속 작업에서 분류한다.
+
+---
+
+## 현재 적용 범위
+
+이번 기준은 다음 축에 적용됐다.
+
+```text
+ACPlayer / ACEnemy
+ActionOrchestratorComponent
+ReactionOrchestratorComponent
+ActionComponent / ReactionComponent
+Action executor / Reaction executor
+WeaponComponent / WeaponActor
+ActionFeedbackComponent
+ReactionFeedbackComponent
+HitFeedbackComponent
+PlayerFeedbackComponent
+CombatSignalSourceComponent
+CombatSignalTargetComponent
+Movement / State / Health / Defense / Overlay component
+```
+
+---
+
+## 제외 범위
+
+다음 항목은 현재 PR의 DI 전환 완료 범위가 아니다.
+
+```text
+Notify / NotifyState component lookup
+AnimInstance component cache
+BehaviorTree Service / Decorator component query
+CombatSignalSource dynamic target resolution policy
+```
+
+이 항목들은 같은 상위 주제인 runtime component lookup policy로 묶어 후속 브랜치에서 정리한다.
+
+---
+
+## 관련 문서
+
+- `Docs/02_Bug_Report/B14_UE5_Portfolio_Bug_Report.md`
+- `Docs/06_notes/N11_Unreal_Blueprint_Native_Component_Reference_Mismatch_Note.md`
+- `Docs/04_Pull_Request/P29_UE5_Portfolio_Pull_Request.md`

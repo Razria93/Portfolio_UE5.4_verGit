@@ -2,156 +2,237 @@
 
 ## 제목
 
-**P29: Component 참조 검증 정책 v1**
+**P29: Character Component 참조 주입 / 복구**
 
 ## 날짜
 
-**2026.06.28**
+**2026.06.29**
 
 ## 상태
 
-- [x] **완료**
+- [x] 완료
 
 ---
 
 ## 브랜치
 
-- `refactor/component-reference-validation-policy`
+- `refactor/character-component-reference-di`
+
+---
+
+## 커밋
+
+```text
+46d1d793 refactor(feedback): inject required references for player feedback
+41ef737b refactor(action): inject required references for action executors
+7e086873 refactor(reaction): inject required references for reaction executors
+7c0719aa refactor(core): share required reference validation entry
+3e18b352 refactor(character): simplify component reference injection calls
+35b9495c refactor(character): recover component references before injection
+49a38a81 docs(unreal): document blueprint component reference recovery
+1ac69be3 fix(asset): refresh enemy blueprint and test map
+```
 
 ---
 
 ## 요약
 
-이번 PR은 component dependency 초기화와 검증 기준을 작게 코드에 반영한다.
+이번 PR은 Character가 소유한 component reference를 owner 쪽에서 명시적으로 구성하고, 각 component / executor / weapon actor에 주입하는 기준을 정리한다.
 
-핵심은 `check()`를 전면 제거하는 것이 아니라, 필수 component 누락을 `ensureMsgf`로 드러내고 public request 경로에서는 기존처럼 `InvalidComponent` reject로 방어하는 패턴을 만드는 것이다.
+핵심 흐름은 다음과 같다.
+
+```text
+ACPlayer / ACEnemy
+-> RecoverReferences
+-> BuildReferences
+-> InjectReferences
+-> InitializeReferences
+-> ValidateRequiredComponentReferences
+```
+
+기존에는 여러 component가 owner나 다른 component를 직접 찾거나, 생성 / 초기화 타이밍에 따라 암시적으로 참조를 확보했다. 이번 PR에서는 `FCharacterComponentReferences`를 Character 기준 참조 묶음으로 두고, 필요한 객체가 이 묶음에서 자기 책임에 필요한 reference만 선택해 저장하도록 정리했다.
+
+또한 Blueprint asset의 stale native component reference 문제를 런타임에서 감지 / 복구하는 방어선을 추가했다. 이 recovery는 일반 dependency wiring 방식이 아니라, Blueprint serialized component reference와 실제 Actor component list가 어긋난 경우를 위한 안전장치다.
 
 ---
 
 ## 변경 배경
 
-W05 코드 품질 정리 계획에서 `check` 기반 component reference 검증은 주요 리스크로 분류되었다.
-
-기존 코드에는 다음 패턴이 넓게 존재한다.
+Component dependency가 늘어나면서 다음 문제가 있었다.
 
 ```text
-BeginPlay
--> owner / component lookup
--> check()
+- component 내부에서 owner / sibling component를 직접 lookup하는 책임이 섞임
+- required reference 누락 시 어떤 dependency가 빠졌는지 설명이 부족함
+- Action / Reaction executor와 Feedback / WeaponActor가 각자 다른 방식으로 reference를 확보함
+- native component rename / Blueprint stale mapping 상황에서 C++ UPROPERTY component field가 invalid가 될 수 있음
 ```
 
-이 패턴은 개발 중 문제를 빠르게 드러내는 장점이 있지만, Blueprint 구성이나 component 누락 같은 runtime 구성 오류에서는 어떤 dependency가 빠졌는지 설명력이 부족할 수 있다.
-
-따라서 이번 PR에서는 필수 dependency가 많은 Orchestrator 계열에 먼저 작은 정책을 적용한다. 필수 dependency는 Orchestrator 내부에서 `FindComponentByClass`로 찾지 않고, owner가 알고 있는 native subobject를 명시적으로 주입한다.
+이번 PR은 “프로젝트 전체 lookup 제거”가 아니라, Character가 소유하고 조립할 수 있는 reference를 명시적으로 구성하는 데 집중한다.
 
 ---
 
 ## 변경 범위
 
-### 1. ActionOrchestrator dependency 주입
+### 1. Character 기준 참조 초기화 흐름
 
-`ACPlayer` / `ACEnemy`가 `PostInitializeComponents()`에서 `UCActionOrchestratorComponent`에 필수 dependency를 주입하도록 정리했다.
+`ACPlayer` / `ACEnemy`의 component reference 초기화 흐름을 다음 순서로 정리했다.
 
-```text
-InjectComponentReferences
-BuildComponentReferences
-FCharacterComponentReferences
-UCActionOrchestratorComponent::InitializeReferences
-ValidateRequiredComponentReferences
+```cpp
+void ACEnemy::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    RecoverReferences();
+
+    FCharacterComponentReferences references;
+    BuildReferences(references);
+    InjectReferences(references);
+}
 ```
 
-필수 component는 다음으로 정리했다.
+역할:
 
 ```text
-MovementComponent
-WeaponComponent
-StateComponent
-HealthComponent
+RecoverReferences
+-> invalid component reference field를 actual component list 기준으로 복구
+
+BuildReferences
+-> 현재 Character field 기준으로 FCharacterComponentReferences 구성
+
+InjectReferences
+-> 동일한 참조 묶음을 각 component에 주입
+```
+
+### 2. Component 참조 묶음
+
+`FCharacterComponentReferences`를 Character가 소유한 component reference 묶음으로 사용한다.
+
+기본 배열 순서는 다음 기준을 따른다.
+
+```text
+Movement
+Weapon
+State
+Health / Resource
+Defense
+Overlay
+CombatSignal
+Orchestrator
+Execution / Action / Reaction
+Feedback
+```
+
+Player와 Enemy의 component field, build, inject 흐름도 가능한 한 이 순서로 정렬했다.
+
+### 3. 필수 참조 검증
+
+공용 validation entry를 추가해 필수 reference 누락 로그 형식을 통일했다.
+
+```text
+Missing required <ReferenceLabel> | Owner=<Owner> | This=<Context>
+```
+
+대상 component는 `InitializeReferences(...)`에서 필요한 reference를 저장한 뒤 `ValidateRequiredComponentReferences()`로 필수 dependency를 검증한다.
+
+### 4. Action / Reaction executor 참조 주입
+
+Action / Reaction executor도 component와 같은 reference 묶음을 통해 필요한 owner / component reference를 주입받도록 정리했다.
+
+```text
 ActionComponent
+-> BuildActionExecutorReferences
+-> UCAction::InitializeReferences
+
 ReactionComponent
+-> BuildReactionExecutorReferences
+-> UCReaction::InitializeReferences
 ```
 
-`ObservableOverlayComponent`는 overlay snapshot / gate 보조 기능이므로 선택 dependency로 유지한다.
+이를 통해 executor 내부에서 owner component를 직접 찾는 흐름을 줄이고, active executor가 사용하는 reference source를 component DI 흐름과 맞췄다.
 
-주입받은 Orchestrator 내부 필드는 일반 cache와 구분되도록 `_Injected` suffix를 사용한다.
+### 5. Feedback component 참조 주입
 
-`InitializeReferences`의 parameter list가 component 증가와 함께 계속 길어지는 문제를 막기 위해, Player / Enemy는 component 주소 목록을 `FCharacterComponentReferences`로 구성하고 Orchestrator는 이 구조체에서 필요한 참조만 선택적으로 가져간다.
-
-### 2. ReactionOrchestrator dependency 주입
-
-`UCReactionOrchestratorComponent`도 같은 방식으로 owner-side explicit injection을 적용했다.
-
-필수 component는 다음으로 정리했다.
+Action / Reaction / Hit / Player feedback 계열의 reference 주입 기준을 정리했다.
 
 ```text
-StateComponent
-HealthComponent
-ActionComponent
-ReactionComponent
+ActionFeedbackComponent
+ReactionFeedbackComponent
+HitFeedbackComponent
+PlayerFeedbackComponent
 ```
 
-`ObservableOverlayComponent`는 선택 dependency로 유지한다.
+Player feedback은 PlayerController 소유 component이므로 `APlayerController` 기준 `InitializeReferences(...)`를 유지한다.
 
-ReactionOrchestrator도 동일한 `FCharacterComponentReferences`를 전달받되, reaction orchestration에 필요한 owner / state / health / overlay / action / reaction 참조만 저장한다.
+### 6. WeaponActor 참조 주입
 
-### 3. check 기반 참조 검증을 ensureMsgf 기반 검증으로 변경
-
-두 Orchestrator 모두 주입된 owner / 필수 component가 누락된 경우 `ensureMsgf`로 구성 오류를 남긴다.
+`UCWeaponComponent`가 weapon actor를 생성한 뒤 필요한 reference를 명시적으로 전달한다.
 
 ```text
-Missing required ACharacter Owner | Owner=... | This=...
-Missing required UCStateComponent | Owner=... | This=...
+UCWeaponComponent
+-> BuildWeaponActorReferences
+-> ACWeaponActor::InitializeReferences
 ```
 
-필수 component 누락 시에는 어떤 component가 누락되었는지 메시지에 남긴다.
+`ACWeaponActor`는 owner / combat signal source를 `BeginPlay()`에서 다시 lookup하지 않고 injected reference를 사용한다.
 
-### 4. Rename recovery 경로 제거
+### 7. Blueprint stale component 참조 복구
 
-P24에서 추가했던 `ACPlayer` / `ACEnemy`의 `ResolveComponentReferences()`는 CombatSignal native component rename 직후의 migration recovery 코드였다.
+Blueprint 기반 Character에서 실제 Actor component list에는 component가 존재하지만, C++ UPROPERTY component pointer field가 null 또는 stale 상태가 되는 문제를 확인했다.
+
+이를 위해 `FComponentReferenceHelper`를 추가했다.
 
 ```text
-CombatSignalSourceComponent / CombatSignalTargetComponent rename 직후
--> Blueprint actor에는 renamed component instance가 존재
--> C++ member pointer가 invalid일 수 있음
--> FindComponentByClass로 기존 component instance를 재연결
+FComponentReferenceHelper::RecoverIfInvalid
+FComponentReferenceHelper::InjectIfValid
 ```
 
-현재 브랜치에서는 rename 안정화 이후의 component reference 기준을 정리하므로, 이 recovery 경로를 상시 dependency wiring 정책에서 제거했다.
-
-비슷한 문제가 다시 발생하면 `FindComponentByClass`를 기본 wiring 방식으로 일반화하지 않고, rename 대상 component에 한정된 일시적 recovery hook으로 다시 검토한다.
+recovery가 발생하면 다음 로그를 남긴다.
 
 ```text
-권장 이름
--> RecoverRenamedComponentReferences
-
-유지 기준
--> Blueprint asset load / compile / save 전 또는 runtime pointer 검증 전
-
-제거 기준
--> asset migration과 대표 flow 검증이 끝난 뒤
+[ComponentReferenceRecovery] Recovered | Owner=... | Component=... | Resolved=...
 ```
 
-### 5. Component reference validation 기준 문서 추가
+이 로그는 정상 흐름 로그가 아니라 stale Blueprint/native component reference mismatch가 복구됐다는 신호다.
 
-다음 노트를 추가했다.
+### 8. Blueprint asset 갱신
+
+`BP_CEnemy`에서 recovery 로그가 반복 출력되는 상황을 확인했고, Blueprint 이름 변경 후 rebuild / compile / save를 통해 stale mapping이 해소되는 것을 확인했다.
+
+관련 에셋 갱신을 반영했다.
 
 ```text
+Content/01_Character/02_Enemy/BP_CEnemy.uasset
+Content/00_UnitTest/TestRoom.umap
+```
+
+---
+
+## 주요 파일
+
+```text
+Source/Portfolio/Type/CCharacterComponentReferenceStructure.h
+Source/Portfolio/Core/Debug/FReferenceValidation.h
+Source/Portfolio/Core/Debug/FComponentReferenceHelper.h
+Source/Portfolio/Character/Player/CPlayer.h
+Source/Portfolio/Character/Player/CPlayer.cpp
+Source/Portfolio/Character/Enemy/CEnemy.h
+Source/Portfolio/Character/Enemy/CEnemy.cpp
+Source/Portfolio/Component/CActionComponent.h
+Source/Portfolio/Component/CActionComponent.cpp
+Source/Portfolio/Component/CReactionComponent.h
+Source/Portfolio/Component/CReactionComponent.cpp
+Source/Portfolio/Component/CActionOrchestratorComponent.h
+Source/Portfolio/Component/CActionOrchestratorComponent.cpp
+Source/Portfolio/Component/CReactionOrchestratorComponent.h
+Source/Portfolio/Component/CReactionOrchestratorComponent.cpp
+Source/Portfolio/Component/CWeaponComponent.h
+Source/Portfolio/Component/CWeaponComponent.cpp
+Source/Portfolio/Weapon/CWeaponActor.h
+Source/Portfolio/Weapon/CWeaponActor.cpp
+Docs/02_Bug_Report/B14_UE5_Portfolio_Bug_Report.md
 Docs/06_notes/N10_Component_Reference_Validation_Policy_Note.md
+Docs/06_notes/N11_Unreal_Blueprint_Native_Component_Reference_Mismatch_Note.md
 ```
-
-문서에는 다음 기준을 정리했다.
-
-```text
-- check 사용 기준
-- ensureMsgf 사용 기준
-- 필수 component / 선택 component 구분
-- public request 경로의 InvalidComponent reject 정책
-- 이번 브랜치에서 Orchestrator 계열만 먼저 적용한 이유
-```
-
-### 6. Code Quality Note 연결
-
-`N08_Code_Quality_Cleanup_Plan_Note`의 component lookup / check 항목에서 세부 기준 문서 `N10`을 참조하도록 갱신했다.
 
 ---
 
@@ -181,32 +262,51 @@ git diff --check
 성공
 ```
 
+### PIE
+
+```text
+TestRoom PIE
+```
+
+확인 내용:
+
+```text
+- 전투 사이클 정상 동작
+- CombatSignalSource / CombatSignalTarget invalid fallback 해소
+- BP_CEnemy asset 갱신 이후 ComponentReferenceRecovery 로그 미출력 확인
+```
+
 ---
 
 ## 제외 범위
 
-이번 PR에서는 다음 작업을 의도적으로 제외한다.
+이번 PR은 Character가 소유한 component reference의 DI / recovery를 다룬다. 다음 runtime lookup 영역은 별도 정책 작업으로 분리한다.
 
 ```text
-- 프로젝트 전체 check 제거
-- ActionComponent / ReactionComponent 초기화 검증 변경
-- CombatSignalSource / CombatSignalTarget 초기화 검증 변경
-- Feedback component 초기화 검증 변경
-- Notify lookup 경로 정책 변경
-- dependency injection 전면 적용
+- Notify / NotifyState의 FindComponentByClass 경로
+- AnimInstance의 owner component cache 정책
+- BehaviorTree Service / Decorator의 pawn component query 정책
+- CombatSignalSource의 동적 target component resolve 정책
 ```
 
-이번 PR의 목적은 적용 범위를 넓히는 것이 아니라, Orchestrator 계열에서 후속 component reference 정리의 기준 패턴을 만드는 것이다.
+남은 lookup은 모두 제거 대상이라고 단정하지 않는다. 다음 작업에서 runtime boundary별로 허용 lookup, DI 전환 대상, cache 유지 대상을 분류한다.
 
 ---
 
 ## 후속 작업
 
-권장 후속 순서는 다음과 같다.
+권장 후속 브랜치:
 
 ```text
-1. ActionComponent / ReactionComponent 초기화 검증
-2. CombatSignalSource / CombatSignalTarget 초기화 검증
-3. Feedback component 초기화 검증
-4. Notify lookup 경로 검증 정책 정리
+refactor/runtime-component-lookup-policy
+```
+
+권장 범위:
+
+```text
+1. Notify / NotifyState component lookup 정책 정리
+2. AnimInstance component cache 기준 정리
+3. AI BehaviorTree component query 기준 정리
+4. CombatSignal 동적 target lookup 허용 기준 문서화
+5. Runtime component lookup 정책 문서 추가
 ```
