@@ -11,12 +11,39 @@ UCPlayerFeedbackComponent::UCPlayerFeedbackComponent()
 {
 }
 
+void UCPlayerFeedbackComponent::InitializeReferences(APlayerController* InOwnerPlayerController)
+{
+	OwnerPlayerController_Injected = InOwnerPlayerController;
+
+	ValidateRequiredComponentReferences();
+}
+
+bool UCPlayerFeedbackComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	struct FRequiredComponentReference
+	{
+		const UObject* Object = nullptr;
+		const TCHAR* Label = TEXT("");
+	};
+
+	const FRequiredComponentReference requiredReferences[] =
+	{
+		{ OwnerPlayerController_Injected, TEXT("APlayerController Owner") },
+	};
+
+	for (const FRequiredComponentReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerPlayerController_Injected, this);
+	}
+
+	return bValid;
+}
+
 void UCPlayerFeedbackComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	OwnerPlayerController_Cached = Cast<APlayerController>(GetOwner());
-	check(OwnerPlayerController_Cached);
 
 	if (UWorld* world = GetWorld())
 	{
@@ -56,9 +83,9 @@ void UCPlayerFeedbackComponent::HandleCameraShakeRequest(const FCameraShakeReque
 
 bool UCPlayerFeedbackComponent::CanCameraShake(const FCameraShakeRequest& InCameraShakeRequest) const
 {
-	if (!IsValid(OwnerPlayerController_Cached)) return false;
-	if (!OwnerPlayerController_Cached->IsLocalController()) return false;
-	if (!IsValid(OwnerPlayerController_Cached->PlayerCameraManager)) return false;
+	if (!IsValid(OwnerPlayerController_Injected)) return false;
+	if (!OwnerPlayerController_Injected->IsLocalController()) return false;
+	if (!IsValid(OwnerPlayerController_Injected->PlayerCameraManager)) return false;
 
 	if (!IsValid(InCameraShakeRequest.CameraShakeClass)) return false;
 
@@ -70,9 +97,9 @@ bool UCPlayerFeedbackComponent::CanCameraShake(const FCameraShakeRequest& InCame
 
 float UCPlayerFeedbackComponent::ResolveCameraShake(const FCameraShakeRequest& InCameraShakeRequest) const
 {
-	if (!IsValid(OwnerPlayerController_Cached)) return 0.f;
+	if (!IsValid(OwnerPlayerController_Injected)) return 0.f;
 
-	APawn* pawn = OwnerPlayerController_Cached->GetPawn();
+	APawn* pawn = OwnerPlayerController_Injected->GetPawn();
 	if (!IsValid(pawn)) return 0.f;
 
 	const bool bIsLocalTarget = IsValid(InCameraShakeRequest.TargetActor) && InCameraShakeRequest.TargetActor == pawn;
@@ -99,10 +126,10 @@ float UCPlayerFeedbackComponent::ResolveCameraShake(const FCameraShakeRequest& I
 
 void UCPlayerFeedbackComponent::PlayCameraShake(const FCameraShakeRequest& InCameraShakeRequest, float InCameraShakeFinalScale) const
 {
-	if (!IsValid(OwnerPlayerController_Cached)) return;
-	if (!IsValid(OwnerPlayerController_Cached->PlayerCameraManager)) return;
+	if (!IsValid(OwnerPlayerController_Injected)) return;
+	if (!IsValid(OwnerPlayerController_Injected->PlayerCameraManager)) return;
 
-	OwnerPlayerController_Cached->PlayerCameraManager->StartCameraShake(InCameraShakeRequest.CameraShakeClass, InCameraShakeFinalScale);
+	OwnerPlayerController_Injected->PlayerCameraManager->StartCameraShake(InCameraShakeRequest.CameraShakeClass, InCameraShakeFinalScale);
 }
 
 void UCPlayerFeedbackComponent::PrintCameraShakeConsumeInfo(const FCameraShakeRequest& InCameraShakeRequest, float InCameraShakeFinalScale) const
