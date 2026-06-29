@@ -27,7 +27,7 @@ void UCAnimNotifyState_Collision::NotifyEnd(USkeletalMeshComponent* MeshComp, UA
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!IsValid(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp)) return;
 
 	actionComp->HandleActionCollisionWindowEnd();
 }
