@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Type/CweaponStructure.h"
+#include "Type/CWeaponStructure.h"
 #include "CAnimInstance.generated.h"
 
 UCLASS()
@@ -13,13 +13,13 @@ class PORTFOLIO_API UCAnimInstance : public UAnimInstance
 protected:
 	/* === Injection Datas === */
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	float Speed;
+	float Speed = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	float Direction;
+	float Direction = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	bool bIsInAir;
+	bool bIsInAir = false;
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
@@ -34,24 +34,36 @@ protected:
 private:
 	/* === Cached Objects === */
 	UPROPERTY(Transient)
-	class ACharacter* OwnerCharacter_Cached;
+	class ACharacter* OwnerCharacter_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCMovementComponent* MovementComp_Cached;
+	class UCMovementComponent* MovementComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCWeaponComponent* WeaponComp_Cached;
+	class UCWeaponComponent* WeaponComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCHealthComponent* HealthComp_Cached;
+	class UCHealthComponent* HealthComp_Cached = nullptr;
 
 	UPROPERTY(Transient)
-	class UCDefenseComponent* DefenseComp_Cached;
+	class UCDefenseComponent* DefenseComp_Cached = nullptr;
 
 public:
 	void NativeInitializeAnimation() override;
 	void NativeUninitializeAnimation() override;
 	void NativeUpdateAnimation(float DeltaSeconds) override;
+
+private:
+	// Reference Cache
+	bool CacheOwnerAndComponents();
+	void ClearCachedReferences();
+	void BindComponentEvents();
+	void UnbindComponentEvents();
+
+private:
+	// Parameter Refresh
+	void RefreshMovementParameters();
+	void RefreshStateParameters();
 
 private:
 	/* === [IN] Custom Delgate Events === */

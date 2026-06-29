@@ -12,27 +12,19 @@ void UCAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	OwnerCharacter_Cached = Cast<ACharacter>(TryGetPawnOwner());
-	if (!IsValid(OwnerCharacter_Cached)) return;
+	UnbindComponentEvents();
+	ClearCachedReferences();
 
-	MovementComp_Cached = Cast<UCMovementComponent>(OwnerCharacter_Cached->GetComponentByClass(UCMovementComponent::StaticClass()));
-	WeaponComp_Cached = Cast<UCWeaponComponent>(OwnerCharacter_Cached->GetComponentByClass(UCWeaponComponent::StaticClass()));
-	HealthComp_Cached = Cast<UCHealthComponent>(OwnerCharacter_Cached->GetComponentByClass(UCHealthComponent::StaticClass()));
-	DefenseComp_Cached = Cast<UCDefenseComponent>(OwnerCharacter_Cached->GetComponentByClass(UCDefenseComponent::StaticClass()));
+	if (!CacheOwnerAndComponents()) return;
 
-	if (IsValid(WeaponComp_Cached))
-	{
-		WeaponComp_Cached->OnWeaponTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
-		CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
-	}
+	BindComponentEvents();
+	RefreshStateParameters();
 }
 
 void UCAnimInstance::NativeUninitializeAnimation()
 {
-	if (IsValid(WeaponComp_Cached))
-	{
-		WeaponComp_Cached->OnWeaponTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
-	}
+	UnbindComponentEvents();
+	ClearCachedReferences();
 
 	Super::NativeUninitializeAnimation();
 }
@@ -43,11 +35,62 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (!IsValid(OwnerCharacter_Cached)) return;
 
+	RefreshMovementParameters();
+	RefreshStateParameters();
+}
+
+bool UCAnimInstance::CacheOwnerAndComponents()
+{
+	OwnerCharacter_Cached = Cast<ACharacter>(TryGetPawnOwner());
+	if (!IsValid(OwnerCharacter_Cached)) return false;
+
+	MovementComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCMovementComponent>();
+	WeaponComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
+	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
+	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
+
+	return true;
+}
+
+void UCAnimInstance::ClearCachedReferences()
+{
+	OwnerCharacter_Cached = nullptr;
+	MovementComp_Cached = nullptr;
+	WeaponComp_Cached = nullptr;
+	HealthComp_Cached = nullptr;
+	DefenseComp_Cached = nullptr;
+}
+
+void UCAnimInstance::BindComponentEvents()
+{
+	if (!IsValid(WeaponComp_Cached)) return;
+
+	WeaponComp_Cached->OnWeaponTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+	CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
+}
+
+void UCAnimInstance::UnbindComponentEvents()
+{
+	if (!IsValid(WeaponComp_Cached)) return;
+
+	WeaponComp_Cached->OnWeaponTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+}
+
+void UCAnimInstance::RefreshMovementParameters()
+{
 	if (IsValid(MovementComp_Cached))
 	{
 		Speed = MovementComp_Cached->GetCurrentSpeed();
 		Direction = MovementComp_Cached->GetCurrentDirection();
 		bIsInAir = MovementComp_Cached->IsFalling();
+	}
+}
+
+void UCAnimInstance::RefreshStateParameters()
+{
+	if (IsValid(WeaponComp_Cached))
+	{
+		CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
 	}
 
 	if (IsValid(HealthComp_Cached))

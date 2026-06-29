@@ -130,6 +130,16 @@ Source/Portfolio/Animation
 AnimInstance 관련 파일
 ```
 
+진행 내용:
+
+```text
+UCAnimInstance
+-> TryGetPawnOwner 기반 owner resolve 유지
+-> component cache / clear / bind / unbind helper로 분리
+-> movement / state parameter refresh helper로 분리
+-> GetComponentByClass 사용을 FindComponentByClass<T>()로 정리
+```
+
 ### 3. AI BehaviorTree lookup
 
 검토 기준:

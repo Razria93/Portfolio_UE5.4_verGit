@@ -195,6 +195,28 @@ cache는 owner 변경 가능성을 고려해 갱신 조건을 둔다.
 
 AnimInstance의 component cache는 Character DI가 아니다.
 
+현재 정리 기준:
+
+```text
+NativeInitializeAnimation
+-> 기존 delegate 해제
+-> cached reference 초기화
+-> TryGetPawnOwner 기반 owner / component cache
+-> component event binding
+-> 초기 state parameter 갱신
+
+NativeUpdateAnimation
+-> cached owner가 invalid면 safe return
+-> Movement parameter 갱신
+-> State / Guard parameter 갱신
+
+NativeUninitializeAnimation
+-> delegate 해제
+-> cached reference 초기화
+```
+
+`FindComponentByClass<T>()`는 AnimInstance가 mesh owner에서 animation parameter source를 찾기 위한 runtime cache 방식으로 사용한다.
+
 ---
 
 ## 5. AI BT Service / Decorator / Task
