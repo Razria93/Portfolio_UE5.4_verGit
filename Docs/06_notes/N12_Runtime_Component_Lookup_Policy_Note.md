@@ -81,6 +81,70 @@ ACPlayer / ACEnemy
 
 component 내부에서 sibling component를 다시 `FindComponentByClass`로 찾지 않는다.
 
+### Component Order
+
+Character-owned component를 나열할 때는 다음 순서를 기본값으로 둔다.
+
+```text
+OwnerCharacter
+
+Movement
+Weapon
+State
+Health
+Defense
+ObservableOverlay
+
+CombatSignalSource
+CombatSignalTarget
+
+ActionOrchestrator
+ReactionOrchestrator
+
+Action
+Reaction
+
+HitFeedback
+ActionFeedback
+ReactionFeedback
+```
+
+이 순서는 다음 영역에 우선 적용한다.
+
+```text
+Character field declaration
+Character constructor CreateDefaultSubobject
+RecoverReferences
+BuildReferences
+InjectReferences
+FCharacterComponentReferences
+InitializeReferences 내부 대입
+ValidateRequiredReferences 배열
+component getter 나열
+```
+
+단, runtime gameplay flow는 component order보다 domain 처리 순서를 우선한다.
+
+예외:
+
+```text
+ACEnemy
+-> 현재 DefenseComponent를 보유하지 않는다.
+-> 적 방어 기능이 필요해지는 시점에 추가한다.
+-> CombatSignalTarget의 Defense reference는 현재 optional dependency로 취급한다.
+
+WeaponActor
+-> Character-owned component가 아니라 WeaponComponent가 spawn하는 runtime actor다.
+-> Character component order 대상이 아니다.
+
+AnimInstance
+-> ActorComponent DI가 아니라 TryGetPawnOwner 기반 animation lifecycle cache다.
+
+Notify / AI BT / CombatSignal target resolve
+-> runtime context에서 owner / target / Blackboard / payload를 해석하는 경로다.
+-> Character component order를 강제하지 않는다.
+```
+
 ---
 
 ## 2. Runtime Lookup 유지 대상
@@ -286,6 +350,31 @@ OwnerCharacter_Injected
 CombatSignalSourceComp_Injected
 Overlap OtherActor / OtherComp
 Socket attach target
+```
+
+현재 정리 기준:
+
+```text
+WeaponComponent
+-> WeaponActor를 runtime actor로 spawn한다.
+-> spawn 직후 OwnerCharacter / CombatSignalSource reference를 주입한다.
+-> EndPlay에서 WeaponActor runtime state(collision / trail)를 정리하고 spawned actor를 Destroy한다.
+
+WeaponActor
+-> BeginPlay에서 collision component delegate를 bind하고 cache한다.
+-> EndPlay / runtime state clear 경로에서 collision window와 trail을 명시적으로 닫는다.
+-> EndPlay에서 collision delegate를 unbind하고 collision cache / injected reference를 비운다.
+-> owner component를 다시 lookup하지 않고 injected reference를 사용한다.
+-> overlap target은 event payload의 OtherActor / OtherComp 기준으로 해석한다.
+```
+
+후속 보완 대상:
+
+```text
+Actor / Component teardown cleanup
+-> EndPlay에서 delegate / timer / spawned actor / runtime cache 정리 기준을 별도 점검한다.
+-> gameplay cleanup API와 teardown-safe cleanup API를 분리할 필요가 있는지 확인한다.
+-> WeaponActor collision window close와 EndPlay cleanup은 별도 refactor에서 다룬다.
 ```
 
 ---

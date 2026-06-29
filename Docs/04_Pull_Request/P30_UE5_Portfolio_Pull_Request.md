@@ -126,8 +126,7 @@ NativeUpdateAnimation에서는 invalid owner / component 상황을 safe return�
 검토 대상:
 
 ```text
-Source/Portfolio/Animation
-AnimInstance 관련 파일
+Source/Portfolio/Character/CAnimInstance.*
 ```
 
 진행 내용:
@@ -185,6 +184,28 @@ Overlap target은 event payload에서 해석한다.
 Source/Portfolio/Weapon
 ```
 
+진행 내용:
+
+```text
+UCWeaponComponent
+-> spawned WeaponActor owner로서 EndPlay cleanup 추가
+-> runtime weapon state(collision / trail) 정리 후 spawned actor Destroy
+
+ACWeaponActor
+-> collision delegate bind/cache는 BeginPlay에서 유지
+-> EndPlay / runtime state clear 경로에서 collision window와 trail을 명시적으로 정리
+-> EndPlay에서 collision delegate unbind / collision cache clear
+-> injected owner/source reference clear
+```
+
+후속 보완 대상:
+
+```text
+Actor / Component teardown cleanup
+-> EndPlay delegate / timer / spawned actor cleanup 기준은 별도 refactor에서 처리
+-> WeaponActor collision cleanup과 gameplay collision close API 분리 여부는 후속 작업으로 분리
+```
+
 ### 5. Lookup 사용처 분류
 
 대상 API:
@@ -206,6 +227,25 @@ runtime lookup 유지
 cache 필요
 safe return / reject 필요
 후속 브랜치 분리
+```
+
+진행 내용:
+
+```text
+GetComponentByClass
+-> Source/Portfolio C++ 코드 기준 잔여 사용처 없음
+
+FindComponentByClass
+-> Notify base/helper, AnimInstance cache, AI owner component query, CombatSignal target resolve처럼 runtime context가 필요한 경로에만 유지
+
+Component order
+-> Character reference 구성/주입 계열은 canonical component order를 기준으로 정렬
+-> runtime gameplay flow는 domain 처리 순서를 우선
+
+현재 예외
+-> ACEnemy는 DefenseComponent를 아직 보유하지 않음
+-> 적 방어 기능이 필요해지는 시점에 추가
+-> CombatSignalTarget의 Defense reference는 현재 optional dependency로 유지
 ```
 
 ---

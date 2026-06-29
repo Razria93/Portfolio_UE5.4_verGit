@@ -53,6 +53,10 @@ public:
 private:
 	bool ValidateRequiredComponentReferences() const;
 
+protected:
+	// Lifecycle
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 public:
 	/* === Check / Query === */
 	FORCEINLINE bool CheckCurrentWeaponType(EWeaponType InNewWeaponType) const { return CurrentWeaponType == InNewWeaponType; }

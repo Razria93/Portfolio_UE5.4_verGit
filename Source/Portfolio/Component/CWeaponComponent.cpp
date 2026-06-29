@@ -42,6 +42,19 @@ bool UCWeaponComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+void UCWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ClearRuntimeWeaponState();
+
+	if (IsValid(WeaponActor))
+	{
+		WeaponActor->Destroy();
+		WeaponActor = nullptr;
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 ACWeaponActor* UCWeaponComponent::GetWeaponActor()
 {
 	return IsValid(WeaponActor) ? WeaponActor : nullptr;
@@ -107,6 +120,7 @@ void UCWeaponComponent::ClearRuntimeWeaponState()
 	if (IsValid(WeaponActor))
 	{
 		WeaponActor->CollisionDisabled();
+		WeaponActor->ToggleTrailActive(false);
 	}
 }
 

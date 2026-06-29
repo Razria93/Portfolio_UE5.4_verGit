@@ -102,6 +102,16 @@ public:
 protected:
 	// Lifecycle
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+private:
+	// Collision Component
+	void ConfigureCollisionComponents();
+	void ClearCollisionComponents();
+
+private:
+	// Trail
+	void ConfigureTrailInitialState();
 
 public:
 	/* === IHitContextProducer (Getter) === */
@@ -148,10 +158,6 @@ public:
 
 	UFUNCTION()
 	void OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-private:
-	void ConfigureCollisionComponents();
-	void ConfigureTrailComponentState();
 
 private:
 	FOverlapContext BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const;

@@ -63,12 +63,26 @@ void ACWeaponActor::BeginPlay()
 	Super::BeginPlay();
 
 	ConfigureCollisionComponents();
-	ConfigureTrailComponentState();
+	ConfigureTrailInitialState();
+}
+
+void ACWeaponActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	CollisionDisabled();
+	ToggleTrailActive(false);
+	ClearCollisionComponents();
+
+	OwnerCharacter_Injected = nullptr;
+	CombatSignalSourceComp_Injected = nullptr;
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ACWeaponActor::ConfigureCollisionComponents()
 {
 	if (!IsValid(RootSceneComponent)) return;
+
+	ClearCollisionComponents();
 
 	TArray<USceneComponent*> children;
 	RootSceneComponent->GetChildrenComponents(true, children);
@@ -86,13 +100,26 @@ void ACWeaponActor::ConfigureCollisionComponents()
 	}
 }
 
-void ACWeaponActor::ConfigureTrailComponentState()
+void ACWeaponActor::ClearCollisionComponents()
+{
+	for (UShapeComponent* collision : Collisions_Cached)
+	{
+		if (!IsValid(collision)) continue;
+
+		collision->OnComponentBeginOverlap.RemoveDynamic(this, &ACWeaponActor::OnComponentBeginOverlap);
+		collision->OnComponentEndOverlap.RemoveDynamic(this, &ACWeaponActor::OnComponentEndOverlap);
+		collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	Collisions_Cached.Empty();
+}
+
+void ACWeaponActor::ConfigureTrailInitialState()
 {
 	if (!IsValid(TrailComponent)) return;
 	if (!bDisableTrailOnBeginPlay) return;
 
-	TrailComponent->Deactivate();
-	TrailComponent->SetVisibility(false);
+	ToggleTrailActive(false);
 }
 
 const FOverlapContext& ACWeaponActor::GetLastOverlapContext() const
