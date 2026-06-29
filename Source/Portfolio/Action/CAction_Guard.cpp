@@ -122,6 +122,12 @@ FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecuti
 		return result;
 	}
 
+	if (!IsValid(WeaponComp_Injected))
+	{
+		result.Decision = EExecutionDecision::Reject;
+		return result;
+	}
+
 	const FActionExecutionContext& incomingContext = InQuery.IncomingPart.GetActionContext();
 	const EGuardActionPhase incomingGuardPhase = ResolveGuardActionPhase(incomingContext.ActionDataKey);
 
