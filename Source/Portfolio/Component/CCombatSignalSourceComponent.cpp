@@ -513,7 +513,7 @@ AActor* UCCombatSignalSourceComponent::ResolveCueTargetActor() const
 	const UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return nullptr;
 
-	return Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
+	return Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
 }
 
 FCombatSignal UCCombatSignalSourceComponent::BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser) const

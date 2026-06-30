@@ -5,7 +5,7 @@
 #include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_SelectAlertPoint::UCBTTask_SelectAlertPoint()
 {
@@ -23,12 +23,12 @@ EBTNodeResult::Type UCBTTask_SelectAlertPoint::ExecuteTask(UBehaviorTreeComponen
 	APawn* pawn = aiController->GetPawn();
 	if (!IsValid(pawn)) return EBTNodeResult::Failed;
 
-	AActor* target = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
+	AActor* target = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
 	if (!IsValid(target)) return EBTNodeResult::Failed;
 
-	bool bUseAlertStep = blackboardComp->GetValueAsBool(CAIKey::Alert::bUseAlertStep);
-	float stepForwardDistance = blackboardComp->GetValueAsFloat(CAIKey::Alert::StepForwardDistance);
-	float stepSideDistance = blackboardComp->GetValueAsFloat(CAIKey::Alert::StepSideDistance);
+	bool bUseAlertStep = blackboardComp->GetValueAsBool(CAIKey::Alert::bUseAlertStep.KeyName);
+	float stepForwardDistance = blackboardComp->GetValueAsFloat(CAIKey::Alert::StepForwardDistance.KeyName);
+	float stepSideDistance = blackboardComp->GetValueAsFloat(CAIKey::Alert::StepSideDistance.KeyName);
 
 	FVector unitVec_ToTarget = (target->GetActorLocation() - pawn->GetActorLocation()).GetSafeNormal2D();
 	FVector unitVec_Right = FVector::CrossProduct(FVector::UpVector, unitVec_ToTarget);
@@ -36,6 +36,6 @@ EBTNodeResult::Type UCBTTask_SelectAlertPoint::ExecuteTask(UBehaviorTreeComponen
 
 	const FVector alertLocation = pawn->GetActorLocation() + (unitVec_ToTarget * stepForwardDistance) + (unitVec_Right * side * stepSideDistance);
 
-	blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation, alertLocation);
+	blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation.KeyName, alertLocation);
 	return EBTNodeResult::Succeeded;
 }

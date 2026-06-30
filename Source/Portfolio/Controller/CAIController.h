@@ -73,9 +73,11 @@ private:
 	// Blackboard Setup
 	bool SetupBlackboardComponent();
 
-	// Blackboard Runtime Value
-	bool SetInitialBlackboardRuntimeValues();
-	void ClearBlackboardRuntimeValues();
+	// Blackboard Value
+	bool InitializeBlackboardValues();
+	void InitializeCustomBlackboardValues(class UBlackboardComponent* InBlackboardComp, const class APawn* InOwnerPawn, TSet<FName>& InOutPendingKeys) const;
+
+	void ClearBlackboardValues();
 
 	// Behavior Tree Runtime
 	bool StartBehaviorTreeRuntime();
@@ -95,11 +97,6 @@ private:
 public:
 	// Query
 	EPerceptionBuildResult BuildPerceptionContext(FTargetData& OutTargetData);
-
-private:
-	// Blackboard Validation
-	bool ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const;
-	bool ValidateBlackboardKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const;
 
 private:
 	// Target Data

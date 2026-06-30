@@ -6,7 +6,7 @@
 
 #include "Character/Enemy/CEnemy.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 #include "Type/CActionOrchestrationStructure.h"
 
@@ -26,10 +26,10 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
 	if (!IsValid(enemy)) return EBTNodeResult::Failed;
 
-	const bool bCanCombatAction = blackboardComp->GetValueAsBool(CAIKey::Engage::bCanCombatAction);
+	const bool bCanCombatAction = blackboardComp->GetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName);
 	if (!bCanCombatAction) return EBTNodeResult::Failed;
 
-	const bool bIsCombatAction = blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction);
+	const bool bIsCombatAction = blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName);
 	if (bIsCombatAction) return EBTNodeResult::Failed;
 
 	if (bStopMovementOnStart)
@@ -44,7 +44,7 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	const float nextCombatActionTime = currentTime + enemy->GetCombatActionCooldown();
 	
 	// Set Cooldown
-	blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime, nextCombatActionTime);
+	blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName, nextCombatActionTime);
 
 	return EBTNodeResult::Succeeded;
 }

@@ -4,7 +4,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_WaitEndReaction::UCBTTask_WaitEndReaction()
 {
@@ -26,7 +26,7 @@ void UCBTTask_WaitEndReaction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8
 		return;
 	}
 
-	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
+	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
 
 	if (!bIsActiveReaction)
 	{

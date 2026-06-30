@@ -3,7 +3,7 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTDecorator_HasValidTarget::UCBTDecorator_HasValidTarget()
 {
@@ -15,12 +15,12 @@ bool UCBTDecorator_HasValidTarget::CalculateRawConditionValue(UBehaviorTreeCompo
 	const UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return false;
 
-	const UObject* target = blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor);
+	const UObject* target = blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
 	if (!IsValid(target)) return false;
 
 	if (bRequireLOS)
 	{
-		const bool bHasLOS = blackboardComp->GetValueAsBool(CAIKey::Perception::bHasLOS);
+		const bool bHasLOS = blackboardComp->GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
 		if (!bHasLOS) return false;
 	}
 

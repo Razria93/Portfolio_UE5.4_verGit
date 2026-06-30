@@ -1,96 +1,99 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AI/Blackboard/CAIKeyFactory.h"
+#include "Type/CHealthStructure.h"
+#include "Type/CStateStructure.h"
 
 namespace CAIKey
 {
 	namespace Targeting
 	{
-		static const FName TargetActor = "TargetActor";							// Object(Actor)
-		static const FName TargetPriority = "TargetPriority";					// Float
+		static const FAIBlackboardKeySpec TargetActor = CAIKeyFactory::FixedObjectNull(TEXT("TargetActor"));
+		static const FAIBlackboardKeySpec TargetPriority = CAIKeyFactory::FixedInt(TEXT("TargetPriority"), INT_MAX);
 	}
 
 	namespace State
 	{
-		static const FName AIIntentState = "AIIntentState";						// Enum(EAIIntentState)
+		static const FAIBlackboardKeySpec AIIntentState = CAIKeyFactory::FixedEnum(TEXT("AIIntentState"), static_cast<uint8>(EAIIntentState::Idle));
 	}
 
 	namespace Perception
 	{
-		static const FName bHasLOS = "bHasLOS";									// Bool
-		static const FName LastSeenTime = "LastSeenTime";						// Float
-		static const FName LastKnownLocation = "LastKnownLocation";				// Vector
+		static const FAIBlackboardKeySpec bHasLOS = CAIKeyFactory::FixedBool(TEXT("bHasLOS"), false);
+		static const FAIBlackboardKeySpec LastSeenTime = CAIKeyFactory::RuntimeFloat(TEXT("LastSeenTime"));
+		static const FAIBlackboardKeySpec LastKnownLocation = CAIKeyFactory::RuntimeVector(TEXT("LastKnownLocation"));
 	}
 
 	namespace Metric
 	{
-		static const FName DistanceToTarget = "DistanceToTarget";				// Float
-		static const FName DistanceToHome = "DistanceToHome";					// Float
+		static const FAIBlackboardKeySpec DistanceToTarget = CAIKeyFactory::RuntimeFloat(TEXT("DistanceToTarget"));
+		static const FAIBlackboardKeySpec DistanceToHome = CAIKeyFactory::RuntimeFloat(TEXT("DistanceToHome"));
 	}
 
 	namespace Navigation
 	{
-		static const FName bReturnHome = "bReturnHome";							// Bool
-		static const FName HomeLocation = "HomeLocation";						// Vector
+		static const FAIBlackboardKeySpec bReturnHome = CAIKeyFactory::FixedBool(TEXT("bReturnHome"), false);
+		static const FAIBlackboardKeySpec HomeLocation = CAIKeyFactory::FromOwnerLocation(TEXT("HomeLocation"));
 	}
 
 	namespace Patrol
 	{
-		static const FName bUsePatrol = "bUsePatrol";							// Bool
-		static const FName PatrolPath = "PatrolPath";							// Object(ACPatrolPath)
-		static const FName PatrolMode = "PatrolMode";							// Enum(EPatrolMode)
+		static const FAIBlackboardKeySpec bUsePatrol = CAIKeyFactory::CustomBool(TEXT("bUsePatrol"));
+		static const FAIBlackboardKeySpec PatrolPath = CAIKeyFactory::CustomObject(TEXT("PatrolPath"));
+		static const FAIBlackboardKeySpec PatrolMode = CAIKeyFactory::CustomEnum(TEXT("PatrolMode"));
 
-		static const FName bPatrolReverse = "bPatrolReverse";					// Bool
-		static const FName PatrolLocation = "PatrolLocation";					// Vector
-		static const FName PatrolIndex = "PatrolIndex";							// Int
+		static const FAIBlackboardKeySpec bPatrolReverse = CAIKeyFactory::FixedBool(TEXT("bPatrolReverse"), false);
+		static const FAIBlackboardKeySpec PatrolLocation = CAIKeyFactory::FromOwnerLocation(TEXT("PatrolLocation"));
+		static const FAIBlackboardKeySpec PatrolIndex = CAIKeyFactory::FixedInt(TEXT("PatrolIndex"), -1);
 	}
 
 	namespace Investigate
 	{
-		static const FName bUseInvestigate = "bUseInvestigate";					// Bool
-		static const FName InvestigateDuration = "InvestigateDuration";			// Float
-		static const FName InvestigateMaxIndex = "InvestigateMaxIndex";			// Int
+		static const FAIBlackboardKeySpec bUseInvestigate = CAIKeyFactory::CustomBool(TEXT("bUseInvestigate"));
+		static const FAIBlackboardKeySpec InvestigateDuration = CAIKeyFactory::CustomFloat(TEXT("InvestigateDuration"));
+		static const FAIBlackboardKeySpec InvestigateMaxIndex = CAIKeyFactory::CustomInt(TEXT("InvestigateMaxIndex"));
 
-		static const FName bCanInvestigate = "bCanInvestigate";					// Bool
-		static const FName bIsInvestigating = "bIsInvestigating";				// Bool
-		static const FName InvestigateLocation = "InvestigateLocation";			// Vector
-		static const FName InvestigateIndex = "InvestigateIndex";				// Int
+		static const FAIBlackboardKeySpec bCanInvestigate = CAIKeyFactory::FixedBool(TEXT("bCanInvestigate"), false);
+		static const FAIBlackboardKeySpec bIsInvestigating = CAIKeyFactory::FixedBool(TEXT("bIsInvestigating"), false);
+		static const FAIBlackboardKeySpec InvestigateLocation = CAIKeyFactory::FromOwnerLocation(TEXT("InvestigateLocation"));
+		static const FAIBlackboardKeySpec InvestigateIndex = CAIKeyFactory::FixedInt(TEXT("InvestigateIndex"), INDEX_NONE);
 	}
 
 	namespace Chase
 	{
-		static const FName ChaseOffsetRange = "ChaseOffsetRange";				// Float
-		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";				// Float
-		static const FName ChaseExitBuffer = "ChaseExitBuffer";					// Float
+		static const FAIBlackboardKeySpec ChaseOffsetRange = CAIKeyFactory::CustomFloat(TEXT("ChaseOffsetRange"));
+		static const FAIBlackboardKeySpec ChaseEnterBuffer = CAIKeyFactory::CustomFloat(TEXT("ChaseEnterBuffer"));
+		static const FAIBlackboardKeySpec ChaseExitBuffer = CAIKeyFactory::CustomFloat(TEXT("ChaseExitBuffer"));
 	}
 
 	namespace Alert
 	{
-		static const FName bUseAlertStep = "bUseAlertStep";						// Bool
-		static const FName StepForwardDistance = "StepForwardDistance";			// Float
-		static const FName StepSideDistance = "StepSideDistance";				// Float
+		static const FAIBlackboardKeySpec bUseAlertStep = CAIKeyFactory::CustomBool(TEXT("bUseAlertStep"));
+		static const FAIBlackboardKeySpec StepForwardDistance = CAIKeyFactory::CustomFloat(TEXT("StepForwardDistance"));
+		static const FAIBlackboardKeySpec StepSideDistance = CAIKeyFactory::CustomFloat(TEXT("StepSideDistance"));
 
-		static const FName bInAlertRange = "bInAlertRange";						// Bool
-		static const FName AlertStepLocation = "AlertStepLocation";				// Vector
+		static const FAIBlackboardKeySpec bInAlertRange = CAIKeyFactory::FixedBool(TEXT("bInAlertRange"), false);
+		static const FAIBlackboardKeySpec AlertStepLocation = CAIKeyFactory::FromOwnerLocation(TEXT("AlertStepLocation"));
 	}
 
 	namespace Engage
 	{
-		static const FName bShouldEngage = "bShouldEngage";						// Bool	 (UpdateAIContext)
-		static const FName bCanCombatAction = "bCanCombatAction";				// Bool	 (UpdateEngageContext)
+		static const FAIBlackboardKeySpec bShouldEngage = CAIKeyFactory::FixedBool(TEXT("bShouldEngage"), false);
+		static const FAIBlackboardKeySpec bCanCombatAction = CAIKeyFactory::FixedBool(TEXT("bCanCombatAction"), false);
 		
-		static const FName bIsCombatAction = "bIsCombatAction";					// Bool	 (OnActionTypeChanged)
-		static const FName bInEngageRange = "bInEngageRange";					// Bool	 (UpdateAIContext)
-		static const FName NextCombatActionTime = "NextCombatActionTime";		// Float (StartCombatAction)
+		static const FAIBlackboardKeySpec bIsCombatAction = CAIKeyFactory::FixedBool(TEXT("bIsCombatAction"), false);
+		static const FAIBlackboardKeySpec bInEngageRange = CAIKeyFactory::FixedBool(TEXT("bInEngageRange"), false);
+		static const FAIBlackboardKeySpec NextCombatActionTime = CAIKeyFactory::FixedFloat(TEXT("NextCombatActionTime"), -1.f);
 	}
 	
 	namespace Reaction
 	{
-		static const FName bIsActiveReaction = "bIsActiveReaction";				// Bool
+		static const FAIBlackboardKeySpec bIsActiveReaction = CAIKeyFactory::FixedBool(TEXT("bIsActiveReaction"), false);
 	}
 
 	namespace Dead
 	{
-		static const FName DeadState = "DeadState";								// Enum(EDeadState)
+		static const FAIBlackboardKeySpec DeadState = CAIKeyFactory::FixedEnum(TEXT("DeadState"), static_cast<uint8>(EDeadState::Alive));
 	}
 }

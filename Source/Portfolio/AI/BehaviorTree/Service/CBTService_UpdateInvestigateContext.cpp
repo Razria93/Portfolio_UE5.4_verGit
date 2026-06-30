@@ -3,7 +3,7 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 {
@@ -22,18 +22,18 @@ void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& Owne
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
-	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bUseInvestigate)) return;
-	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bCanInvestigate)) return;
-	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating)) return;
+	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName)) return;
+	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName)) return;
+	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName)) return;
 
-	const float lastSeenTime = blackboardComp->GetValueAsFloat(CAIKey::Perception::LastSeenTime);
-	const float investigateDuration = blackboardComp->GetValueAsFloat(CAIKey::Investigate::InvestigateDuration);
+	const float lastSeenTime = blackboardComp->GetValueAsFloat(CAIKey::Perception::LastSeenTime.KeyName);
+	const float investigateDuration = blackboardComp->GetValueAsFloat(CAIKey::Investigate::InvestigateDuration.KeyName);
 
 	const bool bTimeout = (investigateDuration > 0.f) && ((world->GetTimeSeconds() - lastSeenTime) >= investigateDuration);
 
 	if (bTimeout)
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate, false);
+		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
 		FLog::Log(TEXT("[Investigate Time out]"));
 	}
 }

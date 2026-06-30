@@ -23,14 +23,17 @@
 1. refactor/unreal-reference-safety-v1
 2. refactor/character-component-reference-di
 3. refactor/runtime-component-lookup-policy
-4. refactor/debug-log-policy-v1
-5. refactor/todo-status-cleanup
+4. refactor/ai-blackboard-key-registry
+5. perf/ai-update-interval-audit
 6. refactor/tuning-constants-cleanup
-7. refactor/naming-typo-api-cleanup
-8. refactor/api-const-consistency
-9. refactor/ai-blackboard-key-registry
-10. perf/ai-update-interval-audit
-11. refactor/enhanced-input-migration
+7. refactor/api-const-consistency
+8. refactor/debug-log-policy-v1
+9. refactor/naming-typo-api-cleanup
+10. refactor/todo-status-cleanup
+11. docs/pr-record-format-sweep
+
+별도 후순위:
+- refactor/enhanced-input-migration
 ```
 
 ---
@@ -488,7 +491,7 @@ refactor/runtime-component-lookup-policy
 
 ### P31. Component Lifecycle Cleanup Policy
 
-- 상태: 진행 중
+- 상태: 완료
 - 브랜치: `refactor/component-lifecycle-cleanup-policy`
 - PR: `P31_UE5_Portfolio_Pull_Request.md`
 - 목표: P29~P30 이후 남은 actor / component lifecycle cleanup 기준을 정리하고, `BeginPlay` / `EndPlay` / delegate / timer / spawned actor / runtime cache 정리 정책을 고정한다.
@@ -532,4 +535,63 @@ Runtime cleanup 명명 사용처: 약 20개+
 - git diff --check
 - PortfolioEditor Win64 Development 빌드
 - PIE 기본 combat loop smoke test
+```
+
+### P32. AI Blackboard Key Registry
+
+- 상태: 진행 중
+- 브랜치: `refactor/ai-blackboard-key-registry`
+- PR: `P32_UE5_Portfolio_Pull_Request.md`
+- 목표: `CAIKey` 정의를 spec 기반으로 정리하고, blackboard required key 검증 기준과 initial / clear runtime value 흐름을 정리하여 키 추가 / 삭제 시 누락 위험을 줄인다.
+- 관련 문서: `N15_AI_Blackboard_Key_Registry_Policy_Note.md`, `N16_AI_Blackboard_Key_Contract_Decision_Note.md`
+- 제외 범위: BehaviorTree asset 재설계, BT Service / Task 행동 로직 변경, AI update interval 튜닝, Enhanced Input migration
+
+준비 단계 조회 결과:
+
+```text
+핵심 파일:
+1. Source/Portfolio/AI/Blackboard/CAIKey.h
+2. Source/Portfolio/AI/Blackboard/CAIKeyTypes.h
+3. Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
+4. Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
+5. Source/Portfolio/AI/Blackboard/CAIBlackboardValueHelper.h
+6. Source/Portfolio/Controller/CAIController.*
+7. Source/Portfolio/AI/BehaviorTree/Service/*
+8. Source/Portfolio/AI/BehaviorTree/Task/*
+9. Source/Portfolio/AI/BehaviorTree/Decorator/*
+10. Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
+
+blackboard key 직접 사용 파일:
+23개
+```
+
+우선 검토 대상:
+
+```text
+1. CAIKey.h
+   -> key category namespace는 유지
+   -> key name / key type / required 기준은 `FAIBlackboardKeySpec`로 결합
+
+2. CAIKeyTypes.h / CAIKeyFactory.h / CAIKeyRegistry.h / CAIBlackboardValueHelper.h
+   -> key spec 타입, 생성 helper, 전체 등록 / 검증 / value 적용 책임 분리
+
+3. ACAIController
+   -> required key validation은 registry 순회로 이동
+   -> InitializeBlackboardValues는 helper common 초기화 / controller custom 초기화 / helper pending 검증 흐름으로 정리
+   -> fixed / owner / clear 공통 적용은 helper로 분리
+   -> custom value source 적용은 controller에 유지
+
+4. BT Service / Task / Decorator
+   -> CAIKey를 직접 읽고 쓰는 runtime 사용처
+   -> 이번 작업에서는 로직 변경 없이 registry 기준과 맞는지 확인
+```
+
+검증 기준:
+
+```text
+- CAIKey spec / registry / ValidateRequiredKeys 사용처 정적 확인
+- InitializeBlackboardValues / ClearBlackboardValues 누락 여부 확인
+- git diff --check
+- PortfolioEditor Win64 Development 빌드
+- PIE AI basic loop smoke test
 ```

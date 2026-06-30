@@ -3,7 +3,7 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_StartInvestigate::UCBTTask_StartInvestigate()
 {
@@ -18,13 +18,13 @@ EBTNodeResult::Type UCBTTask_StartInvestigate::ExecuteTask(UBehaviorTreeComponen
 	UWorld* world = OwnerComp.GetWorld();
 	if (!IsValid(world)) return EBTNodeResult::Failed;
 
-	const FVector lastKnownLocation = blackboardComp->GetValueAsVector(CAIKey::Perception::LastKnownLocation);
+	const FVector lastKnownLocation = blackboardComp->GetValueAsVector(CAIKey::Perception::LastKnownLocation.KeyName);
 
-	blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate, true);
-	blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating, true);
+	blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, true);
+	blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName, true);
 
-	blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation, lastKnownLocation);
-	blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, 0);
+	blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation.KeyName, lastKnownLocation);
+	blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, 0);
 
 	return EBTNodeResult::Succeeded;
 }

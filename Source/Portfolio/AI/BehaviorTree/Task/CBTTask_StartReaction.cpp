@@ -4,7 +4,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_StartReaction::UCBTTask_StartReaction()
 {
@@ -16,7 +16,7 @@ EBTNodeResult::Type UCBTTask_StartReaction::ExecuteTask(UBehaviorTreeComponent& 
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
+	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
 
 	return bIsActiveReaction ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

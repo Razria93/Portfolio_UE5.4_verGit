@@ -3,7 +3,7 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_AdvanceInvestigateIndex::UCBTTask_AdvanceInvestigateIndex()
 {
@@ -15,19 +15,19 @@ EBTNodeResult::Type UCBTTask_AdvanceInvestigateIndex::ExecuteTask(UBehaviorTreeC
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-	const int32 maxIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex);
-	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateIndex);
+	const int32 maxIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex.KeyName);
+	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName);
 	const int32 nextIndex = currentIndex + 1;
 
 	if (nextIndex > maxIndex)
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate, false);
-		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, currentIndex);
+		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
+		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, currentIndex);
 		FLog::Log(TEXT("[Index Done]"));
 	}
 	else
 	{
-		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, nextIndex);
+		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, nextIndex);
 	}
 
 	return EBTNodeResult::Succeeded;

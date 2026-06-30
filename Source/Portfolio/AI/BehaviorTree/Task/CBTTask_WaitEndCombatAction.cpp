@@ -3,7 +3,7 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_WaitEndCombatAction::UCBTTask_WaitEndCombatAction()
 {
@@ -19,7 +19,7 @@ EBTNodeResult::Type UCBTTask_WaitEndCombatAction::ExecuteTask(UBehaviorTreeCompo
 		return EBTNodeResult::Failed;
 	}
 
-	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction))
+	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName))
 	{
 		return EBTNodeResult::Succeeded;
 	}
@@ -36,7 +36,7 @@ void UCBTTask_WaitEndCombatAction::TickTask(UBehaviorTreeComponent& OwnerComp, u
 		return;
 	}
 
-	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction))
+	if (!blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName))
 	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		return;
