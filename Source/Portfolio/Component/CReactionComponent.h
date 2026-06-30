@@ -79,6 +79,7 @@ private:
 protected:
 	// Lifecycle
 	void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	// Query
@@ -117,6 +118,21 @@ public:
 	void HandleReactionFeedback(FName InTriggerKey);
 	void HandleReactionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleReactionFeedbackWindowEnd(FName InTriggerKey);
+
+private:
+	// Runtime Lifecycle
+	void InitializeReactionRuntime();
+	void UninitializeReactionRuntime();
+
+private:
+	// Runtime Map
+	void BuildReactionRuntimeMaps();
+	void ClearReactionRuntimeMaps();
+
+private:
+	// Active Runtime State
+	void SetInitialActiveReactionRuntimeState();
+	void ResetActiveReactionRuntimeState();
 
 private:
 	// Data Build (temporary: move to DataAsset)

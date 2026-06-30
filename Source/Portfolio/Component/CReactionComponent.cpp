@@ -59,12 +59,56 @@ void UCReactionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Rebuild All
+	InitializeReactionRuntime();
+}
+
+void UCReactionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UninitializeReactionRuntime();
+
+	Super::EndPlay(EndPlayReason);
+}
+
+// Runtime Lifecycle
+
+void UCReactionComponent::InitializeReactionRuntime()
+{
+	BuildReactionRuntimeMaps();
+	SetInitialActiveReactionRuntimeState();
+}
+
+void UCReactionComponent::UninitializeReactionRuntime()
+{
+	ResetActiveReactionRuntimeState();
+	ClearReactionRuntimeMaps();
+}
+
+// Runtime Map
+
+void UCReactionComponent::BuildReactionRuntimeMaps()
+{
 	BuildReactionDataMap(true);
 	BuildReactionExecutorMap(true);
+}
 
-	// Init Reaction State
+void UCReactionComponent::ClearReactionRuntimeMaps()
+{
+	ReactionExecutorMap.Reset();
+	ReactionDataMap.Reset();
+}
+
+// Active Runtime State
+
+void UCReactionComponent::SetInitialActiveReactionRuntimeState()
+{
 	ActiveReactionType = EReactionType::Idle;
+}
+
+void UCReactionComponent::ResetActiveReactionRuntimeState()
+{
+	ActiveReactionType = EReactionType::None;
+	ActiveReactionData = FReactionData();
+	ActiveReactionExecutor = nullptr;
 }
 
 // Query

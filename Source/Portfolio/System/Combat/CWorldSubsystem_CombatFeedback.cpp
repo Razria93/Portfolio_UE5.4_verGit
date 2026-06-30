@@ -5,6 +5,20 @@
 
 #include "Type/CWorldSubSystemStructure.h"
 
+void UCWorldSubsystem_CombatFeedback::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+}
+
+void UCWorldSubsystem_CombatFeedback::Deinitialize()
+{
+	ClearFeedbackRuntimeState();
+
+	Super::Deinitialize();
+}
+
+// Request
+
 void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHitStopRequest)
 {
 	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] Request HitStop"));
@@ -39,6 +53,8 @@ void UCWorldSubsystem_CombatFeedback::RequestCameraShake(const FCameraShakeReque
 {
 	OnCameraShakeRequested.Broadcast(InCameraShakeRequest);
 }
+
+// HitStop
 
 void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDuration, float InDilation)
 {
@@ -86,6 +102,48 @@ void UCWorldSubsystem_CombatFeedback::RestoreHitStop(TWeakObjectPtr<AActor> InAc
 	ActiveHitStopMap.Remove(InActorKey);
 	CachedTimeDilationMap.Remove(InActorKey);
 }
+
+void UCWorldSubsystem_CombatFeedback::ClearHitStop()
+{
+	if (UWorld* world = GetWorld())
+	{
+		FTimerManager& timerManager = world->GetTimerManager();
+
+		for (const TPair<TWeakObjectPtr<AActor>, FTimerHandle>& pair : ActiveHitStopMap)
+		{
+			FTimerHandle timerHandle = pair.Value;
+			timerManager.ClearTimer(timerHandle);
+		}
+	}
+
+	for (const TPair<TWeakObjectPtr<AActor>, float>& pair : CachedTimeDilationMap)
+	{
+		AActor* actor = pair.Key.Get();
+		if (!IsValid(actor)) continue;
+
+		actor->CustomTimeDilation = pair.Value;
+	}
+
+	ActiveHitStopMap.Reset();
+	CachedTimeDilationMap.Reset();
+}
+
+// CameraShake
+
+void UCWorldSubsystem_CombatFeedback::ClearCameraShake()
+{
+	OnCameraShakeRequested.Clear();
+}
+
+// Runtime State
+
+void UCWorldSubsystem_CombatFeedback::ClearFeedbackRuntimeState()
+{
+	ClearHitStop();
+	ClearCameraShake();
+}
+
+// Debug
 
 void UCWorldSubsystem_CombatFeedback::PrintHitStopConsumeInfo(AActor* InActor, float InDuration, float InDilation) const
 {

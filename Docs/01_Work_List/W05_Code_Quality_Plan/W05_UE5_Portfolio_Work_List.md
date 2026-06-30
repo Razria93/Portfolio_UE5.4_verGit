@@ -485,3 +485,51 @@ refactor/runtime-component-lookup-policy
 6. 필요한 코드 수정만 반영
 7. 문서와 PR 기록 업데이트
 ```
+
+### P31. Component Lifecycle Cleanup Policy
+
+- 상태: 진행 중
+- 브랜치: `refactor/component-lifecycle-cleanup-policy`
+- PR: `P31_UE5_Portfolio_Pull_Request.md`
+- 목표: P29~P30 이후 남은 actor / component lifecycle cleanup 기준을 정리하고, `BeginPlay` / `EndPlay` / delegate / timer / spawned actor / runtime cache 정리 정책을 고정한다.
+- 관련 문서: `N13_Component_Lifecycle_Cleanup_Policy_Note.md`, `N14_Dead_Destroy_And_Execution_Cleanup_Followup_Note.md`
+- 제외 범위: Dead 이후 Actor Destroy 구현, Action / Reaction 실행 종료 정책 재설계, montage stop 정책 변경, Guard / Reaction runtime cleanup 재설계, 모든 injected reference 일괄 null 처리
+
+준비 단계 조회 결과:
+
+```text
+Lifecycle hook 보유 파일: 11개
+Delegate / Timer 사용 파일: 8개
+SpawnActor / NewObject 생성 경로: 3개
+Runtime cleanup 명명 사용처: 약 20개+
+```
+
+우선 검토 대상:
+
+```text
+1. ACAIController
+   -> perception delegate bind / unbind
+   -> TargetDataMap / ControlledPawn_Cached cleanup
+
+2. UCWorldSubsystem_CombatFeedback
+   -> hit stop timer handle cleanup
+   -> cached time dilation restore policy
+
+3. UCActionComponent / UCReactionComponent
+   -> executor object ownership
+   -> active runtime context teardown 기준
+   -> execution 흐름 영향도가 크면 문서화 후 후속 분리
+
+4. 후속 분리 후보
+   -> Dead Destroy Flow
+   -> Execution Runtime Cleanup Boundary
+```
+
+검증 기준:
+
+```text
+- rg 기반 lifecycle / delegate / timer / spawn 사용처 전수 확인
+- git diff --check
+- PortfolioEditor Win64 Development 빌드
+- PIE 기본 combat loop smoke test
+```

@@ -7,6 +7,18 @@
 
 #include "Type/CWorldSubSystemStructure.h"
 
+void UCWorldSubsystem_CombatEngage::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+}
+
+void UCWorldSubsystem_CombatEngage::Deinitialize()
+{
+	ClearEngageRuntimeState();
+
+	Super::Deinitialize();
+}
+
 void UCWorldSubsystem_CombatEngage::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -24,18 +36,7 @@ TStatId UCWorldSubsystem_CombatEngage::GetStatId() const
 	RETURN_QUICK_DECLARE_CYCLE_STAT(UCWorldSubsystem_CombatEngage, STATGROUP_Tickables);
 }
 
-void UCWorldSubsystem_CombatEngage::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-}
-
-void UCWorldSubsystem_CombatEngage::Deinitialize()
-{
-	RequestContainer.Reset();
-	AssignmentContainer.Reset();
-
-	Super::Deinitialize();
-}
+// Query
 
 FEngageAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAIController* InCAIController) const
 {
@@ -47,6 +48,8 @@ FEngageAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAI
 	return *found;
 }
 
+// Request
+
 void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & InEngageRequestContext)
 {
 	if (!IsValid(InEngageRequestContext.RequestController)) return;
@@ -54,6 +57,8 @@ void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & 
 	// Override Request
 	RequestContainer.FindOrAdd(InEngageRequestContext.RequestController) = InEngageRequestContext;
 }
+
+// Assignment
 
 void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 {
@@ -112,6 +117,17 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	// 3. Clear RequestContainer
 	RequestContainer.Reset();
 }
+
+// Runtime State
+
+void UCWorldSubsystem_CombatEngage::ClearEngageRuntimeState()
+{
+	ElapsedTime = 0.f;
+	RequestContainer.Reset();
+	AssignmentContainer.Reset();
+}
+
+// Debug
 
 void UCWorldSubsystem_CombatEngage::PrintEngageContext(const ACAIController* InCAIController, const AActor* InActor, const int& InPriority, const int& InIndex, const float& InDistance, const ECombatRole& InCombatRole) const
 {

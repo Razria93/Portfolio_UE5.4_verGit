@@ -69,12 +69,14 @@ void UCActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Rebuild All
-	BuildActionDataMap(true);
-	BuildActionExecutorMap(true);
+	InitializeActionRuntime();
+}
 
-	// Init Action State
-	ActiveActionType = EActionType::Idle;
+void UCActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UninitializeActionRuntime();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -88,6 +90,49 @@ void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 		actionExecutor->Tick(DeltaTime);
 	}
+}
+
+// Runtime Lifecycle
+
+void UCActionComponent::InitializeActionRuntime()
+{
+	BuildActionRuntimeMaps();
+	SetInitialActiveActionRuntimeState();
+}
+
+void UCActionComponent::UninitializeActionRuntime()
+{
+	ResetActiveActionRuntimeState();
+	ClearActionRuntimeMaps();
+}
+
+// Runtime Map
+
+void UCActionComponent::BuildActionRuntimeMaps()
+{
+	BuildActionDataMap(true);
+	BuildActionExecutorMap(true);
+}
+
+void UCActionComponent::ClearActionRuntimeMaps()
+{
+	ActionExecutorMap.Reset();
+	ActionDataMap.Reset();
+}
+
+// Active Runtime State
+
+void UCActionComponent::SetInitialActiveActionRuntimeState()
+{
+	ActiveActionType = EActionType::Idle;
+}
+
+void UCActionComponent::ResetActiveActionRuntimeState()
+{
+	ActiveActionType = EActionType::None;
+	ActiveActionIndex = INDEX_NONE;
+	ActiveActionData = FActionData();
+	ActiveActionExecutor = nullptr;
 }
 
 // Query

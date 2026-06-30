@@ -36,5 +36,6 @@
 | P28 | Unreal 참조 안전성 v1 | `P28_UE5_Portfolio_Pull_Request.md` | `refactor/unreal-reference-safety-v1` |  | W05, N08, N09 |
 | P29 | Character Component 참조 주입 / 복구 | `P29_UE5_Portfolio_Pull_Request.md` | `refactor/character-component-reference-di` |  | W05, N10, N11, B14 |
 | P30 | Runtime Component 조회 정책 | `P30_UE5_Portfolio_Pull_Request.md` | `refactor/runtime-component-lookup-policy` |  | W05, N12 |
+| P31 | Component Lifecycle Cleanup Policy | `P31_UE5_Portfolio_Pull_Request.md` | `refactor/component-lifecycle-cleanup-policy` |  | W05, N13, N14 |
 
 ---

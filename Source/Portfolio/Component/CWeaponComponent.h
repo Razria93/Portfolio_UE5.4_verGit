@@ -55,6 +55,7 @@ private:
 
 protected:
 	// Lifecycle
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
@@ -79,7 +80,7 @@ public:
 public:
 	void PushContext(const FActionContext& InActionContext);
 	void ClearContext();
-	void ClearRuntimeWeaponState();
+	void ClearWeaponRuntimeState();
 
 public:
 	void OpenCollisionWindow(FName InCollisionName);
@@ -87,6 +88,13 @@ public:
 
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);
+
+private:
+	// Runtime Lifecycle
+	void UninitializeWeaponRuntime();
+
+	// Weapon Actor
+	void DestroyWeaponActor();
 
 private:
 	FWeaponContext BuildWeaponContext() const;
