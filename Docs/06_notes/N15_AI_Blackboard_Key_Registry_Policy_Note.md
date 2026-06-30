@@ -48,10 +48,10 @@ CAIKey.h
 ACAIController::ValidateBlackboardKeys
 -> required key 수동 검증
 
-ACAIController::InitializeBlackboardRuntimeValues
+ACAIController::InitializeBlackboardValues
 -> initial runtime value 수동 설정
 
-ACAIController::ClearBlackboardRuntimeValues
+ACAIController::ClearBlackboardValues
 -> teardown clear 대상 수동 나열
 
 BT Service / Task / Decorator
@@ -69,8 +69,8 @@ BT Service / Task / Decorator
 ```text
 CAIKey.h
 ValidateBlackboardKeys
-InitializeBlackboardRuntimeValues
-ClearBlackboardRuntimeValues
+InitializeBlackboardValues
+ClearBlackboardValues
 BT node usage
 Blackboard asset
 ```
@@ -179,29 +179,30 @@ ACAIController::SetupBlackboardComponent
 ### 4. Runtime value setup은 두 단계로 나눈다
 
 ```text
-InitializeBlackboardRuntimeValues
--> ApplyInitialBlackboardValues: registry 1회 순회
+InitializeBlackboardValues
+-> CAIBlackboardValueHelper::InitializeValues: registry 1회 순회
 -> Fixed / FromOwnerLocation / Custom policy 분기
 -> Custom key는 pending set에 등록
--> ApplyCustomBlackboardValues에서 custom value 명시 적용
+-> InitializeCustomBlackboardValues에서 custom value 명시 적용
 -> 처리된 custom key는 pending set에서 제거
--> 남은 custom key가 있으면 ensure
+-> CAIBlackboardValueHelper::ValidateCustomKeysApplied로 누락 검증
 ```
 
 고정 초기값과 owner 위치 기반 값은 key spec의 policy로 자동 적용한다.
 
-Custom value는 key마다 source가 다르므로 controller helper에서 명시 적용한다. 이 부분까지 함수 포인터 / lambda / variant로 자동화하면 key contract가 gameplay object access까지 알게 되므로 이번 범위에서는 제외한다.
+Custom value는 key마다 source가 다르므로 controller에서 명시 적용한다. 이 부분까지 함수 포인터 / lambda / variant로 자동화하면 key contract가 gameplay object access까지 알게 되므로 이번 범위에서는 제외한다.
 
-`Custom` policy는 registry가 자동 적용하지 않는 domain-specific 초기값을 의미한다. 현재 구현에서는 `ACAIController::ApplyCustomBlackboardValues`가 custom value를 명시적으로 적용한다.
+`Custom` policy는 registry가 자동 적용하지 않는 domain-specific 초기값을 의미한다. 현재 구현에서는 `ACAIController::InitializeCustomBlackboardValues`가 custom value를 명시적으로 적용한다.
 
-Custom key는 조용히 무시하지 않는다. Registry 순회 중 pending set에 등록하고, domain-specific 적용이 끝난 뒤에도 남아 있으면 ensure로 누락을 드러낸다.
+Custom key는 조용히 무시하지 않는다. Registry 순회 중 pending set에 등록하고, domain-specific 적용이 끝난 뒤에도 남아 있으면 `CAIBlackboardValueHelper`의 ensure로 누락을 드러낸다.
 
 `RuntimeValue`는 key name / type / required / clear 계약은 필요하지만 possession 초기화 시점에는 의미 있는 값이 없는 key에 사용한다. 예를 들어 `LastSeenTime`, `LastKnownLocation`, `DistanceToTarget`, `DistanceToHome`은 perception / BT service update에서 의미 있는 runtime 값으로 채워진다.
 
 ### 5. Clear는 registry 기반으로 단순화한다
 
 ```text
-ClearBlackboardRuntimeValues
+ClearBlackboardValues
+-> CAIBlackboardValueHelper::ClearValues 호출
 -> CAIKeyRegistry::GetKeySpecs 순회
 -> bClearOnRuntimeTeardown 대상만 ClearValue 반복
 ```
@@ -231,6 +232,14 @@ CAIKeyRegistry.h
 -> ValidateRequiredKeys()
 -> missing required key ensure
 
+CAIBlackboardValueHelper.h
+-> InitializeValues()
+-> ApplyFixedValue()
+-> ApplyOwnerLocationValue()
+-> ApplyCustom*()
+-> ValidateCustomKeysApplied()
+-> ClearValues()
+
 BT Service / Task / Decorator
 -> CAIKey::Category::KeySpec.KeyName 사용
 ```
@@ -242,7 +251,8 @@ BT Service / Task / Decorator
 - key name / expected type / initial policy / fixed default 정의 위치 결합
 - 전체 key 등록 목록은 registry에서 별도 관리
 - Blackboard API에는 명시적으로 KeyName만 전달
-- fixed / owner initial value는 registry 순회로 적용
+- fixed / owner initial value와 clear runtime value는 helper에서 registry 순회로 적용
+- custom value는 controller가 source를 읽고 helper apply API로 적용
 ```
 
 ### 다른 후보를 사용하지 않은 이유
@@ -271,6 +281,7 @@ Source/Portfolio/AI/Blackboard/CAIKeyTypes.h
 Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
 Source/Portfolio/AI/Blackboard/CAIKey.h
 Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
+Source/Portfolio/AI/Blackboard/CAIBlackboardValueHelper.h
 Source/Portfolio/Controller/CAIController.h
 Source/Portfolio/Controller/CAIController.cpp
 ```
@@ -310,13 +321,14 @@ Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 - 검증 실패 시 누락 key 목록과 expected type이 ensure로 확인된다.
 - Blackboard API 호출부는 KeySpec이 아니라 KeySpec.KeyName을 전달한다.
 - initial blackboard value 설정이 fixed / owner / custom 기반 value로 구분된다.
-- fixed / owner initial value는 registry 순회로 적용된다.
-- custom value는 controller helper에서 명시 적용된다.
+- fixed / owner initial value는 `CAIBlackboardValueHelper`에서 registry 순회로 적용된다.
+- custom value source 적용은 controller에 남고, blackboard write / pending 검증은 `CAIBlackboardValueHelper`가 처리한다.
+- clear runtime value는 `bClearOnRuntimeTeardown` 기준으로 registry 순회 적용된다.
 - BT node behavior는 변경되지 않는다.
 - 빌드와 PIE AI smoke test가 통과한다.
 ```
 
-## 후속 분리
+## 후속 작업
 
 이번 작업에서는 AI update interval을 조정하지 않는다.
 

@@ -17,6 +17,7 @@
 #include "Type/CAIStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
 #include "AI/BlackBoard/CAIKeyRegistry.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
 
 ACAIController::ACAIController()
 {
@@ -106,7 +107,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 
 	if (!BindPerceptionEvents()) return false;
 	if (!SetupBlackboardComponent()) return false;
-	if (!InitializeBlackboardRuntimeValues()) return false;
+	if (!InitializeBlackboardValues()) return false;
 	if (!StartBehaviorTreeRuntime()) return false;
 
 	return true;
@@ -115,7 +116,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 void ACAIController::UninitializeControllerRuntime()
 {
 	StopBehaviorTreeRuntime();
-	ClearBlackboardRuntimeValues();
+	ClearBlackboardValues();
 	UnbindPerceptionEvents();
 
 	ClearTargetDataMap();
@@ -178,7 +179,7 @@ bool ACAIController::SetupBlackboardComponent()
 
 // Blackboard Runtime Value
 
-bool ACAIController::InitializeBlackboardRuntimeValues()
+bool ACAIController::InitializeBlackboardValues()
 {
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return false;
@@ -186,80 +187,13 @@ bool ACAIController::InitializeBlackboardRuntimeValues()
 
 	TSet<FName> pendingCustomKeys;
 
-	ApplyInitialBlackboardValues(blackboardComp, ControlledPawn_Cached, pendingCustomKeys);
-	ApplyCustomBlackboardValues(blackboardComp, ControlledPawn_Cached, pendingCustomKeys);
+	CAIBlackboardValueHelper::InitializeValues(blackboardComp, ControlledPawn_Cached, pendingCustomKeys);
+	InitializeCustomBlackboardValues(blackboardComp, ControlledPawn_Cached, pendingCustomKeys);
 
-	return ValidateCustomBlackboardKeysApplied(pendingCustomKeys);
+	return CAIBlackboardValueHelper::ValidateCustomKeysApplied(pendingCustomKeys, ControlledPawn_Cached);
 }
 
-void ACAIController::ApplyInitialBlackboardValues(UBlackboardComponent* InBlackboardComp, const APawn* InOwnerPawn, TSet<FName>& OutPendingKeys) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-
-	for (const FAIBlackboardKeySpec& keySpec : CAIKeyRegistry::GetKeySpecs())
-	{
-		switch (keySpec.InitialValuePolicy)
-		{
-		case EAIBlackboardInitialValuePolicy::Fixed:
-			ApplyFixedInitialBlackboardValue(InBlackboardComp, keySpec);
-			break;
-
-		case EAIBlackboardInitialValuePolicy::FromOwnerLocation:
-			ApplyOwnerLocationInitialBlackboardValue(InBlackboardComp, InOwnerPawn, keySpec);
-			break;
-
-		case EAIBlackboardInitialValuePolicy::Custom:
-			OutPendingKeys.Add(keySpec.KeyName);
-			break;
-
-		case EAIBlackboardInitialValuePolicy::None:
-		default:
-			break;
-		}
-	}
-}
-
-void ACAIController::ApplyFixedInitialBlackboardValue(UBlackboardComponent* InBlackboardComp, const FAIBlackboardKeySpec& InKeySpec) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-
-	switch (InKeySpec.ValueType)
-	{
-	case EAIBlackboardKeyValueType::Bool:
-		InBlackboardComp->SetValueAsBool(InKeySpec.KeyName, InKeySpec.BoolDefault);
-		break;
-
-	case EAIBlackboardKeyValueType::Int:
-		InBlackboardComp->SetValueAsInt(InKeySpec.KeyName, InKeySpec.IntDefault);
-		break;
-
-	case EAIBlackboardKeyValueType::Float:
-		InBlackboardComp->SetValueAsFloat(InKeySpec.KeyName, InKeySpec.FloatDefault);
-		break;
-
-	case EAIBlackboardKeyValueType::Vector:
-		InBlackboardComp->SetValueAsVector(InKeySpec.KeyName, InKeySpec.VectorDefault);
-		break;
-
-	case EAIBlackboardKeyValueType::Enum:
-		InBlackboardComp->SetValueAsEnum(InKeySpec.KeyName, InKeySpec.EnumDefault);
-		break;
-
-	case EAIBlackboardKeyValueType::Object:
-		InBlackboardComp->ClearValue(InKeySpec.KeyName);
-		break;
-	}
-}
-
-void ACAIController::ApplyOwnerLocationInitialBlackboardValue(UBlackboardComponent* InBlackboardComp, const APawn* InOwnerPawn, const FAIBlackboardKeySpec& InKeySpec) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-	if (!IsValid(InOwnerPawn)) return;
-
-	InBlackboardComp->SetValueAsVector(InKeySpec.KeyName, InOwnerPawn->GetActorLocation());
-}
-
-void ACAIController::ApplyCustomBlackboardValues(UBlackboardComponent* InBlackboardComp, const APawn* InOwnerPawn, TSet<FName>& InOutPendingKeys) const
+void ACAIController::InitializeCustomBlackboardValues(UBlackboardComponent* InBlackboardComp, const APawn* InOwnerPawn, TSet<FName>& InOutPendingKeys) const
 {
 	if (!IsValid(InBlackboardComp)) return;
 	if (!IsValid(InOwnerPawn)) return;
@@ -268,114 +202,29 @@ void ACAIController::ApplyCustomBlackboardValues(UBlackboardComponent* InBlackbo
 	if (!IsValid(enemy)) return;
 
 	// Patrol custom values
-	SetCustomBlackboardBoolValue(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::bUsePatrol, enemy->GetbUsePatrol());
-	SetCustomBlackboardObjectValue(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolPath, enemy->GetPatrolPath());
-	SetCustomBlackboardEnumValue(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolMode, static_cast<uint8>(enemy->GetPatrolMode()));
+	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::bUsePatrol, enemy->GetbUsePatrol(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomObject(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolPath, enemy->GetPatrolPath(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomEnum(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolMode, static_cast<uint8>(enemy->GetPatrolMode()), ControlledPawn_Cached);
 
 	// Investigate custom values
-	SetCustomBlackboardBoolValue(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::bUseInvestigate, enemy->GetbUseInvestigate());
-	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateDuration, enemy->GetInvestigateDuration());
-	SetCustomBlackboardIntValue(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateMaxIndex, enemy->GetInvestigateMaxIndex());
+	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::bUseInvestigate, enemy->GetbUseInvestigate(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateDuration, enemy->GetInvestigateDuration(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomInt(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateMaxIndex, enemy->GetInvestigateMaxIndex(), ControlledPawn_Cached);
 
 	// Chase custom values
-	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseOffsetRange, enemy->GetChaseOffsetRange());
-	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseEnterBuffer, enemy->GetChaseEnterBuffer());
-	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseExitBuffer, enemy->GetChaseExitBuffer());
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseOffsetRange, enemy->GetChaseOffsetRange(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseEnterBuffer, enemy->GetChaseEnterBuffer(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseExitBuffer, enemy->GetChaseExitBuffer(), ControlledPawn_Cached);
 
 	// Alert custom values
-	SetCustomBlackboardBoolValue(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::bUseAlertStep, enemy->GetbUseAlertStep());
-	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepForwardDistance, enemy->GetStepForwardDistance());
-	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepSideDistance, enemy->GetStepSideDistance());
+	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::bUseAlertStep, enemy->GetbUseAlertStep(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepForwardDistance, enemy->GetStepForwardDistance(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepSideDistance, enemy->GetStepSideDistance(), ControlledPawn_Cached);
 }
 
-void ACAIController::SetCustomBlackboardBoolValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, bool InValue) const
+void ACAIController::ClearBlackboardValues()
 {
-	if (!IsValid(InBlackboardComp)) return;
-
-	InBlackboardComp->SetValueAsBool(InKeySpec.KeyName, InValue);
-	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
-}
-
-void ACAIController::SetCustomBlackboardIntValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, int32 InValue) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-
-	InBlackboardComp->SetValueAsInt(InKeySpec.KeyName, InValue);
-	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
-}
-
-void ACAIController::SetCustomBlackboardFloatValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, float InValue) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-
-	InBlackboardComp->SetValueAsFloat(InKeySpec.KeyName, InValue);
-	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
-}
-
-void ACAIController::SetCustomBlackboardVectorValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, const FVector& InValue) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-
-	InBlackboardComp->SetValueAsVector(InKeySpec.KeyName, InValue);
-	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
-}
-
-void ACAIController::SetCustomBlackboardEnumValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, uint8 InValue) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-
-	InBlackboardComp->SetValueAsEnum(InKeySpec.KeyName, InValue);
-	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
-}
-
-void ACAIController::SetCustomBlackboardObjectValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, UObject* InValue) const
-{
-	if (!IsValid(InBlackboardComp)) return;
-
-	InBlackboardComp->SetValueAsObject(InKeySpec.KeyName, InValue);
-	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
-}
-
-void ACAIController::MarkCustomBlackboardKeyApplied(TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec) const
-{
-	ensureMsgf(
-		InOutPendingKeys.Remove(InKeySpec.KeyName) > 0,
-		TEXT("[AIController] Custom Blackboard key was not registered | Owner=%s | Key=%s"),
-		*GetNameSafe(ControlledPawn_Cached),
-		*InKeySpec.KeyName.ToString());
-}
-
-bool ACAIController::ValidateCustomBlackboardKeysApplied(const TSet<FName>& InPendingKeys) const
-{
-	if (InPendingKeys.IsEmpty()) return true;
-
-	TArray<FString> pendingKeyNames;
-	for (const FName& keyName : InPendingKeys)
-	{
-		pendingKeyNames.Add(keyName.ToString());
-	}
-
-	const FString pendingCustomKeys = FString::Join(pendingKeyNames, TEXT(", "));
-
-	ensureMsgf(false,
-		TEXT("[AIController] Missing custom Blackboard initial values | Owner=%s | Pending=%s"),
-		*GetNameSafe(ControlledPawn_Cached),
-		*pendingCustomKeys);
-
-	return false;
-}
-
-void ACAIController::ClearBlackboardRuntimeValues()
-{
-	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return;
-
-	for (const FAIBlackboardKeySpec& keySpec : CAIKeyRegistry::GetKeySpecs())
-	{
-		if (!keySpec.bClearOnRuntimeTeardown) continue;
-
-		blackboardComp->ClearValue(keySpec.KeyName);
-	}
+	CAIBlackboardValueHelper::ClearValues(GetBlackboardComponent());
 }
 
 // Behavior Tree Runtime

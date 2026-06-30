@@ -12,7 +12,7 @@
 
 - [x] 작업 방향 수립
 - [x] 코드 / 문서 반영
-- [ ] 검증 완료
+- [x] 검증 완료
 
 ---
 
@@ -54,10 +54,10 @@ CAIKey.h
 ACAIController::ValidateBlackboardKeys
 -> required key를 수동 나열
 
-ACAIController::InitializeBlackboardRuntimeValues
+ACAIController::InitializeBlackboardValues
 -> 초기 runtime 값을 수동 나열
 
-ACAIController::ClearBlackboardRuntimeValues
+ACAIController::ClearBlackboardValues
 -> clear 대상을 수동 나열
 ```
 
@@ -123,6 +123,10 @@ Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
 Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
 -> 전체 key spec 등록
 -> required key validation
+
+Source/Portfolio/AI/Blackboard/CAIBlackboardValueHelper.h
+-> initial / custom / clear blackboard value 적용 helper
+-> custom pending key mark / validate
 ```
 
 `CAIKey`는 category namespace 사용감을 유지하고, `CAIKeyRegistry`는 전체 key 목록과 검증 흐름을 담당한다.
@@ -135,7 +139,7 @@ Docs/06_notes/N16_AI_Blackboard_Key_Contract_Decision_Note.md
 
 ### 2. Required key validation 단일화
 
-현재 `ValidateBlackboardKeys()`는 모든 required key를 수동 변수로 선언하고 다시 `bAllValid`에 합산한다.
+기존 `ValidateBlackboardKeys()`는 모든 required key를 수동 변수로 선언하고 다시 `bAllValid`에 합산했다.
 
 변경 방향:
 
@@ -150,14 +154,15 @@ CAIKeyRegistry::GetKeySpecs 순회
 초기값이 필요한 key와 단순 clear만 필요한 key를 구분한다.
 
 ```text
-InitializeBlackboardRuntimeValues
--> ApplyInitialBlackboardValues: registry 1회 순회
+InitializeBlackboardValues
+-> CAIBlackboardValueHelper::InitializeValues: registry 1회 순회
 -> Fixed / FromOwnerLocation / Custom policy 분기
 -> Custom key는 pending set에 등록
--> ApplyCustomBlackboardValues에서 처리된 custom key 제거
--> 남은 custom key가 있으면 ensure
+-> InitializeCustomBlackboardValues에서 처리된 custom key 제거
+-> CAIBlackboardValueHelper::ValidateCustomKeysApplied로 누락 검증
 
-ClearBlackboardRuntimeValues
+ClearBlackboardValues
+-> CAIBlackboardValueHelper::ClearValues 호출
 -> CAIKeyRegistry::GetKeySpecs 순회
 -> bClearOnRuntimeTeardown 대상만 ClearValue
 ```
@@ -197,6 +202,7 @@ rg 기반 CAIKey / blackboard 사용처 전수 확인
 registry required key와 ValidateRequiredKeys 경로 확인
 CAIKey spec과 Blackboard API KeyName 전달 경로 확인
 CAIKeyTypes / CAIKeyFactory / CAIKey / CAIKeyRegistry 책임 분리 확인
+CAIBlackboardValueHelper initial / custom / clear helper 경로 확인
 initial blackboard value policy / default value 순회 확인
 blackboard clear 대상 bClearOnRuntimeTeardown 순회 확인
 git diff --check
@@ -211,9 +217,12 @@ git diff --check 통과
 PortfolioEditor Win64 Development 빌드 통과
 required key 누락 시 ensureMsgf 경로 적용
 initial blackboard value fixed / owner는 registry 순회 적용
-custom value는 명시 helper 유지
+custom value source 적용은 controller에 유지
+common blackboard value 적용 / pending 검증은 CAIBlackboardValueHelper로 분리
 clear runtime value는 bClearOnRuntimeTeardown 기준 registry 순회 적용
-PIE AI basic loop smoke test 대기
+PIE AI basic loop smoke test 통과
+combat damage / guard / parry / stagger / enemy Blink cue delivery 정상 확인
+player Blink cue reject는 player-side target resolve 부재로 인한 기존 기능 범위 밖 동작으로 분류
 ```
 
 ---

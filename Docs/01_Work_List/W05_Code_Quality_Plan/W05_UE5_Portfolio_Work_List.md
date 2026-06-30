@@ -554,11 +554,12 @@ Runtime cleanup 명명 사용처: 약 20개+
 2. Source/Portfolio/AI/Blackboard/CAIKeyTypes.h
 3. Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
 4. Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
-5. Source/Portfolio/Controller/CAIController.*
-6. Source/Portfolio/AI/BehaviorTree/Service/*
-7. Source/Portfolio/AI/BehaviorTree/Task/*
-8. Source/Portfolio/AI/BehaviorTree/Decorator/*
-9. Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
+5. Source/Portfolio/AI/Blackboard/CAIBlackboardValueHelper.h
+6. Source/Portfolio/Controller/CAIController.*
+7. Source/Portfolio/AI/BehaviorTree/Service/*
+8. Source/Portfolio/AI/BehaviorTree/Task/*
+9. Source/Portfolio/AI/BehaviorTree/Decorator/*
+10. Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 
 blackboard key 직접 사용 파일:
 23개
@@ -571,15 +572,14 @@ blackboard key 직접 사용 파일:
    -> key category namespace는 유지
    -> key name / key type / required 기준은 `FAIBlackboardKeySpec`로 결합
 
-2. CAIKeyTypes.h / CAIKeyFactory.h / CAIKeyRegistry.h
-   -> key spec 타입, 생성 helper, 전체 등록 / 검증 책임 분리
+2. CAIKeyTypes.h / CAIKeyFactory.h / CAIKeyRegistry.h / CAIBlackboardValueHelper.h
+   -> key spec 타입, 생성 helper, 전체 등록 / 검증 / value 적용 책임 분리
 
 3. ACAIController
    -> required key validation은 registry 순회로 이동
-   -> InitializeBlackboardRuntimeValues는 registry 1회 순회에서 fixed / owner-location / custom policy를 분기
-   -> custom policy는 custom value 적용 후 pending 검증
-   -> fixed / owner initial value는 registry 순회로 적용
-   -> ClearBlackboardRuntimeValues는 bClearOnRuntimeTeardown 기준 registry 순회로 적용
+   -> InitializeBlackboardValues는 helper common 초기화 / controller custom 초기화 / helper pending 검증 흐름으로 정리
+   -> fixed / owner / clear 공통 적용은 helper로 분리
+   -> custom value source 적용은 controller에 유지
 
 4. BT Service / Task / Decorator
    -> CAIKey를 직접 읽고 쓰는 runtime 사용처
@@ -590,7 +590,7 @@ blackboard key 직접 사용 파일:
 
 ```text
 - CAIKey spec / registry / ValidateRequiredKeys 사용처 정적 확인
-- InitializeBlackboardRuntimeValues / ClearBlackboardRuntimeValues 누락 여부 확인
+- InitializeBlackboardValues / ClearBlackboardValues 누락 여부 확인
 - git diff --check
 - PortfolioEditor Win64 Development 빌드
 - PIE AI basic loop smoke test
