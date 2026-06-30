@@ -24,6 +24,33 @@ struct FAIBlackboardKeySpec
 
 namespace CAIKeyRegistry
 {
+	static const TCHAR* GetValueTypeName(EAIBlackboardKeyValueType InValueType)
+	{
+		switch (InValueType)
+		{
+		case EAIBlackboardKeyValueType::Bool:
+			return TEXT("Bool");
+
+		case EAIBlackboardKeyValueType::Int:
+			return TEXT("Int");
+
+		case EAIBlackboardKeyValueType::Float:
+			return TEXT("Float");
+
+		case EAIBlackboardKeyValueType::Enum:
+			return TEXT("Enum");
+
+		case EAIBlackboardKeyValueType::Object:
+			return TEXT("Object");
+
+		case EAIBlackboardKeyValueType::Vector:
+			return TEXT("Vector");
+
+		default:
+			return TEXT("Unknown");
+		}
+	}
+
 	static const TArray<FAIBlackboardKeySpec>& GetKeySpecs()
 	{
 		static const TArray<FAIBlackboardKeySpec> keySpecs =

@@ -410,144 +410,26 @@ bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardA
 {
 	if (!IsValid(InBlackboardAsset)) return false;
 
-	// Targeting
-	const bool bTargetActorKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Targeting::TargetActor);
-	const bool bTargetPriorityKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Targeting::TargetPriority);
-
-	// StateType
-	const bool bAIIntentStateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::State::AIIntentState);
-
-	// Perception
-	const bool bHasLOSKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::bHasLOS);
-	const bool bLastSeenTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::LastSeenTime);
-	const bool bLastKnownLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Perception::LastKnownLocation);
-
-	// Metric
-	const bool bDistanceToTargetKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Metric::DistanceToTarget);
-	const bool bDistanceToHomeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Metric::DistanceToHome);
-
-	// Navigation
-	const bool bHomeLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Navigation::HomeLocation);
-	const bool bReturnHomeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Navigation::bReturnHome);
-
-	// Patrol
-	const bool bUsePatrolKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bUsePatrol);
-	const bool bPatrolPathKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolPath);
-	const bool bPatrolModeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolMode);
-
-	const bool bPatrolReverseKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::bPatrolReverse);
-	const bool bPatrolLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolLocation);
-	const bool bPatrolIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Patrol::PatrolIndex);
-
-	// Investigate
-	const bool bUseInvestigateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::bUseInvestigate);
-	const bool bInvestigateDurationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateDuration);
-	const bool bInvestigateMaxIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateMaxIndex);
-
-	const bool bCanInvestigateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::bCanInvestigate);
-	const bool bIsInvestigatingKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::bIsInvestigating);
-	const bool bInvestigateLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateLocation);
-	const bool bInvestigateIndexKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Investigate::InvestigateIndex);
-
-	// Chase
-	const bool bChaseOffsetDintanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseOffsetRange);
-	const bool bChaseEnterBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseEnterBuffer);
-	const bool bChaseExitBufferKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Chase::ChaseExitBuffer);
-
-	// Alert
-	const bool bUseAlertStepKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::bUseAlertStep);
-	const bool bStepForwardDistanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::StepForwardDistance);
-	const bool bStepSideDistanceKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::StepSideDistance);
-
-	const bool bInAlertRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::bInAlertRange);
-	const bool bAlertStepLocationKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Alert::AlertStepLocation);
-
-	// Engage
-	const bool bShouldEngageKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bShouldEngage);
-	const bool bCanCombatActionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bCanCombatAction);
-
-	const bool bIsCombatActionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bIsCombatAction);
-	const bool bInEngageRangeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::bInEngageRange);
-	const bool bNextCombatActionTimeKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Engage::NextCombatActionTime);
-
-	// Reaction
-	const bool bIsActiveReactionKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Reaction::bIsActiveReaction);
-
-	// Dead
-	const bool bDeadStateKey = ValidateBlackboardKey(InBlackboardAsset, CAIKey::Dead::DeadState);
-
 	bool bAllValid = true;
 
-	// Targeting
-	bAllValid &= bTargetActorKey;
-	bAllValid &= bTargetPriorityKey;
+	for (const FAIBlackboardKeySpec& keySpec : CAIKeyRegistry::GetKeySpecs())
+	{
+		if (!keySpec.bRequired) continue;
 
-	// StateType
-	bAllValid &= bAIIntentStateKey;
+		const bool bValidKey = ValidateBlackboardKey(InBlackboardAsset, keySpec.KeyName);
+		if (bValidKey) continue;
 
-	// Perception
-	bAllValid &= bHasLOSKey;
-	bAllValid &= bLastSeenTimeKey;
-	bAllValid &= bLastKnownLocationKey;
+		bAllValid = false;
 
-	// Metric
-	bAllValid &= bDistanceToTargetKey;
-	bAllValid &= bDistanceToHomeKey;
-
-	// Navigation
-	bAllValid &= bHomeLocationKey;
-	bAllValid &= bReturnHomeKey;
-
-	// Patrol
-	bAllValid &= bUsePatrolKey;
-	bAllValid &= bPatrolPathKey;
-	bAllValid &= bPatrolModeKey;
-
-	bAllValid &= bPatrolReverseKey;
-	bAllValid &= bPatrolLocationKey;
-	bAllValid &= bPatrolIndexKey;
-
-	// Investigate
-	bAllValid &= bUseInvestigateKey;
-	bAllValid &= bInvestigateDurationKey;
-	bAllValid &= bInvestigateMaxIndexKey;
-
-	bAllValid &= bCanInvestigateKey;
-	bAllValid &= bIsInvestigatingKey;
-	bAllValid &= bInvestigateLocationKey;
-	bAllValid &= bInvestigateIndexKey;
-
-	// Chase
-	bAllValid &= bChaseOffsetDintanceKey;
-	bAllValid &= bChaseEnterBufferKey;
-	bAllValid &= bChaseExitBufferKey;
-
-	bAllValid &= bInAlertRangeKey;
-
-	// Alert
-	bAllValid &= bUseAlertStepKey;
-	bAllValid &= bStepForwardDistanceKey;
-	bAllValid &= bStepSideDistanceKey;
-
-	bAllValid &= bAlertStepLocationKey;
-
-	// Engage
-	bAllValid &= bShouldEngageKey;
-	bAllValid &= bCanCombatActionKey;
-
-	bAllValid &= bIsCombatActionKey;
-	bAllValid &= bInEngageRangeKey;
-	bAllValid &= bNextCombatActionTimeKey;
-
-	// Reaction
-	bAllValid &= bIsActiveReactionKey;
-
-	// Dead
-	bAllValid &= bDeadStateKey;
+		FLog::Log(FString::Printf(
+			TEXT("[Error|ACAIController] Missing Blackboard key | Key=%s | ExpectedType=%s"),
+			*keySpec.KeyName.ToString(),
+			CAIKeyRegistry::GetValueTypeName(keySpec.ValueType)));
+	}
 
 	if (!bAllValid)
 	{
-		FLog::Log(FString::Printf(TEXT("%-20s"), TEXT("[Error|ACAIController] Missing Blackboard keys.")));
+		FLog::Log(TEXT("[Error|ACAIController] Missing required Blackboard keys."));
 		return false;
 	}
 
