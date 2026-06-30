@@ -2,7 +2,7 @@
 
 ## 제목
 
-**P32: AI Blackboard Key Registry**
+**P32: AI Blackboard Key Registry 정책 정리**
 
 ## 날짜
 
@@ -25,7 +25,14 @@
 ## 커밋
 
 ```text
-TBD
+docs(ai): plan blackboard key registry cleanup
+refactor(ai): add blackboard key registry
+refactor(ai): validate blackboard keys through registry
+refactor(ai): define blackboard key specs
+refactor(ai): organize blackboard key initialization policy
+refactor(ai): apply blackboard clear policy from registry
+refactor(ai): centralize blackboard key registry
+style(ai): normalize blackboard include casing
 ```
 
 ---
