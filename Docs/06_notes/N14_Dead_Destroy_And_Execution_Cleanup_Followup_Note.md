@@ -169,7 +169,7 @@ overlay, feedback window, weapon collision, hit context, ResultOut, Repulse 같�
 ```text
 Action / Reaction ClearRuntime
 Action / Reaction CleanupRuntimeEffects
-WeaponComponent ClearRuntimeWeaponState
+WeaponComponent ClearWeaponRuntimeState
 FeedbackComponent ClearRuntimeFeedback
 DefenseComponent ClearGuardState
 ```
@@ -262,7 +262,7 @@ After
 
 ```text
 - interrupt 전후 snapshot 기준이 문서화되어 있다.
-- ClearRuntime / CleanupRuntimeEffects / ClearRuntimeWeaponState / ClearRuntimeFeedback / ClearGuardState 호출 순서가 설명 가능하다.
+- ClearRuntime / CleanupRuntimeEffects / ClearWeaponRuntimeState / ClearRuntimeFeedback / ClearGuardState 호출 순서가 설명 가능하다.
 - ResultOut / Repulse 사례에서 필요한 데이터가 cleanup 전에 확보된다.
 - cleanup 이후 stale hit window, stale overlay, stale feedback state가 남지 않는다.
 - 기존 Action / Reaction interrupt smoke test가 통과한다.

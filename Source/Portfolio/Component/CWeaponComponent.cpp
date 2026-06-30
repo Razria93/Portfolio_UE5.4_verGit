@@ -42,17 +42,24 @@ bool UCWeaponComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+void UCWeaponComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 void UCWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ClearRuntimeWeaponState();
-
-	if (IsValid(WeaponActor))
-	{
-		WeaponActor->Destroy();
-		WeaponActor = nullptr;
-	}
+	UninitializeWeaponRuntime();
 
 	Super::EndPlay(EndPlayReason);
+}
+
+// Runtime Lifecycle
+
+void UCWeaponComponent::UninitializeWeaponRuntime()
+{
+	ClearWeaponRuntimeState();
+	DestroyWeaponActor();
 }
 
 ACWeaponActor* UCWeaponComponent::GetWeaponActor()
@@ -113,7 +120,7 @@ void UCWeaponComponent::ClearContext()
 	provider->SetLastActionContext(FActionContext());
 }
 
-void UCWeaponComponent::ClearRuntimeWeaponState()
+void UCWeaponComponent::ClearWeaponRuntimeState()
 {
 	ClearContext();
 
@@ -122,6 +129,16 @@ void UCWeaponComponent::ClearRuntimeWeaponState()
 		WeaponActor->CollisionDisabled();
 		WeaponActor->ToggleTrailActive(false);
 	}
+}
+
+// Weapon Actor
+
+void UCWeaponComponent::DestroyWeaponActor()
+{
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->Destroy();
+	WeaponActor = nullptr;
 }
 
 void UCWeaponComponent::OpenCollisionWindow(FName InCollisionName)

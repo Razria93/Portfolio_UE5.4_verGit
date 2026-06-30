@@ -268,7 +268,7 @@ void UCAction::CleanupRuntimeEffects()
 {
 	if (IsValid(WeaponComp_Injected))
 	{
-		WeaponComp_Injected->ClearRuntimeWeaponState();
+		WeaponComp_Injected->ClearWeaponRuntimeState();
 	}
 
 	if (IsValid(ActionFeedbackComp_Injected))

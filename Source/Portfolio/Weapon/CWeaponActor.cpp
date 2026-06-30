@@ -118,15 +118,12 @@ void ACWeaponActor::ClearCollisionComponents()
 void ACWeaponActor::InitializeTrailState()
 {
 	if (!bDisableTrailOnBeginPlay) return;
-	if (!IsValid(TrailComponent)) return;
 
 	ToggleTrailActive(false);
 }
 
 void ACWeaponActor::ClearTrailState()
 {
-	if (!IsValid(TrailComponent)) return;
-
 	ToggleTrailActive(false);
 }
 

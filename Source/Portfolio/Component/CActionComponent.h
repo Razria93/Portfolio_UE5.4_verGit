@@ -93,6 +93,7 @@ private:
 protected:
 	// Lifecycle
 	void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
@@ -148,6 +149,20 @@ public:
 public:
 	// Event Broadcast
 	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
+
+private:
+	// Runtime Lifecycle
+	void InitializeActionRuntime();
+	void UninitializeActionRuntime();
+
+private:
+	// Runtime Map
+	void BuildActionRuntimeMaps();
+	void ClearActionRuntimeMaps();
+
+	// Active Runtime State
+	void SetInitialActiveActionRuntimeState();
+	void ResetActiveActionRuntimeState();
 
 private:
 	// Data Build (temporary: move to DataAsset)

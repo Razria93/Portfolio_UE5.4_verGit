@@ -6,6 +6,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BrainComponent.h"
 
 #include "Character/Enemy/CEnemy.h"
 #include "AI/Patrol/CPatrolPath.h"
@@ -39,21 +40,25 @@ void ACAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	if (!IsValid(InPawn)) return;
-
-	ControlledPawn_Cached = InPawn;
-
-	if (!InitializePerception()) return;
-	if (!InitializeBlackBoard()) return;
-	if (!InitializeBlackBoardValue()) return;
-	if (!InitializeBehaviorTree()) return;
+	if (!InitializeControllerRuntime(InPawn))
+	{
+		UninitializeControllerRuntime();
+		return;
+	}
 }
 
 void ACAIController::OnUnPossess()
 {
-	Super::OnUnPossess();
+	UninitializeControllerRuntime();
 
-	ControlledPawn_Cached = nullptr;
+	Super::OnUnPossess();
+}
+
+void ACAIController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UninitializeControllerRuntime();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 bool ACAIController::InitializeSightConfig()
@@ -90,18 +95,75 @@ bool ACAIController::InitializeSightConfig()
 // 6. Task Node			: Executes the decided actions
 // -----------------------------------------------------------------------------
 
-bool ACAIController::InitializePerception()
-{
-	if (!IsValid(AIPerceptionComp)) return false;
+// Runtime Lifecycle
 
-	AIPerceptionComp->OnPerceptionUpdated.AddDynamic(this, &ACAIController::OnPerceptionUpdated);
-	AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &ACAIController::OnTargetPerceptionUpdated);
-	AIPerceptionComp->OnTargetPerceptionForgotten.AddDynamic(this, &ACAIController::OnTargetPerceptionForgotten);
+bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
+{
+	if (!SetPossessionRuntimeState(InPawn)) return false;
+
+	ClearTargetDataMap();
+
+	if (!BindPerceptionEvents()) return false;
+	if (!SetupBlackboardComponent()) return false;
+	if (!SetInitialBlackboardRuntimeValues()) return false;
+	if (!StartBehaviorTreeRuntime()) return false;
 
 	return true;
 }
 
-bool ACAIController::InitializeBlackBoard()
+void ACAIController::UninitializeControllerRuntime()
+{
+	StopBehaviorTreeRuntime();
+	ClearBlackboardRuntimeValues();
+	UnbindPerceptionEvents();
+
+	ClearTargetDataMap();
+
+	ResetPossessionRuntimeState();
+}
+
+// Possession Runtime
+
+bool ACAIController::SetPossessionRuntimeState(APawn* InPawn)
+{
+	if (!IsValid(InPawn)) return false;
+
+	ControlledPawn_Cached = InPawn;
+	return true;
+}
+
+void ACAIController::ResetPossessionRuntimeState()
+{
+	ControlledPawn_Cached = nullptr;
+}
+
+// Perception Binding
+
+bool ACAIController::BindPerceptionEvents()
+{
+	if (!IsValid(AIPerceptionComp)) return false;
+
+	UnbindPerceptionEvents();
+
+	AIPerceptionComp->OnPerceptionUpdated.AddUniqueDynamic(this, &ACAIController::OnPerceptionUpdated);
+	AIPerceptionComp->OnTargetPerceptionUpdated.AddUniqueDynamic(this, &ACAIController::OnTargetPerceptionUpdated);
+	AIPerceptionComp->OnTargetPerceptionForgotten.AddUniqueDynamic(this, &ACAIController::OnTargetPerceptionForgotten);
+
+	return true;
+}
+
+void ACAIController::UnbindPerceptionEvents()
+{
+	if (!IsValid(AIPerceptionComp)) return;
+
+	AIPerceptionComp->OnPerceptionUpdated.RemoveDynamic(this, &ACAIController::OnPerceptionUpdated);
+	AIPerceptionComp->OnTargetPerceptionUpdated.RemoveDynamic(this, &ACAIController::OnTargetPerceptionUpdated);
+	AIPerceptionComp->OnTargetPerceptionForgotten.RemoveDynamic(this, &ACAIController::OnTargetPerceptionForgotten);
+}
+
+// Blackboard Setup
+
+bool ACAIController::SetupBlackboardComponent()
 {
 	if (!BlackboardAsset) return false;
 	if (!ValidateBlackboardKeys(BlackboardAsset)) return false;
@@ -113,14 +175,9 @@ bool ACAIController::InitializeBlackBoard()
 	return bUsed && IsValid(blackboardComp);
 }
 
-bool ACAIController::InitializeBehaviorTree()
-{
-	if (!BehaviorTreeAsset) return false;
+// Blackboard Runtime Value
 
-	return RunBehaviorTree(BehaviorTreeAsset);
-}
-
-bool ACAIController::InitializeBlackBoardValue()
+bool ACAIController::SetInitialBlackboardRuntimeValues()
 {
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return false;
@@ -221,6 +278,93 @@ bool ACAIController::InitializeBlackBoardValue()
 	return true;
 }
 
+void ACAIController::ClearBlackboardRuntimeValues()
+{
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return;
+
+	// Targeting
+	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
+	blackboardComp->ClearValue(CAIKey::Targeting::TargetPriority);
+
+	// State
+	blackboardComp->ClearValue(CAIKey::State::AIIntentState);
+
+	// Perception
+	blackboardComp->ClearValue(CAIKey::Perception::bHasLOS);
+	blackboardComp->ClearValue(CAIKey::Perception::LastSeenTime);
+	blackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation);
+
+	// Metric
+	blackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
+	blackboardComp->ClearValue(CAIKey::Metric::DistanceToHome);
+
+	// Navigation
+	blackboardComp->ClearValue(CAIKey::Navigation::HomeLocation);
+	blackboardComp->ClearValue(CAIKey::Navigation::bReturnHome);
+
+	// Patrol
+	blackboardComp->ClearValue(CAIKey::Patrol::bUsePatrol);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolPath);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolMode);
+	blackboardComp->ClearValue(CAIKey::Patrol::bPatrolReverse);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolLocation);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolIndex);
+
+	// Investigate
+	blackboardComp->ClearValue(CAIKey::Investigate::bUseInvestigate);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateDuration);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateMaxIndex);
+	blackboardComp->ClearValue(CAIKey::Investigate::bCanInvestigate);
+	blackboardComp->ClearValue(CAIKey::Investigate::bIsInvestigating);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateIndex);
+
+	// Chase
+	blackboardComp->ClearValue(CAIKey::Chase::ChaseOffsetRange);
+	blackboardComp->ClearValue(CAIKey::Chase::ChaseEnterBuffer);
+	blackboardComp->ClearValue(CAIKey::Chase::ChaseExitBuffer);
+
+	// Alert
+	blackboardComp->ClearValue(CAIKey::Alert::bUseAlertStep);
+	blackboardComp->ClearValue(CAIKey::Alert::StepForwardDistance);
+	blackboardComp->ClearValue(CAIKey::Alert::StepSideDistance);
+	blackboardComp->ClearValue(CAIKey::Alert::bInAlertRange);
+	blackboardComp->ClearValue(CAIKey::Alert::AlertStepLocation);
+
+	// Engage
+	blackboardComp->ClearValue(CAIKey::Engage::bShouldEngage);
+	blackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction);
+	blackboardComp->ClearValue(CAIKey::Engage::bIsCombatAction);
+	blackboardComp->ClearValue(CAIKey::Engage::bInEngageRange);
+	blackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime);
+
+	// Reaction
+	blackboardComp->ClearValue(CAIKey::Reaction::bIsActiveReaction);
+
+	// Dead
+	blackboardComp->ClearValue(CAIKey::Dead::DeadState);
+}
+
+// Behavior Tree Runtime
+
+bool ACAIController::StartBehaviorTreeRuntime()
+{
+	if (!BehaviorTreeAsset) return false;
+
+	return RunBehaviorTree(BehaviorTreeAsset);
+}
+
+void ACAIController::StopBehaviorTreeRuntime()
+{
+	UBrainComponent* brainComp = GetBrainComponent();
+	if (!IsValid(brainComp)) return;
+
+	brainComp->StopLogic(TEXT("StopBehaviorTreeRuntime"));
+}
+
+// Perception Event Callback
+
 void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
 	// [Disable OnPerceptionUpdated]
@@ -251,11 +395,15 @@ void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 	// - TargetForgotten is Controlled by bHasLOS and bHasMemory
 }
 
+// Query
+
 EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetData& OutTargetData)
 {
 	UpdateTargetDataMap();
 	return SelectTopPriority(OutTargetData);
 }
+
+// Blackboard Validation
 
 bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const
 {
@@ -417,6 +565,8 @@ bool ACAIController::ValidateBlackboardKey(const UBlackboardData* InBlackboardAs
 	return IsValid(InBlackboardAsset) && (InBlackboardAsset->GetKeyID(InKeyName) != FBlackboard::InvalidKey);
 }
 
+// Target Data
+
 void ACAIController::UpdateTargetDataMap()
 {
 	// -----------------------------------------------------------------------------
@@ -493,6 +643,11 @@ void ACAIController::UpdateTargetDataMap()
 	}
 }
 
+void ACAIController::ClearTargetDataMap()
+{
+	TargetDataMap.Reset();
+}
+
 EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetData& OutTargetData)
 {
 	OutTargetData = FTargetData();
@@ -525,6 +680,7 @@ EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetData& OutTargetD
 	return EPerceptionBuildResult::Success;
 }
 
+// Debug
 
 void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& UpdatedActors) const
 {

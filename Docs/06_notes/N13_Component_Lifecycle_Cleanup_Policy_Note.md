@@ -28,6 +28,58 @@ timer handle을 저장하거나 actor state를 임시 변경했다면
 
 ---
 
+## Naming 기준
+
+이번 작업에서는 `Initialize`를 모든 setup helper에 일괄 적용하지 않는다.
+
+상위 lifecycle 조합 함수는 `Initialize / Uninitialize`를 사용하고, 하위 helper는 실제 동작의 반대말이 자연스럽게 보이도록 구분한다.
+
+```text
+Runtime lifecycle 조합
+-> InitializeXXXRuntime
+-> UninitializeXXXRuntime
+
+map / container 구성과 비움
+-> BuildXXXMap
+-> ClearXXXMap
+
+초기 상태 설정과 기본 상태 복구
+-> SetInitialXXXState
+-> ResetXXXState
+
+delegate / event 연결과 해제
+-> BindXXXEvents
+-> UnbindXXXEvents
+
+logic 시작과 중단
+-> StartXXXRuntime
+-> StopXXXRuntime
+
+spawned actor 생성과 파괴
+-> CreateXXX
+-> DestroyXXX
+```
+
+이 기준을 적용하면 `Initialize`의 반대편에 `Clear`, `Reset`, `Unbind`, `Stop`, `Destroy`가 섞여 보이는 문제가 줄어든다.
+
+예시:
+
+```text
+InitializeControllerRuntime
+-> SetPossessionRuntimeState
+-> BindPerceptionEvents
+-> SetInitialBlackboardRuntimeValues
+-> StartBehaviorTreeRuntime
+
+UninitializeControllerRuntime
+-> StopBehaviorTreeRuntime
+-> ClearBlackboardRuntimeValues
+-> UnbindPerceptionEvents
+-> ResetPossessionRuntimeState
+```
+
+---
+
 ## Cleanup 분류
 
 ## Dead Destroy Flow와의 관계
@@ -68,7 +120,7 @@ Docs/06_notes/N14_Dead_Destroy_And_Execution_Cleanup_Followup_Note.md
 ```text
 Action / Reaction ClearRuntime
 Action / Reaction CleanupRuntimeEffects
-WeaponComponent ClearRuntimeWeaponState
+WeaponComponent ClearWeaponRuntimeState
 FeedbackComponent ClearRuntimeFeedback
 DefenseComponent ClearGuardState
 ```
@@ -132,12 +184,19 @@ Runtime cleanup 명명 사용처: 약 20개+
 
 ```text
 OnPossess
--> ControlledPawn_Cached 설정
--> perception delegate bind
--> blackboard / behavior tree 초기화
+-> SetPossessionRuntimeState
+-> ClearTargetDataMap
+-> BindPerceptionEvents
+-> SetupBlackboardComponent
+-> SetInitialBlackboardRuntimeValues
+-> StartBehaviorTreeRuntime
 
 OnUnPossess
--> ControlledPawn_Cached = nullptr
+-> StopBehaviorTreeRuntime
+-> ClearBlackboardRuntimeValues
+-> UnbindPerceptionEvents
+-> ClearTargetDataMap
+-> ResetPossessionRuntimeState
 ```
 
 검토 포인트:
@@ -177,7 +236,12 @@ RestoreHitStop
 
 ```text
 BeginPlay
--> data map / executor map build
+-> BuildActionRuntimeMaps / BuildReactionRuntimeMaps
+-> SetInitialActiveActionRuntimeState / SetInitialActiveReactionRuntimeState
+
+EndPlay
+-> ResetActiveActionRuntimeState / ResetActiveReactionRuntimeState
+-> ClearActionRuntimeMaps / ClearReactionRuntimeMaps
 
 NewObject
 -> action / reaction executor 생성

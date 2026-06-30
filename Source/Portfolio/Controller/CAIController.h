@@ -46,24 +46,43 @@ public:
 	ACAIController();
 
 protected:
+	// Lifecycle
 	void BeginPlay() override;
-
-protected:
 	void OnPossess(class APawn* InPawn) override;
 	void OnUnPossess() override;
+	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 protected:
+	// Config Setup
 	bool InitializeSightConfig();
 
 private:
-	bool InitializePerception();
-	bool InitializeBlackBoard();
-	bool InitializeBehaviorTree();
+	// Runtime Lifecycle
+	bool InitializeControllerRuntime(class APawn* InPawn);
+	void UninitializeControllerRuntime();
 
 private:
-	bool InitializeBlackBoardValue();
+	// Possession Runtime
+	bool SetPossessionRuntimeState(class APawn* InPawn);
+	void ResetPossessionRuntimeState();
+
+	// Perception Binding
+	bool BindPerceptionEvents();
+	void UnbindPerceptionEvents();
+
+	// Blackboard Setup
+	bool SetupBlackboardComponent();
+
+	// Blackboard Runtime Value
+	bool SetInitialBlackboardRuntimeValues();
+	void ClearBlackboardRuntimeValues();
+
+	// Behavior Tree Runtime
+	bool StartBehaviorTreeRuntime();
+	void StopBehaviorTreeRuntime();
 
 private:
+	// Perception Event Callback
 	UFUNCTION()
 	void OnPerceptionUpdated(const TArray<class AActor*>& InUpdatedActors);
 
@@ -74,17 +93,22 @@ private:
 	void OnTargetPerceptionForgotten(class AActor* Actor);
 
 public:
+	// Query
 	EPerceptionBuildResult BuildPerceptionContext(FTargetData& OutTargetData);
 
 private:
+	// Blackboard Validation
 	bool ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const;
 	bool ValidateBlackboardKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const;
 
 private:
+	// Target Data
 	void UpdateTargetDataMap();
+	void ClearTargetDataMap();
 	EPerceptionBuildResult SelectTopPriority(FTargetData& OutTargetData);
 
 private:
+	// Debug
 	void PrintPerceptionUpdatedSummary(const TArray<class AActor*>& UpdatedActors) const;
 	void PrintTargetPerceptionUpdatedSummary(class AActor* Actor, const FAIStimulus& Stimulus) const;
 	void PrintTargetPerceptionForgotten(AActor* Actor) const;

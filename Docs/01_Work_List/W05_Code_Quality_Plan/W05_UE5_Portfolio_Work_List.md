@@ -488,7 +488,7 @@ refactor/runtime-component-lookup-policy
 
 ### P31. Component Lifecycle Cleanup Policy
 
-- 상태: 준비 중
+- 상태: 진행 중
 - 브랜치: `refactor/component-lifecycle-cleanup-policy`
 - PR: `P31_UE5_Portfolio_Pull_Request.md`
 - 목표: P29~P30 이후 남은 actor / component lifecycle cleanup 기준을 정리하고, `BeginPlay` / `EndPlay` / delegate / timer / spawned actor / runtime cache 정리 정책을 고정한다.

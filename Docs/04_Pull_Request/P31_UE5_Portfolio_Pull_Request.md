@@ -10,7 +10,7 @@
 
 ## 상태
 
-- [ ] 준비 중
+- [x] 완료
 
 ---
 
@@ -23,7 +23,7 @@
 ## 커밋
 
 ```text
-TBD
+refactor(lifecycle): clarify runtime setup and teardown naming
 ```
 
 ---
@@ -165,6 +165,107 @@ Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 
 ---
 
+## 작업 결과
+
+### 1. Runtime setup / teardown naming 기준 정리
+
+상위 lifecycle 조합 함수는 `Initialize / Uninitialize`를 유지하고, 하위 작업은 실제 동작이 드러나는 이름으로 분리했다.
+
+```text
+상위 lifecycle
+-> InitializeRuntime / UninitializeRuntime
+
+map 구성 / 비움
+-> Build / Clear
+
+초기 상태 설정 / 기본 상태 복구
+-> SetInitial / Reset
+
+delegate 연결 / 해제
+-> Bind / Unbind
+
+logic 시작 / 중단
+-> Start / Stop
+
+spawned actor 생성 / 파괴
+-> Create / Destroy
+```
+
+이 기준에 따라 `ActionComponent`, `ReactionComponent`, `AIController`, `WeaponComponent`의 helper API 이름을 정리했다.
+
+### 2. ACAIController lifecycle cleanup
+
+`OnPossess`에서 구성한 controller runtime을 `OnUnPossess`와 `EndPlay`에서 같은 teardown 경로로 닫도록 정리했다.
+
+```text
+InitializeControllerRuntime
+-> SetPossessionRuntimeState
+-> ClearTargetDataMap
+-> BindPerceptionEvents
+-> SetupBlackboardComponent
+-> SetInitialBlackboardRuntimeValues
+-> StartBehaviorTreeRuntime
+
+UninitializeControllerRuntime
+-> StopBehaviorTreeRuntime
+-> ClearBlackboardRuntimeValues
+-> UnbindPerceptionEvents
+-> ClearTargetDataMap
+-> ResetPossessionRuntimeState
+```
+
+`SetupBlackboardComponent()`는 `UseBlackboard()`로 blackboard component를 준비하고 key validity를 확인하는 단계다. UE에는 `UseBlackboard()`에 직접 대응하는 unregister API가 없으므로 teardown에서는 behavior tree logic을 먼저 멈춘 뒤 runtime key 값을 정리한다.
+
+### 3. Action / Reaction runtime lifecycle
+
+`ActionComponent`와 `ReactionComponent`는 `BeginPlay`에서 runtime map과 initial active state를 구성하고, `EndPlay`에서 broadcast 없는 teardown helper로 상태를 닫는다.
+
+```text
+Action
+-> BuildActionRuntimeMaps
+-> SetInitialActiveActionRuntimeState
+-> ResetActiveActionRuntimeState
+-> ClearActionRuntimeMaps
+
+Reaction
+-> BuildReactionRuntimeMaps
+-> SetInitialActiveReactionRuntimeState
+-> ResetActiveReactionRuntimeState
+-> ClearReactionRuntimeMaps
+```
+
+`ClearActiveActionContext()` / `ClearActiveReactionContext()`는 gameplay event broadcast를 포함하므로 object teardown 경로에서는 직접 호출하지 않는다.
+
+### 4. WeaponComponent runtime teardown
+
+`WeaponComponent`는 `EndPlay`에서 `UninitializeWeaponRuntime()`을 호출하고, 내부에서 runtime weapon state 정리와 spawned weapon actor destroy를 명시적으로 나눴다.
+
+```text
+UninitializeWeaponRuntime
+-> ClearWeaponRuntimeState
+-> DestroyWeaponActor
+```
+
+`ClearWeaponRuntimeState()`는 gameplay 중 action cleanup에서도 호출될 수 있는 public API로 유지하고, object teardown에서만 필요한 actor destroy는 private helper로 분리했다.
+
+### 5. Combat subsystem cleanup
+
+`UCWorldSubsystem_CombatFeedback`은 `Deinitialize`에서 hit stop timer / cached dilation / camera shake delegate를 정리한다.
+
+```text
+ClearFeedbackRuntimeState
+-> ClearHitStop
+-> ClearCameraShake
+```
+
+`UCWorldSubsystem_CombatEngage`는 `Deinitialize`에서 request / assignment / elapsed time을 초기 상태로 되돌린다.
+
+```text
+ClearEngageRuntimeState
+```
+
+---
+
 ## 제외 범위
 
 ```text
@@ -181,10 +282,17 @@ Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 ## 검증 계획
 
 ```text
-rg 기반 lifecycle / delegate / timer / spawn 사용처 전수 확인
-git diff --check
-PortfolioEditor Win64 Development 빌드
-PIE 기본 combat loop smoke test
+[x] rg 기반 lifecycle / delegate / timer / spawn 사용처 전수 확인
+[x] git diff --check
+[x] PortfolioEditor Win64 Development 빌드
+[x] PIE 기본 combat loop smoke test
+```
+
+PIE 확인 결과:
+
+```text
+- Guard / Parry / Stagger / Damage / Blink cue route 로그 정상 확인
+- crash / ensure / stale reference 로그 없음
 ```
 
 ---

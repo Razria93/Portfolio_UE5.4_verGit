@@ -28,18 +28,32 @@ private:
 	TMap<class ACAIController*, FEngageAssignmentContext> AssignmentContainer;
 
 public:
+	// Lifecycle
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+
+public:
+	// Tick
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
 
 public:
+	// Query
 	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
 
 public:
+	// Request
 	void SubmitRequest(const FEngageRequestContext & InEngageRequestContext);
+
+public:
+	// Assignment
 	void RebuildAssignments();
 
 private:
+	// Runtime State
+	void ClearEngageRuntimeState();
+
+private:
+	// Debug
 	void PrintEngageContext(const ACAIController* InCAIController, const AActor* InActor, const int& InPriority, const int& InIndex, const float& InDistance, const ECombatRole& InCombatRole) const;
 };
