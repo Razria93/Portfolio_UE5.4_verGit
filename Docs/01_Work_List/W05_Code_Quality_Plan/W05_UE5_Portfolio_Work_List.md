@@ -24,7 +24,7 @@
 2. refactor/character-component-reference-di
 3. refactor/runtime-component-lookup-policy
 4. refactor/ai-blackboard-key-registry
-5. perf/ai-update-interval-audit
+5. refactor/ai-update-interval-policy
 6. refactor/tuning-constants-cleanup
 7. refactor/api-const-consistency
 8. refactor/debug-log-policy-v1
@@ -338,7 +338,7 @@ refactor/ai-blackboard-key-registry
 **추천 브랜치**
 
 ```text
-perf/ai-update-interval-audit
+refactor/ai-update-interval-policy
 ```
 
 **외부 리뷰에서 나온 내용**
@@ -539,7 +539,7 @@ Runtime cleanup 명명 사용처: 약 20개+
 
 ### P32. AI Blackboard Key Registry
 
-- 상태: 진행 중
+- 상태: 완료
 - 브랜치: `refactor/ai-blackboard-key-registry`
 - PR: `P32_UE5_Portfolio_Pull_Request.md`
 - 목표: `CAIKey` 정의를 spec 기반으로 정리하고, blackboard required key 검증 기준과 initial / clear runtime value 흐름을 정리하여 키 추가 / 삭제 시 누락 위험을 줄인다.
@@ -594,4 +594,78 @@ blackboard key 직접 사용 파일:
 - git diff --check
 - PortfolioEditor Win64 Development 빌드
 - PIE AI basic loop smoke test
+```
+
+### P33. AI Update Interval Profiling 정책 정리
+
+- 상태: 진행 중
+- 브랜치: `refactor/ai-update-interval-policy`
+- PR: `P33_UE5_Portfolio_Pull_Request.md`
+- 목표: Enemy AI의 BehaviorTree Service / Task polling / CombatEngage subsystem update 경로를 전수 조사하고, AI 수 증가 시 비용을 측정할 수 있는 profiling 기준을 정리한다.
+- 관련 문서: `N17_AI_Update_Interval_Profiling_Policy_Note.md`
+- 제외 범위: BehaviorTree asset 재설계, AI 행동 로직 변경, dirty flag 실제 구조 도입, event-driven Blackboard update 전환, 대규모 AI LOD / batch manager 구현
+
+사전 조사 결과:
+
+```text
+BT Service:
+1. UCBTService_UpdateAIContext
+   -> Interval 0.1s
+   -> perception top target / home metric / alert range / engage assignment / reaction-dead state 갱신
+
+2. UCBTService_UpdateEngageContext
+   -> Interval 0.1s
+   -> engage range / combat cooldown / combat action 가능 여부 갱신
+
+3. UCBTService_UpdatePatrolContext
+   -> Interval 0.1s
+   -> patrol point 도달 / 다음 patrol target 갱신
+
+4. UCBTService_UpdateInvestigateContext
+   -> Interval 0.1s
+   -> investigate timeout 확인
+
+5. UCBTService_UpdateAIIntentState
+   -> Interval 0.2s
+   -> Blackboard 기반 AI intent state 결정
+
+BT Task polling:
+1. UCBTTask_WaitDeadState
+2. UCBTTask_WaitEndCombatAction
+3. UCBTTask_WaitEndReaction
+
+Subsystem:
+1. UCWorldSubsystem_CombatEngage
+   -> RebuildInterval 0.1s
+   -> target별 engage role assignment rebuild
+```
+
+측정 기준:
+
+```text
+- Enemy Count: 1 / 5 / 10 / 20
+- State: Idle / Player Detected / Engage
+- Duration: 30s per case
+- Stats: stat unit, stat game, stat ai, stat behavior
+- Capture: csvprofile start / csvprofile stop
+```
+
+작업 순서:
+
+```text
+1. AI update interval / polling 경로 문서화
+2. CSV profiling scope 추가 여부 결정
+3. service / subsystem 중심 1차 계측
+4. 측정 결과 기록
+5. interval 조정 / dirty flag / event-driven 후보 분류
+6. 필요 시 low-risk interval default 정리
+```
+
+검증 기준:
+
+```text
+- rg 기반 tick / interval / polling 사용처 전수 확인
+- git diff --check
+- PortfolioEditor Win64 Development 빌드
+- PIE AI smoke test
 ```
