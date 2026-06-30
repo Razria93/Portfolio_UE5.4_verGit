@@ -8,7 +8,7 @@
 
 #include "AI/Patrol/CPatrolPath.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 #include "Type/CAIStructure.h"
 
 UCBTService_UpdatePatrolContext::UCBTService_UpdatePatrolContext()

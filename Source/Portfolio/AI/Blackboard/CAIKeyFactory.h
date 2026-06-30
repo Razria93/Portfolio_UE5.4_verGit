@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 
-#include "AI/BlackBoard/CAIKeyTypes.h"
+#include "AI/Blackboard/CAIKeyTypes.h"
 
 namespace CAIKeyFactory
 {

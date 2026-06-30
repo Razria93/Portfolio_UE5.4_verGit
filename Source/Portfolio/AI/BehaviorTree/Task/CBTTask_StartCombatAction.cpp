@@ -6,7 +6,7 @@
 
 #include "Character/Enemy/CEnemy.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 #include "Type/CActionOrchestrationStructure.h"
 

@@ -7,7 +7,7 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 #include "Type/CAIStructure.h"
 
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()

@@ -12,7 +12,7 @@
 #include "Type/CStateStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CHealthStructure.h"
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 {

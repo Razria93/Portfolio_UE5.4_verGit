@@ -11,7 +11,7 @@
 #include "Component/CHealthComponent.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 #include "Type/CAIStructure.h"
 #include "Type/CWorldSubSystemStructure.h"
 

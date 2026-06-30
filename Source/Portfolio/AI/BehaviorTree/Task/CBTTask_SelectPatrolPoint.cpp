@@ -8,7 +8,7 @@
 #include "AI/Patrol/CPatrolPath.h"
 
 #include "Type/CAIStructure.h"
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_SelectPatrolPoint::UCBTTask_SelectPatrolPoint()
 {

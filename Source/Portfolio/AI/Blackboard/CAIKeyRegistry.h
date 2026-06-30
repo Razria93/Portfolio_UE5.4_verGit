@@ -4,7 +4,7 @@
 
 #include "BehaviorTree/BlackboardData.h"
 
-#include "AI/BlackBoard/CAIKey.h"
+#include "AI/Blackboard/CAIKey.h"
 
 namespace CAIKeyRegistry
 {

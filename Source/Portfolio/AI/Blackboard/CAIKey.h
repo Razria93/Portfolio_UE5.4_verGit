@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AI/BlackBoard/CAIKeyFactory.h"
+#include "AI/Blackboard/CAIKeyFactory.h"
 #include "Type/CHealthStructure.h"
 #include "Type/CStateStructure.h"
 
