@@ -16,6 +16,7 @@
 #include "Type/CStateStructure.h"
 #include "Type/CAIStructure.h"
 #include "AI/BlackBoard/CAIKey.h"
+#include "AI/BlackBoard/CAIKeyRegistry.h"
 
 ACAIController::ACAIController()
 {

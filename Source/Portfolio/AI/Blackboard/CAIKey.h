@@ -7,7 +7,7 @@ namespace CAIKey
 	namespace Targeting
 	{
 		static const FName TargetActor = "TargetActor";							// Object(Actor)
-		static const FName TargetPriority = "TargetPriority";					// Float
+		static const FName TargetPriority = "TargetPriority";					// Int
 	}
 
 	namespace State
