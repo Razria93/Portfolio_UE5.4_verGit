@@ -91,11 +91,10 @@ BT 노드나 C++ 설정에 `FName` 필드를 노출하고, asset에서 입력한
 `CAIKey`는 category namespace를 유지하고, 각 key를 `FAIBlackboardKeySpec`로 정의한다.
 
 ```cpp
-static const FAIBlackboardKeySpec TargetActor =
-{
-    TEXT("TargetActor"),
-    EAIBlackboardKeyValueType::Object
-};
+static const FAIBlackboardKeySpec TargetActor = CAIKeyFactory::FixedObjectNull(TEXT("TargetActor"));
+static const FAIBlackboardKeySpec TargetPriority = CAIKeyFactory::FixedInt(TEXT("TargetPriority"), INT_MAX);
+static const FAIBlackboardKeySpec LastSeenTime = CAIKeyFactory::RuntimeFloat(TEXT("LastSeenTime"));
+static const FAIBlackboardKeySpec HomeLocation = CAIKeyFactory::FromOwnerLocation(TEXT("HomeLocation"));
 ```
 
 사용처:
@@ -108,8 +107,10 @@ BlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
 
 ```text
 - BT / Blackboard asset에서 쓰는 key name을 C++ 심볼로 추적할 수 있다.
-- key name과 expected type을 한 곳에 둔다.
+- key name, expected type, initial policy, fixed default value를 한 곳에 둔다.
 - CAIKeyRegistry에서 required key 검증을 구성할 수 있다.
+- fixed / owner-location initial value는 registry 순회로 적용할 수 있다.
+- custom initial value는 domain-specific helper에서 명시 적용할 수 있다.
 - Blackboard API에는 명시적으로 KeyName만 전달하므로 사용 경계가 드러난다.
 ```
 
@@ -160,6 +161,9 @@ CAIKey::Targeting::TargetActor.KeyName
 
 기대 타입:
 EAIBlackboardKeyValueType::Object
+
+초기화 정책:
+EAIBlackboardInitialValuePolicy::Fixed
 ```
 
 따라서 `CAIKey`는 data table이나 runtime registry가 아니라, C++ / BT 경계의 contract vocabulary다.
@@ -202,6 +206,7 @@ BT Task / Service / Decorator
 
 ```text
 - CAIKey를 FAIBlackboardKeySpec 기반 contract vocabulary로 변경
+- CAIKeyTypes / CAIKeyFactory / CAIKey / CAIKeyRegistry 책임 분리
 - CAIKeyRegistry에서 required key 목록 검증
 - Blackboard API 호출부를 KeySpec.KeyName 전달 방식으로 정리
 ```

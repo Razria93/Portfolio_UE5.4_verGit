@@ -21,14 +21,14 @@ namespace CAIKeyRegistry
 		case EAIBlackboardKeyValueType::Float:
 			return TEXT("Float");
 
+		case EAIBlackboardKeyValueType::Vector:
+			return TEXT("Vector");
+
 		case EAIBlackboardKeyValueType::Enum:
 			return TEXT("Enum");
 
 		case EAIBlackboardKeyValueType::Object:
 			return TEXT("Object");
-
-		case EAIBlackboardKeyValueType::Vector:
-			return TEXT("Vector");
 
 		default:
 			return TEXT("Unknown");

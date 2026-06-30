@@ -542,7 +542,7 @@ Runtime cleanup 명명 사용처: 약 20개+
 - 상태: 진행 중
 - 브랜치: `refactor/ai-blackboard-key-registry`
 - PR: `P32_UE5_Portfolio_Pull_Request.md`
-- 목표: `CAIKey` 정의를 spec 기반으로 정리하고, blackboard required key 검증 기준을 registry 중심으로 묶어 키 추가 / 삭제 시 누락 위험을 줄인다. Initial runtime value 설정과 teardown clear registry화는 후속 후보로 검토한다.
+- 목표: `CAIKey` 정의를 spec 기반으로 정리하고, blackboard required key 검증 기준과 initial runtime value 설정 흐름을 정리하여 키 추가 / 삭제 시 누락 위험을 줄인다. Teardown clear registry화는 후속 후보로 검토한다.
 - 관련 문서: `N15_AI_Blackboard_Key_Registry_Policy_Note.md`, `N16_AI_Blackboard_Key_Contract_Decision_Note.md`
 - 제외 범위: BehaviorTree asset 재설계, BT Service / Task 행동 로직 변경, AI update interval 튜닝, Enhanced Input migration
 
@@ -551,11 +551,14 @@ Runtime cleanup 명명 사용처: 약 20개+
 ```text
 핵심 파일:
 1. Source/Portfolio/AI/Blackboard/CAIKey.h
-2. Source/Portfolio/Controller/CAIController.*
-3. Source/Portfolio/AI/BehaviorTree/Service/*
-4. Source/Portfolio/AI/BehaviorTree/Task/*
-5. Source/Portfolio/AI/BehaviorTree/Decorator/*
-6. Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
+2. Source/Portfolio/AI/Blackboard/CAIKeyTypes.h
+3. Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
+4. Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
+5. Source/Portfolio/Controller/CAIController.*
+6. Source/Portfolio/AI/BehaviorTree/Service/*
+7. Source/Portfolio/AI/BehaviorTree/Task/*
+8. Source/Portfolio/AI/BehaviorTree/Decorator/*
+9. Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 
 blackboard key 직접 사용 파일:
 23개
@@ -568,12 +571,17 @@ blackboard key 직접 사용 파일:
    -> key category namespace는 유지
    -> key name / key type / required 기준은 `FAIBlackboardKeySpec`로 결합
 
-2. ACAIController
+2. CAIKeyTypes.h / CAIKeyFactory.h / CAIKeyRegistry.h
+   -> key spec 타입, 생성 helper, 전체 등록 / 검증 책임 분리
+
+3. ACAIController
    -> required key validation은 registry 순회로 이동
-   -> SetInitialBlackboardRuntimeValues 수동 나열은 후속 후보
+   -> InitializeBlackboardRuntimeValues는 registry 1회 순회에서 fixed / owner-location / custom policy를 분기
+   -> custom policy는 custom value 적용 후 pending 검증
+   -> fixed / owner initial value는 registry 순회로 적용
    -> ClearBlackboardRuntimeValues 수동 나열은 후속 후보
 
-3. BT Service / Task / Decorator
+4. BT Service / Task / Decorator
    -> CAIKey를 직접 읽고 쓰는 runtime 사용처
    -> 이번 작업에서는 로직 변경 없이 registry 기준과 맞는지 확인
 ```
@@ -582,7 +590,7 @@ blackboard key 직접 사용 파일:
 
 ```text
 - CAIKey spec / registry / ValidateRequiredKeys 사용처 정적 확인
-- SetInitialBlackboardRuntimeValues / ClearBlackboardRuntimeValues 누락 여부 확인
+- InitializeBlackboardRuntimeValues / ClearBlackboardRuntimeValues 누락 여부 확인
 - git diff --check
 - PortfolioEditor Win64 Development 빌드
 - PIE AI basic loop smoke test

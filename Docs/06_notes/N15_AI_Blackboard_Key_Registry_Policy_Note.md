@@ -48,7 +48,7 @@ CAIKey.h
 ACAIController::ValidateBlackboardKeys
 -> required key 수동 검증
 
-ACAIController::SetInitialBlackboardRuntimeValues
+ACAIController::InitializeBlackboardRuntimeValues
 -> initial runtime value 수동 설정
 
 ACAIController::ClearBlackboardRuntimeValues
@@ -69,7 +69,7 @@ BT Service / Task / Decorator
 ```text
 CAIKey.h
 ValidateBlackboardKeys
-SetInitialBlackboardRuntimeValues
+InitializeBlackboardRuntimeValues
 ClearBlackboardRuntimeValues
 BT node usage
 Blackboard asset
@@ -109,25 +109,35 @@ CAIKey::Targeting::TargetActor.KeyName
 
 ### 2. registry는 key 등록과 검증을 담당한다
 
-`CAIKey.h`는 개별 key의 계약 정보를 정의하고, `CAIKeyRegistry.h`는 전체 key 목록 등록과 검증 흐름을 담당한다.
+`CAIKeyTypes.h`는 key spec의 공통 타입을 정의하고, `CAIKeyFactory.h`는 spec 생성 helper를 제공한다.
+
+`CAIKey.h`는 개별 key vocabulary와 key별 계약 정보를 정의하고, `CAIKeyRegistry.h`는 전체 key 목록 등록과 검증 흐름을 담당한다.
 
 key spec은 다음 정보를 제공한다.
 
 ```text
 FName KeyName
 EAIBlackboardKeyValueType ValueType
+EAIBlackboardInitialValuePolicy InitialValuePolicy
+fixed default value fields
 bool bRequired
 bool bClearOnRuntimeTeardown
 ```
 
-초기값까지 registry에 넣을지 여부는 key 성격에 따라 나눈다.
+초기값 적용 방식은 key 성격에 따라 나눈다.
 
 ```text
 공통 fixed initial value
--> registry 또는 helper table에서 처리 가능
+-> FAIBlackboardKeySpec의 InitialValuePolicy / default value 기반으로 registry 순회 처리
 
-enemy instance에서 읽어야 하는 value
--> controller helper에서 별도 적용 유지
+owner 위치 기반 value
+-> FromOwnerLocation policy 기반으로 registry 순회 처리
+
+runtime update value
+-> RuntimeValue factory로 정의하고 possession 초기화에서는 값을 쓰지 않음
+
+custom value
+-> custom helper에서 별도 적용 유지
 ```
 
 예:
@@ -140,7 +150,7 @@ CAIKey::Navigation::HomeLocation.KeyName
 -> owner pawn location 필요
 
 CAIKey::Patrol::bUsePatrol.KeyName
--> ACEnemy instance 설정 필요
+-> custom value 적용 필요
 ```
 
 ### 3. Validation은 registry 순회로 바꾼다
@@ -169,12 +179,24 @@ ACAIController::SetupBlackboardComponent
 ### 4. Runtime value setup은 두 단계로 나눈다
 
 ```text
-SetInitialBlackboardRuntimeValues
--> ApplyFixedInitialBlackboardValues
--> ApplyOwnerBlackboardValues
+InitializeBlackboardRuntimeValues
+-> ApplyInitialBlackboardValues: registry 1회 순회
+-> Fixed / FromOwnerLocation / Custom policy 분기
+-> Custom key는 pending set에 등록
+-> ApplyCustomBlackboardValues에서 custom value 명시 적용
+-> 처리된 custom key는 pending set에서 제거
+-> 남은 custom key가 있으면 ensure
 ```
 
-고정 초기값과 enemy instance 기반 값을 구분하면 함수가 길어지는 문제를 줄일 수 있다.
+고정 초기값과 owner 위치 기반 값은 key spec의 policy로 자동 적용한다.
+
+Custom value는 key마다 source가 다르므로 controller helper에서 명시 적용한다. 이 부분까지 함수 포인터 / lambda / variant로 자동화하면 key contract가 gameplay object access까지 알게 되므로 이번 범위에서는 제외한다.
+
+`Custom` policy는 registry가 자동 적용하지 않는 domain-specific 초기값을 의미한다. 현재 구현에서는 `ACAIController::ApplyCustomBlackboardValues`가 custom value를 명시적으로 적용한다.
+
+Custom key는 조용히 무시하지 않는다. Registry 순회 중 pending set에 등록하고, domain-specific 적용이 끝난 뒤에도 남아 있으면 ensure로 누락을 드러낸다.
+
+`RuntimeValue`는 key name / type / required / clear 계약은 필요하지만 possession 초기화 시점에는 의미 있는 값이 없는 key에 사용한다. 예를 들어 `LastSeenTime`, `LastKnownLocation`, `DistanceToTarget`, `DistanceToHome`은 perception / BT service update에서 의미 있는 runtime 값으로 채워진다.
 
 ### 5. Clear는 registry 기반으로 단순화한다
 
@@ -193,9 +215,15 @@ ClearBlackboardRuntimeValues
 ### 선택한 형태
 
 ```text
-CAIKey.h
+CAIKeyTypes.h
 -> EAIBlackboardKeyValueType
+-> EAIBlackboardInitialValuePolicy
 -> FAIBlackboardKeySpec
+
+CAIKeyFactory.h
+-> fixed / runtime / owner / custom key spec factory helper
+
+CAIKey.h
 -> CAIKey::Category::KeySpec
 
 CAIKeyRegistry.h
@@ -211,9 +239,10 @@ BT Service / Task / Decorator
 
 ```text
 - key category 네임스페이스 사용감 유지
-- key name과 expected type 정의 위치 결합
+- key name / expected type / initial policy / fixed default 정의 위치 결합
 - 전체 key 등록 목록은 registry에서 별도 관리
 - Blackboard API에는 명시적으로 KeyName만 전달
+- fixed / owner initial value는 registry 순회로 적용
 ```
 
 ### 다른 후보를 사용하지 않은 이유
@@ -238,6 +267,8 @@ BT Service / Task / Decorator
 ## 예상 수정 대상
 
 ```text
+Source/Portfolio/AI/Blackboard/CAIKeyTypes.h
+Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
 Source/Portfolio/AI/Blackboard/CAIKey.h
 Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
 Source/Portfolio/Controller/CAIController.h
@@ -264,7 +295,9 @@ Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 4. ValidateBlackboardKeys 수동 검증 제거
 5. CAIKey 사용처를 KeySpec.KeyName 전달 방식으로 변경
 6. BT Service / Task / Decorator key type 사용처 정적 확인
-7. 빌드 / PIE smoke test
+7. initial blackboard value helper 분리
+8. fixed / owner initial value를 registry 순회로 변경
+9. 빌드 / PIE smoke test
 ```
 
 ---
@@ -276,11 +309,14 @@ Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 - ValidateBlackboardKeys의 수동 bool 나열이 제거된다.
 - 검증 실패 시 누락 key 목록과 expected type이 ensure로 확인된다.
 - Blackboard API 호출부는 KeySpec이 아니라 KeySpec.KeyName을 전달한다.
+- initial blackboard value 설정이 fixed / owner / custom 기반 value로 구분된다.
+- fixed / owner initial value는 registry 순회로 적용된다.
+- custom value는 controller helper에서 명시 적용된다.
 - BT node behavior는 변경되지 않는다.
 - 빌드와 PIE AI smoke test가 통과한다.
 ```
 
-초기값 설정과 teardown clear registry화는 같은 주제의 후속 후보로 남긴다. 이번 커밋에서는 required key 계약 검증과 key spec 정의를 먼저 안정화한다.
+teardown clear registry화는 같은 주제의 후속 후보로 남긴다.
 
 ---
 

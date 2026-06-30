@@ -106,7 +106,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 
 	if (!BindPerceptionEvents()) return false;
 	if (!SetupBlackboardComponent()) return false;
-	if (!SetInitialBlackboardRuntimeValues()) return false;
+	if (!InitializeBlackboardRuntimeValues()) return false;
 	if (!StartBehaviorTreeRuntime()) return false;
 
 	return true;
@@ -178,105 +178,191 @@ bool ACAIController::SetupBlackboardComponent()
 
 // Blackboard Runtime Value
 
-bool ACAIController::SetInitialBlackboardRuntimeValues()
+bool ACAIController::InitializeBlackboardRuntimeValues()
 {
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return false;
+	if (!IsValid(ControlledPawn_Cached)) return false;
 
-	// Targeting 
-	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
-	blackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority.KeyName, INT_MAX);
+	TSet<FName> pendingCustomKeys;
 
-	// State
-	blackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState.KeyName, static_cast<uint8>(EAIIntentState::Idle));
+	ApplyInitialBlackboardValues(blackboardComp, ControlledPawn_Cached, pendingCustomKeys);
+	ApplyCustomBlackboardValues(blackboardComp, ControlledPawn_Cached, pendingCustomKeys);
 
-	// Perception
-	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS.KeyName, false);
+	return ValidateCustomBlackboardKeysApplied(pendingCustomKeys);
+}
 
-	// Navigation
-	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName, false);
+void ACAIController::ApplyInitialBlackboardValues(UBlackboardComponent* InBlackboardComp, const APawn* InOwnerPawn, TSet<FName>& OutPendingKeys) const
+{
+	if (!IsValid(InBlackboardComp)) return;
 
-	if (APawn* ownerPawn = GetPawn())
+	for (const FAIBlackboardKeySpec& keySpec : CAIKeyRegistry::GetKeySpecs())
 	{
-		blackboardComp->SetValueAsVector(CAIKey::Navigation::HomeLocation.KeyName, ownerPawn->GetActorLocation());
-
-		if (ACEnemy* enemy = Cast<ACEnemy>(ownerPawn))
+		switch (keySpec.InitialValuePolicy)
 		{
-			// --- Patrol ---
-			bool bUsePatrol = enemy->GetbUsePatrol();
-			ACPatrolPath* patrolPath = enemy->GetPatrolPath();
-			EPatrolMode patrolMode = enemy->GetPatrolMode();
+		case EAIBlackboardInitialValuePolicy::Fixed:
+			ApplyFixedInitialBlackboardValue(InBlackboardComp, keySpec);
+			break;
 
-			// Set
-			blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol.KeyName, bUsePatrol);
-			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPath.KeyName, patrolPath ? patrolPath : nullptr);
-			blackboardComp->SetValueAsEnum(CAIKey::Patrol::PatrolMode.KeyName, static_cast<uint8>(patrolMode));
+		case EAIBlackboardInitialValuePolicy::FromOwnerLocation:
+			ApplyOwnerLocationInitialBlackboardValue(InBlackboardComp, InOwnerPawn, keySpec);
+			break;
 
-			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse.KeyName, false);
-			blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName, ownerPawn->GetActorLocation());
-			blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex.KeyName, -1);
+		case EAIBlackboardInitialValuePolicy::Custom:
+			OutPendingKeys.Add(keySpec.KeyName);
+			break;
 
-			// --- Investigate ---
-			bool bUseInvestigate = enemy->GetbUseInvestigate();
-			float investigateDuration = enemy->GetInvestigateDuration();
-			int  investigateMaxIndex = enemy->GetInvestigateMaxIndex();
-
-			// Set
-			blackboardComp->SetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName, bUseInvestigate);
-			blackboardComp->SetValueAsFloat(CAIKey::Investigate::InvestigateDuration.KeyName, investigateDuration);
-			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex.KeyName, investigateMaxIndex);
-
-			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
-			blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName, false);
-			blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation.KeyName, ownerPawn->GetActorLocation());
-			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);
-
-			// --- Chase ---
-			float chaseoffsetRange = enemy->GetChaseOffsetRange();
-			float chaseEnterBuffer = enemy->GetChaseEnterBuffer();
-			float chaseExitBuffer = enemy->GetChaseExitBuffer();
-
-			// Set
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetRange.KeyName, chaseoffsetRange);
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer.KeyName, chaseEnterBuffer);
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer.KeyName, chaseExitBuffer);
-
-			// --- Alert ---
-			bool bUseAlertStep = enemy->GetbUseAlertStep();
-			float stepForwardDistance = enemy->GetStepForwardDistance();
-			float stepSideDistance = enemy->GetStepSideDistance();
-
-			// Set
-			blackboardComp->SetValueAsBool(CAIKey::Alert::bUseAlertStep.KeyName, bUseAlertStep);
-			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepForwardDistance.KeyName, stepForwardDistance);
-			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepSideDistance.KeyName, stepSideDistance);
-
-			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName, false);
-			blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation.KeyName, ownerPawn->GetActorLocation());
-
-			// --- Engage ---
-			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage.KeyName, false);
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName, false);
-
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName, false);
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName, false);
-			blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName, -1.f);
-
-			// --- Reaction ---
-			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName, false);
-
-			// --- Dead ---
-			// Init
-			blackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
+		case EAIBlackboardInitialValuePolicy::None:
+		default:
+			break;
 		}
 	}
+}
 
-	return true;
+void ACAIController::ApplyFixedInitialBlackboardValue(UBlackboardComponent* InBlackboardComp, const FAIBlackboardKeySpec& InKeySpec) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	switch (InKeySpec.ValueType)
+	{
+	case EAIBlackboardKeyValueType::Bool:
+		InBlackboardComp->SetValueAsBool(InKeySpec.KeyName, InKeySpec.BoolDefault);
+		break;
+
+	case EAIBlackboardKeyValueType::Int:
+		InBlackboardComp->SetValueAsInt(InKeySpec.KeyName, InKeySpec.IntDefault);
+		break;
+
+	case EAIBlackboardKeyValueType::Float:
+		InBlackboardComp->SetValueAsFloat(InKeySpec.KeyName, InKeySpec.FloatDefault);
+		break;
+
+	case EAIBlackboardKeyValueType::Vector:
+		InBlackboardComp->SetValueAsVector(InKeySpec.KeyName, InKeySpec.VectorDefault);
+		break;
+
+	case EAIBlackboardKeyValueType::Enum:
+		InBlackboardComp->SetValueAsEnum(InKeySpec.KeyName, InKeySpec.EnumDefault);
+		break;
+
+	case EAIBlackboardKeyValueType::Object:
+		InBlackboardComp->ClearValue(InKeySpec.KeyName);
+		break;
+	}
+}
+
+void ACAIController::ApplyOwnerLocationInitialBlackboardValue(UBlackboardComponent* InBlackboardComp, const APawn* InOwnerPawn, const FAIBlackboardKeySpec& InKeySpec) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+	if (!IsValid(InOwnerPawn)) return;
+
+	InBlackboardComp->SetValueAsVector(InKeySpec.KeyName, InOwnerPawn->GetActorLocation());
+}
+
+void ACAIController::ApplyCustomBlackboardValues(UBlackboardComponent* InBlackboardComp, const APawn* InOwnerPawn, TSet<FName>& InOutPendingKeys) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+	if (!IsValid(InOwnerPawn)) return;
+
+	const ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
+	if (!IsValid(enemy)) return;
+
+	// Patrol custom values
+	SetCustomBlackboardBoolValue(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::bUsePatrol, enemy->GetbUsePatrol());
+	SetCustomBlackboardObjectValue(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolPath, enemy->GetPatrolPath());
+	SetCustomBlackboardEnumValue(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolMode, static_cast<uint8>(enemy->GetPatrolMode()));
+
+	// Investigate custom values
+	SetCustomBlackboardBoolValue(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::bUseInvestigate, enemy->GetbUseInvestigate());
+	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateDuration, enemy->GetInvestigateDuration());
+	SetCustomBlackboardIntValue(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateMaxIndex, enemy->GetInvestigateMaxIndex());
+
+	// Chase custom values
+	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseOffsetRange, enemy->GetChaseOffsetRange());
+	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseEnterBuffer, enemy->GetChaseEnterBuffer());
+	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseExitBuffer, enemy->GetChaseExitBuffer());
+
+	// Alert custom values
+	SetCustomBlackboardBoolValue(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::bUseAlertStep, enemy->GetbUseAlertStep());
+	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepForwardDistance, enemy->GetStepForwardDistance());
+	SetCustomBlackboardFloatValue(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepSideDistance, enemy->GetStepSideDistance());
+}
+
+void ACAIController::SetCustomBlackboardBoolValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, bool InValue) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsBool(InKeySpec.KeyName, InValue);
+	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
+}
+
+void ACAIController::SetCustomBlackboardIntValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, int32 InValue) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsInt(InKeySpec.KeyName, InValue);
+	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
+}
+
+void ACAIController::SetCustomBlackboardFloatValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, float InValue) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsFloat(InKeySpec.KeyName, InValue);
+	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
+}
+
+void ACAIController::SetCustomBlackboardVectorValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, const FVector& InValue) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsVector(InKeySpec.KeyName, InValue);
+	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
+}
+
+void ACAIController::SetCustomBlackboardEnumValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, uint8 InValue) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsEnum(InKeySpec.KeyName, InValue);
+	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
+}
+
+void ACAIController::SetCustomBlackboardObjectValue(UBlackboardComponent* InBlackboardComp, TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, UObject* InValue) const
+{
+	if (!IsValid(InBlackboardComp)) return;
+
+	InBlackboardComp->SetValueAsObject(InKeySpec.KeyName, InValue);
+	MarkCustomBlackboardKeyApplied(InOutPendingKeys, InKeySpec);
+}
+
+void ACAIController::MarkCustomBlackboardKeyApplied(TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec) const
+{
+	ensureMsgf(
+		InOutPendingKeys.Remove(InKeySpec.KeyName) > 0,
+		TEXT("[AIController] Custom Blackboard key was not registered | Owner=%s | Key=%s"),
+		*GetNameSafe(ControlledPawn_Cached),
+		*InKeySpec.KeyName.ToString());
+}
+
+bool ACAIController::ValidateCustomBlackboardKeysApplied(const TSet<FName>& InPendingKeys) const
+{
+	if (InPendingKeys.IsEmpty()) return true;
+
+	TArray<FString> pendingKeyNames;
+	for (const FName& keyName : InPendingKeys)
+	{
+		pendingKeyNames.Add(keyName.ToString());
+	}
+
+	const FString pendingCustomKeys = FString::Join(pendingKeyNames, TEXT(", "));
+
+	ensureMsgf(false,
+		TEXT("[AIController] Missing custom Blackboard initial values | Owner=%s | Pending=%s"),
+		*GetNameSafe(ControlledPawn_Cached),
+		*pendingCustomKeys);
+
+	return false;
 }
 
 void ACAIController::ClearBlackboardRuntimeValues()

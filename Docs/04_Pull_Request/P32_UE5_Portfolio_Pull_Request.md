@@ -54,7 +54,7 @@ CAIKey.h
 ACAIController::ValidateBlackboardKeys
 -> required key를 수동 나열
 
-ACAIController::SetInitialBlackboardRuntimeValues
+ACAIController::InitializeBlackboardRuntimeValues
 -> 초기 runtime 값을 수동 나열
 
 ACAIController::ClearBlackboardRuntimeValues
@@ -69,7 +69,10 @@ ACAIController::ClearBlackboardRuntimeValues
 
 ```text
 핵심 key 정의:
+Source/Portfolio/AI/Blackboard/CAIKeyTypes.h
+Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
 Source/Portfolio/AI/Blackboard/CAIKey.h
+Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
 
 blackboard setup / validate / initialize / clear:
 Source/Portfolio/Controller/CAIController.*
@@ -107,7 +110,15 @@ blackboard key 직접 사용 파일:
 ```text
 Source/Portfolio/AI/Blackboard/CAIKey.h
 -> FAIBlackboardKeySpec 기반 key 정의
+-> CAIKeyFactory helper 기반 key spec 생성
+-> RuntimeValue key는 possession 초기화에서 제외
 -> CAIKey::Category::KeySpec.KeyName 사용
+
+Source/Portfolio/AI/Blackboard/CAIKeyTypes.h
+-> EAIBlackboardKeyValueType / EAIBlackboardInitialValuePolicy / FAIBlackboardKeySpec 정의
+
+Source/Portfolio/AI/Blackboard/CAIKeyFactory.h
+-> fixed / runtime / owner / custom key spec 생성 helper 분리
 
 Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
 -> 전체 key spec 등록
@@ -139,9 +150,12 @@ CAIKeyRegistry::GetKeySpecs 순회
 초기값이 필요한 key와 단순 clear만 필요한 key를 구분한다.
 
 ```text
-SetInitialBlackboardRuntimeValues
--> 이번 커밋에서는 기존 흐름 유지
--> 후속 작업에서 fixed value / owner value / enemy setting value 분리 검토
+InitializeBlackboardRuntimeValues
+-> ApplyInitialBlackboardValues: registry 1회 순회
+-> Fixed / FromOwnerLocation / Custom policy 분기
+-> Custom key는 pending set에 등록
+-> ApplyCustomBlackboardValues에서 처리된 custom key 제거
+-> 남은 custom key가 있으면 ensure
 
 ClearBlackboardRuntimeValues
 -> 이번 커밋에서는 기존 흐름 유지
@@ -182,6 +196,8 @@ BT 노드의 blackboard read / write 로직은 이번 PR에서 기능 변경하�
 rg 기반 CAIKey / blackboard 사용처 전수 확인
 registry required key와 ValidateRequiredKeys 경로 확인
 CAIKey spec과 Blackboard API KeyName 전달 경로 확인
+CAIKeyTypes / CAIKeyFactory / CAIKey / CAIKeyRegistry 책임 분리 확인
+initial blackboard value policy / default value 순회 확인
 git diff --check
 PortfolioEditor Win64 Development 빌드
 PIE AI basic loop smoke test
@@ -193,6 +209,8 @@ PIE AI basic loop smoke test
 git diff --check 통과
 PortfolioEditor Win64 Development 빌드 통과
 required key 누락 시 ensureMsgf 경로 적용
+initial blackboard value fixed / owner는 registry 순회 적용
+custom value는 명시 helper 유지
 PIE AI basic loop smoke test 대기
 ```
 
