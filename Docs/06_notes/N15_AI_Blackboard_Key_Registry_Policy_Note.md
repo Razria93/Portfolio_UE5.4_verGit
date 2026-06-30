@@ -39,7 +39,7 @@ clear 대상 여부
 runtime owner
 ```
 
-현재 분산 상태:
+기존 분산 상태:
 
 ```text
 CAIKey.h
@@ -64,7 +64,7 @@ BT Service / Task / Decorator
 
 ### 1. key 추가 / 삭제 시 수정 지점이 많다
 
-현재는 key를 하나 추가하면 다음 위치를 모두 맞춰야 한다.
+기존에는 key를 하나 추가하면 다음 위치를 모두 맞춰야 했다.
 
 ```text
 CAIKey.h
@@ -202,8 +202,8 @@ Custom key는 조용히 무시하지 않는다. Registry 순회 중 pending set�
 
 ```text
 ClearBlackboardRuntimeValues
--> GetRuntimeClearBlackboardKeySpecs()
--> ClearValue 반복
+-> CAIKeyRegistry::GetKeySpecs 순회
+-> bClearOnRuntimeTeardown 대상만 ClearValue 반복
 ```
 
 단, `DeadState`처럼 clear보다 Alive reset이 의미적으로 맞는 key는 registry에서 clear 대상이 아닌 reset 대상으로 분류할 수 있다.
@@ -315,10 +315,6 @@ Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 - BT node behavior는 변경되지 않는다.
 - 빌드와 PIE AI smoke test가 통과한다.
 ```
-
-teardown clear registry화는 같은 주제의 후속 후보로 남긴다.
-
----
 
 ## 후속 분리
 

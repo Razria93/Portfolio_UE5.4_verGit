@@ -158,8 +158,8 @@ InitializeBlackboardRuntimeValues
 -> 남은 custom key가 있으면 ensure
 
 ClearBlackboardRuntimeValues
--> 이번 커밋에서는 기존 흐름 유지
--> 후속 작업에서 clear 대상 registry 순회 검토
+-> CAIKeyRegistry::GetKeySpecs 순회
+-> bClearOnRuntimeTeardown 대상만 ClearValue
 ```
 
 ### 4. BT Service / Task / Decorator 사용처 확인
@@ -198,6 +198,7 @@ registry required key와 ValidateRequiredKeys 경로 확인
 CAIKey spec과 Blackboard API KeyName 전달 경로 확인
 CAIKeyTypes / CAIKeyFactory / CAIKey / CAIKeyRegistry 책임 분리 확인
 initial blackboard value policy / default value 순회 확인
+blackboard clear 대상 bClearOnRuntimeTeardown 순회 확인
 git diff --check
 PortfolioEditor Win64 Development 빌드
 PIE AI basic loop smoke test
@@ -211,6 +212,7 @@ PortfolioEditor Win64 Development 빌드 통과
 required key 누락 시 ensureMsgf 경로 적용
 initial blackboard value fixed / owner는 registry 순회 적용
 custom value는 명시 helper 유지
+clear runtime value는 bClearOnRuntimeTeardown 기준 registry 순회 적용
 PIE AI basic loop smoke test 대기
 ```
 

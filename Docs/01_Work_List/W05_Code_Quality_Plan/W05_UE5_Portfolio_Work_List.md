@@ -542,7 +542,7 @@ Runtime cleanup 명명 사용처: 약 20개+
 - 상태: 진행 중
 - 브랜치: `refactor/ai-blackboard-key-registry`
 - PR: `P32_UE5_Portfolio_Pull_Request.md`
-- 목표: `CAIKey` 정의를 spec 기반으로 정리하고, blackboard required key 검증 기준과 initial runtime value 설정 흐름을 정리하여 키 추가 / 삭제 시 누락 위험을 줄인다. Teardown clear registry화는 후속 후보로 검토한다.
+- 목표: `CAIKey` 정의를 spec 기반으로 정리하고, blackboard required key 검증 기준과 initial / clear runtime value 흐름을 정리하여 키 추가 / 삭제 시 누락 위험을 줄인다.
 - 관련 문서: `N15_AI_Blackboard_Key_Registry_Policy_Note.md`, `N16_AI_Blackboard_Key_Contract_Decision_Note.md`
 - 제외 범위: BehaviorTree asset 재설계, BT Service / Task 행동 로직 변경, AI update interval 튜닝, Enhanced Input migration
 
@@ -579,7 +579,7 @@ blackboard key 직접 사용 파일:
    -> InitializeBlackboardRuntimeValues는 registry 1회 순회에서 fixed / owner-location / custom policy를 분기
    -> custom policy는 custom value 적용 후 pending 검증
    -> fixed / owner initial value는 registry 순회로 적용
-   -> ClearBlackboardRuntimeValues 수동 나열은 후속 후보
+   -> ClearBlackboardRuntimeValues는 bClearOnRuntimeTeardown 기준 registry 순회로 적용
 
 4. BT Service / Task / Decorator
    -> CAIKey를 직접 읽고 쓰는 runtime 사용처

@@ -370,67 +370,12 @@ void ACAIController::ClearBlackboardRuntimeValues()
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
-	// Targeting
-	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
-	blackboardComp->ClearValue(CAIKey::Targeting::TargetPriority.KeyName);
+	for (const FAIBlackboardKeySpec& keySpec : CAIKeyRegistry::GetKeySpecs())
+	{
+		if (!keySpec.bClearOnRuntimeTeardown) continue;
 
-	// State
-	blackboardComp->ClearValue(CAIKey::State::AIIntentState.KeyName);
-
-	// Perception
-	blackboardComp->ClearValue(CAIKey::Perception::bHasLOS.KeyName);
-	blackboardComp->ClearValue(CAIKey::Perception::LastSeenTime.KeyName);
-	blackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation.KeyName);
-
-	// Metric
-	blackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget.KeyName);
-	blackboardComp->ClearValue(CAIKey::Metric::DistanceToHome.KeyName);
-
-	// Navigation
-	blackboardComp->ClearValue(CAIKey::Navigation::HomeLocation.KeyName);
-	blackboardComp->ClearValue(CAIKey::Navigation::bReturnHome.KeyName);
-
-	// Patrol
-	blackboardComp->ClearValue(CAIKey::Patrol::bUsePatrol.KeyName);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolPath.KeyName);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolMode.KeyName);
-	blackboardComp->ClearValue(CAIKey::Patrol::bPatrolReverse.KeyName);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolLocation.KeyName);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolIndex.KeyName);
-
-	// Investigate
-	blackboardComp->ClearValue(CAIKey::Investigate::bUseInvestigate.KeyName);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateDuration.KeyName);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateMaxIndex.KeyName);
-	blackboardComp->ClearValue(CAIKey::Investigate::bCanInvestigate.KeyName);
-	blackboardComp->ClearValue(CAIKey::Investigate::bIsInvestigating.KeyName);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateIndex.KeyName);
-
-	// Chase
-	blackboardComp->ClearValue(CAIKey::Chase::ChaseOffsetRange.KeyName);
-	blackboardComp->ClearValue(CAIKey::Chase::ChaseEnterBuffer.KeyName);
-	blackboardComp->ClearValue(CAIKey::Chase::ChaseExitBuffer.KeyName);
-
-	// Alert
-	blackboardComp->ClearValue(CAIKey::Alert::bUseAlertStep.KeyName);
-	blackboardComp->ClearValue(CAIKey::Alert::StepForwardDistance.KeyName);
-	blackboardComp->ClearValue(CAIKey::Alert::StepSideDistance.KeyName);
-	blackboardComp->ClearValue(CAIKey::Alert::bInAlertRange.KeyName);
-	blackboardComp->ClearValue(CAIKey::Alert::AlertStepLocation.KeyName);
-
-	// Engage
-	blackboardComp->ClearValue(CAIKey::Engage::bShouldEngage.KeyName);
-	blackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction.KeyName);
-	blackboardComp->ClearValue(CAIKey::Engage::bIsCombatAction.KeyName);
-	blackboardComp->ClearValue(CAIKey::Engage::bInEngageRange.KeyName);
-	blackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime.KeyName);
-
-	// Reaction
-	blackboardComp->ClearValue(CAIKey::Reaction::bIsActiveReaction.KeyName);
-
-	// Dead
-	blackboardComp->ClearValue(CAIKey::Dead::DeadState.KeyName);
+		blackboardComp->ClearValue(keySpec.KeyName);
+	}
 }
 
 // Behavior Tree Runtime
