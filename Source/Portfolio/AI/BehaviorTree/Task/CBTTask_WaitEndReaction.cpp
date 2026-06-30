@@ -26,7 +26,7 @@ void UCBTTask_WaitEndReaction::TickTask(UBehaviorTreeComponent& OwnerComp, uint8
 		return;
 	}
 
-	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
+	const bool bIsActiveReaction = blackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
 
 	if (!bIsActiveReaction)
 	{

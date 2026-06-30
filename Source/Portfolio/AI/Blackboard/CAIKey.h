@@ -2,95 +2,113 @@
 
 #include "CoreMinimal.h"
 
+enum class EAIBlackboardKeyValueType : uint8
+{
+	Bool,
+	Int,
+	Float,
+	Enum,
+	Object,
+	Vector,
+};
+
+struct FAIBlackboardKeySpec
+{
+	FName KeyName = NAME_None;
+	EAIBlackboardKeyValueType ValueType = EAIBlackboardKeyValueType::Bool;
+	bool bRequired = true;
+	bool bClearOnRuntimeTeardown = true;
+};
+
 namespace CAIKey
 {
 	namespace Targeting
 	{
-		static const FName TargetActor = "TargetActor";							// Object(Actor)
-		static const FName TargetPriority = "TargetPriority";					// Int
+		static const FAIBlackboardKeySpec TargetActor = { TEXT("TargetActor"), EAIBlackboardKeyValueType::Object };
+		static const FAIBlackboardKeySpec TargetPriority = { TEXT("TargetPriority"), EAIBlackboardKeyValueType::Int };
 	}
 
 	namespace State
 	{
-		static const FName AIIntentState = "AIIntentState";						// Enum(EAIIntentState)
+		static const FAIBlackboardKeySpec AIIntentState = { TEXT("AIIntentState"), EAIBlackboardKeyValueType::Enum };
 	}
 
 	namespace Perception
 	{
-		static const FName bHasLOS = "bHasLOS";									// Bool
-		static const FName LastSeenTime = "LastSeenTime";						// Float
-		static const FName LastKnownLocation = "LastKnownLocation";				// Vector
+		static const FAIBlackboardKeySpec bHasLOS = { TEXT("bHasLOS"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec LastSeenTime = { TEXT("LastSeenTime"), EAIBlackboardKeyValueType::Float };
+		static const FAIBlackboardKeySpec LastKnownLocation = { TEXT("LastKnownLocation"), EAIBlackboardKeyValueType::Vector };
 	}
 
 	namespace Metric
 	{
-		static const FName DistanceToTarget = "DistanceToTarget";				// Float
-		static const FName DistanceToHome = "DistanceToHome";					// Float
+		static const FAIBlackboardKeySpec DistanceToTarget = { TEXT("DistanceToTarget"), EAIBlackboardKeyValueType::Float };
+		static const FAIBlackboardKeySpec DistanceToHome = { TEXT("DistanceToHome"), EAIBlackboardKeyValueType::Float };
 	}
 
 	namespace Navigation
 	{
-		static const FName bReturnHome = "bReturnHome";							// Bool
-		static const FName HomeLocation = "HomeLocation";						// Vector
+		static const FAIBlackboardKeySpec bReturnHome = { TEXT("bReturnHome"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec HomeLocation = { TEXT("HomeLocation"), EAIBlackboardKeyValueType::Vector };
 	}
 
 	namespace Patrol
 	{
-		static const FName bUsePatrol = "bUsePatrol";							// Bool
-		static const FName PatrolPath = "PatrolPath";							// Object(ACPatrolPath)
-		static const FName PatrolMode = "PatrolMode";							// Enum(EPatrolMode)
+		static const FAIBlackboardKeySpec bUsePatrol = { TEXT("bUsePatrol"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec PatrolPath = { TEXT("PatrolPath"), EAIBlackboardKeyValueType::Object };
+		static const FAIBlackboardKeySpec PatrolMode = { TEXT("PatrolMode"), EAIBlackboardKeyValueType::Enum };
 
-		static const FName bPatrolReverse = "bPatrolReverse";					// Bool
-		static const FName PatrolLocation = "PatrolLocation";					// Vector
-		static const FName PatrolIndex = "PatrolIndex";							// Int
+		static const FAIBlackboardKeySpec bPatrolReverse = { TEXT("bPatrolReverse"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec PatrolLocation = { TEXT("PatrolLocation"), EAIBlackboardKeyValueType::Vector };
+		static const FAIBlackboardKeySpec PatrolIndex = { TEXT("PatrolIndex"), EAIBlackboardKeyValueType::Int };
 	}
 
 	namespace Investigate
 	{
-		static const FName bUseInvestigate = "bUseInvestigate";					// Bool
-		static const FName InvestigateDuration = "InvestigateDuration";			// Float
-		static const FName InvestigateMaxIndex = "InvestigateMaxIndex";			// Int
+		static const FAIBlackboardKeySpec bUseInvestigate = { TEXT("bUseInvestigate"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec InvestigateDuration = { TEXT("InvestigateDuration"), EAIBlackboardKeyValueType::Float };
+		static const FAIBlackboardKeySpec InvestigateMaxIndex = { TEXT("InvestigateMaxIndex"), EAIBlackboardKeyValueType::Int };
 
-		static const FName bCanInvestigate = "bCanInvestigate";					// Bool
-		static const FName bIsInvestigating = "bIsInvestigating";				// Bool
-		static const FName InvestigateLocation = "InvestigateLocation";			// Vector
-		static const FName InvestigateIndex = "InvestigateIndex";				// Int
+		static const FAIBlackboardKeySpec bCanInvestigate = { TEXT("bCanInvestigate"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec bIsInvestigating = { TEXT("bIsInvestigating"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec InvestigateLocation = { TEXT("InvestigateLocation"), EAIBlackboardKeyValueType::Vector };
+		static const FAIBlackboardKeySpec InvestigateIndex = { TEXT("InvestigateIndex"), EAIBlackboardKeyValueType::Int };
 	}
 
 	namespace Chase
 	{
-		static const FName ChaseOffsetRange = "ChaseOffsetRange";				// Float
-		static const FName ChaseEnterBuffer = "ChaseEnterBuffer";				// Float
-		static const FName ChaseExitBuffer = "ChaseExitBuffer";					// Float
+		static const FAIBlackboardKeySpec ChaseOffsetRange = { TEXT("ChaseOffsetRange"), EAIBlackboardKeyValueType::Float };
+		static const FAIBlackboardKeySpec ChaseEnterBuffer = { TEXT("ChaseEnterBuffer"), EAIBlackboardKeyValueType::Float };
+		static const FAIBlackboardKeySpec ChaseExitBuffer = { TEXT("ChaseExitBuffer"), EAIBlackboardKeyValueType::Float };
 	}
 
 	namespace Alert
 	{
-		static const FName bUseAlertStep = "bUseAlertStep";						// Bool
-		static const FName StepForwardDistance = "StepForwardDistance";			// Float
-		static const FName StepSideDistance = "StepSideDistance";				// Float
+		static const FAIBlackboardKeySpec bUseAlertStep = { TEXT("bUseAlertStep"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec StepForwardDistance = { TEXT("StepForwardDistance"), EAIBlackboardKeyValueType::Float };
+		static const FAIBlackboardKeySpec StepSideDistance = { TEXT("StepSideDistance"), EAIBlackboardKeyValueType::Float };
 
-		static const FName bInAlertRange = "bInAlertRange";						// Bool
-		static const FName AlertStepLocation = "AlertStepLocation";				// Vector
+		static const FAIBlackboardKeySpec bInAlertRange = { TEXT("bInAlertRange"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec AlertStepLocation = { TEXT("AlertStepLocation"), EAIBlackboardKeyValueType::Vector };
 	}
 
 	namespace Engage
 	{
-		static const FName bShouldEngage = "bShouldEngage";						// Bool	 (UpdateAIContext)
-		static const FName bCanCombatAction = "bCanCombatAction";				// Bool	 (UpdateEngageContext)
+		static const FAIBlackboardKeySpec bShouldEngage = { TEXT("bShouldEngage"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec bCanCombatAction = { TEXT("bCanCombatAction"), EAIBlackboardKeyValueType::Bool };
 		
-		static const FName bIsCombatAction = "bIsCombatAction";					// Bool	 (OnActionTypeChanged)
-		static const FName bInEngageRange = "bInEngageRange";					// Bool	 (UpdateAIContext)
-		static const FName NextCombatActionTime = "NextCombatActionTime";		// Float (StartCombatAction)
+		static const FAIBlackboardKeySpec bIsCombatAction = { TEXT("bIsCombatAction"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec bInEngageRange = { TEXT("bInEngageRange"), EAIBlackboardKeyValueType::Bool };
+		static const FAIBlackboardKeySpec NextCombatActionTime = { TEXT("NextCombatActionTime"), EAIBlackboardKeyValueType::Float };
 	}
 	
 	namespace Reaction
 	{
-		static const FName bIsActiveReaction = "bIsActiveReaction";				// Bool
+		static const FAIBlackboardKeySpec bIsActiveReaction = { TEXT("bIsActiveReaction"), EAIBlackboardKeyValueType::Bool };
 	}
 
 	namespace Dead
 	{
-		static const FName DeadState = "DeadState";								// Enum(EDeadState)
+		static const FAIBlackboardKeySpec DeadState = { TEXT("DeadState"), EAIBlackboardKeyValueType::Enum };
 	}
 }

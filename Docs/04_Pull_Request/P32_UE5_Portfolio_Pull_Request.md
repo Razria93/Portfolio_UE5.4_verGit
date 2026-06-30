@@ -11,7 +11,7 @@
 ## 상태
 
 - [x] 작업 방향 수립
-- [ ] 코드 / 문서 반영
+- [x] 코드 / 문서 반영
 - [ ] 검증 완료
 
 ---
@@ -34,7 +34,7 @@ TBD
 
 이번 PR은 AI blackboard key 정의 / 검증 / 초기화 / 정리 기준을 registry 중심으로 정리한다.
 
-현재 `CAIKey`는 key name vocabulary 역할을 하지만, required key 검증과 runtime value 초기화 / 정리는 `ACAIController`에서 수동으로 길게 나열되어 있다. 이 구조는 key 추가 또는 삭제 시 누락 위험이 크고, BehaviorTree key 계약을 코드에서 설명하기 어렵다.
+현재 `CAIKey`는 key category vocabulary 역할을 하지만, required key 검증과 runtime value 초기화 / 정리는 `ACAIController`에서 수동으로 길게 나열되어 있다. 이 구조는 key 추가 또는 삭제 시 누락 위험이 크고, BehaviorTree key 계약을 코드에서 설명하기 어렵다.
 
 핵심 목표는 AI 행동 로직을 바꾸지 않고, blackboard key 계약을 한 곳에서 읽고 검증할 수 있게 만드는 것이다.
 
@@ -49,6 +49,7 @@ P31에서 `ACAIController` lifecycle cleanup을 정리하면서 blackboard setup
 ```text
 CAIKey.h
 -> key name만 정의
+-> key type / required 여부는 별도 위치에 있음
 
 ACAIController::ValidateBlackboardKeys
 -> required key를 수동 나열
@@ -87,7 +88,7 @@ blackboard key 직접 사용 파일:
 
 ## 작업 범위
 
-### 1. Blackboard key registry 도입
+### 1. Blackboard key spec / registry 도입
 
 목표:
 
@@ -101,14 +102,25 @@ blackboard key 직접 사용 파일:
 
 를 한 곳에서 확인할 수 있게 한다.
 
-후보:
+변경:
 
 ```text
 Source/Portfolio/AI/Blackboard/CAIKey.h
+-> FAIBlackboardKeySpec 기반 key 정의
+-> CAIKey::Category::KeySpec.KeyName 사용
+
 Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h
+-> 전체 key spec 등록
+-> required key validation
 ```
 
-registry가 너무 커지면 별도 파일로 분리한다.
+`CAIKey`는 category namespace 사용감을 유지하고, `CAIKeyRegistry`는 전체 key 목록과 검증 흐름을 담당한다.
+
+`CAIKey`를 자유 FName / DataAsset 기반 입력으로 풀지 않은 이유는 별도 결정 문서에 정리했다.
+
+```text
+Docs/06_notes/N16_AI_Blackboard_Key_Contract_Decision_Note.md
+```
 
 ### 2. Required key validation 단일화
 
@@ -117,9 +129,9 @@ registry가 너무 커지면 별도 파일로 분리한다.
 변경 방향:
 
 ```text
-registry의 required key 목록 순회
--> ValidateBlackboardKey 호출
--> 누락 key 로그 또는 ensure 정책 적용
+CAIKeyRegistry::GetKeySpecs 순회
+-> CAIKeyRegistry::ValidateRequiredKeys 호출
+-> 누락 key 이름과 expected type ensure
 ```
 
 ### 3. Initial / Clear runtime value 기준 정리
@@ -128,11 +140,12 @@ registry의 required key 목록 순회
 
 ```text
 SetInitialBlackboardRuntimeValues
--> registry 기반 공통 초기값 적용
--> enemy instance에서 가져와야 하는 tuning 값은 별도 apply helper 유지
+-> 이번 커밋에서는 기존 흐름 유지
+-> 후속 작업에서 fixed value / owner value / enemy setting value 분리 검토
 
 ClearBlackboardRuntimeValues
--> registry 기반 clear 대상 순회
+-> 이번 커밋에서는 기존 흐름 유지
+-> 후속 작업에서 clear 대상 registry 순회 검토
 ```
 
 ### 4. BT Service / Task / Decorator 사용처 확인
@@ -145,6 +158,7 @@ BT 노드의 blackboard read / write 로직은 이번 PR에서 기능 변경하�
 - registry에 없는 key를 직접 사용하지 않는지
 - key type과 GetValueAs / SetValueAs API가 일치하는지
 - controller 초기화 / clear 대상에서 누락된 key가 없는지
+- Blackboard API 호출부가 `CAIKey::Category::KeySpec.KeyName` 형태로 정리됐는지
 ```
 
 ---
@@ -166,11 +180,20 @@ BT 노드의 blackboard read / write 로직은 이번 PR에서 기능 변경하�
 
 ```text
 rg 기반 CAIKey / blackboard 사용처 전수 확인
-registry required key와 ValidateBlackboardKeys 경로 확인
-registry initial / clear 대상과 controller runtime value 경로 확인
+registry required key와 ValidateRequiredKeys 경로 확인
+CAIKey spec과 Blackboard API KeyName 전달 경로 확인
 git diff --check
 PortfolioEditor Win64 Development 빌드
 PIE AI basic loop smoke test
+```
+
+현재 확인:
+
+```text
+git diff --check 통과
+PortfolioEditor Win64 Development 빌드 통과
+required key 누락 시 ensureMsgf 경로 적용
+PIE AI basic loop smoke test 대기
 ```
 
 ---
@@ -180,6 +203,7 @@ PIE AI basic loop smoke test
 ```text
 Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 Docs/06_notes/N15_AI_Blackboard_Key_Registry_Policy_Note.md
+Docs/06_notes/N16_AI_Blackboard_Key_Contract_Decision_Note.md
 Docs/04_Pull_Request/P31_UE5_Portfolio_Pull_Request.md
 Docs/06_notes/N13_Component_Lifecycle_Cleanup_Policy_Note.md
 ```

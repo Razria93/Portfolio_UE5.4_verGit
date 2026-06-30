@@ -6,6 +6,8 @@
 
 목표는 BehaviorTree 동작을 바꾸는 것이 아니라, blackboard key 계약을 코드에서 한 곳에 모아 검증 / 초기화 / 정리 누락을 줄이는 것이다.
 
+`CAIKey`를 data-driven 입력으로 풀지 않고 C++ contract vocabulary로 유지한 결정 배경은 `N16_AI_Blackboard_Key_Contract_Decision_Note.md`에 별도로 정리한다.
+
 ---
 
 ## 현재 구조
@@ -89,19 +91,31 @@ Blackboard asset
 
 ## 설계 방향
 
-### 1. CAIKey는 vocabulary로 유지한다
+### 1. CAIKey는 spec vocabulary로 유지한다
 
-BT Service / Task / Decorator에서 이미 `CAIKey::Category::KeyName` 형태를 넓게 사용하고 있으므로, key name namespace는 유지한다.
+BT Service / Task / Decorator에서 이미 `CAIKey::Category::KeyName` 형태를 넓게 사용하고 있으므로, category namespace는 유지한다.
 
-이번 작업에서 모든 BT 노드 사용처를 wrapper API로 강제 이전하지 않는다.
+다만 `CAIKey`의 값은 단순 `FName`이 아니라 `FAIBlackboardKeySpec`로 정의한다.
 
-### 2. registry는 key contract를 담당한다
+```text
+CAIKey::Targeting::TargetActor
+-> FAIBlackboardKeySpec
 
-registry는 다음 정보를 제공한다.
+CAIKey::Targeting::TargetActor.KeyName
+-> Blackboard API에 전달하는 FName
+```
+
+이렇게 하면 key category 사용감은 유지하면서 key name / expected type / required 여부 같은 계약 정보를 key 정의 근처에 둘 수 있다.
+
+### 2. registry는 key 등록과 검증을 담당한다
+
+`CAIKey.h`는 개별 key의 계약 정보를 정의하고, `CAIKeyRegistry.h`는 전체 key 목록 등록과 검증 흐름을 담당한다.
+
+key spec은 다음 정보를 제공한다.
 
 ```text
 FName KeyName
-EBlackboardKeyContractType ValueType
+EAIBlackboardKeyValueType ValueType
 bool bRequired
 bool bClearOnRuntimeTeardown
 ```
@@ -119,25 +133,38 @@ enemy instance에서 읽어야 하는 value
 예:
 
 ```text
-CAIKey::State::AIIntentState
+CAIKey::State::AIIntentState.KeyName
 -> fixed initial value: Idle
 
-CAIKey::Navigation::HomeLocation
+CAIKey::Navigation::HomeLocation.KeyName
 -> owner pawn location 필요
 
-CAIKey::Patrol::bUsePatrol
+CAIKey::Patrol::bUsePatrol.KeyName
 -> ACEnemy instance 설정 필요
 ```
 
 ### 3. Validation은 registry 순회로 바꾼다
 
 ```text
-ValidateBlackboardKeys
--> GetRequiredBlackboardKeySpecs()
--> ValidateBlackboardKey 반복
+ACAIController::SetupBlackboardComponent
+-> CAIKeyRegistry::ValidateRequiredKeys
+-> CAIKeyRegistry::GetKeySpecs 순회
+-> required key 검증
 ```
 
-검증 실패 시 key name과 expected type을 로그에 남길 수 있게 한다.
+검증 실패 시 누락된 key name과 expected type을 모아 `ensureMsgf` 1회로 남긴다.
+
+```text
+[AIKeyRegistry] Missing required Blackboard keys | Blackboard=... | Missing=TargetActor:Object, ...
+```
+
+개별 key마다 별도 로그를 찍지 않는 이유:
+
+```text
+- required blackboard key 누락은 asset 계약 위반이므로 ensure가 적합하다.
+- 누락 key마다 ensure / log를 남기면 callstack과 로그가 과해진다.
+- 최종 ensure 1회가 Blackboard asset, 누락 key 목록, expected type을 함께 보여준다.
+```
 
 ### 4. Runtime value setup은 두 단계로 나눈다
 
@@ -161,51 +188,49 @@ ClearBlackboardRuntimeValues
 
 ---
 
-## 구현 후보
+## 구현 결정
 
-### Option A. CAIKey.h 안에 registry 추가
-
-장점:
+### 선택한 형태
 
 ```text
-- key name과 key contract가 한 파일에 있음
-- 작은 변경으로 시작 가능
+CAIKey.h
+-> EAIBlackboardKeyValueType
+-> FAIBlackboardKeySpec
+-> CAIKey::Category::KeySpec
+
+CAIKeyRegistry.h
+-> GetKeySpecs()
+-> ValidateRequiredKeys()
+-> missing required key ensure
+
+BT Service / Task / Decorator
+-> CAIKey::Category::KeySpec.KeyName 사용
 ```
 
-단점:
+이 형태는 다음 기준을 만족한다.
 
 ```text
-- CAIKey.h가 길어짐
-- type / default value helper가 늘어나면 부담
+- key category 네임스페이스 사용감 유지
+- key name과 expected type 정의 위치 결합
+- 전체 key 등록 목록은 registry에서 별도 관리
+- Blackboard API에는 명시적으로 KeyName만 전달
 ```
 
-### Option B. CAIKeyRegistry.h 추가
-
-장점:
+### 다른 후보를 사용하지 않은 이유
 
 ```text
-- CAIKey는 name vocabulary로 유지
-- registry / validation / initial / clear 정책을 분리 가능
-```
+- 단순 FName vocabulary 유지
+  -> key type 정의가 registry에만 남아 CAIKey와 중복 관리된다.
 
-단점:
+- CAIKey.h 안에 전체 registry까지 포함
+  -> CAIKey.h가 key 정의 / 전체 등록 / 검증 책임을 모두 가지게 된다.
 
-```text
-- 파일이 하나 늘어남
-- include 정리가 필요
-```
+- 모든 BT 사용처를 wrapper API로 이전
+  -> 이번 PR의 목적보다 변경 범위가 커지고 BT node behavior 검증 부담이 커진다.
 
-추천:
-
-```text
-Option B
-```
-
-이유:
-
-```text
-CAIKey.h는 기존 BT 노드가 넓게 include하고 있으므로 가볍게 유지하는 편이 낫다.
-registry는 controller setup / validation 쪽에서 주로 사용하므로 별도 파일이 책임 분리에 맞다.
+- 자유 FName / DataAsset 기반 key profile
+  -> 현재 규모에서는 유연성보다 추적성 저하와 검증 부담이 더 크다.
+  -> enemy별 key profile이 필요해지는 시점에 별도 확장한다.
 ```
 
 ---
@@ -234,15 +259,12 @@ Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 
 ```text
 1. CAIKey usage 목록을 key category별로 정리
-2. FAIBlackboardKeySpec / EAIBlackboardKeyValueType 후보 정의
+2. FAIBlackboardKeySpec / EAIBlackboardKeyValueType 정의
 3. required key registry 구성
-4. ValidateBlackboardKeys를 registry 순회로 변경
-5. clear 대상 registry 구성
-6. ClearBlackboardRuntimeValues를 registry 순회로 변경
-7. fixed initial value helper 분리
-8. owner / enemy 기반 initial value helper 분리
-9. BT Service / Task / Decorator key type 사용처 정적 확인
-10. 빌드 / PIE smoke test
+4. ValidateBlackboardKeys 수동 검증 제거
+5. CAIKey 사용처를 KeySpec.KeyName 전달 방식으로 변경
+6. BT Service / Task / Decorator key type 사용처 정적 확인
+7. 빌드 / PIE smoke test
 ```
 
 ---
@@ -252,11 +274,13 @@ Source/Portfolio/Component/CCombatSignalSourceComponent.cpp
 ```text
 - required blackboard key 목록이 registry에서 확인된다.
 - ValidateBlackboardKeys의 수동 bool 나열이 제거된다.
-- ClearBlackboardRuntimeValues의 수동 ClearValue 나열이 줄어든다.
-- initial runtime value 설정이 fixed value와 owner / enemy 기반 value로 구분된다.
+- 검증 실패 시 누락 key 목록과 expected type이 ensure로 확인된다.
+- Blackboard API 호출부는 KeySpec이 아니라 KeySpec.KeyName을 전달한다.
 - BT node behavior는 변경되지 않는다.
 - 빌드와 PIE AI smoke test가 통과한다.
 ```
+
+초기값 설정과 teardown clear registry화는 같은 주제의 후속 후보로 남긴다. 이번 커밋에서는 required key 계약 검증과 key spec 정의를 먼저 안정화한다.
 
 ---
 

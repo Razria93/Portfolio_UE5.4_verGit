@@ -126,7 +126,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn*
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
-	FVector homeLocation = InBlackboardComp->GetValueAsVector(CAIKey::Navigation::HomeLocation);
+	FVector homeLocation = InBlackboardComp->GetValueAsVector(CAIKey::Navigation::HomeLocation.KeyName);
 
 	float dist_home = FVector::Dist(ownerLocation, homeLocation);
 
@@ -141,11 +141,11 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
 
-	float chaseOffsetRange = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseOffsetRange);
-	float chaseEnterBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer);
-	float chaseExitBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseExitBuffer);
+	float chaseOffsetRange = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseOffsetRange.KeyName);
+	float chaseEnterBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer.KeyName);
+	float chaseExitBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseExitBuffer.KeyName);
 
-	bool bInAlertRange = InBlackboardComp->GetValueAsBool(CAIKey::Alert::bInAlertRange);
+	bool bInAlertRange = InBlackboardComp->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
 
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
@@ -230,27 +230,27 @@ void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* 
 	if (!IsValid(InBlackboardComp)) return;
 	if (!IsValid(InAIContext.TargetActor)) return;
 
-	InBlackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor, InAIContext.TargetActor);
-	InBlackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority, InAIContext.TargetPriority);
-	InBlackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, InAIContext.bHasLOS);
-	InBlackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime, InAIContext.LastSeenTime);
-	InBlackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation, InAIContext.LastKnownLocation);
+	InBlackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor.KeyName, InAIContext.TargetActor);
+	InBlackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority.KeyName, InAIContext.TargetPriority);
+	InBlackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS.KeyName, InAIContext.bHasLOS);
+	InBlackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime.KeyName, InAIContext.LastSeenTime);
+	InBlackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation.KeyName, InAIContext.LastKnownLocation);
 }
 
 void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, InAIContext.bReturnHome);
-	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToHome, InAIContext.DistanceToHome);
+	InBlackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName, InAIContext.bReturnHome);
+	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToHome.KeyName, InAIContext.DistanceToHome);
 }
 
 void UCBTService_UpdateAIContext::UpdateAlertRangeContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget, InAIContext.DistanceToTarget);
-	InBlackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange, InAIContext.bInAlertRange);
+	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget.KeyName, InAIContext.DistanceToTarget);
+	InBlackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName, InAIContext.bInAlertRange);
 
 }
 
@@ -258,63 +258,63 @@ void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardCompo
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage, InAIContext.bShouldEngage);
+	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage.KeyName, InAIContext.bShouldEngage);
 }
 
 void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsActiveReaction, InAIContext.bIsActiveReaction);
+	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName, InAIContext.bIsActiveReaction);
 }
 
 void UCBTService_UpdateAIContext::UpdateDeadContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState, static_cast<uint8>(InAIContext.DeadState));
+	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(InAIContext.DeadState));
 }
 
 void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
-	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetPriority);
-	InBlackboardComp->ClearValue(CAIKey::Perception::bHasLOS);
+	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
+	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetPriority.KeyName);
+	InBlackboardComp->ClearValue(CAIKey::Perception::bHasLOS.KeyName);
 }
 
 void UCBTService_UpdateAIContext::ClearHomeMetricContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToHome);
-	InBlackboardComp->ClearValue(CAIKey::Navigation::bReturnHome);
+	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToHome.KeyName);
+	InBlackboardComp->ClearValue(CAIKey::Navigation::bReturnHome.KeyName);
 }
 
 void UCBTService_UpdateAIContext::ClearAlertRangeContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
-	InBlackboardComp->ClearValue(CAIKey::Alert::bInAlertRange);
+	InBlackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget.KeyName);
+	InBlackboardComp->ClearValue(CAIKey::Alert::bInAlertRange.KeyName);
 }
 
 void UCBTService_UpdateAIContext::ClearEngageAssignmentContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Engage::bShouldEngage);
+	InBlackboardComp->ClearValue(CAIKey::Engage::bShouldEngage.KeyName);
 }
 
 void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Reaction::bIsActiveReaction);
+	InBlackboardComp->ClearValue(CAIKey::Reaction::bIsActiveReaction.KeyName);
 }
 
 void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlackboardComp)
 {
-	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState, static_cast<uint8>(EDeadState::Alive));
+	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
 }

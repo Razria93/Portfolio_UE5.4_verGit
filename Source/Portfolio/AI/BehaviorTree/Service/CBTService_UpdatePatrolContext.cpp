@@ -57,19 +57,19 @@ EContextBuildResult UCBTService_UpdatePatrolContext::BuildPatrolContext(APawn* I
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
-	const bool bUsePatrol = InBlackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol);
+	const bool bUsePatrol = InBlackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol.KeyName);
 	if (!bUsePatrol) return EContextBuildResult::NoData;
 
-	OutPatrolContext.bUsePatrol = InBlackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol);
-	OutPatrolContext.PatrolPath = Cast<ACPatrolPath>(InBlackboardComp->GetValueAsObject(CAIKey::Patrol::PatrolPath));
-	OutPatrolContext.PatrolMode = static_cast<EPatrolMode>(InBlackboardComp->GetValueAsEnum(CAIKey::Patrol::PatrolMode));
+	OutPatrolContext.bUsePatrol = InBlackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol.KeyName);
+	OutPatrolContext.PatrolPath = Cast<ACPatrolPath>(InBlackboardComp->GetValueAsObject(CAIKey::Patrol::PatrolPath.KeyName));
+	OutPatrolContext.PatrolMode = static_cast<EPatrolMode>(InBlackboardComp->GetValueAsEnum(CAIKey::Patrol::PatrolMode.KeyName));
 
 	if (!OutPatrolContext.bUsePatrol || !IsValid(OutPatrolContext.PatrolPath) || OutPatrolContext.PatrolPath->Num() <= 0 || OutPatrolContext.PatrolMode == EPatrolMode::None)
 		return EContextBuildResult::NoData;
 
-	OutPatrolContext.CurrentIndex = InBlackboardComp->GetValueAsInt(CAIKey::Patrol::PatrolIndex);
-	OutPatrolContext.bPatrolReverse = InBlackboardComp->GetValueAsBool(CAIKey::Patrol::bPatrolReverse);
-	OutPatrolContext.CurrentPatrolLocation = InBlackboardComp->GetValueAsVector(CAIKey::Patrol::PatrolLocation);
+	OutPatrolContext.CurrentIndex = InBlackboardComp->GetValueAsInt(CAIKey::Patrol::PatrolIndex.KeyName);
+	OutPatrolContext.bPatrolReverse = InBlackboardComp->GetValueAsBool(CAIKey::Patrol::bPatrolReverse.KeyName);
+	OutPatrolContext.CurrentPatrolLocation = InBlackboardComp->GetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName);
 
 	return EContextBuildResult::Success;
 }
@@ -168,16 +168,16 @@ void UCBTService_UpdatePatrolContext::UpdatePatrolContext(UBlackboardComponent* 
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, InPatrolContext.bPatrolReverse);
-	InBlackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, InPatrolContext.NextIndex);
-	InBlackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, InPatrolContext.NextPatrolLocation);
+	InBlackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse.KeyName, InPatrolContext.bPatrolReverse);
+	InBlackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex.KeyName, InPatrolContext.NextIndex);
+	InBlackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName, InPatrolContext.NextPatrolLocation);
 }
 
 void UCBTService_UpdatePatrolContext::ClearPatrolContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Patrol::bPatrolReverse);
+	InBlackboardComp->ClearValue(CAIKey::Patrol::bPatrolReverse.KeyName);
 }
 
 bool UCBTService_UpdatePatrolContext::IsReached(const FVector& InOwnerLocation, const FVector& InPatrolLocation) const
@@ -197,7 +197,7 @@ void UCBTService_UpdatePatrolContext::PrintPatrolContextData(const APawn* InOwne
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return;
 
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
-	FVector patrolLocation = InBlackboardComp->GetValueAsVector(CAIKey::Patrol::PatrolLocation);
+	FVector patrolLocation = InBlackboardComp->GetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName);
 
 	float dist2D = FVector::Dist2D(ownerLocation, patrolLocation);
 	float diff_Z = FMath::Abs(ownerLocation.Z - patrolLocation.Z);

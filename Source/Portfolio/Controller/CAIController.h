@@ -97,11 +97,6 @@ public:
 	EPerceptionBuildResult BuildPerceptionContext(FTargetData& OutTargetData);
 
 private:
-	// Blackboard Validation
-	bool ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const;
-	bool ValidateBlackboardKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const;
-
-private:
 	// Target Data
 	void UpdateTargetDataMap();
 	void ClearTargetDataMap();

@@ -20,7 +20,7 @@ EBTNodeResult::Type UCBTTask_SetFocus::ExecuteTask(UBehaviorTreeComponent& Owner
 	AAIController* aiController = OwnerComp.GetAIOwner();
 	if (!IsValid(aiController)) return EBTNodeResult::Failed;
 
-	AActor* target = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
+	AActor* target = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
 	if (!IsValid(target)) return EBTNodeResult::Failed;
 
 	aiController->SetFocus(target, EAIFocusPriority::Gameplay);

@@ -2,25 +2,9 @@
 
 #include "CoreMinimal.h"
 
+#include "BehaviorTree/BlackboardData.h"
+
 #include "AI/BlackBoard/CAIKey.h"
-
-enum class EAIBlackboardKeyValueType : uint8
-{
-	Bool,
-	Int,
-	Float,
-	Enum,
-	Object,
-	Vector,
-};
-
-struct FAIBlackboardKeySpec
-{
-	FName KeyName = NAME_None;
-	EAIBlackboardKeyValueType ValueType = EAIBlackboardKeyValueType::Bool;
-	bool bRequired = true;
-	bool bClearOnRuntimeTeardown = true;
-};
 
 namespace CAIKeyRegistry
 {
@@ -56,68 +40,105 @@ namespace CAIKeyRegistry
 		static const TArray<FAIBlackboardKeySpec> keySpecs =
 		{
 			// Targeting
-			{ CAIKey::Targeting::TargetActor, EAIBlackboardKeyValueType::Object },
-			{ CAIKey::Targeting::TargetPriority, EAIBlackboardKeyValueType::Int },
+			CAIKey::Targeting::TargetActor,
+			CAIKey::Targeting::TargetPriority,
 
 			// State
-			{ CAIKey::State::AIIntentState, EAIBlackboardKeyValueType::Enum },
+			CAIKey::State::AIIntentState,
 
 			// Perception
-			{ CAIKey::Perception::bHasLOS, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Perception::LastSeenTime, EAIBlackboardKeyValueType::Float },
-			{ CAIKey::Perception::LastKnownLocation, EAIBlackboardKeyValueType::Vector },
+			CAIKey::Perception::bHasLOS,
+			CAIKey::Perception::LastSeenTime,
+			CAIKey::Perception::LastKnownLocation,
 
 			// Metric
-			{ CAIKey::Metric::DistanceToTarget, EAIBlackboardKeyValueType::Float },
-			{ CAIKey::Metric::DistanceToHome, EAIBlackboardKeyValueType::Float },
+			CAIKey::Metric::DistanceToTarget,
+			CAIKey::Metric::DistanceToHome,
 
 			// Navigation
-			{ CAIKey::Navigation::bReturnHome, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Navigation::HomeLocation, EAIBlackboardKeyValueType::Vector },
+			CAIKey::Navigation::bReturnHome,
+			CAIKey::Navigation::HomeLocation,
 
 			// Patrol
-			{ CAIKey::Patrol::bUsePatrol, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Patrol::PatrolPath, EAIBlackboardKeyValueType::Object },
-			{ CAIKey::Patrol::PatrolMode, EAIBlackboardKeyValueType::Enum },
-			{ CAIKey::Patrol::bPatrolReverse, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Patrol::PatrolLocation, EAIBlackboardKeyValueType::Vector },
-			{ CAIKey::Patrol::PatrolIndex, EAIBlackboardKeyValueType::Int },
+			CAIKey::Patrol::bUsePatrol,
+			CAIKey::Patrol::PatrolPath,
+			CAIKey::Patrol::PatrolMode,
+			CAIKey::Patrol::bPatrolReverse,
+			CAIKey::Patrol::PatrolLocation,
+			CAIKey::Patrol::PatrolIndex,
 
 			// Investigate
-			{ CAIKey::Investigate::bUseInvestigate, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Investigate::InvestigateDuration, EAIBlackboardKeyValueType::Float },
-			{ CAIKey::Investigate::InvestigateMaxIndex, EAIBlackboardKeyValueType::Int },
-			{ CAIKey::Investigate::bCanInvestigate, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Investigate::bIsInvestigating, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Investigate::InvestigateLocation, EAIBlackboardKeyValueType::Vector },
-			{ CAIKey::Investigate::InvestigateIndex, EAIBlackboardKeyValueType::Int },
+			CAIKey::Investigate::bUseInvestigate,
+			CAIKey::Investigate::InvestigateDuration,
+			CAIKey::Investigate::InvestigateMaxIndex,
+			CAIKey::Investigate::bCanInvestigate,
+			CAIKey::Investigate::bIsInvestigating,
+			CAIKey::Investigate::InvestigateLocation,
+			CAIKey::Investigate::InvestigateIndex,
 
 			// Chase
-			{ CAIKey::Chase::ChaseOffsetRange, EAIBlackboardKeyValueType::Float },
-			{ CAIKey::Chase::ChaseEnterBuffer, EAIBlackboardKeyValueType::Float },
-			{ CAIKey::Chase::ChaseExitBuffer, EAIBlackboardKeyValueType::Float },
+			CAIKey::Chase::ChaseOffsetRange,
+			CAIKey::Chase::ChaseEnterBuffer,
+			CAIKey::Chase::ChaseExitBuffer,
 
 			// Alert
-			{ CAIKey::Alert::bUseAlertStep, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Alert::StepForwardDistance, EAIBlackboardKeyValueType::Float },
-			{ CAIKey::Alert::StepSideDistance, EAIBlackboardKeyValueType::Float },
-			{ CAIKey::Alert::bInAlertRange, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Alert::AlertStepLocation, EAIBlackboardKeyValueType::Vector },
+			CAIKey::Alert::bUseAlertStep,
+			CAIKey::Alert::StepForwardDistance,
+			CAIKey::Alert::StepSideDistance,
+			CAIKey::Alert::bInAlertRange,
+			CAIKey::Alert::AlertStepLocation,
 
 			// Engage
-			{ CAIKey::Engage::bShouldEngage, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Engage::bCanCombatAction, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Engage::bIsCombatAction, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Engage::bInEngageRange, EAIBlackboardKeyValueType::Bool },
-			{ CAIKey::Engage::NextCombatActionTime, EAIBlackboardKeyValueType::Float },
+			CAIKey::Engage::bShouldEngage,
+			CAIKey::Engage::bCanCombatAction,
+			CAIKey::Engage::bIsCombatAction,
+			CAIKey::Engage::bInEngageRange,
+			CAIKey::Engage::NextCombatActionTime,
 
 			// Reaction
-			{ CAIKey::Reaction::bIsActiveReaction, EAIBlackboardKeyValueType::Bool },
+			CAIKey::Reaction::bIsActiveReaction,
 
 			// Dead
-			{ CAIKey::Dead::DeadState, EAIBlackboardKeyValueType::Enum },
+			CAIKey::Dead::DeadState,
 		};
 
 		return keySpecs;
+	}
+
+	static bool ValidateKey(const UBlackboardData* InBlackboardAsset, const FAIBlackboardKeySpec& InKeySpec)
+	{
+		if (!IsValid(InBlackboardAsset)) return false;
+
+		return InBlackboardAsset->GetKeyID(InKeySpec.KeyName) != FBlackboard::InvalidKey;
+	}
+
+	static bool ValidateRequiredKeys(const UBlackboardData* InBlackboardAsset)
+	{
+		if (!IsValid(InBlackboardAsset)) return false;
+
+		TArray<FString> missingKeyMessages;
+
+		for (const FAIBlackboardKeySpec& keySpec : GetKeySpecs())
+		{
+			if (!keySpec.bRequired) continue;
+
+			const bool bValidKey = ValidateKey(InBlackboardAsset, keySpec);
+			if (bValidKey) continue;
+
+			missingKeyMessages.Add(FString::Printf(
+				TEXT("%s:%s"),
+				*keySpec.KeyName.ToString(),
+				GetValueTypeName(keySpec.ValueType)));
+		}
+
+		if (missingKeyMessages.IsEmpty()) return true;
+
+		const FString missingKeys = FString::Join(missingKeyMessages, TEXT(", "));
+		ensureMsgf(false,
+			TEXT("[AIKeyRegistry] Missing required Blackboard keys | Blackboard=%s | Missing=%s"),
+			*GetNameSafe(InBlackboardAsset),
+			*missingKeys);
+
+		return false;
 	}
 }

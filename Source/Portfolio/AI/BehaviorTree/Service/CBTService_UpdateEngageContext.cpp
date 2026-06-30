@@ -60,15 +60,15 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 	ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
 	if (!IsValid(enemy)) return EContextBuildResult::Error;
 
-	OutEngageContext.TargetActor = Cast<AActor>(InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor));
+	OutEngageContext.TargetActor = Cast<AActor>(InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
 	if (!IsValid(OutEngageContext.TargetActor)) return EContextBuildResult::NoData;
 
 	OutEngageContext.EngageOffsetRange = enemy->GetEngageOffsetRange();
 	OutEngageContext.EngageEnterBuffer = enemy->GetEngageEnterBuffer();
 	OutEngageContext.EngageExitBuffer = enemy->GetEngageExitBuffer();
 
-	OutEngageContext.bPrevInEngageRange = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bInEngageRange);
-	OutEngageContext.NextCombatActionTime = InBlackboardComp->GetValueAsFloat(CAIKey::Engage::NextCombatActionTime);
+	OutEngageContext.bPrevInEngageRange = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName);
+	OutEngageContext.NextCombatActionTime = InBlackboardComp->GetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName);
 
 	return EContextBuildResult::Success;
 }
@@ -100,8 +100,8 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 	float currentTime = InOwnerPawn->GetWorld()->GetTimeSeconds();
 	const bool bCooldownElapsed = currentTime >= InOutEngageContext.NextCombatActionTime;
 
-	const bool bIsCombatAction = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction);
-	const bool bIsActiveReaction = InBlackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
+	const bool bIsCombatAction = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName);
+	const bool bIsActiveReaction = InBlackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
 
 	InOutEngageContext.EngageOuterRange = engageOuterRange;
 	InOutEngageContext.EngageInnerRange = engageInnerRange;
@@ -124,16 +124,16 @@ void UCBTService_UpdateEngageContext::UpdateEngageContext(UBlackboardComponent* 
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, InEngageContext.bInEngageRange);
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction, InEngageContext.bCanCombatAction);
+	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName, InEngageContext.bInEngageRange);
+	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName, InEngageContext.bCanCombatAction);
 }
 
 void UCBTService_UpdateEngageContext::ClearEngageContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Engage::bInEngageRange);
-	InBlackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction);
+	InBlackboardComp->ClearValue(CAIKey::Engage::bInEngageRange.KeyName);
+	InBlackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction.KeyName);
 }
 
 void UCBTService_UpdateEngageContext::PrintEngageContext(const APawn* InOwnerPawn, const FEngageContext& InEngageContext, const float InCurrentTime)

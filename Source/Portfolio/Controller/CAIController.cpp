@@ -167,7 +167,7 @@ void ACAIController::UnbindPerceptionEvents()
 bool ACAIController::SetupBlackboardComponent()
 {
 	if (!BlackboardAsset) return false;
-	if (!ValidateBlackboardKeys(BlackboardAsset)) return false;
+	if (!CAIKeyRegistry::ValidateRequiredKeys(BlackboardAsset)) return false;
 
 	// blackboardComp: Out Parameter
 	UBlackboardComponent* blackboardComp = nullptr;
@@ -184,21 +184,21 @@ bool ACAIController::SetInitialBlackboardRuntimeValues()
 	if (!IsValid(blackboardComp)) return false;
 
 	// Targeting 
-	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
-	blackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority, INT_MAX);
+	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
+	blackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority.KeyName, INT_MAX);
 
 	// State
-	blackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState, static_cast<uint8>(EAIIntentState::Idle));
+	blackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState.KeyName, static_cast<uint8>(EAIIntentState::Idle));
 
 	// Perception
-	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS, false);
+	blackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS.KeyName, false);
 
 	// Navigation
-	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome, false);
+	blackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName, false);
 
 	if (APawn* ownerPawn = GetPawn())
 	{
-		blackboardComp->SetValueAsVector(CAIKey::Navigation::HomeLocation, ownerPawn->GetActorLocation());
+		blackboardComp->SetValueAsVector(CAIKey::Navigation::HomeLocation.KeyName, ownerPawn->GetActorLocation());
 
 		if (ACEnemy* enemy = Cast<ACEnemy>(ownerPawn))
 		{
@@ -208,14 +208,14 @@ bool ACAIController::SetInitialBlackboardRuntimeValues()
 			EPatrolMode patrolMode = enemy->GetPatrolMode();
 
 			// Set
-			blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol, bUsePatrol);
-			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPath, patrolPath ? patrolPath : nullptr);
-			blackboardComp->SetValueAsEnum(CAIKey::Patrol::PatrolMode, static_cast<uint8>(patrolMode));
+			blackboardComp->SetValueAsBool(CAIKey::Patrol::bUsePatrol.KeyName, bUsePatrol);
+			blackboardComp->SetValueAsObject(CAIKey::Patrol::PatrolPath.KeyName, patrolPath ? patrolPath : nullptr);
+			blackboardComp->SetValueAsEnum(CAIKey::Patrol::PatrolMode.KeyName, static_cast<uint8>(patrolMode));
 
 			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, false);
-			blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, ownerPawn->GetActorLocation());
-			blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, -1);
+			blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse.KeyName, false);
+			blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName, ownerPawn->GetActorLocation());
+			blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex.KeyName, -1);
 
 			// --- Investigate ---
 			bool bUseInvestigate = enemy->GetbUseInvestigate();
@@ -223,15 +223,15 @@ bool ACAIController::SetInitialBlackboardRuntimeValues()
 			int  investigateMaxIndex = enemy->GetInvestigateMaxIndex();
 
 			// Set
-			blackboardComp->SetValueAsBool(CAIKey::Investigate::bUseInvestigate, bUseInvestigate);
-			blackboardComp->SetValueAsFloat(CAIKey::Investigate::InvestigateDuration, investigateDuration);
-			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex, investigateMaxIndex);
+			blackboardComp->SetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName, bUseInvestigate);
+			blackboardComp->SetValueAsFloat(CAIKey::Investigate::InvestigateDuration.KeyName, investigateDuration);
+			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex.KeyName, investigateMaxIndex);
 
 			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate, false);
-			blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating, false);
-			blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation, ownerPawn->GetActorLocation());
-			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex, INDEX_NONE);
+			blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
+			blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName, false);
+			blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation.KeyName, ownerPawn->GetActorLocation());
+			blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);
 
 			// --- Chase ---
 			float chaseoffsetRange = enemy->GetChaseOffsetRange();
@@ -239,9 +239,9 @@ bool ACAIController::SetInitialBlackboardRuntimeValues()
 			float chaseExitBuffer = enemy->GetChaseExitBuffer();
 
 			// Set
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetRange, chaseoffsetRange);
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer, chaseEnterBuffer);
-			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer, chaseExitBuffer);
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseOffsetRange.KeyName, chaseoffsetRange);
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer.KeyName, chaseEnterBuffer);
+			blackboardComp->SetValueAsFloat(CAIKey::Chase::ChaseExitBuffer.KeyName, chaseExitBuffer);
 
 			// --- Alert ---
 			bool bUseAlertStep = enemy->GetbUseAlertStep();
@@ -249,30 +249,30 @@ bool ACAIController::SetInitialBlackboardRuntimeValues()
 			float stepSideDistance = enemy->GetStepSideDistance();
 
 			// Set
-			blackboardComp->SetValueAsBool(CAIKey::Alert::bUseAlertStep, bUseAlertStep);
-			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepForwardDistance, stepForwardDistance);
-			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepSideDistance, stepSideDistance);
+			blackboardComp->SetValueAsBool(CAIKey::Alert::bUseAlertStep.KeyName, bUseAlertStep);
+			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepForwardDistance.KeyName, stepForwardDistance);
+			blackboardComp->SetValueAsFloat(CAIKey::Alert::StepSideDistance.KeyName, stepSideDistance);
 
 			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange, false);
-			blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation, ownerPawn->GetActorLocation());
+			blackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName, false);
+			blackboardComp->SetValueAsVector(CAIKey::Alert::AlertStepLocation.KeyName, ownerPawn->GetActorLocation());
 
 			// --- Engage ---
 			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage, false);
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction, false);
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage.KeyName, false);
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName, false);
 
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction, false);
-			blackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
-			blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime, -1.f);
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName, false);
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName, false);
+			blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName, -1.f);
 
 			// --- Reaction ---
 			// Init
-			blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsActiveReaction, false);
+			blackboardComp->SetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName, false);
 
 			// --- Dead ---
 			// Init
-			blackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState, static_cast<uint8>(EDeadState::Alive));
+			blackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
 		}
 	}
 
@@ -285,66 +285,66 @@ void ACAIController::ClearBlackboardRuntimeValues()
 	if (!IsValid(blackboardComp)) return;
 
 	// Targeting
-	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor);
-	blackboardComp->ClearValue(CAIKey::Targeting::TargetPriority);
+	blackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
+	blackboardComp->ClearValue(CAIKey::Targeting::TargetPriority.KeyName);
 
 	// State
-	blackboardComp->ClearValue(CAIKey::State::AIIntentState);
+	blackboardComp->ClearValue(CAIKey::State::AIIntentState.KeyName);
 
 	// Perception
-	blackboardComp->ClearValue(CAIKey::Perception::bHasLOS);
-	blackboardComp->ClearValue(CAIKey::Perception::LastSeenTime);
-	blackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation);
+	blackboardComp->ClearValue(CAIKey::Perception::bHasLOS.KeyName);
+	blackboardComp->ClearValue(CAIKey::Perception::LastSeenTime.KeyName);
+	blackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation.KeyName);
 
 	// Metric
-	blackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget);
-	blackboardComp->ClearValue(CAIKey::Metric::DistanceToHome);
+	blackboardComp->ClearValue(CAIKey::Metric::DistanceToTarget.KeyName);
+	blackboardComp->ClearValue(CAIKey::Metric::DistanceToHome.KeyName);
 
 	// Navigation
-	blackboardComp->ClearValue(CAIKey::Navigation::HomeLocation);
-	blackboardComp->ClearValue(CAIKey::Navigation::bReturnHome);
+	blackboardComp->ClearValue(CAIKey::Navigation::HomeLocation.KeyName);
+	blackboardComp->ClearValue(CAIKey::Navigation::bReturnHome.KeyName);
 
 	// Patrol
-	blackboardComp->ClearValue(CAIKey::Patrol::bUsePatrol);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolPath);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolMode);
-	blackboardComp->ClearValue(CAIKey::Patrol::bPatrolReverse);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolLocation);
-	blackboardComp->ClearValue(CAIKey::Patrol::PatrolIndex);
+	blackboardComp->ClearValue(CAIKey::Patrol::bUsePatrol.KeyName);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolPath.KeyName);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolMode.KeyName);
+	blackboardComp->ClearValue(CAIKey::Patrol::bPatrolReverse.KeyName);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolLocation.KeyName);
+	blackboardComp->ClearValue(CAIKey::Patrol::PatrolIndex.KeyName);
 
 	// Investigate
-	blackboardComp->ClearValue(CAIKey::Investigate::bUseInvestigate);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateDuration);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateMaxIndex);
-	blackboardComp->ClearValue(CAIKey::Investigate::bCanInvestigate);
-	blackboardComp->ClearValue(CAIKey::Investigate::bIsInvestigating);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation);
-	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateIndex);
+	blackboardComp->ClearValue(CAIKey::Investigate::bUseInvestigate.KeyName);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateDuration.KeyName);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateMaxIndex.KeyName);
+	blackboardComp->ClearValue(CAIKey::Investigate::bCanInvestigate.KeyName);
+	blackboardComp->ClearValue(CAIKey::Investigate::bIsInvestigating.KeyName);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateIndex.KeyName);
 
 	// Chase
-	blackboardComp->ClearValue(CAIKey::Chase::ChaseOffsetRange);
-	blackboardComp->ClearValue(CAIKey::Chase::ChaseEnterBuffer);
-	blackboardComp->ClearValue(CAIKey::Chase::ChaseExitBuffer);
+	blackboardComp->ClearValue(CAIKey::Chase::ChaseOffsetRange.KeyName);
+	blackboardComp->ClearValue(CAIKey::Chase::ChaseEnterBuffer.KeyName);
+	blackboardComp->ClearValue(CAIKey::Chase::ChaseExitBuffer.KeyName);
 
 	// Alert
-	blackboardComp->ClearValue(CAIKey::Alert::bUseAlertStep);
-	blackboardComp->ClearValue(CAIKey::Alert::StepForwardDistance);
-	blackboardComp->ClearValue(CAIKey::Alert::StepSideDistance);
-	blackboardComp->ClearValue(CAIKey::Alert::bInAlertRange);
-	blackboardComp->ClearValue(CAIKey::Alert::AlertStepLocation);
+	blackboardComp->ClearValue(CAIKey::Alert::bUseAlertStep.KeyName);
+	blackboardComp->ClearValue(CAIKey::Alert::StepForwardDistance.KeyName);
+	blackboardComp->ClearValue(CAIKey::Alert::StepSideDistance.KeyName);
+	blackboardComp->ClearValue(CAIKey::Alert::bInAlertRange.KeyName);
+	blackboardComp->ClearValue(CAIKey::Alert::AlertStepLocation.KeyName);
 
 	// Engage
-	blackboardComp->ClearValue(CAIKey::Engage::bShouldEngage);
-	blackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction);
-	blackboardComp->ClearValue(CAIKey::Engage::bIsCombatAction);
-	blackboardComp->ClearValue(CAIKey::Engage::bInEngageRange);
-	blackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime);
+	blackboardComp->ClearValue(CAIKey::Engage::bShouldEngage.KeyName);
+	blackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction.KeyName);
+	blackboardComp->ClearValue(CAIKey::Engage::bIsCombatAction.KeyName);
+	blackboardComp->ClearValue(CAIKey::Engage::bInEngageRange.KeyName);
+	blackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime.KeyName);
 
 	// Reaction
-	blackboardComp->ClearValue(CAIKey::Reaction::bIsActiveReaction);
+	blackboardComp->ClearValue(CAIKey::Reaction::bIsActiveReaction.KeyName);
 
 	// Dead
-	blackboardComp->ClearValue(CAIKey::Dead::DeadState);
+	blackboardComp->ClearValue(CAIKey::Dead::DeadState.KeyName);
 }
 
 // Behavior Tree Runtime
@@ -402,50 +402,6 @@ EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetData& OutTa
 {
 	UpdateTargetDataMap();
 	return SelectTopPriority(OutTargetData);
-}
-
-// Blackboard Validation
-
-bool ACAIController::ValidateBlackboardKeys(const UBlackboardData* InBlackboardAsset) const
-{
-	if (!IsValid(InBlackboardAsset)) return false;
-
-	bool bAllValid = true;
-
-	for (const FAIBlackboardKeySpec& keySpec : CAIKeyRegistry::GetKeySpecs())
-	{
-		if (!keySpec.bRequired) continue;
-
-		const bool bValidKey = ValidateBlackboardKey(InBlackboardAsset, keySpec.KeyName);
-		if (bValidKey) continue;
-
-		bAllValid = false;
-
-		FLog::Log(FString::Printf(
-			TEXT("[Error|ACAIController] Missing Blackboard key | Key=%s | ExpectedType=%s"),
-			*keySpec.KeyName.ToString(),
-			CAIKeyRegistry::GetValueTypeName(keySpec.ValueType)));
-	}
-
-	if (!bAllValid)
-	{
-		FLog::Log(TEXT("[Error|ACAIController] Missing required Blackboard keys."));
-		return false;
-	}
-
-	return true;
-}
-
-bool ACAIController::ValidateBlackboardKey(const UBlackboardData* InBlackboardAsset, const FName& InKeyName) const
-{
-	// -----------------------------------------------------------------------------
-	// [Blackboard Key Validate]
-	// [EngineAPI] GetKeyID (UBlackboardData / UBlackboardComponent)
-	// - true  : returns 'a valid FKey'
-	// - false : returns 'FBlackboard::InvalidKey'
-	// -----------------------------------------------------------------------------
-
-	return IsValid(InBlackboardAsset) && (InBlackboardAsset->GetKeyID(InKeyName) != FBlackboard::InvalidKey);
 }
 
 // Target Data

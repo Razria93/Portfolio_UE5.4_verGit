@@ -442,7 +442,7 @@ void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPr
 	if (!IsValid(blackboardComp)) return;
 
 	const bool bIsCombatAction = IsCombatActionType(InNewActionType);
-	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction, bIsCombatAction);
+	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName, bIsCombatAction);
 }
 
 void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)

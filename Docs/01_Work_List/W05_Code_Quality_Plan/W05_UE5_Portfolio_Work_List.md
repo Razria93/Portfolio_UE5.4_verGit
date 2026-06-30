@@ -539,11 +539,11 @@ Runtime cleanup 명명 사용처: 약 20개+
 
 ### P32. AI Blackboard Key Registry
 
-- 상태: 준비 중
+- 상태: 진행 중
 - 브랜치: `refactor/ai-blackboard-key-registry`
 - PR: `P32_UE5_Portfolio_Pull_Request.md`
-- 목표: `CAIKey` 정의, blackboard required key 검증, initial runtime value 설정, teardown clear 기준을 registry 중심으로 묶어 키 추가 / 삭제 시 누락 위험을 줄인다.
-- 관련 문서: `N15_AI_Blackboard_Key_Registry_Policy_Note.md`
+- 목표: `CAIKey` 정의를 spec 기반으로 정리하고, blackboard required key 검증 기준을 registry 중심으로 묶어 키 추가 / 삭제 시 누락 위험을 줄인다. Initial runtime value 설정과 teardown clear registry화는 후속 후보로 검토한다.
+- 관련 문서: `N15_AI_Blackboard_Key_Registry_Policy_Note.md`, `N16_AI_Blackboard_Key_Contract_Decision_Note.md`
 - 제외 범위: BehaviorTree asset 재설계, BT Service / Task 행동 로직 변경, AI update interval 튜닝, Enhanced Input migration
 
 준비 단계 조회 결과:
@@ -565,12 +565,13 @@ blackboard key 직접 사용 파일:
 
 ```text
 1. CAIKey.h
-   -> key name만 있고 key type / required / initial / clear 정책은 없음
+   -> key category namespace는 유지
+   -> key name / key type / required 기준은 `FAIBlackboardKeySpec`로 결합
 
 2. ACAIController
-   -> ValidateBlackboardKeys 수동 나열
-   -> SetInitialBlackboardRuntimeValues 수동 나열
-   -> ClearBlackboardRuntimeValues 수동 나열
+   -> required key validation은 registry 순회로 이동
+   -> SetInitialBlackboardRuntimeValues 수동 나열은 후속 후보
+   -> ClearBlackboardRuntimeValues 수동 나열은 후속 후보
 
 3. BT Service / Task / Decorator
    -> CAIKey를 직접 읽고 쓰는 runtime 사용처
@@ -580,7 +581,7 @@ blackboard key 직접 사용 파일:
 검증 기준:
 
 ```text
-- CAIKey / registry / ValidateBlackboardKeys 사용처 정적 확인
+- CAIKey spec / registry / ValidateRequiredKeys 사용처 정적 확인
 - SetInitialBlackboardRuntimeValues / ClearBlackboardRuntimeValues 누락 여부 확인
 - git diff --check
 - PortfolioEditor Win64 Development 빌드

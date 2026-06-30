@@ -43,9 +43,9 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	// -----------------------------------------------------------------------------
 	// 1. Absolute States
 	// -----------------------------------------------------------------------------
-	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState));
-	const bool bIsActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction);
-	const bool bIsCombatAction = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsCombatAction);
+	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState.KeyName));
+	const bool bIsActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
+	const bool bIsCombatAction = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName);
 
 	if (deadState != EDeadState::Alive)
 		return EAIIntentState::Dead;
@@ -60,14 +60,14 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	// -----------------------------------------------------------------------------
 	// 2.  Context
 	// -----------------------------------------------------------------------------
-	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor));
+	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
 
 	const bool bHasTarget = IsValid(target);
-	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS);
-	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating);
+	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
+	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName);
 
-	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange);
-	const bool bShouldEngage = InBlackboard->GetValueAsBool(CAIKey::Engage::bShouldEngage);
+	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
+	const bool bShouldEngage = InBlackboard->GetValueAsBool(CAIKey::Engage::bShouldEngage.KeyName);
 
 	// -----------------------------------------------------------------------------
 	// 3) Decide Next AIIntentState
@@ -90,12 +90,12 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 
 bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState)
 {
-	const uint8 currentAIIntentState = static_cast<uint8>(InBlackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState));
+	const uint8 currentAIIntentState = static_cast<uint8>(InBlackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState.KeyName));
 	const uint8 nextAIIntentState = static_cast<uint8>(InNextAIIntentState);
 
 	if (currentAIIntentState == nextAIIntentState) return false;
 
-	InBlackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState, nextAIIntentState);
+	InBlackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState.KeyName, nextAIIntentState);
 
 	UpdateAIIntentStateTransition(InBlackboardComp, static_cast<EAIIntentState>(currentAIIntentState), static_cast<EAIIntentState>(nextAIIntentState));
 	return true;
@@ -109,12 +109,12 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 	// Engage -> Non-Engage
 	if (InCurrentAIIntentState == EAIIntentState::Engage && InNextAIIntentState != EAIIntentState::Engage)
 	{
-		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange, false);
-		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction, false);
+		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName, false);
+		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName, false);
 
 		if (InNextAIIntentState == EAIIntentState::Dead || InNextAIIntentState == EAIIntentState::Idle)
 		{
-			InBlackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime);
+			InBlackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime.KeyName);
 		}
 	} 
 }

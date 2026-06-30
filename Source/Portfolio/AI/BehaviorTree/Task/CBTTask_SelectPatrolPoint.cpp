@@ -24,14 +24,14 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn)) return EBTNodeResult::Failed;
 
-	bool bUsePatrol = blackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol);
-	ACPatrolPath* patrolPath = Cast<ACPatrolPath>(blackboardComp->GetValueAsObject(CAIKey::Patrol::PatrolPath));
-	EPatrolMode patrolMode = static_cast<EPatrolMode>(blackboardComp->GetValueAsEnum(CAIKey::Patrol::PatrolMode));
+	bool bUsePatrol = blackboardComp->GetValueAsBool(CAIKey::Patrol::bUsePatrol.KeyName);
+	ACPatrolPath* patrolPath = Cast<ACPatrolPath>(blackboardComp->GetValueAsObject(CAIKey::Patrol::PatrolPath.KeyName));
+	EPatrolMode patrolMode = static_cast<EPatrolMode>(blackboardComp->GetValueAsEnum(CAIKey::Patrol::PatrolMode.KeyName));
 
 	if (!bUsePatrol || !IsValid(patrolPath) || patrolPath->Num() <= 0 || patrolMode == EPatrolMode::None) return EBTNodeResult::Failed;
 	
-	int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Patrol::PatrolIndex);
-	bool bPatrolReverse = blackboardComp->GetValueAsBool(CAIKey::Patrol::bPatrolReverse);
+	int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Patrol::PatrolIndex.KeyName);
+	bool bPatrolReverse = blackboardComp->GetValueAsBool(CAIKey::Patrol::bPatrolReverse.KeyName);
 	
 	const int32 count = patrolPath->Num();
 	int32 nextIndex = INDEX_NONE;
@@ -93,9 +93,9 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	FPatrolPointData nextPatrolPointData;
 	if (!patrolPath->GetPointData(nextIndex, nextPatrolPointData)) return EBTNodeResult::Failed;
 
-	blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse, bPatrolReverse);
-	blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex, nextIndex);
-	blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation, nextPatrolPointData.Location);
+	blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse.KeyName, bPatrolReverse);
+	blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex.KeyName, nextIndex);
+	blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName, nextPatrolPointData.Location);
 
 	return EBTNodeResult::Succeeded;
 }
