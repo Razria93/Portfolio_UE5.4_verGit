@@ -132,6 +132,8 @@ Stats: stat unit, stat game, stat ai, stat behavior
 Capture: csvprofile start / csvprofile stop
 ```
 
+`stat behavior`는 엔진 / 실행 상태에 따라 별도 overlay 변화가 명확하지 않을 수 있다. 기준 측정은 `stat unit`, `stat game`, `stat ai`, CSV `PortfolioAI` scope를 우선한다.
+
 Enemy 수:
 
 ```text
@@ -184,7 +186,7 @@ PIE 실행 후:
 1. 콘솔에서 stat unit 실행
 2. 콘솔에서 stat game 실행
 3. 콘솔에서 stat ai 실행
-4. 콘솔에서 stat behavior 실행
+4. 필요 시 콘솔에서 stat behavior 실행
 5. 콘솔에서 csvprofile start 실행
 6. 30초 동안 동일한 상태 유지
 7. 콘솔에서 csvprofile stop 실행
@@ -216,6 +218,7 @@ FPS overlay는 체감 프레임 확인용이다.
 stat 명령은 에디터 안에서 대략적인 시스템 비용을 확인하기 위한 보조 지표다.
 CSV는 계측 scope별 duration을 확인하기 위한 후속 분석 자료다.
 CSV 결과가 없으면 interval 조정이나 dirty flag 도입을 바로 결정하지 않는다.
+BehaviorTree 비용은 `stat behavior`보다 CSV의 `Exclusive/GameThread/BehaviorTreeTick`와 `PortfolioAI` scope를 우선 확인한다.
 ```
 
 ---
@@ -253,7 +256,7 @@ Notes:
 
 | Case | Enemy Count | State | Duration | FPS / Frame | Game ms | AI ms | Behavior ms | PortfolioAI Hot Path | Notes |
 | --- | ---: | --- | ---: | --- | --- | --- | --- | --- | --- |
-| 01 | 1 | Idle | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 01 | 1 | Idle / Patrol | 29.27s | avg 11.20ms / p95 9.68ms / p99 24.88ms | avg 10.02ms / p95 9.50ms / p99 10.63ms | BT Tick avg 0.0174ms / p95 0.0259ms | - | BT_UpdateAIContext p95 0.0123ms, BT_UpdateAIIntentState p95 0.0037ms, CombatEngage_Rebuild p95 0.0005ms | Patrol context is updated by `UCBTTask_SelectPatrolPoint`; unused patrol service removed. |
 | 02 | 1 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
 | 03 | 10 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
 | 04 | 20 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |

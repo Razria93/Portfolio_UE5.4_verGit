@@ -132,6 +132,8 @@ stat unit / stat game / stat ai / stat behavior / csvprofile 사용 기준 정�
 CSV 결과 기록 양식 정리
 ```
 
+`stat behavior`는 보조 지표로 둔다. 기준 측정은 `stat unit`, `stat game`, `stat ai`, CSV `PortfolioAI` scope를 우선한다.
+
 ### 2. CSV profiling 계측 후보 정리
 
 1차 후보:
@@ -213,7 +215,7 @@ PIE AI smoke test
 Enemy Count: 1 / 5 / 10 / 20
 State: Idle / Player Detected / Engage
 Duration: 30s per case
-Stats: stat unit, stat game, stat ai, stat behavior
+Stats: stat unit, stat game, stat ai, stat behavior(optional)
 Capture: csvprofile start / csvprofile stop
 ```
 
@@ -221,7 +223,7 @@ Capture: csvprofile start / csvprofile stop
 
 ```text
 1. PIE 실행
-2. stat unit / stat game / stat ai / stat behavior 활성화
+2. stat unit / stat game / stat ai 활성화
 3. csvprofile start
 4. 30초 동안 동일 상태 유지
 5. csvprofile stop
@@ -244,7 +246,7 @@ CSV hot path summary
 
 | Case | Enemy Count | State | Duration | FPS / Frame | Game ms | AI ms | Behavior ms | PortfolioAI Hot Path | Notes |
 | --- | ---: | --- | ---: | --- | --- | --- | --- | --- | --- |
-| 01 | 1 | Idle | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 01 | 1 | Idle / Patrol | 29.27s | avg 11.20ms / p95 9.68ms / p99 24.88ms | avg 10.02ms / p95 9.50ms / p99 10.63ms | BT Tick avg 0.0174ms / p95 0.0259ms | - | BT_UpdateAIContext p95 0.0123ms, BT_UpdateAIIntentState p95 0.0037ms, CombatEngage_Rebuild p95 0.0005ms | Patrol context is updated by `UCBTTask_SelectPatrolPoint`; unused patrol service removed. |
 | 02 | 1 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
 | 03 | 10 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
 | 04 | 20 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
