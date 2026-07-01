@@ -9,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Type/CAIStructure.h"
 
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
@@ -127,8 +128,8 @@ void UCBTService_UpdateEngageContext::UpdateEngageContext(UBlackboardComponent* 
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName, InEngageContext.bInEngageRange);
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName, InEngageContext.bCanCombatAction);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bInEngageRange.KeyName, InEngageContext.bInEngageRange);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bCanCombatAction.KeyName, InEngageContext.bCanCombatAction);
 }
 
 void UCBTService_UpdateEngageContext::ClearEngageContext(UBlackboardComponent* InBlackboardComp)

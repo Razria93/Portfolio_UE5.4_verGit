@@ -615,6 +615,15 @@ polling 구조 자체는 유지됨
 
 변화가 발생했을 때만 특정 context를 다시 계산하도록 표시하는 방식이다.
 
+이번 브랜치에서 바로 도입한 범위는 full dirty flag가 아니라 Blackboard dirty write guard다.
+
+```text
+Service polling은 유지한다.
+계산 결과가 기존 Blackboard 값과 같으면 SetValue를 생략한다.
+Task의 명령성 Blackboard write는 유지한다.
+context dirty ownership / 소비 순서는 아직 도입하지 않는다.
+```
+
 예시:
 
 ```text
@@ -703,7 +712,7 @@ CSV profiling scope 설계
 ```text
 BehaviorTree asset 재설계
 AI 행동 로직 변경
-dirty flag 실제 구조 도입
+context dirty ownership을 포함한 dirty flag 실제 구조 도입
 event-driven Blackboard update 전환
 대규모 AI LOD / batch manager 구현
 Enhanced Input migration
@@ -717,6 +726,7 @@ Enhanced Input migration
 docs(ai): plan update interval profiling policy
 refactor(ai): add csv profiling scopes for update paths
 docs(ai): record update interval profiling results
+refactor(ai): guard repeated blackboard writes in services
 refactor(ai): define ai update interval defaults
 docs(ai): classify dirty flag and event-driven followups
 ```
@@ -731,6 +741,7 @@ interval 값을 실제로 바꾸는 커밋은 profiling 결과를 기록한 뒤�
 현재 AI update 경로가 service / task / subsystem / perception 기준으로 목록화되어 있다.
 CSV profiling 대상과 측정 케이스가 문서화되어 있다.
 계측 추가 시 기능 동작이 바뀌지 않는다.
+반복 Blackboard write guard가 service polling 경로에 적용되어 있다.
 측정 결과를 바탕으로 interval 조정, dirty flag, event-driven 후보가 분리되어 있다.
 git diff --check가 통과한다.
 PortfolioEditor Win64 Development 빌드가 통과한다.

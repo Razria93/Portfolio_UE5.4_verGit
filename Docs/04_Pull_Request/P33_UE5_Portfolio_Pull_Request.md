@@ -27,6 +27,7 @@
 ```text
 docs(ai): plan update interval profiling policy
 refactor(ai): add profiling scopes for update intervals
+refactor(ai): guard repeated blackboard writes in services
 ```
 
 ---
@@ -36,6 +37,8 @@ refactor(ai): add profiling scopes for update intervals
 이번 PR은 Enemy AI의 BehaviorTree Service / Task polling / CombatEngage subsystem update 경로를 전수 조사하고, AI 수 증가 시 비용을 측정할 수 있는 profiling 기준을 정리한다.
 
 목표는 interval 값을 감으로 조정하는 것이 아니라, 현재 구조에서 어떤 경로가 비용을 만들 수 있는지 수치로 확인하고, 단순 interval 조정 / dirty flag / event-driven 전환 후보를 분리하는 것이다.
+
+추가로 full dirty flag 구조를 바로 도입하지 않고, polling service가 같은 Blackboard 값을 반복 기록하지 않도록 `Set...IfChanged` 기반 dirty write guard를 먼저 적용한다.
 
 ---
 
@@ -177,6 +180,7 @@ PortfolioAI_CombatEngage_RebuildAssignments
 ```text
 Interval 조정
 RandomDeviation 적용
+Blackboard dirty write guard
 Dirty flag
 Event-driven Blackboard update
 Hybrid update model
@@ -190,7 +194,7 @@ AI LOD / batch update 후속 후보
 ```text
 BehaviorTree asset 재설계
 AI 행동 로직 변경
-dirty flag 실제 구조 도입
+context dirty ownership을 포함한 dirty flag 실제 구조 도입
 event-driven Blackboard update 전환
 대규모 AI LOD / batch manager 구현
 Enhanced Input migration

@@ -5,6 +5,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
 
 UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 {
@@ -36,7 +37,7 @@ void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& Owne
 
 	if (bTimeout)
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bCanInvestigate.KeyName, false);
 		FLog::Log(TEXT("[Investigate Time out]"));
 	}
 }

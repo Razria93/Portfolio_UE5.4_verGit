@@ -9,6 +9,54 @@
 
 namespace CAIBlackboardValueHelper
 {
+	static void SetBoolIfChanged(UBlackboardComponent* InBlackboardComp, const FName& InKeyName, bool InValue)
+	{
+		if (!IsValid(InBlackboardComp)) return;
+		if (InBlackboardComp->GetValueAsBool(InKeyName) == InValue) return;
+
+		InBlackboardComp->SetValueAsBool(InKeyName, InValue);
+	}
+
+	static void SetIntIfChanged(UBlackboardComponent* InBlackboardComp, const FName& InKeyName, int32 InValue)
+	{
+		if (!IsValid(InBlackboardComp)) return;
+		if (InBlackboardComp->GetValueAsInt(InKeyName) == InValue) return;
+
+		InBlackboardComp->SetValueAsInt(InKeyName, InValue);
+	}
+
+	static void SetFloatIfChanged(UBlackboardComponent* InBlackboardComp, const FName& InKeyName, float InValue)
+	{
+		if (!IsValid(InBlackboardComp)) return;
+		if (FMath::IsNearlyEqual(InBlackboardComp->GetValueAsFloat(InKeyName), InValue)) return;
+
+		InBlackboardComp->SetValueAsFloat(InKeyName, InValue);
+	}
+
+	static void SetVectorIfChanged(UBlackboardComponent* InBlackboardComp, const FName& InKeyName, const FVector& InValue)
+	{
+		if (!IsValid(InBlackboardComp)) return;
+		if (InBlackboardComp->GetValueAsVector(InKeyName).Equals(InValue)) return;
+
+		InBlackboardComp->SetValueAsVector(InKeyName, InValue);
+	}
+
+	static void SetEnumIfChanged(UBlackboardComponent* InBlackboardComp, const FName& InKeyName, uint8 InValue)
+	{
+		if (!IsValid(InBlackboardComp)) return;
+		if (InBlackboardComp->GetValueAsEnum(InKeyName) == InValue) return;
+
+		InBlackboardComp->SetValueAsEnum(InKeyName, InValue);
+	}
+
+	static void SetObjectIfChanged(UBlackboardComponent* InBlackboardComp, const FName& InKeyName, UObject* InValue)
+	{
+		if (!IsValid(InBlackboardComp)) return;
+		if (InBlackboardComp->GetValueAsObject(InKeyName) == InValue) return;
+
+		InBlackboardComp->SetValueAsObject(InKeyName, InValue);
+	}
+
 	static void ApplyFixedValue(UBlackboardComponent* InBlackboardComp, const FAIBlackboardKeySpec& InKeySpec)
 	{
 		if (!IsValid(InBlackboardComp)) return;
