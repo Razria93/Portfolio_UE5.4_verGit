@@ -1,6 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.h"
 #include "ProjectGlobal.h"
-#include "Core/Profiling/FPortfolioCsvProfiler.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
 #include "GameFramework/Pawn.h"
@@ -26,7 +26,7 @@ UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-	CSV_SCOPED_TIMING_STAT(PortfolioAI, BT_UpdateAIIntentState);
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState);
 
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return;

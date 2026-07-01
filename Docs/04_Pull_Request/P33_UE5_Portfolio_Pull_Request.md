@@ -162,14 +162,14 @@ ACAIController::SelectTopPriority
 1차 적용:
 
 ```text
-CSV Category: PortfolioAI
+CSV Global Stat Prefix: PortfolioAI_
 
-BT_UpdateAIContext
-BT_UpdateAIIntentState
-BT_UpdateEngageContext
-BT_UpdateInvestigateContext
-CombatEngage_Tick
-CombatEngage_RebuildAssignments
+PortfolioAI_BT_UpdateAIContext
+PortfolioAI_BT_UpdateAIIntentState
+PortfolioAI_BT_UpdateEngageContext
+PortfolioAI_BT_UpdateInvestigateContext
+PortfolioAI_CombatEngage_Tick
+PortfolioAI_CombatEngage_RebuildAssignments
 ```
 
 ### 3. 개선 후보 분류
@@ -227,7 +227,7 @@ Capture: csvprofile start / csvprofile stop
 4. 30초 동안 동일 상태 유지
 5. csvprofile stop
 6. Saved/Profiling/CSV 결과 파일 확인
-7. PortfolioAI category의 BT Service / CombatEngage scope 확인
+7. PortfolioAI_ prefix의 BT Service / CombatEngage scope 확인
 ```
 
 기록 항목:

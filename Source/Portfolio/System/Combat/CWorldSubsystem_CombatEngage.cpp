@@ -1,6 +1,6 @@
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 #include "ProjectGlobal.h"
-#include "Core/Profiling/FPortfolioCsvProfiler.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
 
@@ -22,7 +22,7 @@ void UCWorldSubsystem_CombatEngage::Deinitialize()
 
 void UCWorldSubsystem_CombatEngage::Tick(float DeltaTime)
 {
-	CSV_SCOPED_TIMING_STAT(PortfolioAI, CombatEngage_Tick);
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_Tick);
 
 	Super::Tick(DeltaTime);
 
@@ -65,7 +65,7 @@ void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & 
 
 void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 {
-	CSV_SCOPED_TIMING_STAT(PortfolioAI, CombatEngage_RebuildAssignments);
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_RebuildAssignments);
 
 	AssignmentContainer.Reset();
 

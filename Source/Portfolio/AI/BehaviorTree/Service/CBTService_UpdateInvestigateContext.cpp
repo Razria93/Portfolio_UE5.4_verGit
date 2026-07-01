@@ -1,6 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.h"
 #include "ProjectGlobal.h"
-#include "Core/Profiling/FPortfolioCsvProfiler.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -17,7 +17,7 @@ UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 
 void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-	CSV_SCOPED_TIMING_STAT(PortfolioAI, BT_UpdateInvestigateContext);
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateInvestigateContext);
 
 	UWorld* world = OwnerComp.GetWorld();
 	if (!IsValid(world)) return;

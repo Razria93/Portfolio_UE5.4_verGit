@@ -190,7 +190,7 @@ PIE 실행 후:
 5. 콘솔에서 csvprofile start 실행
 6. 30초 동안 동일한 상태 유지
 7. 콘솔에서 csvprofile stop 실행
-8. 생성된 CSV 파일에서 PortfolioAI category column 확인
+8. 생성된 CSV 파일에서 PortfolioAI_ prefix column 확인
 ```
 
 CSV 저장 위치:
@@ -202,12 +202,12 @@ Saved/Profiling/CSV
 우선 확인할 CSV scope:
 
 ```text
-PortfolioAI/BT_UpdateAIContext
-PortfolioAI/BT_UpdateAIIntentState
-PortfolioAI/BT_UpdateEngageContext
-PortfolioAI/BT_UpdateInvestigateContext
-PortfolioAI/CombatEngage_Tick
-PortfolioAI/CombatEngage_RebuildAssignments
+PortfolioAI_BT_UpdateAIContext
+PortfolioAI_BT_UpdateAIIntentState
+PortfolioAI_BT_UpdateEngageContext
+PortfolioAI_BT_UpdateInvestigateContext
+PortfolioAI_CombatEngage_Tick
+PortfolioAI_CombatEngage_RebuildAssignments
 ```
 
 주의:
@@ -298,14 +298,14 @@ CSV scope는 hot path를 식별할 수 있는 최소 단위로 둔다.
 1차 적용 scope:
 
 ```text
-CSV Category: PortfolioAI
+CSV Global Stat Prefix: PortfolioAI_
 
-BT_UpdateAIContext
-BT_UpdateAIIntentState
-BT_UpdateEngageContext
-BT_UpdateInvestigateContext
-CombatEngage_Tick
-CombatEngage_RebuildAssignments
+PortfolioAI_BT_UpdateAIContext
+PortfolioAI_BT_UpdateAIIntentState
+PortfolioAI_BT_UpdateEngageContext
+PortfolioAI_BT_UpdateInvestigateContext
+PortfolioAI_CombatEngage_Tick
+PortfolioAI_CombatEngage_RebuildAssignments
 ```
 
 ---
