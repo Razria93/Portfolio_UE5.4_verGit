@@ -261,51 +261,52 @@ Notes:
 | 05 | 40 | Engage | 30.12s | avg 16.09ms / p95 18.00ms / p99 18.66ms | avg 17.46ms / p95 17.98ms / p99 18.59ms | BT Tick avg 0.2453ms / p95 0.3545ms, AIPerception p95 0.2168ms | - | BT_UpdateAIContext p95 0.1732ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0056ms | 40 AI engage load reaches the 60fps boundary; AI service cost increases but remains below 0.5ms p95. GameThread/combat load is the stronger bottleneck candidate. |
 | 06 | 60 | Engage | 30.48s | avg 19.54ms / p95 21.89ms / p99 22.73ms | avg 21.17ms / p95 21.84ms / p99 22.62ms | BT Tick avg 0.3834ms / p95 0.5331ms, AIPerception p95 0.4236ms | - | BT_UpdateAIContext p95 0.2799ms, BT_UpdateEngageContext p95 0.0014ms, CombatEngage_Rebuild p95 0.0072ms | 60 AI engage load is below 60fps; BT service cost crosses 0.5ms p95 but remains below 1ms. GameThread/combat interaction remains the primary optimization candidate. |
 | 07 | 60 | Engage / Logs Disabled | 30.45s | avg 19.28ms / p95 21.31ms / p99 22.02ms | avg 20.66ms / p95 21.27ms / p99 21.90ms | BT Tick avg 0.3843ms / p95 0.5156ms, AIPerception p95 0.4453ms | - | BT_UpdateAIContext p95 0.2699ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0071ms | Project combat logs disabled. Frame/GameThread improve slightly, but the result is close to Case 06; logging is not the main bottleneck. |
+| 08 | 60 | Distributed Patrol-Engage | 34.74s | avg 16.11ms / p95 19.04ms / p99 19.85ms | avg 18.96ms / p95 18.98ms / p99 19.60ms | BT Tick avg 0.3208ms / p95 0.4993ms, AIPerception p95 0.2134ms | - | BT_UpdateAIContext p95 0.2583ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0069ms | Distributed setup reduces hit/stuck density; about three enemies receive hits and many enemies remain in Alert/Patrol range. Frame/GameThread improve compared with Case 06/07, but the case is not equivalent to the dense combat-heavy setup. |
 
 ---
 
 ## Case 08 Setup: 60 Enemy Distributed Patrol-Engage
 
-Purpose:
+목적:
 
 ```text
-Separate crowd blocking / stuck movement from AI polling and combat-heavy load.
-The previous 60 Enemy cases were dense enough that most enemies entered Engage/Assault and several enemies repeatedly blocked each other.
+crowd blocking / stuck movement 변수를 AI polling 및 combat-heavy 부하와 분리한다.
+이전 60 Enemy 측정은 밀도가 높아 대부분의 Enemy가 Engage / Assault 상태로 진입했고, 일부 Enemy가 서로 반복적으로 이동을 막았다.
 ```
 
-Asset / map changes:
+Asset / map 변경:
 
 ```text
 Patrol point spacing:
-- nearest patrol point distance expanded to about 1500 units
+- 가장 가까운 patrol point 간 직선거리를 약 1500 unit 수준으로 확대
 
 Patrol pattern:
-- PatrolMode changed to Random
+- PatrolMode를 Random으로 변경
 
 Enemy placement:
-- enemies moved around the patrol-area center
-- density reduced compared to the previous combat-heavy setup
+- Enemy 위치를 patrol area 중심 기준으로 재배치
+- 기존 combat-heavy setup보다 밀도를 낮춤
 
 Enemy collision:
-- capsule radius changed from 40 to 10
+- capsule radius를 40에서 10으로 축소
 
 Patrol MoveTo:
-- acceptable radius changed from 50 to 200
+- acceptable radius를 50에서 200으로 확대
 ```
 
-Expected effect:
+예상 효과:
 
 ```text
-CharacterMovement stuck / failed-to-move cases should be reduced.
-Some enemies may remain in Patrol because lower density reduces perception/engage overlap.
-This case is not directly equivalent to Case 06/07; it is a controlled distributed-load comparison.
+CharacterMovement stuck / failed-to-move 상황을 줄인다.
+밀도가 낮아지면서 perception / engage overlap이 줄어 일부 Enemy는 Patrol 상태로 남을 수 있다.
+이 케이스는 Case 06 / 07과 직접 동등 비교하지 않고, controlled distributed-load 비교 케이스로 해석한다.
 ```
 
-Interpretation rule:
+해석 기준:
 
 ```text
-If GameThread p95 drops clearly while BT / Perception costs remain similar, crowd blocking and combat density were the dominant factors.
-If BT / Perception also drops clearly, the previous dense setup also affected AI state distribution and target perception load.
+GameThread p95가 명확히 내려가고 BT / Perception 비용이 비슷하면 crowd blocking과 combat density가 주요 변수였다고 본다.
+BT / Perception도 함께 내려가면 기존 dense setup이 AI state distribution 및 target perception 부하에도 영향을 줬다고 본다.
 ```
 
 ---
