@@ -267,6 +267,13 @@ CSV hot path summary
 | 16 | 160 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 28.74s | avg 27.45ms / p95 34.39ms / p99 54.22ms | avg 32.45ms / p95 35.62ms / p99 35.62ms | BT Tick avg 0.6359ms / p95 0.9204ms, AIPerception p95 0.5346ms | Yellow Upper | BT_UpdateAIContext p95 0.5630ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0074ms | 160 Enemy boundary 측정 결과다. 측정 시작 직전 crash를 피하기 위해 csvprofile을 미리 켠 뒤 대기했으므로 앞 10초를 제외한 값을 공식값으로 사용한다. BT Tick p95는 Red 기준인 1.0ms 아래지만 Yellow 상단이며, Frame p95는 33ms를 넘어 30fps 아래 플레이 상태 중단 기준에 도달했다. 이 시점부터 OUT OF MEMORY 경고와 약 15초의 perception 인지 지연이 관찰됐다. |
 | 17 | 180 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 32.10s | avg 32.03ms / p95 38.68ms / p99 56.06ms | avg 36.62ms / p95 38.51ms / p99 41.47ms | BT Tick avg 0.7517ms / p95 1.0169ms, AIPerception p95 0.6158ms | Red | BT_UpdateAIContext p95 0.6118ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0066ms | 180 Enemy boundary 측정 결과다. 앞 5초 대기 구간을 제외한 값을 공식값으로 사용한다. BT Tick p95가 1.0ms를 넘어 Red에 진입했으며, Frame/GameThread p95도 30fps 아래 플레이 상태 기준을 크게 넘었다. 160 Enemy 이후의 OUT OF MEMORY 경고가 이어진 상태에서 약 20초의 perception 인지 지연이 관찰됐다. |
 | 18 | 200 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 32.23s | avg 33.98ms / p95 42.27ms / p99 43.34ms | avg 40.42ms / p95 42.27ms / p99 43.72ms | BT Tick avg 0.8021ms / p95 1.1133ms, AIPerception p95 1.1034ms | Red / Stress Limit | BT_UpdateAIContext p95 0.6694ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0065ms | 200 Enemy boundary 측정 결과다. 앞 15초 대기 구간을 제외한 값을 공식값으로 사용한다. 160 Enemy 이후 이어진 OUT OF MEMORY 경고가 200 Enemy에서도 관찰됐고, 약 25초의 perception 인지 지연도 확인됐다. 이 케이스는 일반 최적화 기준선이 아니라 PIE CSV / runtime stress limit 확인용으로 기록한다. |
+| 19 | 120 | Boundary / Dirty Write Guard / F11 Fullscreen | 31.92s | avg 22.84ms / p95 26.02ms / p99 33.31ms | avg 24.23ms / p95 25.81ms / p99 28.31ms | BT Tick avg 0.5808ms / p95 0.7464ms, AIPerception p95 0.3726ms | Yellow | BT_UpdateAIContext p95 0.4585ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0062ms | Blackboard dirty write guard 적용 이후 120 Enemy 재측정 결과다. Case 14 대비 BT_UpdateAIContext p95와 BT Tick p95가 소폭 감소했지만, 계산 / perception / render 부하는 그대로이므로 체감 개선 축이 아니라 micro optimization 결과로 분류한다. |
+
+Raw CSV:
+
+```text
+Docs/07_Profiling/AI_Update_Interval/CSV/MANIFEST.md
+```
 
 현재 확인:
 
