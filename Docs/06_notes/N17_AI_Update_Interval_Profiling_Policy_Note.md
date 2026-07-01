@@ -127,12 +127,15 @@ Debug log가 측정 결과를 왜곡하는가?
 ```text
 Map: TestRoom
 Mode: PIE
+Viewport: F11 fullscreen
 Duration: 30s per case
 Stats: stat unit, stat game, stat ai, stat behavior
 Capture: csvprofile start / csvprofile stop
 ```
 
 `stat behavior`는 엔진 / 실행 상태에 따라 별도 overlay 변화가 명확하지 않을 수 있다. 기준 측정은 `stat unit`, `stat game`, `stat ai`, CSV `PortfolioAI` scope를 우선한다.
+
+Boundary 측정은 viewport / editor layout 변수를 줄이기 위해 PIE 실행 후 F11 fullscreen 상태를 기준으로 진행한다.
 
 Enemy 수:
 
@@ -230,6 +233,7 @@ Enemy Count:
 State:
 Duration:
 Log State:
+Viewport State:
 
 Frame ms Avg:
 Frame ms Max:
@@ -263,6 +267,7 @@ Notes:
 | 07 | 60 | Engage / Logs Disabled | 30.45s | avg 19.28ms / p95 21.31ms / p99 22.02ms | avg 20.66ms / p95 21.27ms / p99 21.90ms | BT Tick avg 0.3843ms / p95 0.5156ms, AIPerception p95 0.4453ms | - | BT_UpdateAIContext p95 0.2699ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0071ms | Project combat logs disabled. Frame/GameThread improve slightly, but the result is close to Case 06; logging is not the main bottleneck. |
 | 08 | 60 | Distributed Patrol-Engage | 34.74s | avg 16.11ms / p95 19.04ms / p99 19.85ms | avg 18.96ms / p95 18.98ms / p99 19.60ms | BT Tick avg 0.3208ms / p95 0.4993ms, AIPerception p95 0.2134ms | - | BT_UpdateAIContext p95 0.2583ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0069ms | Distributed setup reduces hit/stuck density; about three enemies receive hits and many enemies remain in Alert/Patrol range. Frame/GameThread improve compared with Case 06/07, but the case is not equivalent to the dense combat-heavy setup. |
 | 09 | 60 | Distributed Patrol-Engage / Friendly Hit Disabled | 34.30s | avg 16.64ms / p95 19.51ms / p99 20.17ms | avg 19.34ms / p95 19.58ms / p99 20.13ms | BT Tick avg 0.3702ms / p95 0.5767ms, AIPerception p95 0.2642ms | - | BT_UpdateAIContext p95 0.2884ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0081ms | Enemy끼리 피격이 발생하지 않도록 friendly hit를 차단한 비교 케이스다. Frame/GameThread는 Case 08과 비슷하고, AIPerception은 Case 06/07보다 낮다. BT Tick p95는 약간 증가했으므로 friendly hit만이 전체 병목이라고 보기는 어렵다. |
+| 10 | 40 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 31.92s | avg 12.72ms / p95 14.11ms / p99 14.55ms | avg 12.98ms / p95 14.11ms / p99 14.57ms | BT Tick avg 0.2764ms / p95 0.4090ms, AIPerception p95 0.1435ms | Green | BT_UpdateAIContext p95 0.1909ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0064ms | Boundary 측정 기준을 PIE F11 fullscreen으로 고정한 뒤 다시 측정한 결과다. Enemy끼리 피격 / 길막이 발생하지 않는 조건에서 BT Tick p95가 0.5ms 아래로 유지되어 Green 구간으로 판정한다. |
 
 ---
 
@@ -422,6 +427,24 @@ AI polling 비용을 비교하기 위한 기준선으로 더 적합하다.
 ```text
 현재 60 Enemy 보정 케이스는 BT Service tick p95가 약 0.5ms를 넘는 Yellow 초입이다.
 이후 최적화 전후 비교를 위해 Green / Yellow / Red 구간을 명시적으로 확보한다.
+```
+
+공통 측정 조건:
+
+```text
+Mode:
+- PIE
+
+Viewport:
+- F11 fullscreen
+- 같은 camera position 유지
+- 측정 중 editor panel / viewport layout 조작 금지
+
+Runtime:
+- -noailogging
+- combat logs disabled
+- distributed patrol-engage setup
+- friendly hit disabled
 ```
 
 판정 기준:
