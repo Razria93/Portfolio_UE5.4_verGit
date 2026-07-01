@@ -249,6 +249,7 @@ CSV hot path summary
 | 02 | 1 | Engage | 32.82s | avg 10.29ms / p95 10.91ms / p99 11.85ms | avg 10.41ms / p95 10.91ms / p99 11.64ms | BT Tick avg 0.0267ms / p95 0.0351ms | - | BT_UpdateAIContext p95 0.0230ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0023ms | Engage branch scope recorded normally; Investigate branch not entered. |
 | 03 | 10 | Engage | 31.72s | avg 11.53ms / p95 12.35ms / p99 13.07ms | avg 11.97ms / p95 12.35ms / p99 13.01ms | BT Tick avg 0.0719ms / p95 0.0913ms, AIPerception p95 0.0556ms | - | BT_UpdateAIContext p95 0.0534ms, BT_UpdateEngageContext p95 0.0022ms, CombatEngage_Rebuild p95 0.0034ms | 10 AI engage load recorded; active tick counts show 10 AI controllers/enemies. `ActorCount/CEnemy` can include editor/PIE world duplication in PIE CSV. |
 | 04 | 20 | Engage | 29.88s | avg 12.64ms / p95 13.54ms / p99 14.00ms | avg 13.38ms / p95 13.51ms / p99 13.93ms | BT Tick avg 0.1127ms / p95 0.1540ms, AIPerception p95 0.0727ms | - | BT_UpdateAIContext p95 0.0831ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0038ms | 20 AI engage load recorded; active tick counts show 20 AI controllers/enemies. GameThread max contains a capture/PIE outlier, so p95/p99 are used for judgment. |
+| 05 | 40 | Engage | 30.12s | avg 16.09ms / p95 18.00ms / p99 18.66ms | avg 17.46ms / p95 17.98ms / p99 18.59ms | BT Tick avg 0.2453ms / p95 0.3545ms, AIPerception p95 0.2168ms | - | BT_UpdateAIContext p95 0.1732ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0056ms | 40 AI engage load reaches the 60fps boundary; AI service cost increases but remains below 0.5ms p95. GameThread/combat load is the stronger bottleneck candidate. |
 
 현재 확인:
 
@@ -260,6 +261,7 @@ PIE AI smoke test 진행 중
 1 Enemy / Engage profiling 기록 완료
 10 Enemy / Engage profiling 기록 완료
 20 Enemy / Engage profiling 기록 완료
+40 Enemy / Engage profiling 기록 완료
 ```
 
 ---
