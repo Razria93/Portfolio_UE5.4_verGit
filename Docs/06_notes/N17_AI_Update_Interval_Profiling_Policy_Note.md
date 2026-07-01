@@ -183,6 +183,18 @@ PIE 실행 전:
 4. Output Log를 비워 측정 중 오류 / ensure / hot path log를 확인하기 쉽게 만든다.
 ```
 
+Editor 실행:
+
+```bash
+"<UE_5.4_ROOT>/Engine/Binaries/Win64/UnrealEditor.exe" "<PROJECT_ROOT>/Portfolio.uproject" -noailogging
+```
+
+Git Bash 예시:
+
+```bash
+"/c/Program Files/Epic Games/UE_5.4/Engine/Binaries/Win64/UnrealEditor.exe" "./Portfolio.uproject" -noailogging
+```
+
 PIE 실행 후:
 
 ```text
@@ -196,10 +208,48 @@ PIE 실행 후:
 8. 생성된 CSV 파일에서 PortfolioAI_ prefix column 확인
 ```
 
+UE 콘솔 입력:
+
+```text
+stat unit
+stat game
+stat ai
+stat behavior
+
+csvprofile start
+csvprofile stop
+```
+
+`stat behavior`는 반응이 없거나 overlay 변화가 명확하지 않으면 생략할 수 있다.
+
 CSV 저장 위치:
 
 ```text
-Saved/Profiling/CSV
+<PROJECT_ROOT>/Saved/Profiling/CSV
+```
+
+Boundary 측정 공통 조건:
+
+```text
+Log State: -noailogging
+PIE or Standalone: PIE
+Viewport: F11 fullscreen
+Enemy끼리는 피격 발생하지 않음
+Enemy끼리 길막지 않음
+플레이어가 2명에게 Engage되고 Combo cycle이 0일 때 측정 시작
+```
+
+Boundary 기록 양식:
+
+```text
+Case:
+Duration: 약 30초
+Log State: -noailogging
+PIE or Standalone: PIE
+플레이어 2명에게 Hit, 나머지는 Engage.
+Enemy 끼리는 피격 발생하지 않음. Enemy끼리 길막지 않음.
+플레이어가 2명에게 Engage되고 Combo cycle이 0일 때 측정시작
+전체화면으로 PIE 진행 (F11)
 ```
 
 우선 확인할 CSV scope:
