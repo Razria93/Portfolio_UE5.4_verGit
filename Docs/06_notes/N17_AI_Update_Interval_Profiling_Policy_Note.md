@@ -264,6 +264,52 @@ Notes:
 
 ---
 
+## Case 08 Setup: 60 Enemy Distributed Patrol-Engage
+
+Purpose:
+
+```text
+Separate crowd blocking / stuck movement from AI polling and combat-heavy load.
+The previous 60 Enemy cases were dense enough that most enemies entered Engage/Assault and several enemies repeatedly blocked each other.
+```
+
+Asset / map changes:
+
+```text
+Patrol point spacing:
+- nearest patrol point distance expanded to about 1500 units
+
+Patrol pattern:
+- PatrolMode changed to Random
+
+Enemy placement:
+- enemies moved around the patrol-area center
+- density reduced compared to the previous combat-heavy setup
+
+Enemy collision:
+- capsule radius changed from 40 to 10
+
+Patrol MoveTo:
+- acceptable radius changed from 50 to 200
+```
+
+Expected effect:
+
+```text
+CharacterMovement stuck / failed-to-move cases should be reduced.
+Some enemies may remain in Patrol because lower density reduces perception/engage overlap.
+This case is not directly equivalent to Case 06/07; it is a controlled distributed-load comparison.
+```
+
+Interpretation rule:
+
+```text
+If GameThread p95 drops clearly while BT / Perception costs remain similar, crowd blocking and combat density were the dominant factors.
+If BT / Perception also drops clearly, the previous dense setup also affected AI state distribution and target perception load.
+```
+
+---
+
 ## CSV Profiling Scope 후보
 
 1차 계측 후보:
