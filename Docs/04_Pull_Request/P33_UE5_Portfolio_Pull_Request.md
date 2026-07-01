@@ -248,7 +248,7 @@ CSV hot path summary
 | 01 | 1 | Idle / Patrol | 29.27s | avg 11.20ms / p95 9.68ms / p99 24.88ms | avg 10.02ms / p95 9.50ms / p99 10.63ms | BT Tick avg 0.0174ms / p95 0.0259ms | - | BT_UpdateAIContext p95 0.0123ms, BT_UpdateAIIntentState p95 0.0037ms, CombatEngage_Rebuild p95 0.0005ms | Patrol context is updated by `UCBTTask_SelectPatrolPoint`; unused patrol service removed. |
 | 02 | 1 | Engage | 32.82s | avg 10.29ms / p95 10.91ms / p99 11.85ms | avg 10.41ms / p95 10.91ms / p99 11.64ms | BT Tick avg 0.0267ms / p95 0.0351ms | - | BT_UpdateAIContext p95 0.0230ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0023ms | Engage branch scope recorded normally; Investigate branch not entered. |
 | 03 | 10 | Engage | 31.72s | avg 11.53ms / p95 12.35ms / p99 13.07ms | avg 11.97ms / p95 12.35ms / p99 13.01ms | BT Tick avg 0.0719ms / p95 0.0913ms, AIPerception p95 0.0556ms | - | BT_UpdateAIContext p95 0.0534ms, BT_UpdateEngageContext p95 0.0022ms, CombatEngage_Rebuild p95 0.0034ms | 10 AI engage load recorded; active tick counts show 10 AI controllers/enemies. `ActorCount/CEnemy` can include editor/PIE world duplication in PIE CSV. |
-| 04 | 20 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 04 | 20 | Engage | 29.88s | avg 12.64ms / p95 13.54ms / p99 14.00ms | avg 13.38ms / p95 13.51ms / p99 13.93ms | BT Tick avg 0.1127ms / p95 0.1540ms, AIPerception p95 0.0727ms | - | BT_UpdateAIContext p95 0.0831ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0038ms | 20 AI engage load recorded; active tick counts show 20 AI controllers/enemies. GameThread max contains a capture/PIE outlier, so p95/p99 are used for judgment. |
 
 현재 확인:
 
@@ -259,7 +259,7 @@ PIE AI smoke test 진행 중
 1 Enemy / Idle-Patrol profiling 기록 완료
 1 Enemy / Engage profiling 기록 완료
 10 Enemy / Engage profiling 기록 완료
-20 Enemy / Engage scaling 측정 대기
+20 Enemy / Engage profiling 기록 완료
 ```
 
 ---
