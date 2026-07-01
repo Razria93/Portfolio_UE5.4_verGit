@@ -415,6 +415,87 @@ AI polling 비용을 비교하기 위한 기준선으로 더 적합하다.
 
 ---
 
+## Scale Test Plan: Green / Yellow / Red Boundary
+
+목적:
+
+```text
+현재 60 Enemy 보정 케이스는 BT Service tick p95가 약 0.5ms를 넘는 Yellow 초입이다.
+이후 최적화 전후 비교를 위해 Green / Yellow / Red 구간을 명시적으로 확보한다.
+```
+
+판정 기준:
+
+```text
+Green:
+- BehaviorTreeTick p95 < 0.5ms
+- 현재 구조 유지 가능
+
+Yellow:
+- BehaviorTreeTick p95 0.5ms ~ 1.0ms
+- scaling risk가 있으므로 interval / dirty flag / event-driven 최적화 후보
+
+Red:
+- BehaviorTreeTick p95 > 1.0ms
+- polling 구조 개선 필요
+```
+
+측정 순서:
+
+```text
+40 Enemy:
+- Green 상단 후보
+- 0.5ms 아래인지 확인
+
+60 Enemy:
+- Yellow 초입 기준선
+- 이미 보정 케이스 측정 완료
+
+80 Enemy:
+- Yellow 확장 확인
+- 60 Enemy보다 BT polling 비용이 선형 또는 준선형으로 증가하는지 확인
+
+120 Enemy:
+- Red 진입 후보
+- BehaviorTreeTick p95가 1.0ms를 넘는지 확인
+
+160 Enemy:
+- Red stress upper bound
+- PIE / 액션 플레이 상태가 유지되는 범위에서만 측정
+```
+
+중단 기준:
+
+```text
+1. BehaviorTreeTick p95 > 1.0ms를 확인한 경우
+2. Frame p95 > 33ms 수준으로 올라가 30fps 아래 플레이 상태가 되는 경우
+3. PIE가 안정적으로 측정되지 않는 경우
+```
+
+최적화 비교 기준:
+
+```text
+Yellow case:
+- 60 Enemy 또는 80 Enemy
+- 실제 플레이 가능 범위에서 interval / dirty flag 개선폭 확인
+
+Red case:
+- 120 Enemy 또는 160 Enemy
+- stress condition에서 polling 구조 개선 효과 확인
+```
+
+해석 원칙:
+
+```text
+3D 액션 게임에서 렌더링, 애니메이션, movement, collision 비용은 기본적으로 발생한다.
+이 측정의 목적은 전체 Frame 비용의 모든 원인을 AI tick으로 돌리는 것이 아니다.
+
+목적은 BT Service / AI polling 비용이 허용 가능한 tick budget을 넘는 조건을 찾고,
+그 조건에서 interval / dirty flag / event-driven 개선이 어느 정도 효과를 내는지 확인하는 것이다.
+```
+
+---
+
 ## CSV Profiling Scope 후보
 
 1차 계측 후보:
