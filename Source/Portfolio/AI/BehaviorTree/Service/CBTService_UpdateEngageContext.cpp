@@ -1,5 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateEngageContext.h"
 #include "ProjectGlobal.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
 #include "GameFramework/Pawn.h"
@@ -8,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Type/CAIStructure.h"
 
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
@@ -21,6 +23,8 @@ UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 
 void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateEngageContext);
+
 	UBlackboardComponent* blackBoardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackBoardComp)) return;
 
@@ -124,8 +128,8 @@ void UCBTService_UpdateEngageContext::UpdateEngageContext(UBlackboardComponent* 
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName, InEngageContext.bInEngageRange);
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName, InEngageContext.bCanCombatAction);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bInEngageRange.KeyName, InEngageContext.bInEngageRange);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bCanCombatAction.KeyName, InEngageContext.bCanCombatAction);
 }
 
 void UCBTService_UpdateEngageContext::ClearEngageContext(UBlackboardComponent* InBlackboardComp)

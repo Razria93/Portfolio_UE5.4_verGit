@@ -38,5 +38,6 @@
 | P30 | Runtime Component 조회 정책 | `P30_UE5_Portfolio_Pull_Request.md` | `refactor/runtime-component-lookup-policy` |  | W05, N12 |
 | P31 | Component Lifecycle Cleanup Policy | `P31_UE5_Portfolio_Pull_Request.md` | `refactor/component-lifecycle-cleanup-policy` |  | W05, N13, N14 |
 | P32 | AI Blackboard Key Registry | `P32_UE5_Portfolio_Pull_Request.md` | `refactor/ai-blackboard-key-registry` |  | W05, N15 |
+| P33 | AI Update Interval Profiling 정책 정리 | `P33_UE5_Portfolio_Pull_Request.md` | `refactor/ai-update-interval-policy` |  | W05, N17 |
 
 ---

@@ -134,7 +134,7 @@ void ACEnemy::BeginPlay()
 	const FActionRequestResult actionRequestResult = HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
 	if (!actionRequestResult.IsAccepted())
 	{
-		FLog::Log(TEXT("[Enemy|BeginPlay] Initial equip-action request rejected."));
+		// FLog::Log(TEXT("[Enemy|BeginPlay] Initial equip-action request rejected."));
 	}
 }
 
@@ -247,10 +247,10 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	}
 	else
 	{
-		FLog::Log(FString::Printf(
-			TEXT("[Enemy] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
-			*GetNameSafe(this),
-			DamageAmount));
+		// FLog::Log(FString::Printf(
+		// 	TEXT("[Enemy] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
+		// 	*GetNameSafe(this),
+		// 	DamageAmount));
 
 		// FallBack
 		finalDamage = DamageAmount;

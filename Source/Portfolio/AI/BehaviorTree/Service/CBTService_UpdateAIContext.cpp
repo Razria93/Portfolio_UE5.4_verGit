@@ -1,5 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateAIContext.h"
 #include "ProjectGlobal.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
 #include "GameFramework/Pawn.h"
@@ -12,6 +13,7 @@
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Type/CAIStructure.h"
 #include "Type/CWorldSubSystemStructure.h"
 
@@ -26,6 +28,8 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext);
+
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
@@ -230,27 +234,27 @@ void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* 
 	if (!IsValid(InBlackboardComp)) return;
 	if (!IsValid(InAIContext.TargetActor)) return;
 
-	InBlackboardComp->SetValueAsObject(CAIKey::Targeting::TargetActor.KeyName, InAIContext.TargetActor);
-	InBlackboardComp->SetValueAsInt(CAIKey::Targeting::TargetPriority.KeyName, InAIContext.TargetPriority);
-	InBlackboardComp->SetValueAsBool(CAIKey::Perception::bHasLOS.KeyName, InAIContext.bHasLOS);
-	InBlackboardComp->SetValueAsFloat(CAIKey::Perception::LastSeenTime.KeyName, InAIContext.LastSeenTime);
-	InBlackboardComp->SetValueAsVector(CAIKey::Perception::LastKnownLocation.KeyName, InAIContext.LastKnownLocation);
+	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::Targeting::TargetActor.KeyName, InAIContext.TargetActor);
+	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Targeting::TargetPriority.KeyName, InAIContext.TargetPriority);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Perception::bHasLOS.KeyName, InAIContext.bHasLOS);
+	CAIBlackboardValueHelper::SetFloatIfChanged(InBlackboardComp, CAIKey::Perception::LastSeenTime.KeyName, InAIContext.LastSeenTime);
+	CAIBlackboardValueHelper::SetVectorIfChanged(InBlackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, InAIContext.LastKnownLocation);
 }
 
 void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName, InAIContext.bReturnHome);
-	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToHome.KeyName, InAIContext.DistanceToHome);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Navigation::bReturnHome.KeyName, InAIContext.bReturnHome);
+	CAIBlackboardValueHelper::SetFloatIfChanged(InBlackboardComp, CAIKey::Metric::DistanceToHome.KeyName, InAIContext.DistanceToHome);
 }
 
 void UCBTService_UpdateAIContext::UpdateAlertRangeContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsFloat(CAIKey::Metric::DistanceToTarget.KeyName, InAIContext.DistanceToTarget);
-	InBlackboardComp->SetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName, InAIContext.bInAlertRange);
+	CAIBlackboardValueHelper::SetFloatIfChanged(InBlackboardComp, CAIKey::Metric::DistanceToTarget.KeyName, InAIContext.DistanceToTarget);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Alert::bInAlertRange.KeyName, InAIContext.bInAlertRange);
 
 }
 
@@ -258,21 +262,21 @@ void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardCompo
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Engage::bShouldEngage.KeyName, InAIContext.bShouldEngage);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bShouldEngage.KeyName, InAIContext.bShouldEngage);
 }
 
 void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName, InAIContext.bIsActiveReaction);
+	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Reaction::bIsActiveReaction.KeyName, InAIContext.bIsActiveReaction);
 }
 
 void UCBTService_UpdateAIContext::UpdateDeadContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(InAIContext.DeadState));
+	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(InAIContext.DeadState));
 }
 
 void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* InBlackboardComp)
@@ -316,5 +320,5 @@ void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InB
 
 void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlackboardComp)
 {
-	InBlackboardComp->SetValueAsEnum(CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
+	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
 }

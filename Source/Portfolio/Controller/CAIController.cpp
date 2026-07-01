@@ -253,7 +253,7 @@ void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 
 void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	PrintTargetPerceptionUpdatedSummary(Actor, Stimulus);
+	// PrintTargetPerceptionUpdatedSummary(Actor, Stimulus);
 
 	if (!IsValid(Actor)) return;
 
@@ -350,15 +350,15 @@ void ACAIController::UpdateTargetDataMap()
 
 	for (AActor* removeKey : removeKeys)
 	{
-		FLog::Log(FString::Printf(TEXT("RemoveActor = %s"), *GetNameSafe(removeKey)));
+		// FLog::Log(FString::Printf(TEXT("RemoveActor = %s"), *GetNameSafe(removeKey)));
 
-		FLog::Log(TEXT("[Remove Actors Before]"));
-		PrintAllTargetData();
+		// FLog::Log(TEXT("[Remove Actors Before]"));
+		// PrintAllTargetData();
 
 		TargetDataMap.Remove(removeKey);
 
-		FLog::Log(TEXT("[Remove Actors After]"));
-		PrintAllTargetData();
+		// FLog::Log(TEXT("[Remove Actors After]"));
+		// PrintAllTargetData();
 	}
 }
 

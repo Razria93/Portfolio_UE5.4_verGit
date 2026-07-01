@@ -1,5 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.h"
 #include "ProjectGlobal.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
 #include "GameFramework/Pawn.h"
@@ -13,6 +14,7 @@
 #include "Type/CWeaponStructure.h"
 #include "Type/CHealthStructure.h"
 #include "AI/Blackboard/CAIKey.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
 
 UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 {
@@ -25,6 +27,8 @@ UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState);
+
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return;
 
@@ -95,7 +99,7 @@ bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* 
 
 	if (currentAIIntentState == nextAIIntentState) return false;
 
-	InBlackboardComp->SetValueAsEnum(CAIKey::State::AIIntentState.KeyName, nextAIIntentState);
+	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::State::AIIntentState.KeyName, nextAIIntentState);
 
 	UpdateAIIntentStateTransition(InBlackboardComp, static_cast<EAIIntentState>(currentAIIntentState), static_cast<EAIIntentState>(nextAIIntentState));
 	return true;
@@ -109,8 +113,8 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 	// Engage -> Non-Engage
 	if (InCurrentAIIntentState == EAIIntentState::Engage && InNextAIIntentState != EAIIntentState::Engage)
 	{
-		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName, false);
-		InBlackboardComp->SetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bInEngageRange.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bCanCombatAction.KeyName, false);
 
 		if (InNextAIIntentState == EAIIntentState::Dead || InNextAIIntentState == EAIIntentState::Idle)
 		{

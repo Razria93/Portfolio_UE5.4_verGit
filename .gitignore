@@ -24,3 +24,6 @@ Saved/
 # Local-only editor scripts and asset staging area
 /Scripts/_Local/
 /Content/_Local/
+
+# Local profiling captures before curated raw CSV archival
+/Csvprofile/

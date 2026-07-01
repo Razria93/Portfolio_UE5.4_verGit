@@ -1,9 +1,11 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.h"
 #include "ProjectGlobal.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
 
 UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 {
@@ -16,6 +18,8 @@ UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 
 void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateInvestigateContext);
+
 	UWorld* world = OwnerComp.GetWorld();
 	if (!IsValid(world)) return;
 
@@ -33,7 +37,7 @@ void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& Owne
 
 	if (bTimeout)
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bCanInvestigate.KeyName, false);
 		FLog::Log(TEXT("[Investigate Time out]"));
 	}
 }
