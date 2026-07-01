@@ -141,7 +141,7 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 
 	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
 	// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
-	PrintCombatSignalTargetOutcomeInfo(combatSignalTargetPacket);
+	// PrintCombatSignalTargetOutcomeInfo(combatSignalTargetPacket);
 	DispatchAcceptedCombatResult(combatSignalTargetPacket);
 	DispatchCombatResultToReceiver(combatSignalTargetPacket);
 
@@ -155,20 +155,20 @@ bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& I
 
 	if (InCombatSignal.CueTag == CombatCueBlinkTag)
 	{
-		FLog::Log(TEXT("[CombatSignalTimingCue] Blink cue received"));
+		// FLog::Log(TEXT("[CombatSignalTimingCue] Blink cue received"));
 		return true;
 	}
 
 	if (InCombatSignal.CueTag == CombatCueRepulseTag)
 	{
-		FLog::Log(TEXT("[CombatSignalTimingCue] Repulse cue received"));
+		// FLog::Log(TEXT("[CombatSignalTimingCue] Repulse cue received"));
 		return true;
 	}
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatSignalTimingCue] Rejected | Reason=%s | CueTag=%s"),
-		*UEnum::GetValueAsString(ECombatSignalTargetRejectReason::UnknownCueTag),
-		*InCombatSignal.CueTag.ToString()));
+	// FLog::Log(FString::Printf(
+	// 	TEXT("[CombatSignalTimingCue] Rejected | Reason=%s | CueTag=%s"),
+	// 	*UEnum::GetValueAsString(ECombatSignalTargetRejectReason::UnknownCueTag),
+	// 	*InCombatSignal.CueTag.ToString()));
 
 	// V1 hook only. Blink / Repulse evaluation and effects are added in separate branches.
 	return false;

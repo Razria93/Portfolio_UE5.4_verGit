@@ -21,15 +21,15 @@ void UCAnimNotify_CombatSignalCue::Notify(USkeletalMeshComponent* MeshComp, UAni
 
 	if (CueTag.IsNone())
 	{
-		FLog::Log(TEXT("[CombatSignalCueNotify] Rejected | Reason=InvalidCueTag"));
+		// FLog::Log(TEXT("[CombatSignalCueNotify] Rejected | Reason=InvalidCueTag"));
 		return;
 	}
 
 	const bool bSent = actionComp->HandleActionCombatSignalCue(CueTag);
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatSignalCueNotify] %s | Source=%s | CueTag=%s"),
-		bSent ? TEXT("Sent") : TEXT("Rejected"),
-		*GetNameSafe(IsValid(MeshComp) ? MeshComp->GetOwner() : nullptr),
-		*CueTag.ToString()));
+	// FLog::Log(FString::Printf(
+	// 	TEXT("[CombatSignalCueNotify] %s | Source=%s | CueTag=%s"),
+	// 	bSent ? TEXT("Sent") : TEXT("Rejected"),
+	// 	*GetNameSafe(IsValid(MeshComp) ? MeshComp->GetOwner() : nullptr),
+	// 	*CueTag.ToString()));
 }

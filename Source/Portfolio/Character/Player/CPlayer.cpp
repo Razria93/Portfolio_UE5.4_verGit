@@ -248,10 +248,10 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	}
 	else
 	{
-		FLog::Log(FString::Printf(
-			TEXT("[Player] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
-			*GetNameSafe(this),
-			DamageAmount));
+		// FLog::Log(FString::Printf(
+		// 	TEXT("[Player] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
+		// 	*GetNameSafe(this),
+		// 	DamageAmount));
 
 		// FallBack
 		finalDamage = DamageAmount;
