@@ -617,9 +617,9 @@ BT Service:
    -> Interval 0.1s
    -> engage range / combat cooldown / combat action 가능 여부 갱신
 
-3. UCBTService_UpdatePatrolContext
-   -> Interval 0.1s
-   -> patrol point 도달 / 다음 patrol target 갱신
+3. UCBTTask_SelectPatrolPoint
+   -> ExecuteTask
+   -> patrol index / patrol location / patrol reverse 갱신
 
 4. UCBTService_UpdateInvestigateContext
    -> Interval 0.1s

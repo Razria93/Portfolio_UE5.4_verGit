@@ -151,40 +151,6 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FPatrolContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	bool bUsePatrol = false;
-
-	UPROPERTY(Transient)
-	bool bPatrolReverse = false;
-
-	UPROPERTY(Transient)
-	class ACPatrolPath* PatrolPath = nullptr;
-
-	UPROPERTY(Transient)
-	EPatrolMode PatrolMode = EPatrolMode::None;
-
-	UPROPERTY(Transient)
-	int32 CurrentIndex = INDEX_NONE;
-
-	UPROPERTY(Transient)
-	int32 NextIndex = INDEX_NONE;
-
-	UPROPERTY(Transient)
-	FVector CurrentPatrolLocation = FVector::ZeroVector;
-
-	UPROPERTY(Transient)
-	FVector NextPatrolLocation = FVector::ZeroVector;
-
-	UPROPERTY(Transient)
-	bool bNeedNextPoint = false;
-};
-
-USTRUCT(BlueprintType)
 struct FEngageContext
 {
     GENERATED_BODY()

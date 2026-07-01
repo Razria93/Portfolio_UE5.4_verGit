@@ -42,11 +42,6 @@ UCBTService_UpdateEngageContext
 -> 역할: engage range, combat cooldown, combat action 가능 여부 갱신
 -> 리스크: 전투 중 빈번히 필요한 값이지만 Enemy 수만큼 누적됨
 
-UCBTService_UpdatePatrolContext
--> Interval: 0.1s
--> 역할: patrol point 도달, 다음 patrol index/location 갱신
--> 리스크: patrol 중에만 필요하지만 현재 성공 경로에 debug log가 있음
-
 UCBTService_UpdateInvestigateContext
 -> Interval: 0.1s
 -> 역할: investigate timeout 확인
@@ -75,6 +70,11 @@ UCBTTask_WaitEndReaction
 -> TickTask every frame
 -> 역할: bIsActiveReaction false 대기
 -> 후보: Reaction end event 또는 Blackboard observer 전환
+
+UCBTTask_SelectPatrolPoint
+-> ExecuteTask
+-> 역할: patrol index / patrol location / patrol reverse 갱신
+-> 메모: 현재 patrol context 갱신은 Service polling이 아니라 Task 실행 시점에 처리된다.
 ```
 
 ### Subsystem
@@ -205,7 +205,6 @@ Saved/Profiling/CSV
 PortfolioAI/BT_UpdateAIContext
 PortfolioAI/BT_UpdateAIIntentState
 PortfolioAI/BT_UpdateEngageContext
-PortfolioAI/BT_UpdatePatrolContext
 PortfolioAI/BT_UpdateInvestigateContext
 PortfolioAI/CombatEngage_Tick
 PortfolioAI/CombatEngage_RebuildAssignments
@@ -244,7 +243,6 @@ CSV Hot Path:
 - UpdateAIContext:
 - UpdateAIIntentState:
 - UpdateEngageContext:
-- UpdatePatrolContext:
 - UpdateInvestigateContext:
 - CombatEngageTick:
 - CombatEngageRebuild:
@@ -271,7 +269,6 @@ Notes:
 UCBTService_UpdateAIContext::TickNode
 UCBTService_UpdateAIIntentState::TickNode
 UCBTService_UpdateEngageContext::TickNode
-UCBTService_UpdatePatrolContext::TickNode
 UCBTService_UpdateInvestigateContext::TickNode
 UCWorldSubsystem_CombatEngage::Tick
 UCWorldSubsystem_CombatEngage::RebuildAssignments
@@ -283,6 +280,7 @@ UCWorldSubsystem_CombatEngage::RebuildAssignments
 UCBTTask_WaitDeadState::TickTask
 UCBTTask_WaitEndCombatAction::TickTask
 UCBTTask_WaitEndReaction::TickTask
+UCBTTask_SelectPatrolPoint::ExecuteTask
 ACAIController::BuildPerceptionContext
 ACAIController::UpdateTargetDataMap
 ACAIController::SelectTopPriority
@@ -305,7 +303,6 @@ CSV Category: PortfolioAI
 BT_UpdateAIContext
 BT_UpdateAIIntentState
 BT_UpdateEngageContext
-BT_UpdatePatrolContext
 BT_UpdateInvestigateContext
 CombatEngage_Tick
 CombatEngage_RebuildAssignments
@@ -327,7 +324,6 @@ RandomDeviation 적용
 
 ```text
 UpdateInvestigateContext
-UpdatePatrolContext
 UpdateAIIntentState
 CombatEngage rebuild
 ```

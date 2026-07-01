@@ -71,10 +71,6 @@ UCBTService_UpdateEngageContext
 -> Interval: 0.1s
 -> 역할: engage range, combat cooldown, combat action 가능 여부 갱신
 
-UCBTService_UpdatePatrolContext
--> Interval: 0.1s
--> 역할: patrol point 도달 / 다음 patrol target 갱신
-
 UCBTService_UpdateInvestigateContext
 -> Interval: 0.1s
 -> 역할: investigate timeout 확인
@@ -95,6 +91,10 @@ UCBTTask_WaitEndCombatAction
 
 UCBTTask_WaitEndReaction
 -> TickTask every frame
+
+UCBTTask_SelectPatrolPoint
+-> ExecuteTask
+-> patrol index / patrol location / patrol reverse 갱신
 ```
 
 ### Subsystem
@@ -142,7 +142,6 @@ CSV 결과 기록 양식 정리
 UCBTService_UpdateAIContext::TickNode
 UCBTService_UpdateAIIntentState::TickNode
 UCBTService_UpdateEngageContext::TickNode
-UCBTService_UpdatePatrolContext::TickNode
 UCBTService_UpdateInvestigateContext::TickNode
 UCWorldSubsystem_CombatEngage::Tick
 UCWorldSubsystem_CombatEngage::RebuildAssignments
@@ -154,6 +153,7 @@ UCWorldSubsystem_CombatEngage::RebuildAssignments
 UCBTTask_WaitDeadState::TickTask
 UCBTTask_WaitEndCombatAction::TickTask
 UCBTTask_WaitEndReaction::TickTask
+UCBTTask_SelectPatrolPoint::ExecuteTask
 ACAIController::BuildPerceptionContext
 ACAIController::UpdateTargetDataMap
 ACAIController::SelectTopPriority
@@ -167,7 +167,6 @@ CSV Category: PortfolioAI
 BT_UpdateAIContext
 BT_UpdateAIIntentState
 BT_UpdateEngageContext
-BT_UpdatePatrolContext
 BT_UpdateInvestigateContext
 CombatEngage_Tick
 CombatEngage_RebuildAssignments
