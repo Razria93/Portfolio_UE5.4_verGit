@@ -255,6 +255,7 @@ CSV hot path summary
 | 08 | 60 | Distributed Patrol-Engage | 34.74s | avg 16.11ms / p95 19.04ms / p99 19.85ms | avg 18.96ms / p95 18.98ms / p99 19.60ms | BT Tick avg 0.3208ms / p95 0.4993ms, AIPerception p95 0.2134ms | - | BT_UpdateAIContext p95 0.2583ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0069ms | Distributed setup reduces hit/stuck density; about three enemies receive hits and many enemies remain in Alert/Patrol range. Frame/GameThread improve compared with Case 06/07, but the case is not equivalent to the dense combat-heavy setup. |
 | 09 | 60 | Distributed Patrol-Engage / Friendly Hit Disabled | 34.30s | avg 16.64ms / p95 19.51ms / p99 20.17ms | avg 19.34ms / p95 19.58ms / p99 20.13ms | BT Tick avg 0.3702ms / p95 0.5767ms, AIPerception p95 0.2642ms | - | BT_UpdateAIContext p95 0.2884ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0081ms | Enemy끼리 피격이 발생하지 않도록 friendly hit를 차단한 비교 케이스다. Frame/GameThread는 Case 08과 비슷하고, AIPerception은 Case 06/07보다 낮다. BT Tick p95는 약간 증가했으므로 friendly hit만이 전체 병목이라고 보기는 어렵다. |
 | 10 | 40 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 31.92s | avg 12.72ms / p95 14.11ms / p99 14.55ms | avg 12.98ms / p95 14.11ms / p99 14.57ms | BT Tick avg 0.2764ms / p95 0.4090ms, AIPerception p95 0.1435ms | Green | BT_UpdateAIContext p95 0.1909ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0064ms | Boundary 측정 기준을 PIE F11 fullscreen으로 고정한 뒤 다시 측정한 결과다. Enemy끼리 피격 / 길막이 발생하지 않는 조건에서 BT Tick p95가 0.5ms 아래로 유지되어 Green 구간으로 판정한다. |
+| 11 | 60 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 31.77s | avg 15.49ms / p95 16.90ms / p99 17.65ms | avg 16.03ms / p95 16.92ms / p99 17.62ms | BT Tick p95 0.5424ms, AIPerception p95 0.2162ms | Yellow | BT_UpdateAIContext p95 0.2664ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0072ms | 60 Enemy boundary 측정 결과다. Enemy끼리 피격 / 길막이 발생하지 않는 조건에서도 BT Tick p95가 0.5ms를 넘어 Yellow 초입으로 진입했다. CSV 일부 평균값에는 비정상 max outlier가 있어 p95/p99 중심으로 해석한다. |
 
 현재 확인:
 
@@ -271,8 +272,9 @@ PIE AI smoke test 진행 중
 60 Enemy / Engage logs-disabled profiling 기록 완료
 60 Enemy / Distributed Patrol-Engage profiling 기록 완료
 60 Enemy / Distributed Patrol-Engage friendly-hit-disabled profiling 기록 완료
-40 Enemy / Boundary friendly-hit-disabled profiling 기록 완료
 Boundary profiling viewport 기준을 PIE F11 fullscreen으로 고정
+40 Enemy / Boundary friendly-hit-disabled fullscreen profiling 기록 완료
+60 Enemy / Boundary friendly-hit-disabled fullscreen profiling 기록 완료
 ```
 
 ---
