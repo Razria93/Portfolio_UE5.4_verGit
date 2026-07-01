@@ -272,6 +272,7 @@ Notes:
 | 12 | 80 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 31.97s | avg 18.96ms / p95 21.19ms / p99 22.21ms | avg 19.74ms / p95 21.18ms / p99 21.84ms | BT Tick avg 0.5252ms / p95 0.7012ms, AIPerception p95 0.3476ms | Yellow | BT_UpdateAIContext p95 0.3499ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0086ms | 80 Enemy boundary 측정 결과다. BT Tick p95가 0.7ms 수준까지 증가해 Yellow 구간이 명확해졌으며, Frame/GameThread p95도 20ms를 넘어 60fps 기준을 벗어난다. |
 | 13 | 100 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 31.88s | avg 20.89ms / p95 23.21ms / p99 24.50ms | avg 21.89ms / p95 23.37ms / p99 24.27ms | BT Tick avg 0.5351ms / p95 0.6601ms, AIPerception p95 0.3297ms | Yellow | BT_UpdateAIContext p95 0.4100ms, BT_UpdateEngageContext p95 0.0022ms, CombatEngage_Rebuild p95 0.0062ms | 100 Enemy boundary 측정 결과다. -noailogging 조건에서 다시 측정했으며, BT Tick p95는 Yellow 구간에 머물러 Red 기준인 1.0ms에는 도달하지 않았다. Frame/GameThread p95는 23ms 수준으로 증가해 전체 플레이 부하는 더 무거워졌다. |
 | 14 | 120 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 32.13s | avg 23.69ms / p95 26.72ms / p99 27.53ms | avg 25.60ms / p95 26.77ms / p99 27.43ms | BT Tick avg 0.5917ms / p95 0.7676ms, AIPerception p95 0.3915ms | Yellow | BT_UpdateAIContext p95 0.4738ms, BT_UpdateEngageContext p95 0.0021ms, CombatEngage_Rebuild p95 0.0060ms | 120 Enemy boundary 측정 결과다. 초반 2~3초 정도 Engage 공백이 있었을 수 있으나 p95 기준 BT Tick은 여전히 Yellow 구간이며 Red 기준인 1.0ms에는 도달하지 않았다. Frame/GameThread p95는 26ms대로 증가해 전체 플레이 부하가 먼저 한계에 가까워진다. |
+| 15 | 140 | Boundary / Friendly Hit Disabled / F11 Fullscreen | 32.57s | avg 27.03ms / p95 31.67ms / p99 32.68ms | avg 30.50ms / p95 31.66ms / p99 32.67ms | BT Tick avg 0.6449ms / p95 0.8595ms, AIPerception p95 0.4621ms | Yellow | BT_UpdateAIContext p95 0.5244ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0068ms | 140 Enemy boundary 측정 결과다. BT Tick p95는 아직 Red 기준인 1.0ms 아래지만 p99가 0.98ms 수준까지 올라 Red 경계에 근접했다. Frame/GameThread p95는 31ms대로 증가해 30fps 경계에 가까워졌으며, 전체 플레이 부하가 AI polling보다 먼저 한계에 도달하는 흐름이 명확하다. |
 
 ---
 
@@ -489,6 +490,10 @@ Red:
 160 Enemy:
 - Red stress upper bound
 - PIE / 액션 플레이 상태가 유지되는 범위에서만 측정
+
+180 / 200 Enemy:
+- Red 진입 여부를 확인하기 위한 추가 stress case
+- 200 Enemy까지 측정하되, Red 진입 시 해당 지점을 상한으로 기록
 ```
 
 중단 기준:
