@@ -262,6 +262,7 @@ Notes:
 | 06 | 60 | Engage | 30.48s | avg 19.54ms / p95 21.89ms / p99 22.73ms | avg 21.17ms / p95 21.84ms / p99 22.62ms | BT Tick avg 0.3834ms / p95 0.5331ms, AIPerception p95 0.4236ms | - | BT_UpdateAIContext p95 0.2799ms, BT_UpdateEngageContext p95 0.0014ms, CombatEngage_Rebuild p95 0.0072ms | 60 AI engage load is below 60fps; BT service cost crosses 0.5ms p95 but remains below 1ms. GameThread/combat interaction remains the primary optimization candidate. |
 | 07 | 60 | Engage / Logs Disabled | 30.45s | avg 19.28ms / p95 21.31ms / p99 22.02ms | avg 20.66ms / p95 21.27ms / p99 21.90ms | BT Tick avg 0.3843ms / p95 0.5156ms, AIPerception p95 0.4453ms | - | BT_UpdateAIContext p95 0.2699ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0071ms | Project combat logs disabled. Frame/GameThread improve slightly, but the result is close to Case 06; logging is not the main bottleneck. |
 | 08 | 60 | Distributed Patrol-Engage | 34.74s | avg 16.11ms / p95 19.04ms / p99 19.85ms | avg 18.96ms / p95 18.98ms / p99 19.60ms | BT Tick avg 0.3208ms / p95 0.4993ms, AIPerception p95 0.2134ms | - | BT_UpdateAIContext p95 0.2583ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0069ms | Distributed setup reduces hit/stuck density; about three enemies receive hits and many enemies remain in Alert/Patrol range. Frame/GameThread improve compared with Case 06/07, but the case is not equivalent to the dense combat-heavy setup. |
+| 09 | 60 | Distributed Patrol-Engage / Friendly Hit Disabled | 34.30s | avg 16.64ms / p95 19.51ms / p99 20.17ms | avg 19.34ms / p95 19.58ms / p99 20.13ms | BT Tick avg 0.3702ms / p95 0.5767ms, AIPerception p95 0.2642ms | - | BT_UpdateAIContext p95 0.2884ms, BT_UpdateEngageContext p95 0.0020ms, CombatEngage_Rebuild p95 0.0081ms | Enemy끼리 피격이 발생하지 않도록 friendly hit를 차단한 비교 케이스다. Frame/GameThread는 Case 08과 비슷하고, AIPerception은 Case 06/07보다 낮다. BT Tick p95는 약간 증가했으므로 friendly hit만이 전체 병목이라고 보기는 어렵다. |
 
 ---
 
@@ -307,6 +308,109 @@ CharacterMovement stuck / failed-to-move 상황을 줄인다.
 ```text
 GameThread p95가 명확히 내려가고 BT / Perception 비용이 비슷하면 crowd blocking과 combat density가 주요 변수였다고 본다.
 BT / Perception도 함께 내려가면 기존 dense setup이 AI state distribution 및 target perception 부하에도 영향을 줬다고 본다.
+```
+
+---
+
+## Case 09 Setup: 60 Enemy Distributed Patrol-Engage / Friendly Hit Disabled
+
+목적:
+
+```text
+Enemy끼리의 피격 / HitStop / CombatSignal 처리 변수를 제거하고,
+60 Enemy distributed setup에서 AI polling 비용과 player-facing combat 비용을 다시 비교한다.
+```
+
+조건:
+
+```text
+Log State:
+- Unreal Editor를 -noailogging 옵션으로 실행
+- 프로젝트 combat 로그 출력은 비활성화 상태 유지
+
+Combat condition:
+- 플레이어 2명에게 Hit 발생
+- 나머지 Enemy는 Engage / Alert 상태
+- Enemy끼리는 피격이 발생하지 않음
+- Enemy끼리 피격이 발생할 만한 거리에도 들어오지 않음
+
+Capture timing:
+- 플레이어가 2명에게 Engage되고 Combo cycle이 0일 때 측정 시작
+```
+
+해석:
+
+```text
+Friendly hit 차단 후에도 Frame / GameThread p95는 Case 08과 큰 차이가 없다.
+따라서 Enemy끼리의 피격 자체는 distributed setup에서 주요 병목으로 보기 어렵다.
+
+다만 Case 06 / 07 dense setup과 비교하면 GameThread p95는 여전히 낮으므로,
+실제 병목은 friendly hit 하나가 아니라 crowd density, perception overlap,
+combat interaction density가 함께 만든 부하로 보는 것이 타당하다.
+```
+
+---
+
+## Profiling Environment Calibration Note
+
+배경:
+
+```text
+초기 60 Enemy dense 측정은 BT Service tick 비용을 보기 위한 목적이었지만,
+실제 측정 환경에는 아래 변수가 함께 섞여 있었다.
+```
+
+확인된 변수:
+
+```text
+Crowd density:
+- Enemy가 좁은 영역에 밀집되어 서로 이동을 막는 상황이 발생했다.
+- CharacterMovement / collision / path following 비용이 BT polling 비용과 섞였다.
+
+Combat density:
+- Enemy끼리 피격이 발생하면서 HitStop / CombatSignal / damage route가 추가로 실행됐다.
+- 이 비용은 AI tick 최적화 대상이 아니라 combat interaction 비용이다.
+
+Perception overlap:
+- 밀집 배치에서는 대부분의 Enemy가 동시에 Engage / Assault 상태로 진입했다.
+- 60 Enemy 전체가 동일한 high-cost 상태에 가까워져 일반적인 patrol-engage 상황과 거리가 생겼다.
+
+Logging:
+- combat 로그 출력이 일부 포함되어 있어 측정 변수로 남아 있었다.
+```
+
+보정 내용:
+
+```text
+1. Unreal Editor는 -noailogging 옵션으로 실행했다.
+2. 프로젝트 combat 로그 출력을 비활성화했다.
+3. Patrol point spacing을 넓히고 PatrolMode를 Random으로 변경했다.
+4. Enemy 배치를 patrol area 중심 기준으로 넓게 분산했다.
+5. Enemy capsule radius를 줄이고 MoveTo acceptable radius를 늘렸다.
+6. Enemy끼리의 friendly hit를 차단한 비교 케이스를 추가했다.
+```
+
+해석:
+
+```text
+보정 전 dense 60 Enemy 결과는 "BT Service tick 단독 부하"가 아니라
+crowd density / combat density / perception overlap이 함께 섞인 stress case로 해석한다.
+
+보정 후 distributed / friendly-hit-disabled 결과는
+AI polling 비용을 비교하기 위한 기준선으로 더 적합하다.
+다만 이 역시 3D 액션 게임의 렌더링, 애니메이션, movement, collision 비용을 포함하므로
+전체 Frame / GameThread 비용과 BT Service 비용을 분리해서 해석한다.
+```
+
+포트폴리오 관점:
+
+```text
+이 작업의 의미는 단순히 60 Enemy 측정값을 얻는 것이 아니라,
+측정 환경에 섞인 변수를 관찰하고 분리한 뒤
+최적화 전후 비교가 가능한 기준선을 만든 것이다.
+
+따라서 이후 interval / dirty flag / event-driven 개선은
+이 보정된 기준선에서 before / after를 비교한다.
 ```
 
 ---
