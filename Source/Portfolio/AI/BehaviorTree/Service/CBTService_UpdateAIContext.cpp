@@ -1,5 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateAIContext.h"
 #include "ProjectGlobal.h"
+#include "Core/Profiling/FPortfolioCsvProfiler.h"
 
 #include "AIController.h"
 #include "GameFramework/Pawn.h"
@@ -26,6 +27,8 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
+	CSV_SCOPED_TIMING_STAT(PortfolioAI, BT_UpdateAIContext);
+
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 

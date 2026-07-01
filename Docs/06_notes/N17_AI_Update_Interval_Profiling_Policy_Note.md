@@ -232,6 +232,20 @@ CSV scope는 hot path를 식별할 수 있는 최소 단위로 둔다.
 너무 세분화해서 코드 가독성을 해치지 않는다.
 ```
 
+1차 적용 scope:
+
+```text
+CSV Category: PortfolioAI
+
+BT_UpdateAIContext
+BT_UpdateAIIntentState
+BT_UpdateEngageContext
+BT_UpdatePatrolContext
+BT_UpdateInvestigateContext
+CombatEngage_Tick
+CombatEngage_RebuildAssignments
+```
+
 ---
 
 ## 개선안 분류

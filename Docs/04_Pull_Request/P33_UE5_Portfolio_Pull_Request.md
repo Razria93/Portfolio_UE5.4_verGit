@@ -11,7 +11,7 @@
 ## 상태
 
 - [x] 작업 방향 수립
-- [ ] 코드 / 문서 반영
+- [x] 코드 / 문서 반영
 - [ ] 검증 완료
 
 ---
@@ -25,7 +25,8 @@
 ## 커밋
 
 ```text
-TBD
+docs(ai): plan update interval profiling policy
+refactor(ai): add profiling scopes for update intervals
 ```
 
 ---
@@ -156,6 +157,20 @@ ACAIController::UpdateTargetDataMap
 ACAIController::SelectTopPriority
 ```
 
+1차 적용:
+
+```text
+CSV Category: PortfolioAI
+
+BT_UpdateAIContext
+BT_UpdateAIIntentState
+BT_UpdateEngageContext
+BT_UpdatePatrolContext
+BT_UpdateInvestigateContext
+CombatEngage_Tick
+CombatEngage_RebuildAssignments
+```
+
 ### 3. 개선 후보 분류
 
 ```text
@@ -216,7 +231,10 @@ CSV hot path summary
 현재 확인:
 
 ```text
-TBD
+git diff --check 통과
+PortfolioEditor Win64 Development 빌드 통과
+PIE AI smoke test 대기
+CSV profiling 측정 대기
 ```
 
 ---
