@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalTargetComponent.h"
 
 #include "Type/CWeaponStructure.h"
@@ -277,17 +278,17 @@ bool UCCombatSignalSourceComponent::CanSendCombatSignal(FCombatSignalSourceConte
 		return false;
 	}
 
-	if (IsDuplicateHit(InOutCombatSignalSourceContext))
-	{
-		InOutCombatSignalSourceContext.bAccepted = false;
-		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::DuplicateHitInWindow;
-		return false;
-	}
-
 	if (IsFriendlyTarget(InOutCombatSignalSourceContext))
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
 		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::FriendlyTarget;
+		return false;
+	}
+
+	if (IsDuplicateHit(InOutCombatSignalSourceContext))
+	{
+		InOutCombatSignalSourceContext.bAccepted = false;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::DuplicateHitInWindow;
 		return false;
 	}
 
@@ -484,21 +485,10 @@ bool UCCombatSignalSourceComponent::IsFriendlyTarget(const FCombatSignalSourceCo
 
 	if (!IsValid(ownerActor) || !IsValid(targetActor)) return false;
 
-	// TODO:
-	// Team / Friendly Fire policy
-	//
-	// Suggested direction:
-	// 1. Resolve team source from ownerActor
-	// 2. Resolve team source from targetActor
-	// 3. Compare team ids or attitudes
-	// 4. Return true when friendly-fire should be blocked
-	//
-	// Example candidates:
-	// - Team component on character
-	// - Team interface on actor
-	// - Gameplay tag based faction policy
+	const bool bOwnerEnemy = ownerActor->IsA<ACEnemy>();
+	const bool bTargetEnemy = targetActor->IsA<ACEnemy>();
 
-	return false;
+	return bOwnerEnemy && bTargetEnemy;
 }
 
 // Cue Helper
