@@ -200,6 +200,8 @@ context dirty ownership을 포함한 dirty flag 실제 구조 도입
 event-driven Blackboard update 전환
 대규모 AI LOD, batch manager 구현
 Enhanced Input migration
+profiling 전용 Enemy / BT / Map asset 구성
+공유 gameplay asset의 profiling용 설정 유지
 ```
 
 ---
@@ -355,6 +357,7 @@ PIE AI smoke test 완료
 200 Enemy를 PIE CSV, runtime 스트레스 한계 케이스로 기록
 120 Enemy dirty write guard 비교 측정 기록 완료
 원본 CSV profiling records archive 추가
+공유 gameplay asset에 들어간 profiling용 설정 변경 제외
 ```
 
 ---
