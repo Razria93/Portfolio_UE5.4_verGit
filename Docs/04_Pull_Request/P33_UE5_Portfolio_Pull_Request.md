@@ -217,6 +217,18 @@ Stats: stat unit, stat game, stat ai, stat behavior
 Capture: csvprofile start / csvprofile stop
 ```
 
+측정 절차:
+
+```text
+1. PIE 실행
+2. stat unit / stat game / stat ai / stat behavior 활성화
+3. csvprofile start
+4. 30초 동안 동일 상태 유지
+5. csvprofile stop
+6. Saved/Profiling/CSV 결과 파일 확인
+7. PortfolioAI category의 BT Service / CombatEngage scope 확인
+```
+
 기록 항목:
 
 ```text
@@ -227,6 +239,15 @@ Behavior ms Avg
 Hitch observed
 CSV hot path summary
 ```
+
+측정 결과:
+
+| Case | Enemy Count | State | Duration | FPS / Frame | Game ms | AI ms | Behavior ms | PortfolioAI Hot Path | Notes |
+| --- | ---: | --- | ---: | --- | --- | --- | --- | --- | --- |
+| 01 | 1 | Idle | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 02 | 1 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 03 | 10 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 04 | 20 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
 
 현재 확인:
 

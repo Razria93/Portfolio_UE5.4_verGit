@@ -167,6 +167,59 @@ Debug log ON 또는 현재 상태 기준 측정
 
 ---
 
+## 측정 절차
+
+PIE 실행 전:
+
+```text
+1. TestRoom에서 측정할 Enemy 수를 고정한다.
+2. 측정 상태를 Idle / Player Detected / Engage 중 하나로 맞춘다.
+3. Editor viewport FPS overlay를 켜서 프레임 체감 변화를 같이 확인한다.
+4. Output Log를 비워 측정 중 오류 / ensure / hot path log를 확인하기 쉽게 만든다.
+```
+
+PIE 실행 후:
+
+```text
+1. 콘솔에서 stat unit 실행
+2. 콘솔에서 stat game 실행
+3. 콘솔에서 stat ai 실행
+4. 콘솔에서 stat behavior 실행
+5. 콘솔에서 csvprofile start 실행
+6. 30초 동안 동일한 상태 유지
+7. 콘솔에서 csvprofile stop 실행
+8. 생성된 CSV 파일에서 PortfolioAI category column 확인
+```
+
+CSV 저장 위치:
+
+```text
+Saved/Profiling/CSV
+```
+
+우선 확인할 CSV scope:
+
+```text
+PortfolioAI/BT_UpdateAIContext
+PortfolioAI/BT_UpdateAIIntentState
+PortfolioAI/BT_UpdateEngageContext
+PortfolioAI/BT_UpdatePatrolContext
+PortfolioAI/BT_UpdateInvestigateContext
+PortfolioAI/CombatEngage_Tick
+PortfolioAI/CombatEngage_RebuildAssignments
+```
+
+주의:
+
+```text
+FPS overlay는 체감 프레임 확인용이다.
+stat 명령은 에디터 안에서 대략적인 시스템 비용을 확인하기 위한 보조 지표다.
+CSV는 계측 scope별 duration을 확인하기 위한 후속 분석 자료다.
+CSV 결과가 없으면 interval 조정이나 dirty flag 도입을 바로 결정하지 않는다.
+```
+
+---
+
 ## 기록 양식
 
 ```text
@@ -195,6 +248,15 @@ CSV Hot Path:
 
 Notes:
 ```
+
+측정 결과:
+
+| Case | Enemy Count | State | Duration | FPS / Frame | Game ms | AI ms | Behavior ms | PortfolioAI Hot Path | Notes |
+| --- | ---: | --- | ---: | --- | --- | --- | --- | --- | --- |
+| 01 | 1 | Idle | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 02 | 1 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 03 | 10 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
+| 04 | 20 | Engage | 30s | TBD | TBD | TBD | TBD | TBD | TBD |
 
 ---
 
