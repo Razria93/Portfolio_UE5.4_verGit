@@ -96,13 +96,14 @@ interval 비교 실험 준비
 기본 경로:
 
 ```text
-Content/00_Profiling/AI_Performance/Maps/
-Content/00_Profiling/AI_Performance/Character/
-Content/00_Profiling/AI_Performance/AI/
-Content/00_Profiling/AI_Performance/Patrol/
+Content/00_Profiling/00_AI_Performance/Map/
+Content/00_Profiling/00_AI_Performance/01_Character/
+Content/00_Profiling/00_AI_Performance/02_Controller/
+Content/00_Profiling/00_AI_Performance/03_Animation/
+Content/00_Profiling/00_AI_Performance/99_Environment/
 ```
 
-`Content/00_Profiling/AI_Performance`는 AI 성능 측정 전용 asset 루트다.
+`Content/00_Profiling/00_AI_Performance`는 AI 성능 측정 전용 asset 루트다.
 
 ```text
 BT Service update interval
@@ -111,7 +112,7 @@ perception LOD
 AnimInstance / WeaponActor / Mesh / Collision 비교
 ```
 
-위 범위를 같은 profiling context로 묶기 위해 Map / Character / AI / Patrol asset을 이 경로 아래에 둔다.
+위 범위를 같은 profiling context로 묶기 위해 Map / Character / AI Controller / BehaviorTree / Blackboard / Patrol / Animation / Material asset을 이 경로 아래에 둔다.
 
 ---
 
@@ -139,16 +140,17 @@ BT_Idle patrol / MoveTo setting
 생성 대상:
 
 ```text
-Content/00_Profiling/AI_Performance/
+Content/00_Profiling/00_AI_Performance/
 ```
 
 하위 구성:
 
 ```text
-Maps
-Character
-AI
-Patrol
+Map
+01_Character
+02_Controller
+03_Animation
+99_Environment
 ```
 
 ### 3. Profiling 전용 asset 복제
@@ -160,6 +162,8 @@ TestRoom -> profiling map
 BP_CEnemy -> profiling enemy
 BT / BB 필요 asset -> profiling AI asset
 PatrolPath / PatrolPoint -> profiling patrol asset
+AnimBlueprint -> profiling animation asset
+Material -> profiling material asset
 ```
 
 복제 후 redirector 정리와 reference 확인을 수행한다.
@@ -255,4 +259,51 @@ Baseline placement rule
 Friendly hit / crowd blocking 제거 기준
 CSV capture 절차
 Extreme comparison test list
+```
+
+---
+
+## 현재 Baseline 기록
+
+### Case 01: 40 Enemy / AIPerf Engage
+
+Raw CSV:
+
+```text
+Docs/07_Profiling/AI_Performance/CSV/baseline/case_01_040_enemy_aiperf_engage.csv
+```
+
+검증 결과:
+
+```text
+40 Enemy 정상 배치
+AIPerf Enemy -> AIPerf AIController 참조 확인
+AIPerf AIController -> AIPerf Blackboard / BehaviorTree 참조 확인
+Blackboard TargetActor 정상 갱신
+Patrol 랜덤 동작
+Engage 진입 가능
+Enemy끼리 피격 없음
+MoveTo 허용반경 100 기준 이동 / 도착 확인
+ReturnToHome MoveTo 허용반경 100 기준 확인
+Movable Range 5000 기준 홈 복귀 / 전투 이탈 확인
+AIPerf PatrolPath / PatrolPoint 참조 확인
+AIPerf AnimInstance 참조 확인
+```
+
+Crowd / collision 기준:
+
+```text
+Enemy끼리 완전한 길막 제거 상태는 아니다.
+collision radius를 10으로 줄이고 MoveTo 허용반경을 100으로 늘려 crowd 변수를 줄인다.
+군집 해소 알고리즘은 P34 범위가 아니다.
+```
+
+대표 지표:
+
+```text
+FrameTime p95: 12.0703ms
+GameThreadTime p95: 11.9513ms
+GPUTime p95: 6.9694ms
+PortfolioAI_BT_UpdateAIContext p95: 0.1608ms
+AIPerception p95: 0.1216ms
 ```

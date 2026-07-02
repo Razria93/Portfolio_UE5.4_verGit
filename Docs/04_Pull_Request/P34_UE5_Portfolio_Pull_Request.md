@@ -81,9 +81,11 @@ Profiling 전용 Patrol / spawn / placement 기준
 Profiling asset 경로:
 
 ```text
-Content/00_Profiling/AI_Performance/Maps/
-Content/00_Profiling/AI_Performance/Character/
-Content/00_Profiling/AI_Performance/AI/
+Content/00_Profiling/00_AI_Performance/Map/
+Content/00_Profiling/00_AI_Performance/01_Character/
+Content/00_Profiling/00_AI_Performance/02_Controller/
+Content/00_Profiling/00_AI_Performance/03_Animation/
+Content/00_Profiling/00_AI_Performance/99_Environment/
 ```
 
 `AI_Performance`는 update interval, runtime LOD, perception LOD, mesh / collision / weapon actor 비교를 포함하는 AI 성능 측정 범위다.
@@ -159,8 +161,66 @@ F11 fullscreen 전환
 stat unit / stat game / stat ai 활성화
 csvprofile start / stop 동작 확인
 40 또는 60 Enemy 기준 engage 상태 재현 확인
-Enemy끼리 길막 / friendly hit가 측정 변수가 되지 않는지 확인
+Enemy끼리 crowd 변수 축소 / friendly hit 차단 확인
 ```
+
+---
+
+## 현재 검증 결과
+
+### 40 Enemy / AIPerf Engage
+
+측정 파일:
+
+```text
+Docs/07_Profiling/AI_Performance/CSV/baseline/case_01_040_enemy_aiperf_engage.csv
+```
+
+측정 조건:
+
+```text
+Map: MAP_AIPerf_40Enemy
+Enemy: 40 placed AIPerf Enemy
+State: Engage
+Duration: 약 30초
+Log State: -noailogging
+PIE: F11 fullscreen
+```
+
+확인 완료:
+
+```text
+40 Enemy 정상 배치
+AIPerf Enemy들이 AIPerf AIController 사용
+Blackboard TargetActor 정상 갱신
+Patrol 랜덤 동작
+Engage 진입 가능
+Enemy끼리 피격 없음
+MoveTo 허용반경 100 기준 이동 / 도착 확인
+ReturnToHome MoveTo 허용반경 100 기준 확인
+Movable Range 5000 기준 홈 복귀 / 전투 이탈 확인
+AIPerf PatrolPath / PatrolPoint 참조 확인
+AIPerf AnimInstance 참조 확인
+```
+
+Crowd / collision 메모:
+
+```text
+Enemy끼리 완전한 길막 제거 상태는 아니다.
+군집 해소 알고리즘은 없으므로 collision radius 축소와 MoveTo 허용반경 증가로 crowd 변수를 줄인 상태다.
+P34에서는 crowd 문제 해결이 아니라 profiling baseline 변수 축소까지만 다룬다.
+```
+
+주요 CSV 지표:
+
+| Metric | Avg | p95 | Max |
+| --- | ---: | ---: | ---: |
+| FrameTime | 11.1087ms | 12.0703ms | 33.7046ms |
+| GameThreadTime | 11.0671ms | 11.9513ms | 250.7286ms |
+| GPUTime | 6.0309ms | 6.9694ms | 7.6379ms |
+| PortfolioAI_BT_UpdateAIContext | 0.1195ms | 0.1608ms | 0.3891ms |
+| PortfolioAI_BT_UpdateAIIntentState | 0.0192ms | 0.0267ms | 0.1731ms |
+| AIPerception | 0.0897ms | 0.1216ms | 0.2510ms |
 
 ---
 
@@ -170,5 +230,6 @@ Enemy끼리 길막 / friendly hit가 측정 변수가 되지 않는지 확인
 Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 Docs/06_notes/N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
 Docs/06_notes/N20_AI_Profiling_Test_Asset_Plan_Note.md
+Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 Docs/04_Pull_Request/P33_UE5_Portfolio_Pull_Request.md
 ```
