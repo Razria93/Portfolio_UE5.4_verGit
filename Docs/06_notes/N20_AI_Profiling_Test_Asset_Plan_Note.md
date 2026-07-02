@@ -170,20 +170,24 @@ Material -> profiling material asset
 
 ### 4. Baseline 측정 조건 구성
 
-1차 baseline:
+기본 baseline:
 
 ```text
 40 Enemy / Engage / F11 fullscreen / -noailogging
-60 Enemy / Engage / F11 fullscreen / -noailogging
 ```
 
-추가 boundary:
+후속 scale variant:
 
 ```text
+60 Enemy
 80 Enemy
 100 Enemy
 120 Enemy
 ```
+
+P34에서는 40 Enemy 기준 profiling world를 고정한다.
+
+60 / 80 / 100 / 120 Enemy 조건은 P35~P37에서 특정 최적화 축을 검증할 때 파생 map 또는 map variant로 확장한다.
 
 120 초과 구간은 stress limit 확인용으로만 다룬다.
 
@@ -211,7 +215,7 @@ Profiling 전용 map이 존재한다.
 Profiling 전용 enemy 기준이 존재한다.
 Profiling 전용 AI / patrol 기준이 존재한다.
 공유 gameplay asset에 profiling 전용 설정이 남지 않는다.
-40 / 60 Enemy engage baseline을 재현할 수 있다.
+40 Enemy engage baseline을 재현할 수 있다.
 P35~P37 극단 비교 테스트를 시작할 수 있다.
 PR 문서에 실제 asset 경로와 검증 결과가 기록되어 있다.
 ```

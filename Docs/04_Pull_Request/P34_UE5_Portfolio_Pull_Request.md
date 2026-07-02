@@ -11,8 +11,8 @@
 ## 상태
 
 - [x] 작업 방향 수립
-- [ ] Asset / 문서 반영
-- [ ] 검증 완료
+- [x] Asset / 문서 반영
+- [x] 검증 완료
 
 ---
 
@@ -26,8 +26,9 @@
 
 ```text
 docs(ai): plan profiling test asset split
-chore(ai): add profiling test assets
-docs(ai): record profiling asset setup
+docs(ai): record profiling test asset baseline
+chore(ai): add AI performance profiling assets
+chore(ai): update profiling visual material
 ```
 
 ---
@@ -95,7 +96,8 @@ Content/00_Profiling/00_AI_Performance/99_Environment/
 고정할 조건:
 
 ```text
-Enemy count: 40 / 60 / 80 / 100 / 120 기준 구성
+기본 profiling world: 40 Enemy 기준
+Scale variant: 60 / 80 / 100 / 120 Enemy 조건은 후속 검증에서 필요할 때 확장
 Enemy spacing: Enemy끼리 길막지 않는 분산 배치
 Friendly hit: Enemy끼리 피격이 발생하지 않는 조건
 Patrol / Engage transition: 플레이어와의 engage 상황 재현 가능
@@ -160,7 +162,7 @@ profiling 전용 map에서 PIE 실행
 F11 fullscreen 전환
 stat unit / stat game / stat ai 활성화
 csvprofile start / stop 동작 확인
-40 또는 60 Enemy 기준 engage 상태 재현 확인
+40 Enemy 기준 engage 상태 재현 확인
 Enemy끼리 crowd 변수 축소 / friendly hit 차단 확인
 ```
 

@@ -14,12 +14,12 @@
 - P31 Component Lifecycle Cleanup 정책 정리
 - P32 AI Blackboard Key Registry 정책 정리
 - P33 AI Update Interval Profiling 정책 정리
-
-다음 작업
 - P34 AI Profiling Test Asset 분리
 
-후속 작업
+다음 작업
 - P35 AI Runtime LOD 정책 정리
+
+후속 작업
 - P36 AI Perception LOD 정책 정리
 - P37 AI Update LOD 정책 정리
 - P38 Type Header / Helper Boundary 정리
@@ -172,41 +172,7 @@ AI update interval을 감으로 조정하지 않고,
 
 ## 다음 작업
 
-### 6. AI Profiling / Bottleneck 분석
-
-#### P34: AI Profiling Test Asset 분리
-
-계획 브랜치:
-
-```text
-chore/ai-profiling-test-assets
-```
-
-작업 범위:
-
-```text
-공유 gameplay asset과 profiling 전용 asset 분리
-profiling 전용 Enemy / BT / Map 구성
-P35~P37 최적화 전 측정 조건 고정
-극단 비교 테스트 실행 환경 준비
-```
-
-관련 문서:
-
-```text
-N20_AI_Profiling_Test_Asset_Plan_Note.md
-```
-
-의도:
-
-```text
-일반 gameplay asset에 profiling 전용 설정을 남기지 않고,
-성능 측정을 재현 가능한 전용 환경에서 수행한다.
-```
-
----
-
-### 7. AI LOD / Performance 최적화
+### 6. AI LOD / Performance 최적화
 
 #### P35: AI Runtime LOD 정책 정리
 
@@ -224,11 +190,20 @@ WeaponActor / collision / movement / mesh / component tick 비활성 효과 검�
 AnimInstance off / WeaponActor off / Mesh hidden / Collision off 극단 비교 측정
 ```
 
+관련 문서:
+
+```text
+N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
+N20_AI_Profiling_Test_Asset_Plan_Note.md
+```
+
 의도:
 
 ```text
 Enemy 수 증가 시 Character / mesh / weapon / movement / collision runtime cost를 줄인다.
 ```
+
+---
 
 #### P36: AI Perception LOD 정책 정리
 
@@ -276,7 +251,7 @@ AI update 비용을 거리 / 중요도 / 전투 참여도에 맞춰 단계적으
 
 ---
 
-### 8. Code Quality Sweep
+### 7. Code Quality Sweep
 
 #### P38: Type Header / Helper Boundary 정리
 
@@ -393,7 +368,7 @@ Phase / 보류 / 후속 작업 상태 명확화
 
 ---
 
-### 9. Documentation / PR Record
+### 8. Documentation / PR Record
 
 #### P44: PR Record Format Sweep
 
@@ -416,14 +391,14 @@ KR / EN 혼용 정리
 
 ## 현재 우선순위
 
-가장 가까운 다음 작업은 P34다.
+가장 가까운 다음 작업은 P35다.
 
 ```text
-P34
--> profiling 전용 asset과 측정 환경을 분리한다.
+P35
+-> P34에서 고정한 profiling 환경에서 runtime LOD 축을 검증하고 구현한다.
 
-P35~P37
--> P34에서 고정한 환경에서 극단 비교 측정 후 최적화 구현에 들어간다.
+P36~P37
+-> perception LOD / update LOD 축은 P35 이후 별도 브랜치로 진행한다.
 ```
 
-P35~P37은 바로 구현하지 않고, 각 축이 유의미한 성능 차이를 만드는지 먼저 확인한 뒤 진행한다.
+각 축은 구현 전에 유의미한 성능 차이를 만드는지 먼저 확인한 뒤 진행한다.
