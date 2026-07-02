@@ -25,12 +25,17 @@
 3. refactor/runtime-component-lookup-policy
 4. refactor/ai-blackboard-key-registry
 5. refactor/ai-update-interval-policy
-6. refactor/tuning-constants-cleanup
-7. refactor/api-const-consistency
-8. refactor/debug-log-policy-v1
-9. refactor/naming-typo-api-cleanup
-10. refactor/todo-status-cleanup
-11. docs/pr-record-format-sweep
+6. chore/ai-profiling-test-assets
+7. refactor/ai-runtime-lod-policy
+8. refactor/ai-perception-lod-policy
+9. refactor/ai-update-lod-policy
+10. refactor/type-header-helper-boundary
+11. refactor/tuning-constants-cleanup
+12. refactor/api-const-consistency
+13. refactor/debug-log-policy-v1
+14. refactor/naming-typo-api-cleanup
+15. refactor/todo-status-cleanup
+16. docs/pr-record-format-sweep
 
 별도 후순위:
 - refactor/enhanced-input-migration
@@ -74,6 +79,7 @@ W05 묶음은 다음 조건을 만족하면 코드 품질 1차 정리가 완료�
 - 필수 / 선택 컴포넌트 참조 정책이 정리되어 있다
 - check / ensure / safe return / log 사용 기준이 정리되어 있다
 - 조건 없는 debug print / log가 분류되어 있다
+- 공용 Type 헤더 / local type / helper 분리 기준이 정리되어 있다
 - 핵심 전투 흐름 주변 TODO가 제거되거나 Phase / 처리 계획이 명확하다
 - 하드코딩 튜닝값이 constants / config / DataAsset 후보로 분류되어 있다
 - 명백한 오타와 API 네이밍 불일치가 정리되어 있다
@@ -103,6 +109,10 @@ Work List / Notes
 ---
 
 ## 4. 고정 작업 항목
+
+이 섹션은 W05에서 다룰 작업 범위를 고정하기 위한 목록이다.
+
+실제 진행 순서는 상단 `우선 브랜치 순서`와 하단 `PR 기준 작업 현황`을 따른다.
 
 ### 4.1 Unreal Reference Safety
 
@@ -186,17 +196,68 @@ refactor/debug-log-policy-v1
 
 - `FLog::Log`, `Print...Info`, `SummaryInfo` 계열 함수가 Combat / Feedback / Reaction / AI 전반에 많다.
 - 일부 로그는 오류성이고, 일부는 순수 debug dump다.
+- 현재 로그는 단순 출력 중심이며, 출력 책임 / 메시지 양식 / build configuration 기준이 충분히 정리되어 있지 않다.
+- 구조체 payload dump, subsystem summary, visual debug tool은 이 작업의 검토 대상이지만, 기능 추가가 필요하면 별도 feature 후보로 분리한다.
 
 **완료 조건**
 
 - Error / Warning / Debug dump / Temporary trace를 분류한다.
-- Shipping 빌드 포함 여부 기준을 정한다.
+- debug message format과 prefix 기준을 정한다.
+- debug print 책임 위치를 정한다.
+- Shipping 빌드 포함 여부와 `#if` / build configuration / console variable / debug flag 사용 기준을 정한다.
 - 최소한 Combat / Feedback / AI debug dump는 gate를 가진다.
+- 시각적 debug tool / UI debug panel이 필요하면 별도 feature 브랜치 후보로 분리한다.
 - 기능 동작 변경 없음.
 
 ---
 
-### 4.4 TODO / 미완성 신호 정리
+### 4.4 Type Header / Helper Boundary 정리
+
+**우선순위: P0 / P1**
+
+**추천 브랜치**
+
+```text
+refactor/type-header-helper-boundary
+```
+
+**코드 스캔에서 확인한 내용**
+
+- `Type/CWeaponStructure.h` 같은 도메인별 Type 헤더가 여러 구조체를 한 번에 포함하고 있어, 작은 타입 하나가 필요해도 무거운 헤더를 include하게 된다.
+- 공유 type과 특정 모듈 내부에서만 쓰는 local context / request / result type의 경계가 충분히 분리되어 있지 않다.
+- 도메인별 Type 헤더가 include dependency를 넓혀 빌드 의존성과 변경 영향 범위를 키울 수 있다.
+- validation / formatting / initialization / clear 같은 반복 helper 중 공용화하거나 local helper로 유지할 후보가 존재한다.
+- 프로젝트 전반에 기능상 필요가 낮아진 helper / legacy utility / dead code 후보가 남아 있을 수 있다.
+
+**1차 조회 대상**
+
+```text
+Source/Portfolio/Type/CWeaponStructure.h
+Source/Portfolio/Type/CCombatSignalStructure.h
+Source/Portfolio/Type/CActionOrchestrationStructure.h
+Source/Portfolio/Type/CReactionOrchestrationStructure.h
+Source/Portfolio/Type/CReactionFeedbackStructure.h
+Source/Portfolio/Type/CWorldSubSystemStructure.h
+Source/Portfolio/Type/CAIStructure.h
+Source/Portfolio/Type/CCharacterComponentReferenceStructure.h
+```
+
+**완료 조건**
+
+- Type 헤더를 shared public type / module-local type / private helper type 기준으로 분류한다.
+- 작은 타입 하나를 위해 도메인 전체 Type 헤더를 include하는 구간을 목록화한다.
+- 공용 Type 계층에 둘 type과 header-local / cpp-local namespace에 둘 type 기준을 정한다.
+- 필요하면 무거운 Type 헤더를 용도별 header로 분리한다.
+- forward declaration으로 충분한 곳과 full include가 필요한 곳을 구분한다.
+- 반복 helper 후보를 validation / formatting / initialization / clear / conversion 기준으로 분류한다.
+- 불필요하거나 사용처가 사라진 helper / utility / legacy code 후보를 목록화한다.
+- 삭제 가능한 항목과 후속 검증이 필요한 항목을 구분한다.
+- 기능 변경 없이 가능한 이동 / 분리만 우선 처리한다.
+- USTRUCT / Blueprint exposure / serialization / asset reference 위험이 있는 type 이동은 별도 commit 또는 후속 브랜치로 분리한다.
+
+---
+
+### 4.5 TODO / 미완성 신호 정리
 
 **우선순위: P0**
 
@@ -223,7 +284,7 @@ refactor/todo-status-cleanup
 
 ---
 
-### 4.5 Hardcoded Tuning Value / Data-driven 정합성
+### 4.6 Hardcoded Tuning Value / Data-driven 정합성
 
 **우선순위: P0 / P1**
 
@@ -250,7 +311,7 @@ refactor/tuning-constants-cleanup
 
 ---
 
-### 4.6 Naming / Typo / API Consistency
+### 4.7 Naming / Typo / API Consistency
 
 **우선순위: P0 / P1**
 
@@ -278,7 +339,7 @@ refactor/naming-typo-api-cleanup
 
 ---
 
-### 4.7 Const / Read-only API Consistency
+### 4.8 Const / Read-only API Consistency
 
 **우선순위: P1**
 
@@ -304,7 +365,7 @@ refactor/api-const-consistency
 
 ---
 
-### 4.8 AI Blackboard Key Registry
+### 4.9 AI Blackboard Key Registry
 
 **우선순위: P1**
 
@@ -331,7 +392,7 @@ refactor/ai-blackboard-key-registry
 
 ---
 
-### 4.9 AI Update Interval / Performance Audit
+### 4.10 AI Update Interval / Performance Audit
 
 **우선순위: P1**
 
@@ -359,7 +420,68 @@ refactor/ai-update-interval-policy
 
 ---
 
-### 4.10 Enhanced Input Migration
+### 4.11 AI Profiling Test Asset 분리
+
+**우선순위: P1**
+
+**추천 브랜치**
+
+```text
+chore/ai-profiling-test-assets
+```
+
+**코드 스캔 / 리뷰에서 확인한 내용**
+
+- 공유 gameplay asset에 profiling 전용 설정이 섞이면 일반 gameplay 조건과 측정 조건이 구분되지 않는다.
+- P33 측정 중 `TestRoom`, `BP_CEnemy`, `BT_Idle` 같은 공유 asset에 profiling용 변경이 들어갔고, 이후 공유 asset 변경은 제외하는 방향으로 정리했다.
+- P35~P37 최적화 작업 전에 재현 가능한 profiling 전용 asset이 필요하다.
+
+**완료 조건**
+
+- profiling 전용 Map / Enemy / BT 후보를 구성한다.
+- 공유 gameplay asset을 오염시키지 않는 측정 환경을 만든다.
+- Enemy count / 배치 / collision / perception / BT 조건을 profiling 전용 asset 기준으로 재현 가능하게 한다.
+- P35~P37에서 사용할 극단 비교 테스트 조건을 asset 또는 문서 기준으로 고정한다.
+- runtime LOD / perception LOD / update LOD 최적화 로직은 구현하지 않는다.
+
+---
+
+### 4.12 AI LOD / Performance 최적화
+
+**우선순위: P1**
+
+**추천 브랜치**
+
+```text
+refactor/ai-runtime-lod-policy
+refactor/ai-perception-lod-policy
+refactor/ai-update-lod-policy
+```
+
+**측정에서 확인한 내용**
+
+- 대량 Enemy 상황에서 Frame / GameThread 총량 증가가 확인됐다.
+- BT Service 비용은 Enemy 수 증가에 따라 커졌지만, 120 Enemy까지는 전체 Frame / GameThread 부하가 먼저 한계에 가까워졌다.
+- 140 Enemy 이후 perception 인지 지연이 관찰됐고, 160 Enemy 이후 OUT OF MEMORY / runtime stress limit 성격이 강해졌다.
+- 따라서 단순 interval 조정보다 runtime LOD / perception LOD / update LOD를 분리해 검증해야 한다.
+
+**완료 조건**
+
+- P34에서 고정한 profiling 전용 환경에서 시작한다.
+- 구현 전에 극단 비교 측정을 먼저 수행한다.
+  - AnimInstance off
+  - WeaponActor off
+  - Mesh hidden
+  - Collision off
+  - Perception active cap
+  - BT Service interval 비교
+- 유의미한 측정 차이가 확인된 축부터 구현한다.
+- runtime LOD, perception LOD, update LOD는 각각 별도 브랜치로 분리한다.
+- 상세 계획은 `N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md`를 따른다.
+
+---
+
+### 4.13 Enhanced Input Migration
 
 **우선순위: P2**
 
@@ -675,6 +797,10 @@ Subsystem:
 후속 분리:
 
 ```text
+0. chore/ai-profiling-test-assets
+   -> 공유 gameplay asset을 오염시키지 않는 profiling 전용 Map / Enemy / BT 구성
+   -> P35~P37 최적화 구현 전에 측정 환경과 극단 비교 테스트 기준 고정
+
 1. refactor/ai-runtime-lod-policy
    -> Enemy 수 증가 시 Character / mesh / weapon / movement runtime cost를 줄이는 축
 
@@ -683,4 +809,68 @@ Subsystem:
 
 3. refactor/ai-update-lod-policy
    -> BT Service / Blackboard update / CombatEngage rebuild 주기를 LOD와 연결하는 축
+
+4. refactor/type-header-helper-boundary
+   -> Type header include boundary와 helper 분리 기준 정리
+
+5. refactor/tuning-constants-cleanup
+   -> LOD / profiling 과정에서 드러난 threshold / interval / radius 값을 constants 또는 config 후보로 정리
 ```
+
+사전 검증 기준:
+
+```text
+- P34는 P35~P37의 선행 준비 작업이다.
+- P34에서는 최적화 로직을 구현하지 않고 profiling 전용 asset과 측정 조건을 고정한다.
+- 각 최적화 브랜치는 구현 전 극단 비교 측정을 먼저 수행한다.
+- AnimInstance off / WeaponActor off / Mesh hidden / Collision off / Perception cap 같은 비교로 유효성을 확인한다.
+- 유의미한 측정 차이가 확인된 축부터 구현한다.
+- 상세 계획은 N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md를 따른다.
+```
+
+## 9. PR 기준 작업 현황
+
+### 완료
+
+```text
+Unreal / Reference Safety
+- P28: Unreal Reference Safety 정책 정리
+
+Component Reference / Runtime Lookup
+- P29: Character Component Reference DI 정리
+- P30: Runtime Component Lookup 정책 정리
+
+Lifecycle / Cleanup
+- P31: Component Lifecycle Cleanup 정책 정리
+
+AI Blackboard 구조
+- P32: AI Blackboard Key Registry 정책 정리
+
+AI Profiling / Bottleneck 분석
+- P33: AI Update Interval Profiling 정책 정리
+```
+
+### 진행 예정
+
+```text
+AI Profiling / Bottleneck 분석
+- P34: AI Profiling Test Asset 분리
+
+AI LOD / Performance 최적화
+- P35: AI Runtime LOD 정책 정리
+- P36: AI Perception LOD 정책 정리
+- P37: AI Update LOD 정책 정리
+
+Code Quality Sweep
+- P38: Type Header / Helper Boundary 정리
+- P39: Tuning Constants Cleanup
+- P40: API Const Consistency
+- P41: Debug Log Policy
+- P42: Naming / Typo / API Cleanup
+- P43: TODO Status Cleanup
+
+Documentation / PR Record
+- P44: PR Record Format Sweep
+```
+
+상세 공유용 정리는 `N19_Code_Quality_PR_Status_Summary_Note.md`를 따른다.
