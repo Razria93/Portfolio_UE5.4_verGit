@@ -367,6 +367,7 @@ PIE AI smoke test 완료
 ```text
 Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 Docs/06_notes/N17_AI_Update_Interval_Profiling_Policy_Note.md
+Docs/06_notes/N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
 Docs/04_Pull_Request/P33_UE5_Portfolio_Pull_Request.md
 Docs/06_notes/N15_AI_Blackboard_Key_Registry_Policy_Note.md
 ```
