@@ -1,0 +1,258 @@
+# UE5 Portfolio - AI Profiling Test Asset Plan Note
+
+## 목적
+
+이 문서는 `P34: AI Profiling Test Asset 분리` 작업의 실행 기준을 정리한다.
+
+P34의 목적은 최적화 구현이 아니라, P35~P37 최적화 작업 전에 측정 환경을 분리하고 재현 가능하게 만드는 것이다.
+
+---
+
+## 문제
+
+P33 측정에서는 빠른 검증을 위해 공유 gameplay asset을 직접 조정했다.
+
+```text
+Content/00_UnitTest/TestRoom.umap
+Content/01_Character/02_Enemy/BP_CEnemy.uasset
+Content/02_Controller/02_Enemy/AI/BehaviorTree/State/BT_Idle.uasset
+```
+
+이 방식은 다음 문제가 있다.
+
+```text
+일반 gameplay 상태와 profiling 상태가 섞인다.
+Enemy 수, 배치, collision, patrol 방식이 공유 asset에 남을 수 있다.
+측정 전후 asset 복구 비용이 생긴다.
+P35~P37 최적화 효과 비교 기준이 흔들린다.
+```
+
+---
+
+## 원칙
+
+```text
+공유 gameplay asset은 기본 동작 확인용으로 유지한다.
+profiling 전용 asset은 성능 측정 조건을 재현하기 위해 별도로 둔다.
+최적화 로직은 P34에서 구현하지 않는다.
+P34는 P35~P37의 실험 환경을 준비한다.
+```
+
+---
+
+## Asset 분리 기준
+
+### Map
+
+profiling map은 Enemy 수와 배치를 고정하기 위한 전용 map이다.
+
+담당 범위:
+
+```text
+Enemy count
+Enemy placement
+Patrol point placement
+Player start position
+Engage 시작 조건
+측정용 label / marker
+```
+
+공유 `TestRoom.umap`은 일반 smoke test용으로 유지한다.
+
+### Enemy Blueprint
+
+profiling enemy는 측정 변수를 줄이기 위한 전용 Enemy Blueprint다.
+
+담당 범위:
+
+```text
+profiling용 collision 설정
+profiling용 perception 설정
+profiling용 combat / patrol tuning override
+profiling용 friendly hit 차단 조건
+```
+
+공유 `BP_CEnemy.uasset`은 일반 gameplay 기준값을 유지한다.
+
+### BehaviorTree / Blackboard
+
+profiling BT는 측정 조건을 고정하기 위한 전용 AI 흐름이다.
+
+담당 범위:
+
+```text
+Idle / Patrol / Engage transition 재현
+측정 대상 service 활성화
+측정에서 제외할 branch 비활성화
+interval 비교 실험 준비
+```
+
+공유 `BT_Idle.uasset`과 기존 BT graph는 일반 gameplay 기준으로 유지한다.
+
+---
+
+## Profiling Asset 경로
+
+기본 경로:
+
+```text
+Content/00_Profiling/AI_Performance/Maps/
+Content/00_Profiling/AI_Performance/Character/
+Content/00_Profiling/AI_Performance/AI/
+Content/00_Profiling/AI_Performance/Patrol/
+```
+
+`Content/00_Profiling/AI_Performance`는 AI 성능 측정 전용 asset 루트다.
+
+```text
+BT Service update interval
+runtime LOD
+perception LOD
+AnimInstance / WeaponActor / Mesh / Collision 비교
+```
+
+위 범위를 같은 profiling context로 묶기 위해 Map / Character / AI / Patrol asset을 이 경로 아래에 둔다.
+
+---
+
+## P34 작업 순서
+
+### 1. 공유 asset 기준 복구 확인
+
+확인 대상:
+
+```text
+TestRoom enemy count
+BP_CEnemy collision radius
+BP_CEnemy health / combat setting
+BT_Idle patrol / MoveTo setting
+```
+
+목표:
+
+```text
+공유 gameplay asset에 P33 profiling 전용 설정이 남지 않았는지 확인한다.
+```
+
+### 2. Profiling 전용 폴더 생성
+
+생성 대상:
+
+```text
+Content/00_Profiling/AI_Performance/
+```
+
+하위 구성:
+
+```text
+Maps
+Character
+AI
+Patrol
+```
+
+### 3. Profiling 전용 asset 복제
+
+복제 기준:
+
+```text
+TestRoom -> profiling map
+BP_CEnemy -> profiling enemy
+BT / BB 필요 asset -> profiling AI asset
+PatrolPath / PatrolPoint -> profiling patrol asset
+```
+
+복제 후 redirector 정리와 reference 확인을 수행한다.
+
+### 4. Baseline 측정 조건 구성
+
+1차 baseline:
+
+```text
+40 Enemy / Engage / F11 fullscreen / -noailogging
+60 Enemy / Engage / F11 fullscreen / -noailogging
+```
+
+추가 boundary:
+
+```text
+80 Enemy
+100 Enemy
+120 Enemy
+```
+
+120 초과 구간은 stress limit 확인용으로만 다룬다.
+
+### 5. 극단 비교 테스트 준비
+
+P35~P37에 넘길 비교 축:
+
+```text
+AnimInstance off
+WeaponActor off
+Mesh hidden
+Collision off
+Perception active cap
+BT Service interval comparison
+```
+
+P34에서는 비교 테스트를 실행할 수 있는 asset 구조와 절차를 준비한다.
+
+---
+
+## 완료 조건
+
+```text
+Profiling 전용 map이 존재한다.
+Profiling 전용 enemy 기준이 존재한다.
+Profiling 전용 AI / patrol 기준이 존재한다.
+공유 gameplay asset에 profiling 전용 설정이 남지 않는다.
+40 / 60 Enemy engage baseline을 재현할 수 있다.
+P35~P37 극단 비교 테스트를 시작할 수 있다.
+PR 문서에 실제 asset 경로와 검증 결과가 기록되어 있다.
+```
+
+---
+
+## 검증 명령 / 절차
+
+실행 조건:
+
+```text
+Unreal Editor 실행 옵션: -noailogging
+PIE mode: fullscreen, F11
+Stat: stat unit / stat game / stat ai
+CSV: csvprofile start / csvprofile stop
+Duration: 약 30초
+```
+
+Git Bash 실행 예:
+
+```bash
+"/c/Program Files/Epic Games/UE_5.4/Engine/Binaries/Win64/UnrealEditor.exe" "C:/UE5_Portfolio/Portfolio_UE5.4_verGit/Portfolio/Portfolio.uproject" -noailogging
+```
+
+UE console:
+
+```text
+stat unit
+stat game
+stat ai
+csvprofile start
+csvprofile stop
+```
+
+---
+
+## P35~P37 인계 기준
+
+P34가 끝나면 다음 정보가 후속 PR의 입력값이 된다.
+
+```text
+Profiling asset 경로
+Baseline enemy count
+Baseline placement rule
+Friendly hit / crowd blocking 제거 기준
+CSV capture 절차
+Extreme comparison test list
+```

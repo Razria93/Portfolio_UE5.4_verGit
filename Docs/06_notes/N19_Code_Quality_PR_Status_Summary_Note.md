@@ -191,6 +191,12 @@ P35~P37 최적화 전 측정 조건 고정
 극단 비교 테스트 실행 환경 준비
 ```
 
+관련 문서:
+
+```text
+N20_AI_Profiling_Test_Asset_Plan_Note.md
+```
+
 의도:
 
 ```text
