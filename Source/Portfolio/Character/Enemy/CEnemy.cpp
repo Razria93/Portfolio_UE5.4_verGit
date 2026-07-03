@@ -2,7 +2,9 @@
 #include "ProjectGlobal.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "HAL/IConsoleManager.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -25,6 +27,15 @@
 
 #include "Type/CWeaponStructure.h"
 #include "AI/Blackboard/CAIKey.h"
+
+namespace
+{
+	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMeshHidden(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyMeshHidden"),
+		0,
+		TEXT("Controls ACEnemy skeletal mesh visibility for AI runtime LOD measurement. 0: visible, 1: hidden."),
+		ECVF_Default);
+}
 
 ACEnemy::ACEnemy()
 {
@@ -118,6 +129,8 @@ void ACEnemy::PostInitializeComponents()
 void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UpdateRuntimeLODMeshVisibility();
 
 	if (IsValid(ActionComponent))
 	{
@@ -222,9 +235,25 @@ void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences
 	FComponentReferenceHelper::InjectIfValid(ReactionFeedbackComponent, InReferences);
 }
 
+void ACEnemy::UpdateRuntimeLODMeshVisibility()
+{
+	const bool bShouldHideMesh = CVarAIRuntimeLODEnemyMeshHidden.GetValueOnGameThread() != 0;
+	if (bRuntimeLODEnemyMeshHiddenApplied == bShouldHideMesh) return;
+
+	USkeletalMeshComponent* meshComp = GetMesh();
+	if (!IsValid(meshComp)) return;
+
+	meshComp->SetHiddenInGame(bShouldHideMesh, false);
+	meshComp->SetVisibility(!bShouldHideMesh, false);
+
+	bRuntimeLODEnemyMeshHiddenApplied = bShouldHideMesh;
+}
+
 void ACEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdateRuntimeLODMeshVisibility();
 }
 
 void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -120,6 +120,9 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
 	int32 ParryResultCount = 0;
 
+private:
+	bool bRuntimeLODEnemyMeshHiddenApplied = false;
+
 protected:
 	// Lifecycle
 	void PostInitializeComponents() override;
@@ -131,6 +134,10 @@ private:
 	void RecoverReferences();
 	void BuildReferences(FCharacterComponentReferences& OutReferences);
 	void InjectReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	// Runtime LOD
+	void UpdateRuntimeLODMeshVisibility();
 
 public:
 	void Tick(float DeltaTime) override;

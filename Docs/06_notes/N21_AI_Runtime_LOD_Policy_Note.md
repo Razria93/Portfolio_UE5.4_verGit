@@ -151,6 +151,40 @@ P35의 우선순위는 1차와 2차 측정이다. 3차 측정은 render 비용�
 3. 80 Enemy에서 차이가 보인 측정 축만 120 Enemy에서 primary comparison을 수행한다.
 ```
 
+현재 측정 스위치:
+
+```text
+Portfolio.AI.RuntimeLOD.EnemyMeshHidden 1
+-> ACEnemy SkeletalMesh visibility off
+-> PIE 중 변경할 수 있으며 다음 Tick에서 반영된다.
+```
+
+Mesh visibility 비교:
+
+```text
+Baseline
+-> Portfolio.AI.RuntimeLOD.EnemyMeshHidden 0
+
+Mesh off
+-> Portfolio.AI.RuntimeLOD.EnemyMeshHidden 1
+```
+
+Mesh visibility off 관찰:
+
+```text
+SetHiddenInGame(true) / SetVisibility(false)는 mesh render만 끄는 비교가 아닐 수 있다.
+SkeletalMeshComponent가 hidden 상태가 되면 VisibilityBasedAnimTickOption 설정에 따라 pose / bone refresh가 줄거나 멈출 수 있다.
+pose 갱신이 멈추면 socket transform도 마지막 pose에 머무를 수 있다.
+WeaponActor가 hand / holster socket에 attach된 상태라면 검이 hidden 직전 위치에 고정된 것처럼 보일 수 있다.
+```
+
+해석 기준:
+
+```text
+Mesh hidden
+-> render cost + pose / socket update cost가 함께 줄어드는 극단 비교일 수 있다.
+```
+
 기록 기준:
 
 ```text
@@ -163,6 +197,7 @@ PortfolioAI scope p95
 ActorCount
 Tick count
 gameplay smoke result
+WeaponActor socket follow result
 ```
 
 ---
