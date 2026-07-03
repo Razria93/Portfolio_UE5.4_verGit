@@ -16,6 +16,8 @@ WeaponActor socket follow 유지 여부를 함께 기록한다.
 
 ## 공통 측정 조건
 
+### Gameplay Stress
+
 ```text
 Map: MAP_AIPerf_40Enemy
 Enemy: case-dependent placed AIPerf Enemy
@@ -30,6 +32,41 @@ Analysis Window: first 3s / last 3s trimmed, middle 30s used
 ```
 
 `Analysis Window`는 UE 자동 종료 기능이 아니라 CSV 분석 기준이다. CSV는 전체 capture duration을 기록하고, 비교값 계산 시 중앙 30초 구간만 사용한다.
+
+### Render Coverage
+
+```text
+Map: MAP_AIPerf_RenderCoverage_40Enemy 또는 MAP_AIPerf_RenderCoverage_80Enemy
+Enemy: BP_AIPerf_RenderCoverage_Enemy
+State: Idle animation only
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: fixed render coverage camera
+Stats: stat unit / stat game / stat ai
+CSV: csvprofile start / csvprofile stop
+Capture Duration: about 36s
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+```
+
+Render Coverage 측정은 gameplay stress가 아니라 화면에 노출된 skeletal mesh render 비용을 분리하기 위한 조건이다.
+
+통제 조건:
+
+```text
+Auto Possess AI off
+AIController / BehaviorTree 미실행
+AI Perception 미실행
+WeaponActor 미생성
+Movement / PathFollowing 없음
+Combat / Guard / Reaction 진입 없음
+Combat collision / overlap 없음
+Niagara / Trail / Feedback 없음
+Player mesh / weapon 화면 미노출
+Collision debug draw off
+80 Enemy 또는 40 Enemy가 최대한 화면 안에 들어오도록 고정 카메라 사용
+```
+
+Render Coverage에서 바꾸는 측정 변수는 `Portfolio.AI.RuntimeLOD.EnemyMeshMode`뿐이다.
 
 ---
 

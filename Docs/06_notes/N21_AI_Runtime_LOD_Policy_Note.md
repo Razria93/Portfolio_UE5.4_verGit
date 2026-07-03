@@ -160,6 +160,34 @@ Analysis Window: 앞 3초 / 뒤 3초 제외, 중앙 30초 사용
 
 `Analysis Window`는 UE 자동 종료 기능이 아니라 CSV 분석 기준이다. CSV는 전체 36초를 기록하고, 비교값을 계산할 때 앞뒤 3초를 제외한다.
 
+EnemyMeshMode 측정은 두 조건으로 분리한다.
+
+```text
+Gameplay Stress
+-> MAP_AIPerf_40Enemy / 80 Enemy 확장 기준
+-> Engage 상태에서 AI / Movement / Combat runtime 비용을 포함한다.
+
+Render Coverage
+-> MAP_AIPerf_RenderCoverage_40Enemy 또는 MAP_AIPerf_RenderCoverage_80Enemy 기준
+-> 화면에 노출된 skeletal mesh render 비용을 분리한다.
+```
+
+Render Coverage 통제 조건:
+
+```text
+BP_AIPerf_RenderCoverage_Enemy 사용
+fixed render coverage camera 사용
+Idle animation only
+Auto Possess AI off
+AIController / BehaviorTree / Perception 미실행
+WeaponActor 미생성
+Movement / PathFollowing 없음
+Combat / Guard / Reaction 진입 없음
+Niagara / Trail / Feedback 없음
+Player mesh / weapon 화면 미노출
+Collision debug draw off
+```
+
 현재 측정 스위치:
 
 ```text

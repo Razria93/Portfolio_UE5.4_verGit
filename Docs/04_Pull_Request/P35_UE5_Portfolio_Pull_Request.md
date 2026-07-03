@@ -262,6 +262,34 @@ WeaponActor가 hand / holster socket에 attach된 상태라면 검이 hidden 직
 따라서 `EnemyMeshMode 1`은 render 비용 분리 측정에 가깝고, `EnemyMeshMode 2`는 `skeletal mesh visibility / pose update 영향 포함` 극단 비교로 해석한다.
 Mode 2는 WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨리는 것으로 관찰되어 정규 성능 측정에서 제외한다.
 
+측정 조건 분리:
+
+```text
+Gameplay Stress
+-> MAP_AIPerf_40Enemy / 80 Enemy 확장 기준
+-> Engage 상태에서 AI / Movement / Combat runtime 비용을 포함한다.
+
+Render Coverage
+-> MAP_AIPerf_RenderCoverage_40Enemy / MAP_AIPerf_RenderCoverage_80Enemy 기준
+-> 화면에 노출된 skeletal mesh render 비용을 분리한다.
+```
+
+Render Coverage 통제 조건:
+
+```text
+BP_AIPerf_RenderCoverage_Enemy 사용
+fixed render coverage camera 사용
+Idle animation only
+Auto Possess AI off
+AIController / BehaviorTree / Perception 미실행
+WeaponActor 미생성
+Movement / PathFollowing 없음
+Combat / Guard / Reaction 진입 없음
+Niagara / Trail / Feedback 없음
+Player mesh / weapon 화면 미노출
+Collision debug draw off
+```
+
 비교 기록:
 
 ```text
