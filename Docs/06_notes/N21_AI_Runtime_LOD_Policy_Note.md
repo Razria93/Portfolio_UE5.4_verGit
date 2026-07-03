@@ -192,6 +192,7 @@ Mesh hidden / pose 유지
 
 Mesh hidden / pose skip 허용
 -> Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
+-> gameplay unsafe 관찰로 정규 성능 측정 제외
 ```
 
 Mesh visibility off 관찰:
@@ -213,6 +214,7 @@ Mode 1: HiddenKeepPose
 Mode 2: HiddenAllowPoseSkip
 -> mesh hidden + visibility 기반 pose skip을 허용한다.
 -> render cost + pose / socket update cost가 함께 줄어드는 극단 비교일 수 있다.
+-> WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨리는 것으로 관찰되어 정규 성능 측정에서 제외한다.
 ```
 
 기록 기준:

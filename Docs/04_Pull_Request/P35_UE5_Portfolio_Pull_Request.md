@@ -247,6 +247,7 @@ Mesh hidden / pose 유지
 
 Mesh hidden / pose skip 허용
 -> Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
+-> gameplay unsafe 관찰로 정규 성능 측정 제외
 ```
 
 Mesh visibility off 관찰:
@@ -259,6 +260,7 @@ WeaponActor가 hand / holster socket에 attach된 상태라면 검이 hidden 직
 ```
 
 따라서 `EnemyMeshMode 1`은 render 비용 분리 측정에 가깝고, `EnemyMeshMode 2`는 `skeletal mesh visibility / pose update 영향 포함` 극단 비교로 해석한다.
+Mode 2는 WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨리는 것으로 관찰되어 정규 성능 측정에서 제외한다.
 
 비교 기록:
 

@@ -60,6 +60,7 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | M00 | `Profile(20260703_143400).csv` | 40 | 0 VisibleDefault | 3.861s-33.861s | 12.6880ms | 12.7354ms | 8.4217ms | 0.1110ms | 0.3067ms | 0.1252ms | 572 | 4,181,001 | 82 | 정상 기준 | Mode 0 comparison baseline |
 | M01 | `Profile(20260703_144556).csv` | 40 | 1 HiddenKeepPose | 3.989s-33.989s | 12.3922ms | 12.4150ms | 7.3382ms | 0.1998ms | 0.3057ms | 0.1233ms | 377.7 | 377,250 | 82 | 유지 | Mesh hidden, weapon animation path maintained |
+| M02 | - | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | 깨짐 | Gameplay unsafe. 정규 성능 측정 제외 |
 
 ---
 
@@ -221,4 +222,40 @@ Mode 1은 mesh visibility를 끄되 pose / socket update를 유지하는 비교�
 SkeletalMesh tick 수가 유지되고 WeaponActor가 animation path를 따라가므로, pose / socket update는 유지된 것으로 본다.
 GPU p95, draw call, primitives drawn이 줄어 render 비용 분리 측정으로 유효하다.
 GameThread / BT / AIPerception 값은 Mode 0과 큰 차이가 없어 AI update 비용과는 분리된 변화로 해석한다.
+```
+
+---
+
+## Case M02 - 40 Enemy / Engage / EnemyMeshMode 2 Observation
+
+정규 CSV 측정:
+
+```text
+수행하지 않음.
+```
+
+관찰:
+
+```text
+0 또는 1에서 시작한 뒤 PIE 중 2로 전환하면 WeaponActor가 전환 순간 위치에 고정된다.
+Actor 자체 위치 이동은 유지될 수 있으나, combo attack 대상의 검 위치가 고정된다.
+새로 Engage 조건에 들어온 대상도 동일하게 검 위치 고정 현상이 발생한다.
+
+PIE 시작부터 2로 설정하면 Enemy actor가 위치 이동하지 않고 target을 향해 회전만 한다.
+```
+
+해석:
+
+```text
+Mode 2는 hidden 상태에서 pose / bone / socket update skip을 허용하는 극단 비교다.
+이 모드는 WeaponActor socket follow, montage / notify 기반 전투 흐름, animation-driven 상태 갱신을 깨뜨릴 수 있다.
+따라서 gameplay-safe Runtime LOD 후보가 아니다.
+```
+
+결정:
+
+```text
+Mode 2는 정규 성능 측정에서 제외한다.
+P35의 Enemy mesh runtime LOD 비교는 Mode 0 VisibleDefault와 Mode 1 HiddenKeepPose를 중심으로 진행한다.
+Mode 2는 pose skip이 전투 시스템에 미치는 부작용 관찰 자료로만 남긴다.
 ```
