@@ -34,7 +34,7 @@ docs(ai): plan runtime LOD policy
 
 이번 PR은 P34에서 분리한 AI performance profiling 환경을 기준으로, 대량 Enemy 상황에서 runtime cost를 줄일 수 있는 축을 분리 측정하고 Runtime LOD 정책을 정리한다.
 
-P35는 바로 proxy enemy나 spawn / despawn manager를 구현하지 않는다. 먼저 `MAP_AIPerf_40Enemy` baseline으로 asset / gameplay 정상성을 확인하고, 80 / 120 Enemy scale variant에서 WeaponActor, collision, mesh, animation, movement, component tick 같은 runtime 요소가 실제로 의미 있는 비용 차이를 만드는지 확인한다.
+P35는 바로 proxy enemy나 spawn / despawn manager를 구현하지 않는다. 먼저 40 / 80 Enemy scale에서 WeaponActor, collision, mesh, animation, movement, component tick 같은 runtime 요소가 실제로 의미 있는 비용 차이를 만드는지 확인한다.
 
 ---
 
@@ -76,10 +76,10 @@ PIE: F11 fullscreen
 
 80 Enemy
 -> 측정 축별 1차 비교 기준
--> 효과가 보이지 않는 측정 축은 120 Enemy 정규 측정에서 제외 가능
+-> 40 Enemy와 같은 패턴이 반복되면 해당 축의 1차 판단 종료
 
 120 Enemy
--> 80 Enemy에서 효과가 확인된 후보의 primary comparison 기준
+-> 40 / 80 측정만으로 판단이 부족할 때 사용하는 optional stress extension
 ```
 
 ---
@@ -106,7 +106,8 @@ BT Tick off 또는 update interval 증가
 
 위 항목이 P35의 runtime cost 측정 축이다.
 
-`40 / 80 / 120 Enemy`는 측정 축이 아니라 scale 단계다.
+`40 / 80 Enemy`는 측정 축이 아니라 scale 단계다.
+`120 Enemy`는 기본 측정 scale이 아니라 필요할 때만 사용하는 stress extension이다.
 
 각 비교는 하나의 측정 축만 바꿔 수행한다.
 
@@ -138,7 +139,7 @@ P35의 우선순위는 1차와 2차 측정이다. 3차 측정은 render 비용�
 -> 측정 축별 1차 비교
 
 120 Enemy
--> 효과가 확인된 측정 축의 최종 비교
+-> 40 / 80 결과만으로 판단이 부족할 때만 선택적으로 사용
 ```
 
 현재 측정 스위치:
@@ -308,6 +309,9 @@ WeaponActor socket follow 유지 여부 확인
 80 Enemy / EnemyMeshMode 0 측정 완료
 80 Enemy / EnemyMeshMode 1 측정 완료
 40 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
+40 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
+80 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
+80 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
 ```
 
 측정 결과:
@@ -339,6 +343,26 @@ Render Coverage 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives�
 따라서 mesh visibility hidden은 render cost 축에서는 실제 효과가 있지만, 전투 상황의 frame budget 문제는 AI / Movement / Combat runtime 비용과 함께 분리해서 봐야 한다.
 80 Enemy Render Coverage Mode 0에서는 AI / BT / WeaponActor가 제거된 상태에서도 Frame p95와 DrawCalls / Primitives가 증가했다.
 80 Enemy Render Coverage Mode 1에서는 DrawCalls p95가 916에서 194로, Primitives p95가 5,400,982에서 35,062로 감소했고 Frame p95도 13.6320ms에서 12.0643ms로 낮아졌다.
+```
+
+측정 과정에서 확인한 문제와 분리:
+
+```text
+초기 Gameplay Stress 측정에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives를 줄였지만 Frame / GameThread p95는 크게 회복되지 않았다.
+이 결과만으로 mesh render 비용이 작다고 판단하기에는 카메라에 실제로 잡힌 Enemy 수, 전투 상태, AI / Movement / Combat runtime 비용이 함께 섞여 있었다.
+따라서 render 비용만 따로 보기 위해 Render Coverage 조건을 분리했다.
+Render Coverage에서는 camera-only pawn, fixed camera, Auto Possess AI off, BT / Perception 미실행, WeaponActor 미생성, Idle animation only 조건을 사용했다.
+이 분리 후 40 / 80 Enemy 모두에서 EnemyMeshMode 1이 GPU / DrawCalls / Primitives와 Frame p95를 함께 낮추는 것을 확인했다.
+```
+
+현재 결론:
+
+```text
+Enemy mesh render cost는 실제로 존재하며, 화면에 노출된 skeletal mesh 수가 늘면 Frame / DrawCalls / Primitives가 함께 증가한다.
+Mesh hidden은 render cost 축에서는 효과가 있다.
+Gameplay Stress에서 효과가 제한적이었던 이유는 render 비용이 없어서가 아니라 AI / Movement / Combat runtime 비용이 함께 섞였기 때문이다.
+따라서 P35 이후 Runtime LOD는 render 축과 gameplay runtime 축을 분리해 검토한다.
+Mesh render 축은 40 / 80 측정에서 패턴이 반복됐으므로 120 정규 측정 없이 1차 판단을 종료한다.
 ```
 
 80 Enemy / Mode 0 기준:

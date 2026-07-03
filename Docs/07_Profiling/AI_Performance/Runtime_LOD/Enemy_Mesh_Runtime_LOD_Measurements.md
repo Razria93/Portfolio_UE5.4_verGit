@@ -114,6 +114,60 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 
 ---
 
+## Measurement Refinement
+
+초기 `Gameplay Stress` 측정에서는 `EnemyMeshMode 1`이 GPU / DrawCalls / Primitives를 줄였지만 Frame / GameThread p95 회복 효과는 제한적이었다.
+
+이 상태에서는 다음 변수가 함께 섞여 있었다.
+
+```text
+카메라에 실제로 들어온 Enemy 수
+AI / BT / Perception
+Movement / PathFollowing
+Combat / Guard / Reaction
+WeaponActor / socket follow
+Niagara / Trail / Feedback
+Collision / overlap
+```
+
+따라서 mesh render cost를 판단하기 위해 `Render Coverage` 조건을 별도로 만들었다.
+
+분리 방식:
+
+```text
+fixed render coverage camera 사용
+camera-only pawn 사용
+BP_AIPerf_RenderCoverage_Enemy 사용
+Auto Possess AI off
+AIController / BT / Perception 미실행
+WeaponActor 미생성
+Movement / PathFollowing 없음
+Combat / Guard / Reaction 진입 없음
+Niagara / Trail / Feedback 없음
+Collision debug draw off
+```
+
+분리 효과:
+
+```text
+BT Tick / AIController / WeaponActor 지표가 사라졌다.
+SkeletalMeshComponent tick은 40 / 80으로 유지됐다.
+40 / 80 Enemy 모두에서 EnemyMeshMode 1이 GPU / DrawCalls / Primitives와 Frame p95를 함께 낮췄다.
+```
+
+측정 결론:
+
+```text
+Enemy mesh render cost는 실제로 존재한다.
+화면에 노출된 skeletal mesh 수가 증가하면 Frame / DrawCalls / Primitives가 함께 증가한다.
+Mesh hidden은 render cost 축에서는 효과가 있다.
+Gameplay Stress에서 frame 회복이 제한적이었던 이유는 render 비용이 없어서가 아니라 AI / Movement / Combat runtime 비용이 함께 섞였기 때문이다.
+따라서 P35 이후 Runtime LOD는 render 축과 gameplay runtime 축을 분리해서 검토한다.
+Mesh render 축은 40 / 80 측정에서 패턴이 반복됐으므로 120 정규 측정 없이 1차 판단을 종료한다.
+```
+
+---
+
 ## Case M00 - 40 Enemy / Engage / EnemyMeshMode 0
 
 원본 CSV:

@@ -49,7 +49,7 @@ P35의 runtime cost 비교는 scale을 올려가며 수행한다.
 -> 측정 축별 1차 비교 기준
 
 120 Enemy
--> 80 Enemy에서 효과가 확인된 측정 축의 primary comparison 기준
+-> 40 / 80 측정만으로 판단이 부족할 때 사용하는 optional stress extension
 ```
 
 160 Enemy 이상은 정규 비교가 아니라 stress limit 참고 구간으로 둔다.
@@ -121,7 +121,8 @@ BT Tick off 또는 update interval 증가
 
 위 항목이 P35의 runtime cost 측정 축이다.
 
-`40 / 80 / 120 Enemy`는 측정 축이 아니라 scale 단계다.
+`40 / 80 Enemy`는 측정 축이 아니라 scale 단계다.
+`120 Enemy`는 기본 측정 scale이 아니라 판단이 부족할 때만 사용하는 optional stress extension이다.
 
 각 비교는 하나의 측정 축만 바꿔 수행한다.
 
@@ -148,7 +149,8 @@ P35의 우선순위는 1차와 2차 측정이다. 3차 측정은 render 비용�
 ```text
 1. 40 Enemy에서 기능이 깨지지 않는지 확인한다.
 2. 80 Enemy에서 측정 축별 1차 비교를 수행한다.
-3. 80 Enemy에서 차이가 보인 측정 축만 120 Enemy에서 primary comparison을 수행한다.
+3. 40 / 80 Enemy에서 같은 패턴이 반복되면 해당 축의 1차 판단을 종료한다.
+4. 120 Enemy는 40 / 80 결과만으로 판단이 부족하거나 stress limit 확인이 필요할 때만 사용한다.
 ```
 
 EnemyMeshMode 비교 측정 기준:
@@ -186,6 +188,16 @@ Combat / Guard / Reaction 진입 없음
 Niagara / Trail / Feedback 없음
 Player mesh / weapon 화면 미노출
 Collision debug draw off
+```
+
+측정 과정에서 확인한 문제와 분리:
+
+```text
+초기 Gameplay Stress 측정에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives를 줄였지만 Frame / GameThread p95는 크게 회복되지 않았다.
+이 결과만으로 mesh render 비용이 작다고 판단하기에는 카메라에 잡힌 Enemy 수, 전투 상태, AI / Movement / Combat runtime 비용이 함께 섞여 있었다.
+따라서 render 비용을 따로 보기 위해 Render Coverage 조건을 분리했다.
+Render Coverage에서는 fixed camera, camera-only pawn, Auto Possess AI off, WeaponActor 미생성, BT / Perception 미실행, Idle animation only 조건을 사용했다.
+이 분리 후 40 / 80 Enemy 모두에서 EnemyMeshMode 1이 GPU / DrawCalls / Primitives와 Frame p95를 함께 낮추는 것을 확인했다.
 ```
 
 현재 측정 스위치:
