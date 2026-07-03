@@ -305,3 +305,9 @@ Runtime cost 분리 측정 항목이 정리되어 있다.
 Runtime LOD 단계 기준이 정리되어 있다.
 P36 perception LOD / P37 update LOD와 범위가 분리되어 있다.
 ```
+
+측정 기록:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
+```

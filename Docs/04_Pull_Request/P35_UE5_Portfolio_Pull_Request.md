@@ -278,5 +278,6 @@ Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 Docs/06_notes/N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
 Docs/06_notes/N20_AI_Profiling_Test_Asset_Plan_Note.md
 Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
 Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 ```
