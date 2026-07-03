@@ -230,8 +230,11 @@ Map: MAP_AIPerf_40Enemy 또는 P35에서 파생한 scale variant
 PIE: F11 fullscreen
 Stats: stat unit / stat game / stat ai
 CSV: csvprofile start / csvprofile stop
-Duration: 약 30초
+Capture Duration: 약 36초
+Analysis Window: 앞 3초 / 뒤 3초 제외, 중앙 30초 사용
 ```
+
+`Analysis Window`는 UE 자동 종료 기능이 아니라 CSV 분석 기준이다. CSV는 전체 36초를 기록하고, 비교값을 계산할 때 앞뒤 3초를 제외한다.
 
 Mesh visibility 비교:
 

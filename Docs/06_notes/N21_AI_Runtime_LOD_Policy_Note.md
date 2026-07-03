@@ -151,6 +151,15 @@ P35의 우선순위는 1차와 2차 측정이다. 3차 측정은 render 비용�
 3. 80 Enemy에서 차이가 보인 측정 축만 120 Enemy에서 primary comparison을 수행한다.
 ```
 
+EnemyMeshMode 비교 측정 기준:
+
+```text
+Capture Duration: 약 36초
+Analysis Window: 앞 3초 / 뒤 3초 제외, 중앙 30초 사용
+```
+
+`Analysis Window`는 UE 자동 종료 기능이 아니라 CSV 분석 기준이다. CSV는 전체 36초를 기록하고, 비교값을 계산할 때 앞뒤 3초를 제외한다.
+
 현재 측정 스위치:
 
 ```text
