@@ -62,6 +62,7 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 | M01 | `Profile(20260703_144556).csv` | 40 | 1 HiddenKeepPose | 3.989s-33.989s | 12.3922ms | 12.4150ms | 7.3382ms | 0.1998ms | 0.3057ms | 0.1233ms | 377.7 | 377,250 | 82 | 유지 | Mesh hidden, weapon animation path maintained |
 | M02 | - | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | 깨짐 | Gameplay unsafe. 정규 성능 측정 제외 |
 | M03 | `Profile(20260703_161310).csv` | 80 | 0 VisibleDefault | 4.261s-34.261s | 21.2578ms | 21.2928ms | 9.3746ms | 0.1776ms | 0.5091ms | 0.2852ms | 583 | 3,771,918 | 162 | 정상 기준 | 80 Enemy Mode 0 comparison baseline |
+| M04 | `Profile(20260703_161605).csv` | 80 | 1 HiddenKeepPose | 3.660s-33.660s | 21.7991ms | 21.7849ms | 8.5164ms | 0.1654ms | 0.5141ms | 0.2845ms | 389 | 380,366 | 162 | 유지 | Render cost reduced, GameThread still over 60fps budget |
 
 ---
 
@@ -351,5 +352,102 @@ Ticks/CAIController: 40 -> 80
 80 Enemy Mode 0은 P35의 mesh runtime LOD 1차 비교 기준이다.
 GameThread / FrameTime p95가 20ms를 넘으므로 60fps 기준에서는 이미 주의 구간에 들어간다.
 GPU p95 증가는 제한적이지만 GameThread, BehaviorTreeTick, AIPerception, BT_UpdateAIContext가 Enemy 수 증가에 맞춰 증가한다.
-다음 비교는 동일 80 Enemy 조건에서 Mode 1 HiddenKeepPose를 측정해 render visibility 제거가 Frame / GPU / draw call에 얼마나 영향을 주는지 확인한다.
+동일 80 Enemy 조건에서 Mode 1 HiddenKeepPose와 비교해 render visibility 제거가 Frame / GPU / draw call에 얼마나 영향을 주는지 확인한다.
+```
+
+---
+
+## Case M04 - 80 Enemy / Engage / EnemyMeshMode 1
+
+원본 CSV:
+
+```text
+Portfolio/Csvprofile/Profile(20260703_161605).csv
+```
+
+사용자 기록:
+
+```text
+Case: 80 Enemy / Engage / EnemyMeshMode 1
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+PlayerStart near Enemy
+Mode: 1 HiddenKeepPose
+```
+
+확인 항목:
+
+```text
+mesh hidden.
+WeaponActor socket follow 유지.
+combo attack 정상 실행.
+trail / Niagara 피드백 정상 재생.
+Enemy끼리 피격 없음.
+측정 불가능할 정도의 길막 없음.
+```
+
+분석 구간:
+
+```text
+Total Duration: 37.319s
+Analysis Window: 3.660s - 33.660s
+Window Duration: 30.001s
+Frames: 1531
+```
+
+주요 지표:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| FrameTime | 19.5957ms | 21.7991ms | 22.7569ms | 24.0990ms |
+| GameThreadTime | 19.5891ms | 21.7849ms | 22.7715ms | 24.1656ms |
+| GPUTime | 6.7062ms | 8.5164ms | 9.0664ms | 9.6612ms |
+| RenderThreadTime | 0.1360ms | 0.1654ms | 0.1957ms | 0.2292ms |
+| BehaviorTreeTick | 0.4199ms | 0.5141ms | 0.5705ms | 0.7838ms |
+| AIPerception | 0.1744ms | 0.2845ms | 0.3797ms | 0.4756ms |
+| BT_UpdateAIContext | 0.2522ms | 0.2940ms | 0.3389ms | 0.4169ms |
+| BT_UpdateAIIntentState | 0.0355ms | 0.0463ms | 0.0576ms | 0.1004ms |
+| BT_UpdateEngageContext | - | - | - | - |
+| CombatEngage_Tick | 0.0012ms | 0.0060ms | 0.0071ms | 0.0399ms |
+| CombatEngage_RebuildAssignments | 0.0010ms | 0.0055ms | 0.0068ms | 0.0395ms |
+
+Render / count:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RHI/DrawCalls | 341.0607 | 389 | 451 | 493 |
+| RHI/PrimitivesDrawn | 352,536 | 380,366 | 421,590 | 449,334 |
+| Ticks/SkeletalMeshComponent | 162 | 162 | 162 | 162 |
+| Ticks/CEnemy | 80 | 80 | 80 | 80 |
+| Ticks/CAIController | 80 | 80 | 80 | 80 |
+| Ticks/BehaviorTreeComponent | 79.83 | 80 | 80 | 80 |
+| ActorCount/CEnemy | 162 | 162 | 162 | 162 |
+| ActorCount/CAIController | 80 | 80 | 80 | 80 |
+| ActorCount/CWeaponActor | 85 | 85 | 85 | 85 |
+
+80 Enemy Mode 0 대비:
+
+```text
+FrameTime p95: 21.2578ms -> 21.7991ms
+GameThreadTime p95: 21.2928ms -> 21.7849ms
+GPUTime p95: 9.3746ms -> 8.5164ms
+RenderThreadTime p95: 0.1776ms -> 0.1654ms
+BehaviorTreeTick p95: 0.5091ms -> 0.5141ms
+AIPerception p95: 0.2852ms -> 0.2845ms
+RHI/DrawCalls p95: 583 -> 389
+RHI/PrimitivesDrawn p95: 3,771,918 -> 380,366
+Ticks/SkeletalMeshComponent: 162 유지
+```
+
+해석:
+
+```text
+Mode 1은 80 Enemy에서도 draw call과 primitives drawn을 크게 줄인다.
+GPU p95도 낮아지므로 mesh visibility 제거는 render 비용 감소 효과가 있다.
+다만 FrameTime / GameThreadTime p95는 60fps 기준을 계속 넘으며 Mode 0보다 개선되지 않았다.
+BehaviorTreeTick, AIPerception, BT_UpdateAIContext도 Mode 0과 거의 같은 수준이다.
+따라서 80 Enemy의 체감 frame budget 문제는 mesh render 단독보다 GameThread runtime 비용의 영향이 더 크다고 해석한다.
+Mode 1은 render cost 분리 측정으로 유효하지만, 현재 조건에서 단독 Runtime LOD 후보로는 frame budget 회복 효과가 제한적이다.
 ```
