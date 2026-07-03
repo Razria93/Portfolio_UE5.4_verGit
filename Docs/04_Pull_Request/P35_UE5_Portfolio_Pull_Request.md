@@ -271,6 +271,28 @@ gameplay smoke test로 attack / hit / guard / parry 흐름 유지 확인
 WeaponActor socket follow 유지 여부 확인
 ```
 
+현재 측정 진행:
+
+```text
+40 Enemy / EnemyMeshMode 0 측정 완료
+40 Enemy / EnemyMeshMode 1 측정 완료
+40 Enemy / EnemyMeshMode 2 gameplay unsafe 관찰로 정규 측정 제외
+80 Enemy / EnemyMeshMode 0 측정 완료
+80 Enemy / EnemyMeshMode 1 측정 예정
+```
+
+80 Enemy / Mode 0 기준:
+
+```text
+FrameTime p95: 21.2578ms
+GameThreadTime p95: 21.2928ms
+GPUTime p95: 9.3746ms
+BehaviorTreeTick p95: 0.5091ms
+AIPerception p95: 0.2852ms
+```
+
+80 Enemy부터는 GameThread / FrameTime p95가 60fps 기준을 넘는다. 따라서 같은 80 Enemy 조건에서 Mode 1 HiddenKeepPose를 측정해 mesh visibility 제거가 frame / GPU / draw call에 미치는 영향을 먼저 비교한다.
+
 ---
 
 ## 관련 문서

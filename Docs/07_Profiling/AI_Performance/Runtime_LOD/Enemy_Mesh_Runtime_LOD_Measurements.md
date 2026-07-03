@@ -18,7 +18,7 @@ WeaponActor socket follow 유지 여부를 함께 기록한다.
 
 ```text
 Map: MAP_AIPerf_40Enemy
-Enemy: 40 placed AIPerf Enemy
+Enemy: case-dependent placed AIPerf Enemy
 State: Engage
 Log State: -noailogging
 PIE: F11 fullscreen
@@ -61,6 +61,7 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 | M00 | `Profile(20260703_143400).csv` | 40 | 0 VisibleDefault | 3.861s-33.861s | 12.6880ms | 12.7354ms | 8.4217ms | 0.1110ms | 0.3067ms | 0.1252ms | 572 | 4,181,001 | 82 | 정상 기준 | Mode 0 comparison baseline |
 | M01 | `Profile(20260703_144556).csv` | 40 | 1 HiddenKeepPose | 3.989s-33.989s | 12.3922ms | 12.4150ms | 7.3382ms | 0.1998ms | 0.3057ms | 0.1233ms | 377.7 | 377,250 | 82 | 유지 | Mesh hidden, weapon animation path maintained |
 | M02 | - | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | 깨짐 | Gameplay unsafe. 정규 성능 측정 제외 |
+| M03 | `Profile(20260703_161310).csv` | 80 | 0 VisibleDefault | 4.261s-34.261s | 21.2578ms | 21.2928ms | 9.3746ms | 0.1776ms | 0.5091ms | 0.2852ms | 583 | 3,771,918 | 162 | 정상 기준 | 80 Enemy Mode 0 comparison baseline |
 
 ---
 
@@ -258,4 +259,97 @@ Mode 2는 hidden 상태에서 pose / bone / socket update skip을 허용하는 �
 Mode 2는 정규 성능 측정에서 제외한다.
 P35의 Enemy mesh runtime LOD 비교는 Mode 0 VisibleDefault와 Mode 1 HiddenKeepPose를 중심으로 진행한다.
 Mode 2는 pose skip이 전투 시스템에 미치는 부작용 관찰 자료로만 남긴다.
+```
+
+---
+
+## Case M03 - 80 Enemy / Engage / EnemyMeshMode 0
+
+원본 CSV:
+
+```text
+Portfolio/Csvprofile/Profile(20260703_161310).csv
+```
+
+사용자 기록:
+
+```text
+Case: 80 Enemy / Engage / EnemyMeshMode 0
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+PlayerStart near Enemy
+Mode: 0 VisibleDefault
+```
+
+확인 항목:
+
+```text
+80 Enemy 정상 배치.
+Engage 진입 가능.
+Enemy끼리 피격 없음.
+Enemy끼리 길막이 측정 불가능할 정도로 심하지 않음.
+PlayerStart 기준 초반 Engage 진입이 너무 늦지 않음.
+```
+
+분석 구간:
+
+```text
+Total Duration: 38.523s
+Analysis Window: 4.261s - 34.261s
+Window Duration: 30.011s
+Frames: 1501
+```
+
+주요 지표:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| FrameTime | 19.9937ms | 21.2578ms | 21.9128ms | 24.4188ms |
+| GameThreadTime | 19.9878ms | 21.2928ms | 21.9116ms | 24.4064ms |
+| GPUTime | 7.9800ms | 9.3746ms | 9.9311ms | 10.6772ms |
+| RenderThreadTime | 0.1372ms | 0.1776ms | 0.2064ms | 0.2588ms |
+| BehaviorTreeTick | 0.4151ms | 0.5091ms | 0.5679ms | 0.7296ms |
+| AIPerception | 0.1706ms | 0.2852ms | 0.3662ms | 0.4847ms |
+| BT_UpdateAIContext | 0.2504ms | 0.2890ms | 0.3346ms | 0.4316ms |
+| BT_UpdateAIIntentState | 0.0350ms | 0.0458ms | 0.0540ms | 0.0925ms |
+| BT_UpdateEngageContext | - | - | - | - |
+| CombatEngage_Tick | 0.0012ms | 0.0059ms | 0.0070ms | 0.0195ms |
+| CombatEngage_RebuildAssignments | 0.0010ms | 0.0055ms | 0.0067ms | 0.0190ms |
+
+Render / count:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RHI/DrawCalls | 470.4024 | 583 | 632 | 665 |
+| RHI/PrimitivesDrawn | 2,844,471 | 3,771,918 | 4,847,502 | 5,290,218 |
+| Ticks/SkeletalMeshComponent | 162 | 162 | 162 | 162 |
+| Ticks/CEnemy | 80 | 80 | 80 | 80 |
+| Ticks/CAIController | 80 | 80 | 80 | 80 |
+| Ticks/BehaviorTreeComponent | 79.84 | 80 | 80 | 80 |
+| ActorCount/CEnemy | 162 | 162 | 162 | 162 |
+| ActorCount/CAIController | 80 | 80 | 80 | 80 |
+| ActorCount/CWeaponActor | 85 | 85 | 85 | 85 |
+
+40 Enemy Mode 0 대비:
+
+```text
+FrameTime p95: 12.6880ms -> 21.2578ms
+GameThreadTime p95: 12.7354ms -> 21.2928ms
+GPUTime p95: 8.4217ms -> 9.3746ms
+BehaviorTreeTick p95: 0.3067ms -> 0.5091ms
+AIPerception p95: 0.1252ms -> 0.2852ms
+BT_UpdateAIContext p95: 0.1612ms -> 0.2890ms
+Ticks/CEnemy: 40 -> 80
+Ticks/CAIController: 40 -> 80
+```
+
+해석:
+
+```text
+80 Enemy Mode 0은 P35의 mesh runtime LOD 1차 비교 기준이다.
+GameThread / FrameTime p95가 20ms를 넘으므로 60fps 기준에서는 이미 주의 구간에 들어간다.
+GPU p95 증가는 제한적이지만 GameThread, BehaviorTreeTick, AIPerception, BT_UpdateAIContext가 Enemy 수 증가에 맞춰 증가한다.
+다음 비교는 동일 80 Enemy 조건에서 Mode 1 HiddenKeepPose를 측정해 render visibility 제거가 Frame / GPU / draw call에 얼마나 영향을 주는지 확인한다.
 ```
