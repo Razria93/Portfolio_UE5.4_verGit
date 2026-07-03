@@ -59,6 +59,7 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 | Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Weapon Socket Follow | Note |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | M00 | `Profile(20260703_143400).csv` | 40 | 0 VisibleDefault | 3.861s-33.861s | 12.6880ms | 12.7354ms | 8.4217ms | 0.1110ms | 0.3067ms | 0.1252ms | 572 | 4,181,001 | 82 | 정상 기준 | Mode 0 comparison baseline |
+| M01 | `Profile(20260703_144556).csv` | 40 | 1 HiddenKeepPose | 3.989s-33.989s | 12.3922ms | 12.4150ms | 7.3382ms | 0.1998ms | 0.3057ms | 0.1233ms | 377.7 | 377,250 | 82 | 유지 | Mesh hidden, weapon animation path maintained |
 
 ---
 
@@ -129,3 +130,95 @@ Ticks/CEnemy와 Ticks/CAIController는 40으로 기록되므로, 활성 플레�
 ActorCount/CEnemy는 PIE/editor world duplication 또는 CSV actor counter 집계 방식의 영향을 받을 수 있다.
 ```
 
+---
+
+## Case M01 - 40 Enemy / Engage / EnemyMeshMode 1
+
+원본 CSV:
+
+```text
+Portfolio/Csvprofile/Profile(20260703_144556).csv
+```
+
+사용자 기록:
+
+```text
+Case: 40 Enemy / Engage / EnemyMeshMode 1
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+PlayerStart near Enemy
+Mode: 1 HiddenKeepPose
+```
+
+관찰:
+
+```text
+mesh hidden 확인.
+WeaponActor는 애니메이션 경로를 따라 정상적으로 이동한다.
+combo attack 정상 실행.
+공격 피드백인 trail / Niagara가 의도된 타이밍에 정상 재생된다.
+```
+
+여기서 `WeaponActor socket follow`는 WeaponActor가 hand / holster socket의 pose 갱신을 따라 정상 이동하는지 확인하는 항목이다.
+`smoke`는 전체 기능 검증이 아니라 combo attack, hit, guard / parry, feedback timing 같은 기본 전투 흐름이 깨지지 않는지 확인하는 간단한 동작 검증을 뜻한다.
+
+분석 구간:
+
+```text
+Total Duration: 37.978s
+Analysis Window: 3.989s - 33.989s
+Window Duration: 29.998s
+Frames: 2667
+```
+
+주요 지표:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| FrameTime | 11.2479ms | 12.3922ms | 12.9690ms | 15.8627ms |
+| GameThreadTime | 11.2436ms | 12.4150ms | 12.9589ms | 15.3482ms |
+| GPUTime | 6.3080ms | 7.3382ms | 8.0136ms | 8.7060ms |
+| RenderThreadTime | 0.1356ms | 0.1998ms | 0.2155ms | 0.3265ms |
+| BehaviorTreeTick | 0.2326ms | 0.3057ms | 0.3366ms | 0.5585ms |
+| AIPerception | 0.0969ms | 0.1233ms | 0.1615ms | 0.2493ms |
+| BT_UpdateAIContext | 0.1437ms | 0.1608ms | 0.1868ms | 0.4830ms |
+| BT_UpdateAIIntentState | 0.0186ms | 0.0255ms | 0.0364ms | 0.0620ms |
+| BT_UpdateEngageContext | 0.0018ms | 0.0023ms | 0.0025ms | 0.0089ms |
+| CombatEngage_Tick | 0.0008ms | 0.0063ms | 0.0071ms | 0.0134ms |
+| CombatEngage_RebuildAssignments | 0.0006ms | 0.0059ms | 0.0067ms | 0.0131ms |
+
+Render / count:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RHI/DrawCalls | 343.5673 | 377.7 | 392 | 411 |
+| RHI/PrimitivesDrawn | 357,255 | 377,250 | 386,943 | 397,490 |
+| Ticks/SkeletalMeshComponent | 82 | 82 | 82 | 82 |
+| Ticks/CEnemy | 40 | 40 | 40 | 40 |
+| Ticks/CAIController | 40 | 40 | 40 | 40 |
+| Ticks/BehaviorTreeComponent | 39.68 | 40 | 40 | 40 |
+| ActorCount/CEnemy | 80 | 80 | 80 | 80 |
+| ActorCount/CAIController | 40 | 40 | 40 | 40 |
+| ActorCount/CWeaponActor | 42 | 42 | 42 | 42 |
+
+Mode 0 대비:
+
+```text
+FrameTime p95: 12.6880ms -> 12.3922ms
+GameThreadTime p95: 12.7354ms -> 12.4150ms
+GPUTime p95: 8.4217ms -> 7.3382ms
+RHI/DrawCalls p95: 572 -> 377.7
+RHI/PrimitivesDrawn p95: 4,181,001 -> 377,250
+Ticks/SkeletalMeshComponent: 82 유지
+```
+
+해석:
+
+```text
+Mode 1은 mesh visibility를 끄되 pose / socket update를 유지하는 비교다.
+SkeletalMesh tick 수가 유지되고 WeaponActor가 animation path를 따라가므로, pose / socket update는 유지된 것으로 본다.
+GPU p95, draw call, primitives drawn이 줄어 render 비용 분리 측정으로 유효하다.
+GameThread / BT / AIPerception 값은 Mode 0과 큰 차이가 없어 AI update 비용과는 분리된 변화로 해석한다.
+```
