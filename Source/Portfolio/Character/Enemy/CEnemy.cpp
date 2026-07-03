@@ -30,10 +30,10 @@
 
 namespace
 {
-	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMeshHidden(
-		TEXT("Portfolio.AI.RuntimeLOD.EnemyMeshHidden"),
+	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMeshMode(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyMeshMode"),
 		0,
-		TEXT("Controls ACEnemy skeletal mesh visibility for AI runtime LOD measurement. 0: visible, 1: hidden."),
+		TEXT("Controls ACEnemy mesh runtime LOD mode. 0: visible default, 1: hidden keep pose, 2: hidden allow pose skip."),
 		ECVF_Default);
 }
 
@@ -130,7 +130,7 @@ void ACEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UpdateRuntimeLODMeshVisibility();
+	UpdateRuntimeLODMeshMode();
 
 	if (IsValid(ActionComponent))
 	{
@@ -235,25 +235,50 @@ void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences
 	FComponentReferenceHelper::InjectIfValid(ReactionFeedbackComponent, InReferences);
 }
 
-void ACEnemy::UpdateRuntimeLODMeshVisibility()
+void ACEnemy::UpdateRuntimeLODMeshMode()
 {
-	const bool bShouldHideMesh = CVarAIRuntimeLODEnemyMeshHidden.GetValueOnGameThread() != 0;
-	if (bRuntimeLODEnemyMeshHiddenApplied == bShouldHideMesh) return;
+	const int32 requestedMeshMode = FMath::Clamp(CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(), 0, 2);
+	if (RuntimeLODMeshState.AppliedMode == requestedMeshMode) return;
 
 	USkeletalMeshComponent* meshComp = GetMesh();
 	if (!IsValid(meshComp)) return;
 
-	meshComp->SetHiddenInGame(bShouldHideMesh, false);
-	meshComp->SetVisibility(!bShouldHideMesh, false);
+	if (!RuntimeLODMeshState.bOriginalStateCached)
+	{
+		RuntimeLODMeshState.OriginalVisibilityBasedAnimTickOption = static_cast<uint8>(meshComp->VisibilityBasedAnimTickOption);
+		RuntimeLODMeshState.bOriginalStateCached = true;
+	}
 
-	bRuntimeLODEnemyMeshHiddenApplied = bShouldHideMesh;
+	switch (requestedMeshMode)
+	{
+	case 1:
+		meshComp->SetHiddenInGame(true, false);
+		meshComp->SetVisibility(false, false);
+		meshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		break;
+
+	case 2:
+		meshComp->SetHiddenInGame(true, false);
+		meshComp->SetVisibility(false, false);
+		meshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+		break;
+
+	case 0:
+	default:
+		meshComp->SetHiddenInGame(false, false);
+		meshComp->SetVisibility(true, false);
+		meshComp->VisibilityBasedAnimTickOption = static_cast<EVisibilityBasedAnimTickOption>(RuntimeLODMeshState.OriginalVisibilityBasedAnimTickOption);
+		break;
+	}
+
+	RuntimeLODMeshState.AppliedMode = requestedMeshMode;
 }
 
 void ACEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateRuntimeLODMeshVisibility();
+	UpdateRuntimeLODMeshMode();
 }
 
 void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

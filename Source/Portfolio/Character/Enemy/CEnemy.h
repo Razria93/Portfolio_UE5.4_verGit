@@ -18,6 +18,14 @@ public:
 	ACEnemy();
 
 private:
+	struct FRuntimeLODMeshState
+	{
+		int32 AppliedMode = INDEX_NONE;
+		uint8 OriginalVisibilityBasedAnimTickOption = 0;
+		bool bOriginalStateCached = false;
+	};
+
+private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
 	bool bUsePatrol;
 
@@ -121,7 +129,7 @@ private:
 	int32 ParryResultCount = 0;
 
 private:
-	bool bRuntimeLODEnemyMeshHiddenApplied = false;
+	FRuntimeLODMeshState RuntimeLODMeshState;
 
 protected:
 	// Lifecycle
@@ -137,7 +145,7 @@ private:
 
 private:
 	// Runtime LOD
-	void UpdateRuntimeLODMeshVisibility();
+	void UpdateRuntimeLODMeshMode();
 
 public:
 	void Tick(float DeltaTime) override;

@@ -154,8 +154,21 @@ P35의 우선순위는 1차와 2차 측정이다. 3차 측정은 render 비용�
 현재 측정 스위치:
 
 ```text
-Portfolio.AI.RuntimeLOD.EnemyMeshHidden 1
+Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+-> VisibleDefault
+-> ACEnemy SkeletalMesh visibility on
+-> 기존 pose update 설정 복구
+
+Portfolio.AI.RuntimeLOD.EnemyMeshMode 1
+-> HiddenKeepPose
 -> ACEnemy SkeletalMesh visibility off
+-> pose / bone / socket update 유지
+
+Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
+-> HiddenAllowPoseSkip
+-> ACEnemy SkeletalMesh visibility off
+-> visibility 기반 pose skip 허용
+
 -> PIE 중 변경할 수 있으며 다음 Tick에서 반영된다.
 ```
 
@@ -163,10 +176,13 @@ Mesh visibility 비교:
 
 ```text
 Baseline
--> Portfolio.AI.RuntimeLOD.EnemyMeshHidden 0
+-> Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
 
-Mesh off
--> Portfolio.AI.RuntimeLOD.EnemyMeshHidden 1
+Mesh hidden / pose 유지
+-> Portfolio.AI.RuntimeLOD.EnemyMeshMode 1
+
+Mesh hidden / pose skip 허용
+-> Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 ```
 
 Mesh visibility off 관찰:
@@ -181,7 +197,12 @@ WeaponActor가 hand / holster socket에 attach된 상태라면 검이 hidden 직
 해석 기준:
 
 ```text
-Mesh hidden
+Mode 1: HiddenKeepPose
+-> mesh는 숨기지만 pose / bone / socket update를 유지한다.
+-> render 비용 분리 측정에 가깝다.
+
+Mode 2: HiddenAllowPoseSkip
+-> mesh hidden + visibility 기반 pose skip을 허용한다.
 -> render cost + pose / socket update cost가 함께 줄어드는 극단 비교일 수 있다.
 ```
 
