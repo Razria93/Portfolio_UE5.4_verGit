@@ -307,6 +307,7 @@ WeaponActor socket follow 유지 여부 확인
 40 Enemy / EnemyMeshMode 2 gameplay unsafe 관찰로 정규 측정 제외
 80 Enemy / EnemyMeshMode 0 측정 완료
 80 Enemy / EnemyMeshMode 1 측정 완료
+40 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 ```
 
 측정 결과:
@@ -320,7 +321,12 @@ WeaponActor socket follow 유지 여부 확인
 | M02  |    40 | 2 HiddenAllowPoseSkip | -      |         - |         - |        - |           - |                - |             - |              - | 제외    | WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨려 정규 측정에서 제외한다.        |
 | M03  |    80 | 0 VisibleDefault      | 38.52s | 21.2578ms | 21.2928ms | 9.3746ms |    0.5091ms |         0.2852ms |           583 |      3,771,918 | 기준    | 80 Enemy부터 Frame / GameThread p95가 60fps 기준을 넘는다.                           |
 | M04  |    80 | 1 HiddenKeepPose      | 37.32s | 21.7991ms | 21.7849ms | 8.5164ms |    0.5141ms |         0.2845ms |           389 |        380,366 | 제한 효과 | render 비용은 줄었지만 Frame / GameThread p95는 회복되지 않았다.                           |
-|      |       |                       |        |           |           |          |             |                  |               |                |       |                                                                             |
+
+### Render Coverage
+
+| Case | Enemy | Mode | 시간 | Frame p95 | Game p95 | GPU p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | 판정 | 메모 |
+| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| R00 | 40 | 0 VisibleDefault | 37.43s | 9.9527ms | 9.3059ms | 7.1942ms | - | 0.0022ms | 555 | 3,275,424 | 기준 | AI / BT / WeaponActor 제거 상태의 render coverage 기준값이다. |
 
 측정 해석:
 
