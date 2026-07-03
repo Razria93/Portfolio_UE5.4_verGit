@@ -319,7 +319,7 @@ WeaponActor socket follow 유지 여부 확인
 80 Enemy / EnemyMeshMode 1 측정 완료
 40 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 40 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
-40 Enemy / RenderCoverage / EnemyMeshMode 2 측정 예정
+40 Enemy / RenderCoverage / EnemyMeshMode 2 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 2 측정 예정
@@ -343,7 +343,7 @@ WeaponActor socket follow 유지 여부 확인
 | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | R00 | 40 | 0 VisibleDefault | 37.43s | 9.9527ms | 9.3059ms | 7.1942ms | - | 0.0022ms | 555 | 3,275,424 | 기준 | AI / BT / WeaponActor 제거 상태의 render coverage 기준값이다. |
 | R01 | 40 | 1 HiddenKeepPose | 37.39s | 9.3213ms | 8.7718ms | 5.9211ms | - | 0.0018ms | 194 | 34,960 | 효과 확인 | visible mesh render 비용 제거로 GPU / DrawCalls / Primitives와 Frame p95가 함께 감소했다. |
-| R04 | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | 예정 | PIE 실행 전 Mode 2 고정 후 pose update isolation을 측정한다. |
+| R04 | 40 | 2 HiddenAllowPoseSkip | 37.88s | 9.3163ms | 6.4882ms | 5.9088ms | - | 0.0019ms | 194 | 35,066 | 효과 확인 | PIE 실행 전 Mode 2 고정. Mode 1 대비 Animation p95가 1.6742ms에서 0.0546ms로 감소했다. |
 | R02 | 80 | 0 VisibleDefault | 37.06s | 13.6320ms | 13.6657ms | 7.9463ms | - | 0.0019ms | 916 | 5,400,982 | 기준 | AI / BT / WeaponActor 제거 상태에서도 skeletal mesh 수 증가로 Frame / DrawCalls / Primitives가 증가했다. |
 | R03 | 80 | 1 HiddenKeepPose | 37.20s | 12.0643ms | 12.1393ms | 5.8511ms | - | 0.0018ms | 194 | 35,062 | 효과 확인 | 80 Enemy에서도 visible mesh render 비용 제거 효과가 유지됐다. |
 | R05 | 80 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | 예정 | PIE 실행 전 Mode 2 고정 후 pose update isolation을 측정한다. |
@@ -356,6 +356,7 @@ Render Coverage 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives�
 따라서 mesh visibility hidden은 render cost 축에서는 실제 효과가 있지만, 전투 상황의 frame budget 문제는 AI / Movement / Combat runtime 비용과 함께 분리해서 봐야 한다.
 80 Enemy Render Coverage Mode 0에서는 AI / BT / WeaponActor가 제거된 상태에서도 Frame p95와 DrawCalls / Primitives가 증가했다.
 80 Enemy Render Coverage Mode 1에서는 DrawCalls p95가 916에서 194로, Primitives p95가 5,400,982에서 35,062로 감소했고 Frame p95도 13.6320ms에서 12.0643ms로 낮아졌다.
+40 Enemy Render Coverage Mode 2에서는 Mode 1 대비 GPU / DrawCalls / Primitives는 거의 유지됐지만 Animation p95가 크게 감소했다.
 ```
 
 측정 과정에서 확인한 문제와 분리:
