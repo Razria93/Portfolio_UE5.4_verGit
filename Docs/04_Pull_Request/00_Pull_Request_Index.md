@@ -40,5 +40,6 @@
 | P32 | AI Blackboard Key Registry | `P32_UE5_Portfolio_Pull_Request.md` | `refactor/ai-blackboard-key-registry` |  | W05, N15 |
 | P33 | AI Update Interval Profiling 정책 정리 | `P33_UE5_Portfolio_Pull_Request.md` | `refactor/ai-update-interval-policy` |  | W05, N17 |
 | P34 | AI Profiling Test Asset 분리 | `P34_UE5_Portfolio_Pull_Request.md` | `chore/ai-profiling-test-assets` |  | W05, N18, N20 |
+| P35 | AI Runtime LOD 정책 정리 | `P35_UE5_Portfolio_Pull_Request.md` | `refactor/ai-runtime-lod-policy` |  | W05, N18, N20, N21 |
 
 ---
