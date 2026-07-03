@@ -327,14 +327,14 @@ WeaponActor socket follow 유지 여부 확인
 | Case | Enemy | Mode | 시간 | Frame p95 | Game p95 | GPU p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | 판정 | 메모 |
 | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | R00 | 40 | 0 VisibleDefault | 37.43s | 9.9527ms | 9.3059ms | 7.1942ms | - | 0.0022ms | 555 | 3,275,424 | 기준 | AI / BT / WeaponActor 제거 상태의 render coverage 기준값이다. |
+| R01 | 40 | 1 HiddenKeepPose | 37.39s | 9.3213ms | 8.7718ms | 5.9211ms | - | 0.0018ms | 194 | 34,960 | 효과 확인 | visible mesh render 비용 제거로 GPU / DrawCalls / Primitives와 Frame p95가 함께 감소했다. |
 
 측정 해석:
 
 ```text
-EnemyMeshMode 1은 GPU / DrawCalls / Primitives 감소 효과가 있다.
-하지만 40 / 80 Enemy 모두 FrameTime / GameThreadTime 개선 폭이 작다.
-80 Enemy에서는 mesh를 숨겨도 Frame / GameThread p95가 60fps 기준을 계속 넘는다.
-따라서 mesh visibility hidden은 render cost 분리 측정으로 유효하지만, 현재 병목 해소 후보의 우선순위는 GameThread runtime 축이다.
+Gameplay Stress 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives를 줄이지만 Frame / GameThread 회복 효과는 제한적이다.
+Render Coverage 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives와 Frame p95를 함께 낮춘다.
+따라서 mesh visibility hidden은 render cost 축에서는 실제 효과가 있지만, 전투 상황의 frame budget 문제는 AI / Movement / Combat runtime 비용과 함께 분리해서 봐야 한다.
 ```
 
 80 Enemy / Mode 0 기준:

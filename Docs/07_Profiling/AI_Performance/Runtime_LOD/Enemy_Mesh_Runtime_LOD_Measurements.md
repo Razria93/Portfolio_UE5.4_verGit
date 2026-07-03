@@ -108,6 +108,7 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 | Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Note |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | R00 | `Profile(20260703_184111).csv` | 40 | 0 VisibleDefault | 3.713s-33.713s | 9.9527ms | 9.3059ms | 7.1942ms | 0.0741ms | - | 0.0022ms | 555 | 3,275,424 | 40 | Render coverage baseline. AI / BT / WeaponActor 제거 확인 |
+| R01 | `Profile(20260703_184341).csv` | 40 | 1 HiddenKeepPose | 3.697s-33.697s | 9.3213ms | 8.7718ms | 5.9211ms | 0.0628ms | - | 0.0018ms | 194 | 34,960 | 40 | Mesh hidden render coverage comparison |
 
 ---
 
@@ -578,4 +579,98 @@ Render Coverage 조건에서는 AI / BT / WeaponActor 변수가 제거된 상태
 Gameplay Stress 40 Enemy Mode 0 대비 Frame / GameThread p95가 낮고, BT / Perception / WeaponActor 관련 비용이 사실상 제거됐다.
 DrawCalls p95는 Gameplay Stress 40 Enemy Mode 0과 비슷하지만, Primitives p95는 여전히 큰 값으로 기록된다.
 다음 비교는 동일 Render Coverage 40 Enemy 조건에서 Mode 1 HiddenKeepPose를 측정해 visible skeletal mesh 제거가 GPU / draw call / primitives에 미치는 영향을 확인한다.
+```
+
+---
+
+## Case R01 - 40 Enemy / RenderCoverage / EnemyMeshMode 1
+
+원본 CSV:
+
+```text
+Portfolio/Csvprofile/Profile(20260703_184341).csv
+```
+
+사용자 기록:
+
+```text
+Case: 40 Enemy / RenderCoverage / EnemyMeshMode 1
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: RenderCoverage fixed camera
+Mode: 1 HiddenKeepPose
+```
+
+확인 항목:
+
+```text
+mesh hidden.
+40 Enemy actor는 존재.
+AIController / BT 미실행 유지.
+WeaponActor 미생성 유지.
+Idle animation / pose update 유지 조건.
+Collision debug draw off.
+```
+
+분석 구간:
+
+```text
+Total Duration: 37.394s
+Analysis Window: 3.697s - 33.697s
+Window Duration: 29.997s
+Frames: 3571
+```
+
+주요 지표:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| FrameTime | 8.4002ms | 9.3213ms | 9.6927ms | 10.4517ms |
+| GameThreadTime | 8.0387ms | 8.7718ms | 9.2960ms | 10.2588ms |
+| GPUTime | 5.2317ms | 5.9211ms | 6.2241ms | 6.5624ms |
+| RenderThreadTime | 0.0497ms | 0.0628ms | 0.0797ms | 0.1649ms |
+| BehaviorTreeTick | - | - | - | - |
+| AIPerception | 0.0014ms | 0.0018ms | 0.0022ms | 0.0032ms |
+| BT_UpdateAIContext | - | - | - | - |
+| BT_UpdateAIIntentState | - | - | - | - |
+| BT_UpdateEngageContext | - | - | - | - |
+| CombatEngage_Tick | 0.0002ms | 0.0010ms | 0.0013ms | 0.0018ms |
+| CombatEngage_RebuildAssignments | 0.0001ms | 0.0005ms | 0.0008ms | 0.0012ms |
+
+Render / count:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RHI/DrawCalls | 168.6869 | 194 | 204 | 207 |
+| RHI/PrimitivesDrawn | 13,490 | 34,960 | 36,180 | 36,732 |
+| Ticks/SkeletalMeshComponent | 40 | 40 | 40 | 40 |
+| Ticks/CEnemy | 40 | 40 | 40 | 40 |
+| Ticks/CAIController | - | - | - | - |
+| Ticks/BehaviorTreeComponent | - | - | - | - |
+| ActorCount/CEnemy | 80 | 80 | 80 | 80 |
+| ActorCount/CAIController | - | - | - | - |
+| ActorCount/CWeaponActor | - | - | - | - |
+
+Render Coverage Mode 0 대비:
+
+```text
+FrameTime p95: 9.9527ms -> 9.3213ms
+GameThreadTime p95: 9.3059ms -> 8.7718ms
+GPUTime p95: 7.1942ms -> 5.9211ms
+RenderThreadTime p95: 0.0741ms -> 0.0628ms
+AIPerception p95: 0.0022ms -> 0.0018ms
+RHI/DrawCalls p95: 555 -> 194
+RHI/PrimitivesDrawn p95: 3,275,424 -> 34,960
+Ticks/SkeletalMeshComponent: 40 유지
+```
+
+해석:
+
+```text
+Render Coverage 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives를 명확히 줄인다.
+FrameTime / GameThreadTime p95도 함께 낮아지므로, 화면에 노출된 skeletal mesh render 비용은 frame budget에 실제 영향을 준다.
+SkeletalMesh tick 수는 유지되므로 Mode 1은 pose update를 유지하면서 visible mesh render 비용을 분리하는 비교로 유효하다.
+Gameplay Stress 조건에서 frame 회복이 제한적이었던 이유는 render 비용이 없어서가 아니라, AI / Movement / Combat runtime 비용이 함께 섞여 있었기 때문으로 해석한다.
 ```
