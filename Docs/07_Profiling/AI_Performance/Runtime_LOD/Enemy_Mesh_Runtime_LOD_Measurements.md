@@ -1,4 +1,4 @@
-# Enemy Mesh Runtime LOD Measurements
+﻿# Enemy Mesh Runtime LOD Measurements
 
 ## 목적
 
@@ -105,24 +105,24 @@ Gameplay Stress 조건에서는 montage / socket / notify 흐름을 깨뜨릴 �
 
 ### Gameplay Stress
 
-| Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Weapon Socket Follow | Note |
+| Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Weapon Socket Follow | Note |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| M00 | `Profile(20260703_143400).csv` | 40 | 0 VisibleDefault | 3.861s-33.861s | 12.6880ms | 12.7354ms | 8.4217ms | 0.1110ms | 0.3067ms | 0.1252ms | 572 | 4,181,001 | 82 | 정상 기준 | Mode 0 comparison baseline |
-| M01 | `Profile(20260703_144556).csv` | 40 | 1 HiddenKeepPose | 3.989s-33.989s | 12.3922ms | 12.4150ms | 7.3382ms | 0.1998ms | 0.3057ms | 0.1233ms | 377.7 | 377,250 | 82 | 유지 | Mesh hidden, weapon animation path maintained |
-| M02 | - | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | 깨짐 | Gameplay unsafe. 정규 성능 측정 제외 |
-| M03 | `Profile(20260703_161310).csv` | 80 | 0 VisibleDefault | 4.261s-34.261s | 21.2578ms | 21.2928ms | 9.3746ms | 0.1776ms | 0.5091ms | 0.2852ms | 583 | 3,771,918 | 162 | 정상 기준 | 80 Enemy Mode 0 comparison baseline |
-| M04 | `Profile(20260703_161605).csv` | 80 | 1 HiddenKeepPose | 3.660s-33.660s | 21.7991ms | 21.7849ms | 8.5164ms | 0.1654ms | 0.5141ms | 0.2845ms | 389 | 380,366 | 162 | 유지 | Render cost reduced, GameThread still over 60fps budget |
+| M00 | `Profile(20260703_143400).csv` | 40 | 0 VisibleDefault | 3.861s-33.861s | 12.6880ms | 12.7354ms | 8.4217ms | 0.1110ms | 2.0121ms | 0.3067ms | 0.1252ms | 572 | 4,181,001 | 82 | 정상 기준 | Mode 0 comparison baseline |
+| M01 | `Profile(20260703_144556).csv` | 40 | 1 HiddenKeepPose | 3.989s-33.989s | 12.3922ms | 12.4150ms | 7.3382ms | 0.1998ms | 1.9191ms | 0.3057ms | 0.1233ms | 377.7 | 377,250 | 82 | 유지 | Mesh hidden, weapon animation path maintained |
+| M02 | - | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | - | 깨짐 | Gameplay unsafe. 정규 성능 측정 제외 |
+| M03 | `Profile(20260703_161310).csv` | 80 | 0 VisibleDefault | 4.261s-34.261s | 21.2578ms | 21.2928ms | 9.3746ms | 0.1776ms | 3.7646ms | 0.5091ms | 0.2852ms | 583 | 3,771,918 | 162 | 정상 기준 | 80 Enemy Mode 0 comparison baseline |
+| M04 | `Profile(20260703_161605).csv` | 80 | 1 HiddenKeepPose | 3.660s-33.660s | 21.7991ms | 21.7849ms | 8.5164ms | 0.1654ms | 3.7889ms | 0.5141ms | 0.2845ms | 389 | 380,366 | 162 | 유지 | Render cost reduced, GameThread still over 60fps budget |
 
 ### Render Coverage
 
-| Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Note |
+| Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Note |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| R00 | `Profile(20260703_184111).csv` | 40 | 0 VisibleDefault | 3.713s-33.713s | 9.9527ms | 9.3059ms | 7.1942ms | 0.0741ms | - | 0.0022ms | 555 | 3,275,424 | 40 | Render coverage baseline. AI / BT / WeaponActor 제거 확인 |
-| R01 | `Profile(20260703_184341).csv` | 40 | 1 HiddenKeepPose | 3.697s-33.697s | 9.3213ms | 8.7718ms | 5.9211ms | 0.0628ms | - | 0.0018ms | 194 | 34,960 | 40 | Mesh hidden render coverage comparison |
-| R04 | `Profile(20260703_202658).csv` | 40 | 2 HiddenAllowPoseSkip | 3.941s-33.941s | 9.3163ms | 6.4882ms | 5.9088ms | 0.0671ms | - | 0.0019ms | 194 | 35,066 | 40 | PIE 실행 전 Mode 2 고정. pose update isolation 측정 |
-| R02 | `Profile(20260703_184650).csv` | 80 | 0 VisibleDefault | 3.532s-33.532s | 13.6320ms | 13.6657ms | 7.9463ms | 0.0838ms | - | 0.0019ms | 916 | 5,400,982 | 80 | 80 Enemy render coverage baseline |
-| R03 | `Profile(20260703_185330).csv` | 80 | 1 HiddenKeepPose | 3.600s-33.600s | 12.0643ms | 12.1393ms | 5.8511ms | 0.0548ms | - | 0.0018ms | 194 | 35,062 | 80 | 80 Enemy mesh hidden render coverage comparison |
-| R05 | - | 80 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | 예정. PIE 실행 전 Mode 2 고정 후 pose update isolation 측정 |
+| R00 | `Profile(20260703_184111).csv` | 40 | 0 VisibleDefault | 3.713s-33.713s | 9.9527ms | 9.3059ms | 7.1942ms | 0.0741ms | 1.7608ms | - | 0.0022ms | 555 | 3,275,424 | 40 | Render coverage baseline. AI / BT / WeaponActor 제거 확인 |
+| R01 | `Profile(20260703_184341).csv` | 40 | 1 HiddenKeepPose | 3.697s-33.697s | 9.3213ms | 8.7718ms | 5.9211ms | 0.0628ms | 1.6742ms | - | 0.0018ms | 194 | 34,960 | 40 | Mesh hidden render coverage comparison |
+| R04 | `Profile(20260703_210823).csv` | 40 | 2 HiddenAllowPoseSkip | 3.800s-33.800s | 8.8687ms | 6.0611ms | 5.8075ms | 0.0556ms | 0.0577ms | - | 0.0018ms | 193 | 34,976 | 40 | PIE 실행 전 Mode 2 고정. pose update isolation 측정 |
+| R02 | `Profile(20260703_184650).csv` | 80 | 0 VisibleDefault | 3.532s-33.532s | 13.6320ms | 13.6657ms | 7.9463ms | 0.0838ms | 3.7604ms | - | 0.0019ms | 916 | 5,400,982 | 80 | 80 Enemy render coverage baseline |
+| R03 | `Profile(20260703_185330).csv` | 80 | 1 HiddenKeepPose | 3.600s-33.600s | 12.0643ms | 12.1393ms | 5.8511ms | 0.0548ms | 2.8188ms | - | 0.0018ms | 194 | 35,062 | 80 | 80 Enemy mesh hidden render coverage comparison |
+| R05 | `Profile(20260703_202949).csv` | 80 | 2 HiddenAllowPoseSkip | 3.716s-33.716s | 8.9149ms | 6.9307ms | 5.9291ms | 0.0559ms | 0.0933ms | - | 0.0018ms | 194 | 34,980 | 80 | PIE 실행 전 Mode 2 고정. pose update isolation 측정 |
 
 ---
 
@@ -174,6 +174,7 @@ Enemy mesh render cost는 실제로 존재한다.
 화면에 노출된 skeletal mesh 수가 증가하면 Frame / DrawCalls / Primitives가 함께 증가한다.
 Mesh hidden은 render cost 축에서는 효과가 있다.
 Mode 2는 render cost를 추가로 낮추기보다 hidden 상태에서 animation / pose update 비용을 줄이는 축으로 확인됐다.
+40 / 80 Enemy 모두에서 Mode 2는 Mode 1 대비 DrawCalls / Primitives를 거의 유지하면서 Animation p95와 GameThreadTime p95를 낮췄다.
 Gameplay Stress에서 frame 회복이 제한적이었던 이유는 render 비용이 없어서가 아니라 AI / Movement / Combat runtime 비용이 함께 섞였기 때문이다.
 따라서 P35 이후 Runtime LOD는 render 축과 gameplay runtime 축을 분리해서 검토한다.
 Mesh render 축은 40 / 80 측정에서 패턴이 반복됐으므로 120 정규 측정 없이 1차 판단을 종료한다.
@@ -749,7 +750,7 @@ Gameplay Stress 조건에서 frame 회복이 제한적이었던 이유는 render
 원본 CSV:
 
 ```text
-Portfolio/Csvprofile/Profile(20260703_202658).csv
+Portfolio/Csvprofile/Profile(20260703_210823).csv
 ```
 
 사용자 기록:
@@ -769,31 +770,31 @@ Purpose: hidden skeletal mesh에서 animation / pose update skip 비용 분리
 분석 구간:
 
 ```text
-Total Duration: 37.882s
-Analysis Window: 3.941s - 33.941s
-Window Duration: 29.991s
-Frames: 3543
+Total Duration: 37.599s
+Analysis Window: 3.800s - 33.800s
+Window Duration: 29.993s
+Frames: 3600
 ```
 
 주요 지표:
 
 | Metric | Avg | p95 | p99 | Max |
 | --- | ---: | ---: | ---: | ---: |
-| FrameTime | 8.4674ms | 9.3163ms | 10.1830ms | 21.7200ms |
-| GameThreadTime | 5.8598ms | 6.4882ms | 7.1109ms | 18.8995ms |
-| GPUTime | 5.2361ms | 5.9088ms | 6.1560ms | 6.4216ms |
-| RenderThreadTime | 0.0517ms | 0.0671ms | 0.0834ms | 0.2004ms |
-| Animation | 0.0453ms | 0.0546ms | 0.0667ms | 0.0893ms |
-| CharacterMovement | 0.0381ms | 0.0464ms | 0.0583ms | 0.1008ms |
+| FrameTime | 8.3335ms | 8.8687ms | 9.0987ms | 10.0070ms |
+| GameThreadTime | 5.6669ms | 6.0611ms | 6.3285ms | 7.2788ms |
+| GPUTime | 5.1649ms | 5.8075ms | 6.1312ms | 7.3568ms |
+| RenderThreadTime | 0.0486ms | 0.0556ms | 0.0700ms | 0.3929ms |
+| Animation | 0.0447ms | 0.0577ms | 0.0680ms | 0.1740ms |
+| CharacterMovement | 0.0375ms | 0.0479ms | 0.0600ms | 0.1573ms |
 | BehaviorTreeTick | - | - | - | - |
-| AIPerception | 0.0014ms | 0.0019ms | 0.0023ms | 0.0043ms |
+| AIPerception | 0.0014ms | 0.0018ms | 0.0022ms | 0.0032ms |
 
 Render / count:
 
 | Metric | Avg | p95 | p99 | Max |
 | --- | ---: | ---: | ---: | ---: |
-| RHI/DrawCalls | 168.6844 | 194 | 205 | 207 |
-| RHI/PrimitivesDrawn | 13,574 | 35,066 | 36,288 | 36,838 |
+| RHI/DrawCalls | 168.6775 | 193 | 205 | 207 |
+| RHI/PrimitivesDrawn | 13,503 | 34,976 | 36,196 | 36,736 |
 | Ticks/SkeletalMeshComponent | 40 | 40 | 40 | 40 |
 | Ticks/CEnemy | 40 | 40 | 40 | 40 |
 | Ticks/CAIController | - | - | - | - |
@@ -805,15 +806,15 @@ Render / count:
 Render Coverage 40 Enemy Mode 1 대비:
 
 ```text
-FrameTime p95: 9.3213ms -> 9.3163ms
-GameThreadTime p95: 8.7718ms -> 6.4882ms
-GPUTime p95: 5.9211ms -> 5.9088ms
-RenderThreadTime p95: 0.0628ms -> 0.0671ms
-Animation p95: 1.6742ms -> 0.0546ms
-CharacterMovement p95: 0.0461ms -> 0.0464ms
-AIPerception p95: 0.0018ms -> 0.0019ms
-RHI/DrawCalls p95: 194 -> 194
-RHI/PrimitivesDrawn p95: 34,960 -> 35,066
+FrameTime p95: 9.3213ms -> 8.8687ms
+GameThreadTime p95: 8.7718ms -> 6.0611ms
+GPUTime p95: 5.9211ms -> 5.8075ms
+RenderThreadTime p95: 0.0628ms -> 0.0556ms
+Animation p95: 1.6742ms -> 0.0577ms
+CharacterMovement p95: 0.0461ms -> 0.0479ms
+AIPerception p95: 0.0018ms -> 0.0018ms
+RHI/DrawCalls p95: 194 -> 193
+RHI/PrimitivesDrawn p95: 34,960 -> 34,976
 Ticks/SkeletalMeshComponent: 40 유지
 ```
 
@@ -991,4 +992,89 @@ Render Coverage 80 Enemy에서도 EnemyMeshMode 1은 GPU / DrawCalls / Primitive
 FrameTime / GameThreadTime p95도 함께 낮아져 visible skeletal mesh render 비용이 frame budget에 영향을 준다는 40 Enemy 결과가 유지된다.
 SkeletalMesh tick 수는 80으로 유지되므로 pose update는 유지된 상태에서 visible render cost만 분리된 것으로 본다.
 Gameplay Stress 조건과 달리 Render Coverage에서는 AI / BT / WeaponActor / Combat 변수가 제거되어 mesh render scale 효과가 더 명확하게 드러난다.
+```
+
+---
+
+## Case R05 - 80 Enemy / RenderCoverage / EnemyMeshMode 2
+
+원본 CSV:
+
+```text
+Portfolio/Csvprofile/Profile(20260703_202949).csv
+```
+
+사용자 기록:
+
+```text
+Case: 80 Enemy / RenderCoverage / EnemyMeshMode 2
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: RenderCoverage fixed camera
+Mode: 2 HiddenAllowPoseSkip
+Mode Apply Timing: PIE 실행 전 CVar 설정
+Purpose: hidden skeletal mesh에서 animation / pose update skip 비용 분리
+```
+
+분석 구간:
+
+```text
+Total Duration: 37.431s
+Analysis Window: 3.716s - 33.716s
+Window Duration: 29.994s
+Frames: 3594
+```
+
+주요 지표:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| FrameTime | 8.3478ms | 8.9149ms | 9.2289ms | 11.6222ms |
+| GameThreadTime | 6.4526ms | 6.9307ms | 7.2996ms | 8.8443ms |
+| GPUTime | 5.2485ms | 5.9291ms | 6.1925ms | 6.9472ms |
+| RenderThreadTime | 0.0481ms | 0.0559ms | 0.0719ms | 0.2028ms |
+| Animation | 0.0790ms | 0.0933ms | 0.1216ms | 0.1482ms |
+| CharacterMovement | 0.0618ms | 0.0744ms | 0.1025ms | 0.1468ms |
+| TickActors | 0.4421ms | 0.5354ms | 0.6111ms | 0.7570ms |
+| BehaviorTreeTick | - | - | - | - |
+| AIPerception | 0.0014ms | 0.0018ms | 0.0023ms | 0.0183ms |
+
+Render / count:
+
+| Metric | Avg | p95 | p99 | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RHI/DrawCalls | 169.6594 | 194 | 206 | 209 |
+| RHI/PrimitivesDrawn | 13,509 | 34,980 | 36,200 | 36,738 |
+| Ticks/SkeletalMeshComponent | 80 | 80 | 80 | 80 |
+| Ticks/CEnemy | 80 | 80 | 80 | 80 |
+| Ticks/CAIController | - | - | - | - |
+| Ticks/BehaviorTreeComponent | - | - | - | - |
+| ActorCount/CEnemy | 160 | 160 | 160 | 160 |
+| ActorCount/CAIController | - | - | - | - |
+| ActorCount/CWeaponActor | - | - | - | - |
+
+Render Coverage 80 Enemy Mode 1 대비:
+
+```text
+FrameTime p95: 12.0643ms -> 8.9149ms
+GameThreadTime p95: 12.1393ms -> 6.9307ms
+GPUTime p95: 5.8511ms -> 5.9291ms
+RenderThreadTime p95: 0.0548ms -> 0.0559ms
+Animation p95: 2.8188ms -> 0.0933ms
+CharacterMovement p95: 0.0763ms -> 0.0744ms
+AIPerception p95: 0.0018ms -> 0.0018ms
+RHI/DrawCalls p95: 194 -> 194
+RHI/PrimitivesDrawn p95: 35,062 -> 34,980
+Ticks/SkeletalMeshComponent: 80 유지
+```
+
+해석:
+
+```text
+80 Enemy에서도 Mode 2는 Mode 1 대비 GPU / DrawCalls / Primitives를 추가로 낮추지 않는다.
+대신 Animation p95와 GameThreadTime p95가 크게 감소한다.
+따라서 Mode 2는 40 / 80 Enemy 모두에서 hidden 상태의 animation / pose update 비용을 분리하는 측정축으로 반복 확인됐다.
+이 결과는 Mode 2를 combat-capable LOD로 쓰기 위한 근거가 아니라, distant moving / dormant 계층에서 animation update를 줄일 수 있는 후보로 해석한다.
 ```

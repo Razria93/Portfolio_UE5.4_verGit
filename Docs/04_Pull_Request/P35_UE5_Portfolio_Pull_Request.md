@@ -322,31 +322,31 @@ WeaponActor socket follow 유지 여부 확인
 40 Enemy / RenderCoverage / EnemyMeshMode 2 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
-80 Enemy / RenderCoverage / EnemyMeshMode 2 측정 예정
+80 Enemy / RenderCoverage / EnemyMeshMode 2 측정 완료
 ```
 
 측정 결과:
 
 ### Enemy Mesh Runtime LOD
 
-| Case | Enemy | Mode                  | 시간     | Frame p95 |  Game p95 |  GPU p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | 판정    | 메모                                                                          |
+| Case | Enemy | Mode                  | 시간     | Frame p95 |  Game p95 |  GPU p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | 판정    | 메모                                                                          |
 | ---- | ----: | --------------------- | ------ | --------: | --------: | -------: | ----------: | ---------------: | ------------: | -------------: | ----- | --------------------------------------------------------------------------- |
-| M00  |    40 | 0 VisibleDefault      | 37.72s | 12.6880ms | 12.7354ms | 8.4217ms |    0.3067ms |         0.1252ms |           572 |      4,181,001 | 기준    | 40 Enemy mesh visible 기준이다.                                                 |
-| M01  |    40 | 1 HiddenKeepPose      | 37.98s | 12.3922ms | 12.4150ms | 7.3382ms |    0.3057ms |         0.1233ms |         377.7 |        377,250 | 제한 효과 | render 비용은 줄었지만 Frame / GameThread 개선은 작다. WeaponActor socket follow는 유지됐다. |
-| M02  |    40 | 2 HiddenAllowPoseSkip | -      |         - |         - |        - |           - |                - |             - |              - | 제외    | WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨려 정규 측정에서 제외한다.        |
-| M03  |    80 | 0 VisibleDefault      | 38.52s | 21.2578ms | 21.2928ms | 9.3746ms |    0.5091ms |         0.2852ms |           583 |      3,771,918 | 기준    | 80 Enemy부터 Frame / GameThread p95가 60fps 기준을 넘는다.                           |
-| M04  |    80 | 1 HiddenKeepPose      | 37.32s | 21.7991ms | 21.7849ms | 8.5164ms |    0.5141ms |         0.2845ms |           389 |        380,366 | 제한 효과 | render 비용은 줄었지만 Frame / GameThread p95는 회복되지 않았다.                           |
+| M00  |    40 | 0 VisibleDefault      | 37.72s | 12.6880ms | 12.7354ms | 8.4217ms |      2.0121ms |    0.3067ms |         0.1252ms |           572 |      4,181,001 | 기준    | 40 Enemy mesh visible 기준이다.                                                 |
+| M01  |    40 | 1 HiddenKeepPose      | 37.98s | 12.3922ms | 12.4150ms | 7.3382ms |      1.9191ms |    0.3057ms |         0.1233ms |         377.7 |        377,250 | 제한 효과 | render 비용은 줄었지만 Frame / GameThread 개선은 작다. WeaponActor socket follow는 유지됐다. |
+| M02  |    40 | 2 HiddenAllowPoseSkip | -      |         - |         - |        - |             - |           - |                - |             - |              - | 제외    | WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨려 정규 측정에서 제외한다.        |
+| M03  |    80 | 0 VisibleDefault      | 38.52s | 21.2578ms | 21.2928ms | 9.3746ms |      3.7646ms |    0.5091ms |         0.2852ms |           583 |      3,771,918 | 기준    | 80 Enemy부터 Frame / GameThread p95가 60fps 기준을 넘는다.                           |
+| M04  |    80 | 1 HiddenKeepPose      | 37.32s | 21.7991ms | 21.7849ms | 8.5164ms |      3.7889ms |    0.5141ms |         0.2845ms |           389 |        380,366 | 제한 효과 | render 비용은 줄었지만 Frame / GameThread p95는 회복되지 않았다.                           |
 
 ### Render Coverage
 
-| Case | Enemy | Mode | 시간 | Frame p95 | Game p95 | GPU p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | 판정 | 메모 |
-| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| R00 | 40 | 0 VisibleDefault | 37.43s | 9.9527ms | 9.3059ms | 7.1942ms | - | 0.0022ms | 555 | 3,275,424 | 기준 | AI / BT / WeaponActor 제거 상태의 render coverage 기준값이다. |
-| R01 | 40 | 1 HiddenKeepPose | 37.39s | 9.3213ms | 8.7718ms | 5.9211ms | - | 0.0018ms | 194 | 34,960 | 효과 확인 | visible mesh render 비용 제거로 GPU / DrawCalls / Primitives와 Frame p95가 함께 감소했다. |
-| R04 | 40 | 2 HiddenAllowPoseSkip | 37.88s | 9.3163ms | 6.4882ms | 5.9088ms | - | 0.0019ms | 194 | 35,066 | 효과 확인 | PIE 실행 전 Mode 2 고정. Mode 1 대비 Animation p95가 1.6742ms에서 0.0546ms로 감소했다. |
-| R02 | 80 | 0 VisibleDefault | 37.06s | 13.6320ms | 13.6657ms | 7.9463ms | - | 0.0019ms | 916 | 5,400,982 | 기준 | AI / BT / WeaponActor 제거 상태에서도 skeletal mesh 수 증가로 Frame / DrawCalls / Primitives가 증가했다. |
-| R03 | 80 | 1 HiddenKeepPose | 37.20s | 12.0643ms | 12.1393ms | 5.8511ms | - | 0.0018ms | 194 | 35,062 | 효과 확인 | 80 Enemy에서도 visible mesh render 비용 제거 효과가 유지됐다. |
-| R05 | 80 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | 예정 | PIE 실행 전 Mode 2 고정 후 pose update isolation을 측정한다. |
+| Case | Enemy | Mode                  | 시간     | Frame p95 |  Game p95 |  GPU p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | 판정    | 메모                                                                                       |
+| ---- | ----: | --------------------- | ------ | --------: | --------: | -------: | ------------: | ----------: | ---------------: | ------------: | -------------- | ----- | ---------------------------------------------------------------------------------------- |
+| R00  |    40 | 0 VisibleDefault      | 37.43s |  9.9527ms |  9.3059ms | 7.1942ms |      1.7608ms |           - |         0.0022ms |           555 | 3,275,424      | 기준    | AI / BT / WeaponActor 제거 상태의 render coverage 기준값이다.                                      |
+| R01  |    40 | 1 HiddenKeepPose      | 37.39s |  9.3213ms |  8.7718ms | 5.9211ms |      1.6742ms |           - |         0.0018ms |           194 | 34,960         | 효과 확인 | visible mesh render 비용 제거로 GPU / DrawCalls / Primitives와 Frame p95가 함께 감소했다.             |
+| R04  |    40 | 2 HiddenAllowPoseSkip | 37.60s |  8.8687ms |  6.0611ms | 5.8075ms |      0.0577ms |           - |         0.0018ms |           193 | 34,976         | 효과 확인 | PIE 실행 전 Mode 2 고정. Mode 1 대비 Animation p95가 1.6742ms에서 0.0577ms로 감소했다.                  |
+| R02  |    80 | 0 VisibleDefault      | 37.06s | 13.6320ms | 13.6657ms | 7.9463ms |      3.7604ms |           - |         0.0019ms |           916 | 5,400,982      | 기준    | AI / BT / WeaponActor 제거 상태에서도 skeletal mesh 수 증가로 Frame / DrawCalls / Primitives가 증가했다. |
+| R03  |    80 | 1 HiddenKeepPose      | 37.20s | 12.0643ms | 12.1393ms | 5.8511ms |      2.8188ms |           - |         0.0018ms |           194 | 35,062         | 효과 확인 | 80 Enemy에서도 visible mesh render 비용 제거 효과가 유지됐다.                                          |
+| R05  |    80 | 2 HiddenAllowPoseSkip | 37.43s |  8.9149ms |  6.9307ms | 5.9291ms |      0.0933ms |           - |         0.0018ms |           194 | 34,980         | 효과 확인 | PIE 실행 전 Mode 2 고정. Mode 1 대비 Animation p95가 2.8188ms에서 0.0933ms로 감소했다.                  |
 
 측정 해석:
 
@@ -357,6 +357,7 @@ Render Coverage 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives�
 80 Enemy Render Coverage Mode 0에서는 AI / BT / WeaponActor가 제거된 상태에서도 Frame p95와 DrawCalls / Primitives가 증가했다.
 80 Enemy Render Coverage Mode 1에서는 DrawCalls p95가 916에서 194로, Primitives p95가 5,400,982에서 35,062로 감소했고 Frame p95도 13.6320ms에서 12.0643ms로 낮아졌다.
 40 Enemy Render Coverage Mode 2에서는 Mode 1 대비 GPU / DrawCalls / Primitives는 거의 유지됐지만 Animation p95가 크게 감소했다.
+80 Enemy Render Coverage Mode 2에서도 같은 패턴이 반복되어, Mode 2는 render cost 추가 절감보다 hidden 상태의 animation / pose update 비용 절감축으로 해석한다.
 ```
 
 측정 과정에서 확인한 문제와 분리:
