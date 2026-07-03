@@ -257,6 +257,24 @@ Mode 2: HiddenAllowPoseSkip
 -> WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨리는 것으로 관찰되어 정규 성능 측정에서 제외한다.
 ```
 
+Mode 2 적용 범위:
+
+```text
+Mode 2는 전투 중인 Enemy에 바로 적용할 Runtime LOD 후보가 아니다.
+Mode 2는 먼 거리 / 비전투 / 비용 분리 조건에서 animation / pose update 비용을 확인하기 위한 측정축이다.
+PIE 실행 중 Mode 0 또는 Mode 1에서 Mode 2로 전환하면 전환 시점의 pose가 남아 측정이 오염될 수 있다.
+따라서 Mode 2 비용 측정은 PIE 실행 전 CVar를 Mode 2로 고정한 상태에서 수행한다.
+```
+
+Runtime LOD 설계 해석:
+
+```text
+MoveTo 기반 이동은 actor transform을 Movement / PathFollowing이 갱신하므로 pose update skip과 별개로 계속 움직일 수 있다.
+Montage 기반 공격은 SkeletalMesh pose update와 notify / socket timing에 의존하므로 Mode 2 상태에서 멈추거나 깨질 수 있다.
+따라서 Mode 2는 combat-capable LOD가 아니라 distant moving 또는 dormant 계층의 후보로만 다룬다.
+Combat 진입 전에는 Mode 0 또는 최소 Mode 1로 복귀한 뒤 action / montage를 시작해야 한다.
+```
+
 기록 기준:
 
 ```text
@@ -296,6 +314,8 @@ cosmetic update 또는 일부 collision cost 축소 후보
 ```text
 멀리 있거나 현재 전투 영향도가 낮은 Enemy
 mesh visibility / shadow / weapon actor / movement update 제한 후보
+combat montage 진입 금지
+필요할 경우 단순 MoveTo 중심의 BT만 유지
 ```
 
 ### Dormant
@@ -303,6 +323,7 @@ mesh visibility / shadow / weapon actor / movement update 제한 후보
 ```text
 매우 멀거나 현재 gameplay 영향도가 낮은 Enemy
 proxy 또는 representation 전환 후보
+BT / Perception / Movement / Anim update 비활성 후보
 P35에서는 구현하지 않고 후속 feature로 분리
 ```
 

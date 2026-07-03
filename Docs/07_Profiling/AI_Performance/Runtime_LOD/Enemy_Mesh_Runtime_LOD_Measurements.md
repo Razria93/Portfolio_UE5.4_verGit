@@ -89,6 +89,16 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 -> visibility 기반 pose skip 허용
 ```
 
+Mode 2 측정 기준:
+
+```text
+Mode 2는 gameplay-safe Runtime LOD 후보가 아니라 animation / pose update 비용을 분리하기 위한 측정축이다.
+PIE 실행 중 Mode 0 또는 Mode 1에서 Mode 2로 전환하면 전환 시점의 pose / socket state가 남아 결과가 오염된다.
+Mode 2 측정은 PIE 실행 전 CVar를 Mode 2로 고정한 뒤 시작한다.
+Render Coverage 조건에서만 정규 비교에 사용한다.
+Gameplay Stress 조건에서는 montage / socket / notify 흐름을 깨뜨릴 수 있으므로 정규 측정에서 제외한다.
+```
+
 ---
 
 ## Summary Table
@@ -109,8 +119,10 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | R00 | `Profile(20260703_184111).csv` | 40 | 0 VisibleDefault | 3.713s-33.713s | 9.9527ms | 9.3059ms | 7.1942ms | 0.0741ms | - | 0.0022ms | 555 | 3,275,424 | 40 | Render coverage baseline. AI / BT / WeaponActor 제거 확인 |
 | R01 | `Profile(20260703_184341).csv` | 40 | 1 HiddenKeepPose | 3.697s-33.697s | 9.3213ms | 8.7718ms | 5.9211ms | 0.0628ms | - | 0.0018ms | 194 | 34,960 | 40 | Mesh hidden render coverage comparison |
+| R04 | - | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | 예정. PIE 실행 전 Mode 2 고정 후 pose update isolation 측정 |
 | R02 | `Profile(20260703_184650).csv` | 80 | 0 VisibleDefault | 3.532s-33.532s | 13.6320ms | 13.6657ms | 7.9463ms | 0.0838ms | - | 0.0019ms | 916 | 5,400,982 | 80 | 80 Enemy render coverage baseline |
 | R03 | `Profile(20260703_185330).csv` | 80 | 1 HiddenKeepPose | 3.600s-33.600s | 12.0643ms | 12.1393ms | 5.8511ms | 0.0548ms | - | 0.0018ms | 194 | 35,062 | 80 | 80 Enemy mesh hidden render coverage comparison |
+| R05 | - | 80 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | 예정. PIE 실행 전 Mode 2 고정 후 pose update isolation 측정 |
 
 ---
 

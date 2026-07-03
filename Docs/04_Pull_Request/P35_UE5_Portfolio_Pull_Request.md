@@ -263,6 +263,15 @@ WeaponActor가 hand / holster socket에 attach된 상태라면 검이 hidden 직
 따라서 `EnemyMeshMode 1`은 render 비용 분리 측정에 가깝고, `EnemyMeshMode 2`는 `skeletal mesh visibility / pose update 영향 포함` 극단 비교로 해석한다.
 Mode 2는 WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨리는 것으로 관찰되어 정규 성능 측정에서 제외한다.
 
+Mode 2 추가 해석:
+
+```text
+Mode 2는 전투 중 Enemy에 바로 적용할 gameplay-safe Runtime LOD 후보가 아니다.
+Mode 2는 Render Coverage 조건에서 animation / pose update 비용을 분리하기 위한 측정축으로만 사용한다.
+PIE 실행 중 Mode 0 또는 Mode 1에서 Mode 2로 전환하면 전환 시점의 pose / socket state가 남아 결과가 오염될 수 있다.
+따라서 Mode 2 측정은 PIE 실행 전 CVar를 Mode 2로 고정한 뒤 수행한다.
+```
+
 측정 조건 분리:
 
 ```text
@@ -310,8 +319,10 @@ WeaponActor socket follow 유지 여부 확인
 80 Enemy / EnemyMeshMode 1 측정 완료
 40 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 40 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
+40 Enemy / RenderCoverage / EnemyMeshMode 2 측정 예정
 80 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
+80 Enemy / RenderCoverage / EnemyMeshMode 2 측정 예정
 ```
 
 측정 결과:
@@ -332,8 +343,10 @@ WeaponActor socket follow 유지 여부 확인
 | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | R00 | 40 | 0 VisibleDefault | 37.43s | 9.9527ms | 9.3059ms | 7.1942ms | - | 0.0022ms | 555 | 3,275,424 | 기준 | AI / BT / WeaponActor 제거 상태의 render coverage 기준값이다. |
 | R01 | 40 | 1 HiddenKeepPose | 37.39s | 9.3213ms | 8.7718ms | 5.9211ms | - | 0.0018ms | 194 | 34,960 | 효과 확인 | visible mesh render 비용 제거로 GPU / DrawCalls / Primitives와 Frame p95가 함께 감소했다. |
+| R04 | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | 예정 | PIE 실행 전 Mode 2 고정 후 pose update isolation을 측정한다. |
 | R02 | 80 | 0 VisibleDefault | 37.06s | 13.6320ms | 13.6657ms | 7.9463ms | - | 0.0019ms | 916 | 5,400,982 | 기준 | AI / BT / WeaponActor 제거 상태에서도 skeletal mesh 수 증가로 Frame / DrawCalls / Primitives가 증가했다. |
 | R03 | 80 | 1 HiddenKeepPose | 37.20s | 12.0643ms | 12.1393ms | 5.8511ms | - | 0.0018ms | 194 | 35,062 | 효과 확인 | 80 Enemy에서도 visible mesh render 비용 제거 효과가 유지됐다. |
+| R05 | 80 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | 예정 | PIE 실행 전 Mode 2 고정 후 pose update isolation을 측정한다. |
 
 측정 해석:
 
