@@ -163,6 +163,16 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 -> PIE 중 변경할 수 있으며 다음 Tick에서 반영된다.
 ```
 
+다음 측정축:
+
+```text
+WeaponActor Isolation
+-> Gameplay Stress 조건에서 Enemy WeaponActor 생성 / attach / socket follow / collision / trail 비용을 분리한다.
+-> Enemy WeaponActor만 비활성화하고 Player weapon은 유지한다.
+-> 목적은 gameplay-safe LOD 적용이 아니라 비용 분리 측정이다.
+-> 유의미한 차이가 확인되면 distant / non-combat 계층에서 WeaponActor 생성 지연 또는 비활성 정책으로 후속 검토한다.
+```
+
 ### 2. Runtime LOD 단계 정의
 
 초기 정책 후보:
@@ -323,6 +333,7 @@ WeaponActor socket follow 유지 여부 확인
 80 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 2 측정 완료
+WeaponActor Isolation 측정 예정
 ```
 
 측정 결과:

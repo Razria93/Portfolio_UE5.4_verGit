@@ -174,6 +174,66 @@ Render Coverage
 -> 화면에 노출된 skeletal mesh render 비용을 분리한다.
 ```
 
+### WeaponActor Isolation 측정 계획
+
+EnemyMeshMode 측정으로 render cost와 animation / pose update cost를 분리했다.
+다음 축은 gameplay stress 조건에 남아 있는 WeaponActor 비용을 분리한다.
+
+측정 목적:
+
+```text
+Enemy WeaponActor 생성 / attach / socket follow 비용 확인
+Weapon collision component / overlap delegate 유지 비용 확인
+Trail / Niagara / feedback 경로가 포함될 때의 차이 확인
+Gameplay Stress에서 남는 GameThread 비용 중 WeaponActor 축의 비중 확인
+```
+
+측정 조건:
+
+```text
+Map: MAP_AIPerf_40Enemy 또는 80 Enemy 확장 기준
+State: Engage
+Log State: -noailogging
+PIE: F11 fullscreen
+Analysis Window: 앞 3초 / 뒤 3초 제외, 중앙 30초 사용
+EnemyMeshMode: 0 VisibleDefault
+```
+
+비교 방식:
+
+```text
+WeaponActor On
+-> 현재 gameplay stress 기준값
+
+Enemy WeaponActor Off
+-> Enemy 쪽 WeaponActor 생성만 막는다.
+-> Player weapon은 유지한다.
+-> 목적은 gameplay-safe 적용 후보가 아니라 WeaponActor 비용 분리다.
+```
+
+주의:
+
+```text
+WeaponActor Off는 sword attack의 시각 표현, socket attach, collision, trail, hit overlap 경로를 깨뜨릴 수 있다.
+따라서 정규 전투 LOD 후보가 아니라 비용 분리 측정축이다.
+측정 결과가 유의미하면 후속 설계에서 distant / non-combat 계층의 WeaponActor 생성 지연 또는 비활성 정책으로 검토한다.
+Combat-capable Enemy는 WeaponActor를 유지한다.
+```
+
+기록 지표:
+
+```text
+FrameTime p95
+GameThreadTime p95
+GPUTime p95
+Animation p95
+TickActors p95
+ActorCount/CWeaponActor
+RHI/DrawCalls p95
+RHI/PrimitivesDrawn p95
+gameplay smoke result
+```
+
 Render Coverage 통제 조건:
 
 ```text

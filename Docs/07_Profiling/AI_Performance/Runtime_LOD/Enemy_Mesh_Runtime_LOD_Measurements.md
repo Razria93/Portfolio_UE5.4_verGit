@@ -180,6 +180,16 @@ Gameplay Stress에서 frame 회복이 제한적이었던 이유는 render 비용
 Mesh render 축은 40 / 80 측정에서 패턴이 반복됐으므로 120 정규 측정 없이 1차 판단을 종료한다.
 ```
 
+다음 측정축:
+
+```text
+WeaponActor Isolation
+-> Gameplay Stress 조건에서 Enemy WeaponActor 비용을 분리한다.
+-> Enemy WeaponActor 생성 / attach / socket follow / collision / trail 경로의 영향을 확인한다.
+-> Player weapon은 유지하고 Enemy WeaponActor만 비활성화한다.
+-> gameplay-safe LOD 후보가 아니라 비용 분리 측정축으로 기록한다.
+```
+
 ---
 
 ## Case M00 - 40 Enemy / Engage / EnemyMeshMode 0
