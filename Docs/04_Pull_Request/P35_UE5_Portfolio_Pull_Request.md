@@ -460,7 +460,8 @@ WeaponActor socket follow 유지 여부 확인
 80 Enemy / RenderCoverage / EnemyMeshMode 0 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 1 측정 완료
 80 Enemy / RenderCoverage / EnemyMeshMode 2 측정 완료
-WeaponActor Isolation 측정 예정
+40 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 0 측정 완료
+40 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
 ```
 
 측정 결과:
@@ -486,6 +487,13 @@ WeaponActor Isolation 측정 예정
 | R03  |    80 | 1 HiddenKeepPose      | 37.20s | 12.0643ms | 12.1393ms | 5.8511ms |      2.8188ms |           - |         0.0018ms |           194 | 35,062         | 효과 확인 | 80 Enemy에서도 visible mesh render 비용 제거 효과가 유지됐다.                                          |
 | R05  |    80 | 2 HiddenAllowPoseSkip | 37.43s |  8.9149ms |  6.9307ms | 5.9291ms |      0.0933ms |           - |         0.0018ms |           194 | 34,980         | 효과 확인 | PIE 실행 전 Mode 2 고정. Mode 1 대비 Animation p95가 2.8188ms에서 0.0933ms로 감소했다.                  |
 
+### WeaponActor Isolation
+
+| Case | Enemy | DisableEnemyWeaponActor | 시간 | Frame p95 | Game p95 | GPU p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | CWeaponActor p95 | TotalActor p95 | SkeletalMesh Tick | 판정 | 메모 |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| W00 | 40 | 0 | 37.25s | 10.8848ms | 9.8752ms | 7.1903ms | 1.8961ms | 0.1308ms | 0.1306ms | 733 | 41 | 339 | 80 | 기준 | Enemy WeaponActor 생성 기준이다. |
+| W01 | 40 | 1 | 37.21s | 9.8752ms | 9.2505ms | 7.0476ms | 1.5954ms | 0.1265ms | 0.1187ms | 573 | 0 | 299 | 40 | 효과 확인 | Enemy WeaponActor 제거로 Actor / SkeletalMesh tick / DrawCalls / Frame p95가 함께 감소했다. |
+
 측정 해석:
 
 ```text
@@ -496,6 +504,8 @@ Render Coverage 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives�
 80 Enemy Render Coverage Mode 1에서는 DrawCalls p95가 916에서 194로, Primitives p95가 5,400,982에서 35,062로 감소했고 Frame p95도 13.6320ms에서 12.0643ms로 낮아졌다.
 40 Enemy Render Coverage Mode 2에서는 Mode 1 대비 GPU / DrawCalls / Primitives는 거의 유지됐지만 Animation p95가 크게 감소했다.
 80 Enemy Render Coverage Mode 2에서도 같은 패턴이 반복되어, Mode 2는 render cost 추가 절감보다 hidden 상태의 animation / pose update 비용 절감축으로 해석한다.
+WeaponActor Isolation에서는 DisableEnemyWeaponActor 1 적용 시 CWeaponActor가 41에서 0으로 떨어지고 TotalActorCount와 SkeletalMeshComponent tick도 함께 감소했다.
+따라서 WeaponActor는 Object Management와 Representation 양쪽에 비용이 있는 축으로 본다.
 ```
 
 측정 과정에서 확인한 문제와 분리:
@@ -551,6 +561,7 @@ Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 Docs/06_notes/N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
 Docs/06_notes/N20_AI_Profiling_Test_Asset_Plan_Note.md
 Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
+Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
 Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 ```

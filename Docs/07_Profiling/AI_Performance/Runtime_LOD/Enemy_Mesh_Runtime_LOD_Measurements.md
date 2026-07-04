@@ -4,6 +4,12 @@
 
 이 문서는 `P35: AI Runtime LOD 정책 정리`에서 수행하는 Enemy mesh runtime LOD 측정 결과를 누적 기록한다.
 
+CSV 해석 기준:
+
+```text
+Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+```
+
 측정 목표:
 
 ```text
@@ -124,6 +130,13 @@ Gameplay Stress 조건에서는 montage / socket / notify 흐름을 깨뜨릴 �
 | R03 | `Profile(20260703_185330).csv` | 80 | 1 HiddenKeepPose | 3.600s-33.600s | 12.0643ms | 12.1393ms | 5.8511ms | 0.0548ms | 2.8188ms | - | 0.0018ms | 194 | 35,062 | 80 | 80 Enemy mesh hidden render coverage comparison |
 | R05 | `Profile(20260703_202949).csv` | 80 | 2 HiddenAllowPoseSkip | 3.716s-33.716s | 8.9149ms | 6.9307ms | 5.9291ms | 0.0559ms | 0.0933ms | - | 0.0018ms | 194 | 34,980 | 80 | PIE 실행 전 Mode 2 고정. pose update isolation 측정 |
 
+### WeaponActor Isolation
+
+| Case | CSV | Enemy | DisableEnemyWeaponActor | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | CWeaponActor p95 | TotalActor p95 | SkeletalMesh Tick | Note |
+| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| W00 | `Profile(20260704_202112).csv` | 40 | 0 | 3s trim | 10.8848ms | 9.8752ms | 7.1903ms | 0.0757ms | 1.8961ms | 0.1308ms | 0.1306ms | 733 | 3,353,510 | 41 | 339 | 80 | Enemy WeaponActor 생성 기준 |
+| W01 | `Profile(20260704_202317).csv` | 40 | 1 | 3s trim | 9.8752ms | 9.2505ms | 7.0476ms | 0.0718ms | 1.5954ms | 0.1265ms | 0.1187ms | 573 | 3,276,896 | 0 | 299 | 40 | Enemy WeaponActor 생성 차단 |
+
 ---
 
 ## Measurement Refinement
@@ -208,6 +221,41 @@ Object Management / WeaponActor Isolation
 -> Player weapon은 유지하고 Enemy WeaponActor만 비활성화한다.
 -> `Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor` 스위치로 측정한다.
 -> gameplay-safe LOD 후보가 아니라 비용 분리 측정축으로 기록한다.
+```
+
+WeaponActor Isolation 40 Enemy 1차 측정 결과:
+
+```text
+DisableEnemyWeaponActor 0 -> 1
+
+ActorCount/CWeaponActor p95: 41 -> 0
+ActorCount/TotalActorCount p95: 339 -> 299
+Ticks/SkeletalMeshComponent p95: 80 -> 40
+RHI/DrawCalls p95: 733 -> 573
+RHI/PrimitivesDrawn p95: 3,353,510 -> 3,276,896
+
+FrameTime p95: 10.8848ms -> 9.8752ms
+GameThreadTime p95: 9.8752ms -> 9.2505ms
+GPUTime p95: 7.1903ms -> 7.0476ms
+Animation p95: 1.8961ms -> 1.5954ms
+```
+
+해석:
+
+```text
+Enemy WeaponActor 제거 CVar는 정상 적용됐다.
+ActorCount/CWeaponActor가 0으로 떨어지고, TotalActorCount와 SkeletalMeshComponent tick도 함께 감소했다.
+Frame / GameThread / Animation / DrawCalls가 함께 낮아져 WeaponActor는 Object Management와 Representation 양쪽에 비용이 있는 축으로 본다.
+GPU p95 감소폭은 제한적이므로, 이 측정만으로 WeaponActor가 GPU 병목의 핵심이라고 보지는 않는다.
+```
+
+주의:
+
+```text
+ActorCount/CEnemy는 81로 기록됐지만 Ticks/CEnemy, Ticks/BehaviorTreeComponent, Ticks/CAIController는 40으로 유지됐다.
+따라서 실제 runtime 측정 대상은 40 Enemy로 해석한다.
+ActorCount/CEnemy는 PIE / editor world count가 섞일 수 있으므로 active Enemy 수 판단에는 Tick count를 우선한다.
+해당 기준은 Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md를 따른다.
 ```
 
 Runtime LOD 단계 연결:
