@@ -45,6 +45,124 @@ CSV는 전체 capture duration을 기록하고, 비교값 계산 시 앞뒤 3초
 
 ---
 
+## 측정 실행 기준
+
+측정은 가능하면 다음 순서로 진행한다.
+
+```text
+1. 측정 map / camera / gameplay state 고정
+2. CVar 적용
+3. PIE 실행
+4. PIE 시작 직후 필요하면 UE console에서 gc 입력
+5. 2~3초 대기
+6. csvprofile start
+7. 약 36초 유지
+8. csvprofile stop
+9. capture log에 GC 이벤트가 있었는지 확인
+10. first 3s / last 3s trim 후 p95 중심으로 해석
+```
+
+주의:
+
+```text
+gc 명령은 측정 구간 중 GC 발생을 완전히 막는 통제 장치가 아니다.
+csvprofile start 전에 GC 정리를 시도해서 capture 중 GC가 끼어들 가능성을 줄이는 절차로만 사용한다.
+gc 입력 여부는 대표값 선정 기준으로 사용하지 않는다.
+대표값 선정은 csvprofile start 이후 capture log에 CSVEvent "GC"가 기록됐는지 여부를 우선한다.
+```
+
+UI / editor 오염 변수는 다음 기준으로 줄인다.
+
+```text
+PIE는 F11 fullscreen 기준으로 유지한다.
+측정 중 Output Log / Details / Content Browser를 조작하지 않는다.
+측정 중 console 입력창을 열어둔 채 시간을 보내지 않는다.
+csvprofile start / stop 입력 시 외에는 viewport 또는 빈 영역에 마우스를 둔다.
+대량 로그가 발생하는 조건에서는 측정하지 않는다.
+```
+
+---
+
+## 측정 요청 템플릿
+
+다음 측정을 요청할 때는 가능한 한 아래 템플릿을 함께 제공한다.
+
+기본 템플릿:
+
+```text
+Case:
+Map:
+Enemy:
+State:
+CVar:
+Capture Duration: about 36s
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera / PlayerStart:
+
+Pre-capture:
+1. CVar 적용
+2. PIE 실행
+3. 선택: PIE 시작 직후 gc 입력
+4. 2~3초 대기
+5. csvprofile start
+
+Capture:
+1. 약 36초 유지
+2. csvprofile stop
+
+확인 항목:
+- target CVar 적용 여부
+- target actor / component count 변화 여부
+- gameplay smoke 유지 여부
+- capture 중 CSVEvent "GC" 발생 여부
+- 측정 중 editor / output log / console 조작 여부
+```
+
+결과 공유 템플릿:
+
+```text
+Case:
+CSV:
+Capture Duration:
+Analysis Window:
+Log State:
+PIE:
+Map:
+CVar:
+
+Pre-capture log:
+Cmd: <CVar>
+Cmd: gc                 // 입력했다면
+Cmd: csvprofile start
+
+Capture log:
+LogCsvProfiler: Display: Capture Starting
+LogCsvProfiler: Display: Metadata set : starttimestamp="..."
+LogCsvProfiler: Display: CSVEvent "GC" [Frame ...]   // 있으면 포함
+Cmd: csvprofile stop
+LogCsvProfiler: Display: Metadata set : endtimestamp="..."
+LogCsvProfiler: Display: Capture Ended. Writing CSV to file : ...
+LogCsvProfiler: Display: Frames : ...
+
+Observed:
+- 측정 중 특이사항
+- 조작 여부
+- gameplay smoke 확인 여부
+```
+
+분석 응답 기준:
+
+```text
+분석할 때는 먼저 의심 지점을 말한다.
+예: CVar 미적용, GC 이벤트, Capture Duration 차이, map / camera 조건 불일치, target count 불일치.
+의심 지점이 없으면 "측정 조건상 큰 이상 없음"을 먼저 명시한다.
+그 다음 p95 중심으로 결과를 해석한다.
+```
+
+---
+
 ## 비교 전 확인 순서
 
 ### 1. 측정 조건 확인
@@ -100,6 +218,8 @@ Log State
 Capture Duration
 Analysis Window
 Gameplay state
+GC event 여부
+UI / editor 조작 여부
 ```
 
 조건이 다르면 같은 표 안에 넣더라도 "정규 비교"가 아니라 "참고 측정"으로 분리한다.
@@ -147,6 +267,29 @@ max
 -> outlier 확인용
 -> 단독으로 결론을 내리지 않는다.
 ```
+
+### GC / outlier
+
+GC 이벤트는 작은 ms 단위 측정에서 해석을 흔들 수 있다.
+
+기본 기준:
+
+```text
+GC 이벤트 없음
+-> 대표값 후보로 적합하다.
+
+GC 이벤트 있음
+-> p95는 조건부로 사용할 수 있다.
+-> p99 / max는 보조 지표로만 본다.
+-> 결과가 애매하면 같은 조건으로 재측정한다.
+
+On / Off 중 한쪽에만 GC 이벤트가 있음
+-> 직접 비교 신뢰도가 낮아진다.
+-> 가능하면 GC 이벤트가 없는 쪽으로 재측정해 대표값을 교체한다.
+```
+
+GC 이벤트가 없더라도 결과가 자동으로 정확해지는 것은 아니다.
+다만 측정 구간의 큰 오염 변수가 하나 줄어든 것이므로, 같은 조건 재측정에서 방향이 반복되면 결론 신뢰도가 올라간다.
 
 ---
 
@@ -223,6 +366,8 @@ GameThread / GPU 방향이 예상과 반대로 크게 튐
 Capture Duration이 크게 다름
 Analysis Window가 다름
 PIE fullscreen / camera / map 조건이 다름
+GC 이벤트가 한쪽 측정에만 존재함
+측정 중 console / output log / editor panel 조작이 있었음
 outlier max가 p95 해석을 왜곡할 정도로 큼
 ```
 

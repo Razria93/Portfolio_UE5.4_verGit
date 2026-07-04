@@ -10,6 +10,18 @@ CSV 해석 기준:
 Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
 ```
 
+측정 실행 기준:
+
+```text
+PIE F11 fullscreen 유지
+csvprofile start / stop 외 editor 조작 최소화
+필요하면 PIE 시작 직후 gc 입력 후 2~3초 대기
+gc 입력 자체는 CSV capture 구간에 포함하지 않음
+capture log에서 GC 이벤트 여부 확인
+GC 이벤트가 있는 측정은 p99 / max를 보조 지표로만 사용
+결과가 애매하면 같은 조건으로 재측정
+```
+
 측정 목표:
 
 ```text
