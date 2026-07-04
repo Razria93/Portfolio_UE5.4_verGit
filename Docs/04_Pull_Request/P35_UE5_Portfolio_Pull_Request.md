@@ -462,6 +462,8 @@ WeaponActor socket follow 유지 여부 확인
 80 Enemy / RenderCoverage / EnemyMeshMode 2 측정 완료
 40 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 0 측정 완료
 40 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
+80 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 0 측정 완료
+80 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
 ```
 
 측정 결과:
@@ -489,10 +491,12 @@ WeaponActor socket follow 유지 여부 확인
 
 ### WeaponActor Isolation
 
-| Case | Enemy | DisableEnemyWeaponActor | 시간 | Frame p95 | Game p95 | GPU p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | CWeaponActor p95 | TotalActor p95 | SkeletalMesh Tick | 판정 | 메모 |
-| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| W00 | 40 | 0 | 37.25s | 10.8848ms | 9.8752ms | 7.1903ms | 1.8961ms | 0.1308ms | 0.1306ms | 733 | 41 | 339 | 80 | 기준 | Enemy WeaponActor 생성 기준이다. |
-| W01 | 40 | 1 | 37.21s | 9.8752ms | 9.2505ms | 7.0476ms | 1.5954ms | 0.1265ms | 0.1187ms | 573 | 0 | 299 | 40 | 효과 확인 | Enemy WeaponActor 제거로 Actor / SkeletalMesh tick / DrawCalls / Frame p95가 함께 감소했다. |
+| Case | Enemy | DisableEnemyWeaponActor | 시간     | Frame p95 |  Game p95 |  GPU p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | CWeaponActor p95 | TotalActor p95 | SkeletalMesh Tick | 판정    | 메모                                                                                |
+| ---- | ----: | ----------------------: | ------ | --------: | --------: | -------: | ------------: | ----------: | ---------------: | ------------: | ---------------: | -------------: | ----------------: | ----- | --------------------------------------------------------------------------------- |
+| W00  |    40 |                       0 | 37.25s | 10.8848ms |  9.8752ms | 7.1903ms |      1.8961ms |    0.1308ms |         0.1306ms |           733 |               41 |            339 |                80 | 기준    | Enemy WeaponActor 생성 기준이다.                                                        |
+| W01  |    40 |                       1 | 37.21s |  9.8752ms |  9.2505ms | 7.0476ms |      1.5954ms |    0.1265ms |         0.1187ms |           573 |                0 |            299 |                40 | 효과 확인 | Enemy WeaponActor 제거로 Actor / SkeletalMesh tick / DrawCalls / Frame p95가 함께 감소했다. |
+| W02  |    80 |                       0 | 37.22s | 16.8035ms | 16.7116ms | 8.0555ms |      4.0316ms |    0.2720ms |         0.4109ms |         1,258 |               81 |            499 |               160 | 기준    | 80 Enemy WeaponActor 생성 기준이다.                                                     |
+| W03  |    80 |                       1 | 37.18s | 14.8267ms | 14.8160ms | 7.8513ms |      3.5294ms |    0.2493ms |         0.2526ms |           936 |                0 |            419 |                80 | 효과 확인 | Actor / SkeletalMesh tick / DrawCalls / Frame p95가 함께 감소했다.                       |
 
 측정 해석:
 
@@ -506,6 +510,9 @@ Render Coverage 조건에서는 EnemyMeshMode 1이 GPU / DrawCalls / Primitives�
 80 Enemy Render Coverage Mode 2에서도 같은 패턴이 반복되어, Mode 2는 render cost 추가 절감보다 hidden 상태의 animation / pose update 비용 절감축으로 해석한다.
 WeaponActor Isolation에서는 DisableEnemyWeaponActor 1 적용 시 CWeaponActor가 41에서 0으로 떨어지고 TotalActorCount와 SkeletalMeshComponent tick도 함께 감소했다.
 따라서 WeaponActor는 Object Management와 Representation 양쪽에 비용이 있는 축으로 본다.
+80 Enemy에서도 같은 actor / component / draw call 감소가 반복됐지만 Frame / GameThread p95는 거의 회복되지 않았다.
+재측정 기준에서는 Frame / GameThread / Animation p95도 함께 감소했다.
+따라서 WeaponActor 제거는 Object Management와 animation update 비용 축에서 유효하지만, 실제 적용은 combat-capable 단계와 weapon dependency를 함께 고려해야 한다.
 ```
 
 측정 과정에서 확인한 문제와 분리:

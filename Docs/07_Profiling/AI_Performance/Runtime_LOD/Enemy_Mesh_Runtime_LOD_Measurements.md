@@ -136,6 +136,8 @@ Gameplay Stress 조건에서는 montage / socket / notify 흐름을 깨뜨릴 �
 | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | W00 | `Profile(20260704_202112).csv` | 40 | 0 | 3s trim | 10.8848ms | 9.8752ms | 7.1903ms | 0.0757ms | 1.8961ms | 0.1308ms | 0.1306ms | 733 | 3,353,510 | 41 | 339 | 80 | Enemy WeaponActor 생성 기준 |
 | W01 | `Profile(20260704_202317).csv` | 40 | 1 | 3s trim | 9.8752ms | 9.2505ms | 7.0476ms | 0.0718ms | 1.5954ms | 0.1265ms | 0.1187ms | 573 | 3,276,896 | 0 | 299 | 40 | Enemy WeaponActor 생성 차단 |
+| W02 | `Profile(20260704_210051).csv` | 80 | 0 | 3s trim | 16.8035ms | 16.7116ms | 8.0555ms | 0.2060ms | 4.0316ms | 0.2720ms | 0.4109ms | 1,258 | 6,051,648 | 81 | 499 | 160 | 80 Enemy WeaponActor 생성 기준 |
+| W03 | `Profile(20260704_205212).csv` | 80 | 1 | 3s trim | 14.8267ms | 14.8160ms | 7.8513ms | 0.1011ms | 3.5294ms | 0.2493ms | 0.2526ms | 936 | 5,908,798 | 0 | 419 | 80 | 80 Enemy WeaponActor 생성 차단 |
 
 ---
 
@@ -256,6 +258,43 @@ ActorCount/CEnemy는 81로 기록됐지만 Ticks/CEnemy, Ticks/BehaviorTreeCompo
 따라서 실제 runtime 측정 대상은 40 Enemy로 해석한다.
 ActorCount/CEnemy는 PIE / editor world count가 섞일 수 있으므로 active Enemy 수 판단에는 Tick count를 우선한다.
 해당 기준은 Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md를 따른다.
+```
+
+WeaponActor Isolation 80 Enemy 측정 결과:
+
+```text
+DisableEnemyWeaponActor 0 -> 1
+
+ActorCount/CWeaponActor p95: 81 -> 0
+ActorCount/TotalActorCount p95: 499 -> 419
+Ticks/SkeletalMeshComponent p95: 160 -> 80
+RHI/DrawCalls p95: 1,258 -> 936
+RHI/PrimitivesDrawn p95: 6,051,648 -> 5,908,798
+
+FrameTime p95: 16.8035ms -> 14.8267ms
+GameThreadTime p95: 16.7116ms -> 14.8160ms
+GPUTime p95: 8.0555ms -> 7.8513ms
+Animation p95: 4.0316ms -> 3.5294ms
+```
+
+해석:
+
+```text
+80 Enemy에서도 Enemy WeaponActor 제거 CVar는 정상 적용됐다.
+CWeaponActor가 81에서 0으로 떨어지고, TotalActorCount와 SkeletalMeshComponent tick도 80개 감소했다.
+DrawCalls와 Primitives도 감소했으므로 WeaponActor는 80 Enemy 규모에서도 actor / component / representation 비용을 만든다.
+GC 이벤트가 없는 On 재측정 기준에서도 FrameTime p95와 GameThreadTime p95가 함께 감소했다.
+Animation p95 감소폭이 비교적 커서 WeaponActor 제거는 animation / skeletal component update 비용에도 영향을 준다.
+다만 GPU p95 감소폭은 제한적이므로, WeaponActor는 GPU 병목보다 actor / component / animation update 비용 축으로 해석한다.
+80 Enemy 기준에서도 WeaponActor 제거는 유효한 Object Management 최적화 후보지만, 실제 gameplay 적용은 combat-capable 단계와 weapon dependency를 함께 고려해야 한다.
+```
+
+주의:
+
+```text
+이전 80 Enemy 측정은 Frame p95 차이가 작아 해석이 애매했으므로 재측정했다.
+W02 / W03 대표값은 둘 다 capture 로그에 GC 이벤트가 기록되지 않은 측정값을 사용한다.
+p99 / max는 여전히 일시적 outlier 영향을 받을 수 있으므로 보조 지표로만 본다.
 ```
 
 Runtime LOD 단계 연결:
