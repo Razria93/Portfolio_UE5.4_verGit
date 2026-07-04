@@ -178,15 +178,37 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 -> PIE 중 변경할 수 있으며 다음 Tick에서 반영된다.
 ```
 
-다음 측정축:
+현재까지 완료된 측정축:
 
 ```text
+Representation / EnemyMeshMode
+-> Gameplay Stress 조건에서 Enemy mesh visibility와 pose update 비용을 확인했다.
+-> Render Coverage 조건에서 mesh render cost와 hidden 상태의 animation / pose update cost를 분리했다.
+-> EnemyMeshMode 2는 비용 분리에는 유효하지만 combat-capable LOD에서는 unsafe로 분류했다.
+
 WeaponActor Isolation
 -> Gameplay Stress 조건에서 Enemy WeaponActor 생성 / attach / socket follow / collision / trail 비용을 분리한다.
 -> Enemy WeaponActor만 비활성화하고 Player weapon은 유지한다.
 -> 목적은 gameplay-safe LOD 적용이 아니라 비용 분리 측정이다.
 -> `Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor` 스위치로 측정한다.
 -> 유의미한 차이가 확인되면 distant / non-combat 계층에서 WeaponActor 생성 지연 또는 비활성 정책으로 후속 검토한다.
+```
+
+다음 측정축:
+
+```text
+Simulation LOD / AI Perception
+-> Gameplay Stress 조건에서 Perception 비용과 감지 지연을 분리한다.
+-> 160~200 Enemy stress에서 관찰한 perception 지연과 연결해 active perception 수 / 거리 / 중요도 제어 후보를 검토한다.
+-> 실제 Perception active cap 구현은 후속 PR로 분리하고, P35에서는 측정축과 적용 가능성만 정리한다.
+
+Simulation LOD / BehaviorTree Update
+-> BT 실행 / service update 비용을 분리한다.
+-> Update interval / dirty flag / time slicing 후보는 측정 결과를 보고 후속 구현 여부를 결정한다.
+
+Simulation LOD / Movement / Nav
+-> Movement decision / PathFollowing / CharacterMovement 비용을 분리한다.
+-> 위치와 path를 바꾸는 gameplay 축이므로 Representation LOD와 분리해 판단한다.
 ```
 
 ### 2. Runtime LOD 단계 정의
@@ -347,7 +369,8 @@ BehaviorTree 구조 변경
 전투 로직 변경
 ```
 
-Perception LOD는 P36, Update LOD는 P37에서 다룬다.
+P35에서는 위 항목을 실제 gameplay 정책으로 구현하지 않는다.
+다만 Perception / BT / Movement는 Simulation LOD 측정축으로 남겨두고, 효과가 확인된 항목만 후속 PR에서 구현한다.
 
 ---
 

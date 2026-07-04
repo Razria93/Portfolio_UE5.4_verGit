@@ -226,15 +226,36 @@ P35 이후 측정 / 구현 순서:
 -> 효과가 확인된 축만 실제 runtime LOD 정책으로 구현
 ```
 
-다음 측정축:
+완료된 측정축:
 
 ```text
+Representation / EnemyMeshMode
+-> Gameplay Stress 조건에서 Enemy mesh visibility와 pose update 비용을 확인했다.
+-> Render Coverage 조건에서 mesh render cost와 hidden 상태의 animation / pose update cost를 분리했다.
+-> EnemyMeshMode 2는 비용 분리에는 유효하지만 combat-capable LOD에서는 unsafe로 분류했다.
+
 Object Management / WeaponActor Isolation
 -> Gameplay Stress 조건에서 Enemy WeaponActor 비용을 분리한다.
 -> Enemy WeaponActor 생성 / attach / socket follow / collision / trail 경로의 영향을 확인한다.
 -> Player weapon은 유지하고 Enemy WeaponActor만 비활성화한다.
 -> `Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor` 스위치로 측정한다.
 -> gameplay-safe LOD 후보가 아니라 비용 분리 측정축으로 기록한다.
+```
+
+다음 측정축:
+
+```text
+Simulation LOD / AI Perception
+-> Perception 비용과 감지 지연을 분리한다.
+-> 160~200 Enemy stress에서 관찰한 perception 지연을 active perception 수 / 거리 / 중요도 제어 후보와 연결해 검토한다.
+
+Simulation LOD / BehaviorTree Update
+-> BT 실행 / service update 비용을 분리한다.
+-> Update interval / dirty flag / time slicing 후보는 측정 결과를 보고 후속 구현 여부를 결정한다.
+
+Simulation LOD / Movement / Nav
+-> Movement decision / PathFollowing / CharacterMovement 비용을 분리한다.
+-> 위치와 path를 바꾸는 gameplay 축이므로 Representation LOD와 분리해 판단한다.
 ```
 
 WeaponActor Isolation 40 Enemy 1차 측정 결과:

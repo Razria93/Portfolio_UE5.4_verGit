@@ -720,6 +720,45 @@ Action Timeline
 5. 현재 직접 교전 중인 FullCombat Enemy는 마지막까지 유지한다.
 ```
 
+---
+
+## 현재 측정 상태
+
+### 완료된 측정축
+
+```text
+Representation / EnemyMeshMode
+-> Gameplay Stress 조건에서 mesh visibility 비용을 확인했다.
+-> Render Coverage 조건에서 mesh render cost와 hidden 상태의 animation / pose update cost를 분리했다.
+-> EnemyMeshMode 2는 비용 분리에는 유효하지만 combat-capable 단계에서는 unsafe로 분류한다.
+
+Object Management / WeaponActor Presence
+-> 40 / 80 Enemy 조건에서 Enemy WeaponActor 생성 여부를 분리했다.
+-> WeaponActor 제거는 ActorCount, SkeletalMeshComponent tick, DrawCalls, Frame / GameThread p95를 낮추는 유효 축으로 확인됐다.
+-> 실제 적용은 combat-capable 단계와 weapon dependency를 함께 고려해야 한다.
+```
+
+### 다음 측정축
+
+```text
+Simulation LOD / AI Perception
+-> Perception 비용과 감지 지연을 분리한다.
+-> 대량 Enemy stress에서 관찰한 perception 지연을 active perception 수 / 거리 / 중요도 제어 후보와 연결해 검토한다.
+
+Simulation LOD / BehaviorTree Update
+-> BT 실행 / service update 비용을 분리한다.
+-> Update interval / dirty flag / time slicing 후보는 측정 결과를 보고 후속 구현 여부를 결정한다.
+
+Simulation LOD / Movement / Nav
+-> Movement decision / PathFollowing / CharacterMovement 비용을 분리한다.
+-> 위치와 path를 바꾸는 gameplay 축이므로 Representation LOD와 분리해 판단한다.
+```
+
+P35에서는 측정축과 적용 가능성을 정리한다.
+실제 Perception active cap, BT interval LOD, Movement LOD, proxy / pooling 구현은 후속 PR에서 다룬다.
+
+---
+
 예상 구조:
 
 ```cpp
