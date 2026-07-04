@@ -88,46 +88,61 @@ PIE: F11 fullscreen
 
 ### 1. Runtime 비용 축 분리 측정
 
-측정 축:
+P35 이후 Runtime LOD 작업은 다음 흐름으로 진행한다.
 
 ```text
-WeaponActor off
-Combat collision off / reduced
-Mesh hidden
-AnimInstance off 또는 animation update 최소화
-CharacterMovement 제한
-Non-essential component tick off
-Shadow off
-Material 단순화
-Low-poly / proxy mesh 비교
-Perception off
-BT Tick off 또는 update interval 증가
+1. Baseline 고정
+2. 축별 Off / Reduced 측정
+3. 효과 있는 축만 LOD 정책 후보로 승격
+4. 구현
+5. 동일 조건으로 전후 비교
 ```
 
-위 항목이 P35의 runtime cost 측정 축이다.
+측정 / 구현 후보 축:
+
+```text
+Object Management
+-> Enemy actor 수, pooling, proxy, WeaponActor 생성 여부
+
+Simulation LOD
+-> Perception, BT, Movement / Nav, Combat-capable gate
+
+Representation LOD
+-> Mesh, animation / pose, locomotion detail, weapon presentation, feedback, shadow / material
+
+Update Scheduling
+-> tick interval, BT interval, perception budget, dirty flag, time slicing
+
+Asset / Rendering Policy
+-> mesh LOD, material, shadow, Niagara scalability, proxy asset
+```
+
+전투 action / reaction / combat processing은 gameplay 의미가 크지만, 동시에 직접 전투 처리에 참여하는 Enemy 수가 제한적이고 대부분 event 단위로 실행된다.
+따라서 P35에서는 세부 성능 제어 축으로 우선 분리하지 않고, combat-capable 여부를 Runtime LOD 단계 전환의 coarse gate로 다룬다.
 
 `40 / 80 Enemy`는 측정 축이 아니라 scale 단계다.
 `120 Enemy`는 기본 측정 scale이 아니라 필요할 때만 사용하는 stress extension이다.
 
 각 비교는 하나의 측정 축만 바꿔 수행한다.
 
-측정 우선순위:
+측정 / 작업 순서:
 
 ```text
-1차 측정
--> 코드 / 에디터 설정으로 바로 끌 수 있는 축
--> Mesh visibility, WeaponActor, AnimInstance, Movement, Collision, Tick, Shadow, Perception, BT Tick
+1. Object Management Cost Audit
+-> Enemy count, WeaponActor, collision, actor/component 수 측정
 
-2차 측정
--> 실제 Runtime LOD로 적용 가능한 주기 / 거리 기반 조정 축
--> component tick interval, BT service interval, perception activation range / cap
+2. Representation LOD Cost Audit
+-> mesh, animation, pose, shadow, material 측정
 
-3차 측정
--> 에셋 제작 또는 대체가 필요한 축
--> material 단순화, low-poly mesh, proxy representation
+3. Simulation LOD Cost Audit
+-> perception, BT, movement/nav 측정
+
+4. Update Scheduling Audit
+-> interval, active cap, dirty flag, time slicing 측정
+
+5. Runtime LOD Implementation v1
+-> 효과가 확인된 축만 실제 runtime LOD 정책으로 구현
 ```
-
-P35의 우선순위는 1차와 2차 측정이다. 3차 측정은 render 비용이 큰 축으로 확인될 때 후속 PR 후보로 분리한다.
 
 측정 scale:
 
@@ -170,27 +185,139 @@ WeaponActor Isolation
 -> Gameplay Stress 조건에서 Enemy WeaponActor 생성 / attach / socket follow / collision / trail 비용을 분리한다.
 -> Enemy WeaponActor만 비활성화하고 Player weapon은 유지한다.
 -> 목적은 gameplay-safe LOD 적용이 아니라 비용 분리 측정이다.
+-> `Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor` 스위치로 측정한다.
 -> 유의미한 차이가 확인되면 distant / non-combat 계층에서 WeaponActor 생성 지연 또는 비활성 정책으로 후속 검토한다.
 ```
 
 ### 2. Runtime LOD 단계 정의
 
-초기 정책 후보:
+전투 관련 Runtime LOD 단계:
 
 ```text
-Near
--> 기존 동작 유지
+FullCombat
+-> WeaponActor / Combat Action / Combat Processing / Feedback 유지
+-> 현재 직접 교전 중인 핵심 Enemy 또는 정예 Enemy
 
-Mid
--> 일부 collision / animation / cosmetic update 축소
+ReducedCombat
+-> WeaponActor / Combat Action / Combat Processing 유지
+-> Feedback 축소 또는 제거
+-> 전투에는 참여하지만 피드백 우선순위가 낮은 Enemy
 
-Far
--> mesh visibility / shadow / weapon actor / movement update 제한 후보
+ActionOnly
+-> Combat Action 유지
+-> Combat Processing / Feedback 제거
+-> WeaponActor는 선택
+-> 가까운 거리에서 공격 모션 / 위협 표현은 필요하지만 실제 hit 처리는 제한할 Enemy
+
+NonCombat
+-> Combat Action / Combat Processing / Feedback 제거
+-> WeaponActor 제거
+-> 이동 / 경계 / 시선 / 위치 유지 정도만 수행하는 Enemy
 
 Dormant
--> proxy 또는 representation 전환 후보
--> P35 구현 범위에서는 제외하고 후속 feature 후보로 기록
+-> Combat Action / Combat Processing / Feedback / WeaponActor 제거
+-> BT / Perception / Movement / Anim update 최소화 또는 정지
+-> proxy / pooling / representation 전환 후보
 ```
+
+`WeaponActor Presence`는 독립 LOD 단계가 아니라 `ActionOnly` 이상에서 WeaponActor를 유지할지 판단하기 위한 보조 측정축으로 둔다.
+
+Runtime LOD는 두 계층으로 분리한다.
+
+```text
+Simulation LOD
+-> FullCombat / ReducedCombat / ActionOnly / NonCombat / Dormant
+-> Combat Action, Combat Processing, Movement decision / execution, Perception, BT update 결정
+
+Representation LOD
+-> Full / Reduced / Minimal / Hidden / Proxy
+-> Mesh visibility, animation update, pose update, locomotion visual detail, shadow, material, proxy representation 결정
+```
+
+`EnemyMeshMode`는 Representation LOD 측정축이고, 전투 단계 5종은 Simulation LOD 단계다.
+부하가 높아지면 낮은 중요도 / 낮은 Simulation LOD Enemy부터 Representation LOD를 먼저 낮추고, 그래도 예산을 넘으면 Simulation LOD를 낮춘다.
+
+P35 기준 우선 제어 축:
+
+```text
+Simulation LOD
+-> movement / nav / update 허용 여부
+-> perception / BT update 허용 여부
+-> combat-capable 여부는 단계 전환으로만 coarse control
+
+Representation LOD
+-> character mesh / animation update / pose update
+-> locomotion visual detail
+-> weapon presentation
+-> feedback presentation
+-> shadow / material / proxy
+```
+
+전투 action / reaction / combat processing은 gameplay 의미가 크지만, 동시에 직접 전투 처리에 참여하는 Enemy 수가 제한적이고 대부분 event 단위로 실행된다.
+따라서 P35에서는 세부 성능 제어 축으로 우선 분리하지 않고, `FullCombat` / `ReducedCombat` / `ActionOnly` / `NonCombat` / `Dormant` 단계 전환에서 coarse gate로 다룬다.
+
+Representation LOD 단계 후보:
+
+| Axis                  | Full                  | Reduced                 | Minimal                             | Hidden              | Proxy              |
+| --------------------- | --------------------- | ----------------------- | ----------------------------------- | ------------------- | ------------------ |
+| Character render      | 원본 표시                 | 원본 표시                   | 단순 mesh / LOD 후보                    | 숨김                  | proxy 표현           |
+| Animation / Pose      | full update           | pose 유지                 | detail / rate 축소 후보                 | combat-capable이면 유지 | 원본 update 없음       |
+| Locomotion detail     | 전체 유지                 | 일부 축소                   | additive / foot IK / turn detail 축소 | 없음 또는 최소            | proxy 전용           |
+| Weapon presentation   | 표시 / socket follow 유지 | shadow / material 축소 후보 | 표시 축소 / 숨김 후보                       | 숨김 후보               | 원본 weapon actor 없음 |
+| Feedback presentation | full                  | 일부 축소                   | 대부분 제거 후보                           | 없음                  | 없음                 |
+| Shadow / Material     | full                  | 일부 축소                   | simple / off 후보                     | off                 | proxy 기준           |
+
+Representation 단계 요약:
+
+```text
+Full
+-> 표현 품질 유지
+
+Reduced
+-> 근거리 표현 일부 축소
+
+Minimal
+-> 세부 표현 축소
+
+Hidden
+-> mesh 숨김
+-> combat-capable 단계에서는 pose update skip 금지
+
+Proxy
+-> 원본 표현을 lightweight representation으로 대체
+```
+
+경계 정책:
+
+```text
+WeaponActor
+-> spawn / existence: Simulation LOD와 Action dependency
+-> visibility / shadow: Representation LOD
+-> collision / hit context: Combat Processing
+-> trail / Niagara / camera shake: Feedback presentation
+
+Movement / Locomotion
+-> movement decision / execution: Simulation LOD
+-> locomotion visual detail: Representation LOD
+
+Feedback
+-> hit / guard / parry / stagger result: Simulation 또는 Combat Processing
+-> Niagara / trail / sound / camera shake / decal: Representation LOD
+-> hit stop: timing에 영향을 주므로 별도 주의 항목
+
+Action / Montage
+-> action state / execution policy: Simulation LOD
+-> montage pose output: Representation LOD
+-> montage notify timing: 현재 Phase 1에서는 Simulation dependency
+```
+
+현재 Phase 1에서는 `AnimNotify`가 combat timing source 역할을 한다.
+따라서 combat-capable LOD에서는 montage playback / notify route를 유지한다.
+Montage 제거 또는 pose update skip은 `NonCombat` / `Dormant` 단계에서만 허용한다.
+Combat timing을 montage에서 분리하는 작업은 후속 `Action Timeline` 개선 후보로 둔다.
+
+Combat-capable 비용은 action / reaction / combat processing을 각각 끄는 방식으로 측정하지 않는다.
+필요하면 Perception / BT / Movement는 유지한 상태에서 attack action, weapon collision, hit processing, feedback 진입을 막는 on/off coarse measurement로만 확인한다.
 
 ### 3. 적용 후보 분류
 

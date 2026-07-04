@@ -180,15 +180,95 @@ Gameplay Stress에서 frame 회복이 제한적이었던 이유는 render 비용
 Mesh render 축은 40 / 80 측정에서 패턴이 반복됐으므로 120 정규 측정 없이 1차 판단을 종료한다.
 ```
 
+P35 이후 측정 / 구현 순서:
+
+```text
+1. Object Management Cost Audit
+-> Enemy count, WeaponActor, collision, actor/component 수 측정
+
+2. Representation LOD Cost Audit
+-> mesh, animation, pose, shadow, material 측정
+
+3. Simulation LOD Cost Audit
+-> perception, BT, movement/nav 측정
+
+4. Update Scheduling Audit
+-> interval, active cap, dirty flag, time slicing 측정
+
+5. Runtime LOD Implementation v1
+-> 효과가 확인된 축만 실제 runtime LOD 정책으로 구현
+```
+
 다음 측정축:
 
 ```text
-WeaponActor Isolation
+Object Management / WeaponActor Isolation
 -> Gameplay Stress 조건에서 Enemy WeaponActor 비용을 분리한다.
 -> Enemy WeaponActor 생성 / attach / socket follow / collision / trail 경로의 영향을 확인한다.
 -> Player weapon은 유지하고 Enemy WeaponActor만 비활성화한다.
+-> `Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor` 스위치로 측정한다.
 -> gameplay-safe LOD 후보가 아니라 비용 분리 측정축으로 기록한다.
 ```
+
+Runtime LOD 단계 연결:
+
+```text
+FullCombat
+ReducedCombat
+ActionOnly
+NonCombat
+Dormant
+```
+
+`WeaponActor Presence`는 독립 LOD 단계가 아니라 `ActionOnly` 이상에서 WeaponActor를 유지할지 판단하기 위한 보조 측정축이다.
+
+LOD 계층 해석:
+
+```text
+Simulation LOD
+-> FullCombat / ReducedCombat / ActionOnly / NonCombat / Dormant
+-> combat action, combat processing, movement decision / execution, perception, BT update를 결정한다.
+
+Representation LOD
+-> Full / Reduced / Minimal / Hidden / Proxy
+-> mesh visibility, animation / pose update, locomotion visual detail, shadow, material, proxy representation을 결정한다.
+```
+
+이 문서의 `EnemyMeshMode` 측정은 Representation LOD 비용 분리다.
+`EnemyMeshMode 1`은 mesh render 비용을, `EnemyMeshMode 2`는 hidden 상태의 animation / pose update 비용을 분리한다.
+전투 기능 단계인 `FullCombat` / `ReducedCombat` / `ActionOnly` / `NonCombat` / `Dormant`는 Simulation LOD로 별도 판단한다.
+따라서 이 측정은 Representation LOD 축 중 mesh visibility, animation update, pose update, montage timing, weapon socket follow에 대한 비용과 부작용을 확인하는 자료다.
+
+P35 기준 우선 제어 축은 Object Management, Simulation LOD, Representation LOD, Update Scheduling, Asset / Rendering Policy로 압축한다.
+전투 action / reaction / combat processing은 동시에 직접 전투 처리에 참여하는 Enemy 수가 제한적이고 대부분 event 단위로 실행되므로, 세부 성능 제어 축이 아니라 Simulation LOD 단계 전환의 coarse gate로 다룬다.
+
+해석 기준:
+
+```text
+WeaponActor
+-> spawn / existence: Simulation LOD와 Action dependency
+-> visibility / shadow: Representation LOD
+-> collision / hit context: Combat Processing
+-> trail / Niagara / camera shake: Feedback presentation
+
+Movement / Locomotion
+-> movement decision / execution: Simulation LOD
+-> locomotion visual detail: Representation LOD
+
+Feedback
+-> hit / guard / parry / stagger result: Simulation 또는 Combat Processing
+-> Niagara / trail / sound / camera shake / decal: Representation LOD
+-> hit stop: timing에 영향을 주므로 별도 주의 항목
+
+Action / Montage
+-> action state / execution policy: Simulation LOD
+-> montage pose output: Representation LOD
+-> montage notify timing: 현재 Phase 1에서는 Simulation dependency
+```
+
+현재 Phase 1에서는 combat-capable LOD에서 montage playback / notify route를 유지한다.
+Montage 제거 또는 pose update skip은 `NonCombat` / `Dormant` 단계에서만 허용한다.
+Combat timing을 montage에서 분리하는 작업은 후속 `Action Timeline` 개선 후보로 둔다.
 
 ---
 

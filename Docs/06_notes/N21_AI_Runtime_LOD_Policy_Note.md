@@ -99,59 +99,124 @@ Proxy / representation LOD는 별도 feature 수준의 작업이다.
 
 ---
 
-## 극단 비교 테스트
+## 측정 및 작업 방식
 
-구현 전에 runtime cost 측정 축을 먼저 분리한다.
+P35 이후 Runtime LOD 작업은 바로 LOD 시스템을 구현하지 않는다.
+먼저 각 축이 실제로 비용을 줄이는지 격리 측정하고, 효과가 확인된 축만 구현 후보로 올린다.
 
-측정 축:
+기본 흐름:
 
 ```text
-WeaponActor off
-Combat collision off / reduced
-Mesh hidden
-AnimInstance off 또는 animation update 최소화
-CharacterMovement 제한
-Non-essential component tick off
-Shadow off
-Material 단순화
-Low-poly / proxy mesh 비교
-Perception off
-BT Tick off 또는 update interval 증가
+1. Baseline 고정
+2. 축별 Off / Reduced 측정
+3. 효과 있는 축만 LOD 정책 후보로 승격
+4. 구현
+5. 동일 조건으로 전후 비교
 ```
 
-위 항목이 P35의 runtime cost 측정 축이다.
+후보 축 전체:
 
-`40 / 80 Enemy`는 측정 축이 아니라 scale 단계다.
-`120 Enemy`는 기본 측정 scale이 아니라 판단이 부족할 때만 사용하는 optional stress extension이다.
+```text
+Object Management
+-> Enemy actor 수 조율
+-> Enemy spawn / despawn / pooling
+-> Dormant / proxy actor 전환
+-> WeaponActor 생성 여부
+-> WeaponActor collision / mesh / trail 생성 여부
+
+Simulation LOD
+-> Perception 활성화 여부
+-> Behavior Tree 활성화 여부
+-> BT service update interval
+-> Movement / Nav / PathFollowing 사용 여부
+-> Movement update interval
+-> Combat-capable 여부
+
+Representation LOD
+-> Character mesh visibility
+-> Animation update / pose update
+-> Locomotion visual detail
+-> Static / idle locomotion 대체
+-> Weapon mesh visibility
+-> Feedback presentation
+-> Shadow
+-> Material complexity
+
+Update Scheduling
+-> Tick interval 조율
+-> BT service interval 조율
+-> Perception update budget / active cap
+-> Distance-based update frequency
+-> Time-sliced update
+-> Dirty flag 기반 update
+
+Asset / Rendering Policy
+-> Skeletal mesh LOD
+-> Material 단순화
+-> Shadow off
+-> Animation Budget Allocator
+-> Niagara scalability
+-> Low-poly proxy / impostor
+```
+
+우선 제어 축:
+
+```text
+Object Management
+-> Enemy actor 수, pooling, proxy, WeaponActor 생성 여부
+
+Simulation LOD
+-> Perception, BT, Movement / Nav, Combat-capable gate
+
+Representation LOD
+-> Mesh, animation / pose, locomotion detail, weapon presentation, feedback, shadow / material
+
+Update Scheduling
+-> tick interval, BT interval, perception budget, dirty flag, time slicing
+
+Asset / Rendering Policy
+-> mesh LOD, material, shadow, Niagara scalability, proxy asset
+```
+
+전투 action / reaction / combat processing은 gameplay 의미가 큰 축이지만, 일반적으로 world에 동시에 많아도 10개 안팎의 Enemy만 직접 전투 처리에 참여한다.
+또한 대부분 tick 단위가 아니라 hit / notify / overlap 같은 event 단위로 실행된다.
+따라서 P35 기준에서는 전투 프로세스 자체를 세밀한 성능 제어 축으로 우선 분리하지 않는다.
+전투 가능 여부는 `FullCombat`, `ReducedCombat`, `ActionOnly`, `NonCombat`, `Dormant` 단계 전환에서 coarse gate로 다룬다.
+
+측정 scale:
+
+```text
+40 Enemy
+-> smoke / sanity 확인
+
+80 Enemy
+-> 측정 축별 1차 비교
+
+120 Enemy
+-> 40 / 80 결과만으로 판단이 부족할 때 optional stress extension으로 사용
+```
+
+작업 순서:
+
+```text
+1. Object Management Cost Audit
+-> Enemy count, WeaponActor, collision, actor/component 수 측정
+
+2. Representation LOD Cost Audit
+-> mesh, animation, pose, shadow, material 측정
+
+3. Simulation LOD Cost Audit
+-> perception, BT, movement/nav 측정
+
+4. Update Scheduling Audit
+-> interval, active cap, dirty flag, time slicing 측정
+
+5. Runtime LOD Implementation v1
+-> 효과가 확인된 축만 실제 runtime LOD 정책으로 구현
+```
 
 각 비교는 하나의 측정 축만 바꿔 수행한다.
-
-측정 우선순위:
-
-```text
-1차 측정
--> 코드 / 에디터 설정으로 바로 끌 수 있는 축
--> Mesh visibility, WeaponActor, AnimInstance, Movement, Collision, Tick, Shadow, Perception, BT Tick
-
-2차 측정
--> 실제 Runtime LOD로 적용 가능한 주기 / 거리 기반 조정 축
--> component tick interval, BT service interval, perception activation range / cap
-
-3차 측정
--> 에셋 제작 또는 대체가 필요한 축
--> material 단순화, low-poly mesh, proxy representation
-```
-
-P35의 우선순위는 1차와 2차 측정이다. 3차 측정은 render 비용이 큰 축으로 확인될 때 후속 PR 후보로 분리한다.
-
-측정 흐름:
-
-```text
-1. 40 Enemy에서 기능이 깨지지 않는지 확인한다.
-2. 80 Enemy에서 측정 축별 1차 비교를 수행한다.
-3. 40 / 80 Enemy에서 같은 패턴이 반복되면 해당 축의 1차 판단을 종료한다.
-4. 120 Enemy는 40 / 80 결과만으로 판단이 부족하거나 stress limit 확인이 필요할 때만 사용한다.
-```
+측정 결과가 작거나 gameplay risk가 크면 문서화 후 후순위로 내린다.
 
 EnemyMeshMode 비교 측정 기준:
 
@@ -209,6 +274,19 @@ Enemy WeaponActor Off
 -> Enemy 쪽 WeaponActor 생성만 막는다.
 -> Player weapon은 유지한다.
 -> 목적은 gameplay-safe 적용 후보가 아니라 WeaponActor 비용 분리다.
+```
+
+측정 스위치:
+
+```text
+Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+-> Enemy WeaponActor 생성
+-> 현재 gameplay stress 기준값
+
+Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 1
+-> Enemy WeaponActor 생성 생략
+-> Equip 시 weapon type state는 유지
+-> montage / action flow는 유지하되 WeaponActor / collision / trail 경로를 제거한다.
 ```
 
 주의:
@@ -354,37 +432,340 @@ WeaponActor socket follow result
 
 ## Runtime LOD 단계 후보
 
-### Near
+전투 관련 Runtime LOD는 다음 5단계로 정리한다.
 
 ```text
-플레이어와 가깝거나 전투에 직접 참여 중인 Enemy
-기존 동작 유지
-combat / animation / collision / weapon actor 유지
+FullCombat
+ReducedCombat
+ActionOnly
+NonCombat
+Dormant
 ```
 
-### Mid
+### FullCombat
 
 ```text
-근처에 있지만 직접 전투 중은 아닌 Enemy
-cosmetic update 또는 일부 collision cost 축소 후보
+WeaponActor 유지
+Combat Action 유지
+Combat Processing 유지
+Feedback 유지
+현재 직접 교전 중인 핵심 Enemy 또는 정예 Enemy
 ```
 
-### Far
+### ReducedCombat
 
 ```text
-멀리 있거나 현재 전투 영향도가 낮은 Enemy
-mesh visibility / shadow / weapon actor / movement update 제한 후보
-combat montage 진입 금지
-필요할 경우 단순 MoveTo 중심의 BT만 유지
+WeaponActor 유지
+Combat Action 유지
+Combat Processing 유지
+Feedback 축소 또는 제거
+전투에는 참여하지만 시각 / 감각 피드백 우선순위가 낮은 Enemy
+```
+
+### ActionOnly
+
+```text
+Combat Action 유지
+Combat Processing 제거
+Feedback 제거
+WeaponActor는 선택
+가까운 거리에서 공격 모션 / 위협 표현은 필요하지만 실제 hit 처리는 제한할 Enemy
+```
+
+### NonCombat
+
+```text
+Combat Action 제거
+Combat Processing 제거
+Feedback 제거
+WeaponActor 제거
+이동 / 경계 / 시선 / 위치 유지 정도만 수행하는 Enemy
 ```
 
 ### Dormant
 
 ```text
-매우 멀거나 현재 gameplay 영향도가 낮은 Enemy
-proxy 또는 representation 전환 후보
-BT / Perception / Movement / Anim update 비활성 후보
-P35에서는 구현하지 않고 후속 feature로 분리
+Combat Action 제거
+Combat Processing 제거
+Feedback 제거
+WeaponActor 제거
+BT / Perception / Movement / Anim update 최소화 또는 정지
+proxy / pooling / representation 전환 후보
+```
+
+측정축과 Runtime LOD 단계의 관계:
+
+```text
+WeaponActor Presence
+-> LOD 단계 자체가 아니라 ActionOnly 이상에서 WeaponActor를 유지할지 판단하기 위한 보조 측정축
+
+Combat Action
+-> ActionOnly 이상에서 필요한 비용
+
+Combat Processing
+-> ReducedCombat 이상에서 필요한 비용
+
+Feedback
+-> FullCombat에서 필요한 비용
+```
+
+### Simulation LOD / Representation LOD 분리
+
+Runtime LOD는 하나의 축으로만 처리하지 않는다.
+전투 참여 능력과 화면 표현 비용은 서로 다른 결정을 요구하므로 다음 두 계층으로 분리한다.
+
+```text
+Simulation LOD
+-> Enemy가 어떤 gameplay 기능을 수행할지 결정한다.
+-> FullCombat / ReducedCombat / ActionOnly / NonCombat / Dormant
+-> Combat Action, Combat Processing, Movement decision / execution, Perception, BT update가 여기에 속한다.
+
+Representation LOD
+-> Enemy를 화면에 어떻게 표현할지 결정한다.
+-> Full / Reduced / Minimal / Hidden / Proxy
+-> Mesh visibility, animation update, pose update, locomotion visual detail, shadow, material, proxy representation이 여기에 속한다.
+```
+
+Enemy mesh 측정에서 사용한 `EnemyMeshMode`는 Representation LOD 측정축이다.
+Mode 1은 mesh render 비용을 줄이는 축이고, Mode 2는 hidden 상태에서 animation / pose update 비용을 분리하는 축이다.
+반대로 `FullCombat`, `ReducedCombat`, `ActionOnly`, `NonCombat`, `Dormant`는 Simulation LOD 단계다.
+
+LOD 제어 축은 후보 전체와 실제 우선 제어 축을 구분한다.
+전투 action / reaction / combat processing은 gameplay 의미가 큰 축이지만, 일반적으로 world에 동시에 많아도 10개 안팎의 Enemy만 직접 전투 처리에 참여한다.
+또한 대부분 tick 단위가 아니라 hit / notify / overlap 같은 event 단위로 실행된다.
+따라서 P35 기준에서는 전투 프로세스 자체를 세밀한 성능 제어 축으로 우선 분리하지 않는다.
+전투 가능 여부는 `FullCombat`, `ReducedCombat`, `ActionOnly`, `NonCombat`, `Dormant` 단계 전환에서 coarse gate로 다룬다.
+
+우선 제어 축:
+
+```text
+Simulation LOD
+-> movement / nav / update 허용 여부
+-> perception / BT update 허용 여부
+-> combat-capable 여부는 단계 전환으로만 coarse control
+
+Representation LOD
+-> character mesh / animation update / pose update
+-> locomotion visual detail
+-> weapon presentation
+-> feedback presentation
+-> shadow / material / proxy
+```
+
+Representation LOD는 다음 단계 후보로 정리한다.
+
+```text
+Full
+-> mesh visible
+-> full animation / pose update
+-> locomotion visual detail 유지
+-> weapon visibility / shadow 유지
+-> full material / shadow 유지
+
+Reduced
+-> mesh visible
+-> animation / pose update 유지
+-> locomotion visual detail 일부 축소
+-> shadow / material / weapon presentation 축소 후보
+
+Minimal
+-> mesh visible 또는 simplified representation
+-> animation detail 축소
+-> additive / foot IK / turn detail / expensive material 축소 후보
+
+Hidden
+-> mesh hidden
+-> pose update 유지 여부를 상황별로 판단
+-> combat-capable 단계에서는 notify / socket timing 때문에 pose update skip 금지
+
+Proxy
+-> 원본 Enemy actor 표현을 proxy representation으로 대체
+-> spawn / despawn / pooling / lightweight actor 정책과 함께 후속 feature에서 검토
+```
+
+축별 변화는 다음 기준으로 압축한다.
+
+| Axis | Full | Reduced | Minimal | Hidden | Proxy |
+| --- | --- | --- | --- | --- | --- |
+| Character render | 원본 mesh 표시 | 원본 mesh 표시 | 단순 mesh / LOD 후보 | mesh hidden | proxy / impostor 후보 |
+| Animation / pose | full update | pose 유지 | update rate / detail 축소 후보 | combat-capable이면 유지, non-combat이면 skip 후보 | 원본 pose update 없음 |
+| Locomotion visual detail | 전체 유지 | 일부 축소 | additive / foot IK / turn detail 축소 | 없음 또는 최소 | proxy 전용 |
+| Weapon presentation | weapon 표시 / socket follow / shadow 유지 | shadow / material 축소 후보 | 표시 축소 / 숨김 후보 | 숨김 후보 | 원본 weapon actor 없음 |
+| Feedback presentation | Niagara / trail / sound / camera shake 유지 | 일부 축소 | 대부분 제거 후보 | 없음 | 없음 |
+| Shadow / material | full | 일부 축소 | simple / off 후보 | off | proxy 기준 |
+
+Representation 단계 요약:
+
+```text
+Full
+-> 직접 교전 또는 주요 시각 대상
+-> 표현 품질 유지
+
+Reduced
+-> 전투 또는 근거리 상태는 유지
+-> 표현 비용 일부 축소
+-> mesh / pose / montage timing 유지
+
+Minimal
+-> 화면에는 남김
+-> 세부 표현 품질 축소
+-> animation detail, material, shadow, feedback presentation 우선 축소
+
+Hidden
+-> mesh 숨김
+-> combat-capable 단계에서는 notify / socket timing 때문에 pose update skip 금지
+-> non-combat / dormant 조건에서만 pose update skip 후보
+
+Proxy
+-> 원본 Enemy actor 표현을 lightweight representation으로 대체
+-> spawn / despawn / pooling / proxy actor 정책과 함께 후속 feature에서 검토
+```
+
+경계 정책:
+
+```text
+WeaponActor
+-> spawn / existence: Simulation LOD와 Action dependency
+-> visibility / shadow: Representation LOD
+-> collision / overlap / hit context: Combat Processing
+-> trail / Niagara / camera shake / hit feedback: Feedback presentation
+
+Movement / Locomotion
+-> movement decision / execution: Simulation LOD
+-> locomotion visual detail: Representation LOD
+
+Feedback
+-> combat result / gameplay outcome: Simulation LOD 또는 Combat Processing
+-> feedback presentation: Representation LOD
+-> runtime effect feedback: timing에 영향을 주므로 별도 주의 항목
+
+Action / Montage
+-> action decision / action state: Simulation LOD
+-> action execution policy: Simulation LOD
+-> montage playback / pose output: Representation LOD
+-> montage notify timing: 현재 Phase 1에서는 Simulation dependency
+```
+
+따라서 `WeaponActor Presence`는 독립 LOD 단계가 아니라, `ActionOnly` 이상에서 WeaponActor를 유지해야 하는지 판단하기 위한 보조 측정축으로 둔다.
+전투 처리와 피드백이 제거되는 단계에서도 무기 실루엣이 필요한지, 또는 무기 actor 자체를 지연 생성 / 제거할 수 있는지 분리해 확인한다.
+
+다만 현재 Phase 1에서는 montage notify가 combat timing source 역할을 한다.
+따라서 combat-capable LOD에서는 montage playback / notify route를 유지한다.
+
+```text
+FullCombat
+-> montage playback 유지
+-> notify route 유지
+
+ReducedCombat
+-> montage playback 유지
+-> notify route 유지
+-> feedback presentation만 축소 가능
+
+ActionOnly
+-> action state 유지
+-> montage playback 유지 후보
+-> notify route는 유지하되 Combat Processing으로 연결하지 않는다.
+
+NonCombat
+-> combat action 제거
+-> combat montage playback 제거 가능
+
+Dormant
+-> combat action 제거
+-> montage 제거 또는 pose update 최소화 가능
+```
+
+Montage 제거 또는 pose update skip은 `NonCombat` / `Dormant` 단계에서만 허용한다.
+Combat timing을 montage notify에서 분리하는 작업은 후속 `Action Timeline` 개선 후보로 둔다.
+
+Combat-capable 비용은 action / reaction / combat processing을 각각 끄는 방식으로 측정하지 않는다.
+필요하면 coarse measurement로만 확인한다.
+
+```text
+Baseline
+-> Perception / BT / Movement 유지
+-> attack action / weapon collision / hit processing / feedback 허용
+
+Combat-capable Off
+-> Perception / BT / Movement 유지
+-> attack action 진입 거부
+-> weapon collision window 차단
+-> hit processing 차단
+-> feedback presentation 차단
+```
+
+후속 `Action Timeline` 개선 방향:
+
+```text
+현재:
+Montage playback
+-> AnimNotify
+-> hit window / cue / command timing
+
+개선 후보:
+Action Timeline
+-> simulation timing source
+-> montage는 representation / sync 대상
+-> AnimNotify는 optional sync marker 또는 authoring helper
+```
+
+부하가 높아졌을 때의 저하 순서는 다음 기준을 따른다.
+
+```text
+1. 중요도가 낮은 Enemy부터 선택한다.
+2. 같은 중요도라면 낮은 Simulation LOD 단계의 Enemy부터 선택한다.
+3. 먼저 Representation LOD를 낮춘다.
+4. 그래도 예산을 넘으면 Simulation LOD를 낮춘다.
+5. 현재 직접 교전 중인 FullCombat Enemy는 마지막까지 유지한다.
+```
+
+예상 구조:
+
+```cpp
+enum class EEnemySimulationLOD
+{
+	FullCombat,
+	ReducedCombat,
+	ActionOnly,
+	NonCombat,
+	Dormant,
+};
+
+enum class EEnemyRepresentationLOD
+{
+	Full,
+	Reduced,
+	Minimal,
+	Hidden,
+	Proxy,
+};
+
+struct FEnemyRuntimeLODState
+{
+	EEnemySimulationLOD SimulationLOD = EEnemySimulationLOD::FullCombat;
+	EEnemyRepresentationLOD RepresentationLOD = EEnemyRepresentationLOD::Full;
+};
+```
+
+Capability로 풀면 다음 형태가 된다.
+
+```cpp
+struct FEnemyRuntimeLODCapability
+{
+	bool bAllowCombatAction = true;
+	bool bAllowCombatProcessing = true;
+	bool bAllowFeedback = true;
+	bool bAllowMovement = true;
+	bool bAllowPerception = true;
+
+	bool bShowMesh = true;
+	bool bAllowFullAnimation = true;
+	bool bAllowPoseUpdate = true;
+	bool bCastShadow = true;
+	bool bShowWeapon = true;
+	bool bUseProxy = false;
+};
 ```
 
 ---
