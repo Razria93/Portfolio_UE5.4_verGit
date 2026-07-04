@@ -2,11 +2,22 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+#include "HAL/IConsoleManager.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Weapon/CWeaponActor.h"
 
 #include "Type/CWeaponStructure.h"
+
+namespace
+{
+	TAutoConsoleVariable<int32> CVarDisableEnemyWeaponActor(
+		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor"),
+		0,
+		TEXT("Disable Enemy WeaponActor creation for runtime LOD measurement. 0: spawn WeaponActor, 1: skip Enemy WeaponActor."),
+		ECVF_Default);
+}
 
 UCWeaponComponent::UCWeaponComponent()
 {
@@ -19,9 +30,16 @@ void UCWeaponComponent::InitializeReferences(const FCharacterComponentReferences
 
 	ValidateRequiredComponentReferences();
 
-	// CWeaponActor
-	CreateWeaponActor(OwnerCharacter_Injected, WeaponActorClassKey, WeaponActorClass);
 	CurrentWeaponType = EWeaponType::Unarmed;
+	bWeaponActorDisabledForProfiling = false;
+
+	if (ShouldSkipWeaponActorCreationForProfiling())
+	{
+		SkipWeaponActorCreationForProfiling();
+		return;
+	}
+
+	CreateWeaponActor(OwnerCharacter_Injected, WeaponActorClassKey, WeaponActorClass);
 }
 
 bool UCWeaponComponent::ValidateRequiredComponentReferences() const
@@ -83,7 +101,11 @@ void UCWeaponComponent::AttachWeaponToHolster()
 
 void UCWeaponComponent::CommitEquipWeapon()
 {
-	if (!IsValid(WeaponActor)) return;
+	if (!IsValid(WeaponActor))
+	{
+		PreserveEquipWeaponTypeWithoutActorForProfiling();
+		return;
+	}
 
 	ChangeWeaponType(WeaponActor->GetWeaponType());
 }
@@ -214,5 +236,28 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 
 	WeaponActor = weaponActor;
 
+	return true;
+}
+
+// Profiling
+
+bool UCWeaponComponent::ShouldSkipWeaponActorCreationForProfiling() const
+{
+	if (CVarDisableEnemyWeaponActor.GetValueOnGameThread() == 0) return false;
+
+	return IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->IsA<ACEnemy>();
+}
+
+void UCWeaponComponent::SkipWeaponActorCreationForProfiling()
+{
+	bWeaponActorDisabledForProfiling = true;
+}
+
+bool UCWeaponComponent::PreserveEquipWeaponTypeWithoutActorForProfiling()
+{
+	if (!bWeaponActorDisabledForProfiling) return false;
+	if (WeaponActorClassKey == EWeaponType::Max) return false;
+
+	ChangeWeaponType(WeaponActorClassKey);
 	return true;
 }
