@@ -201,6 +201,7 @@ Simulation LOD / AI Perception
 -> Gameplay Stress 조건에서 Perception 비용과 감지 지연을 분리한다.
 -> 160~200 Enemy stress에서 관찰한 perception 지연과 연결해 active perception 수 / 거리 / 중요도 제어 후보를 검토한다.
 -> 실제 Perception active cap 구현은 후속 PR로 분리하고, P35에서는 측정축과 적용 가능성만 정리한다.
+-> 측정 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md에 기록한다.
 
 Simulation LOD / BehaviorTree Update
 -> BT 실행 / service update 비용을 분리한다.
@@ -592,6 +593,7 @@ Docs/06_notes/N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
 Docs/06_notes/N20_AI_Profiling_Test_Asset_Plan_Note.md
 Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
 Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
 Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 ```

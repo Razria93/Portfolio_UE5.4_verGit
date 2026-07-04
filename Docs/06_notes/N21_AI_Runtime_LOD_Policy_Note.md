@@ -744,6 +744,7 @@ Object Management / WeaponActor Presence
 Simulation LOD / AI Perception
 -> Perception 비용과 감지 지연을 분리한다.
 -> 대량 Enemy stress에서 관찰한 perception 지연을 active perception 수 / 거리 / 중요도 제어 후보와 연결해 검토한다.
+-> 측정 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md에 기록한다.
 
 Simulation LOD / BehaviorTree Update
 -> BT 실행 / service update 비용을 분리한다.
