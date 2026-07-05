@@ -806,3 +806,44 @@ RawActors / InvalidProviders는 여전히 높을 수 있다.
 MaxTargetDataMap은 1에 가까워져야 한다.
 BT_UpdateAIContext와 FirstValidLatency 변화는 재측정으로 확인한다.
 ```
+
+### Provider Guard 재측정
+
+40 Enemy 결과:
+
+| Metric | Before | ProviderGuard |
+| --- | ---: | ---: |
+| MaxTargetDataMap p95 | 41 | 1 |
+| FirstValidLatency p95 | 3.743s | 3.734s |
+| PerceptionContextLatency p95 | 3.754s | 3.746s |
+| BT_UpdateAIContext p95 | 0.2263ms | 0.1658ms |
+| BehaviorTreeTick p95 | 0.3735ms | 0.3216ms |
+
+해석:
+
+```text
+Provider guard는 TargetDataMap 전파 차단에는 효과가 있다.
+MaxTargetDataMap이 41에서 1로 줄었고 BT_UpdateAIContext p95도 감소했다.
+하지만 FirstValidLatency는 거의 변하지 않았다.
+따라서 장기 지연은 TargetDataMap 삽입 이후가 아니라 perception callback에서 valid provider가 들어오기 전 단계에 남아 있다.
+다음 작업은 team attitude / affiliation으로 Enemy끼리 perception 대상이 되지 않게 하는 것이다.
+```
+
+80 Enemy 결과:
+
+| Metric | Before | ProviderGuard |
+| --- | ---: | ---: |
+| MaxTargetDataMap p95 | 81 | 1 |
+| FirstValidLatency p95 | 9.377s | 9.877s |
+| PerceptionContextLatency p95 | 9.393s | 9.911s |
+| BT_UpdateAIContext p95 | 0.4739ms | 0.2903ms |
+| BehaviorTreeTick p95 | 0.6971ms | 0.5377ms |
+
+해석:
+
+```text
+80 Enemy에서도 Provider guard는 TargetDataMap 전파 차단에는 효과가 있다.
+MaxTargetDataMap이 81에서 1로 줄었고 BT_UpdateAIContext p95도 감소했다.
+하지만 FirstValidLatency는 9초대 후반으로 남았다.
+40 / 80 Enemy 모두 같은 패턴이므로, 다음 작업은 team attitude / affiliation으로 Enemy끼리 perception 대상이 되지 않게 하는 것이다.
+```

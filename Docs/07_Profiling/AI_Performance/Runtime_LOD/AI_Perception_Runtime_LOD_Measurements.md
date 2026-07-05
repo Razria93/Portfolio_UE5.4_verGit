@@ -532,6 +532,214 @@ CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
 
 ---
 
+## Case PA06 - 40 Enemy / TargetDataMapProviderGuard
+
+측정 파일:
+
+```text
+CSV: Portfolio/Csvprofile/Profile(20260706_014017).csv
+Log: Portfolio/Csvprofile/Log(20260706_014017).txt
+```
+
+측정 조건:
+
+```text
+Case: 40 Enemy / TargetDataMapProviderGuard
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+```
+
+CSV 요약:
+
+| Metric | Avg | P95 | Max |
+| --- | ---: | ---: | ---: |
+| FrameTime | 13.2622ms | 14.4562ms | 16.0033ms |
+| GameThreadTime | 13.2574ms | 14.5096ms | 15.9328ms |
+| GPUTime | 9.7800ms | 10.5924ms | 11.5603ms |
+| AIPerception | 0.1385ms | 0.1745ms | 0.6465ms |
+| BehaviorTreeTick | 0.2303ms | 0.3216ms | 0.5170ms |
+| BT_UpdateAIContext | 0.1344ms | 0.1658ms | 0.3129ms |
+| CombatEngage_Tick | 0.0011ms | 0.0074ms | 0.0171ms |
+| CombatEngage_RebuildAssignments | 0.0009ms | 0.0071ms | 0.0164ms |
+| CharacterMovement | 1.0302ms | 1.3464ms | 2.2288ms |
+| Animation | 1.8577ms | 2.0374ms | 2.6015ms |
+| AnimationParallelEvaluation TotalTaskTime | 3.3673ms | 3.7533ms | 4.6682ms |
+| DrawCalls | 797.9361 | 836 | 874 |
+| PrimitivesDrawn | 3,914,389 | 5,252,994 | 5,278,282 |
+| CEnemy ActorCount | 81 | 81 | 81 |
+| CWeaponActor ActorCount | 42 | 42 | 42 |
+| CAIController ActorCount | 40 | 40 | 40 |
+| TotalActorCount | 323 | 323 | 323 |
+
+Audit 요약:
+
+| Metric | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RawEvents | 476.275 | 479 | 472 | 483 |
+| RawActors | 41 | 41 | 41 | 41 |
+| ValidProviders | 1 | 1 | 1 | 1 |
+| InvalidProviders | 40 | 40 | 40 | 40 |
+| MaxTargetDataMap | 1 | 1 | 1 | 1 |
+| FirstRawLatency | 0.346s | 0.442s | 0.010s | 0.442s |
+| FirstValidLatency | 3.702s | 3.734s | 3.667s | 3.734s |
+
+Blackboard / Engage latency 요약:
+
+| Metric | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PerceptionContextLatency | 40 | 3.716s | 3.746s | 3.678s | 3.780s |
+| BlackboardTargetLatency | 40 | 3.716s | 3.746s | 3.678s | 3.780s |
+| EngageRequestLatency | 40 | 3.716s | 3.746s | 3.678s | 3.780s |
+| EngageAssignmentLatency | 2 | 3.734s | 3.734s | 3.734s | 3.734s |
+
+Frame delta 요약:
+
+| Delta | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FirstValid -> PerceptionContext | 40 | 1.175 frames | 1 frame | 1 | 5 |
+| PerceptionContext -> BlackboardTarget | 40 | 0 frames | 0 frames | 0 | 0 |
+| BlackboardTarget -> EngageRequest | 40 | 0 frames | 0 frames | 0 | 0 |
+| EngageRequest -> EngageAssignment | 2 | 4.5 frames | 5 frames | 4 | 5 |
+
+이전 40 Enemy 기준과 비교:
+
+| Metric | PA04 Before | PA06 ProviderGuard |
+| --- | ---: | ---: |
+| MaxTargetDataMap p95 | 41 | 1 |
+| FirstValidLatency p95 | 3.743s | 3.734s |
+| PerceptionContextLatency p95 | 3.754s | 3.746s |
+| BT_UpdateAIContext p95 | 0.2263ms | 0.1658ms |
+| BehaviorTreeTick p95 | 0.3735ms | 0.3216ms |
+| AIPerception p95 | 0.1798ms | 0.1745ms |
+
+해석:
+
+```text
+TargetDataMap provider guard는 의도대로 동작했다.
+RawActors / InvalidProviders는 여전히 41 / 40이지만 MaxTargetDataMap p95는 41에서 1로 감소했다.
+즉 perception callback 후보 누수는 남아 있지만 downstream target map 전파는 차단됐다.
+
+BT_UpdateAIContext p95는 0.2263ms에서 0.1658ms로 줄었다.
+따라서 TargetDataMap 순회 / target selection 비용에는 개선 효과가 있다.
+
+FirstValidLatency p95는 3.743초에서 3.734초로 거의 변하지 않았다.
+따라서 장기 지연은 TargetDataMap 삽입 이후가 아니라 perception callback에서 valid provider가 들어오기 전 단계에 남아 있다.
+
+다음 개선은 team attitude / affiliation으로 Enemy끼리 perception target이 되지 않게 하는 방향이 우선이다.
+```
+
+---
+
+## Case PA07 - 80 Enemy / TargetDataMapProviderGuard
+
+측정 파일:
+
+```text
+CSV: Portfolio/Csvprofile/Profile(20260706_014454).csv
+Log: Portfolio/Csvprofile/Log(20260706_014454).txt
+```
+
+측정 조건:
+
+```text
+Case: 80 Enemy / TargetDataMapProviderGuard
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+```
+
+CSV 요약:
+
+| Metric | Avg | P95 | Max |
+| --- | ---: | ---: | ---: |
+| FrameTime | 19.7909ms | 23.0862ms | 25.2496ms |
+| GameThreadTime | 19.7852ms | 23.1067ms | 25.2857ms |
+| GPUTime | 10.7434ms | 11.5051ms | 12.2351ms |
+| AIPerception | 0.2756ms | 0.8280ms | 1.0464ms |
+| BehaviorTreeTick | 0.4180ms | 0.5377ms | 0.9374ms |
+| BT_UpdateAIContext | 0.2368ms | 0.2903ms | 0.4663ms |
+| CombatEngage_Tick | 0.0019ms | 0.0119ms | 0.0239ms |
+| CombatEngage_RebuildAssignments | 0.0017ms | 0.0115ms | 0.0236ms |
+| CharacterMovement | 1.8786ms | 2.9221ms | 4.0249ms |
+| Animation | 3.3905ms | 3.7309ms | 5.0358ms |
+| AnimationParallelEvaluation TotalTaskTime | 5.7087ms | 6.5796ms | 7.6793ms |
+| DrawCalls | 1,301.0576 | 1,351 | 1,406 |
+| PrimitivesDrawn | 6,633,567 | 7,773,164 | 7,957,652 |
+| CEnemy ActorCount | 161 | 161 | 161 |
+| CWeaponActor ActorCount | 82 | 82 | 82 |
+| CAIController ActorCount | 80 | 80 | 80 |
+| TotalActorCount | 483 | 483 | 483 |
+
+Audit 요약:
+
+| Metric | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RawEvents | 147.450 | 149 | 146 | 149 |
+| RawActors | 81 | 81 | 81 | 81 |
+| ValidProviders | 1 | 1 | 1 | 1 |
+| InvalidProviders | 80 | 80 | 80 | 80 |
+| MaxTargetDataMap | 1 | 1 | 1 | 1 |
+| FirstRawLatency | 0.522s | 0.684s | 0.010s | 0.684s |
+| FirstValidLatency | 9.785s | 9.877s | 9.678s | 9.894s |
+
+Blackboard / Engage latency 요약:
+
+| Metric | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PerceptionContextLatency | 80 | 9.804s | 9.911s | 9.694s | 9.911s |
+| BlackboardTargetLatency | 80 | 9.804s | 9.911s | 9.694s | 9.911s |
+| EngageRequestLatency | 80 | 9.804s | 9.911s | 9.694s | 9.911s |
+| EngageAssignmentLatency | 2 | 9.742s | 9.742s | 9.742s | 9.742s |
+
+Frame delta 요약:
+
+| Delta | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FirstValid -> PerceptionContext | 80 | 1.175 frames | 1 frame | 1 | 6 |
+| PerceptionContext -> BlackboardTarget | 80 | 0 frames | 0 frames | 0 | 0 |
+| BlackboardTarget -> EngageRequest | 80 | 0 frames | 0 frames | 0 | 0 |
+| EngageRequest -> EngageAssignment | 2 | 1 frame | 1 frame | 1 | 1 |
+
+이전 80 Enemy 기준과 비교:
+
+| Metric | PA05 Before | PA07 ProviderGuard |
+| --- | ---: | ---: |
+| MaxTargetDataMap p95 | 81 | 1 |
+| FirstValidLatency p95 | 9.377s | 9.877s |
+| PerceptionContextLatency p95 | 9.393s | 9.911s |
+| BT_UpdateAIContext p95 | 0.4739ms | 0.2903ms |
+| BehaviorTreeTick p95 | 0.6971ms | 0.5377ms |
+| AIPerception p95 | 0.8596ms | 0.8280ms |
+
+해석:
+
+```text
+80 Enemy에서도 TargetDataMap provider guard는 의도대로 동작했다.
+MaxTargetDataMap p95는 81에서 1로 감소했다.
+BT_UpdateAIContext p95도 0.4739ms에서 0.2903ms로 줄었다.
+
+하지만 RawActors / InvalidProviders는 81 / 80으로 그대로다.
+FirstValidLatency p95도 9초대 후반으로 남아 있다.
+따라서 provider guard는 downstream 비용을 줄이는 보정이고, perception 후보 생성 / dispatch 지연의 근본 해결은 아니다.
+
+40 / 80 Enemy 모두 같은 패턴이 반복됐으므로 다음 작업은 team attitude / affiliation 기반으로 Enemy끼리 perception 대상이 되지 않게 하는 것이다.
+```
+
+---
+
 ## 후속 개선 후보
 
 ```text

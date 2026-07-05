@@ -303,6 +303,48 @@ FirstValidLatency가 40 Enemy 약 3.7초에서 80 Enemy 약 9.4초로 증가했�
 따라서 후보 수 증가가 valid target 인정 지연을 확대하는 패턴으로 본다.
 ```
 
+Provider guard 적용 후 40 Enemy 측정:
+
+```text
+Case = 40 Enemy / TargetDataMapProviderGuard
+RawActors p95 = 41
+InvalidProviders p95 = 40
+MaxTargetDataMap p95 = 1
+FirstValidLatency p95 = 3.734s
+BT_UpdateAIContext p95 = 0.1658ms
+```
+
+Provider guard 해석:
+
+```text
+MaxTargetDataMap이 41에서 1로 줄었으므로 downstream target map 전파는 차단됐다.
+BT_UpdateAIContext p95도 0.2263ms에서 0.1658ms로 감소했다.
+따라서 TargetDataMap 순회 / target selection 비용에는 개선 효과가 있다.
+
+FirstValidLatency p95는 거의 변하지 않았다.
+따라서 장기 지연은 TargetDataMap 삽입 이후가 아니라 perception callback에서 valid target provider가 들어오기 전 단계에 남아 있다.
+```
+
+Provider guard 적용 후 80 Enemy 측정:
+
+```text
+Case = 80 Enemy / TargetDataMapProviderGuard
+RawActors p95 = 81
+InvalidProviders p95 = 80
+MaxTargetDataMap p95 = 1
+FirstValidLatency p95 = 9.877s
+BT_UpdateAIContext p95 = 0.2903ms
+```
+
+80 Enemy Provider guard 해석:
+
+```text
+MaxTargetDataMap이 81에서 1로 줄었으므로 80 Enemy에서도 downstream target map 전파는 차단됐다.
+BT_UpdateAIContext p95는 0.4739ms에서 0.2903ms로 감소했다.
+하지만 FirstValidLatency는 9초대 후반으로 남았다.
+따라서 provider guard는 target map / BT context 비용을 낮추는 보정이고, perception 후보 생성 / dispatch 지연의 근본 해결은 아니다.
+```
+
 ---
 
 ## 다음 분석 템플릿
