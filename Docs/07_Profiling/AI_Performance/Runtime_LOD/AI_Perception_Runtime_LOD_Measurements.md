@@ -781,6 +781,220 @@ CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
 
 ---
 
+## Case PA08 - 40 Enemy / TeamAttitudeAffiliation
+
+측정 파일:
+
+```text
+CSV: Portfolio/Csvprofile/Profile(20260706_021904).csv
+Log: Portfolio/Csvprofile/Log(20260706_021904).txt
+```
+
+측정 조건:
+
+```text
+Case: 40 Enemy / TeamAttitudeAffiliation
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+GC Event: none
+```
+
+CSV 요약:
+
+| Metric | Avg | P95 | Max |
+| --- | ---: | ---: | ---: |
+| FrameTime | 13.5576ms | 14.7516ms | 17.9011ms |
+| GameThreadTime | 13.5531ms | 14.7173ms | 18.6109ms |
+| GPUTime | 9.9136ms | 10.5948ms | 11.2191ms |
+| AIPerception | 0.0620ms | 0.0722ms | 0.1258ms |
+| BehaviorTreeTick | 0.2321ms | 0.3246ms | 0.4620ms |
+| BT_UpdateAIContext | 0.1356ms | 0.1681ms | 0.2972ms |
+| BT_UpdateEngageContext | 0.0019ms | 0.0025ms | 0.0575ms |
+| CombatEngage_Tick | 0.0011ms | 0.0076ms | 0.0148ms |
+| CombatEngage_RebuildAssignments | 0.0009ms | 0.0072ms | 0.0139ms |
+| CharacterMovement | 1.0211ms | 1.3464ms | 1.9764ms |
+| Animation | 1.8761ms | 2.0625ms | 3.0684ms |
+| AnimationParallelEvaluation TotalTaskTime | 3.3941ms | 3.7751ms | 5.4026ms |
+| DrawCalls | 798.8577 | 830 | 860 |
+| PrimitivesDrawn | 3,896,866 | 4,894,308 | 5,189,162 |
+| CEnemy ActorCount | 81 | 81 | 81 |
+| CWeaponActor ActorCount | 42 | 42 | 42 |
+| CAIController ActorCount | 41 | 41 | 41 |
+| TotalActorCount | 335 | 335 | 335 |
+
+Audit 요약:
+
+| Metric | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RawEvents | 1 | 1 | 1 | 1 |
+| RawActors | 1 | 1 | 1 | 1 |
+| ValidProviders | 1 | 1 | 1 | 1 |
+| InvalidProviders | 0 | 0 | 0 | 0 |
+| MaxTargetDataMap | 1 | 1 | 1 | 1 |
+| FirstRawLatency | 0.463s | 0.607s | 0.010s | 0.607s |
+| FirstValidLatency | 0.463s | 0.607s | 0.010s | 0.607s |
+
+Blackboard / Engage latency 요약:
+
+| Metric | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PerceptionContextLatency | 40 | 0.514s | 0.626s | 0.206s | 0.626s |
+| BlackboardTargetLatency | 40 | 0.514s | 0.626s | 0.206s | 0.626s |
+| EngageRequestLatency | 40 | 0.514s | 0.626s | 0.206s | 0.626s |
+| EngageAssignmentLatency | 2 | 0.214s | 0.214s | 0.214s | 0.214s |
+
+Frame delta 요약:
+
+| Delta | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FirstValid -> PerceptionContext | 40 | 1 frame | 1 frame | 1 | 1 |
+| PerceptionContext -> BlackboardTarget | 40 | 0 frames | 0 frames | 0 | 0 |
+| BlackboardTarget -> EngageRequest | 40 | 0 frames | 0 frames | 0 | 0 |
+| EngageRequest -> EngageAssignment | 2 | 10 frames | 10 frames | 10 | 10 |
+
+이전 40 Enemy 기준과 비교:
+
+| Metric | PA04 Before | PA06 ProviderGuard | PA08 TeamAttitude |
+| --- | ---: | ---: | ---: |
+| RawActors p95 | 41 | 41 | 1 |
+| InvalidProviders p95 | 40 | 40 | 0 |
+| MaxTargetDataMap p95 | 41 | 1 | 1 |
+| FirstValidLatency p95 | 3.743s | 3.734s | 0.607s |
+| PerceptionContextLatency p95 | 3.754s | 3.746s | 0.626s |
+| AIPerception p95 | 0.1798ms | 0.1745ms | 0.0722ms |
+| BT_UpdateAIContext p95 | 0.2263ms | 0.1658ms | 0.1681ms |
+
+해석:
+
+```text
+Team attitude / affiliation filter는 40 Enemy 조건에서 의도대로 동작했다.
+RawActors p95가 41에서 1로 줄었고 InvalidProviders p95는 40에서 0으로 줄었다.
+즉 Enemy끼리는 perception target에서 제외되고 Player만 Hostile target으로 남았다.
+
+FirstValidLatency p95는 3.743초에서 0.607초로 감소했다.
+AIPerception p95도 0.1798ms에서 0.0722ms로 감소했다.
+따라서 장기 지연의 핵심 원인은 Enemy 후보 누수였고, affiliation filter가 이를 직접 줄였다.
+
+Provider guard는 TargetDataMap 전파를 막는 방어선이고,
+Team attitude는 perception callback 이전 후보 생성 단계의 근본 보정으로 본다.
+```
+
+---
+
+## Case PA09 - 80 Enemy / TeamAttitudeAffiliation
+
+측정 파일:
+
+```text
+CSV: Portfolio/Csvprofile/Profile(20260706_022337).csv
+Log: Portfolio/Csvprofile/Log(20260706_022337).txt
+```
+
+측정 조건:
+
+```text
+Case: 80 Enemy / TeamAttitudeAffiliation
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+GC Event: none
+```
+
+CSV 요약:
+
+| Metric | Avg | P95 | Max |
+| --- | ---: | ---: | ---: |
+| FrameTime | 21.4612ms | 23.6308ms | 28.5413ms |
+| GameThreadTime | 21.4553ms | 23.6682ms | 28.1308ms |
+| GPUTime | 10.7409ms | 11.4539ms | 12.2449ms |
+| AIPerception | 0.0896ms | 0.1107ms | 0.2225ms |
+| BehaviorTreeTick | 0.4267ms | 0.5350ms | 0.7109ms |
+| BT_UpdateAIContext | 0.2475ms | 0.2929ms | 0.4497ms |
+| BT_UpdateEngageContext | 0.0017ms | 0.0022ms | 0.0066ms |
+| CombatEngage_Tick | 0.0026ms | 0.0132ms | 0.0303ms |
+| CombatEngage_RebuildAssignments | 0.0023ms | 0.0128ms | 0.0300ms |
+| CharacterMovement | 2.3618ms | 2.8921ms | 4.5053ms |
+| Animation | 3.4942ms | 3.8995ms | 5.0021ms |
+| AnimationParallelEvaluation TotalTaskTime | 5.7749ms | 6.4836ms | 7.5986ms |
+| DrawCalls | 1,320.1185 | 1,350 | 1,382 |
+| PrimitivesDrawn | 6,308,857 | 7,043,598 | 7,471,056 |
+| CEnemy ActorCount | 161 | 161 | 161 |
+| CWeaponActor ActorCount | 82 | 82 | 82 |
+| CAIController ActorCount | 81 | 81 | 81 |
+| TotalActorCount | 495 | 495 | 495 |
+
+Audit 요약:
+
+| Metric | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RawEvents | 1 | 1 | 1 | 1 |
+| RawActors | 1 | 1 | 1 | 1 |
+| ValidProviders | 1 | 1 | 1 | 1 |
+| InvalidProviders | 0 | 0 | 0 | 0 |
+| MaxTargetDataMap | 1 | 1 | 1 | 1 |
+| FirstRawLatency | 0.570s | 0.724s | 0.011s | 0.744s |
+| FirstValidLatency | 0.570s | 0.724s | 0.011s | 0.744s |
+
+Blackboard / Engage latency 요약:
+
+| Metric | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PerceptionContextLatency | 80 | 0.612s | 0.744s | 0.306s | 0.765s |
+| BlackboardTargetLatency | 80 | 0.612s | 0.744s | 0.306s | 0.765s |
+| EngageRequestLatency | 80 | 0.612s | 0.744s | 0.306s | 0.765s |
+| EngageAssignmentLatency | 2 | 0.314s | 0.314s | 0.314s | 0.314s |
+
+Frame delta 요약:
+
+| Delta | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FirstValid -> PerceptionContext | 80 | 1 frame | 1 frame | 1 | 1 |
+| PerceptionContext -> BlackboardTarget | 80 | 0 frames | 0 frames | 0 | 0 |
+| BlackboardTarget -> EngageRequest | 80 | 0 frames | 0 frames | 0 | 0 |
+| EngageRequest -> EngageAssignment | 2 | 4 frames | 4 frames | 4 | 4 |
+
+이전 80 Enemy 기준과 비교:
+
+| Metric | PA05 Before | PA07 ProviderGuard | PA09 TeamAttitude |
+| --- | ---: | ---: | ---: |
+| RawActors p95 | 81 | 81 | 1 |
+| InvalidProviders p95 | 80 | 80 | 0 |
+| MaxTargetDataMap p95 | 81 | 1 | 1 |
+| FirstValidLatency p95 | 9.377s | 9.877s | 0.724s |
+| PerceptionContextLatency p95 | 9.393s | 9.911s | 0.744s |
+| AIPerception p95 | 0.8596ms | 0.8280ms | 0.1107ms |
+| BT_UpdateAIContext p95 | 0.4739ms | 0.2903ms | 0.2929ms |
+
+해석:
+
+```text
+Team attitude / affiliation filter는 80 Enemy 조건에서도 의도대로 동작했다.
+RawActors p95가 81에서 1로 줄었고 InvalidProviders p95는 80에서 0으로 줄었다.
+즉 Enemy끼리는 perception target에서 제외되고 Player만 Hostile target으로 남았다.
+
+FirstValidLatency p95는 9.377초에서 0.724초로 감소했다.
+AIPerception p95도 0.8596ms에서 0.1107ms로 감소했다.
+40 / 80 Enemy 모두 같은 패턴이므로, 기존 장기 지연의 핵심 원인은 Enemy 후보 누수였다고 판단한다.
+
+BT_UpdateAIContext p95는 provider guard 이후와 큰 차이가 없다.
+따라서 Team Attitude의 주 효과는 downstream map 순회보다 perception callback 후보 수와 first valid latency 감소에 있다.
+```
+
+---
+
 ## 후속 개선 후보
 
 ```text

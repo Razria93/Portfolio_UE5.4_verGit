@@ -885,3 +885,45 @@ InvalidProviders가 0에 가까워지는지 확인한다.
 MaxTargetDataMap은 1에 가까운 상태를 유지해야 한다.
 FirstValidLatency가 줄어드는지 확인한다.
 ```
+
+40 Enemy 측정 결과:
+
+| Metric | Before | ProviderGuard | TeamAttitude |
+| --- | ---: | ---: | ---: |
+| RawActors p95 | 41 | 41 | 1 |
+| InvalidProviders p95 | 40 | 40 | 0 |
+| MaxTargetDataMap p95 | 41 | 1 | 1 |
+| FirstValidLatency p95 | 3.743s | 3.734s | 0.607s |
+| PerceptionContextLatency p95 | 3.754s | 3.746s | 0.626s |
+| AIPerception p95 | 0.1798ms | 0.1745ms | 0.0722ms |
+
+해석:
+
+```text
+40 Enemy에서 Team Attitude / affiliation filter는 정상 동작했다.
+RawActors는 41에서 1로 줄었고 InvalidProviders는 40에서 0으로 줄었다.
+FirstValidLatency도 3.743초에서 0.607초로 감소했다.
+따라서 기존 장기 지연의 핵심 원인은 Enemy 후보 누수였다고 본다.
+80 Enemy에서도 같은 패턴이 반복되는지 재측정한다.
+```
+
+80 Enemy 측정 결과:
+
+| Metric | Before | ProviderGuard | TeamAttitude |
+| --- | ---: | ---: | ---: |
+| RawActors p95 | 81 | 81 | 1 |
+| InvalidProviders p95 | 80 | 80 | 0 |
+| MaxTargetDataMap p95 | 81 | 1 | 1 |
+| FirstValidLatency p95 | 9.377s | 9.877s | 0.724s |
+| PerceptionContextLatency p95 | 9.393s | 9.911s | 0.744s |
+| AIPerception p95 | 0.8596ms | 0.8280ms | 0.1107ms |
+| BT_UpdateAIContext p95 | 0.4739ms | 0.2903ms | 0.2929ms |
+
+해석:
+
+```text
+80 Enemy에서도 Team Attitude / affiliation filter는 정상 동작했다.
+RawActors는 81에서 1로 줄었고 InvalidProviders는 80에서 0으로 줄었다.
+FirstValidLatency도 9.377초에서 0.724초로 감소했다.
+40 / 80 Enemy 모두 같은 패턴이므로, 기존 장기 지연의 핵심 원인은 Enemy 후보 누수였다고 판단한다.
+```

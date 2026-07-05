@@ -356,6 +356,40 @@ RawActors / InvalidProviders가 그대로라면 GetTeamAttitudeTowards override�
 target actor team id 제공 방식 또는 controller / pawn team interface 구성을 추가 검토한다.
 ```
 
+40 Enemy Team attitude 측정 해석:
+
+```text
+RawActors p95 = 1
+InvalidProviders p95 = 0
+MaxTargetDataMap p95 = 1
+FirstValidLatency p95 = 0.607s
+AIPerception p95 = 0.0722ms
+```
+
+```text
+40 Enemy 조건에서 affiliation filter는 정상 동작했다.
+Enemy끼리는 Friendly로 분류되어 sight target에서 제외됐고, Player만 Hostile target으로 남았다.
+FirstValidLatency p95가 3.743초에서 0.607초로 감소했으므로,
+기존 장기 지연의 핵심 원인은 Enemy 후보 누수였다고 본다.
+```
+
+80 Enemy Team attitude 측정 해석:
+
+```text
+RawActors p95 = 1
+InvalidProviders p95 = 0
+MaxTargetDataMap p95 = 1
+FirstValidLatency p95 = 0.724s
+AIPerception p95 = 0.1107ms
+```
+
+```text
+80 Enemy 조건에서도 affiliation filter는 정상 동작했다.
+Enemy끼리는 Friendly로 분류되어 sight target에서 제외됐고, Player만 Hostile target으로 남았다.
+FirstValidLatency p95가 9.377초에서 0.724초로 감소했다.
+40 / 80 Enemy 모두 같은 패턴이므로, 기존 장기 지연의 핵심 원인은 Enemy 후보 누수였다고 판단한다.
+```
+
 ---
 
 ## 다음 분석 템플릿
