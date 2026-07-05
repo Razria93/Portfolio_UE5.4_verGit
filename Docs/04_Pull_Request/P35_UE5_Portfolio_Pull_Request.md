@@ -779,3 +779,30 @@ FirstValidLatency p95는 40 Enemy 약 3.7초에서 80 Enemy 약 9.4초로 증가
 따라서 장기 지연은 Blackboard / Engage subsystem이 아니라 Enemy 후보 누수와 valid target 인정 이전 단계에서 확대된다.
 다음 작업 우선순위는 team attitude / affiliation 정리와 invalid provider의 TargetDataMap 진입 차단이다.
 ```
+
+### 1차 보정
+
+```text
+ACAIController::OnTargetPerceptionUpdated()에서 ITargetContextProvider가 없는 Actor는 TargetDataMap에 넣지 않도록 보정했다.
+이 변경은 perception callback 자체를 막는 근본 해결은 아니지만,
+provider 없는 Enemy 후보가 TargetDataMap / target selection / BT context update로 전파되는 것을 차단한다.
+```
+
+재측정 기준:
+
+```text
+40 Enemy / 80 Enemy
+DisableEnemyPerception 0
+PerceptionCandidateAudit 1
+BlackboardEngageLatencyAudit 1
+DisableEnemyWeaponActor 0
+EnemyMeshMode 0
+```
+
+예상 확인:
+
+```text
+RawActors / InvalidProviders는 여전히 높을 수 있다.
+MaxTargetDataMap은 1에 가까워져야 한다.
+BT_UpdateAIContext와 FirstValidLatency 변화는 재측정으로 확인한다.
+```

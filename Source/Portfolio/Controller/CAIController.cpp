@@ -297,11 +297,13 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 
 	if (!IsValid(Actor)) return;
 
+	const bool bHasTargetProvider = (Cast<ITargetContextProvider>(Actor) != nullptr);
+
 	if (Stimulus.WasSuccessfullySensed())
 	{
 		RecordRawPerceptionCandidate(Actor);
 
-		if (Cast<ITargetContextProvider>(Actor))
+		if (bHasTargetProvider)
 		{
 			RecordValidTargetProvider(Actor);
 		}
@@ -310,6 +312,8 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 			RecordInvalidTargetProvider(Actor);
 		}
 	}
+
+	if (!bHasTargetProvider) return;
 
 	FTargetData& data = TargetDataMap.FindOrAdd(Actor);
 

@@ -171,6 +171,8 @@ FirstValidLatency
 ```text
 InvalidProviders가 Enemy 수에 비례해서 증가하면 후보 누수가 있다.
 MaxTargetDataMap이 RawActors와 같거나 비슷하면 raw 후보가 TargetDataMap까지 들어간다.
+provider guard 적용 후에도 RawActors / InvalidProviders는 높을 수 있다.
+이때 MaxTargetDataMap만 낮아지면 callback 후보 누수는 남아 있지만 downstream target map 전파는 차단된 것으로 본다.
 ValidProviders가 1인데 InvalidProviders가 크면 Player 1명을 찾기 위해 다수 Enemy를 같이 처리하는 구조다.
 ```
 

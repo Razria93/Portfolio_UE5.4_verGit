@@ -497,7 +497,37 @@ BlackboardTarget -> EngageRequest도 0 frame이다.
 EngageAssignment는 80명 중 2명만 기록됐고, request 이후 1 frame 안에 assignment가 완료됐다.
 
 결론적으로 team attitude / affiliation을 통해 Enemy끼리 perception 대상이 되지 않게 만드는 작업이 우선이다.
-그 다음 방어선으로 TargetDataMap에 invalid provider를 넣지 않도록 보정한다.
+그 전 단계의 방어선으로 TargetDataMap에 invalid provider를 넣지 않도록 보정한다.
+```
+
+---
+
+## 적용된 1차 보정
+
+```text
+ACAIController::OnTargetPerceptionUpdated()에서 ITargetContextProvider가 없는 Actor는 TargetDataMap에 넣지 않는다.
+Raw perception callback 자체는 계속 기록하지만, provider 없는 Enemy 후보가 downstream target selection으로 전파되지 않게 막는다.
+```
+
+기대 효과:
+
+```text
+RawActors / InvalidProviders는 여전히 높게 나올 수 있다.
+하지만 MaxTargetDataMap은 Player target 중심으로 낮아져야 한다.
+BT_UpdateAIContext / SelectTopPriority / TargetDataMap 순회 비용 감소를 확인한다.
+FirstValidLatency가 얼마나 줄어드는지는 별도 측정으로 확인한다.
+```
+
+다음 측정:
+
+```text
+Case: 40 Enemy / TargetDataMapProviderGuard
+Case: 80 Enemy / TargetDataMapProviderGuard
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
 ```
 
 ---
@@ -505,7 +535,6 @@ EngageAssignment는 80명 중 2명만 기록됐고, request 이후 1 frame 안�
 ## 후속 개선 후보
 
 ```text
-provider 없는 Actor를 TargetDataMap에 넣기 전에 필터링
 team attitude 기반으로 Enemy 후보를 sight 단계에서 제외
 distance / combat importance 기반 active perception cap
 BT service interval / first valid target update timing 추가 분리
