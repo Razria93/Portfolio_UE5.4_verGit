@@ -77,9 +77,9 @@ Enemy가 Engage에 진입하지 않거나 전투 상태가 달라짐
 
 ---
 
-## 측정 스위치 후보
+## 측정 스위치
 
-후보 CVar:
+구현된 CVar:
 
 ```text
 Portfolio.AI.RuntimeLOD.DisableEnemyPerception
@@ -87,36 +87,35 @@ Portfolio.AI.RuntimeLOD.DisableEnemyPerception
 1: Enemy Perception disabled for runtime LOD measurement
 ```
 
-적용 후보 위치:
+적용 위치:
 
 ```text
 ACAIController::InitializeControllerRuntime
+-> Perception profiling 상태를 기본값으로 복구
 -> BindPerceptionEvents 전에 측정 스위치 확인
 
-ACAIController::BindPerceptionEvents
--> disabled 상태면 delegate binding 생략
+ACAIController::ResetPerceptionStateForProfiling
+-> bPerceptionDisabledForProfiling 초기화
+-> Sight sense 활성화
+
+ACAIController::DisableEnemyPerceptionForProfiling
+-> TargetDataMap 정리
+-> Sight sense 비활성화
 
 ACAIController::BuildPerceptionContext
 -> disabled 상태면 NoData 반환
 ```
 
-적용 방식 후보:
+적용 방식:
 
 ```text
-1. Delegate binding만 생략
--> Perception system 자체 비용은 남을 수 있다.
--> event 처리 / TargetDataMap 갱신 비용만 줄인다.
-
-2. Sight sense 비활성화 + delegate binding 생략
--> Perception system 비용까지 줄이는 측정에 더 가깝다.
--> gameplay state 변화가 크다.
-
-3. TargetDataMap / Blackboard 갱신만 생략
--> Perception engine 비용은 유지된다.
--> Blackboard write / context build 비용 분리에는 유효하다.
+Sight sense 비활성화
+Perception delegate binding 생략
+TargetDataMap 정리
+BuildPerceptionContext에서 NoData 반환
 ```
 
-P35의 1차 측정은 `2. Sight sense 비활성화 + delegate binding 생략`을 우선 후보로 둔다.
+P35의 1차 측정은 `Sight sense 비활성화 + delegate binding 생략` 방식으로 수행한다.
 목적은 gameplay-safe 적용이 아니라 Perception 축의 최대 비용 차이를 확인하는 것이다.
 
 ---
@@ -238,4 +237,3 @@ time-sliced perception activation
 dormant enemy perception disable
 최근 target memory 유지 후 perception 비활성화
 ```
-

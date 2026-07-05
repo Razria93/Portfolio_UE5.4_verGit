@@ -7,6 +7,7 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BrainComponent.h"
+#include "HAL/IConsoleManager.h"
 
 #include "Character/Enemy/CEnemy.h"
 #include "AI/Patrol/CPatrolPath.h"
@@ -18,6 +19,15 @@
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIKeyRegistry.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
+
+namespace
+{
+	TAutoConsoleVariable<int32> CVarDisableEnemyPerception(
+		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyPerception"),
+		0,
+		TEXT("Disable Enemy AI Perception for runtime LOD measurement. 0: enable perception, 1: disable Enemy perception."),
+		ECVF_Default);
+}
 
 ACAIController::ACAIController()
 {
@@ -104,8 +114,18 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 	if (!SetPossessionRuntimeState(InPawn)) return false;
 
 	ClearTargetDataMap();
+	ResetPerceptionStateForProfiling();
 
-	if (!BindPerceptionEvents()) return false;
+	// Profiling disable path must not bind perception delegates.
+	if (ShouldDisableEnemyPerceptionForProfiling())
+	{
+		DisableEnemyPerceptionForProfiling();
+	}
+	else
+	{
+		if (!BindPerceptionEvents()) return false;
+	}
+
 	if (!SetupBlackboardComponent()) return false;
 	if (!InitializeBlackboardValues()) return false;
 	if (!StartBehaviorTreeRuntime()) return false;
@@ -120,6 +140,7 @@ void ACAIController::UninitializeControllerRuntime()
 	UnbindPerceptionEvents();
 
 	ClearTargetDataMap();
+	ResetPerceptionStateForProfiling();
 
 	ResetPossessionRuntimeState();
 }
@@ -280,6 +301,8 @@ void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 
 EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetData& OutTargetData)
 {
+	if (bPerceptionDisabledForProfiling) return EPerceptionBuildResult::NoData;
+
 	UpdateTargetDataMap();
 	return SelectTopPriority(OutTargetData);
 }
@@ -365,6 +388,36 @@ void ACAIController::UpdateTargetDataMap()
 void ACAIController::ClearTargetDataMap()
 {
 	TargetDataMap.Reset();
+}
+
+// Profiling
+
+void ACAIController::ResetPerceptionStateForProfiling()
+{
+	bPerceptionDisabledForProfiling = false;
+
+	if (!IsValid(AIPerceptionComp)) return;
+	if (!IsValid(SightConfig)) return;
+
+	AIPerceptionComp->SetSenseEnabled(SightConfig->GetSenseImplementation(), true);
+}
+
+bool ACAIController::ShouldDisableEnemyPerceptionForProfiling() const
+{
+	if (CVarDisableEnemyPerception.GetValueOnGameThread() == 0) return false;
+
+	return IsValid(ControlledPawn_Cached) && ControlledPawn_Cached->IsA<ACEnemy>();
+}
+
+void ACAIController::DisableEnemyPerceptionForProfiling()
+{
+	bPerceptionDisabledForProfiling = true;
+	ClearTargetDataMap();
+
+	if (!IsValid(AIPerceptionComp)) return;
+	if (!IsValid(SightConfig)) return;
+
+	AIPerceptionComp->SetSenseEnabled(SightConfig->GetSenseImplementation(), false);
 }
 
 EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetData& OutTargetData)

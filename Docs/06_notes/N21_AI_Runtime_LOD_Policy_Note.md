@@ -357,6 +357,20 @@ Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
 -> visibility 기반 pose skip 허용
 
 -> PIE 중 변경할 수 있으며 다음 Tick에서 반영된다.
+
+Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+-> Enemy WeaponActor 생성 유지
+
+Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 1
+-> Enemy WeaponActor 생성 생략
+-> Player WeaponActor는 유지
+
+Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+-> Enemy Perception 활성
+
+Portfolio.AI.RuntimeLOD.DisableEnemyPerception 1
+-> Enemy Perception 비활성
+-> Sight sense 비활성화, delegate binding 생략, BuildPerceptionContext NoData 반환
 ```
 
 Mesh visibility 비교:

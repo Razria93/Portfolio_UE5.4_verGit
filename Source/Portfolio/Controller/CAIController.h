@@ -37,6 +37,9 @@ protected:
 	UPROPERTY(Transient)
 	class APawn* ControlledPawn_Cached;
 
+	UPROPERTY(Transient)
+	bool bPerceptionDisabledForProfiling = false;
+
 protected:
 	/* --- Config --- */
 	UPROPERTY(Transient)
@@ -103,6 +106,12 @@ private:
 	void UpdateTargetDataMap();
 	void ClearTargetDataMap();
 	EPerceptionBuildResult SelectTopPriority(FTargetData& OutTargetData);
+
+private:
+	// Profiling
+	void ResetPerceptionStateForProfiling();
+	bool ShouldDisableEnemyPerceptionForProfiling() const;
+	void DisableEnemyPerceptionForProfiling();
 
 private:
 	// Debug
