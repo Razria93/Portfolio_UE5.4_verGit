@@ -33,7 +33,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
-	const AAIController* aiOwner = OwnerComp.GetAIOwner();
+	ACAIController* aiOwner = Cast<ACAIController>(OwnerComp.GetAIOwner());
 	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
@@ -88,6 +88,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	}
 
 	UpdatePerceptionContext(blackboardComp, aiContext);
+	aiOwner->RecordBlackboardTargetSetForAudit(aiContext.TargetActor);
 
 	// Based TargetActor
 	EContextBuildResult engageMetricResult = ComputeAlertRangeContext(ownerPawn, blackboardComp, aiContext);
@@ -121,6 +122,8 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* I
 	OutAIContext.bHasLOS = topData.bHasLOS;
 	OutAIContext.LastSeenTime = topData.LastSeenTime;
 	OutAIContext.LastKnownLocation = topData.LastKnownLocation;
+
+	aiController->RecordPerceptionContextBuiltForAudit(topData.TargetActor);
 
 	return EContextBuildResult::Success;
 }
@@ -197,10 +200,15 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	requestContext.bWasEngaged = previousAssignmentContext.IsValidAssignment() && previousAssignmentContext.CombatRole == ECombatRole::Engage;
 
 	subsystem->SubmitRequest(requestContext);
+	aiController->RecordEngageRequestSubmittedForAudit(InOutAIContext.TargetActor);
 
 	const FEngageAssignmentContext curAssignmentContext = subsystem->GetAssignment(aiController); // Current Context
 
 	InOutAIContext.bShouldEngage = curAssignmentContext.IsValidAssignment() && curAssignmentContext.CombatRole == ECombatRole::Engage;
+	if (InOutAIContext.bShouldEngage)
+	{
+		aiController->RecordEngageAssignmentResolvedForAudit(InOutAIContext.TargetActor);
+	}
 
 	return EContextBuildResult::Success;
 }

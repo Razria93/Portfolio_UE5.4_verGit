@@ -378,6 +378,13 @@ Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 0
 Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
 -> Perception 후보 Audit 활성
 -> Raw / Valid / Rejected 후보 수와 first valid target latency 출력
+
+Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 0
+-> Blackboard / Engage latency Audit 비활성
+
+Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+-> Blackboard / Engage latency Audit 활성
+-> PerceptionContext / BlackboardTarget / EngageRequest / EngageAssignment latency 출력
 ```
 
 Mesh visibility 비교:
@@ -762,12 +769,10 @@ Object Management / WeaponActor Presence
 ### 다음 측정축
 
 ```text
-Simulation LOD / AI Perception
--> Perception 후보 누수, 감지 지연, downstream 부하를 분리한다.
--> Perception Gate 측정 전에 Candidate Audit을 먼저 수행한다.
--> 대량 Enemy stress에서 관찰한 perception 지연을 active perception 수 / 거리 / 중요도 제어 후보와 연결해 검토한다.
--> Candidate Audit 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Candidate_Audit_Plan.md에 기록한다.
--> 측정 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md에 기록한다.
+Simulation LOD / Blackboard-Engage Latency
+-> FirstValidLatency 이후 Blackboard TargetActor 반영과 Engage request / assignment 지연을 분리한다.
+-> `Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit`로 측정한다.
+-> Perception 후보 누수 개선 전에 지연이 어느 단계에서 발생하는지 확인한다.
 
 Simulation LOD / BehaviorTree Update
 -> BT 실행 / service update 비용을 분리한다.

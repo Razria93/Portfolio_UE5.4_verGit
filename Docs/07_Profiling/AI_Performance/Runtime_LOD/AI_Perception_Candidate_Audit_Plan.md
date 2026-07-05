@@ -122,8 +122,8 @@ Engage request는 먼저 들어왔지만 `UCWorldSubsystem_CombatEngage::Rebuild
 
 ```text
 FirstEngageRequestTime
-FirstEngageAssignedTime
-FirstEngageAssignedFrame
+FirstEngageAssignmentTime
+FirstEngageAssignmentFrame
 ```
 
 ---
@@ -183,15 +183,18 @@ Perception 이후 Blackboard 반영, Engage request, Engage assignment 지연을
 ```text
 FirstBlackboardTargetTime
 FirstEngageRequestTime
-FirstEngageAssignedTime
+FirstEngageAssignmentTime
 ```
 
 측정 위치:
 
 ```text
+ACAIController::RecordPerceptionContextBuiltForAudit
+ACAIController::RecordBlackboardTargetSetForAudit
+ACAIController::RecordEngageRequestSubmittedForAudit
+ACAIController::RecordEngageAssignmentResolvedForAudit
 UCBTService_UpdateAIContext::UpdatePerceptionContext
 UCBTService_UpdateAIContext::ComputeEngageAssignmentContext
-UCWorldSubsystem_CombatEngage::RebuildAssignments
 ```
 
 확인 가능한 내용:
@@ -220,7 +223,7 @@ FirstRawPerceptionFrame
 FirstValidTargetFrame
 FirstBlackboardTargetFrame
 FirstEngageRequestFrame
-FirstEngageAssignedFrame
+FirstEngageAssignmentFrame
 ```
 
 측정 위치:
@@ -262,7 +265,7 @@ Avg / P50 / P95 / Max FirstRawPerceptionLatency
 Avg / P50 / P95 / Max FirstValidTargetLatency
 Avg / P50 / P95 / Max FirstBlackboardTargetLatency
 Avg / P50 / P95 / Max FirstEngageRequestLatency
-Avg / P50 / P95 / Max FirstEngageAssignedLatency
+Avg / P50 / P95 / Max FirstEngageAssignmentLatency
 
 Avg / Max RawPerceptionActorCount
 Avg / Max InvalidTargetProviderCount

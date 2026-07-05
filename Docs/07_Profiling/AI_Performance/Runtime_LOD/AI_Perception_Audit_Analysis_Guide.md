@@ -117,6 +117,26 @@ FirstRawFrame
 FirstValidFrame
 ```
 
+Blackboard / Engage latency 로그:
+
+```text
+[BlackboardEngageLatencyAudit]
+Owner
+PerceptionContextLatency
+BlackboardTargetLatency
+EngageRequestLatency
+EngageAssignmentLatency
+StartFrame
+PerceptionContextFrame
+BlackboardTargetFrame
+EngageRequestFrame
+EngageAssignmentFrame
+PerceptionTarget
+BlackboardTarget
+EngageRequestTarget
+EngageAssignmentTarget
+```
+
 각 값의 의미:
 
 ```text
@@ -230,8 +250,16 @@ Audit summary:
 - FirstRawLatency p95:
 - FirstValidLatency p95:
 
+Blackboard / Engage latency summary:
+- PerceptionContextLatency p95:
+- BlackboardTargetLatency p95:
+- EngageRequestLatency p95:
+- EngageAssignmentLatency p95:
+
 Interpretation:
 - 후보 누수:
 - valid target 지연:
+- Blackboard 반영 지연:
+- Engage request / assignment 지연:
 - 다음 측정 필요 여부:
 ```

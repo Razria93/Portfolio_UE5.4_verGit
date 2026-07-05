@@ -33,6 +33,12 @@ namespace
 		0,
 		TEXT("Enable Enemy Perception candidate audit for runtime LOD measurement. 0: disabled, 1: enabled."),
 		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEnableBlackboardEngageLatencyAudit(
+		TEXT("Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit"),
+		0,
+		TEXT("Enable Enemy Blackboard / Engage latency audit for runtime LOD measurement. 0: disabled, 1: enabled."),
+		ECVF_Default);
 }
 
 ACAIController::ACAIController()
@@ -122,6 +128,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 	ClearTargetDataMap();
 	InitializePerceptionStateForProfiling();
 	InitializePerceptionCandidateAudit();
+	InitializeBlackboardEngageLatencyAudit();
 
 	// Profiling disable path must not bind perception delegates.
 	if (ShouldDisableEnemyPerceptionForProfiling())
@@ -147,7 +154,9 @@ void ACAIController::UninitializeControllerRuntime()
 	UnbindPerceptionEvents();
 
 	PrintPerceptionCandidateAuditSummary();
+	PrintBlackboardEngageLatencyAuditSummary();
 
+	ClearBlackboardEngageLatencyAudit();
 	ClearPerceptionCandidateAudit();
 	ClearPerceptionStateForProfiling();
 	ClearTargetDataMap();
@@ -566,6 +575,84 @@ void ACAIController::RecordTargetDataMapSizeForAudit()
 		TargetDataMap.Num());
 }
 
+// Blackboard / Engage Latency Audit Lifecycle
+
+void ACAIController::InitializeBlackboardEngageLatencyAudit()
+{
+	ClearBlackboardEngageLatencyAudit();
+
+	BlackboardEngageLatencyAuditState.bEnabled = ShouldAuditBlackboardEngageLatency();
+	if (!BlackboardEngageLatencyAuditState.bEnabled) return;
+
+	UWorld* world = GetWorld();
+	BlackboardEngageLatencyAuditState.RuntimeStartTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+	BlackboardEngageLatencyAuditState.RuntimeStartFrame = GFrameCounter;
+}
+
+void ACAIController::ClearBlackboardEngageLatencyAudit()
+{
+	BlackboardEngageLatencyAuditState.Reset();
+}
+
+// Blackboard / Engage Latency Audit Condition
+
+bool ACAIController::ShouldAuditBlackboardEngageLatency() const
+{
+	if (CVarEnableBlackboardEngageLatencyAudit.GetValueOnGameThread() == 0) return false;
+
+	return IsValid(ControlledPawn_Cached) && ControlledPawn_Cached->IsA<ACEnemy>();
+}
+
+// Blackboard / Engage Latency Audit Record
+
+void ACAIController::RecordPerceptionContextBuiltForAudit(AActor* InTargetActor)
+{
+	if (!BlackboardEngageLatencyAuditState.bEnabled) return;
+	if (!IsValid(InTargetActor)) return;
+	if (BlackboardEngageLatencyAuditState.FirstPerceptionContextTime >= 0.f) return;
+
+	UWorld* world = GetWorld();
+	BlackboardEngageLatencyAuditState.FirstPerceptionContextTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+	BlackboardEngageLatencyAuditState.FirstPerceptionContextFrame = GFrameCounter;
+	BlackboardEngageLatencyAuditState.FirstPerceptionTargetActor = InTargetActor;
+}
+
+void ACAIController::RecordBlackboardTargetSetForAudit(AActor* InTargetActor)
+{
+	if (!BlackboardEngageLatencyAuditState.bEnabled) return;
+	if (!IsValid(InTargetActor)) return;
+	if (BlackboardEngageLatencyAuditState.FirstBlackboardTargetTime >= 0.f) return;
+
+	UWorld* world = GetWorld();
+	BlackboardEngageLatencyAuditState.FirstBlackboardTargetTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+	BlackboardEngageLatencyAuditState.FirstBlackboardTargetFrame = GFrameCounter;
+	BlackboardEngageLatencyAuditState.FirstBlackboardTargetActor = InTargetActor;
+}
+
+void ACAIController::RecordEngageRequestSubmittedForAudit(AActor* InTargetActor)
+{
+	if (!BlackboardEngageLatencyAuditState.bEnabled) return;
+	if (!IsValid(InTargetActor)) return;
+	if (BlackboardEngageLatencyAuditState.FirstEngageRequestTime >= 0.f) return;
+
+	UWorld* world = GetWorld();
+	BlackboardEngageLatencyAuditState.FirstEngageRequestTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+	BlackboardEngageLatencyAuditState.FirstEngageRequestFrame = GFrameCounter;
+	BlackboardEngageLatencyAuditState.FirstEngageRequestTargetActor = InTargetActor;
+}
+
+void ACAIController::RecordEngageAssignmentResolvedForAudit(AActor* InTargetActor)
+{
+	if (!BlackboardEngageLatencyAuditState.bEnabled) return;
+	if (!IsValid(InTargetActor)) return;
+	if (BlackboardEngageLatencyAuditState.FirstEngageAssignmentTime >= 0.f) return;
+
+	UWorld* world = GetWorld();
+	BlackboardEngageLatencyAuditState.FirstEngageAssignmentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+	BlackboardEngageLatencyAuditState.FirstEngageAssignmentFrame = GFrameCounter;
+	BlackboardEngageLatencyAuditState.FirstEngageAssignmentTargetActor = InTargetActor;
+}
+
 // Debug
 
 void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& UpdatedActors) const
@@ -681,4 +768,47 @@ void ACAIController::PrintPerceptionCandidateAuditSummary() const
 		PerceptionCandidateAuditState.RuntimeStartFrame,
 		PerceptionCandidateAuditState.FirstRawPerceptionFrame,
 		PerceptionCandidateAuditState.FirstValidTargetFrame));
+}
+
+void ACAIController::PrintBlackboardEngageLatencyAuditSummary() const
+{
+	if (!BlackboardEngageLatencyAuditState.bEnabled) return;
+
+	const bool bHasPerceptionContext = BlackboardEngageLatencyAuditState.FirstPerceptionContextTime >= 0.f;
+	const bool bHasBlackboardTarget = BlackboardEngageLatencyAuditState.FirstBlackboardTargetTime >= 0.f;
+	const bool bHasEngageRequest = BlackboardEngageLatencyAuditState.FirstEngageRequestTime >= 0.f;
+	const bool bHasEngageAssignment = BlackboardEngageLatencyAuditState.FirstEngageAssignmentTime >= 0.f;
+
+	const float perceptionContextLatency = bHasPerceptionContext
+		? BlackboardEngageLatencyAuditState.FirstPerceptionContextTime - BlackboardEngageLatencyAuditState.RuntimeStartTime
+		: -1.f;
+
+	const float blackboardTargetLatency = bHasBlackboardTarget
+		? BlackboardEngageLatencyAuditState.FirstBlackboardTargetTime - BlackboardEngageLatencyAuditState.RuntimeStartTime
+		: -1.f;
+
+	const float engageRequestLatency = bHasEngageRequest
+		? BlackboardEngageLatencyAuditState.FirstEngageRequestTime - BlackboardEngageLatencyAuditState.RuntimeStartTime
+		: -1.f;
+
+	const float engageAssignmentLatency = bHasEngageAssignment
+		? BlackboardEngageLatencyAuditState.FirstEngageAssignmentTime - BlackboardEngageLatencyAuditState.RuntimeStartTime
+		: -1.f;
+
+	FLog::Log(FString::Printf(
+		TEXT("[BlackboardEngageLatencyAudit] Owner=%s | PerceptionContextLatency=%.3f | BlackboardTargetLatency=%.3f | EngageRequestLatency=%.3f | EngageAssignmentLatency=%.3f | StartFrame=%llu | PerceptionContextFrame=%llu | BlackboardTargetFrame=%llu | EngageRequestFrame=%llu | EngageAssignmentFrame=%llu | PerceptionTarget=%s | BlackboardTarget=%s | EngageRequestTarget=%s | EngageAssignmentTarget=%s"),
+		*GetNameSafe(ControlledPawn_Cached),
+		perceptionContextLatency,
+		blackboardTargetLatency,
+		engageRequestLatency,
+		engageAssignmentLatency,
+		BlackboardEngageLatencyAuditState.RuntimeStartFrame,
+		BlackboardEngageLatencyAuditState.FirstPerceptionContextFrame,
+		BlackboardEngageLatencyAuditState.FirstBlackboardTargetFrame,
+		BlackboardEngageLatencyAuditState.FirstEngageRequestFrame,
+		BlackboardEngageLatencyAuditState.FirstEngageAssignmentFrame,
+		*GetNameSafe(BlackboardEngageLatencyAuditState.FirstPerceptionTargetActor.Get()),
+		*GetNameSafe(BlackboardEngageLatencyAuditState.FirstBlackboardTargetActor.Get()),
+		*GetNameSafe(BlackboardEngageLatencyAuditState.FirstEngageRequestTargetActor.Get()),
+		*GetNameSafe(BlackboardEngageLatencyAuditState.FirstEngageAssignmentTargetActor.Get())));
 }

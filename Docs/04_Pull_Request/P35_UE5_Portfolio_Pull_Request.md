@@ -197,6 +197,13 @@ Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 0
 Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
 -> Perception 후보 Audit 활성
 -> Raw / Valid / Rejected 후보 수와 first valid target latency 출력
+
+Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 0
+-> Blackboard / Engage latency Audit 비활성
+
+Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+-> Blackboard / Engage latency Audit 활성
+-> PerceptionContext / BlackboardTarget / EngageRequest / EngageAssignment latency 출력
 ```
 
 현재까지 완료된 측정축:
@@ -231,6 +238,7 @@ Simulation LOD / Blackboard-Engage Latency
 -> FirstValidLatency 이후 Blackboard TargetActor 반영과 Engage 진입까지의 지연을 분리한다.
 -> BT service interval이 first valid target 지연에 관여하는지 확인한다.
 -> Perception 후보 누수 개선 전에 지연이 어느 단계에서 발생하는지 먼저 확인한다.
+-> `Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit`로 계측한다.
 
 Simulation LOD / BehaviorTree Update
 -> BT 실행 / service update 비용을 분리한다.
@@ -520,6 +528,7 @@ WeaponActor socket follow 유지 여부 확인
 40 Enemy / PerceptionCandidateAudit 측정 완료
 40 Enemy / DisableEnemyPerception 0 / 1 비교 완료
 80 Enemy / PerceptionCandidateAudit + DisableEnemyPerception 0 / 1 비교 완료
+Blackboard / Engage latency audit 계측 코드 추가 완료
 ```
 
 측정 결과:
@@ -556,12 +565,12 @@ WeaponActor socket follow 유지 여부 확인
 
 ### AI Perception Runtime LOD
 
-| Case   | Enemy | DisableEnemyPerception | Audit | Frame p95 |  Game p95 | AIPerception p95 | BT_UpdateAIContext p95 | CharacterMovement p95 | RawActors p95 | InvalidProviders p95 | FirstValidLatency p95 | 판정          | 메모                                                                              |
-| ------ | ----: | ---------------------: | ----: | --------: | --------: | ---------------: | ---------------------: | --------------------: | ------------: | -------------------: | --------------------: | ----------- | ------------------------------------------------------------------------------- |
-| PA00   |    40 |                      0 |     1 | 12.3510ms | 12.2010ms |         0.1742ms |               0.2397ms |              1.3312ms |            41 |                   40 |                3.741s | 후보 누수 재현    | Audit을 켠 기준값이다. 40 Enemy 후보 누수와 first valid 지연이 반복됐다.                           |
-| PA01   |    40 |                      1 |     1 | 11.7484ms | 10.0197ms |         0.1538ms |               0.0991ms |              0.3924ms |             0 |                    0 |               -1.000s | Gate 차단 확인  | Perception delegate bind 경로가 차단되어 RawEvents / RawActors / TargetDataMap이 0이 된다. |
-| PA02   |    80 |                      0 |     1 | 21.5917ms | 21.5991ms |         0.8591ms |               0.4688ms |              2.9091ms |            81 |                   80 |                9.591s | scale 증가 확인 | 후보 누수와 first valid 지연이 40 Enemy 대비 크게 증가했다.                                     |
-| PA03   |    80 |                      1 |     1 | 17.2850ms | 17.2840ms |         0.8079ms |               0.1964ms |              0.9195ms |             0 |                    0 |               -1.000s | Gate 차단 확인  | RawEvents / RawActors / TargetDataMap이 0으로 차단됐다.                                |
+| Case | Enemy | DisableEnemyPerception | Audit | Frame p95 |  Game p95 | AIPerception p95 | BT_UpdateAIContext p95 | CharacterMovement p95 | RawActors p95 | InvalidProviders p95 | FirstValidLatency p95 | 판정          | 메모                                                                              |
+| ---- | ----: | ---------------------: | ----: | --------: | --------: | ---------------: | ---------------------: | --------------------: | ------------: | -------------------: | --------------------: | ----------- | ------------------------------------------------------------------------------- |
+| PA00 |    40 |                      0 |     1 | 12.3510ms | 12.2010ms |         0.1742ms |               0.2397ms |              1.3312ms |            41 |                   40 |                3.741s | 후보 누수 재현    | Audit을 켠 기준값이다. 40 Enemy 후보 누수와 first valid 지연이 반복됐다.                           |
+| PA01 |    40 |                      1 |     1 | 11.7484ms | 10.0197ms |         0.1538ms |               0.0991ms |              0.3924ms |             0 |                    0 |               -1.000s | Gate 차단 확인  | Perception delegate bind 경로가 차단되어 RawEvents / RawActors / TargetDataMap이 0이 된다. |
+| PA02 |    80 |                      0 |     1 | 21.5917ms | 21.5991ms |         0.8591ms |               0.4688ms |              2.9091ms |            81 |                   80 |                9.591s | scale 증가 확인 | 후보 누수와 first valid 지연이 40 Enemy 대비 크게 증가했다.                                     |
+| PA03 |    80 |                      1 |     1 | 17.2850ms | 17.2840ms |         0.8079ms |               0.1964ms |              0.9195ms |             0 |                    0 |               -1.000s | Gate 차단 확인  | RawEvents / RawActors / TargetDataMap이 0으로 차단됐다.                                |
 
 측정 해석:
 

@@ -322,6 +322,27 @@ Log State: -noailogging
 PIE: F11 fullscreen
 CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
 CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+```
+
+기록되는 로그:
+
+```text
+[BlackboardEngageLatencyAudit]
+Owner
+PerceptionContextLatency
+BlackboardTargetLatency
+EngageRequestLatency
+EngageAssignmentLatency
+StartFrame
+PerceptionContextFrame
+BlackboardTargetFrame
+EngageRequestFrame
+EngageAssignmentFrame
+PerceptionTarget
+BlackboardTarget
+EngageRequestTarget
+EngageAssignmentTarget
 ```
 
 ---
@@ -333,5 +354,5 @@ provider 없는 Actor를 TargetDataMap에 넣기 전에 필터링
 team attitude 기반으로 Enemy 후보를 sight 단계에서 제외
 distance / combat importance 기반 active perception cap
 BT service interval / first valid target update timing 분리 측정
-Blackboard / Engage latency audit 추가
+Blackboard / Engage latency audit 측정
 ```

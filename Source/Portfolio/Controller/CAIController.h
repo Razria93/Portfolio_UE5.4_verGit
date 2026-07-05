@@ -48,6 +48,56 @@ struct FPerceptionCandidateAuditState
 	}
 };
 
+struct FBlackboardEngageLatencyAuditState
+{
+	bool bEnabled = false;
+
+	float RuntimeStartTime = 0.f;
+	uint64 RuntimeStartFrame = 0;
+
+	float FirstPerceptionContextTime = -1.f;
+	uint64 FirstPerceptionContextFrame = 0;
+
+	float FirstBlackboardTargetTime = -1.f;
+	uint64 FirstBlackboardTargetFrame = 0;
+
+	float FirstEngageRequestTime = -1.f;
+	uint64 FirstEngageRequestFrame = 0;
+
+	float FirstEngageAssignmentTime = -1.f;
+	uint64 FirstEngageAssignmentFrame = 0;
+
+	TWeakObjectPtr<class AActor> FirstPerceptionTargetActor;
+	TWeakObjectPtr<class AActor> FirstBlackboardTargetActor;
+	TWeakObjectPtr<class AActor> FirstEngageRequestTargetActor;
+	TWeakObjectPtr<class AActor> FirstEngageAssignmentTargetActor;
+
+	void Reset()
+	{
+		bEnabled = false;
+
+		RuntimeStartTime = 0.f;
+		RuntimeStartFrame = 0;
+
+		FirstPerceptionContextTime = -1.f;
+		FirstPerceptionContextFrame = 0;
+
+		FirstBlackboardTargetTime = -1.f;
+		FirstBlackboardTargetFrame = 0;
+
+		FirstEngageRequestTime = -1.f;
+		FirstEngageRequestFrame = 0;
+
+		FirstEngageAssignmentTime = -1.f;
+		FirstEngageAssignmentFrame = 0;
+
+		FirstPerceptionTargetActor.Reset();
+		FirstBlackboardTargetActor.Reset();
+		FirstEngageRequestTargetActor.Reset();
+		FirstEngageAssignmentTargetActor.Reset();
+	}
+};
+
 UCLASS()
 class PORTFOLIO_API ACAIController : public AAIController
 {
@@ -90,6 +140,7 @@ private:
 	bool bPerceptionDisabledForProfiling = false;
 
 	FPerceptionCandidateAuditState PerceptionCandidateAuditState;
+	FBlackboardEngageLatencyAuditState BlackboardEngageLatencyAuditState;
 
 public:
 	ACAIController();
@@ -147,6 +198,13 @@ public:
 	// Query
 	EPerceptionBuildResult BuildPerceptionContext(FTargetData& OutTargetData);
 
+public:
+	// Profiling Event Sink
+	void RecordPerceptionContextBuiltForAudit(class AActor* InTargetActor);
+	void RecordBlackboardTargetSetForAudit(class AActor* InTargetActor);
+	void RecordEngageRequestSubmittedForAudit(class AActor* InTargetActor);
+	void RecordEngageAssignmentResolvedForAudit(class AActor* InTargetActor);
+
 private:
 	// Target Data
 	void UpdateTargetDataMap();
@@ -183,6 +241,15 @@ private:
 	void RecordTargetDataMapSizeForAudit();
 
 private:
+	// Blackboard / Engage Latency Audit
+	// 1. Lifecycle
+	void InitializeBlackboardEngageLatencyAudit();
+	void ClearBlackboardEngageLatencyAudit();
+
+	// 2. Condition
+	bool ShouldAuditBlackboardEngageLatency() const;
+
+private:
 	// Debug
 	void PrintPerceptionUpdatedSummary(const TArray<class AActor*>& UpdatedActors) const;
 	void PrintTargetPerceptionUpdatedSummary(class AActor* Actor, const FAIStimulus& Stimulus) const;
@@ -192,6 +259,7 @@ private:
 
 	// Profiling Debug
 	void PrintPerceptionCandidateAuditSummary() const;
+	void PrintBlackboardEngageLatencyAuditSummary() const;
 };
 
 
