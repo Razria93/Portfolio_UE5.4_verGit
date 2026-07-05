@@ -653,3 +653,67 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measureme
 Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
 Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 ```
+
+---
+
+## 추가 측정 - Blackboard / Engage Latency Audit
+
+### 40 Enemy
+
+측정 조건:
+
+```text
+Case: 40 Enemy / BlackboardEngageLatencyAudit
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+```
+
+CSV 요약:
+
+| Metric | P95 |
+| --- | ---: |
+| FrameTime | 13.6816ms |
+| GameThreadTime | 13.5957ms |
+| GPUTime | 10.4328ms |
+| AIPerception | 0.1798ms |
+| BehaviorTreeTick | 0.3735ms |
+| BT_UpdateAIContext | 0.2263ms |
+| CharacterMovement | 1.4425ms |
+| Animation | 2.0754ms |
+
+Audit 요약:
+
+| Metric                   |    P95 |
+| ------------------------ | -----: |
+| RawActors                |     41 |
+| InvalidProviders         |     40 |
+| MaxTargetDataMap         |     41 |
+| FirstRawLatency          | 0.450s |
+| FirstValidLatency        | 3.743s |
+| PerceptionContextLatency | 3.754s |
+| BlackboardTargetLatency  | 3.754s |
+| EngageRequestLatency     | 3.754s |
+| EngageAssignmentLatency  | 3.764s |
+
+Frame delta:
+
+| Delta                                 |      P95 |
+| ------------------------------------- | -------: |
+| FirstValid -> PerceptionContext       |  1 frame |
+| PerceptionContext -> BlackboardTarget |  0 frame |
+| BlackboardTarget -> EngageRequest     |  0 frame |
+| EngageRequest -> EngageAssignment     | 5 frames |
+
+해석:
+
+```text
+FirstValid target이 나온 뒤 Blackboard TargetActor 반영과 Engage request는 같은 BT service tick 안에서 처리된다.
+따라서 40 Enemy 기준 약 3.7초 지연은 Blackboard / Engage subsystem 지연이 아니라 first valid target 이전 단계의 지연으로 본다.
+EngageAssignment는 40명 중 2명만 기록됐고, 기록된 대상은 request 이후 3~5 frame 안에 assignment가 완료됐다.
+다음 후보는 team attitude 분리, target provider filtering 위치 조정, perception candidate cap이다.
+```

@@ -300,22 +300,19 @@ Gate 효과 판단은 Audit 로그의 RawEvents / RawActors / MaxTargetDataMap 0
 
 ---
 
-## 다음 측정
+## Case PA04 - 40 Enemy / BlackboardEngageLatencyAudit
 
-Blackboard / Engage latency audit를 추가해 first valid target 이후 실제 Blackboard TargetActor 반영과 Engage 진입까지의 지연을 분리한다.
-
-확인할 항목:
+측정 파일:
 
 ```text
-FirstValidLatency 이후 Blackboard TargetActor 반영까지의 지연
-Blackboard TargetActor 반영 이후 Engage request / assignment까지의 지연
-BT service interval이 first valid target 지연에 관여하는지
+CSV: Portfolio/Csvprofile/Profile(20260706_002628).csv
+Log: Portfolio/Csvprofile/Log(20260706_002628).txt
 ```
 
-측정 템플릿:
+측정 조건:
 
 ```text
-Case: 80 Enemy / BlackboardEngageLatencyAudit
+Case: 40 Enemy / BlackboardEngageLatencyAudit
 Capture Duration: 약 36초
 Analysis Window: first 3s / last 3s trimmed, middle 30s used
 Log State: -noailogging
@@ -325,24 +322,82 @@ CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
 CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
 ```
 
-기록되는 로그:
+CSV 요약:
+
+| Metric | Avg | P95 | Max |
+| --- | ---: | ---: | ---: |
+| FrameTime | 12.2371ms | 13.6816ms | 16.7157ms |
+| GameThreadTime | 12.1353ms | 13.5957ms | 16.1568ms |
+| GPUTime | 9.5948ms | 10.4328ms | 11.5139ms |
+| AIPerception | 0.1488ms | 0.1798ms | 0.6368ms |
+| BehaviorTreeTick | 0.2869ms | 0.3735ms | 0.6769ms |
+| BT_UpdateAIContext | 0.1914ms | 0.2263ms | 0.5225ms |
+| BT_UpdateEngageContext | 0.0019ms | 0.0024ms | 0.0332ms |
+| CombatEngage_Tick | 0.0011ms | 0.0075ms | 0.0307ms |
+| CombatEngage_RebuildAssignments | 0.0009ms | 0.0070ms | 0.0301ms |
+| CharacterMovement | 1.0089ms | 1.4425ms | 2.3108ms |
+| Animation | 1.8378ms | 2.0754ms | 2.9224ms |
+| AnimationParallelEvaluation TotalTaskTime | 3.4718ms | 4.0081ms | 4.9625ms |
+| DrawCalls | 794.1332 | 830 | 867 |
+| PrimitivesDrawn | 3,692,117 | 4,773,552 | 4,839,698 |
+| CEnemy ActorCount | 81 | 81 | 81 |
+| CWeaponActor ActorCount | 42 | 42 | 42 |
+| CAIController ActorCount | 40 | 40 | 40 |
+| TotalActorCount | 335 | 335 | 335 |
+
+Audit 요약:
+
+| Metric | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RawEvents | 518.575 | 522 | 514 | 524 |
+| RawActors | 41 | 41 | 41 | 41 |
+| ValidProviders | 1 | 1 | 1 | 1 |
+| InvalidProviders | 40 | 40 | 40 | 40 |
+| MaxTargetDataMap | 41 | 41 | 41 | 41 |
+| FirstRawLatency | 0.354s | 0.450s | 0.010s | 0.450s |
+| FirstValidLatency | 3.713s | 3.743s | 3.679s | 3.743s |
+
+Blackboard / Engage latency 요약:
+
+| Metric | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PerceptionContextLatency | 40 | 3.724s | 3.754s | 3.690s | 3.754s |
+| BlackboardTargetLatency | 40 | 3.724s | 3.754s | 3.690s | 3.754s |
+| EngageRequestLatency | 40 | 3.724s | 3.754s | 3.690s | 3.754s |
+| EngageAssignmentLatency | 2 | 3.764s | 3.764s | 3.764s | 3.764s |
+
+Frame delta 요약:
+
+| Delta | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FirstValid -> PerceptionContext | 40 | 1.05 frames | 1 frame | 1 | 3 |
+| PerceptionContext -> BlackboardTarget | 40 | 0 frames | 0 frames | 0 | 0 |
+| BlackboardTarget -> EngageRequest | 40 | 0 frames | 0 frames | 0 | 0 |
+| EngageRequest -> EngageAssignment | 2 | 4 frames | 5 frames | 3 | 5 |
+
+해석:
 
 ```text
-[BlackboardEngageLatencyAudit]
-Owner
-PerceptionContextLatency
-BlackboardTargetLatency
-EngageRequestLatency
-EngageAssignmentLatency
-StartFrame
-PerceptionContextFrame
-BlackboardTargetFrame
-EngageRequestFrame
-EngageAssignmentFrame
-PerceptionTarget
-BlackboardTarget
-EngageRequestTarget
-EngageAssignmentTarget
+40 Enemy 조건에서 RawActors p95는 41, InvalidProviders p95는 40이다.
+즉 Player 1명을 찾는 과정에서 Enemy 40명이 후보로 같이 들어온다.
+
+FirstValidLatency p95는 3.743초이고,
+PerceptionContextLatency / BlackboardTargetLatency / EngageRequestLatency p95는 모두 3.754초다.
+FirstValid target이 인정된 뒤 PerceptionContext / BlackboardTarget / EngageRequest는 거의 같은 프레임에서 이어진다.
+
+Frame delta 기준으로 FirstValid -> PerceptionContext는 p95 1 frame,
+PerceptionContext -> BlackboardTarget은 0 frame,
+BlackboardTarget -> EngageRequest도 0 frame이다.
+따라서 이번 측정에서 3.7초 지연의 주 원인은 Blackboard 반영이나 Engage request가 아니다.
+
+EngageAssignment은 40명 중 2명만 기록됐다.
+이는 현재 engage assignment 정책상 target에 배정되는 attacker 수가 제한되기 때문이다.
+기록된 2명은 request 이후 3~5 frame 안에 assignment가 완료됐다.
+
+결론적으로 병목 후보는 FirstValid target이 나오기 전 단계다.
+즉 raw perception 후보는 초반에 들어오지만,
+valid target provider가 후보로 인정되는 시점이 늦다.
+다음 분석은 team attitude / target provider filtering / perception candidate cap 쪽을 우선 본다.
 ```
 
 ---
@@ -353,6 +408,6 @@ EngageAssignmentTarget
 provider 없는 Actor를 TargetDataMap에 넣기 전에 필터링
 team attitude 기반으로 Enemy 후보를 sight 단계에서 제외
 distance / combat importance 기반 active perception cap
-BT service interval / first valid target update timing 분리 측정
-Blackboard / Engage latency audit 측정
+BT service interval / first valid target update timing 추가 분리
+80 Enemy / BlackboardEngageLatencyAudit 재측정
 ```

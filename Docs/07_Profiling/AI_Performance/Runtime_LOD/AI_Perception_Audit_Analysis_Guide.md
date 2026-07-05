@@ -182,6 +182,25 @@ FirstRawLatency와 FirstValidLatency가 함께 높으면 perception stimulus 처
 FirstValidLatency가 여러 Enemy에서 비슷한 값으로 몰리면 BT service interval 또는 batch update 가능성이 있다.
 ```
 
+### Blackboard / Engage 지연 판단
+
+```text
+FirstValidLatency와 PerceptionContextLatency가 거의 같고 frame delta가 1 frame 수준이면,
+valid target 인정 이후 BuildPerceptionContext까지의 추가 지연은 작다고 본다.
+
+PerceptionContextLatency, BlackboardTargetLatency, EngageRequestLatency가 같고 frame delta가 0이면,
+Blackboard 반영과 Engage request는 같은 BT service tick 안에서 이어진 것으로 본다.
+
+EngageAssignmentLatency는 assignment를 받은 AI만 따로 valid-only 기준으로 해석한다.
+전체 Enemy 중 일부만 assignment를 받는 구조라면 -1.000 값을 p95에 섞지 않는다.
+
+EngageRequest -> EngageAssignment frame delta가 한 자리 frame이면,
+CombatEngage rebuild interval은 장기 지연 원인이 아니라고 본다.
+
+따라서 FirstValidLatency는 높은데 이후 단계의 frame delta가 작으면,
+Blackboard / Engage subsystem이 아니라 first valid target 이전 단계를 우선 의심한다.
+```
+
 ### 성능 판단
 
 ```text
@@ -220,6 +239,39 @@ AIPerception 비용 자체는 크지 않지만 후보 누수가 TargetDataMap을
 ```text
 FirstValidLatency 3.5초의 직접 원인이 BT service interval인지, perception batch인지, target provider 이벤트 순서인지는 아직 확정하지 않는다.
 80 Enemy 측정과 Blackboard / Engage latency audit 후 판단한다.
+```
+
+---
+
+## Blackboard / Engage Audit 기준 해석
+
+40 Enemy 측정 결과:
+
+```text
+Case = 40 Enemy / BlackboardEngageLatencyAudit
+RawActors p95 = 41
+InvalidProviders p95 = 40
+FirstRawLatency p95 = 0.450s
+FirstValidLatency p95 = 3.743s
+
+PerceptionContextLatency p95 = 3.754s
+BlackboardTargetLatency p95 = 3.754s
+EngageRequestLatency p95 = 3.754s
+
+FirstValid -> PerceptionContext p95 = 1 frame
+PerceptionContext -> BlackboardTarget p95 = 0 frame
+BlackboardTarget -> EngageRequest p95 = 0 frame
+EngageRequest -> EngageAssignment p95 = 5 frames
+```
+
+해석:
+
+```text
+이번 측정에서는 valid target 인정 이후 Blackboard TargetActor 반영과 Engage request까지의 추가 지연이 거의 없다.
+따라서 3.7초 지연은 Blackboard 반영이나 Engage subsystem에서 만들어진 지연으로 보지 않는다.
+
+Raw 후보는 초반에 들어오지만 valid target provider가 늦게 인정된다.
+다음 원인 후보는 team attitude 미분리, target provider filtering 위치, perception candidate cap 부재다.
 ```
 
 ---
