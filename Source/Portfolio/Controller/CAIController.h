@@ -6,6 +6,48 @@
 #include "Type/CAIStructure.h"
 #include "CAIController.generated.h"
 
+struct FPerceptionCandidateAuditState
+{
+	bool bEnabled = false;
+
+	float RuntimeStartTime = 0.f;
+	uint64 RuntimeStartFrame = 0;
+
+	float FirstRawPerceptionTime = -1.f;
+	uint64 FirstRawPerceptionFrame = 0;
+
+	float FirstValidTargetTime = -1.f;
+	uint64 FirstValidTargetFrame = 0;
+
+	int32 RawPerceptionEventCount = 0;
+	int32 MaxTargetDataMapSize = 0;
+
+	TSet<TWeakObjectPtr<class AActor>> RawPerceptionActors;
+	TSet<TWeakObjectPtr<class AActor>> ValidTargetProviderActors;
+	TSet<TWeakObjectPtr<class AActor>> InvalidTargetProviderActors;
+
+	void Reset()
+	{
+		bEnabled = false;
+
+		RuntimeStartTime = 0.f;
+		RuntimeStartFrame = 0;
+
+		FirstRawPerceptionTime = -1.f;
+		FirstRawPerceptionFrame = 0;
+
+		FirstValidTargetTime = -1.f;
+		FirstValidTargetFrame = 0;
+
+		RawPerceptionEventCount = 0;
+		MaxTargetDataMapSize = 0;
+
+		RawPerceptionActors.Reset();
+		ValidTargetProviderActors.Reset();
+		InvalidTargetProviderActors.Reset();
+	}
+};
+
 UCLASS()
 class PORTFOLIO_API ACAIController : public AAIController
 {
@@ -37,13 +79,17 @@ protected:
 	UPROPERTY(Transient)
 	class APawn* ControlledPawn_Cached;
 
-	UPROPERTY(Transient)
-	bool bPerceptionDisabledForProfiling = false;
-
 protected:
 	/* --- Config --- */
 	UPROPERTY(Transient)
 	class UAISenseConfig_Sight* SightConfig;
+
+private:
+	// Profiling State
+	UPROPERTY(Transient)
+	bool bPerceptionDisabledForProfiling = false;
+
+	FPerceptionCandidateAuditState PerceptionCandidateAuditState;
 
 public:
 	ACAIController();
@@ -108,10 +154,33 @@ private:
 	EPerceptionBuildResult SelectTopPriority(FTargetData& OutTargetData);
 
 private:
-	// Profiling
-	void ResetPerceptionStateForProfiling();
+	// Perception Profiling Gate
+	// 1. Lifecycle
+	void InitializePerceptionStateForProfiling();
+	void ClearPerceptionStateForProfiling();
+
+	// 2. Condition
 	bool ShouldDisableEnemyPerceptionForProfiling() const;
+
+	// 3. Set
 	void DisableEnemyPerceptionForProfiling();
+	void EnableEnemyPerceptionForProfiling();
+	void SetPerceptionSenseEnabledForProfiling(bool bEnabled);
+
+private:
+	// Perception Candidate Audit
+	// 1. Lifecycle
+	void InitializePerceptionCandidateAudit();
+	void ClearPerceptionCandidateAudit();
+
+	// 2. Condition
+	bool ShouldAuditPerceptionCandidates() const;
+
+	// 3. Record
+	void RecordRawPerceptionCandidate(class AActor* InActor);
+	void RecordValidTargetProvider(class AActor* InActor);
+	void RecordInvalidTargetProvider(class AActor* InActor);
+	void RecordTargetDataMapSizeForAudit();
 
 private:
 	// Debug
@@ -120,6 +189,9 @@ private:
 	void PrintTargetPerceptionForgotten(AActor* Actor) const;
 	void PrintAllTargetData() const;
 	void PrintTargetData(const FTargetData& InData) const;
+
+	// Profiling Debug
+	void PrintPerceptionCandidateAuditSummary() const;
 };
 
 
