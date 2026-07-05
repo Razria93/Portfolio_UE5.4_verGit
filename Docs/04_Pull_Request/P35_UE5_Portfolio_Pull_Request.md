@@ -717,3 +717,65 @@ FirstValid target이 나온 뒤 Blackboard TargetActor 반영과 Engage request�
 EngageAssignment는 40명 중 2명만 기록됐고, 기록된 대상은 request 이후 3~5 frame 안에 assignment가 완료됐다.
 다음 후보는 team attitude 분리, target provider filtering 위치 조정, perception candidate cap이다.
 ```
+
+### 80 Enemy
+
+측정 조건:
+
+```text
+Case: 80 Enemy / BlackboardEngageLatencyAudit
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+```
+
+CSV 요약:
+
+| Metric | P95 |
+| --- | ---: |
+| FrameTime | 20.5497ms |
+| GameThreadTime | 20.3026ms |
+| GPUTime | 11.5416ms |
+| AIPerception | 0.8596ms |
+| BehaviorTreeTick | 0.6971ms |
+| BT_UpdateAIContext | 0.4739ms |
+| CharacterMovement | 2.6772ms |
+| Animation | 3.5045ms |
+
+Audit 요약:
+
+| Metric | P95 |
+| --- | ---: |
+| RawActors | 81 |
+| InvalidProviders | 80 |
+| MaxTargetDataMap | 81 |
+| FirstRawLatency | 0.962s |
+| FirstValidLatency | 9.377s |
+| PerceptionContextLatency | 9.393s |
+| BlackboardTargetLatency | 9.393s |
+| EngageRequestLatency | 9.393s |
+| EngageAssignmentLatency | 9.242s |
+
+Frame delta:
+
+| Delta | P95 |
+| --- | ---: |
+| FirstValid -> PerceptionContext | 1 frame |
+| PerceptionContext -> BlackboardTarget | 0 frame |
+| BlackboardTarget -> EngageRequest | 0 frame |
+| EngageRequest -> EngageAssignment | 1 frame |
+
+해석:
+
+```text
+80 Enemy에서도 FirstValid target 이후 Blackboard TargetActor 반영과 Engage request는 같은 BT service tick 안에서 처리된다.
+FirstValidLatency p95는 40 Enemy 약 3.7초에서 80 Enemy 약 9.4초로 증가했다.
+따라서 장기 지연은 Blackboard / Engage subsystem이 아니라 Enemy 후보 누수와 valid target 인정 이전 단계에서 확대된다.
+다음 작업 우선순위는 team attitude / affiliation 정리와 invalid provider의 TargetDataMap 진입 차단이다.
+```

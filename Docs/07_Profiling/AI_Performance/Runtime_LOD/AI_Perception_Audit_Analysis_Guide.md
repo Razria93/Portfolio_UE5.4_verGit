@@ -274,6 +274,33 @@ Raw 후보는 초반에 들어오지만 valid target provider가 늦게 인정�
 다음 원인 후보는 team attitude 미분리, target provider filtering 위치, perception candidate cap 부재다.
 ```
 
+80 Enemy 측정 결과:
+
+```text
+Case = 80 Enemy / BlackboardEngageLatencyAudit
+RawActors p95 = 81
+InvalidProviders p95 = 80
+FirstRawLatency p95 = 0.962s
+FirstValidLatency p95 = 9.377s
+
+PerceptionContextLatency p95 = 9.393s
+BlackboardTargetLatency p95 = 9.393s
+EngageRequestLatency p95 = 9.393s
+
+FirstValid -> PerceptionContext p95 = 1 frame
+PerceptionContext -> BlackboardTarget p95 = 0 frame
+BlackboardTarget -> EngageRequest p95 = 0 frame
+EngageRequest -> EngageAssignment p95 = 1 frame
+```
+
+80 Enemy 해석:
+
+```text
+80 Enemy에서도 valid target 이후 Blackboard / Engage 단계의 추가 지연은 거의 없다.
+FirstValidLatency가 40 Enemy 약 3.7초에서 80 Enemy 약 9.4초로 증가했다.
+따라서 후보 수 증가가 valid target 인정 지연을 확대하는 패턴으로 본다.
+```
+
 ---
 
 ## 다음 분석 템플릿

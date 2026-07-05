@@ -402,6 +402,106 @@ valid target provider가 후보로 인정되는 시점이 늦다.
 
 ---
 
+## Case PA05 - 80 Enemy / BlackboardEngageLatencyAudit
+
+측정 파일:
+
+```text
+CSV: Portfolio/Csvprofile/Profile(20260706_012112).csv
+Log: Portfolio/Csvprofile/Log(20260706_012112).txt
+```
+
+측정 조건:
+
+```text
+Case: 80 Enemy / BlackboardEngageLatencyAudit
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+```
+
+CSV 요약:
+
+| Metric | Avg | P95 | Max |
+| --- | ---: | ---: | ---: |
+| FrameTime | 18.1419ms | 20.5497ms | 98.8381ms |
+| GameThreadTime | 18.0174ms | 20.3026ms | 93.1750ms |
+| GPUTime | 10.7054ms | 11.5416ms | 17.3124ms |
+| AIPerception | 0.2729ms | 0.8596ms | 1.1915ms |
+| BehaviorTreeTick | 0.5611ms | 0.6971ms | 1.3450ms |
+| BT_UpdateAIContext | 0.3882ms | 0.4739ms | 1.0331ms |
+| CombatEngage_Tick | 0.0017ms | 0.0112ms | 0.0203ms |
+| CombatEngage_RebuildAssignments | 0.0015ms | 0.0109ms | 0.0198ms |
+| CharacterMovement | 1.7660ms | 2.6772ms | 5.2863ms |
+| Animation | 3.2665ms | 3.5045ms | 73.0987ms |
+| AnimationParallelEvaluation TotalTaskTime | 5.6968ms | 6.6040ms | 8.8496ms |
+| DrawCalls | 1,309.4449 | 1,352 | 2,480 |
+| PrimitivesDrawn | 7,001,508 | 8,013,446 | 13,502,118 |
+| CEnemy ActorCount | 161 | 161 | 161 |
+| CWeaponActor ActorCount | 82 | 82 | 82 |
+| CAIController ActorCount | 80 | 80 | 80 |
+| TotalActorCount | 483 | 483 | 483 |
+
+Audit 요약:
+
+| Metric | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: |
+| RawEvents | 170.962 | 172 | 169 | 173 |
+| RawActors | 81 | 81 | 81 | 81 |
+| ValidProviders | 1 | 1 | 1 | 1 |
+| InvalidProviders | 80 | 80 | 80 | 80 |
+| MaxTargetDataMap | 81 | 81 | 81 | 81 |
+| FirstRawLatency | 0.773s | 0.962s | 0.010s | 0.962s |
+| FirstValidLatency | 9.294s | 9.377s | 9.197s | 9.393s |
+
+Blackboard / Engage latency 요약:
+
+| Metric | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PerceptionContextLatency | 80 | 9.310s | 9.393s | 9.212s | 9.408s |
+| BlackboardTargetLatency | 80 | 9.310s | 9.393s | 9.212s | 9.408s |
+| EngageRequestLatency | 80 | 9.310s | 9.393s | 9.212s | 9.408s |
+| EngageAssignmentLatency | 2 | 9.242s | 9.242s | 9.242s | 9.242s |
+
+Frame delta 요약:
+
+| Delta | Count | Avg | P95 | Min | Max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FirstValid -> PerceptionContext | 80 | 1.025 frames | 1 frame | 1 | 3 |
+| PerceptionContext -> BlackboardTarget | 80 | 0 frames | 0 frames | 0 | 0 |
+| BlackboardTarget -> EngageRequest | 80 | 0 frames | 0 frames | 0 | 0 |
+| EngageRequest -> EngageAssignment | 2 | 1 frame | 1 frame | 1 | 1 |
+
+해석:
+
+```text
+80 Enemy 조건에서도 RawActors p95는 81, InvalidProviders p95는 80이다.
+Player 1명을 찾는 동안 Enemy 80명이 perception 후보로 같이 들어온다.
+
+FirstRawLatency p95는 0.962초이고 FirstValidLatency p95는 9.377초다.
+40 Enemy의 FirstValidLatency p95 3.743초 대비 크게 증가했다.
+즉 후보 누수 규모가 커질수록 valid target 인정 지연도 같이 증가한다.
+
+PerceptionContextLatency / BlackboardTargetLatency / EngageRequestLatency p95는 모두 9.393초다.
+Frame delta 기준으로 FirstValid -> PerceptionContext는 p95 1 frame,
+PerceptionContext -> BlackboardTarget은 0 frame,
+BlackboardTarget -> EngageRequest도 0 frame이다.
+
+따라서 80 Enemy에서도 장기 지연은 Blackboard 반영이나 Engage request 단계가 아니라 FirstValid target 이전 단계에서 발생한다.
+EngageAssignment는 80명 중 2명만 기록됐고, request 이후 1 frame 안에 assignment가 완료됐다.
+
+결론적으로 team attitude / affiliation을 통해 Enemy끼리 perception 대상이 되지 않게 만드는 작업이 우선이다.
+그 다음 방어선으로 TargetDataMap에 invalid provider를 넣지 않도록 보정한다.
+```
+
+---
+
 ## 후속 개선 후보
 
 ```text
@@ -409,5 +509,4 @@ provider 없는 Actor를 TargetDataMap에 넣기 전에 필터링
 team attitude 기반으로 Enemy 후보를 sight 단계에서 제외
 distance / combat importance 기반 active perception cap
 BT service interval / first valid target update timing 추가 분리
-80 Enemy / BlackboardEngageLatencyAudit 재측정
 ```
