@@ -152,6 +152,10 @@ protected:
 	void OnUnPossess() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+public:
+	// Team
+	ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
 protected:
 	// Config Setup
 	bool InitializeSightConfig();

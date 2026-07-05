@@ -847,3 +847,41 @@ MaxTargetDataMap이 81에서 1로 줄었고 BT_UpdateAIContext p95도 감소했�
 하지만 FirstValidLatency는 9초대 후반으로 남았다.
 40 / 80 Enemy 모두 같은 패턴이므로, 다음 작업은 team attitude / affiliation으로 Enemy끼리 perception 대상이 되지 않게 하는 것이다.
 ```
+
+### Team Attitude / Affiliation 보정
+
+적용 내용:
+
+```text
+ACAIController::GetTeamAttitudeTowards()를 override했다.
+ACPlayer는 Hostile로 취급한다.
+ACEnemy는 Friendly로 취급한다.
+그 외 Actor는 Neutral로 취급한다.
+```
+
+의도:
+
+```text
+SightConfig는 DetectEnemies=true, DetectFriendlies=false, DetectNeutrals=false다.
+따라서 Enemy AIController 기준에서 Player만 감지 대상에 남기고, Enemy끼리는 sight 대상에서 제외하는 것이 목표다.
+```
+
+재측정 기준:
+
+```text
+40 Enemy / 80 Enemy
+DisableEnemyPerception 0
+PerceptionCandidateAudit 1
+BlackboardEngageLatencyAudit 1
+DisableEnemyWeaponActor 0
+EnemyMeshMode 0
+```
+
+예상 확인:
+
+```text
+RawActors가 1에 가까워지는지 확인한다.
+InvalidProviders가 0에 가까워지는지 확인한다.
+MaxTargetDataMap은 1에 가까운 상태를 유지해야 한다.
+FirstValidLatency가 줄어드는지 확인한다.
+```

@@ -345,6 +345,17 @@ BT_UpdateAIContext p95는 0.4739ms에서 0.2903ms로 감소했다.
 따라서 provider guard는 target map / BT context 비용을 낮추는 보정이고, perception 후보 생성 / dispatch 지연의 근본 해결은 아니다.
 ```
 
+Team attitude / affiliation 적용 후 판단:
+
+```text
+ACAIController 기준에서 ACPlayer는 Hostile, ACEnemy는 Friendly, 그 외 Actor는 Neutral로 취급한다.
+SightConfig가 DetectEnemies=true, DetectFriendlies=false, DetectNeutrals=false라면 Enemy끼리는 perception target에서 제외되어야 한다.
+
+적용 후 RawActors가 1에 가까워지고 InvalidProviders가 0에 가까워지면 affiliation filter가 동작한 것으로 본다.
+RawActors / InvalidProviders가 그대로라면 GetTeamAttitudeTowards override만으로는 현재 perception target filtering에 연결되지 않은 것으로 보고,
+target actor team id 제공 방식 또는 controller / pawn team interface 구성을 추가 검토한다.
+```
+
 ---
 
 ## 다음 분석 템플릿

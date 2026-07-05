@@ -9,6 +9,7 @@
 #include "BrainComponent.h"
 #include "HAL/IConsoleManager.h"
 
+#include "Character/Player/CPlayer.h"
 #include "Character/Enemy/CEnemy.h"
 #include "AI/Patrol/CPatrolPath.h"
 
@@ -83,6 +84,21 @@ void ACAIController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	UninitializeControllerRuntime();
 
 	Super::EndPlay(EndPlayReason);
+}
+
+ETeamAttitude::Type ACAIController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	if (Other.IsA<ACPlayer>())
+	{
+		return ETeamAttitude::Hostile;
+	}
+
+	if (Other.IsA<ACEnemy>())
+	{
+		return ETeamAttitude::Friendly;
+	}
+
+	return ETeamAttitude::Neutral;
 }
 
 bool ACAIController::InitializeSightConfig()

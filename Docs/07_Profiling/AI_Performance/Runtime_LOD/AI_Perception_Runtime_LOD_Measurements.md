@@ -740,10 +740,50 @@ FirstValidLatency p95도 9초대 후반으로 남아 있다.
 
 ---
 
+## 적용된 2차 보정
+
+```text
+ACAIController::GetTeamAttitudeTowards()를 override해 perception affiliation 기준을 명시했다.
+ACPlayer는 Hostile로 취급한다.
+ACEnemy는 Friendly로 취급한다.
+그 외 Actor는 Neutral로 취급한다.
+```
+
+의도:
+
+```text
+SightConfig는 DetectEnemies=true, DetectFriendlies=false, DetectNeutrals=false로 설정되어 있다.
+따라서 Enemy AIController 기준에서 Player만 perception target으로 남기고,
+Enemy끼리는 sight 대상에서 제외하는 것이 목표다.
+```
+
+기대 효과:
+
+```text
+RawActors는 1에 가까워져야 한다.
+InvalidProviders는 0에 가까워져야 한다.
+MaxTargetDataMap은 provider guard 적용 상태와 동일하게 1에 가까워야 한다.
+FirstValidLatency가 줄어드는지 확인한다.
+AIPerception / BT_UpdateAIContext / CharacterMovement p95 변화도 함께 확인한다.
+```
+
+다음 측정:
+
+```text
+Case: 40 Enemy / TeamAttitudeAffiliation
+Case: 80 Enemy / TeamAttitudeAffiliation
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CVar: Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 1
+CVar: Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+CVar: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+```
+
+---
+
 ## 후속 개선 후보
 
 ```text
-team attitude 기반으로 Enemy 후보를 sight 단계에서 제외
 distance / combat importance 기반 active perception cap
 BT service interval / first valid target update timing 추가 분리
 ```
