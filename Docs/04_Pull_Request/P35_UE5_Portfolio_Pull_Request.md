@@ -616,6 +616,7 @@ Docs/06_notes/N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
 Docs/06_notes/N20_AI_Profiling_Test_Asset_Plan_Note.md
 Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
 Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Audit_Analysis_Guide.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
 Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md

@@ -1,13 +1,13 @@
-# AI Perception Runtime LOD Measurements
+﻿# AI Perception Runtime LOD Measurements
 
 ## 목적
 
-이 문서는 `P35: AI Runtime LOD 정책 정리`에서 수행할 AI Perception 비용 분리 측정 계획과 결과를 누적 기록한다.
+`P35: AI Runtime LOD 정책 정리`에서 AI Perception 비용과 후보 누수, target 인식 지연을 측정한 결과를 기록한다.
 
-CSV 해석 기준:
+공통 분석 기준:
 
 ```text
-Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Audit_Analysis_Guide.md
 ```
 
 ---
@@ -19,8 +19,9 @@ Perception 흐름:
 ```text
 ACAIController
 -> UAIPerceptionComponent / UAISenseConfig_Sight 생성
--> OnTargetPerceptionUpdated에서 TargetDataMap 갱신
--> UCBTService_UpdateAIContext::BuildPerceptionContext
+-> OnTargetPerceptionUpdated에서 raw perception actor 수신
+-> TargetDataMap 갱신
+-> UCBTService_UpdateAIContext에서 BuildPerceptionContext 호출
 -> ACAIController::BuildPerceptionContext
 -> TargetDataMap 정리 / top target 선택
 -> Blackboard TargetActor / bHasLOS / LastSeenTime / LastKnownLocation 갱신
@@ -33,63 +34,12 @@ ACAIController
 Source/Portfolio/Controller/CAIController.h
 Source/Portfolio/Controller/CAIController.cpp
 Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.cpp
-```
-
-Perception 후보 누수 / 인지 지연 Audit 계획:
-
-```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Candidate_Audit_Plan.md
-```
-
-현재 측정에서 확인할 수 있는 비용 지표:
-
-```text
-Exclusive/GameThread/AIPerception
-GameThread/PortfolioAI_BT_UpdateAIContext
-Ticks/BehaviorTreeComponent
-Ticks/CAIController
-FrameTime
-GameThreadTime
-```
-
----
-
-## 측정상 주의점
-
-Perception은 비용축이면서 동시에 gameplay input이다.
-
-따라서 단순히 Perception을 끄면 다음 변화가 함께 발생한다.
-
-```text
-TargetDataMap이 갱신되지 않음
-Blackboard TargetActor가 비거나 갱신되지 않음
-Alert / Engage context가 달라짐
-Enemy가 Engage에 진입하지 않거나 전투 상태가 달라짐
-```
-
-이 경우 Frame / GameThread 차이는 Perception 비용만이 아니라 gameplay state 변화까지 포함한다.
-
-따라서 P35에서는 Perception 측정을 두 단계로 나눈다.
-
-```text
-0. Perception Candidate Audit
--> Perception 후보 누수와 first valid target latency를 확인한다.
--> Perception Gate 측정 전에 TargetDataMap 오염 여부를 판단한다.
-
-1. Perception Gate Impact
--> Perception을 끈 상태와 켠 상태의 engine / controller 비용 차이를 확인한다.
--> gameplay state가 달라지므로 Perception이 여는 downstream 부하 측정으로 기록한다.
-
-2. Perception Active Budget 후보
--> 대량 Enemy에서 모든 Enemy가 perception을 켜는 것이 필요한지 확인한다.
--> 실제 active cap / distance budget 구현은 후속 PR에서 다룬다.
 ```
 
 ---
 
 ## 측정 스위치
-
-구현된 CVar:
 
 ```text
 Portfolio.AI.RuntimeLOD.DisableEnemyPerception
@@ -101,153 +51,284 @@ Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit
 1: Enemy Perception candidate audit enabled
 ```
 
-적용 위치:
+Perception Candidate Audit 출력:
 
 ```text
-ACAIController::InitializeControllerRuntime
--> Perception profiling 상태를 기본값으로 복구
--> BindPerceptionEvents 전에 측정 스위치 확인
-
-ACAIController::ResetPerceptionStateForProfiling
--> bPerceptionDisabledForProfiling 초기화
--> Sight sense 활성화
-
-ACAIController::DisableEnemyPerceptionForProfiling
--> TargetDataMap 정리
--> Sight sense 비활성화
-
-ACAIController::BuildPerceptionContext
--> disabled 상태면 NoData 반환
+[PerceptionCandidateAudit]
+Owner
+RawEvents
+RawActors
+ValidProviders
+InvalidProviders
+MaxTargetDataMap
+FirstRawLatency
+FirstValidLatency
+StartFrame
+FirstRawFrame
+FirstValidFrame
 ```
-
-적용 방식:
-
-```text
-Sight sense 비활성화
-Perception delegate binding 생략
-TargetDataMap 정리
-BuildPerceptionContext에서 NoData 반환
-```
-
-P35의 1차 측정은 `Sight sense 비활성화 + delegate binding 생략` 방식으로 수행한다.
-목적은 gameplay-safe 적용이 아니라 Perception 축의 최대 비용 차이를 확인하는 것이다.
 
 ---
 
-## 측정 케이스
+## 측정 기준
 
-### Case P00 - 40 Enemy / Perception On
+기본 측정 조건:
 
 ```text
-Case: 40 Enemy / Perception Isolation / DisableEnemyPerception 0
-Map: MAP_AIPerf_WeaponActor_40Enemy 또는 별도 Perception map
-Enemy: 40 AIPerf Enemy
-State: Gameplay Stress
+Capture Duration: about 36s
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+```
+
+CSV 분석 기준:
+
+```text
+FrameTime 누적합 기준으로 first 3s / last 3s를 제외한다.
+p95를 주요 비교값으로 사용한다.
+avg는 경향 확인, p99 / max는 outlier 확인에 사용한다.
+Unreal CSV는 중복 컬럼명이 있을 수 있으므로 header index 기반으로 파싱한다.
+```
+
+---
+
+## Case PA01 - 40 Enemy / PerceptionCandidateAudit
+
+측정 조건:
+
+```text
+Case: 40 Enemy / PerceptionCandidateAudit
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CSV: Csvprofile/Profile(20260705_190543).csv
+Log: pasted-text 4ce5ed38-e802-43bf-a612-50d7f6d2e396
+```
+
+CSV 요약:
+
+| Metric | Avg | p95 | p99 | Max |
+|---|---:|---:|---:|---:|
+| FrameTime | 11.2675ms | 12.3806ms | 13.0387ms | 13.7578ms |
+| GameThreadTime | 11.1050ms | 12.2368ms | 12.7574ms | 13.9457ms |
+| GPUTime | 9.7269ms | 10.5926ms | 10.9432ms | 11.4339ms |
+| BT_UpdateAIContext | 0.1721ms | 0.2087ms | 0.2559ms | 0.3377ms |
+| AIPerception | 0.1373ms | 0.1675ms | 0.4291ms | 0.5595ms |
+| BehaviorTreeTick | 0.2616ms | 0.3414ms | 0.3910ms | 0.5280ms |
+| CharacterMovement | 0.8353ms | 1.1782ms | 1.3080ms | 1.8102ms |
+| Animation | 1.6377ms | 1.9318ms | 2.1640ms | 2.8431ms |
+
+Audit 로그 요약:
+
+| Metric | Min | Avg | p95 | Max |
+|---|---:|---:|---:|---:|
+| RawEvents | 506 | 511.425 | 516 | 517 |
+| RawActors | 41 | 41 | 41 | 41 |
+| ValidProviders | 1 | 1 | 1 | 1 |
+| InvalidProviders | 40 | 40 | 40 | 40 |
+| MaxTargetDataMap | 41 | 41 | 41 | 41 |
+| FirstRawLatency | 0.009s | 0.341s | 0.432s | 0.432s |
+| FirstValidLatency | 3.492s | 3.526s | 3.556s | 3.556s |
+
+해석:
+
+```text
+40 Enemy 조건에서 각 Enemy는 평균적으로 41개의 raw perception actor를 보유한다.
+그중 valid target provider는 1개이고 invalid provider는 40개다.
+즉 Player 1개를 찾기 위해 같은 Enemy 40개가 perception 후보와 TargetDataMap에 함께 들어온다.
+
+Raw perception은 대부분 0.5초 이내에 들어온다.
+하지만 first valid target provider 인정은 약 3.5초 뒤에 발생한다.
+따라서 현재 지연은 raw sight 감지 자체보다 provider filtering / target data update / BT service 갱신 구간에 있을 가능성이 높다.
+
+AIPerception p95는 0.1675ms로 높지 않다.
+하지만 후보 누수로 인해 TargetDataMap이 41개까지 커지는 구조가 확인됐다.
+```
+
+아직 확정하지 않는 항목:
+
+```text
+FirstValidLatency 약 3.5초의 직접 원인이 BT service interval인지, perception batch인지, target provider 이벤트 순서인지는 아직 확정하지 않는다.
+80 Enemy 측정과 Blackboard / Engage latency audit 후 판단한다.
+```
+
+---
+
+## Case PA02 - 40 Enemy / DisableEnemyPerception 비교
+
+측정 조건:
+
+```text
+Case: 40 Enemy / DisableEnemyPerception comparison
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CSV A: Csvprofile/Profile(20260705_195927).csv
+Log A: Csvprofile/Log(20260705_195927).txt
+CVar A: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 1
+CSV B: Csvprofile/Profile(20260705_200134).csv
+Log B: Csvprofile/Log(20260705_200134).txt
+CVar B: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+Capture 중 CSVEvent "GC" 없음
+```
+
+CSV 비교:
+
+| Metric | Disable 1 p95 | Disable 0 p95 | Delta |
+|---|---:|---:|---:|
+| FrameTime | 11.9462ms | 12.7584ms | +0.8122ms |
+| GameThreadTime | 10.5186ms | 12.7712ms | +2.2526ms |
+| GPUTime | 10.0818ms | 10.5814ms | +0.4996ms |
+| AIPerception | 0.1626ms | 0.1812ms | +0.0186ms |
+| BehaviorTreeTick | 0.2026ms | 0.3551ms | +0.1525ms |
+| BT_UpdateAIContext | 0.1102ms | 0.2166ms | +0.1064ms |
+| CharacterMovement | 0.4099ms | 1.2401ms | +0.8302ms |
+| Animation | 2.0825ms | 1.9700ms | -0.1125ms |
+| RHI DrawCalls | 750 | 830 | +80 |
+
+Audit 로그 요약:
+
+| Metric | Avg | p95 | Max |
+|---|---:|---:|---:|
+| RawEvents | 497.6 | 501 | 502 |
+| RawActors | 41 | 41 | 41 |
+| ValidProviders | 1 | 1 | 1 |
+| InvalidProviders | 40 | 40 | 40 |
+| MaxTargetDataMap | 41 | 41 | 41 |
+| FirstRawLatency | 0.4023s | 0.503s | 0.503s |
+| FirstValidLatency | 3.7254s | 3.751s | 3.763s |
+
+해석:
+
+```text
+Perception을 끄면 GameThread p95가 약 2.25ms 낮아진다.
+하지만 AIPerception p95 차이는 약 0.02ms 수준이다.
+따라서 이번 비교에서 큰 차이는 perception engine 자체보다,
+perception이 켜졌을 때 이어지는 BT update / target context / movement state 변화까지 포함한 총합 비용으로 해석한다.
+
+Disable 0에서는 40 Enemy 각각이 Player 1명과 Enemy 40명을 후보로 본다.
+Raw perception은 약 0.5초 안에 들어오지만 valid target provider 인정은 약 3.7초 뒤에 발생한다.
+이전 PA01과 같은 패턴이 반복되므로 후보 누수와 first valid target 지연은 재현된 상태다.
+```
+
+주의:
+
+```text
+DisableEnemyPerception 1은 perception delegate bind 경로를 차단하므로 Audit 로그가 나오지 않는다.
+Disable 1 / Disable 0 비교는 순수 AIPerception 비용 비교가 아니라 perception 활성화로 파생되는 AI runtime 총합 비교다.
+```
+
+---
+
+## Case PA03 - 80 Enemy / PerceptionCandidateAudit + DisableEnemyPerception 비교
+
+측정 조건:
+
+```text
+Case: 80 Enemy / PerceptionCandidateAudit + DisableEnemyPerception comparison
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+CSV A: Csvprofile/Profile(20260705_205831).csv
+Log A: Csvprofile/Log(20260705_205831).txt
+CVar A: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar A: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CSV B: Csvprofile/Profile(20260705_210038).csv
+Log B: Csvprofile/Log(20260705_210038).txt
+CVar B: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 1
+CVar B: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+Capture 중 CSVEvent "GC" 없음
+```
+
+CSV 비교:
+
+| Metric | Disable 0 p95 | Disable 1 p95 | Delta |
+|---|---:|---:|---:|
+| FrameTime | 21.5917ms | 17.2850ms | -4.3067ms |
+| GameThreadTime | 21.5991ms | 17.2840ms | -4.3151ms |
+| GPUTime | 11.2417ms | 10.8227ms | -0.4190ms |
+| AIPerception | 0.8591ms | 0.8079ms | -0.0512ms |
+| BehaviorTreeTick | 0.7057ms | 0.3795ms | -0.3262ms |
+| BT_UpdateAIContext | 0.4688ms | 0.1964ms | -0.2724ms |
+| CharacterMovement | 2.9091ms | 0.9195ms | -1.9896ms |
+| Animation | 3.8701ms | 4.9692ms | +1.0991ms |
+| RHI DrawCalls | 1348 | 1272 | -76 |
+
+Audit 로그 비교:
+
+| Metric | Disable 0 p95 | Disable 1 p95 |
+|---|---:|---:|
+| RawEvents | 157 | 0 |
+| RawActors | 81 | 0 |
+| ValidProviders | 1 | 0 |
+| InvalidProviders | 80 | 0 |
+| MaxTargetDataMap | 81 | 0 |
+| FirstRawLatency | 0.695s | -1.000s |
+| FirstValidLatency | 9.591s | -1.000s |
+
+해석:
+
+```text
+80 Enemy에서 perception을 끄면 GameThread p95가 약 4.3ms 낮아진다.
+하지만 AIPerception p95 차이는 약 0.05ms 수준이다.
+따라서 이번 결과도 perception engine 자체보다,
+perception 활성화 이후 열리는 BT update / target context / movement / combat state 흐름의 총합 비용으로 해석한다.
+
+Disable 0에서는 각 Enemy가 Player 1명과 Enemy 80명을 후보로 본다.
+RawActors / InvalidProviders / MaxTargetDataMap이 40 Enemy 대비 거의 2배로 증가했다.
+FirstValidLatency p95도 40 Enemy 약 3.7초에서 80 Enemy 약 9.6초로 증가했다.
+즉 후보 누수는 Enemy 수에 비례하고, valid target 인정 지연도 Enemy 수 증가에 따라 커진다.
+
+Disable 1에서는 RawEvents / RawActors / TargetDataMap이 모두 0이다.
+Perception profiling gate가 후보 수집과 downstream target update를 차단하는 것은 확인됐다.
+```
+
+주의:
+
+```text
+Disable 1에서도 AIPerception p95가 0에 가까워지지는 않는다.
+따라서 해당 CSV stat은 현재 map / engine level에서 남는 AIPerception 항목을 포함한다고 본다.
+Gate 효과 판단은 Audit 로그의 RawEvents / RawActors / MaxTargetDataMap 0 여부와 downstream 비용 감소를 함께 본다.
+```
+
+---
+
+## 다음 측정
+
+Blackboard / Engage latency audit를 추가해 first valid target 이후 실제 Blackboard TargetActor 반영과 Engage 진입까지의 지연을 분리한다.
+
+확인할 항목:
+
+```text
+FirstValidLatency 이후 Blackboard TargetActor 반영까지의 지연
+Blackboard TargetActor 반영 이후 Engage request / assignment까지의 지연
+BT service interval이 first valid target 지연에 관여하는지
+```
+
+측정 템플릿:
+
+```text
+Case: 80 Enemy / BlackboardEngageLatencyAudit
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
 CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
-Capture Duration: about 36s
-Analysis Window: first 3s / last 3s trimmed, middle 30s used
-Log State: -noailogging
-PIE: F11 fullscreen
-```
-
-### Case P01 - 40 Enemy / Perception Off
-
-```text
-Case: 40 Enemy / Perception Isolation / DisableEnemyPerception 1
-Map: same as P00
-Enemy: 40 AIPerf Enemy
-State: Gameplay Stress
-CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 1
-Capture Duration: about 36s
-Analysis Window: first 3s / last 3s trimmed, middle 30s used
-Log State: -noailogging
-PIE: F11 fullscreen
-```
-
-### Case P02 / P03 - 80 Enemy
-
-```text
-P02: 80 Enemy / DisableEnemyPerception 0
-P03: 80 Enemy / DisableEnemyPerception 1
-```
-
-80 Enemy는 40 Enemy에서 비용 차이가 확인된 뒤 측정한다.
-
----
-
-## 측정 요청 템플릿
-
-```text
-Case: 40 Enemy / Perception Isolation / DisableEnemyPerception 0
-Map:
-Enemy:
-State:
-CVar: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
-Capture Duration: about 36s
-Analysis Window: first 3s / last 3s trimmed, middle 30s used
-Log State: -noailogging
-PIE: F11 fullscreen
-Camera / PlayerStart:
-
-Pre-capture:
-1. CVar 적용
-2. PIE 실행
-3. 선택: PIE 시작 직후 gc 입력
-4. 2~3초 대기
-5. csvprofile start
-
-Capture:
-1. 약 36초 유지
-2. csvprofile stop
-
-확인 항목:
-- target CVar 적용 여부
-- capture 중 CSVEvent "GC" 발생 여부
-- TargetActor 갱신 여부
-- Engage 진입 여부
-- AIPerception p95
-- BT_UpdateAIContext p95
-- Frame / GameThread p95
+CVar: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
 ```
 
 ---
 
-## 해석 기준
-
-Perception Off에서 Engage 진입이 달라지면 다음처럼 해석한다.
+## 후속 개선 후보
 
 ```text
-Perception Off 결과는 pure frame comparison이 아니다.
-Perception 비용과 gameplay state 변화가 함께 반영된 비용 분리 측정이다.
-```
-
-유효한 결론:
-
-```text
-Perception 활성화 자체가 대량 Enemy에서 비용을 만드는지
-Perception을 끄면 AIPerception p95가 얼마나 줄어드는지
-BT_UpdateAIContext가 TargetDataMap / Blackboard 갱신 감소로 함께 줄어드는지
-Perception Off가 gameplay state를 얼마나 바꾸는지
-```
-
-아직 결론 내리지 않는 항목:
-
-```text
-Perception Off를 그대로 Runtime LOD 정책으로 적용할지 여부
-거리 기반 active cap 값
-전투 중 Enemy의 perception 유지/해제 정책
-```
-
----
-
-## 후속 구현 후보
-
-측정 결과가 유의미하면 후속 PR에서 다음 정책을 검토한다.
-
-```text
-distance-based perception active cap
-combat importance 기반 perception enable / disable
-time-sliced perception activation
-dormant enemy perception disable
-최근 target memory 유지 후 perception 비활성화
+provider 없는 Actor를 TargetDataMap에 넣기 전에 필터링
+team attitude 기반으로 Enemy 후보를 sight 단계에서 제외
+distance / combat importance 기반 active perception cap
+BT service interval / first valid target update timing 분리 측정
+Blackboard / Engage latency audit 추가
 ```
