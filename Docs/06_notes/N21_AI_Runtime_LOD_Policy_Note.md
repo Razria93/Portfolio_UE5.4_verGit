@@ -919,6 +919,7 @@ Animation / Pose / Locomotion
 40 / 80 Enemy 조건에서 AnimationParallelEvaluation과 Animation 비용이 계속 남아 있다.
 EnemyMeshMode 2는 pose update skip 비용 효과를 보여줬지만 combat-capable Enemy에는 안전하지 않다.
 따라서 다음 작업은 gameplay-safe animation reduction과 measurement-only pose skip을 분리한다.
+기존 EnemyMeshMode 2 조건은 이후 EnemyMeshMode 1 + EnemyAnimationMode 2 조합으로 이관한다.
 ```
 
 상세 작업 계획:

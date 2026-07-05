@@ -205,6 +205,37 @@ Portfolio.AI.RuntimeLOD.EnemyAnimationMode
 2: PoseSkipIsolation
 ```
 
+## EnemyMeshMode / EnemyAnimationMode 분리
+
+현재 `EnemyMeshMode 2`는 mesh visibility와 pose update skip을 함께 제어한다.
+이 구조는 render 비용과 animation / pose 비용을 분리해서 해석하기 어렵다.
+
+따라서 다음 구현에서는 책임을 분리한다.
+
+```text
+EnemyMeshMode
+0: Visible
+1: Hidden
+
+EnemyAnimationMode
+0: Default
+1: ReducedParameterRefresh
+2: PoseSkipIsolation
+```
+
+기존 `EnemyMeshMode 2`에 해당하던 조건은 다음 조합으로 이관한다.
+
+```text
+EnemyMeshMode 1
+EnemyAnimationMode 2
+```
+
+`EnemyMeshMode`는 mesh 표시 여부만 담당한다.
+`EnemyAnimationMode`는 animation parameter refresh, pose update, visibility based anim tick option 같은 animation / pose 정책을 담당한다.
+
+`PoseSkipIsolation`은 측정용 극단 조건이다.
+Combat-capable Enemy에서는 montage notify / socket timing 때문에 pose update skip을 허용하지 않는다.
+
 정확한 구현 위치는 현재 `USkeletalMeshComponent` / AnimInstance 설정을 확인한 뒤 결정한다.
 
 ## 작업 가이드
