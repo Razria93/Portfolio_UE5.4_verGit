@@ -35,6 +35,12 @@ Source/Portfolio/Controller/CAIController.cpp
 Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.cpp
 ```
 
+Perception 후보 누수 / 인지 지연 Audit 계획:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Candidate_Audit_Plan.md
+```
+
 현재 측정에서 확인할 수 있는 비용 지표:
 
 ```text
@@ -66,9 +72,13 @@ Enemy가 Engage에 진입하지 않거나 전투 상태가 달라짐
 따라서 P35에서는 Perception 측정을 두 단계로 나눈다.
 
 ```text
-1. Perception Runtime Cost
+0. Perception Candidate Audit
+-> Perception 후보 누수와 first valid target latency를 확인한다.
+-> Perception Gate 측정 전에 TargetDataMap 오염 여부를 판단한다.
+
+1. Perception Gate Impact
 -> Perception을 끈 상태와 켠 상태의 engine / controller 비용 차이를 확인한다.
--> gameplay state가 달라질 수 있으므로 비용 분리 측정으로 기록한다.
+-> gameplay state가 달라지므로 Perception이 여는 downstream 부하 측정으로 기록한다.
 
 2. Perception Active Budget 후보
 -> 대량 Enemy에서 모든 Enemy가 perception을 켜는 것이 필요한지 확인한다.

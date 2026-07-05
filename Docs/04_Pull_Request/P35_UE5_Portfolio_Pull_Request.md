@@ -212,9 +212,11 @@ WeaponActor Isolation
 
 ```text
 Simulation LOD / AI Perception
--> Gameplay Stress 조건에서 Perception 비용과 감지 지연을 분리한다.
+-> Gameplay Stress 조건에서 Perception 후보 누수, 감지 지연, downstream 부하를 분리한다.
+-> Perception Gate 측정 전에 Candidate Audit을 먼저 수행한다.
 -> 160~200 Enemy stress에서 관찰한 perception 지연과 연결해 active perception 수 / 거리 / 중요도 제어 후보를 검토한다.
 -> 실제 Perception active cap 구현은 후속 PR로 분리하고, P35에서는 측정축과 적용 가능성만 정리한다.
+-> Candidate Audit 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Candidate_Audit_Plan.md에 기록한다.
 -> 측정 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md에 기록한다.
 
 Simulation LOD / BehaviorTree Update
