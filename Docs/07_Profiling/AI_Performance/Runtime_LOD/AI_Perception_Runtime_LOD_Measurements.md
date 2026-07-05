@@ -166,58 +166,61 @@ Capture Duration: 약 36초
 Analysis Window: first 3s / last 3s trimmed, middle 30s used
 Log State: -noailogging
 PIE: F11 fullscreen
-CSV A: Csvprofile/Profile(20260705_195927).csv
-Log A: Csvprofile/Log(20260705_195927).txt
-CVar A: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 1
-CSV B: Csvprofile/Profile(20260705_200134).csv
-Log B: Csvprofile/Log(20260705_200134).txt
-CVar B: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CSV A: Csvprofile/Profile(20260705_232414).csv
+Log A: Csvprofile/Log(20260705_232414).txt
+CVar A: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+CVar A: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+CSV B: Csvprofile/Profile(20260705_232703).csv
+Log B: Csvprofile/Log(20260705_232703).txt
+CVar B: Portfolio.AI.RuntimeLOD.DisableEnemyPerception 1
+CVar B: Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
 Capture 중 CSVEvent "GC" 없음
 ```
 
 CSV 비교:
 
-| Metric | Disable 1 p95 | Disable 0 p95 | Delta |
+| Metric | Disable 0 p95 | Disable 1 p95 | Delta |
 |---|---:|---:|---:|
-| FrameTime | 11.9462ms | 12.7584ms | +0.8122ms |
-| GameThreadTime | 10.5186ms | 12.7712ms | +2.2526ms |
-| GPUTime | 10.0818ms | 10.5814ms | +0.4996ms |
-| AIPerception | 0.1626ms | 0.1812ms | +0.0186ms |
-| BehaviorTreeTick | 0.2026ms | 0.3551ms | +0.1525ms |
-| BT_UpdateAIContext | 0.1102ms | 0.2166ms | +0.1064ms |
-| CharacterMovement | 0.4099ms | 1.2401ms | +0.8302ms |
-| Animation | 2.0825ms | 1.9700ms | -0.1125ms |
-| RHI DrawCalls | 750 | 830 | +80 |
+| FrameTime | 12.3510ms | 11.7484ms | -0.6026ms |
+| GameThreadTime | 12.2010ms | 10.0197ms | -2.1813ms |
+| GPUTime | 10.4527ms | 10.0674ms | -0.3853ms |
+| AIPerception | 0.1742ms | 0.1538ms | -0.0204ms |
+| BehaviorTreeTick | 0.3748ms | 0.1934ms | -0.1814ms |
+| BT_UpdateAIContext | 0.2397ms | 0.0991ms | -0.1406ms |
+| CharacterMovement | 1.3312ms | 0.3924ms | -0.9388ms |
+| Animation | 1.9679ms | 2.0538ms | +0.0859ms |
+| RHI DrawCalls | 834 | 747 | -87 |
 
-Audit 로그 요약:
+Audit 로그 비교:
 
-| Metric | Avg | p95 | Max |
-|---|---:|---:|---:|
-| RawEvents | 497.6 | 501 | 502 |
-| RawActors | 41 | 41 | 41 |
-| ValidProviders | 1 | 1 | 1 |
-| InvalidProviders | 40 | 40 | 40 |
-| MaxTargetDataMap | 41 | 41 | 41 |
-| FirstRawLatency | 0.4023s | 0.503s | 0.503s |
-| FirstValidLatency | 3.7254s | 3.751s | 3.763s |
+| Metric | Disable 0 p95 | Disable 1 p95 |
+|---|---:|---:|
+| RawEvents | 526 | 0 |
+| RawActors | 41 | 0 |
+| ValidProviders | 1 | 0 |
+| InvalidProviders | 40 | 0 |
+| MaxTargetDataMap | 41 | 0 |
+| FirstRawLatency | 0.458s | -1.000s |
+| FirstValidLatency | 3.741s | -1.000s |
 
 해석:
 
 ```text
-Perception을 끄면 GameThread p95가 약 2.25ms 낮아진다.
+Perception을 끄면 GameThread p95가 약 2.18ms 낮아진다.
 하지만 AIPerception p95 차이는 약 0.02ms 수준이다.
 따라서 이번 비교에서 큰 차이는 perception engine 자체보다,
 perception이 켜졌을 때 이어지는 BT update / target context / movement state 변화까지 포함한 총합 비용으로 해석한다.
 
 Disable 0에서는 40 Enemy 각각이 Player 1명과 Enemy 40명을 후보로 본다.
-Raw perception은 약 0.5초 안에 들어오지만 valid target provider 인정은 약 3.7초 뒤에 발생한다.
+Raw perception은 약 0.46초 안에 들어오지만 valid target provider 인정은 약 3.7초 뒤에 발생한다.
 이전 PA01과 같은 패턴이 반복되므로 후보 누수와 first valid target 지연은 재현된 상태다.
 ```
 
 주의:
 
 ```text
-DisableEnemyPerception 1은 perception delegate bind 경로를 차단하므로 Audit 로그가 나오지 않는다.
+DisableEnemyPerception 1에서도 Audit CVar는 켜져 있다.
+다만 perception delegate bind 경로가 차단되므로 기록할 RawEvents / RawActors / TargetDataMap이 0이 된다.
 Disable 1 / Disable 0 비교는 순수 AIPerception 비용 비교가 아니라 perception 활성화로 파생되는 AI runtime 총합 비교다.
 ```
 

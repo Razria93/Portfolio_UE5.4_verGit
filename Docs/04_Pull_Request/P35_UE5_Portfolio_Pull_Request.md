@@ -213,18 +213,24 @@ WeaponActor Isolation
 -> 목적은 gameplay-safe LOD 적용이 아니라 비용 분리 측정이다.
 -> `Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor` 스위치로 측정한다.
 -> 유의미한 차이가 확인되면 distant / non-combat 계층에서 WeaponActor 생성 지연 또는 비활성 정책으로 후속 검토한다.
+
+Simulation LOD / AI Perception
+-> 40 / 80 Enemy 조건에서 Perception 후보 누수, 감지 지연, downstream 부하를 분리했다.
+-> 40 Enemy에서는 InvalidProviders 40, MaxTargetDataMap 41, FirstValidLatency p95 약 3.7초가 확인됐다.
+-> 80 Enemy에서는 InvalidProviders 80, MaxTargetDataMap 81, FirstValidLatency p95 약 9.6초가 확인됐다.
+-> 후보 누수는 Enemy 수에 비례하고, valid target 인정 지연도 scale 증가에 따라 커진다.
+-> DisableEnemyPerception 1 적용 시 RawEvents / RawActors / TargetDataMap은 0으로 차단됐다.
+-> 다만 AIPerception p95 자체보다 BT update / target context / movement / combat state로 이어지는 downstream 비용 차이가 더 크다.
+-> 측정 결과는 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md에 기록한다.
 ```
 
 다음 측정축:
 
 ```text
-Simulation LOD / AI Perception
--> Gameplay Stress 조건에서 Perception 후보 누수, 감지 지연, downstream 부하를 분리한다.
--> Perception Gate 측정 전에 Candidate Audit을 먼저 수행한다.
--> 160~200 Enemy stress에서 관찰한 perception 지연과 연결해 active perception 수 / 거리 / 중요도 제어 후보를 검토한다.
--> 실제 Perception active cap 구현은 후속 PR로 분리하고, P35에서는 측정축과 적용 가능성만 정리한다.
--> Candidate Audit 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Candidate_Audit_Plan.md에 기록한다.
--> 측정 계획은 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Perception_Runtime_LOD_Measurements.md에 기록한다.
+Simulation LOD / Blackboard-Engage Latency
+-> FirstValidLatency 이후 Blackboard TargetActor 반영과 Engage 진입까지의 지연을 분리한다.
+-> BT service interval이 first valid target 지연에 관여하는지 확인한다.
+-> Perception 후보 누수 개선 전에 지연이 어느 단계에서 발생하는지 먼저 확인한다.
 
 Simulation LOD / BehaviorTree Update
 -> BT 실행 / service update 비용을 분리한다.
@@ -511,6 +517,9 @@ WeaponActor socket follow 유지 여부 확인
 40 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
 80 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 0 측정 완료
 80 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
+40 Enemy / PerceptionCandidateAudit 측정 완료
+40 Enemy / DisableEnemyPerception 0 / 1 비교 완료
+80 Enemy / PerceptionCandidateAudit + DisableEnemyPerception 0 / 1 비교 완료
 ```
 
 측정 결과:
@@ -518,12 +527,12 @@ WeaponActor socket follow 유지 여부 확인
 ### Enemy Mesh Runtime LOD
 
 | Case | Enemy | Mode                  | 시간     | Frame p95 |  Game p95 |  GPU p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | 판정    | 메모                                                                          |
-| ---- | ----: | --------------------- | ------ | --------: | --------: | -------: | ----------: | ---------------: | ------------: | -------------: | ----- | --------------------------------------------------------------------------- |
-| M00  |    40 | 0 VisibleDefault      | 37.72s | 12.6880ms | 12.7354ms | 8.4217ms |      2.0121ms |    0.3067ms |         0.1252ms |           572 |      4,181,001 | 기준    | 40 Enemy mesh visible 기준이다.                                                 |
-| M01  |    40 | 1 HiddenKeepPose      | 37.98s | 12.3922ms | 12.4150ms | 7.3382ms |      1.9191ms |    0.3057ms |         0.1233ms |         377.7 |        377,250 | 제한 효과 | render 비용은 줄었지만 Frame / GameThread 개선은 작다. WeaponActor socket follow는 유지됐다. |
-| M02  |    40 | 2 HiddenAllowPoseSkip | -      |         - |         - |        - |             - |           - |                - |             - |              - | 제외    | WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨려 정규 측정에서 제외한다.        |
-| M03  |    80 | 0 VisibleDefault      | 38.52s | 21.2578ms | 21.2928ms | 9.3746ms |      3.7646ms |    0.5091ms |         0.2852ms |           583 |      3,771,918 | 기준    | 80 Enemy부터 Frame / GameThread p95가 60fps 기준을 넘는다.                           |
-| M04  |    80 | 1 HiddenKeepPose      | 37.32s | 21.7991ms | 21.7849ms | 8.5164ms |      3.7889ms |    0.5141ms |         0.2845ms |           389 |        380,366 | 제한 효과 | render 비용은 줄었지만 Frame / GameThread p95는 회복되지 않았다.                           |
+| ---- | ----: | --------------------- | ------ | --------: | --------: | -------: | ------------: | ----------: | ---------------: | ------------: | -------------- | ----- | --------------------------------------------------------------------------- |
+| M00  |    40 | 0 VisibleDefault      | 37.72s | 12.6880ms | 12.7354ms | 8.4217ms |      2.0121ms |    0.3067ms |         0.1252ms |           572 | 4,181,001      | 기준    | 40 Enemy mesh visible 기준이다.                                                 |
+| M01  |    40 | 1 HiddenKeepPose      | 37.98s | 12.3922ms | 12.4150ms | 7.3382ms |      1.9191ms |    0.3057ms |         0.1233ms |         377.7 | 377,250        | 제한 효과 | render 비용은 줄었지만 Frame / GameThread 개선은 작다. WeaponActor socket follow는 유지됐다. |
+| M02  |    40 | 2 HiddenAllowPoseSkip | -      |         - |         - |        - |             - |           - |                - |             - | -              | 제외    | WeaponActor socket follow와 animation-driven 전투 흐름을 깨뜨려 정규 측정에서 제외한다.        |
+| M03  |    80 | 0 VisibleDefault      | 38.52s | 21.2578ms | 21.2928ms | 9.3746ms |      3.7646ms |    0.5091ms |         0.2852ms |           583 | 3,771,918      | 기준    | 80 Enemy부터 Frame / GameThread p95가 60fps 기준을 넘는다.                           |
+| M04  |    80 | 1 HiddenKeepPose      | 37.32s | 21.7991ms | 21.7849ms | 8.5164ms |      3.7889ms |    0.5141ms |         0.2845ms |           389 | 380,366        | 제한 효과 | render 비용은 줄었지만 Frame / GameThread p95는 회복되지 않았다.                           |
 
 ### Render Coverage
 
@@ -545,6 +554,15 @@ WeaponActor socket follow 유지 여부 확인
 | W02  |    80 |                       0 | 37.22s | 16.8035ms | 16.7116ms | 8.0555ms |      4.0316ms |    0.2720ms |         0.4109ms |         1,258 |               81 |            499 |               160 | 기준    | 80 Enemy WeaponActor 생성 기준이다.                                                     |
 | W03  |    80 |                       1 | 37.18s | 14.8267ms | 14.8160ms | 7.8513ms |      3.5294ms |    0.2493ms |         0.2526ms |           936 |                0 |            419 |                80 | 효과 확인 | Actor / SkeletalMesh tick / DrawCalls / Frame p95가 함께 감소했다.                       |
 
+### AI Perception Runtime LOD
+
+| Case   | Enemy | DisableEnemyPerception | Audit | Frame p95 |  Game p95 | AIPerception p95 | BT_UpdateAIContext p95 | CharacterMovement p95 | RawActors p95 | InvalidProviders p95 | FirstValidLatency p95 | 판정          | 메모                                                                              |
+| ------ | ----: | ---------------------: | ----: | --------: | --------: | ---------------: | ---------------------: | --------------------: | ------------: | -------------------: | --------------------: | ----------- | ------------------------------------------------------------------------------- |
+| PA00   |    40 |                      0 |     1 | 12.3510ms | 12.2010ms |         0.1742ms |               0.2397ms |              1.3312ms |            41 |                   40 |                3.741s | 후보 누수 재현    | Audit을 켠 기준값이다. 40 Enemy 후보 누수와 first valid 지연이 반복됐다.                           |
+| PA01   |    40 |                      1 |     1 | 11.7484ms | 10.0197ms |         0.1538ms |               0.0991ms |              0.3924ms |             0 |                    0 |               -1.000s | Gate 차단 확인  | Perception delegate bind 경로가 차단되어 RawEvents / RawActors / TargetDataMap이 0이 된다. |
+| PA02   |    80 |                      0 |     1 | 21.5917ms | 21.5991ms |         0.8591ms |               0.4688ms |              2.9091ms |            81 |                   80 |                9.591s | scale 증가 확인 | 후보 누수와 first valid 지연이 40 Enemy 대비 크게 증가했다.                                     |
+| PA03   |    80 |                      1 |     1 | 17.2850ms | 17.2840ms |         0.8079ms |               0.1964ms |              0.9195ms |             0 |                    0 |               -1.000s | Gate 차단 확인  | RawEvents / RawActors / TargetDataMap이 0으로 차단됐다.                                |
+
 측정 해석:
 
 ```text
@@ -560,6 +578,11 @@ WeaponActor Isolation에서는 DisableEnemyWeaponActor 1 적용 시 CWeaponActor
 80 Enemy에서도 같은 actor / component / draw call 감소가 반복됐지만 Frame / GameThread p95는 거의 회복되지 않았다.
 재측정 기준에서는 Frame / GameThread / Animation p95도 함께 감소했다.
 따라서 WeaponActor 제거는 Object Management와 animation update 비용 축에서 유효하지만, 실제 적용은 combat-capable 단계와 weapon dependency를 함께 고려해야 한다.
+AI Perception 측정에서는 40 Enemy 기준 InvalidProviders 40, 80 Enemy 기준 InvalidProviders 80이 확인됐다.
+즉 Player 1명을 찾는 과정에서 같은 Enemy들이 perception 후보와 TargetDataMap에 함께 들어온다.
+FirstValidLatency p95는 40 Enemy 약 3.7초, 80 Enemy 약 9.6초로 증가했다.
+Perception을 끄면 GameThread p95는 줄지만 AIPerception p95 자체 차이는 작다.
+따라서 병목은 perception engine 단일 비용보다 후보 누수 이후 BT update / target context / movement / combat state로 이어지는 downstream 비용으로 본다.
 ```
 
 측정 과정에서 확인한 문제와 분리:

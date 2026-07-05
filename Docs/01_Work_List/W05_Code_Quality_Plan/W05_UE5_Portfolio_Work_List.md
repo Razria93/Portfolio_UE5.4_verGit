@@ -851,11 +851,20 @@ AI Profiling / Bottleneck 분석
 - P34: AI Profiling Test Asset 분리
 ```
 
-### 진행 예정
+### 진행 중
 
 ```text
 AI LOD / Performance 최적화
 - P35: AI Runtime LOD 정책 정리
+  -> Enemy mesh / WeaponActor / AI Perception 비용 분리 측정 진행
+  -> 40 / 80 Enemy Perception 후보 누수와 first valid target 지연 확인
+  -> 다음 단계는 Blackboard / Engage latency audit
+```
+
+### 진행 예정
+
+```text
+AI LOD / Performance 최적화
 - P36: AI Perception LOD 정책 정리
 - P37: AI Update LOD 정책 정리
 
