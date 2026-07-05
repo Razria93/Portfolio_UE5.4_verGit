@@ -371,6 +371,13 @@ Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
 Portfolio.AI.RuntimeLOD.DisableEnemyPerception 1
 -> Enemy Perception 비활성
 -> Sight sense 비활성화, delegate binding 생략, BuildPerceptionContext NoData 반환
+
+Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 0
+-> Perception 후보 Audit 비활성
+
+Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 1
+-> Perception 후보 Audit 활성
+-> Raw / Valid / Rejected 후보 수와 first valid target latency 출력
 ```
 
 Mesh visibility 비교:

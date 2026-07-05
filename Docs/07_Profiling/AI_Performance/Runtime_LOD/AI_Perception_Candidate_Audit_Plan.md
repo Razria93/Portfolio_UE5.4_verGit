@@ -1,4 +1,4 @@
-# AI Perception Candidate Audit Plan
+﻿# AI Perception Candidate Audit Plan
 
 ## 목적
 
@@ -86,8 +86,8 @@ provider 없는 Actor 확인 후 continue
 
 ```text
 RawPerceptionActorCount
-ValidTargetCandidateCount
-RejectedNoTargetContextProviderCount
+ValidTargetProviderCount
+InvalidTargetProviderCount
 TargetDataMapSize
 ```
 
@@ -145,8 +145,8 @@ RuntimeStartTime
 FirstRawPerceptionTime
 FirstValidTargetTime
 RawPerceptionActorCount
-ValidTargetCandidateCount
-RejectedNoTargetContextProviderCount
+ValidTargetProviderCount
+InvalidTargetProviderCount
 TargetDataMapSize
 MaxTargetDataMapSize
 ```
@@ -265,7 +265,7 @@ Avg / P50 / P95 / Max FirstEngageRequestLatency
 Avg / P50 / P95 / Max FirstEngageAssignedLatency
 
 Avg / Max RawPerceptionActorCount
-Avg / Max RejectedNoTargetContextProviderCount
+Avg / Max InvalidTargetProviderCount
 Avg / Max TargetDataMapSize
 ```
 

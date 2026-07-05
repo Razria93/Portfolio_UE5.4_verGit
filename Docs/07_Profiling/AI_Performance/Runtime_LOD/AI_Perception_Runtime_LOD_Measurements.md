@@ -95,6 +95,10 @@ Enemy가 Engage에 진입하지 않거나 전투 상태가 달라짐
 Portfolio.AI.RuntimeLOD.DisableEnemyPerception
 0: Enemy Perception enabled
 1: Enemy Perception disabled for runtime LOD measurement
+
+Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit
+0: Candidate audit disabled
+1: Enemy Perception candidate audit enabled
 ```
 
 적용 위치:
