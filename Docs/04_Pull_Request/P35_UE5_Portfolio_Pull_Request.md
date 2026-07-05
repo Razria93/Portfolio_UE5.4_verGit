@@ -848,6 +848,53 @@ MaxTargetDataMap이 81에서 1로 줄었고 BT_UpdateAIContext p95도 감소했�
 40 / 80 Enemy 모두 같은 패턴이므로, 다음 작업은 team attitude / affiliation으로 Enemy끼리 perception 대상이 되지 않게 하는 것이다.
 ```
 
+---
+
+## 다음 측정축 정리
+
+현재 P35에서 남기는 주요 측정축은 6개로 압축한다.
+
+```text
+1. Animation / Pose / Locomotion
+2. Movement / Nav
+3. BT Update Interval
+4. Perception Active Budget
+5. Collision / Overlap
+6. Actor / Component / Proxy
+```
+
+측정에서 제외하거나 후순위로 내린 항목:
+
+```text
+Feedback / VFX
+-> 대부분 event 기반이며 현재 40 / 80 Enemy frame 병목의 주축으로 보이지 않는다.
+
+Combat Action / Reaction / Processing
+-> gameplay 의미가 크고 직접 전투에 참여하는 Enemy 수가 제한적이다.
+-> P35에서는 별도 세부 축이 아니라 combat-capable gate로만 다룬다.
+
+WeaponActor 세부 분해
+-> 존재 비용은 이미 유효 축으로 확인했다.
+-> mesh / collision / shadow 세부 분리는 Runtime LOD 설계 단계에서 필요할 때 다시 분리한다.
+```
+
+다음 작업은 `Animation / Pose / Locomotion` 축이다.
+
+이유:
+
+```text
+Team Attitude 보정으로 perception 후보 누수는 해결됐다.
+하지만 40 / 80 Enemy에서 AnimationParallelEvaluation과 Animation 비용은 여전히 남아 있다.
+EnemyMeshMode 2는 pose update skip의 비용 효과를 보여줬지만 combat-capable Enemy에는 그대로 적용할 수 없다.
+따라서 다음 측정은 gameplay-safe animation reduction과 pose-skip isolation을 분리해 진행한다.
+```
+
+작업 계획 문서:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Animation_Pose_LOD_Measurement_Plan.md
+```
+
 ### Team Attitude / Affiliation 보정
 
 적용 내용:

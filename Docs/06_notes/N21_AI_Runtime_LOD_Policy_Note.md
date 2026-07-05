@@ -883,3 +883,46 @@ P36 perception LOD / P37 update LOD와 범위가 분리되어 있다.
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
 ```
+
+---
+
+## 현재 측정축 고정
+
+P35 기준 주요 측정축은 6개로 압축한다.
+
+```text
+1. Animation / Pose / Locomotion
+2. Movement / Nav
+3. BT Update Interval
+4. Perception Active Budget
+5. Collision / Overlap
+6. Actor / Component / Proxy
+```
+
+현재까지 확정된 원인:
+
+```text
+AI perception candidate leak
+```
+
+Team Attitude / Affiliation 보정으로 Enemy끼리 perception 후보로 들어오는 문제는 해결됐다.
+
+다음 측정축:
+
+```text
+Animation / Pose / Locomotion
+```
+
+선정 이유:
+
+```text
+40 / 80 Enemy 조건에서 AnimationParallelEvaluation과 Animation 비용이 계속 남아 있다.
+EnemyMeshMode 2는 pose update skip 비용 효과를 보여줬지만 combat-capable Enemy에는 안전하지 않다.
+따라서 다음 작업은 gameplay-safe animation reduction과 measurement-only pose skip을 분리한다.
+```
+
+상세 작업 계획:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Animation_Pose_LOD_Measurement_Plan.md
+```
