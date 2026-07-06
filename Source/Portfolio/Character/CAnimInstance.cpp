@@ -20,7 +20,7 @@ namespace
 
 	TAutoConsoleVariable<float> CVarEnemyAnimationReducedRefreshInterval(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval"),
-		0.2f,
+		0.1f,
 		TEXT("Refresh interval for ACEnemy reduced animation parameter mode."),
 		ECVF_Default);
 }
@@ -39,6 +39,7 @@ void UCAnimInstance::NativeInitializeAnimation()
 	if (!CacheOwnerAndComponents()) return;
 
 	BindComponentEvents();
+
 	RefreshMovementParameters();
 	RefreshStateParameters();
 }

@@ -172,17 +172,22 @@ P35와 같은 scale 정책을 사용한다.
 
 ```text
 A00: 40 Enemy / AnimationBaseline
-A01: 40 Enemy / AnimationReduced
+A01: 40 Enemy / AnimationReduced / Interval 0.1
 A02: 80 Enemy / AnimationBaseline
-A03: 80 Enemy / AnimationReduced
+A03: 80 Enemy / AnimationReduced / Interval 0.1
 ```
 
 선택 측정쌍:
 
 ```text
-A04: 40 Enemy / PoseSkipIsolation
-A05: 80 Enemy / PoseSkipIsolation
+A04: 40 Enemy / AnimationReduced / Interval 0.2
+A05: 80 Enemy / AnimationReduced / Interval 0.2
+A06: 40 Enemy / PoseSkipIsolation
+A07: 80 Enemy / PoseSkipIsolation
 ```
+
+`0.1`은 AIContext / EngageContext / CombatEngage rebuild 주기와 맞춘 1차 reduced 기준이다.
+`0.2`는 AIIntentState 주기와 맞춘 aggressive reduced 후보이며, 0.1 측정으로 판단이 부족할 때만 추가한다.
 
 ## 측정 지표
 
@@ -236,6 +241,12 @@ CVar 후보:
 ```text
 Portfolio.AI.RuntimeLOD.EnemyAnimationMode
 Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval
+```
+
+기본 reduced interval:
+
+```text
+0.1
 ```
 
 값 후보:
