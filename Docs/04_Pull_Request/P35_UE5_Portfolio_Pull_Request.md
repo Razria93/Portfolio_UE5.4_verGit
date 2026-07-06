@@ -527,6 +527,8 @@ WeaponActor socket follow 유지 여부 확인
 80 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
 40 Enemy / AnimationBaseline / EnemyAnimationMode 0 측정 완료
 40 Enemy / AnimationReduced / EnemyAnimationMode 1 / Interval 0.1 측정 완료
+80 Enemy / AnimationBaseline / EnemyAnimationMode 0 측정 완료
+80 Enemy / AnimationReduced / EnemyAnimationMode 1 / Interval 0.1 측정 완료
 40 Enemy / PerceptionCandidateAudit 측정 완료
 40 Enemy / DisableEnemyPerception 0 / 1 비교 완료
 80 Enemy / PerceptionCandidateAudit + DisableEnemyPerception 0 / 1 비교 완료
@@ -571,6 +573,8 @@ Blackboard / Engage latency audit 계측 코드 추가 완료
 | ---- | ----: | -----------------: | -------: | ------ | --------: | --------: | ------------: | ---------------: | --------: | ---------: | --------: | ----- | ----------------------------------------------------------------------------------- |
 | A00  |    40 |                  0 |     0.1 | 37.28s | 12.7319ms | 12.7569ms |      2.0340ms |         3.7941ms |   3,459.1 |    3,459.1 |         - | 기준    | Default refresh 기준이다. Attempt와 Executed가 40/frame으로 동일하다.                         |
 | A01  |    40 |                  1 |     0.1 | 37.10s | 12.7914ms | 12.7950ms |      2.0606ms |         3.7730ms |   3,446.9 |      378.8 |   3,068.1 | 제한 효과 | Reduced refresh gate는 정상 동작했다. 다만 40 Enemy에서는 Frame / Game / Animation p95 개선이 거의 없다. |
+| A02  |    80 |                  0 |     0.1 | 37.38s | 20.4072ms | 20.3507ms |      3.4579ms |         6.3936ms |   4,217.1 |    4,217.1 |         - | 기준    | 80 Enemy Default refresh 기준이다. Attempt와 Executed가 80/frame으로 동일하다.                         |
+| A03  |    80 |                  1 |     0.1 | 37.42s | 20.3399ms | 20.3328ms |      3.5562ms |         6.5276ms |   4,234.7 |      711.3 |   3,523.4 | 제한 효과 | Reduced refresh gate는 정상 동작했다. 다만 Frame / Game p95 개선은 오차 수준이고 Animation p95는 소폭 증가했다. |
 
 ### AI Perception Runtime LOD
 
@@ -600,6 +604,9 @@ Animation / Pose / Locomotion 40 Enemy 측정에서는 EnemyAnimationMode 1이 r
 Attempt는 baseline과 동일하게 40/frame 수준을 유지했고, reduced 조건에서는 Executed가 약 3,459/s에서 약 379/s로 줄고 Skipped가 약 3,068/s로 증가했다.
 다만 Frame / GameThread / Animation p95는 거의 개선되지 않았다.
 따라서 parameter refresh 주기 축소는 동작 검증은 됐지만, 40 Enemy 조건에서는 주요 frame 병목 축으로 보기 어렵다.
+80 Enemy 측정에서도 같은 패턴이 반복됐다.
+EnemyAnimationMode 1은 Executed를 약 4,217/s에서 약 711/s로 줄였지만, Frame / GameThread p95 개선은 오차 수준이고 Animation / AnimParallel p95는 오히려 소폭 증가했다.
+따라서 현재 구현 형태의 parameter refresh gate는 호출 빈도 제어 기능으로는 유효하지만, 40 / 80 Enemy 조건의 성능 병목을 해결하는 Runtime LOD 축으로는 우선순위가 낮다.
 AI Perception 측정에서는 40 Enemy 기준 InvalidProviders 40, 80 Enemy 기준 InvalidProviders 80이 확인됐다.
 즉 Player 1명을 찾는 과정에서 같은 Enemy들이 perception 후보와 TargetDataMap에 함께 들어온다.
 FirstValidLatency p95는 40 Enemy 약 3.7초, 80 Enemy 약 9.6초로 증가했다.

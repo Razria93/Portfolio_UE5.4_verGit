@@ -281,6 +281,13 @@ Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter 1
 | A00  |    0 | 37.28s | 12.7319ms | 12.7569ms |      2.0340ms |         3.7941ms |   3,459.1 |    3,459.1 |         - | 기준    | Profile(20260706_172159).csv |
 | A01  |    1 | 37.10s | 12.7914ms | 12.7950ms |      2.0606ms |         3.7730ms |   3,446.9 |      378.8 |   3,068.1 | 제한 효과 | Profile(20260706_172439).csv |
 
+### 80 Enemy / Interval 0.1
+
+| Case | Mode | 시간     | Frame p95 |  Game p95 | Animation p95 | AnimParallel p95 | Attempt/s | Executed/s | Skipped/s | 판정    | 원본 CSV                    |
+| ---- | ---: | ------ | --------: | --------: | ------------: | ---------------: | --------: | ---------: | --------: | ----- | ------------------------- |
+| A02  |    0 | 37.38s | 20.4072ms | 20.3507ms |      3.4579ms |         6.3936ms |   4,217.1 |    4,217.1 |         - | 기준    | Profile(20260706_173457).csv |
+| A03  |    1 | 37.42s | 20.3399ms | 20.3328ms |      3.5562ms |         6.5276ms |   4,234.7 |      711.3 |   3,523.4 | 제한 효과 | Profile(20260706_174039).csv |
+
 측정 조건:
 
 ```text
@@ -309,7 +316,11 @@ Skipped는 약 3,068/s로 증가했다.
 다만 Frame p95, GameThread p95, Animation p95는 baseline과 거의 차이가 없다.
 따라서 40 Enemy 조건에서 parameter refresh 주기 축소는 동작 검증은 됐지만, frame budget을 회복하는 주요 병목 해소책으로 보기는 어렵다.
 
-다음 판단은 80 Enemy에서 같은 패턴이 유지되는지 확인한 뒤 내린다.
+80 Enemy에서도 같은 패턴이 반복됐다.
+EnemyAnimationMode 1은 Executed를 약 4,217/s에서 약 711/s로 줄였지만, Frame / GameThread p95 개선은 오차 수준이고 Animation / AnimParallel p95는 소폭 증가했다.
+
+따라서 현재 구현 형태의 parameter refresh gate는 호출 빈도 제어 기능으로는 유효하지만, 40 / 80 Enemy 조건의 성능 병목을 해결하는 Runtime LOD 축으로는 우선순위가 낮다.
+애니메이션 비용 축은 parameter refresh보다 pose update, skeletal mesh tick option, locomotion detail, montage / notify dependency 분리 쪽을 후속 후보로 둔다.
 ```
 
 ## EnemyMeshMode / EnemyAnimationMode 분리
