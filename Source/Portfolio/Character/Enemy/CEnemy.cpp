@@ -39,7 +39,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMovementMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMovementMode"),
 		0,
-		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: disable movement component tick, 2: block movement intent."),
+		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: disable movement state refresh, 2: block movement intent."),
 		ECVF_Default);
 }
 
@@ -279,65 +279,95 @@ void ACEnemy::UpdateRuntimeLODMovementMode()
 {
 	const int32 requestedMovementMode = FMath::Clamp(CVarAIRuntimeLODEnemyMovementMode.GetValueOnGameThread(), 0, 2);
 
-	if (!RuntimeLODMovementState.bOriginalStateCached)
-	{
-		RuntimeLODMovementState.bOriginalMovementComponentTickEnabled = IsValid(MovementComponent) ? MovementComponent->IsComponentTickEnabled() : true;
-		RuntimeLODMovementState.bOriginalStateCached = true;
-	}
+	CacheRuntimeLODMovementOriginalState();
 
 	if (RuntimeLODMovementState.AppliedMode != requestedMovementMode)
 	{
-		switch (requestedMovementMode)
-		{
-		case 1:
-			ApplyRuntimeLODMovementComponentTickDisabled();
-			break;
-
-		case 2:
-			ApplyRuntimeLODMovementIntentBlocked();
-			break;
-
-		case 0:
-		default:
-			ApplyRuntimeLODMovementDefault();
-			break;
-		}
-
+		ApplyRuntimeLODMovementMode(requestedMovementMode);
 		RuntimeLODMovementState.AppliedMode = requestedMovementMode;
+	}
+
+	if (requestedMovementMode == 2)
+	{
+		BlockRuntimeLODMovementIntent();
+	}
+}
+
+void ACEnemy::CacheRuntimeLODMovementOriginalState()
+{
+	if (RuntimeLODMovementState.bOriginalStateCached) return;
+
+	RuntimeLODMovementState.bOriginalMovementComponentTickEnabled = IsValid(MovementComponent) ? MovementComponent->IsComponentTickEnabled() : true;
+	RuntimeLODMovementState.bOriginalStateCached = true;
+}
+
+void ACEnemy::ApplyRuntimeLODMovementMode(int32 InMovementMode)
+{
+	switch (InMovementMode)
+	{
+	case 1:
+		ApplyRuntimeLODMovementStateRefreshDisabled();
+		break;
+
+	case 2:
+		ApplyRuntimeLODMovementIntentBlocked();
+		break;
+
+	case 0:
+	default:
+		ApplyRuntimeLODMovementDefault();
+		break;
 	}
 }
 
 void ACEnemy::ApplyRuntimeLODMovementDefault()
 {
-	if (IsValid(MovementComponent))
-	{
-		MovementComponent->SetComponentTickEnabled(RuntimeLODMovementState.bOriginalMovementComponentTickEnabled);
-		MovementComponent->SetMove();
-	}
+	RestoreRuntimeLODMovementStateRefresh();
+	AllowRuntimeLODMovementIntent();
 }
 
-void ACEnemy::ApplyRuntimeLODMovementComponentTickDisabled()
+void ACEnemy::ApplyRuntimeLODMovementStateRefreshDisabled()
 {
-	if (IsValid(MovementComponent))
-	{
-		MovementComponent->SetMove();
-		MovementComponent->SetComponentTickEnabled(false);
-	}
+	AllowRuntimeLODMovementIntent();
+	DisableRuntimeLODMovementStateRefresh();
 }
 
 void ACEnemy::ApplyRuntimeLODMovementIntentBlocked()
 {
-	ApplyRuntimeLODMovementDefault();
-
-	if (IsValid(MovementComponent))
-	{
-		MovementComponent->SetStop();
-	}
-
-	StopRuntimeLODPathFollowing();
+	RestoreRuntimeLODMovementStateRefresh();
+	BlockRuntimeLODMovementIntent();
+	StopRuntimeLODActiveMovement();
 }
 
-void ACEnemy::StopRuntimeLODPathFollowing()
+void ACEnemy::RestoreRuntimeLODMovementStateRefresh()
+{
+	if (!IsValid(MovementComponent)) return;
+
+	MovementComponent->SetComponentTickEnabled(RuntimeLODMovementState.bOriginalMovementComponentTickEnabled);
+}
+
+void ACEnemy::DisableRuntimeLODMovementStateRefresh()
+{
+	if (!IsValid(MovementComponent)) return;
+
+	MovementComponent->SetComponentTickEnabled(false);
+}
+
+void ACEnemy::AllowRuntimeLODMovementIntent()
+{
+	if (!IsValid(MovementComponent)) return;
+
+	MovementComponent->SetMove();
+}
+
+void ACEnemy::BlockRuntimeLODMovementIntent()
+{
+	if (!IsValid(MovementComponent)) return;
+
+	MovementComponent->SetStop();
+}
+
+void ACEnemy::StopRuntimeLODActiveMovement()
 {
 	AAIController* aiController = Cast<AAIController>(GetController());
 	if (!IsValid(aiController)) return;

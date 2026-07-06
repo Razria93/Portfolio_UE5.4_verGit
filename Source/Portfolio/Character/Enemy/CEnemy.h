@@ -153,12 +153,27 @@ private:
 
 private:
 	// Runtime LOD
+	// 1. Update
 	void UpdateRuntimeLODMeshMode();
 	void UpdateRuntimeLODMovementMode();
+
+	// 2. Lifecycle
+	void CacheRuntimeLODMovementOriginalState();
+
+	// 3. Dispatch
+	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
+
+	// 4. Movement Mode
 	void ApplyRuntimeLODMovementDefault();
-	void ApplyRuntimeLODMovementComponentTickDisabled();
+	void ApplyRuntimeLODMovementStateRefreshDisabled();
 	void ApplyRuntimeLODMovementIntentBlocked();
-	void StopRuntimeLODPathFollowing();
+
+	// 5. Movement State
+	void RestoreRuntimeLODMovementStateRefresh();
+	void DisableRuntimeLODMovementStateRefresh();
+	void AllowRuntimeLODMovementIntent();
+	void BlockRuntimeLODMovementIntent();
+	void StopRuntimeLODActiveMovement();
 
 public:
 	void Tick(float DeltaTime) override;

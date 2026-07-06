@@ -154,7 +154,7 @@ Portfolio.AI.RuntimeLOD.EnemyMovementMode
 
 ```text
 0: Default
-1: DisableMovementComponentTick
+1: MovementStateRefreshDisabled
 2: BlockMovementIntent
 ```
 
@@ -162,7 +162,7 @@ Portfolio.AI.RuntimeLOD.EnemyMovementMode
 
 ```text
 0: Default
-1: DisableMovementComponentTick
+1: MovementStateRefreshDisabled
 2: BlockMovementIntent
 ```
 
@@ -174,9 +174,10 @@ Portfolio.AI.RuntimeLOD.EnemyMovementMode
 ```text
 ACEnemy::UpdateRuntimeLODMovementMode
 -> EnemyMovementMode CVar를 읽는다.
--> Mode 1은 UCMovementComponent tick을 비활성화한다.
+-> Mode 1은 UCMovementComponent tick을 비활성화해 speed / direction / falling state refresh를 멈춘다.
 -> Mode 2는 UCMovementComponent::SetStop으로 movement intent를 차단한다.
 -> Mode 2 진입 시 현재 path following은 AIController::StopMovement로 1회 정리한다.
+-> Mode 2 유지 중에는 Action / Reaction 종료가 SetMove를 호출해도 SetStop 상태를 다시 유지한다.
 ```
 
 ## 측정 범위
@@ -186,7 +187,7 @@ Movement / Nav 측정은 두 제어만 사용한다.
 | Mode | 이름 | 목적 |
 | ---: | --- | --- |
 | 0 | Default | 기준값 |
-| 1 | DisableMovementComponentTick | `UCMovementComponent`의 speed / direction / falling cache refresh 비용 분리 |
+| 1 | MovementStateRefreshDisabled | `UCMovementComponent`의 speed / direction / falling cache refresh 비용 분리 |
 | 2 | BlockMovementIntent | movement intent / MoveTo / path following / CharacterMovement 흐름 비용 분리 |
 
 이 측정은 locomotion animation, pose update, SkeletalMesh tick 비용을 직접 측정하지 않는다.
@@ -210,11 +211,11 @@ AnimationMode는 기본값으로 고정하고, MovementMode만 바꾼다.
 
 ```text
 MV00: 40 Enemy / MovementBaseline / MovementMode 0
-MV01: 40 Enemy / DisableMovementComponentTick / MovementMode 1
+MV01: 40 Enemy / MovementStateRefreshDisabled / MovementMode 1
 MV02: 40 Enemy / BlockMovementIntent / MovementMode 2
 
 MV03: 80 Enemy / MovementBaseline / MovementMode 0
-MV04: 80 Enemy / DisableMovementComponentTick / MovementMode 1
+MV04: 80 Enemy / MovementStateRefreshDisabled / MovementMode 1
 MV05: 80 Enemy / BlockMovementIntent / MovementMode 2
 ```
 
@@ -279,7 +280,7 @@ RHI/DrawCalls p95
 ## 해석 기준
 
 ```text
-DisableMovementComponentTick으로 CharacterMovement p95가 거의 줄지 않으면,
+MovementStateRefreshDisabled로 CharacterMovement p95가 거의 줄지 않으면,
 custom movement state refresh는 주요 병목이 아니라고 본다.
 
 BlockMovementIntent로 CharacterMovement / PathFollowing / GameThread p95가 크게 줄면,
