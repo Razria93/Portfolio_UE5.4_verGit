@@ -195,15 +195,18 @@ CVar 후보:
 
 ```text
 Portfolio.AI.RuntimeLOD.EnemyAnimationMode
+Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval
 ```
 
 값 후보:
 
 ```text
 0: Default
-1: ReducedUpdate
-2: PoseSkipIsolation
+1: ReducedParameterRefresh
 ```
+
+`PoseSkipIsolation`은 후속 이관 대상이다.
+첫 구현에서는 parameter refresh 주기 축소만 측정한다.
 
 ## EnemyMeshMode / EnemyAnimationMode 분리
 
@@ -220,7 +223,6 @@ EnemyMeshMode
 EnemyAnimationMode
 0: Default
 1: ReducedParameterRefresh
-2: PoseSkipIsolation
 ```
 
 기존 `EnemyMeshMode 2`에 해당하던 조건은 다음 조합으로 이관한다.
@@ -235,6 +237,7 @@ EnemyAnimationMode 2
 
 `PoseSkipIsolation`은 측정용 극단 조건이다.
 Combat-capable Enemy에서는 montage notify / socket timing 때문에 pose update skip을 허용하지 않는다.
+따라서 첫 구현에서는 `EnemyAnimationMode 1`만 실동작으로 추가하고, `EnemyAnimationMode 2`는 후속 pose skip isolation 작업에서 다룬다.
 
 정확한 구현 위치는 현재 `USkeletalMeshComponent` / AnimInstance 설정을 확인한 뒤 결정한다.
 

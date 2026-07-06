@@ -2,11 +2,30 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
+#include "HAL/IConsoleManager.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
+
+namespace
+{
+	TAutoConsoleVariable<int32> CVarEnemyAnimationMode(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationMode"),
+		0,
+		TEXT("Controls ACEnemy animation runtime LOD mode. 0: default refresh, 1: reduced parameter refresh."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<float> CVarEnemyAnimationReducedRefreshInterval(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval"),
+		0.2f,
+		TEXT("Refresh interval for ACEnemy reduced animation parameter mode."),
+		ECVF_Default);
+}
+
+// Lifecycle
 
 void UCAnimInstance::NativeInitializeAnimation()
 {
@@ -15,9 +34,12 @@ void UCAnimInstance::NativeInitializeAnimation()
 	UnbindComponentEvents();
 	ClearCachedReferences();
 
+	InitializeAnimationStateForProfiling();
+
 	if (!CacheOwnerAndComponents()) return;
 
 	BindComponentEvents();
+	RefreshMovementParameters();
 	RefreshStateParameters();
 }
 
@@ -25,6 +47,8 @@ void UCAnimInstance::NativeUninitializeAnimation()
 {
 	UnbindComponentEvents();
 	ClearCachedReferences();
+
+	ClearAnimationStateForProfiling();
 
 	Super::NativeUninitializeAnimation();
 }
@@ -34,10 +58,13 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
 	if (!IsValid(OwnerCharacter_Cached)) return;
+	if (!ShouldRefreshAnimationParameters(DeltaSeconds)) return;
 
 	RefreshMovementParameters();
 	RefreshStateParameters();
 }
+
+// Reference Cache
 
 bool UCAnimInstance::CacheOwnerAndComponents()
 {
@@ -76,6 +103,59 @@ void UCAnimInstance::UnbindComponentEvents()
 	WeaponComp_Cached->OnWeaponTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
 }
 
+// Animation Profiling Gate
+
+void UCAnimInstance::InitializeAnimationStateForProfiling()
+{
+	RuntimeLODAnimationRefreshElapsed = 0.f;
+}
+
+void UCAnimInstance::ClearAnimationStateForProfiling()
+{
+	RuntimeLODAnimationRefreshElapsed = 0.f;
+}
+
+bool UCAnimInstance::ShouldReduceEnemyAnimationRefreshForProfiling() const
+{
+	return GetEnemyAnimationModeForProfiling() > 0;
+}
+
+bool UCAnimInstance::IsEnemyAnimationProfilingTarget() const
+{
+	return IsValid(OwnerCharacter_Cached) && OwnerCharacter_Cached->IsA<ACEnemy>();
+}
+
+int32 UCAnimInstance::GetEnemyAnimationModeForProfiling() const
+{
+	if (!IsEnemyAnimationProfilingTarget()) return 0;
+
+	return FMath::Clamp(CVarEnemyAnimationMode.GetValueOnGameThread(), 0, 1);
+}
+
+float UCAnimInstance::GetReducedAnimationRefreshIntervalForProfiling() const
+{
+	return FMath::Max(CVarEnemyAnimationReducedRefreshInterval.GetValueOnGameThread(), KINDA_SMALL_NUMBER);
+}
+
+bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
+{
+	if (!ShouldReduceEnemyAnimationRefreshForProfiling())
+	{
+		RuntimeLODAnimationRefreshElapsed = 0.f;
+		return true;
+	}
+
+	RuntimeLODAnimationRefreshElapsed += DeltaSeconds;
+
+	const float refreshInterval = GetReducedAnimationRefreshIntervalForProfiling();
+	if (RuntimeLODAnimationRefreshElapsed < refreshInterval) return false;
+
+	RuntimeLODAnimationRefreshElapsed = 0.f;
+	return true;
+}
+
+// Parameter Refresh
+
 void UCAnimInstance::RefreshMovementParameters()
 {
 	if (IsValid(MovementComp_Cached))
@@ -100,6 +180,8 @@ void UCAnimInstance::RefreshStateParameters()
 
 	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
 }
+
+// Component Event Callback
 
 void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType)
 {

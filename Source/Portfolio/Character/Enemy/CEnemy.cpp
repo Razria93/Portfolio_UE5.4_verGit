@@ -33,7 +33,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMeshMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMeshMode"),
 		0,
-		TEXT("Controls ACEnemy mesh runtime LOD mode. 0: visible default, 1: hidden keep pose, 2: hidden allow pose skip."),
+		TEXT("Controls ACEnemy mesh runtime LOD mode. 0: visible, 1: hidden keep pose."),
 		ECVF_Default);
 }
 
@@ -237,7 +237,7 @@ void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences
 
 void ACEnemy::UpdateRuntimeLODMeshMode()
 {
-	const int32 requestedMeshMode = FMath::Clamp(CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(), 0, 2);
+	const int32 requestedMeshMode = FMath::Clamp(CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(), 0, 1);
 	if (RuntimeLODMeshState.AppliedMode == requestedMeshMode) return;
 
 	USkeletalMeshComponent* meshComp = GetMesh();
@@ -255,12 +255,6 @@ void ACEnemy::UpdateRuntimeLODMeshMode()
 		meshComp->SetHiddenInGame(true, false);
 		meshComp->SetVisibility(false, false);
 		meshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-		break;
-
-	case 2:
-		meshComp->SetHiddenInGame(true, false);
-		meshComp->SetVisibility(false, false);
-		meshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		break;
 
 	case 0:
