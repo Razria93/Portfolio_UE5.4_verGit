@@ -920,6 +920,8 @@ Animation / Pose / Locomotion
 EnemyMeshMode 2는 pose update skip 비용 효과를 보여줬지만 combat-capable Enemy에는 안전하지 않다.
 따라서 다음 작업은 gameplay-safe animation reduction과 measurement-only pose skip을 분리한다.
 기존 EnemyMeshMode 2 조건은 이후 EnemyMeshMode 1 + EnemyAnimationMode 2 조합으로 이관한다.
+측정 맵은 fixed camera 안에서 Enemy들이 Alert / Engage / movement / locomotion을 유지하는 조건으로 구성한다.
+이 fixed camera는 RenderCoverage처럼 draw call 통제가 아니라 gameplay stress 관찰 통제를 위한 것이다.
 ```
 
 상세 작업 계획:

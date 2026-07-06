@@ -888,6 +888,8 @@ Team Attitude 보정으로 perception 후보 누수는 해결됐다.
 EnemyMeshMode 2는 pose update skip의 비용 효과를 보여줬지만 combat-capable Enemy에는 그대로 적용할 수 없다.
 따라서 다음 측정은 gameplay-safe animation reduction과 pose-skip isolation을 분리해 진행한다.
 기존 EnemyMeshMode 2 조건은 이후 EnemyMeshMode 1 + EnemyAnimationMode 2 조합으로 이관한다.
+측정 맵은 fixed camera 안에서 Enemy들이 Alert / Engage / movement / locomotion을 유지하는 조건으로 구성한다.
+이 fixed camera는 RenderCoverage처럼 draw call 통제가 아니라 gameplay stress 관찰 통제를 위한 것이다.
 ```
 
 작업 계획 문서:

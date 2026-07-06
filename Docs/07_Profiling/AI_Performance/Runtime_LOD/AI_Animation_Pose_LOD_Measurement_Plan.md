@@ -87,6 +87,46 @@ Mode C: Pose Skip Isolation
 
 Mode C는 측정 기준점이지, 1차 구현 목표가 아니다.
 
+## 측정 맵 구성
+
+Animation / Pose / Locomotion 측정은 별도 맵에서 진행한다.
+
+권장 맵:
+
+```text
+MAP_AIPerf_AnimationLOD_40Enemy
+MAP_AIPerf_AnimationLOD_80Enemy
+```
+
+맵 구성 기준:
+
+```text
+Player 또는 target 역할 actor를 중앙에 배치한다.
+Enemy는 fixed camera 안에 모두 보이도록 배치한다.
+Enemy가 Player를 인식하고 Alert / Engage로 진입할 수 있게 한다.
+Enemy가 화면 밖으로 빠져나가지 않도록 arena / placement / engage range를 조정한다.
+Enemy끼리 피격하지 않도록 한다.
+Enemy끼리 길막이 측정을 지배하지 않도록 한다.
+AIController / BT / BB / Perception / Movement / WeaponActor는 유지한다.
+EnemyMeshMode는 0으로 유지한다.
+EnemyAnimationMode만 0 / 1로 비교한다.
+```
+
+고정 카메라는 사용한다.
+다만 RenderCoverage 측정과 목적이 다르다.
+
+```text
+RenderCoverage fixed camera
+-> 화면 안 mesh 수 / draw call / primitive 통제가 목적
+
+AnimationLOD fixed camera
+-> gameplay stress 상태, movement 흐름, locomotion 품질 관찰 통제가 목적
+```
+
+이번 측정에서는 모든 Enemy를 화면 안에 유지한다.
+Enemy가 화면 밖으로 나가면 이동 끊김, 길막, Engage 이탈, animation refresh 지연을 구분하기 어렵다.
+따라서 fixed camera 안에서 Alert / Engage / movement / locomotion이 관찰되는 조건을 기본값으로 둔다.
+
 ## HiddenAllowPoseSkip을 바로 쓰지 않는 이유
 
 `EnemyMeshMode 2`는 animation / pose 비용 측정에는 유효하다.
