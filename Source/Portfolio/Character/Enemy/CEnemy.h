@@ -25,6 +25,13 @@ private:
 		bool bOriginalStateCached = false;
 	};
 
+	struct FRuntimeLODMovementState
+	{
+		int32 AppliedMode = INDEX_NONE;
+		bool bOriginalMovementComponentTickEnabled = true;
+		bool bOriginalStateCached = false;
+	};
+
 private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
 	bool bUsePatrol;
@@ -130,6 +137,7 @@ private:
 
 private:
 	FRuntimeLODMeshState RuntimeLODMeshState;
+	FRuntimeLODMovementState RuntimeLODMovementState;
 
 protected:
 	// Lifecycle
@@ -146,6 +154,11 @@ private:
 private:
 	// Runtime LOD
 	void UpdateRuntimeLODMeshMode();
+	void UpdateRuntimeLODMovementMode();
+	void ApplyRuntimeLODMovementDefault();
+	void ApplyRuntimeLODMovementComponentTickDisabled();
+	void ApplyRuntimeLODMovementIntentBlocked();
+	void StopRuntimeLODPathFollowing();
 
 public:
 	void Tick(float DeltaTime) override;

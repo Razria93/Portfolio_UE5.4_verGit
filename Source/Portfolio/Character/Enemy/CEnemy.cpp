@@ -35,6 +35,12 @@ namespace
 		0,
 		TEXT("Controls ACEnemy mesh runtime LOD mode. 0: visible, 1: hidden keep pose."),
 		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMovementMode(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyMovementMode"),
+		0,
+		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: disable movement component tick, 2: block movement intent."),
+		ECVF_Default);
 }
 
 ACEnemy::ACEnemy()
@@ -131,6 +137,7 @@ void ACEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateRuntimeLODMeshMode();
+	UpdateRuntimeLODMovementMode();
 
 	if (IsValid(ActionComponent))
 	{
@@ -268,11 +275,82 @@ void ACEnemy::UpdateRuntimeLODMeshMode()
 	RuntimeLODMeshState.AppliedMode = requestedMeshMode;
 }
 
+void ACEnemy::UpdateRuntimeLODMovementMode()
+{
+	const int32 requestedMovementMode = FMath::Clamp(CVarAIRuntimeLODEnemyMovementMode.GetValueOnGameThread(), 0, 2);
+
+	if (!RuntimeLODMovementState.bOriginalStateCached)
+	{
+		RuntimeLODMovementState.bOriginalMovementComponentTickEnabled = IsValid(MovementComponent) ? MovementComponent->IsComponentTickEnabled() : true;
+		RuntimeLODMovementState.bOriginalStateCached = true;
+	}
+
+	if (RuntimeLODMovementState.AppliedMode != requestedMovementMode)
+	{
+		switch (requestedMovementMode)
+		{
+		case 1:
+			ApplyRuntimeLODMovementComponentTickDisabled();
+			break;
+
+		case 2:
+			ApplyRuntimeLODMovementIntentBlocked();
+			break;
+
+		case 0:
+		default:
+			ApplyRuntimeLODMovementDefault();
+			break;
+		}
+
+		RuntimeLODMovementState.AppliedMode = requestedMovementMode;
+	}
+}
+
+void ACEnemy::ApplyRuntimeLODMovementDefault()
+{
+	if (IsValid(MovementComponent))
+	{
+		MovementComponent->SetComponentTickEnabled(RuntimeLODMovementState.bOriginalMovementComponentTickEnabled);
+		MovementComponent->SetMove();
+	}
+}
+
+void ACEnemy::ApplyRuntimeLODMovementComponentTickDisabled()
+{
+	if (IsValid(MovementComponent))
+	{
+		MovementComponent->SetMove();
+		MovementComponent->SetComponentTickEnabled(false);
+	}
+}
+
+void ACEnemy::ApplyRuntimeLODMovementIntentBlocked()
+{
+	ApplyRuntimeLODMovementDefault();
+
+	if (IsValid(MovementComponent))
+	{
+		MovementComponent->SetStop();
+	}
+
+	StopRuntimeLODPathFollowing();
+}
+
+void ACEnemy::StopRuntimeLODPathFollowing()
+{
+	AAIController* aiController = Cast<AAIController>(GetController());
+	if (!IsValid(aiController)) return;
+
+	aiController->StopMovement();
+}
+
 void ACEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	UpdateRuntimeLODMeshMode();
+	UpdateRuntimeLODMovementMode();
 }
 
 void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

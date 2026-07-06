@@ -111,7 +111,8 @@ tick을 끄면 locomotion parameter가 stale 상태가 될 수 있다.
 
 ```text
 기본 이동 유지
-AIController StopMovement 또는 MoveTo 차단
+movement intent 차단
+현재 path following 1회 정리
 CharacterMovement tick disable 후보
 ```
 
@@ -141,7 +142,7 @@ movement/nav 관련 context만 간소화
 P35에서는 Movement / Nav 측정에서 비용 신호를 확인하고, 실제 update interval 조정은 BT Update Interval 축에서 다시 다룬다.
 ```
 
-## 제안 CVar 후보
+## 구현된 CVar
 
 첫 구현에서는 침습도가 낮고 되돌리기 쉬운 측정용 CVar부터 둔다.
 
@@ -149,43 +150,72 @@ P35에서는 Movement / Nav 측정에서 비용 신호를 확인하고, 실제 u
 Portfolio.AI.RuntimeLOD.EnemyMovementMode
 ```
 
-후보 값:
+값:
 
 ```text
 0: Default
 1: DisableMovementComponentTick
-2: StopPathFollowing
-3: DisableCharacterMovementTick
+2: BlockMovementIntent
 ```
 
-권장 1차 구현:
+1차 구현:
 
 ```text
 0: Default
 1: DisableMovementComponentTick
-2: StopPathFollowing
+2: BlockMovementIntent
 ```
 
-`DisableCharacterMovementTick`은 gameplay state를 크게 바꾸므로 1차 구현에서는 optional 후보로 둔다.
+`DisableCharacterMovementTick`, SkeletalMesh tick disable, `bPauseAnims` 같은 강한 제어는 gameplay / animation state를 크게 바꾼다.
+따라서 Movement / Nav 측정에 포함하지 않고 별도 제한 환경 측정으로 분리한다.
+
+현재 구현 위치:
+
+```text
+ACEnemy::UpdateRuntimeLODMovementMode
+-> EnemyMovementMode CVar를 읽는다.
+-> Mode 1은 UCMovementComponent tick을 비활성화한다.
+-> Mode 2는 UCMovementComponent::SetStop으로 movement intent를 차단한다.
+-> Mode 2 진입 시 현재 path following은 AIController::StopMovement로 1회 정리한다.
+```
+
+## 측정 범위
+
+Movement / Nav 측정은 두 제어만 사용한다.
+
+| Mode | 이름 | 목적 |
+| ---: | --- | --- |
+| 0 | Default | 기준값 |
+| 1 | DisableMovementComponentTick | `UCMovementComponent`의 speed / direction / falling cache refresh 비용 분리 |
+| 2 | BlockMovementIntent | movement intent / MoveTo / path following / CharacterMovement 흐름 비용 분리 |
+
+이 측정은 locomotion animation, pose update, SkeletalMesh tick 비용을 직접 측정하지 않는다.
+해당 축은 전투 기능을 제거한 제한 환경에서 별도로 측정한다.
+
+별도 측정 후보:
+
+```text
+Character Actor tick
+CharacterMovementComponent tick
+SkeletalMeshComponent tick
+bPauseAnims
+VisibilityBasedAnimTickOption
+Animation update / pose progression
+```
 
 ## 제안 측정 케이스
 
 Animation / Pose 축과 같은 40 / 80 scale을 사용한다.
+AnimationMode는 기본값으로 고정하고, MovementMode만 바꾼다.
 
 ```text
-MV00: 40 Enemy / MovementBaseline
-MV01: 40 Enemy / DisableMovementComponentTick
-MV02: 40 Enemy / StopPathFollowing
-MV03: 80 Enemy / MovementBaseline
-MV04: 80 Enemy / DisableMovementComponentTick
-MV05: 80 Enemy / StopPathFollowing
-```
+MV00: 40 Enemy / MovementBaseline / MovementMode 0
+MV01: 40 Enemy / DisableMovementComponentTick / MovementMode 1
+MV02: 40 Enemy / BlockMovementIntent / MovementMode 2
 
-선택 측정:
-
-```text
-MV06: 40 Enemy / DisableCharacterMovementTick
-MV07: 80 Enemy / DisableCharacterMovementTick
+MV03: 80 Enemy / MovementBaseline / MovementMode 0
+MV04: 80 Enemy / DisableMovementComponentTick / MovementMode 1
+MV05: 80 Enemy / BlockMovementIntent / MovementMode 2
 ```
 
 ## 공통 측정 조건
@@ -249,13 +279,13 @@ RHI/DrawCalls p95
 ## 해석 기준
 
 ```text
-MovementComponent tick disable로 CharacterMovement p95가 거의 줄지 않으면,
+DisableMovementComponentTick으로 CharacterMovement p95가 거의 줄지 않으면,
 custom movement state refresh는 주요 병목이 아니라고 본다.
 
-StopPathFollowing으로 CharacterMovement / PathFollowing / GameThread p95가 크게 줄면,
-실제 이동과 nav path following이 유효한 Runtime LOD 축이다.
+BlockMovementIntent로 CharacterMovement / PathFollowing / GameThread p95가 크게 줄면,
+실제 이동 요청과 nav path following이 유효한 Runtime LOD 축이다.
 
-StopPathFollowing으로 frame은 줄지만 gameplay 상태가 크게 변하면,
+BlockMovementIntent로 frame은 줄지만 gameplay 상태가 크게 변하면,
 최적화 적용안은 movement disable이 아니라 path update interval / active movement budget / distant movement simplification 쪽으로 설계한다.
 
 CharacterMovement tick disable이 큰 효과를 보이면,
@@ -268,8 +298,8 @@ far / dormant enemy에서 movement simulation을 proxy 또는 lightweight actor�
 1. BT asset에서 MoveTo 노드 위치와 조건을 확인한다.
 2. AIPerf Movement/Nav 전용 맵을 만들지, 기존 AnimationLOD 맵을 복제할지 결정한다.
 3. EnemyMovementMode CVar 제어 위치를 결정한다.
-4. MovementComponent tick disable과 PathFollowing stop을 같은 CVar에 둘지 분리할지 결정한다.
-5. StopPathFollowing 측정 시 AI state가 계속 Engage/Alert를 유지하는지 확인한다.
+4. MovementComponent tick disable과 MovementIntent block이 각각 의도한 축만 제어하는지 확인한다.
+5. BlockMovementIntent 측정 시 AI state가 계속 Engage/Alert를 유지하는지 확인한다.
 ```
 
 ## 권장 커밋 분리
