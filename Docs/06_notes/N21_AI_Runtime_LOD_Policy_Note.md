@@ -910,25 +910,21 @@ Team Attitude / Affiliation 보정으로 Enemy끼리 perception 후보로 들어
 다음 측정축:
 
 ```text
-Animation / Pose / Locomotion
+Movement / Nav
 ```
 
 선정 이유:
 
 ```text
-40 / 80 Enemy 조건에서 AnimationParallelEvaluation과 Animation 비용이 계속 남아 있다.
-EnemyMeshMode 2는 pose update skip 비용 효과를 보여줬지만 combat-capable Enemy에는 안전하지 않다.
-따라서 다음 작업은 gameplay-safe animation reduction과 measurement-only pose skip을 분리한다.
-기존 EnemyMeshMode 2 조건은 이후 EnemyMeshMode 1 + EnemyAnimationMode 2 조합으로 이관한다.
-측정 맵은 fixed camera 안에서 Enemy들이 Alert / Engage / movement / locomotion을 유지하는 조건으로 구성한다.
-이 fixed camera는 RenderCoverage처럼 draw call 통제가 아니라 gameplay stress 관찰 통제를 위한 것이다.
-정규 측정은 EnemyAnimationRefreshCounter를 켜서 parameter refresh attempt / executed / skipped 횟수를 함께 기록한다.
 40 / 80 Enemy 기준 EnemyAnimationMode 1은 Attempt 대비 Executed를 줄이고 Skipped를 증가시켜 gate 동작은 검증됐다.
 다만 Frame / GameThread / Animation p95 개선은 거의 없거나 오차 수준이라, 현재 구현 형태의 parameter refresh 주기 축소를 주요 병목 해소책으로 보기는 어렵다.
+40 / 80 Enemy 측정에서 CharacterMovement 비용은 계속 남아 있다.
+실제 이동은 UCMovementComponent tick, CharacterMovement / PathFollowing, BT MoveTo / movement decision으로 나뉜다.
+따라서 다음 작업은 Movement / Nav 비용을 분리한다.
 ```
 
 상세 작업 계획:
 
 ```text
-Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Animation_Pose_LOD_Measurement_Plan.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Plan.md
 ```

@@ -898,25 +898,30 @@ WeaponActor 세부 분해
 -> mesh / collision / shadow 세부 분리는 Runtime LOD 설계 단계에서 필요할 때 다시 분리한다.
 ```
 
-다음 작업은 `Animation / Pose / Locomotion` 축이다.
+`Animation / Pose / Locomotion` 축은 parameter refresh gate까지 1차 측정했다.
+
+측정 결론:
+
+```text
+EnemyAnimationMode 1은 refresh Executed count를 크게 줄였지만 Frame / GameThread / Animation p95 개선은 거의 없었다.
+따라서 현재 구현 형태의 parameter refresh gate는 동작 검증은 됐지만 40 / 80 Enemy 조건의 주요 병목 해소책은 아니다.
+pose update / skeletal mesh tick option / locomotion detail은 후속 후보로 남긴다.
+```
+
+다음 작업은 `Movement / Nav` 축이다.
 
 이유:
 
 ```text
-Team Attitude 보정으로 perception 후보 누수는 해결됐다.
-하지만 40 / 80 Enemy에서 AnimationParallelEvaluation과 Animation 비용은 여전히 남아 있다.
-EnemyMeshMode 2는 pose update skip의 비용 효과를 보여줬지만 combat-capable Enemy에는 그대로 적용할 수 없다.
-따라서 다음 측정은 gameplay-safe animation reduction과 pose-skip isolation을 분리해 진행한다.
-기존 EnemyMeshMode 2 조건은 이후 EnemyMeshMode 1 + EnemyAnimationMode 2 조합으로 이관한다.
-측정 맵은 fixed camera 안에서 Enemy들이 Alert / Engage / movement / locomotion을 유지하는 조건으로 구성한다.
-이 fixed camera는 RenderCoverage처럼 draw call 통제가 아니라 gameplay stress 관찰 통제를 위한 것이다.
-정규 측정은 EnemyAnimationRefreshCounter를 켜서 parameter refresh attempt / executed / skipped 횟수를 함께 기록한다.
+40 / 80 Enemy 측정에서 CharacterMovement 비용이 계속 남아 있다.
+실제 이동은 UCMovementComponent tick, CharacterMovement / PathFollowing, BT MoveTo / movement decision으로 나뉜다.
+Animation parameter refresh보다 movement / nav simulation이 frame budget에 미치는 영향을 먼저 분리한다.
 ```
 
 작업 계획 문서:
 
 ```text
-Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Animation_Pose_LOD_Measurement_Plan.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Plan.md
 ```
 
 ### Team Attitude / Affiliation 보정
