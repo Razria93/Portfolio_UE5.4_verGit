@@ -272,6 +272,46 @@ Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter 1
 
 카운터가 없는 기존 40 Enemy baseline / reduced 측정은 preliminary 측정으로만 보고 정규 결과표에는 사용하지 않는다.
 
+## 측정 결과
+
+### 40 Enemy / Interval 0.1
+
+| Case | Mode | 시간     | Frame p95 |  Game p95 | Animation p95 | AnimParallel p95 | Attempt/s | Executed/s | Skipped/s | 판정    | 원본 CSV                    |
+| ---- | ---: | ------ | --------: | --------: | ------------: | ---------------: | --------: | ---------: | --------: | ----- | ------------------------- |
+| A00  |    0 | 37.28s | 12.7319ms | 12.7569ms |      2.0340ms |         3.7941ms |   3,459.1 |    3,459.1 |         - | 기준    | Profile(20260706_172159).csv |
+| A01  |    1 | 37.10s | 12.7914ms | 12.7950ms |      2.0606ms |         3.7730ms |   3,446.9 |      378.8 |   3,068.1 | 제한 효과 | Profile(20260706_172439).csv |
+
+측정 조건:
+
+```text
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Map: MAP_AIPerf_AnimationLOD_40Enemy
+Camera: fixed camera
+DisableEnemyPerception 0
+PerceptionCandidateAudit 0
+BlackboardEngageLatencyAudit 0
+DisableEnemyWeaponActor 0
+EnemyMeshMode 0
+EnemyAnimationRefreshCounter 1
+EnemyAnimationReducedRefreshInterval 0.1
+```
+
+해석:
+
+```text
+EnemyAnimationMode 1에서는 refresh gate가 정상 동작했다.
+Attempt는 baseline과 동일하게 40/frame 수준을 유지했고, Executed는 약 3,459/s에서 약 379/s로 감소했다.
+Skipped는 약 3,068/s로 증가했다.
+
+다만 Frame p95, GameThread p95, Animation p95는 baseline과 거의 차이가 없다.
+따라서 40 Enemy 조건에서 parameter refresh 주기 축소는 동작 검증은 됐지만, frame budget을 회복하는 주요 병목 해소책으로 보기는 어렵다.
+
+다음 판단은 80 Enemy에서 같은 패턴이 유지되는지 확인한 뒤 내린다.
+```
+
 ## EnemyMeshMode / EnemyAnimationMode 분리
 
 현재 `EnemyMeshMode 2`는 mesh visibility와 pose update skip을 함께 제어한다.

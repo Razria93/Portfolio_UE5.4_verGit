@@ -525,6 +525,8 @@ WeaponActor socket follow 유지 여부 확인
 40 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
 80 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 0 측정 완료
 80 Enemy / WeaponActor Isolation / DisableEnemyWeaponActor 1 측정 완료
+40 Enemy / AnimationBaseline / EnemyAnimationMode 0 측정 완료
+40 Enemy / AnimationReduced / EnemyAnimationMode 1 / Interval 0.1 측정 완료
 40 Enemy / PerceptionCandidateAudit 측정 완료
 40 Enemy / DisableEnemyPerception 0 / 1 비교 완료
 80 Enemy / PerceptionCandidateAudit + DisableEnemyPerception 0 / 1 비교 완료
@@ -563,6 +565,13 @@ Blackboard / Engage latency audit 계측 코드 추가 완료
 | W02  |    80 |                       0 | 37.22s | 16.8035ms | 16.7116ms | 8.0555ms |      4.0316ms |    0.2720ms |         0.4109ms |         1,258 |               81 |            499 |               160 | 기준    | 80 Enemy WeaponActor 생성 기준이다.                                                     |
 | W03  |    80 |                       1 | 37.18s | 14.8267ms | 14.8160ms | 7.8513ms |      3.5294ms |    0.2493ms |         0.2526ms |           936 |                0 |            419 |                80 | 효과 확인 | Actor / SkeletalMesh tick / DrawCalls / Frame p95가 함께 감소했다.                       |
 
+### Animation / Pose / Locomotion
+
+| Case | Enemy | EnemyAnimationMode | Interval | 시간     | Frame p95 |  Game p95 | Animation p95 | AnimParallel p95 | Attempt/s | Executed/s | Skipped/s | 판정    | 메모                                                                                  |
+| ---- | ----: | -----------------: | -------: | ------ | --------: | --------: | ------------: | ---------------: | --------: | ---------: | --------: | ----- | ----------------------------------------------------------------------------------- |
+| A00  |    40 |                  0 |     0.1 | 37.28s | 12.7319ms | 12.7569ms |      2.0340ms |         3.7941ms |   3,459.1 |    3,459.1 |         - | 기준    | Default refresh 기준이다. Attempt와 Executed가 40/frame으로 동일하다.                         |
+| A01  |    40 |                  1 |     0.1 | 37.10s | 12.7914ms | 12.7950ms |      2.0606ms |         3.7730ms |   3,446.9 |      378.8 |   3,068.1 | 제한 효과 | Reduced refresh gate는 정상 동작했다. 다만 40 Enemy에서는 Frame / Game / Animation p95 개선이 거의 없다. |
+
 ### AI Perception Runtime LOD
 
 | Case | Enemy | DisableEnemyPerception | Audit | Frame p95 |  Game p95 | AIPerception p95 | BT_UpdateAIContext p95 | CharacterMovement p95 | RawActors p95 | InvalidProviders p95 | FirstValidLatency p95 | 판정          | 메모                                                                              |
@@ -587,6 +596,10 @@ WeaponActor Isolation에서는 DisableEnemyWeaponActor 1 적용 시 CWeaponActor
 80 Enemy에서도 같은 actor / component / draw call 감소가 반복됐지만 Frame / GameThread p95는 거의 회복되지 않았다.
 재측정 기준에서는 Frame / GameThread / Animation p95도 함께 감소했다.
 따라서 WeaponActor 제거는 Object Management와 animation update 비용 축에서 유효하지만, 실제 적용은 combat-capable 단계와 weapon dependency를 함께 고려해야 한다.
+Animation / Pose / Locomotion 40 Enemy 측정에서는 EnemyAnimationMode 1이 refresh gate 자체는 정상적으로 줄였다.
+Attempt는 baseline과 동일하게 40/frame 수준을 유지했고, reduced 조건에서는 Executed가 약 3,459/s에서 약 379/s로 줄고 Skipped가 약 3,068/s로 증가했다.
+다만 Frame / GameThread / Animation p95는 거의 개선되지 않았다.
+따라서 parameter refresh 주기 축소는 동작 검증은 됐지만, 40 Enemy 조건에서는 주요 frame 병목 축으로 보기 어렵다.
 AI Perception 측정에서는 40 Enemy 기준 InvalidProviders 40, 80 Enemy 기준 InvalidProviders 80이 확인됐다.
 즉 Player 1명을 찾는 과정에서 같은 Enemy들이 perception 후보와 TargetDataMap에 함께 들어온다.
 FirstValidLatency p95는 40 Enemy 약 3.7초, 80 Enemy 약 9.6초로 증가했다.
