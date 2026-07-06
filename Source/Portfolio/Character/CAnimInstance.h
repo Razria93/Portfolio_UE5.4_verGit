@@ -83,6 +83,16 @@ private:
 	bool ShouldRefreshAnimationParameters(float DeltaSeconds);
 
 private:
+	// Animation Refresh Audit
+	// 1. Condition
+	bool ShouldAuditAnimationRefreshForProfiling() const;
+
+	// 2. Record
+	void RecordAnimationRefreshAttemptForProfiling() const;
+	void RecordAnimationRefreshExecutedForProfiling() const;
+	void RecordAnimationRefreshSkippedForProfiling() const;
+
+private:
 	// Parameter Refresh
 	void RefreshMovementParameters();
 	void RefreshStateParameters();

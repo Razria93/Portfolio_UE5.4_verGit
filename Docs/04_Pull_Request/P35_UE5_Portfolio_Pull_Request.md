@@ -890,6 +890,7 @@ EnemyMeshMode 2는 pose update skip의 비용 효과를 보여줬지만 combat-c
 기존 EnemyMeshMode 2 조건은 이후 EnemyMeshMode 1 + EnemyAnimationMode 2 조합으로 이관한다.
 측정 맵은 fixed camera 안에서 Enemy들이 Alert / Engage / movement / locomotion을 유지하는 조건으로 구성한다.
 이 fixed camera는 RenderCoverage처럼 draw call 통제가 아니라 gameplay stress 관찰 통제를 위한 것이다.
+정규 측정은 EnemyAnimationRefreshCounter를 켜서 parameter refresh attempt / executed / skipped 횟수를 함께 기록한다.
 ```
 
 작업 계획 문서:

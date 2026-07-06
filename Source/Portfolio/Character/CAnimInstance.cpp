@@ -3,6 +3,7 @@
 
 #include "GameFramework/Character.h"
 #include "HAL/IConsoleManager.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
@@ -22,6 +23,12 @@ namespace
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval"),
 		0.1f,
 		TEXT("Refresh interval for ACEnemy reduced animation parameter mode."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEnemyAnimationRefreshCounter(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter"),
+		0,
+		TEXT("Enable ACEnemy animation parameter refresh counters for runtime LOD measurement. 0: disabled, 1: enabled."),
 		ECVF_Default);
 }
 
@@ -140,19 +147,55 @@ float UCAnimInstance::GetReducedAnimationRefreshIntervalForProfiling() const
 
 bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 {
+	RecordAnimationRefreshAttemptForProfiling();
+
 	if (!ShouldReduceEnemyAnimationRefreshForProfiling())
 	{
 		RuntimeLODAnimationRefreshElapsed = 0.f;
+		RecordAnimationRefreshExecutedForProfiling();
 		return true;
 	}
 
 	RuntimeLODAnimationRefreshElapsed += DeltaSeconds;
 
 	const float refreshInterval = GetReducedAnimationRefreshIntervalForProfiling();
-	if (RuntimeLODAnimationRefreshElapsed < refreshInterval) return false;
+	if (RuntimeLODAnimationRefreshElapsed < refreshInterval)
+	{
+		RecordAnimationRefreshSkippedForProfiling();
+		return false;
+	}
 
 	RuntimeLODAnimationRefreshElapsed = 0.f;
+	RecordAnimationRefreshExecutedForProfiling();
 	return true;
+}
+
+// Animation Refresh Audit
+
+bool UCAnimInstance::ShouldAuditAnimationRefreshForProfiling() const
+{
+	return IsEnemyAnimationProfilingTarget() && (CVarEnemyAnimationRefreshCounter.GetValueOnGameThread() != 0);
+}
+
+void UCAnimInstance::RecordAnimationRefreshAttemptForProfiling() const
+{
+	if (!ShouldAuditAnimationRefreshForProfiling()) return;
+
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Attempt, 1, ECsvCustomStatOp::Accumulate);
+}
+
+void UCAnimInstance::RecordAnimationRefreshExecutedForProfiling() const
+{
+	if (!ShouldAuditAnimationRefreshForProfiling()) return;
+
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Executed, 1, ECsvCustomStatOp::Accumulate);
+}
+
+void UCAnimInstance::RecordAnimationRefreshSkippedForProfiling() const
+{
+	if (!ShouldAuditAnimationRefreshForProfiling()) return;
+
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Skipped, 1, ECsvCustomStatOp::Accumulate);
 }
 
 // Parameter Refresh
