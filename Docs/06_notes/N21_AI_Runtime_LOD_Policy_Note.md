@@ -933,7 +933,9 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Pla
 
 ```text
 MovementMode 1은 CMovementComponent tick count를 줄였지만 Frame / GameThread p95 개선으로 이어지지 않았다.
+PIE 관측상 Alert Spread 중 locomotion representation이 Idle Locomotion으로 남아 표현 품질도 깨진다.
+따라서 Mode 1은 비용 분리 측정 결과로만 남기고 Runtime LOD 후보에서 제외한다.
 MovementMode 2는 40 / 80 Enemy 모두에서 CharacterMovement p95와 Frame / GameThread p95를 함께 줄였다.
 따라서 custom movement state refresh보다 실제 movement intent / CharacterMovement / nav movement 흐름이 더 유효한 비용 축으로 본다.
-실제 Runtime LOD 적용은 movement disable이 아니라 distance / combat relevance 기반 movement update interval 또는 active movement budget으로 설계한다.
+실제 Runtime LOD 적용은 movement disable이 아니라 distance / combat relevance 기반 movement update interval, active movement budget, Engage / Attack gate로 설계한다.
 ```

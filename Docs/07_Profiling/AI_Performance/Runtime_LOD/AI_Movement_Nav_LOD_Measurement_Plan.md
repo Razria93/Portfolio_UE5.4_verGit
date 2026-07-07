@@ -362,6 +362,8 @@ MV02: Profile(20260707_134915).csv
 MovementStateRefreshDisabled는 CMovementComponent tick을 41 -> 1 수준으로 줄였다.
 하지만 Frame / GameThread p95 개선은 약 0.3ms 수준이고, CharacterMovement p95는 오히려 소폭 증가했다.
 따라서 UCMovementComponent의 speed / direction / falling state refresh는 40 Enemy 조건에서 주요 병목으로 보기 어렵다.
+PIE 관측상 Mode 1에서는 Perception / BT 판단 / Alert Spread는 유지되지만 movement state cache가 갱신되지 않아 Alert Spread 중에도 이동 locomotion으로 전환되지 않고 Idle Locomotion으로 표현된다.
+따라서 Mode 1은 성능 이득이 제한적이고 representation도 깨뜨리므로 Runtime LOD 후보에서 제외한다.
 
 BlockMovementIntent는 Frame p95를 13.1964ms -> 10.9037ms, Game p95를 13.1588ms -> 10.6373ms로 줄였다.
 CharacterMovement p95도 1.2187ms -> 0.4026ms로 크게 줄었다.
@@ -416,6 +418,8 @@ MV05: Profile(20260707_141911).csv
 MovementStateRefreshDisabled는 CMovementComponent tick을 81 -> 1 수준으로 줄였다.
 하지만 Frame / GameThread / CharacterMovement p95는 개선되지 않았고 오히려 소폭 증가했다.
 따라서 UCMovementComponent의 speed / direction / falling state refresh는 80 Enemy 조건에서도 주요 병목으로 보기 어렵다.
+40 Enemy와 동일하게 Mode 1은 실제 이동 요청과 BT 판단은 유지하지만 locomotion parameter가 최신화되지 않아 representation을 깨뜨린다.
+따라서 Mode 1은 비용 분리 측정 결과로만 남기고 Runtime LOD 적용 후보에서 제외한다.
 
 BlockMovementIntent는 Frame p95를 20.0551ms -> 16.9774ms, Game p95를 20.0078ms -> 17.0193ms로 줄였다.
 CharacterMovement p95도 2.5264ms -> 0.8254ms로 크게 줄었다.
@@ -426,18 +430,24 @@ BlockMovementIntent에서도 CharacterMovementComponent / PathFollowingComponent
 
 Mode 2에서 Animation p95는 증가했지만, 이 측정축의 직접 대상은 movement / nav 비용이다.
 Animation 변화는 movement 상태 변화에 따른 부수 효과로 보고, animation 최적화 결론으로 사용하지 않는다.
+PIE 관측상 Mode 2는 실제 이동을 차단한다.
+가까운 Enemy는 이동하지 않아도 Engage 유효 거리 안에 있으면 Attack을 계속 시도할 수 있다.
+따라서 Mode 2를 그대로 Runtime LOD로 적용하려면 이동은 막히고 combat 판단은 유지되는 불일치가 생길 수 있다.
+후속 설계에서는 movement block을 직접 적용하지 않고 combat relevance / Engage gate / movement budget과 함께 다룬다.
 ```
 
 ## 종합 결론
 
 ```text
 40 / 80 Enemy 모두 MovementMode 1은 CMovementComponent tick count를 줄였지만 Frame / GameThread p95 개선으로 이어지지 않았다.
-따라서 custom movement state refresh는 현재 조건의 주요 병목 축이 아니다.
+또한 Alert Spread 중 locomotion representation이 Idle Locomotion으로 남아 표현 품질을 깨뜨린다.
+따라서 Mode 1은 현재 조건의 주요 병목 축이 아니며 Runtime LOD 후보에서 제외한다.
 
 40 / 80 Enemy 모두 MovementMode 2는 CharacterMovement p95와 Frame / GameThread p95를 함께 줄였다.
 따라서 Movement / Nav 최적화는 state refresh tick을 줄이는 방향보다, far / non-combat enemy의 active movement 빈도나 movement intent 자체를 줄이는 방향이 더 타당하다.
 
-다만 Mode 2는 gameplay state를 크게 바꾸므로 그대로 Runtime LOD로 적용하기보다, distance / combat relevance 기반으로 movement update interval, path request 빈도, active movement budget을 조정하는 방식으로 설계한다.
+다만 Mode 2는 gameplay state를 크게 바꾸고, Engage 유효 거리 안의 Enemy가 이동 없이 Attack을 시도할 수 있다.
+따라서 그대로 Runtime LOD로 적용하기보다, distance / combat relevance 기반으로 movement update interval, path request 빈도, active movement budget, Engage / Attack gate를 함께 조정하는 방식으로 설계한다.
 ```
 
 ## 종료 조건

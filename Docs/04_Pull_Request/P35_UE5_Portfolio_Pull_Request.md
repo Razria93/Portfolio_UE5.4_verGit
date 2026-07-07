@@ -928,7 +928,8 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Pla
 
 ```text
 MovementMode 1은 CMovementComponent tick count를 줄였지만 Frame / GameThread p95 개선으로 이어지지 않았다.
-따라서 custom movement state refresh는 현재 조건의 주요 병목으로 보기 어렵다.
+또한 PIE 관측상 Alert Spread 중 locomotion representation이 Idle Locomotion으로 남는다.
+따라서 custom movement state refresh는 현재 조건의 주요 병목이 아니며 Runtime LOD 후보에서 제외한다.
 
 MovementMode 2는 40 / 80 Enemy 모두에서 Frame / GameThread / CharacterMovement p95를 함께 줄였다.
 따라서 실제 이동 요청 / CharacterMovement / nav movement 흐름은 유효한 비용 축으로 본다.
@@ -938,7 +939,8 @@ MovementMode 2는 40 / 80 Enemy 모두에서 Frame / GameThread / CharacterMovem
 
 ```text
 Movement / Nav는 Runtime LOD 구현 후보로 남긴다.
-다만 Mode 2는 gameplay state를 크게 바꾸므로 그대로 적용하지 않고, distance / combat relevance 기반 movement update interval 또는 active movement budget으로 설계한다.
+다만 Mode 2는 gameplay state를 크게 바꾸고, Engage 유효 거리 안의 Enemy가 이동 없이 Attack을 시도할 수 있다.
+따라서 그대로 적용하지 않고, distance / combat relevance 기반 movement update interval, active movement budget, Engage / Attack gate로 설계한다.
 ```
 
 ### Team Attitude / Affiliation 보정
