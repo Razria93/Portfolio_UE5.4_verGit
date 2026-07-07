@@ -277,6 +277,14 @@ AnimationParallelEvaluation TotalTaskTime p95
 RHI/DrawCalls p95
 ```
 
+`Ticks/*` 지표 해석:
+
+```text
+Ticks/CharacterMovementComponent, Ticks/PathFollowingComponent, Ticks/CMovementComponent 지표는 시간 비용이 아니라 해당 frame에서 tick된 component 수다.
+따라서 표의 Tick p95 값은 ms가 아니라 count로 해석한다.
+실제 시간 비용은 Exclusive/GameThread/CharacterMovement, BehaviorTreeTick, Pathfinding 같은 timing stat과 함께 본다.
+```
+
 ## 해석 기준
 
 ```text
@@ -365,11 +373,78 @@ BlockMovementIntent에서도 PathFollowingComponent tick count는 41로 유지�
 ActorCount/CEnemy는 80으로 기록되지만 CAIController 40, CWeaponActor 41로 보아 40 Enemy PIE 조건으로 해석한다.
 ```
 
+## 80 Enemy 측정 결과
+
+공통 조건:
+
+```text
+Map: MAP_AIPerf_MovementNav_80Enemy
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: fixed camera
+EnemyMeshMode 0
+EnemyAnimationMode 0
+EnemyAnimationRefreshCounter 0
+DisableEnemyWeaponActor 0
+DisableEnemyPerception 0
+PerceptionCandidateAudit 0
+BlackboardEngageLatencyAudit 0
+CanMoveDecoratorAudit 0
+```
+
+원본 CSV:
+
+```text
+MV03: Profile(20260707_141109).csv
+MV04: Profile(20260707_141359).csv
+MV05: Profile(20260707_141911).csv
+```
+
+측정 결과:
+
+| Case | EnemyMovementMode | 상태 | 시간 | Frame p95 | Game p95 | CharacterMovement p95 | CMovement Tick p95 | PathFollowing Tick p95 | BT Tick p95 | AIContext p95 | Animation p95 | AnimParallel p95 | DrawCalls avg | 판정 |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| MV03 | 0 | MovementBaseline | 37.12s | 20.0551ms | 20.0078ms | 2.5264ms | 81 | 81 | 0.5079ms | 0.2708ms | 3.3888ms | 6.4413ms | 1313.5 | 기준 |
+| MV04 | 1 | MovementStateRefreshDisabled | 37.20s | 20.6420ms | 20.6332ms | 2.6630ms | 1 | 81 | 0.5176ms | 0.2767ms | 3.5096ms | 5.9473ms | 1312.9 | 효과 없음 |
+| MV05 | 2 | BlockMovementIntent | 37.19s | 16.9774ms | 17.0193ms | 0.8254ms | 81 | 81 | 0.4289ms | 0.2596ms | 4.5242ms | 5.7582ms | 1240.7 | 유효 |
+
+측정 해석:
+
+```text
+MovementStateRefreshDisabled는 CMovementComponent tick을 81 -> 1 수준으로 줄였다.
+하지만 Frame / GameThread / CharacterMovement p95는 개선되지 않았고 오히려 소폭 증가했다.
+따라서 UCMovementComponent의 speed / direction / falling state refresh는 80 Enemy 조건에서도 주요 병목으로 보기 어렵다.
+
+BlockMovementIntent는 Frame p95를 20.0551ms -> 16.9774ms, Game p95를 20.0078ms -> 17.0193ms로 줄였다.
+CharacterMovement p95도 2.5264ms -> 0.8254ms로 크게 줄었다.
+따라서 실제 이동 요청 / CharacterMovement / nav movement 흐름은 80 Enemy 조건에서도 유효한 비용 축으로 본다.
+
+BlockMovementIntent에서도 CharacterMovementComponent / PathFollowingComponent tick count는 81로 유지된다.
+따라서 현재 제어는 component tick 자체를 제거한 것이 아니라, movement intent와 active movement를 막아 실제 이동 처리 비용을 낮춘 것으로 해석한다.
+
+Mode 2에서 Animation p95는 증가했지만, 이 측정축의 직접 대상은 movement / nav 비용이다.
+Animation 변화는 movement 상태 변화에 따른 부수 효과로 보고, animation 최적화 결론으로 사용하지 않는다.
+```
+
+## 종합 결론
+
+```text
+40 / 80 Enemy 모두 MovementMode 1은 CMovementComponent tick count를 줄였지만 Frame / GameThread p95 개선으로 이어지지 않았다.
+따라서 custom movement state refresh는 현재 조건의 주요 병목 축이 아니다.
+
+40 / 80 Enemy 모두 MovementMode 2는 CharacterMovement p95와 Frame / GameThread p95를 함께 줄였다.
+따라서 Movement / Nav 최적화는 state refresh tick을 줄이는 방향보다, far / non-combat enemy의 active movement 빈도나 movement intent 자체를 줄이는 방향이 더 타당하다.
+
+다만 Mode 2는 gameplay state를 크게 바꾸므로 그대로 Runtime LOD로 적용하기보다, distance / combat relevance 기반으로 movement update interval, path request 빈도, active movement budget을 조정하는 방식으로 설계한다.
+```
+
 ## 종료 조건
 
 ```text
 40 Enemy 기준 MovementMode 0 / 1 / 2 비교를 기록했다.
-80 Enemy 기준 MovementMode 0 / 1 / 2 비교를 추가로 기록한다.
+80 Enemy 기준 MovementMode 0 / 1 / 2 비교를 기록했다.
 CharacterMovement / PathFollowing 비용이 frame budget에 미치는 영향을 확인한다.
 40 / 80 Enemy에서 같은 패턴이 반복되면 Movement / Nav를 후속 Runtime LOD 구현 후보로 정의한다.
 효과가 제한적이면 BT Update Interval 또는 Collision / Overlap 축으로 넘어간다.

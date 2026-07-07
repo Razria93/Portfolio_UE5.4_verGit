@@ -929,11 +929,11 @@ Movement / Nav
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Plan.md
 ```
 
-40 Enemy 1차 결과:
+40 / 80 Enemy 결과:
 
 ```text
-MovementMode 1은 CMovementComponent tick 자체는 줄였지만 Frame / GameThread p95 개선이 제한적이었다.
-MovementMode 2는 CharacterMovement p95와 Frame / GameThread p95를 함께 줄였다.
-따라서 custom movement state refresh보다 실제 movement intent / CharacterMovement / nav movement 흐름이 더 유효한 비용 축으로 보인다.
-80 Enemy에서도 같은 패턴이 반복되는지 확인한다.
+MovementMode 1은 CMovementComponent tick count를 줄였지만 Frame / GameThread p95 개선으로 이어지지 않았다.
+MovementMode 2는 40 / 80 Enemy 모두에서 CharacterMovement p95와 Frame / GameThread p95를 함께 줄였다.
+따라서 custom movement state refresh보다 실제 movement intent / CharacterMovement / nav movement 흐름이 더 유효한 비용 축으로 본다.
+실제 Runtime LOD 적용은 movement disable이 아니라 distance / combat relevance 기반 movement update interval 또는 active movement budget으로 설계한다.
 ```

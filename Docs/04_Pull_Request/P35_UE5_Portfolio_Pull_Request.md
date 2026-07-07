@@ -924,22 +924,21 @@ Animation parameter refresh보다 movement / nav simulation이 frame budget에 �
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Plan.md
 ```
 
-40 Enemy 측정 결과:
+40 / 80 Enemy 측정 결과:
 
 ```text
-MovementMode 1은 CMovementComponent tick을 41 -> 1 수준으로 줄였지만 Frame / GameThread p95 개선은 약 0.3ms 수준이다.
-따라서 custom movement state refresh는 40 Enemy 조건에서 주요 병목으로 보기 어렵다.
+MovementMode 1은 CMovementComponent tick count를 줄였지만 Frame / GameThread p95 개선으로 이어지지 않았다.
+따라서 custom movement state refresh는 현재 조건의 주요 병목으로 보기 어렵다.
 
-MovementMode 2는 Frame p95를 13.1964ms -> 10.9037ms, Game p95를 13.1588ms -> 10.6373ms로 줄였다.
-CharacterMovement p95도 1.2187ms -> 0.4026ms로 감소했다.
+MovementMode 2는 40 / 80 Enemy 모두에서 Frame / GameThread / CharacterMovement p95를 함께 줄였다.
 따라서 실제 이동 요청 / CharacterMovement / nav movement 흐름은 유효한 비용 축으로 본다.
 ```
 
 다음 확인:
 
 ```text
-80 Enemy에서 MovementMode 0 / 1 / 2를 같은 조건으로 측정한다.
-40 Enemy와 같은 패턴이 반복되면 Movement / Nav 축을 Runtime LOD 구현 후보로 확정한다.
+Movement / Nav는 Runtime LOD 구현 후보로 남긴다.
+다만 Mode 2는 gameplay state를 크게 바꾸므로 그대로 적용하지 않고, distance / combat relevance 기반 movement update interval 또는 active movement budget으로 설계한다.
 ```
 
 ### Team Attitude / Affiliation 보정
