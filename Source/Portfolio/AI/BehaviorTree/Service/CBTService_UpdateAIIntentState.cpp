@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -21,7 +22,7 @@ UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 	NodeName = "Update AI Intent State";
 	bNotifyTick = true;
 
-	Interval = 0.2f;
+	Interval = CBTServiceIntervalHelper::GetAIIntentStateInterval();
 	RandomDeviation = 0.f;
 }
 

@@ -8,6 +8,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 
 #include "Controller/CAIController.h"
+#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHealthComponent.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
@@ -22,7 +23,7 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 	NodeName = "Update AIContext";
 	bNotifyTick = true;
 
-	Interval = 0.1f;
+	Interval = CBTServiceIntervalHelper::GetAIContextInterval();
 	RandomDeviation = 0.0f;
 }
 

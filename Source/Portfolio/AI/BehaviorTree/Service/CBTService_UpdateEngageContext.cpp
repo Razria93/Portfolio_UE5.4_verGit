@@ -4,6 +4,7 @@
 
 #include "AIController.h"
 #include "GameFramework/Pawn.h"
+#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Character/Enemy/CEnemy.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -17,7 +18,7 @@ UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 	NodeName = TEXT("Update Engage Context");
 	bNotifyTick = true;
 
-	Interval = 0.1f;
+	Interval = CBTServiceIntervalHelper::GetEngageContextInterval();
 	RandomDeviation = 0.0f;
 }
 
