@@ -3,8 +3,8 @@
 #include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
-#include "GameFramework/Pawn.h"
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
+#include "GameFramework/Pawn.h"
 #include "Character/Enemy/CEnemy.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -16,24 +16,16 @@
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 {
 	NodeName = TEXT("Update Engage Context");
-	bNotifyBecomeRelevant = true;
 	bNotifyTick = true;
 
 	Interval = 0.1f;
 	RandomDeviation = 0.0f;
 }
 
-void UCBTService_UpdateEngageContext::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
-{
-	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
-
-	Interval = CBTServiceIntervalHelper::GetEngageContextInterval();
-	RandomDeviation = 0.0f;
-}
-
 void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateEngageContext);
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackBoardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackBoardComp)) return;
@@ -65,6 +57,11 @@ void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	}
 
 	UpdateEngageContext(blackBoardComp, engageContext);
+}
+
+void UCBTService_UpdateEngageContext::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetEngageContextInterval());
 }
 
 EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& OutEngageContext)

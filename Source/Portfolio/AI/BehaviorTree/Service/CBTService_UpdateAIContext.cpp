@@ -7,8 +7,8 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-#include "Controller/CAIController.h"
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
+#include "Controller/CAIController.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHealthComponent.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
@@ -21,24 +21,16 @@
 UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 {
 	NodeName = "Update AIContext";
-	bNotifyBecomeRelevant = true;
 	bNotifyTick = true;
 
 	Interval = 0.1f;
 	RandomDeviation = 0.0f;
 }
 
-void UCBTService_UpdateAIContext::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
-{
-	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
-
-	Interval = CBTServiceIntervalHelper::GetAIContextInterval();
-	RandomDeviation = 0.0f;
-}
-
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext);
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
@@ -339,4 +331,9 @@ void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InB
 void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlackboardComp)
 {
 	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
+}
+
+void UCBTService_UpdateAIContext::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetAIContextInterval());
 }

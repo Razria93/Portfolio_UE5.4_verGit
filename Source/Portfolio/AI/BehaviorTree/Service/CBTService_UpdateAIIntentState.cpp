@@ -20,24 +20,16 @@
 UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 {
 	NodeName = "Update AI Intent State";
-	bNotifyBecomeRelevant = true;
 	bNotifyTick = true;
 
 	Interval = 0.2f;
 	RandomDeviation = 0.f;
 }
 
-void UCBTService_UpdateAIIntentState::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
-{
-	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
-
-	Interval = CBTServiceIntervalHelper::GetAIIntentStateInterval();
-	RandomDeviation = 0.0f;
-}
-
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState);
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return;
@@ -131,4 +123,9 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 			InBlackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime.KeyName);
 		}
 	} 
+}
+
+void UCBTService_UpdateAIIntentState::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetAIIntentStateInterval());
 }
