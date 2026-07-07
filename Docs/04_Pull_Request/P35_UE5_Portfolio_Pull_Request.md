@@ -908,7 +908,7 @@ EnemyAnimationMode 1은 refresh Executed count를 크게 줄였지만 Frame / Ga
 pose update / skeletal mesh tick option / locomotion detail은 후속 후보로 남긴다.
 ```
 
-다음 작업은 `Movement / Nav` 축이다.
+현재 작업은 `Movement / Nav` 축이다.
 
 이유:
 
@@ -922,6 +922,24 @@ Animation parameter refresh보다 movement / nav simulation이 frame budget에 �
 
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Plan.md
+```
+
+40 Enemy 측정 결과:
+
+```text
+MovementMode 1은 CMovementComponent tick을 41 -> 1 수준으로 줄였지만 Frame / GameThread p95 개선은 약 0.3ms 수준이다.
+따라서 custom movement state refresh는 40 Enemy 조건에서 주요 병목으로 보기 어렵다.
+
+MovementMode 2는 Frame p95를 13.1964ms -> 10.9037ms, Game p95를 13.1588ms -> 10.6373ms로 줄였다.
+CharacterMovement p95도 1.2187ms -> 0.4026ms로 감소했다.
+따라서 실제 이동 요청 / CharacterMovement / nav movement 흐름은 유효한 비용 축으로 본다.
+```
+
+다음 확인:
+
+```text
+80 Enemy에서 MovementMode 0 / 1 / 2를 같은 조건으로 측정한다.
+40 Enemy와 같은 패턴이 반복되면 Movement / Nav 축을 Runtime LOD 구현 후보로 확정한다.
 ```
 
 ### Team Attitude / Affiliation 보정

@@ -312,11 +312,65 @@ chore(ai): prepare movement nav profiling maps
 docs(ai): record movement nav profiling results
 ```
 
+## 40 Enemy 측정 결과
+
+공통 조건:
+
+```text
+Map: MAP_AIPerf_MovementNav_40Enemy
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: fixed camera
+EnemyMeshMode 0
+EnemyAnimationMode 0
+DisableEnemyWeaponActor 0
+DisableEnemyPerception 0
+PerceptionCandidateAudit 0
+BlackboardEngageLatencyAudit 0
+CanMoveDecoratorAudit 0
+```
+
+원본 CSV:
+
+```text
+MV00: Profile(20260707_134355).csv
+MV01: Profile(20260707_134714).csv
+MV02: Profile(20260707_134915).csv
+```
+
+측정 결과:
+
+| Case | EnemyMovementMode | 상태 | 시간 | Frame p95 | Game p95 | CharacterMovement p95 | CMovement Tick p95 | PathFollowing Tick p95 | BT Tick p95 | AIContext p95 | Animation p95 | AnimParallel p95 | DrawCalls avg | 판정 |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| MV00 | 0 | MovementBaseline | 37.15s | 13.1964ms | 13.1588ms | 1.2187ms | 41 | 41 | 0.3102ms | 0.1634ms | 2.0188ms | 3.9907ms | 796.7 | 기준 |
+| MV01 | 1 | MovementStateRefreshDisabled | 37.91s | 12.8934ms | 12.8905ms | 1.3356ms | 1 | 41 | 0.2998ms | 0.1619ms | 2.0482ms | 3.5350ms | 791.0 | 제한 효과 |
+| MV02 | 2 | BlockMovementIntent | 37.27s | 10.9037ms | 10.6373ms | 0.4026ms | 41 | 41 | 0.2732ms | 0.1690ms | 2.1513ms | 3.3163ms | 718.0 | 유효 |
+
+측정 해석:
+
+```text
+MovementStateRefreshDisabled는 CMovementComponent tick을 41 -> 1 수준으로 줄였다.
+하지만 Frame / GameThread p95 개선은 약 0.3ms 수준이고, CharacterMovement p95는 오히려 소폭 증가했다.
+따라서 UCMovementComponent의 speed / direction / falling state refresh는 40 Enemy 조건에서 주요 병목으로 보기 어렵다.
+
+BlockMovementIntent는 Frame p95를 13.1964ms -> 10.9037ms, Game p95를 13.1588ms -> 10.6373ms로 줄였다.
+CharacterMovement p95도 1.2187ms -> 0.4026ms로 크게 줄었다.
+따라서 실제 이동 요청 / CharacterMovement / nav movement 흐름은 유효한 비용 축으로 본다.
+
+BlockMovementIntent에서도 PathFollowingComponent tick count는 41로 유지된다.
+따라서 현재 제어는 component tick 자체를 제거한 것이 아니라, movement intent와 active movement를 막아 실제 이동 처리 비용을 낮춘 것으로 해석한다.
+
+ActorCount/CEnemy는 80으로 기록되지만 CAIController 40, CWeaponActor 41로 보아 40 Enemy PIE 조건으로 해석한다.
+```
+
 ## 종료 조건
 
 ```text
-40 / 80 Enemy 기준 MovementBaseline과 최소 1개 reduced 조건을 비교한다.
+40 Enemy 기준 MovementMode 0 / 1 / 2 비교를 기록했다.
+80 Enemy 기준 MovementMode 0 / 1 / 2 비교를 추가로 기록한다.
 CharacterMovement / PathFollowing 비용이 frame budget에 미치는 영향을 확인한다.
-Movement / Nav가 주요 병목이면 후속 Runtime LOD 구현 후보를 정의한다.
+40 / 80 Enemy에서 같은 패턴이 반복되면 Movement / Nav를 후속 Runtime LOD 구현 후보로 정의한다.
 효과가 제한적이면 BT Update Interval 또는 Collision / Overlap 축으로 넘어간다.
 ```
