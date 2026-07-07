@@ -908,7 +908,7 @@ EnemyAnimationMode 1은 refresh Executed count를 크게 줄였지만 Frame / Ga
 pose update / skeletal mesh tick option / locomotion detail은 후속 후보로 남긴다.
 ```
 
-현재 작업은 `Movement / Nav` 축이다.
+`Movement / Nav` 축은 40 / 80 Enemy 기준 측정까지 진행했다.
 
 이유:
 
@@ -941,6 +941,14 @@ MovementMode 2는 40 / 80 Enemy 모두에서 Frame / GameThread / CharacterMovem
 Movement / Nav는 Runtime LOD 구현 후보로 남긴다.
 다만 Mode 2는 gameplay state를 크게 바꾸고, Engage 유효 거리 안의 Enemy가 이동 없이 Attack을 시도할 수 있다.
 따라서 그대로 적용하지 않고, distance / combat relevance 기반 movement update interval, active movement budget, Engage / Attack gate로 설계한다.
+```
+
+다음 측정축은 `BT Update Interval`이다.
+
+작업 계획 문서:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Measurement_Plan.md
 ```
 
 ### Team Attitude / Affiliation 보정

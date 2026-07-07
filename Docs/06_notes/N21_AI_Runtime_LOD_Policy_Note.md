@@ -907,7 +907,7 @@ AI perception candidate leak
 
 Team Attitude / Affiliation 보정으로 Enemy끼리 perception 후보로 들어오는 문제는 해결됐다.
 
-현재 측정축:
+최근 측정축:
 
 ```text
 Movement / Nav
@@ -920,7 +920,7 @@ Movement / Nav
 다만 Frame / GameThread / Animation p95 개선은 거의 없거나 오차 수준이라, 현재 구현 형태의 parameter refresh 주기 축소를 주요 병목 해소책으로 보기는 어렵다.
 40 / 80 Enemy 측정에서 CharacterMovement 비용은 계속 남아 있다.
 실제 이동은 UCMovementComponent tick, CharacterMovement / PathFollowing, BT MoveTo / movement decision으로 나뉜다.
-따라서 현재 작업은 Movement / Nav 비용을 분리한다.
+따라서 Movement / Nav 비용을 분리했다.
 ```
 
 상세 작업 계획:
@@ -938,4 +938,16 @@ PIE 관측상 Alert Spread 중 locomotion representation이 Idle Locomotion으�
 MovementMode 2는 40 / 80 Enemy 모두에서 CharacterMovement p95와 Frame / GameThread p95를 함께 줄였다.
 따라서 custom movement state refresh보다 실제 movement intent / CharacterMovement / nav movement 흐름이 더 유효한 비용 축으로 본다.
 실제 Runtime LOD 적용은 movement disable이 아니라 distance / combat relevance 기반 movement update interval, active movement budget, Engage / Attack gate로 설계한다.
+```
+
+다음 측정축:
+
+```text
+BT Update Interval
+```
+
+상세 작업 계획:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Measurement_Plan.md
 ```
