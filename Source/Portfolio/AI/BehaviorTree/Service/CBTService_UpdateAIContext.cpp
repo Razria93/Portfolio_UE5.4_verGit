@@ -21,7 +21,16 @@
 UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 {
 	NodeName = "Update AIContext";
+	bNotifyBecomeRelevant = true;
 	bNotifyTick = true;
+
+	Interval = 0.1f;
+	RandomDeviation = 0.0f;
+}
+
+void UCBTService_UpdateAIContext::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
 
 	Interval = CBTServiceIntervalHelper::GetAIContextInterval();
 	RandomDeviation = 0.0f;

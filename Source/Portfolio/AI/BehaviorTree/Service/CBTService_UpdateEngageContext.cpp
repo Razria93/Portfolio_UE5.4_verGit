@@ -16,7 +16,16 @@
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 {
 	NodeName = TEXT("Update Engage Context");
+	bNotifyBecomeRelevant = true;
 	bNotifyTick = true;
+
+	Interval = 0.1f;
+	RandomDeviation = 0.0f;
+}
+
+void UCBTService_UpdateEngageContext::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
 
 	Interval = CBTServiceIntervalHelper::GetEngageContextInterval();
 	RandomDeviation = 0.0f;

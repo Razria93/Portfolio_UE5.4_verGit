@@ -20,10 +20,19 @@
 UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 {
 	NodeName = "Update AI Intent State";
+	bNotifyBecomeRelevant = true;
 	bNotifyTick = true;
 
-	Interval = CBTServiceIntervalHelper::GetAIIntentStateInterval();
+	Interval = 0.2f;
 	RandomDeviation = 0.f;
+}
+
+void UCBTService_UpdateAIIntentState::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
+
+	Interval = CBTServiceIntervalHelper::GetAIIntentStateInterval();
+	RandomDeviation = 0.0f;
 }
 
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
