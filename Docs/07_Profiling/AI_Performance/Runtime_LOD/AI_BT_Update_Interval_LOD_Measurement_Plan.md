@@ -222,6 +222,9 @@ Exclusive/GameThread/BehaviorTreeTick p95
 GameThread/PortfolioAI_BT_UpdateAIContext p95
 GameThread/PortfolioAI_BT_UpdateAIIntentState p95
 GameThread/PortfolioAI_BT_UpdateEngageContext p95
+PortfolioAI_BT_UpdateAIContext_Count
+PortfolioAI_BT_UpdateAIIntentState_Count
+PortfolioAI_BT_UpdateEngageContext_Count
 Exclusive/GameThread/CharacterMovement p95
 ```
 
@@ -407,7 +410,8 @@ BT12 / Mode 2: Profile(20260707_224402).csv
 
 ```text
 ScheduleNextTick 기반 제어는 정상 동작한다.
-AIContext / AIIntent active count와 BT Tick p95가 감소했으므로 BT service 작업량은 실제로 줄었다.
+AIContext / AIIntent active count와 BT Tick p95가 감소했으므로 BT service 작업량은 줄어든 것으로 해석했다.
+다만 active count는 frame 단위 기록 수라 호출 횟수의 근사치일 뿐이며, 후속 측정에서는 `*_Count` counter를 우선 지표로 사용한다.
 다만 Frame / Game p95 개선 폭은 작다.
 현재 조건에서 BT service interval은 primary bottleneck이 아니라 보조 최적화 축으로 본다.
 ```
@@ -553,9 +557,9 @@ EngageContext:
 검증 기준:
 
 ```text
-Mode 1 / 2에서 AIIntentState active count가 줄어드는지 확인한다.
-AIContext active count는 Mode 0과 유사하게 유지되는지 확인한다.
-EngageContext active count는 Mode 0과 유사하게 유지되는지 확인한다.
+Mode 1 / 2에서 AIIntentState count가 줄어드는지 확인한다.
+AIContext count는 Mode 0과 유사하게 유지되는지 확인한다.
+EngageContext count는 Mode 0과 유사하게 유지되는지 확인한다.
 Engage / Attack 상태 전환이 Mode 1 / 2에서도 깨지지 않는지 확인한다.
-Frame / Game p95 개선보다 service active count와 gameplay 안정성을 함께 본다.
+Frame / Game p95 개선보다 service count와 gameplay 안정성을 함께 본다.
 ```

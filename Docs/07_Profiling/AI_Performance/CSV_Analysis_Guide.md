@@ -242,8 +242,13 @@ stat scope는 존재하지만 대부분의 frame에서 비용이 없거나 매�
 active count를 함께 확인한다.
 
 active count 감소:
-interval / gate / LOD 제어가 실제로 호출 빈도를 줄였다는 직접 신호다.
-Frame / GameThread p95 개선이 작더라도 작업량 감소로 기록할 수 있다.
+해당 stat이 기록된 frame 수가 줄었다는 신호다.
+호출 빈도 감소의 참고 자료로 볼 수는 있지만, frame 단위 분산 때문에 실제 호출 횟수와 다를 수 있다.
+
+`*_Count` 감소:
+CSV custom counter로 누적한 실제 호출 횟수 감소다.
+interval / gate / LOD 제어가 호출량을 줄였는지 판단할 때는 active count보다 `*_Count`를 우선한다.
+Frame / GameThread p95 개선이 작더라도 `*_Count`가 줄면 작업량 감소로 기록할 수 있다.
 
 active count 0:
 해당 경로가 실행되지 않은 것이다.
@@ -262,9 +267,26 @@ CombatRole gate 이후 Engage assignment를 받지 못한 Enemy는 Engage branch
 이때 확인할 것은 "Engage가 완전히 죽었는가"가 아니라:
 
 1. Mode 0에서 최소 Engager가 정상적으로 공격하는지
-2. Mode 1 / 2에서 AIContext / AIIntent active count가 줄었는지
+2. Mode 1 / 2에서 AIContext / AIIntent / EngageContext count가 정책대로 변했는지
 3. EngageContext가 Mode 0 대비 과도하게 사라져 공격 전환이 깨졌는지
 4. Alert cap 밖 Enemy가 Chase / Alert Spread로 몰리지 않는지
+```
+
+BT service 호출 횟수 기준:
+
+```text
+PortfolioAI_BT_UpdateAIContext_Count:
+AIContext TickNode 호출 횟수다.
+Assignment request producer이므로 Mode 1 / 2에서도 Mode 0과 유사하게 유지되어야 한다.
+
+PortfolioAI_BT_UpdateAIIntentState_Count:
+AIIntentState TickNode 호출 횟수다.
+BTUpdateIntervalMode 1 / 2에서 줄어드는지 확인한다.
+
+PortfolioAI_BT_UpdateEngageContext_Count:
+EngageContext TickNode 호출 횟수다.
+Engage branch 실행 여부와 연결된다.
+이번 P35에서는 수정 대상이 아니므로 gameplay smoke와 함께 보조 지표로 해석한다.
 ```
 
 해석 시 주의:

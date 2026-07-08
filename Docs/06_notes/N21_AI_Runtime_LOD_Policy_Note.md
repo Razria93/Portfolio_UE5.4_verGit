@@ -964,7 +964,8 @@ ScheduleNextTick 보완 후 재측정 결론:
 
 ```text
 ScheduleNextTick에서 SetNextTickTime을 직접 호출하는 방식은 유효했다.
-AIContext / AIIntentState / EngageContext active count와 BehaviorTreeTick p95가 감소했으므로 BT service 작업량은 실제로 줄었다.
+AIContext / AIIntentState / EngageContext active count와 BehaviorTreeTick p95가 감소했으므로 BT service 작업량은 줄어든 것으로 해석했다.
+다만 active count는 호출 횟수가 아니라 stat이 기록된 frame 수이므로, 후속 측정에서는 `*_Count` counter를 우선 지표로 사용한다.
 다만 Frame / GameThread p95 개선 폭은 작았고, EngageContext 호출 빈도가 줄어들면 Engage / Attack 상태 전환이 깨졌다.
 AIContext 호출 빈도를 줄이면 CombatEngage request 갱신이 늦어져 assignment lease가 끊기고, CombatRole이 None으로 떨어지면서 Idle로 되돌아가는 문제가 발생했다.
 ```

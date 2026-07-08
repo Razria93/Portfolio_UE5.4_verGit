@@ -1060,7 +1060,8 @@ FirstValidLatency도 9.377초에서 0.724초로 감소했다.
 
 ```text
 ScheduleNextTick 기반 제어는 정상 동작한다.
-BT service active count와 BT Tick p95는 실제로 감소했다.
+BT service active count와 BT Tick p95는 감소했다.
+다만 active count는 호출 횟수가 아니라 stat이 기록된 frame 수이므로, 후속 측정에서는 `*_Count` counter를 우선 지표로 사용한다.
 다만 Frame / Game p95 개선 폭은 작으므로 현재 조건의 primary bottleneck으로 보지는 않는다.
 ```
 
@@ -1106,8 +1107,8 @@ Investigate / Chase는 CombatRole이 Engage 또는 Alert인 객체가 target을 
 검증 기준:
 
 ```text
-Mode 1 / 2에서 AIIntentState active count가 줄어드는지 확인한다.
-AIContext active count는 유지되는지 확인한다.
-EngageContext active count는 유지되는지 확인한다.
+Mode 1 / 2에서 AIIntentState count가 줄어드는지 확인한다.
+AIContext count는 유지되는지 확인한다.
+EngageContext count는 유지되는지 확인한다.
 Engage / Attack 상태 전환이 깨지지 않는지 확인한다.
 ```
