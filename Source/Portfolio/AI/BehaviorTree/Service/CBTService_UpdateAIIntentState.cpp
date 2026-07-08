@@ -82,17 +82,20 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	// 3-1. Invalid Target -> Idle.
 	if (!bHasTarget && !bIsInvestigating) return EAIIntentState::Idle;
 
-	// 3-2. Valid target But Invalid LOS.
+	// 3-2. Target awareness alone does not grant combat participation.
+	if (combatRole == ECombatRole::None) return EAIIntentState::Idle;
+
+	// 3-3. Assigned combat participant lost LOS.
 	if (!bHasLOS) return EAIIntentState::Investigate;
 
-	// 3-3. Valid Target and LOS But Out of Range.
+	// 3-4. Assigned combat participant is out of alert range.
 	if (!bInAlertRange) return EAIIntentState::Chase;
 
-	// 3-4. in Range and assigned by CombatEngage subsystem.
+	// 3-5. In range and assigned by CombatEngage subsystem.
 	if (combatRole == ECombatRole::Engage) return EAIIntentState::Engage;
 	if (combatRole == ECombatRole::Alert) return EAIIntentState::Alert;
 
-	// 3-5. Target is visible but this AI was not assigned to combat participation.
+	// 3-6. Unknown role fallback.
 	return EAIIntentState::Idle;
 }
 

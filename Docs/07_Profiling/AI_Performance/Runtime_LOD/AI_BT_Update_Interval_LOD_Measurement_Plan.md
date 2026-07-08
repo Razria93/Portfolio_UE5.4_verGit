@@ -506,11 +506,12 @@ Blackboard 반영:
 UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 Blackboard에 기록한다.
 CombatRole == Engage이면 AIIntentState는 Engage로 진입한다.
 CombatRole == Alert이면 AIIntentState는 Alert로 진입한다.
-CombatRole == None이면 target / LOS / alert range가 있어도 AIIntentState는 Idle로 되돌린다.
+CombatRole == None이면 target이 있어도 Investigate / Chase / Alert / Engage로 진입하지 않고 Idle로 되돌린다.
+Investigate / Chase는 CombatRole == Engage 또는 Alert인 객체가 target을 잃거나 거리 조건을 벗어났을 때만 허용한다.
 ```
 
 이 구조에서는 `bShouldEngage`를 Engage 호환 플래그로 유지하지만, Alert / Idle 분기는 `CombatRole`을 기준으로 한다.
-따라서 `MaxAlertersPerTarget` 밖의 Enemy는 target을 인식해도 Alert Spread에 들어가지 않고 Idle_Router의 valid target wait 경로로 남는다.
+따라서 `MaxAlertersPerTarget` 밖의 Enemy는 target을 인식해도 Chase / Alert Spread에 들어가지 않고 Idle_Router의 wait 경로로 남는다.
 
 Blackboard asset 확인:
 

@@ -131,7 +131,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 
 			AssignmentContainer.Add(requestController, engageAssignmentContext);
 			
-			PrintEngageContext(rqeusetContexts[i].RequestController, rqeusetContexts[i].TargetActor, rqeusetContexts[i].TargetPriority, i, rqeusetContexts[i].DistanceToTarget, combatRole);
+			// PrintEngageContext(rqeusetContexts[i].RequestController, rqeusetContexts[i].TargetActor, rqeusetContexts[i].TargetPriority, i, rqeusetContexts[i].DistanceToTarget, combatRole);
 		}
 	}
 

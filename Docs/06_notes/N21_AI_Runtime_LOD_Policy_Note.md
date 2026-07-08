@@ -997,6 +997,7 @@ EngageContext는 전투 상태 전환 안정성을 위해 기본 interval을 유
 
 UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 `CombatRole` Blackboard key로 전달한다.
 AIIntentState는 `CombatRole`이 Engage일 때만 Engage, Alert일 때만 Alert로 진입한다.
-`CombatRole`이 None이면 target / LOS / alert range가 있어도 Idle로 되돌린다.
-따라서 Alert cap 밖의 Enemy는 target을 인식해도 Alert Spread에 참여하지 않는다.
+`CombatRole`이 None이면 target이 있어도 Investigate / Chase / Alert / Engage로 진입하지 않고 Idle로 되돌린다.
+Investigate / Chase는 CombatRole이 Engage 또는 Alert인 객체가 target을 잃거나 거리 조건을 벗어났을 때만 허용한다.
+따라서 Alert cap 밖의 Enemy는 target을 인식해도 Chase / Alert Spread에 참여하지 않는다.
 ```
