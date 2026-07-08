@@ -28,6 +28,104 @@
 docs(ai): plan runtime LOD policy
 ```
 
+### BTUpdateInterval AssignmentGate 최종 측정
+
+측정 목적:
+
+```text
+Engage / Alert / Idle assignment gate가 적용된 상태에서 BTUpdateIntervalMode 0 / 1 / 2를 비교했다.
+이번 측정은 frame p95 개선보다 AIIntentState 호출 빈도와 interval preset 분포가 정책대로 줄어드는지 확인하는 데 초점을 둔다.
+```
+
+측정 조건:
+
+```text
+Enemy Count: 40
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: fixed camera
+GC Event: none
+```
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260708_213701).csv
+Mode 1: Profile(20260708_213854).csv
+Mode 2: Profile(20260708_214143).csv
+```
+
+측정 결과:
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | Default Count | Reduced Count | Aggressive Count |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BT Final 40-0 | 0 | 11.5960ms | 10.7646ms | 0.1999ms | 11720 | 6080 | 6080 | 0 | 0 |
+| BT Final 40-1 | 1 | 11.6864ms | 11.0142ms | 0.2020ms | 11760 | 4178 | 302 | 3876 | 0 |
+| BT Final 40-2 | 2 | 11.7361ms | 10.8924ms | 0.2034ms | 11920 | 3090 | 304 | 1110 | 1676 |
+
+해석:
+
+```text
+BTUpdateIntervalMode 정책은 의도대로 적용된다.
+
+Mode 0은 Default만 선택한다.
+Mode 1은 High에서 Default, Reduced / Low에서 Reduced를 선택한다.
+Mode 2는 High에서 Default, Reduced에서 Reduced, Low에서 Aggressive를 선택한다.
+
+AIIntentState 호출 수는 6080 -> 4178 -> 3090으로 감소했다.
+AIContext 호출 수는 유사하게 유지된다. AIContext는 request/context producer이므로 현재 정책상 유지되는 것이 맞다.
+40 Enemy 조건에서는 Frame / Game / BT Tick p95 개선 폭이 작으므로, 이 결과는 즉각적인 frame gain보다 service work reduction과 Runtime LOD policy 검증으로 해석한다.
+```
+
+후속 측정 후보:
+
+```text
+Alert assignment cap을 CVar로 제어할 수 있게 만들고 AlertCap 6 / 40을 같은 코드 상태에서 비교한다.
+이를 통해 1차 개선인 Engage / Alert / Idle 계층화가 movement 후보와 BT work에 주는 영향을 분리해서 확인한다.
+```
+
+시행착오 기록:
+
+```text
+BT interval 최적화는 단순히 interval 값을 키우는 작업으로 끝나지 않았다.
+
+처음에는 BT asset의 service interval 값을 변경해 효과를 확인하려 했지만,
+runtime scheduling이 의도대로 반영되는지 명확하지 않았다.
+이후 ScheduleNextTick / SetNextTickTime 기반으로 service scheduling을 코드에서 제어했다.
+
+초기 분석에서는 active count를 실제 service 호출 수처럼 해석하는 문제가 있었다.
+이를 보완하기 위해 UpdateAIContext / UpdateAIIntentState / UpdateEngageContext 호출 횟수 counter를 추가했다.
+
+Mode 1 / 2의 차이가 CSV에서 명확하지 않아 Default / Reduced / Aggressive interval preset 선택 counter도 추가했다.
+최종 분석은 frame p95보다 AIIntentState 호출 수와 interval preset 분포를 우선 확인한다.
+
+전역 interval 감소는 Engage / Attack 전환을 불안정하게 만들었다.
+따라서 최적 interval 값을 찾기 전에 CombatEngage assignment 기반으로 Engage / Alert / Idle 계층을 먼저 나누었다.
+
+그 결과 MaxAlertersPerTarget 밖의 Enemy는 target을 인식해도 Chase / Alert Spread에 참여하지 않고 Idle wait 경로에 남도록 정리했다.
+이후 BT interval은 모든 Enemy에 동일 적용하는 값이 아니라, assignment 결과에 따른 precision policy로 다룬다.
+```
+
+정책 결론:
+
+```text
+이번 작업의 핵심은 BT Service interval 값을 찾는 것이 아니라,
+CombatEngage assignment를 기준으로 AI를 Engage / Alert / Idle 계층으로 나누고,
+그 계층 위에서 service update precision을 다르게 적용하는 Runtime LOD 정책을 정립한 것이다.
+```
+
+후속 작업:
+
+```text
+1. Assignment lifetime / bootstrap 안정화
+2. Alert assignment cap CVar 추가
+3. AlertCap 6 / 40 비교 측정
+4. BTUpdateIntervalMode 0 / 1 / 2 재측정
+5. Observe / Aware / Standby 상태 분리 검토
+```
+
 ---
 
 ## 요약

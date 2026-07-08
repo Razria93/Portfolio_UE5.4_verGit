@@ -306,6 +306,31 @@ BTUpdateIntervalMode 2의 Low에서만 증가해야 한다.
 Mode 2에서 이 값이 거의 없으면 Mode 1과 Mode 2의 호출량이 비슷한 원인을 Low tier 부재로 해석할 수 있다.
 ```
 
+BT interval assignment gate 측정 해석:
+
+```text
+Mode 0 / 1 / 2 비교에서는 frame p95보다 interval preset count를 먼저 본다.
+
+정상 패턴:
+
+Mode 0:
+Default Count만 증가한다.
+
+Mode 1:
+Default Count와 Reduced Count가 증가한다.
+Aggressive Count는 0 또는 거의 없어야 한다.
+
+Mode 2:
+Default Count, Reduced Count, Aggressive Count가 모두 증가한다.
+Low precision 대상이 없으면 Aggressive Count가 0일 수 있다.
+
+AIContext Count는 Mode 1 / 2에서도 Mode 0과 유사하게 유지될 수 있다.
+AIContext는 CombatEngage request/context producer이므로, 현재 P35 정책에서는 줄이는 대상이 아니다.
+
+AIIntentState Count가 줄고 interval preset 분포가 위 패턴을 따르면 BTUpdateIntervalMode는 정상 적용된 것이다.
+Frame / Game p95 변화가 작아도 service work reduction으로 기록한다.
+```
+
 해석 시 주의:
 
 ```text

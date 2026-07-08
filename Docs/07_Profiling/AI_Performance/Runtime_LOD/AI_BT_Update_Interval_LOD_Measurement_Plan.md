@@ -18,6 +18,152 @@ AI 반응 지연
 Engage / Alert / Attack 전환 안정성
 ```
 
+## 최종 측정 - AssignmentGate 40 Enemy
+
+측정 목적:
+
+```text
+Engage / Alert / Idle assignment gate가 적용된 상태에서 BTUpdateIntervalMode 0 / 1 / 2를 비교한다.
+이번 측정은 frame p95 개선보다 AIIntentState 호출 빈도와 interval preset 분포가 정책대로 줄어드는지 확인하는 데 초점을 둔다.
+```
+
+공통 조건:
+
+```text
+Enemy Count: 40
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: fixed camera
+GC Event: none
+
+Runtime LOD CVar:
+EnemyMeshMode 0
+EnemyAnimationMode 0
+EnemyAnimationRefreshCounter 0
+DisableEnemyWeaponActor 0
+DisableEnemyPerception 0
+PerceptionCandidateAudit 0
+BlackboardEngageLatencyAudit 0
+CanMoveDecoratorAudit 0
+EnemyMovementMode 0
+```
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260708_213701).csv
+Mode 1: Profile(20260708_213854).csv
+Mode 2: Profile(20260708_214143).csv
+```
+
+측정 결과:
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | Default Count | Reduced Count | Aggressive Count |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BT Final 40-0 | 0 | 11.5960ms | 10.7646ms | 0.1999ms | 11720 | 6080 | 6080 | 0 | 0 |
+| BT Final 40-1 | 1 | 11.6864ms | 11.0142ms | 0.2020ms | 11760 | 4178 | 302 | 3876 | 0 |
+| BT Final 40-2 | 2 | 11.7361ms | 10.8924ms | 0.2034ms | 11920 | 3090 | 304 | 1110 | 1676 |
+
+해석:
+
+```text
+BTUpdateIntervalMode 정책은 정상 적용됐다.
+
+Mode 0은 Default만 선택한다.
+Mode 1은 High에서 Default, Reduced / Low에서 Reduced를 선택한다.
+Mode 2는 High에서 Default, Reduced에서 Reduced, Low에서 Aggressive를 선택한다.
+
+AIIntentState 호출 수는 6080 -> 4178 -> 3090으로 감소한다.
+AIContext 호출 수는 유사하게 유지된다. AIContext는 request/context producer이므로 현재 정책상 줄이는 대상이 아니다.
+40 Enemy 조건에서 Frame / Game / BT Tick p95 변화는 작다.
+따라서 이번 결과는 즉각적인 frame gain보다 정책 검증과 service work reduction으로 해석한다.
+```
+
+남은 비교 후보:
+
+```text
+Alert assignment cap 효과를 분리하려면 Alert assignment limit을 profiling CVar로 추가한다.
+그 다음 같은 현재 코드 경로에서 AlertCap 6 / 40을 비교한다.
+과거 CSV는 service scheduling과 assignment 정책이 바뀌는 도중에 측정됐으므로 직접 before/after 기준으로 쓰기 어렵다.
+```
+
+## 시행착오 기록 - BT Interval 정책이 바뀐 이유
+
+이번 작업은 단순히 "BT Service interval 값을 얼마로 할 것인가"를 찾는 작업이 아니었다.
+핵심은 BT Service tick 주기를 런타임에서 어디서 제어해야 하는지, 그리고 어떤 AI에게 어떤 정밀도를 부여해야 하는지 정하는 과정이었다.
+
+1. BT asset interval 변경은 충분하지 않았다
+
+```text
+기존 BT asset 안의 Service node는 Interval 값을 직렬화해서 가지고 있다.
+C++ 생성자에서 Interval 기본값을 바꿔도 이미 저장된 BT asset의 node property에는 반영되지 않는다.
+OnBecomeRelevant에서 Interval을 덮어쓰는 방식도 실제 service scheduling에 반영되지 않았다고 판단했다.
+이후 ScheduleNextTick / SetNextTickTime 기반으로 다음 tick 시점을 직접 제어하는 방식으로 전환했다.
+```
+
+2. active count와 실제 호출 횟수는 같은 지표가 아니었다
+
+```text
+초기 분석에서는 BT service active count를 실제 TickNode 호출 횟수처럼 해석했다.
+하지만 active count는 stat이 기록된 frame 수에 가깝고, 실제 호출 횟수와 다를 수 있다.
+따라서 UpdateAIContext / UpdateAIIntentState / UpdateEngageContext 호출 횟수 counter를 추가했다.
+```
+
+3. Mode 1 / 2는 interval preset 분포를 봐야 했다
+
+```text
+Mode 1과 Mode 2가 너무 비슷하게 보인 시점이 있었다.
+문제는 선택된 interval preset이 CSV에 보이지 않았다는 점이다.
+Default / Reduced / Aggressive interval 선택 counter를 추가했고,
+최종 해석에서는 frame p95보다 preset 분포와 service call count를 먼저 확인한다.
+```
+
+4. 전역 interval 감소는 최적화보다 먼저 gameplay 전환을 흔들었다
+
+```text
+전역적으로 interval을 키우면 호출 수는 줄지만 Engage / Attack 전환이 불안정해졌다.
+일부 Enemy는 Engage에 들어갔다가 빠져나오고, 더 강한 감소에서는 Engage 자체가 형성되지 않았다.
+따라서 문제는 "더 큰 interval 값을 찾는 것"이 아니라,
+AI별 precision과 service별 책임을 분리하는 정책 문제로 판단했다.
+```
+
+5. Assignment 정책이 interval 정책보다 먼저 필요했다
+
+```text
+Perception은 많은 Enemy가 같은 target을 인식하게 만들 수 있다.
+assignment gate가 없으면 너무 많은 Enemy가 Chase / Alert movement에 참여하고, movement와 BT work가 불필요하게 커진다.
+CombatEngage assignment를 기준으로 Engage / Alert / Idle 계층을 나누고,
+Engage / Alert을 받은 Enemy만 전투 movement state에 진입하도록 정리했다.
+assignment를 받지 못한 Enemy는 target 정보가 있어도 Idle wait 흐름에 남는다.
+```
+
+6. EngageContext 컬럼 부재는 즉시 실패가 아니다
+
+```text
+EngageContext는 Engage branch에 붙은 service다.
+assignment gate 이후 대부분의 Enemy는 Engage branch에 들어가지 않는다.
+따라서 EngageContext 컬럼이 없거나 작아도 정책 실패로 단정하지 않는다.
+실제 Engage / Attack smoke와 service counter를 함께 확인한다.
+```
+
+7. 과거 CSV는 깨끗한 baseline이 아니다
+
+```text
+과거 capture는 interval scheduling, CombatRole gate, Alert assignment 동작이 계속 바뀌는 중에 측정됐다.
+히스토리로는 의미가 있지만 직접 before/after 비교 기준으로 쓰기에는 적합하지 않다.
+깨끗한 비교를 위해 Alert assignment cap CVar를 추가하고 같은 현재 코드 경로에서 AlertCap 6 / 40을 비교한다.
+```
+
+8. 최종 결론
+
+```text
+이번 작업의 핵심은 BT Service interval 값을 찾는 것이 아니다.
+CombatEngage assignment를 기준으로 AI를 Engage / Alert / Idle 계층으로 나누고,
+그 계층 위에서 service update precision을 다르게 적용하는 Runtime LOD 정책을 정립한 것이다.
+```
+
 Movement / Nav 측정에서 `MovementMode 2`는 frame 개선을 만들었지만 gameplay state를 크게 바꿨다.
 따라서 다음 단계는 이동을 직접 막는 것이 아니라, BT context 갱신 빈도를 낮춰 movement / target / engage 판단이 얼마나 자주 발생해야 하는지 확인하는 것이다.
 

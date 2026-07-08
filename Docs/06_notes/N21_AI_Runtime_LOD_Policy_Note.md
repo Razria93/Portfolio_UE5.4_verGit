@@ -16,6 +16,96 @@ P35의 비교 기준은 P34 baseline CSV다.
 Docs/07_Profiling/AI_Performance/CSV/baseline/case_01_040_enemy_aiperf_engage.csv
 ```
 
+## BT Update Interval AssignmentGate 측정 결과
+
+AssignmentGate 적용 후 40 Enemy 조건에서 `BTUpdateIntervalMode` 0 / 1 / 2를 다시 측정했다.
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260708_213701).csv
+Mode 1: Profile(20260708_213854).csv
+Mode 2: Profile(20260708_214143).csv
+```
+
+정책 검증 결과:
+
+```text
+Mode 0:
+Default interval만 선택한다.
+
+Mode 1:
+High는 Default interval을 유지한다.
+Reduced / Low는 Reduced interval을 선택한다.
+
+Mode 2:
+High는 Default interval을 유지한다.
+Reduced는 Reduced interval을 선택한다.
+Low는 Aggressive interval을 선택한다.
+```
+
+측정 해석:
+
+```text
+AIIntentState 호출 수는 6080 -> 4178 -> 3090으로 감소했다.
+AIContext 호출 수는 유지된다.
+Frame / Game p95 개선은 40 Enemy 조건에서 작다.
+
+따라서 BT interval LOD는 이 조건에서 직접적인 frame bottleneck 해결책이라기보다,
+Runtime LOD tier에 따라 service work를 줄이는 정책 검증 결과로 본다.
+```
+
+후속 정책 후보:
+
+```text
+Alert assignment cap을 CVar로 제어해 AlertCap 6 / 40을 같은 코드 상태에서 비교한다.
+이 비교는 Engage / Alert / Idle 계층화가 movement 후보와 BT service work를 얼마나 줄이는지 확인하는 데 사용한다.
+```
+
+## BT Interval 정책 시행착오 요약
+
+BT interval LOD는 다음 시행착오를 거쳐 현재 구조로 정리했다.
+
+```text
+1. BT asset interval 직접 변경만으로는 runtime scheduling 제어가 명확하지 않았다.
+2. ScheduleNextTick / SetNextTickTime 기반 제어로 service interval 적용 경로를 명시했다.
+3. active count는 실제 service 호출 횟수가 아니므로 UpdateAIContext / UpdateAIIntentState / UpdateEngageContext counter를 추가했다.
+4. Mode 1 / 2 차이를 확인하기 위해 Default / Reduced / Aggressive interval preset counter를 추가했다.
+5. 전역 interval 감소는 Engage / Attack 전환을 불안정하게 만들 수 있음을 확인했다.
+6. 따라서 interval 값 탐색보다 Engage / Alert / Idle assignment gate를 먼저 정리했다.
+7. 최종 구조는 CombatEngage assignment 결과로 AI update precision을 정하고, AIIntentState interval만 precision에 따라 줄인다.
+```
+
+정책 결론:
+
+```text
+BT interval LOD는 전체 AI를 일괄 감속하는 기능이 아니다.
+이번 작업의 핵심은 BT Service interval 값을 찾는 것이 아니라,
+CombatEngage assignment를 기준으로 AI를 Engage / Alert / Idle 계층으로 나누고,
+그 계층 위에서 service update precision을 다르게 적용하는 Runtime LOD 정책을 정립한 것이다.
+Engage / Alert / Idle 계층화 이후, 전투 중요도가 낮은 AI의 decision update 빈도를 줄이는 보조 정책으로 다룬다.
+```
+
+후속 작업:
+
+```text
+1. Assignment lifetime / bootstrap 안정화
+   RequestContainer가 비는 구간 때문에 CombatRole None이 발생하지 않도록 assignment 유지 정책을 보완한다.
+
+2. Alert assignment cap CVar 추가
+   같은 코드 상태에서 AlertCap 6 / 40을 비교할 수 있게 만든다.
+
+3. AlertCap 6 / 40 비교 측정
+   Engage / Alert / Idle 계층화가 movement 후보와 BT work를 얼마나 줄이는지 분리 측정한다.
+
+4. BTUpdateIntervalMode 0 / 1 / 2 재측정
+   assignment cap이 고정된 상태에서 service update precision 정책의 효과를 다시 본다.
+
+5. Observe / Aware / Standby 상태 분리 검토
+   target을 인식했지만 Engage / Alert assignment를 받지 못한 Enemy를 Idle로 둘지,
+   별도 관찰 상태로 분리할지 후속 설계에서 판단한다.
+```
+
 조건:
 
 ```text
