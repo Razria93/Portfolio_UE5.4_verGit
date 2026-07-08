@@ -943,12 +943,26 @@ Movement / Nav는 Runtime LOD 구현 후보로 남긴다.
 따라서 그대로 적용하지 않고, distance / combat relevance 기반 movement update interval, active movement budget, Engage / Attack gate로 설계한다.
 ```
 
-다음 측정축은 `BT Update Interval`이다.
+`BT Update Interval` 축은 40 Enemy 기준 1차 측정을 진행했다.
 
-작업 계획 문서:
+작업 계획 및 결과 문서:
 
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Measurement_Plan.md
+```
+
+측정 결과:
+
+```text
+BTUpdateIntervalMode 0 / 1 / 2 모두 BehaviorTreeTick, BT_UpdateAIContext, BT_UpdateAIIntentState, BT_UpdateEngageContext p95가 거의 변하지 않았다.
+따라서 OnBecomeRelevant에서 Service Interval을 덮어쓰는 방식은 기존 BT asset service scheduling에 유효하게 반영되지 않은 것으로 본다.
+이번 결과는 BT Update Interval LOD 자체의 효과 없음이 아니라, 현재 runtime override 방식이 유효 측정 축을 만들지 못했다는 기록이다.
+```
+
+후속 보완:
+
+```text
+BTUpdateIntervalMode를 계속 검증하려면 service 내부 elapsed time gate 또는 BT service memory / next tick scheduling 직접 제어 방식으로 다시 구현한다.
 ```
 
 ### Team Attitude / Affiliation 보정
@@ -1029,4 +1043,68 @@ FirstValidLatency도 3.743초에서 0.607초로 감소했다.
 RawActors는 81에서 1로 줄었고 InvalidProviders는 80에서 0으로 줄었다.
 FirstValidLatency도 9.377초에서 0.724초로 감소했다.
 40 / 80 Enemy 모두 같은 패턴이므로, 기존 장기 지연의 핵심 원인은 Enemy 후보 누수였다고 판단한다.
+```
+
+### BT Update Interval 재측정 및 정책 결론
+
+`OnBecomeRelevant` 기반 interval override는 BT service scheduling에 유효하게 반영되지 않았다.
+이후 `ScheduleNextTick`에서 `SetNextTickTime`을 직접 호출하는 방식으로 보완했고, 40 Enemy 조건에서 `BTUpdateIntervalMode` 0 / 1 / 2를 다시 측정했다.
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext active | AIIntent active | EngageContext active | 판정 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| BT10 | 0 | 13.2421ms | 13.2233ms | 0.2476ms | 294 | 152 | 384 | 기준 |
+| BT11 | 1 | 12.7211ms | 12.7218ms | 0.2149ms | 152 | 103 | 4 | interval 제어는 동작하나 전투 상태 전환 불안정 |
+| BT12 | 2 | 12.7915ms | 12.7800ms | 0.1925ms | 77 | 61 | 0 | interval 제어는 동작하나 Engage 판단 붕괴 |
+
+해석:
+
+```text
+ScheduleNextTick 기반 제어는 정상 동작한다.
+BT service active count와 BT Tick p95는 실제로 감소했다.
+다만 Frame / Game p95 개선 폭은 작으므로 현재 조건의 primary bottleneck으로 보지는 않는다.
+```
+
+Gameplay 관찰:
+
+```text
+Mode 0은 정상적으로 Engage / Attack 흐름이 유지됐다.
+Mode 1은 Engage 진입과 이탈이 반복됐고 Attack 진입이 불안정했다.
+Mode 2는 Engage에 들어가는 객체가 사실상 사라졌다.
+```
+
+정책 결론:
+
+```text
+BT interval LOD는 전역 최적값을 찾는 문제가 아니다.
+Enemy별 Runtime LOD tier와 service별 precision policy가 먼저 필요하다.
+
+EngageContext는 전투 진입, 공격 가능 여부, 할당, 거리 판단에 직접 연결되므로 high precision을 유지한다.
+AIContext / AIIntentState는 distance / combat relevance / LOD tier에 따라 완화할 수 있다.
+Patrol / Alert / Investigate 계열은 low precision 후보로 본다.
+
+최적 interval 값 탐색은 위 정책 구조가 생긴 뒤에 진행한다.
+```
+
+구현 반영:
+
+```text
+UCWorldSubsystem_CombatEngage에 AI update precision query를 추가했다.
+현재 Engage assignment는 High, Alert assignment 또는 현재 request는 Reduced, 그 외는 Low로 분류한다.
+MaxAlertersPerTarget을 추가해 target당 Alert assignment 수를 제한한다.
+Engage / Alert 범위 밖의 request는 AssignmentContainer에 저장하지 않는다.
+CBTServiceIntervalHelper는 AIContext / AIIntentState interval을 AI update precision에 따라 선택한다.
+EngageContext는 Runtime LOD mode와 관계없이 기본 interval을 유지한다.
+
+UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 `CombatRole` Blackboard key로 기록한다.
+AIIntentState는 `CombatRole`이 Engage일 때 Engage, Alert일 때 Alert로 진입한다.
+`CombatRole`이 None이면 target / LOS / alert range가 있어도 Idle로 되돌아간다.
+따라서 MaxAlertersPerTarget 밖의 Enemy는 target을 인식해도 Alert Spread에 참여하지 않는다.
+```
+
+검증 기준:
+
+```text
+Mode 1 / 2에서 AIContext / AIIntentState active count가 줄어드는지 확인한다.
+EngageContext active count는 유지되는지 확인한다.
+Engage / Attack 상태 전환이 깨지지 않는지 확인한다.
 ```

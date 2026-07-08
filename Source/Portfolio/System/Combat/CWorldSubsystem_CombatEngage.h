@@ -15,6 +15,9 @@ private:
 	int32 MaxEngagersPerTarget = 2;
 
 	UPROPERTY()
+	int32 MaxAlertersPerTarget = 6;
+
+	UPROPERTY()
 	float RebuildInterval = 0.1f;
 
 private:
@@ -40,6 +43,7 @@ public:
 public:
 	// Query
 	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
+	EAIUpdatePrecision GetAIUpdatePrecision(const class ACAIController* InCAIController) const;
 
 public:
 	// Request

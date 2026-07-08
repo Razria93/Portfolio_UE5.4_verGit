@@ -2,9 +2,11 @@
 
 #include "CoreMinimal.h"
 
+class UBehaviorTreeComponent;
+
 namespace CBTServiceIntervalHelper
 {
-	float GetAIContextInterval();
-	float GetAIIntentStateInterval();
+	float GetAIContextInterval(const UBehaviorTreeComponent& InOwnerComp);
+	float GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp);
 	float GetEngageContextInterval();
 }

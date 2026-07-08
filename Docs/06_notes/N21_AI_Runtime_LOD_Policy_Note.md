@@ -940,14 +940,63 @@ MovementMode 2는 40 / 80 Enemy 모두에서 CharacterMovement p95와 Frame / Ga
 실제 Runtime LOD 적용은 movement disable이 아니라 distance / combat relevance 기반 movement update interval, active movement budget, Engage / Attack gate로 설계한다.
 ```
 
-다음 측정축:
+`BT Update Interval` 축은 40 Enemy 기준 1차 측정을 진행했다.
 
 ```text
-BT Update Interval
+BTUpdateIntervalMode 0 / 1 / 2 모두 BehaviorTreeTick, BT_UpdateAIContext, BT_UpdateAIIntentState, BT_UpdateEngageContext p95가 거의 변하지 않았다.
+OnBecomeRelevant에서 Service Interval을 덮어쓰는 방식은 기존 BT asset service scheduling에 유효하게 반영되지 않은 것으로 본다.
+이번 결과는 BT Update Interval LOD 자체의 효과 없음이 아니라, 현재 runtime override 방식이 유효 측정 축을 만들지 못했다는 기록이다.
 ```
 
-상세 작업 계획:
+상세 작업 계획 및 결과:
 
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Measurement_Plan.md
+```
+
+후속 보완:
+
+```text
+BTUpdateIntervalMode를 계속 검증하려면 service 내부 elapsed time gate 또는 BT service memory / next tick scheduling 직접 제어 방식으로 다시 구현한다.
+```
+
+ScheduleNextTick 보완 후 재측정 결론:
+
+```text
+ScheduleNextTick에서 SetNextTickTime을 직접 호출하는 방식은 유효했다.
+AIContext / AIIntentState / EngageContext active count와 BehaviorTreeTick p95가 감소했으므로 BT service 작업량은 실제로 줄었다.
+다만 Frame / GameThread p95 개선 폭은 작았고, EngageContext 호출 빈도가 줄어들면 Engage / Attack 상태 전환이 깨졌다.
+```
+
+Runtime LOD 정책 결론:
+
+```text
+BT interval LOD는 전역 최적값을 찾는 문제가 아니다.
+Enemy별 Runtime LOD tier와 service별 precision policy가 먼저 필요하다.
+
+EngageContext는 전투 진입, 공격 가능 여부, 할당, 거리 판단에 직접 연결되므로 high precision을 유지한다.
+AIContext / AIIntentState는 distance / combat relevance / LOD tier에 따라 완화할 수 있다.
+Patrol / Alert / Investigate 계열은 low precision 후보로 본다.
+
+최적 interval 값 탐색은 위 정책 구조가 생긴 뒤에 진행한다.
+전역 BTUpdateIntervalMode는 측정용 fallback으로 남기고, 실제 Runtime LOD는 Enemy별 tier와 service role을 함께 보고 결정한다.
+```
+
+구현 v1:
+
+```text
+UCWorldSubsystem_CombatEngage가 AI update precision을 제공한다.
+Engage assignment를 받은 AIController는 High로 분류한다.
+Alert assignment 또는 현재 request를 가진 AIController는 Reduced로 분류한다.
+그 외 AIController는 Low로 분류한다.
+MaxAlertersPerTarget으로 target당 Alert assignment 수를 제한한다.
+Engage / Alert 범위 밖의 request는 AssignmentContainer에 저장하지 않는다.
+
+AIContext / AIIntentState는 precision에 따라 interval을 조절한다.
+EngageContext는 전투 상태 전환 안정성을 위해 기본 interval을 유지한다.
+
+UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 `CombatRole` Blackboard key로 전달한다.
+AIIntentState는 `CombatRole`이 Engage일 때만 Engage, Alert일 때만 Alert로 진입한다.
+`CombatRole`이 None이면 target / LOS / alert range가 있어도 Idle로 되돌린다.
+따라서 Alert cap 밖의 Enemy는 target을 인식해도 Alert Spread에 참여하지 않는다.
 ```

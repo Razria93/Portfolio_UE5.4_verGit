@@ -206,7 +206,8 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 
 	const FEngageAssignmentContext curAssignmentContext = subsystem->GetAssignment(aiController); // Current Context
 
-	InOutAIContext.bShouldEngage = curAssignmentContext.IsValidAssignment() && curAssignmentContext.CombatRole == ECombatRole::Engage;
+	InOutAIContext.CombatRole = curAssignmentContext.IsValidAssignment() ? curAssignmentContext.CombatRole : ECombatRole::None;
+	InOutAIContext.bShouldEngage = InOutAIContext.CombatRole == ECombatRole::Engage;
 	if (InOutAIContext.bShouldEngage)
 	{
 		aiController->RecordEngageAssignmentResolvedForAudit(InOutAIContext.TargetActor);
@@ -272,6 +273,7 @@ void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardCompo
 {
 	if (!IsValid(InBlackboardComp)) return;
 
+	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Engage::CombatRole.KeyName, static_cast<uint8>(InAIContext.CombatRole));
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bShouldEngage.KeyName, InAIContext.bShouldEngage);
 }
 
@@ -318,6 +320,7 @@ void UCBTService_UpdateAIContext::ClearEngageAssignmentContext(UBlackboardCompon
 {
 	if (!IsValid(InBlackboardComp)) return;
 
+	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Engage::CombatRole.KeyName, static_cast<uint8>(ECombatRole::None));
 	InBlackboardComp->ClearValue(CAIKey::Engage::bShouldEngage.KeyName);
 }
 
@@ -335,5 +338,5 @@ void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlack
 
 void UCBTService_UpdateAIContext::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetAIContextInterval());
+	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetAIContextInterval(OwnerComp));
 }

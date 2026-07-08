@@ -51,6 +51,19 @@ FEngageAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAI
 	return *found;
 }
 
+EAIUpdatePrecision UCWorldSubsystem_CombatEngage::GetAIUpdatePrecision(const ACAIController* InCAIController) const
+{
+	if (!IsValid(InCAIController)) return EAIUpdatePrecision::High;
+
+	const FEngageAssignmentContext* foundAssignment = AssignmentContainer.Find(InCAIController);
+	if (foundAssignment && foundAssignment->CombatRole == ECombatRole::Engage) return EAIUpdatePrecision::High;
+	if (foundAssignment && foundAssignment->CombatRole == ECombatRole::Alert) return EAIUpdatePrecision::Reduced;
+
+	if (RequestContainer.Contains(InCAIController)) return EAIUpdatePrecision::Reduced;
+
+	return EAIUpdatePrecision::Low;
+}
+
 // Request
 
 void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & InEngageRequestContext)
@@ -103,8 +116,11 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 				return A.DistanceToTarget < B.DistanceToTarget;
 			});
 
+		const int32 maxAssignedPerTarget = MaxEngagersPerTarget + MaxAlertersPerTarget;
 		for (int32 i = 0; i < rqeusetContexts.Num(); ++i)
 		{
+			if (i >= maxAssignedPerTarget) continue;
+
 			ACAIController* requestController = rqeusetContexts[i].RequestController;
 			ECombatRole combatRole = i < MaxEngagersPerTarget ? ECombatRole::Engage : ECombatRole::Alert;
 
@@ -115,7 +131,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 
 			AssignmentContainer.Add(requestController, engageAssignmentContext);
 			
-			// PrintEngageContext(rqeusetContexts[i].RequestController, rqeusetContexts[i].TargetActor, rqeusetContexts[i].TargetPriority, i, rqeusetContexts[i].DistanceToTarget, combatRole);
+			PrintEngageContext(rqeusetContexts[i].RequestController, rqeusetContexts[i].TargetActor, rqeusetContexts[i].TargetPriority, i, rqeusetContexts[i].DistanceToTarget, combatRole);
 		}
 	}
 

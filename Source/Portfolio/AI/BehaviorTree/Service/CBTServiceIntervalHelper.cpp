@@ -1,6 +1,11 @@
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 
+#include "BehaviorTree/BehaviorTreeComponent.h"
 #include "HAL/IConsoleManager.h"
+
+#include "Controller/CAIController.h"
+#include "System/Combat/CWorldSubsystem_CombatEngage.h"
+#include "Type/CWorldSubSystemStructure.h"
 
 namespace
 {
@@ -16,62 +21,60 @@ namespace
 
 	constexpr float ReducedAIContextInterval = 0.2f;
 	constexpr float ReducedAIIntentStateInterval = 0.3f;
-	constexpr float ReducedEngageContextInterval = 0.2f;
 
 	constexpr float AggressiveAIContextInterval = 0.4f;
 	constexpr float AggressiveAIIntentStateInterval = 0.5f;
-	constexpr float AggressiveEngageContextInterval = 0.3f;
 
 	int32 GetBTUpdateIntervalMode()
 	{
 		return FMath::Clamp(CVarBTUpdateIntervalMode.GetValueOnGameThread(), 0, 2);
 	}
-}
 
-float CBTServiceIntervalHelper::GetAIContextInterval()
-{
-	switch (GetBTUpdateIntervalMode())
+	EAIUpdatePrecision GetAIUpdatePrecision(const UBehaviorTreeComponent& InOwnerComp)
 	{
-	case 1:
-		return ReducedAIContextInterval;
+		const ACAIController* aiController = Cast<ACAIController>(InOwnerComp.GetAIOwner());
+		if (!IsValid(aiController)) return EAIUpdatePrecision::High;
 
-	case 2:
-		return AggressiveAIContextInterval;
+		UWorld* world = aiController->GetWorld();
+		if (!IsValid(world)) return EAIUpdatePrecision::High;
 
-	case 0:
-	default:
-		return DefaultAIContextInterval;
+		const UCWorldSubsystem_CombatEngage* engageSubsystem = world->GetSubsystem<UCWorldSubsystem_CombatEngage>();
+		if (!IsValid(engageSubsystem)) return EAIUpdatePrecision::High;
+
+		return engageSubsystem->GetAIUpdatePrecision(aiController);
+	}
+
+	float SelectContextInterval(const UBehaviorTreeComponent& InOwnerComp, float InDefaultInterval, float InReducedInterval, float InAggressiveInterval)
+	{
+		const int32 mode = GetBTUpdateIntervalMode();
+		if (mode == 0) return InDefaultInterval;
+
+		switch (GetAIUpdatePrecision(InOwnerComp))
+		{
+		case EAIUpdatePrecision::High:
+			return InDefaultInterval;
+
+		case EAIUpdatePrecision::Reduced:
+			return InReducedInterval;
+
+		case EAIUpdatePrecision::Low:
+		default:
+			return InAggressiveInterval;
+		}
 	}
 }
 
-float CBTServiceIntervalHelper::GetAIIntentStateInterval()
+float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& InOwnerComp)
 {
-	switch (GetBTUpdateIntervalMode())
-	{
-	case 1:
-		return ReducedAIIntentStateInterval;
+	return SelectContextInterval(InOwnerComp, DefaultAIContextInterval, ReducedAIContextInterval, AggressiveAIContextInterval);
+}
 
-	case 2:
-		return AggressiveAIIntentStateInterval;
-
-	case 0:
-	default:
-		return DefaultAIIntentStateInterval;
-	}
+float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
+{
+	return SelectContextInterval(InOwnerComp, DefaultAIIntentStateInterval, ReducedAIIntentStateInterval, AggressiveAIIntentStateInterval);
 }
 
 float CBTServiceIntervalHelper::GetEngageContextInterval()
 {
-	switch (GetBTUpdateIntervalMode())
-	{
-	case 1:
-		return ReducedEngageContextInterval;
-
-	case 2:
-		return AggressiveEngageContextInterval;
-
-	case 0:
-	default:
-		return DefaultEngageContextInterval;
-	}
+	return DefaultEngageContextInterval;
 }
