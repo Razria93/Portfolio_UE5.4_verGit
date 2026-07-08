@@ -2,6 +2,7 @@
 
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "Controller/CAIController.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
@@ -42,22 +43,35 @@ namespace
 		return engageSubsystem->GetAIUpdatePrecision(aiController);
 	}
 
-	float SelectContextInterval(const UBehaviorTreeComponent& InOwnerComp, float InDefaultInterval, float InReducedInterval, float InAggressiveInterval)
+	float SelectAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
 	{
 		const int32 mode = GetBTUpdateIntervalMode();
-		if (mode == 0) return InDefaultInterval;
+		if (mode == 0)
+		{
+			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Default_Count, 1, ECsvCustomStatOp::Accumulate);
+			return DefaultAIIntentStateInterval;
+		}
 
 		switch (GetAIUpdatePrecision(InOwnerComp))
 		{
 		case EAIUpdatePrecision::High:
-			return InDefaultInterval;
+			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Default_Count, 1, ECsvCustomStatOp::Accumulate);
+			return DefaultAIIntentStateInterval;
 
 		case EAIUpdatePrecision::Reduced:
-			return InReducedInterval;
+			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Reduced_Count, 1, ECsvCustomStatOp::Accumulate);
+			return ReducedAIIntentStateInterval;
 
 		case EAIUpdatePrecision::Low:
 		default:
-			return InAggressiveInterval;
+			if (mode == 1)
+			{
+				CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Reduced_Count, 1, ECsvCustomStatOp::Accumulate);
+				return ReducedAIIntentStateInterval;
+			}
+
+			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Aggressive_Count, 1, ECsvCustomStatOp::Accumulate);
+			return AggressiveAIIntentStateInterval;
 		}
 	}
 }
@@ -69,7 +83,7 @@ float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponen
 
 float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
 {
-	return SelectContextInterval(InOwnerComp, DefaultAIIntentStateInterval, ReducedAIIntentStateInterval, AggressiveAIIntentStateInterval);
+	return SelectAIIntentStateInterval(InOwnerComp);
 }
 
 float CBTServiceIntervalHelper::GetEngageContextInterval()

@@ -1094,7 +1094,10 @@ UCWorldSubsystem_CombatEngage에 AI update precision query를 추가했다.
 현재 Engage assignment는 High, Alert assignment 또는 현재 request는 Reduced, 그 외는 Low로 분류한다.
 MaxAlertersPerTarget을 추가해 target당 Alert assignment 수를 제한한다.
 Engage / Alert 범위 밖의 request는 AssignmentContainer에 저장하지 않는다.
-CBTServiceIntervalHelper는 AIContext를 기본 interval로 고정하고, AIIntentState interval만 AI update precision에 따라 선택한다.
+CBTServiceIntervalHelper는 AIContext를 기본 interval로 고정하고, AIIntentState interval만 AI update precision과 BTUpdateIntervalMode에 따라 선택한다.
+Mode 0은 모든 precision이 기본 interval을 사용한다.
+Mode 1은 High만 기본 interval을 유지하고 Reduced / Low는 reduced interval을 사용한다.
+Mode 2는 High는 기본 interval, Reduced는 reduced interval, Low는 aggressive interval을 사용한다.
 EngageContext는 Runtime LOD mode와 관계없이 기본 interval을 유지한다.
 
 UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 `CombatRole` Blackboard key로 기록한다.
@@ -1110,5 +1113,6 @@ Investigate / Chase는 CombatRole이 Engage 또는 Alert인 객체가 target을 
 Mode 1 / 2에서 AIIntentState count가 줄어드는지 확인한다.
 AIContext count는 유지되는지 확인한다.
 EngageContext count는 유지되는지 확인한다.
+AIIntentState interval selection count로 Default / Reduced / Aggressive 선택 분포를 확인한다.
 Engage / Attack 상태 전환이 깨지지 않는지 확인한다.
 ```

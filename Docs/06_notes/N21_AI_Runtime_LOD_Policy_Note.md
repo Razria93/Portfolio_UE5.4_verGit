@@ -996,7 +996,10 @@ MaxAlertersPerTarget으로 target당 Alert assignment 수를 제한한다.
 Engage / Alert 범위 밖의 request는 AssignmentContainer에 저장하지 않는다.
 
 AIContext는 CombatEngage request producer이므로 기본 interval을 유지한다.
-AIIntentState는 precision에 따라 interval을 조절한다.
+AIIntentState는 precision과 BTUpdateIntervalMode에 따라 interval을 조절한다.
+Mode 0은 모든 precision이 기본 interval을 사용한다.
+Mode 1은 High만 기본 interval을 유지하고 Reduced / Low는 reduced interval을 사용한다.
+Mode 2는 High는 기본 interval, Reduced는 reduced interval, Low는 aggressive interval을 사용한다.
 EngageContext는 전투 상태 전환 안정성을 위해 기본 interval을 유지한다.
 
 UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 `CombatRole` Blackboard key로 전달한다.

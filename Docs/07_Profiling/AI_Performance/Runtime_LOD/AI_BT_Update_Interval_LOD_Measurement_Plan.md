@@ -83,11 +83,11 @@ Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode
 
 권장 interval:
 
-| Mode | UpdateAIContext | UpdateAIIntentState | UpdateEngageContext | 목적 |
-| ---: | ---: | ---: | ---: | --- |
-| 0 | `0.1s` | `0.2s` | `0.1s` | 기준값 |
-| 1 | `0.1s` | `0.3s` | `0.1s` | 의도 상태 갱신만 보수적으로 감소 |
-| 2 | `0.1s` | `0.5s` | `0.1s` | 의도 상태 갱신만 공격적으로 감소 |
+| Mode | UpdateAIContext | AIIntent High | AIIntent Reduced | AIIntent Low | UpdateEngageContext | 목적 |
+| ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0 | `0.1s` | `0.2s` | `0.2s` | `0.2s` | `0.1s` | 기준값 |
+| 1 | `0.1s` | `0.2s` | `0.3s` | `0.3s` | `0.1s` | 의도 상태 갱신만 보수적으로 감소 |
+| 2 | `0.1s` | `0.2s` | `0.3s` | `0.5s` | `0.1s` | Low tier 의도 상태 갱신만 공격적으로 감소 |
 
 설계 기준:
 
@@ -225,6 +225,9 @@ GameThread/PortfolioAI_BT_UpdateEngageContext p95
 PortfolioAI_BT_UpdateAIContext_Count
 PortfolioAI_BT_UpdateAIIntentState_Count
 PortfolioAI_BT_UpdateEngageContext_Count
+PortfolioAI_BT_AIIntentInterval_Default_Count
+PortfolioAI_BT_AIIntentInterval_Reduced_Count
+PortfolioAI_BT_AIIntentInterval_Aggressive_Count
 Exclusive/GameThread/CharacterMovement p95
 ```
 
@@ -560,6 +563,7 @@ EngageContext:
 Mode 1 / 2에서 AIIntentState count가 줄어드는지 확인한다.
 AIContext count는 Mode 0과 유사하게 유지되는지 확인한다.
 EngageContext count는 Mode 0과 유사하게 유지되는지 확인한다.
+AIIntentState interval selection count로 Default / Reduced / Aggressive 선택 분포를 확인한다.
 Engage / Attack 상태 전환이 Mode 1 / 2에서도 깨지지 않는지 확인한다.
 Frame / Game p95 개선보다 service count와 gameplay 안정성을 함께 본다.
 ```

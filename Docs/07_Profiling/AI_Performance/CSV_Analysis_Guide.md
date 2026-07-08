@@ -289,6 +289,23 @@ Engage branch 실행 여부와 연결된다.
 이번 P35에서는 수정 대상이 아니므로 gameplay smoke와 함께 보조 지표로 해석한다.
 ```
 
+BT service interval 선택 기준:
+
+```text
+PortfolioAI_BT_AIIntentInterval_Default_Count:
+AIIntentState가 default interval을 선택한 횟수다.
+BTUpdateIntervalMode 0 또는 High precision에서 증가한다.
+
+PortfolioAI_BT_AIIntentInterval_Reduced_Count:
+AIIntentState가 reduced interval을 선택한 횟수다.
+BTUpdateIntervalMode 1의 Reduced / Low, 또는 BTUpdateIntervalMode 2의 Reduced에서 증가한다.
+
+PortfolioAI_BT_AIIntentInterval_Aggressive_Count:
+AIIntentState가 aggressive interval을 선택한 횟수다.
+BTUpdateIntervalMode 2의 Low에서만 증가해야 한다.
+Mode 2에서 이 값이 거의 없으면 Mode 1과 Mode 2의 호출량이 비슷한 원인을 Low tier 부재로 해석할 수 있다.
+```
+
 해석 시 주의:
 
 ```text
