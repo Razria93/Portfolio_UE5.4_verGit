@@ -16,14 +16,12 @@ namespace
 		ECVF_Default);
 
 	constexpr float DefaultAIContextInterval = 0.1f;
+
 	constexpr float DefaultAIIntentStateInterval = 0.2f;
-	constexpr float DefaultEngageContextInterval = 0.1f;
-
-	constexpr float ReducedAIContextInterval = 0.2f;
 	constexpr float ReducedAIIntentStateInterval = 0.3f;
-
-	constexpr float AggressiveAIContextInterval = 0.4f;
 	constexpr float AggressiveAIIntentStateInterval = 0.5f;
+
+	constexpr float DefaultEngageContextInterval = 0.1f;
 
 	int32 GetBTUpdateIntervalMode()
 	{
@@ -64,9 +62,9 @@ namespace
 	}
 }
 
-float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& InOwnerComp)
+float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
 {
-	return SelectContextInterval(InOwnerComp, DefaultAIContextInterval, ReducedAIContextInterval, AggressiveAIContextInterval);
+	return DefaultAIContextInterval;
 }
 
 float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)

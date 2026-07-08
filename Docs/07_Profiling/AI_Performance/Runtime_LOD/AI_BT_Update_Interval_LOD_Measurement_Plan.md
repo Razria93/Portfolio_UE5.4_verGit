@@ -86,15 +86,15 @@ Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode
 | Mode | UpdateAIContext | UpdateAIIntentState | UpdateEngageContext | 목적 |
 | ---: | ---: | ---: | ---: | --- |
 | 0 | `0.1s` | `0.2s` | `0.1s` | 기준값 |
-| 1 | `0.2s` | `0.3s` | `0.2s` | 보수적 감소 |
-| 2 | `0.4s` | `0.5s` | `0.3s` | 공격적 감소 |
+| 1 | `0.1s` | `0.3s` | `0.1s` | 의도 상태 갱신만 보수적으로 감소 |
+| 2 | `0.1s` | `0.5s` | `0.1s` | 의도 상태 갱신만 공격적으로 감소 |
 
 설계 기준:
 
 ```text
-UpdateAIContext는 target / movement context의 핵심이므로 가장 먼저 본다.
+UpdateAIContext는 target / movement context와 CombatEngage request를 갱신하므로 기본 interval을 유지한다.
 UpdateAIIntentState는 너무 느리면 state transition 체감 지연이 생길 수 있다.
-UpdateEngageContext는 combat action 가능 판단과 연결되므로 공격 템포가 깨지는지 확인한다.
+UpdateEngageContext는 combat action 가능 판단과 연결되므로 기본 interval을 유지한다.
 ```
 
 대안:
@@ -426,8 +426,9 @@ Mode 2는 Engage에 들어가는 객체가 사실상 사라졌다.
 BT interval LOD는 전역 최적값을 찾는 문제가 아니다.
 어떤 Enemy에게 어떤 service precision을 줄 것인지 먼저 정책화해야 한다.
 
-EngageContext처럼 전투 진입, 공격 가능 여부, 할당, 거리 판단에 직접 연결되는 service는 high precision을 유지한다.
-AIContext / AIIntentState처럼 상위 상태와 context 갱신 성격이 강한 service는 distance / combat relevance / LOD tier에 따라 완화할 수 있다.
+AIContext처럼 CombatEngage request를 생산하는 service는 high precision을 유지한다.
+EngageContext처럼 전투 진입, 공격 가능 여부, 할당, 거리 판단에 직접 연결되는 service도 high precision을 유지한다.
+AIIntentState처럼 상위 상태 결정 성격이 강한 service는 distance / combat relevance / LOD tier에 따라 완화할 수 있다.
 Patrol / Alert / Investigate처럼 반응 지연 허용 폭이 큰 상태는 low precision 후보로 본다.
 ```
 
@@ -466,7 +467,7 @@ BT pause 또는 매우 낮은 빈도 후보
 ```text
 UCWorldSubsystem_CombatEngage가 AI update precision을 제공한다.
 EAIUpdatePrecision은 High / Reduced / Low로 구분한다.
-BT service interval helper는 AIController의 precision을 조회해 AIContext / AIIntentState interval을 결정한다.
+BT service interval helper는 AIContext를 기본 interval로 고정하고, AIIntentState interval만 AIController precision에 따라 결정한다.
 EngageContext는 전투 상태 전환 안정성을 위해 Runtime LOD mode와 관계없이 기본 interval을 유지한다.
 ```
 
@@ -540,7 +541,7 @@ Service별 적용:
 
 ```text
 AIContext:
-precision policy 적용
+항상 기본 interval 유지
 
 AIIntentState:
 precision policy 적용
@@ -552,7 +553,8 @@ EngageContext:
 검증 기준:
 
 ```text
-Mode 1 / 2에서 AIContext / AIIntentState active count가 줄어드는지 확인한다.
+Mode 1 / 2에서 AIIntentState active count가 줄어드는지 확인한다.
+AIContext active count는 Mode 0과 유사하게 유지되는지 확인한다.
 EngageContext active count는 Mode 0과 유사하게 유지되는지 확인한다.
 Engage / Attack 상태 전환이 Mode 1 / 2에서도 깨지지 않는지 확인한다.
 Frame / Game p95 개선보다 service active count와 gameplay 안정성을 함께 본다.

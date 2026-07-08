@@ -966,6 +966,7 @@ ScheduleNextTick 보완 후 재측정 결론:
 ScheduleNextTick에서 SetNextTickTime을 직접 호출하는 방식은 유효했다.
 AIContext / AIIntentState / EngageContext active count와 BehaviorTreeTick p95가 감소했으므로 BT service 작업량은 실제로 줄었다.
 다만 Frame / GameThread p95 개선 폭은 작았고, EngageContext 호출 빈도가 줄어들면 Engage / Attack 상태 전환이 깨졌다.
+AIContext 호출 빈도를 줄이면 CombatEngage request 갱신이 늦어져 assignment lease가 끊기고, CombatRole이 None으로 떨어지면서 Idle로 되돌아가는 문제가 발생했다.
 ```
 
 Runtime LOD 정책 결론:
@@ -974,8 +975,9 @@ Runtime LOD 정책 결론:
 BT interval LOD는 전역 최적값을 찾는 문제가 아니다.
 Enemy별 Runtime LOD tier와 service별 precision policy가 먼저 필요하다.
 
+AIContext는 target / movement context와 CombatEngage request를 갱신하므로 high precision을 유지한다.
 EngageContext는 전투 진입, 공격 가능 여부, 할당, 거리 판단에 직접 연결되므로 high precision을 유지한다.
-AIContext / AIIntentState는 distance / combat relevance / LOD tier에 따라 완화할 수 있다.
+AIIntentState는 distance / combat relevance / LOD tier에 따라 완화할 수 있다.
 Patrol / Alert / Investigate 계열은 low precision 후보로 본다.
 
 최적 interval 값 탐색은 위 정책 구조가 생긴 뒤에 진행한다.
@@ -992,7 +994,8 @@ Alert assignment 또는 현재 request를 가진 AIController는 Reduced로 분�
 MaxAlertersPerTarget으로 target당 Alert assignment 수를 제한한다.
 Engage / Alert 범위 밖의 request는 AssignmentContainer에 저장하지 않는다.
 
-AIContext / AIIntentState는 precision에 따라 interval을 조절한다.
+AIContext는 CombatEngage request producer이므로 기본 interval을 유지한다.
+AIIntentState는 precision에 따라 interval을 조절한다.
 EngageContext는 전투 상태 전환 안정성을 위해 기본 interval을 유지한다.
 
 UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 `CombatRole` Blackboard key로 전달한다.

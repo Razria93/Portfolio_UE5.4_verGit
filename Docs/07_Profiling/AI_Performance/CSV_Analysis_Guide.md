@@ -202,3 +202,128 @@ Observed:
 5. 아직 확정하면 안 되는 항목을 분리한다.
 6. 다음 측정 조건을 제안한다.
 ```
+
+---
+
+## 반복 분석 프롬프트
+
+AI Runtime LOD CSV를 분석할 때는 아래 프롬프트를 기준으로 해석한다.
+
+```text
+이 CSV는 UE CSV profiler 산출물이다.
+일반 CSV처럼 Import-Csv로 읽지 말고, 헤더 문자열을 index로 매핑한 뒤 필요한 컬럼만 index 기반으로 파싱한다.
+
+분석 순서:
+
+1. Log 파일에서 csvprofile start / stop, capture duration, frame count, CSVEvent "GC" 유무를 먼저 확인한다.
+2. FrameTime 누적합으로 전체 capture time을 계산한다.
+3. first 3s / last 3s를 제외한 middle window만 분석한다.
+4. p95를 기본 비교값으로 사용하고, avg / max / active count를 보조로 본다.
+5. 변경 축과 직접 연결된 stat을 먼저 본다.
+6. ActorCount / Tick count / active count로 측정 조건이 실제 반영됐는지 확인한다.
+7. 없는 컬럼, 0 값, active count 0을 서로 다르게 해석한다.
+8. CSV 수치만으로 gameplay state를 단정하지 않는다.
+9. BT / Perception / Movement 축은 PIE 관찰 결과와 함께 해석한다.
+10. 분석 결과는 "측정 신뢰도", "핵심 지표", "직접 축 해석", "주의점", "다음 측정" 순서로 답한다.
+```
+
+### 컬럼 없음 / 0 / active count 해석
+
+CSV에서 특정 stat이 보이지 않는 경우를 바로 오류로 판단하지 않는다.
+
+```text
+컬럼 없음:
+해당 capture 동안 그 stat scope가 한 번도 기록되지 않았거나,
+해당 코드 경로 / BT branch / service가 실행되지 않았을 가능성이 높다.
+정상 여부는 측정 목적과 gameplay smoke로 판단한다.
+
+컬럼은 있으나 p95 == 0:
+stat scope는 존재하지만 대부분의 frame에서 비용이 없거나 매우 작다.
+active count를 함께 확인한다.
+
+active count 감소:
+interval / gate / LOD 제어가 실제로 호출 빈도를 줄였다는 직접 신호다.
+Frame / GameThread p95 개선이 작더라도 작업량 감소로 기록할 수 있다.
+
+active count 0:
+해당 경로가 실행되지 않은 것이다.
+측정 목적이 "그 경로를 제거하는 것"이면 정상이고,
+baseline에서 반드시 실행되어야 하는 경로라면 gameplay smoke를 다시 확인한다.
+```
+
+### BT Update Interval 해석 기준
+
+BT interval 측정에서 `BT_UpdateEngageContext`가 보이지 않는다고 즉시 문제로 단정하지 않는다.
+
+```text
+BT_UpdateEngageContext는 Engage branch에 붙은 service다.
+CombatRole gate 이후 Engage assignment를 받지 못한 Enemy는 Engage branch로 들어가지 않는다.
+따라서 AssignmentGate 측정에서는 EngageContext active count가 줄거나 컬럼이 없을 수 있다.
+이때 확인할 것은 "Engage가 완전히 죽었는가"가 아니라:
+
+1. Mode 0에서 최소 Engager가 정상적으로 공격하는지
+2. Mode 1 / 2에서 AIContext / AIIntent active count가 줄었는지
+3. EngageContext가 Mode 0 대비 과도하게 사라져 공격 전환이 깨졌는지
+4. Alert cap 밖 Enemy가 Chase / Alert Spread로 몰리지 않는지
+```
+
+해석 시 주의:
+
+```text
+Mode 0 baseline에서 BT_UpdateEngageContext 컬럼이 없으면,
+먼저 PIE 관찰로 실제 Engage / Attack 발생 여부를 확인한다.
+공격이 있었다면 capture window와 service 실행 타이밍 문제일 수 있다.
+공격이 없었다면 gate / BT asset / Blackboard key 설정 문제로 본다.
+
+Mode 1 / 2에서 BT_UpdateEngageContext가 줄어드는 것은 반드시 나쁜 신호가 아니다.
+정책상 EngageContext는 combat participant에만 남아야 한다.
+다만 실제 공격이 불안정해지면 interval 또는 role gate 정책을 조정한다.
+```
+
+### ActorCount와 Tick count 불일치
+
+ActorCount와 Tick count가 다를 때는 둘을 같은 지표로 해석하지 않는다.
+
+```text
+ActorCount:
+월드에 존재하는 actor 수다.
+측정용 배치, 비활성 객체, 에디터/테스트용 actor가 포함될 수 있다.
+
+Ticks/*:
+해당 frame에서 실제 tick한 객체 수다.
+성능 측정 scale은 보통 Tick count를 우선 기준으로 본다.
+
+예:
+ActorCount/CEnemy가 85이고 Ticks/CEnemy가 40이면,
+성능 측정 scale은 40 Enemy tick 기준으로 해석한다.
+다만 actor presence cost를 보는 측정이면 ActorCount도 따로 기록한다.
+```
+
+### CSV 분석 답변 템플릿
+
+```text
+측정 신뢰도:
+- GC:
+- Capture duration:
+- Analysis window:
+- CVar / map / scale 확인:
+
+핵심 지표:
+| Metric | p95 | 해석 |
+
+직접 축 해석:
+- 변경한 축:
+- 직접 stat:
+- active count:
+- Frame / GameThread 영향:
+
+주의점:
+- 없는 컬럼:
+- ActorCount / Tick count 불일치:
+- gameplay smoke로 확인할 항목:
+
+다음 측정:
+- 다음 Mode / Enemy count:
+- 유지할 조건:
+- 반드시 관찰할 항목:
+```
