@@ -66,6 +66,21 @@ Mode 2: Profile(20260708_214143).csv
 | BT Final 40-1 | 1 | 11.6864ms | 11.0142ms | 0.2020ms | 11760 | 4178 | 302 | 3876 | 0 |
 | BT Final 40-2 | 2 | 11.7361ms | 10.8924ms | 0.2034ms | 11920 | 3090 | 304 | 1110 | 1676 |
 
+80 Enemy 추가 측정:
+
+```text
+Mode 0: Profile(20260708_224210).csv
+Mode 1: Profile(20260708_224356).csv
+Mode 2: Profile(20260708_224639).csv
+GC Event: none
+```
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | EngageContext Count | Default Count | Reduced Count | Aggressive Count |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BT Final 80-0 | 0 | 17.0098ms | 16.9991ms | 0.3917ms | 22480 | 12080 | 560 | 12080 | 0 | 0 |
+| BT Final 80-1 | 1 | 17.0418ms | 17.0108ms | 0.3812ms | 22960 | 8340 | - | 306 | 8034 | 0 |
+| BT Final 80-2 | 2 | 17.1633ms | 17.1902ms | 0.3919ms | 22240 | 5578 | 556 | 296 | 1101 | 4181 |
+
 해석:
 
 ```text
