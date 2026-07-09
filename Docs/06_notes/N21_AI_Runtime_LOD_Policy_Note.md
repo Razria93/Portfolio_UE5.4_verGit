@@ -1147,8 +1147,18 @@ Investigate / Chase는 CombatRole이 Engage 또는 Alert인 객체가 target을 
 
 Runtime LOD 측정에서는 이 bootstrap 변수를 줄이기 위해 최초 assignment 확정 전 warmup 구간을 둔다.
 
-상세 계획:
+검증 결과:
+
+```text
+WarmupTime 1.0은 split 완화 효과는 있으나 request snapshot이 32 / 74 / 80으로 흔들려 경계값으로 본다.
+WarmupTime 1.2는 반복 관찰에서 최초 assignment 확정 시점의 request snapshot이 80으로 수렴했다.
+WarmupTime 1.2 기준 40 / 80 Enemy BTUpdateIntervalMode 0 / 1 / 2 재측정에서도 AIIntentState 호출 수 감소가 유지됐다.
+Frame / Game p95 개선은 제한적이므로 frame gain보다 Runtime LOD 정책 검증과 service work reduction으로 해석한다.
+```
+
+상세 문서:
 
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Result_Note.md
 ```

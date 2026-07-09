@@ -122,15 +122,89 @@ AIContext 호출 수는 Mode와 무관하게 유사하게 유지된다.
 80 Enemy 조건에서도 Frame / Game / BT Tick p95 개선은 뚜렷하지 않다.
 ```
 
+## 40 Enemy Result - AssignmentWarmup 1.2
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260709_172705).csv
+Mode 1: Profile(20260709_173756).csv
+Mode 2: Profile(20260709_173016).csv
+```
+
+조건:
+
+```text
+EngageAssignmentWarmupTime 1.2
+EngageAssignmentAudit 0
+EngageAssignmentVerboseAudit 0
+Engage 2 / Alert 6 / 나머지 Idle 안정 유지
+GC Event: none
+```
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext p95 | AIIntent p95 | EngageContext p95 | AIContext Count | AIIntent Count | EngageContext Count | Default Count | Reduced Count | Aggressive Count |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BT Warmup 40-0 | 0 | 11.6406ms | 10.9127ms | 0.2070ms | 0.1415ms | 0.0257ms | 0.0072ms | 12520 | 6520 | 624 | 6520 | 0 | 0 |
+| BT Warmup 40-1 | 1 | 11.8182ms | 10.9590ms | 0.2047ms | 0.1406ms | 0.0099ms | 0.0071ms | 11640 | 4178 | 580 | 302 | 3876 | 0 |
+| BT Warmup 40-2 | 2 | 11.8810ms | 10.9224ms | 0.2071ms | 0.1432ms | 0.0132ms | 0.0071ms | 11720 | 2970 | 582 | 304 | 810 | 1856 |
+
+해석:
+
+```text
+Warmup 1.2 적용 후에도 AIIntentState 호출 수는 6520 -> 4178 -> 2970으로 감소한다.
+EngageContext 호출 수는 624 -> 580 -> 582로 유지된다.
+AIContext는 request/context producer 역할 때문에 유사하게 유지된다.
+40 Enemy 조건에서는 Frame / Game p95 개선은 오차 범위로 본다.
+```
+
+## 80 Enemy Result - AssignmentWarmup 1.2
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260709_181038).csv
+Mode 1: Profile(20260709_181231).csv
+Mode 2: Profile(20260709_181433).csv
+```
+
+조건:
+
+```text
+EngageAssignmentWarmupTime 1.2
+EngageAssignmentAudit 0
+EngageAssignmentVerboseAudit 0
+Engage 2 / Alert 6 / 나머지 Idle 안정 유지
+GC Event: none
+```
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext p95 | AIIntent p95 | EngageContext p95 | AIContext Count | AIIntent Count | EngageContext Count | Default Count | Reduced Count | Aggressive Count |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BT Warmup 80-0 | 0 | 16.7495ms | 16.7296ms | 0.3874ms | 0.2616ms | 0.0796ms | 0.0072ms | 22800 | 12080 | 570 | 12080 | 0 | 0 |
+| BT Warmup 80-1 | 1 | 16.4366ms | 16.3790ms | 0.3836ms | 0.2564ms | 0.0154ms | 0.0073ms | 23280 | 8180 | 580 | 302 | 7878 | 0 |
+| BT Warmup 80-2 | 2 | 16.1559ms | 16.2050ms | 0.3858ms | 0.2572ms | 0.0309ms | 0.0073ms | 23360 | 5752 | 582 | 298 | 1704 | 3750 |
+
+해석:
+
+```text
+Warmup 1.2 적용 후 80 Enemy에서도 AIIntentState 호출 수는 12080 -> 8180 -> 5752로 감소한다.
+Mode 1은 Reduced preset 중심으로 분포한다.
+Mode 2는 Reduced / Aggressive preset으로 분산된다.
+EngageContext 호출 수는 570 -> 580 -> 582로 유지된다.
+AIContext 호출 수는 Mode와 무관하게 유사하게 유지된다.
+Frame / Game p95는 Mode가 올라갈수록 약간 낮아졌지만, 개선 폭이 작아 frame gain으로 단정하지 않는다.
+이 결과는 assignment warmup으로 bootstrap 변수를 줄인 상태에서도 service work reduction이 유지된다는 근거로 본다.
+```
+
 ## Conclusion
 
 ```text
 BTUpdateIntervalMode 정책은 40 / 80 Enemy 조건 모두에서 정상 동작한다.
 Mode가 올라갈수록 AIIntentState service work는 줄어든다.
 AssignmentLease 적용 후 40 Enemy 조건에서 Mode 1 / 2도 Engage 2 / Alert 6 / Idle 계층을 안정적으로 유지했다.
+AssignmentWarmup 1.2 적용 후 40 / 80 Enemy 조건에서도 동일한 호출 수 감소 경향이 유지됐다.
 다만 Frame p95 개선은 뚜렷하지 않으므로, 이 결과는 직접적인 frame gain보다 Runtime LOD 정책 검증, assignment 안정화, service work reduction으로 해석한다.
 
-다음 비교는 Alert assignment cap을 CVar로 분리한 뒤 AlertCap 6 / 40 조건에서 수행한다.
+다음 비교는 Alert assignment cap을 CVar로 분리한 뒤 AlertCap 6 / 40 조건에서 수행하거나, 현재 Warmup 1.2 기준을 baseline으로 Runtime LOD tier 설계를 진행한다.
 ```
 ## Follow-up - Assignment Bootstrap Warmup
 
