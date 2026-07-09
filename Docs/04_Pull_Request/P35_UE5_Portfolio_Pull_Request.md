@@ -64,17 +64,18 @@ Mode 2: Profile(20260709_203937).csv
 
 80 Enemy 최종 비교:
 
-| Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | EngageContext Count |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 16.2377ms | 16.2519ms | 0.4001ms | 23600 | 12000 | 590 |
-| 1 | 16.1284ms | 16.1593ms | 0.3787ms | 12216 | 8100 | 592 |
-| 2 | 16.2984ms | 16.2689ms | 0.1641ms | 6947 | 5826 | 580 |
+| Mode | Frame p95 |  Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | EngageContext Count |
+| ---: | --------: | --------: | ----------: | --------------: | -------------: | ------------------: |
+|    0 | 16.2377ms | 16.2519ms |    0.4001ms |           23600 |          12000 |                 590 |
+|    1 | 16.1284ms | 16.1593ms |    0.3787ms |           12216 |           8100 |                 592 |
+|    2 | 16.2984ms | 16.2689ms |    0.1641ms |            6947 |           5826 |                 580 |
 
 관련 문서:
 
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
 Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
 ```
