@@ -72,6 +72,9 @@ void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & 
 
 	// Override Request
 	RequestContainer.FindOrAdd(InEngageRequestContext.RequestController) = InEngageRequestContext;
+
+	UWorld* world = GetWorld();
+	LastRequestTimeContainer.FindOrAdd(InEngageRequestContext.RequestController) = IsValid(world) ? world->GetTimeSeconds() : 0.f;
 }
 
 // Assignment
@@ -80,63 +83,144 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_RebuildAssignments);
 
-	AssignmentContainer.Reset();
+	TMap<ACAIController*, FEngageAssignmentContext> nextAssignments;
+	TSet<ACAIController*> freshRequestControllers;
+	TMap<AActor*, FEngageAssignmentSlotState> slotState;
 
-	// 1. Build RequestBucket from RequestContainer
+	TMap<ACAIController*, FEngageRequestContext> requestSnapshot = ConsumeRequestSnapshot();
 	TMap<AActor*, TArray<FEngageRequestContext>> requestBucket;
-	for (const TPair<ACAIController*, FEngageRequestContext>& pair : RequestContainer)
+	BuildRequestBucket(requestSnapshot, requestBucket);
+	ApplyFreshRequestAssignments(requestBucket, nextAssignments, freshRequestControllers, slotState);
+	PreserveLeasedAssignments(nextAssignments, freshRequestControllers, slotState);
+
+	AssignmentContainer = MoveTemp(nextAssignments);
+}
+
+TMap<ACAIController*, FEngageRequestContext> UCWorldSubsystem_CombatEngage::ConsumeRequestSnapshot()
+{
+	TMap<ACAIController*, FEngageRequestContext> requestSnapshot = MoveTemp(RequestContainer);
+	RequestContainer.Reset();
+
+	return requestSnapshot;
+}
+
+void UCWorldSubsystem_CombatEngage::BuildRequestBucket(const TMap<ACAIController*, FEngageRequestContext>& InRequestSnapshot, TMap<AActor*, TArray<FEngageRequestContext>>& OutRequestBucket) const
+{
+	OutRequestBucket.Reset();
+
+	for (const TPair<ACAIController*, FEngageRequestContext>& pair : InRequestSnapshot)
 	{
-		const ACAIController* requestor = pair.Key;
 		const FEngageRequestContext& request = pair.Value;
-		
+
 		if (!IsValid(request.RequestController) || !IsValid(request.TargetActor)) continue;
 
-		requestBucket.FindOrAdd(request.TargetActor).Add(request);
+		OutRequestBucket.FindOrAdd(request.TargetActor).Add(request);
 	}
+}
 
-	// 2. Build AssignmentContainer from RequestBucket
-	for (auto& pair : requestBucket)
+void UCWorldSubsystem_CombatEngage::SortRequestContexts(TArray<FEngageRequestContext>& InOutRequestContexts) const
+{
+	InOutRequestContexts.Sort([](const FEngageRequestContext& A, const FEngageRequestContext& B)
+		{
+			if (A.TargetPriority != B.TargetPriority)
+			{
+				return A.TargetPriority < B.TargetPriority;
+			}
+
+			if (A.bWasEngaged != B.bWasEngaged)
+			{
+				return A.bWasEngaged;
+			}
+
+			return A.DistanceToTarget < B.DistanceToTarget;
+		});
+}
+
+void UCWorldSubsystem_CombatEngage::ApplyFreshRequestAssignments(const TMap<AActor*, TArray<FEngageRequestContext>>& InRequestBucket, TMap<ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TSet<ACAIController*>& OutFreshRequestControllers, TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState) const
+{
+	for (const TPair<AActor*, TArray<FEngageRequestContext>>& pair : InRequestBucket)
 	{
 		AActor* targetActor = pair.Key;
-		TArray<FEngageRequestContext>& rqeusetContexts = pair.Value;
+		if (!IsValid(targetActor)) continue;
 
-		rqeusetContexts.Sort([](const FEngageRequestContext& A, const FEngageRequestContext& B)
-			{
-				// SortCondition 1: Priority
-				if (A.TargetPriority != B.TargetPriority)
-					return A.TargetPriority < B.TargetPriority;
+		TArray<FEngageRequestContext> requestContexts = pair.Value;
+		SortRequestContexts(requestContexts);
 
-				// SortCondition 2: bWasEngaged
-				// If A was engaged and B was not -> keep A ahead.
-				// If A was not engaged and B was -> let B move ahead.
-				if (A.bWasEngaged != B.bWasEngaged)
-					return A.bWasEngaged; 
-
-				// SortCondition 3: DistanceToTarget
-				return A.DistanceToTarget < B.DistanceToTarget;
-			});
-
+		FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindOrAdd(targetActor);
 		const int32 maxAssignedPerTarget = MaxEngagersPerTarget + MaxAlertersPerTarget;
-		for (int32 i = 0; i < rqeusetContexts.Num(); ++i)
+
+		for (int32 i = 0; i < requestContexts.Num(); ++i)
 		{
+			ACAIController* requestController = requestContexts[i].RequestController;
+			if (!IsValid(requestController)) continue;
+
+			OutFreshRequestControllers.Add(requestController);
 			if (i >= maxAssignedPerTarget) continue;
 
-			ACAIController* requestController = rqeusetContexts[i].RequestController;
-			ECombatRole combatRole = i < MaxEngagersPerTarget ? ECombatRole::Engage : ECombatRole::Alert;
+			const ECombatRole combatRole = i < MaxEngagersPerTarget ? ECombatRole::Engage : ECombatRole::Alert;
 
 			FEngageAssignmentContext engageAssignmentContext;
-
 			engageAssignmentContext.TargetActor = targetActor;
 			engageAssignmentContext.CombatRole = combatRole;
 
-			AssignmentContainer.Add(requestController, engageAssignmentContext);
-			
-			// PrintEngageContext(rqeusetContexts[i].RequestController, rqeusetContexts[i].TargetActor, rqeusetContexts[i].TargetPriority, i, rqeusetContexts[i].DistanceToTarget, combatRole);
+			InOutNextAssignments.Add(requestController, engageAssignmentContext);
+
+			if (combatRole == ECombatRole::Engage)
+			{
+				++targetSlotState.EngageCount;
+			}
+			else if (combatRole == ECombatRole::Alert)
+			{
+				++targetSlotState.AlertCount;
+			}
+
+			// PrintEngageContext(requestController, targetActor, requestContexts[i].TargetPriority, i, requestContexts[i].DistanceToTarget, combatRole);
 		}
 	}
+}
 
-	// 3. Clear RequestContainer
-	RequestContainer.Reset();
+void UCWorldSubsystem_CombatEngage::PreserveLeasedAssignments(TMap<ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, const TSet<ACAIController*>& InFreshRequestControllers, TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState) const
+{
+	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentContainer)
+	{
+		ACAIController* aiController = pair.Key;
+		const FEngageAssignmentContext& previousAssignment = pair.Value;
+
+		if (!IsValid(aiController)) continue;
+		if (InFreshRequestControllers.Contains(aiController)) continue;
+		if (!previousAssignment.IsValidAssignment()) continue;
+		if (!IsAssignmentLeaseValid(aiController)) continue;
+
+		FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindOrAdd(previousAssignment.TargetActor);
+
+		if (previousAssignment.CombatRole == ECombatRole::Engage)
+		{
+			if (targetSlotState.EngageCount >= MaxEngagersPerTarget) continue;
+
+			InOutNextAssignments.Add(aiController, previousAssignment);
+			++targetSlotState.EngageCount;
+		}
+		else if (previousAssignment.CombatRole == ECombatRole::Alert)
+		{
+			if (targetSlotState.AlertCount >= MaxAlertersPerTarget) continue;
+
+			InOutNextAssignments.Add(aiController, previousAssignment);
+			++targetSlotState.AlertCount;
+		}
+	}
+}
+
+bool UCWorldSubsystem_CombatEngage::IsAssignmentLeaseValid(const ACAIController* InCAIController) const
+{
+	if (!IsValid(InCAIController)) return false;
+
+	const float* lastRequestTime = LastRequestTimeContainer.Find(InCAIController);
+	if (!lastRequestTime) return false;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return false;
+
+	return world->GetTimeSeconds() - *lastRequestTime <= AssignmentLeaseDuration;
 }
 
 // Runtime State
@@ -145,6 +229,7 @@ void UCWorldSubsystem_CombatEngage::ClearEngageRuntimeState()
 {
 	ElapsedTime = 0.f;
 	RequestContainer.Reset();
+	LastRequestTimeContainer.Reset();
 	AssignmentContainer.Reset();
 }
 
