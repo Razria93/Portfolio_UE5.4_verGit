@@ -11,8 +11,8 @@
 ## 상태
 
 - [x] 작업 방향 수립
-- [ ] 측정 / 코드 / 문서 반영
-- [ ] 검증 완료
+- [x] 측정 / 코드 / 문서 반영
+- [x] 검증 완료
 
 ---
 
@@ -26,6 +26,66 @@
 
 ```text
 docs(ai): plan runtime LOD policy
+```
+
+## 최종 마감 요약
+
+P35는 대규모 Enemy 조건에서 Runtime LOD 후보 축을 분리 측정하고, 실제 정책 후보로 남길 축을 정리하는 작업이다.
+최종적으로 Enemy mesh, animation refresh, WeaponActor, perception, movement, BT service interval을 각각 확인했고, CombatEngage assignment gate / lease / warmup을 통해 Engage 2 / Alert 6 / Idle 계층을 안정화했다.
+
+최종 결론:
+
+```text
+Mode 1:
+combat-capable 조건에서도 보수적으로 사용할 수 있는 Runtime LOD 후보.
+AIContext / AIIntentState 호출수를 줄이면서 gameplay smoke가 안정적으로 유지됐다.
+
+Mode 2:
+AIContext / AIIntentState 호출수와 BT Tick p95 감소 폭이 가장 크다.
+다만 공격적인 후보이므로 far / offscreen / NonCombat / Dormant 계층부터 적용하는 쪽이 적합하다.
+
+EngageContext:
+전투 진입과 공격 전환에 직접 관여하므로 기본 interval을 유지한다.
+```
+
+대표 측정:
+
+```text
+40 Enemy:
+Mode 0: Profile(20260709_191603).csv
+Mode 1: Profile(20260709_191821).csv
+Mode 2: Profile(20260709_192202).csv
+
+80 Enemy:
+Mode 0: Profile(20260709_202805).csv
+Mode 1: Profile(20260709_202920).csv
+Mode 2: Profile(20260709_203937).csv
+```
+
+80 Enemy 최종 비교:
+
+| Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | EngageContext Count |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 16.2377ms | 16.2519ms | 0.4001ms | 23600 | 12000 | 590 |
+| 1 | 16.1284ms | 16.1593ms | 0.3787ms | 12216 | 8100 | 592 |
+| 2 | 16.2984ms | 16.2689ms | 0.1641ms | 6947 | 5826 | 580 |
+
+관련 문서:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_Note.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
+Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+```
+
+후속 작업:
+
+```text
+1. Observe / Aware Intent 분리
+2. AlertCap CVar 비교 측정
+3. Runtime LOD Implementation v1
+4. Proxy / Dormant Actor 최적화 검토
 ```
 
 ### BTUpdateInterval AssignmentGate 최종 측정

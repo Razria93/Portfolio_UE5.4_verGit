@@ -8,6 +8,52 @@ P35는 P34에서 만든 AI performance profiling 환경을 사용해 runtime cos
 
 ---
 
+## P35 최종 정책 요약
+
+P35의 결론은 Runtime LOD를 단순히 모든 Enemy에 같은 interval로 적용하는 것이 아니라, CombatEngage assignment 결과와 runtime relevance에 따라 update precision을 다르게 적용해야 한다는 것이다.
+
+최종 정책:
+
+```text
+Mode 1:
+combat-capable 조건에서도 보수적으로 사용할 수 있는 Runtime LOD 후보.
+AIContext / AIIntentState 호출수를 줄이면서 Engage 2 / Alert 6 / Idle 계층과 공격 전환이 안정적으로 유지됐다.
+
+Mode 2:
+AIContext / AIIntentState 호출수와 BT Tick p95 감소 폭이 가장 크다.
+다만 공격적인 후보이므로 far / offscreen / NonCombat / Dormant 계층부터 적용하는 쪽이 적합하다.
+
+EngageContext:
+전투 진입과 공격 전환에 직접 관여하므로 기본 interval을 유지한다.
+```
+
+80 Enemy 최종 대표 측정:
+
+| Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | EngageContext Count |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 16.2377ms | 16.2519ms | 0.4001ms | 23600 | 12000 | 590 |
+| 1 | 16.1284ms | 16.1593ms | 0.3787ms | 12216 | 8100 | 592 |
+| 2 | 16.2984ms | 16.2689ms | 0.1641ms | 6947 | 5826 | 580 |
+
+후속 작업:
+
+```text
+1. Observe / Aware Intent 분리
+2. AlertCap CVar 비교 측정
+3. Runtime LOD Implementation v1
+4. Proxy / Dormant Actor 최적화 검토
+```
+
+관련 상세 문서:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_Note.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
+```
+
+---
+
 ## 기준 Baseline
 
 P35의 비교 기준은 P34 baseline CSV다.
