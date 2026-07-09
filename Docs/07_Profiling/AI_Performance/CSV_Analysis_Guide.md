@@ -277,7 +277,8 @@ BT service 호출 횟수 기준:
 ```text
 PortfolioAI_BT_UpdateAIContext_Count:
 AIContext TickNode 호출 횟수다.
-Assignment request producer이므로 Mode 1 / 2에서도 Mode 0과 유사하게 유지되어야 한다.
+AIContextService 호출수 레벨 분리 전에는 Assignment request producer이므로 Mode 1 / 2에서도 Mode 0과 유사하게 유지되는 것이 정상이었다.
+AIContextService 호출수 레벨 분리 이후에는 Mode 1 / 2에서 Reduced / Low precision 대상의 호출수가 줄어드는지 확인한다.
 
 PortfolioAI_BT_UpdateAIIntentState_Count:
 AIIntentState TickNode 호출 횟수다.
@@ -292,6 +293,18 @@ Engage branch 실행 여부와 연결된다.
 BT service interval 선택 기준:
 
 ```text
+PortfolioAI_BT_AIContextInterval_Default_Count:
+AIContext가 default interval을 선택한 횟수다.
+BTUpdateIntervalMode 0 또는 High precision에서 증가한다.
+
+PortfolioAI_BT_AIContextInterval_Reduced_Count:
+AIContext가 reduced interval을 선택한 횟수다.
+BTUpdateIntervalMode 1의 Reduced / Low, 또는 BTUpdateIntervalMode 2의 Reduced에서 증가한다.
+
+PortfolioAI_BT_AIContextInterval_Aggressive_Count:
+AIContext가 aggressive interval을 선택한 횟수다.
+BTUpdateIntervalMode 2의 Low에서만 증가해야 한다.
+
 PortfolioAI_BT_AIIntentInterval_Default_Count:
 AIIntentState가 default interval을 선택한 횟수다.
 BTUpdateIntervalMode 0 또는 High precision에서 증가한다.
@@ -324,8 +337,13 @@ Mode 2:
 Default Count, Reduced Count, Aggressive Count가 모두 증가한다.
 Low precision 대상이 없으면 Aggressive Count가 0일 수 있다.
 
+AIContextService 호출수 레벨 분리 전:
 AIContext Count는 Mode 1 / 2에서도 Mode 0과 유사하게 유지될 수 있다.
-AIContext는 CombatEngage request/context producer이므로, 현재 P35 정책에서는 줄이는 대상이 아니다.
+AIContext는 CombatEngage request/context producer이므로 줄이는 대상이 아니었다.
+
+AIContextService 호출수 레벨 분리 후:
+AIContext Count도 Mode 1 / 2에서 줄어드는지 확인한다.
+다만 Engage / Alert / Idle assignment가 흔들리면 AIContext interval 감소가 gameplay-safe하지 않은 것으로 본다.
 
 AIIntentState Count가 줄고 interval preset 분포가 위 패턴을 따르면 BTUpdateIntervalMode는 정상 적용된 것이다.
 Frame / Game p95 변화가 작아도 service work reduction으로 기록한다.

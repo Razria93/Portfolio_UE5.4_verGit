@@ -27,6 +27,8 @@ namespace
 
 	// AIContext
 	constexpr float DefaultAIContextInterval = 0.1f;
+	constexpr float ReducedAIContextInterval = 0.2f;
+	constexpr float AggressiveAIContextInterval = 0.4f;
 
 	// AIIntentState
 	constexpr float DefaultAIIntentStateInterval = 0.2f;
@@ -58,7 +60,7 @@ namespace
 	}
 
 	// Mode + Precision -> Interval Enum Preset
-	EBTServiceIntervalPreset SelectAIIntentStateIntervalPreset(int32 InMode, EAIUpdatePrecision InPrecision)
+	EBTServiceIntervalPreset SelectIntervalPreset(int32 InMode, EAIUpdatePrecision InPrecision)
 	{
 		switch (InMode)
 		{
@@ -101,24 +103,60 @@ namespace
 		}
 	}
 
-	// Interval Enum Preset -> Interval float value (return)
-	float GetAIIntentStateIntervalByPreset(EBTServiceIntervalPreset InPreset)
+	// AIContext
+	// Record Counter (AIContext)
+	void RecordAIContextIntervalPreset(EBTServiceIntervalPreset InPreset)
 	{
 		switch (InPreset)
 		{
 		case EBTServiceIntervalPreset::Default:
-			return DefaultAIIntentStateInterval;
+			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIContextInterval_Default_Count, 1, ECsvCustomStatOp::Accumulate);
+			return;
 
 		case EBTServiceIntervalPreset::Reduced:
-			return ReducedAIIntentStateInterval;
+			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIContextInterval_Reduced_Count, 1, ECsvCustomStatOp::Accumulate);
+			return;
 
 		case EBTServiceIntervalPreset::Aggressive:
 		default:
-			return AggressiveAIIntentStateInterval;
+			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIContextInterval_Aggressive_Count, 1, ECsvCustomStatOp::Accumulate);
+			return;
 		}
 	}
 
-	// Profiling Counter
+	// Interval Enum Preset -> Interval float value (AIContext)
+	float GetAIContextIntervalByPreset(EBTServiceIntervalPreset InPreset)
+	{
+		switch (InPreset)
+		{
+		case EBTServiceIntervalPreset::Default:
+			return DefaultAIContextInterval;
+
+		case EBTServiceIntervalPreset::Reduced:
+			return ReducedAIContextInterval;
+
+		case EBTServiceIntervalPreset::Aggressive:
+		default:
+			return AggressiveAIContextInterval;
+		}
+	}
+
+	// Interval Select (AIContext)
+	float SelectAIContextInterval(const UBehaviorTreeComponent& InOwnerComp)
+	{
+		const EBTServiceIntervalPreset intervalPreset = SelectIntervalPreset(
+			GetBTUpdateIntervalMode(),
+			ResolveAIUpdatePrecision(InOwnerComp));
+
+		// Profiling
+		RecordAIContextIntervalPreset(intervalPreset);
+
+		// return Interval float value
+		return GetAIContextIntervalByPreset(intervalPreset);
+	}
+
+	// AIIntentState
+	// Record Counter (AIIntentState)
 	void RecordAIIntentStateIntervalPreset(EBTServiceIntervalPreset InPreset)
 	{
 		switch (InPreset)
@@ -138,10 +176,27 @@ namespace
 		}
 	}
 
-	// Interval Select
+	// Interval Enum Preset -> Interval float value (AIIntentState)
+	float GetAIIntentStateIntervalByPreset(EBTServiceIntervalPreset InPreset)
+	{
+		switch (InPreset)
+		{
+		case EBTServiceIntervalPreset::Default:
+			return DefaultAIIntentStateInterval;
+
+		case EBTServiceIntervalPreset::Reduced:
+			return ReducedAIIntentStateInterval;
+
+		case EBTServiceIntervalPreset::Aggressive:
+		default:
+			return AggressiveAIIntentStateInterval;
+		}
+	}
+
+	// Interval Select (AIIntentState)
 	float SelectAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
 	{
-		const EBTServiceIntervalPreset intervalPreset = SelectAIIntentStateIntervalPreset(
+		const EBTServiceIntervalPreset intervalPreset = SelectIntervalPreset(
 			GetBTUpdateIntervalMode(),
 			ResolveAIUpdatePrecision(InOwnerComp));
 
@@ -153,9 +208,9 @@ namespace
 	}
 }
 
-float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
+float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& InOwnerComp)
 {
-	return DefaultAIContextInterval;
+	return SelectAIContextInterval(InOwnerComp);
 }
 
 float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
