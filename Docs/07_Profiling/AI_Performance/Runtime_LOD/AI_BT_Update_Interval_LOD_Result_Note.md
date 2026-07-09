@@ -35,7 +35,7 @@ CanMoveDecoratorAudit 0
 EnemyMovementMode 0
 ```
 
-## 40 Enemy Result
+## 40 Enemy Result - AssignmentGate
 
 측정 파일:
 
@@ -60,6 +60,39 @@ Mode 1은 Default / Reduced를 선택한다.
 Mode 2는 Default / Reduced / Aggressive를 모두 선택한다.
 AIContext 호출 수는 유사하게 유지된다.
 40 Enemy 조건에서 Frame / Game / BT Tick p95 개선은 작다.
+```
+
+## 40 Enemy Result - AssignmentLease
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260709_111406).csv
+Mode 1: Profile(20260709_111732).csv
+Mode 2: Profile(20260709_111916).csv
+```
+
+관측:
+
+```text
+BTUpdateIntervalMode 0 / 1 / 2 모두 Engage 2 / Alert 6 / 나머지 Idle이 안정적으로 유지됐다.
+GC Event는 없었다.
+```
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | Default Count | Reduced Count | Aggressive Count |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| BT Lease 40-0 | 0 | 12.4386ms | 11.3758ms | 0.2058ms | 11800 | 6080 | 6080 | 0 | 0 |
+| BT Lease 40-1 | 1 | 11.7803ms | 11.3470ms | 0.2016ms | 11720 | 4180 | 304 | 3876 | 0 |
+| BT Lease 40-2 | 2 | 11.7323ms | 11.2466ms | 0.2075ms | 12280 | 3100 | 318 | 794 | 1988 |
+
+해석:
+
+```text
+AssignmentLease 적용 후에도 AIIntentState 호출 수는 6080 -> 4180 -> 3100으로 감소한다.
+Mode 1 / 2에서 호출 수를 줄여도 Engage / Alert / Idle assignment가 끊기지 않았다.
+AIContext 호출 수는 request/context producer 역할 때문에 유지된다.
+40 Enemy 조건에서 Frame / Game / BT Tick p95 개선은 오차 범위로 본다.
+이번 결과는 frame gain보다 assignment 안정화와 service work reduction을 동시에 확인한 결과로 해석한다.
 ```
 
 ## 80 Enemy Result
@@ -94,8 +127,18 @@ AIContext 호출 수는 Mode와 무관하게 유사하게 유지된다.
 ```text
 BTUpdateIntervalMode 정책은 40 / 80 Enemy 조건 모두에서 정상 동작한다.
 Mode가 올라갈수록 AIIntentState service work는 줄어든다.
-다만 Frame p95 개선은 뚜렷하지 않으므로, 이 결과는 직접적인 frame gain보다 Runtime LOD 정책 검증과 service work reduction으로 해석한다.
+AssignmentLease 적용 후 40 Enemy 조건에서 Mode 1 / 2도 Engage 2 / Alert 6 / Idle 계층을 안정적으로 유지했다.
+다만 Frame p95 개선은 뚜렷하지 않으므로, 이 결과는 직접적인 frame gain보다 Runtime LOD 정책 검증, assignment 안정화, service work reduction으로 해석한다.
 
 다음 비교는 Alert assignment cap을 CVar로 분리한 뒤 AlertCap 6 / 40 조건에서 수행한다.
 ```
+## Follow-up - Assignment Bootstrap Warmup
 
+초기 request 후보가 한 번에 모두 들어오지 않고 `6 -> 13 -> 32 -> 62 -> 80`처럼 단계적으로 채워지는 현상을 확인했다.
+따라서 BT interval LOD 재측정 전에 CombatEngage 최초 assignment 확정 시점을 안정화한다.
+
+상세 계획:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
+```

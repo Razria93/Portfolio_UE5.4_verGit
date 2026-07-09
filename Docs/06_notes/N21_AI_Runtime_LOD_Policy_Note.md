@@ -106,6 +106,39 @@ Engage / Alert / Idle 계층화 이후, 전투 중요도가 낮은 AI의 decisio
    별도 관찰 상태로 분리할지 후속 설계에서 판단한다.
 ```
 
+## BT Update Interval AssignmentLease 측정 결과
+
+Assignment lease 적용 후 40 Enemy 조건에서 `BTUpdateIntervalMode` 0 / 1 / 2를 다시 측정했다.
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260709_111406).csv
+Mode 1: Profile(20260709_111732).csv
+Mode 2: Profile(20260709_111916).csv
+GC Event: none
+```
+
+측정 결과:
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | Default Count | Reduced Count | Aggressive Count | 상태 관측 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| BT Lease 40-0 | 0 | 12.4386ms | 11.3758ms | 0.2058ms | 11800 | 6080 | 6080 | 0 | 0 | Engage 2 / Alert 6 / Idle 안정 |
+| BT Lease 40-1 | 1 | 11.7803ms | 11.3470ms | 0.2016ms | 11720 | 4180 | 304 | 3876 | 0 | Engage 2 / Alert 6 / Idle 안정 |
+| BT Lease 40-2 | 2 | 11.7323ms | 11.2466ms | 0.2075ms | 12280 | 3100 | 318 | 794 | 1988 | Engage 2 / Alert 6 / Idle 안정 |
+
+측정 해석:
+
+```text
+AIIntentState 호출 수는 6080 -> 4180 -> 3100으로 감소했다.
+Mode 1 / 2에서도 Engage 2 / Alert 6 / 나머지 Idle이 안정적으로 유지됐다.
+AIContext 호출 수는 request/context producer 역할 때문에 유지됐다.
+Frame / Game / BT Tick p95 개선은 오차 범위로 본다.
+
+Assignment lease는 interval 감소 자체보다 assignment bootstrap/read timing 안정화에 의미가 있다.
+이 결과로 AIIntentState update precision을 낮춰도 현재 40 Enemy 조건에서는 CombatRole 계층이 끊기지 않음을 확인했다.
+```
+
 조건:
 
 ```text
@@ -1085,6 +1118,15 @@ Alert assignment 또는 현재 request를 가진 AIController는 Reduced로 분�
 MaxAlertersPerTarget으로 target당 Alert assignment 수를 제한한다.
 Engage / Alert 범위 밖의 request는 AssignmentContainer에 저장하지 않는다.
 
+Assignment 안정화 정책:
+기존 전투 관계는 새 request 정렬 결과보다 우선한다.
+기존 Engage는 lease가 유효하면 Engage slot을 먼저 차지한다.
+기존 Alert는 fresh request 정렬상 Engage권에 들어오고 Engage slot이 비어 있으면 Engage로 승격한다.
+기존 Alert가 승격되지 못하면 lease가 유효한 동안 Alert slot을 먼저 차지한다.
+기존 Engage를 Alert로 강등하지 않는다.
+새 후보는 기존 Engage / 승격 Alert / 기존 Alert가 먼저 채운 뒤 남은 slot만 채운다.
+따라서 Alert 경계에서 매 rebuild마다 멤버가 과도하게 교체되는 현상을 줄인다.
+
 AIContext는 CombatEngage request producer이므로 기본 interval을 유지한다.
 AIIntentState는 precision과 BTUpdateIntervalMode에 따라 interval을 조절한다.
 Mode 0은 모든 precision이 기본 interval을 사용한다.
@@ -1097,4 +1139,16 @@ AIIntentState는 `CombatRole`이 Engage일 때만 Engage, Alert일 때만 Alert�
 `CombatRole`이 None이면 target이 있어도 Investigate / Chase / Alert / Engage로 진입하지 않고 Idle로 되돌린다.
 Investigate / Chase는 CombatRole이 Engage 또는 Alert인 객체가 target을 잃거나 거리 조건을 벗어났을 때만 허용한다.
 따라서 Alert cap 밖의 Enemy는 target을 인식해도 Chase / Alert Spread에 참여하지 않는다.
+```
+## CombatEngage Assignment Bootstrap Warmup
+
+대량 AI 조건에서는 Perception / BT service update가 모든 Enemy request를 한 프레임에 제출하지 않는다.
+초기 request snapshot이 일부 후보만 포함한 상태에서 assignment를 확정하면, 먼저 들어온 Enemy가 Engage / Alert 권한을 선점한다.
+
+Runtime LOD 측정에서는 이 bootstrap 변수를 줄이기 위해 최초 assignment 확정 전 warmup 구간을 둔다.
+
+상세 계획:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
 ```

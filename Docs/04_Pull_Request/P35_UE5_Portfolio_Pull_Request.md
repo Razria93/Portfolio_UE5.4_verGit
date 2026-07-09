@@ -126,6 +126,44 @@ CombatEngage assignment를 기준으로 AI를 Engage / Alert / Idle 계층으로
 5. Observe / Aware / Standby 상태 분리 검토
 ```
 
+### BTUpdateInterval AssignmentLease 40 Enemy 측정
+
+측정 목적:
+
+```text
+Assignment lease 적용 후 BTUpdateIntervalMode 0 / 1 / 2에서도 Engage / Alert / Idle 계층이 안정적으로 유지되는지 확인했다.
+이번 측정의 핵심은 AIIntentState 호출 수 감소 자체가 아니라, 호출 수를 줄여도 assignment snapshot이 안정적으로 읽히는지 확인하는 것이다.
+```
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260709_111406).csv
+Mode 1: Profile(20260709_111732).csv
+Mode 2: Profile(20260709_111916).csv
+GC Event: none
+```
+
+측정 결과:
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | Default Count | Reduced Count | Aggressive Count | 상태 관측 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| BT Lease 40-0 | 0 | 12.4386ms | 11.3758ms | 0.2058ms | 11800 | 6080 | 6080 | 0 | 0 | Engage 2 / Alert 6 / Idle 안정 |
+| BT Lease 40-1 | 1 | 11.7803ms | 11.3470ms | 0.2016ms | 11720 | 4180 | 304 | 3876 | 0 | Engage 2 / Alert 6 / Idle 안정 |
+| BT Lease 40-2 | 2 | 11.7323ms | 11.2466ms | 0.2075ms | 12280 | 3100 | 318 | 794 | 1988 | Engage 2 / Alert 6 / Idle 안정 |
+
+해석:
+
+```text
+Assignment lease 적용 후에도 AIIntentState 호출 수는 6080 -> 4180 -> 3100으로 감소했다.
+Mode 1 / 2에서도 Engage 2 / Alert 6 / 나머지 Idle이 안정적으로 유지됐다.
+AIContext 호출 수는 request/context producer 역할 때문에 유지됐다.
+40 Enemy 조건에서 Frame / Game / BT Tick p95 개선은 오차 범위다.
+
+따라서 이번 결과는 직접적인 frame gain보다,
+assignment 안정화와 service work reduction이 동시에 성립하는지 확인한 결과로 해석한다.
+```
+
 ---
 
 ## 요약
@@ -1205,6 +1243,19 @@ Investigate / Chase는 CombatRole이 Engage 또는 Alert인 객체가 target을 
 따라서 MaxAlertersPerTarget 밖의 Enemy는 target을 인식해도 Chase / Alert Spread에 참여하지 않는다.
 ```
 
+assignment 안정화 정책:
+
+```text
+기존 전투 관계는 새 request 정렬 결과보다 우선한다.
+기존 Engage는 lease가 유효하면 Engage slot을 먼저 차지한다.
+기존 Alert는 fresh request 정렬상 Engage권에 들어오고 Engage slot이 비어 있으면 Engage로 승격한다.
+기존 Alert가 승격되지 못하면 lease가 유효한 동안 Alert slot을 먼저 차지한다.
+기존 Engage를 Alert로 강등하지 않는다.
+새 후보는 기존 Engage / 승격 Alert / 기존 Alert가 먼저 채운 뒤 남은 slot만 채운다.
+
+이 정책은 Alert 경계에서 매 rebuild마다 멤버가 과도하게 교체되는 현상을 줄이기 위한 것이다.
+```
+
 검증 기준:
 
 ```text
@@ -1213,4 +1264,14 @@ AIContext count는 유지되는지 확인한다.
 EngageContext count는 유지되는지 확인한다.
 AIIntentState interval selection count로 Default / Reduced / Aggressive 선택 분포를 확인한다.
 Engage / Attack 상태 전환이 깨지지 않는지 확인한다.
+```
+## Follow-up - Assignment Bootstrap Warmup
+
+BT interval LOD 측정 중 초기 request 후보가 단계적으로 채워지며 일부 Enemy가 assignment를 선점하는 현상을 확인했다.
+최초 assignment 확정은 후보군이 충분히 모인 뒤 수행하는 `AssignmentWarmup` 정책으로 보완한다.
+
+상세 계획:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
 ```

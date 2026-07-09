@@ -104,6 +104,64 @@ Alert assignment cap 효과를 분리하려면 Alert assignment limit을 profili
 과거 CSV는 service scheduling과 assignment 정책이 바뀌는 도중에 측정됐으므로 직접 before/after 기준으로 쓰기 어렵다.
 ```
 
+## 최종 측정 - AssignmentLease 40 Enemy
+
+측정 목적:
+
+```text
+Assignment lease 적용 후 BTUpdateIntervalMode 0 / 1 / 2에서도 Engage / Alert / Idle 계층이 안정적으로 유지되는지 확인한다.
+이번 측정의 핵심은 AIIntentState 호출 수 감소 자체가 아니라, 호출 수를 줄여도 assignment snapshot이 안정적으로 읽히는지 확인하는 것이다.
+```
+
+공통 조건:
+
+```text
+Enemy Count: 40
+Capture Duration: 약 36초
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+Camera: fixed camera
+GC Event: none
+
+Runtime LOD CVar:
+EnemyMeshMode 0
+EnemyAnimationMode 0
+EnemyAnimationRefreshCounter 0
+DisableEnemyWeaponActor 0
+DisableEnemyPerception 0
+PerceptionCandidateAudit 0
+BlackboardEngageLatencyAudit 0
+CanMoveDecoratorAudit 0
+EnemyMovementMode 0
+```
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260709_111406).csv
+Mode 1: Profile(20260709_111732).csv
+Mode 2: Profile(20260709_111916).csv
+```
+
+측정 결과:
+
+| Case | Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | Default Count | Reduced Count | Aggressive Count | 상태 관측 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| BT Lease 40-0 | 0 | 12.4386ms | 11.3758ms | 0.2058ms | 11800 | 6080 | 6080 | 0 | 0 | Engage 2 / Alert 6 / Idle 안정 |
+| BT Lease 40-1 | 1 | 11.7803ms | 11.3470ms | 0.2016ms | 11720 | 4180 | 304 | 3876 | 0 | Engage 2 / Alert 6 / Idle 안정 |
+| BT Lease 40-2 | 2 | 11.7323ms | 11.2466ms | 0.2075ms | 12280 | 3100 | 318 | 794 | 1988 | Engage 2 / Alert 6 / Idle 안정 |
+
+해석:
+
+```text
+Assignment lease 적용 후 AIIntentState 호출 수는 6080 -> 4180 -> 3100으로 감소한다.
+Mode 1 / 2에서도 Engage 2 / Alert 6 / 나머지 Idle이 안정적으로 유지됐다.
+AIContext 호출 수는 유사하게 유지된다.
+Frame / Game / BT Tick p95 개선은 오차 범위로 본다.
+따라서 이번 결과는 frame gain보다 assignment 안정화와 service work reduction 검증으로 해석한다.
+```
+
 ## 시행착오 기록 - BT Interval 정책이 바뀐 이유
 
 이번 작업은 단순히 "BT Service interval 값을 얼마로 할 것인가"를 찾는 작업이 아니었다.
@@ -665,6 +723,19 @@ target당 Alert assignment를 받을 수 있는 AIController 수
 정렬된 request 중 MaxEngagersPerTarget 범위는 Engage로 저장한다.
 그 다음 MaxAlertersPerTarget 범위는 Alert로 저장한다.
 나머지는 AssignmentContainer에 저장하지 않는다.
+```
+
+Assignment 안정화 순서:
+
+```text
+1. 기존 Engage assignment를 lease 동안 먼저 유지한다.
+2. 기존 Alert assignment가 fresh request 정렬상 Engage권에 들어오고 Engage slot이 비어 있으면 Engage로 승격한다.
+3. 승격되지 않은 기존 Alert assignment를 lease 동안 유지한다.
+4. 새 request 후보는 남은 Engage / Alert slot만 채운다.
+
+기존 Engage는 Alert로 강등하지 않는다.
+기존 Alert는 승격 또는 Alert 유지 또는 lease 만료 후 탈락만 허용한다.
+이 순서는 Alert cap 경계에서 멤버가 매 rebuild마다 흔들리는 현상을 줄이기 위한 것이다.
 ```
 
 따라서 `AssignmentContainer`는 precision policy의 기준 테이블 역할을 한다.
