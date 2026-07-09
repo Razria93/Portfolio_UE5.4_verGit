@@ -27,3 +27,6 @@ Saved/
 
 # Local profiling captures before curated raw CSV archival
 /Csvprofile/
+
+# Local profiling raw evidence referenced by docs, not committed
+/Docs/07_Profiling/AI_Performance/CSV/runtime_lod/

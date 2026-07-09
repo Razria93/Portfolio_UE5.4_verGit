@@ -1,4 +1,4 @@
-﻿# UE5 Portfolio Pull Request
+# UE5 Portfolio Pull Request
 
 ## 제목
 
@@ -97,6 +97,8 @@ Analysis Window: first 3s / last 3s trimmed, middle 30s used
 Log State: -noailogging
 PIE: F11 fullscreen
 GC Event: none
+Raw CSV: Docs/07_Profiling/AI_Performance/CSV/runtime_lod/p35_ai_context_interval_split/
+Pivot Evidence: Docs/07_Profiling/AI_Performance/CSV/runtime_lod/p35_design_pivot_evidence/
 ```
 
 40 Enemy 대표 측정:
@@ -195,7 +197,7 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_N
 4. EngageContext count 유지 확인
 5. Default / Reduced / Aggressive interval preset 분포 확인
 6. GC 없는 CSV를 대표 측정값으로 사용
-7. 203058 Mode 2 측정은 Frame / Game / CharacterMovement p95가 튄 보조 측정으로 분리하고, 203937을 대표값으로 사용
+7. 최종 대표 측정과 설계 분기 근거 CSV를 분리해서 보관
 ```
 
 ## 제외 범위
@@ -235,6 +237,7 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_N
 
 ```text
 Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
+Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_Note.md
