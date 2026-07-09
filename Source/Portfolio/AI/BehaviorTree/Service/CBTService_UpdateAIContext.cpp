@@ -7,6 +7,7 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Controller/CAIController.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHealthComponent.h"
@@ -29,11 +30,13 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext);
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext_Count, 1, ECsvCustomStatOp::Accumulate);
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
-	const AAIController* aiOwner = OwnerComp.GetAIOwner();
+	ACAIController* aiOwner = Cast<ACAIController>(OwnerComp.GetAIOwner());
 	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
@@ -88,6 +91,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	}
 
 	UpdatePerceptionContext(blackboardComp, aiContext);
+	aiOwner->RecordBlackboardTargetSetForAudit(aiContext.TargetActor);
 
 	// Based TargetActor
 	EContextBuildResult engageMetricResult = ComputeAlertRangeContext(ownerPawn, blackboardComp, aiContext);
@@ -121,6 +125,8 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* I
 	OutAIContext.bHasLOS = topData.bHasLOS;
 	OutAIContext.LastSeenTime = topData.LastSeenTime;
 	OutAIContext.LastKnownLocation = topData.LastKnownLocation;
+
+	aiController->RecordPerceptionContextBuiltForAudit(topData.TargetActor);
 
 	return EContextBuildResult::Success;
 }
@@ -197,10 +203,16 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	requestContext.bWasEngaged = previousAssignmentContext.IsValidAssignment() && previousAssignmentContext.CombatRole == ECombatRole::Engage;
 
 	subsystem->SubmitRequest(requestContext);
+	aiController->RecordEngageRequestSubmittedForAudit(InOutAIContext.TargetActor);
 
 	const FEngageAssignmentContext curAssignmentContext = subsystem->GetAssignment(aiController); // Current Context
 
-	InOutAIContext.bShouldEngage = curAssignmentContext.IsValidAssignment() && curAssignmentContext.CombatRole == ECombatRole::Engage;
+	InOutAIContext.CombatRole = curAssignmentContext.IsValidAssignment() ? curAssignmentContext.CombatRole : ECombatRole::None;
+	InOutAIContext.bShouldEngage = InOutAIContext.CombatRole == ECombatRole::Engage;
+	if (InOutAIContext.bShouldEngage)
+	{
+		aiController->RecordEngageAssignmentResolvedForAudit(InOutAIContext.TargetActor);
+	}
 
 	return EContextBuildResult::Success;
 }
@@ -262,6 +274,7 @@ void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardCompo
 {
 	if (!IsValid(InBlackboardComp)) return;
 
+	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Engage::CombatRole.KeyName, static_cast<uint8>(InAIContext.CombatRole));
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bShouldEngage.KeyName, InAIContext.bShouldEngage);
 }
 
@@ -308,6 +321,7 @@ void UCBTService_UpdateAIContext::ClearEngageAssignmentContext(UBlackboardCompon
 {
 	if (!IsValid(InBlackboardComp)) return;
 
+	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Engage::CombatRole.KeyName, static_cast<uint8>(ECombatRole::None));
 	InBlackboardComp->ClearValue(CAIKey::Engage::bShouldEngage.KeyName);
 }
 
@@ -321,4 +335,9 @@ void UCBTService_UpdateAIContext::ClearReactionContext(UBlackboardComponent* InB
 void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlackboardComp)
 {
 	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
+}
+
+void UCBTService_UpdateAIContext::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetAIContextInterval(OwnerComp));
 }

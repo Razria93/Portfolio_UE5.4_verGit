@@ -849,15 +849,32 @@ AI Blackboard 구조
 AI Profiling / Bottleneck 분석
 - P33: AI Update Interval Profiling 정책 정리
 - P34: AI Profiling Test Asset 분리
+
+AI LOD / Performance 최적화
+- P35: AI Runtime LOD 정책 정리
+  -> Enemy mesh / animation / WeaponActor / perception / movement / BT service interval 축 분리 측정 완료
+  -> CombatEngage assignment gate / lease / warmup 기반 Engage 2 / Alert 6 / Idle 계층 안정화
+  -> AIContext / AIIntentState interval split 정책 후보 정리
+```
+
+### 진행 중
+
+```text
+없음
 ```
 
 ### 진행 예정
 
 ```text
 AI LOD / Performance 최적화
-- P35: AI Runtime LOD 정책 정리
-- P36: AI Perception LOD 정책 정리
-- P37: AI Update LOD 정책 정리
+- P36: Observe / Aware Intent 분리
+- P37: Runtime LOD Implementation v1
+  -> Mode 1을 combat-capable 보수 후보로 적용
+  -> Mode 2는 far / offscreen / NonCombat / Dormant 우선 후보로 검토
+
+AI LOD / Performance 후속 측정
+- AlertCap CVar 비교 측정
+- Proxy / Dormant Actor 최적화 검토
 
 Code Quality Sweep
 - P38: Type Header / Helper Boundary 정리

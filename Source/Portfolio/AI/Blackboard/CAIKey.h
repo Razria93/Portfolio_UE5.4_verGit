@@ -4,6 +4,7 @@
 #include "AI/Blackboard/CAIKeyFactory.h"
 #include "Type/CHealthStructure.h"
 #include "Type/CStateStructure.h"
+#include "Type/CWorldSubSystemStructure.h"
 
 namespace CAIKey
 {
@@ -79,6 +80,7 @@ namespace CAIKey
 
 	namespace Engage
 	{
+		static const FAIBlackboardKeySpec CombatRole = CAIKeyFactory::FixedEnum(TEXT("CombatRole"), static_cast<uint8>(ECombatRole::None));
 		static const FAIBlackboardKeySpec bShouldEngage = CAIKeyFactory::FixedBool(TEXT("bShouldEngage"), false);
 		static const FAIBlackboardKeySpec bCanCombatAction = CAIKeyFactory::FixedBool(TEXT("bCanCombatAction"), false);
 		

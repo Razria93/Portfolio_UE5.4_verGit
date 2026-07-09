@@ -339,6 +339,26 @@ GC pressure reduction
 
 의도는 실제 최적화 구현이 유의미할 가능성이 있는지 확인하는 것이다.
 
+측정 축은 다음 우선순위로 나눈다.
+
+```text
+1차 측정
+-> 코드 / 에디터 설정으로 바로 끌 수 있는 축
+-> Mesh visibility, WeaponActor, AnimInstance, Movement, Collision, Tick, Shadow, Perception, BT Tick
+
+2차 측정
+-> 실제 Runtime LOD로 적용 가능한 주기 / 거리 기반 조정 축
+-> component tick interval, BT service interval, perception activation range / cap
+
+3차 측정
+-> 에셋 제작 또는 대체가 필요한 축
+-> material 단순화, low-poly mesh, proxy representation
+```
+
+1차 측정은 병목 후보를 빠르게 걸러내기 위한 극단 비교다.
+2차 측정은 실제 적용 가능한 Runtime LOD 정책으로 이어질 수 있는지 확인한다.
+3차 측정은 render 비용이 큰 축으로 확인될 때 후속 PR에서 다룬다.
+
 ### 1. Actor / Component 수
 
 검증 질문:

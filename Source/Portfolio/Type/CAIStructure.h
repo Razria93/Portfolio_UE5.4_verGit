@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Type/CHealthStructure.h"
+#include "Type/CWorldSubSystemStructure.h"
 #include "CAIStructure.generated.h"
 
 UENUM(BlueprintType)
@@ -101,6 +102,9 @@ public:
     bool bInAlertRange = false;
 
     // Engage Context
+    UPROPERTY(Transient)
+    ECombatRole CombatRole = ECombatRole::None;
+
     UPROPERTY(Transient)
     bool bShouldEngage = false;
 

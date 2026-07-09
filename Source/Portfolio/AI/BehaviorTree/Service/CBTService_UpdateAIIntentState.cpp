@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -13,6 +14,7 @@
 #include "Type/CStateStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CHealthStructure.h"
+#include "Type/CWorldSubSystemStructure.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 
@@ -28,6 +30,8 @@ UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState);
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState_Count, 1, ECsvCustomStatOp::Accumulate);
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return;
@@ -71,7 +75,7 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName);
 
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
-	const bool bShouldEngage = InBlackboard->GetValueAsBool(CAIKey::Engage::bShouldEngage.KeyName);
+	const ECombatRole combatRole = static_cast<ECombatRole>(InBlackboard->GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
 
 	// -----------------------------------------------------------------------------
 	// 3) Decide Next AIIntentState
@@ -79,17 +83,21 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	// 3-1. Invalid Target -> Idle.
 	if (!bHasTarget && !bIsInvestigating) return EAIIntentState::Idle;
 
-	// 3-2. Valid target But Invalid LOS.
+	// 3-2. Target awareness alone does not grant combat participation.
+	if (combatRole == ECombatRole::None) return EAIIntentState::Idle;
+
+	// 3-3. Assigned combat participant lost LOS.
 	if (!bHasLOS) return EAIIntentState::Investigate;
 
-	// 3-3. Valid Target and LOS But Out of Range.
+	// 3-4. Assigned combat participant is out of alert range.
 	if (!bInAlertRange) return EAIIntentState::Chase;
 
-	// 3-4. in Range But attack disable.
-	if (!bShouldEngage) return EAIIntentState::Alert;
+	// 3-5. In range and assigned by CombatEngage subsystem.
+	if (combatRole == ECombatRole::Engage) return EAIIntentState::Engage;
+	if (combatRole == ECombatRole::Alert) return EAIIntentState::Alert;
 
-	// 3-5. in Range and Attackable.
-	return EAIIntentState::Engage;
+	// 3-6. Unknown role fallback.
+	return EAIIntentState::Idle;
 }
 
 bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState)
@@ -121,4 +129,9 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 			InBlackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime.KeyName);
 		}
 	} 
+}
+
+void UCBTService_UpdateAIIntentState::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetAIIntentStateInterval(OwnerComp));
 }

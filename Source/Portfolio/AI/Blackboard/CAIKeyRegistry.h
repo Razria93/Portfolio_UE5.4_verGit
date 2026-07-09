@@ -89,6 +89,7 @@ namespace CAIKeyRegistry
 			CAIKey::Alert::AlertStepLocation,
 
 			// Engage
+			CAIKey::Engage::CombatRole,
 			CAIKey::Engage::bShouldEngage,
 			CAIKey::Engage::bCanCombatAction,
 			CAIKey::Engage::bIsCombatAction,

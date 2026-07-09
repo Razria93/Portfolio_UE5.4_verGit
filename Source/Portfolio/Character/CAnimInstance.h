@@ -48,7 +48,12 @@ private:
 	UPROPERTY(Transient)
 	class UCDefenseComponent* DefenseComp_Cached = nullptr;
 
+private:
+	// Profiling State
+	float RuntimeLODAnimationRefreshElapsed = 0.f;
+
 public:
+	// Lifecycle
 	void NativeInitializeAnimation() override;
 	void NativeUninitializeAnimation() override;
 	void NativeUpdateAnimation(float DeltaSeconds) override;
@@ -61,13 +66,39 @@ private:
 	void UnbindComponentEvents();
 
 private:
+	// Animation Profiling Gate
+	// 1. Lifecycle
+	void InitializeAnimationStateForProfiling();
+	void ClearAnimationStateForProfiling();
+
+	// 2. Condition
+	bool ShouldReduceEnemyAnimationRefreshForProfiling() const;
+	bool IsEnemyAnimationProfilingTarget() const;
+
+	// 3. Query
+	int32 GetEnemyAnimationModeForProfiling() const;
+	float GetReducedAnimationRefreshIntervalForProfiling() const;
+
+	// 4. Gate
+	bool ShouldRefreshAnimationParameters(float DeltaSeconds);
+
+private:
+	// Animation Refresh Audit
+	// 1. Condition
+	bool ShouldAuditAnimationRefreshForProfiling() const;
+
+	// 2. Record
+	void RecordAnimationRefreshAttemptForProfiling() const;
+	void RecordAnimationRefreshExecutedForProfiling() const;
+	void RecordAnimationRefreshSkippedForProfiling() const;
+
+private:
 	// Parameter Refresh
 	void RefreshMovementParameters();
 	void RefreshStateParameters();
 
 private:
-	/* === [IN] Custom Delgate Events === */
-	// CWeaponComponent
+	// Component Event Callback
 	UFUNCTION()
 	void OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType);
 };

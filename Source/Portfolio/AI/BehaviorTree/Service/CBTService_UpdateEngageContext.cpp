@@ -3,6 +3,7 @@
 #include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
+#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "GameFramework/Pawn.h"
 #include "Character/Enemy/CEnemy.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
@@ -24,6 +25,8 @@ UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateEngageContext);
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_UpdateEngageContext_Count, 1, ECsvCustomStatOp::Accumulate);
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackBoardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackBoardComp)) return;
@@ -55,6 +58,11 @@ void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	}
 
 	UpdateEngageContext(blackBoardComp, engageContext);
+}
+
+void UCBTService_UpdateEngageContext::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetEngageContextInterval());
 }
 
 EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& OutEngageContext)

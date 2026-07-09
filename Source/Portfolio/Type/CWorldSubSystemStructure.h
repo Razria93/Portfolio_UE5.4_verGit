@@ -12,6 +12,14 @@ enum class ECombatRole : uint8
 };
 
 UENUM(BlueprintType)
+enum class EAIUpdatePrecision : uint8
+{
+	High,
+	Reduced,
+	Low
+};
+
+UENUM(BlueprintType)
 enum class EFeedbackAudience : uint8
 {
 	None,

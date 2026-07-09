@@ -34,6 +34,9 @@ private:
 	UPROPERTY(Transient)
 	class ACWeaponActor* WeaponActor = nullptr;
 
+	UPROPERTY(Transient)
+	bool bWeaponActorDisabledForProfiling = false;
+
 private:
 	/* === Injected Objects === */
 	UPROPERTY(Transient)
@@ -102,4 +105,10 @@ private:
 private:
 	FCharacterComponentReferences BuildWeaponActorReferences() const;
 	bool CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType InWeaponType, TSubclassOf<ACWeaponActor> InWeaponActorClass);
+
+private:
+	// Profiling
+	bool ShouldSkipWeaponActorCreationForProfiling() const;
+	void SkipWeaponActorCreationForProfiling();
+	bool PreserveEquipWeaponTypeWithoutActorForProfiling();
 };

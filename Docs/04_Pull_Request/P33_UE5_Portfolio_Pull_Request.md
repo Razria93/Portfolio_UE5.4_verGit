@@ -257,14 +257,14 @@ CSV hot path summary
 
 ### 기준 측정
 
-| Case | Enemy | 상태 | 시간 | Frame p95 | Game p95 | BT Tick p95 | AIPerception p95 | 주요 경로 p95 | 메모 |
-| ---- | ----: | ---- | ---: | --------: | -------: | -----------: | ---------------: | ------------ | ---- |
-| 01 | 1 | Idle, Patrol | 29.27s | 9.68ms | 9.50ms | 0.0259ms | - | AIContext 0.0123ms, AIIntent 0.0037ms, EngageRebuild 0.0005ms | Patrol context는 `UCBTTask_SelectPatrolPoint`에서 갱신된다. 사용하지 않는 patrol service는 제거했다. |
-| 02 | 1 | Engage | 32.82s | 10.91ms | 10.91ms | 0.0351ms | - | AIContext 0.0230ms, EngageContext 0.0020ms, EngageRebuild 0.0023ms | Engage branch 계측 scope가 정상 기록됐다. Investigate branch는 진입하지 않았다. |
-| 03 | 10 | Engage | 31.72s | 12.35ms | 12.35ms | 0.0913ms | 0.0556ms | AIContext 0.0534ms, EngageContext 0.0022ms, EngageRebuild 0.0034ms | 10 AI engage 부하 기준값이다. PIE CSV의 `ActorCount/CEnemy`는 editor world와 PIE world 중복을 포함할 수 있다. |
-| 04 | 20 | Engage | 29.88s | 13.54ms | 13.51ms | 0.1540ms | 0.0727ms | AIContext 0.0831ms, EngageContext 0.0020ms, EngageRebuild 0.0038ms | 20 AI engage 부하 기준값이다. GameThread max에는 capture/PIE outlier가 있어 p95/p99 중심으로 판단한다. |
-| 05 | 40 | Engage | 30.12s | 18.00ms | 17.98ms | 0.3545ms | 0.2168ms | AIContext 0.1732ms, EngageContext 0.0020ms, EngageRebuild 0.0056ms | 60fps 경계에 접근한다. AI service 비용은 증가하지만 p95 기준 0.5ms 아래다. |
-| 06 | 60 | Engage | 30.48s | 21.89ms | 21.84ms | 0.5331ms | 0.4236ms | AIContext 0.2799ms, EngageContext 0.0014ms, EngageRebuild 0.0072ms | 60fps 아래로 내려간다. BT service 비용은 0.5ms를 넘지만 1.0ms에는 도달하지 않는다. |
+| Case | Enemy | 상태           |     시간 | Frame p95 | Game p95 | BT Tick p95 | AIPerception p95 | 주요 경로 p95                                                          | 메모                                                                                         |
+| ---- | ----: | ------------ | -----: | --------: | -------: | ----------: | ---------------: | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 01   |     1 | Idle, Patrol | 29.27s |    9.68ms |   9.50ms |    0.0259ms |                - | AIContext 0.0123ms, AIIntent 0.0037ms, EngageRebuild 0.0005ms      | Patrol context는 `UCBTTask_SelectPatrolPoint`에서 갱신된다. 사용하지 않는 patrol service는 제거했다.         |
+| 02   |     1 | Engage       | 32.82s |   10.91ms |  10.91ms |    0.0351ms |                - | AIContext 0.0230ms, EngageContext 0.0020ms, EngageRebuild 0.0023ms | Engage branch 계측 scope가 정상 기록됐다. Investigate branch는 진입하지 않았다.                             |
+| 03   |    10 | Engage       | 31.72s |   12.35ms |  12.35ms |    0.0913ms |         0.0556ms | AIContext 0.0534ms, EngageContext 0.0022ms, EngageRebuild 0.0034ms | 10 AI engage 부하 기준값이다. PIE CSV의 `ActorCount/CEnemy`는 editor world와 PIE world 중복을 포함할 수 있다. |
+| 04   |    20 | Engage       | 29.88s |   13.54ms |  13.51ms |    0.1540ms |         0.0727ms | AIContext 0.0831ms, EngageContext 0.0020ms, EngageRebuild 0.0038ms | 20 AI engage 부하 기준값이다. GameThread max에는 capture/PIE outlier가 있어 p95/p99 중심으로 판단한다.         |
+| 05   |    40 | Engage       | 30.12s |   18.00ms |  17.98ms |    0.3545ms |         0.2168ms | AIContext 0.1732ms, EngageContext 0.0020ms, EngageRebuild 0.0056ms | 60fps 경계에 접근한다. AI service 비용은 증가하지만 p95 기준 0.5ms 아래다.                                     |
+| 06   |    60 | Engage       | 30.48s |   21.89ms |  21.84ms |    0.5331ms |         0.4236ms | AIContext 0.2799ms, EngageContext 0.0014ms, EngageRebuild 0.0072ms | 60fps 아래로 내려간다. BT service 비용은 0.5ms를 넘지만 1.0ms에는 도달하지 않는다.                                |
 
 ### 환경 변수 분리 측정
 

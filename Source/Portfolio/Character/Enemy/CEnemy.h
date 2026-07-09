@@ -18,6 +18,21 @@ public:
 	ACEnemy();
 
 private:
+	struct FRuntimeLODMeshState
+	{
+		int32 AppliedMode = INDEX_NONE;
+		uint8 OriginalVisibilityBasedAnimTickOption = 0;
+		bool bOriginalStateCached = false;
+	};
+
+	struct FRuntimeLODMovementState
+	{
+		int32 AppliedMode = INDEX_NONE;
+		bool bOriginalMovementComponentTickEnabled = true;
+		bool bOriginalStateCached = false;
+	};
+
+private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
 	bool bUsePatrol;
 
@@ -120,6 +135,10 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
 	int32 ParryResultCount = 0;
 
+private:
+	FRuntimeLODMeshState RuntimeLODMeshState;
+	FRuntimeLODMovementState RuntimeLODMovementState;
+
 protected:
 	// Lifecycle
 	void PostInitializeComponents() override;
@@ -131,6 +150,30 @@ private:
 	void RecoverReferences();
 	void BuildReferences(FCharacterComponentReferences& OutReferences);
 	void InjectReferences(const FCharacterComponentReferences& InReferences);
+
+private:
+	// Runtime LOD
+	// 1. Update
+	void UpdateRuntimeLODMeshMode();
+	void UpdateRuntimeLODMovementMode();
+
+	// 2. Lifecycle
+	void CacheRuntimeLODMovementOriginalState();
+
+	// 3. Dispatch
+	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
+
+	// 4. Movement Mode
+	void ApplyRuntimeLODMovementDefault();
+	void ApplyRuntimeLODMovementStateRefreshDisabled();
+	void ApplyRuntimeLODMovementIntentBlocked();
+
+	// 5. Movement State
+	void RestoreRuntimeLODMovementStateRefresh();
+	void DisableRuntimeLODMovementStateRefresh();
+	void AllowRuntimeLODMovementIntent();
+	void BlockRuntimeLODMovementIntent();
+	void StopRuntimeLODActiveMovement();
 
 public:
 	void Tick(float DeltaTime) override;
