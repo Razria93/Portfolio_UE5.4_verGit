@@ -11,6 +11,16 @@ struct FEngageAssignmentSlotState
 	int32 AlertCount = 0;
 };
 
+struct FEngageAssignmentRebuildDebugState
+{
+	int32 RequestSnapshotCount = 0;
+	int32 RequestBucketCount = 0;
+	int32 FreshAppliedCount = 0;
+	int32 PromotedCount = 0;
+	int32 PreservedEngageCount = 0;
+	int32 PreservedAlertCount = 0;
+};
+
 UCLASS()
 class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsystem
 {
@@ -18,10 +28,10 @@ class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsyst
 	
 private:
 	UPROPERTY()
-	int32 MaxEngagersPerTarget = 2;
+	int32 MaxEngagersPerTarget = 8;
 
 	UPROPERTY()
-	int32 MaxAlertersPerTarget = 6;
+	int32 MaxAlertersPerTarget = 16;
 
 	UPROPERTY()
 	float RebuildInterval = 0.1f;
@@ -31,6 +41,7 @@ private:
 
 private:
 	float ElapsedTime = 0.f;
+	int32 AssignmentRebuildId = 0;
 
 private:
 	UPROPERTY()
@@ -73,12 +84,15 @@ private:
 
 private:
 	// Assignment Apply
-	void ApplyFreshRequestAssignments(const TMap<class AActor*, TArray<FEngageRequestContext>>& InRequestBucket, TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TSet<class ACAIController*>& OutFreshRequestControllers, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState) const;
-	void PreserveLeasedAssignments(TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, const TSet<class ACAIController*>& InFreshRequestControllers, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState) const;
+	void PreserveExistingEngageAssignments(TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const;
+	void PromoteExistingAlertAssignments(const TMap<class AActor*, TArray<FEngageRequestContext>>& InRequestBucket, TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const;
+	void PreserveExistingAlertAssignments(TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const;
+	void ApplyFreshRequestAssignments(const TMap<class AActor*, TArray<FEngageRequestContext>>& InRequestBucket, TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const;
 
 private:
 	// Assignment Lease
 	bool IsAssignmentLeaseValid(const class ACAIController* InCAIController) const;
+	bool TryReserveAssignmentSlot(const FEngageAssignmentContext& InAssignment, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState) const;
 
 private:
 	// Runtime State
@@ -86,5 +100,9 @@ private:
 
 private:
 	// Debug
-	void PrintEngageContext(const ACAIController* InCAIController, const AActor* InActor, const int& InPriority, const int& InIndex, const float& InDistance, const ECombatRole& InCombatRole) const;
+	void PrintAppliedFreshEngageAssignment(const FEngageRequestContext& InRequestContext, const int& InIndex, const ECombatRole& InCombatRole, const FEngageAssignmentSlotState& InSlotState) const;
+	void PrintPromotedEngageAssignment(const FEngageRequestContext& InRequestContext, const FEngageAssignmentSlotState& InSlotState) const;
+	void PrintPreservedAssignment(const ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment, const FEngageAssignmentSlotState& InSlotState) const;
+	void PrintEngageRequestSnapshot(const int& InRebuildId, const TMap<class ACAIController*, FEngageRequestContext>& InRequestSnapshot, const TMap<class AActor*, TArray<FEngageRequestContext>>& InRequestBucket) const;
+	void PrintEngageAssignmentRebuildSummary(const int& InRebuildId, const FEngageAssignmentRebuildDebugState& InDebugState, const TMap<class ACAIController*, FEngageAssignmentContext>& InAssignments) const;
 };
