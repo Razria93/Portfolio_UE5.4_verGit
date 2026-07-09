@@ -36,8 +36,9 @@ Rebuild 17: RequestCount = 80
 - Enemy 수가 많아질수록 perception / BT scheduling 편차가 커지고, request snapshot이 `6 -> 13 -> 32 -> 62 -> 80`처럼 단계적으로 채워진다.
 - Assignment cap이 작을 때는 초기 request pool만으로도 자연스럽게 보일 수 있지만, Engage / Alert 총합이 커질수록 더 넓은 후보군이 들어올 시간이 필요하다.
 
-관찰상 80 Enemy 기준에서는 Engage / Alert 총합과 무관하게 `1.0s ~ 1.2s` 수준의 warmup이면 최초 assignment가 납득 가능한 형태로 안정화됐다.
-이는 현재 테스트 조건에서 전체 Enemy 수 80 기준의 초기 request pool이 대체로 1초대 초반에 충분히 형성된다는 근거로 본다.
+관찰상 80 Enemy 기준에서 `1.0s`는 최소 동작 후보지만 request snapshot이 `32 ~ 80` 사이에서 흔들릴 수 있었다.
+`1.2s`는 현재 테스트 조건에서 더 안정적인 warmup 후보로 본다.
+이는 초기 request pool 형성 시간이 시스템 부하와 scheduling 편차에 영향을 받으며, 80 Enemy 기준에서는 1초 부근이 경계값에 가깝다는 근거다.
 
 ## Current Flow
 
@@ -233,6 +234,68 @@ BTUpdateIntervalMode 1 / 2에서도 Engage / Alert / Idle 계층이 유지되는
 최초 assignment가 더 완성된 후보군 기준으로 결정된다.
 BT interval LOD 측정에서 시작 직후 assignment bootstrap 변수가 줄어든다.
 ```
+
+## Validation Result
+
+### 80 Enemy / WarmupTime 1.0
+
+측정 파일:
+
+```text
+Profile(20260709_165800).csv
+Log(20260709_165800).txt
+```
+
+조건:
+
+```text
+EngageAssignmentWarmupTime 1.0
+EngageAssignmentAudit 1
+EngageAssignmentVerboseAudit 0
+BTUpdateIntervalMode 0
+Engage 2 / Alert 6
+```
+
+로그 결과:
+
+```text
+Warmup 중 RequestCount 대표 패턴: 6 -> 8/13 -> 32/44
+Warmup 종료 후 RequestSnapshot 관찰값: 32 / 74 / 80
+FinalEngage: 2
+FinalAlert: 6
+FinalTotal: 8
+```
+
+해석:
+
+- Warmup 종료 전 assignment 확정은 지연됐다.
+- 기존에 보였던 2명 / 6명이 나뉘어 출발하는 현상은 사라졌다.
+- 첫 측정에서 상대적으로 먼 Enemy가 선택되는 비합리적인 선정이 1회 관찰됐지만, 이후 약 30회 PIE 초반 반복 관찰에서는 재발하지 않았다.
+- `WarmupTime 1.0`은 bootstrap split 완화 효과는 확인됐지만, request snapshot이 32 / 74 / 80으로 흔들릴 수 있어 안정값으로 보기에는 경계에 가깝다.
+- 이후 BT interval 재측정 baseline은 `WarmupTime 1.2`를 우선 사용한다.
+
+### 80 Enemy / WarmupTime 1.2
+
+반복 관찰 결과:
+
+```text
+Warmup 중 RequestCount 대표 패턴:
+6 -> 11/13/17 -> 38/44/50 -> 80
+6 -> 8 -> 32 -> 74 -> 80
+6 -> 7 -> 26 -> 68 -> 80
+
+Warmup 종료 후 RequestSnapshot: 80
+FinalEngage: 2
+FinalAlert: 6
+FinalTotal: 8
+```
+
+해석:
+
+- `WarmupTime 1.2`에서는 여러 반복 관찰에서 최초 assignment 확정 시점의 `RequestSnapshot`이 80으로 수렴했다.
+- 일부 케이스는 request count가 1.0초를 넘긴 뒤에야 80에 도달했다.
+- 따라서 80 Enemy 기준의 BT interval 재측정 baseline은 `WarmupTime 1.2`를 사용한다.
+- `WarmupTime 1.0`은 최소 동작 후보로 남기되, 안정 측정 기준으로는 사용하지 않는다.
 
 ## Risk
 
