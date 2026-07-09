@@ -123,3 +123,70 @@ Portfolio.AI.RuntimeLOD.EnemyMovementMode 0
 80 Enemy / BTUpdateIntervalMode 1
 80 Enemy / BTUpdateIntervalMode 2
 ```
+
+## 40 Enemy 측정 결과
+
+측정 파일:
+
+```text
+Mode 0: Profile(20260709_191603).csv
+Mode 1: Profile(20260709_191821).csv
+Mode 2: Profile(20260709_192202).csv
+```
+
+측정 조건:
+
+```text
+Enemy Count: 40
+Capture Duration: about 36s
+Analysis Window: first 3s / last 3s trimmed, middle 30s used
+Log State: -noailogging
+PIE: F11 fullscreen
+GC Event: none
+```
+
+핵심 결과:
+
+| Mode | Frame p95 | Game p95 | BT Tick p95 | AIContext Count | AIIntent Count | EngageContext Count |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 11.5721ms | 10.9428ms | 0.2152ms | 11680 | 6040 | 584 |
+| 1 | 11.7582ms | 11.0469ms | 0.1881ms | 6278 | 4140 | 576 |
+| 2 | 11.6986ms | 11.0404ms | 0.0956ms | 3918 | 3090 | 578 |
+
+AIContext interval preset:
+
+| Mode | Default | Reduced | Aggressive |
+| ---: | ---: | ---: | ---: |
+| 0 | 11680 | 0 | 0 |
+| 1 | 578 | 5700 | 0 |
+| 2 | 580 | 900 | 2438 |
+
+AIIntentState interval preset:
+
+| Mode | Default | Reduced | Aggressive |
+| ---: | ---: | ---: | ---: |
+| 0 | 6040 | 0 | 0 |
+| 1 | 302 | 3838 | 0 |
+| 2 | 300 | 1180 | 1610 |
+
+해석:
+
+```text
+AIContextService 호출수 레벨 분리는 정상 적용됐다.
+Mode 1에서 AIContext Count는 11680 -> 6278로 약 46% 감소했다.
+Mode 2에서 AIContext Count는 11680 -> 3918로 약 66% 감소했다.
+
+AIIntentState Count도 기존 정책처럼 6040 -> 4140 -> 3090으로 감소했다.
+EngageContext Count는 584 -> 576 -> 578로 유지됐다.
+
+Frame / Game p95는 개선되지 않았다.
+다만 BehaviorTreeTick p95는 0.2152ms -> 0.1881ms -> 0.0956ms로 감소했다.
+따라서 이번 결과는 frame gain보다 BT service work reduction이 명확한 측정으로 본다.
+```
+
+주의:
+
+```text
+Mode 1 / 2에서 gameplay smoke가 유지되는지가 최종 판단 기준이다.
+AIContext Count가 줄어도 Engage / Alert / Idle 계층이나 Attack 진입이 흔들리면 해당 interval은 combat-capable 조건에 부적합하다.
+```
