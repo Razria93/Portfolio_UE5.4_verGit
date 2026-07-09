@@ -29,9 +29,31 @@ namespace
 		TEXT("Print detailed CombatEngage assignment candidate logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
+	TAutoConsoleVariable<int32> CVarEngageAssignmentEngageCap(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap"),
+		2,
+		TEXT("Controls max Engage assignees per target for AI Runtime LOD profiling. Default: 2."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentAlertCap(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap"),
+		6,
+		TEXT("Controls max Alert assignees per target for AI Runtime LOD profiling. Default: 6."),
+		ECVF_Default);
+
 	float GetEngageAssignmentWarmupTime()
 	{
 		return FMath::Max(0.f, CVarEngageAssignmentWarmupTime.GetValueOnGameThread());
+	}
+
+	int32 GetEngageAssignmentEngageCap()
+	{
+		return FMath::Max(0, CVarEngageAssignmentEngageCap.GetValueOnGameThread());
+	}
+
+	int32 GetEngageAssignmentAlertCap()
+	{
+		return FMath::Max(0, CVarEngageAssignmentAlertCap.GetValueOnGameThread());
 	}
 
 	bool ShouldPrintEngageAssignmentAudit()
@@ -281,7 +303,7 @@ void UCWorldSubsystem_CombatEngage::PromoteExistingAlertAssignments(const TMap<A
 
 		for (int32 i = 0; i < requestContexts.Num(); ++i)
 		{
-			if (i >= MaxEngagersPerTarget) break;
+			if (i >= GetEngageAssignmentEngageCap()) break;
 
 			ACAIController* requestController = requestContexts[i].RequestController;
 			if (!IsValid(requestController)) continue;
@@ -354,11 +376,11 @@ void UCWorldSubsystem_CombatEngage::ApplyFreshRequestAssignments(const TMap<AAct
 			freshAssignment.TargetActor = targetActor;
 
 			FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindOrAdd(targetActor);
-			if (targetSlotState.EngageCount < MaxEngagersPerTarget)
+			if (targetSlotState.EngageCount < GetEngageAssignmentEngageCap())
 			{
 				freshAssignment.CombatRole = ECombatRole::Engage;
 			}
-			else if (targetSlotState.AlertCount < MaxAlertersPerTarget)
+			else if (targetSlotState.AlertCount < GetEngageAssignmentAlertCap())
 			{
 				freshAssignment.CombatRole = ECombatRole::Alert;
 			}
@@ -386,7 +408,7 @@ bool UCWorldSubsystem_CombatEngage::TryReserveAssignmentSlot(const FEngageAssign
 
 	if (InAssignment.CombatRole == ECombatRole::Engage)
 	{
-		if (targetSlotState.EngageCount >= MaxEngagersPerTarget) return false;
+		if (targetSlotState.EngageCount >= GetEngageAssignmentEngageCap()) return false;
 
 		++targetSlotState.EngageCount;
 		return true;
@@ -394,7 +416,7 @@ bool UCWorldSubsystem_CombatEngage::TryReserveAssignmentSlot(const FEngageAssign
 
 	if (InAssignment.CombatRole == ECombatRole::Alert)
 	{
-		if (targetSlotState.AlertCount >= MaxAlertersPerTarget) return false;
+		if (targetSlotState.AlertCount >= GetEngageAssignmentAlertCap()) return false;
 
 		++targetSlotState.AlertCount;
 		return true;
@@ -443,8 +465,8 @@ void UCWorldSubsystem_CombatEngage::PrintAppliedFreshEngageAssignment(const FEng
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Index"), InIndex));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("DistanceToTarget"), InRequestContext.DistanceToTarget));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CombatRole"), *UEnum::GetValueAsString(InCombatRole)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, MaxEngagersPerTarget));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, MaxAlertersPerTarget));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, GetEngageAssignmentEngageCap()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, GetEngageAssignmentAlertCap()));
 	FLog::Log(TEXT("===================================="));
 }
 
@@ -460,8 +482,8 @@ void UCWorldSubsystem_CombatEngage::PrintPromotedEngageAssignment(const FEngageR
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("DistanceToTarget"), InRequestContext.DistanceToTarget));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PreviousRole"), *UEnum::GetValueAsString(ECombatRole::Alert)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CombatRole"), *UEnum::GetValueAsString(ECombatRole::Engage)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, MaxEngagersPerTarget));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, MaxAlertersPerTarget));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, GetEngageAssignmentEngageCap()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, GetEngageAssignmentAlertCap()));
 	FLog::Log(TEXT("=================================="));
 }
 
@@ -482,8 +504,8 @@ void UCWorldSubsystem_CombatEngage::PrintPreservedAssignment(const ACAIControlle
 	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CombatRole"), *UEnum::GetValueAsString(InAssignment.CombatRole)));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("LeaseAge"), leaseAge));
 	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("LeaseRemaining"), leaseRemaining));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, MaxEngagersPerTarget));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, MaxAlertersPerTarget));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, GetEngageAssignmentEngageCap()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, GetEngageAssignmentAlertCap()));
 	FLog::Log(TEXT("============================="));
 }
 
@@ -559,6 +581,8 @@ void UCWorldSubsystem_CombatEngage::PrintEngageAssignmentRebuildSummary(const in
 
 	FLog::Log(TEXT("==== EngageAssignmentRebuildSummary ===="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RebuildId"), InRebuildId));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("EngageCap"), GetEngageAssignmentEngageCap()));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AlertCap"), GetEngageAssignmentAlertCap()));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RequestSnapshot"), InDebugState.RequestSnapshotCount));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("TargetBuckets"), InDebugState.RequestBucketCount));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WarmupRequest"), InDebugState.WarmupRequestCount));
