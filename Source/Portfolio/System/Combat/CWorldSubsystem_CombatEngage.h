@@ -15,6 +15,7 @@ struct FEngageAssignmentRebuildDebugState
 {
 	int32 RequestSnapshotCount = 0;
 	int32 RequestBucketCount = 0;
+	int32 WarmupRequestCount = 0;
 	int32 FreshAppliedCount = 0;
 	int32 PromotedCount = 0;
 	int32 PreservedEngageCount = 0;
@@ -28,10 +29,10 @@ class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsyst
 	
 private:
 	UPROPERTY()
-	int32 MaxEngagersPerTarget = 8;
+	int32 MaxEngagersPerTarget = 2;
 
 	UPROPERTY()
-	int32 MaxAlertersPerTarget = 16;
+	int32 MaxAlertersPerTarget = 6;
 
 	UPROPERTY()
 	float RebuildInterval = 0.1f;
@@ -41,6 +42,8 @@ private:
 
 private:
 	float ElapsedTime = 0.f;
+	float AssignmentWarmupStartTime = -1.f;
+	bool bAssignmentWarmupCompleted = false;
 	int32 AssignmentRebuildId = 0;
 
 private:
@@ -83,6 +86,12 @@ private:
 	void SortRequestContexts(TArray<FEngageRequestContext>& InOutRequestContexts) const;
 
 private:
+	// Assignment Warmup
+	void StartAssignmentWarmupIfNeeded();
+	bool ShouldDelayAssignmentForWarmup() const;
+	float GetAssignmentWarmupElapsedTime() const;
+
+private:
 	// Assignment Apply
 	void PreserveExistingEngageAssignments(TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const;
 	void PromoteExistingAlertAssignments(const TMap<class AActor*, TArray<FEngageRequestContext>>& InRequestBucket, TMap<class ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const;
@@ -103,6 +112,7 @@ private:
 	void PrintAppliedFreshEngageAssignment(const FEngageRequestContext& InRequestContext, const int& InIndex, const ECombatRole& InCombatRole, const FEngageAssignmentSlotState& InSlotState) const;
 	void PrintPromotedEngageAssignment(const FEngageRequestContext& InRequestContext, const FEngageAssignmentSlotState& InSlotState) const;
 	void PrintPreservedAssignment(const ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment, const FEngageAssignmentSlotState& InSlotState) const;
+	void PrintAssignmentWarmupDelay(const int& InRebuildId) const;
 	void PrintEngageRequestSnapshot(const int& InRebuildId, const TMap<class ACAIController*, FEngageRequestContext>& InRequestSnapshot, const TMap<class AActor*, TArray<FEngageRequestContext>>& InRequestBucket) const;
 	void PrintEngageAssignmentRebuildSummary(const int& InRebuildId, const FEngageAssignmentRebuildDebugState& InDebugState, const TMap<class ACAIController*, FEngageAssignmentContext>& InAssignments) const;
 };

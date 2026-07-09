@@ -23,6 +23,22 @@ Rebuild 17: RequestCount = 80
 초기 request 6개가 먼저 assignment를 얻으면, 이후 더 가까운 Enemy가 request를 제출해도 기존 assignment lease / preserve 정책 때문에 즉시 교체되지 않는다.
 그 결과 배치상 더 가까운 Enemy가 있어도 최초로 인지된 일부 Enemy가 Engage / Alert 권한을 선점하는 현상이 발생했다.
 
+## Expected Causes
+
+초기 후보 수집은 단일 함수 호출로 끝나는 구조가 아니라 AI Perception, Blackboard 갱신, BT Service 호출, Engage request 제출이 여러 프레임에 걸쳐 이어지는 구조다.
+따라서 80 Enemy가 같은 타겟을 동시에 볼 수 있는 배치에서도 모든 AI가 같은 rebuild frame에 request를 제출한다고 가정하기 어렵다.
+
+예상 원인은 다음과 같다.
+
+- `AI Perception`은 모든 Enemy의 감지 결과를 한 프레임에 안정적으로 올려주지 않는다.
+- 감지 결과가 들어와도 즉시 assignment request가 되는 것이 아니라 `UpdateAIContext`, `UpdateAIIntentState`, `UpdateEngageContext` 같은 BT Service 갱신 단계를 거친다.
+- 초기 상태 전환은 `Perception -> Blackboard -> IntentState -> EngageRequest -> RebuildAssignments -> BT 상태 반영` 순서로 이어지므로 여러 갱신 주기를 통과해야 한다.
+- Enemy 수가 많아질수록 perception / BT scheduling 편차가 커지고, request snapshot이 `6 -> 13 -> 32 -> 62 -> 80`처럼 단계적으로 채워진다.
+- Assignment cap이 작을 때는 초기 request pool만으로도 자연스럽게 보일 수 있지만, Engage / Alert 총합이 커질수록 더 넓은 후보군이 들어올 시간이 필요하다.
+
+관찰상 80 Enemy 기준에서는 Engage / Alert 총합과 무관하게 `1.0s ~ 1.2s` 수준의 warmup이면 최초 assignment가 납득 가능한 형태로 안정화됐다.
+이는 현재 테스트 조건에서 전체 Enemy 수 80 기준의 초기 request pool이 대체로 1초대 초반에 충분히 형성된다는 근거로 본다.
+
 ## Current Flow
 
 ```text
@@ -101,22 +117,56 @@ BeginPlay / subsystem active
 Portfolio.AI.RuntimeLOD.EngageAssignmentWarmupTime
 ```
 
-권장 초기값:
+기본값:
 
 ```text
-0.5s 또는 1.0s
+0.0s
 ```
 
-측정용으로는 0.0 / 0.5 / 1.0을 비교한다.
+기본값이 0이면 기존 동작과 동일하게 즉시 assignment를 확정한다.
+측정 시에는 1.0s 또는 1.2s를 사용한다.
+
+측정 후보:
+
+```text
+0.0s / 1.0s / 1.2s
+```
+
+Warmup 검증용 로그:
+
+```text
+Portfolio.AI.RuntimeLOD.EngageAssignmentAudit
+Portfolio.AI.RuntimeLOD.EngageAssignmentVerboseAudit
+```
+
+`EngageAssignmentAudit`은 warmup 지연 중 request count와 최초 assignment summary만 출력한다.
+CSV 성능 측정 시에는 로그 영향을 줄이기 위해 0으로 둔다.
+`EngageAssignmentVerboseAudit`은 후보 목록과 상세 assignment 추적이 필요할 때만 사용한다.
+
+검증 목적 기본값:
+
+```text
+EngageAssignmentAudit 1
+EngageAssignmentVerboseAudit 0
+```
+
+구현 상태:
+
+```text
+UCWorldSubsystem_CombatEngage에 CVar 추가 완료
+Warmup 중 RequestContainer consume 보류 완료
+Warmup 종료 후 최초 RebuildAssignments에서 request snapshot consume 완료
+EngageAssignmentAudit / VerboseAudit debug 출력 제어 추가 완료
+```
 
 ### Runtime State
 
 ```text
-float AssignmentWarmupElapsedTime
+float AssignmentWarmupStartTime
 bool bAssignmentWarmupCompleted
 ```
 
-또는 subsystem 시작 시간을 기준으로 현재 시간이 warmup 종료 시점을 지났는지 판단한다.
+첫 request가 들어온 시간을 `AssignmentWarmupStartTime`으로 기록하고, 현재 시간과의 차이로 warmup 경과 시간을 계산한다.
 
 ### RebuildAssignments Policy
 
@@ -161,6 +211,8 @@ PerceptionCandidateAudit 0
 BlackboardEngageLatencyAudit 0
 CanMoveDecoratorAudit 0
 EnemyMovementMode 0
+EngageAssignmentAudit 1
+EngageAssignmentVerboseAudit 0
 ```
 
 확인 항목:

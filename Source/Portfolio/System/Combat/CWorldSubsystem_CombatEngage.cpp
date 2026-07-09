@@ -1,5 +1,6 @@
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 #include "ProjectGlobal.h"
+#include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
@@ -7,6 +8,42 @@
 #include "Controller/CAIController.h"
 
 #include "Type/CWorldSubSystemStructure.h"
+
+namespace
+{
+	TAutoConsoleVariable<float> CVarEngageAssignmentWarmupTime(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentWarmupTime"),
+		0.0f,
+		TEXT("Delays the first CombatEngage assignment rebuild until request candidates are warmed up. 0: disabled."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentAudit(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAudit"),
+		0,
+		TEXT("Print minimal CombatEngage assignment warmup audit logs. 0: disabled, 1: enabled."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentVerboseAudit(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentVerboseAudit"),
+		0,
+		TEXT("Print detailed CombatEngage assignment candidate logs. 0: disabled, 1: enabled."),
+		ECVF_Default);
+
+	float GetEngageAssignmentWarmupTime()
+	{
+		return FMath::Max(0.f, CVarEngageAssignmentWarmupTime.GetValueOnGameThread());
+	}
+
+	bool ShouldPrintEngageAssignmentAudit()
+	{
+		return CVarEngageAssignmentAudit.GetValueOnGameThread() != 0;
+	}
+
+	bool ShouldPrintEngageAssignmentVerboseAudit()
+	{
+		return CVarEngageAssignmentVerboseAudit.GetValueOnGameThread() != 0;
+	}
+}
 
 void UCWorldSubsystem_CombatEngage::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -70,6 +107,8 @@ void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & 
 {
 	if (!IsValid(InEngageRequestContext.RequestController)) return;
 
+	StartAssignmentWarmupIfNeeded();
+
 	// Override Request
 	RequestContainer.FindOrAdd(InEngageRequestContext.RequestController) = InEngageRequestContext;
 
@@ -83,6 +122,30 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_RebuildAssignments);
 
+	++AssignmentRebuildId;
+
+	// Delay for Warmup
+	if (ShouldDelayAssignmentForWarmup())
+	{
+		if (ShouldPrintEngageAssignmentAudit())
+		{
+			PrintAssignmentWarmupDelay(AssignmentRebuildId);
+		}
+
+		return;
+	}
+
+	bool bCompletedWarmupThisRebuild = false;
+
+	// Flag Toogle
+	if (!bAssignmentWarmupCompleted)
+	{
+		if (GetEngageAssignmentWarmupTime() > 0.f && AssignmentWarmupStartTime < 0.f) return;
+
+		bAssignmentWarmupCompleted = true;
+		bCompletedWarmupThisRebuild = true;
+	}
+
 	TMap<ACAIController*, FEngageAssignmentContext> nextAssignments;
 	TMap<AActor*, FEngageAssignmentSlotState> slotState;
 	FEngageAssignmentRebuildDebugState rebuildDebugState;
@@ -91,18 +154,24 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	TMap<AActor*, TArray<FEngageRequestContext>> requestBucket;
 	BuildRequestBucket(requestSnapshot, requestBucket);
 
+	rebuildDebugState.WarmupRequestCount = requestSnapshot.Num();
 	rebuildDebugState.RequestSnapshotCount = requestSnapshot.Num();
 	rebuildDebugState.RequestBucketCount = requestBucket.Num();
 
-	++AssignmentRebuildId;
-	PrintEngageRequestSnapshot(AssignmentRebuildId, requestSnapshot, requestBucket);
+	if (ShouldPrintEngageAssignmentVerboseAudit())
+	{
+		PrintEngageRequestSnapshot(AssignmentRebuildId, requestSnapshot, requestBucket);
+	}
 
 	PreserveExistingEngageAssignments(nextAssignments, slotState, rebuildDebugState);
 	PromoteExistingAlertAssignments(requestBucket, nextAssignments, slotState, rebuildDebugState);
 	PreserveExistingAlertAssignments(nextAssignments, slotState, rebuildDebugState);
 	ApplyFreshRequestAssignments(requestBucket, nextAssignments, slotState, rebuildDebugState);
 
-	PrintEngageAssignmentRebuildSummary(AssignmentRebuildId, rebuildDebugState, nextAssignments);
+	if (ShouldPrintEngageAssignmentAudit() && (bCompletedWarmupThisRebuild || AssignmentRebuildId == 1))
+	{
+		PrintEngageAssignmentRebuildSummary(AssignmentRebuildId, rebuildDebugState, nextAssignments);
+	}
 
 	AssignmentContainer = MoveTemp(nextAssignments);
 }
@@ -147,6 +216,35 @@ void UCWorldSubsystem_CombatEngage::SortRequestContexts(TArray<FEngageRequestCon
 		});
 }
 
+void UCWorldSubsystem_CombatEngage::StartAssignmentWarmupIfNeeded()
+{
+	if (bAssignmentWarmupCompleted) return;
+	if (AssignmentWarmupStartTime >= 0.f) return;
+	if (GetEngageAssignmentWarmupTime() <= 0.f) return;
+
+	const UWorld* world = GetWorld();
+	AssignmentWarmupStartTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+}
+
+bool UCWorldSubsystem_CombatEngage::ShouldDelayAssignmentForWarmup() const
+{
+	if (bAssignmentWarmupCompleted) return false;
+	if (AssignmentWarmupStartTime < 0.f) return false;
+	if (GetEngageAssignmentWarmupTime() <= 0.f) return false;
+
+	return GetAssignmentWarmupElapsedTime() < GetEngageAssignmentWarmupTime();
+}
+
+float UCWorldSubsystem_CombatEngage::GetAssignmentWarmupElapsedTime() const
+{
+	if (AssignmentWarmupStartTime < 0.f) return 0.f;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return 0.f;
+
+	return FMath::Max(0.f, world->GetTimeSeconds() - AssignmentWarmupStartTime);
+}
+
 void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const
 {
 	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentContainer)
@@ -167,7 +265,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIC
 		++InOutDebugState.PreservedEngageCount;
 
 		const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(previousAssignment.TargetActor);
-		PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+		// PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
 	}
 }
 
@@ -206,7 +304,7 @@ void UCWorldSubsystem_CombatEngage::PromoteExistingAlertAssignments(const TMap<A
 			++InOutDebugState.PromotedCount;
 
 			const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(targetActor);
-			PrintPromotedEngageAssignment(requestContexts[i], targetSlotState);
+			// PrintPromotedEngageAssignment(requestContexts[i], targetSlotState);
 		}
 	}
 }
@@ -232,7 +330,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingAlertAssignments(TMap<ACAICo
 		++InOutDebugState.PreservedAlertCount;
 
 		const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(previousAssignment.TargetActor);
-		PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+		// PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
 	}
 }
 
@@ -275,7 +373,7 @@ void UCWorldSubsystem_CombatEngage::ApplyFreshRequestAssignments(const TMap<AAct
 			++InOutDebugState.FreshAppliedCount;
 
 			const FEngageAssignmentSlotState& updatedSlotState = InOutSlotState.FindChecked(targetActor);
-			PrintAppliedFreshEngageAssignment(requestContexts[i], i, freshAssignment.CombatRole, updatedSlotState);
+			// PrintAppliedFreshEngageAssignment(requestContexts[i], i, freshAssignment.CombatRole, updatedSlotState);
 		}
 	}
 }
@@ -323,6 +421,8 @@ bool UCWorldSubsystem_CombatEngage::IsAssignmentLeaseValid(const ACAIController*
 void UCWorldSubsystem_CombatEngage::ClearEngageRuntimeState()
 {
 	ElapsedTime = 0.f;
+	AssignmentWarmupStartTime = -1.f;
+	bAssignmentWarmupCompleted = false;
 	AssignmentRebuildId = 0;
 	RequestContainer.Reset();
 	LastRequestTimeContainer.Reset();
@@ -385,6 +485,16 @@ void UCWorldSubsystem_CombatEngage::PrintPreservedAssignment(const ACAIControlle
 	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, MaxEngagersPerTarget));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, MaxAlertersPerTarget));
 	FLog::Log(TEXT("============================="));
+}
+
+void UCWorldSubsystem_CombatEngage::PrintAssignmentWarmupDelay(const int& InRebuildId) const
+{
+	FLog::Log(FString::Printf(
+		TEXT("[EngageAssignmentWarmupDelay] RebuildId=%d | RequestCount=%d | WarmupElapsed=%.3f | WarmupTime=%.3f"),
+		InRebuildId,
+		RequestContainer.Num(),
+		GetAssignmentWarmupElapsedTime(),
+		GetEngageAssignmentWarmupTime()));
 }
 
 void UCWorldSubsystem_CombatEngage::PrintEngageRequestSnapshot(const int& InRebuildId, const TMap<ACAIController*, FEngageRequestContext>& InRequestSnapshot, const TMap<AActor*, TArray<FEngageRequestContext>>& InRequestBucket) const
@@ -451,6 +561,7 @@ void UCWorldSubsystem_CombatEngage::PrintEngageAssignmentRebuildSummary(const in
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RebuildId"), InRebuildId));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RequestSnapshot"), InDebugState.RequestSnapshotCount));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("TargetBuckets"), InDebugState.RequestBucketCount));
+	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WarmupRequest"), InDebugState.WarmupRequestCount));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("FreshApplied"), InDebugState.FreshAppliedCount));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Promoted"), InDebugState.PromotedCount));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("PreservedEngage"), InDebugState.PreservedEngageCount));
