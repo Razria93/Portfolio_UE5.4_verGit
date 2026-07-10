@@ -1235,6 +1235,19 @@ bShouldEndInvestigate : Investigate route 종료 요청. max index 도달 또는
 `StartInvestigate`는 `bShouldInvestigate`를 소비하고 `bIsInvestigating`을 켠다.
 `AdvanceInvestigateIndex`는 max index에 도달하면 `bShouldEndInvestigate`를 켜고, 실제 cleanup은 `EndInvestigate`에서 수행한다.
 `EndInvestigate`는 investigate flag, investigate location/index, LastSeenTime / LastKnownLocation을 정리한다.
+
+Observe / Investigate lifecycle smoke 측정:
+
+| Case | CSV | Frame p95 | Game p95 | CharacterMovement p95 | BT Tick p95 | AIContext Count | AIIntent Count | EngageContext Count |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 40 Enemy | `Profile(20260710_235840).csv` | 12.0728ms | 11.6555ms | 0.5393ms | 0.2253ms | 11760 | 6000 | 586 |
+| 80 Enemy | `Profile(20260711_000137).csv` | 17.6108ms | 17.6139ms | 0.9388ms | 0.4207ms | 23360 | 12160 | 580 |
+
+로그 기준 두 측정 모두 GC 이벤트 없이 약 37초 캡처됐다.
+CSV의 `Ticks/CEnemy` p95는 각각 40 / 80이므로 실제 play tick 기준 40 / 80 Enemy 측정으로 분류한다.
+40 Enemy는 P36 AlertCap 6 대표 측정과 거의 같은 수준으로 유지됐다.
+80 Enemy는 CharacterMovement p95가 P36 AlertCap 6 대표 측정보다 소폭 높지만, BT Tick / AIContext / AIIntentState 계열은 큰 회귀 없이 유지됐다.
+따라서 Observe / Investigate lifecycle 분리는 현재 조건에서 service update 정책을 깨지 않는 것으로 본다.
 ```
 ## CombatEngage Assignment Bootstrap Warmup
 
