@@ -78,26 +78,28 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	const ECombatRole combatRole = static_cast<ECombatRole>(InBlackboard->GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
 
 	// -----------------------------------------------------------------------------
-	// 3) Decide Next AIIntentState
+	// 3. Decide Next AIIntentState
 	// -----------------------------------------------------------------------------
-	// 3-1. Invalid Target -> Idle.
+	// [Case_01] Idle: No target and no active investigation.
 	if (!bHasTarget && !bIsInvestigating) return EAIIntentState::Idle;
 
-	// 3-2. Target awareness alone does not grant combat participation.
-	if (combatRole == ECombatRole::None) return EAIIntentState::Idle;
+	// [Case_02] Investigate: Investigating.
+	if (bIsInvestigating) return EAIIntentState::Investigate;
 
-	// 3-3. Assigned combat participant lost LOS.
+	// [Case_03] Observe: Target valid + CombatRole == None.
+	if (combatRole == ECombatRole::None) return EAIIntentState::Observe;
+
+	// [Case 04] Investigate: Target valid + CombatRole != None + LOS invalid.
 	if (!bHasLOS) return EAIIntentState::Investigate;
 
-	// 3-4. Assigned combat participant is out of alert range.
+	// [Case 05] Combat: Target vaild + Combat Role != None + LOS valid.
 	if (!bInAlertRange) return EAIIntentState::Chase;
 
-	// 3-5. In range and assigned by CombatEngage subsystem.
 	if (combatRole == ECombatRole::Engage) return EAIIntentState::Engage;
 	if (combatRole == ECombatRole::Alert) return EAIIntentState::Alert;
 
-	// 3-6. Unknown role fallback.
-	return EAIIntentState::Idle;
+	// Target-valid fallback.
+	return EAIIntentState::Observe;
 }
 
 bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState)

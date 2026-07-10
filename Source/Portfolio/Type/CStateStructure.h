@@ -19,6 +19,7 @@ enum class EAIIntentState : uint8
 {
 	Idle = 0,
 	Patrol,
+	Observe,
 	Investigate,
 	Chase,
 	Alert,
