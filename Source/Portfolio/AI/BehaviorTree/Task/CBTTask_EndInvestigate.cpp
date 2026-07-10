@@ -15,8 +15,9 @@ EBTNodeResult::Type UCBTTask_EndInvestigate::ExecuteTask(UBehaviorTreeComponent&
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-	blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
+	blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName, false);
 	blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName, false);
+	blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldEndInvestigate.KeyName, false);
 
 	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
 	blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, -1);

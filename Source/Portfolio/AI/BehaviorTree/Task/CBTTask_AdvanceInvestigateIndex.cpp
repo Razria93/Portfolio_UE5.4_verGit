@@ -21,7 +21,10 @@ EBTNodeResult::Type UCBTTask_AdvanceInvestigateIndex::ExecuteTask(UBehaviorTreeC
 
 	if (nextIndex > maxIndex)
 	{
-		blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, false);
+		blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName, false);
+		blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName, true);
+		blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldEndInvestigate.KeyName, true);
+
 		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, currentIndex);
 		FLog::Log(TEXT("[Index Done]"));
 	}

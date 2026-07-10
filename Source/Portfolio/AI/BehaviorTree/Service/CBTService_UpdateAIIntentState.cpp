@@ -72,32 +72,42 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 
 	const bool bHasTarget = IsValid(target);
 	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
+	const bool bHasAwareness = bHasTarget || bHasLOS;
+
+	const bool bUseInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName);
+	const bool bShouldInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName);
 	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName);
 
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
 	const ECombatRole combatRole = static_cast<ECombatRole>(InBlackboard->GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
 
 	// -----------------------------------------------------------------------------
-	// 3) Decide Next AIIntentState
+	// 3. Decide Next AIIntentState
 	// -----------------------------------------------------------------------------
-	// 3-1. Invalid Target -> Idle.
-	if (!bHasTarget && !bIsInvestigating) return EAIIntentState::Idle;
+	// [Case_01] No awareness: investigate only when requested or already active.
+	if (!bHasAwareness)
+	{
+		if (bUseInvestigate && (bShouldInvestigate || bIsInvestigating)) return EAIIntentState::Investigate;
+		return EAIIntentState::Idle;
+	}
 
-	// 3-2. Target awareness alone does not grant combat participation.
-	if (combatRole == ECombatRole::None) return EAIIntentState::Idle;
+	// [Case_02] Aware + no combat role: observe only.
+	if (combatRole == ECombatRole::None) return EAIIntentState::Observe;
 
-	// 3-3. Assigned combat participant lost LOS.
-	if (!bHasLOS) return EAIIntentState::Investigate;
+	// [Case_03] Aware + combat role: remember Engage as investigate candidate.
+	if (combatRole == ECombatRole::Engage)
+	{
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboard, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
+	}
 
-	// 3-4. Assigned combat participant is out of alert range.
+	// [Case_04] Aware + combat role: movement/combat state.
 	if (!bInAlertRange) return EAIIntentState::Chase;
 
-	// 3-5. In range and assigned by CombatEngage subsystem.
 	if (combatRole == ECombatRole::Engage) return EAIIntentState::Engage;
 	if (combatRole == ECombatRole::Alert) return EAIIntentState::Alert;
 
-	// 3-6. Unknown role fallback.
-	return EAIIntentState::Idle;
+	// Aware fallback.
+	return EAIIntentState::Observe;
 }
 
 bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState)
@@ -129,6 +139,17 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 			InBlackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime.KeyName);
 		}
 	} 
+
+	// Investigate -> Non-Investigate
+	if (InCurrentAIIntentState == EAIIntentState::Investigate && InNextAIIntentState != EAIIntentState::Investigate)
+	{
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bIsInvestigating.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bShouldEndInvestigate.KeyName, false);
+
+		InBlackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
+		CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);
+	}
 }
 
 void UCBTService_UpdateAIIntentState::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

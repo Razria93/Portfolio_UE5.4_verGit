@@ -2,7 +2,7 @@
 
 ## 목적
 
-이 문서는 코드 품질 정리 작업의 현재 진행 상황과 다음 작업 순서를 PR 기준으로 공유하기 위해 작성한다.
+이 문서는 코드 품질 정리 작업의 현재 진행 상황과 후속 작업 순서를 PR 기준으로 공유하기 위해 작성한다.
 
 ## PR 진행 현황
 
@@ -15,30 +15,29 @@
 - P32 AI Blackboard Key Registry 정책 정리
 - P33 AI Update Interval Profiling 정책 정리
 - P34 AI Profiling Test Asset 분리
-
-다음 작업
 - P35 AI Runtime LOD 정책 정리
+- P36 AI AlertCap 비교 측정 및 Assignment Cap 제어 추가
+- P37 AI Observe Intent 및 Investigate Lifecycle 정리
 
 후속 작업
-- P36 AI Perception LOD 정책 정리
-- P37 AI Update LOD 정책 정리
-- P38 Type Header / Helper Boundary 정리
-- P39 Tuning Constants Cleanup
-- P40 API Const Consistency
-- P41 Debug Log Policy
-- P42 Naming / Typo / API Cleanup
-- P43 TODO Status Cleanup
-- P44 PR Record Format Sweep
+- P38 Runtime LOD Implementation v1
+- P39 Type Header / Helper Boundary 정리
+- P40 Tuning Constants Cleanup
+- P41 API Const Consistency
+- P42 Debug Log Policy
+- P43 Naming / Typo / API Cleanup
+- P44 TODO Status Cleanup
+- P45 PR Record Format Sweep
 ```
 
 정리 기준은 다음과 같다.
 
 ```text
 완료
--> 이미 PR merge까지 완료된 작업
+-> 구현 / 검증 / PR 문서 작성까지 완료된 작업
 
-다음 작업 / 후속 작업
--> 다음 PR로 진행할 작업
+후속 작업
+-> 이후 PR로 진행할 작업
 
 카테고리
 -> 작업 성격이 같은 PR을 묶어 리뷰 흐름을 이해하기 쉽게 분류
@@ -170,7 +169,7 @@ AI update interval을 감으로 조정하지 않고,
 
 ---
 
-## 다음 작업
+## AI LOD / Performance 최적화 진행 현황
 
 ### 6. AI LOD / Performance 최적화
 
@@ -205,48 +204,49 @@ Enemy 수 증가 시 Character / mesh / weapon / movement / collision runtime co
 
 ---
 
-#### P36: AI Perception LOD 정책 정리
+#### P36: AI AlertCap 비교 측정 및 Assignment Cap 제어 추가
 
 계획 브랜치:
 
 ```text
-refactor/ai-perception-lod-policy
+feature/ai-alert-cap-comparison
 ```
 
 작업 범위:
 
 ```text
-AI Perception 활성 대상 수 제한
-거리 / 중요도 기반 sight activation 또는 interval 조정
-Perception active cap 극단 비교 측정
+EngageCap / AlertCap CVar 추가
+AlertCap 6 / 40 비교 측정
+Alert 후보 수 증가가 CharacterMovement cost를 증가시키는지 확인
 ```
 
 의도:
 
 ```text
-대량 Enemy 상황에서 perception 부하와 인지 지연을 줄인다.
+Runtime LOD에서 movement 후보 수를 제한해야 하는 근거를 측정으로 확보한다.
 ```
 
-#### P37: AI Update LOD 정책 정리
+#### P37: AI Observe Intent 및 Investigate Lifecycle 정리
 
 계획 브랜치:
 
 ```text
-refactor/ai-update-lod-policy
+feature/ai-observe-intent-state
 ```
 
 작업 범위:
 
 ```text
-BT Service / Blackboard update / CombatEngage rebuild 주기를 LOD와 연결
-service interval 0.1s / 0.2s / 0.5s 비교 측정
-dirty flag / event-driven 전환 범위 검토
+CombatRole 없는 인지 대상은 Observe로 대기
+bCanInvestigate 제거
+bShouldInvestigate / bIsInvestigating / bShouldEndInvestigate lifecycle 분리
+40 / 80 Enemy smoke 측정
 ```
 
 의도:
 
 ```text
-AI update 비용을 거리 / 중요도 / 전투 참여도에 맞춰 단계적으로 줄인다.
+AlertCap 밖의 Enemy가 Chase / Alert / Investigate로 번지지 않게 하고, Investigate 상태 전환 책임을 명확히 한다.
 ```
 
 ---
@@ -391,14 +391,14 @@ KR / EN 혼용 정리
 
 ## 현재 우선순위
 
-가장 가까운 다음 작업은 P35다.
+현재 P37은 구현 / 검증 / PR 문서 작성까지 완료됐다.
 
 ```text
-P35
--> P34에서 고정한 profiling 환경에서 runtime LOD 축을 검증하고 구현한다.
+P37
+-> P36에서 확인한 AlertCap 정책 위에 Observe intent와 Investigate lifecycle을 정리했다.
 
-P36~P37
--> perception LOD / update LOD 축은 P35 이후 별도 브랜치로 진행한다.
+P38 이후
+-> Runtime LOD Implementation v1과 남은 측정축을 별도 브랜치로 진행한다.
 ```
 
 각 축은 구현 전에 유의미한 성능 차이를 만드는지 먼저 확인한 뒤 진행한다.
