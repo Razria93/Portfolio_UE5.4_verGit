@@ -855,6 +855,11 @@ AI LOD / Performance 최적화
   -> Enemy mesh / animation / WeaponActor / perception / movement / BT service interval 축 분리 측정 완료
   -> CombatEngage assignment gate / lease / warmup 기반 Engage 2 / Alert 6 / Idle 계층 안정화
   -> AIContext / AIIntentState interval split 정책 후보 정리
+- P36: AI AlertCap 비교 측정 및 Assignment Cap 제어 추가
+  -> AlertCap 6 / 40 비교로 Alert 후보 수가 CharacterMovement cost를 증가시키는 축임을 확인
+- P37: Observe Intent / Investigate Lifecycle 정리
+  -> CombatRole 없는 인지 대상은 Observe로 대기
+  -> Investigate 진입 / 실행 / 종료 요청 flag 분리
 ```
 
 ### 진행 중
@@ -867,25 +872,27 @@ AI LOD / Performance 최적화
 
 ```text
 AI LOD / Performance 최적화
-- P36: Observe / Aware Intent 분리
-- P37: Runtime LOD Implementation v1
+- P38: Runtime LOD Implementation v1
   -> Mode 1을 combat-capable 보수 후보로 적용
   -> Mode 2는 far / offscreen / NonCombat / Dormant 우선 후보로 검토
 
 AI LOD / Performance 후속 측정
-- AlertCap CVar 비교 측정
+- Collision / Hit Window 측정
+- Feedback Presentation 측정
+- Component Tick Audit
+- Perception Active Budget / Cap 검토
 - Proxy / Dormant Actor 최적화 검토
 
 Code Quality Sweep
-- P38: Type Header / Helper Boundary 정리
-- P39: Tuning Constants Cleanup
-- P40: API Const Consistency
-- P41: Debug Log Policy
-- P42: Naming / Typo / API Cleanup
-- P43: TODO Status Cleanup
+- P39: Type Header / Helper Boundary 정리
+- P40: Tuning Constants Cleanup
+- P41: API Const Consistency
+- P42: Debug Log Policy
+- P43: Naming / Typo / API Cleanup
+- P44: TODO Status Cleanup
 
 Documentation / PR Record
-- P44: PR Record Format Sweep
+- P45: PR Record Format Sweep
 ```
 
 상세 공유용 정리는 `N19_Code_Quality_PR_Status_Summary_Note.md`를 따른다.

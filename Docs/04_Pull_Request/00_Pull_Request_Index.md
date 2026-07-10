@@ -42,5 +42,6 @@
 | P34 | AI Profiling Test Asset 분리 | `P34_UE5_Portfolio_Pull_Request.md` | `chore/ai-profiling-test-assets` |  | W05, N18, N20 |
 | P35 | AI Runtime LOD 정책 정리 | `P35_UE5_Portfolio_Pull_Request.md` | `refactor/ai-runtime-lod-policy` |  | W05, N18, N20, N21 |
 | P36 | AI AlertCap 비교 측정 및 Assignment Cap 제어 추가 | `P36_UE5_Portfolio_Pull_Request.md` | `feature/ai-alert-cap-comparison` |  | N21 |
+| P37 | AI Observe Intent 및 Investigate Lifecycle 정리 | `P37_UE5_Portfolio_Pull_Request.md` | `feature/ai-observe-intent-state` |  | N21 |
 
 ---
