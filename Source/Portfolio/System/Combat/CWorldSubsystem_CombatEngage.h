@@ -29,12 +29,6 @@ class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsyst
 	
 private:
 	UPROPERTY()
-	int32 MaxEngagersPerTarget = 2;
-
-	UPROPERTY()
-	int32 MaxAlertersPerTarget = 6;
-
-	UPROPERTY()
 	float RebuildInterval = 0.1f;
 
 	UPROPERTY()
