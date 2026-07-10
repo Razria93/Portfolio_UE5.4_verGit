@@ -1271,3 +1271,31 @@ Frame / Game p95 개선은 제한적이므로 frame gain보다 Runtime LOD 정�
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Result_Note.md
 ```
+
+## Combat Collision / Hit Window 측정 계획
+
+P37 이후 다음 성능 분리 축은 `Combat Collision / Hit Window`다.
+
+이번 축은 `WeaponActor` 존재 비용이 아니라, attack montage 중 hit window가 열렸을 때 발생하는 weapon collision / overlap / hit processing 비용을 분리한다.
+
+측정 브랜치:
+
+```text
+feature/ai-combat-collision-profiling
+```
+
+측정 방향:
+
+```text
+WeaponActor 생성 유지
+attack montage 유지
+AnimNotify route 유지
+Enemy weapon hit collision window만 CVar로 차단
+40 / 80 Enemy에서 FullCombat vs HitCollisionDisabled 쌍 비교
+```
+
+상세 문서:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Combat_Collision_HitWindow_Measurement_Plan.md
+```
