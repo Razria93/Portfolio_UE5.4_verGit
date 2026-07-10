@@ -39,7 +39,7 @@ Capture Duration: 약 36초
 Analysis Window: first 3s / last 3s trimmed, middle 30s used
 Log State: -noailogging
 PIE: F11 fullscreen
-Map: MAP_AIPerf_BTUpdateInterval_40Enemy / MAP_AIPerf_BTUpdateInterval_80Enemy
+Map: MAP_AIPerf_AlertCap_40Enemy / MAP_AIPerf_AlertCap_80Enemy
 Camera: fixed camera
 GC Event: none 권장
 ```

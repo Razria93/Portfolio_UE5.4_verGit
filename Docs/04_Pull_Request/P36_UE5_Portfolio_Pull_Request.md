@@ -31,9 +31,10 @@ P35에서는 `Engage / Alert / Idle` 계층화와 BT service interval split을 �
    - EngageCap / AlertCap을 CVar로 제어
    - 기본값은 기존 정책과 동일하게 Engage 2 / Alert 6 유지
 
-2. AlertCap 비교용 profiling map 추가
+2. AlertCap 비교용 profiling map 준비
    - 40 Enemy / 80 Enemy 비교 map 추가
-   - AlertCap 비교를 BTUpdateInterval 측정 흐름과 분리
+   - 대표 측정은 전용 `MAP_AIPerf_AlertCap_40Enemy / 80Enemy` 기준으로 수행
+   - 전용 map은 AlertCap 비교를 BTUpdateInterval 측정 흐름과 분리하기 위해 유지
 
 3. AlertCap 비교 측정 문서 추가
    - 측정 조건
@@ -68,6 +69,9 @@ Content/00_Profiling/00_AI_Performance/00_Map/07_AlertCap/GM_AIPerf_AlertCap.uas
 Content/00_Profiling/00_AI_Performance/00_Map/07_AlertCap/MAP_AIPerf_AlertCap_40Enemy.umap
 Content/00_Profiling/00_AI_Performance/00_Map/07_AlertCap/MAP_AIPerf_AlertCap_80Enemy.umap
 
+Docs/04_Pull_Request/00_Pull_Request_Index.md
+Docs/04_Pull_Request/P36_UE5_Portfolio_Pull_Request.md
+Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_AlertCap_Comparison_Plan.md
 ```
 
@@ -80,6 +84,7 @@ Log State: -noailogging
 PIE: F11 fullscreen
 Camera: fixed camera
 GC Event: none
+Map: MAP_AIPerf_AlertCap_40Enemy / MAP_AIPerf_AlertCap_80Enemy
 ```
 
 공통 CVar:
@@ -174,7 +179,9 @@ Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap 40
 80 Enemy: 0.4167ms -> 0.4014ms
 ```
 
-호출 수 역시 핵심 병목으로 보기 어렵다. 40 Enemy에서는 count가 오히려 소폭 감소했고, 80 Enemy에서도 `AIContext Count`만 소폭 증가했다.
+호출 수 역시 핵심 병목으로 보기 어렵다. 
+
+40 Enemy에서는 모든 service count가 소폭 감소했고, 80 Enemy에서는 AIContext Count와 EngageContext Count가 소폭 증가했지만 BT Tick p95는 오히려 감소했다. 따라서 이번 차이는 BT service 호출 수 증가보다 Alert 후보 증가에 따른 CharacterMovement / animation work 증가로 해석하는 편이 더 타당하다.
 
 따라서 이번 PR의 결론은 다음과 같다.
 
