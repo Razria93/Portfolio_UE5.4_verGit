@@ -1212,10 +1212,29 @@ Mode 2는 High는 기본 interval, Reduced는 reduced interval, Low는 aggressiv
 EngageContext는 전투 상태 전환 안정성을 위해 기본 interval을 유지한다.
 
 UpdateAIContext는 CombatEngage subsystem의 assignment 결과를 `CombatRole` Blackboard key로 전달한다.
-AIIntentState는 `CombatRole`이 Engage일 때만 Engage, Alert일 때만 Alert로 진입한다.
-`CombatRole`이 None이면 target이 있어도 Investigate / Chase / Alert / Engage로 진입하지 않고 Idle로 되돌린다.
-Investigate / Chase는 CombatRole이 Engage 또는 Alert인 객체가 target을 잃거나 거리 조건을 벗어났을 때만 허용한다.
-따라서 Alert cap 밖의 Enemy는 target을 인식해도 Chase / Alert Spread에 참여하지 않는다.
+AIIntentState는 `TargetActor`와 `bHasLOS`를 상호 보완적인 awareness 신호로 본다.
+`TargetActor`는 LOS 흔들림을 완충하는 기억이고, `bHasLOS`는 현재 시야에 대한 즉시 반응 신호다.
+따라서 `TargetActor || bHasLOS`가 true이면 아직 인지 중인 상태로 해석한다.
+
+인지 중인 Enemy가 `CombatRole == None`이면 Chase / Alert / Engage / Investigate로 진입하지 않고 `Observe`로 대기한다.
+`Observe`는 target awareness는 있지만 CombatEngage assignment 권한이 없는 상태다.
+Alert cap 밖의 Enemy는 target을 인식해도 Chase / Alert Spread에 참여하지 않는다.
+
+`CombatRole == Engage`인 동안에는 이후 target awareness를 완전히 잃었을 때 Investigate로 들어갈 수 있도록 `bShouldInvestigate`를 기록한다.
+Investigate는 `TargetActor || bHasLOS`가 모두 false가 된 뒤, `bShouldInvestigate` 또는 `bIsInvestigating`이 true일 때만 허용한다.
+즉 LOS가 잠깐 끊겨도 TargetActor memory가 살아 있는 동안에는 Chase / Alert / Engage / Observe 판단을 유지하고, 완전 상실 후에만 조사 단계로 넘어간다.
+
+Investigate lifecycle은 다음 세 Blackboard flag로 분리한다.
+
+```text
+bShouldInvestigate    : Investigate 진입 예약. Engage였던 객체만 기록한다.
+bIsInvestigating      : 실제 Investigate route 실행 중.
+bShouldEndInvestigate : Investigate route 종료 요청. max index 도달 또는 timeout에서 true가 된다.
+```
+
+`StartInvestigate`는 `bShouldInvestigate`를 소비하고 `bIsInvestigating`을 켠다.
+`AdvanceInvestigateIndex`는 max index에 도달하면 `bShouldEndInvestigate`를 켜고, 실제 cleanup은 `EndInvestigate`에서 수행한다.
+`EndInvestigate`는 investigate flag, investigate location/index, LastSeenTime / LastKnownLocation을 정리한다.
 ```
 ## CombatEngage Assignment Bootstrap Warmup
 
