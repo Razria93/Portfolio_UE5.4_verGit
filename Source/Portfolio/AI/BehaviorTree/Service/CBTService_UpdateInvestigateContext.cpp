@@ -27,7 +27,6 @@ void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& Owne
 	if (!IsValid(blackboardComp)) return;
 
 	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName)) return;
-	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName)) return;
 	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName)) return;
 
 	const float lastSeenTime = blackboardComp->GetValueAsFloat(CAIKey::Perception::LastSeenTime.KeyName);
@@ -37,7 +36,8 @@ void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& Owne
 
 	if (bTimeout)
 	{
-		CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bCanInvestigate.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bIsInvestigating.KeyName, false);
 		FLog::Log(TEXT("[Investigate Time out]"));
 	}
 }

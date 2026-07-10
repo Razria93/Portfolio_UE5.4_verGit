@@ -55,7 +55,7 @@ namespace CAIKey
 		static const FAIBlackboardKeySpec InvestigateDuration = CAIKeyFactory::CustomFloat(TEXT("InvestigateDuration"));
 		static const FAIBlackboardKeySpec InvestigateMaxIndex = CAIKeyFactory::CustomInt(TEXT("InvestigateMaxIndex"));
 
-		static const FAIBlackboardKeySpec bCanInvestigate = CAIKeyFactory::FixedBool(TEXT("bCanInvestigate"), false);
+		static const FAIBlackboardKeySpec bShouldInvestigate = CAIKeyFactory::FixedBool(TEXT("bShouldInvestigate"), false);
 		static const FAIBlackboardKeySpec bIsInvestigating = CAIKeyFactory::FixedBool(TEXT("bIsInvestigating"), false);
 		static const FAIBlackboardKeySpec InvestigateLocation = CAIKeyFactory::FromOwnerLocation(TEXT("InvestigateLocation"));
 		static const FAIBlackboardKeySpec InvestigateIndex = CAIKeyFactory::FixedInt(TEXT("InvestigateIndex"), INDEX_NONE);

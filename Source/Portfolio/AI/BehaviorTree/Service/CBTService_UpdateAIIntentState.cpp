@@ -72,6 +72,10 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 
 	const bool bHasTarget = IsValid(target);
 	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
+	const bool bHasAwareness = bHasTarget || bHasLOS;
+
+	const bool bUseInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName);
+	const bool bShouldInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName);
 	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName);
 
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
@@ -80,25 +84,29 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	// -----------------------------------------------------------------------------
 	// 3. Decide Next AIIntentState
 	// -----------------------------------------------------------------------------
-	// [Case_01] Idle: No target and no active investigation.
-	if (!bHasTarget && !bIsInvestigating) return EAIIntentState::Idle;
+	// [Case_01] No awareness: investigate only when requested or already active.
+	if (!bHasAwareness)
+	{
+		if (bUseInvestigate && (bShouldInvestigate || bIsInvestigating)) return EAIIntentState::Investigate;
+		return EAIIntentState::Idle;
+	}
 
-	// [Case_02] Investigate: Investigating.
-	if (bIsInvestigating) return EAIIntentState::Investigate;
-
-	// [Case_03] Observe: Target valid + CombatRole == None.
+	// [Case_02] Aware + no combat role: observe only.
 	if (combatRole == ECombatRole::None) return EAIIntentState::Observe;
 
-	// [Case 04] Investigate: Target valid + CombatRole != None + LOS invalid.
-	if (!bHasLOS) return EAIIntentState::Investigate;
+	// [Case_03] Aware + combat role: remember Engage as investigate candidate.
+	if (combatRole == ECombatRole::Engage)
+	{
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboard, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
+	}
 
-	// [Case 05] Combat: Target vaild + Combat Role != None + LOS valid.
+	// [Case_04] Aware + combat role: movement/combat state.
 	if (!bInAlertRange) return EAIIntentState::Chase;
 
 	if (combatRole == ECombatRole::Engage) return EAIIntentState::Engage;
 	if (combatRole == ECombatRole::Alert) return EAIIntentState::Alert;
 
-	// Target-valid fallback.
+	// Aware fallback.
 	return EAIIntentState::Observe;
 }
 
@@ -131,6 +139,16 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 			InBlackboardComp->ClearValue(CAIKey::Engage::NextCombatActionTime.KeyName);
 		}
 	} 
+
+	// Investigate -> Non-Investigate
+	if (InCurrentAIIntentState == EAIIntentState::Investigate && InNextAIIntentState != EAIIntentState::Investigate)
+	{
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bIsInvestigating.KeyName, false);
+
+		InBlackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
+		CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);
+	}
 }
 
 void UCBTService_UpdateAIIntentState::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

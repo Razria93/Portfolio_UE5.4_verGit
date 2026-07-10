@@ -20,7 +20,7 @@ EBTNodeResult::Type UCBTTask_StartInvestigate::ExecuteTask(UBehaviorTreeComponen
 
 	const FVector lastKnownLocation = blackboardComp->GetValueAsVector(CAIKey::Perception::LastKnownLocation.KeyName);
 
-	blackboardComp->SetValueAsBool(CAIKey::Investigate::bCanInvestigate.KeyName, true);
+	blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName, false);
 	blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName, true);
 
 	blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation.KeyName, lastKnownLocation);
