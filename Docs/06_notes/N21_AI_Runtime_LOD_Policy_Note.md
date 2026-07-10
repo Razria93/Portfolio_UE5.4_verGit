@@ -6,8 +6,37 @@
 
 P35는 P34에서 만든 AI performance profiling 환경을 사용해 runtime cost를 분리 측정하고, 실제 효과가 있는 축부터 Runtime LOD 정책으로 정리한다.
 
----
 
+## P36 AlertCap 비교 측정 결과
+
+P36에서는 `CombatEngage` assignment cap을 CVar로 분리하고, `AlertCap 6 / 40`을 40 / 80 Enemy 조건에서 비교했다.
+
+측정 결론:
+
+```text
+AlertCap은 BT Tick 자체를 줄이는 정책이 아니라,
+Alert movement 후보 수를 제한해 CharacterMovement / animation work를 줄이는 정책이다.
+```
+
+대표 측정 결과:
+
+| Enemy | AlertCap | Frame p95 | Game p95 | CharacterMovement p95 | BT Tick p95 |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 40 | 6 | 12.0038ms | 11.5967ms | 0.5394ms | 0.2110ms |
+| 40 | 40 | 13.0781ms | 13.1117ms | 1.3609ms | 0.1970ms |
+| 80 | 6 | 17.5270ms | 17.5329ms | 0.8072ms | 0.4167ms |
+| 80 | 40 | 19.1846ms | 19.1422ms | 1.6427ms | 0.4014ms |
+
+따라서 `Engage / Alert / Idle` 계층화는 단순한 상태 정리가 아니라, 실제 movement 후보 수를 제한하는 Runtime LOD 정책으로 유지한다.
+
+관련 문서:
+
+```text
+Docs/04_Pull_Request/P36_UE5_Portfolio_Pull_Request.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_AlertCap_Comparison_Plan.md
+```
+
+---
 ## P35 최종 정책 요약
 
 P35의 결론은 Runtime LOD를 단순히 모든 Enemy에 같은 interval로 적용하는 것이 아니라, CombatEngage assignment 결과와 runtime relevance에 따라 update precision을 다르게 적용해야 한다는 것이다.
