@@ -57,6 +57,7 @@ namespace CAIKey
 
 		static const FAIBlackboardKeySpec bShouldInvestigate = CAIKeyFactory::FixedBool(TEXT("bShouldInvestigate"), false);
 		static const FAIBlackboardKeySpec bIsInvestigating = CAIKeyFactory::FixedBool(TEXT("bIsInvestigating"), false);
+		static const FAIBlackboardKeySpec bShouldEndInvestigate = CAIKeyFactory::FixedBool(TEXT("bShouldEndInvestigate"), false);
 		static const FAIBlackboardKeySpec InvestigateLocation = CAIKeyFactory::FromOwnerLocation(TEXT("InvestigateLocation"));
 		static const FAIBlackboardKeySpec InvestigateIndex = CAIKeyFactory::FixedInt(TEXT("InvestigateIndex"), INDEX_NONE);
 	}

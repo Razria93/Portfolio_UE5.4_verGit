@@ -145,6 +145,7 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 	{
 		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
 		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bIsInvestigating.KeyName, false);
+		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bShouldEndInvestigate.KeyName, false);
 
 		InBlackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
 		CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);

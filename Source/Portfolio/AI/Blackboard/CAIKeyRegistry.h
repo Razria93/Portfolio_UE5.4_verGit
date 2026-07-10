@@ -73,6 +73,7 @@ namespace CAIKeyRegistry
 			CAIKey::Investigate::InvestigateMaxIndex,
 			CAIKey::Investigate::bShouldInvestigate,
 			CAIKey::Investigate::bIsInvestigating,
+			CAIKey::Investigate::bShouldEndInvestigate,
 			CAIKey::Investigate::InvestigateLocation,
 			CAIKey::Investigate::InvestigateIndex,
 

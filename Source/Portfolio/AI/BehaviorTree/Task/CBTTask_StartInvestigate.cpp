@@ -22,6 +22,7 @@ EBTNodeResult::Type UCBTTask_StartInvestigate::ExecuteTask(UBehaviorTreeComponen
 
 	blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName, false);
 	blackboardComp->SetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName, true);
+	blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldEndInvestigate.KeyName, false);
 
 	blackboardComp->SetValueAsVector(CAIKey::Investigate::InvestigateLocation.KeyName, lastKnownLocation);
 	blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, 0);
