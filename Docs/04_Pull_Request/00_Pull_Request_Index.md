@@ -45,5 +45,6 @@
 | P37 | AI Observe Intent 및 Investigate Lifecycle 정리 | `P37_UE5_Portfolio_Pull_Request.md` | `feature/ai-observe-intent-state` |  | N21 |
 | P38 | AI Combat Collision / Hit Window 비용 분리 측정 | `P38_UE5_Portfolio_Pull_Request.md` | `feature/ai-combat-collision-profiling` |  | N21 |
 | P39 | AI Combat Feedback Presentation 비용 분리 측정 | `P39_UE5_Portfolio_Pull_Request.md` | `feature/ai-combat-feedback-profiling` |  | N21 |
+| P40 | AI Enemy Actor Tick 비용 분리 측정 | `P40_UE5_Portfolio_Pull_Request.md` | `feature/ai-enemy-actor-tick-profiling` |  | N21 |
 
 ---
