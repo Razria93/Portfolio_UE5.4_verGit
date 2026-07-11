@@ -285,25 +285,26 @@ Combat Collision / HitProcessing은 Runtime LOD v1 우선 제어 후보로 보�
 
 #### P39: Feedback Presentation 측정
 
-계획 브랜치:
+브랜치:
 
 ```text
-feature/ai-feedback-presentation-profiling
+feature/ai-combat-feedback-profiling
 ```
 
-작업 범위:
+작업 결과:
 
 ```text
-Niagara / trail / sound / camera shake / cue route 비용 분리
-hit processing은 유지한 상태에서 presentation route만 줄일 수 있는지 확인
-40 / 80 Enemy 기준 FullFeedback vs FeedbackDisabled 쌍 측정
+Enemy action feedback presentation gate 추가
+Trail / VFX / SFX counter와 TrailClear cleanup counter 분리
+40 / 80 Enemy 기준 FeedbackBaseline vs FeedbackDisabled 쌍 측정
 ```
 
-의도:
+결론:
 
 ```text
-Combat Collision / HitProcessing은 끄기 애매한 축으로 확인됐다.
-반면 Feedback Presentation은 gameplay result와 분리하기 쉬우므로 Runtime LOD 후보로 우선 검토한다.
+Combat Feedback Presentation은 기능적으로 분리 가능하다.
+하지만 40 / 80 Enemy 조건에서 Frame / Game p95 개선은 유의미하지 않았다.
+Runtime LOD v1 핵심 병목 축이 아니라 최하위 representation 단계의 선택 후보로 둔다.
 ```
 
 ---
@@ -448,7 +449,7 @@ KR / EN 혼용 정리
 
 ## 현재 우선순위
 
-현재 P38은 구현 / 검증 / PR 문서 작성까지 완료됐다.
+현재 P39는 구현 / 검증 / PR 문서 작성까지 완료됐다.
 
 ```text
 P37
@@ -457,8 +458,11 @@ P37
 P38
 -> Combat Collision / HitProcessing 축은 계측과 분리는 성공했지만 Runtime LOD v1 우선 제어 후보에서는 제외했다.
 
-P39 이후
--> Feedback Presentation 측정부터 이어가고, 남은 측정축과 code quality sweep은 별도 브랜치로 진행한다.
+P39
+-> Combat Feedback Presentation 축은 기능적으로 분리 가능하지만 Frame / Game p95 개선이 제한적이므로 최하위 representation 후보로만 유지한다.
+
+P40 이후
+-> 남은 측정축과 code quality sweep은 별도 브랜치로 진행한다.
 ```
 
 각 축은 구현 전에 유의미한 성능 차이를 만드는지 먼저 확인한 뒤 진행한다.

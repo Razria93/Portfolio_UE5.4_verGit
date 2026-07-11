@@ -259,5 +259,5 @@ Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_AlertCap_Comparison_Plan.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Result_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_Note.md
-Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+Docs/07_Profiling/CSV_Analysis_Guide.md
 ```

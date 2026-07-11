@@ -6,6 +6,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundBase.h"
 
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
 #include "Type/CReactionFeedbackStructure.h"
 
 // Internal linkage
@@ -51,6 +52,14 @@ bool UCReactionFeedbackComponent::ValidateRequiredComponentReferences() const
 void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest)
 {
 	if (!CanPlayReactionFeedback(InReactionFeedbackRequest)) return;
+
+	FCombatFeedbackProfiling::RecordReactionFeedbackRequest();
+
+	if (FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackProfiling::RecordReactionFeedbackSkipped();
+		return;
+	}
 
 	// PrintReactionFeedbackRequestInfo(InReactionFeedbackRequest);
 	ExecuteVFXFeedbacks(InReactionFeedbackRequest);
@@ -285,6 +294,8 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 	{
 	case EReactionVFXPlayType::Once:
 	{
+		FCombatFeedbackProfiling::RecordReactionVFX();
+
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InReactionVFXFeedbackData.VFX,
 			OwnerCharacter_Injected->GetMesh(),
@@ -321,6 +332,8 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 	{
 	case EReactionSFXPlayType::Once:
 	{
+		FCombatFeedbackProfiling::RecordReactionSFX();
+
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			InReactionSFXFeedbackData.SFX,

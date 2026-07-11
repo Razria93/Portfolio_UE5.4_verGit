@@ -274,7 +274,7 @@ Extreme comparison test list
 Raw CSV:
 
 ```text
-Docs/07_Profiling/AI_Performance/CSV/baseline/case_01_040_enemy_aiperf_engage.csv
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 ```
 
 검증 결과:

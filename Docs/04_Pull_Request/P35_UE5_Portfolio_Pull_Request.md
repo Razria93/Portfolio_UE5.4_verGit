@@ -97,8 +97,8 @@ Analysis Window: first 3s / last 3s trimmed, middle 30s used
 Log State: -noailogging
 PIE: F11 fullscreen
 GC Event: none
-Raw CSV: Docs/07_Profiling/AI_Performance/CSV/runtime_lod/p35_ai_context_interval_split/
-Pivot Evidence: Docs/07_Profiling/AI_Performance/CSV/runtime_lod/p35_design_pivot_evidence/
+Evidence Manifest: Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
+Pivot Evidence Manifest: Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 ```
 
 40 Enemy 대표 측정:
@@ -237,11 +237,11 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_N
 
 ```text
 Docs/06_notes/N21_AI_Runtime_LOD_Policy_Note.md
-Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Result_Note.md
-Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+Docs/07_Profiling/CSV_Analysis_Guide.md
 ```

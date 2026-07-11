@@ -7,7 +7,7 @@
 CSV 해석 기준:
 
 ```text
-Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md
+Docs/07_Profiling/CSV_Analysis_Guide.md
 ```
 
 측정 실행 기준:
@@ -290,7 +290,7 @@ GPU p95 감소폭은 제한적이므로, 이 측정만으로 WeaponActor가 GPU 
 ActorCount/CEnemy는 81로 기록됐지만 Ticks/CEnemy, Ticks/BehaviorTreeComponent, Ticks/CAIController는 40으로 유지됐다.
 따라서 실제 runtime 측정 대상은 40 Enemy로 해석한다.
 ActorCount/CEnemy는 PIE / editor world count가 섞일 수 있으므로 active Enemy 수 판단에는 Tick count를 우선한다.
-해당 기준은 Docs/07_Profiling/AI_Performance/CSV_Analysis_Guide.md를 따른다.
+해당 기준은 Docs/07_Profiling/CSV_Analysis_Guide.md를 따른다.
 ```
 
 WeaponActor Isolation 80 Enemy 측정 결과:

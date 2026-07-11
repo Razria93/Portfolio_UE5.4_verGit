@@ -8,6 +8,7 @@
 #include "Sound/SoundBase.h"
 #include "Camera/CameraShakeBase.h"
 
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
 #include "System/Combat/CWorldSubsystem_CombatFeedback.h"
 
 #include "Type/CWeaponStructure.h"
@@ -44,9 +45,18 @@ void UCHitFeedbackComponent::PlayHitFeedback(const FCombatSignalTargetPacket& In
 {
 	if (!CanPlayHitFeedback(InCombatSignalTargetPacket)) return;
 
+	FCombatFeedbackProfiling::RecordHitFeedbackRequest();
+
 	// PrintHitInfo(InCombatSignalTargetPacket);
 
 	PlayHitStop(InCombatSignalTargetPacket);
+
+	if (FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackProfiling::RecordHitFeedbackPresentationSkipped();
+		return;
+	}
+
 	PlayHitVFX(InCombatSignalTargetPacket);
 	PlayHitSFX(InCombatSignalTargetPacket);
 	PlayCameraShake(InCombatSignalTargetPacket);
@@ -84,6 +94,8 @@ void UCHitFeedbackComponent::PlayHitVFX(const FCombatSignalTargetPacket& InComba
 	// FLog::Log(TEXT("[UCHitFeedbackComponent] Play HitVFX"));
 	// PrintHitVFXRequestInfo(HitVFX, location, rotation);
 
+	FCombatFeedbackProfiling::RecordHitVFX();
+
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
 }
 
@@ -102,6 +114,8 @@ void UCHitFeedbackComponent::PlayHitSFX(const FCombatSignalTargetPacket& InComba
 	// FLog::Log(TEXT("[UCHitFeedbackComponent] Play HitSFX"));
 	// PrintHitSFXRequestInfo(HitSFX, location);
 
+	FCombatFeedbackProfiling::RecordHitSFX();
+
 	UGameplayStatics::PlaySoundAtLocation(this, HitSFX, location);
 }
 
@@ -116,6 +130,8 @@ void UCHitFeedbackComponent::PlayCameraShake(const FCombatSignalTargetPacket& In
 
 	// FLog::Log(TEXT("[UCHitFeedbackComponent] PlayCameraShake"));
 	// PrintCameraShakeRequestInfo(cameraShakeRequest);
+
+	FCombatFeedbackProfiling::RecordCameraShakeRequest();
 
 	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
 }

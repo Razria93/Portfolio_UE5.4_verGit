@@ -80,7 +80,7 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Lev
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
-Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 ```
 
 ---
@@ -90,7 +90,7 @@ Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 P35의 비교 기준은 P34 baseline CSV다.
 
 ```text
-Docs/07_Profiling/AI_Performance/CSV/baseline/case_01_040_enemy_aiperf_engage.csv
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 ```
 
 ## BT Update Interval AssignmentGate 측정 결과
@@ -1318,11 +1318,49 @@ CombatSignalCue는 유지되어 montage / action cue 기반 presentation route�
 EngageCap 4 stress 조건에서도 HitProcessing / CombatSignal 차단은 정상 동작했지만 Frame / Game p95 개선은 관찰되지 않았다.
 따라서 현재 조건에서는 hit processing 이후 경로가 주요 프레임 병목이라고 보기는 어렵다.
 Combat Collision / HitProcessing은 Runtime LOD v1의 우선 제어 후보로 보지 않고 후순위로 닫는다.
-다음 측정 축은 Feedback Presentation으로 넘긴다.
+다음 측정 축은 Feedback Presentation으로 넘겼다.
 ```
 
 상세 문서:
 
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Combat_Collision_HitWindow_Measurement_Plan.md
+```
+
+## P39 Combat Feedback Presentation 측정 결과
+
+P39에서는 전투 판정과 결과는 유지하고, Enemy combat feedback presentation만 분리해서 측정했다.
+
+측정 범위:
+
+```text
+attack montage 유지
+hit processing / combat signal 유지
+hit stop 유지
+Player-side HitFeedback 유지
+Enemy ActionFeedback presentation만 skip
+```
+
+계측 기준:
+
+```text
+event 지점에서는 FCombatFeedbackProfiling::Record...()로 counter만 누적한다.
+CSV 기록은 UCWorldSubsystem_CombatEngage::Tick()에서 FlushToCsv()로 내보낸다.
+Trail on과 action cleanup의 TrailClear를 분리한다.
+```
+
+측정 결과 요약:
+
+```text
+DisableEnemyCombatFeedback 1에서 ActionFeedback_Skipped가 request 수와 동일하게 증가했다.
+Enemy Trail / VFX / SFX presentation counter는 0으로 낮아졌다.
+TrailClear는 cleanup 호출이므로 presentation 실행으로 보지 않는다.
+40 / 80 Enemy 모두 Frame / Game p95 개선은 유의미하지 않았다.
+따라서 Combat Feedback Presentation은 Runtime LOD v1 핵심 병목 축이 아니라 최하위 representation 단계의 선택 후보로 둔다.
+```
+
+상세 문서:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Combat_Feedback_Presentation_Measurement_Plan.md
 ```
