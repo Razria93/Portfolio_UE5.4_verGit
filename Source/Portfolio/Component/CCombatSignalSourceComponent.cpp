@@ -5,15 +5,23 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/ShapeComponent.h"
 #include "GameFramework/Character.h"
+#include "HAL/IConsoleManager.h"
 
 #include "AI/Blackboard/CAIKey.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalTargetComponent.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "Type/CWeaponStructure.h"
 
 namespace
 {
+	TAutoConsoleVariable<int32> CVarDisableEnemyHitProcessing(
+		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyHitProcessing"),
+		0,
+		TEXT("Disable Enemy hit processing for combat collision profiling. 0: process hit, 1: skip Enemy hit processing after overlap."),
+		ECVF_Default);
+
 	const FName CombatTimingCueSignalTag(TEXT("Combat.Signal.TimingCue"));
 }
 
@@ -77,11 +85,17 @@ void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser
 
 void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext& InHitContext)
 {
+	if (ShouldSkipEnemyHitProcessingForProfiling()) return;
+
+	FCombatCollisionProfilingCounters::RecordHitProcessing();
+
 	ProcessCombatSignalSource(InHitContext);
 }
 
 bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser)
 {
+	FCombatCollisionProfilingCounters::RecordCombatSignalCueRequest();
+
 	const FCombatSignal combatSignal = BuildCueSignal(InTargetActor, InCueTag, InCueLocation, InDirection, InSignalCauser);
 	if (!ValidateCueSignal(combatSignal)) return false;
 
@@ -90,6 +104,8 @@ bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor
 
 bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 {
+	FCombatCollisionProfilingCounters::RecordAICombatSignalCueRequest();
+
 	AActor* targetActor = ResolveCueTargetActor();
 	if (!IsValid(targetActor)) return false;
 
@@ -155,6 +171,20 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	// Debug: build the final source-side result for optional reporting.
 	const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
 	// PrintCombatSignalSourceSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult);
+}
+
+// Profiling
+
+bool UCCombatSignalSourceComponent::ShouldSkipEnemyHitProcessingForProfiling() const
+{
+	if (CVarDisableEnemyHitProcessing.GetValueOnGameThread() == 0) return false;
+
+	return IsEnemyHitProcessingProfilingTarget();
+}
+
+bool UCCombatSignalSourceComponent::IsEnemyHitProcessingProfilingTarget() const
+{
+	return IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->IsA<ACEnemy>();
 }
 
 bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitContext) const
@@ -348,6 +378,8 @@ FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FComb
 
 void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSourceContext& InOutCombatSignalSourceContext)
 {
+	FCombatCollisionProfilingCounters::RecordCombatSignal();
+
 	InOutCombatSignalSourceContext.CommittedDamage = SendDamageToTarget(InOutCombatSignalSourceContext);
 
 	if (InOutCombatSignalSourceContext.CommittedDamage <= 0.f)
@@ -392,6 +424,8 @@ bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatS
 	UCCombatSignalTargetComponent* targetComponent = targetActor->FindComponentByClass<UCCombatSignalTargetComponent>();
 	if (!IsValid(targetComponent))
 		return false;
+
+	FCombatCollisionProfilingCounters::RecordCombatSignalCueSend();
 
 	return targetComponent->RequestCombatSignalTarget(InCombatSignal);
 }

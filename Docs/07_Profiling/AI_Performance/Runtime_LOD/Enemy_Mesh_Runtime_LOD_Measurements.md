@@ -1,4 +1,4 @@
-﻿# Enemy Mesh Runtime LOD Measurements
+# Enemy Mesh Runtime LOD Measurements
 
 ## 목적
 

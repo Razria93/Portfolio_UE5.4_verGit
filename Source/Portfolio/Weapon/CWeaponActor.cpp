@@ -7,6 +7,7 @@
 #include "NiagaraSystem.h"
 
 #include "Component/CCombatSignalSourceComponent.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -221,6 +222,8 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 		++CurrentHitWindowId;
 		bHitWindowOpened = true;
 
+		FCombatCollisionProfilingCounters::RecordHitWindowOpen();
+
 		if (IsValid(CombatSignalSourceComp_Injected))
 		{
 			CombatSignalSourceComp_Injected->NotifyHitWindowOpened(this, CurrentHitWindowId);
@@ -239,6 +242,8 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 void ACWeaponActor::CollisionDisabled()
 {
 	if (!bHitWindowOpened) return;
+
+	FCombatCollisionProfilingCounters::RecordHitWindowClose();
 
 	for (UShapeComponent* collision : Collisions_Cached)
 	{
@@ -266,6 +271,8 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	if (OwnerCharacter_Injected == OtherActor) return;
 
 	if (!IsValid(CombatSignalSourceComp_Injected)) return;
+
+	FCombatCollisionProfilingCounters::RecordHitWindowOverlap();
 
 	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	FHitContext hitContext = BuildHitContext(overlapContext);

@@ -18,16 +18,17 @@
 - P35 AI Runtime LOD 정책 정리
 - P36 AI AlertCap 비교 측정 및 Assignment Cap 제어 추가
 - P37 AI Observe Intent 및 Investigate Lifecycle 정리
+- P38 AI Combat Collision / Hit Window 비용 분리 측정
 
 후속 작업
-- P38 Runtime LOD Implementation v1
-- P39 Type Header / Helper Boundary 정리
-- P40 Tuning Constants Cleanup
-- P41 API Const Consistency
-- P42 Debug Log Policy
-- P43 Naming / Typo / API Cleanup
-- P44 TODO Status Cleanup
-- P45 PR Record Format Sweep
+- P39 Feedback Presentation 측정
+- P40 Type Header / Helper Boundary 정리
+- P41 Tuning Constants Cleanup
+- P42 API Const Consistency
+- P43 Debug Log Policy
+- P44 Naming / Typo / API Cleanup
+- P45 TODO Status Cleanup
+- P46 PR Record Format Sweep
 ```
 
 정리 기준은 다음과 같다.
@@ -249,11 +250,67 @@ bShouldInvestigate / bIsInvestigating / bShouldEndInvestigate lifecycle 분리
 AlertCap 밖의 Enemy가 Chase / Alert / Investigate로 번지지 않게 하고, Investigate 상태 전환 책임을 명확히 한다.
 ```
 
+#### P38: AI Combat Collision / Hit Window 비용 분리 측정
+
+계획 브랜치:
+
+```text
+feature/ai-combat-collision-profiling
+```
+
+작업 범위:
+
+```text
+Combat Collision / Hit Window event 계측
+event count를 tick phase에서 FlushToCsv로 기록
+DisableEnemyHitProcessing gate 추가
+40 / 80 Enemy FullCombat vs HitProcessingDisabled 비교
+EngageCap 4 stress 참고 측정
+```
+
+의도:
+
+```text
+HitWindow / Overlap / HitProcessing / CombatSignal route를 분리하고,
+Combat Collision / HitProcessing이 Runtime LOD v1의 우선 제어 후보인지 판단한다.
+```
+
+결론:
+
+```text
+HitProcessing / CombatSignal 차단은 정상 동작했지만 Frame / Game p95 개선은 작았다.
+Combat Collision / HitProcessing은 Runtime LOD v1 우선 제어 후보로 보지 않고 후순위로 닫는다.
+다음 성능 측정 축은 Feedback Presentation으로 넘긴다.
+```
+
+#### P39: Feedback Presentation 측정
+
+계획 브랜치:
+
+```text
+feature/ai-feedback-presentation-profiling
+```
+
+작업 범위:
+
+```text
+Niagara / trail / sound / camera shake / cue route 비용 분리
+hit processing은 유지한 상태에서 presentation route만 줄일 수 있는지 확인
+40 / 80 Enemy 기준 FullFeedback vs FeedbackDisabled 쌍 측정
+```
+
+의도:
+
+```text
+Combat Collision / HitProcessing은 끄기 애매한 축으로 확인됐다.
+반면 Feedback Presentation은 gameplay result와 분리하기 쉬우므로 Runtime LOD 후보로 우선 검토한다.
+```
+
 ---
 
 ### 7. Code Quality Sweep
 
-#### P38: Type Header / Helper Boundary 정리
+#### P40: Type Header / Helper Boundary 정리
 
 계획 브랜치:
 
@@ -278,7 +335,7 @@ validation / formatting / debug dump / initialization / clear helper 분리 기�
 type 위치와 helper 책임을 명확히 해 빌드 의존성과 변경 영향 범위를 줄인다.
 ```
 
-#### P39: Tuning Constants Cleanup
+#### P41: Tuning Constants Cleanup
 
 계획 브랜치:
 
@@ -293,7 +350,7 @@ AI radius / interval / threshold / combat tuning value 정리
 constants / config / DataAsset 분류
 ```
 
-#### P40: API Const Consistency
+#### P42: API Const Consistency
 
 계획 브랜치:
 
@@ -308,7 +365,7 @@ read-only API const 정합성 점검
 불필요한 mutable 접근 정리
 ```
 
-#### P41: Debug Log Policy
+#### P43: Debug Log Policy
 
 계획 브랜치:
 
@@ -335,7 +392,7 @@ debug print 책임 위치 정리
 시각적 디버그 툴은 feature 성격으로 별도 분리한다.
 ```
 
-#### P42: Naming / Typo / API Cleanup
+#### P44: Naming / Typo / API Cleanup
 
 계획 브랜치:
 
@@ -351,7 +408,7 @@ include casing 정리
 API naming 불일치 정리
 ```
 
-#### P43: TODO Status Cleanup
+#### P45: TODO Status Cleanup
 
 계획 브랜치:
 
@@ -370,7 +427,7 @@ Phase / 보류 / 후속 작업 상태 명확화
 
 ### 8. Documentation / PR Record
 
-#### P44: PR Record Format Sweep
+#### P46: PR Record Format Sweep
 
 계획 브랜치:
 
@@ -391,14 +448,17 @@ KR / EN 혼용 정리
 
 ## 현재 우선순위
 
-현재 P37은 구현 / 검증 / PR 문서 작성까지 완료됐다.
+현재 P38은 구현 / 검증 / PR 문서 작성까지 완료됐다.
 
 ```text
 P37
 -> P36에서 확인한 AlertCap 정책 위에 Observe intent와 Investigate lifecycle을 정리했다.
 
-P38 이후
--> Runtime LOD Implementation v1과 남은 측정축을 별도 브랜치로 진행한다.
+P38
+-> Combat Collision / HitProcessing 축은 계측과 분리는 성공했지만 Runtime LOD v1 우선 제어 후보에서는 제외했다.
+
+P39 이후
+-> Feedback Presentation 측정부터 이어가고, 남은 측정축과 code quality sweep은 별도 브랜치로 진행한다.
 ```
 
 각 축은 구현 전에 유의미한 성능 차이를 만드는지 먼저 확인한 뒤 진행한다.

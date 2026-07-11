@@ -2,6 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CActionComponent.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 UCAnimNotifyState_Collision::UCAnimNotifyState_Collision()
 {
@@ -19,6 +20,8 @@ void UCAnimNotifyState_Collision::NotifyBegin(USkeletalMeshComponent* MeshComp, 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
 
+	FCombatCollisionProfilingCounters::RecordCollisionNotifyBegin();
+
 	actionComp->HandleActionCollisionWindowBegin(CollisionName);
 }
 
@@ -28,6 +31,8 @@ void UCAnimNotifyState_Collision::NotifyEnd(USkeletalMeshComponent* MeshComp, UA
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
 	if (!CanProcessActionNotify(actionComp)) return;
+
+	FCombatCollisionProfilingCounters::RecordCollisionNotifyEnd();
 
 	actionComp->HandleActionCollisionWindowEnd();
 }
