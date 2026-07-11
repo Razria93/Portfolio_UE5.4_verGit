@@ -85,6 +85,86 @@ Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 
 ---
 
+## Runtime LOD 책임 분리 기준
+
+Movement LOD 책임 분리 이후 Runtime LOD 코드는 다음 기준으로 배치한다.
+
+```text
+Runtime LOD policy helper:
+-> CVar 읽기
+-> mode clamp
+-> profiling target 판정
+-> mode 의미 해석
+-> 적용할 policy / interval / gate 값 결정
+
+Domain owner:
+-> 실제 상태 변경
+-> tick enable / disable
+-> spawn / destroy / attach / detach
+-> movement, animation, perception, feedback, collision 같은 도메인 동작 적용
+```
+
+이 기준을 둔 이유는 Runtime LOD가 기본 gameplay 흐름의 예외 제어이기 때문이다.
+예외 제어 조건과 실제 gameplay state mutation이 한 클래스에 섞이면, 어떤 코드가 정규 동작이고 어떤 코드가 profiling / LOD 제어인지 읽기 어려워진다.
+
+Movement 분리에서 확인한 문제:
+
+```text
+EnemyActorTickMode 1로 ACEnemy tick을 끄면,
+ACEnemy::Tick 안에서 다시 적용하던 EnemyMovementMode 2의 movement intent block도 같이 멈출 수 있었다.
+
+즉 actor tick 최적화가 movement LOD guard의 실행 주기를 끊는 구조였다.
+```
+
+해결 기준:
+
+```text
+Movement 제어 책임은 UCMovementComponent가 가진다.
+Runtime LOD CVar와 mode 해석은 AI/RuntimeLOD helper가 가진다.
+ACEnemy는 movement LOD를 직접 polling하지 않는다.
+```
+
+따라서 Runtime LOD 축별 책임은 다음처럼 나눈다.
+
+| 축 | Policy / Helper 책임 | Domain owner 책임 | 우선순위 |
+| --- | --- | --- | --- |
+| Movement / Nav | `FAIMovementRuntimeLODPolicy`가 `EnemyMovementMode`와 적용 mode를 해석 | `UCMovementComponent`가 movement intent, state refresh, active movement stop을 적용 | 적용됨 |
+| Enemy Actor Tick | Actor tick mode 해석은 별도 helper로 분리 가능 | `ACEnemy`가 actor tick enable / disable 적용 | 낮음 |
+| Mesh / Pose Visibility | mesh mode, combat-capable 여부, pose skip 허용 여부 판단 | `ACEnemy` 또는 mesh owner가 visibility / animation tick option 적용 | 중간 |
+| Animation Parameter Refresh | animation mode, refresh interval, counter gate 판단 | `CAnimInstance`가 parameter refresh skip / 실행 적용 | 높음 |
+| BT Service Interval | service별 interval preset / precision 판단 | 각 BT service가 `ScheduleNextTick` / `SetNextTickTime`에 반영 | 적용됨, 정리 후보 |
+| Perception | perception disable / active budget / target 여부 판단 | `ACAIController`가 sense enable, delegate bind, perception context를 적용 | 높음 |
+| WeaponActor | Enemy WeaponActor 생성 skip 여부 판단 | `UCWeaponComponent`가 create / destroy / equip state를 적용 | 높음 |
+| Combat Hit Processing | hit processing disable 여부 판단, counter는 profiling 전용으로 유지 | combat signal / hit window owner가 overlap 후보와 hit processing을 적용 또는 차단 | 중간 |
+| Feedback Presentation | Enemy feedback skip 여부 판단 | feedback owner가 trail / VFX / SFX / camera shake를 적용 또는 차단 | 중간 |
+| Engage Assignment / AlertCap / Warmup | CVar read helper는 둘 수 있음 | `UCWorldSubsystem_CombatEngage`가 request, assignment, lease, precision을 관리 | 현 구조 유지 |
+
+`Core/Profiling`에는 counter / CSV flush 같은 계측 책임만 둔다.
+Runtime LOD mode 해석이나 gameplay 상태 변경은 `Core/Profiling`으로 보내지 않는다.
+
+후속 리팩터링 우선순위:
+
+```text
+1. WeaponActor Runtime LOD policy 분리
+2. Animation Runtime LOD policy 분리
+3. Perception Runtime LOD policy 분리
+4. Feedback Runtime LOD policy 분리
+5. Combat hit processing policy 분리
+6. Mesh / pose policy 분리
+7. Enemy Actor Tick policy 분리
+```
+
+Engage assignment는 단순 policy gate가 아니라 request sorting, cap, lease, warmup, precision source를 함께 가진 subsystem이다.
+따라서 별도 helper로 과도하게 분리하지 않고 `UCWorldSubsystem_CombatEngage` 안에 유지한다.
+
+축별 측정 이후 실제 적용 계획은 상태 기반 Runtime LOD 정책으로 정리한다.
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_State_Based_Runtime_LOD_Policy_Plan.md
+```
+
+---
+
 ## 기준 Baseline
 
 P35의 비교 기준은 P34 baseline CSV다.
