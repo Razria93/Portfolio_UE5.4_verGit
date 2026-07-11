@@ -175,7 +175,7 @@ Enemy끼리 crowd 변수 축소 / friendly hit 차단 확인
 측정 파일:
 
 ```text
-Docs/07_Profiling/AI_Performance/CSV/baseline/case_01_040_enemy_aiperf_engage.csv
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 ```
 
 측정 조건:
@@ -232,6 +232,6 @@ P34에서는 crowd 문제 해결이 아니라 profiling baseline 변수 축소�
 Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 Docs/06_notes/N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
 Docs/06_notes/N20_AI_Profiling_Test_Asset_Plan_Note.md
-Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 Docs/04_Pull_Request/P33_UE5_Portfolio_Pull_Request.md
 ```

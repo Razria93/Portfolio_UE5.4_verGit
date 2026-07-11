@@ -324,7 +324,7 @@ CSV hot path summary
 원본 CSV:
 
 ```text
-Docs/07_Profiling/AI_Update_Interval/CSV/MANIFEST.md
+Docs/07_Profiling/AI_Update_Interval/CSV_Evidence_Manifest.md
 ```
 
 현재 확인:

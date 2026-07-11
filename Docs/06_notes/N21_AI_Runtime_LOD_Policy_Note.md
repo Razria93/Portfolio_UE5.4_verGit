@@ -80,7 +80,7 @@ Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Lev
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
-Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 ```
 
 ---
@@ -90,7 +90,7 @@ Docs/07_Profiling/AI_Performance/CSV/MANIFEST.md
 P35의 비교 기준은 P34 baseline CSV다.
 
 ```text
-Docs/07_Profiling/AI_Performance/CSV/baseline/case_01_040_enemy_aiperf_engage.csv
+Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
 ```
 
 ## BT Update Interval AssignmentGate 측정 결과
