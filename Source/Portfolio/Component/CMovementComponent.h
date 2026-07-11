@@ -14,6 +14,14 @@ class PORTFOLIO_API UCMovementComponent : public UActorComponent
 public:
 	UCMovementComponent();
 
+private:
+	struct FRuntimeLODMovementState
+	{
+		int32 AppliedMode = INDEX_NONE;
+		bool bOriginalMovementComponentTickEnabled = true;
+		bool bOriginalStateCached = false;
+	};
+
 	// === MovementData ===================================== //
 private:
 	UPROPERTY(EditAnywhere, Category = "Movement|Gait")
@@ -33,8 +41,14 @@ private:
 	bool bHasMovementModeOverride = false;
 
 private:
+	FRuntimeLODMovementState RuntimeLODMovementState;
+
+private:
 	UPROPERTY(Transient)
 	bool bCanMove = true;
+
+	UPROPERTY(Transient)
+	bool bRuntimeLODMovementIntentBlocked = false;
 
 	UPROPERTY(Transient)
 	bool bIsFalling = false;
@@ -66,7 +80,31 @@ private:
 
 protected:
 	// Lifecycle
+	void BeginPlay() override;
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+private:
+	// Runtime LOD
+	// 1. Update
+	void UpdateRuntimeLODMovementMode();
+
+	// 2. Lifecycle
+	void EnsureRuntimeLODMovementOriginalStateCached();
+
+	// 3. Dispatch
+	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
+
+	// 4. Movement Mode
+	void ApplyRuntimeLODMovementDefault();
+	void ApplyRuntimeLODMovementStateRefreshDisabled();
+	void ApplyRuntimeLODMovementIntentBlocked();
+
+	// 5. Movement State
+	void RestoreRuntimeLODMovementStateRefresh();
+	void DisableRuntimeLODMovementStateRefresh();
+	void AllowRuntimeLODMovementIntent();
+	void BlockRuntimeLODMovementIntent();
+	void StopRuntimeLODActiveMovement();
 
 public:
 	/* === Check / Query === */
@@ -85,11 +123,19 @@ public:
 public:
 	/* === Setter === */
 	FORCEINLINE void SetStop() { bCanMove = false; }
-	FORCEINLINE void SetMove() { bCanMove = true; }
+	FORCEINLINE void SetMove()
+	{
+		if (bRuntimeLODMovementIntentBlocked) return;
+
+		bCanMove = true;
+	}
 
 public:
 	/* === Movement Arbitration === */
 	bool CanAcceptMoveInput() const;
+
+	void BlockMovementIntentForRuntimeLOD();
+	void ClearMovementIntentBlockForRuntimeLOD();
 
 public:
 	void OnMove(const FVector2D& InAxis2D);
