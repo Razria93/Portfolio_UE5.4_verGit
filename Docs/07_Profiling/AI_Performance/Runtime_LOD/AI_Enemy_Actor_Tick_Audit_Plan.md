@@ -45,7 +45,7 @@ Portfolio.AI.RuntimeLOD.EnemyActorTickMode
 - Mode 1은 `ACEnemy::Tick` 자체를 끄므로 PIE 중 CVar를 1에서 0으로 되돌리는 runtime restore 검증에는 적합하지 않다.
 - 정규 측정은 PIE 시작 전 CVar를 설정한 뒤 진행한다.
 - Mode 1은 `CActionComponent`, `CMovementComponent`, `CharacterMovementComponent`, `BehaviorTreeComponent`, `SkeletalMeshComponent` tick을 끄지 않는다.
-- 측정 명칭과 CVar는 `EnemyActorTick`으로 정리했다. 기존 측정 맵 에셋명은 UE asset rename / redirector churn을 피하기 위해 `ComponentTick` 이름을 유지한다.
+- 측정 명칭, CVar, 전용 측정 맵 에셋명을 `EnemyActorTick` 기준으로 정리했다.
 
 ## 측정 조건
 

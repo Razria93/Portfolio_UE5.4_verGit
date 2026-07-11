@@ -45,9 +45,9 @@
    - CActionComponent / CMovementComponent / CharacterMovement / BT / SkeletalMesh tick은 유지
 
 3. Enemy Actor Tick 측정 맵 추가
-   - MAP_AIPerf_ComponentTick_40Enemy
-   - MAP_AIPerf_ComponentTick_80Enemy
-   - 측정 명칭과 CVar는 `EnemyActorTick`으로 정리했다. 다만 UE asset rename / redirector churn을 피하기 위해 기존 측정 맵 에셋명은 유지했다.
+   - MAP_AIPerf_EnemyActorTick_40Enemy
+   - MAP_AIPerf_EnemyActorTick_80Enemy
+   - 측정 명칭, CVar, 전용 측정 맵 에셋명을 `EnemyActorTick` 기준으로 정리했다.
 
 4. Enemy Actor Tick 측정 문서 정리
    - 측정 범위 명시
@@ -79,8 +79,8 @@ Mode 1은 ACEnemy actor tick 자체를 끄므로 PIE 중 1 -> 0 runtime restore 
 Source/Portfolio/Character/Enemy/CEnemy.h
 Source/Portfolio/Character/Enemy/CEnemy.cpp
 
-Content/00_Profiling/00_AI_Performance/00_Map/11_ComponentTick/MAP_AIPerf_ComponentTick_40Enemy.umap
-Content/00_Profiling/00_AI_Performance/00_Map/11_ComponentTick/MAP_AIPerf_ComponentTick_80Enemy.umap
+Content/00_Profiling/00_AI_Performance/00_Map/11_EnemyActorTick/MAP_AIPerf_EnemyActorTick_40Enemy.umap
+Content/00_Profiling/00_AI_Performance/00_Map/11_EnemyActorTick/MAP_AIPerf_EnemyActorTick_80Enemy.umap
 
 Docs/04_Pull_Request/00_Pull_Request_Index.md
 Docs/04_Pull_Request/P40_UE5_Portfolio_Pull_Request.md
