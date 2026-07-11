@@ -9,6 +9,7 @@
 #include "AI/Blackboard/CAIKey.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalTargetComponent.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "Type/CWeaponStructure.h"
 
@@ -77,11 +78,15 @@ void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser
 
 void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext& InHitContext)
 {
+	FCombatCollisionProfilingCounters::RecordHitProcessing();
+
 	ProcessCombatSignalSource(InHitContext);
 }
 
 bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser)
 {
+	FCombatCollisionProfilingCounters::RecordCombatSignalCueRequest();
+
 	const FCombatSignal combatSignal = BuildCueSignal(InTargetActor, InCueTag, InCueLocation, InDirection, InSignalCauser);
 	if (!ValidateCueSignal(combatSignal)) return false;
 
@@ -90,6 +95,8 @@ bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor
 
 bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 {
+	FCombatCollisionProfilingCounters::RecordAICombatSignalCueRequest();
+
 	AActor* targetActor = ResolveCueTargetActor();
 	if (!IsValid(targetActor)) return false;
 
@@ -348,6 +355,8 @@ FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FComb
 
 void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSourceContext& InOutCombatSignalSourceContext)
 {
+	FCombatCollisionProfilingCounters::RecordCombatSignal();
+
 	InOutCombatSignalSourceContext.CommittedDamage = SendDamageToTarget(InOutCombatSignalSourceContext);
 
 	if (InOutCombatSignalSourceContext.CommittedDamage <= 0.f)
@@ -392,6 +401,8 @@ bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatS
 	UCCombatSignalTargetComponent* targetComponent = targetActor->FindComponentByClass<UCCombatSignalTargetComponent>();
 	if (!IsValid(targetComponent))
 		return false;
+
+	FCombatCollisionProfilingCounters::RecordCombatSignalCueSend();
 
 	return targetComponent->RequestCombatSignalTarget(InCombatSignal);
 }

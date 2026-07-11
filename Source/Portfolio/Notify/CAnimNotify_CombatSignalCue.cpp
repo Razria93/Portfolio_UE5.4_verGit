@@ -2,6 +2,7 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CActionComponent.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 UCAnimNotify_CombatSignalCue::UCAnimNotify_CombatSignalCue()
 {
@@ -24,6 +25,8 @@ void UCAnimNotify_CombatSignalCue::Notify(USkeletalMeshComponent* MeshComp, UAni
 		// FLog::Log(TEXT("[CombatSignalCueNotify] Rejected | Reason=InvalidCueTag"));
 		return;
 	}
+
+	FCombatCollisionProfilingCounters::RecordCombatSignalCueNotify();
 
 	const bool bSent = actionComp->HandleActionCombatSignalCue(CueTag);
 

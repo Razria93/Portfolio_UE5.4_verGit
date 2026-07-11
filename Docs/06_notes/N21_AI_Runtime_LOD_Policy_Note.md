@@ -1271,12 +1271,11 @@ Frame / Game p95 개선은 제한적이므로 frame gain보다 Runtime LOD 정�
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_LOD_Result_Note.md
 ```
-
 ## Combat Collision / Hit Window 측정 계획
 
 P37 이후 다음 성능 분리 축은 `Combat Collision / Hit Window`다.
 
-이번 축은 `WeaponActor` 존재 비용이 아니라, attack montage 중 hit window가 열렸을 때 발생하는 weapon collision / overlap / hit processing 비용을 분리한다.
+이번 축은 `WeaponActor` 존재 비용이 아니라 attack montage 중 hit window가 열렸을 때 발생하는 weapon collision / overlap / hit processing 비용을 분리한다.
 
 측정 브랜치:
 
@@ -1290,8 +1289,24 @@ feature/ai-combat-collision-profiling
 WeaponActor 생성 유지
 attack montage 유지
 AnimNotify route 유지
-Enemy weapon hit collision window만 CVar로 차단
-40 / 80 Enemy에서 FullCombat vs HitCollisionDisabled 쌍 비교
+hit window / overlap / hit processing route 계측
+40 / 80 Enemy에서 FullCombat vs 차단 케이스 쌍 비교
+```
+
+계측 기준:
+
+```text
+AnimNotify / overlap / combat signal request 같은 event 지점에서는 카운터만 누적한다.
+CSV 기록은 UCWorldSubsystem_CombatEngage::Tick()에서 FlushToCsv()로 내보낸다.
+해석 기준은 *_FlushCount 컬럼으로 통일한다.
+```
+
+이유:
+
+```text
+event 함수 안에서 직접 CSV_CUSTOM_STAT_GLOBAL 또는 CSV_SCOPED_TIMING_STAT_GLOBAL을 호출하는 방식은
+로그 호출이 확인되어도 CSV 컬럼에 안정적으로 남지 않았다.
+기존에 안정적으로 잡혔던 BT service / subsystem tick / anim update 계측은 tick 또는 tick에 준하는 주기적 실행 지점이었다.
 ```
 
 상세 문서:

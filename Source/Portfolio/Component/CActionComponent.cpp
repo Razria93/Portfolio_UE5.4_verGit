@@ -15,6 +15,7 @@
 #include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 UCActionComponent::UCActionComponent()
 {
@@ -359,12 +360,16 @@ void UCActionComponent::HandleActionCollisionWindowBegin(FName InCollisionName)
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor)) return;
 
+	FCombatCollisionProfilingCounters::RecordActionCollisionWindowBegin();
+
 	WeaponComp_Injected->OpenCollisionWindow(InCollisionName);
 }
 
 void UCActionComponent::HandleActionCollisionWindowEnd()
 {
 	if (!IsValid(WeaponComp_Injected)) return;
+
+	FCombatCollisionProfilingCounters::RecordActionCollisionWindowEnd();
 
 	WeaponComp_Injected->CloseCollisionWindow();
 }
@@ -375,6 +380,8 @@ bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor)) return false;
+
+	FCombatCollisionProfilingCounters::RecordActionCombatSignalCue();
 
 	FActionCombatSignalCueRequest request;
 	if (!activeExecutor->ResolveNotifyCombatSignalCue(InCueTag, request)) return false;

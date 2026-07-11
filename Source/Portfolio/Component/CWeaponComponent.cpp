@@ -6,6 +6,7 @@
 
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalSourceComponent.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Weapon/CWeaponActor.h"
 
 #include "Type/CWeaponStructure.h"
@@ -167,12 +168,16 @@ void UCWeaponComponent::OpenCollisionWindow(FName InCollisionName)
 {
 	if (!IsValid(WeaponActor)) return;
 
+	FCombatCollisionProfilingCounters::RecordWeaponComponentOpenCollisionWindow();
+
 	WeaponActor->CollisionEnabled(InCollisionName);
 }
 
 void UCWeaponComponent::CloseCollisionWindow()
 {
 	if (!IsValid(WeaponActor)) return;
+
+	FCombatCollisionProfilingCounters::RecordWeaponComponentCloseCollisionWindow();
 
 	WeaponActor->CollisionDisabled();
 }
