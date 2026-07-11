@@ -1,6 +1,9 @@
 #include "Component/CMovementComponent.h"
 #include "ProjectGlobal.h"
 
+#include "AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.h"
+
+#include "AIController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -40,16 +43,123 @@ bool UCMovementComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+void UCMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UpdateRuntimeLODMovementMode();
+}
+
 void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
 
+	UpdateRuntimeLODMovementMode();
+
 	CalculateSpeed();
 	CalculateDirection();
 
 	bIsFalling = CharacterMovementComp_Injected->IsFalling();
+}
+
+void UCMovementComponent::UpdateRuntimeLODMovementMode()
+{
+	if (!FAIMovementRuntimeLODPolicy::IsEnemyMovementRuntimeLODTarget(OwnerCharacter_Injected)) return;
+
+	const int32 requestedMovementMode = FAIMovementRuntimeLODPolicy::GetEnemyMovementMode();
+
+	EnsureRuntimeLODMovementOriginalStateCached();
+
+	// Update Mode
+	if (RuntimeLODMovementState.AppliedMode != requestedMovementMode)
+	{
+		ApplyRuntimeLODMovementMode(requestedMovementMode);
+		RuntimeLODMovementState.AppliedMode = requestedMovementMode;
+	}
+
+	// Block Intent
+	if (FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(requestedMovementMode))
+	{
+		BlockRuntimeLODMovementIntent();
+	}
+}
+
+void UCMovementComponent::EnsureRuntimeLODMovementOriginalStateCached()
+{
+	if (RuntimeLODMovementState.bOriginalStateCached) return;
+
+	RuntimeLODMovementState.bOriginalMovementComponentTickEnabled = IsComponentTickEnabled();
+	RuntimeLODMovementState.bOriginalStateCached = true;
+}
+
+void UCMovementComponent::ApplyRuntimeLODMovementMode(int32 InMovementMode)
+{
+	// MODE 1
+	if (FAIMovementRuntimeLODPolicy::ShouldDisableMovementStateRefresh(InMovementMode))
+	{
+		ApplyRuntimeLODMovementStateRefreshDisabled();
+		return;
+	}
+
+	// MODE 2
+	if (FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(InMovementMode))
+	{
+		ApplyRuntimeLODMovementIntentBlocked();
+		return;
+	}
+
+	// MODE 0
+	ApplyRuntimeLODMovementDefault();
+}
+
+void UCMovementComponent::ApplyRuntimeLODMovementDefault()
+{
+	RestoreRuntimeLODMovementStateRefresh();
+	AllowRuntimeLODMovementIntent();
+}
+
+void UCMovementComponent::ApplyRuntimeLODMovementStateRefreshDisabled()
+{
+	AllowRuntimeLODMovementIntent();
+	DisableRuntimeLODMovementStateRefresh();
+}
+
+void UCMovementComponent::ApplyRuntimeLODMovementIntentBlocked()
+{
+	RestoreRuntimeLODMovementStateRefresh();
+	BlockRuntimeLODMovementIntent();
+	StopRuntimeLODActiveMovement();
+}
+
+void UCMovementComponent::RestoreRuntimeLODMovementStateRefresh()
+{
+	SetComponentTickEnabled(RuntimeLODMovementState.bOriginalMovementComponentTickEnabled);
+}
+
+void UCMovementComponent::DisableRuntimeLODMovementStateRefresh()
+{
+	SetComponentTickEnabled(false);
+}
+
+void UCMovementComponent::AllowRuntimeLODMovementIntent()
+{
+	ClearMovementIntentBlockForRuntimeLOD();
+	SetMove();
+}
+
+void UCMovementComponent::BlockRuntimeLODMovementIntent()
+{
+	BlockMovementIntentForRuntimeLOD();
+}
+
+void UCMovementComponent::StopRuntimeLODActiveMovement()
+{
+	AAIController* aiController = IsValid(OwnerCharacter_Injected) ? Cast<AAIController>(OwnerCharacter_Injected->GetController()) : nullptr;
+	if (!IsValid(aiController)) return;
+
+	aiController->StopMovement();
 }
 
 // [Final Movement Gate]
@@ -68,6 +178,17 @@ bool UCMovementComponent::CanAcceptMoveInput() const
 	}
 
 	return true;
+}
+
+void UCMovementComponent::BlockMovementIntentForRuntimeLOD()
+{
+	bRuntimeLODMovementIntentBlocked = true;
+	bCanMove = false;
+}
+
+void UCMovementComponent::ClearMovementIntentBlockForRuntimeLOD()
+{
+	bRuntimeLODMovementIntentBlocked = false;
 }
 
 void UCMovementComponent::OnMove(const FVector2D& InAxis2D)

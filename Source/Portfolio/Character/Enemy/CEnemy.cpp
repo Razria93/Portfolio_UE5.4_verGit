@@ -36,10 +36,10 @@ namespace
 		TEXT("Controls ACEnemy mesh runtime LOD mode. 0: visible, 1: hidden keep pose."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMovementMode(
-		TEXT("Portfolio.AI.RuntimeLOD.EnemyMovementMode"),
+	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyActorTickMode(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyActorTickMode"),
 		0,
-		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: disable movement state refresh, 2: block movement intent."),
+		TEXT("Controls ACEnemy actor tick profiling mode. 0: default, 1: disable ACEnemy actor tick."),
 		ECVF_Default);
 }
 
@@ -137,7 +137,7 @@ void ACEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateRuntimeLODMeshMode();
-	UpdateRuntimeLODMovementMode();
+	UpdateRuntimeLODActorTickMode();
 
 	if (IsValid(ActionComponent))
 	{
@@ -275,104 +275,59 @@ void ACEnemy::UpdateRuntimeLODMeshMode()
 	RuntimeLODMeshState.AppliedMode = requestedMeshMode;
 }
 
-void ACEnemy::UpdateRuntimeLODMovementMode()
+void ACEnemy::UpdateRuntimeLODActorTickMode()
 {
-	const int32 requestedMovementMode = FMath::Clamp(CVarAIRuntimeLODEnemyMovementMode.GetValueOnGameThread(), 0, 2);
+	const int32 requestedActorTickMode = FMath::Clamp(CVarAIRuntimeLODEnemyActorTickMode.GetValueOnGameThread(), 0, 1);
 
-	CacheRuntimeLODMovementOriginalState();
+	CacheRuntimeLODActorTickOriginalState();
 
-	if (RuntimeLODMovementState.AppliedMode != requestedMovementMode)
-	{
-		ApplyRuntimeLODMovementMode(requestedMovementMode);
-		RuntimeLODMovementState.AppliedMode = requestedMovementMode;
-	}
+	if (RuntimeLODActorTickState.AppliedMode == requestedActorTickMode) return;
 
-	if (requestedMovementMode == 2)
-	{
-		BlockRuntimeLODMovementIntent();
-	}
+	ApplyRuntimeLODActorTickMode(requestedActorTickMode);
+	RuntimeLODActorTickState.AppliedMode = requestedActorTickMode;
 }
 
-void ACEnemy::CacheRuntimeLODMovementOriginalState()
+void ACEnemy::CacheRuntimeLODActorTickOriginalState()
 {
-	if (RuntimeLODMovementState.bOriginalStateCached) return;
+	if (RuntimeLODActorTickState.bOriginalStateCached) return;
 
-	RuntimeLODMovementState.bOriginalMovementComponentTickEnabled = IsValid(MovementComponent) ? MovementComponent->IsComponentTickEnabled() : true;
-	RuntimeLODMovementState.bOriginalStateCached = true;
+	RuntimeLODActorTickState.bOriginalActorTickEnabled = IsActorTickEnabled();
+	RuntimeLODActorTickState.bOriginalStateCached = true;
 }
 
-void ACEnemy::ApplyRuntimeLODMovementMode(int32 InMovementMode)
+void ACEnemy::ApplyRuntimeLODActorTickMode(int32 InActorTickMode)
 {
-	switch (InMovementMode)
+	switch (InActorTickMode)
 	{
 	case 1:
-		ApplyRuntimeLODMovementStateRefreshDisabled();
-		break;
-
-	case 2:
-		ApplyRuntimeLODMovementIntentBlocked();
+		ApplyRuntimeLODActorTickDisabled();
 		break;
 
 	case 0:
 	default:
-		ApplyRuntimeLODMovementDefault();
+		ApplyRuntimeLODActorTickDefault();
 		break;
 	}
 }
 
-void ACEnemy::ApplyRuntimeLODMovementDefault()
+void ACEnemy::ApplyRuntimeLODActorTickDefault()
 {
-	RestoreRuntimeLODMovementStateRefresh();
-	AllowRuntimeLODMovementIntent();
+	RestoreRuntimeLODActorTick();
 }
 
-void ACEnemy::ApplyRuntimeLODMovementStateRefreshDisabled()
+void ACEnemy::ApplyRuntimeLODActorTickDisabled()
 {
-	AllowRuntimeLODMovementIntent();
-	DisableRuntimeLODMovementStateRefresh();
+	DisableRuntimeLODActorTick();
 }
 
-void ACEnemy::ApplyRuntimeLODMovementIntentBlocked()
+void ACEnemy::RestoreRuntimeLODActorTick()
 {
-	RestoreRuntimeLODMovementStateRefresh();
-	BlockRuntimeLODMovementIntent();
-	StopRuntimeLODActiveMovement();
+	SetActorTickEnabled(RuntimeLODActorTickState.bOriginalActorTickEnabled);
 }
 
-void ACEnemy::RestoreRuntimeLODMovementStateRefresh()
+void ACEnemy::DisableRuntimeLODActorTick()
 {
-	if (!IsValid(MovementComponent)) return;
-
-	MovementComponent->SetComponentTickEnabled(RuntimeLODMovementState.bOriginalMovementComponentTickEnabled);
-}
-
-void ACEnemy::DisableRuntimeLODMovementStateRefresh()
-{
-	if (!IsValid(MovementComponent)) return;
-
-	MovementComponent->SetComponentTickEnabled(false);
-}
-
-void ACEnemy::AllowRuntimeLODMovementIntent()
-{
-	if (!IsValid(MovementComponent)) return;
-
-	MovementComponent->SetMove();
-}
-
-void ACEnemy::BlockRuntimeLODMovementIntent()
-{
-	if (!IsValid(MovementComponent)) return;
-
-	MovementComponent->SetStop();
-}
-
-void ACEnemy::StopRuntimeLODActiveMovement()
-{
-	AAIController* aiController = Cast<AAIController>(GetController());
-	if (!IsValid(aiController)) return;
-
-	aiController->StopMovement();
+	SetActorTickEnabled(false);
 }
 
 void ACEnemy::Tick(float DeltaTime)
@@ -380,7 +335,7 @@ void ACEnemy::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateRuntimeLODMeshMode();
-	UpdateRuntimeLODMovementMode();
+	UpdateRuntimeLODActorTickMode();
 }
 
 void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

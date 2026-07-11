@@ -25,10 +25,10 @@ private:
 		bool bOriginalStateCached = false;
 	};
 
-	struct FRuntimeLODMovementState
+	struct FRuntimeLODActorTickState
 	{
 		int32 AppliedMode = INDEX_NONE;
-		bool bOriginalMovementComponentTickEnabled = true;
+		bool bOriginalActorTickEnabled = true;
 		bool bOriginalStateCached = false;
 	};
 
@@ -137,7 +137,7 @@ private:
 
 private:
 	FRuntimeLODMeshState RuntimeLODMeshState;
-	FRuntimeLODMovementState RuntimeLODMovementState;
+	FRuntimeLODActorTickState RuntimeLODActorTickState;
 
 protected:
 	// Lifecycle
@@ -155,25 +155,21 @@ private:
 	// Runtime LOD
 	// 1. Update
 	void UpdateRuntimeLODMeshMode();
-	void UpdateRuntimeLODMovementMode();
+	void UpdateRuntimeLODActorTickMode();
 
 	// 2. Lifecycle
-	void CacheRuntimeLODMovementOriginalState();
+	void CacheRuntimeLODActorTickOriginalState();
 
 	// 3. Dispatch
-	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
+	void ApplyRuntimeLODActorTickMode(int32 InActorTickMode);
 
-	// 4. Movement Mode
-	void ApplyRuntimeLODMovementDefault();
-	void ApplyRuntimeLODMovementStateRefreshDisabled();
-	void ApplyRuntimeLODMovementIntentBlocked();
+	// 4. Enemy Actor Tick Mode
+	void ApplyRuntimeLODActorTickDefault();
+	void ApplyRuntimeLODActorTickDisabled();
 
-	// 5. Movement State
-	void RestoreRuntimeLODMovementStateRefresh();
-	void DisableRuntimeLODMovementStateRefresh();
-	void AllowRuntimeLODMovementIntent();
-	void BlockRuntimeLODMovementIntent();
-	void StopRuntimeLODActiveMovement();
+	// 5. Enemy Actor Tick State
+	void RestoreRuntimeLODActorTick();
+	void DisableRuntimeLODActorTick();
 
 public:
 	void Tick(float DeltaTime) override;
