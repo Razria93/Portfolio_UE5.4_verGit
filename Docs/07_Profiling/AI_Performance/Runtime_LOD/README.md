@@ -23,5 +23,5 @@ raw CSV / log 파일은 이 폴더에 저장하지 않는다. 각 측정 노트�
 | Alert cap | `AI_AlertCap_Comparison_Plan.md` |
 | Combat collision / hit window | `AI_Combat_Collision_HitWindow_Measurement_Plan.md` |
 | Combat feedback presentation | `AI_Combat_Feedback_Presentation_Measurement_Plan.md` |
-| Component tick audit | `AI_Component_Tick_Audit_Plan.md` |
+| Enemy actor tick audit | `AI_Enemy_Actor_Tick_Audit_Plan.md` |
 | Debugging obstacles | `AI_Runtime_LOD_Debugging_Obstacle_Note.md` |

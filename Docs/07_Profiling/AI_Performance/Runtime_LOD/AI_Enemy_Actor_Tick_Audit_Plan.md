@@ -1,10 +1,10 @@
-# AI Component Tick Audit Plan
+﻿# AI Enemy Actor Tick Audit Plan
 
 ## 목적
 
-`Component Tick` 축이 AI Runtime LOD v1의 실질적인 최적화 후보인지 확인한다.
+`Enemy Actor Tick` 축이 AI Runtime LOD v1의 실질적인 최적화 후보인지 확인한다.
 
-이번 문서는 Unreal Engine 기본 tick 전체를 줄이는 계획이 아니다. 프로젝트 코드가 직접 가진 Enemy-side actor / component tick 중 Runtime LOD로 줄일 가치가 있는 항목을 분리한다.
+이번 문서는 Unreal Engine 기본 tick 전체를 줄이는 계획이 아니다. 프로젝트 코드가 직접 가진 Enemy-side actor tick 중 Runtime LOD로 줄일 가치가 있는 항목을 분리한다.
 
 ## 배경
 
@@ -19,20 +19,18 @@
 | Combat collision / hit window | `AI_Combat_Collision_HitWindow_Measurement_Plan.md` |
 | Combat feedback presentation | `AI_Combat_Feedback_Presentation_Measurement_Plan.md` |
 
-따라서 이 문서의 `Component Tick`은 다음처럼 좁게 정의한다.
+따라서 이 문서의 `Enemy Actor Tick`은 다음처럼 좁게 정의한다.
 
 ```text
 ACEnemy::Tick
-UCMovementComponent::TickComponent
-UCActionComponent::TickComponent
 ```
 
-`CharacterMovementComponent`, `SkeletalMeshComponent`, `BehaviorTreeComponent`는 엔진 또는 시스템 축이므로 이 문서에서 직접 off 후보로 다루지 않는다. 해당 비용은 Movement / Animation / BT 문서에서 해석한다.
+`UCMovementComponent::TickComponent`, `UCActionComponent::TickComponent`, `CharacterMovementComponent`, `SkeletalMeshComponent`, `BehaviorTreeComponent`는 이번 PR의 직접 제어 대상이 아니다. 해당 비용은 Movement / Animation / BT / 후속 Component Tick 문서에서 해석한다.
 
 ## 제어 CVar
 
 ```text
-Portfolio.AI.RuntimeLOD.EnemyComponentTickMode
+Portfolio.AI.RuntimeLOD.EnemyActorTickMode
 ```
 
 | Mode | 이름 | 제어 내용 | 목적 |
@@ -47,6 +45,7 @@ Portfolio.AI.RuntimeLOD.EnemyComponentTickMode
 - Mode 1은 `ACEnemy::Tick` 자체를 끄므로 PIE 중 CVar를 1에서 0으로 되돌리는 runtime restore 검증에는 적합하지 않다.
 - 정규 측정은 PIE 시작 전 CVar를 설정한 뒤 진행한다.
 - Mode 1은 `CActionComponent`, `CMovementComponent`, `CharacterMovementComponent`, `BehaviorTreeComponent`, `SkeletalMeshComponent` tick을 끄지 않는다.
+- 측정 명칭과 CVar는 `EnemyActorTick`으로 정리했다. 기존 측정 맵 에셋명은 UE asset rename / redirector churn을 피하기 위해 `ComponentTick` 이름을 유지한다.
 
 ## 측정 조건
 
@@ -135,7 +134,7 @@ Gameplay smoke:
 
 ## 해석
 
-`EnemyComponentTickMode 1`은 기능적으로 성공했다.
+`EnemyActorTickMode 1`은 기능적으로 성공했다.
 
 ```text
 Mode 0: Ticks/CEnemy = 40 또는 80
@@ -216,7 +215,7 @@ Movement와 Animation을 각각 분리한 뒤, 실제 gameplay stress 조건에�
 
 ## 현재 판단
 
-Component Tick 축은 Runtime LOD v1의 1차 최적화 후보에서 낮은 우선순위로 둔다.
+Enemy Actor Tick 축은 Runtime LOD v1의 1차 최적화 후보에서 낮은 우선순위로 둔다.
 
 다음 우선순위는 다음과 같다.
 
