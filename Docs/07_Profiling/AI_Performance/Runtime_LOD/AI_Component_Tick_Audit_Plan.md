@@ -54,11 +54,22 @@ Portfolio.AI.RuntimeLOD.EnemyComponentTickMode
 | 2 | DisableMovementComponentTick | `UCMovementComponent::TickComponent` 비활성화 | movement parameter refresh 비용 분리 |
 | 3 | DisableActionComponentTick | `UCActionComponent::TickComponent` 비활성화 | active action executor tick 비용 분리 |
 
+현재 구현 범위:
+
+```text
+Mode 1: DisableEnemyActorTick
+```
+
+`ACEnemy::Tick`은 현재 Runtime LOD mesh / movement / component tick mode polling을 수행한다.
+따라서 Mode 1은 gameplay action 자체가 아니라 Enemy actor-level polling tick 비용을 분리하는 측정이다.
+
 주의:
 
 - `Mode 2`는 이전 Movement / Nav 측정의 `MovementComponent tick off`와 겹친다.
 - 따라서 새 결과가 기존 결론을 바꾸지 않는다면, `Mode 2`는 재측정보다 기존 결과 인용으로 닫아도 된다.
 - `Mode 3`은 combat action lifecycle을 깨뜨릴 수 있으므로, 기능 smoke가 우선이다.
+- Mode 1은 actor tick 자체를 끄므로 PIE 중 CVar를 1에서 0으로 되돌리는 runtime restore 검증에는 적합하지 않다.
+- 정규 측정은 PIE 실행 전 CVar 설정을 기준으로 한다.
 
 ## 구현 범위
 

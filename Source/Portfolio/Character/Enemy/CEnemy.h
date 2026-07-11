@@ -32,6 +32,13 @@ private:
 		bool bOriginalStateCached = false;
 	};
 
+	struct FRuntimeLODComponentTickState
+	{
+		int32 AppliedMode = INDEX_NONE;
+		bool bOriginalActorTickEnabled = true;
+		bool bOriginalStateCached = false;
+	};
+
 private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
 	bool bUsePatrol;
@@ -138,6 +145,7 @@ private:
 private:
 	FRuntimeLODMeshState RuntimeLODMeshState;
 	FRuntimeLODMovementState RuntimeLODMovementState;
+	FRuntimeLODComponentTickState RuntimeLODComponentTickState;
 
 protected:
 	// Lifecycle
@@ -156,17 +164,24 @@ private:
 	// 1. Update
 	void UpdateRuntimeLODMeshMode();
 	void UpdateRuntimeLODMovementMode();
+	void UpdateRuntimeLODComponentTickMode();
 
 	// 2. Lifecycle
 	void CacheRuntimeLODMovementOriginalState();
+	void CacheRuntimeLODComponentTickOriginalState();
 
 	// 3. Dispatch
 	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
+	void ApplyRuntimeLODComponentTickMode(int32 InComponentTickMode);
 
 	// 4. Movement Mode
 	void ApplyRuntimeLODMovementDefault();
 	void ApplyRuntimeLODMovementStateRefreshDisabled();
 	void ApplyRuntimeLODMovementIntentBlocked();
+
+	// 4. Component Tick Mode
+	void ApplyRuntimeLODComponentTickDefault();
+	void ApplyRuntimeLODActorTickDisabled();
 
 	// 5. Movement State
 	void RestoreRuntimeLODMovementStateRefresh();
@@ -174,6 +189,10 @@ private:
 	void AllowRuntimeLODMovementIntent();
 	void BlockRuntimeLODMovementIntent();
 	void StopRuntimeLODActiveMovement();
+
+	// 5. Component Tick State
+	void RestoreRuntimeLODActorTick();
+	void DisableRuntimeLODActorTick();
 
 public:
 	void Tick(float DeltaTime) override;

@@ -41,6 +41,12 @@ namespace
 		0,
 		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: disable movement state refresh, 2: block movement intent."),
 		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyComponentTickMode(
+		TEXT("Portfolio.AI.RuntimeLOD.EnemyComponentTickMode"),
+		0,
+		TEXT("Controls ACEnemy actor/component tick profiling mode. 0: default, 1: disable ACEnemy actor tick."),
+		ECVF_Default);
 }
 
 ACEnemy::ACEnemy()
@@ -138,6 +144,7 @@ void ACEnemy::BeginPlay()
 
 	UpdateRuntimeLODMeshMode();
 	UpdateRuntimeLODMovementMode();
+	UpdateRuntimeLODComponentTickMode();
 
 	if (IsValid(ActionComponent))
 	{
@@ -293,12 +300,32 @@ void ACEnemy::UpdateRuntimeLODMovementMode()
 	}
 }
 
+void ACEnemy::UpdateRuntimeLODComponentTickMode()
+{
+	const int32 requestedComponentTickMode = FMath::Clamp(CVarAIRuntimeLODEnemyComponentTickMode.GetValueOnGameThread(), 0, 1);
+
+	CacheRuntimeLODComponentTickOriginalState();
+
+	if (RuntimeLODComponentTickState.AppliedMode == requestedComponentTickMode) return;
+
+	ApplyRuntimeLODComponentTickMode(requestedComponentTickMode);
+	RuntimeLODComponentTickState.AppliedMode = requestedComponentTickMode;
+}
+
 void ACEnemy::CacheRuntimeLODMovementOriginalState()
 {
 	if (RuntimeLODMovementState.bOriginalStateCached) return;
 
 	RuntimeLODMovementState.bOriginalMovementComponentTickEnabled = IsValid(MovementComponent) ? MovementComponent->IsComponentTickEnabled() : true;
 	RuntimeLODMovementState.bOriginalStateCached = true;
+}
+
+void ACEnemy::CacheRuntimeLODComponentTickOriginalState()
+{
+	if (RuntimeLODComponentTickState.bOriginalStateCached) return;
+
+	RuntimeLODComponentTickState.bOriginalActorTickEnabled = IsActorTickEnabled();
+	RuntimeLODComponentTickState.bOriginalStateCached = true;
 }
 
 void ACEnemy::ApplyRuntimeLODMovementMode(int32 InMovementMode)
@@ -320,6 +347,21 @@ void ACEnemy::ApplyRuntimeLODMovementMode(int32 InMovementMode)
 	}
 }
 
+void ACEnemy::ApplyRuntimeLODComponentTickMode(int32 InComponentTickMode)
+{
+	switch (InComponentTickMode)
+	{
+	case 1:
+		ApplyRuntimeLODActorTickDisabled();
+		break;
+
+	case 0:
+	default:
+		ApplyRuntimeLODComponentTickDefault();
+		break;
+	}
+}
+
 void ACEnemy::ApplyRuntimeLODMovementDefault()
 {
 	RestoreRuntimeLODMovementStateRefresh();
@@ -337,6 +379,16 @@ void ACEnemy::ApplyRuntimeLODMovementIntentBlocked()
 	RestoreRuntimeLODMovementStateRefresh();
 	BlockRuntimeLODMovementIntent();
 	StopRuntimeLODActiveMovement();
+}
+
+void ACEnemy::ApplyRuntimeLODComponentTickDefault()
+{
+	RestoreRuntimeLODActorTick();
+}
+
+void ACEnemy::ApplyRuntimeLODActorTickDisabled()
+{
+	DisableRuntimeLODActorTick();
 }
 
 void ACEnemy::RestoreRuntimeLODMovementStateRefresh()
@@ -375,12 +427,23 @@ void ACEnemy::StopRuntimeLODActiveMovement()
 	aiController->StopMovement();
 }
 
+void ACEnemy::RestoreRuntimeLODActorTick()
+{
+	SetActorTickEnabled(RuntimeLODComponentTickState.bOriginalActorTickEnabled);
+}
+
+void ACEnemy::DisableRuntimeLODActorTick()
+{
+	SetActorTickEnabled(false);
+}
+
 void ACEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	UpdateRuntimeLODMeshMode();
 	UpdateRuntimeLODMovementMode();
+	UpdateRuntimeLODComponentTickMode();
 }
 
 void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
