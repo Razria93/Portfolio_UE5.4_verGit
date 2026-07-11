@@ -21,4 +21,5 @@ raw CSV / log 파일은 이 폴더에 저장하지 않는다. 각 측정 노트�
 | AIContext interval split | `AI_BT_Update_Interval_AIContext_Level_Split_Note.md` |
 | Assignment warmup | `AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md` |
 | Alert cap | `AI_AlertCap_Comparison_Plan.md` |
+| Combat feedback presentation | `AI_Combat_Feedback_Presentation_Measurement_Plan.md` |
 | Debugging obstacles | `AI_Runtime_LOD_Debugging_Obstacle_Note.md` |

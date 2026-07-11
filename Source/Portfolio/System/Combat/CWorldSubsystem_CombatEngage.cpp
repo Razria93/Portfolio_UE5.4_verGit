@@ -7,6 +7,7 @@
 
 #include "Controller/CAIController.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
 
 #include "Type/CWorldSubSystemStructure.h"
 
@@ -84,6 +85,7 @@ void UCWorldSubsystem_CombatEngage::Tick(float DeltaTime)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_Tick);
 	FCombatCollisionProfilingCounters::FlushToCsv();
+	FCombatFeedbackProfiling::FlushToCsv();
 
 	Super::Tick(DeltaTime);
 

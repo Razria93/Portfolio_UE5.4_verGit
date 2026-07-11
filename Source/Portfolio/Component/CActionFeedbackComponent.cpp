@@ -8,6 +8,7 @@
 #include "Sound/SoundBase.h"
 
 #include "Component/CWeaponComponent.h"
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
 #include "Weapon/CWeaponActor.h"
 
 UCActionFeedbackComponent::UCActionFeedbackComponent()
@@ -43,6 +44,14 @@ bool UCActionFeedbackComponent::ValidateRequiredComponentReferences() const
 void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
 	if (!CanPlayActionFeedback(InActionFeedbackRequest)) return;
+
+	FCombatFeedbackProfiling::RecordActionFeedbackRequest();
+
+	if (FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackProfiling::RecordActionFeedbackSkipped();
+		return;
+	}
 
 	// PrintActionFeedbackRequestInfo(InActionFeedbackRequest);
 
@@ -276,6 +285,8 @@ void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InAc
 	{
 	case EActionVFXPlayType::Once:
 	{
+		FCombatFeedbackProfiling::RecordActionVFX();
+
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InActionVFXFeedbackData.VFX,
 			OwnerCharacter_Injected->GetMesh(),
@@ -312,6 +323,8 @@ void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InAc
 	{
 	case EActionSFXPlayType::Once:
 	{
+		FCombatFeedbackProfiling::RecordActionSFX();
+
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			InActionSFXFeedbackData.SFX,
@@ -344,6 +357,8 @@ void UCActionFeedbackComponent::ToggleTrailActive(bool bActive)
 	if (!IsValid(weaponActor)) return;
 
 	// PrintTrailInfo(bActive, weaponActor);
+
+	FCombatFeedbackProfiling::RecordActionTrail();
 
 	weaponActor->ToggleTrailActive(bActive);
 }
