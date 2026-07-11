@@ -860,6 +860,9 @@ AI LOD / Performance 최적화
 - P37: Observe Intent / Investigate Lifecycle 정리
   -> CombatRole 없는 인지 대상은 Observe로 대기
   -> Investigate 진입 / 실행 / 종료 요청 flag 분리
+- P38: AI Combat Collision / Hit Window 비용 분리 측정
+  -> HitWindow / Overlap / HitProcessing / CombatSignal route 계측
+  -> HitProcessing 차단은 동작하지만 Frame / Game p95 개선이 작아 Runtime LOD v1 우선 후보에서 제외
 ```
 
 ### 진행 중
@@ -872,27 +875,25 @@ AI LOD / Performance 최적화
 
 ```text
 AI LOD / Performance 최적화
-- P38: Runtime LOD Implementation v1
-  -> Mode 1을 combat-capable 보수 후보로 적용
-  -> Mode 2는 far / offscreen / NonCombat / Dormant 우선 후보로 검토
+- P39: Feedback Presentation 측정
+  -> Niagara / trail / sound / camera shake / cue route 비용 분리
+  -> hit processing은 유지하고 presentation route만 줄일 수 있는지 확인
 
 AI LOD / Performance 후속 측정
-- Collision / Hit Window 측정
-- Feedback Presentation 측정
 - Component Tick Audit
 - Perception Active Budget / Cap 검토
 - Proxy / Dormant Actor 최적화 검토
 
 Code Quality Sweep
-- P39: Type Header / Helper Boundary 정리
-- P40: Tuning Constants Cleanup
-- P41: API Const Consistency
-- P42: Debug Log Policy
-- P43: Naming / Typo / API Cleanup
-- P44: TODO Status Cleanup
+- P40: Type Header / Helper Boundary 정리
+- P41: Tuning Constants Cleanup
+- P42: API Const Consistency
+- P43: Debug Log Policy
+- P44: Naming / Typo / API Cleanup
+- P45: TODO Status Cleanup
 
 Documentation / PR Record
-- P45: PR Record Format Sweep
+- P46: PR Record Format Sweep
 ```
 
 상세 공유용 정리는 `N19_Code_Quality_PR_Status_Summary_Note.md`를 따른다.

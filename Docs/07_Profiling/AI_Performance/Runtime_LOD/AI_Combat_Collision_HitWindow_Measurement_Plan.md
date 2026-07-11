@@ -173,6 +173,51 @@ Frame / Game p95 변화는 40 / 80 모두 작다. 현재 조건에서는 hit pro
 다만 HitProcessing과 CombatSignal을 완전히 끊었으므로, 이후 collision-only / feedback-only 비교의 기준점으로 사용할 수 있다.
 ```
 
+### EngageCap 4 stress 참고 측정
+
+기본 `Engage 2 / Alert 6` 조건에서는 hit processing 이후 경로의 frame 영향이 작았다. 실전 전투 밀도에서는 2명보다 많은 Enemy가 공격할 수 있으므로, `EngageCap 4 / AlertCap 6` 조건으로 보조 stress 측정을 수행했다.
+
+측정 CVar:
+
+```text
+Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap 4
+Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap 6
+Portfolio.AI.RuntimeLOD.DisableEnemyHitProcessing 0 / 1
+```
+
+주의:
+
+```text
+debugging을 위해 Enemy collision capsule size를 10으로 줄인 상태에서 측정했다.
+Enemy가 한쪽에 밀집해 공격하는 상황이 발생했으므로 HitWindow Overlap 수는 실제 기본 collision size보다 높게 잡힐 수 있다.
+따라서 이 측정의 Overlap count는 순수 hit processing 비용이 아니라 전투 밀도 / 군집 후보 수 참고값으로 본다.
+```
+
+| Case | CSV | Frame p95 | Game p95 | CharacterMovement p95 | BT Tick p95 | HitWindow Open / Close | HitWindow Overlap | HitProcessing | CombatSignal | CombatSignalCue |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 80 Enemy / Engage 4 / FullCombat | `Profile(20260711_123416).csv` | 18.2174ms | 18.1873ms | 0.8017ms | 0.4137ms | 48 / 48 | 103 | 103 | 54 | 16 |
+| 80 Enemy / Engage 4 / HitProcessingDisabled | `Profile(20260711_123952).csv` | 18.8448ms | 18.8774ms | 0.8388ms | 0.4236ms | 52 / 49 | 133 | 0 | 0 | 16 |
+
+해석:
+
+```text
+EngageCap 4에서 hit window / cue count는 EngageCap 2 대비 거의 2배로 늘었다.
+DisableEnemyHitProcessing 1은 stress 조건에서도 HitProcessing / CombatSignal을 0으로 낮췄다.
+반면 Frame / Game p95 개선은 관찰되지 않았고, HitProcessingDisabled 쪽이 오히려 높게 측정됐다.
+이는 hit processing 제거 효과보다 군집, 위치, 공격 타이밍, overlap 후보 수 증가 변수가 더 크게 섞인 결과로 본다.
+```
+
+### 최종 결론
+
+```text
+Combat Collision / HitProcessing 축은 계측과 분리는 성공했다.
+하지만 Engage 2 / Engage 4 조건 모두에서 Frame / Game p95 개선은 유의미하지 않았다.
+군집 stress에서도 효과가 작다면, 기본 collision size와 일반 전투 배치에서는 hit 후보 수가 더 줄 가능성이 높다.
+attack montage가 이미 재생 중인 상태에서 hit processing만 끄는 Runtime LOD 정책은 gameplay 의미도 애매하다.
+따라서 Combat Collision / HitProcessing은 Runtime LOD v1의 우선 제어 후보로 보지 않고 후순위로 닫는다.
+다음 축은 Feedback Presentation으로 넘긴다.
+```
+
 ## 공통 측정 조건
 
 ```text

@@ -1315,7 +1315,10 @@ event 함수 안에서 직접 CSV_CUSTOM_STAT_GLOBAL 또는 CSV_SCOPED_TIMING_ST
 HitProcessingDisabled는 hit window open / close와 overlap 후보 수집을 유지하면서 HitProcessing / CombatSignal만 0으로 낮췄다.
 CombatSignalCue는 유지되어 montage / action cue 기반 presentation route가 hit processing gate와 분리되어 있음을 확인했다.
 40 / 80 Enemy 모두 Frame / Game p95 변화는 작았다.
-따라서 현재 조건에서는 hit processing 이후 경로가 주요 프레임 병목이라고 보기는 어렵고, collision-only / feedback-only 분리 비교의 기준점으로 둔다.
+EngageCap 4 stress 조건에서도 HitProcessing / CombatSignal 차단은 정상 동작했지만 Frame / Game p95 개선은 관찰되지 않았다.
+따라서 현재 조건에서는 hit processing 이후 경로가 주요 프레임 병목이라고 보기는 어렵다.
+Combat Collision / HitProcessing은 Runtime LOD v1의 우선 제어 후보로 보지 않고 후순위로 닫는다.
+다음 측정 축은 Feedback Presentation으로 넘긴다.
 ```
 
 상세 문서:
