@@ -142,6 +142,37 @@ hit window open / close 횟수는 40 / 80 모두 안정적이다.
 104859처럼 overlap 후보가 과다하게 튄 측정은 대표값으로 사용하지 않는다.
 ```
 
+### HitProcessingDisabled 결과
+
+`Portfolio.AI.RuntimeLOD.DisableEnemyHitProcessing 1` 기준으로 40 / 80 Enemy를 측정했다.
+
+공통 확인:
+
+```text
+Engage 2 유지
+Alert 6 유지
+attack montage 유지
+hit feedback 유지
+GC 이벤트 없음
+```
+
+| Case | CSV | Frame p95 | Game p95 | CharacterMovement p95 | BT Tick p95 | HitWindow Open / Close | HitWindow Overlap | HitProcessing | CombatSignal | CombatSignalCue |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 40 Enemy / FullCombat | `Profile(20260711_111308).csv` | 12.6371ms | 12.6204ms | 0.4925ms | 0.2055ms | 24 / 24 | 42 | 42 | 38 | 8 |
+| 40 Enemy / HitProcessingDisabled | `Profile(20260711_120705).csv` | 12.5523ms | 12.5267ms | 0.5171ms | 0.2042ms | 26 / 24 | 47 | 0 | 0 | 8 |
+| 80 Enemy / FullCombat | `Profile(20260711_110514).csv` | 17.5514ms | 17.5532ms | 0.7883ms | 0.4098ms | 24 / 24 | 34 | 34 | 30 | 8 |
+| 80 Enemy / HitProcessingDisabled | `Profile(20260711_121022).csv` | 17.4999ms | 17.4853ms | 0.7731ms | 0.4024ms | 26 / 25 | 30 | 0 | 0 | 8 |
+
+해석:
+
+```text
+HitProcessingDisabled는 hit window open / close, attack montage, overlap 후보 수집을 유지한 채 HitProcessing과 CombatSignal만 0으로 낮췄다.
+따라서 현재 CVar는 collision window / overlap 비용과 hit processing 이후 전투 신호 경로를 분리하는 축으로 유효하다.
+CombatSignalCue count는 8로 유지된다. 이는 montage / action cue 기반 presentation route가 hit processing gate와 별도 책임임을 의미한다.
+Frame / Game p95 변화는 40 / 80 모두 작다. 현재 조건에서는 hit processing 이후 경로가 주요 프레임 병목이라고 보기는 어렵다.
+다만 HitProcessing과 CombatSignal을 완전히 끊었으므로, 이후 collision-only / feedback-only 비교의 기준점으로 사용할 수 있다.
+```
+
 ## 공통 측정 조건
 
 ```text

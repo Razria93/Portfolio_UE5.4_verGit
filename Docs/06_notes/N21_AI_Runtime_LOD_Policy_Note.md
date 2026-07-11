@@ -1309,6 +1309,15 @@ event 함수 안에서 직접 CSV_CUSTOM_STAT_GLOBAL 또는 CSV_SCOPED_TIMING_ST
 기존에 안정적으로 잡혔던 BT service / subsystem tick / anim update 계측은 tick 또는 tick에 준하는 주기적 실행 지점이었다.
 ```
 
+측정 결과 요약:
+
+```text
+HitProcessingDisabled는 hit window open / close와 overlap 후보 수집을 유지하면서 HitProcessing / CombatSignal만 0으로 낮췄다.
+CombatSignalCue는 유지되어 montage / action cue 기반 presentation route가 hit processing gate와 분리되어 있음을 확인했다.
+40 / 80 Enemy 모두 Frame / Game p95 변화는 작았다.
+따라서 현재 조건에서는 hit processing 이후 경로가 주요 프레임 병목이라고 보기는 어렵고, collision-only / feedback-only 분리 비교의 기준점으로 둔다.
+```
+
 상세 문서:
 
 ```text
