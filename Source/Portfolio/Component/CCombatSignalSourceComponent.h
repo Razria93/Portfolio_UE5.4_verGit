@@ -53,6 +53,11 @@ private:
 	void ProcessCombatSignalSource(const FHitContext& InHitContext);
 
 private:
+	// Profiling
+	bool ShouldSkipEnemyHitProcessingForProfiling() const;
+	bool IsEnemyHitProcessingProfilingTarget() const;
+
+private:
 	// Receive
 	bool ValidateRequest(const FHitContext& InHitContext) const;
 	FCombatSignalSourcePayload BuildPayload(const FHitContext& InHitContext) const;

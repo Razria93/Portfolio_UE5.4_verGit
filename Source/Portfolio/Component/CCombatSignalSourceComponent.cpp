@@ -5,6 +5,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/ShapeComponent.h"
 #include "GameFramework/Character.h"
+#include "HAL/IConsoleManager.h"
 
 #include "AI/Blackboard/CAIKey.h"
 #include "Character/Enemy/CEnemy.h"
@@ -15,6 +16,12 @@
 
 namespace
 {
+	TAutoConsoleVariable<int32> CVarDisableEnemyHitProcessing(
+		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyHitProcessing"),
+		0,
+		TEXT("Disable Enemy hit processing for combat collision profiling. 0: process hit, 1: skip Enemy hit processing after overlap."),
+		ECVF_Default);
+
 	const FName CombatTimingCueSignalTag(TEXT("Combat.Signal.TimingCue"));
 }
 
@@ -78,6 +85,8 @@ void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser
 
 void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext& InHitContext)
 {
+	if (ShouldSkipEnemyHitProcessingForProfiling()) return;
+
 	FCombatCollisionProfilingCounters::RecordHitProcessing();
 
 	ProcessCombatSignalSource(InHitContext);
@@ -162,6 +171,20 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	// Debug: build the final source-side result for optional reporting.
 	const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
 	// PrintCombatSignalSourceSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult);
+}
+
+// Profiling
+
+bool UCCombatSignalSourceComponent::ShouldSkipEnemyHitProcessingForProfiling() const
+{
+	if (CVarDisableEnemyHitProcessing.GetValueOnGameThread() == 0) return false;
+
+	return IsEnemyHitProcessingProfilingTarget();
+}
+
+bool UCCombatSignalSourceComponent::IsEnemyHitProcessingProfilingTarget() const
+{
+	return IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->IsA<ACEnemy>();
 }
 
 bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitContext) const
