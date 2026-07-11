@@ -58,3 +58,14 @@ Combat collision / hit window 브랜치는 raw 캡처를 로컬 자료로만 사
 | CC-04 | `Profile(20260711_121022).csv` | 80 Enemy / DisableEnemyHitProcessing 1 |
 | CC-05 | `Profile(20260711_123416).csv` | 80 Enemy / Engage stress / hit processing on |
 | CC-06 | `Profile(20260711_123952).csv` | 80 Enemy / Engage stress / hit processing off |
+
+## Combat Feedback Presentation Evidence
+
+Combat feedback presentation 브랜치는 raw 캡처를 로컬 자료로만 사용했다. 해석 결론은 Enemy action presentation을 기능적으로 분리할 수 있지만, 40 / 80 Enemy 조건에서 Runtime LOD v1 우선 제어 후보로 볼 만큼 큰 Frame / Game p95 개선은 보이지 않았다는 것이다.
+
+| Case | Source Capture | 측정 조건 |
+| --- | --- | --- |
+| CF-01 | `Profile(20260711_191545).csv` | 40 Enemy / FeedbackBaseline / DisableEnemyCombatFeedback 0 |
+| CF-02 | `Profile(20260711_191931).csv` | 40 Enemy / FeedbackDisabled / DisableEnemyCombatFeedback 1 |
+| CF-03 | `Profile(20260711_193111).csv` | 80 Enemy / FeedbackBaseline / DisableEnemyCombatFeedback 0 |
+| CF-04 | `Profile(20260711_193802).csv` | 80 Enemy / FeedbackDisabled / DisableEnemyCombatFeedback 1 |

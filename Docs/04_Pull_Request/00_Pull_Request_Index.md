@@ -44,5 +44,6 @@
 | P36 | AI AlertCap 비교 측정 및 Assignment Cap 제어 추가 | `P36_UE5_Portfolio_Pull_Request.md` | `feature/ai-alert-cap-comparison` |  | N21 |
 | P37 | AI Observe Intent 및 Investigate Lifecycle 정리 | `P37_UE5_Portfolio_Pull_Request.md` | `feature/ai-observe-intent-state` |  | N21 |
 | P38 | AI Combat Collision / Hit Window 비용 분리 측정 | `P38_UE5_Portfolio_Pull_Request.md` | `feature/ai-combat-collision-profiling` |  | N21 |
+| P39 | AI Combat Feedback Presentation 비용 분리 측정 | `P39_UE5_Portfolio_Pull_Request.md` | `feature/ai-combat-feedback-profiling` |  | N21 |
 
 ---
