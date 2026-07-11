@@ -9,7 +9,7 @@ public:
 
 	static void RecordActionFeedbackRequest();
 	static void RecordActionFeedbackSkipped();
-	static void RecordActionTrail();
+	static void RecordActionTrail(bool bActive);
 	static void RecordActionVFX();
 	static void RecordActionSFX();
 

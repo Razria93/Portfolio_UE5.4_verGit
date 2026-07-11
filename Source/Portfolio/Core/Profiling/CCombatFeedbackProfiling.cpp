@@ -16,6 +16,7 @@ namespace
 	int32 ActionFeedbackRequestCount = 0;
 	int32 ActionFeedbackSkippedCount = 0;
 	int32 ActionTrailCount = 0;
+	int32 ActionTrailClearCount = 0;
 	int32 ActionVFXCount = 0;
 	int32 ActionSFXCount = 0;
 
@@ -40,7 +41,16 @@ bool FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(const AActor* InOwn
 
 void FCombatFeedbackProfiling::RecordActionFeedbackRequest() { ++ActionFeedbackRequestCount; }
 void FCombatFeedbackProfiling::RecordActionFeedbackSkipped() { ++ActionFeedbackSkippedCount; }
-void FCombatFeedbackProfiling::RecordActionTrail() { ++ActionTrailCount; }
+void FCombatFeedbackProfiling::RecordActionTrail(bool bActive)
+{
+	if (bActive)
+	{
+		++ActionTrailCount;
+		return;
+	}
+
+	++ActionTrailClearCount;
+}
 void FCombatFeedbackProfiling::RecordActionVFX() { ++ActionVFXCount; }
 void FCombatFeedbackProfiling::RecordActionSFX() { ++ActionSFXCount; }
 
@@ -60,6 +70,7 @@ void FCombatFeedbackProfiling::FlushToCsv()
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_ActionFeedback_Request_FlushCount, ActionFeedbackRequestCount, ECsvCustomStatOp::Accumulate);
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_ActionFeedback_Skipped_FlushCount, ActionFeedbackSkippedCount, ECsvCustomStatOp::Accumulate);
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_ActionFeedback_Trail_FlushCount, ActionTrailCount, ECsvCustomStatOp::Accumulate);
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_ActionFeedback_TrailClear_FlushCount, ActionTrailClearCount, ECsvCustomStatOp::Accumulate);
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_ActionFeedback_VFX_FlushCount, ActionVFXCount, ECsvCustomStatOp::Accumulate);
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_ActionFeedback_SFX_FlushCount, ActionSFXCount, ECsvCustomStatOp::Accumulate);
 
@@ -77,6 +88,7 @@ void FCombatFeedbackProfiling::FlushToCsv()
 	ActionFeedbackRequestCount = 0;
 	ActionFeedbackSkippedCount = 0;
 	ActionTrailCount = 0;
+	ActionTrailClearCount = 0;
 	ActionVFXCount = 0;
 	ActionSFXCount = 0;
 

@@ -358,7 +358,7 @@ void UCActionFeedbackComponent::ToggleTrailActive(bool bActive)
 
 	// PrintTrailInfo(bActive, weaponActor);
 
-	FCombatFeedbackProfiling::RecordActionTrail();
+	FCombatFeedbackProfiling::RecordActionTrail(bActive);
 
 	weaponActor->ToggleTrailActive(bActive);
 }
