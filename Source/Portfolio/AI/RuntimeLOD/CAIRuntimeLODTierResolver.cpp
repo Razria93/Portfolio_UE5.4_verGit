@@ -6,30 +6,17 @@
 
 namespace
 {
-	EAIRuntimeLODTier ResolveTierFromIntentState(EAIIntentState InAIIntentState, bool bHasTargetAwareness)
+	bool IsAlwaysCombatCriticalIntentState(EAIIntentState InAIIntentState)
 	{
 		switch (InAIIntentState)
 		{
 		case EAIIntentState::Dead:
 		case EAIIntentState::HitReact:
-		case EAIIntentState::Engage:
-			return EAIRuntimeLODTier::CombatCritical;
-
-		case EAIIntentState::Alert:
-		case EAIIntentState::Chase:
-		case EAIIntentState::Investigate:
-			return EAIRuntimeLODTier::CombatSupport;
-
-		case EAIIntentState::Observe:
-			return EAIRuntimeLODTier::Awareness;
-
-		case EAIIntentState::Patrol:
-		case EAIIntentState::Idle:
-			return EAIRuntimeLODTier::Background;
+			return true;
 
 		case EAIIntentState::Max:
 		default:
-			return bHasTargetAwareness ? EAIRuntimeLODTier::Awareness : EAIRuntimeLODTier::Background;
+			return false;
 		}
 	}
 }
@@ -55,6 +42,7 @@ EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const UBlackboardCompon
 EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const FAIRuntimeLODTierContext& InContext)
 {
 	if (InContext.bDormantCandidate) return EAIRuntimeLODTier::Dormant;
+	if (IsAlwaysCombatCriticalIntentState(InContext.AIIntentState)) return EAIRuntimeLODTier::CombatCritical;
 
 	switch (InContext.CombatRole)
 	{
@@ -66,7 +54,7 @@ EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const FAIRuntimeLODTier
 
 	case ECombatRole::None:
 	default:
-		return ResolveTierFromIntentState(InContext.AIIntentState, InContext.bHasTargetAwareness);
+		return InContext.bHasTargetAwareness ? EAIRuntimeLODTier::Awareness : EAIRuntimeLODTier::Background;
 	}
 }
 
