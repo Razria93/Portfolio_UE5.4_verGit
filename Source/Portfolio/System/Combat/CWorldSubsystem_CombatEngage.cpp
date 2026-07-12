@@ -114,19 +114,6 @@ FEngageAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAI
 	return *found;
 }
 
-EAIUpdatePrecision UCWorldSubsystem_CombatEngage::GetAIUpdatePrecision(const ACAIController* InCAIController) const
-{
-	if (!IsValid(InCAIController)) return EAIUpdatePrecision::High;
-
-	const FEngageAssignmentContext* foundAssignment = AssignmentContainer.Find(InCAIController);
-	if (foundAssignment && foundAssignment->CombatRole == ECombatRole::Engage) return EAIUpdatePrecision::High;
-	if (foundAssignment && foundAssignment->CombatRole == ECombatRole::Alert) return EAIUpdatePrecision::Reduced;
-
-	if (RequestContainer.Contains(InCAIController)) return EAIUpdatePrecision::Reduced;
-
-	return EAIUpdatePrecision::Low;
-}
-
 // Request
 
 void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & InEngageRequestContext)

@@ -63,7 +63,6 @@ public:
 public:
 	// Query
 	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
-	EAIUpdatePrecision GetAIUpdatePrecision(const class ACAIController* InCAIController) const;
 
 public:
 	// Request
