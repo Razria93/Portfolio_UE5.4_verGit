@@ -29,9 +29,9 @@ DisableEnemyCombatFeedback
 | AlertCap / Assignment | Alert 후보 수 제한이 CharacterMovement p95에 직접 영향을 줬다. | 핵심 정책으로 유지 |
 | BT Update Interval | service 호출 수 감소는 유효하지만 Frame / Game p95 개선은 제한적이었다. | tier별 update precision으로 사용 |
 | Movement / Nav | movement intent block은 비용 감소 가능성이 있으나 전역 적용은 gameplay를 깨뜨린다. | 상태 기반으로만 적용 |
-| Animation Refresh | parameter refresh 감소 gate는 동작했지만 단독 frame 개선은 약했다. | Observe / Idle 이하 보조 정책 |
+| Animation Refresh | parameter refresh 감소 gate는 동작했지만 단독 frame 개선은 약했다. | Awareness / Background 이하 보조 정책 |
 | Enemy Actor Tick | `CEnemy Tick` 제거는 가능하지만 주요 병목은 아니었다. | 낮은 우선순위 |
-| WeaponActor | 비용 축으로 유효했다. | Observe 이하 후보, v1 직접 적용은 보수적 판단 |
+| WeaponActor | 비용 축으로 유효했다. | Awareness 이하 후보, v1 직접 적용은 보수적 판단 |
 | Combat Hit Pipeline | hit window / hit processing 차단 효과는 현재 조건에서 작았다. | v1 핵심 제어에서 제외 |
 | Feedback Presentation | Enemy feedback skip은 정상 작동했지만 frame 개선은 작았다. | 최하위 representation 후보 |
 | Perception | 비활성화는 입력 자체를 흔들 수 있다. | v1에서는 끄지 않고 후속 active budget으로 분리 |
@@ -40,13 +40,42 @@ DisableEnemyCombatFeedback
 
 ### Tier 기준
 
+Runtime LOD tier는 AIIntentState 이름을 그대로 따르지 않는다.
+`Chase`, `Investigate`, `Observe`, `Idle`은 행동 상태이고, Runtime LOD tier는 성능 정책 계층이다.
+
+따라서 tier는 다음 입력을 조합해서 판단한다.
+
+```text
+CombatRole
+Target awareness
+Recent combat interaction
+Distance / visibility
+Dormant candidate
+```
+
+기본 tier:
+
 | Tier | 기준 |
 | --- | --- |
-| Engage | CombatEngage subsystem에서 Engage role을 받은 직접 전투 참여자 |
-| Alert | CombatEngage subsystem에서 Alert role을 받은 전투 후보 / 경계 참여자 |
-| Observe | target awareness는 있지만 combat role이 없는 관찰 상태 |
-| Idle | target awareness가 없고 전투 / 조사 중이 아닌 일반 상태 |
-| Dormant | player와 멀고 시야에도 들어오지 않는 비활성 후보 |
+| CombatCritical | 직접 전투 결과, 피격 반응, 사망, combat timing 보존이 필요한 객체 |
+| CombatSupport | 전투 주변 보조, Alert role, 근거리 전투 후보 |
+| Awareness | target awareness는 있지만 combat role이 없는 객체 |
+| Background | target awareness가 없고 전투 / 조사 중이 아닌 일반 객체 |
+| Dormant | 멀고 보이지 않으며 wake-up 전까지 비활성화할 수 있는 객체 |
+
+해석 기준:
+
+```text
+Engage role -> CombatCritical
+Alert role -> CombatSupport
+Target / LOS 있음 + role 없음 -> Awareness
+Target / LOS 없음 -> Background
+far + invisible + no recent interaction -> Dormant 후보
+```
+
+`Chase`와 `Investigate`는 tier를 직접 결정하지 않는다.
+`Engage + Chase`는 CombatCritical이고, `Alert + Chase`는 CombatSupport다.
+`Investigate`는 현재 정책상 Engage에서 파생되는 recovery 행동에 가깝기 때문에 CombatRole과 recent combat interaction을 우선 본다.
 
 ### Dormant 기준
 
@@ -98,70 +127,84 @@ Hit feedback:
 
 ## 정책표
 
-| Tier | Engage | Alert | Observe | Idle | Dormant |
+v1에서는 축을 과하게 늘리지 않는다.
+측정상 의미가 있었던 `Perception`, `Movement`, `BT Update`, `Animation`, `Wake-up`을 핵심 축으로 두고, weapon / hit / reaction 일부는 `Combat Enablement`로 압축한다.
+
+| Tier | CombatCritical | CombatSupport | Awareness | Background | Dormant |
 | --- | --- | --- | --- | --- | --- |
-| Cap | 2 | 6 | 12 후보 | else | far / invisible |
+| Budget | EngageCap + reactive overflow | AlertCap | Awareness budget 후보 | 나머지 일반 객체 | far / invisible / no recent interaction |
 | Perception | High | Reduced | Low | Low or Budgeted | Off + Wake-up |
 | Movement | High | Reduced | None | None / Idle Movement Low | None |
 | BT Update | High | Reduced | Low | Low | Off / VeryLow |
-| Animation | Full | Full | Reduced | Reduced | Off |
-| Mesh | On | On | On | On | Hidden / Proxy |
-| Weapon Actor | On | On | Optional Visible | Off | Off |
-| Combat Hit Pipeline | On | Off until Engage | Off | Off | Off |
-| Hit Receive / Reaction | On | On | On | On / Minimal | Wake-up Hit only |
-| Feedback Presentation | Action + Reaction + Hit | Reaction + Hit | Reaction + Hit | Minimal Hit / Off | Off |
+| Animation | Full | Full or Reduced | Reduced | Reduced | Off |
+| Combat Enablement | Full | Limited | Off | Off | Off |
+| Representation | Full | Full | Reduced | Reduced | Hidden / Proxy 후보 |
+| Feedback Presentation | Action + Reaction + Hit | Reaction + Hit | Minimal Reaction / Hit | Minimal Hit / Off | Off |
+| Wake-up | 필요 없음 | 필요 없음 | 유지 | 유지 | range / visibility / damage / script |
+
+`Combat Enablement`는 다음 항목을 하나로 묶은 v1 정책 축이다.
+
+```text
+Weapon actor readiness
+Outgoing hit authority
+Combat Hit Pipeline
+Hit receive eligibility
+Reaction entry
+```
+
+Combat collision / feedback 측정 결과, 해당 축들은 event 기반이며 현재 40 / 80 Enemy 조건에서 단독 최적화 축으로 강하게 밀 정도의 frame gain은 보이지 않았다.
+따라서 v1에서는 세부 축으로 쪼개지 않고, 전투 참여 가능 여부를 정하는 coarse gate로 다룬다.
 
 ## 적용 예시
 
-### Engage
+### CombatCritical
 
-직접 전투 참여자다.
+직접 전투 결과에 관여하는 객체다.
+Engage role, HitReact, Dead, 강제 reaction, combat timing 보존이 필요한 상태가 여기에 들어간다.
 
 ```text
 Movement: High
 BT Update: High
 Animation: Full
-WeaponActor: On
-Combat Hit Pipeline: On
+Combat Enablement: Full
 Feedback: Action + Reaction + Hit
 ```
 
-Engage는 montage notify / socket timing / hit window / combat signal route가 모두 유지되어야 한다.
-따라서 pose update skip, WeaponActor 제거, Combat Hit Pipeline 제거는 금지한다.
+CombatCritical은 montage notify / socket timing / hit window / combat signal route가 모두 유지되어야 한다.
+따라서 pose update skip, weapon readiness 제거, outgoing hit authority 제거는 금지한다.
 
-### Alert
+### CombatSupport
 
-전투 후보이자 경계 참여자다.
+전투 주변 보조 객체다.
+Alert role, 전투 후보, 근거리 지원 객체가 여기에 들어간다.
 
 ```text
 Movement: Reduced
 BT Update: Reduced
-Animation: Full
-WeaponActor: On
-Combat Hit Pipeline: Off until Engage
+Animation: Full or Reduced
+Combat Enablement: Limited
 Feedback: Reaction + Hit
 ```
 
-Alert는 언제든 Engage로 승격될 수 있으므로 movement, perception, weapon, full animation을 보수적으로 유지한다.
-다만 직접 공격자는 아니므로 outgoing hit 처리와 action feedback은 Engage 전까지 의미가 없다.
+CombatSupport는 언제든 CombatCritical로 승격될 수 있으므로 perception / movement / BT는 유지하되 빈도를 낮춘다.
+다만 직접 공격 권한은 없으므로 outgoing hit authority와 action feedback은 기본적으로 제한한다.
 
-### Observe
+### Awareness
 
-target awareness는 있지만 combat assignment가 없는 상태다.
+target awareness는 있지만 combat role이 없는 객체다.
 
 ```text
 Movement: None
 BT Update: Low
 Animation: Reduced
-WeaponActor: Optional Visible
-Combat Hit Pipeline: Off
-Feedback: Reaction + Hit
+Combat Enablement: Off
+Feedback: Minimal Reaction / Hit
 ```
 
-Observe는 전투 권한이 없으므로 Chase / Alert Spread / Attack에 참여하지 않는다.
-v1에서는 Observe에서 movement intent를 제한하는 것이 핵심 적용 후보가 된다.
+Awareness는 전투 권한이 없으므로 Chase / Alert Spread / Attack에 참여하지 않는다.
+v1에서는 Awareness에서 movement intent를 제한하는 것이 핵심 적용 후보가 된다.
 
-### Idle
+### Background
 
 target awareness가 없고 전투 / 조사 중이 아닌 상태다.
 
@@ -169,8 +212,7 @@ target awareness가 없고 전투 / 조사 중이 아닌 상태다.
 Movement: None / Idle Movement Low
 BT Update: Low
 Animation: Reduced
-WeaponActor: Off
-Combat Hit Pipeline: Off
+Combat Enablement: Off
 Feedback: Minimal Hit / Off
 ```
 
@@ -192,8 +234,7 @@ Movement: None
 BT Update: Off / VeryLow
 Animation: Off
 Mesh: Hidden / Proxy
-WeaponActor: Off
-Combat Hit Pipeline: Off
+Combat Enablement: Off
 Feedback: Off
 ```
 
@@ -246,14 +287,15 @@ v1은 정책 전체를 한 번에 구현하지 않는다.
 
 ### v1 적용 후보
 
-1. Tier resolver 추가
+1. Tier resolver 정리
    - `CombatRole`
    - `AIIntentState`
    - target awareness
    - distance / visibility 후보
+   - `Chase` / `Investigate`는 상태명만으로 tier를 결정하지 않음
 
 2. Movement
-   - Observe 이하 movement intent 제한
+   - Awareness 이하 movement intent 제한
    - Idle은 필요할 때만 `Idle Movement Low`
    - Dormant는 movement 없음
 
@@ -262,8 +304,14 @@ v1은 정책 전체를 한 번에 구현하지 않는다.
    - EngageContext는 기본 주기 유지
 
 4. Animation
-   - Observe / Idle reduced refresh
+   - Awareness / Background reduced refresh
    - combat-capable tier는 Full 유지
+
+5. Combat Enablement
+   - CombatCritical은 full 유지
+   - CombatSupport는 limited
+   - Awareness 이하 outgoing hit authority off
+   - 세부 collision / feedback 축은 v1 직접 최적화에서 제외
 
 ### v1에서 하지 않는 것
 
@@ -277,6 +325,110 @@ Dormant full implementation
 ```
 
 이 항목들은 정책표에는 남기되, v1 직접 적용 대상에서 제외한다.
+
+## 현재 이후 작업 순서
+
+현재 단계 이후 작업은 다음 순서로 진행한다.
+
+```text
+1. Tier resolver 보정
+2. ACAIController tier snapshot 추가
+3. BT interval 소비 경로를 snapshot 기반으로 변경
+4. Movement policy 소비 경로를 snapshot 기반으로 변경
+5. Animation policy 소비 경로를 snapshot 기반으로 변경
+6. State-based Runtime LOD v1 smoke 측정
+7. Perception Active Budget / Wake-up 계획 수립
+8. Dormant / Proxy Actor 후속 분리
+```
+
+### 1. Tier resolver 보정
+
+`Chase` / `Investigate`를 상태명만으로 `CombatSupport`에 넣지 않는다.
+resolver는 role / awareness / recent interaction을 먼저 보고 tier를 결정한다.
+
+권장 판정 순서:
+
+```text
+Dormant candidate -> Dormant
+Dead / HitReact -> CombatCritical
+CombatRole Engage -> CombatCritical
+CombatRole Alert -> CombatSupport
+Target / LOS 있음 -> Awareness
+else -> Background
+```
+
+### 2. ACAIController tier snapshot
+
+BT / Movement / Animation이 각자 Blackboard를 다시 조합하지 않게 한다.
+`ACAIController`에 현재 Runtime LOD tier를 저장하고 같은 snapshot을 소비하게 만든다.
+
+후보 API:
+
+```cpp
+EAIRuntimeLODTier GetCurrentRuntimeLODTier() const;
+void RefreshRuntimeLODTierFromBlackboard();
+```
+
+### 3. BT interval snapshot 소비
+
+현재 BT interval helper는 Blackboard 기반 resolver를 직접 호출한다.
+다음 단계에서는 controller snapshot을 읽도록 바꾼다.
+
+```text
+AIContext: fixed interval
+AIIntentState: tier snapshot 기반 interval
+EngageContext: fixed interval
+```
+
+### 4. Movement / Animation snapshot 소비
+
+Movement와 Animation은 같은 tier snapshot을 읽는다.
+이 단계부터 실제 Runtime LOD v1 적용이 시작된다.
+
+```text
+Movement:
+-> CombatCritical High
+-> CombatSupport Reduced
+-> Awareness None
+-> Background None / Idle Movement Low
+-> Dormant None
+
+Animation:
+-> CombatCritical Full
+-> CombatSupport Full or Reduced
+-> Awareness Reduced
+-> Background Reduced
+-> Dormant Off
+```
+
+### 5. State-based Runtime LOD v1 측정
+
+최소 측정:
+
+```text
+40 Enemy Policy Off / On
+80 Enemy Policy Off / On
+```
+
+확인 기준:
+
+```text
+Engage / Alert cap 유지
+Awareness가 불필요하게 이동하지 않음
+Attack / HitReact / Investigate 깨짐 없음
+CharacterMovement / Animation / BT Tick p95
+AIContext / AIIntent / EngageContext count
+```
+
+### 6. Perception Active Budget / Wake-up
+
+v1 smoke가 안정화된 뒤 진행한다.
+Perception을 단순히 끄는 것이 아니라 active budget과 wake-up 정책으로 분리한다.
+
+### 7. Dormant / Proxy Actor
+
+Dormant는 v1에서 완성하지 않는다.
+Wake-up 정책과 representation 전환이 필요하므로 별도 후속 브랜치로 분리한다.
 
 ## 측정 계획
 
@@ -310,7 +462,7 @@ GC event 없는 측정 우선 사용
 
 ```text
 Engage 2 / Alert 6 유지
-Observe가 움직이지 않는지
+Awareness가 움직이지 않는지
 Idle / Idle Movement 정책이 의도대로 동작하는지
 Attack / HitReact / Investigate 깨짐 없는지
 CharacterMovement p95
@@ -324,7 +476,7 @@ Frame / Game p95
 
 ```text
 Combat-capable 흐름이 깨지지 않는다.
-Observe / Idle 계층에서 불필요한 movement work가 줄어든다.
+Awareness / Background 계층에서 불필요한 movement work가 줄어든다.
 Animation reduced가 visual break 없이 보조 효과를 낸다.
 BT update precision이 기존 Assignment / AlertCap 정책과 충돌하지 않는다.
 ```
@@ -348,7 +500,7 @@ gameplay smoke 확인
 
 ```text
 대량 Enemy를 모두 같은 비용으로 업데이트하지 않는다.
-Engage / Alert / Observe / Idle / Dormant tier로 나눈다.
+CombatCritical / CombatSupport / Awareness / Background / Dormant tier로 나눈다.
 Combat-capable 객체는 보수적으로 유지한다.
 전투 권한이 없는 객체부터 movement / BT / animation 비용을 줄인다.
 Perception / proxy / mesh hidden / wake-up manager는 후속 고도화로 남긴다.
@@ -360,10 +512,37 @@ Perception / proxy / mesh hidden / wake-up manager는 후속 고도화로 남긴
 후속 고도화 후보:
 
 ```text
-1. Perception Active Budget / Wake-up
-2. Dormant / Proxy Actor
-3. Animation Budget / Pose Skip
-4. WeaponActor spawn delay / pooling
-5. Distance / camera visibility 기반 LOD policy tuning
-6. 120+ Enemy stress scene
+1. Tier resolver 보정
+   - Chase / Investigate를 상태명으로 분류하지 않고 role / awareness 기준으로 판정
+
+2. ACAIController Tier Snapshot
+   - CurrentRuntimeLODTier 저장
+   - BT / Movement / Animation이 같은 tier 값을 소비
+
+3. Movement / Animation 소비 경로 연결
+   - Movement policy는 controller snapshot 소비
+   - Animation policy는 controller snapshot 소비
+
+4. State-based Runtime LOD v1 측정
+   - 40 Enemy Policy Off / On
+   - 80 Enemy Policy Off / On
+
+5. Perception Active Budget / Wake-up
+   - Perception을 바로 끄지 않고 active budget / wake-up 정책으로 분리
+
+6. Dormant / Proxy Actor
+   - Dormant registry
+   - range / visibility / damage / script wake-up
+   - hidden / proxy representation 검토
+
+7. Animation Budget / Pose Skip
+   - combat-capable tier 제외
+   - Background / Dormant 후보부터 검토
+
+8. Distance / camera visibility 기반 LOD tuning
+   - camera frustum / forward cone / distance 조합
+   - tier hysteresis / minimum hold time 추가
+
+9. 120+ Enemy stress scene
+   - v1 정책이 40 / 80 이후에도 유지되는지 확인
 ```

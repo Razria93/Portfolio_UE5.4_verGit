@@ -218,11 +218,28 @@ AIIntentState는 행동 상태이고, Runtime LOD tier는 성능 정책 계층�
 
 | Tier | 의미 |
 | --- | --- |
-| CombatCritical | Engage, HitReact, Dead처럼 combat timing / reaction 보존이 필요한 상태 |
-| CombatSupport | Alert, Chase, Investigate처럼 전투 주변 참여 또는 active search 상태 |
+| CombatCritical | 직접 전투 결과, 피격 반응, 사망, combat timing 보존이 필요한 객체 |
+| CombatSupport | 전투 주변 보조, Alert role, 근거리 전투 후보 |
 | Awareness | target awareness는 있지만 combat assignment가 없는 상태 |
 | Background | Idle / Patrol 같은 일반 background 상태 |
 | Dormant | offscreen / far / wake-up 대기 후보 |
+
+Tier는 `AIIntentState` 이름을 그대로 따라가지 않는다.
+`Chase`와 `Investigate`는 성능 tier가 아니라 행동 상태다.
+
+해석 기준:
+
+```text
+Dormant candidate -> Dormant
+Dead / HitReact -> CombatCritical
+CombatRole Engage -> CombatCritical
+CombatRole Alert -> CombatSupport
+Target / LOS 있음 + CombatRole None -> Awareness
+Target / LOS 없음 -> Background
+```
+
+따라서 `Engage + Chase`는 CombatCritical이고, `Alert + Chase`는 CombatSupport다.
+`Investigate`는 현재 정책상 Engage에서 파생되는 recovery 행동에 가까우므로 상태명만으로 CombatSupport에 넣지 않는다.
 
 ### 2. StateRuntimeLODPolicy 축소
 
