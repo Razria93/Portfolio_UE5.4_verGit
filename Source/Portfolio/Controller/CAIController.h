@@ -6,6 +6,8 @@
 #include "Type/CAIStructure.h"
 #include "CAIController.generated.h"
 
+enum class EAIRuntimeLODTier : uint8;
+
 struct FPerceptionCandidateAuditState
 {
 	bool bEnabled = false;
@@ -139,6 +141,8 @@ private:
 	UPROPERTY(Transient)
 	bool bPerceptionDisabledForProfiling = false;
 
+	EAIRuntimeLODTier CurrentRuntimeLODTier;
+
 	FPerceptionCandidateAuditState PerceptionCandidateAuditState;
 	FBlackboardEngageLatencyAuditState BlackboardEngageLatencyAuditState;
 
@@ -203,6 +207,11 @@ public:
 	EPerceptionBuildResult BuildPerceptionContext(FTargetData& OutTargetData);
 
 public:
+	// Runtime LOD Snapshot
+	EAIRuntimeLODTier GetCurrentRuntimeLODTier() const;
+	bool RefreshRuntimeLODTierFromBlackboard();
+
+public:
 	// Profiling Event Sink
 	void RecordPerceptionContextBuiltForAudit(class AActor* InTargetActor);
 	void RecordBlackboardTargetSetForAudit(class AActor* InTargetActor);
@@ -214,6 +223,15 @@ private:
 	void UpdateTargetDataMap();
 	void ClearTargetDataMap();
 	EPerceptionBuildResult SelectTopPriority(FTargetData& OutTargetData);
+
+private:
+	// Runtime LOD Snapshot
+	// 1. Lifecycle
+	void InitializeRuntimeLODTierSnapshot();
+	void ClearRuntimeLODTierSnapshot();
+
+	// 2. Set
+	void SetCurrentRuntimeLODTier(EAIRuntimeLODTier InTier);
 
 private:
 	// Perception Profiling Gate

@@ -1,5 +1,26 @@
 # AI BT Update Interval AIContext Level Split Note
 
+## 현재 상태
+
+이 문서는 `AIContextService` 호출수도 Runtime LOD precision에 따라 줄일 수 있는지 확인한 과거 실험 기록이다.
+
+이후 Runtime LOD tier snapshot 설계 검토에서 `AIContext`는 Blackboard / CombatRole / target awareness를 갱신하는 producer 계층으로 정리했다.
+따라서 현재 정책에서는 `AIContext` interval split을 적용하지 않는다.
+
+현재 적용 기준:
+
+```text
+AIContext: 기본 interval 유지
+AIIntentState: Runtime LOD tier 기반 interval 조정
+EngageContext: 기본 interval 유지
+```
+
+관련 후속 문서:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Tier_Snapshot_Refactor_Plan.md
+```
+
 ## 목적
 
 Assignment warmup과 Engage / Alert cap으로 전투 참여 계층이 안정화된 상태에서 `AIContextService` 호출수도 Runtime LOD precision에 따라 줄일 수 있는지 확인한다.

@@ -20,6 +20,7 @@
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIKeyRegistry.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
+#include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
 
 namespace
 {
@@ -44,6 +45,8 @@ namespace
 
 ACAIController::ACAIController()
 {
+	CurrentRuntimeLODTier = EAIRuntimeLODTier::Background;
+
 	// Init AIPerceptionComp
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	check(AIPerceptionComp);
@@ -142,6 +145,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 	if (!SetPossessionRuntimeState(InPawn)) return false;
 
 	ClearTargetDataMap();
+	InitializeRuntimeLODTierSnapshot();
 	InitializePerceptionStateForProfiling();
 	InitializePerceptionCandidateAudit();
 	InitializeBlackboardEngageLatencyAudit();
@@ -158,6 +162,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 
 	if (!SetupBlackboardComponent()) return false;
 	if (!InitializeBlackboardValues()) return false;
+	if (!RefreshRuntimeLODTierFromBlackboard()) return false;
 	if (!StartBehaviorTreeRuntime()) return false;
 
 	return true;
@@ -175,6 +180,7 @@ void ACAIController::UninitializeControllerRuntime()
 	ClearBlackboardEngageLatencyAudit();
 	ClearPerceptionCandidateAudit();
 	ClearPerceptionStateForProfiling();
+	ClearRuntimeLODTierSnapshot();
 	ClearTargetDataMap();
 
 	ResetPossessionRuntimeState();
@@ -477,6 +483,41 @@ EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetData& OutTargetD
 
 	OutTargetData = topData;
 	return EPerceptionBuildResult::Success;
+}
+
+// Runtime LOD Snapshot
+
+EAIRuntimeLODTier ACAIController::GetCurrentRuntimeLODTier() const
+{
+	return CurrentRuntimeLODTier;
+}
+
+bool ACAIController::RefreshRuntimeLODTierFromBlackboard()
+{
+	const UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!IsValid(blackboardComp))
+	{
+		SetCurrentRuntimeLODTier(EAIRuntimeLODTier::Background);
+		return false;
+	}
+
+	SetCurrentRuntimeLODTier(FAIRuntimeLODTierResolver::ResolveTier(*blackboardComp));
+	return true;
+}
+
+void ACAIController::InitializeRuntimeLODTierSnapshot()
+{
+	SetCurrentRuntimeLODTier(EAIRuntimeLODTier::Background);
+}
+
+void ACAIController::ClearRuntimeLODTierSnapshot()
+{
+	SetCurrentRuntimeLODTier(EAIRuntimeLODTier::Background);
+}
+
+void ACAIController::SetCurrentRuntimeLODTier(EAIRuntimeLODTier InTier)
+{
+	CurrentRuntimeLODTier = InTier;
 }
 
 // Perception Profiling Gate

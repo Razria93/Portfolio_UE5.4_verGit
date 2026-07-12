@@ -1,12 +1,13 @@
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 
 #include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
+#include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
+#include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Controller/CAIController.h"
-#include "System/Combat/CWorldSubsystem_CombatEngage.h"
-#include "Type/CWorldSubSystemStructure.h"
 
 namespace
 {
@@ -27,8 +28,6 @@ namespace
 
 	// AIContext
 	constexpr float DefaultAIContextInterval = 0.1f;
-	constexpr float ReducedAIContextInterval = 0.2f;
-	constexpr float AggressiveAIContextInterval = 0.4f;
 
 	// AIIntentState
 	constexpr float DefaultAIIntentStateInterval = 0.2f;
@@ -44,115 +43,88 @@ namespace
 		return FMath::Clamp(CVarBTUpdateIntervalMode.GetValueOnGameThread(), 0, 2);
 	}
 
-	// Precision Resolve
-	EAIUpdatePrecision ResolveAIUpdatePrecision(const UBehaviorTreeComponent& InOwnerComp)
+	// Runtime LOD Tier Snapshot
+	const ACAIController* GetAIController(const UBehaviorTreeComponent& InOwnerComp)
 	{
-		const ACAIController* aiController = Cast<ACAIController>(InOwnerComp.GetAIOwner());
-		if (!IsValid(aiController)) return EAIUpdatePrecision::High;
-
-		UWorld* world = aiController->GetWorld();
-		if (!IsValid(world)) return EAIUpdatePrecision::High;
-
-		const UCWorldSubsystem_CombatEngage* engageSubsystem = world->GetSubsystem<UCWorldSubsystem_CombatEngage>();
-		if (!IsValid(engageSubsystem)) return EAIUpdatePrecision::High;
-
-		return engageSubsystem->GetAIUpdatePrecision(aiController);
+		return Cast<ACAIController>(InOwnerComp.GetAIOwner());
 	}
 
-	// Mode + Precision -> Interval Enum Preset
-	EBTServiceIntervalPreset SelectIntervalPreset(int32 InMode, EAIUpdatePrecision InPrecision)
+	EAIRuntimeLODTier GetRuntimeLODTierSnapshot(const ACAIController& InAIController)
+	{
+		return InAIController.GetCurrentRuntimeLODTier();
+	}
+
+	EAIRuntimeLODTier ResolveRuntimeLODTierFallback(const UBehaviorTreeComponent& InOwnerComp)
+	{
+		const UBlackboardComponent* blackboardComp = InOwnerComp.GetBlackboardComponent();
+		if (!IsValid(blackboardComp)) return EAIRuntimeLODTier::CombatCritical;
+
+		return FAIRuntimeLODTierResolver::ResolveTier(*blackboardComp);
+	}
+
+	EAIRuntimeLODTier GetRuntimeLODTierForIntervalSelection(const UBehaviorTreeComponent& InOwnerComp)
+	{
+		const ACAIController* aiController = GetAIController(InOwnerComp);
+		if (IsValid(aiController)) return GetRuntimeLODTierSnapshot(*aiController);
+
+		return ResolveRuntimeLODTierFallback(InOwnerComp);
+	}
+
+	// Mode + Runtime LOD Tier -> Interval Enum Preset
+	EBTServiceIntervalPreset SelectIntervalPreset(int32 InMode, EAIRuntimeLODTier InTier)
 	{
 		switch (InMode)
 		{
 		case 0:
-			switch (InPrecision)
+			switch (InTier)
 			{
-			case EAIUpdatePrecision::High:
-			case EAIUpdatePrecision::Reduced:
-			case EAIUpdatePrecision::Low:
+			case EAIRuntimeLODTier::CombatCritical:
+			case EAIRuntimeLODTier::CombatSupport:
+			case EAIRuntimeLODTier::Awareness:
+			case EAIRuntimeLODTier::Background:
+			case EAIRuntimeLODTier::Dormant:
 			default:
 				return EBTServiceIntervalPreset::Default;
 			}
 
 		case 1:
-			switch (InPrecision)
+			switch (InTier)
 			{
-			case EAIUpdatePrecision::High:
+			case EAIRuntimeLODTier::CombatCritical:
 				return EBTServiceIntervalPreset::Default;
 
-			case EAIUpdatePrecision::Reduced:
-			case EAIUpdatePrecision::Low:
+			case EAIRuntimeLODTier::CombatSupport:
+			case EAIRuntimeLODTier::Awareness:
+			case EAIRuntimeLODTier::Background:
+			case EAIRuntimeLODTier::Dormant:
 			default:
 				return EBTServiceIntervalPreset::Reduced;
 			}
 
 		case 2:
 		default:
-			switch (InPrecision)
+			switch (InTier)
 			{
-			case EAIUpdatePrecision::High:
+			case EAIRuntimeLODTier::CombatCritical:
 				return EBTServiceIntervalPreset::Default;
 
-			case EAIUpdatePrecision::Reduced:
+			case EAIRuntimeLODTier::CombatSupport:
 				return EBTServiceIntervalPreset::Reduced;
 
-			case EAIUpdatePrecision::Low:
+			case EAIRuntimeLODTier::Awareness:
+			case EAIRuntimeLODTier::Background:
+			case EAIRuntimeLODTier::Dormant:
 			default:
 				return EBTServiceIntervalPreset::Aggressive;
 			}
 		}
 	}
 
-	// AIContext
-	// Record Counter (AIContext)
-	void RecordAIContextIntervalPreset(EBTServiceIntervalPreset InPreset)
+	void RecordStateRuntimeLODTier(EAIRuntimeLODTier InTier)
 	{
-		switch (InPreset)
-		{
-		case EBTServiceIntervalPreset::Default:
-			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIContextInterval_Default_Count, 1, ECsvCustomStatOp::Accumulate);
-			return;
+		if (!FAIStateRuntimeLODPolicy::IsStatePolicyAuditEnabled()) return;
 
-		case EBTServiceIntervalPreset::Reduced:
-			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIContextInterval_Reduced_Count, 1, ECsvCustomStatOp::Accumulate);
-			return;
-
-		case EBTServiceIntervalPreset::Aggressive:
-		default:
-			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIContextInterval_Aggressive_Count, 1, ECsvCustomStatOp::Accumulate);
-			return;
-		}
-	}
-
-	// Interval Enum Preset -> Interval float value (AIContext)
-	float GetAIContextIntervalByPreset(EBTServiceIntervalPreset InPreset)
-	{
-		switch (InPreset)
-		{
-		case EBTServiceIntervalPreset::Default:
-			return DefaultAIContextInterval;
-
-		case EBTServiceIntervalPreset::Reduced:
-			return ReducedAIContextInterval;
-
-		case EBTServiceIntervalPreset::Aggressive:
-		default:
-			return AggressiveAIContextInterval;
-		}
-	}
-
-	// Interval Select (AIContext)
-	float SelectAIContextInterval(const UBehaviorTreeComponent& InOwnerComp)
-	{
-		const EBTServiceIntervalPreset intervalPreset = SelectIntervalPreset(
-			GetBTUpdateIntervalMode(),
-			ResolveAIUpdatePrecision(InOwnerComp));
-
-		// Profiling
-		RecordAIContextIntervalPreset(intervalPreset);
-
-		// return Interval float value
-		return GetAIContextIntervalByPreset(intervalPreset);
+		FAIStateRuntimeLODPolicy::RecordResolvedTierForProfiling(InTier);
 	}
 
 	// AIIntentState
@@ -196,11 +168,13 @@ namespace
 	// Interval Select (AIIntentState)
 	float SelectAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
 	{
+		const EAIRuntimeLODTier runtimeLODTier = GetRuntimeLODTierForIntervalSelection(InOwnerComp);
 		const EBTServiceIntervalPreset intervalPreset = SelectIntervalPreset(
 			GetBTUpdateIntervalMode(),
-			ResolveAIUpdatePrecision(InOwnerComp));
+			runtimeLODTier);
 
 		// Profiling
+		RecordStateRuntimeLODTier(runtimeLODTier);
 		RecordAIIntentStateIntervalPreset(intervalPreset);
 
 		// return Interval float value
@@ -208,9 +182,9 @@ namespace
 	}
 }
 
-float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& InOwnerComp)
+float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
 {
-	return SelectAIContextInterval(InOwnerComp);
+	return DefaultAIContextInterval;
 }
 
 float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)

@@ -68,7 +68,7 @@ void UCMovementComponent::UpdateRuntimeLODMovementMode()
 {
 	if (!FAIMovementRuntimeLODPolicy::IsEnemyMovementRuntimeLODTarget(OwnerCharacter_Injected)) return;
 
-	const int32 requestedMovementMode = FAIMovementRuntimeLODPolicy::GetEnemyMovementMode();
+	const int32 requestedMovementMode = FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(OwnerCharacter_Injected);
 
 	EnsureRuntimeLODMovementOriginalStateCached();
 

@@ -76,7 +76,6 @@ private:
 	bool IsEnemyAnimationProfilingTarget() const;
 
 	// 3. Query
-	int32 GetEnemyAnimationModeForProfiling() const;
 	float GetReducedAnimationRefreshIntervalForProfiling() const;
 
 	// 4. Gate
