@@ -302,6 +302,7 @@ Runtime LOD tier나 update precision을 직접 판단하지 않는다.
 8. UpdateAIContext 이후 Runtime LOD tier snapshot refresh
 9. AIIntentState 변경 이후 Runtime LOD tier snapshot refresh
 10. BTServiceIntervalHelper가 controller snapshot을 우선 소비
+11. Movement Runtime LOD policy가 controller snapshot을 소비
 ```
 
 단, 아직 완전한 Runtime LOD 적용 구조는 아니다.
@@ -309,7 +310,7 @@ Runtime LOD tier나 update precision을 직접 판단하지 않는다.
 이유:
 
 ```text
-Movement / Animation 소비 경로 변경
+Animation 소비 경로 변경
 Dormant / Wake-up manager
 Perception budget
 ```
@@ -334,6 +335,12 @@ UpdateAIIntentState
 -> AIIntentState 변경
 -> ACAIController::RefreshRuntimeLODTierFromBlackboard()
 -> Dead / HitReact 같은 absolute state tier 반영
+
+Movement Runtime LOD
+-> FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(Owner)
+-> StatePolicyMode가 꺼져 있으면 기존 EnemyMovementMode CVar 소비
+-> StatePolicyMode가 켜져 있으면 OwnerController.GetCurrentRuntimeLODTier() 소비
+-> Awareness / Dormant는 movement intent block
 ```
 
 이는 최종 구조는 아니지만, CombatEngageSubsystem과 BT helper에 섞여 있던 책임을 먼저 분리하는 중간 단계다.
@@ -354,17 +361,14 @@ AIIntentState: Runtime LOD tier 기반 interval 조정
 EngageContext: combat timing 계층이므로 고정 interval
 ```
 
-### 2. Movement / Animation 소비 경로 변경
+### 2. Animation 소비 경로 변경
 
-Movement와 Animation은 각자 Blackboard를 다시 조합하지 않고 controller snapshot을 읽는다.
+Movement는 controller snapshot 소비 경로로 연결했다.
+다음 단계에서는 Animation도 Blackboard를 다시 조합하지 않고 controller snapshot을 읽는다.
 
 예상 흐름:
 
 ```text
-UCMovementComponent
--> OwnerController.GetCurrentRuntimeLODTier()
--> tier별 movement intent / update policy 적용
-
 UCAnimInstance
 -> OwnerController.GetCurrentRuntimeLODTier()
 -> tier별 parameter refresh / animation detail policy 적용
@@ -405,7 +409,8 @@ StateRuntimeLODPolicy는 CVar / audit 전용으로 유지한다.
 BTServiceIntervalHelper는 tier를 소비해 interval만 선택한다.
 CombatEngageSubsystem은 CombatRole assignment만 담당한다.
 ACAIController는 CurrentRuntimeLODTier snapshot을 저장한다.
-다음 단계에서는 Movement / Animation이 controller snapshot을 소비한다.
+Movement Runtime LOD policy는 controller snapshot을 소비한다.
+다음 단계에서는 Animation이 controller snapshot을 소비한다.
 장기적으로는 AIRuntimeLODSubsystem으로 승격한다.
 ```
 
