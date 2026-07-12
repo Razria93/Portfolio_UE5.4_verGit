@@ -209,7 +209,7 @@ public:
 public:
 	// Runtime LOD Snapshot
 	EAIRuntimeLODTier GetCurrentRuntimeLODTier() const;
-	void RefreshRuntimeLODTierFromBlackboard();
+	bool RefreshRuntimeLODTierFromBlackboard();
 
 public:
 	// Profiling Event Sink

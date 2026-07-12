@@ -162,7 +162,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 
 	if (!SetupBlackboardComponent()) return false;
 	if (!InitializeBlackboardValues()) return false;
-	RefreshRuntimeLODTierFromBlackboard();
+	if (!RefreshRuntimeLODTierFromBlackboard()) return false;
 	if (!StartBehaviorTreeRuntime()) return false;
 
 	return true;
@@ -492,16 +492,17 @@ EAIRuntimeLODTier ACAIController::GetCurrentRuntimeLODTier() const
 	return CurrentRuntimeLODTier;
 }
 
-void ACAIController::RefreshRuntimeLODTierFromBlackboard()
+bool ACAIController::RefreshRuntimeLODTierFromBlackboard()
 {
 	const UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp))
 	{
 		SetCurrentRuntimeLODTier(EAIRuntimeLODTier::Background);
-		return;
+		return false;
 	}
 
 	SetCurrentRuntimeLODTier(FAIRuntimeLODTierResolver::ResolveTier(*blackboardComp));
+	return true;
 }
 
 void ACAIController::InitializeRuntimeLODTierSnapshot()
