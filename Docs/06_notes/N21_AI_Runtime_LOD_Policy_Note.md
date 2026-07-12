@@ -46,10 +46,12 @@ P35의 결론은 Runtime LOD를 단순히 모든 Enemy에 같은 interval로 적
 ```text
 Mode 1:
 combat-capable 조건에서도 보수적으로 사용할 수 있는 Runtime LOD 후보.
-AIContext / AIIntentState 호출수를 줄이면서 Engage 2 / Alert 6 / Idle 계층과 공격 전환이 안정적으로 유지됐다.
+과거 AIContext / AIIntentState 호출수 감소 실험에서는 Engage 2 / Alert 6 / Idle 계층과 공격 전환이 안정적으로 유지됐다.
+다만 이후 책임 분리 검토에서 AIContext는 context producer로 분류했으므로 현재 정책에서는 기본 interval을 유지한다.
 
 Mode 2:
-AIContext / AIIntentState 호출수와 BT Tick p95 감소 폭이 가장 크다.
+과거 실험 기준으로 AIContext / AIIntentState 호출수와 BT Tick p95 감소 폭이 가장 컸다.
+현재 정책에서는 AIIntentState에만 Runtime LOD tier 기반 interval 조정을 적용한다.
 다만 공격적인 후보이므로 far / offscreen / NonCombat / Dormant 계층부터 적용하는 쪽이 적합하다.
 
 EngageContext:
@@ -78,6 +80,7 @@ EngageContext:
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_BT_Update_Interval_AIContext_Level_Split_80Enemy_Correction.md
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Tier_Snapshot_Refactor_Plan.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Debugging_Obstacle_Note.md
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md
 Docs/07_Profiling/AI_Performance/CSV_Evidence_Manifest.md
@@ -106,6 +109,15 @@ Domain owner:
 
 이 기준을 둔 이유는 Runtime LOD가 기본 gameplay 흐름의 예외 제어이기 때문이다.
 예외 제어 조건과 실제 gameplay state mutation이 한 클래스에 섞이면, 어떤 코드가 정규 동작이고 어떤 코드가 profiling / LOD 제어인지 읽기 어려워진다.
+
+Runtime LOD tier 판정은 BT service helper나 CombatEngage subsystem에 직접 묶지 않는다.
+Blackboard 기반 tier resolver로 분리하고, 추후 `ACAIController`에 `CurrentRuntimeLODTier` snapshot을 저장해 BT / Movement / Animation이 같은 tier 값을 소비하는 구조로 확장한다.
+
+관련 설계 노트:
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Runtime_LOD_Tier_Snapshot_Refactor_Plan.md
+```
 
 Movement 분리에서 확인한 문제:
 

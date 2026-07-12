@@ -18,11 +18,12 @@ raw CSV / log 파일은 이 폴더에 저장하지 않는다. 각 측정 노트�
 | Animation / pose | `AI_Animation_Pose_LOD_Measurement_Plan.md` |
 | Movement / nav | `AI_Movement_Nav_LOD_Measurement_Plan.md` |
 | BT update interval | `AI_BT_Update_Interval_LOD_Result_Note.md` |
-| AIContext interval split | `AI_BT_Update_Interval_AIContext_Level_Split_Note.md` |
+| AIContext interval split legacy experiment | `AI_BT_Update_Interval_AIContext_Level_Split_Note.md` |
 | Assignment warmup | `AI_CombatEngage_Assignment_Bootstrap_Warmup_Plan.md` |
 | Alert cap | `AI_AlertCap_Comparison_Plan.md` |
 | Combat collision / hit window | `AI_Combat_Collision_HitWindow_Measurement_Plan.md` |
 | Combat feedback presentation | `AI_Combat_Feedback_Presentation_Measurement_Plan.md` |
 | Enemy actor tick audit | `AI_Enemy_Actor_Tick_Audit_Plan.md` |
 | State-based Runtime LOD policy | `AI_State_Based_Runtime_LOD_Policy_Plan.md` |
+| Runtime LOD tier snapshot refactor | `AI_Runtime_LOD_Tier_Snapshot_Refactor_Plan.md` |
 | Debugging obstacles | `AI_Runtime_LOD_Debugging_Obstacle_Note.md` |

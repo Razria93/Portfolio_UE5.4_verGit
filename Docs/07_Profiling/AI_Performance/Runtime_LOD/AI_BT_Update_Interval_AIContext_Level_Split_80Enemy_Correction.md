@@ -1,5 +1,20 @@
 # AIContext Interval Split 80 Enemy Correction
 
+## 현재 상태
+
+이 문서는 `AIContext interval split` 실험의 80 Enemy 대표 측정값 정정 기록이다.
+
+이후 Runtime LOD tier snapshot 설계 검토에서 `AIContext`는 context producer로 분류했고, 현재 코드 정책에서는 `AIContext` interval을 기본값으로 고정한다.
+따라서 아래 결과는 호출수 감소 실험 근거로 보존하되, 현재 Runtime LOD 적용 후보로 사용하지 않는다.
+
+현재 적용 기준:
+
+```text
+AIContext: 기본 interval 유지
+AIIntentState: Runtime LOD tier 기반 interval 조정
+EngageContext: 기본 interval 유지
+```
+
 ## Purpose
 
 `80 Enemy / BTUpdateIntervalMode 2` 대표 측정값을 재측정본 기준으로 정정한다.

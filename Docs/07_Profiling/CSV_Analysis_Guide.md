@@ -274,16 +274,16 @@ Engage branch 실행 여부와 연결된다.
 BT service interval 선택 기준:
 
 ```text
-PortfolioAI_BT_AIContextInterval_Default_Count
-PortfolioAI_BT_AIContextInterval_Reduced_Count
-PortfolioAI_BT_AIContextInterval_Aggressive_Count
-
 PortfolioAI_BT_AIIntentInterval_Default_Count
 PortfolioAI_BT_AIIntentInterval_Reduced_Count
 PortfolioAI_BT_AIIntentInterval_Aggressive_Count
 ```
 
-정상 패턴:
+`AIContext`는 현재 Runtime LOD interval 조정 대상이 아니다.
+따라서 `PortfolioAI_BT_AIContextInterval_*` counter가 없는 것이 정상이다.
+과거 `AIContext interval split` 실험 CSV를 해석할 때만 해당 legacy counter를 참고한다.
+
+AIIntentState interval preset 정상 패턴:
 
 ```text
 Mode 0:
