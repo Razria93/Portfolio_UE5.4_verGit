@@ -1,9 +1,12 @@
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 
 #include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
+#include "AI/Blackboard/CAIKey.h"
+#include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Controller/CAIController.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 #include "Type/CWorldSubSystemStructure.h"
@@ -57,6 +60,31 @@ namespace
 		if (!IsValid(engageSubsystem)) return EAIUpdatePrecision::High;
 
 		return engageSubsystem->GetAIUpdatePrecision(aiController);
+	}
+
+	// State Runtime LOD Audit
+	FAIStateRuntimeLODContext BuildStateRuntimeLODContext(const UBlackboardComponent& InBlackboardComp)
+	{
+		FAIStateRuntimeLODContext context;
+		context.AIIntentState = static_cast<EAIIntentState>(InBlackboardComp.GetValueAsEnum(CAIKey::State::AIIntentState.KeyName));
+		context.CombatRole = static_cast<ECombatRole>(InBlackboardComp.GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
+
+		const AActor* targetActor = Cast<AActor>(InBlackboardComp.GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+		const bool bHasLOS = InBlackboardComp.GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
+		context.bHasTargetAwareness = IsValid(targetActor) || bHasLOS;
+
+		return context;
+	}
+
+	void RecordStateRuntimeLODTier(const UBehaviorTreeComponent& InOwnerComp)
+	{
+		if (!FAIStateRuntimeLODPolicy::IsStatePolicyEnabled()) return;
+
+		const UBlackboardComponent* blackboardComp = InOwnerComp.GetBlackboardComponent();
+		if (!IsValid(blackboardComp)) return;
+
+		const EAIStateRuntimeLODTier tier = FAIStateRuntimeLODPolicy::ResolveTier(BuildStateRuntimeLODContext(*blackboardComp));
+		FAIStateRuntimeLODPolicy::RecordResolvedTierForProfiling(tier);
 	}
 
 	// Mode + Precision -> Interval Enum Preset
@@ -202,6 +230,7 @@ namespace
 
 		// Profiling
 		RecordAIIntentStateIntervalPreset(intervalPreset);
+		RecordStateRuntimeLODTier(InOwnerComp);
 
 		// return Interval float value
 		return GetAIIntentStateIntervalByPreset(intervalPreset);
