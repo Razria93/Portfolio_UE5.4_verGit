@@ -303,6 +303,7 @@ Runtime LOD tier나 update precision을 직접 판단하지 않는다.
 9. AIIntentState 변경 이후 Runtime LOD tier snapshot refresh
 10. BTServiceIntervalHelper가 controller snapshot을 우선 소비
 11. Movement Runtime LOD policy가 controller snapshot을 소비
+12. Animation refresh policy가 controller snapshot을 소비
 ```
 
 단, 아직 완전한 Runtime LOD 적용 구조는 아니다.
@@ -310,7 +311,6 @@ Runtime LOD tier나 update precision을 직접 판단하지 않는다.
 이유:
 
 ```text
-Animation 소비 경로 변경
 Dormant / Wake-up manager
 Perception budget
 ```
@@ -341,6 +341,12 @@ Movement Runtime LOD
 -> StatePolicyMode가 꺼져 있으면 기존 EnemyMovementMode CVar 소비
 -> StatePolicyMode가 켜져 있으면 OwnerController.GetCurrentRuntimeLODTier() 소비
 -> Awareness / Dormant는 movement intent block
+
+Animation Runtime LOD
+-> FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(Owner)
+-> StatePolicyMode가 꺼져 있으면 기존 EnemyAnimationMode CVar 소비
+-> StatePolicyMode가 켜져 있으면 OwnerController.GetCurrentRuntimeLODTier() 소비
+-> Awareness / Background / Dormant는 reduced parameter refresh
 ```
 
 이는 최종 구조는 아니지만, CombatEngageSubsystem과 BT helper에 섞여 있던 책임을 먼저 분리하는 중간 단계다.
@@ -361,14 +367,17 @@ AIIntentState: Runtime LOD tier 기반 interval 조정
 EngageContext: combat timing 계층이므로 고정 interval
 ```
 
-### 2. Animation 소비 경로 변경
+### 2. Movement / Animation 소비 경로
 
-Movement는 controller snapshot 소비 경로로 연결했다.
-다음 단계에서는 Animation도 Blackboard를 다시 조합하지 않고 controller snapshot을 읽는다.
+Movement와 Animation은 controller snapshot 소비 경로로 연결했다.
 
-예상 흐름:
+현재 흐름:
 
 ```text
+UCMovementComponent
+-> OwnerController.GetCurrentRuntimeLODTier()
+-> tier별 movement intent / update policy 적용
+
 UCAnimInstance
 -> OwnerController.GetCurrentRuntimeLODTier()
 -> tier별 parameter refresh / animation detail policy 적용
@@ -410,7 +419,7 @@ BTServiceIntervalHelper는 tier를 소비해 interval만 선택한다.
 CombatEngageSubsystem은 CombatRole assignment만 담당한다.
 ACAIController는 CurrentRuntimeLODTier snapshot을 저장한다.
 Movement Runtime LOD policy는 controller snapshot을 소비한다.
-다음 단계에서는 Animation이 controller snapshot을 소비한다.
+Animation refresh policy는 controller snapshot을 소비한다.
 장기적으로는 AIRuntimeLODSubsystem으로 승격한다.
 ```
 

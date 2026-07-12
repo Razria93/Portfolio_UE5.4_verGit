@@ -1,36 +1,14 @@
 #include "Character/CAnimInstance.h"
 #include "ProjectGlobal.h"
 
+#include "AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.h"
 #include "GameFramework/Character.h"
-#include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
-#include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
-
-namespace
-{
-	TAutoConsoleVariable<int32> CVarEnemyAnimationMode(
-		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationMode"),
-		0,
-		TEXT("Controls ACEnemy animation runtime LOD mode. 0: default refresh, 1: reduced parameter refresh."),
-		ECVF_Default);
-
-	TAutoConsoleVariable<float> CVarEnemyAnimationReducedRefreshInterval(
-		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval"),
-		0.1f,
-		TEXT("Refresh interval for ACEnemy reduced animation parameter mode."),
-		ECVF_Default);
-
-	TAutoConsoleVariable<int32> CVarEnemyAnimationRefreshCounter(
-		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter"),
-		0,
-		TEXT("Enable ACEnemy animation parameter refresh counters for runtime LOD measurement. 0: disabled, 1: enabled."),
-		ECVF_Default);
-}
 
 // Lifecycle
 
@@ -125,24 +103,17 @@ void UCAnimInstance::ClearAnimationStateForProfiling()
 
 bool UCAnimInstance::ShouldReduceEnemyAnimationRefreshForProfiling() const
 {
-	return GetEnemyAnimationModeForProfiling() > 0;
+	return FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(OwnerCharacter_Cached) > 0;
 }
 
 bool UCAnimInstance::IsEnemyAnimationProfilingTarget() const
 {
-	return IsValid(OwnerCharacter_Cached) && OwnerCharacter_Cached->IsA<ACEnemy>();
-}
-
-int32 UCAnimInstance::GetEnemyAnimationModeForProfiling() const
-{
-	if (!IsEnemyAnimationProfilingTarget()) return 0;
-
-	return FMath::Clamp(CVarEnemyAnimationMode.GetValueOnGameThread(), 0, 1);
+	return FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(OwnerCharacter_Cached);
 }
 
 float UCAnimInstance::GetReducedAnimationRefreshIntervalForProfiling() const
 {
-	return FMath::Max(CVarEnemyAnimationReducedRefreshInterval.GetValueOnGameThread(), KINDA_SMALL_NUMBER);
+	return FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval();
 }
 
 bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
@@ -174,7 +145,7 @@ bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 
 bool UCAnimInstance::ShouldAuditAnimationRefreshForProfiling() const
 {
-	return IsEnemyAnimationProfilingTarget() && (CVarEnemyAnimationRefreshCounter.GetValueOnGameThread() != 0);
+	return IsEnemyAnimationProfilingTarget() && FAIAnimationRuntimeLODPolicy::ShouldAuditAnimationRefresh();
 }
 
 void UCAnimInstance::RecordAnimationRefreshAttemptForProfiling() const
