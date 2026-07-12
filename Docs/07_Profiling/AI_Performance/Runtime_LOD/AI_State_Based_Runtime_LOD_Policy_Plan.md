@@ -483,6 +483,132 @@ BT update precision이 기존 Assignment / AlertCap 정책과 충돌하지 않�
 
 Frame / Game p95 개선이 작더라도, tier별 work reduction이 명확하고 gameplay smoke가 안정적이면 Runtime LOD v1 정책 기반으로 유지한다.
 
+## 40 Enemy Smoke 결과
+
+이번 smoke 측정은 `StatePolicyMode 1`이 직접적인 Frame / Game p95 개선을 만드는지 확인하기보다, tier snapshot 통합 구조가 gameplay를 깨지 않고 BT / Movement / Animation 소비 경로에 연결되는지 확인하는 목적이다.
+
+측정 조건:
+
+```text
+Case: 40 Enemy / StatePolicyMode 0
+ID: 20260712_211525
+
+Case: 40 Enemy / StatePolicyMode 1
+ID: 20260712_211733
+
+Capture Duration: 약 37초
+Analysis Window: first 3s / last 3s trimmed
+Log State: -noailogging
+PIE: F11 fullscreen
+Fixed camera
+GC Event: none
+```
+
+공통 CVar:
+
+```text
+Portfolio.AI.RuntimeLOD.EngageAssignmentWarmupTime 1.2
+Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap 2
+Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap 6
+Portfolio.AI.RuntimeLOD.EngageAssignmentAudit 0
+Portfolio.AI.RuntimeLOD.EngageAssignmentVerboseAudit 0
+
+Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode 2
+Portfolio.AI.RuntimeLOD.EnemyMovementMode 0
+Portfolio.AI.RuntimeLOD.EnemyAnimationMode 0
+Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter 1
+
+Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
+Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 0
+Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit 0
+Portfolio.AI.RuntimeLOD.CanMoveDecoratorAudit 0
+
+Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
+Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+Portfolio.AI.RuntimeLOD.DisableEnemyCombatFeedback 0
+Portfolio.AI.RuntimeLOD.DisableEnemyHitProcessing 0
+```
+
+Gameplay smoke:
+
+```text
+Engage 2 유지
+Alert 6 유지
+나머지 Observe 또는 Idle 유지
+attack montage 정상
+movement 이상 없음
+animation 이상 없음
+GC 이벤트 없음
+```
+
+Frame / subsystem 결과:
+
+| Metric | StatePolicyMode 0 | StatePolicyMode 1 | 해석 |
+| --- | ---: | ---: | --- |
+| Frame p95 | 11.9403ms | 12.0101ms | 거의 동일 |
+| Game p95 | 11.3695ms | 11.3800ms | 거의 동일 |
+| BT Tick p95 | 0.2187ms | 0.2123ms | 거의 동일 |
+| CharacterMovement p95 | 0.5314ms | 0.5492ms | 거의 동일 |
+| Animation p95 | 2.1760ms | 2.1841ms | 거의 동일 |
+| AnimParallel p95 | 3.3673ms | 3.3678ms | 거의 동일 |
+
+호출 / refresh counter:
+
+| Counter | StatePolicyMode 0 | StatePolicyMode 1 |
+| --- | ---: | ---: |
+| AIContext Count | 11,840 | 11,920 |
+| AIIntent Count | 2,860 | 2,900 |
+| EngageContext Count | 588 | 596 |
+| AnimRefresh Attempt | 110,240 | 110,520 |
+| AnimRefresh Executed | 110,240 | 31,640 |
+| AnimRefresh Skipped | 0 | 78,880 |
+
+Tier / interval counter:
+
+| Counter | StatePolicyMode 0 | StatePolicyMode 1 |
+| --- | ---: | ---: |
+| CombatCritical Tier | 0 | 304 |
+| CombatSupport Tier | 0 | 612 |
+| Awareness Tier | 0 | 1,984 |
+| AIIntent Default Interval | 302 | 304 |
+| AIIntent Reduced Interval | 606 | 612 |
+| AIIntent Aggressive Interval | 1,952 | 1,984 |
+
+해석:
+
+```text
+BT 호출 수가 비슷한 것은 정상이다.
+AIContext는 tier 판정 입력을 만드는 producer이므로 고정 interval을 유지한다.
+EngageContext는 combat timing 계층이므로 고정 interval을 유지한다.
+AIIntentState는 두 케이스 모두 BTUpdateIntervalMode 2 조건이므로 interval 분포가 비슷하다.
+```
+
+Mode 1에서 의미 있는 변화는 다음이다.
+
+```text
+StateLOD tier counter가 기록된다.
+BT interval helper가 controller snapshot을 소비한다.
+Movement / Animation policy가 같은 controller snapshot을 소비한다.
+Animation parameter refresh가 tier에 따라 줄어든다.
+```
+
+단, 줄어든 것은 animation 실행 전체가 아니다.
+
+```text
+줄어든 것:
+RefreshMovementParameters()
+RefreshStateParameters()
+
+줄어들지 않은 것:
+NativeUpdateAnimation 호출
+AnimGraph evaluation
+pose update
+SkeletalMeshComponent tick
+AnimationParallelEvaluation
+```
+
+따라서 `AnimRefresh Executed`는 크게 줄었지만 `Animation p95`와 `AnimParallel p95`는 거의 변하지 않았다. 이번 결과는 성능 수치 개선보다, Runtime LOD v1 정책을 같은 tier snapshot 기반으로 안전하게 확장할 수 있음을 확인한 smoke 결과로 본다.
+
 ## 최적화 이슈 마감 기준
 
 이 브랜치가 완료되면 현재 AI Runtime LOD 최적화 이슈는 1차 결론으로 마감한다.
@@ -509,7 +635,7 @@ Perception / proxy / mesh hidden / wake-up manager는 후속 고도화로 남긴
 따라서 이 브랜치의 완료는 “최적화 전체 종료”가 아니라 `AI Runtime LOD v1 마감`으로 본다.
 이후 작업은 새로운 최적화 이슈가 아니라 v1 정책 위에 얹는 후속 고도화로 분리한다.
 
-후속 고도화 후보:
+현재 브랜치에서 완료된 항목:
 
 ```text
 1. Tier resolver 보정
@@ -525,24 +651,30 @@ Perception / proxy / mesh hidden / wake-up manager는 후속 고도화로 남긴
 
 4. State-based Runtime LOD v1 측정
    - 40 Enemy Policy Off / On
-   - 80 Enemy Policy Off / On
+```
 
-5. Perception Active Budget / Wake-up
+후속 고도화 후보:
+
+```text
+1. 80 Enemy StatePolicyMode 0 / 1 확인
+   - 40 Enemy smoke 통과 후 확장 확인
+
+2. Perception Active Budget / Wake-up
    - Perception을 바로 끄지 않고 active budget / wake-up 정책으로 분리
 
-6. Dormant / Proxy Actor
+3. Dormant / Proxy Actor
    - Dormant registry
    - range / visibility / damage / script wake-up
    - hidden / proxy representation 검토
 
-7. Animation Budget / Pose Skip
+4. Animation Budget / Pose Skip
    - combat-capable tier 제외
    - Background / Dormant 후보부터 검토
 
-8. Distance / camera visibility 기반 LOD tuning
+5. Distance / camera visibility 기반 LOD tuning
    - camera frustum / forward cone / distance 조합
    - tier hysteresis / minimum hold time 추가
 
-9. 120+ Enemy stress scene
+6. 120+ Enemy stress scene
    - v1 정책이 40 / 80 이후에도 유지되는지 확인
 ```

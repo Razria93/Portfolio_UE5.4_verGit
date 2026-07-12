@@ -425,3 +425,87 @@ Animation refresh policy는 controller snapshot을 소비한다.
 
 이 리팩토링은 성능 수치 개선 자체보다 Runtime LOD 정책을 안전하게 확장하기 위한 구조 정리다.
 특히 service별 갱신 주기 차이로 인해 발생할 수 있는 stale tier / 상태 튕김 문제를 줄이는 것이 핵심이다.
+
+## Smoke 측정 해석
+
+Tier snapshot 구조 적용 후 40 Enemy 기준으로 `StatePolicyMode 0 / 1` smoke 측정을 진행했다.
+
+측정 ID:
+
+```text
+StatePolicyMode 0: 20260712_211525
+StatePolicyMode 1: 20260712_211733
+```
+
+고정 조건:
+
+```text
+EngageAssignmentWarmupTime 1.2
+EngageAssignmentEngageCap 2
+EngageAssignmentAlertCap 6
+BTUpdateIntervalMode 2
+EnemyMovementMode 0
+EnemyAnimationMode 0
+EnemyAnimationRefreshCounter 1
+-noailogging
+F11 fullscreen
+fixed camera
+GC event 없음
+```
+
+Gameplay smoke:
+
+```text
+Engage 2 유지
+Alert 6 유지
+나머지 Observe 또는 Idle 유지
+attack montage 정상
+movement 이상 없음
+animation 이상 없음
+```
+
+결과 요약:
+
+| Metric | StatePolicyMode 0 | StatePolicyMode 1 | 해석 |
+| --- | ---: | ---: | --- |
+| Frame p95 | 11.9403ms | 12.0101ms | 거의 동일 |
+| Game p95 | 11.3695ms | 11.3800ms | 거의 동일 |
+| BT Tick p95 | 0.2187ms | 0.2123ms | 거의 동일 |
+| CharacterMovement p95 | 0.5314ms | 0.5492ms | 거의 동일 |
+| Animation p95 | 2.1760ms | 2.1841ms | 거의 동일 |
+| AnimParallel p95 | 3.3673ms | 3.3678ms | 거의 동일 |
+
+Counter:
+
+| Counter | StatePolicyMode 0 | StatePolicyMode 1 |
+| --- | ---: | ---: |
+| AIContext Count | 11,840 | 11,920 |
+| AIIntent Count | 2,860 | 2,900 |
+| EngageContext Count | 588 | 596 |
+| AnimRefresh Attempt | 110,240 | 110,520 |
+| AnimRefresh Executed | 110,240 | 31,640 |
+| AnimRefresh Skipped | 0 | 78,880 |
+
+해석:
+
+```text
+Frame / Game p95 개선은 거의 없다.
+BT 호출 수가 비슷한 것은 의도된 결과다.
+AIContext와 EngageContext는 고정 interval을 유지한다.
+AIIntentState는 두 케이스 모두 BTUpdateIntervalMode 2 조건이므로 interval 분포가 비슷하다.
+```
+
+Mode 1에서 확인한 핵심은 다음이다.
+
+```text
+StateLOD tier counter 기록
+BT interval helper의 controller snapshot 소비
+Movement policy의 controller snapshot 소비
+Animation policy의 controller snapshot 소비
+Animation parameter refresh 감소
+```
+
+단, animation refresh 감소는 `RefreshMovementParameters()`와 `RefreshStateParameters()` 호출 빈도 감소를 의미한다.
+`NativeUpdateAnimation`, AnimGraph evaluation, pose update, `SkeletalMeshComponent` tick, `AnimationParallelEvaluation` 전체를 줄인 것은 아니다.
+
+따라서 이번 smoke 측정은 성능 개선 PR의 증거라기보다, Runtime LOD tier snapshot 구조가 gameplay를 깨지 않고 여러 소비자에게 연결됐다는 검증으로 해석한다.
