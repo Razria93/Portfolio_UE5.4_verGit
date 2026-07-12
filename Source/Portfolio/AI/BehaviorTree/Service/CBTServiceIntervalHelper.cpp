@@ -43,16 +43,31 @@ namespace
 		return FMath::Clamp(CVarBTUpdateIntervalMode.GetValueOnGameThread(), 0, 2);
 	}
 
-	// Runtime LOD Tier
-	EAIRuntimeLODTier ResolveRuntimeLODTier(const UBehaviorTreeComponent& InOwnerComp)
+	// Runtime LOD Tier Snapshot
+	const ACAIController* GetAIController(const UBehaviorTreeComponent& InOwnerComp)
 	{
-		const ACAIController* aiController = Cast<ACAIController>(InOwnerComp.GetAIOwner());
-		if (IsValid(aiController)) return aiController->GetCurrentRuntimeLODTier();
+		return Cast<ACAIController>(InOwnerComp.GetAIOwner());
+	}
 
+	EAIRuntimeLODTier GetRuntimeLODTierSnapshot(const ACAIController& InAIController)
+	{
+		return InAIController.GetCurrentRuntimeLODTier();
+	}
+
+	EAIRuntimeLODTier ResolveRuntimeLODTierFallback(const UBehaviorTreeComponent& InOwnerComp)
+	{
 		const UBlackboardComponent* blackboardComp = InOwnerComp.GetBlackboardComponent();
 		if (!IsValid(blackboardComp)) return EAIRuntimeLODTier::CombatCritical;
 
 		return FAIRuntimeLODTierResolver::ResolveTier(*blackboardComp);
+	}
+
+	EAIRuntimeLODTier GetRuntimeLODTierForIntervalSelection(const UBehaviorTreeComponent& InOwnerComp)
+	{
+		const ACAIController* aiController = GetAIController(InOwnerComp);
+		if (IsValid(aiController)) return GetRuntimeLODTierSnapshot(*aiController);
+
+		return ResolveRuntimeLODTierFallback(InOwnerComp);
 	}
 
 	// Mode + Runtime LOD Tier -> Interval Enum Preset
@@ -153,7 +168,7 @@ namespace
 	// Interval Select (AIIntentState)
 	float SelectAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
 	{
-		const EAIRuntimeLODTier runtimeLODTier = ResolveRuntimeLODTier(InOwnerComp);
+		const EAIRuntimeLODTier runtimeLODTier = GetRuntimeLODTierForIntervalSelection(InOwnerComp);
 		const EBTServiceIntervalPreset intervalPreset = SelectIntervalPreset(
 			GetBTUpdateIntervalMode(),
 			runtimeLODTier);
