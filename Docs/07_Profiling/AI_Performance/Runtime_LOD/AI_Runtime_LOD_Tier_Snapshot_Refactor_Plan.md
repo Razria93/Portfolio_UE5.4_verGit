@@ -298,14 +298,17 @@ Runtime LOD tier나 update precision을 직접 판단하지 않는다.
 4. AIContext interval은 기본값으로 고정
 5. AIIntentState interval 선택을 Runtime LOD tier 기반으로 변경
 6. CombatEngageSubsystem에서 GetAIUpdatePrecision 제거
+7. ACAIController에 CurrentRuntimeLODTier snapshot 추가
+8. UpdateAIContext 이후 Runtime LOD tier snapshot refresh
+9. AIIntentState 변경 이후 Runtime LOD tier snapshot refresh
+10. BTServiceIntervalHelper가 controller snapshot을 우선 소비
 ```
 
-단, 아직 완전한 snapshot 구조는 적용하지 않는다.
+단, 아직 완전한 Runtime LOD 적용 구조는 아니다.
 
 이유:
 
 ```text
-ACAIController snapshot 저장
 Movement / Animation 소비 경로 변경
 Dormant / Wake-up manager
 Perception budget
@@ -318,37 +321,26 @@ Perception budget
 ```text
 BTServiceIntervalHelper
 -> AIContext는 Default interval 반환
--> AIIntentState는 FAIRuntimeLODTierResolver::ResolveTier(Blackboard)
+-> AIIntentState는 ACAIController::GetCurrentRuntimeLODTier() 우선 소비
+-> controller snapshot이 없을 때만 FAIRuntimeLODTierResolver::ResolveTier(Blackboard) fallback
 -> Mode + Tier로 interval preset 선택
+
+UpdateAIContext
+-> Blackboard context 갱신
+-> ACAIController::RefreshRuntimeLODTierFromBlackboard()
+-> CurrentRuntimeLODTier 저장
+
+UpdateAIIntentState
+-> AIIntentState 변경
+-> ACAIController::RefreshRuntimeLODTierFromBlackboard()
+-> Dead / HitReact 같은 absolute state tier 반영
 ```
 
 이는 최종 구조는 아니지만, CombatEngageSubsystem과 BT helper에 섞여 있던 책임을 먼저 분리하는 중간 단계다.
 
 ## 추후 적용할 내용
 
-### 1. ACAIController Tier Snapshot
-
-다음 단계의 1차 목표는 Enemy별 Runtime LOD tier snapshot을 `ACAIController`에 저장하는 것이다.
-
-후보 API:
-
-```cpp
-EAIRuntimeLODTier GetCurrentRuntimeLODTier() const;
-void RefreshRuntimeLODTierFromBlackboard();
-```
-
-권장 흐름:
-
-```text
-UpdateAIContext service 실행
--> Blackboard context 갱신
--> ACAIController::RefreshRuntimeLODTierFromBlackboard()
--> CurrentRuntimeLODTier 저장
-```
-
-이후 `BTServiceIntervalHelper`, Movement, Animation은 resolver를 직접 호출하지 않고 controller snapshot을 읽는다.
-
-### 2. AIContext interval 고정
+### 1. AIContext interval 고정
 
 `AIContext`는 target / LOS / distance / CombatRole 같은 판단 입력을 갱신하는 producer다.
 
@@ -362,7 +354,7 @@ AIIntentState: Runtime LOD tier 기반 interval 조정
 EngageContext: combat timing 계층이므로 고정 interval
 ```
 
-### 3. Movement / Animation 소비 경로 변경
+### 2. Movement / Animation 소비 경로 변경
 
 Movement와 Animation은 각자 Blackboard를 다시 조합하지 않고 controller snapshot을 읽는다.
 
@@ -378,7 +370,7 @@ UCAnimInstance
 -> tier별 parameter refresh / animation detail policy 적용
 ```
 
-### 4. AIRuntimeLODSubsystem 승격
+### 3. AIRuntimeLODSubsystem 승격
 
 Dormant / Wake-up / Perception Active Budget까지 들어오면 `ACAIController` snapshot만으로는 부족해질 수 있다.
 
@@ -412,7 +404,8 @@ Runtime LOD tier 판정은 공통 resolver로 분리한다.
 StateRuntimeLODPolicy는 CVar / audit 전용으로 유지한다.
 BTServiceIntervalHelper는 tier를 소비해 interval만 선택한다.
 CombatEngageSubsystem은 CombatRole assignment만 담당한다.
-다음 단계에서는 ACAIController에 CurrentRuntimeLODTier snapshot을 저장한다.
+ACAIController는 CurrentRuntimeLODTier snapshot을 저장한다.
+다음 단계에서는 Movement / Animation이 controller snapshot을 소비한다.
 장기적으로는 AIRuntimeLODSubsystem으로 승격한다.
 ```
 

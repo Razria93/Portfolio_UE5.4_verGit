@@ -10,6 +10,7 @@
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
+#include "Controller/CAIController.h"
 
 #include "Type/CStateStructure.h"
 #include "Type/CWeaponStructure.h"
@@ -43,7 +44,14 @@ void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp
 
 	const EAIIntentState nextAIIntentState = DecideNextAIIntentState(blackboardComp, currentTime);
 
-	ChangeAIIntentState(blackboardComp, nextAIIntentState);
+	if (ChangeAIIntentState(blackboardComp, nextAIIntentState))
+	{
+		ACAIController* aiOwner = Cast<ACAIController>(OwnerComp.GetAIOwner());
+		if (IsValid(aiOwner))
+		{
+			aiOwner->RefreshRuntimeLODTierFromBlackboard();
+		}
+	}
 }
 
 EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackboardComponent* InBlackboard, float InCurrentTime)

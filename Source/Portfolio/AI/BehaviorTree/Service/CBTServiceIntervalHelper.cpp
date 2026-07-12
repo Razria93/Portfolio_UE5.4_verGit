@@ -7,6 +7,7 @@
 
 #include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
 #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
+#include "Controller/CAIController.h"
 
 namespace
 {
@@ -45,6 +46,9 @@ namespace
 	// Runtime LOD Tier
 	EAIRuntimeLODTier ResolveRuntimeLODTier(const UBehaviorTreeComponent& InOwnerComp)
 	{
+		const ACAIController* aiController = Cast<ACAIController>(InOwnerComp.GetAIOwner());
+		if (IsValid(aiController)) return aiController->GetCurrentRuntimeLODTier();
+
 		const UBlackboardComponent* blackboardComp = InOwnerComp.GetBlackboardComponent();
 		if (!IsValid(blackboardComp)) return EAIRuntimeLODTier::CombatCritical;
 

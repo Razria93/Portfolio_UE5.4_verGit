@@ -49,6 +49,11 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		ClearAlertRangeContext(blackboardComp);
 		ClearEngageAssignmentContext(blackboardComp);
 
+		if (IsValid(aiOwner))
+		{
+			aiOwner->RefreshRuntimeLODTierFromBlackboard();
+		}
+
 		return;
 	}
 
@@ -87,6 +92,8 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		ClearAlertRangeContext(blackboardComp);
 		ClearEngageAssignmentContext(blackboardComp);
 
+		aiOwner->RefreshRuntimeLODTierFromBlackboard();
+
 		return;
 	}
 
@@ -107,6 +114,8 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		UpdateEngageAssignmentContext(blackboardComp, aiContext);
 	else
 		ClearEngageAssignmentContext(blackboardComp);
+
+	aiOwner->RefreshRuntimeLODTierFromBlackboard();
 }
 
 EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAIContext& OutAIContext)
