@@ -1456,3 +1456,43 @@ TrailClear는 cleanup 호출이므로 presentation 실행으로 보지 않는다
 ```text
 Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Combat_Feedback_Presentation_Measurement_Plan.md
 ```
+
+## Dormant Runtime LOD 보류 결정
+
+P41 기준으로 AI Runtime LOD는 주요 비용 축 탐색과 state-based tier snapshot 구조 정리까지 완료했다.
+
+완료된 축:
+
+```text
+WeaponActor
+Perception 후보 / affiliation
+BT Update Interval
+Assignment warmup / AlertCap
+Observe / Investigate lifecycle
+Movement / Nav
+Animation parameter refresh
+Combat Collision / HitProcessing
+Combat Feedback Presentation
+Enemy Actor Tick
+State Runtime LOD tier snapshot
+```
+
+이후 남은 `Perception Active Budget`, `Wake-up`, `Dormant Manager`, `Representation LOD`, `Proxy`, `120+ stress validation`은 각각 독립된 작은 최적화라기보다 `Dormant Runtime LOD`라는 하나의 큰 시스템을 구성하는 하위 작업이다.
+
+`Dormant Runtime LOD`는 단순 측정이나 gate 추가가 아니라 다음 정책을 모두 포함한다.
+
+```text
+Dormant 진입 조건
+Dormant 유지 조건
+Dormant 복귀 조건
+Perception wake-up
+Movement / BT / Animation / Representation 복구 순서
+Hysteresis / minimum hold time
+```
+
+따라서 현재 최적화 탐색 흐름에서는 Dormant 구현을 보류한다.
+새 세션에서 재개할 때는 아래 문서를 먼저 읽고 진행한다.
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Dormant_Runtime_LOD_Deferred_Plan.md
+```

@@ -632,8 +632,17 @@ Combat-capable 객체는 보수적으로 유지한다.
 Perception / proxy / mesh hidden / wake-up manager는 후속 고도화로 남긴다.
 ```
 
-따라서 이 브랜치의 완료는 “최적화 전체 종료”가 아니라 `AI Runtime LOD v1 마감`으로 본다.
-이후 작업은 새로운 최적화 이슈가 아니라 v1 정책 위에 얹는 후속 고도화로 분리한다.
+따라서 이 브랜치의 완료는 `AI Runtime LOD v1 마감`으로 본다.
+이 시점까지 “최적화라고 부를 만한 주요 비용 축”은 한 번씩 분리해서 검토했다.
+
+남아 있는 `Perception Active Budget`, `Wake-up`, `Dormant Manager`, `Representation LOD`, `Proxy`, `120+ stress validation`은 서로 독립된 작은 최적화 축이라기보다 하나의 큰 작업인 `Dormant Runtime LOD`를 구성하는 하위 요소다.
+
+`Dormant Runtime LOD`는 실제 gameplay 정책과 wake-up 시스템을 동반하는 본격 구현 작업이므로 현재 최적화 탐색 흐름에서는 보류한다.
+재개 시에는 다음 문서를 기준으로 진행한다.
+
+```text
+Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Dormant_Runtime_LOD_Deferred_Plan.md
+```
 
 현재 브랜치에서 완료된 항목:
 
@@ -653,7 +662,7 @@ Perception / proxy / mesh hidden / wake-up manager는 후속 고도화로 남긴
    - 40 Enemy Policy Off / On
 ```
 
-후속 고도화 후보:
+보류된 Dormant Runtime LOD 후보:
 
 ```text
 1. 80 Enemy StatePolicyMode 0 / 1 확인
