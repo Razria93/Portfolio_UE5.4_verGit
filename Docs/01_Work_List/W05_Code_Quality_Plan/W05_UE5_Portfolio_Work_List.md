@@ -190,6 +190,12 @@ refactor/character-component-reference-di
 refactor/debug-log-policy-v1
 ```
 
+**관련 문서**
+
+```text
+N22_Debug_Log_Policy_Work_Plan_Note.md
+```
+
 **외부 리뷰에서 나온 내용**
 
 - 조건 없는 debug print / log는 Shipping 빌드와 성능 측면에서 문제가 될 수 있다.

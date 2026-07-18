@@ -331,6 +331,12 @@ Dormant / Proxy / Perception Active Budget은 별도 장기 작업으로 남긴�
 refactor/debug-log-policy-v1
 ```
 
+관련 문서:
+
+```text
+N22_Debug_Log_Policy_Work_Plan_Note.md
+```
+
 작업 범위:
 
 ```text
