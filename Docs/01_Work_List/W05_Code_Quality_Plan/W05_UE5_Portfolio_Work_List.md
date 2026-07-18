@@ -27,15 +27,19 @@
 5. refactor/ai-update-interval-policy
 6. chore/ai-profiling-test-assets
 7. refactor/ai-runtime-lod-policy
-8. refactor/ai-perception-lod-policy
-9. refactor/ai-update-lod-policy
-10. refactor/type-header-helper-boundary
-11. refactor/tuning-constants-cleanup
-12. refactor/api-const-consistency
-13. refactor/debug-log-policy-v1
-14. refactor/naming-typo-api-cleanup
+8. feature/ai-alert-cap-comparison
+9. feature/ai-observe-intent-state
+10. feature/ai-combat-collision-profiling
+11. feature/ai-combat-feedback-profiling
+12. feature/ai-enemy-actor-tick-profiling
+13. feature/ai-state-based-runtime-lod
+14. refactor/debug-log-policy-v1
 15. refactor/todo-status-cleanup
-16. docs/pr-record-format-sweep
+16. refactor/naming-typo-api-cleanup
+17. refactor/api-const-consistency
+18. refactor/tuning-constants-cleanup
+19. refactor/type-header-helper-boundary
+20. docs/pr-record-format-sweep
 
 별도 후순위:
 - refactor/enhanced-input-migration
@@ -863,6 +867,15 @@ AI LOD / Performance 최적화
 - P38: AI Combat Collision / Hit Window 비용 분리 측정
   -> HitWindow / Overlap / HitProcessing / CombatSignal route 계측
   -> HitProcessing 차단은 동작하지만 Frame / Game p95 개선이 작아 Runtime LOD v1 우선 후보에서 제외
+- P39: AI Combat Feedback Presentation 비용 분리 측정
+  -> Enemy action feedback presentation gate / Trail / VFX / SFX counter 분리
+  -> 40 / 80 Enemy 기준 Frame / Game p95 개선이 제한적이므로 최하위 representation 후보로 유지
+- P40: AI Enemy Actor Tick 비용 분리 측정
+  -> Enemy Actor Tick off 효과를 분리 측정
+  -> ACEnemy Tick 자체보다 Movement / Animation 변동이 Frame / Game p95에 더 크게 관여함을 확인
+- P41: AI State Runtime LOD tier snapshot 통합
+  -> Blackboard 기반 Runtime LOD tier snapshot을 controller / animation / BT interval 정책에 연결
+  -> AIContext interval은 stale tier feedback을 피하기 위해 고정 주기로 유지
 ```
 
 ### 진행 중
@@ -874,26 +887,32 @@ AI LOD / Performance 최적화
 ### 진행 예정
 
 ```text
-AI LOD / Performance 최적화
-- P39: Feedback Presentation 측정
-  -> Niagara / trail / sound / camera shake / cue route 비용 분리
-  -> hit processing은 유지하고 presentation route만 줄일 수 있는지 확인
-
-AI LOD / Performance 후속 측정
-- Component Tick Audit
-- Perception Active Budget / Cap 검토
-- Proxy / Dormant Actor 최적화 검토
-
 Code Quality Sweep
-- P40: Type Header / Helper Boundary 정리
-- P41: Tuning Constants Cleanup
-- P42: API Const Consistency
-- P43: Debug Log Policy
-- P44: Naming / Typo / API Cleanup
-- P45: TODO Status Cleanup
+- Debug Log Policy
+  -> hot path log / debug dump / error log 분류
+  -> build config / CVar / debug flag 기준 정리
+- TODO Status Cleanup
+  -> 핵심 runtime 경로 TODO 제거 또는 Phase / 후속 작업 후보로 분류
+- Naming / Typo / API Cleanup
+  -> 명백한 오타와 API naming 불일치 정리
+  -> Blueprint / asset 영향 rename은 별도 판단
+- API Const Consistency
+  -> read-only API const 정합성 점검
+- Tuning Constants Cleanup
+  -> AI / Combat radius, interval, threshold 값을 constants / config / DataAsset 후보로 분류
+- Type Header / Helper Boundary 정리
+  -> 공유 Type 헤더와 helper 책임 경계 점검
 
 Documentation / PR Record
-- P46: PR Record Format Sweep
+- PR Record Format Sweep
+
+Deferred Performance Follow-up
+- Perception Active Budget / Cap 검토
+- Proxy / Dormant Actor 최적화 검토
+- Dormant / wake-up 정책 구현
+
+별도 후순위
+- Enhanced Input Migration
 ```
 
 상세 공유용 정리는 `N19_Code_Quality_PR_Status_Summary_Note.md`를 따른다.
