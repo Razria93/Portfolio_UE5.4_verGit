@@ -339,7 +339,11 @@ void UCAction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint
 	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
 	if (bInterrupted)
 	{
-		FLog::Log(TEXT("[Action] Unexpected montage interruption."));
+		FLog::Log(FString::Printf(
+			TEXT("[Action] Unexpected montage interruption. Action=%s | Montage=%s | Serial=%u"),
+			*GetNameSafe(this),
+			*GetNameSafe(InAnimMontage),
+			InSerial));
 		return;
 	}
 
