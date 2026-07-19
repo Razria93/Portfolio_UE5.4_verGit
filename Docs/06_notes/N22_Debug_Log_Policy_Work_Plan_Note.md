@@ -6,6 +6,8 @@
 
 목표는 로그를 전부 제거하는 것이 아니다. 로그의 성격, 활성화 조건, 빌드 포함 여부, 출력 책임을 분리해서 다음 상태를 만든다.
 
+디버그 로그 / 진단 코드 작성 규칙은 `N23_Debug_Log_And_Diagnostic_Code_Policy_Note.md`를 따른다. 이 문서는 N23의 정책을 이번 브랜치에 적용하기 위한 작업 계획이다.
+
 ```text
 1. Shipping / Release 성격의 배포 빌드에 debug dump가 포함되지 않는다.
 2. Development / DebugGame 빌드에서도 hot path debug log는 기본 비활성이다.
@@ -172,6 +174,209 @@ Shipping 포함 가능성
 이미 CVar / debug flag가 있는지
 에러성 로그인지 단순 dump인지
 반복 출력 가능성이 있는지
+```
+
+### Step 1 결과. 1차 로그 사용처 스캔
+
+`Source/Portfolio` 기준 1차 스캔 결과, `FLog::Log`, `UE_LOG`, `Print...`, `Audit` 계열은 Combat / AI / Feedback / Reaction 경로에 넓게 분포한다.
+
+파일별 주요 사용처는 다음과 같다.
+
+| 파일 | 대략 사용 수 | 주요 성격 |
+| --- | ---: | --- |
+| `Controller/CAIController.cpp` | 149 | Perception debug / profiling audit |
+| `Component/CCombatSignalSourceComponent.cpp` | 74 | Combat signal context dump |
+| `System/Combat/CWorldSubsystem_CombatEngage.cpp` | 71 | Assignment audit / summary |
+| `Component/CReactionComponent.cpp` | 59 | Reaction data / executor dump |
+| `Component/CCombatSignalTargetComponent.cpp` | 52 | Combat signal target dump |
+| `Component/CHitFeedbackComponent.cpp` | 50 | Hit feedback request dump |
+| `Weapon/CWeaponActor.cpp` | 42 | overlap / hit context dump |
+| `Reaction/CReaction.cpp` | 40 | reaction runtime / participant dump |
+| `Component/CActionFeedbackComponent.cpp` | 36 | action feedback dump |
+| `Component/CHealthComponent.cpp` | 29 | damage / heal / dead context dump |
+| `Component/CReactionFeedbackComponent.cpp` | 24 | reaction feedback dump |
+
+이미 CVar 또는 profiling gate가 있는 영역은 다음과 같다.
+
+```text
+CAIController
+-> Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit
+-> Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit
+
+CWorldSubsystem_CombatEngage
+-> Portfolio.AI.RuntimeLOD.EngageAssignmentAudit
+-> Portfolio.AI.RuntimeLOD.EngageAssignmentVerboseAudit
+
+CBTDecorator_CanMove
+-> Portfolio.AI.RuntimeLOD.CanMoveDecoratorAudit
+
+Runtime LOD / CSV counter 계열
+-> CCombatCollisionProfilingCounters
+-> CCombatFeedbackProfiling
+-> CAIStateRuntimeLODPolicy
+-> CAIAnimationRuntimeLODPolicy
+```
+
+이 영역은 이미 명시적 측정 / audit 제어가 있으므로, 1차 수정에서는 동작을 크게 바꾸지 않는다. 필요하면 Shipping 제외 guard와 naming / section 정리만 적용한다.
+
+---
+
+## 1차 수정 방향
+
+### 1. 명백한 debug trace부터 정리한다
+
+작고 안전한 우선 후보:
+
+```text
+AI/BehaviorTree/Task/CBTTask_AdvanceInvestigateIndex.cpp
+-> [Index Done]
+
+AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.cpp
+-> [Investigate Time out]
+```
+
+이 로그들은 정상 상태 전환 확인용에 가깝다. Error / Warning이 아니므로 기본 출력 대상이 아니다.
+
+정책:
+
+```text
+1. 제거하거나
+2. debug CVar / build guard 뒤로 이동한다.
+```
+
+### 2. Action / Reaction runtime log는 성격을 나눈다
+
+후보:
+
+```text
+Action/CAction.cpp
+-> Unexpected montage interruption
+
+Reaction/CReaction.cpp
+-> Unexpected montage interruption
+-> Stopped
+-> Ignored
+```
+
+정책:
+
+```text
+Unexpected montage interruption
+-> 비정상 가능성이 있으므로 Warning 성격인지 Debug 성격인지 판단한다.
+
+Stopped / Ignored
+-> 상태 흐름 dump에 가까우므로 기본 출력하지 않는다.
+```
+
+### 3. Data build / duplicate key log는 Warning 후보로 본다
+
+후보:
+
+```text
+Component/CActionComponent.cpp
+-> Duplicate key overwrite
+-> BuildActionExecutorMap failed
+
+Component/CReactionComponent.cpp
+-> Duplicate key overwrite
+-> BuildReactionExecutorMap failed
+
+Component/CActionFeedbackComponent.cpp
+-> Duplicate trail / VFX / SFX match
+
+Component/CReactionFeedbackComponent.cpp
+-> Duplicate VFX / SFX execution key
+```
+
+정책:
+
+```text
+1. asset / data contract 위반이면 Warning 또는 Error 성격으로 유지한다.
+2. 정상 fallback 가능한 중복 skip이면 Debug dump로 낮추고 gate를 둔다.
+3. 반복 출력 가능성이 있으면 once / build-time validation / future data validation 후보로 분리한다.
+```
+
+### 4. Print... 함수는 Shipping 제외 후보로 본다
+
+대상:
+
+```text
+PrintCombatSignalSourceSummaryInfo
+PrintCombatSignalTargetSummaryInfo
+PrintActionFeedbackRequestInfo
+PrintReactionFeedbackRequestInfo
+PrintHitStopRequestInfo
+PrintReactionInfoSummary
+PrintTargetData
+PrintEngageContext
+PrintBeginOverlapContextInfo
+PrintEndOverlapContextInfo
+```
+
+현재 대부분 호출은 주석 처리되어 있지만, 함수 정의 자체는 Shipping 빌드에도 포함될 수 있다.
+
+정책:
+
+```text
+1. Debug dump 함수는 `#if !UE_BUILD_SHIPPING` 대상으로 본다.
+2. 선언 / 정의 / 호출부 guard 중 어떤 방식이 가장 코드 오염이 적은지 파일별로 판단한다.
+3. 호출이 풀렸을 때 hot path에서 반복 출력될 수 있는 함수는 CVar / debug flag도 함께 고려한다.
+```
+
+### 5. Profiling audit은 기존 CVar를 유지한다
+
+대상:
+
+```text
+PerceptionCandidateAudit
+BlackboardEngageLatencyAudit
+EngageAssignmentAudit
+EngageAssignmentVerboseAudit
+CanMoveDecoratorAudit
+StateRuntimeLODTierAudit
+AnimationRefreshCounter
+```
+
+정책:
+
+```text
+1. 기존 CVar semantics를 바꾸지 않는다.
+2. Shipping 제외 guard는 적용 후보로 본다.
+3. 로그가 너무 많은 verbose audit은 summary 중심 유지 여부를 검토한다.
+```
+
+---
+
+## 1차 적용 순서
+
+```text
+1. 가장 작은 AI debug trace 정리
+   -> CBTTask_AdvanceInvestigateIndex
+   -> CBTService_UpdateInvestigateContext
+
+2. Action / Reaction runtime log 분류
+   -> Unexpected interruption
+   -> stop / ignored 흐름 로그
+
+3. Action / Reaction component data build log 분류
+   -> duplicate key
+   -> executor map build failure
+
+4. Feedback / Hit / Weapon / CombatSignal Print... dump 함수 guard 검토
+   -> Shipping 제외
+   -> 필요 시 CVar 후보 기록
+
+5. AI / CombatEngage profiling audit guard 검토
+   -> 기존 CVar 유지
+   -> Shipping 제외
+```
+
+이 순서를 따르는 이유는 다음과 같다.
+
+```text
+1. 정상 동작 로그와 오류 로그를 먼저 분리해야 한다.
+2. 작은 파일에서 정책을 검증한 뒤 넓은 Combat / AI dump 함수로 확장한다.
+3. 이미 측정용 CVar가 있는 Runtime LOD / profiling audit은 마지막에 건드려야 측정 workflow 회귀를 줄일 수 있다.
 ```
 
 ### Step 2. Policy Helper / Guard 방식 결정

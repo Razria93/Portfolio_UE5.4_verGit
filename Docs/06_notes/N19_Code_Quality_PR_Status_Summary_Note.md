@@ -335,6 +335,7 @@ refactor/debug-log-policy-v1
 
 ```text
 N22_Debug_Log_Policy_Work_Plan_Note.md
+N23_Debug_Log_And_Diagnostic_Code_Policy_Note.md
 ```
 
 작업 범위:
