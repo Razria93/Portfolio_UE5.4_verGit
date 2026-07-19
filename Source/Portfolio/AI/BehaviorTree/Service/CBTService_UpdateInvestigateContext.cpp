@@ -38,6 +38,5 @@ void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& Owne
 	{
 		CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
 		CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldEndInvestigate.KeyName, true);
-		FLog::Log(TEXT("[Investigate Time out]"));
 	}
 }

@@ -26,7 +26,6 @@ EBTNodeResult::Type UCBTTask_AdvanceInvestigateIndex::ExecuteTask(UBehaviorTreeC
 		blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldEndInvestigate.KeyName, true);
 
 		blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, currentIndex);
-		FLog::Log(TEXT("[Index Done]"));
 	}
 	else
 	{
