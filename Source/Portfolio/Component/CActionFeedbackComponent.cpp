@@ -53,8 +53,6 @@ void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InAct
 		return;
 	}
 
-	// PrintActionFeedbackRequestInfo(InActionFeedbackRequest);
-
 	ExecuteTrailFeedbacks(InActionFeedbackRequest);
 	ExecuteVFXFeedbacks(InActionFeedbackRequest);
 	ExecuteSFXFeedbacks(InActionFeedbackRequest);
@@ -164,17 +162,21 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 
 	if (!bestData)
 	{
-		// FLog::Log(TEXT("[ActionFeedback] Trail | No Matched Data")); // Invalid
 		return;
 	}
 
 	if (bestMatchCount > 1)
 	{
-		FLog::Log(TEXT("[ActionFeedback] Duplicate highest-priority trail feedback matches")); // Error
+		FLog::Log(FString::Printf(
+			TEXT("[ActionFeedback] Duplicate highest-priority trail feedback matches. ActionType=%s | ActionIndex=%d | Timing=%s | TriggerKey=%s | Owner=%s"),
+			*UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackKey.ActionType),
+			InActionFeedbackRequest.ActionFeedbackKey.ActionIndex,
+			*UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackTiming),
+			*InActionFeedbackRequest.TriggerKey.ToString(),
+			*GetNameSafe(OwnerCharacter_Injected)));
 		return;
 	}
 
-	// FLog::Log(TEXT("[ActionFeedback] Trail | Matched Data")); // Valid
 	ToggleTrailActive(bestData->bTrailActive);
 }
 
@@ -205,7 +207,6 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 
 	if (matchedDatas.Num() <= 0)
 	{
-		// FLog::Log(TEXT("[ActionFeedback] VFX | No Matched Data"));
 		return;
 	}
 
@@ -217,11 +218,9 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ActionFeedback] Duplicate VFX execution key skipped"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ActionFeedback] VFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayActionVFX(*data);
 	}
@@ -254,7 +253,6 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 
 	if (matchedDatas.Num() <= 0)
 	{
-		// FLog::Log(TEXT("[ActionFeedback] SFX | No Matched Data"));
 		return;
 	}
 
@@ -266,11 +264,9 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ActionFeedback] Duplicate SFX execution key skipped"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ActionFeedback] SFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayActionSFX(*data);
 	}
@@ -297,8 +293,6 @@ void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InAc
 			EAttachLocation::KeepRelativeOffset,
 			true,
 			ENCPoolMethod::None);
-
-		// PrintActionVFXInfo(InActionVFXFeedbackData);
 
 		return;
 	}
@@ -330,8 +324,6 @@ void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InAc
 			InActionSFXFeedbackData.SFX,
 			OwnerCharacter_Injected->GetActorLocation());
 
-		// PrintActionSFXInfo(InActionSFXFeedbackData);
-
 		return;
 	}
 
@@ -356,44 +348,7 @@ void UCActionFeedbackComponent::ToggleTrailActive(bool bActive)
 	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(uobject);
 	if (!IsValid(weaponActor)) return;
 
-	// PrintTrailInfo(bActive, weaponActor);
-
 	FCombatFeedbackProfiling::RecordActionTrail(bActive);
 
 	weaponActor->ToggleTrailActive(bActive);
-}
-
-void UCActionFeedbackComponent::PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const
-{
-	FLog::Log(TEXT("==== ActionFeedback Request ====="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackKey.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("ActionIndex"), InActionFeedbackRequest.ActionFeedbackKey.ActionIndex));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionFeedbackTiming"), *UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackTiming)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TriggerKey"), *InActionFeedbackRequest.TriggerKey.ToString()));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCActionFeedbackComponent::PrintActionVFXInfo(const FActionVFXFeedbackData& InActionVFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ActionFeedback VFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InActionVFXFeedbackData.VFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InActionVFXFeedbackData.VFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Socket"), *InActionVFXFeedbackData.SocketName.ToString()));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCActionFeedbackComponent::PrintActionSFXInfo(const FActionSFXFeedbackData& InActionSFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ActionFeedback SFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InActionSFXFeedbackData.SFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InActionSFXFeedbackData.SFX)));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCActionFeedbackComponent::PrintTrailInfo(bool bActive, const ACWeaponActor* InWeaponActor) const
-{
-	FLog::Log(TEXT("=== ActionFeedback Trail Info ==="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bActive ? TEXT("Active") : TEXT("Inactive")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponActor"), *GetNameSafe(InWeaponActor)));
-	FLog::Log(TEXT("================================="));
 }

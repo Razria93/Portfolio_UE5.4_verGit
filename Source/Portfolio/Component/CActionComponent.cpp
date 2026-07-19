@@ -203,7 +203,12 @@ UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 	UCAction* add = AddActionExecutor(InData.ActionExecutorKey);
 	if (IsValid(add)) return add;
 
-	// [Debug] ActionData is Valid; but Find and Add Failed
+	FLog::Log(FString::Printf(
+		TEXT("[ActionComponent] Failed to resolve ActionExecutor. ActionType=%s | ActionIndex=%d | ActionExecutorKey=%s | Owner=%s"),
+		*UEnum::GetValueAsString(InData.ActionDataKey.ActionType),
+		InData.ActionDataKey.ActionIndex,
+		*GetNameSafe(InData.ActionExecutorKey.Get()),
+		*GetNameSafe(OwnerCharacter_Injected)));
 	return nullptr;
 }
 
@@ -450,8 +455,11 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 		{
 			if (bRebuildAll)
 			{
-				// [Debug] Duplicate key: Override data
-				FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
+				FLog::Log(FString::Printf(
+					TEXT("[ActionComponent] Duplicate ActionData key overwritten. ActionType=%s | ActionIndex=%d | Owner=%s"),
+					*UEnum::GetValueAsString(actionDataKey.ActionType),
+					actionDataKey.ActionIndex,
+					*GetNameSafe(OwnerCharacter_Injected)));
 				ActionDataMap[actionDataKey] = actionData;
 			}
 			else // bRebuildAll == false
@@ -497,7 +505,12 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 		UCAction* add = AddActionExecutor(executorkey);
 		if (!IsValid(add))
 		{
-			FLog::Log(FString::Printf(TEXT("[BuildActionExecutorMap] Failed to add ActionExecutor. ActionExecutorKey = %s"), *GetNameSafe(actionData.ActionExecutorKey.Get())));
+			FLog::Log(FString::Printf(
+				TEXT("[ActionComponent] Failed to add ActionExecutor during map build. ActionType=%s | ActionIndex=%d | ActionExecutorKey=%s | Owner=%s"),
+				*UEnum::GetValueAsString(actionData.ActionDataKey.ActionType),
+				actionData.ActionDataKey.ActionIndex,
+				*GetNameSafe(actionData.ActionExecutorKey.Get()),
+				*GetNameSafe(OwnerCharacter_Injected)));
 			continue;
 		}
 	}

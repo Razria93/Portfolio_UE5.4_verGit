@@ -174,9 +174,6 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 		const FReactionData& found = *foundPtr;
 		if (!found.IsValidMinimal()) continue;
 
-		// [Debug] ReactionData
-		// PrintReactionDataInfo(found);
-
 		OutData = found;
 		return true;
 	}
@@ -194,7 +191,15 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 	UCReaction* add = AddReactionExecutor(InData.ReactionExecutorKey);
 	if (IsValid(add)) return add;
 
-	// [Debug] ReactionData is Valid; but Find and Add Failed
+	const FDamageSpecKey& damageSpecKey = InData.ReactionDataKey.DamageSpecKey;
+	FLog::Log(FString::Printf(
+		TEXT("[ReactionComponent] Failed to resolve ReactionExecutor. ReactionType=%s | WeaponType=%s | ActionType=%s | ActionIndex=%d | ReactionExecutorKey=%s | Owner=%s"),
+		*UEnum::GetValueAsString(InData.ReactionDataKey.ReactionType),
+		*UEnum::GetValueAsString(damageSpecKey.WeaponType),
+		*UEnum::GetValueAsString(damageSpecKey.ActionType),
+		damageSpecKey.ActionIndex,
+		*GetNameSafe(InData.ReactionExecutorKey.Get()),
+		*GetNameSafe(OwnerCharacter_Injected)));
 	return nullptr;
 }
 
@@ -358,8 +363,14 @@ void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 		{
 			if (bRebuildAll)
 			{
-				// [Debug] Duplicate key: Override data
-				FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
+				const FDamageSpecKey& damageSpecKey = reactionDataKey.DamageSpecKey;
+				FLog::Log(FString::Printf(
+					TEXT("[ReactionComponent] Duplicate ReactionData key overwritten. ReactionType=%s | WeaponType=%s | ActionType=%s | ActionIndex=%d | Owner=%s"),
+					*UEnum::GetValueAsString(reactionDataKey.ReactionType),
+					*UEnum::GetValueAsString(damageSpecKey.WeaponType),
+					*UEnum::GetValueAsString(damageSpecKey.ActionType),
+					damageSpecKey.ActionIndex,
+					*GetNameSafe(OwnerCharacter_Injected)));
 				ReactionDataMap[reactionDataKey] = reactionData;
 			}
 			else // bRebuildAll == false
@@ -405,7 +416,15 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 		UCReaction* add = AddReactionExecutor(executorkey);
 		if (!IsValid(add))
 		{
-			FLog::Log(FString::Printf(TEXT("[BuildReactionExecutorMap] Failed to add ReactionExecutor. ReactionExecutorKey = %s"), *GetNameSafe(reactionData.ReactionExecutorKey.Get())));
+			const FDamageSpecKey& damageSpecKey = reactionData.ReactionDataKey.DamageSpecKey;
+			FLog::Log(FString::Printf(
+				TEXT("[ReactionComponent] Failed to add ReactionExecutor during map build. ReactionType=%s | WeaponType=%s | ActionType=%s | ActionIndex=%d | ReactionExecutorKey=%s | Owner=%s"),
+				*UEnum::GetValueAsString(reactionData.ReactionDataKey.ReactionType),
+				*UEnum::GetValueAsString(damageSpecKey.WeaponType),
+				*UEnum::GetValueAsString(damageSpecKey.ActionType),
+				damageSpecKey.ActionIndex,
+				*GetNameSafe(reactionData.ReactionExecutorKey.Get()),
+				*GetNameSafe(OwnerCharacter_Injected)));
 			continue;
 		}
 	}

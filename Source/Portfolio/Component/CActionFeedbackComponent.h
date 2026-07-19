@@ -61,12 +61,4 @@ private:
 	void PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData);
 	void PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData);
 	void ToggleTrailActive(bool bActive);
-
-private:
-	void PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const;
-
-private:
-	void PrintActionVFXInfo(const FActionVFXFeedbackData& InActionVFXFeedbackData) const;
-	void PrintActionSFXInfo(const FActionSFXFeedbackData& InActionSFXFeedbackData) const;
-	void PrintTrailInfo(bool bActive, const class ACWeaponActor* InWeaponActor) const;
 };

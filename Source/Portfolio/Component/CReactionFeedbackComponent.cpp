@@ -61,7 +61,6 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 		return;
 	}
 
-	// PrintReactionFeedbackRequestInfo(InReactionFeedbackRequest);
 	ExecuteVFXFeedbacks(InReactionFeedbackRequest);
 	ExecuteSFXFeedbacks(InReactionFeedbackRequest);
 }
@@ -221,11 +220,9 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ReactionFeedback] Duplicate VFX execution key skipped"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ReactionFeedback] VFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayReactionVFX(*matchedData);
 	}
@@ -275,11 +272,9 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ReactionFeedback] Duplicate SFX execution key skipped"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ReactionFeedback] SFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayReactionSFX(*matchedData);
 	}
@@ -307,8 +302,6 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 			true,
 			ENCPoolMethod::None);
 
-		// PrintReactionVFXInfo(InReactionVFXFeedbackData);
-
 		return;
 	}
 
@@ -322,7 +315,6 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 		return;
 	}
 }
-
 void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData& InReactionSFXFeedbackData)
 {
 	if (!IsValid(InReactionSFXFeedbackData.SFX)) return;
@@ -339,8 +331,6 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 			InReactionSFXFeedbackData.SFX,
 			OwnerCharacter_Injected->GetActorLocation());
 
-		// PrintReactionSFXInfo(InReactionSFXFeedbackData);
-
 		return;
 	}
 
@@ -353,30 +343,4 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 	default:
 		return;
 	}
-}
-
-void UCReactionFeedbackComponent::PrintReactionFeedbackRequestInfo(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
-{
-	FLog::Log(TEXT("==== ReactionFeedback Request ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Timing"), *UEnum::GetValueAsString(InReactionFeedbackRequest.ReactionFeedbackTiming)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TriggerKey"), *InReactionFeedbackRequest.TriggerKey.ToString()));
-	FLog::Log(TEXT("----------------------------------"));
-}
-
-void UCReactionFeedbackComponent::PrintReactionVFXInfo(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ReactionFeedback VFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InReactionVFXFeedbackData.VFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InReactionVFXFeedbackData.VFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Socket"), *InReactionVFXFeedbackData.SocketName.ToString()));
-	FLog::Log(TEXT("-----------------------------------"));
-}
-
-void UCReactionFeedbackComponent::PrintReactionSFXInfo(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ReactionFeedback SFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InReactionSFXFeedbackData.SFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InReactionSFXFeedbackData.SFX)));
-	FLog::Log(TEXT("-----------------------------------"));
 }
