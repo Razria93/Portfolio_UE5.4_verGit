@@ -141,9 +141,9 @@ asset/data 설정 오류를 찾는 저빈도 진단 로그다.
 
 | 파일 | 위치 | 현재 상태 | 후보 이벤트 | 권장 처리 |
 | --- | --- | --- | --- | --- |
-| `Source/Portfolio/Component/CActionFeedbackComponent.cpp` | `ExecuteTrailFeedbacks` | active diagnostic | 최고 우선순위 trail feedback 중복 | 유지 |
-| `Source/Portfolio/Component/CHitFeedbackComponent.cpp` | `PlayHitVFX` | active diagnostic | HitVFX invalid | 유지. owner/context 보강 후보 |
-| `Source/Portfolio/Component/CHitFeedbackComponent.cpp` | `PlayHitSFX` | active diagnostic | HitSFX invalid | 유지. owner/context 보강 후보 |
+| `Source/Portfolio/Component/CActionFeedbackComponent.cpp` | `ExecuteTrailFeedbacks` | helper gated | 최고 우선순위 trail feedback 중복 | `FCombatFeedbackDebug` + `FeedbackAudit` 처리 완료 |
+| `Source/Portfolio/Component/CHitFeedbackComponent.cpp` | `PlayHitVFX` | helper gated | HitVFX invalid | `FCombatFeedbackDebug` + `FeedbackAudit` 처리 완료 |
+| `Source/Portfolio/Component/CHitFeedbackComponent.cpp` | `PlayHitSFX` | helper gated | HitSFX invalid | `FCombatFeedbackDebug` + `FeedbackAudit` 처리 완료 |
 
 판단:
 
@@ -265,7 +265,7 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 | `Portfolio.Debug.ReactionComponentAudit` | ReactionComponent data/executor/notify/runtime reject | 처리 완료 |
 | `Portfolio.Debug.ReactionComponentDump` | ReactionComponent execution context dump | 처리 완료 |
 | `Portfolio.Debug.CombatResultAudit` | CombatResult receive / parry stack / stagger request 경계 | 보류 |
-| `Portfolio.Debug.FeedbackAudit` | feedback request/match/invalid data 상세 | 보류 |
+| `Portfolio.Debug.FeedbackAudit` | feedback request/match/invalid data 상세 | 처리 완료 |
 
 판단:
 
@@ -342,7 +342,7 @@ defense outcome, reaction dispatch 경계에서 조용히 drop될 가능성이 �
 |  12 | `Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.cpp`                                            | `bCanCombatAction` 계산 경계                                           | range, cooldown, active action/reaction, target missing                                                                                            | `FAICombatBTDebug` + `AICombatBTAudit` 처리 완료             |
 |  13 | `Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartCombatAction.cpp`                                                    | BT에서 combat action으로 들어가는 경계                                       | blackboard/controller/pawn invalid, action request result, cooldown set                                                                            | `FAICombatBTDebug` + `AICombatBTAudit` 처리 완료             |
 |  14 | `Source/Portfolio/Component/CMovementComponent.cpp`                                                                      | 최종 movement gate / Runtime LOD movement suppression                | movement intent reject, RuntimeLOD mode change, missing gait speed                                                                                 | `FMovementDebug` + `MovementAudit` 처리 완료                 |
-|  15 | `Source/Portfolio/Component/CActionFeedbackComponent.cpp`, `CReactionFeedbackComponent.cpp`, `CHitFeedbackComponent.cpp` | presentation 문제를 combat bug로 오인할 수 있음                              | no matching feedback, duplicate match, invalid VFX/SFX/camera shake, profiling skip                                                                | invalid asset은 default diagnostic, volume은 CSV counter     |
+|  15 | `Source/Portfolio/Component/CActionFeedbackComponent.cpp`, `CReactionFeedbackComponent.cpp`, `CHitFeedbackComponent.cpp`, `CWorldSubsystem_CombatFeedback.cpp` | presentation 문제를 combat bug로 오인할 수 있음                              | no matching feedback, duplicate match, invalid VFX/SFX/camera shake, profiling skip                                                                | `FCombatFeedbackDebug` + `FeedbackAudit` 처리 완료 / CSV counter 유지 |
 
 ### 우선순위 조정
 

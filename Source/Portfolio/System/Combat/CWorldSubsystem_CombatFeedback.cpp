@@ -2,6 +2,7 @@
 
 #include "GameFramework/Actor.h"
 
+#include "Core/Debug/FCombatFeedbackDebug.h"
 #include "Type/CWorldSubSystemStructure.h"
 
 void UCWorldSubsystem_CombatFeedback::Initialize(FSubsystemCollectionBase& Collection)
@@ -20,6 +21,8 @@ void UCWorldSubsystem_CombatFeedback::Deinitialize()
 
 void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHitStopRequest)
 {
+	FCombatFeedbackDebug::RecordCombatFeedbackHitStopRequestedForAudit(InHitStopRequest);
+
 	switch (InHitStopRequest.HitStopAudience)
 	{
 	case EFeedbackAudience::Source:
@@ -42,12 +45,14 @@ void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHi
 	}
 
 	default:
+		FCombatFeedbackDebug::RecordCombatFeedbackRequestRejectedForAudit(TEXT("HitStop"), TEXT("UnsupportedAudience"));
 		break;
 	}
 }
 
 void UCWorldSubsystem_CombatFeedback::RequestCameraShake(const FCameraShakeRequest& InCameraShakeRequest)
 {
+	FCombatFeedbackDebug::RecordCombatFeedbackCameraShakeRequestedForAudit(InCameraShakeRequest);
 	OnCameraShakeRequested.Broadcast(InCameraShakeRequest);
 }
 
@@ -55,8 +60,16 @@ void UCWorldSubsystem_CombatFeedback::RequestCameraShake(const FCameraShakeReque
 
 void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDuration, float InDilation)
 {
-	if (!IsValid(InActor)) return;
-	if (InDuration <= 0.f) return;
+	if (!IsValid(InActor))
+	{
+		FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, TEXT("InvalidActor"));
+		return;
+	}
+	if (InDuration <= 0.f)
+	{
+		FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, TEXT("InvalidDuration"));
+		return;
+	}
 
 	const TWeakObjectPtr<AActor> actorKey(InActor);
 
@@ -67,6 +80,7 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 
 	// Slow InActor
 	InActor->CustomTimeDilation = InDilation;
+	FCombatFeedbackDebug::RecordCombatFeedbackHitStopAppliedForAudit(InActor, InDuration, InDilation);
 
 	if (FTimerHandle* existingHandle = ActiveHitStopMap.Find(actorKey))
 	{
