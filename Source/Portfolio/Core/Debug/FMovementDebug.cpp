@@ -51,17 +51,6 @@ void FMovementDebug::RecordRuntimeLODMovementModeAppliedForAudit(const AActor* I
 		bInIntentBlocked ? TEXT("true") : TEXT("false")));
 }
 
-void FMovementDebug::RecordRuntimeLODMovementIntentBlockedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent)
-{
-	if (!ShouldAuditMovement()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[Movement|RuntimeLOD|IntentBlocked] Event=%s | Owner=%s | Component=%s"),
-		InEvent ? InEvent : TEXT("Block"),
-		*GetNameSafe(InOwnerActor),
-		*GetNameSafe(InComponent)));
-}
-
 void FMovementDebug::RecordRuntimeLODMovementIntentAllowedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent)
 {
 	if (!ShouldAuditMovement()) return;
@@ -69,6 +58,17 @@ void FMovementDebug::RecordRuntimeLODMovementIntentAllowedForAudit(const AActor*
 	FLog::Log(FString::Printf(
 		TEXT("[Movement|RuntimeLOD|IntentAllowed] Event=%s | Owner=%s | Component=%s"),
 		InEvent ? InEvent : TEXT("Allow"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InComponent)));
+}
+
+void FMovementDebug::RecordRuntimeLODMovementIntentBlockedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent)
+{
+	if (!ShouldAuditMovement()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Movement|RuntimeLOD|IntentBlocked] Event=%s | Owner=%s | Component=%s"),
+		InEvent ? InEvent : TEXT("Block"),
 		*GetNameSafe(InOwnerActor),
 		*GetNameSafe(InComponent)));
 }

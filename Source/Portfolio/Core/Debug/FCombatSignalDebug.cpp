@@ -169,6 +169,22 @@ void FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(const FHitContex
 		*FormatCombatSignalHitContextDamageSpecKey(InHitContext)));
 }
 
+void FCombatSignalDebug::RecordSourceAcceptedForAudit(const FCombatSignalSourceContext& InContext)
+{
+	if (!ShouldAuditCombatSignal()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Combat|SignalSource|Accepted] Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | HitWindowId=%d | %s | RequestDamage=%.3f | CommittedDamage=%.3f"),
+		*GetNameSafe(InContext.SourceActor),
+		*GetNameSafe(InContext.TargetActor),
+		*GetNameSafe(InContext.DamageCauser),
+		*GetNameSafe(InContext.Instigator),
+		InContext.HitWindowKey.HitWindowId,
+		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
+		InContext.DamageAmount.RequestDamage,
+		InContext.CommittedDamage));
+}
+
 void FCombatSignalDebug::RecordSourceRejectedForAudit(const FCombatSignalSourceContext& InContext)
 {
 	if (!ShouldAuditCombatSignal()) return;
@@ -186,20 +202,16 @@ void FCombatSignalDebug::RecordSourceRejectedForAudit(const FCombatSignalSourceC
 		InContext.CommittedDamage));
 }
 
-void FCombatSignalDebug::RecordSourceAcceptedForAudit(const FCombatSignalSourceContext& InContext)
+void FCombatSignalDebug::RecordCueAcceptedForAudit(const FCombatSignal& InSignal)
 {
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(
-		TEXT("[Combat|SignalSource|Accepted] Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | HitWindowId=%d | %s | RequestDamage=%.3f | CommittedDamage=%.3f"),
-		*GetNameSafe(InContext.SourceActor),
-		*GetNameSafe(InContext.TargetActor),
-		*GetNameSafe(InContext.DamageCauser),
-		*GetNameSafe(InContext.Instigator),
-		InContext.HitWindowKey.HitWindowId,
-		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
-		InContext.DamageAmount.RequestDamage,
-		InContext.CommittedDamage));
+		TEXT("[Combat|SignalCue|Accepted] CueTag=%s | Source=%s | Target=%s | Causer=%s"),
+		*InSignal.CueTag.ToString(),
+		*GetNameSafe(InSignal.Header.SourceActor),
+		*GetNameSafe(InSignal.Header.TargetActor),
+		*GetNameSafe(InSignal.Header.SignalCauser)));
 }
 
 void FCombatSignalDebug::RecordCueRejectedForAudit(const FCombatSignal& InSignal, const TCHAR* InReason)
@@ -209,18 +221,6 @@ void FCombatSignalDebug::RecordCueRejectedForAudit(const FCombatSignal& InSignal
 	FLog::Log(FString::Printf(
 		TEXT("[Combat|SignalCue|Rejected] Reason=%s | CueTag=%s | Source=%s | Target=%s | Causer=%s"),
 		InReason ? InReason : TEXT("InvalidCue"),
-		*InSignal.CueTag.ToString(),
-		*GetNameSafe(InSignal.Header.SourceActor),
-		*GetNameSafe(InSignal.Header.TargetActor),
-		*GetNameSafe(InSignal.Header.SignalCauser)));
-}
-
-void FCombatSignalDebug::RecordCueAcceptedForAudit(const FCombatSignal& InSignal)
-{
-	if (!ShouldAuditCombatSignal()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[Combat|SignalCue|Accepted] CueTag=%s | Source=%s | Target=%s | Causer=%s"),
 		*InSignal.CueTag.ToString(),
 		*GetNameSafe(InSignal.Header.SourceActor),
 		*GetNameSafe(InSignal.Header.TargetActor),
@@ -263,25 +263,6 @@ void FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(float InDamag
 		*GetNameSafe(InDamageCauser)));
 }
 
-void FCombatSignalDebug::RecordTargetRejectedForAudit(const FCombatSignalTargetPacket& InPacket)
-{
-	if (!ShouldAuditCombatSignal()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[Combat|SignalTarget|Rejected] Reason=%s | Outcome=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f"),
-		*UEnum::GetValueAsString(InPacket.Result.RejectReason),
-		*UEnum::GetValueAsString(InPacket.Result.DefenseOutcome),
-		*GetNameSafe(InPacket.Context.SourceActor),
-		*GetNameSafe(InPacket.Context.TargetActor),
-		*GetNameSafe(InPacket.Context.DamageCauser),
-		*GetNameSafe(InPacket.Context.Instigator),
-		*FormatCombatSignalDamageSpecKey(InPacket.Result.DamageSpecKey),
-		InPacket.Result.RequestDamage,
-		InPacket.Result.MitigatedDamage,
-		InPacket.Result.FinalTakenDamage,
-		InPacket.Result.CommittedDamage));
-}
-
 void FCombatSignalDebug::RecordTargetAcceptedForAudit(const FCombatSignalTargetPacket& InPacket)
 {
 	if (!ShouldAuditCombatSignal()) return;
@@ -304,17 +285,23 @@ void FCombatSignalDebug::RecordTargetAcceptedForAudit(const FCombatSignalTargetP
 		*UEnum::GetValueAsString(InPacket.Result.DeadState_After)));
 }
 
-void FCombatSignalDebug::RecordTimingCueRejectedForAudit(const FCombatSignal& InSignal, const TCHAR* InReason)
+void FCombatSignalDebug::RecordTargetRejectedForAudit(const FCombatSignalTargetPacket& InPacket)
 {
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(
-		TEXT("[Combat|SignalTargetCue|Rejected] Reason=%s | CueTag=%s | Source=%s | Target=%s | Causer=%s"),
-		InReason ? InReason : TEXT("InvalidTimingCue"),
-		*InSignal.CueTag.ToString(),
-		*GetNameSafe(InSignal.Header.SourceActor),
-		*GetNameSafe(InSignal.Header.TargetActor),
-		*GetNameSafe(InSignal.Header.SignalCauser)));
+		TEXT("[Combat|SignalTarget|Rejected] Reason=%s | Outcome=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f"),
+		*UEnum::GetValueAsString(InPacket.Result.RejectReason),
+		*UEnum::GetValueAsString(InPacket.Result.DefenseOutcome),
+		*GetNameSafe(InPacket.Context.SourceActor),
+		*GetNameSafe(InPacket.Context.TargetActor),
+		*GetNameSafe(InPacket.Context.DamageCauser),
+		*GetNameSafe(InPacket.Context.Instigator),
+		*FormatCombatSignalDamageSpecKey(InPacket.Result.DamageSpecKey),
+		InPacket.Result.RequestDamage,
+		InPacket.Result.MitigatedDamage,
+		InPacket.Result.FinalTakenDamage,
+		InPacket.Result.CommittedDamage));
 }
 
 void FCombatSignalDebug::RecordTimingCueAcceptedForAudit(const FCombatSignal& InSignal)
@@ -323,6 +310,19 @@ void FCombatSignalDebug::RecordTimingCueAcceptedForAudit(const FCombatSignal& In
 
 	FLog::Log(FString::Printf(
 		TEXT("[Combat|SignalTargetCue|Accepted] CueTag=%s | Source=%s | Target=%s | Causer=%s"),
+		*InSignal.CueTag.ToString(),
+		*GetNameSafe(InSignal.Header.SourceActor),
+		*GetNameSafe(InSignal.Header.TargetActor),
+		*GetNameSafe(InSignal.Header.SignalCauser)));
+}
+
+void FCombatSignalDebug::RecordTimingCueRejectedForAudit(const FCombatSignal& InSignal, const TCHAR* InReason)
+{
+	if (!ShouldAuditCombatSignal()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Combat|SignalTargetCue|Rejected] Reason=%s | CueTag=%s | Source=%s | Target=%s | Causer=%s"),
+		InReason ? InReason : TEXT("InvalidTimingCue"),
 		*InSignal.CueTag.ToString(),
 		*GetNameSafe(InSignal.Header.SourceActor),
 		*GetNameSafe(InSignal.Header.TargetActor),

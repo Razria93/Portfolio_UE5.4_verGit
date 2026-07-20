@@ -94,17 +94,6 @@ void FReactionComponentDebug::RecordReactionDataDuplicateForAudit(const AActor* 
 		*FormatReactionComponentData(InData)));
 }
 
-void FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(const AActor* InOwnerActor, const FReactionDataKey& InDataKey, const TCHAR* InReason)
-{
-	if (!ShouldAuditReactionComponent()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[Reaction|Component|DataResolveFailed] Reason=%s | Owner=%s | %s"),
-		InReason ? InReason : TEXT("Unknown"),
-		*GetNameSafe(InOwnerActor),
-		*FormatReactionComponentDataKey(InDataKey)));
-}
-
 void FReactionComponentDebug::RecordReactionDataResolvedForAudit(const AActor* InOwnerActor, const FReactionDataKey& InRequestKey, const FReactionData& InResolvedData, int32 InCandidateIndex)
 {
 	if (!ShouldAuditReactionComponent()) return;
@@ -115,6 +104,17 @@ void FReactionComponentDebug::RecordReactionDataResolvedForAudit(const AActor* I
 		InCandidateIndex,
 		*FormatReactionComponentDataKey(InRequestKey),
 		*FormatReactionComponentData(InResolvedData)));
+}
+
+void FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(const AActor* InOwnerActor, const FReactionDataKey& InDataKey, const TCHAR* InReason)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Component|DataResolveFailed] Reason=%s | Owner=%s | %s"),
+		InReason ? InReason : TEXT("Unknown"),
+		*GetNameSafe(InOwnerActor),
+		*FormatReactionComponentDataKey(InDataKey)));
 }
 
 void FReactionComponentDebug::RecordReactionExecutorResolveFailedForAudit(const AActor* InOwnerActor, const FReactionData& InData, const TCHAR* InReason)
@@ -164,6 +164,18 @@ void FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(const AActo
 		*FormatReactionComponentExecutionResult(InResult)));
 }
 
+void FReactionComponentDebug::RecordReactionRuntimeAcceptedForAudit(const AActor* InOwnerActor, const FReactionExecutionContext& InContext, const TCHAR* InEvent)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Component|%sAccepted] Owner=%s | %s | Executor=%s"),
+		InEvent ? InEvent : TEXT("Runtime"),
+		*GetNameSafe(InOwnerActor),
+		*FormatReactionComponentDataKey(InContext.ReactionDataKey),
+		*GetNameSafe(InContext.ReactionExecutor)));
+}
+
 void FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(const AActor* InOwnerActor, const FReactionExecutionContext& InContext, const TCHAR* InEvent, const TCHAR* InReason)
 {
 	if (!ShouldAuditReactionComponent()) return;
@@ -172,18 +184,6 @@ void FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(const AActor
 		TEXT("[Reaction|Component|%sRejected] Reason=%s | Owner=%s | %s | Executor=%s"),
 		InEvent ? InEvent : TEXT("Runtime"),
 		InReason ? InReason : TEXT("Rejected"),
-		*GetNameSafe(InOwnerActor),
-		*FormatReactionComponentDataKey(InContext.ReactionDataKey),
-		*GetNameSafe(InContext.ReactionExecutor)));
-}
-
-void FReactionComponentDebug::RecordReactionRuntimeAcceptedForAudit(const AActor* InOwnerActor, const FReactionExecutionContext& InContext, const TCHAR* InEvent)
-{
-	if (!ShouldAuditReactionComponent()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[Reaction|Component|%sAccepted] Owner=%s | %s | Executor=%s"),
-		InEvent ? InEvent : TEXT("Runtime"),
 		*GetNameSafe(InOwnerActor),
 		*FormatReactionComponentDataKey(InContext.ReactionDataKey),
 		*GetNameSafe(InContext.ReactionExecutor)));

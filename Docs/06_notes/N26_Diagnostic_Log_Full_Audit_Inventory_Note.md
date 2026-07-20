@@ -1,5 +1,31 @@
 # N26. Diagnostic Log Full Audit Inventory Note
 
+## PR final rescan override
+
+2026-07-21 PR 전 잔여 로그 재스캔 기준으로 아래 판단을 기존 요약보다 우선한다.
+
+```text
+1. Action / Reaction data diagnostic: helper gated 처리 완료
+2. Action / Reaction montage interruption: helper gated 처리 완료
+3. Feedback data diagnostic: helper gated 처리 완료
+4. Notify invalid trigger: helper warning once 처리 완료
+5. Overlay handling failure: helper gated 처리 완료
+6. ComponentReference recovery: ensureMsgf는 계약 위반 가시성으로 유지, success path는 helper gated 처리 완료
+```
+
+잔여 직접 FLog::Log는 다음 범위로 제한된다.
+
+```text
+1. CAIController runtime LOD audit: 기존 CVar gate 유지
+2. CWorldSubsystem_CombatEngage assignment audit: 기존 CVar gate + Shipping no-op 유지
+3. CBTDecorator_CanMove decorator audit: 기존 CVar gate 유지
+4. Core/Debug helper 내부 출력: helper 구현부이므로 허용
+```
+
+check / ensureMsgf는 runtime debug dump가 아니라 contract validation으로 분류한다. 메시지 포맷만 필요 시 정리하고, ensure 호출 자체는 최종 컴파일 본문에서 보이도록 유지한다.
+
+Diagnostic helper API 배치는 request/gate reject를 먼저 두고, 같은 레벨의 result 쌍은 positive-first(`Accepted/Applied/Succeeded/Started/Played/Resolved/Allowed -> Rejected/Ignored/Failed/Blocked`)로 둔다. 단독 reject/warning API는 억지로 재배치하지 않는다.
+
 ## 목적
 
 `refactor/debug-log-policy-v1`의 1단계 전수조사 결과를 정리한다.

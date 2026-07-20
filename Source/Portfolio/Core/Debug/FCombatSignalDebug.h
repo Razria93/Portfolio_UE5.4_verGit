@@ -25,11 +25,12 @@ public:
 public:
 	// Source Diagnostic Hook
 	static void RecordSourceHitRequestRejectedForAudit(const FHitContext& InHitContext, const TCHAR* InReason);
-	static void RecordSourceRejectedForAudit(const FCombatSignalSourceContext& InContext);
-	static void RecordSourceAcceptedForAudit(const FCombatSignalSourceContext& InContext);
 
-	static void RecordCueRejectedForAudit(const FCombatSignal& InSignal, const TCHAR* InReason);
+	static void RecordSourceAcceptedForAudit(const FCombatSignalSourceContext& InContext);
+	static void RecordSourceRejectedForAudit(const FCombatSignalSourceContext& InContext);
+
 	static void RecordCueAcceptedForAudit(const FCombatSignal& InSignal);
+	static void RecordCueRejectedForAudit(const FCombatSignal& InSignal, const TCHAR* InReason);
 
 public:
 	// Source Debug Dump
@@ -38,11 +39,12 @@ public:
 public:
 	// Target Diagnostic Hook
 	static void RecordTargetDamageRequestRejectedForAudit(float InDamageAmount, const FDamageEvent& InDamageEvent, AController* InEventInstigator, AActor* InDamageCauser, const TCHAR* InReason);
-	static void RecordTargetRejectedForAudit(const FCombatSignalTargetPacket& InPacket);
-	static void RecordTargetAcceptedForAudit(const FCombatSignalTargetPacket& InPacket);
 
-	static void RecordTimingCueRejectedForAudit(const FCombatSignal& InSignal, const TCHAR* InReason);
+	static void RecordTargetAcceptedForAudit(const FCombatSignalTargetPacket& InPacket);
+	static void RecordTargetRejectedForAudit(const FCombatSignalTargetPacket& InPacket);
+
 	static void RecordTimingCueAcceptedForAudit(const FCombatSignal& InSignal);
+	static void RecordTimingCueRejectedForAudit(const FCombatSignal& InSignal, const TCHAR* InReason);
 
 public:
 	// Target Debug Dump

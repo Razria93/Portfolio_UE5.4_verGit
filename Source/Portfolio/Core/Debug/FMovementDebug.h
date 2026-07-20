@@ -13,8 +13,8 @@ public:
 public:
 	// Runtime LOD Diagnostic Hook
 	static void RecordRuntimeLODMovementModeAppliedForAudit(const AActor* InOwnerActor, const UObject* InComponent, int32 InPreviousMode, int32 InNewMode, bool bInTickEnabled, bool bInCanMove, bool bInIntentBlocked);
-	static void RecordRuntimeLODMovementIntentBlockedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent);
 	static void RecordRuntimeLODMovementIntentAllowedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent);
+	static void RecordRuntimeLODMovementIntentBlockedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent);
 
 public:
 	// Movement Gate Diagnostic Hook
