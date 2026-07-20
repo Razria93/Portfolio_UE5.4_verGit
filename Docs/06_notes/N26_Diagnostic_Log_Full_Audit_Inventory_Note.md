@@ -30,7 +30,7 @@
 
 | 분류                                     | 상태                   | 판단                                                               |
 | -------------------------------------- | -------------------- | ---------------------------------------------------------------- |
-| CombatResult runtime flow              | active 기본 출력         | 보류. `CombatResultAudit` helper 후보                                     |
+| CombatResult runtime flow              | helper gated             | `FCombatResultDebug` + `CombatResultAudit` 처리 완료                     |
 | CombatResult dispatch flow             | helper gated         | `FCombatSignalDebug::RecordCombatResultDispatchForAudit` 처리 완료          |
 | Action / Reaction data diagnostic      | active 기본 출력         | 유지. asset/data 문제 진단용. 추후 non-shipping helper화 후보                |
 | Action / Reaction montage interruption | active 기본 출력         | 유지. 비정상 interruption 진단용. 추후 non-shipping helper화 후보             |
@@ -51,27 +51,27 @@
 
 | 파일 | 위치 | 현재 상태 | 후보 이벤트 | 빈도 | 권장 처리 |
 | --- | --- | --- | --- | --- | --- |
-| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `ReceiveCombatResultPacket` | `FLog::Log` active | combat result packet 수신/내용 | combat event마다 | `FCombatResultDebug` helper + `Portfolio.Debug.CombatResultAudit` |
-| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `HandleParryCombatResult` | `FLog::Log` active | parry stack / stagger threshold | parry result마다 | `FCombatResultDebug` helper + CVar gate |
-| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `TryRequestParryStaggerReaction` | `FLog::Log` active | stagger reaction request result | parry threshold 도달 시 | `FCombatResultDebug` helper + CVar gate |
-| `Source/Portfolio/Character/Player/CPlayer.cpp` | `ReceiveCombatResultPacket` | `FLog::Log` active | combat result packet 수신/내용 | combat event마다 | `FCombatResultDebug` helper + CVar gate |
-| `Source/Portfolio/Character/Player/CPlayer.cpp` | `HandleParryCombatResult` | `FLog::Log` active | parry stack / stagger threshold | parry result마다 | `FCombatResultDebug` helper + CVar gate |
-| `Source/Portfolio/Character/Player/CPlayer.cpp` | `TryRequestParryStaggerReaction` | `FLog::Log` active | stagger reaction request result | parry threshold 도달 시 | `FCombatResultDebug` helper + CVar gate |
+| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `ReceiveCombatResultPacket` | helper gated | combat result packet 수신/내용 | combat event마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
+| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `HandleParryCombatResult` | helper gated | parry stack / stagger threshold | parry result마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
+| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `TryRequestParryStaggerReaction` | helper gated | stagger reaction request result | parry threshold 도달 시 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
+| `Source/Portfolio/Character/Player/CPlayer.cpp` | `ReceiveCombatResultPacket` | helper gated | combat result packet 수신/내용 | combat event마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
+| `Source/Portfolio/Character/Player/CPlayer.cpp` | `HandleParryCombatResult` | helper gated | parry stack / stagger threshold | parry result마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
+| `Source/Portfolio/Character/Player/CPlayer.cpp` | `TryRequestParryStaggerReaction` | helper gated | stagger reaction request result | parry threshold 도달 시 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
 
 판단:
 
 ```text
 이 로그들은 전투 결과 흐름을 따라가기에는 유용하지만 기본 출력으로 두기에는 runtime flow log 성격이 강하다.
-특히 대량 전투 / 피드백 측정 / 충돌 측정 중 출력 로그 노이즈가 될 수 있으므로 `FCombatResultDebug` 후보로 보류한다.
+특히 대량 전투 / 피드백 측정 / 충돌 측정 중 출력 로그 노이즈가 될 수 있으므로 `FCombatResultDebug` + `CombatResultAudit`으로 gate 처리했다.
 ```
 
 권장 API 형태:
 
 ```cpp
-FCombatResultDebug::PrintReceived(Receiver, Packet);
-FCombatResultDebug::PrintPacket(Receiver, Packet);
-FCombatResultDebug::PrintParryStack(Receiver, Packet, Count, Threshold, bStaggerReady);
-FCombatResultDebug::PrintStaggerRequest(Receiver, Packet, Result);
+FCombatResultDebug::RecordCombatResultReceivedForAudit(Receiver, Packet);
+FCombatResultDebug::RecordParryStackUpdatedForAudit(Receiver, Packet, Count, Threshold, bStaggerReady);
+FCombatResultDebug::RecordParryStaggerReactionRequestedForAudit(Receiver, Packet, Result);
+FCombatResultDebug::RecordParryStaggerReactionRejectedForAudit(Receiver, Packet, Reason);
 ```
 
 ### 1-2. CombatResult Dispatch / CombatSignal Target
@@ -98,7 +98,7 @@ Portfolio.Debug.CombatSignalAudit으로 dispatch 경계를 gate한다.
 기존 active FLog::Log 4곳은 본문 helper 호출로 대체했다.
 ```
 
-현재 프로젝트 흐름상 `CombatSignalTarget -> CombatResultReceiver` 경계이므로, dispatch는 CombatSignalAudit에 포함하고 CombatResult receive 쪽은 추후 별도 CombatResultAudit 후보로 남긴다.
+현재 프로젝트 흐름상 `CombatSignalTarget -> CombatResultReceiver` 경계이므로, dispatch는 CombatSignalAudit에 포함하고 CombatResult receive / parry stack / stagger request 쪽은 별도 CombatResultAudit으로 분리했다.
 
 ---
 
@@ -264,7 +264,7 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 | `Portfolio.Debug.ActionComponentDump` | ActionComponent execution context dump | 처리 완료 |
 | `Portfolio.Debug.ReactionComponentAudit` | ReactionComponent data/executor/notify/runtime reject | 처리 완료 |
 | `Portfolio.Debug.ReactionComponentDump` | ReactionComponent execution context dump | 처리 완료 |
-| `Portfolio.Debug.CombatResultAudit` | CombatResult receive / parry stack / stagger request 경계 | 보류 |
+| `Portfolio.Debug.CombatResultAudit` | CombatResult receive / parry stack / stagger request 경계 | 처리 완료 |
 | `Portfolio.Debug.FeedbackAudit` | feedback request/match/invalid data 상세 | 처리 완료 |
 
 판단:
@@ -272,7 +272,7 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 ```text
 CombatSignalAudit / CombatSignalDump는 source/target/weapon raw overlap 1차 적용 완료 상태다.
 다음 탐색은 Weapon raw overlap 또는 Action/Reaction data diagnostic 후보를 검토한다.
-CombatResult receive 로그는 dispatch가 CombatSignalAudit에 포함되었으므로, 이후 receiver-side 결과 분석이 필요할 때 별도 CombatResultAudit으로 분리한다.
+CombatResult receive 로그는 dispatch가 CombatSignalAudit에 포함되었으므로, receiver-side 결과 분석용 별도 CombatResultAudit으로 분리했다.
 ```
 
 ---
@@ -290,13 +290,13 @@ CombatResult receive 로그는 dispatch가 CombatSignalAudit에 포함되었으�
 6. 본문 gameplay code에는 문자열 포맷을 두지 않고 helper 호출만 남김
 ```
 
-보류 항목:
+추가 검토 항목:
 
 ```text
-1. CEnemy / CPlayer CombatResult active log를 FCombatResultDebug helper로 분리
-2. Action / Reaction Orchestrator reject audit
-3. Overlay / ComponentReferenceRecovery gate 여부
-4. Notify / Movement / Feedback invalid 로그 context 보강
+1. Overlay / ComponentReferenceRecovery gate 여부
+2. Notify invalid 로그 context 보강
+3. Action / Reaction data diagnostic 유지 범위 재확인
+4. 전체 잔여 FLog::Log 재스캔
 ```
 
 현재 단계에서 제거하지 않을 항목:
@@ -324,7 +324,7 @@ CombatResult 로그는 이미 결과가 생성된 뒤의 흐름을 보여준다.
 defense outcome, reaction dispatch 경계에서 조용히 drop될 가능성이 더 높다.
 ```
 
-따라서 다음 구현으로 바로 `FCombatResultDebug`에 들어가기 전에, CombatSignal source/target 경계를 먼저 스캔해서 `CombatSignalAudit` 범위를 확정한다.
+CombatSignal source/target 경계를 먼저 확정한 뒤, receiver-side CombatResult 경계는 `FCombatResultDebug` + `CombatResultAudit`으로 분리했다.
 
 |  순서 | 파일                                                                                                                       | 디버깅 가치                                                             | 관측 후보                                                                                                                                              | 권장 로그 형태                                                   |
 | --: | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -353,8 +353,8 @@ defense outcome, reaction dispatch 경계에서 조용히 drop될 가능성이 �
 ```text
 1. CCombatSignalSourceComponent / CCombatSignalTargetComponent를 한 쌍으로 먼저 스캔한다.
 2. CombatSignalAudit 범위와 출력 단위를 확정한다.
-3. 그 결과를 바탕으로 CombatResult receive / dispatch 로그를 CombatSignalAudit에 포함할지,
-   별도 CombatResultAudit으로 분리할지 결정한다.
+3. 그 결과를 바탕으로 dispatch 로그는 CombatSignalAudit에 포함하고,
+   CombatResult receive / parry stack / stagger request 로그는 별도 CombatResultAudit으로 분리했다.
 4. 이후 ActionOrchestrator / ReactionOrchestrator의 request result audit을 검토한다.
 ```
 
@@ -374,5 +374,5 @@ defense outcome, reaction dispatch 경계에서 조용히 drop될 가능성이 �
 2. accept/reject/defer/intervention 중 어떤 경계만 CVar audit으로 출력할지
 3. 기존 active diagnostic log가 Error / Warning / Diagnostic Hook 중 어디에 속하는지
 4. CSV counter가 필요한 event volume 지점이 어디인지
-5. CombatResult receive 로그를 별도 CombatResultAudit으로 분리할지
+5. CombatResult receive 로그 분리 완료 후 전체 잔여 로그를 재스캔할지
 ```

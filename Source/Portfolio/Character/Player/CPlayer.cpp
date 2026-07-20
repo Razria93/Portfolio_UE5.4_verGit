@@ -7,6 +7,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
+#include "Core/Debug/FCombatResultDebug.h"
+
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -260,17 +262,7 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 void ACPlayer::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
 {
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResult] Received | Receiver=%s | Requester=%s"),
-		*GetNameSafe(this),
-		*GetNameSafe(InCombatResultPacket.TargetActor)));
-
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResult] Packet | Outcome=%s | Source=%s | Requester=%s | DamageCauser=%s"),
-		*UEnum::GetValueAsString(InCombatResultPacket.DefenseOutcome),
-		*GetNameSafe(InCombatResultPacket.SourceActor),
-		*GetNameSafe(InCombatResultPacket.TargetActor),
-		*GetNameSafe(InCombatResultPacket.DamageCauser)));
+	FCombatResultDebug::RecordCombatResultReceivedForAudit(this, InCombatResultPacket);
 
 	if (InCombatResultPacket.IsParryResult())
 	{
@@ -285,13 +277,7 @@ void ACPlayer::HandleParryCombatResult(const FCombatResultPacket& InCombatResult
 
 	const bool bStaggerReady = ParryResultCount >= threshold;
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResult] ParryStack | Receiver=%s | Requester=%s | Count=%d/%d | StaggerReady=%s"),
-		*GetNameSafe(this),
-		*GetNameSafe(InCombatResultPacket.TargetActor),
-		ParryResultCount,
-		threshold,
-		bStaggerReady ? TEXT("true") : TEXT("false")));
+	FCombatResultDebug::RecordParryStackUpdatedForAudit(this, InCombatResultPacket, ParryResultCount, threshold, bStaggerReady);
 
 	if (bStaggerReady && TryRequestParryStaggerReaction(InCombatResultPacket))
 	{
@@ -301,7 +287,11 @@ void ACPlayer::HandleParryCombatResult(const FCombatResultPacket& InCombatResult
 
 bool ACPlayer::TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket)
 {
-	if (!IsValid(ReactionOrchestratorComponent)) return false;
+	if (!IsValid(ReactionOrchestratorComponent))
+	{
+		FCombatResultDebug::RecordParryStaggerReactionRejectedForAudit(this, InCombatResultPacket, TEXT("InvalidReactionOrchestrator"));
+		return false;
+	}
 
 	FCombatResultReactionRequest request;
 	request.IntentSource = EReactionIntentSource::CombatResult;
@@ -311,11 +301,7 @@ bool ACPlayer::TryRequestParryStaggerReaction(const FCombatResultPacket& InComba
 	const FReactionRequestResult result = ReactionOrchestratorComponent->RequestCombatResultReaction(request);
 	const bool bStarted = result.IsAccepted();
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResult] StaggerRequest | Receiver=%s | Requester=%s | Result=%s"),
-		*GetNameSafe(this),
-		*GetNameSafe(InCombatResultPacket.TargetActor),
-		bStarted ? TEXT("Accepted") : TEXT("Rejected")));
+	FCombatResultDebug::RecordParryStaggerReactionRequestedForAudit(this, InCombatResultPacket, result);
 
 	return bStarted;
 }
