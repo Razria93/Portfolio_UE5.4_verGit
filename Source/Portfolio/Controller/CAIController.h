@@ -272,13 +272,6 @@ private:
 	bool ShouldAuditBlackboardEngageLatency() const;
 
 private:
-	// Debug
-	void PrintPerceptionUpdatedSummary(const TArray<class AActor*>& UpdatedActors) const;
-	void PrintTargetPerceptionUpdatedSummary(class AActor* Actor, const FAIStimulus& Stimulus) const;
-	void PrintTargetPerceptionForgotten(AActor* Actor) const;
-	void PrintAllTargetData() const;
-	void PrintTargetData(const FTargetData& InData) const;
-
 	// Profiling Debug
 	void PrintPerceptionCandidateAuditSummary() const;
 	void PrintBlackboardEngageLatencyAuditSummary() const;

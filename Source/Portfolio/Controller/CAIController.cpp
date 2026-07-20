@@ -315,8 +315,6 @@ void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 
 void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	// PrintTargetPerceptionUpdatedSummary(Actor, Stimulus);
-
 	if (!IsValid(Actor)) return;
 
 	const bool bHasTargetProvider = (Cast<ITargetContextProvider>(Actor) != nullptr);
@@ -434,15 +432,7 @@ void ACAIController::UpdateTargetDataMap()
 
 	for (AActor* removeKey : removeKeys)
 	{
-		// FLog::Log(FString::Printf(TEXT("RemoveActor = %s"), *GetNameSafe(removeKey)));
-
-		// FLog::Log(TEXT("[Remove Actors Before]"));
-		// PrintAllTargetData();
-
 		TargetDataMap.Remove(removeKey);
-
-		// FLog::Log(TEXT("[Remove Actors After]"));
-		// PrintAllTargetData();
 	}
 
 	RecordTargetDataMapSizeForAudit();
@@ -712,91 +702,6 @@ void ACAIController::RecordEngageAssignmentResolvedForAudit(AActor* InTargetActo
 	BlackboardEngageLatencyAuditState.FirstEngageAssignmentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
 	BlackboardEngageLatencyAuditState.FirstEngageAssignmentFrame = GFrameCounter;
 	BlackboardEngageLatencyAuditState.FirstEngageAssignmentTargetActor = InTargetActor;
-}
-
-// Debug
-
-void ACAIController::PrintPerceptionUpdatedSummary(const TArray<AActor*>& UpdatedActors) const
-{
-	FLog::Log(TEXT("====== Perception Updated ======="));
-	FLog::Log(TEXT("-------- Updated Actors ---------"));
-
-	if (UpdatedActors.Num() == 0)
-	{
-		FLog::Log(TEXT("None"));
-	}
-	else
-	{
-		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("UpdateActors"), UpdatedActors.Num()));
-
-		// NOTE: List of actors whose perception state changed during this frame
-		// - ex. added / updated / removed
-		for (const AActor* updatedActor : UpdatedActors)
-		{
-			FLog::Log(FString::Printf(TEXT("- %s"), *GetNameSafe(updatedActor)));
-		}
-	}
-
-	FLog::Log(TEXT("================================="));
-}
-
-void ACAIController::PrintTargetPerceptionUpdatedSummary(AActor* Actor, const FAIStimulus& Stimulus) const
-{
-	FLog::Log(TEXT("=== Target Perception Updated ==="));
-
-	FLog::Log(FString::Printf(TEXT("TargetActor = %s"), *GetNameSafe(Actor)));
-
-	FLog::Log(FString::Printf(TEXT("Sense = %s | Perceived = %s | Age = %.2f"),
-		*GetNameSafe(UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus)),
-		Stimulus.WasSuccessfullySensed() ? TEXT("Gained") : TEXT("Lost"),
-		Stimulus.GetAge()));
-
-	FLog::Log(TEXT("================================="));
-}
-
-void ACAIController::PrintTargetPerceptionForgotten(AActor* Actor) const
-{
-	FLog::Log(TEXT("== Target Perception Forgotten =="));
-
-	FLog::Log(FString::Printf(TEXT("TargetActor = %s"), *GetNameSafe(Actor)));
-
-	FLog::Log(TEXT("================================="));
-}
-
-void ACAIController::PrintAllTargetData() const
-{
-	FLog::Log(TEXT("========= TargetDataMap ========="));
-
-	if (TargetDataMap.IsEmpty())
-	{
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetDataMap"), TEXT("IsEmpty")));
-	}
-
-	for (const TPair<AActor*, FTargetData>& pair : TargetDataMap)
-	{
-		PrintTargetData(pair.Value);
-	}
-
-	FLog::Log(TEXT("================================="));
-}
-
-void ACAIController::PrintTargetData(const FTargetData& InData) const
-{
-	FLog::Log(TEXT("---------- TargetData -----------"));
-
-	if (!InData.IsValidData())
-	{
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetData"), TEXT("InValid")));
-		FLog::Log(TEXT("---------------------------------"));
-		return;
-	}
-
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InData.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("TargetPriority"), InData.TargetPriority));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bHasLOS"), InData.bHasLOS ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("LastSeenTime"), InData.LastSeenTime));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("LastKnownLocation"), *InData.LastKnownLocation.ToCompactString()));
-	FLog::Log(TEXT("---------------------------------"));
 }
 
 // Profiling Debug

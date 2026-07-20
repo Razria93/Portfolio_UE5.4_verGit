@@ -28,7 +28,4 @@ private:
 
 private:
 	void ClearEngageContext(UBlackboardComponent* InBlackboardComp);
-
-private:
-	void PrintEngageContext(const APawn* InOwnerPawn, const FEngageContext & InEngageContext, const float InCurrentTime);
 };

@@ -1,5 +1,4 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateEngageContext.h"
-#include "ProjectGlobal.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AIController.h"
@@ -127,8 +126,6 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 		&& !bIsCombatAction			// for ActionType Check
 		&& !bIsActiveReaction;		// for ActiveReaction Check
 
-	// PrintEngageContext(InOwnerPawn, InOutEngageContext, currentTime);
-
 	return EContextBuildResult::Success;
 }
 
@@ -146,30 +143,4 @@ void UCBTService_UpdateEngageContext::ClearEngageContext(UBlackboardComponent* I
 
 	InBlackboardComp->ClearValue(CAIKey::Engage::bInEngageRange.KeyName);
 	InBlackboardComp->ClearValue(CAIKey::Engage::bCanCombatAction.KeyName);
-}
-
-void UCBTService_UpdateEngageContext::PrintEngageContext(const APawn* InOwnerPawn, const FEngageContext& InEngageContext, const float InCurrentTime)
-{
-	if (!IsValid(InOwnerPawn)) return;
-
-	const FVector ownerLocation = InOwnerPawn->GetActorLocation();
-	const FVector targetLocation = IsValid(InEngageContext.TargetActor) ? InEngageContext.TargetActor->GetActorLocation() : FVector::ZeroVector;
-
-	FLog::Log(TEXT("======== EngageContext ========"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerPawn"), *GetNameSafe(InOwnerPawn)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InEngageContext.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerLocation"), *ownerLocation.ToCompactString()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetLocation"), *targetLocation.ToCompactString()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("DistanceToTarget"), InEngageContext.DistanceToTarget));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("EngageOffsetRange"), InEngageContext.EngageOffsetRange));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("EngageEnterBuffer"), InEngageContext.EngageEnterBuffer));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("EngageExitBuffer"), InEngageContext.EngageExitBuffer));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("EngageOuterRange"), InEngageContext.EngageOuterRange));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("EngageInnerRange"), InEngageContext.EngageInnerRange));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bPrevInEngageRange"), InEngageContext.bPrevInEngageRange ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bInEngageRange"), InEngageContext.bInEngageRange ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bCanCombatAction"), InEngageContext.bCanCombatAction ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("NextCombatActionTime"), InEngageContext.NextCombatActionTime));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CurrentTime"), InCurrentTime));
-	FLog::Log(TEXT("================================"));
 }
