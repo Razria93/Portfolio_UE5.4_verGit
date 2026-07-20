@@ -77,11 +77,4 @@ private:
 private:
 	FHitStopRequest BuildHitStopRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 	FCameraShakeRequest BuildCameraShakeRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
-
-private:
-	void PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const;
-	void PrintHitVFXRequestInfo(class UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const;
-	void PrintHitSFXRequestInfo(USoundBase * InHitSFX, const FVector& InLocation) const;
-	void PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const;
-	void PrintHitInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 };

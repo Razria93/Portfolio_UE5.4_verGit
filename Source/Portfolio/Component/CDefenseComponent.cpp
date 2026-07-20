@@ -309,15 +309,3 @@ void UCDefenseComponent::ClearMovementOverride()
 
 	MovementComp_Injected->ClearMovementOverride();
 }
-
-// Debug
-void UCDefenseComponent::PrintGuardStateInfo() const
-{
-	FLog::Log(FString::Printf(
-		TEXT("[Defense] CanStartGuard = %s | WantsGuarding = %s | IsGuardingPose = %s | CanGuard = %s | CanParry = %s"),
-		bCanStartGuard ? TEXT("true") : TEXT("false"),
-		bWantsGuarding ? TEXT("true") : TEXT("false"),
-		bIsGuardingPose ? TEXT("true") : TEXT("false"),
-		bCanGuard ? TEXT("true") : TEXT("false"),
-		bCanParry ? TEXT("true") : TEXT("false")));
-}

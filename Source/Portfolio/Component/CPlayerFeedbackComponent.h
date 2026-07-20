@@ -44,7 +44,4 @@ private:
 	bool CanCameraShake(const FCameraShakeRequest& InCameraShakeRequest) const;
 	float ResolveCameraShake(const FCameraShakeRequest& InCameraShakeRequest) const;
 	void PlayCameraShake(const FCameraShakeRequest& InCameraShakeRequest, float InScale) const;
-
-private:
-	void PrintCameraShakeConsumeInfo(const FCameraShakeRequest& InCameraShakeRequest, float InFinalScale) const;
 };

@@ -4,6 +4,12 @@
 
 이 문서는 코드 품질 정리 작업의 현재 진행 상황과 후속 작업 순서를 PR 기준으로 공유하기 위해 작성한다.
 
+`W05_Code_Quality_Plan`에서 시작된 작업은 중간에 AI Runtime LOD / profiling 축으로 확장되었고, P39~P41은 원래 예상했던 Type Header / Tuning / Const 작업이 아니라 AI 성능 측정과 Runtime LOD 정책 정리에 사용되었다.
+
+따라서 이 문서는 현재 실제 PR 흐름을 기준으로 상태를 다시 정리한다.
+
+---
+
 ## PR 진행 현황
 
 ```text
@@ -19,16 +25,23 @@
 - P36 AI AlertCap 비교 측정 및 Assignment Cap 제어 추가
 - P37 AI Observe Intent 및 Investigate Lifecycle 정리
 - P38 AI Combat Collision / Hit Window 비용 분리 측정
+- P39 AI Combat Feedback Presentation 비용 분리 측정
+- P40 AI Enemy Actor Tick 비용 분리 측정
+- P41 AI State Runtime LOD tier snapshot 통합
 
 후속 작업
-- P39 Feedback Presentation 측정
-- P40 Type Header / Helper Boundary 정리
-- P41 Tuning Constants Cleanup
-- P42 API Const Consistency
-- P43 Debug Log Policy
-- P44 Naming / Typo / API Cleanup
-- P45 TODO Status Cleanup
-- P46 PR Record Format Sweep
+- Debug Log Policy
+- TODO Status Cleanup
+- Naming / Typo / API Cleanup
+- API Const Consistency
+- Tuning Constants Cleanup
+- Type Header / Helper Boundary 정리
+- PR Record Format Sweep
+
+별도 후순위
+- Enhanced Input Migration
+- Perception Active Budget / Cap
+- Proxy / Dormant Actor 최적화
 ```
 
 정리 기준은 다음과 같다.
@@ -40,8 +53,8 @@
 후속 작업
 -> 이후 PR로 진행할 작업
 
-카테고리
--> 작업 성격이 같은 PR을 묶어 리뷰 흐름을 이해하기 쉽게 분류
+별도 후순위
+-> 현재 코드 품질 sweep에서 바로 처리하지 않고, 별도 기능 / 성능 설계로 넘길 작업
 ```
 
 ---
@@ -145,6 +158,13 @@ Blackboard key 추가 시 누락 위험 감소
 BehaviorTree와 C++ 사이의 key 계약을 한 곳에서 확인하고 검증한다.
 ```
 
+현재 판단:
+
+```text
+완료된 항목으로 본다.
+후속 작업에서 Blackboard key를 추가 / 제거할 경우 registry 계약을 같이 갱신해야 한다.
+```
+
 ---
 
 ### 5. AI Profiling / Bottleneck 분석
@@ -168,52 +188,39 @@ AI update interval을 감으로 조정하지 않고,
 측정 결과를 바탕으로 runtime LOD / perception LOD / update LOD 후속 작업을 분리한다.
 ```
 
----
+현재 판단:
 
-## AI LOD / Performance 최적화 진행 현황
+```text
+기본 audit은 완료된 항목으로 본다.
+이후 P35~P41에서 BT interval / assignment cap / state tier 기반 Runtime LOD로 확장 검증했다.
+```
+
+---
 
 ### 6. AI LOD / Performance 최적화
 
+#### P34: AI Profiling Test Asset 분리
+
+정리 내용:
+
+```text
+공유 gameplay asset을 오염시키지 않는 AI profiling 전용 asset 흐름 정리
+측정 맵 / 적 수 / 고정 카메라 / csvprofile 기준 정리
+```
+
 #### P35: AI Runtime LOD 정책 정리
 
-계획 브랜치:
+정리 내용:
 
 ```text
-refactor/ai-runtime-lod-policy
+Enemy mesh / animation / WeaponActor / perception / movement / BT service interval 축 분리 측정
+CombatEngage assignment gate / lease / warmup 기반 Engage 2 / Alert 6 / Idle 계층 안정화
+AIContext / AIIntentState interval split 정책 후보 정리
 ```
-
-작업 범위:
-
-```text
-Enemy 거리 / 중요도 기준 runtime LOD 산출
-WeaponActor / collision / movement / mesh / component tick 비활성 효과 검증
-AnimInstance off / WeaponActor off / Mesh hidden / Collision off 극단 비교 측정
-```
-
-관련 문서:
-
-```text
-N18_AI_Performance_Bottleneck_And_LOD_Plan_Note.md
-N20_AI_Profiling_Test_Asset_Plan_Note.md
-```
-
-의도:
-
-```text
-Enemy 수 증가 시 Character / mesh / weapon / movement / collision runtime cost를 줄인다.
-```
-
----
 
 #### P36: AI AlertCap 비교 측정 및 Assignment Cap 제어 추가
 
-계획 브랜치:
-
-```text
-feature/ai-alert-cap-comparison
-```
-
-작업 범위:
+정리 내용:
 
 ```text
 EngageCap / AlertCap CVar 추가
@@ -221,21 +228,16 @@ AlertCap 6 / 40 비교 측정
 Alert 후보 수 증가가 CharacterMovement cost를 증가시키는지 확인
 ```
 
-의도:
+결론:
 
 ```text
-Runtime LOD에서 movement 후보 수를 제한해야 하는 근거를 측정으로 확보한다.
+AlertCap 증가는 BT Tick보다 CharacterMovement p95에 더 크게 반영됐다.
+Runtime LOD에서 movement 후보 수를 제한해야 하는 근거로 사용한다.
 ```
 
 #### P37: AI Observe Intent 및 Investigate Lifecycle 정리
 
-계획 브랜치:
-
-```text
-feature/ai-observe-intent-state
-```
-
-작업 범위:
+정리 내용:
 
 ```text
 CombatRole 없는 인지 대상은 Observe로 대기
@@ -244,21 +246,9 @@ bShouldInvestigate / bIsInvestigating / bShouldEndInvestigate lifecycle 분리
 40 / 80 Enemy smoke 측정
 ```
 
-의도:
-
-```text
-AlertCap 밖의 Enemy가 Chase / Alert / Investigate로 번지지 않게 하고, Investigate 상태 전환 책임을 명확히 한다.
-```
-
 #### P38: AI Combat Collision / Hit Window 비용 분리 측정
 
-계획 브랜치:
-
-```text
-feature/ai-combat-collision-profiling
-```
-
-작업 범위:
+정리 내용:
 
 ```text
 Combat Collision / Hit Window event 계측
@@ -268,30 +258,16 @@ DisableEnemyHitProcessing gate 추가
 EngageCap 4 stress 참고 측정
 ```
 
-의도:
-
-```text
-HitWindow / Overlap / HitProcessing / CombatSignal route를 분리하고,
-Combat Collision / HitProcessing이 Runtime LOD v1의 우선 제어 후보인지 판단한다.
-```
-
 결론:
 
 ```text
 HitProcessing / CombatSignal 차단은 정상 동작했지만 Frame / Game p95 개선은 작았다.
 Combat Collision / HitProcessing은 Runtime LOD v1 우선 제어 후보로 보지 않고 후순위로 닫는다.
-다음 성능 측정 축은 Feedback Presentation으로 넘긴다.
 ```
 
-#### P39: Feedback Presentation 측정
+#### P39: AI Combat Feedback Presentation 비용 분리 측정
 
-브랜치:
-
-```text
-feature/ai-combat-feedback-profiling
-```
-
-작업 결과:
+정리 내용:
 
 ```text
 Enemy action feedback presentation gate 추가
@@ -307,71 +283,59 @@ Combat Feedback Presentation은 기능적으로 분리 가능하다.
 Runtime LOD v1 핵심 병목 축이 아니라 최하위 representation 단계의 선택 후보로 둔다.
 ```
 
+#### P40: AI Enemy Actor Tick 비용 분리 측정
+
+정리 내용:
+
+```text
+Enemy Actor Tick off mode 추가
+Actor Tick이 Runtime LOD Movement guard를 소유하던 구조를 분리
+Movement Runtime LOD 제어는 MovementComponent 책임으로 이동
+40 / 80 Enemy 기준 Actor Tick off 효과 측정
+```
+
+결론:
+
+```text
+Enemy Actor Tick 자체 제거만으로 Frame / Game p95가 안정적으로 개선되지는 않았다.
+측정 변동은 Movement / Animation 쪽과 더 강하게 연결되어 있다고 본다.
+```
+
+#### P41: AI State Runtime LOD tier snapshot 통합
+
+정리 내용:
+
+```text
+Blackboard 기반 Runtime LOD tier snapshot 추가
+Controller / Animation / BT interval 정책이 같은 tier snapshot을 사용하도록 정리
+AIContext interval은 stale tier feedback을 피하기 위해 고정 주기로 유지
+Animation Runtime LOD 정책을 별도 policy helper로 분리
+```
+
+결론:
+
+```text
+축별 계측에서 얻은 결과를 실제 Runtime LOD tier 정책으로 통합하는 1차 구조를 마련했다.
+Dormant / Proxy / Perception Active Budget은 별도 장기 작업으로 남긴다.
+```
+
 ---
 
-### 7. Code Quality Sweep
+## 후속 작업
 
-#### P40: Type Header / Helper Boundary 정리
+### 1. Debug Log Policy
 
-계획 브랜치:
-
-```text
-refactor/type-header-helper-boundary
-```
-
-작업 범위:
-
-```text
-Type/CWeaponStructure.h 같은 도메인 Type 헤더의 include 범위 점검
-공유 type / local type / transient request / result type 분류
-작은 type 하나를 위해 무거운 도메인 Type 헤더를 include하는 구간 목록화
-전역 Type 계층에 둘 type과 header-local / cpp-local type 기준 정리
-validation / formatting / debug dump / initialization / clear helper 분리 기준 정리
-```
-
-의도:
-
-```text
-공유 Type 헤더의 include 범위를 줄이고,
-type 위치와 helper 책임을 명확히 해 빌드 의존성과 변경 영향 범위를 줄인다.
-```
-
-#### P41: Tuning Constants Cleanup
-
-계획 브랜치:
-
-```text
-refactor/tuning-constants-cleanup
-```
-
-작업 범위:
-
-```text
-AI radius / interval / threshold / combat tuning value 정리
-constants / config / DataAsset 분류
-```
-
-#### P42: API Const Consistency
-
-계획 브랜치:
-
-```text
-refactor/api-const-consistency
-```
-
-작업 범위:
-
-```text
-read-only API const 정합성 점검
-불필요한 mutable 접근 정리
-```
-
-#### P43: Debug Log Policy
-
-계획 브랜치:
+추천 브랜치:
 
 ```text
 refactor/debug-log-policy-v1
+```
+
+관련 문서:
+
+```text
+N22_Debug_Log_Policy_Work_Plan_Note.md
+N23_Debug_Log_And_Diagnostic_Code_Policy_Note.md
 ```
 
 작업 범위:
@@ -393,9 +357,25 @@ debug print 책임 위치 정리
 시각적 디버그 툴은 feature 성격으로 별도 분리한다.
 ```
 
-#### P44: Naming / Typo / API Cleanup
+### 2. TODO Status Cleanup
 
-계획 브랜치:
+추천 브랜치:
+
+```text
+refactor/todo-status-cleanup
+```
+
+작업 범위:
+
+```text
+핵심 runtime 경로 TODO 정리
+Phase / 보류 / 후속 작업 상태 명확화
+문서의 후속 작업 후보와 코드 주석 상태 일치
+```
+
+### 3. Naming / Typo / API Cleanup
+
+추천 브랜치:
 
 ```text
 refactor/naming-typo-api-cleanup
@@ -407,30 +387,60 @@ refactor/naming-typo-api-cleanup
 오타 정리
 include casing 정리
 API naming 불일치 정리
+Blueprint / asset 영향 rename은 별도 판단 후 분리
 ```
 
-#### P45: TODO Status Cleanup
+### 4. API Const Consistency
 
-계획 브랜치:
+추천 브랜치:
 
 ```text
-refactor/todo-status-cleanup
+refactor/api-const-consistency
 ```
 
 작업 범위:
 
 ```text
-핵심 runtime 경로 TODO 정리
-Phase / 보류 / 후속 작업 상태 명확화
+read-only API const 정합성 점검
+불필요한 mutable 접근 정리
+query / resolver / getter API const 적용
 ```
 
----
+### 5. Tuning Constants Cleanup
 
-### 8. Documentation / PR Record
+추천 브랜치:
 
-#### P46: PR Record Format Sweep
+```text
+refactor/tuning-constants-cleanup
+```
 
-계획 브랜치:
+작업 범위:
+
+```text
+AI radius / interval / threshold / combat tuning value 정리
+constants / config / DataAsset 후보 분류
+대규모 DataAsset 전환은 후속 작업으로 분리
+```
+
+### 6. Type Header / Helper Boundary 정리
+
+추천 브랜치:
+
+```text
+refactor/type-header-helper-boundary
+```
+
+작업 범위:
+
+```text
+공유 Type 헤더 include 범위 점검
+local type / shared type / helper type 위치 기준 정리
+validation / formatting / debug dump / initialization / clear helper 분리 기준 정리
+```
+
+### 7. PR Record Format Sweep
+
+추천 브랜치:
 
 ```text
 docs/pr-record-format-sweep
@@ -447,22 +457,35 @@ KR / EN 혼용 정리
 
 ---
 
-## 현재 우선순위
-
-현재 P39는 구현 / 검증 / PR 문서 작성까지 완료됐다.
+## 별도 후순위
 
 ```text
-P37
--> P36에서 확인한 AlertCap 정책 위에 Observe intent와 Investigate lifecycle을 정리했다.
+Enhanced Input Migration
+-> 입력 시스템 구조 변경 성격이 강하므로 코드 품질 1차 sweep과 분리한다.
 
-P38
--> Combat Collision / HitProcessing 축은 계측과 분리는 성공했지만 Runtime LOD v1 우선 제어 후보에서는 제외했다.
+Perception Active Budget / Cap
+-> Dormant / wake-up 정책과 연결되는 성능 설계 작업으로 분리한다.
 
-P39
--> Combat Feedback Presentation 축은 기능적으로 분리 가능하지만 Frame / Game p95 개선이 제한적이므로 최하위 representation 후보로만 유지한다.
-
-P40 이후
--> 남은 측정축과 code quality sweep은 별도 브랜치로 진행한다.
+Proxy / Dormant Actor 최적화
+-> 단순 측정 축이 아니라 실제 Runtime LOD 적용 단계이므로 장기 작업으로 분리한다.
 ```
 
-각 축은 구현 전에 유의미한 성능 차이를 만드는지 먼저 확인한 뒤 진행한다.
+---
+
+## 현재 우선순위
+
+현재는 AI Runtime LOD 측정과 1차 정책 통합이 P41까지 완료된 상태다.
+
+다음 작업은 남은 code quality sweep으로 복귀한다.
+
+```text
+1. Debug Log Policy
+2. TODO Status Cleanup
+3. Naming / Typo / API Cleanup
+4. API Const Consistency
+5. Tuning Constants Cleanup
+6. Type Header / Helper Boundary
+7. PR Record Format Sweep
+```
+
+현재 우선순위는 `Debug Log Policy`다.

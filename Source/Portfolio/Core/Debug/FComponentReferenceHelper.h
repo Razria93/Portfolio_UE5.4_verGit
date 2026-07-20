@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "Core/Debug/FLog.h"
+#include "Core/Debug/FComponentReferenceDebug.h"
 #include "Type/CCharacterComponentReferenceStructure.h"
 
 class FComponentReferenceHelper
@@ -19,7 +19,7 @@ public:
 
 		if (!ensureMsgf(
 			IsValid(resolvedComponent),
-			TEXT("[ComponentReferenceRecovery] Failed | Owner=%s | Component=%s"),
+			TEXT("[ComponentReference|Recovery|Failed] Owner=%s | Component=%s"),
 			*GetNameSafe(InOwnerActor),
 			*GetNameSafe(TComponent::StaticClass())
 		))
@@ -29,12 +29,7 @@ public:
 
 		InOutComponent = resolvedComponent;
 
-		FLog::Log(FString::Printf(
-			TEXT("[ComponentReferenceRecovery] Recovered | Owner=%s | Component=%s | Resolved=%s"),
-			*GetNameSafe(InOwnerActor),
-			*GetNameSafe(TComponent::StaticClass()),
-			*GetNameSafe(resolvedComponent)
-		));
+		FComponentReferenceDebug::RecordComponentReferenceRecoveredForAudit(InOwnerActor, TComponent::StaticClass(), resolvedComponent);
 	}
 
 	template <typename TComponent>

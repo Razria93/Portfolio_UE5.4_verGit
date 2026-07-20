@@ -8,6 +8,7 @@
 #include "Sound/SoundBase.h"
 
 #include "Component/CWeaponComponent.h"
+#include "Core/Debug/FCombatFeedbackDebug.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
 #include "Weapon/CWeaponActor.h"
 
@@ -45,15 +46,15 @@ void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InAct
 {
 	if (!CanPlayActionFeedback(InActionFeedbackRequest)) return;
 
+	FCombatFeedbackDebug::RecordActionFeedbackRequestAcceptedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest);
 	FCombatFeedbackProfiling::RecordActionFeedbackRequest();
 
 	if (FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(OwnerCharacter_Injected))
 	{
+		FCombatFeedbackDebug::RecordActionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("RuntimeLODSkipEnemyFeedback"));
 		FCombatFeedbackProfiling::RecordActionFeedbackSkipped();
 		return;
 	}
-
-	// PrintActionFeedbackRequestInfo(InActionFeedbackRequest);
 
 	ExecuteTrailFeedbacks(InActionFeedbackRequest);
 	ExecuteVFXFeedbacks(InActionFeedbackRequest);
@@ -67,9 +68,21 @@ void UCActionFeedbackComponent::ClearRuntimeFeedback()
 
 bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!IsValid(GetWorld())) return false;
-	if (InActionFeedbackRequest.ActionFeedbackTiming == EActionFeedbackTiming::None) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("InvalidOwner"));
+		return false;
+	}
+	if (!IsValid(GetWorld()))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("InvalidWorld"));
+		return false;
+	}
+	if (InActionFeedbackRequest.ActionFeedbackTiming == EActionFeedbackTiming::None)
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("InvalidTiming"));
+		return false;
+	}
 
 	return true;
 }
@@ -164,17 +177,17 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 
 	if (!bestData)
 	{
-		// FLog::Log(TEXT("[ActionFeedback] Trail | No Matched Data")); // Invalid
+		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), TEXT("NoMatch"));
 		return;
 	}
 
 	if (bestMatchCount > 1)
 	{
-		FLog::Log(TEXT("[ActionFeedback] Duplicate highest-priority trail feedback matches")); // Error
+		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), TEXT("DuplicateBestMatch"), bestMatchCount);
 		return;
 	}
 
-	// FLog::Log(TEXT("[ActionFeedback] Trail | Matched Data")); // Valid
+	FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), bestMatchCount);
 	ToggleTrailActive(bestData->bTrailActive);
 }
 
@@ -205,10 +218,11 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 
 	if (matchedDatas.Num() <= 0)
 	{
-		// FLog::Log(TEXT("[ActionFeedback] VFX | No Matched Data"));
+		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("VFX"), TEXT("NoMatch"));
 		return;
 	}
 
+	FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("VFX"), matchedDatas.Num());
 	TSet<FActionVFXExecutionKey> executionKeys;
 
 	for (const FActionVFXFeedbackData* data : matchedDatas)
@@ -217,11 +231,10 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ActionFeedback] Duplicate VFX execution key skipped"));
+			FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), data ? data->VFX : nullptr, TEXT("DuplicateExecutionKey"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ActionFeedback] VFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayActionVFX(*data);
 	}
@@ -254,10 +267,11 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 
 	if (matchedDatas.Num() <= 0)
 	{
-		// FLog::Log(TEXT("[ActionFeedback] SFX | No Matched Data"));
+		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("SFX"), TEXT("NoMatch"));
 		return;
 	}
 
+	FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("SFX"), matchedDatas.Num());
 	TSet<FActionSFXExecutionKey> executionKeys;
 
 	for (const FActionSFXFeedbackData* data : matchedDatas)
@@ -266,11 +280,10 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ActionFeedback] Duplicate SFX execution key skipped"));
+			FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), data ? data->SFX : nullptr, TEXT("DuplicateExecutionKey"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ActionFeedback] SFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayActionSFX(*data);
 	}
@@ -278,14 +291,23 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 
 void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData)
 {
-	if (!IsValid(InActionVFXFeedbackData.VFX)) return;
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(InActionVFXFeedbackData.VFX))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InActionVFXFeedbackData.VFX, TEXT("InvalidAsset"));
+		return;
+	}
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InActionVFXFeedbackData.VFX, TEXT("InvalidOwner"));
+		return;
+	}
 
 	switch (InActionVFXFeedbackData.VFXPlayType)
 	{
 	case EActionVFXPlayType::Once:
 	{
 		FCombatFeedbackProfiling::RecordActionVFX();
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InActionVFXFeedbackData.VFX, TEXT("SpawnOnce"));
 
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InActionVFXFeedbackData.VFX,
@@ -298,39 +320,46 @@ void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InAc
 			true,
 			ENCPoolMethod::None);
 
-		// PrintActionVFXInfo(InActionVFXFeedbackData);
-
 		return;
 	}
 
 	case EActionVFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InActionVFXFeedbackData.VFX, TEXT("LoopNotImplemented"));
 		return;
 	}
 
 	default:
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InActionVFXFeedbackData.VFX, TEXT("UnsupportedPlayType"));
 		return;
 	}
 }
 
 void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData)
 {
-	if (!IsValid(InActionSFXFeedbackData.SFX)) return;
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(InActionSFXFeedbackData.SFX))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InActionSFXFeedbackData.SFX, TEXT("InvalidAsset"));
+		return;
+	}
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InActionSFXFeedbackData.SFX, TEXT("InvalidOwner"));
+		return;
+	}
 
 	switch (InActionSFXFeedbackData.SFXPlayType)
 	{
 	case EActionSFXPlayType::Once:
 	{
 		FCombatFeedbackProfiling::RecordActionSFX();
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InActionSFXFeedbackData.SFX, TEXT("PlayOnce"));
 
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			InActionSFXFeedbackData.SFX,
 			OwnerCharacter_Injected->GetActorLocation());
-
-		// PrintActionSFXInfo(InActionSFXFeedbackData);
 
 		return;
 	}
@@ -338,62 +367,40 @@ void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InAc
 	case EActionSFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InActionSFXFeedbackData.SFX, TEXT("LoopNotImplemented"));
 		return;
 	}
 
 	default:
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InActionSFXFeedbackData.SFX, TEXT("UnsupportedPlayType"));
 		return;
 	}
 }
 
 void UCActionFeedbackComponent::ToggleTrailActive(bool bActive)
 {
-	if (!IsValid(WeaponComp_Injected)) return;
+	if (!IsValid(WeaponComp_Injected))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), nullptr, TEXT("InvalidWeaponComponent"));
+		return;
+	}
 
 	UObject* uobject = WeaponComp_Injected->GetWeaponActor();
-	if (!IsValid(uobject)) return;
+	if (!IsValid(uobject))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), uobject, TEXT("InvalidWeaponActorObject"));
+		return;
+	}
 
 	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(uobject);
-	if (!IsValid(weaponActor)) return;
-
-	// PrintTrailInfo(bActive, weaponActor);
+	if (!IsValid(weaponActor))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), uobject, TEXT("InvalidWeaponActor"));
+		return;
+	}
 
 	FCombatFeedbackProfiling::RecordActionTrail(bActive);
+	FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), weaponActor, bActive ? TEXT("Activate") : TEXT("Deactivate"));
 
 	weaponActor->ToggleTrailActive(bActive);
-}
-
-void UCActionFeedbackComponent::PrintActionFeedbackRequestInfo(const FActionFeedbackRequest& InActionFeedbackRequest) const
-{
-	FLog::Log(TEXT("==== ActionFeedback Request ====="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackKey.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("ActionIndex"), InActionFeedbackRequest.ActionFeedbackKey.ActionIndex));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionFeedbackTiming"), *UEnum::GetValueAsString(InActionFeedbackRequest.ActionFeedbackTiming)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TriggerKey"), *InActionFeedbackRequest.TriggerKey.ToString()));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCActionFeedbackComponent::PrintActionVFXInfo(const FActionVFXFeedbackData& InActionVFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ActionFeedback VFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InActionVFXFeedbackData.VFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InActionVFXFeedbackData.VFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Socket"), *InActionVFXFeedbackData.SocketName.ToString()));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCActionFeedbackComponent::PrintActionSFXInfo(const FActionSFXFeedbackData& InActionSFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ActionFeedback SFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InActionSFXFeedbackData.SFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InActionSFXFeedbackData.SFX)));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCActionFeedbackComponent::PrintTrailInfo(bool bActive, const ACWeaponActor* InWeaponActor) const
-{
-	FLog::Log(TEXT("=== ActionFeedback Trail Info ==="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bActive ? TEXT("Active") : TEXT("Inactive")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponActor"), *GetNameSafe(InWeaponActor)));
-	FLog::Log(TEXT("================================="));
 }

@@ -54,9 +54,4 @@ private:
 private:
 	void PlayReactionVFX(const FReactionVFXFeedbackData& InReactionVFXFeedbackData);
 	void PlayReactionSFX(const FReactionSFXFeedbackData& InReactionSFXFeedbackData);
-
-private:
-	void PrintReactionFeedbackRequestInfo(const FReactionFeedbackRequest& InReactionFeedbackRequest) const;
-	void PrintReactionVFXInfo(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const;
-	void PrintReactionSFXInfo(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const;
 };

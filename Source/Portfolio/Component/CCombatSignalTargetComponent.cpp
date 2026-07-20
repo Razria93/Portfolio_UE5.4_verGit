@@ -7,6 +7,7 @@
 #include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
 
 #include "Type/CWeaponStructure.h"
@@ -70,6 +71,7 @@ float UCCombatSignalTargetComponent::ProcessCombatSignalTarget(float DamageAmoun
 		return HandleDefaultDamageEvent(DamageAmount, damageEvent, EventInstigator, DamageCauser);
 	}
 
+	FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(DamageAmount, DamageEvent, EventInstigator, DamageCauser, TEXT("UnsupportedDamageEvent"));
 	return 0.f;
 }
 
@@ -80,13 +82,18 @@ bool UCCombatSignalTargetComponent::ProcessCombatSignalTarget(const FCombatSigna
 		return HandleTimingCueSignal(InCombatSignal);
 	}
 
+	FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("UnsupportedSignalType"));
 	return false;
 }
 
 float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
 	// Receive: validate engine damage input and normalize it into target-side data.
-	if (!FMath::IsFinite(DamageAmount)) return 0.f;
+	if (!FMath::IsFinite(DamageAmount))
+	{
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteDamageAmount"));
+		return 0.f;
+	}
 	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
 
 	FCombatSignalTargetPayload combatSignalTargetPayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
@@ -99,7 +106,6 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 		const FCombatSignalTargetResult rejectedResult = BuildResult(combatSignalTargetContext);
 		const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, rejectedResult);
 
-		// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
 		DispatchRejectedCombatResult(combatSignalTargetPacket);
 		return 0.f;
 	}
@@ -114,7 +120,6 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 		const FCombatSignalTargetResult rejectedResult = BuildResult(combatSignalTargetContext);
 		const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, rejectedResult);
 
-		// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
 		DispatchRejectedCombatResult(combatSignalTargetPacket);
 		return 0.f;
 	}
@@ -127,7 +132,6 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 		const FCombatSignalTargetResult rejectedResult = BuildResult(combatSignalTargetContext);
 		const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, rejectedResult);
 
-		// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
 		DispatchRejectedCombatResult(combatSignalTargetPacket);
 		return 0.f;
 	}
@@ -140,10 +144,10 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, committedResult);
 
 	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
-	// PrintCombatSignalTargetSummaryInfo(combatSignalTargetPacket);
-	// PrintCombatSignalTargetOutcomeInfo(combatSignalTargetPacket);
 	DispatchAcceptedCombatResult(combatSignalTargetPacket);
 	DispatchCombatResultToReceiver(combatSignalTargetPacket);
+	FCombatSignalDebug::RecordTargetAcceptedForAudit(combatSignalTargetPacket);
+	FCombatSignalDebug::PrintTargetPacketDebug(combatSignalTargetPacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -151,39 +155,62 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& InCombatSignal)
 {
 	if (!ValidateSignalRequest(InCombatSignal))
+	{
+		FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("InvalidTimingCueSignal"));
 		return false;
+	}
 
 	if (InCombatSignal.CueTag == CombatCueBlinkTag)
 	{
-		// FLog::Log(TEXT("[CombatSignalTimingCue] Blink cue received"));
+		FCombatSignalDebug::RecordTimingCueAcceptedForAudit(InCombatSignal);
 		return true;
 	}
 
 	if (InCombatSignal.CueTag == CombatCueRepulseTag)
 	{
-		// FLog::Log(TEXT("[CombatSignalTimingCue] Repulse cue received"));
+		FCombatSignalDebug::RecordTimingCueAcceptedForAudit(InCombatSignal);
 		return true;
 	}
 
-	// FLog::Log(FString::Printf(
-	// 	TEXT("[CombatSignalTimingCue] Rejected | Reason=%s | CueTag=%s"),
-	// 	*UEnum::GetValueAsString(ECombatSignalTargetRejectReason::UnknownCueTag),
-	// 	*InCombatSignal.CueTag.ToString()));
-
 	// V1 hook only. Blink / Repulse evaluation and effects are added in separate branches.
+	FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("UnknownCueTag"));
 	return false;
 }
 
 bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!IsValid(HealthComp_Injected)) return false;
-	if (!IsValid(InDamageCauser)) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidOwner"));
+		return false;
+	}
+	if (!IsValid(HealthComp_Injected))
+	{
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidHealthComponent"));
+		return false;
+	}
+	if (!IsValid(InDamageCauser))
+	{
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidDamageCauser"));
+		return false;
+	}
 
-	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerCharacter_Injected) return false;
+	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerCharacter_Injected)
+	{
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("TargetMismatch"));
+		return false;
+	}
 
-	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage)) return false;
-	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage)) return false;
+	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage))
+	{
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteBaseDamage"));
+		return false;
+	}
+	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage))
+	{
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteRequestDamage"));
+		return false;
+	}
 
 	return true;
 }
@@ -436,6 +463,8 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 
 void UCCombatSignalTargetComponent::DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
+	FCombatSignalDebug::RecordTargetRejectedForAudit(InCombatSignalTargetPacket);
+	FCombatSignalDebug::PrintTargetPacketDebug(InCombatSignalTargetPacket);
 	// - Debug/UI rejected feedback
 }
 
@@ -449,38 +478,22 @@ void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombat
 	AActor* receiverActor = ResolveCombatResultReceiverActor(InCombatSignalTargetPacket);
 	if (!IsValid(receiverActor))
 	{
-		FLog::Log(FString::Printf(
-			TEXT("[CombatResultDispatch] No receiver | Outcome=%s | Source=%s | DamageCauser=%s | Requester=%s"),
-			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-			*GetNameSafe(combatResultPacket.SourceActor),
-			*GetNameSafe(combatResultPacket.DamageCauser),
-			*GetNameSafe(combatResultPacket.TargetActor)));
+		FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, nullptr, TEXT("NoReceiver"));
 		return;
 	}
 
 	ICombatResultReceiver* receiver = Cast<ICombatResultReceiver>(receiverActor);
 	if (!receiver)
 	{
-		FLog::Log(FString::Printf(
-			TEXT("[CombatResultDispatch] Receiver has no interface | Outcome=%s | Receiver=%s"),
-			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-			*GetNameSafe(receiverActor)));
+		FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("MissingReceiverInterface"));
 		return;
 	}
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResultDispatch] Delivering | Outcome=%s | Receiver=%s | Requester=%s"),
-		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-		*GetNameSafe(receiverActor),
-		*GetNameSafe(combatResultPacket.TargetActor)));
+	FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("Delivering"));
 
 	receiver->ReceiveCombatResultPacket(combatResultPacket);
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResultDispatch] Delivered | Outcome=%s | Receiver=%s | Requester=%s"),
-		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-		*GetNameSafe(receiverActor),
-		*GetNameSafe(combatResultPacket.TargetActor)));
+	FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("Delivered"));
 }
 
 AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
@@ -567,87 +580,4 @@ FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const
 	combatResultPacket.CommittedDamage = InCombatSignalTargetPacket.Result.CommittedDamage;
 
 	return combatResultPacket;
-}
-
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetSummaryInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
-{
-	FLog::Log(TEXT("====== Combat Signal Target Summary ======"));
-	FLog::Log(TEXT("[@ COMBAT SIGNAL TARGET]"));
-
-	FLog::Log(FString::Printf(TEXT("SourceActor = %s | TargetActor = %s | Instigator = %s | DamageCauser = %s"),
-		*GetNameSafe(InCombatSignalTargetPacket.Context.SourceActor),
-		*GetNameSafe(InCombatSignalTargetPacket.Context.TargetActor),
-		*GetNameSafe(InCombatSignalTargetPacket.Context.Instigator),
-		*GetNameSafe(InCombatSignalTargetPacket.Context.DamageCauser)
-	));
-
-	FLog::Log(FString::Printf(TEXT("RequestDamage = %.3f | MitigatedDamage = %.3f | FinalTakenDamage = %.3f | CommittedDamage = %.3f"),
-		InCombatSignalTargetPacket.Result.RequestDamage,
-		InCombatSignalTargetPacket.Result.MitigatedDamage,
-		InCombatSignalTargetPacket.Result.FinalTakenDamage,
-		InCombatSignalTargetPacket.Result.CommittedDamage
-	));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetContextInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
-{
-	FLog::Log(TEXT("/////- Combat Signal Target Context -/////"));
-	PrintObjectInfo(InCombatSignalTargetPacket);
-	PrintSpecKeyInfo(InCombatSignalTargetPacket);
-	PrintDamageAmountInfo(InCombatSignalTargetPacket);
-	FLog::Log(TEXT("/////////////////////////////////"));
-}
-
-void UCCombatSignalTargetComponent::PrintCombatSignalTargetOutcomeInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
-{
-	const FCombatSignalTargetResult& result = InCombatSignalTargetPacket.Result;
-
-	if (result.DefenseOutcome == EDamageDefenseOutcome::None && result.CommittedDamage <= KINDA_SMALL_NUMBER) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[CombatSignalTargetOutcome] Outcome=%s | Commit=%s | Damage=%.3f | HP=%.3f->%.3f"),
-		*UEnum::GetValueAsString(result.DefenseOutcome),
-		result.bShouldCommitDamage ? TEXT("true") : TEXT("false"),
-		result.CommittedDamage,
-		InCombatSignalTargetPacket.Context.HealthPointBefore,
-		InCombatSignalTargetPacket.Context.HealthPointAfter));
-}
-
-void UCCombatSignalTargetComponent::PrintObjectInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
-{
-	FLog::Log(TEXT("========== Object Info =========="));
-	FLog::Log(TEXT("--------- Payload Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] EventInstigator"), *GetNameSafe(InCombatSignalTargetPacket.Payload.EventInstigator)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Payload] DamageCauser"), *GetNameSafe(InCombatSignalTargetPacket.Payload.DamageCauser)));
-	FLog::Log(TEXT("--------- Context Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] SourceActor"), *GetNameSafe(InCombatSignalTargetPacket.Context.SourceActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] TargetActor"), *GetNameSafe(InCombatSignalTargetPacket.Context.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] Instigator"), *GetNameSafe(InCombatSignalTargetPacket.Context.Instigator)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("[Context] DamageCauser"), *GetNameSafe(InCombatSignalTargetPacket.Context.DamageCauser)));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCCombatSignalTargetComponent::PrintSpecKeyInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
-{
-	FLog::Log(TEXT("========= SpecKey Info =========="));
-	FLog::Log(TEXT("--------- Payload Info ----------"));
-	const FDamageSpecKey& damageSpecKey = InCombatSignalTargetPacket.Payload.DamageSpecKey;
-	const FString actionIndexText = (damageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(damageSpecKey.ActionIndex);
-
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(damageSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(damageSpecKey.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCCombatSignalTargetComponent::PrintDamageAmountInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
-{
-	FLog::Log(TEXT("======= DamageAmount Info ======="));
-	FLog::Log(TEXT("--------- Payload Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InCombatSignalTargetPacket.Payload.DamageSpec.BaseDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InCombatSignalTargetPacket.Payload.DamageAmount.RequestDamage));
-	FLog::Log(TEXT("---------- Amount Info ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("FinalTakenDamage"), InCombatSignalTargetPacket.Result.FinalTakenDamage));
-	FLog::Log(TEXT("================================="));
 }

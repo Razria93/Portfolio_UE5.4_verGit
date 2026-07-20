@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CActionComponent.h"
+#include "Core/Debug/FAnimNotifyDebug.h"
 
 UCAnimNotifyState_ActionBase::UCAnimNotifyState_ActionBase()
 {
@@ -16,7 +17,7 @@ bool UCAnimNotifyState_ActionBase::CanProcessActionNotify(const UCActionComponen
 
 	if (TriggerActionType == EActionType::None || TriggerActionType == EActionType::Max)
 	{
-		FLog::Log(TEXT("[AnimNotifyState_ActionBase] Invalid TriggerActionType."));
+		FAnimNotifyDebug::ReportActionNotifyTriggerWarning(this, InActionComp->GetOwner(), InActionComp, TriggerActionType, TriggerActionIndex, TEXT("InvalidTriggerActionType"));
 		return false;
 	}
 

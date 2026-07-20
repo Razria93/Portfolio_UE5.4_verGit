@@ -4,9 +4,10 @@
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 #include "NiagaraComponent.h"
-#include "NiagaraSystem.h"
 
 #include "Component/CCombatSignalSourceComponent.h"
+
+#include "Core/Debug/FCombatSignalDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "Type/CWeaponStructure.h"
@@ -167,8 +168,6 @@ void ACWeaponActor::ToggleTrailActive(bool bEnable)
 {
 	if (!IsValid(TrailComponent)) return;
 
-	// PrintTrailInfo(bEnable);
-
 	if (bEnable)
 	{
 		TrailComponent->SetVisibility(true);
@@ -215,7 +214,18 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 	}
 
 	// Early-Return
-	if (collisionsToEnable.IsEmpty()) return;
+	if (collisionsToEnable.IsEmpty())
+	{
+		FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
+			OwnerCharacter_Injected,
+			this,
+			InName,
+			CurrentHitWindowId,
+			Collisions_Cached.Num(),
+			TEXT("CollisionEnableRejected"),
+			InName.IsNone() ? TEXT("NoCollisionComponents") : TEXT("CollisionNameNotFound"));
+		return;
+	}
 
 	if (!bHitWindowOpened)
 	{
@@ -228,6 +238,17 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 		{
 			CombatSignalSourceComp_Injected->NotifyHitWindowOpened(this, CurrentHitWindowId);
 		}
+		else
+		{
+			FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
+				OwnerCharacter_Injected,
+				this,
+				InName,
+				CurrentHitWindowId,
+				collisionsToEnable.Num(),
+				TEXT("HitWindowOpenWarning"),
+				TEXT("MissingCombatSignalSourceComponent"));
+		}
 	}
 
 	for (UShapeComponent* collision : collisionsToEnable)
@@ -237,11 +258,30 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 
 	if (OnWeaponActorCollisionEnabled.IsBound())
 		OnWeaponActorCollisionEnabled.Broadcast();
+
+	FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
+		OwnerCharacter_Injected,
+		this,
+		InName,
+		CurrentHitWindowId,
+		collisionsToEnable.Num(),
+		TEXT("CollisionEnabled"));
 }
 
 void ACWeaponActor::CollisionDisabled()
 {
-	if (!bHitWindowOpened) return;
+	if (!bHitWindowOpened)
+	{
+		FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
+			OwnerCharacter_Injected,
+			this,
+			NAME_None,
+			CurrentHitWindowId,
+			Collisions_Cached.Num(),
+			TEXT("CollisionDisableIgnored"),
+			TEXT("HitWindowNotOpened"));
+		return;
+	}
 
 	FCombatCollisionProfilingCounters::RecordHitWindowClose();
 
@@ -256,28 +296,65 @@ void ACWeaponActor::CollisionDisabled()
 	{
 		CombatSignalSourceComp_Injected->NotifyHitWindowClosed(this, CurrentHitWindowId);
 	}
+	else
+	{
+		FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
+			OwnerCharacter_Injected,
+			this,
+			NAME_None,
+			CurrentHitWindowId,
+			Collisions_Cached.Num(),
+			TEXT("HitWindowCloseWarning"),
+			TEXT("MissingCombatSignalSourceComponentOrInvalidHitWindow"));
+	}
 
 	// Legacy delegate
 	if (OnWeaponActorCollisionDisabled.IsBound())
 		OnWeaponActorCollisionDisabled.Broadcast();
+
+	FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
+		OwnerCharacter_Injected,
+		this,
+		NAME_None,
+		CurrentHitWindowId,
+		Collisions_Cached.Num(),
+		TEXT("CollisionDisabled"));
 }
 
 void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
-	if (!IsValid(overlapComp)) return;
+	if (!IsValid(overlapComp))
+	{
+		FCombatSignalDebug::RecordWeaponOverlapRejectedForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("BeginOverlap"), TEXT("InvalidOverlapComponent"));
+		return;
+	}
 
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(OtherActor)) return;
-	if (OwnerCharacter_Injected == OtherActor) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(OtherActor))
+	{
+		FCombatSignalDebug::RecordWeaponOverlapRejectedForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("BeginOverlap"), TEXT("InvalidOwnerOrOtherActor"));
+		return;
+	}
 
-	if (!IsValid(CombatSignalSourceComp_Injected)) return;
+	if (OwnerCharacter_Injected == OtherActor)
+	{
+		FCombatSignalDebug::RecordWeaponOverlapIgnoredForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("BeginOverlap"), TEXT("SelfOverlap"));
+		return;
+	}
+
+	if (!IsValid(CombatSignalSourceComp_Injected))
+	{
+		FCombatSignalDebug::RecordWeaponOverlapRejectedForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("BeginOverlap"), TEXT("MissingCombatSignalSourceComponent"));
+		return;
+	}
 
 	FCombatCollisionProfilingCounters::RecordHitWindowOverlap();
 
 	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	FHitContext hitContext = BuildHitContext(overlapContext);
 
-	// PrintBeginOverlapContextInfo(hitContext);
+	FCombatSignalDebug::RecordWeaponOverlapAcceptedForAudit(hitContext, TEXT("BeginOverlap"));
+	FCombatSignalDebug::PrintWeaponHitContextDebug(hitContext);
 
 	// Legacy delegate
 	if (OnWeaponActorBeginOverlap.IsBound())
@@ -290,12 +367,29 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 void ACWeaponActor::OnComponentEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	UShapeComponent* overlapComp = Cast<UShapeComponent>(OverlappedComponent);
-	if (!IsValid(overlapComp)) return;
+	if (!IsValid(overlapComp))
+	{
+		FCombatSignalDebug::RecordWeaponOverlapIgnoredForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("EndOverlap"), TEXT("InvalidOverlapComponent"));
+		return;
+	}
 
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(OtherActor)) return;
-	if (OwnerCharacter_Injected == OtherActor) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(OtherActor))
+	{
+		FCombatSignalDebug::RecordWeaponOverlapIgnoredForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("EndOverlap"), TEXT("InvalidOwnerOrOtherActor"));
+		return;
+	}
 
-	if (!IsValid(CombatSignalSourceComp_Injected)) return;
+	if (OwnerCharacter_Injected == OtherActor)
+	{
+		FCombatSignalDebug::RecordWeaponOverlapIgnoredForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("EndOverlap"), TEXT("SelfOverlap"));
+		return;
+	}
+
+	if (!IsValid(CombatSignalSourceComp_Injected))
+	{
+		FCombatSignalDebug::RecordWeaponOverlapIgnoredForAudit(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, CurrentHitWindowId, TEXT("EndOverlap"), TEXT("MissingCombatSignalSourceComponent"));
+		return;
+	}
 
 	// Legacy delegate
 	if (OnWeaponActorEndOverlap.IsBound())
@@ -398,74 +492,4 @@ void ACWeaponActor::AttachToOwnerSocket(FName InSocketName)
 	if (!IsValid(meshComp)) return;
 
 	AttachToComponent(meshComp, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
-}
-
-void ACWeaponActor::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)
-{
-	FLog::Log(TEXT("========= Begin Overlap ========="));
-	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
-	FLog::Log(TEXT("================================="));
-}
-
-void ACWeaponActor::PrintEndOverlapContextInfo(const FHitContext& InHitContext)
-{
-	FLog::Log(TEXT("========== End Overlap =========="));
-	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
-	FLog::Log(TEXT("================================="));
-}
-
-void ACWeaponActor::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext)
-{
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
-
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InOverlapContext.DamageCauser)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlappedComponent"), *GetNameSafe(InOverlapContext.OverlappedComponent)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlapShape"), *GetNameSafe(InOverlapContext.OverlapShape))); // cast result (can be NULL)
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherActor"), *GetNameSafe(InOverlapContext.OtherActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherComponent"), *GetNameSafe(InOverlapContext.OtherComponent)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("OtherBodyIndex"), InOverlapContext.OtherBodyIndex));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bFromSweep"), InOverlapContext.bFromSweep ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("HitWindowId"), InOverlapContext.HitWindowId));
-
-	if (InOverlapContext.bFromSweep)
-	{
-		const FHitResult& hitResult = InOverlapContext.SweepResult;
-
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BlockingHit"), hitResult.bBlockingHit ? TEXT("true") : TEXT("false")));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Actor"), *GetNameSafe(hitResult.GetActor())));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Component"), *GetNameSafe(hitResult.GetComponent())));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BoneName"), *hitResult.BoneName.ToString()));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactPoint"), *hitResult.ImpactPoint.ToString()));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactNormal"), *hitResult.ImpactNormal.ToString()));
-	}
-}
-
-void ACWeaponActor::PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext)
-{
-	FLog::Log(TEXT("---------- Hit Context ----------"));
-	FLog::Log(TEXT("[WeaponContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InWeaponContext.WeaponType)));
-
-	FLog::Log(TEXT("[ActionContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InActionContext.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), (InActionContext.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.ActionIndex)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void ACWeaponActor::PrintTrailInfo(bool bEnable) const
-{
-	if (!IsValid(TrailComponent)) return;
-
-	UNiagaraSystem* trailAsset = TrailComponent->GetAsset();
-
-	const FString trailCompName = TrailComponent->GetName();
-	FString trailAssetName = IsValid(trailAsset) ? trailAsset->GetName() : TEXT("None");
-
-	FLog::Log(TEXT("======= Weapon Trail Info ======="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bEnable ? TEXT("Active") : TEXT("Inactive")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailComponent"), *trailCompName));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailAsset"), *trailAssetName));
-	FLog::Log(TEXT("================================="));
 }

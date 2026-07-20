@@ -11,6 +11,8 @@
 #include "Component/CReactionFeedbackComponent.h"
 #include "Reaction/CReaction.h"
 
+#include "Core/Debug/FReactionComponentDebug.h"
+
 #include "Type/CWeaponStructure.h"
 
 UCReactionComponent::UCReactionComponent()
@@ -151,7 +153,11 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 {
 	OutData = FReactionData();
 
-	if (!InDataKey.IsValidMinimal()) return false;
+	if (!InDataKey.IsValidMinimal())
+	{
+		FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("InvalidDataKey"));
+		return false;
+	}
 
 	TArray<FDamageSpecKey> candidateKeys; // OutParameter
 	EReactionType reactionType = InDataKey.ReactionType;
@@ -159,8 +165,9 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 	// Candidate SpecKey
 	BuildCandidateSpecKeys(InDataKey.DamageSpecKey, candidateKeys);
 
-	for (const FDamageSpecKey& candidateKey : candidateKeys)
+	for (int32 candidateIndex = 0; candidateIndex < candidateKeys.Num(); ++candidateIndex)
 	{
+		const FDamageSpecKey& candidateKey = candidateKeys[candidateIndex];
 		FReactionDataKey reactionDataKey;
 
 		// Rebuild CandidateSpecKey + Type
@@ -172,15 +179,18 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 		if (!foundPtr) continue;
 
 		const FReactionData& found = *foundPtr;
-		if (!found.IsValidMinimal()) continue;
-
-		// [Debug] ReactionData
-		// PrintReactionDataInfo(found);
+		if (!found.IsValidMinimal())
+		{
+			FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, reactionDataKey, TEXT("InvalidResolvedData"));
+			continue;
+		}
 
 		OutData = found;
+		FReactionComponentDebug::RecordReactionDataResolvedForAudit(OwnerCharacter_Injected, InDataKey, found, candidateIndex);
 		return true;
 	}
 
+	FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("NotFound"));
 	return false;
 }
 
@@ -194,7 +204,7 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 	UCReaction* add = AddReactionExecutor(InData.ReactionExecutorKey);
 	if (IsValid(add)) return add;
 
-	// [Debug] ReactionData is Valid; but Find and Add Failed
+	FReactionComponentDebug::RecordReactionExecutorResolveFailedForAudit(OwnerCharacter_Injected, InData, TEXT("MissingExecutor"));
 	return nullptr;
 }
 
@@ -202,8 +212,17 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 
 bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& InResult)
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!InResult.IsAcceptedDecision()) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("InvalidOwner"));
+		return false;
+	}
+
+	if (!InResult.IsAcceptedDecision())
+	{
+		FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("RejectedDecision"));
+		return false;
+	}
 
 	switch (InResult.ApplyMode)
 	{
@@ -211,15 +230,27 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 	{
 		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
 		{
+			FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Start"), TEXT("OverlayHandlingFailed"));
 			return false;
 		}
 
-		return StartReaction(InResult.ResolvedContext);
+		const bool bStarted = StartReaction(InResult.ResolvedContext);
+		if (bStarted)
+		{
+			FReactionComponentDebug::RecordReactionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Start"));
+			FReactionComponentDebug::PrintReactionExecutionContextDebug(OwnerCharacter_Injected, InResult.ResolvedContext, TEXT("Start"));
+		}
+		else
+		{
+			FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Start"), TEXT("StartFailed"));
+		}
+		return bStarted;
 	}
 
 	case EExecutionApplyMode::Reserve:
 	{
 		// [NOTE] Reaction does not support reserved execution.
+		FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Reserve"), TEXT("UnsupportedReserve"));
 		return false;
 	}
 
@@ -228,25 +259,46 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective))
 		{
+			FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"), TEXT("InterventionFailed"));
 			return false;
 		}
 		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
 		{
+			FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"), TEXT("OverlayHandlingFailed"));
 			return false;
 		}
 
-		return StartReaction(InResult.ResolvedContext);
+		const bool bStarted = StartReaction(InResult.ResolvedContext);
+		if (bStarted)
+		{
+			FReactionComponentDebug::RecordReactionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"));
+			FReactionComponentDebug::PrintReactionExecutionContextDebug(OwnerCharacter_Injected, InResult.ResolvedContext, TEXT("Intervene"));
+		}
+		else
+		{
+			FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"), TEXT("StartFailed"));
+		}
+		return bStarted;
 	}
 	
 	default:
+		FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("UnsupportedApplyMode"));
 		return false;
 	}
 }
 
 bool UCReactionComponent::RequestInterruptActiveReaction(const FExecutionInterventionDirective& InDirective)
 {
-	if (!InDirective.IsValidRequest()) return false;
-	if (InDirective.TargetDomain != EExecutionDomain::Reaction) return false;
+	if (!InDirective.IsValidRequest())
+	{
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, FReactionExecutionContext(), TEXT("RequestInterrupt"), TEXT("InvalidDirective"));
+		return false;
+	}
+	if (InDirective.TargetDomain != EExecutionDomain::Reaction)
+	{
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, FReactionExecutionContext(), TEXT("RequestInterrupt"), TEXT("WrongTargetDomain"));
+		return false;
+	}
 
 	return InterruptActiveReaction(InDirective);
 }
@@ -255,9 +307,21 @@ bool UCReactionComponent::RequestInterruptActiveReaction(const FExecutionInterve
 
 void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason)
 {
-	if (!IsActive()) return;
-	if (!IsValid(InReaction)) return;
-	if (InReaction != GetActiveReactionExecutor()) return;
+	if (!IsActive())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, InReaction, TEXT("ApplyFinished"), NAME_None, TEXT("NotActive"));
+		return;
+	}
+	if (!IsValid(InReaction))
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, InReaction, TEXT("ApplyFinished"), NAME_None, TEXT("InvalidReaction"));
+		return;
+	}
+	if (InReaction != GetActiveReactionExecutor())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, InReaction, TEXT("ApplyFinished"), NAME_None, TEXT("StaleReaction"));
+		return;
+	}
 
 	EndActiveReaction(InFinishReason);
 }
@@ -266,7 +330,11 @@ void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReacti
 
 void UCReactionComponent::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
 {
-	if (!IsValid(ActionComp_Injected)) return;
+	if (!IsValid(ActionComp_Injected))
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("ConsumeDeferredAction"), NAME_None, TEXT("InvalidActionComponent"));
+		return;
+	}
 
 	ActionComp_Injected->ConsumeDeferredAction(InConsumeKey);
 }
@@ -275,60 +343,108 @@ void UCReactionComponent::RequestConsumeDeferredAction(EDeferredActionConsumeKey
 
 void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand)
 {
-	if (InNotifyCommand == EReactionNotifyCommand::None || InNotifyCommand == EReactionNotifyCommand::Max) return;
+	if (InNotifyCommand == EReactionNotifyCommand::None || InNotifyCommand == EReactionNotifyCommand::Max)
+	{
+		FReactionComponentDebug::RecordReactionNotifyCommandIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, InNotifyCommand, TEXT("InvalidCommand"));
+		return;
+	}
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FReactionComponentDebug::RecordReactionNotifyCommandIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, InNotifyCommand, TEXT("InvalidExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
 void UCReactionComponent::HandleReactionAllowInterventionWindowBegin(FName InWindowKey)
 {
-	if (InWindowKey.IsNone()) return;
+	if (InWindowKey.IsNone())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("AllowInterventionWindowBegin"), InWindowKey, TEXT("InvalidWindowKey"));
+		return;
+	}
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("AllowInterventionWindowBegin"), InWindowKey, TEXT("InvalidExecutor"));
+		return;
+	}
 
 	activeExecutor->OpenAllowInterventionWindow(InWindowKey);
 }
 
 void UCReactionComponent::HandleReactionAllowInterventionWindowEnd(FName InWindowKey)
 {
-	if (InWindowKey.IsNone()) return;
+	if (InWindowKey.IsNone())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("AllowInterventionWindowEnd"), InWindowKey, TEXT("InvalidWindowKey"));
+		return;
+	}
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("AllowInterventionWindowEnd"), InWindowKey, TEXT("InvalidExecutor"));
+		return;
+	}
 
 	activeExecutor->CloseAllowInterventionWindow(InWindowKey);
 }
 
 void UCReactionComponent::HandleReactionFeedback(FName InTriggerKey)
 {
-	if (InTriggerKey.IsNone()) return;
+	if (InTriggerKey.IsNone())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("Feedback"), InTriggerKey, TEXT("InvalidTriggerKey"));
+		return;
+	}
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("Feedback"), InTriggerKey, TEXT("InvalidExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerOnce, InTriggerKey);
 }
 
 void UCReactionComponent::HandleReactionFeedbackWindowBegin(FName InTriggerKey)
 {
-	if (InTriggerKey.IsNone()) return;
+	if (InTriggerKey.IsNone())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("FeedbackWindowBegin"), InTriggerKey, TEXT("InvalidTriggerKey"));
+		return;
+	}
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("FeedbackWindowBegin"), InTriggerKey, TEXT("InvalidExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerWindowBegin, InTriggerKey);
 }
 
 void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
 {
-	if (InTriggerKey.IsNone()) return;
+	if (InTriggerKey.IsNone())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("FeedbackWindowEnd"), InTriggerKey, TEXT("InvalidTriggerKey"));
+		return;
+	}
 
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("FeedbackWindowEnd"), InTriggerKey, TEXT("InvalidExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
 }
@@ -358,8 +474,7 @@ void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 		{
 			if (bRebuildAll)
 			{
-				// [Debug] Duplicate key: Override data
-				FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
+				FReactionComponentDebug::RecordReactionDataDuplicateForAudit(OwnerCharacter_Injected, reactionData, bRebuildAll);
 				ReactionDataMap[reactionDataKey] = reactionData;
 			}
 			else // bRebuildAll == false
@@ -405,7 +520,7 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 		UCReaction* add = AddReactionExecutor(executorkey);
 		if (!IsValid(add))
 		{
-			FLog::Log(FString::Printf(TEXT("[BuildReactionExecutorMap] Failed to add ReactionExecutor. ReactionExecutorKey = %s"), *GetNameSafe(reactionData.ReactionExecutorKey.Get())));
+			FReactionComponentDebug::RecordReactionExecutorMapBuildFailedForAudit(OwnerCharacter_Injected, reactionData, TEXT("AddFailed"));
 			continue;
 		}
 	}
@@ -494,17 +609,29 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FDamageSpecKey& InSpecKey
 bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionInterventionDirective& InDirective)
 {
 	if (!InDirective.IsRequested()) return true;
-	if (!InDirective.IsValidRequest()) return false;
+	if (!InDirective.IsValidRequest())
+	{
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, FReactionExecutionContext(), TEXT("ApplyIntervention"), TEXT("InvalidDirective"));
+		return false;
+	}
 
 	switch (InDirective.TargetDomain)
 	{
 	case EExecutionDomain::Action:
-		return IsValid(ActionComp_Injected) && ActionComp_Injected->RequestInterruptActiveAction(InDirective);
+	{
+		const bool bApplied = IsValid(ActionComp_Injected) && ActionComp_Injected->RequestInterruptActiveAction(InDirective);
+		if (!bApplied)
+		{
+			FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, FReactionExecutionContext(), TEXT("ApplyIntervention"), TEXT("ActionInterventionFailed"));
+		}
+		return bApplied;
+	}
 
 	case EExecutionDomain::Reaction:
 		return InterruptActiveReaction(InDirective);
 
 	default:
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, FReactionExecutionContext(), TEXT("ApplyIntervention"), TEXT("UnsupportedTargetDomain"));
 		return false;
 	}
 }
@@ -520,11 +647,23 @@ bool UCReactionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayH
 
 bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InContext)
 {
-	if (IsActive()) return false;
-	if (!InContext.IsValidMinimal()) return false;
+	if (IsActive())
+	{
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"), TEXT("AlreadyActive"));
+		return false;
+	}
+	if (!InContext.IsValidMinimal())
+	{
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"), TEXT("InvalidContext"));
+		return false;
+	}
 
 	UCReaction* incomingExecutor = InContext.ReactionExecutor;
-	if (!IsValid(incomingExecutor)) return false;
+	if (!IsValid(incomingExecutor))
+	{
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"), TEXT("InvalidExecutor"));
+		return false;
+	}
 
 	const FReactionData& incomingData = InContext.ReactionData;
 
@@ -533,10 +672,12 @@ bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InConte
 	if (!incomingExecutor->Start(incomingData))
 	{
 		ExitReactionState(incomingData);
+		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"), TEXT("ExecutorStartFailed"));
 		return false;
 	}
 
 	SetActiveReactionContext(InContext);
+	FReactionComponentDebug::RecordReactionRuntimeAcceptedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"));
 	return true;
 }
 
@@ -550,6 +691,7 @@ bool UCReactionComponent::InterruptActiveReaction(const FExecutionInterventionDi
 	if (!IsValid(activeExecutor))
 	{
 		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("Interrupt"), NAME_None, TEXT("InvalidExecutorFallbackEnd"));
 		return EndActiveReaction(finishReason);
 	}
 
@@ -558,6 +700,7 @@ bool UCReactionComponent::InterruptActiveReaction(const FExecutionInterventionDi
 	if (IsActive())
 	{
 		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("Interrupt"), NAME_None, TEXT("ExecutorDidNotEndFallbackEnd"));
 		return EndActiveReaction(finishReason);
 	}
 
@@ -569,6 +712,10 @@ bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason
 	if (!IsActive()) return true;
 
 	const FReactionData activeData = ActiveReactionData;
+	FReactionExecutionContext activeContext;
+	activeContext.ReactionDataKey = activeData.ReactionDataKey;
+	activeContext.ReactionData = activeData;
+	activeContext.ReactionExecutor = ActiveReactionExecutor;
 
 	if (activeData.IsValidMinimal())
 	{
@@ -576,6 +723,8 @@ bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason
 	}
 
 	ClearActiveReactionContext();
+
+	FReactionComponentDebug::RecordReactionRuntimeAcceptedForAudit(OwnerCharacter_Injected, activeContext, TEXT("End"));
 
 	return !IsActive();
 }
@@ -657,147 +806,4 @@ EReactionFinishReason UCReactionComponent::ConvertExecutionStopReasonToReactionF
 	default:
 		return EReactionFinishReason::Ignored;
 	}
-}
-
-// Debug
-
-void UCReactionComponent::PrintReactionInfoSummary() const
-{
-	FLog::Log(TEXT("=== Reaction Intergrated Info ==="));
-
-	// Component State
-	PrintComponentStateInfo();
-
-	// Active ReactionData
-	{
-		FLog::Log(TEXT("=== Active ReactionData Info ===="));
-
-		if (!ActiveReactionData.IsValidMinimal())
-		{
-			FLog::Log(TEXT("[ActiveReactionData] Invalid / Empty"));
-		}
-		else
-		{
-			PrintReactionDataInfo(ActiveReactionData);
-		}
-	}
-
-	// Active Executor Runtime
-	{
-		FLog::Log(TEXT("== Active ReactionExcutor Info =="));
-
-		if (!IsValid(ActiveReactionExecutor))
-		{
-			FLog::Log(TEXT("[ActiveExecutor] None"));
-		}
-		else
-		{
-			PrintReactionExcutorInfo(ActiveReactionExecutor);
-			PrintReactionExecutorRuntimeInfo(ActiveReactionExecutor);
-		}
-	}
-
-	FLog::Log(TEXT("================================="));
-}
-
-void UCReactionComponent::PrintReactionDataMap() const
-{
-	FLog::Log(TEXT("===== ReactionDataMap Info ======"));
-
-	const int32 count = ReactionDataMap.Num();
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Count"), count));
-
-	if (count <= 0)
-	{
-		FLog::Log(TEXT("[Is Empty]"));
-		FLog::Log(TEXT("================================="));
-		return;
-	}
-
-	FLog::Log(TEXT("=========== Pair Info ==========="));
-
-	int32 index = 0;
-	for (const TPair<FReactionDataKey, FReactionData>& pair : ReactionDataMap)
-	{
-		const FReactionDataKey& key = pair.Key;
-		const FReactionData& value = pair.Value;
-
-		FLog::Log(FString::Printf(TEXT("[%s: %d]"), TEXT("PairIndex"), index++));
-
-		PrintReactionDataKeyInfo(key);
-		PrintReactionDataInfo(value);
-		FLog::Log(TEXT("================================="));
-	}
-}
-
-void UCReactionComponent::PrintComponentStateInfo() const
-{
-	FLog::Log(TEXT("-------- Component State --------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("IsActive"), IsActive() ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(ActiveReactionType)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCReactionComponent::PrintDamageSpecKeyInfo(const FDamageSpecKey& InSpecKey) const
-{
-	const FString actionIndexText = (InSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(InSpecKey.ActionIndex);
-
-	FLog::Log(TEXT("---- DamageSpecKey Info ----"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InSpecKey.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCReactionComponent::PrintReactionDataKeyInfo(const FReactionDataKey& InDataKey) const
-{
-	const FDamageSpecKey& damageSpecKey = InDataKey.DamageSpecKey;
-	const FString actionIndexText = (damageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(damageSpecKey.ActionIndex);
-
-	FLog::Log(TEXT("----- ReactionDataKey Info ------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(damageSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(damageSpecKey.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InDataKey.ReactionType)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCReactionComponent::PrintReactionDataInfo(const FReactionData& InData) const
-{
-	const FDamageSpecKey& damageSpecKey = InData.ReactionDataKey.DamageSpecKey;
-	const FString actionIndexText = (damageSpecKey.ActionIndex == INDEX_NONE) ? TEXT("NONE") : FString::FromInt(damageSpecKey.ActionIndex);
-
-	FLog::Log(TEXT("------ ReactionData Info --------"));
-	// DamageSpec Key
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(damageSpecKey.WeaponType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(damageSpecKey.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionIndex"), *actionIndexText));
-
-	// ReactionType Key
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InData.ReactionDataKey.ReactionType)));
-
-	// RactionExecutor Key
-	UClass* executorClass = InData.ReactionExecutorKey.Get();
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ExecutorKey"), *GetNameSafe(executorClass)));
-
-	// Raction Montage Data
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Montage"), *GetNameSafe(InData.Montage)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("PlayRate"), InData.PlayRate));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("bCanMove"), InData.bCanMove ? 1 : 0));
-	FLog::Log(TEXT("---------------------------------"));
-
-}
-
-void UCReactionComponent::PrintReactionExcutorInfo(const UCReaction* InReaction) const
-{
-	FLog::Log(TEXT("----- ReactionExcutor Info ------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ExecutorObject"), *GetNameSafe(InReaction)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ExecutorClass"), *GetNameSafe(InReaction->GetClass())));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCReactionComponent::PrintReactionExecutorRuntimeInfo(const UCReaction* InReaction) const
-{
-	if (!IsValid(InReaction)) return;
-	InReaction->PrintReactionExecutorRuntimeInfo_Public();
 }

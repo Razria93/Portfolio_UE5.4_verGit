@@ -15,6 +15,7 @@
 
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
+#include "Core/Debug/FAICombatBTDebug.h"
 #include "Type/CAIStructure.h"
 #include "Type/CWorldSubSystemStructure.h"
 
@@ -34,12 +35,19 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return;
+	if (!IsValid(blackboardComp))
+	{
+		FAICombatBTDebug::RecordAIContextClearedForAudit(OwnerComp.GetAIOwner(), nullptr, nullptr, TEXT("AIContext"), TEXT("MissingBlackboard"));
+		return;
+	}
 
 	ACAIController* aiOwner = Cast<ACAIController>(OwnerComp.GetAIOwner());
 	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
+		AActor* targetActor = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiOwner, ownerPawn, targetActor, TEXT("AIContext"), TEXT("MissingOwnerPawn"));
+
 		ClearDeadContext(blackboardComp);
 		ClearReactionContext(blackboardComp);
 		ClearHomeMetricContext(blackboardComp);
@@ -87,6 +95,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 
 	if (buildResult != EContextBuildResult::Success)
 	{
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiOwner, ownerPawn, aiContext.TargetActor, TEXT("PerceptionContext"), *UEnum::GetValueAsString(buildResult));
 		ClearPerceptionContext(blackboardComp);
 
 		ClearAlertRangeContext(blackboardComp);
@@ -113,7 +122,9 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	if (engageAssignmentResult == EContextBuildResult::Success)
 		UpdateEngageAssignmentContext(blackboardComp, aiContext);
 	else
+	{
 		ClearEngageAssignmentContext(blackboardComp);
+	}
 
 	aiOwner->RefreshRuntimeLODTierFromBlackboard();
 }
@@ -191,14 +202,31 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 
 EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
 {
-	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
-	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
+	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
+	{
+		FAICombatBTDebug::RecordAIContextClearedForAudit(nullptr, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("InvalidInput"));
+		return EContextBuildResult::Error;
+	}
+	if (!IsValid(InOutAIContext.TargetActor))
+	{
+		FAICombatBTDebug::RecordAIContextClearedForAudit(nullptr, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingTarget"));
+		return EContextBuildResult::NoData;
+	}
 
 	ACAIController* aiController = Cast<ACAIController>(InOwnerPawn->GetController());
-	if (!IsValid(aiController)) return EContextBuildResult::Error;
+	if (!IsValid(aiController))
+	{
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiController, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingAIController"));
+		return EContextBuildResult::Error;
+	}
 
-	UCWorldSubsystem_CombatEngage* subsystem = InOwnerPawn->GetWorld()->GetSubsystem<UCWorldSubsystem_CombatEngage>();
-	if (!IsValid(subsystem)) return EContextBuildResult::Error;
+	UWorld* world = InOwnerPawn->GetWorld();
+	UCWorldSubsystem_CombatEngage* subsystem = IsValid(world) ? world->GetSubsystem<UCWorldSubsystem_CombatEngage>() : nullptr;
+	if (!IsValid(subsystem))
+	{
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiController, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingEngageSubsystem"));
+		return EContextBuildResult::Error;
+	}
 
 	// [TODO]
 	// Change from 'UCWorldSubsystem_CombatEngage' to 'CWorldSubsystem_EngageCoordinator'
@@ -221,6 +249,10 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	if (InOutAIContext.bShouldEngage)
 	{
 		aiController->RecordEngageAssignmentResolvedForAudit(InOutAIContext.TargetActor);
+	}
+	else
+	{
+		FAICombatBTDebug::RecordAIContextEngageAssignmentForAudit(aiController, InOwnerPawn, InOutAIContext.TargetActor, InOutAIContext.CombatRole, InOutAIContext.bShouldEngage, TEXT("EngageAssignmentPending"));
 	}
 
 	return EContextBuildResult::Success;

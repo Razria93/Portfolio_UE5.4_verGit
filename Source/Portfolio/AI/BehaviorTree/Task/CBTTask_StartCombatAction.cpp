@@ -8,6 +8,7 @@
 
 #include "AI/Blackboard/CAIKey.h"
 
+#include "Core/Debug/FAICombatBTDebug.h"
 #include "Type/CActionOrchestrationStructure.h"
 
 UCBTTask_StartCombatAction::UCBTTask_StartCombatAction()
@@ -18,19 +19,40 @@ UCBTTask_StartCombatAction::UCBTTask_StartCombatAction()
 EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
+	if (!IsValid(blackboardComp))
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(nullptr, nullptr, nullptr, CombatActionIntent, FActionRequestResult(), TEXT("MissingBlackboard"));
+		return EBTNodeResult::Failed;
+	}
 
 	AAIController* aiController = OwnerComp.GetAIOwner();
-	if (!IsValid(aiController)) return EBTNodeResult::Failed;
+	if (!IsValid(aiController))
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, nullptr, nullptr, CombatActionIntent, FActionRequestResult(), TEXT("MissingAIController"));
+		return EBTNodeResult::Failed;
+	}
 
 	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
-	if (!IsValid(enemy)) return EBTNodeResult::Failed;
+	AActor* targetActor = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	if (!IsValid(enemy))
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, aiController->GetPawn(), targetActor, CombatActionIntent, FActionRequestResult(), TEXT("InvalidEnemyPawn"));
+		return EBTNodeResult::Failed;
+	}
 
 	const bool bCanCombatAction = blackboardComp->GetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName);
-	if (!bCanCombatAction) return EBTNodeResult::Failed;
+	if (!bCanCombatAction)
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("CannotCombatAction"));
+		return EBTNodeResult::Failed;
+	}
 
 	const bool bIsCombatAction = blackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName);
-	if (bIsCombatAction) return EBTNodeResult::Failed;
+	if (bIsCombatAction)
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("AlreadyCombatAction"));
+		return EBTNodeResult::Failed;
+	}
 
 	if (bStopMovementOnStart)
 	{
@@ -38,13 +60,19 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	}
 
 	const FActionRequestResult requestResult = enemy->HandleAICombatAction(CombatActionIntent);
-	if (!requestResult.IsStartedResult()) return EBTNodeResult::Failed;
+	if (!requestResult.IsStartedResult())
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, requestResult, TEXT("ActionRequestFailed"));
+		return EBTNodeResult::Failed;
+	}
 
 	const float currentTime = OwnerComp.GetWorld()->GetTimeSeconds();
-	const float nextCombatActionTime = currentTime + enemy->GetCombatActionCooldown();
+	const float cooldown = enemy->GetCombatActionCooldown();
+	const float nextCombatActionTime = currentTime + cooldown;
 	
 	// Set Cooldown
 	blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName, nextCombatActionTime);
+	FAICombatBTDebug::RecordCombatActionTaskSucceededForAudit(aiController, enemy, targetActor, CombatActionIntent, requestResult, cooldown, nextCombatActionTime);
 
 	return EBTNodeResult::Succeeded;
 }

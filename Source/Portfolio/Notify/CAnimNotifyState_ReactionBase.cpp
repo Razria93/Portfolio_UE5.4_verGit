@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 
 #include "Component/CReactionComponent.h"
+#include "Core/Debug/FAnimNotifyDebug.h"
 
 UCAnimNotifyState_ReactionBase::UCAnimNotifyState_ReactionBase()
 {
@@ -16,7 +17,7 @@ bool UCAnimNotifyState_ReactionBase::CanProcessReactionNotify(const UCReactionCo
 
 	if (TriggerReactionType == EReactionType::None || TriggerReactionType == EReactionType::Max)
 	{
-		FLog::Log(TEXT("[AnimNotifyState_ReactionBase] Invalid TriggerReactionType."));
+		FAnimNotifyDebug::ReportReactionNotifyTriggerWarning(this, InReactionComp->GetOwner(), InReactionComp, TriggerReactionType, TEXT("InvalidTriggerReactionType"));
 		return false;
 	}
 

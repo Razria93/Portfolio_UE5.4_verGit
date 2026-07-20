@@ -3,6 +3,8 @@
 
 #include "GameFramework/Character.h"
 
+#include "Core/Debug/FObservableOverlayDebug.h"
+
 UCObservableOverlayComponent::UCObservableOverlayComponent()
 {
 }
@@ -71,9 +73,7 @@ bool UCObservableOverlayComponent::ApplyOverlayHandlings(const TArray<EObservabl
 	{
 		if (!ApplyOverlayHandling(handling))
 		{
-			FLog::Log(FString::Printf(
-				TEXT("[OverlayHandling] Failed Handling=%s"),
-				*UEnum::GetValueAsString(handling)));
+			FObservableOverlayDebug::RecordOverlayHandlingsRejectedForAudit(OwnerCharacter_Injected, this, InHandlings, handling, TEXT("HandlingRejected"));
 			return false;
 		}
 	}
@@ -97,9 +97,7 @@ bool UCObservableOverlayComponent::ApplyOverlayHandling(EObservableOverlayHandli
 		return overlayPolicy->ApplyOverlayHandling(InHandling);
 	}
 
-	FLog::Log(FString::Printf(
-		TEXT("[OverlayHandling] No policy accepted Handling=%s"),
-		*UEnum::GetValueAsString(InHandling)));
+	FObservableOverlayDebug::RecordOverlayHandlingRejectedForAudit(OwnerCharacter_Injected, this, InHandling, TEXT("NoPolicyAccepted"));
 	return false;
 }
 

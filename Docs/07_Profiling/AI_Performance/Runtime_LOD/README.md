@@ -26,4 +26,5 @@ raw CSV / log 파일은 이 폴더에 저장하지 않는다. 각 측정 노트�
 | Enemy actor tick audit | `AI_Enemy_Actor_Tick_Audit_Plan.md` |
 | State-based Runtime LOD policy | `AI_State_Based_Runtime_LOD_Policy_Plan.md` |
 | Runtime LOD tier snapshot refactor | `AI_Runtime_LOD_Tier_Snapshot_Refactor_Plan.md` |
+| Dormant Runtime LOD deferred plan | `AI_Dormant_Runtime_LOD_Deferred_Plan.md` |
 | Debugging obstacles | `AI_Runtime_LOD_Debugging_Obstacle_Note.md` |

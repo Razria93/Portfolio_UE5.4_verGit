@@ -6,6 +6,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundBase.h"
 
+#include "Core/Debug/FCombatFeedbackDebug.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
 #include "Type/CReactionFeedbackStructure.h"
 
@@ -53,15 +54,16 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 {
 	if (!CanPlayReactionFeedback(InReactionFeedbackRequest)) return;
 
+	FCombatFeedbackDebug::RecordReactionFeedbackRequestAcceptedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest);
 	FCombatFeedbackProfiling::RecordReactionFeedbackRequest();
 
 	if (FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(OwnerCharacter_Injected))
 	{
+		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("RuntimeLODSkipEnemyFeedback"));
 		FCombatFeedbackProfiling::RecordReactionFeedbackSkipped();
 		return;
 	}
 
-	// PrintReactionFeedbackRequestInfo(InReactionFeedbackRequest);
 	ExecuteVFXFeedbacks(InReactionFeedbackRequest);
 	ExecuteSFXFeedbacks(InReactionFeedbackRequest);
 }
@@ -72,12 +74,32 @@ void UCReactionFeedbackComponent::ClearRuntimeFeedback()
 
 bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
 {
-	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::None) return false;
-	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::Max) return false;
+	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::None)
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidTiming"));
+		return false;
+	}
+	if (InReactionFeedbackRequest.ReactionFeedbackTiming == EReactionFeedbackTiming::Max)
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidTiming"));
+		return false;
+	}
 
-	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::None) return false;
-	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::All) return false;
-	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::Max) return false;
+	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::None)
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidReactionType"));
+		return false;
+	}
+	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::All)
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidReactionType"));
+		return false;
+	}
+	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::Max)
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidReactionType"));
+		return false;
+	}
 
 	return true;
 }
@@ -208,24 +230,29 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 
 	if (matchedDatas.Num() <= 0)
 	{
+		FCombatFeedbackDebug::RecordReactionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("VFX"), TEXT("NoMatch"));
 		return;
 	}
 
+	FCombatFeedbackDebug::RecordReactionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("VFX"), matchedDatas.Num());
 	TSet<FReactionVFXExecutionKey> executionKeys;
 
 	for (const FReactionVFXFeedbackData* matchedData : matchedDatas)
 	{
-		if (!matchedData) continue;
+		if (!matchedData)
+		{
+			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), nullptr, TEXT("InvalidMatchedData"));
+			continue;
+		}
 
 		const FReactionVFXExecutionKey executionKey = BuildReactionVFXExecutionKey(*matchedData);
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ReactionFeedback] Duplicate VFX execution key skipped"));
+			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), matchedData->VFX, TEXT("DuplicateExecutionKey"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ReactionFeedback] VFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayReactionVFX(*matchedData);
 	}
@@ -262,24 +289,29 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 
 	if (matchedDatas.Num() <= 0)
 	{
+		FCombatFeedbackDebug::RecordReactionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("SFX"), TEXT("NoMatch"));
 		return;
 	}
 
+	FCombatFeedbackDebug::RecordReactionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("SFX"), matchedDatas.Num());
 	TSet<FReactionSFXExecutionKey> executionKeys;
 
 	for (const FReactionSFXFeedbackData* matchedData : matchedDatas)
 	{
-		if (!matchedData) continue;
+		if (!matchedData)
+		{
+			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), nullptr, TEXT("InvalidMatchedData"));
+			continue;
+		}
 
 		const FReactionSFXExecutionKey executionKey = BuildReactionSFXExecutionKey(*matchedData);
 
 		if (executionKeys.Contains(executionKey))
 		{
-			FLog::Log(TEXT("[ReactionFeedback] Duplicate SFX execution key skipped"));
+			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), matchedData->SFX, TEXT("DuplicateExecutionKey"));
 			continue;
 		}
 
-		// FLog::Log(TEXT("[ReactionFeedback] SFX | Matched Data"));
 		executionKeys.Add(executionKey);
 		PlayReactionSFX(*matchedData);
 	}
@@ -287,14 +319,23 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 
 void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData& InReactionVFXFeedbackData)
 {
-	if (!IsValid(InReactionVFXFeedbackData.VFX)) return;
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(InReactionVFXFeedbackData.VFX))
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InReactionVFXFeedbackData.VFX, TEXT("InvalidAsset"));
+		return;
+	}
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InReactionVFXFeedbackData.VFX, TEXT("InvalidOwner"));
+		return;
+	}
 
 	switch (InReactionVFXFeedbackData.VFXPlayType)
 	{
 	case EReactionVFXPlayType::Once:
 	{
 		FCombatFeedbackProfiling::RecordReactionVFX();
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InReactionVFXFeedbackData.VFX, TEXT("SpawnOnce"));
 
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InReactionVFXFeedbackData.VFX,
@@ -307,39 +348,45 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 			true,
 			ENCPoolMethod::None);
 
-		// PrintReactionVFXInfo(InReactionVFXFeedbackData);
-
 		return;
 	}
 
 	case EReactionVFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InReactionVFXFeedbackData.VFX, TEXT("LoopNotImplemented"));
 		return;
 	}
 
 	default:
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InReactionVFXFeedbackData.VFX, TEXT("UnsupportedPlayType"));
 		return;
 	}
 }
-
 void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData& InReactionSFXFeedbackData)
 {
-	if (!IsValid(InReactionSFXFeedbackData.SFX)) return;
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	if (!IsValid(InReactionSFXFeedbackData.SFX))
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InReactionSFXFeedbackData.SFX, TEXT("InvalidAsset"));
+		return;
+	}
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InReactionSFXFeedbackData.SFX, TEXT("InvalidOwner"));
+		return;
+	}
 
 	switch (InReactionSFXFeedbackData.SFXPlayType)
 	{
 	case EReactionSFXPlayType::Once:
 	{
 		FCombatFeedbackProfiling::RecordReactionSFX();
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InReactionSFXFeedbackData.SFX, TEXT("PlayOnce"));
 
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			InReactionSFXFeedbackData.SFX,
 			OwnerCharacter_Injected->GetActorLocation());
-
-		// PrintReactionSFXInfo(InReactionSFXFeedbackData);
 
 		return;
 	}
@@ -347,36 +394,12 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 	case EReactionSFXPlayType::Loop:
 	{
 		// TODO: Implement Loop
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InReactionSFXFeedbackData.SFX, TEXT("LoopNotImplemented"));
 		return;
 	}
 
 	default:
+		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InReactionSFXFeedbackData.SFX, TEXT("UnsupportedPlayType"));
 		return;
 	}
-}
-
-void UCReactionFeedbackComponent::PrintReactionFeedbackRequestInfo(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
-{
-	FLog::Log(TEXT("==== ReactionFeedback Request ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ReactionType"), *UEnum::GetValueAsString(InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Timing"), *UEnum::GetValueAsString(InReactionFeedbackRequest.ReactionFeedbackTiming)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TriggerKey"), *InReactionFeedbackRequest.TriggerKey.ToString()));
-	FLog::Log(TEXT("----------------------------------"));
-}
-
-void UCReactionFeedbackComponent::PrintReactionVFXInfo(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ReactionFeedback VFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InReactionVFXFeedbackData.VFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InReactionVFXFeedbackData.VFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Socket"), *InReactionVFXFeedbackData.SocketName.ToString()));
-	FLog::Log(TEXT("-----------------------------------"));
-}
-
-void UCReactionFeedbackComponent::PrintReactionSFXInfo(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const
-{
-	FLog::Log(TEXT("==== ReactionFeedback SFX Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PlayType"), *UEnum::GetValueAsString(InReactionSFXFeedbackData.SFXPlayType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InReactionSFXFeedbackData.SFX)));
-	FLog::Log(TEXT("-----------------------------------"));
 }

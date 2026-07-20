@@ -104,8 +104,4 @@ private:
 	// Movement Override
 	void ApplyGuardMovementOverride();
 	void ClearMovementOverride();
-
-private:
-	// Debug
-	void PrintGuardStateInfo() const;
 };

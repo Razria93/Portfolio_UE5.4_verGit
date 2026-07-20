@@ -15,6 +15,7 @@
 #include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
+#include "Core/Debug/FActionComponentDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 UCActionComponent::UCActionComponent()
@@ -181,13 +182,25 @@ bool UCActionComponent::ResolveActionData(const FActionDataKey& InDataKey, FActi
 {
 	OutData = FActionData();
 
-	if (!InDataKey.IsValidMinimal()) return false;
+	if (!InDataKey.IsValidMinimal())
+	{
+		FActionComponentDebug::RecordActionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("InvalidDataKey"));
+		return false;
+	}
 
 	FActionData const* foundPtr = ActionDataMap.Find(InDataKey);
-	if (!foundPtr) return false;
+	if (!foundPtr)
+	{
+		FActionComponentDebug::RecordActionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("DataNotFound"));
+		return false;
+	}
 
 	FActionData found = *foundPtr;
-	if (!found.IsValidMinimal()) return false;
+	if (!found.IsValidMinimal())
+	{
+		FActionComponentDebug::RecordActionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("InvalidData"));
+		return false;
+	}
 
 	OutData = found;
 	return true;
@@ -203,7 +216,7 @@ UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 	UCAction* add = AddActionExecutor(InData.ActionExecutorKey);
 	if (IsValid(add)) return add;
 
-	// [Debug] ActionData is Valid; but Find and Add Failed
+	FActionComponentDebug::RecordActionExecutorResolveFailedForAudit(OwnerCharacter_Injected, InData, TEXT("AddExecutorFailed"));
 	return nullptr;
 }
 
@@ -227,33 +240,71 @@ bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionDa
 
 bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResult)
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!InResult.IsAcceptedDecision()) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FActionComponentDebug::RecordActionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("InvalidOwner"));
+		return false;
+	}
+
+	if (!InResult.IsAcceptedDecision())
+	{
+		FActionComponentDebug::RecordActionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("RejectedDecision"));
+		return false;
+	}
 
 	switch (InResult.ApplyMode)
 	{
 	case EExecutionApplyMode::Start:
 	{
-		if (!ApplyOverlayHandlings(InResult.OverlayHandlings)) return false;
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
+		{
+			FActionComponentDebug::RecordActionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("OverlayHandlingFailed"));
+			return false;
+		}
 
-		return StartAction(InResult.ResolvedContext);
+		const bool bStarted = StartAction(InResult.ResolvedContext);
+		if (bStarted)
+		{
+			FActionComponentDebug::RecordActionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Start"));
+		}
+		return bStarted;
 	}
 
 	case EExecutionApplyMode::Reserve:
 	{
-		return ReserveAction(InResult.ResolvedContext);
+		const bool bReserved = ReserveAction(InResult.ResolvedContext);
+		if (bReserved)
+		{
+			FActionComponentDebug::RecordActionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Reserve"));
+		}
+		return bReserved;
 	}
 
 	case EExecutionApplyMode::Intervene:
 	{
 		// [NOTE] Try Apply Intervention
-		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective)) return false;
-		if (!ApplyOverlayHandlings(InResult.OverlayHandlings)) return false;
+		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective))
+		{
+			FActionComponentDebug::RecordActionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("InterventionFailed"));
+			return false;
+		}
 
-		return StartAction(InResult.ResolvedContext);
+		if (!ApplyOverlayHandlings(InResult.OverlayHandlings))
+		{
+			FActionComponentDebug::RecordActionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("OverlayHandlingFailed"));
+			return false;
+		}
+
+		const bool bStarted = StartAction(InResult.ResolvedContext);
+		if (bStarted)
+		{
+			FActionComponentDebug::RecordActionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"));
+		}
+		return bStarted;
 	}
 
 	default:
+		FActionComponentDebug::RecordActionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("InvalidApplyMode"));
 		return false;
 	}
 }
@@ -295,70 +346,126 @@ void UCActionComponent::HandleApplyActionFinished(const UCAction* InAction, EAct
 
 void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyCommand)
 {
-	if (InNotifyCommand == EActionNotifyCommand::None || InNotifyCommand == EActionNotifyCommand::Max) return;
+	if (InNotifyCommand == EActionNotifyCommand::None || InNotifyCommand == EActionNotifyCommand::Max)
+	{
+		FActionComponentDebug::RecordActionNotifyCommandIgnoredForAudit(OwnerCharacter_Injected, nullptr, InNotifyCommand, TEXT("InvalidCommand"));
+		return;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionNotifyCommandIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, InNotifyCommand, TEXT("NoActiveExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
 void UCActionComponent::HandleActionAllowInterventionWindowBegin(FName InWindowKey)
 {
-	if (InWindowKey.IsNone()) return;
+	if (InWindowKey.IsNone())
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("AllowInterventionWindowBegin"), InWindowKey, TEXT("InvalidWindowKey"));
+		return;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("AllowInterventionWindowBegin"), InWindowKey, TEXT("NoActiveExecutor"));
+		return;
+	}
 
 	activeExecutor->OpenAllowInterventionWindow(InWindowKey);
 }
 
 void UCActionComponent::HandleActionAllowInterventionWindowEnd(FName InWindowKey)
 {
-	if (InWindowKey.IsNone()) return;
+	if (InWindowKey.IsNone())
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("AllowInterventionWindowEnd"), InWindowKey, TEXT("InvalidWindowKey"));
+		return;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("AllowInterventionWindowEnd"), InWindowKey, TEXT("NoActiveExecutor"));
+		return;
+	}
 
 	activeExecutor->CloseAllowInterventionWindow(InWindowKey);
 }
 
 void UCActionComponent::HandleActionFeedback(FName InTriggerKey)
 {
-	if (InTriggerKey.IsNone()) return;
+	if (InTriggerKey.IsNone())
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("Feedback"), InTriggerKey, TEXT("InvalidTriggerKey"));
+		return;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("Feedback"), InTriggerKey, TEXT("NoActiveExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerOnce, InTriggerKey);
 }
 
 void UCActionComponent::HandleActionFeedbackWindowBegin(FName InTriggerKey)
 {
-	if (InTriggerKey.IsNone()) return;
+	if (InTriggerKey.IsNone())
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("FeedbackWindowBegin"), InTriggerKey, TEXT("InvalidTriggerKey"));
+		return;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("FeedbackWindowBegin"), InTriggerKey, TEXT("NoActiveExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowBegin, InTriggerKey);
 }
 
 void UCActionComponent::HandleActionFeedbackWindowEnd(FName InTriggerKey)
 {
-	if (InTriggerKey.IsNone()) return;
+	if (InTriggerKey.IsNone())
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("FeedbackWindowEnd"), InTriggerKey, TEXT("InvalidTriggerKey"));
+		return;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("FeedbackWindowEnd"), InTriggerKey, TEXT("NoActiveExecutor"));
+		return;
+	}
 
 	activeExecutor->HandleNotifyFeedback(EActionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
 }
 
 void UCActionComponent::HandleActionCollisionWindowBegin(FName InCollisionName)
 {
-	if (!IsValid(WeaponComp_Injected)) return;
+	if (!IsValid(WeaponComp_Injected))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("CollisionWindowBegin"), InCollisionName, TEXT("InvalidWeaponComponent"));
+		return;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("CollisionWindowBegin"), InCollisionName, TEXT("NoActiveExecutor"));
+		return;
+	}
 
 	FCombatCollisionProfilingCounters::RecordActionCollisionWindowBegin();
 
@@ -367,7 +474,11 @@ void UCActionComponent::HandleActionCollisionWindowBegin(FName InCollisionName)
 
 void UCActionComponent::HandleActionCollisionWindowEnd()
 {
-	if (!IsValid(WeaponComp_Injected)) return;
+	if (!IsValid(WeaponComp_Injected))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("CollisionWindowEnd"), NAME_None, TEXT("InvalidWeaponComponent"));
+		return;
+	}
 
 	FCombatCollisionProfilingCounters::RecordActionCollisionWindowEnd();
 
@@ -376,19 +487,43 @@ void UCActionComponent::HandleActionCollisionWindowEnd()
 
 bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
 {
-	if (InCueTag.IsNone()) return false;
+	if (InCueTag.IsNone())
+	{
+		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, nullptr, InCueTag, TEXT("Ignored"), TEXT("InvalidCueTag"));
+		return false;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return false;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, InCueTag, TEXT("Ignored"), TEXT("NoActiveExecutor"));
+		return false;
+	}
 
 	FCombatCollisionProfilingCounters::RecordActionCombatSignalCue();
 
 	FActionCombatSignalCueRequest request;
-	if (!activeExecutor->ResolveNotifyCombatSignalCue(InCueTag, request)) return false;
-	if (!request.IsValidRequest()) return false;
+	if (!activeExecutor->ResolveNotifyCombatSignalCue(InCueTag, request))
+	{
+		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, InCueTag, TEXT("Rejected"), TEXT("ResolveCueFailed"));
+		return false;
+	}
 
-	if (!IsValid(CombatSignalSourceComp_Injected)) return false;
-	return CombatSignalSourceComp_Injected->RequestAICombatSignalCue(request.CueTag);
+	if (!request.IsValidRequest())
+	{
+		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, InCueTag, TEXT("Rejected"), TEXT("InvalidCueRequest"));
+		return false;
+	}
+
+	if (!IsValid(CombatSignalSourceComp_Injected))
+	{
+		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, InCueTag, TEXT("Rejected"), TEXT("MissingCombatSignalSourceComponent"));
+		return false;
+	}
+
+	const bool bRequested = CombatSignalSourceComp_Injected->RequestAICombatSignalCue(request.CueTag);
+	FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, request.CueTag, bRequested ? TEXT("Accepted") : TEXT("Rejected"), bRequested ? nullptr : TEXT("SourceRejectedCue"));
+	return bRequested;
 }
 
 // Cross-System Dispatch
@@ -450,8 +585,7 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 		{
 			if (bRebuildAll)
 			{
-				// [Debug] Duplicate key: Override data
-				FLog::Log(TEXT("[Duplicate key] Overwrite Value"));
+				FActionComponentDebug::RecordActionDataDuplicateForAudit(OwnerCharacter_Injected, actionData, bRebuildAll);
 				ActionDataMap[actionDataKey] = actionData;
 			}
 			else // bRebuildAll == false
@@ -497,7 +631,7 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 		UCAction* add = AddActionExecutor(executorkey);
 		if (!IsValid(add))
 		{
-			FLog::Log(FString::Printf(TEXT("[BuildActionExecutorMap] Failed to add ActionExecutor. ActionExecutorKey = %s"), *GetNameSafe(actionData.ActionExecutorKey.Get())));
+			FActionComponentDebug::RecordActionExecutorMapBuildFailedForAudit(OwnerCharacter_Injected, actionData, TEXT("AddExecutorFailed"));
 			continue;
 		}
 	}
@@ -578,11 +712,24 @@ bool UCActionComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHan
 
 bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 {
-	if (IsActive()) return false;
-	if (!InContext.IsValidMinimal()) return false;
+	if (IsActive())
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("AlreadyActive"));
+		return false;
+	}
+
+	if (!InContext.IsValidMinimal())
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("InvalidContext"));
+		return false;
+	}
 
 	UCAction* incomingExecutor = InContext.ActionExecutor;
-	if (!IsValid(incomingExecutor)) return false;
+	if (!IsValid(incomingExecutor))
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("InvalidExecutor"));
+		return false;
+	}
 
 	const FActionData& incomingData = InContext.ActionData;
 
@@ -591,24 +738,44 @@ bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 	if (!incomingExecutor->Start(incomingData))
 	{
 		ExitActionState(incomingData);
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("ExecutorStartFailed"));
 		return false;
 	}
 
 	SetActiveActionContext(InContext);
+	FActionComponentDebug::PrintActionExecutionContextDebug(OwnerCharacter_Injected, InContext, TEXT("StartAction"));
 	return true;
 }
 
 bool UCActionComponent::ReserveAction(const FActionExecutionContext& InContext)
 {
-	if (!IsActive()) return false;
-	if (!InContext.IsValidMinimal()) return false;
+	if (!IsActive())
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("ReserveAction"), TEXT("NoActiveAction"));
+		return false;
+	}
+
+	if (!InContext.IsValidMinimal())
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("ReserveAction"), TEXT("InvalidContext"));
+		return false;
+	}
 
 	UCAction* activeExecutor = GetActiveActionExecutor();
-	if (!IsValid(activeExecutor)) return false;
+	if (!IsValid(activeExecutor))
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("ReserveAction"), TEXT("NoActiveExecutor"));
+		return false;
+	}
 
 	const FActionData& incomingData = InContext.ActionData;
 
-	return activeExecutor->ReserveChain(incomingData);
+	const bool bReserved = activeExecutor->ReserveChain(incomingData);
+	if (!bReserved)
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("ReserveAction"), TEXT("ExecutorReserveFailed"));
+	}
+	return bReserved;
 }
 
 bool UCActionComponent::InterruptActiveAction(const FExecutionInterventionDirective& InDirective)

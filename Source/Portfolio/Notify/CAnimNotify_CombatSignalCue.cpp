@@ -1,5 +1,4 @@
 #include "Notify/CAnimNotify_CombatSignalCue.h"
-#include "ProjectGlobal.h"
 
 #include "Component/CActionComponent.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
@@ -22,17 +21,10 @@ void UCAnimNotify_CombatSignalCue::Notify(USkeletalMeshComponent* MeshComp, UAni
 
 	if (CueTag.IsNone())
 	{
-		// FLog::Log(TEXT("[CombatSignalCueNotify] Rejected | Reason=InvalidCueTag"));
 		return;
 	}
 
 	FCombatCollisionProfilingCounters::RecordCombatSignalCueNotify();
 
-	const bool bSent = actionComp->HandleActionCombatSignalCue(CueTag);
-
-	// FLog::Log(FString::Printf(
-	// 	TEXT("[CombatSignalCueNotify] %s | Source=%s | CueTag=%s"),
-	// 	bSent ? TEXT("Sent") : TEXT("Rejected"),
-	// 	*GetNameSafe(IsValid(MeshComp) ? MeshComp->GetOwner() : nullptr),
-	// 	*CueTag.ToString()));
+	actionComp->HandleActionCombatSignalCue(CueTag);
 }

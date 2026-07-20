@@ -1,8 +1,8 @@
 #include "System/Combat/CWorldSubsystem_CombatFeedback.h"
-#include "ProjectGlobal.h"
 
 #include "GameFramework/Actor.h"
 
+#include "Core/Debug/FCombatFeedbackDebug.h"
 #include "Type/CWorldSubSystemStructure.h"
 
 void UCWorldSubsystem_CombatFeedback::Initialize(FSubsystemCollectionBase& Collection)
@@ -21,7 +21,7 @@ void UCWorldSubsystem_CombatFeedback::Deinitialize()
 
 void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHitStopRequest)
 {
-	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] Request HitStop"));
+	FCombatFeedbackDebug::RecordCombatFeedbackHitStopRequestedForAudit(InHitStopRequest);
 
 	switch (InHitStopRequest.HitStopAudience)
 	{
@@ -45,12 +45,14 @@ void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHi
 	}
 
 	default:
+		FCombatFeedbackDebug::RecordCombatFeedbackRequestRejectedForAudit(TEXT("HitStop"), TEXT("UnsupportedAudience"));
 		break;
 	}
 }
 
 void UCWorldSubsystem_CombatFeedback::RequestCameraShake(const FCameraShakeRequest& InCameraShakeRequest)
 {
+	FCombatFeedbackDebug::RecordCombatFeedbackCameraShakeRequestedForAudit(InCameraShakeRequest);
 	OnCameraShakeRequested.Broadcast(InCameraShakeRequest);
 }
 
@@ -58,8 +60,16 @@ void UCWorldSubsystem_CombatFeedback::RequestCameraShake(const FCameraShakeReque
 
 void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDuration, float InDilation)
 {
-	if (!IsValid(InActor)) return;
-	if (InDuration <= 0.f) return;
+	if (!IsValid(InActor))
+	{
+		FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, TEXT("InvalidActor"));
+		return;
+	}
+	if (InDuration <= 0.f)
+	{
+		FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, TEXT("InvalidDuration"));
+		return;
+	}
 
 	const TWeakObjectPtr<AActor> actorKey(InActor);
 
@@ -70,6 +80,7 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 
 	// Slow InActor
 	InActor->CustomTimeDilation = InDilation;
+	FCombatFeedbackDebug::RecordCombatFeedbackHitStopAppliedForAudit(InActor, InDuration, InDilation);
 
 	if (FTimerHandle* existingHandle = ActiveHitStopMap.Find(actorKey))
 	{
@@ -78,9 +89,6 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &UCWorldSubsystem_CombatFeedback::RestoreHitStop, actorKey);
-
-	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] ApplyHitStop"));
-	// PrintHitStopConsumeInfo(InActor, InDuration, InDilation);
 
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, InDuration, false);
 	ActiveHitStopMap.Add(actorKey, handle);
@@ -94,9 +102,6 @@ void UCWorldSubsystem_CombatFeedback::RestoreHitStop(TWeakObjectPtr<AActor> InAc
 		const float* cachedDilation = CachedTimeDilationMap.Find(InActorKey);
 		InActor->CustomTimeDilation = cachedDilation ? *cachedDilation : 1.f;
 	}
-
-	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] RestoreHitStop"));
-	// PrintHitStopConsumeInfo(InActor, 1.f, 0.f);
 
 	// Restore InActor
 	ActiveHitStopMap.Remove(InActorKey);
@@ -141,15 +146,4 @@ void UCWorldSubsystem_CombatFeedback::ClearFeedbackRuntimeState()
 {
 	ClearHitStop();
 	ClearCameraShake();
-}
-
-// Debug
-
-void UCWorldSubsystem_CombatFeedback::PrintHitStopConsumeInfo(AActor* InActor, float InDuration, float InDilation) const
-{
-	FLog::Log(TEXT("===== HitStop Consume Info ======"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Actor"), *GetNameSafe(InActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("Duration"), InDuration));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("Dilation"), InDilation));
-	FLog::Log(TEXT("================================="));
 }
