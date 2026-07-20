@@ -278,7 +278,10 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIC
 		++InOutDebugState.PreservedEngageCount;
 
 		const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(previousAssignment.TargetActor);
-		// PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+		if (ShouldPrintEngageAssignmentVerboseAudit())
+		{
+			PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+		}
 	}
 }
 
@@ -317,7 +320,10 @@ void UCWorldSubsystem_CombatEngage::PromoteExistingAlertAssignments(const TMap<A
 			++InOutDebugState.PromotedCount;
 
 			const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(targetActor);
-			// PrintPromotedEngageAssignment(requestContexts[i], targetSlotState);
+			if (ShouldPrintEngageAssignmentVerboseAudit())
+			{
+				PrintPromotedEngageAssignment(requestContexts[i], targetSlotState);
+			}
 		}
 	}
 }
@@ -343,7 +349,10 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingAlertAssignments(TMap<ACAICo
 		++InOutDebugState.PreservedAlertCount;
 
 		const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(previousAssignment.TargetActor);
-		// PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+		if (ShouldPrintEngageAssignmentVerboseAudit())
+		{
+			PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+		}
 	}
 }
 
@@ -386,7 +395,10 @@ void UCWorldSubsystem_CombatEngage::ApplyFreshRequestAssignments(const TMap<AAct
 			++InOutDebugState.FreshAppliedCount;
 
 			const FEngageAssignmentSlotState& updatedSlotState = InOutSlotState.FindChecked(targetActor);
-			// PrintAppliedFreshEngageAssignment(requestContexts[i], i, freshAssignment.CombatRole, updatedSlotState);
+			if (ShouldPrintEngageAssignmentVerboseAudit())
+			{
+				PrintAppliedFreshEngageAssignment(requestContexts[i], i, freshAssignment.CombatRole, updatedSlotState);
+			}
 		}
 	}
 }
