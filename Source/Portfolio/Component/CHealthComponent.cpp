@@ -150,8 +150,6 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 
 	UpdateDeadState();
 
-	// PrintTakeDamageContextInfo();
-
 	return takenDamage;
 }
 
@@ -176,8 +174,6 @@ float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 	// TODO: `FOnHealthChanged` Delegate BroadCast
 
 	UpdateDeadState();
-
-	// PrintTakeHealContextInfo();
 
 	return takenHeal;
 }
@@ -240,60 +236,3 @@ void UCHealthComponent::ChangeDeadState(EDeadState InNewDeadState)
 		OnDeadStateChanged.Broadcast(prevDeadState, DeadState);
 	}
 }
-
-void UCHealthComponent::PrintTakeDamageContextInfo()
-{
-	FLog::Log(TEXT("========= Damage Event =========="));
-	PrintHealthContextInfo("TakeDamage");
-	PrintDeadContextInfo("TakeDamage");
-	FLog::Log(TEXT("================================="));
-}
-
-void UCHealthComponent::PrintTakeHealContextInfo()
-{
-	FLog::Log(TEXT("========== Heal Event ==========="));
-	PrintHealthContextInfo("TakeHeal");
-	PrintDeadContextInfo("TakeHeal");
-	FLog::Log(TEXT("================================="));
-}
-
-void UCHealthComponent::PrintHealthContextInfo(const FString& InLabel) const
-{
-	FLog::Log(TEXT("-------- Health Context ---------"));
-	if (!InLabel.IsEmpty())
-	{
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Label"), *InLabel));
-	}
-
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("MaxHP"), MaxHP));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("PreviousHP"), PreviousHP));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CurrentHP"), CurrentHP));
-
-	float hpDelta = PreviousHP - CurrentHP;
-	float hpPercent = 0.f;
-
-	if (MaxHP > 0.f)
-	{
-		hpPercent = CurrentHP / MaxHP;
-	}
-
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HPDelta"), hpDelta));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HPPercent"), hpPercent));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DeadState"), *UEnum::GetValueAsString(DeadState)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCHealthComponent::PrintDeadContextInfo(const FString& InLabel) const
-{
-	FLog::Log(TEXT("--------- Dead Context ----------"));
-	if (!InLabel.IsEmpty())
-	{
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Label"), *InLabel));
-	}
-
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DeadState"), *UEnum::GetValueAsString(DeadState)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-

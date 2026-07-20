@@ -55,8 +55,6 @@ bool UCCombatSignalSourceComponent::ValidateRequiredComponentReferences() const
 
 void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
 {
-	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCCombatSignalSourceComponent|NotifyHitWindowOpened]"), TEXT("InHitWindowId"), InHitWindowId));
-
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
 
@@ -71,8 +69,6 @@ void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser
 
 void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId)
 {
-	// FLog::Log(FString::Printf(TEXT("%-20s: %s = %d"), TEXT("[UCCombatSignalSourceComponent|NotifyHitWindowClosed]"), TEXT("InHitWindowId"), InHitWindowId));
-
 	if (!IsValid(InDamageCauser)) return;
 	if (InHitWindowId == INDEX_NONE) return;
 
@@ -120,7 +116,6 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	// Receive: validate overlap hit input and normalize it into source-side data.
 	if (!ValidateRequest(InHitContext))
 	{
-		// PrintCombatSignalSourceRejectedSummaryInfo(InHitContext, ECombatSignalSourceRejectReason::InvalidRequest);
 		return;
 	}
 
@@ -130,15 +125,11 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	// Resolve: validate source-side context and sender policy before target delivery.
 	if (!ValidateContext(combatSignalSourceContext))
 	{
-		const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
-		// PrintCombatSignalSourceRejectedSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult.RejectReason);
 		return;
 	}
 
 	if (!CanSendCombatSignal(combatSignalSourceContext))
 	{
-		const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
-		// PrintCombatSignalSourceRejectedSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult.RejectReason);
 		return;
 	}
 
@@ -146,16 +137,12 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	ResolveSourceDamageSpec(combatSignalSourceContext);
 	if (!combatSignalSourceContext.bAccepted)
 	{
-		const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
-		// PrintCombatSignalSourceRejectedSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult.RejectReason);
 		return;
 	}
 
 	ComputeSourceDamage(combatSignalSourceContext);
 	if (!combatSignalSourceContext.bAccepted)
 	{
-		const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
-		// PrintCombatSignalSourceRejectedSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult.RejectReason);
 		return;
 	}
 
@@ -163,14 +150,8 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	CommitCombatSignalSource(combatSignalSourceContext);
 	if (!combatSignalSourceContext.bAccepted)
 	{
-		const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
-		// PrintCombatSignalSourceRejectedSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult.RejectReason);
 		return;
 	}
-
-	// Debug: build the final source-side result for optional reporting.
-	const FCombatSignalSourceResult combatSignalSourceResult = BuildResult(combatSignalSourceContext);
-	// PrintCombatSignalSourceSummaryInfo(combatSignalSourceContext.HitContext, combatSignalSourceResult);
 }
 
 // Profiling
@@ -578,121 +559,4 @@ bool UCCombatSignalSourceComponent::ValidateCueSignal(const FCombatSignal& InCom
 	if (InCombatSignal.CueTag.IsNone()) return false;
 
 	return true;
-}
-
-// Debug
-
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InCombatSignalSourceResult) const
-{
-	FLog::Log(TEXT("===== Combat Signal Source Summary ======"));
-	FLog::Log(TEXT("[@ COMBAT SIGNAL SOURCE]"));
-
-	FLog::Log(FString::Printf(
-		TEXT("DamageCauser = %s | Target = %s | HitWindowId = %d | Base = %.3f | Request = %.3f | Committed = %.3f"),
-		*GetNameSafe(InHitContext.OverlapContext.DamageCauser),
-		*GetNameSafe(InHitContext.OverlapContext.OtherActor),
-		InHitContext.OverlapContext.HitWindowId,
-		InCombatSignalSourceResult.BaseDamage,
-		InCombatSignalSourceResult.RequestDamage,
-		InCombatSignalSourceResult.CommittedDamage
-	));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const
-{
-	FLog::Log(TEXT("////- Combat Signal Source Context -/////"));
-	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
-	PrintDamageSpecInfo(InDamageSpec);
-	PrintDamageResultInfo(InCombatSignalSourceResult);
-	FLog::Log(TEXT("/////////////////////////////////"));
-}
-
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const
-{
-	FLog::Log(TEXT("= Combat Signal Source Rejected Summary ="));
-	FLog::Log(TEXT("[@ COMBAT SIGNAL SOURCE REJECTED]"));
-
-	FLog::Log(FString::Printf(
-		TEXT("RejectReason = %s | DamageCauser = %s | Target = %s | HitWindowId = %d"),
-		*UEnum::GetValueAsString(InRejectReason),
-		*GetNameSafe(InHitContext.OverlapContext.DamageCauser),
-		*GetNameSafe(InHitContext.OverlapContext.OtherActor),
-		InHitContext.OverlapContext.HitWindowId
-	));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCCombatSignalSourceComponent::PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const
-{
-	FLog::Log(TEXT("////- Combat Signal Source Rejected Context -////"));
-	PrintRejectReasonInfo(InRejectReason);
-	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
-	FLog::Log(TEXT("/////////////////////////////////"));
-}
-
-void UCCombatSignalSourceComponent::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const
-{
-	FLog::Log(TEXT("-------- Overlap Context --------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InOverlapContext.DamageCauser)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlappedComponent"), *GetNameSafe(InOverlapContext.OverlappedComponent)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlapShape"), *GetNameSafe(InOverlapContext.OverlapShape))); // cast result (can be NULL)
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherActor"), *GetNameSafe(InOverlapContext.OtherActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherComponent"), *GetNameSafe(InOverlapContext.OtherComponent)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("OtherBodyIndex"), InOverlapContext.OtherBodyIndex));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bFromSweep"), InOverlapContext.bFromSweep ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("HitWindowId"), InOverlapContext.HitWindowId));
-
-	if (InOverlapContext.bFromSweep)
-	{
-		const FHitResult& hitResult = InOverlapContext.SweepResult;
-
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BlockingHit"), hitResult.bBlockingHit ? TEXT("true") : TEXT("false")));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Actor"), *GetNameSafe(hitResult.GetActor())));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Component"), *GetNameSafe(hitResult.GetComponent())));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BoneName"), *hitResult.BoneName.ToString()));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactPoint"), *hitResult.ImpactPoint.ToString()));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactNormal"), *hitResult.ImpactNormal.ToString()));
-	}
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCCombatSignalSourceComponent::PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const
-{
-	FLog::Log(TEXT("---------- Hit Context ----------"));
-	FLog::Log(TEXT("[WeaponContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InWeaponContext.WeaponType)));
-
-	FLog::Log(TEXT("[ActionContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InActionContext.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), (InActionContext.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.ActionIndex)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCCombatSignalSourceComponent::PrintDamageSpecInfo(const FDamageSpec& InDamageSpec) const
-{
-	FLog::Log(TEXT("---------- Damage Spec ----------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InDamageSpec.BaseDamage));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCCombatSignalSourceComponent::PrintDamageResultInfo(const FCombatSignalSourceResult& InCombatSignalSourceResult) const
-{
-	FLog::Log(TEXT("--------- Damage Result ---------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("BaseDamage"), InCombatSignalSourceResult.BaseDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("RequestDamage"), InCombatSignalSourceResult.RequestDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("CommittedDamage"), InCombatSignalSourceResult.CommittedDamage));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bAccepted"), InCombatSignalSourceResult.bAccepted ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("RejectReason"), *UEnum::GetValueAsString(InCombatSignalSourceResult.RejectReason)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void UCCombatSignalSourceComponent::PrintRejectReasonInfo(ECombatSignalSourceRejectReason InRejectReason) const
-{
-	FLog::Log(TEXT("--------- Reject Reason ---------"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("RejectReason"), *UEnum::GetValueAsString(InRejectReason)));
-	FLog::Log(TEXT("---------------------------------"));
 }

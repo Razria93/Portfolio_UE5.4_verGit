@@ -167,15 +167,4 @@ private:
 
 private:
 	void AttachToOwnerSocket(FName InSocketName);
-
-private:
-	void PrintBeginOverlapContextInfo(const FHitContext& InHitContext);
-	void PrintEndOverlapContextInfo(const FHitContext& InHitContext);
-
-private:
-	void PrintOverlapContextInfo(const FOverlapContext& Context);
-	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext);
-
-private:
-	void PrintTrailInfo(bool bEnable) const;
 };

@@ -95,16 +95,4 @@ private:
 	FCombatSignal BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser) const;
 	bool ValidateCueSignal(const FCombatSignal& InCombatSignal) const;
 
-private:
-	// Debug
-	void PrintCombatSignalSourceSummaryInfo(const FHitContext& InHitContext, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
-	void PrintCombatSignalSourceContextInfo(const FHitContext& InHitContext, const FDamageSpec& InDamageSpec, const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
-	void PrintCombatSignalSourceRejectedSummaryInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
-	void PrintCombatSignalSourceRejectedContextInfo(const FHitContext& InHitContext, ECombatSignalSourceRejectReason InRejectReason) const;
-
-	void PrintOverlapContextInfo(const FOverlapContext& InOverlapContext) const;
-	void PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext) const;
-	void PrintDamageSpecInfo(const FDamageSpec& InDamageSpec) const;
-	void PrintDamageResultInfo(const FCombatSignalSourceResult& InCombatSignalSourceResult) const;
-	void PrintRejectReasonInfo(ECombatSignalSourceRejectReason InRejectReason) const;
 };

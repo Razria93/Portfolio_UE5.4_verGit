@@ -95,12 +95,4 @@ public:
 private:
 	void UpdateDeadState();
 	void ChangeDeadState(EDeadState InNewDeadState);
-
-private:
-	void PrintTakeDamageContextInfo();
-	void PrintTakeHealContextInfo();
-
-private:
-	void PrintHealthContextInfo(const FString& InLabel = TEXT("")) const;
-	void PrintDeadContextInfo(const FString& InLabel = TEXT("")) const;
 };

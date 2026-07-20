@@ -4,7 +4,6 @@
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 #include "NiagaraComponent.h"
-#include "NiagaraSystem.h"
 
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
@@ -167,8 +166,6 @@ void ACWeaponActor::ToggleTrailActive(bool bEnable)
 {
 	if (!IsValid(TrailComponent)) return;
 
-	// PrintTrailInfo(bEnable);
-
 	if (bEnable)
 	{
 		TrailComponent->SetVisibility(true);
@@ -276,8 +273,6 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 
 	FOverlapContext overlapContext = BuildOverlapContext(OwnerCharacter_Injected, this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	FHitContext hitContext = BuildHitContext(overlapContext);
-
-	// PrintBeginOverlapContextInfo(hitContext);
 
 	// Legacy delegate
 	if (OnWeaponActorBeginOverlap.IsBound())
@@ -398,74 +393,4 @@ void ACWeaponActor::AttachToOwnerSocket(FName InSocketName)
 	if (!IsValid(meshComp)) return;
 
 	AttachToComponent(meshComp, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), InSocketName);
-}
-
-void ACWeaponActor::PrintBeginOverlapContextInfo(const FHitContext& InHitContext)
-{
-	FLog::Log(TEXT("========= Begin Overlap ========="));
-	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
-	FLog::Log(TEXT("================================="));
-}
-
-void ACWeaponActor::PrintEndOverlapContextInfo(const FHitContext& InHitContext)
-{
-	FLog::Log(TEXT("========== End Overlap =========="));
-	PrintOverlapContextInfo(InHitContext.OverlapContext);
-	PrintHitContextInfo(InHitContext.WeaponContext, InHitContext.ActionContext);
-	FLog::Log(TEXT("================================="));
-}
-
-void ACWeaponActor::PrintOverlapContextInfo(const FOverlapContext& InOverlapContext)
-{
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerActor"), *GetNameSafe(InOverlapContext.OwnerActor)));
-
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("DamageCauser"), *GetNameSafe(InOverlapContext.DamageCauser)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlappedComponent"), *GetNameSafe(InOverlapContext.OverlappedComponent)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OverlapShape"), *GetNameSafe(InOverlapContext.OverlapShape))); // cast result (can be NULL)
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherActor"), *GetNameSafe(InOverlapContext.OtherActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OtherComponent"), *GetNameSafe(InOverlapContext.OtherComponent)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("OtherBodyIndex"), InOverlapContext.OtherBodyIndex));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("bFromSweep"), InOverlapContext.bFromSweep ? TEXT("true") : TEXT("false")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("HitWindowId"), InOverlapContext.HitWindowId));
-
-	if (InOverlapContext.bFromSweep)
-	{
-		const FHitResult& hitResult = InOverlapContext.SweepResult;
-
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BlockingHit"), hitResult.bBlockingHit ? TEXT("true") : TEXT("false")));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Actor"), *GetNameSafe(hitResult.GetActor())));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.Component"), *GetNameSafe(hitResult.GetComponent())));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.BoneName"), *hitResult.BoneName.ToString()));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactPoint"), *hitResult.ImpactPoint.ToString()));
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Sweep.ImpactNormal"), *hitResult.ImpactNormal.ToString()));
-	}
-}
-
-void ACWeaponActor::PrintHitContextInfo(const FWeaponContext& InWeaponContext, const FActionContext& InActionContext)
-{
-	FLog::Log(TEXT("---------- Hit Context ----------"));
-	FLog::Log(TEXT("[WeaponContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("WeaponType"), *UEnum::GetValueAsString(InWeaponContext.WeaponType)));
-
-	FLog::Log(TEXT("[ActionContext]"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ActionType"), *UEnum::GetValueAsString(InActionContext.ActionType)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Index"), (InActionContext.ActionIndex == INDEX_NONE) ? TEXT("NONE") : *FString::FromInt(InActionContext.ActionIndex)));
-	FLog::Log(TEXT("---------------------------------"));
-}
-
-void ACWeaponActor::PrintTrailInfo(bool bEnable) const
-{
-	if (!IsValid(TrailComponent)) return;
-
-	UNiagaraSystem* trailAsset = TrailComponent->GetAsset();
-
-	const FString trailCompName = TrailComponent->GetName();
-	FString trailAssetName = IsValid(trailAsset) ? trailAsset->GetName() : TEXT("None");
-
-	FLog::Log(TEXT("======= Weapon Trail Info ======="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("State"), bEnable ? TEXT("Active") : TEXT("Inactive")));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailComponent"), *trailCompName));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TrailAsset"), *trailAssetName));
-	FLog::Log(TEXT("================================="));
 }
