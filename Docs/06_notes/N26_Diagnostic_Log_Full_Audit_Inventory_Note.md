@@ -163,13 +163,13 @@ feedback presentation은 Runtime LOD에서 비용 측정을 마쳤지만, invali
 | `Source/Portfolio/Component/CMovementComponent.cpp` | `ChangeMovementGait` | helper gated | GaitSpeedMap missing | `FMovementDebug` + `MovementAudit` 처리 완료 |
 | `Source/Portfolio/Component/CObservableOverlayComponent.cpp` | `ApplyOverlayHandlings` | active diagnostic | overlay handling apply 실패 | 유지. owner/context 보강 후보 |
 | `Source/Portfolio/Component/CObservableOverlayComponent.cpp` | `ApplyOverlayHandling` | active diagnostic | policy 미수락 | 유지 후보. 정상 reject인지 추가 확인 필요 |
-| `Source/Portfolio/Core/Debug/FComponentReferenceHelper.h` | `RecoverIfInvalid` | active diagnostic | invalid component reference recovery | 유지 후보. non-shipping helper 또는 CVar gate 후보 |
+| `Source/Portfolio/Core/Debug/FComponentReferenceHelper.h` | `RecoverIfInvalid` | ensure + helper gated | invalid component reference recovery | 실패 `ensureMsgf` 유지 / 복구 성공은 `FComponentReferenceDebug` + `ComponentReferenceAudit` 처리 완료 |
 
 판단:
 
 ```text
 이 영역은 대부분 asset/configuration 오류 또는 시스템 경계 실패다.
-다만 Overlay policy 미수락과 ComponentReferenceRecovery는 정상 복구/정책 흐름일 수도 있으므로 다음 단계에서 빈도와 의미를 확인한 뒤 유지/게이트 여부를 결정한다.
+다만 Overlay policy 미수락은 정상 정책 흐름일 수도 있으므로 다음 단계에서 빈도와 의미를 확인한 뒤 유지/게이트 여부를 결정한다. ComponentReferenceRecovery는 실패 `ensureMsgf` 유지, 성공 복구 로그 CVar gate로 처리했다.
 ```
 
 ---
@@ -266,6 +266,7 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 | `Portfolio.Debug.ReactionComponentDump` | ReactionComponent execution context dump | 처리 완료 |
 | `Portfolio.Debug.CombatResultAudit` | CombatResult receive / parry stack / stagger request 경계 | 처리 완료 |
 | `Portfolio.Debug.FeedbackAudit` | feedback request/match/invalid data 상세 | 처리 완료 |
+| `Portfolio.Debug.ComponentReferenceAudit` | component reference recovery 성공 관측 | 처리 완료 |
 
 판단:
 
@@ -293,7 +294,7 @@ CombatResult receive 로그는 dispatch가 CombatSignalAudit에 포함되었으�
 추가 검토 항목:
 
 ```text
-1. Overlay / ComponentReferenceRecovery gate 여부
+1. Overlay gate 여부
 2. Notify invalid 로그 context 보강
 3. Action / Reaction data diagnostic 유지 범위 재확인
 4. 전체 잔여 FLog::Log 재스캔
