@@ -36,7 +36,7 @@
 | Action / Reaction montage interruption | active 기본 출력         | 유지. 비정상 interruption 진단용. 추후 non-shipping helper화 후보             |
 | Feedback data diagnostic               | active 기본 출력         | 유지. 중복/invalid feedback data 진단용                                 |
 | Notify invalid trigger                 | active 기본 출력         | 유지. notify asset 설정 오류 진단용. owner/notify context 보강 후보           |
-| Movement invalid gait                  | active 기본 출력         | 유지. movement data 설정 오류 진단용. gait/owner context 보강 후보            |
+| Movement invalid gait                  | helper gated            | `FMovementDebug` + `MovementAudit` 처리 완료                                  |
 | Overlay handling failure               | active 기본 출력         | 유지 후보. 정책 실패 진단용. owner/context 보강 후보                            |
 | AI / Engage audit                      | CVar gated           | 유지. 이미 감사 구조로 분리됨                                                |
 | CSV profiling counters                 | CSV only             | 유지. 성능 측정용이며 출력 로그가 아님                                           |
@@ -160,7 +160,7 @@ feedback presentation은 Runtime LOD에서 비용 측정을 마쳤지만, invali
 | `Source/Portfolio/Notify/CAnimNotifyState_ActionBase.cpp` | `IsValidateActionType` | active diagnostic | invalid action notify state type | 유지. mesh owner/context 보강 후보 |
 | `Source/Portfolio/Notify/CAnimNotify_ReactionBase.cpp` | `IsValidateReactionType` | active diagnostic | invalid reaction notify type | 유지. mesh owner/context 보강 후보 |
 | `Source/Portfolio/Notify/CAnimNotifyState_ReactionBase.cpp` | `IsValidateReactionType` | active diagnostic | invalid reaction notify state type | 유지. mesh owner/context 보강 후보 |
-| `Source/Portfolio/Component/CMovementComponent.cpp` | `ChangeMovementGait` | active diagnostic | GaitSpeedMap missing | 유지. gait/owner context 보강 후보 |
+| `Source/Portfolio/Component/CMovementComponent.cpp` | `ChangeMovementGait` | helper gated | GaitSpeedMap missing | `FMovementDebug` + `MovementAudit` 처리 완료 |
 | `Source/Portfolio/Component/CObservableOverlayComponent.cpp` | `ApplyOverlayHandlings` | active diagnostic | overlay handling apply 실패 | 유지. owner/context 보강 후보 |
 | `Source/Portfolio/Component/CObservableOverlayComponent.cpp` | `ApplyOverlayHandling` | active diagnostic | policy 미수락 | 유지 후보. 정상 reject인지 추가 확인 필요 |
 | `Source/Portfolio/Core/Debug/FComponentReferenceHelper.h` | `RecoverIfInvalid` | active diagnostic | invalid component reference recovery | 유지 후보. non-shipping helper 또는 CVar gate 후보 |
@@ -341,7 +341,7 @@ defense outcome, reaction dispatch 경계에서 조용히 drop될 가능성이 �
 |  11 | `Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.cpp`                                                | AI blackboard context builder                                      | target changed/cleared, engage request submitted, assignment missing                                                                               | `FAICombatBTDebug` + `AICombatBTAudit` 처리 완료             |
 |  12 | `Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.cpp`                                            | `bCanCombatAction` 계산 경계                                           | range, cooldown, active action/reaction, target missing                                                                                            | `FAICombatBTDebug` + `AICombatBTAudit` 처리 완료             |
 |  13 | `Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartCombatAction.cpp`                                                    | BT에서 combat action으로 들어가는 경계                                       | blackboard/controller/pawn invalid, action request result, cooldown set                                                                            | `FAICombatBTDebug` + `AICombatBTAudit` 처리 완료             |
-|  14 | `Source/Portfolio/Component/CMovementComponent.cpp`                                                                      | 최종 movement gate / Runtime LOD movement suppression                | movement intent reject, RuntimeLOD mode change, missing gait speed                                                                                 | CVar audit. missing gait speed는 default diagnostic         |
+|  14 | `Source/Portfolio/Component/CMovementComponent.cpp`                                                                      | 최종 movement gate / Runtime LOD movement suppression                | movement intent reject, RuntimeLOD mode change, missing gait speed                                                                                 | `FMovementDebug` + `MovementAudit` 처리 완료                 |
 |  15 | `Source/Portfolio/Component/CActionFeedbackComponent.cpp`, `CReactionFeedbackComponent.cpp`, `CHitFeedbackComponent.cpp` | presentation 문제를 combat bug로 오인할 수 있음                              | no matching feedback, duplicate match, invalid VFX/SFX/camera shake, profiling skip                                                                | invalid asset은 default diagnostic, volume은 CSV counter     |
 
 ### 우선순위 조정

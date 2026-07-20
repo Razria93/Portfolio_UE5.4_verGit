@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Component/CStateComponent.h"
+#include "Core/Debug/FMovementDebug.h"
 
 UCMovementComponent::UCMovementComponent()
 {
@@ -75,8 +76,10 @@ void UCMovementComponent::UpdateRuntimeLODMovementMode()
 	// Update Mode
 	if (RuntimeLODMovementState.AppliedMode != requestedMovementMode)
 	{
+		const int32 previousMovementMode = RuntimeLODMovementState.AppliedMode;
 		ApplyRuntimeLODMovementMode(requestedMovementMode);
 		RuntimeLODMovementState.AppliedMode = requestedMovementMode;
+		FMovementDebug::RecordRuntimeLODMovementModeAppliedForAudit(OwnerCharacter_Injected, this, previousMovementMode, requestedMovementMode, IsComponentTickEnabled(), bCanMove, bRuntimeLODMovementIntentBlocked);
 	}
 
 	// Block Intent
@@ -145,12 +148,22 @@ void UCMovementComponent::DisableRuntimeLODMovementStateRefresh()
 
 void UCMovementComponent::AllowRuntimeLODMovementIntent()
 {
+	if (bRuntimeLODMovementIntentBlocked)
+	{
+		FMovementDebug::RecordRuntimeLODMovementIntentAllowedForAudit(OwnerCharacter_Injected, this, TEXT("RuntimeLODMode"));
+	}
+
 	ClearMovementIntentBlockForRuntimeLOD();
 	SetMove();
 }
 
 void UCMovementComponent::BlockRuntimeLODMovementIntent()
 {
+	if (!bRuntimeLODMovementIntentBlocked)
+	{
+		FMovementDebug::RecordRuntimeLODMovementIntentBlockedForAudit(OwnerCharacter_Injected, this, TEXT("RuntimeLODMode"));
+	}
+
 	BlockMovementIntentForRuntimeLOD();
 }
 
@@ -193,9 +206,49 @@ void UCMovementComponent::ClearMovementIntentBlockForRuntimeLOD()
 
 void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 {
-	if (!CanAcceptMoveInput()) return;
-	if (InAxis2D.IsNearlyZero()) return;
-	if (!IsValid(OwnerCharacter_Injected)) return;
+	EExecutionState executionState = EExecutionState::Max;
+	if (IsValid(StateComp_Injected))
+	{
+		executionState = StateComp_Injected->GetCurrentExecutionState();
+	}
+
+	if (!CanAcceptMoveInput())
+	{
+		const TCHAR* reason = TEXT("Rejected");
+		if (!IsValid(OwnerCharacter_Injected))
+		{
+			reason = TEXT("InvalidOwner");
+		}
+		else if (bRuntimeLODMovementIntentBlocked)
+		{
+			reason = TEXT("RuntimeLODIntentBlocked");
+		}
+		else if (!bCanMove)
+		{
+			reason = TEXT("CannotMove");
+		}
+		else if (executionState == EExecutionState::Dead)
+		{
+			reason = TEXT("DeadState");
+		}
+		else if (executionState == EExecutionState::Reaction)
+		{
+			reason = TEXT("ReactionState");
+		}
+
+		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, reason, executionState, bCanMove, bRuntimeLODMovementIntentBlocked);
+		return;
+	}
+	if (InAxis2D.IsNearlyZero())
+	{
+		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, TEXT("ZeroAxis"), executionState, bCanMove, bRuntimeLODMovementIntentBlocked);
+		return;
+	}
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, TEXT("InvalidOwner"), executionState, bCanMove, bRuntimeLODMovementIntentBlocked);
+		return;
+	}
 
 	const FRotator controlRot = OwnerCharacter_Injected->GetControlRotation();
 	const FRotator yawRot = FRotator(0.f, controlRot.Yaw, 0.f);
@@ -205,6 +258,7 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 
 	OwnerCharacter_Injected->AddMovementInput(forwardDirection, InAxis2D.Y);
 	OwnerCharacter_Injected->AddMovementInput(rightDirection, InAxis2D.X);
+	FMovementDebug::RecordMovementInputAcceptedForAudit(OwnerCharacter_Injected, this, InAxis2D, CurrentMovementGait);
 }
 
 void UCMovementComponent::OnWalk()
@@ -272,19 +326,28 @@ void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
 
 void UCMovementComponent::ApplyMovementGait(EMovementGait InNewMovementGait)
 {
-	if (!IsValid(CharacterMovementComp_Injected)) return;
-	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max) return;
+	if (!IsValid(CharacterMovementComp_Injected))
+	{
+		FMovementDebug::RecordMovementGaitRejectedForAudit(OwnerCharacter_Injected, this, InNewMovementGait, TEXT("InvalidMovementComponent"));
+		return;
+	}
+	if (InNewMovementGait == EMovementGait::None || InNewMovementGait == EMovementGait::Max)
+	{
+		FMovementDebug::RecordMovementGaitRejectedForAudit(OwnerCharacter_Injected, this, InNewMovementGait, TEXT("InvalidGait"));
+		return;
+	}
 
 	const float* speed = GaitSpeedMap.Find(InNewMovementGait);
 
 	if (!speed)
 	{
-		FLog::Log(TEXT("[ChangeMovementGait] InValid GaitSpeedMap")); // Error
+		FMovementDebug::RecordMovementGaitRejectedForAudit(OwnerCharacter_Injected, this, InNewMovementGait, TEXT("MissingGaitSpeed"));
 		return;
 	}
 
 	CurrentMovementGait = InNewMovementGait;
 	CharacterMovementComp_Injected->MaxWalkSpeed = *speed;
+	FMovementDebug::RecordMovementGaitAppliedForAudit(OwnerCharacter_Injected, this, InNewMovementGait, *speed);
 }
 
 void UCMovementComponent::ApplyRotationMode(EMovementRotationMode InRotationMode)
