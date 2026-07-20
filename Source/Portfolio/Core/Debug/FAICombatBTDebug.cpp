@@ -13,6 +13,12 @@ namespace
 		0,
 		TEXT("Print AI combat behavior tree boundary diagnostic hook logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarCanMoveDecoratorAudit(
+		TEXT("Portfolio.AI.RuntimeLOD.CanMoveDecoratorAudit"),
+		0,
+		TEXT("Print CBTDecorator_CanMove result for runtime LOD debugging. 0: disabled, 1: enabled."),
+		ECVF_Default);
 #endif
 
 	FString FormatAICombatBTController(const AAIController* InAIController)
@@ -54,6 +60,27 @@ bool FAICombatBTDebug::ShouldAuditAICombatBT()
 #else
 	return false;
 #endif
+}
+
+bool FAICombatBTDebug::ShouldAuditCanMoveDecorator()
+{
+#if !UE_BUILD_SHIPPING
+	return CVarCanMoveDecoratorAudit.GetValueOnGameThread() != 0;
+#else
+	return false;
+#endif
+}
+
+// Can Move Decorator Diagnostic Hook
+
+void FAICombatBTDebug::RecordCanMoveDecoratorResultForAudit(const APawn* InOwnerPawn, bool bInCanMove)
+{
+	if (!ShouldAuditCanMoveDecorator()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[AI|CombatBT|CanMoveDecoratorResult] Owner=%s | CanMove=%s"),
+		*GetNameSafe(InOwnerPawn),
+		bInCanMove ? TEXT("true") : TEXT("false")));
 }
 
 // AI Context / Engage Assignment Diagnostic Hook

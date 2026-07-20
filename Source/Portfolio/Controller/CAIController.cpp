@@ -11,6 +11,7 @@
 
 #include "Character/Player/CPlayer.h"
 #include "Character/Enemy/CEnemy.h"
+#include "Core/Debug/FAIPerceptionDebug.h"
 #include "AI/Patrol/CPatrolPath.h"
 
 #include "Interface/TargetContextProvider.h"
@@ -30,17 +31,6 @@ namespace
 		TEXT("Disable Enemy AI Perception for runtime LOD measurement. 0: enable perception, 1: disable Enemy perception."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarEnablePerceptionCandidateAudit(
-		TEXT("Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit"),
-		0,
-		TEXT("Enable Enemy Perception candidate audit for runtime LOD measurement. 0: disabled, 1: enabled."),
-		ECVF_Default);
-
-	TAutoConsoleVariable<int32> CVarEnableBlackboardEngageLatencyAudit(
-		TEXT("Portfolio.AI.RuntimeLOD.BlackboardEngageLatencyAudit"),
-		0,
-		TEXT("Enable Enemy Blackboard / Engage latency audit for runtime LOD measurement. 0: disabled, 1: enabled."),
-		ECVF_Default);
 }
 
 ACAIController::ACAIController()
@@ -573,7 +563,7 @@ void ACAIController::ClearPerceptionCandidateAudit()
 
 bool ACAIController::ShouldAuditPerceptionCandidates() const
 {
-	if (CVarEnablePerceptionCandidateAudit.GetValueOnGameThread() == 0) return false;
+	if (!FAIPerceptionDebug::ShouldAuditPerceptionCandidates()) return false;
 
 	return IsValid(ControlledPawn_Cached) && ControlledPawn_Cached->IsA<ACEnemy>();
 }
@@ -649,7 +639,7 @@ void ACAIController::ClearBlackboardEngageLatencyAudit()
 
 bool ACAIController::ShouldAuditBlackboardEngageLatency() const
 {
-	if (CVarEnableBlackboardEngageLatencyAudit.GetValueOnGameThread() == 0) return false;
+	if (!FAIPerceptionDebug::ShouldAuditBlackboardEngageLatency()) return false;
 
 	return IsValid(ControlledPawn_Cached) && ControlledPawn_Cached->IsA<ACEnemy>();
 }
