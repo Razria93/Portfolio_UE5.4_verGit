@@ -439,6 +439,7 @@ enum class EActionRequestRejectReason : uint8
 	IncomingCannotIntervene,
 	ActiveCannotAcceptIntervention,
 	InterventionDispatchFailed,
+	RejectedByOverlay,
 
 	ActionExecutionFailed,
 
@@ -588,6 +589,7 @@ enum class EReactionRequestRejectReason : uint8
 	IncomingCannotIntervene,
 	ActiveCannotAcceptIntervention,
 	InterventionDispatchFailed,
+	RejectedByOverlay,
 	ReactionExecutionFailed,
 
 	Max,

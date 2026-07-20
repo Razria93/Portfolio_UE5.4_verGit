@@ -127,8 +127,8 @@ asset/data 설정 오류를 찾는 저빈도 진단 로그다.
 | --- | --- | --- | --- | --- |
 | `Source/Portfolio/Action/CAction.cpp` | montage interruption callback | active diagnostic | 예상 밖 montage interruption | 유지 |
 | `Source/Portfolio/Reaction/CReaction.cpp` | montage interruption callback | active diagnostic | 예상 밖 montage interruption | 유지 |
-| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | execution participant resolve | active diagnostic | action/reaction 동시 active | 유지. invariant helper 후보 |
-| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | execution participant resolve | active diagnostic | action/reaction 동시 active | 유지. invariant helper 후보 |
+| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | execution participant resolve | helper gated | action/reaction 동시 active | `FActionReactionDebug::RecordInvalidActiveParticipantsForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | execution participant resolve | helper gated | action/reaction 동시 active | `FActionReactionDebug::RecordInvalidActiveParticipantsForAudit` 처리 완료 |
 
 판단:
 
@@ -233,10 +233,10 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 
 | 파일 | 위치 | 후보 이벤트 | 현재 상태 | 권장 처리 |
 | --- | --- | --- | --- | --- |
-| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `RequestMovementAction`, `RequestEquipmentAction`, `RequestCombatAction` | accepted / ignored / rejected / deferred | result object로 반환 | 기본 로그 추가 금지. 필요 시 `ActionRequestAudit` 후보 |
-| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ValidateExecutionPolicy`, `TryDispatchIntervention` | reject reason 세분화 | result object로 반환 | CVar audit 또는 CSV counter 후보 |
-| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `RequestDamageReaction`, `RequestCombatResultReaction` | accepted / ignored / rejected | result object로 반환 | 기본 로그 추가 금지. 필요 시 `ReactionRequestAudit` 후보 |
-| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ValidateExecutionPolicy`, `TryDispatchIntervention` | reject reason 세분화 | result object로 반환 | CVar audit 또는 CSV counter 후보 |
+| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `RequestMovementAction`, `RequestEquipmentAction`, `RequestCombatAction` | accepted / ignored / rejected / deferred | helper gated | `FActionReactionDebug::RecordActionRequestResultForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FActionReactionDebug::RecordActionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
+| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `RequestDamageReaction`, `RequestCombatResultReaction` | accepted / ignored / rejected | helper gated | `FActionReactionDebug::RecordReactionRequestResultForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FActionReactionDebug::RecordReactionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
 
 판단:
 
@@ -257,8 +257,9 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 | --- | --- | --- |
 | `Portfolio.Debug.CombatSignalAudit` | CombatSignal source/target reject reason, accepted/rejected result, timing cue, dispatch 요약 | 완료 |
 | `Portfolio.Debug.CombatSignalDump` | CombatSignal source context / target packet 상세 dump | 완료 |
-| `Portfolio.Debug.ActionRequestAudit` | ActionOrchestrator request result / reject reason | 다음 후보 |
-| `Portfolio.Debug.ReactionRequestAudit` | ReactionOrchestrator request result / reject reason | 다음 후보 |
+| `Portfolio.Debug.ActionRequestAudit` | ActionOrchestrator request result / reject reason | 처리 완료 |
+| `Portfolio.Debug.ReactionRequestAudit` | ReactionOrchestrator request result / reject reason | 처리 완료 |
+| `Portfolio.Debug.ActionReactionDump` | Action/Reaction orchestration query/result dump | 처리 완료 |
 | `Portfolio.Debug.CombatResultAudit` | CombatResult receive / parry stack / stagger request 경계 | 보류 |
 | `Portfolio.Debug.FeedbackAudit` | feedback request/match/invalid data 상세 | 보류 |
 
@@ -266,7 +267,7 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 
 ```text
 CombatSignalAudit / CombatSignalDump는 1차 적용 완료 상태다.
-다음 탐색은 ActionRequestAudit / ReactionRequestAudit 후보를 먼저 검토한다.
+다음 탐색은 Weapon raw overlap 또는 Action/Reaction data diagnostic 후보를 검토한다.
 CombatResult receive 로그는 dispatch가 CombatSignalAudit에 포함되었으므로, 이후 receiver-side 결과 분석이 필요할 때 별도 CombatResultAudit으로 분리한다.
 ```
 
@@ -321,23 +322,23 @@ defense outcome, reaction dispatch 경계에서 조용히 drop될 가능성이 �
 
 따라서 다음 구현으로 바로 `FCombatResultDebug`에 들어가기 전에, CombatSignal source/target 경계를 먼저 스캔해서 `CombatSignalAudit` 범위를 확정한다.
 
-| 순서 | 파일 | 디버깅 가치 | 관측 후보 | 권장 로그 형태 |
-| ---: | --- | --- | --- | --- |
-| 1 | `Source/Portfolio/Component/CCombatSignalSourceComponent.cpp` | 공격자 쪽 hit pipeline이 여러 gate에서 조용히 drop될 수 있음 | invalid hit context, self/friendly target, duplicate hit window, missing damage spec, compute/commit failure, cue target resolution | CVar audit + CSV counter |
-| 2 | `Source/Portfolio/Component/CCombatSignalTargetComponent.cpp` | target-side damage / defense / reaction / CombatResult dispatch 경계 | invalid damage event, already dead, parry/guard/zero damage, committed HP delta, reaction request result, rejected result packet, dispatch failure | CVar audit. 불가능한 dispatch failure는 default diagnostic 후보 |
-| 3 | `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | action request accept/reject/defer/intervention 중앙 판단 | request source/type, reject reason, resolved data/executor, active participant, execution decision, overlay rejection, intervention failure | CVar audit |
-| 4 | `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | damage/combat result가 reaction으로 이어지는 중앙 판단 | reaction type resolution, missing reaction data/executor, active rejection, dead-force intervention, overlay rejection, dispatch failure | CVar audit |
-| 5 | `Source/Portfolio/Weapon/CWeaponActor.cpp` | raw collision window / overlap 시작점 | collision window open/close, overlap ignored reason, named collision missing, stale hit context | CSV counter + CVar audit |
-| 6 | `Source/Portfolio/Component/CActionComponent.cpp` | action data map, notify routing, executor 상태 | missing action data, executor add failure, notify ignored, collision/cue notify routing | data error는 default diagnostic, runtime reject는 CVar audit |
-| 7 | `Source/Portfolio/Action/CAction.cpp` | montage lifecycle / chain / intervention window | montage play/bind failure, unexpected interruption, stale montage end, intervention mismatch | failure는 default diagnostic, rule trace는 CVar audit |
-| 8 | `Source/Portfolio/Component/CReactionComponent.cpp` | reaction data fallback / active reaction state | spec-key fallback miss, executor failure, notify ignored | data error는 default diagnostic, runtime trace는 CVar audit |
-| 9 | `Source/Portfolio/Reaction/CReaction.cpp` | reaction montage lifecycle | montage play/bind failure, unexpected interruption, stale montage end | failure는 default diagnostic, rule trace는 CVar audit |
-| 10 | `Source/Portfolio/System/Combat/CWorldSubsystem_CombatEngage.cpp` | AI combat role allocator | request snapshot, warmup, lease, cap, preserve/promote/fresh assignment | 기존 CVar audit 유지 |
-| 11 | `Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.cpp` | AI blackboard context builder | target changed/cleared, engage request submitted, assignment missing | CVar audit + CSV counter |
-| 12 | `Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.cpp` | `bCanCombatAction` 계산 경계 | range, cooldown, active action/reaction, target missing | CVar audit |
-| 13 | `Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartCombatAction.cpp` | BT에서 combat action으로 들어가는 경계 | blackboard/controller/pawn invalid, action request result, cooldown set | CVar audit |
-| 14 | `Source/Portfolio/Component/CMovementComponent.cpp` | 최종 movement gate / Runtime LOD movement suppression | movement intent reject, RuntimeLOD mode change, missing gait speed | CVar audit. missing gait speed는 default diagnostic |
-| 15 | `Source/Portfolio/Component/CActionFeedbackComponent.cpp`, `CReactionFeedbackComponent.cpp`, `CHitFeedbackComponent.cpp` | presentation 문제를 combat bug로 오인할 수 있음 | no matching feedback, duplicate match, invalid VFX/SFX/camera shake, profiling skip | invalid asset은 default diagnostic, volume은 CSV counter |
+|  순서 | 파일                                                                                                                       | 디버깅 가치                                                             | 관측 후보                                                                                                                                              | 권장 로그 형태                                                   |
+| --: | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+|   1 | `Source/Portfolio/Component/CCombatSignalSourceComponent.cpp`                                                            | 공격자 쪽 hit pipeline이 여러 gate에서 조용히 drop될 수 있음                       | invalid hit context, self/friendly target, duplicate hit window, missing damage spec, compute/commit failure, cue target resolution                | CVar audit + CSV counter                                   |
+|   2 | `Source/Portfolio/Component/CCombatSignalTargetComponent.cpp`                                                            | target-side damage / defense / reaction / CombatResult dispatch 경계 | invalid damage event, already dead, parry/guard/zero damage, committed HP delta, reaction request result, rejected result packet, dispatch failure | CVar audit. 불가능한 dispatch failure는 default diagnostic 후보   |
+|   3 | `Source/Portfolio/Component/CActionOrchestratorComponent.cpp`                                                            | action request accept/reject/defer/intervention 중앙 판단              | request source/type, reject reason, resolved data/executor, active participant, execution decision, overlay rejection, intervention failure        | CVar audit                                                 |
+|   4 | `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp`                                                          | damage/combat result가 reaction으로 이어지는 중앙 판단                        | reaction type resolution, missing reaction data/executor, active rejection, dead-force intervention, overlay rejection, dispatch failure           | CVar audit                                                 |
+|   5 | `Source/Portfolio/Weapon/CWeaponActor.cpp`                                                                               | raw collision window / overlap 시작점                                 | collision window open/close, overlap ignored reason, named collision missing, stale hit context                                                    | CSV counter + CVar audit                                   |
+|   6 | `Source/Portfolio/Component/CActionComponent.cpp`                                                                        | action data map, notify routing, executor 상태                       | missing action data, executor add failure, notify ignored, collision/cue notify routing                                                            | data error는 default diagnostic, runtime reject는 CVar audit |
+|   7 | `Source/Portfolio/Action/CAction.cpp`                                                                                    | montage lifecycle / chain / intervention window                    | montage play/bind failure, unexpected interruption, stale montage end, intervention mismatch                                                       | failure는 default diagnostic, rule trace는 CVar audit        |
+|   8 | `Source/Portfolio/Component/CReactionComponent.cpp`                                                                      | reaction data fallback / active reaction state                     | spec-key fallback miss, executor failure, notify ignored                                                                                           | data error는 default diagnostic, runtime trace는 CVar audit  |
+|   9 | `Source/Portfolio/Reaction/CReaction.cpp`                                                                                | reaction montage lifecycle                                         | montage play/bind failure, unexpected interruption, stale montage end                                                                              | failure는 default diagnostic, rule trace는 CVar audit        |
+|  10 | `Source/Portfolio/System/Combat/CWorldSubsystem_CombatEngage.cpp`                                                        | AI combat role allocator                                           | request snapshot, warmup, lease, cap, preserve/promote/fresh assignment                                                                            | 기존 CVar audit 유지                                           |
+|  11 | `Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.cpp`                                                | AI blackboard context builder                                      | target changed/cleared, engage request submitted, assignment missing                                                                               | CVar audit + CSV counter                                   |
+|  12 | `Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.cpp`                                            | `bCanCombatAction` 계산 경계                                           | range, cooldown, active action/reaction, target missing                                                                                            | CVar audit                                                 |
+|  13 | `Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartCombatAction.cpp`                                                    | BT에서 combat action으로 들어가는 경계                                       | blackboard/controller/pawn invalid, action request result, cooldown set                                                                            | CVar audit                                                 |
+|  14 | `Source/Portfolio/Component/CMovementComponent.cpp`                                                                      | 최종 movement gate / Runtime LOD movement suppression                | movement intent reject, RuntimeLOD mode change, missing gait speed                                                                                 | CVar audit. missing gait speed는 default diagnostic         |
+|  15 | `Source/Portfolio/Component/CActionFeedbackComponent.cpp`, `CReactionFeedbackComponent.cpp`, `CHitFeedbackComponent.cpp` | presentation 문제를 combat bug로 오인할 수 있음                              | no matching feedback, duplicate match, invalid VFX/SFX/camera shake, profiling skip                                                                | invalid asset은 default diagnostic, volume은 CSV counter     |
 
 ### 우선순위 조정
 

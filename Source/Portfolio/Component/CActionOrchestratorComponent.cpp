@@ -14,6 +14,8 @@
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
 
+#include "Core/Debug/FActionReactionDebug.h"
+
 #include "Type/CActionOrchestrationStructure.h"
 
 UCActionOrchestratorComponent::UCActionOrchestratorComponent()
@@ -411,6 +413,9 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 	ResolveExecutionApplyMode(decisionQuery, executionResult);
 	ResolveObservableOverlayGate(decisionQuery, executionResult);
 
+	FActionReactionDebug::RecordActionExecutionResultForAudit(OwnerCharacter_Injected, executionResult, TEXT("DecisionResolved"));
+	FActionReactionDebug::PrintActionExecutionDebug(OwnerCharacter_Injected, decisionQuery, executionResult);
+
 	return DispatchActionDecision(executionResult);
 }
 
@@ -517,7 +522,7 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 
 	if (bHasActiveAction && bHasActiveReaction)
 	{
-		FLog::Log(TEXT("[ActionOrchestrator] Invalid execution state (action and reaction are both active)."));
+		FActionReactionDebug::RecordInvalidActiveParticipantsForAudit(OwnerCharacter_Injected, TEXT("ActionOrchestrator"));
 		return participant;
 	}
 
@@ -824,6 +829,7 @@ void UCActionOrchestratorComponent::ResolveObservableOverlayGate(const FExecutio
 			if (!overlayDecision.IsAccepted())
 			{
 				InOutResult.Decision = overlayDecision.Decision;
+				InOutResult.RejectReason = EActionRequestRejectReason::RejectedByOverlay;
 				return;
 			}
 
@@ -941,6 +947,8 @@ FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EAc
 	{
 		result.RejectReason = EActionRequestRejectReason::None;
 	}
+
+	FActionReactionDebug::RecordActionRequestResultForAudit(OwnerCharacter_Injected, result, TEXT("RequestResult"));
 
 	return result;
 }
