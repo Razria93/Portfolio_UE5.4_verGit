@@ -7,6 +7,7 @@
 #include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
 
 #include "Type/CWeaponStructure.h"
@@ -70,6 +71,7 @@ float UCCombatSignalTargetComponent::ProcessCombatSignalTarget(float DamageAmoun
 		return HandleDefaultDamageEvent(DamageAmount, damageEvent, EventInstigator, DamageCauser);
 	}
 
+	FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(DamageAmount, DamageEvent, EventInstigator, DamageCauser, TEXT("UnsupportedDamageEvent"));
 	return 0.f;
 }
 
@@ -80,13 +82,18 @@ bool UCCombatSignalTargetComponent::ProcessCombatSignalTarget(const FCombatSigna
 		return HandleTimingCueSignal(InCombatSignal);
 	}
 
+	FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("UnsupportedSignalType"));
 	return false;
 }
 
 float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
 	// Receive: validate engine damage input and normalize it into target-side data.
-	if (!FMath::IsFinite(DamageAmount)) return 0.f;
+	if (!FMath::IsFinite(DamageAmount))
+	{
+		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteDamageAmount"));
+		return 0.f;
+	}
 	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
 
 	FCombatSignalTargetPayload combatSignalTargetPayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
@@ -139,6 +146,8 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
 	DispatchAcceptedCombatResult(combatSignalTargetPacket);
 	DispatchCombatResultToReceiver(combatSignalTargetPacket);
+	FCombatSignalDebug::RecordTargetAcceptedForAudit(combatSignalTargetPacket);
+	FCombatSignalDebug::PrintTargetPacketDebug(combatSignalTargetPacket);
 
 	return committedResult.CommittedDamage;
 }
@@ -146,32 +155,62 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& InCombatSignal)
 {
 	if (!ValidateSignalRequest(InCombatSignal))
+	{
+		FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("InvalidTimingCueSignal"));
 		return false;
+	}
 
 	if (InCombatSignal.CueTag == CombatCueBlinkTag)
 	{
+		FCombatSignalDebug::RecordTimingCueAcceptedForAudit(InCombatSignal);
 		return true;
 	}
 
 	if (InCombatSignal.CueTag == CombatCueRepulseTag)
 	{
+		FCombatSignalDebug::RecordTimingCueAcceptedForAudit(InCombatSignal);
 		return true;
 	}
 
 	// V1 hook only. Blink / Repulse evaluation and effects are added in separate branches.
+	FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("UnknownCueTag"));
 	return false;
 }
 
 bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!IsValid(HealthComp_Injected)) return false;
-	if (!IsValid(InDamageCauser)) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidOwner"));
+		return false;
+	}
+	if (!IsValid(HealthComp_Injected))
+	{
+		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidHealthComponent"));
+		return false;
+	}
+	if (!IsValid(InDamageCauser))
+	{
+		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidDamageCauser"));
+		return false;
+	}
 
-	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerCharacter_Injected) return false;
+	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerCharacter_Injected)
+	{
+		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("TargetMismatch"));
+		return false;
+	}
 
-	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage)) return false;
-	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage)) return false;
+	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage))
+	{
+		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteBaseDamage"));
+		return false;
+	}
+	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage))
+	{
+		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteRequestDamage"));
+		return false;
+	}
 
 	return true;
 }
@@ -424,6 +463,8 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 
 void UCCombatSignalTargetComponent::DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
+	FCombatSignalDebug::RecordTargetRejectedForAudit(InCombatSignalTargetPacket);
+	FCombatSignalDebug::PrintTargetPacketDebug(InCombatSignalTargetPacket);
 	// - Debug/UI rejected feedback
 }
 
@@ -437,38 +478,22 @@ void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombat
 	AActor* receiverActor = ResolveCombatResultReceiverActor(InCombatSignalTargetPacket);
 	if (!IsValid(receiverActor))
 	{
-		FLog::Log(FString::Printf(
-			TEXT("[CombatResultDispatch] No receiver | Outcome=%s | Source=%s | DamageCauser=%s | Requester=%s"),
-			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-			*GetNameSafe(combatResultPacket.SourceActor),
-			*GetNameSafe(combatResultPacket.DamageCauser),
-			*GetNameSafe(combatResultPacket.TargetActor)));
+		FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, nullptr, TEXT("NoReceiver"));
 		return;
 	}
 
 	ICombatResultReceiver* receiver = Cast<ICombatResultReceiver>(receiverActor);
 	if (!receiver)
 	{
-		FLog::Log(FString::Printf(
-			TEXT("[CombatResultDispatch] Receiver has no interface | Outcome=%s | Receiver=%s"),
-			*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-			*GetNameSafe(receiverActor)));
+		FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("MissingReceiverInterface"));
 		return;
 	}
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResultDispatch] Delivering | Outcome=%s | Receiver=%s | Requester=%s"),
-		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-		*GetNameSafe(receiverActor),
-		*GetNameSafe(combatResultPacket.TargetActor)));
+	FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("Delivering"));
 
 	receiver->ReceiveCombatResultPacket(combatResultPacket);
 
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResultDispatch] Delivered | Outcome=%s | Receiver=%s | Requester=%s"),
-		*UEnum::GetValueAsString(combatResultPacket.DefenseOutcome),
-		*GetNameSafe(receiverActor),
-		*GetNameSafe(combatResultPacket.TargetActor)));
+	FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("Delivered"));
 }
 
 AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const

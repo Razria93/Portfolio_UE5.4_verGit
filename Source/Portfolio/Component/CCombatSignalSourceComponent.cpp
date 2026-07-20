@@ -10,6 +10,8 @@
 #include "AI/Blackboard/CAIKey.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalTargetComponent.h"
+
+#include "Core/Debug/FCombatSignalDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "Type/CWeaponStructure.h"
@@ -93,7 +95,11 @@ bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor
 	FCombatCollisionProfilingCounters::RecordCombatSignalCueRequest();
 
 	const FCombatSignal combatSignal = BuildCueSignal(InTargetActor, InCueTag, InCueLocation, InDirection, InSignalCauser);
-	if (!ValidateCueSignal(combatSignal)) return false;
+	if (!ValidateCueSignal(combatSignal))
+	{
+		FCombatSignalDebug::RecordCueRejectedForAudit(combatSignal, TEXT("InvalidCueRequest"));
+		return false;
+	}
 
 	return SendCueSignal(combatSignal);
 }
@@ -103,7 +109,12 @@ bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 	FCombatCollisionProfilingCounters::RecordAICombatSignalCueRequest();
 
 	AActor* targetActor = ResolveCueTargetActor();
-	if (!IsValid(targetActor)) return false;
+	if (!IsValid(targetActor))
+	{
+		FCombatSignal emptySignal = BuildCueSignal(nullptr, InCueTag, FVector::ZeroVector, FVector::ZeroVector, OwnerCharacter_Injected);
+		FCombatSignalDebug::RecordCueRejectedForAudit(emptySignal, TEXT("MissingAITarget"));
+		return false;
+	}
 
 	const FVector cueLocation = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetActorLocation() : FVector::ZeroVector;
 	const FVector cueDirection = IsValid(OwnerCharacter_Injected) ? (targetActor->GetActorLocation() - OwnerCharacter_Injected->GetActorLocation()).GetSafeNormal() : FVector::ZeroVector;
@@ -125,11 +136,15 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	// Resolve: validate source-side context and sender policy before target delivery.
 	if (!ValidateContext(combatSignalSourceContext))
 	{
+		FCombatSignalDebug::RecordSourceRejectedForAudit(combatSignalSourceContext);
+		FCombatSignalDebug::PrintSourceContextDebug(combatSignalSourceContext);
 		return;
 	}
 
 	if (!CanSendCombatSignal(combatSignalSourceContext))
 	{
+		FCombatSignalDebug::RecordSourceRejectedForAudit(combatSignalSourceContext);
+		FCombatSignalDebug::PrintSourceContextDebug(combatSignalSourceContext);
 		return;
 	}
 
@@ -137,12 +152,16 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	ResolveSourceDamageSpec(combatSignalSourceContext);
 	if (!combatSignalSourceContext.bAccepted)
 	{
+		FCombatSignalDebug::RecordSourceRejectedForAudit(combatSignalSourceContext);
+		FCombatSignalDebug::PrintSourceContextDebug(combatSignalSourceContext);
 		return;
 	}
 
 	ComputeSourceDamage(combatSignalSourceContext);
 	if (!combatSignalSourceContext.bAccepted)
 	{
+		FCombatSignalDebug::RecordSourceRejectedForAudit(combatSignalSourceContext);
+		FCombatSignalDebug::PrintSourceContextDebug(combatSignalSourceContext);
 		return;
 	}
 
@@ -150,8 +169,13 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 	CommitCombatSignalSource(combatSignalSourceContext);
 	if (!combatSignalSourceContext.bAccepted)
 	{
+		FCombatSignalDebug::RecordSourceRejectedForAudit(combatSignalSourceContext);
+		FCombatSignalDebug::PrintSourceContextDebug(combatSignalSourceContext);
 		return;
 	}
+
+	FCombatSignalDebug::RecordSourceAcceptedForAudit(combatSignalSourceContext);
+	FCombatSignalDebug::PrintSourceContextDebug(combatSignalSourceContext);
 }
 
 // Profiling
@@ -173,32 +197,55 @@ bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitCont
 	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
 
 	// V1: Validate core actors (OwnerActor / DamageCauser / OtherActor)
-	if (!overlapContext.IsValidMinimal()) return false;
+	if (!overlapContext.IsValidMinimal())
+	{
+		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidMinimalOverlapContext"));
+		return false;
+	}
 
 	// V2: Check Valid Hit Window
-	if (overlapContext.HitWindowId == INDEX_NONE) return false;
+	if (overlapContext.HitWindowId == INDEX_NONE)
+	{
+		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidHitWindow"));
+		return false;
+	}
 
 	// V3: Check Valid Object
 	// 3-1): Validate Components (current policy)
 	if (!IsValid(overlapContext.OverlappedComponent) || !IsValid(overlapContext.OtherComponent))
+	{
+		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidOverlapComponent"));
 		return false;
+	}
 
 	// 3-2): Attack collision must be ShapeComponent (current policy)
 	if (!IsValid(overlapContext.OverlapShape))
+	{
+		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidOverlapShape"));
 		return false;
+	}
 
 	// V4: Check ownership
 	 // 4-1) DamageCauser must be owned by the attacker
 	if (overlapContext.DamageCauser->GetOwner() != overlapContext.OwnerActor)
+	{
+		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("DamageCauserOwnerMismatch"));
 		return false;
+	}
 
 	// 4-2) OverlappedComponent must belong to the DamageCauser
 	if (overlapContext.OverlappedComponent->GetOwner() != overlapContext.DamageCauser)
+	{
+		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("OverlappedComponentOwnerMismatch"));
 		return false;
+	}
 
 	// 4-3) OtherComponent must belong to the target actor
 	if (overlapContext.OtherComponent->GetOwner() != overlapContext.OtherActor)
+	{
+		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("OtherComponentOwnerMismatch"));
 		return false;
+	}
 
 	return true;
 }
@@ -396,19 +443,36 @@ float UCCombatSignalSourceComponent::SendDamageToTarget(const FCombatSignalSourc
 bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatSignal) const
 {
 	if (!ValidateCueSignal(InCombatSignal))
+	{
+		FCombatSignalDebug::RecordCueRejectedForAudit(InCombatSignal, TEXT("InvalidCueSignal"));
 		return false;
+	}
 
 	AActor* targetActor = InCombatSignal.Header.TargetActor;
 	if (!IsValid(targetActor))
+	{
+		FCombatSignalDebug::RecordCueRejectedForAudit(InCombatSignal, TEXT("InvalidTarget"));
 		return false;
+	}
 
 	UCCombatSignalTargetComponent* targetComponent = targetActor->FindComponentByClass<UCCombatSignalTargetComponent>();
 	if (!IsValid(targetComponent))
+	{
+		FCombatSignalDebug::RecordCueRejectedForAudit(InCombatSignal, TEXT("MissingTargetComponent"));
 		return false;
+	}
 
 	FCombatCollisionProfilingCounters::RecordCombatSignalCueSend();
 
-	return targetComponent->RequestCombatSignalTarget(InCombatSignal);
+	const bool bAccepted = targetComponent->RequestCombatSignalTarget(InCombatSignal);
+	if (!bAccepted)
+	{
+		FCombatSignalDebug::RecordCueRejectedForAudit(InCombatSignal, TEXT("TargetRejectedCue"));
+		return false;
+	}
+
+	FCombatSignalDebug::RecordCueAcceptedForAudit(InCombatSignal);
+	return true;
 }
 
 void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InCombatSignalSourceContext)
