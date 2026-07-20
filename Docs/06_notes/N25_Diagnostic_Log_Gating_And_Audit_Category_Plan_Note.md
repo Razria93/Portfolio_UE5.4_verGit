@@ -279,10 +279,16 @@ CWorldSubsystem_CombatFeedback
 VFX / SFX / Trail / HitStop / CameraShake 요청과 실패 관측
 ```
 
-### ActionReaction
+### Execution / Action / Reaction
 
 ```text
-Portfolio.Debug.ActionReactionAudit
+Portfolio.Debug.ExecutionOrchestratorDump
+Portfolio.Debug.ActionRequestAudit
+Portfolio.Debug.ReactionRequestAudit
+Portfolio.Debug.ActionComponentAudit
+Portfolio.Debug.ActionComponentDump
+Portfolio.Debug.ReactionComponentAudit
+Portfolio.Debug.ReactionComponentDump
 ```
 
 대상:
