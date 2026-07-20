@@ -19,6 +19,7 @@ namespace
 		TEXT("Delays the first CombatEngage assignment rebuild until request candidates are warmed up. 0: disabled."),
 		ECVF_Default);
 
+#if !UE_BUILD_SHIPPING
 	TAutoConsoleVariable<int32> CVarEngageAssignmentAudit(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAudit"),
 		0,
@@ -30,6 +31,7 @@ namespace
 		0,
 		TEXT("Print detailed CombatEngage assignment candidate logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
+#endif
 
 	TAutoConsoleVariable<int32> CVarEngageAssignmentEngageCap(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap"),
@@ -60,12 +62,20 @@ namespace
 
 	bool ShouldPrintEngageAssignmentAudit()
 	{
+#if !UE_BUILD_SHIPPING
 		return CVarEngageAssignmentAudit.GetValueOnGameThread() != 0;
+#else
+		return false;
+#endif
 	}
 
 	bool ShouldPrintEngageAssignmentVerboseAudit()
 	{
+#if !UE_BUILD_SHIPPING
 		return CVarEngageAssignmentVerboseAudit.GetValueOnGameThread() != 0;
+#else
+		return false;
+#endif
 	}
 }
 
@@ -458,6 +468,8 @@ void UCWorldSubsystem_CombatEngage::ClearEngageRuntimeState()
 
 void UCWorldSubsystem_CombatEngage::PrintAppliedFreshEngageAssignment(const FEngageRequestContext& InRequestContext, const int& InIndex, const ECombatRole& InCombatRole, const FEngageAssignmentSlotState& InSlotState) const
 {
+	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
+
 	const APawn* controlledPawn = IsValid(InRequestContext.RequestController) ? InRequestContext.RequestController->GetPawn() : nullptr;
 
 	FLog::Log(TEXT("==== AppliedFreshEngageAssignment ===="));
@@ -475,6 +487,8 @@ void UCWorldSubsystem_CombatEngage::PrintAppliedFreshEngageAssignment(const FEng
 
 void UCWorldSubsystem_CombatEngage::PrintPromotedEngageAssignment(const FEngageRequestContext& InRequestContext, const FEngageAssignmentSlotState& InSlotState) const
 {
+	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
+
 	const APawn* controlledPawn = IsValid(InRequestContext.RequestController) ? InRequestContext.RequestController->GetPawn() : nullptr;
 
 	FLog::Log(TEXT("==== PromotedEngageAssignment ===="));
@@ -492,6 +506,8 @@ void UCWorldSubsystem_CombatEngage::PrintPromotedEngageAssignment(const FEngageR
 
 void UCWorldSubsystem_CombatEngage::PrintPreservedAssignment(const ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment, const FEngageAssignmentSlotState& InSlotState) const
 {
+	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
+
 	const APawn* controlledPawn = IsValid(InCAIController) ? InCAIController->GetPawn() : nullptr;
 	const float* lastRequestTime = LastRequestTimeContainer.Find(InCAIController);
 
@@ -514,6 +530,8 @@ void UCWorldSubsystem_CombatEngage::PrintPreservedAssignment(const ACAIControlle
 
 void UCWorldSubsystem_CombatEngage::PrintAssignmentWarmupDelay(const int& InRebuildId) const
 {
+	if (!ShouldPrintEngageAssignmentAudit()) return;
+
 	FLog::Log(FString::Printf(
 		TEXT("[EngageAssignmentWarmupDelay] RebuildId=%d | RequestCount=%d | WarmupElapsed=%.3f | WarmupTime=%.3f"),
 		InRebuildId,
@@ -524,6 +542,8 @@ void UCWorldSubsystem_CombatEngage::PrintAssignmentWarmupDelay(const int& InRebu
 
 void UCWorldSubsystem_CombatEngage::PrintEngageRequestSnapshot(const int& InRebuildId, const TMap<ACAIController*, FEngageRequestContext>& InRequestSnapshot, const TMap<AActor*, TArray<FEngageRequestContext>>& InRequestBucket) const
 {
+	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
+
 	FLog::Log(TEXT("==== EngageRequestSnapshot ===="));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RebuildId"), InRebuildId));
 	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RequestCount"), InRequestSnapshot.Num()));
@@ -559,6 +579,8 @@ void UCWorldSubsystem_CombatEngage::PrintEngageRequestSnapshot(const int& InRebu
 
 void UCWorldSubsystem_CombatEngage::PrintEngageAssignmentRebuildSummary(const int& InRebuildId, const FEngageAssignmentRebuildDebugState& InDebugState, const TMap<ACAIController*, FEngageAssignmentContext>& InAssignments) const
 {
+	if (!ShouldPrintEngageAssignmentAudit()) return;
+
 	int32 engageCount = 0;
 	int32 alertCount = 0;
 	int32 noneCount = 0;
