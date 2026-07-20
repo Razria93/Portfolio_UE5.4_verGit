@@ -43,8 +43,4 @@ private:
 private:
 	// Runtime State
 	void ClearFeedbackRuntimeState();
-
-private:
-	// Debug
-	void PrintHitStopConsumeInfo(AActor* InActor, float InDuration, float InDilation) const;
 };

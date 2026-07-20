@@ -1,5 +1,4 @@
 #include "System/Combat/CWorldSubsystem_CombatFeedback.h"
-#include "ProjectGlobal.h"
 
 #include "GameFramework/Actor.h"
 
@@ -21,8 +20,6 @@ void UCWorldSubsystem_CombatFeedback::Deinitialize()
 
 void UCWorldSubsystem_CombatFeedback::RequestHitStop(const FHitStopRequest& InHitStopRequest)
 {
-	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] Request HitStop"));
-
 	switch (InHitStopRequest.HitStopAudience)
 	{
 	case EFeedbackAudience::Source:
@@ -79,9 +76,6 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &UCWorldSubsystem_CombatFeedback::RestoreHitStop, actorKey);
 
-	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] ApplyHitStop"));
-	// PrintHitStopConsumeInfo(InActor, InDuration, InDilation);
-
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, InDuration, false);
 	ActiveHitStopMap.Add(actorKey, handle);
 }
@@ -94,9 +88,6 @@ void UCWorldSubsystem_CombatFeedback::RestoreHitStop(TWeakObjectPtr<AActor> InAc
 		const float* cachedDilation = CachedTimeDilationMap.Find(InActorKey);
 		InActor->CustomTimeDilation = cachedDilation ? *cachedDilation : 1.f;
 	}
-
-	// FLog::Log(TEXT("[UCWorldSubsystem_CombatFeedback] RestoreHitStop"));
-	// PrintHitStopConsumeInfo(InActor, 1.f, 0.f);
 
 	// Restore InActor
 	ActiveHitStopMap.Remove(InActorKey);
@@ -141,15 +132,4 @@ void UCWorldSubsystem_CombatFeedback::ClearFeedbackRuntimeState()
 {
 	ClearHitStop();
 	ClearCameraShake();
-}
-
-// Debug
-
-void UCWorldSubsystem_CombatFeedback::PrintHitStopConsumeInfo(AActor* InActor, float InDuration, float InDilation) const
-{
-	FLog::Log(TEXT("===== HitStop Consume Info ======"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Actor"), *GetNameSafe(InActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("Duration"), InDuration));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("Dilation"), InDilation));
-	FLog::Log(TEXT("================================="));
 }
