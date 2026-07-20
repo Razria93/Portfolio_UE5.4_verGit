@@ -13,7 +13,7 @@ namespace
 		ECVF_Default);
 #endif
 
-	FString FormatOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
+	FString FormatObservableOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 	{
 		if (InHandlings.IsEmpty()) return TEXT("None");
 
@@ -64,5 +64,5 @@ void FObservableOverlayDebug::RecordOverlayHandlingsRejectedForAudit(const AActo
 		*GetNameSafe(InOwnerActor),
 		*GetNameSafe(InComponent),
 		*UEnum::GetValueAsString(InFailedHandling),
-		*FormatOverlayHandlings(InHandlings)));
+		*FormatObservableOverlayHandlings(InHandlings)));
 }

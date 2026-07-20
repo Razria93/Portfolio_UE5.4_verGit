@@ -35,7 +35,7 @@
 | Action / Reaction data diagnostic      | active 기본 출력         | 유지. asset/data 문제 진단용. 추후 non-shipping helper화 후보                |
 | Action / Reaction montage interruption | active 기본 출력         | 유지. 비정상 interruption 진단용. 추후 non-shipping helper화 후보             |
 | Feedback data diagnostic               | active 기본 출력         | 유지. 중복/invalid feedback data 진단용                                 |
-| Notify invalid trigger                 | active 기본 출력         | 유지. notify asset 설정 오류 진단용. owner/notify context 보강 후보           |
+| Notify invalid trigger                 | helper warning once      | `FAnimNotifyDebug`로 owner/component/notify context 보강 완료                |
 | Movement invalid gait                  | helper gated            | `FMovementDebug` + `MovementAudit` 처리 완료                                  |
 | Overlay handling failure               | active 기본 출력         | 유지 후보. 정책 실패 진단용. owner/context 보강 후보                            |
 | AI / Engage audit                      | CVar gated           | 유지. 이미 감사 구조로 분리됨                                                |
@@ -156,10 +156,10 @@ feedback presentation은 Runtime LOD에서 비용 측정을 마쳤지만, invali
 
 | 파일 | 위치 | 현재 상태 | 후보 이벤트 | 권장 처리 |
 | --- | --- | --- | --- | --- |
-| `Source/Portfolio/Notify/CAnimNotify_ActionBase.cpp` | `IsValidateActionType` | active diagnostic | invalid action notify type | 유지. mesh owner/context 보강 후보 |
-| `Source/Portfolio/Notify/CAnimNotifyState_ActionBase.cpp` | `IsValidateActionType` | active diagnostic | invalid action notify state type | 유지. mesh owner/context 보강 후보 |
-| `Source/Portfolio/Notify/CAnimNotify_ReactionBase.cpp` | `IsValidateReactionType` | active diagnostic | invalid reaction notify type | 유지. mesh owner/context 보강 후보 |
-| `Source/Portfolio/Notify/CAnimNotifyState_ReactionBase.cpp` | `IsValidateReactionType` | active diagnostic | invalid reaction notify state type | 유지. mesh owner/context 보강 후보 |
+| `Source/Portfolio/Notify/CAnimNotify_ActionBase.cpp` | `CanProcessActionNotify` | helper warning once | invalid action notify type | `FAnimNotifyDebug::ReportActionNotifyTriggerWarning` 처리 완료 |
+| `Source/Portfolio/Notify/CAnimNotifyState_ActionBase.cpp` | `CanProcessActionNotify` | helper warning once | invalid action notify state type | `FAnimNotifyDebug::ReportActionNotifyTriggerWarning` 처리 완료 |
+| `Source/Portfolio/Notify/CAnimNotify_ReactionBase.cpp` | `CanProcessReactionNotify` | helper warning once | invalid reaction notify type | `FAnimNotifyDebug::ReportReactionNotifyTriggerWarning` 처리 완료 |
+| `Source/Portfolio/Notify/CAnimNotifyState_ReactionBase.cpp` | `CanProcessReactionNotify` | helper warning once | invalid reaction notify state type | `FAnimNotifyDebug::ReportReactionNotifyTriggerWarning` 처리 완료 |
 | `Source/Portfolio/Component/CMovementComponent.cpp` | `ChangeMovementGait` | helper gated | GaitSpeedMap missing | `FMovementDebug` + `MovementAudit` 처리 완료 |
 | `Source/Portfolio/Component/CObservableOverlayComponent.cpp` | `ApplyOverlayHandlings` | helper gated | overlay handling apply 실패 | `FObservableOverlayDebug` + `ObservableOverlayAudit` 처리 완료 |
 | `Source/Portfolio/Component/CObservableOverlayComponent.cpp` | `ApplyOverlayHandling` | helper gated | policy 미수락 | `FObservableOverlayDebug` + `ObservableOverlayAudit` 처리 완료 |
@@ -295,9 +295,8 @@ CombatResult receive 로그는 dispatch가 CombatSignalAudit에 포함되었으�
 추가 검토 항목:
 
 ```text
-1. Notify invalid 로그 context 보강
-2. Action / Reaction data diagnostic 유지 범위 재확인
-3. 전체 잔여 FLog::Log 재스캔
+1. Action / Reaction data diagnostic 유지 범위 재확인
+2. 전체 잔여 FLog::Log 재스캔
 ```
 
 현재 단계에서 제거하지 않을 항목:
