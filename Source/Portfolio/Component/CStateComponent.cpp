@@ -105,19 +105,8 @@ void UCStateComponent::ChangeExecutionState(EExecutionState InNewExecutionState)
 	EExecutionState prevExecutionState = CurrentExecutionState;
 	CurrentExecutionState = InNewExecutionState;
 
-	// PrintExecutionStateChangedInfo(prevExecutionState, CurrentExecutionState);
-
 	if (OnExecutionStateChanged.IsBound())
 	{
 		OnExecutionStateChanged.Broadcast(OwnerCharacter_Injected, prevExecutionState, CurrentExecutionState);
 	}
-}
-
-void UCStateComponent::PrintExecutionStateChangedInfo(EExecutionState InPrevExecutionState, EExecutionState InNewExecutionState) const
-{
-	FLog::Log(FString::Printf(
-		TEXT("[ExecutionStateChanged] Owner = %s | PrevState = %s | NewState = %s"),
-		*GetNameSafe(OwnerCharacter_Injected),
-		*UEnum::GetValueAsString(InPrevExecutionState),
-		*UEnum::GetValueAsString(InNewExecutionState)));
 }

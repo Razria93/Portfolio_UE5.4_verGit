@@ -69,9 +69,6 @@ void UCPlayerFeedbackComponent::HandleCameraShakeRequest(const FCameraShakeReque
 	const float finalScale = ResolveCameraShake(InCameraShakeRequest);
 	if (finalScale <= KINDA_SMALL_NUMBER) return;
 
-	// FLog::Log(TEXT("[UCPlayerFeedbackComponent] Handle CameraShakeRequest"));
-	// PrintCameraShakeConsumeInfo(InCameraShakeRequest, finalScale);
-
 	PlayCameraShake(InCameraShakeRequest, finalScale);
 }
 
@@ -124,16 +121,4 @@ void UCPlayerFeedbackComponent::PlayCameraShake(const FCameraShakeRequest& InCam
 	if (!IsValid(OwnerPlayerController_Injected->PlayerCameraManager)) return;
 
 	OwnerPlayerController_Injected->PlayerCameraManager->StartCameraShake(InCameraShakeRequest.CameraShakeClass, InCameraShakeFinalScale);
-}
-
-void UCPlayerFeedbackComponent::PrintCameraShakeConsumeInfo(const FCameraShakeRequest& InCameraShakeRequest, float InCameraShakeFinalScale) const
-{
-	FLog::Log(TEXT("======== CameraShake Info ======="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CameraShakeAudience"), *UEnum::GetValueAsString(InCameraShakeRequest.CameraShakeAudience)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CameraShakeClass"), *GetNameSafe(InCameraShakeRequest.CameraShakeClass)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InCameraShakeRequest.SourceActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InCameraShakeRequest.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("CameraShakeBaseScale"), InCameraShakeRequest.CameraShakeBaseScale));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("CameraShakeFinalScale"), InCameraShakeFinalScale));
-	FLog::Log(TEXT("================================="));
 }

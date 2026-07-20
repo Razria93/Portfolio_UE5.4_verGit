@@ -47,8 +47,6 @@ void UCHitFeedbackComponent::PlayHitFeedback(const FCombatSignalTargetPacket& In
 
 	FCombatFeedbackProfiling::RecordHitFeedbackRequest();
 
-	// PrintHitInfo(InCombatSignalTargetPacket);
-
 	PlayHitStop(InCombatSignalTargetPacket);
 
 	if (FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(OwnerCharacter_Injected))
@@ -71,9 +69,6 @@ void UCHitFeedbackComponent::PlayHitStop(const FCombatSignalTargetPacket& InComb
 
 	const FHitStopRequest hitStopRequest = BuildHitStopRequest(InCombatSignalTargetPacket);
 
-	// FLog::Log(TEXT("[UCHitFeedbackComponent] Play HitStop"));
-	// PrintHitStopRequestInfo(hitStopRequest);
-
 	feedbackSubsystem->RequestHitStop(hitStopRequest);
 }
 
@@ -90,9 +85,6 @@ void UCHitFeedbackComponent::PlayHitVFX(const FCombatSignalTargetPacket& InComba
 
 	const FVector location = ResolveHitFeedbackLocation(InCombatSignalTargetPacket);
 	const FRotator rotation = ResolveHitFeedbackRotation(InCombatSignalTargetPacket);
-
-	// FLog::Log(TEXT("[UCHitFeedbackComponent] Play HitVFX"));
-	// PrintHitVFXRequestInfo(HitVFX, location, rotation);
 
 	FCombatFeedbackProfiling::RecordHitVFX();
 
@@ -111,9 +103,6 @@ void UCHitFeedbackComponent::PlayHitSFX(const FCombatSignalTargetPacket& InComba
 
 	const FVector location = ResolveHitFeedbackLocation(InCombatSignalTargetPacket);
 
-	// FLog::Log(TEXT("[UCHitFeedbackComponent] Play HitSFX"));
-	// PrintHitSFXRequestInfo(HitSFX, location);
-
 	FCombatFeedbackProfiling::RecordHitSFX();
 
 	UGameplayStatics::PlaySoundAtLocation(this, HitSFX, location);
@@ -127,9 +116,6 @@ void UCHitFeedbackComponent::PlayCameraShake(const FCombatSignalTargetPacket& In
 	if (!IsValid(feedbackSubsystem)) return;
 
 	const FCameraShakeRequest cameraShakeRequest = BuildCameraShakeRequest(InCombatSignalTargetPacket);
-
-	// FLog::Log(TEXT("[UCHitFeedbackComponent] PlayCameraShake"));
-	// PrintCameraShakeRequestInfo(cameraShakeRequest);
 
 	FCombatFeedbackProfiling::RecordCameraShakeRequest();
 
@@ -222,65 +208,4 @@ FCameraShakeRequest UCHitFeedbackComponent::BuildCameraShakeRequest(const FComba
 		: (IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetActorLocation() : FVector::ZeroVector);
 
 	return cameraShakeRequest;
-}
-
-void UCHitFeedbackComponent::PrintHitStopRequestInfo(const FHitStopRequest& InHitStopRequest) const
-{
-	FLog::Log(TEXT("====== HitStop Request Info ====="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("HitStopAudience"), *UEnum::GetValueAsString(InHitStopRequest.HitStopAudience)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InHitStopRequest.SourceActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InHitStopRequest.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HitStopDuration"), InHitStopRequest.HitStopDuration));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("HitStopDilation"), InHitStopRequest.HitStopDilation));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCHitFeedbackComponent::PrintHitVFXRequestInfo(UNiagaraSystem* InHitVFX, const FVector& InLocation, const FRotator& InRotation) const
-{
-	FLog::Log(TEXT("========== HitVFX Info =========="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitVFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
-	FLog::Log(FString::Printf(TEXT("%-20s: X=%.2f Y=%.2f Z=%.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
-	FLog::Log(FString::Printf(TEXT("%-20s: P=%.2f Y=%.2f R=%.2f"), TEXT("Rotation"), InRotation.Pitch, InRotation.Yaw, InRotation.Roll));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCHitFeedbackComponent::PrintHitSFXRequestInfo(USoundBase* InHitSFX, const FVector& InLocation) const
-{
-	FLog::Log(TEXT("========= HitSFX Info ========="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Asset"), *GetNameSafe(InHitSFX)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("OwnerCharacter"), *GetNameSafe(OwnerCharacter_Injected)));
-	FLog::Log(FString::Printf(TEXT("%-20s: X = %.2f Y = %.2f Z = %.2f"), TEXT("Location"), InLocation.X, InLocation.Y, InLocation.Z));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCHitFeedbackComponent::PrintCameraShakeRequestInfo(const FCameraShakeRequest& InCameraShakeRequest) const
-{
-	FLog::Log(TEXT("=== CameraShake Request Info ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Audience"), *UEnum::GetValueAsString(InCameraShakeRequest.CameraShakeAudience)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Class"), *GetNameSafe(InCameraShakeRequest.CameraShakeClass)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("SourceActor"), *GetNameSafe(InCameraShakeRequest.SourceActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InCameraShakeRequest.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.2f"), TEXT("CameraShakeBaseScale"), InCameraShakeRequest.CameraShakeBaseScale));
-	FLog::Log(TEXT("================================="));
-}
-
-void UCHitFeedbackComponent::PrintHitInfo(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
-{
-	if (!InCombatSignalTargetPacket.Context.DamageImpactInfo.bHasHitResult)
-	{
-		FLog::Log(TEXT("[HitFeedback] HitInfo: None"));
-		return;
-	}
-
-	const FHitResult& hitResult = InCombatSignalTargetPacket.Context.DamageImpactInfo.HitResult;
-
-	FLog::Log(TEXT("======== Damage Hit Info ========"));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ImpactPoint"), *hitResult.ImpactPoint.ToCompactString()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ImpactNormal"), *hitResult.ImpactNormal.ToCompactString()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Location"), *hitResult.Location.ToCompactString()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Normal"), *hitResult.Normal.ToCompactString()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("BoneName"), *hitResult.BoneName.ToString()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("Component"), *GetNameSafe(hitResult.GetComponent())));
-	FLog::Log(TEXT("================================="));
 }

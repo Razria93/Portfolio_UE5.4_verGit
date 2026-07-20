@@ -58,8 +58,4 @@ public:
 
 private:
 	void ChangeExecutionState(EExecutionState InNewExecutionState);
-
-private:
-	void PrintExecutionStateChangedInfo(EExecutionState InPrevExecutionState, EExecutionState InNewExecutionState) const;
-	
 };
