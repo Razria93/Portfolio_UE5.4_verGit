@@ -20,7 +20,7 @@ namespace
 		ECVF_Default);
 #endif
 
-	FString FormatDamageSpecKey(const FDamageSpecKey& InDamageSpecKey)
+	FString FormatCombatSignalDamageSpecKey(const FDamageSpecKey& InDamageSpecKey)
 	{
 		return FString::Printf(
 			TEXT("WeaponType=%s ActionType=%s ActionIndex=%d"),
@@ -29,14 +29,14 @@ namespace
 			InDamageSpecKey.ActionIndex);
 	}
 
-	FString FormatHitContextDamageSpecKey(const FHitContext& InHitContext)
+	FString FormatCombatSignalHitContextDamageSpecKey(const FHitContext& InHitContext)
 	{
 		FDamageSpecKey damageSpecKey;
 		damageSpecKey.WeaponType = InHitContext.WeaponContext.WeaponType;
 		damageSpecKey.ActionType = InHitContext.ActionContext.ActionType;
 		damageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
 
-		return FormatDamageSpecKey(damageSpecKey);
+		return FormatCombatSignalDamageSpecKey(damageSpecKey);
 	}
 }
 
@@ -93,7 +93,7 @@ void FCombatSignalDebug::RecordWeaponOverlapAcceptedForAudit(const FHitContext& 
 		*GetNameSafe(overlapContext.OtherComponent),
 		overlapContext.HitWindowId,
 		*UEnum::GetValueAsString(InHitContext.DamageImpactInfo.Source),
-		*FormatHitContextDamageSpecKey(InHitContext)));
+		*FormatCombatSignalHitContextDamageSpecKey(InHitContext)));
 }
 
 void FCombatSignalDebug::RecordWeaponOverlapRejectedForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, const UPrimitiveComponent* InOverlappedComponent, const AActor* InOtherActor, const UPrimitiveComponent* InOtherComponent, int32 InHitWindowId, const TCHAR* InEvent, const TCHAR* InReason)
@@ -148,7 +148,7 @@ void FCombatSignalDebug::PrintWeaponHitContextDebug(const FHitContext& InHitCont
 		overlapContext.HitWindowId,
 		InHitContext.DamageImpactInfo.bHasHitResult ? TEXT("true") : TEXT("false"),
 		*UEnum::GetValueAsString(InHitContext.DamageImpactInfo.Source),
-		*FormatHitContextDamageSpecKey(InHitContext)));
+		*FormatCombatSignalHitContextDamageSpecKey(InHitContext)));
 }
 
 // Source Diagnostic Hook
@@ -166,7 +166,7 @@ void FCombatSignalDebug::RecordSourceInvalidRequestForAudit(const FHitContext& I
 		*GetNameSafe(overlapContext.OtherActor),
 		*GetNameSafe(overlapContext.DamageCauser),
 		overlapContext.HitWindowId,
-		*FormatHitContextDamageSpecKey(InHitContext)));
+		*FormatCombatSignalHitContextDamageSpecKey(InHitContext)));
 }
 
 void FCombatSignalDebug::RecordSourceRejectedForAudit(const FCombatSignalSourceContext& InContext)
@@ -181,7 +181,7 @@ void FCombatSignalDebug::RecordSourceRejectedForAudit(const FCombatSignalSourceC
 		*GetNameSafe(InContext.DamageCauser),
 		*GetNameSafe(InContext.Instigator),
 		InContext.HitWindowKey.HitWindowId,
-		*FormatDamageSpecKey(InContext.DamageSpecKey),
+		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
 		InContext.DamageAmount.RequestDamage,
 		InContext.CommittedDamage));
 }
@@ -197,7 +197,7 @@ void FCombatSignalDebug::RecordSourceAcceptedForAudit(const FCombatSignalSourceC
 		*GetNameSafe(InContext.DamageCauser),
 		*GetNameSafe(InContext.Instigator),
 		InContext.HitWindowKey.HitWindowId,
-		*FormatDamageSpecKey(InContext.DamageSpecKey),
+		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
 		InContext.DamageAmount.RequestDamage,
 		InContext.CommittedDamage));
 }
@@ -242,7 +242,7 @@ void FCombatSignalDebug::PrintSourceContextDebug(const FCombatSignalSourceContex
 		*GetNameSafe(InContext.DamageCauser),
 		*GetNameSafe(InContext.Instigator),
 		InContext.HitWindowKey.HitWindowId,
-		*FormatDamageSpecKey(InContext.DamageSpecKey),
+		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
 		InContext.DamageSpec.BaseDamage,
 		InContext.DamageAmount.RequestDamage,
 		InContext.CommittedDamage));
@@ -275,7 +275,7 @@ void FCombatSignalDebug::RecordTargetRejectedForAudit(const FCombatSignalTargetP
 		*GetNameSafe(InPacket.Context.TargetActor),
 		*GetNameSafe(InPacket.Context.DamageCauser),
 		*GetNameSafe(InPacket.Context.Instigator),
-		*FormatDamageSpecKey(InPacket.Result.DamageSpecKey),
+		*FormatCombatSignalDamageSpecKey(InPacket.Result.DamageSpecKey),
 		InPacket.Result.RequestDamage,
 		InPacket.Result.MitigatedDamage,
 		InPacket.Result.FinalTakenDamage,
@@ -293,7 +293,7 @@ void FCombatSignalDebug::RecordTargetAcceptedForAudit(const FCombatSignalTargetP
 		*GetNameSafe(InPacket.Context.TargetActor),
 		*GetNameSafe(InPacket.Context.DamageCauser),
 		*GetNameSafe(InPacket.Context.Instigator),
-		*FormatDamageSpecKey(InPacket.Result.DamageSpecKey),
+		*FormatCombatSignalDamageSpecKey(InPacket.Result.DamageSpecKey),
 		InPacket.Result.RequestDamage,
 		InPacket.Result.MitigatedDamage,
 		InPacket.Result.FinalTakenDamage,
@@ -344,7 +344,7 @@ void FCombatSignalDebug::PrintTargetPacketDebug(const FCombatSignalTargetPacket&
 		*GetNameSafe(InPacket.Context.TargetActor),
 		*GetNameSafe(InPacket.Context.DamageCauser),
 		*GetNameSafe(InPacket.Context.Instigator),
-		*FormatDamageSpecKey(InPacket.Result.DamageSpecKey),
+		*FormatCombatSignalDamageSpecKey(InPacket.Result.DamageSpecKey),
 		InPacket.Result.RequestDamage,
 		InPacket.Result.MitigatedDamage,
 		InPacket.Result.FinalTakenDamage,

@@ -108,8 +108,8 @@ Portfolio.Debug.CombatSignalAudit으로 dispatch 경계를 gate한다.
 
 | 파일 | 위치 | 현재 상태 | 후보 이벤트 | 권장 처리 |
 | --- | --- | --- | --- | --- |
-| `Source/Portfolio/Component/CActionComponent.cpp` | `ResolveActionExecutor` | active diagnostic | ActionExecutor resolve 실패 | 유지. 필요 시 non-shipping helper화 |
-| `Source/Portfolio/Component/CActionComponent.cpp` | `BuildActionExecutorMap` | active diagnostic | duplicate key overwrite / add 실패 | 유지 |
+| `Source/Portfolio/Component/CActionComponent.cpp` | `ResolveActionData`, `ResolveActionExecutor` | helper gated | ActionData/ActionExecutor resolve 실패 | `FActionComponentDebug` + `ActionComponentAudit` 처리 완료 |
+| `Source/Portfolio/Component/CActionComponent.cpp` | `BuildActionDataMap`, `BuildActionExecutorMap` | helper gated | duplicate key overwrite / add 실패 | `FActionComponentDebug` + `ActionComponentAudit` 처리 완료 |
 | `Source/Portfolio/Component/CReactionComponent.cpp` | `ResolveReactionExecutor` | active diagnostic | ReactionExecutor resolve 실패 | 유지 |
 | `Source/Portfolio/Component/CReactionComponent.cpp` | `BuildReactionExecutorMap` | active diagnostic | duplicate key overwrite / add 실패 | 유지 |
 
@@ -260,6 +260,8 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 | `Portfolio.Debug.ActionRequestAudit` | ActionOrchestrator request result / reject reason | 처리 완료 |
 | `Portfolio.Debug.ReactionRequestAudit` | ReactionOrchestrator request result / reject reason | 처리 완료 |
 | `Portfolio.Debug.ActionReactionDump` | Action/Reaction orchestration query/result dump | 처리 완료 |
+| `Portfolio.Debug.ActionComponentAudit` | ActionComponent data/executor/notify/runtime reject | 처리 완료 |
+| `Portfolio.Debug.ActionComponentDump` | ActionComponent execution context dump | 처리 완료 |
 | `Portfolio.Debug.CombatResultAudit` | CombatResult receive / parry stack / stagger request 경계 | 보류 |
 | `Portfolio.Debug.FeedbackAudit` | feedback request/match/invalid data 상세 | 보류 |
 
@@ -329,7 +331,7 @@ defense outcome, reaction dispatch 경계에서 조용히 drop될 가능성이 �
 |   3 | `Source/Portfolio/Component/CActionOrchestratorComponent.cpp`                                                            | action request accept/reject/defer/intervention 중앙 판단              | request source/type, reject reason, resolved data/executor, active participant, execution decision, overlay rejection, intervention failure        | CVar audit                                                 |
 |   4 | `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp`                                                          | damage/combat result가 reaction으로 이어지는 중앙 판단                        | reaction type resolution, missing reaction data/executor, active rejection, dead-force intervention, overlay rejection, dispatch failure           | CVar audit                                                 |
 |   5 | `Source/Portfolio/Weapon/CWeaponActor.cpp`                                                                               | raw collision window / overlap 시작점                                 | collision window open/close, overlap ignored reason, named collision missing, hit context dump                                                     | `FCombatSignalDebug` + `CombatSignalAudit/Dump` 처리 완료  |
-|   6 | `Source/Portfolio/Component/CActionComponent.cpp`                                                                        | action data map, notify routing, executor 상태                       | missing action data, executor add failure, notify ignored, collision/cue notify routing                                                            | data error는 default diagnostic, runtime reject는 CVar audit |
+|   6 | `Source/Portfolio/Component/CActionComponent.cpp`                                                                        | action data map, notify routing, executor 상태                       | missing action data, executor add failure, notify ignored, collision/cue notify routing                                                            | `FActionComponentDebug` + `ActionComponentAudit/Dump` 처리 완료 |
 |   7 | `Source/Portfolio/Action/CAction.cpp`                                                                                    | montage lifecycle / chain / intervention window                    | montage play/bind failure, unexpected interruption, stale montage end, intervention mismatch                                                       | failure는 default diagnostic, rule trace는 CVar audit        |
 |   8 | `Source/Portfolio/Component/CReactionComponent.cpp`                                                                      | reaction data fallback / active reaction state                     | spec-key fallback miss, executor failure, notify ignored                                                                                           | data error는 default diagnostic, runtime trace는 CVar audit  |
 |   9 | `Source/Portfolio/Reaction/CReaction.cpp`                                                                                | reaction montage lifecycle                                         | montage play/bind failure, unexpected interruption, stale montage end                                                                              | failure는 default diagnostic, rule trace는 CVar audit        |
