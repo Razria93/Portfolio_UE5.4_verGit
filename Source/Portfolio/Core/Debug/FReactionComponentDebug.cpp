@@ -1,6 +1,7 @@
 #include "Core/Debug/FReactionComponentDebug.h"
 #include "Core/Debug/FLog.h"
 
+#include "Animation/AnimMontage.h"
 #include "HAL/IConsoleManager.h"
 #include "Reaction/CReaction.h"
 
@@ -215,6 +216,83 @@ void FReactionComponentDebug::RecordReactionNotifyCommandIgnoredForAudit(const A
 		*UEnum::GetValueAsString(InCommand)));
 }
 
+// Reaction Executor Diagnostic Hook
+
+void FReactionComponentDebug::RecordReactionExecutorStartedForAudit(const AActor* InOwnerActor, const UObject* InReactionExecutor, const FReactionData& InData)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Executor|Started] Owner=%s | Executor=%s | %s"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InReactionExecutor),
+		*FormatReactionComponentData(InData)));
+}
+
+void FReactionComponentDebug::RecordReactionExecutorStoppedForAudit(const AActor* InOwnerActor, const UObject* InReactionExecutor, const FReactionData& InData, const TCHAR* InEvent)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Executor|%s] Owner=%s | Executor=%s | %s"),
+		InEvent ? InEvent : TEXT("Stopped"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InReactionExecutor),
+		*FormatReactionComponentData(InData)));
+}
+
+void FReactionComponentDebug::RecordReactionMontagePlayedForAudit(const AActor* InOwnerActor, const UObject* InReactionExecutor, const FReactionData& InData, float InDuration)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Executor|MontagePlayed] Owner=%s | Executor=%s | Duration=%.3f | %s"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InReactionExecutor),
+		InDuration,
+		*FormatReactionComponentData(InData)));
+}
+
+void FReactionComponentDebug::RecordReactionExecutorRejectedForAudit(const AActor* InOwnerActor, const UObject* InReactionExecutor, const FReactionData& InData, const TCHAR* InEvent, const TCHAR* InReason)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Executor|%sRejected] Reason=%s | Owner=%s | Executor=%s | %s"),
+		InEvent ? InEvent : TEXT("Lifecycle"),
+		InReason ? InReason : TEXT("Rejected"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InReactionExecutor),
+		*FormatReactionComponentData(InData)));
+}
+
+void FReactionComponentDebug::RecordReactionMontageRejectedForAudit(const AActor* InOwnerActor, const UObject* InReactionExecutor, const FReactionData& InData, const TCHAR* InEvent, const TCHAR* InReason)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Executor|%sRejected] Reason=%s | Owner=%s | Executor=%s | %s"),
+		InEvent ? InEvent : TEXT("Montage"),
+		InReason ? InReason : TEXT("Rejected"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InReactionExecutor),
+		*FormatReactionComponentData(InData)));
+}
+
+void FReactionComponentDebug::RecordReactionMontageIgnoredForAudit(const AActor* InOwnerActor, const UObject* InReactionExecutor, const UAnimMontage* InMontage, uint32 InSerial, uint32 InActiveSerial, const TCHAR* InReason)
+{
+	if (!ShouldAuditReactionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Executor|MontageIgnored] Reason=%s | Owner=%s | Executor=%s | Montage=%s | Serial=%u | ActiveSerial=%u"),
+		InReason ? InReason : TEXT("Ignored"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InReactionExecutor),
+		*GetNameSafe(InMontage),
+		InSerial,
+		InActiveSerial));
+}
+
 // Debug Dump
 
 void FReactionComponentDebug::PrintReactionExecutionContextDebug(const AActor* InOwnerActor, const FReactionExecutionContext& InContext, const TCHAR* InEvent)
@@ -227,4 +305,18 @@ void FReactionComponentDebug::PrintReactionExecutionContextDebug(const AActor* I
 		*GetNameSafe(InOwnerActor),
 		*FormatReactionComponentData(InContext.ReactionData),
 		*GetNameSafe(InContext.ReactionExecutor)));
+}
+
+void FReactionComponentDebug::PrintReactionExecutorRuntimeDebug(const AActor* InOwnerActor, const UObject* InReactionExecutor, const FReactionData& InData, const UAnimMontage* InMontage, uint32 InSerial, const TCHAR* InEvent)
+{
+	if (!ShouldPrintReactionComponentDebug()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Reaction|Executor|%sRuntimeDump] Owner=%s | Executor=%s | Montage=%s | Serial=%u | %s"),
+		InEvent ? InEvent : TEXT("Reaction"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InReactionExecutor),
+		*GetNameSafe(InMontage),
+		InSerial,
+		*FormatReactionComponentData(InData)));
 }
