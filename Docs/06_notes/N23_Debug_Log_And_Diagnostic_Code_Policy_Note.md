@@ -6,6 +6,14 @@
 
 이번 기준은 `refactor/debug-log-policy-v1` 브랜치의 코드 정리 판단 근거로 사용하며, 이후 새 debug log를 추가할 때도 동일하게 적용한다.
 
+책임 범위:
+
+```text
+이 문서는 정책 문서다.
+용어, 분류 기준, API naming, CVar naming, 메시지 형식, 리뷰 기준을 정의한다.
+특정 파일별 처리 결과, 구현 이력, 우선순위 표는 N24 / N25 / N26에서 관리한다.
+```
+
 목표는 다음과 같다.
 
 ```text
@@ -227,7 +235,67 @@ Profiling Audit은 사람에게 상태를 보여주는 Debug Dump가 아니라 �
 
 ## API 작성 패턴
 
+### Error
+
+필수 component / asset 없음, 계속 진행하면 잘못된 상태다.
+
+권장 naming:
+
+```text
+Report{Domain}{Event}Error()
+Validate{Domain}{Contract}()
+Ensure{Domain}{RequiredReference}()
+```
+
+예:
+
+```cpp
+ReportCombatSignalMissingComponentError(OwnerActor, TEXT("UCHealthComponent"));
+ValidateCombatSignalTargetRequiredReferences();
+EnsureActionRequiredDataAsset(ActionDataAsset);
+```
+
+처리 원칙:
+
+```text
+1. 유지 또는 ensure / UE_LOG(Error)를 사용한다.
+2. 단발 validation 또는 초기화 실패처럼 본문에서 바로 읽히는 편이 더 명확하면 본문에 유지할 수 있다.
+3. Tick / overlap / notify / combat event처럼 반복 호출될 수 있는 경로에서는 InitializeReferences / BeginPlay / BuildDataMap 같은 검증 단계로 이동하는 것을 우선 검토한다.
+4. 메시지에는 Domain / System / Event와 Owner / Asset / Component를 포함한다.
+```
+
+### Warning
+
+fallback 가능한 data / config 문제다.
+
+권장 naming:
+
+```text
+Report{Domain}{Event}Warning()
+Validate{Domain}{Config}()
+Report{Domain}{Fallback}Warning()
+```
+
+예:
+
+```cpp
+ReportDuplicateActionExecutorKeyWarning(ActionExecutorKey);
+ReportReactionFallbackMatchWarning(ReactionDataKey, FallbackKey);
+ValidateFeedbackDuplicateMatchConfig(FeedbackKey);
+```
+
+처리 원칙:
+
+```text
+1. 유지할 수 있다.
+2. 반복 가능성이 있으면 once / gate / rate-limit를 검토한다.
+3. 정상 reject는 Warning으로 올리지 않는다.
+4. 메시지에는 실제 처리 정책을 포함한다. 예: Policy=Skip / Fallback / Overwrite
+```
+
 ### Debug Dump
+
+context / payload / result 상세 출력이다.
 
 권장 naming:
 
@@ -245,7 +313,51 @@ PrintTargetDataDebug(TargetData);
 ShouldPrintPerceptionDebug();
 ```
 
+처리 원칙:
+
+```text
+1. 기본 제거 또는 helper + CVar로 분리한다.
+2. 본문에서 FLog::Log / FString::Printf를 직접 사용하지 않는다.
+3. Shipping 빌드에서는 no-op 처리한다.
+4. 기본 출력은 Off다.
+5. 상세 상태를 펼쳐 보는 용도이므로 Diagnostic Hook / Profiling Audit보다 verbose하게 둔다.
+```
+
+### Diagnostic Hook
+
+reject / result / dispatch 관측 지점이다.
+
+권장 naming:
+
+```text
+ShouldAudit{Domain}{Feature}()
+Record{Domain}{Event}Diagnostic()
+Record{Domain}{Event}ForAudit()
+Print{Domain}{Feature}DiagnosticSummary()
+```
+
+예:
+
+```cpp
+ShouldAuditCombatSignal();
+RecordCombatSignalSourceRejectedForAudit(Context);
+RecordCombatSignalTargetRejectedForAudit(Packet);
+RecordCombatResultDispatchForAudit(Packet, ReceiverActor);
+PrintCombatSignalDiagnosticSummary(Packet);
+```
+
+처리 원칙:
+
+```text
+1. 본문은 hook 호출만 남긴다.
+2. 출력 여부 / 포맷 / CVar / Shipping guard는 helper가 책임진다.
+3. 정상 reject도 hook 대상이 될 수 있지만 기본 출력은 금지한다.
+4. 이벤트 요약 중심으로 기록한다. 예: Reason, Source, Target, DamageCauser, DamageSpecKey, Outcome
+```
+
 ### Profiling Audit
+
+성능 측정, 빈도 측정, CSV counter / summary다.
 
 권장 naming:
 
@@ -264,24 +376,15 @@ PrintPerceptionCandidateAuditSummary();
 FlushCombatFeedbackProfilingToCsv();
 ```
 
-### Error / Warning Report
-
-권장 naming:
+처리 원칙:
 
 ```text
-Report{Domain}{Event}Warning()
-Report{Domain}{Event}Error()
-Validate{Domain}{Contract}()
+1. 기존 RuntimeLOD / Profiling CVar는 유지한다.
+2. 기본 출력은 Off다.
+3. 가능하면 로그보다 CSV counter / timing stat을 우선한다.
+4. summary 또는 flush 지점 중심으로 출력한다.
+5. per-frame / per-overlap 상세 출력은 피한다.
 ```
-
-예:
-
-```cpp
-ReportDuplicateActionExecutorKeyWarning(ActionExecutorKey);
-ValidateRequiredBlackboardKeys(BlackboardAsset);
-```
-
-Error / Warning은 반드시 별도 API로 빼야 하는 것은 아니다. 단발 validation 또는 초기화 실패처럼 본문에서 바로 읽히는 편이 더 명확하면 본문에 유지할 수 있다.
 
 ---
 
