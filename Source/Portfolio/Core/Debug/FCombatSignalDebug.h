@@ -12,6 +12,17 @@ public:
 	static bool ShouldPrintCombatSignalDebug();
 
 public:
+	// Weapon Actor Diagnostic Hook
+	static void RecordWeaponCollisionWindowForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, FName InCollisionName, int32 InHitWindowId, int32 InCollisionCount, const TCHAR* InEvent, const TCHAR* InReason = nullptr);
+	static void RecordWeaponOverlapAcceptedForAudit(const FHitContext& InHitContext, const TCHAR* InEvent);
+	static void RecordWeaponOverlapRejectedForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, const UPrimitiveComponent* InOverlappedComponent, const AActor* InOtherActor, const UPrimitiveComponent* InOtherComponent, int32 InHitWindowId, const TCHAR* InEvent, const TCHAR* InReason);
+	static void RecordWeaponOverlapIgnoredForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, const UPrimitiveComponent* InOverlappedComponent, const AActor* InOtherActor, const UPrimitiveComponent* InOtherComponent, int32 InHitWindowId, const TCHAR* InEvent, const TCHAR* InReason);
+
+public:
+	// Weapon Actor Debug Dump
+	static void PrintWeaponHitContextDebug(const FHitContext& InHitContext);
+
+public:
 	// Source Diagnostic Hook
 	static void RecordSourceInvalidRequestForAudit(const FHitContext& InHitContext, const TCHAR* InReason);
 	static void RecordSourceRejectedForAudit(const FCombatSignalSourceContext& InContext);

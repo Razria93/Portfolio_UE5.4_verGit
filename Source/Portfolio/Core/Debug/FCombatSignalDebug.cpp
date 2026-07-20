@@ -1,6 +1,7 @@
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Core/Debug/FLog.h"
 
+#include "Components/PrimitiveComponent.h"
 #include "HAL/IConsoleManager.h"
 
 namespace
@@ -27,6 +28,16 @@ namespace
 			*UEnum::GetValueAsString(InDamageSpecKey.ActionType),
 			InDamageSpecKey.ActionIndex);
 	}
+
+	FString FormatHitContextDamageSpecKey(const FHitContext& InHitContext)
+	{
+		FDamageSpecKey damageSpecKey;
+		damageSpecKey.WeaponType = InHitContext.WeaponContext.WeaponType;
+		damageSpecKey.ActionType = InHitContext.ActionContext.ActionType;
+		damageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
+
+		return FormatDamageSpecKey(damageSpecKey);
+	}
 }
 
 // Gate
@@ -49,6 +60,97 @@ bool FCombatSignalDebug::ShouldPrintCombatSignalDebug()
 #endif
 }
 
+// Weapon Actor Diagnostic Hook
+
+void FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, FName InCollisionName, int32 InHitWindowId, int32 InCollisionCount, const TCHAR* InEvent, const TCHAR* InReason)
+{
+	if (!ShouldAuditCombatSignal()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Combat|WeaponActor|%s] Owner=%s | Weapon=%s | CollisionName=%s | HitWindowId=%d | CollisionCount=%d | Reason=%s"),
+		InEvent ? InEvent : TEXT("CollisionWindow"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InWeaponActor),
+		*InCollisionName.ToString(),
+		InHitWindowId,
+		InCollisionCount,
+		InReason ? InReason : TEXT("None")));
+}
+
+void FCombatSignalDebug::RecordWeaponOverlapAcceptedForAudit(const FHitContext& InHitContext, const TCHAR* InEvent)
+{
+	if (!ShouldAuditCombatSignal()) return;
+
+	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Combat|WeaponActor|%sAccepted] Owner=%s | Weapon=%s | OverlapComp=%s | OtherActor=%s | OtherComp=%s | HitWindowId=%d | ImpactSource=%s | %s"),
+		InEvent ? InEvent : TEXT("Overlap"),
+		*GetNameSafe(overlapContext.OwnerActor),
+		*GetNameSafe(overlapContext.DamageCauser),
+		*GetNameSafe(overlapContext.OverlappedComponent),
+		*GetNameSafe(overlapContext.OtherActor),
+		*GetNameSafe(overlapContext.OtherComponent),
+		overlapContext.HitWindowId,
+		*UEnum::GetValueAsString(InHitContext.DamageImpactInfo.Source),
+		*FormatHitContextDamageSpecKey(InHitContext)));
+}
+
+void FCombatSignalDebug::RecordWeaponOverlapRejectedForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, const UPrimitiveComponent* InOverlappedComponent, const AActor* InOtherActor, const UPrimitiveComponent* InOtherComponent, int32 InHitWindowId, const TCHAR* InEvent, const TCHAR* InReason)
+{
+	if (!ShouldAuditCombatSignal()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Combat|WeaponActor|%sRejected] Reason=%s | Owner=%s | Weapon=%s | OverlapComp=%s | OtherActor=%s | OtherComp=%s | HitWindowId=%d"),
+		InEvent ? InEvent : TEXT("Overlap"),
+		InReason ? InReason : TEXT("InvalidOverlap"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InWeaponActor),
+		*GetNameSafe(InOverlappedComponent),
+		*GetNameSafe(InOtherActor),
+		*GetNameSafe(InOtherComponent),
+		InHitWindowId));
+}
+
+void FCombatSignalDebug::RecordWeaponOverlapIgnoredForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, const UPrimitiveComponent* InOverlappedComponent, const AActor* InOtherActor, const UPrimitiveComponent* InOtherComponent, int32 InHitWindowId, const TCHAR* InEvent, const TCHAR* InReason)
+{
+	if (!ShouldAuditCombatSignal()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Combat|WeaponActor|%sIgnored] Reason=%s | Owner=%s | Weapon=%s | OverlapComp=%s | OtherActor=%s | OtherComp=%s | HitWindowId=%d"),
+		InEvent ? InEvent : TEXT("Overlap"),
+		InReason ? InReason : TEXT("IgnoredOverlap"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InWeaponActor),
+		*GetNameSafe(InOverlappedComponent),
+		*GetNameSafe(InOtherActor),
+		*GetNameSafe(InOtherComponent),
+		InHitWindowId));
+}
+
+// Weapon Actor Debug Dump
+
+void FCombatSignalDebug::PrintWeaponHitContextDebug(const FHitContext& InHitContext)
+{
+	if (!ShouldPrintCombatSignalDebug()) return;
+
+	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Combat|WeaponActor|HitContextDump] Owner=%s | Weapon=%s | OverlapComp=%s | OtherActor=%s | OtherComp=%s | BodyIndex=%d | FromSweep=%s | HitWindowId=%d | ImpactValid=%s | ImpactSource=%s | %s"),
+		*GetNameSafe(overlapContext.OwnerActor),
+		*GetNameSafe(overlapContext.DamageCauser),
+		*GetNameSafe(overlapContext.OverlappedComponent),
+		*GetNameSafe(overlapContext.OtherActor),
+		*GetNameSafe(overlapContext.OtherComponent),
+		overlapContext.OtherBodyIndex,
+		overlapContext.bFromSweep ? TEXT("true") : TEXT("false"),
+		overlapContext.HitWindowId,
+		InHitContext.DamageImpactInfo.bHasHitResult ? TEXT("true") : TEXT("false"),
+		*UEnum::GetValueAsString(InHitContext.DamageImpactInfo.Source),
+		*FormatHitContextDamageSpecKey(InHitContext)));
+}
+
 // Source Diagnostic Hook
 
 void FCombatSignalDebug::RecordSourceInvalidRequestForAudit(const FHitContext& InHitContext, const TCHAR* InReason)
@@ -64,14 +166,7 @@ void FCombatSignalDebug::RecordSourceInvalidRequestForAudit(const FHitContext& I
 		*GetNameSafe(overlapContext.OtherActor),
 		*GetNameSafe(overlapContext.DamageCauser),
 		overlapContext.HitWindowId,
-		*FormatDamageSpecKey([&InHitContext]()
-		{
-			FDamageSpecKey damageSpecKey;
-			damageSpecKey.WeaponType = InHitContext.WeaponContext.WeaponType;
-			damageSpecKey.ActionType = InHitContext.ActionContext.ActionType;
-			damageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
-			return damageSpecKey;
-		}())));
+		*FormatHitContextDamageSpecKey(InHitContext)));
 }
 
 void FCombatSignalDebug::RecordSourceRejectedForAudit(const FCombatSignalSourceContext& InContext)
