@@ -10,6 +10,7 @@
 
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
+#include "Core/Debug/FAICombatBTDebug.h"
 #include "Type/CAIStructure.h"
 
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
@@ -28,12 +29,17 @@ void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackBoardComp = OwnerComp.GetBlackboardComponent();
-	if (!IsValid(blackBoardComp)) return;
+	if (!IsValid(blackBoardComp))
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(nullptr, FEngageContext(), TEXT("Tick"), TEXT("MissingBlackboard"));
+		return;
+	}
 
 	const AAIController* aiOwner = OwnerComp.GetAIOwner();
 	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(ownerPawn, FEngageContext(), TEXT("Tick"), TEXT("MissingOwnerPawn"));
 		ClearEngageContext(blackBoardComp);
 		return;
 	}
@@ -66,13 +72,25 @@ void UCBTService_UpdateEngageContext::ScheduleNextTick(UBehaviorTreeComponent& O
 
 EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& OutEngageContext)
 {
-	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
+	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("InvalidInput"));
+		return EContextBuildResult::Error;
+	}
 
 	ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
-	if (!IsValid(enemy)) return EContextBuildResult::Error;
+	if (!IsValid(enemy))
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("InvalidEnemyPawn"));
+		return EContextBuildResult::Error;
+	}
 
 	OutEngageContext.TargetActor = Cast<AActor>(InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
-	if (!IsValid(OutEngageContext.TargetActor)) return EContextBuildResult::NoData;
+	if (!IsValid(OutEngageContext.TargetActor))
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingTarget"));
+		return EContextBuildResult::NoData;
+	}
 
 	OutEngageContext.EngageOffsetRange = enemy->GetEngageOffsetRange();
 	OutEngageContext.EngageEnterBuffer = enemy->GetEngageEnterBuffer();
@@ -86,8 +104,16 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 
 EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& InOutEngageContext)
 {
-	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
-	if (!IsValid(InOutEngageContext.TargetActor)) return EContextBuildResult::NoData;
+	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, InOutEngageContext, TEXT("Compute"), TEXT("InvalidInput"));
+		return EContextBuildResult::Error;
+	}
+	if (!IsValid(InOutEngageContext.TargetActor))
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, InOutEngageContext, TEXT("Compute"), TEXT("MissingTarget"));
+		return EContextBuildResult::NoData;
+	}
 
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutEngageContext.TargetActor->GetActorLocation();
@@ -125,6 +151,31 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 		&& bCooldownElapsed			// for ActionCooldown Check
 		&& !bIsCombatAction			// for ActionType Check
 		&& !bIsActiveReaction;		// for ActiveReaction Check
+
+	FAICombatBTDebug::RecordEngageContextComputedForAudit(InOwnerPawn, InOutEngageContext, bCooldownElapsed, bIsCombatAction, bIsActiveReaction);
+
+	if (!InOutEngageContext.bCanCombatAction)
+	{
+		const TCHAR* reason = TEXT("Unknown");
+		if (!bInEngageRange)
+		{
+			reason = TEXT("OutOfEngageRange");
+		}
+		else if (!bCooldownElapsed)
+		{
+			reason = TEXT("Cooldown");
+		}
+		else if (bIsCombatAction)
+		{
+			reason = TEXT("AlreadyCombatAction");
+		}
+		else if (bIsActiveReaction)
+		{
+			reason = TEXT("ActiveReaction");
+		}
+
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, InOutEngageContext, TEXT("Gate"), reason);
+	}
 
 	return EContextBuildResult::Success;
 }

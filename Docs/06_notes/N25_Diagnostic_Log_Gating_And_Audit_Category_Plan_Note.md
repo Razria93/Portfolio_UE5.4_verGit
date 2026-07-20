@@ -314,6 +314,7 @@ execution state 불일치
 
 ```text
 Portfolio.Debug.AIStateAudit
+Portfolio.Debug.AICombatBTAudit
 ```
 
 대상:
