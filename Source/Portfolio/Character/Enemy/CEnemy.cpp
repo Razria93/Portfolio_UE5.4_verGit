@@ -151,11 +151,7 @@ void ACEnemy::BeginPlay()
 		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
 	}
 
-	const FActionRequestResult actionRequestResult = HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
-	if (!actionRequestResult.IsAccepted())
-	{
-		// FLog::Log(TEXT("[Enemy|BeginPlay] Initial equip-action request rejected."));
-	}
+	HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
 }
 
 void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -358,11 +354,6 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	}
 	else
 	{
-		// FLog::Log(FString::Printf(
-		// 	TEXT("[Enemy] TakeDamage Fallback | Target=%s | Damage=%.3f | Reason=InvalidCombatSignalTargetComponent"),
-		// 	*GetNameSafe(this),
-		// 	DamageAmount));
-
 		// FallBack
 		finalDamage = DamageAmount;
 	}

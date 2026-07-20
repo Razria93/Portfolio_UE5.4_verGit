@@ -1,5 +1,4 @@
 #include "Action/CAction_ComboAttack.h"
-#include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
 
@@ -60,8 +59,6 @@ bool UCAction_ComboAttack::ReserveChain(const FActionData& InData)
 	bHasReservingChain = true;
 	bReserveChainWindowOpened = false;
 
-	// FLog::Log(TEXT("[ComboAttack] Chain input buffered."));
-
 	return true;
 }
 
@@ -119,7 +116,6 @@ void UCAction_ComboAttack::ConsumeChain()
 
 	if (!CanConsumeChain(nextData))
 	{
-		// FLog::Log(TEXT("[ComboAttack] Failed to consume chain."));
 		return;
 	}
 
@@ -157,8 +153,6 @@ void UCAction_ComboAttack::ConsumeChain()
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Chain);
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached.ActionIndex);
-
-	// FLog::Log(FString::Printf(TEXT("[ComboAttack] Consume Chain. ActionIndex = %d"), ActiveDataKey_Cached.ActionIndex));
 }
 
 bool UCAction_ComboAttack::CanResolveChain(const FExecutionDecisionQuery& InQuery) const
