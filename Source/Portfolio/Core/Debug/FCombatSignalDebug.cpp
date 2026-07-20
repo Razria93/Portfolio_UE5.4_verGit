@@ -153,7 +153,7 @@ void FCombatSignalDebug::PrintWeaponHitContextDebug(const FHitContext& InHitCont
 
 // Source Diagnostic Hook
 
-void FCombatSignalDebug::RecordSourceInvalidRequestForAudit(const FHitContext& InHitContext, const TCHAR* InReason)
+void FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(const FHitContext& InHitContext, const TCHAR* InReason)
 {
 	if (!ShouldAuditCombatSignal()) return;
 
@@ -250,7 +250,7 @@ void FCombatSignalDebug::PrintSourceContextDebug(const FCombatSignalSourceContex
 
 // Target Diagnostic Hook
 
-void FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(float InDamageAmount, const FDamageEvent& InDamageEvent, AController* InEventInstigator, AActor* InDamageCauser, const TCHAR* InReason)
+void FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(float InDamageAmount, const FDamageEvent& InDamageEvent, AController* InEventInstigator, AActor* InDamageCauser, const TCHAR* InReason)
 {
 	if (!ShouldAuditCombatSignal()) return;
 

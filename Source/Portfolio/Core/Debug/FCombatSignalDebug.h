@@ -24,7 +24,7 @@ public:
 
 public:
 	// Source Diagnostic Hook
-	static void RecordSourceInvalidRequestForAudit(const FHitContext& InHitContext, const TCHAR* InReason);
+	static void RecordSourceHitRequestRejectedForAudit(const FHitContext& InHitContext, const TCHAR* InReason);
 	static void RecordSourceRejectedForAudit(const FCombatSignalSourceContext& InContext);
 	static void RecordSourceAcceptedForAudit(const FCombatSignalSourceContext& InContext);
 
@@ -37,7 +37,7 @@ public:
 
 public:
 	// Target Diagnostic Hook
-	static void RecordTargetInvalidDamageRequestForAudit(float InDamageAmount, const FDamageEvent& InDamageEvent, AController* InEventInstigator, AActor* InDamageCauser, const TCHAR* InReason);
+	static void RecordTargetDamageRequestRejectedForAudit(float InDamageAmount, const FDamageEvent& InDamageEvent, AController* InEventInstigator, AActor* InDamageCauser, const TCHAR* InReason);
 	static void RecordTargetRejectedForAudit(const FCombatSignalTargetPacket& InPacket);
 	static void RecordTargetAcceptedForAudit(const FCombatSignalTargetPacket& InPacket);
 

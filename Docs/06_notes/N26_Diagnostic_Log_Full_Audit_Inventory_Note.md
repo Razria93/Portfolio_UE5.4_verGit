@@ -219,8 +219,8 @@ Shipping 포함 여부는 별도 빌드 정책에서 다룰 수 있지만, debug
 
 | 파일 | 위치 | 후보 이벤트 | 현재 상태 | 권장 처리 |
 | --- | --- | --- | --- | --- |
-| `Source/Portfolio/Component/CCombatSignalSourceComponent.cpp` | `ValidateRequest`, `CanSendCombatSignal`, `ResolveDamageSpec`, `ComputeDamage`, `CommitSignal`, cue send | invalid hit context, invalid actor/component ownership, self/friendly target, duplicate hit, spec missing, compute failed, commit failed, cue target/component missing | helper gated | `FCombatSignalDebug::RecordSource...ForAudit`, `RecordCue...ForAudit` 처리 완료 |
-| `Source/Portfolio/Component/CCombatSignalTargetComponent.cpp` | `ValidateRequest`, `CanReceiveCombatSignal`, `ComputeTargetDamage`, rejected/accepted packet, timing cue | invalid damage event, invalid target/causer/instigator, already dead, zero damage, guard/parry, unknown cue | helper gated | `FCombatSignalDebug::RecordTarget...ForAudit`, `RecordTimingCue...ForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CCombatSignalSourceComponent.cpp` | `ValidateRequest`, `CanSendCombatSignal`, `ResolveDamageSpec`, `ComputeDamage`, `CommitSignal`, cue send | invalid hit context, invalid actor/component ownership, self/friendly target, duplicate hit, spec missing, compute failed, commit failed, cue target/component missing | helper gated | `FCombatSignalDebug::RecordSource...RejectedForAudit`, `RecordCue...ForAudit` 처리 완료 / request gate naming 통일 완료 |
+| `Source/Portfolio/Component/CCombatSignalTargetComponent.cpp` | `ValidateRequest`, `CanReceiveCombatSignal`, `ComputeTargetDamage`, rejected/accepted packet, timing cue | invalid damage event, invalid target/causer/instigator, already dead, zero damage, guard/parry, unknown cue | helper gated | `FCombatSignalDebug::RecordTarget...RejectedForAudit`, `RecordTimingCue...ForAudit` 처리 완료 / damage request naming 통일 완료 |
 
 판단:
 

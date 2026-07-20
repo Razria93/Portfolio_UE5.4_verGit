@@ -71,7 +71,7 @@ float UCCombatSignalTargetComponent::ProcessCombatSignalTarget(float DamageAmoun
 		return HandleDefaultDamageEvent(DamageAmount, damageEvent, EventInstigator, DamageCauser);
 	}
 
-	FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(DamageAmount, DamageEvent, EventInstigator, DamageCauser, TEXT("UnsupportedDamageEvent"));
+	FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(DamageAmount, DamageEvent, EventInstigator, DamageCauser, TEXT("UnsupportedDamageEvent"));
 	return 0.f;
 }
 
@@ -91,7 +91,7 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	// Receive: validate engine damage input and normalize it into target-side data.
 	if (!FMath::IsFinite(DamageAmount))
 	{
-		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteDamageAmount"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteDamageAmount"));
 		return 0.f;
 	}
 	if (!ValidateRequest(InDefaultDamageEvent, InDamageInstigator, InDamageCauser)) return 0.f;
@@ -181,34 +181,34 @@ bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& I
 {
 	if (!IsValid(OwnerCharacter_Injected))
 	{
-		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidOwner"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidOwner"));
 		return false;
 	}
 	if (!IsValid(HealthComp_Injected))
 	{
-		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidHealthComponent"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidHealthComponent"));
 		return false;
 	}
 	if (!IsValid(InDamageCauser))
 	{
-		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidDamageCauser"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidDamageCauser"));
 		return false;
 	}
 
 	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerCharacter_Injected)
 	{
-		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("TargetMismatch"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("TargetMismatch"));
 		return false;
 	}
 
 	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage))
 	{
-		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteBaseDamage"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteBaseDamage"));
 		return false;
 	}
 	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage))
 	{
-		FCombatSignalDebug::RecordTargetInvalidDamageRequestForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteRequestDamage"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteRequestDamage"));
 		return false;
 	}
 

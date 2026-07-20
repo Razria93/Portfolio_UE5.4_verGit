@@ -199,14 +199,14 @@ bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitCont
 	// V1: Validate core actors (OwnerActor / DamageCauser / OtherActor)
 	if (!overlapContext.IsValidMinimal())
 	{
-		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidMinimalOverlapContext"));
+		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidMinimalOverlapContext"));
 		return false;
 	}
 
 	// V2: Check Valid Hit Window
 	if (overlapContext.HitWindowId == INDEX_NONE)
 	{
-		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidHitWindow"));
+		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidHitWindow"));
 		return false;
 	}
 
@@ -214,14 +214,14 @@ bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitCont
 	// 3-1): Validate Components (current policy)
 	if (!IsValid(overlapContext.OverlappedComponent) || !IsValid(overlapContext.OtherComponent))
 	{
-		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidOverlapComponent"));
+		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidOverlapComponent"));
 		return false;
 	}
 
 	// 3-2): Attack collision must be ShapeComponent (current policy)
 	if (!IsValid(overlapContext.OverlapShape))
 	{
-		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("InvalidOverlapShape"));
+		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidOverlapShape"));
 		return false;
 	}
 
@@ -229,21 +229,21 @@ bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitCont
 	 // 4-1) DamageCauser must be owned by the attacker
 	if (overlapContext.DamageCauser->GetOwner() != overlapContext.OwnerActor)
 	{
-		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("DamageCauserOwnerMismatch"));
+		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("DamageCauserOwnerMismatch"));
 		return false;
 	}
 
 	// 4-2) OverlappedComponent must belong to the DamageCauser
 	if (overlapContext.OverlappedComponent->GetOwner() != overlapContext.DamageCauser)
 	{
-		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("OverlappedComponentOwnerMismatch"));
+		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("OverlappedComponentOwnerMismatch"));
 		return false;
 	}
 
 	// 4-3) OtherComponent must belong to the target actor
 	if (overlapContext.OtherComponent->GetOwner() != overlapContext.OtherActor)
 	{
-		FCombatSignalDebug::RecordSourceInvalidRequestForAudit(InHitContext, TEXT("OtherComponentOwnerMismatch"));
+		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("OtherComponentOwnerMismatch"));
 		return false;
 	}
 

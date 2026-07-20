@@ -13,7 +13,7 @@ namespace
 		ECVF_Default);
 #endif
 
-	FString FormatDamageSpecKey(const FDamageSpecKey& InKey)
+	FString FormatCombatResultDamageSpecKey(const FDamageSpecKey& InKey)
 	{
 		return FString::Printf(
 			TEXT("WeaponType=%s | ActionType=%s | ActionIndex=%d"),
@@ -33,7 +33,7 @@ namespace
 			*UEnum::GetValueAsString(InPacket.DefenseOutcome),
 			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"),
 			InPacket.CommittedDamage,
-			*FormatDamageSpecKey(InPacket.DamageSpecKey));
+			*FormatCombatResultDamageSpecKey(InPacket.DamageSpecKey));
 	}
 
 	FString FormatReactionRequestResult(const FReactionRequestResult& InResult)
