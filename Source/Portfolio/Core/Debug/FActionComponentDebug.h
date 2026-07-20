@@ -4,6 +4,8 @@
 #include "Type/CActionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
 
+class UAnimMontage;
+
 class PORTFOLIO_API FActionComponentDebug
 {
 public:
@@ -31,6 +33,16 @@ public:
 	static void RecordActionNotifyCommandIgnoredForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, EActionNotifyCommand InCommand, const TCHAR* InReason);
 
 public:
+	// Action Executor Diagnostic Hook
+	static void RecordActionExecutorStartedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData);
+	static void RecordActionExecutorStoppedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const TCHAR* InEvent);
+	static void RecordActionMontagePlayedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, float InDuration);
+	static void RecordActionExecutorRejectedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const TCHAR* InEvent, const TCHAR* InReason);
+	static void RecordActionMontageRejectedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const TCHAR* InEvent, const TCHAR* InReason);
+	static void RecordActionMontageIgnoredForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const UAnimMontage* InMontage, uint32 InSerial, uint32 InActiveSerial, const TCHAR* InReason);
+
+public:
 	// Debug Dump
 	static void PrintActionExecutionContextDebug(const AActor* InOwnerActor, const FActionExecutionContext& InContext, const TCHAR* InEvent);
+	static void PrintActionExecutorRuntimeDebug(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const UAnimMontage* InMontage, uint32 InSerial, const TCHAR* InEvent);
 };

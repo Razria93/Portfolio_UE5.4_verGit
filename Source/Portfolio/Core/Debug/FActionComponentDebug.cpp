@@ -196,6 +196,83 @@ void FActionComponentDebug::RecordActionNotifyCommandIgnoredForAudit(const AActo
 		*UEnum::GetValueAsString(InCommand)));
 }
 
+// Action Executor Diagnostic Hook
+
+void FActionComponentDebug::RecordActionExecutorStartedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData)
+{
+	if (!ShouldAuditActionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Action|Executor|Started] Owner=%s | Executor=%s | %s"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InActionExecutor),
+		*FormatActionComponentData(InData)));
+}
+
+void FActionComponentDebug::RecordActionExecutorStoppedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const TCHAR* InEvent)
+{
+	if (!ShouldAuditActionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Action|Executor|%s] Owner=%s | Executor=%s | %s"),
+		InEvent ? InEvent : TEXT("Stopped"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InActionExecutor),
+		*FormatActionComponentData(InData)));
+}
+
+void FActionComponentDebug::RecordActionMontagePlayedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, float InDuration)
+{
+	if (!ShouldAuditActionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Action|Executor|MontagePlayed] Owner=%s | Executor=%s | Duration=%.3f | %s"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InActionExecutor),
+		InDuration,
+		*FormatActionComponentData(InData)));
+}
+
+void FActionComponentDebug::RecordActionExecutorRejectedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const TCHAR* InEvent, const TCHAR* InReason)
+{
+	if (!ShouldAuditActionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Action|Executor|%sRejected] Reason=%s | Owner=%s | Executor=%s | %s"),
+		InEvent ? InEvent : TEXT("Lifecycle"),
+		InReason ? InReason : TEXT("Rejected"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InActionExecutor),
+		*FormatActionComponentData(InData)));
+}
+
+void FActionComponentDebug::RecordActionMontageRejectedForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const TCHAR* InEvent, const TCHAR* InReason)
+{
+	if (!ShouldAuditActionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Action|Executor|%sRejected] Reason=%s | Owner=%s | Executor=%s | %s"),
+		InEvent ? InEvent : TEXT("Montage"),
+		InReason ? InReason : TEXT("Rejected"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InActionExecutor),
+		*FormatActionComponentData(InData)));
+}
+
+void FActionComponentDebug::RecordActionMontageIgnoredForAudit(const AActor* InOwnerActor, const UObject* InActionExecutor, const UAnimMontage* InMontage, uint32 InSerial, uint32 InActiveSerial, const TCHAR* InReason)
+{
+	if (!ShouldAuditActionComponent()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Action|Executor|MontageIgnored] Reason=%s | Owner=%s | Executor=%s | Montage=%s | Serial=%u | ActiveSerial=%u"),
+		InReason ? InReason : TEXT("Ignored"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InActionExecutor),
+		*GetNameSafe(InMontage),
+		InSerial,
+		InActiveSerial));
+}
+
 // Debug Dump
 
 void FActionComponentDebug::PrintActionExecutionContextDebug(const AActor* InOwnerActor, const FActionExecutionContext& InContext, const TCHAR* InEvent)
@@ -208,4 +285,18 @@ void FActionComponentDebug::PrintActionExecutionContextDebug(const AActor* InOwn
 		*GetNameSafe(InOwnerActor),
 		*FormatActionComponentData(InContext.ActionData),
 		*GetNameSafe(InContext.ActionExecutor)));
+}
+
+void FActionComponentDebug::PrintActionExecutorRuntimeDebug(const AActor* InOwnerActor, const UObject* InActionExecutor, const FActionData& InData, const UAnimMontage* InMontage, uint32 InSerial, const TCHAR* InEvent)
+{
+	if (!ShouldPrintActionComponentDebug()) return;
+
+	FLog::Log(FString::Printf(
+		TEXT("[Action|Executor|%sRuntimeDump] Owner=%s | Executor=%s | Montage=%s | Serial=%u | %s"),
+		InEvent ? InEvent : TEXT("Action"),
+		*GetNameSafe(InOwnerActor),
+		*GetNameSafe(InActionExecutor),
+		*GetNameSafe(InMontage),
+		InSerial,
+		*FormatActionComponentData(InData)));
 }

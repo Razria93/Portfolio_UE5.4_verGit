@@ -8,6 +8,8 @@
 #include "Component/CActionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 
+#include "Core/Debug/FActionComponentDebug.h"
+
 void UCAction::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -123,8 +125,17 @@ bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDeci
 
 bool UCAction::Start(const FActionData& InData)
 {
-	if (!InData.IsValidMinimal()) return false;
-	if (bIsActive) return false;
+	if (!InData.IsValidMinimal())
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, InData, TEXT("Start"), TEXT("InvalidData"));
+		return false;
+	}
+
+	if (bIsActive)
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, InData, TEXT("Start"), TEXT("AlreadyActive"));
+		return false;
+	}
 
 	ActiveDataKey_Cached = InData.ActionDataKey;
 	ActiveData_Cached = InData;
@@ -148,31 +159,56 @@ bool UCAction::Start(const FActionData& InData)
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached.ActionIndex);
+	FActionComponentDebug::RecordActionExecutorStartedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached);
+	FActionComponentDebug::PrintActionExecutorRuntimeDebug(OwnerCharacter_Injected, this, ActiveData_Cached, ActiveMontage_Cached, CachedSerial_ActivePlay, TEXT("Start"));
 
 	return true;
 }
 
 void UCAction::Interrupt(const FExecutionInterventionDirective& InDirective)
 {
-	if (!bIsActive) return;
-	if (!InDirective.IsValidRequest()) return;
+	if (!bIsActive)
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("Interrupt"), TEXT("NotActive"));
+		return;
+	}
+
+	if (!InDirective.IsValidRequest())
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("Interrupt"), TEXT("InvalidDirective"));
+		return;
+	}
 
 	HandleActionStop(ResolveActionStopReason(InDirective));
 }
 
 void UCAction::Stop(EActionStopReason InStopReason)
 {
-	if (!bIsActive) return;
-	if (InStopReason == EActionStopReason::None) return;
+	if (!bIsActive)
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("Stop"), TEXT("NotActive"));
+		return;
+	}
+
+	if (InStopReason == EActionStopReason::None)
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("Stop"), TEXT("InvalidStopReason"));
+		return;
+	}
 
 	HandleActionStop(InStopReason);
 }
 
 void UCAction::Complete()
 {
-	if (!bIsActive) return;
+	if (!bIsActive)
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("Complete"), TEXT("NotActive"));
+		return;
+	}
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
+	const FActionData activeData = ActiveData_Cached;
 	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
 
 	CleanupRuntimeEffects();
@@ -180,6 +216,7 @@ void UCAction::Complete()
 
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
+	FActionComponentDebug::RecordActionExecutorStoppedForAudit(OwnerCharacter_Injected, this, activeData, TEXT("Completed"));
 
 	if (IsValid(ActionComp_Injected))
 	{
@@ -213,7 +250,11 @@ EActionStopReason UCAction::ResolveActionStopReason(const FExecutionIntervention
 
 void UCAction::HandleActionStop(EActionStopReason InStopReason)
 {
-	if (InStopReason == EActionStopReason::None) return;
+	if (InStopReason == EActionStopReason::None)
+	{
+		FActionComponentDebug::RecordActionExecutorRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("HandleStop"), TEXT("InvalidStopReason"));
+		return;
+	}
 
 	LastStopReason_Cached = InStopReason;
 
@@ -237,6 +278,7 @@ void UCAction::HandleActionStop(EActionStopReason InStopReason)
 	}
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(feedbackTiming);
+	const FActionData activeData = ActiveData_Cached;
 	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
 
 	StopMontage();
@@ -245,6 +287,8 @@ void UCAction::HandleActionStop(EActionStopReason InStopReason)
 
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(eventType, actionIndex);
+	const FString finishReasonName = UEnum::GetValueAsString(finishReason);
+	FActionComponentDebug::RecordActionExecutorStoppedForAudit(OwnerCharacter_Injected, this, activeData, *finishReasonName);
 
 	if (IsValid(ActionComp_Injected))
 	{
@@ -279,19 +323,42 @@ void UCAction::CleanupRuntimeEffects()
 
 bool UCAction::PlayMontage(const FActionData& InData)
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-	if (!IsValid(InData.Montage)) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, InData, TEXT("PlayMontage"), TEXT("InvalidOwner"));
+		return false;
+	}
+
+	if (!IsValid(InData.Montage))
+	{
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, InData, TEXT("PlayMontage"), TEXT("InvalidMontage"));
+		return false;
+	}
 
 	const float duration = OwnerCharacter_Injected->PlayAnimMontage(InData.Montage, InData.PlayRate);
-	if (duration <= 0.0f) return false;
+	if (duration <= 0.0f)
+	{
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, InData, TEXT("PlayMontage"), TEXT("InvalidDuration"));
+		return false;
+	}
+
+	FActionComponentDebug::RecordActionMontagePlayedForAudit(OwnerCharacter_Injected, this, InData, duration);
 
 	if (!InData.StartSectionName.IsNone())
 	{
 		USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-		if (!IsValid(meshComp)) return true;
+		if (!IsValid(meshComp))
+		{
+			FActionComponentDebug::RecordActionMontageIgnoredForAudit(OwnerCharacter_Injected, this, InData.Montage, CachedSerial_ActivePlay, CachedSerial_ActivePlay, TEXT("MissingMeshForSectionJump"));
+			return true;
+		}
 
 		UAnimInstance* animInstance = meshComp->GetAnimInstance();
-		if (!IsValid(animInstance)) return true;
+		if (!IsValid(animInstance))
+		{
+			FActionComponentDebug::RecordActionMontageIgnoredForAudit(OwnerCharacter_Injected, this, InData.Montage, CachedSerial_ActivePlay, CachedSerial_ActivePlay, TEXT("MissingAnimInstanceForSectionJump"));
+			return true;
+		}
 
 		animInstance->Montage_JumpToSection(InData.StartSectionName, InData.Montage);
 	}
@@ -315,14 +382,31 @@ void UCAction::StopMontage(float InBlendOutTime)
 
 bool UCAction::BindMontageEndDelegate()
 {
-	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("BindMontageEnd"), TEXT("InvalidOwner"));
+		return false;
+	}
 
 	USkeletalMeshComponent* meshComp = OwnerCharacter_Injected->GetMesh();
-	if (!IsValid(meshComp)) return false;
+	if (!IsValid(meshComp))
+	{
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("BindMontageEnd"), TEXT("InvalidMesh"));
+		return false;
+	}
 
 	UAnimInstance* animInstance = meshComp->GetAnimInstance();
-	if (!IsValid(animInstance)) return false;
-	if (!IsValid(ActiveMontage_Cached)) return false;
+	if (!IsValid(animInstance))
+	{
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("BindMontageEnd"), TEXT("InvalidAnimInstance"));
+		return false;
+	}
+
+	if (!IsValid(ActiveMontage_Cached))
+	{
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("BindMontageEnd"), TEXT("InvalidActiveMontage"));
+		return false;
+	}
 
 	const uint32 thisPlaySerial = ++Serial_CurrentPlay;
 	CachedSerial_ActivePlay = thisPlaySerial;
@@ -336,14 +420,15 @@ bool UCAction::BindMontageEndDelegate()
 
 void UCAction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint32 InSerial)
 {
-	if (!CanHandleMontageEnd(InAnimMontage, InSerial)) return;
+	if (!CanHandleMontageEnd(InAnimMontage, InSerial))
+	{
+		FActionComponentDebug::RecordActionMontageIgnoredForAudit(OwnerCharacter_Injected, this, InAnimMontage, InSerial, CachedSerial_ActivePlay, TEXT("StaleMontageEnd"));
+		return;
+	}
+
 	if (bInterrupted)
 	{
-		FLog::Log(FString::Printf(
-			TEXT("[Action] Unexpected montage interruption. Action=%s | Montage=%s | Serial=%u"),
-			*GetNameSafe(this),
-			*GetNameSafe(InAnimMontage),
-			InSerial));
+		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("MontageEnd"), TEXT("UnexpectedInterruption"));
 		return;
 	}
 
@@ -428,14 +513,22 @@ FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTi
 
 void UCAction::PushHitContext()
 {
-	if (!IsValid(WeaponComp_Injected)) return;
+	if (!IsValid(WeaponComp_Injected))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, this, TEXT("PushHitContext"), NAME_None, TEXT("InvalidWeaponComponent"));
+		return;
+	}
 
 	WeaponComp_Injected->PushContext(BuildActionContext());
 }
 
 void UCAction::ClearHitContext()
 {
-	if (!IsValid(WeaponComp_Injected)) return;
+	if (!IsValid(WeaponComp_Injected))
+	{
+		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, this, TEXT("ClearHitContext"), NAME_None, TEXT("InvalidWeaponComponent"));
+		return;
+	}
 
 	WeaponComp_Injected->ClearContext();
 }
