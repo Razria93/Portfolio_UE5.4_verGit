@@ -1,4 +1,4 @@
-#include "Core/Debug/FActionReactionDebug.h"
+#include "Core/Debug/FExecutionOrchestratorDebug.h"
 #include "Core/Debug/FLog.h"
 
 #include "Action/CAction.h"
@@ -21,8 +21,8 @@ namespace
 		TEXT("Print reaction request orchestration diagnostic hook logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarActionReactionDump(
-		TEXT("Portfolio.Debug.ActionReactionDump"),
+	TAutoConsoleVariable<int32> CVarExecutionOrchestratorDump(
+		TEXT("Portfolio.Debug.ExecutionOrchestratorDump"),
 		0,
 		TEXT("Print action/reaction orchestration debug dumps. 0: disabled, 1: enabled."),
 		ECVF_Default);
@@ -113,7 +113,7 @@ namespace
 
 // Gate
 
-bool FActionReactionDebug::ShouldAuditActionRequest()
+bool FExecutionOrchestratorDebug::ShouldAuditActionRequest()
 {
 #if !UE_BUILD_SHIPPING
 	return CVarActionRequestAudit.GetValueOnGameThread() != 0;
@@ -122,7 +122,7 @@ bool FActionReactionDebug::ShouldAuditActionRequest()
 #endif
 }
 
-bool FActionReactionDebug::ShouldAuditReactionRequest()
+bool FExecutionOrchestratorDebug::ShouldAuditReactionRequest()
 {
 #if !UE_BUILD_SHIPPING
 	return CVarReactionRequestAudit.GetValueOnGameThread() != 0;
@@ -131,10 +131,10 @@ bool FActionReactionDebug::ShouldAuditReactionRequest()
 #endif
 }
 
-bool FActionReactionDebug::ShouldPrintActionReactionDebug()
+bool FExecutionOrchestratorDebug::ShouldPrintExecutionOrchestratorDebug()
 {
 #if !UE_BUILD_SHIPPING
-	return CVarActionReactionDump.GetValueOnGameThread() != 0;
+	return CVarExecutionOrchestratorDump.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -142,7 +142,7 @@ bool FActionReactionDebug::ShouldPrintActionReactionDebug()
 
 // Shared Diagnostic Hook
 
-void FActionReactionDebug::RecordInvalidActiveParticipantsForAudit(const AActor* InOwnerActor, const TCHAR* InSystem)
+void FExecutionOrchestratorDebug::RecordInvalidActiveParticipantsForAudit(const AActor* InOwnerActor, const TCHAR* InSystem)
 {
 	if (!ShouldAuditActionRequest() && !ShouldAuditReactionRequest()) return;
 
@@ -154,7 +154,7 @@ void FActionReactionDebug::RecordInvalidActiveParticipantsForAudit(const AActor*
 
 // Action Diagnostic Hook
 
-void FActionReactionDebug::RecordActionExecutionResultForAudit(const AActor* InOwnerActor, const FActionExecutionResult& InResult, const TCHAR* InEvent)
+void FExecutionOrchestratorDebug::RecordActionExecutionResultForAudit(const AActor* InOwnerActor, const FActionExecutionResult& InResult, const TCHAR* InEvent)
 {
 	if (!ShouldAuditActionRequest()) return;
 
@@ -171,7 +171,7 @@ void FActionReactionDebug::RecordActionExecutionResultForAudit(const AActor* InO
 		*FormatActionDataKey(InResult.ResolvedContext.ActionDataKey)));
 }
 
-void FActionReactionDebug::RecordActionRequestResultForAudit(const AActor* InOwnerActor, const FActionRequestResult& InResult, const TCHAR* InEvent)
+void FExecutionOrchestratorDebug::RecordActionRequestResultForAudit(const AActor* InOwnerActor, const FActionRequestResult& InResult, const TCHAR* InEvent)
 {
 	if (!ShouldAuditActionRequest()) return;
 
@@ -185,9 +185,9 @@ void FActionReactionDebug::RecordActionRequestResultForAudit(const AActor* InOwn
 
 // Action Debug Dump
 
-void FActionReactionDebug::PrintActionExecutionDebug(const AActor* InOwnerActor, const FExecutionDecisionQuery& InQuery, const FActionExecutionResult& InResult)
+void FExecutionOrchestratorDebug::PrintActionExecutionDebug(const AActor* InOwnerActor, const FExecutionDecisionQuery& InQuery, const FActionExecutionResult& InResult)
 {
-	if (!ShouldPrintActionReactionDebug()) return;
+	if (!ShouldPrintExecutionOrchestratorDebug()) return;
 
 	FLog::Log(FString::Printf(
 		TEXT("[Action|Orchestrator|ExecutionDump] Owner=%s | %s | Incoming={%s} | Active={%s} | Decision=%s | Relationship=%s | ApplyMode=%s | RejectReason=%s | Overlay=%s"),
@@ -204,7 +204,7 @@ void FActionReactionDebug::PrintActionExecutionDebug(const AActor* InOwnerActor,
 
 // Reaction Diagnostic Hook
 
-void FActionReactionDebug::RecordReactionExecutionResultForAudit(const AActor* InOwnerActor, const FReactionExecutionResult& InResult, const TCHAR* InEvent)
+void FExecutionOrchestratorDebug::RecordReactionExecutionResultForAudit(const AActor* InOwnerActor, const FReactionExecutionResult& InResult, const TCHAR* InEvent)
 {
 	if (!ShouldAuditReactionRequest()) return;
 
@@ -221,7 +221,7 @@ void FActionReactionDebug::RecordReactionExecutionResultForAudit(const AActor* I
 		*FormatReactionDataKey(InResult.ResolvedContext.ReactionDataKey)));
 }
 
-void FActionReactionDebug::RecordReactionRequestResultForAudit(const AActor* InOwnerActor, const FReactionRequestResult& InResult, const TCHAR* InEvent)
+void FExecutionOrchestratorDebug::RecordReactionRequestResultForAudit(const AActor* InOwnerActor, const FReactionRequestResult& InResult, const TCHAR* InEvent)
 {
 	if (!ShouldAuditReactionRequest()) return;
 
@@ -235,9 +235,9 @@ void FActionReactionDebug::RecordReactionRequestResultForAudit(const AActor* InO
 
 // Reaction Debug Dump
 
-void FActionReactionDebug::PrintReactionExecutionDebug(const AActor* InOwnerActor, const FExecutionDecisionQuery& InQuery, const FReactionExecutionResult& InResult)
+void FExecutionOrchestratorDebug::PrintReactionExecutionDebug(const AActor* InOwnerActor, const FExecutionDecisionQuery& InQuery, const FReactionExecutionResult& InResult)
 {
-	if (!ShouldPrintActionReactionDebug()) return;
+	if (!ShouldPrintExecutionOrchestratorDebug()) return;
 
 	FLog::Log(FString::Printf(
 		TEXT("[Reaction|Orchestrator|ExecutionDump] Owner=%s | %s | Incoming={%s} | Active={%s} | Decision=%s | Relationship=%s | ApplyMode=%s | RejectReason=%s | Overlay=%s"),

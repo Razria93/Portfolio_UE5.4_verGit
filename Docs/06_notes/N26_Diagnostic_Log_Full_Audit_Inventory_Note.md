@@ -127,8 +127,8 @@ asset/data 설정 오류를 찾는 저빈도 진단 로그다.
 | --- | --- | --- | --- | --- |
 | `Source/Portfolio/Action/CAction.cpp` | montage interruption callback | active diagnostic | 예상 밖 montage interruption | 유지 |
 | `Source/Portfolio/Reaction/CReaction.cpp` | montage interruption callback | active diagnostic | 예상 밖 montage interruption | 유지 |
-| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | execution participant resolve | helper gated | action/reaction 동시 active | `FActionReactionDebug::RecordInvalidActiveParticipantsForAudit` 처리 완료 |
-| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | execution participant resolve | helper gated | action/reaction 동시 active | `FActionReactionDebug::RecordInvalidActiveParticipantsForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | execution participant resolve | helper gated | action/reaction 동시 active | `FExecutionOrchestratorDebug::RecordInvalidActiveParticipantsForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | execution participant resolve | helper gated | action/reaction 동시 active | `FExecutionOrchestratorDebug::RecordInvalidActiveParticipantsForAudit` 처리 완료 |
 
 판단:
 
@@ -233,10 +233,10 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 
 | 파일 | 위치 | 후보 이벤트 | 현재 상태 | 권장 처리 |
 | --- | --- | --- | --- | --- |
-| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `RequestMovementAction`, `RequestEquipmentAction`, `RequestCombatAction` | accepted / ignored / rejected / deferred | helper gated | `FActionReactionDebug::RecordActionRequestResultForAudit` 처리 완료 |
-| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FActionReactionDebug::RecordActionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
-| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `RequestDamageReaction`, `RequestCombatResultReaction` | accepted / ignored / rejected | helper gated | `FActionReactionDebug::RecordReactionRequestResultForAudit` 처리 완료 |
-| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FActionReactionDebug::RecordReactionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
+| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `RequestMovementAction`, `RequestEquipmentAction`, `RequestCombatAction` | accepted / ignored / rejected / deferred | helper gated | `FExecutionOrchestratorDebug::RecordActionRequestResultForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FExecutionOrchestratorDebug::RecordActionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
+| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `RequestDamageReaction`, `RequestCombatResultReaction` | accepted / ignored / rejected | helper gated | `FExecutionOrchestratorDebug::RecordReactionRequestResultForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FExecutionOrchestratorDebug::RecordReactionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
 
 판단:
 
@@ -259,7 +259,7 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 | `Portfolio.Debug.CombatSignalDump` | CombatSignal source context / target packet 상세 dump | 완료 |
 | `Portfolio.Debug.ActionRequestAudit` | ActionOrchestrator request result / reject reason | 처리 완료 |
 | `Portfolio.Debug.ReactionRequestAudit` | ReactionOrchestrator request result / reject reason | 처리 완료 |
-| `Portfolio.Debug.ActionReactionDump` | Action/Reaction orchestration query/result dump | 처리 완료 |
+| `Portfolio.Debug.ExecutionOrchestratorDump` | Action/Reaction orchestration query/result dump | 처리 완료 |
 | `Portfolio.Debug.ActionComponentAudit` | ActionComponent data/executor/notify/runtime reject | 처리 완료 |
 | `Portfolio.Debug.ActionComponentDump` | ActionComponent execution context dump | 처리 완료 |
 | `Portfolio.Debug.CombatResultAudit` | CombatResult receive / parry stack / stagger request 경계 | 보류 |

@@ -5,13 +5,13 @@
 #include "Type/CReactionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
 
-class PORTFOLIO_API FActionReactionDebug
+class PORTFOLIO_API FExecutionOrchestratorDebug
 {
 public:
 	// Gate
 	static bool ShouldAuditActionRequest();
 	static bool ShouldAuditReactionRequest();
-	static bool ShouldPrintActionReactionDebug();
+	static bool ShouldPrintExecutionOrchestratorDebug();
 
 public:
 	// Shared Diagnostic Hook

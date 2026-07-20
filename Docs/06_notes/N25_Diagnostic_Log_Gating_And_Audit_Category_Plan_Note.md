@@ -387,7 +387,7 @@ Source/Portfolio/Core/Debug/
 FCombatResultDebug.h/.cpp
 FCombatSignalDebug.h/.cpp
 FFeedbackDebug.h/.cpp
-FActionReactionDebug.h/.cpp
+FExecutionOrchestratorDebug.h/.cpp
 FAIStateDebug.h/.cpp
 FMovementDebug.h/.cpp
 FNotifyDebug.h/.cpp

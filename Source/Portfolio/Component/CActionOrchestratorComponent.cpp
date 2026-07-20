@@ -14,7 +14,7 @@
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
 
-#include "Core/Debug/FActionReactionDebug.h"
+#include "Core/Debug/FExecutionOrchestratorDebug.h"
 
 #include "Type/CActionOrchestrationStructure.h"
 
@@ -413,8 +413,8 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 	ResolveExecutionApplyMode(decisionQuery, executionResult);
 	ResolveObservableOverlayGate(decisionQuery, executionResult);
 
-	FActionReactionDebug::RecordActionExecutionResultForAudit(OwnerCharacter_Injected, executionResult, TEXT("DecisionResolved"));
-	FActionReactionDebug::PrintActionExecutionDebug(OwnerCharacter_Injected, decisionQuery, executionResult);
+	FExecutionOrchestratorDebug::RecordActionExecutionResultForAudit(OwnerCharacter_Injected, executionResult, TEXT("DecisionResolved"));
+	FExecutionOrchestratorDebug::PrintActionExecutionDebug(OwnerCharacter_Injected, decisionQuery, executionResult);
 
 	return DispatchActionDecision(executionResult);
 }
@@ -522,7 +522,7 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 
 	if (bHasActiveAction && bHasActiveReaction)
 	{
-		FActionReactionDebug::RecordInvalidActiveParticipantsForAudit(OwnerCharacter_Injected, TEXT("ActionOrchestrator"));
+		FExecutionOrchestratorDebug::RecordInvalidActiveParticipantsForAudit(OwnerCharacter_Injected, TEXT("ActionOrchestrator"));
 		return participant;
 	}
 
@@ -948,7 +948,7 @@ FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EAc
 		result.RejectReason = EActionRequestRejectReason::None;
 	}
 
-	FActionReactionDebug::RecordActionRequestResultForAudit(OwnerCharacter_Injected, result, TEXT("RequestResult"));
+	FExecutionOrchestratorDebug::RecordActionRequestResultForAudit(OwnerCharacter_Injected, result, TEXT("RequestResult"));
 
 	return result;
 }
