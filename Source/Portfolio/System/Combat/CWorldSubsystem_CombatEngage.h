@@ -5,23 +5,6 @@
 #include "Type/CWorldSubSystemStructure.h"
 #include "CWorldSubsystem_CombatEngage.generated.h"
 
-struct FEngageAssignmentSlotState
-{
-	int32 EngageCount = 0;
-	int32 AlertCount = 0;
-};
-
-struct FEngageAssignmentRebuildDebugState
-{
-	int32 RequestSnapshotCount = 0;
-	int32 RequestBucketCount = 0;
-	int32 WarmupRequestCount = 0;
-	int32 FreshAppliedCount = 0;
-	int32 PromotedCount = 0;
-	int32 PreservedEngageCount = 0;
-	int32 PreservedAlertCount = 0;
-};
-
 UCLASS()
 class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsystem
 {
@@ -99,13 +82,4 @@ private:
 private:
 	// Runtime State
 	void ClearEngageRuntimeState();
-
-private:
-	// Debug
-	void PrintAppliedFreshEngageAssignment(const FEngageRequestContext& InRequestContext, const int& InIndex, const ECombatRole& InCombatRole, const FEngageAssignmentSlotState& InSlotState) const;
-	void PrintPromotedEngageAssignment(const FEngageRequestContext& InRequestContext, const FEngageAssignmentSlotState& InSlotState) const;
-	void PrintPreservedAssignment(const ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment, const FEngageAssignmentSlotState& InSlotState) const;
-	void PrintAssignmentWarmupDelay(const int& InRebuildId) const;
-	void PrintEngageRequestSnapshot(const int& InRebuildId, const TMap<class ACAIController*, FEngageRequestContext>& InRequestSnapshot, const TMap<class AActor*, TArray<FEngageRequestContext>>& InRequestBucket) const;
-	void PrintEngageAssignmentRebuildSummary(const int& InRebuildId, const FEngageAssignmentRebuildDebugState& InDebugState, const TMap<class ACAIController*, FEngageAssignmentContext>& InAssignments) const;
 };
