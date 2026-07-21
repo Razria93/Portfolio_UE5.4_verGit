@@ -2,23 +2,13 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
-#include "HAL/IConsoleManager.h"
 
-#include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalSourceComponent.h"
+#include "Core/Profiling/CCombatCollisionProfiling.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Weapon/CWeaponActor.h"
 
 #include "Type/CWeaponStructure.h"
-
-namespace
-{
-	TAutoConsoleVariable<int32> CVarDisableEnemyWeaponActor(
-		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor"),
-		0,
-		TEXT("Disable Enemy WeaponActor creation for runtime LOD measurement. 0: spawn WeaponActor, 1: skip Enemy WeaponActor."),
-		ECVF_Default);
-}
 
 UCWeaponComponent::UCWeaponComponent()
 {
@@ -248,9 +238,7 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 
 bool UCWeaponComponent::ShouldSkipWeaponActorCreationForProfiling() const
 {
-	if (CVarDisableEnemyWeaponActor.GetValueOnGameThread() == 0) return false;
-
-	return IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->IsA<ACEnemy>();
+	return FCombatCollisionProfiling::ShouldSkipEnemyWeaponActorCreation(OwnerCharacter_Injected);
 }
 
 void UCWeaponComponent::SkipWeaponActorCreationForProfiling()

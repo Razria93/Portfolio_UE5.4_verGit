@@ -7,11 +7,11 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BrainComponent.h"
-#include "HAL/IConsoleManager.h"
 
 #include "Character/Player/CPlayer.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Core/Debug/FAIPerceptionDebug.h"
+#include "Core/Profiling/CAIPerceptionProfiling.h"
 #include "AI/Patrol/CPatrolPath.h"
 
 #include "Interface/TargetContextProvider.h"
@@ -22,16 +22,6 @@
 #include "AI/Blackboard/CAIKeyRegistry.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
-
-namespace
-{
-	TAutoConsoleVariable<int32> CVarDisableEnemyPerception(
-		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyPerception"),
-		0,
-		TEXT("Disable Enemy AI Perception for runtime LOD measurement. 0: enable perception, 1: disable Enemy perception."),
-		ECVF_Default);
-
-}
 
 ACAIController::ACAIController()
 {
@@ -514,9 +504,7 @@ void ACAIController::ClearPerceptionStateForProfiling()
 
 bool ACAIController::ShouldDisableEnemyPerceptionForProfiling() const
 {
-	if (CVarDisableEnemyPerception.GetValueOnGameThread() == 0) return false;
-
-	return IsValid(ControlledPawn_Cached) && ControlledPawn_Cached->IsA<ACEnemy>();
+	return FAIPerceptionProfiling::ShouldDisableEnemyPerception(ControlledPawn_Cached);
 }
 
 void ACAIController::DisableEnemyPerceptionForProfiling()

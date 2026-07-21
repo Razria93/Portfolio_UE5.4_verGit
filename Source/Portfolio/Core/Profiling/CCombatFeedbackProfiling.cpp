@@ -7,11 +7,13 @@
 
 namespace
 {
+#if !UE_BUILD_SHIPPING
 	TAutoConsoleVariable<int32> CVarDisableEnemyCombatFeedback(
 		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyCombatFeedback"),
 		0,
 		TEXT("Disable Enemy combat feedback presentation for runtime LOD profiling. 0: play feedback, 1: skip Enemy feedback presentation."),
 		ECVF_Default);
+#endif
 
 	int32 ActionFeedbackRequestCount = 0;
 	int32 ActionFeedbackSkippedCount = 0;
@@ -34,9 +36,13 @@ namespace
 
 bool FCombatFeedbackProfiling::ShouldSkipEnemyCombatFeedback(const AActor* InOwnerActor)
 {
+#if !UE_BUILD_SHIPPING
 	if (CVarDisableEnemyCombatFeedback.GetValueOnGameThread() == 0) return false;
 
 	return IsValid(InOwnerActor) && InOwnerActor->IsA<ACEnemy>();
+#else
+	return false;
+#endif
 }
 
 void FCombatFeedbackProfiling::RecordActionFeedbackRequest() { ++ActionFeedbackRequestCount; }
