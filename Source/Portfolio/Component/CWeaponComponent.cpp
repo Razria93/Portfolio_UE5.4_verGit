@@ -206,7 +206,13 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 {
 	if (!IsValid(InOwnerCharacter)) return false;
 
-	if (!ensureMsgf(*InWeaponActorClass, TEXT("UCWeaponComponent: InWeaponActorClass is not set.")))
+	if (!ensureMsgf(
+		*InWeaponActorClass,
+		TEXT("[Weapon|Component|WeaponActorClassMissing] Reason=MissingWeaponActorClass | Owner=%s | Component=%s | Asset=%s | WeaponType=%s"),
+		*GetNameSafe(InOwnerCharacter),
+		*GetNameSafe(this),
+		*GetNameSafe(*InWeaponActorClass),
+		*UEnum::GetValueAsString(InWeaponType)))
 		return false;
 
 	UWorld* World = InOwnerCharacter->GetWorld();
@@ -222,7 +228,13 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	ACWeaponActor* weaponActor = World->SpawnActor<ACWeaponActor>(InWeaponActorClass, SpawnParams);
 
 	// 3) Check WeaponActor Validation
-	if (!ensureMsgf(IsValid(weaponActor), TEXT("UCWeaponComponent: WeaponActor was not created")))
+	if (!ensureMsgf(
+		IsValid(weaponActor),
+		TEXT("[Weapon|Component|WeaponActorSpawnFailed] Reason=SpawnActorReturnedInvalid | Owner=%s | Component=%s | Asset=%s | WeaponType=%s"),
+		*GetNameSafe(InOwnerCharacter),
+		*GetNameSafe(this),
+		*GetNameSafe(*InWeaponActorClass),
+		*UEnum::GetValueAsString(InWeaponType)))
 		return false;
 
 	const FCharacterComponentReferences references = BuildWeaponActorReferences();
