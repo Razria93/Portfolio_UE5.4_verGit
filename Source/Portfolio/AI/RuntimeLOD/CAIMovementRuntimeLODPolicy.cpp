@@ -22,7 +22,7 @@ int32 FAIMovementRuntimeLODPolicy::GetEnemyMovementMode()
 
 int32 FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(const AActor* InOwner)
 {
-	if (FAIStateRuntimeLODPolicy::GetStatePolicyMode() > 0)
+	if (FAIStateRuntimeLODPolicy::ShouldUseStateBasedPolicy())
 	{
 		return GetStateBasedMovementMode(InOwner);
 	}

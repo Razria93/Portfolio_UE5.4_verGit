@@ -41,7 +41,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyActorTickMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyActorTickMode"),
 		0,
-		TEXT("Controls ACEnemy actor tick profiling mode. 0: default, 1: disable ACEnemy actor tick."),
+		TEXT("Controls ACEnemy actor tick Runtime LOD mode. 0: default, 1: disable ACEnemy actor tick."),
 		ECVF_Default);
 }
 

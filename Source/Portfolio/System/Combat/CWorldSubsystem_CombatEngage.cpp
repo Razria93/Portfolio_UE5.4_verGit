@@ -23,13 +23,13 @@ namespace
 	TAutoConsoleVariable<int32> CVarEngageAssignmentEngageCap(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap"),
 		2,
-		TEXT("Controls max Engage assignees per target for AI Runtime LOD profiling. Default: 2."),
+		TEXT("Controls max Engage assignees per target for AI Runtime LOD assignment. Default: 2."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarEngageAssignmentAlertCap(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap"),
 		6,
-		TEXT("Controls max Alert assignees per target for AI Runtime LOD profiling. Default: 6."),
+		TEXT("Controls max Alert assignees per target for AI Runtime LOD assignment. Default: 6."),
 		ECVF_Default);
 
 	float GetEngageAssignmentWarmupTime()

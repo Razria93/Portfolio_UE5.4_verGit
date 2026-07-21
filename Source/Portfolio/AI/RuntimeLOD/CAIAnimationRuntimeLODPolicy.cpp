@@ -3,6 +3,7 @@
 #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Controller/CAIController.h"
+#include "Core/Profiling/CAIAnimationProfiling.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 
@@ -20,11 +21,6 @@ namespace
 		TEXT("Refresh interval for ACEnemy reduced animation parameter mode."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarEnemyAnimationRefreshCounter(
-		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter"),
-		0,
-		TEXT("Enable ACEnemy animation parameter refresh counters for runtime LOD measurement. 0: disabled, 1: enabled."),
-		ECVF_Default);
 }
 
 int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode()
@@ -34,7 +30,7 @@ int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode()
 
 int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(const AActor* InOwner)
 {
-	if (FAIStateRuntimeLODPolicy::GetStatePolicyMode() > 0)
+	if (FAIStateRuntimeLODPolicy::ShouldUseStateBasedPolicy())
 	{
 		return GetStateBasedAnimationMode(InOwner);
 	}
@@ -54,7 +50,7 @@ float FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval()
 
 bool FAIAnimationRuntimeLODPolicy::ShouldAuditAnimationRefresh()
 {
-	return CVarEnemyAnimationRefreshCounter.GetValueOnGameThread() != 0;
+	return FAIAnimationProfiling::ShouldAuditAnimationRefresh();
 }
 
 int32 FAIAnimationRuntimeLODPolicy::GetStateBasedAnimationMode(const AActor* InOwner)

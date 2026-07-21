@@ -1,5 +1,66 @@
 # N26. Diagnostic Log Full Audit Inventory Note
 
+## 2026-07-21 CVar ownership update
+
+Current ownership rule:
+
+```text
+1. Debug / Diagnostic output CVar
+   -> Core/Debug helper owns the CVar, gate, message format, and non-shipping no-op.
+
+2. Profiling gate CVar that can change runtime behavior
+   -> Core/Profiling helper owns the CVar and non-shipping no-op.
+   -> Gameplay classes keep semantic methods such as ShouldSkip...ForProfiling().
+
+3. CSV / profiling audit CVar
+   -> Core/Profiling helper or the narrow policy helper owns the audit gate.
+   -> Runtime policy selector CVar must not also imply audit/counter output.
+
+4. Runtime policy / tuning CVar
+   -> The owning policy/system cpp may keep the CVar when it is the natural owner.
+   -> The CVar should be read through a policy API, not scattered through gameplay flow.
+```
+
+Applied ownership:
+
+```text
+Core/Debug:
+- AI combat BT audit and CanMoveDecoratorAudit
+- AI perception audit gates
+- CombatEngage assignment audit gates and output format
+
+Core/Profiling:
+- DisableEnemyPerception
+- DisableEnemyHitProcessing
+- DisableEnemyWeaponActor
+- DisableEnemyCombatFeedback
+- AnimationRefreshAudit
+
+Policy owner:
+- StatePolicyMode controls policy source only.
+- StatePolicyAudit controls state tier CSV counters.
+- StatePolicyMode 0 means per-system RuntimeLOD CVar modes.
+- StatePolicyMode 1 means state-based RuntimeLOD tier snapshot.
+```
+
+Remaining runtime policy/tuning CVars intentionally kept in owner files:
+
+```text
+CombatEngage assignment tuning:
+- EngageAssignmentWarmupTime
+- EngageAssignmentEngageCap
+- EngageAssignmentAlertCap
+
+Enemy / RuntimeLOD policy:
+- EnemyMeshMode
+- EnemyActorTickMode
+- EnemyMovementMode
+- EnemyAnimationMode
+- EnemyAnimationReducedRefreshInterval
+- BTUpdateIntervalMode
+- StatePolicyMode
+```
+
 ## PR final rescan override
 
 2026-07-21 PR 전 잔여 로그 재스캔 기준으로 아래 판단을 기존 요약보다 우선한다.

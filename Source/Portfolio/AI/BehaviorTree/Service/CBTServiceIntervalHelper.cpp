@@ -15,7 +15,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarBTUpdateIntervalMode(
 		TEXT("Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode"),
 		0,
-		TEXT("Controls AI BT service update interval profiling mode. 0: default, 1: reduced, 2: aggressive reduced."),
+		TEXT("Controls AI BT service update interval Runtime LOD mode. 0: default, 1: reduced, 2: aggressive reduced."),
 		ECVF_Default);
 
 	// Interval Preset
