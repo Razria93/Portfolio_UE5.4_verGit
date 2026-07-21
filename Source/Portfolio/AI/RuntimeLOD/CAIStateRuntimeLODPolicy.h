@@ -8,7 +8,4 @@ class FAIStateRuntimeLODPolicy
 public:
 	static int32 GetStatePolicyMode();
 	static bool ShouldUseStateBasedPolicy();
-	static bool IsStatePolicyAuditEnabled();
-
-	static void RecordResolvedTierForProfiling(EAIRuntimeLODTier InTier);
 };

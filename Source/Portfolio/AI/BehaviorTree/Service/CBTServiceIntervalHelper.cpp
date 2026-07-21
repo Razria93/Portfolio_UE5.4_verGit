@@ -3,11 +3,11 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "HAL/IConsoleManager.h"
-#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
 #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Controller/CAIController.h"
+#include "Core/Profiling/CAIStateRuntimeLODProfiling.h"
 
 namespace
 {
@@ -122,9 +122,7 @@ namespace
 
 	void RecordStateRuntimeLODTier(EAIRuntimeLODTier InTier)
 	{
-		if (!FAIStateRuntimeLODPolicy::IsStatePolicyAuditEnabled()) return;
-
-		FAIStateRuntimeLODPolicy::RecordResolvedTierForProfiling(InTier);
+		FAIStateRuntimeLODProfiling::RecordResolvedTierForProfiling(InTier);
 	}
 
 	// AIIntentState
