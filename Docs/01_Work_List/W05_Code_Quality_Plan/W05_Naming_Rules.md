@@ -127,12 +127,13 @@ APawn* ControlledPawn_Cached = nullptr;
 ```text
 public API / UPROPERTY member
 -> 가능하면 Component 사용
+-> Unreal engine API / parent class API와 이름 충돌 가능성이 있으면 Comp 허용
 
 local variable / injected member / cached member
 -> 기존 프로젝트 관례상 Comp 허용
 ```
 
-`GetMovementComp()`, `MovementComp_Injected` 같은 이름은 이미 광범위하게 사용되고 있으므로 단발 오타 정리 브랜치에서 전면 변경하지 않는다.
+`GetMovementComp()`, `MovementComp_Injected` 같은 이름은 이미 광범위하게 사용되고 있고, 일부 component 계열 public API는 engine / parent API와 충돌을 피하기 위한 회피 네이밍일 수 있다. 따라서 단발 오타 정리 브랜치에서 전면 변경하지 않는다.
 
 ---
 
@@ -148,13 +149,15 @@ static void PrintActionExecutionContextDebug(...);
 static void ReportActionNotifyTriggerWarning(...);
 ```
 
-신규 profiling API는 `Record...ForProfiling()` 형태를 권장한다.
+Profiling helper는 class / namespace가 이미 profiling 책임을 드러내므로 함수명에 `ForProfiling` suffix를 반복하지 않는다.
 
 ```cpp
-static void RecordAnimationRefreshExecutedForProfiling();
+static void RecordAnimationRefreshExecuted();
+static void RecordUpdateAIContextTick();
+static void RecordResolvedTier(EAIRuntimeLODTier InTier);
 ```
 
-단, 이미 counter class 이름으로 profiling 성격이 드러나는 기존 combat profiling API의 전면 rename은 별도 판단한다.
+`Core/Profiling` 밖의 owner class가 profiling event를 별도 wrapper로 분리해야 할 때는 필요하면 `ForProfiling` suffix를 허용한다. 다만 helper API 자체는 suffix 없는 `Record...` 형태를 기본으로 한다.
 
 ---
 
@@ -169,8 +172,9 @@ Comp vs Component 전면 통일
 CWorldSubSystemStructure / SubSystem -> Subsystem
 -> 파일명, generated include, UHT, include 경로 영향 가능
 
-combat profiling API suffix 전면 통일
--> 기존 counter class와 호출부가 넓음
+Core/Profiling API suffix 통일
+-> helper class 이름이 profiling 책임을 드러내므로 함수명에서는 ForProfiling suffix를 제거하는 방향
+-> 호출부가 있는 rename이므로 네이밍 브랜치에서 별도 commit으로 처리
 
 책임명 자체가 애매한 public API rename
 -> 실제 책임 재분류가 필요할 수 있음

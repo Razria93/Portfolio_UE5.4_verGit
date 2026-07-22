@@ -14,7 +14,8 @@
 - [x] 네이밍 규칙 문서 분리
 - [x] 이번 브랜치 처리 범위 / 보류 범위 분류
 - [ ] P0 단발 네이밍 불일치 수정
-- [ ] P1 public API rename 후보 판단
+- [ ] P1 public API rename 적용
+- [ ] Profiling helper API suffix 정리
 - [ ] 검증 및 PR 문서 작성
 
 ---
@@ -84,9 +85,9 @@ CBTService_UpdateEngageContext.h
 -> FEngageContext & -> FEngageContext&
 ```
 
-### P1: 판단 후 선택 적용
+### P1: public API rename 적용
 
-다음 항목은 규칙상 수정 방향은 명확하지만 public C++ API rename이다. 호출부 범위와 빌드 영향 확인 후 적용 여부를 결정한다.
+다음 항목은 public C++ API rename이지만, 기존 이름이 bool getter 규칙과 맞지 않으므로 이번 브랜치에서 적용한다.
 
 ```text
 CEnemy.h
@@ -98,7 +99,29 @@ CEnemy.h
 -> CAIController.cpp
 ```
 
-`UFUNCTION`이 아니므로 Blueprint 직접 영향은 낮지만 public inline API이므로 별도 commit 또는 별도 판단 단위로 처리한다.
+`UFUNCTION`이 아니므로 Blueprint 직접 영향은 낮지만 public inline API이므로 P0 단발 수정과 별도 commit으로 처리한다.
+
+### P1: Profiling helper API suffix 정리
+
+`Core/Profiling` helper class는 class 이름이 profiling 책임을 이미 드러내므로 `ForProfiling` suffix를 제거하는 방향으로 통일한다.
+
+```text
+CAIAnimationProfiling
+-> RecordAnimationRefreshAttemptForProfiling() -> RecordAnimationRefreshAttempt()
+-> RecordAnimationRefreshExecutedForProfiling() -> RecordAnimationRefreshExecuted()
+-> RecordAnimationRefreshSkippedForProfiling() -> RecordAnimationRefreshSkipped()
+
+CAIBehaviorTreeProfiling
+-> RecordUpdateAIContextTickForProfiling() -> RecordUpdateAIContextTick()
+-> RecordUpdateAIIntentStateTickForProfiling() -> RecordUpdateAIIntentStateTick()
+-> RecordUpdateEngageContextTickForProfiling() -> RecordUpdateEngageContextTick()
+-> RecordAIIntentIntervalPresetForProfiling() -> RecordAIIntentIntervalPreset()
+
+CAIStateRuntimeLODProfiling
+-> RecordResolvedTierForProfiling() -> RecordResolvedTier()
+```
+
+`CCombatFeedbackProfiling`, `FCombatCollisionProfilingCounters`는 이미 suffix 없는 형태이므로 유지한다.
 
 ---
 
@@ -115,9 +138,9 @@ CWorldSubSystemStructure / SubSystem -> Subsystem
 -> 파일명, generated include, UHT, include 경로 영향 가능
 -> 구조체 나누기 / 헤더 배치 규칙 작업에서 처리
 
-combat profiling API suffix 전면 통일
--> 기존 counter class와 호출부가 넓음
--> profiling naming 작업으로 별도 처리
+Core/Profiling 밖 owner-side profiling wrapper 전면 통일
+-> helper API 통일 이후 필요하면 별도 판단
+-> owner class 내부 wrapper는 profiling side effect를 드러내기 위해 ForProfiling suffix를 허용
 
 RequestAICombatSignalCue 같은 책임명 불일치 후보
 -> 실제 책임 재분류가 필요할 수 있음
@@ -131,11 +154,11 @@ RequestAICombatSignalCue 같은 책임명 불일치 후보
 ```text
 1. P0 단발 네이밍 불일치 수정
 2. rg 재검색으로 잔존 후보 확인
-3. P1 GetbUse 계열 적용 여부 판단
-4. 필요 시 P1 별도 commit 처리
+3. P1 GetbUse 계열을 ShouldUse 계열로 별도 commit 처리
+4. P1 Core/Profiling helper API suffix를 별도 commit 처리
 5. W05 문서와 PR 문서 업데이트
 6. git diff --check
-7. C++ header/API 변경이 있으면 PortfolioEditor Development 빌드
+7. C++ header/API 변경이 있으므로 PortfolioEditor Development 빌드
 ```
 
 ---
@@ -146,6 +169,7 @@ RequestAICombatSignalCue 같은 책임명 불일치 후보
 
 ```powershell
 rg -n "inAxisValue|executorkey|dist_target|blackBoardComp|FEngageContext &|FEngageRequestContext &" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
+rg -n "GetbUse|Record[A-Za-z0-9]+ForProfiling" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
 git diff --check
 ```
 
@@ -163,10 +187,10 @@ C++ API 변경 시 빌드:
 PR 가능:
 - 기능 동작 변경이 없다
 - P0 네이밍 불일치가 제거됐다
-- P1 public API rename 여부가 문서에 기록됐다
+- P1 public API rename과 profiling helper API suffix 정리가 문서 기준과 일치한다
 - 보류 항목이 삭제되지 않고 후속 범위로 남아 있다
 - git diff --check가 통과했다
-- header/API rename을 적용했다면 Development 빌드를 확인했다
+- Development 빌드를 확인했다
 
 PR 보류:
 - Blueprint / asset reference 위험이 있는 rename이 섞였다
