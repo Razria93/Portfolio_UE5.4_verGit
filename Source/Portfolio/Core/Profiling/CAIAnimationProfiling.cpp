@@ -1,6 +1,7 @@
 #include "Core/Profiling/CAIAnimationProfiling.h"
 
 #include "HAL/IConsoleManager.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 namespace
 {
@@ -20,4 +21,25 @@ bool FAIAnimationProfiling::ShouldAuditAnimationRefresh()
 #else
 	return false;
 #endif
+}
+
+void FAIAnimationProfiling::RecordAnimationRefreshAttemptForProfiling()
+{
+	if (!ShouldAuditAnimationRefresh()) return;
+
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Attempt, 1, ECsvCustomStatOp::Accumulate);
+}
+
+void FAIAnimationProfiling::RecordAnimationRefreshExecutedForProfiling()
+{
+	if (!ShouldAuditAnimationRefresh()) return;
+
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Executed, 1, ECsvCustomStatOp::Accumulate);
+}
+
+void FAIAnimationProfiling::RecordAnimationRefreshSkippedForProfiling()
+{
+	if (!ShouldAuditAnimationRefresh()) return;
+
+	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Skipped, 1, ECsvCustomStatOp::Accumulate);
 }

@@ -11,6 +11,7 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Controller/CAIController.h"
+#include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 
 #include "Type/CStateStructure.h"
 #include "Type/CWeaponStructure.h"
@@ -31,7 +32,7 @@ UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState);
-	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState_Count, 1, ECsvCustomStatOp::Accumulate);
+	FAIBehaviorTreeProfiling::RecordUpdateAIIntentStateTickForProfiling();
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UWorld* world = GetWorld();

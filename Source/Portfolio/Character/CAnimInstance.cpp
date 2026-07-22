@@ -2,8 +2,8 @@
 #include "ProjectGlobal.h"
 
 #include "AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.h"
+#include "Core/Profiling/CAIAnimationProfiling.h"
 #include "GameFramework/Character.h"
-#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -152,21 +152,21 @@ void UCAnimInstance::RecordAnimationRefreshAttemptForProfiling() const
 {
 	if (!ShouldAuditAnimationRefreshForProfiling()) return;
 
-	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Attempt, 1, ECsvCustomStatOp::Accumulate);
+	FAIAnimationProfiling::RecordAnimationRefreshAttemptForProfiling();
 }
 
 void UCAnimInstance::RecordAnimationRefreshExecutedForProfiling() const
 {
 	if (!ShouldAuditAnimationRefreshForProfiling()) return;
 
-	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Executed, 1, ECsvCustomStatOp::Accumulate);
+	FAIAnimationProfiling::RecordAnimationRefreshExecutedForProfiling();
 }
 
 void UCAnimInstance::RecordAnimationRefreshSkippedForProfiling() const
 {
 	if (!ShouldAuditAnimationRefreshForProfiling()) return;
 
-	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Skipped, 1, ECsvCustomStatOp::Accumulate);
+	FAIAnimationProfiling::RecordAnimationRefreshSkippedForProfiling();
 }
 
 // Parameter Refresh

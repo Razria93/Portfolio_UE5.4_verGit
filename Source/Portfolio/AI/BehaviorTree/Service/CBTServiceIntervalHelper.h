@@ -4,6 +4,13 @@
 
 class UBehaviorTreeComponent;
 
+enum class EBTServiceIntervalPreset : uint8
+{
+	Default,
+	Reduced,
+	Aggressive
+};
+
 namespace CBTServiceIntervalHelper
 {
 	float GetAIContextInterval(const UBehaviorTreeComponent& InOwnerComp);

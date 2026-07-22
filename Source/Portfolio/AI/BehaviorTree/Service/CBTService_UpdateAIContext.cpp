@@ -16,6 +16,7 @@
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Core/Debug/FAICombatBTDebug.h"
+#include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Type/CAIStructure.h"
 #include "Type/CWorldSubSystemStructure.h"
 
@@ -31,7 +32,7 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext);
-	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext_Count, 1, ECsvCustomStatOp::Accumulate);
+	FAIBehaviorTreeProfiling::RecordUpdateAIContextTickForProfiling();
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
