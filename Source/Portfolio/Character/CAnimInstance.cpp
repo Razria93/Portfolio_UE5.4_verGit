@@ -145,7 +145,7 @@ bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 
 bool UCAnimInstance::ShouldAuditAnimationRefreshForProfiling() const
 {
-	return IsEnemyAnimationProfilingTarget() && FAIAnimationRuntimeLODPolicy::ShouldAuditAnimationRefresh();
+	return IsEnemyAnimationProfilingTarget() && FAIAnimationProfiling::ShouldAuditAnimationRefresh();
 }
 
 void UCAnimInstance::RecordAnimationRefreshAttemptForProfiling() const

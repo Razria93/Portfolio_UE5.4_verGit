@@ -12,7 +12,6 @@ public:
 	static bool IsEnemyAnimationRuntimeLODTarget(const AActor* InOwner);
 
 	static float GetReducedAnimationRefreshInterval();
-	static bool ShouldAuditAnimationRefresh();
 
 private:
 	static int32 GetStateBasedAnimationMode(const AActor* InOwner);

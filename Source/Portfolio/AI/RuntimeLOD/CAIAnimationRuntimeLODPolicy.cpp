@@ -3,7 +3,6 @@
 #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Controller/CAIController.h"
-#include "Core/Profiling/CAIAnimationProfiling.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 
@@ -46,11 +45,6 @@ bool FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(const AActor
 float FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval()
 {
 	return FMath::Max(CVarEnemyAnimationReducedRefreshInterval.GetValueOnGameThread(), KINDA_SMALL_NUMBER);
-}
-
-bool FAIAnimationRuntimeLODPolicy::ShouldAuditAnimationRefresh()
-{
-	return FAIAnimationProfiling::ShouldAuditAnimationRefresh();
 }
 
 int32 FAIAnimationRuntimeLODPolicy::GetStateBasedAnimationMode(const AActor* InOwner)
