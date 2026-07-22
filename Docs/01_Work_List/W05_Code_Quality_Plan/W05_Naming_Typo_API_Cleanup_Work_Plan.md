@@ -13,10 +13,11 @@
 - [x] 네이밍 패턴 스캔
 - [x] 네이밍 규칙 문서 분리
 - [x] 이번 브랜치 처리 범위 / 보류 범위 분류
-- [ ] P0 단발 네이밍 불일치 수정
-- [ ] P1 public API rename 적용
-- [ ] Profiling helper API suffix 정리
-- [ ] 검증 및 PR 문서 작성
+- [x] P0 단발 네이밍 불일치 수정
+- [x] P1 public API rename 적용
+- [x] Profiling helper API suffix 정리
+- [x] 최종 검증
+- [ ] PR 문서 작성
 
 ---
 
@@ -73,6 +74,7 @@ CReactionComponent.cpp
 
 CBTService_UpdateAIContext.cpp
 -> dist_target -> distanceToTarget
+-> dist_home -> distanceToHome
 
 CBTService_UpdateEngageContext.cpp
 -> blackBoardComp -> blackboardComp
@@ -139,8 +141,8 @@ CWorldSubSystemStructure / SubSystem -> Subsystem
 -> 구조체 나누기 / 헤더 배치 규칙 작업에서 처리
 
 Core/Profiling 밖 owner-side profiling wrapper 전면 통일
--> helper API 통일 이후 필요하면 별도 판단
--> owner class 내부 wrapper는 profiling side effect를 드러내기 위해 ForProfiling suffix를 허용
+-> helper API와 owner-side wrapper 모두 이번 브랜치에서 suffix를 제거
+-> profiling 책임은 `Core/Profiling` helper class 이름과 호출 섹션으로 표현
 
 RequestAICombatSignalCue 같은 책임명 불일치 후보
 -> 실제 책임 재분류가 필요할 수 있음
@@ -156,9 +158,11 @@ RequestAICombatSignalCue 같은 책임명 불일치 후보
 2. rg 재검색으로 잔존 후보 확인
 3. P1 GetbUse 계열을 ShouldUse 계열로 별도 commit 처리
 4. P1 Core/Profiling helper API suffix를 별도 commit 처리
-5. W05 문서와 PR 문서 업데이트
-6. git diff --check
-7. C++ header/API 변경이 있으므로 PortfolioEditor Development 빌드
+5. 추가 local snake_case 후보 정리
+6. W05 문서 업데이트
+7. git diff --check
+8. C++ header/API 변경이 있으므로 PortfolioEditor Development 빌드
+9. PR 문서 업데이트
 ```
 
 ---
@@ -168,7 +172,7 @@ RequestAICombatSignalCue 같은 책임명 불일치 후보
 정적 확인:
 
 ```powershell
-rg -n "inAxisValue|executorkey|dist_target|blackBoardComp|FEngageContext &|FEngageRequestContext &" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
+rg -n "inAxisValue|executorkey|dist_target|dist_home|blackBoardComp|FEngageContext &|FEngageRequestContext &" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
 rg -n "GetbUse|Record[A-Za-z0-9]+ForProfiling" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
 git diff --check
 ```

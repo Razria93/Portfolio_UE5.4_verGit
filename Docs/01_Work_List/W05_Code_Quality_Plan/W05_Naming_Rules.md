@@ -157,7 +157,7 @@ static void RecordUpdateAIContextTick();
 static void RecordResolvedTier(EAIRuntimeLODTier InTier);
 ```
 
-`Core/Profiling` 밖의 owner class가 profiling event를 별도 wrapper로 분리해야 할 때는 필요하면 `ForProfiling` suffix를 허용한다. 다만 helper API 자체는 suffix 없는 `Record...` 형태를 기본으로 한다.
+`Core/Profiling` 밖의 owner class가 profiling event를 별도 wrapper로 분리해야 할 때도 가능하면 suffix 없는 `Record...` 형태를 사용한다. profiling 책임은 호출 위치의 섹션명과 `Core/Profiling` helper class 이름으로 표현한다.
 
 ---
 
@@ -171,10 +171,6 @@ Comp vs Component 전면 통일
 
 CWorldSubSystemStructure / SubSystem -> Subsystem
 -> 파일명, generated include, UHT, include 경로 영향 가능
-
-Core/Profiling API suffix 통일
--> helper class 이름이 profiling 책임을 드러내므로 함수명에서는 ForProfiling suffix를 제거하는 방향
--> 호출부가 있는 rename이므로 네이밍 브랜치에서 별도 commit으로 처리
 
 책임명 자체가 애매한 public API rename
 -> 실제 책임 재분류가 필요할 수 있음
