@@ -102,6 +102,8 @@ W05 묶음은 다음 조건을 만족하면 코드 품질 1차 정리가 완료�
 Work List / Notes
 - Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
 - Docs/01_Work_List/W05_Code_Quality_Plan/W05_Comment_Section_Cleanup_Work_Plan.md
+- Docs/01_Work_List/W05_Code_Quality_Plan/W05_Naming_Rules.md
+- Docs/01_Work_List/W05_Code_Quality_Plan/W05_Naming_Typo_API_Cleanup_Work_Plan.md
 - Docs/01_Work_List/00_Work_List_Index.md
 - Docs/06_notes/N08_Code_Quality_Cleanup_Plan_Note.md
 ```
@@ -349,6 +351,7 @@ refactor/naming-typo-api-cleanup
 - 기능 변경 없이 오타와 명백한 네이밍 불일치를 정리한다.
 - Blueprint / asset reference 위험이 있는 rename은 별도 확인 후 처리한다.
 - `RequestAICombatSignalCue` 같은 책임명 불일치 후보는 별도 commit으로 분리한다.
+- 네이밍 규칙은 `W05_Naming_Rules.md`에, 이번 브랜치 처리 / 보류 범위는 `W05_Naming_Typo_API_Cleanup_Work_Plan.md`에 기록한다.
 
 ---
 
