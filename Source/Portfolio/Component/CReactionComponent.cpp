@@ -159,7 +159,7 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 		return false;
 	}
 
-	TArray<FDamageSpecKey> candidateKeys; // OutParameter
+	TArray<FDamageSpecKey> candidateKeys;
 	EReactionType reactionType = InDataKey.ReactionType;
 	
 	// Candidate SpecKey

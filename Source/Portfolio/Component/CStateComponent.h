@@ -28,7 +28,7 @@ private:
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 public:
-	/* === [Out] Custom Delgate Events === */
+	/* === [Out] Custom Delegate Events === */
 	FExecutionStateChanged OnExecutionStateChanged;
 
 public:

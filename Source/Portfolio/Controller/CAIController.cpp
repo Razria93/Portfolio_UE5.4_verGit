@@ -212,7 +212,6 @@ bool ACAIController::SetupBlackboardComponent()
 	if (!BlackboardAsset) return false;
 	if (!CAIKeyRegistry::ValidateRequiredKeys(BlackboardAsset)) return false;
 
-	// blackboardComp: Out Parameter
 	UBlackboardComponent* blackboardComp = nullptr;
 	bool bUsed = UseBlackboard(BlackboardAsset, blackboardComp);
 
@@ -368,7 +367,6 @@ void ACAIController::UpdateTargetDataMap()
 	//	- bHasMemory	: false
 	// -----------------------------------------------------------------------------
 
-	// Used BT_Service API
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 

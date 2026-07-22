@@ -134,12 +134,12 @@ public:
 
 public:
 	// Intervention Match
-	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const;	// Incoming API
-	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
+	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const;
+	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;
 
 public:
 	// Observable Overlay Match
-	virtual void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const;	// Incoming API
+	virtual void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const;
 
 private:
 	bool MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const;

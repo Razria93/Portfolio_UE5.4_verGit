@@ -79,7 +79,7 @@ private:
 	TArray<class UShapeComponent*> Collisions_Cached;
 
 public:
-	/* === [OUT] Custom Delgate Events === */
+	/* === [OUT] Custom Delegate Events === */
 	// Collision (Enabled/Disabled)
 	FWeaponActorCollisionEnabled OnWeaponActorCollisionEnabled;
 	FWeaponActorCollisionDisabled OnWeaponActorCollisionDisabled;
@@ -152,7 +152,7 @@ public:
 	void CollisionDisabled();
 
 public:
-	/* === [IN] Engine Delgate Events === */
+	/* === [IN] Engine Delegate Events === */
 	// UShapeComponent
 	UFUNCTION()
 	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

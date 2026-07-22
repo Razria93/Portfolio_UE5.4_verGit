@@ -250,7 +250,7 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	}
 	else
 	{
-		// FallBack
+		// Fallback
 		finalDamage = DamageAmount;
 	}
 

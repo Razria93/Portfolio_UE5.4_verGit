@@ -418,7 +418,7 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 	// Process 4: Commit Damage To Health
 	InOutCombatSignalTargetContext.CommittedDamage = InOutCombatSignalTargetContext.bShouldCommitDamage ? CommitDamageToHealth(InOutCombatSignalTargetContext) : 0.f;
 
-	// TODO: Shield / Mana / Stemina etc + Commit Order
+	// TODO: Shield / Mana / Stamina etc + Commit Order
 
 	// Post-state Snapshot: Set BuildResult
 	InOutCombatSignalTargetContext.DeadState_After = HealthComp_Injected->GetDeadState();

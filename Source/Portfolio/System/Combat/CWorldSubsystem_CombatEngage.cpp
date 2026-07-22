@@ -126,7 +126,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 
 	bool bCompletedWarmupThisRebuild = false;
 
-	// Flag Toogle
+	// Flag Toggle
 	if (!bAssignmentWarmupCompleted)
 	{
 		if (GetEngageAssignmentWarmupTime() > 0.f && AssignmentWarmupStartTime < 0.f) return;

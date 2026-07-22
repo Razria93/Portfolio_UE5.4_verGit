@@ -46,7 +46,7 @@ private:
 	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Injected = nullptr;
 
 public:
-	/* === [Out] Custom Delgate Events === */
+	/* === [Out] Custom Delegate Events === */
 	FWeaponTypeChanged OnWeaponTypeChanged;
 
 public:

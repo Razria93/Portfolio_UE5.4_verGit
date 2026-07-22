@@ -356,7 +356,7 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	}
 	else
 	{
-		// FallBack
+		// Fallback
 		finalDamage = DamageAmount;
 	}
 

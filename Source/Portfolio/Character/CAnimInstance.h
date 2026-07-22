@@ -11,7 +11,7 @@ class PORTFOLIO_API UCAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 protected:
-	/* === Injection Datas === */
+	/* === Injected Animation Data === */
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float Speed = 0.f;
 

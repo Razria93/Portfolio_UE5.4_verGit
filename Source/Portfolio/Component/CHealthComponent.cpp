@@ -124,7 +124,7 @@ bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUp
 		CurrentHP = FMath::Clamp(CurrentHP, 1.f, MaxHP);
 	}
 
-	// TODO: `FOnMaxHealthChanged` Delegate BroadCast
+	// TODO: `FOnMaxHealthChanged` Delegate Broadcast
 
 	return true;
 }
@@ -146,7 +146,7 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 	PreviousHP = oldHP;
 	CurrentHP = newHP;
 
-	// TODO: `FOnHealthChanged` Delegate BroadCast
+	// TODO: `FOnHealthChanged` Delegate Broadcast
 
 	UpdateDeadState();
 
@@ -171,7 +171,7 @@ float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 	PreviousHP = oldHP;
 	CurrentHP = newHP;
 
-	// TODO: `FOnHealthChanged` Delegate BroadCast
+	// TODO: `FOnHealthChanged` Delegate Broadcast
 
 	UpdateDeadState();
 

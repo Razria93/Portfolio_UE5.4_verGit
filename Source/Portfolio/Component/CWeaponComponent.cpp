@@ -224,7 +224,7 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	// 2) Spawn WeaponActor
-	// TODO : Deffered Spawn
+	// TODO: Deferred Spawn
 	ACWeaponActor* weaponActor = World->SpawnActor<ACWeaponActor>(InWeaponActorClass, SpawnParams);
 
 	// 3) Check WeaponActor Validation

@@ -18,7 +18,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	TMap<FDamageSpecKey, FDamageSpec> DamageSpecContainer;	// TODO: Seperate DataAsset (DB)
+	TMap<FDamageSpecKey, FDamageSpec> DamageSpecContainer;	// TODO: Separate DataAsset (DB)
 
 private:
 	TMap<FCombatSignalHitWindowKey, TSet<TWeakObjectPtr<AActor>>> DamagedTargetContainer;

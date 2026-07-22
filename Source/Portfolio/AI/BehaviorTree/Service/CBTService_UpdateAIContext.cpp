@@ -66,7 +66,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		return;
 	}
 
-	FAIContext aiContext; // OutParameter
+	FAIContext aiContext;
 
 	// Based OwnerPawn
 	EContextBuildResult deadResult = ComputeDeadContext(ownerPawn, blackboardComp, aiContext);
@@ -135,7 +135,7 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* I
 	ACAIController* aiController = Cast<ACAIController>(InOwnerPawn->GetController());
 	if (!IsValid(aiController)) return EContextBuildResult::Error;
 
-	FTargetData topData; // OutParameter
+	FTargetData topData;
 	const EPerceptionBuildResult Result = aiController->BuildPerceptionContext(topData);
 
 	if (Result == EPerceptionBuildResult::Error) return EContextBuildResult::Error;

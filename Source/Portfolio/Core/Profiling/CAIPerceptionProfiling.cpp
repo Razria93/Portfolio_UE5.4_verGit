@@ -10,7 +10,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarDisableEnemyPerception(
 		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyPerception"),
 		0,
-		TEXT("Disable Enemy AI Perception for runtime LOD measurement. 0: enable perception, 1: disable Enemy perception."),
+		TEXT("Disable ACEnemy AI perception for runtime LOD measurement. 0: enable perception, 1: disable ACEnemy perception."),
 		ECVF_Default);
 #endif
 }
