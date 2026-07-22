@@ -1131,7 +1131,6 @@ public:
 	UPROPERTY(Transient)
 	AActor* TargetActor = nullptr;
 
-	// Damage MetaData
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
@@ -1161,7 +1160,6 @@ struct FCombatSignalTargetPayload
 	GENERATED_BODY()
 
 public:
-	// ObjectData
 	UPROPERTY(Transient)
 	class AActor* SourceActor = nullptr;
 
@@ -1173,8 +1171,6 @@ public:
 
 	UPROPERTY(Transient)
 	class AActor* DamageCauser = nullptr;
-
-	// Damage MetaData
 
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
@@ -1188,7 +1184,6 @@ public:
 	UPROPERTY(Transient)
 	FDamageAmount DamageAmount = FDamageAmount();
 
-	//Damage AmountData
 	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;
 
@@ -1202,7 +1197,6 @@ struct FCombatSignalTargetContext
 	GENERATED_BODY()
 
 public:
-	// Resolved objects [Set BuildContext]
 	UPROPERTY(Transient)
 	class AActor* SourceActor = nullptr;
 
@@ -1215,14 +1209,12 @@ public:
 	UPROPERTY(Transient)
 	class AActor* DamageCauser = nullptr;
 
-	// Damage MetaData [Set BuildContext]
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
 
-	// Query Acceptable [Set ValidateContext / CanReceiveCombatSignal / ComputeTargetDamage]
 	UPROPERTY(Transient)
 	bool bAccepted = true;
 
@@ -1235,14 +1227,12 @@ public:
 	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;
 
-	// Pre-state Snapshot [Set HandleDefaultDamageEvent before ValidatePolicy]
 	UPROPERTY(Transient)
 	float HealthPointBefore = 0.f;
 
 	UPROPERTY(Transient)
 	EDeadState DeadState_Before = EDeadState::Alive;
 
-	// DamageAmounts [Set ComputeTargetDamage & CommitCombatSignalTarget]
 	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
 
@@ -1255,7 +1245,6 @@ public:
 	UPROPERTY(Transient)
 	float CommittedDamage = 0.f;		// Actual HP loss committed to Health. (ex. [shield absorbs] 60 -> HP: -30 / SP: -30)
 
-	// Post-state Snapshot [Set BuildResult]
 	UPROPERTY(Transient)
 	float HealthPointAfter = 0.f;
 
@@ -1284,11 +1273,9 @@ public:
 	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;
 
-	// Damage MetaData
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
 
-	// Damage Amount
 	UPROPERTY(Transient)
 	float RequestDamage = 0.f;
 

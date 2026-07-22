@@ -113,10 +113,8 @@ void UCWeaponComponent::PushContext(const FActionContext& InActionContext)
 	IHitContextProvider* provider = Cast<IHitContextProvider>(WeaponActor);
 	if (!provider) return;
 
-	// 1) Build contexts from current state
 	const FWeaponContext weaponContext = BuildWeaponContext();
 
-	// 2) Push/Cache into the carrier
 	provider->SetLastWeaponContext(weaponContext);
 	provider->SetLastActionContext(InActionContext);
 }
@@ -218,15 +216,12 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	UWorld* World = InOwnerCharacter->GetWorld();
 	if (!World) return false;
 
-	// 1) SpawnParams
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = InOwnerCharacter;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	// 2) Spawn WeaponActor
 	ACWeaponActor* weaponActor = World->SpawnActor<ACWeaponActor>(InWeaponActorClass, SpawnParams);
 
-	// 3) Check WeaponActor Validation
 	if (!ensureMsgf(
 		IsValid(weaponActor),
 		TEXT("[Weapon|Component|WeaponActorSpawnFailed] Reason=SpawnActorReturnedInvalid | Owner=%s | Component=%s | Asset=%s | WeaponType=%s"),

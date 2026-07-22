@@ -33,18 +33,15 @@
 
 ACPlayer::ACPlayer()
 {
-	// Init CapsuleComp
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
 	check(CapsuleComp);
 	CapsuleComp->InitCapsuleSize(40.0f, 90.0f);
 
-	// Init SkeletalMeshComp
 	USkeletalMeshComponent* MeshComp = GetMesh();
 	check(MeshComp);
 	MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // FRotator: (Pitch, Yaw, Roll)
 
-	// Init CharacterMovementComp
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
 	check(characterMovementComp);
 	characterMovementComp->bOrientRotationToMovement = true;
@@ -52,7 +49,6 @@ ACPlayer::ACPlayer()
 
 	bUseControllerRotationYaw = false;
 
-	// Init SpringArmComp
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	check(SpringArmComponent);
 	SpringArmComponent->SetupAttachment(GetCapsuleComponent());
@@ -60,70 +56,54 @@ ACPlayer::ACPlayer()
 	SpringArmComponent->TargetArmLength = 300.0f;
 	SpringArmComponent->bUsePawnControlRotation = true;
 
-	// Init CameraComp
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	check(CameraComponent);
 	CameraComponent->SetupAttachment(SpringArmComponent);
 	CameraComponent->SetRelativeLocation(FVector(0.0f, 40.0f, 0.0f));
 	CameraComponent->bUsePawnControlRotation = false;
 
-	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
 
-	// Init WeaponComp
 	WeaponComponent = CreateDefaultSubobject<UCWeaponComponent>(TEXT("Weapon"));
 	check(WeaponComponent);
 
-	// Init StateComp
 	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
 	check(StateComponent);
 
-	// Init HealthComp
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
 
-	// Init DefenseComp
 	DefenseComponent = CreateDefaultSubobject<UCDefenseComponent>(TEXT("Defense"));
 	check(DefenseComponent);
 
-	// Init ObservableOverlayComp
 	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
 	check(ObservableOverlayComponent);
 
-	// Init CombatSignalSourceComp
 	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
 	check(CombatSignalSourceComponent);
 
-	// Init CombatSignalTargetComp
 	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
 	check(CombatSignalTargetComponent);
 
-	// Init ActionOrchestratorComp
 	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
 	check(ActionOrchestratorComponent);
 
-	// Init ReactionOrchestratorComp
 	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
 	check(ReactionOrchestratorComponent);
 
-	// Init ActionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
 	check(ActionComponent);
 
-	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
 
-	// Init HitFeedbackComp
 	HitFeedbackComponent = CreateDefaultSubobject<UCHitFeedbackComponent>(TEXT("HitFeedback"));
 	check(HitFeedbackComponent);
 
-	// Init ActionFeedbackComp
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
 	check(ActionFeedbackComponent);
 
-	// Init ReactionFeedbackComp
 	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
 	check(ReactionFeedbackComponent);
 }
@@ -237,7 +217,6 @@ void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	// Minimal validation
 	if (DamageAmount <= 0.f) return 0.f;
 
 	// TODO(Gameplay): Decide whether dead actors should bypass the engine TakeDamage route.
@@ -250,11 +229,9 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	}
 	else
 	{
-		// Fallback
 		finalDamage = DamageAmount;
 	}
 
-	// Engine-Event Trigger
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;

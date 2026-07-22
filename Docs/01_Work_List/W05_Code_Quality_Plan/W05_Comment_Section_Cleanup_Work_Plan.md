@@ -157,12 +157,12 @@
 
 ### 5) 불필요한 설명 주석 제거
 
-- [ ] `CPlayer.cpp` 생성자 init 주석 중 코드 반복 설명 제거
-- [ ] `CEnemy.cpp` 생성자 init 주석 중 코드 반복 설명 제거
-- [ ] `CWeaponComponent.cpp` spawn 단계 번호 주석을 압축 또는 제거
-- [ ] `CBTServiceIntervalHelper.cpp`의 단순 return 설명 주석 제거
-- [ ] `CCombatSignalStructure.h`의 필드명 반복 UPROPERTY 주석 정리
-- [ ] `CWeaponStructure.h`의 `[NOTE] Temp`, 개인 체크리스트성 주석, 단순 단계 주석 정리
+- [x] `CPlayer.cpp` 생성자 init 주석 중 코드 반복 설명 제거
+- [x] `CEnemy.cpp` 생성자 init 주석 중 코드 반복 설명 제거
+- [x] `CWeaponComponent.cpp` spawn 단계 번호 주석을 압축 또는 제거
+- [x] `CBTServiceIntervalHelper.cpp`의 단순 return 설명 주석 제거
+- [x] `CCombatSignalStructure.h`의 필드명 반복 UPROPERTY 주석 정리
+- [x] `CWeaponStructure.h`의 `[NOTE] Temp`, 개인 체크리스트성 주석, 단순 단계 주석 정리
 
 ### 6) API / inline role comment 유효성 검토
 
