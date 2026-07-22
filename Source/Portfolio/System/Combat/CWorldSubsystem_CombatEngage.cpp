@@ -95,7 +95,7 @@ FEngageAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAI
 
 // Request
 
-void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & InEngageRequestContext)
+void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext& InEngageRequestContext)
 {
 	if (!IsValid(InEngageRequestContext.RequestController)) return;
 

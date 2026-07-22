@@ -55,14 +55,14 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
 }
 
-void ACPlayerController::InputLookYaw(float inAxisValue)
+void ACPlayerController::InputLookYaw(float InAxisValue)
 {
-	AddYawInput(inAxisValue);
+	AddYawInput(InAxisValue);
 }
 
-void ACPlayerController::InputLookPitch(float inAxisValue)
+void ACPlayerController::InputLookPitch(float InAxisValue)
 {
-	AddPitchInput(inAxisValue);
+	AddPitchInput(InAxisValue);
 }
 
 void ACPlayerController::InputMoveForward(float InAxisValue)

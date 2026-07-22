@@ -181,21 +181,21 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
 
-	float dist_target = FVector::Dist(ownerLocation, targetLocation);
+	float distanceToTarget = FVector::Dist(ownerLocation, targetLocation);
 
 	float alertOuterRange = chaseOffsetRange + chaseEnterBuffer;
 	float alertInnerRange = FMath::Max(0.f, chaseOffsetRange - chaseExitBuffer);
 
 	if (bInAlertRange)
 	{
-		if (dist_target > alertOuterRange) bInAlertRange = false;
+		if (distanceToTarget > alertOuterRange) bInAlertRange = false;
 	}
 	else
 	{
-		if (dist_target <= alertInnerRange) bInAlertRange = true;
+		if (distanceToTarget <= alertInnerRange) bInAlertRange = true;
 	}
 
-	InOutAIContext.DistanceToTarget = dist_target;
+	InOutAIContext.DistanceToTarget = distanceToTarget;
 	InOutAIContext.bInAlertRange = bInAlertRange;
 
 	return EContextBuildResult::Success;

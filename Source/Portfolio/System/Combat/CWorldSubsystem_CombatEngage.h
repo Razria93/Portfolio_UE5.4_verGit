@@ -49,7 +49,7 @@ public:
 
 public:
 	// Request
-	void SubmitRequest(const FEngageRequestContext & InEngageRequestContext);
+	void SubmitRequest(const FEngageRequestContext& InEngageRequestContext);
 
 public:
 	// Assignment

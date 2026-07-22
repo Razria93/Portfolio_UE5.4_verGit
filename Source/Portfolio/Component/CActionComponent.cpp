@@ -616,18 +616,18 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 	{
 		if (!actionData.IsValidMinimal()) continue;
 
-		UClass* executorkey = actionData.ActionExecutorKey.Get();
-		if (!IsValid(executorkey)) continue;
+		UClass* executorKey = actionData.ActionExecutorKey.Get();
+		if (!IsValid(executorKey)) continue;
 
 		// 1) Find existing cached Reaction
 		if (!bRebuildAll)
 		{
-			const UCAction* found = FindActionExecutor(executorkey);
+			const UCAction* found = FindActionExecutor(executorKey);
 			if (IsValid(found)) continue;
 		}
 
 		// 2) Add cached Reaction
-		UCAction* add = AddActionExecutor(executorkey);
+		UCAction* add = AddActionExecutor(executorKey);
 		if (!IsValid(add))
 		{
 			FActionComponentDebug::RecordActionExecutorMapBuildFailedForAudit(OwnerCharacter_Injected, actionData, TEXT("AddExecutorFailed"));
