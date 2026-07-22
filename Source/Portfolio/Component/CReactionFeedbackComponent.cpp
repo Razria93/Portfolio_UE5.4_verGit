@@ -116,7 +116,6 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 
 	const FReactionFeedbackKey& requestKey = InReactionFeedbackRequest.ReactionFeedbackKey;
 
-	// ReactionType
 	if (InDataKey.ReactionType == requestKey.ReactionType)
 	{
 		OutScore += ReactionFeedbackScore::ReactionExact;
@@ -126,7 +125,6 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 		return false;
 	}
 
-	// WeaponType
 	if (InDataKey.DamageSpecKey.WeaponType == requestKey.DamageSpecKey.WeaponType)
 	{
 		OutScore += ReactionFeedbackScore::WeaponExact;
@@ -136,7 +134,6 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 		return false;
 	}
 
-	// ActionType
 	if (InDataKey.DamageSpecKey.ActionType == requestKey.DamageSpecKey.ActionType)
 	{
 		OutScore += ReactionFeedbackScore::ActionExact;
@@ -146,7 +143,6 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 		return false;
 	}
 
-	// ActionIndex
 	if (InDataKey.DamageSpecKey.ActionIndex == requestKey.DamageSpecKey.ActionIndex)
 	{
 		OutScore += ReactionFeedbackScore::IndexExact;

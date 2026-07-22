@@ -89,29 +89,24 @@ bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackReque
 
 EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FActionFeedbackKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
-	// Exact
 	if (InDataTiming != InActionFeedbackRequest.ActionFeedbackTiming)
 		return EActionFeedbackMatchTier::None;
 
 	if (InDataTriggerKey != InActionFeedbackRequest.TriggerKey)
 		return EActionFeedbackMatchTier::None;
 
-	// Exact & Wildcard
 	const bool bActionExact = (InDataKey.ActionType == InActionFeedbackRequest.ActionFeedbackKey.ActionType);
 	const bool bActionAny = (InDataKey.ActionType == EActionType::All);
 
 	const bool bIndexExact = (InDataKey.ActionIndex == InActionFeedbackRequest.ActionFeedbackKey.ActionIndex);
 	const bool bIndexAny = (InDataKey.ActionIndex == INDEX_NONE);
 
-	// Tier 0
 	if (bActionExact && bIndexExact)
 		return EActionFeedbackMatchTier::ExactActionExactIndex;
 
-	// Tier 1	
 	if (bActionExact && bIndexAny)
 		return EActionFeedbackMatchTier::ExactActionAnyIndex;
 
-	// Tier 2
 	if (bActionAny && bIndexAny)
 		return EActionFeedbackMatchTier::AnyActionAnyIndex;
 
@@ -150,7 +145,6 @@ FActionSFXExecutionKey UCActionFeedbackComponent::BuildActionSFXExecutionKey(con
 
 void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
-	// Cached Score and Data
 	EActionFeedbackMatchTier bestTier = EActionFeedbackMatchTier::None;
 	const FTrailFeedbackData* bestData = nullptr;
 	int32 bestMatchCount = 0;
@@ -162,7 +156,6 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 		if (matchTier == EActionFeedbackMatchTier::None) continue;
 		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
 
-		// New high score: Reset and update
 		if (static_cast<uint8>(matchTier) > static_cast<uint8>(bestTier))
 		{
 			bestTier = matchTier;
@@ -171,7 +164,6 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 			continue;
 		}
 
-		// Duplicate highest score: reject ambiguous trail match.
 		++bestMatchCount;
 	}
 
@@ -203,7 +195,6 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 		if (matchTier == EActionFeedbackMatchTier::None) continue;
 		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
 
-		// New high score: Reset and update
 		if (static_cast<uint8>(matchTier) > static_cast<uint8>(bestTier))
 		{
 			bestTier = matchTier;
@@ -212,7 +203,6 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 			continue;
 		}
 
-		// Tie: Add to list
 		matchedDatas.Add(&actionVFXFeedbackData);
 	}
 
@@ -252,7 +242,6 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 		if (matchTier == EActionFeedbackMatchTier::None) continue;
 		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
 
-		// New high score: Reset and update
 		if (static_cast<uint8>(matchTier) > static_cast<uint8>(bestTier))
 		{
 			bestTier = matchTier;
@@ -261,7 +250,6 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 			continue;
 		}
 
-		// Tie: Add to list
 		matchedDatas.Add(&actionSFXFeedbackData);
 	}
 

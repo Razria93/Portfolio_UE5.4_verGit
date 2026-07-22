@@ -91,7 +91,6 @@ bool ACAIController::InitializeSightConfig()
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("SightConfig");
 	if (!IsValid(SightConfig)) return false;
 
-	// Set Default (Overridable in Blueprint Editor)
 	SightConfig->SightRadius = 500.f;
 	SightConfig->LoseSightRadius = 600.f;
 	SightConfig->PeripheralVisionAngleDegrees = 45.f;

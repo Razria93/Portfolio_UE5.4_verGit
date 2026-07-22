@@ -334,10 +334,8 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 
 void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
-	// Process 1: Compute Mitigation Damage
 	InOutCombatSignalTargetContext.MitigatedDamage = ComputeMitigatedDamage(InOutCombatSignalTargetContext);
 
-	// Gate 1: Zero damage
 	if (InOutCombatSignalTargetContext.bShouldCommitDamage && InOutCombatSignalTargetContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
@@ -349,7 +347,6 @@ void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetConte
 	InOutCombatSignalTargetContext.bAccepted = true;
 	InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
 
-	// Process 2: Compute FinalTaken Damage
 	InOutCombatSignalTargetContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutCombatSignalTargetContext);
 }
 
@@ -357,7 +354,7 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 {
 	const float requestedDamage = InOutCombatSignalTargetContext.RequestedDamage;
 
-	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	// Non-finite damage is clamped out before target-side policy evaluation.
 	if (!FMath::IsFinite(requestedDamage)) return 0.f;
 
 	float mitigatedDamage = requestedDamage;
@@ -379,7 +376,7 @@ float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTarget
 
 	const float mitigatedDamage = InOutCombatSignalTargetContext.MitigatedDamage;
 
-	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	// Non-finite damage is clamped out before final damage policy evaluation.
 	if (!FMath::IsFinite(mitigatedDamage)) return 0.f;
 
 	const float finalTakenDamage = mitigatedDamage;
@@ -415,12 +412,10 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 {
 	if (!IsValid(HealthComp_Injected)) return;
 
-	// Process 4: Commit Damage To Health
 	InOutCombatSignalTargetContext.CommittedDamage = InOutCombatSignalTargetContext.bShouldCommitDamage ? CommitDamageToHealth(InOutCombatSignalTargetContext) : 0.f;
 
 	// TODO(CombatPolicy): Add shield / mana / stamina resource commit order.
 
-	// Post-state Snapshot: Set BuildResult
 	InOutCombatSignalTargetContext.DeadState_After = HealthComp_Injected->GetDeadState();
 	InOutCombatSignalTargetContext.HealthPointAfter = HealthComp_Injected->GetCurrentHP();
 }

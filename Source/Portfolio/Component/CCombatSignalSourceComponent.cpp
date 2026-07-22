@@ -298,7 +298,6 @@ bool UCCombatSignalSourceComponent::ValidateContext(FCombatSignalSourceContext& 
 		return false;
 	}
 
-	// Valid Context
 	InOutCombatSignalSourceContext.bAccepted = true;
 	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
 	return true;
@@ -467,7 +466,6 @@ void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSign
 	AActor* targetActor = InCombatSignalSourceContext.TargetActor;
 	if (!IsValid(targetActor)) return;
 
-	// Cached
 	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(InCombatSignalSourceContext.HitWindowKey);
 	damagedTargets.Add(targetActor);
 }

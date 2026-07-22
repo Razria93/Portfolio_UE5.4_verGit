@@ -162,7 +162,6 @@ FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDefer
 	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max)
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
 
-	// Find the deferred candidate for this consume key.
 	const int32 foundIndex = DeferredActionCandidates.IndexOfByPredicate(
 		[InConsumeKey](const FDeferredActionCandidate& InEntry)
 		{

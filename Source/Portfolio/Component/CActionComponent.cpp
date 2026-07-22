@@ -672,7 +672,6 @@ UCAction* UCActionComponent::FindActionExecutor(const UClass* InClass)
 
 	if (!IsValid(found))
 	{
-		// Remove Invalid Entry
 		ActionExecutorMap.Remove(InClass);
 
 		return nullptr;

@@ -126,7 +126,6 @@ void ACEnemy::BeginPlay()
 
 	if (IsValid(ActionComponent))
 	{
-		// Update blackboard
 		ActionComponent->OnActionTypeChanged.AddDynamic(this, &ACEnemy::OnActionTypeChanged);
 		ActionComponent->OnActionEvent.AddDynamic(this, &ACEnemy::OnActionEvent);
 	}

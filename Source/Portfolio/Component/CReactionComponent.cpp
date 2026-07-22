@@ -170,11 +170,9 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 		const FDamageSpecKey& candidateKey = candidateKeys[candidateIndex];
 		FReactionDataKey reactionDataKey;
 
-		// Rebuild CandidateSpecKey + Type
 		reactionDataKey.DamageSpecKey = candidateKey;
 		reactionDataKey.ReactionType = reactionType;
 
-		// Find ReactionData
 		const FReactionData* foundPtr = ReactionDataMap.Find(reactionDataKey);
 		if (!foundPtr) continue;
 
@@ -560,7 +558,6 @@ UCReaction* UCReactionComponent::FindReactionExecutor(const UClass* InClass)
 
 	if (!IsValid(found))
 	{
-		// Remove Invalid Entry
 		ReactionExecutorMap.Remove(InClass);
 
 		return nullptr;

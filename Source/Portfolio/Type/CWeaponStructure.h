@@ -968,16 +968,7 @@ FORCEINLINE uint32 GetTypeHash(const FDamageSpecKey& InOther)
 	return H;
 }
 
-/***
- * [EN]
- * USTRUCT Set/Map key checklist:
- * 1) operator==
- * 2) GetTypeHash
- *
- * GetTypeHash notes:
- * - Prefer a normal overload at namespace/global scope (avoid hidden-friend in the struct).
- * - Avoid ::GetTypeHash(...); call GetTypeHash(...) to keep ADL available.
- ***/
+// Global GetTypeHash keeps ADL available for this map key.
 
 USTRUCT(BlueprintType)
 struct FDamageSpec
