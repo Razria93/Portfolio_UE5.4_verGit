@@ -2,7 +2,7 @@
 
 ## 제목
 
-**P44: Comment / Section Cleanup Policy**
+**P44: 주석 / 섹션 정리 정책**
 
 ## 날짜
 
@@ -343,16 +343,30 @@ Gameplay / CombatPolicy TODO 구현
 -> mitigation / final damage / resource commit order
 ```
 
+## 관련 문서
+
+```text
+Docs/01_Work_List/W05_Code_Quality_Plan/W05_Comment_Section_Cleanup_Work_Plan.md
+-> 이번 브랜치의 작업 범위, 주석 사용 규칙, 유지 TODO 판단을 기록한다.
+
+Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
+-> W05 코드 품질 작업 흐름에서 이번 브랜치 위치를 관리한다.
+
+Docs/04_Pull_Request/00_Pull_Request_Index.md
+-> P44 문서와 GitHub PR 번호를 연결한다.
+```
+
 ## PR 설명 초안
 
 ```md
 ## Summary
 
-- comment / section cleanup 작업 계획과 주석 사용 규칙을 문서화
-- stale / 오타 / 잘못된 주석, 태그형 주석, 장식성 banner, 코드 반복 설명 주석 정리
+- 주석 / 섹션 정리 작업 계획과 주석 사용 규칙을 문서화
+- stale comment, 오타, 잘못된 설명, 태그형 주석, 장식성 banner, 코드 반복 설명 주석 정리
 - header / cpp section comment를 짧은 책임명 중심으로 정리
 - code-local TODO 6개를 Gameplay / CombatPolicy 후속 작업으로 유지 판단
-- Type / Data 주석 중 구조체/헤더 배치 작업으로 넘길 항목을 P3 final decision으로 기록
+- Type / Data 주석 중 구조체 / 헤더 배치 작업으로 넘길 항목을 P3 final decision으로 기록
+- PR 문서에 관련 문서 섹션과 GitHub PR 번호 반영
 
 ## Validation
 
