@@ -5,5 +5,6 @@
 class FAIAnimationProfiling
 {
 public:
+	// Gate
 	static bool ShouldAuditAnimationRefresh();
 };

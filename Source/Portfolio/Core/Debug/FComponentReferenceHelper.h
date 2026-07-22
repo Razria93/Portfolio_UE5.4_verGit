@@ -19,7 +19,7 @@ public:
 
 		if (!ensureMsgf(
 			IsValid(resolvedComponent),
-			TEXT("[ComponentReference|Recovery|Failed] Owner=%s | Component=%s"),
+			TEXT("[ComponentReference|Recovery|Failed] Reason=FindComponentByClassFailed | Owner=%s | Component=%s"),
 			*GetNameSafe(InOwnerActor),
 			*GetNameSafe(TComponent::StaticClass())
 		))

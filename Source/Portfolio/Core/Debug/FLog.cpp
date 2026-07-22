@@ -2,7 +2,8 @@
 
 DEFINE_LOG_CATEGORY_STATIC(Custom_FLog, Display, All);
 
-// === Console Log ===
+// Log Output
+
 void FLog::Log(int32 InValue)
 {
 	UE_LOG(Custom_FLog, Display, TEXT("%d"), InValue);
@@ -44,7 +45,8 @@ void FLog::Log(const UObject* InValue)
 	UE_LOG(Custom_FLog, Display, TEXT("%s (Valid)"), *InValue->GetName());
 }
 
-// === Screen Debug Message ===
+// Screen Output
+
 void FLog::Print(int InValue, int32 InKey, float InDuration, const FColor& InColor)
 {
 	if (GEngine)

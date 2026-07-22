@@ -40,7 +40,7 @@ bool FAIPerceptionDebug::ShouldAuditBlackboardEngageLatency()
 #endif
 }
 
-// Profiling Audit
+// Profiling Audit Summary
 
 void FAIPerceptionDebug::PrintPerceptionCandidateAuditSummary(const AActor* InOwnerActor, const FPerceptionCandidateAuditState& InState)
 {

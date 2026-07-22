@@ -10,7 +10,7 @@ public:
 	static bool ShouldAuditPerceptionCandidates();
 	static bool ShouldAuditBlackboardEngageLatency();
 
-	// Profiling Audit
+	// Profiling Audit Summary
 	static void PrintPerceptionCandidateAuditSummary(const AActor* InOwnerActor, const FPerceptionCandidateAuditState& InState);
 	static void PrintBlackboardEngageLatencyAuditSummary(const AActor* InOwnerActor, const FBlackboardEngageLatencyAuditState& InState);
 };
