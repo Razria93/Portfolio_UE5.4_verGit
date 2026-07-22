@@ -171,7 +171,7 @@ void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackReque
 			continue;
 		}
 
-		// Tie: Error (Architect Miss)
+		// Duplicate highest score: reject ambiguous trail match.
 		++bestMatchCount;
 	}
 

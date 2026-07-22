@@ -7,7 +7,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarAIStateRuntimeLODPolicyMode(
 		TEXT("Portfolio.AI.RuntimeLOD.StatePolicyMode"),
 		0,
-		TEXT("Controls AI Runtime LOD policy source. 0: per-system RuntimeLOD CVar modes, 1: state-based RuntimeLOD tier snapshot."),
+		TEXT("Controls AI Runtime LOD policy source. 0: per-system Runtime LOD CVar modes, 1: state-based Runtime LOD tier snapshot."),
 		ECVF_Default);
 }
 

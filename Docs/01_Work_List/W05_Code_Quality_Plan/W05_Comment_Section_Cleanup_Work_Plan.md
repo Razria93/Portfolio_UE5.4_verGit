@@ -117,14 +117,14 @@
 
 ### 2) stale / 잘못된 설명 정리
 
-- [ ] `FCombatEngageDebug` CVar 설명을 warmup 한정 표현에서 warmup / rebuild summary 기준으로 수정
-- [ ] `FCombatFeedbackDebug` CVar 설명을 실제 request / channel / presentation / dispatch 역할에 맞게 수정
-- [ ] `FAIPerceptionDebug` CVar 설명의 candidate / latency / Blackboard / Engage 표현을 실제 출력 기준으로 수정
-- [ ] `CAIPerceptionProfiling` CVar 설명의 `Enemy` 표기를 정리
-- [ ] `CCombatCollisionProfiling` CVar 설명의 enemy / weapon actor 표현을 정리
-- [ ] `CCombatFeedbackProfiling` CVar 설명의 `Enemy` 표기를 정리
-- [ ] `CAIStateRuntimeLODPolicy`의 `Runtime LOD` / `RuntimeLOD` 표현을 문맥별로 통일
-- [ ] `CActionFeedbackComponent`의 `Architect Miss` 표현을 실제 의미가 드러나는 문구로 수정
+- [x] `FCombatEngageDebug` CVar 설명을 warmup 한정 표현에서 warmup / rebuild summary 기준으로 수정
+- [x] `FCombatFeedbackDebug` CVar 설명을 실제 request / channel / presentation / dispatch 역할에 맞게 수정
+- [x] `FAIPerceptionDebug` CVar 설명의 candidate / latency / Blackboard / Engage 표현을 실제 출력 기준으로 수정
+- [x] `CAIPerceptionProfiling` CVar 설명의 `Enemy` 표기를 정리
+- [x] `CCombatCollisionProfiling` CVar 설명의 enemy / weapon actor 표현을 정리
+- [x] `CCombatFeedbackProfiling` CVar 설명의 `Enemy` 표기를 정리
+- [x] `CAIStateRuntimeLODPolicy`의 `Runtime LOD` / `RuntimeLOD` 표현을 문맥별로 통일
+- [x] `CActionFeedbackComponent`의 `Architect Miss` 표현을 실제 의미가 드러나는 문구로 수정
 
 ### 3) TODO 분류
 
