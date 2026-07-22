@@ -14,7 +14,7 @@ class PORTFOLIO_API UCHealthComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	UCHealthComponent(); // TODO: Extend ResourceComponent
+	UCHealthComponent();
 
 private:
 	// === Initialize ===

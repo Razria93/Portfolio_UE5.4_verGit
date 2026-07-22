@@ -165,7 +165,7 @@ private:
 	void ResetActiveActionRuntimeState();
 
 private:
-	// Data Build (temporary: move to DataAsset)
+	// Data Build
 	void BuildActionDataMap(bool bRebuildAll);
 	void BuildActionExecutorMap(bool bRebuildAll);
 

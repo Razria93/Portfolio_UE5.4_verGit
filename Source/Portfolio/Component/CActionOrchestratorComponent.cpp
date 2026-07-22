@@ -330,14 +330,12 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 		{
 		case EActionIntentEvent::Started:
 		{
-			// Temporary: Started -> Guard In data key.
 			incomingCandidate.ActionDataKey.ActionIndex = GetGuardActionPhaseIndex(EGuardActionPhase::In);
 			break;
 		}
 
 		case EActionIntentEvent::Completed:
 		{
-			// Temporary: Completed -> Guard Out data key.
 			incomingCandidate.ActionDataKey.ActionIndex = GetGuardActionPhaseIndex(EGuardActionPhase::Out);
 			break;
 		}

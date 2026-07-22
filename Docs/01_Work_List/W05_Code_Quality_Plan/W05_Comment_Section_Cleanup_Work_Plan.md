@@ -128,14 +128,14 @@
 
 ### 3) TODO 분류
 
-- [ ] `CAIController` perception config DataAsset 후보 TODO 분류
-- [ ] `CPlayer` / `CEnemy` DeadFlag early return TODO 분류
-- [ ] `CActionFeedbackComponent` / `CReactionFeedbackComponent` loop support TODO 분류
-- [ ] `CWeaponComponent` deferred spawn TODO 분류
-- [ ] `CActionComponent` / `CReactionComponent` DataAsset build TODO 분류
-- [ ] `CCombatSignalSourceComponent` DamageSpecContainer DataAsset migration TODO 분류
-- [ ] `CHealthComponent` ResourceComponent extension / delegate broadcast TODO 분류
-- [ ] `CWeaponStructure` feedback / action execution context / 미분류 TODO 정리
+- [x] `CAIController` perception config DataAsset 후보 TODO 분류
+- [x] `CPlayer` / `CEnemy` DeadFlag early return TODO 분류
+- [x] `CActionFeedbackComponent` / `CReactionFeedbackComponent` loop support TODO 분류
+- [x] `CWeaponComponent` deferred spawn TODO 분류
+- [x] `CActionComponent` / `CReactionComponent` DataAsset build TODO 분류
+- [x] `CCombatSignalSourceComponent` DamageSpecContainer DataAsset migration TODO 분류
+- [x] `CHealthComponent` ResourceComponent extension / delegate broadcast TODO 분류
+- [x] `CWeaponStructure` feedback / action execution context / 미분류 TODO 정리
 
 ### 4) 섹션 주석 양식 정리
 
@@ -190,6 +190,8 @@
 - Action / Reaction data map build 이동
 - DamageSpecContainer DataAsset migration
 - AI perception config DataAsset migration
+- feedback data type 이동
+- Health / ResourceComponent 확장
 
 상수 제거 / RuntimeLOD 구조 정리:
 - CEnemy RuntimeLOD CVar 위치 이동
@@ -199,6 +201,9 @@
 - DeadFlag early return 동작 변경
 - feedback loop support 구현
 - deferred spawn 정책 구현
+- AI combo branch의 action index 사용 정책
+- CombatEngage coordinator naming / responsibility 재검토
+- combat result UI feedback 추가 여부
 ```
 
 ---

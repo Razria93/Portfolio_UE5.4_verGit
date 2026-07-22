@@ -352,7 +352,6 @@ enum class EExecutionAfterStopAction : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EActionStopSource : uint8
 {
@@ -367,7 +366,6 @@ enum class EActionStopSource : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EActionStopReason : uint8
 {
@@ -509,7 +507,6 @@ enum class EDamageDefenseOutcome : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EReactionStopSource : uint8
 {
@@ -524,7 +521,6 @@ enum class EReactionStopSource : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EReactionStopReason : uint8
 {
@@ -595,7 +591,6 @@ enum class EReactionRequestRejectReason : uint8
 	Max,
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionFeedbackTiming : uint8
 {
@@ -613,7 +608,6 @@ enum class EActionFeedbackTiming : uint8
 	TriggerWindowEnd
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 enum class EActionFeedbackMatchTier : uint8
 {
 	None = 0,
@@ -623,7 +617,6 @@ enum class EActionFeedbackMatchTier : uint8
 	ExactActionExactIndex,
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionVFXPlayType : uint8
 {
@@ -631,7 +624,6 @@ enum class EActionVFXPlayType : uint8
 	Loop
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionSFXPlayType : uint8
 {
@@ -837,7 +829,6 @@ public:
 	FWeaponContext() = default;
 };
 
-// [TODO] Translate to FActionExecutionContext
 USTRUCT(BlueprintType)
 struct FActionContext
 {
@@ -1270,14 +1261,6 @@ public:
 
 	UPROPERTY(Transient)
 	EDeadState DeadState_After = EDeadState::Alive;
-
-	// TODO:
-	// - HitBoneName
-	// - HitDirection
-	// - HitImpulseVector
-	// - TeamId / Attribute
-	// - StateSnapshot
-	// - Cached Component (Minimal)
 
 public:
 	FCombatSignalTargetContext() = default;

@@ -240,7 +240,7 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 	// Minimal validation
 	if (DamageAmount <= 0.f) return 0.f;
 
-	// TODO: Check DeadFlag and early return
+	// TODO(Gameplay): Decide whether dead actors should bypass the engine TakeDamage route.
 
 	float finalDamage = DamageAmount;
 

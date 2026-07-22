@@ -346,7 +346,7 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	// Minimal validation
 	if (DamageAmount <= 0.f) return 0.f;
 
-	// TODO: Check DeadFlag and early return
+	// TODO(Gameplay): Decide whether dead actors should bypass the engine TakeDamage route.
 
 	float finalDamage = DamageAmount;
 
@@ -561,8 +561,6 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 // Mapping API (ActionData -> Intent)
 ECombatActionIntent ACEnemy::ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const
 {
-	// TODO: Use InActionIndex when ai combo branch
-
 	switch (InActionType)
 	{
 	case EActionType::ComboAttack:

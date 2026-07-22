@@ -135,7 +135,7 @@ private:
 	void ResetActiveReactionRuntimeState();
 
 private:
-	// Data Build (temporary: move to DataAsset)
+	// Data Build
 	void BuildReactionDataMap(bool bRebuildAll);
 	void BuildReactionExecutorMap(bool bRebuildAll);
 

@@ -353,7 +353,6 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 
 	case EReactionVFXPlayType::Loop:
 	{
-		// TODO: Implement Loop
 		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InReactionVFXFeedbackData.VFX, TEXT("LoopNotImplemented"));
 		return;
 	}
@@ -393,7 +392,6 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 
 	case EReactionSFXPlayType::Loop:
 	{
-		// TODO: Implement Loop
 		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InReactionSFXFeedbackData.SFX, TEXT("LoopNotImplemented"));
 		return;
 	}

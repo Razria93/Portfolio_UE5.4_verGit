@@ -229,8 +229,6 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 		return EContextBuildResult::Error;
 	}
 
-	// [TODO]
-	// Change from 'UCWorldSubsystem_CombatEngage' to 'CWorldSubsystem_EngageCoordinator'
 	const FEngageAssignmentContext previousAssignmentContext = subsystem->GetAssignment(aiController); // Previous Context
 
 	FEngageRequestContext requestContext;

@@ -88,7 +88,6 @@ bool ACAIController::InitializeSightConfig()
 {
 	if (!IsValid(AIPerceptionComp)) return false;
 
-	// TODO: Move perception config to data-driven asset.
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("SightConfig");
 	if (!IsValid(SightConfig)) return false;
 
