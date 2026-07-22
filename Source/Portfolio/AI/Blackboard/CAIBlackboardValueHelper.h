@@ -128,7 +128,7 @@ namespace CAIBlackboardValueHelper
 	{
 		ensureMsgf(
 			InOutPendingKeys.Remove(InKeySpec.KeyName) > 0,
-			TEXT("[AIBlackboardValueHelper] Custom Blackboard key was not registered | Owner=%s | Key=%s"),
+			TEXT("[AI|Blackboard|CustomKeyNotRegistered] Reason=MissingPendingKey | Owner=%s | Key=%s"),
 			*GetNameSafe(InOwnerContext),
 			*InKeySpec.KeyName.ToString());
 	}
@@ -194,7 +194,7 @@ namespace CAIBlackboardValueHelper
 		const FString pendingCustomKeys = FString::Join(pendingKeyNames, TEXT(", "));
 
 		ensureMsgf(false,
-			TEXT("[AIBlackboardValueHelper] Missing custom Blackboard initial values | Owner=%s | Pending=%s"),
+			TEXT("[AI|Blackboard|CustomInitialValuesMissing] Reason=PendingCustomKeys | Owner=%s | Missing=%s"),
 			*GetNameSafe(InOwnerContext),
 			*pendingCustomKeys);
 
