@@ -173,10 +173,10 @@
 
 ### 7) 잔존 trace 확인
 
-- [ ] commented-out `UE_LOG` 잔존 여부 확인
-- [ ] commented-out `DrawDebug` 잔존 여부 확인
-- [ ] commented-out `GEngine` 잔존 여부 확인
-- [ ] 임시 debug trace성 주석 잔존 여부 확인
+- [x] commented-out `UE_LOG` 잔존 여부 확인
+- [x] commented-out `DrawDebug` 잔존 여부 확인
+- [x] commented-out `GEngine` 잔존 여부 확인
+- [x] 임시 debug trace성 주석 잔존 여부 확인
 
 ---
 
@@ -224,13 +224,13 @@ UPROPERTY / Editor 노출 정리:
 
 ## 7. 완료 기준
 
-- [ ] 전수조사 후보가 이번 브랜치 범위 / 후속 범위로 분류되어 있다
-- [ ] 오타와 stale comment가 코드 상태와 충돌하지 않는다
-- [ ] TODO는 구현 필요 여부와 후속 카테고리를 추적할 수 있다
-- [ ] 섹션 주석은 같은 파일 안에서 일관된 양식을 가진다
-- [ ] 단순히 코드 내용을 반복하는 주석이 줄어 있다
-- [ ] commented-out temporary trace가 남아 있지 않음을 확인했다
-- [ ] 코드 동작 변경 없이 diff가 주석 / 문자열 / 문서 중심으로 제한되어 있다
+- [x] 전수조사 후보가 이번 브랜치 범위 / 후속 범위로 분류되어 있다
+- [x] 오타와 stale comment가 코드 상태와 충돌하지 않는다
+- [x] TODO는 구현 필요 여부와 후속 카테고리를 추적할 수 있다
+- [x] 섹션 주석은 같은 파일 안에서 일관된 양식을 가진다
+- [x] 단순히 코드 내용을 반복하는 주석이 줄어 있다
+- [x] commented-out temporary trace가 남아 있지 않음을 확인했다
+- [x] 코드 동작 변경 없이 diff가 주석 / 문자열 / 문서 중심으로 제한되어 있다
 
 ---
 
