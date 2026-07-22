@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CWorldSubSystemStructure.generated.h"
+#include "CWorldSubsystemStructure.generated.h"
 
 UENUM(BlueprintType)
 enum class ECombatRole : uint8

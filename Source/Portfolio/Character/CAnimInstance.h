@@ -82,9 +82,9 @@ private:
 	bool ShouldAuditAnimationRefreshForProfiling() const;
 
 	// Record
-	void RecordAnimationRefreshAttemptForProfiling() const;
-	void RecordAnimationRefreshExecutedForProfiling() const;
-	void RecordAnimationRefreshSkippedForProfiling() const;
+	void RecordAnimationRefreshAttempt() const;
+	void RecordAnimationRefreshExecuted() const;
+	void RecordAnimationRefreshSkipped() const;
 
 private:
 	// Parameter Refresh

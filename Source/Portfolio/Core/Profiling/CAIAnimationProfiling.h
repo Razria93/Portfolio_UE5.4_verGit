@@ -9,7 +9,7 @@ public:
 	static bool ShouldAuditAnimationRefresh();
 
 	// Counter
-	static void RecordAnimationRefreshAttemptForProfiling();
-	static void RecordAnimationRefreshExecutedForProfiling();
-	static void RecordAnimationRefreshSkippedForProfiling();
+	static void RecordAnimationRefreshAttempt();
+	static void RecordAnimationRefreshExecuted();
+	static void RecordAnimationRefreshSkipped();
 };

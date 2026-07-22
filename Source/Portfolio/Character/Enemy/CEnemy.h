@@ -192,12 +192,12 @@ public:
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 
 public:
-	FORCEINLINE bool GetbUsePatrol() const { return bUsePatrol; }
+	FORCEINLINE bool ShouldUsePatrol() const { return bUsePatrol; }
 	FORCEINLINE ACPatrolPath* GetPatrolPath() const { return PatrolPath; }
 	FORCEINLINE EPatrolMode GetPatrolMode() const { return PatrolMode; }
 
 public:
-	FORCEINLINE bool GetbUseInvestigate() const { return bUseInvestigate; }
+	FORCEINLINE bool ShouldUseInvestigate() const { return bUseInvestigate; }
 	FORCEINLINE float GetInvestigateDuration() const { return InvestigateDuration; }
 	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
 
@@ -207,7 +207,7 @@ public:
 	FORCEINLINE float GetChaseExitBuffer() const { return ChaseExitBuffer; }
 
 public:
-	FORCEINLINE bool GetbUseAlertStep() const { return bUseAlertStep; }
+	FORCEINLINE bool ShouldUseAlertStep() const { return bUseAlertStep; }
 	FORCEINLINE float GetStepSideDistance() const { return StepSideDistance; }
 	FORCEINLINE float GetStepForwardDistance() const { return StepForwardDistance; }
 

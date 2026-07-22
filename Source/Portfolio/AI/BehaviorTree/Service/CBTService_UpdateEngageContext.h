@@ -18,10 +18,10 @@ protected:
 	virtual void ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 private:
-	EContextBuildResult BuildEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext & OutEngageContext);
+	EContextBuildResult BuildEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& OutEngageContext);
 
 private:
-	EContextBuildResult ComputeEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext & InOutEngageContext);
+	EContextBuildResult ComputeEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& InOutEngageContext);
 
 private:
 	void UpdateEngageContext(UBlackboardComponent* InBlackboardComp, FEngageContext& InEngageContext);

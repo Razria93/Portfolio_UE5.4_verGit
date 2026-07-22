@@ -503,18 +503,18 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 	{
 		if (!reactionData.IsValidMinimal()) continue;
 
-		UClass* executorkey = reactionData.ReactionExecutorKey.Get();
-		if (!IsValid(executorkey)) continue;
+		UClass* executorKey = reactionData.ReactionExecutorKey.Get();
+		if (!IsValid(executorKey)) continue;
 
 		// 1) Find existing cached Reaction
 		if (!bRebuildAll)
 		{
-			const UCReaction* found = FindReactionExecutor(executorkey);
+			const UCReaction* found = FindReactionExecutor(executorKey);
 			if (IsValid(found)) continue;
 		}
 
 		// 2) Add cached Reaction
-		UCReaction* add = AddReactionExecutor(executorkey);
+		UCReaction* add = AddReactionExecutor(executorKey);
 		if (!IsValid(add))
 		{
 			FReactionComponentDebug::RecordReactionExecutorMapBuildFailedForAudit(OwnerCharacter_Injected, reactionData, TEXT("AddFailed"));

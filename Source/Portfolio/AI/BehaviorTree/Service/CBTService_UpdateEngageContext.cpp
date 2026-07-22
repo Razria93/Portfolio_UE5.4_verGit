@@ -26,11 +26,11 @@ UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateEngageContext);
-	FAIBehaviorTreeProfiling::RecordUpdateEngageContextTickForProfiling();
+	FAIBehaviorTreeProfiling::RecordUpdateEngageContextTick();
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
-	UBlackboardComponent* blackBoardComp = OwnerComp.GetBlackboardComponent();
-	if (!IsValid(blackBoardComp))
+	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
+	if (!IsValid(blackboardComp))
 	{
 		FAICombatBTDebug::RecordEngageContextRejectedForAudit(nullptr, FEngageContext(), TEXT("Tick"), TEXT("MissingBlackboard"));
 		return;
@@ -41,29 +41,29 @@ void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp
 	if (!IsValid(ownerPawn))
 	{
 		FAICombatBTDebug::RecordEngageContextRejectedForAudit(ownerPawn, FEngageContext(), TEXT("Tick"), TEXT("MissingOwnerPawn"));
-		ClearEngageContext(blackBoardComp);
+		ClearEngageContext(blackboardComp);
 		return;
 	}
 
 	FEngageContext engageContext;
 
-	const EContextBuildResult buildResult = BuildEngageContext(ownerPawn, blackBoardComp, engageContext);
+	const EContextBuildResult buildResult = BuildEngageContext(ownerPawn, blackboardComp, engageContext);
 
 	if (buildResult != EContextBuildResult::Success)
 	{
-		ClearEngageContext(blackBoardComp);
+		ClearEngageContext(blackboardComp);
 		return;
 	}
 
-	const EContextBuildResult computeResult = ComputeEngageContext(ownerPawn, blackBoardComp, engageContext);
+	const EContextBuildResult computeResult = ComputeEngageContext(ownerPawn, blackboardComp, engageContext);
 
 	if (computeResult != EContextBuildResult::Success)
 	{
-		ClearEngageContext(blackBoardComp);
+		ClearEngageContext(blackboardComp);
 		return;
 	}
 
-	UpdateEngageContext(blackBoardComp, engageContext);
+	UpdateEngageContext(blackboardComp, engageContext);
 }
 
 void UCBTService_UpdateEngageContext::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -119,7 +119,7 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutEngageContext.TargetActor->GetActorLocation();
 
-	float dist_target = FVector::Dist(ownerLocation, targetLocation);
+	float distanceToTarget = FVector::Dist(ownerLocation, targetLocation);
 
 	float engageOuterRange = InOutEngageContext.EngageOffsetRange + InOutEngageContext.EngageEnterBuffer;
 	float engageInnerRange = FMath::Max(0.f, InOutEngageContext.EngageOffsetRange - InOutEngageContext.EngageExitBuffer);
@@ -128,11 +128,11 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 
 	if (bInEngageRange)
 	{
-		if (dist_target > engageOuterRange) bInEngageRange = false;
+		if (distanceToTarget > engageOuterRange) bInEngageRange = false;
 	}
 	else
 	{
-		if (dist_target <= engageInnerRange) bInEngageRange = true;
+		if (distanceToTarget <= engageInnerRange) bInEngageRange = true;
 	}
 
 	float currentTime = InOwnerPawn->GetWorld()->GetTimeSeconds();
@@ -143,7 +143,7 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 
 	InOutEngageContext.EngageOuterRange = engageOuterRange;
 	InOutEngageContext.EngageInnerRange = engageInnerRange;
-	InOutEngageContext.DistanceToTarget = dist_target;
+	InOutEngageContext.DistanceToTarget = distanceToTarget;
 
 	// Result
 	InOutEngageContext.bInEngageRange = bInEngageRange;

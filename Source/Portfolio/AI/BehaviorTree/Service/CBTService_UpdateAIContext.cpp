@@ -18,7 +18,7 @@
 #include "Core/Debug/FAICombatBTDebug.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Type/CAIStructure.h"
-#include "Type/CWorldSubSystemStructure.h"
+#include "Type/CWorldSubsystemStructure.h"
 
 UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 {
@@ -32,7 +32,7 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext);
-	FAIBehaviorTreeProfiling::RecordUpdateAIContextTickForProfiling();
+	FAIBehaviorTreeProfiling::RecordUpdateAIContextTick();
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
@@ -159,10 +159,10 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn*
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector homeLocation = InBlackboardComp->GetValueAsVector(CAIKey::Navigation::HomeLocation.KeyName);
 
-	float dist_home = FVector::Dist(ownerLocation, homeLocation);
+	float distanceToHome = FVector::Dist(ownerLocation, homeLocation);
 
-	InOutAIContext.DistanceToHome = dist_home;
-	InOutAIContext.bReturnHome = dist_home > MovableRange;
+	InOutAIContext.DistanceToHome = distanceToHome;
+	InOutAIContext.bReturnHome = distanceToHome > MovableRange;
 
 	return EContextBuildResult::Success;
 }
@@ -181,21 +181,21 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
 
-	float dist_target = FVector::Dist(ownerLocation, targetLocation);
+	float distanceToTarget = FVector::Dist(ownerLocation, targetLocation);
 
 	float alertOuterRange = chaseOffsetRange + chaseEnterBuffer;
 	float alertInnerRange = FMath::Max(0.f, chaseOffsetRange - chaseExitBuffer);
 
 	if (bInAlertRange)
 	{
-		if (dist_target > alertOuterRange) bInAlertRange = false;
+		if (distanceToTarget > alertOuterRange) bInAlertRange = false;
 	}
 	else
 	{
-		if (dist_target <= alertInnerRange) bInAlertRange = true;
+		if (distanceToTarget <= alertInnerRange) bInAlertRange = true;
 	}
 
-	InOutAIContext.DistanceToTarget = dist_target;
+	InOutAIContext.DistanceToTarget = distanceToTarget;
 	InOutAIContext.bInAlertRange = bInAlertRange;
 
 	return EContextBuildResult::Success;

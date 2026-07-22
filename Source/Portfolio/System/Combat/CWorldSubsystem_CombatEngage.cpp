@@ -10,7 +10,7 @@
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
 
-#include "Type/CWorldSubSystemStructure.h"
+#include "Type/CWorldSubsystemStructure.h"
 
 namespace
 {
@@ -95,7 +95,7 @@ FEngageAssignmentContext UCWorldSubsystem_CombatEngage::GetAssignment(const ACAI
 
 // Request
 
-void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext & InEngageRequestContext)
+void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext& InEngageRequestContext)
 {
 	if (!IsValid(InEngageRequestContext.RequestController)) return;
 

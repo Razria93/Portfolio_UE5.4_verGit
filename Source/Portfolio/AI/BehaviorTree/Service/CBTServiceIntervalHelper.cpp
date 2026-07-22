@@ -115,14 +115,14 @@ namespace
 
 	void RecordStateRuntimeLODTier(EAIRuntimeLODTier InTier)
 	{
-		FAIStateRuntimeLODProfiling::RecordResolvedTierForProfiling(InTier);
+		FAIStateRuntimeLODProfiling::RecordResolvedTier(InTier);
 	}
 
 	// AIIntentState
 	// Record Counter (AIIntentState)
 	void RecordAIIntentStateIntervalPreset(EBTServiceIntervalPreset InPreset)
 	{
-		FAIBehaviorTreeProfiling::RecordAIIntentIntervalPresetForProfiling(InPreset);
+		FAIBehaviorTreeProfiling::RecordAIIntentIntervalPreset(InPreset);
 	}
 
 	// Interval Enum Preset -> Interval float value (AIIntentState)
