@@ -18,7 +18,7 @@
 - [x] Profiling helper API suffix 정리
 - [x] World subsystem structure file rename 적용
 - [x] 최종 검증
-- [ ] PR 문서 작성
+- [x] PR 문서 작성
 
 ---
 
