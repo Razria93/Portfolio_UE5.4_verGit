@@ -159,10 +159,10 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn*
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
 	FVector homeLocation = InBlackboardComp->GetValueAsVector(CAIKey::Navigation::HomeLocation.KeyName);
 
-	float dist_home = FVector::Dist(ownerLocation, homeLocation);
+	float distanceToHome = FVector::Dist(ownerLocation, homeLocation);
 
-	InOutAIContext.DistanceToHome = dist_home;
-	InOutAIContext.bReturnHome = dist_home > MovableRange;
+	InOutAIContext.DistanceToHome = distanceToHome;
+	InOutAIContext.bReturnHome = distanceToHome > MovableRange;
 
 	return EContextBuildResult::Success;
 }
