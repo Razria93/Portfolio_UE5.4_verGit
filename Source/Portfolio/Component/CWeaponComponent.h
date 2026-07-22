@@ -16,7 +16,6 @@ class PORTFOLIO_API UCWeaponComponent : public UActorComponent
 public:
 	UCWeaponComponent();
 
-	// === WeaponData ======================================= //
 private:
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	EWeaponType WeaponActorClassKey = EWeaponType::Max;
@@ -24,10 +23,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	TSubclassOf<class ACWeaponActor> WeaponActorClass;
 
-	// ====================================================== //
-
 private:
-	/* === State === */
 	UPROPERTY(Transient)
 	EWeaponType CurrentWeaponType = EWeaponType::Unarmed;
 
@@ -38,7 +34,6 @@ private:
 	bool bWeaponActorDisabledForProfiling = false;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -46,7 +41,6 @@ private:
 	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Injected = nullptr;
 
 public:
-	/* === [Out] Custom Delgate Events === */
 	FWeaponTypeChanged OnWeaponTypeChanged;
 
 public:
@@ -62,11 +56,11 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	/* === Check / Query === */
+	// Check / Query
 	FORCEINLINE bool CheckCurrentWeaponType(EWeaponType InNewWeaponType) const { return CurrentWeaponType == InNewWeaponType; }
 
 public:
-	/* === Getter === */
+	// Query
 	FORCEINLINE EWeaponType GetCurrentWeaponType() { return CurrentWeaponType; }
 
 public:

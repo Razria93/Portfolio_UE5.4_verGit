@@ -73,7 +73,6 @@ void UCMovementComponent::UpdateRuntimeLODMovementMode()
 
 	EnsureRuntimeLODMovementOriginalStateCached();
 
-	// Update Mode
 	if (RuntimeLODMovementState.AppliedMode != requestedMovementMode)
 	{
 		const int32 previousMovementMode = RuntimeLODMovementState.AppliedMode;
@@ -82,7 +81,6 @@ void UCMovementComponent::UpdateRuntimeLODMovementMode()
 		FMovementDebug::RecordRuntimeLODMovementModeAppliedForAudit(OwnerCharacter_Injected, this, previousMovementMode, requestedMovementMode, IsComponentTickEnabled(), bCanMove, bRuntimeLODMovementIntentBlocked);
 	}
 
-	// Block Intent
 	if (FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(requestedMovementMode))
 	{
 		BlockRuntimeLODMovementIntent();
@@ -99,21 +97,18 @@ void UCMovementComponent::EnsureRuntimeLODMovementOriginalStateCached()
 
 void UCMovementComponent::ApplyRuntimeLODMovementMode(int32 InMovementMode)
 {
-	// MODE 1
 	if (FAIMovementRuntimeLODPolicy::ShouldDisableMovementStateRefresh(InMovementMode))
 	{
 		ApplyRuntimeLODMovementStateRefreshDisabled();
 		return;
 	}
 
-	// MODE 2
 	if (FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(InMovementMode))
 	{
 		ApplyRuntimeLODMovementIntentBlocked();
 		return;
 	}
 
-	// MODE 0
 	ApplyRuntimeLODMovementDefault();
 }
 
@@ -175,7 +170,6 @@ void UCMovementComponent::StopRuntimeLODActiveMovement()
 	aiController->StopMovement();
 }
 
-// [Final Movement Gate]
 // Final movement gate for axis input accepted by the orchestrator.
 bool UCMovementComponent::CanAcceptMoveInput() const
 {

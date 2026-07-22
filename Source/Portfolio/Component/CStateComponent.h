@@ -18,17 +18,14 @@ public:
 	UCStateComponent();
 
 private:
-	/* === State === */
 	UPROPERTY(Transient)
 	EExecutionState CurrentExecutionState = EExecutionState::Idle;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 public:
-	/* === [Out] Custom Delgate Events === */
 	FExecutionStateChanged OnExecutionStateChanged;
 
 public:
@@ -42,15 +39,15 @@ public:
 	void OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState);
 
 public:
-	/* === Check / Query === */
+	// Check / Query
 	FORCEINLINE bool CheckCurExecutionState(EExecutionState InNewExecutionState) const { return CurrentExecutionState == InNewExecutionState; }
 
 public:
-	/* === Getter === */
+	// Query
 	FORCEINLINE EExecutionState GetCurrentExecutionState() const { return CurrentExecutionState; }
 
 public:
-	/* === Setter === */
+	// Mutation
 	void SetIdleState();
 	void SetActionState();
 	void SetReactionState();

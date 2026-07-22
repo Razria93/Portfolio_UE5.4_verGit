@@ -70,7 +70,6 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	const float cooldown = enemy->GetCombatActionCooldown();
 	const float nextCombatActionTime = currentTime + cooldown;
 	
-	// Set Cooldown
 	blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName, nextCombatActionTime);
 	FAICombatBTDebug::RecordCombatActionTaskSucceededForAudit(aiController, enemy, targetActor, CombatActionIntent, requestResult, cooldown, nextCombatActionTime);
 

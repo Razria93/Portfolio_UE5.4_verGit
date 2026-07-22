@@ -154,7 +154,6 @@ namespace
 		RecordStateRuntimeLODTier(runtimeLODTier);
 		RecordAIIntentStateIntervalPreset(intervalPreset);
 
-		// return Interval float value
 		return GetAIIntentStateIntervalByPreset(intervalPreset);
 	}
 }

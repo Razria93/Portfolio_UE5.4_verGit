@@ -16,7 +16,6 @@ public:
 	UCCombatSignalTargetComponent();
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 

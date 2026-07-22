@@ -77,7 +77,7 @@ void UCWorldSubsystem_CombatEngage::Tick(float DeltaTime)
 
 TStatId UCWorldSubsystem_CombatEngage::GetStatId() const
 {
-	// [NOTE] Returns a stat id, so Unreal can track this tickable subsystem in the unreal stat system.
+	// Unreal uses this stat id to track the tickable subsystem.
 	RETURN_QUICK_DECLARE_CYCLE_STAT(UCWorldSubsystem_CombatEngage, STATGROUP_Tickables);
 }
 
@@ -126,7 +126,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 
 	bool bCompletedWarmupThisRebuild = false;
 
-	// Flag Toogle
+	// Flag Toggle
 	if (!bAssignmentWarmupCompleted)
 	{
 		if (GetEngageAssignmentWarmupTime() > 0.f && AssignmentWarmupStartTime < 0.f) return;

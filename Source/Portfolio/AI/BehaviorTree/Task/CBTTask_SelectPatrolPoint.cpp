@@ -40,7 +40,6 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	{
 	case EPatrolMode::Random:
 	{
-		// Select Point [Random]
 		nextIndex = FMath::RandRange(0, count - 1);
 
 		// Reroll
@@ -54,7 +53,6 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	{
 		if (currentIndex < 0) currentIndex = 0;
 
-		// Select Point [Loop]
 		nextIndex = (currentIndex + 1) % count;
 
 		break;
@@ -64,7 +62,6 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 	{
 		if (currentIndex < 0) currentIndex = 0;
 
-		// Select Point [Reverse]
 		nextIndex = bPatrolReverse ? currentIndex - 1 : currentIndex + 1;
 
 		// Reverse in last point (count - 1 -> count - 2)

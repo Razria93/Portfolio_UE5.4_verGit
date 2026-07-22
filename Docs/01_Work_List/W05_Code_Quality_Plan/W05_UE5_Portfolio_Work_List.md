@@ -34,12 +34,13 @@
 12. feature/ai-enemy-actor-tick-profiling
 13. feature/ai-state-based-runtime-lod
 14. refactor/debug-log-policy-v1
-15. refactor/todo-status-cleanup
-16. refactor/naming-typo-api-cleanup
-17. refactor/api-const-consistency
-18. refactor/tuning-constants-cleanup
-19. refactor/type-header-helper-boundary
-20. docs/pr-record-format-sweep
+15. refactor/comment-section-cleanup
+16. refactor/todo-status-cleanup
+17. refactor/naming-typo-api-cleanup
+18. refactor/api-const-consistency
+19. refactor/tuning-constants-cleanup
+20. refactor/type-header-helper-boundary
+21. docs/pr-record-format-sweep
 
 별도 후순위:
 - refactor/enhanced-input-migration
@@ -100,6 +101,7 @@ W05 묶음은 다음 조건을 만족하면 코드 품질 1차 정리가 완료�
 ```yaml
 Work List / Notes
 - Docs/01_Work_List/W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md
+- Docs/01_Work_List/W05_Code_Quality_Plan/W05_Comment_Section_Cleanup_Work_Plan.md
 - Docs/01_Work_List/00_Work_List_Index.md
 - Docs/06_notes/N08_Code_Quality_Cleanup_Plan_Note.md
 ```

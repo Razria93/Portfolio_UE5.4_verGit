@@ -153,21 +153,20 @@ private:
 
 private:
 	// Runtime LOD
-	// 1. Update
 	void UpdateRuntimeLODMeshMode();
 	void UpdateRuntimeLODActorTickMode();
 
-	// 2. Lifecycle
+	// Lifecycle
 	void CacheRuntimeLODActorTickOriginalState();
 
-	// 3. Dispatch
+	// Dispatch
 	void ApplyRuntimeLODActorTickMode(int32 InActorTickMode);
 
-	// 4. Enemy Actor Tick Mode
+	// Actor Tick Mode
 	void ApplyRuntimeLODActorTickDefault();
 	void ApplyRuntimeLODActorTickDisabled();
 
-	// 5. Enemy Actor Tick State
+	// Actor Tick State
 	void RestoreRuntimeLODActorTick();
 	void DisableRuntimeLODActorTick();
 
@@ -257,7 +256,7 @@ private:
 	void OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
 
 private:
-	// ActionEvent API (Event -> Intent -> Handle)
+	// Action Event Routing
 	void RequestChainCombatAction(EActionType InActionType, int32 InActionIndex);
 	ECombatActionIntent ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const;
 };

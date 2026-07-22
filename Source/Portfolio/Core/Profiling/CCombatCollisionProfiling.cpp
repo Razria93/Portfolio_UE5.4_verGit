@@ -10,13 +10,13 @@ namespace
 	TAutoConsoleVariable<int32> CVarDisableEnemyHitProcessing(
 		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyHitProcessing"),
 		0,
-		TEXT("Disable Enemy hit processing for combat collision profiling. 0: process hit, 1: skip Enemy hit processing after overlap."),
+		TEXT("Disable ACEnemy hit processing for combat collision profiling. 0: process hit, 1: skip ACEnemy hit processing after overlap."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarDisableEnemyWeaponActor(
 		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor"),
 		0,
-		TEXT("Disable Enemy WeaponActor creation for runtime LOD measurement. 0: spawn WeaponActor, 1: skip Enemy WeaponActor."),
+		TEXT("Disable ACEnemy WeaponActor creation for runtime LOD measurement. 0: spawn WeaponActor, 1: skip ACEnemy WeaponActor."),
 		ECVF_Default);
 #endif
 

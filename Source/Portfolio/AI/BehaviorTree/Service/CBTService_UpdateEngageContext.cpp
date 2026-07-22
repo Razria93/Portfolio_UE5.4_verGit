@@ -45,7 +45,7 @@ void UCBTService_UpdateEngageContext::TickNode(UBehaviorTreeComponent& OwnerComp
 		return;
 	}
 
-	FEngageContext engageContext; // OutParameter
+	FEngageContext engageContext;
 
 	const EContextBuildResult buildResult = BuildEngageContext(ownerPawn, blackBoardComp, engageContext);
 

@@ -18,13 +18,12 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-	TMap<FDamageSpecKey, FDamageSpec> DamageSpecContainer;	// TODO: Seperate DataAsset (DB)
+	TMap<FDamageSpecKey, FDamageSpec> DamageSpecContainer;
 
 private:
 	TMap<FCombatSignalHitWindowKey, TSet<TWeakObjectPtr<AActor>>> DamagedTargetContainer;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 

@@ -22,15 +22,11 @@ private:
 		bool bOriginalStateCached = false;
 	};
 
-	// === MovementData ===================================== //
 private:
 	UPROPERTY(EditAnywhere, Category = "Movement|Gait")
 	TMap<EMovementGait, float> GaitSpeedMap;
 
-	// ====================================================== //
-
 private:
-	/* === State === */
 	UPROPERTY(Transient)
 	EMovementGait CurrentMovementGait = EMovementGait::Run;
 
@@ -61,7 +57,6 @@ private:
 	float CurrentDirection = 0.f;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -85,21 +80,20 @@ protected:
 
 private:
 	// Runtime LOD
-	// 1. Update
 	void UpdateRuntimeLODMovementMode();
 
-	// 2. Lifecycle
+	// Lifecycle
 	void EnsureRuntimeLODMovementOriginalStateCached();
 
-	// 3. Dispatch
+	// Dispatch
 	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
 
-	// 4. Movement Mode
+	// Movement Mode
 	void ApplyRuntimeLODMovementDefault();
 	void ApplyRuntimeLODMovementStateRefreshDisabled();
 	void ApplyRuntimeLODMovementIntentBlocked();
 
-	// 5. Movement State
+	// Movement State
 	void RestoreRuntimeLODMovementStateRefresh();
 	void DisableRuntimeLODMovementStateRefresh();
 	void AllowRuntimeLODMovementIntent();
@@ -107,11 +101,11 @@ private:
 	void StopRuntimeLODActiveMovement();
 
 public:
-	/* === Check / Query === */
+	// Check / Query
 	FORCEINLINE bool CheckCurrentMovementGait(EMovementGait InNewMovementGait) const { return CurrentMovementGait == InNewMovementGait; }
 
 public:
-	/* === Getter === */
+	// Query
 	FORCEINLINE EMovementGait GetCurrentMovementGait() const { return CurrentMovementGait; }
 
 public:
@@ -121,7 +115,7 @@ public:
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
 
 public:
-	/* === Setter === */
+	// Mutation
 	FORCEINLINE void SetStop() { bCanMove = false; }
 	FORCEINLINE void SetMove()
 	{
@@ -131,7 +125,7 @@ public:
 	}
 
 public:
-	/* === Movement Arbitration === */
+	// Movement Arbitration
 	bool CanAcceptMoveInput() const;
 
 	void BlockMovementIntentForRuntimeLOD();
@@ -150,7 +144,7 @@ public:
 	void OnStopJump();
 
 public:
-	/* === Movement Policy === */
+	// Movement Policy
 	void ApplyMovementOverride(EMovementGait InGait, EMovementRotationMode InRotationMode);
 	void ClearMovementOverride();
 

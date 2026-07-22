@@ -15,7 +15,6 @@ class PORTFOLIO_API UCReaction : public UObject
 	GENERATED_BODY()
 
 protected:
-	/* === Runtime State === */
 	UPROPERTY(Transient)
 	bool bIsActive = false;
 
@@ -40,7 +39,6 @@ protected:
 	EReactionStopReason LastStopReason_Cached = EReactionStopReason::None;
 
 protected:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -134,12 +132,12 @@ public:
 
 public:
 	// Intervention Match
-	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const;	// Incoming API
-	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;	// Acitve	API
+	virtual bool WantIntervention(const FExecutionInterventionQuery& InQuery) const;
+	virtual bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const;
 
 public:
 	// Observable Overlay Match
-	virtual void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const;	// Incoming API
+	virtual void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const;
 
 private:
 	bool MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const;

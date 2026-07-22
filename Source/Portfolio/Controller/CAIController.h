@@ -22,7 +22,6 @@ protected:
 	TMap<AActor*, FTargetData> TargetDataMap;
 
 protected:
-	/* --- Asset --- */
 	UPROPERTY(EditDefaultsOnly)
 	class UBlackboardData* BlackboardAsset;
 
@@ -30,22 +29,18 @@ protected:
 	class UBehaviorTree* BehaviorTreeAsset;
 
 protected:
-	/* --- Component --- */
 	UPROPERTY(VisibleAnywhere)
 	class UAIPerceptionComponent* AIPerceptionComp;
 
 protected:
-	/* --- Cached --- */
 	UPROPERTY(Transient)
 	class APawn* ControlledPawn_Cached;
 
 protected:
-	/* --- Config --- */
 	UPROPERTY(Transient)
 	class UAISenseConfig_Sight* SightConfig;
 
 private:
-	// Profiling State
 	UPROPERTY(Transient)
 	bool bPerceptionDisabledForProfiling = false;
 
@@ -134,37 +129,34 @@ private:
 
 private:
 	// Runtime LOD Snapshot
-	// 1. Lifecycle
 	void InitializeRuntimeLODTierSnapshot();
 	void ClearRuntimeLODTierSnapshot();
 
-	// 2. Set
+	// Mutation
 	void SetCurrentRuntimeLODTier(EAIRuntimeLODTier InTier);
 
 private:
 	// Perception Profiling Gate
-	// 1. Lifecycle
 	void InitializePerceptionStateForProfiling();
 	void ClearPerceptionStateForProfiling();
 
-	// 2. Condition
+	// Condition
 	bool ShouldDisableEnemyPerceptionForProfiling() const;
 
-	// 3. Set
+	// Mutation
 	void DisableEnemyPerceptionForProfiling();
 	void EnableEnemyPerceptionForProfiling();
 	void SetPerceptionSenseEnabledForProfiling(bool bEnabled);
 
 private:
 	// Perception Candidate Audit
-	// 1. Lifecycle
 	void InitializePerceptionCandidateAudit();
 	void ClearPerceptionCandidateAudit();
 
-	// 2. Condition
+	// Condition
 	bool ShouldAuditPerceptionCandidates() const;
 
-	// 3. Record
+	// Record
 	void RecordRawPerceptionCandidate(class AActor* InActor);
 	void RecordValidTargetProvider(class AActor* InActor);
 	void RecordInvalidTargetProvider(class AActor* InActor);
@@ -172,11 +164,10 @@ private:
 
 private:
 	// Blackboard / Engage Latency Audit
-	// 1. Lifecycle
 	void InitializeBlackboardEngageLatencyAudit();
 	void ClearBlackboardEngageLatencyAudit();
 
-	// 2. Condition
+	// Condition
 	bool ShouldAuditBlackboardEngageLatency() const;
 
 };

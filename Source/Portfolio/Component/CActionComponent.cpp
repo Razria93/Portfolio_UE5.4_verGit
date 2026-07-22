@@ -212,7 +212,7 @@ UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 	UCAction* found = FindActionExecutor(InData.ActionExecutorKey.Get());
 	if (IsValid(found)) return found;
 
-	// 2) [Policy] Try Add and cache Action; return if valid
+	// 2) Try add and cache Action; return if valid.
 	UCAction* add = AddActionExecutor(InData.ActionExecutorKey);
 	if (IsValid(add)) return add;
 
@@ -282,7 +282,6 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 
 	case EExecutionApplyMode::Intervene:
 	{
-		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective))
 		{
 			FActionComponentDebug::RecordActionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("InterventionFailed"));
@@ -590,7 +589,7 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 			}
 			else // bRebuildAll == false
 			{
-				// [Policy] Currently set to 'skip'. (Options: ignore | restart | stop-then-play)
+				// Duplicate action data is skipped unless the map is being rebuilt.
 				continue;
 			}
 		}
@@ -673,7 +672,6 @@ UCAction* UCActionComponent::FindActionExecutor(const UClass* InClass)
 
 	if (!IsValid(found))
 	{
-		// Remove Invalid Entry
 		ActionExecutorMap.Remove(InClass);
 
 		return nullptr;
@@ -787,7 +785,7 @@ bool UCActionComponent::InterruptActiveAction(const FExecutionInterventionDirect
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor))
 	{
-		// [NOTE] Fallback
+		// Force end when the active executor is already invalid.
 		return EndActiveAction(finishReason);
 	}
 
@@ -795,7 +793,7 @@ bool UCActionComponent::InterruptActiveAction(const FExecutionInterventionDirect
 
 	if (IsActive())
 	{
-		// [NOTE] Fallback
+		// Force end when the executor interrupt callback did not clear active state.
 		return EndActiveAction(finishReason);
 	}
 

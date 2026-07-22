@@ -162,7 +162,6 @@ FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDefer
 	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max)
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
 
-	// Find the deferred candidate for this consume key.
 	const int32 foundIndex = DeferredActionCandidates.IndexOfByPredicate(
 		[InConsumeKey](const FDeferredActionCandidate& InEntry)
 		{
@@ -330,14 +329,12 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 		{
 		case EActionIntentEvent::Started:
 		{
-			// Temporary: Started -> Guard In data key.
 			incomingCandidate.ActionDataKey.ActionIndex = GetGuardActionPhaseIndex(EGuardActionPhase::In);
 			break;
 		}
 
 		case EActionIntentEvent::Completed:
 		{
-			// Temporary: Completed -> Guard Out data key.
 			incomingCandidate.ActionDataKey.ActionIndex = GetGuardActionPhaseIndex(EGuardActionPhase::Out);
 			break;
 		}
@@ -400,7 +397,6 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
 
-	// [NOTE] Returns true when the incoming candidate should be deferred and provides its consume key.
 	EDeferredActionConsumeKey consumeKey = EDeferredActionConsumeKey::None;
 	if (TryResolveDeferredConsumeKey(InIncomingCandidate, decisionQuery, consumeKey))
 	{
@@ -681,7 +677,6 @@ void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDe
 	InOutResult.ApplyMode = EExecutionApplyMode::None;
 	InOutResult.InterventionDirective = FExecutionInterventionDirective();
 
-	// [NOTE] Early return ignore and reject decision
 	if (!InOutResult.IsAcceptedDecision()) return;
 
 	switch (InOutResult.Relationship)
@@ -887,11 +882,9 @@ bool UCActionOrchestratorComponent::BuildInterventionDirective(const FExecutionI
 
 FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const FActionExecutionResult& InResult)
 {
-	// [NOTE] Request ignore result
 	if (InResult.Decision == EExecutionDecision::Ignore)
 		return BuildActionRequestResult(EActionRequestResultType::Ignored);
 
-	// [NOTE] Request rejected result
 	if (!InResult.IsAcceptedDecision())
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, InResult.RejectReason);
 

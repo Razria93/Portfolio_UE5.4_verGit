@@ -116,58 +116,38 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 
 	const FReactionFeedbackKey& requestKey = InReactionFeedbackRequest.ReactionFeedbackKey;
 
-	// ReactionType
 	if (InDataKey.ReactionType == requestKey.ReactionType)
 	{
 		OutScore += ReactionFeedbackScore::ReactionExact;
 	}
-	else if (InDataKey.ReactionType == EReactionType::All)
-	{
-		// [Pass] Wildcard match.
-	}
-	else
+	else if (InDataKey.ReactionType != EReactionType::All)
 	{
 		return false;
 	}
 
-	// WeaponType
 	if (InDataKey.DamageSpecKey.WeaponType == requestKey.DamageSpecKey.WeaponType)
 	{
 		OutScore += ReactionFeedbackScore::WeaponExact;
 	}
-	else if (InDataKey.DamageSpecKey.WeaponType == EWeaponType::All)
-	{
-		// [Pass] Wildcard match.
-	}
-	else
+	else if (InDataKey.DamageSpecKey.WeaponType != EWeaponType::All)
 	{
 		return false;
 	}
 
-	// ActionType
 	if (InDataKey.DamageSpecKey.ActionType == requestKey.DamageSpecKey.ActionType)
 	{
 		OutScore += ReactionFeedbackScore::ActionExact;
 	}
-	else if (InDataKey.DamageSpecKey.ActionType == EActionType::All)
-	{
-		// [Pass] Wildcard match.
-	}
-	else
+	else if (InDataKey.DamageSpecKey.ActionType != EActionType::All)
 	{
 		return false;
 	}
 
-	// ActionIndex
 	if (InDataKey.DamageSpecKey.ActionIndex == requestKey.DamageSpecKey.ActionIndex)
 	{
 		OutScore += ReactionFeedbackScore::IndexExact;
 	}
-	else if (InDataKey.DamageSpecKey.ActionIndex == INDEX_NONE)
-	{
-		// [Pass] Wildcard match.
-	}
-	else
+	else if (InDataKey.DamageSpecKey.ActionIndex != INDEX_NONE)
 	{
 		return false;
 	}
@@ -353,7 +333,6 @@ void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData
 
 	case EReactionVFXPlayType::Loop:
 	{
-		// TODO: Implement Loop
 		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InReactionVFXFeedbackData.VFX, TEXT("LoopNotImplemented"));
 		return;
 	}
@@ -393,7 +372,6 @@ void UCReactionFeedbackComponent::PlayReactionSFX(const FReactionSFXFeedbackData
 
 	case EReactionSFXPlayType::Loop:
 	{
-		// TODO: Implement Loop
 		FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), InReactionSFXFeedbackData.SFX, TEXT("LoopNotImplemented"));
 		return;
 	}

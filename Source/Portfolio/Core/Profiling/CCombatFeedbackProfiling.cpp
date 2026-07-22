@@ -11,7 +11,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarDisableEnemyCombatFeedback(
 		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyCombatFeedback"),
 		0,
-		TEXT("Disable Enemy combat feedback presentation for runtime LOD profiling. 0: play feedback, 1: skip Enemy feedback presentation."),
+		TEXT("Disable ACEnemy combat feedback presentation for runtime LOD profiling. 0: play feedback, 1: skip ACEnemy feedback presentation."),
 		ECVF_Default);
 
 	// Action Counter

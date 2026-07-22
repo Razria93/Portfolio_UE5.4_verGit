@@ -11,13 +11,13 @@ namespace
 	TAutoConsoleVariable<int32> CVarEngageAssignmentAudit(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAudit"),
 		0,
-		TEXT("Print minimal CombatEngage assignment warmup audit logs. 0: disabled, 1: enabled."),
+		TEXT("Print CombatEngage assignment warmup and rebuild summary audit logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarEngageAssignmentVerboseAudit(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentVerboseAudit"),
 		0,
-		TEXT("Print detailed CombatEngage assignment candidate logs. 0: disabled, 1: enabled."),
+		TEXT("Print detailed CombatEngage assignment request candidate and slot decision audit logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
 #endif
 }

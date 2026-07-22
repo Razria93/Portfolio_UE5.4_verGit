@@ -352,7 +352,6 @@ enum class EExecutionAfterStopAction : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EActionStopSource : uint8
 {
@@ -367,7 +366,6 @@ enum class EActionStopSource : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EActionStopReason : uint8
 {
@@ -490,9 +488,6 @@ enum class ECombatSignalTargetRejectReason : uint8
 	InvalidInstigator,
 
 	AlreadyDead,
-	// Invulnerable,
-
-	// DamageCooldown,
 	ZeroDamage,
 
 	UnknownCueTag,
@@ -509,7 +504,6 @@ enum class EDamageDefenseOutcome : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EReactionStopSource : uint8
 {
@@ -524,7 +518,6 @@ enum class EReactionStopSource : uint8
 	Max,
 };
 
-// [NOTE] Temp
 UENUM(BlueprintType)
 enum class EReactionStopReason : uint8
 {
@@ -595,7 +588,6 @@ enum class EReactionRequestRejectReason : uint8
 	Max,
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionFeedbackTiming : uint8
 {
@@ -613,7 +605,6 @@ enum class EActionFeedbackTiming : uint8
 	TriggerWindowEnd
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 enum class EActionFeedbackMatchTier : uint8
 {
 	None = 0,
@@ -623,7 +614,6 @@ enum class EActionFeedbackMatchTier : uint8
 	ExactActionExactIndex,
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionVFXPlayType : uint8
 {
@@ -631,7 +621,6 @@ enum class EActionVFXPlayType : uint8
 	Loop
 };
 
-// [TODO] Migrate to CActionFeedbackStructure
 UENUM(BlueprintType)
 enum class EActionSFXPlayType : uint8
 {
@@ -837,7 +826,6 @@ public:
 	FWeaponContext() = default;
 };
 
-// [TODO] Translate to FActionExecutionContext
 USTRUCT(BlueprintType)
 struct FActionContext
 {
@@ -980,16 +968,7 @@ FORCEINLINE uint32 GetTypeHash(const FDamageSpecKey& InOther)
 	return H;
 }
 
-/***
- * [EN]
- * USTRUCT Set/Map key checklist:
- * 1) operator==
- * 2) GetTypeHash
- *
- * GetTypeHash notes:
- * - Prefer a normal overload at namespace/global scope (avoid hidden-friend in the struct).
- * - Avoid ::GetTypeHash(...); call GetTypeHash(...) to keep ADL available.
- ***/
+// Global GetTypeHash keeps ADL available for this map key.
 
 USTRUCT(BlueprintType)
 struct FDamageSpec
@@ -1140,7 +1119,6 @@ public:
 	UPROPERTY(Transient)
 	AActor* TargetActor = nullptr;
 
-	// Damage MetaData
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
@@ -1170,7 +1148,6 @@ struct FCombatSignalTargetPayload
 	GENERATED_BODY()
 
 public:
-	// ObjectData
 	UPROPERTY(Transient)
 	class AActor* SourceActor = nullptr;
 
@@ -1182,8 +1159,6 @@ public:
 
 	UPROPERTY(Transient)
 	class AActor* DamageCauser = nullptr;
-
-	// Damage MetaData
 
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
@@ -1197,7 +1172,6 @@ public:
 	UPROPERTY(Transient)
 	FDamageAmount DamageAmount = FDamageAmount();
 
-	//Damage AmountData
 	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;
 
@@ -1211,7 +1185,6 @@ struct FCombatSignalTargetContext
 	GENERATED_BODY()
 
 public:
-	// Resolved objects [Set BuildContext]
 	UPROPERTY(Transient)
 	class AActor* SourceActor = nullptr;
 
@@ -1224,14 +1197,12 @@ public:
 	UPROPERTY(Transient)
 	class AActor* DamageCauser = nullptr;
 
-	// Damage MetaData [Set BuildContext]
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
 
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
 
-	// Query Acceptable [Set ValidateContext / CanReceiveCombatSignal / ComputeTargetDamage]
 	UPROPERTY(Transient)
 	bool bAccepted = true;
 
@@ -1244,14 +1215,12 @@ public:
 	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;
 
-	// Pre-state Snapshot [Set HandleDefaultDamageEvent before ValidatePolicy]
 	UPROPERTY(Transient)
 	float HealthPointBefore = 0.f;
 
 	UPROPERTY(Transient)
 	EDeadState DeadState_Before = EDeadState::Alive;
 
-	// DamageAmounts [Set ComputeTargetDamage & CommitCombatSignalTarget]
 	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;		// Raw incoming damage requested by Apply pipeline. (ex. [skill] 100)
 
@@ -1264,20 +1233,11 @@ public:
 	UPROPERTY(Transient)
 	float CommittedDamage = 0.f;		// Actual HP loss committed to Health. (ex. [shield absorbs] 60 -> HP: -30 / SP: -30)
 
-	// Post-state Snapshot [Set BuildResult]
 	UPROPERTY(Transient)
 	float HealthPointAfter = 0.f;
 
 	UPROPERTY(Transient)
 	EDeadState DeadState_After = EDeadState::Alive;
-
-	// TODO:
-	// - HitBoneName
-	// - HitDirection
-	// - HitImpulseVector
-	// - TeamId / Attribute
-	// - StateSnapshot
-	// - Cached Component (Minimal)
 
 public:
 	FCombatSignalTargetContext() = default;
@@ -1301,11 +1261,9 @@ public:
 	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;
 
-	// Damage MetaData
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
 
-	// Damage Amount
 	UPROPERTY(Transient)
 	float RequestDamage = 0.f;
 

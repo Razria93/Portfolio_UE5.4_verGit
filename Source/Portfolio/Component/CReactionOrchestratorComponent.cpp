@@ -107,8 +107,6 @@ bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestR
 		return false;
 	}
 
-	// [NOTE]
-	// Do not reject dead state here.
 	// DeadReaction may be requested after health and dead state have already been committed.
 
 	return true;
@@ -452,7 +450,6 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 	InOutResult.ApplyMode = EExecutionApplyMode::None;
 	InOutResult.InterventionDirective = FExecutionInterventionDirective();
 
-	// [NOTE] Early return ignore and reject decision
 	if (!InOutResult.IsAcceptedDecision()) return;
 
 	switch (InOutResult.Relationship)
@@ -472,7 +469,7 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 
 	case EExecutionRelationship::Sequential:
 	{
-		// [NOTE] Reaction does not support sequential execution.
+		// Reaction does not support sequential execution.
 		InOutResult.Decision = EExecutionDecision::Reject;
 		InOutResult.RejectReason = EReactionRequestRejectReason::InvalidSequential;
 		return;
@@ -517,7 +514,6 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 
 	if (!InOutResult.IsAcceptedDecision()) return;
 
-	// [NOTE] Start immediately when there is no active execution.
 	if (!InQuery.HasActivePart()) return;
 
 	FExecutionInterventionQuery interventionQuery;
@@ -536,9 +532,7 @@ void UCReactionOrchestratorComponent::ResolveInterventionDirective(const FExecut
 
 	if (bIncomingDead)
 	{
-		// [NOTE]
-		// Force intervention.
-		// Do not ask incoming WantIntervention or active AllowIntervention.
+		// DeadReaction forces intervention without querying participant permissions.
 		FExecutionInterventionDirective directive;
 
 		if (!BuildInterventionDirective(interventionQuery, EExecutionStopSource::ReactionOrchestration, EExecutionAfterStopAction::StartIncoming, directive))
@@ -681,11 +675,9 @@ bool UCReactionOrchestratorComponent::BuildInterventionDirective(const FExecutio
 
 FReactionRequestResult UCReactionOrchestratorComponent::DispatchReactionDecision(const FReactionExecutionResult& InResult)
 {
-	// [NOTE] Request ignore result
 	if (InResult.Decision == EExecutionDecision::Ignore)
 		return BuildReactionRequestResult(EReactionRequestResultType::Ignored, EReactionRequestRejectReason::None);
 
-	// [NOTE] Request rejected result
 	if (!InResult.IsAcceptedDecision())
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, InResult.RejectReason);
 

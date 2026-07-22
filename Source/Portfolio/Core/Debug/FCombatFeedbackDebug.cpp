@@ -9,7 +9,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarCombatFeedbackAudit(
 		TEXT("Portfolio.Debug.FeedbackAudit"),
 		0,
-		TEXT("Print combat feedback request, match, asset, and dispatch diagnostic hook logs. 0: disabled, 1: enabled."),
+		TEXT("Print combat feedback request, channel, presentation, asset, and shared dispatch diagnostic hook logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
 #endif
 

@@ -49,76 +49,59 @@ ACEnemy::ACEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Init CapsuleComp
 	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
 	check(CapsuleComp);
 	CapsuleComp->InitCapsuleSize(40.0f, 90.0f);
 
-	// Init SkeletalMeshComp
 	USkeletalMeshComponent* MeshComp = GetMesh();
 	check(MeshComp);
 	MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // FRotator: (Pitch, Yaw, Roll)
 
-	// Init CharacterMovementComp
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
 	check(characterMovementComp);
 	characterMovementComp->bOrientRotationToMovement = true;
 	characterMovementComp->MaxWalkSpeed = 600.0f;
 
-	// Init MovementComp (Custom)
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
 
-	// Init WeaponComp
 	WeaponComponent = CreateDefaultSubobject<UCWeaponComponent>(TEXT("Weapon"));
 	check(WeaponComponent);
 
-	// Init StateComp
 	StateComponent = CreateDefaultSubobject<UCStateComponent>(TEXT("State"));
 	check(StateComponent);
 
-	// Init HealthComp
 	HealthComponent = CreateDefaultSubobject<UCHealthComponent>(TEXT("Health"));
 	check(HealthComponent);
 
-	// Init ObservableOverlayComp
 	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
 	check(ObservableOverlayComponent);
 
-	// Init CombatSignalSourceComp
 	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
 	check(CombatSignalSourceComponent);
 
-	// Init CombatSignalTargetComp
 	CombatSignalTargetComponent = CreateDefaultSubobject<UCCombatSignalTargetComponent>(TEXT("CombatSignalTarget"));
 	check(CombatSignalTargetComponent);
 
-	// Init ActionOrchestratorComp
 	ActionOrchestratorComponent = CreateDefaultSubobject<UCActionOrchestratorComponent>(TEXT("ActionOrchestrator"));
 	check(ActionOrchestratorComponent);
 
-	// Init ReactionOrchestratorComp
 	ReactionOrchestratorComponent = CreateDefaultSubobject<UCReactionOrchestratorComponent>(TEXT("ReactionOrchestrator"));
 	check(ReactionOrchestratorComponent);
 
-	// Init ActionComp
 	ActionComponent = CreateDefaultSubobject<UCActionComponent>(TEXT("Action"));
 	check(ActionComponent);
 
-	// Init ReactionComp
 	ReactionComponent = CreateDefaultSubobject<UCReactionComponent>(TEXT("Reaction"));
 	check(ReactionComponent);
 
-	// Init HitFeedbackComp
 	HitFeedbackComponent = CreateDefaultSubobject<UCHitFeedbackComponent>(TEXT("HitFeedback"));
 	check(HitFeedbackComponent);
 
-	// Init ActionFeedbackComp
 	ActionFeedbackComponent = CreateDefaultSubobject<UCActionFeedbackComponent>(TEXT("ActionFeedback"));
 	check(ActionFeedbackComponent);
 
-	// Init ReactionFeedbackComp
 	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
 	check(ReactionFeedbackComponent);
 }
@@ -143,7 +126,6 @@ void ACEnemy::BeginPlay()
 
 	if (IsValid(ActionComponent))
 	{
-		// Update blackboard
 		ActionComponent->OnActionTypeChanged.AddDynamic(this, &ACEnemy::OnActionTypeChanged);
 		ActionComponent->OnActionEvent.AddDynamic(this, &ACEnemy::OnActionEvent);
 	}
@@ -343,10 +325,9 @@ void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	// Minimal validation
 	if (DamageAmount <= 0.f) return 0.f;
 
-	// TODO: Check DeadFlag and early return
+	// TODO(Gameplay): Decide whether dead actors should bypass the engine TakeDamage route.
 
 	float finalDamage = DamageAmount;
 
@@ -356,11 +337,9 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 	}
 	else
 	{
-		// FallBack
 		finalDamage = DamageAmount;
 	}
 
-	// Engine-Event Trigger
 	Super::TakeDamage(finalDamage, DamageEvent, EventInstigator, DamageCauser);
 
 	return finalDamage;
@@ -548,7 +527,7 @@ void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionTy
 	}
 }
 
-// Request API (ActionData -> Intent -> Handle)
+// Chain Combat Request
 void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionIndex)
 {
 	const ECombatActionIntent combatActionIntent = ResolveChainCombatIntent(InActionType, InActionIndex);
@@ -558,11 +537,9 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 	if (!actionRequestResult.IsReservedResult()) return;
 }
 
-// Mapping API (ActionData -> Intent)
+// Chain Intent Mapping
 ECombatActionIntent ACEnemy::ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const
 {
-	// TODO: Use InActionIndex when ai combo branch
-
 	switch (InActionType)
 	{
 	case EActionType::ComboAttack:

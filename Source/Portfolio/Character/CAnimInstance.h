@@ -11,7 +11,6 @@ class PORTFOLIO_API UCAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 protected:
-	/* === Injection Datas === */
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float Speed = 0.f;
 
@@ -32,7 +31,6 @@ protected:
 	bool bIsGuardingPose = false;
 
 private:
-	/* === Cached Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
@@ -49,7 +47,6 @@ private:
 	class UCDefenseComponent* DefenseComp_Cached = nullptr;
 
 private:
-	// Profiling State
 	float RuntimeLODAnimationRefreshElapsed = 0.f;
 
 public:
@@ -67,26 +64,24 @@ private:
 
 private:
 	// Animation Profiling Gate
-	// 1. Lifecycle
 	void InitializeAnimationStateForProfiling();
 	void ClearAnimationStateForProfiling();
 
-	// 2. Condition
+	// Condition
 	bool ShouldReduceEnemyAnimationRefreshForProfiling() const;
 	bool IsEnemyAnimationProfilingTarget() const;
 
-	// 3. Query
+	// Query
 	float GetReducedAnimationRefreshIntervalForProfiling() const;
 
-	// 4. Gate
+	// Gate
 	bool ShouldRefreshAnimationParameters(float DeltaSeconds);
 
 private:
 	// Animation Refresh Audit
-	// 1. Condition
 	bool ShouldAuditAnimationRefreshForProfiling() const;
 
-	// 2. Record
+	// Record
 	void RecordAnimationRefreshAttemptForProfiling() const;
 	void RecordAnimationRefreshExecutedForProfiling() const;
 	void RecordAnimationRefreshSkippedForProfiling() const;

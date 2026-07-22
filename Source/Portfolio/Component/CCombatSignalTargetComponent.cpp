@@ -318,11 +318,11 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 		return true;
 	}
 
-	// TODO:
-	// Gate 3: invulnerable / iframe / god-mode state
-	// Gate 4: defensive friendly-fire check on receiver side
-	// Gate 5: receiver-side damage cooldown / hit immunity window
-	// Gate 6: defensive self-damage policy
+	// TODO(CombatPolicy): Add target-side defensive gates.
+	// - Invulnerable / iframe / god-mode state
+	// - Defensive friendly-fire check on receiver side
+	// - Receiver-side damage cooldown / hit immunity window
+	// - Defensive self-damage policy
 
 	InOutCombatSignalTargetContext.bAccepted = true;
 	InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
@@ -334,10 +334,8 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 
 void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
-	// Process 1: Compute Mitigation Damage
-	InOutCombatSignalTargetContext.MitigatedDamage = ComputeMitigatedDamage(InOutCombatSignalTargetContext);	// TODO
+	InOutCombatSignalTargetContext.MitigatedDamage = ComputeMitigatedDamage(InOutCombatSignalTargetContext);
 
-	// Gate 1: Zero damage
 	if (InOutCombatSignalTargetContext.bShouldCommitDamage && InOutCombatSignalTargetContext.MitigatedDamage <= KINDA_SMALL_NUMBER)
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
@@ -349,15 +347,14 @@ void UCCombatSignalTargetComponent::ComputeTargetDamage(FCombatSignalTargetConte
 	InOutCombatSignalTargetContext.bAccepted = true;
 	InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
 
-	// Process 2: Compute FinalTaken Damage
-	InOutCombatSignalTargetContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutCombatSignalTargetContext);	// TODO
+	InOutCombatSignalTargetContext.FinalTakenDamage = ComputeFinalTakenDamage(InOutCombatSignalTargetContext);
 }
 
 float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
 	const float requestedDamage = InOutCombatSignalTargetContext.RequestedDamage;
 
-	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	// Non-finite damage is clamped out before target-side policy evaluation.
 	if (!FMath::IsFinite(requestedDamage)) return 0.f;
 
 	float mitigatedDamage = requestedDamage;
@@ -368,7 +365,7 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 		mitigatedDamage *= 0.5f;
 	}
 
-	// TODO: Defense / Armor / Resistance Policy
+	// TODO(CombatPolicy): Add defense / armor / resistance mitigation policy.
 
 	return FMath::Max(0.f, mitigatedDamage);
 }
@@ -379,12 +376,12 @@ float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTarget
 
 	const float mitigatedDamage = InOutCombatSignalTargetContext.MitigatedDamage;
 
-	// Minimal safe policy (Check NaN, +Inf/-Inf)
+	// Non-finite damage is clamped out before final damage policy evaluation.
 	if (!FMath::IsFinite(mitigatedDamage)) return 0.f;
 
 	const float finalTakenDamage = mitigatedDamage;
 
-	// TODO: Critical / Guard / Headshot etc Policy
+	// TODO(CombatPolicy): Add critical / guard / headshot final damage policy.
 
 	return FMath::Max(0.f, finalTakenDamage);
 }
@@ -415,12 +412,10 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 {
 	if (!IsValid(HealthComp_Injected)) return;
 
-	// Process 4: Commit Damage To Health
 	InOutCombatSignalTargetContext.CommittedDamage = InOutCombatSignalTargetContext.bShouldCommitDamage ? CommitDamageToHealth(InOutCombatSignalTargetContext) : 0.f;
 
-	// TODO: Shield / Mana / Stemina etc + Commit Order
+	// TODO(CombatPolicy): Add shield / mana / stamina resource commit order.
 
-	// Post-state Snapshot: Set BuildResult
 	InOutCombatSignalTargetContext.DeadState_After = HealthComp_Injected->GetDeadState();
 	InOutCombatSignalTargetContext.HealthPointAfter = HealthComp_Injected->GetCurrentHP();
 }
@@ -456,16 +451,12 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 			HitFeedbackComp_Injected->PlayHitFeedback(InCombatSignalTargetPacket);
 		}
 	}
-
-	// TODO:
-	// - Debug/UI Feedback
 }
 
 void UCCombatSignalTargetComponent::DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	FCombatSignalDebug::RecordTargetRejectedForAudit(InCombatSignalTargetPacket);
 	FCombatSignalDebug::PrintTargetPacketDebug(InCombatSignalTargetPacket);
-	// - Debug/UI rejected feedback
 }
 
 void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
@@ -506,8 +497,6 @@ AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AControl
 	if (!IsValid(DamageCauser))
 		return nullptr;
 
-	/* === Fallback Process (DamageCauser-based) === */
-
 	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
 	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
 		return causerInstigator;
@@ -533,8 +522,6 @@ AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AControl
 				return ownerController;
 		}
 	}
-
-	/* ============================================= */
 
 	return nullptr;
 }
