@@ -423,7 +423,6 @@ void UCReaction::HandleNotifyCommand(EReactionNotifyCommand InCommand)
 
 void UCReaction::HandleSpecificNotifyCommand(EReactionNotifyCommand InCommand)
 {
-	// Specific Reactions override this API.
 }
 
 void UCReaction::HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey)

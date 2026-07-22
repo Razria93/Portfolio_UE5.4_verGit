@@ -58,8 +58,7 @@ public:
 	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
 
 public:
-	// Skill API
-	// (Current not used)
+	// State Transition
 	bool TryKill();
 	bool TryRevive(float InReviveHP);
 	bool TryCancelRevive();

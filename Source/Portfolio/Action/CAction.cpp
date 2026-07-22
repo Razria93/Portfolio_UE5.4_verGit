@@ -226,13 +226,11 @@ void UCAction::Complete()
 
 bool UCAction::ReserveChain(const FActionData& InData)
 {
-	// Specific Actions override this API.
 	return false;
 }
 
 void UCAction::ConsumeChain()
 {
-	// Specific Actions override this API.
 }
 
 EActionStopReason UCAction::ResolveActionStopReason(const FExecutionInterventionDirective& InDirective) const
@@ -469,7 +467,6 @@ void UCAction::HandleNotifyCommand(EActionNotifyCommand InCommand)
 
 void UCAction::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
-	// Specific Actions override this API.
 }
 
 void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey)

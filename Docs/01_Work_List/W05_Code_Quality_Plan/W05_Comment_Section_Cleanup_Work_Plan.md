@@ -304,3 +304,197 @@ PR 보류:
 - `refactor/runtime-lod-config-policy`: RuntimeLOD CVar / policy / config 위치 재검토
 
 ---
+## 13. Comment Usage Rules
+
+이번 브랜치 이후 주석은 "코드가 직접 말하지 못하는 이유 / 정책 / 예외 / 구역"만 남긴다.
+단순히 코드 동작을 반복하는 주석, 임시 trace, stale 상태 설명, 장식성 banner는 제거 대상이다.
+
+### 1) Engine / Template Header
+
+UE 템플릿 copyright 주석은 유지한다.
+그 외 파일 상단 설명 주석은 별도 필요가 없으면 추가하지 않는다.
+
+```cpp
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#include "Portfolio.h"
+```
+
+### 2) Debug Helper
+
+Debug helper는 API 구역을 구분하기 위한 짧은 명사구 섹션만 허용한다.
+출력 정책은 함수명, CVar, helper 구조로 표현하고 본문 설명 주석은 최소화한다.
+
+```cpp
+// Gate
+
+bool FCombatSignalDebug::ShouldAuditCombatSignal()
+{
+	return CVarCombatSignalAudit.GetValueOnGameThread() != 0;
+}
+
+// Source Diagnostic Hook
+
+void FCombatSignalDebug::RecordSourceRejectedForAudit(...)
+{
+	if (!ShouldAuditCombatSignal()) return;
+}
+```
+
+### 3) Profiling Helper
+
+Profiling helper는 gate / audit / counter / CSV 구역 구분에 사용한다.
+counter 종류가 여러 개면 구체적인 counter 이름을 섹션명으로 쓴다.
+
+```cpp
+// Gate
+
+bool CAIAnimationProfiling::ShouldAuditAnimationRefresh()
+{
+	return CVarAnimationRefreshAudit.GetValueOnGameThread() != 0;
+}
+
+// Counter
+
+void CAIAnimationProfiling::RecordAnimationRefreshExecuted()
+{
+	CSV_CUSTOM_STAT_GLOBAL(AnimationRefreshExecuted, 1, ECsvCustomStatOp::Accumulate);
+}
+```
+
+### 4) Header API Section
+
+헤더 선언부는 함수 그룹을 읽기 쉽게 나눌 때만 섹션 주석을 둔다.
+섹션명은 `Lifecycle`, `Component Reference`, `Query`, `Mutation`, `Runtime State`, `Notify Routing`처럼 짧은 명사구를 사용한다.
+`API`, `Current`, `Used`, `Temp` 같은 상태성 표현은 사용하지 않는다.
+
+```cpp
+public:
+	// Lifecycle
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+public:
+	// Query
+	bool IsActive() const;
+	EActionType GetActiveActionType() const;
+
+private:
+	// Runtime State
+	void ClearActionRuntimeState();
+```
+
+### 5) Implementation Section
+
+cpp 구현부는 함수 그룹을 나눌 때만 섹션 주석을 둔다.
+가능하면 헤더의 섹션명과 같은 용어를 사용한다.
+함수 1개짜리 작은 그룹은 보통 섹션 주석을 두지 않는다.
+
+```cpp
+// Runtime Lifecycle
+
+void UCActionComponent::InitializeActionRuntime()
+{
+	BuildActionRuntimeMaps();
+}
+
+void UCActionComponent::UninitializeActionRuntime()
+{
+	ClearActionRuntimeMaps();
+}
+
+// Notify Routing
+
+void UCActionComponent::HandleActionNotify(...)
+{
+}
+```
+
+### 6) Algorithm / Step
+
+순서나 우선순위가 의미 있는 fallback, priority matching, state decision에만 단계 주석을 사용한다.
+번호는 실제 실행 순서나 우선순위를 나타낼 때만 쓴다.
+장식성 separator 또는 block banner는 사용하지 않는다.
+
+```cpp
+AController* ResolveInstigatorController(AActor* InAttacker, AActor* InDamageCauser)
+{
+	// 1) Prefer attacker-provided instigator.
+	if (AController* controller = InAttacker->GetInstigatorController())
+		return controller;
+
+	// 2) Fall back to the attacker pawn controller.
+	if (APawn* pawn = Cast<APawn>(InAttacker))
+		return pawn->GetController();
+
+	return nullptr;
+}
+```
+
+### 7) Policy / Exception Reason
+
+본문 주석은 기본적으로 "왜 이렇게 해야 하는지"를 설명할 때만 사용한다.
+`[NOTE]`, `[Policy]` 같은 태그는 기본적으로 쓰지 않고, 한 줄 문장으로 작성한다.
+2줄 이상 길어지면 함수 분리 또는 문서화를 먼저 검토한다.
+
+```cpp
+bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(...)
+{
+	// DeadReaction may be requested after health and dead state have already been committed.
+	if (RejectReason == EReactionRequestRejectReason::DeadState)
+		return true;
+
+	return false;
+}
+```
+
+### 8) Type / Data Meaning
+
+enum sentinel / wildcard처럼 이름만으로 의미가 부족한 값은 짧은 inline 주석을 허용한다.
+field 의미 설명은 이름으로 표현하기 어려울 때만 허용한다.
+payload 설명이 길어지면 struct 이름, 필드명, 문서로 이동한다.
+UPROPERTY 바로 위에 변수 그룹처럼 보이는 섹션 주석은 지양한다.
+
+```cpp
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+	None = 0,	// Invalid, unset
+	Sword,
+
+	All,		// Wildcard
+	Max,		// Sentinel
+};
+```
+
+```cpp
+USTRUCT(BlueprintType)
+struct FDamageAmount
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	float RequestedDamage = 0.f; // Raw incoming damage before mitigation.
+
+	UPROPERTY(Transient)
+	float FinalTakenDamage = 0.f; // Damage after target-side final rules.
+};
+```
+
+### 9) Sparse / One-off
+
+주석이 한두 개만 있는 파일은 기본적으로 제거 후보로 본다.
+단, 코드만으로 드러나지 않는 엔진 제약, interface wrapper, lifecycle 예외 같은 이유 설명은 유지할 수 있다.
+
+```cpp
+// Avoid if this is the only comment and it only repeats the function name.
+void UCWeaponComponent::ClearWeaponRuntime()
+{
+}
+```
+
+```cpp
+// UINTERFACE wrapper keeps the UObject and interface pointer together.
+FObservableTargetRef targetRef;
+```

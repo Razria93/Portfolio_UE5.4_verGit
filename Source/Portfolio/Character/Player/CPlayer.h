@@ -121,7 +121,7 @@ private:
 	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
-	// Interface API
+	// Interface
 	int GetTargetPriority() const override { return Priority; }
 
 public:

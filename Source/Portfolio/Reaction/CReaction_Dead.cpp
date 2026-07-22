@@ -59,6 +59,6 @@ void UCReaction_Dead::ResolveObservableOverlayCondition(const FObservableOverlay
 
 bool UCReaction_Dead::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {
-	// [NOTE] Dead reaction is terminal and cannot be interrupted.
+	// Dead reaction is terminal and cannot be interrupted.
 	return false;
 }

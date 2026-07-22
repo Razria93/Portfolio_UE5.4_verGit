@@ -63,7 +63,7 @@ void UCPlayerFeedbackComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 
 void UCPlayerFeedbackComponent::HandleCameraShakeRequest(const FCameraShakeRequest& InCameraShakeRequest)
 {
-	// [NOTE] Only the local player controller.
+	// Camera shake is requested only by the local player controller.
 	if (!CanCameraShake(InCameraShakeRequest)) return;
 
 	const float finalScale = ResolveCameraShake(InCameraShakeRequest);

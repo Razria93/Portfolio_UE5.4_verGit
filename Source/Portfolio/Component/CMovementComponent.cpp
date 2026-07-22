@@ -175,7 +175,6 @@ void UCMovementComponent::StopRuntimeLODActiveMovement()
 	aiController->StopMovement();
 }
 
-// [Final Movement Gate]
 // Final movement gate for axis input accepted by the orchestrator.
 bool UCMovementComponent::CanAcceptMoveInput() const
 {

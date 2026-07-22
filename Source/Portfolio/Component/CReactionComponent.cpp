@@ -200,7 +200,7 @@ UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& In
 	UCReaction* found = FindReactionExecutor(InData.ReactionExecutorKey.Get());
 	if (IsValid(found)) return found;
 
-	// 2) [Policy] Try Add and cache Reaction; return if valid
+	// 2) Try add and cache Reaction; return if valid.
 	UCReaction* add = AddReactionExecutor(InData.ReactionExecutorKey);
 	if (IsValid(add)) return add;
 
@@ -249,14 +249,13 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 
 	case EExecutionApplyMode::Reserve:
 	{
-		// [NOTE] Reaction does not support reserved execution.
+		// Reaction does not support reserved execution.
 		FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Reserve"), TEXT("UnsupportedReserve"));
 		return false;
 	}
 
 	case EExecutionApplyMode::Intervene:
 	{
-		// [NOTE] Try Apply Intervention
 		if (!ApplyExecutionInterventionDirective(InResult.InterventionDirective))
 		{
 			FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"), TEXT("InterventionFailed"));
@@ -479,7 +478,7 @@ void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 			}
 			else // bRebuildAll == false
 			{
-				// [Policy] Currently set to 'skip'. (Options: ignore | restart | stop-then-play)
+				// Duplicate reaction data is skipped unless the map is being rebuilt.
 				continue;
 			}
 		}
@@ -690,7 +689,7 @@ bool UCReactionComponent::InterruptActiveReaction(const FExecutionInterventionDi
 	UCReaction* activeExecutor = GetActiveReactionExecutor();
 	if (!IsValid(activeExecutor))
 	{
-		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
+		// Force end when the active executor is already invalid.
 		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("Interrupt"), NAME_None, TEXT("InvalidExecutorFallbackEnd"));
 		return EndActiveReaction(finishReason);
 	}
@@ -699,7 +698,7 @@ bool UCReactionComponent::InterruptActiveReaction(const FExecutionInterventionDi
 
 	if (IsActive())
 	{
-		// [NOTE] Fallback when executor Interrupt() did not clear the active state through callback.
+		// Force end when the executor interrupt callback did not clear active state.
 		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("Interrupt"), NAME_None, TEXT("ExecutorDidNotEndFallbackEnd"));
 		return EndActiveReaction(finishReason);
 	}

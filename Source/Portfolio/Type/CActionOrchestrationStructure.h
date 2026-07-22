@@ -85,15 +85,12 @@ struct FMovementActionRequest
 	GENERATED_BODY()
 
 public:
-	// Who: request source
 	UPROPERTY(Transient)
 	EActionIntentSource IntentSource = EActionIntentSource::None;
 
-	// What: requested intent
 	UPROPERTY(Transient)
 	EMovementActionIntent IntentType = EMovementActionIntent::None;
 
-	// How: intent event
 	UPROPERTY(Transient)
 	EActionIntentEvent IntentEvent = EActionIntentEvent::None;
 
@@ -107,15 +104,12 @@ struct FEquipmentActionRequest
 	GENERATED_BODY()
 
 public:
-	// Who: request source
 	UPROPERTY(Transient)
 	EActionIntentSource IntentSource = EActionIntentSource::None;
 
-	// What: requested intent
 	UPROPERTY(Transient)
 	EEquipmentActionIntent IntentType = EEquipmentActionIntent::None;
 
-	// How: intent event
 	UPROPERTY(Transient)
 	EActionIntentEvent IntentEvent = EActionIntentEvent::None;
 };
@@ -126,15 +120,12 @@ struct FCombatActionRequest
 	GENERATED_BODY()
 
 public:
-	// Who: request source
 	UPROPERTY(Transient)
 	EActionIntentSource IntentSource = EActionIntentSource::None;
 
-	// What: requested intent
 	UPROPERTY(Transient)
 	ECombatActionIntent IntentType = ECombatActionIntent::None;
 
-	// How: intent event
 	UPROPERTY(Transient)
 	EActionIntentEvent IntentEvent = EActionIntentEvent::None;
 

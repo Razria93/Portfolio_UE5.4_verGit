@@ -256,7 +256,7 @@ private:
 	void OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
 
 private:
-	// ActionEvent API (Event -> Intent -> Handle)
+	// Action Event Routing
 	void RequestChainCombatAction(EActionType InActionType, int32 InActionIndex);
 	ECombatActionIntent ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const;
 };

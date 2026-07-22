@@ -398,7 +398,6 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
 
-	// [NOTE] Returns true when the incoming candidate should be deferred and provides its consume key.
 	EDeferredActionConsumeKey consumeKey = EDeferredActionConsumeKey::None;
 	if (TryResolveDeferredConsumeKey(InIncomingCandidate, decisionQuery, consumeKey))
 	{
@@ -679,7 +678,6 @@ void UCActionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDe
 	InOutResult.ApplyMode = EExecutionApplyMode::None;
 	InOutResult.InterventionDirective = FExecutionInterventionDirective();
 
-	// [NOTE] Early return ignore and reject decision
 	if (!InOutResult.IsAcceptedDecision()) return;
 
 	switch (InOutResult.Relationship)
@@ -885,11 +883,9 @@ bool UCActionOrchestratorComponent::BuildInterventionDirective(const FExecutionI
 
 FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const FActionExecutionResult& InResult)
 {
-	// [NOTE] Request ignore result
 	if (InResult.Decision == EExecutionDecision::Ignore)
 		return BuildActionRequestResult(EActionRequestResultType::Ignored);
 
-	// [NOTE] Request rejected result
 	if (!InResult.IsAcceptedDecision())
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, InResult.RejectReason);
 

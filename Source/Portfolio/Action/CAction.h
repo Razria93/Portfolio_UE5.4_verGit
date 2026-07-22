@@ -163,7 +163,7 @@ protected:
 	void EmitActionEvent(EActionEventType InEventType, int32 InActionIndex = INDEX_NONE) const;
 
 public:
-	// [Legacy delegate]
+	// Legacy Delegate
 	UFUNCTION()
 	virtual void OnWeaponActorCollisionEnabled() {};
 

@@ -528,7 +528,7 @@ void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionTy
 	}
 }
 
-// Request API (ActionData -> Intent -> Handle)
+// Chain Combat Request
 void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionIndex)
 {
 	const ECombatActionIntent combatActionIntent = ResolveChainCombatIntent(InActionType, InActionIndex);
@@ -538,7 +538,7 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 	if (!actionRequestResult.IsReservedResult()) return;
 }
 
-// Mapping API (ActionData -> Intent)
+// Chain Intent Mapping
 ECombatActionIntent ACEnemy::ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const
 {
 	switch (InActionType)

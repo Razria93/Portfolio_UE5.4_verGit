@@ -488,9 +488,6 @@ enum class ECombatSignalTargetRejectReason : uint8
 	InvalidInstigator,
 
 	AlreadyDead,
-	// Invulnerable,
-
-	// DamageCooldown,
 	ZeroDamage,
 
 	UnknownCueTag,

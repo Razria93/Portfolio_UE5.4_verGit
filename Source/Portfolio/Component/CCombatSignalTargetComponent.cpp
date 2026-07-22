@@ -502,8 +502,6 @@ AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AControl
 	if (!IsValid(DamageCauser))
 		return nullptr;
 
-	/* === Fallback Process (DamageCauser-based) === */
-
 	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
 	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
 		return causerInstigator;
@@ -529,8 +527,6 @@ AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AControl
 				return ownerController;
 		}
 	}
-
-	/* ============================================= */
 
 	return nullptr;
 }

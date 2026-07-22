@@ -57,9 +57,7 @@ void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp
 
 EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackboardComponent* InBlackboard, float InCurrentTime)
 {
-	// -----------------------------------------------------------------------------
-	// 1. Absolute States
-	// -----------------------------------------------------------------------------
+	// Absolute States
 	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState.KeyName));
 	const bool bIsActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
 	const bool bIsCombatAction = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName);
@@ -74,9 +72,7 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	if (bIsCombatAction)
 		return EAIIntentState::Engage;
 
-	// -----------------------------------------------------------------------------
-	// 2.  Context
-	// -----------------------------------------------------------------------------
+	// Context
 	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
 
 	const bool bHasTarget = IsValid(target);
@@ -90,26 +86,24 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
 	const ECombatRole combatRole = static_cast<ECombatRole>(InBlackboard->GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
 
-	// -----------------------------------------------------------------------------
-	// 3. Decide Next AIIntentState
-	// -----------------------------------------------------------------------------
-	// [Case_01] No awareness: investigate only when requested or already active.
+	// Intent Decision
+	// No awareness: investigate only when requested or already active.
 	if (!bHasAwareness)
 	{
 		if (bUseInvestigate && (bShouldInvestigate || bIsInvestigating)) return EAIIntentState::Investigate;
 		return EAIIntentState::Idle;
 	}
 
-	// [Case_02] Aware + no combat role: observe only.
+	// Aware + no combat role: observe only.
 	if (combatRole == ECombatRole::None) return EAIIntentState::Observe;
 
-	// [Case_03] Aware + combat role: remember Engage as investigate candidate.
+	// Aware + combat role: remember Engage as investigate candidate.
 	if (combatRole == ECombatRole::Engage)
 	{
 		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboard, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
 	}
 
-	// [Case_04] Aware + combat role: movement/combat state.
+	// Aware + combat role: movement/combat state.
 	if (!bInAlertRange) return EAIIntentState::Chase;
 
 	if (combatRole == ECombatRole::Engage) return EAIIntentState::Engage;
@@ -132,7 +126,7 @@ bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* 
 	return true;
 }
 
-// [NOTE] Safety-net cleanup for unexpected State exit.
+// Cleanup handles unexpected intent-state exits.
 void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardComponent* InBlackboardComp, EAIIntentState InCurrentAIIntentState, EAIIntentState InNextAIIntentState)
 {
 	if (!IsValid(InBlackboardComp)) return;

@@ -368,7 +368,7 @@ void UCCombatSignalSourceComponent::ComputeSourceDamage(FCombatSignalSourceConte
 		return;
 	}
 
-	// [NOTE] Minimal sender-side request damage.
+	// Use base damage as the minimal sender-side request damage.
 	InOutCombatSignalSourceContext.DamageAmount = FDamageAmount();
 	InOutCombatSignalSourceContext.DamageAmount.RequestDamage = InOutCombatSignalSourceContext.DamageSpec.BaseDamage;
 

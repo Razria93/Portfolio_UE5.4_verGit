@@ -106,17 +106,6 @@ bool ACAIController::InitializeSightConfig()
 	return true;
 }
 
-// -----------------------------------------------------------------------------
-// [AI Perception & Blackboard Initialization]
-// 1. Controller		: Perception and interpretation (like human awareness)
-// 2. Blackboard		: Storage of perceived facts
-// 3. BehaviorTree		: Decision making based on facts
-// 
-// 4. Service Node		: Periodically maintains perceived facts
-// 5. Decorator Node	: Evaluates logical conditions on perceived facts
-// 6. Task Node			: Executes the decided actions
-// -----------------------------------------------------------------------------
-
 // Runtime Lifecycle
 
 bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
@@ -288,7 +277,7 @@ void ACAIController::StopBehaviorTreeRuntime()
 
 void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
-	// [Disable OnPerceptionUpdated]
+	// Target-specific perception updates are handled by OnTargetPerceptionUpdated.
 }
 
 void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -330,8 +319,7 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 
 void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 {
-	// [Disable OnTargetPerceptionForgotten]
-	// - TargetForgotten is Controlled by bHasLOS and bHasMemory
+	// Target forgotten state is derived from LOS and memory state.
 }
 
 // Query
@@ -348,24 +336,6 @@ EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetData& OutTa
 
 void ACAIController::UpdateTargetDataMap()
 {
-	// -----------------------------------------------------------------------------
-	// [Target Perception Level]
-	// 1. Active Target 
-	//	- TargetActor	: Valid
-	//	- bHasLOS		: true
-	//	- bHasMemory	: true
-	// 
-	// 2. Lost Target but Remembered 
-	//	- TargetActor	: Invalid
-	//	- bHasLOS		: false
-	//	- bHasMemory	: true
-	// 
-	// 3. Timeout and Expired
-	//	- TargetActor	: Invalid
-	//	- bHasLOS		: false
-	//	- bHasMemory	: false
-	// -----------------------------------------------------------------------------
-
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
 
