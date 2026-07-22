@@ -32,7 +32,7 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIContext);
-	FAIBehaviorTreeProfiling::RecordUpdateAIContextTickForProfiling();
+	FAIBehaviorTreeProfiling::RecordUpdateAIContextTick();
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();

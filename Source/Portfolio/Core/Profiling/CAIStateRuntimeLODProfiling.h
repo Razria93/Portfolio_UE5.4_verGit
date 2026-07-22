@@ -10,5 +10,5 @@ public:
 	static bool ShouldAuditStateRuntimeLOD();
 
 	// Counter
-	static void RecordResolvedTierForProfiling(EAIRuntimeLODTier InTier);
+	static void RecordResolvedTier(EAIRuntimeLODTier InTier);
 };

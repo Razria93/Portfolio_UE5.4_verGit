@@ -23,7 +23,7 @@ bool FAIStateRuntimeLODProfiling::ShouldAuditStateRuntimeLOD()
 #endif
 }
 
-void FAIStateRuntimeLODProfiling::RecordResolvedTierForProfiling(EAIRuntimeLODTier InTier)
+void FAIStateRuntimeLODProfiling::RecordResolvedTier(EAIRuntimeLODTier InTier)
 {
 	if (!ShouldAuditStateRuntimeLOD()) return;
 

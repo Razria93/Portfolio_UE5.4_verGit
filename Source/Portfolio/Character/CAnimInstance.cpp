@@ -118,12 +118,12 @@ float UCAnimInstance::GetReducedAnimationRefreshIntervalForProfiling() const
 
 bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 {
-	RecordAnimationRefreshAttemptForProfiling();
+	RecordAnimationRefreshAttempt();
 
 	if (!ShouldReduceEnemyAnimationRefreshForProfiling())
 	{
 		RuntimeLODAnimationRefreshElapsed = 0.f;
-		RecordAnimationRefreshExecutedForProfiling();
+		RecordAnimationRefreshExecuted();
 		return true;
 	}
 
@@ -132,12 +132,12 @@ bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 	const float refreshInterval = GetReducedAnimationRefreshIntervalForProfiling();
 	if (RuntimeLODAnimationRefreshElapsed < refreshInterval)
 	{
-		RecordAnimationRefreshSkippedForProfiling();
+		RecordAnimationRefreshSkipped();
 		return false;
 	}
 
 	RuntimeLODAnimationRefreshElapsed = 0.f;
-	RecordAnimationRefreshExecutedForProfiling();
+	RecordAnimationRefreshExecuted();
 	return true;
 }
 
@@ -148,25 +148,25 @@ bool UCAnimInstance::ShouldAuditAnimationRefreshForProfiling() const
 	return IsEnemyAnimationProfilingTarget() && FAIAnimationProfiling::ShouldAuditAnimationRefresh();
 }
 
-void UCAnimInstance::RecordAnimationRefreshAttemptForProfiling() const
+void UCAnimInstance::RecordAnimationRefreshAttempt() const
 {
 	if (!ShouldAuditAnimationRefreshForProfiling()) return;
 
-	FAIAnimationProfiling::RecordAnimationRefreshAttemptForProfiling();
+	FAIAnimationProfiling::RecordAnimationRefreshAttempt();
 }
 
-void UCAnimInstance::RecordAnimationRefreshExecutedForProfiling() const
+void UCAnimInstance::RecordAnimationRefreshExecuted() const
 {
 	if (!ShouldAuditAnimationRefreshForProfiling()) return;
 
-	FAIAnimationProfiling::RecordAnimationRefreshExecutedForProfiling();
+	FAIAnimationProfiling::RecordAnimationRefreshExecuted();
 }
 
-void UCAnimInstance::RecordAnimationRefreshSkippedForProfiling() const
+void UCAnimInstance::RecordAnimationRefreshSkipped() const
 {
 	if (!ShouldAuditAnimationRefreshForProfiling()) return;
 
-	FAIAnimationProfiling::RecordAnimationRefreshSkippedForProfiling();
+	FAIAnimationProfiling::RecordAnimationRefreshSkipped();
 }
 
 // Parameter Refresh

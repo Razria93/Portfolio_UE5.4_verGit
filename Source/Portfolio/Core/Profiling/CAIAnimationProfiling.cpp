@@ -23,21 +23,21 @@ bool FAIAnimationProfiling::ShouldAuditAnimationRefresh()
 #endif
 }
 
-void FAIAnimationProfiling::RecordAnimationRefreshAttemptForProfiling()
+void FAIAnimationProfiling::RecordAnimationRefreshAttempt()
 {
 	if (!ShouldAuditAnimationRefresh()) return;
 
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Attempt, 1, ECsvCustomStatOp::Accumulate);
 }
 
-void FAIAnimationProfiling::RecordAnimationRefreshExecutedForProfiling()
+void FAIAnimationProfiling::RecordAnimationRefreshExecuted()
 {
 	if (!ShouldAuditAnimationRefresh()) return;
 
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_AnimRefresh_Executed, 1, ECsvCustomStatOp::Accumulate);
 }
 
-void FAIAnimationProfiling::RecordAnimationRefreshSkippedForProfiling()
+void FAIAnimationProfiling::RecordAnimationRefreshSkipped()
 {
 	if (!ShouldAuditAnimationRefresh()) return;
 

@@ -8,10 +8,10 @@ class FAIBehaviorTreeProfiling
 {
 public:
 	// Service Tick Counter
-	static void RecordUpdateAIContextTickForProfiling();
-	static void RecordUpdateAIIntentStateTickForProfiling();
-	static void RecordUpdateEngageContextTickForProfiling();
+	static void RecordUpdateAIContextTick();
+	static void RecordUpdateAIIntentStateTick();
+	static void RecordUpdateEngageContextTick();
 
 	// Interval Preset Counter
-	static void RecordAIIntentIntervalPresetForProfiling(EBTServiceIntervalPreset InPreset);
+	static void RecordAIIntentIntervalPreset(EBTServiceIntervalPreset InPreset);
 };

@@ -32,7 +32,7 @@ UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_BT_UpdateAIIntentState);
-	FAIBehaviorTreeProfiling::RecordUpdateAIIntentStateTickForProfiling();
+	FAIBehaviorTreeProfiling::RecordUpdateAIIntentStateTick();
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	UWorld* world = GetWorld();
