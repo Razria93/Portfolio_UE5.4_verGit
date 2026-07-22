@@ -498,3 +498,40 @@ void UCWeaponComponent::ClearWeaponRuntime()
 // UINTERFACE wrapper keeps the UObject and interface pointer together.
 FObservableTargetRef targetRef;
 ```
+
+---
+
+## 14. P3 Final Decision
+
+P3 항목은 이번 브랜치에서 코드 수정하지 않고, 유지 또는 후속 작업으로 이관한다.
+
+### 1) Type / Data 주석
+
+`CAIStructure.h`, `CWeaponStructure.h`에 남은 Type / Data 의미 주석은 현재 브랜치에서 추가 정리하지 않는다.
+
+판단:
+- enum의 `None`, `All`, `Max` 설명은 sentinel / wildcard 의미를 설명하므로 유지한다.
+- `FDamageAmount`의 damage 단계 설명은 `RequestedDamage`, `MitigatedDamage`, `FinalTakenDamage`, `CommittedDamage`의 파이프라인 의미를 구분하므로 유지한다.
+- `FAIContext`의 field group 주석과 `FOverlapContext`의 actor/component alias 주석은 구조체 분리 / 헤더 배치 규칙 작업에서 다시 판단한다.
+
+후속 범위:
+- 구조체 나누기 / 헤더 배치 규칙
+- 네이밍 / 매개변수 작명 규칙
+- UPROPERTY Category 정리
+
+### 2) TODO 유지 판단
+
+남은 TODO 6개는 코드 위치에 정책 후속 작업을 표시해야 하므로 유지한다.
+
+유지 목록:
+- `CPlayer.cpp`: `TODO(Gameplay)` Dead actor TakeDamage route 정책
+- `CEnemy.cpp`: `TODO(Gameplay)` Dead actor TakeDamage route 정책
+- `CCombatSignalTargetComponent.cpp`: `TODO(CombatPolicy)` target-side defensive gates
+- `CCombatSignalTargetComponent.cpp`: `TODO(CombatPolicy)` mitigation policy
+- `CCombatSignalTargetComponent.cpp`: `TODO(CombatPolicy)` final damage policy
+- `CCombatSignalTargetComponent.cpp`: `TODO(CombatPolicy)` resource commit order
+
+판단:
+- TODO가 실제 구현 위치와 직접 연결되어 있다.
+- 문서로만 옮기면 정책을 구현할 때 놓칠 가능성이 크다.
+- 이번 브랜치의 주석 규칙상 허용되는 code-local TODO로 본다.
