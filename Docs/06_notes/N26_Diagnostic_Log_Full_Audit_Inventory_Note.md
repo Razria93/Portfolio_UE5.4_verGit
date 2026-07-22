@@ -2,6 +2,13 @@
 
 ## 2026-07-21 CVar ownership update
 
+최신 ownership 기준:
+
+```text
+최종 CVar ownership 기준은 N27_Debug_Profiling_CVar_Ownership_Final_Note.md를 따른다.
+N26은 audit inventory와 이전 migration context를 유지한다.
+```
+
 Current ownership rule:
 
 ```text
@@ -35,10 +42,10 @@ Core/Profiling:
 - DisableEnemyWeaponActor
 - DisableEnemyCombatFeedback
 - AnimationRefreshAudit
+- StatePolicyAudit
 
 Policy owner:
 - StatePolicyMode controls policy source only.
-- StatePolicyAudit controls state tier CSV counters.
 - StatePolicyMode 0 means per-system RuntimeLOD CVar modes.
 - StatePolicyMode 1 means state-based RuntimeLOD tier snapshot.
 ```
