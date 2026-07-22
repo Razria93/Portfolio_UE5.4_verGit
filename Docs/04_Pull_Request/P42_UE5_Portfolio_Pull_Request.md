@@ -131,6 +131,7 @@ Docs/06_notes/N23_Debug_Log_And_Diagnostic_Code_Policy_Note.md
 Docs/06_notes/N24_Debug_Log_Cleanup_Inventory_Note.md
 Docs/06_notes/N25_Diagnostic_Log_Gating_And_Audit_Category_Plan_Note.md
 Docs/06_notes/N26_Diagnostic_Log_Full_Audit_Inventory_Note.md
+Docs/06_notes/N27_Debug_Profiling_CVar_Ownership_Final_Note.md
 
 Source/Portfolio/Core/Debug/*Debug.*
 Source/Portfolio/Core/Debug/FComponentReferenceHelper.h
