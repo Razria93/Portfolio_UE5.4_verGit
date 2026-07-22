@@ -18,12 +18,9 @@ class PORTFOLIO_API UCReactionComponent : public UActorComponent
 public:
 	UCReactionComponent();
 
-	// === ReactionData ===================================== //
 private:
 	UPROPERTY(EditAnywhere, Category = "Reaction|Data")
 	TArray<FReactionData> ReactionDatas;
-
-	// ====================================================== //
 
 private:
 	UPROPERTY(Transient)
@@ -43,7 +40,6 @@ private:
 	class UCReaction* ActiveReactionExecutor = nullptr;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -66,7 +62,6 @@ private:
 	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
 
 public:
-	/* === Delegate === */
 	FReactionTypeChanged OnReactionTypeChanged;
 
 public:

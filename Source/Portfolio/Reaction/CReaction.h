@@ -15,7 +15,6 @@ class PORTFOLIO_API UCReaction : public UObject
 	GENERATED_BODY()
 
 protected:
-	/* === Runtime State === */
 	UPROPERTY(Transient)
 	bool bIsActive = false;
 
@@ -40,7 +39,6 @@ protected:
 	EReactionStopReason LastStopReason_Cached = EReactionStopReason::None;
 
 protected:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 

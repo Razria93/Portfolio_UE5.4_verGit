@@ -17,7 +17,6 @@ public:
 	UCHealthComponent();
 
 private:
-	// === Initialize ===
 	UPROPERTY(EditAnywhere, Category = "Health|HP", meta = (ClampMin = 0.00))
 	float InitMaxHP = 0.f;
 
@@ -42,7 +41,6 @@ private:
 	EDeadState DeadState = EDeadState::Alive;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -60,7 +58,7 @@ public:
 	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
 
 public:
-	/* === Skill API === */
+	// Skill API
 	// (Current not used)
 	bool TryKill();
 	bool TryRevive(float InReviveHP);
@@ -78,7 +76,7 @@ public:
 	bool CanRevive() const;
 
 public:
-	/* === Getter === */
+	// Query
 	float GetMaxHP() const { return MaxHP; }
 	float GetCurrentHP() const { return CurrentHP; }
 	float GetPreviousHP() const { return PreviousHP; }

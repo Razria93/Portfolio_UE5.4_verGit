@@ -21,7 +21,6 @@ class PORTFOLIO_API ACWeaponActor : public AActor, public IHitContextProvider
 public:
 	ACWeaponActor();
 
-	// === Weapon Actor Data ================================ //
 public:
 	UPROPERTY(EditAnywhere, Category = "Weapon|SocketName")
 	FName SocketName_Holster;
@@ -32,8 +31,6 @@ public:
 private:
 	UPROPERTY(EditAnywhere, Category = "Feedback|Trail")
 	bool bDisableTrailOnBeginPlay = true;
-
-	// ====================================================== //
 
 private:
 	UPROPERTY(Transient)
@@ -47,7 +44,6 @@ private:
 	int32 CurrentHitWindowId = INDEX_NONE;
 
 private:
-	/* === Components === */
 	UPROPERTY(VisibleAnywhere)
 	class USceneComponent* RootSceneComponent = nullptr;
 
@@ -55,7 +51,6 @@ private:
 	class UNiagaraComponent* TrailComponent = nullptr;
 
 private:
-	/* === Context Carrier === */
 	UPROPERTY(Transient)
 	FOverlapContext LastOverlapContext_Cached;
 
@@ -67,7 +62,6 @@ private:
 
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -79,12 +73,9 @@ private:
 	TArray<class UShapeComponent*> Collisions_Cached;
 
 public:
-	/* === [OUT] Custom Delegate Events === */
-	// Collision (Enabled/Disabled)
 	FWeaponActorCollisionEnabled OnWeaponActorCollisionEnabled;
 	FWeaponActorCollisionDisabled OnWeaponActorCollisionDisabled;
 
-	// Overlap (Raw Overlap)
 	FWeaponActorBeginOverlap OnWeaponActorBeginOverlap;
 	FWeaponActorEndOverlap OnWeaponActorEndOverlap;
 
@@ -115,19 +106,19 @@ private:
 	void ClearTrailState();
 
 public:
-	/* === IHitContextProducer (Getter) === */
+	// Hit Context Provider Query
 	virtual const FOverlapContext& GetLastOverlapContext() const override;
 	virtual const FWeaponContext& GetLastWeaponContext() const override;
 	virtual const FActionContext& GetLastActionContext() const override;
 
 public:
-	/* === IHitContextProducer (Setter) === */
+	// Hit Context Provider Mutation
 	virtual void SetLastOverlapContext(const FOverlapContext& InOverlapContext) override;
 	virtual void SetLastWeaponContext(const FWeaponContext& InWeaponContext) override;
 	virtual void SetLastActionContext(const FActionContext& InActionContext) override;
 
 public:
-	/* === Getter === */
+	// Query
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 
 public:
@@ -135,25 +126,22 @@ public:
 	FORCEINLINE int32 GetCurrentHitWindowId() const { return CurrentHitWindowId; }
 
 public:
-	/* === Setter === */
+	// Mutation
 	void ChangeWeaponType(EWeaponType InWeaponType);
 	void ToggleTrailActive(bool bEnable);
 
 public:
-	/* === AnimNotify Events === */
-	// CAnimNotify_Equip / Unequip
+	// Equip Notify Events
 	void AttachToHandSocket();
 	void AttachToHolsterSocket();
 
 public:
-	/* === AnimNotify Events === */
-	// CAnimNotify_Collision
+	// Collision Notify Events
 	void CollisionEnabled(FName InName);
 	void CollisionDisabled();
 
 public:
-	/* === [IN] Engine Delegate Events === */
-	// UShapeComponent
+	// Engine Delegate Events
 	UFUNCTION()
 	void OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 

@@ -21,7 +21,6 @@ private:
 	float LocalSourceShakeScale = 0.5f;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class APlayerController* OwnerPlayerController_Injected = nullptr;
 

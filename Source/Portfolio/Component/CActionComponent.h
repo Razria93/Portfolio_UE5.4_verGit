@@ -18,12 +18,9 @@ class PORTFOLIO_API UCActionComponent : public UActorComponent
 public:
 	UCActionComponent();
 
-	// === ActionData ======================================= //
 private:
 	UPROPERTY(EditAnywhere, Category = "Action|Data")
 	TArray<FActionData> ActionDatas;
-
-	// ====================================================== //
 
 private:
 	UPROPERTY(Transient)
@@ -33,7 +30,6 @@ private:
 	TMap<class UClass*, class UCAction*> ActionExecutorMap;
 
 private:
-	/* === Active Action Context === */
 	UPROPERTY(Transient)
 	EActionType ActiveActionType = EActionType::Max;
 
@@ -47,7 +43,6 @@ private:
 	class UCAction* ActiveActionExecutor = nullptr;
 
 private:
-	/* === Injected Objects === */
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -79,7 +74,6 @@ private:
 	class UCActionFeedbackComponent* ActionFeedbackComp_Injected = nullptr;
 
 public:
-	/* === Delegate === */
 	FActionTypeChanged OnActionTypeChanged;
 	FActionEventSignature OnActionEvent;
 

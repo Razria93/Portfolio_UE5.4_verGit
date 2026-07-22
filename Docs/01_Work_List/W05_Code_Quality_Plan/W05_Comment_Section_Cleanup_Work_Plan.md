@@ -48,6 +48,7 @@
 - CVar help text와 실제 역할 정합성 수정
 - 의미 없는 빈 TODO 제거 또는 후속 범주 명시
 - 섹션 주석 스타일 정리
+- UPROPERTY 변수 구간 섹션 주석 정리
 - 코드가 그대로 설명되는 중복 주석 제거
 - commented-out debug trace 잔존 여부 확인
 
@@ -55,6 +56,7 @@
 - API rename
 - USTRUCT / header 구조 이동
 - DataAsset 분리 구현
+- UPROPERTY Category 재설계
 - runtime behavior 변경
 - DeadFlag / loop / spawn policy 구현
 - RuntimeLOD CVar 위치 이동
@@ -69,6 +71,7 @@
 - 코드 동작을 바꾸지 않는 품질 정리이므로 PR 단위로 독립 검토 가능
 - TODO 분류는 이후 작업 카테고리와 연결되므로 장기 관리에 도움됨
 - 섹션 주석 정리는 현재 debug / profiling helper 정리 흐름과 맞음
+- UPROPERTY 변수 구간은 섹션 주석보다 Category 기준으로 관리하는 편이 에디터 노출 의도와 맞음
 
 구현 비용:
 - 대부분 주석 / 문자열 수정
@@ -94,6 +97,7 @@
 - API rename: 네이밍 / 매개변수 작명 규칙
 - Type 이동: 구조체 나누기 / 헤더 배치 규칙
 - DataAsset 이동: 데이터 에셋 분리
+- UPROPERTY Category 정리: 별도 category naming / editor exposure 정리
 - DeadFlag 동작 변경: 별도 gameplay correctness 작업
 - RuntimeLOD CVar 위치 이동: RuntimeLOD config / policy 구조 정리
 ```
@@ -139,12 +143,17 @@
 
 ### 4) 섹션 주석 양식 정리
 
-- [ ] `CWeaponActor.h`의 `// ===`, `/* === */`, 중복 `AnimNotify Events` 섹션 정리
-- [ ] `CAIController.h`의 `/* --- Asset --- */`와 `// Lifecycle` 스타일 혼용 정리
-- [ ] `CAnimInstance.h`의 RuntimeLOD 번호 주석을 의미 기반 섹션으로 정리
-- [ ] `CEnemy.h`의 RuntimeLOD 번호 주석을 의미 기반 섹션으로 정리
-- [ ] `CMovementComponent.h`의 RuntimeLOD 번호 주석을 의미 기반 섹션으로 정리
-- [ ] `Core/Debug` / `Core/Profiling` helper 섹션명은 필요 시 최소 보정
+- [x] 변수 / `UPROPERTY` 구간은 섹션 주석 대신 Category / 변수명 / struct 이름 기준으로 관리
+- [x] `CWeaponActor.h`의 `// ===`, `/* === */`, 중복 `AnimNotify Events` 섹션 정리
+- [x] `CAIController.h`의 `/* --- Asset --- */`와 `// Lifecycle` 스타일 혼용 정리
+- [x] `CAnimInstance.h`의 RuntimeLOD 번호 주석을 의미 기반 섹션으로 정리
+- [x] `CEnemy.h`의 RuntimeLOD 번호 주석을 의미 기반 섹션으로 정리
+- [x] `CMovementComponent.h`의 RuntimeLOD 번호 주석을 의미 기반 섹션으로 정리
+- [x] `CWeaponComponent.h` / `CStateComponent.h` / `CHealthComponent.h` 변수 섹션 주석 정리
+- [x] `CActionComponent.h` / `CReactionComponent.h` 변수 섹션 주석 정리
+- [x] `CPlayerFeedbackComponent.h` / `CHitFeedbackComponent.h` 변수 섹션 주석 정리
+- [x] `CCombatSignalSourceComponent.h` / `CCombatSignalTargetComponent.h` 변수 섹션 주석 정리
+- [x] `Core/Debug` / `Core/Profiling` helper 섹션명은 필요 시 최소 보정
 
 ### 5) 불필요한 설명 주석 제거
 
@@ -192,6 +201,11 @@
 - AI perception config DataAsset migration
 - feedback data type 이동
 - Health / ResourceComponent 확장
+
+UPROPERTY / Editor 노출 정리:
+- UPROPERTY Category naming 통일
+- 변수 구간 분류는 Category 기준으로 재검토
+- Category 변경에 따른 에디터 표시 / asset 영향 확인
 
 상수 제거 / RuntimeLOD 구조 정리:
 - CEnemy RuntimeLOD CVar 위치 이동
@@ -258,7 +272,8 @@ Work List:
 - public API rename이 필요해 보이면 네이밍 작업으로 분리한다.
 - USTRUCT / UPROPERTY / Blueprint exposure와 관련된 이름 변경은 이번 브랜치에서 하지 않는다.
 - TODO 삭제는 구현 완료가 명확하거나 다른 문서 / 후속 범주로 추적 가능할 때만 허용한다.
-- 섹션 주석은 파일별 기존 스타일을 우선하되, 같은 파일 안에서는 혼용을 줄인다.
+- 함수 구간 섹션 주석은 파일별 기존 스타일을 우선하되, 같은 파일 안에서는 혼용을 줄인다.
+- 변수 / UPROPERTY 구간은 섹션 주석을 줄이고 Category / 변수명 / struct 이름으로 의미를 표현한다.
 
 ---
 
