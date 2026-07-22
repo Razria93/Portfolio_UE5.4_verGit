@@ -3,11 +3,12 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "HAL/IConsoleManager.h"
-#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
 #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Controller/CAIController.h"
+#include "Core/Profiling/CAIBehaviorTreeProfiling.h"
+#include "Core/Profiling/CAIStateRuntimeLODProfiling.h"
 
 namespace
 {
@@ -15,16 +16,8 @@ namespace
 	TAutoConsoleVariable<int32> CVarBTUpdateIntervalMode(
 		TEXT("Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode"),
 		0,
-		TEXT("Controls AI BT service update interval profiling mode. 0: default, 1: reduced, 2: aggressive reduced."),
+		TEXT("Controls AI BT service update interval Runtime LOD mode. 0: default, 1: reduced, 2: aggressive reduced."),
 		ECVF_Default);
-
-	// Interval Preset
-	enum class EBTServiceIntervalPreset : uint8
-	{
-		Default,
-		Reduced,
-		Aggressive
-	};
 
 	// AIContext
 	constexpr float DefaultAIContextInterval = 0.1f;
@@ -122,30 +115,14 @@ namespace
 
 	void RecordStateRuntimeLODTier(EAIRuntimeLODTier InTier)
 	{
-		if (!FAIStateRuntimeLODPolicy::IsStatePolicyAuditEnabled()) return;
-
-		FAIStateRuntimeLODPolicy::RecordResolvedTierForProfiling(InTier);
+		FAIStateRuntimeLODProfiling::RecordResolvedTierForProfiling(InTier);
 	}
 
 	// AIIntentState
 	// Record Counter (AIIntentState)
 	void RecordAIIntentStateIntervalPreset(EBTServiceIntervalPreset InPreset)
 	{
-		switch (InPreset)
-		{
-		case EBTServiceIntervalPreset::Default:
-			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Default_Count, 1, ECsvCustomStatOp::Accumulate);
-			return;
-
-		case EBTServiceIntervalPreset::Reduced:
-			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Reduced_Count, 1, ECsvCustomStatOp::Accumulate);
-			return;
-
-		case EBTServiceIntervalPreset::Aggressive:
-		default:
-			CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_AIIntentInterval_Aggressive_Count, 1, ECsvCustomStatOp::Accumulate);
-			return;
-		}
+		FAIBehaviorTreeProfiling::RecordAIIntentIntervalPresetForProfiling(InPreset);
 	}
 
 	// Interval Enum Preset -> Interval float value (AIIntentState)

@@ -446,7 +446,7 @@ EngageAssignmentAlertCap 6
 BTUpdateIntervalMode 2
 EnemyMovementMode 0
 EnemyAnimationMode 0
-EnemyAnimationRefreshCounter 1
+AnimationRefreshAudit 1
 -noailogging
 F11 fullscreen
 fixed camera

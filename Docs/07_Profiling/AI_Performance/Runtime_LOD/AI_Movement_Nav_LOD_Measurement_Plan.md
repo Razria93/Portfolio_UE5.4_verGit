@@ -388,7 +388,7 @@ PIE: F11 fullscreen
 Camera: fixed camera
 EnemyMeshMode 0
 EnemyAnimationMode 0
-EnemyAnimationRefreshCounter 0
+AnimationRefreshAudit 0
 DisableEnemyWeaponActor 0
 DisableEnemyPerception 0
 PerceptionCandidateAudit 0

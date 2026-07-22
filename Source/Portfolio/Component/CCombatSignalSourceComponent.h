@@ -55,7 +55,6 @@ private:
 private:
 	// Profiling
 	bool ShouldSkipEnemyHitProcessingForProfiling() const;
-	bool IsEnemyHitProcessingProfilingTarget() const;
 
 private:
 	// Receive

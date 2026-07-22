@@ -75,6 +75,23 @@ public:
 	}
 };
 
+struct FEngageAssignmentSlotState
+{
+	int32 EngageCount = 0;
+	int32 AlertCount = 0;
+};
+
+struct FEngageAssignmentRebuildDebugState
+{
+	int32 RequestSnapshotCount = 0;
+	int32 RequestBucketCount = 0;
+	int32 WarmupRequestCount = 0;
+	int32 FreshAppliedCount = 0;
+	int32 PromotedCount = 0;
+	int32 PreservedEngageCount = 0;
+	int32 PreservedAlertCount = 0;
+};
+
 USTRUCT(BlueprintType)
 struct FHitStopRequest
 {

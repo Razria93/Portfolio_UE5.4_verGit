@@ -20,11 +20,6 @@ namespace
 		TEXT("Refresh interval for ACEnemy reduced animation parameter mode."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarEnemyAnimationRefreshCounter(
-		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter"),
-		0,
-		TEXT("Enable ACEnemy animation parameter refresh counters for runtime LOD measurement. 0: disabled, 1: enabled."),
-		ECVF_Default);
 }
 
 int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode()
@@ -34,7 +29,7 @@ int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode()
 
 int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(const AActor* InOwner)
 {
-	if (FAIStateRuntimeLODPolicy::GetStatePolicyMode() > 0)
+	if (FAIStateRuntimeLODPolicy::ShouldUseStateBasedPolicy())
 	{
 		return GetStateBasedAnimationMode(InOwner);
 	}
@@ -50,11 +45,6 @@ bool FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(const AActor
 float FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval()
 {
 	return FMath::Max(CVarEnemyAnimationReducedRefreshInterval.GetValueOnGameThread(), KINDA_SMALL_NUMBER);
-}
-
-bool FAIAnimationRuntimeLODPolicy::ShouldAuditAnimationRefresh()
-{
-	return CVarEnemyAnimationRefreshCounter.GetValueOnGameThread() != 0;
 }
 
 int32 FAIAnimationRuntimeLODPolicy::GetStateBasedAnimationMode(const AActor* InOwner)

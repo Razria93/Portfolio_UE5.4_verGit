@@ -2,23 +2,13 @@
 #include "ProjectGlobal.h"
 
 #include "GameFramework/Character.h"
-#include "HAL/IConsoleManager.h"
 
-#include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalSourceComponent.h"
+#include "Core/Profiling/CCombatCollisionProfiling.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Weapon/CWeaponActor.h"
 
 #include "Type/CWeaponStructure.h"
-
-namespace
-{
-	TAutoConsoleVariable<int32> CVarDisableEnemyWeaponActor(
-		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor"),
-		0,
-		TEXT("Disable Enemy WeaponActor creation for runtime LOD measurement. 0: spawn WeaponActor, 1: skip Enemy WeaponActor."),
-		ECVF_Default);
-}
 
 UCWeaponComponent::UCWeaponComponent()
 {
@@ -216,7 +206,13 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 {
 	if (!IsValid(InOwnerCharacter)) return false;
 
-	if (!ensureMsgf(*InWeaponActorClass, TEXT("UCWeaponComponent: InWeaponActorClass is not set.")))
+	if (!ensureMsgf(
+		*InWeaponActorClass,
+		TEXT("[Weapon|Component|WeaponActorClassMissing] Reason=MissingWeaponActorClass | Owner=%s | Component=%s | Asset=%s | WeaponType=%s"),
+		*GetNameSafe(InOwnerCharacter),
+		*GetNameSafe(this),
+		*GetNameSafe(*InWeaponActorClass),
+		*UEnum::GetValueAsString(InWeaponType)))
 		return false;
 
 	UWorld* World = InOwnerCharacter->GetWorld();
@@ -232,7 +228,13 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	ACWeaponActor* weaponActor = World->SpawnActor<ACWeaponActor>(InWeaponActorClass, SpawnParams);
 
 	// 3) Check WeaponActor Validation
-	if (!ensureMsgf(IsValid(weaponActor), TEXT("UCWeaponComponent: WeaponActor was not created")))
+	if (!ensureMsgf(
+		IsValid(weaponActor),
+		TEXT("[Weapon|Component|WeaponActorSpawnFailed] Reason=SpawnActorReturnedInvalid | Owner=%s | Component=%s | Asset=%s | WeaponType=%s"),
+		*GetNameSafe(InOwnerCharacter),
+		*GetNameSafe(this),
+		*GetNameSafe(*InWeaponActorClass),
+		*UEnum::GetValueAsString(InWeaponType)))
 		return false;
 
 	const FCharacterComponentReferences references = BuildWeaponActorReferences();
@@ -248,9 +250,7 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 
 bool UCWeaponComponent::ShouldSkipWeaponActorCreationForProfiling() const
 {
-	if (CVarDisableEnemyWeaponActor.GetValueOnGameThread() == 0) return false;
-
-	return IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->IsA<ACEnemy>();
+	return FCombatCollisionProfiling::ShouldSkipEnemyWeaponActorCreation(OwnerCharacter_Injected);
 }
 
 void UCWeaponComponent::SkipWeaponActorCreationForProfiling()

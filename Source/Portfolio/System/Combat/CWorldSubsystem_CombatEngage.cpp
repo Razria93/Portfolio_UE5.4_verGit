@@ -6,6 +6,7 @@
 #include "AIController.h"
 
 #include "Controller/CAIController.h"
+#include "Core/Debug/FCombatEngageDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
 
@@ -19,30 +20,16 @@ namespace
 		TEXT("Delays the first CombatEngage assignment rebuild until request candidates are warmed up. 0: disabled."),
 		ECVF_Default);
 
-#if !UE_BUILD_SHIPPING
-	TAutoConsoleVariable<int32> CVarEngageAssignmentAudit(
-		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAudit"),
-		0,
-		TEXT("Print minimal CombatEngage assignment warmup audit logs. 0: disabled, 1: enabled."),
-		ECVF_Default);
-
-	TAutoConsoleVariable<int32> CVarEngageAssignmentVerboseAudit(
-		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentVerboseAudit"),
-		0,
-		TEXT("Print detailed CombatEngage assignment candidate logs. 0: disabled, 1: enabled."),
-		ECVF_Default);
-#endif
-
 	TAutoConsoleVariable<int32> CVarEngageAssignmentEngageCap(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap"),
 		2,
-		TEXT("Controls max Engage assignees per target for AI Runtime LOD profiling. Default: 2."),
+		TEXT("Controls max Engage assignees per target for AI Runtime LOD assignment. Default: 2."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarEngageAssignmentAlertCap(
 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap"),
 		6,
-		TEXT("Controls max Alert assignees per target for AI Runtime LOD profiling. Default: 6."),
+		TEXT("Controls max Alert assignees per target for AI Runtime LOD assignment. Default: 6."),
 		ECVF_Default);
 
 	float GetEngageAssignmentWarmupTime()
@@ -58,24 +45,6 @@ namespace
 	int32 GetEngageAssignmentAlertCap()
 	{
 		return FMath::Max(0, CVarEngageAssignmentAlertCap.GetValueOnGameThread());
-	}
-
-	bool ShouldPrintEngageAssignmentAudit()
-	{
-#if !UE_BUILD_SHIPPING
-		return CVarEngageAssignmentAudit.GetValueOnGameThread() != 0;
-#else
-		return false;
-#endif
-	}
-
-	bool ShouldPrintEngageAssignmentVerboseAudit()
-	{
-#if !UE_BUILD_SHIPPING
-		return CVarEngageAssignmentVerboseAudit.GetValueOnGameThread() != 0;
-#else
-		return false;
-#endif
 	}
 }
 
@@ -150,10 +119,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	// Delay for Warmup
 	if (ShouldDelayAssignmentForWarmup())
 	{
-		if (ShouldPrintEngageAssignmentAudit())
-		{
-			PrintAssignmentWarmupDelay(AssignmentRebuildId);
-		}
+		FCombatEngageDebug::RecordEngageAssignmentWarmupDelayedForAudit(AssignmentRebuildId, RequestContainer.Num(), GetAssignmentWarmupElapsedTime(), GetEngageAssignmentWarmupTime());
 
 		return;
 	}
@@ -181,9 +147,9 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	rebuildDebugState.RequestSnapshotCount = requestSnapshot.Num();
 	rebuildDebugState.RequestBucketCount = requestBucket.Num();
 
-	if (ShouldPrintEngageAssignmentVerboseAudit())
+	if (FCombatEngageDebug::ShouldAuditEngageAssignmentVerbose())
 	{
-		PrintEngageRequestSnapshot(AssignmentRebuildId, requestSnapshot, requestBucket);
+		FCombatEngageDebug::RecordEngageRequestSnapshotForAudit(AssignmentRebuildId, requestSnapshot, requestBucket);
 	}
 
 	PreserveExistingEngageAssignments(nextAssignments, slotState, rebuildDebugState);
@@ -191,9 +157,9 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	PreserveExistingAlertAssignments(nextAssignments, slotState, rebuildDebugState);
 	ApplyFreshRequestAssignments(requestBucket, nextAssignments, slotState, rebuildDebugState);
 
-	if (ShouldPrintEngageAssignmentAudit() && (bCompletedWarmupThisRebuild || AssignmentRebuildId == 1))
+	if (FCombatEngageDebug::ShouldAuditEngageAssignment() && (bCompletedWarmupThisRebuild || AssignmentRebuildId == 1))
 	{
-		PrintEngageAssignmentRebuildSummary(AssignmentRebuildId, rebuildDebugState, nextAssignments);
+		FCombatEngageDebug::RecordEngageAssignmentRebuildSummaryForAudit(AssignmentRebuildId, rebuildDebugState, nextAssignments, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 	}
 
 	AssignmentContainer = MoveTemp(nextAssignments);
@@ -288,9 +254,14 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIC
 		++InOutDebugState.PreservedEngageCount;
 
 		const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(previousAssignment.TargetActor);
-		if (ShouldPrintEngageAssignmentVerboseAudit())
+		if (FCombatEngageDebug::ShouldAuditEngageAssignmentVerbose())
 		{
-			PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+			const float* lastRequestTime = LastRequestTimeContainer.Find(aiController);
+			const UWorld* world = GetWorld();
+			const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : -1.f;
+			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentLeaseDuration - leaseAge) : 0.f;
+			FCombatEngageDebug::RecordEngageAssignmentPreservedForAudit(aiController, previousAssignment, targetSlotState, leaseAge, leaseRemaining, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 		}
 	}
 }
@@ -330,9 +301,9 @@ void UCWorldSubsystem_CombatEngage::PromoteExistingAlertAssignments(const TMap<A
 			++InOutDebugState.PromotedCount;
 
 			const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(targetActor);
-			if (ShouldPrintEngageAssignmentVerboseAudit())
+			if (FCombatEngageDebug::ShouldAuditEngageAssignmentVerbose())
 			{
-				PrintPromotedEngageAssignment(requestContexts[i], targetSlotState);
+				FCombatEngageDebug::RecordEngageAssignmentPromotedForAudit(requestContexts[i], targetSlotState, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 			}
 		}
 	}
@@ -359,9 +330,14 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingAlertAssignments(TMap<ACAICo
 		++InOutDebugState.PreservedAlertCount;
 
 		const FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindChecked(previousAssignment.TargetActor);
-		if (ShouldPrintEngageAssignmentVerboseAudit())
+		if (FCombatEngageDebug::ShouldAuditEngageAssignmentVerbose())
 		{
-			PrintPreservedAssignment(aiController, previousAssignment, targetSlotState);
+			const float* lastRequestTime = LastRequestTimeContainer.Find(aiController);
+			const UWorld* world = GetWorld();
+			const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : -1.f;
+			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentLeaseDuration - leaseAge) : 0.f;
+			FCombatEngageDebug::RecordEngageAssignmentPreservedForAudit(aiController, previousAssignment, targetSlotState, leaseAge, leaseRemaining, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 		}
 	}
 }
@@ -405,9 +381,9 @@ void UCWorldSubsystem_CombatEngage::ApplyFreshRequestAssignments(const TMap<AAct
 			++InOutDebugState.FreshAppliedCount;
 
 			const FEngageAssignmentSlotState& updatedSlotState = InOutSlotState.FindChecked(targetActor);
-			if (ShouldPrintEngageAssignmentVerboseAudit())
+			if (FCombatEngageDebug::ShouldAuditEngageAssignmentVerbose())
 			{
-				PrintAppliedFreshEngageAssignment(requestContexts[i], i, freshAssignment.CombatRole, updatedSlotState);
+				FCombatEngageDebug::RecordFreshEngageAssignmentAppliedForAudit(requestContexts[i], i, freshAssignment.CombatRole, updatedSlotState, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 			}
 		}
 	}
@@ -462,162 +438,4 @@ void UCWorldSubsystem_CombatEngage::ClearEngageRuntimeState()
 	RequestContainer.Reset();
 	LastRequestTimeContainer.Reset();
 	AssignmentContainer.Reset();
-}
-
-// Debug
-
-void UCWorldSubsystem_CombatEngage::PrintAppliedFreshEngageAssignment(const FEngageRequestContext& InRequestContext, const int& InIndex, const ECombatRole& InCombatRole, const FEngageAssignmentSlotState& InSlotState) const
-{
-	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
-
-	const APawn* controlledPawn = IsValid(InRequestContext.RequestController) ? InRequestContext.RequestController->GetPawn() : nullptr;
-
-	FLog::Log(TEXT("==== AppliedFreshEngageAssignment ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AIController"), *GetNameSafe(InRequestContext.RequestController)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ControlledPawn"), *GetNameSafe(controlledPawn)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InRequestContext.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Priority"), InRequestContext.TargetPriority));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Index"), InIndex));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("DistanceToTarget"), InRequestContext.DistanceToTarget));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CombatRole"), *UEnum::GetValueAsString(InCombatRole)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, GetEngageAssignmentEngageCap()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, GetEngageAssignmentAlertCap()));
-	FLog::Log(TEXT("===================================="));
-}
-
-void UCWorldSubsystem_CombatEngage::PrintPromotedEngageAssignment(const FEngageRequestContext& InRequestContext, const FEngageAssignmentSlotState& InSlotState) const
-{
-	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
-
-	const APawn* controlledPawn = IsValid(InRequestContext.RequestController) ? InRequestContext.RequestController->GetPawn() : nullptr;
-
-	FLog::Log(TEXT("==== PromotedEngageAssignment ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AIController"), *GetNameSafe(InRequestContext.RequestController)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ControlledPawn"), *GetNameSafe(controlledPawn)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InRequestContext.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Priority"), InRequestContext.TargetPriority));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("DistanceToTarget"), InRequestContext.DistanceToTarget));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("PreviousRole"), *UEnum::GetValueAsString(ECombatRole::Alert)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CombatRole"), *UEnum::GetValueAsString(ECombatRole::Engage)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, GetEngageAssignmentEngageCap()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, GetEngageAssignmentAlertCap()));
-	FLog::Log(TEXT("=================================="));
-}
-
-void UCWorldSubsystem_CombatEngage::PrintPreservedAssignment(const ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment, const FEngageAssignmentSlotState& InSlotState) const
-{
-	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
-
-	const APawn* controlledPawn = IsValid(InCAIController) ? InCAIController->GetPawn() : nullptr;
-	const float* lastRequestTime = LastRequestTimeContainer.Find(InCAIController);
-
-	const UWorld* world = GetWorld();
-	const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
-	const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : -1.f;
-	const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentLeaseDuration - leaseAge) : 0.f;
-
-	FLog::Log(TEXT("==== PreservedAssignment ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("AIController"), *GetNameSafe(InCAIController)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("ControlledPawn"), *GetNameSafe(controlledPawn)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(InAssignment.TargetActor)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("CombatRole"), *UEnum::GetValueAsString(InAssignment.CombatRole)));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("LeaseAge"), leaseAge));
-	FLog::Log(FString::Printf(TEXT("%-20s: %.3f"), TEXT("LeaseRemaining"), leaseRemaining));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("EngageSlot"), InSlotState.EngageCount, GetEngageAssignmentEngageCap()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d / %d"), TEXT("AlertSlot"), InSlotState.AlertCount, GetEngageAssignmentAlertCap()));
-	FLog::Log(TEXT("============================="));
-}
-
-void UCWorldSubsystem_CombatEngage::PrintAssignmentWarmupDelay(const int& InRebuildId) const
-{
-	if (!ShouldPrintEngageAssignmentAudit()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[EngageAssignmentWarmupDelay] RebuildId=%d | RequestCount=%d | WarmupElapsed=%.3f | WarmupTime=%.3f"),
-		InRebuildId,
-		RequestContainer.Num(),
-		GetAssignmentWarmupElapsedTime(),
-		GetEngageAssignmentWarmupTime()));
-}
-
-void UCWorldSubsystem_CombatEngage::PrintEngageRequestSnapshot(const int& InRebuildId, const TMap<ACAIController*, FEngageRequestContext>& InRequestSnapshot, const TMap<AActor*, TArray<FEngageRequestContext>>& InRequestBucket) const
-{
-	if (!ShouldPrintEngageAssignmentVerboseAudit()) return;
-
-	FLog::Log(TEXT("==== EngageRequestSnapshot ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RebuildId"), InRebuildId));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RequestCount"), InRequestSnapshot.Num()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("TargetBucketCount"), InRequestBucket.Num()));
-
-	for (const TPair<AActor*, TArray<FEngageRequestContext>>& pair : InRequestBucket)
-	{
-		AActor* targetActor = pair.Key;
-		TArray<FEngageRequestContext> requestContexts = pair.Value;
-		SortRequestContexts(requestContexts);
-
-		FLog::Log(FString::Printf(TEXT("%-20s: %s"), TEXT("TargetActor"), *GetNameSafe(targetActor)));
-		FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("CandidateCount"), requestContexts.Num()));
-
-		for (int32 i = 0; i < requestContexts.Num(); ++i)
-		{
-			const FEngageRequestContext& requestContext = requestContexts[i];
-			const APawn* controlledPawn = IsValid(requestContext.RequestController) ? requestContext.RequestController->GetPawn() : nullptr;
-
-			FLog::Log(FString::Printf(
-				TEXT("  [%02d] Controller=%s | Pawn=%s | Priority=%d | WasEngaged=%s | Distance=%.3f"),
-				i,
-				*GetNameSafe(requestContext.RequestController),
-				*GetNameSafe(controlledPawn),
-				requestContext.TargetPriority,
-				requestContext.bWasEngaged ? TEXT("true") : TEXT("false"),
-				requestContext.DistanceToTarget));
-		}
-	}
-
-	FLog::Log(TEXT("==============================="));
-}
-
-void UCWorldSubsystem_CombatEngage::PrintEngageAssignmentRebuildSummary(const int& InRebuildId, const FEngageAssignmentRebuildDebugState& InDebugState, const TMap<ACAIController*, FEngageAssignmentContext>& InAssignments) const
-{
-	if (!ShouldPrintEngageAssignmentAudit()) return;
-
-	int32 engageCount = 0;
-	int32 alertCount = 0;
-	int32 noneCount = 0;
-
-	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : InAssignments)
-	{
-		switch (pair.Value.CombatRole)
-		{
-		case ECombatRole::Engage:
-			++engageCount;
-			break;
-
-		case ECombatRole::Alert:
-			++alertCount;
-			break;
-
-		case ECombatRole::None:
-		default:
-			++noneCount;
-			break;
-		}
-	}
-
-	FLog::Log(TEXT("==== EngageAssignmentRebuildSummary ===="));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RebuildId"), InRebuildId));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("EngageCap"), GetEngageAssignmentEngageCap()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("AlertCap"), GetEngageAssignmentAlertCap()));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("RequestSnapshot"), InDebugState.RequestSnapshotCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("TargetBuckets"), InDebugState.RequestBucketCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("WarmupRequest"), InDebugState.WarmupRequestCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("FreshApplied"), InDebugState.FreshAppliedCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("Promoted"), InDebugState.PromotedCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("PreservedEngage"), InDebugState.PreservedEngageCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("PreservedAlert"), InDebugState.PreservedAlertCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("FinalEngage"), engageCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("FinalAlert"), alertCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("FinalNone"), noneCount));
-	FLog::Log(FString::Printf(TEXT("%-20s: %d"), TEXT("FinalTotal"), InAssignments.Num()));
-	FLog::Log(TEXT("========================================"));
 }

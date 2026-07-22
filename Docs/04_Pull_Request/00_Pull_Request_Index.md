@@ -7,6 +7,7 @@
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
 | P42 | Debug Log Policy v1 | `P42_UE5_Portfolio_Pull_Request.md` | `refactor/debug-log-policy-v1` |  | W05, N22, N23, N24, N25, N26 |
+| P43 | CVar Ownership Policy | `P43_UE5_Portfolio_Pull_Request.md` | `refactor/cvar-ownership-policy` |  | W05, N23, N26, N27 |
 | P01 | Character / Camera Core | `P01_UE5_Portfolio_Pull_Request.md` | `feature/character-camera-core` |  | D02 |
 | P02 | Character Movement Core | `P02_UE5_Portfolio_Pull_Request.md` | `feature/character-move-core` |  | D03, B01 |
 | P03 | Weapon Equip | `P03_UE5_Portfolio_Pull_Request.md` | `feature/character-weapon-equip` |  | D04, B02 |

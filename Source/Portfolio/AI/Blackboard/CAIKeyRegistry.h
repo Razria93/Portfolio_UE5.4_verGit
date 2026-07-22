@@ -137,7 +137,7 @@ namespace CAIKeyRegistry
 
 		const FString missingKeys = FString::Join(missingKeyMessages, TEXT(", "));
 		ensureMsgf(false,
-			TEXT("[AIKeyRegistry] Missing required Blackboard keys | Blackboard=%s | Missing=%s"),
+			TEXT("[AI|Blackboard|RequiredKeysMissing] Reason=MissingRequiredKeys | Asset=%s | Missing=%s"),
 			*GetNameSafe(InBlackboardAsset),
 			*missingKeys);
 

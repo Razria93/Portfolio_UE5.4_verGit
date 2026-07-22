@@ -5,25 +5,19 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/ShapeComponent.h"
 #include "GameFramework/Character.h"
-#include "HAL/IConsoleManager.h"
 
 #include "AI/Blackboard/CAIKey.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalTargetComponent.h"
 
 #include "Core/Debug/FCombatSignalDebug.h"
+#include "Core/Profiling/CCombatCollisionProfiling.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "Type/CWeaponStructure.h"
 
 namespace
 {
-	TAutoConsoleVariable<int32> CVarDisableEnemyHitProcessing(
-		TEXT("Portfolio.AI.RuntimeLOD.DisableEnemyHitProcessing"),
-		0,
-		TEXT("Disable Enemy hit processing for combat collision profiling. 0: process hit, 1: skip Enemy hit processing after overlap."),
-		ECVF_Default);
-
 	const FName CombatTimingCueSignalTag(TEXT("Combat.Signal.TimingCue"));
 }
 
@@ -182,14 +176,7 @@ void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext&
 
 bool UCCombatSignalSourceComponent::ShouldSkipEnemyHitProcessingForProfiling() const
 {
-	if (CVarDisableEnemyHitProcessing.GetValueOnGameThread() == 0) return false;
-
-	return IsEnemyHitProcessingProfilingTarget();
-}
-
-bool UCCombatSignalSourceComponent::IsEnemyHitProcessingProfilingTarget() const
-{
-	return IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->IsA<ACEnemy>();
+	return FCombatCollisionProfiling::ShouldSkipEnemyHitProcessing(OwnerCharacter_Injected);
 }
 
 bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitContext) const

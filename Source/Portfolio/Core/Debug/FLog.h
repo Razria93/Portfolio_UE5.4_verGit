@@ -5,7 +5,7 @@
 class PORTFOLIO_API FLog
 {
 public:
-	// === Print Log ===
+	// Log Output
 	static void Log(int32 InValue);
 	static void Log(float InValue);
 	static void Log(const FString& InValue);
@@ -13,7 +13,7 @@ public:
 	static void Log(const FRotator& InValue);
 	static void Log(const UObject* InValue);
 
-	// === Print Screen ===
+	// Screen Output
 	static void Print(int InValue, int32 InKey, float InDuration = 10.f, const FColor& InColor = FColor::Blue);
 	static void Print(float InValue, int32 InKey, float InDuration = 10.f, const FColor& InColor = FColor::Blue);
 	static void Print(const FString& InValue, int32 InKey, float InDuration = 10.f, const FColor& InColor = FColor::Blue);

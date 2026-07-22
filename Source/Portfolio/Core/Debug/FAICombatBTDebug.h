@@ -13,6 +13,11 @@ class PORTFOLIO_API FAICombatBTDebug
 public:
 	// Gate
 	static bool ShouldAuditAICombatBT();
+	static bool ShouldAuditCanMoveDecorator();
+
+public:
+	// Can Move Decorator Diagnostic Hook
+	static void RecordCanMoveDecoratorResultForAudit(const APawn* InOwnerPawn, bool bInCanMove);
 
 public:
 	// AI Context / Engage Assignment Diagnostic Hook

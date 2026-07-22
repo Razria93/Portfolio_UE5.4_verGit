@@ -244,7 +244,7 @@ CVar 후보:
 ```text
 Portfolio.AI.RuntimeLOD.EnemyAnimationMode
 Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval
-Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter
+Portfolio.AI.RuntimeLOD.AnimationRefreshAudit
 ```
 
 기본 reduced interval:
@@ -263,11 +263,11 @@ Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter
 `PoseSkipIsolation`은 후속 이관 대상이다.
 첫 구현에서는 parameter refresh 주기 축소만 측정한다.
 
-정규 측정에서는 `EnemyAnimationRefreshCounter`를 켠다.
+정규 측정에서는 `AnimationRefreshAudit`을 켠다.
 이 카운터는 refresh gate의 attempt / executed / skipped 횟수를 CSV에 누적해, ReducedParameterRefresh가 실제로 호출 빈도를 줄였는지 확인하기 위한 측정 전용 값이다.
 
 ```text
-Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter 1
+Portfolio.AI.RuntimeLOD.AnimationRefreshAudit 1
 ```
 
 카운터가 없는 기존 40 Enemy baseline / reduced 측정은 preliminary 측정으로만 보고 정규 결과표에는 사용하지 않는다.
@@ -302,7 +302,7 @@ PerceptionCandidateAudit 0
 BlackboardEngageLatencyAudit 0
 DisableEnemyWeaponActor 0
 EnemyMeshMode 0
-EnemyAnimationRefreshCounter 1
+AnimationRefreshAudit 1
 EnemyAnimationReducedRefreshInterval 0.1
 ```
 
