@@ -41,7 +41,7 @@ GC Event: none
 Runtime LOD CVar:
 EnemyMeshMode 0
 EnemyAnimationMode 0
-EnemyAnimationRefreshCounter 0
+AnimationRefreshAudit 0
 DisableEnemyWeaponActor 0
 DisableEnemyPerception 0
 PerceptionCandidateAudit 0
@@ -127,7 +127,7 @@ GC Event: none
 Runtime LOD CVar:
 EnemyMeshMode 0
 EnemyAnimationMode 0
-EnemyAnimationRefreshCounter 0
+AnimationRefreshAudit 0
 DisableEnemyWeaponActor 0
 DisableEnemyPerception 0
 PerceptionCandidateAudit 0
@@ -401,7 +401,7 @@ PIE: F11 fullscreen
 Camera: fixed camera
 EnemyMeshMode 0
 EnemyAnimationMode 0
-EnemyAnimationRefreshCounter 0
+AnimationRefreshAudit 0
 DisableEnemyWeaponActor 0
 DisableEnemyPerception 0
 PerceptionCandidateAudit 0
@@ -524,7 +524,7 @@ Log State: -noailogging
 PIE: F11 fullscreen
 EnemyMeshMode 0
 EnemyAnimationMode 0
-EnemyAnimationRefreshCounter 0
+AnimationRefreshAudit 0
 DisableEnemyWeaponActor 0
 DisableEnemyPerception 0
 PerceptionCandidateAudit 0
@@ -605,7 +605,7 @@ Log State: -noailogging
 PIE: F11 fullscreen
 EnemyMeshMode 0
 EnemyAnimationMode 0
-EnemyAnimationRefreshCounter 0
+AnimationRefreshAudit 0
 DisableEnemyWeaponActor 0
 DisableEnemyPerception 0
 PerceptionCandidateAudit 0

@@ -60,6 +60,7 @@ AI/RuntimeLOD 또는 owner system
 
 3. CSV counter ownership 정리
    - animation refresh counter를 CAIAnimationProfiling으로 이동
+   - 현재 profiling plan의 animation refresh counter CVar를 AnimationRefreshAudit으로 통일
    - BT service / interval preset counter를 CAIBehaviorTreeProfiling으로 이동
    - Core/Profiling 밖 CSV_CUSTOM_STAT_GLOBAL 직접 호출 제거
 

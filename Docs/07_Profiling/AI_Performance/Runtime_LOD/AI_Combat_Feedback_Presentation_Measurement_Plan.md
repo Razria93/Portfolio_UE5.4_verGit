@@ -111,7 +111,7 @@ Portfolio.AI.RuntimeLOD.DisableEnemyCombatFeedback 0 / 1
 Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode 0
 Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
 Portfolio.AI.RuntimeLOD.EnemyAnimationMode 0
-Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter 0
+Portfolio.AI.RuntimeLOD.AnimationRefreshAudit 0
 Portfolio.AI.RuntimeLOD.DisableEnemyWeaponActor 0
 Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
 Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 0

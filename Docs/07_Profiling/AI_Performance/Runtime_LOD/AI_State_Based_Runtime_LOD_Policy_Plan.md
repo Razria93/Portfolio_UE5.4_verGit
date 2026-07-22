@@ -516,7 +516,7 @@ Portfolio.AI.RuntimeLOD.EngageAssignmentVerboseAudit 0
 Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode 2
 Portfolio.AI.RuntimeLOD.EnemyMovementMode 0
 Portfolio.AI.RuntimeLOD.EnemyAnimationMode 0
-Portfolio.AI.RuntimeLOD.EnemyAnimationRefreshCounter 1
+Portfolio.AI.RuntimeLOD.AnimationRefreshAudit 1
 
 Portfolio.AI.RuntimeLOD.DisableEnemyPerception 0
 Portfolio.AI.RuntimeLOD.PerceptionCandidateAudit 0
