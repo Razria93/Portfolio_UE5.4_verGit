@@ -10,7 +10,7 @@
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
 
-#include "Type/CWorldSubSystemStructure.h"
+#include "Type/CWorldSubsystemStructure.h"
 
 namespace
 {

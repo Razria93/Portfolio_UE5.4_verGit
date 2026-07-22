@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CWorldSubSystemStructure.h"
+#include "Type/CWorldSubsystemStructure.h"
 
 class AActor;
 class ACAIController;

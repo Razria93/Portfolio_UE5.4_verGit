@@ -169,9 +169,6 @@ static void RecordResolvedTier(EAIRuntimeLODTier InTier);
 Comp vs Component 전면 통일
 -> public getter, injected/cache member, local variable까지 광범위하게 영향
 
-CWorldSubSystemStructure / SubSystem -> Subsystem
--> 파일명, generated include, UHT, include 경로 영향 가능
-
 책임명 자체가 애매한 public API rename
 -> 실제 책임 재분류가 필요할 수 있음
 ```

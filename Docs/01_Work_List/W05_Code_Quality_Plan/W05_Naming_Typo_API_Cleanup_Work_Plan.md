@@ -16,6 +16,7 @@
 - [x] P0 단발 네이밍 불일치 수정
 - [x] P1 public API rename 적용
 - [x] Profiling helper API suffix 정리
+- [x] World subsystem structure file rename 적용
 - [x] 최종 검증
 - [ ] PR 문서 작성
 
@@ -125,6 +126,19 @@ CAIStateRuntimeLODProfiling
 
 `CCombatFeedbackProfiling`, `FCombatCollisionProfilingCounters`는 이미 suffix 없는 형태이므로 유지한다.
 
+### P1: World subsystem structure file rename
+
+`CWorldSubSystemStructure`는 파일명과 include 경로만 `SubSystem` 표기가 남아 있고, 내부 타입명에는 영향이 없다.
+따라서 이번 브랜치에서 `CWorldSubsystemStructure`로 정리한다.
+
+```text
+Source/Portfolio/Type/CWorldSubSystemStructure.h
+-> Source/Portfolio/Type/CWorldSubsystemStructure.h
+
+Source/Portfolio/Type/CWorldSubSystemStructure.cpp
+-> Source/Portfolio/Type/CWorldSubsystemStructure.cpp
+```
+
 ---
 
 ## 4. 이번 브랜치 보류 범위
@@ -135,10 +149,6 @@ CAIStateRuntimeLODProfiling
 Comp vs Component 전면 통일
 -> public getter, injected/cache member, local variable까지 광범위하게 영향
 -> API 스타일 변경 작업으로 분리
-
-CWorldSubSystemStructure / SubSystem -> Subsystem
--> 파일명, generated include, UHT, include 경로 영향 가능
--> 구조체 나누기 / 헤더 배치 규칙 작업에서 처리
 
 Core/Profiling 밖 owner-side profiling wrapper 전면 통일
 -> helper API와 owner-side wrapper 모두 이번 브랜치에서 suffix를 제거
@@ -159,10 +169,11 @@ RequestAICombatSignalCue 같은 책임명 불일치 후보
 3. P1 GetbUse 계열을 ShouldUse 계열로 별도 commit 처리
 4. P1 Core/Profiling helper API suffix를 별도 commit 처리
 5. 추가 local snake_case 후보 정리
-6. W05 문서 업데이트
-7. git diff --check
-8. C++ header/API 변경이 있으므로 PortfolioEditor Development 빌드
-9. PR 문서 업데이트
+6. CWorldSubsystemStructure 파일명 / include 경로 정리
+7. W05 문서 업데이트
+8. git diff --check
+9. C++ header/API 변경이 있으므로 PortfolioEditor Development 빌드
+10. PR 문서 업데이트
 ```
 
 ---
@@ -173,7 +184,7 @@ RequestAICombatSignalCue 같은 책임명 불일치 후보
 
 ```powershell
 rg -n "inAxisValue|executorkey|dist_target|dist_home|blackBoardComp|FEngageContext &|FEngageRequestContext &" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
-rg -n "GetbUse|Record[A-Za-z0-9]+ForProfiling" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
+rg -n "GetbUse|Record[A-Za-z0-9]+ForProfiling|CWorldSubSystemStructure" ..\Source\Portfolio --glob "*.h" --glob "*.cpp"
 git diff --check
 ```
 
@@ -192,12 +203,12 @@ PR 가능:
 - 기능 동작 변경이 없다
 - P0 네이밍 불일치가 제거됐다
 - P1 public API rename과 profiling helper API suffix 정리가 문서 기준과 일치한다
-- 보류 항목이 삭제되지 않고 후속 범위로 남아 있다
+- 보류 항목은 구조 영향이 큰 범위만 후속 범위로 남아 있다
 - git diff --check가 통과했다
 - Development 빌드를 확인했다
 
 PR 보류:
 - Blueprint / asset reference 위험이 있는 rename이 섞였다
-- 파일명 / generated include / UHT 영향 rename이 섞였다
+- 파일명 / generated include / UHT 영향 rename이 빌드로 검증되지 않았다
 - 네이밍 정리를 넘어 책임 재설계가 필요해졌다
 ```

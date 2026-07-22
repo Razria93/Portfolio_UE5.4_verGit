@@ -252,7 +252,7 @@ Source/Portfolio/Type/CCombatSignalStructure.h
 Source/Portfolio/Type/CActionOrchestrationStructure.h
 Source/Portfolio/Type/CReactionOrchestrationStructure.h
 Source/Portfolio/Type/CReactionFeedbackStructure.h
-Source/Portfolio/Type/CWorldSubSystemStructure.h
+Source/Portfolio/Type/CWorldSubsystemStructure.h
 Source/Portfolio/Type/CAIStructure.h
 Source/Portfolio/Type/CCharacterComponentReferenceStructure.h
 ```

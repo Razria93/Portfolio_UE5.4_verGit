@@ -3,7 +3,7 @@
 #include "GameFramework/Actor.h"
 
 #include "Core/Debug/FCombatFeedbackDebug.h"
-#include "Type/CWorldSubSystemStructure.h"
+#include "Type/CWorldSubsystemStructure.h"
 
 void UCWorldSubsystem_CombatFeedback::Initialize(FSubsystemCollectionBase& Collection)
 {
