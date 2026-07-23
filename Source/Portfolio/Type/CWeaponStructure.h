@@ -1,12 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DamageEvents.h"
-#include "DamageEventId.h"
 #include "Type/CWeaponTypes.h"
 #include "Type/CActionTypes.h"
 #include "Type/CReactionTypes.h"
 #include "Type/CExecutionRuleTypes.h"
+#include "Type/CCombatHitTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CCombatResultTypes.h"
 #include "Type/CStateTypes.h"
 #include "Type/CHealthTypes.h"
 #include "CWeaponStructure.generated.h"
@@ -232,17 +233,6 @@ enum class EActionRequestRejectReason : uint8
 };
 
 UENUM(BlueprintType)
-enum class EDamageImpactInfoSource : uint8
-{
-	None = 0,
-
-	SweepResult,
-	ClosestPoint,
-
-	Max,
-};
-
-UENUM(BlueprintType)
 enum class ECombatSignalSourceRejectReason : uint8
 {
 	None = 0,
@@ -278,17 +268,6 @@ enum class ECombatSignalTargetRejectReason : uint8
 	ZeroDamage,
 
 	UnknownCueTag,
-};
-
-UENUM(BlueprintType)
-enum class EDamageDefenseOutcome : uint8
-{
-	None = 0,
-
-	Guard,
-	Parry,
-
-	Max,
 };
 
 UENUM(BlueprintType)
@@ -475,203 +454,6 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FOverlapContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	class AActor* OwnerActor = nullptr;							// AttackActor
-
-	UPROPERTY(Transient)
-	class AActor* DamageCauser = nullptr;						// WeaponActor
-
-	UPROPERTY(Transient)
-	class UPrimitiveComponent* OverlappedComponent = nullptr;	// Hit Collision of WeaponActor
-
-	UPROPERTY(Transient)
-	class UShapeComponent* OverlapShape = nullptr;			// Cast result: UShapeComponent (nullptr if cast fails)
-
-	UPROPERTY(Transient)
-	class AActor* OtherActor = nullptr;							// DamagedActor
-
-	UPROPERTY(Transient)
-	class UPrimitiveComponent* OtherComponent = nullptr;		// DamagedComponent
-
-	UPROPERTY(Transient)
-	int32 OtherBodyIndex = INDEX_NONE;
-
-	UPROPERTY(Transient)
-	bool bFromSweep = false;
-
-	UPROPERTY(Transient)
-	FHitResult SweepResult;
-
-	UPROPERTY(Transient)
-	int32 HitWindowId = INDEX_NONE;
-
-public:
-	FOverlapContext() = default;
-
-public:
-	bool IsValidMinimal() const;
-};
-
-USTRUCT(BlueprintType)
-struct FDamageImpactInfo
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	bool bHasHitResult = false;
-
-
-	UPROPERTY(Transient)
-	EDamageImpactInfoSource Source = EDamageImpactInfoSource::None;
-
-	UPROPERTY(Transient)
-	FHitResult HitResult = FHitResult();
-
-public:
-	FDamageImpactInfo() = default;
-
-public:
-	bool IsValidMinimal() const
-	{
-		return bHasHitResult
-			&& Source != EDamageImpactInfoSource::None
-			&& Source != EDamageImpactInfoSource::Max;
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FHitContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	FOverlapContext OverlapContext = FOverlapContext();
-
-	UPROPERTY(Transient)
-	FWeaponContext WeaponContext = FWeaponContext();
-
-	UPROPERTY(Transient)
-	FActionContext ActionContext = FActionContext();
-
-	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
-
-public:
-	FHitContext() = default;
-};
-
-USTRUCT()
-struct FCombatSignalHitWindowKey
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	class AActor* DamageCauser = nullptr;
-
-	UPROPERTY(Transient)
-	int32 HitWindowId = INDEX_NONE;
-
-	bool operator==(const FCombatSignalHitWindowKey& InOther) const
-	{
-		return DamageCauser == InOther.DamageCauser
-			&& HitWindowId == InOther.HitWindowId;
-	}
-};
-
-FORCEINLINE uint32 GetTypeHash(const FCombatSignalHitWindowKey& InOther)
-{
-	uint32 H = 0;
-
-	H = HashCombine(H, GetTypeHash(InOther.DamageCauser));
-	H = HashCombine(H, GetTypeHash(InOther.HitWindowId));
-
-	return H;
-}
-
-USTRUCT(BlueprintType)
-struct FDamageSpecKey
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	EWeaponType WeaponType = EWeaponType::Max;
-
-	UPROPERTY(EditAnywhere)
-	EActionType ActionType = EActionType::Max;
-
-	UPROPERTY(EditAnywhere)
-	int32 ActionIndex = INDEX_NONE;
-
-public:
-	FDamageSpecKey() = default;
-
-public:
-	bool IsValidMinimal() const
-	{
-		return WeaponType != EWeaponType::None
-			&& WeaponType != EWeaponType::Max
-			&& ActionType != EActionType::None
-			&& ActionType != EActionType::Max;
-	}
-
-public:
-	bool operator==(const FDamageSpecKey& InOther) const
-	{
-		return WeaponType == InOther.WeaponType
-			&& ActionType == InOther.ActionType
-			&& ActionIndex == InOther.ActionIndex;
-	}
-};
-
-FORCEINLINE uint32 GetTypeHash(const FDamageSpecKey& InOther)
-{
-	uint32 H = 0;
-
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.WeaponType)));
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InOther.ActionType)));
-	H = HashCombine(H, GetTypeHash(InOther.ActionIndex));
-
-	return H;
-}
-
-// Global GetTypeHash keeps ADL available for this map key.
-
-USTRUCT(BlueprintType)
-struct FDamageSpec
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	float BaseDamage = 0.f;
-
-public:
-	FDamageSpec() = default;
-};
-
-USTRUCT(BlueprintType)
-struct FDamageAmount
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	float RequestDamage = 0.f;
-
-public:
-	FDamageAmount() = default;
-};
-
-USTRUCT(BlueprintType)
 struct FCombatSignalSourcePayload
 {
 	GENERATED_BODY()
@@ -780,41 +562,6 @@ public:
 
 public:
 	FCombatSignalSourceResult() = default;
-};
-
-USTRUCT(BlueprintType)
-struct FDefaultDamageEvent : public FDamageEvent
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	AActor* SourceActor = nullptr;
-
-	UPROPERTY(Transient)
-	AActor* TargetActor = nullptr;
-
-	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
-
-	UPROPERTY(Transient)
-	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
-
-	UPROPERTY(Transient)
-	FDamageSpec DamageSpec = FDamageSpec();
-
-	UPROPERTY(Transient)
-	FDamageAmount DamageAmount = FDamageAmount();
-
-public:
-	static const int32 ClassID = (int32)EDamageEventTypeId::DefaultDamage;
-
-public:
-	FDefaultDamageEvent() = default;
-
-public:
-	virtual int32 GetTypeID() const override { return ClassID; }
-	virtual bool IsOfType(int32 InID) const override { return InID == ClassID || FDamageEvent::IsOfType(InID); }
 };
 
 USTRUCT(BlueprintType)
@@ -974,54 +721,6 @@ struct FCombatSignalTargetPacket
 
 	UPROPERTY(Transient)
 	FCombatSignalTargetResult Result;
-};
-
-USTRUCT(BlueprintType)
-struct FCombatResultPacket
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	class AActor* SourceActor = nullptr;
-
-	UPROPERTY(Transient)
-	class AActor* TargetActor = nullptr;
-
-	UPROPERTY(Transient)
-	class AController* Instigator = nullptr;
-
-	UPROPERTY(Transient)
-	class AActor* DamageCauser = nullptr;
-
-	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
-
-	UPROPERTY(Transient)
-	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
-
-	UPROPERTY(Transient)
-	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
-
-	UPROPERTY(Transient)
-	bool bDamageCommitted = false;
-
-	UPROPERTY(Transient)
-	float CommittedDamage = 0.f;
-
-public:
-	FCombatResultPacket() = default;
-
-public:
-	bool IsValidMinimal() const
-	{
-		return IsValid(SourceActor) && IsValid(TargetActor) && DefenseOutcome != EDamageDefenseOutcome::None;
-	}
-
-	bool IsParryResult() const
-	{
-		return DefenseOutcome == EDamageDefenseOutcome::Parry;
-	}
 };
 
 USTRUCT(BlueprintType)

@@ -1,0 +1,1 @@
+#include "Type/CCombatResultTypes.h"

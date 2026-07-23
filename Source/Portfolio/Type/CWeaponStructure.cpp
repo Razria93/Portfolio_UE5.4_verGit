@@ -16,11 +16,6 @@ bool FActionData::IsValidMinimal() const
 		&& IsValid(Montage);
 }
 
-bool FOverlapContext::IsValidMinimal() const
-{
-	return IsValid(OwnerActor) && IsValid(DamageCauser) && IsValid(OtherActor);
-}
-
 bool FReactionDataKey::IsValidMinimal() const
 {
 	return ReactionType != EReactionType::None
