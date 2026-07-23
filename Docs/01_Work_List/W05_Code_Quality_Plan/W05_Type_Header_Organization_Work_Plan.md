@@ -30,7 +30,7 @@ refactor/type-header-organization
 - [x] 독립 signal / world feedback / engage 타입 분리
 - [x] `CWeaponStructure.h` 낮은 계층 identity / rule 분리
 - [x] hit / damage / combat result 타입 분리
-- [ ] combat signal source / target 타입 분리
+- [x] combat signal source / target 타입 분리
 - [ ] action / reaction 저장형 data 타입 분리
 - [ ] execution / observable overlay 타입 분리
 - [ ] orchestration / feedback 타입 정리
