@@ -9,29 +9,6 @@
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
 
-bool FActionData::IsValidMinimal() const
-{
-	return ActionDataKey.IsValidMinimal()
-		&& IsValid(ActionExecutorKey.Get())
-		&& IsValid(Montage);
-}
-
-bool FReactionDataKey::IsValidMinimal() const
-{
-	return ReactionType != EReactionType::None
-		&& ReactionType != EReactionType::Max
-		&& DamageSpecKey.IsValidMinimal();
-}
-
-bool FReactionData::IsValidMinimal() const
-{
-	return ReactionDataKey.ReactionType != EReactionType::None
-		&& ReactionDataKey.ReactionType != EReactionType::All
-		&& ReactionDataKey.ReactionType != EReactionType::Max
-		&& IsValid(ReactionExecutorKey)
-		&& IsValid(Montage);
-}
-
 bool FExecutionParticipant::IsValidMinimal() const
 {
 	if (!bIsValid) return false;

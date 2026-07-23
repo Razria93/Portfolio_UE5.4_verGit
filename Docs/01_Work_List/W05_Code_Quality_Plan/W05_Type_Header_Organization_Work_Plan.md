@@ -31,7 +31,7 @@ refactor/type-header-organization
 - [x] `CWeaponStructure.h` 낮은 계층 identity / rule 분리
 - [x] hit / damage / combat result 타입 분리
 - [x] combat signal source / target 타입 분리
-- [ ] action / reaction 저장형 data 타입 분리
+- [x] action / reaction 저장형 data 타입 분리
 - [ ] execution / observable overlay 타입 분리
 - [ ] orchestration / feedback 타입 정리
 - [ ] 사용처 include 교체 및 umbrella 의존 제거
