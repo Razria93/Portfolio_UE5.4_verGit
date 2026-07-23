@@ -254,7 +254,7 @@ Source/Portfolio/Type/CReactionOrchestrationStructure.h
 Source/Portfolio/Type/CReactionFeedbackStructure.h
 Source/Portfolio/Type/CWorldSubsystemStructure.h
 Source/Portfolio/Type/CAIStructure.h
-Source/Portfolio/Type/CCharacterComponentReferenceStructure.h
+Source/Portfolio/Type/CCharacterComponentReferenceTypes.h
 ```
 
 **완료 조건**
