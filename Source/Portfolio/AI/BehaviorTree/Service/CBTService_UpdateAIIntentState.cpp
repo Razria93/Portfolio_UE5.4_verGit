@@ -13,9 +13,9 @@
 #include "Controller/CAIController.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 
-#include "Type/CStateStructure.h"
+#include "Type/CStateTypes.h"
 #include "Type/CWeaponStructure.h"
-#include "Type/CHealthStructure.h"
+#include "Type/CHealthTypes.h"
 #include "Type/CWorldSubsystemStructure.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"

@@ -3,8 +3,8 @@
 #include "CoreMinimal.h"
 #include "Engine/DamageEvents.h"
 #include "DamageEventId.h"
-#include "Type/CStateStructure.h"
-#include "Type/CHealthStructure.h"
+#include "Type/CStateTypes.h"
+#include "Type/CHealthTypes.h"
 #include "CWeaponStructure.generated.h"
 
 UENUM(BlueprintType)

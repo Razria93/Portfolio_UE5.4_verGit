@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CActionOrchestrationStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CReactionFeedbackStructure.h"

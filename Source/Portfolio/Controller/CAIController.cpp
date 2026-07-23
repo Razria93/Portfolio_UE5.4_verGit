@@ -16,7 +16,7 @@
 
 #include "Interface/TargetContextProvider.h"
 
-#include "Type/CStateStructure.h"
+#include "Type/CStateTypes.h"
 #include "Type/CAIStructure.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIKeyRegistry.h"

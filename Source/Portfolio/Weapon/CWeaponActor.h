@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interface/HitContextProvider.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CWeaponStructure.h"
 #include "CWeaponActor.generated.h"
 

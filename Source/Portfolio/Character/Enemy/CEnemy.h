@@ -4,7 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Type/CAIStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CWeaponStructure.h"
 #include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"

@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Interface/ObservableOverlayPolicy.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CWeaponStructure.h"
 #include "CObservableOverlayComponent.generated.h"
 

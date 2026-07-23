@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CStateStructure.h"
-#include "Type/CMovementStructure.h"
+#include "Type/CStateTypes.h"
+#include "Type/CMovementTypes.h"
 
 class PORTFOLIO_API FMovementDebug
 {

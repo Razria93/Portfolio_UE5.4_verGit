@@ -28,7 +28,7 @@
 #include "Action/CAction.h"
 
 #include "Type/CWeaponStructure.h"
-#include "Type/CStateStructure.h"
+#include "Type/CStateTypes.h"
 #include "Type/CActionOrchestrationStructure.h"
 
 ACPlayer::ACPlayer()

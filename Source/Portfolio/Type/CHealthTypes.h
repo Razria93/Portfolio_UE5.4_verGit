@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CHealthStructure.generated.h"
+#include "CHealthTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EDeadState : uint8

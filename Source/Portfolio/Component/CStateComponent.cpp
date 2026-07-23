@@ -3,8 +3,8 @@
 
 #include "GameFramework/Character.h"
 
-#include "Type/CStateStructure.h"
-#include "Type/CHealthStructure.h"
+#include "Type/CStateTypes.h"
+#include "Type/CHealthTypes.h"
 
 UCStateComponent::UCStateComponent()
 {

@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CStateStructure.h"
-#include "Type/CHealthStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CStateTypes.h"
+#include "Type/CHealthTypes.h"
 #include "CStateComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FExecutionStateChanged, class ACharacter*, InOwnerCharacter, EExecutionState, InPrevExecutionState, EExecutionState, InNewExecutionState);

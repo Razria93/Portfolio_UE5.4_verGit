@@ -3,7 +3,7 @@
 
 #include "GameFramework/Character.h"
 
-#include "Type/CHealthStructure.h"
+#include "Type/CHealthTypes.h"
 
 UCHealthComponent::UCHealthComponent()
 {

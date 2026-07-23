@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTService.h"
-#include "Type/CStateStructure.h"
+#include "Type/CStateTypes.h"
 #include "CBTService_UpdateAIIntentState.generated.h"
 
 UCLASS()

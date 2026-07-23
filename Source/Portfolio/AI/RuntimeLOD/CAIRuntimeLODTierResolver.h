@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CStateStructure.h"
+#include "Type/CStateTypes.h"
 #include "Type/CWorldSubsystemStructure.h"
 
 class UBlackboardComponent;

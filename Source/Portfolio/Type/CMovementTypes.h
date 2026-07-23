@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CMovementStructure.generated.h"
+#include "CMovementTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EMovementGait : uint8

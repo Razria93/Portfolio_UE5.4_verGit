@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CStateStructure.generated.h"
+#include "CStateTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EExecutionState : uint8

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCombatSignalStructure.h"
 #include "Type/CWeaponStructure.h"
 #include "CCombatSignalSourceComponent.generated.h"
