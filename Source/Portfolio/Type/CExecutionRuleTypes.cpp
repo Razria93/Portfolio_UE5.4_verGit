@@ -1,6 +1,6 @@
 #include "Type/CExecutionRuleTypes.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CExecutionTypes.h"
 
 namespace
 {
