@@ -893,7 +893,11 @@ AI LOD / Performance 최적화
 ### 진행 중
 
 ```text
-없음
+Type Header / Helper Boundary 정리
+- Type 헤더 배치 규칙 문서화
+- UHT / BlueprintType 이동 위험 기준 정리
+- include-only 정리 후보 스캔
+- CWeaponStructure.h 분리 지도 작성
 ```
 
 ### 진행 예정
@@ -912,8 +916,6 @@ Code Quality Sweep
   -> read-only API const 정합성 점검
 - Tuning Constants Cleanup
   -> AI / Combat radius, interval, threshold 값을 constants / config / DataAsset 후보로 분류
-- Type Header / Helper Boundary 정리
-  -> 공유 Type 헤더와 helper 책임 경계 점검
 
 Documentation / PR Record
 - PR Record Format Sweep
