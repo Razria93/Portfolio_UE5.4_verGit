@@ -27,7 +27,7 @@ refactor/type-header-organization
 - [x] `DamageEventId.h` 정책 결정
 - [x] 에이전트 기반 작업 순서 재검토
 - [x] 저위험 Type 파일명 / 패턴 정리
-- [ ] 독립 signal / world feedback / engage 타입 분리
+- [x] 독립 signal / world feedback / engage 타입 분리
 - [ ] `CWeaponStructure.h` 낮은 계층 identity / rule 분리
 - [ ] hit / damage / combat result 타입 분리
 - [ ] combat signal source / target 타입 분리
@@ -67,10 +67,10 @@ refactor/type-header-organization
 ```text
 2061 CWeaponStructure.h
  298 CAIStructure.h
- 279 CCombatSignalStructure.h
+ 279 CCombatSignalStructure.h -> CCombatSignalTypes.h
  252 CActionOrchestrationStructure.h
  236 CReactionFeedbackStructure.h
- 140 CWorldSubsystemStructure.h
+ 140 CWorldSubsystemStructure.h -> CCombatFeedbackTypes.h / CEngageAssignmentTypes.h
   81 CReactionOrchestrationStructure.h
   30 CStateStructure.h
   28 CMovementStructure.h
@@ -179,6 +179,12 @@ refactor(type): rename simple type headers
 CCombatSignalStructure.h -> CCombatSignalTypes.h
 CWorldSubsystemStructure.h -> CCombatFeedbackTypes.h
 CWorldSubsystemStructure.h -> CEngageAssignmentTypes.h
+```
+
+적용 상태:
+
+```text
+완료
 ```
 
 목적:

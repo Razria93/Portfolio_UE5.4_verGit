@@ -248,11 +248,12 @@ refactor/type-header-helper-boundary
 
 ```text
 Source/Portfolio/Type/CWeaponStructure.h
-Source/Portfolio/Type/CCombatSignalStructure.h
+Source/Portfolio/Type/CCombatSignalTypes.h
 Source/Portfolio/Type/CActionOrchestrationStructure.h
 Source/Portfolio/Type/CReactionOrchestrationStructure.h
 Source/Portfolio/Type/CReactionFeedbackStructure.h
-Source/Portfolio/Type/CWorldSubsystemStructure.h
+Source/Portfolio/Type/CCombatFeedbackTypes.h
+Source/Portfolio/Type/CEngageAssignmentTypes.h
 Source/Portfolio/Type/CAIStructure.h
 Source/Portfolio/Type/CCharacterComponentReferenceTypes.h
 ```
