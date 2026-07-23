@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTService.h"
-#include "Type/CAIStructure.h"
+#include "Type/CAITypes.h"
 #include "CBTService_UpdateEngageContext.generated.h"
 
 UCLASS()

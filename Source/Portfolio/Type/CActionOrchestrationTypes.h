@@ -1,8 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CWeaponStructure.h"
-#include "CActionOrchestrationStructure.generated.h"
+#include "Type/CActionTypes.h"
+#include "Type/CActionDataTypes.h"
+#include "Type/CExecutionTypes.h"
+#include "CActionOrchestrationTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EActionIntentSource : uint8
@@ -75,6 +77,98 @@ enum class EDeferredActionConsumeKey : uint8
 
 	AfterGuardInAction,
 	AfterGuardBlockReaction,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionStopSource : uint8
+{
+	None = 0,
+
+	ActionOrchestration,
+	ReactionOrchestration,
+
+	System,
+	External,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionStopReason : uint8
+{
+	None = 0,
+
+	Interrupted,
+	Ignored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionFinishReason : uint8
+{
+	None = 0,
+
+	Completed,
+	Interrupted,
+	Ignored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionRequestResultType : uint8
+{
+	None = 0,
+
+	Rejected,
+	Ignored,
+
+	Handled,
+
+	Started,
+	Reserved,
+	Deferred,
+	Intervened,
+
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EActionRequestRejectReason : uint8
+{
+	None = 0,
+
+	InvalidOwner,
+	InvalidRequest,
+	InvalidComponent,
+
+	Dead,
+
+	InvalidState,
+	InvalidEquipment,
+	InvalidCombatAction,
+
+	InvalidQuery,
+
+	ActionCandidateNotFound,
+	ActionDataNotFound,
+	ActionExecutorNotFound,
+	RejectedByExecutor,
+	NoExecutableAction,
+
+	InvalidIndependent,
+	InvalidSequential,
+	InvalidExclusive,
+
+	IncomingCannotIntervene,
+	ActiveCannotAcceptIntervention,
+	InterventionDispatchFailed,
+	RejectedByOverlay,
+
+	ActionExecutionFailed,
 
 	Max,
 };
@@ -205,6 +299,45 @@ public:
 	bool IsIntervenedResult() const
 	{
 		return ResultType == EActionRequestResultType::Intervened;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FActionExecutionResult
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EExecutionDecision Decision = EExecutionDecision::None;
+
+	UPROPERTY(Transient)
+	EExecutionRelationship Relationship = EExecutionRelationship::None;
+
+	UPROPERTY(Transient)
+	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
+
+	UPROPERTY(Transient)
+	FActionExecutionContext ResolvedContext = FActionExecutionContext();
+
+	UPROPERTY(Transient)
+	EActionRequestRejectReason RejectReason = EActionRequestRejectReason::None;
+
+	UPROPERTY(Transient)
+	FExecutionInterventionDirective InterventionDirective = FExecutionInterventionDirective();
+
+	UPROPERTY(Transient)
+	TArray<EObservableOverlayHandling> OverlayHandlings;
+
+public:
+	bool IsAcceptedDecision() const
+	{
+		return Decision == EExecutionDecision::Accept;
+	}
+
+	bool RequiresIntervention() const
+	{
+		return InterventionDirective.IsRequested();
 	}
 };
 

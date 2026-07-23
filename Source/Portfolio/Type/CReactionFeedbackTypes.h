@@ -1,8 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CWeaponStructure.h"
-#include "CReactionFeedbackStructure.generated.h"
+#include "Type/CReactionTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "CReactionFeedbackTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EReactionFeedbackTiming : uint8

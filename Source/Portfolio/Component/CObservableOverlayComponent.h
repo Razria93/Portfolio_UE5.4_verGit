@@ -4,7 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "Interface/ObservableOverlayPolicy.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CObservableOverlayTypes.h"
+#include "Type/CExecutionTypes.h"
 #include "CObservableOverlayComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))

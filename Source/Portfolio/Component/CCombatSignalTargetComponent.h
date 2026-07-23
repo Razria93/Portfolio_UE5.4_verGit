@@ -4,7 +4,10 @@
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCombatSignalTypes.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CCombatSignalTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CCombatResultTypes.h"
+#include "Type/CCombatSignalTargetTypes.h"
 #include "CCombatSignalTargetComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))

@@ -3,7 +3,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CActionTypes.h"
 #include "CWeaponComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FWeaponTypeChanged, class ACharacter*, InOwnerCharacter, EWeaponType, InPrevWeaponType, EWeaponType, InNewWeaponType);

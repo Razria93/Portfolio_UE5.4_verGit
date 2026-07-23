@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CAIStructure.h"
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CAITypes.h"
+#include "Type/CActionOrchestrationTypes.h"
 #include "Type/CEngageAssignmentTypes.h"
 
 class AAIController;

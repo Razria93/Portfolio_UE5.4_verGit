@@ -2,7 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Action/CAction.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CActionDataTypes.h"
+#include "Type/CExecutionTypes.h"
 #include "CAction_ComboAttack.generated.h"
 
 UCLASS()

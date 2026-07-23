@@ -1,7 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CActionTypes.h"
+#include "Type/CReactionTypes.h"
 
 class PORTFOLIO_API FAnimNotifyDebug
 {

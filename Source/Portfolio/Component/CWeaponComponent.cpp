@@ -8,7 +8,8 @@
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Weapon/CWeaponActor.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CCombatHitTypes.h"
 
 UCWeaponComponent::UCWeaponComponent()
 {

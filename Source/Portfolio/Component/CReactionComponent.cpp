@@ -13,7 +13,14 @@
 
 #include "Core/Debug/FReactionComponentDebug.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CActionTypes.h"
+#include "Type/CReactionTypes.h"
+#include "Type/CReactionDataTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CObservableOverlayTypes.h"
+#include "Type/CExecutionTypes.h"
 
 UCReactionComponent::UCReactionComponent()
 {

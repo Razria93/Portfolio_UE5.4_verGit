@@ -4,7 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "Interface/HitContextProvider.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CCombatHitTypes.h"
 #include "CWeaponActor.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponActorCollisionEnabled);

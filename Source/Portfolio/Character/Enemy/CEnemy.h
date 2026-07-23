@@ -2,10 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Type/CAIStructure.h"
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CAITypes.h"
+#include "Type/CActionOrchestrationTypes.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CActionTypes.h"
+#include "Type/CCombatResultTypes.h"
 #include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
 

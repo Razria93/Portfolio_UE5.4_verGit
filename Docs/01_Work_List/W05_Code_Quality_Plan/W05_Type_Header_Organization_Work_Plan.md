@@ -33,8 +33,8 @@ refactor/type-header-organization
 - [x] combat signal source / target 타입 분리
 - [x] action / reaction 저장형 data 타입 분리
 - [x] execution / observable overlay 타입 분리
-- [ ] orchestration / feedback 타입 정리
-- [ ] 사용처 include 교체 및 umbrella 의존 제거
+- [x] orchestration / feedback 타입 정리
+- [x] 사용처 include 교체 및 umbrella 의존 제거
 - [ ] 최종 빌드 / PIE / 로그 검증
 - [ ] PR 문서 작성
 
@@ -66,12 +66,12 @@ refactor/type-header-organization
 
 ```text
 2061 CWeaponStructure.h
- 298 CAIStructure.h
+ 298 CAIStructure.h -> CAITypes.h
  279 CCombatSignalStructure.h -> CCombatSignalTypes.h
- 252 CActionOrchestrationStructure.h
- 236 CReactionFeedbackStructure.h
+ 252 CActionOrchestrationStructure.h -> CActionOrchestrationTypes.h
+ 236 CReactionFeedbackStructure.h -> CReactionFeedbackTypes.h
  140 CWorldSubsystemStructure.h -> CCombatFeedbackTypes.h / CEngageAssignmentTypes.h
-  81 CReactionOrchestrationStructure.h
+  81 CReactionOrchestrationStructure.h -> CReactionOrchestrationTypes.h
   30 CStateStructure.h
   28 CMovementStructure.h
   28 CCharacterComponentReferenceStructure.h
@@ -87,7 +87,7 @@ CWeaponStructure.h
 -> CStateStructure.h, CHealthStructure.h, Engine/DamageEvents.h까지 직접 include
 -> action만 필요한 파일도 health/state/damage 변경에 재컴파일될 수 있음
 
-CActionOrchestrationStructure.h / CReactionOrchestrationStructure.h / CReactionFeedbackStructure.h
+CActionOrchestrationTypes.h / CReactionOrchestrationTypes.h / CReactionFeedbackTypes.h
 -> CWeaponStructure.h를 직접 include해 Type 내부 분리가 실제 include 경량화로 이어지지 않음
 
 CWorldSubsystemStructure.h
@@ -354,8 +354,8 @@ refactor(type): split orchestration feedback types
 1. cpp 직접 include 전환
 2. UPROPERTY 값 타입이 있는 h 직접 include 전환
 3. interface h 최소 Type 헤더 include 전환
-4. CWeaponStructure.h compatibility-only 상태 확인
-5. umbrella 제거 가능 여부 판단
+4. CWeaponStructure.h compatibility include 제거
+5. umbrella 제거 완료 여부 확인
 ```
 
 예상 커밋:
@@ -395,7 +395,7 @@ Combat / dodge montage notify 값
 - 타입명 / enum entry / UPROPERTY 이름 변경 없음
 - UHT generated include 규칙 준수
 - include 배치 규칙 준수
-- CWeaponStructure.h umbrella 의존 제거 또는 명확한 compatibility 용도만 유지
+- CWeaponStructure.h umbrella 의존 제거
 - PortfolioEditor Development 빌드 통과
 - PIE smoke 또는 미확인 항목 명시
 - Blueprint / asset load 관련 구조체 경고 없음

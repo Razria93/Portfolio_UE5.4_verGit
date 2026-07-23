@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Type/CHealthTypes.h"
 #include "Type/CEngageAssignmentTypes.h"
-#include "CAIStructure.generated.h"
+#include "CAITypes.generated.h"
 
 UENUM(BlueprintType)
 enum class EPatrolMode : uint8

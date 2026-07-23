@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
-#include "Type/CAIStructure.h"
+#include "Type/CAITypes.h"
 #include "CAIController.generated.h"
 
 enum class EAIRuntimeLODTier : uint8;

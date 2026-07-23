@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Notify/CAnimNotify.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CActionTypes.h"
 #include "CAnimNotify_ActionBase.generated.h"
 
 UCLASS(Abstract)

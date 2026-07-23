@@ -10,7 +10,12 @@
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CReactionTypes.h"
+#include "Type/CHealthTypes.h"
+#include "Type/CCombatSignalTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CCombatResultTypes.h"
+#include "Type/CCombatSignalTargetTypes.h"
 
 namespace
 {

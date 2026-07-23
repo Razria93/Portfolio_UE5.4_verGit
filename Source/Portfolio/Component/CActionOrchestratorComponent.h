@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "CActionOrchestratorComponent.generated.h"
 

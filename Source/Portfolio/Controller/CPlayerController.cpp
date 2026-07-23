@@ -5,7 +5,7 @@
 
 #include "Component/CPlayerFeedbackComponent.h"
 
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
 
 ACPlayerController::ACPlayerController()
 {

@@ -3,10 +3,13 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
-#include "Type/CActionOrchestrationStructure.h"
-#include "Type/CWeaponStructure.h"
-#include "Type/CReactionFeedbackStructure.h"
-#include "Type/CReactionOrchestrationStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
+#include "Type/CReactionTypes.h"
+#include "Type/CReactionDataTypes.h"
+#include "Type/CReactionFeedbackTypes.h"
+#include "Type/CExecutionTypes.h"
+#include "Type/CObservableOverlayTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
 #include "CReaction.generated.h"
 
 UCLASS(Abstract)

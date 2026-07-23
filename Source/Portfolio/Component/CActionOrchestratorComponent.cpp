@@ -16,7 +16,7 @@
 
 #include "Core/Debug/FExecutionOrchestratorDebug.h"
 
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
 
 UCActionOrchestratorComponent::UCActionOrchestratorComponent()
 {

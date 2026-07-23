@@ -4,7 +4,10 @@
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCombatSignalTypes.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CCombatSignalTypes.h"
+#include "Type/CCombatHitTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CCombatSignalSourceTypes.h"
 #include "CCombatSignalSourceComponent.generated.h"
 
 

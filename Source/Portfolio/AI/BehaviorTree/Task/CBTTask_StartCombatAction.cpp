@@ -9,7 +9,7 @@
 #include "AI/Blackboard/CAIKey.h"
 
 #include "Core/Debug/FAICombatBTDebug.h"
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
 
 UCBTTask_StartCombatAction::UCBTTask_StartCombatAction()
 {

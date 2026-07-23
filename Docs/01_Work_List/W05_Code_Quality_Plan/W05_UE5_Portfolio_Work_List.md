@@ -247,14 +247,14 @@ refactor/type-header-helper-boundary
 **1차 조회 대상**
 
 ```text
-Source/Portfolio/Type/CWeaponStructure.h
+Source/Portfolio/Type/CWeapon*.h
 Source/Portfolio/Type/CCombatSignalTypes.h
-Source/Portfolio/Type/CActionOrchestrationStructure.h
-Source/Portfolio/Type/CReactionOrchestrationStructure.h
-Source/Portfolio/Type/CReactionFeedbackStructure.h
+Source/Portfolio/Type/CActionOrchestrationTypes.h
+Source/Portfolio/Type/CReactionOrchestrationTypes.h
+Source/Portfolio/Type/CReactionFeedbackTypes.h
 Source/Portfolio/Type/CCombatFeedbackTypes.h
 Source/Portfolio/Type/CEngageAssignmentTypes.h
-Source/Portfolio/Type/CAIStructure.h
+Source/Portfolio/Type/CAITypes.h
 Source/Portfolio/Type/CCharacterComponentReferenceTypes.h
 ```
 

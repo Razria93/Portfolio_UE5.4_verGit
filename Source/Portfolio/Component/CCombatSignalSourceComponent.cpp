@@ -14,7 +14,10 @@
 #include "Core/Profiling/CCombatCollisionProfiling.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CCombatSignalTypes.h"
+#include "Type/CCombatHitTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CCombatSignalSourceTypes.h"
 
 namespace
 {

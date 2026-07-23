@@ -14,7 +14,12 @@
 #include "Component/CActionFeedbackComponent.h"
 #include "Action/CAction.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CActionTypes.h"
+#include "Type/CActionDataTypes.h"
+#include "Type/CActionFeedbackTypes.h"
+#include "Type/CActionOrchestrationTypes.h"
+#include "Type/CObservableOverlayTypes.h"
+#include "Type/CExecutionTypes.h"
 #include "Core/Debug/FActionComponentDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 

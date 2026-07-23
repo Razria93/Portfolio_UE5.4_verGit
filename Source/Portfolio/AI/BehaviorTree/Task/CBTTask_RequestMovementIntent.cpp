@@ -5,7 +5,7 @@
 
 #include "Character/Enemy/CEnemy.h"
 
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
 
 UCBTTask_RequestMovementIntent::UCBTTask_RequestMovementIntent()
 {

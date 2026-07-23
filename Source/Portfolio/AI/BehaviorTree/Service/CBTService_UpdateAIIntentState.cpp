@@ -14,7 +14,7 @@
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 
 #include "Type/CStateTypes.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CHealthTypes.h"
 #include "Type/CHealthTypes.h"
 #include "Type/CEngageAssignmentTypes.h"
 #include "AI/Blackboard/CAIKey.h"
