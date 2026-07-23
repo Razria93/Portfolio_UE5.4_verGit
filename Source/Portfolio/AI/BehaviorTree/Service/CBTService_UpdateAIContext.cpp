@@ -18,7 +18,7 @@
 #include "Core/Debug/FAICombatBTDebug.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Type/CAIStructure.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CEngageAssignmentTypes.h"
 
 UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 {

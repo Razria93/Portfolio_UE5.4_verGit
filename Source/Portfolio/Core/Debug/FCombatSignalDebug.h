@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CCombatSignalStructure.h"
+#include "Type/CCombatSignalTypes.h"
 #include "Type/CWeaponStructure.h"
 
 class PORTFOLIO_API FCombatSignalDebug

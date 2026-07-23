@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Type/CHealthTypes.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CEngageAssignmentTypes.h"
 #include "CAIStructure.generated.h"
 
 UENUM(BlueprintType)

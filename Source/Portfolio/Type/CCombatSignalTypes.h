@@ -1,9 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CCombatSignalStructure.generated.h"
 
 class AActor;
+
+#include "CCombatSignalTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class ECombatSignalType : uint8

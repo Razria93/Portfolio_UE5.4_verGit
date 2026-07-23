@@ -16,7 +16,7 @@
 #include "Type/CStateTypes.h"
 #include "Type/CWeaponStructure.h"
 #include "Type/CHealthTypes.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CEngageAssignmentTypes.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 

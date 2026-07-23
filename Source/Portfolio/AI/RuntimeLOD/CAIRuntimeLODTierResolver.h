@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Type/CStateTypes.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CEngageAssignmentTypes.h"
 
 class UBlackboardComponent;
 

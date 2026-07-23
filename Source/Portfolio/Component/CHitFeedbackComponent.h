@@ -4,7 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CWeaponStructure.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CCombatFeedbackTypes.h"
 #include "CHitFeedbackComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

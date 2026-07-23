@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Type/CReactionFeedbackStructure.h"
 #include "Type/CWeaponStructure.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CCombatFeedbackTypes.h"
 
 class PORTFOLIO_API FCombatFeedbackDebug
 {

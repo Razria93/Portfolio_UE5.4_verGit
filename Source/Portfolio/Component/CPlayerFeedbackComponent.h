@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CCombatFeedbackTypes.h"
 #include "CPlayerFeedbackComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

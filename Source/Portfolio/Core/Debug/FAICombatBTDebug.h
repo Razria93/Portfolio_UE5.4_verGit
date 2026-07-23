@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Type/CAIStructure.h"
 #include "Type/CActionOrchestrationStructure.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CEngageAssignmentTypes.h"
 
 class AAIController;
 class APawn;

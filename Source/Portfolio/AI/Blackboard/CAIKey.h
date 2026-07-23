@@ -4,7 +4,7 @@
 #include "AI/Blackboard/CAIKeyFactory.h"
 #include "Type/CHealthTypes.h"
 #include "Type/CStateTypes.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CEngageAssignmentTypes.h"
 
 namespace CAIKey
 {

@@ -1,7 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CWorldSubsystemStructure.generated.h"
+
+class ACAIController;
+class AActor;
+
+#include "CEngageAssignmentTypes.generated.h"
 
 UENUM(BlueprintType)
 enum class ECombatRole : uint8
@@ -19,15 +23,6 @@ enum class EAIUpdatePrecision : uint8
 	Low
 };
 
-UENUM(BlueprintType)
-enum class EFeedbackAudience : uint8
-{
-	None,
-	Source,
-	Target,
-	Both
-};
-
 USTRUCT(BlueprintType)
 struct FEngageRequestContext
 {
@@ -35,10 +30,10 @@ struct FEngageRequestContext
 
 public:
 	UPROPERTY(Transient)
-	class ACAIController* RequestController = nullptr;
+	ACAIController* RequestController = nullptr;
 
 	UPROPERTY(Transient)
-	class AActor* TargetActor = nullptr;
+	AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
 	int TargetPriority = INT_MAX;
@@ -90,51 +85,4 @@ struct FEngageAssignmentRebuildDebugState
 	int32 PromotedCount = 0;
 	int32 PreservedEngageCount = 0;
 	int32 PreservedAlertCount = 0;
-};
-
-USTRUCT(BlueprintType)
-struct FHitStopRequest
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	float HitStopDuration = 0.04f;
-
-	UPROPERTY(EditAnywhere)
-	float HitStopDilation = 0.05f;
-
-	UPROPERTY(EditAnywhere)
-	EFeedbackAudience HitStopAudience = EFeedbackAudience::Both;
-
-	UPROPERTY(EditAnywhere)
-	class AActor* SourceActor = nullptr;
-
-	UPROPERTY(EditAnywhere)
-	class AActor* TargetActor = nullptr;
-};
-
-USTRUCT(BlueprintType)
-struct FCameraShakeRequest
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UCameraShakeBase> CameraShakeClass = nullptr;
-
-	UPROPERTY(EditAnywhere)
-	float CameraShakeBaseScale = 1.f;
-
-	UPROPERTY(EditAnywhere)
-	EFeedbackAudience CameraShakeAudience = EFeedbackAudience::Both;
-
-	UPROPERTY(EditAnywhere)
-	class AActor* SourceActor = nullptr;
-
-	UPROPERTY(EditAnywhere)
-	class AActor* TargetActor = nullptr;
-
-	UPROPERTY(EditAnywhere)
-	FVector EventLocation = FVector::ZeroVector;
 };
