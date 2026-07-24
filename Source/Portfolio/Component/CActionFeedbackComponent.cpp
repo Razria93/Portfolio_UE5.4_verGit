@@ -87,7 +87,7 @@ bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackReque
 	return true;
 }
 
-EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FActionFeedbackKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const
+EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FActionFeedbackMatchKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
 	if (InDataTiming != InActionFeedbackRequest.ActionFeedbackTiming)
 		return EActionFeedbackMatchTier::None;
@@ -95,10 +95,10 @@ EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FAc
 	if (InDataTriggerKey != InActionFeedbackRequest.TriggerKey)
 		return EActionFeedbackMatchTier::None;
 
-	const bool bActionExact = (InDataKey.ActionType == InActionFeedbackRequest.ActionFeedbackKey.ActionType);
+	const bool bActionExact = (InDataKey.ActionType == InActionFeedbackRequest.ActionFeedbackMatchKey.ActionType);
 	const bool bActionAny = (InDataKey.ActionType == EActionType::All);
 
-	const bool bIndexExact = (InDataKey.ActionIndex == InActionFeedbackRequest.ActionFeedbackKey.ActionIndex);
+	const bool bIndexExact = (InDataKey.ActionIndex == InActionFeedbackRequest.ActionFeedbackMatchKey.ActionIndex);
 	const bool bIndexAny = (InDataKey.ActionIndex == INDEX_NONE);
 
 	if (bActionExact && bIndexExact)
@@ -113,45 +113,39 @@ EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FAc
 	return EActionFeedbackMatchTier::None;
 }
 
-FActionVFXExecutionKey UCActionFeedbackComponent::BuildActionVFXExecutionKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const
+FActionVFXPlaybackKey UCActionFeedbackComponent::BuildActionVFXPlaybackKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const
 {
-	FActionVFXExecutionKey executionKey;
+	FActionVFXPlaybackKey playbackKey;
 
-	executionKey.ActionFeedbackKey = InActionVFXFeedbackData.ActionFeedbackKey;
-	executionKey.ActionFeedbackTiming = InActionVFXFeedbackData.ActionFeedbackTiming;
-	executionKey.TriggerKey = InActionVFXFeedbackData.TriggerKey;
-	executionKey.VFXPlayType = InActionVFXFeedbackData.VFXPlayType;
-	executionKey.VFX = InActionVFXFeedbackData.VFX;
-	executionKey.SocketName = InActionVFXFeedbackData.SocketName;
-	executionKey.RelativeLocation = InActionVFXFeedbackData.RelativeLocation;
-	executionKey.RelativeRotation = InActionVFXFeedbackData.RelativeRotation;
-	executionKey.RelativeScale = InActionVFXFeedbackData.RelativeScale;
+	playbackKey.VFXPlayType = InActionVFXFeedbackData.VFXPlayType;
+	playbackKey.VFX = InActionVFXFeedbackData.VFX;
+	playbackKey.SocketName = InActionVFXFeedbackData.SocketName;
+	playbackKey.RelativeLocation = InActionVFXFeedbackData.RelativeLocation;
+	playbackKey.RelativeRotation = InActionVFXFeedbackData.RelativeRotation;
+	playbackKey.RelativeScale = InActionVFXFeedbackData.RelativeScale;
 
-	return executionKey;
+	return playbackKey;
 }
 
-FActionSFXExecutionKey UCActionFeedbackComponent::BuildActionSFXExecutionKey(const FActionSFXFeedbackData& InActionSFXFeedbackData) const
+FActionSFXPlaybackKey UCActionFeedbackComponent::BuildActionSFXPlaybackKey(const FActionSFXFeedbackData& InActionSFXFeedbackData) const
 {
-	FActionSFXExecutionKey executionKey;
+	FActionSFXPlaybackKey playbackKey;
 
-	executionKey.ActionFeedbackKey = InActionSFXFeedbackData.ActionFeedbackKey;
-	executionKey.ActionFeedbackTiming = InActionSFXFeedbackData.ActionFeedbackTiming;
-	executionKey.TriggerKey = InActionSFXFeedbackData.TriggerKey;
-	executionKey.SFXPlayType = InActionSFXFeedbackData.SFXPlayType;
-	executionKey.SFX = InActionSFXFeedbackData.SFX;
+	playbackKey.SFXPlayType = InActionSFXFeedbackData.SFXPlayType;
+	playbackKey.SFX = InActionSFXFeedbackData.SFX;
 
-	return executionKey;
+	return playbackKey;
 }
 
 void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
 	EActionFeedbackMatchTier bestTier = EActionFeedbackMatchTier::None;
-	const FTrailFeedbackData* bestData = nullptr;
+	const FActionTrailFeedbackData* bestData = nullptr;
 	int32 bestMatchCount = 0;
 
-	for (const FTrailFeedbackData& trailFeedbackData : TrailFeedbackDatas)
+	for (const FActionTrailFeedbackData& trailFeedbackData : TrailFeedbackDatas)
 	{
-		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(trailFeedbackData.ActionFeedbackKey, trailFeedbackData.ActionFeedbackTiming, trailFeedbackData.TriggerKey, InActionFeedbackRequest);
+		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(trailFeedbackData.ActionFeedbackMatchKey, trailFeedbackData.ActionFeedbackTiming, trailFeedbackData.TriggerKey, InActionFeedbackRequest);
 
 		if (matchTier == EActionFeedbackMatchTier::None) continue;
 		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
@@ -190,7 +184,7 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 
 	for (const FActionVFXFeedbackData& actionVFXFeedbackData : VFXFeedbackDatas)
 	{
-		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(actionVFXFeedbackData.ActionFeedbackKey, actionVFXFeedbackData.ActionFeedbackTiming, actionVFXFeedbackData.TriggerKey, InActionFeedbackRequest);
+		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(actionVFXFeedbackData.ActionFeedbackMatchKey, actionVFXFeedbackData.ActionFeedbackTiming, actionVFXFeedbackData.TriggerKey, InActionFeedbackRequest);
 
 		if (matchTier == EActionFeedbackMatchTier::None) continue;
 		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
@@ -213,19 +207,19 @@ void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest
 	}
 
 	FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("VFX"), matchedDatas.Num());
-	TSet<FActionVFXExecutionKey> executionKeys;
+	TSet<FActionVFXPlaybackKey> playbackKeys;
 
 	for (const FActionVFXFeedbackData* data : matchedDatas)
 	{
-		const FActionVFXExecutionKey executionKey = BuildActionVFXExecutionKey(*data);
+		const FActionVFXPlaybackKey playbackKey = BuildActionVFXPlaybackKey(*data);
 
-		if (executionKeys.Contains(executionKey))
+		if (playbackKeys.Contains(playbackKey))
 		{
-			FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), data ? data->VFX : nullptr, TEXT("DuplicateExecutionKey"));
+			FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), data ? data->VFX : nullptr, TEXT("DuplicatePlaybackKey"));
 			continue;
 		}
 
-		executionKeys.Add(executionKey);
+		playbackKeys.Add(playbackKey);
 		PlayActionVFX(*data);
 	}
 }
@@ -237,7 +231,7 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 
 	for (const FActionSFXFeedbackData& actionSFXFeedbackData : SFXFeedbackDatas)
 	{
-		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(actionSFXFeedbackData.ActionFeedbackKey, actionSFXFeedbackData.ActionFeedbackTiming, actionSFXFeedbackData.TriggerKey, InActionFeedbackRequest);
+		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(actionSFXFeedbackData.ActionFeedbackMatchKey, actionSFXFeedbackData.ActionFeedbackTiming, actionSFXFeedbackData.TriggerKey, InActionFeedbackRequest);
 
 		if (matchTier == EActionFeedbackMatchTier::None) continue;
 		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
@@ -260,19 +254,19 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 	}
 
 	FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("SFX"), matchedDatas.Num());
-	TSet<FActionSFXExecutionKey> executionKeys;
+	TSet<FActionSFXPlaybackKey> playbackKeys;
 
 	for (const FActionSFXFeedbackData* data : matchedDatas)
 	{
-		const FActionSFXExecutionKey executionKey = BuildActionSFXExecutionKey(*data);
+		const FActionSFXPlaybackKey playbackKey = BuildActionSFXPlaybackKey(*data);
 
-		if (executionKeys.Contains(executionKey))
+		if (playbackKeys.Contains(playbackKey))
 		{
-			FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), data ? data->SFX : nullptr, TEXT("DuplicateExecutionKey"));
+			FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), data ? data->SFX : nullptr, TEXT("DuplicatePlaybackKey"));
 			continue;
 		}
 
-		executionKeys.Add(executionKey);
+		playbackKeys.Add(playbackKey);
 		PlayActionSFX(*data);
 	}
 }

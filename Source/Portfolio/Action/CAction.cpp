@@ -500,8 +500,8 @@ FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTi
 
 	if (!ActiveDataKey_Cached.IsValidMinimal()) return request;
 
-	request.ActionFeedbackKey.ActionType = ActiveDataKey_Cached.ActionType;
-	request.ActionFeedbackKey.ActionIndex = ActiveDataKey_Cached.ActionIndex;
+	request.ActionFeedbackMatchKey.ActionType = ActiveDataKey_Cached.ActionType;
+	request.ActionFeedbackMatchKey.ActionIndex = ActiveDataKey_Cached.ActionIndex;
 	request.ActionFeedbackTiming = InTiming;
 	request.TriggerKey = InTriggerKey;
 

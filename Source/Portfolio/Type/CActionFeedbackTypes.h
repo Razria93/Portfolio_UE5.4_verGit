@@ -49,7 +49,7 @@ enum class EActionSFXPlayType : uint8
 // Key / Identifier
 
 USTRUCT(BlueprintType)
-struct FActionFeedbackKey
+struct FActionFeedbackMatchKey
 {
 	GENERATED_BODY()
 
@@ -61,10 +61,10 @@ public:
 	int32 ActionIndex = INDEX_NONE;
 
 public:
-	FActionFeedbackKey() = default;
+	FActionFeedbackMatchKey() = default;
 
 public:
-	bool operator==(const FActionFeedbackKey& InOther) const
+	bool operator==(const FActionFeedbackMatchKey& InOther) const
 	{
 		return ActionType == InOther.ActionType
 			&& ActionIndex == InOther.ActionIndex;
@@ -80,7 +80,7 @@ struct FActionFeedbackRequest
 
 public:
 	UPROPERTY(EditAnywhere)
-	FActionFeedbackKey ActionFeedbackKey = FActionFeedbackKey();
+	FActionFeedbackMatchKey ActionFeedbackMatchKey = FActionFeedbackMatchKey();
 
 	UPROPERTY(EditAnywhere)
 	EActionFeedbackTiming ActionFeedbackTiming = EActionFeedbackTiming::None;
@@ -123,7 +123,7 @@ struct FActionVFXFeedbackData
 
 public:
 	UPROPERTY(EditAnywhere)
-	FActionFeedbackKey ActionFeedbackKey = FActionFeedbackKey();
+	FActionFeedbackMatchKey ActionFeedbackMatchKey = FActionFeedbackMatchKey();
 
 	UPROPERTY(EditAnywhere)
 	EActionFeedbackTiming ActionFeedbackTiming = EActionFeedbackTiming::None;
@@ -160,7 +160,7 @@ struct FActionSFXFeedbackData
 
 public:
 	UPROPERTY(EditAnywhere)
-	FActionFeedbackKey ActionFeedbackKey = FActionFeedbackKey();
+	FActionFeedbackMatchKey ActionFeedbackMatchKey = FActionFeedbackMatchKey();
 
 	UPROPERTY(EditAnywhere)
 	EActionFeedbackTiming ActionFeedbackTiming = EActionFeedbackTiming::None;
@@ -181,20 +181,11 @@ public:
 // Runtime Key / Playback Key
 
 USTRUCT()
-struct FActionVFXExecutionKey
+struct FActionVFXPlaybackKey
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient)
-	FActionFeedbackKey ActionFeedbackKey = FActionFeedbackKey();
-
-	UPROPERTY(Transient)
-	EActionFeedbackTiming ActionFeedbackTiming = EActionFeedbackTiming::None;
-
-	UPROPERTY(Transient)
-	FName TriggerKey = NAME_None;
-
 	UPROPERTY(Transient)
 	EActionVFXPlayType VFXPlayType = EActionVFXPlayType::Once;
 
@@ -214,15 +205,12 @@ public:
 	FVector RelativeScale = FVector(1.f, 1.f, 1.f);
 
 public:
-	FActionVFXExecutionKey() = default;
+	FActionVFXPlaybackKey() = default;
 
 public:
-	bool operator==(const FActionVFXExecutionKey& InOther) const
+	bool operator==(const FActionVFXPlaybackKey& InOther) const
 	{
-		return ActionFeedbackKey == InOther.ActionFeedbackKey
-			&& ActionFeedbackTiming == InOther.ActionFeedbackTiming
-			&& TriggerKey == InOther.TriggerKey
-			&& VFXPlayType == InOther.VFXPlayType
+		return VFXPlayType == InOther.VFXPlayType
 			&& VFX == InOther.VFX
 			&& SocketName == InOther.SocketName
 			&& RelativeLocation == InOther.RelativeLocation
@@ -231,14 +219,10 @@ public:
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FActionVFXExecutionKey& InKey)
+FORCEINLINE uint32 GetTypeHash(const FActionVFXPlaybackKey& InKey)
 {
 	uint32 H = 0;
 
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionFeedbackKey.ActionType)));
-	H = HashCombine(H, GetTypeHash(InKey.ActionFeedbackKey.ActionIndex));
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionFeedbackTiming)));
-	H = HashCombine(H, GetTypeHash(InKey.TriggerKey));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.VFXPlayType)));
 	H = HashCombine(H, GetTypeHash(InKey.VFX));
 	H = HashCombine(H, GetTypeHash(InKey.SocketName));
@@ -259,20 +243,11 @@ FORCEINLINE uint32 GetTypeHash(const FActionVFXExecutionKey& InKey)
 }
 
 USTRUCT()
-struct FActionSFXExecutionKey
+struct FActionSFXPlaybackKey
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient)
-	FActionFeedbackKey ActionFeedbackKey = FActionFeedbackKey();
-
-	UPROPERTY(Transient)
-	EActionFeedbackTiming ActionFeedbackTiming = EActionFeedbackTiming::None;
-
-	UPROPERTY(Transient)
-	FName TriggerKey = NAME_None;
-
 	UPROPERTY(Transient)
 	EActionSFXPlayType SFXPlayType = EActionSFXPlayType::Once;
 
@@ -280,27 +255,20 @@ public:
 	TObjectPtr<class USoundBase> SFX = nullptr;
 
 public:
-	FActionSFXExecutionKey() = default;
+	FActionSFXPlaybackKey() = default;
 
 public:
-	bool operator==(const FActionSFXExecutionKey& InOther) const
+	bool operator==(const FActionSFXPlaybackKey& InOther) const
 	{
-		return ActionFeedbackKey == InOther.ActionFeedbackKey
-			&& ActionFeedbackTiming == InOther.ActionFeedbackTiming
-			&& TriggerKey == InOther.TriggerKey
-			&& SFXPlayType == InOther.SFXPlayType
+		return SFXPlayType == InOther.SFXPlayType
 			&& SFX == InOther.SFX;
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FActionSFXExecutionKey& InKey)
+FORCEINLINE uint32 GetTypeHash(const FActionSFXPlaybackKey& InKey)
 {
 	uint32 H = 0;
 
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionFeedbackKey.ActionType)));
-	H = HashCombine(H, GetTypeHash(InKey.ActionFeedbackKey.ActionIndex));
-	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.ActionFeedbackTiming)));
-	H = HashCombine(H, GetTypeHash(InKey.TriggerKey));
 	H = HashCombine(H, GetTypeHash(static_cast<uint8>(InKey.SFXPlayType)));
 	H = HashCombine(H, GetTypeHash(InKey.SFX));
 

@@ -448,8 +448,8 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 
 	if (!ActiveDataKey_Cached.IsValidMinimal()) return request;
 
-	request.ReactionFeedbackKey.ReactionType = ActiveDataKey_Cached.ReactionType;
-	request.ReactionFeedbackKey.DamageSpecKey = ActiveDataKey_Cached.DamageSpecKey;
+	request.ReactionFeedbackMatchKey.ReactionType = ActiveDataKey_Cached.ReactionType;
+	request.ReactionFeedbackMatchKey.DamageSpecKey = ActiveDataKey_Cached.DamageSpecKey;
 	request.ReactionFeedbackTiming = InTiming;
 	request.TriggerKey = InTriggerKey;
 
