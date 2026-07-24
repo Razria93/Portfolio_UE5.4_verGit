@@ -273,7 +273,7 @@ public:
 // Resolution / Resolve Result
 
 USTRUCT(BlueprintType)
-struct FActionCombatSignalCueRequest
+struct FActionCombatSignalCueResolution
 {
 	GENERATED_BODY()
 
@@ -285,7 +285,7 @@ public:
 	FName CueTag = NAME_None;
 
 public:
-	bool IsValidRequest() const
+	bool IsValidResolution() const
 	{
 		return bAccepted
 			&& !CueTag.IsNone();

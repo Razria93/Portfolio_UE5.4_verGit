@@ -22,5 +22,5 @@ public:
 	int32 Num() const { return PatrolPoints.Num(); }
 
 	UFUNCTION()
-	bool GetPointData(int32 InIndex, FPatrolPointData& OutPatrolPointData) const;
+	bool GetPointSnapshot(int32 InIndex, FPatrolPointSnapshot& OutPatrolPointSnapshot) const;
 };

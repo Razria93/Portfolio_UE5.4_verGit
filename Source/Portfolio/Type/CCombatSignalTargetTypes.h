@@ -40,7 +40,7 @@ public:
 	class AActor* DamageCauser = nullptr;
 
 	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+	FHitImpactContext HitImpactContext = FHitImpactContext();
 
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
@@ -49,7 +49,7 @@ public:
 	FDamageSpec DamageSpec = FDamageSpec();
 
 	UPROPERTY(Transient)
-	FDamageAmount DamageAmount = FDamageAmount();
+	FDamageRequestAmount DamageRequestAmount = FDamageRequestAmount();
 
 	UPROPERTY(Transient)
 	float RequestedDamage = 0.f;
@@ -77,7 +77,7 @@ public:
 	class AActor* DamageCauser = nullptr;
 
 	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+	FHitImpactContext HitImpactContext = FHitImpactContext();
 
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();

@@ -506,16 +506,16 @@ bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
 
 	FCombatCollisionProfilingCounters::RecordActionCombatSignalCue();
 
-	FActionCombatSignalCueRequest request;
-	if (!activeExecutor->ResolveNotifyCombatSignalCue(InCueTag, request))
+	FActionCombatSignalCueResolution resolution;
+	if (!activeExecutor->ResolveNotifyCombatSignalCue(InCueTag, resolution))
 	{
 		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, InCueTag, TEXT("Rejected"), TEXT("ResolveCueFailed"));
 		return false;
 	}
 
-	if (!request.IsValidRequest())
+	if (!resolution.IsValidResolution())
 	{
-		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, InCueTag, TEXT("Rejected"), TEXT("InvalidCueRequest"));
+		FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, InCueTag, TEXT("Rejected"), TEXT("InvalidCueResolution"));
 		return false;
 	}
 
@@ -525,8 +525,8 @@ bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
 		return false;
 	}
 
-	const bool bRequested = CombatSignalSourceComp_Injected->RequestAICombatSignalCue(request.CueTag);
-	FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, request.CueTag, bRequested ? TEXT("Accepted") : TEXT("Rejected"), bRequested ? nullptr : TEXT("SourceRejectedCue"));
+	const bool bRequested = CombatSignalSourceComp_Injected->RequestAICombatSignalCue(resolution.CueTag);
+	FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, resolution.CueTag, bRequested ? TEXT("Accepted") : TEXT("Rejected"), bRequested ? nullptr : TEXT("SourceRejectedCue"));
 	return bRequested;
 }
 

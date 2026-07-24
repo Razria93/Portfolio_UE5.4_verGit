@@ -17,7 +17,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
-	TArray<FTrailFeedbackData> TrailFeedbackDatas;
+	TArray<FActionTrailFeedbackData> TrailFeedbackDatas;
 
 	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
 	TArray<FActionVFXFeedbackData> VFXFeedbackDatas;
@@ -47,11 +47,11 @@ private:
 	bool CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const;
 
 private:
-	EActionFeedbackMatchTier CalculateMatchTier(const FActionFeedbackKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const;
+	EActionFeedbackMatchTier CalculateMatchTier(const FActionFeedbackMatchKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const;
 
 private:
-	FActionVFXExecutionKey BuildActionVFXExecutionKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const;
-	FActionSFXExecutionKey BuildActionSFXExecutionKey(const FActionSFXFeedbackData& InActionSFXFeedbackData) const;
+	FActionVFXPlaybackKey BuildActionVFXPlaybackKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const;
+	FActionSFXPlaybackKey BuildActionSFXPlaybackKey(const FActionSFXFeedbackData& InActionSFXFeedbackData) const;
 
 private:
 	void ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);

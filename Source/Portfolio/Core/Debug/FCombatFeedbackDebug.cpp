@@ -17,8 +17,8 @@ namespace
 	{
 		return FString::Printf(
 			TEXT("ActionType=%s | ActionIndex=%d | Timing=%s | TriggerKey=%s"),
-			*UEnum::GetValueAsString(InRequest.ActionFeedbackKey.ActionType),
-			InRequest.ActionFeedbackKey.ActionIndex,
+			*UEnum::GetValueAsString(InRequest.ActionFeedbackMatchKey.ActionType),
+			InRequest.ActionFeedbackMatchKey.ActionIndex,
 			*UEnum::GetValueAsString(InRequest.ActionFeedbackTiming),
 			*InRequest.TriggerKey.ToString());
 	}
@@ -27,10 +27,10 @@ namespace
 	{
 		return FString::Printf(
 			TEXT("ReactionType=%s | WeaponType=%s | ActionType=%s | ActionIndex=%d | Timing=%s | TriggerKey=%s"),
-			*UEnum::GetValueAsString(InRequest.ReactionFeedbackKey.ReactionType),
-			*UEnum::GetValueAsString(InRequest.ReactionFeedbackKey.DamageSpecKey.WeaponType),
-			*UEnum::GetValueAsString(InRequest.ReactionFeedbackKey.DamageSpecKey.ActionType),
-			InRequest.ReactionFeedbackKey.DamageSpecKey.ActionIndex,
+			*UEnum::GetValueAsString(InRequest.ReactionFeedbackMatchKey.ReactionType),
+			*UEnum::GetValueAsString(InRequest.ReactionFeedbackMatchKey.DamageSpecKey.WeaponType),
+			*UEnum::GetValueAsString(InRequest.ReactionFeedbackMatchKey.DamageSpecKey.ActionType),
+			InRequest.ReactionFeedbackMatchKey.DamageSpecKey.ActionIndex,
 			*UEnum::GetValueAsString(InRequest.ReactionFeedbackTiming),
 			*InRequest.TriggerKey.ToString());
 	}

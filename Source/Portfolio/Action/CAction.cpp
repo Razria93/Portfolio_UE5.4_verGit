@@ -475,16 +475,16 @@ void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTrig
 	PlayFeedbackRequest(feedbackRequest);
 }
 
-bool UCAction::ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueRequest& OutRequest) const
+bool UCAction::ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueResolution& OutResolution) const
 {
-	OutRequest = FActionCombatSignalCueRequest();
+	OutResolution = FActionCombatSignalCueResolution();
 
 	if (InCueTag.IsNone()) return false;
 
-	OutRequest.bAccepted = true;
-	OutRequest.CueTag = InCueTag;
+	OutResolution.bAccepted = true;
+	OutResolution.CueTag = InCueTag;
 
-	return OutRequest.IsValidRequest();
+	return OutResolution.IsValidResolution();
 }
 
 void UCAction::PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const
@@ -500,8 +500,8 @@ FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTi
 
 	if (!ActiveDataKey_Cached.IsValidMinimal()) return request;
 
-	request.ActionFeedbackKey.ActionType = ActiveDataKey_Cached.ActionType;
-	request.ActionFeedbackKey.ActionIndex = ActiveDataKey_Cached.ActionIndex;
+	request.ActionFeedbackMatchKey.ActionType = ActiveDataKey_Cached.ActionType;
+	request.ActionFeedbackMatchKey.ActionIndex = ActiveDataKey_Cached.ActionIndex;
 	request.ActionFeedbackTiming = InTiming;
 	request.TriggerKey = InTriggerKey;
 
@@ -516,7 +516,7 @@ void UCAction::PushHitContext()
 		return;
 	}
 
-	WeaponComp_Injected->PushContext(BuildActionContext());
+	WeaponComp_Injected->PushActionDataKey(ActiveDataKey_Cached);
 }
 
 void UCAction::ClearHitContext()
@@ -528,16 +528,6 @@ void UCAction::ClearHitContext()
 	}
 
 	WeaponComp_Injected->ClearContext();
-}
-
-FActionContext UCAction::BuildActionContext() const
-{
-	FActionContext context;
-
-	context.ActionType = ActiveDataKey_Cached.ActionType;
-	context.ActionIndex = ActiveDataKey_Cached.ActionIndex;
-
-	return context;
 }
 
 void UCAction::OpenAllowInterventionWindow(FName InWindowKey)

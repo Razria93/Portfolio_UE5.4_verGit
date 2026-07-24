@@ -87,12 +87,12 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 		return EBTNodeResult::Failed;
 	}
 
-	FPatrolPointData nextPatrolPointData;
-	if (!patrolPath->GetPointData(nextIndex, nextPatrolPointData)) return EBTNodeResult::Failed;
+	FPatrolPointSnapshot nextPatrolPointSnapshot;
+	if (!patrolPath->GetPointSnapshot(nextIndex, nextPatrolPointSnapshot)) return EBTNodeResult::Failed;
 
 	blackboardComp->SetValueAsBool(CAIKey::Patrol::bPatrolReverse.KeyName, bPatrolReverse);
 	blackboardComp->SetValueAsInt(CAIKey::Patrol::PatrolIndex.KeyName, nextIndex);
-	blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName, nextPatrolPointData.Location);
+	blackboardComp->SetValueAsVector(CAIKey::Patrol::PatrolLocation.KeyName, nextPatrolPointSnapshot.Location);
 
 	return EBTNodeResult::Succeeded;
 }

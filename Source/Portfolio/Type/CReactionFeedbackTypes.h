@@ -42,7 +42,7 @@ enum class EReactionSFXPlayType : uint8
 // Key / Identifier
 
 USTRUCT(BlueprintType)
-struct FReactionFeedbackKey
+struct FReactionFeedbackMatchKey
 {
 	GENERATED_BODY()
 
@@ -54,10 +54,10 @@ public:
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
 
 public:
-	FReactionFeedbackKey() = default;
+	FReactionFeedbackMatchKey() = default;
 
 public:
-	bool operator==(const FReactionFeedbackKey& InOther) const
+	bool operator==(const FReactionFeedbackMatchKey& InOther) const
 	{
 		return ReactionType == InOther.ReactionType
 			&& DamageSpecKey == InOther.DamageSpecKey;
@@ -73,7 +73,7 @@ struct FReactionFeedbackRequest
 
 public:
 	UPROPERTY(Transient)
-	FReactionFeedbackKey ReactionFeedbackKey = FReactionFeedbackKey();
+	FReactionFeedbackMatchKey ReactionFeedbackMatchKey = FReactionFeedbackMatchKey();
 
 	UPROPERTY(Transient)
 	EReactionFeedbackTiming ReactionFeedbackTiming = EReactionFeedbackTiming::None;
@@ -94,7 +94,7 @@ struct FReactionVFXFeedbackData
 
 public:
 	UPROPERTY(EditAnywhere)
-	FReactionFeedbackKey ReactionFeedbackKey = FReactionFeedbackKey();
+	FReactionFeedbackMatchKey ReactionFeedbackMatchKey = FReactionFeedbackMatchKey();
 
 	UPROPERTY(EditAnywhere)
 	EReactionFeedbackTiming ReactionFeedbackTiming = EReactionFeedbackTiming::None;
@@ -131,7 +131,7 @@ struct FReactionSFXFeedbackData
 
 public:
 	UPROPERTY(EditAnywhere)
-	FReactionFeedbackKey ReactionFeedbackKey = FReactionFeedbackKey();
+	FReactionFeedbackMatchKey ReactionFeedbackMatchKey = FReactionFeedbackMatchKey();
 
 	UPROPERTY(EditAnywhere)
 	EReactionFeedbackTiming ReactionFeedbackTiming = EReactionFeedbackTiming::None;
@@ -152,7 +152,7 @@ public:
 // Runtime Key / Playback Key
 
 USTRUCT()
-struct FReactionVFXExecutionKey
+struct FReactionVFXPlaybackKey
 {
 	GENERATED_BODY()
 
@@ -176,10 +176,10 @@ public:
 	FVector RelativeScale = FVector::OneVector;
 
 public:
-	FReactionVFXExecutionKey() = default;
+	FReactionVFXPlaybackKey() = default;
 
 public:
-	bool operator==(const FReactionVFXExecutionKey& InOther) const
+	bool operator==(const FReactionVFXPlaybackKey& InOther) const
 	{
 		return VFXPlayType == InOther.VFXPlayType
 			&& VFX == InOther.VFX
@@ -190,7 +190,7 @@ public:
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FReactionVFXExecutionKey& InKey)
+FORCEINLINE uint32 GetTypeHash(const FReactionVFXPlaybackKey& InKey)
 {
 	uint32 H = 0;
 
@@ -214,7 +214,7 @@ FORCEINLINE uint32 GetTypeHash(const FReactionVFXExecutionKey& InKey)
 }
 
 USTRUCT()
-struct FReactionSFXExecutionKey
+struct FReactionSFXPlaybackKey
 {
 	GENERATED_BODY()
 
@@ -226,17 +226,17 @@ public:
 	TObjectPtr<class USoundBase> SFX = nullptr;
 
 public:
-	FReactionSFXExecutionKey() = default;
+	FReactionSFXPlaybackKey() = default;
 
 public:
-	bool operator==(const FReactionSFXExecutionKey& InOther) const
+	bool operator==(const FReactionSFXPlaybackKey& InOther) const
 	{
 		return SFXPlayType == InOther.SFXPlayType
 			&& SFX == InOther.SFX;
 	}
 };
 
-FORCEINLINE uint32 GetTypeHash(const FReactionSFXExecutionKey& InKey)
+FORCEINLINE uint32 GetTypeHash(const FReactionSFXPlaybackKey& InKey)
 {
 	uint32 H = 0;
 

@@ -59,7 +59,7 @@ private:
 	FWeaponContext LastWeaponContext_Cached;
 
 	UPROPERTY(Transient)
-	FActionContext LastActionContext_Cached;
+	FActionDataKey LastActionDataKey_Cached;
 
 
 private:
@@ -110,13 +110,13 @@ public:
 	// Hit Context Provider Query
 	virtual const FOverlapContext& GetLastOverlapContext() const override;
 	virtual const FWeaponContext& GetLastWeaponContext() const override;
-	virtual const FActionContext& GetLastActionContext() const override;
+	virtual const FActionDataKey& GetLastActionDataKey() const override;
 
 public:
 	// Hit Context Provider Mutation
 	virtual void SetLastOverlapContext(const FOverlapContext& InOverlapContext) override;
 	virtual void SetLastWeaponContext(const FWeaponContext& InWeaponContext) override;
-	virtual void SetLastActionContext(const FActionContext& InActionContext) override;
+	virtual void SetLastActionDataKey(const FActionDataKey& InActionDataKey) override;
 
 public:
 	// Query
@@ -151,7 +151,7 @@ public:
 
 private:
 	FOverlapContext BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const;
-	FDamageImpactInfo BuildDamageImpactInfo(const FOverlapContext& InOverlapContext) const;
+	FHitImpactContext BuildHitImpactContext(const FOverlapContext& InOverlapContext) const;
 	FHitContext BuildHitContext(const FOverlapContext& InOverlapContext) const;
 
 private:

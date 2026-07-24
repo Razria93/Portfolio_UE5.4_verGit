@@ -469,7 +469,7 @@ enum class EWeaponType : uint8
 
 ```cpp
 USTRUCT(BlueprintType)
-struct FDamageAmount
+struct FDamageRequestAmount
 {
 	GENERATED_BODY()
 
@@ -511,8 +511,8 @@ P3 항목은 이번 브랜치에서 코드 수정하지 않고, 유지 또는 �
 
 판단:
 - enum의 `None`, `All`, `Max` 설명은 sentinel / wildcard 의미를 설명하므로 유지한다.
-- `FDamageAmount`의 damage 단계 설명은 `RequestedDamage`, `MitigatedDamage`, `FinalTakenDamage`, `CommittedDamage`의 파이프라인 의미를 구분하므로 유지한다.
-- `FAIContext`의 field group 주석과 `FOverlapContext`의 actor/component alias 주석은 구조체 분리 / 헤더 배치 규칙 작업에서 다시 판단한다.
+- `FDamageRequestAmount`의 damage 단계 설명은 `RequestedDamage`, `MitigatedDamage`, `FinalTakenDamage`, `CommittedDamage`의 파이프라인 의미를 구분하므로 유지한다.
+- `FAIBlackboardUpdateContext`의 field group 주석과 `FOverlapContext`의 actor/component alias 주석은 구조체 분리 / 헤더 배치 규칙 작업에서 다시 판단한다.
 
 후속 범위:
 - 구조체 나누기 / 헤더 배치 규칙

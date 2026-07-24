@@ -107,7 +107,7 @@ void UCWeaponComponent::CommitUnequipWeapon()
 	ChangeWeaponType(EWeaponType::Unarmed);
 }
 
-void UCWeaponComponent::PushContext(const FActionContext& InActionContext)
+void UCWeaponComponent::PushActionDataKey(const FActionDataKey& InActionDataKey)
 {
 	if (!IsValid(WeaponActor)) return;
 
@@ -117,7 +117,7 @@ void UCWeaponComponent::PushContext(const FActionContext& InActionContext)
 	const FWeaponContext weaponContext = BuildWeaponContext();
 
 	provider->SetLastWeaponContext(weaponContext);
-	provider->SetLastActionContext(InActionContext);
+	provider->SetLastActionDataKey(InActionDataKey);
 }
 
 void UCWeaponComponent::ClearContext()
@@ -129,7 +129,7 @@ void UCWeaponComponent::ClearContext()
 
 	provider->SetLastOverlapContext(FOverlapContext());
 	provider->SetLastWeaponContext(FWeaponContext());
-	provider->SetLastActionContext(FActionContext());
+	provider->SetLastActionDataKey(FActionDataKey());
 }
 
 void UCWeaponComponent::ClearWeaponRuntimeState()

@@ -129,17 +129,16 @@ public:
 
 public:
 	// Combat Signal
-	virtual bool ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueRequest& OutRequest) const;
+	virtual bool ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueResolution& OutResolution) const;
 
 protected:
 	void PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const;
 	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 protected:
-	// Action-only hit context
+	// Hit Source Action Key
 	void PushHitContext();
 	void ClearHitContext();
-	virtual FActionContext BuildActionContext() const;
 
 public:
 	// Intervention Window

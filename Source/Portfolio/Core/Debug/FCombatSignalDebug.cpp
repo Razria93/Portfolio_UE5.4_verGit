@@ -33,8 +33,8 @@ namespace
 	{
 		FDamageSpecKey damageSpecKey;
 		damageSpecKey.WeaponType = InHitContext.WeaponContext.WeaponType;
-		damageSpecKey.ActionType = InHitContext.ActionContext.ActionType;
-		damageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
+		damageSpecKey.ActionType = InHitContext.ActionDataKey.ActionType;
+		damageSpecKey.ActionIndex = InHitContext.ActionDataKey.ActionIndex;
 
 		return FormatCombatSignalDamageSpecKey(damageSpecKey);
 	}
@@ -92,7 +92,7 @@ void FCombatSignalDebug::RecordWeaponOverlapAcceptedForAudit(const FHitContext& 
 		*GetNameSafe(overlapContext.OtherActor),
 		*GetNameSafe(overlapContext.OtherComponent),
 		overlapContext.HitWindowId,
-		*UEnum::GetValueAsString(InHitContext.DamageImpactInfo.Source),
+		*UEnum::GetValueAsString(InHitContext.HitImpactContext.Source),
 		*FormatCombatSignalHitContextDamageSpecKey(InHitContext)));
 }
 
@@ -146,8 +146,8 @@ void FCombatSignalDebug::PrintWeaponHitContextDebug(const FHitContext& InHitCont
 		overlapContext.OtherBodyIndex,
 		overlapContext.bFromSweep ? TEXT("true") : TEXT("false"),
 		overlapContext.HitWindowId,
-		InHitContext.DamageImpactInfo.bHasHitResult ? TEXT("true") : TEXT("false"),
-		*UEnum::GetValueAsString(InHitContext.DamageImpactInfo.Source),
+		InHitContext.HitImpactContext.bHasHitResult ? TEXT("true") : TEXT("false"),
+		*UEnum::GetValueAsString(InHitContext.HitImpactContext.Source),
 		*FormatCombatSignalHitContextDamageSpecKey(InHitContext)));
 }
 
@@ -181,7 +181,7 @@ void FCombatSignalDebug::RecordSourceAcceptedForAudit(const FCombatSignalSourceC
 		*GetNameSafe(InContext.Instigator),
 		InContext.HitWindowKey.HitWindowId,
 		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
-		InContext.DamageAmount.RequestDamage,
+		InContext.DamageRequestAmount.RequestDamage,
 		InContext.CommittedDamage));
 }
 
@@ -198,7 +198,7 @@ void FCombatSignalDebug::RecordSourceRejectedForAudit(const FCombatSignalSourceC
 		*GetNameSafe(InContext.Instigator),
 		InContext.HitWindowKey.HitWindowId,
 		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
-		InContext.DamageAmount.RequestDamage,
+		InContext.DamageRequestAmount.RequestDamage,
 		InContext.CommittedDamage));
 }
 
@@ -244,7 +244,7 @@ void FCombatSignalDebug::PrintSourceContextDebug(const FCombatSignalSourceContex
 		InContext.HitWindowKey.HitWindowId,
 		*FormatCombatSignalDamageSpecKey(InContext.DamageSpecKey),
 		InContext.DamageSpec.BaseDamage,
-		InContext.DamageAmount.RequestDamage,
+		InContext.DamageRequestAmount.RequestDamage,
 		InContext.CommittedDamage));
 }
 

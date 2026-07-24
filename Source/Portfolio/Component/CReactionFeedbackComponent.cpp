@@ -85,17 +85,17 @@ bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbac
 		return false;
 	}
 
-	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::None)
+	if (InReactionFeedbackRequest.ReactionFeedbackMatchKey.ReactionType == EReactionType::None)
 	{
 		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidReactionType"));
 		return false;
 	}
-	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::All)
+	if (InReactionFeedbackRequest.ReactionFeedbackMatchKey.ReactionType == EReactionType::All)
 	{
 		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidReactionType"));
 		return false;
 	}
-	if (InReactionFeedbackRequest.ReactionFeedbackKey.ReactionType == EReactionType::Max)
+	if (InReactionFeedbackRequest.ReactionFeedbackMatchKey.ReactionType == EReactionType::Max)
 	{
 		FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("InvalidReactionType"));
 		return false;
@@ -104,7 +104,7 @@ bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbac
 	return true;
 }
 
-bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedbackKey& InDataKey, EReactionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FReactionFeedbackRequest& InReactionFeedbackRequest, int32& OutScore) const
+bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedbackMatchKey& InDataKey, EReactionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FReactionFeedbackRequest& InReactionFeedbackRequest, int32& OutScore) const
 {
 	OutScore = 0;
 
@@ -114,7 +114,7 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 	if (InDataTriggerKey != InReactionFeedbackRequest.TriggerKey)
 		return false;
 
-	const FReactionFeedbackKey& requestKey = InReactionFeedbackRequest.ReactionFeedbackKey;
+	const FReactionFeedbackMatchKey& requestKey = InReactionFeedbackRequest.ReactionFeedbackMatchKey;
 
 	if (InDataKey.ReactionType == requestKey.ReactionType)
 	{
@@ -155,28 +155,28 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 	return true;
 }
 
-FReactionVFXExecutionKey UCReactionFeedbackComponent::BuildReactionVFXExecutionKey(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const
+FReactionVFXPlaybackKey UCReactionFeedbackComponent::BuildReactionVFXPlaybackKey(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const
 {
-	FReactionVFXExecutionKey executionKey;
+	FReactionVFXPlaybackKey playbackKey;
 
-	executionKey.VFXPlayType = InReactionVFXFeedbackData.VFXPlayType;
-	executionKey.VFX = InReactionVFXFeedbackData.VFX;
-	executionKey.SocketName = InReactionVFXFeedbackData.SocketName;
-	executionKey.RelativeLocation = InReactionVFXFeedbackData.RelativeLocation;
-	executionKey.RelativeRotation = InReactionVFXFeedbackData.RelativeRotation;
-	executionKey.RelativeScale = InReactionVFXFeedbackData.RelativeScale;
+	playbackKey.VFXPlayType = InReactionVFXFeedbackData.VFXPlayType;
+	playbackKey.VFX = InReactionVFXFeedbackData.VFX;
+	playbackKey.SocketName = InReactionVFXFeedbackData.SocketName;
+	playbackKey.RelativeLocation = InReactionVFXFeedbackData.RelativeLocation;
+	playbackKey.RelativeRotation = InReactionVFXFeedbackData.RelativeRotation;
+	playbackKey.RelativeScale = InReactionVFXFeedbackData.RelativeScale;
 
-	return executionKey;
+	return playbackKey;
 }
 
-FReactionSFXExecutionKey UCReactionFeedbackComponent::BuildReactionSFXExecutionKey(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const
+FReactionSFXPlaybackKey UCReactionFeedbackComponent::BuildReactionSFXPlaybackKey(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const
 {
-	FReactionSFXExecutionKey executionKey;
+	FReactionSFXPlaybackKey playbackKey;
 
-	executionKey.SFXPlayType = InReactionSFXFeedbackData.SFXPlayType;
-	executionKey.SFX = InReactionSFXFeedbackData.SFX;
+	playbackKey.SFXPlayType = InReactionSFXFeedbackData.SFXPlayType;
+	playbackKey.SFX = InReactionSFXFeedbackData.SFX;
 
-	return executionKey;
+	return playbackKey;
 }
 
 void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackRequest& InReactionFeedbackRequest)
@@ -188,7 +188,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 	{
 		int32 matchScore = INDEX_NONE;
 
-		if (!TryCalculateMatchScore(data.ReactionFeedbackKey, data.ReactionFeedbackTiming, data.TriggerKey, InReactionFeedbackRequest, matchScore))
+		if (!TryCalculateMatchScore(data.ReactionFeedbackMatchKey, data.ReactionFeedbackTiming, data.TriggerKey, InReactionFeedbackRequest, matchScore))
 		{
 			continue;
 		}
@@ -215,7 +215,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 	}
 
 	FCombatFeedbackDebug::RecordReactionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("VFX"), matchedDatas.Num());
-	TSet<FReactionVFXExecutionKey> executionKeys;
+	TSet<FReactionVFXPlaybackKey> playbackKeys;
 
 	for (const FReactionVFXFeedbackData* matchedData : matchedDatas)
 	{
@@ -225,15 +225,15 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		const FReactionVFXExecutionKey executionKey = BuildReactionVFXExecutionKey(*matchedData);
+		const FReactionVFXPlaybackKey playbackKey = BuildReactionVFXPlaybackKey(*matchedData);
 
-		if (executionKeys.Contains(executionKey))
+		if (playbackKeys.Contains(playbackKey))
 		{
-			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), matchedData->VFX, TEXT("DuplicateExecutionKey"));
+			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), matchedData->VFX, TEXT("DuplicatePlaybackKey"));
 			continue;
 		}
 
-		executionKeys.Add(executionKey);
+		playbackKeys.Add(playbackKey);
 		PlayReactionVFX(*matchedData);
 	}
 }
@@ -247,7 +247,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 	{
 		int32 matchScore = INDEX_NONE;
 
-		if (!TryCalculateMatchScore(data.ReactionFeedbackKey, data.ReactionFeedbackTiming, data.TriggerKey, InReactionFeedbackRequest, matchScore))
+		if (!TryCalculateMatchScore(data.ReactionFeedbackMatchKey, data.ReactionFeedbackTiming, data.TriggerKey, InReactionFeedbackRequest, matchScore))
 		{
 			continue;
 		}
@@ -274,7 +274,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 	}
 
 	FCombatFeedbackDebug::RecordReactionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InReactionFeedbackRequest, TEXT("SFX"), matchedDatas.Num());
-	TSet<FReactionSFXExecutionKey> executionKeys;
+	TSet<FReactionSFXPlaybackKey> playbackKeys;
 
 	for (const FReactionSFXFeedbackData* matchedData : matchedDatas)
 	{
@@ -284,15 +284,15 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		const FReactionSFXExecutionKey executionKey = BuildReactionSFXExecutionKey(*matchedData);
+		const FReactionSFXPlaybackKey playbackKey = BuildReactionSFXPlaybackKey(*matchedData);
 
-		if (executionKeys.Contains(executionKey))
+		if (playbackKeys.Contains(playbackKey))
 		{
-			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), matchedData->SFX, TEXT("DuplicateExecutionKey"));
+			FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("SFX"), matchedData->SFX, TEXT("DuplicatePlaybackKey"));
 			continue;
 		}
 
-		executionKeys.Add(executionKey);
+		playbackKeys.Add(playbackKey);
 		PlayReactionSFX(*matchedData);
 	}
 }

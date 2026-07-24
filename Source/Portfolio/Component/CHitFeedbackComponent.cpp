@@ -247,7 +247,7 @@ bool UCHitFeedbackComponent::CanPlayCameraShake(const FCombatSignalTargetPacket&
 
 FVector UCHitFeedbackComponent::ResolveHitFeedbackLocation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	const FDamageImpactInfo& damageHitInfo = InCombatSignalTargetPacket.Context.DamageImpactInfo;
+	const FHitImpactContext& damageHitInfo = InCombatSignalTargetPacket.Context.HitImpactContext;
 
 	if (damageHitInfo.bHasHitResult)
 	{
@@ -259,7 +259,7 @@ FVector UCHitFeedbackComponent::ResolveHitFeedbackLocation(const FCombatSignalTa
 
 FRotator UCHitFeedbackComponent::ResolveHitFeedbackRotation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
-	const FDamageImpactInfo& damageHitInfo = InCombatSignalTargetPacket.Context.DamageImpactInfo;
+	const FHitImpactContext& damageHitInfo = InCombatSignalTargetPacket.Context.HitImpactContext;
 
 	if (damageHitInfo.bHasHitResult)
 	{

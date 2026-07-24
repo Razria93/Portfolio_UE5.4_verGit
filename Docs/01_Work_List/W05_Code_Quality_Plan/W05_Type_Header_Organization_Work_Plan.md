@@ -167,12 +167,10 @@ CReactionKeyTypes.h
 CReactionDataTypes.h
 -> FReactionData, FReactionExecutionContext
 
-CActionTypes.h 임시 잔류 / 후속 정리 후보
--> FActionContext는 현재 hit / combat signal에 실리는 action identity snapshot 성격이다.
--> FActionExecutionContext와 다른 역할이며, FActionDataKey와 필드가 중복된다.
--> 단순 대칭 목적의 FReactionContext는 추가하지 않는다.
--> 최종 후보는 FActionContext 제거 후 FActionDataKey 직접 사용이다.
--> USTRUCT / UPROPERTY 변경 리스크가 있으므로 별도 rename / removal pass에서 처리한다.
+CActionTypes.h
+-> action enum 전용 헤더로 정리 완료
+-> hit / combat signal에 실리던 action identity snapshot은 FActionContext 대신 FActionDataKey를 직접 사용하도록 정리 완료
+-> 단순 대칭 목적의 FReactionContext는 추가하지 않음
 
 CActionOrchestrationTypes.h
 -> EActionStopReason / EActionFinishReason
@@ -299,24 +297,26 @@ Core/Debug/FCombatEngageDebugTypes.h
 
 ### 4.4 배치 / 구성 정리 후보
 
-#### Action / Reaction key / context 구조 정리
+#### Action / Reaction key / context 구조 정리 완료
 
 ```text
 현재 Action
--> CActionTypes.h: enum + FActionDataKey + FActionContext
+-> CActionTypes.h: enum
+-> CActionKeyTypes.h: FActionDataKey + key helper
 -> CActionDataTypes.h: FActionData + FActionExecutionContext
 
 현재 Reaction
 -> CReactionTypes.h: enum
--> CReactionDataTypes.h: FReactionDataKey + FReactionData + FReactionExecutionContext
+-> CReactionKeyTypes.h: FReactionDataKey + key helper
+-> CReactionDataTypes.h: FReactionData + FReactionExecutionContext
 ```
 
 판단:
 
 ```text
--> 현재 분리는 의도된 도메인 설계라기보다 include 부담을 줄이다가 굳어진 비대칭으로 본다.
--> FActionDataKey는 가볍기 때문에 CActionTypes.h에 남았고, FReactionDataKey는 FDamageSpecKey 의존 때문에 CReactionTypes.h에 올라가지 못한 것으로 본다.
--> 최종 목표는 Types / KeyTypes / DataTypes / OrchestrationTypes 책임 분리다.
+-> 기존 분리는 의도된 도메인 설계라기보다 include 부담을 줄이다가 굳어진 비대칭으로 판단했다.
+-> Action / Reaction 모두 Types / KeyTypes / DataTypes / OrchestrationTypes 책임 분리 기준으로 정리했다.
+-> hit / combat signal에 전달되던 FActionContext는 FActionDataKey 직접 사용으로 대체했다.
 ```
 
 권장 최종 구조:
@@ -346,27 +346,30 @@ CReactionDataTypes.h
 -> FReactionExecutionContext
 ```
 
-`FActionContext` 판단:
+`FActionContext` 처리 결과:
 
 ```text
 -> 실제 역할은 action runtime context가 아니라 hit / combat signal에 실리는 action identity snapshot이다.
 -> 현재 필드는 FActionDataKey와 동일하게 ActionType + ActionIndex다.
--> 최종 후보는 FActionContext 제거 후 FActionDataKey 직접 사용이다.
+-> FActionContext는 제거하고 FActionDataKey 직접 사용으로 정리했다.
 -> hit source metadata가 추가될 명확한 계획이 생기면 FActionHitSourceContext 또는 FCombatSourceActionContext rename을 별도 검토한다.
 -> 단순 대칭 목적의 FReactionContext 추가는 금지한다.
 ```
 
-진행 판단:
+검증 결과:
 
 ```text
--> KeyTypes 실제 분리는 현재 Type header organization 브랜치의 다음 코드 작업으로 진행한다.
--> FActionContext 제거 / rename은 USTRUCT / UPROPERTY 변경이므로 Editor load, Blueprint compile, PIE smoke 검증과 묶는 별도 pass에서 처리한다.
+-> KeyTypes 실제 분리 완료.
+-> FActionContext 제거 완료.
+-> PortfolioEditor Win64 Development 빌드 통과.
+-> PIE smoke 정상 작동 확인.
 ```
 
 ```text
 CActionFeedbackTypes.h / CReactionFeedbackTypes.h
--> VFX Data -> VFX RuntimeKey / PlaybackKey -> SFX Data -> SFX RuntimeKey / PlaybackKey 순서로 통일
--> Action feedback execution key와 Reaction feedback execution key의 dedupe 기준 통일
+-> FeedbackMatchKey / FeedbackPlaybackKey 의미 분리 완료
+-> Action feedback execution key와 Reaction feedback execution key를 PlaybackKey로 rename 완료
+-> Action / Reaction playback dedupe 기준 통일 완료
 
 Feedback key model 정리
 
@@ -377,69 +380,67 @@ Feedback key model 정리
 -> Timing / TriggerKey / ActionType / ReactionType은 matching 단계의 입력이며 playback dedupe key에는 포함하지 않는다.
 
 rename / 구조 후보:
--> FActionFeedbackKey -> FActionFeedbackMatchKey
--> FReactionFeedbackKey -> FReactionFeedbackMatchKey
--> FActionVFXExecutionKey -> FActionVFXPlaybackKey
--> FActionSFXExecutionKey -> FActionSFXPlaybackKey
--> FReactionVFXExecutionKey -> FReactionVFXPlaybackKey
--> FReactionSFXExecutionKey -> FReactionSFXPlaybackKey
+-> FActionFeedbackKey -> FActionFeedbackMatchKey 완료
+-> FReactionFeedbackKey -> FReactionFeedbackMatchKey 완료
+-> FActionVFXExecutionKey -> FActionVFXPlaybackKey 완료
+-> FActionSFXExecutionKey -> FActionSFXPlaybackKey 완료
+-> FReactionVFXExecutionKey -> FReactionVFXPlaybackKey 완료
+-> FReactionSFXExecutionKey -> FReactionSFXPlaybackKey 완료
 
 구조 변경:
--> Action PlaybackKey에서 ActionFeedbackKey / Timing / TriggerKey 제거 검토
--> Action / Reaction PlaybackKey를 동일한 playback identity 기준으로 통일
--> 이 항목은 단순 rename pass가 아니라 의미 모델 정리 + rename + dedupe 동작 검증으로 처리
+-> Action PlaybackKey에서 ActionFeedbackMatchKey / Timing / TriggerKey 제거 완료
+-> Action / Reaction PlaybackKey를 effect asset + playback condition 기준으로 통일 완료
+-> 이 항목은 단순 rename이 아니라 의미 모델 정리 + dedupe 동작 변경으로 처리했다.
 
 CAITypes.h
--> audit state가 gameplay context보다 먼저 나오는 배치 정리
--> EPatrolMode와 FPatrolPointData가 함께 읽히도록 배치 정리
+-> EPatrolMode와 FPatrolPointSnapshot이 함께 읽히도록 배치 정리 완료
 
 FActionDataKey vs FActionFeedbackKey
 FReactionDataKey vs FReactionFeedbackKey
--> 목적이 feedback matching이면 FeedbackMatchKey로 분리 명명
--> DataKey 재사용보다 feedback matching 의미를 우선 확인
+-> feedback matching 목적이므로 FeedbackMatchKey로 분리 명명 완료
+-> DataKey 재사용보다 feedback matching 의미를 우선했다.
 
 CCombatSignalSourceTypes.h / CCombatSignalTargetTypes.h
--> RequestDamage vs RequestedDamage 표기 불일치 정리
+-> FDamageRequestAmount / DamageRequestAmount로 request amount wrapper 의미 정리 완료
 ```
 
-### 4.5 rename / 구조 변경 보류 후보
+### 4.5 rename / 구조 변경 처리 결과
 
 ```text
 FTargetData
 -> 설정 Data가 아니라 perception runtime state
--> 후보: FTargetPerceptionState / FPerceptionTargetState
+-> FTargetPerceptionState로 rename 완료
 
 FPatrolPointData
 -> 저장 Data라기보다 patrol point runtime snapshot에 가까움
--> 후보: FPatrolPointSnapshot
+-> FPatrolPointSnapshot으로 rename 완료
 
 FDamageImpactInfo
 -> Info가 넓고 실제 의미는 hit impact context
--> 후보: FHitImpactContext / FDamageImpactContext
+-> FHitImpactContext로 rename 완료
 
 FDamageAmount
 -> RequestDamage float 하나만 감싼 wrapper로는 의미가 약함
--> 후보: 제거 또는 FDamageRequestAmount로 존속
+-> FDamageRequestAmount로 rename 완료
 
 FActionCombatSignalCueRequest
 -> request가 아니라 notify cue 해석 결과에 가까움
--> 후보: FActionCombatSignalCueResult / FActionCombatSignalCueResolution
+-> FActionCombatSignalCueResolution으로 rename 완료
 
 FTrailFeedbackData
 -> action feedback 파일 안에서 유일하게 Action prefix가 없음
--> 후보: FActionTrailFeedbackData
+-> FActionTrailFeedbackData로 rename 완료
 
 FAIContext
 -> perception / home / alert / engage / reaction / dead가 모두 들어간 aggregate
--> 후보: FAIBlackboardUpdateContext 또는 하위 context 분리
+-> FAIBlackboardUpdateContext로 rename 완료
 ```
 
-보류 사유:
+처리 기준:
 
 ```text
-USTRUCT / UENUM BlueprintType rename은 asset / Blueprint serialization 위험이 있다.
-rename은 redirect / build / Editor load / Blueprint compile / PIE smoke를 포함하는 별도 rename pass에서 처리한다.
-FPatrolPointData rename도 다른 rename 후보들과 함께 별도 pass에서 처리한다.
+USTRUCT BlueprintType rename은 asset / Blueprint serialization 위험이 있으므로 build, Editor load, Blueprint compile, PIE smoke 확인과 함께 처리한다.
+이번 브랜치에서 TypeRename 범위로 포함했다.
 ```
 
 ---
@@ -684,8 +685,8 @@ CActionOrchestrationTypes.h
 ```text
 CAITypes.h
 -> EPatrolMode
--> FPatrolPointData
--> FAIContext
+-> FPatrolPointSnapshot
+-> FAIBlackboardUpdateContext
 -> FEngageContext
 ```
 
@@ -698,8 +699,8 @@ CAITypes.h
 목적:
 
 ```text
-- EPatrolMode와 FPatrolPointData를 가까이 배치
-- FPatrolPointData는 rename하지 않고 runtime state 섹션 배치만 정리
+- EPatrolMode와 FPatrolPointSnapshot을 가까이 배치
+- FPatrolPointSnapshot은 patrol point runtime snapshot 의미로 정리
 - 반복되던 Runtime Context 섹션 표기를 하나로 정리
 ```
 
