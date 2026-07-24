@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CAIStructure.h"
+#include "Core/Debug/FAIPerceptionDebugTypes.h"
 
 class PORTFOLIO_API FAIPerceptionDebug
 {

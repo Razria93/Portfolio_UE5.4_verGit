@@ -1,15 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Type/CAIBehaviorTreeTypes.h"
 
 class UBehaviorTreeComponent;
-
-enum class EBTServiceIntervalPreset : uint8
-{
-	Default,
-	Reduced,
-	Aggressive
-};
 
 namespace CBTServiceIntervalHelper
 {

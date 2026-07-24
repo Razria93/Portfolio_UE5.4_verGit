@@ -4,8 +4,8 @@
 #include "GameFramework/Character.h"
 #include "Interface/TargetContextProvider.h"
 #include "Interface/CombatResultReceiver.h"
-#include "Type/CActionOrchestrationStructure.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
 #include "CPlayer.generated.h"
 
 UCLASS()

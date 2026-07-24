@@ -1,8 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CReactionOrchestrationStructure.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CReactionTypes.h"
+#include "Type/CReactionDataTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
 
 class UAnimMontage;
 

@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "AI/Blackboard/CAIKeyFactory.h"
-#include "Type/CHealthStructure.h"
-#include "Type/CStateStructure.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CHealthTypes.h"
+#include "Type/CStateTypes.h"
+#include "Type/CEngageAssignmentTypes.h"
 
 namespace CAIKey
 {

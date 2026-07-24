@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Type/CAIStructure.h"
+#include "Type/CAITypes.h"
 #include "CPatrolPath.generated.h"
 
 UCLASS()

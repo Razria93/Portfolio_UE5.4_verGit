@@ -2,7 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Core/Debug/FCombatEngageDebugTypes.h"
+#include "Type/CEngageAssignmentTypes.h"
 #include "CWorldSubsystem_CombatEngage.generated.h"
 
 UCLASS()

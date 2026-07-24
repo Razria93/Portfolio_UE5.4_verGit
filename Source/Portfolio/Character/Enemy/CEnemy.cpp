@@ -27,7 +27,9 @@
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CActionTypes.h"
+#include "Type/CReactionTypes.h"
+#include "Type/CCombatResultTypes.h"
 #include "AI/Blackboard/CAIKey.h"
 
 namespace

@@ -2,7 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CCombatHitTypes.h"
 #include "HitContextProvider.generated.h"
 
 UINTERFACE(MinimalAPI)

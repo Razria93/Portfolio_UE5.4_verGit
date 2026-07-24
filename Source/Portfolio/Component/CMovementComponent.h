@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CMovementStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CMovementTypes.h"
 #include "CMovementComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))

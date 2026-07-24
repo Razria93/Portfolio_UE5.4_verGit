@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CHealthStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CHealthTypes.h"
 #include "CHealthComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDeadStateChanged, EDeadState, EDeadState);

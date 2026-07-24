@@ -12,7 +12,7 @@
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Core/Debug/FAICombatBTDebug.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
-#include "Type/CAIStructure.h"
+#include "Type/CAITypes.h"
 
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 {

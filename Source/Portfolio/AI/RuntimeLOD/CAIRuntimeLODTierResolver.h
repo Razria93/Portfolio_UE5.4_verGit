@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CStateStructure.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CStateTypes.h"
+#include "Type/CEngageAssignmentTypes.h"
 
 class UBlackboardComponent;
 

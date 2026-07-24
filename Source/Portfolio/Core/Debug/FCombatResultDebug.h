@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CReactionOrchestrationStructure.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CReactionOrchestrationTypes.h"
+#include "Type/CCombatResultTypes.h"
 
 class PORTFOLIO_API FCombatResultDebug
 {

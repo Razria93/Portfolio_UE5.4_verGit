@@ -10,7 +10,9 @@
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
-#include "Type/CWeaponStructure.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CCombatHitTypes.h"
+#include "Type/CCombatSignalTypes.h"
 
 ACWeaponActor::ACWeaponActor()
 {

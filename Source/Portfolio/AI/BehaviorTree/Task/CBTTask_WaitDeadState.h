@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "Type/CHealthStructure.h"
+#include "Type/CHealthTypes.h"
 #include "CBTTask_WaitDeadState.generated.h"
 
 UCLASS()

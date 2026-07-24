@@ -2,7 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CHealthTypes.h"
 #include "CAnimInstance.generated.h"
 
 UCLASS()

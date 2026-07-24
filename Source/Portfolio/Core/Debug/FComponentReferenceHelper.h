@@ -4,7 +4,7 @@
 #include "GameFramework/Actor.h"
 
 #include "Core/Debug/FComponentReferenceDebug.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
 
 class FComponentReferenceHelper
 {

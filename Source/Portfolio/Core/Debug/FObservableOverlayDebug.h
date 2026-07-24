@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CObservableOverlayTypes.h"
 
 class PORTFOLIO_API FObservableOverlayDebug
 {

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CActionOrchestrationStructure.h"
-#include "Type/CReactionOrchestrationStructure.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CActionOrchestrationTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
+#include "Type/CExecutionTypes.h"
 
 class PORTFOLIO_API FExecutionOrchestratorDebug
 {

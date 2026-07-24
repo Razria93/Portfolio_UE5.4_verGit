@@ -2,9 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CActionOrchestrationStructure.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CActionTypes.h"
+#include "Type/CActionDataTypes.h"
+#include "Type/CActionOrchestrationTypes.h"
+#include "Type/CObservableOverlayTypes.h"
+#include "Type/CExecutionTypes.h"
 #include "CActionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FActionTypeChanged, class ACharacter*, InOwnerCharacter, EActionType, InPrevActionType, EActionType, InNewActionType);

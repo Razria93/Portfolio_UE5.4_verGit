@@ -1,6 +1,5 @@
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 
-#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "ProfilingDebugging/CsvProfiler.h"
 
 void FAIBehaviorTreeProfiling::RecordUpdateAIContextTick()

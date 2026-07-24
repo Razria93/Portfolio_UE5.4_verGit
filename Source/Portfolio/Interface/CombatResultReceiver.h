@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CCombatResultTypes.h"
 #include "CombatResultReceiver.generated.h"
 
 UINTERFACE(MinimalAPI)

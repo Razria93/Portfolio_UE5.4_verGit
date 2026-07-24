@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CReactionOrchestrationStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
 #include "CReactionOrchestratorComponent.generated.h"
 
 

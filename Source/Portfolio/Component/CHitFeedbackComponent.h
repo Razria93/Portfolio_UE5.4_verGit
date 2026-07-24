@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CWeaponStructure.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CCombatSignalTargetTypes.h"
+#include "Type/CCombatFeedbackTypes.h"
 #include "CHitFeedbackComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CWorldSubsystemStructure.h"
+#include "Core/Debug/FCombatEngageDebugTypes.h"
+#include "Type/CEngageAssignmentTypes.h"
 
 class AActor;
 class ACAIController;

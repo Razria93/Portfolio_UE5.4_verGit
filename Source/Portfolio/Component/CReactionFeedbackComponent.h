@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CReactionFeedbackStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CReactionFeedbackTypes.h"
 #include "CReactionFeedbackComponent.generated.h"
 
 

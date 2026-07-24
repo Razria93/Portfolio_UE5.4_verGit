@@ -247,14 +247,15 @@ refactor/type-header-helper-boundary
 **1차 조회 대상**
 
 ```text
-Source/Portfolio/Type/CWeaponStructure.h
-Source/Portfolio/Type/CCombatSignalStructure.h
-Source/Portfolio/Type/CActionOrchestrationStructure.h
-Source/Portfolio/Type/CReactionOrchestrationStructure.h
-Source/Portfolio/Type/CReactionFeedbackStructure.h
-Source/Portfolio/Type/CWorldSubsystemStructure.h
-Source/Portfolio/Type/CAIStructure.h
-Source/Portfolio/Type/CCharacterComponentReferenceStructure.h
+Source/Portfolio/Type/CWeapon*.h
+Source/Portfolio/Type/CCombatSignalTypes.h
+Source/Portfolio/Type/CActionOrchestrationTypes.h
+Source/Portfolio/Type/CReactionOrchestrationTypes.h
+Source/Portfolio/Type/CReactionFeedbackTypes.h
+Source/Portfolio/Type/CCombatFeedbackTypes.h
+Source/Portfolio/Type/CEngageAssignmentTypes.h
+Source/Portfolio/Type/CAITypes.h
+Source/Portfolio/Type/CCharacterComponentReferenceTypes.h
 ```
 
 **완료 조건**
@@ -893,7 +894,11 @@ AI LOD / Performance 최적화
 ### 진행 중
 
 ```text
-없음
+Type Header / Helper Boundary 정리
+- Type 헤더 배치 규칙 문서화
+- UHT / BlueprintType 이동 위험 기준 정리
+- include-only 정리 후보 스캔
+- CWeaponStructure.h 분리 지도 작성
 ```
 
 ### 진행 예정
@@ -912,8 +917,6 @@ Code Quality Sweep
   -> read-only API const 정합성 점검
 - Tuning Constants Cleanup
   -> AI / Combat radius, interval, threshold 값을 constants / config / DataAsset 후보로 분류
-- Type Header / Helper Boundary 정리
-  -> 공유 Type 헤더와 helper 책임 경계 점검
 
 Documentation / PR Record
 - PR Record Format Sweep

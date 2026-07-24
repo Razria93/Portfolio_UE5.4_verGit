@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CWeaponStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CObservableOverlayTypes.h"
 #include "Interface/ObservableOverlayPolicy.h"
 #include "CDefenseComponent.generated.h"
 

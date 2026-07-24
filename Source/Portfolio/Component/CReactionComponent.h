@@ -2,10 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CWeaponStructure.h"
-#include "Type/CActionOrchestrationStructure.h"
-#include "Type/CReactionOrchestrationStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CActionTypes.h"
+#include "Type/CReactionTypes.h"
+#include "Type/CReactionDataTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CObservableOverlayTypes.h"
+#include "Type/CExecutionTypes.h"
+#include "Type/CActionOrchestrationTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
 #include "CReactionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReactionTypeChanged, class ACharacter*, InOwnerCharacter, EReactionType, InPrevReactionType, EReactionType, InNewReactionType);

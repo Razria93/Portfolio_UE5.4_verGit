@@ -2,10 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Type/CCharacterComponentReferenceStructure.h"
-#include "Type/CWeaponStructure.h"
-// #include "Type/CActionFeedbackStructure.h"
-#include "Type/CActionOrchestrationStructure.h"
+#include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CActionTypes.h"
+#include "Type/CActionDataTypes.h"
+#include "Type/CActionFeedbackTypes.h"
+#include "Type/CExecutionTypes.h"
+#include "Type/CObservableOverlayTypes.h"
+#include "Type/CActionOrchestrationTypes.h"
 #include "CAction.generated.h"
 
 UCLASS(Abstract) // Base Action Class

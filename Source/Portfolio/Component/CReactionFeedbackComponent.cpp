@@ -8,7 +8,7 @@
 
 #include "Core/Debug/FCombatFeedbackDebug.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
-#include "Type/CReactionFeedbackStructure.h"
+#include "Type/CReactionFeedbackTypes.h"
 
 // Internal linkage
 namespace
