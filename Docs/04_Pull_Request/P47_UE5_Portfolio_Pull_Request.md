@@ -15,13 +15,14 @@
 - [x] Feedback MatchKey / PlaybackKey 의미 분리
 - [x] Action / Reaction feedback playback dedupe 기준 통일
 - [x] 구조체 rename pass 적용
+- [x] renamed USTRUCT / UPROPERTY CoreRedirects 추가
 - [x] W05 Type Header Organization Work Plan 완료 상태 반영
 - [x] `PortfolioEditor Win64 Development` build 통과
-- [ ] PIE smoke 확인
+- [x] PIE smoke 확인
 
 ## 브랜치
 
-- `refactor/action-hit-context-key`
+- `refactor/type-rename-feedback-key-cleanup`
 
 ## 요약
 
@@ -188,6 +189,20 @@ P46에서 후속 후보로 남겼던 항목 일부를 이번 브랜치에 포함
 
 다음 후속 작업은 feedback 구조 / rename이 아니라 RuntimeLOD config 정리 같은 별도 범위로 좁혀진다.
 
+### 5. CoreRedirects 추가
+
+왜:
+
+`USTRUCT` / `UPROPERTY` rename은 C++ build가 통과해도 기존 Blueprint / component default / asset serialized data가 새 이름으로 자동 매핑되지 않을 수 있다.
+
+어떻게:
+
+`Config/DefaultEngine.ini`의 `[CoreRedirects]`에 이번 rename에 대한 `StructRedirects`, `EnumRedirects`, `PropertyRedirects`를 추가했다.
+
+결과:
+
+기존 action hit context, feedback component data, combat hit / damage event payload field, AI runtime struct reference가 에디터 로드 시 새 타입 / 프로퍼티 이름으로 매핑될 수 있게 했다.
+
 ## 주요 처리 흐름
 
 ```text
@@ -238,8 +253,9 @@ Docs
 4. git diff --check 실행
 5. PortfolioEditor Win64 Development build 실행
 6. Editor load / Blueprint compile 확인
-7. PIE smoke 실행
-8. feedback playback duplicate 로그와 combat hit 경로 확인
+7. renamed feedback component data 유지 확인
+8. PIE smoke 실행
+9. feedback playback duplicate 로그와 combat hit 경로 확인
 ```
 
 ## 검증 결과
@@ -247,10 +263,10 @@ Docs
 ### Static check
 
 ```text
-이전 타입명 잔여 검색
+Source 기준 이전 타입명 잔여 검색
 Result: Pass
 
-FeedbackKey / ExecutionKey 잔여 검색
+Source 기준 FeedbackKey / ExecutionKey 잔여 검색
 Result: Pass
 
 git diff --check
@@ -268,7 +284,17 @@ Result: Pass
 
 ```text
 PIE smoke
-Result: Pending
+Result: Pass
+```
+
+### Editor data migration
+
+```text
+CoreRedirects
+Result: Added
+
+Editor load / Blueprint compile / renamed feedback data 유지 확인
+Result: Pass
 ```
 
 ## 비범위 / 후속 작업
@@ -282,7 +308,8 @@ CEnemy RuntimeLOD CVar / config 정리
 -> RuntimeLOD config / DataAsset 분리 작업에서 별도 처리
 
 Feedback data asset migration
--> renamed UPROPERTY가 editor asset에 어떻게 반영되는지 필요 시 별도 확인
+-> 이번 PR의 renamed component data migration은 확인 완료
+-> feedback data를 별도 DataAsset으로 분리하는 설계는 후속 작업에서 별도 판단
 
 AI context 하위 context 분리
 -> FAIBlackboardUpdateContext 내부 aggregate를 더 나눌지는 별도 구조 작업에서 판단
@@ -299,4 +326,4 @@ AI context 하위 context 분리
 
 이번 PR은 P46에서 파일 책임만 분리한 뒤 남아 있던 타입 의미 문제를 정리한다.
 
-`FActionContext`를 제거하고, feedback matching과 playback dedupe 기준을 분리했으며, 실제 역할과 맞지 않던 구조체 이름을 정리했다. 검증은 Live Coding을 끈 뒤 build와 PIE smoke로 마무리한다.
+`FActionContext`를 제거하고, feedback matching과 playback dedupe 기준을 분리했으며, 실제 역할과 맞지 않던 구조체 이름을 정리했다. CoreRedirects를 추가해 renamed data migration을 보완했고, build / PIE smoke / editor data migration 확인까지 완료했다.
