@@ -61,7 +61,7 @@ private:
 private:
 	// Evaluate
 	bool ValidateContext(FCombatSignalTargetContext& InOutCombatSignalTargetContext);
-	bool CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext);
+	bool CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	void ComputeTargetDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	float ComputeMitigatedDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	float ComputeFinalTakenDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;

@@ -62,10 +62,10 @@ public:
 
 public:
 	// Query
-	FORCEINLINE EWeaponType GetCurrentWeaponType() { return CurrentWeaponType; }
+	FORCEINLINE EWeaponType GetCurrentWeaponType() const { return CurrentWeaponType; }
 
 public:
-	class ACWeaponActor* GetWeaponActor();
+	class ACWeaponActor* GetWeaponActor() const;
 
 public:
 	void AttachWeaponToHand();

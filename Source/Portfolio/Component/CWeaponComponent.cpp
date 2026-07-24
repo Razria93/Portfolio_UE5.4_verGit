@@ -72,7 +72,7 @@ void UCWeaponComponent::UninitializeWeaponRuntime()
 	DestroyWeaponActor();
 }
 
-ACWeaponActor* UCWeaponComponent::GetWeaponActor()
+ACWeaponActor* UCWeaponComponent::GetWeaponActor() const
 {
 	return IsValid(WeaponActor) ? WeaponActor : nullptr;
 }
