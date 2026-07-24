@@ -42,7 +42,7 @@ refactor/type-header-organization
 - [x] Action / Reaction KeyTypes 실제 분리
 - [x] BT service interval preset type 위치 정리
 - [x] 최종 빌드 / PIE / 로그 검증
-- [ ] PR 문서 작성
+- [x] PR 문서 작성
 
 ---
 

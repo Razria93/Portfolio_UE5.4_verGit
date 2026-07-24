@@ -6,6 +6,7 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P46 | Type Header Organization | `P46_UE5_Portfolio_Pull_Request.md` | `refactor/type-header-organization` |  | W05 |
 | P45 | Naming / Typo / API Cleanup | `P45_UE5_Portfolio_Pull_Request.md` | `refactor/naming-typo-api-cleanup` |  | W05 |
 | P44 | 주석 / 섹션 정리 정책 | `P44_UE5_Portfolio_Pull_Request.md` | `refactor/comment-section-cleanup` | #99 | W05 |
 | P42 | Debug Log Policy v1 | `P42_UE5_Portfolio_Pull_Request.md` | `refactor/debug-log-policy-v1` |  | W05, N22, N23, N24, N25, N26 |
