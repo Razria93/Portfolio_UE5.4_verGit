@@ -38,6 +38,9 @@ refactor/type-header-organization
 - [x] 규칙 문서와 작업 계획 문서 역할 분리
 - [x] action orchestration candidate 섹션 위치 정리
 - [x] AI Type runtime context / patrol state 섹션 정리
+- [x] Action / Reaction KeyTypes 분리 계획 고정
+- [x] Action / Reaction KeyTypes 실제 분리
+- [ ] BT service interval preset type 위치 정리
 - [ ] 최종 빌드 / PIE / 로그 검증
 - [ ] PR 문서 작성
 
@@ -353,11 +356,11 @@ CReactionDataTypes.h
 -> 단순 대칭 목적의 FReactionContext 추가는 금지한다.
 ```
 
-보류 사유:
+진행 판단:
 
 ```text
--> KeyTypes 분리는 include 파급이 있으므로 별도 pass에서 처리한다.
--> FActionContext 제거 / rename은 USTRUCT / UPROPERTY 변경이므로 Editor load, Blueprint compile, PIE smoke 검증과 묶는다.
+-> KeyTypes 실제 분리는 현재 Type header organization 브랜치의 다음 코드 작업으로 진행한다.
+-> FActionContext 제거 / rename은 USTRUCT / UPROPERTY 변경이므로 Editor load, Blueprint compile, PIE smoke 검증과 묶는 별도 pass에서 처리한다.
 ```
 
 ```text

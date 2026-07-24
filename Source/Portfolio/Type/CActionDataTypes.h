@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Type/CActionTypes.h"
+#include "Type/CActionKeyTypes.h"
 #include "Type/CExecutionRuleTypes.h"
 #include "CActionDataTypes.generated.h"
 
