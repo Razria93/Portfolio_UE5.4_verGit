@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Type/CCombatSignalTypes.h"
-#include "Type/CCombatSignalTypes.h"
 #include "Type/CCombatHitTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Type/CCombatSignalSourceTypes.h"

@@ -8,19 +8,7 @@
 #include "Type/CExecutionTypes.h"
 #include "CReactionOrchestrationTypes.generated.h"
 
-UENUM(BlueprintType)
-enum class EReactionStopSource : uint8
-{
-	None = 0,
-
-	ActionOrchestration,
-	ReactionOrchestration,
-
-	System,
-	External,
-
-	Max,
-};
+// Enum
 
 UENUM(BlueprintType)
 enum class EReactionStopReason : uint8
@@ -103,6 +91,8 @@ enum class EReactionIntentSource : uint8
 	Max,
 };
 
+// Key / Identifier
+
 USTRUCT(BlueprintType)
 struct FReactionCandidate
 {
@@ -118,6 +108,8 @@ public:
 		return ReactionDataKey.IsValidMinimal();
 	}
 };
+
+// Request
 
 USTRUCT(BlueprintType)
 struct FDamageReactionRequest
@@ -147,6 +139,8 @@ public:
 	UPROPERTY(Transient)
 	EReactionType ReactionType = EReactionType::None;
 };
+
+// Result
 
 USTRUCT(BlueprintType)
 struct FReactionRequestResult

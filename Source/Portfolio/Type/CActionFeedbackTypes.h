@@ -4,6 +4,8 @@
 #include "Type/CActionTypes.h"
 #include "CActionFeedbackTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EActionFeedbackTiming : uint8
 {
@@ -44,6 +46,8 @@ enum class EActionSFXPlayType : uint8
 	Loop
 };
 
+// Key / Identifier
+
 USTRUCT(BlueprintType)
 struct FActionFeedbackKey
 {
@@ -67,6 +71,8 @@ public:
 	}
 };
 
+// Request
+
 USTRUCT(BlueprintType)
 struct FActionFeedbackRequest
 {
@@ -85,6 +91,8 @@ public:
 public:
 	FActionFeedbackRequest() = default;
 };
+
+// Data / Config
 
 USTRUCT(BlueprintType)
 struct FTrailFeedbackData
@@ -169,6 +177,8 @@ public:
 public:
 	FActionSFXFeedbackData() = default;
 };
+
+// Runtime Key / Playback Key
 
 USTRUCT()
 struct FActionVFXExecutionKey

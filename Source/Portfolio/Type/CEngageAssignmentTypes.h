@@ -7,6 +7,8 @@ class AActor;
 
 #include "CEngageAssignmentTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class ECombatRole : uint8
 {
@@ -15,13 +17,7 @@ enum class ECombatRole : uint8
 	Alert
 };
 
-UENUM(BlueprintType)
-enum class EAIUpdatePrecision : uint8
-{
-	High,
-	Reduced,
-	Low
-};
+// Request
 
 USTRUCT(BlueprintType)
 struct FEngageRequestContext
@@ -48,6 +44,8 @@ public:
 	FEngageRequestContext() = default;
 };
 
+// Runtime Context
+
 USTRUCT(BlueprintType)
 struct FEngageAssignmentContext
 {
@@ -70,19 +68,10 @@ public:
 	}
 };
 
+// Runtime State
+
 struct FEngageAssignmentSlotState
 {
 	int32 EngageCount = 0;
 	int32 AlertCount = 0;
-};
-
-struct FEngageAssignmentRebuildDebugState
-{
-	int32 RequestSnapshotCount = 0;
-	int32 RequestBucketCount = 0;
-	int32 WarmupRequestCount = 0;
-	int32 FreshAppliedCount = 0;
-	int32 PromotedCount = 0;
-	int32 PreservedEngageCount = 0;
-	int32 PreservedAlertCount = 0;
 };

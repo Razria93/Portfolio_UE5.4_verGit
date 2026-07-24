@@ -6,6 +6,8 @@
 #include "Type/CExecutionTypes.h"
 #include "CActionOrchestrationTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EActionIntentSource : uint8
 {
@@ -77,20 +79,6 @@ enum class EDeferredActionConsumeKey : uint8
 
 	AfterGuardInAction,
 	AfterGuardBlockReaction,
-
-	Max,
-};
-
-UENUM(BlueprintType)
-enum class EActionStopSource : uint8
-{
-	None = 0,
-
-	ActionOrchestration,
-	ReactionOrchestration,
-
-	System,
-	External,
 
 	Max,
 };
@@ -173,6 +161,53 @@ enum class EActionRequestRejectReason : uint8
 	Max,
 };
 
+// Candidate
+
+USTRUCT(BlueprintType)
+struct FActionCandidate
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FActionDataKey ActionDataKey = FActionDataKey();
+
+public:
+	bool IsValidMinimal() const
+	{
+		return ActionDataKey.IsValidMinimal();
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FDeferredActionCandidate
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EDeferredActionConsumeKey ConsumeKey = EDeferredActionConsumeKey::None;
+
+	UPROPERTY(Transient)
+	FActionCandidate Candidate = FActionCandidate();
+
+public:
+	bool IsValidMinimal() const
+	{
+		return ConsumeKey != EDeferredActionConsumeKey::None
+			&& ConsumeKey != EDeferredActionConsumeKey::Max
+			&& Candidate.IsValidMinimal();
+	}
+
+	bool MatchesIdentity(EDeferredActionConsumeKey InConsumeKey, const FActionCandidate& InCandidate) const
+	{
+		return ConsumeKey == InConsumeKey
+			&& Candidate.ActionDataKey == InCandidate.ActionDataKey;
+	}
+};
+
+// Request
+
 USTRUCT(BlueprintType)
 struct FMovementActionRequest
 {
@@ -235,6 +270,8 @@ public:
 	}
 };
 
+// Resolution / Resolve Result
+
 USTRUCT(BlueprintType)
 struct FActionCombatSignalCueRequest
 {
@@ -254,6 +291,8 @@ public:
 			&& !CueTag.IsNone();
 	}
 };
+
+// Result
 
 USTRUCT(BlueprintType)
 struct FActionRequestResult
@@ -338,48 +377,5 @@ public:
 	bool RequiresIntervention() const
 	{
 		return InterventionDirective.IsRequested();
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FActionCandidate
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	FActionDataKey ActionDataKey = FActionDataKey();
-
-public:
-	bool IsValidMinimal() const
-	{
-		return ActionDataKey.IsValidMinimal();
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FDeferredActionCandidate
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	EDeferredActionConsumeKey ConsumeKey = EDeferredActionConsumeKey::None;
-
-	UPROPERTY(Transient)
-	FActionCandidate Candidate = FActionCandidate();
-
-public:
-	bool IsValidMinimal() const
-	{
-		return ConsumeKey != EDeferredActionConsumeKey::None
-			&& ConsumeKey != EDeferredActionConsumeKey::Max
-			&& Candidate.IsValidMinimal();
-	}
-
-	bool MatchesIdentity(EDeferredActionConsumeKey InConsumeKey, const FActionCandidate& InCandidate) const
-	{
-		return ConsumeKey == InConsumeKey
-			&& Candidate.ActionDataKey == InCandidate.ActionDataKey;
 	}
 };

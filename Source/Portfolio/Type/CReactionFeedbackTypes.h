@@ -5,6 +5,8 @@
 #include "Type/CCombatDamageTypes.h"
 #include "CReactionFeedbackTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EReactionFeedbackTiming : uint8
 {
@@ -37,6 +39,8 @@ enum class EReactionSFXPlayType : uint8
 	Loop
 };
 
+// Key / Identifier
+
 USTRUCT(BlueprintType)
 struct FReactionFeedbackKey
 {
@@ -60,6 +64,8 @@ public:
 	}
 };
 
+// Request
+
 USTRUCT(BlueprintType)
 struct FReactionFeedbackRequest
 {
@@ -78,6 +84,8 @@ public:
 public:
 	FReactionFeedbackRequest() = default;
 };
+
+// Data / Config
 
 USTRUCT(BlueprintType)
 struct FReactionVFXFeedbackData
@@ -140,6 +148,8 @@ public:
 public:
 	FReactionSFXFeedbackData() = default;
 };
+
+// Runtime Key / Playback Key
 
 USTRUCT()
 struct FReactionVFXExecutionKey

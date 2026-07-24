@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Debug/FCombatEngageDebugTypes.h"
 #include "Type/CEngageAssignmentTypes.h"
 
 class AActor;
