@@ -1,7 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 
 #include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
-#include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Controller/CAIController.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Core/Profiling/CAIStateRuntimeLODProfiling.h"

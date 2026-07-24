@@ -5,7 +5,6 @@
 #include "AI/Blackboard/CAIKey.h"
 
 #include "AIController.h"
-#include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UCBTTask_SetFocus::UCBTTask_SetFocus()

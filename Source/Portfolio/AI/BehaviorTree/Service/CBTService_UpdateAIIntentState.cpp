@@ -3,9 +3,6 @@
 #include "ProjectGlobal.h"
 
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
-#include "Character/Enemy/CEnemy.h"
-#include "Component/CMovementComponent.h"
-#include "Component/CWeaponComponent.h"
 #include "Controller/CAIController.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Type/CStateTypes.h"
@@ -16,7 +13,6 @@
 
 #include "ProfilingDebugging/CsvProfiler.h"
 #include "AIController.h"
-#include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()

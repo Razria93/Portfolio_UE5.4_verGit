@@ -2,11 +2,7 @@
 
 #include "ProjectGlobal.h"
 
-#include "AI/Blackboard/CAIKey.h"
-
 #include "AIController.h"
-#include "GameFramework/Pawn.h"
-#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTTask_ClearFocus::UCBTTask_ClearFocus()
 {
