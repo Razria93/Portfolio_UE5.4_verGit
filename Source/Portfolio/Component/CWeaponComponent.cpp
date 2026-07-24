@@ -1,15 +1,15 @@
 #include "Component/CWeaponComponent.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Core/Profiling/CCombatCollisionProfiling.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Weapon/CWeaponActor.h"
-
 #include "Type/CWeaponTypes.h"
 #include "Type/CCombatHitTypes.h"
+
+#include "GameFramework/Character.h"
 
 UCWeaponComponent::UCWeaponComponent()
 {

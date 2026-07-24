@@ -1,7 +1,6 @@
 #include "Component/CActionOrchestratorComponent.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -10,13 +9,12 @@
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
-
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
-
 #include "Core/Debug/FExecutionOrchestratorDebug.h"
-
 #include "Type/CActionOrchestrationTypes.h"
+
+#include "GameFramework/Character.h"
 
 UCActionOrchestratorComponent::UCActionOrchestratorComponent()
 {

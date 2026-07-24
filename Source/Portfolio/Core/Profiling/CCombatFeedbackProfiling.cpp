@@ -1,9 +1,9 @@
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
 
+#include "Character/Enemy/CEnemy.h"
+
 #include "HAL/IConsoleManager.h"
 #include "ProfilingDebugging/CsvProfiler.h"
-
-#include "Character/Enemy/CEnemy.h"
 
 namespace
 {

@@ -1,10 +1,6 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.h"
-#include "ProjectGlobal.h"
-#include "ProfilingDebugging/CsvProfiler.h"
 
-#include "AIController.h"
-#include "GameFramework/Pawn.h"
-#include "BehaviorTree/BlackboardComponent.h"
+#include "ProjectGlobal.h"
 
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Character/Enemy/CEnemy.h"
@@ -12,12 +8,16 @@
 #include "Component/CWeaponComponent.h"
 #include "Controller/CAIController.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
-
 #include "Type/CStateTypes.h"
 #include "Type/CHealthTypes.h"
 #include "Type/CEngageAssignmentTypes.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
+
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "AIController.h"
+#include "GameFramework/Pawn.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 {

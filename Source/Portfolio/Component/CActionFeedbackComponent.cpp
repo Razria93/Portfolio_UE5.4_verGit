@@ -1,16 +1,17 @@
 #include "Component/CActionFeedbackComponent.h"
+
 #include "ProjectGlobal.h"
+
+#include "Component/CWeaponComponent.h"
+#include "Core/Debug/FCombatFeedbackDebug.h"
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
+#include "Weapon/CWeaponActor.h"
 
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
-
-#include "Component/CWeaponComponent.h"
-#include "Core/Debug/FCombatFeedbackDebug.h"
-#include "Core/Profiling/CCombatFeedbackProfiling.h"
-#include "Weapon/CWeaponActor.h"
 
 UCActionFeedbackComponent::UCActionFeedbackComponent()
 {

@@ -1,14 +1,14 @@
 #include "Component/CMovementComponent.h"
+
 #include "ProjectGlobal.h"
 
 #include "AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.h"
+#include "Component/CStateComponent.h"
+#include "Core/Debug/FMovementDebug.h"
 
 #include "AIController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
-#include "Component/CStateComponent.h"
-#include "Core/Debug/FMovementDebug.h"
 
 UCMovementComponent::UCMovementComponent()
 {

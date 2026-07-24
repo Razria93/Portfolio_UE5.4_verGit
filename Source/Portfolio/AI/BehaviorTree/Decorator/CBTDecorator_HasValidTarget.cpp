@@ -1,9 +1,10 @@
 #include "AI/BehaviorTree/Decorator/CBTDecorator_HasValidTarget.h"
+
 #include "ProjectGlobal.h"
 
-#include "BehaviorTree/BlackboardComponent.h"
-
 #include "AI/Blackboard/CAIKey.h"
+
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTDecorator_HasValidTarget::UCBTDecorator_HasValidTarget()
 {

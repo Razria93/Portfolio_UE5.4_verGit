@@ -1,9 +1,10 @@
 #include "AI/BehaviorTree/Task/CBTTask_AdvanceInvestigateIndex.h"
+
 #include "ProjectGlobal.h"
 
-#include "BehaviorTree/BlackboardComponent.h"
-
 #include "AI/Blackboard/CAIKey.h"
+
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTTask_AdvanceInvestigateIndex::UCBTTask_AdvanceInvestigateIndex()
 {

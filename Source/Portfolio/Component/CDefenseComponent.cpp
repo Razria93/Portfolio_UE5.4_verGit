@@ -1,9 +1,10 @@
 #include "Component/CDefenseComponent.h"
+
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CMovementComponent.h"
+
+#include "GameFramework/Character.h"
 
 UCDefenseComponent::UCDefenseComponent()
 {

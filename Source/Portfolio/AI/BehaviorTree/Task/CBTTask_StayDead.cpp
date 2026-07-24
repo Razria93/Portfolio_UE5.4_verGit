@@ -1,4 +1,5 @@
 #include "AI/BehaviorTree/Task/CBTTask_StayDead.h"
+
 #include "ProjectGlobal.h"
 
 UCBTTask_StayDead::UCBTTask_StayDead()

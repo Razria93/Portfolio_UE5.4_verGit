@@ -1,23 +1,22 @@
 #include "Component/CCombatSignalSourceComponent.h"
+
 #include "ProjectGlobal.h"
+
+#include "AI/Blackboard/CAIKey.h"
+#include "Character/Enemy/CEnemy.h"
+#include "Component/CCombatSignalTargetComponent.h"
+#include "Core/Debug/FCombatSignalDebug.h"
+#include "Core/Profiling/CCombatCollisionProfiling.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
+#include "Type/CCombatSignalTypes.h"
+#include "Type/CCombatHitTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CCombatSignalSourceTypes.h"
 
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/ShapeComponent.h"
 #include "GameFramework/Character.h"
-
-#include "AI/Blackboard/CAIKey.h"
-#include "Character/Enemy/CEnemy.h"
-#include "Component/CCombatSignalTargetComponent.h"
-
-#include "Core/Debug/FCombatSignalDebug.h"
-#include "Core/Profiling/CCombatCollisionProfiling.h"
-#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
-
-#include "Type/CCombatSignalTypes.h"
-#include "Type/CCombatHitTypes.h"
-#include "Type/CCombatDamageTypes.h"
-#include "Type/CCombatSignalSourceTypes.h"
 
 namespace
 {

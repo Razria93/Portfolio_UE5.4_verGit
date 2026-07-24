@@ -1,10 +1,11 @@
 #include "Action/CAction_Guard.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CActionComponent.h"
 #include "Component/CWeaponComponent.h"
+
+#include "GameFramework/Character.h"
 
 // CAction_Guard only owns Guard In/Out transition actions.
 // Guard Hold is an idle overlay state owned by UCDefenseComponent.

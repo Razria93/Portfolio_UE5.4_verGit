@@ -1,5 +1,12 @@
 #include "Component/CHitFeedbackComponent.h"
+
 #include "ProjectGlobal.h"
+
+#include "Core/Debug/FCombatFeedbackDebug.h"
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
+#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
+#include "Type/CCombatHitTypes.h"
+#include "Type/CCombatSignalTargetTypes.h"
 
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
@@ -7,13 +14,6 @@
 #include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
 #include "Camera/CameraShakeBase.h"
-
-#include "Core/Debug/FCombatFeedbackDebug.h"
-#include "Core/Profiling/CCombatFeedbackProfiling.h"
-#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
-
-#include "Type/CCombatHitTypes.h"
-#include "Type/CCombatSignalTargetTypes.h"
 
 UCHitFeedbackComponent::UCHitFeedbackComponent()
 {

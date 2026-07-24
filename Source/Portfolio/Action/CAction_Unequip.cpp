@@ -1,9 +1,10 @@
 #include "Action/CAction_Unequip.h"
+
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CWeaponComponent.h"
+
+#include "GameFramework/Character.h"
 
 FExecutionDecisionResult UCAction_Unequip::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {

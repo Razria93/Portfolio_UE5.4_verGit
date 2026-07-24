@@ -1,11 +1,11 @@
 #include "AI/BehaviorTree/Task/CBTTask_RequestMovementIntent.h"
+
 #include "ProjectGlobal.h"
 
-#include "AIController.h"
-
 #include "Character/Enemy/CEnemy.h"
-
 #include "Type/CActionOrchestrationTypes.h"
+
+#include "AIController.h"
 
 UCBTTask_RequestMovementIntent::UCBTTask_RequestMovementIntent()
 {

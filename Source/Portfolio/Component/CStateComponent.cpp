@@ -1,10 +1,11 @@
 #include "Component/CStateComponent.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Type/CStateTypes.h"
 #include "Type/CHealthTypes.h"
+
+#include "GameFramework/Character.h"
 
 UCStateComponent::UCStateComponent()
 {

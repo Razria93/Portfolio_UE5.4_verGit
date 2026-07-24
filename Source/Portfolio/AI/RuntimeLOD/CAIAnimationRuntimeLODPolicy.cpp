@@ -3,6 +3,7 @@
 #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Controller/CAIController.h"
+
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 

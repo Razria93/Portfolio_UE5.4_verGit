@@ -1,8 +1,8 @@
 #include "Core/Profiling/CCombatCollisionProfiling.h"
 
-#include "HAL/IConsoleManager.h"
-
 #include "Character/Enemy/CEnemy.h"
+
+#include "HAL/IConsoleManager.h"
 
 namespace
 {

@@ -1,18 +1,17 @@
 #include "Weapon/CWeaponActor.h"
+
 #include "ProjectGlobal.h"
+
+#include "Component/CCombatSignalSourceComponent.h"
+#include "Core/Debug/FCombatSignalDebug.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
+#include "Type/CWeaponTypes.h"
+#include "Type/CCombatHitTypes.h"
+#include "Type/CCombatSignalTypes.h"
 
 #include "GameFramework/Character.h"
 #include "Components/ShapeComponent.h"
 #include "NiagaraComponent.h"
-
-#include "Component/CCombatSignalSourceComponent.h"
-
-#include "Core/Debug/FCombatSignalDebug.h"
-#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
-
-#include "Type/CWeaponTypes.h"
-#include "Type/CCombatHitTypes.h"
-#include "Type/CCombatSignalTypes.h"
 
 ACWeaponActor::ACWeaponActor()
 {

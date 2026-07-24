@@ -1,11 +1,12 @@
 #include "AI/BehaviorTree/Decorator/CBTDecorator_CanMove.h"
+
 #include "ProjectGlobal.h"
 
-#include "AIController.h"
 #include "Core/Debug/FAICombatBTDebug.h"
-#include "GameFramework/Pawn.h"
-
 #include "Component/CMovementComponent.h"
+
+#include "AIController.h"
+#include "GameFramework/Pawn.h"
 
 UCBTDecorator_CanMove::UCBTDecorator_CanMove()
 {

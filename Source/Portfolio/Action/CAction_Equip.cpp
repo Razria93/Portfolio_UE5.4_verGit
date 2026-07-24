@@ -1,9 +1,10 @@
 #include "Action/CAction_Equip.h"
+
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CWeaponComponent.h"
+
+#include "GameFramework/Character.h"
 
 FExecutionDecisionResult UCAction_Equip::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {

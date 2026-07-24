@@ -1,16 +1,16 @@
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
-#include "ProjectGlobal.h"
-#include "HAL/IConsoleManager.h"
-#include "ProfilingDebugging/CsvProfiler.h"
 
-#include "AIController.h"
+#include "ProjectGlobal.h"
 
 #include "Controller/CAIController.h"
 #include "Core/Debug/FCombatEngageDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
-
 #include "Type/CEngageAssignmentTypes.h"
+
+#include "HAL/IConsoleManager.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "AIController.h"
 
 namespace
 {

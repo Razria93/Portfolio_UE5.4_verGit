@@ -1,14 +1,15 @@
 #include "Character/CAnimInstance.h"
+
 #include "ProjectGlobal.h"
 
 #include "AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.h"
 #include "Core/Profiling/CAIAnimationProfiling.h"
-#include "GameFramework/Character.h"
-
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
+
+#include "GameFramework/Character.h"
 
 // Lifecycle
 

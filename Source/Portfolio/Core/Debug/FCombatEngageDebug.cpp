@@ -1,7 +1,8 @@
 #include "Core/Debug/FCombatEngageDebug.h"
-#include "Core/Debug/FLog.h"
 
+#include "Core/Debug/FLog.h"
 #include "Controller/CAIController.h"
+
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 

@@ -1,14 +1,15 @@
 #include "Component/CReactionFeedbackComponent.h"
+
 #include "ProjectGlobal.h"
+
+#include "Core/Debug/FCombatFeedbackDebug.h"
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
+#include "Type/CReactionFeedbackTypes.h"
 
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundBase.h"
-
-#include "Core/Debug/FCombatFeedbackDebug.h"
-#include "Core/Profiling/CCombatFeedbackProfiling.h"
-#include "Type/CReactionFeedbackTypes.h"
 
 // Internal linkage
 namespace

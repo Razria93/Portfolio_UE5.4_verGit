@@ -1,18 +1,17 @@
 #include "Component/CReactionOrchestratorComponent.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
-
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
-
 #include "Core/Debug/FExecutionOrchestratorDebug.h"
+
+#include "GameFramework/Character.h"
 
 UCReactionOrchestratorComponent::UCReactionOrchestratorComponent()
 {

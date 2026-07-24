@@ -1,4 +1,5 @@
 #include "AI/Patrol/CPatrolPoint.h"
+
 #include "Components/TextRenderComponent.h"
 
 ACPatrolPoint::ACPatrolPoint()
