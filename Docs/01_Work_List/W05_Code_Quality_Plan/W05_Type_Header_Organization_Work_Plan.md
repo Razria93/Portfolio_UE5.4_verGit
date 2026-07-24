@@ -197,7 +197,7 @@ CEngageAssignmentTypes.h
 -> debug / profiling rebuild state는 engage assignment gameplay type으로 유지하지 않음
 ```
 
-권장 분류에서 제외:
+권장 분류에서 제외 / 제거 완료:
 
 ```text
 EActionStopSource
@@ -205,16 +205,15 @@ EReactionStopSource
 EAIUpdatePrecision
 ```
 
-제외 사유:
+적용 결과:
 
 ```text
 EActionStopSource / EReactionStopSource
--> StopReason / FinishReason으로 충분히 표현 가능한지 먼저 확인할 후보
--> 별도 source enum을 유지하면 orchestration API가 원인과 결과를 중복 표현할 위험이 있음
+-> StopReason / FinishReason과 책임이 겹치므로 제거했다.
+-> orchestration API에서 원인과 결과를 중복 표현하지 않도록 정리했다.
 
 EAIUpdatePrecision
--> engage assignment 도메인보다 update scheduling / profiling 정책에 가까움
--> 현재 사용처와 실제 정책 소유자를 확인한 뒤 이동 또는 제거 판단 필요
+-> 실제 gameplay assignment 타입이 아니라 update scheduling / profiling 정책에 가까운 미사용 타입이므로 제거했다.
 ```
 
 ---
@@ -243,52 +242,56 @@ CCombatSignalTypes.h
 -> 해당 구현 이후에도 사용처가 없으면 제거 후보로 재평가한다.
 ```
 
-### 4.2 바로 제거 후보
+### 4.2 미사용 타입 제거 완료
 
 ```text
 CActionOrchestrationTypes.h
--> EActionStopSource
+-> EActionStopSource 제거 완료
 
 CReactionOrchestrationTypes.h
--> EReactionStopSource
+-> EReactionStopSource 제거 완료
 
 CEngageAssignmentTypes.h
--> EAIUpdatePrecision
+-> EAIUpdatePrecision 제거 완료
 ```
 
 사유:
 
 ```text
 EActionStopSource / EReactionStopSource
--> source와 reason의 책임이 겹치는지 확인 필요
+-> StopReason / FinishReason과 책임이 겹쳐 별도 source enum을 유지하지 않는다.
 
 EAIUpdatePrecision
--> gameplay assignment 타입보다 update policy / profiling 성격이 강함
+-> gameplay assignment 타입보다 update scheduling / profiling 정책에 가까웠고, 실제 사용처가 없어 제거했다.
 ```
 
-### 4.3 이동 후보
+### 4.3 debug / audit state 이동 완료
 
 ```text
 CAITypes.h
+-> FPerceptionCandidateAuditState 이동 완료
+-> FBlackboardEngageLatencyAuditState 이동 완료
+
+CEngageAssignmentTypes.h
+-> FEngageAssignmentRebuildDebugState 이동 완료
+```
+
+적용 위치:
+
+```text
+Core/Debug/FAIPerceptionDebugTypes.h
 -> FPerceptionCandidateAuditState
 -> FBlackboardEngageLatencyAuditState
 
-CEngageAssignmentTypes.h
+Core/Debug/FCombatEngageDebugTypes.h
 -> FEngageAssignmentRebuildDebugState
-```
-
-권장 이동 방향:
-
-```text
-Core/Debug
-Core/Profiling
-또는 해당 helper / policy 소유 헤더
 ```
 
 사유:
 
 ```text
--> gameplay shared Type 헤더에 audit / debug / profiling state가 섞이면 일반 gameplay include가 진단 전용 타입에 의존하게 됨
+-> gameplay shared Type 헤더에 audit / debug / profiling state가 섞이지 않도록 분리했다.
+-> 일반 gameplay include가 진단 전용 타입에 의존하지 않게 했다.
 ```
 
 ### 4.4 배치 / 구성 정리 후보
