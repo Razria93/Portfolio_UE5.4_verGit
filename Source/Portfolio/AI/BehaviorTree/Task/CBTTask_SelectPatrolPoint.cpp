@@ -1,14 +1,14 @@
 #include "AI/BehaviorTree/Task/CBTTask_SelectPatrolPoint.h"
+
 #include "ProjectGlobal.h"
+
+#include "AI/Patrol/CPatrolPath.h"
+#include "Type/CAITypes.h"
+#include "AI/Blackboard/CAIKey.h"
 
 #include "AIController.h"
 #include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
-
-#include "AI/Patrol/CPatrolPath.h"
-
-#include "Type/CAITypes.h"
-#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_SelectPatrolPoint::UCBTTask_SelectPatrolPoint()
 {

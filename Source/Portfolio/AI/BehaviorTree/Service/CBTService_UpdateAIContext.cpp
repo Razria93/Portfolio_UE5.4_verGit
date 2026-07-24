@@ -1,24 +1,24 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateAIContext.h"
-#include "ProjectGlobal.h"
-#include "ProfilingDebugging/CsvProfiler.h"
 
-#include "AIController.h"
-#include "GameFramework/Pawn.h"
-#include "BehaviorTree/BehaviorTreeComponent.h"
-#include "BehaviorTree/BlackboardComponent.h"
+#include "ProjectGlobal.h"
 
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Controller/CAIController.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHealthComponent.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
-
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Core/Debug/FAICombatBTDebug.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Type/CAITypes.h"
 #include "Type/CEngageAssignmentTypes.h"
+
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "AIController.h"
+#include "GameFramework/Pawn.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 {

@@ -1,17 +1,9 @@
 #include "Character/Enemy/CEnemy.h"
+
 #include "ProjectGlobal.h"
 
-#include "Components/CapsuleComponent.h"
-#include "Components/SkeletalMeshComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "HAL/IConsoleManager.h"
-
-#include "BehaviorTree/BlackboardComponent.h"
-
 #include "Controller/CAIController.h"
-
 #include "Core/Debug/FCombatResultDebug.h"
-
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -26,11 +18,16 @@
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
-
 #include "Type/CActionTypes.h"
 #include "Type/CReactionTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "AI/Blackboard/CAIKey.h"
+
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "HAL/IConsoleManager.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 namespace
 {

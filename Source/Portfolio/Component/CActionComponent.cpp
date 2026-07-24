@@ -1,7 +1,6 @@
 #include "Component/CActionComponent.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -13,7 +12,6 @@
 #include "Component/CReactionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Action/CAction.h"
-
 #include "Type/CActionTypes.h"
 #include "Type/CActionDataTypes.h"
 #include "Type/CActionFeedbackTypes.h"
@@ -22,6 +20,8 @@
 #include "Type/CExecutionTypes.h"
 #include "Core/Debug/FActionComponentDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
+
+#include "GameFramework/Character.h"
 
 UCActionComponent::UCActionComponent()
 {

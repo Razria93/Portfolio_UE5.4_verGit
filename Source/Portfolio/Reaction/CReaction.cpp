@@ -1,12 +1,12 @@
 #include "Reaction/CReaction.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CReactionComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
-
 #include "Core/Debug/FReactionComponentDebug.h"
+
+#include "GameFramework/Character.h"
 
 void UCReaction::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {

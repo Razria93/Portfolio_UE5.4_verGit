@@ -1,15 +1,14 @@
 #include "AI/BehaviorTree/Task/CBTTask_StartCombatAction.h"
+
 #include "ProjectGlobal.h"
+
+#include "Character/Enemy/CEnemy.h"
+#include "AI/Blackboard/CAIKey.h"
+#include "Core/Debug/FAICombatBTDebug.h"
+#include "Type/CActionOrchestrationTypes.h"
 
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
-
-#include "Character/Enemy/CEnemy.h"
-
-#include "AI/Blackboard/CAIKey.h"
-
-#include "Core/Debug/FAICombatBTDebug.h"
-#include "Type/CActionOrchestrationTypes.h"
 
 UCBTTask_StartCombatAction::UCBTTask_StartCombatAction()
 {

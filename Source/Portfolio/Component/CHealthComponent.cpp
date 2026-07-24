@@ -1,9 +1,10 @@
 #include "Component/CHealthComponent.h"
+
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Type/CHealthTypes.h"
+
+#include "GameFramework/Character.h"
 
 UCHealthComponent::UCHealthComponent()
 {

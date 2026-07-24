@@ -1,11 +1,8 @@
 #include "AI/BehaviorTree/Task/CBTTask_ClearFocus.h"
+
 #include "ProjectGlobal.h"
 
 #include "AIController.h"
-#include "GameFramework/Pawn.h"
-#include "BehaviorTree/BlackboardComponent.h"
-
-#include "AI/Blackboard/CAIKey.h"
 
 UCBTTask_ClearFocus::UCBTTask_ClearFocus()
 {

@@ -1,9 +1,10 @@
 #include "Notify/CAnimNotify_HealthBase.h"
+
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CHealthComponent.h"
+
+#include "GameFramework/Character.h"
 
 UCAnimNotify_HealthBase::UCAnimNotify_HealthBase()
 {

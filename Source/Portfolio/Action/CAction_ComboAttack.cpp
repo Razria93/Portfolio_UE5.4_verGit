@@ -1,9 +1,9 @@
 #include "Action/CAction_ComboAttack.h"
 
-#include "GameFramework/Character.h"
-
 #include "Component/CWeaponComponent.h"
 #include "Component/CActionComponent.h"
+
+#include "GameFramework/Character.h"
 
 FExecutionDecisionResult UCAction_ComboAttack::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {

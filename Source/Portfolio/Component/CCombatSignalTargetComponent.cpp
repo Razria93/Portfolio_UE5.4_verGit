@@ -1,7 +1,6 @@
 #include "Component/CCombatSignalTargetComponent.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CHealthComponent.h"
 #include "Component/CReactionOrchestratorComponent.h"
@@ -9,13 +8,14 @@
 #include "Component/CDefenseComponent.h"
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
-
 #include "Type/CReactionTypes.h"
 #include "Type/CHealthTypes.h"
 #include "Type/CCombatSignalTypes.h"
 #include "Type/CCombatDamageTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Type/CCombatSignalTargetTypes.h"
+
+#include "GameFramework/Character.h"
 
 namespace
 {

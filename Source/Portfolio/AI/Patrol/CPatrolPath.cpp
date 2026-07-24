@@ -1,4 +1,5 @@
 #include "AI/Patrol/CPatrolPath.h"
+
 #include "AI/Patrol/CPatrolPoint.h"
 
 ACPatrolPath::ACPatrolPath()

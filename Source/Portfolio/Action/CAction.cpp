@@ -1,14 +1,14 @@
 #include "Action/CAction.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-#include "Animation/AnimInstance.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CWeaponComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
-
 #include "Core/Debug/FActionComponentDebug.h"
+
+#include "GameFramework/Character.h"
+#include "Animation/AnimInstance.h"
 
 void UCAction::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {

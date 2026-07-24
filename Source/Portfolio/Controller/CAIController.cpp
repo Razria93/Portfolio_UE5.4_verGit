@@ -1,5 +1,19 @@
 #include "Controller/CAIController.h"
+
 #include "ProjectGlobal.h"
+
+#include "Character/Player/CPlayer.h"
+#include "Character/Enemy/CEnemy.h"
+#include "Core/Debug/FAIPerceptionDebug.h"
+#include "Core/Profiling/CAIPerceptionProfiling.h"
+#include "AI/Patrol/CPatrolPath.h"
+#include "Interface/TargetContextProvider.h"
+#include "Type/CStateTypes.h"
+#include "Type/CAITypes.h"
+#include "AI/Blackboard/CAIKey.h"
+#include "AI/Blackboard/CAIKeyRegistry.h"
+#include "AI/Blackboard/CAIBlackboardValueHelper.h"
+#include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
 
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionSystem.h"
@@ -7,21 +21,6 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BrainComponent.h"
-
-#include "Character/Player/CPlayer.h"
-#include "Character/Enemy/CEnemy.h"
-#include "Core/Debug/FAIPerceptionDebug.h"
-#include "Core/Profiling/CAIPerceptionProfiling.h"
-#include "AI/Patrol/CPatrolPath.h"
-
-#include "Interface/TargetContextProvider.h"
-
-#include "Type/CStateTypes.h"
-#include "Type/CAITypes.h"
-#include "AI/Blackboard/CAIKey.h"
-#include "AI/Blackboard/CAIKeyRegistry.h"
-#include "AI/Blackboard/CAIBlackboardValueHelper.h"
-#include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
 
 ACAIController::ACAIController()
 {
@@ -647,4 +646,3 @@ void ACAIController::RecordEngageAssignmentResolvedForAudit(AActor* InTargetActo
 	BlackboardEngageLatencyAuditState.FirstEngageAssignmentFrame = GFrameCounter;
 	BlackboardEngageLatencyAuditState.FirstEngageAssignmentTargetActor = InTargetActor;
 }
-

@@ -1,9 +1,9 @@
 #include "System/Combat/CWorldSubsystem_CombatFeedback.h"
 
-#include "GameFramework/Actor.h"
-
 #include "Core/Debug/FCombatFeedbackDebug.h"
 #include "Type/CCombatFeedbackTypes.h"
+
+#include "GameFramework/Actor.h"
 
 void UCWorldSubsystem_CombatFeedback::Initialize(FSubsystemCollectionBase& Collection)
 {

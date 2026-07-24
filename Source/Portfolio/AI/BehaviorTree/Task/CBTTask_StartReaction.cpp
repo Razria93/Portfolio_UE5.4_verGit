@@ -1,10 +1,10 @@
 #include "AI/BehaviorTree/Task/CBTTask_StartReaction.h"
+
 #include "ProjectGlobal.h"
 
-#include "AIController.h"
-#include "BehaviorTree/BlackboardComponent.h"
-
 #include "AI/Blackboard/CAIKey.h"
+
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTTask_StartReaction::UCBTTask_StartReaction()
 {

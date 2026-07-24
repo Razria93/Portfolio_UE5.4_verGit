@@ -1,4 +1,5 @@
 #include "Core/Debug/FCombatResultDebug.h"
+
 #include "Core/Debug/FLog.h"
 
 #include "HAL/IConsoleManager.h"

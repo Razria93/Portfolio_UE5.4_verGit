@@ -1,14 +1,8 @@
 #include "Character/Player/CPlayer.h"
+
 #include "ProjectGlobal.h"
 
-#include "Components/CapsuleComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
-
 #include "Core/Debug/FCombatResultDebug.h"
-
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -24,14 +18,17 @@
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
-
 #include "Action/CAction.h"
-
 #include "Type/CActionTypes.h"
 #include "Type/CReactionTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Type/CStateTypes.h"
 #include "Type/CActionOrchestrationTypes.h"
+
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 
 ACPlayer::ACPlayer()
 {

@@ -1,10 +1,11 @@
 #include "Notify/CAnimNotify_ReactionBase.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CReactionComponent.h"
 #include "Core/Debug/FAnimNotifyDebug.h"
+
+#include "GameFramework/Character.h"
 
 UCAnimNotify_ReactionBase::UCAnimNotify_ReactionBase()
 {

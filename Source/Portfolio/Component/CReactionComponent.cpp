@@ -1,7 +1,6 @@
 #include "Component/CReactionComponent.h"
-#include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
+#include "ProjectGlobal.h"
 
 #include "Component/CMovementComponent.h"
 #include "Component/CStateComponent.h"
@@ -10,9 +9,7 @@
 #include "Component/CActionComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 #include "Reaction/CReaction.h"
-
 #include "Core/Debug/FReactionComponentDebug.h"
-
 #include "Type/CWeaponTypes.h"
 #include "Type/CActionTypes.h"
 #include "Type/CReactionTypes.h"
@@ -21,6 +18,8 @@
 #include "Type/CCombatDamageTypes.h"
 #include "Type/CObservableOverlayTypes.h"
 #include "Type/CExecutionTypes.h"
+
+#include "GameFramework/Character.h"
 
 UCReactionComponent::UCReactionComponent()
 {

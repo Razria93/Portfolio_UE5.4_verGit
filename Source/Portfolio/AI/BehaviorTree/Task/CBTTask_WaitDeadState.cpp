@@ -1,9 +1,11 @@
 #include "AI/BehaviorTree/Task/CBTTask_WaitDeadState.h"
+
 #include "ProjectGlobal.h"
 
-#include "AIController.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CHealthComponent.h"
+
+#include "AIController.h"
 
 UCBTTask_WaitDeadState::UCBTTask_WaitDeadState()
 {

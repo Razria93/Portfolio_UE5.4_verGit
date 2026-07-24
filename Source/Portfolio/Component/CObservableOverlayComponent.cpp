@@ -1,9 +1,10 @@
 #include "Component/CObservableOverlayComponent.h"
+
 #include "ProjectGlobal.h"
 
-#include "GameFramework/Character.h"
-
 #include "Core/Debug/FObservableOverlayDebug.h"
+
+#include "GameFramework/Character.h"
 
 UCObservableOverlayComponent::UCObservableOverlayComponent()
 {

@@ -1,10 +1,10 @@
 #include "AI/BehaviorTree/Task/CBTTask_WaitEndReaction.h"
+
 #include "ProjectGlobal.h"
 
-#include "AIController.h"
-#include "BehaviorTree/BlackboardComponent.h"
-
 #include "AI/Blackboard/CAIKey.h"
+
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTTask_WaitEndReaction::UCBTTask_WaitEndReaction()
 {

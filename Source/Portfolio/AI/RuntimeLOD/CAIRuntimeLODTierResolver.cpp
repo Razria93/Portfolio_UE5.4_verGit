@@ -1,8 +1,8 @@
 #include "AI/RuntimeLOD/CAIRuntimeLODTierResolver.h"
 
-#include "BehaviorTree/BlackboardComponent.h"
-
 #include "AI/Blackboard/CAIKey.h"
+
+#include "BehaviorTree/BlackboardComponent.h"
 
 namespace
 {

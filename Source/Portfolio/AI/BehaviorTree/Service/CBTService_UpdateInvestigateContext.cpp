@@ -1,11 +1,12 @@
 #include "AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.h"
-#include "ProjectGlobal.h"
-#include "ProfilingDebugging/CsvProfiler.h"
 
-#include "BehaviorTree/BlackboardComponent.h"
+#include "ProjectGlobal.h"
 
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
+
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 {
