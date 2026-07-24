@@ -1,8 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
-enum class EBTServiceIntervalPreset : uint8;
+#include "Type/CAIBehaviorTreeTypes.h"
 
 class FAIBehaviorTreeProfiling
 {

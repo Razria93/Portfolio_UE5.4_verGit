@@ -40,7 +40,7 @@ refactor/type-header-organization
 - [x] AI Type runtime context / patrol state 섹션 정리
 - [x] Action / Reaction KeyTypes 분리 계획 고정
 - [x] Action / Reaction KeyTypes 실제 분리
-- [ ] BT service interval preset type 위치 정리
+- [x] BT service interval preset type 위치 정리
 - [ ] 최종 빌드 / PIE / 로그 검증
 - [ ] PR 문서 작성
 
