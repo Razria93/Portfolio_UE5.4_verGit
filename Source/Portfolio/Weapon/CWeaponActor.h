@@ -151,7 +151,7 @@ public:
 
 private:
 	FOverlapContext BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const;
-	FDamageImpactInfo BuildDamageImpactInfo(const FOverlapContext& InOverlapContext) const;
+	FHitImpactContext BuildHitImpactContext(const FOverlapContext& InOverlapContext) const;
 	FHitContext BuildHitContext(const FOverlapContext& InOverlapContext) const;
 
 private:

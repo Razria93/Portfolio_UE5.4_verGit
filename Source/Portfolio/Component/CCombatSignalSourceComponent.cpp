@@ -248,7 +248,7 @@ FCombatSignalSourcePayload UCCombatSignalSourceComponent::BuildPayload(const FHi
 	combatSignalSourcePayload.SourceActor = InHitContext.OverlapContext.OwnerActor;
 	combatSignalSourcePayload.DamageCauser = InHitContext.OverlapContext.DamageCauser;
 	combatSignalSourcePayload.TargetActor = InHitContext.OverlapContext.OtherActor;
-	combatSignalSourcePayload.DamageImpactInfo = InHitContext.DamageImpactInfo;
+	combatSignalSourcePayload.HitImpactContext = InHitContext.HitImpactContext;
 	combatSignalSourcePayload.HitWindowKey = BuildHitWindowKey(InHitContext);
 	combatSignalSourcePayload.DamageSpecKey = BuildSpecKey(InHitContext);
 
@@ -264,7 +264,7 @@ FCombatSignalSourceContext UCCombatSignalSourceComponent::BuildContext(const FCo
 	combatSignalSourceContext.DamageCauser = InCombatSignalSourcePayload.DamageCauser;
 	combatSignalSourceContext.TargetActor = InCombatSignalSourcePayload.TargetActor;
 	combatSignalSourceContext.HitWindowKey = InCombatSignalSourcePayload.HitWindowKey;
-	combatSignalSourceContext.DamageImpactInfo = InCombatSignalSourcePayload.DamageImpactInfo;
+	combatSignalSourceContext.HitImpactContext = InCombatSignalSourcePayload.HitImpactContext;
 	combatSignalSourceContext.DamageSpecKey = InCombatSignalSourcePayload.DamageSpecKey;
 	combatSignalSourceContext.Instigator = ResolveInstigatorController(InCombatSignalSourcePayload.SourceActor, InCombatSignalSourcePayload.DamageCauser);
 
@@ -371,8 +371,8 @@ void UCCombatSignalSourceComponent::ComputeSourceDamage(FCombatSignalSourceConte
 	}
 
 	// Use base damage as the minimal sender-side request damage.
-	InOutCombatSignalSourceContext.DamageAmount = FDamageAmount();
-	InOutCombatSignalSourceContext.DamageAmount.RequestDamage = InOutCombatSignalSourceContext.DamageSpec.BaseDamage;
+	InOutCombatSignalSourceContext.DamageRequestAmount = FDamageRequestAmount();
+	InOutCombatSignalSourceContext.DamageRequestAmount.RequestDamage = InOutCombatSignalSourceContext.DamageSpec.BaseDamage;
 
 	InOutCombatSignalSourceContext.bAccepted = true;
 	InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::None;
@@ -387,7 +387,7 @@ FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FComb
 	combatSignalSourceResult.HitWindowKey = InCombatSignalSourceContext.HitWindowKey;
 	combatSignalSourceResult.DamageSpecKey = InCombatSignalSourceContext.DamageSpecKey;
 	combatSignalSourceResult.BaseDamage = InCombatSignalSourceContext.DamageSpec.BaseDamage;
-	combatSignalSourceResult.RequestDamage = InCombatSignalSourceContext.DamageAmount.RequestDamage;
+	combatSignalSourceResult.RequestDamage = InCombatSignalSourceContext.DamageRequestAmount.RequestDamage;
 	combatSignalSourceResult.CommittedDamage = InCombatSignalSourceContext.CommittedDamage;
 
 	return combatSignalSourceResult;
@@ -422,11 +422,11 @@ float UCCombatSignalSourceComponent::SendDamageToTarget(const FCombatSignalSourc
 	damageEvent.SourceActor = InCombatSignalSourceContext.SourceActor;
 	damageEvent.TargetActor = InCombatSignalSourceContext.TargetActor;
 	damageEvent.DamageSpecKey = InCombatSignalSourceContext.DamageSpecKey;
-	damageEvent.DamageImpactInfo = InCombatSignalSourceContext.DamageImpactInfo;
+	damageEvent.HitImpactContext = InCombatSignalSourceContext.HitImpactContext;
 	damageEvent.DamageSpec = InCombatSignalSourceContext.DamageSpec;
-	damageEvent.DamageAmount = InCombatSignalSourceContext.DamageAmount;
+	damageEvent.DamageRequestAmount = InCombatSignalSourceContext.DamageRequestAmount;
 
-	return InCombatSignalSourceContext.TargetActor->TakeDamage(InCombatSignalSourceContext.DamageAmount.RequestDamage, damageEvent, InCombatSignalSourceContext.Instigator, InCombatSignalSourceContext.DamageCauser);
+	return InCombatSignalSourceContext.TargetActor->TakeDamage(InCombatSignalSourceContext.DamageRequestAmount.RequestDamage, damageEvent, InCombatSignalSourceContext.Instigator, InCombatSignalSourceContext.DamageCauser);
 }
 
 bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatSignal) const

@@ -36,7 +36,7 @@ enum class EContextBuildResult : uint8
 // Runtime State
 
 USTRUCT(BlueprintType)
-struct FPatrolPointData
+struct FPatrolPointSnapshot
 {
     GENERATED_BODY()
 
@@ -56,13 +56,13 @@ struct FPatrolPointData
     FName PointTag = NAME_None;
 
 public:
-    FPatrolPointData() = default;
-    FPatrolPointData(const FPatrolPointData&) = default;
-    FPatrolPointData& operator=(const FPatrolPointData&) = default;
+    FPatrolPointSnapshot() = default;
+    FPatrolPointSnapshot(const FPatrolPointSnapshot&) = default;
+    FPatrolPointSnapshot& operator=(const FPatrolPointSnapshot&) = default;
 };
 
 USTRUCT(BlueprintType)
-struct FTargetData
+struct FTargetPerceptionState
 {
     GENERATED_BODY()
 
@@ -83,9 +83,9 @@ public:
     FVector LastKnownLocation = FVector::ZeroVector;
 
 public:
-    FTargetData() = default;
-    FTargetData(const FTargetData&) = default;
-    FTargetData& operator=(const FTargetData&) = default;
+    FTargetPerceptionState() = default;
+    FTargetPerceptionState(const FTargetPerceptionState&) = default;
+    FTargetPerceptionState& operator=(const FTargetPerceptionState&) = default;
 
 public:
     bool IsValidData() const
@@ -97,7 +97,7 @@ public:
 // Runtime Context
 
 USTRUCT(BlueprintType)
-struct FAIContext
+struct FAIBlackboardUpdateContext
 {
     GENERATED_BODY()
 
@@ -149,9 +149,9 @@ public:
     EDeadState DeadState = EDeadState::Alive;
 
 public:
-    FAIContext() = default;
-    FAIContext(const FAIContext&) = default;
-    FAIContext& operator=(const FAIContext&) = default;
+    FAIBlackboardUpdateContext() = default;
+    FAIBlackboardUpdateContext(const FAIBlackboardUpdateContext&) = default;
+    FAIBlackboardUpdateContext& operator=(const FAIBlackboardUpdateContext&) = default;
 
 public:
     bool IsValidContext() const

@@ -20,7 +20,7 @@ protected:
 
 protected:
 	UPROPERTY(Transient)
-	TMap<AActor*, FTargetData> TargetDataMap;
+	TMap<AActor*, FTargetPerceptionState> TargetPerceptionStateMap;
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -108,7 +108,7 @@ private:
 
 public:
 	// Query
-	EPerceptionBuildResult BuildPerceptionContext(FTargetData& OutTargetData);
+	EPerceptionBuildResult BuildPerceptionContext(FTargetPerceptionState& OutTargetPerceptionState);
 
 public:
 	// Runtime LOD Snapshot
@@ -124,9 +124,9 @@ public:
 
 private:
 	// Target Data
-	void UpdateTargetDataMap();
-	void ClearTargetDataMap();
-	EPerceptionBuildResult SelectTopPriority(FTargetData& OutTargetData);
+	void UpdateTargetPerceptionStateMap();
+	void ClearTargetPerceptionStateMap();
+	EPerceptionBuildResult SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState);
 
 private:
 	// Runtime LOD Snapshot
@@ -161,7 +161,7 @@ private:
 	void RecordRawPerceptionCandidate(class AActor* InActor);
 	void RecordValidTargetProvider(class AActor* InActor);
 	void RecordInvalidTargetProvider(class AActor* InActor);
-	void RecordTargetDataMapSizeForAudit();
+	void RecordTargetPerceptionStateMapSizeForAudit();
 
 private:
 	// Blackboard / Engage Latency Audit

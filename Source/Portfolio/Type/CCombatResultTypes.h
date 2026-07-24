@@ -23,7 +23,7 @@ public:
 	class AActor* DamageCauser = nullptr;
 
 	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+	FHitImpactContext HitImpactContext = FHitImpactContext();
 
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();

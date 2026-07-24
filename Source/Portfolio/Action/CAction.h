@@ -129,7 +129,7 @@ public:
 
 public:
 	// Combat Signal
-	virtual bool ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueRequest& OutRequest) const;
+	virtual bool ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueResolution& OutResolution) const;
 
 protected:
 	void PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const;

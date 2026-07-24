@@ -22,22 +22,22 @@ protected:
 	virtual void ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 private:
-	EContextBuildResult BuildPerceptionContext(class APawn* InOwnerPawn, FAIContext& OutAIContext);
+	EContextBuildResult BuildPerceptionContext(class APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext);
 
 private:
-	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
-	EContextBuildResult ComputeAlertRangeContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
-	EContextBuildResult ComputeEngageAssignmentContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
-	EContextBuildResult ComputeReactionContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
-	EContextBuildResult ComputeDeadContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext);
+	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
+	EContextBuildResult ComputeAlertRangeContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
+	EContextBuildResult ComputeEngageAssignmentContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
+	EContextBuildResult ComputeReactionContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
+	EContextBuildResult ComputeDeadContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
 
 private:
-	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateAlertRangeContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateEngageAssignmentContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateReactionContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
-	void UpdateDeadContext(class UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext);
+	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
+	void UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
+	void UpdateAlertRangeContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
+	void UpdateEngageAssignmentContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
+	void UpdateReactionContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
+	void UpdateDeadContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
 
 private:
 	void ClearPerceptionContext(class UBlackboardComponent* InBlackboardComp);

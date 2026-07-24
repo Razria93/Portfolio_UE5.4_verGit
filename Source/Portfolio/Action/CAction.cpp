@@ -475,16 +475,16 @@ void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTrig
 	PlayFeedbackRequest(feedbackRequest);
 }
 
-bool UCAction::ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueRequest& OutRequest) const
+bool UCAction::ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueResolution& OutResolution) const
 {
-	OutRequest = FActionCombatSignalCueRequest();
+	OutResolution = FActionCombatSignalCueResolution();
 
 	if (InCueTag.IsNone()) return false;
 
-	OutRequest.bAccepted = true;
-	OutRequest.CueTag = InCueTag;
+	OutResolution.bAccepted = true;
+	OutResolution.CueTag = InCueTag;
 
-	return OutRequest.IsValidRequest();
+	return OutResolution.IsValidResolution();
 }
 
 void UCAction::PlayFeedbackRequest(const FActionFeedbackRequest& InRequest) const

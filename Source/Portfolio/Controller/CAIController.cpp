@@ -111,7 +111,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 {
 	if (!SetPossessionRuntimeState(InPawn)) return false;
 
-	ClearTargetDataMap();
+	ClearTargetPerceptionStateMap();
 	InitializeRuntimeLODTierSnapshot();
 	InitializePerceptionStateForProfiling();
 	InitializePerceptionCandidateAudit();
@@ -148,7 +148,7 @@ void ACAIController::UninitializeControllerRuntime()
 	ClearPerceptionCandidateAudit();
 	ClearPerceptionStateForProfiling();
 	ClearRuntimeLODTierSnapshot();
-	ClearTargetDataMap();
+	ClearTargetPerceptionStateMap();
 
 	ResetPossessionRuntimeState();
 }
@@ -301,9 +301,9 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 
 	if (!bHasTargetProvider) return;
 
-	FTargetData& data = TargetDataMap.FindOrAdd(Actor);
+	FTargetPerceptionState& data = TargetPerceptionStateMap.FindOrAdd(Actor);
 
-	RecordTargetDataMapSizeForAudit();
+	RecordTargetPerceptionStateMapSizeForAudit();
 
 	if (Stimulus.WasSuccessfullySensed())
 	{
@@ -323,17 +323,17 @@ void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 
 // Query
 
-EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetData& OutTargetData)
+EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetPerceptionState& OutTargetPerceptionState)
 {
 	if (bPerceptionDisabledForProfiling) return EPerceptionBuildResult::NoData;
 
-	UpdateTargetDataMap();
-	return SelectTopPriority(OutTargetData);
+	UpdateTargetPerceptionStateMap();
+	return SelectTopPriority(OutTargetPerceptionState);
 }
 
 // Target Data
 
-void ACAIController::UpdateTargetDataMap()
+void ACAIController::UpdateTargetPerceptionStateMap()
 {
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
@@ -344,10 +344,10 @@ void ACAIController::UpdateTargetDataMap()
 	float nowTime = world->GetTimeSeconds();
 
 	TArray<AActor*> removeKeys;
-	for (TPair<AActor*, FTargetData>& pair : TargetDataMap)
+	for (TPair<AActor*, FTargetPerceptionState>& pair : TargetPerceptionStateMap)
 	{
 		AActor* actorKey = pair.Key;
-		FTargetData& data = pair.Value;
+		FTargetPerceptionState& data = pair.Value;
 
 		if (!IsValid(actorKey) || !data.IsValidData())
 		{
@@ -378,46 +378,46 @@ void ACAIController::UpdateTargetDataMap()
 
 	for (AActor* removeKey : removeKeys)
 	{
-		TargetDataMap.Remove(removeKey);
+		TargetPerceptionStateMap.Remove(removeKey);
 	}
 
-	RecordTargetDataMapSizeForAudit();
+	RecordTargetPerceptionStateMapSizeForAudit();
 }
 
-void ACAIController::ClearTargetDataMap()
+void ACAIController::ClearTargetPerceptionStateMap()
 {
-	TargetDataMap.Reset();
+	TargetPerceptionStateMap.Reset();
 }
 
-EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetData& OutTargetData)
+EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState)
 {
-	OutTargetData = FTargetData();
+	OutTargetPerceptionState = FTargetPerceptionState();
 
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EPerceptionBuildResult::Error;
 
-	if (TargetDataMap.IsEmpty()) return EPerceptionBuildResult::NoData;
+	if (TargetPerceptionStateMap.IsEmpty()) return EPerceptionBuildResult::NoData;
 
 	int bestPriority = INT_MAX;
-	FTargetData topData;
+	FTargetPerceptionState topState;
 
-	for (TPair<AActor*, FTargetData>& pair : TargetDataMap)
+	for (TPair<AActor*, FTargetPerceptionState>& pair : TargetPerceptionStateMap)
 	{
 		AActor* actorKey = pair.Key;
-		FTargetData& data = pair.Value;
+		FTargetPerceptionState& data = pair.Value;
 
 		if (!IsValid(actorKey) || !data.IsValidData()) continue;
 
 		if (data.TargetPriority < bestPriority)
 		{
 			bestPriority = data.TargetPriority;
-			topData = data;
+			topState = data;
 		}
 	}
 
-	if (bestPriority == INT_MAX || !topData.IsValidData()) return EPerceptionBuildResult::NoData;
+	if (bestPriority == INT_MAX || !topState.IsValidData()) return EPerceptionBuildResult::NoData;
 
-	OutTargetData = topData;
+	OutTargetPerceptionState = topState;
 	return EPerceptionBuildResult::Success;
 }
 
@@ -476,7 +476,7 @@ bool ACAIController::ShouldDisableEnemyPerceptionForProfiling() const
 void ACAIController::DisableEnemyPerceptionForProfiling()
 {
 	bPerceptionDisabledForProfiling = true;
-	ClearTargetDataMap();
+	ClearTargetPerceptionStateMap();
 	SetPerceptionSenseEnabledForProfiling(false);
 }
 
@@ -561,13 +561,13 @@ void ACAIController::RecordInvalidTargetProvider(AActor* InActor)
 	PerceptionCandidateAuditState.InvalidTargetProviderActors.Add(InActor);
 }
 
-void ACAIController::RecordTargetDataMapSizeForAudit()
+void ACAIController::RecordTargetPerceptionStateMapSizeForAudit()
 {
 	if (!PerceptionCandidateAuditState.bEnabled) return;
 
-	PerceptionCandidateAuditState.MaxTargetDataMapSize = FMath::Max(
-		PerceptionCandidateAuditState.MaxTargetDataMapSize,
-		TargetDataMap.Num());
+	PerceptionCandidateAuditState.MaxTargetPerceptionStateMapSize = FMath::Max(
+		PerceptionCandidateAuditState.MaxTargetPerceptionStateMapSize,
+		TargetPerceptionStateMap.Num());
 }
 
 // Blackboard / Engage Latency Audit Lifecycle

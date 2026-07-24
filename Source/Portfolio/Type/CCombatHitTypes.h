@@ -6,7 +6,7 @@
 #include "CCombatHitTypes.generated.h"
 
 UENUM(BlueprintType)
-enum class EDamageImpactInfoSource : uint8
+enum class EHitImpactContextSource : uint8
 {
 	None = 0,
 
@@ -60,7 +60,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FDamageImpactInfo
+struct FHitImpactContext
 {
 	GENERATED_BODY()
 
@@ -69,20 +69,20 @@ public:
 	bool bHasHitResult = false;
 
 	UPROPERTY(Transient)
-	EDamageImpactInfoSource Source = EDamageImpactInfoSource::None;
+	EHitImpactContextSource Source = EHitImpactContextSource::None;
 
 	UPROPERTY(Transient)
 	FHitResult HitResult = FHitResult();
 
 public:
-	FDamageImpactInfo() = default;
+	FHitImpactContext() = default;
 
 public:
 	bool IsValidMinimal() const
 	{
 		return bHasHitResult
-			&& Source != EDamageImpactInfoSource::None
-			&& Source != EDamageImpactInfoSource::Max;
+			&& Source != EHitImpactContextSource::None
+			&& Source != EHitImpactContextSource::Max;
 	}
 };
 
@@ -102,7 +102,7 @@ public:
 	FActionDataKey ActionDataKey = FActionDataKey();
 
 	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+	FHitImpactContext HitImpactContext = FHitImpactContext();
 
 public:
 	FHitContext() = default;

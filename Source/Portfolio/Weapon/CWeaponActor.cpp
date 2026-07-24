@@ -416,23 +416,23 @@ FOverlapContext ACWeaponActor::BuildOverlapContext(AActor* InOwnerActor, AActor*
 	return overlapContext;
 }
 
-FDamageImpactInfo ACWeaponActor::BuildDamageImpactInfo(const FOverlapContext& InOverlapContext) const
+FHitImpactContext ACWeaponActor::BuildHitImpactContext(const FOverlapContext& InOverlapContext) const
 {
-	FDamageImpactInfo damageImpactInfo;
+	FHitImpactContext hitImpactContext;
 
 	if (!IsValid(InOverlapContext.OverlappedComponent) || !IsValid(InOverlapContext.OtherComponent))
 	{
 		// Invalid
-		return damageImpactInfo;
+		return hitImpactContext;
 	}
 
 	if (InOverlapContext.bFromSweep)
 	{
-		damageImpactInfo.bHasHitResult = true;
-		damageImpactInfo.Source = EDamageImpactInfoSource::SweepResult;
-		damageImpactInfo.HitResult = InOverlapContext.SweepResult;
+		hitImpactContext.bHasHitResult = true;
+		hitImpactContext.Source = EHitImpactContextSource::SweepResult;
+		hitImpactContext.HitResult = InOverlapContext.SweepResult;
 
-		return damageImpactInfo;
+		return hitImpactContext;
 	}
 
 	const FVector queryLocation = InOverlapContext.OverlappedComponent->GetComponentLocation();
@@ -443,7 +443,7 @@ FDamageImpactInfo ACWeaponActor::BuildDamageImpactInfo(const FOverlapContext& In
 	if (distance < 0.f)
 	{
 		// Invalid
-		return damageImpactInfo;
+		return hitImpactContext;
 	}
 
 	FHitResult hitResult;
@@ -467,11 +467,11 @@ FDamageImpactInfo ACWeaponActor::BuildDamageImpactInfo(const FOverlapContext& In
 	hitResult.ImpactNormal = impactNormal;
 	hitResult.Normal = impactNormal;
 
-	damageImpactInfo.bHasHitResult = true;
-	damageImpactInfo.Source = EDamageImpactInfoSource::ClosestPoint;
-	damageImpactInfo.HitResult = hitResult;
+	hitImpactContext.bHasHitResult = true;
+	hitImpactContext.Source = EHitImpactContextSource::ClosestPoint;
+	hitImpactContext.HitResult = hitResult;
 
-	return damageImpactInfo;
+	return hitImpactContext;
 }
 
 FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapContext) const
@@ -481,7 +481,7 @@ FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapConte
 	hitContext.OverlapContext = InOverlapContext;
 	hitContext.WeaponContext = LastWeaponContext_Cached;
 	hitContext.ActionDataKey = LastActionDataKey_Cached;
-	hitContext.DamageImpactInfo = BuildDamageImpactInfo(InOverlapContext);
+	hitContext.HitImpactContext = BuildHitImpactContext(InOverlapContext);
 
 	return hitContext;
 }

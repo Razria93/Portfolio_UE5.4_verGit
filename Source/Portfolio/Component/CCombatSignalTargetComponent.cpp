@@ -186,34 +186,34 @@ bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& I
 {
 	if (!IsValid(OwnerCharacter_Injected))
 	{
-		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidOwner"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageRequestAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidOwner"));
 		return false;
 	}
 	if (!IsValid(HealthComp_Injected))
 	{
-		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidHealthComponent"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageRequestAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidHealthComponent"));
 		return false;
 	}
 	if (!IsValid(InDamageCauser))
 	{
-		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidDamageCauser"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageRequestAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("InvalidDamageCauser"));
 		return false;
 	}
 
 	if (IsValid(InDefaultDamageEvent.TargetActor) && InDefaultDamageEvent.TargetActor != OwnerCharacter_Injected)
 	{
-		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("TargetMismatch"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageRequestAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("TargetMismatch"));
 		return false;
 	}
 
 	if (!FMath::IsFinite(InDefaultDamageEvent.DamageSpec.BaseDamage))
 	{
-		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteBaseDamage"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageRequestAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteBaseDamage"));
 		return false;
 	}
-	if (!FMath::IsFinite(InDefaultDamageEvent.DamageAmount.RequestDamage))
+	if (!FMath::IsFinite(InDefaultDamageEvent.DamageRequestAmount.RequestDamage))
 	{
-		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteRequestDamage"));
+		FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(InDefaultDamageEvent.DamageRequestAmount.RequestDamage, InDefaultDamageEvent, InDamageInstigator, InDamageCauser, TEXT("NonFiniteRequestDamage"));
 		return false;
 	}
 
@@ -242,10 +242,10 @@ FCombatSignalTargetPayload UCCombatSignalTargetComponent::BuildPayload(float Dam
 	combatSignalTargetPayload.EventInstigator = InDamageInstigator;
 	combatSignalTargetPayload.DamageCauser = InDamageCauser;
 
-	combatSignalTargetPayload.DamageImpactInfo = InDefaultDamageEvent.DamageImpactInfo;
+	combatSignalTargetPayload.HitImpactContext = InDefaultDamageEvent.HitImpactContext;
 	combatSignalTargetPayload.DamageSpecKey = InDefaultDamageEvent.DamageSpecKey;
 	combatSignalTargetPayload.DamageSpec = InDefaultDamageEvent.DamageSpec;
-	combatSignalTargetPayload.DamageAmount = InDefaultDamageEvent.DamageAmount;
+	combatSignalTargetPayload.DamageRequestAmount = InDefaultDamageEvent.DamageRequestAmount;
 
 	combatSignalTargetPayload.RequestedDamage = DamageAmount;
 
@@ -261,7 +261,7 @@ FCombatSignalTargetContext UCCombatSignalTargetComponent::BuildContext(const FCo
 	combatSignalTargetContext.Instigator = ResolveInstigatorController(InCombatSignalTargetPayload.EventInstigator, InCombatSignalTargetPayload.DamageCauser);
 	combatSignalTargetContext.DamageCauser = InCombatSignalTargetPayload.DamageCauser;
 
-	combatSignalTargetContext.DamageImpactInfo = InCombatSignalTargetPayload.DamageImpactInfo;
+	combatSignalTargetContext.HitImpactContext = InCombatSignalTargetPayload.HitImpactContext;
 	combatSignalTargetContext.DamageSpecKey = InCombatSignalTargetPayload.DamageSpecKey;
 
 	combatSignalTargetContext.RequestedDamage = InCombatSignalTargetPayload.RequestedDamage;
@@ -565,7 +565,7 @@ FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const
 	combatResultPacket.TargetActor = InCombatSignalTargetPacket.Context.TargetActor;
 	combatResultPacket.Instigator = InCombatSignalTargetPacket.Context.Instigator;
 	combatResultPacket.DamageCauser = InCombatSignalTargetPacket.Context.DamageCauser;
-	combatResultPacket.DamageImpactInfo = InCombatSignalTargetPacket.Context.DamageImpactInfo;
+	combatResultPacket.HitImpactContext = InCombatSignalTargetPacket.Context.HitImpactContext;
 	combatResultPacket.DamageSpecKey = InCombatSignalTargetPacket.Result.DamageSpecKey;
 	combatResultPacket.DefenseOutcome = InCombatSignalTargetPacket.Result.DefenseOutcome;
 	combatResultPacket.bDamageCommitted = InCombatSignalTargetPacket.Result.bShouldCommitDamage;

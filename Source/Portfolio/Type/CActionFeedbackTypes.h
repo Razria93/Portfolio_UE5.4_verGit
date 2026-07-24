@@ -95,13 +95,13 @@ public:
 // Data / Config
 
 USTRUCT(BlueprintType)
-struct FTrailFeedbackData
+struct FActionTrailFeedbackData
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere)
-	FActionFeedbackKey ActionFeedbackKey = FActionFeedbackKey();
+	FActionFeedbackMatchKey ActionFeedbackMatchKey = FActionFeedbackMatchKey();
 
 	UPROPERTY(EditAnywhere)
 	EActionFeedbackTiming ActionFeedbackTiming = EActionFeedbackTiming::None;
@@ -113,7 +113,7 @@ public:
 	bool bTrailActive = false;
 
 public:
-	FTrailFeedbackData() = default;
+	FActionTrailFeedbackData() = default;
 };
 
 USTRUCT(BlueprintType)

@@ -82,7 +82,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FDamageAmount
+struct FDamageRequestAmount
 {
 	GENERATED_BODY()
 
@@ -91,7 +91,7 @@ public:
 	float RequestDamage = 0.f;
 
 public:
-	FDamageAmount() = default;
+	FDamageRequestAmount() = default;
 };
 
 USTRUCT(BlueprintType)
@@ -107,7 +107,7 @@ public:
 	AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
-	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();
+	FHitImpactContext HitImpactContext = FHitImpactContext();
 
 	UPROPERTY(Transient)
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
@@ -116,7 +116,7 @@ public:
 	FDamageSpec DamageSpec = FDamageSpec();
 
 	UPROPERTY(Transient)
-	FDamageAmount DamageAmount = FDamageAmount();
+	FDamageRequestAmount DamageRequestAmount = FDamageRequestAmount();
 
 public:
 	static const int32 ClassID = (int32)EDamageEventTypeId::DefaultDamage;

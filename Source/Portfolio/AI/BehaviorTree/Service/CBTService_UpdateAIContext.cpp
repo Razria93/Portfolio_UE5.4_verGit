@@ -66,7 +66,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		return;
 	}
 
-	FAIContext aiContext;
+	FAIBlackboardUpdateContext aiContext;
 
 	// Based OwnerPawn
 	EContextBuildResult deadResult = ComputeDeadContext(ownerPawn, blackboardComp, aiContext);
@@ -130,29 +130,29 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	aiOwner->RefreshRuntimeLODTierFromBlackboard();
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAIContext& OutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext)
 {
 	ACAIController* aiController = Cast<ACAIController>(InOwnerPawn->GetController());
 	if (!IsValid(aiController)) return EContextBuildResult::Error;
 
-	FTargetData topData;
-	const EPerceptionBuildResult Result = aiController->BuildPerceptionContext(topData);
+	FTargetPerceptionState topState;
+	const EPerceptionBuildResult Result = aiController->BuildPerceptionContext(topState);
 
 	if (Result == EPerceptionBuildResult::Error) return EContextBuildResult::Error;
 	if (Result == EPerceptionBuildResult::NoData) return EContextBuildResult::NoData;
 
-	OutAIContext.TargetActor = topData.TargetActor;
-	OutAIContext.TargetPriority = topData.TargetPriority;
-	OutAIContext.bHasLOS = topData.bHasLOS;
-	OutAIContext.LastSeenTime = topData.LastSeenTime;
-	OutAIContext.LastKnownLocation = topData.LastKnownLocation;
+	OutAIContext.TargetActor = topState.TargetActor;
+	OutAIContext.TargetPriority = topState.TargetPriority;
+	OutAIContext.bHasLOS = topState.bHasLOS;
+	OutAIContext.LastSeenTime = topState.LastSeenTime;
+	OutAIContext.LastKnownLocation = topState.LastKnownLocation;
 
-	aiController->RecordPerceptionContextBuiltForAudit(topData.TargetActor);
+	aiController->RecordPerceptionContextBuiltForAudit(topState.TargetActor);
 
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
@@ -167,7 +167,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn*
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
@@ -201,7 +201,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
 	{
@@ -257,7 +257,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
@@ -269,7 +269,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
@@ -281,7 +281,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwn
 	return EContextBuildResult::Success;
 }
 
-void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 	if (!IsValid(InAIContext.TargetActor)) return;
@@ -293,7 +293,7 @@ void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* 
 	CAIBlackboardValueHelper::SetVectorIfChanged(InBlackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, InAIContext.LastKnownLocation);
 }
 
-void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
@@ -301,7 +301,7 @@ void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* 
 	CAIBlackboardValueHelper::SetFloatIfChanged(InBlackboardComp, CAIKey::Metric::DistanceToHome.KeyName, InAIContext.DistanceToHome);
 }
 
-void UCBTService_UpdateAIContext::UpdateAlertRangeContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateAlertRangeContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
@@ -310,7 +310,7 @@ void UCBTService_UpdateAIContext::UpdateAlertRangeContext(UBlackboardComponent* 
 
 }
 
-void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
@@ -318,14 +318,14 @@ void UCBTService_UpdateAIContext::UpdateEngageAssignmentContext(UBlackboardCompo
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bShouldEngage.KeyName, InAIContext.bShouldEngage);
 }
 
-void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateReactionContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Reaction::bIsActiveReaction.KeyName, InAIContext.bIsActiveReaction);
 }
 
-void UCBTService_UpdateAIContext::UpdateDeadContext(UBlackboardComponent* InBlackboardComp, FAIContext& InAIContext)
+void UCBTService_UpdateAIContext::UpdateDeadContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
