@@ -15,8 +15,9 @@
 - [x] 1차 후보 영역 분류
 - [x] 코드 전수 감사
 - [x] ReadOnly / Non-ReadOnly / 보류 후보 분류
-- [ ] ReadOnly API const 적용
-- [ ] build / PIE 검증
+- [x] ReadOnly API const 적용 1차
+- [x] build 검증
+- [ ] PIE 검증
 
 ---
 
@@ -91,6 +92,26 @@
 
 다음 항목은 현재 구현 기준으로 내부 상태를 바꾸지 않는 조회 / 조립 성격이므로 다음 const 적용 pass의 1차 후보로 둔다.
 
+적용 상태:
+
+```text
+완료:
+-> UCWeaponComponent::GetCurrentWeaponType
+-> UCWeaponComponent::GetWeaponActor
+-> UCCombatSignalTargetComponent::CanReceiveCombatSignal
+-> UCBTService_UpdateAIContext::ComputeHomeMetricContext
+-> UCBTService_UpdateAIContext::ComputeAlertRangeContext
+-> UCBTService_UpdateAIContext::ComputeReactionContext
+-> UCBTService_UpdateAIContext::ComputeDeadContext
+-> ACAIController::SelectTopPriority
+
+검증:
+-> PortfolioEditor Win64 Development build 통과
+
+남은 검증:
+-> PIE smoke
+```
+
 ### Component
 
 ```text
@@ -101,6 +122,7 @@ Source/Portfolio/Component/CWeaponComponent.h / .cpp
 판정:
 -> CurrentWeaponType 또는 WeaponActor 유효성 확인 후 값을 반환한다.
 -> member field 변경이 없으므로 ReadOnly const 후보로 둔다.
+-> 1차 적용 완료.
 ```
 
 ### CombatSignal
@@ -112,6 +134,7 @@ Source/Portfolio/Component/CCombatSignalTargetComponent.h / .cpp
 판정:
 -> target context를 판정 / 채우지만 component owner 상태는 바꾸지 않는다.
 -> DefenseComp_Injected->CanParry()가 const query로 유지되는지 함께 확인한 뒤 적용한다.
+-> 1차 적용 완료.
 ```
 
 ### AI / BehaviorTree service
@@ -126,6 +149,7 @@ Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.h / .cpp
 판정:
 -> service member 상태를 바꾸지 않고, 입력 pawn / blackboard / component에서 값을 읽어 context를 채운다.
 -> debug / audit 기록이 없는 함수부터 1차 후보로 둔다.
+-> 1차 적용 완료.
 ```
 
 ### AI / Controller
@@ -138,6 +162,7 @@ Source/Portfolio/Controller/CAIController.h / .cpp
 -> TargetPerceptionStateMap을 조회해 top state를 Out parameter에 채운다.
 -> 단독 함수 기준 member mutation은 없으므로 ReadOnly const 후보로 둔다.
 -> 적용 시 loop variable을 const reference로 정리하고, BuildPerceptionContext와 분리해서 검증한다.
+-> 1차 적용 완료.
 ```
 
 ### 이미 const 정합성이 높은 영역
