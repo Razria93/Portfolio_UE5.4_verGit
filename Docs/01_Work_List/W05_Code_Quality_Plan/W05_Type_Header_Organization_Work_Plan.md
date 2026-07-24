@@ -167,12 +167,10 @@ CReactionKeyTypes.h
 CReactionDataTypes.h
 -> FReactionData, FReactionExecutionContext
 
-CActionTypes.h 임시 잔류 / 후속 정리 후보
--> FActionContext는 현재 hit / combat signal에 실리는 action identity snapshot 성격이다.
--> FActionExecutionContext와 다른 역할이며, FActionDataKey와 필드가 중복된다.
--> 단순 대칭 목적의 FReactionContext는 추가하지 않는다.
--> 최종 후보는 FActionContext 제거 후 FActionDataKey 직접 사용이다.
--> USTRUCT / UPROPERTY 변경 리스크가 있으므로 별도 rename / removal pass에서 처리한다.
+CActionTypes.h
+-> action enum 전용 헤더로 정리 완료
+-> hit / combat signal에 실리던 action identity snapshot은 FActionContext 대신 FActionDataKey를 직접 사용하도록 정리 완료
+-> 단순 대칭 목적의 FReactionContext는 추가하지 않음
 
 CActionOrchestrationTypes.h
 -> EActionStopReason / EActionFinishReason
@@ -299,24 +297,26 @@ Core/Debug/FCombatEngageDebugTypes.h
 
 ### 4.4 배치 / 구성 정리 후보
 
-#### Action / Reaction key / context 구조 정리
+#### Action / Reaction key / context 구조 정리 완료
 
 ```text
 현재 Action
--> CActionTypes.h: enum + FActionDataKey + FActionContext
+-> CActionTypes.h: enum
+-> CActionKeyTypes.h: FActionDataKey + key helper
 -> CActionDataTypes.h: FActionData + FActionExecutionContext
 
 현재 Reaction
 -> CReactionTypes.h: enum
--> CReactionDataTypes.h: FReactionDataKey + FReactionData + FReactionExecutionContext
+-> CReactionKeyTypes.h: FReactionDataKey + key helper
+-> CReactionDataTypes.h: FReactionData + FReactionExecutionContext
 ```
 
 판단:
 
 ```text
--> 현재 분리는 의도된 도메인 설계라기보다 include 부담을 줄이다가 굳어진 비대칭으로 본다.
--> FActionDataKey는 가볍기 때문에 CActionTypes.h에 남았고, FReactionDataKey는 FDamageSpecKey 의존 때문에 CReactionTypes.h에 올라가지 못한 것으로 본다.
--> 최종 목표는 Types / KeyTypes / DataTypes / OrchestrationTypes 책임 분리다.
+-> 기존 분리는 의도된 도메인 설계라기보다 include 부담을 줄이다가 굳어진 비대칭으로 판단했다.
+-> Action / Reaction 모두 Types / KeyTypes / DataTypes / OrchestrationTypes 책임 분리 기준으로 정리했다.
+-> hit / combat signal에 전달되던 FActionContext는 FActionDataKey 직접 사용으로 대체했다.
 ```
 
 권장 최종 구조:
@@ -346,21 +346,23 @@ CReactionDataTypes.h
 -> FReactionExecutionContext
 ```
 
-`FActionContext` 판단:
+`FActionContext` 처리 결과:
 
 ```text
 -> 실제 역할은 action runtime context가 아니라 hit / combat signal에 실리는 action identity snapshot이다.
 -> 현재 필드는 FActionDataKey와 동일하게 ActionType + ActionIndex다.
--> 최종 후보는 FActionContext 제거 후 FActionDataKey 직접 사용이다.
+-> FActionContext는 제거하고 FActionDataKey 직접 사용으로 정리했다.
 -> hit source metadata가 추가될 명확한 계획이 생기면 FActionHitSourceContext 또는 FCombatSourceActionContext rename을 별도 검토한다.
 -> 단순 대칭 목적의 FReactionContext 추가는 금지한다.
 ```
 
-진행 판단:
+검증 결과:
 
 ```text
--> KeyTypes 실제 분리는 현재 Type header organization 브랜치의 다음 코드 작업으로 진행한다.
--> FActionContext 제거 / rename은 USTRUCT / UPROPERTY 변경이므로 Editor load, Blueprint compile, PIE smoke 검증과 묶는 별도 pass에서 처리한다.
+-> KeyTypes 실제 분리 완료.
+-> FActionContext 제거 완료.
+-> PortfolioEditor Win64 Development 빌드 통과.
+-> PIE smoke 정상 작동 확인.
 ```
 
 ```text
