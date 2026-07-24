@@ -152,7 +152,7 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* I
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
@@ -167,7 +167,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn*
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
@@ -257,7 +257,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 
@@ -269,7 +269,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeReactionContext(APawn* I
 	return EContextBuildResult::Success;
 }
 
-EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext)
+EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
 

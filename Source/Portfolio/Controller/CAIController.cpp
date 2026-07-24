@@ -388,11 +388,11 @@ void ACAIController::ClearTargetPerceptionStateMap()
 	TargetPerceptionStateMap.Reset();
 }
 
-EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState)
+EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState) const
 {
 	OutTargetPerceptionState = FTargetPerceptionState();
 
-	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	const UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EPerceptionBuildResult::Error;
 
 	if (TargetPerceptionStateMap.IsEmpty()) return EPerceptionBuildResult::NoData;
@@ -400,10 +400,10 @@ EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetPerceptionState&
 	int bestPriority = INT_MAX;
 	FTargetPerceptionState topState;
 
-	for (TPair<AActor*, FTargetPerceptionState>& pair : TargetPerceptionStateMap)
+	for (const TPair<AActor*, FTargetPerceptionState>& pair : TargetPerceptionStateMap)
 	{
 		AActor* actorKey = pair.Key;
-		FTargetPerceptionState& data = pair.Value;
+		const FTargetPerceptionState& data = pair.Value;
 
 		if (!IsValid(actorKey) || !data.IsValidData()) continue;
 

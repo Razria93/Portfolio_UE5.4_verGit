@@ -126,7 +126,7 @@ private:
 	// Target Data
 	void UpdateTargetPerceptionStateMap();
 	void ClearTargetPerceptionStateMap();
-	EPerceptionBuildResult SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState);
+	EPerceptionBuildResult SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState) const;
 
 private:
 	// Runtime LOD Snapshot
