@@ -141,9 +141,9 @@ const FWeaponContext& ACWeaponActor::GetLastWeaponContext() const
 	return LastWeaponContext_Cached;
 }
 
-const FActionContext& ACWeaponActor::GetLastActionContext() const
+const FActionDataKey& ACWeaponActor::GetLastActionDataKey() const
 {
-	return LastActionContext_Cached;
+	return LastActionDataKey_Cached;
 }
 
 void ACWeaponActor::SetLastOverlapContext(const FOverlapContext& InOverlapContext)
@@ -156,9 +156,9 @@ void ACWeaponActor::SetLastWeaponContext(const FWeaponContext& InWeaponContext)
 	LastWeaponContext_Cached = InWeaponContext;
 }
 
-void ACWeaponActor::SetLastActionContext(const FActionContext& InActionContext)
+void ACWeaponActor::SetLastActionDataKey(const FActionDataKey& InActionDataKey)
 {
-	LastActionContext_Cached = InActionContext;
+	LastActionDataKey_Cached = InActionDataKey;
 }
 
 void ACWeaponActor::ChangeWeaponType(EWeaponType InWeaponType)
@@ -480,7 +480,7 @@ FHitContext ACWeaponActor::BuildHitContext(const FOverlapContext& InOverlapConte
 
 	hitContext.OverlapContext = InOverlapContext;
 	hitContext.WeaponContext = LastWeaponContext_Cached;
-	hitContext.ActionContext = LastActionContext_Cached;
+	hitContext.ActionDataKey = LastActionDataKey_Cached;
 	hitContext.DamageImpactInfo = BuildDamageImpactInfo(InOverlapContext);
 
 	return hitContext;

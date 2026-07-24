@@ -78,19 +78,3 @@ enum class EActionEventType : uint8
 
 	Max,
 };
-
-USTRUCT(BlueprintType)
-struct FActionContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	EActionType ActionType = EActionType::Max;
-
-	UPROPERTY(EditAnywhere)
-	int32 ActionIndex = INDEX_NONE;
-
-public:
-	FActionContext() = default;
-};

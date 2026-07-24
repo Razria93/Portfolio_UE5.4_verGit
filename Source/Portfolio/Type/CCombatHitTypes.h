@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Type/CWeaponTypes.h"
-#include "Type/CActionTypes.h"
+#include "Type/CActionKeyTypes.h"
 #include "CCombatHitTypes.generated.h"
 
 UENUM(BlueprintType)
@@ -99,7 +99,7 @@ public:
 	FWeaponContext WeaponContext = FWeaponContext();
 
 	UPROPERTY(Transient)
-	FActionContext ActionContext = FActionContext();
+	FActionDataKey ActionDataKey = FActionDataKey();
 
 	UPROPERTY(Transient)
 	FDamageImpactInfo DamageImpactInfo = FDamageImpactInfo();

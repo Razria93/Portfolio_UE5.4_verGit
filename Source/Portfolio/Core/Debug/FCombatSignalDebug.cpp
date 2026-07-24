@@ -33,8 +33,8 @@ namespace
 	{
 		FDamageSpecKey damageSpecKey;
 		damageSpecKey.WeaponType = InHitContext.WeaponContext.WeaponType;
-		damageSpecKey.ActionType = InHitContext.ActionContext.ActionType;
-		damageSpecKey.ActionIndex = InHitContext.ActionContext.ActionIndex;
+		damageSpecKey.ActionType = InHitContext.ActionDataKey.ActionType;
+		damageSpecKey.ActionIndex = InHitContext.ActionDataKey.ActionIndex;
 
 		return FormatCombatSignalDamageSpecKey(damageSpecKey);
 	}

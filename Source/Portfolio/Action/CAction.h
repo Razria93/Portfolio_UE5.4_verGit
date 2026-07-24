@@ -136,10 +136,9 @@ protected:
 	virtual FActionFeedbackRequest BuildFeedbackRequest(EActionFeedbackTiming InTiming, FName InTriggerKey = NAME_None) const;
 
 protected:
-	// Action-only hit context
+	// Hit Source Action Key
 	void PushHitContext();
 	void ClearHitContext();
-	virtual FActionContext BuildActionContext() const;
 
 public:
 	// Intervention Window

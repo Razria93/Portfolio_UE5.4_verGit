@@ -516,7 +516,7 @@ void UCAction::PushHitContext()
 		return;
 	}
 
-	WeaponComp_Injected->PushContext(BuildActionContext());
+	WeaponComp_Injected->PushActionDataKey(ActiveDataKey_Cached);
 }
 
 void UCAction::ClearHitContext()
@@ -528,16 +528,6 @@ void UCAction::ClearHitContext()
 	}
 
 	WeaponComp_Injected->ClearContext();
-}
-
-FActionContext UCAction::BuildActionContext() const
-{
-	FActionContext context;
-
-	context.ActionType = ActiveDataKey_Cached.ActionType;
-	context.ActionIndex = ActiveDataKey_Cached.ActionIndex;
-
-	return context;
 }
 
 void UCAction::OpenAllowInterventionWindow(FName InWindowKey)
