@@ -44,7 +44,7 @@ FActionRequestResult HandleCombatAction(...);
 
 ```cpp
 void BuildContext(const FCombatSignalTargetPayload& InPayload, FCombatSignalTargetContext& OutContext);
-void UpdateContext(FAIContext& InOutAIContext);
+void UpdateContext(FAIBlackboardUpdateContext& InOutAIContext);
 ```
 
 참조 표기는 `FType& Value`, `const FType& Value` 형태로 통일한다.
