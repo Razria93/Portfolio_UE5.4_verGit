@@ -19,7 +19,7 @@
 - [x] include order 재스캔 통과
 - [x] `git diff --check` 통과
 - [x] `PortfolioEditor Win64 Development` build 통과
-- [ ] PIE smoke 미실행
+- [x] PIE smoke 확인
 
 ## 브랜치
 
@@ -158,6 +158,7 @@ commit range
 4. git diff --check main...HEAD
 5. PortfolioEditor Win64 Development build
 6. 에이전트 교차 검토로 상위 include 과밀 후보 확인
+7. PIE smoke 실행
 ```
 
 ## 검증 결과
@@ -205,6 +206,13 @@ PortfolioEditor Win64 Development
 Result: Pass
 ```
 
+### PIE
+
+```text
+PIE smoke
+Result: Pass
+```
+
 ### Review
 
 ```text
@@ -226,7 +234,6 @@ Result: Must fix now 항목 없음
 - `ProjectGlobal.h` 제공 기능 축소
 - Feedback MatchKey / PlaybackKey 구조 변경
 - CombatSignal generic pipeline scaffold 제거
-- PIE smoke
 
 ## 관련 문서
 
