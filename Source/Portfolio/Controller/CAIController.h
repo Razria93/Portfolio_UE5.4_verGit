@@ -85,7 +85,7 @@ private:
 	// Blackboard Setup
 	bool SetupBlackboardComponent();
 
-	// Blackboard Value
+	// Blackboard Runtime Value
 	bool InitializeBlackboardValues();
 	void InitializeCustomBlackboardValues(class UBlackboardComponent* InBlackboardComp, const class APawn* InOwnerPawn, TSet<FName>& InOutPendingKeys) const;
 
