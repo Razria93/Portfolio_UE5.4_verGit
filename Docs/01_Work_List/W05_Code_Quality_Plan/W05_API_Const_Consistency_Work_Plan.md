@@ -317,7 +317,31 @@ Source/Portfolio/Core/Profiling/*
 -> Blueprint / override signature를 별도 pass에서 검증하기로 결정
 ```
 
-### 3.5 local const / Others 전수 검토
+### 3.5 ReadOnly Param const 적용 1차 재스캔
+
+ReadOnly Param const 적용 1차는 다음 기준으로 재스캔했다.
+
+```text
+검색 기준:
+-> Component / Action / Reaction / Weapon / CombatSignal / AI / System / Core
+-> FString / FText / TArray / TMap / project FStruct by-value input
+-> UFUNCTION / delegate / override / Blueprint 노출 signature 제외
+-> FName / enum / scalar 값 전달은 이번 pass에서 const& 강제 대상에서 제외
+
+결과:
+-> 1차 범위에서 새로 const&로 바꿀 대형 by-value 입력 후보는 발견되지 않았다.
+-> TArray / TMap / FString / FText 계열 입력은 이미 const&이거나 Out / InOut 참조로 분류되어 있다.
+-> project FStruct 입력은 대부분 이미 const&이며, FDamageEvent는 UE TakeDamage 계열 signature와 CombatSignal damage forwarding 경로라 현 상태를 유지한다.
+-> FAIStimulus는 perception UFUNCTION callback signature이므로 제외한다.
+-> FName 입력은 작은 값 타입이고 현재 delegate / notify / trigger / collision key 경로에 넓게 사용되므로 이번 pass에서 변경하지 않는다.
+
+판정:
+-> 이번 pass는 코드 signature 변경 없이 감사 완료로 처리한다.
+-> ReadOnly Param 정책 위반으로 볼 명확한 내부/private helper 후보는 남기지 않았다.
+-> 다음 pass는 parameter const가 아니라 ReadOnly member function const 누락 / 보류 후보 재검증 중심으로 진행한다.
+```
+
+### 3.6 local const / Others 전수 검토
 
 `const` 사용 현황을 다음 기준으로 재분류했다.
 
@@ -408,6 +432,32 @@ const 포함 라인 : 1902
 판정:
 -> local const 정책 검증용 선별 정리만 수행했다.
 -> 의미가 있는 snapshot / gate까지 기계적으로 제거하지 않는다.
+```
+
+### 3.7 ReadOnly member function const 보류 후보 재검증
+
+ReadOnly member function const 잔여 후보를 다음 기준으로 재스캔했다.
+
+```text
+검색 기준:
+-> Get / Is / Has / Can / Should / Find / Resolve / Build / Make / Calculate / Compute 계열 header 선언
+-> const가 붙지 않은 member function 후보
+-> static function / free function / override / UFUNCTION / delegate signature 제외
+
+재스캔 결과:
+-> 명확한 신규 ReadOnly member function const 적용 후보는 발견되지 않았다.
+-> static policy / debug / profiling helper는 member const 적용 대상이 아니다.
+-> free function helper는 member const 적용 대상이 아니다.
+-> CAnimInstance::ShouldRefreshAnimationParameters는 RuntimeLODAnimationRefreshElapsed를 갱신하고 profiling / audit 조건에 걸리므로 Non-ReadOnly로 유지한다.
+-> UCActionComponent::ResolveActionData / UCReactionComponent::ResolveReactionData는 data map 조회 자체는 ReadOnly 성격이지만 실패 경로에서 audit 기록을 수행하므로 현재 정책에서는 보류한다.
+-> UCActionComponent::ResolveActionExecutor / UCReactionComponent::ResolveReactionExecutor는 executor lazy 생성 / cache mutation 경로가 있으므로 Non-ReadOnly로 유지한다.
+-> UCActionComponent::FindActionExecutor / UCReactionComponent::FindReactionExecutor는 invalid cached executor 제거 경로가 있으므로 Non-ReadOnly로 유지한다.
+-> UCActionComponent::BuildActionExecutorReferences / UCReactionComponent::BuildReactionExecutorReferences는 non-const FCharacterComponentReferences pointer graph를 조립하므로 현재 계약에서는 보류한다.
+-> ACPlayer::BuildReferences / ACEnemy::BuildReferences는 non-const owner / component pointer graph를 OutReferences에 채우므로 현재 계약에서는 보류한다.
+
+판정:
+-> 이번 pass는 코드 signature 변경 없이 감사 완료로 처리한다.
+-> 추가 const 적용은 audit 기록 정책 변경, FCharacterComponentReferences pointer graph 계약 변경, Blueprint / override signature 별도 검증 결정 전까지 보류한다.
 ```
 
 ---
