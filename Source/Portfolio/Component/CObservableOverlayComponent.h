@@ -34,12 +34,18 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
+	// Overlay Snapshot
 	void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot);
+
+	// Overlay Event
 	bool ApplyOverlayEvent(const FObservableOverlayEventContext& InContext);
+
+	// Overlay Handling
 	bool ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings);
 	bool ApplyOverlayHandling(EObservableOverlayHandling InHandling);
 
 private:
+	// Policy Registry
 	void MarkPolicyRegistryDirty();
 	void RefreshPolicyRegistry();
 	void RebuildPolicyRegistry();

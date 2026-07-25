@@ -27,6 +27,8 @@ UCCombatSignalSourceComponent::UCCombatSignalSourceComponent()
 {
 }
 
+// Component Reference
+
 void UCCombatSignalSourceComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -51,6 +53,8 @@ bool UCCombatSignalSourceComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// HitWindow
+
 void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
 {
 	if (!IsValid(InDamageCauser)) return;
@@ -60,7 +64,7 @@ void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser
 	hitWindowKey.DamageCauser = InDamageCauser;
 	hitWindowKey.HitWindowId = InHitWindowId;
 
-	// Reset stale record for the same hit window key
+	// Reset stale record for the same hit window key.
 	DamagedTargetContainer.Remove(hitWindowKey);
 	DamagedTargetContainer.FindOrAdd(hitWindowKey);
 }
@@ -76,6 +80,8 @@ void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser
 
 	DamagedTargetContainer.Remove(hitWindowKey);
 }
+
+// Entry
 
 void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext& InHitContext)
 {
@@ -100,6 +106,8 @@ bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor
 	return SendCueSignal(combatSignal);
 }
 
+// Entry for AI
+
 bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 {
 	FCombatCollisionProfilingCounters::RecordAICombatSignalCueRequest();
@@ -117,6 +125,8 @@ bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 
 	return RequestCombatSignalCue(targetActor, InCueTag, cueLocation, cueDirection, OwnerCharacter_Injected);
 }
+
+// Entry
 
 void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext& InHitContext)
 {
@@ -180,6 +190,8 @@ bool UCCombatSignalSourceComponent::ShouldSkipEnemyHitProcessingForProfiling() c
 {
 	return FCombatCollisionProfiling::ShouldSkipEnemyHitProcessing(OwnerCharacter_Injected);
 }
+
+// Receive
 
 bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitContext) const
 {
@@ -267,6 +279,8 @@ FCombatSignalSourceContext UCCombatSignalSourceComponent::BuildContext(const FCo
 
 	return combatSignalSourceContext;
 }
+
+// Resolve
 
 bool UCCombatSignalSourceComponent::ValidateContext(FCombatSignalSourceContext& InOutCombatSignalSourceContext) const
 {
@@ -390,6 +404,8 @@ FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FComb
 	return combatSignalSourceResult;
 }
 
+// Send
+
 void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSourceContext& InOutCombatSignalSourceContext)
 {
 	FCombatCollisionProfilingCounters::RecordCombatSignal();
@@ -460,6 +476,8 @@ bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatS
 	FCombatSignalDebug::RecordCueAcceptedForAudit(InCombatSignal);
 	return true;
 }
+
+// Cache
 
 void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InCombatSignalSourceContext)
 {

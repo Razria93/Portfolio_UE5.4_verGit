@@ -9,6 +9,9 @@
 
 // CAction_Guard only owns Guard In/Out transition actions.
 // Guard Hold is an idle overlay state owned by UCDefenseComponent.
+
+// Lifecycle
+
 bool UCAction_Guard::Start(const FActionData& InData)
 {
 	const bool bStarted = Super::Start(InData);
@@ -106,6 +109,8 @@ void UCAction_Guard::Complete()
 		break;
 	}
 }
+
+// Decision
 
 FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
@@ -206,6 +211,8 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 	return false;
 }
 
+// Observable Overlay
+
 void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -263,6 +270,8 @@ void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQ
 	OutDecision.Decision = EExecutionDecision::Reject;
 }
 
+// Notify
+
 void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
 	if (!IsValid(ActionComp_Injected)) return;
@@ -281,6 +290,8 @@ void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 		break;
 	}
 }
+
+// Intervention
 
 bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
@@ -347,6 +358,8 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 
 	return false;
 }
+
+// Guard State Cleanup
 
 void UCAction_Guard::ClearDeferredGuardActions() const
 {
