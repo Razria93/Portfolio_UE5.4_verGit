@@ -501,6 +501,74 @@ FObservableTargetRef targetRef;
 
 ---
 
+## 13.1 Section Comment Follow-up Rules
+
+### Header / Source Section Synchronization
+
+`.h`가 API 책임 단위로 섹션을 나누면 `.cpp`도 같은 책임 그룹 기준으로 섹션을 둔다.
+목표는 선언 파일에서 본 책임 구조를 구현 파일에서도 빠르게 찾을 수 있게 하는 것이다.
+
+```text
+기본 원칙:
+-> .cpp 섹션명과 순서는 가능하면 .h를 따른다.
+-> 완전한 함수 단위 1:1 매칭은 강제하지 않는다.
+-> 구현 전용 helper / local namespace / static helper / 세부 pipeline 단계는 .cpp 전용 섹션으로 둘 수 있다.
+-> 함수가 1~2개뿐인 작은 파일은 섹션 주석을 생략할 수 있다.
+-> Unreal lifecycle / callback / 구현 흐름이 더 중요한 경우 구현 흐름을 우선한다.
+```
+
+### Type Header Section Taxonomy
+
+Type 헤더에서 타입 역할이 3개 이상으로 나뉘면 아래 taxonomy를 우선 사용한다.
+타입이 1~2개뿐인 작은 Type 헤더는 섹션 주석을 생략할 수 있다.
+
+```text
+// Enum
+// Key / Identifier
+// Data / Config
+// Runtime State
+// Runtime Context
+// Request
+// Candidate
+// Payload
+// Resolution
+// Result
+// Packet
+// Runtime Key / Playback Key
+// Reserved Pipeline Scaffold
+// Helper API
+```
+
+pipeline 단계가 type taxonomy보다 더 명확한 파일은 `Request`, `Candidate`, `Payload`, `Resolution`, `Result`, `Packet`을 우선 사용한다.
+feedback / playback처럼 domain 의미가 필요한 경우 `Runtime Key / Playback Key`처럼 구체적인 섹션명을 허용한다.
+
+### Step Comment Style
+
+단계형 주석은 fallback 순서, policy gate, priority matching처럼 순서 자체가 의미를 가질 때만 사용한다.
+번호 깊이는 한 단계까지만 허용하고, `2-3-1` 같은 중첩 번호는 의미 있는 문장형 주석으로 바꾼다.
+
+```cpp
+// Gate: already dead.
+// Gate: parry intercept.
+// Gate: target-side defense policy.
+```
+
+```cpp
+// Preferred: engine-provided instigator.
+// Fallback: causer-provided instigator.
+// Final fallback: causer owner as instigator.
+```
+
+피하는 형태:
+
+```cpp
+// 2-3-1) Case 03-01
+// [Policy] ...
+// NOTE: ...
+```
+
+---
+
 ## 14. P3 Final Decision
 
 P3 항목은 이번 브랜치에서 코드 수정하지 않고, 유지 또는 후속 작업으로 이관한다.

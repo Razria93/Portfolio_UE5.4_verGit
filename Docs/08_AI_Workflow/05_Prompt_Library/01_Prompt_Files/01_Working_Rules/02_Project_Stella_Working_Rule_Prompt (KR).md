@@ -20,6 +20,39 @@ Project Stella 작업 세션에서 반복 적용할 실행 규칙을 제공한�
 
 ---
 
+## 2.1 코드 주석 / 섹션 규칙
+
+```yaml
+섹션 구분 주석
+-> 파일 구조 탐색을 돕는 경우에만 둔다.
+-> 함수 그룹 / 타입 그룹 / 구현 책임이 3개 이상으로 나뉠 때 우선 사용한다.
+-> 짧은 명사구를 사용하고 장식성 separator, [NOTE], [Policy], [Pass] 태그는 사용하지 않는다.
+-> 변수 / UPROPERTY 구간은 섹션 주석보다 Category / 변수명 / struct 이름으로 의미를 표현한다.
+
+.h / .cpp 섹션 동기화
+-> .h가 API 책임 단위로 섹션을 나누면 .cpp도 같은 책임 그룹 기준으로 섹션을 둔다.
+-> .cpp 섹션명과 순서는 가능하면 .h를 따른다.
+-> 구현 전용 helper / local namespace / static helper / 세부 pipeline 단계는 .cpp 전용 섹션으로 둘 수 있다.
+-> 작은 파일이나 함수 수가 적은 파일은 섹션을 생략할 수 있다.
+-> Unreal lifecycle / callback / 구현 흐름이 더 중요한 경우 구현 흐름을 우선한다.
+
+Type 헤더 섹션
+-> Type 헤더 섹션명은 W05 Comment Section Cleanup Work Plan의 taxonomy를 따른다.
+-> Enum, Key / Identifier, Data / Config, Runtime State, Runtime Context, Request, Candidate, Payload, Resolution, Result, Packet, Runtime Key / Playback Key, Reserved Pipeline Scaffold, Helper API를 우선 사용한다.
+
+단계형 주석
+-> fallback 순서, policy gate, priority matching처럼 순서 자체가 의미 있을 때만 사용한다.
+-> 번호 깊이는 한 단계까지만 허용한다.
+-> 2-3-1 같은 중첩 번호는 의미 있는 문장형 주석으로 바꾼다.
+-> Gate / Preferred / Fallback / Final fallback 같은 prefix를 일관되게 사용한다.
+
+금지
+-> 주석 정리 작업에서 타입명 / 필드명 / 함수명 / 동작을 함께 변경하지 않는다.
+-> include 변경, DataAsset 전환, serialized field 변경을 주석 정리와 묶지 않는다.
+```
+
+---
+
 ## 3. 사용 방법
 
 작업 요청과 함께 `복사용 Prompt`를 전달한다.
