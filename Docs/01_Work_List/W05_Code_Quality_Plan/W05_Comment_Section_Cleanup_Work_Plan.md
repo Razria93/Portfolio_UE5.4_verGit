@@ -530,7 +530,8 @@ AI 작업 시스템에는 반복 적용해야 하는 실행 체크리스트만 �
 -> 파일 고유 책임 섹션은 허용하되, .h와 .cpp 양쪽에 대응되는 구현이 있으면 같은 이름을 쓴다.
 -> 구현 전용 helper / local namespace / static helper / 세부 pipeline 단계는 .cpp 전용 섹션으로 둘 수 있다.
 -> 함수가 1~2개뿐인 작은 파일은 섹션 주석을 생략할 수 있다.
--> Unreal lifecycle / callback / 구현 흐름이 더 중요한 경우 구현 흐름을 우선한다.
+-> Unreal lifecycle / callback 순서처럼 호출 순서가 이해에 직접 영향을 주는 경우에만 구현 흐름을 우선한다.
+-> 이 경우에도 같은 책임을 다루는 섹션명은 가능한 한 .h / .cpp에서 동일하게 유지한다.
 ```
 
 공통 책임 섹션명은 아래 이름을 우선 사용한다.
@@ -551,7 +552,7 @@ AI 작업 시스템에는 반복 적용해야 하는 실행 체크리스트만 �
 // Result
 ```
 
-파일 고유 책임은 짧은 명사구로 둔다. 예를 들어 `Animation Refresh Audit`, `Movement Arbitration`, `Camera Shake`, `Overlay Snapshot`, `CombatSignal Receive / Resolve / Send`처럼 해당 파일의 실제 책임을 드러내는 이름은 허용한다.
+파일 고유 책임은 짧은 명사구로 둔다. 예를 들어 CombatSignal 파일의 `Receive`, `Resolve`, `Send`, `Animation Refresh Audit`, `Movement Arbitration`, `Camera Shake`, `Overlay Snapshot`처럼 해당 파일의 실제 책임을 드러내는 이름은 허용한다.
 
 ### Type Header Section Taxonomy
 

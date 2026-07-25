@@ -37,7 +37,8 @@ Project Stella 작업 세션에서 반복 적용할 실행 규칙을 제공한�
 -> 파일 고유 책임 섹션은 허용하되, .h와 .cpp 양쪽에 대응되는 구현이 있으면 같은 이름을 쓴다.
 -> 구현 전용 helper / local namespace / static helper / 세부 pipeline 단계는 .cpp 전용 섹션으로 둘 수 있다.
 -> 작은 파일이나 함수 수가 적은 파일은 섹션을 생략할 수 있다.
--> Unreal lifecycle / callback / 구현 흐름이 더 중요한 경우 구현 흐름을 우선한다.
+-> Unreal lifecycle / callback 순서처럼 호출 순서가 이해에 직접 영향을 주는 경우에만 구현 흐름을 우선한다.
+-> 이 경우에도 같은 책임을 다루는 섹션명은 가능한 한 .h / .cpp에서 동일하게 유지한다.
 
 공통 책임 섹션명
 -> Lifecycle, Runtime Lifecycle, Component Reference, Query, Mutation, State Transition, Runtime State, Request, Entry, Notify, Notify Routing, Feedback, Result를 우선 사용한다.
