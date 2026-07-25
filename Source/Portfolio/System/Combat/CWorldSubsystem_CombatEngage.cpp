@@ -133,7 +133,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	// Mark warmup completion on the first rebuild after the delay.
 	if (!bAssignmentWarmupCompleted)
 	{
-		if (GetEngageAssignmentWarmupTime() > 0.f && AssignmentWarmupStartTime < 0.f) return;
+		if (GetEngageAssignmentWarmupTime() > 0.f && AssignmentWarmupStartTime == CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return;
 
 		bAssignmentWarmupCompleted = true;
 		bCompletedWarmupThisRebuild = true;
@@ -161,7 +161,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	PreserveExistingAlertAssignments(nextAssignments, slotState, rebuildDebugState);
 	ApplyFreshRequestAssignments(requestBucket, nextAssignments, slotState, rebuildDebugState);
 
-	if (FCombatEngageDebug::ShouldAuditEngageAssignment() && (bCompletedWarmupThisRebuild || AssignmentRebuildId == 1))
+	if (FCombatEngageDebug::ShouldAuditEngageAssignment() && (bCompletedWarmupThisRebuild || AssignmentRebuildId == CCombatEngageConstants::FirstAssignmentRebuildId))
 	{
 		FCombatEngageDebug::RecordEngageAssignmentRebuildSummaryForAudit(AssignmentRebuildId, rebuildDebugState, nextAssignments, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 	}
@@ -216,7 +216,7 @@ void UCWorldSubsystem_CombatEngage::SortRequestContexts(TArray<FEngageRequestCon
 void UCWorldSubsystem_CombatEngage::StartAssignmentWarmupIfNeeded()
 {
 	if (bAssignmentWarmupCompleted) return;
-	if (AssignmentWarmupStartTime >= 0.f) return;
+	if (AssignmentWarmupStartTime != CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return;
 	if (GetEngageAssignmentWarmupTime() <= 0.f) return;
 
 	const UWorld* world = GetWorld();
@@ -226,7 +226,7 @@ void UCWorldSubsystem_CombatEngage::StartAssignmentWarmupIfNeeded()
 bool UCWorldSubsystem_CombatEngage::ShouldDelayAssignmentForWarmup() const
 {
 	if (bAssignmentWarmupCompleted) return false;
-	if (AssignmentWarmupStartTime < 0.f) return false;
+	if (AssignmentWarmupStartTime == CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return false;
 	if (GetEngageAssignmentWarmupTime() <= 0.f) return false;
 
 	return GetAssignmentWarmupElapsedTime() < GetEngageAssignmentWarmupTime();
@@ -234,7 +234,7 @@ bool UCWorldSubsystem_CombatEngage::ShouldDelayAssignmentForWarmup() const
 
 float UCWorldSubsystem_CombatEngage::GetAssignmentWarmupElapsedTime() const
 {
-	if (AssignmentWarmupStartTime < 0.f) return 0.f;
+	if (AssignmentWarmupStartTime == CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return 0.f;
 
 	const UWorld* world = GetWorld();
 	if (!IsValid(world)) return 0.f;
@@ -444,9 +444,9 @@ bool UCWorldSubsystem_CombatEngage::IsAssignmentLeaseValid(const ACAIController*
 void UCWorldSubsystem_CombatEngage::ClearEngageRuntimeState()
 {
 	ElapsedTime = 0.f;
-	AssignmentWarmupStartTime = -1.f;
+	AssignmentWarmupStartTime = CCombatEngageConstants::UnsetAssignmentWarmupStartTime;
 	bAssignmentWarmupCompleted = false;
-	AssignmentRebuildId = 0;
+	AssignmentRebuildId = CCombatEngageConstants::InitialAssignmentRebuildId;
 	RequestContainer.Reset();
 	LastRequestTimeContainer.Reset();
 	AssignmentContainer.Reset();

@@ -21,7 +21,7 @@ EBTNodeResult::Type UCBTTask_EndInvestigate::ExecuteTask(UBehaviorTreeComponent&
 	blackboardComp->SetValueAsBool(CAIKey::Investigate::bShouldEndInvestigate.KeyName, false);
 
 	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
-	blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, -1);
+	blackboardComp->SetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);
 
 	blackboardComp->ClearValue(CAIKey::Perception::LastSeenTime.KeyName);
 	blackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation.KeyName);

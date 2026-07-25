@@ -259,7 +259,7 @@ void UCReaction::HandleReactionStop(EReactionStopReason InStopReason)
 	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(feedbackTiming);
 	const FReactionData activeData = ActiveData_Cached;
 
-	StopMontage(0.1f);
+	StopMontage(CExecutionConstants::DefaultMontageStopBlendOutTime);
 	CleanupRuntimeEffects();
 	ClearRuntime();
 

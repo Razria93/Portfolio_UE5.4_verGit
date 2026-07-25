@@ -69,24 +69,11 @@ FORCEINLINE EGuardActionPhase ResolveGuardActionPhase(const FActionDataKey& InKe
 {
 	if (InKey.ActionType != EActionType::Guard) return EGuardActionPhase::None;
 
-	switch (InKey.ActionIndex)
-	{
-	case 1:
-		return EGuardActionPhase::In;
+	if (InKey.ActionIndex == GetGuardActionPhaseIndex(EGuardActionPhase::In)) return EGuardActionPhase::In;
+	if (InKey.ActionIndex == GetGuardActionPhaseIndex(EGuardActionPhase::Out)) return EGuardActionPhase::Out;
+	if (InKey.ActionIndex == GetGuardActionPhaseIndex(EGuardActionPhase::Hold)) return EGuardActionPhase::Hold;
+	if (InKey.ActionIndex == GetGuardActionPhaseIndex(EGuardActionPhase::Hit)) return EGuardActionPhase::Hit;
+	if (InKey.ActionIndex == GetGuardActionPhaseIndex(EGuardActionPhase::Parry)) return EGuardActionPhase::Parry;
 
-	case 2:
-		return EGuardActionPhase::Out;
-
-	case 3:
-		return EGuardActionPhase::Hold;
-
-	case 4:
-		return EGuardActionPhase::Hit;
-
-	case 5:
-		return EGuardActionPhase::Parry;
-
-	default:
-		return EGuardActionPhase::None;
-	}
+	return EGuardActionPhase::None;
 }

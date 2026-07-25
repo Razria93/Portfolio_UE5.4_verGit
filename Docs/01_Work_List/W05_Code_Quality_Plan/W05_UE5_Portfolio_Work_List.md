@@ -104,6 +104,8 @@ Work List / Notes
 - Docs/01_Work_List/W05_Code_Quality_Plan/W05_Comment_Section_Cleanup_Work_Plan.md
 - Docs/01_Work_List/W05_Code_Quality_Plan/W05_Naming_Rules.md
 - Docs/01_Work_List/W05_Code_Quality_Plan/W05_Naming_Typo_API_Cleanup_Work_Plan.md
+- Docs/01_Work_List/W05_Code_Quality_Plan/W05_Tuning_Constants_Rules.md
+- Docs/01_Work_List/W05_Code_Quality_Plan/W05_Tuning_Constants_Work_Plan.md
 - Docs/01_Work_List/00_Work_List_Index.md
 - Docs/06_notes/N08_Code_Quality_Cleanup_Plan_Note.md
 ```

@@ -101,7 +101,7 @@ protected:
 protected:
 	// Montage Lifecycle
 	virtual bool PlayMontage(const FReactionData& InData);
-	virtual void StopMontage(float InBlendOutTime = 0.1f);
+	virtual void StopMontage(float InBlendOutTime = CExecutionConstants::DefaultMontageStopBlendOutTime);
 	virtual bool BindMontageEndDelegate();
 
 protected:
