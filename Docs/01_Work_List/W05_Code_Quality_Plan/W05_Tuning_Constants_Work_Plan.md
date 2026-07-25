@@ -443,6 +443,15 @@ Source/Portfolio/AI/Patrol/CPatrolPoint.cpp
 -> DataAsset 우선순위는 낮다.
 ```
 
+적용 상태:
+
+```text
+-> 1차 적용 완료: TextRender size / height / facing yaw는 CPatrolPoint.cpp local constexpr로 이름 부여.
+-> 값 변경 없음.
+-> ExtraWaitTime / FaceYaw / PointTag 같은 patrol gameplay 값은 기존 UPROPERTY 소유권 유지.
+-> DataAsset 전환 대상 아님.
+```
+
 ---
 
 ## 5. 유지 권장 literal
