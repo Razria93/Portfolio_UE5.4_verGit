@@ -17,7 +17,7 @@
 - [x] ReadOnly / Non-ReadOnly / 보류 후보 분류
 - [x] ReadOnly API const 적용 1차
 - [x] build 검증
-- [ ] PIE 검증
+- [x] PIE 검증
 
 ---
 
@@ -108,8 +108,8 @@
 검증:
 -> PortfolioEditor Win64 Development build 통과
 
-남은 검증:
--> PIE smoke
+추가 검증:
+-> PIE smoke 정상 작동 확인
 ```
 
 ### Component
