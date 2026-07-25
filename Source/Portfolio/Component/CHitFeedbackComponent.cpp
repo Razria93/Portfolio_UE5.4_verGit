@@ -19,6 +19,8 @@ UCHitFeedbackComponent::UCHitFeedbackComponent()
 {
 }
 
+// Component Reference
+
 void UCHitFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -43,6 +45,8 @@ bool UCHitFeedbackComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// Entry
+
 void UCHitFeedbackComponent::PlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket)
 {
 	if (!CanPlayHitFeedback(InCombatSignalTargetPacket)) return;
@@ -63,6 +67,8 @@ void UCHitFeedbackComponent::PlayHitFeedback(const FCombatSignalTargetPacket& In
 	PlayHitSFX(InCombatSignalTargetPacket);
 	PlayCameraShake(InCombatSignalTargetPacket);
 }
+
+// Playback
 
 void UCHitFeedbackComponent::PlayHitStop(const FCombatSignalTargetPacket& InCombatSignalTargetPacket)
 {
@@ -149,6 +155,8 @@ void UCHitFeedbackComponent::PlayCameraShake(const FCombatSignalTargetPacket& In
 
 	feedbackSubsystem->RequestCameraShake(cameraShakeRequest);
 }
+
+// Query
 
 bool UCHitFeedbackComponent::CanPlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
@@ -245,6 +253,8 @@ bool UCHitFeedbackComponent::CanPlayCameraShake(const FCombatSignalTargetPacket&
 	return true;
 }
 
+// Resolve
+
 FVector UCHitFeedbackComponent::ResolveHitFeedbackLocation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	const FHitImpactContext& damageHitInfo = InCombatSignalTargetPacket.Context.HitImpactContext;
@@ -268,6 +278,8 @@ FRotator UCHitFeedbackComponent::ResolveHitFeedbackRotation(const FCombatSignalT
 
 	return IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetActorRotation() : FRotator::ZeroRotator;
 }
+
+// Request
 
 FHitStopRequest UCHitFeedbackComponent::BuildHitStopRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {

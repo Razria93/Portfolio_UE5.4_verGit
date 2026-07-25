@@ -26,14 +26,21 @@ protected:
 	virtual void SetupInputComponent() override;
 
 protected:
+	// Look Input
 	void InputLookYaw(float InAxisValue);
 	void InputLookPitch(float InAxisValue);
 
 protected:
+	// Move Input
 	void InputMoveForward(float InAxisValue);
 	void InputMoveRight(float InAxisValue);
 
 protected:
+	// Movement Dispatch
+	void FlushMoveInput();
+
+protected:
+	// Action Input
 	void PressWalk();
 	void ReleaseWalk();
 
@@ -45,7 +52,4 @@ protected:
 	void PressGuard();
 	void ReleaseGuard();
 	void PressDodge();
-
-protected:
-	void FlushMoveInput();
 };

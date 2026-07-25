@@ -85,7 +85,7 @@ private:
 	// Blackboard Setup
 	bool SetupBlackboardComponent();
 
-	// Blackboard Value
+	// Blackboard Runtime Value
 	bool InitializeBlackboardValues();
 	void InitializeCustomBlackboardValues(class UBlackboardComponent* InBlackboardComp, const class APawn* InOwnerPawn, TSet<FName>& InOutPendingKeys) const;
 
@@ -116,7 +116,7 @@ public:
 	bool RefreshRuntimeLODTierFromBlackboard();
 
 public:
-	// Profiling Event Sink
+	// Perception Audit Event Sink
 	void RecordPerceptionContextBuiltForAudit(class AActor* InTargetActor);
 	void RecordBlackboardTargetSetForAudit(class AActor* InTargetActor);
 	void RecordEngageRequestSubmittedForAudit(class AActor* InTargetActor);
@@ -132,19 +132,13 @@ private:
 	// Runtime LOD Snapshot
 	void InitializeRuntimeLODTierSnapshot();
 	void ClearRuntimeLODTierSnapshot();
-
-	// Mutation
 	void SetCurrentRuntimeLODTier(EAIRuntimeLODTier InTier);
 
 private:
 	// Perception Profiling Gate
 	void InitializePerceptionStateForProfiling();
 	void ClearPerceptionStateForProfiling();
-
-	// Condition
 	bool ShouldDisableEnemyPerceptionForProfiling() const;
-
-	// Mutation
 	void DisableEnemyPerceptionForProfiling();
 	void EnableEnemyPerceptionForProfiling();
 	void SetPerceptionSenseEnabledForProfiling(bool bEnabled);
@@ -153,11 +147,7 @@ private:
 	// Perception Candidate Audit
 	void InitializePerceptionCandidateAudit();
 	void ClearPerceptionCandidateAudit();
-
-	// Condition
 	bool ShouldAuditPerceptionCandidates() const;
-
-	// Record
 	void RecordRawPerceptionCandidate(class AActor* InActor);
 	void RecordValidTargetProvider(class AActor* InActor);
 	void RecordInvalidTargetProvider(class AActor* InActor);
@@ -167,8 +157,6 @@ private:
 	// Blackboard / Engage Latency Audit
 	void InitializeBlackboardEngageLatencyAudit();
 	void ClearBlackboardEngageLatencyAudit();
-
-	// Condition
 	bool ShouldAuditBlackboardEngageLatency() const;
 
 };

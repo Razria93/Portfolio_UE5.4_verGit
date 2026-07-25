@@ -8,6 +8,8 @@
 
 #include "GameFramework/Character.h"
 
+// Component Reference
+
 void UCReaction::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -35,6 +37,8 @@ bool UCReaction::ValidateRequiredReferences() const
 
 	return bValid;
 }
+
+// Decision
 
 FExecutionDecisionResult UCReaction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
@@ -85,13 +89,13 @@ bool UCReaction::IsIncomingReactionType(const FExecutionInterventionQuery& InQue
 
 bool UCReaction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// Idle && No ActivePart: Idle
+	// Idle state accepts independent reaction requests.
 	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
 }
 
 bool UCReaction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	// Active state can accept exclusive requests against the current part.
 	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
 }
 
@@ -99,7 +103,7 @@ bool UCReaction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDe
 {
 	OutRelationship = EExecutionRelationship::None;
 
-	// Idle && No ActivePart: Idle
+	// Idle state resolves to an independent relationship.
 	if (CanResolveIndependentRelationship(InQuery))
 	{
 		OutRelationship = EExecutionRelationship::Independent;
@@ -114,6 +118,9 @@ bool UCReaction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDe
 
 	return false;
 }
+
+// Lifecycle
+
 bool UCReaction::Start(const FReactionData& InData)
 {
 	if (!InData.IsValidMinimal())
@@ -286,6 +293,8 @@ void UCReaction::CleanupRuntimeEffects()
 	}
 }
 
+// Montage Lifecycle
+
 bool UCReaction::PlayMontage(const FReactionData& InData)
 {
 	if (!IsValid(OwnerCharacter_Injected))
@@ -406,6 +415,8 @@ bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) c
 	return true;
 }
 
+// Notify
+
 void UCReaction::HandleNotifyCommand(EReactionNotifyCommand InCommand)
 {
 	switch (InCommand)
@@ -424,6 +435,8 @@ void UCReaction::HandleNotifyCommand(EReactionNotifyCommand InCommand)
 void UCReaction::HandleSpecificNotifyCommand(EReactionNotifyCommand InCommand)
 {
 }
+
+// Feedback
 
 void UCReaction::HandleNotifyFeedback(EReactionFeedbackTiming InTiming, FName InTriggerKey)
 {
@@ -456,6 +469,8 @@ FReactionFeedbackRequest UCReaction::BuildFeedbackRequest(EReactionFeedbackTimin
 	return request;
 }
 
+// Cross-System Dispatch
+
 void UCReaction::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey) const
 {
 	if (!IsValid(ReactionComp_Injected))
@@ -466,6 +481,8 @@ void UCReaction::RequestConsumeDeferredAction(EDeferredActionConsumeKey InConsum
 
 	ReactionComp_Injected->RequestConsumeDeferredAction(InConsumeKey);
 }
+
+// Intervention Window
 
 void UCReaction::OpenAllowInterventionWindow(FName InWindowKey)
 {
@@ -489,6 +506,8 @@ void UCReaction::CloseAllowInterventionWindow(FName InWindowKey)
 	AllowInterventionWindowKeys.Remove(InWindowKey);
 }
 
+// Intervention Match
+
 bool UCReaction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
@@ -506,20 +525,24 @@ bool UCReaction::AllowIntervention(const FExecutionInterventionQuery& InQuery) c
 	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
+// Observable Overlay Match
+
 void UCReaction::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
 
 	if (!InQuery.DecisionQuery.IncomingPart.IsReactionParticipant())
 	{
-		// Reaction only.
+		// Reject non-Reaction overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
 
-	// Default Reaction Case: No overlay cleanup.
+	// Default Reaction overlay handling accepts without cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }
+
+// Intervention Match Helper
 
 bool UCReaction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const
 {

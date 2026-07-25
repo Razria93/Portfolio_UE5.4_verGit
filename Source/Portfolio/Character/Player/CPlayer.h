@@ -92,9 +92,11 @@ private:
 	void InjectReferences(const FCharacterComponentReferences& InReferences);
 
 public:
+	// Input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	// Query
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
@@ -111,9 +113,11 @@ public:
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 
 public:
+	// Damage
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
 
 public:
+	// Combat Result
 	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
 
 private:
@@ -125,9 +129,11 @@ public:
 	int GetTargetPriority() const override { return Priority; }
 
 public:
+	// Movement Intent
 	FActionRequestResult HandleMove(const FVector2D& InAxis2D);
 
 public:
+	// Action Intent
 	FActionRequestResult HandleWalk();
 	FActionRequestResult HandleRun();
 	FActionRequestResult HandleSprint();

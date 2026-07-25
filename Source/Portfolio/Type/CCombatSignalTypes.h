@@ -6,6 +6,8 @@ class AActor;
 
 #include "CCombatSignalTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class ECombatSignalType : uint8
 {
@@ -46,6 +48,8 @@ enum class ECombatSignalResultType : uint8
 
 	Max,
 };
+
+// Packet
 
 USTRUCT(BlueprintType)
 struct FCombatSignalHeader
@@ -125,6 +129,8 @@ public:
 			&& SignalTag != NAME_None;
 	}
 };
+
+// Reserved Pipeline Scaffold
 
 USTRUCT(BlueprintType)
 struct FCombatSignalContext

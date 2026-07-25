@@ -18,15 +18,11 @@ namespace
 		TEXT("Controls AI BT service update interval Runtime LOD mode. 0: default, 1: reduced, 2: aggressive reduced."),
 		ECVF_Default);
 
-	// AIContext
+	// Interval Defaults
 	constexpr float DefaultAIContextInterval = 0.1f;
-
-	// AIIntentState
 	constexpr float DefaultAIIntentStateInterval = 0.2f;
 	constexpr float ReducedAIIntentStateInterval = 0.3f;
 	constexpr float AggressiveAIIntentStateInterval = 0.5f;
-
-	// EngageContext
 	constexpr float DefaultEngageContextInterval = 0.1f;
 
 	// Mode Query
@@ -62,7 +58,7 @@ namespace
 		return ResolveRuntimeLODTierFallback(InOwnerComp);
 	}
 
-	// Mode + Runtime LOD Tier -> Interval Enum Preset
+	// Interval Preset Selection
 	EBTServiceIntervalPreset SelectIntervalPreset(int32 InMode, EAIRuntimeLODTier InTier)
 	{
 		switch (InMode)
@@ -117,14 +113,13 @@ namespace
 		FAIStateRuntimeLODProfiling::RecordResolvedTier(InTier);
 	}
 
-	// AIIntentState
-	// Record Counter (AIIntentState)
+	// Profiling
 	void RecordAIIntentStateIntervalPreset(EBTServiceIntervalPreset InPreset)
 	{
 		FAIBehaviorTreeProfiling::RecordAIIntentIntervalPreset(InPreset);
 	}
 
-	// Interval Enum Preset -> Interval float value (AIIntentState)
+	// Interval Value
 	float GetAIIntentStateIntervalByPreset(EBTServiceIntervalPreset InPreset)
 	{
 		switch (InPreset)
@@ -141,7 +136,7 @@ namespace
 		}
 	}
 
-	// Interval Select (AIIntentState)
+	// Interval Selection
 	float SelectAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
 	{
 		const EAIRuntimeLODTier runtimeLODTier = GetRuntimeLODTierForIntervalSelection(InOwnerComp);
@@ -149,13 +144,15 @@ namespace
 			GetBTUpdateIntervalMode(),
 			runtimeLODTier);
 
-		// Profiling
+		// Record the selected Runtime LOD tier and interval preset.
 		RecordStateRuntimeLODTier(runtimeLODTier);
 		RecordAIIntentStateIntervalPreset(intervalPreset);
 
 		return GetAIIntentStateIntervalByPreset(intervalPreset);
 	}
 }
+
+// Public API
 
 float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
 {

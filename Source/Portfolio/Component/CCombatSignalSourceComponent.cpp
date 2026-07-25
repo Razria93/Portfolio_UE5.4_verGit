@@ -27,6 +27,8 @@ UCCombatSignalSourceComponent::UCCombatSignalSourceComponent()
 {
 }
 
+// Component Reference
+
 void UCCombatSignalSourceComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -51,6 +53,8 @@ bool UCCombatSignalSourceComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// Hit Window
+
 void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
 {
 	if (!IsValid(InDamageCauser)) return;
@@ -60,7 +64,7 @@ void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser
 	hitWindowKey.DamageCauser = InDamageCauser;
 	hitWindowKey.HitWindowId = InHitWindowId;
 
-	// Reset stale record for the same hit window key
+	// Reset stale record for the same hit window key.
 	DamagedTargetContainer.Remove(hitWindowKey);
 	DamagedTargetContainer.FindOrAdd(hitWindowKey);
 }
@@ -76,6 +80,8 @@ void UCCombatSignalSourceComponent::NotifyHitWindowClosed(AActor* InDamageCauser
 
 	DamagedTargetContainer.Remove(hitWindowKey);
 }
+
+// Entry
 
 void UCCombatSignalSourceComponent::RequestCombatSignalSource(const FHitContext& InHitContext)
 {
@@ -100,6 +106,8 @@ bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor
 	return SendCueSignal(combatSignal);
 }
 
+// AI Entry
+
 bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 {
 	FCombatCollisionProfilingCounters::RecordAICombatSignalCueRequest();
@@ -117,6 +125,8 @@ bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 
 	return RequestCombatSignalCue(targetActor, InCueTag, cueLocation, cueDirection, OwnerCharacter_Injected);
 }
+
+// Entry
 
 void UCCombatSignalSourceComponent::ProcessCombatSignalSource(const FHitContext& InHitContext)
 {
@@ -181,55 +191,55 @@ bool UCCombatSignalSourceComponent::ShouldSkipEnemyHitProcessingForProfiling() c
 	return FCombatCollisionProfiling::ShouldSkipEnemyHitProcessing(OwnerCharacter_Injected);
 }
 
+// Receive
+
 bool UCCombatSignalSourceComponent::ValidateRequest(const FHitContext& InHitContext) const
 {
 	const FOverlapContext& overlapContext = InHitContext.OverlapContext;
 
-	// V1: Validate core actors (OwnerActor / DamageCauser / OtherActor)
+	// Gate: core actors must be valid.
 	if (!overlapContext.IsValidMinimal())
 	{
 		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidMinimalOverlapContext"));
 		return false;
 	}
 
-	// V2: Check Valid Hit Window
+	// Gate: hit window must be open.
 	if (overlapContext.HitWindowId == INDEX_NONE)
 	{
 		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidHitWindow"));
 		return false;
 	}
 
-	// V3: Check Valid Object
-	// 3-1): Validate Components (current policy)
+	// Gate: overlap components must be valid.
 	if (!IsValid(overlapContext.OverlappedComponent) || !IsValid(overlapContext.OtherComponent))
 	{
 		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidOverlapComponent"));
 		return false;
 	}
 
-	// 3-2): Attack collision must be ShapeComponent (current policy)
+	// Gate: attack collision must be a shape component.
 	if (!IsValid(overlapContext.OverlapShape))
 	{
 		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("InvalidOverlapShape"));
 		return false;
 	}
 
-	// V4: Check ownership
-	 // 4-1) DamageCauser must be owned by the attacker
+	// Gate: damage causer must be owned by the attacker.
 	if (overlapContext.DamageCauser->GetOwner() != overlapContext.OwnerActor)
 	{
 		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("DamageCauserOwnerMismatch"));
 		return false;
 	}
 
-	// 4-2) OverlappedComponent must belong to the DamageCauser
+	// Gate: overlapped component must belong to the damage causer.
 	if (overlapContext.OverlappedComponent->GetOwner() != overlapContext.DamageCauser)
 	{
 		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("OverlappedComponentOwnerMismatch"));
 		return false;
 	}
 
-	// 4-3) OtherComponent must belong to the target actor
+	// Gate: other component must belong to the target actor.
 	if (overlapContext.OtherComponent->GetOwner() != overlapContext.OtherActor)
 	{
 		FCombatSignalDebug::RecordSourceHitRequestRejectedForAudit(InHitContext, TEXT("OtherComponentOwnerMismatch"));
@@ -269,6 +279,8 @@ FCombatSignalSourceContext UCCombatSignalSourceComponent::BuildContext(const FCo
 
 	return combatSignalSourceContext;
 }
+
+// Resolve
 
 bool UCCombatSignalSourceComponent::ValidateContext(FCombatSignalSourceContext& InOutCombatSignalSourceContext) const
 {
@@ -392,6 +404,8 @@ FCombatSignalSourceResult UCCombatSignalSourceComponent::BuildResult(const FComb
 	return combatSignalSourceResult;
 }
 
+// Send
+
 void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSourceContext& InOutCombatSignalSourceContext)
 {
 	FCombatCollisionProfilingCounters::RecordCombatSignal();
@@ -463,6 +477,8 @@ bool UCCombatSignalSourceComponent::SendCueSignal(const FCombatSignal& InCombatS
 	return true;
 }
 
+// Cache
+
 void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSignalSourceContext& InCombatSignalSourceContext)
 {
 	AActor* targetActor = InCombatSignalSourceContext.TargetActor;
@@ -499,11 +515,11 @@ AController* UCCombatSignalSourceComponent::ResolveInstigatorController(AActor* 
 {
 	if (IsValid(InAttacker))
 	{
-		// 1) Preferred: attacker-provided instigator
+		// Preferred: attacker-provided instigator.
 		if (AController* attackerInstigator = InAttacker->GetInstigatorController())
 			return attackerInstigator;
 
-		// 2) Fallback: attacker is a pawn/character
+		// Fallback: attacker pawn controller.
 		if (APawn* attackerPawn = Cast<APawn>(InAttacker))
 		{
 			if (AController* attackerController = attackerPawn->GetController())
@@ -513,17 +529,17 @@ AController* UCCombatSignalSourceComponent::ResolveInstigatorController(AActor* 
 
 	if (IsValid(InDamageCauser))
 	{
-		// 3) Fallback: causer-provided instigator
+		// Fallback: causer-provided instigator.
 		if (AController* causerInstigator = InDamageCauser->GetInstigatorController())
 			return causerInstigator;
 
 		if (AActor* causerOwner = InDamageCauser->GetOwner())
 		{
-			// 4) Fallback: owner of the causer provides the instigator
+			// Fallback: causer owner-provided instigator.
 			if (AController* ownerInstigator = causerOwner->GetInstigatorController())
 				return ownerInstigator;
 
-			// 5) Final fallback: owner of the causer is a pawn/character
+			// Final fallback: causer owner pawn controller.
 			if (APawn* ownerPawn = Cast<APawn>(causerOwner))
 			{
 				if (AController* ownerController = ownerPawn->GetController())

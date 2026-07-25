@@ -55,16 +55,15 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
-	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
-
-public:
 	// State Transition
+	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
 	bool TryKill();
 	bool TryRevive(float InReviveHP);
 	bool TryCancelRevive();
 	bool TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUpdatePolicy);
 
 public:
+	// Health Change
 	float TakeDamage(float InTakeDamageAmount);
 	float TakeHeal(float InTakeHealAmount);
 
@@ -82,6 +81,7 @@ public:
 	EDeadState GetDeadState() const { return DeadState; }
 
 public:
+	// State Transition
 	void EnterDeadState();
 	void EnterAliveState();
 

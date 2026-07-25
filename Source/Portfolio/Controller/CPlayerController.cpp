@@ -14,6 +14,8 @@ ACPlayerController::ACPlayerController()
 	check(PlayerFeedbackComponent);
 }
 
+// Lifecycle
+
 void ACPlayerController::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -54,6 +56,8 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
 }
 
+// Look Input
+
 void ACPlayerController::InputLookYaw(float InAxisValue)
 {
 	AddYawInput(InAxisValue);
@@ -63,6 +67,8 @@ void ACPlayerController::InputLookPitch(float InAxisValue)
 {
 	AddPitchInput(InAxisValue);
 }
+
+// Move Input
 
 void ACPlayerController::InputMoveForward(float InAxisValue)
 {
@@ -74,6 +80,8 @@ void ACPlayerController::InputMoveRight(float InAxisValue)
 	CachedMoveAxis2D.X = InAxisValue;
 }
 
+// Movement Dispatch
+
 void ACPlayerController::FlushMoveInput()
 {
 	if (CachedMoveAxis2D.IsNearlyZero()) return;
@@ -83,6 +91,8 @@ void ACPlayerController::FlushMoveInput()
 
 	FActionRequestResult result = player->HandleMove(CachedMoveAxis2D);
 }
+
+// Action Input
 
 void ACPlayerController::PressWalk()
 {

@@ -11,6 +11,8 @@ UCDefenseComponent::UCDefenseComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+// Component Reference
+
 void UCDefenseComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;

@@ -10,6 +10,8 @@ UCHealthComponent::UCHealthComponent()
 {
 }
 
+// Component Reference
+
 void UCHealthComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -34,6 +36,8 @@ bool UCHealthComponent::ValidateRequiredComponentReferences() const
 
 	return bValid;
 }
+
+// State Transition
 
 void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy)
 {
@@ -128,6 +132,8 @@ bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUp
 	return true;
 }
 
+// Health Change
+
 float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 {
 	if (!IsAlive()) return 0.f;
@@ -173,6 +179,8 @@ float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 	return takenHeal;
 }
 
+// Query
+
 bool UCHealthComponent::IsAlive() const
 {
 	return DeadState == EDeadState::Alive;
@@ -193,6 +201,8 @@ bool UCHealthComponent::CanRevive() const
 	return IsDead();
 }
 
+// State Transition
+
 void UCHealthComponent::EnterDeadState()
 {
 	ChangeDeadState(EDeadState::Dead);
@@ -202,6 +212,8 @@ void UCHealthComponent::EnterAliveState()
 {
 	ChangeDeadState(EDeadState::Alive);
 }
+
+// Notify Routing
 
 void UCHealthComponent::HandleDeadStateNotify(EDeadState InDeadState)
 {

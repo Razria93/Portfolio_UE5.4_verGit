@@ -5,6 +5,8 @@
 #include "Type/CExecutionRuleTypes.h"
 #include "CActionDataTypes.generated.h"
 
+// Data / Config
+
 USTRUCT(BlueprintType)
 struct FActionData
 {
@@ -44,6 +46,8 @@ public:
 public:
 	bool IsValidMinimal() const;
 };
+
+// Runtime Context
 
 USTRUCT(BlueprintType)
 struct FActionExecutionContext

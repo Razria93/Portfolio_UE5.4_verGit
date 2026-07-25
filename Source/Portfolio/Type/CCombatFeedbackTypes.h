@@ -7,6 +7,8 @@ class AActor;
 
 #include "CCombatFeedbackTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EFeedbackAudience : uint8
 {
@@ -15,6 +17,8 @@ enum class EFeedbackAudience : uint8
 	Target,
 	Both
 };
+
+// Request
 
 USTRUCT(BlueprintType)
 struct FHitStopRequest

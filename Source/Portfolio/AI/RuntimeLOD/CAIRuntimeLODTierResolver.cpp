@@ -6,6 +6,7 @@
 
 namespace
 {
+	// Helper
 	bool IsAlwaysCombatCriticalIntentState(EAIIntentState InAIIntentState)
 	{
 		switch (InAIIntentState)
@@ -21,6 +22,8 @@ namespace
 	}
 }
 
+// Context Build
+
 FAIRuntimeLODTierContext FAIRuntimeLODTierResolver::BuildContext(const UBlackboardComponent& InBlackboardComp)
 {
 	FAIRuntimeLODTierContext context;
@@ -33,6 +36,8 @@ FAIRuntimeLODTierContext FAIRuntimeLODTierResolver::BuildContext(const UBlackboa
 
 	return context;
 }
+
+// Tier Resolve
 
 EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const UBlackboardComponent& InBlackboardComp)
 {
@@ -57,6 +62,8 @@ EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const FAIRuntimeLODTier
 		return InContext.bHasTargetAwareness ? EAIRuntimeLODTier::Awareness : EAIRuntimeLODTier::Background;
 	}
 }
+
+// String Conversion
 
 const TCHAR* FAIRuntimeLODTierResolver::LexToString(EAIRuntimeLODTier InTier)
 {

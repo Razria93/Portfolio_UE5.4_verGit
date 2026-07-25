@@ -24,11 +24,6 @@ private:
 	UPROPERTY(Transient)
 	class APlayerController* OwnerPlayerController_Injected = nullptr;
 
-protected:
-	// Lifecycle
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 public:
 	// Component Reference
 	void InitializeReferences(class APlayerController* InOwnerPlayerController);
@@ -36,7 +31,13 @@ public:
 private:
 	bool ValidateRequiredComponentReferences() const;
 
+protected:
+	// Lifecycle
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 public:
+	// Camera Shake
 	void HandleCameraShakeRequest(const FCameraShakeRequest& InCameraShakeRequest);
 
 private:

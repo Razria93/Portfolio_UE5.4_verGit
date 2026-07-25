@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CWeaponTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
@@ -15,6 +17,8 @@ enum class EWeaponType : uint8
 
 	Max,		// Sentinel
 };
+
+// Runtime Context
 
 USTRUCT(BlueprintType)
 struct FWeaponContext

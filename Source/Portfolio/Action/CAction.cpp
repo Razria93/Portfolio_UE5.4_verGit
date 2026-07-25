@@ -10,6 +10,8 @@
 #include "GameFramework/Character.h"
 #include "Animation/AnimInstance.h"
 
+// Component Reference
+
 void UCAction::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -39,6 +41,8 @@ bool UCAction::ValidateRequiredReferences() const
 
 	return bValid;
 }
+
+// Resolve
 
 FExecutionDecisionResult UCAction::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
@@ -93,13 +97,13 @@ bool UCAction::IsIncomingActionType(const FExecutionInterventionQuery& InQuery, 
 
 bool UCAction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// Idle && No ActivePart: Idle
+	// Idle state accepts independent action requests.
 	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
 }
 
 bool UCAction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	// Active state can accept exclusive requests against the current part.
 	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
 }
 
@@ -107,7 +111,7 @@ bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDeci
 {
 	OutRelationship = EExecutionRelationship::None;
 
-	// Idle && No ActivePart: Idle
+	// Idle state resolves to an independent relationship.
 	if (CanResolveIndependentRelationship(InQuery))
 	{
 		OutRelationship = EExecutionRelationship::Independent;
@@ -122,6 +126,8 @@ bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDeci
 
 	return false;
 }
+
+// Lifecycle
 
 bool UCAction::Start(const FActionData& InData)
 {
@@ -319,6 +325,8 @@ void UCAction::CleanupRuntimeEffects()
 	}
 }
 
+// Montage Lifecycle
+
 bool UCAction::PlayMontage(const FActionData& InData)
 {
 	if (!IsValid(OwnerCharacter_Injected))
@@ -442,6 +450,8 @@ bool UCAction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) con
 	return true;
 }
 
+// Notify
+
 void UCAction::HandleNotifyCommand(EActionNotifyCommand InCommand)
 {
 	switch (InCommand)
@@ -469,11 +479,15 @@ void UCAction::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
 }
 
+// Feedback
+
 void UCAction::HandleNotifyFeedback(EActionFeedbackTiming InTiming, FName InTriggerKey)
 {
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(InTiming, InTriggerKey);
 	PlayFeedbackRequest(feedbackRequest);
 }
+
+// Combat Signal
 
 bool UCAction::ResolveNotifyCombatSignalCue(FName InCueTag, FActionCombatSignalCueResolution& OutResolution) const
 {
@@ -508,6 +522,8 @@ FActionFeedbackRequest UCAction::BuildFeedbackRequest(EActionFeedbackTiming InTi
 	return request;
 }
 
+// Hit Source Action Key
+
 void UCAction::PushHitContext()
 {
 	if (!IsValid(WeaponComp_Injected))
@@ -530,6 +546,8 @@ void UCAction::ClearHitContext()
 	WeaponComp_Injected->ClearContext();
 }
 
+// Intervention Window
+
 void UCAction::OpenAllowInterventionWindow(FName InWindowKey)
 {
 	if (InWindowKey.IsNone()) return;
@@ -543,6 +561,8 @@ void UCAction::CloseAllowInterventionWindow(FName InWindowKey)
 
 	AllowInterventionWindowKeys.Remove(InWindowKey);
 }
+
+// Intervention Match
 
 bool UCAction::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
@@ -561,20 +581,24 @@ bool UCAction::AllowIntervention(const FExecutionInterventionQuery& InQuery) con
 	return MatchesAllowInterventionRules(ActiveData_Cached.AllowInterventionRules, InQuery.IncomingPart);
 }
 
+// Observable Overlay Match
+
 void UCAction::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
 
 	if (!InQuery.DecisionQuery.IncomingPart.IsActionParticipant())
 	{
-		// Action only.
+		// Reject non-Action overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
 
-	// Default Action Case: No overlay cleanup.
+	// Default Action overlay handling accepts without cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }
+
+// Intervention Match Helper
 
 bool UCAction::MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const
 {
@@ -623,6 +647,8 @@ bool UCAction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionP
 
 	return false;
 }
+
+// Event
 
 void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const
 {

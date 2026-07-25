@@ -20,6 +20,8 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+// Lifecycle
+
 UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 {
 	NodeName = "Update AIContext";
@@ -68,7 +70,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 
 	FAIBlackboardUpdateContext aiContext;
 
-	// Based OwnerPawn
+	// Compute owner-pawn based context first.
 	EContextBuildResult deadResult = ComputeDeadContext(ownerPawn, blackboardComp, aiContext);
 
 	if (deadResult == EContextBuildResult::Success)
@@ -91,7 +93,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	else
 		ClearHomeMetricContext(blackboardComp);
 
-	// Based Perception
+	// Build perception-based target context before target-dependent metrics.
 	EContextBuildResult buildResult = BuildPerceptionContext(ownerPawn, aiContext);
 
 	if (buildResult != EContextBuildResult::Success)
@@ -110,7 +112,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	UpdatePerceptionContext(blackboardComp, aiContext);
 	aiOwner->RecordBlackboardTargetSetForAudit(aiContext.TargetActor);
 
-	// Based TargetActor
+	// Compute target-actor based context after perception succeeds.
 	EContextBuildResult engageMetricResult = ComputeAlertRangeContext(ownerPawn, blackboardComp, aiContext);
 
 	if (engageMetricResult == EContextBuildResult::Success)
@@ -129,6 +131,8 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 
 	aiOwner->RefreshRuntimeLODTierFromBlackboard();
 }
+
+// Context Build
 
 EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext)
 {
@@ -151,6 +155,8 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* I
 
 	return EContextBuildResult::Success;
 }
+
+// Context Compute
 
 EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const
 {
@@ -281,6 +287,8 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwn
 	return EContextBuildResult::Success;
 }
 
+// Blackboard Update
+
 void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
@@ -332,6 +340,8 @@ void UCBTService_UpdateAIContext::UpdateDeadContext(UBlackboardComponent* InBlac
 	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(InAIContext.DeadState));
 }
 
+// Blackboard Clear
+
 void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
@@ -376,6 +386,8 @@ void UCBTService_UpdateAIContext::ClearDeadContext(UBlackboardComponent* InBlack
 {
 	CAIBlackboardValueHelper::SetEnumIfChanged(InBlackboardComp, CAIKey::Dead::DeadState.KeyName, static_cast<uint8>(EDeadState::Alive));
 }
+
+// Lifecycle
 
 void UCBTService_UpdateAIContext::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {

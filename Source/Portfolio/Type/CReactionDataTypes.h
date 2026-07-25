@@ -5,6 +5,8 @@
 #include "Type/CExecutionRuleTypes.h"
 #include "CReactionDataTypes.generated.h"
 
+// Data / Config
+
 USTRUCT(BlueprintType)
 struct FReactionData
 {
@@ -44,6 +46,8 @@ public:
 public:
 	bool IsValidMinimal() const;
 };
+
+// Runtime Context
 
 USTRUCT(BlueprintType)
 struct FReactionExecutionContext

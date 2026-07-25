@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CReactionTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EReactionType : uint8
 {

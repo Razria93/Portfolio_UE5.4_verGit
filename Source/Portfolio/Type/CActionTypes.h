@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CActionTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EActionType : uint8
 {

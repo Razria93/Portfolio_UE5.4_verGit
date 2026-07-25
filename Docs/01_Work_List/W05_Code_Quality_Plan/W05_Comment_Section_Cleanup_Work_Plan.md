@@ -501,6 +501,819 @@ FObservableTargetRef targetRef;
 
 ---
 
+## 13.1 Section Comment Follow-up Rules
+
+### Rule / Work Plan Boundary
+
+W05 문서는 코드 품질 정리의 정책 기준과 현재 프로젝트 적용 계획을 함께 기록한다.
+AI 작업 시스템에는 반복 적용해야 하는 실행 체크리스트만 반영하고, 프로젝트의 세부 후보 판단은 W05 Work Plan에 남긴다.
+
+```text
+역할 분리:
+-> W05 Work Plan: 현재 branch에서 적용할 정책, 후보, 완료 / 보류 판단을 기록한다.
+-> AI Workflow Prompt: 이후 작업 세션에서 반복 적용할 실행 체크리스트를 제공한다.
+-> .agents: 현재 repo에는 별도 agent rule 파일이 없으므로 이번 반영 대상에서 제외한다.
+-> .codex: 현재 repo에는 별도 Codex rule 파일이 없으므로 이번 반영 대상에서 제외한다.
+```
+
+### Header / Source Section Synchronization
+
+`.h`가 API 책임 단위로 섹션을 나누면 `.cpp`도 같은 책임 그룹 기준으로 섹션을 둔다.
+목표는 선언 파일에서 본 책임 구조를 구현 파일에서도 빠르게 찾을 수 있게 하는 것이다.
+
+```text
+기본 원칙:
+-> 공통 책임 섹션명은 프로젝트 전체에서 같은 이름을 사용한다.
+-> .h와 .cpp에서 같은 책임을 다루면 같은 섹션명을 사용한다.
+-> .cpp 섹션명과 순서는 가능하면 .h를 따른다.
+-> 완전한 함수 단위 1:1 매칭은 강제하지 않는다.
+-> 파일 고유 책임 섹션은 허용하되, .h와 .cpp 양쪽에 대응되는 구현이 있으면 같은 이름을 쓴다.
+-> 구현 전용 helper / local namespace / static helper / 세부 pipeline 단계는 .cpp 전용 섹션으로 둘 수 있다.
+-> 함수가 1~2개뿐인 작은 파일은 섹션 주석을 생략할 수 있다.
+-> Unreal lifecycle / callback 순서처럼 호출 순서가 이해에 직접 영향을 주는 경우에만 구현 흐름을 우선한다.
+-> 이 경우에도 같은 책임을 다루는 섹션명은 가능한 한 .h / .cpp에서 동일하게 유지한다.
+```
+
+공통 책임 섹션명은 아래 이름을 우선 사용한다.
+
+```text
+// Lifecycle
+// Runtime Lifecycle
+// Component Reference
+// Query
+// Mutation
+// State Transition
+// Runtime State
+// Request
+// Entry
+// Notify
+// Notify Routing
+// Feedback
+// Result
+```
+
+파일 고유 책임은 짧은 명사구로 둔다. 예를 들어 CombatSignal 파일의 `Receive`, `Resolve`, `Send`, `Animation Refresh Audit`, `Movement Arbitration`, `Camera Shake`, `Overlay Snapshot`처럼 해당 파일의 실제 책임을 드러내는 이름은 허용한다.
+
+### Type Header Section Taxonomy
+
+Type 헤더에서 타입 역할이 3개 이상으로 나뉘면 아래 taxonomy를 우선 사용한다.
+타입이 1~2개뿐인 작은 Type 헤더는 섹션 주석을 생략할 수 있다.
+
+```text
+// Enum
+// Key / Identifier
+// Data / Config
+// Runtime State
+// Runtime Context
+// Request
+// Candidate
+// Payload
+// Resolution
+// Result
+// Packet
+// Runtime Key / Playback Key
+// Reserved Pipeline Scaffold
+// Helper API
+```
+
+pipeline 단계가 type taxonomy보다 더 명확한 파일은 `Request`, `Candidate`, `Payload`, `Resolution`, `Result`, `Packet`을 우선 사용한다.
+feedback / playback처럼 domain 의미가 필요한 경우 `Runtime Key / Playback Key`처럼 구체적인 섹션명을 허용한다.
+
+### File Family Section Policy
+
+섹션 주석은 모든 파일에 같은 모양으로 강제하지 않는다.
+같은 성격 / 책임 / 파일 패턴을 가진 파일군끼리 같은 섹션 체계를 우선 사용한다.
+파일 고유 책임은 고유 섹션으로 허용한다.
+
+```text
+공통 판단 기준:
+-> 같은 계열 파일은 같은 책임명 섹션을 우선 사용한다.
+-> 파일 고유 책임은 고유 섹션으로 허용한다.
+-> .h와 .cpp는 함수 1:1이 아니라 책임 그룹 기준으로 동기화한다.
+-> 로컬 흐름 설명은 섹션이 아니라 문장형 주석으로 작성한다.
+-> 짧고 단일 책임인 UE adapter / Interface / Type cpp는 섹션을 생략할 수 있다.
+-> 섹션은 같은 책임의 함수가 2개 이상 있거나, 파일 내 책임 그룹이 2개 이상일 때 우선 둔다.
+-> 단, 프로젝트 계열 일관성을 위해 단일 함수라도 명시 섹션을 둘 수 있다.
+```
+
+#### Action / Reaction Base
+
+```text
+대상:
+-> CAction.h / .cpp
+-> CReaction.h / .cpp
+
+권장 섹션:
+-> Component Reference
+-> Tick
+-> Query
+-> Decision
+-> Observable Overlay
+-> Notify
+-> Intervention
+-> State Transition
+-> Intervention Match Helper
+
+판단:
+-> base class는 파생 클래스가 따르는 공통 책임 기준점이다.
+-> Idle && No ActivePart, Default Action Case 같은 case 설명은 섹션이 아니라 문장형 로컬 설명으로 둔다.
+```
+
+#### Action / Reaction Derived
+
+```text
+대상:
+-> CAction_*
+-> CReaction_*
+
+권장 공통 섹션:
+-> Decision
+-> Lifecycle
+-> Notify
+-> Observable Overlay
+-> Intervention
+
+파일 고유 섹션 예:
+-> Chain Reservation
+-> Chain Window
+-> Weapon
+-> Guard State Cleanup
+
+판단:
+-> 파생 클래스는 base와 공통 책임명을 맞춘다.
+-> 파일 고유 로직은 고유 섹션으로 둔다.
+-> Case 1, Another Case, GuardState Case 같은 라벨은 섹션으로 쓰지 않고 조건 설명 문장으로 둔다.
+```
+
+#### Component
+
+```text
+대상:
+-> Component/*
+
+권장 공통 섹션:
+-> Component Reference
+-> Lifecycle
+-> Runtime Lifecycle
+-> Query
+-> Mutation
+-> Runtime State
+-> State Transition
+-> Request / Entry
+-> Receive
+-> Resolve
+-> Apply
+-> Packet
+-> Notify
+-> Helper
+
+도메인별 고유 섹션 예:
+-> Data Resolve
+-> Execution Entry
+-> Decision Apply
+-> Execution Operations
+-> Matching
+-> Runtime Key / Playback Key
+-> Playback
+-> Runtime LOD
+-> Movement Arbitration
+-> Movement Input
+-> Movement Policy
+-> Hit Window
+-> AI Entry
+-> Cue Helper
+
+판단:
+-> Component는 public / private API 책임이 섞이기 쉬우므로 섹션을 적극 적용한다.
+-> Check / Query는 Query로 통일한다.
+-> 단독 Mutation은 허용 가능하지만 더 구체적인 책임명이 있으면 구체명을 우선한다.
+```
+
+#### Controller
+
+```text
+대상:
+-> CAIController
+-> CPlayerController
+
+권장 공통 섹션:
+-> Lifecycle
+
+PlayerController 권장 섹션:
+-> Look Input
+-> Move Input
+-> Movement Dispatch
+-> Action Input
+
+AIController 권장 섹션:
+-> Team
+-> Config Setup
+-> Blackboard Setup
+-> Blackboard Runtime Value
+-> Behavior Tree Runtime
+-> Perception Event Callback
+-> Runtime LOD Snapshot
+-> Perception Candidate Audit
+-> Blackboard / Engage Latency Audit
+
+판단:
+-> Controller는 UE lifecycle + input / perception / blackboard 책임이 분명하면 섹션을 둔다.
+-> 짧은 controller라도 .h / .cpp가 같은 책임으로 나뉘면 같은 섹션명을 유지한다.
+-> 큰 controller는 공통명보다 실제 책임을 드러내는 구체 섹션명을 우선한다.
+```
+
+#### Behavior Tree Service / Task / Decorator
+
+```text
+BT Service 권장 섹션:
+-> Lifecycle
+-> Context Build
+-> Context Compute
+-> Blackboard Update
+-> Blackboard Clear
+-> Intent Decision
+-> Intent Transition
+-> Interval Defaults
+-> Interval Selection
+-> Profiling
+-> Public API
+
+BT Task / Decorator 판단:
+-> 대체로 짧은 UE node adapter이므로 섹션 생략을 기본 허용한다.
+-> ExecuteTask, CalculateRawConditionValue 같은 override 하나가 중심이면 함수 자체가 구조 역할을 한다.
+-> 파일이 커지고 책임이 나뉘면 Execution, Validation, Blackboard Update, Request, Result 정도의 최소 섹션만 둔다.
+```
+
+#### AI RuntimeLOD Policy
+
+```text
+대상:
+-> AI/RuntimeLOD/*Policy*
+
+권장 섹션:
+-> Policy Resolve
+-> Runtime LOD
+-> Query
+-> Helper
+
+판단:
+-> RuntimeLOD policy 파일은 resolver보다 짧고 단일 정책 판단에 집중하는 경우가 많다.
+-> 함수가 1~2개뿐이면 섹션 생략을 허용한다.
+-> policy가 여러 입력을 조합하거나 CVar / config / tier decision을 함께 다루면 Runtime LOD / Policy Resolve 섹션을 둔다.
+-> CAIRuntimeLODTierResolver처럼 context build와 tier resolve가 분리되면 Context Build / Tier Resolve / String Conversion처럼 책임을 더 구체화한다.
+```
+
+#### Character
+
+```text
+대상:
+-> Character/*
+-> Character/Player/*
+-> Character/Enemy/*
+
+권장 섹션:
+-> Lifecycle
+-> Component Reference
+-> Input
+-> Query
+-> Component Query
+-> AI Config Query
+-> Runtime LOD
+-> Tick
+-> Damage
+-> Combat Result
+-> Movement Intent
+-> Action Intent
+-> Runtime State
+-> Action Event Routing
+
+판단:
+-> Character 계열은 gameplay owner / actor 책임을 기준으로 섹션을 둔다.
+-> Player와 Enemy가 공유하는 책임은 같은 섹션명을 사용한다.
+-> Enemy처럼 AI config / Runtime LOD / intent routing이 추가되면 고유 섹션을 허용한다.
+-> CAnimInstance는 Character 하위지만 animation refresh / gate / record 고유 구조가 강하므로 파일 고유 섹션을 유지한다.
+```
+
+#### System
+
+```text
+대상:
+-> System/*
+-> System/Combat/*
+
+권장 섹션:
+-> Lifecycle
+-> Tick
+-> Query
+-> Request
+-> Assignment
+-> Assignment Build
+-> Assignment Warmup
+-> Assignment Apply
+-> Assignment Lease
+-> Runtime State
+-> HitStop
+-> Camera Shake
+
+판단:
+-> System / Subsystem 계열은 actor/component보다 runtime service 책임에 가깝다.
+-> Request / Assignment / Runtime State처럼 외부 요청과 내부 상태 처리를 분리한다.
+-> CombatFeedback처럼 feedback dispatch 책임이면 HitStop / Camera Shake 같은 도메인 섹션을 허용한다.
+```
+
+#### Weapon
+
+```text
+대상:
+-> Weapon/*
+
+권장 섹션:
+-> Component Reference
+-> Initial State
+-> Lifecycle
+-> Collision Component
+-> Trail
+-> Hit Context Provider Query
+-> Hit Context Provider Mutation
+-> Query
+-> Mutation
+-> Equip Notify Events
+-> Collision Notify Events
+-> Engine Delegate Events
+-> Helper
+
+판단:
+-> Weapon actor는 combat collision / notify / hit context provider 책임이 섞이므로 섹션을 둔다.
+-> WeaponComponent는 Component 계열 정책을 따르되 Weapon Actor / Runtime Lifecycle / Profiling 같은 고유 섹션을 허용한다.
+-> Equip / Unequip action의 Weapon 섹션은 Action derived의 파일 고유 섹션으로 허용한다.
+```
+
+#### Type
+
+```text
+Type 헤더:
+-> Type Header Section Taxonomy를 따른다.
+
+Type cpp:
+-> IsValidMinimal, hash/helper만 있는 짧은 cpp는 섹션 생략을 허용한다.
+-> 구현 함수가 늘거나 helper 성격이 섞이면 Helper API, Data / Config, Runtime State 등 헤더 taxonomy와 맞춘다.
+```
+
+#### Core Debug / Profiling
+
+```text
+Core / Debug 권장 섹션:
+-> Gate
+-> Diagnostic Hook
+-> Debug Dump
+-> 도메인 고유 Diagnostic Hook
+
+Core / Profiling 권장 섹션:
+-> Gate
+-> Counter
+-> Service Tick Counter
+-> Interval Preset Counter
+-> Flush
+
+판단:
+-> Debug / Profiling 파일은 gameplay component식 Lifecycle / Query / Mutation을 강제하지 않는다.
+-> 이미 Gate / Diagnostic Hook / Debug Dump 체계가 있으면 그 체계를 유지한다.
+-> 짧은 helper / type 파일은 섹션 생략을 허용한다.
+```
+
+#### Notify / Interface / Blackboard / Patrol / Module
+
+```text
+Notify:
+-> UE Notify adapter 성격이 강하면 섹션 생략을 기본 허용한다.
+-> 길어지면 Notify Entry, Validation, Command Dispatch, Payload Build 정도만 사용한다.
+
+Interface:
+-> UInterface 계약 자체가 구조이므로 API가 적으면 섹션 생략을 허용한다.
+-> 여러 계약 그룹이 생기면 Query, Request, Result, Event 정도로 최소화한다.
+
+AI / Blackboard:
+-> key namespace / registry / helper 구조 자체가 섹션 역할을 한다.
+-> helper가 커지면 Key Lookup, Value Apply, Value Clear 정도를 사용한다.
+
+AI / Patrol:
+-> actor / data 책임이 작으면 섹션 생략을 허용한다.
+-> 커지면 Lifecycle, Query, Patrol Point, Path Resolve, Debug 같은 도메인 섹션을 사용한다.
+
+Module / Global:
+-> Portfolio.cpp / .h, ProjectGlobal.h는 gameplay section policy 대상이 아니다.
+-> include grouping, module macro, global dependency 관리가 우선이다.
+```
+
+### Step Comment Style
+
+단계형 주석은 fallback 순서, policy gate, priority matching처럼 순서 자체가 의미를 가질 때만 사용한다.
+번호 깊이는 한 단계까지만 허용하고, `2-3-1` 같은 중첩 번호는 의미 있는 문장형 주석으로 바꾼다.
+
+```cpp
+// Gate: already dead.
+// Gate: parry intercept.
+// Gate: target-side defense policy.
+```
+
+```cpp
+// Preferred: engine-provided instigator.
+// Fallback: causer-provided instigator.
+// Final fallback: causer owner as instigator.
+```
+
+피하는 형태:
+
+```cpp
+// 2-3-1) Case 03-01
+// [Policy] ...
+// NOTE: ...
+```
+
+---
+
+## 13.2 Section Consistency Full Audit
+
+섹션 주석 통일성 기준으로 `Source/Portfolio` 전체를 재스캔한 결과다.
+이 목록은 PR 마감 전에 보완할 후보를 빠뜨리지 않기 위한 감사표이며, 실제 수정 여부는 파일별 책임 구조와 가독성 기준으로 다시 판단한다.
+
+### Audit 기준
+
+```text
+기본:
+-> 같은 책임이면 .h / .cpp 섹션명은 동일하게 둔다.
+-> Lifecycle / Query / Component Reference / Runtime State / Request / Result 등 공통 책임은 공통 섹션명을 사용한다.
+-> 파일 고유 책임은 고유 섹션으로 허용한다.
+
+예외:
+-> .cpp-only helper / anonymous namespace / local helper / 아주 작은 단일 책임 파일은 예외로 둘 수 있다.
+-> include-only Type .cpp는 섹션화하지 않는다.
+-> 로컬 분기 설명은 섹션처럼 보이지 않게 문장형 주석으로 둔다.
+```
+
+### 1) 큰 `.cpp`인데 섹션이 없는 후보
+
+```text
+Source/Portfolio/Component/CStateComponent.cpp
+Source/Portfolio/Reaction/CReaction_BlockHit.cpp
+Source/Portfolio/Type/CExecutionRuleTypes.cpp
+Source/Portfolio/AI/RuntimeLOD/CAIRuntimeLODTierResolver.cpp
+```
+
+### 2) `.h / .cpp` 섹션 불일치 또는 한쪽 누락 후보
+
+```text
+Source/Portfolio/Action/CAction.h / .cpp
+Source/Portfolio/Action/CAction_ComboAttack.h / .cpp
+Source/Portfolio/Reaction/CReaction.h / .cpp
+Source/Portfolio/Reaction/CReaction_BlockHit.h / .cpp
+Source/Portfolio/Character/CAnimInstance.h / .cpp
+Source/Portfolio/Character/Enemy/CEnemy.h / .cpp
+Source/Portfolio/Character/Player/CPlayer.h / .cpp
+Source/Portfolio/Component/CActionComponent.h / .cpp
+Source/Portfolio/Component/CActionOrchestratorComponent.h / .cpp
+Source/Portfolio/Component/CDefenseComponent.h / .cpp
+Source/Portfolio/Component/CMovementComponent.h / .cpp
+Source/Portfolio/Component/CReactionComponent.h / .cpp
+Source/Portfolio/Component/CReactionFeedbackComponent.h / .cpp
+Source/Portfolio/Component/CReactionOrchestratorComponent.h / .cpp
+Source/Portfolio/Component/CStateComponent.h / .cpp
+Source/Portfolio/Component/CWeaponComponent.h / .cpp
+Source/Portfolio/Controller/CAIController.h / .cpp
+Source/Portfolio/System/Combat/CWorldSubsystem_CombatEngage.h / .cpp
+Source/Portfolio/System/Combat/CWorldSubsystem_CombatFeedback.h / .cpp
+Source/Portfolio/Weapon/CWeaponActor.h / .cpp
+```
+
+### 3) AI / BehaviorTree 후보
+
+```text
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.h / .cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.h / .cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.h / .cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.h / .cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTServiceIntervalHelper.h / .cpp
+Source/Portfolio/AI/BehaviorTree/Task/CBTTask_SelectPatrolPoint.h / .cpp
+Source/Portfolio/AI/BehaviorTree/Task/*.h / .cpp
+Source/Portfolio/AI/BehaviorTree/Decorator/*.h / .cpp
+Source/Portfolio/AI/RuntimeLOD/CAIRuntimeLODTierResolver.h / .cpp
+```
+
+### 4) Core / Debug / Profiling 후보
+
+```text
+Source/Portfolio/Core/Debug/FAIPerceptionDebugTypes.h
+Source/Portfolio/Core/Debug/FCombatEngageDebugTypes.h
+Source/Portfolio/Core/Debug/FComponentReferenceHelper.h
+Source/Portfolio/Core/Debug/FReferenceValidation.h
+Source/Portfolio/Core/Profiling/CAIAnimationProfiling.h / .cpp
+Source/Portfolio/Core/Profiling/CAIBehaviorTreeProfiling.h / .cpp
+Source/Portfolio/Core/Profiling/CAIPerceptionProfiling.h / .cpp
+Source/Portfolio/Core/Profiling/CAIStateRuntimeLODProfiling.h / .cpp
+Source/Portfolio/Core/Profiling/CCombatCollisionProfiling.h / .cpp
+Source/Portfolio/Core/Profiling/CCombatCollisionProfilingCounters.h / .cpp
+Source/Portfolio/Core/Profiling/CCombatFeedbackProfiling.h / .cpp
+```
+
+### 5) Type 구현 `.cpp` 후보
+
+```text
+Source/Portfolio/Type/CExecutionRuleTypes.cpp
+Source/Portfolio/Type/CExecutionTypes.cpp
+Source/Portfolio/Type/CActionDataTypes.cpp
+Source/Portfolio/Type/CReactionDataTypes.cpp
+Source/Portfolio/Type/CActionKeyTypes.cpp
+Source/Portfolio/Type/CReactionKeyTypes.cpp
+Source/Portfolio/Type/CCombatHitTypes.cpp
+```
+
+include-only Type `.cpp`는 섹션화 실익이 낮으므로 기본 예외 후보로 둔다.
+
+### 6) 공통명 흔들림 후보
+
+```text
+Check / Query vs Query
+State Query vs Query
+CameraShake vs Camera Shake
+Delegate / Legacy delegate / Engine Delegate Events
+Condition 단독 섹션
+Mutation 단독 섹션
+Profiling Event Sink
+HitWindow
+Entry for AI
+```
+
+### 7) 섹션처럼 잡히는 로컬 설명 후보
+
+```text
+Sync with ActionComponent
+Based OwnerPawn
+Based Perception
+Based TargetActor
+Absolute States
+Context
+Result
+Reroll
+determine left or right
+Internal linkage
+Candidate SpecKey
+Resolve Executor
+Delay for Warmup
+Flag Toggle
+Slow InActor
+Restore InActor
+Early-Return
+Invalid
+Legacy delegate
+```
+
+### 8) 단계형 / Case 주석 후보
+
+```text
+CAction.cpp: Idle && No ActivePart / No Idle && Has ActivePart
+CAction.cpp: Default Action Case
+CAction_Guard.cpp: Case 1 / Case 2 / Case Guard-in / Case Guard-out
+CAction_Dodge.cpp: GuardState Case / Another Case
+CReaction.cpp: Idle && No ActivePart / No Idle && Has ActivePart / Default Reaction Case
+CReaction_Hit.cpp: GuardState Case / Another Case
+CReaction_Dead.cpp: GuardState Case / Another Case
+CReaction_Stagger.cpp: GuardState Case / Another Case
+CReaction_BlockHit.cpp: Another Case
+CBTTask_SelectPatrolPoint.cpp: Reroll / Reverse...
+CBTService_UpdateAIIntentState.cpp: Engage -> Non-Engage / Investigate -> Non-Investigate
+CCombatSignalTargetComponent.cpp: V1 hook only
+```
+
+### 9) 우선 검토 묶음
+
+```text
+1. CStateComponent.h / .cpp
+2. CAIController.h / .cpp
+3. CMovementComponent.h / .cpp
+4. CWeaponActor.h / .cpp
+5. CAnimInstance.h / .cpp
+6. BT Service 계열
+7. Core / Profiling 계열
+8. Type 구현 .cpp 일부
+9. CAction_ComboAttack.h / .cpp
+10. CReaction_BlockHit.h / .cpp
+```
+
+### 10) 보완 판정표
+
+아래 판정은 13.2 감사표를 기준으로 에이전트 교차 검토 후 정리한 실행 계획이다.
+코드 수정 시 함수명, 시그니처, 접근 권한, 동작은 변경하지 않고 섹션 주석과 로컬 설명 주석만 정리한다.
+
+#### Fix Now
+
+```text
+Action / Reaction:
+-> CAction_ComboAttack.h / .cpp
+-> CReaction_BlockHit.h / .cpp
+-> CAction.h / .cpp
+-> CReaction.h / .cpp
+
+Component / Character / Controller / Weapon / System:
+-> CStateComponent.h / .cpp
+-> CMovementComponent.h / .cpp
+-> CWeaponComponent.h / .cpp
+-> CAIController.h / .cpp
+-> CCombatSignalSourceComponent.h / .cpp
+-> CWorldSubsystem_CombatFeedback.h / .cpp
+-> CWeaponActor.h / .cpp
+
+AI / RuntimeLOD / Profiling / Type:
+-> CBTService_UpdateAIContext.h / .cpp
+-> CBTService_UpdateEngageContext.h / .cpp
+-> CBTService_UpdateAIIntentState.h / .cpp
+-> CBTServiceIntervalHelper.h / .cpp
+-> CAIRuntimeLODTierResolver.h / .cpp
+-> CAIAnimationProfiling.h / .cpp
+-> CAIBehaviorTreeProfiling.h / .cpp
+-> CAIPerceptionProfiling.h / .cpp
+-> CAIStateRuntimeLODProfiling.h / .cpp
+-> CCombatCollisionProfiling.h / .cpp
+-> CExecutionRuleTypes.cpp
+-> CExecutionTypes.cpp
+```
+
+#### Optional
+
+```text
+-> CAction_Dodge.h / .cpp
+-> CAction_Equip.h / .cpp
+-> CAction_Unequip.h / .cpp
+-> CReaction_Hit.h / .cpp
+-> CReaction_Dead.h / .cpp
+-> CReaction_Stagger.h / .cpp
+-> CReaction_Parry.h / .cpp
+-> CAnimInstance.h / .cpp
+-> CEnemy.h / .cpp
+-> CActionComponent.h / .cpp
+-> CReactionComponent.h / .cpp
+-> CActionOrchestratorComponent.h / .cpp
+-> CBTService_UpdateInvestigateContext.h / .cpp
+-> CBTTask_SelectPatrolPoint.h / .cpp
+-> CCombatCollisionProfilingCounters.h / .cpp
+-> CCombatFeedbackProfiling.h / .cpp
+-> FAIPerceptionDebugTypes.h
+-> Type 구현이 매우 짧은 CActionDataTypes.cpp / CReactionDataTypes.cpp / CActionKeyTypes.cpp / CReactionKeyTypes.cpp / CCombatHitTypes.cpp
+```
+
+#### Leave Justified
+
+```text
+-> CPlayer.h / .cpp
+-> CDefenseComponent.h / .cpp
+-> CReactionFeedbackComponent.h / .cpp
+-> CReactionOrchestratorComponent.h / .cpp
+-> CWorldSubsystem_CombatEngage.h / .cpp
+-> 작은 BT Task / Decorator 단일 책임 파일
+-> include-only Type .cpp
+-> FCombatEngageDebugTypes.h
+-> FComponentReferenceHelper.h
+-> FReferenceValidation.h
+```
+
+### 11) 파일별 보완 방향
+
+```text
+CAction_ComboAttack.h / .cpp
+-> .h / .cpp에 Decision, Chain Reservation, Lifecycle, Notify, Chain Window, Chain Consume, Chain Query 섹션 추가
+-> Sync with ActionComponent는 섹션이 아니라 로컬 설명으로 유지하거나 제거
+
+CReaction_BlockHit.h / .cpp
+-> Decision, Lifecycle, Intervention, Observable Overlay 섹션 추가
+-> Another Case 주석은 문장형 로컬 설명으로 변경
+
+CAction.h / .cpp
+-> .h에 Intervention Match Helper 섹션을 추가해 .cpp와 대응
+-> Idle / Default Action Case 주석은 문장형 로컬 설명 후보
+
+CReaction.h / .cpp
+-> .h에 Intervention Match Helper 섹션을 추가해 .cpp와 대응
+-> Idle / Default Reaction Case 주석은 문장형 로컬 설명 후보
+
+CStateComponent.h / .cpp
+-> Check / Query와 Query를 Query로 통합
+-> Component Reference, Health State Sync, Query, State Transition 섹션으로 .h / .cpp 동기화
+
+CMovementComponent.h / .cpp
+-> Check / Query는 Query로 통합
+-> Dispatch / Movement Mode / Mutation은 실제 책임에 맞춰 Runtime LOD, Movement State, Query, Runtime State 쪽으로 흡수
+-> determine left or right는 문장형 로컬 주석으로 변경
+
+CWeaponComponent.h / .cpp
+-> Check / Query를 Query로 통일
+
+CAIController.h / .cpp
+-> API 순서 재배치 없이 섹션명만 보정
+-> Runtime LOD Query / Runtime LOD State / Perception Profiling / Perception Candidate Audit / Blackboard / Engage Latency Audit 기준으로 정리
+-> Init AIPerceptionComp는 Perception Component Setup으로 변경
+
+CCombatSignalSourceComponent.h / .cpp
+-> HitWindow를 Hit Window로 표기
+-> Entry for AI는 Entry로 흡수하거나, AI Entry처럼 짧은 명사구로 통일
+
+CWorldSubsystem_CombatFeedback.h / .cpp
+-> CameraShake를 Camera Shake로 통일
+-> Slow InActor / Restore InActor는 문장형 로컬 설명으로 변경
+
+CWeaponActor.h / .cpp
+-> Early-Return / Invalid / Legacy delegate는 섹션처럼 보이지 않게 로컬 설명으로 낮춤
+-> Delegate 계열 섹션명은 Engine Delegate Events 기준으로 유지
+
+BT Service 계열
+-> UpdateAIContext: Lifecycle, Config, Context Build, Context Compute, Blackboard Write, Blackboard Clear
+-> UpdateEngageContext: Lifecycle, Context Build, Context Compute, Blackboard Write, Blackboard Clear
+-> UpdateAIIntentState: Lifecycle, Intent Decision, State Transition
+-> IntervalHelper: Console Variable, Mode Query, Runtime LOD, Interval Preset, Profiling, Public API
+
+CAIRuntimeLODTierResolver.h / .cpp
+-> Enum, Runtime Context, Runtime LOD Resolve, String Conversion 섹션 추가
+
+Core / Profiling 짧은 .cpp
+-> .h의 Gate / Counter / Service Tick Counter / Interval Preset Counter 섹션을 .cpp에도 그대로 반영
+
+Type 구현 .cpp
+-> CExecutionRuleTypes.cpp: Helper API, Validation, Match
+-> CExecutionTypes.cpp: Validation, Query
+```
+
+### 12) 적용 순서
+
+```text
+1. 공통명 표기 흔들림 정리
+   -> Check / Query, CameraShake, HitWindow, Entry for AI
+
+2. 섹션 없는 중간 크기 파일 정리
+   -> CStateComponent, CAction_ComboAttack, CReaction_BlockHit, CExecutionRuleTypes, CAIRuntimeLODTierResolver
+
+3. 큰 파일 섹션명 보정
+   -> CAIController, CMovementComponent, CWeaponActor
+
+4. BT Service 계열 정리
+
+5. Core / Profiling .h / .cpp 동기화
+
+6. Type 구현 .cpp 섹션 보강
+
+7. Optional 후보 선별
+```
+
+### 13) Applied Result
+
+```text
+Fix Now applied:
+-> CAction.h / .cpp, CReaction.h / .cpp
+-> CAction_ComboAttack.h / .cpp
+-> CReaction_BlockHit.h / .cpp
+-> CStateComponent.h / .cpp
+-> CMovementComponent.h / .cpp
+-> CWeaponComponent.h
+-> CAIController.h / .cpp
+-> CCombatSignalSourceComponent.h / .cpp
+-> CCombatSignalTargetComponent.cpp
+-> CWorldSubsystem_CombatEngage.cpp
+-> CWorldSubsystem_CombatFeedback.h / .cpp
+-> CWeaponActor.cpp
+-> BT Service: UpdateAIContext, UpdateEngageContext, UpdateAIIntentState, IntervalHelper
+-> CAIRuntimeLODTierResolver.h / .cpp
+-> Core/Profiling: CAIAnimation, CAIBehaviorTree, CAIPerception, CAIStateRuntimeLOD, CCombatCollision
+-> Type implementation: CExecutionRuleTypes.cpp, CExecutionTypes.cpp
+
+Optional applied:
+-> CAction_Dodge.h / .cpp
+-> CReaction_Hit.h / .cpp
+-> CReaction_Dead.h / .cpp
+-> CReaction_Stagger.h / .cpp
+-> CReaction_Parry.h / .cpp
+-> CEnemy.h / .cpp repeated section meaning clarified
+-> CActionComponent.cpp / CReactionComponent.cpp / CReactionOrchestratorComponent.cpp local section-like comments clarified
+-> CPlayerController.h / .cpp reviewed and retained: Lifecycle / Look Input / Move Input / Movement Dispatch / Action Input already match.
+
+Build blocker fixed:
+-> CHealthComponent.h had duplicate InitializeHealth(float, float, EMaxHPUpdatePolicy) declarations around the State Transition section.
+-> The duplicate declaration outside the section was removed; the section-owned declaration remains.
+
+Explicitly left unchanged:
+-> CAnimInstance.h / .cpp: file-specific Condition / Query / Gate / Record structure is retained.
+-> CBTService_UpdateInvestigateContext.h / .cpp: excluded by implementation decision.
+-> CBTTask_SelectPatrolPoint.h / .cpp: excluded by implementation decision.
+-> CCombatCollisionProfilingCounters.h / .cpp: excluded by implementation decision.
+-> CCombatFeedbackProfiling.h / .cpp: excluded by implementation decision.
+-> FAIPerceptionDebugTypes.h: excluded by implementation decision.
+-> Short Type implementation .cpp files are excluded.
+
+Applied policy:
+-> Shared responsibility sections use shared names such as Query, Lifecycle, Component Reference, Runtime LOD, Request, Result, Packet, Helper.
+-> File-specific sections remain allowed when they express a responsibility unique to that file.
+-> .h and .cpp use matching responsibility names where both sides expose the same responsibility.
+-> Local flow explanations are written as sentences, not section labels.
+```
+
+---
+
 ## 14. P3 Final Decision
 
 P3 항목은 이번 브랜치에서 코드 수정하지 않고, 유지 또는 후속 작업으로 이관한다.

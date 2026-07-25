@@ -4,6 +4,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCReaction_Parry::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -37,6 +39,8 @@ FExecutionDecisionResult UCReaction_Parry::ResolveExecutionDecision(const FExecu
 	return result;
 }
 
+// Intervention
+
 bool UCReaction_Parry::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
@@ -57,6 +61,8 @@ bool UCReaction_Parry::WantIntervention(const FExecutionInterventionQuery& InQue
 	return false;
 }
 
+// Observable Overlay
+
 void UCReaction_Parry::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -64,7 +70,7 @@ void UCReaction_Parry::ResolveObservableOverlayCondition(const FObservableOverla
 	const bool bIsParryReaction = IsIncomingReactionType(InQuery.DecisionQuery, EReactionType::Parry);
 	if (!bIsParryReaction)
 	{
-		// Parry only.
+		// Reject non-Parry overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}

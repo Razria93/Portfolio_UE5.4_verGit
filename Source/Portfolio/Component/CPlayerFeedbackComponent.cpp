@@ -12,6 +12,8 @@ UCPlayerFeedbackComponent::UCPlayerFeedbackComponent()
 {
 }
 
+// Component Reference
+
 void UCPlayerFeedbackComponent::InitializeReferences(APlayerController* InOwnerPlayerController)
 {
 	OwnerPlayerController_Injected = InOwnerPlayerController;
@@ -35,6 +37,8 @@ bool UCPlayerFeedbackComponent::ValidateRequiredComponentReferences() const
 
 	return bValid;
 }
+
+// Lifecycle
 
 void UCPlayerFeedbackComponent::BeginPlay()
 {
@@ -61,6 +65,8 @@ void UCPlayerFeedbackComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 
 	Super::EndPlay(EndPlayReason);
 }
+
+// Camera Shake
 
 void UCPlayerFeedbackComponent::HandleCameraShakeRequest(const FCameraShakeRequest& InCameraShakeRequest)
 {

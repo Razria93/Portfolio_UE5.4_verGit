@@ -56,24 +56,29 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
+	// Entry
 	void PlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
 
 private:
+	// Playback
 	void PlayHitStop(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
 	void PlayHitVFX(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
 	void PlayHitSFX(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
 	void PlayCameraShake(const FCombatSignalTargetPacket& InCombatSignalTargetPacket);
 
 private:
+	// Query
 	bool CanPlayHitFeedback(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 	bool CanPlayHitStop(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 	bool CanPlayCameraShake(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
 private:
+	// Resolve
 	FVector ResolveHitFeedbackLocation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 	FRotator ResolveHitFeedbackRotation(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
 private:
+	// Request
 	FHitStopRequest BuildHitStopRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 	FCameraShakeRequest BuildCameraShakeRequest(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 };

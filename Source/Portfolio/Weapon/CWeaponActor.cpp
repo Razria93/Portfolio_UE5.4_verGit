@@ -29,6 +29,8 @@ ACWeaponActor::ACWeaponActor()
 	TrailComponent->bAutoActivate = false;
 }
 
+// Component Reference
+
 void ACWeaponActor::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -55,11 +57,15 @@ bool ACWeaponActor::ValidateRequiredReferences() const
 	return bValid;
 }
 
+// Initial State
+
 void ACWeaponActor::ApplyInitialWeaponState(EWeaponType InWeaponType)
 {
 	ChangeWeaponType(InWeaponType);
 	AttachToHolsterSocket();
 }
+
+// Lifecycle
 
 void ACWeaponActor::BeginPlay()
 {
@@ -81,6 +87,8 @@ void ACWeaponActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	Super::EndPlay(EndPlayReason);
 }
+
+// Collision Component
 
 void ACWeaponActor::InitializeCollisionComponents()
 {
@@ -118,6 +126,8 @@ void ACWeaponActor::ClearCollisionComponents()
 	Collisions_Cached.Empty();
 }
 
+// Trail
+
 void ACWeaponActor::InitializeTrailState()
 {
 	if (!bDisableTrailOnBeginPlay) return;
@@ -129,6 +139,8 @@ void ACWeaponActor::ClearTrailState()
 {
 	ToggleTrailActive(false);
 }
+
+// Hit Context Provider Query
 
 const FOverlapContext& ACWeaponActor::GetLastOverlapContext() const
 {
@@ -145,6 +157,8 @@ const FActionDataKey& ACWeaponActor::GetLastActionDataKey() const
 	return LastActionDataKey_Cached;
 }
 
+// Hit Context Provider Mutation
+
 void ACWeaponActor::SetLastOverlapContext(const FOverlapContext& InOverlapContext)
 {
 	LastOverlapContext_Cached = InOverlapContext;
@@ -159,6 +173,8 @@ void ACWeaponActor::SetLastActionDataKey(const FActionDataKey& InActionDataKey)
 {
 	LastActionDataKey_Cached = InActionDataKey;
 }
+
+// Mutation
 
 void ACWeaponActor::ChangeWeaponType(EWeaponType InWeaponType)
 {
@@ -181,6 +197,8 @@ void ACWeaponActor::ToggleTrailActive(bool bEnable)
 	}
 }
 
+// Equip Notify Events
+
 void ACWeaponActor::AttachToHandSocket()
 {
 	AttachToOwnerSocket(SocketName_Hand);
@@ -190,6 +208,8 @@ void ACWeaponActor::AttachToHolsterSocket()
 {
 	AttachToOwnerSocket(SocketName_Holster);
 }
+
+// Collision Notify Events
 
 void ACWeaponActor::CollisionEnabled(FName InName)
 {
@@ -214,7 +234,7 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 		}
 	}
 
-	// Early-Return
+	// Reject empty collision enable requests.
 	if (collisionsToEnable.IsEmpty())
 	{
 		FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
@@ -309,7 +329,7 @@ void ACWeaponActor::CollisionDisabled()
 			TEXT("MissingCombatSignalSourceComponentOrInvalidHitWindow"));
 	}
 
-	// Legacy delegate
+	// Notify legacy collision disabled listeners.
 	if (OnWeaponActorCollisionDisabled.IsBound())
 		OnWeaponActorCollisionDisabled.Broadcast();
 
@@ -321,6 +341,8 @@ void ACWeaponActor::CollisionDisabled()
 		Collisions_Cached.Num(),
 		TEXT("CollisionDisabled"));
 }
+
+// Engine Delegate Events
 
 void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -357,7 +379,7 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	FCombatSignalDebug::RecordWeaponOverlapAcceptedForAudit(hitContext, TEXT("BeginOverlap"));
 	FCombatSignalDebug::PrintWeaponHitContextDebug(hitContext);
 
-	// Legacy delegate
+	// Notify legacy overlap listeners before forwarding the combat signal.
 	if (OnWeaponActorBeginOverlap.IsBound())
 		OnWeaponActorBeginOverlap.Broadcast(OwnerCharacter_Injected, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
@@ -392,10 +414,12 @@ void ACWeaponActor::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCompone
 		return;
 	}
 
-	// Legacy delegate
+	// Notify legacy overlap listeners after validating the end overlap.
 	if (OnWeaponActorEndOverlap.IsBound())
 		OnWeaponActorEndOverlap.Broadcast(OwnerCharacter_Injected, OtherActor);
 }
+
+// Helper
 
 FOverlapContext ACWeaponActor::BuildOverlapContext(AActor* InOwnerActor, AActor* InDamageCauser, UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) const
 {
@@ -421,7 +445,7 @@ FHitImpactContext ACWeaponActor::BuildHitImpactContext(const FOverlapContext& In
 
 	if (!IsValid(InOverlapContext.OverlappedComponent) || !IsValid(InOverlapContext.OtherComponent))
 	{
-		// Invalid
+		// Invalid overlap context cannot produce hit impact data.
 		return hitImpactContext;
 	}
 
@@ -441,7 +465,7 @@ FHitImpactContext ACWeaponActor::BuildHitImpactContext(const FOverlapContext& In
 
 	if (distance < 0.f)
 	{
-		// Invalid
+		// Invalid closest-point query cannot produce hit impact data.
 		return hitImpactContext;
 	}
 

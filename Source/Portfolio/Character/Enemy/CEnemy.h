@@ -156,28 +156,23 @@ private:
 	// Runtime LOD
 	void UpdateRuntimeLODMeshMode();
 	void UpdateRuntimeLODActorTickMode();
-
-	// Lifecycle
 	void CacheRuntimeLODActorTickOriginalState();
-
-	// Dispatch
 	void ApplyRuntimeLODActorTickMode(int32 InActorTickMode);
-
-	// Actor Tick Mode
 	void ApplyRuntimeLODActorTickDefault();
 	void ApplyRuntimeLODActorTickDisabled();
-
-	// Actor Tick State
 	void RestoreRuntimeLODActorTick();
 	void DisableRuntimeLODActorTick();
 
 public:
+	// Tick
 	void Tick(float DeltaTime) override;
 
 public:
+	// Input
 	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	// Component Query
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
@@ -193,6 +188,7 @@ public:
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 
 public:
+	// AI Config Query
 	FORCEINLINE bool ShouldUsePatrol() const { return bUsePatrol; }
 	FORCEINLINE ACPatrolPath* GetPatrolPath() const { return PatrolPath; }
 	FORCEINLINE EPatrolMode GetPatrolMode() const { return PatrolMode; }
@@ -221,9 +217,11 @@ public:
 	FORCEINLINE float GetCombatActionCooldown() const { return CombatActionCooldown; }
 
 public:
+	// Damage
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
 
 public:
+	// Combat Result
 	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
 
 private:
@@ -231,6 +229,7 @@ private:
 	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
+	// AI Movement Intent
 	FActionRequestResult HandleAIWalk();
 	FActionRequestResult HandleAIRun();
 	FActionRequestResult HandleAISprint();
@@ -238,14 +237,17 @@ public:
 	FActionRequestResult HandleAIJump();
 	FActionRequestResult HandleAIStopJump();
 
+	// AI Action Intent
 	FActionRequestResult HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
 	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent);
 
 public:
+	// Runtime State
 	bool TryStartKill();
 	bool TryStartRevive(float InReviveHP);
 
 private:
+	// Combat Action Query
 	bool IsCombatActionType(EActionType InActionType) const;
 
 private:

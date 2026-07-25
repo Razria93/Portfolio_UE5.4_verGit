@@ -15,6 +15,8 @@ UCWeaponComponent::UCWeaponComponent()
 {
 }
 
+// Component Reference
+
 void UCWeaponComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -52,6 +54,8 @@ bool UCWeaponComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// Lifecycle
+
 void UCWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -72,10 +76,14 @@ void UCWeaponComponent::UninitializeWeaponRuntime()
 	DestroyWeaponActor();
 }
 
+// Query
+
 ACWeaponActor* UCWeaponComponent::GetWeaponActor() const
 {
 	return IsValid(WeaponActor) ? WeaponActor : nullptr;
 }
+
+// Mutation
 
 void UCWeaponComponent::AttachWeaponToHand()
 {

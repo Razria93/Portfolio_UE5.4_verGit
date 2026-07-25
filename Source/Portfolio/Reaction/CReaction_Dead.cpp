@@ -4,6 +4,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -33,6 +35,8 @@ FExecutionDecisionResult UCReaction_Dead::ResolveExecutionDecision(const FExecut
 	return result;
 }
 
+// Observable Overlay
+
 void UCReaction_Dead::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -40,7 +44,7 @@ void UCReaction_Dead::ResolveObservableOverlayCondition(const FObservableOverlay
 	const bool bIsDeadReaction = IsIncomingReactionType(InQuery.DecisionQuery, EReactionType::Dead);
 	if (!bIsDeadReaction)
 	{
-		// Dead only.
+		// Reject non-Dead overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
@@ -48,15 +52,17 @@ void UCReaction_Dead::ResolveObservableOverlayCondition(const FObservableOverlay
 	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
 	if (bHasGuardState)
 	{
-		// GuardState Case: clear Guard before Dead.
+		// Dead clears an active Guard state before it starts.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
 		return;
 	}
 
-	// Another Case: No overlay cleanup.
+	// Dead can start without overlay cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }
+
+// Intervention
 
 bool UCReaction_Dead::AllowIntervention(const FExecutionInterventionQuery& InQuery) const
 {

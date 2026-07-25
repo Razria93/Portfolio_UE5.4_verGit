@@ -11,7 +11,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundBase.h"
 
-// Internal linkage
+// Helper
 namespace
 {
 	namespace ReactionFeedbackScore
@@ -26,6 +26,8 @@ namespace
 UCReactionFeedbackComponent::UCReactionFeedbackComponent()
 {
 }
+
+// Component Reference
 
 void UCReactionFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
@@ -51,6 +53,8 @@ bool UCReactionFeedbackComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// Entry
+
 void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest)
 {
 	if (!CanPlayReactionFeedback(InReactionFeedbackRequest)) return;
@@ -72,6 +76,8 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 void UCReactionFeedbackComponent::ClearRuntimeFeedback()
 {
 }
+
+// Query
 
 bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const
 {
@@ -104,6 +110,8 @@ bool UCReactionFeedbackComponent::CanPlayReactionFeedback(const FReactionFeedbac
 
 	return true;
 }
+
+// Matching
 
 bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedbackMatchKey& InDataKey, EReactionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FReactionFeedbackRequest& InReactionFeedbackRequest, int32& OutScore) const
 {
@@ -156,6 +164,8 @@ bool UCReactionFeedbackComponent::TryCalculateMatchScore(const FReactionFeedback
 	return true;
 }
 
+// Runtime Key / Playback Key
+
 FReactionVFXPlaybackKey UCReactionFeedbackComponent::BuildReactionVFXPlaybackKey(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const
 {
 	FReactionVFXPlaybackKey playbackKey;
@@ -180,6 +190,8 @@ FReactionSFXPlaybackKey UCReactionFeedbackComponent::BuildReactionSFXPlaybackKey
 	return playbackKey;
 }
 
+// Execution
+
 void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackRequest& InReactionFeedbackRequest)
 {
 	int32 bestScore = INDEX_NONE;
@@ -196,7 +208,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 
 		if (matchScore < bestScore) continue;
 
-		// New-High score: Reset and Update List
+		// Preferred: replace matches with the new highest score.
 		if (matchScore > bestScore)
 		{
 			bestScore = matchScore;
@@ -205,7 +217,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		// Tie score: Add to list
+		// Tie: keep all matches with the current best score.
 		matchedDatas.Add(&data);
 	}
 
@@ -255,7 +267,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 
 		if (matchScore < bestScore) continue;
 
-		// New-High score: Reset and Update List
+		// Preferred: replace matches with the new highest score.
 		if (matchScore > bestScore)
 		{
 			bestScore = matchScore;
@@ -264,7 +276,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		// Tie score: Add to list
+		// Tie: keep all matches with the current best score.
 		matchedDatas.Add(&data);
 	}
 
@@ -297,6 +309,8 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 		PlayReactionSFX(*matchedData);
 	}
 }
+
+// Playback
 
 void UCReactionFeedbackComponent::PlayReactionVFX(const FReactionVFXFeedbackData& InReactionVFXFeedbackData)
 {

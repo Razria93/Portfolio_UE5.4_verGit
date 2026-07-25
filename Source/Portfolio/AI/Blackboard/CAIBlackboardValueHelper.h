@@ -9,6 +9,7 @@
 
 namespace CAIBlackboardValueHelper
 {
+	// Value Set
 	static void SetBoolIfChanged(UBlackboardComponent* InBlackboardComp, const FName& InKeyName, bool InValue)
 	{
 		if (!IsValid(InBlackboardComp)) return;
@@ -57,6 +58,7 @@ namespace CAIBlackboardValueHelper
 		InBlackboardComp->SetValueAsObject(InKeyName, InValue);
 	}
 
+	// Initial Value Apply
 	static void ApplyFixedValue(UBlackboardComponent* InBlackboardComp, const FAIBlackboardKeySpec& InKeySpec)
 	{
 		if (!IsValid(InBlackboardComp)) return;
@@ -124,6 +126,7 @@ namespace CAIBlackboardValueHelper
 		}
 	}
 
+	// Custom Value Apply
 	static void MarkCustomKeyApplied(TSet<FName>& InOutPendingKeys, const FAIBlackboardKeySpec& InKeySpec, const UObject* InOwnerContext)
 	{
 		ensureMsgf(
@@ -181,6 +184,7 @@ namespace CAIBlackboardValueHelper
 		MarkCustomKeyApplied(InOutPendingKeys, InKeySpec, InOwnerContext);
 	}
 
+	// Validation
 	static bool ValidateCustomKeysApplied(const TSet<FName>& InPendingKeys, const UObject* InOwnerContext)
 	{
 		if (InPendingKeys.IsEmpty()) return true;
@@ -201,6 +205,7 @@ namespace CAIBlackboardValueHelper
 		return false;
 	}
 
+	// Clear
 	static void ClearValues(UBlackboardComponent* InBlackboardComp)
 	{
 		if (!IsValid(InBlackboardComp)) return;

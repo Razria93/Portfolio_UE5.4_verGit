@@ -11,6 +11,7 @@ UCStateComponent::UCStateComponent()
 {
 }
 
+// Component Reference
 void UCStateComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -35,7 +36,7 @@ bool UCStateComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
-// Sync Health 'dead-state' changes into the 'execution state'.
+// Health State Sync
 void UCStateComponent::OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
@@ -70,6 +71,7 @@ void UCStateComponent::OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState
 	}
 }
 
+// Mutation
 void UCStateComponent::SetIdleState()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;

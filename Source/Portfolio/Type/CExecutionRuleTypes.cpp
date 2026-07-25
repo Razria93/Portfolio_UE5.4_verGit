@@ -4,6 +4,7 @@
 
 namespace
 {
+	// Helper API
 	bool IsValidExecutionDomain(EExecutionDomain InDomain)
 	{
 		return InDomain != EExecutionDomain::None && InDomain != EExecutionDomain::Max;
@@ -34,6 +35,8 @@ namespace
 		return InPattern == EReactionType::All || InPattern == InValue;
 	}
 }
+
+// Data / Config
 
 bool FExecutionInterventionParticipantFilter::IsValidMinimal() const
 {

@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CHealthTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EDeadState : uint8
 {

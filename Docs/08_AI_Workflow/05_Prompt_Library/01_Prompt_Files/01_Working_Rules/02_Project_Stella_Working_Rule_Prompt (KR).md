@@ -20,6 +20,53 @@ Project Stella 작업 세션에서 반복 적용할 실행 규칙을 제공한�
 
 ---
 
+## 2.1 코드 주석 / 섹션 규칙
+
+```yaml
+섹션 구분 주석
+-> 파일 구조 탐색을 돕는 경우에만 둔다.
+-> 함수 그룹 / 타입 그룹 / 구현 책임이 3개 이상으로 나뉠 때 우선 사용한다.
+-> 짧은 명사구를 사용하고 장식성 separator, [NOTE], [Policy], [Pass] 태그는 사용하지 않는다.
+-> 변수 / UPROPERTY 구간은 섹션 주석보다 Category / 변수명 / struct 이름으로 의미를 표현한다.
+
+.h / .cpp 섹션 동기화
+-> .h가 API 책임 단위로 섹션을 나누면 .cpp도 같은 책임 그룹 기준으로 섹션을 둔다.
+-> 공통 책임 섹션명은 프로젝트 전체에서 같은 이름을 사용한다.
+-> .h와 .cpp에서 같은 책임을 다루면 같은 섹션명을 사용한다.
+-> .cpp 섹션명과 순서는 가능하면 .h를 따른다.
+-> 파일 고유 책임 섹션은 허용하되, .h와 .cpp 양쪽에 대응되는 구현이 있으면 같은 이름을 쓴다.
+-> 구현 전용 helper / local namespace / static helper / 세부 pipeline 단계는 .cpp 전용 섹션으로 둘 수 있다.
+-> 작은 파일이나 함수 수가 적은 파일은 섹션을 생략할 수 있다.
+-> Unreal lifecycle / callback 순서처럼 호출 순서가 이해에 직접 영향을 주는 경우에만 구현 흐름을 우선한다.
+-> 이 경우에도 같은 책임을 다루는 섹션명은 가능한 한 .h / .cpp에서 동일하게 유지한다.
+
+공통 책임 섹션명
+-> Lifecycle, Runtime Lifecycle, Component Reference, Query, Mutation, State Transition, Runtime State, Request, Entry, Notify, Notify Routing, Feedback, Result를 우선 사용한다.
+-> 파일 고유 책임은 Animation Refresh Audit, Movement Arbitration, Camera Shake, Overlay Snapshot처럼 짧은 명사구로 둔다.
+
+Type 헤더 섹션
+-> Type 헤더 섹션명은 W05 Comment Section Cleanup Work Plan의 taxonomy를 따른다.
+-> Enum, Key / Identifier, Data / Config, Runtime State, Runtime Context, Request, Candidate, Payload, Resolution, Result, Packet, Runtime Key / Playback Key, Reserved Pipeline Scaffold, Helper API를 우선 사용한다.
+
+작업 체크리스트
+-> Type 헤더가 taxonomy를 따르는지 확인한다.
+-> .h / .cpp의 책임 섹션이 큰 그룹 기준으로 동기화되어 있는지 확인한다.
+-> 단계형 주석이 fallback / policy gate / priority matching처럼 순서 의미를 가지는지 확인한다.
+-> 주석 정리 중 타입명 / 필드명 / API signature / include / 동작 변경이 섞이지 않았는지 확인한다.
+
+단계형 주석
+-> fallback 순서, policy gate, priority matching처럼 순서 자체가 의미 있을 때만 사용한다.
+-> 번호 깊이는 한 단계까지만 허용한다.
+-> 2-3-1 같은 중첩 번호는 의미 있는 문장형 주석으로 바꾼다.
+-> Gate / Preferred / Fallback / Final fallback 같은 prefix를 일관되게 사용한다.
+
+금지
+-> 주석 정리 작업에서 타입명 / 필드명 / 함수명 / 동작을 함께 변경하지 않는다.
+-> include 변경, DataAsset 전환, serialized field 변경을 주석 정리와 묶지 않는다.
+```
+
+---
+
 ## 3. 사용 방법
 
 작업 요청과 함께 `복사용 Prompt`를 전달한다.
@@ -47,6 +94,12 @@ Project Stella 작업을 진행해줘.
    - 건드리지 않을 범위
    - 검증 방법
    - 사용자 확인이 필요한 항목
+
+2-1. 주석 / 섹션 정리 작업이면 아래 체크리스트를 먼저 적용해줘.
+   - Type 헤더 섹션은 W05 taxonomy를 기준으로 확인해줘.
+   - `.h`가 API 책임 단위로 나뉘면 `.cpp`도 같은 책임 그룹 기준으로 섹션을 동기화해줘.
+   - 단계형 주석은 fallback / policy gate / priority matching처럼 순서 자체가 의미 있을 때만 남겨줘.
+   - 주석 정리 중 타입명 / 필드명 / API signature / include / 동작 변경을 함께 처리하지 말아줘.
 
 3. Project Stella 작업 맥락을 유지해줘.
    - Stella Blade 액션 시스템 분석 / 구현 포트폴리오라는 맥락을 유지해줘.

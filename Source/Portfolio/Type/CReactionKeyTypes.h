@@ -5,6 +5,8 @@
 #include "Type/CCombatDamageTypes.h"
 #include "CReactionKeyTypes.generated.h"
 
+// Key / Identifier
+
 USTRUCT(BlueprintType)
 struct FReactionDataKey
 {
@@ -30,6 +32,8 @@ public:
 			&& DamageSpecKey == InOther.DamageSpecKey;
 	}
 };
+
+// Helper API
 
 FORCEINLINE uint32 GetTypeHash(const FReactionDataKey& InKey)
 {

@@ -213,11 +213,11 @@ bool UCActionComponent::ResolveActionData(const FActionDataKey& InDataKey, FActi
 
 UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 {
-	// 1) Try reuse cached Action; return if valid
+	// Preferred: reuse cached action executor.
 	UCAction* found = FindActionExecutor(InData.ActionExecutorKey.Get());
 	if (IsValid(found)) return found;
 
-	// 2) Try add and cache Action; return if valid.
+	// Fallback: create and cache action executor.
 	UCAction* add = AddActionExecutor(InData.ActionExecutorKey);
 	if (IsValid(add)) return add;
 
@@ -570,8 +570,7 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	// bRebuildAll == true: Rebuild 
-	// bRebuildAll == false: Append
+	// Rebuild clears stale action data; append keeps the existing map.
 
 	if (bRebuildAll)
 	{
@@ -609,8 +608,7 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	// bRebuildAll == true: Rebuild 
-	// bRebuildAll == false: Append
+	// Rebuild clears stale action executors; append keeps existing cache entries.
 
 	if (bRebuildAll)
 	{
@@ -624,14 +622,14 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 		UClass* executorKey = actionData.ActionExecutorKey.Get();
 		if (!IsValid(executorKey)) continue;
 
-		// 1) Find existing cached Reaction
+		// Preferred: keep existing cached action executor.
 		if (!bRebuildAll)
 		{
 			const UCAction* found = FindActionExecutor(executorKey);
 			if (IsValid(found)) continue;
 		}
 
-		// 2) Add cached Reaction
+		// Fallback: create cached action executor.
 		UCAction* add = AddActionExecutor(executorKey);
 		if (!IsValid(add))
 		{

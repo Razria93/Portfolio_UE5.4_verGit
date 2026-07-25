@@ -26,6 +26,8 @@ namespace
 	}
 }
 
+// Gate
+
 bool FCombatCollisionProfiling::ShouldSkipEnemyHitProcessing(const AActor* InOwnerActor)
 {
 #if !UE_BUILD_SHIPPING

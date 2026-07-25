@@ -4,6 +4,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCReaction_Stagger::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -37,6 +39,8 @@ FExecutionDecisionResult UCReaction_Stagger::ResolveExecutionDecision(const FExe
 	return result;
 }
 
+// Intervention
+
 bool UCReaction_Stagger::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
 	if (!InQuery.IsValidMinimal()) return false;
@@ -47,6 +51,8 @@ bool UCReaction_Stagger::WantIntervention(const FExecutionInterventionQuery& InQ
 	return InQuery.ActivePart.IsActionParticipant() || InQuery.ActivePart.IsReactionParticipant();
 }
 
+// Observable Overlay
+
 void UCReaction_Stagger::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -54,7 +60,7 @@ void UCReaction_Stagger::ResolveObservableOverlayCondition(const FObservableOver
 	const bool bIsStaggerReaction = IsIncomingReactionType(InQuery.DecisionQuery, EReactionType::Stagger);
 	if (!bIsStaggerReaction)
 	{
-		// Stagger only.
+		// Reject non-Stagger overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
@@ -62,12 +68,12 @@ void UCReaction_Stagger::ResolveObservableOverlayCondition(const FObservableOver
 	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
 	if (bHasGuardState)
 	{
-		// GuardState Case: clear Guard before Stagger.
+		// Stagger clears an active Guard state before it starts.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
 		return;
 	}
 
-	// Another Case: No overlay cleanup.
+	// Stagger can start without overlay cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }

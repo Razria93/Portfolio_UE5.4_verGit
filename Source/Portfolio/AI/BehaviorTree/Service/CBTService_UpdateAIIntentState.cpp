@@ -15,6 +15,8 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+// Lifecycle
+
 UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 {
 	NodeName = "Update AI Intent State";
@@ -50,9 +52,11 @@ void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp
 	}
 }
 
+// Intent Decision
+
 EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackboardComponent* InBlackboard, float InCurrentTime)
 {
-	// Absolute States
+	// Absolute states override contextual intent decisions.
 	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState.KeyName));
 	const bool bIsActiveReaction = InBlackboard->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
 	const bool bIsCombatAction = InBlackboard->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName);
@@ -67,7 +71,7 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	if (bIsCombatAction)
 		return EAIIntentState::Engage;
 
-	// Context
+	// Gather blackboard context for intent selection.
 	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
 
 	const bool bHasTarget = IsValid(target);
@@ -81,7 +85,6 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
 	const ECombatRole combatRole = static_cast<ECombatRole>(InBlackboard->GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
 
-	// Intent Decision
 	// No awareness: investigate only when requested or already active.
 	if (!bHasAwareness)
 	{
@@ -108,6 +111,8 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	return EAIIntentState::Observe;
 }
 
+// Intent Transition
+
 bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState)
 {
 	const uint8 currentAIIntentState = static_cast<uint8>(InBlackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState.KeyName));
@@ -121,12 +126,11 @@ bool UCBTService_UpdateAIIntentState::ChangeAIIntentState(UBlackboardComponent* 
 	return true;
 }
 
-// Cleanup handles unexpected intent-state exits.
 void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardComponent* InBlackboardComp, EAIIntentState InCurrentAIIntentState, EAIIntentState InNextAIIntentState)
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	// Engage -> Non-Engage
+	// Clear Engage context when leaving Engage unexpectedly.
 	if (InCurrentAIIntentState == EAIIntentState::Engage && InNextAIIntentState != EAIIntentState::Engage)
 	{
 		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bInEngageRange.KeyName, false);
@@ -138,7 +142,7 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 		}
 	} 
 
-	// Investigate -> Non-Investigate
+	// Clear Investigate context when leaving Investigate unexpectedly.
 	if (InCurrentAIIntentState == EAIIntentState::Investigate && InNextAIIntentState != EAIIntentState::Investigate)
 	{
 		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
@@ -149,6 +153,8 @@ void UCBTService_UpdateAIIntentState::UpdateAIIntentStateTransition(UBlackboardC
 		CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);
 	}
 }
+
+// Lifecycle
 
 void UCBTService_UpdateAIIntentState::ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {

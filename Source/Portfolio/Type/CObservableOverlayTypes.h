@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CObservableOverlayTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EObservableOverlayHandling : uint8
 {
@@ -34,6 +36,8 @@ enum class EObservableOverlayEventType : uint8
 	Max,
 };
 
+// Runtime Context
+
 USTRUCT(BlueprintType)
 struct FObservableOverlayEventContext
 {
@@ -57,6 +61,8 @@ public:
 		return EventType != EObservableOverlayEventType::None && EventType != EObservableOverlayEventType::Max;
 	}
 };
+
+// Runtime State
 
 USTRUCT(BlueprintType)
 struct FGuardObservableOverlaySnapshot

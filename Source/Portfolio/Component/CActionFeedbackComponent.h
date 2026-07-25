@@ -40,25 +40,31 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
+	// Entry
 	void PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);
 	void ClearRuntimeFeedback();
 
 private:
+	// Query
 	bool CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const;
 
 private:
+	// Matching
 	EActionFeedbackMatchTier CalculateMatchTier(const FActionFeedbackMatchKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const;
 
 private:
+	// Runtime Key / Playback Key
 	FActionVFXPlaybackKey BuildActionVFXPlaybackKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const;
 	FActionSFXPlaybackKey BuildActionSFXPlaybackKey(const FActionSFXFeedbackData& InActionSFXFeedbackData) const;
 
 private:
+	// Execution
 	void ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
 	void ExecuteVFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
 	void ExecuteSFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
 
 private:
+	// Playback
 	void PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData);
 	void PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData);
 	void ToggleTrailActive(bool bActive);

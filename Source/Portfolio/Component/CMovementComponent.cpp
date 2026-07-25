@@ -16,6 +16,8 @@ UCMovementComponent::UCMovementComponent()
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 }
 
+// Component Reference
+
 void UCMovementComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -44,6 +46,8 @@ bool UCMovementComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// Lifecycle
+
 void UCMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -64,6 +68,8 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 	bIsFalling = CharacterMovementComp_Injected->IsFalling();
 }
+
+// Runtime LOD
 
 void UCMovementComponent::UpdateRuntimeLODMovementMode()
 {
@@ -141,6 +147,8 @@ void UCMovementComponent::DisableRuntimeLODMovementStateRefresh()
 	SetComponentTickEnabled(false);
 }
 
+// Movement State
+
 void UCMovementComponent::AllowRuntimeLODMovementIntent()
 {
 	if (bRuntimeLODMovementIntentBlocked)
@@ -170,6 +178,8 @@ void UCMovementComponent::StopRuntimeLODActiveMovement()
 	aiController->StopMovement();
 }
 
+// Movement Arbitration
+
 // Final movement gate for axis input accepted by the orchestrator.
 bool UCMovementComponent::CanAcceptMoveInput() const
 {
@@ -197,6 +207,8 @@ void UCMovementComponent::ClearMovementIntentBlockForRuntimeLOD()
 {
 	bRuntimeLODMovementIntentBlocked = false;
 }
+
+// Movement Input
 
 void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 {
@@ -283,6 +295,8 @@ void UCMovementComponent::OnStopJump()
 
 	OwnerCharacter_Injected->StopJumping();
 }
+
+// Movement Policy
 
 void UCMovementComponent::ApplyMovementOverride(EMovementGait InGait, EMovementRotationMode InRotationMode)
 {
@@ -373,6 +387,8 @@ void UCMovementComponent::ApplyRotationMode(EMovementRotationMode InRotationMode
 	}
 }
 
+// Runtime State
+
 void UCMovementComponent::CalculateSpeed()
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
@@ -397,7 +413,7 @@ void UCMovementComponent::CalculateDirection()
 		float angleRad = FMath::Acos(FVector::DotProduct(forwardNormal, velocityNormal));
 		float angleDeg = FMath::RadiansToDegrees(angleRad);
 
-		// determine left or right
+		// Determine left or right from the movement input basis.
 		FVector crossProduct = FVector::CrossProduct(forwardNormal, velocityNormal);
 		if (crossProduct.Z < 0)
 		{

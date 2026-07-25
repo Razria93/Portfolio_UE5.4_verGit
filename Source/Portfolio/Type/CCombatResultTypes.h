@@ -4,6 +4,8 @@
 #include "Type/CCombatDamageTypes.h"
 #include "CCombatResultTypes.generated.h"
 
+// Packet
+
 USTRUCT(BlueprintType)
 struct FCombatResultPacket
 {

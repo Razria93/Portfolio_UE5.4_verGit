@@ -10,6 +10,8 @@ UCObservableOverlayComponent::UCObservableOverlayComponent()
 {
 }
 
+// Component Reference
+
 void UCObservableOverlayComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -36,6 +38,8 @@ bool UCObservableOverlayComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// Overlay Snapshot
+
 void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot)
 {
 	RefreshPolicyRegistry();
@@ -49,6 +53,8 @@ void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapsh
 		overlayPolicy->WriteOverlaySnapshot(OutSnapshot);
 	}
 }
+
+// Overlay Event
 
 bool UCObservableOverlayComponent::ApplyOverlayEvent(const FObservableOverlayEventContext& InContext)
 {
@@ -67,6 +73,8 @@ bool UCObservableOverlayComponent::ApplyOverlayEvent(const FObservableOverlayEve
 
 	return false;
 }
+
+// Overlay Handling
 
 bool UCObservableOverlayComponent::ApplyOverlayHandlings(const TArray<EObservableOverlayHandling>& InHandlings)
 {
@@ -101,6 +109,8 @@ bool UCObservableOverlayComponent::ApplyOverlayHandling(EObservableOverlayHandli
 	FObservableOverlayDebug::RecordOverlayHandlingRejectedForAudit(OwnerCharacter_Injected, this, InHandling, TEXT("NoPolicyAccepted"));
 	return false;
 }
+
+// Policy Registry
 
 void UCObservableOverlayComponent::MarkPolicyRegistryDirty()
 {

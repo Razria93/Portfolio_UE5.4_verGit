@@ -6,6 +6,8 @@
 #include "Type/CHealthTypes.h"
 #include "CCombatSignalTargetTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class ECombatSignalTargetRejectReason : uint8
 {
@@ -20,6 +22,8 @@ enum class ECombatSignalTargetRejectReason : uint8
 
 	UnknownCueTag,
 };
+
+// Payload
 
 USTRUCT(BlueprintType)
 struct FCombatSignalTargetPayload
@@ -57,6 +61,8 @@ public:
 public:
 	FCombatSignalTargetPayload() = default;
 };
+
+// Runtime Context
 
 USTRUCT(BlueprintType)
 struct FCombatSignalTargetContext
@@ -122,6 +128,8 @@ public:
 	FCombatSignalTargetContext() = default;
 };
 
+// Result
+
 USTRUCT(BlueprintType)
 struct FCombatSignalTargetResult
 {
@@ -164,6 +172,8 @@ public:
 public:
 	FCombatSignalTargetResult() = default;
 };
+
+// Packet
 
 USTRUCT(BlueprintType)
 struct FCombatSignalTargetPacket

@@ -4,6 +4,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCReaction_BlockHit::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -39,6 +41,8 @@ FExecutionDecisionResult UCReaction_BlockHit::ResolveExecutionDecision(const FEx
 	return result;
 }
 
+// Lifecycle
+
 void UCReaction_BlockHit::Complete()
 {
 	Super::Complete();
@@ -46,6 +50,8 @@ void UCReaction_BlockHit::Complete()
 	RequestConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardBlockReaction);
 	RequestConsumeDeferredAction(EDeferredActionConsumeKey::AfterGuardInAction);
 }
+
+// Intervention
 
 bool UCReaction_BlockHit::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
@@ -67,6 +73,8 @@ bool UCReaction_BlockHit::WantIntervention(const FExecutionInterventionQuery& In
 	return false;
 }
 
+// Observable Overlay
+
 void UCReaction_BlockHit::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -74,7 +82,7 @@ void UCReaction_BlockHit::ResolveObservableOverlayCondition(const FObservableOve
 	const bool bIsBlockHitReaction = IsIncomingReactionType(InQuery.DecisionQuery, EReactionType::BlockHit);
 	if (!bIsBlockHitReaction)
 	{
-		// BlockHit only.
+		// Reject non-BlockHit overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
@@ -82,11 +90,11 @@ void UCReaction_BlockHit::ResolveObservableOverlayCondition(const FObservableOve
 	const FGuardObservableOverlaySnapshot& guardSnapshot = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard;
 	if (guardSnapshot.bCanGuard)
 	{
-		// Guard Case: keep Guard during BlockHit.
+		// BlockHit keeps Guard while an active Guard window can block it.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		return;
 	}
 
-	// Another Case: BlockHit requires an active Guard window.
+	// BlockHit requires an active Guard window.
 	OutDecision.Decision = EExecutionDecision::Reject;
 }

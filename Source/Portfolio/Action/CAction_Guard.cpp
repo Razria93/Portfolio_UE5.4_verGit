@@ -9,6 +9,9 @@
 
 // CAction_Guard only owns Guard In/Out transition actions.
 // Guard Hold is an idle overlay state owned by UCDefenseComponent.
+
+// Lifecycle
+
 bool UCAction_Guard::Start(const FActionData& InData)
 {
 	const bool bStarted = Super::Start(InData);
@@ -107,6 +110,8 @@ void UCAction_Guard::Complete()
 	}
 }
 
+// Decision
+
 FExecutionDecisionResult UCAction_Guard::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -178,7 +183,7 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 	
 	if (!InQuery.HasActivePart()) return false;
 
-	// Case 1. Guard-In -> Guard-Out
+	// Guard-Out can be deferred until active Guard-In completes.
 	if (InQuery.ActivePart.IsActionParticipant())
 	{
 		const FActionExecutionContext& activeContext = InQuery.ActivePart.GetActionContext();
@@ -191,7 +196,7 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 		}
 	}
 
-	// Case 2. Guard-Block -> Guard-Out
+	// Guard-Out can be deferred until active Guard-Block reaction completes.
 	if (InQuery.ActivePart.IsReactionParticipant())
 	{
 		const FReactionExecutionContext& activeContext = InQuery.ActivePart.GetReactionContext();
@@ -206,6 +211,8 @@ bool UCAction_Guard::TryResolveDeferredConsumeKey(const FExecutionDecisionQuery&
 	return false;
 }
 
+// Observable Overlay
+
 void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -213,7 +220,7 @@ void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQ
 	const bool bIsGuard = IsIncomingActionType(InQuery.DecisionQuery, EActionType::Guard);
 	if (!bIsGuard)
 	{
-		// Guard only.
+		// Reject non-Guard overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
@@ -223,7 +230,7 @@ void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQ
 
 	const FGuardObservableOverlaySnapshot& guardOverlaySnapshot = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard;
 
-	// Case Guard-in: check condition
+	// Guard-In starts only when Guard is not already active.
 	if (incomingGuardPhase == EGuardActionPhase::In)
 	{
 		const bool bCanStartGuardIn = !guardOverlaySnapshot.bIsGuardingPose && guardOverlaySnapshot.bCanStartGuard;
@@ -244,7 +251,7 @@ void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQ
 		return;
 	}
 
-	// Case Guard-out: check condition
+	// Guard-Out clears an active Guard pose if one exists.
 	if (incomingGuardPhase == EGuardActionPhase::Out)
 	{
 		if (!guardOverlaySnapshot.bIsGuardingPose)
@@ -262,6 +269,8 @@ void UCAction_Guard::ResolveObservableOverlayCondition(const FObservableOverlayQ
 	// CAction_Guard does not execute Guard Hold / Hit / Parry phases.
 	OutDecision.Decision = EExecutionDecision::Reject;
 }
+
+// Notify
 
 void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
@@ -281,6 +290,8 @@ void UCAction_Guard::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 		break;
 	}
 }
+
+// Intervention
 
 bool UCAction_Guard::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {
@@ -347,6 +358,8 @@ bool UCAction_Guard::AllowIntervention(const FExecutionInterventionQuery& InQuer
 
 	return false;
 }
+
+// Guard State Cleanup
 
 void UCAction_Guard::ClearDeferredGuardActions() const
 {

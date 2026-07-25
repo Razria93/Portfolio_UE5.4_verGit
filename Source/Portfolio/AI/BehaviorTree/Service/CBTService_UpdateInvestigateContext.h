@@ -13,5 +13,6 @@ public:
 	UCBTService_UpdateInvestigateContext();
 
 protected:
+	// Lifecycle
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 };

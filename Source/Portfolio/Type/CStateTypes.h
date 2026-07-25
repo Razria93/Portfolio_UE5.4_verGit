@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CStateTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EExecutionState : uint8
 {

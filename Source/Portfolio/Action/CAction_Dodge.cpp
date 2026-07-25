@@ -4,6 +4,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCAction_Dodge::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -33,6 +35,8 @@ FExecutionDecisionResult UCAction_Dodge::ResolveExecutionDecision(const FExecuti
 	return result;
 }
 
+// Observable Overlay
+
 void UCAction_Dodge::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -40,12 +44,12 @@ void UCAction_Dodge::ResolveObservableOverlayCondition(const FObservableOverlayQ
 	const bool bIsDodge = IsIncomingActionType(InQuery.DecisionQuery, EActionType::Dodge);
 	if (!bIsDodge)
 	{
-		// Dodge only.
+		// Reject non-Dodge overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
 
-	// GuardState Case: clear Guard before Dodge.
+	// Dodge clears an active Guard state before it starts.
 	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
 	if (bHasGuardState)
 	{
@@ -54,9 +58,11 @@ void UCAction_Dodge::ResolveObservableOverlayCondition(const FObservableOverlayQ
 		return;
 	}
 
-	// Another Case: No overlay cleanup.
+	// Dodge can start without overlay cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }
+
+// Intervention
 
 bool UCAction_Dodge::WantIntervention(const FExecutionInterventionQuery& InQuery) const
 {

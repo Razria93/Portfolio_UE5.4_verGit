@@ -5,6 +5,8 @@
 
 #include "GameFramework/Actor.h"
 
+// Lifecycle
+
 void UCWorldSubsystem_CombatFeedback::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -78,7 +80,7 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 		CachedTimeDilationMap.Add(actorKey, InActor->CustomTimeDilation);
 	}
 
-	// Slow InActor
+	// Apply slowdown to the requested actor.
 	InActor->CustomTimeDilation = InDilation;
 	FCombatFeedbackDebug::RecordCombatFeedbackHitStopAppliedForAudit(InActor, InDuration, InDilation);
 
@@ -103,7 +105,7 @@ void UCWorldSubsystem_CombatFeedback::RestoreHitStop(TWeakObjectPtr<AActor> InAc
 		InActor->CustomTimeDilation = cachedDilation ? *cachedDilation : 1.f;
 	}
 
-	// Restore InActor
+	// Restore runtime records for the requested actor.
 	ActiveHitStopMap.Remove(InActorKey);
 	CachedTimeDilationMap.Remove(InActorKey);
 }
@@ -133,7 +135,7 @@ void UCWorldSubsystem_CombatFeedback::ClearHitStop()
 	CachedTimeDilationMap.Reset();
 }
 
-// CameraShake
+// Camera Shake
 
 void UCWorldSubsystem_CombatFeedback::ClearCameraShake()
 {

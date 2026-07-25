@@ -5,6 +5,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCAction_ComboAttack::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -51,6 +53,8 @@ FExecutionDecisionResult UCAction_ComboAttack::ResolveExecutionDecision(const FE
 	return result;
 }
 
+// Chain Reservation
+
 bool UCAction_ComboAttack::ReserveChain(const FActionData& InData)
 {
 	if (!CanReserveChain(InData)) return false;
@@ -62,6 +66,8 @@ bool UCAction_ComboAttack::ReserveChain(const FActionData& InData)
 	return true;
 }
 
+// Lifecycle
+
 void UCAction_ComboAttack::ClearRuntime()
 {
 	Super::ClearRuntime();
@@ -70,6 +76,8 @@ void UCAction_ComboAttack::ClearRuntime()
 	bHasReservingChain = false;
 	bReserveChainWindowOpened = false;
 }
+
+// Notify
 
 void UCAction_ComboAttack::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
@@ -92,6 +100,8 @@ void UCAction_ComboAttack::HandleSpecificNotifyCommand(EActionNotifyCommand InCo
 	}
 }
 
+// Chain Window
+
 void UCAction_ComboAttack::OpenReserveChainWindow()
 {
 	if (!bIsActive) return;
@@ -109,6 +119,8 @@ void UCAction_ComboAttack::CloseReserveChainWindow()
 
 	EmitActionEvent(EActionEventType::ReserveChainWindowClosed, ActiveDataKey_Cached.ActionIndex);
 }
+
+// Chain Consume
 
 void UCAction_ComboAttack::ConsumeChain()
 {
@@ -142,7 +154,7 @@ void UCAction_ComboAttack::ConsumeChain()
 
 	if (IsValid(ActionComp_Injected))
 	{
-		// Sync with ActionComponent
+		// Keep the owning action component synchronized with the consumed chain.
 		if (!ActionComp_Injected->HandleApplyActionConsumed(this, nextData))
 		{
 			Stop(EActionStopReason::Ignored);
@@ -154,6 +166,8 @@ void UCAction_ComboAttack::ConsumeChain()
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached.ActionIndex);
 }
+
+// Chain Query
 
 bool UCAction_ComboAttack::CanResolveChain(const FExecutionDecisionQuery& InQuery) const
 {

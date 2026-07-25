@@ -57,17 +57,14 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	// Check / Query
-	FORCEINLINE bool CheckCurrentWeaponType(EWeaponType InNewWeaponType) const { return CurrentWeaponType == InNewWeaponType; }
-
-public:
 	// Query
+	FORCEINLINE bool CheckCurrentWeaponType(EWeaponType InNewWeaponType) const { return CurrentWeaponType == InNewWeaponType; }
 	FORCEINLINE EWeaponType GetCurrentWeaponType() const { return CurrentWeaponType; }
 
-public:
 	class ACWeaponActor* GetWeaponActor() const;
 
 public:
+	// Mutation
 	void AttachWeaponToHand();
 	void AttachWeaponToHolster();
 
