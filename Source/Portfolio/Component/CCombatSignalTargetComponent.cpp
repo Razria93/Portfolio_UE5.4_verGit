@@ -311,7 +311,7 @@ bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& 
 
 bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
-	// Gate 1: already dead
+	// Gate: already dead.
 	if (InOutCombatSignalTargetContext.DeadState_Before != EDeadState::Alive)
 	{
 		InOutCombatSignalTargetContext.bAccepted = false;
@@ -320,7 +320,7 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 		return false;
 	}
 
-	// Gate 2: Parry window intercepts incoming damage before damage commit.
+	// Gate: parry window intercepts incoming damage before damage commit.
 	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanParry())
 	{
 		InOutCombatSignalTargetContext.bAccepted = true;
@@ -510,33 +510,33 @@ void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombat
 
 AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
 {
-	// 1) Best case: engine provided instigator
+	// Preferred: engine-provided instigator.
 	if (IsValid(EventInstigator))
 		return EventInstigator;
 
-	// 2) Fallback needs a valid causer
+	// Gate: fallback requires a valid causer.
 	if (!IsValid(DamageCauser))
 		return nullptr;
 
-	// 2-1) Case 01: Explicit instigator set on the causer (ex. projectile / weaponActor / trap)
+	// Fallback: causer-provided instigator.
 	if (AController* causerInstigator = DamageCauser->GetInstigatorController())
 		return causerInstigator;
 
-	// 2-2) Case 02: Direct hit (the causer itself is a Pawn/Character)
+	// Fallback: causer pawn controller.
 	if (APawn* causerPawn = Cast<APawn>(DamageCauser))
 	{
 		if (AController* causerController = causerPawn->GetController())
 			return causerController;
 	}
 
-	// 2-3) Case 03: Proxy case (projectile / trap / weaponActor owned by another actor)
+	// Fallback: proxy causer owner.
 	if (AActor* causerOwner = DamageCauser->GetOwner())
 	{
-		// 2-3-1) Case 03-01: Owner is the carrier and holds the correct instigator (ex. projectile / weaponActor / trap)
+		// Fallback: causer owner-provided instigator.
 		if (AController* ownerInstigator = causerOwner->GetInstigatorController())
 			return ownerInstigator;
 
-		// 2-3-1) Case 03-02: Fallback (Owner is Pawn/Character)
+		// Final fallback: causer owner pawn controller.
 		if (APawn* ownerPawn = Cast<APawn>(causerOwner))
 		{
 			if (AController* ownerController = ownerPawn->GetController())
