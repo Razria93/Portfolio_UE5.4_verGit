@@ -5,6 +5,7 @@
 #include "Type/CAITypes.h"
 #include "Type/CActionOrchestrationTypes.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CCharacterSetupTypes.h"
 #include "Type/CActionTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Interface/CombatResultReceiver.h"
@@ -32,6 +33,16 @@ private:
 		bool bOriginalActorTickEnabled = true;
 		bool bOriginalStateCached = false;
 	};
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterSetup")
+	FCharacterCapsuleSetup CapsuleSetup;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterSetup")
+	FCharacterMeshSetup MeshSetup;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterSetup")
+	FCharacterMovementSetup MovementSetup;
 
 private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
@@ -142,9 +153,14 @@ private:
 
 protected:
 	// Lifecycle
+	void OnConstruction(const FTransform& Transform) override;
 	void PostInitializeComponents() override;
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+private:
+	// Setup
+	void ApplyCharacterSetup();
 
 private:
 	// Component Reference

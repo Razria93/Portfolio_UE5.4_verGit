@@ -283,6 +283,17 @@ Source/Portfolio/Character/Enemy/CEnemy.cpp
 -> Player / Enemy / NPC archetype 공유가 필요하면 CharacterSetup DataAsset 후보.
 ```
 
+적용 상태:
+
+```text
+-> 1차 적용 완료: CPlayer / CEnemy 생성자 literal을 UPROPERTY(EditDefaultsOnly) 기본값으로 이동.
+-> 공통 setup 값은 CCharacterSetupTypes.h의 FCharacterCapsuleSetup / FCharacterMeshSetup / FCharacterMovementSetup으로 묶음.
+-> Player 전용 camera 값은 FPlayerCameraSetup으로 묶음.
+-> ApplyCharacterSetup()을 constructor / OnConstruction()에서 호출해 native 기본값과 editor default override 적용 지점을 맞춤.
+-> 값 변경 없음.
+-> config USTRUCT / CharacterSetup DataAsset 전환은 asset / archetype 공유 기준을 정한 뒤 후속 작업에서 검토.
+```
+
 ### 4.2 AI perception / memory
 
 대상:

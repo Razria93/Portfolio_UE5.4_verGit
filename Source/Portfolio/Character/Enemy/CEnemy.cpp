@@ -70,19 +70,9 @@ ACEnemy::ACEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
-	check(CapsuleComp);
-	CapsuleComp->InitCapsuleSize(40.0f, 90.0f);
-
-	USkeletalMeshComponent* MeshComp = GetMesh();
-	check(MeshComp);
-	MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
-	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // FRotator: (Pitch, Yaw, Roll)
-
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
 	check(characterMovementComp);
 	characterMovementComp->bOrientRotationToMovement = true;
-	characterMovementComp->MaxWalkSpeed = 600.0f;
 
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -125,9 +115,18 @@ ACEnemy::ACEnemy()
 
 	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
 	check(ReactionFeedbackComponent);
+
+	ApplyCharacterSetup();
 }
 
 // Lifecycle
+
+void ACEnemy::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	ApplyCharacterSetup();
+}
 
 void ACEnemy::PostInitializeComponents()
 {
@@ -175,6 +174,24 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+// Setup
+
+void ACEnemy::ApplyCharacterSetup()
+{
+	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	check(CapsuleComp);
+	CapsuleComp->InitCapsuleSize(CapsuleSetup.Radius, CapsuleSetup.HalfHeight);
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	check(MeshComp);
+	MeshComp->SetRelativeLocation(MeshSetup.RelativeLocation);
+	MeshComp->SetRelativeRotation(MeshSetup.RelativeRotation);
+
+	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
+	check(characterMovementComp);
+	characterMovementComp->MaxWalkSpeed = MovementSetup.DefaultWalkSpeed;
 }
 
 // Component Reference

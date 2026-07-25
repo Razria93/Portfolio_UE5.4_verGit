@@ -32,33 +32,20 @@
 
 ACPlayer::ACPlayer()
 {
-	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
-	check(CapsuleComp);
-	CapsuleComp->InitCapsuleSize(40.0f, 90.0f);
-
-	USkeletalMeshComponent* MeshComp = GetMesh();
-	check(MeshComp);
-	MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
-	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // FRotator: (Pitch, Yaw, Roll)
-
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
 	check(characterMovementComp);
 	characterMovementComp->bOrientRotationToMovement = true;
-	characterMovementComp->MaxWalkSpeed = 600.0f;
 
 	bUseControllerRotationYaw = false;
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	check(SpringArmComponent);
 	SpringArmComponent->SetupAttachment(GetCapsuleComponent());
-	SpringArmComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 55.0f));
-	SpringArmComponent->TargetArmLength = 300.0f;
 	SpringArmComponent->bUsePawnControlRotation = true;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	check(CameraComponent);
 	CameraComponent->SetupAttachment(SpringArmComponent);
-	CameraComponent->SetRelativeLocation(FVector(0.0f, 40.0f, 0.0f));
 	CameraComponent->bUsePawnControlRotation = false;
 
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
@@ -105,9 +92,18 @@ ACPlayer::ACPlayer()
 
 	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
 	check(ReactionFeedbackComponent);
+
+	ApplyCharacterSetup();
 }
 
 // Lifecycle
+
+void ACPlayer::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	ApplyCharacterSetup();
+}
 
 void ACPlayer::PostInitializeComponents()
 {
@@ -138,6 +134,35 @@ void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+// Setup
+
+void ACPlayer::ApplyCharacterSetup()
+{
+	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	check(CapsuleComp);
+	CapsuleComp->InitCapsuleSize(CapsuleSetup.Radius, CapsuleSetup.HalfHeight);
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	check(MeshComp);
+	MeshComp->SetRelativeLocation(MeshSetup.RelativeLocation);
+	MeshComp->SetRelativeRotation(MeshSetup.RelativeRotation);
+
+	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
+	check(characterMovementComp);
+	characterMovementComp->MaxWalkSpeed = MovementSetup.DefaultWalkSpeed;
+
+	if (SpringArmComponent)
+	{
+		SpringArmComponent->SetRelativeLocation(CameraSetup.SpringArmRelativeLocation);
+		SpringArmComponent->TargetArmLength = CameraSetup.BoomLength;
+	}
+
+	if (CameraComponent)
+	{
+		CameraComponent->SetRelativeLocation(CameraSetup.CameraRelativeLocation);
+	}
 }
 
 // Component Reference
