@@ -414,6 +414,16 @@ Source/Portfolio/Type/CCombatFeedbackTypes.h
 -> 여러 feedback preset이 필요하면 DataAsset 후보.
 ```
 
+적용 상태:
+
+```text
+-> 1차 적용 완료: component 기본값은 FHitStopFeedbackTuning / FHitCameraShakeFeedbackTuning / FPlayerCameraShakeFeedbackTuning으로 묶음.
+-> FHitStopRequest / FCameraShakeRequest는 runtime request 타입으로 유지.
+-> 값 변경 없음.
+-> request struct 기본값은 direct request 생성 시 fallback 기본값으로 유지.
+-> feedback preset DataAsset 전환은 preset 공유 기준을 정한 뒤 후속 작업에서 검토.
+```
+
 ### 4.6 Patrol editor visualization
 
 대상:

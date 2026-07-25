@@ -15,10 +15,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
-	float LocalTargetShakeScale = 1.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
-	float LocalSourceShakeScale = 0.5f;
+	FPlayerCameraShakeFeedbackTuning CameraShakeTuning;
 
 private:
 	UPROPERTY(Transient)

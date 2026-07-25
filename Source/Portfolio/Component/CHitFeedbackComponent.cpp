@@ -187,27 +187,27 @@ bool UCHitFeedbackComponent::CanPlayHitStop(const FCombatSignalTargetPacket& InC
 		return false;
 	}
 
-	if (HitStopAudience == EFeedbackAudience::None)
+	if (HitStopTuning.Audience == EFeedbackAudience::None)
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("HitStop"), TEXT("AudienceNone"));
 		return false;
 	}
-	if (!FMath::IsFinite(HitStopDuration))
+	if (!FMath::IsFinite(HitStopTuning.Duration))
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("HitStop"), TEXT("InvalidDuration"));
 		return false;
 	}
-	if (!FMath::IsFinite(HitStopDilation))
+	if (!FMath::IsFinite(HitStopTuning.Dilation))
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("HitStop"), TEXT("InvalidDilation"));
 		return false;
 	}
-	if (HitStopDuration <= KINDA_SMALL_NUMBER)
+	if (HitStopTuning.Duration <= KINDA_SMALL_NUMBER)
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("HitStop"), TEXT("InvalidDuration"));
 		return false;
 	}
-	if (HitStopDilation < 0.f)
+	if (HitStopTuning.Dilation < 0.f)
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("HitStop"), TEXT("InvalidDilation"));
 		return false;
@@ -223,28 +223,28 @@ bool UCHitFeedbackComponent::CanPlayCameraShake(const FCombatSignalTargetPacket&
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("InvalidWorld"));
 		return false;
 	}
-	if (!bEnableCameraShake)
+	if (!CameraShakeTuning.bEnabled)
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("Disabled"));
 		return false;
 	}
 	
-	if (CameraShakeAudience == EFeedbackAudience::None)
+	if (CameraShakeTuning.Audience == EFeedbackAudience::None)
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("AudienceNone"));
 		return false;
 	}
-	if (!IsValid(CameraShakeClass))
+	if (!IsValid(CameraShakeTuning.CameraShakeClass))
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("InvalidClass"));
 		return false;
 	}
-	if (!FMath::IsFinite(CameraShakeBaseScale))
+	if (!FMath::IsFinite(CameraShakeTuning.BaseScale))
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("InvalidScale"));
 		return false;
 	}
-	if (CameraShakeBaseScale <= KINDA_SMALL_NUMBER)
+	if (CameraShakeTuning.BaseScale <= KINDA_SMALL_NUMBER)
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("InvalidScale"));
 		return false;
@@ -285,9 +285,9 @@ FHitStopRequest UCHitFeedbackComponent::BuildHitStopRequest(const FCombatSignalT
 {
 	FHitStopRequest hitStopRequest;
 
-	hitStopRequest.HitStopAudience = HitStopAudience;
-	hitStopRequest.HitStopDuration = HitStopDuration;
-	hitStopRequest.HitStopDilation = HitStopDilation;
+	hitStopRequest.HitStopAudience = HitStopTuning.Audience;
+	hitStopRequest.HitStopDuration = HitStopTuning.Duration;
+	hitStopRequest.HitStopDilation = HitStopTuning.Dilation;
 	hitStopRequest.SourceActor = InCombatSignalTargetPacket.Context.SourceActor;
 	hitStopRequest.TargetActor = InCombatSignalTargetPacket.Context.TargetActor;
 
@@ -298,9 +298,9 @@ FCameraShakeRequest UCHitFeedbackComponent::BuildCameraShakeRequest(const FComba
 {
 	FCameraShakeRequest cameraShakeRequest;
 
-	cameraShakeRequest.CameraShakeClass = CameraShakeClass;
-	cameraShakeRequest.CameraShakeBaseScale = CameraShakeBaseScale;
-	cameraShakeRequest.CameraShakeAudience = CameraShakeAudience;
+	cameraShakeRequest.CameraShakeClass = CameraShakeTuning.CameraShakeClass;
+	cameraShakeRequest.CameraShakeBaseScale = CameraShakeTuning.BaseScale;
+	cameraShakeRequest.CameraShakeAudience = CameraShakeTuning.Audience;
 	cameraShakeRequest.SourceActor = InCombatSignalTargetPacket.Context.SourceActor;
 	cameraShakeRequest.TargetActor = InCombatSignalTargetPacket.Context.TargetActor;
 	cameraShakeRequest.EventLocation = IsValid(InCombatSignalTargetPacket.Context.TargetActor)
