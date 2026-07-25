@@ -172,12 +172,14 @@ private:
 	void DisableRuntimeLODActorTick();
 
 public:
+	// Tick
 	void Tick(float DeltaTime) override;
 
 public:
 	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	// Query
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
@@ -221,9 +223,11 @@ public:
 	FORCEINLINE float GetCombatActionCooldown() const { return CombatActionCooldown; }
 
 public:
+	// Damage
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
 
 public:
+	// Combat Result
 	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
 
 private:
@@ -231,6 +235,7 @@ private:
 	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
+	// AI Movement Intent
 	FActionRequestResult HandleAIWalk();
 	FActionRequestResult HandleAIRun();
 	FActionRequestResult HandleAISprint();
@@ -238,14 +243,17 @@ public:
 	FActionRequestResult HandleAIJump();
 	FActionRequestResult HandleAIStopJump();
 
+	// AI Action Intent
 	FActionRequestResult HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
 	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent);
 
 public:
+	// Runtime State
 	bool TryStartKill();
 	bool TryStartRevive(float InReviveHP);
 
 private:
+	// Query
 	bool IsCombatActionType(EActionType InActionType) const;
 
 private:

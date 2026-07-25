@@ -132,6 +132,7 @@ public:
 	void ClearMovementIntentBlockForRuntimeLOD();
 
 public:
+	// Movement Input
 	void OnMove(const FVector2D& InAxis2D);
 
 public:

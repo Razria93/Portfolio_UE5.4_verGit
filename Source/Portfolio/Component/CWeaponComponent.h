@@ -68,6 +68,7 @@ public:
 	class ACWeaponActor* GetWeaponActor() const;
 
 public:
+	// Mutation
 	void AttachWeaponToHand();
 	void AttachWeaponToHolster();
 

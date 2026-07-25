@@ -5,6 +5,8 @@
 
 #include "GameFramework/Actor.h"
 
+// Lifecycle
+
 void UCWorldSubsystem_CombatFeedback::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);

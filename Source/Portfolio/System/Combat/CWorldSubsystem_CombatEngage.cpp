@@ -48,6 +48,8 @@ namespace
 	}
 }
 
+// Lifecycle
+
 void UCWorldSubsystem_CombatEngage::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -59,6 +61,8 @@ void UCWorldSubsystem_CombatEngage::Deinitialize()
 
 	Super::Deinitialize();
 }
+
+// Tick
 
 void UCWorldSubsystem_CombatEngage::Tick(float DeltaTime)
 {
@@ -165,6 +169,8 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 	AssignmentContainer = MoveTemp(nextAssignments);
 }
 
+// Assignment Build
+
 TMap<ACAIController*, FEngageRequestContext> UCWorldSubsystem_CombatEngage::ConsumeRequestSnapshot()
 {
 	TMap<ACAIController*, FEngageRequestContext> requestSnapshot = MoveTemp(RequestContainer);
@@ -205,6 +211,8 @@ void UCWorldSubsystem_CombatEngage::SortRequestContexts(TArray<FEngageRequestCon
 		});
 }
 
+// Assignment Warmup
+
 void UCWorldSubsystem_CombatEngage::StartAssignmentWarmupIfNeeded()
 {
 	if (bAssignmentWarmupCompleted) return;
@@ -233,6 +241,8 @@ float UCWorldSubsystem_CombatEngage::GetAssignmentWarmupElapsedTime() const
 
 	return FMath::Max(0.f, world->GetTimeSeconds() - AssignmentWarmupStartTime);
 }
+
+// Assignment Apply
 
 void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIController*, FEngageAssignmentContext>& InOutNextAssignments, TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState, FEngageAssignmentRebuildDebugState& InOutDebugState) const
 {
@@ -388,6 +398,8 @@ void UCWorldSubsystem_CombatEngage::ApplyFreshRequestAssignments(const TMap<AAct
 		}
 	}
 }
+
+// Assignment Lease
 
 bool UCWorldSubsystem_CombatEngage::TryReserveAssignmentSlot(const FEngageAssignmentContext& InAssignment, TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState) const
 {

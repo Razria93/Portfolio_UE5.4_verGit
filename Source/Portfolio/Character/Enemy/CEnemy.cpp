@@ -105,6 +105,8 @@ ACEnemy::ACEnemy()
 	check(ReactionFeedbackComponent);
 }
 
+// Lifecycle
+
 void ACEnemy::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -152,6 +154,8 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	Super::EndPlay(EndPlayReason);
 }
+
+// Component Reference
 
 void ACEnemy::RecoverReferences()
 {
@@ -221,6 +225,8 @@ void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences
 	FComponentReferenceHelper::InjectIfValid(ReactionFeedbackComponent, InReferences);
 }
 
+// Runtime LOD
+
 void ACEnemy::UpdateRuntimeLODMeshMode()
 {
 	const int32 requestedMeshMode = FMath::Clamp(CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(), 0, 1);
@@ -266,6 +272,8 @@ void ACEnemy::UpdateRuntimeLODActorTickMode()
 	RuntimeLODActorTickState.AppliedMode = requestedActorTickMode;
 }
 
+// Actor Tick State
+
 void ACEnemy::CacheRuntimeLODActorTickOriginalState()
 {
 	if (RuntimeLODActorTickState.bOriginalStateCached) return;
@@ -309,6 +317,8 @@ void ACEnemy::DisableRuntimeLODActorTick()
 	SetActorTickEnabled(false);
 }
 
+// Tick
+
 void ACEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -321,6 +331,8 @@ void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
+
+// Damage
 
 float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -343,6 +355,8 @@ float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, A
 
 	return finalDamage;
 }
+
+// Combat Result
 
 void ACEnemy::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
 {
@@ -389,6 +403,8 @@ bool ACEnemy::TryRequestParryStaggerReaction(const FCombatResultPacket& InCombat
 
 	return bStarted;
 }
+
+// AI Movement Intent
 
 FActionRequestResult ACEnemy::HandleAIWalk()
 {
@@ -450,6 +466,8 @@ FActionRequestResult ACEnemy::HandleAIStopJump()
 	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
+// AI Action Intent
+
 FActionRequestResult ACEnemy::HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent)
 {
 	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
@@ -473,6 +491,8 @@ FActionRequestResult ACEnemy::HandleAICombatAction(ECombatActionIntent InCombatA
 
 	return ActionOrchestratorComponent->RequestCombatAction(request);
 }
+
+// Runtime State
 
 bool ACEnemy::TryStartKill()
 {
@@ -498,6 +518,8 @@ bool ACEnemy::IsCombatActionType(EActionType InActionType) const
 		return false; // Idle / Equip / Unequip etc..
 	}
 }
+
+// Action Event Routing
 
 void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPreviousActionType, EActionType InNewActionType)
 {
@@ -526,7 +548,6 @@ void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionTy
 	}
 }
 
-// Chain Combat Request
 void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionIndex)
 {
 	const ECombatActionIntent combatActionIntent = ResolveChainCombatIntent(InActionType, InActionIndex);
@@ -536,7 +557,6 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 	if (!actionRequestResult.IsReservedResult()) return;
 }
 
-// Chain Intent Mapping
 ECombatActionIntent ACEnemy::ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const
 {
 	switch (InActionType)
