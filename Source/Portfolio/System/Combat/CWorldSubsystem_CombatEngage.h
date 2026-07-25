@@ -20,10 +20,7 @@ class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsyst
 	
 private:
 	UPROPERTY()
-	float RebuildInterval = 0.1f;
-
-	UPROPERTY()
-	float AssignmentLeaseDuration = 0.5f;
+	FEngageAssignmentTuning AssignmentTuning;
 
 private:
 	float ElapsedTime = 0.f;

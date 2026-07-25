@@ -345,6 +345,14 @@ Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartRevive.h
 -> 여러 enemy archetype이 공유하면 AI tuning config / DataAsset 후보.
 ```
 
+적용 상태:
+
+```text
+-> 코드 변경 없음: MovableRange / ReviveHP는 이미 BT node-local UPROPERTY로 소유권이 잡혀 있음.
+-> 값 / 필드명 / 타입 / category 변경 없음.
+-> 구조체화 / DataAsset 전환은 BT asset override 리스크가 있으므로 공유 필요성이 생길 때 별도 검토.
+```
+
 ### 4.4 CombatEngage tuning
 
 대상:
@@ -366,6 +374,16 @@ Source/Portfolio/System/Combat/CWorldSubsystem_CombatEngage.cpp
 -> subsystem runtime tuning 후보.
 -> CVar 이름 / 값 계약은 유지한다.
 -> config USTRUCT 또는 project settings / DataAsset 후보는 별도 검토한다.
+```
+
+적용 상태:
+
+```text
+-> 1차 적용 완료: RebuildInterval / AssignmentLeaseDuration을 FEngageAssignmentTuning으로 묶음.
+-> 값 변경 없음.
+-> subsystem은 AssignmentTuning.RebuildInterval / AssignmentTuning.LeaseDuration을 참조.
+-> warmup time / engage cap / alert cap CVar 이름과 기본값은 외부 조정 계약으로 보고 변경하지 않음.
+-> project settings / DataAsset 전환은 subsystem 설정 소유권을 정한 뒤 후속 작업에서 검토.
 ```
 
 ### 4.5 Feedback tuning

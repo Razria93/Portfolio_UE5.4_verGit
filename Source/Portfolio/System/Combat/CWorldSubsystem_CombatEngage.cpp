@@ -73,7 +73,7 @@ void UCWorldSubsystem_CombatEngage::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ElapsedTime += DeltaTime;
-	if (ElapsedTime < RebuildInterval) return;
+	if (ElapsedTime < AssignmentTuning.RebuildInterval) return;
 
 	ElapsedTime = 0.f;
 	RebuildAssignments();
@@ -270,7 +270,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIC
 			const UWorld* world = GetWorld();
 			const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
 			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : -1.f;
-			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentLeaseDuration - leaseAge) : 0.f;
+			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentTuning.LeaseDuration - leaseAge) : 0.f;
 			FCombatEngageDebug::RecordEngageAssignmentPreservedForAudit(aiController, previousAssignment, targetSlotState, leaseAge, leaseRemaining, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 		}
 	}
@@ -346,7 +346,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingAlertAssignments(TMap<ACAICo
 			const UWorld* world = GetWorld();
 			const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
 			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : -1.f;
-			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentLeaseDuration - leaseAge) : 0.f;
+			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentTuning.LeaseDuration - leaseAge) : 0.f;
 			FCombatEngageDebug::RecordEngageAssignmentPreservedForAudit(aiController, previousAssignment, targetSlotState, leaseAge, leaseRemaining, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 		}
 	}
@@ -436,7 +436,7 @@ bool UCWorldSubsystem_CombatEngage::IsAssignmentLeaseValid(const ACAIController*
 	const UWorld* world = GetWorld();
 	if (!IsValid(world)) return false;
 
-	return world->GetTimeSeconds() - *lastRequestTime <= AssignmentLeaseDuration;
+	return world->GetTimeSeconds() - *lastRequestTime <= AssignmentTuning.LeaseDuration;
 }
 
 // Runtime State
