@@ -97,13 +97,13 @@ bool UCAction::IsIncomingActionType(const FExecutionInterventionQuery& InQuery, 
 
 bool UCAction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// Idle && No ActivePart: Idle
+	// Idle state accepts independent action requests.
 	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
 }
 
 bool UCAction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// No Idle && Has ActivePart: Active Action OR Active Reaction
+	// Active state can accept exclusive requests against the current part.
 	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
 }
 
@@ -111,7 +111,7 @@ bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDeci
 {
 	OutRelationship = EExecutionRelationship::None;
 
-	// Idle && No ActivePart: Idle
+	// Idle state resolves to an independent relationship.
 	if (CanResolveIndependentRelationship(InQuery))
 	{
 		OutRelationship = EExecutionRelationship::Independent;
@@ -589,12 +589,12 @@ void UCAction::ResolveObservableOverlayCondition(const FObservableOverlayQuery& 
 
 	if (!InQuery.DecisionQuery.IncomingPart.IsActionParticipant())
 	{
-		// Action only.
+		// Reject non-Action overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
 
-	// Default Action Case: No overlay cleanup.
+	// Default Action overlay handling accepts without cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }
 

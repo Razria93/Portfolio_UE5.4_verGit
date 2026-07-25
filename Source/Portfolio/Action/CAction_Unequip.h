@@ -10,11 +10,14 @@ class PORTFOLIO_API UCAction_Unequip : public UCAction
 	GENERATED_BODY()
 
 public:
+	// Decision
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 protected:
+	// Notify
 	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
 
 private:
+	// Weapon
 	void DetachWeapon();
 };

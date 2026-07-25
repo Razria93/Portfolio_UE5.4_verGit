@@ -15,6 +15,8 @@ namespace
 #endif
 }
 
+// Gate
+
 bool FAIPerceptionProfiling::ShouldDisableEnemyPerception(const AActor* InOwnerActor)
 {
 #if !UE_BUILD_SHIPPING

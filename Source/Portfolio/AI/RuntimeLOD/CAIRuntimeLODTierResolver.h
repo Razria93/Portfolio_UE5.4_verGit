@@ -26,9 +26,13 @@ struct FAIRuntimeLODTierContext
 class FAIRuntimeLODTierResolver
 {
 public:
+	// Context Build
 	static FAIRuntimeLODTierContext BuildContext(const UBlackboardComponent& InBlackboardComp);
+
+	// Tier Resolve
 	static EAIRuntimeLODTier ResolveTier(const UBlackboardComponent& InBlackboardComp);
 	static EAIRuntimeLODTier ResolveTier(const FAIRuntimeLODTierContext& InContext);
 
+	// String Conversion
 	static const TCHAR* LexToString(EAIRuntimeLODTier InTier);
 };

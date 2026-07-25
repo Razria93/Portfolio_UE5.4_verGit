@@ -272,8 +272,6 @@ void ACEnemy::UpdateRuntimeLODActorTickMode()
 	RuntimeLODActorTickState.AppliedMode = requestedActorTickMode;
 }
 
-// Actor Tick State
-
 void ACEnemy::CacheRuntimeLODActorTickOriginalState()
 {
 	if (RuntimeLODActorTickState.bOriginalStateCached) return;
@@ -326,6 +324,8 @@ void ACEnemy::Tick(float DeltaTime)
 	UpdateRuntimeLODMeshMode();
 	UpdateRuntimeLODActorTickMode();
 }
+
+// Input
 
 void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -505,6 +505,8 @@ bool ACEnemy::TryStartRevive(float InReviveHP)
 {
 	return IsValid(HealthComponent) && HealthComponent->TryRevive(InReviveHP);
 }
+
+// Combat Action Query
 
 bool ACEnemy::IsCombatActionType(EActionType InActionType) const
 {

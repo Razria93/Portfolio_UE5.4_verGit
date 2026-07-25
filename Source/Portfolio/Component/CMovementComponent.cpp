@@ -413,7 +413,7 @@ void UCMovementComponent::CalculateDirection()
 		float angleRad = FMath::Acos(FVector::DotProduct(forwardNormal, velocityNormal));
 		float angleDeg = FMath::RadiansToDegrees(angleRad);
 
-		// determine left or right
+		// Determine left or right from the movement input basis.
 		FVector crossProduct = FVector::CrossProduct(forwardNormal, velocityNormal);
 		if (crossProduct.Z < 0)
 		{

@@ -37,7 +37,7 @@ private:
 	void ClearHitStop();
 
 private:
-	// CameraShake
+	// Camera Shake
 	void ClearCameraShake();
 
 private:

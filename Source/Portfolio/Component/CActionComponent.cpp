@@ -570,8 +570,7 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	// bRebuildAll == true: Rebuild 
-	// bRebuildAll == false: Append
+	// Rebuild clears stale action data; append keeps the existing map.
 
 	if (bRebuildAll)
 	{
@@ -609,8 +608,7 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	// bRebuildAll == true: Rebuild 
-	// bRebuildAll == false: Append
+	// Rebuild clears stale action executors; append keeps existing cache entries.
 
 	if (bRebuildAll)
 	{

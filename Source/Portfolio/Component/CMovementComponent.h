@@ -81,19 +81,11 @@ protected:
 private:
 	// Runtime LOD
 	void UpdateRuntimeLODMovementMode();
-
-	// Lifecycle
 	void EnsureRuntimeLODMovementOriginalStateCached();
-
-	// Dispatch
 	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
-
-	// Movement Mode
 	void ApplyRuntimeLODMovementDefault();
 	void ApplyRuntimeLODMovementStateRefreshDisabled();
 	void ApplyRuntimeLODMovementIntentBlocked();
-
-	// Movement State
 	void RestoreRuntimeLODMovementStateRefresh();
 	void DisableRuntimeLODMovementStateRefresh();
 	void AllowRuntimeLODMovementIntent();
@@ -101,14 +93,10 @@ private:
 	void StopRuntimeLODActiveMovement();
 
 public:
-	// Check / Query
-	FORCEINLINE bool CheckCurrentMovementGait(EMovementGait InNewMovementGait) const { return CurrentMovementGait == InNewMovementGait; }
-
-public:
 	// Query
+	FORCEINLINE bool CheckCurrentMovementGait(EMovementGait InNewMovementGait) const { return CurrentMovementGait == InNewMovementGait; }
 	FORCEINLINE EMovementGait GetCurrentMovementGait() const { return CurrentMovementGait; }
 
-public:
 	FORCEINLINE bool CanMove() const { return bCanMove; }
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
 	FORCEINLINE float GetCurrentSpeed() const { return CurrentSpeed; }

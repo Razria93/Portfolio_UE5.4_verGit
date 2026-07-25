@@ -105,7 +105,7 @@ void UCWorldSubsystem_CombatEngage::SubmitRequest(const FEngageRequestContext& I
 
 	StartAssignmentWarmupIfNeeded();
 
-	// Override Request
+	// Keep the latest request for the same controller.
 	RequestContainer.FindOrAdd(InEngageRequestContext.RequestController) = InEngageRequestContext;
 
 	UWorld* world = GetWorld();
@@ -120,7 +120,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 
 	++AssignmentRebuildId;
 
-	// Delay for Warmup
+	// Delay assignment rebuild until warmup has completed.
 	if (ShouldDelayAssignmentForWarmup())
 	{
 		FCombatEngageDebug::RecordEngageAssignmentWarmupDelayedForAudit(AssignmentRebuildId, RequestContainer.Num(), GetAssignmentWarmupElapsedTime(), GetEngageAssignmentWarmupTime());
@@ -130,7 +130,7 @@ void UCWorldSubsystem_CombatEngage::RebuildAssignments()
 
 	bool bCompletedWarmupThisRebuild = false;
 
-	// Flag Toggle
+	// Mark warmup completion on the first rebuild after the delay.
 	if (!bAssignmentWarmupCompleted)
 	{
 		if (GetEngageAssignmentWarmupTime() > 0.f && AssignmentWarmupStartTime < 0.f) return;

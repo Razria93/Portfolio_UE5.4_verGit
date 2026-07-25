@@ -11,7 +11,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundBase.h"
 
-// Internal linkage
+// Helper
 namespace
 {
 	namespace ReactionFeedbackScore

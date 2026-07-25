@@ -2,6 +2,8 @@
 
 #include "ProfilingDebugging/CsvProfiler.h"
 
+// Service Tick Counter
+
 void FAIBehaviorTreeProfiling::RecordUpdateAIContextTick()
 {
 #if !UE_BUILD_SHIPPING
@@ -22,6 +24,8 @@ void FAIBehaviorTreeProfiling::RecordUpdateEngageContextTick()
 	CSV_CUSTOM_STAT_GLOBAL(PortfolioAI_BT_UpdateEngageContext_Count, 1, ECsvCustomStatOp::Accumulate);
 #endif
 }
+
+// Interval Preset Counter
 
 void FAIBehaviorTreeProfiling::RecordAIIntentIntervalPreset(EBTServiceIntervalPreset InPreset)
 {

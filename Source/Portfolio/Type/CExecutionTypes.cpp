@@ -3,6 +3,8 @@
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
 
+// Runtime State
+
 bool FExecutionParticipant::IsValidMinimal() const
 {
 	if (!bIsValid) return false;

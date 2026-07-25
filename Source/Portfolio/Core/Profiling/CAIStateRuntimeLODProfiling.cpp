@@ -14,6 +14,8 @@ namespace
 #endif
 }
 
+// Gate
+
 bool FAIStateRuntimeLODProfiling::ShouldAuditStateRuntimeLOD()
 {
 #if !UE_BUILD_SHIPPING
@@ -22,6 +24,8 @@ bool FAIStateRuntimeLODProfiling::ShouldAuditStateRuntimeLOD()
 	return false;
 #endif
 }
+
+// Counter
 
 void FAIStateRuntimeLODProfiling::RecordResolvedTier(EAIRuntimeLODTier InTier)
 {

@@ -55,9 +55,6 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
-	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
-
-public:
 	// State Transition
 	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
 	bool TryKill();

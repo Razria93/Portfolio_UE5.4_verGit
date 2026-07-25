@@ -14,18 +14,23 @@ public:
 	UCBTService_UpdateEngageContext();
 
 protected:
+	// Lifecycle
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 	virtual void ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 private:
+	// Context Build
 	EContextBuildResult BuildEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& OutEngageContext);
 
 private:
+	// Context Compute
 	EContextBuildResult ComputeEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& InOutEngageContext);
 
 private:
+	// Blackboard Update
 	void UpdateEngageContext(UBlackboardComponent* InBlackboardComp, FEngageContext& InEngageContext);
 
 private:
+	// Blackboard Clear
 	void ClearEngageContext(UBlackboardComponent* InBlackboardComp);
 };

@@ -65,7 +65,7 @@ public:
 	virtual void Tick(float InDeltaTime) {}
 
 public:
-	// State Query
+	// Query
 	bool IsActive() const { return bIsActive; }
 
 public:
@@ -155,6 +155,7 @@ public:
 	virtual void ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const;
 
 private:
+	// Intervention Match Helper
 	bool MatchesWantInterventionRules(const TArray<FExecutionInterventionWantRule>& InRules, const FExecutionParticipant& InParticipant) const;
 	bool MatchesAllowInterventionRules(const TArray<FExecutionInterventionAllowRule>& InRules, const FExecutionParticipant& InParticipant) const;
 	bool IsAllowInterventionRuleTimingSatisfied(const FExecutionInterventionAllowRule& InRule) const;

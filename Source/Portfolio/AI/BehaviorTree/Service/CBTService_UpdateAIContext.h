@@ -18,13 +18,16 @@ private:
 	float MovableRange = 1000.f;
 
 protected:
+	// Lifecycle
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 	virtual void ScheduleNextTick(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 private:
+	// Context Build
 	EContextBuildResult BuildPerceptionContext(class APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext);
 
 private:
+	// Context Compute
 	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const;
 	EContextBuildResult ComputeAlertRangeContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const;
 	EContextBuildResult ComputeEngageAssignmentContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
@@ -32,6 +35,7 @@ private:
 	EContextBuildResult ComputeDeadContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const;
 
 private:
+	// Blackboard Update
 	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
 	void UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
 	void UpdateAlertRangeContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
@@ -40,6 +44,7 @@ private:
 	void UpdateDeadContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
 
 private:
+	// Blackboard Clear
 	void ClearPerceptionContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearHomeMetricContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearAlertRangeContext(class UBlackboardComponent* InBlackboardComp);

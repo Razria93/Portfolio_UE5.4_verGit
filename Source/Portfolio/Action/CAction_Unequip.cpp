@@ -6,6 +6,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCAction_Unequip::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -45,6 +47,8 @@ FExecutionDecisionResult UCAction_Unequip::ResolveExecutionDecision(const FExecu
 	return result;
 }
 
+// Notify
+
 void UCAction_Unequip::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
 	switch (InCommand)
@@ -57,6 +61,8 @@ void UCAction_Unequip::HandleSpecificNotifyCommand(EActionNotifyCommand InComman
 		return;
 	}
 }
+
+// Weapon
 
 void UCAction_Unequip::DetachWeapon()
 {

@@ -168,7 +168,7 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 	TArray<FDamageSpecKey> candidateKeys;
 	EReactionType reactionType = InDataKey.ReactionType;
 	
-	// Candidate SpecKey
+	// Resolve candidate spec keys before data lookup.
 	BuildCandidateSpecKeys(InDataKey.DamageSpecKey, candidateKeys);
 
 	for (int32 candidateIndex = 0; candidateIndex < candidateKeys.Num(); ++candidateIndex)
@@ -458,8 +458,7 @@ void UCReactionComponent::BuildReactionDataMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	// bRebuildAll == true: Rebuild 
-	// bRebuildAll == false: Append
+	// Rebuild clears stale reaction data; append keeps the existing map.
 
 	if (bRebuildAll)
 	{
@@ -497,8 +496,7 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	// bRebuildAll == true: Rebuild 
-	// bRebuildAll == false: Append
+	// Rebuild clears stale reaction executors; append keeps existing cache entries.
 
 	if (bRebuildAll)
 	{

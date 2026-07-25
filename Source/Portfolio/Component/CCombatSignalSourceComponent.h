@@ -37,7 +37,7 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
-	// HitWindow
+	// Hit Window
 	void NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId);
 	void NotifyHitWindowClosed(AActor* InDamageCauser, int32 InHitWindowId);
 
@@ -47,7 +47,7 @@ public:
 	bool RequestCombatSignalCue(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation = FVector::ZeroVector, const FVector& InDirection = FVector::ZeroVector, AActor* InSignalCauser = nullptr);
 
 public:
-	// Entry for AI
+	// AI Entry
 	bool RequestAICombatSignalCue(FName InCueTag);
 
 private:

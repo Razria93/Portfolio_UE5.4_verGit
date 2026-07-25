@@ -234,7 +234,7 @@ void ACWeaponActor::CollisionEnabled(FName InName)
 		}
 	}
 
-	// Early-Return
+	// Reject empty collision enable requests.
 	if (collisionsToEnable.IsEmpty())
 	{
 		FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(
@@ -329,7 +329,7 @@ void ACWeaponActor::CollisionDisabled()
 			TEXT("MissingCombatSignalSourceComponentOrInvalidHitWindow"));
 	}
 
-	// Legacy delegate
+	// Notify legacy collision disabled listeners.
 	if (OnWeaponActorCollisionDisabled.IsBound())
 		OnWeaponActorCollisionDisabled.Broadcast();
 
@@ -379,7 +379,7 @@ void ACWeaponActor::OnComponentBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	FCombatSignalDebug::RecordWeaponOverlapAcceptedForAudit(hitContext, TEXT("BeginOverlap"));
 	FCombatSignalDebug::PrintWeaponHitContextDebug(hitContext);
 
-	// Legacy delegate
+	// Notify legacy overlap listeners before forwarding the combat signal.
 	if (OnWeaponActorBeginOverlap.IsBound())
 		OnWeaponActorBeginOverlap.Broadcast(OwnerCharacter_Injected, this, overlapComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
@@ -414,7 +414,7 @@ void ACWeaponActor::OnComponentEndOverlap(UPrimitiveComponent* OverlappedCompone
 		return;
 	}
 
-	// Legacy delegate
+	// Notify legacy overlap listeners after validating the end overlap.
 	if (OnWeaponActorEndOverlap.IsBound())
 		OnWeaponActorEndOverlap.Broadcast(OwnerCharacter_Injected, OtherActor);
 }
@@ -445,7 +445,7 @@ FHitImpactContext ACWeaponActor::BuildHitImpactContext(const FOverlapContext& In
 
 	if (!IsValid(InOverlapContext.OverlappedComponent) || !IsValid(InOverlapContext.OtherComponent))
 	{
-		// Invalid
+		// Invalid overlap context cannot produce hit impact data.
 		return hitImpactContext;
 	}
 
@@ -465,7 +465,7 @@ FHitImpactContext ACWeaponActor::BuildHitImpactContext(const FOverlapContext& In
 
 	if (distance < 0.f)
 	{
-		// Invalid
+		// Invalid closest-point query cannot produce hit impact data.
 		return hitImpactContext;
 	}
 

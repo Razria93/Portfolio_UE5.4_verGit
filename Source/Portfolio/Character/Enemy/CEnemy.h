@@ -156,18 +156,10 @@ private:
 	// Runtime LOD
 	void UpdateRuntimeLODMeshMode();
 	void UpdateRuntimeLODActorTickMode();
-
-	// Lifecycle
 	void CacheRuntimeLODActorTickOriginalState();
-
-	// Dispatch
 	void ApplyRuntimeLODActorTickMode(int32 InActorTickMode);
-
-	// Actor Tick Mode
 	void ApplyRuntimeLODActorTickDefault();
 	void ApplyRuntimeLODActorTickDisabled();
-
-	// Actor Tick State
 	void RestoreRuntimeLODActorTick();
 	void DisableRuntimeLODActorTick();
 
@@ -176,10 +168,11 @@ public:
 	void Tick(float DeltaTime) override;
 
 public:
+	// Input
 	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	// Query
+	// Component Query
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
@@ -195,6 +188,7 @@ public:
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 
 public:
+	// AI Config Query
 	FORCEINLINE bool ShouldUsePatrol() const { return bUsePatrol; }
 	FORCEINLINE ACPatrolPath* GetPatrolPath() const { return PatrolPath; }
 	FORCEINLINE EPatrolMode GetPatrolMode() const { return PatrolMode; }
@@ -253,7 +247,7 @@ public:
 	bool TryStartRevive(float InReviveHP);
 
 private:
-	// Query
+	// Combat Action Query
 	bool IsCombatActionType(EActionType InActionType) const;
 
 private:

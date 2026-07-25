@@ -36,14 +36,11 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
+	// Health State Sync
 	void OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState);
 
-public:
-	// Check / Query
-	FORCEINLINE bool CheckCurExecutionState(EExecutionState InNewExecutionState) const { return CurrentExecutionState == InNewExecutionState; }
-
-public:
 	// Query
+	FORCEINLINE bool CheckCurExecutionState(EExecutionState InNewExecutionState) const { return CurrentExecutionState == InNewExecutionState; }
 	FORCEINLINE EExecutionState GetCurrentExecutionState() const { return CurrentExecutionState; }
 
 public:

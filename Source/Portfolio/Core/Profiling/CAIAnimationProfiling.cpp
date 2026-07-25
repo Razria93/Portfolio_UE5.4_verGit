@@ -14,6 +14,8 @@ namespace
 #endif
 }
 
+// Gate
+
 bool FAIAnimationProfiling::ShouldAuditAnimationRefresh()
 {
 #if !UE_BUILD_SHIPPING
@@ -22,6 +24,8 @@ bool FAIAnimationProfiling::ShouldAuditAnimationRefresh()
 	return false;
 #endif
 }
+
+// Counter
 
 void FAIAnimationProfiling::RecordAnimationRefreshAttempt()
 {

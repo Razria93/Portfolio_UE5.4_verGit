@@ -181,7 +181,7 @@ bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& I
 		return true;
 	}
 
-	// V1 hook only. Blink / Repulse evaluation and effects are added in separate branches.
+	// Only Blink and Repulse timing cues are supported in this pass.
 	FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("UnknownCueTag"));
 	return false;
 }

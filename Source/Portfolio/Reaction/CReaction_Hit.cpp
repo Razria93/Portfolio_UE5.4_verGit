@@ -4,6 +4,8 @@
 
 #include "GameFramework/Character.h"
 
+// Decision
+
 FExecutionDecisionResult UCReaction_Hit::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
 {
 	FExecutionDecisionResult result;
@@ -39,6 +41,8 @@ FExecutionDecisionResult UCReaction_Hit::ResolveExecutionDecision(const FExecuti
 	return result;
 }
 
+// Observable Overlay
+
 void UCReaction_Hit::ResolveObservableOverlayCondition(const FObservableOverlayQuery& InQuery, FObservableOverlayExecutionDecision& OutDecision) const
 {
 	OutDecision = FObservableOverlayExecutionDecision();
@@ -46,7 +50,7 @@ void UCReaction_Hit::ResolveObservableOverlayCondition(const FObservableOverlayQ
 	const bool bIsHitReaction = IsIncomingReactionType(InQuery.DecisionQuery, EReactionType::Hit);
 	if (!bIsHitReaction)
 	{
-		// Hit only.
+		// Reject non-Hit overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
@@ -54,12 +58,12 @@ void UCReaction_Hit::ResolveObservableOverlayCondition(const FObservableOverlayQ
 	const bool bHasGuardState = InQuery.DecisionQuery.Snapshot.ObservableOverlay.Guard.HasGuardRuntimeState();
 	if (bHasGuardState)
 	{
-		// GuardState Case: clear Guard before Hit.
+		// Hit clears an active Guard state before it starts.
 		OutDecision.Decision = EExecutionDecision::Accept;
 		OutDecision.Handlings.AddUnique(EObservableOverlayHandling::ClearGuardState);
 		return;
 	}
 
-	// Another Case: No overlay cleanup.
+	// Hit can start without overlay cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }

@@ -14,6 +14,8 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+// Lifecycle
+
 UCBTService_UpdateEngageContext::UCBTService_UpdateEngageContext()
 {
 	NodeName = TEXT("Update Engage Context");
@@ -71,6 +73,8 @@ void UCBTService_UpdateEngageContext::ScheduleNextTick(UBehaviorTreeComponent& O
 	SetNextTickTime(NodeMemory, CBTServiceIntervalHelper::GetEngageContextInterval());
 }
 
+// Context Build
+
 EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& OutEngageContext)
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
@@ -102,6 +106,8 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 
 	return EContextBuildResult::Success;
 }
+
+// Context Compute
 
 EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FEngageContext& InOutEngageContext)
 {
@@ -145,7 +151,7 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 	InOutEngageContext.EngageInnerRange = engageInnerRange;
 	InOutEngageContext.DistanceToTarget = distanceToTarget;
 
-	// Result
+	// Store the computed engage result.
 	InOutEngageContext.bInEngageRange = bInEngageRange;
 	InOutEngageContext.bCanCombatAction = 
 		bInEngageRange				// for ActionRange Check
@@ -181,6 +187,8 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 	return EContextBuildResult::Success;
 }
 
+// Blackboard Update
+
 void UCBTService_UpdateEngageContext::UpdateEngageContext(UBlackboardComponent* InBlackboardComp, FEngageContext& InEngageContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
@@ -188,6 +196,8 @@ void UCBTService_UpdateEngageContext::UpdateEngageContext(UBlackboardComponent* 
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bInEngageRange.KeyName, InEngageContext.bInEngageRange);
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Engage::bCanCombatAction.KeyName, InEngageContext.bCanCombatAction);
 }
+
+// Blackboard Clear
 
 void UCBTService_UpdateEngageContext::ClearEngageContext(UBlackboardComponent* InBlackboardComp)
 {

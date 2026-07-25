@@ -53,7 +53,7 @@ bool UCCombatSignalSourceComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
-// HitWindow
+// Hit Window
 
 void UCCombatSignalSourceComponent::NotifyHitWindowOpened(AActor* InDamageCauser, int32 InHitWindowId)
 {
@@ -106,7 +106,7 @@ bool UCCombatSignalSourceComponent::RequestCombatSignalCue(AActor* InTargetActor
 	return SendCueSignal(combatSignal);
 }
 
-// Entry for AI
+// AI Entry
 
 bool UCCombatSignalSourceComponent::RequestAICombatSignalCue(FName InCueTag)
 {
