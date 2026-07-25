@@ -8,6 +8,8 @@
 #include "Type/CStateTypes.h"
 #include "CExecutionTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EExecutionDecision : uint8
 {
@@ -81,6 +83,8 @@ enum class EExecutionAfterStopAction : uint8
 	Max,
 };
 
+// Runtime State
+
 USTRUCT(BlueprintType)
 struct FExecutionSnapshot
 {
@@ -124,6 +128,8 @@ public:
 	}
 };
 
+// Runtime Context
+
 USTRUCT(BlueprintType)
 struct FExecutionParticipant
 {
@@ -153,6 +159,8 @@ public:
 	UObject* GetExecutor() const;
 	int32 GetPriority() const;
 };
+
+// Request
 
 USTRUCT(BlueprintType)
 struct FObservableOverlayExecutionDecision
@@ -212,6 +220,8 @@ public:
 	UPROPERTY(Transient)
 	EExecutionApplyMode ApplyMode = EExecutionApplyMode::None;
 };
+
+// Result
 
 USTRUCT(BlueprintType)
 struct FExecutionDecisionResult

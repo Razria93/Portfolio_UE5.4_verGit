@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CMovementTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EMovementGait : uint8
 {

@@ -7,6 +7,8 @@
 
 struct FExecutionParticipant;
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EExecutionDomain : uint8
 {
@@ -28,6 +30,8 @@ enum class EExecutionInterventionTiming : uint8
 
 	Max,
 };
+
+// Key / Identifier
 
 USTRUCT(BlueprintType)
 struct FExecutionInterventionParticipantFilter
@@ -64,6 +68,8 @@ public:
 			&& Index == InOther.Index;
 	}
 };
+
+// Data / Config
 
 USTRUCT(BlueprintType)
 struct FExecutionInterventionWantRule

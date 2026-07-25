@@ -8,6 +8,8 @@
 #include "Type/CCombatHitTypes.h"
 #include "CCombatDamageTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EDamageDefenseOutcome : uint8
 {
@@ -18,6 +20,8 @@ enum class EDamageDefenseOutcome : uint8
 
 	Max,
 };
+
+// Key / Identifier
 
 USTRUCT(BlueprintType)
 struct FDamageSpecKey
@@ -68,6 +72,8 @@ FORCEINLINE uint32 GetTypeHash(const FDamageSpecKey& InOther)
 
 // Global GetTypeHash keeps ADL available for this map key.
 
+// Data / Config
+
 USTRUCT(BlueprintType)
 struct FDamageSpec
 {
@@ -81,6 +87,8 @@ public:
 	FDamageSpec() = default;
 };
 
+// Request
+
 USTRUCT(BlueprintType)
 struct FDamageRequestAmount
 {
@@ -93,6 +101,8 @@ public:
 public:
 	FDamageRequestAmount() = default;
 };
+
+// Packet
 
 USTRUCT(BlueprintType)
 struct FDefaultDamageEvent : public FDamageEvent

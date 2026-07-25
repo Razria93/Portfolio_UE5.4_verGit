@@ -4,6 +4,8 @@
 #include "Type/CActionTypes.h"
 #include "CActionKeyTypes.generated.h"
 
+// Key / Identifier
+
 USTRUCT(BlueprintType)
 struct FActionDataKey
 {
@@ -26,6 +28,8 @@ public:
 			&& ActionIndex == InOther.ActionIndex;
 	}
 };
+
+// Helper API
 
 FORCEINLINE uint32 GetTypeHash(const FActionDataKey& InKey)
 {

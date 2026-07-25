@@ -19,6 +19,8 @@ class UCReactionOrchestratorComponent;
 class UCStateComponent;
 class UCWeaponComponent;
 
+// Runtime Context
+
 struct FCharacterComponentReferences
 {
 	ACharacter* OwnerCharacter = nullptr;

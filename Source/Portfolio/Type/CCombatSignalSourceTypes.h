@@ -5,6 +5,8 @@
 #include "Type/CCombatDamageTypes.h"
 #include "CCombatSignalSourceTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class ECombatSignalSourceRejectReason : uint8
 {
@@ -27,6 +29,8 @@ enum class ECombatSignalSourceRejectReason : uint8
 	DuplicateHitInWindow,
 	FriendlyTarget,
 };
+
+// Payload
 
 USTRUCT(BlueprintType)
 struct FCombatSignalSourcePayload
@@ -58,6 +62,8 @@ public:
 public:
 	FCombatSignalSourcePayload() = default;
 };
+
+// Runtime Context
 
 USTRUCT(BlueprintType)
 struct FCombatSignalSourceContext
@@ -107,6 +113,8 @@ public:
 public:
 	FCombatSignalSourceContext() = default;
 };
+
+// Result
 
 USTRUCT(BlueprintType)
 struct FCombatSignalSourceResult

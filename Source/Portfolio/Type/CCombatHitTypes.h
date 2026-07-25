@@ -5,6 +5,8 @@
 #include "Type/CActionKeyTypes.h"
 #include "CCombatHitTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EHitImpactContextSource : uint8
 {
@@ -15,6 +17,8 @@ enum class EHitImpactContextSource : uint8
 
 	Max,
 };
+
+// Runtime Context
 
 USTRUCT(BlueprintType)
 struct FOverlapContext
@@ -107,6 +111,8 @@ public:
 public:
 	FHitContext() = default;
 };
+
+// Key / Identifier
 
 USTRUCT()
 struct FCombatSignalHitWindowKey
