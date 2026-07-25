@@ -503,6 +503,19 @@ FObservableTargetRef targetRef;
 
 ## 13.1 Section Comment Follow-up Rules
 
+### Rule / Work Plan Boundary
+
+W05 문서는 코드 품질 정리의 정책 기준과 현재 프로젝트 적용 계획을 함께 기록한다.
+AI 작업 시스템에는 반복 적용해야 하는 실행 체크리스트만 반영하고, 프로젝트의 세부 후보 판단은 W05 Work Plan에 남긴다.
+
+```text
+역할 분리:
+-> W05 Work Plan: 현재 branch에서 적용할 정책, 후보, 완료 / 보류 판단을 기록한다.
+-> AI Workflow Prompt: 이후 작업 세션에서 반복 적용할 실행 체크리스트를 제공한다.
+-> .agents: 현재 repo에는 별도 agent rule 파일이 없으므로 이번 반영 대상에서 제외한다.
+-> .codex: 현재 repo에는 별도 Codex rule 파일이 없으므로 이번 반영 대상에서 제외한다.
+```
+
 ### Header / Source Section Synchronization
 
 `.h`가 API 책임 단위로 섹션을 나누면 `.cpp`도 같은 책임 그룹 기준으로 섹션을 둔다.

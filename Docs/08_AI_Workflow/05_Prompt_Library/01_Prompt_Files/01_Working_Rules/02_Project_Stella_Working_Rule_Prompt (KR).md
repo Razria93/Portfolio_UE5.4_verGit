@@ -40,6 +40,12 @@ Type 헤더 섹션
 -> Type 헤더 섹션명은 W05 Comment Section Cleanup Work Plan의 taxonomy를 따른다.
 -> Enum, Key / Identifier, Data / Config, Runtime State, Runtime Context, Request, Candidate, Payload, Resolution, Result, Packet, Runtime Key / Playback Key, Reserved Pipeline Scaffold, Helper API를 우선 사용한다.
 
+작업 체크리스트
+-> Type 헤더가 taxonomy를 따르는지 확인한다.
+-> .h / .cpp의 책임 섹션이 큰 그룹 기준으로 동기화되어 있는지 확인한다.
+-> 단계형 주석이 fallback / policy gate / priority matching처럼 순서 의미를 가지는지 확인한다.
+-> 주석 정리 중 타입명 / 필드명 / API signature / include / 동작 변경이 섞이지 않았는지 확인한다.
+
 단계형 주석
 -> fallback 순서, policy gate, priority matching처럼 순서 자체가 의미 있을 때만 사용한다.
 -> 번호 깊이는 한 단계까지만 허용한다.
@@ -80,6 +86,12 @@ Project Stella 작업을 진행해줘.
    - 건드리지 않을 범위
    - 검증 방법
    - 사용자 확인이 필요한 항목
+
+2-1. 주석 / 섹션 정리 작업이면 아래 체크리스트를 먼저 적용해줘.
+   - Type 헤더 섹션은 W05 taxonomy를 기준으로 확인해줘.
+   - `.h`가 API 책임 단위로 나뉘면 `.cpp`도 같은 책임 그룹 기준으로 섹션을 동기화해줘.
+   - 단계형 주석은 fallback / policy gate / priority matching처럼 순서 자체가 의미 있을 때만 남겨줘.
+   - 주석 정리 중 타입명 / 필드명 / API signature / include / 동작 변경을 함께 처리하지 말아줘.
 
 3. Project Stella 작업 맥락을 유지해줘.
    - Stella Blade 액션 시스템 분석 / 구현 포트폴리오라는 맥락을 유지해줘.
