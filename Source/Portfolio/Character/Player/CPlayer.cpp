@@ -107,6 +107,8 @@ ACPlayer::ACPlayer()
 	check(ReactionFeedbackComponent);
 }
 
+// Lifecycle
+
 void ACPlayer::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -137,6 +139,8 @@ void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	Super::EndPlay(EndPlayReason);
 }
+
+// Component Reference
 
 void ACPlayer::RecoverReferences()
 {
@@ -209,10 +213,14 @@ void ACPlayer::InjectReferences(const FCharacterComponentReferences& InReference
 	FComponentReferenceHelper::InjectIfValid(ReactionFeedbackComponent, InReferences);
 }
 
+// Input
+
 void ACPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
+
+// Damage
 
 float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -235,6 +243,8 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 	return finalDamage;
 }
+
+// Combat Result
 
 void ACPlayer::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
 {
@@ -281,6 +291,8 @@ bool ACPlayer::TryRequestParryStaggerReaction(const FCombatResultPacket& InComba
 
 	return bStarted;
 }
+
+// Movement Intent
 
 FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
 {
@@ -354,6 +366,8 @@ FActionRequestResult ACPlayer::HandleStopJump()
 
 	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
+
+// Action Intent
 
 FActionRequestResult ACPlayer::HandleEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent)
 {

@@ -34,24 +34,30 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
+	// Entry
 	void PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest);
 	void ClearRuntimeFeedback();
 
 private:
+	// Query
 	bool CanPlayReactionFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest) const;
 
 private:
+	// Matching
 	bool TryCalculateMatchScore(const FReactionFeedbackMatchKey& InDataKey, EReactionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FReactionFeedbackRequest& InReactionFeedbackRequest, int32& OutScore) const;
 
 private:
+	// Runtime Key / Playback Key
 	FReactionVFXPlaybackKey BuildReactionVFXPlaybackKey(const FReactionVFXFeedbackData& InReactionVFXFeedbackData) const;
 	FReactionSFXPlaybackKey BuildReactionSFXPlaybackKey(const FReactionSFXFeedbackData& InReactionSFXFeedbackData) const;
 
 private:
+	// Execution
 	void ExecuteVFXFeedbacks(const FReactionFeedbackRequest& InReactionFeedbackRequest);
 	void ExecuteSFXFeedbacks(const FReactionFeedbackRequest& InReactionFeedbackRequest);
 
 private:
+	// Playback
 	void PlayReactionVFX(const FReactionVFXFeedbackData& InReactionVFXFeedbackData);
 	void PlayReactionSFX(const FReactionSFXFeedbackData& InReactionSFXFeedbackData);
 };

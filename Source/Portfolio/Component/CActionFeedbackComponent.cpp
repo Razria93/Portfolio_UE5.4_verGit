@@ -17,6 +17,8 @@ UCActionFeedbackComponent::UCActionFeedbackComponent()
 {
 }
 
+// Component Reference
+
 void UCActionFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -43,6 +45,8 @@ bool UCActionFeedbackComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+// Entry
+
 void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
 	if (!CanPlayActionFeedback(InActionFeedbackRequest)) return;
@@ -67,6 +71,8 @@ void UCActionFeedbackComponent::ClearRuntimeFeedback()
 	ToggleTrailActive(false);
 }
 
+// Query
+
 bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
 	if (!IsValid(OwnerCharacter_Injected))
@@ -87,6 +93,8 @@ bool UCActionFeedbackComponent::CanPlayActionFeedback(const FActionFeedbackReque
 
 	return true;
 }
+
+// Matching
 
 EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FActionFeedbackMatchKey& InDataKey, EActionFeedbackTiming InDataTiming, FName InDataTriggerKey, const FActionFeedbackRequest& InActionFeedbackRequest) const
 {
@@ -114,6 +122,8 @@ EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FAc
 	return EActionFeedbackMatchTier::None;
 }
 
+// Runtime Key / Playback Key
+
 FActionVFXPlaybackKey UCActionFeedbackComponent::BuildActionVFXPlaybackKey(const FActionVFXFeedbackData& InActionVFXFeedbackData) const
 {
 	FActionVFXPlaybackKey playbackKey;
@@ -137,6 +147,8 @@ FActionSFXPlaybackKey UCActionFeedbackComponent::BuildActionSFXPlaybackKey(const
 
 	return playbackKey;
 }
+
+// Execution
 
 void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
@@ -271,6 +283,8 @@ void UCActionFeedbackComponent::ExecuteSFXFeedbacks(const FActionFeedbackRequest
 		PlayActionSFX(*data);
 	}
 }
+
+// Playback
 
 void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData)
 {
