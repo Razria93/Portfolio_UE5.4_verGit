@@ -141,7 +141,7 @@ private:
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry")
+	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry", meta = (ClampMin = 1))
 	int32 ParryStaggerThreshold = 3;
 
 	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")

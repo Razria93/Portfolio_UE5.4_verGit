@@ -7,6 +7,11 @@
 
 #include "GameFramework/Character.h"
 
+namespace
+{
+	const FLinearColor ExecutionInterventionWindowEditorColor(0.1f, 0.45f, 0.95f, 1.0f);
+}
+
 UCAnimNotifyState_ExecutionInterventionWindow::UCAnimNotifyState_ExecutionInterventionWindow()
 {
 }
@@ -18,7 +23,7 @@ FString UCAnimNotifyState_ExecutionInterventionWindow::GetNotifyName_Implementat
 
 FLinearColor UCAnimNotifyState_ExecutionInterventionWindow::GetEditorColor()
 {
-	return FLinearColor(0.1f, 0.45f, 0.95f, 1.0f);
+	return ExecutionInterventionWindowEditorColor;
 }
 
 void UCAnimNotifyState_ExecutionInterventionWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)

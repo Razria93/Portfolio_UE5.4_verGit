@@ -9,6 +9,7 @@
 namespace CCombatEngageConstants
 {
 	constexpr float UnsetAssignmentWarmupStartTime = -1.f;
+	constexpr float MissingAssignmentLeaseAge = -1.f;
 	constexpr int32 InitialAssignmentRebuildId = 0;
 	constexpr int32 FirstAssignmentRebuildId = 1;
 }

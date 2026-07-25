@@ -269,7 +269,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIC
 			const float* lastRequestTime = LastRequestTimeContainer.Find(aiController);
 			const UWorld* world = GetWorld();
 			const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
-			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : -1.f;
+			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : CCombatEngageConstants::MissingAssignmentLeaseAge;
 			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentTuning.LeaseDuration - leaseAge) : 0.f;
 			FCombatEngageDebug::RecordEngageAssignmentPreservedForAudit(aiController, previousAssignment, targetSlotState, leaseAge, leaseRemaining, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 		}
@@ -345,7 +345,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingAlertAssignments(TMap<ACAICo
 			const float* lastRequestTime = LastRequestTimeContainer.Find(aiController);
 			const UWorld* world = GetWorld();
 			const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
-			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : -1.f;
+			const float leaseAge = lastRequestTime ? currentTime - *lastRequestTime : CCombatEngageConstants::MissingAssignmentLeaseAge;
 			const float leaseRemaining = lastRequestTime ? FMath::Max(0.f, AssignmentTuning.LeaseDuration - leaseAge) : 0.f;
 			FCombatEngageDebug::RecordEngageAssignmentPreservedForAudit(aiController, previousAssignment, targetSlotState, leaseAge, leaseRemaining, GetEngageAssignmentEngageCap(), GetEngageAssignmentAlertCap());
 		}

@@ -498,6 +498,36 @@ Source/Portfolio/AI/Patrol/CPatrolPoint.cpp
 
 ---
 
+## 6.1 최종 소스 전수조사 후속 처리
+
+에이전트 교차검증:
+
+```text
+-> Component / Character 범위 확인
+-> AI / Controller / System 범위 확인
+-> Action / Reaction / Notify / Type / Core 범위 확인
+```
+
+바로 처리한 항목:
+
+```text
+-> CAIKey::Patrol::PatrolIndex는 raw -1 대신 INDEX_NONE을 사용한다.
+-> assignment lease age 누락값은 CCombatEngageConstants::MissingAssignmentLeaseAge로 이름을 부여한다.
+-> CActionFeedbackTypes의 RelativeScale 기본값은 FVector::OneVector를 사용한다.
+-> Execution Intervention notify editor color는 ExecutionInterventionWindowEditorColor로 이름을 부여한다.
+-> ParryStaggerThreshold는 ClampMin = 1과 runtime MinimumParryStaggerThreshold guard를 함께 사용한다.
+```
+
+설계상 보류:
+
+```text
+-> GuardDamageMitigationMultiplier 소유권 이동은 Defense / guard tuning 후속 후보로 남긴다.
+-> BT service constructor Interval / RandomDeviation literal은 BT interval 정책을 중앙화할 때까지 유지한다.
+-> DataAsset / Project Settings 전환은 asset / Blueprint / PIE 검증이 필요하므로 후속 작업으로 남긴다.
+```
+
+---
+
 ## 7. 검증 계획
 
 ```powershell

@@ -30,6 +30,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
+namespace
+{
+	constexpr int32 MinimumParryStaggerThreshold = 1;
+}
+
 ACPlayer::ACPlayer()
 {
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
@@ -283,7 +288,7 @@ void ACPlayer::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResu
 
 void ACPlayer::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
 {
-	const int32 threshold = FMath::Max(1, ParryStaggerThreshold);
+	const int32 threshold = FMath::Max(MinimumParryStaggerThreshold, ParryStaggerThreshold);
 	ParryResultCount = FMath::Min(ParryResultCount + 1, threshold);
 
 	const bool bStaggerReady = ParryResultCount >= threshold;
