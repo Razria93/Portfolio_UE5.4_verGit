@@ -196,7 +196,7 @@ Source/Portfolio/System/Combat/CWorldSubsystem_CombatEngage.cpp
 상태:
 
 ```text
--> 미진행
+-> 완료
 ```
 
 대상:

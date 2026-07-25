@@ -31,15 +31,37 @@
 
 namespace
 {
+	enum class EEnemyMeshRuntimeLODMode : int32
+	{
+		Default = 0,
+		HiddenKeepPose = 1,
+	};
+
+	enum class EEnemyActorTickRuntimeLODMode : int32
+	{
+		Default = 0,
+		Disabled = 1,
+	};
+
+	constexpr int32 ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode InMode)
+	{
+		return static_cast<int32>(InMode);
+	}
+
+	constexpr int32 ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode InMode)
+	{
+		return static_cast<int32>(InMode);
+	}
+
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMeshMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMeshMode"),
-		0,
+		ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::Default),
 		TEXT("Controls ACEnemy mesh runtime LOD mode. 0: visible, 1: hidden keep pose."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyActorTickMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyActorTickMode"),
-		0,
+		ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Default),
 		TEXT("Controls ACEnemy actor tick Runtime LOD mode. 0: default, 1: disable ACEnemy actor tick."),
 		ECVF_Default);
 }
@@ -229,7 +251,10 @@ void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences
 
 void ACEnemy::UpdateRuntimeLODMeshMode()
 {
-	const int32 requestedMeshMode = FMath::Clamp(CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(), 0, 1);
+	const int32 requestedMeshMode = FMath::Clamp(
+		CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(),
+		ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::Default),
+		ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::HiddenKeepPose));
 	if (RuntimeLODMeshState.AppliedMode == requestedMeshMode) return;
 
 	USkeletalMeshComponent* meshComp = GetMesh();
@@ -243,13 +268,13 @@ void ACEnemy::UpdateRuntimeLODMeshMode()
 
 	switch (requestedMeshMode)
 	{
-	case 1:
+	case ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::HiddenKeepPose):
 		meshComp->SetHiddenInGame(true, false);
 		meshComp->SetVisibility(false, false);
 		meshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 		break;
 
-	case 0:
+	case ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::Default):
 	default:
 		meshComp->SetHiddenInGame(false, false);
 		meshComp->SetVisibility(true, false);
@@ -262,7 +287,10 @@ void ACEnemy::UpdateRuntimeLODMeshMode()
 
 void ACEnemy::UpdateRuntimeLODActorTickMode()
 {
-	const int32 requestedActorTickMode = FMath::Clamp(CVarAIRuntimeLODEnemyActorTickMode.GetValueOnGameThread(), 0, 1);
+	const int32 requestedActorTickMode = FMath::Clamp(
+		CVarAIRuntimeLODEnemyActorTickMode.GetValueOnGameThread(),
+		ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Default),
+		ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Disabled));
 
 	CacheRuntimeLODActorTickOriginalState();
 
@@ -284,11 +312,11 @@ void ACEnemy::ApplyRuntimeLODActorTickMode(int32 InActorTickMode)
 {
 	switch (InActorTickMode)
 	{
-	case 1:
+	case ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Disabled):
 		ApplyRuntimeLODActorTickDisabled();
 		break;
 
-	case 0:
+	case ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Default):
 	default:
 		ApplyRuntimeLODActorTickDefault();
 		break;
