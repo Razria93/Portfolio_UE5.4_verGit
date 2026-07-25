@@ -25,11 +25,11 @@ private:
 	EContextBuildResult BuildPerceptionContext(class APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext);
 
 private:
-	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
-	EContextBuildResult ComputeAlertRangeContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
+	EContextBuildResult ComputeHomeMetricContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const;
+	EContextBuildResult ComputeAlertRangeContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const;
 	EContextBuildResult ComputeEngageAssignmentContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
-	EContextBuildResult ComputeReactionContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
-	EContextBuildResult ComputeDeadContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext);
+	EContextBuildResult ComputeReactionContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const;
+	EContextBuildResult ComputeDeadContext(class APawn* InOwnerPawn, class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const;
 
 private:
 	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);

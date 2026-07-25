@@ -373,11 +373,14 @@ refactor/api-const-consistency
 **코드 스캔에서 확인한 내용**
 
 - getter / query / resolver 계열 API 전수 점검이 필요하다.
+- 규칙은 `W05_Naming_Rules.md`의 `ReadOnly API const 사용` 섹션에 기록한다.
+- 실제 후보 / 보류 목록은 `W05_API_Const_Consistency_Work_Plan.md`에 기록한다.
 
 **완료 조건**
 
 - read-only API에 `const` 적용 기준을 맞춘다.
 - 내부 상태 변경이 필요한 함수는 이름 / 역할을 확인한다.
+- UFUNCTION / Blueprint / delegate / override signature 변경 여부를 분리 확인한다.
 - 빌드 성공.
 
 ---

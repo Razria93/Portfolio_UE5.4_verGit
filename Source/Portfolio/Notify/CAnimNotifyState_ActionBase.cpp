@@ -22,8 +22,8 @@ bool UCAnimNotifyState_ActionBase::CanProcessActionNotify(const UCActionComponen
 		return false;
 	}
 
-	const EActionType actionType = InActionComp->GetActiveActionType();
-	const int32 actionIndex = InActionComp->GetActiveActionIndex();
+	EActionType actionType = InActionComp->GetActiveActionType();
+	int32 actionIndex = InActionComp->GetActiveActionIndex();
 
 	if (TriggerActionType != EActionType::All && actionType != TriggerActionType) return false;
 	if (TriggerActionIndex != INDEX_NONE && actionIndex != TriggerActionIndex) return false;

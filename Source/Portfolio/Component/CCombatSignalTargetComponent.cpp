@@ -301,7 +301,7 @@ bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& 
 	return true;
 }
 
-bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
+bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
 {
 	// Gate 1: already dead
 	if (InOutCombatSignalTargetContext.DeadState_Before != EDeadState::Alive)
