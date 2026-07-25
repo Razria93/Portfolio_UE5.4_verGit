@@ -233,7 +233,7 @@ Source/Portfolio/AI/BehaviorTree/Service/CBTServiceIntervalHelper.cpp
 상태:
 
 ```text
--> 미진행
+-> 완료
 ```
 
 대상:
