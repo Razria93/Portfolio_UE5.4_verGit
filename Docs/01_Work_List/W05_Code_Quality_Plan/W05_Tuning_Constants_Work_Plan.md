@@ -316,6 +316,16 @@ Source/Portfolio/Controller/CAIController.h
 -> enemy archetype별 차이가 필요하면 DataAsset 후보.
 ```
 
+적용 상태:
+
+```text
+-> 1차 적용 완료: CAIController sight / memory tuning 값을 FAIControllerPerceptionSetup으로 묶음.
+-> SightRadius / LoseSightRadius / PeripheralVisionAngleDegrees / MaxAge / TargetMemoryTimeout 값 변경 없음.
+-> detection affiliation 기본값도 같은 setup 구조체에 포함.
+-> ConfigureSightConfig()을 constructor 초기화 경로와 BeginPlay에서 호출해 native 기본값과 editor default override 적용 지점을 맞춤.
+-> AI perception DataAsset 전환은 enemy archetype별 공유 기준을 정한 뒤 후속 작업에서 검토.
+```
+
 ### 4.3 AI behavior tuning
 
 대상:
