@@ -208,7 +208,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 
 		if (matchScore < bestScore) continue;
 
-		// New-High score: Reset and Update List
+		// Preferred: replace matches with the new highest score.
 		if (matchScore > bestScore)
 		{
 			bestScore = matchScore;
@@ -217,7 +217,7 @@ void UCReactionFeedbackComponent::ExecuteVFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		// Tie score: Add to list
+		// Tie: keep all matches with the current best score.
 		matchedDatas.Add(&data);
 	}
 
@@ -267,7 +267,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 
 		if (matchScore < bestScore) continue;
 
-		// New-High score: Reset and Update List
+		// Preferred: replace matches with the new highest score.
 		if (matchScore > bestScore)
 		{
 			bestScore = matchScore;
@@ -276,7 +276,7 @@ void UCReactionFeedbackComponent::ExecuteSFXFeedbacks(const FReactionFeedbackReq
 			continue;
 		}
 
-		// Tie score: Add to list
+		// Tie: keep all matches with the current best score.
 		matchedDatas.Add(&data);
 	}
 

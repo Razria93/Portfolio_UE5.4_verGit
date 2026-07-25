@@ -333,7 +333,7 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 		return participant;
 	}
 
-	// 01. Active Reaction Case
+	// Preferred: active reaction participant.
 	if (bHasActiveReaction)
 	{
 		FReactionData activeData;
@@ -357,7 +357,7 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 		}
 	}
 
-	// 02. Active Action Case
+	// Fallback: active action participant.
 	if (bHasActiveAction)
 	{
 		FActionData activeData;

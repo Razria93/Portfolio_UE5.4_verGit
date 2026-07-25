@@ -200,11 +200,11 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 
 UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& InData)
 {
-	// 1) Try reuse cached Reaction; return if valid
+	// Preferred: reuse cached reaction executor.
 	UCReaction* found = FindReactionExecutor(InData.ReactionExecutorKey.Get());
 	if (IsValid(found)) return found;
 
-	// 2) Try add and cache Reaction; return if valid.
+	// Fallback: create and cache reaction executor.
 	UCReaction* add = AddReactionExecutor(InData.ReactionExecutorKey);
 	if (IsValid(add)) return add;
 
@@ -512,14 +512,14 @@ void UCReactionComponent::BuildReactionExecutorMap(bool bRebuildAll)
 		UClass* executorKey = reactionData.ReactionExecutorKey.Get();
 		if (!IsValid(executorKey)) continue;
 
-		// 1) Find existing cached Reaction
+		// Preferred: keep existing cached reaction executor.
 		if (!bRebuildAll)
 		{
 			const UCReaction* found = FindReactionExecutor(executorKey);
 			if (IsValid(found)) continue;
 		}
 
-		// 2) Add cached Reaction
+		// Fallback: create cached reaction executor.
 		UCReaction* add = AddReactionExecutor(executorKey);
 		if (!IsValid(add))
 		{
@@ -578,17 +578,17 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FDamageSpecKey& InSpecKey
 {
 	OutSpecKeys.Reset();
 
-	// 1) Exact: Weapon + Action + Index
+	// Exact: weapon, action, and index.
 	OutSpecKeys.Add(InSpecKey);
 
-	// 2) Any Index: Weapon + Action + AnyIndex
+	// Fallback: weapon and action with any index.
 	{
 		FDamageSpecKey candidateKey = InSpecKey;
 		candidateKey.ActionIndex = INDEX_NONE;
 		OutSpecKeys.Add(candidateKey);
 	}
 
-	// 3) Any Action: Weapon + AnyAction + AnyIndex
+	// Fallback: weapon with any action and any index.
 	{
 		FDamageSpecKey candidateKey = InSpecKey;
 		candidateKey.ActionType = EActionType::All;
@@ -596,7 +596,7 @@ void UCReactionComponent::BuildCandidateSpecKeys(const FDamageSpecKey& InSpecKey
 		OutSpecKeys.Add(candidateKey);
 	}
 
-	// 4) Any Weapon: AnyWeapon + AnyAction + AnyIndex
+	// Final fallback: any weapon, any action, and any index.
 	{
 		FDamageSpecKey candidateKey = InSpecKey;
 		candidateKey.WeaponType = EWeaponType::All;
