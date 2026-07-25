@@ -27,6 +27,8 @@ UCCombatSignalTargetComponent::UCCombatSignalTargetComponent()
 {
 }
 
+// Component Reference
+
 void UCCombatSignalTargetComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -57,6 +59,8 @@ bool UCCombatSignalTargetComponent::ValidateRequiredComponentReferences() const
 
 	return bValid;
 }
+
+// Entry
 
 float UCCombatSignalTargetComponent::RequestCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -182,6 +186,8 @@ bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& I
 	return false;
 }
 
+// Receive
+
 bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
 	if (!IsValid(OwnerCharacter_Injected))
@@ -268,6 +274,8 @@ FCombatSignalTargetContext UCCombatSignalTargetComponent::BuildContext(const FCo
 
 	return combatSignalTargetContext;
 }
+
+// Evaluate
 
 bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
@@ -413,6 +421,8 @@ FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FComb
 	return combatSignalTargetResult;
 }
 
+// Apply
+
 void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
 	if (!IsValid(HealthComp_Injected)) return;
@@ -425,6 +435,8 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 	InOutCombatSignalTargetContext.HealthPointAfter = HealthComp_Injected->GetCurrentHP();
 }
 
+// Packet
+
 FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult) const
 {
 	FCombatSignalTargetPacket combatSignalTargetPacket;
@@ -435,6 +447,8 @@ FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FComb
 
 	return combatSignalTargetPacket;
 }
+
+// Notify
 
 void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
@@ -491,6 +505,8 @@ void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombat
 
 	FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("Delivered"));
 }
+
+// Helper
 
 AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
 {
