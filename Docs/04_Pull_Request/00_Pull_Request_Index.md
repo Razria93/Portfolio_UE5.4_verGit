@@ -6,6 +6,7 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P50 | Section Comment Consistency | `P50_UE5_Portfolio_Pull_Request.md` | `refactor/section-comment-consistency` |  | W05 |
 | P49 | API Const Consistency | `P49_UE5_Portfolio_Pull_Request.md` | `refactor/api-const-consistency` |  | W05 |
 | P48 | CPP Include Order Cleanup | `P48_UE5_Portfolio_Pull_Request.md` | `refactor/include-order-cleanup` |  | W05 |
 | P47 | Type Rename and Feedback Key Cleanup | `P47_UE5_Portfolio_Pull_Request.md` | `refactor/type-rename-feedback-key-cleanup` |  | W05 |
