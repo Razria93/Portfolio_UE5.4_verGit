@@ -16,9 +16,9 @@ EBTNodeResult::Type UCBTTask_AdvanceInvestigateIndex::ExecuteTask(UBehaviorTreeC
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EBTNodeResult::Failed;
 
-	const int32 maxIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex.KeyName);
-	const int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName);
-	const int32 nextIndex = currentIndex + 1;
+	int32 maxIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateMaxIndex.KeyName);
+	int32 currentIndex = blackboardComp->GetValueAsInt(CAIKey::Investigate::InvestigateIndex.KeyName);
+	int32 nextIndex = currentIndex + 1;
 
 	if (nextIndex > maxIndex)
 	{

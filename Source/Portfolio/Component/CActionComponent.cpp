@@ -267,7 +267,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 			return false;
 		}
 
-		const bool bStarted = StartAction(InResult.ResolvedContext);
+		bool bStarted = StartAction(InResult.ResolvedContext);
 		if (bStarted)
 		{
 			FActionComponentDebug::RecordActionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Start"));
@@ -277,7 +277,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 
 	case EExecutionApplyMode::Reserve:
 	{
-		const bool bReserved = ReserveAction(InResult.ResolvedContext);
+		bool bReserved = ReserveAction(InResult.ResolvedContext);
 		if (bReserved)
 		{
 			FActionComponentDebug::RecordActionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Reserve"));
@@ -299,7 +299,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 			return false;
 		}
 
-		const bool bStarted = StartAction(InResult.ResolvedContext);
+		bool bStarted = StartAction(InResult.ResolvedContext);
 		if (bStarted)
 		{
 			FActionComponentDebug::RecordActionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"));
@@ -525,7 +525,7 @@ bool UCActionComponent::HandleActionCombatSignalCue(FName InCueTag)
 		return false;
 	}
 
-	const bool bRequested = CombatSignalSourceComp_Injected->RequestAICombatSignalCue(resolution.CueTag);
+	bool bRequested = CombatSignalSourceComp_Injected->RequestAICombatSignalCue(resolution.CueTag);
 	FActionComponentDebug::RecordActionCombatSignalCueForAudit(OwnerCharacter_Injected, activeExecutor, resolution.CueTag, bRequested ? TEXT("Accepted") : TEXT("Rejected"), bRequested ? nullptr : TEXT("SourceRejectedCue"));
 	return bRequested;
 }
@@ -773,7 +773,7 @@ bool UCActionComponent::ReserveAction(const FActionExecutionContext& InContext)
 
 	const FActionData& incomingData = InContext.ActionData;
 
-	const bool bReserved = activeExecutor->ReserveChain(incomingData);
+	bool bReserved = activeExecutor->ReserveChain(incomingData);
 	if (!bReserved)
 	{
 		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("ReserveAction"), TEXT("ExecutorReserveFailed"));

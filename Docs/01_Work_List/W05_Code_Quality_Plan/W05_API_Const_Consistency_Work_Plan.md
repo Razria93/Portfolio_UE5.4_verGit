@@ -299,6 +299,117 @@ Source/Portfolio/Core/Profiling/*
 -> ShouldAudit / Get CVar 계열은 유지하고, Record / Print / Report 계열은 const 후보에서 제외한다.
 ```
 
+### 3.4 1차 적용 후 잔여 재스캔
+
+```text
+재스캔 기준:
+-> Get / Is / Has / Can / Should / Find / Resolve / Build / Make / Calculate / Compute 계열 header 선언
+
+결과:
+-> 명확한 member ReadOnly API const 후보는 1차 적용 완료.
+-> 남은 member 함수는 상태 변경, audit / profiling 기록, cache mutation, lazy 생성, Blueprint / override signature, 또는 현재 비-const로 남긴 pointer graph 보류 항목이다.
+-> static policy / helper 함수는 member const 대상이 아니므로 이번 pass에서 제외한다.
+-> CMovementComponent::CalculateSpeed / CalculateDirection은 movement runtime state 계산 / 갱신 흐름으로 보아 ReadOnly API가 아니다.
+
+다음 조건 전까지 추가 const 적용은 보류:
+-> audit 기록 함수를 ReadOnly 예외로 허용할지 정책 변경
+-> 현재 비-const FCharacterComponentReferences builder의 pointer graph 계약 변경
+-> Blueprint / override signature를 별도 pass에서 검증하기로 결정
+```
+
+### 3.5 local const / Others 전수 검토
+
+`const` 사용 현황을 다음 기준으로 재분류했다.
+
+```text
+ReadOnly API
+-> 함수 뒤 const: Foo(...) const
+
+ReadOnly Param
+-> parameter 내부 const: const FType& / const UObject* / const TCHAR*
+
+Others
+-> 위 둘이 아닌 const: local const, static / namespace const, pointer const form 등
+```
+
+전체 현황:
+
+```text
+ReadOnly API   : 731
+ReadOnly Param : 1073
+Others         : 415
+const 포함 라인 : 1902
+```
+
+`Others` 세부 분류:
+
+```text
+132  Local const struct/value snapshot
+77   Local const bool gate
+52   Local const scalar
+47   Static/namespace constant
+42   Local const enum
+32   Local pointer-to-const UObject/Actor
+18   Local const UE value
+6    Pointer const form
+4    Container of pointer-to-const
+2    Local const template value
+2    Static local container cache
+1    Unclassified
+```
+
+검토 결론:
+
+```text
+허용 / 권장:
+-> Static / namespace constant
+-> Static local lookup table
+-> 의미 있는 struct / value snapshot
+-> UE value snapshot
+-> Container of pointer-to-const
+-> const TCHAR* reason / literal
+
+선별 허용:
+-> local bool gate
+-> local enum
+-> local scalar
+-> snapshot / 판단 기준 / 이전 상태 / 복잡한 조건식 이름 부여일 때만 유지
+
+지양:
+-> 모든 local bool / int / enum에 기계적으로 const 붙이기
+-> UObject / AActor pointer-to-const 대량 적용
+-> AActor* const 같은 포인터 자체 const 남용
+```
+
+현재 프로젝트 판정:
+
+```text
+-> local const는 전면 제거 대상이 아니다.
+-> 기존 Others 대부분은 snapshot / branch gate / static key / debug reason / lookup table 성격이라 유지 가능하다.
+-> local bool / scalar / enum 중 의미 없는 단순 임시값만 선별 정리한다.
+-> UObject / AActor pointer-to-const는 새로 대량 적용하지 않는다.
+```
+
+선별 cleanup 결과:
+
+```text
+정리 완료:
+-> 단순 bool result 임시값: bStarted / bReserved / bRequested / bApplied
+-> Notify trigger 비교용 단순 active type / index 임시값
+-> Investigate index 증가용 단순 int32 임시값
+
+유지:
+-> previous state / threshold / cooldown / latency / match tier
+-> guard phase / reaction type / execution state snapshot
+-> 복잡한 조건식에 이름을 붙인 branch gate
+-> static / namespace constant
+-> UObject / AActor pointer-to-const 기존 사용
+
+판정:
+-> local const 정책 검증용 선별 정리만 수행했다.
+-> 의미가 있는 snapshot / gate까지 기계적으로 제거하지 않는다.
+```
+
 ---
 
 ## 4. 보류 / 제외 후보

@@ -383,7 +383,7 @@ bool ACEnemy::TryRequestParryStaggerReaction(const FCombatResultPacket& InCombat
 	request.ReactionType = EReactionType::Stagger;
 
 	const FReactionRequestResult result = ReactionOrchestratorComponent->RequestCombatResultReaction(request);
-	const bool bStarted = result.IsAccepted();
+	bool bStarted = result.IsAccepted();
 
 	FCombatResultDebug::RecordParryStaggerReactionRequestedForAudit(this, InCombatResultPacket, result);
 

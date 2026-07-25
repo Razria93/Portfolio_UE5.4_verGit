@@ -293,3 +293,69 @@ UObject pointer
 -> const AActor* 같은 pointer-to-const 대량 적용을 하지 않는다.
 -> ReadOnly API const 정리와 local pointer const 정리는 별도 pass로 분리한다.
 ```
+
+### 10.1 내부 local const 사용
+
+local variable의 `const`는 기본값으로 강제하지 않는다.
+
+프로젝트에서 `const`의 1차 용도는 다음 두 가지다.
+
+```text
+ReadOnly API
+-> owner 상태를 바꾸지 않는 member function 계약
+
+ReadOnly Param
+-> caller-owned 입력값을 수정하지 않는 parameter 계약
+```
+
+다만 함수 내부 local value에서도 값의 의미를 고정하는 경우에는 `const`를 허용한다. 이때 기준은 “값이 바뀌지 않으므로 const를 붙인다”가 아니라, “이 값은 이 시점의 snapshot / 판단 기준 / 내부 상수라서 이후 코드에서 바뀌면 오해나 버그가 된다”이다.
+
+허용 / 권장:
+
+```text
+파일 내부 상수
+-> namespace 내부 const FName / static constexpr / static const
+-> tag, key, collision profile name, magic number 대체값
+
+static local lookup table
+-> 함수 내부에서 한 번 구성되고 읽기 전용으로 쓰이는 static const TArray / TMap
+
+의미 있는 snapshot
+-> 이전 상태
+-> trace / overlap 시점의 위치, 회전, hit result
+-> 이후 로직의 기준점이 되는 context / payload / result 복사본
+
+문자열 literal reason
+-> const TCHAR* reason = TEXT("Cooldown");
+```
+
+선별 허용:
+
+```text
+local bool
+-> 복잡한 조건식에 이름을 붙이는 gate면 허용
+-> 단순 null check / 한 줄 임시값이면 생략 가능
+
+local enum / scalar
+-> 이전 상태, 시작 시점 값, 계산 기준이면 허용
+-> 단순 중간 계산값이면 생략 가능
+
+UE value type
+-> FVector / FRotator / FTransform / FName / FString 등은 snapshot 의미가 있으면 허용
+-> 계속 보정 / 누적 / 수정할 값이면 non-const
+```
+
+지양:
+
+```text
+모든 local bool / int / enum에 기계적으로 const 붙이기
+-> 코드가 시끄러워지고 의미 신호가 약해진다.
+
+UObject / AActor pointer-to-const 대량 적용
+-> Unreal API 호환성과 reflection 관례를 우선한다.
+-> 읽기 전용 계약은 우선 API const와 const parameter에서 표현한다.
+
+포인터 자체 const 남용
+-> AActor* const Target 같은 형태는 로컬 재대입만 막는다.
+-> 객체 불변성이 아니므로 일반 정책으로 강제하지 않는다.
+```

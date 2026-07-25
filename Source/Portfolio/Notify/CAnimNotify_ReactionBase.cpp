@@ -22,7 +22,7 @@ bool UCAnimNotify_ReactionBase::CanProcessReactionNotify(const UCReactionCompone
 		return false;
 	}
 
-	const EReactionType reactionType = InReactionComp->GetActiveReactionType();
+	EReactionType reactionType = InReactionComp->GetActiveReactionType();
 
 	if (TriggerReactionType != EReactionType::All && reactionType != TriggerReactionType) return false;
 

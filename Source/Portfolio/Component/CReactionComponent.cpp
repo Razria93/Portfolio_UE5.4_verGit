@@ -238,7 +238,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 			return false;
 		}
 
-		const bool bStarted = StartReaction(InResult.ResolvedContext);
+		bool bStarted = StartReaction(InResult.ResolvedContext);
 		if (bStarted)
 		{
 			FReactionComponentDebug::RecordReactionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Start"));
@@ -271,7 +271,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 			return false;
 		}
 
-		const bool bStarted = StartReaction(InResult.ResolvedContext);
+		bool bStarted = StartReaction(InResult.ResolvedContext);
 		if (bStarted)
 		{
 			FReactionComponentDebug::RecordReactionDecisionAppliedForAudit(OwnerCharacter_Injected, InResult, TEXT("Intervene"));
@@ -621,7 +621,7 @@ bool UCReactionComponent::ApplyExecutionInterventionDirective(const FExecutionIn
 	{
 	case EExecutionDomain::Action:
 	{
-		const bool bApplied = IsValid(ActionComp_Injected) && ActionComp_Injected->RequestInterruptActiveAction(InDirective);
+		bool bApplied = IsValid(ActionComp_Injected) && ActionComp_Injected->RequestInterruptActiveAction(InDirective);
 		if (!bApplied)
 		{
 			FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, FReactionExecutionContext(), TEXT("ApplyIntervention"), TEXT("ActionInterventionFailed"));
