@@ -36,6 +36,8 @@ namespace
 	constexpr float ReducedAIIntentStateInterval = 0.3f;
 	constexpr float AggressiveAIIntentStateInterval = 0.5f;
 	constexpr float DefaultEngageContextInterval = 0.1f;
+	constexpr float DefaultInvestigateContextInterval = 0.1f;
+	constexpr float DefaultRandomDeviation = 0.0f;
 
 	// Mode Query
 	EBTServiceIntervalMode GetBTUpdateIntervalMode()
@@ -171,9 +173,34 @@ namespace
 
 // Public API
 
-float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
+float CBTServiceIntervalHelper::GetDefaultAIContextInterval()
 {
 	return DefaultAIContextInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultAIIntentStateInterval()
+{
+	return DefaultAIIntentStateInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultEngageContextInterval()
+{
+	return DefaultEngageContextInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultInvestigateContextInterval()
+{
+	return DefaultInvestigateContextInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultRandomDeviation()
+{
+	return DefaultRandomDeviation;
+}
+
+float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
+{
+	return GetDefaultAIContextInterval();
 }
 
 float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
@@ -183,5 +210,5 @@ float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComp
 
 float CBTServiceIntervalHelper::GetEngageContextInterval()
 {
-	return DefaultEngageContextInterval;
+	return GetDefaultEngageContextInterval();
 }

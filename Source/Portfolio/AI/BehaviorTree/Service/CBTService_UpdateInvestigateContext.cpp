@@ -2,6 +2,7 @@
 
 #include "ProjectGlobal.h"
 
+#include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 
@@ -13,8 +14,8 @@ UCBTService_UpdateInvestigateContext::UCBTService_UpdateInvestigateContext()
 	NodeName = TEXT("Update Investigate Context");
 	bNotifyTick = true;
 
-	Interval = 0.1f;
-	RandomDeviation = 0.0f;
+	Interval = CBTServiceIntervalHelper::GetDefaultInvestigateContextInterval();
+	RandomDeviation = CBTServiceIntervalHelper::GetDefaultRandomDeviation();
 }
 
 void UCBTService_UpdateInvestigateContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
