@@ -6,6 +6,18 @@
 
 // Key / Identifier
 
+namespace CActionIndexConstants
+{
+	constexpr int32 FirstActionIndex = 0;
+	constexpr int32 NextSequentialActionOffset = 1;
+
+	constexpr int32 GuardInActionIndex = 1;
+	constexpr int32 GuardOutActionIndex = 2;
+	constexpr int32 GuardHoldActionIndex = 3;
+	constexpr int32 GuardHitActionIndex = 4;
+	constexpr int32 GuardParryActionIndex = 5;
+}
+
 USTRUCT(BlueprintType)
 struct FActionDataKey
 {
@@ -46,19 +58,19 @@ FORCEINLINE int32 GetGuardActionPhaseIndex(EGuardActionPhase InPhase)
 	switch (InPhase)
 	{
 	case EGuardActionPhase::In:
-		return 1;
+		return CActionIndexConstants::GuardInActionIndex;
 
 	case EGuardActionPhase::Out:
-		return 2;
+		return CActionIndexConstants::GuardOutActionIndex;
 
 	case EGuardActionPhase::Hold:
-		return 3;
+		return CActionIndexConstants::GuardHoldActionIndex;
 
 	case EGuardActionPhase::Hit:
-		return 4;
+		return CActionIndexConstants::GuardHitActionIndex;
 
 	case EGuardActionPhase::Parry:
-		return 5;
+		return CActionIndexConstants::GuardParryActionIndex;
 
 	default:
 		return INDEX_NONE;

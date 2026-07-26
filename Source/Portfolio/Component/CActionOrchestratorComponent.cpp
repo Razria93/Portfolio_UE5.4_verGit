@@ -263,21 +263,21 @@ bool UCActionOrchestratorComponent::ResolveEquipmentActionCandidate(const FEquip
 	case EEquipmentActionIntent::Equip:
 	{
 		incomingCandidate.ActionDataKey.ActionType = EActionType::Equip;
-		incomingCandidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
 		break;
 	}
 
 	case EEquipmentActionIntent::Unequip:
 	{
 		incomingCandidate.ActionDataKey.ActionType = EActionType::Unequip;
-		incomingCandidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
 		break;
 	}
 
 	case EEquipmentActionIntent::Toggle:
 	{
 		incomingCandidate.ActionDataKey.ActionType = WeaponComp_Injected->CheckCurrentWeaponType(EWeaponType::Unarmed) ? EActionType::Equip : EActionType::Unequip;
-		incomingCandidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
 		break;
 	}
 
@@ -308,14 +308,16 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	case ECombatActionIntent::ComboAttack:
 	{
 		incomingCandidate.ActionDataKey.ActionType = EActionType::ComboAttack;
-		incomingCandidate.ActionDataKey.ActionIndex = ActionComp_Injected->IsActiveActionType(EActionType::ComboAttack) ? ActionComp_Injected->GetActiveActionIndex() + 1 : 0;
+		incomingCandidate.ActionDataKey.ActionIndex = ActionComp_Injected->IsActiveActionType(EActionType::ComboAttack)
+			? ActionComp_Injected->GetActiveActionIndex() + CActionIndexConstants::NextSequentialActionOffset
+			: CActionIndexConstants::FirstActionIndex;
 		break;
 	}
 
 	case ECombatActionIntent::Dodge:
 	{
 		incomingCandidate.ActionDataKey.ActionType = EActionType::Dodge;
-		incomingCandidate.ActionDataKey.ActionIndex = 0;
+		incomingCandidate.ActionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
 		break;
 	}
 

@@ -631,3 +631,525 @@ PIE smoke는 사용자가 확인한다.
 -> runtime interval selection 정책과 CVar mode 계약은 변경하지 않았다.
 -> 값 변경 없음: AIContext 0.1f, AIIntentState 0.2f, EngageContext 0.1f, InvestigateContext 0.1f, RandomDeviation 0.0f.
 ```
+
+---
+
+## 9. 최종 전수조사 후보 전체
+
+이 섹션은 상수 / 매직넘버 / 튜닝 소유권 관점에서 전수조사 중 후보로 잡힌 항목을 빠짐없이 추적하기 위한 목록이다.
+
+주의:
+
+```text
+-> 아래 항목은 모두 "즉시 수정해야 하는 버그"를 뜻하지 않는다.
+-> 이미 이번 브랜치에서 처리한 항목, 유지 가능한 항목, 후속 설계 후보를 모두 포함한다.
+-> 추후 작업에서는 각 항목의 성격을 먼저 확인한 뒤 상수 정리 / 튜닝 소유권 / migration / validation 정책 중 하나로 분류한다.
+```
+
+### 9.1 이번 브랜치 처리 완료
+
+Character setup:
+
+```text
+Source/Portfolio/Character/Player/CPlayer.cpp
+Source/Portfolio/Character/Enemy/CEnemy.cpp
+-> capsule radius / half height
+-> mesh relative location / rotation
+-> default walk speed
+-> player camera boom / camera offset
+
+처리:
+-> CCharacterSetupTypes.h의 setup USTRUCT로 이동.
+-> CPlayer / CEnemy는 setup 값을 constructor / OnConstruction에서 적용한다.
+-> 값 변경 없음.
+```
+
+AI perception:
+
+```text
+Source/Portfolio/Controller/CAIController.h
+Source/Portfolio/Controller/CAIController.cpp
+Source/Portfolio/Type/CAIPerceptionSetupTypes.h
+-> SightRadius
+-> LoseSightRadius
+-> PeripheralVisionAngleDegrees
+-> MaxAge
+-> TargetMemoryTimeout
+-> DetectionByAffiliation flags
+
+처리:
+-> PerceptionSetup을 프로젝트 설정 소유자로 둔다.
+-> constructor에서 SightConfig를 생성 / 등록해 UE AIPerception listener 등록 경로를 유지한다.
+-> BeginPlay에서 ConfigureSightConfig()로 PerceptionSetup 값을 재적용한다.
+-> AIPerceptionComponent의 SensesConfig는 engine-facing mirror로 보고 직접 편집 기준으로 보지 않는다.
+```
+
+Defense guard tuning:
+
+```text
+Source/Portfolio/Component/CCombatSignalTargetComponent.cpp
+Source/Portfolio/Component/CDefenseComponent.h
+Source/Portfolio/Type/CDefenseTuningTypes.h
+-> GuardDamageMitigationMultiplier = 0.5f
+
+처리:
+-> FDefenseGuardTuning::GuardDamageTakenMultiplier로 이동.
+-> UCDefenseComponent가 GuardTuning을 소유한다.
+-> CCombatSignalTargetComponent는 DefenseComponent에서 값을 조회한다.
+-> 값 변경 없음.
+```
+
+BT service interval / random deviation:
+
+```text
+Source/Portfolio/AI/BehaviorTree/Service/CBTServiceIntervalHelper.h
+Source/Portfolio/AI/BehaviorTree/Service/CBTServiceIntervalHelper.cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.cpp
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.cpp
+-> Interval defaults
+-> RandomDeviation defaults
+-> RuntimeLOD interval preset values
+
+처리:
+-> service constructor raw defaults를 CBTServiceIntervalHelper public default API로 중앙화.
+-> RuntimeLOD interval mode는 CVar int32 계약을 유지한다.
+-> 값 변경 없음.
+```
+
+Debug / execution defaults:
+
+```text
+Source/Portfolio/Core/Debug/FLog.h
+-> screen print duration 10.f
+-> DefaultScreenPrintDuration으로 정리 완료.
+
+Source/Portfolio/Type/CExecutionTypes.h
+Source/Portfolio/Action/CAction.h
+Source/Portfolio/Reaction/CReaction.h
+-> montage stop blend out 0.1f
+-> DefaultMontageStopBlendOutTime으로 정리 완료.
+```
+
+Feedback tuning:
+
+```text
+Source/Portfolio/Component/CHitFeedbackComponent.h
+Source/Portfolio/Component/CPlayerFeedbackComponent.h
+Source/Portfolio/Type/CCombatFeedbackTypes.h
+-> hit stop duration / dilation
+-> camera shake base scale
+-> local source / target scale
+
+처리:
+-> component default는 tuning USTRUCT로 묶었다.
+-> runtime request struct는 request fallback default로 유지한다.
+-> legacy asset migration / save / migration code removal까지 완료.
+```
+
+### 9.2 바로 정리 가능한 잔여 후보
+
+문자열 스타일:
+
+```text
+Source/Portfolio/Weapon/CWeaponActor.cpp
+-> CreateDefaultSubobject<USceneComponent>("RootScene")
+
+후보:
+-> TEXT("RootScene")로 UE 문자열 스타일 정합성 맞춤.
+
+성격:
+-> 매직넘버 제거가 아니라 문자열 literal 스타일 정리.
+-> 동작 변경 없음.
+
+처리:
+-> 완료. CreateDefaultSubobject 이름을 TEXT("RootScene")로 정리했다.
+```
+
+Action default index:
+
+```text
+Source/Portfolio/Component/CActionOrchestratorComponent.cpp
+-> ActionIndex = 0 반복
+-> combo fallback: IsActiveActionType(ComboAttack) ? GetActiveActionIndex() + 1 : 0
+
+후보:
+-> DefaultActionIndex / InitialActionIndex / FirstActionIndex 같은 local constexpr 이름 부여.
+
+주의:
+-> 0은 INDEX_NONE이 아니라 실제 0번 action을 의미할 가능성이 높다.
+-> 이름은 "invalid"가 아니라 "first/default action" 의미로 잡아야 한다.
+
+처리:
+-> 완료. CActionIndexConstants::FirstActionIndex로 의미를 고정했다.
+-> combo fallback의 다음 index offset은 CActionIndexConstants::NextSequentialActionOffset을 사용한다.
+```
+
+Guard phase index 내부 literal:
+
+```text
+Source/Portfolio/Type/CActionKeyTypes.h
+-> Guard phase index 1 / 2 / 3 / 4 / 5
+
+현재 상태:
+-> 외부 사용부는 GetGuardActionPhaseIndex(EGuardActionPhase)를 통해 의미화되어 있다.
+
+후보:
+-> helper 내부 return literal에도 internal constexpr 이름을 부여한다.
+-> 외부 API는 int32 ActionIndex 계약을 유지한다.
+
+처리:
+-> 완료. GuardInActionIndex / GuardOutActionIndex / GuardHoldActionIndex / GuardHitActionIndex / GuardParryActionIndex로 내부 literal 의미를 고정했다.
+```
+
+Combo chain sequence:
+
+```text
+Source/Portfolio/Action/CAction_ComboAttack.cpp
+-> incomingKey.ActionIndex != activeKey.ActionIndex + 1
+-> incomingKey.ActionIndex != ActiveDataKey_Cached.ActionIndex + 1
+
+후보:
+-> next combo action index helper 또는 local named expression으로 의도를 명시한다.
+
+성격:
+-> 숫자 자체보다 combo sequencing contract를 문서화 / 코드화하는 문제.
+-> 값 변경 없음.
+
+처리:
+-> 완료. CActionIndexConstants::NextSequentialActionOffset을 사용해 next sequential action 의미를 드러냈다.
+```
+
+### 9.3 튜닝 소유권 / migration 후보
+
+Parry result tuning:
+
+```text
+Source/Portfolio/Character/Player/CPlayer.h
+-> ParryStaggerThreshold = 3
+
+Source/Portfolio/Character/Enemy/CEnemy.h
+-> ParryStaggerThreshold = 3
+
+Source/Portfolio/Character/Player/CPlayer.cpp
+Source/Portfolio/Character/Enemy/CEnemy.cpp
+-> MinimumParryStaggerThreshold = 1
+
+후보:
+-> FDefenseParryTuning 또는 combat result tuning으로 이동.
+-> Player / Enemy 공통 기준으로 둘지, character archetype별 override로 둘지 결정.
+
+주의:
+-> ParryStaggerThreshold는 serialized UPROPERTY이므로 이동 / regrouping 시 migration 대상이다.
+-> 지금 바로 옮기면 asset 저장 / Editor load / Blueprint compile / PIE smoke 검증이 필요하다.
+```
+
+AI behavior tuning:
+
+```text
+Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.h
+-> MovableRange = 1000.f
+
+Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartRevive.h
+-> ReviveHP = 30.f
+
+후보:
+-> BT node-local UPROPERTY로 유지.
+-> Enemy / AI tuning struct로 이동.
+-> AI behavior DataAsset로 이동.
+
+주의:
+-> BT asset override와 연결될 수 있으므로 단순 constexpr 치환 대상이 아니다.
+-> 여러 enemy archetype이 값을 공유해야 하는지 먼저 판단한다.
+```
+
+Health default policy:
+
+```text
+Source/Portfolio/Component/CHealthComponent.h
+-> InitMaxHP = 0.f
+-> InitCurrentHP = 0.f
+-> MaxHP / PreviousHP / CurrentHP = 0.f
+
+후보:
+-> "BP에서 반드시 설정해야 하는 component" 계약으로 유지.
+-> C++ 기본 HP를 제공.
+-> character setup / health tuning struct로 이동.
+
+주의:
+-> 0 HP default는 component가 미설정 상태에서 사실상 unusable/dead가 되는 계약이다.
+-> 의도된 must-configure 패턴이면 유지 가능하지만 문서화가 필요하다.
+```
+
+Enemy AI tuning:
+
+```text
+Source/Portfolio/Character/Enemy/CEnemy.h
+-> patrol / investigate / chase / alert / engage 관련 거리, 시간, flag UPROPERTY
+
+후보:
+-> 현재처럼 Enemy UPROPERTY로 유지.
+-> FEnemyAITuning / FAIBehaviorTuning struct로 묶음.
+-> enemy archetype DataAsset로 이동.
+
+주의:
+-> 현재는 CEnemy가 AI behavior tuning 소유자다.
+-> 구조체화 / DataAsset화는 serialized field migration과 asset 검증 대상이다.
+```
+
+Weapon socket contract:
+
+```text
+Source/Portfolio/Weapon/CWeaponActor.h
+-> SocketName_Holster
+-> SocketName_Hand
+
+후보:
+-> BP 필수 설정 계약으로 유지.
+-> 기본 socket name constant 제공.
+-> weapon tuning / weapon setup struct로 이동.
+
+주의:
+-> socket 이름은 skeleton / mesh asset contract와 연결된다.
+-> 잘못된 기본값을 넣으면 누락이 숨겨질 수 있다.
+```
+
+Input binding string contract:
+
+```text
+Source/Portfolio/Controller/CPlayerController.cpp
+-> input binding action name string
+
+후보:
+-> input action name constants로 중앙화.
+-> enhanced input migration 때 함께 정리.
+
+주의:
+-> Project Settings input name과 연결되는 외부 계약값이다.
+-> 이름 변경 금지.
+```
+
+Feedback default ownership:
+
+```text
+Source/Portfolio/Type/CCombatFeedbackTypes.h
+-> FHitStopRequest default
+-> FCameraShakeRequest default
+
+후보:
+-> request fallback default로 유지.
+-> shared feedback default namespace로 이동.
+
+주의:
+-> component tuning과 request fallback default는 목적이 다르다.
+-> dedupe / playback model 변경 작업과 섞지 않는다.
+```
+
+### 9.4 RuntimeLOD / CVar 후보
+
+AI animation reduced refresh:
+
+```text
+Source/Portfolio/AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.cpp
+-> EnemyAnimationReducedRefreshInterval = 0.1f
+
+후보:
+-> CVar default로 유지.
+-> local constexpr default 이름을 부여하고 CVar default에 사용.
+
+주의:
+-> CVar 이름 / 설명 / default는 외부 조정 계약값이다.
+-> 값 변경 금지.
+```
+
+RuntimeLOD mode CVar:
+
+```text
+Source/Portfolio/AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.cpp
+-> movement mode 0 / 1 / 2
+
+Source/Portfolio/AI/RuntimeLOD/CAIStateRuntimeLODPolicy.cpp
+-> state policy mode 0 / 1
+
+Source/Portfolio/Character/Enemy/CEnemy.cpp
+-> enemy mesh mode 0 / 1
+-> enemy actor tick mode 0 / 1
+
+Source/Portfolio/System/Combat/CWorldSubsystem_CombatEngage.cpp
+-> warmup time default 0.0f
+-> engage cap default 2
+-> alert cap default 6
+
+현재 상태:
+-> enum wrapper / helper / CVar 설명으로 의미가 드러난다.
+
+후보:
+-> CVar default 값에 local constexpr 이름 부여.
+
+주의:
+-> CVar int32 / float default는 외부 튜닝 계약이므로 이름 / 값 변경 금지.
+```
+
+### 9.5 Data / validation 후보
+
+Action / Reaction play rate:
+
+```text
+Source/Portfolio/Type/CActionDataTypes.h
+-> PlayRate = 1.0f
+
+Source/Portfolio/Type/CReactionDataTypes.h
+-> PlayRate = 1.f
+
+후보:
+-> editor clamp metadata 추가.
+-> IsValidMinimal / validation 정책과 함께 정리.
+
+주의:
+-> 상수 제거라기보다 authoring validation 정책이다.
+-> runtime에서 duration <= 0을 거부하는 흐름과 맞춰 검토한다.
+```
+
+Defense guard clamp:
+
+```text
+Source/Portfolio/Type/CDefenseTuningTypes.h
+-> GuardDamageTakenMultiplier = 0.5f
+-> ClampMin = 0.0
+
+후보:
+-> ClampMax = 1.0 추가 여부 검토.
+
+주의:
+-> 1.0 초과를 "피해 증폭"으로 허용할지, guard mitigation으로 제한할지 정책 결정이 필요하다.
+```
+
+Notify editor color:
+
+```text
+Source/Portfolio/Notify/CAnimNotifyState_ExecutionInterventionWindow.cpp
+-> FLinearColor(0.1f, 0.45f, 0.95f, 1.0f)
+
+현재 상태:
+-> ExecutionInterventionWindowEditorColor로 이름 부여됨.
+
+판정:
+-> editor visualization default로 유지 가능.
+```
+
+### 9.6 BT / AI index 후보
+
+Investigate index:
+
+```text
+Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartInvestigate.cpp
+-> InvestigateIndex = 0
+
+Source/Portfolio/AI/BehaviorTree/Task/CBTTask_EndInvestigate.cpp
+-> InvestigateIndex = INDEX_NONE
+
+Source/Portfolio/AI/BehaviorTree/Task/CBTTask_AdvanceInvestigateIndex.cpp
+-> currentIndex + 1
+
+후보:
+-> first investigate index / next investigate index helper.
+
+주의:
+-> EndInvestigate의 invalid sentinel은 INDEX_NONE으로 정리 완료.
+-> Start / Advance는 sequence contract라 유지 가능.
+```
+
+Patrol index:
+
+```text
+Source/Portfolio/AI/BehaviorTree/Task/CBTTask_SelectPatrolPoint.cpp
+-> 0
+-> 1
+-> count - 1
+-> count - 2
+-> nextIndex + 1
+
+후보:
+-> patrol index boundary helper.
+
+주의:
+-> 대부분 배열 index / boundary arithmetic이다.
+-> 과도하게 상수화하면 알고리즘 가독성이 떨어질 수 있다.
+```
+
+Alert side multiplier:
+
+```text
+Source/Portfolio/AI/BehaviorTree/Task/CBTTask_SelectAlertPoint.cpp
+-> side multiplier 1.f / -1.f
+
+후보:
+-> named direction multiplier.
+
+주의:
+-> 현재는 local algorithm value라 유지 가능.
+```
+
+### 9.7 유지 권장 literal
+
+다음 값들은 현재 기준으로 상수 제거 대상에서 제외한다.
+
+```text
+-> 초기화 / reset 값 0, 0.f
+-> loop index 0 / ++i
+-> count 비교 / count reset
+-> HP / damage / heal guard 0.f
+-> hash seed uint32 H = 0
+-> pure virtual = 0
+-> enum None = 0 / Idle = 0
+-> INDEX_NONE / NAME_None / INT_MAX / KINDA_SMALL_NUMBER
+-> FVector::ZeroVector / FVector::OneVector
+-> CSV counter increment 1
+-> debug / profiling counter reset 0
+-> bool false / true
+```
+
+판정:
+
+```text
+-> 이 값들은 언어 / UE / 알고리즘 관례값이다.
+-> 이름을 붙이는 것이 항상 가독성을 높이지 않는다.
+-> 의미가 외부 계약이나 도메인 정책으로 올라갈 때만 별도 상수 / config로 승격한다.
+```
+
+### 9.8 후속 작업 단위 제안
+
+상수 정리형 처리 완료:
+
+```text
+-> CWeaponActor RootScene TEXT() 스타일 정리
+-> CActionOrchestratorComponent default ActionIndex 명명
+-> CActionKeyTypes guard phase 내부 literal 명명
+-> CAction_ComboAttack next index 의도 명명
+-> 위 항목은 이번 브랜치에서 처리 완료.
+```
+
+튜닝 소유권 follow-up:
+
+```text
+-> Parry result tuning 소유권 결정
+-> BT node-local tuning 유지 / 이동 기준 결정
+-> CHealthComponent 기본 HP 정책 결정
+-> CEnemy AI tuning struct / DataAsset 여부 결정
+-> Weapon socket default contract 결정
+```
+
+validation follow-up:
+
+```text
+-> PlayRate Clamp metadata / IsValidMinimal 정책 정리
+-> GuardDamageTakenMultiplier ClampMax 허용 여부 결정
+```
+
+input follow-up:
+
+```text
+-> CPlayerController input binding string contract 중앙화
+-> Enhanced Input migration 작업과 병합 여부 결정
+```
