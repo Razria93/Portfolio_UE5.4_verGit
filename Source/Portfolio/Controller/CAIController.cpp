@@ -29,13 +29,15 @@ ACAIController::ACAIController()
 	// Initialize AI perception component.
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	check(AIPerceptionComp);
+
+	InitializeSightConfig();
 }
 
 void ACAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitializeSightConfig();
+	ConfigureSightConfig();
 }
 
 void ACAIController::OnPossess(APawn* InPawn)
@@ -82,7 +84,7 @@ bool ACAIController::InitializeSightConfig()
 {
 	if (!IsValid(AIPerceptionComp)) return false;
 
-	SightConfig = NewObject<UAISenseConfig_Sight>(this, TEXT("SightConfig"));
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 	if (!IsValid(SightConfig)) return false;
 
 	return ConfigureSightConfig();
