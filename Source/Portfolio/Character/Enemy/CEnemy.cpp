@@ -53,7 +53,10 @@ namespace
 		return static_cast<int32>(InMode);
 	}
 
-	constexpr int32 MinimumParryStaggerThreshold = 1;
+	namespace EnemyCombatDefaults
+	{
+		constexpr int32 MinimumParryStaggerThreshold = 1;
+	}
 
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMeshMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMeshMode"),
@@ -417,7 +420,7 @@ void ACEnemy::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResul
 
 void ACEnemy::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
 {
-	const int32 threshold = FMath::Max(MinimumParryStaggerThreshold, ParryStaggerThreshold);
+	const int32 threshold = FMath::Max(EnemyCombatDefaults::MinimumParryStaggerThreshold, ParryStaggerThreshold);
 	ParryResultCount = FMath::Min(ParryResultCount + 1, threshold);
 
 	const bool bStaggerReady = ParryResultCount >= threshold;

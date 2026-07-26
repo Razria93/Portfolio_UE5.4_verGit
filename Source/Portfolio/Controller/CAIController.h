@@ -54,6 +54,8 @@ private:
 public:
 	ACAIController();
 
+	virtual void PostLoad() override;
+
 protected:
 	// Lifecycle
 	void BeginPlay() override;
@@ -69,6 +71,11 @@ protected:
 	// Config Setup
 	bool InitializeSightConfig();
 	bool ConfigureSightConfig();
+	void MigrateDeprecatedPerceptionSetup();
+
+private:
+	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use PerceptionSetup.TargetMemoryTimeout."))
+	float TargetMemoryTimeout;
 
 private:
 	// Runtime Lifecycle

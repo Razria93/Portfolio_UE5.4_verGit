@@ -24,6 +24,9 @@
 
 ACAIController::ACAIController()
 {
+	const FAIControllerPerceptionSetup defaultPerceptionSetup;
+	TargetMemoryTimeout = defaultPerceptionSetup.TargetMemoryTimeout;
+
 	CurrentRuntimeLODTier = EAIRuntimeLODTier::Background;
 
 	// Initialize AI perception component.
@@ -36,6 +39,13 @@ ACAIController::ACAIController()
 	{
 		AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
 	}
+}
+
+void ACAIController::PostLoad()
+{
+	Super::PostLoad();
+
+	MigrateDeprecatedPerceptionSetup();
 }
 
 void ACAIController::BeginPlay()
@@ -112,6 +122,55 @@ bool ACAIController::ConfigureSightConfig()
 	AIPerceptionComp->ConfigureSense(*SightConfig);
 
 	return true;
+}
+
+void ACAIController::MigrateDeprecatedPerceptionSetup()
+{
+	const FAIControllerPerceptionSetup defaultPerceptionSetup;
+
+	if (FMath::IsNearlyEqual(PerceptionSetup.TargetMemoryTimeout, defaultPerceptionSetup.TargetMemoryTimeout)
+		&& !FMath::IsNearlyEqual(TargetMemoryTimeout, defaultPerceptionSetup.TargetMemoryTimeout))
+	{
+		PerceptionSetup.TargetMemoryTimeout = TargetMemoryTimeout;
+	}
+
+	if (!IsValid(SightConfig)) return;
+
+	if (FMath::IsNearlyEqual(PerceptionSetup.SightRadius, defaultPerceptionSetup.SightRadius)
+		&& !FMath::IsNearlyEqual(SightConfig->SightRadius, defaultPerceptionSetup.SightRadius))
+	{
+		PerceptionSetup.SightRadius = SightConfig->SightRadius;
+	}
+	if (FMath::IsNearlyEqual(PerceptionSetup.LoseSightRadius, defaultPerceptionSetup.LoseSightRadius)
+		&& !FMath::IsNearlyEqual(SightConfig->LoseSightRadius, defaultPerceptionSetup.LoseSightRadius))
+	{
+		PerceptionSetup.LoseSightRadius = SightConfig->LoseSightRadius;
+	}
+	if (FMath::IsNearlyEqual(PerceptionSetup.PeripheralVisionAngleDegrees, defaultPerceptionSetup.PeripheralVisionAngleDegrees)
+		&& !FMath::IsNearlyEqual(SightConfig->PeripheralVisionAngleDegrees, defaultPerceptionSetup.PeripheralVisionAngleDegrees))
+	{
+		PerceptionSetup.PeripheralVisionAngleDegrees = SightConfig->PeripheralVisionAngleDegrees;
+	}
+	if (FMath::IsNearlyEqual(PerceptionSetup.MaxAge, defaultPerceptionSetup.MaxAge)
+		&& !FMath::IsNearlyEqual(SightConfig->GetMaxAge(), defaultPerceptionSetup.MaxAge))
+	{
+		PerceptionSetup.MaxAge = SightConfig->GetMaxAge();
+	}
+	if (PerceptionSetup.bDetectEnemies == defaultPerceptionSetup.bDetectEnemies
+		&& SightConfig->DetectionByAffiliation.bDetectEnemies != defaultPerceptionSetup.bDetectEnemies)
+	{
+		PerceptionSetup.bDetectEnemies = SightConfig->DetectionByAffiliation.bDetectEnemies;
+	}
+	if (PerceptionSetup.bDetectFriendlies == defaultPerceptionSetup.bDetectFriendlies
+		&& SightConfig->DetectionByAffiliation.bDetectFriendlies != defaultPerceptionSetup.bDetectFriendlies)
+	{
+		PerceptionSetup.bDetectFriendlies = SightConfig->DetectionByAffiliation.bDetectFriendlies;
+	}
+	if (PerceptionSetup.bDetectNeutrals == defaultPerceptionSetup.bDetectNeutrals
+		&& SightConfig->DetectionByAffiliation.bDetectNeutrals != defaultPerceptionSetup.bDetectNeutrals)
+	{
+		PerceptionSetup.bDetectNeutrals = SightConfig->DetectionByAffiliation.bDetectNeutrals;
+	}
 }
 
 // Runtime Lifecycle

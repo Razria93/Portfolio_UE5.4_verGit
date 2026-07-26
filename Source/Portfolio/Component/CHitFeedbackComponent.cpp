@@ -17,6 +17,60 @@
 
 UCHitFeedbackComponent::UCHitFeedbackComponent()
 {
+	const FHitStopFeedbackTuning defaultHitStopTuning;
+	HitStopAudience = defaultHitStopTuning.Audience;
+	HitStopDuration = defaultHitStopTuning.Duration;
+	HitStopDilation = defaultHitStopTuning.Dilation;
+
+	const FHitCameraShakeFeedbackTuning defaultCameraShakeTuning;
+	CameraShakeAudience = defaultCameraShakeTuning.Audience;
+	CameraShakeClass = defaultCameraShakeTuning.CameraShakeClass;
+	CameraShakeBaseScale = defaultCameraShakeTuning.BaseScale;
+	bEnableCameraShake = defaultCameraShakeTuning.bEnabled;
+}
+
+void UCHitFeedbackComponent::PostLoad()
+{
+	Super::PostLoad();
+
+	MigrateDeprecatedFeedbackTuning();
+}
+
+void UCHitFeedbackComponent::MigrateDeprecatedFeedbackTuning()
+{
+	const FHitStopFeedbackTuning defaultHitStopTuning;
+
+	if (HitStopTuning.Audience == defaultHitStopTuning.Audience && HitStopAudience != defaultHitStopTuning.Audience)
+	{
+		HitStopTuning.Audience = HitStopAudience;
+	}
+	if (FMath::IsNearlyEqual(HitStopTuning.Duration, defaultHitStopTuning.Duration) && !FMath::IsNearlyEqual(HitStopDuration, defaultHitStopTuning.Duration))
+	{
+		HitStopTuning.Duration = HitStopDuration;
+	}
+	if (FMath::IsNearlyEqual(HitStopTuning.Dilation, defaultHitStopTuning.Dilation) && !FMath::IsNearlyEqual(HitStopDilation, defaultHitStopTuning.Dilation))
+	{
+		HitStopTuning.Dilation = HitStopDilation;
+	}
+
+	const FHitCameraShakeFeedbackTuning defaultCameraShakeTuning;
+
+	if (CameraShakeTuning.bEnabled == defaultCameraShakeTuning.bEnabled && bEnableCameraShake != defaultCameraShakeTuning.bEnabled)
+	{
+		CameraShakeTuning.bEnabled = bEnableCameraShake;
+	}
+	if (CameraShakeTuning.Audience == defaultCameraShakeTuning.Audience && CameraShakeAudience != defaultCameraShakeTuning.Audience)
+	{
+		CameraShakeTuning.Audience = CameraShakeAudience;
+	}
+	if (!IsValid(CameraShakeTuning.CameraShakeClass) && IsValid(CameraShakeClass))
+	{
+		CameraShakeTuning.CameraShakeClass = CameraShakeClass;
+	}
+	if (FMath::IsNearlyEqual(CameraShakeTuning.BaseScale, defaultCameraShakeTuning.BaseScale) && !FMath::IsNearlyEqual(CameraShakeBaseScale, defaultCameraShakeTuning.BaseScale))
+	{
+		CameraShakeTuning.BaseScale = CameraShakeBaseScale;
+	}
 }
 
 // Component Reference

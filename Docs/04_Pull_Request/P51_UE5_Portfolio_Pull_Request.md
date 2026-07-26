@@ -171,11 +171,38 @@ CAnimNotifyState_ExecutionInterventionWindow.cpp
 -> CActionFeedbackTypes RelativeScale: FVector::OneVector
 -> Execution intervention notify editor color: 이름 있는 editor color
 -> ParryStaggerThreshold: ClampMin = 1 + runtime 최소값 guard
+-> CHitFeedbackComponent legacy HitStop / CameraShake 필드: PostLoad migration
+-> CAIController legacy SightConfig / TargetMemoryTimeout 값: PostLoad migration
+-> Player / Enemy parry threshold 내부 상수: unity build 충돌 방지용 namespace 분리
 ```
 
 결과
 
 값 변경 없이 의미가 불명확한 남은 literal을 정리했다.
+
+### 6. 리뷰 대응
+
+무엇
+
+`CHitFeedbackComponent`의 hit feedback 설정을 구조체로 묶는 과정에서 기존 Blueprint asset이 저장하던 legacy scalar property 값을 잃지 않도록 호환 레이어를 추가했다.
+
+어떻게
+
+```text
+-> 기존 HitStopAudience / HitStopDuration / HitStopDilation property를 deprecated property로 유지
+-> 기존 bEnableCameraShake / CameraShakeAudience / CameraShakeClass / CameraShakeBaseScale property를 deprecated property로 유지
+-> PostLoad에서 legacy 값이 의미를 가진 경우 새 HitStopTuning / CameraShakeTuning으로 복사
+-> 새 struct 값이 이미 설정된 경우 legacy 기본값으로 덮어쓰지 않도록 조건부 migration 적용
+-> deprecated field에는 raw default literal을 두지 않고 새 config struct 기본값에서 초기화
+```
+
+결과
+
+기존 `BP_CPlayer`, `BP_CEnemy` 같은 Blueprint asset이 저장한 camera shake class와 hit feedback 기본값을 새 구조체 설정으로 이어받을 수 있게 했다.
+
+추가로 `CAIController`의 perception 설정도 기존 Blueprint가 `SightConfig` subobject와 `TargetMemoryTimeout`에 저장한 값을 잃지 않도록 `PostLoad` migration을 추가했다. 기존 asset 값이 native default와 다를 때만 `PerceptionSetup`으로 복사하고, 이후 BeginPlay의 sight config 적용은 migration된 값을 기준으로 수행한다.
+
+이 migration layer는 영구 구조가 아니다. 대상 asset을 Editor에서 열고 저장해 새 config struct 값이 asset에 기록되면, 후속 커밋에서 deprecated field와 `PostLoad` migration 코드를 제거한다.
 
 ## 명시적 보류
 
@@ -184,7 +211,7 @@ CAnimNotifyState_ExecutionInterventionWindow.cpp
 ```text
 -> DataAsset 전환
 -> Project Settings 전환
--> Blueprint / serialized asset migration
+-> 광범위 Blueprint / serialized asset migration
 -> USTRUCT / UPROPERTY rename
 -> enum entry rename
 -> CVar 이름 / default 계약 변경

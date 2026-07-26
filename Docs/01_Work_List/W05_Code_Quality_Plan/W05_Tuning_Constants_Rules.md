@@ -13,6 +13,7 @@
 - [x] 내부 규칙값 / 튜닝 데이터 / 외부 계약값 분류 기준 정리
 - [x] enum / helper / constexpr 적용 기준 정리
 - [x] config / UPROPERTY / DataAsset 분리 기준 정리
+- [x] serialized UPROPERTY regrouping migration 기준 정리
 
 ---
 
@@ -112,6 +113,42 @@ int32 GetExampleModeValue(EExampleMode InMode);
 -> 여러 값이 항상 묶여 움직이면 config USTRUCT 후보로 둔다.
 -> 여러 actor / Blueprint / archetype이 같은 설정 묶음을 공유하면 DataAsset 후보로 둔다.
 -> DataAsset 전환은 asset 생성, editor load, Blueprint compile, PIE smoke 검증이 필요한 구조 변경으로 본다.
+```
+
+### 2.4.1 Serialized UPROPERTY regrouping migration
+
+기존 `UPROPERTY`를 config `USTRUCT`로 묶거나 이름 / 소유권을 바꿀 때는 Blueprint / asset serialization 값을 먼저 보호한다.
+
+규칙:
+
+```text
+-> 기존 field를 바로 삭제하지 않는다.
+-> 기존 field는 DeprecatedProperty로 1 pass 유지한다.
+-> deprecated field는 editor 설정 소유자가 아니라 legacy asset 값을 읽기 위한 migration slot이다.
+-> deprecated field에는 raw default literal을 다시 두지 않는다.
+-> deprecated field의 기본 상태가 필요하면 새 config struct 기본값에서 초기화한다.
+-> 새 field / struct가 default이고 legacy field가 non-default이면 PostLoad에서 복사한다.
+-> float은 정확 비교 대신 FMath::IsNearlyEqual 기준으로 default 여부를 판단한다.
+-> UObject / asset reference는 새 값이 nullptr이고 legacy 값이 valid일 때 복사한다.
+-> migration이 필요한 asset을 Editor에서 열고 저장한다.
+-> 저장 검증 이후 후속 PR 또는 후속 커밋에서 deprecated field와 migration 코드를 제거한다.
+```
+
+권장 커밋 순서:
+
+```text
+1. 규칙 추가 + 코드 migration layer 추가
+2. Editor에서 대상 asset을 열고 저장
+3. 저장 검증 이후 deprecated field / PostLoad migration code 제거
+```
+
+주의:
+
+```text
+-> migration layer는 영구 구조가 아니다.
+-> runtime 로직은 새 config struct만 읽는다.
+-> migration layer 추가 커밋과 제거 커밋은 분리한다.
+-> asset 저장 커밋은 코드 변경 커밋과 분리한다.
 ```
 
 ### 2.5 외부 계약값
