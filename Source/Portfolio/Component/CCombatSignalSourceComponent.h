@@ -9,7 +9,6 @@
 #include "Type/CCombatSignalSourceTypes.h"
 #include "CCombatSignalSourceComponent.generated.h"
 
-
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCCombatSignalSourceComponent : public UActorComponent
 {

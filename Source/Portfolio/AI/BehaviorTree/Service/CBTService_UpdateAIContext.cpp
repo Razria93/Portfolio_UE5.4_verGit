@@ -27,8 +27,8 @@ UCBTService_UpdateAIContext::UCBTService_UpdateAIContext()
 	NodeName = "Update AIContext";
 	bNotifyTick = true;
 
-	Interval = 0.1f;
-	RandomDeviation = 0.0f;
+	Interval = CBTServiceIntervalHelper::GetDefaultAIContextInterval();
+	RandomDeviation = CBTServiceIntervalHelper::GetDefaultRandomDeviation();
 }
 
 void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
@@ -84,7 +84,6 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		UpdateReactionContext(blackboardComp, aiContext);
 	else
 		ClearReactionContext(blackboardComp);
-
 
 	EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
 

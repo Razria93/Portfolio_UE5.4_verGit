@@ -6,7 +6,6 @@
 #include "Type/CReactionFeedbackTypes.h"
 #include "CReactionFeedbackComponent.generated.h"
 
-
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCReactionFeedbackComponent : public UActorComponent
 {

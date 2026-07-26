@@ -17,6 +17,21 @@ enum class ECombatRole : uint8
 	Alert
 };
 
+// Data / Config
+
+USTRUCT(BlueprintType)
+struct FEngageAssignmentTuning
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Assignment")
+	float RebuildInterval = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category = "Assignment")
+	float LeaseDuration = 0.5f;
+};
+
 // Request
 
 USTRUCT(BlueprintType)

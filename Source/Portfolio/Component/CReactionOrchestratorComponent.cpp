@@ -441,7 +441,6 @@ FReactionExecutionResult UCReactionOrchestratorComponent::BuildReactionExecution
 	return result;
 }
 
-
 // Decision Refinement
 
 void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecutionDecisionQuery& InQuery, FReactionExecutionResult& InOutResult) const
@@ -499,7 +498,6 @@ void UCReactionOrchestratorComponent::ResolveExecutionApplyMode(const FExecution
 		return;
 	}
 
-	
 	default:
 		InOutResult.Decision = EExecutionDecision::Reject;
 		InOutResult.RejectReason = EReactionRequestRejectReason::NoExecutableReaction;

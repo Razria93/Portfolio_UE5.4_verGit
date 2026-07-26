@@ -6,6 +6,14 @@
 #include "Type/CEngageAssignmentTypes.h"
 #include "CWorldSubsystem_CombatEngage.generated.h"
 
+namespace CCombatEngageConstants
+{
+	constexpr float UnsetAssignmentWarmupStartTime = -1.f;
+	constexpr float MissingAssignmentLeaseAge = -1.f;
+	constexpr int32 InitialAssignmentRebuildId = 0;
+	constexpr int32 FirstAssignmentRebuildId = 1;
+}
+
 UCLASS()
 class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsystem
 {
@@ -13,16 +21,13 @@ class PORTFOLIO_API UCWorldSubsystem_CombatEngage : public UTickableWorldSubsyst
 	
 private:
 	UPROPERTY()
-	float RebuildInterval = 0.1f;
-
-	UPROPERTY()
-	float AssignmentLeaseDuration = 0.5f;
+	FEngageAssignmentTuning AssignmentTuning;
 
 private:
 	float ElapsedTime = 0.f;
-	float AssignmentWarmupStartTime = -1.f;
+	float AssignmentWarmupStartTime = CCombatEngageConstants::UnsetAssignmentWarmupStartTime;
 	bool bAssignmentWarmupCompleted = false;
-	int32 AssignmentRebuildId = 0;
+	int32 AssignmentRebuildId = CCombatEngageConstants::InitialAssignmentRebuildId;
 
 private:
 	UPROPERTY()

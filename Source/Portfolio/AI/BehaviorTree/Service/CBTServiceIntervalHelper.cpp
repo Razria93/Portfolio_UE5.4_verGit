@@ -11,10 +11,22 @@
 
 namespace
 {
+	enum class EBTServiceIntervalMode : int32
+	{
+		Default = 0,
+		Reduced = 1,
+		AggressiveReduced = 2,
+	};
+
+	constexpr int32 ToBTServiceIntervalModeValue(EBTServiceIntervalMode InMode)
+	{
+		return static_cast<int32>(InMode);
+	}
+
 	// Console Variable
 	TAutoConsoleVariable<int32> CVarBTUpdateIntervalMode(
 		TEXT("Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode"),
-		0,
+		ToBTServiceIntervalModeValue(EBTServiceIntervalMode::Default),
 		TEXT("Controls AI BT service update interval Runtime LOD mode. 0: default, 1: reduced, 2: aggressive reduced."),
 		ECVF_Default);
 
@@ -24,11 +36,18 @@ namespace
 	constexpr float ReducedAIIntentStateInterval = 0.3f;
 	constexpr float AggressiveAIIntentStateInterval = 0.5f;
 	constexpr float DefaultEngageContextInterval = 0.1f;
+	constexpr float DefaultInvestigateContextInterval = 0.1f;
+	constexpr float DefaultRandomDeviation = 0.0f;
 
 	// Mode Query
-	int32 GetBTUpdateIntervalMode()
+	EBTServiceIntervalMode GetBTUpdateIntervalMode()
 	{
-		return FMath::Clamp(CVarBTUpdateIntervalMode.GetValueOnGameThread(), 0, 2);
+		const int32 modeValue = FMath::Clamp(
+			CVarBTUpdateIntervalMode.GetValueOnGameThread(),
+			ToBTServiceIntervalModeValue(EBTServiceIntervalMode::Default),
+			ToBTServiceIntervalModeValue(EBTServiceIntervalMode::AggressiveReduced));
+
+		return static_cast<EBTServiceIntervalMode>(modeValue);
 	}
 
 	// Runtime LOD Tier Snapshot
@@ -59,11 +78,11 @@ namespace
 	}
 
 	// Interval Preset Selection
-	EBTServiceIntervalPreset SelectIntervalPreset(int32 InMode, EAIRuntimeLODTier InTier)
+	EBTServiceIntervalPreset SelectIntervalPreset(EBTServiceIntervalMode InMode, EAIRuntimeLODTier InTier)
 	{
 		switch (InMode)
 		{
-		case 0:
+		case EBTServiceIntervalMode::Default:
 			switch (InTier)
 			{
 			case EAIRuntimeLODTier::CombatCritical:
@@ -75,7 +94,7 @@ namespace
 				return EBTServiceIntervalPreset::Default;
 			}
 
-		case 1:
+		case EBTServiceIntervalMode::Reduced:
 			switch (InTier)
 			{
 			case EAIRuntimeLODTier::CombatCritical:
@@ -89,7 +108,7 @@ namespace
 				return EBTServiceIntervalPreset::Reduced;
 			}
 
-		case 2:
+		case EBTServiceIntervalMode::AggressiveReduced:
 		default:
 			switch (InTier)
 			{
@@ -154,9 +173,34 @@ namespace
 
 // Public API
 
-float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
+float CBTServiceIntervalHelper::GetDefaultAIContextInterval()
 {
 	return DefaultAIContextInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultAIIntentStateInterval()
+{
+	return DefaultAIIntentStateInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultEngageContextInterval()
+{
+	return DefaultEngageContextInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultInvestigateContextInterval()
+{
+	return DefaultInvestigateContextInterval;
+}
+
+float CBTServiceIntervalHelper::GetDefaultRandomDeviation()
+{
+	return DefaultRandomDeviation;
+}
+
+float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
+{
+	return GetDefaultAIContextInterval();
 }
 
 float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
@@ -166,5 +210,5 @@ float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComp
 
 float CBTServiceIntervalHelper::GetEngageContextInterval()
 {
-	return DefaultEngageContextInterval;
+	return GetDefaultEngageContextInterval();
 }

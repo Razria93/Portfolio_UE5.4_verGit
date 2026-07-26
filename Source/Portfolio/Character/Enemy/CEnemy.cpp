@@ -31,15 +31,42 @@
 
 namespace
 {
+	enum class EEnemyMeshRuntimeLODMode : int32
+	{
+		Default = 0,
+		HiddenKeepPose = 1,
+	};
+
+	enum class EEnemyActorTickRuntimeLODMode : int32
+	{
+		Default = 0,
+		Disabled = 1,
+	};
+
+	constexpr int32 ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode InMode)
+	{
+		return static_cast<int32>(InMode);
+	}
+
+	constexpr int32 ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode InMode)
+	{
+		return static_cast<int32>(InMode);
+	}
+
+	namespace EnemyCombatDefaults
+	{
+		constexpr int32 MinimumParryStaggerThreshold = 1;
+	}
+
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMeshMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMeshMode"),
-		0,
+		ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::Default),
 		TEXT("Controls ACEnemy mesh runtime LOD mode. 0: visible, 1: hidden keep pose."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyActorTickMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyActorTickMode"),
-		0,
+		ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Default),
 		TEXT("Controls ACEnemy actor tick Runtime LOD mode. 0: default, 1: disable ACEnemy actor tick."),
 		ECVF_Default);
 }
@@ -48,19 +75,9 @@ ACEnemy::ACEnemy()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
-	check(CapsuleComp);
-	CapsuleComp->InitCapsuleSize(40.0f, 90.0f);
-
-	USkeletalMeshComponent* MeshComp = GetMesh();
-	check(MeshComp);
-	MeshComp->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
-	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f)); // FRotator: (Pitch, Yaw, Roll)
-
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
 	check(characterMovementComp);
 	characterMovementComp->bOrientRotationToMovement = true;
-	characterMovementComp->MaxWalkSpeed = 600.0f;
 
 	MovementComponent = CreateDefaultSubobject<UCMovementComponent>(TEXT("Movement"));
 	check(MovementComponent);
@@ -103,9 +120,18 @@ ACEnemy::ACEnemy()
 
 	ReactionFeedbackComponent = CreateDefaultSubobject<UCReactionFeedbackComponent>(TEXT("ReactionFeedback"));
 	check(ReactionFeedbackComponent);
+
+	ApplyCharacterSetup();
 }
 
 // Lifecycle
+
+void ACEnemy::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	ApplyCharacterSetup();
+}
 
 void ACEnemy::PostInitializeComponents()
 {
@@ -153,6 +179,24 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+// Setup
+
+void ACEnemy::ApplyCharacterSetup()
+{
+	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	check(CapsuleComp);
+	CapsuleComp->InitCapsuleSize(CapsuleSetup.Radius, CapsuleSetup.HalfHeight);
+
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	check(MeshComp);
+	MeshComp->SetRelativeLocation(MeshSetup.RelativeLocation);
+	MeshComp->SetRelativeRotation(MeshSetup.RelativeRotation);
+
+	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
+	check(characterMovementComp);
+	characterMovementComp->MaxWalkSpeed = MovementSetup.DefaultWalkSpeed;
 }
 
 // Component Reference
@@ -229,7 +273,10 @@ void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences
 
 void ACEnemy::UpdateRuntimeLODMeshMode()
 {
-	const int32 requestedMeshMode = FMath::Clamp(CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(), 0, 1);
+	const int32 requestedMeshMode = FMath::Clamp(
+		CVarAIRuntimeLODEnemyMeshMode.GetValueOnGameThread(),
+		ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::Default),
+		ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::HiddenKeepPose));
 	if (RuntimeLODMeshState.AppliedMode == requestedMeshMode) return;
 
 	USkeletalMeshComponent* meshComp = GetMesh();
@@ -243,13 +290,13 @@ void ACEnemy::UpdateRuntimeLODMeshMode()
 
 	switch (requestedMeshMode)
 	{
-	case 1:
+	case ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::HiddenKeepPose):
 		meshComp->SetHiddenInGame(true, false);
 		meshComp->SetVisibility(false, false);
 		meshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 		break;
 
-	case 0:
+	case ToEnemyMeshRuntimeLODModeValue(EEnemyMeshRuntimeLODMode::Default):
 	default:
 		meshComp->SetHiddenInGame(false, false);
 		meshComp->SetVisibility(true, false);
@@ -262,7 +309,10 @@ void ACEnemy::UpdateRuntimeLODMeshMode()
 
 void ACEnemy::UpdateRuntimeLODActorTickMode()
 {
-	const int32 requestedActorTickMode = FMath::Clamp(CVarAIRuntimeLODEnemyActorTickMode.GetValueOnGameThread(), 0, 1);
+	const int32 requestedActorTickMode = FMath::Clamp(
+		CVarAIRuntimeLODEnemyActorTickMode.GetValueOnGameThread(),
+		ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Default),
+		ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Disabled));
 
 	CacheRuntimeLODActorTickOriginalState();
 
@@ -284,11 +334,11 @@ void ACEnemy::ApplyRuntimeLODActorTickMode(int32 InActorTickMode)
 {
 	switch (InActorTickMode)
 	{
-	case 1:
+	case ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Disabled):
 		ApplyRuntimeLODActorTickDisabled();
 		break;
 
-	case 0:
+	case ToEnemyActorTickRuntimeLODModeValue(EEnemyActorTickRuntimeLODMode::Default):
 	default:
 		ApplyRuntimeLODActorTickDefault();
 		break;
@@ -370,7 +420,7 @@ void ACEnemy::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResul
 
 void ACEnemy::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
 {
-	const int32 threshold = FMath::Max(1, ParryStaggerThreshold);
+	const int32 threshold = FMath::Max(EnemyCombatDefaults::MinimumParryStaggerThreshold, ParryStaggerThreshold);
 	ParryResultCount = FMath::Min(ParryResultCount + 1, threshold);
 
 	const bool bStaggerReady = ParryResultCount >= threshold;
@@ -514,7 +564,6 @@ bool ACEnemy::IsCombatActionType(EActionType InActionType) const
 	{
 	case EActionType::ComboAttack:
 		return true;
-
 
 	default:
 		return false; // Idle / Equip / Unequip etc..

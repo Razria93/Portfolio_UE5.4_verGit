@@ -9,16 +9,31 @@
 
 namespace
 {
+	enum class EAIMovementRuntimeLODMode : int32
+	{
+		Default = 0,
+		DisableStateRefresh = 1,
+		BlockMovementIntent = 2,
+	};
+
+	constexpr int32 ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode InMode)
+	{
+		return static_cast<int32>(InMode);
+	}
+
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMovementMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMovementMode"),
-		0,
+		ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default),
 		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: disable movement state refresh, 2: block movement intent."),
 		ECVF_Default);
 }
 
 int32 FAIMovementRuntimeLODPolicy::GetEnemyMovementMode()
 {
-	return FMath::Clamp(CVarAIRuntimeLODEnemyMovementMode.GetValueOnGameThread(), 0, 2);
+	return FMath::Clamp(
+		CVarAIRuntimeLODEnemyMovementMode.GetValueOnGameThread(),
+		ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default),
+		ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::BlockMovementIntent));
 }
 
 int32 FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(const AActor* InOwner)
@@ -38,30 +53,30 @@ bool FAIMovementRuntimeLODPolicy::IsEnemyMovementRuntimeLODTarget(const AActor* 
 
 bool FAIMovementRuntimeLODPolicy::ShouldDisableMovementStateRefresh(int32 InMovementMode)
 {
-	return InMovementMode == 1;
+	return InMovementMode == ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::DisableStateRefresh);
 }
 
 bool FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(int32 InMovementMode)
 {
-	return InMovementMode == 2;
+	return InMovementMode == ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::BlockMovementIntent);
 }
 
 int32 FAIMovementRuntimeLODPolicy::GetStateBasedMovementMode(const AActor* InOwner)
 {
 	const APawn* ownerPawn = Cast<APawn>(InOwner);
 	const ACAIController* aiController = IsValid(ownerPawn) ? Cast<ACAIController>(ownerPawn->GetController()) : nullptr;
-	if (!IsValid(aiController)) return 0;
+	if (!IsValid(aiController)) return ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default);
 
 	switch (aiController->GetCurrentRuntimeLODTier())
 	{
 	case EAIRuntimeLODTier::Awareness:
 	case EAIRuntimeLODTier::Dormant:
-		return 2;
+		return ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::BlockMovementIntent);
 
 	case EAIRuntimeLODTier::CombatCritical:
 	case EAIRuntimeLODTier::CombatSupport:
 	case EAIRuntimeLODTier::Background:
 	default:
-		return 0;
+		return ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default);
 	}
 }

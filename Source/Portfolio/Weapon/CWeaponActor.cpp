@@ -17,7 +17,7 @@ ACWeaponActor::ACWeaponActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	RootSceneComponent = CreateDefaultSubobject<USceneComponent>("RootScene");
+	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
 	check(RootSceneComponent);
 
 	SetRootComponent(RootSceneComponent);

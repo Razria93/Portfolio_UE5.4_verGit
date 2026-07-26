@@ -106,14 +106,14 @@ float UCPlayerFeedbackComponent::ResolveCameraShake(const FCameraShakeRequest& I
 	switch (InCameraShakeRequest.CameraShakeAudience)
 	{
 	case EFeedbackAudience::Source:
-		return bIsLocalSource ? InCameraShakeRequest.CameraShakeBaseScale * LocalSourceShakeScale : 0.f;
+		return bIsLocalSource ? InCameraShakeRequest.CameraShakeBaseScale * CameraShakeTuning.LocalSourceScale : 0.f;
 
 	case EFeedbackAudience::Target:
-		return bIsLocalTarget ? InCameraShakeRequest.CameraShakeBaseScale * LocalTargetShakeScale : 0.f;
+		return bIsLocalTarget ? InCameraShakeRequest.CameraShakeBaseScale * CameraShakeTuning.LocalTargetScale : 0.f;
 
 	case EFeedbackAudience::Both:
-		if (bIsLocalTarget) return InCameraShakeRequest.CameraShakeBaseScale * LocalTargetShakeScale;
-		if (bIsLocalSource) return InCameraShakeRequest.CameraShakeBaseScale * LocalSourceShakeScale;
+		if (bIsLocalTarget) return InCameraShakeRequest.CameraShakeBaseScale * CameraShakeTuning.LocalTargetScale;
+		if (bIsLocalSource) return InCameraShakeRequest.CameraShakeBaseScale * CameraShakeTuning.LocalSourceScale;
 
 	default:
 		break;

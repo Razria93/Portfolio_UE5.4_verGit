@@ -46,7 +46,7 @@ namespace CAIKey
 
 		static const FAIBlackboardKeySpec bPatrolReverse = CAIKeyFactory::FixedBool(TEXT("bPatrolReverse"), false);
 		static const FAIBlackboardKeySpec PatrolLocation = CAIKeyFactory::FromOwnerLocation(TEXT("PatrolLocation"));
-		static const FAIBlackboardKeySpec PatrolIndex = CAIKeyFactory::FixedInt(TEXT("PatrolIndex"), -1);
+		static const FAIBlackboardKeySpec PatrolIndex = CAIKeyFactory::FixedInt(TEXT("PatrolIndex"), INDEX_NONE);
 	}
 
 	namespace Investigate

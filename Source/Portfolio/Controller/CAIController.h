@@ -5,6 +5,7 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "Core/Debug/FAIPerceptionDebugTypes.h"
 #include "Type/CAITypes.h"
+#include "Type/CAIPerceptionSetupTypes.h"
 #include "CAIController.generated.h"
 
 enum class EAIRuntimeLODTier : uint8;
@@ -15,8 +16,8 @@ class PORTFOLIO_API ACAIController : public AAIController
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere)
-	float TargetMemoryTimeout = 3.0f;
+	UPROPERTY(EditDefaultsOnly, Category = "AI|Perception")
+	FAIControllerPerceptionSetup PerceptionSetup;
 
 protected:
 	UPROPERTY(Transient)
@@ -67,6 +68,7 @@ public:
 protected:
 	// Config Setup
 	bool InitializeSightConfig();
+	bool ConfigureSightConfig();
 
 private:
 	// Runtime Lifecycle
@@ -160,5 +162,3 @@ private:
 	bool ShouldAuditBlackboardEngageLatency() const;
 
 };
-
-

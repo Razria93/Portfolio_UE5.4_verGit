@@ -22,8 +22,8 @@ UCBTService_UpdateAIIntentState::UCBTService_UpdateAIIntentState()
 	NodeName = "Update AI Intent State";
 	bNotifyTick = true;
 
-	Interval = 0.2f;
-	RandomDeviation = 0.f;
+	Interval = CBTServiceIntervalHelper::GetDefaultAIIntentStateInterval();
+	RandomDeviation = CBTServiceIntervalHelper::GetDefaultRandomDeviation();
 }
 
 void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)

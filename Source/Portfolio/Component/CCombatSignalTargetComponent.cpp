@@ -375,7 +375,7 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanGuard())
 	{
 		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
-		mitigatedDamage *= 0.5f;
+		mitigatedDamage *= DefenseComp_Injected->GetGuardDamageTakenMultiplier();
 	}
 
 	// TODO(CombatPolicy): Add defense / armor / resistance mitigation policy.

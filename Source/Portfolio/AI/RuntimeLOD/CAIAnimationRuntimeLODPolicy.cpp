@@ -9,9 +9,20 @@
 
 namespace
 {
+	enum class EAIAnimationRuntimeLODMode : int32
+	{
+		DefaultRefresh = 0,
+		ReducedParameterRefresh = 1,
+	};
+
+	constexpr int32 ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode InMode)
+	{
+		return static_cast<int32>(InMode);
+	}
+
 	TAutoConsoleVariable<int32> CVarEnemyAnimationMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationMode"),
-		0,
+		ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh),
 		TEXT("Controls ACEnemy animation runtime LOD mode. 0: default refresh, 1: reduced parameter refresh."),
 		ECVF_Default);
 
@@ -25,7 +36,10 @@ namespace
 
 int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode()
 {
-	return FMath::Clamp(CVarEnemyAnimationMode.GetValueOnGameThread(), 0, 1);
+	return FMath::Clamp(
+		CVarEnemyAnimationMode.GetValueOnGameThread(),
+		ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh),
+		ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::ReducedParameterRefresh));
 }
 
 int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(const AActor* InOwner)
@@ -52,18 +66,18 @@ int32 FAIAnimationRuntimeLODPolicy::GetStateBasedAnimationMode(const AActor* InO
 {
 	const APawn* ownerPawn = Cast<APawn>(InOwner);
 	const ACAIController* aiController = IsValid(ownerPawn) ? Cast<ACAIController>(ownerPawn->GetController()) : nullptr;
-	if (!IsValid(aiController)) return 0;
+	if (!IsValid(aiController)) return ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh);
 
 	switch (aiController->GetCurrentRuntimeLODTier())
 	{
 	case EAIRuntimeLODTier::Awareness:
 	case EAIRuntimeLODTier::Background:
 	case EAIRuntimeLODTier::Dormant:
-		return 1;
+		return ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::ReducedParameterRefresh);
 
 	case EAIRuntimeLODTier::CombatCritical:
 	case EAIRuntimeLODTier::CombatSupport:
 	default:
-		return 0;
+		return ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh);
 	}
 }

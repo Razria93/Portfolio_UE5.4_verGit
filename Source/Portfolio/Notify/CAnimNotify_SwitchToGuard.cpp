@@ -3,11 +3,12 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CActionComponent.h"
+#include "Type/CActionKeyTypes.h"
 
 UCAnimNotify_SwitchToGuard::UCAnimNotify_SwitchToGuard()
 {
 	TriggerActionType = EActionType::Guard;
-	TriggerActionIndex = 1;
+	TriggerActionIndex = GetGuardActionPhaseIndex(EGuardActionPhase::In);
 }
 
 FString UCAnimNotify_SwitchToGuard::GetNotifyName_Implementation() const

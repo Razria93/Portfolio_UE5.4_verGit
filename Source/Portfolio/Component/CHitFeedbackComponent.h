@@ -12,18 +12,12 @@ class PORTFOLIO_API UCHitFeedbackComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UCHitFeedbackComponent();
 
 private:
-	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")
-	EFeedbackAudience HitStopAudience = EFeedbackAudience::Both;
-
-	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")
-	float HitStopDuration = 0.04f;
-
-	UPROPERTY(EditAnywhere, Category = "FeedBack|HitStop")
-	float HitStopDilation = 0.05f;
+	UPROPERTY(EditAnywhere, Category = "Feedback|HitStop")
+	FHitStopFeedbackTuning HitStopTuning;
 
 	UPROPERTY(EditAnywhere, Category = "Feedback|VFX")
 	class UNiagaraSystem* HitVFX = nullptr;
@@ -32,17 +26,7 @@ private:
 	class USoundBase* HitSFX = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
-	EFeedbackAudience CameraShakeAudience = EFeedbackAudience::Both;
-
-	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
-	TSubclassOf<class UCameraShakeBase> CameraShakeClass;
-
-	UPROPERTY(EditAnywhere, Category = "Feedback|CameraShake")
-	float CameraShakeBaseScale = 1.f;
-
-private:
-	UPROPERTY(EditAnywhere)
-	bool bEnableCameraShake = true;
+	FHitCameraShakeFeedbackTuning CameraShakeTuning;
 
 private:
 	UPROPERTY(Transient)

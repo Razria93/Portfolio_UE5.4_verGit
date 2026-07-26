@@ -31,16 +31,13 @@ ACAIController::ACAIController()
 	check(AIPerceptionComp);
 
 	InitializeSightConfig();
-
-	if (IsValid(SightConfig))
-	{
-		AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
-	}
 }
 
 void ACAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ConfigureSightConfig();
 }
 
 void ACAIController::OnPossess(APawn* InPawn)
@@ -87,19 +84,28 @@ bool ACAIController::InitializeSightConfig()
 {
 	if (!IsValid(AIPerceptionComp)) return false;
 
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("SightConfig");
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 	if (!IsValid(SightConfig)) return false;
 
-	SightConfig->SightRadius = 500.f;
-	SightConfig->LoseSightRadius = 600.f;
-	SightConfig->PeripheralVisionAngleDegrees = 45.f;
-	SightConfig->SetMaxAge(2.f);
+	return ConfigureSightConfig();
+}
 
-	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
+bool ACAIController::ConfigureSightConfig()
+{
+	if (!IsValid(AIPerceptionComp)) return false;
+	if (!IsValid(SightConfig)) return false;
+
+	SightConfig->SightRadius = PerceptionSetup.SightRadius;
+	SightConfig->LoseSightRadius = PerceptionSetup.LoseSightRadius;
+	SightConfig->PeripheralVisionAngleDegrees = PerceptionSetup.PeripheralVisionAngleDegrees;
+	SightConfig->SetMaxAge(PerceptionSetup.MaxAge);
+
+	SightConfig->DetectionByAffiliation.bDetectEnemies = PerceptionSetup.bDetectEnemies;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = PerceptionSetup.bDetectFriendlies;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = PerceptionSetup.bDetectNeutrals;
 
 	AIPerceptionComp->ConfigureSense(*SightConfig);
+	AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
 
 	return true;
 }
@@ -365,7 +371,7 @@ void ACAIController::UpdateTargetPerceptionStateMap()
 		}
 		else // bHasLOS == false
 		{
-			bool bMemoryValid = ((nowTime - data.LastSeenTime) > TargetMemoryTimeout);
+			bool bMemoryValid = ((nowTime - data.LastSeenTime) > PerceptionSetup.TargetMemoryTimeout);
 
 			if (bMemoryValid)
 			{

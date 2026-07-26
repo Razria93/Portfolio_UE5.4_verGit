@@ -61,7 +61,6 @@ private:
 	UPROPERTY(Transient)
 	FActionDataKey LastActionDataKey_Cached;
 
-
 private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;

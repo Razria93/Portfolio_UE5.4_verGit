@@ -6,6 +6,7 @@
 #include "Interface/CombatResultReceiver.h"
 #include "Type/CActionOrchestrationTypes.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CCharacterSetupTypes.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
@@ -19,6 +20,19 @@ public:
 private:
 	UPROPERTY(EditAnywhere, Category = "Priority")
 	int Priority = INT_MAX;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterSetup")
+	FCharacterCapsuleSetup CapsuleSetup;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterSetup")
+	FCharacterMeshSetup MeshSetup;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterSetup")
+	FCharacterMovementSetup MovementSetup;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CharacterSetup")
+	FPlayerCameraSetup CameraSetup;
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -73,7 +87,7 @@ private:
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry")
+	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry", meta = (ClampMin = 1))
 	int32 ParryStaggerThreshold = 3;
 
 	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
@@ -81,9 +95,14 @@ private:
 
 protected:
 	// Lifecycle
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+private:
+	// Setup
+	void ApplyCharacterSetup();
 
 private:
 	// Component Reference

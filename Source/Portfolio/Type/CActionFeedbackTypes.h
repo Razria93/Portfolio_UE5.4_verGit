@@ -147,7 +147,7 @@ public:
 	FRotator RelativeRotation = FRotator::ZeroRotator;
 
 	UPROPERTY(EditAnywhere)
-	FVector RelativeScale = FVector(1.f, 1.f, 1.f);
+	FVector RelativeScale = FVector::OneVector;
 
 public:
 	FActionVFXFeedbackData() = default;
@@ -202,7 +202,7 @@ public:
 	FRotator RelativeRotation = FRotator::ZeroRotator;
 
 	UPROPERTY(Transient)
-	FVector RelativeScale = FVector(1.f, 1.f, 1.f);
+	FVector RelativeScale = FVector::OneVector;
 
 public:
 	FActionVFXPlaybackKey() = default;

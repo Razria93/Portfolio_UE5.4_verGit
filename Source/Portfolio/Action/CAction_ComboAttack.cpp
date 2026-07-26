@@ -183,7 +183,7 @@ bool UCAction_ComboAttack::CanResolveChain(const FExecutionDecisionQuery& InQuer
 
 	if (activeKey.ActionType != EActionType::ComboAttack) return false;
 	if (incomingKey.ActionType != activeKey.ActionType) return false;
-	if (incomingKey.ActionIndex != activeKey.ActionIndex + 1) return false;
+	if (incomingKey.ActionIndex != activeKey.ActionIndex + CActionIndexConstants::NextSequentialActionOffset) return false;
 
 	return true;
 }
@@ -199,7 +199,7 @@ bool UCAction_ComboAttack::CanReserveChain(const FActionData& InData) const
 	const FActionDataKey& incomingKey = InData.ActionDataKey;
 
 	if (incomingKey.ActionType != ActiveDataKey_Cached.ActionType) return false;
-	if (incomingKey.ActionIndex != ActiveDataKey_Cached.ActionIndex + 1) return false;
+	if (incomingKey.ActionIndex != ActiveDataKey_Cached.ActionIndex + CActionIndexConstants::NextSequentialActionOffset) return false;
 
 	return true;
 }

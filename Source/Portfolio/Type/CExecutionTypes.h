@@ -8,6 +8,11 @@
 #include "Type/CStateTypes.h"
 #include "CExecutionTypes.generated.h"
 
+namespace CExecutionConstants
+{
+	constexpr float DefaultMontageStopBlendOutTime = 0.1f;
+}
+
 // Enum
 
 UENUM(BlueprintType)
