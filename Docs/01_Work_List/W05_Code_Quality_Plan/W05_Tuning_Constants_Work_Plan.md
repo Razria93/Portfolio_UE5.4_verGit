@@ -322,8 +322,19 @@ Source/Portfolio/Controller/CAIController.h
 -> 1차 적용 완료: CAIController sight / memory tuning 값을 FAIControllerPerceptionSetup으로 묶음.
 -> SightRadius / LoseSightRadius / PeripheralVisionAngleDegrees / MaxAge / TargetMemoryTimeout 값 변경 없음.
 -> detection affiliation 기본값도 같은 setup 구조체에 포함.
--> ConfigureSightConfig()을 constructor 초기화 경로와 BeginPlay에서 호출해 native 기본값과 editor default override 적용 지점을 맞춤.
+-> constructor는 AIPerceptionComponent만 생성하고, BeginPlay에서 runtime SightConfig를 구성한다.
+-> ConfigureSightConfig()에서 ConfigureSense와 SetDominantSense를 함께 수행해 runtime 적용 지점을 단일화.
 -> AI perception DataAsset 전환은 enemy archetype별 공유 기준을 정한 뒤 후속 작업에서 검토.
+```
+
+소유권 기준:
+
+```text
+-> PerceptionSetup은 프로젝트가 정의한 AI perception tuning source of truth다.
+-> AIPerceptionComponent의 SensesConfig 배열은 legacy migration 입력으로만 본다.
+-> 최종 asset 상태에서는 SensesConfig 배열을 비워 editor details에 중복 설정 지점이 보이지 않게 한다.
+-> 생성자에서 SensesConfig 배열을 채우지 않아 editor details에 중복 설정 지점이 생기는 것을 피한다.
+-> 기존 Blueprint SensesConfig 값은 PerceptionSetup으로 migration한 뒤 더 이상 직접 수정하지 않는다.
 ```
 
 ### 4.3 AI behavior tuning
@@ -576,7 +587,8 @@ Content/00_Profiling/00_AI_Performance/02_Controller/02_Enemy/BP_AIPerf_CAIContr
 ```text
 1. 규칙 문서 + PostLoad migration layer 추가.
 2. 대상 asset을 Editor에서 열고 저장.
-3. asset 저장 검증 이후 DeprecatedProperty field / PostLoad migration code 제거.
+3. AI controller asset은 AIPerceptionComponent SensesConfig 배열을 비운 상태로 저장.
+4. asset 저장 검증 이후 DeprecatedProperty field / PostLoad migration code 제거.
 ```
 
 주의:
@@ -586,6 +598,7 @@ Content/00_Profiling/00_AI_Performance/02_Controller/02_Enemy/BP_AIPerf_CAIContr
 -> runtime read path는 새 config USTRUCT만 사용한다.
 -> deprecated field에는 raw default literal을 두지 않는다.
 -> legacy field 기본 상태는 새 config USTRUCT 기본값에서 초기화한다.
+-> legacy SensesConfig 배열은 migration 후 asset에서 제거한다.
 ```
 
 ---

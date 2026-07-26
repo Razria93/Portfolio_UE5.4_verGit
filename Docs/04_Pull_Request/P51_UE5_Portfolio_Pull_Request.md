@@ -202,6 +202,8 @@ CAnimNotifyState_ExecutionInterventionWindow.cpp
 
 추가로 `CAIController`의 perception 설정도 기존 Blueprint가 `SightConfig` subobject와 `TargetMemoryTimeout`에 저장한 값을 잃지 않도록 `PostLoad` migration을 추가했다. 기존 asset 값이 native default와 다를 때만 `PerceptionSetup`으로 복사하고, 이후 BeginPlay의 sight config 적용은 migration된 값을 기준으로 수행한다.
 
+AI perception 설정의 기준은 `PerceptionSetup`으로 둔다. `AIPerceptionComponent`의 SensesConfig 배열은 legacy migration 입력으로만 보고, 최종 asset 상태에서는 비워 중복 설정 지점이 보이지 않게 한다. 생성자에서는 `AIPerceptionComponent`만 만들고, BeginPlay에서 runtime `SightConfig`를 구성한다. `ConfigureSightConfig()`는 `ConfigureSense`와 `SetDominantSense`를 함께 수행한다.
+
 이 migration layer는 영구 구조가 아니다. 대상 asset을 Editor에서 열고 저장해 새 config struct 값이 asset에 기록되면, 후속 커밋에서 deprecated field와 `PostLoad` migration 코드를 제거한다.
 
 ## 명시적 보류

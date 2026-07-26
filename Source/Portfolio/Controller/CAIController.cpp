@@ -32,13 +32,6 @@ ACAIController::ACAIController()
 	// Initialize AI perception component.
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	check(AIPerceptionComp);
-
-	InitializeSightConfig();
-
-	if (IsValid(SightConfig))
-	{
-		AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
-	}
 }
 
 void ACAIController::PostLoad()
@@ -52,7 +45,7 @@ void ACAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ConfigureSightConfig();
+	InitializeSightConfig();
 }
 
 void ACAIController::OnPossess(APawn* InPawn)
@@ -99,7 +92,7 @@ bool ACAIController::InitializeSightConfig()
 {
 	if (!IsValid(AIPerceptionComp)) return false;
 
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>("SightConfig");
+	SightConfig = NewObject<UAISenseConfig_Sight>(this, TEXT("SightConfig"));
 	if (!IsValid(SightConfig)) return false;
 
 	return ConfigureSightConfig();
@@ -120,6 +113,7 @@ bool ACAIController::ConfigureSightConfig()
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = PerceptionSetup.bDetectNeutrals;
 
 	AIPerceptionComp->ConfigureSense(*SightConfig);
+	AIPerceptionComp->SetDominantSense(*SightConfig->GetSenseImplementation());
 
 	return true;
 }
@@ -134,42 +128,45 @@ void ACAIController::MigrateDeprecatedPerceptionSetup()
 		PerceptionSetup.TargetMemoryTimeout = TargetMemoryTimeout;
 	}
 
-	if (!IsValid(SightConfig)) return;
+	const UAISenseConfig_Sight* legacySightConfig = IsValid(AIPerceptionComp)
+		? AIPerceptionComp->GetSenseConfig<UAISenseConfig_Sight>()
+		: nullptr;
+	if (!IsValid(legacySightConfig)) return;
 
 	if (FMath::IsNearlyEqual(PerceptionSetup.SightRadius, defaultPerceptionSetup.SightRadius)
-		&& !FMath::IsNearlyEqual(SightConfig->SightRadius, defaultPerceptionSetup.SightRadius))
+		&& !FMath::IsNearlyEqual(legacySightConfig->SightRadius, defaultPerceptionSetup.SightRadius))
 	{
-		PerceptionSetup.SightRadius = SightConfig->SightRadius;
+		PerceptionSetup.SightRadius = legacySightConfig->SightRadius;
 	}
 	if (FMath::IsNearlyEqual(PerceptionSetup.LoseSightRadius, defaultPerceptionSetup.LoseSightRadius)
-		&& !FMath::IsNearlyEqual(SightConfig->LoseSightRadius, defaultPerceptionSetup.LoseSightRadius))
+		&& !FMath::IsNearlyEqual(legacySightConfig->LoseSightRadius, defaultPerceptionSetup.LoseSightRadius))
 	{
-		PerceptionSetup.LoseSightRadius = SightConfig->LoseSightRadius;
+		PerceptionSetup.LoseSightRadius = legacySightConfig->LoseSightRadius;
 	}
 	if (FMath::IsNearlyEqual(PerceptionSetup.PeripheralVisionAngleDegrees, defaultPerceptionSetup.PeripheralVisionAngleDegrees)
-		&& !FMath::IsNearlyEqual(SightConfig->PeripheralVisionAngleDegrees, defaultPerceptionSetup.PeripheralVisionAngleDegrees))
+		&& !FMath::IsNearlyEqual(legacySightConfig->PeripheralVisionAngleDegrees, defaultPerceptionSetup.PeripheralVisionAngleDegrees))
 	{
-		PerceptionSetup.PeripheralVisionAngleDegrees = SightConfig->PeripheralVisionAngleDegrees;
+		PerceptionSetup.PeripheralVisionAngleDegrees = legacySightConfig->PeripheralVisionAngleDegrees;
 	}
 	if (FMath::IsNearlyEqual(PerceptionSetup.MaxAge, defaultPerceptionSetup.MaxAge)
-		&& !FMath::IsNearlyEqual(SightConfig->GetMaxAge(), defaultPerceptionSetup.MaxAge))
+		&& !FMath::IsNearlyEqual(legacySightConfig->GetMaxAge(), defaultPerceptionSetup.MaxAge))
 	{
-		PerceptionSetup.MaxAge = SightConfig->GetMaxAge();
+		PerceptionSetup.MaxAge = legacySightConfig->GetMaxAge();
 	}
 	if (PerceptionSetup.bDetectEnemies == defaultPerceptionSetup.bDetectEnemies
-		&& SightConfig->DetectionByAffiliation.bDetectEnemies != defaultPerceptionSetup.bDetectEnemies)
+		&& legacySightConfig->DetectionByAffiliation.bDetectEnemies != defaultPerceptionSetup.bDetectEnemies)
 	{
-		PerceptionSetup.bDetectEnemies = SightConfig->DetectionByAffiliation.bDetectEnemies;
+		PerceptionSetup.bDetectEnemies = legacySightConfig->DetectionByAffiliation.bDetectEnemies;
 	}
 	if (PerceptionSetup.bDetectFriendlies == defaultPerceptionSetup.bDetectFriendlies
-		&& SightConfig->DetectionByAffiliation.bDetectFriendlies != defaultPerceptionSetup.bDetectFriendlies)
+		&& legacySightConfig->DetectionByAffiliation.bDetectFriendlies != defaultPerceptionSetup.bDetectFriendlies)
 	{
-		PerceptionSetup.bDetectFriendlies = SightConfig->DetectionByAffiliation.bDetectFriendlies;
+		PerceptionSetup.bDetectFriendlies = legacySightConfig->DetectionByAffiliation.bDetectFriendlies;
 	}
 	if (PerceptionSetup.bDetectNeutrals == defaultPerceptionSetup.bDetectNeutrals
-		&& SightConfig->DetectionByAffiliation.bDetectNeutrals != defaultPerceptionSetup.bDetectNeutrals)
+		&& legacySightConfig->DetectionByAffiliation.bDetectNeutrals != defaultPerceptionSetup.bDetectNeutrals)
 	{
-		PerceptionSetup.bDetectNeutrals = SightConfig->DetectionByAffiliation.bDetectNeutrals;
+		PerceptionSetup.bDetectNeutrals = legacySightConfig->DetectionByAffiliation.bDetectNeutrals;
 	}
 }
 
