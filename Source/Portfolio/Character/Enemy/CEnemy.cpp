@@ -565,7 +565,6 @@ bool ACEnemy::IsCombatActionType(EActionType InActionType) const
 	case EActionType::ComboAttack:
 		return true;
 
-
 	default:
 		return false; // Idle / Equip / Unequip etc..
 	}

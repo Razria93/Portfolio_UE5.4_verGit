@@ -228,7 +228,7 @@ bool UCHitFeedbackComponent::CanPlayCameraShake(const FCombatSignalTargetPacket&
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("Disabled"));
 		return false;
 	}
-	
+
 	if (CameraShakeTuning.Audience == EFeedbackAudience::None)
 	{
 		FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, InCombatSignalTargetPacket, TEXT("CameraShake"), TEXT("AudienceNone"));

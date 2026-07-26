@@ -85,7 +85,6 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	else
 		ClearReactionContext(blackboardComp);
 
-
 	EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
 
 	if (homeResult == EContextBuildResult::Success)

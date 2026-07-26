@@ -78,9 +78,8 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 			nextIndex = 1;
 		}
 
-
 		nextIndex = FMath::Clamp(nextIndex, 0, count - 1);
-		
+
 		break;
 	}
 	default:

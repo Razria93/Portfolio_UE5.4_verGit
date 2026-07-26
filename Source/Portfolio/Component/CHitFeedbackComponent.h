@@ -12,7 +12,7 @@ class PORTFOLIO_API UCHitFeedbackComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UCHitFeedbackComponent();
 
 private:

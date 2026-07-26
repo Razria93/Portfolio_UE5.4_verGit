@@ -6,7 +6,6 @@
 #include "Type/CReactionOrchestrationTypes.h"
 #include "CReactionOrchestratorComponent.generated.h"
 
-
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCReactionOrchestratorComponent : public UActorComponent
 {
