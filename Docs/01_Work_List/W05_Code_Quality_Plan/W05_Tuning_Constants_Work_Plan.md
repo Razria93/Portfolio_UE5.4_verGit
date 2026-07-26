@@ -246,8 +246,16 @@ Source/Portfolio/Component/CCombatSignalTargetComponent.cpp
 판정:
 
 ```text
--> 현재는 internal policy constexpr 후보.
--> 장기적으로 defense / guard tuning 데이터 후보이기도 하므로 이름은 GuardDamageMitigationMultiplier처럼 정책 의미를 드러낸다.
+-> 1차 적용 완료: guard damage multiplier 소유권을 CDefenseComponent로 이동.
+-> FDefenseGuardTuning은 Type/CDefenseTuningTypes.h로 분리한다.
+-> UCDefenseComponent는 FDefenseGuardTuning GuardTuning을 직접 소유한다.
+-> 현재는 방어 튜닝 묶음 단위가 Guard 하나뿐이므로 FDefenseTuning aggregate는 만들지 않는다.
+-> Parry tuning이 실제로 생기면 FDefenseParryTuning을 같은 Type 헤더에 추가하고 UCDefenseComponent에 ParryTuning으로 병렬 배치한다.
+-> FDefenseTuning aggregate는 Guard / Parry 등 여러 defense tuning을 하나의 preset / DataAsset / runtime config 단위로 다룰 필요가 생길 때만 검토한다.
+-> Dodge는 현재 Action 소유이므로 defense tuning에 미리 포함하지 않는다.
+-> CCombatSignalTargetComponent는 target damage 계산 중 DefenseComp에서 GetGuardDamageTakenMultiplier()를 조회한다.
+-> 값 이름은 mitigation 결과보다 실제 의미가 분명한 GuardDamageTakenMultiplier로 둔다.
+-> 기본값은 기존 0.5f와 동일하게 유지한다.
 ```
 
 ---
@@ -322,8 +330,9 @@ Source/Portfolio/Controller/CAIController.h
 -> 1차 적용 완료: CAIController sight / memory tuning 값을 FAIControllerPerceptionSetup으로 묶음.
 -> SightRadius / LoseSightRadius / PeripheralVisionAngleDegrees / MaxAge / TargetMemoryTimeout 값 변경 없음.
 -> detection affiliation 기본값도 같은 setup 구조체에 포함.
--> constructor는 AIPerceptionComponent만 생성하고, BeginPlay에서 runtime SightConfig를 구성한다.
--> ConfigureSightConfig()에서 ConfigureSense와 SetDominantSense를 함께 수행해 runtime 적용 지점을 단일화.
+-> constructor에서 SightConfig를 기본 등록해 UE AIPerception listener 등록 흐름을 유지한다.
+-> BeginPlay에서 ConfigureSightConfig()를 다시 호출해 PerceptionSetup 값을 runtime 적용한다.
+-> ConfigureSightConfig()에서 ConfigureSense와 SetDominantSense를 함께 수행한다.
 -> AI perception DataAsset 전환은 enemy archetype별 공유 기준을 정한 뒤 후속 작업에서 검토.
 ```
 
@@ -331,9 +340,8 @@ Source/Portfolio/Controller/CAIController.h
 
 ```text
 -> PerceptionSetup은 프로젝트가 정의한 AI perception tuning source of truth다.
--> AIPerceptionComponent의 SensesConfig 배열은 legacy migration 입력으로만 본다.
--> 최종 asset 상태에서는 SensesConfig 배열을 비워 editor details에 중복 설정 지점이 보이지 않게 한다.
--> 생성자에서 SensesConfig 배열을 채우지 않아 editor details에 중복 설정 지점이 생기는 것을 피한다.
+-> AIPerceptionComponent의 SensesConfig 배열은 UE listener 등록을 위한 engine-facing mirror다.
+-> SensesConfig는 Details에 보일 수 있지만 직접 편집 기준으로 보지 않는다.
 -> 기존 Blueprint SensesConfig 값은 PerceptionSetup으로 migration한 뒤 더 이상 직접 수정하지 않는다.
 ```
 
@@ -548,8 +556,6 @@ Source/Portfolio/AI/Patrol/CPatrolPoint.cpp
 설계상 보류:
 
 ```text
--> GuardDamageMitigationMultiplier 소유권 이동은 Defense / guard tuning 후속 후보로 남긴다.
--> BT service constructor Interval / RandomDeviation literal은 BT interval 정책을 중앙화할 때까지 유지한다.
 -> DataAsset / Project Settings 전환은 asset / Blueprint / PIE 검증이 필요하므로 후속 작업으로 남긴다.
 ```
 
@@ -587,7 +593,7 @@ Content/00_Profiling/00_AI_Performance/02_Controller/02_Enemy/BP_AIPerf_CAIContr
 ```text
 1. 규칙 문서 + PostLoad migration layer 추가 완료.
 2. 대상 asset Editor 저장 완료.
-3. AI controller asset은 AIPerceptionComponent SensesConfig 배열을 비운 상태로 저장 완료.
+3. AI controller asset은 PerceptionSetup 값을 기준으로 저장 완료.
 4. asset 저장 검증 이후 DeprecatedProperty field / PostLoad migration code 제거 완료.
 ```
 
@@ -597,7 +603,7 @@ Content/00_Profiling/00_AI_Performance/02_Controller/02_Enemy/BP_AIPerf_CAIContr
 -> runtime read path는 새 config USTRUCT만 사용한다.
 -> DeprecatedProperty field는 남기지 않는다.
 -> PostLoad migration code는 남기지 않는다.
--> legacy SensesConfig 배열은 asset에서 제거한다.
+-> SensesConfig 배열은 UE listener 등록 mirror로만 남기고 직접 편집 기준으로 보지 않는다.
 ```
 
 ---
@@ -612,3 +618,16 @@ git diff --check
 ```
 
 PIE smoke는 사용자가 확인한다.
+
+---
+
+## 8. BT service interval default cleanup
+
+처리 결과:
+
+```text
+-> BT service constructor Interval / RandomDeviation raw defaults를 CBTServiceIntervalHelper public default API로 중앙화했다.
+-> UpdateAIContext / UpdateAIIntentState / UpdateEngageContext / UpdateInvestigateContext 생성자는 helper default를 사용한다.
+-> runtime interval selection 정책과 CVar mode 계약은 변경하지 않았다.
+-> 값 변경 없음: AIContext 0.1f, AIIntentState 0.2f, EngageContext 0.1f, InvestigateContext 0.1f, RandomDeviation 0.0f.
+```

@@ -89,7 +89,7 @@
 -> CombatEngage warmup / rebuild sentinel은 CCombatEngageConstants로 이동
 -> missing assignment lease age sentinel에 이름 부여
 -> RuntimeLOD / BT interval mode raw number는 enum/helper로 감쌈
--> guard mitigation multiplier에 이름 부여
+-> guard damage multiplier를 CDefenseComponent 소유 튜닝 값으로 이동
 ```
 
 결과
@@ -202,9 +202,58 @@ CAnimNotifyState_ExecutionInterventionWindow.cpp
 
 추가로 `CAIController`의 perception 설정도 기존 Blueprint가 `SightConfig` subobject와 `TargetMemoryTimeout`에 저장한 값을 `PerceptionSetup`으로 이전한 뒤 migration layer를 제거했다. 이후 BeginPlay의 sight config 적용은 저장된 `PerceptionSetup` 값을 기준으로 수행한다.
 
-AI perception 설정의 기준은 `PerceptionSetup`으로 둔다. `AIPerceptionComponent`의 SensesConfig 배열은 legacy migration 입력으로만 보고, 최종 asset 상태에서는 비워 중복 설정 지점이 보이지 않게 한다. 생성자에서는 `AIPerceptionComponent`만 만들고, BeginPlay에서 runtime `SightConfig`를 구성한다. `ConfigureSightConfig()`는 `ConfigureSense`와 `SetDominantSense`를 함께 수행한다.
+AI perception 설정의 기준은 `PerceptionSetup`으로 둔다. `AIPerceptionComponent`의 SensesConfig 배열은 UE listener 등록을 위한 engine-facing mirror로 보고 직접 편집 기준으로 보지 않는다. 생성자에서 `SightConfig`를 기본 등록해 UE AIPerception listener 등록 흐름을 유지하고, BeginPlay에서 `ConfigureSightConfig()`를 다시 호출해 저장된 `PerceptionSetup` 값을 runtime 적용한다.
 
 migration layer는 영구 구조가 아니므로 최종 코드에는 남기지 않았다.
+
+### 7. Defense guard tuning 소유권 정리
+
+무엇
+
+`CCombatSignalTargetComponent`에 있던 guard damage multiplier를 `CDefenseComponent`의 guard tuning 값으로 이동했다.
+
+어떻게
+
+```text
+-> Type/CDefenseTuningTypes.h에 FDefenseGuardTuning 추가
+-> UCDefenseComponent는 FDefenseGuardTuning GuardTuning을 직접 소유
+-> FDefenseTuning aggregate는 아직 만들지 않음
+-> GuardDamageTakenMultiplier 기본값 0.5 유지
+-> CCombatSignalTargetComponent는 DefenseComp.GetGuardDamageTakenMultiplier()를 통해 조회
+```
+
+결과
+
+guard 중 받는 데미지 배율의 소유권이 target signal 처리 코드가 아니라 defense / guard 정책 쪽으로 이동했다.
+
+구조 판단:
+
+```text
+-> 현재 defense tuning은 guard damage multiplier 하나뿐이므로 넓은 FDefenseTuning aggregate를 만들지 않는다.
+-> Parry tuning이 실제로 생기면 FDefenseParryTuning을 같은 Type 헤더에 추가하고 UCDefenseComponent가 ParryTuning으로 병렬 소유한다.
+-> Dodge는 현재 Action 소유이므로 defense tuning에 미리 포함하지 않는다.
+-> Guard / Parry 등을 하나의 preset / DataAsset / runtime config 단위로 다룰 필요가 생길 때만 FDefenseTuning aggregate를 검토한다.
+```
+
+### 8. BT service interval default 정리
+
+무엇
+
+BT service 생성자에 남아 있던 `Interval` / `RandomDeviation` raw 기본값을 `CBTServiceIntervalHelper`로 중앙화했다.
+
+어떻게
+
+```text
+-> GetDefaultAIContextInterval()
+-> GetDefaultAIIntentStateInterval()
+-> GetDefaultEngageContextInterval()
+-> GetDefaultInvestigateContextInterval()
+-> GetDefaultRandomDeviation()
+```
+
+결과
+
+BT service editor 기본 표시값과 runtime interval helper의 기본값 소유권이 같은 helper로 모였다. Runtime LOD interval selection과 CVar mode 계약은 변경하지 않았다.
 
 ## 명시적 보류
 
@@ -218,8 +267,6 @@ migration layer는 영구 구조가 아니므로 최종 코드에는 남기지 �
 -> enum entry rename
 -> CVar 이름 / default 계약 변경
 -> debug / audit / log 문자열 중앙화
--> BT service Interval / RandomDeviation 정책 변경
--> GuardDamageMitigationMultiplier 소유권 이동
 ```
 
 후속 후보:
