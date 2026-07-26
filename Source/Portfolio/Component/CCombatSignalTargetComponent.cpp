@@ -21,8 +21,6 @@ namespace
 {
 	const FName CombatCueBlinkTag(TEXT("Combat.Cue.Blink"));
 	const FName CombatCueRepulseTag(TEXT("Combat.Cue.Repulse"));
-
-	constexpr float GuardDamageMitigationMultiplier = 0.5f;
 }
 
 UCCombatSignalTargetComponent::UCCombatSignalTargetComponent()
@@ -377,7 +375,7 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanGuard())
 	{
 		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
-		mitigatedDamage *= GuardDamageMitigationMultiplier;
+		mitigatedDamage *= DefenseComp_Injected->GetGuardDamageTakenMultiplier();
 	}
 
 	// TODO(CombatPolicy): Add defense / armor / resistance mitigation policy.

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
+#include "Type/CDefenseTuningTypes.h"
 #include "Type/CObservableOverlayTypes.h"
 #include "Interface/ObservableOverlayPolicy.h"
 #include "CDefenseComponent.generated.h"
@@ -21,6 +22,10 @@ private:
 
 	UPROPERTY(Transient)
 	class UCMovementComponent* MovementComp_Injected = nullptr;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "Defense|Guard")
+	FDefenseGuardTuning GuardTuning;
 
 private:
 	UPROPERTY(Transient)
@@ -54,6 +59,7 @@ public:
 	FORCEINLINE bool CanParry() const { return bCanParry; }
 	FORCEINLINE bool HasGuardOverlay() const { return bIsGuardingPose || bCanGuard || bCanParry; }
 	FORCEINLINE bool HasGuardRuntimeState() const { return !bCanStartGuard || bWantsGuarding || HasGuardOverlay(); }
+	FORCEINLINE float GetGuardDamageTakenMultiplier() const { return GuardTuning.GuardDamageTakenMultiplier; }
 
 public:
 	// Overlay Policy
