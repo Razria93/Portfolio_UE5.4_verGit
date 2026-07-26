@@ -433,7 +433,7 @@ Source/Portfolio/Type/CCombatFeedbackTypes.h
 -> 값 변경 없음.
 -> request struct 기본값은 direct request 생성 시 fallback 기본값으로 유지.
 -> feedback preset DataAsset 전환은 preset 공유 기준을 정한 뒤 후속 작업에서 검토.
--> legacy HitStop / CameraShake field는 DeprecatedProperty migration slot으로 1 pass 유지.
+-> legacy HitStop / CameraShake field는 asset 저장 이후 제거 완료.
 ```
 
 asset migration 대상:
@@ -446,9 +446,9 @@ Content/01_Character/02_Enemy/BP_CEnemy.uasset
 처리 순서:
 
 ```text
-1. 코드에서 legacy field -> FHitStopFeedbackTuning / FHitCameraShakeFeedbackTuning PostLoad migration을 추가한다.
-2. Editor에서 대상 Blueprint asset을 열고 저장한다.
-3. 저장 검증 이후 legacy field와 PostLoad migration code를 제거한다.
+1. 코드에서 legacy field -> FHitStopFeedbackTuning / FHitCameraShakeFeedbackTuning PostLoad migration을 추가했다.
+2. Editor에서 대상 Blueprint asset을 열고 저장했다.
+3. 저장 검증 이후 legacy field와 PostLoad migration code를 제거했다.
 ```
 
 ### 4.6 Patrol editor visualization
@@ -555,7 +555,7 @@ Source/Portfolio/AI/Patrol/CPatrolPoint.cpp
 
 ## 6.2 Serialized UPROPERTY regrouping migration 대상
 
-이번 PR에서 `UPROPERTY`가 config `USTRUCT`로 묶이면서 legacy asset 값 보호가 필요한 대상이다.
+이번 PR에서 `UPROPERTY`가 config `USTRUCT`로 묶이면서 legacy asset 값을 보호한 대상이다.
 
 대상:
 
@@ -582,23 +582,22 @@ Content/02_Controller/02_Enemy/BP_CAIController.uasset
 Content/00_Profiling/00_AI_Performance/02_Controller/02_Enemy/BP_AIPerf_CAIController.uasset
 ```
 
-커밋 순서:
+처리 결과:
 
 ```text
-1. 규칙 문서 + PostLoad migration layer 추가.
-2. 대상 asset을 Editor에서 열고 저장.
-3. AI controller asset은 AIPerceptionComponent SensesConfig 배열을 비운 상태로 저장.
-4. asset 저장 검증 이후 DeprecatedProperty field / PostLoad migration code 제거.
+1. 규칙 문서 + PostLoad migration layer 추가 완료.
+2. 대상 asset Editor 저장 완료.
+3. AI controller asset은 AIPerceptionComponent SensesConfig 배열을 비운 상태로 저장 완료.
+4. asset 저장 검증 이후 DeprecatedProperty field / PostLoad migration code 제거 완료.
 ```
 
-주의:
+최종 상태:
 
 ```text
--> migration layer는 영구 설정 구조가 아니다.
 -> runtime read path는 새 config USTRUCT만 사용한다.
--> deprecated field에는 raw default literal을 두지 않는다.
--> legacy field 기본 상태는 새 config USTRUCT 기본값에서 초기화한다.
--> legacy SensesConfig 배열은 migration 후 asset에서 제거한다.
+-> DeprecatedProperty field는 남기지 않는다.
+-> PostLoad migration code는 남기지 않는다.
+-> legacy SensesConfig 배열은 asset에서 제거한다.
 ```
 
 ---

@@ -15,8 +15,6 @@ class PORTFOLIO_API UCHitFeedbackComponent : public UActorComponent
 public:	
 	UCHitFeedbackComponent();
 
-	virtual void PostLoad() override;
-
 private:
 	UPROPERTY(EditAnywhere, Category = "Feedback|HitStop")
 	FHitStopFeedbackTuning HitStopTuning;
@@ -31,33 +29,8 @@ private:
 	FHitCameraShakeFeedbackTuning CameraShakeTuning;
 
 private:
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use HitStopTuning.Audience."))
-	EFeedbackAudience HitStopAudience;
-
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use HitStopTuning.Duration."))
-	float HitStopDuration;
-
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use HitStopTuning.Dilation."))
-	float HitStopDilation;
-
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use CameraShakeTuning.Audience."))
-	EFeedbackAudience CameraShakeAudience;
-
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use CameraShakeTuning.CameraShakeClass."))
-	TSubclassOf<class UCameraShakeBase> CameraShakeClass;
-
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use CameraShakeTuning.BaseScale."))
-	float CameraShakeBaseScale;
-
-	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Use CameraShakeTuning.bEnabled."))
-	bool bEnableCameraShake;
-
-private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
-
-private:
-	void MigrateDeprecatedFeedbackTuning();
 
 public:
 	// Component Reference

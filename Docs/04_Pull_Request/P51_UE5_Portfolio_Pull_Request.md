@@ -171,8 +171,8 @@ CAnimNotifyState_ExecutionInterventionWindow.cpp
 -> CActionFeedbackTypes RelativeScale: FVector::OneVector
 -> Execution intervention notify editor color: 이름 있는 editor color
 -> ParryStaggerThreshold: ClampMin = 1 + runtime 최소값 guard
--> CHitFeedbackComponent legacy HitStop / CameraShake 필드: PostLoad migration
--> CAIController legacy SightConfig / TargetMemoryTimeout 값: PostLoad migration
+-> CHitFeedbackComponent legacy HitStop / CameraShake 필드: PostLoad migration 후 제거
+-> CAIController legacy SightConfig / TargetMemoryTimeout 값: PostLoad migration 후 제거
 -> Player / Enemy parry threshold 내부 상수: unity build 충돌 방지용 namespace 분리
 ```
 
@@ -184,27 +184,27 @@ CAnimNotifyState_ExecutionInterventionWindow.cpp
 
 무엇
 
-`CHitFeedbackComponent`의 hit feedback 설정을 구조체로 묶는 과정에서 기존 Blueprint asset이 저장하던 legacy scalar property 값을 잃지 않도록 호환 레이어를 추가했다.
+`CHitFeedbackComponent`의 hit feedback 설정을 구조체로 묶는 과정에서 기존 Blueprint asset이 저장하던 legacy scalar property 값을 새 config struct로 이전하고, asset 저장 후 migration layer를 제거했다.
 
 어떻게
 
 ```text
--> 기존 HitStopAudience / HitStopDuration / HitStopDilation property를 deprecated property로 유지
--> 기존 bEnableCameraShake / CameraShakeAudience / CameraShakeClass / CameraShakeBaseScale property를 deprecated property로 유지
--> PostLoad에서 legacy 값이 의미를 가진 경우 새 HitStopTuning / CameraShakeTuning으로 복사
--> 새 struct 값이 이미 설정된 경우 legacy 기본값으로 덮어쓰지 않도록 조건부 migration 적용
--> deprecated field에는 raw default literal을 두지 않고 새 config struct 기본값에서 초기화
+-> 기존 HitStopAudience / HitStopDuration / HitStopDilation 값을 HitStopTuning으로 migration
+-> 기존 bEnableCameraShake / CameraShakeAudience / CameraShakeClass / CameraShakeBaseScale 값을 CameraShakeTuning으로 migration
+-> 대상 Blueprint asset 저장
+-> DeprecatedProperty field 제거
+-> PostLoad migration code 제거
 ```
 
 결과
 
 기존 `BP_CPlayer`, `BP_CEnemy` 같은 Blueprint asset이 저장한 camera shake class와 hit feedback 기본값을 새 구조체 설정으로 이어받을 수 있게 했다.
 
-추가로 `CAIController`의 perception 설정도 기존 Blueprint가 `SightConfig` subobject와 `TargetMemoryTimeout`에 저장한 값을 잃지 않도록 `PostLoad` migration을 추가했다. 기존 asset 값이 native default와 다를 때만 `PerceptionSetup`으로 복사하고, 이후 BeginPlay의 sight config 적용은 migration된 값을 기준으로 수행한다.
+추가로 `CAIController`의 perception 설정도 기존 Blueprint가 `SightConfig` subobject와 `TargetMemoryTimeout`에 저장한 값을 `PerceptionSetup`으로 이전한 뒤 migration layer를 제거했다. 이후 BeginPlay의 sight config 적용은 저장된 `PerceptionSetup` 값을 기준으로 수행한다.
 
 AI perception 설정의 기준은 `PerceptionSetup`으로 둔다. `AIPerceptionComponent`의 SensesConfig 배열은 legacy migration 입력으로만 보고, 최종 asset 상태에서는 비워 중복 설정 지점이 보이지 않게 한다. 생성자에서는 `AIPerceptionComponent`만 만들고, BeginPlay에서 runtime `SightConfig`를 구성한다. `ConfigureSightConfig()`는 `ConfigureSense`와 `SetDominantSense`를 함께 수행한다.
 
-이 migration layer는 영구 구조가 아니다. 대상 asset을 Editor에서 열고 저장해 새 config struct 값이 asset에 기록되면, 후속 커밋에서 deprecated field와 `PostLoad` migration 코드를 제거한다.
+migration layer는 영구 구조가 아니므로 최종 코드에는 남기지 않았다.
 
 ## 명시적 보류
 
