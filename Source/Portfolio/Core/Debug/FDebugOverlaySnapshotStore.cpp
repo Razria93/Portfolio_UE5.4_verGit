@@ -167,6 +167,8 @@ namespace
 #endif
 }
 
+// Gate
+
 bool FDebugOverlaySnapshotStore::IsEnabled()
 {
 #if !UE_BUILD_SHIPPING
@@ -193,6 +195,8 @@ int32 FDebugOverlaySnapshotStore::GetEventLogDisplayLimit()
 	return 0;
 #endif
 }
+
+// Execution Record
 
 void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName)
 {
@@ -225,6 +229,8 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	AddEventInternal(*store, MakeEventEntry(world, TEXT("Execution"), eventName, ownerName, FString(), FString(), summary));
 #endif
 }
+
+// Combat Record
 
 void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWorldContextObject, const AActor* InOwnerActor, const AActor* InWeaponActor, FName InCollisionName, int32 InHitWindowId, const FString& InHitWindowState, const TCHAR* InEventName, const TCHAR* InReason)
 {
@@ -334,6 +340,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 #endif
 }
 
+// AI Record
+
 void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntent, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName)
 {
 #if !UE_BUILD_SHIPPING
@@ -368,6 +376,8 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 #endif
 }
 
+// Event Log
+
 void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 {
 #if !UE_BUILD_SHIPPING
@@ -380,6 +390,20 @@ void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, c
 	AddEventInternal(*store, MakeEventEntry(world, InCategory, InEventName, InOwnerName, InSourceName, InTargetName, InSummary));
 #endif
 }
+
+TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents)
+{
+#if !UE_BUILD_SHIPPING
+	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	if (!store) return TArray<FDebugOverlayEventEntry>();
+
+	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity);
+#else
+	return TArray<FDebugOverlayEventEntry>();
+#endif
+}
+
+// Snapshot Query
 
 bool FDebugOverlaySnapshotStore::GetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot)
 {
@@ -397,17 +421,7 @@ bool FDebugOverlaySnapshotStore::GetSnapshotCopy(const UObject* InWorldContextOb
 #endif
 }
 
-TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents)
-{
-#if !UE_BUILD_SHIPPING
-	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
-	if (!store) return TArray<FDebugOverlayEventEntry>();
-
-	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity);
-#else
-	return TArray<FDebugOverlayEventEntry>();
-#endif
-}
+// Lifecycle
 
 void FDebugOverlaySnapshotStore::Reset(const UObject* InWorldContextObject)
 {
