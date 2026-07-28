@@ -14,6 +14,9 @@ namespace
 	static constexpr float DebugOverlayOriginY = 36.f;
 	static constexpr float DebugOverlayLineHeight = 16.f;
 	static constexpr float DebugOverlayFontScale = 0.85f;
+	static constexpr float DebugOverlayBackgroundPadding = 8.f;
+	static constexpr float DebugOverlayBackgroundWidth = 760.f;
+	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 
 	FString BoolText(bool bInValue)
 	{
@@ -186,6 +189,19 @@ void ACDebugOverlayHUD::DrawHUD()
 	AddLine(lines, FString::Printf(TEXT("RuntimeLODTier: %s"), *FormatRuntimeLODTier()));
 
 	AddSnapshotLines(lines, snapshot, bHasSnapshot);
+
+	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
+	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
+	const float availableWidth = Canvas
+		? FMath::Max(0.f, Canvas->SizeX - backgroundX - DebugOverlayBackgroundPadding)
+		: DebugOverlayBackgroundWidth;
+	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
+	const float backgroundHeight = (lines.Num() * DebugOverlayLineHeight) + (DebugOverlayBackgroundPadding * 2.f);
+
+	if (backgroundWidth > 0.f && backgroundHeight > 0.f)
+	{
+		DrawRect(DebugOverlayBackgroundColor, backgroundX, backgroundY, backgroundWidth, backgroundHeight);
+	}
 
 	float y = DebugOverlayOriginY;
 	for (const FString& line : lines)
