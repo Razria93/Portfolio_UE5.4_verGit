@@ -15,7 +15,7 @@ namespace
 	static constexpr float DebugOverlayLineHeight = 20.f;
 	static constexpr float DebugOverlayFontScale = 1.05f;
 	static constexpr float DebugOverlayBackgroundPadding = 10.f;
-	static constexpr float DebugOverlayBackgroundWidth = 920.f;
+	static constexpr float DebugOverlayBackgroundWidth = 1040.f;
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 
 	FString BoolText(bool bInValue)
