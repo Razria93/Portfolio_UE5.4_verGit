@@ -1,16 +1,22 @@
-# Debug Overlay Operation Guide
+# Debug Overlay 운영 가이드
+
+## 고정 정책
+
+- 이 브랜치의 문서는 기본적으로 한국어(KR)로 작성한다.
+- 작업 단위가 끝나면 권장 커밋 메시지 형식으로 자동 커밋한다.
+- 진행 프롬프트는 파일로 만들지 않고 채팅에서 직접 제안한다.
+- 기존 사용자 변경은 되돌리지 않는다.
+- 구현 전에 실제 코드 위치와 표시 가능 여부를 먼저 확인한다.
 
 ## 작업 브랜치
 
 - `feature/debug-overlay-evidence-plan`
 
-## 세션 운영
+## 작업 범위
 
-- 이 세션은 debug overlay evidence 작업의 계획, 문서, 구현, 검증을 다룬다.
-- 기존 사용자 변경은 되돌리지 않는다.
-- 현재 확인된 기존 변경:
-  - `Docs/04_Pull_Request/P51_UE5_Portfolio_Pull_Request.md`
-- 구현 전에 항상 실제 코드 위치와 표시 가능 여부를 확인한다.
+이 세션은 debug overlay evidence 작업의 계획, 문서, 구현, 검증을 다룬다.
+
+목표는 완성형 게임 HUD가 아니라 이력서, 포트폴리오, 기술문서, 제출 영상에서 사용할 수 있는 개발 전용 evidence overlay를 만드는 것이다.
 
 ## 진행 순서
 
@@ -28,6 +34,7 @@
 - overlay enable이 꺼져 있을 때 기존 동작이 변하지 않아야 한다.
 - 표시 값은 실제 runtime state 또는 최근 event hook에서 온 값이어야 한다.
 - 불확실한 값은 `Pending`, `N/A`, `NotCaptured`처럼 표현한다.
+- Shipping 기능처럼 보이거나 동작하지 않도록 개발 전용 gate를 둔다.
 
 ## Console Variable 원칙
 
@@ -48,7 +55,7 @@ Portfolio.DebugOverlay.EventLogLimit
 권장 목표:
 
 ```text
-Debug overlay evidence workspace를 기준으로 계획 문서, evidence map, 최소 overlay 구현, 빌드 검증까지 완료한다.
+Debug overlay evidence workspace 기준으로 evidence map 확정, 최소 overlay 구현, 빌드 검증까지 완료한다.
 ```
 
 ## 에이전트 활용 기준
@@ -57,9 +64,8 @@ Debug overlay evidence workspace를 기준으로 계획 문서, evidence map, �
 
 다만 다음 경우에는 하위 에이전트 활용을 검토한다.
 
-- Action / Reaction, CombatSignal / AI RuntimeLOD를 병렬로 코드 조사해야 할 때
+- Action / Reaction, CombatSignal / Damage, Enemy AI / Runtime LOD를 병렬로 코드 조사해야 할 때
 - 문서 evidence map과 구현 후보를 동시에 검토해야 할 때
 - 빌드 오류 원인 범위가 넓어질 때
 
 기본 방침은 메인 에이전트가 코드와 문서를 직접 읽고 판단하는 것이다.
-
