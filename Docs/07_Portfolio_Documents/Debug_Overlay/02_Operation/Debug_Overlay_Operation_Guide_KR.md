@@ -1,5 +1,84 @@
 # Debug Overlay 운영 가이드
 
+## TestRoom 수동 연결 절차
+
+### 전제
+
+- 전역 `GlobalDefaultGameMode`는 변경하지 않는다.
+- TestRoom 경로는 `/Game/00_UnitTest/TestRoom`이다.
+- 기존 테스트용 GameMode asset `Content/00_UnitTest/GM_Test.uasset`가 존재한다.
+- `ACDebugOverlayGameMode`는 C++ class로 존재하며, non-shipping에서 `ACDebugOverlayHUD`를 `HUDClass`로 사용한다.
+- `.umap`, `.uasset` binary asset은 자동 수정하지 않는다. 에디터에서 의도적으로 저장할 때만 변경한다.
+
+### 권장 연결 방식
+
+권장 방식은 TestRoom의 World Settings에서 GameMode Override를 `ACDebugOverlayGameMode`로 지정하는 것이다.
+
+절차:
+
+1. Unreal Editor에서 `/Game/00_UnitTest/TestRoom`을 연다.
+2. `World Settings` 패널을 연다.
+3. `GameMode Override`를 확인한다.
+4. P0 overlay 촬영용으로 `ACDebugOverlayGameMode`를 지정한다.
+5. 변경 저장 전 TestRoom만 변경되는지 확인한다.
+6. 전역 `DefaultEngine.ini`의 `GlobalDefaultGameMode`는 변경하지 않는다.
+
+대안:
+
+- 기존 `GM_Test` BP를 유지해야 한다면 `GM_Test`의 `HUDClass`만 `ACDebugOverlayHUD`로 지정한다.
+- 이 경우에도 변경 저장 전 `GM_Test.uasset`만 변경되는지 확인한다.
+
+### 실행 CVar
+
+PIE 실행 전 또는 실행 중 콘솔에서 다음 값을 설정한다.
+
+```text
+Portfolio.DebugOverlay.Enabled 1
+Portfolio.DebugOverlay.Collect 1
+Portfolio.DebugOverlay.EventLogLimit 5
+```
+
+의미:
+
+- `Portfolio.DebugOverlay.Enabled`: Canvas HUD 표시 여부
+- `Portfolio.DebugOverlay.Collect`: 기존 debug hook에서 SnapshotStore에 최근 evidence를 기록할지 여부
+- `Portfolio.DebugOverlay.EventLogLimit`: 화면에 표시할 최근 event line 수
+
+### 확인 절차
+
+1. `/Game/00_UnitTest/TestRoom`에서 PIE를 실행한다.
+2. 화면 좌상단에 `[Debug Overlay P0]`가 표시되는지 확인한다.
+3. player action, reaction, guard, combat event를 발생시킨다.
+4. `Recent Execution`, `Recent Combat`, `Recent AI`, `Event Log`가 갱신되는지 확인한다.
+5. event가 아직 없으면 `NotCaptured`로 표시되는 것이 정상이다.
+6. 대상 AI 선택 로직이 없는 상태에서는 `RuntimeLODTier`가 `N/A`로 표시될 수 있다.
+7. 실제 combat result가 capture되기 전에는 `FinalTakenDamage`가 `NotCaptured`로 표시될 수 있다.
+
+### 문제 해결
+
+Overlay가 보이지 않을 때:
+
+- TestRoom의 `GameMode Override`가 `ACDebugOverlayGameMode`인지 확인한다.
+- `Portfolio.DebugOverlay.Enabled`가 `1`인지 확인한다.
+- PIE 대상 map이 `/Game/00_UnitTest/TestRoom`인지 확인한다.
+- Shipping build가 아닌지 확인한다.
+
+Event Log가 비어 있을 때:
+
+- `Portfolio.DebugOverlay.Collect`가 `1`인지 확인한다.
+- Action / Reaction / Combat / AI event가 실제로 발생했는지 확인한다.
+- 현재 연결된 hook 범위가 P0 대상인지 확인한다.
+- 기존 audit log CVar와 overlay collect CVar는 분리되어 있으므로, 기존 `Portfolio.Debug.*Audit` 값이 꺼져 있어도 collect는 가능해야 한다.
+
+### 금지 사항
+
+- 전역 `GlobalDefaultGameMode`를 변경하지 않는다.
+- `.umap`, `.uasset` 저장은 의도적으로만 수행한다.
+- `DefaultEngine.ini`, `Build.cs`를 이 절차 때문에 변경하지 않는다.
+- UMG/Slate dependency를 추가하지 않는다.
+- Shipping HUD처럼 사용하지 않는다.
+- 실제 코드에서 읽지 못한 값을 성공 evidence처럼 표시하지 않는다.
+
 ## 고정 정책
 
 - 이 브랜치의 문서는 기본적으로 한국어(KR)로 작성한다.
