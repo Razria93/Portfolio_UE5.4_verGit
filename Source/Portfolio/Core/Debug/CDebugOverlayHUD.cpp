@@ -12,10 +12,10 @@ namespace
 {
 	static constexpr float DebugOverlayOriginX = 24.f;
 	static constexpr float DebugOverlayOriginY = 36.f;
-	static constexpr float DebugOverlayLineHeight = 16.f;
-	static constexpr float DebugOverlayFontScale = 0.85f;
-	static constexpr float DebugOverlayBackgroundPadding = 8.f;
-	static constexpr float DebugOverlayBackgroundWidth = 760.f;
+	static constexpr float DebugOverlayLineHeight = 20.f;
+	static constexpr float DebugOverlayFontScale = 1.05f;
+	static constexpr float DebugOverlayBackgroundPadding = 10.f;
+	static constexpr float DebugOverlayBackgroundWidth = 920.f;
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 
 	FString BoolText(bool bInValue)
