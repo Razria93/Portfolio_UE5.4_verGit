@@ -1,5 +1,6 @@
 #include "Core/Debug/FAICombatBTDebug.h"
 
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 
 #include "AIController.h"
@@ -49,6 +50,15 @@ namespace
 			TEXT("Result=%s | RejectReason=%s"),
 			*UEnum::GetValueAsString(InResult.ResultType),
 			*UEnum::GetValueAsString(InResult.RejectReason));
+	}
+
+	const UObject* ResolveAICombatBTWorldContext(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor)
+	{
+		if (IsValid(InOwnerPawn)) return InOwnerPawn;
+		if (IsValid(InAIController)) return InAIController;
+		if (IsValid(InTargetActor)) return InTargetActor;
+
+		return nullptr;
 	}
 }
 
@@ -144,6 +154,19 @@ void FAICombatBTDebug::RecordEngageContextRejectedForAudit(const APawn* InOwnerP
 
 void FAICombatBTDebug::RecordCombatActionTaskSucceededForAudit(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, ECombatActionIntent InIntent, const FActionRequestResult& InResult, float InCooldown, float InNextActionTime)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordAICombatTask(
+			ResolveAICombatBTWorldContext(InAIController, InOwnerPawn, InTargetActor),
+			InAIController,
+			InOwnerPawn,
+			InTargetActor,
+			UEnum::GetValueAsString(InIntent),
+			UEnum::GetValueAsString(InResult.ResultType),
+			UEnum::GetValueAsString(InResult.RejectReason),
+			TEXT("CombatActionTaskSucceeded"));
+	}
+
 	if (!ShouldAuditAICombatBT()) return;
 
 	FLog::Log(FString::Printf(
@@ -159,6 +182,19 @@ void FAICombatBTDebug::RecordCombatActionTaskSucceededForAudit(const AAIControll
 
 void FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, ECombatActionIntent InIntent, const FActionRequestResult& InResult, const TCHAR* InReason)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordAICombatTask(
+			ResolveAICombatBTWorldContext(InAIController, InOwnerPawn, InTargetActor),
+			InAIController,
+			InOwnerPawn,
+			InTargetActor,
+			UEnum::GetValueAsString(InIntent),
+			UEnum::GetValueAsString(InResult.ResultType),
+			InReason ? FString(InReason) : UEnum::GetValueAsString(InResult.RejectReason),
+			TEXT("CombatActionTaskRejected"));
+	}
+
 	if (!ShouldAuditAICombatBT()) return;
 
 	FLog::Log(FString::Printf(

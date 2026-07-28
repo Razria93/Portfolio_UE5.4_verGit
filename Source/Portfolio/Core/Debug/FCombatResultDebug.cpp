@@ -1,5 +1,6 @@
 #include "Core/Debug/FCombatResultDebug.h"
 
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 
 #include "HAL/IConsoleManager.h"
@@ -44,6 +45,16 @@ namespace
 			*UEnum::GetValueAsString(InResult.ResultType),
 			*UEnum::GetValueAsString(InResult.RejectReason));
 	}
+
+	const UObject* ResolveCombatResultWorldContext(const AActor* InReceiverActor, const FCombatResultPacket& InPacket)
+	{
+		if (IsValid(InReceiverActor)) return InReceiverActor;
+		if (IsValid(InPacket.TargetActor)) return InPacket.TargetActor;
+		if (IsValid(InPacket.SourceActor)) return InPacket.SourceActor;
+		if (IsValid(InPacket.DamageCauser)) return InPacket.DamageCauser;
+
+		return nullptr;
+	}
 }
 
 // Gate
@@ -61,6 +72,15 @@ bool FCombatResultDebug::ShouldAuditCombatResult()
 
 void FCombatResultDebug::RecordCombatResultReceivedForAudit(const AActor* InReceiverActor, const FCombatResultPacket& InPacket)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordCombatResult(
+			ResolveCombatResultWorldContext(InReceiverActor, InPacket),
+			InReceiverActor,
+			InPacket,
+			TEXT("PacketReceived"));
+	}
+
 	if (!ShouldAuditCombatResult()) return;
 
 	FLog::Log(FString::Printf(

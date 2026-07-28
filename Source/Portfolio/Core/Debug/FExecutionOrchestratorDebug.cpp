@@ -1,5 +1,6 @@
 #include "Core/Debug/FExecutionOrchestratorDebug.h"
 
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
@@ -156,6 +157,18 @@ void FExecutionOrchestratorDebug::RecordInvalidActiveParticipantsForAudit(const 
 
 void FExecutionOrchestratorDebug::RecordActionExecutionResultForAudit(const AActor* InOwnerActor, const FActionExecutionResult& InResult, const TCHAR* InEvent)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordExecutionDecision(
+			InOwnerActor,
+			InOwnerActor,
+			TEXT("Action"),
+			UEnum::GetValueAsString(InResult.Decision),
+			UEnum::GetValueAsString(InResult.ApplyMode),
+			UEnum::GetValueAsString(InResult.RejectReason),
+			InEvent ? InEvent : TEXT("ExecutionResult"));
+	}
+
 	if (!ShouldAuditActionRequest()) return;
 
 	FLog::Log(FString::Printf(
@@ -206,6 +219,18 @@ void FExecutionOrchestratorDebug::PrintActionExecutionDebug(const AActor* InOwne
 
 void FExecutionOrchestratorDebug::RecordReactionExecutionResultForAudit(const AActor* InOwnerActor, const FReactionExecutionResult& InResult, const TCHAR* InEvent)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordExecutionDecision(
+			InOwnerActor,
+			InOwnerActor,
+			TEXT("Reaction"),
+			UEnum::GetValueAsString(InResult.Decision),
+			UEnum::GetValueAsString(InResult.ApplyMode),
+			UEnum::GetValueAsString(InResult.RejectReason),
+			InEvent ? InEvent : TEXT("ExecutionResult"));
+	}
+
 	if (!ShouldAuditReactionRequest()) return;
 
 	FLog::Log(FString::Printf(
