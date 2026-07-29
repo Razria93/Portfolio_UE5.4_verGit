@@ -117,7 +117,7 @@ namespace
 		if (!IsValid(defenseComp)) return MissingText();
 
 		return FString::Printf(
-			TEXT("Wants=%s Pose=%s CanGuard=%s CanParry=%s CanStart=%s"),
+			TEXT("Wants=%s | Pose=%s | CanGuard=%s | CanParry=%s | CanStart=%s"),
 			*BoolText(defenseComp->WantsGuarding()),
 			*BoolText(defenseComp->IsGuardingPose()),
 			*BoolText(defenseComp->CanGuard()),
@@ -141,7 +141,7 @@ namespace
 		if (!IsValid(movementComp)) return MissingText();
 
 		return FString::Printf(
-			TEXT("Gait=%s Speed=%.1f Dir=%.1f CanMove=%s Falling=%s"),
+			TEXT("Gait=%s | Speed=%.1f | Dir=%.1f | CanMove=%s | Falling=%s"),
 			*CompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
 			movementComp->GetCurrentSpeed(),
 			movementComp->GetCurrentDirection(),
@@ -155,7 +155,7 @@ namespace
 		if (!IsValid(healthComp)) return MissingText();
 
 		return FString::Printf(
-			TEXT("HP=%.1f/%.1f DeadState=%s"),
+			TEXT("HP=%.1f/%.1f | DeadState=%s"),
 			healthComp->GetCurrentHP(),
 			healthComp->GetMaxHP(),
 			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
