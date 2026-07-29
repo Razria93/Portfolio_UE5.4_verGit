@@ -88,6 +88,22 @@ namespace
 		return InReason ? FString(InReason) : FString(TEXT("None"));
 	}
 
+	FString CompactEnumText(const FString& InValue)
+	{
+		int32 separatorIndex = INDEX_NONE;
+		return InValue.FindLastChar(TEXT(':'), separatorIndex)
+			&& separatorIndex > 0
+			&& InValue[separatorIndex - 1] == TEXT(':')
+			&& separatorIndex + 1 < InValue.Len()
+			? InValue.RightChop(separatorIndex + 1)
+			: InValue;
+	}
+
+	FString CompactReasonText(const FString& InValue)
+	{
+		return CompactEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
+	}
+
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 	{
 		FDebugOverlayEventEntry entry;
@@ -210,11 +226,11 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	const FString eventName = ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
-		TEXT("%s %s Apply=%s Reject=%s"),
+		TEXT("%s | Decision=%s | Apply=%s | RejectReason=%s"),
 		*InDomain,
-		*InDecision,
-		*InApplyMode,
-		*InRejectReason);
+		*CompactEnumText(InDecision),
+		*CompactEnumText(InApplyMode),
+		*CompactReasonText(InRejectReason));
 
 	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastExecution.FrameNumber = GetCurrentFrameNumber();
@@ -245,11 +261,11 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString weaponName = GetNameSafe(InWeaponActor);
 	const FString summary = FString::Printf(
-		TEXT("%s HitWindow=%d Collision=%s Reason=%s"),
-		*InHitWindowState,
+		TEXT("State=%s | HitWindow=%d | Collision=%s | Reason=%s"),
+		*CompactEnumText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
-		*ToSafeReason(InReason));
+		*CompactReasonText(ToSafeReason(InReason)));
 
 	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastCombat.FrameNumber = GetCurrentFrameNumber();
@@ -279,8 +295,8 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString summary = FString::Printf(
-		TEXT("Outcome=%s Final=%.3f Commit=%.3f Accepted=%s"),
-		*outcome,
+		TEXT("Outcome=%s | Final=%.3f | Commit=%.3f | Accepted=%s"),
+		*CompactEnumText(outcome),
 		InPacket.Result.FinalTakenDamage,
 		InPacket.Result.CommittedDamage,
 		InPacket.Result.bAccepted ? TEXT("true") : TEXT("false"));
@@ -318,8 +334,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	const FString causerName = GetNameSafe(InPacket.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
 	const FString summary = FString::Printf(
-		TEXT("Outcome=%s DamageCommitted=%s Commit=%.3f Receiver=%s"),
-		*outcome,
+		TEXT("Outcome=%s | DamageCommitted=%s | Commit=%.3f | Receiver=%s"),
+		*CompactEnumText(outcome),
 		InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"),
 		InPacket.CommittedDamage,
 		*receiverName);
@@ -356,10 +372,10 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	const FString pawnName = GetNameSafe(InOwnerPawn);
 	const FString targetName = GetNameSafe(InTargetActor);
 	const FString summary = FString::Printf(
-		TEXT("Intent=%s Result=%s Reject=%s"),
-		*InIntent,
-		*InRequestResult,
-		*InRejectReason);
+		TEXT("Intent=%s | Result=%s | RejectReason=%s"),
+		*CompactEnumText(InIntent),
+		*CompactEnumText(InRequestResult),
+		*CompactReasonText(InRejectReason));
 
 	store->Snapshot.LastAI.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastAI.FrameNumber = GetCurrentFrameNumber();
