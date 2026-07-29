@@ -1,5 +1,18 @@
 # Debug Overlay P1 Work Order
 
+## Target Selection 결정 보강
+
+P1 Target Selection은 현재 브랜치에서 debug overlay evidence를 닫는 것을 우선한다.
+
+- P1 구현은 debug overlay 한정 `UCDebugOverlayTargetComponent`로 진행한다.
+- component 소유 위치는 `ACPlayerController`를 우선한다.
+- source chain은 `TargetComponent -> RecentCombatTarget -> WorldScanFallback`으로 고정한다.
+- `WorldScanFallback`은 최후 fallback으로만 유지한다.
+- 범용 combat target component는 이번 브랜치에서 구현하지 않는다.
+- 브랜치 마감 후 별도 리팩터링에서 `UCTargetSelectionComponent` 또는 `UCTargetProviderComponent`로 승격을 검토한다.
+
+세부 설계 기준은 `Debug_Overlay_P1_Target_Selection_Design_KR.md`를 따른다.
+
 ## 1. 목적
 
 이 문서는 debug overlay P1 작업 순서와 최종 촬영 연기 정책을 고정한다.
