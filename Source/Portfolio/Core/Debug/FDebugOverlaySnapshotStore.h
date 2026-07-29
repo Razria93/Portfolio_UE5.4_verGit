@@ -18,7 +18,7 @@ public:
 
 public:
 	// Execution Record
-	static void RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName);
+	static void RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InSubject, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName);
 
 public:
 	// Combat Record

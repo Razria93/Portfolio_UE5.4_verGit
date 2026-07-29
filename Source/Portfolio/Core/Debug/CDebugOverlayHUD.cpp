@@ -11,6 +11,7 @@
 #include "Engine/Canvas.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
+#include "Type/CActionKeyTypes.h"
 
 namespace
 {
@@ -35,6 +36,30 @@ namespace
 		return TEXT("N/A");
 	}
 
+	FString CompactEnumText(const FString& InValue)
+	{
+		int32 separatorIndex = INDEX_NONE;
+		return InValue.FindLastChar(TEXT(':'), separatorIndex)
+			&& separatorIndex > 0
+			&& InValue[separatorIndex - 1] == TEXT(':')
+			&& separatorIndex + 1 < InValue.Len()
+			? InValue.RightChop(separatorIndex + 1)
+			: InValue;
+	}
+
+	FString FormatGuardActionPhase(EGuardActionPhase InPhase)
+	{
+		switch (InPhase)
+		{
+		case EGuardActionPhase::In:
+			return TEXT("Guard In");
+		case EGuardActionPhase::Out:
+			return TEXT("Guard Out");
+		default:
+			return TEXT("Guard");
+		}
+	}
+
 	template <typename TComponent>
 	TComponent* FindComponent(const APawn* InPawn)
 	{
@@ -44,7 +69,7 @@ namespace
 	FString FormatExecutionState(const APawn* InPawn)
 	{
 		const UCStateComponent* stateComp = FindComponent<UCStateComponent>(InPawn);
-		return IsValid(stateComp) ? UEnum::GetValueAsString(stateComp->GetCurrentExecutionState()) : MissingText();
+		return IsValid(stateComp) ? CompactEnumText(UEnum::GetValueAsString(stateComp->GetCurrentExecutionState())) : MissingText();
 	}
 
 	FString FormatActiveAction(const APawn* InPawn)
@@ -53,10 +78,28 @@ namespace
 		if (!IsValid(actionComp)) return MissingText();
 		if (!actionComp->IsActive()) return TEXT("None");
 
+		const EActionType actionType = actionComp->GetActiveActionType();
+		const int32 actionIndex = actionComp->GetActiveActionIndex();
+
+		if (actionType == EActionType::Guard)
+		{
+			FActionDataKey actionDataKey;
+			actionDataKey.ActionType = actionType;
+			actionDataKey.ActionIndex = actionIndex;
+
+			const EGuardActionPhase guardPhase = ResolveGuardActionPhase(actionDataKey);
+			if (guardPhase == EGuardActionPhase::In || guardPhase == EGuardActionPhase::Out)
+			{
+				return FormatGuardActionPhase(guardPhase);
+			}
+
+			return TEXT("Guard");
+		}
+
 		return FString::Printf(
 			TEXT("%s[%d]"),
-			*UEnum::GetValueAsString(actionComp->GetActiveActionType()),
-			actionComp->GetActiveActionIndex());
+			*CompactEnumText(UEnum::GetValueAsString(actionType)),
+			actionIndex);
 	}
 
 	FString FormatActiveReaction(const APawn* InPawn)
@@ -65,7 +108,7 @@ namespace
 		if (!IsValid(reactionComp)) return MissingText();
 		if (!reactionComp->IsActive()) return TEXT("None");
 
-		return UEnum::GetValueAsString(reactionComp->GetActiveReactionType());
+		return CompactEnumText(UEnum::GetValueAsString(reactionComp->GetActiveReactionType()));
 	}
 
 	FString FormatGuardOverlay(const APawn* InPawn)
@@ -99,7 +142,7 @@ namespace
 
 		return FString::Printf(
 			TEXT("Gait=%s Speed=%.1f Dir=%.1f CanMove=%s Falling=%s"),
-			*UEnum::GetValueAsString(movementComp->GetCurrentMovementGait()),
+			*CompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
 			movementComp->GetCurrentSpeed(),
 			movementComp->GetCurrentDirection(),
 			*BoolText(movementComp->CanMove()),
@@ -115,7 +158,7 @@ namespace
 			TEXT("HP=%.1f/%.1f DeadState=%s"),
 			healthComp->GetCurrentHP(),
 			healthComp->GetMaxHP(),
-			*UEnum::GetValueAsString(healthComp->GetDeadState()));
+			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
 	}
 
 	FString CaptureStateText(EDebugOverlayCaptureState InState)

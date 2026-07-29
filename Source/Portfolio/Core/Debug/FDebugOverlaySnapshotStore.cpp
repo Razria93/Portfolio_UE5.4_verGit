@@ -104,6 +104,13 @@ namespace
 		return CompactEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
 	}
 
+	FString FormatExecutionDomainSubject(const FString& InDomain, const FString& InSubject)
+	{
+		return InSubject.IsEmpty()
+			? InDomain
+			: FString::Printf(TEXT("%s(%s)"), *InDomain, *InSubject);
+	}
+
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 	{
 		FDebugOverlayEventEntry entry;
@@ -214,7 +221,7 @@ int32 FDebugOverlaySnapshotStore::GetEventLogDisplayLimit()
 
 // Execution Record
 
-void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName)
+void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InSubject, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName)
 {
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
@@ -225,9 +232,10 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	const UWorld* world = ResolveWorld(InWorldContextObject);
 	const FString eventName = ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
+	const FString domainSubject = FormatExecutionDomainSubject(InDomain, InSubject);
 	const FString summary = FString::Printf(
 		TEXT("%s | Decision=%s | Apply=%s | RejectReason=%s"),
-		*InDomain,
+		*domainSubject,
 		*CompactEnumText(InDecision),
 		*CompactEnumText(InApplyMode),
 		*CompactReasonText(InRejectReason));
