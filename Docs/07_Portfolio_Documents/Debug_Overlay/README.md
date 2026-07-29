@@ -35,6 +35,7 @@
 - `01_Planning/Debug_Overlay_P1_Scope_KR.md`
 - `01_Planning/Debug_Overlay_P1_Target_Selection_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_Target_Component_Implementation_Plan_KR.md`
+- `01_Planning/Debug_Overlay_P1_Target_Set_Path_Design_KR.md`
 - `02_Operation/Debug_Overlay_Operation_Guide_KR.md`
 - `03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md`
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`
