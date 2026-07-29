@@ -13,6 +13,8 @@ P1 Target Selection은 현재 브랜치에서 debug overlay evidence를 닫는 �
 
 세부 설계 기준은 `Debug_Overlay_P1_Target_Selection_Design_KR.md`를 따른다.
 
+구현 계획 기준은 `Debug_Overlay_P1_Target_Component_Implementation_Plan_KR.md`를 따른다.
+
 ## 1. 목적
 
 이 문서는 debug overlay P1 작업 순서와 최종 촬영 연기 정책을 고정한다.
