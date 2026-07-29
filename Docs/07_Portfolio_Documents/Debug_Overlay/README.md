@@ -18,6 +18,8 @@
   - 제출 영상별 overlay preset 및 화면 구성
 - `05_Verification`
   - PIE 확인 체크리스트, 실패 분기, 캡처 전 검증 기준
+- `06_Evidence_Package`
+  - 1차/최종 evidence 패키지 구성, 파일 목록, 사용 가능 범위
 
 ## 주요 문서
 
@@ -32,6 +34,7 @@
 - `03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md`
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`
 - `05_Verification/Debug_Overlay_P0_PIE_Checklist_KR.md`
+- `06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md`
 
 ## 현재 상태
 
@@ -76,6 +79,8 @@ P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 e
 - Execution summary는 `Action(ComboAttack[1])`, `Reaction(Hit)`처럼 subject를 포함한다.
 - Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, Target Component 기반 선택은 P1 후보로 둔다.
 - EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 제외한다.
+
+현재 캡처 파일은 1차 패키지로만 정리한다. 최종 제출 후보는 후속 리팩터링과 재촬영 이후 별도 패키지로 분리한다.
 
 ## 현재 브랜치
 
