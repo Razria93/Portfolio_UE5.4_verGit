@@ -2,12 +2,22 @@
 
 #include "ProjectGlobal.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
+#include "EngineUtils.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayTargetComponent.h"
 #endif
 #include "Type/CActionOrchestrationTypes.h"
+
+#if !UE_BUILD_SHIPPING
+namespace
+{
+	static constexpr float DebugOverlayTargetTraceDistance = 5000.f;
+	static constexpr float DebugOverlayNearestTargetRadius = 1500.f;
+}
+#endif
 
 ACPlayerController::ACPlayerController()
 {
@@ -62,6 +72,29 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
 	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
+}
+
+// Debug Overlay Exec
+
+void ACPlayerController::DebugOverlaySelectTarget()
+{
+#if !UE_BUILD_SHIPPING
+	SelectDebugOverlayTargetFromView();
+#endif
+}
+
+void ACPlayerController::DebugOverlaySelectNearestTarget()
+{
+#if !UE_BUILD_SHIPPING
+	SelectDebugOverlayNearestEnemy();
+#endif
+}
+
+void ACPlayerController::DebugOverlayClearTarget()
+{
+#if !UE_BUILD_SHIPPING
+	ClearDebugOverlayTarget();
+#endif
 }
 
 // Look Input
@@ -173,3 +206,100 @@ void ACPlayerController::PressDodge()
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
 }
+
+#if !UE_BUILD_SHIPPING
+
+bool ACPlayerController::SelectDebugOverlayTargetFromView()
+{
+	if (!IsValid(DebugOverlayTargetComponent)) return false;
+
+	ACEnemy* targetEnemy = FindDebugOverlayEnemyFromView();
+	if (!IsValid(targetEnemy))
+	{
+		targetEnemy = FindNearestDebugOverlayEnemy();
+	}
+
+	if (!IsValid(targetEnemy))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+		return false;
+	}
+
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy);
+	return true;
+}
+
+bool ACPlayerController::SelectDebugOverlayNearestEnemy()
+{
+	if (!IsValid(DebugOverlayTargetComponent)) return false;
+
+	ACEnemy* targetEnemy = FindNearestDebugOverlayEnemy();
+	if (!IsValid(targetEnemy))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+		return false;
+	}
+
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy);
+	return true;
+}
+
+void ACPlayerController::ClearDebugOverlayTarget()
+{
+	if (!IsValid(DebugOverlayTargetComponent)) return;
+
+	DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+}
+
+ACEnemy* ACPlayerController::FindDebugOverlayEnemyFromView() const
+{
+	UWorld* world = GetWorld();
+	if (!IsValid(world)) return nullptr;
+
+	FVector viewLocation = FVector::ZeroVector;
+	FRotator viewRotation = FRotator::ZeroRotator;
+	GetPlayerViewPoint(viewLocation, viewRotation);
+
+	const FVector traceStart = viewLocation;
+	const FVector traceEnd = traceStart + viewRotation.Vector() * DebugOverlayTargetTraceDistance;
+
+	FCollisionQueryParams queryParams(SCENE_QUERY_STAT(DebugOverlayTargetTrace), false);
+	if (const APawn* pawn = GetPawn())
+	{
+		queryParams.AddIgnoredActor(pawn);
+	}
+
+	FHitResult hitResult;
+	if (!world->LineTraceSingleByChannel(hitResult, traceStart, traceEnd, ECC_Visibility, queryParams)) return nullptr;
+
+	return Cast<ACEnemy>(hitResult.GetActor());
+}
+
+ACEnemy* ACPlayerController::FindNearestDebugOverlayEnemy() const
+{
+	UWorld* world = GetWorld();
+	const APawn* pawn = GetPawn();
+	if (!IsValid(world) || !IsValid(pawn)) return nullptr;
+
+	const FVector origin = pawn->GetActorLocation();
+	const float maxDistanceSquared = FMath::Square(DebugOverlayNearestTargetRadius);
+
+	ACEnemy* nearestEnemy = nullptr;
+	float nearestDistanceSquared = maxDistanceSquared;
+
+	for (TActorIterator<ACEnemy> it(world); it; ++it)
+	{
+		ACEnemy* enemy = *it;
+		if (!IsValid(enemy)) continue;
+
+		const float distanceSquared = FVector::DistSquared(origin, enemy->GetActorLocation());
+		if (distanceSquared > nearestDistanceSquared) continue;
+
+		nearestDistanceSquared = distanceSquared;
+		nearestEnemy = enemy;
+	}
+
+	return nearestEnemy;
+}
+
+#endif

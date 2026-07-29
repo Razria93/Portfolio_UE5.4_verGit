@@ -12,6 +12,17 @@ class PORTFOLIO_API ACPlayerController : public APlayerController
 public:
 	ACPlayerController();
 
+public:
+	// Debug Overlay Exec
+	UFUNCTION(Exec)
+	void DebugOverlaySelectTarget();
+
+	UFUNCTION(Exec)
+	void DebugOverlaySelectNearestTarget();
+
+	UFUNCTION(Exec)
+	void DebugOverlayClearTarget();
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
@@ -55,4 +66,15 @@ protected:
 	void PressGuard();
 	void ReleaseGuard();
 	void PressDodge();
+
+#if !UE_BUILD_SHIPPING
+private:
+	// Debug Overlay Target
+	bool SelectDebugOverlayTargetFromView();
+	bool SelectDebugOverlayNearestEnemy();
+	void ClearDebugOverlayTarget();
+
+	class ACEnemy* FindDebugOverlayEnemyFromView() const;
+	class ACEnemy* FindNearestDebugOverlayEnemy() const;
+#endif
 };

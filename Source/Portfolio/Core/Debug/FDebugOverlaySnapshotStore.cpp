@@ -90,7 +90,7 @@ namespace
 		return InReason ? FString(InReason) : FString(TEXT("None"));
 	}
 
-	FString CompactEnumText(const FString& InValue)
+	FString CompactStoreEnumText(const FString& InValue)
 	{
 		int32 separatorIndex = INDEX_NONE;
 		return InValue.FindLastChar(TEXT(':'), separatorIndex)
@@ -103,7 +103,7 @@ namespace
 
 	FString CompactReasonText(const FString& InValue)
 	{
-		return CompactEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
+		return CompactStoreEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
 	}
 
 	FString FormatExecutionDomainSubject(const FString& InDomain, const FString& InSubject)
@@ -250,8 +250,8 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	const FString summary = FString::Printf(
 		TEXT("%s | Decision=%s | Apply=%s | RejectReason=%s"),
 		*domainSubject,
-		*CompactEnumText(InDecision),
-		*CompactEnumText(InApplyMode),
+		*CompactStoreEnumText(InDecision),
+		*CompactStoreEnumText(InApplyMode),
 		*CompactReasonText(InRejectReason));
 
 	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
@@ -284,7 +284,7 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	const FString weaponName = GetNameSafe(InWeaponActor);
 	const FString summary = FString::Printf(
 		TEXT("State=%s | HitWindow=%d | Collision=%s | Reason=%s"),
-		*CompactEnumText(InHitWindowState),
+		*CompactStoreEnumText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
 		*CompactReasonText(ToSafeReason(InReason)));
@@ -318,7 +318,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString summary = FString::Printf(
 		TEXT("Outcome=%s | Final=%.3f | Commit=%.3f | Accepted=%s"),
-		*CompactEnumText(outcome),
+		*CompactStoreEnumText(outcome),
 		InPacket.Result.FinalTakenDamage,
 		InPacket.Result.CommittedDamage,
 		InPacket.Result.bAccepted ? TEXT("true") : TEXT("false"));
@@ -358,7 +358,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
 	const FString summary = FString::Printf(
 		TEXT("Outcome=%s | DamageCommitted=%s | Commit=%.3f | Receiver=%s"),
-		*CompactEnumText(outcome),
+		*CompactStoreEnumText(outcome),
 		InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"),
 		InPacket.CommittedDamage,
 		*receiverName);
@@ -397,8 +397,8 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	const FString targetName = GetNameSafe(InTargetActor);
 	const FString summary = FString::Printf(
 		TEXT("Intent=%s | Result=%s | RejectReason=%s"),
-		*CompactEnumText(InIntent),
-		*CompactEnumText(InRequestResult),
+		*CompactStoreEnumText(InIntent),
+		*CompactStoreEnumText(InRequestResult),
 		*CompactReasonText(InRejectReason));
 
 	store->Snapshot.LastAI.CaptureState = EDebugOverlayCaptureState::Captured;
