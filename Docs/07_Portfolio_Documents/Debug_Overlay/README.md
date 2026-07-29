@@ -36,6 +36,7 @@
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`
 - `05_Verification/Debug_Overlay_P0_PIE_Checklist_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md`
+- `06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md`
 
 ## 현재 상태
 
