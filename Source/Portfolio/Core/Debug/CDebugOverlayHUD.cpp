@@ -152,10 +152,8 @@ namespace
 		InOutLines.Add(InLine);
 	}
 
-	void AddActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn)
+	void AddActorStatusLines(TArray<FString>& InOutLines, const APawn* InPawn)
 	{
-		AddLine(InOutLines, TEXT(""));
-		AddLine(InOutLines, InPanelName);
 		AddLine(InOutLines, FString::Printf(TEXT("State: %s"), *FormatExecutionState(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("Action: %s"), *FormatActiveAction(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *FormatActiveReaction(InPawn)));
@@ -164,6 +162,13 @@ namespace
 		AddLine(InOutLines, FString::Printf(TEXT("HP: %s"), *FormatActorHealth(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *FormatRuntimeLODTier()));
 		AddLine(InOutLines, FString::Printf(TEXT("AI: %s"), *FormatAISummary()));
+	}
+
+	void AddActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn)
+	{
+		AddLine(InOutLines, TEXT(""));
+		AddLine(InOutLines, InPanelName);
+		AddActorStatusLines(InOutLines, InPawn);
 	}
 
 	void AddSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
@@ -282,6 +287,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	AddActorPanelLines(lines, TEXT("[Player]"), pawn);
 
 	AddLine(lines, TEXT(""));
+	AddLine(lines, TEXT("[Enemy]"));
 	if (LastEnemyScanCount == 0)
 	{
 		AddLine(lines, TEXT("EnemyFallback: NotCaptured(NoEnemy)"));
@@ -300,7 +306,8 @@ void ACDebugOverlayHUD::DrawHUD()
 		AddLine(lines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(enemy)));
 	}
 
-	AddActorPanelLines(lines, TEXT("[Enemy]"), enemy);
+	AddLine(lines, TEXT(""));
+	AddActorStatusLines(lines, enemy);
 
 	AddSnapshotLines(lines, snapshot, bHasSnapshot);
 
