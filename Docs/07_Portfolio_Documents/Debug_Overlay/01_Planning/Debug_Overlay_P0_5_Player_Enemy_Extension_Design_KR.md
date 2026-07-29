@@ -21,22 +21,32 @@ P0.5 확장은 P0 debug overlay가 TestRoom PIE에서 정상 동작하는 것을
 
 ## 3. 패널 구조
 
-P0.5 overlay는 다음 두 패널을 기본 구조로 한다.
+P0.5 overlay는 Player와 Enemy를 같은 section 순서로 표시한다. 구조는 대칭으로 유지하고, 대상별로 의미가 없거나 아직 조회할 수 없는 값은 `N/A`, `None`, `NotCaptured`로 표시한다.
 
 ```text
 [Debug Overlay P0.5 - Player]
 State:
+Action:
+Reaction:
+Guard:
 Movement:
 HP:
+Runtime LOD:
+AI:
 Recent Execution:
 Recent Combat:
 Event Log:
 
 [Debug Overlay P0.5 - Enemy]
 State:
+Action:
+Reaction:
+Guard:
 Movement:
 HP:
 Runtime LOD:
+AI:
+Recent Execution:
 Recent AI:
 Recent Combat:
 Event Log:
@@ -45,6 +55,18 @@ Event Log:
 Player tab은 blue 계열, Enemy tab은 red 계열의 작은 header block으로 표시한다. Header 색상은 대상 구분용이며, gameplay 상태나 위험도 의미를 부여하지 않는다.
 
 본문은 기존 반투명 black background를 유지한다. 제출 캡처에서 읽히는 것이 목적이므로 장식적 UI 요소는 추가하지 않는다.
+
+대칭 구조를 유지하는 이유:
+
+- 캡처 이미지를 보는 사람이 Player/Enemy 정보를 같은 순서로 비교할 수 있다.
+- 특정 항목이 없을 때도 누락인지 미수집인지 구분할 수 있다.
+- 후속 구현에서 section 추가/삭제로 인한 layout 흔들림을 줄일 수 있다.
+
+대상별 예외:
+
+- Player의 `Runtime LOD`와 `AI`는 P0.5에서 기본적으로 `N/A` 또는 `NotCaptured`가 가능하다.
+- Enemy의 `Guard`는 component가 없거나 의미가 낮으면 `N/A`가 가능하다.
+- Enemy의 `Recent Execution`은 enemy action/reaction hook 귀속이 확정되기 전까지 `NotCaptured`가 가능하다.
 
 ## 4. Player 표시 항목
 
@@ -62,6 +84,10 @@ Player tab은 blue 계열, Enemy tab은 red 계열의 작은 header block으로 
 | HP.CurrentHP | 현재 HP | `UCHealthComponent::GetCurrentHP` | Ready |
 | HP.MaxHP | 최대 HP | `UCHealthComponent::GetMaxHP` | Ready |
 | HP.DeadState | 생존/사망 상태 | `UCHealthComponent::GetDeadState` | Ready |
+| RuntimeLODTier | Player 기준 runtime LOD | 현재 P0.5에서는 기본 `N/A` | ReviewNeeded |
+| AI | Player 기준 AI summary | Player에는 일반적으로 없음 | ReviewNeeded |
+| Recent Execution | Player 기준 최근 execution summary | Store snapshot 또는 subject 분리 Store | Ready/HookNeeded |
+| Recent Combat | Player 기준 최근 combat summary | Store snapshot 또는 subject 분리 Store | Ready/HookNeeded |
 | EventLog | Player 기준 최근 event | Subject 분리 Store | HookNeeded |
 
 Player actor는 HUD의 `GetOwningPawn()`을 기준으로 한다. Component를 찾지 못하면 기존 P0 정책처럼 `N/A`, 아직 event가 없으면 `NotCaptured`, active 상태가 없으면 `None`을 사용한다.
@@ -73,6 +99,7 @@ Player actor는 HUD의 `GetOwningPawn()`을 기준으로 한다. Component를 �
 | ExecutionState | enemy 현재 execution state | `UCStateComponent::GetCurrentExecutionState` | Ready |
 | ActiveAction | enemy 현재 active action 또는 `None` | `UCActionComponent` getter | Ready |
 | ActiveReaction | enemy 현재 active reaction 또는 `None` | `UCReactionComponent` getter | Ready |
+| GuardOverlay | enemy guard intent/pose/capability | `UCDefenseComponent` getter 또는 `N/A` | ReviewNeeded |
 | Movement.Gait | enemy movement gait | `UCMovementComponent::GetCurrentMovementGait` | Ready |
 | Movement.Speed | enemy 2D speed | `UCMovementComponent::GetCurrentSpeed` | Ready |
 | Movement.Direction | enemy movement direction | `UCMovementComponent::GetCurrentDirection` | Ready |
@@ -82,7 +109,10 @@ Player actor는 HUD의 `GetOwningPawn()`을 기준으로 한다. Component를 �
 | HP.MaxHP | enemy 최대 HP | `UCHealthComponent::GetMaxHP` | Ready |
 | HP.DeadState | enemy 생존/사망 상태 | `UCHealthComponent::GetDeadState` | Ready |
 | RuntimeLODTier | enemy runtime LOD tier | 기존 Runtime LOD source 또는 AI summary | ReviewNeeded |
+| AI | enemy AI 상태/summary | `FDebugOverlaySnapshotStore` AI summary | Ready |
+| Recent Execution | enemy 기준 최근 execution summary | Store subject 분리 이후 안정화 | HookNeeded |
 | Recent AI | 최근 AI combat task summary | `FDebugOverlaySnapshotStore` AI summary | Ready |
+| Recent Combat | enemy 기준 최근 combat summary | Store snapshot 또는 subject 분리 Store | Ready/HookNeeded |
 | EventLog | Enemy 기준 최근 event | Subject 분리 Store | HookNeeded |
 
 Enemy 패널은 선택된 enemy가 없으면 header는 유지하되 주요 값은 `N/A` 또는 `NotCaptured`로 표시한다. 이 상태를 enemy system 성공 evidence로 사용하지 않는다.
