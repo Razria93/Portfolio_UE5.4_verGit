@@ -74,7 +74,7 @@ P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 e
 - multi-field 상태값은 `|`로 구분한다.
 - Guard action은 `Guard In`, `Guard Out`처럼 index 없이 표시한다.
 - Execution summary는 `Action(ComboAttack[1])`, `Reaction(Hit)`처럼 subject를 포함한다.
-- Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, target/blackboard 기반 선택은 P1 후보로 둔다.
+- Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, Target Component 기반 선택은 P1 후보로 둔다.
 - EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 제외한다.
 
 ## 현재 브랜치

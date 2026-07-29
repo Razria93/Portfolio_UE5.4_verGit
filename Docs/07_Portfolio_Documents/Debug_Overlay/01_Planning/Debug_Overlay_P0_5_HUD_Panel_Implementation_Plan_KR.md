@@ -315,7 +315,8 @@ P0.5 HUD 1단계에서 구현하지 않을 것:
 - Event category filter
 - compact summary format 변경
 - combat snapshot 기반 enemy 추론
-- Blackboard target actor 연동
+- Target Component 기반 enemy selection
+- Blackboard target actor 보조 검토
 - 다중 enemy cycling
 
 이 범위를 기준으로 다음 단계에서 실제 HUD 구현을 진행한다.

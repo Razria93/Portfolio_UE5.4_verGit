@@ -258,7 +258,7 @@ Evidence 의미:
 Evidence 의미:
 
 - P0.5에서는 selected enemy가 world scan fallback임을 함께 설명해야 한다.
-- target/blackboard 기반 enemy selection evidence로 사용하지 않는다.
+- Target Component 기반 enemy selection evidence로 사용하지 않는다. 현재는 `WorldScanFallback` evidence로만 설명한다.
 
 ## P0.5 제외 프리셋
 
@@ -270,5 +270,5 @@ Evidence 의미:
 | EventLog category filter | P1 Store/filter 작업 필요 |
 | Player/Enemy별 EventLog 분리 | Store subject 분리 필요 |
 | Runtime LOD 실제 tier 성공 캡처 | 현재 `N/A` 가능, hook 보강 필요 |
-| target/blackboard enemy selection | P1 후보 |
+| Target Component 기반 enemy selection | P1 후보 |
 | capture automation | P1 후보 |

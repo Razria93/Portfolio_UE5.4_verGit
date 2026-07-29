@@ -190,7 +190,7 @@ Damage가 발생하지 않은 장면의 `NotCaptured`는 실패가 아니다. �
 3. Enemy가 2개 이상이면 `EnemyFallback: Ambiguous(Count=N)` 상태를 성공 evidence로 사용하지 않는다.
 4. 단일 enemy인데 표시되지 않으면 world scan cache가 stale인지 확인한다.
 
-P0.5 enemy selection은 `WorldScanFallback` 기반이다. target/blackboard 기반 선택 실패로 해석하지 않는다.
+P0.5 enemy selection은 `WorldScanFallback` 기반이다. Target Component 기반 선택 실패로 해석하지 않는다.
 
 ### 7.8 Guard In/Out이 index로 보임
 

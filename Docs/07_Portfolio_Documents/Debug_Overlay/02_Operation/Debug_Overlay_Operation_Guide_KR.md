@@ -100,7 +100,7 @@ EnemyFallback: Selected=BP_CEnemy_C_1 Policy=FirstValid Count=1
 
 - 이 표시는 "현재 캡처 대상으로 선택된 enemy"를 보여주는 개발 전용 fallback이다.
 - 다중 enemy가 있거나 enemy를 찾지 못하면 enemy evidence 신뢰도를 제한한다.
-- target/blackboard 기반 enemy selection은 P1 후보로 둔다.
+- Target Component 기반 enemy selection은 P1 후보로 둔다. Blackboard 기반 선택은 Target Component가 없을 때의 보조 검토 후보로만 둔다.
 
 ### EventLog 운영 판단
 

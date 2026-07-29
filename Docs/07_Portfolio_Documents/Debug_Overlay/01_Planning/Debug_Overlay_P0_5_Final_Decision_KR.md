@@ -105,7 +105,7 @@ EnemyFallback: Selected=BP_CEnemy_C_1 Policy=FirstValid Count=1
 | `Ambiguous(Count=N)` | 다중 enemy로 대상 확정 불가 | 특정 enemy evidence로 사용하지 않음 |
 | `StaleEnemy` | cache 대상이 유효하지 않음 | 재확인 필요 |
 
-target/blackboard 기반 enemy selection은 P1에서 검토한다.
+Target Component 기반 enemy selection은 P1에서 검토한다. Blackboard 기반 선택은 Target Component가 없거나 AI 내부 상태를 보조 검증해야 할 때의 보조 후보로 둔다.
 
 ## 5. 제출 evidence로 사용할 수 있는 항목
 
@@ -129,7 +129,7 @@ target/blackboard 기반 enemy selection은 P1에서 검토한다.
 | --- | --- |
 | Runtime LOD | P0.5에서는 `N/A` 가능. 실제 tier 성공 evidence로 사용하지 않는다. |
 | AI | `NotCaptured` 가능. AI task event가 실제 발생한 경우만 보조 evidence로 사용한다. |
-| Enemy selection | world scan fallback이므로 target/blackboard evidence가 아니다. |
+| Enemy selection | world scan fallback이므로 Target Component 기반 evidence가 아니다. |
 | EventLog | world 단위 공통 log이며 Player/Enemy별 분리 log가 아니다. |
 | FPS/성능 | overlay 캡처를 성능 성공 주장으로 사용하지 않는다. |
 
@@ -140,7 +140,7 @@ P0.5에서는 다음을 구현/검증 범위에서 제외한다.
 - EventLog 추가 축약
 - EventLog category filter
 - Player/Enemy별 EventLog 분리
-- target/blackboard 기반 enemy selection
+- Target Component 기반 enemy selection
 - Runtime LOD 실제 tier hook 보강
 - AI blackboard 상세 표시
 - 다중 enemy cycling UI
@@ -155,7 +155,8 @@ P1 후보는 다음으로 둔다.
 
 | 후보 | 목적 |
 | --- | --- |
-| target/blackboard enemy selection | fallback이 아닌 전투 대상 기준 enemy 표시 |
+| Target Component 기반 enemy selection | gameplay/runtime truth인 현재 target 기준 enemy 표시 |
+| Blackboard 기반 enemy 보조 검토 | Target Component가 없거나 AI 내부 target 확인이 필요할 때만 보조 후보로 사용 |
 | Store subject 분리 | Player/Enemy별 recent summary/EventLog 분리 |
 | EventLog category filter | Execution/Combat/AI 등 선택 표시 |
 | Runtime LOD hook | 실제 tier/interval evidence 표시 |
@@ -218,7 +219,7 @@ P0.5 이후 작업 제안은 다음 묶음을 기준으로 한다.
 
 포함 작업:
 
-- target/blackboard 기반 enemy selection 설계
+- Target Component 기반 enemy selection 설계
 - Store subject 분리 설계
 - Player/Enemy별 EventLog 분리 설계
 - EventLog category filter 설계
