@@ -4,9 +4,21 @@
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
 
 class AAIController;
+class AActor;
 class APawn;
 struct FCombatResultPacket;
 struct FCombatSignalTargetPacket;
+
+struct PORTFOLIO_API FDebugOverlayRecentCombatPair
+{
+	TWeakObjectPtr<AActor> SourceActor;
+	TWeakObjectPtr<AActor> TargetActor;
+	FString SourceName;
+	FString TargetName;
+	uint64 FrameNumber = 0;
+	float WorldTimeSeconds = 0.f;
+	FString EventName;
+};
 
 class PORTFOLIO_API FDebugOverlaySnapshotStore
 {
@@ -38,6 +50,7 @@ public:
 public:
 	// Snapshot Query
 	static bool GetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
+	static bool TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair);
 
 public:
 	// Lifecycle

@@ -16,6 +16,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
 
+	UPROPERTY(VisibleAnywhere)
+	class UCDebugOverlayTargetComponent* DebugOverlayTargetComponent = nullptr;
+
 private:
 	FVector2D CachedMoveAxis2D = FVector2D::ZeroVector;
 

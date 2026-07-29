@@ -4,6 +4,9 @@
 
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
+#if !UE_BUILD_SHIPPING
+#include "Core/Debug/CDebugOverlayTargetComponent.h"
+#endif
 #include "Type/CActionOrchestrationTypes.h"
 
 ACPlayerController::ACPlayerController()
@@ -12,6 +15,11 @@ ACPlayerController::ACPlayerController()
 
 	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
 	check(PlayerFeedbackComponent);
+
+#if !UE_BUILD_SHIPPING
+	DebugOverlayTargetComponent = CreateDefaultSubobject<UCDebugOverlayTargetComponent>(TEXT("DebugOverlayTarget"));
+	check(DebugOverlayTargetComponent);
+#endif
 }
 
 // Lifecycle

@@ -45,8 +45,10 @@ namespace
 	{
 		FDebugOverlaySnapshot Snapshot;
 		TArray<FDebugOverlayEventEntry> EventRing;
+		FDebugOverlayRecentCombatPair RecentCombatPair;
 		int32 NextEventIndex = 0;
 		int32 EventCount = 0;
+		bool bHasRecentCombatPair = false;
 	};
 
 #if !UE_BUILD_SHIPPING
@@ -142,6 +144,18 @@ namespace
 		InStore.EventCount = FMath::Min(InStore.EventCount + 1, DebugOverlayEventStoreCapacity);
 
 		InStore.Snapshot.RecentEvents = GetRecentEventsCopyFromStore(InStore, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit);
+	}
+
+	void RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
+	{
+		InStore.RecentCombatPair.SourceActor = InSourceActor;
+		InStore.RecentCombatPair.TargetActor = InTargetActor;
+		InStore.RecentCombatPair.SourceName = GetNameSafe(InSourceActor);
+		InStore.RecentCombatPair.TargetName = GetNameSafe(InTargetActor);
+		InStore.RecentCombatPair.FrameNumber = GetCurrentFrameNumber();
+		InStore.RecentCombatPair.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
+		InStore.RecentCombatPair.EventName = InEventName;
+		InStore.bHasRecentCombatPair = true;
 	}
 
 	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp)
@@ -321,6 +335,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	store->Snapshot.LastCombat.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.Result.CommittedDamage;
 	store->Snapshot.LastCombat.Summary = summary;
+	RecordRecentCombatPairInternal(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
 
 	AddEventInternal(*store, MakeEventEntry(world, TEXT("Combat"), eventName, targetName, sourceName, targetName, summary));
 #endif
@@ -359,6 +374,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	store->Snapshot.LastCombat.bDamageCommitted = InPacket.bDamageCommitted;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.CommittedDamage;
 	store->Snapshot.LastCombat.Summary = summary;
+	RecordRecentCombatPairInternal(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
 
 	AddEventInternal(*store, MakeEventEntry(world, TEXT("CombatResult"), eventName, receiverName, sourceName, targetName, summary));
 #endif
@@ -439,6 +455,21 @@ bool FDebugOverlaySnapshotStore::GetSnapshotCopy(const UObject* InWorldContextOb
 
 	OutSnapshot = store->Snapshot;
 	OutSnapshot.RecentEvents = GetRecentEventsCopyFromStore(*store, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit);
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool FDebugOverlaySnapshotStore::TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair)
+{
+	OutPair = FDebugOverlayRecentCombatPair();
+
+#if !UE_BUILD_SHIPPING
+	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	if (!store || !store->bHasRecentCombatPair) return false;
+
+	OutPair = store->RecentCombatPair;
 	return true;
 #else
 	return false;

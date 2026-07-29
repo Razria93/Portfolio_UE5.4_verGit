@@ -16,7 +16,7 @@ public:
 
 #if !UE_BUILD_SHIPPING
 private:
-	ACEnemy* ResolveDisplayEnemy();
+	ACEnemy* ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines);
 	void RefreshCachedEnemyIfNeeded();
 
 private:
