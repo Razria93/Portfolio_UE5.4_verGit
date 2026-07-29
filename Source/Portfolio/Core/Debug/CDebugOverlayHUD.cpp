@@ -1,6 +1,7 @@
 #include "Core/Debug/CDebugOverlayHUD.h"
 
 #include "Character/Enemy/CEnemy.h"
+#include "Character/Player/CPlayer.h"
 #include "Component/CActionComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CHealthComponent.h"
@@ -125,6 +126,21 @@ namespace
 			*BoolText(defenseComp->CanStartGuard()));
 	}
 
+	FString FormatParryStaggerStack(const APawn* InPawn)
+	{
+		if (const ACPlayer* player = Cast<ACPlayer>(InPawn))
+		{
+			return FString::Printf(TEXT("%d/%d"), player->GetParryResultCount(), player->GetParryStaggerThreshold());
+		}
+
+		if (const ACEnemy* enemy = Cast<ACEnemy>(InPawn))
+		{
+			return FString::Printf(TEXT("%d/%d"), enemy->GetParryResultCount(), enemy->GetParryStaggerThreshold());
+		}
+
+		return MissingText();
+	}
+
 	FString FormatRuntimeLODTier()
 	{
 		return MissingText();
@@ -200,6 +216,7 @@ namespace
 		AddLine(InOutLines, FString::Printf(TEXT("State: %s"), *FormatExecutionState(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("Action: %s"), *FormatActiveAction(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *FormatActiveReaction(InPawn)));
+		AddLine(InOutLines, FString::Printf(TEXT("Stagger: %s"), *FormatParryStaggerStack(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *FormatGuardOverlay(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *FormatActorMovement(InPawn)));
 		AddLine(InOutLines, FString::Printf(TEXT("HP: %s"), *FormatActorHealth(InPawn)));

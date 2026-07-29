@@ -130,6 +130,8 @@ public:
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
+	FORCEINLINE int32 GetParryResultCount() const { return ParryResultCount; }
+	FORCEINLINE int32 GetParryStaggerThreshold() const { return ParryStaggerThreshold; }
 
 public:
 	// Damage

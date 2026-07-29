@@ -112,7 +112,7 @@ namespace
 		return FString::Join(handlingNames, TEXT(","));
 	}
 
-	FString CompactEnumText(const FString& InValue)
+	FString CompactExecutionEnumText(const FString& InValue)
 	{
 		int32 separatorIndex = INDEX_NONE;
 		return InValue.FindLastChar(TEXT(':'), separatorIndex)
@@ -149,7 +149,7 @@ namespace
 			return TEXT("Guard");
 		}
 
-		const FString actionType = CompactEnumText(UEnum::GetValueAsString(InKey.ActionType));
+		const FString actionType = CompactExecutionEnumText(UEnum::GetValueAsString(InKey.ActionType));
 		return InKey.ActionIndex != INDEX_NONE
 			? FString::Printf(TEXT("%s[%d]"), *actionType, InKey.ActionIndex)
 			: actionType;
@@ -157,7 +157,7 @@ namespace
 
 	FString FormatReactionSubjectForOverlay(const FReactionDataKey& InKey)
 	{
-		return CompactEnumText(UEnum::GetValueAsString(InKey.ReactionType));
+		return CompactExecutionEnumText(UEnum::GetValueAsString(InKey.ReactionType));
 	}
 }
 
