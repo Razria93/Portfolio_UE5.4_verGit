@@ -175,7 +175,85 @@ P0.5 완료 이후 제출 evidence 준비는 다음 순서로 진행한다.
 6. 각 캡처가 어떤 evidence 항목을 증명하는지 Capture Presets 문서에 맞춰 분류한다.
 7. `N/A`, `NotCaptured`, fallback 상태는 성공 evidence로 과장하지 않는다.
 
-## 10. 최종 결론
+## 10. 후속 작업 묶음
+
+P0.5 이후 작업 제안은 다음 묶음을 기준으로 한다.
+
+### 묶음 A: Evidence 패키징
+
+목표:
+
+- 실제 제출 자료로 사용할 overlay 캡처 세트를 수집하고 정리한다.
+
+포함 작업:
+
+- Idle / Guard In / Guard Out / ComboAttack / Hit / Parry / Enemy Action 캡처 선별
+- 기존 Bandicam 캡처 중 채택본/폐기본 분리
+- `Docs/98_Evidence/01_Screenshot/DebugOverlay/` 하위 파일명 정리
+- 필요 시 `Docs/98_Evidence/02_Video/DebugOverlay/` 하위 영상 클립 정리
+- Evidence Package 문서 작성
+
+권장 산출물:
+
+- `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_KR.md`
+
+### 묶음 B: 포트폴리오 문서 연결
+
+목표:
+
+- Debug overlay evidence를 실제 포트폴리오/기술문서 문맥에 연결한다.
+
+포함 작업:
+
+- PF02 Combat Data Pipeline에 연결할 combat/parry evidence 후보 정리
+- PF03 Action & Reaction Execution에 연결할 action/reaction evidence 후보 정리
+- PF04 Enemy AI Combat Behavior에 연결할 enemy state/action evidence 후보 정리
+- overlay가 "주장"이 아니라 runtime evidence임을 설명하는 문장 작성
+
+### 묶음 C: P1 설계
+
+목표:
+
+- P0.5에서 제외한 확장 항목을 P1 후보 설계로 분리한다.
+
+포함 작업:
+
+- target/blackboard 기반 enemy selection 설계
+- Store subject 분리 설계
+- Player/Enemy별 EventLog 분리 설계
+- EventLog category filter 설계
+- Runtime LOD 실제 tier hook 설계
+- AI blackboard/BT detail 표시 설계
+- 다중 enemy selector 설계
+- capture automation 설계
+
+### 묶음 D: P0.5 최종 검수
+
+목표:
+
+- 문서와 실제 PIE 화면이 서로 맞는지 확인하고 P0.5 작업을 닫는다.
+
+포함 작업:
+
+- README / Operation / Capture / Verification / Final Decision 용어 충돌 확인
+- 실제 PIE 화면과 체크리스트 항목 일치 확인
+- `N/A`, `NotCaptured`, `WorldScanFallback` 설명 일관성 확인
+- 필요 시 문서 index 보강
+
+### 권장 진행 순서
+
+다음 작업 제안은 기본적으로 아래 순서를 따른다.
+
+```text
+묶음 A: Evidence 패키징
+묶음 B: 포트폴리오 문서 연결
+묶음 D: P0.5 최종 검수
+묶음 C: P1 설계
+```
+
+단, 실제 캡처 파일이 아직 충분하지 않으면 묶음 A를 먼저 진행한다. 포트폴리오 본문 작성이 우선이면 묶음 B를 먼저 진행할 수 있다.
+
+## 11. 최종 결론
 
 P0.5 debug overlay는 제출용 evidence 확보에 필요한 최소 가독성 개선과 Player/Enemy 상태 비교를 제공하는 상태로 본다.
 
