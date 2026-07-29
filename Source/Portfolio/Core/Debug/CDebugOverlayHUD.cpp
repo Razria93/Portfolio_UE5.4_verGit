@@ -1,11 +1,15 @@
 #include "Core/Debug/CDebugOverlayHUD.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Component/CActionComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Component/CHealthComponent.h"
+#include "Component/CMovementComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CStateComponent.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Engine/Canvas.h"
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 
 namespace
@@ -16,7 +20,10 @@ namespace
 	static constexpr float DebugOverlayFontScale = 1.05f;
 	static constexpr float DebugOverlayBackgroundPadding = 10.f;
 	static constexpr float DebugOverlayBackgroundWidth = 1040.f;
+	static constexpr float DebugOverlayEnemyScanCooldownSeconds = 0.5f;
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
+	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
+	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
 
 	FString BoolText(bool bInValue)
 	{
@@ -80,6 +87,37 @@ namespace
 		return MissingText();
 	}
 
+	FString FormatAISummary()
+	{
+		return TEXT("NotCaptured");
+	}
+
+	FString FormatActorMovement(const APawn* InPawn)
+	{
+		const UCMovementComponent* movementComp = FindComponent<UCMovementComponent>(InPawn);
+		if (!IsValid(movementComp)) return MissingText();
+
+		return FString::Printf(
+			TEXT("Gait=%s Speed=%.1f Dir=%.1f CanMove=%s Falling=%s"),
+			*UEnum::GetValueAsString(movementComp->GetCurrentMovementGait()),
+			movementComp->GetCurrentSpeed(),
+			movementComp->GetCurrentDirection(),
+			*BoolText(movementComp->CanMove()),
+			*BoolText(movementComp->IsFalling()));
+	}
+
+	FString FormatActorHealth(const APawn* InPawn)
+	{
+		const UCHealthComponent* healthComp = FindComponent<UCHealthComponent>(InPawn);
+		if (!IsValid(healthComp)) return MissingText();
+
+		return FString::Printf(
+			TEXT("HP=%.1f/%.1f DeadState=%s"),
+			healthComp->GetCurrentHP(),
+			healthComp->GetMaxHP(),
+			*UEnum::GetValueAsString(healthComp->GetDeadState()));
+	}
+
 	FString CaptureStateText(EDebugOverlayCaptureState InState)
 	{
 		switch (InState)
@@ -112,6 +150,20 @@ namespace
 	void AddLine(TArray<FString>& InOutLines, const FString& InLine)
 	{
 		InOutLines.Add(InLine);
+	}
+
+	void AddActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn)
+	{
+		AddLine(InOutLines, TEXT(""));
+		AddLine(InOutLines, InPanelName);
+		AddLine(InOutLines, FString::Printf(TEXT("State: %s"), *FormatExecutionState(InPawn)));
+		AddLine(InOutLines, FString::Printf(TEXT("Action: %s"), *FormatActiveAction(InPawn)));
+		AddLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *FormatActiveReaction(InPawn)));
+		AddLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *FormatGuardOverlay(InPawn)));
+		AddLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *FormatActorMovement(InPawn)));
+		AddLine(InOutLines, FString::Printf(TEXT("HP: %s"), *FormatActorHealth(InPawn)));
+		AddLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *FormatRuntimeLODTier()));
+		AddLine(InOutLines, FString::Printf(TEXT("AI: %s"), *FormatAISummary()));
 	}
 
 	void AddSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
@@ -164,7 +216,51 @@ namespace
 				*eventEntry.Summary));
 		}
 	}
+
+	bool IsPanelHeaderLine(const FString& InLine)
+	{
+		return InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]");
+	}
+
+	FLinearColor GetPanelHeaderColor(const FString& InLine)
+	{
+		return InLine == TEXT("[Player]") ? DebugOverlayPlayerHeaderColor : DebugOverlayEnemyHeaderColor;
+	}
 }
+
+#if !UE_BUILD_SHIPPING
+void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
+{
+	UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	const float currentTime = world->GetTimeSeconds();
+	if (CachedEnemy.IsValid() && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
+	if (!CachedEnemy.IsValid() && LastEnemyScanTimeSeconds >= 0.f && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
+
+	LastEnemyScanTimeSeconds = currentTime;
+	LastEnemyScanCount = 0;
+	CachedEnemy.Reset();
+
+	for (TActorIterator<ACEnemy> actorIt(world); actorIt; ++actorIt)
+	{
+		ACEnemy* enemy = *actorIt;
+		if (!IsValid(enemy)) continue;
+
+		++LastEnemyScanCount;
+		if (!CachedEnemy.IsValid())
+		{
+			CachedEnemy = enemy;
+		}
+	}
+}
+
+ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy()
+{
+	RefreshCachedEnemyIfNeeded();
+	return LastEnemyScanCount == 1 ? CachedEnemy.Get() : nullptr;
+}
+#endif
 
 void ACDebugOverlayHUD::DrawHUD()
 {
@@ -174,6 +270,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 
 	const APawn* pawn = GetOwningPawn();
+	const ACEnemy* enemy = ResolveDisplayEnemy();
 
 	FDebugOverlaySnapshot snapshot;
 	const bool bHasSnapshot = FDebugOverlaySnapshotStore::GetSnapshotCopy(GetWorld(), snapshot);
@@ -181,12 +278,29 @@ void ACDebugOverlayHUD::DrawHUD()
 	TArray<FString> lines;
 	lines.Reserve(32);
 
-	AddLine(lines, TEXT("[Debug Overlay P0]"));
-	AddLine(lines, FString::Printf(TEXT("ExecutionState: %s"), *FormatExecutionState(pawn)));
-	AddLine(lines, FString::Printf(TEXT("ActiveAction: %s"), *FormatActiveAction(pawn)));
-	AddLine(lines, FString::Printf(TEXT("ActiveReaction: %s"), *FormatActiveReaction(pawn)));
-	AddLine(lines, FString::Printf(TEXT("GuardOverlay: %s"), *FormatGuardOverlay(pawn)));
-	AddLine(lines, FString::Printf(TEXT("RuntimeLODTier: %s"), *FormatRuntimeLODTier()));
+	AddLine(lines, TEXT("[Debug Overlay P0.5]"));
+	AddActorPanelLines(lines, TEXT("[Player]"), pawn);
+
+	AddLine(lines, TEXT(""));
+	if (LastEnemyScanCount == 0)
+	{
+		AddLine(lines, TEXT("EnemyFallback: NotCaptured(NoEnemy)"));
+	}
+	else if (LastEnemyScanCount > 1)
+	{
+		AddLine(lines, FString::Printf(TEXT("EnemyFallback: Ambiguous(Count=%d)"), LastEnemyScanCount));
+	}
+	else if (!IsValid(enemy))
+	{
+		AddLine(lines, TEXT("EnemyFallback: NotCaptured(StaleEnemy)"));
+	}
+	else
+	{
+		AddLine(lines, FString::Printf(TEXT("EnemySource: WorldScanFallback")));
+		AddLine(lines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(enemy)));
+	}
+
+	AddActorPanelLines(lines, TEXT("[Enemy]"), enemy);
 
 	AddSnapshotLines(lines, snapshot, bHasSnapshot);
 
@@ -206,6 +320,11 @@ void ACDebugOverlayHUD::DrawHUD()
 	float y = DebugOverlayOriginY;
 	for (const FString& line : lines)
 	{
+		if (IsPanelHeaderLine(line) && backgroundWidth > 0.f)
+		{
+			DrawRect(GetPanelHeaderColor(line), backgroundX, y - 2.f, backgroundWidth, DebugOverlayLineHeight + 4.f);
+		}
+
 		DrawText(line, FLinearColor::White, DebugOverlayOriginX, y, nullptr, DebugOverlayFontScale, false);
 		y += DebugOverlayLineHeight;
 	}
