@@ -159,33 +159,28 @@ subject가 비어 있으면 기존 형식으로 fallback한다.
 
 ### 판단
 
-`Guard[1] (Guard In)` 및 `Guard[2] (Guard Out)` 표시는 코드 근거가 충분하므로 Ready다.
+`Guard In` 및 `Guard Out` 표시는 코드 근거가 충분하므로 Ready다.
 
-단, `Guard[0] (Guard In)` / `Guard[1] (Guard Out)`처럼 overlay 전용 0-based 재번호화를 적용하는 것은 실제 runtime key와 달라 오해 소지가 있다. 이 방식은 사용자 표시 정책 결정이 필요하다.
+`Guard[0] (Guard In)` / `Guard[1] (Guard Out)`처럼 overlay 전용 0-based 재번호화를 적용하는 것은 실제 runtime key와 달라 오해 소지가 있다. P0.5에서는 이 방식을 제외한다.
 
 ### 권장 표시
 
-P0.5에서는 실제 ActionIndex를 유지한다.
+P0.5에서는 실제 ActionIndex를 화면에 노출하지 않는다. 제출 evidence 목적상 내부 key보다 guard phase 의미가 더 중요하기 때문이다.
 
 ```text
-Guard[1] (Guard In)
-Guard[2] (Guard Out)
+Guard In
+Guard Out
 ```
 
-Guard Hold / Hit / Parry는 P0.5에서 표시 대상이 되면 같은 방식으로 확장한다.
-
-```text
-Guard[3] (Guard Hold)
-Guard[4] (Guard Hit)
-Guard[5] (Guard Parry)
-```
+Guard Hold / Hit / Parry는 P0.5에서 별도 Action alias로 표시하지 않는다. 해당 의미는 Guard 현재값, Reaction, Combat outcome 쪽에서 설명한다.
 
 ### 분류
 
 | 항목 | 분류 | 이유 |
 | --- | --- | --- |
-| 실제 index 유지 alias | Ready | `CActionKeyTypes.h` helper 근거 있음 |
-| 0-based compact alias | ReviewNeeded | 실제 runtime key와 다름 |
+| index 없는 `Guard In/Out` alias | Ready | `CActionKeyTypes.h` helper 근거 있음. 화면에는 phase 의미만 노출 |
+| 실제 index 유지 alias | Exclude | 제출 evidence 가독성 기준으로 내부 key 노출 불필요 |
+| 0-based compact alias | Exclude | 실제 runtime key와 다르며 P0.5 표시 정책에서 제외 |
 | data asset display name 조회 | ReviewNeeded | `FActionData`에 display/semantic name 필드 없음 |
 
 ## 6. Store Compact Helper 재사용 검토
@@ -248,7 +243,7 @@ HUD current value compact를 위해 이 helper를 public API로 노출하면 다
 
 1. HUD current value는 모두 enum prefix를 제거한다.
 2. Execution summary는 `Action(Subject)` / `Reaction(Subject)` 형식을 사용한다.
-3. Guard alias는 실제 index를 유지해 `Guard[1] (Guard In)`, `Guard[2] (Guard Out)`으로 표시한다.
+3. Guard alias는 index를 노출하지 않고 `Guard In`, `Guard Out`으로 표시한다.
 4. Store compact helper는 public API로 노출하지 않는다.
 5. audit log format은 변경하지 않는다.
 
@@ -274,4 +269,4 @@ HUD current value compact를 위해 이 helper를 public API로 노출하면 다
   - `Movement: Gait=Run`
   - `HP: ... DeadState=Alive`
   - `Execution/DecisionResolved: Reaction(Hit) | Decision=Accept | Apply=Intervene | RejectReason=None`
-  - `Action: Guard[1] (Guard In)` 또는 `Action: Guard[2] (Guard Out)`
+  - `Action: Guard In` 또는 `Action: Guard Out`

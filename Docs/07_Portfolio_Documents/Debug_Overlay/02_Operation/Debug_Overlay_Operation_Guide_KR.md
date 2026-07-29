@@ -47,12 +47,93 @@ Portfolio.DebugOverlay.EventLogLimit 5
 ### 확인 절차
 
 1. `/Game/00_UnitTest/TestRoom`에서 PIE를 실행한다.
-2. 화면 좌상단에 `[Debug Overlay P0]`가 표시되는지 확인한다.
+2. 화면 좌상단에 `[Debug Overlay P0.5]`가 표시되는지 확인한다.
 3. player action, reaction, guard, combat event를 발생시킨다.
 4. `Recent Execution`, `Recent Combat`, `Recent AI`, `Event Log`가 갱신되는지 확인한다.
 5. event가 아직 없으면 `NotCaptured`로 표시되는 것이 정상이다.
 6. 대상 AI 선택 로직이 없는 상태에서는 `RuntimeLODTier`가 `N/A`로 표시될 수 있다.
 7. 실제 combat result가 capture되기 전에는 `FinalTakenDamage`가 `NotCaptured`로 표시될 수 있다.
+
+## P0.5 운영 기준
+
+P0.5 overlay는 Player/Enemy 상태 패널과 공통 recent block으로 구성한다.
+
+```text
+[Debug Overlay P0.5]
+[Player]
+[Enemy]
+[Recent Execution]
+[Recent Combat]
+[Recent AI]
+[Event Log]
+```
+
+Player tab은 blue, Enemy tab은 red로 표시한다. 색상은 대상 구분용이며 gameplay 위험도나 성공/실패 의미를 갖지 않는다.
+
+### 표시 정책
+
+P0.5 표시 문자열은 캡처 evidence 가독성을 우선한다.
+
+| 항목 | 표시 정책 | 예시 |
+| --- | --- | --- |
+| enum prefix | 제거 | `ExecutionState::Idle` -> `Idle` |
+| Action subject | type/index compact | `ComboAttack[1]` |
+| Reaction subject | type compact | `Hit`, `Parry` |
+| Guard action | index 제거 | `Guard In`, `Guard Out` |
+| multi-field 상태값 | pipe 문자로 구분 | `Gait=Run`, `Speed=0.0`, `Dir=0.0` |
+| Execution summary | subject 포함 | `Action(Guard In)`, `Decision=Accept`, `Apply=Start`, `RejectReason=None` |
+
+Guard Hold / Guard Hit / Guard Parry는 P0.5에서 별도 action label로 표시하지 않는다. 해당 의미는 Guard 현재값, Reaction, Combat outcome에서 설명한다.
+
+### Enemy fallback 의미
+
+P0.5 Enemy 패널은 target component 또는 blackboard target 기반 선택이 아니라 world scan fallback으로 표시한다.
+
+정상적으로 단일 enemy가 선택되면 다음처럼 표시한다.
+
+```text
+EnemySource: WorldScanFallback
+EnemyFallback: Selected=BP_CEnemy_C_1 Policy=FirstValid Count=1
+```
+
+주의:
+
+- 이 표시는 "현재 캡처 대상으로 선택된 enemy"를 보여주는 개발 전용 fallback이다.
+- 다중 enemy가 있거나 enemy를 찾지 못하면 enemy evidence 신뢰도를 제한한다.
+- target/blackboard 기반 enemy selection은 P1 후보로 둔다.
+
+### EventLog 운영 판단
+
+P0.5에서는 EventLog 추가 축약을 하지 않는다.
+
+이유:
+
+- 현재 compact key/value format이 캡처에서 충분히 읽힌다.
+- 더 줄이면 action/combat 흐름 설명에 필요한 key가 사라질 수 있다.
+- category filter와 Player/Enemy별 EventLog 분리는 Store subject 정책이 필요하므로 P1로 둔다.
+
+### Evidence 파일 규칙
+
+캡처 파일은 목적이 드러나도록 보관한다.
+
+권장 폴더:
+
+```text
+Docs/98_Evidence/01_Screenshot/DebugOverlay/
+Docs/98_Evidence/02_Video/DebugOverlay/
+```
+
+권장 파일명:
+
+```text
+debug_overlay_p0_5_idle_YYYYMMDD.png
+debug_overlay_p0_5_guard_in_YYYYMMDD.png
+debug_overlay_p0_5_combo_attack_YYYYMMDD.png
+debug_overlay_p0_5_hit_YYYYMMDD.png
+debug_overlay_p0_5_parry_YYYYMMDD.png
+```
+
+Bandicam 원본 파일명은 보존할 수 있지만, 문서에서 참조할 채택본은 의미 기반 이름으로 복사하거나 별도 목록에 매핑한다.
 
 ### 문제 해결
 
@@ -78,6 +159,7 @@ Event Log가 비어 있을 때:
 - UMG/Slate dependency를 추가하지 않는다.
 - Shipping HUD처럼 사용하지 않는다.
 - 실제 코드에서 읽지 못한 값을 성공 evidence처럼 표시하지 않는다.
+- EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 구현하지 않는다.
 
 ## 고정 정책
 
@@ -123,11 +205,14 @@ Event Log가 비어 있을 때:
 
 ```text
 Portfolio.DebugOverlay.Enabled
+Portfolio.DebugOverlay.Collect
 Portfolio.DebugOverlay.Preset
 Portfolio.DebugOverlay.EventLogLimit
 ```
 
 기존 debug cvar와 충돌하지 않도록 `Portfolio.DebugOverlay.*` 네임스페이스를 사용한다.
+
+P0.5 실행 확인에서는 `Enabled`, `Collect`, `EventLogLimit`를 필수로 본다. `Preset`은 후속 preset 확장용이며, 현재 P0.5 수동 캡처 절차의 필수 CVar는 아니다.
 
 ## 목표모드 사용 기준
 

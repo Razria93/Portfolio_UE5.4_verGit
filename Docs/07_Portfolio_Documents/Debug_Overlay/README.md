@@ -16,16 +16,67 @@
   - 표시 항목별 코드 근거, 상태 분류, 신뢰도
 - `04_Capture_Presets`
   - 제출 영상별 overlay preset 및 화면 구성
+- `05_Verification`
+  - PIE 확인 체크리스트, 실패 분기, 캡처 전 검증 기준
 
 ## 주요 문서
 
 - `01_Planning/Debug_Overlay_Plan_KR.md`
 - `01_Planning/Debug_Overlay_Implementation_Position_Review_KR.md`
+- `01_Planning/Debug_Overlay_P0_Final_Decision_KR.md`
+- `01_Planning/Debug_Overlay_P0_5_Player_Enemy_Extension_Design_KR.md`
+- `01_Planning/Debug_Overlay_P0_5_HUD_Panel_Implementation_Plan_KR.md`
+- `01_Planning/Debug_Overlay_P0_5_Compact_Display_Subject_Review_KR.md`
+- `01_Planning/Debug_Overlay_P0_5_Final_Decision_KR.md`
 - `02_Operation/Debug_Overlay_Operation_Guide_KR.md`
 - `03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md`
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`
+- `05_Verification/Debug_Overlay_P0_PIE_Checklist_KR.md`
+
+## 현재 상태
+
+P0.5 기준 overlay는 TestRoom PIE에서 다음 화면 구조로 확인한다.
+
+```text
+[Debug Overlay P0.5]
+
+[Player]
+State:
+Action:
+Reaction:
+Guard:
+Movement:
+HP:
+Runtime LOD:
+AI:
+
+[Enemy]
+State:
+Action:
+Reaction:
+Guard:
+Movement:
+HP:
+Runtime LOD:
+AI:
+
+[Recent Execution]
+[Recent Combat]
+[Recent AI]
+[Event Log]
+```
+
+P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 execution/combat/AI/event evidence를 공통 recent block으로 확인하는 것이다.
+
+현재 P0.5에서 확정한 표시 정책:
+
+- enum prefix는 overlay 표시에서 제거한다.
+- multi-field 상태값은 `|`로 구분한다.
+- Guard action은 `Guard In`, `Guard Out`처럼 index 없이 표시한다.
+- Execution summary는 `Action(ComboAttack[1])`, `Reaction(Hit)`처럼 subject를 포함한다.
+- Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, target/blackboard 기반 선택은 P1 후보로 둔다.
+- EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 제외한다.
 
 ## 현재 브랜치
 
 - `feature/debug-overlay-evidence-plan`
-

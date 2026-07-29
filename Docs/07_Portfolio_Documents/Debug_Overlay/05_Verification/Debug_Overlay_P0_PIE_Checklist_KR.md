@@ -1,10 +1,12 @@
-# Debug Overlay P0 PIE 확인 체크리스트
+# Debug Overlay P0 / P0.5 PIE 확인 체크리스트
 
 ## 1. 목적
 
-이 문서는 TestRoom PIE에서 P0 debug overlay가 정상적으로 표시되고, debug hook을 통해 수집된 snapshot/event 값이 화면에서 갱신되는지 확인하기 위한 검증표다.
+이 문서는 TestRoom PIE에서 P0/P0.5 debug overlay가 정상적으로 표시되고, debug hook을 통해 수집된 snapshot/event 값이 화면에서 갱신되는지 확인하기 위한 검증표다.
 
 검증 목적은 제출 영상 및 기술문서 evidence 확보 전 사전 확인이다. 이 문서는 성능 성공 주장, Shipping HUD 검증, 완성형 UI 품질 검증을 목적으로 하지 않는다.
+
+현재 제출 캡처 기준은 P0.5 화면이다. P0 label과 P0 기본 항목은 초기 구현 검증 기록으로 유지하되, 실제 제출 evidence 확인은 `4.1 P0.5 화면 확인`, `6.1 P0.5 이벤트별 체크리스트`, `P0.5 추가 완료 기준`을 우선한다.
 
 ## 2. 사전 조건
 
@@ -29,9 +31,9 @@ Portfolio.DebugOverlay.EventLogLimit 5
 
 기존 audit log CVar는 필요할 때 별도로 켤 수 있다. 단, overlay collect CVar와 audit log CVar는 독립이다. Audit log가 꺼져 있어도 `Portfolio.DebugOverlay.Collect=1`이면 overlay Store 기록은 가능해야 한다.
 
-## 4. 기본 화면 확인
+## 4. P0 기본 화면 확인
 
-PIE 시작 직후 좌상단 text block에서 다음 label이 보이는지 확인한다.
+P0 초기 구현 기준으로 PIE 시작 직후 좌상단 text block에서 다음 label이 보이는지 확인한다.
 
 | 확인 항목 | 기대 상태 |
 | --- | --- |
@@ -46,6 +48,27 @@ PIE 시작 직후 좌상단 text block에서 다음 label이 보이는지 확인
 | `Recent AI` | 최근 기록 또는 `NotCaptured` |
 | `Event Log` | 최근 event 0~5 lines |
 
+## 4.1 P0.5 화면 확인
+
+P0.5 구현 이후에는 다음 구조를 기준으로 확인한다.
+
+| 확인 항목 | 기대 상태 |
+| --- | --- |
+| `[Debug Overlay P0.5]` | 표시됨 |
+| `[Player]` | blue tab으로 표시 |
+| `[Enemy]` | red tab으로 표시 |
+| Player/Enemy `State` | enum prefix 없는 현재값 또는 `N/A` |
+| Player/Enemy `Action` | `None`, `ComboAttack[n]`, `Guard In`, `Guard Out` 등 |
+| Player/Enemy `Reaction` | `None`, `Hit`, `Parry`, `Stagger` 등 |
+| Player/Enemy `Guard` | `Wants`, `Pose`, `CanGuard` 등이 pipe 구분으로 표시 |
+| Player/Enemy `Movement` | `Gait`, `Speed`, `Dir`, `CanMove`, `Falling`이 pipe 구분으로 표시 |
+| Player/Enemy `HP` | `HP=current/max`, `DeadState=Alive` 등 |
+| EnemySource | `WorldScanFallback` 또는 미검출/다중 enemy 상태 |
+| Recent Execution | subject 포함 compact summary |
+| Event Log | 현재 compact key/value format 유지 |
+
+P0.5에서는 EventLog 추가 축약을 검증하지 않는다. 현재 형식을 충분한 제출 evidence 형식으로 본다.
+
 ## 5. 표시값 기준
 
 | 표시값 | 의미 | Evidence 사용 기준 |
@@ -56,6 +79,18 @@ PIE 시작 직후 좌상단 text block에서 다음 label이 보이는지 확인
 | `Pending` | hook 또는 event 흐름상 아직 최종 결과가 확정되지 않음 | 전이 상태 설명에만 사용한다. |
 
 `RuntimeLODTier`는 대상 AI 선택 또는 조회 대상 확정 전까지 `N/A`일 수 있다. `FinalTakenDamage`는 실제 combat result capture 전까지 `NotCaptured`일 수 있다.
+
+P0.5 표시 예시:
+
+```text
+State: Idle
+Action: Guard In
+Reaction: None
+Guard: Wants=true | Pose=true | CanGuard=true | CanParry=false | CanStart=false
+Movement: Gait=Walk | Speed=0.0 | Dir=0.0 | CanMove=true | Falling=false
+HP: 5000.0/5000.0 | DeadState=Alive
+Recent Execution: Action(Guard In) | Decision=Accept | Apply=Start | RejectReason=None
+```
 
 ## 6. 이벤트별 체크리스트
 
@@ -71,6 +106,21 @@ PIE 시작 직후 좌상단 text block에서 다음 label이 보이는지 확인
 | 8 | Target accepted/rejected 발생 | `Recent Combat`, `Event Log` | target accepted/rejected summary | `RecordTargetAcceptedForAudit`, `RecordTargetRejectedForAudit` | accepted/rejected 결과 구분이 보이면 사용 가능 |
 | 9 | CombatResult received 발생 | `Recent Combat`, `FinalTakenDamage`, `DamageCommit`, `Event Log` | result summary, damage value 또는 `NotCaptured` | `RecordCombatResultDispatchForAudit`, `RecordCombatResultReceivedForAudit` | 실제 result capture 후 사용 가능 |
 | 10 | 가능 시 AI combat task success/reject 유도 | `Recent AI`, `RuntimeLODTier`, `Event Log` | AI task success/reject summary, LOD는 현재값 또는 `N/A` | `RecordCombatActionTaskSucceededForAudit`, `RecordCombatActionTaskRejectedForAudit` | 보조 evidence로만 사용 |
+
+## 6.1 P0.5 이벤트별 체크리스트
+
+| 순서 | 테스트 액션 | 기대 overlay 항목 | 기대 표시값 | 실패 시 확인할 위치 | Evidence 사용 가능 여부 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | TestRoom 진입 후 PIE 시작 | `[Debug Overlay P0.5]`, `[Player]`, `[Enemy]` | Player blue tab, Enemy red tab | GameMode Override, `Portfolio.DebugOverlay.Enabled` | 환경 evidence |
+| 2 | Idle 상태 유지 | Player/Enemy State, Action, Reaction, HP | `Idle`, `None`, `HP=current/max`, `DeadState=Alive` | actor/component getter 조회 | baseline evidence |
+| 3 | Guard 입력 | Player Action, Guard, Recent Execution | `Guard In`, `Action(Guard In)`, `Decision=Accept...` | action component, execution hook | Guard In evidence |
+| 4 | Guard 해제 | Player Action, Guard, EventLog | `Guard Out` 또는 active 종료 후 `None` | guard action phase, defense getter | Guard Out evidence |
+| 5 | ComboAttack 입력 | Player Action, Recent Execution | `ComboAttack[n]`, `Action(ComboAttack[n])...` | action type/index, execution subject 전달 | action orchestration evidence |
+| 6 | 적 공격으로 Hit 유도 | Reaction, Recent Execution, Recent Combat | `Hit`, `Reaction(Hit)...`, damage 값 | reaction hook, combat result hook | reaction/combat evidence |
+| 7 | Parry 유도 | Reaction, Recent Combat, EventLog | `Parry`, `Outcome=Parry`, commit 0 계열 | defense outcome, combat result hook | parry evidence |
+| 8 | Enemy action/reaction 확인 | Enemy State/Action/Reaction/HP | enemy current 값 또는 `None` | enemy fallback 선택, enemy components | enemy 상태 evidence |
+
+`|` 문자가 포함된 기대 표시값은 markdown table 구분과 충돌할 수 있으므로 결과 기록에서는 code span 또는 text block으로 남긴다.
 
 ## 7. 실패 분기
 
@@ -131,6 +181,23 @@ Damage가 발생하지 않은 장면의 `NotCaptured`는 실패가 아니다. �
 
 `RuntimeLODTier=N/A` 상태를 Runtime LOD 성공 evidence로 사용하지 않는다.
 
+### 7.7 P0.5 Enemy가 표시되지 않음
+
+확인 순서:
+
+1. TestRoom에 `ACEnemy` 기반 actor가 존재하는지 확인한다.
+2. Enemy가 0개면 `EnemyFallback: NotCaptured(NoEnemy)`가 정상이다.
+3. Enemy가 2개 이상이면 `EnemyFallback: Ambiguous(Count=N)` 상태를 성공 evidence로 사용하지 않는다.
+4. 단일 enemy인데 표시되지 않으면 world scan cache가 stale인지 확인한다.
+
+P0.5 enemy selection은 `WorldScanFallback` 기반이다. target/blackboard 기반 선택 실패로 해석하지 않는다.
+
+### 7.8 Guard In/Out이 index로 보임
+
+P0.5 기준에서 Guard action은 `Guard In`, `Guard Out`으로 표시되어야 한다.
+
+`Guard[1]`, `Guard[2]`, `EActionType::Guard[1]`처럼 index 또는 enum prefix가 보이면 compact display 정책이 반영되지 않은 상태다.
+
 ## 8. 캡처 전 확인
 
 캡처 전에 다음 항목을 확인한다.
@@ -143,9 +210,9 @@ Damage가 발생하지 않은 장면의 `NotCaptured`는 실패가 아니다. �
 | 근거성 | 실제 코드에서 읽지 못한 값은 성공 evidence로 사용하지 않는다. |
 | 상태 표현 | `N/A`, `NotCaptured`, `None`, `Pending`을 의미에 맞게 해석한다. |
 
-## 9. 완료 기준
+## 9. P0 완료 기준
 
-P0 PIE 확인은 다음 조건을 만족하면 완료로 본다.
+P0 PIE 확인은 다음 조건을 만족하면 완료로 본다. P0.5 제출 캡처에서는 아래 `P0.5 추가 완료 기준`을 우선한다.
 
 | 완료 항목 | 기준 |
 | --- | --- |
@@ -155,6 +222,18 @@ P0 PIE 확인은 다음 조건을 만족하면 완료로 본다.
 | EventLog | `Portfolio.DebugOverlay.EventLogLimit 5` 기준으로 3~5 lines 표시를 확인한다. |
 | Snapshot | Store snapshot 기반 recent summary가 event 발생 후 갱신된다. |
 | 실패/미수집 표현 | 조회 실패와 미수집 상태가 `N/A`, `NotCaptured`, `None`, `Pending` 기준으로 표시된다. |
+
+P0.5 추가 완료 기준:
+
+| 완료 항목 | 기준 |
+| --- | --- |
+| Player/Enemy panel | 두 패널이 같은 section 순서로 표시된다. |
+| 색상 tab | Player blue, Enemy red tab이 구분된다. |
+| compact enum | State/Action/Reaction/Movement/HP에서 enum prefix가 제거된다. |
+| Guard label | `Guard In`, `Guard Out`이 index 없이 표시된다. |
+| subject summary | Recent Execution/EventLog에 `Action(...)`, `Reaction(...)` subject가 표시된다. |
+| Enemy fallback | `EnemySource`와 `EnemyFallback` 의미가 화면에서 확인된다. |
+| EventLog | 추가 축약 없이 현재 format으로 3~5 lines 표시된다. |
 
 AI combat task success/reject는 P0 필수 완료 기준이 아니라 가능 시 확인하는 보조 항목이다. P0 완료 판단은 Action/Reaction, Combat, EventLog, Store snapshot 갱신 확인을 기준으로 한다.
 
