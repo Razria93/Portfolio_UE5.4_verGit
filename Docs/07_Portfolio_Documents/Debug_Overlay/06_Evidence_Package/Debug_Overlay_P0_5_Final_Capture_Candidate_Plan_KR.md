@@ -4,6 +4,8 @@
 
 이 문서는 P0.5 debug overlay의 최종 재촬영 기준을 고정한다.
 
+단, 최종 재촬영은 P1 설계/구현/검증 이후로 연기한다. P0.5 단계에서는 반복 촬영/패키징을 중단하고, 이 문서는 P1 이후 최종 촬영을 준비하기 위한 기준 문서로 유지한다.
+
 Round1과 Round1_StaggerCount는 1차 evidence 패키지이며 최종 제출 후보가 아니다. 최종 후보는 후속 재촬영을 통해 별도 폴더에 패키징한다.
 
 이 문서의 목표:
@@ -183,9 +185,9 @@ Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P0_5
 
 ## 12. 다음 작업
 
-다음 작업은 실제 최종 재촬영 파일을 받아 `FinalCandidate` 폴더에 패키징하고, 최종 evidence package 문서를 작성하는 것이다.
+다음 촬영/패키징 작업은 P1 검증 이후에 진행한다. P1 이전의 다음 작업은 P1 범위 확정과 Target Component 기반 Enemy Selection 설계다.
 
-진행 전 필요 파일:
+P1 이후 최종 촬영 진행 전 필요 파일:
 
 - 위 13개 장면에 대응하는 새 캡처 PNG
 - 캡처 원본 위치

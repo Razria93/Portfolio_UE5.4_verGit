@@ -31,6 +31,7 @@
 - `01_Planning/Debug_Overlay_P0_5_Compact_Display_Subject_Review_KR.md`
 - `01_Planning/Debug_Overlay_P0_5_Final_Decision_KR.md`
 - `01_Planning/Debug_Overlay_P0_5_Remaining_Refactor_Plan_KR.md`
+- `01_Planning/Debug_Overlay_P1_Work_Order_KR.md`
 - `02_Operation/Debug_Overlay_Operation_Guide_KR.md`
 - `03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md`
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`
@@ -82,7 +83,7 @@ P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 e
 - Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, Target Component 기반 선택은 P1 후보로 둔다.
 - EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 제외한다.
 
-현재 캡처 파일은 1차 패키지로만 정리한다. 최종 제출 후보는 후속 리팩터링과 재촬영 이후 별도 패키지로 분리한다.
+현재 캡처 파일은 1차 패키지로만 정리한다. 반복 촬영/패키징은 P1 완료 전까지 중단하고, 최종 제출 후보는 P1 설계/구현/검증 이후 별도 패키지로 분리한다.
 
 ## 현재 브랜치
 
