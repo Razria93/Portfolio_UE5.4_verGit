@@ -202,6 +202,51 @@ namespace
 		return bMatchesAnyRole;
 	}
 
+	bool IsTargetPacketEvent(const FDebugOverlayEventEntry& InEntry)
+	{
+		return InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
+			&& (InEntry.EventName.Contains(TEXT("TargetAccepted"), ESearchCase::IgnoreCase)
+				|| InEntry.EventName.Contains(TEXT("TargetRejected"), ESearchCase::IgnoreCase));
+	}
+
+	FString GetSubjectEventRoleLabel(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
+	{
+		if (!IsTargetPacketEvent(InEntry) || InSubjectName.IsEmpty()) return FString();
+
+		const bool bIsSource = InEntry.SourceName == InSubjectName;
+		const bool bIsTarget = InEntry.TargetName == InSubjectName;
+		const bool bIsOwner = InEntry.OwnerName == InSubjectName;
+
+		if (bIsSource && bIsTarget)
+		{
+			return TEXT("Self");
+		}
+
+		if (bIsSource)
+		{
+			return TEXT("Outgoing");
+		}
+
+		if (bIsTarget || bIsOwner)
+		{
+			return TEXT("Incoming");
+		}
+
+		return FString();
+	}
+
+	FDebugOverlayEventEntry MakeSubjectDisplayEventEntry(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
+	{
+		FDebugOverlayEventEntry entry = InEntry;
+		const FString roleLabel = GetSubjectEventRoleLabel(entry, InSubjectName);
+		if (!roleLabel.IsEmpty())
+		{
+			entry.EventName = FString::Printf(TEXT("%s(%s)"), *entry.EventName, *roleLabel);
+		}
+
+		return entry;
+	}
+
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 	{
 		FDebugOverlayEventEntry entry;
@@ -281,7 +326,7 @@ namespace
 			const FDebugOverlayEventEntry& entry = InStore.EventRing[index];
 			if (DoesEventMatchFilter(entry, InFilter) && DoesEventMatchSubject(entry, InSubjectName))
 			{
-				result.Add(entry);
+				result.Add(MakeSubjectDisplayEventEntry(entry, InSubjectName));
 			}
 		}
 
