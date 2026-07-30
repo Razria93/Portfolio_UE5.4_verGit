@@ -93,3 +93,9 @@ P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 e
 ## 현재 브랜치
 
 - `feature/debug-overlay-evidence-plan`
+
+## PR / 품질 리뷰 문서
+
+- `05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md`
+- `05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md`
+- `../../04_Pull_Request/P52_UE5_Portfolio_Pull_Request.md`

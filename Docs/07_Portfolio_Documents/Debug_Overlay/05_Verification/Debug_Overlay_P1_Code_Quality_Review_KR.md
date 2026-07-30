@@ -249,7 +249,39 @@
 | gameplay flow 오염 | TargetComponent는 debug-only controller-owned component이며 기존 combat/action target flow를 변경하지 않는다. |
 | Stagger getter | read-only getter로 panel 표시만 지원하며 store/event 확장을 하지 않는다. |
 
-## 11. 다음 작업 제안
+## 11. P42~P51 PR 기준 매핑
+
+이 섹션은 `Docs/04_Pull_Request`의 W05 코드 클린 PR 문서 스타일을 기준으로, debug overlay 코드 품질 검토 결과가 어떤 과거 PR 축과 연결되는지 정리한다.
+
+| 기준 PR | 기준 축 | Debug Overlay 반영 상태 | 판단 |
+| --- | --- | --- | --- |
+| P42 | Debug Log Policy | 기존 audit log 출력과 overlay collect를 결합하지 않고 SnapshotStore 기록 경로를 분리했다. | 반영 |
+| P43 | CVar Ownership | `Portfolio.DebugOverlay.*` CVar를 기존 `Portfolio.Debug.*Audit` 및 profiling CVar와 분리했다. | 반영 |
+| P44 | Comment / Section Cleanup | Store API section과 HUD helper section을 책임 단위로 정리했다. | 반영 |
+| P45 | Naming / API Cleanup | `TrySelect...`, `TryGetSnapshotCopy`, `Append...` 계열로 low-risk rename을 적용했다. | 반영 |
+| P46 | Type Header Organization | snapshot / summary / event entry type을 `Core/Debug` 소유 debug type으로 분리했다. | 반영 |
+| P47 | Type Meaning Cleanup | `RecentCombatPair`, `ExecutionSummary`, `CombatSummary` 등 의미 중심 이름을 사용한다. 다만 Player/Enemy subject ownership 분리는 Later다. | 일부 반영 |
+| P48 | CPP Include Order Cleanup | HUD / Store / PlayerController `.cpp` include group을 W05 순서로 정리했다. | 반영 |
+| P49 | API Const Consistency | getter/query const와 read-only/mutation API를 검토했다. `ResolveWorld`의 `const_cast`는 DecisionNeeded다. | 일부 반영 |
+| P50 | Section Comment Consistency | 같은 파일군의 helper/record/query/lifecycle 책임이 드러나도록 section을 맞췄다. | 반영 |
+| P51 | Tuning Constants Cleanup | event capacity, display limit, trace distance, nearest radius, stale timeout을 internal policy constant로 분류했다. CVar/preset화는 Later다. | 일부 반영 |
+
+### PR 설명으로 재사용할 수 있는 반영 내용
+
+- Debug overlay는 기존 gameplay flow를 바꾸지 않고, 기존 debug hook에서 SnapshotStore record만 추가한다.
+- Overlay collect CVar와 기존 audit log CVar는 별도 gate로 유지한다.
+- HUD / Store / PlayerController cleanup은 동작 변경 없는 W05 LowRiskFix 범위로 처리했다.
+- Shipping에서는 store record/query가 no-op 또는 false/empty로 동작하도록 유지한다.
+- Runtime LOD actual value, AI current detail, Player/Enemy EventLog 분리는 아직 성공 evidence로 주장하지 않는다.
+
+### PR 설명에서 비범위로 남길 항목
+
+- 범용 target system, lock-on, target cycling, combat action target 강제는 구현하지 않는다.
+- EventLog category filter와 Player/Enemy EventLog 분리는 P1 후속이다.
+- Runtime LOD actual 표시와 AI current value 보강은 별도 설계 이후 진행한다.
+- FinalCandidate 촬영/패키징은 P1 완료 이후로 미룬다.
+
+## 12. 다음 작업 제안
 
 1. `LowRiskFix` cleanup 구현
    - include group 정리
