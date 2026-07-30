@@ -315,19 +315,15 @@ namespace
 
 #if !UE_BUILD_SHIPPING
 // Enemy Resolution
-ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines)
+ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(TArray<FString>& OutSourceLines)
 {
 	if (ACEnemy* targetComponentEnemy = ResolveTargetComponentEnemy(OutSourceLines))
 	{
 		return targetComponentEnemy;
 	}
 
-	if (ACEnemy* recentCombatEnemy = ResolveRecentCombatEnemy(InViewerPawn, OutSourceLines))
-	{
-		return recentCombatEnemy;
-	}
-
-	return ResolveWorldScanFallbackEnemy(OutSourceLines);
+	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: None"));
+	return nullptr;
 }
 
 ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(TArray<FString>& OutSourceLines) const
@@ -341,7 +337,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(TArray<FString>& OutSour
 	ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayTargetActor());
 	if (!IsValid(targetEnemy)) return nullptr;
 
-	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: TargetComponent"));
+	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemySource: %s"), *targetComp->GetDebugOverlayTargetSource()));
 	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyTarget: %s"), *targetComp->GetDebugOverlayTargetSummary()));
 	return targetEnemy;
 }
@@ -476,7 +472,7 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	const APawn* pawn = GetOwningPawn();
 	TArray<FString> enemySourceLines;
-	const ACEnemy* enemy = ResolveDisplayEnemy(pawn, enemySourceLines);
+	const ACEnemy* enemy = ResolveDisplayEnemy(enemySourceLines);
 
 	FDebugOverlaySnapshot snapshot;
 	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(GetWorld(), snapshot);

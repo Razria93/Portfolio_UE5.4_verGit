@@ -217,16 +217,11 @@ bool ACPlayerController::TrySelectDebugOverlayTargetFromView()
 	ACEnemy* targetEnemy = FindDebugOverlayEnemyFromView();
 	if (!IsValid(targetEnemy))
 	{
-		targetEnemy = FindNearestDebugOverlayEnemy();
-	}
-
-	if (!IsValid(targetEnemy))
-	{
 		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
 		return false;
 	}
 
-	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy);
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy, EDebugOverlayTargetSource::Trace);
 	return true;
 }
 
@@ -241,7 +236,7 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 		return false;
 	}
 
-	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy);
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy, EDebugOverlayTargetSource::Nearest);
 	return true;
 }
 

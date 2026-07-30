@@ -4,6 +4,13 @@
 #include "Components/ActorComponent.h"
 #include "CDebugOverlayTargetComponent.generated.h"
 
+enum class EDebugOverlayTargetSource : uint8
+{
+	None,
+	Trace,
+	Nearest,
+};
+
 UCLASS(ClassGroup = (Debug))
 class PORTFOLIO_API UCDebugOverlayTargetComponent : public UActorComponent
 {
@@ -14,6 +21,7 @@ public:
 
 private:
 	TWeakObjectPtr<AActor> DebugOverlayTargetActor;
+	EDebugOverlayTargetSource DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
 
 public:
 	// Query
@@ -23,6 +31,6 @@ public:
 	FString GetDebugOverlayTargetSource() const;
 
 	// Mutation
-	void SetDebugOverlayTarget(AActor* InTargetActor);
+	void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource);
 	void ClearDebugOverlayTarget();
 };

@@ -19,7 +19,7 @@ private:
 	int32 LastEnemyScanCount = 0;
 
 	// Enemy Resolution
-	ACEnemy* ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines);
+	ACEnemy* ResolveDisplayEnemy(TArray<FString>& OutSourceLines);
 	ACEnemy* ResolveTargetComponentEnemy(TArray<FString>& OutSourceLines) const;
 	ACEnemy* ResolveRecentCombatEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines) const;
 	ACEnemy* ResolveWorldScanFallbackEnemy(TArray<FString>& OutSourceLines);
