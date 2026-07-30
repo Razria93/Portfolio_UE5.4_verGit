@@ -6,8 +6,9 @@ P1 Target Selection은 현재 브랜치에서 debug overlay evidence를 닫는 �
 
 - P1 구현은 debug overlay 한정 `UCDebugOverlayTargetComponent`로 진행한다.
 - component 소유 위치는 `ACPlayerController`를 우선한다.
-- source chain은 `TargetComponent -> RecentCombatTarget -> WorldScanFallback`으로 고정한다.
-- `WorldScanFallback`은 최후 fallback으로만 유지한다.
+- source chain 결정은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다.
+- P1 기본 Enemy panel은 명시 target 기반이며, target이 없으면 `EnemySource: None`을 표시한다.
+- `RecentCombatTarget`과 `WorldScanFallback`은 기본 자동 fallback이 아니라 diagnostic 후보로 격하한다.
 - 범용 combat target component는 이번 브랜치에서 구현하지 않는다.
 - 브랜치 마감 후 별도 리팩터링에서 `UCTargetSelectionComponent` 또는 `UCTargetProviderComponent`로 승격을 검토한다.
 
@@ -117,7 +118,7 @@ P1 검증
 | 1 | P1 범위 확정 | 필수/보강/보류 항목 분리 | P1 scope 문서 |
 | 2 | Target Component 기반 Enemy Selection 설계 | Enemy panel claim 강화 | target source 설계 문서 |
 | 3 | Target Component / Target Provider 구현 | 실제 target source 확보 | C++ component/provider |
-| 4 | HUD EnemySource 전환 | `TargetComponent` 우선, `WorldScanFallback` 보조 표시 | HUD 표시 변경 |
+| 4 | HUD EnemySource 전환 | `TargetComponent.Trace/Nearest` 명시 선택 우선, target 없음은 `None` 표시 | HUD 표시 변경 |
 | 5 | Store subject 분리 설계 | Player/Enemy Recent/EventLog 분리 기반 마련 | Store subject 설계 문서 |
 | 6 | EventLog category filter 설계/구현 | 필요한 종류의 log만 표시 | CVar 또는 preset 기반 filter |
 | 7 | Player/Enemy Recent/EventLog 분리 | subject 기반 evidence 분리 | Store/HUD 확장 |
@@ -139,7 +140,7 @@ P1 검증
 | AI 표시 보강 | Target Component 이후 보조 단계로 진행한다. |
 | 최종 촬영 | P1 검증 이후로 미룬다. |
 
-권장 target source fallback chain:
+이전 target source fallback chain:
 
 ```text
 TargetComponent
@@ -147,7 +148,7 @@ RecentCombatTarget
 WorldScanFallback
 ```
 
-`WorldScanFallback`은 P1에서도 보조 경로로 유지할 수 있지만, 최종 claim의 중심으로 사용하지 않는다.
+위 chain은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`로 대체한다. P1 기본 HUD path에서는 `RecentCombatTarget`과 `WorldScanFallback`이 Enemy panel을 자동으로 채우지 않는다.
 
 ## 8. P1 보류 가능 항목
 

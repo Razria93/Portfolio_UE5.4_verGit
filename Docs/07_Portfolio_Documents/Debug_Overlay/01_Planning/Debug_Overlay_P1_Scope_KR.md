@@ -13,7 +13,7 @@ P1 목표는 다음 네 가지다.
 | 목표 | 설명 |
 | --- | --- |
 | Enemy panel 신뢰도 강화 | `WorldScanFallback` 중심 claim에서 벗어나 실제 target source 기반 표시로 전환한다. |
-| Target source 명시 | overlay에 enemy source가 `TargetComponent`, `RecentCombatTarget`, `WorldScanFallback` 중 무엇인지 명확히 표시한다. |
+| Target source 명시 | overlay에 enemy source가 `TargetComponent.Trace`, `TargetComponent.Nearest`, `None` 중 무엇인지 명확히 표시한다. |
 | EventLog 가독성/제어 개선 | category filter로 필요한 종류의 log만 볼 수 있게 한다. |
 | 최종 촬영 전 품질 확보 | P1 검증 이후 최종 evidence 촬영으로 넘어갈 수 있는 상태를 만든다. |
 
@@ -23,9 +23,9 @@ P1 필수 범위는 최소 성공선을 기준으로 고정한다.
 
 | 필수 항목 | 포함 내용 | 완료 기준 |
 | --- | --- | --- |
-| Target Component 기반 Enemy Selection 설계 | target source, fallback chain, 표시 정책 확정 | 설계 문서 작성 |
+| Target Component 기반 Enemy Selection 설계 | target source, 명시 선택/None 표시 정책 확정 | 설계 문서 작성 |
 | Target Component / Target Provider 구현 | 현재 target actor를 제공하는 최소 구조 구현 | HUD에서 target actor 조회 가능 |
-| HUD EnemySource 전환 | `TargetComponent` 우선, `RecentCombatTarget` 보조, `WorldScanFallback` 최후 fallback | overlay에 source와 선택 대상 표시 |
+| HUD EnemySource 전환 | `TargetComponent.Trace/Nearest` 명시 선택 우선, target 없음은 `None` 표시 | overlay에 source와 선택 대상 표시 |
 | EventLog category filter | `All`, `Execution`, `Combat`, `AI` 표시 제어 | filter 기준에 맞게 EventLog 표시 |
 | P1 검증 체크리스트 작성 | P1 표시값과 claim 검증 기준 정리 | PIE 확인 절차 문서화 |
 
@@ -38,25 +38,25 @@ EventLog category filter
 P1 검증
 ```
 
-## 4. EnemySource Fallback Chain
+## 4. EnemySource Selection Policy
 
-P1의 enemy source fallback chain은 다음 순서로 고정한다.
+P1의 enemy source selection policy는 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다.
 
 ```text
-TargetComponent
-RecentCombatTarget
-WorldScanFallback
+TargetComponent.Trace
+TargetComponent.Nearest
+None
 ```
 
 해석 기준:
 
 | Source | 의미 | Evidence claim |
 | --- | --- | --- |
-| `TargetComponent` | player/controller가 명시적으로 보유한 target | 최종 enemy panel claim의 우선 근거 |
-| `RecentCombatTarget` | 최근 combat packet/result에서 확인된 대상 | 보조 근거. 최근 event 상태임을 함께 설명 |
-| `WorldScanFallback` | world scan으로 찾은 단일 enemy | 최후 fallback. target 기반 evidence로 주장하지 않음 |
+| `TargetComponent.Trace` | camera forward trace로 명시 선택한 target | 최종 enemy panel claim의 우선 근거 |
+| `TargetComponent.Nearest` | 사용자 명령으로 nearest enemy를 명시 선택한 target | 명시 command 기반 보조 target selection evidence |
+| `None` | 명시 target 없음 | Enemy panel target evidence 없음 |
 
-`WorldScanFallback`은 P1에서도 보조 경로로 유지할 수 있다. 단, 최종 claim의 중심으로 사용하지 않는다.
+`RecentCombatTarget`과 `WorldScanFallback`은 P1 기본 source chain에서 제외한다. 이후 diagnostic/source 검증 후보로 유지할 수 있지만, target 없음 상태에서 Enemy panel을 자동으로 채우지 않는다.
 
 범위 제한:
 
@@ -131,9 +131,9 @@ P1 완료 여부는 다음 기준으로 판단한다.
 
 | 기준 | 완료 판단 |
 | --- | --- |
-| `EnemySource: TargetComponent` 표시 가능 | Target Component target이 있을 때 HUD에 표시 |
-| fallback chain 표시 | TargetComponent 실패 시 RecentCombatTarget 또는 WorldScanFallback 상태 표시 |
-| `WorldScanFallback` 제한 | 최후 fallback으로만 사용되고 target evidence로 과장하지 않음 |
+| `EnemySource: TargetComponent.Trace/Nearest` 표시 가능 | Target Component target이 있을 때 HUD에 표시 |
+| target 없음 표시 | 명시 target이 없을 때 `EnemySource: None` 표시 |
+| 자동 fallback 제한 | RecentCombatTarget/WorldScanFallback이 target 없음 상태를 자동으로 채우지 않음 |
 | EventLog filter 동작 | `All/Execution/Combat/AI` 기준으로 표시 제어 가능 |
 | P1 검증 체크리스트 | PIE 확인 절차가 문서화됨 |
 | 최종 촬영 판단 | P1 검증 이후 촬영/패키징으로 넘어갈지 결정 가능 |

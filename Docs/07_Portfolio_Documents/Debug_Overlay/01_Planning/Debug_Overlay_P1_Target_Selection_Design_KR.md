@@ -8,6 +8,8 @@ P0.5에서는 `WorldScanFallback`으로 월드에 존재하는 단일 `ACEnemy`�
 
 P1의 목표는 Enemy panel source chain을 명확히 만들고, `WorldScanFallback`을 최후 fallback으로 낮추는 것이다.
 
+> Update: P1 Target Selection 최종 정책은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다. 이후 구현은 자동 fallback chain이 아니라 `TargetComponent.Trace`, `TargetComponent.Nearest`, `None` 기반 명시 target 정책을 따른다. 이 문서의 기존 fallback chain 설명은 과거 설계 맥락으로만 본다.
+
 ## 2. 최종 결정
 
 P1에서는 debug overlay 한정 component를 먼저 구현한다.
@@ -46,28 +48,29 @@ P1에서는 debug overlay 한정 component를 먼저 구현한다.
 | `Source/Portfolio/Character/Player/CPlayer.h` | 전투/상태 component와 `FCharacterComponentReferences` 흐름이 많음 | P1에서 더 건드리면 범위가 커질 수 있음 |
 | `Source/Portfolio/Interface/TargetContextProvider.h` | AI perception용 `GetTargetPriority()` interface | overlay target provider와 의미가 다르므로 재사용하지 않음 |
 | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp` | 현재 `TActorIterator<ACEnemy>` 기반 fallback 사용 | P1에서 최후 fallback으로 낮춤 |
-| `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp` | combat target/result hook에서 source/target name 저장 | RecentCombatTarget fallback의 근거 |
+| `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp` | combat target/result hook에서 source/target name 저장 | RecentCombatTarget diagnostic의 근거 |
 | `Source/Portfolio/Type/CCombatSignalTargetTypes.h` | `FCombatSignalTargetPacket`에 Source/Target actor 존재 | Store recent combat pair 기록 가능 |
 | `Source/Portfolio/Type/CCombatResultTypes.h` | `FCombatResultPacket`에 Source/Target actor 존재 | Store recent combat pair 기록 가능 |
 
-## 5. Source Chain
+## 5. Source Policy
 
-P1 Enemy Selection source chain은 다음 순서로 고정한다.
+P1 Enemy Selection source policy는 다음으로 고정한다.
 
 ```text
-TargetComponent
-RecentCombatTarget
-WorldScanFallback
+TargetComponent.Trace
+TargetComponent.Nearest
+None
 ```
 
 표시 문구는 다음 기준을 사용한다.
 
 | Source | 의미 | Evidence claim |
 | --- | --- | --- |
-| `EnemySource: TargetComponent` | `UCDebugOverlayTargetComponent`가 제공한 selected enemy | P1 최종 enemy panel claim의 우선 근거 |
-| `EnemySource: RecentCombatTarget` | 최근 combat pair에서 player 기준 상대 Enemy를 선택 | 보조 근거. stale 기준 안에서만 사용 |
-| `EnemySource: WorldScanFallback` | 월드 scan 결과 enemy가 1개라서 선택 | 최후 fallback. target 기반 evidence로 과장하지 않음 |
-| `EnemySource: None` | 표시 가능한 Enemy 없음 | 성공 evidence로 사용하지 않음 |
+| `EnemySource: TargetComponent.Trace` | camera forward trace로 명시 선택한 enemy | P1 최종 enemy panel claim의 우선 근거 |
+| `EnemySource: TargetComponent.Nearest` | 사용자 명령으로 nearest enemy를 명시 선택한 enemy | 명시 command 기반 보조 target selection evidence |
+| `EnemySource: None` | 명시 target 없음 | 성공 evidence로 사용하지 않음 |
+| `EnemySource: RecentCombatTarget` | 최근 combat pair에서 player 기준 상대 Enemy를 선택 | P1 기본 source chain에서 제외. diagnostic 후보 |
+| `EnemySource: WorldScanFallback` | 월드 scan 결과 enemy가 1개라서 선택 | P1 기본 source chain에서 제외. diagnostic/debug fallback 후보 |
 | `EnemySource: Ambiguous` | 다중 후보로 대상 확정 불가 | 특정 Enemy evidence로 사용하지 않음 |
 | `EnemySource: Stale` | 이전 source가 invalid 또는 timeout됨 | fallback 또는 재확인 필요 |
 
@@ -141,14 +144,13 @@ HUD는 target 선택의 주체가 아니라 consumer다.
 P1 HUD enemy resolve 순서:
 
 1. `GetOwningPlayerController()`에서 `UCDebugOverlayTargetComponent` 조회
-2. component가 valid target을 제공하면 `EnemySource: TargetComponent`
-3. component가 없거나 target invalid면 Store의 RecentCombatTarget fallback 조회
-4. RecentCombatTarget도 invalid/stale이면 `WorldScanFallback`
-5. fallback도 실패하면 `None` 또는 `Ambiguous`
+2. component가 valid target을 제공하면 `EnemySource: TargetComponent.Trace` 또는 `EnemySource: TargetComponent.Nearest`
+3. component가 없거나 target invalid면 `EnemySource: None`
+4. `RecentCombatTarget`과 `WorldScanFallback`은 기본 HUD path에서 자동 표시하지 않고 diagnostic 후보로만 둔다.
 
-HUD는 이 source를 화면에 명시한다. 최종 evidence에서는 가능한 한 `TargetComponent` source 캡처를 사용한다.
+HUD는 이 source를 화면에 명시한다. 최종 evidence에서는 `TargetComponent.Trace` 또는 `TargetComponent.Nearest` source 캡처만 target selection claim으로 사용한다.
 
-## 11. RecentCombatTarget Fallback 설계
+## 11. RecentCombatTarget Diagnostic 설계
 
 RecentCombatTarget은 단일 `TargetActor`를 저장하는 방식으로 설계하지 않는다.
 
@@ -179,7 +181,7 @@ FString EventName;
 - 최근 combat candidate는 Store 내부 별도 상태로 보관한다.
 - HUD는 전용 query API로 weak pair를 조회한다.
 - weak pointer invalid 시 stale로 처리한다.
-- stale 상태면 `WorldScanFallback`으로 내려간다.
+- stale 상태는 diagnostic 후보로만 기록하며, P1 기본 HUD path에서는 `WorldScanFallback`으로 자동 하강하지 않는다.
 
 ## 12. Stale 정책
 
@@ -199,9 +201,9 @@ P1 최소 구현에서는 시간 기준을 우선 검토한다. stale timeout �
 
 역할:
 
-- TargetComponent가 아직 없거나 target이 없을 때 보조 확인
-- RecentCombatTarget이 stale일 때 최후 fallback
-- TestRoom 단일 enemy 상황에서 최소 확인 유지
+- diagnostic/debug fallback 검증
+- P1 이전 WorldScanFallback 기반 동작 비교
+- TestRoom 단일 enemy 상황에서 별도 진단이 필요할 때 보조 확인
 
 제한:
 
@@ -216,11 +218,11 @@ P1 최소 정책:
 
 | 상황 | 표시 |
 | --- | --- |
-| TargetComponent valid target 있음 | 해당 target 표시 |
-| TargetComponent 없음, RecentCombatTarget valid | 최근 combat 상대 Enemy 표시 |
-| TargetComponent/RecentCombatTarget 없음, world enemy 1개 | `WorldScanFallback` |
-| TargetComponent/RecentCombatTarget 없음, world enemy 여러 개 | `Ambiguous(Count=N)` |
-| target weak pointer invalid | `Stale` 후 다음 fallback |
+| TargetComponent valid target 있음 | `TargetComponent.Trace` 또는 `TargetComponent.Nearest` |
+| TargetComponent 없음 | `None` |
+| TargetComponent invalid | `None` |
+| RecentCombatTarget valid | P1 기본 Enemy panel에는 자동 표시하지 않음 |
+| world enemy 1개 | P1 기본 Enemy panel에는 자동 표시하지 않음 |
 
 임의 첫 번째 Enemy를 성공 evidence처럼 표시하지 않는다.
 
@@ -273,9 +275,9 @@ P1 Target Selection에서는 다음을 하지 않는다.
 
 - `UCDebugOverlayTargetComponent`를 P1 debug-only provider로 고정
 - component 소유 위치를 `ACPlayerController`로 고정
-- source chain을 `TargetComponent -> RecentCombatTarget -> WorldScanFallback`으로 고정
-- `WorldScanFallback`을 최후 fallback으로 제한
-- RecentCombatTarget을 Store weak source/target pair 기반으로 설계
+- source 표시를 `TargetComponent.Trace`, `TargetComponent.Nearest`, `None`으로 고정
+- `WorldScanFallback`을 diagnostic/debug fallback 후보로 제한
+- RecentCombatTarget은 Store weak source/target pair 기반 diagnostic 후보로 둠
 - 기존 `ITargetContextProvider`와 의미를 분리
 - 범용 Target Component 승격은 브랜치 마감 후 리팩터링 후보로 분리
 
@@ -283,4 +285,4 @@ P1 Target Selection에서는 다음을 하지 않는다.
 
 다음 작업은 `P1 Target Component 구현 계획 문서 작성`이다.
 
-구현 계획 문서에서는 `UCDebugOverlayTargetComponent`의 파일/API, `ACPlayerController` 연결 방식, Store recent combat pair query API, HUD fallback chain 변경 범위를 구현 단위로 확정한다.
+구현 계획 문서에서는 `UCDebugOverlayTargetComponent`의 파일/API, `ACPlayerController` 연결 방식, source type 저장, HUD의 명시 target 표시 정책 변경 범위를 구현 단위로 확정한다.

@@ -9,8 +9,9 @@ P1 Target Selection 설계에서 결정한 기준은 다음과 같다.
 - P1에서는 debug overlay 한정 component로 구현한다.
 - component 이름은 `UCDebugOverlayTargetComponent`로 둔다.
 - component 소유 위치는 `ACPlayerController`다.
-- Enemy source chain은 `TargetComponent -> RecentCombatTarget -> WorldScanFallback`이다.
-- `WorldScanFallback`은 최후 fallback으로만 유지한다.
+- Enemy source 최종 정책은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다.
+- P1 기본 HUD path는 `TargetComponent.Trace`, `TargetComponent.Nearest`, `None`을 사용한다.
+- `RecentCombatTarget`과 `WorldScanFallback`은 기본 자동 fallback이 아니라 diagnostic 후보로 둔다.
 - 범용 `UCTargetSelectionComponent` 승격은 브랜치 마감 후 별도 리팩터링 후보로 둔다.
 
 이번 문서는 코드 구현이 아니라, 다음 구현 단계에서 흔들리면 안 되는 파일/API/연결/검증 기준을 정리한다.
@@ -99,29 +100,25 @@ check(DebugOverlayTargetComponent);
 - `ACPlayer`의 `FCharacterComponentReferences` 흐름은 건드리지 않는다.
 - `ACPlayer`에 새 component를 붙이지 않는다.
 - HUD는 `GetOwningPlayerController()`에서 component를 조회한다.
-- component가 없으면 바로 `RecentCombatTarget` fallback으로 내려간다.
+- component가 없으면 `EnemySource: None`을 표시한다.
 
-## 6. HUD Fallback Chain
+## 6. HUD Target Selection Path
 
 HUD의 Enemy resolve 순서는 다음으로 전환한다.
 
 ```text
-TargetComponent
-RecentCombatTarget
-WorldScanFallback
+TargetComponent.Trace
+TargetComponent.Nearest
+None
 ```
 
 구현 순서:
 
 1. `GetOwningPlayerController()`에서 `UCDebugOverlayTargetComponent`를 찾는다.
 2. component가 valid target을 제공하면 해당 actor를 Enemy panel 대상으로 사용한다.
-3. 표시 문구는 `EnemySource: TargetComponent`와 target summary를 사용한다.
-4. component가 없거나 target invalid면 Store의 recent combat pair를 조회한다.
-5. recent combat pair가 player 기준 상대 Enemy를 제공하면 `EnemySource: RecentCombatTarget`으로 표시한다.
-6. recent combat pair가 stale/invalid이면 기존 world scan fallback으로 내려간다.
-7. world scan 결과가 1개면 `EnemySource: WorldScanFallback`으로 표시한다.
-8. world scan 결과가 0개면 `EnemySource: None`으로 표시한다.
-9. world scan 결과가 여러 개면 `EnemySource: Ambiguous(Count=N)`으로 표시한다.
+3. 표시 문구는 source type에 따라 `EnemySource: TargetComponent.Trace` 또는 `EnemySource: TargetComponent.Nearest`를 사용한다.
+4. component가 없거나 target invalid면 `EnemySource: None`을 표시한다.
+5. Store recent combat pair와 world scan fallback은 P1 기본 HUD path에서 자동 표시하지 않는다.
 
 기존 `RefreshCachedEnemyIfNeeded()` / `ResolveDisplayEnemy()`는 삭제하지 않고 world scan fallback 구현부로 재배치하거나 유지한다.
 
@@ -129,31 +126,31 @@ WorldScanFallback
 
 P1 표시 문구 후보는 다음으로 둔다.
 
-TargetComponent 성공:
+TargetComponent Trace 성공:
 
 ```text
-EnemySource: TargetComponent
+EnemySource: TargetComponent.Trace
 EnemyTarget: Selected=BP_CEnemy_C_1
 ```
 
-RecentCombatTarget 성공:
+TargetComponent Nearest 성공:
 
 ```text
-EnemySource: RecentCombatTarget
-EnemyRecentCombat: Source=BP_CPlayer_0 Target=BP_CEnemy_C_1 Age=0.42
+EnemySource: TargetComponent.Nearest
+EnemyTarget: Selected=BP_CEnemy_C_1
 ```
 
-WorldScanFallback 성공:
-
-```text
-EnemySource: WorldScanFallback
-EnemyFallback: Selected=BP_CEnemy_C_1 Policy=FirstValid Count=1
-```
-
-실패/보류:
+target 없음:
 
 ```text
 EnemySource: None
+```
+
+diagnostic 후보:
+
+```text
+EnemySource: RecentCombatTarget
+EnemySource: WorldScanFallback
 EnemySource: Ambiguous(Count=2)
 EnemySource: Stale
 ```
@@ -162,7 +159,7 @@ EnemySource: Stale
 
 ## 8. Store Recent Combat Pair
 
-RecentCombatTarget fallback은 Store 기반으로 구현한다.
+RecentCombatTarget은 Store 기반 diagnostic 후보로 유지한다.
 
 단일 `TargetActor`를 저장하지 않는다. combat 방향에 따라 enemy 후보가 `SourceActor`일 수도 있고 `TargetActor`일 수도 있기 때문이다.
 
@@ -279,7 +276,7 @@ P1 Target Component 구현 순서는 다음으로 고정한다.
 4. `RecordCombatTargetPacket` / `RecordCombatResult`에서 pair 기록
 5. Store recent combat pair query API 추가
 6. HUD에서 player 기준 recent combat 상대 Enemy resolve 구현
-7. HUD enemy resolve chain을 `TargetComponent -> RecentCombatTarget -> WorldScanFallback`으로 전환
+7. HUD enemy resolve path를 `TargetComponent.Trace/Nearest -> None`으로 전환
 8. build 검증
 9. PIE 수동 확인
 
@@ -326,10 +323,10 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 
 - `PortfolioEditor Win64 Development` 빌드
 - Shipping guard 확인
-- `EnemySource: TargetComponent` 표시 확인
-- TargetComponent target invalid 시 `RecentCombatTarget` fallback 확인
-- RecentCombatTarget stale 시 `WorldScanFallback` fallback 확인
-- 다중 enemy에서 `Ambiguous(Count=N)` 확인
+- `EnemySource: TargetComponent.Trace` 표시 확인
+- `EnemySource: TargetComponent.Nearest` 표시 확인
+- TargetComponent target invalid 또는 clear 시 `EnemySource: None` 확인
+- RecentCombatTarget/WorldScanFallback이 target 없음 상태를 자동으로 채우지 않는지 확인
 
 ## 17. 완료 기준
 
@@ -338,7 +335,7 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 - `UCDebugOverlayTargetComponent` 구현 파일/API 후보
 - `ACPlayerController` 연결 방식
 - Store recent combat pair 기록/query 방향
-- HUD fallback chain 전환 기준
+- HUD target selection path 전환 기준
 - Shipping/build 정책
 - 구현 중 질문해야 할 결정 요소
 
@@ -346,4 +343,4 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 
 다음 작업은 `P1 Target Component 실제 구현`이다.
 
-구현 단계에서는 이 문서 범위를 기준으로 component, controller 연결, Store recent combat pair, HUD fallback chain만 최소 변경한다.
+구현 단계에서는 이 문서 범위를 기준으로 component, controller 연결, source type 저장, HUD target selection path만 최소 변경한다.

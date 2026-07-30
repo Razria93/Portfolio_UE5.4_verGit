@@ -41,7 +41,7 @@ DebugOverlayClearTarget
 
 | 명령 | 의미 |
 | --- | --- |
-| `DebugOverlaySelectTarget` | camera forward trace로 `ACEnemy`를 찾고, 실패하면 nearest enemy fallback을 사용한다. 둘 다 실패하면 explicit target을 clear한다. |
+| `DebugOverlaySelectTarget` | camera forward trace로 `ACEnemy`를 찾는다. 실패하면 explicit target을 clear한다. |
 | `DebugOverlaySelectNearestTarget` | player pawn 기준 nearest `ACEnemy`를 찾는다. 실패하면 explicit target을 clear한다. |
 | `DebugOverlayClearTarget` | `UCDebugOverlayTargetComponent`의 explicit target만 clear한다. Store recent combat pair나 world scan fallback은 지우지 않는다. |
 
@@ -65,21 +65,27 @@ P1 TargetComponent 검증에서는 Enemy panel의 source 관련 line을 우선 �
 
 | 순서 | 테스트 액션 | 기대 결과 | 실패 시 확인 |
 | --- | --- | --- | --- |
-| 1 | Enemy를 화면 중앙에 두고 `DebugOverlaySelectTarget` 실행 | `EnemySource: TargetComponent`, `EnemyTarget: Selected=...` | trace channel, Enemy collision, command 호출 여부 |
-| 2 | Enemy를 바라보지 않고 `DebugOverlaySelectTarget` 실행 | trace 실패 후 nearest fallback이 성공하면 `EnemySource: TargetComponent` | nearest radius `1500.f`, TestRoom enemy 거리 |
-| 3 | 근처 Enemy 기준 `DebugOverlaySelectNearestTarget` 실행 | nearest enemy가 `TargetComponent` target으로 표시 | 다중 enemy일 때 거리 기준 선택 여부 |
-| 4 | `DebugOverlayClearTarget` 실행 | `TargetComponent` source가 사라지고 `RecentCombatTarget` 또는 `WorldScanFallback`으로 내려감 | explicit target clear 여부 |
-| 5 | combat event 발생 후 clear 실행 | 최근 전투 상대가 유효하면 `EnemySource: RecentCombatTarget` | `Portfolio.DebugOverlay.Collect`, combat pair 기록 여부 |
-| 6 | recent combat pair가 stale인 상태에서 clear 실행 | `EnemyRecentCombat: Stale ...` 보조 표시 후 fallback으로 내려감 | stale 시간, weak pointer validity |
-| 7 | Enemy가 없거나 탐색 실패 | `EnemySource: None` | TestRoom enemy 배치 |
-| 8 | WorldScanFallback 후보가 여러 개 | `EnemySource: Ambiguous(Count=N)` | 다중 enemy 상태, fallback claim 제외 |
+| 1 | Enemy를 화면 중앙에 두고 `DebugOverlaySelectTarget` 실행 | `EnemySource: TargetComponent.Trace`, `EnemyTarget: Selected=...` | trace channel, Enemy collision, command 호출 여부 |
+| 2 | Enemy를 바라보지 않고 `DebugOverlaySelectTarget` 실행 | trace 실패 후 `EnemySource: None` | explicit target clear 여부 |
+| 3 | 근처 Enemy 기준 `DebugOverlaySelectNearestTarget` 실행 | `EnemySource: TargetComponent.Nearest`, `EnemyTarget: Selected=...` | nearest radius `1500.f`, TestRoom enemy 거리 |
+| 4 | nearest 대상이 없는 상태에서 `DebugOverlaySelectNearestTarget` 실행 | `EnemySource: None` | explicit target clear 여부 |
+| 5 | `DebugOverlayClearTarget` 실행 | `EnemySource: None` | explicit target clear 여부 |
+| 6 | combat event 발생 후 clear 실행 | `RecentCombatTarget`이 자동으로 Enemy panel을 채우지 않음 | `Portfolio.DebugOverlay.Collect`, combat pair 기록 여부 |
+| 7 | target 없음 상태에서 Enemy가 월드에 1명 존재 | `WorldScanFallback`이 자동으로 Enemy panel을 채우지 않음 | P1 decision 적용 여부 |
 
 ## 6. 기대 표시
 
 ### 6.1 TargetComponent 선택 성공
 
 ```text
-EnemySource: TargetComponent
+EnemySource: TargetComponent.Trace
+EnemyTarget: Selected=BP_CEnemy_C_1
+```
+
+또는:
+
+```text
+EnemySource: TargetComponent.Nearest
 EnemyTarget: Selected=BP_CEnemy_C_1
 ```
 
@@ -88,7 +94,7 @@ EnemyTarget: Selected=BP_CEnemy_C_1
 - 사용자가 명시적으로 debug target을 선택한 상태다.
 - 이 상태만 TargetComponent 기반 Enemy source evidence로 사용한다.
 
-### 6.2 RecentCombatTarget fallback
+### 6.2 RecentCombatTarget diagnostic
 
 ```text
 EnemySource: RecentCombatTarget
@@ -97,8 +103,8 @@ EnemyRecentCombat: Source=BP_CPlayer_0 Target=BP_CEnemy_C_1 Age=0.42
 
 해석:
 
-- explicit TargetComponent target은 없지만 최근 combat pair로 Enemy를 resolve한 상태다.
-- 이 값은 "선택 target"이 아니라 "최근 전투 상대" evidence다.
+- P1 기본 HUD path에서는 target 없음 상태를 자동으로 채우지 않는다.
+- 이후 diagnostic mode를 추가할 경우 "선택 target"이 아니라 "최근 전투 상대" evidence로만 해석한다.
 
 ### 6.3 RecentCombatTarget stale/not matched
 
@@ -110,9 +116,9 @@ EnemyRecentCombat: NotMatched Source=... Target=... Age=...
 해석:
 
 - 최근 combat pair는 존재하지만 현재 player 기준 Enemy source로 사용하기 어렵다.
-- 이 line이 보이면 다음 source는 `WorldScanFallback`, `None`, `Ambiguous`, `Stale` 중 하나로 내려가는지 확인한다.
+- 이 line은 diagnostic 후보이며, P1 기본 target selection 성공 evidence로 사용하지 않는다.
 
-### 6.4 WorldScanFallback
+### 6.4 WorldScanFallback diagnostic
 
 ```text
 EnemySource: WorldScanFallback
@@ -121,7 +127,7 @@ EnemyFallback: Selected=BP_CEnemy_C_1 Policy=FirstValid Count=1
 
 해석:
 
-- TargetComponent와 RecentCombatTarget 모두 유효하지 않을 때 사용하는 최후 fallback이다.
+- P1 기본 HUD path에서는 target 없음 상태를 자동으로 채우지 않는다.
 - final evidence에서 TargetComponent 기반 선택처럼 설명하지 않는다.
 
 ### 6.5 실패/보류 상태
@@ -135,7 +141,7 @@ EnemySource: Stale
 해석:
 
 - `None`: Enemy를 찾지 못했다.
-- `Ambiguous(Count=N)`: WorldScanFallback 후보가 여러 개라 단일 Enemy source로 주장하지 않는다.
+- `Ambiguous(Count=N)`: diagnostic world scan 후보가 여러 개라 단일 Enemy source로 주장하지 않는다.
 - `Stale`: cached fallback target이 더 이상 유효하지 않다.
 
 ## 7. 실패 분기
@@ -154,39 +160,39 @@ EnemySource: Stale
 
 1. Enemy가 camera forward trace 경로에 있는지 확인한다.
 2. `ECC_Visibility` trace가 Enemy collision에 막히는지 확인한다.
-3. trace 실패 후 nearest fallback 범위 `1500.f` 안에 Enemy가 있는지 확인한다.
-4. 둘 다 실패하면 explicit target은 clear되고 fallback chain으로 내려가는 것이 정상이다.
+3. nearest 확인이 필요하면 `DebugOverlaySelectNearestTarget`을 별도로 실행한다.
+4. 실패하면 explicit target은 clear되고 `EnemySource: None`으로 표시되는 것이 정상이다.
 
-### 7.3 nearest fallback이 기대와 다른 Enemy를 선택함
+### 7.3 nearest command가 기대와 다른 Enemy를 선택함
 
 확인:
 
-1. nearest fallback은 player pawn 위치 기준 거리 우선이다.
+1. nearest command는 player pawn 위치 기준 거리 우선이다.
 2. 다중 enemy에서는 카메라 방향보다 거리가 우선될 수 있다.
-3. 이 경우 TargetComponent evidence로는 "nearest fallback으로 선택된 target"이라고 설명한다.
+3. 이 경우 TargetComponent evidence로는 "nearest command로 선택된 target"이라고 설명한다.
 
 ### 7.4 clear 이후에도 TargetComponent가 남아 보임
 
 확인:
 
 1. `DebugOverlayClearTarget`을 실행했는지 확인한다.
-2. `EnemySource: TargetComponent`가 사라졌는지 확인한다.
-3. clear 이후 `RecentCombatTarget` 또는 `WorldScanFallback`으로 내려가는지 확인한다.
+2. `EnemySource: TargetComponent.Trace/Nearest`가 사라졌는지 확인한다.
+3. clear 이후 `EnemySource: None`으로 표시되는지 확인한다.
 
-### 7.5 fallback chain이 WorldScanFallback으로 내려가지 않음
+### 7.5 target 없음 상태에서 fallback이 자동 표시됨
 
 확인:
 
-1. recent combat pair가 아직 유효하면 `RecentCombatTarget`이 먼저 표시될 수 있다.
-2. recent combat pair가 stale/not matched이면 보조 line이 표시된 뒤 fallback으로 내려가야 한다.
-3. Enemy가 0개면 `None`, 여러 개면 `Ambiguous(Count=N)`이 정상이다.
+1. P1 decision 적용 후에는 target 없음 상태에서 `RecentCombatTarget`이나 `WorldScanFallback`이 Enemy panel을 자동으로 채우면 안 된다.
+2. `DebugOverlayClearTarget` 후 `EnemySource: None`이 표시되는지 확인한다.
+3. diagnostic 후보는 target selection 성공 evidence로 사용하지 않는다.
 
 ## 8. 확인 기준
 
-- `TargetComponent`는 명시 target source로만 주장한다.
-- `RecentCombatTarget`은 최근 전투 상대 source로만 주장한다.
-- `WorldScanFallback`은 최후 fallback source로만 주장한다.
-- `DebugOverlaySelectTarget`은 camera trace 우선, nearest fallback 보조로 설명한다.
+- `TargetComponent.Trace`는 camera trace 기반 명시 target source로만 주장한다.
+- `TargetComponent.Nearest`는 nearest command 기반 명시 target source로만 주장한다.
+- `RecentCombatTarget`은 P1 기본 source chain에서 제외하고 diagnostic 후보로만 다룬다.
+- `WorldScanFallback`은 P1 기본 source chain에서 제외하고 diagnostic 후보로만 다룬다.
 - dead enemy 제외는 아직 적용하지 않았으므로 성공 evidence처럼 말하지 않는다.
 - trace channel, trace distance, nearest radius는 P1 debug helper 기본값으로만 설명한다.
 - 실제 코드에서 읽지 못한 값을 성공 evidence처럼 표시하지 않는다.
@@ -195,11 +201,11 @@ EnemySource: Stale
 
 | 완료 항목 | 기준 |
 | --- | --- |
-| TargetComponent source | `DebugOverlaySelectTarget` 또는 `DebugOverlaySelectNearestTarget` 후 `EnemySource: TargetComponent` 표시 |
+| TargetComponent source | `DebugOverlaySelectTarget` 후 `EnemySource: TargetComponent.Trace`, `DebugOverlaySelectNearestTarget` 후 `EnemySource: TargetComponent.Nearest` 표시 |
 | Target summary | `EnemyTarget: Selected=...` 표시 |
-| Clear | `DebugOverlayClearTarget` 후 `EnemySource: TargetComponent` 제거 |
-| Recent fallback | combat event 이후 clear 시 `RecentCombatTarget` 표시 가능 |
-| WorldScan fallback | explicit target/recent target이 없을 때 `WorldScanFallback` 또는 실패 상태 표시 |
+| Clear | `DebugOverlayClearTarget` 후 `EnemySource: None` 표시 |
+| Recent diagnostic | combat event 이후에도 clear 상태에서는 자동 Enemy source로 승격하지 않음 |
+| WorldScan diagnostic | target 없음 상태에서 자동 Enemy source로 승격하지 않음 |
 | 실패 상태 | `None`, `Ambiguous(Count=N)`, `Stale`, `NotMatched`를 성공 evidence처럼 사용하지 않음 |
 
 ## 10. 결과 기록 템플릿
@@ -216,8 +222,8 @@ DebugOverlaySelectNearestTarget:
 DebugOverlayClearTarget:
 
 TargetComponent 표시:
-RecentCombatTarget fallback:
-WorldScanFallback fallback:
+RecentCombatTarget diagnostic:
+WorldScanFallback diagnostic:
 None/Ambiguous/Stale 상태:
 
 Evidence 사용 가능 항목:
