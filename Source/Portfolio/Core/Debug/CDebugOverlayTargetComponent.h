@@ -21,15 +21,20 @@ public:
 private:
 	TWeakObjectPtr<AActor> DebugOverlayTargetActor;
 	EDebugOverlayTargetSource DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
+	FString DebugOverlaySelectionSummary;
 
 public:
 	// Query
 	bool HasDebugOverlayTarget() const;
+	bool HasDebugOverlaySelectionSummary() const;
 	AActor* GetDebugOverlayTargetActor() const;
 	FString GetDebugOverlayTargetSummary() const;
 	FString GetDebugOverlayTargetSource() const;
+	FString GetDebugOverlaySelectionSummary() const;
 
 	// Mutation
 	void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource);
 	void ClearDebugOverlayTarget();
+	void SetDebugOverlaySelectionSummary(const FString& InSummary);
+	void ClearDebugOverlaySelectionSummary();
 };

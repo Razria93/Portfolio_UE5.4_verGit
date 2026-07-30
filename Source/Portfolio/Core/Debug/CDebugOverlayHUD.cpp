@@ -324,6 +324,14 @@ namespace
 	{
 		return FString::Printf(TEXT("%.2f"), FMath::Max(0.f, InAgeSeconds));
 	}
+
+	void AppendTargetSelectionSummary(TArray<FString>& InOutLines, const UCDebugOverlayTargetComponent* InTargetComp)
+	{
+		if (!IsValid(InTargetComp)) return;
+		if (!InTargetComp->HasDebugOverlaySelectionSummary()) return;
+
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("EnemySelect: %s"), *InTargetComp->GetDebugOverlaySelectionSummary()));
+	}
 }
 #endif
 
@@ -337,6 +345,12 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(TArray<FString>& OutSourceLines)
 	}
 
 	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: None"));
+	if (const APlayerController* owningPlayerController = GetOwningPlayerController())
+	{
+		const UCDebugOverlayTargetComponent* targetComp = owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>();
+		AppendTargetSelectionSummary(OutSourceLines, targetComp);
+	}
+
 	return nullptr;
 }
 
@@ -353,6 +367,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(TArray<FString>& OutSour
 
 	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemySource: %s"), *targetComp->GetDebugOverlayTargetSource()));
 	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyTarget: %s"), *targetComp->GetDebugOverlayTargetSummary()));
+	AppendTargetSelectionSummary(OutSourceLines, targetComp);
 	return targetEnemy;
 }
 

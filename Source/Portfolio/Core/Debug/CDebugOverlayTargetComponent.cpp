@@ -28,6 +28,11 @@ bool UCDebugOverlayTargetComponent::HasDebugOverlayTarget() const
 	return DebugOverlayTargetActor.IsValid();
 }
 
+bool UCDebugOverlayTargetComponent::HasDebugOverlaySelectionSummary() const
+{
+	return !DebugOverlaySelectionSummary.IsEmpty();
+}
+
 AActor* UCDebugOverlayTargetComponent::GetDebugOverlayTargetActor() const
 {
 	return DebugOverlayTargetActor.Get();
@@ -47,6 +52,11 @@ FString UCDebugOverlayTargetComponent::GetDebugOverlayTargetSource() const
 		: FString(TEXT("None"));
 }
 
+FString UCDebugOverlayTargetComponent::GetDebugOverlaySelectionSummary() const
+{
+	return DebugOverlaySelectionSummary;
+}
+
 // Mutation
 void UCDebugOverlayTargetComponent::SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource)
 {
@@ -64,4 +74,15 @@ void UCDebugOverlayTargetComponent::ClearDebugOverlayTarget()
 {
 	DebugOverlayTargetActor.Reset();
 	DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
+	ClearDebugOverlaySelectionSummary();
+}
+
+void UCDebugOverlayTargetComponent::SetDebugOverlaySelectionSummary(const FString& InSummary)
+{
+	DebugOverlaySelectionSummary = InSummary;
+}
+
+void UCDebugOverlayTargetComponent::ClearDebugOverlaySelectionSummary()
+{
+	DebugOverlaySelectionSummary.Reset();
 }

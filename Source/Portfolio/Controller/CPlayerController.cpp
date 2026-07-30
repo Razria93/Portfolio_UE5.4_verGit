@@ -204,16 +204,69 @@ void ACPlayerController::PressDodge()
 
 bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 {
-	if (!IsValid(DebugOverlayTargetComponent)) return false;
-
-	ACEnemy* targetEnemy = FindNearestDebugOverlayEnemy();
-	if (!IsValid(targetEnemy))
+	if (!IsValid(DebugOverlayTargetComponent))
 	{
-		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result=TargetComponentMissing"));
 		return false;
 	}
 
-	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy, EDebugOverlayTargetSource::Nearest);
+	if (!IsValid(GetWorld()) || !IsValid(GetPawn()))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = TEXT("NearestFailed InvalidContext");
+		RecordDebugOverlayNearestSelectionResult(summary);
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result=InvalidContext"));
+		return false;
+	}
+
+	float closestDistance = 0.f;
+	ACEnemy* closestEnemy = FindClosestDebugOverlayEnemy(closestDistance);
+	if (!IsValid(closestEnemy))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = FString::Printf(
+			TEXT("NearestFailed NoEnemy Radius=%.0f"),
+			DebugOverlayNearestTargetRadius);
+		RecordDebugOverlayNearestSelectionResult(summary);
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result=NoEnemy Radius=%.0f"), DebugOverlayNearestTargetRadius);
+		return false;
+	}
+
+	if (closestDistance > DebugOverlayNearestTargetRadius)
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = FString::Printf(
+			TEXT("NearestFailed OutOfRange Closest=%.0f Radius=%.0f"),
+			closestDistance,
+			DebugOverlayNearestTargetRadius);
+		RecordDebugOverlayNearestSelectionResult(summary);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("DebugOverlaySelectNearestTarget Result=OutOfRange Closest=%.0f Radius=%.0f"),
+			closestDistance,
+			DebugOverlayNearestTargetRadius);
+		return false;
+	}
+
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(closestEnemy, EDebugOverlayTargetSource::Nearest);
+
+	const FString summary = FString::Printf(
+		TEXT("NearestSelected Target=%s Distance=%.0f Radius=%.0f"),
+		*GetNameSafe(closestEnemy),
+		closestDistance,
+		DebugOverlayNearestTargetRadius);
+	RecordDebugOverlayNearestSelectionResult(summary);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("DebugOverlaySelectNearestTarget Result=Selected Target=%s Distance=%.0f Radius=%.0f"),
+		*GetNameSafe(closestEnemy),
+		closestDistance,
+		DebugOverlayNearestTargetRadius);
 	return true;
 }
 
@@ -224,17 +277,25 @@ void ACPlayerController::ClearDebugOverlayTarget()
 	DebugOverlayTargetComponent->ClearDebugOverlayTarget();
 }
 
-ACEnemy* ACPlayerController::FindNearestDebugOverlayEnemy() const
+void ACPlayerController::RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const
 {
+	if (!IsValid(DebugOverlayTargetComponent)) return;
+
+	DebugOverlayTargetComponent->SetDebugOverlaySelectionSummary(InSummary);
+}
+
+ACEnemy* ACPlayerController::FindClosestDebugOverlayEnemy(float& OutDistance) const
+{
+	OutDistance = 0.f;
+
 	UWorld* world = GetWorld();
 	const APawn* pawn = GetPawn();
 	if (!IsValid(world) || !IsValid(pawn)) return nullptr;
 
 	const FVector origin = pawn->GetActorLocation();
-	const float maxDistanceSquared = FMath::Square(DebugOverlayNearestTargetRadius);
 
-	ACEnemy* nearestEnemy = nullptr;
-	float nearestDistanceSquared = maxDistanceSquared;
+	ACEnemy* closestEnemy = nullptr;
+	float closestDistanceSquared = TNumericLimits<float>::Max();
 
 	for (TActorIterator<ACEnemy> it(world); it; ++it)
 	{
@@ -242,13 +303,16 @@ ACEnemy* ACPlayerController::FindNearestDebugOverlayEnemy() const
 		if (!IsValid(enemy)) continue;
 
 		const float distanceSquared = FVector::DistSquared(origin, enemy->GetActorLocation());
-		if (distanceSquared > nearestDistanceSquared) continue;
+		if (distanceSquared > closestDistanceSquared) continue;
 
-		nearestDistanceSquared = distanceSquared;
-		nearestEnemy = enemy;
+		closestDistanceSquared = distanceSquared;
+		closestEnemy = enemy;
 	}
 
-	return nearestEnemy;
+	if (!IsValid(closestEnemy)) return nullptr;
+
+	OutDistance = FMath::Sqrt(closestDistanceSquared);
+	return closestEnemy;
 }
 
 #endif

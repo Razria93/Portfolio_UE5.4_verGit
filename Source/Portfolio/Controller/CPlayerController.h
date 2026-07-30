@@ -70,6 +70,7 @@ private:
 	bool TrySelectDebugOverlayNearestEnemy();
 	void ClearDebugOverlayTarget();
 
-	class ACEnemy* FindNearestDebugOverlayEnemy() const;
+	void RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const;
+	class ACEnemy* FindClosestDebugOverlayEnemy(float& OutDistance) const;
 #endif
 };
