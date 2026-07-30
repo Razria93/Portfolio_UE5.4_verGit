@@ -160,9 +160,46 @@ namespace
 	{
 		if (InSubjectName.IsEmpty()) return false;
 
-		return InEntry.OwnerName == InSubjectName
+		const bool bMatchesAnyRole =
+			InEntry.OwnerName == InSubjectName
 			|| InEntry.SourceName == InSubjectName
 			|| InEntry.TargetName == InSubjectName;
+
+		if (InEntry.Category.Equals(TEXT("Execution"), ESearchCase::IgnoreCase))
+		{
+			return InEntry.OwnerName == InSubjectName;
+		}
+
+		if (InEntry.Category.Equals(TEXT("AI"), ESearchCase::IgnoreCase))
+		{
+			return InEntry.OwnerName == InSubjectName
+				|| InEntry.SourceName == InSubjectName;
+		}
+
+		if (InEntry.Category.Equals(TEXT("CombatResult"), ESearchCase::IgnoreCase))
+		{
+			return InEntry.OwnerName == InSubjectName
+				|| InEntry.TargetName == InSubjectName;
+		}
+
+		if (InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase))
+		{
+			if (InEntry.EventName.Contains(TEXT("Collision"), ESearchCase::IgnoreCase))
+			{
+				return InEntry.OwnerName == InSubjectName
+					|| InEntry.SourceName == InSubjectName;
+			}
+
+			if (InEntry.EventName.Contains(TEXT("TargetAccepted"), ESearchCase::IgnoreCase)
+				|| InEntry.EventName.Contains(TEXT("TargetRejected"), ESearchCase::IgnoreCase))
+			{
+				return bMatchesAnyRole;
+			}
+
+			return bMatchesAnyRole;
+		}
+
+		return bMatchesAnyRole;
 	}
 
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
