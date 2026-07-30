@@ -22,6 +22,7 @@ public:
 private:
 	TWeakObjectPtr<AActor> DebugOverlayTargetActor;
 	EDebugOverlayTargetSource DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
+	FString LastDebugOverlayTraceSummary;
 
 public:
 	// Query
@@ -29,8 +30,10 @@ public:
 	AActor* GetDebugOverlayTargetActor() const;
 	FString GetDebugOverlayTargetSummary() const;
 	FString GetDebugOverlayTargetSource() const;
+	FString GetDebugOverlayTraceSummary() const;
 
 	// Mutation
 	void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource);
 	void ClearDebugOverlayTarget();
+	void RecordDebugOverlayTraceSummary(const FString& InSummary);
 };

@@ -74,7 +74,7 @@ private:
 	bool TrySelectDebugOverlayNearestEnemy();
 	void ClearDebugOverlayTarget();
 
-	class ACEnemy* FindDebugOverlayEnemyFromView() const;
+	class ACEnemy* FindDebugOverlayEnemyFromView();
 	class ACEnemy* FindNearestDebugOverlayEnemy() const;
 #endif
 };

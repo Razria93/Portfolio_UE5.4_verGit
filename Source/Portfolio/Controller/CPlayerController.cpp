@@ -10,13 +10,45 @@
 #endif
 #include "Type/CActionOrchestrationTypes.h"
 
+#include "DrawDebugHelpers.h"
 #include "EngineUtils.h"
+#include "HAL/IConsoleManager.h"
 
 #if !UE_BUILD_SHIPPING
 namespace
 {
 	static constexpr float DebugOverlayTargetTraceDistance = 5000.f;
 	static constexpr float DebugOverlayNearestTargetRadius = 1500.f;
+	static constexpr float DebugOverlayTargetTraceDebugLifetime = 2.0f;
+
+	TAutoConsoleVariable<int32> CVarDebugOverlayTargetTraceDebug(
+		TEXT("Portfolio.DebugOverlay.TargetTraceDebug"),
+		0,
+		TEXT("Draw and log debug overlay target trace diagnostics."),
+		ECVF_Default);
+
+	bool ShouldDebugOverlayTargetTraceDebug()
+	{
+		return CVarDebugOverlayTargetTraceDebug.GetValueOnGameThread() != 0;
+	}
+
+	void DrawDebugOverlayTargetTrace(UWorld* InWorld, const FVector& InStart, const FVector& InEnd, const FHitResult& InHitResult, const FColor& InColor)
+	{
+		if (!ShouldDebugOverlayTargetTraceDebug() || !IsValid(InWorld)) return;
+
+		DrawDebugLine(InWorld, InStart, InEnd, InColor, false, DebugOverlayTargetTraceDebugLifetime, 0, 2.0f);
+		if (InHitResult.bBlockingHit)
+		{
+			DrawDebugSphere(InWorld, InHitResult.ImpactPoint, 16.0f, 12, InColor, false, DebugOverlayTargetTraceDebugLifetime);
+		}
+	}
+
+	void LogDebugOverlayTargetTrace(const FString& InSummary)
+	{
+		if (!ShouldDebugOverlayTargetTraceDebug()) return;
+
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectTarget %s"), *InSummary);
+	}
 }
 #endif
 
@@ -247,7 +279,7 @@ void ACPlayerController::ClearDebugOverlayTarget()
 	DebugOverlayTargetComponent->ClearDebugOverlayTarget();
 }
 
-ACEnemy* ACPlayerController::FindDebugOverlayEnemyFromView() const
+ACEnemy* ACPlayerController::FindDebugOverlayEnemyFromView()
 {
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return nullptr;
@@ -266,9 +298,47 @@ ACEnemy* ACPlayerController::FindDebugOverlayEnemyFromView() const
 	}
 
 	FHitResult hitResult;
-	if (!world->LineTraceSingleByChannel(hitResult, traceStart, traceEnd, ECC_Visibility, queryParams)) return nullptr;
+	const bool bHit = world->LineTraceSingleByChannel(hitResult, traceStart, traceEnd, ECC_Visibility, queryParams);
+	if (!bHit)
+	{
+		const FString summary = FString::Printf(TEXT("Miss Distance=%.0f"), DebugOverlayTargetTraceDistance);
+		if (IsValid(DebugOverlayTargetComponent))
+		{
+			DebugOverlayTargetComponent->RecordDebugOverlayTraceSummary(summary);
+		}
 
-	return Cast<ACEnemy>(hitResult.GetActor());
+		DrawDebugOverlayTargetTrace(world, traceStart, traceEnd, hitResult, FColor::Red);
+		LogDebugOverlayTargetTrace(summary);
+		return nullptr;
+	}
+
+	AActor* hitActor = hitResult.GetActor();
+	ACEnemy* hitEnemy = Cast<ACEnemy>(hitActor);
+	if (!IsValid(hitEnemy))
+	{
+		const FString summary = FString::Printf(
+			TEXT("HitNonEnemy Actor=%s Class=%s"),
+			*GetNameSafe(hitActor),
+			*GetNameSafe(IsValid(hitActor) ? hitActor->GetClass() : nullptr));
+		if (IsValid(DebugOverlayTargetComponent))
+		{
+			DebugOverlayTargetComponent->RecordDebugOverlayTraceSummary(summary);
+		}
+
+		DrawDebugOverlayTargetTrace(world, traceStart, traceEnd, hitResult, FColor::Yellow);
+		LogDebugOverlayTargetTrace(summary);
+		return nullptr;
+	}
+
+	const FString summary = FString::Printf(TEXT("HitEnemy Actor=%s"), *GetNameSafe(hitEnemy));
+	if (IsValid(DebugOverlayTargetComponent))
+	{
+		DebugOverlayTargetComponent->RecordDebugOverlayTraceSummary(summary);
+	}
+
+	DrawDebugOverlayTargetTrace(world, traceStart, traceEnd, hitResult, FColor::Green);
+	LogDebugOverlayTargetTrace(summary);
+	return hitEnemy;
 }
 
 ACEnemy* ACPlayerController::FindNearestDebugOverlayEnemy() const

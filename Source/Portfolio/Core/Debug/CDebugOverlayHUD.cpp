@@ -322,6 +322,15 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(TArray<FString>& OutSourceLines)
 		return targetComponentEnemy;
 	}
 
+	const APlayerController* owningPlayerController = GetOwningPlayerController();
+	const UCDebugOverlayTargetComponent* targetComp = IsValid(owningPlayerController)
+		? owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>()
+		: nullptr;
+	if (IsValid(targetComp) && !targetComp->GetDebugOverlayTraceSummary().IsEmpty())
+	{
+		AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("TraceDebug: %s"), *targetComp->GetDebugOverlayTraceSummary()));
+	}
+
 	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: None"));
 	return nullptr;
 }
@@ -339,6 +348,10 @@ ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(TArray<FString>& OutSour
 
 	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemySource: %s"), *targetComp->GetDebugOverlayTargetSource()));
 	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyTarget: %s"), *targetComp->GetDebugOverlayTargetSummary()));
+	if (!targetComp->GetDebugOverlayTraceSummary().IsEmpty())
+	{
+		AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("TraceDebug: %s"), *targetComp->GetDebugOverlayTraceSummary()));
+	}
 	return targetEnemy;
 }
 
