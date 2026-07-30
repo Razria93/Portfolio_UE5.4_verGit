@@ -314,6 +314,7 @@ namespace
 #endif
 
 #if !UE_BUILD_SHIPPING
+// Enemy Resolution
 ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines)
 {
 	if (ACEnemy* targetComponentEnemy = ResolveTargetComponentEnemy(OutSourceLines))
@@ -437,6 +438,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveWorldScanFallbackEnemy(TArray<FString>& OutSo
 	return fallbackEnemy;
 }
 
+// Enemy Cache
 void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
 {
 	UWorld* world = GetWorld();
@@ -464,6 +466,7 @@ void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
 }
 #endif
 
+// Rendering
 void ACDebugOverlayHUD::DrawHUD()
 {
 #if !UE_BUILD_SHIPPING
