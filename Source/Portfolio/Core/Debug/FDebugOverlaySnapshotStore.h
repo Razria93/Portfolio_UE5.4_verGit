@@ -27,6 +27,7 @@ public:
 	static bool IsEnabled();
 	static bool IsCollecting();
 	static int32 GetEventLogDisplayLimit();
+	static FString GetEventLogFilter();
 
 public:
 	// Execution Record
@@ -46,6 +47,7 @@ public:
 	// Event Log
 	static void AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents);
+	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter);
 
 public:
 	// Snapshot Query

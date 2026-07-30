@@ -240,7 +240,7 @@ namespace
 		AppendActorStatusLines(InOutLines, InPawn);
 	}
 
-	void AppendSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
+	void AppendSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InFilteredEvents)
 	{
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, TEXT("[Recent Execution]"));
@@ -275,16 +275,30 @@ namespace
 			TEXT("CombatTask: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastAI.Summary, InSnapshot.LastAI.CaptureState) : TEXT("NotCaptured")));
 
+		const FString eventLogFilter = FDebugOverlaySnapshotStore::GetEventLogFilter();
 		AppendOverlayLine(InOutLines, TEXT(""));
-		AppendOverlayLine(InOutLines, TEXT("[Event Log]"));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("[Event Log: %s]"), *eventLogFilter));
 
-		if (!bInHasSnapshot || InSnapshot.RecentEvents.IsEmpty())
+		const int32 eventLogLimit = FDebugOverlaySnapshotStore::GetEventLogDisplayLimit();
+		if (!bInHasSnapshot)
 		{
 			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
 			return;
 		}
 
-		for (const FDebugOverlayEventEntry& eventEntry : InSnapshot.RecentEvents)
+		if (eventLogLimit == 0)
+		{
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter=%s Limit=0)"), *eventLogFilter));
+			return;
+		}
+
+		if (InFilteredEvents.IsEmpty())
+		{
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter=%s)"), *eventLogFilter));
+			return;
+		}
+
+		for (const FDebugOverlayEventEntry& eventEntry : InFilteredEvents)
 		{
 			AppendOverlayLine(InOutLines, FString::Printf(
 				TEXT("%s/%s: %s"),
@@ -476,6 +490,10 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	FDebugOverlaySnapshot snapshot;
 	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(GetWorld(), snapshot);
+	const TArray<FDebugOverlayEventEntry> filteredEvents = FDebugOverlaySnapshotStore::GetRecentEventsCopy(
+		GetWorld(),
+		FDebugOverlaySnapshotStore::GetEventLogDisplayLimit(),
+		FDebugOverlaySnapshotStore::GetEventLogFilter());
 
 	TArray<FString> lines;
 	lines.Reserve(32);
@@ -493,7 +511,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendOverlayLine(lines, TEXT(""));
 	AppendActorStatusLines(lines, enemy);
 
-	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
+	AppendSnapshotLines(lines, snapshot, bHasSnapshot, filteredEvents);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
 	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);

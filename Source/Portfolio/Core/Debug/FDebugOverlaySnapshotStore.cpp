@@ -41,6 +41,12 @@ namespace
 		TEXT("Number of recent debug overlay event lines to display. 0-5."),
 		ECVF_Default);
 
+	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogFilter(
+		TEXT("Portfolio.DebugOverlay.EventLogFilter"),
+		TEXT("All"),
+		TEXT("Filter debug overlay event log. Values: All, Execution, Combat, AI."),
+		ECVF_Default);
+
 	struct FDebugOverlayWorldStore
 	{
 		FDebugOverlaySnapshot Snapshot;
@@ -54,7 +60,8 @@ namespace
 	TMap<TObjectKey<UWorld>, FDebugOverlayWorldStore> StoresByWorld;
 
 	int32 GetClampedEventLogDisplayLimit();
-	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp);
+	FString GetCanonicalEventLogFilter();
+	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter);
 
 	UWorld* ResolveWorld(const UObject* InWorldContextObject)
 	{
@@ -111,6 +118,43 @@ namespace
 			: FString::Printf(TEXT("%s(%s)"), *InDomain, *InSubject);
 	}
 
+	FString NormalizeEventLogFilter(const FString& InFilter)
+	{
+		if (InFilter.Equals(TEXT("Execution"), ESearchCase::IgnoreCase))
+		{
+			return TEXT("Execution");
+		}
+
+		if (InFilter.Equals(TEXT("Combat"), ESearchCase::IgnoreCase))
+		{
+			return TEXT("Combat");
+		}
+
+		if (InFilter.Equals(TEXT("AI"), ESearchCase::IgnoreCase))
+		{
+			return TEXT("AI");
+		}
+
+		return TEXT("All");
+	}
+
+	bool DoesEventMatchFilter(const FDebugOverlayEventEntry& InEntry, const FString& InFilter)
+	{
+		const FString filter = NormalizeEventLogFilter(InFilter);
+		if (filter == TEXT("All"))
+		{
+			return true;
+		}
+
+		if (filter == TEXT("Combat"))
+		{
+			return InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
+				|| InEntry.Category.Equals(TEXT("CombatResult"), ESearchCase::IgnoreCase);
+		}
+
+		return InEntry.Category.Equals(filter, ESearchCase::IgnoreCase);
+	}
+
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 	{
 		FDebugOverlayEventEntry entry;
@@ -140,7 +184,7 @@ namespace
 		InStore.NextEventIndex = (InStore.NextEventIndex + 1) % DebugOverlayEventStoreCapacity;
 		InStore.EventCount = FMath::Min(InStore.EventCount + 1, DebugOverlayEventStoreCapacity);
 
-		InStore.Snapshot.RecentEvents = GetRecentEventsCopyFromStore(InStore, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit);
+		InStore.Snapshot.RecentEvents = GetRecentEventsCopyFromStore(InStore, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"));
 	}
 
 	void RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
@@ -155,18 +199,17 @@ namespace
 		InStore.bHasRecentCombatPair = true;
 	}
 
-	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp)
+	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter)
 	{
 		TArray<FDebugOverlayEventEntry> result;
 
 		const int32 maxEvents = FMath::Clamp(InMaxEvents, 0, InMaxClamp);
-		const int32 eventCount = FMath::Min(InStore.EventCount, maxEvents);
-		result.Reserve(eventCount);
+		result.Reserve(maxEvents);
 
-		for (int32 i = 0; i < eventCount; ++i)
+		for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
 		{
 			const int32 index = (InStore.NextEventIndex - 1 - i + DebugOverlayEventStoreCapacity) % DebugOverlayEventStoreCapacity;
-			if (InStore.EventRing.IsValidIndex(index))
+			if (InStore.EventRing.IsValidIndex(index) && DoesEventMatchFilter(InStore.EventRing[index], InFilter))
 			{
 				result.Add(InStore.EventRing[index]);
 			}
@@ -181,6 +224,11 @@ namespace
 			CVarDebugOverlayEventLogLimit.GetValueOnGameThread(),
 			0,
 			DebugOverlayMaxEventLogDisplayLimit);
+	}
+
+	FString GetCanonicalEventLogFilter()
+	{
+		return NormalizeEventLogFilter(CVarDebugOverlayEventLogFilter.GetValueOnGameThread());
 	}
 
 	FDebugOverlayWorldStore* FindStore(const UObject* InWorldContextObject)
@@ -227,6 +275,15 @@ int32 FDebugOverlaySnapshotStore::GetEventLogDisplayLimit()
 	return GetClampedEventLogDisplayLimit();
 #else
 	return 0;
+#endif
+}
+
+FString FDebugOverlaySnapshotStore::GetEventLogFilter()
+{
+#if !UE_BUILD_SHIPPING
+	return GetCanonicalEventLogFilter();
+#else
+	return TEXT("All");
 #endif
 }
 
@@ -434,7 +491,19 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
-	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity);
+	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, TEXT("All"));
+#else
+	return TArray<FDebugOverlayEventEntry>();
+#endif
+}
+
+TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter)
+{
+#if !UE_BUILD_SHIPPING
+	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	if (!store) return TArray<FDebugOverlayEventEntry>();
+
+	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -451,7 +520,7 @@ bool FDebugOverlaySnapshotStore::TryGetSnapshotCopy(const UObject* InWorldContex
 	if (!store) return false;
 
 	OutSnapshot = store->Snapshot;
-	OutSnapshot.RecentEvents = GetRecentEventsCopyFromStore(*store, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit);
+	OutSnapshot.RecentEvents = GetRecentEventsCopyFromStore(*store, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"));
 	return true;
 #else
 	return false;
