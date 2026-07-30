@@ -62,6 +62,7 @@ namespace
 	int32 GetClampedEventLogDisplayLimit();
 	FString GetCanonicalEventLogFilter();
 	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter);
+	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName);
 
 	UWorld* ResolveWorld(const UObject* InWorldContextObject)
 	{
@@ -155,6 +156,15 @@ namespace
 		return InEntry.Category.Equals(filter, ESearchCase::IgnoreCase);
 	}
 
+	bool DoesEventMatchSubject(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
+	{
+		if (InSubjectName.IsEmpty()) return false;
+
+		return InEntry.OwnerName == InSubjectName
+			|| InEntry.SourceName == InSubjectName
+			|| InEntry.TargetName == InSubjectName;
+	}
+
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 	{
 		FDebugOverlayEventEntry entry;
@@ -212,6 +222,29 @@ namespace
 			if (InStore.EventRing.IsValidIndex(index) && DoesEventMatchFilter(InStore.EventRing[index], InFilter))
 			{
 				result.Add(InStore.EventRing[index]);
+			}
+		}
+
+		return result;
+	}
+
+	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName)
+	{
+		TArray<FDebugOverlayEventEntry> result;
+		if (InSubjectName.IsEmpty()) return result;
+
+		const int32 maxEvents = FMath::Clamp(InMaxEvents, 0, InMaxClamp);
+		result.Reserve(maxEvents);
+
+		for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
+		{
+			const int32 index = (InStore.NextEventIndex - 1 - i + DebugOverlayEventStoreCapacity) % DebugOverlayEventStoreCapacity;
+			if (!InStore.EventRing.IsValidIndex(index)) continue;
+
+			const FDebugOverlayEventEntry& entry = InStore.EventRing[index];
+			if (DoesEventMatchFilter(entry, InFilter) && DoesEventMatchSubject(entry, InSubjectName))
+			{
+				result.Add(entry);
 			}
 		}
 
@@ -504,6 +537,18 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
 	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter);
+#else
+	return TArray<FDebugOverlayEventEntry>();
+#endif
+}
+
+TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const FString& InSubjectName)
+{
+#if !UE_BUILD_SHIPPING
+	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	if (!store) return TArray<FDebugOverlayEventEntry>();
+
+	return GetRecentEventsForSubjectCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, InSubjectName);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif

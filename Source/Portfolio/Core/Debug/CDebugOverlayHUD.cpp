@@ -220,6 +220,44 @@ namespace
 		InOutLines.Add(InLine);
 	}
 
+	FString FormatEventLogEntryLine(const FDebugOverlayEventEntry& InEntry)
+	{
+		return FString::Printf(
+			TEXT("%s/%s: %s"),
+			*InEntry.Category,
+			*InEntry.EventName,
+			*InEntry.Summary);
+	}
+
+	void AppendSubjectEventLogLine(TArray<FString>& InOutLines, const TCHAR* InLabel, const TCHAR* InNoSubjectText, bool bInHasSubject, bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
+	{
+		if (!bInHasSubject)
+		{
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("%s: %s"), InLabel, InNoSubjectText));
+			return;
+		}
+
+		if (!bInHasSnapshot)
+		{
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("%s: NotCaptured"), InLabel));
+			return;
+		}
+
+		if (InEventLogLimit == 0)
+		{
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("%s: NoEvents(Filter=%s Limit=0)"), InLabel, *InEventLogFilter));
+			return;
+		}
+
+		if (InEvents.IsEmpty())
+		{
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("%s: NoEvents(Filter=%s)"), InLabel, *InEventLogFilter));
+			return;
+		}
+
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("%s: %s"), InLabel, *FormatEventLogEntryLine(InEvents[0])));
+	}
+
 	void AppendActorStatusLines(TArray<FString>& InOutLines, const APawn* InPawn)
 	{
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("State: %s"), *FormatExecutionState(InPawn)));
@@ -300,11 +338,7 @@ namespace
 
 		for (const FDebugOverlayEventEntry& eventEntry : InFilteredEvents)
 		{
-			AppendOverlayLine(InOutLines, FString::Printf(
-				TEXT("%s/%s: %s"),
-				*eventEntry.Category,
-				*eventEntry.EventName,
-				*eventEntry.Summary));
+			AppendOverlayLine(InOutLines, FormatEventLogEntryLine(eventEntry));
 		}
 	}
 
@@ -509,12 +543,27 @@ void ACDebugOverlayHUD::DrawHUD()
 		GetWorld(),
 		FDebugOverlaySnapshotStore::GetEventLogDisplayLimit(),
 		FDebugOverlaySnapshotStore::GetEventLogFilter());
+	const FString eventLogFilter = FDebugOverlaySnapshotStore::GetEventLogFilter();
+	const int32 eventLogLimit = FDebugOverlaySnapshotStore::GetEventLogDisplayLimit();
+	const FString playerSubjectName = GetNameSafe(pawn);
+	const FString enemySubjectName = GetNameSafe(enemy);
+	const TArray<FDebugOverlayEventEntry> playerEvents = FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(
+		GetWorld(),
+		1,
+		eventLogFilter,
+		playerSubjectName);
+	const TArray<FDebugOverlayEventEntry> enemyEvents = FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(
+		GetWorld(),
+		1,
+		eventLogFilter,
+		enemySubjectName);
 
 	TArray<FString> lines;
 	lines.Reserve(32);
 
 	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
 	AppendActorPanelLines(lines, TEXT("[Player]"), pawn);
+	AppendSubjectEventLogLine(lines, TEXT("PlayerEventLog"), TEXT("N/A"), IsValid(pawn), bHasSnapshot, playerEvents, eventLogFilter, eventLogLimit);
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Enemy]"));
@@ -525,6 +574,7 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendActorStatusLines(lines, enemy);
+	AppendSubjectEventLogLine(lines, TEXT("EnemyEventLog"), TEXT("NoTarget"), IsValid(enemy), bHasSnapshot, enemyEvents, eventLogFilter, eventLogLimit);
 
 	AppendSnapshotLines(lines, snapshot, bHasSnapshot, filteredEvents);
 
