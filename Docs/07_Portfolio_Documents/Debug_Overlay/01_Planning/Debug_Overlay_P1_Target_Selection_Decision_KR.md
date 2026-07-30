@@ -16,7 +16,9 @@ TargetComponent -> RecentCombatTarget -> WorldScanFallback
 
 이 구조는 TargetComponent가 없거나 clear된 상태에서도 RecentCombatTarget 또는 WorldScanFallback이 Enemy panel을 채울 수 있다. 그 결과 사용자가 명시 target을 잡았는지, 자동 fallback이 표시된 것인지 구분하기 어렵다.
 
-P1부터는 “명시 target이 있어야 Enemy panel 정보가 의미 있다”는 정책으로 전환한다.
+또한 line trace 기반 `DebugOverlaySelectTarget`은 TestRoom PIE에서 실제 운용성이 낮았다. 카메라 방향과 collision hit 조건을 맞추기 어렵고, 향후 TargetComponent도 line trace 추적 방식으로 설계할 가능성이 낮다.
+
+따라서 P1부터는 “명시 target이 있어야 Enemy panel 정보가 의미 있다”는 정책은 유지하되, 명시 선택 경로는 nearest command 중심으로 단순화한다.
 
 ## 3. 최종 결정
 
@@ -24,20 +26,20 @@ P1부터는 “명시 target이 있어야 Enemy panel 정보가 의미 있다”
 | --- | --- |
 | 기본 상태 | `EnemySource: None` |
 | 자동 fallback 표시 | Enemy panel을 자동 fallback으로 채우지 않는다. |
-| `DebugOverlaySelectTarget` 성공 | `EnemySource: TargetComponent.Trace` |
-| `DebugOverlaySelectTarget` 실패 | 기존 target clear 후 `EnemySource: None` |
+| `DebugOverlaySelectTarget` | P1 기본 명령에서 제거한다. |
+| line trace target selection | P1에서 사용하지 않는다. |
 | `DebugOverlaySelectNearestTarget` 성공 | `EnemySource: TargetComponent.Nearest` |
 | `DebugOverlaySelectNearestTarget` 실패 | 기존 target clear 후 `EnemySource: None` |
 | `DebugOverlayClearTarget` | target clear 후 `EnemySource: None` |
 
-P1 evidence claim은 `TargetComponent.Trace` 또는 `TargetComponent.Nearest`로 명시 선택된 대상만 신뢰한다.
+P1 evidence claim은 `TargetComponent.Nearest`로 명시 선택된 대상만 신뢰한다.
 
 ## 4. Source 의미
 
 | Source | 의미 | Evidence claim |
 | --- | --- | --- |
-| `TargetComponent.Trace` | camera forward trace로 명시 선택한 enemy | 가장 명확한 target selection evidence |
-| `TargetComponent.Nearest` | 사용자 명령으로 nearest enemy를 명시 선택한 enemy | 명시 command 기반 보조 target selection evidence |
+| `TargetComponent.Nearest` | 사용자 명령으로 nearest enemy를 명시 선택한 enemy | 명시 command 기반 target selection evidence |
+| `None` | 명시 target 없음 | Enemy panel target evidence 없음 |
 | `RecentCombatTarget` | 최근 combat event에서 확인된 source/target pair | P1 기본 source chain에서 제외. 이후 diagnostic/source 검증 후보 |
 | `WorldScanFallback` | world scan으로 찾은 enemy | P1 기본 source chain에서 제외. 이후 diagnostic/debug fallback 후보 |
 
@@ -47,8 +49,9 @@ P1 evidence claim은 `TargetComponent.Trace` 또는 `TargetComponent.Nearest`로
 
 | 파일/영역 | 영향 |
 | --- | --- |
-| `UCDebugOverlayTargetComponent` | target actor와 함께 source type 저장이 필요하다. |
-| `ACPlayerController` | select command에서 `Trace` 또는 `Nearest` source type을 전달해야 한다. |
+| `UCDebugOverlayTargetComponent` | source type은 `None` / `Nearest`만 유지한다. |
+| `ACPlayerController` | `DebugOverlaySelectTarget`과 line trace helper를 제거한다. |
+| `ACPlayerController` | `DebugOverlaySelectNearestTarget`과 `DebugOverlayClearTarget`만 유지한다. |
 | `CDebugOverlayHUD` | TargetComponent target이 없으면 `EnemySource: None`을 표시한다. |
 | RecentCombatTarget helper | 기본 Enemy panel source에서 제외하고 diagnostic 후보로 유지할 수 있다. |
 | WorldScanFallback helper | 기본 Enemy panel source에서 제외하고 diagnostic/debug fallback 후보로 유지할 수 있다. |
@@ -62,6 +65,7 @@ P1 evidence claim은 `TargetComponent.Trace` 또는 `TargetComponent.Nearest`로
 - combat targeting 연동
 - lock-on / target cycling UI
 - camera / aim assist
+- line trace target selection 유지
 - RecentCombatTarget 자동 승격
 - WorldScanFallback 자동 선택
 - 최종 촬영 / 패키징
@@ -71,8 +75,6 @@ P1 evidence claim은 `TargetComponent.Trace` 또는 `TargetComponent.Nearest`로
 | 시나리오 | 기대 표시 |
 | --- | --- |
 | PIE 진입 후 target 없음 | `EnemySource: None` |
-| Enemy를 바라보고 `DebugOverlaySelectTarget` 성공 | `EnemySource: TargetComponent.Trace` |
-| `DebugOverlaySelectTarget` 실패 | `EnemySource: None` |
 | `DebugOverlaySelectNearestTarget` 성공 | `EnemySource: TargetComponent.Nearest` |
 | `DebugOverlaySelectNearestTarget` 실패 | `EnemySource: None` |
 | `DebugOverlayClearTarget` 실행 | `EnemySource: None` |
@@ -83,14 +85,14 @@ P1 evidence claim은 `TargetComponent.Trace` 또는 `TargetComponent.Nearest`로
 
 ## 8. 문서 우선순위
 
-이 문서는 이전 P1 문서에 남아 있는 `TargetComponent -> RecentCombatTarget -> WorldScanFallback` 자동 fallback chain 설명보다 우선한다.
+이 문서는 이전 P1 문서에 남아 있는 `TargetComponent.Trace`, `DebugOverlaySelectTarget`, `TargetComponent -> RecentCombatTarget -> WorldScanFallback` 자동 fallback chain 설명보다 우선한다.
 
 이후 `Debug_Overlay_P1_Scope_KR.md`, `Debug_Overlay_P1_Work_Order_KR.md`, `Debug_Overlay_P1_TargetComponent_PIE_Checklist_KR.md`는 이 결정 문서 기준으로 갱신한다.
 
 ## 9. 다음 구현 단계
 
-1. `UCDebugOverlayTargetComponent`에 source type을 추가한다.
-2. `ACPlayerController` command가 `Trace` / `Nearest` source type을 전달하게 한다.
-3. `CDebugOverlayHUD`에서 TargetComponent target이 없으면 `EnemySource: None`을 표시한다.
-4. RecentCombatTarget / WorldScanFallback 자동 fallback 표시를 P1 기본 path에서 제외한다.
-5. PIE checklist를 새 정책 기준으로 갱신한다.
+1. `UCDebugOverlayTargetComponent`에서 `Trace` source type과 trace summary를 제거한다.
+2. `ACPlayerController`에서 `DebugOverlaySelectTarget`과 line trace helper를 제거한다.
+3. `CDebugOverlayHUD`에서 trace diagnostic line 표시를 제거한다.
+4. RecentCombatTarget / WorldScanFallback 자동 fallback 표시를 P1 기본 path에서 제외한 상태를 유지한다.
+5. PIE checklist를 nearest/clear 기준으로 갱신한다.

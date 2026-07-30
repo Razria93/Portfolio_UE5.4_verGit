@@ -8,8 +8,6 @@ namespace
 	{
 		switch (InSource)
 		{
-		case EDebugOverlayTargetSource::Trace:
-			return TEXT("TargetComponent.Trace");
 		case EDebugOverlayTargetSource::Nearest:
 			return TEXT("TargetComponent.Nearest");
 		case EDebugOverlayTargetSource::None:
@@ -49,11 +47,6 @@ FString UCDebugOverlayTargetComponent::GetDebugOverlayTargetSource() const
 		: FString(TEXT("None"));
 }
 
-FString UCDebugOverlayTargetComponent::GetDebugOverlayTraceSummary() const
-{
-	return LastDebugOverlayTraceSummary;
-}
-
 // Mutation
 void UCDebugOverlayTargetComponent::SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource)
 {
@@ -71,9 +64,4 @@ void UCDebugOverlayTargetComponent::ClearDebugOverlayTarget()
 {
 	DebugOverlayTargetActor.Reset();
 	DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
-}
-
-void UCDebugOverlayTargetComponent::RecordDebugOverlayTraceSummary(const FString& InSummary)
-{
-	LastDebugOverlayTraceSummary = InSummary;
 }

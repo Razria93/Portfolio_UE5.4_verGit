@@ -10,7 +10,7 @@ P1 Target Selection 설계에서 결정한 기준은 다음과 같다.
 - component 이름은 `UCDebugOverlayTargetComponent`로 둔다.
 - component 소유 위치는 `ACPlayerController`다.
 - Enemy source 최종 정책은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다.
-- P1 기본 HUD path는 `TargetComponent.Trace`, `TargetComponent.Nearest`, `None`을 사용한다.
+- P1 기본 HUD path는 `TargetComponent.Nearest`, `None`을 사용한다.
 - `RecentCombatTarget`과 `WorldScanFallback`은 기본 자동 fallback이 아니라 diagnostic 후보로 둔다.
 - 범용 `UCTargetSelectionComponent` 승격은 브랜치 마감 후 별도 리팩터링 후보로 둔다.
 
@@ -107,7 +107,6 @@ check(DebugOverlayTargetComponent);
 HUD의 Enemy resolve 순서는 다음으로 전환한다.
 
 ```text
-TargetComponent.Trace
 TargetComponent.Nearest
 None
 ```
@@ -116,7 +115,7 @@ None
 
 1. `GetOwningPlayerController()`에서 `UCDebugOverlayTargetComponent`를 찾는다.
 2. component가 valid target을 제공하면 해당 actor를 Enemy panel 대상으로 사용한다.
-3. 표시 문구는 source type에 따라 `EnemySource: TargetComponent.Trace` 또는 `EnemySource: TargetComponent.Nearest`를 사용한다.
+3. 표시 문구는 source type에 따라 `EnemySource: TargetComponent.Nearest`를 사용한다.
 4. component가 없거나 target invalid면 `EnemySource: None`을 표시한다.
 5. Store recent combat pair와 world scan fallback은 P1 기본 HUD path에서 자동 표시하지 않는다.
 
@@ -125,13 +124,6 @@ None
 ## 7. HUD 표시 문구
 
 P1 표시 문구 후보는 다음으로 둔다.
-
-TargetComponent Trace 성공:
-
-```text
-EnemySource: TargetComponent.Trace
-EnemyTarget: Selected=BP_CEnemy_C_1
-```
 
 TargetComponent Nearest 성공:
 
@@ -276,7 +268,7 @@ P1 Target Component 구현 순서는 다음으로 고정한다.
 4. `RecordCombatTargetPacket` / `RecordCombatResult`에서 pair 기록
 5. Store recent combat pair query API 추가
 6. HUD에서 player 기준 recent combat 상대 Enemy resolve 구현
-7. HUD enemy resolve path를 `TargetComponent.Trace/Nearest -> None`으로 전환
+7. HUD enemy resolve path를 `TargetComponent.Nearest -> None`으로 전환
 8. build 검증
 9. PIE 수동 확인
 
@@ -323,7 +315,6 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 
 - `PortfolioEditor Win64 Development` 빌드
 - Shipping guard 확인
-- `EnemySource: TargetComponent.Trace` 표시 확인
 - `EnemySource: TargetComponent.Nearest` 표시 확인
 - TargetComponent target invalid 또는 clear 시 `EnemySource: None` 확인
 - RecentCombatTarget/WorldScanFallback이 target 없음 상태를 자동으로 채우지 않는지 확인

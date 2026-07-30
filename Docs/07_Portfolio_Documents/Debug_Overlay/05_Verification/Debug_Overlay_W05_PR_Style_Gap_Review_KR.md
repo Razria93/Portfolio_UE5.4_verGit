@@ -95,7 +95,7 @@ P42~P51은 세부 주제가 달라도 다음 구조를 반복한다.
 | P48 CPP Include Order Cleanup | 반영 | 대상 `.cpp` include group 정리를 LowRiskFix로 처리했다. |
 | P49 API Const Consistency | 일부 반영 | query/getter const 검토는 문서화했지만 `ResolveWorld`의 `const_cast`는 DecisionNeeded다. |
 | P50 Section Comment Consistency | 반영 | Store API section과 HUD helper section을 책임 단위로 정리했다. |
-| P51 Tuning Constants Cleanup | 일부 반영 | trace distance, nearest radius, stale timeout, event limit은 internal policy constant로 유지한다. CVar/preset화는 Later다. |
+| P51 Tuning Constants Cleanup | 일부 반영 | nearest radius, stale timeout, event limit은 internal policy constant로 유지한다. CVar/preset화는 Later다. |
 
 ## 7. PR 문서로 보강해야 할 gap
 

@@ -52,7 +52,7 @@
 | --- | --- | --- |
 | `CDebugOverlayHUD.cpp:73-180` | local variable lowerCamelCase / Component suffix | `stateComp`, `actionComp`, `reactionComp`, `defenseComp`, `movementComp`, `healthComp`는 기존 로컬 `Comp` 허용 범위라 큰 문제는 아니다. 다만 같은 파일 안에서 `FindComponent` helper와 함께 쓰이므로 다음 cleanup에서 `stateComponent` 등으로 통일할지 검토 가능하다. |
 | `CDebugOverlayHUD.cpp:212-237` | helper naming | `AddLine`, `AddActorStatusLines`, `AddSnapshotLines`는 간결하지만 HUD rendering helper임이 약하다. P1에서 HUD가 커질 경우 `AppendOverlayLine`, `AppendActorStatusLines`처럼 append 의미를 맞추는 것이 더 명확하다. |
-| `CPlayerController.h:73-74`, `CPlayerController.cpp:212-244` | bool mutation API naming | `SelectDebugOverlayTargetFromView()`, `SelectDebugOverlayNearestEnemy()`는 target component를 변경하고 성공 여부를 반환한다. W05 기준상 bool 반환 mutation helper는 `TrySelect...` 계열이 더 명확하다. |
+| `CPlayerController.h`, `CPlayerController.cpp` | bool mutation API naming | `TrySelectDebugOverlayNearestEnemy()`는 target component를 변경하고 성공 여부를 반환한다. W05 기준상 bool 반환 mutation helper에 맞게 정리되어 있다. |
 | `FDebugOverlaySnapshotStore.h:52`, `FDebugOverlaySnapshotStore.cpp:448` | bool + Out parameter query naming | `GetSnapshotCopy()`는 bool 성공 여부와 `OutSnapshot`을 함께 사용한다. 같은 store에 `TryGetRecentCombatPair()`가 있으므로 `TryGetSnapshotCopy()`로 맞추는 것이 더 일관적이다. |
 
 ### DecisionNeeded
@@ -68,7 +68,7 @@
 | 위치 | 판단 |
 | --- | --- |
 | `CDebugOverlayHUD.h:18-19` | `ResolveDisplayEnemy`, `RefreshCachedEnemyIfNeeded`는 cache와 source line을 갱신하므로 non-const가 맞다. |
-| `CPlayerController.h:77-78` | `FindDebugOverlayEnemyFromView`, `FindNearestDebugOverlayEnemy`는 조회 전용이므로 `const`가 적절하다. |
+| `CPlayerController.h` | `FindNearestDebugOverlayEnemy`는 조회 전용이므로 `const`가 적절하다. |
 | `CDebugOverlayTargetComponent.h:16-19` | `HasDebugOverlayTarget()`, `GetDebugOverlayTargetActor()`, `GetDebugOverlayTargetSummary()`, `GetDebugOverlayTargetSource()`는 상태 변경이 없는 query API로 `const`가 적절하다. |
 | `FDebugOverlaySnapshotStore.h:27-58` | static store API라 member const 적용 대상이 아니다. `Record/Add/Reset` 계열은 mutation API로 명확하다. |
 | `CPlayer.h:133-134`, `CEnemy.h:205-206` | `GetParryResultCount()`, `GetParryStaggerThreshold()`는 read-only inline getter로 적합하다. |
@@ -131,7 +131,7 @@
 | 위치 | 판단 |
 | --- | --- |
 | `FDebugOverlaySnapshotStore.cpp:14-16` | event ring capacity와 display limit은 internal policy 값이며 `static constexpr`로 분리되어 있다. |
-| `CPlayerController.cpp:17-18` | trace distance `5000.f`, nearest radius `1500.f`는 debug target selection의 내부 default policy 값이며 `static constexpr`로 분리되어 있다. |
+| `CPlayerController.cpp` | nearest radius `1500.f`는 debug target selection의 내부 default policy 값이며 `static constexpr`로 분리되어 있다. |
 | `CDebugOverlayHUD.cpp:21-31` | HUD 위치, 크기, 색상, fallback cooldown, stale timeout이 anonymous namespace 상수로 분리되어 있다. |
 
 ### LowRiskFix
@@ -198,9 +198,9 @@
 
 | 위치 | 판단 |
 | --- | --- |
-| `CDebugOverlayHUD.cpp:373-467` | fallback chain은 `TargetComponent -> RecentCombatTarget -> WorldScanFallback` 순서로 구현되어 있고, 각 source 문구도 실제 선택 경로와 일치한다. |
-| `CDebugOverlayHUD.cpp:401-423` | recent combat pair는 viewer pawn이 source 또는 target인 경우에만 Enemy로 resolve된다. 무관한 combat event를 Enemy panel source로 승격하지 않는다. |
-| `CDebugOverlayHUD.cpp:445-467` | world scan fallback은 TargetComponent와 RecentCombatTarget 실패 이후에만 실행된다. 다중 enemy는 `Ambiguous(Count=N)`으로 차단되어 임의 선택 evidence가 되지 않는다. |
+| `CDebugOverlayHUD.cpp` | 기본 Enemy panel path는 `TargetComponent.Nearest -> None`으로 정리되어 있다. 명시 target이 없으면 자동 fallback으로 Enemy panel을 채우지 않는다. |
+| `CDebugOverlayHUD.cpp` | recent combat pair helper는 diagnostic 후보로 남아 있지만 기본 Enemy panel source로 호출되지 않는다. |
+| `CDebugOverlayHUD.cpp` | world scan fallback helper는 diagnostic 후보로 남아 있지만 기본 Enemy panel source로 호출되지 않는다. |
 | `FDebugOverlaySnapshotStore.cpp:149-159` | recent combat pair는 weak actor pair와 name/time/frame/event만 저장하며 snapshot copy에 raw pointer를 넣지 않는다. |
 | `FDebugOverlaySnapshotStore.cpp:338`, `377` | `RecordCombatTargetPacket`, `RecordCombatResult`에서 recent combat pair를 기록하며 기존 audit log format이나 gameplay result 흐름을 변경하지 않는다. |
 
@@ -208,15 +208,14 @@
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
-| `CPlayerController.cpp:216-220` | source claim 정확도 | `DebugOverlaySelectTarget`은 view trace 실패 시 nearest enemy fallback까지 수행한다. 사용자가 command 이름만 보면 view trace source로 이해할 수 있다. overlay에는 여전히 `EnemySource: TargetComponent`로 표시되므로, target component 내부에 selection method를 기록할지 결정이 필요하다. |
-| `CPlayerController.cpp:212-229` | target set UX | `DebugOverlaySelectTarget` 실패 시 기존 explicit target을 clear한다. fallback chain으로 내려가는 설계에는 맞지만, 실패한 재선택이 기존 TargetComponent 고정을 해제해도 되는지는 운영 정책 판단이 필요하다. |
-| `CDebugOverlayHUD.cpp:427-442` | fallback state 표시 | Recent combat pair가 stale/not matched인 경우 `EnemyRecentCombat: Stale/NotMatched`를 출력한 뒤 WorldScanFallback 또는 None/Ambiguous로 내려간다. 이 중첩 표시는 evidence 설명에는 도움이 되지만 화면이 길어질 수 있다. 유지할지 축약할지 결정이 필요하다. |
+| `CPlayerController.cpp`, `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | source claim 정확도 | 결정 완료. line trace 기반 `DebugOverlaySelectTarget`은 제거하고, P1 source claim은 `TargetComponent.Nearest` / `None`으로 제한한다. |
+| `CDebugOverlayHUD.cpp` | diagnostic helper 유지 | RecentCombatTarget/WorldScanFallback helper는 남아 있으나 기본 표시 path에서 사용하지 않는다. 후속 diagnostic mode를 만들 때 유지/삭제를 판단한다. |
 
 ### Later
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
-| `CPlayerController.cpp:272-275` | trace target resolve | view trace는 `HitResult.GetActor()`가 직접 `ACEnemy`일 때만 성공한다. Enemy 부착 무기/컴포넌트/프록시를 맞는 경우 nearest fallback으로 갈 수 있으므로 P1 안정화 이후 owner/attached actor resolve 보강 후보로 둔다. |
+| `CPlayerController.cpp` | line trace target resolve | line trace 기반 target selection은 P1 정책에서 제거되었다. 후속 범용 TargetComponent 설계에서 필요할 때 별도 검토한다. |
 | `CDebugOverlayHUD.cpp:147-155` | evidence claim 범위 | Runtime LOD와 AI current value는 아직 `N/A` / `NotCaptured` placeholder다. P1 Runtime LOD / AI 보강 전까지 성공 evidence로 주장하지 않는다. |
 | `FDebugOverlaySnapshotStore.cpp:149-159` | subject ownership | recent combat pair는 P1 TargetComponent 기준은 충족한다. 다만 Player/Enemy EventLog 분리 시 subject ownership 모델을 별도 설계해야 한다. |
 
@@ -229,7 +228,7 @@
 | include group 정리 | `CDebugOverlayHUD.cpp`, `FDebugOverlaySnapshotStore.cpp`, `CPlayerController.cpp` | W05 include 순서에 맞춰 project Type/Core/Debug와 engine header 순서를 정리한다. |
 | HUD helper 섹션 정리 | `CDebugOverlayHUD.cpp` | anonymous namespace 내부 helper를 formatting / status / snapshot / style 그룹으로 나눈다. |
 | HUD append helper naming 검토 | `CDebugOverlayHUD.cpp` | `AddLine` 계열을 `Append...` 계열로 바꿀지 검토한다. |
-| bool mutation helper naming | `CPlayerController.*` | `SelectDebugOverlayTargetFromView`, `SelectDebugOverlayNearestEnemy`를 `TrySelect...` 계열로 바꾸는 low-risk rename을 검토한다. |
+| bool mutation helper naming | `CPlayerController.*` | 남은 mutation helper는 `TrySelectDebugOverlayNearestEnemy`로 정리되어 있다. |
 | snapshot query naming | `FDebugOverlaySnapshotStore.*`, `CDebugOverlayHUD.cpp` | `GetSnapshotCopy`를 `TryGetSnapshotCopy`로 맞추는 low-risk rename을 검토한다. |
 | debug-only helper guard 축소 | `CDebugOverlayHUD.cpp`, `FDebugOverlaySnapshotStore.cpp` | shipping에서도 컴파일되는 overlay 전용 anonymous namespace helper를 non-shipping guard 안으로 좁힐지 검토한다. |
 
@@ -237,12 +236,11 @@
 
 | 항목 | 파일 | 결정 필요 내용 |
 | --- | --- | --- |
-| `GetDebugOverlayTargetSource()` 유지 여부 | `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | 현재 API는 존재하지만 HUD는 직접 `"TargetComponent"` 문자열을 출력한다. 제거, 사용, 또는 selection method 확장 중 결정이 필요하다. |
-| view trace 실패 시 nearest fallback source 표시 | `CPlayerController.cpp`, `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | `DebugOverlaySelectTarget`이 nearest fallback으로 선택한 경우에도 `EnemySource: TargetComponent`만 표시된다. source claim을 더 세분화할지 결정이 필요하다. |
-| 실패한 `DebugOverlaySelectTarget`이 기존 target을 clear할지 | `CPlayerController.cpp` | 현재는 선택 실패 시 explicit target을 해제한다. 운영상 이전 target 유지가 더 나은지 결정이 필요하다. |
+| `GetDebugOverlayTargetSource()` 유지 여부 | `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | 현재 API는 `TargetComponent.Nearest` / `None` 표시를 위해 사용한다. 유지한다. |
+| line trace target selection 유지 여부 | `CPlayerController.cpp`, `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | 결정 완료. P1에서는 line trace target selection을 제거하고 nearest command만 명시 target source로 사용한다. |
 | Exec command / reflected member shipping 노출 정책 | `CPlayerController.h`, `CDebugOverlayTargetComponent.*` | cpp body와 생성 경로는 no-op/guard되어 있으나 UFUNCTION/UPROPERTY/class surface는 shipping에도 남는다. UHT 안전성과 debug-only 엄격성 사이에서 결정이 필요하다. |
 | `ResolveWorld`의 `const_cast` 유지 여부 | `FDebugOverlaySnapshotStore.cpp` | 실제 mutation은 없지만 W05 위험 신호다. helper signature 변경 또는 현 상태 유지 중 결정한다. |
-| stale/not matched recent combat line 유지 여부 | `CDebugOverlayHUD.cpp` | fallback chain 설명력과 화면 길이 사이에서 유지/축약 여부를 결정한다. |
+| diagnostic helper 유지 여부 | `CDebugOverlayHUD.cpp` | RecentCombatTarget/WorldScanFallback helper는 기본 path에서 제외되어 있다. 후속 diagnostic mode에서 재사용할지 결정한다. |
 
 ### Later
 
@@ -252,7 +250,7 @@
 | AI current value 보강 | `CDebugOverlayHUD.cpp` | P1 AI 표시 보강 단계에서 처리한다. |
 | Player/Enemy EventLog 분리 | `FDebugOverlaySnapshotStore.*`, `CDebugOverlayHUD.cpp` | subject ownership 설계 이후 처리한다. |
 | EventLog category filter | `FDebugOverlaySnapshotStore.*`, `CDebugOverlayHUD.cpp` | P1 별도 구현 단위로 처리한다. |
-| view trace owner/attached actor resolve | `CPlayerController.cpp` | 직접 hit actor만 `ACEnemy`로 cast하는 현재 구현을 P1 안정화 이후 보강한다. |
+| 범용 target source 설계 | `CPlayerController.cpp`, future target component | line trace는 P1에서 제거했다. 범용 target component로 승격할 때 입력 방식과 target source를 별도 설계한다. |
 
 ### NoIssue
 
@@ -374,7 +372,7 @@
 | P48 | CPP Include Order Cleanup | HUD / Store / PlayerController `.cpp` include group을 W05 순서로 정리했다. | 반영 |
 | P49 | API Const Consistency | getter/query const와 read-only/mutation API를 검토했다. `ResolveWorld`의 `const_cast`는 DecisionNeeded다. | 일부 반영 |
 | P50 | Section Comment Consistency | 같은 파일군의 helper/record/query/lifecycle 책임이 드러나도록 section을 맞췄다. | 반영 |
-| P51 | Tuning Constants Cleanup | event capacity, display limit, trace distance, nearest radius, stale timeout을 internal policy constant로 분류했다. CVar/preset화는 Later다. | 일부 반영 |
+| P51 | Tuning Constants Cleanup | event capacity, display limit, nearest radius, stale timeout을 internal policy constant로 분류했다. CVar/preset화는 Later다. | 일부 반영 |
 
 ### PR 설명으로 재사용할 수 있는 반영 내용
 
@@ -400,9 +398,9 @@
    - 필요 시 `GetSnapshotCopy` naming 정리
 
 2. `DecisionNeeded` 항목 사용자 결정
-   - `GetDebugOverlayTargetSource()`를 제거할지 HUD에서 사용할지 결정
-   - `TargetComponent` source를 `TargetComponent(ViewTrace)` / `TargetComponent(NearestFallback)`처럼 세분화할지 결정
-   - 실패한 `DebugOverlaySelectTarget`이 기존 target을 clear할지 유지할지 결정
+   - diagnostic helper를 유지할지 별도 mode로 노출할지 결정
+   - 범용 TargetComponent로 승격할 때 target source 입력 방식을 결정
+   - P1 Target Selection Decision 기준으로 nearest-only command 정책 유지
    - Exec command / UPROPERTY / component class shipping 노출 정책 결정
    - `ResolveWorld`의 `const_cast` 유지 여부 결정
 

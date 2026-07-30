@@ -8,7 +8,7 @@ P0.5에서는 `WorldScanFallback`으로 월드에 존재하는 단일 `ACEnemy`�
 
 P1의 목표는 Enemy panel source chain을 명확히 만들고, `WorldScanFallback`을 최후 fallback으로 낮추는 것이다.
 
-> Update: P1 Target Selection 최종 정책은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다. 이후 구현은 자동 fallback chain이 아니라 `TargetComponent.Trace`, `TargetComponent.Nearest`, `None` 기반 명시 target 정책을 따른다. 이 문서의 기존 fallback chain 설명은 과거 설계 맥락으로만 본다.
+> Update: P1 Target Selection 최종 정책은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다. 이후 구현은 자동 fallback chain이 아니라 `TargetComponent.Nearest`, `None` 기반 명시 target 정책을 따른다. 이 문서의 기존 fallback chain과 trace 설명은 과거 설계 맥락으로만 본다.
 
 ## 2. 최종 결정
 
@@ -57,7 +57,6 @@ P1에서는 debug overlay 한정 component를 먼저 구현한다.
 P1 Enemy Selection source policy는 다음으로 고정한다.
 
 ```text
-TargetComponent.Trace
 TargetComponent.Nearest
 None
 ```
@@ -66,8 +65,7 @@ None
 
 | Source | 의미 | Evidence claim |
 | --- | --- | --- |
-| `EnemySource: TargetComponent.Trace` | camera forward trace로 명시 선택한 enemy | P1 최종 enemy panel claim의 우선 근거 |
-| `EnemySource: TargetComponent.Nearest` | 사용자 명령으로 nearest enemy를 명시 선택한 enemy | 명시 command 기반 보조 target selection evidence |
+| `EnemySource: TargetComponent.Nearest` | 사용자 명령으로 nearest enemy를 명시 선택한 enemy | 명시 command 기반 target selection evidence |
 | `EnemySource: None` | 명시 target 없음 | 성공 evidence로 사용하지 않음 |
 | `EnemySource: RecentCombatTarget` | 최근 combat pair에서 player 기준 상대 Enemy를 선택 | P1 기본 source chain에서 제외. diagnostic 후보 |
 | `EnemySource: WorldScanFallback` | 월드 scan 결과 enemy가 1개라서 선택 | P1 기본 source chain에서 제외. diagnostic/debug fallback 후보 |
@@ -144,11 +142,11 @@ HUD는 target 선택의 주체가 아니라 consumer다.
 P1 HUD enemy resolve 순서:
 
 1. `GetOwningPlayerController()`에서 `UCDebugOverlayTargetComponent` 조회
-2. component가 valid target을 제공하면 `EnemySource: TargetComponent.Trace` 또는 `EnemySource: TargetComponent.Nearest`
+2. component가 valid target을 제공하면 `EnemySource: TargetComponent.Nearest`
 3. component가 없거나 target invalid면 `EnemySource: None`
 4. `RecentCombatTarget`과 `WorldScanFallback`은 기본 HUD path에서 자동 표시하지 않고 diagnostic 후보로만 둔다.
 
-HUD는 이 source를 화면에 명시한다. 최종 evidence에서는 `TargetComponent.Trace` 또는 `TargetComponent.Nearest` source 캡처만 target selection claim으로 사용한다.
+HUD는 이 source를 화면에 명시한다. 최종 evidence에서는 `TargetComponent.Nearest` source 캡처만 target selection claim으로 사용한다.
 
 ## 11. RecentCombatTarget Diagnostic 설계
 
@@ -218,7 +216,7 @@ P1 최소 정책:
 
 | 상황 | 표시 |
 | --- | --- |
-| TargetComponent valid target 있음 | `TargetComponent.Trace` 또는 `TargetComponent.Nearest` |
+| TargetComponent valid target 있음 | `TargetComponent.Nearest` |
 | TargetComponent 없음 | `None` |
 | TargetComponent invalid | `None` |
 | RecentCombatTarget valid | P1 기본 Enemy panel에는 자동 표시하지 않음 |
@@ -275,7 +273,7 @@ P1 Target Selection에서는 다음을 하지 않는다.
 
 - `UCDebugOverlayTargetComponent`를 P1 debug-only provider로 고정
 - component 소유 위치를 `ACPlayerController`로 고정
-- source 표시를 `TargetComponent.Trace`, `TargetComponent.Nearest`, `None`으로 고정
+- source 표시를 `TargetComponent.Nearest`, `None`으로 고정
 - `WorldScanFallback`을 diagnostic/debug fallback 후보로 제한
 - RecentCombatTarget은 Store weak source/target pair 기반 diagnostic 후보로 둠
 - 기존 `ITargetContextProvider`와 의미를 분리

@@ -15,9 +15,6 @@ public:
 public:
 	// Debug Overlay Exec
 	UFUNCTION(Exec)
-	void DebugOverlaySelectTarget();
-
-	UFUNCTION(Exec)
 	void DebugOverlaySelectNearestTarget();
 
 	UFUNCTION(Exec)
@@ -70,11 +67,9 @@ protected:
 #if !UE_BUILD_SHIPPING
 private:
 	// Debug Overlay Target
-	bool TrySelectDebugOverlayTargetFromView();
 	bool TrySelectDebugOverlayNearestEnemy();
 	void ClearDebugOverlayTarget();
 
-	class ACEnemy* FindDebugOverlayEnemyFromView();
 	class ACEnemy* FindNearestDebugOverlayEnemy() const;
 #endif
 };

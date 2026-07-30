@@ -118,7 +118,7 @@ P1 검증
 | 1 | P1 범위 확정 | 필수/보강/보류 항목 분리 | P1 scope 문서 |
 | 2 | Target Component 기반 Enemy Selection 설계 | Enemy panel claim 강화 | target source 설계 문서 |
 | 3 | Target Component / Target Provider 구현 | 실제 target source 확보 | C++ component/provider |
-| 4 | HUD EnemySource 전환 | `TargetComponent.Trace/Nearest` 명시 선택 우선, target 없음은 `None` 표시 | HUD 표시 변경 |
+| 4 | HUD EnemySource 전환 | `TargetComponent.Nearest` 명시 선택 우선, target 없음은 `None` 표시 | HUD 표시 변경 |
 | 5 | Store subject 분리 설계 | Player/Enemy Recent/EventLog 분리 기반 마련 | Store subject 설계 문서 |
 | 6 | EventLog category filter 설계/구현 | 필요한 종류의 log만 표시 | CVar 또는 preset 기반 filter |
 | 7 | Player/Enemy Recent/EventLog 분리 | subject 기반 evidence 분리 | Store/HUD 확장 |
