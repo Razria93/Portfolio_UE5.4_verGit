@@ -16,10 +16,13 @@ private:
 	TWeakObjectPtr<AActor> DebugOverlayTargetActor;
 
 public:
+	// Query
 	bool HasDebugOverlayTarget() const;
 	AActor* GetDebugOverlayTargetActor() const;
 	FString GetDebugOverlayTargetSummary() const;
 	FString GetDebugOverlayTargetSource() const;
+
+	// Mutation
 	void SetDebugOverlayTarget(AActor* InTargetActor);
 	void ClearDebugOverlayTarget();
 };

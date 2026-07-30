@@ -7,6 +7,7 @@ UCDebugOverlayTargetComponent::UCDebugOverlayTargetComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+// Query
 bool UCDebugOverlayTargetComponent::HasDebugOverlayTarget() const
 {
 	return DebugOverlayTargetActor.IsValid();
@@ -29,6 +30,7 @@ FString UCDebugOverlayTargetComponent::GetDebugOverlayTargetSource() const
 	return TEXT("TargetComponent");
 }
 
+// Mutation
 void UCDebugOverlayTargetComponent::SetDebugOverlayTarget(AActor* InTargetActor)
 {
 	DebugOverlayTargetActor = InTargetActor;
