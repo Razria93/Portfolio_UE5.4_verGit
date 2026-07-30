@@ -214,7 +214,7 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 	{
 		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
 
-		const FString summary = TEXT("NearestFailed InvalidContext");
+		const FString summary = TEXT("NearestFailed | InvalidContext");
 		RecordDebugOverlayNearestSelectionResult(summary);
 		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result=InvalidContext"));
 		return false;
@@ -227,7 +227,7 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
 
 		const FString summary = FString::Printf(
-			TEXT("NearestFailed NoEnemy Radius=%.0f"),
+			TEXT("NearestFailed | NoEnemy | Radius=%.0f"),
 			DebugOverlayNearestTargetRadius);
 		RecordDebugOverlayNearestSelectionResult(summary);
 		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result=NoEnemy Radius=%.0f"), DebugOverlayNearestTargetRadius);
@@ -239,7 +239,7 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
 
 		const FString summary = FString::Printf(
-			TEXT("NearestFailed OutOfRange Closest=%.0f Radius=%.0f"),
+			TEXT("NearestFailed | OutOfRange | Closest=%.0f | Radius=%.0f"),
 			closestDistance,
 			DebugOverlayNearestTargetRadius);
 		RecordDebugOverlayNearestSelectionResult(summary);
@@ -255,7 +255,7 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 	DebugOverlayTargetComponent->SetDebugOverlayTarget(closestEnemy, EDebugOverlayTargetSource::Nearest);
 
 	const FString summary = FString::Printf(
-		TEXT("NearestSelected Target=%s Distance=%.0f Radius=%.0f"),
+		TEXT("NearestSelected | Target=%s | Distance=%.0f | Radius=%.0f"),
 		*GetNameSafe(closestEnemy),
 		closestDistance,
 		DebugOverlayNearestTargetRadius);
