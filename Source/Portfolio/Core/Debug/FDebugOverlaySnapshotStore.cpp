@@ -1,12 +1,13 @@
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 
+#include "Type/CCombatResultTypes.h"
+#include "Type/CCombatSignalTargetTypes.h"
+
 #include "AIController.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
-#include "Type/CCombatResultTypes.h"
-#include "Type/CCombatSignalTargetTypes.h"
 #include "UObject/ObjectKey.h"
 
 namespace
@@ -39,7 +40,6 @@ namespace
 		DebugOverlayDefaultEventLogDisplayLimit,
 		TEXT("Number of recent debug overlay event lines to display. 0-5."),
 		ECVF_Default);
-#endif
 
 	struct FDebugOverlayWorldStore
 	{
@@ -51,12 +51,10 @@ namespace
 		bool bHasRecentCombatPair = false;
 	};
 
-#if !UE_BUILD_SHIPPING
 	TMap<TObjectKey<UWorld>, FDebugOverlayWorldStore> StoresByWorld;
 
 	int32 GetClampedEventLogDisplayLimit();
 	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp);
-#endif
 
 	UWorld* ResolveWorld(const UObject* InWorldContextObject)
 	{
@@ -128,7 +126,6 @@ namespace
 		return entry;
 	}
 
-#if !UE_BUILD_SHIPPING
 	void AddEventInternal(FDebugOverlayWorldStore& InStore, const FDebugOverlayEventEntry& InEntry)
 	{
 		if (InStore.EventRing.Num() < DebugOverlayEventStoreCapacity)
@@ -445,7 +442,7 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 
 // Snapshot Query
 
-bool FDebugOverlaySnapshotStore::GetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot)
+bool FDebugOverlaySnapshotStore::TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot)
 {
 	OutSnapshot = FDebugOverlaySnapshot();
 

@@ -49,7 +49,7 @@ public:
 
 public:
 	// Snapshot Query
-	static bool GetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
+	static bool TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
 	static bool TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair);
 
 public:

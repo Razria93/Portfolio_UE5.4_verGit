@@ -70,8 +70,8 @@ protected:
 #if !UE_BUILD_SHIPPING
 private:
 	// Debug Overlay Target
-	bool SelectDebugOverlayTargetFromView();
-	bool SelectDebugOverlayNearestEnemy();
+	bool TrySelectDebugOverlayTargetFromView();
+	bool TrySelectDebugOverlayNearestEnemy();
 	void ClearDebugOverlayTarget();
 
 	class ACEnemy* FindDebugOverlayEnemyFromView() const;

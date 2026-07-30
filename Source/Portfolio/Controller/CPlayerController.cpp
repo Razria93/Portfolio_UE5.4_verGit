@@ -5,11 +5,12 @@
 #include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
-#include "EngineUtils.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayTargetComponent.h"
 #endif
 #include "Type/CActionOrchestrationTypes.h"
+
+#include "EngineUtils.h"
 
 #if !UE_BUILD_SHIPPING
 namespace
@@ -79,14 +80,14 @@ void ACPlayerController::SetupInputComponent()
 void ACPlayerController::DebugOverlaySelectTarget()
 {
 #if !UE_BUILD_SHIPPING
-	SelectDebugOverlayTargetFromView();
+	TrySelectDebugOverlayTargetFromView();
 #endif
 }
 
 void ACPlayerController::DebugOverlaySelectNearestTarget()
 {
 #if !UE_BUILD_SHIPPING
-	SelectDebugOverlayNearestEnemy();
+	TrySelectDebugOverlayNearestEnemy();
 #endif
 }
 
@@ -209,7 +210,7 @@ void ACPlayerController::PressDodge()
 
 #if !UE_BUILD_SHIPPING
 
-bool ACPlayerController::SelectDebugOverlayTargetFromView()
+bool ACPlayerController::TrySelectDebugOverlayTargetFromView()
 {
 	if (!IsValid(DebugOverlayTargetComponent)) return false;
 
@@ -229,7 +230,7 @@ bool ACPlayerController::SelectDebugOverlayTargetFromView()
 	return true;
 }
 
-bool ACPlayerController::SelectDebugOverlayNearestEnemy()
+bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 {
 	if (!IsValid(DebugOverlayTargetComponent)) return false;
 

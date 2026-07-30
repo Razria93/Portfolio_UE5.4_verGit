@@ -10,14 +10,17 @@
 #include "Component/CStateComponent.h"
 #include "Core/Debug/CDebugOverlayTargetComponent.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
+#include "Type/CActionKeyTypes.h"
+
 #include "Engine/Canvas.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
-#include "Type/CActionKeyTypes.h"
 
+#if !UE_BUILD_SHIPPING
 namespace
 {
+	// Display Constants
 	static constexpr float DebugOverlayOriginX = 24.f;
 	static constexpr float DebugOverlayOriginY = 36.f;
 	static constexpr float DebugOverlayLineHeight = 20.f;
@@ -30,6 +33,7 @@ namespace
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
 
+	// Text Formatting
 	FString BoolText(bool bInValue)
 	{
 		return bInValue ? TEXT("true") : TEXT("false");
@@ -64,6 +68,7 @@ namespace
 		}
 	}
 
+	// Actor Status Formatting
 	template <typename TComponent>
 	TComponent* FindComponent(const APawn* InPawn)
 	{
@@ -180,6 +185,7 @@ namespace
 			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
 	}
 
+	// Snapshot Lines
 	FString CaptureStateText(EDebugOverlayCaptureState InState)
 	{
 		switch (InState)
@@ -209,75 +215,75 @@ namespace
 			&& InCombatSummary.Summary.Contains(TEXT("Final="));
 	}
 
-	void AddLine(TArray<FString>& InOutLines, const FString& InLine)
+	void AppendOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
 	{
 		InOutLines.Add(InLine);
 	}
 
-	void AddActorStatusLines(TArray<FString>& InOutLines, const APawn* InPawn)
+	void AppendActorStatusLines(TArray<FString>& InOutLines, const APawn* InPawn)
 	{
-		AddLine(InOutLines, FString::Printf(TEXT("State: %s"), *FormatExecutionState(InPawn)));
-		AddLine(InOutLines, FString::Printf(TEXT("Action: %s"), *FormatActiveAction(InPawn)));
-		AddLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *FormatActiveReaction(InPawn)));
-		AddLine(InOutLines, FString::Printf(TEXT("Stagger: %s"), *FormatParryStaggerStack(InPawn)));
-		AddLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *FormatGuardOverlay(InPawn)));
-		AddLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *FormatActorMovement(InPawn)));
-		AddLine(InOutLines, FString::Printf(TEXT("HP: %s"), *FormatActorHealth(InPawn)));
-		AddLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *FormatRuntimeLODTier()));
-		AddLine(InOutLines, FString::Printf(TEXT("AI: %s"), *FormatAISummary()));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("State: %s"), *FormatExecutionState(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Action: %s"), *FormatActiveAction(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *FormatActiveReaction(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Stagger: %s"), *FormatParryStaggerStack(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *FormatGuardOverlay(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *FormatActorMovement(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("HP: %s"), *FormatActorHealth(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *FormatRuntimeLODTier()));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("AI: %s"), *FormatAISummary()));
 	}
 
-	void AddActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn)
+	void AppendActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn)
 	{
-		AddLine(InOutLines, TEXT(""));
-		AddLine(InOutLines, InPanelName);
-		AddActorStatusLines(InOutLines, InPawn);
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, InPanelName);
+		AppendActorStatusLines(InOutLines, InPawn);
 	}
 
-	void AddSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
+	void AppendSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
 	{
-		AddLine(InOutLines, TEXT(""));
-		AddLine(InOutLines, TEXT("[Recent Execution]"));
-		AddLine(InOutLines, FString::Printf(
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Recent Execution]"));
+		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("Decision: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastExecution.Summary, InSnapshot.LastExecution.CaptureState) : TEXT("NotCaptured")));
 
-		AddLine(InOutLines, TEXT(""));
-		AddLine(InOutLines, TEXT("[Recent Combat]"));
-		AddLine(InOutLines, FString::Printf(
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Recent Combat]"));
+		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("HitWindow: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastCombat.HitWindowState, InSnapshot.LastCombat.CaptureState) : TEXT("NotCaptured")));
-		AddLine(InOutLines, FString::Printf(
+		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("DefenseOutcome: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastCombat.DefenseOutcome, InSnapshot.LastCombat.CaptureState) : TEXT("NotCaptured")));
-		AddLine(InOutLines, FString::Printf(
+		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("FinalTakenDamage: %s"),
 			bInHasSnapshot && HasFinalTakenDamageEvidence(InSnapshot.LastCombat)
 				? *FString::Printf(TEXT("%.3f"), InSnapshot.LastCombat.FinalTakenDamage)
 				: TEXT("NotCaptured")));
-		AddLine(InOutLines, FString::Printf(
+		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("DamageCommit: %s %.3f"),
 			bInHasSnapshot && InSnapshot.LastCombat.bHasDamageCommit ? (InSnapshot.LastCombat.bDamageCommitted ? TEXT("true") : TEXT("false")) : TEXT("NotCaptured"),
 			bInHasSnapshot && InSnapshot.LastCombat.bHasDamageCommit ? InSnapshot.LastCombat.CommittedDamage : 0.f));
 
-		AddLine(InOutLines, TEXT(""));
-		AddLine(InOutLines, TEXT("[Recent AI]"));
-		AddLine(InOutLines, FString::Printf(
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Recent AI]"));
+		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("CombatTask: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastAI.Summary, InSnapshot.LastAI.CaptureState) : TEXT("NotCaptured")));
 
-		AddLine(InOutLines, TEXT(""));
-		AddLine(InOutLines, TEXT("[Event Log]"));
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Event Log]"));
 
 		if (!bInHasSnapshot || InSnapshot.RecentEvents.IsEmpty())
 		{
-			AddLine(InOutLines, TEXT("NotCaptured"));
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
 			return;
 		}
 
 		for (const FDebugOverlayEventEntry& eventEntry : InSnapshot.RecentEvents)
 		{
-			AddLine(InOutLines, FString::Printf(
+			AppendOverlayLine(InOutLines, FString::Printf(
 				TEXT("%s/%s: %s"),
 				*eventEntry.Category,
 				*eventEntry.EventName,
@@ -285,6 +291,7 @@ namespace
 		}
 	}
 
+	// Panel Styling
 	bool IsPanelHeaderLine(const FString& InLine)
 	{
 		return InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]");
@@ -295,11 +302,13 @@ namespace
 		return InLine == TEXT("[Player]") ? DebugOverlayPlayerHeaderColor : DebugOverlayEnemyHeaderColor;
 	}
 
+	// Enemy Source Formatting
 	FString FormatAgeSeconds(float InAgeSeconds)
 	{
 		return FString::Printf(TEXT("%.2f"), FMath::Max(0.f, InAgeSeconds));
 	}
 }
+#endif
 
 #if !UE_BUILD_SHIPPING
 void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
@@ -336,8 +345,8 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArra
 		{
 			if (ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayTargetActor()))
 			{
-				AddLine(OutSourceLines, TEXT("EnemySource: TargetComponent"));
-				AddLine(OutSourceLines, FString::Printf(TEXT("EnemyTarget: %s"), *targetComp->GetDebugOverlayTargetSummary()));
+				AppendOverlayLine(OutSourceLines, TEXT("EnemySource: TargetComponent"));
+				AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyTarget: %s"), *targetComp->GetDebugOverlayTargetSummary()));
 				return targetEnemy;
 			}
 		}
@@ -372,8 +381,8 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArra
 
 			if (IsValid(recentEnemy))
 			{
-				AddLine(OutSourceLines, TEXT("EnemySource: RecentCombatTarget"));
-				AddLine(OutSourceLines, FString::Printf(
+				AppendOverlayLine(OutSourceLines, TEXT("EnemySource: RecentCombatTarget"));
+				AppendOverlayLine(OutSourceLines, FString::Printf(
 					TEXT("EnemyRecentCombat: Source=%s Target=%s Age=%s"),
 					*recentCombatPair.SourceName,
 					*recentCombatPair.TargetName,
@@ -384,7 +393,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArra
 
 		if (bPairStale || bSourceInvalid || bTargetInvalid)
 		{
-			AddLine(OutSourceLines, FString::Printf(
+			AppendOverlayLine(OutSourceLines, FString::Printf(
 				TEXT("EnemyRecentCombat: Stale Source=%s Target=%s Age=%s"),
 				*recentCombatPair.SourceName,
 				*recentCombatPair.TargetName,
@@ -392,7 +401,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArra
 		}
 		else if (!bRecentCombatPairMatched)
 		{
-			AddLine(OutSourceLines, FString::Printf(
+			AppendOverlayLine(OutSourceLines, FString::Printf(
 				TEXT("EnemyRecentCombat: NotMatched Source=%s Target=%s Age=%s"),
 				*recentCombatPair.SourceName,
 				*recentCombatPair.TargetName,
@@ -403,25 +412,25 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArra
 	RefreshCachedEnemyIfNeeded();
 	if (LastEnemyScanCount == 0)
 	{
-		AddLine(OutSourceLines, TEXT("EnemySource: None"));
+		AppendOverlayLine(OutSourceLines, TEXT("EnemySource: None"));
 		return nullptr;
 	}
 
 	if (LastEnemyScanCount > 1)
 	{
-		AddLine(OutSourceLines, FString::Printf(TEXT("EnemySource: Ambiguous(Count=%d)"), LastEnemyScanCount));
+		AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemySource: Ambiguous(Count=%d)"), LastEnemyScanCount));
 		return nullptr;
 	}
 
 	ACEnemy* fallbackEnemy = CachedEnemy.Get();
 	if (!IsValid(fallbackEnemy))
 	{
-		AddLine(OutSourceLines, TEXT("EnemySource: Stale"));
+		AppendOverlayLine(OutSourceLines, TEXT("EnemySource: Stale"));
 		return nullptr;
 	}
 
-	AddLine(OutSourceLines, TEXT("EnemySource: WorldScanFallback"));
-	AddLine(OutSourceLines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(fallbackEnemy)));
+	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: WorldScanFallback"));
+	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(fallbackEnemy)));
 	return fallbackEnemy;
 }
 #endif
@@ -438,25 +447,25 @@ void ACDebugOverlayHUD::DrawHUD()
 	const ACEnemy* enemy = ResolveDisplayEnemy(pawn, enemySourceLines);
 
 	FDebugOverlaySnapshot snapshot;
-	const bool bHasSnapshot = FDebugOverlaySnapshotStore::GetSnapshotCopy(GetWorld(), snapshot);
+	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(GetWorld(), snapshot);
 
 	TArray<FString> lines;
 	lines.Reserve(32);
 
-	AddLine(lines, TEXT("[Debug Overlay P0.5]"));
-	AddActorPanelLines(lines, TEXT("[Player]"), pawn);
+	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
+	AppendActorPanelLines(lines, TEXT("[Player]"), pawn);
 
-	AddLine(lines, TEXT(""));
-	AddLine(lines, TEXT("[Enemy]"));
+	AppendOverlayLine(lines, TEXT(""));
+	AppendOverlayLine(lines, TEXT("[Enemy]"));
 	for (const FString& enemySourceLine : enemySourceLines)
 	{
-		AddLine(lines, enemySourceLine);
+		AppendOverlayLine(lines, enemySourceLine);
 	}
 
-	AddLine(lines, TEXT(""));
-	AddActorStatusLines(lines, enemy);
+	AppendOverlayLine(lines, TEXT(""));
+	AppendActorStatusLines(lines, enemy);
 
-	AddSnapshotLines(lines, snapshot, bHasSnapshot);
+	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
 	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
