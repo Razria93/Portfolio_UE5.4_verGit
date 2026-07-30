@@ -250,17 +250,19 @@ namespace
 
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, TEXT("[Recent Combat]"));
+
 		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("HitWindow: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastCombat.HitWindowState, InSnapshot.LastCombat.CaptureState) : TEXT("NotCaptured")));
+
 		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("DefenseOutcome: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastCombat.DefenseOutcome, InSnapshot.LastCombat.CaptureState) : TEXT("NotCaptured")));
+
 		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("FinalTakenDamage: %s"),
-			bInHasSnapshot && HasFinalTakenDamageEvidence(InSnapshot.LastCombat)
-				? *FString::Printf(TEXT("%.3f"), InSnapshot.LastCombat.FinalTakenDamage)
-				: TEXT("NotCaptured")));
+			bInHasSnapshot && HasFinalTakenDamageEvidence(InSnapshot.LastCombat) ? *FString::Printf(TEXT("%.3f"), InSnapshot.LastCombat.FinalTakenDamage) : TEXT("NotCaptured")));
+
 		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("DamageCommit: %s %.3f"),
 			bInHasSnapshot && InSnapshot.LastCombat.bHasDamageCommit ? (InSnapshot.LastCombat.bDamageCommitted ? TEXT("true") : TEXT("false")) : TEXT("NotCaptured"),
@@ -268,6 +270,7 @@ namespace
 
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, TEXT("[Recent AI]"));
+
 		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("CombatTask: %s"),
 			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastAI.Summary, InSnapshot.LastAI.CaptureState) : TEXT("NotCaptured")));
@@ -306,6 +309,157 @@ namespace
 	FString FormatAgeSeconds(float InAgeSeconds)
 	{
 		return FString::Printf(TEXT("%.2f"), FMath::Max(0.f, InAgeSeconds));
+	}
+}
+#endif
+
+#if !UE_BUILD_SHIPPING
+ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines)
+{
+	if (ACEnemy* targetComponentEnemy = ResolveTargetComponentEnemy(OutSourceLines))
+	{
+		return targetComponentEnemy;
+	}
+
+	if (ACEnemy* recentCombatEnemy = ResolveRecentCombatEnemy(InViewerPawn, OutSourceLines))
+	{
+		return recentCombatEnemy;
+	}
+
+	return ResolveWorldScanFallbackEnemy(OutSourceLines);
+}
+
+ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(TArray<FString>& OutSourceLines) const
+{
+	const APlayerController* owningPlayerController = GetOwningPlayerController();
+	if (!IsValid(owningPlayerController)) return nullptr;
+
+	const UCDebugOverlayTargetComponent* targetComp = owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>();
+	if (!IsValid(targetComp)) return nullptr;
+
+	ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayTargetActor());
+	if (!IsValid(targetEnemy)) return nullptr;
+
+	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: TargetComponent"));
+	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyTarget: %s"), *targetComp->GetDebugOverlayTargetSummary()));
+	return targetEnemy;
+}
+
+ACEnemy* ACDebugOverlayHUD::ResolveRecentCombatEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines) const
+{
+	FDebugOverlayRecentCombatPair recentCombatPair;
+	if (!FDebugOverlaySnapshotStore::TryGetRecentCombatPair(GetWorld(), recentCombatPair))
+	{
+		return nullptr;
+	}
+
+	const UWorld* world = GetWorld();
+	const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+	const float pairAge = currentTime - recentCombatPair.WorldTimeSeconds;
+	const bool bPairStale = pairAge > DebugOverlayRecentCombatTargetStaleSeconds;
+
+	AActor* sourceActor = recentCombatPair.SourceActor.Get();
+	AActor* targetActor = recentCombatPair.TargetActor.Get();
+	const bool bSourceInvalid = !IsValid(sourceActor);
+	const bool bTargetInvalid = !IsValid(targetActor);
+	bool bRecentCombatPairMatched = false;
+
+	if (!bPairStale && !bSourceInvalid && !bTargetInvalid && IsValid(InViewerPawn))
+	{
+		ACEnemy* recentEnemy = nullptr;
+		if (sourceActor == InViewerPawn)
+		{
+			recentEnemy = Cast<ACEnemy>(targetActor);
+			bRecentCombatPairMatched = true;
+		}
+		else if (targetActor == InViewerPawn)
+		{
+			recentEnemy = Cast<ACEnemy>(sourceActor);
+			bRecentCombatPairMatched = true;
+		}
+
+		if (IsValid(recentEnemy))
+		{
+			AppendOverlayLine(OutSourceLines, TEXT("EnemySource: RecentCombatTarget"));
+			AppendOverlayLine(OutSourceLines, FString::Printf(
+				TEXT("EnemyRecentCombat: Source=%s Target=%s Age=%s"),
+				*recentCombatPair.SourceName,
+				*recentCombatPair.TargetName,
+				*FormatAgeSeconds(pairAge)));
+			return recentEnemy;
+		}
+	}
+
+	if (bPairStale || bSourceInvalid || bTargetInvalid)
+	{
+		AppendOverlayLine(OutSourceLines, FString::Printf(
+			TEXT("EnemyRecentCombat: Stale Source=%s Target=%s Age=%s"),
+			*recentCombatPair.SourceName,
+			*recentCombatPair.TargetName,
+			*FormatAgeSeconds(pairAge)));
+	}
+	else if (!bRecentCombatPairMatched)
+	{
+		AppendOverlayLine(OutSourceLines, FString::Printf(
+			TEXT("EnemyRecentCombat: NotMatched Source=%s Target=%s Age=%s"),
+			*recentCombatPair.SourceName,
+			*recentCombatPair.TargetName,
+			*FormatAgeSeconds(pairAge)));
+	}
+
+	return nullptr;
+}
+
+ACEnemy* ACDebugOverlayHUD::ResolveWorldScanFallbackEnemy(TArray<FString>& OutSourceLines)
+{
+	RefreshCachedEnemyIfNeeded();
+	if (LastEnemyScanCount == 0)
+	{
+		AppendOverlayLine(OutSourceLines, TEXT("EnemySource: None"));
+		return nullptr;
+	}
+
+	if (LastEnemyScanCount > 1)
+	{
+		AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemySource: Ambiguous(Count=%d)"), LastEnemyScanCount));
+		return nullptr;
+	}
+
+	ACEnemy* fallbackEnemy = CachedEnemy.Get();
+	if (!IsValid(fallbackEnemy))
+	{
+		AppendOverlayLine(OutSourceLines, TEXT("EnemySource: Stale"));
+		return nullptr;
+	}
+
+	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: WorldScanFallback"));
+	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(fallbackEnemy)));
+	return fallbackEnemy;
+}
+
+void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
+{
+	UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	const float currentTime = world->GetTimeSeconds();
+	if (CachedEnemy.IsValid() && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
+	if (!CachedEnemy.IsValid() && LastEnemyScanTimeSeconds >= 0.f && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
+
+	LastEnemyScanTimeSeconds = currentTime;
+	LastEnemyScanCount = 0;
+	CachedEnemy.Reset();
+
+	for (TActorIterator<ACEnemy> actorIt(world); actorIt; ++actorIt)
+	{
+		ACEnemy* enemy = *actorIt;
+		if (!IsValid(enemy)) continue;
+
+		++LastEnemyScanCount;
+		if (!CachedEnemy.IsValid())
+		{
+			CachedEnemy = enemy;
+		}
 	}
 }
 #endif
@@ -368,128 +522,3 @@ void ACDebugOverlayHUD::DrawHUD()
 	}
 #endif
 }
-
-#if !UE_BUILD_SHIPPING
-ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines)
-{
-	if (APlayerController* owningPlayerController = GetOwningPlayerController())
-	{
-		if (const UCDebugOverlayTargetComponent* targetComp = owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>())
-		{
-			if (ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayTargetActor()))
-			{
-				AppendOverlayLine(OutSourceLines, TEXT("EnemySource: TargetComponent"));
-				AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyTarget: %s"), *targetComp->GetDebugOverlayTargetSummary()));
-				return targetEnemy;
-			}
-		}
-	}
-
-	FDebugOverlayRecentCombatPair recentCombatPair;
-	if (FDebugOverlaySnapshotStore::TryGetRecentCombatPair(GetWorld(), recentCombatPair))
-	{
-		const UWorld* world = GetWorld();
-		const float currentTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
-		const float pairAge = currentTime - recentCombatPair.WorldTimeSeconds;
-		const bool bPairStale = pairAge > DebugOverlayRecentCombatTargetStaleSeconds;
-		AActor* sourceActor = recentCombatPair.SourceActor.Get();
-		AActor* targetActor = recentCombatPair.TargetActor.Get();
-		const bool bSourceInvalid = !IsValid(sourceActor);
-		const bool bTargetInvalid = !IsValid(targetActor);
-		bool bRecentCombatPairMatched = false;
-
-		if (!bPairStale && !bSourceInvalid && !bTargetInvalid && IsValid(InViewerPawn))
-		{
-			ACEnemy* recentEnemy = nullptr;
-			if (sourceActor == InViewerPawn)
-			{
-				recentEnemy = Cast<ACEnemy>(targetActor);
-				bRecentCombatPairMatched = true;
-			}
-			else if (targetActor == InViewerPawn)
-			{
-				recentEnemy = Cast<ACEnemy>(sourceActor);
-				bRecentCombatPairMatched = true;
-			}
-
-			if (IsValid(recentEnemy))
-			{
-				AppendOverlayLine(OutSourceLines, TEXT("EnemySource: RecentCombatTarget"));
-				AppendOverlayLine(OutSourceLines, FString::Printf(
-					TEXT("EnemyRecentCombat: Source=%s Target=%s Age=%s"),
-					*recentCombatPair.SourceName,
-					*recentCombatPair.TargetName,
-					*FormatAgeSeconds(pairAge)));
-				return recentEnemy;
-			}
-		}
-
-		if (bPairStale || bSourceInvalid || bTargetInvalid)
-		{
-			AppendOverlayLine(OutSourceLines, FString::Printf(
-				TEXT("EnemyRecentCombat: Stale Source=%s Target=%s Age=%s"),
-				*recentCombatPair.SourceName,
-				*recentCombatPair.TargetName,
-				*FormatAgeSeconds(pairAge)));
-		}
-		else if (!bRecentCombatPairMatched)
-		{
-			AppendOverlayLine(OutSourceLines, FString::Printf(
-				TEXT("EnemyRecentCombat: NotMatched Source=%s Target=%s Age=%s"),
-				*recentCombatPair.SourceName,
-				*recentCombatPair.TargetName,
-				*FormatAgeSeconds(pairAge)));
-		}
-	}
-
-	RefreshCachedEnemyIfNeeded();
-	if (LastEnemyScanCount == 0)
-	{
-		AppendOverlayLine(OutSourceLines, TEXT("EnemySource: None"));
-		return nullptr;
-	}
-
-	if (LastEnemyScanCount > 1)
-	{
-		AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemySource: Ambiguous(Count=%d)"), LastEnemyScanCount));
-		return nullptr;
-	}
-
-	ACEnemy* fallbackEnemy = CachedEnemy.Get();
-	if (!IsValid(fallbackEnemy))
-	{
-		AppendOverlayLine(OutSourceLines, TEXT("EnemySource: Stale"));
-		return nullptr;
-	}
-
-	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: WorldScanFallback"));
-	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(fallbackEnemy)));
-	return fallbackEnemy;
-}
-
-void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
-{
-	UWorld* world = GetWorld();
-	if (!IsValid(world)) return;
-
-	const float currentTime = world->GetTimeSeconds();
-	if (CachedEnemy.IsValid() && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
-	if (!CachedEnemy.IsValid() && LastEnemyScanTimeSeconds >= 0.f && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
-
-	LastEnemyScanTimeSeconds = currentTime;
-	LastEnemyScanCount = 0;
-	CachedEnemy.Reset();
-
-	for (TActorIterator<ACEnemy> actorIt(world); actorIt; ++actorIt)
-	{
-		ACEnemy* enemy = *actorIt;
-		if (!IsValid(enemy)) continue;
-
-		++LastEnemyScanCount;
-		if (!CachedEnemy.IsValid())
-		{
-			CachedEnemy = enemy;
-		}
-	}
-}
-#endif

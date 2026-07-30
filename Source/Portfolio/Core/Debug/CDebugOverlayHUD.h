@@ -11,9 +11,6 @@ class PORTFOLIO_API ACDebugOverlayHUD : public AHUD
 {
 	GENERATED_BODY()
 
-public:
-	virtual void DrawHUD() override;
-
 #if !UE_BUILD_SHIPPING
 private:
 	TWeakObjectPtr<ACEnemy> CachedEnemy;
@@ -22,6 +19,12 @@ private:
 
 private:
 	ACEnemy* ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines);
+	ACEnemy* ResolveTargetComponentEnemy(TArray<FString>& OutSourceLines) const;
+	ACEnemy* ResolveRecentCombatEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines) const;
+	ACEnemy* ResolveWorldScanFallbackEnemy(TArray<FString>& OutSourceLines);
 	void RefreshCachedEnemyIfNeeded();
 #endif
+
+public:
+	virtual void DrawHUD() override;
 };
