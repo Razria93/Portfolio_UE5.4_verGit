@@ -310,33 +310,66 @@ namespace
 }
 #endif
 
-#if !UE_BUILD_SHIPPING
-void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
+void ACDebugOverlayHUD::DrawHUD()
 {
-	UWorld* world = GetWorld();
-	if (!IsValid(world)) return;
+#if !UE_BUILD_SHIPPING
+	Super::DrawHUD();
 
-	const float currentTime = world->GetTimeSeconds();
-	if (CachedEnemy.IsValid() && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
-	if (!CachedEnemy.IsValid() && LastEnemyScanTimeSeconds >= 0.f && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
+	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 
-	LastEnemyScanTimeSeconds = currentTime;
-	LastEnemyScanCount = 0;
-	CachedEnemy.Reset();
+	const APawn* pawn = GetOwningPawn();
+	TArray<FString> enemySourceLines;
+	const ACEnemy* enemy = ResolveDisplayEnemy(pawn, enemySourceLines);
 
-	for (TActorIterator<ACEnemy> actorIt(world); actorIt; ++actorIt)
+	FDebugOverlaySnapshot snapshot;
+	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(GetWorld(), snapshot);
+
+	TArray<FString> lines;
+	lines.Reserve(32);
+
+	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
+	AppendActorPanelLines(lines, TEXT("[Player]"), pawn);
+
+	AppendOverlayLine(lines, TEXT(""));
+	AppendOverlayLine(lines, TEXT("[Enemy]"));
+	for (const FString& enemySourceLine : enemySourceLines)
 	{
-		ACEnemy* enemy = *actorIt;
-		if (!IsValid(enemy)) continue;
-
-		++LastEnemyScanCount;
-		if (!CachedEnemy.IsValid())
-		{
-			CachedEnemy = enemy;
-		}
+		AppendOverlayLine(lines, enemySourceLine);
 	}
+
+	AppendOverlayLine(lines, TEXT(""));
+	AppendActorStatusLines(lines, enemy);
+
+	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
+
+	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
+	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
+	const float availableWidth = Canvas
+		? FMath::Max(0.f, Canvas->SizeX - backgroundX - DebugOverlayBackgroundPadding)
+		: DebugOverlayBackgroundWidth;
+	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
+	const float backgroundHeight = (lines.Num() * DebugOverlayLineHeight) + (DebugOverlayBackgroundPadding * 2.f);
+
+	if (backgroundWidth > 0.f && backgroundHeight > 0.f)
+	{
+		DrawRect(DebugOverlayBackgroundColor, backgroundX, backgroundY, backgroundWidth, backgroundHeight);
+	}
+
+	float y = DebugOverlayOriginY;
+	for (const FString& line : lines)
+	{
+		if (IsPanelHeaderLine(line) && backgroundWidth > 0.f)
+		{
+			DrawRect(GetPanelHeaderColor(line), backgroundX, y - 2.f, backgroundWidth, DebugOverlayLineHeight + 4.f);
+		}
+
+		DrawText(line, FLinearColor::White, DebugOverlayOriginX, y, nullptr, DebugOverlayFontScale, false);
+		y += DebugOverlayLineHeight;
+	}
+#endif
 }
 
+#if !UE_BUILD_SHIPPING
 ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines)
 {
 	if (APlayerController* owningPlayerController = GetOwningPlayerController())
@@ -433,63 +466,30 @@ ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(const APawn* InViewerPawn, TArra
 	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(fallbackEnemy)));
 	return fallbackEnemy;
 }
-#endif
 
-void ACDebugOverlayHUD::DrawHUD()
+void ACDebugOverlayHUD::RefreshCachedEnemyIfNeeded()
 {
-#if !UE_BUILD_SHIPPING
-	Super::DrawHUD();
+	UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
 
-	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
+	const float currentTime = world->GetTimeSeconds();
+	if (CachedEnemy.IsValid() && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
+	if (!CachedEnemy.IsValid() && LastEnemyScanTimeSeconds >= 0.f && currentTime - LastEnemyScanTimeSeconds < DebugOverlayEnemyScanCooldownSeconds) return;
 
-	const APawn* pawn = GetOwningPawn();
-	TArray<FString> enemySourceLines;
-	const ACEnemy* enemy = ResolveDisplayEnemy(pawn, enemySourceLines);
+	LastEnemyScanTimeSeconds = currentTime;
+	LastEnemyScanCount = 0;
+	CachedEnemy.Reset();
 
-	FDebugOverlaySnapshot snapshot;
-	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(GetWorld(), snapshot);
-
-	TArray<FString> lines;
-	lines.Reserve(32);
-
-	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
-	AppendActorPanelLines(lines, TEXT("[Player]"), pawn);
-
-	AppendOverlayLine(lines, TEXT(""));
-	AppendOverlayLine(lines, TEXT("[Enemy]"));
-	for (const FString& enemySourceLine : enemySourceLines)
+	for (TActorIterator<ACEnemy> actorIt(world); actorIt; ++actorIt)
 	{
-		AppendOverlayLine(lines, enemySourceLine);
-	}
+		ACEnemy* enemy = *actorIt;
+		if (!IsValid(enemy)) continue;
 
-	AppendOverlayLine(lines, TEXT(""));
-	AppendActorStatusLines(lines, enemy);
-
-	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
-
-	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
-	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
-	const float availableWidth = Canvas
-		? FMath::Max(0.f, Canvas->SizeX - backgroundX - DebugOverlayBackgroundPadding)
-		: DebugOverlayBackgroundWidth;
-	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
-	const float backgroundHeight = (lines.Num() * DebugOverlayLineHeight) + (DebugOverlayBackgroundPadding * 2.f);
-
-	if (backgroundWidth > 0.f && backgroundHeight > 0.f)
-	{
-		DrawRect(DebugOverlayBackgroundColor, backgroundX, backgroundY, backgroundWidth, backgroundHeight);
-	}
-
-	float y = DebugOverlayOriginY;
-	for (const FString& line : lines)
-	{
-		if (IsPanelHeaderLine(line) && backgroundWidth > 0.f)
+		++LastEnemyScanCount;
+		if (!CachedEnemy.IsValid())
 		{
-			DrawRect(GetPanelHeaderColor(line), backgroundX, y - 2.f, backgroundWidth, DebugOverlayLineHeight + 4.f);
+			CachedEnemy = enemy;
 		}
-
-		DrawText(line, FLinearColor::White, DebugOverlayOriginX, y, nullptr, DebugOverlayFontScale, false);
-		y += DebugOverlayLineHeight;
 	}
-#endif
 }
+#endif

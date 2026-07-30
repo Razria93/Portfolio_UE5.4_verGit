@@ -77,14 +77,14 @@
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
-| `CDebugOverlayHUD.cpp:331` | ReadOnly / mutation 분리 | `ResolveDisplayEnemy`는 source line append와 fallback cache refresh를 함께 수행한다. 동작은 맞지만 query와 text build 책임이 섞여 있다. 다음 cleanup에서 target resolve result struct 또는 source-line builder 분리를 검토할 수 있다. |
+| `CDebugOverlayHUD.cpp:373` | ReadOnly / mutation 분리 | `ResolveDisplayEnemy`는 source line append와 fallback cache refresh를 함께 수행한다. 동작은 맞지만 query와 text build 책임이 섞여 있다. 다음 cleanup에서 target resolve result struct 또는 source-line builder 분리를 검토할 수 있다. |
 
 ### DecisionNeeded
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
 | `FDebugOverlaySnapshotStore.cpp:61-71` | ReadOnly / const policy | `ResolveWorld(const UObject*)`에서 `const_cast<UObject*>`를 사용한다. 실제 mutation은 없지만 W05에서 `const_cast`는 위험 신호로 분류하므로, helper signature를 바꿀지 현 상태를 유지할지 판단이 필요하다. |
-| `CDebugOverlayHUD.h:19`, `CDebugOverlayHUD.cpp:331` | API 책임명 | `ResolveDisplayEnemy()`는 이름상 read-only resolve처럼 보이지만 내부에서 cache와 source line을 갱신한다. non-const 자체는 맞지만 이름 또는 책임 분리 여부를 판단해야 한다. |
+| `CDebugOverlayHUD.h:24`, `CDebugOverlayHUD.cpp:373` | API 책임명 | `ResolveDisplayEnemy()`는 이름상 read-only resolve처럼 보이지만 내부에서 cache와 source line을 갱신한다. non-const 자체는 맞지만 이름 또는 책임 분리 여부를 판단해야 한다. |
 
 ## 5. Header / include 정리 검토
 
@@ -168,7 +168,7 @@
 | 위치 | 판단 |
 | --- | --- |
 | `CDebugOverlayGameMode.cpp:7-9` | Shipping에서는 HUDClass를 debug overlay HUD로 지정하지 않는다. |
-| `CDebugOverlayHUD.cpp:431-485` | `DrawHUD` 내부가 `#if !UE_BUILD_SHIPPING`으로 보호되고 `IsEnabled()` gate를 통과해야 그린다. |
+| `CDebugOverlayHUD.cpp:313-370` | `DrawHUD` 내부가 `#if !UE_BUILD_SHIPPING`으로 보호되고 `IsEnabled()` gate를 통과해야 그린다. |
 | `FDebugOverlaySnapshotStore.cpp:18-42`, `209-481` | CVar 선언과 store mutation이 non-shipping guard 안에 있다. Shipping query는 false/empty/no-op로 정리되어 있다. |
 | `CPlayerController.cpp:29-32`, `79-98`, `210-305` | TargetComponent 생성과 Exec 구현이 non-shipping guard 안에 있다. input asset/config 변경 없이 console command로만 접근한다. |
 | `FExecutionOrchestratorDebug.cpp:209-222`, `272-285` | overlay record 호출은 store의 `IsCollecting()` / record API를 통해 shipping no-op 경계에 걸려 있고, 기존 audit CVar return과 분리되어 있다. |
@@ -187,7 +187,7 @@
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
-| `CDebugOverlayHUD.cpp:429-485` | Shipping guard | shipping에서는 `DrawHUD()`가 `Super::DrawHUD()`도 호출하지 않고 완전 no-op이 된다. debug 전용 HUD라면 허용 가능하지만, shipping에서 이 HUD class가 지정될 가능성을 방어하려면 `Super::DrawHUD()` 위치 조정 여부를 결정해야 한다. |
+| `CDebugOverlayHUD.cpp:313-370` | Shipping guard | shipping에서는 `DrawHUD()`가 정의는 유지되지만 `Super::DrawHUD()`도 호출하지 않고 완전 no-op이 된다. debug 전용 HUD라면 허용 가능하지만, shipping에서 이 HUD class가 지정될 가능성을 방어하려면 `Super::DrawHUD()` 위치 조정 여부를 결정해야 한다. |
 | `CDebugOverlayTargetComponent.h:7-24`, `CDebugOverlayTargetComponent.cpp:5-40` | Shipping guard | component class/API 자체는 shipping에서도 컴파일된다. 현재 생성 경로는 `ACPlayerController`에서 non-shipping guard로 차단되어 있으나, debug-only component 정책을 class/API까지 엄격히 적용할지 결정이 필요하다. |
 | `CPlayerController.h:17-24` | Shipping guard / UHT surface | `UFUNCTION(Exec)` 3개가 shipping class interface에도 남고 cpp body만 no-op 처리된다. runtime 동작은 차단되지만 command surface 자체를 shipping에서 제거할지 여부는 UHT/빌드 정책까지 포함해 결정해야 한다. |
 | `CPlayerController.h:30-31` | Shipping guard / reflected member | `DebugOverlayTargetComponent` UPROPERTY가 shipping class layout/reflection에도 남는다. constructor 생성은 non-shipping guard되어 있으나 debug-only reflected member를 shipping에 남길지 판단이 필요하다. |
@@ -198,9 +198,9 @@
 
 | 위치 | 판단 |
 | --- | --- |
-| `CDebugOverlayHUD.cpp:331-425` | fallback chain은 `TargetComponent -> RecentCombatTarget -> WorldScanFallback` 순서로 구현되어 있고, 각 source 문구도 실제 선택 경로와 일치한다. |
-| `CDebugOverlayHUD.cpp:359-381` | recent combat pair는 viewer pawn이 source 또는 target인 경우에만 Enemy로 resolve된다. 무관한 combat event를 Enemy panel source로 승격하지 않는다. |
-| `CDebugOverlayHUD.cpp:403-425` | world scan fallback은 TargetComponent와 RecentCombatTarget 실패 이후에만 실행된다. 다중 enemy는 `Ambiguous(Count=N)`으로 차단되어 임의 선택 evidence가 되지 않는다. |
+| `CDebugOverlayHUD.cpp:373-467` | fallback chain은 `TargetComponent -> RecentCombatTarget -> WorldScanFallback` 순서로 구현되어 있고, 각 source 문구도 실제 선택 경로와 일치한다. |
+| `CDebugOverlayHUD.cpp:401-423` | recent combat pair는 viewer pawn이 source 또는 target인 경우에만 Enemy로 resolve된다. 무관한 combat event를 Enemy panel source로 승격하지 않는다. |
+| `CDebugOverlayHUD.cpp:445-467` | world scan fallback은 TargetComponent와 RecentCombatTarget 실패 이후에만 실행된다. 다중 enemy는 `Ambiguous(Count=N)`으로 차단되어 임의 선택 evidence가 되지 않는다. |
 | `FDebugOverlaySnapshotStore.cpp:149-159` | recent combat pair는 weak actor pair와 name/time/frame/event만 저장하며 snapshot copy에 raw pointer를 넣지 않는다. |
 | `FDebugOverlaySnapshotStore.cpp:338`, `377` | `RecordCombatTargetPacket`, `RecordCombatResult`에서 recent combat pair를 기록하며 기존 audit log format이나 gameplay result 흐름을 변경하지 않는다. |
 
@@ -210,7 +210,7 @@
 | --- | --- | --- |
 | `CPlayerController.cpp:216-220` | source claim 정확도 | `DebugOverlaySelectTarget`은 view trace 실패 시 nearest enemy fallback까지 수행한다. 사용자가 command 이름만 보면 view trace source로 이해할 수 있다. overlay에는 여전히 `EnemySource: TargetComponent`로 표시되므로, target component 내부에 selection method를 기록할지 결정이 필요하다. |
 | `CPlayerController.cpp:212-229` | target set UX | `DebugOverlaySelectTarget` 실패 시 기존 explicit target을 clear한다. fallback chain으로 내려가는 설계에는 맞지만, 실패한 재선택이 기존 TargetComponent 고정을 해제해도 되는지는 운영 정책 판단이 필요하다. |
-| `CDebugOverlayHUD.cpp:385-399` | fallback state 표시 | Recent combat pair가 stale/not matched인 경우 `EnemyRecentCombat: Stale/NotMatched`를 출력한 뒤 WorldScanFallback 또는 None/Ambiguous로 내려간다. 이 중첩 표시는 evidence 설명에는 도움이 되지만 화면이 길어질 수 있다. 유지할지 축약할지 결정이 필요하다. |
+| `CDebugOverlayHUD.cpp:427-442` | fallback state 표시 | Recent combat pair가 stale/not matched인 경우 `EnemyRecentCombat: Stale/NotMatched`를 출력한 뒤 WorldScanFallback 또는 None/Ambiguous로 내려간다. 이 중첩 표시는 evidence 설명에는 도움이 되지만 화면이 길어질 수 있다. 유지할지 축약할지 결정이 필요하다. |
 
 ### Later
 
@@ -263,7 +263,103 @@
 | gameplay flow 오염 | TargetComponent는 debug-only controller-owned component이며 기존 combat/action target flow를 변경하지 않는다. |
 | Stagger getter | read-only getter로 panel 표시만 지원하며 store/event 확장을 하지 않는다. |
 
-## 11. P42~P51 PR 기준 매핑
+## 11. Header / Source API Order 검토
+
+| 파일 | 판단 |
+| --- | --- |
+| `CDebugOverlayTargetComponent.h/.cpp` | constructor 이후 `Has/Get/Get/Get/Set/Clear` 순서가 header와 source에서 일치한다. Field는 source 구현 대응 대상이 아니므로 제외한다. |
+| `FDebugOverlaySnapshotStore.h/.cpp` | `Gate -> Execution Record -> Combat Record -> AI Record -> Event Log -> Snapshot Query -> Lifecycle` 순서가 header와 source에서 일치한다. |
+| `CPlayerController.h/.cpp` | `Debug Overlay Exec -> Lifecycle -> Look Input -> Move Input -> Movement Dispatch -> Action Input -> Debug Overlay Target` 순서가 header와 source에서 일치한다. |
+| `CDebugOverlayHUD.h/.cpp` | 기존 source 구현 순서가 `RefreshCachedEnemyIfNeeded -> ResolveDisplayEnemy -> DrawHUD`였으나, header 선언 흐름에 맞춰 `DrawHUD -> ResolveDisplayEnemy -> RefreshCachedEnemyIfNeeded` 순서로 정리했다. |
+
+`CPlayerController.h`의 Exec command가 field보다 위에 있는 구조는 UCLASS field-first 패턴의 예외지만, source 구현 순서와는 일치한다. Console command entry point 가시성 의도가 있으므로 이번 cleanup에서는 위치를 유지한다.
+
+## 12. Branch File Checklist
+
+이 체크리스트는 `main...HEAD` 기준으로 `feature/debug-overlay-evidence-plan` 브랜치에서 생성하거나 수정한 파일을 정리한다. 리뷰 시 코드/문서/asset 범위를 빠르게 확인하기 위한 목록이다.
+
+### Config / Content
+
+| 상태 | 파일 |
+| --- | --- |
+| M | `Config/DefaultInput.ini` |
+| A | `Content/00_UnitTest/GM_DebugOverlay.uasset` |
+| M | `Content/00_UnitTest/TestRoom.umap` |
+| M | `Content/04_Montage/Defense/00_Guard/M_GuardIdle_Sword_Start.uasset` |
+
+### Pull Request / Debug Overlay 문서
+
+| 상태 | 파일 |
+| --- | --- |
+| M | `Docs/04_Pull_Request/00_Pull_Request_Index.md` |
+| A | `Docs/04_Pull_Request/P52_UE5_Portfolio_Pull_Request.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/README.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_Plan_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_Implementation_Position_Review_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_Final_Decision_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_Minimum_Design_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_SnapshotStore_Implementation_Plan_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_5_Player_Enemy_Extension_Design_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_5_HUD_Panel_Implementation_Plan_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_5_Compact_Display_Subject_Review_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_5_Final_Decision_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_5_Remaining_Refactor_Plan_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Work_Order_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Scope_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Target_Selection_Design_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Target_Component_Implementation_Plan_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Target_Set_Path_Design_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/02_Operation/Debug_Overlay_Operation_Guide_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P0_PIE_Checklist_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_TargetComponent_PIE_Checklist_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md` |
+
+### Evidence Screenshot Package
+
+| 상태 | 파일 |
+| --- | --- |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_block_hit.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_enemy_hit.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_enemy_stagger.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_guard_in.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_guard_out_reguard_lock.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_move_run.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_move_walk.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_parry.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1/debug_overlay_p0_5_round1_player_hit.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1_StaggerCount/debug_overlay_p0_5_round1_stagger_count_idle.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1_StaggerCount/debug_overlay_p0_5_round1_stagger_count_reset.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1_StaggerCount/debug_overlay_p0_5_round1_stagger_count_stack_1.png` |
+| A | `Docs/98_Evidence/01_Screenshot/DebugOverlay/Round1_StaggerCount/debug_overlay_p0_5_round1_stagger_count_stack_2.png` |
+
+### Source
+
+| 상태 | 파일 |
+| --- | --- |
+| M | `Source/Portfolio/Character/Enemy/CEnemy.h` |
+| M | `Source/Portfolio/Character/Player/CPlayer.h` |
+| M | `Source/Portfolio/Controller/CPlayerController.h` |
+| M | `Source/Portfolio/Controller/CPlayerController.cpp` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayGameMode.h` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayGameMode.cpp` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.h` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.h` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.cpp` |
+| M | `Source/Portfolio/Core/Debug/FAICombatBTDebug.cpp` |
+| M | `Source/Portfolio/Core/Debug/FCombatResultDebug.cpp` |
+| M | `Source/Portfolio/Core/Debug/FCombatSignalDebug.cpp` |
+| A | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotTypes.h` |
+| A | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.h` |
+| A | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp` |
+| M | `Source/Portfolio/Core/Debug/FExecutionOrchestratorDebug.cpp` |
+
+## 13. P42~P51 PR 기준 매핑
 
 이 섹션은 `Docs/04_Pull_Request`의 W05 코드 클린 PR 문서 스타일을 기준으로, debug overlay 코드 품질 검토 결과가 어떤 과거 PR 축과 연결되는지 정리한다.
 
@@ -295,7 +391,7 @@
 - Runtime LOD actual 표시와 AI current value 보강은 별도 설계 이후 진행한다.
 - FinalCandidate 촬영/패키징은 P1 완료 이후로 미룬다.
 
-## 12. 다음 작업 제안
+## 14. 다음 작업 제안
 
 1. `LowRiskFix` cleanup 구현
    - include group 정리
