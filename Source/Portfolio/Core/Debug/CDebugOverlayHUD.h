@@ -16,12 +16,12 @@ public:
 
 #if !UE_BUILD_SHIPPING
 private:
-	ACEnemy* ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines);
-	void RefreshCachedEnemyIfNeeded();
-
-private:
 	TWeakObjectPtr<ACEnemy> CachedEnemy;
 	float LastEnemyScanTimeSeconds = -1.f;
 	int32 LastEnemyScanCount = 0;
+
+private:
+	ACEnemy* ResolveDisplayEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines);
+	void RefreshCachedEnemyIfNeeded();
 #endif
 };

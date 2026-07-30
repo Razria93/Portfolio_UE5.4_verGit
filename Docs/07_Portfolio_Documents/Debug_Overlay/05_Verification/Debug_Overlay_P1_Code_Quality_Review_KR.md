@@ -88,6 +88,12 @@
 
 ## 5. Header / include 정리 검토
 
+### Header Layout 기준
+
+기존 프로젝트 UCLASS 헤더는 일반적으로 field를 API 아래에 두는 방식이 아니다. 대체로 생성자 또는 class entry 이후 private/protected `UPROPERTY` / runtime field를 먼저 배치하고, lifecycle / query / mutation / helper API가 뒤따른다.
+
+이 기준은 UCLASS 계열에 적용한다. `FDebugOverlaySnapshotStore`처럼 field가 없는 static utility class는 API-only section 구조를 유지하고, `FDebugOverlaySnapshotTypes`처럼 data struct를 모은 type header는 field-only type 문서로 판단한다.
+
 ### NoIssue
 
 | 위치 | 판단 |
@@ -100,9 +106,17 @@
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
+| `CDebugOverlayHUD.h` | UCLASS header layout | `CachedEnemy`, `LastEnemyScanTimeSeconds`, `LastEnemyScanCount` runtime field가 private helper 아래에 있었다. 기존 UCLASS 패턴에 맞춰 field를 helper 위로 올리는 low-risk cleanup이 가능하다. |
+| `CDebugOverlayTargetComponent.h` | UCLASS header layout | `DebugOverlayTargetActor` field가 public API 아래에 있었다. 파일은 짧지만 UCLASS 패턴과 맞추려면 constructor 이후 private field를 먼저 두고 public query/mutation API를 뒤에 두는 것이 더 일관적이다. |
 | `CPlayerController.cpp:8-12` | include group 순서 | `EngineUtils.h`가 engine header인데 `Core/Debug`와 `Type` project headers 사이에 위치한다. W05 기준상 project internal header를 먼저 모으고 engine header를 뒤로 보내는 정리가 가능하다. |
 | `CDebugOverlayHUD.cpp:13-17` | include group 순서 | `Engine/Canvas.h`, `EngineUtils.h`, `GameFramework/*`가 `Type/CActionKeyTypes.h`보다 앞에 있다. W05 기준으로는 project Type header를 engine header보다 먼저 두는 정리가 가능하다. |
 | `FDebugOverlaySnapshotStore.cpp:3-10` | include group 순서 | `Type/CCombatResultTypes.h`, `Type/CCombatSignalTargetTypes.h`가 Unreal/Engine include 뒤에 있다. W05 기준으로 project Type include를 engine header보다 먼저 배치하는 정리가 가능하다. |
+
+### DecisionNeeded
+
+| 위치 | 기준 | 내용 |
+| --- | --- | --- |
+| `CPlayerController.h:17-31` | UCLASS header layout / Exec visibility | `Debug Overlay Exec` command가 component field보다 위에 있다. 기존 UCLASS field-first 패턴과는 다소 다르지만 console command 가시성 의도가 있을 수 있으므로 이번 cleanup에서는 이동하지 않는다. |
 
 ### Later
 

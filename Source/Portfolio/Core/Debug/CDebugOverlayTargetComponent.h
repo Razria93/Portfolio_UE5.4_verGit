@@ -12,6 +12,9 @@ class PORTFOLIO_API UCDebugOverlayTargetComponent : public UActorComponent
 public:
 	UCDebugOverlayTargetComponent();
 
+private:
+	TWeakObjectPtr<AActor> DebugOverlayTargetActor;
+
 public:
 	bool HasDebugOverlayTarget() const;
 	AActor* GetDebugOverlayTargetActor() const;
@@ -19,7 +22,4 @@ public:
 	FString GetDebugOverlayTargetSource() const;
 	void SetDebugOverlayTarget(AActor* InTargetActor);
 	void ClearDebugOverlayTarget();
-
-private:
-	TWeakObjectPtr<AActor> DebugOverlayTargetActor;
 };
