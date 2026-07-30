@@ -2,9 +2,9 @@
 
 ## 1. 목적
 
-이 문서는 P1 debug overlay의 TargetComponent 기반 Enemy source가 PIE에서 실제로 표시되는지 확인하기 위한 검증 체크리스트다.
+이 문서는 P1 debug overlay의 Enemy panel source가 PIE에서 최신 명시 target 정책대로 동작하는지 확인하기 위한 체크리스트다.
 
-검증 대상은 다음 Exec command다.
+검증 대상 command는 다음 3개다.
 
 ```text
 DebugOverlaySelectTarget
@@ -12,9 +12,22 @@ DebugOverlaySelectNearestTarget
 DebugOverlayClearTarget
 ```
 
-이 문서는 최종 촬영 후보를 고르는 문서가 아니다. 기능 검증과 failure branch 확인을 위한 문서이며, 최종 촬영/패키징은 P1 검증 이후 별도 단계에서 진행한다.
+이번 체크리스트는 최종 촬영/패키징 문서가 아니다. P1 TargetComponent source type 구현 이후, 기능 동작과 실패 분기를 확인하기 위한 검증 문서다.
 
-## 2. 사전 조건
+## 2. 현재 코드 전제
+
+| 항목 | 기준 |
+| --- | --- |
+| TargetComponent source type | 구현 완료 |
+| 기본 Enemy source | `TargetComponent.Trace`, `TargetComponent.Nearest`, `None` |
+| 명시 target 없음 | `EnemySource: None` |
+| `RecentCombatTarget` | 기본 Enemy panel source로 자동 사용하지 않음 |
+| `WorldScanFallback` | 기본 Enemy panel source로 자동 사용하지 않음 |
+| 실패/clear 정책 | 기존 target clear 후 `EnemySource: None` |
+
+Enemy panel은 이제 자동으로 Enemy를 추정해 채우는 화면이 아니다. `DebugOverlaySelectTarget` 또는 `DebugOverlaySelectNearestTarget`으로 명시 선택된 target만 P1 target evidence로 취급한다.
+
+## 3. 사전 조건
 
 | 항목 | 기준 |
 | --- | --- |
@@ -27,25 +40,19 @@ DebugOverlayClearTarget
 | EventLog line | `Portfolio.DebugOverlay.EventLogLimit 5` 권장 |
 | asset 저장 | `.umap`, `.uasset` 저장은 의도적으로만 수행 |
 
-## 3. 실행 명령
+## 4. 실행 명령과 기대값
 
 PIE console에서 다음 명령을 실행한다.
 
-```text
-DebugOverlaySelectTarget
-DebugOverlaySelectNearestTarget
-DebugOverlayClearTarget
-```
+| 명령 | 동작 | 성공 기대값 | 실패 기대값 |
+| --- | --- | --- | --- |
+| `DebugOverlaySelectTarget` | camera forward trace로 `ACEnemy`를 명시 선택 | `EnemySource: TargetComponent.Trace` | 기존 target clear 후 `EnemySource: None` |
+| `DebugOverlaySelectNearestTarget` | player pawn 기준 nearest `ACEnemy`를 명시 선택 | `EnemySource: TargetComponent.Nearest` | 기존 target clear 후 `EnemySource: None` |
+| `DebugOverlayClearTarget` | explicit target clear | `EnemySource: None` | 해당 없음 |
 
-명령 의미:
+`DebugOverlaySelectTarget`은 trace 실패 시 nearest로 자동 하강하지 않는다. nearest 확인이 필요하면 `DebugOverlaySelectNearestTarget`을 별도로 실행한다.
 
-| 명령 | 의미 |
-| --- | --- |
-| `DebugOverlaySelectTarget` | camera forward trace로 `ACEnemy`를 찾는다. 실패하면 explicit target을 clear한다. |
-| `DebugOverlaySelectNearestTarget` | player pawn 기준 nearest `ACEnemy`를 찾는다. 실패하면 explicit target을 clear한다. |
-| `DebugOverlayClearTarget` | `UCDebugOverlayTargetComponent`의 explicit target만 clear한다. Store recent combat pair나 world scan fallback은 지우지 않는다. |
-
-## 4. 기본 표시 확인
+## 5. 기본 화면 확인
 
 PIE 시작 후 overlay에 다음 구조가 보이는지 확인한다.
 
@@ -59,156 +66,160 @@ PIE 시작 후 overlay에 다음 구조가 보이는지 확인한다.
 [Event Log]
 ```
 
-P1 TargetComponent 검증에서는 Enemy panel의 source 관련 line을 우선 확인한다.
+P1 TargetComponent 검증에서는 `[Enemy]` 아래 source line을 우선 확인한다.
 
-## 5. 검증 시나리오
+## 6. 검증 시나리오
 
 | 순서 | 테스트 액션 | 기대 결과 | 실패 시 확인 |
 | --- | --- | --- | --- |
-| 1 | Enemy를 화면 중앙에 두고 `DebugOverlaySelectTarget` 실행 | `EnemySource: TargetComponent.Trace`, `EnemyTarget: Selected=...` | trace channel, Enemy collision, command 호출 여부 |
-| 2 | Enemy를 바라보지 않고 `DebugOverlaySelectTarget` 실행 | trace 실패 후 `EnemySource: None` | explicit target clear 여부 |
-| 3 | 근처 Enemy 기준 `DebugOverlaySelectNearestTarget` 실행 | `EnemySource: TargetComponent.Nearest`, `EnemyTarget: Selected=...` | nearest radius `1500.f`, TestRoom enemy 거리 |
-| 4 | nearest 대상이 없는 상태에서 `DebugOverlaySelectNearestTarget` 실행 | `EnemySource: None` | explicit target clear 여부 |
-| 5 | `DebugOverlayClearTarget` 실행 | `EnemySource: None` | explicit target clear 여부 |
-| 6 | combat event 발생 후 clear 실행 | `RecentCombatTarget`이 자동으로 Enemy panel을 채우지 않음 | `Portfolio.DebugOverlay.Collect`, combat pair 기록 여부 |
-| 7 | target 없음 상태에서 Enemy가 월드에 1명 존재 | `WorldScanFallback`이 자동으로 Enemy panel을 채우지 않음 | P1 decision 적용 여부 |
+| 1 | PIE 진입 직후 command 실행 전 확인 | `EnemySource: None` | 이전 target 또는 fallback source가 남아 있는지 |
+| 2 | Enemy를 화면 중앙에 두고 `DebugOverlaySelectTarget` 실행 | `EnemySource: TargetComponent.Trace`, `EnemyTarget: Selected=...` | trace channel, Enemy collision, controller command 호출 여부 |
+| 3 | Enemy를 바라보지 않고 `DebugOverlaySelectTarget` 실행 | `EnemySource: None` | 실패 시 기존 target clear 여부 |
+| 4 | Enemy 근처에서 `DebugOverlaySelectNearestTarget` 실행 | `EnemySource: TargetComponent.Nearest`, `EnemyTarget: Selected=...` | nearest radius `1500.f`, player pawn 위치, Enemy 거리 |
+| 5 | Enemy가 없거나 너무 먼 상태에서 `DebugOverlaySelectNearestTarget` 실행 | `EnemySource: None` | 실패 시 기존 target clear 여부 |
+| 6 | `DebugOverlayClearTarget` 실행 | `EnemySource: None` | clear 후 이전 target source가 남아 있는지 |
+| 7 | combat event 이후 target 없이 확인 | `RecentCombatTarget`이 Enemy panel을 자동으로 채우지 않음 | TargetComponent decision 적용 여부 |
+| 8 | world에 Enemy가 있어도 target 없이 확인 | `WorldScanFallback`이 Enemy panel을 자동으로 채우지 않음 | HUD 기본 source path가 자동 fallback을 호출하는지 |
 
-## 6. 기대 표시
+## 7. 기대 표시 예시
 
-### 6.1 TargetComponent 선택 성공
+### 7.1 Trace 선택 성공
 
 ```text
 EnemySource: TargetComponent.Trace
 EnemyTarget: Selected=BP_CEnemy_C_1
 ```
 
-또는:
+의미:
+
+- 사용자가 camera forward trace로 Enemy를 명시 선택했다.
+- P1 target selection evidence로 사용할 수 있다.
+
+### 7.2 Nearest 선택 성공
 
 ```text
 EnemySource: TargetComponent.Nearest
 EnemyTarget: Selected=BP_CEnemy_C_1
 ```
 
-해석:
+의미:
 
-- 사용자가 명시적으로 debug target을 선택한 상태다.
-- 이 상태만 TargetComponent 기반 Enemy source evidence로 사용한다.
+- 사용자가 nearest command로 Enemy를 명시 선택했다.
+- camera trace evidence는 아니며, 명시 command 기반 보조 target selection evidence다.
 
-### 6.2 RecentCombatTarget diagnostic
-
-```text
-EnemySource: RecentCombatTarget
-EnemyRecentCombat: Source=BP_CPlayer_0 Target=BP_CEnemy_C_1 Age=0.42
-```
-
-해석:
-
-- P1 기본 HUD path에서는 target 없음 상태를 자동으로 채우지 않는다.
-- 이후 diagnostic mode를 추가할 경우 "선택 target"이 아니라 "최근 전투 상대" evidence로만 해석한다.
-
-### 6.3 RecentCombatTarget stale/not matched
-
-```text
-EnemyRecentCombat: Stale Source=... Target=... Age=...
-EnemyRecentCombat: NotMatched Source=... Target=... Age=...
-```
-
-해석:
-
-- 최근 combat pair는 존재하지만 현재 player 기준 Enemy source로 사용하기 어렵다.
-- 이 line은 diagnostic 후보이며, P1 기본 target selection 성공 evidence로 사용하지 않는다.
-
-### 6.4 WorldScanFallback diagnostic
-
-```text
-EnemySource: WorldScanFallback
-EnemyFallback: Selected=BP_CEnemy_C_1 Policy=FirstValid Count=1
-```
-
-해석:
-
-- P1 기본 HUD path에서는 target 없음 상태를 자동으로 채우지 않는다.
-- final evidence에서 TargetComponent 기반 선택처럼 설명하지 않는다.
-
-### 6.5 실패/보류 상태
+### 7.3 target 없음
 
 ```text
 EnemySource: None
-EnemySource: Ambiguous(Count=N)
-EnemySource: Stale
 ```
 
-해석:
+의미:
 
-- `None`: Enemy를 찾지 못했다.
-- `Ambiguous(Count=N)`: diagnostic world scan 후보가 여러 개라 단일 Enemy source로 주장하지 않는다.
-- `Stale`: cached fallback target이 더 이상 유효하지 않다.
+- 현재 명시 target이 없다.
+- Enemy actor-derived line은 `N/A`, `None`, `NotCaptured` 계열로 보일 수 있다.
+- target selection 성공 evidence로 사용하지 않는다.
 
-## 7. 실패 분기
+## 8. Diagnostic 후보 분리
 
-### 7.1 Exec command가 호출되지 않음
+아래 항목은 P1 기본 Enemy panel 성공 evidence가 아니다. 후속 diagnostic mode 또는 source 검증 후보로만 다룬다.
+
+| 항목 | 현재 P1 기본 정책 |
+| --- | --- |
+| `RecentCombatTarget` | target 없음 상태를 자동으로 채우지 않음 |
+| `WorldScanFallback` | target 없음 상태를 자동으로 채우지 않음 |
+| `Stale` | 기본 성공 evidence 아님 |
+| `Ambiguous(Count=N)` | 기본 성공 evidence 아님 |
+| `NotMatched` | 기본 성공 evidence 아님 |
+
+기존 helper가 코드에 남아 있더라도, 기본 `DrawHUD` source path에서 자동 호출되지 않는 것이 이번 P1 정책이다.
+
+## 9. 실패 분기
+
+### 9.1 Exec command가 호출되지 않음
 
 확인:
 
-1. PIE console에서 명령을 정확히 입력했는지 확인한다.
-2. 현재 player controller가 `ACPlayerController`인지 확인한다.
+1. PIE console에 명령을 정확히 입력했는지 확인한다.
+2. 현재 PlayerController가 `ACPlayerController`인지 확인한다.
 3. 실행 환경이 shipping이 아닌지 확인한다.
 
-### 7.2 `DebugOverlaySelectTarget` 후 TargetComponent가 표시되지 않음
+### 9.2 `DebugOverlaySelectTarget` 성공이 보이지 않음
 
 확인:
 
 1. Enemy가 camera forward trace 경로에 있는지 확인한다.
 2. `ECC_Visibility` trace가 Enemy collision에 막히는지 확인한다.
-3. nearest 확인이 필요하면 `DebugOverlaySelectNearestTarget`을 별도로 실행한다.
-4. 실패하면 explicit target은 clear되고 `EnemySource: None`으로 표시되는 것이 정상이다.
+3. trace 실패 시 `EnemySource: None`이 표시되는 것은 정상이다.
+4. nearest 선택을 확인하려면 `DebugOverlaySelectNearestTarget`을 별도로 실행한다.
 
-### 7.3 nearest command가 기대와 다른 Enemy를 선택함
+### 9.3 `DebugOverlaySelectNearestTarget`이 기대와 다른 Enemy를 선택함
 
 확인:
 
 1. nearest command는 player pawn 위치 기준 거리 우선이다.
-2. 다중 enemy에서는 카메라 방향보다 거리가 우선될 수 있다.
-3. 이 경우 TargetComponent evidence로는 "nearest command로 선택된 target"이라고 설명한다.
+2. camera 방향보다 거리가 우선될 수 있다.
+3. 이 경우 evidence 설명은 "nearest command로 명시 선택한 target"으로 한정한다.
 
-### 7.4 clear 이후에도 TargetComponent가 남아 보임
+### 9.4 실패 후 이전 target이 남아 보임
+
+실패 조건:
+
+- `DebugOverlaySelectTarget` 실패 후 이전 `TargetComponent.Trace/Nearest`가 계속 보임
+- `DebugOverlaySelectNearestTarget` 실패 후 이전 `TargetComponent.Trace/Nearest`가 계속 보임
+
+기대 동작:
+
+```text
+EnemySource: None
+```
+
+### 9.5 clear 이후 fallback이 자동 표시됨
+
+실패 조건:
+
+- `DebugOverlayClearTarget` 이후 `EnemySource: RecentCombatTarget`이 자동 표시됨
+- `DebugOverlayClearTarget` 이후 `EnemySource: WorldScanFallback`이 자동 표시됨
+
+기대 동작:
+
+```text
+EnemySource: None
+```
+
+### 9.6 target 없음 상태에서 Enemy actor 값이 성공 evidence처럼 보임
 
 확인:
 
-1. `DebugOverlayClearTarget`을 실행했는지 확인한다.
-2. `EnemySource: TargetComponent.Trace/Nearest`가 사라졌는지 확인한다.
-3. clear 이후 `EnemySource: None`으로 표시되는지 확인한다.
+1. `[Enemy]` panel source가 `EnemySource: None`인지 확인한다.
+2. target 없음 상태의 Enemy actor-derived 값은 성공 evidence로 사용하지 않는다.
+3. 실제 캡처 설명에서는 "명시 target 없음"으로 기록한다.
 
-### 7.5 target 없음 상태에서 fallback이 자동 표시됨
-
-확인:
-
-1. P1 decision 적용 후에는 target 없음 상태에서 `RecentCombatTarget`이나 `WorldScanFallback`이 Enemy panel을 자동으로 채우면 안 된다.
-2. `DebugOverlayClearTarget` 후 `EnemySource: None`이 표시되는지 확인한다.
-3. diagnostic 후보는 target selection 성공 evidence로 사용하지 않는다.
-
-## 8. 확인 기준
+## 10. 확인 기준
 
 - `TargetComponent.Trace`는 camera trace 기반 명시 target source로만 주장한다.
 - `TargetComponent.Nearest`는 nearest command 기반 명시 target source로만 주장한다.
-- `RecentCombatTarget`은 P1 기본 source chain에서 제외하고 diagnostic 후보로만 다룬다.
-- `WorldScanFallback`은 P1 기본 source chain에서 제외하고 diagnostic 후보로만 다룬다.
+- `None`은 target selection 성공 evidence가 아니다.
+- `RecentCombatTarget`은 P1 기본 source에서 제외하고 diagnostic 후보로만 다룬다.
+- `WorldScanFallback`은 P1 기본 source에서 제외하고 diagnostic 후보로만 다룬다.
 - dead enemy 제외는 아직 적용하지 않았으므로 성공 evidence처럼 말하지 않는다.
 - trace channel, trace distance, nearest radius는 P1 debug helper 기본값으로만 설명한다.
 - 실제 코드에서 읽지 못한 값을 성공 evidence처럼 표시하지 않는다.
 
-## 9. 완료 기준
+## 11. 완료 기준
 
 | 완료 항목 | 기준 |
 | --- | --- |
-| TargetComponent source | `DebugOverlaySelectTarget` 후 `EnemySource: TargetComponent.Trace`, `DebugOverlaySelectNearestTarget` 후 `EnemySource: TargetComponent.Nearest` 표시 |
-| Target summary | `EnemyTarget: Selected=...` 표시 |
+| Trace source | `DebugOverlaySelectTarget` 후 `EnemySource: TargetComponent.Trace` 표시 |
+| Nearest source | `DebugOverlaySelectNearestTarget` 후 `EnemySource: TargetComponent.Nearest` 표시 |
+| Target summary | source 성공 시 `EnemyTarget: Selected=...` 표시 |
+| Trace 실패 | 기존 target clear 후 `EnemySource: None` 표시 |
+| Nearest 실패 | 기존 target clear 후 `EnemySource: None` 표시 |
 | Clear | `DebugOverlayClearTarget` 후 `EnemySource: None` 표시 |
-| Recent diagnostic | combat event 이후에도 clear 상태에서는 자동 Enemy source로 승격하지 않음 |
-| WorldScan diagnostic | target 없음 상태에서 자동 Enemy source로 승격하지 않음 |
-| 실패 상태 | `None`, `Ambiguous(Count=N)`, `Stale`, `NotMatched`를 성공 evidence처럼 사용하지 않음 |
+| Recent diagnostic | target 없음 상태에서 자동 Enemy source로 승격되지 않음 |
+| WorldScan diagnostic | target 없음 상태에서 자동 Enemy source로 승격되지 않음 |
+| 문서 claim | 실제 코드 정책과 일치 |
 
-## 10. 결과 기록 템플릿
+## 12. 결과 기록 템플릿
 
 ```text
 날짜:
@@ -217,22 +228,23 @@ EnemySource: Stale
 GameMode/HUD 연결:
 CVar:
 
-DebugOverlaySelectTarget:
-DebugOverlaySelectNearestTarget:
+PIE 진입 직후:
+DebugOverlaySelectTarget 성공:
+DebugOverlaySelectTarget 실패:
+DebugOverlaySelectNearestTarget 성공:
+DebugOverlaySelectNearestTarget 실패:
 DebugOverlayClearTarget:
 
-TargetComponent 표시:
-RecentCombatTarget diagnostic:
-WorldScanFallback diagnostic:
-None/Ambiguous/Stale 상태:
+RecentCombatTarget 자동 표시 여부:
+WorldScanFallback 자동 표시 여부:
 
 Evidence 사용 가능 항목:
 Evidence 제외 항목:
 후속 조치:
 ```
 
-## 11. 다음 단계
+## 13. 다음 단계
 
-이 체크리스트를 통과하면 다음 작업은 `P1 EventLog category filter 설계` 또는 `P1 TargetComponent PIE 수동 검증 결과 정리` 중 하나로 진행한다.
+이 체크리스트를 통과하면 다음 작업은 `P1 TargetComponent PIE 수동 검증 결과 정리` 또는 `P1 EventLog category filter 설계`로 진행한다.
 
-실제 촬영/패키징은 P1 기능 검증이 닫힌 뒤 진행한다.
+최종 촬영/패키징은 P1 기능 검증이 닫힌 뒤 별도 단계에서 진행한다.
