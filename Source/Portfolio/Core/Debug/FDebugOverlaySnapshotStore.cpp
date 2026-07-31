@@ -47,6 +47,18 @@ namespace
 		TEXT("Filter debug overlay event log. Values: All, Execution, Combat, AI."),
 		ECVF_Default);
 
+	TAutoConsoleVariable<int32> CVarDebugOverlayHideNoiseEvents(
+		TEXT("Portfolio.DebugOverlay.HideNoiseEvents"),
+		0,
+		TEXT("Hide noisy debug overlay event log entries. 0: show all, 1: hide reject/ignore noise."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarDebugOverlayShowCollisionWindowEvents(
+		TEXT("Portfolio.DebugOverlay.ShowCollisionWindowEvents"),
+		1,
+		TEXT("Show debug overlay collision window event log entries. 0: hide, 1: show."),
+		ECVF_Default);
+
 	struct FDebugOverlayWorldStore
 	{
 		FDebugOverlaySnapshot Snapshot;
@@ -61,8 +73,8 @@ namespace
 
 	int32 GetClampedEventLogDisplayLimit();
 	FString GetCanonicalEventLogFilter();
-	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter);
-	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName);
+	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters);
+	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters);
 
 	UWorld* ResolveWorld(const UObject* InWorldContextObject)
 	{
@@ -167,6 +179,91 @@ namespace
 		}
 
 		return InEntry.Category.Equals(filter, ESearchCase::IgnoreCase);
+	}
+
+	FString ExtractSummaryFieldValue(const FString& InSummary, const FString& InFieldName)
+	{
+		TArray<FString> summaryParts;
+		InSummary.ParseIntoArray(summaryParts, TEXT("|"), true);
+
+		for (FString summaryPart : summaryParts)
+		{
+			summaryPart.TrimStartAndEndInline();
+
+			const FString colonPrefix = FString::Printf(TEXT("%s:"), *InFieldName);
+			if (summaryPart.StartsWith(colonPrefix, ESearchCase::IgnoreCase))
+			{
+				FString value = summaryPart.RightChop(colonPrefix.Len());
+				value.TrimStartAndEndInline();
+				return value;
+			}
+
+			const FString equalsPrefix = FString::Printf(TEXT("%s="), *InFieldName);
+			if (summaryPart.StartsWith(equalsPrefix, ESearchCase::IgnoreCase))
+			{
+				FString value = summaryPart.RightChop(equalsPrefix.Len());
+				value.TrimStartAndEndInline();
+				return value;
+			}
+		}
+
+		return FString();
+	}
+
+	bool IsExecutionNoiseEvent(const FDebugOverlayEventEntry& InEntry)
+	{
+		if (!InEntry.Category.Equals(TEXT("Execution"), ESearchCase::IgnoreCase)) return false;
+		if (!InEntry.EventName.Equals(TEXT("DecisionResolved"), ESearchCase::IgnoreCase)) return false;
+
+		const FString decision = ExtractSummaryFieldValue(InEntry.Summary, TEXT("Decision"));
+		if (decision.Equals(TEXT("Reject"), ESearchCase::IgnoreCase)
+			|| decision.Equals(TEXT("Ignore"), ESearchCase::IgnoreCase))
+		{
+			return true;
+		}
+
+		const FString rejectReason = ExtractSummaryFieldValue(InEntry.Summary, TEXT("RejectReason"));
+		return !rejectReason.IsEmpty() && !rejectReason.Equals(TEXT("None"), ESearchCase::IgnoreCase);
+	}
+
+	bool IsCollisionWindowEvent(const FDebugOverlayEventEntry& InEntry)
+	{
+		if (!InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)) return false;
+
+		return InEntry.EventName.Equals(TEXT("CollisionEnabled"), ESearchCase::IgnoreCase)
+			|| InEntry.EventName.Equals(TEXT("CollisionDisabled"), ESearchCase::IgnoreCase)
+			|| InEntry.EventName.Equals(TEXT("CollisionDisabledIgnored"), ESearchCase::IgnoreCase);
+	}
+
+	bool IsEventExcludedByDisplayFilters(const FDebugOverlayEventEntry& InEntry)
+	{
+		const bool bHideNoiseEvents = CVarDebugOverlayHideNoiseEvents.GetValueOnGameThread() != 0;
+		const bool bShowCollisionWindowEvents = CVarDebugOverlayShowCollisionWindowEvents.GetValueOnGameThread() != 0;
+
+		if (bHideNoiseEvents)
+		{
+			if (IsExecutionNoiseEvent(InEntry)) return true;
+			if (InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
+				&& InEntry.EventName.Equals(TEXT("CollisionDisabledIgnored"), ESearchCase::IgnoreCase))
+			{
+				return true;
+			}
+		}
+
+		if (!bShowCollisionWindowEvents && IsCollisionWindowEvent(InEntry))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	bool ShouldIncludeEventForDisplay(const FDebugOverlayEventEntry& InEntry, const FString& InFilter, bool bApplyDisplayFilters)
+	{
+		if (!DoesEventMatchFilter(InEntry, InFilter)) return false;
+		if (bApplyDisplayFilters && IsEventExcludedByDisplayFilters(InEntry)) return false;
+
+		return true;
 	}
 
 	bool DoesEventMatchSubject(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
@@ -289,7 +386,7 @@ namespace
 		InStore.NextEventIndex = (InStore.NextEventIndex + 1) % DebugOverlayEventStoreCapacity;
 		InStore.EventCount = FMath::Min(InStore.EventCount + 1, DebugOverlayEventStoreCapacity);
 
-		InStore.Snapshot.RecentEvents = GetRecentEventsCopyFromStore(InStore, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"));
+		InStore.Snapshot.RecentEvents = GetRecentEventsCopyFromStore(InStore, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"), false);
 	}
 
 	void RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
@@ -304,7 +401,7 @@ namespace
 		InStore.bHasRecentCombatPair = true;
 	}
 
-	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter)
+	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters)
 	{
 		TArray<FDebugOverlayEventEntry> result;
 
@@ -314,7 +411,7 @@ namespace
 		for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
 		{
 			const int32 index = (InStore.NextEventIndex - 1 - i + DebugOverlayEventStoreCapacity) % DebugOverlayEventStoreCapacity;
-			if (InStore.EventRing.IsValidIndex(index) && DoesEventMatchFilter(InStore.EventRing[index], InFilter))
+			if (InStore.EventRing.IsValidIndex(index) && ShouldIncludeEventForDisplay(InStore.EventRing[index], InFilter, bApplyDisplayFilters))
 			{
 				result.Add(InStore.EventRing[index]);
 			}
@@ -323,7 +420,7 @@ namespace
 		return result;
 	}
 
-	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName)
+	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters)
 	{
 		TArray<FDebugOverlayEventEntry> result;
 		if (InSubjectName.IsEmpty()) return result;
@@ -337,7 +434,7 @@ namespace
 			if (!InStore.EventRing.IsValidIndex(index)) continue;
 
 			const FDebugOverlayEventEntry& entry = InStore.EventRing[index];
-			if (DoesEventMatchFilter(entry, InFilter) && DoesEventMatchSubject(entry, InSubjectName))
+			if (ShouldIncludeEventForDisplay(entry, InFilter, bApplyDisplayFilters) && DoesEventMatchSubject(entry, InSubjectName))
 			{
 				result.Add(MakeSubjectDisplayEventEntry(entry, InSubjectName));
 			}
@@ -627,7 +724,7 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
-	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, TEXT("All"));
+	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, TEXT("All"), true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -639,7 +736,7 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
-	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter);
+	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -651,7 +748,7 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForSu
 	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
-	return GetRecentEventsForSubjectCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, InSubjectName);
+	return GetRecentEventsForSubjectCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, InSubjectName, true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -668,7 +765,7 @@ bool FDebugOverlaySnapshotStore::TryGetSnapshotCopy(const UObject* InWorldContex
 	if (!store) return false;
 
 	OutSnapshot = store->Snapshot;
-	OutSnapshot.RecentEvents = GetRecentEventsCopyFromStore(*store, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"));
+	OutSnapshot.RecentEvents = GetRecentEventsCopyFromStore(*store, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"), false);
 	return true;
 #else
 	return false;
