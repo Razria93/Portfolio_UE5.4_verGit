@@ -35,6 +35,7 @@ namespace
 	static constexpr float DebugOverlayRightMargin = 24.f;
 	static constexpr float DebugOverlayBottomMargin = 24.f;
 	static constexpr float DebugOverlayMinEventLogPanelWidth = 420.f;
+	static constexpr float DebugOverlayInteractionPanelWidth = 520.f;
 	static constexpr float DebugOverlayEnemyScanCooldownSeconds = 0.5f;
 	static constexpr float DebugOverlayRecentCombatTargetStaleSeconds = 3.0f;
 	static constexpr float DebugOverlayRecentAIEventStaleSeconds = 3.0f;
@@ -430,9 +431,8 @@ namespace
 
 		if (bEventStale)
 		{
-			AppendOverlayLine(InOutLines, TEXT("Stale: true"));
-			AppendOverlayLine(InOutLines, FString::Printf(TEXT("Age: %s"), *FormatAgeSeconds(eventAge)));
-			AppendOverlayLine(InOutLines, FString::Printf(TEXT("LastPawn: %s"), *InSnapshot.LastAI.PawnName));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("Stale Time: %ss"), *FormatAgeSeconds(eventAge)));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("Last Pawn: %s"), *InSnapshot.LastAI.PawnName));
 			AppendOverlayLine(InOutLines, TEXT("Note: Not current AI evidence"));
 			return;
 		}
@@ -771,6 +771,8 @@ void ACDebugOverlayHUD::DrawHUD()
 	lines.Reserve(32);
 	TArray<FString> eventLogLines;
 	eventLogLines.Reserve(eventLogLimit + 2);
+	TArray<FString> interactionLines;
+	interactionLines.Reserve(16);
 
 	AppendOverlayLine(lines, TEXT("[Debug Overlay Pannel_01]"));
 	AppendActorPanelLines(lines, TEXT("[Player]"), pawn, GetWorld(), bHasSnapshot);
@@ -788,12 +790,12 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendEnemyCurrentAIBlock(lines, enemy);
 	AppendEnemyRecentAIEventBlock(lines, enemy, snapshot, bHasSnapshot, GetWorld());
 
-	AppendOverlayLine(lines, TEXT(""));
-	AppendOverlayLine(lines, TEXT("[Interaction]"));
-	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
-
 	AppendOverlayLine(eventLogLines, TEXT("[Debug Overlay Pannel_02]"));
 	AppendEventLogBlock(eventLogLines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
+
+	AppendOverlayLine(interactionLines, TEXT("[Debug Overlay Pannel_03]"));
+	AppendOverlayLine(interactionLines, TEXT("[Interaction]"));
+	AppendSnapshotLines(interactionLines, snapshot, bHasSnapshot);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
 	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
@@ -819,7 +821,16 @@ void ACDebugOverlayHUD::DrawHUD()
 	{
 		const float eventLogBackgroundX = backgroundX + backgroundWidth + DebugOverlayPanelGap;
 		const float eventLogBackgroundY = backgroundY;
-		const float eventLogAvailableWidth = FMath::Max(0.f, Canvas->SizeX - eventLogBackgroundX - DebugOverlayRightMargin);
+		const float rightPanelAvailableWidth = FMath::Max(0.f, Canvas->SizeX - eventLogBackgroundX - DebugOverlayRightMargin);
+		const bool bCanDrawInteractionPanel = !interactionLines.IsEmpty()
+			&& rightPanelAvailableWidth >= DebugOverlayMinEventLogPanelWidth + DebugOverlayPanelGap + DebugOverlayInteractionPanelWidth;
+		const float interactionBackgroundWidth = bCanDrawInteractionPanel ? DebugOverlayInteractionPanelWidth : 0.f;
+		const float interactionBackgroundX = bCanDrawInteractionPanel
+			? Canvas->SizeX - DebugOverlayRightMargin - interactionBackgroundWidth
+			: 0.f;
+		const float eventLogAvailableWidth = bCanDrawInteractionPanel
+			? FMath::Max(0.f, interactionBackgroundX - DebugOverlayPanelGap - eventLogBackgroundX)
+			: rightPanelAvailableWidth;
 		const float eventLogAvailableHeight = FMath::Max(0.f, Canvas->SizeY - eventLogBackgroundY - DebugOverlayBottomMargin);
 		const float maxEventLogTextHeight = FMath::Max(0.f, eventLogAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
 		const int32 eventLogLineCount = CalculateVisibleOverlayLineCount(eventLogLines, maxEventLogTextHeight, false, true);
@@ -847,6 +858,38 @@ void ACDebugOverlayHUD::DrawHUD()
 				eventLogBackgroundHeight,
 				false,
 				true);
+		}
+
+		if (bCanDrawInteractionPanel)
+		{
+			const float interactionAvailableHeight = FMath::Max(0.f, Canvas->SizeY - eventLogBackgroundY - DebugOverlayBottomMargin);
+			const float maxInteractionTextHeight = FMath::Max(0.f, interactionAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
+			const int32 interactionLineCount = CalculateVisibleOverlayLineCount(interactionLines, maxInteractionTextHeight, true, false);
+			TArray<FString> visibleInteractionLines;
+			visibleInteractionLines.Reserve(interactionLineCount);
+			for (int32 lineIndex = 0; lineIndex < interactionLineCount; ++lineIndex)
+			{
+				visibleInteractionLines.Add(interactionLines[lineIndex]);
+			}
+
+			const float interactionBackgroundHeight = FMath::Min(
+				CalculateOverlayLinesHeight(visibleInteractionLines, true, false) + (DebugOverlayBackgroundPadding * 2.f),
+				interactionAvailableHeight);
+
+			if (interactionBackgroundHeight > 0.f && !visibleInteractionLines.IsEmpty())
+			{
+				DrawOverlayLines(
+					*this,
+					visibleInteractionLines,
+					interactionBackgroundX + DebugOverlayBackgroundPadding,
+					eventLogBackgroundY + DebugOverlayBackgroundPadding,
+					interactionBackgroundX,
+					eventLogBackgroundY,
+					interactionBackgroundWidth,
+					interactionBackgroundHeight,
+					true,
+					false);
+			}
 		}
 	}
 #endif
