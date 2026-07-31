@@ -6,11 +6,15 @@
 
 이번 문서는 촬영 실행이나 패키징 결과가 아니라 촬영 전 준비 기준이다.
 
+P1 Closure Review는 완료된 상태로 본다. FinalCandidate 촬영은 P1 기능 closure 이후 새로 촬영한 파일만 대상으로 한다.
+
 Round1, Round1_StaggerCount, PIE 검증 캡처는 FinalCandidate로 승격하지 않는다. 최종 후보는 P1 마감 기준을 통과한 뒤 새로 촬영한 파일만 사용한다.
 
 ## 2. 현재 P1 HUD 기준
 
 P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
+
+`Pannel` 표기는 현재 runtime style-lock 표시값이므로 FinalCandidate 문서와 파일 설명에서 임의로 `Panel`로 정정하지 않는다.
 
 ### 2.1 `Pannel_01`
 
@@ -138,13 +142,15 @@ P1 FinalCandidate 필수 장면은 다음을 기준으로 한다.
 | 12 | Stagger Count stack 2 | Enemy `Stagger: 2/3` | `Combat` |
 | 13 | Stagger Count reset | Enemy stagger 이후 `0/3` reset | `Combat` |
 | 14 | TargetComponent.Nearest selected | `EnemySource: TargetComponent.Nearest` | `All` |
-| 15 | Interaction Recent Combat damage breakdown | `Request / Mitigated / Final / Commit` | `Combat` |
-| 16 | EventLog All | `[Event Log: All]` | `All` |
-| 17 | EventLog Execution | `[Event Log: Execution]` | `Execution` |
-| 18 | EventLog Combat | `[Event Log: Combat]` | `Combat` |
-| 19 | EventLog AI | `[Event Log: AI]` | `AI` |
-| 20 | Enemy Current AI visible | `[Current AI]` blackboard 값 | `AI` |
-| 21 | Enemy Recent AI Event visible 또는 stale | `[Recent AI Event]` event/stale 상태 | `AI` |
+| 15 | TargetComponent clear / no target | `DebugOverlayClearTarget` 후 `EnemySource: None` | `All` |
+| 16 | Enemy Recent Execution | Enemy panel의 actor-local `[Recent Execution]` | `Execution` |
+| 17 | Interaction Recent Combat damage breakdown | `Request / Mitigated / Final / Commit` | `Combat` |
+| 18 | EventLog All | `[Event Log: All]` | `All` |
+| 19 | EventLog Execution | `[Event Log: Execution]` | `Execution` |
+| 20 | EventLog Combat | `[Event Log: Combat]` | `Combat` |
+| 21 | EventLog AI | `[Event Log: AI]` | `AI` |
+| 22 | Enemy Current AI visible | `[Current AI]` blackboard 값 | `AI` |
+| 23 | Enemy Recent AI Event visible 또는 stale | `[Recent AI Event]` event/stale 상태 | `AI` |
 
 ## 5. 장면별 Claim 기준
 
@@ -160,7 +166,9 @@ P1 FinalCandidate 필수 장면은 다음을 기준으로 한다.
 | Enemy Stagger | parry stack threshold 후 enemy reaction | Enemy `Reaction: Stagger` | 장기 stagger 통계 |
 | Stagger stack 1 / 2 | 현재 parry stagger stack | Enemy `Stagger: 1/3`, `2/3` | 누적 총량 |
 | Stagger reset | stagger 이후 stack reset 상태 | Enemy `Stagger: 0/3` | reset 원인 전체 검증 |
-| Target selected | 명시 target source 기반 enemy evidence | `EnemySource: TargetComponent.Nearest`, `EnemySelect` | 범용 lock-on system |
+| Target selected | 명시 target source 기반 enemy evidence | `EnemySource: TargetComponent.Nearest`, `EnemySelect` | 범용 target system / lock-on / combat target flow 변경 |
+| Target clear | 명시 target 해제 후 no target 상태 | `EnemySource: None` | fallback enemy 자동 선택 성공 |
+| Enemy Recent Execution | selected Enemy 기준 최근 execution 표시 | Enemy panel `[Recent Execution]` | Interaction recent execution과 동일한 의미라고 주장 |
 | Interaction damage | combat result breakdown | `Request`, `Mitigated`, `Final`, `Commit` | 모든 damage formula 성공 |
 | EventLog filters | EventLog 표시 범위 제어 | `[Event Log: ...]` | event 미발생 증명 |
 | Current AI | selected Enemy current AI state | `Controller`, `Pawn`, `Target`, `IntentState` | BT active node 전체 추적 |
@@ -177,7 +185,8 @@ P1 FinalCandidate 필수 장면은 다음을 기준으로 한다.
 - `BT_Default.uasset` Patrol range 변경을 HUD 기능처럼 설명하는 것
 - PIE 검증 캡처를 FinalCandidate로 승격하는 것
 - `EnemySource: None` 상태에서 Enemy current state를 성공 evidence처럼 설명하는 것
-- Shipping HUD처럼 보이는 설명
+- 범용 target system / lock-on / combat target flow 변경처럼 설명하는 것
+- Shipping HUD / gameplay HUD / UMG / Slate HUD처럼 보이는 설명
 
 ## 7. 제외 / 보류할 캡처 기준
 
@@ -221,6 +230,8 @@ debug_overlay_p1_final_<scene>.png
 - `debug_overlay_p1_final_stagger_stack_2.png`
 - `debug_overlay_p1_final_stagger_reset.png`
 - `debug_overlay_p1_final_target_nearest.png`
+- `debug_overlay_p1_final_target_none.png`
+- `debug_overlay_p1_final_enemy_recent_execution.png`
 - `debug_overlay_p1_final_interaction_combat_damage.png`
 - `debug_overlay_p1_final_eventlog_all.png`
 - `debug_overlay_p1_final_eventlog_execution.png`
@@ -275,8 +286,7 @@ Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate
 
 ## 12. 다음 작업
 
-1. P1 closure review를 진행한다.
-2. 실제 FinalCandidate 촬영을 진행한다.
-3. 촬영 결과를 `FinalCandidate` 폴더에 패키징한다.
-4. 최종 evidence package 문서를 작성한다.
-5. P52 PR과 포트폴리오 본문에 최종 evidence를 연결한다.
+1. 실제 FinalCandidate 촬영을 진행한다.
+2. 촬영 결과를 `FinalCandidate` 폴더에 패키징한다.
+3. 최종 evidence package 문서를 작성한다.
+4. P52 PR과 포트폴리오 본문에 최종 evidence를 연결한다.
