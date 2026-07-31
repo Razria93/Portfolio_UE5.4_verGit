@@ -2,16 +2,19 @@
 
 #include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
+#include "AI/Blackboard/CAIKey.h"
 #include "Component/CActionComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CStateComponent.h"
+#include "Controller/CAIController.h"
 #include "Core/Debug/CDebugOverlayTargetComponent.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Type/CActionKeyTypes.h"
 
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Engine/Canvas.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
@@ -60,6 +63,11 @@ namespace
 			&& separatorIndex + 1 < InValue.Len()
 			? InValue.RightChop(separatorIndex + 1)
 			: InValue;
+	}
+
+	FString CompactReasonText(const FString& InValue)
+	{
+		return CompactEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
 	}
 
 	FString FormatGuardActionPhase(EGuardActionPhase InPhase)
@@ -159,6 +167,24 @@ namespace
 	FString FormatRuntimeLODTier()
 	{
 		return MissingText();
+	}
+
+	FString FormatAIIntentState(const UBlackboardComponent* InBlackboardComp)
+	{
+		if (!IsValid(InBlackboardComp)) return MissingText();
+
+		const uint8 intentStateValue = InBlackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState.KeyName);
+		if (intentStateValue >= static_cast<uint8>(EAIIntentState::Max)) return MissingText();
+
+		return CompactEnumText(UEnum::GetValueAsString(static_cast<EAIIntentState>(intentStateValue)));
+	}
+
+	FString FormatAITargetActor(const UBlackboardComponent* InBlackboardComp)
+	{
+		if (!IsValid(InBlackboardComp)) return MissingText();
+
+		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
+		return IsValid(targetObject) ? GetNameSafe(targetObject) : MissingText();
 	}
 
 	FString FormatActorMovement(const APawn* InPawn)
@@ -321,6 +347,43 @@ namespace
 		AppendSummaryLines(InOutLines, executionEvents[0].Summary, EDebugOverlayCaptureState::Captured);
 	}
 
+	void AppendEnemyRecentAIBlock(TArray<FString>& InOutLines, const ACEnemy* InEnemy, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
+	{
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Recent AI]"));
+
+		if (!IsValid(InEnemy))
+		{
+			AppendOverlayLine(InOutLines, TEXT("NoTarget"));
+			return;
+		}
+
+		const ACAIController* aiController = Cast<ACAIController>(InEnemy->GetController());
+		const UBlackboardComponent* blackboardComp = IsValid(aiController) ? aiController->GetBlackboardComponent() : nullptr;
+
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Controller: %s"), *GetNameSafe(aiController)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Pawn: %s"), *GetNameSafe(InEnemy)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Target: %s"), *FormatAITargetActor(blackboardComp)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("IntentState: %s"), *FormatAIIntentState(blackboardComp)));
+
+		const FString enemyName = GetNameSafe(InEnemy);
+		const bool bHasMatchingRecentTask = bInHasSnapshot
+			&& InSnapshot.LastAI.CaptureState == EDebugOverlayCaptureState::Captured
+			&& InSnapshot.LastAI.PawnName == enemyName;
+
+		if (!bHasMatchingRecentTask)
+		{
+			AppendOverlayLine(InOutLines, FString::Printf(
+				TEXT("RecentTask: %s"),
+				bInHasSnapshot && InSnapshot.LastAI.CaptureState == EDebugOverlayCaptureState::Captured ? TEXT("NotMatched") : TEXT("NotCaptured")));
+			return;
+		}
+
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("RecentTask: %s"), *CompactEnumText(InSnapshot.LastAI.SubState)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *CompactEnumText(InSnapshot.LastAI.RequestResult)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *CompactReasonText(InSnapshot.LastAI.RejectReason)));
+	}
+
 	void AppendActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn, const UObject* InWorldContextObject, bool bInHasSnapshot)
 	{
 		AppendOverlayLine(InOutLines, TEXT(""));
@@ -352,16 +415,6 @@ namespace
 			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
 		}
 
-		AppendOverlayLine(InOutLines, TEXT(""));
-		AppendOverlayLine(InOutLines, TEXT("[Recent AI]"));
-		if (bInHasSnapshot)
-		{
-			AppendSummaryLines(InOutLines, InSnapshot.LastAI.Summary, InSnapshot.LastAI.CaptureState);
-		}
-		else
-		{
-			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
-		}
 	}
 
 	// Panel Styling
@@ -679,6 +732,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendOverlayLine(lines, TEXT(""));
 	AppendActorStatusLines(lines, enemy);
 	AppendActorRecentExecutionBlock(lines, GetWorld(), bHasSnapshot, enemy);
+	AppendEnemyRecentAIBlock(lines, enemy, snapshot, bHasSnapshot);
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Interaction]"));

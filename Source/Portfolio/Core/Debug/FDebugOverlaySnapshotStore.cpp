@@ -233,7 +233,18 @@ namespace
 
 		const FString eventName = InEntry.EventName.TrimStartAndEnd();
 		return eventName.StartsWith(TEXT("CollisionEnabled"), ESearchCase::IgnoreCase)
-			|| eventName.StartsWith(TEXT("CollisionDisabled"), ESearchCase::IgnoreCase);
+			|| eventName.StartsWith(TEXT("CollisionDisabled"), ESearchCase::IgnoreCase)
+			|| eventName.StartsWith(TEXT("CollisionDisableIgnored"), ESearchCase::IgnoreCase);
+	}
+
+	bool IsCollisionDisableIgnoredEvent(const FDebugOverlayEventEntry& InEntry)
+	{
+		const FString category = InEntry.Category.TrimStartAndEnd();
+		if (!category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)) return false;
+
+		const FString eventName = InEntry.EventName.TrimStartAndEnd();
+		return eventName.StartsWith(TEXT("CollisionDisableIgnored"), ESearchCase::IgnoreCase)
+			|| eventName.StartsWith(TEXT("CollisionDisabledIgnored"), ESearchCase::IgnoreCase);
 	}
 
 	bool IsEventExcludedByDisplayFilters(const FDebugOverlayEventEntry& InEntry)
@@ -244,13 +255,7 @@ namespace
 		if (bHideNoiseEvents)
 		{
 			if (IsExecutionNoiseEvent(InEntry)) return true;
-			const FString category = InEntry.Category.TrimStartAndEnd();
-			const FString eventName = InEntry.EventName.TrimStartAndEnd();
-			if (category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
-				&& eventName.StartsWith(TEXT("CollisionDisabledIgnored"), ESearchCase::IgnoreCase))
-			{
-				return true;
-			}
+			if (IsCollisionDisableIgnoredEvent(InEntry)) return true;
 		}
 
 		if (bHideCollisionWindowEvents && IsCollisionWindowEvent(InEntry))
