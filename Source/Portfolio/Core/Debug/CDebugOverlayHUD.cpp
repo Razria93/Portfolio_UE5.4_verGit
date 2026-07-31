@@ -180,7 +180,7 @@ namespace
 		if (!IsValid(healthComp)) return MissingText();
 
 		return FString::Printf(
-			TEXT("HP=%.1f/%.1f | DeadState=%s"),
+			TEXT("%.1f/%.1f (DeadState=%s)"),
 			healthComp->GetCurrentHP(),
 			healthComp->GetMaxHP(),
 			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
@@ -210,15 +210,32 @@ namespace
 			: CaptureStateText(InState);
 	}
 
-	bool HasFinalTakenDamageEvidence(const FDebugOverlayCombatSummary& InCombatSummary)
-	{
-		return InCombatSummary.CaptureState == EDebugOverlayCaptureState::Captured
-			&& InCombatSummary.Summary.Contains(TEXT("Final="));
-	}
-
 	void AppendOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
 	{
 		InOutLines.Add(InLine);
+	}
+
+	void AppendSummaryLines(TArray<FString>& InOutLines, const FString& InSummary, EDebugOverlayCaptureState InCaptureState)
+	{
+		const FString summary = ValueOrNotCaptured(InSummary, InCaptureState);
+		if (InCaptureState != EDebugOverlayCaptureState::Captured || summary.IsEmpty())
+		{
+			AppendOverlayLine(InOutLines, summary);
+			return;
+		}
+
+		TArray<FString> summaryParts;
+		summary.ParseIntoArray(summaryParts, TEXT(" | "), true);
+		if (summaryParts.IsEmpty())
+		{
+			AppendOverlayLine(InOutLines, summary);
+			return;
+		}
+
+		for (const FString& summaryPart : summaryParts)
+		{
+			AppendOverlayLine(InOutLines, summaryPart);
+		}
 	}
 
 	FString FormatEventLogEntryLine(const FDebugOverlayEventEntry& InEntry)
@@ -282,36 +299,36 @@ namespace
 	void AppendSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
 	{
 		AppendOverlayLine(InOutLines, TEXT("[Recent Execution]"));
-		AppendOverlayLine(InOutLines, FString::Printf(
-			TEXT("Decision: %s"),
-			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastExecution.Summary, InSnapshot.LastExecution.CaptureState) : TEXT("NotCaptured")));
+		if (bInHasSnapshot)
+		{
+			AppendSummaryLines(InOutLines, InSnapshot.LastExecution.Summary, InSnapshot.LastExecution.CaptureState);
+		}
+		else
+		{
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+		}
 
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, TEXT("[Recent Combat]"));
-
-		AppendOverlayLine(InOutLines, FString::Printf(
-			TEXT("HitWindow: %s"),
-			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastCombat.HitWindowState, InSnapshot.LastCombat.CaptureState) : TEXT("NotCaptured")));
-
-		AppendOverlayLine(InOutLines, FString::Printf(
-			TEXT("DefenseOutcome: %s"),
-			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastCombat.DefenseOutcome, InSnapshot.LastCombat.CaptureState) : TEXT("NotCaptured")));
-
-		AppendOverlayLine(InOutLines, FString::Printf(
-			TEXT("FinalTakenDamage: %s"),
-			bInHasSnapshot && HasFinalTakenDamageEvidence(InSnapshot.LastCombat) ? *FString::Printf(TEXT("%.3f"), InSnapshot.LastCombat.FinalTakenDamage) : TEXT("NotCaptured")));
-
-		AppendOverlayLine(InOutLines, FString::Printf(
-			TEXT("DamageCommit: %s %.3f"),
-			bInHasSnapshot && InSnapshot.LastCombat.bHasDamageCommit ? (InSnapshot.LastCombat.bDamageCommitted ? TEXT("true") : TEXT("false")) : TEXT("NotCaptured"),
-			bInHasSnapshot && InSnapshot.LastCombat.bHasDamageCommit ? InSnapshot.LastCombat.CommittedDamage : 0.f));
+		if (bInHasSnapshot)
+		{
+			AppendSummaryLines(InOutLines, InSnapshot.LastCombat.Summary, InSnapshot.LastCombat.CaptureState);
+		}
+		else
+		{
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+		}
 
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, TEXT("[Recent AI]"));
-
-		AppendOverlayLine(InOutLines, FString::Printf(
-			TEXT("CombatTask: %s"),
-			bInHasSnapshot ? *ValueOrNotCaptured(InSnapshot.LastAI.Summary, InSnapshot.LastAI.CaptureState) : TEXT("NotCaptured")));
+		if (bInHasSnapshot)
+		{
+			AppendSummaryLines(InOutLines, InSnapshot.LastAI.Summary, InSnapshot.LastAI.CaptureState);
+		}
+		else
+		{
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+		}
 	}
 
 	// Panel Styling
