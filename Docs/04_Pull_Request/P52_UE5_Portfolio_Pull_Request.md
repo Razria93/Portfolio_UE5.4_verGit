@@ -27,8 +27,9 @@
 - [x] Recent Combat collision lifecycle overwrite 방지
 - [x] Enemy Current AI / Recent AI Event 분리
 - [x] W05 Code Quality Review 작성
-- [x] W05 LowRiskFix cleanup 반영
+- [x] W05 cleanup 후보 구조 리뷰 및 후속 브랜치 이관
 - [x] P1 통합 PIE 결과 문서화
+- [x] P1 Closure Review 작성
 - [ ] Runtime LOD actual 표시 보강
 - [ ] P1 완료 후 FinalCandidate 촬영 / 패키징
 - [ ] 포트폴리오 본문 연결
@@ -413,6 +414,7 @@ AI target selection 변경
 - `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Overlay_Layout_PIE_Result_KR.md`
+- `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Closure_Review_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md`
@@ -428,6 +430,6 @@ AI target selection 변경
 
 ## 정리
 
-이번 PR 후보는 debug overlay를 제출용 evidence tooling으로 구성하고, P0/P0.5/P1로 단계화된 구현과 W05 code quality cleanup을 하나의 설명 가능한 흐름으로 묶는다.
+이번 PR 후보는 debug overlay를 제출용 evidence tooling으로 구성하고, P0/P0.5/P1로 단계화된 구현과 W05 code quality 기준의 구조 리뷰를 하나의 설명 가능한 흐름으로 묶는다. 실제 code cleanup 구현은 후속 브랜치로 분리한다.
 
 P1 기준으로 Target / EventLog / Interaction / Recent summary / Enemy AI evidence는 마감 가능한 수준까지 구현되었다. Runtime LOD actual 표시와 최종 촬영/패키징은 P1 이후 단계로 분리한다.
