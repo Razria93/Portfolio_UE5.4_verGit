@@ -37,6 +37,7 @@ namespace
 	static constexpr float DebugOverlayMinEventLogPanelWidth = 420.f;
 	static constexpr float DebugOverlayEnemyScanCooldownSeconds = 0.5f;
 	static constexpr float DebugOverlayRecentCombatTargetStaleSeconds = 3.0f;
+	static constexpr float DebugOverlayRecentAIEventStaleSeconds = 3.0f;
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
@@ -52,6 +53,11 @@ namespace
 	FString MissingText()
 	{
 		return TEXT("N/A");
+	}
+
+	FString FormatAgeSeconds(float InAgeSeconds)
+	{
+		return FString::Printf(TEXT("%.2f"), FMath::Max(0.f, InAgeSeconds));
 	}
 
 	FString CompactEnumText(const FString& InValue)
@@ -185,6 +191,24 @@ namespace
 
 		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
 		return IsValid(targetObject) ? GetNameSafe(targetObject) : MissingText();
+	}
+
+	bool HasAITargetActor(const UBlackboardComponent* InBlackboardComp)
+	{
+		if (!IsValid(InBlackboardComp)) return false;
+
+		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
+		return IsValid(targetObject);
+	}
+
+	FString FormatBlackboardBool(const UBlackboardComponent* InBlackboardComp, FName InKeyName)
+	{
+		return IsValid(InBlackboardComp) ? BoolText(InBlackboardComp->GetValueAsBool(InKeyName)) : MissingText();
+	}
+
+	FString FormatBlackboardFloat(const UBlackboardComponent* InBlackboardComp, FName InKeyName)
+	{
+		return IsValid(InBlackboardComp) ? FString::Printf(TEXT("%.1f"), InBlackboardComp->GetValueAsFloat(InKeyName)) : MissingText();
 	}
 
 	FString FormatActorMovement(const APawn* InPawn)
@@ -347,10 +371,10 @@ namespace
 		AppendSummaryLines(InOutLines, executionEvents[0].Summary, EDebugOverlayCaptureState::Captured);
 	}
 
-	void AppendEnemyRecentAIBlock(TArray<FString>& InOutLines, const ACEnemy* InEnemy, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
+	void AppendEnemyCurrentAIBlock(TArray<FString>& InOutLines, const ACEnemy* InEnemy)
 	{
 		AppendOverlayLine(InOutLines, TEXT(""));
-		AppendOverlayLine(InOutLines, TEXT("[Recent AI]"));
+		AppendOverlayLine(InOutLines, TEXT("[Current AI]"));
 
 		if (!IsValid(InEnemy))
 		{
@@ -360,27 +384,62 @@ namespace
 
 		const ACAIController* aiController = Cast<ACAIController>(InEnemy->GetController());
 		const UBlackboardComponent* blackboardComp = IsValid(aiController) ? aiController->GetBlackboardComponent() : nullptr;
+		const bool bHasTarget = HasAITargetActor(blackboardComp);
 
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Controller: %s"), *GetNameSafe(aiController)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Pawn: %s"), *GetNameSafe(InEnemy)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Target: %s"), *FormatAITargetActor(blackboardComp)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("IntentState: %s"), *FormatAIIntentState(blackboardComp)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("ReturnHome: %s"), *FormatBlackboardBool(blackboardComp, CAIKey::Navigation::bReturnHome.KeyName)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("UsePatrol: %s"), *FormatBlackboardBool(blackboardComp, CAIKey::Patrol::bUsePatrol.KeyName)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("HasLOS: %s"), *FormatBlackboardBool(blackboardComp, CAIKey::Perception::bHasLOS.KeyName)));
+		const FString distanceToTarget = bHasTarget ? FormatBlackboardFloat(blackboardComp, CAIKey::Metric::DistanceToTarget.KeyName) : MissingText();
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("DistanceToTarget: %s"), *distanceToTarget));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("IsCombatAction: %s"), *FormatBlackboardBool(blackboardComp, CAIKey::Engage::bIsCombatAction.KeyName)));
+	}
 
-		const FString enemyName = GetNameSafe(InEnemy);
-		const bool bHasMatchingRecentTask = bInHasSnapshot
-			&& InSnapshot.LastAI.CaptureState == EDebugOverlayCaptureState::Captured
-			&& InSnapshot.LastAI.PawnName == enemyName;
+	void AppendEnemyRecentAIEventBlock(TArray<FString>& InOutLines, const ACEnemy* InEnemy, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot, const UWorld* InWorld)
+	{
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Recent AI Event]"));
 
-		if (!bHasMatchingRecentTask)
+		if (!IsValid(InEnemy))
 		{
-			AppendOverlayLine(InOutLines, FString::Printf(
-				TEXT("RecentTask: %s"),
-				bInHasSnapshot && InSnapshot.LastAI.CaptureState == EDebugOverlayCaptureState::Captured ? TEXT("NotMatched") : TEXT("NotCaptured")));
+			AppendOverlayLine(InOutLines, TEXT("NoTarget"));
 			return;
 		}
 
-		AppendOverlayLine(InOutLines, FString::Printf(TEXT("RecentTask: %s"), *CompactEnumText(InSnapshot.LastAI.SubState)));
+		if (!bInHasSnapshot || InSnapshot.LastAI.CaptureState != EDebugOverlayCaptureState::Captured)
+		{
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+			return;
+		}
+
+		const FString enemyName = GetNameSafe(InEnemy);
+		if (InSnapshot.LastAI.PawnName != enemyName)
+		{
+			AppendOverlayLine(InOutLines, TEXT("NotMatched"));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("Selected: %s"), *enemyName));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("LastPawn: %s"), *InSnapshot.LastAI.PawnName));
+			return;
+		}
+
+		const float currentTime = IsValid(InWorld) ? InWorld->GetTimeSeconds() : InSnapshot.LastAI.WorldTimeSeconds;
+		const float eventAge = currentTime - InSnapshot.LastAI.WorldTimeSeconds;
+		const bool bEventStale = eventAge > DebugOverlayRecentAIEventStaleSeconds;
+
+		if (bEventStale)
+		{
+			AppendOverlayLine(InOutLines, TEXT("Stale: true"));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("Age: %s"), *FormatAgeSeconds(eventAge)));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("LastPawn: %s"), *InSnapshot.LastAI.PawnName));
+			AppendOverlayLine(InOutLines, TEXT("Note: Not current AI evidence"));
+			return;
+		}
+
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Task: %s"), *CompactEnumText(InSnapshot.LastAI.SubState)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *CompactEnumText(InSnapshot.LastAI.RequestResult)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Age: %s"), *FormatAgeSeconds(eventAge)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *CompactReasonText(InSnapshot.LastAI.RejectReason)));
 	}
 
@@ -519,12 +578,6 @@ namespace
 				y += DebugOverlayHeaderBottomPadding;
 			}
 		}
-	}
-
-	// Enemy Source Formatting
-	FString FormatAgeSeconds(float InAgeSeconds)
-	{
-		return FString::Printf(TEXT("%.2f"), FMath::Max(0.f, InAgeSeconds));
 	}
 
 	void AppendTargetSelectionSummary(TArray<FString>& InOutLines, const UCDebugOverlayTargetComponent* InTargetComp)
@@ -732,7 +785,8 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendOverlayLine(lines, TEXT(""));
 	AppendActorStatusLines(lines, enemy);
 	AppendActorRecentExecutionBlock(lines, GetWorld(), bHasSnapshot, enemy);
-	AppendEnemyRecentAIBlock(lines, enemy, snapshot, bHasSnapshot);
+	AppendEnemyCurrentAIBlock(lines, enemy);
+	AppendEnemyRecentAIEventBlock(lines, enemy, snapshot, bHasSnapshot, GetWorld());
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Interaction]"));
