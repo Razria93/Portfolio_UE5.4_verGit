@@ -64,6 +64,7 @@
 - `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md`
+- `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`
 
 ## 현재 상태
 
@@ -112,6 +113,8 @@ P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 e
 현재 캡처 파일은 1차 패키지로만 정리한다. 반복 촬영/패키징은 P1 완료 전까지 중단하고, 최종 제출 후보는 P1 설계/구현/검증 이후 별도 패키지로 분리한다.
 
 P1 마감 기준의 최신 상태는 `01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`와 `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`를 기준으로 확인한다. P1에서는 TargetComponent 기반 명시 target, 3-panel layout, EventLog filter/separate panel, Interaction panel, Player/Enemy Recent Execution, Enemy Current AI / Recent AI Event 분리를 완료 기준으로 두며, Runtime LOD actual 표시와 FinalCandidate 촬영/패키징은 후속 단계로 분리한다.
+
+P1 FinalCandidate 촬영 전 장면 목록, CVar, 파일명, 제외 기준은 `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`를 따른다.
 
 ## 현재 브랜치
 

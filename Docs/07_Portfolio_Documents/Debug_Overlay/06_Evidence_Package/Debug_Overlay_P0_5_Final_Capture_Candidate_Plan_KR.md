@@ -6,6 +6,8 @@
 
 단, 최종 재촬영은 P1 설계/구현/검증 이후로 연기한다. P0.5 단계에서는 반복 촬영/패키징을 중단하고, 이 문서는 P1 이후 최종 촬영을 준비하기 위한 기준 문서로 유지한다.
 
+P1 구현 이후의 최신 FinalCandidate 촬영 전 기준은 `Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`를 따른다. 이 문서는 P0.5 기준의 장면/claim 이력을 보존하기 위한 참조 문서로 유지한다.
+
 Round1과 Round1_StaggerCount는 1차 evidence 패키지이며 최종 제출 후보가 아니다. 최종 후보는 후속 재촬영을 통해 별도 폴더에 패키징한다.
 
 이 문서의 목표:
