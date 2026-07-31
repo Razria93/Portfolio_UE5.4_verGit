@@ -39,6 +39,7 @@
 - `01_Planning/Debug_Overlay_P1_Target_Set_Path_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_NearestTarget_Diagnostic_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_EventLog_Filter_Design_KR.md`
+- `01_Planning/Debug_Overlay_P1_EventLog_Noise_Filter_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_Store_Subject_Separation_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_Player_Enemy_EventLog_Separation_Implementation_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_Subject_EventLog_Role_Filter_Design_KR.md`

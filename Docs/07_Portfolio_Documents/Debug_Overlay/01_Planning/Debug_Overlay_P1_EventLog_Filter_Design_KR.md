@@ -8,6 +8,8 @@ P0.5 EventLog는 world 단위 최근 event를 그대로 보여준다. 이 구조
 
 이 작업은 EventLog를 더 축약하거나 Player/Enemy별로 분리하는 작업이 아니다.
 
+Reject / Ignore 계열 noise event와 Collision window event의 세부 표시 제어는 category filter와 별도 정책으로 둔다. 해당 표시 전용 필터 설계는 `Debug_Overlay_P1_EventLog_Noise_Filter_Design_KR.md`에서 다룬다.
+
 ## 2. 현재 구조
 
 현재 EventLog 구조는 다음과 같다.
@@ -168,6 +170,8 @@ P1에서는 EventLog 추가 compact를 다시 진행하지 않는다.
 - Store subject ownership 재설계
 - Recent Execution / Recent Combat / Recent AI 분리
 - EventLog 추가 compact
+- Reject / Ignore noise 표시 필터
+- Collision window event 표시 필터
 - 최종 촬영/패키징
 - capture automation
 - gameplay flow 변경

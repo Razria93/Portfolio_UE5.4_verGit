@@ -271,39 +271,39 @@ Execution
 
 ## 8. EventLog Noise Filter 정책
 
-Reject / Ignore event는 디버깅에는 필요하지만 capture readability를 해칠 수 있다.
+Reject / Ignore event와 Collision window event는 디버깅에는 필요하지만 capture readability를 해칠 수 있다.
 
-P1 redesign에서는 표시 단계 noise filter CVar를 설계한다.
+P1 redesign에서는 표시 단계 noise/collision filter CVar를 설계한다. 최종 설계는 `Debug_Overlay_P1_EventLog_Noise_Filter_Design_KR.md`를 따른다.
 
-후보 CVar:
+채택 CVar:
 
 ```text
-Portfolio.DebugOverlay.EventLogNoiseFilter
+Portfolio.DebugOverlay.HideNoiseEvents
+Portfolio.DebugOverlay.ShowCollisionWindowEvents
 ```
 
-후보 값:
+기본값:
 
 ```text
-All
-HideReject
-HideIgnore
-HideRejectAndIgnore
+HideNoiseEvents=0
+ShowCollisionWindowEvents=1
 ```
 
 정책:
 
 - Store ring buffer에는 모든 event를 계속 저장한다.
-- noise filter는 record 단계가 아니라 display/query 단계에서만 적용한다.
+- noise/collision filter는 record 단계가 아니라 display/query 단계에서만 적용한다.
 - EventLog category filter와 결합해서 적용한다.
 - 숨겨진 event를 “발생하지 않았다”는 evidence로 해석하지 않는다.
-- 기본값은 `All`로 둔다.
+- `Portfolio.DebugOverlay.EventLogNoiseFilter` 문자열형 후보는 폐기한다.
+- Reject / Ignore 제어와 Collision window 제어를 분리한다.
 
 예상 적용 순서:
 
 ```text
 ring buffer 최신순 순회
 -> category filter match
--> noise filter match
+-> noise/collision filter match
 -> EventLogLimit 수집
 -> Interaction panel 표시
 ```
