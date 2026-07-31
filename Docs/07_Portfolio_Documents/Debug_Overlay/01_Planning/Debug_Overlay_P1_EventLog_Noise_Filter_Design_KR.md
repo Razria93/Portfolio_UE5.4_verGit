@@ -305,11 +305,10 @@ Commit: 0.000
 [Event Log: ...]
 ```
 
-비대상:
+기본 비대상:
 
 ```text
 [Recent Execution]
-[Recent Combat]
 [Recent AI]
 ```
 
@@ -319,7 +318,14 @@ Commit: 0.000
 - Reject/Ignore가 최근 상태 자체를 설명하는 경우도 있으므로 숨기면 오해가 생길 수 있다.
 - Recent filtering은 별도 정책과 CVar가 필요하다.
 
-Recent summary까지 noise filter를 적용할지는 P1 후속 결정으로 둔다.
+단, `Recent Combat`은 예외 정책을 둔다.
+
+- `Recent Combat`은 최근 Combat 로그가 아니라 최근 전투 판정/결과 evidence summary다.
+- `CollisionEnabled`, `CollisionDisabled`, `CollisionDisabledIgnored`는 collision lifecycle diagnostic이므로 `Recent Combat` 갱신 대상에서 제외한다.
+- 위 collision lifecycle event는 EventLog에는 기록하되, `TargetAccepted`, `TargetRejected`, `CombatResult/*`가 만든 의미 있는 combat summary를 덮어쓰지 않는다.
+- `HideCollisionWindowEvents`는 EventLog 표시 제어용이며, `Recent Combat`은 CVar와 무관하게 collision lifecycle event로 갱신하지 않는다.
+
+Recent Execution / Recent AI까지 noise filter를 적용할지는 P1 후속 결정으로 둔다.
 
 ## 11. 구현 영향
 
@@ -352,7 +358,7 @@ Recent summary까지 noise filter를 적용할지는 P1 후속 결정으로 둔�
 - Store record path 변경
 - EventLog compact 재작업
 - Player/Enemy EventLog 재분리
-- Recent summary filtering
+- Recent Execution / Recent AI summary filtering
 - Runtime LOD actual 표시
 - AI detail 보강
 - final capture packaging
@@ -389,7 +395,8 @@ Recent summary까지 noise filter를 적용할지는 P1 후속 결정으로 둔�
 - 숨길 event와 숨기지 않을 event가 구분되어 있다.
 - filter 적용 순서가 `category -> noise/collision -> limit`으로 고정되어 있다.
 - Store record path를 변경하지 않는 정책이 명시되어 있다.
-- Recent summary는 이번 필터 대상이 아님을 명시했다.
+- Recent Combat은 collision lifecycle event로 갱신하지 않는 예외 정책을 명시했다.
+- Recent Execution / Recent AI summary는 이번 필터 대상이 아님을 명시했다.
 - 후속 구현과 PIE 검증 기준이 정리되어 있다.
 
 ## 15. 다음 작업

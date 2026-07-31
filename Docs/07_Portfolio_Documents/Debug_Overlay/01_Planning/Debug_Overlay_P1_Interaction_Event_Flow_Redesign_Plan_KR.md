@@ -268,6 +268,10 @@ Execution
 - Player/Enemy subject ownership으로 억지 분리하지 않는다.
 - Interaction timeline에서는 window state event로 설명한다.
 - actor-specific panel에서는 current state 중심으로 유지한다.
+- `Recent Combat`은 최근 전투 판정/결과 요약으로 사용한다.
+- `CollisionEnabled`, `CollisionDisabled`, `CollisionDisabledIgnored`는 collision lifecycle diagnostic이므로 `Recent Combat` 갱신 대상에서 제외한다.
+- `TargetAccepted`, `TargetRejected`, `CombatResult/*`는 `Recent Combat` 갱신 대상으로 유지한다.
+- 따라서 collision lifecycle event가 반복되어도 직전 의미 있는 combat 판정 summary를 덮어쓰지 않는다.
 
 ## 8. EventLog Noise Filter 정책
 

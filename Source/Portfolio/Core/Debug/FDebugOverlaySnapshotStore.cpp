@@ -561,22 +561,12 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	const UWorld* world = ResolveWorld(InWorldContextObject);
 	const FString eventName = ToSafeEventName(InEventName, TEXT("WeaponCollisionWindow"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
-	const FString weaponName = GetNameSafe(InWeaponActor);
 	const FString summary = FString::Printf(
 		TEXT("State: %s | HitWindow: %d | Collision: %s | Reason: %s"),
 		*CompactStoreEnumText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
 		*CompactReasonText(ToSafeReason(InReason)));
-
-	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastCombat.FrameNumber = GetCurrentFrameNumber();
-	store->Snapshot.LastCombat.WorldTimeSeconds = GetWorldTimeSeconds(world);
-	store->Snapshot.LastCombat.SourceName = ownerName;
-	store->Snapshot.LastCombat.DamageCauserName = weaponName;
-	store->Snapshot.LastCombat.HitWindowId = InHitWindowId;
-	store->Snapshot.LastCombat.HitWindowState = InHitWindowState;
-	store->Snapshot.LastCombat.Summary = summary;
 
 	AddEventInternal(*store, MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
 #endif
