@@ -59,6 +59,7 @@
 - `05_Verification/Debug_Overlay_P1_EventLog_Filter_PIE_Checklist_KR.md`
 - `05_Verification/Debug_Overlay_P1_EventLog_Filter_PIE_Result_KR.md`
 - `05_Verification/Debug_Overlay_P1_Subject_Role_Label_PIE_Checklist_KR.md`
+- `05_Verification/Debug_Overlay_P1_Overlay_Layout_PIE_Result_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md`
 
