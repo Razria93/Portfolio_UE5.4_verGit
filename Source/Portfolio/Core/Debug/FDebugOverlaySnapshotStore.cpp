@@ -429,7 +429,7 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	const FString eventName = ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
-		TEXT("Owner=%s | Domain=%s | Subject=%s | Decision=%s | Apply=%s | RejectReason=%s"),
+		TEXT("Owner: %s | Domain: %s | Subject: %s | Decision: %s | Apply: %s | RejectReason: %s"),
 		*GetDisplayNameOrNA(InOwnerActor),
 		*CompactStoreEnumText(InDomain),
 		InSubject.IsEmpty() ? TEXT("N/A") : *InSubject,
@@ -466,7 +466,7 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString weaponName = GetNameSafe(InWeaponActor);
 	const FString summary = FString::Printf(
-		TEXT("State=%s | HitWindow=%d | Collision=%s | Reason=%s"),
+		TEXT("State: %s | HitWindow: %d | Collision: %s | Reason: %s"),
 		*CompactStoreEnumText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
@@ -500,7 +500,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString summary = FString::Printf(
-		TEXT("Attacker=%s | Defender=%s | Outcome=%s | Final=%.3f | Commit=%.3f | Accepted=%s"),
+		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Final: %.3f | Commit: %.3f | Accepted: %s"),
 		*GetDisplayNameOrNA(InPacket.Context.SourceActor),
 		*GetDisplayNameOrNA(InPacket.Context.TargetActor),
 		*CompactStoreEnumText(outcome),
@@ -543,7 +543,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
 	const FString resultSourceName = ResolveCombatResultSourceName(InReceiverActor, InPacket);
 	const FString summary = FString::Printf(
-		TEXT("ResultFrom=%s | ResultReceiver=%s | Outcome=%s | DamageCommitted=%s | Commit=%.3f"),
+		TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | DamageCommitted: %s | Commit: %.3f"),
 		*resultSourceName,
 		*GetDisplayNameOrNA(InReceiverActor),
 		*CompactStoreEnumText(outcome),
@@ -583,7 +583,7 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	const FString pawnName = GetNameSafe(InOwnerPawn);
 	const FString targetName = GetNameSafe(InTargetActor);
 	const FString summary = FString::Printf(
-		TEXT("Controller=%s | Pawn=%s | Target=%s | Intent=%s | Result=%s | RejectReason=%s"),
+		TEXT("Controller: %s | Pawn: %s | Target: %s | Intent: %s | Result: %s | RejectReason: %s"),
 		*GetDisplayNameOrNA(InAIController),
 		*GetDisplayNameOrNA(InOwnerPawn),
 		*GetDisplayNameOrNA(InTargetActor),

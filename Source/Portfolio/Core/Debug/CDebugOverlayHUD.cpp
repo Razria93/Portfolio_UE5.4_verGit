@@ -127,7 +127,7 @@ namespace
 		if (!IsValid(defenseComp)) return MissingText();
 
 		return FString::Printf(
-			TEXT("Wants=%s | Pose=%s | CanGuard=%s | CanParry=%s | CanStart=%s"),
+			TEXT("Wants: %s | Pose: %s | CanGuard: %s | CanParry: %s | CanStart: %s"),
 			*BoolText(defenseComp->WantsGuarding()),
 			*BoolText(defenseComp->IsGuardingPose()),
 			*BoolText(defenseComp->CanGuard()),
@@ -166,7 +166,7 @@ namespace
 		if (!IsValid(movementComp)) return MissingText();
 
 		return FString::Printf(
-			TEXT("Gait=%s | Speed=%.1f | Dir=%.1f | CanMove=%s | Falling=%s"),
+			TEXT("Gait: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
 			*CompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
 			movementComp->GetCurrentSpeed(),
 			movementComp->GetCurrentDirection(),
@@ -180,7 +180,7 @@ namespace
 		if (!IsValid(healthComp)) return MissingText();
 
 		return FString::Printf(
-			TEXT("%.1f/%.1f (DeadState=%s)"),
+			TEXT("%.1f/%.1f (DeadState: %s)"),
 			healthComp->GetCurrentHP(),
 			healthComp->GetMaxHP(),
 			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
@@ -260,13 +260,13 @@ namespace
 
 		if (InEventLogLimit == 0)
 		{
-			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter=%s Limit=0)"), *InEventLogFilter));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter: %s Limit: 0)"), *InEventLogFilter));
 			return;
 		}
 
 		if (InEvents.IsEmpty())
 		{
-			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter=%s)"), *InEventLogFilter));
+			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter: %s)"), *InEventLogFilter));
 			return;
 		}
 
@@ -433,7 +433,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveRecentCombatEnemy(const APawn* InViewerPawn, 
 		{
 			AppendOverlayLine(OutSourceLines, TEXT("EnemySource: RecentCombatTarget"));
 			AppendOverlayLine(OutSourceLines, FString::Printf(
-				TEXT("EnemyRecentCombat: Source=%s Target=%s Age=%s"),
+				TEXT("EnemyRecentCombat: Source: %s | Target: %s | Age: %s"),
 				*recentCombatPair.SourceName,
 				*recentCombatPair.TargetName,
 				*FormatAgeSeconds(pairAge)));
@@ -444,7 +444,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveRecentCombatEnemy(const APawn* InViewerPawn, 
 	if (bPairStale || bSourceInvalid || bTargetInvalid)
 	{
 		AppendOverlayLine(OutSourceLines, FString::Printf(
-			TEXT("EnemyRecentCombat: Stale Source=%s Target=%s Age=%s"),
+			TEXT("EnemyRecentCombat: Stale | Source: %s | Target: %s | Age: %s"),
 			*recentCombatPair.SourceName,
 			*recentCombatPair.TargetName,
 			*FormatAgeSeconds(pairAge)));
@@ -452,7 +452,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveRecentCombatEnemy(const APawn* InViewerPawn, 
 	else if (!bRecentCombatPairMatched)
 	{
 		AppendOverlayLine(OutSourceLines, FString::Printf(
-			TEXT("EnemyRecentCombat: NotMatched Source=%s Target=%s Age=%s"),
+			TEXT("EnemyRecentCombat: NotMatched | Source: %s | Target: %s | Age: %s"),
 			*recentCombatPair.SourceName,
 			*recentCombatPair.TargetName,
 			*FormatAgeSeconds(pairAge)));
@@ -484,7 +484,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveWorldScanFallbackEnemy(TArray<FString>& OutSo
 	}
 
 	AppendOverlayLine(OutSourceLines, TEXT("EnemySource: WorldScanFallback"));
-	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyFallback: Selected=%s Policy=FirstValid Count=1"), *GetNameSafe(fallbackEnemy)));
+	AppendOverlayLine(OutSourceLines, FString::Printf(TEXT("EnemyFallback: Selected: %s | Policy: FirstValid | Count: 1"), *GetNameSafe(fallbackEnemy)));
 	return fallbackEnemy;
 }
 

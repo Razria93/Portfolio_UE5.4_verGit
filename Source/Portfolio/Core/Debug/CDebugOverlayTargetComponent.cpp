@@ -41,7 +41,7 @@ AActor* UCDebugOverlayTargetComponent::GetDebugOverlayTargetActor() const
 FString UCDebugOverlayTargetComponent::GetDebugOverlayTargetSummary() const
 {
 	return HasDebugOverlayTarget()
-		? FString::Printf(TEXT("Selected=%s"), *GetNameSafe(DebugOverlayTargetActor.Get()))
+		? FString::Printf(TEXT("Selected: %s"), *GetNameSafe(DebugOverlayTargetActor.Get()))
 		: FString(TEXT("None"));
 }
 
