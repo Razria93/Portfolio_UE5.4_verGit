@@ -415,6 +415,7 @@ AI target selection 변경
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Overlay_Layout_PIE_Result_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md`
+- `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md`
 - `Docs/04_Pull_Request/P42_UE5_Portfolio_Pull_Request.md`
 - `Docs/04_Pull_Request/P43_UE5_Portfolio_Pull_Request.md`
 - `Docs/04_Pull_Request/P44_UE5_Portfolio_Pull_Request.md`

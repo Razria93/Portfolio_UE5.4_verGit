@@ -62,6 +62,7 @@
 - `05_Verification/Debug_Overlay_P1_Subject_Role_Label_PIE_Checklist_KR.md`
 - `05_Verification/Debug_Overlay_P1_Overlay_Layout_PIE_Result_KR.md`
 - `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`
+- `05_Verification/Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`
@@ -124,4 +125,5 @@ P1 FinalCandidate 촬영 전 장면 목록, CVar, 파일명, 제외 기준은 `0
 
 - `05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md`
 - `05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md`
+- `05_Verification/Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md`
 - `../../04_Pull_Request/P52_UE5_Portfolio_Pull_Request.md`
