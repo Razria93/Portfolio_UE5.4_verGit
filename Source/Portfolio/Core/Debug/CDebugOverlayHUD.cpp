@@ -26,7 +26,8 @@ namespace
 	static constexpr float DebugOverlayLineHeight = 20.f;
 	static constexpr float DebugOverlayFontScale = 1.05f;
 	static constexpr float DebugOverlayBackgroundPadding = 10.f;
-	static constexpr float DebugOverlayBackgroundWidth = 1040.f;
+	static constexpr float DebugOverlayBackgroundWidth = 840.f;
+	static constexpr float DebugOverlayHeaderBottomPadding = 5.f;
 	static constexpr float DebugOverlayPanelGap = 24.f;
 	static constexpr float DebugOverlayRightMargin = 24.f;
 	static constexpr float DebugOverlayBottomMargin = 24.f;
@@ -379,6 +380,54 @@ namespace
 		return DebugOverlayInteractionHeaderColor;
 	}
 
+	bool IsOverlayHeaderLine(const FString& InLine, bool bInDrawPanelHeaders, bool bInDrawEventLogHeaders)
+	{
+		return (bInDrawPanelHeaders && IsPanelHeaderLine(InLine))
+			|| (bInDrawEventLogHeaders && IsEventLogHeaderLine(InLine));
+	}
+
+	float CalculateOverlayLinesHeight(
+		const TArray<FString>& InLines,
+		bool bInDrawPanelHeaders,
+		bool bInDrawEventLogHeaders)
+	{
+		float height = 0.f;
+		for (const FString& line : InLines)
+		{
+			height += DebugOverlayLineHeight;
+			if (IsOverlayHeaderLine(line, bInDrawPanelHeaders, bInDrawEventLogHeaders))
+			{
+				height += DebugOverlayHeaderBottomPadding;
+			}
+		}
+
+		return height;
+	}
+
+	int32 CalculateVisibleOverlayLineCount(
+		const TArray<FString>& InLines,
+		float InMaxTextHeight,
+		bool bInDrawPanelHeaders,
+		bool bInDrawEventLogHeaders)
+	{
+		float usedHeight = 0.f;
+		for (int32 lineIndex = 0; lineIndex < InLines.Num(); ++lineIndex)
+		{
+			const FString& line = InLines[lineIndex];
+			const float lineHeight = DebugOverlayLineHeight
+				+ (IsOverlayHeaderLine(line, bInDrawPanelHeaders, bInDrawEventLogHeaders) ? DebugOverlayHeaderBottomPadding : 0.f);
+
+			if (usedHeight + lineHeight > InMaxTextHeight)
+			{
+				return lineIndex;
+			}
+
+			usedHeight += lineHeight;
+		}
+
+		return InLines.Num();
+	}
+
 	void DrawOverlayLines(
 		ACDebugOverlayHUD& InHud,
 		const TArray<FString>& InLines,
@@ -409,6 +458,10 @@ namespace
 
 			InHud.DrawText(line, FLinearColor::White, InTextX, y, nullptr, DebugOverlayFontScale, false);
 			y += DebugOverlayLineHeight;
+			if (bDrawPanelHeader || bDrawEventLogHeader)
+			{
+				y += DebugOverlayHeaderBottomPadding;
+			}
 		}
 	}
 
@@ -635,7 +688,7 @@ void ACDebugOverlayHUD::DrawHUD()
 		? FMath::Max(0.f, Canvas->SizeX - backgroundX - DebugOverlayBackgroundPadding)
 		: DebugOverlayBackgroundWidth;
 	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
-	const float backgroundHeight = (lines.Num() * DebugOverlayLineHeight) + (DebugOverlayBackgroundPadding * 2.f);
+	const float backgroundHeight = CalculateOverlayLinesHeight(lines, true, false) + (DebugOverlayBackgroundPadding * 2.f);
 
 	DrawOverlayLines(
 		*this,
@@ -652,12 +705,11 @@ void ACDebugOverlayHUD::DrawHUD()
 	if (Canvas && !eventLogLines.IsEmpty())
 	{
 		const float eventLogBackgroundX = backgroundX + backgroundWidth + DebugOverlayPanelGap;
-		const float eventLogBackgroundY = backgroundY;
+		const float eventLogBackgroundY = backgroundY + DebugOverlayLineHeight;
 		const float eventLogAvailableWidth = FMath::Max(0.f, Canvas->SizeX - eventLogBackgroundX - DebugOverlayRightMargin);
 		const float eventLogAvailableHeight = FMath::Max(0.f, Canvas->SizeY - eventLogBackgroundY - DebugOverlayBottomMargin);
-		const int32 maxEventLogLineCount = FMath::Max(0, FMath::FloorToInt(
-			(eventLogAvailableHeight - (DebugOverlayBackgroundPadding * 2.f)) / DebugOverlayLineHeight));
-		const int32 eventLogLineCount = FMath::Min(eventLogLines.Num(), maxEventLogLineCount);
+		const float maxEventLogTextHeight = FMath::Max(0.f, eventLogAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
+		const int32 eventLogLineCount = CalculateVisibleOverlayLineCount(eventLogLines, maxEventLogTextHeight, false, true);
 		TArray<FString> visibleEventLogLines;
 		visibleEventLogLines.Reserve(eventLogLineCount);
 		for (int32 lineIndex = 0; lineIndex < eventLogLineCount; ++lineIndex)
@@ -666,7 +718,7 @@ void ACDebugOverlayHUD::DrawHUD()
 		}
 
 		const float eventLogBackgroundHeight = FMath::Min(
-			(visibleEventLogLines.Num() * DebugOverlayLineHeight) + (DebugOverlayBackgroundPadding * 2.f),
+			CalculateOverlayLinesHeight(visibleEventLogLines, false, true) + (DebugOverlayBackgroundPadding * 2.f),
 			eventLogAvailableHeight);
 
 		if (eventLogAvailableWidth >= DebugOverlayMinEventLogPanelWidth && eventLogBackgroundHeight > 0.f && !visibleEventLogLines.IsEmpty())
@@ -675,7 +727,7 @@ void ACDebugOverlayHUD::DrawHUD()
 				*this,
 				visibleEventLogLines,
 				eventLogBackgroundX + DebugOverlayBackgroundPadding,
-				DebugOverlayOriginY,
+				eventLogBackgroundY + DebugOverlayBackgroundPadding,
 				eventLogBackgroundX,
 				eventLogBackgroundY,
 				eventLogAvailableWidth,
