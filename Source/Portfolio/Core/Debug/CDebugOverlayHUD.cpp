@@ -38,7 +38,7 @@ namespace
 	static constexpr float DebugOverlayInteractionPanelWidth = 520.f;
 	static constexpr float DebugOverlayEnemyScanCooldownSeconds = 0.5f;
 	static constexpr float DebugOverlayRecentCombatTargetStaleSeconds = 3.0f;
-	static constexpr float DebugOverlayRecentAIEventStaleSeconds = 3.0f;
+	static constexpr float DebugOverlayRecentAIEventStaleSeconds = 5.0f;
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
@@ -451,8 +451,37 @@ namespace
 		AppendActorRecentExecutionBlock(InOutLines, InWorldContextObject, bInHasSnapshot, InPawn);
 	}
 
+	void AppendMainActorPanelLines(
+		TArray<FString>& InOutLines,
+		const APawn* InPlayerPawn,
+		const ACEnemy* InEnemy,
+		const TArray<FString>& InEnemySourceLines,
+		const FDebugOverlaySnapshot& InSnapshot,
+		bool bInHasSnapshot,
+		const UObject* InWorldContextObject,
+		const UWorld* InWorld)
+	{
+		AppendOverlayLine(InOutLines, TEXT("[Debug Overlay Pannel_01]"));
+		AppendActorPanelLines(InOutLines, TEXT("[Player]"), InPlayerPawn, InWorldContextObject, bInHasSnapshot);
+
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Enemy]"));
+		for (const FString& enemySourceLine : InEnemySourceLines)
+		{
+			AppendOverlayLine(InOutLines, enemySourceLine);
+		}
+
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendActorStatusLines(InOutLines, InEnemy);
+		AppendActorRecentExecutionBlock(InOutLines, InWorldContextObject, bInHasSnapshot, InEnemy);
+		AppendEnemyCurrentAIBlock(InOutLines, InEnemy);
+		AppendEnemyRecentAIEventBlock(InOutLines, InEnemy, InSnapshot, bInHasSnapshot, InWorld);
+	}
+
 	void AppendSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
 	{
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Interaction]"));
 		AppendOverlayLine(InOutLines, TEXT("[Recent Execution]"));
 		if (bInHasSnapshot)
 		{
@@ -754,16 +783,17 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 
+	UWorld* world = GetWorld();
 	const APawn* pawn = GetOwningPawn();
 	TArray<FString> enemySourceLines;
 	const ACEnemy* enemy = ResolveDisplayEnemy(enemySourceLines);
 
 	FDebugOverlaySnapshot snapshot;
-	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(GetWorld(), snapshot);
+	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(world, snapshot);
 	const FString eventLogFilter = FDebugOverlaySnapshotStore::GetEventLogFilter();
 	const int32 eventLogLimit = FDebugOverlaySnapshotStore::GetEventLogDisplayLimit();
 	const TArray<FDebugOverlayEventEntry> recentEvents = FDebugOverlaySnapshotStore::GetRecentEventsCopy(
-		GetWorld(),
+		world,
 		eventLogLimit,
 		eventLogFilter);
 
@@ -774,27 +804,12 @@ void ACDebugOverlayHUD::DrawHUD()
 	TArray<FString> interactionLines;
 	interactionLines.Reserve(16);
 
-	AppendOverlayLine(lines, TEXT("[Debug Overlay Pannel_01]"));
-	AppendActorPanelLines(lines, TEXT("[Player]"), pawn, GetWorld(), bHasSnapshot);
-
-	AppendOverlayLine(lines, TEXT(""));
-	AppendOverlayLine(lines, TEXT("[Enemy]"));
-	for (const FString& enemySourceLine : enemySourceLines)
-	{
-		AppendOverlayLine(lines, enemySourceLine);
-	}
-
-	AppendOverlayLine(lines, TEXT(""));
-	AppendActorStatusLines(lines, enemy);
-	AppendActorRecentExecutionBlock(lines, GetWorld(), bHasSnapshot, enemy);
-	AppendEnemyCurrentAIBlock(lines, enemy);
-	AppendEnemyRecentAIEventBlock(lines, enemy, snapshot, bHasSnapshot, GetWorld());
+	AppendMainActorPanelLines(lines, pawn, enemy, enemySourceLines, snapshot, bHasSnapshot, world, world);
 
 	AppendOverlayLine(eventLogLines, TEXT("[Debug Overlay Pannel_02]"));
 	AppendEventLogBlock(eventLogLines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
 	AppendOverlayLine(interactionLines, TEXT("[Debug Overlay Pannel_03]"));
-	AppendOverlayLine(interactionLines, TEXT("[Interaction]"));
 	AppendSnapshotLines(interactionLines, snapshot, bHasSnapshot);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
