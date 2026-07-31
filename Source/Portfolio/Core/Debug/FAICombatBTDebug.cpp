@@ -1,9 +1,12 @@
 #include "Core/Debug/FAICombatBTDebug.h"
 
+#include "AI/Blackboard/CAIKey.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
+#include "Type/CStateTypes.h"
 
 #include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 
@@ -59,6 +62,17 @@ namespace
 		if (IsValid(InTargetActor)) return InTargetActor;
 
 		return nullptr;
+	}
+
+	FString ResolveAIIntentStateText(const AAIController* InAIController)
+	{
+		const UBlackboardComponent* blackboardComp = IsValid(InAIController) ? InAIController->GetBlackboardComponent() : nullptr;
+		if (!IsValid(blackboardComp)) return TEXT("N/A");
+
+		const uint8 intentStateValue = blackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState.KeyName);
+		if (intentStateValue >= static_cast<uint8>(EAIIntentState::Max)) return TEXT("N/A");
+
+		return UEnum::GetValueAsString(static_cast<EAIIntentState>(intentStateValue));
 	}
 }
 
@@ -161,6 +175,7 @@ void FAICombatBTDebug::RecordCombatActionTaskSucceededForAudit(const AAIControll
 			InAIController,
 			InOwnerPawn,
 			InTargetActor,
+			ResolveAIIntentStateText(InAIController),
 			UEnum::GetValueAsString(InIntent),
 			UEnum::GetValueAsString(InResult.ResultType),
 			UEnum::GetValueAsString(InResult.RejectReason),
@@ -189,6 +204,7 @@ void FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(const AAIControlle
 			InAIController,
 			InOwnerPawn,
 			InTargetActor,
+			ResolveAIIntentStateText(InAIController),
 			UEnum::GetValueAsString(InIntent),
 			UEnum::GetValueAsString(InResult.ResultType),
 			InReason ? FString(InReason) : UEnum::GetValueAsString(InResult.RejectReason),

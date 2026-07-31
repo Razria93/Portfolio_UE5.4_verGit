@@ -46,6 +46,7 @@
 - `01_Planning/Debug_Overlay_P1_EventLog_Subject_Role_Label_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_Subject_EventLog_Semantics_Cleanup_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_Interaction_Event_Flow_Redesign_Plan_KR.md`
+- `01_Planning/Debug_Overlay_P1_Actor_Recent_AI_Display_Plan_KR.md`
 - `02_Operation/Debug_Overlay_Operation_Guide_KR.md`
 - `03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md`
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`

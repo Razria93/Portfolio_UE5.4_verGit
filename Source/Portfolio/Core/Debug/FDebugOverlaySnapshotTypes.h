@@ -61,7 +61,8 @@ struct PORTFOLIO_API FDebugOverlayAISummary
 	FString ControllerName;
 	FString PawnName;
 	FString TargetName;
-	FString Intent;
+	FString IntentState;
+	FString SubState;
 	FString RequestResult;
 	FString RejectReason;
 	FString RuntimeLODTier;

@@ -155,11 +155,6 @@ namespace
 		return MissingText();
 	}
 
-	FString FormatAISummary()
-	{
-		return TEXT("NotCaptured");
-	}
-
 	FString FormatActorMovement(const APawn* InPawn)
 	{
 		const UCMovementComponent* movementComp = FindComponent<UCMovementComponent>(InPawn);
@@ -286,14 +281,46 @@ namespace
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *FormatGuardOverlay(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *FormatActorMovement(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *FormatRuntimeLODTier()));
-		AppendOverlayLine(InOutLines, FString::Printf(TEXT("AI: %s"), *FormatAISummary()));
 	}
 
-	void AppendActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn)
+	void AppendActorRecentExecutionBlock(TArray<FString>& InOutLines, const UObject* InWorldContextObject, bool bInHasSnapshot, const APawn* InPawn)
+	{
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, TEXT("[Recent Execution]"));
+
+		if (!bInHasSnapshot)
+		{
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+			return;
+		}
+
+		if (!IsValid(InPawn))
+		{
+			AppendOverlayLine(InOutLines, TEXT("N/A"));
+			return;
+		}
+
+		const TArray<FDebugOverlayEventEntry> executionEvents = FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(
+			InWorldContextObject,
+			1,
+			TEXT("Execution"),
+			GetNameSafe(InPawn));
+
+		if (executionEvents.IsEmpty())
+		{
+			AppendOverlayLine(InOutLines, TEXT("NoEvents(Filter: Execution)"));
+			return;
+		}
+
+		AppendSummaryLines(InOutLines, executionEvents[0].Summary, EDebugOverlayCaptureState::Captured);
+	}
+
+	void AppendActorPanelLines(TArray<FString>& InOutLines, const TCHAR* InPanelName, const APawn* InPawn, const UObject* InWorldContextObject, bool bInHasSnapshot)
 	{
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, InPanelName);
 		AppendActorStatusLines(InOutLines, InPawn);
+		AppendActorRecentExecutionBlock(InOutLines, InWorldContextObject, bInHasSnapshot, InPawn);
 	}
 
 	void AppendSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
@@ -541,7 +568,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	lines.Reserve(32);
 
 	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
-	AppendActorPanelLines(lines, TEXT("[Player]"), pawn);
+	AppendActorPanelLines(lines, TEXT("[Player]"), pawn, GetWorld(), bHasSnapshot);
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Enemy]"));
@@ -552,6 +579,7 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendActorStatusLines(lines, enemy);
+	AppendActorRecentExecutionBlock(lines, GetWorld(), bHasSnapshot, enemy);
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Interaction]"));

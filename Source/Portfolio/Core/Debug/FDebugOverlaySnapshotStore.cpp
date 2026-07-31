@@ -659,7 +659,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 
 // AI Record
 
-void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntent, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName)
+void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntentState, const FString& InSubState, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName)
 {
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
@@ -673,11 +673,12 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	const FString pawnName = GetNameSafe(InOwnerPawn);
 	const FString targetName = GetNameSafe(InTargetActor);
 	const FString summary = FString::Printf(
-		TEXT("Controller: %s | Pawn: %s | Target: %s | Intent: %s | Result: %s | RejectReason: %s"),
+		TEXT("Controller: %s | Pawn: %s | Target: %s | IntentState: %s | SubState: %s | Result: %s | RejectReason: %s"),
 		*GetDisplayNameOrNA(InAIController),
 		*GetDisplayNameOrNA(InOwnerPawn),
 		*GetDisplayNameOrNA(InTargetActor),
-		*CompactStoreEnumText(InIntent),
+		*CompactStoreEnumText(InIntentState),
+		*CompactStoreEnumText(InSubState),
 		*CompactStoreEnumText(InRequestResult),
 		*CompactReasonText(InRejectReason));
 
@@ -687,7 +688,8 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	store->Snapshot.LastAI.ControllerName = controllerName;
 	store->Snapshot.LastAI.PawnName = pawnName;
 	store->Snapshot.LastAI.TargetName = targetName;
-	store->Snapshot.LastAI.Intent = InIntent;
+	store->Snapshot.LastAI.IntentState = InIntentState;
+	store->Snapshot.LastAI.SubState = InSubState;
 	store->Snapshot.LastAI.RequestResult = InRequestResult;
 	store->Snapshot.LastAI.RejectReason = InRejectReason;
 	store->Snapshot.LastAI.Summary = summary;

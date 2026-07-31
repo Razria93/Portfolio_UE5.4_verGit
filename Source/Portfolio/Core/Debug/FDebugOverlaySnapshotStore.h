@@ -41,7 +41,7 @@ public:
 
 public:
 	// AI Record
-	static void RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntent, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName);
+	static void RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntentState, const FString& InSubState, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName);
 
 public:
 	// Event Log
