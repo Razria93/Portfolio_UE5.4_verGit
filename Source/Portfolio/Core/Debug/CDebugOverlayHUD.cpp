@@ -26,7 +26,7 @@ namespace
 	static constexpr float DebugOverlayLineHeight = 20.f;
 	static constexpr float DebugOverlayFontScale = 1.05f;
 	static constexpr float DebugOverlayBackgroundPadding = 10.f;
-	static constexpr float DebugOverlayBackgroundWidth = 840.f;
+	static constexpr float DebugOverlayBackgroundWidth = 700.f;
 	static constexpr float DebugOverlayHeaderBottomPadding = 5.f;
 	static constexpr float DebugOverlayPanelGap = 24.f;
 	static constexpr float DebugOverlayRightMargin = 24.f;
@@ -38,6 +38,7 @@ namespace
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
 	static const FLinearColor DebugOverlayInteractionHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
+	static const FLinearColor DebugOverlayDefaultHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
 
 	// Text Formatting
 	FString BoolText(bool bInValue)
@@ -377,7 +378,8 @@ namespace
 	{
 		if (InLine == TEXT("[Player]")) return DebugOverlayPlayerHeaderColor;
 		if (InLine == TEXT("[Enemy]")) return DebugOverlayEnemyHeaderColor;
-		return DebugOverlayInteractionHeaderColor;
+		if (InLine == TEXT("[Interaction]")) return DebugOverlayInteractionHeaderColor;
+		return DebugOverlayDefaultHeaderColor;
 	}
 
 	bool IsOverlayHeaderLine(const FString& InLine, bool bInDrawPanelHeaders, bool bInDrawEventLogHeaders)
@@ -680,6 +682,8 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Interaction]"));
 	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
+
+	AppendOverlayLine(eventLogLines, TEXT("[Debug Overlay P0.5]"));
 	AppendEventLogBlock(eventLogLines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
@@ -705,7 +709,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	if (Canvas && !eventLogLines.IsEmpty())
 	{
 		const float eventLogBackgroundX = backgroundX + backgroundWidth + DebugOverlayPanelGap;
-		const float eventLogBackgroundY = backgroundY + DebugOverlayLineHeight;
+		const float eventLogBackgroundY = backgroundY;
 		const float eventLogAvailableWidth = FMath::Max(0.f, Canvas->SizeX - eventLogBackgroundX - DebugOverlayRightMargin);
 		const float eventLogAvailableHeight = FMath::Max(0.f, Canvas->SizeY - eventLogBackgroundY - DebugOverlayBottomMargin);
 		const float maxEventLogTextHeight = FMath::Max(0.f, eventLogAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
