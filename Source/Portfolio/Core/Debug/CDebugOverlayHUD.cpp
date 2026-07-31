@@ -37,7 +37,7 @@ namespace
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
-	static const FLinearColor DebugOverlayInteractionHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
+	static const FLinearColor DebugOverlayInteractionHeaderColor(0.2f, 0.08f, 0.35f, 0.68f);
 	static const FLinearColor DebugOverlayDefaultHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
 
 	// Text Formatting
@@ -250,6 +250,7 @@ namespace
 
 	void AppendEventLogBlock(TArray<FString>& InOutLines, bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
 	{
+		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("[Event Log: %s]"), *InEventLogFilter));
 
 		if (!bInHasSnapshot)
@@ -665,7 +666,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	TArray<FString> eventLogLines;
 	eventLogLines.Reserve(eventLogLimit + 2);
 
-	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
+	AppendOverlayLine(lines, TEXT("[Debug Overlay Pannel_01]"));
 	AppendActorPanelLines(lines, TEXT("[Player]"), pawn, GetWorld(), bHasSnapshot);
 
 	AppendOverlayLine(lines, TEXT(""));
@@ -683,7 +684,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendOverlayLine(lines, TEXT("[Interaction]"));
 	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
 
-	AppendOverlayLine(eventLogLines, TEXT("[Debug Overlay P0.5]"));
+	AppendOverlayLine(eventLogLines, TEXT("[Debug Overlay Pannel_02]"));
 	AppendEventLogBlock(eventLogLines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);

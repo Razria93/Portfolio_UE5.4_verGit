@@ -13,7 +13,7 @@
 namespace
 {
 	static constexpr int32 DebugOverlayEventStoreCapacity = 32;
-	static constexpr int32 DebugOverlayDefaultEventLogDisplayLimit = 5;
+	static constexpr int32 DebugOverlayDefaultEventLogDisplayLimit = 16;
 	static constexpr int32 DebugOverlayMaxEventLogDisplayLimit = 32;
 
 #if !UE_BUILD_SHIPPING
