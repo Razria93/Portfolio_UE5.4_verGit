@@ -50,6 +50,7 @@
 - `01_Planning/Debug_Overlay_P1_Enemy_Current_AI_Recent_AI_Event_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_EventLog_Separate_Panel_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_Overlay_Layout_Style_Lock_KR.md`
+- `01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`
 - `02_Operation/Debug_Overlay_Operation_Guide_KR.md`
 - `03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md`
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`
@@ -109,6 +110,8 @@ P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 e
 - EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 제외한다.
 
 현재 캡처 파일은 1차 패키지로만 정리한다. 반복 촬영/패키징은 P1 완료 전까지 중단하고, 최종 제출 후보는 P1 설계/구현/검증 이후 별도 패키지로 분리한다.
+
+P1 마감 기준의 최신 상태는 `01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`와 `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`를 기준으로 확인한다. P1에서는 TargetComponent 기반 명시 target, 3-panel layout, EventLog filter/separate panel, Interaction panel, Player/Enemy Recent Execution, Enemy Current AI / Recent AI Event 분리를 완료 기준으로 두며, Runtime LOD actual 표시와 FinalCandidate 촬영/패키징은 후속 단계로 분리한다.
 
 ## 현재 브랜치
 

@@ -6,7 +6,7 @@
 
 ## 날짜
 
-**2026.07.30**
+**2026.07.30 ~ 2026.08.01**
 
 ## 상태
 
@@ -16,14 +16,22 @@
 - [x] TestRoom 수동 연결용 `ACDebugOverlayGameMode` 추가
 - [x] P0.5 Player / Enemy panel 분리
 - [x] Movement / HP / Stagger Count 표시
-- [x] compact display format 정리
-- [x] P1 TargetComponent 기반 enemy source chain 추가
+- [x] P1 TargetComponent 기반 명시 Enemy target 표시
+- [x] `DebugOverlaySelectNearestTarget` / `DebugOverlayClearTarget` 운용 경로 정리
+- [x] EventLog category filter 구현
+- [x] EventLog noise / collision window display filter 구현
+- [x] EventLog separate panel 구현
+- [x] Interaction separate panel 구현
+- [x] Player / Enemy Recent Execution 분리
+- [x] Recent Combat damage breakdown 표시
+- [x] Recent Combat collision lifecycle overwrite 방지
+- [x] Enemy Current AI / Recent AI Event 분리
 - [x] W05 Code Quality Review 작성
 - [x] W05 LowRiskFix cleanup 반영
-- [ ] P1 DecisionNeeded 항목 확정
-- [ ] EventLog category filter 구현
+- [x] P1 통합 PIE 결과 문서화
 - [ ] Runtime LOD actual 표시 보강
 - [ ] P1 완료 후 FinalCandidate 촬영 / 패키징
+- [ ] 포트폴리오 본문 연결
 
 ## 브랜치
 
@@ -33,9 +41,9 @@
 
 이번 PR 후보는 resume / 기술문서 / 제출 영상에서 runtime evidence를 설명하기 위한 개발 전용 Debug Overlay를 추가한다.
 
-완성형 gameplay HUD가 아니라, Action / Reaction, CombatSignal / Damage, Enemy AI 관련 현재값과 최근 event를 TestRoom PIE에서 확인하기 위한 evidence tooling이다. Overlay는 shipping product UI처럼 보이지 않게 유지하며, 실제 코드에서 읽을 수 없는 값은 `N/A`, `NotCaptured`, `Pending`으로 표시한다.
+완성형 gameplay HUD가 아니라, Action / Reaction, CombatSignal / Damage, Enemy AI, Runtime LOD 관련 현재값과 최근 event를 TestRoom PIE에서 확인하기 위한 evidence tooling이다. Overlay는 shipping product UI처럼 보이지 않게 유지하며, 실제 코드에서 읽을 수 없는 값은 `N/A`, `NotCaptured`, `Pending`으로 표시한다.
 
-작업은 기능 구현과 W05 code quality 정리를 함께 포함한다.
+P1 마감 기준에서는 `Runtime LOD actual` 표시만 의도적으로 보류하고, Target / EventLog / Interaction / Recent summary / AI evidence 표시를 대부분 구현 완료 상태로 둔다.
 
 ```text
 P0
@@ -45,7 +53,13 @@ P0.5
 -> Player/Enemy panel, Movement, HP, Stagger Count, compact 표시
 
 P1
--> TargetComponent 기반 EnemySource chain
+-> TargetComponent.Nearest
+-> 3-panel layout
+-> EventLog filter / separate panel
+-> Interaction recent summary
+-> Player/Enemy Recent Execution
+-> Enemy Current AI / Recent AI Event
+-> Recent Combat damage breakdown
 ```
 
 ## 변경 배경
@@ -60,7 +74,7 @@ P1
 
 ### 1. SnapshotTypes / SnapshotStore
 
-무엇:
+대상:
 
 - `FDebugOverlaySnapshotTypes.h`
 - `FDebugOverlaySnapshotStore.h/.cpp`
@@ -90,7 +104,7 @@ Shipping
 
 ### 2. 기존 debug hook 연결
 
-무엇:
+대상:
 
 - `FExecutionOrchestratorDebug.cpp`
 - `FCombatSignalDebug.cpp`
@@ -122,7 +136,7 @@ AI
 
 ### 3. Canvas 기반 Debug Overlay HUD
 
-무엇:
+대상:
 
 - `ACDebugOverlayHUD`
 - `ACDebugOverlayGameMode`
@@ -132,27 +146,32 @@ AI
 - UMG / Slate 없이 `AHUD::DrawHUD()`와 Canvas Draw로 개발 전용 overlay를 표시한다.
 - 전역 `GlobalDefaultGameMode`를 변경하지 않고 TestRoom 수동 연결을 기준으로 둔다.
 
-표시 항목:
+P1 현재 표시 구조:
 
 ```text
-[Debug Overlay P0.5]
-
+[Debug Overlay Pannel_01]
 [Player]
-State / Action / Reaction / Stagger / Guard / Movement / HP / Runtime LOD / AI
+Current State
+[Recent Execution]
 
 [Enemy]
-EnemySource / EnemyTarget or fallback
-State / Action / Reaction / Stagger / Guard / Movement / HP / Runtime LOD / AI
+Target Source / Current State
+[Recent Execution]
+[Current AI]
+[Recent AI Event]
 
+[Debug Overlay Pannel_02]
+[Event Log: All|Execution|Combat|AI]
+
+[Debug Overlay Pannel_03]
+[Interaction]
 [Recent Execution]
 [Recent Combat]
-[Recent AI]
-[Event Log]
 ```
 
 ### 4. P0.5 표시 보강
 
-무엇:
+대상:
 
 - Player / Enemy panel 분리
 - blue / red tab
@@ -166,42 +185,131 @@ State / Action / Reaction / Stagger / Guard / Movement / HP / Runtime LOD / AI
 
 - Player와 Enemy의 현재 상태를 같은 순서로 비교할 수 있다.
 - Stagger Count는 현재 parry stack으로만 표시하며 누적 통계처럼 주장하지 않는다.
-- EventLog 추가 축약은 P0.5에서 보류했다.
+- P0.5 Round1 캡처는 임시 검증 evidence로 유지하고 FinalCandidate로 승격하지 않는다.
 
-### 5. P1 TargetComponent source chain
+### 5. P1 TargetComponent 명시 target 표시
 
-무엇:
+대상:
 
 - `UCDebugOverlayTargetComponent`
 - `ACPlayerController` debug Exec command
-- HUD enemy source chain
-- Store recent combat pair
+- HUD enemy source 표시
 
-역할:
-
-- Enemy panel이 단순 world scan이 아니라 명시 target source를 우선 사용할 수 있게 한다.
-
-source chain:
+현재 정책:
 
 ```text
-TargetComponent
--> RecentCombatTarget
--> WorldScanFallback
-```
-
-Exec command:
-
-```text
-DebugOverlaySelectTarget
 DebugOverlaySelectNearestTarget
+-> TargetComponent.Nearest
+
 DebugOverlayClearTarget
+-> EnemySource: None
+
+target 없음
+-> EnemySource: None
 ```
 
-비목표:
+`RecentCombatTarget` / `WorldScanFallback`은 기본 Enemy panel source로 자동 사용하지 않는다. P1 evidence에서는 명시 target이 있을 때만 Enemy panel 값을 성공 evidence로 주장한다.
 
-- 범용 target system이 아니다.
-- lock-on, target cycling, combat action target 강제는 구현하지 않는다.
-- 브랜치 마감 후 필요하면 범용 target component로 리팩터링한다.
+Nearest radius는 `3000` 기준으로 운용한다.
+
+### 6. EventLog filter / separate panel
+
+대상:
+
+- `FDebugOverlaySnapshotStore`
+- `ACDebugOverlayHUD`
+
+구현 상태:
+
+- `Portfolio.DebugOverlay.EventLogFilter`
+  - `All`
+  - `Execution`
+  - `Combat`
+  - `AI`
+- `Portfolio.DebugOverlay.EventLogLimit`
+  - `0~32`
+- Reject / Ignore noise display filter
+- Collision window display filter
+- EventLog separate panel `Pannel_02`
+
+주의:
+
+- display filter는 화면 표시 제어다.
+- filter로 숨겨진 event를 “발생하지 않았다”고 주장하지 않는다.
+- collision lifecycle event는 EventLog diagnostic으로 유지될 수 있다.
+
+### 7. Interaction / Recent summary
+
+Interaction panel은 world-level recent summary를 담당한다.
+
+표시 항목:
+
+- `[Recent Execution]`
+- `[Recent Combat]`
+
+Player / Enemy panel에는 actor-local Recent Execution을 별도 표시한다.
+
+Recent Combat은 최근 combat evidence summary이며, 마지막 combat log가 아니다. `CollisionEnabled`, `CollisionDisabled`, `CollisionDisabledIgnored` 같은 collision lifecycle event는 Recent Combat 대표값을 덮어쓰지 않는다.
+
+Recent Combat damage breakdown:
+
+```text
+Request
+Mitigated
+Final
+Commit
+```
+
+`Request`는 요청 damage, `Mitigated`는 방어/감산 이후 값, `Final`은 최종 판정 damage, `Commit`은 실제 commit 값이다. `Raw`라는 표현은 사용하지 않는다.
+
+### 8. Enemy Current AI / Recent AI Event
+
+Enemy AI evidence는 두 영역으로 분리한다.
+
+```text
+[Current AI]
+Controller
+Pawn
+Target
+IntentState
+ReturnHome
+UsePatrol
+HasLOS
+DistanceToTarget
+IsCombatAction
+
+[Recent AI Event]
+Task
+Result
+Age 또는 Stale Time
+Last Pawn
+RejectReason
+Note
+```
+
+정책:
+
+- Current AI는 selected Enemy의 현재 Blackboard / Controller / Pawn 상태다.
+- Recent AI Event는 최근 AI task event다.
+- Recent AI Event는 current AI evidence가 아니다.
+- Behavior Tree active node 전체 추적은 P1 보류다.
+
+### 9. BT_Default tuning
+
+대상:
+
+- `Content/02_Controller/02_Enemy/AI/BehaviorTree/BT_Default.uasset`
+
+변경 목적:
+
+- Patrol 이동 가능 거리 조정
+- P1 PIE 검증에서 Enemy patrol / engage 흐름을 안정적으로 확인하기 위한 tuning
+
+주의:
+
+- debug overlay UI 기능 변경이 아니다.
+- HUD evidence claim에 포함하지 않는다.
+- 별도 커밋으로 분리했다.
 
 ## W05 Code Quality 반영
 
@@ -215,7 +323,7 @@ DebugOverlayClearTarget
 | P48 Include Order Cleanup | HUD / Store / PlayerController `.cpp` include group을 W05 기준으로 정리했다. |
 | P49 API Const Consistency | getter/query const 여부와 DecisionNeeded 항목을 문서화했다. |
 | P50 Section Comment Consistency | Store API section과 HUD helper section을 파일군 책임 기준으로 정리했다. |
-| P51 Tuning Constants Cleanup | trace distance, nearest radius, stale timeout, event limit을 internal policy constant로 분류했다. |
+| P51 Tuning Constants Cleanup | nearest radius, stale timeout, event limit을 internal policy constant 또는 CVar contract로 분류했다. |
 
 ## 변경 파일 범위
 
@@ -227,7 +335,11 @@ Source/Portfolio/Core/Debug/*
 Source/Portfolio/Controller/CPlayerController.h/.cpp
 Source/Portfolio/Character/Player/CPlayer.h
 Source/Portfolio/Character/Enemy/CEnemy.h
+
+Content/02_Controller/02_Enemy/AI/BehaviorTree/BT_Default.uasset
 ```
+
+`BT_Default.uasset`은 PIE 검증 보조 tuning이며, overlay HUD 기능 구현 범위와 분리해서 설명한다.
 
 ## 검증
 
@@ -252,31 +364,31 @@ Map:
 /Game/00_UnitTest/TestRoom
 
 Result:
-P0.5 overlay 표시 확인
-Player / Enemy panel 표시 확인
-Movement / HP / Stagger Count 표시 확인
-Recent Execution / Combat / AI / EventLog 갱신 확인
-TargetComponent / RecentCombatTarget / WorldScanFallback source chain 체크리스트 작성
+P1 3-panel overlay 표시 확인
+TargetComponent.Nearest 표시 확인
+Player / Enemy Recent Execution 분리 확인
+EventLog separate panel 확인
+Interaction panel 확인
+Recent Combat Request / Mitigated / Final / Commit 확인
+Enemy Current AI / Recent AI Event 분리 확인
+Collision lifecycle event가 Recent Combat을 덮지 않는 것 확인
 ```
 
 주의:
 
-- Round1 / Round1_StaggerCount는 임시 검증 evidence다.
-- 최종 제출용 FinalCandidate 촬영은 P1 완료 후 별도 진행한다.
-- Runtime LOD actual value와 AI current detail은 아직 성공 evidence로 주장하지 않는다.
+- 현재 PIE 캡처는 최종 제출 evidence가 아니다.
+- FinalCandidate 촬영은 P1 마감 후 별도 진행한다.
+- `Runtime LOD: N/A`는 성공 evidence로 주장하지 않는다.
 
 ## 비범위 / 후속 작업
 
-이번 PR 후보에서 완료하지 않은 항목:
+P1에서 의도적으로 보류한 항목:
 
 ```text
-EventLog category filter
-Player/Enemy Recent/EventLog 분리
 Runtime LOD actual 표시
-AI current value 보강
-TargetComponent selection method 세분화
-DebugOverlayTargetComponent shipping reflection 정책 결정
-RecentCombat stale/not matched 문구 축약 여부 결정
+Behavior Tree active node 전체 추적
+EventLog line wrapping / compact 재작업
+CollisionDisabledIgnored event 자체 발생 원인 제거
 FinalCandidate 촬영 / 패키징
 포트폴리오 본문 연결
 ```
@@ -298,6 +410,9 @@ AI target selection 변경
 - `Docs/07_Portfolio_Documents/Debug_Overlay/README.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Work_Order_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Scope_KR.md`
+- `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`
+- `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`
+- `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Overlay_Layout_PIE_Result_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md`
 - `Docs/04_Pull_Request/P42_UE5_Portfolio_Pull_Request.md`
@@ -314,4 +429,4 @@ AI target selection 변경
 
 이번 PR 후보는 debug overlay를 제출용 evidence tooling으로 구성하고, P0/P0.5/P1로 단계화된 구현과 W05 code quality cleanup을 하나의 설명 가능한 흐름으로 묶는다.
 
-현재 상태는 최종 촬영 전 기능 검증과 코드 품질 정리를 진행한 단계다. 이후에는 P1 DecisionNeeded 항목을 확정하고, EventLog filter / Runtime LOD / AI 보강을 닫은 뒤 FinalCandidate 촬영으로 넘어간다.
+P1 기준으로 Target / EventLog / Interaction / Recent summary / Enemy AI evidence는 마감 가능한 수준까지 구현되었다. Runtime LOD actual 표시와 최종 촬영/패키징은 P1 이후 단계로 분리한다.
