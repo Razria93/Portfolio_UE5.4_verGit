@@ -279,14 +279,14 @@ P1 redesign에서는 표시 단계 noise/collision filter CVar를 설계한다. 
 
 ```text
 Portfolio.DebugOverlay.HideNoiseEvents
-Portfolio.DebugOverlay.ShowCollisionWindowEvents
+Portfolio.DebugOverlay.HideCollisionWindowEvents
 ```
 
 기본값:
 
 ```text
 HideNoiseEvents=0
-ShowCollisionWindowEvents=1
+HideCollisionWindowEvents=0
 ```
 
 정책:

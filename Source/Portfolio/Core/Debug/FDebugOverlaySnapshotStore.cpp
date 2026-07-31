@@ -53,10 +53,10 @@ namespace
 		TEXT("Hide noisy debug overlay event log entries. 0: show all, 1: hide reject/ignore noise."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarDebugOverlayShowCollisionWindowEvents(
-		TEXT("Portfolio.DebugOverlay.ShowCollisionWindowEvents"),
-		1,
-		TEXT("Show debug overlay collision window event log entries. 0: hide, 1: show."),
+	TAutoConsoleVariable<int32> CVarDebugOverlayHideCollisionWindowEvents(
+		TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents"),
+		0,
+		TEXT("Hide debug overlay collision window event log entries. 0: show all, 1: hide collision window events."),
 		ECVF_Default);
 
 	struct FDebugOverlayWorldStore
@@ -238,7 +238,7 @@ namespace
 	bool IsEventExcludedByDisplayFilters(const FDebugOverlayEventEntry& InEntry)
 	{
 		const bool bHideNoiseEvents = CVarDebugOverlayHideNoiseEvents.GetValueOnGameThread() != 0;
-		const bool bShowCollisionWindowEvents = CVarDebugOverlayShowCollisionWindowEvents.GetValueOnGameThread() != 0;
+		const bool bHideCollisionWindowEvents = CVarDebugOverlayHideCollisionWindowEvents.GetValueOnGameThread() != 0;
 
 		if (bHideNoiseEvents)
 		{
@@ -250,7 +250,7 @@ namespace
 			}
 		}
 
-		if (!bShowCollisionWindowEvents && IsCollisionWindowEvent(InEntry))
+		if (bHideCollisionWindowEvents && IsCollisionWindowEvent(InEntry))
 		{
 			return true;
 		}

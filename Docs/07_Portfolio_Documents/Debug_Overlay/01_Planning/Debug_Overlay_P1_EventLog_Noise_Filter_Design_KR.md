@@ -39,7 +39,7 @@ P1 EventLog 표시 필터는 다음 계층으로 나눈다.
 | --- | --- | --- |
 | Category filter | `Portfolio.DebugOverlay.EventLogFilter` | `All / Execution / Combat / AI` category 선택 |
 | Noise filter | `Portfolio.DebugOverlay.HideNoiseEvents` | Reject / Ignore 계열 event 숨김 |
-| Collision window filter | `Portfolio.DebugOverlay.ShowCollisionWindowEvents` | Collision window event 표시 여부 |
+| Collision window filter | `Portfolio.DebugOverlay.HideCollisionWindowEvents` | Collision window event 숨김 여부 |
 
 정책:
 
@@ -81,10 +81,10 @@ int32 / bool style CVar
 - 검증 중 실패 원인을 놓치지 않는다.
 - 캡처 정리나 노이즈가 심한 상황에서만 사용자가 명시적으로 켠다.
 
-### 4.2 ShowCollisionWindowEvents
+### 4.2 HideCollisionWindowEvents
 
 ```text
-Portfolio.DebugOverlay.ShowCollisionWindowEvents
+Portfolio.DebugOverlay.HideCollisionWindowEvents
 ```
 
 권장 타입:
@@ -96,17 +96,17 @@ int32 / bool style CVar
 권장 기본값:
 
 ```text
-1
+0
 ```
 
 의미:
 
 | 값 | 의미 |
 | --- | --- |
-| `1` | Collision window event를 EventLog에 표시 |
-| `0` | Collision window event를 EventLog 표시에서 숨김 |
+| `0` | Collision window event를 EventLog에 표시 |
+| `1` | Collision window event를 EventLog 표시에서 숨김 |
 
-기본값을 `1`로 두는 이유:
+기본값을 `0`으로 두는 이유:
 
 - P1 Interaction panel은 flow 확인이 목적이다.
 - `CollisionEnabled -> TargetAccepted -> CombatResult` 순서는 combat evidence에서 중요하다.
@@ -134,17 +134,17 @@ int32 / bool style CVar
 
 ```text
 HideNoiseEvents=1이면 숨김
-ShowCollisionWindowEvents=0이면 숨김
+HideCollisionWindowEvents=1이면 숨김
 ```
 
 즉 둘 중 하나라도 숨김 조건에 걸리면 표시하지 않는다.
 구현 기준은 OR 조건이다.
 
-다만 `CollisionDisabledIgnored`는 hit window 실패 원인을 확인할 때 유용하다. 원인 분석이나 hook 검증을 할 때는 `HideNoiseEvents=0`, `ShowCollisionWindowEvents=1` 기본 조합으로 되돌린 뒤 확인한다.
+다만 `CollisionDisabledIgnored`는 hit window 실패 원인을 확인할 때 유용하다. 원인 분석이나 hook 검증을 할 때는 `HideNoiseEvents=0`, `HideCollisionWindowEvents=0` 기본 조합으로 되돌린 뒤 확인한다.
 
 ## 6. Collision Window 대상
 
-`ShowCollisionWindowEvents=0`일 때 숨길 대상은 다음으로 제한한다.
+`HideCollisionWindowEvents=1`일 때 숨길 대상은 다음으로 제한한다.
 
 | Category | Event | 표시 정책 |
 | --- | --- | --- |
@@ -161,7 +161,7 @@ ShowCollisionWindowEvents=0이면 숨김
 | `CombatResult` | `PacketReceived` | receiver-side result evidence |
 | `CombatResult` | `Delivering` / `Delivered` | 별도 result diagnostic이며 window event는 아님 |
 
-Collision window event는 flow 확인에 필요할 수 있으므로 기본 표시를 유지한다. 단, 캡처 화면에서 너무 많은 window open/close가 반복되면 `ShowCollisionWindowEvents=0`으로 숨길 수 있다.
+Collision window event는 flow 확인에 필요할 수 있으므로 기본 표시를 유지한다. 단, 캡처 화면에서 너무 많은 window open/close가 반복되면 `HideCollisionWindowEvents=1`으로 숨길 수 있다.
 
 ## 7. 적용 순서
 
@@ -216,7 +216,7 @@ NoEvents(Filter: Combat NoiseHidden: true CollisionWindow: false)
 ```text
 Portfolio.DebugOverlay.EventLogFilter All
 Portfolio.DebugOverlay.HideNoiseEvents 0
-Portfolio.DebugOverlay.ShowCollisionWindowEvents 1
+Portfolio.DebugOverlay.HideCollisionWindowEvents 0
 ```
 
 예상:
@@ -254,7 +254,7 @@ Portfolio.DebugOverlay.HideNoiseEvents 1
 ### 9.3 Collision window 숨김
 
 ```text
-Portfolio.DebugOverlay.ShowCollisionWindowEvents 0
+Portfolio.DebugOverlay.HideCollisionWindowEvents 1
 ```
 
 예상:
@@ -269,7 +269,7 @@ Portfolio.DebugOverlay.ShowCollisionWindowEvents 0
 ```text
 Portfolio.DebugOverlay.EventLogFilter Combat
 Portfolio.DebugOverlay.HideNoiseEvents 1
-Portfolio.DebugOverlay.ShowCollisionWindowEvents 0
+Portfolio.DebugOverlay.HideCollisionWindowEvents 1
 ```
 
 예상:
@@ -369,7 +369,7 @@ Recent summary까지 noise filter를 적용할지는 P1 후속 결정으로 둔�
 | 기본값 | 기존 EventLog와 동일하게 표시 |
 | `HideNoiseEvents 1` | Reject / Ignore execution event가 표시에서 제외 |
 | `HideNoiseEvents 1` | `CollisionDisabledIgnored`가 표시에서 제외 |
-| `ShowCollisionWindowEvents 0` | `CollisionEnabled/Disabled/DisabledIgnored`가 표시에서 제외 |
+| `HideCollisionWindowEvents 1` | `CollisionEnabled/Disabled/DisabledIgnored`가 표시에서 제외 |
 | `EventLogFilter Combat` + collision off | `TargetAccepted`, `CombatResult` 중심 표시 |
 | `EventLogLimit 0` | 기존 limit 0 empty state 유지 |
 | filter 값을 되돌림 | Store에 남아 있던 event가 다시 표시 가능 |
@@ -385,7 +385,7 @@ Recent summary까지 noise filter를 적용할지는 P1 후속 결정으로 둔�
 이번 설계 문서의 완료 기준은 다음과 같다.
 
 - category filter와 noise/collision filter의 역할 차이가 정리되어 있다.
-- `HideNoiseEvents`, `ShowCollisionWindowEvents` CVar 후보와 기본값이 정리되어 있다.
+- `HideNoiseEvents`, `HideCollisionWindowEvents` CVar 후보와 기본값이 정리되어 있다.
 - 숨길 event와 숨기지 않을 event가 구분되어 있다.
 - filter 적용 순서가 `category -> noise/collision -> limit`으로 고정되어 있다.
 - Store record path를 변경하지 않는 정책이 명시되어 있다.
@@ -401,7 +401,7 @@ Recent summary까지 noise filter를 적용할지는 P1 후속 결정으로 둔�
 ```text
 FDebugOverlaySnapshotStore.cpp 중심 display filter helper 추가
 Portfolio.DebugOverlay.HideNoiseEvents 추가
-Portfolio.DebugOverlay.ShowCollisionWindowEvents 추가
+Portfolio.DebugOverlay.HideCollisionWindowEvents 추가
 EventLog query path에서 category -> noise/collision -> limit 순서 적용
 CDebugOverlayHUD.cpp는 필요 시 최소 표시 문구만 확인
 ```
