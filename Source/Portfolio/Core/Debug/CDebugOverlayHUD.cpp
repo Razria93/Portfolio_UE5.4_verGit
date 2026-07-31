@@ -27,6 +27,10 @@ namespace
 	static constexpr float DebugOverlayFontScale = 1.05f;
 	static constexpr float DebugOverlayBackgroundPadding = 10.f;
 	static constexpr float DebugOverlayBackgroundWidth = 1040.f;
+	static constexpr float DebugOverlayPanelGap = 24.f;
+	static constexpr float DebugOverlayRightMargin = 24.f;
+	static constexpr float DebugOverlayBottomMargin = 24.f;
+	static constexpr float DebugOverlayMinEventLogPanelWidth = 420.f;
 	static constexpr float DebugOverlayEnemyScanCooldownSeconds = 0.5f;
 	static constexpr float DebugOverlayRecentCombatTargetStaleSeconds = 3.0f;
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
@@ -244,7 +248,6 @@ namespace
 
 	void AppendEventLogBlock(TArray<FString>& InOutLines, bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
 	{
-		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("[Event Log: %s]"), *InEventLogFilter));
 
 		if (!bInHasSnapshot)
@@ -364,11 +367,49 @@ namespace
 		return InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[Interaction]");
 	}
 
+	bool IsEventLogHeaderLine(const FString& InLine)
+	{
+		return InLine.StartsWith(TEXT("[Event Log:"));
+	}
+
 	FLinearColor GetPanelHeaderColor(const FString& InLine)
 	{
 		if (InLine == TEXT("[Player]")) return DebugOverlayPlayerHeaderColor;
 		if (InLine == TEXT("[Enemy]")) return DebugOverlayEnemyHeaderColor;
 		return DebugOverlayInteractionHeaderColor;
+	}
+
+	void DrawOverlayLines(
+		ACDebugOverlayHUD& InHud,
+		const TArray<FString>& InLines,
+		float InTextX,
+		float InTextY,
+		float InBackgroundX,
+		float InBackgroundY,
+		float InBackgroundWidth,
+		float InBackgroundHeight,
+		bool bInDrawPanelHeaders,
+		bool bInDrawEventLogHeaders)
+	{
+		if (InBackgroundWidth > 0.f && InBackgroundHeight > 0.f)
+		{
+			InHud.DrawRect(DebugOverlayBackgroundColor, InBackgroundX, InBackgroundY, InBackgroundWidth, InBackgroundHeight);
+		}
+
+		float y = InTextY;
+		for (const FString& line : InLines)
+		{
+			const bool bDrawPanelHeader = bInDrawPanelHeaders && IsPanelHeaderLine(line);
+			const bool bDrawEventLogHeader = bInDrawEventLogHeaders && IsEventLogHeaderLine(line);
+
+			if ((bDrawPanelHeader || bDrawEventLogHeader) && InBackgroundWidth > 0.f)
+			{
+				InHud.DrawRect(GetPanelHeaderColor(line), InBackgroundX, y - 2.f, InBackgroundWidth, DebugOverlayLineHeight + 4.f);
+			}
+
+			InHud.DrawText(line, FLinearColor::White, InTextX, y, nullptr, DebugOverlayFontScale, false);
+			y += DebugOverlayLineHeight;
+		}
 	}
 
 	// Enemy Source Formatting
@@ -566,6 +607,8 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	TArray<FString> lines;
 	lines.Reserve(32);
+	TArray<FString> eventLogLines;
+	eventLogLines.Reserve(eventLogLimit + 2);
 
 	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
 	AppendActorPanelLines(lines, TEXT("[Player]"), pawn, GetWorld(), bHasSnapshot);
@@ -584,7 +627,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Interaction]"));
 	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
-	AppendEventLogBlock(lines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
+	AppendEventLogBlock(eventLogLines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
 	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
@@ -594,21 +637,52 @@ void ACDebugOverlayHUD::DrawHUD()
 	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
 	const float backgroundHeight = (lines.Num() * DebugOverlayLineHeight) + (DebugOverlayBackgroundPadding * 2.f);
 
-	if (backgroundWidth > 0.f && backgroundHeight > 0.f)
-	{
-		DrawRect(DebugOverlayBackgroundColor, backgroundX, backgroundY, backgroundWidth, backgroundHeight);
-	}
+	DrawOverlayLines(
+		*this,
+		lines,
+		DebugOverlayOriginX,
+		DebugOverlayOriginY,
+		backgroundX,
+		backgroundY,
+		backgroundWidth,
+		backgroundHeight,
+		true,
+		false);
 
-	float y = DebugOverlayOriginY;
-	for (const FString& line : lines)
+	if (Canvas && !eventLogLines.IsEmpty())
 	{
-		if (IsPanelHeaderLine(line) && backgroundWidth > 0.f)
+		const float eventLogBackgroundX = backgroundX + backgroundWidth + DebugOverlayPanelGap;
+		const float eventLogBackgroundY = backgroundY;
+		const float eventLogAvailableWidth = FMath::Max(0.f, Canvas->SizeX - eventLogBackgroundX - DebugOverlayRightMargin);
+		const float eventLogAvailableHeight = FMath::Max(0.f, Canvas->SizeY - eventLogBackgroundY - DebugOverlayBottomMargin);
+		const int32 maxEventLogLineCount = FMath::Max(0, FMath::FloorToInt(
+			(eventLogAvailableHeight - (DebugOverlayBackgroundPadding * 2.f)) / DebugOverlayLineHeight));
+		const int32 eventLogLineCount = FMath::Min(eventLogLines.Num(), maxEventLogLineCount);
+		TArray<FString> visibleEventLogLines;
+		visibleEventLogLines.Reserve(eventLogLineCount);
+		for (int32 lineIndex = 0; lineIndex < eventLogLineCount; ++lineIndex)
 		{
-			DrawRect(GetPanelHeaderColor(line), backgroundX, y - 2.f, backgroundWidth, DebugOverlayLineHeight + 4.f);
+			visibleEventLogLines.Add(eventLogLines[lineIndex]);
 		}
 
-		DrawText(line, FLinearColor::White, DebugOverlayOriginX, y, nullptr, DebugOverlayFontScale, false);
-		y += DebugOverlayLineHeight;
+		const float eventLogBackgroundHeight = FMath::Min(
+			(visibleEventLogLines.Num() * DebugOverlayLineHeight) + (DebugOverlayBackgroundPadding * 2.f),
+			eventLogAvailableHeight);
+
+		if (eventLogAvailableWidth >= DebugOverlayMinEventLogPanelWidth && eventLogBackgroundHeight > 0.f && !visibleEventLogLines.IsEmpty())
+		{
+			DrawOverlayLines(
+				*this,
+				visibleEventLogLines,
+				eventLogBackgroundX + DebugOverlayBackgroundPadding,
+				DebugOverlayOriginY,
+				eventLogBackgroundX,
+				eventLogBackgroundY,
+				eventLogAvailableWidth,
+				eventLogBackgroundHeight,
+				false,
+				true);
+		}
 	}
 #endif
 }

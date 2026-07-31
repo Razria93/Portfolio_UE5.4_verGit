@@ -14,7 +14,7 @@ namespace
 {
 	static constexpr int32 DebugOverlayEventStoreCapacity = 32;
 	static constexpr int32 DebugOverlayDefaultEventLogDisplayLimit = 5;
-	static constexpr int32 DebugOverlayMaxEventLogDisplayLimit = 5;
+	static constexpr int32 DebugOverlayMaxEventLogDisplayLimit = 32;
 
 #if !UE_BUILD_SHIPPING
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnabled(
@@ -38,7 +38,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarDebugOverlayEventLogLimit(
 		TEXT("Portfolio.DebugOverlay.EventLogLimit"),
 		DebugOverlayDefaultEventLogDisplayLimit,
-		TEXT("Number of recent debug overlay event lines to display. 0-5."),
+		TEXT("Number of recent debug overlay event lines to display. 0-32."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogFilter(
