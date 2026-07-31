@@ -117,14 +117,14 @@ namespace
 		return CompactStoreEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
 	}
 
-	FString ResolveCombatResultFromName(const AActor* InReceiverActor, const FCombatResultPacket& InPacket)
+	FString ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket)
 	{
-		if (IsValid(InPacket.SourceActor) && InPacket.SourceActor != InReceiverActor)
+		if (IsValid(InPacket.SourceActor) && InPacket.SourceActor != InResultReceiverActor)
 		{
 			return GetNameSafe(InPacket.SourceActor);
 		}
 
-		if (IsValid(InPacket.TargetActor) && InPacket.TargetActor != InReceiverActor)
+		if (IsValid(InPacket.TargetActor) && InPacket.TargetActor != InResultReceiverActor)
 		{
 			return GetNameSafe(InPacket.TargetActor);
 		}
@@ -541,10 +541,10 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	const FString targetName = GetNameSafe(InPacket.TargetActor);
 	const FString causerName = GetNameSafe(InPacket.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
-	const FString fromName = ResolveCombatResultFromName(InReceiverActor, InPacket);
+	const FString resultSourceName = ResolveCombatResultSourceName(InReceiverActor, InPacket);
 	const FString summary = FString::Printf(
-		TEXT("From=%s | Receiver=%s | Outcome=%s | DamageCommitted=%s | Commit=%.3f"),
-		*fromName,
+		TEXT("ResultFrom=%s | ResultReceiver=%s | Outcome=%s | DamageCommitted=%s | Commit=%.3f"),
+		*resultSourceName,
 		*GetDisplayNameOrNA(InReceiverActor),
 		*CompactStoreEnumText(outcome),
 		InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"),
