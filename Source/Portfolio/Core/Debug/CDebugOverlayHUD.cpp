@@ -32,6 +32,7 @@ namespace
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
+	static const FLinearColor DebugOverlayInteractionHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
 
 	// Text Formatting
 	FString BoolText(bool bInValue)
@@ -229,16 +230,10 @@ namespace
 			*InEntry.Summary);
 	}
 
-	void AppendSubjectEventLogBlock(TArray<FString>& InOutLines, const TCHAR* InNoSubjectText, bool bInHasSubject, bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
+	void AppendEventLogBlock(TArray<FString>& InOutLines, bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
 	{
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("[Event Log: %s]"), *InEventLogFilter));
-
-		if (!bInHasSubject)
-		{
-			AppendOverlayLine(InOutLines, InNoSubjectText);
-			return;
-		}
 
 		if (!bInHasSnapshot)
 		{
@@ -269,10 +264,10 @@ namespace
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("State: %s"), *FormatExecutionState(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Action: %s"), *FormatActiveAction(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *FormatActiveReaction(InPawn)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("HP: %s"), *FormatActorHealth(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Stagger: %s"), *FormatParryStaggerStack(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *FormatGuardOverlay(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *FormatActorMovement(InPawn)));
-		AppendOverlayLine(InOutLines, FString::Printf(TEXT("HP: %s"), *FormatActorHealth(InPawn)));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *FormatRuntimeLODTier()));
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("AI: %s"), *FormatAISummary()));
 	}
@@ -286,7 +281,6 @@ namespace
 
 	void AppendSnapshotLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
 	{
-		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, TEXT("[Recent Execution]"));
 		AppendOverlayLine(InOutLines, FString::Printf(
 			TEXT("Decision: %s"),
@@ -323,12 +317,14 @@ namespace
 	// Panel Styling
 	bool IsPanelHeaderLine(const FString& InLine)
 	{
-		return InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]");
+		return InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[Interaction]");
 	}
 
 	FLinearColor GetPanelHeaderColor(const FString& InLine)
 	{
-		return InLine == TEXT("[Player]") ? DebugOverlayPlayerHeaderColor : DebugOverlayEnemyHeaderColor;
+		if (InLine == TEXT("[Player]")) return DebugOverlayPlayerHeaderColor;
+		if (InLine == TEXT("[Enemy]")) return DebugOverlayEnemyHeaderColor;
+		return DebugOverlayInteractionHeaderColor;
 	}
 
 	// Enemy Source Formatting
@@ -519,25 +515,16 @@ void ACDebugOverlayHUD::DrawHUD()
 	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(GetWorld(), snapshot);
 	const FString eventLogFilter = FDebugOverlaySnapshotStore::GetEventLogFilter();
 	const int32 eventLogLimit = FDebugOverlaySnapshotStore::GetEventLogDisplayLimit();
-	const FString playerSubjectName = GetNameSafe(pawn);
-	const FString enemySubjectName = GetNameSafe(enemy);
-	const TArray<FDebugOverlayEventEntry> playerEvents = FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(
+	const TArray<FDebugOverlayEventEntry> recentEvents = FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 		GetWorld(),
 		eventLogLimit,
-		eventLogFilter,
-		playerSubjectName);
-	const TArray<FDebugOverlayEventEntry> enemyEvents = FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(
-		GetWorld(),
-		eventLogLimit,
-		eventLogFilter,
-		enemySubjectName);
+		eventLogFilter);
 
 	TArray<FString> lines;
 	lines.Reserve(32);
 
 	AppendOverlayLine(lines, TEXT("[Debug Overlay P0.5]"));
 	AppendActorPanelLines(lines, TEXT("[Player]"), pawn);
-	AppendSubjectEventLogBlock(lines, TEXT("N/A"), IsValid(pawn), bHasSnapshot, playerEvents, eventLogFilter, eventLogLimit);
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendOverlayLine(lines, TEXT("[Enemy]"));
@@ -548,9 +535,11 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	AppendOverlayLine(lines, TEXT(""));
 	AppendActorStatusLines(lines, enemy);
-	AppendSubjectEventLogBlock(lines, TEXT("NoTarget"), IsValid(enemy), bHasSnapshot, enemyEvents, eventLogFilter, eventLogLimit);
 
+	AppendOverlayLine(lines, TEXT(""));
+	AppendOverlayLine(lines, TEXT("[Interaction]"));
 	AppendSnapshotLines(lines, snapshot, bHasSnapshot);
+	AppendEventLogBlock(lines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
 	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);

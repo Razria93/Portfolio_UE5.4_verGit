@@ -15,7 +15,7 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
-	static constexpr float DebugOverlayNearestTargetRadius = 1500.f;
+	static constexpr float DebugOverlayNearestTargetRadius = 3000.f;
 }
 #endif
 
