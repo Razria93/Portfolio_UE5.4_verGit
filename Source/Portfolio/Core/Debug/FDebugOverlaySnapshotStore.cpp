@@ -96,6 +96,11 @@ namespace
 		return InReason ? FString(InReason) : FString(TEXT("None"));
 	}
 
+	FString GetDisplayNameOrNA(const UObject* InObject)
+	{
+		return IsValid(InObject) ? GetNameSafe(InObject) : FString(TEXT("N/A"));
+	}
+
 	FString CompactStoreEnumText(const FString& InValue)
 	{
 		int32 separatorIndex = INDEX_NONE;
@@ -112,11 +117,19 @@ namespace
 		return CompactStoreEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
 	}
 
-	FString FormatExecutionDomainSubject(const FString& InDomain, const FString& InSubject)
+	FString ResolveCombatResultFromName(const AActor* InReceiverActor, const FCombatResultPacket& InPacket)
 	{
-		return InSubject.IsEmpty()
-			? InDomain
-			: FString::Printf(TEXT("%s(%s)"), *InDomain, *InSubject);
+		if (IsValid(InPacket.SourceActor) && InPacket.SourceActor != InReceiverActor)
+		{
+			return GetNameSafe(InPacket.SourceActor);
+		}
+
+		if (IsValid(InPacket.TargetActor) && InPacket.TargetActor != InReceiverActor)
+		{
+			return GetNameSafe(InPacket.TargetActor);
+		}
+
+		return GetDisplayNameOrNA(InPacket.SourceActor);
 	}
 
 	FString NormalizeEventLogFilter(const FString& InFilter)
@@ -415,10 +428,11 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	const UWorld* world = ResolveWorld(InWorldContextObject);
 	const FString eventName = ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
-	const FString domainSubject = FormatExecutionDomainSubject(InDomain, InSubject);
 	const FString summary = FString::Printf(
-		TEXT("%s | Decision=%s | Apply=%s | RejectReason=%s"),
-		*domainSubject,
+		TEXT("Owner=%s | Domain=%s | Subject=%s | Decision=%s | Apply=%s | RejectReason=%s"),
+		*GetDisplayNameOrNA(InOwnerActor),
+		*CompactStoreEnumText(InDomain),
+		InSubject.IsEmpty() ? TEXT("N/A") : *InSubject,
 		*CompactStoreEnumText(InDecision),
 		*CompactStoreEnumText(InApplyMode),
 		*CompactReasonText(InRejectReason));
@@ -486,7 +500,9 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString summary = FString::Printf(
-		TEXT("Outcome=%s | Final=%.3f | Commit=%.3f | Accepted=%s"),
+		TEXT("Attacker=%s | Defender=%s | Outcome=%s | Final=%.3f | Commit=%.3f | Accepted=%s"),
+		*GetDisplayNameOrNA(InPacket.Context.SourceActor),
+		*GetDisplayNameOrNA(InPacket.Context.TargetActor),
 		*CompactStoreEnumText(outcome),
 		InPacket.Result.FinalTakenDamage,
 		InPacket.Result.CommittedDamage,
@@ -525,12 +541,14 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	const FString targetName = GetNameSafe(InPacket.TargetActor);
 	const FString causerName = GetNameSafe(InPacket.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
+	const FString fromName = ResolveCombatResultFromName(InReceiverActor, InPacket);
 	const FString summary = FString::Printf(
-		TEXT("Outcome=%s | DamageCommitted=%s | Commit=%.3f | Receiver=%s"),
+		TEXT("From=%s | Receiver=%s | Outcome=%s | DamageCommitted=%s | Commit=%.3f"),
+		*fromName,
+		*GetDisplayNameOrNA(InReceiverActor),
 		*CompactStoreEnumText(outcome),
 		InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"),
-		InPacket.CommittedDamage,
-		*receiverName);
+		InPacket.CommittedDamage);
 
 	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastCombat.FrameNumber = GetCurrentFrameNumber();
@@ -565,7 +583,10 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	const FString pawnName = GetNameSafe(InOwnerPawn);
 	const FString targetName = GetNameSafe(InTargetActor);
 	const FString summary = FString::Printf(
-		TEXT("Intent=%s | Result=%s | RejectReason=%s"),
+		TEXT("Controller=%s | Pawn=%s | Target=%s | Intent=%s | Result=%s | RejectReason=%s"),
+		*GetDisplayNameOrNA(InAIController),
+		*GetDisplayNameOrNA(InOwnerPawn),
+		*GetDisplayNameOrNA(InTargetActor),
 		*CompactStoreEnumText(InIntent),
 		*CompactStoreEnumText(InRequestResult),
 		*CompactReasonText(InRejectReason));
