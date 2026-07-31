@@ -6,6 +6,8 @@
 
 `Incoming / Outgoing / Self` label은 성공/실패 판정이 아니라 subject 기준 방향성 보조 정보다. 즉, 같은 `Combat/TargetAccepted` 또는 `Combat/TargetRejected` event가 Player/Enemy 양쪽 EventLog에 표시될 때, 각 panel 기준으로 해당 event가 들어온 판정인지 나간 판정인지 해석하기 위한 표시다.
 
+후속 설계에서는 Parry/Guard evidence 해석 혼동을 줄이기 위해 `Incoming / Outgoing`을 `Defender / Attacker`로 바꾸는 방향을 검토한다. 이 문서는 현재 구현 기준 체크리스트이며, semantics cleanup 구현 이후 갱신 대상이다.
+
 이번 검증은 최종 촬영/패키징이 아니라 기능 검증 절차다.
 
 ## 2. 사전 조건
