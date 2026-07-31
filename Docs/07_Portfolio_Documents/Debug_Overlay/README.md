@@ -47,6 +47,7 @@
 - `01_Planning/Debug_Overlay_P1_Subject_EventLog_Semantics_Cleanup_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_Interaction_Event_Flow_Redesign_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_Actor_Recent_AI_Display_Plan_KR.md`
+- `01_Planning/Debug_Overlay_P1_Enemy_Current_AI_Recent_AI_Event_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_EventLog_Separate_Panel_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_Overlay_Layout_Style_Lock_KR.md`
 - `02_Operation/Debug_Overlay_Operation_Guide_KR.md`
