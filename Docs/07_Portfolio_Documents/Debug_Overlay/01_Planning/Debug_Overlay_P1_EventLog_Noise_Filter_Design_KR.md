@@ -152,6 +152,15 @@ HideCollisionWindowEvents=1이면 숨김
 | `Combat` | `CollisionDisabled` | 숨김 |
 | `Combat` | `CollisionDisabledIgnored` | 숨김 |
 
+구현 메모:
+
+- EventLog 표시 문자열은 `Category/EventName` 조합으로 보이지만, 실제 필터는 `FDebugOverlayEventEntry.Category`와 `EventName`을 기준으로 판단한다.
+- `Category`와 `EventName`은 표시 직전 `TrimStartAndEnd` 후 대소문자 무시 비교를 적용한다.
+- collision window event는 `Combat` category 안에서 `CollisionEnabled*`, `CollisionDisabled*` prefix로 판별한다.
+- 이 방식은 `CollisionDisabledIgnored`처럼 `CollisionDisabled` 계열의 세부 event도 함께 숨기기 위한 것이다.
+- `TargetAccepted`, `TargetRejected`, `CombatResult/*`는 `Collision*` prefix가 아니므로 `HideCollisionWindowEvents=1`로 숨기지 않는다.
+- PIE에서 CVar를 켰는데도 숨김이 반영되지 않으면 Live Coding/Hot Reload 잔존 DLL 가능성을 먼저 확인하고, 에디터 재시작 후 다시 검증한다.
+
 숨기지 않는 대상:
 
 | Category | Event | 이유 |
