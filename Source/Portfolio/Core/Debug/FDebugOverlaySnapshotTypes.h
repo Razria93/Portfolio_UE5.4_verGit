@@ -49,7 +49,7 @@ struct PORTFOLIO_API FDebugOverlayCombatSummary
 	bool bHasDamageCommit = false;
 	bool bDamageCommitted = false;
 	bool bHasDamageBreakdown = false;
-	float RawDamage = 0.f;
+	float RequestDamage = 0.f;
 	float MitigatedDamage = 0.f;
 	float FinalTakenDamage = 0.f;
 	float CommittedDamage = 0.f;

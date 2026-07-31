@@ -600,7 +600,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString summary = FString::Printf(
-		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Raw: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
+		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
 		*GetDisplayNameOrNA(InPacket.Context.SourceActor),
 		*GetDisplayNameOrNA(InPacket.Context.TargetActor),
 		*CompactStoreEnumText(outcome),
@@ -620,7 +620,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	store->Snapshot.LastCombat.bHasDamageCommit = true;
 	store->Snapshot.LastCombat.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
 	store->Snapshot.LastCombat.bHasDamageBreakdown = true;
-	store->Snapshot.LastCombat.RawDamage = InPacket.Result.RequestDamage;
+	store->Snapshot.LastCombat.RequestDamage = InPacket.Result.RequestDamage;
 	store->Snapshot.LastCombat.MitigatedDamage = InPacket.Result.MitigatedDamage;
 	store->Snapshot.LastCombat.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.Result.CommittedDamage;
@@ -649,16 +649,16 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	const FString resultSourceName = ResolveCombatResultSourceName(InReceiverActor, InPacket);
 	const bool bHasPreviousDamageBreakdown = store->Snapshot.LastCombat.bHasDamageBreakdown
 		&& IsSameCombatPair(store->Snapshot.LastCombat, sourceName, targetName);
-	const float rawDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.RawDamage : 0.f;
+	const float requestDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.RequestDamage : 0.f;
 	const float mitigatedDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.MitigatedDamage : 0.f;
 	const float finalTakenDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.FinalTakenDamage : 0.f;
 	const FString summary = bHasPreviousDamageBreakdown
 		? FString::Printf(
-			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Raw: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
+			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
 			*GetDisplayNameOrNA(InReceiverActor),
 			*CompactStoreEnumText(outcome),
-			rawDamage,
+			requestDamage,
 			mitigatedDamage,
 			finalTakenDamage,
 			InPacket.CommittedDamage,
@@ -681,7 +681,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	store->Snapshot.LastCombat.bHasDamageCommit = true;
 	store->Snapshot.LastCombat.bDamageCommitted = InPacket.bDamageCommitted;
 	store->Snapshot.LastCombat.bHasDamageBreakdown = bHasPreviousDamageBreakdown;
-	store->Snapshot.LastCombat.RawDamage = rawDamage;
+	store->Snapshot.LastCombat.RequestDamage = requestDamage;
 	store->Snapshot.LastCombat.MitigatedDamage = mitigatedDamage;
 	store->Snapshot.LastCombat.FinalTakenDamage = finalTakenDamage;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.CommittedDamage;
