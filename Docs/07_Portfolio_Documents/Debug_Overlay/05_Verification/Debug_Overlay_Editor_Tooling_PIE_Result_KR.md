@@ -45,6 +45,7 @@ toolbar button은 panel open 진입점이다. overlay enable/disable direct togg
 | [debug_overlay_editor_tooling_01_toolbar_button.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_01_toolbar_button.jpg) | Level Editor toolbar의 `Debug Overlay` 버튼과 tooltip, Nomad panel open 상태 |
 | [debug_overlay_editor_tooling_02_nomad_panel_target_select.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_02_nomad_panel_target_select.jpg) | Nomad panel의 CVar UI / Target command 섹션과 `Select Nearest Target` 실행 확인 |
 | [debug_overlay_editor_tooling_03_target_clear_filters.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_03_target_clear_filters.jpg) | EventLog filter 관련 UI와 `Clear Target` 실행 상태 확인 |
+| [debug_overlay_editor_tooling_04_outliner_target_selection.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_04_outliner_target_selection.jpg) | Outliner actor 선택 후 `Select Outliner Actor`로 `TargetComponent.EditorSelection` 반영 확인 |
 
 대표 스크린샷은 Editor Tooling 검증용이다. Shipping HUD, config 저장, preset 저장, runtime target system 변경 claim으로 사용하지 않는다.
 
@@ -75,6 +76,12 @@ toolbar button은 panel open 진입점이다. overlay enable/disable direct togg
 - HUD에서 `EnemySource: None`으로 target clear 결과를 확인한다.
 - Editor plugin은 `TargetComponent`를 직접 clear하지 않는다.
 
+### Select Outliner Actor
+
+- Editor Outliner에서 선택한 actor를 대상으로 기존 runtime command 경로를 호출한다.
+- PIE 중 HUD에서 `EnemySource: TargetComponent.EditorSelection` 및 `EnemySelect: EditorSelected` 표시로 결과를 확인한다.
+- Editor plugin은 selected actor 전달만 담당하며, target panel 표시와 snapshot 반영은 runtime Debug Overlay 경로를 따른다.
+
 ### 제외 command
 
 - line trace 기반 `DebugOverlaySelectTarget`은 복구하지 않는다.
@@ -100,7 +107,7 @@ PIE world 또는 PlayerController를 찾지 못하면 command를 실행하지 �
 - `창 > Portfolio Tools > Debug Overlay` menu entry와 Level Editor toolbar button 양쪽에서 Nomad panel을 열 수 있다.
 - Editor Nomad 패널에서 Debug Overlay 주요 CVar를 조작할 수 있다.
 - PIE 중 CVar 변경이 runtime HUD에 반영된다.
-- Target command 버튼은 기존 runtime console command 경로로 동작한다.
+- `Select Nearest Target`, `Select Outliner Actor`, `Clear Target` 버튼은 기존 runtime console command 경로로 동작한다.
 - Editor-only plugin과 runtime Debug Overlay의 책임 경계가 유지된다.
 - runtime Debug Overlay 코드, `Portfolio.Build.cs`, `.uproject`, asset/config 변경 없이 Editor Tooling을 추가했다.
 
