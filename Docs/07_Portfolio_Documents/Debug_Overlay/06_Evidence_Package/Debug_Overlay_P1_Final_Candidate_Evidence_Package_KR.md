@@ -136,6 +136,7 @@ P1 Closure Review 이후 촬영한 clean viewport 캡처만 `FinalCandidate` 폴
 
 ## 9. 다음 작업
 
-1. 패키징된 FinalCandidate 기준으로 P52 PR 문서를 갱신한다.
+1. P52 PR 최종 점검 후 브랜치 마감 가능 여부를 판단한다.
 2. 포트폴리오 본문 evidence claim에 연결할 스크린샷과 claim 문장을 선별한다.
 3. 필요하면 `NotPackaged`로 남은 Combat/AI empty filter 전용 캡처만 별도 보강한다.
+4. 후속 브랜치에서 debug overlay code cleanup과 Runtime LOD actual 표시를 검토한다.

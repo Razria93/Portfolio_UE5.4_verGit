@@ -2,7 +2,7 @@
 
 ## 1. 목적
 
-이 문서는 P1 debug overlay의 FinalCandidate 촬영 전에 확인해야 할 장면, claim 범위, 제외 기준, CVar / command 준비사항을 고정한다.
+이 문서는 P1 debug overlay의 FinalCandidate 촬영/패키징 기준, claim 범위, 제외 기준, CVar / command 준비사항을 고정한다.
 
 이번 문서는 촬영 실행이나 패키징 결과가 아니라 촬영 전 준비 기준이다.
 
@@ -122,9 +122,11 @@ DebugOverlayClearTarget
 - hot reload 직후 상태가 의심되면 editor 재시작 후 확인한다.
 - console command 입력창 또는 Output Log 창이 최종 캡처 claim을 가리면 final 후보에서 제외한다.
 
-## 4. 필수 촬영 장면
+## 4. 촬영 후보 장면
 
-P1 FinalCandidate 필수 장면은 다음을 기준으로 한다.
+P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
+
+아래 목록은 촬영 후보와 검증 항목 전체이며, 현재 FinalCandidate package 완료를 막는 blocking 필수 목록은 아니다. 현재 package에서는 `Walk`, `Stagger Count stack 1`, `Stagger Count reset`, `EventLog Combat`, `EventLog AI`를 `NotPackaged` 또는 선택 보강 항목으로 분리한다. `Enemy Stagger`와 `Stagger Count stack 3` claim은 `debug_overlay_p1_final_stagger_stack_3.png`가 대표한다.
 
 | 순서 | 장면 | 핵심 확인 | 권장 EventLog filter |
 | --- | --- | --- | --- |
@@ -228,6 +230,7 @@ debug_overlay_p1_final_<scene>.png
 - `debug_overlay_p1_final_enemy_stagger.png`
 - `debug_overlay_p1_final_stagger_stack_1.png`
 - `debug_overlay_p1_final_stagger_stack_2.png`
+- `debug_overlay_p1_final_stagger_stack_3.png`
 - `debug_overlay_p1_final_stagger_reset.png`
 - `debug_overlay_p1_final_target_nearest.png`
 - `debug_overlay_p1_final_target_none.png`

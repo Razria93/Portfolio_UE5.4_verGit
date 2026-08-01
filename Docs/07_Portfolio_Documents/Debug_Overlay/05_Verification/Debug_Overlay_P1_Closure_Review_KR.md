@@ -2,7 +2,7 @@
 
 ## 목적
 
-이 문서는 Debug Overlay P1 작업을 FinalCandidate 촬영 단계로 넘길 수 있는지 최종 점검한다.
+이 문서는 Debug Overlay P1 작업이 FinalCandidate evidence package와 P52 closeout 기준까지 일관되게 닫혔는지 최종 점검한다.
 
 P1의 목적은 최종 제출 캡처를 만드는 것이 아니라, runtime evidence tooling이 실제 PIE에서 설명 가능한 형태로 동작하는지 확인하는 것이다. 따라서 이 문서는 완료 항목, 보류 항목, evidence claim 가능 범위, 금지 claim을 분리해서 고정한다.
 
@@ -10,9 +10,9 @@ P1의 목적은 최종 제출 캡처를 만드는 것이 아니라, runtime evid
 
 ## 결론
 
-P1은 `Runtime LOD actual` 표시를 제외하면 FinalCandidate 촬영 전 기능 검증 단계로 닫을 수 있다.
+P1은 `Runtime LOD actual` 표시를 제외하면 기능 검증 단계와 FinalCandidate evidence package 정리까지 닫을 수 있다.
 
-FinalCandidate 촬영은 P1 기능 closure 이후 별도 패키지로 진행한다. 현재 PIE 캡처와 검증 문서는 기능 확인 evidence이며, 최종 제출 후보로 승격하지 않는다.
+FinalCandidate evidence package는 P1 closure 이후 별도 폴더와 문서로 정리했다. PIE 검증 캡처와 Round1 캡처는 기능 확인 evidence로만 유지하며, 최종 제출 후보로 승격하지 않는다.
 
 ## P1 완료 항목
 
@@ -48,12 +48,12 @@ FinalCandidate 촬영은 P1 기능 closure 이후 별도 패키지로 진행한�
 - Store role matcher 분리
 - Store schema/API 변경
 - 범용 target component 전환
-- FinalCandidate 촬영 / 패키징
+- 필요 시 FinalCandidate 보강 캡처
 - 포트폴리오 본문 evidence claim 연결
 
 ## Evidence Claim 가능 범위
 
-FinalCandidate로 적합하게 재촬영 / 패키징한 뒤 아래 범위는 성공 evidence로 사용할 수 있다.
+FinalCandidate로 패키징한 캡처 중 실제 화면에서 읽히는 범위에 한해 아래 항목을 성공 evidence로 사용할 수 있다.
 
 - selected Enemy를 명시 target으로 고정해 Enemy current state를 표시한다.
 - Player / Enemy current state를 같은 화면에서 비교한다.
@@ -86,11 +86,12 @@ FinalCandidate로 적합하게 재촬영 / 패키징한 뒤 아래 범위는 성
 | `Debug_Overlay_P1_Integrated_PIE_Result_KR.md` | 작성됨 | P1 통합 검증 결과와 완료 항목 일치 |
 | `Debug_Overlay_P1_Overlay_Layout_PIE_Result_KR.md` | 작성됨 | 3-panel layout 검증 결과와 일치 |
 | `Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md` | 작성됨 | cleanup 후보 식별 완료. 구현은 후속 브랜치로 이관 |
-| `P52_UE5_Portfolio_Pull_Request.md` | 갱신됨 | P1 closure와 FinalCandidate 전 상태를 PR 후보 문맥에 연결 |
+| `Debug_Overlay_P1_Final_Candidate_Evidence_Package_KR.md` | 작성됨 | FinalCandidate 파일/claim 매핑과 금지 claim 기준 기록 |
+| `P52_UE5_Portfolio_Pull_Request.md` | 갱신됨 | P1 closure와 FinalCandidate evidence claim 연결 |
 
-## FinalCandidate 진입 조건
+## FinalCandidate package 상태
 
-다음 조건을 만족하면 FinalCandidate 촬영 / 패키징으로 넘어간다.
+FinalCandidate package는 다음 기준으로 작성 완료 상태다.
 
 - `Pannel_01 / Pannel_02 / Pannel_03` layout이 유지된다.
 - `TargetComponent.Nearest`와 `EnemySource: None` 전환이 확인된다.
@@ -99,11 +100,11 @@ FinalCandidate로 적합하게 재촬영 / 패키징한 뒤 아래 범위는 성
 - Enemy Current AI와 Recent AI Event가 분리되어 표시된다.
 - Recent Combat이 collision lifecycle event로 덮이지 않는다.
 - Runtime LOD actual은 제외 항목으로 명확히 기록한다.
-- editor console, tooltip, taskbar 등 최종 제출 캡처에 부적합한 요소를 제거하고 다시 촬영한다.
+- editor console, tooltip, taskbar 등 최종 제출 캡처에 부적합한 요소는 FinalCandidate에서 제외한다.
 
 ## 다음 작업
 
-1. FinalCandidate 실제 촬영 / 패키징
-2. P52 PR 문서와 FinalCandidate evidence claim 연결
-3. 포트폴리오 본문 evidence claim 정리
+1. P52 PR 최종 점검 후 브랜치 마감 가능 여부 판단
+2. 포트폴리오 본문 evidence claim 정리
+3. 필요 시 Combat/AI empty filter 전용 FinalCandidate 보강 캡처
 4. 후속 브랜치에서 Debug Overlay code cleanup 진행

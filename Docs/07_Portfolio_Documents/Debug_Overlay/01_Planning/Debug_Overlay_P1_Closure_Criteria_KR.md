@@ -4,7 +4,7 @@
 
 이 문서는 debug overlay P1을 어떤 기준으로 마감할지 고정한다.
 
-P1은 최종 제출용 촬영/패키징 단계가 아니라, FinalCandidate 촬영 전에 runtime evidence tooling의 기능과 표시 정책을 닫는 단계다.
+이 문서는 runtime evidence tooling의 기능과 표시 정책을 닫기 위한 기준으로 작성되었고, 현재는 FinalCandidate evidence package 완료 후 P52 closeout 기준까지 반영한다.
 
 ## 2. P1 완료로 보는 항목
 
@@ -172,10 +172,10 @@ P1 완료 기준:
 | --- | --- | --- |
 | Runtime LOD actual 표시 | 현재 `N/A`, 실제 tier source hook 필요 | P2 또는 별도 debug pass |
 | Behavior Tree active node 전체 추적 | BT node runtime 추적 범위가 큼 | AI evidence 후속 |
-| EventLog line wrapping / compact 재작업 | 현재 separate panel로 가독성 확보 | FinalCandidate 전 UI polish |
+| EventLog line wrapping / compact 재작업 | 현재 separate panel로 가독성 확보 | 후속 UI polish |
 | CollisionDisabledIgnored event 자체 발생 원인 제거 | Recent Combat overwrite 문제는 해결, event 발생 원인 분석은 별도 | combat diagnostic 후속 |
-| FinalCandidate 촬영/패키징 | P1 기능 마감 후 진행 | 다음 단계 |
-| 포트폴리오 본문 연결 | 최종 evidence package 이후 진행 | FinalCandidate 이후 |
+| 필요 시 FinalCandidate 보강 캡처 | 핵심 claim은 패키징 완료, Combat/AI empty filter 전용 캡처는 선택 사항 | 선택 보강 |
+| 포트폴리오 본문 연결 | FinalCandidate evidence package 이후 진행 | 포트폴리오 문서 후속 |
 
 ## 4. Evidence claim 주의
 
@@ -208,16 +208,18 @@ P1은 다음 조건을 만족하면 마감 가능하다.
 - P1 완료/보류 항목이 이 문서에 분리되어 있다.
 - `Debug_Overlay_P1_Integrated_PIE_Result_KR.md` 기준으로 통합 PIE 확인 결과가 기록되어 있다.
 - Runtime LOD actual 표시가 보류 항목으로 명시되어 있다.
-- FinalCandidate 촬영이 아직 진행되지 않았음을 명시한다.
+- FinalCandidate evidence package와 P52 evidence claim 연결 상태가 문서에 반영되어 있다.
 
 현재 판단:
 
 - Runtime LOD actual 표시를 제외한 P1 debug overlay 기능은 마감 가능한 상태다.
-- FinalCandidate 촬영/패키징은 다음 단계로 넘긴다.
+- FinalCandidate evidence package는 작성 완료 상태다.
+- P52 PR 문서에는 FinalCandidate evidence claim 연결을 반영했다.
+- 포트폴리오 본문 evidence claim 연결과 후속 code cleanup은 다음 단계로 분리한다.
 
 ## 7. 다음 단계
 
-1. P1 closure review를 수행한다.
-2. FinalCandidate 촬영 전 체크리스트를 현재 3-panel layout 기준으로 갱신한다.
-3. P1 완료 후 FinalCandidate 촬영/패키징을 진행한다.
-4. 최종 evidence package 이후 포트폴리오 본문과 PR 문서를 연결한다.
+1. P52 PR 최종 점검 후 브랜치 마감 가능 여부를 판단한다.
+2. 포트폴리오 본문 evidence claim에 연결할 스크린샷과 claim 문장을 선별한다.
+3. 필요하면 `NotPackaged`로 남은 Combat/AI empty filter 전용 캡처만 별도 보강한다.
+4. 후속 브랜치에서 debug overlay code cleanup과 Runtime LOD actual 표시를 검토한다.
