@@ -318,11 +318,27 @@ bool ACPlayerController::TrySelectDebugOverlayActorTarget(const FString& InActor
 		return false;
 	}
 
-	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetActor, EDebugOverlayTargetSource::EditorSelection);
+	ACEnemy* targetEnemy = Cast<ACEnemy>(targetActor);
+	if (!IsValid(targetEnemy))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
 
-	const FString summary = FString::Printf(TEXT("EditorSelected | Target: %s"), *GetNameSafe(targetActor));
+		const FString summary = FString::Printf(TEXT("EditorSelectFailed | NotEnemy | Target: %s"), *GetNameSafe(targetActor));
+		RecordDebugOverlayEditorSelectionResult(summary);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("DebugOverlaySelectActorTarget Result: NotEnemy | Target: %s | Class: %s"),
+			*GetNameSafe(targetActor),
+			*GetNameSafe(targetActor->GetClass()));
+		return false;
+	}
+
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy, EDebugOverlayTargetSource::EditorSelection);
+
+	const FString summary = FString::Printf(TEXT("EditorSelected | Target: %s"), *GetNameSafe(targetEnemy));
 	RecordDebugOverlayEditorSelectionResult(summary);
-	UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: Selected | Target: %s"), *GetNameSafe(targetActor));
+	UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: Selected | Target: %s"), *GetNameSafe(targetEnemy));
 	return true;
 }
 
