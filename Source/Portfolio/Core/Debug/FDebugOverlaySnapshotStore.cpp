@@ -71,6 +71,27 @@ namespace
 
 	TMap<TObjectKey<UWorld>, FDebugOverlayWorldStore> StoresByWorld;
 
+	void RemoveStoreForWorld(UWorld* InWorld)
+	{
+		if (!InWorld) return;
+
+		StoresByWorld.Remove(TObjectKey<UWorld>(InWorld));
+	}
+
+	void HandleWorldCleanup(UWorld* InWorld, bool, bool)
+	{
+		RemoveStoreForWorld(InWorld);
+	}
+
+	void EnsureWorldCleanupDelegateRegistered()
+	{
+		static bool bRegistered = false;
+		if (bRegistered) return;
+
+		FWorldDelegates::OnWorldCleanup.AddStatic(&HandleWorldCleanup);
+		bRegistered = true;
+	}
+
 	int32 GetClampedEventLogDisplayLimit();
 	FString GetCanonicalEventLogFilter();
 	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters);
@@ -482,6 +503,7 @@ namespace
 		UWorld* world = ResolveWorld(InWorldContextObject);
 		if (!IsValid(world)) return nullptr;
 
+		EnsureWorldCleanupDelegateRegistered();
 		return &StoresByWorld.FindOrAdd(TObjectKey<UWorld>(world));
 	}
 #endif
