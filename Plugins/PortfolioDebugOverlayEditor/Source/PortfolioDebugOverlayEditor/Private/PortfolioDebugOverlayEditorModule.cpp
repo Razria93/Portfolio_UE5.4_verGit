@@ -1,7 +1,10 @@
 #include "PortfolioDebugOverlayEditorModule.h"
 
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 #include "Framework/Commands/UIAction.h"
 #include "Framework/Docking/TabManager.h"
+#include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "Modules/ModuleManager.h"
@@ -32,6 +35,8 @@ namespace
 	static constexpr const TCHAR* DebugOverlayEventLogLimitCVarName = TEXT("Portfolio.DebugOverlay.EventLogLimit");
 	static constexpr const TCHAR* DebugOverlayHideNoiseEventsCVarName = TEXT("Portfolio.DebugOverlay.HideNoiseEvents");
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
+	static constexpr const TCHAR* DebugOverlaySelectNearestTargetCommand = TEXT("DebugOverlaySelectNearestTarget");
+	static constexpr const TCHAR* DebugOverlayClearTargetCommand = TEXT("DebugOverlayClearTarget");
 
 	IConsoleVariable* FindDebugOverlayCVar(const TCHAR* InName)
 	{
@@ -107,6 +112,39 @@ namespace
 			: LOCTEXT("UnavailableCVar", "Unavailable");
 	}
 
+	UWorld* FindDebugOverlayPIEWorld()
+	{
+		if (!GEngine) return nullptr;
+
+		for (const FWorldContext& worldContext : GEngine->GetWorldContexts())
+		{
+			if (worldContext.WorldType != EWorldType::PIE) continue;
+
+			UWorld* world = worldContext.World();
+			if (IsValid(world)) return world;
+		}
+
+		return nullptr;
+	}
+
+	FText ExecuteDebugOverlayTargetCommand(const TCHAR* InCommand, const FText& InSuccessStatus)
+	{
+		UWorld* world = FindDebugOverlayPIEWorld();
+		if (!IsValid(world))
+		{
+			return LOCTEXT("PIEWorldNotAvailable", "PIE world not available");
+		}
+
+		APlayerController* playerController = world->GetFirstPlayerController();
+		if (!IsValid(playerController))
+		{
+			return LOCTEXT("PlayerControllerNotAvailable", "PlayerController not available");
+		}
+
+		playerController->ConsoleCommand(InCommand, true);
+		return InSuccessStatus;
+	}
+
 	class SPortfolioDebugOverlayEditorWidget : public SCompoundWidget
 	{
 	public:
@@ -120,6 +158,7 @@ namespace
 			EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Combat")));
 			EventLogFilterOptions.Add(MakeShared<FString>(TEXT("AI")));
 			RefreshEventLogFilterSelection();
+			LastTargetCommandStatus = LOCTEXT("TargetCommandNotRun", "Last Command: None");
 
 			ChildSlot
 			[
@@ -191,6 +230,17 @@ namespace
 						[
 							MakeRefreshRow()
 						]
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						.Padding(0.f, 12.f, 0.f, 8.f)
+						[
+							SNew(SSeparator)
+						]
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						[
+							MakeTargetCommandSection()
+						]
 					]
 				]
 			];
@@ -200,6 +250,7 @@ namespace
 		TArray<TSharedPtr<FString>> EventLogFilterOptions;
 		TSharedPtr<FString> SelectedEventLogFilter;
 		TSharedPtr<SComboBox<TSharedPtr<FString>>> EventLogFilterComboBox;
+		FText LastTargetCommandStatus;
 
 		TSharedRef<SWidget> MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName) const
 		{
@@ -414,6 +465,67 @@ namespace
 						RefreshEventLogFilterSelection();
 						return FReply::Handled();
 					})
+				];
+		}
+
+		TSharedRef<SWidget> MakeTargetCommandSection()
+		{
+			return SNew(SVerticalBox)
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 4.f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("TargetSectionLabel", "Target"))
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 6.f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("TargetSectionHelp", "Runs existing debug overlay target console commands during PIE. Check the HUD for the selection result."))
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 6.f)
+				[
+					SNew(SUniformGridPanel)
+					.SlotPadding(FMargin(0.f, 0.f, 8.f, 0.f))
+					+ SUniformGridPanel::Slot(0, 0)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("SelectNearestTargetButton", "Select Nearest Target"))
+						.OnClicked_Lambda([this]()
+						{
+							LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
+								DebugOverlaySelectNearestTargetCommand,
+								LOCTEXT("SelectNearestTargetSent", "Last Command: SelectNearestTarget"));
+							return FReply::Handled();
+						})
+					]
+					+ SUniformGridPanel::Slot(1, 0)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("ClearTargetButton", "Clear Target"))
+						.OnClicked_Lambda([this]()
+						{
+							LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
+								DebugOverlayClearTargetCommand,
+								LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
+							return FReply::Handled();
+						})
+					]
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(STextBlock)
+					.Text_Lambda([this]()
+					{
+						return LastTargetCommandStatus;
+					})
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 				];
 		}
 
