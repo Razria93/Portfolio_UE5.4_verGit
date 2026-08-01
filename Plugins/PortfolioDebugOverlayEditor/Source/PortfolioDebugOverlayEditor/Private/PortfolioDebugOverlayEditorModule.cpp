@@ -8,6 +8,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "Modules/ModuleManager.h"
+#include "Styling/AppStyle.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Input/SButton.h"
@@ -583,6 +584,15 @@ void FPortfolioDebugOverlayEditorModule::RegisterMenus()
 		LOCTEXT("OpenDebugOverlayPanelTooltip", "Open Portfolio Debug Overlay settings panel."),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateRaw(this, &FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel)));
+
+	UToolMenu* toolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar"));
+	FToolMenuSection& toolbarSection = toolbarMenu->FindOrAddSection(TEXT("Settings"));
+	toolbarSection.AddEntry(FToolMenuEntry::InitToolBarButton(
+		TEXT("OpenPortfolioDebugOverlayPanelToolbar"),
+		FUIAction(FExecuteAction::CreateRaw(this, &FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel)),
+		LOCTEXT("OpenDebugOverlayPanelToolbarLabel", "Debug Overlay"),
+		LOCTEXT("OpenDebugOverlayPanelToolbarTooltip", "Open Debug Overlay panel"),
+		FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Settings"))));
 }
 
 void FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel()
