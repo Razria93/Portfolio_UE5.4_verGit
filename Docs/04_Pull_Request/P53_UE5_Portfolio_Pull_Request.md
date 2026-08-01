@@ -26,9 +26,10 @@
 
 ## 브랜치
 
-- 현재 로컬 작업: `main` (`origin/main` 대비 ahead)
-- 권장 PR 브랜치: `feature/debug-overlay-editor-tooling`
-- 이 문서는 PR 제출 전 정리 문서이며, 실제 브랜치 생성 / push / PR 생성은 별도 단계에서 수행한다.
+- Base: `main`
+- Branch: `feature/debug-overlay-editor-tooling`
+- Draft PR: `#108`
+- 원격 push 완료
 
 ## 대표 스크린샷
 
@@ -246,7 +247,7 @@ Editor Tooling 검증 결과:
 
 후속 후보:
 
-- Editor Tooling PR branch 생성 / push / Draft PR 작성
+- PR Ready 전환 / review 대응
 - Debug Overlay runtime 코드 클린
 - Runtime LOD actual 표시 검토
 - Editor Tooling custom icon 또는 preset 기능 검토
