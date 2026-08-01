@@ -90,6 +90,13 @@ void ACPlayerController::DebugOverlayClearTarget()
 #endif
 }
 
+void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
+{
+#if !UE_BUILD_SHIPPING
+	TrySelectDebugOverlayActorTarget(ActorName);
+#endif
+}
+
 // Look Input
 
 void ACPlayerController::InputLookYaw(float InAxisValue)
@@ -270,6 +277,71 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 	return true;
 }
 
+bool ACPlayerController::TrySelectDebugOverlayActorTarget(const FString& InActorName)
+{
+	const FString actorName = InActorName.TrimStartAndEnd();
+
+	if (!IsValid(DebugOverlayTargetComponent))
+	{
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: TargetComponentMissing | Name: %s"), *actorName);
+		return false;
+	}
+
+	if (!IsValid(GetWorld()) || !IsValid(GetPawn()))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = TEXT("EditorSelectFailed | InvalidContext");
+		RecordDebugOverlayEditorSelectionResult(summary);
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: InvalidContext | Name: %s"), *actorName);
+		return false;
+	}
+
+	if (actorName.IsEmpty())
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = TEXT("EditorSelectFailed | NoActorName");
+		RecordDebugOverlayEditorSelectionResult(summary);
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: NoActorName"));
+		return false;
+	}
+
+	AActor* targetActor = FindDebugOverlayActorByName(actorName);
+	if (!IsValid(targetActor))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = FString::Printf(TEXT("EditorSelectFailed | NoActor | Name: %s"), *actorName);
+		RecordDebugOverlayEditorSelectionResult(summary);
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: NoActor | Name: %s"), *actorName);
+		return false;
+	}
+
+	ACEnemy* targetEnemy = Cast<ACEnemy>(targetActor);
+	if (!IsValid(targetEnemy))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = FString::Printf(TEXT("EditorSelectFailed | NotEnemy | Target: %s"), *GetNameSafe(targetActor));
+		RecordDebugOverlayEditorSelectionResult(summary);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("DebugOverlaySelectActorTarget Result: NotEnemy | Target: %s | Class: %s"),
+			*GetNameSafe(targetActor),
+			*GetNameSafe(targetActor->GetClass()));
+		return false;
+	}
+
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(targetEnemy, EDebugOverlayTargetSource::EditorSelection);
+
+	const FString summary = FString::Printf(TEXT("EditorSelected | Target: %s"), *GetNameSafe(targetEnemy));
+	RecordDebugOverlayEditorSelectionResult(summary);
+	UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: Selected | Target: %s"), *GetNameSafe(targetEnemy));
+	return true;
+}
+
 void ACPlayerController::ClearDebugOverlayTarget()
 {
 	if (!IsValid(DebugOverlayTargetComponent)) return;
@@ -278,6 +350,13 @@ void ACPlayerController::ClearDebugOverlayTarget()
 }
 
 void ACPlayerController::RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const
+{
+	if (!IsValid(DebugOverlayTargetComponent)) return;
+
+	DebugOverlayTargetComponent->SetDebugOverlaySelectionSummary(InSummary);
+}
+
+void ACPlayerController::RecordDebugOverlayEditorSelectionResult(const FString& InSummary) const
 {
 	if (!IsValid(DebugOverlayTargetComponent)) return;
 
@@ -313,6 +392,32 @@ ACEnemy* ACPlayerController::FindClosestDebugOverlayEnemy(float& OutDistance) co
 
 	OutDistance = FMath::Sqrt(closestDistanceSquared);
 	return closestEnemy;
+}
+
+AActor* ACPlayerController::FindDebugOverlayActorByName(const FString& InActorName) const
+{
+	UWorld* world = GetWorld();
+	if (!IsValid(world) || InActorName.IsEmpty()) return nullptr;
+
+	for (TActorIterator<AActor> it(world); it; ++it)
+	{
+		AActor* actor = *it;
+		if (!IsValid(actor)) continue;
+
+		if (actor->GetName().Equals(InActorName, ESearchCase::IgnoreCase))
+		{
+			return actor;
+		}
+
+#if WITH_EDITOR
+		if (actor->GetActorLabel().Equals(InActorName, ESearchCase::IgnoreCase))
+		{
+			return actor;
+		}
+#endif
+	}
+
+	return nullptr;
 }
 
 #endif

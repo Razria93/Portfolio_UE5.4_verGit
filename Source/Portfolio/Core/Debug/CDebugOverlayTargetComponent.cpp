@@ -10,6 +10,8 @@ namespace
 		{
 		case EDebugOverlayTargetSource::Nearest:
 			return TEXT("TargetComponent.Nearest");
+		case EDebugOverlayTargetSource::EditorSelection:
+			return TEXT("TargetComponent.EditorSelection");
 		case EDebugOverlayTargetSource::None:
 		default:
 			return TEXT("None");

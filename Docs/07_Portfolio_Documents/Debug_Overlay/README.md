@@ -64,6 +64,7 @@
 - `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`
 - `05_Verification/Debug_Overlay_P1_Closure_Review_KR.md`
 - `05_Verification/Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md`
+- `05_Verification/Debug_Overlay_Editor_Tooling_PIE_Result_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`
