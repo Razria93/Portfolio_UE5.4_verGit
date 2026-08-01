@@ -124,7 +124,7 @@ namespace
 			: InValue;
 	}
 
-	FString CompactReasonText(const FString& InValue)
+	FString CompactStoreReasonText(const FString& InValue)
 	{
 		return CompactStoreEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
 	}
@@ -545,7 +545,7 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 		InSubject.IsEmpty() ? TEXT("N/A") : *InSubject,
 		*CompactStoreEnumText(InDecision),
 		*CompactStoreEnumText(InApplyMode),
-		*CompactReasonText(InRejectReason));
+		*CompactStoreReasonText(InRejectReason));
 
 	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastExecution.FrameNumber = GetCurrentFrameNumber();
@@ -579,7 +579,7 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 		*CompactStoreEnumText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
-		*CompactReasonText(ToSafeReason(InReason)));
+		*CompactStoreReasonText(ToSafeReason(InReason)));
 
 	AddEventInternal(*store, MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
 #endif
@@ -715,7 +715,7 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 		*CompactStoreEnumText(InIntentState),
 		*CompactStoreEnumText(InSubState),
 		*CompactStoreEnumText(InRequestResult),
-		*CompactReasonText(InRejectReason));
+		*CompactStoreReasonText(InRejectReason));
 
 	store->Snapshot.LastAI.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastAI.FrameNumber = GetCurrentFrameNumber();
