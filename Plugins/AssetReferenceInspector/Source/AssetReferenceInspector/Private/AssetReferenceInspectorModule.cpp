@@ -1,6 +1,7 @@
 #include "AssetReferenceInspectorModule.h"
 
 #include "AssetReferenceInspectorCommands.h"
+#include "AssetReferenceInspectorStyle.h"
 #include "UI/SAssetReferenceInspectorWidget.h"
 
 #include "Framework/Commands/UICommandList.h"
@@ -15,6 +16,7 @@ static const FName AssetReferenceInspectorTabName(TEXT("AssetReferenceInspector"
 
 void FAssetReferenceInspectorModule::StartupModule()
 {
+	FAssetReferenceInspectorStyle::Initialize();
 	FAssetReferenceInspectorCommands::Register();
 
 	PluginCommands = MakeShared<FUICommandList>();
@@ -27,6 +29,7 @@ void FAssetReferenceInspectorModule::StartupModule()
 	// Create Delegate Object and Regist to Normad Tab Spawner
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AssetReferenceInspectorTabName, FOnSpawnTab::CreateRaw(this, &FAssetReferenceInspectorModule::OnSpawnPluginTab))
 		.SetDisplayName(FText::FromString(TEXT("Asset Reference Inspector")))
+		.SetIcon(FSlateIcon(FAssetReferenceInspectorStyle::GetStyleSetName(), TEXT("AssetReferenceInspector.OpenPluginWindow")))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FAssetReferenceInspectorModule::RegisterMenus));
@@ -40,6 +43,7 @@ void FAssetReferenceInspectorModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AssetReferenceInspectorTabName);
 
 	FAssetReferenceInspectorCommands::Unregister();
+	FAssetReferenceInspectorStyle::Shutdown();
 }
 
 TSharedRef<SDockTab> FAssetReferenceInspectorModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)

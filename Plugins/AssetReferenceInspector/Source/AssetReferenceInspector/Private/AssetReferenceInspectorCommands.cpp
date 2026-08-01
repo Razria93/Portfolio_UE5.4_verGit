@@ -1,5 +1,7 @@
 #include "AssetReferenceInspectorCommands.h"
 
+#include "AssetReferenceInspectorStyle.h"
+
 #define LOCTEXT_NAMESPACE "FAssetReferenceInspectorCommands"
 
 FAssetReferenceInspectorCommands::FAssetReferenceInspectorCommands()
@@ -7,7 +9,7 @@ FAssetReferenceInspectorCommands::FAssetReferenceInspectorCommands()
 		TEXT("AssetReferenceInspector"),
 		FText::FromString(TEXT("Asset Reference Inspector")),
 		NAME_None,
-		FAppStyle::GetAppStyleSetName())
+		FAssetReferenceInspectorStyle::GetStyleSetName())
 {
 }
 
