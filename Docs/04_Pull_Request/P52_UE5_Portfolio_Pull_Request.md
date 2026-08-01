@@ -32,8 +32,6 @@
 - [x] P1 Closure Review 작성
 - [x] P1 FinalCandidate evidence package 작성
 - [x] P52 evidence claim 연결
-- [ ] Runtime LOD actual 표시 보강
-- [ ] 포트폴리오 본문 연결
 
 ## 브랜치
 
@@ -45,7 +43,7 @@
 
 완성형 gameplay HUD가 아니라, Action / Reaction, CombatSignal / Damage, Enemy AI, Runtime LOD 관련 현재값과 최근 event를 TestRoom PIE에서 확인하기 위한 evidence tooling이다. Overlay는 shipping product UI처럼 보이지 않게 유지하며, 실제 코드에서 읽을 수 없는 값은 `N/A`, `NotCaptured`, `Pending`으로 표시한다.
 
-P1 마감 기준에서는 `Runtime LOD actual` 표시만 의도적으로 보류하고, Target / EventLog / Interaction / Recent summary / AI evidence 표시를 대부분 구현 완료 상태로 둔다. FinalCandidate evidence package는 별도 폴더와 문서에 정리했으며, 포트폴리오 본문 연결은 후속 단계로 분리한다.
+P1 마감 기준에서는 `Runtime LOD actual` 표시만 의도적으로 보류하고, Target / EventLog / Interaction / Recent summary / AI evidence 표시를 대부분 구현 완료 상태로 둔다. FinalCandidate evidence package는 별도 폴더와 문서에 정리했다.
 
 ```text
 P0
@@ -66,7 +64,7 @@ P1
 
 ## 변경 배경
 
-기술문서와 포트폴리오 문서에서 gameplay 구조를 설명하려면, 코드 경로만이 아니라 실제 runtime에서 어떤 판단과 결과가 발생했는지 보여주는 evidence가 필요하다.
+기술문서와 제출 evidence에서 gameplay 구조를 설명하려면, 코드 경로만이 아니라 실제 runtime에서 어떤 판단과 결과가 발생했는지 보여주는 evidence가 필요하다.
 
 기존 audit log는 Output Log 기반이라 제출 영상이나 스크린샷에 바로 쓰기 어렵고, 기존 gameplay HUD로 만들면 shipping HUD처럼 오해될 수 있다. 따라서 debug-only CVar gate 뒤에서만 동작하는 overlay를 별도 evidence tooling으로 구성했다.
 
@@ -426,7 +424,6 @@ Behavior Tree active node 전체 추적
 EventLog line wrapping / compact 재작업
 CollisionDisabledIgnored event 자체 발생 원인 제거
 필요 시 FinalCandidate 보강 캡처
-포트폴리오 본문 연결
 ```
 
 명시적 비목표:
@@ -469,4 +466,4 @@ AI target selection 변경
 
 이번 PR 후보는 debug overlay를 제출용 evidence tooling으로 구성하고, P0/P0.5/P1로 단계화된 구현과 W05 code quality 기준의 구조 리뷰를 하나의 설명 가능한 흐름으로 묶는다. 실제 code cleanup 구현은 후속 브랜치로 분리한다.
 
-P1 기준으로 Target / EventLog / Interaction / Recent summary / Enemy AI evidence는 마감 가능한 수준까지 구현되었다. FinalCandidate evidence package까지 정리했으며, Runtime LOD actual 표시와 포트폴리오 본문 연결은 후속 단계로 분리한다.
+P1 기준으로 Target / EventLog / Interaction / Recent summary / Enemy AI evidence는 마감 가능한 수준까지 구현되었다. FinalCandidate evidence package까지 정리했으며, Runtime LOD actual 표시는 후속 보완 후보로 분리한다.
