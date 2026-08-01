@@ -30,8 +30,9 @@
 - [x] W05 cleanup 후보 구조 리뷰 및 후속 브랜치 이관
 - [x] P1 통합 PIE 결과 문서화
 - [x] P1 Closure Review 작성
+- [x] P1 FinalCandidate evidence package 작성
+- [x] P52 evidence claim 연결
 - [ ] Runtime LOD actual 표시 보강
-- [ ] P1 완료 후 FinalCandidate 촬영 / 패키징
 - [ ] 포트폴리오 본문 연결
 
 ## 브랜치
@@ -44,7 +45,7 @@
 
 완성형 gameplay HUD가 아니라, Action / Reaction, CombatSignal / Damage, Enemy AI, Runtime LOD 관련 현재값과 최근 event를 TestRoom PIE에서 확인하기 위한 evidence tooling이다. Overlay는 shipping product UI처럼 보이지 않게 유지하며, 실제 코드에서 읽을 수 없는 값은 `N/A`, `NotCaptured`, `Pending`으로 표시한다.
 
-P1 마감 기준에서는 `Runtime LOD actual` 표시만 의도적으로 보류하고, Target / EventLog / Interaction / Recent summary / AI evidence 표시를 대부분 구현 완료 상태로 둔다.
+P1 마감 기준에서는 `Runtime LOD actual` 표시만 의도적으로 보류하고, Target / EventLog / Interaction / Recent summary / AI evidence 표시를 대부분 구현 완료 상태로 둔다. FinalCandidate evidence package는 별도 폴더와 문서에 정리했으며, 포트폴리오 본문 연결은 후속 단계로 분리한다.
 
 ```text
 P0
@@ -377,9 +378,43 @@ Collision lifecycle event가 Recent Combat을 덮지 않는 것 확인
 
 주의:
 
-- 현재 PIE 캡처는 최종 제출 evidence가 아니다.
-- FinalCandidate 촬영은 P1 마감 후 별도 진행한다.
+- PIE 검증 캡처와 P0.5 Round1 캡처는 FinalCandidate로 승격하지 않는다.
+- FinalCandidate evidence는 `Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate`에 별도 패키징한다.
 - `Runtime LOD: N/A`는 성공 evidence로 주장하지 않는다.
+
+## FinalCandidate Evidence 연결
+
+FinalCandidate evidence package:
+
+- `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Evidence_Package_KR.md`
+- `Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate`
+
+P52 PR 설명에서 사용할 evidence claim은 아래 파일 기준으로 제한한다. 한 캡처가 여러 claim을 동시에 보여주더라도, claim은 실제 화면에서 읽히는 visible evidence 범위로만 사용한다.
+
+| claim | evidence file | 주의 |
+| --- | --- | --- |
+| 3-panel layout | `debug_overlay_p1_final_idle.png`, `debug_overlay_p1_final_eventlog_all.png` | runtime 표기 `Pannel_01/02/03` 유지 |
+| TargetComponent.Nearest | `debug_overlay_p1_final_target_nearest.png` | generic target system / lock-on claim 금지 |
+| EnemySource None | `debug_overlay_p1_final_guard_out.png`, `debug_overlay_p1_final_parry.png` | target 없음 또는 clear 후 상태 claim |
+| Player movement Run | `debug_overlay_p1_final_move_run.png` | movement current state 표시 claim |
+| Player Recent Execution | `debug_overlay_p1_final_guard_out.png`, `debug_overlay_p1_final_parry.png` | actor-specific recent execution claim |
+| Enemy Recent Execution | `debug_overlay_p1_final_enemy_recent_execution.png` | Interaction recent와 역할 분리 |
+| Interaction Recent Combat / damage breakdown | `debug_overlay_p1_final_interaction_combat_damage.png`, `debug_overlay_p1_final_parry.png` | `Request / Mitigated / Final / Commit` 기준 |
+| EventLog separate panel / All filter | `debug_overlay_p1_final_eventlog_all.png` | line wrapping / compact claim 금지 |
+| EventLog Execution filter | `debug_overlay_p1_final_guard_out.png`, `debug_overlay_p1_final_parry.png` | Execution category 표시 claim |
+| Guard / BlockHit / Parry | `debug_overlay_p1_final_guard_in.png`, `debug_overlay_p1_final_block_hit.png`, `debug_overlay_p1_final_parry.png` | visible reaction/outcome/damage line 기준 |
+| Player Hit / Enemy Hit | `debug_overlay_p1_final_player_hit.png`, `debug_overlay_p1_final_enemy_hit.png` | HP/Reaction/EventLog visible line 기준 |
+| Stagger Count | `debug_overlay_p1_final_stagger_stack_2.png`, `debug_overlay_p1_final_stagger_stack_3.png` | 현재 stack count claim, 누적 통계 claim 금지 |
+| Enemy Current AI | `debug_overlay_p1_final_enemy_current_ai.png` | Blackboard / Controller / Pawn current snapshot claim |
+| Enemy Recent AI Event | `debug_overlay_p1_final_enemy_recent_ai_event.png` | current AI evidence가 아니라 recent task event |
+
+NotPackaged / 제한 claim:
+
+- `EventLog`의 `Combat` / `AI` 전용 filter 성공 캡처는 현재 패키지에 포함하지 않는다.
+- `NoEvents(Filter: Combat)` 또는 `NoEvents(Filter: AI)` 장면은 empty-state evidence로만 별도 보강 가능하다.
+- `Runtime LOD actual`, Behavior Tree active node tracking, Shipping HUD, generic target system, combat action target flow는 P52 성공 claim으로 사용하지 않는다.
+- display filter로 숨겨진 event를 “발생하지 않았다”고 주장하지 않는다.
+- collision lifecycle event는 Recent Combat을 덮지 않지만, EventLog diagnostic으로 남을 수 있다.
 
 ## 비범위 / 후속 작업
 
@@ -390,7 +425,7 @@ Runtime LOD actual 표시
 Behavior Tree active node 전체 추적
 EventLog line wrapping / compact 재작업
 CollisionDisabledIgnored event 자체 발생 원인 제거
-FinalCandidate 촬영 / 패키징
+필요 시 FinalCandidate 보강 캡처
 포트폴리오 본문 연결
 ```
 
@@ -418,6 +453,8 @@ AI target selection 변경
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md`
 - `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md`
+- `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`
+- `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Evidence_Package_KR.md`
 - `Docs/04_Pull_Request/P42_UE5_Portfolio_Pull_Request.md`
 - `Docs/04_Pull_Request/P43_UE5_Portfolio_Pull_Request.md`
 - `Docs/04_Pull_Request/P44_UE5_Portfolio_Pull_Request.md`
@@ -432,4 +469,4 @@ AI target selection 변경
 
 이번 PR 후보는 debug overlay를 제출용 evidence tooling으로 구성하고, P0/P0.5/P1로 단계화된 구현과 W05 code quality 기준의 구조 리뷰를 하나의 설명 가능한 흐름으로 묶는다. 실제 code cleanup 구현은 후속 브랜치로 분리한다.
 
-P1 기준으로 Target / EventLog / Interaction / Recent summary / Enemy AI evidence는 마감 가능한 수준까지 구현되었다. Runtime LOD actual 표시와 최종 촬영/패키징은 P1 이후 단계로 분리한다.
+P1 기준으로 Target / EventLog / Interaction / Recent summary / Enemy AI evidence는 마감 가능한 수준까지 구현되었다. FinalCandidate evidence package까지 정리했으며, Runtime LOD actual 표시와 포트폴리오 본문 연결은 후속 단계로 분리한다.
