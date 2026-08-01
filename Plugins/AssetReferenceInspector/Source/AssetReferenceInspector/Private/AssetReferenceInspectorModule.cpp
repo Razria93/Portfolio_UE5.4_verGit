@@ -67,6 +67,17 @@ void FAssetReferenceInspectorModule::RegisterMenus()
 	UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.MainMenu.Window.PortfolioToolsDebugOverlay"));
 	FToolMenuSection& Section = Menu->FindOrAddSection(TEXT("AssetReferenceInspector"));
 	Section.AddMenuEntryWithCommandList(FAssetReferenceInspectorCommands::Get().OpenPluginWindow, PluginCommands);
+
+	UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.User"));
+	FToolMenuSection& ToolbarSection = ToolbarMenu->FindOrAddSection(TEXT("AssetReferenceInspector"));
+	FToolMenuEntry ToolbarEntry = FToolMenuEntry::InitToolBarButton(
+		TEXT("OpenAssetReferenceInspectorToolbar"),
+		FUIAction(FExecuteAction::CreateRaw(this, &FAssetReferenceInspectorModule::OpenPluginWindow)),
+		FText::FromString(TEXT("Asset Inspector")),
+		FText::FromString(TEXT("Open Asset Reference Inspector.")),
+		FSlateIcon(FAssetReferenceInspectorStyle::GetStyleSetName(), TEXT("AssetReferenceInspector.OpenPluginWindow")));
+	ToolbarEntry.StyleNameOverride = TEXT("AssetEditorToolbar");
+	ToolbarSection.AddEntry(ToolbarEntry);
 }
 
 IMPLEMENT_MODULE(FAssetReferenceInspectorModule, AssetReferenceInspector)
