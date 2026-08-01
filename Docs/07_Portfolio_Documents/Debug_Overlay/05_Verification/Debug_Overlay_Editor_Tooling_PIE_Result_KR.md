@@ -31,7 +31,7 @@
 
 | 진입점 | 검증 결과 |
 | --- | --- |
-| `창 > Debug Overlay` | 기존 menu entry가 유지되고 Nomad panel이 열린다. |
+| `창 > Portfolio Tools > Debug Overlay` | 프로젝트 전용 menu entry가 유지되고 Nomad panel이 열린다. |
 | Level Editor toolbar button | 상단 toolbar에 `Debug Overlay` 버튼이 표시된다. |
 | Toolbar click | 버튼 클릭 시 기존 `Debug Overlay` Nomad panel이 열린다. |
 | Nomad panel | CVar UI와 Target command 버튼이 유지된다. |
@@ -97,7 +97,7 @@ PIE world 또는 PlayerController를 찾지 못하면 command를 실행하지 �
 
 ## 10. 성공 판단
 
-- `창 > Debug Overlay` menu entry와 Level Editor toolbar button 양쪽에서 Nomad panel을 열 수 있다.
+- `창 > Portfolio Tools > Debug Overlay` menu entry와 Level Editor toolbar button 양쪽에서 Nomad panel을 열 수 있다.
 - Editor Nomad 패널에서 Debug Overlay 주요 CVar를 조작할 수 있다.
 - PIE 중 CVar 변경이 runtime HUD에 반영된다.
 - Target command 버튼은 기존 runtime console command 경로로 동작한다.

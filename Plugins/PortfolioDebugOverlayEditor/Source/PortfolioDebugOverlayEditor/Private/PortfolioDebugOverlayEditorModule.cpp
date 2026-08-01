@@ -577,13 +577,21 @@ void FPortfolioDebugOverlayEditorModule::RegisterMenus()
 	FToolMenuOwnerScoped ownerScoped(this);
 
 	UToolMenu* menu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.MainMenu.Window"));
-	FToolMenuSection& section = menu->FindOrAddSection(TEXT("WindowLayout"));
-	section.AddMenuEntry(
-		TEXT("OpenPortfolioDebugOverlayPanel"),
-		LOCTEXT("OpenDebugOverlayPanelLabel", "Debug Overlay"),
-		LOCTEXT("OpenDebugOverlayPanelTooltip", "Open Portfolio Debug Overlay settings panel."),
-		FSlateIcon(),
-		FUIAction(FExecuteAction::CreateRaw(this, &FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel)));
+	FToolMenuSection& section = menu->FindOrAddSection(TEXT("PortfolioTools"));
+	section.AddSubMenu(
+		TEXT("PortfolioToolsDebugOverlay"),
+		LOCTEXT("PortfolioToolsSubMenuLabel", "Portfolio Tools"),
+		LOCTEXT("PortfolioToolsSubMenuTooltip", "Open Portfolio editor tools."),
+		FNewToolMenuDelegate::CreateLambda([this](UToolMenu* subMenu)
+		{
+			FToolMenuSection& subMenuSection = subMenu->FindOrAddSection(TEXT("DebugOverlay"));
+			subMenuSection.AddMenuEntry(
+				TEXT("OpenPortfolioDebugOverlayPanel"),
+				LOCTEXT("OpenDebugOverlayPanelLabel", "Debug Overlay"),
+				LOCTEXT("OpenDebugOverlayPanelTooltip", "Open Portfolio Debug Overlay settings panel."),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateRaw(this, &FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel)));
+		}));
 
 	UToolMenu* toolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.User"));
 	FToolMenuSection& toolbarSection = toolbarMenu->FindOrAddSection(TEXT("PortfolioDebugOverlay"));
