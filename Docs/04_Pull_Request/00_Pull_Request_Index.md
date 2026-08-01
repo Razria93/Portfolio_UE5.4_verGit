@@ -6,6 +6,7 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P53 | Debug Overlay Editor Tooling | `P53_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-editor-tooling` |  | Debug Overlay |
 | P52 | Debug Overlay Evidence Tooling | `P52_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-evidence-plan` |  | W05, Debug Overlay |
 | P51 | Tuning Constants Cleanup | `P51_UE5_Portfolio_Pull_Request.md` | `refactor/tuning-constants-cleanup` |  | W05 |
 | P50 | Section Comment Consistency | `P50_UE5_Portfolio_Pull_Request.md` | `refactor/section-comment-consistency` |  | W05 |

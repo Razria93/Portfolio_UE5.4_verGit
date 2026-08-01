@@ -14,7 +14,7 @@
 | Plugin | `Plugins/PortfolioDebugOverlayEditor` |
 | Plugin 성격 | Editor-only plugin |
 | Runtime Debug Overlay | P52에서 구현된 기존 runtime 기능 사용 |
-| Runtime 코드 변경 | 없음 |
+| Runtime 코드 변경 | Outliner actor target command bridge용 debug-only exec / target source 보강 포함 |
 | 제외 변경 | `Portfolio.Build.cs`, `.uproject`, `.umap`, `.uasset`, config 변경 없음 |
 | 확인 방식 | 사용자가 PIE에서 Nomad 패널 조작 및 target command 동작을 수동 확인 |
 
@@ -109,7 +109,8 @@ PIE world 또는 PlayerController를 찾지 못하면 command를 실행하지 �
 - PIE 중 CVar 변경이 runtime HUD에 반영된다.
 - `Select Nearest Target`, `Select Outliner Actor`, `Clear Target` 버튼은 기존 runtime console command 경로로 동작한다.
 - Editor-only plugin과 runtime Debug Overlay의 책임 경계가 유지된다.
-- runtime Debug Overlay 코드, `Portfolio.Build.cs`, `.uproject`, asset/config 변경 없이 Editor Tooling을 추가했다.
+- runtime Debug Overlay의 HUD/Store와 기존 target 정책, `Portfolio.Build.cs`, `.uproject`, asset/config 변경 없이 Editor Tooling을 추가했다.
+- Outliner actor selection 전달을 위한 debug-only runtime command bridge는 별도 보조 경로로 제한했다.
 
 ## 11. 보류 항목
 
