@@ -19,7 +19,8 @@ public class PortfolioDebugOverlayEditor : ModuleRules
 			"Projects",
 			"Slate",
 			"SlateCore",
-			"ToolMenus"
+			"ToolMenus",
+			"UnrealEd"
 		});
 	}
 }

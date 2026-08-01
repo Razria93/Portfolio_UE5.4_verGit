@@ -8,6 +8,7 @@ enum class EDebugOverlayTargetSource : uint8
 {
 	None,
 	Nearest,
+	EditorSelection,
 };
 
 UCLASS(ClassGroup = (Debug))

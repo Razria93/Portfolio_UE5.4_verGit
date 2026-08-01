@@ -2,12 +2,14 @@
 
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "Editor.h"
 #include "Framework/Commands/UIAction.h"
 #include "Framework/Docking/TabManager.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "Modules/ModuleManager.h"
+#include "Selection.h"
 #include "Styling/AppStyle.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
@@ -38,6 +40,7 @@ namespace
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
 	static constexpr const TCHAR* DebugOverlaySelectNearestTargetCommand = TEXT("DebugOverlaySelectNearestTarget");
 	static constexpr const TCHAR* DebugOverlayClearTargetCommand = TEXT("DebugOverlayClearTarget");
+	static constexpr const TCHAR* DebugOverlaySelectActorTargetCommand = TEXT("DebugOverlaySelectActorTarget");
 
 	IConsoleVariable* FindDebugOverlayCVar(const TCHAR* InName)
 	{
@@ -144,6 +147,37 @@ namespace
 
 		playerController->ConsoleCommand(InCommand, true);
 		return InSuccessStatus;
+	}
+
+	AActor* GetSingleSelectedEditorActor()
+	{
+		if (!GEditor) return nullptr;
+
+		USelection* selectedActors = GEditor->GetSelectedActors();
+		if (!IsValid(selectedActors) || selectedActors->Num() <= 0) return nullptr;
+
+		for (FSelectionIterator it(*selectedActors); it; ++it)
+		{
+			AActor* actor = Cast<AActor>(*it);
+			if (IsValid(actor)) return actor;
+		}
+
+		return nullptr;
+	}
+
+	FText ExecuteDebugOverlayOutlinerTargetCommand()
+	{
+		AActor* selectedActor = GetSingleSelectedEditorActor();
+		if (!IsValid(selectedActor))
+		{
+			return LOCTEXT("NoEditorActorSelected", "No editor actor selected");
+		}
+
+		const FString actorName = selectedActor->GetName();
+		const FString command = FString::Printf(TEXT("%s %s"), DebugOverlaySelectActorTargetCommand, *actorName);
+		return ExecuteDebugOverlayTargetCommand(
+			*command,
+			FText::Format(LOCTEXT("SelectOutlinerActorSent", "Last Command: SelectOutlinerActor | Actor: {0}"), FText::FromString(actorName)));
 	}
 
 	class SPortfolioDebugOverlayEditorWidget : public SCompoundWidget
@@ -491,29 +525,49 @@ namespace
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 6.f)
 				[
-					SNew(SUniformGridPanel)
-					.SlotPadding(FMargin(0.f, 0.f, 8.f, 0.f))
-					+ SUniformGridPanel::Slot(0, 0)
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.f, 0.f, 0.f, 4.f)
 					[
-						SNew(SButton)
-						.Text(LOCTEXT("SelectNearestTargetButton", "Select Nearest Target"))
-						.OnClicked_Lambda([this]()
-						{
-							LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
-								DebugOverlaySelectNearestTargetCommand,
-								LOCTEXT("SelectNearestTargetSent", "Last Command: SelectNearestTarget"));
-							return FReply::Handled();
-						})
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.FillWidth(1.f)
+						.Padding(0.f, 0.f, 4.f, 0.f)
+						[
+							SNew(SButton)
+							.Text(LOCTEXT("SelectNearestTargetButton", "Select Nearest Target"))
+							.OnClicked_Lambda([this]()
+							{
+								LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
+									DebugOverlaySelectNearestTargetCommand,
+									LOCTEXT("SelectNearestTargetSent", "Last Command: SelectNearestTarget"));
+								return FReply::Handled();
+							})
+						]
+						+ SHorizontalBox::Slot()
+						.FillWidth(1.f)
+						.Padding(4.f, 0.f, 0.f, 0.f)
+						[
+							SNew(SButton)
+							.Text(LOCTEXT("ClearTargetButton", "Clear Target"))
+							.OnClicked_Lambda([this]()
+							{
+								LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
+									DebugOverlayClearTargetCommand,
+									LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
+								return FReply::Handled();
+							})
+						]
 					]
-					+ SUniformGridPanel::Slot(1, 0)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
 					[
 						SNew(SButton)
-						.Text(LOCTEXT("ClearTargetButton", "Clear Target"))
+						.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Actor"))
 						.OnClicked_Lambda([this]()
 						{
-							LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
-								DebugOverlayClearTargetCommand,
-								LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
+							LastTargetCommandStatus = ExecuteDebugOverlayOutlinerTargetCommand();
 							return FReply::Handled();
 						})
 					]

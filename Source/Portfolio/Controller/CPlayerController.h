@@ -20,6 +20,9 @@ public:
 	UFUNCTION(Exec)
 	void DebugOverlayClearTarget();
 
+	UFUNCTION(Exec)
+	void DebugOverlaySelectActorTarget(const FString& ActorName);
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
@@ -68,9 +71,12 @@ protected:
 private:
 	// Debug Overlay Target
 	bool TrySelectDebugOverlayNearestEnemy();
+	bool TrySelectDebugOverlayActorTarget(const FString& InActorName);
 	void ClearDebugOverlayTarget();
 
 	void RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const;
+	void RecordDebugOverlayEditorSelectionResult(const FString& InSummary) const;
 	class ACEnemy* FindClosestDebugOverlayEnemy(float& OutDistance) const;
+	AActor* FindDebugOverlayActorByName(const FString& InActorName) const;
 #endif
 };
