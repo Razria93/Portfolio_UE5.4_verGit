@@ -37,6 +37,26 @@
 
 - `feature/debug-overlay-evidence-plan`
 
+## 대표 스크린샷
+
+### 3-panel overlay layout
+
+![Debug Overlay 3-panel layout](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/feature/debug-overlay-evidence-plan/Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate/debug_overlay_p1_final_idle.png?raw=1)
+
+- `Pannel_01`은 Player / Enemy actor state, `Pannel_02`는 EventLog, `Pannel_03`은 Interaction summary를 담당한다.
+
+### Target / actor state / recent execution
+
+![Debug Overlay TargetComponent nearest selection](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/feature/debug-overlay-evidence-plan/Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate/debug_overlay_p1_final_target_nearest.png?raw=1)
+
+- `TargetComponent.Nearest` 기반 명시 target 선택과 Player / Enemy actor state 분리 표시를 확인한다.
+
+### Combat / interaction / event log evidence
+
+![Debug Overlay combat damage and interaction evidence](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/feature/debug-overlay-evidence-plan/Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate/debug_overlay_p1_final_interaction_combat_damage.png?raw=1)
+
+- Interaction panel의 Recent Combat damage breakdown과 EventLog separate panel 흐름을 함께 확인한다.
+
 ## 요약
 
 이번 PR 후보는 resume / 기술문서 / 제출 영상에서 runtime evidence를 설명하기 위한 개발 전용 Debug Overlay를 추가한다.
