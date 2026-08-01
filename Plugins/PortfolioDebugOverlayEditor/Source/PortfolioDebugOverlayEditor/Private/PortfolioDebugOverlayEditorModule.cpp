@@ -585,14 +585,16 @@ void FPortfolioDebugOverlayEditorModule::RegisterMenus()
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateRaw(this, &FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel)));
 
-	UToolMenu* toolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar"));
-	FToolMenuSection& toolbarSection = toolbarMenu->FindOrAddSection(TEXT("Settings"));
-	toolbarSection.AddEntry(FToolMenuEntry::InitToolBarButton(
+	UToolMenu* toolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.User"));
+	FToolMenuSection& toolbarSection = toolbarMenu->FindOrAddSection(TEXT("PortfolioDebugOverlay"));
+	FToolMenuEntry toolbarEntry = FToolMenuEntry::InitToolBarButton(
 		TEXT("OpenPortfolioDebugOverlayPanelToolbar"),
 		FUIAction(FExecuteAction::CreateRaw(this, &FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel)),
 		LOCTEXT("OpenDebugOverlayPanelToolbarLabel", "Debug Overlay"),
 		LOCTEXT("OpenDebugOverlayPanelToolbarTooltip", "Open Debug Overlay panel"),
-		FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Settings"))));
+		FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Settings")));
+	toolbarEntry.StyleNameOverride = TEXT("AssetEditorToolbar");
+	toolbarSection.AddEntry(toolbarEntry);
 }
 
 void FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel()
