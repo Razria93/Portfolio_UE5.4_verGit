@@ -12,9 +12,20 @@ class PORTFOLIO_API ACPlayerController : public APlayerController
 public:
 	ACPlayerController();
 
+public:
+	// Debug Overlay Exec
+	UFUNCTION(Exec)
+	void DebugOverlaySelectNearestTarget();
+
+	UFUNCTION(Exec)
+	void DebugOverlayClearTarget();
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	class UCDebugOverlayTargetComponent* DebugOverlayTargetComponent = nullptr;
 
 private:
 	FVector2D CachedMoveAxis2D = FVector2D::ZeroVector;
@@ -52,4 +63,14 @@ protected:
 	void PressGuard();
 	void ReleaseGuard();
 	void PressDodge();
+
+#if !UE_BUILD_SHIPPING
+private:
+	// Debug Overlay Target
+	bool TrySelectDebugOverlayNearestEnemy();
+	void ClearDebugOverlayTarget();
+
+	void RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const;
+	class ACEnemy* FindClosestDebugOverlayEnemy(float& OutDistance) const;
+#endif
 };

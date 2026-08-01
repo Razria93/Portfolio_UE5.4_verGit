@@ -2,9 +2,22 @@
 
 #include "ProjectGlobal.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
+#if !UE_BUILD_SHIPPING
+#include "Core/Debug/CDebugOverlayTargetComponent.h"
+#endif
 #include "Type/CActionOrchestrationTypes.h"
+
+#include "EngineUtils.h"
+
+#if !UE_BUILD_SHIPPING
+namespace
+{
+	static constexpr float DebugOverlayNearestTargetRadius = 3000.f;
+}
+#endif
 
 ACPlayerController::ACPlayerController()
 {
@@ -12,6 +25,11 @@ ACPlayerController::ACPlayerController()
 
 	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
 	check(PlayerFeedbackComponent);
+
+#if !UE_BUILD_SHIPPING
+	DebugOverlayTargetComponent = CreateDefaultSubobject<UCDebugOverlayTargetComponent>(TEXT("DebugOverlayTarget"));
+	check(DebugOverlayTargetComponent);
+#endif
 }
 
 // Lifecycle
@@ -54,6 +72,22 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
 	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
+}
+
+// Debug Overlay Exec
+
+void ACPlayerController::DebugOverlaySelectNearestTarget()
+{
+#if !UE_BUILD_SHIPPING
+	TrySelectDebugOverlayNearestEnemy();
+#endif
+}
+
+void ACPlayerController::DebugOverlayClearTarget()
+{
+#if !UE_BUILD_SHIPPING
+	ClearDebugOverlayTarget();
+#endif
 }
 
 // Look Input
@@ -165,3 +199,120 @@ void ACPlayerController::PressDodge()
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
 }
+
+#if !UE_BUILD_SHIPPING
+
+bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
+{
+	if (!IsValid(DebugOverlayTargetComponent))
+	{
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: TargetComponentMissing"));
+		return false;
+	}
+
+	if (!IsValid(GetWorld()) || !IsValid(GetPawn()))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = TEXT("NearestFailed | InvalidContext");
+		RecordDebugOverlayNearestSelectionResult(summary);
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: InvalidContext"));
+		return false;
+	}
+
+	float closestDistance = 0.f;
+	ACEnemy* closestEnemy = FindClosestDebugOverlayEnemy(closestDistance);
+	if (!IsValid(closestEnemy))
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = FString::Printf(
+			TEXT("NearestFailed | NoEnemy | Radius: %.0f"),
+			DebugOverlayNearestTargetRadius);
+		RecordDebugOverlayNearestSelectionResult(summary);
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: NoEnemy | Radius: %.0f"), DebugOverlayNearestTargetRadius);
+		return false;
+	}
+
+	if (closestDistance > DebugOverlayNearestTargetRadius)
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+
+		const FString summary = FString::Printf(
+			TEXT("NearestFailed | OutOfRange | Closest: %.0f | Radius: %.0f"),
+			closestDistance,
+			DebugOverlayNearestTargetRadius);
+		RecordDebugOverlayNearestSelectionResult(summary);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("DebugOverlaySelectNearestTarget Result: OutOfRange | Closest: %.0f | Radius: %.0f"),
+			closestDistance,
+			DebugOverlayNearestTargetRadius);
+		return false;
+	}
+
+	DebugOverlayTargetComponent->SetDebugOverlayTarget(closestEnemy, EDebugOverlayTargetSource::Nearest);
+
+	const FString summary = FString::Printf(
+		TEXT("NearestSelected | Target: %s | Distance: %.0f | Radius: %.0f"),
+		*GetNameSafe(closestEnemy),
+		closestDistance,
+		DebugOverlayNearestTargetRadius);
+	RecordDebugOverlayNearestSelectionResult(summary);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("DebugOverlaySelectNearestTarget Result: Selected | Target: %s | Distance: %.0f | Radius: %.0f"),
+		*GetNameSafe(closestEnemy),
+		closestDistance,
+		DebugOverlayNearestTargetRadius);
+	return true;
+}
+
+void ACPlayerController::ClearDebugOverlayTarget()
+{
+	if (!IsValid(DebugOverlayTargetComponent)) return;
+
+	DebugOverlayTargetComponent->ClearDebugOverlayTarget();
+}
+
+void ACPlayerController::RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const
+{
+	if (!IsValid(DebugOverlayTargetComponent)) return;
+
+	DebugOverlayTargetComponent->SetDebugOverlaySelectionSummary(InSummary);
+}
+
+ACEnemy* ACPlayerController::FindClosestDebugOverlayEnemy(float& OutDistance) const
+{
+	OutDistance = 0.f;
+
+	UWorld* world = GetWorld();
+	const APawn* pawn = GetPawn();
+	if (!IsValid(world) || !IsValid(pawn)) return nullptr;
+
+	const FVector origin = pawn->GetActorLocation();
+
+	ACEnemy* closestEnemy = nullptr;
+	float closestDistanceSquared = TNumericLimits<float>::Max();
+
+	for (TActorIterator<ACEnemy> it(world); it; ++it)
+	{
+		ACEnemy* enemy = *it;
+		if (!IsValid(enemy)) continue;
+
+		const float distanceSquared = FVector::DistSquared(origin, enemy->GetActorLocation());
+		if (distanceSquared > closestDistanceSquared) continue;
+
+		closestDistanceSquared = distanceSquared;
+		closestEnemy = enemy;
+	}
+
+	if (!IsValid(closestEnemy)) return nullptr;
+
+	OutDistance = FMath::Sqrt(closestDistanceSquared);
+	return closestEnemy;
+}
+
+#endif

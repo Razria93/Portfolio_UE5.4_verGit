@@ -1,8 +1,12 @@
 #include "Core/Debug/FAICombatBTDebug.h"
 
+#include "AI/Blackboard/CAIKey.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
+#include "Type/CStateTypes.h"
 
 #include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 
@@ -49,6 +53,26 @@ namespace
 			TEXT("Result=%s | RejectReason=%s"),
 			*UEnum::GetValueAsString(InResult.ResultType),
 			*UEnum::GetValueAsString(InResult.RejectReason));
+	}
+
+	const UObject* ResolveAICombatBTWorldContext(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor)
+	{
+		if (IsValid(InOwnerPawn)) return InOwnerPawn;
+		if (IsValid(InAIController)) return InAIController;
+		if (IsValid(InTargetActor)) return InTargetActor;
+
+		return nullptr;
+	}
+
+	FString ResolveAIIntentStateText(const AAIController* InAIController)
+	{
+		const UBlackboardComponent* blackboardComp = IsValid(InAIController) ? InAIController->GetBlackboardComponent() : nullptr;
+		if (!IsValid(blackboardComp)) return TEXT("N/A");
+
+		const uint8 intentStateValue = blackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState.KeyName);
+		if (intentStateValue >= static_cast<uint8>(EAIIntentState::Max)) return TEXT("N/A");
+
+		return UEnum::GetValueAsString(static_cast<EAIIntentState>(intentStateValue));
 	}
 }
 
@@ -144,6 +168,20 @@ void FAICombatBTDebug::RecordEngageContextRejectedForAudit(const APawn* InOwnerP
 
 void FAICombatBTDebug::RecordCombatActionTaskSucceededForAudit(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, ECombatActionIntent InIntent, const FActionRequestResult& InResult, float InCooldown, float InNextActionTime)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordAICombatTask(
+			ResolveAICombatBTWorldContext(InAIController, InOwnerPawn, InTargetActor),
+			InAIController,
+			InOwnerPawn,
+			InTargetActor,
+			ResolveAIIntentStateText(InAIController),
+			UEnum::GetValueAsString(InIntent),
+			UEnum::GetValueAsString(InResult.ResultType),
+			UEnum::GetValueAsString(InResult.RejectReason),
+			TEXT("CombatActionTaskSucceeded"));
+	}
+
 	if (!ShouldAuditAICombatBT()) return;
 
 	FLog::Log(FString::Printf(
@@ -159,6 +197,20 @@ void FAICombatBTDebug::RecordCombatActionTaskSucceededForAudit(const AAIControll
 
 void FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, ECombatActionIntent InIntent, const FActionRequestResult& InResult, const TCHAR* InReason)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordAICombatTask(
+			ResolveAICombatBTWorldContext(InAIController, InOwnerPawn, InTargetActor),
+			InAIController,
+			InOwnerPawn,
+			InTargetActor,
+			ResolveAIIntentStateText(InAIController),
+			UEnum::GetValueAsString(InIntent),
+			UEnum::GetValueAsString(InResult.ResultType),
+			InReason ? FString(InReason) : UEnum::GetValueAsString(InResult.RejectReason),
+			TEXT("CombatActionTaskRejected"));
+	}
+
 	if (!ShouldAuditAICombatBT()) return;
 
 	FLog::Log(FString::Printf(

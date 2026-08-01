@@ -1,5 +1,6 @@
 #include "Core/Debug/FCombatSignalDebug.h"
 
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 
 #include "Components/PrimitiveComponent.h"
@@ -39,6 +40,25 @@ namespace
 
 		return FormatCombatSignalDamageSpecKey(damageSpecKey);
 	}
+
+	const UObject* ResolveTargetPacketWorldContext(const FCombatSignalTargetPacket& InPacket)
+	{
+		if (IsValid(InPacket.Context.TargetActor)) return InPacket.Context.TargetActor;
+		if (IsValid(InPacket.Context.SourceActor)) return InPacket.Context.SourceActor;
+		if (IsValid(InPacket.Context.DamageCauser)) return InPacket.Context.DamageCauser;
+
+		return nullptr;
+	}
+
+	const UObject* ResolveResultPacketWorldContext(const FCombatResultPacket& InPacket, const AActor* InReceiverActor)
+	{
+		if (IsValid(InReceiverActor)) return InReceiverActor;
+		if (IsValid(InPacket.TargetActor)) return InPacket.TargetActor;
+		if (IsValid(InPacket.SourceActor)) return InPacket.SourceActor;
+		if (IsValid(InPacket.DamageCauser)) return InPacket.DamageCauser;
+
+		return nullptr;
+	}
 }
 
 // Gate
@@ -65,6 +85,19 @@ bool FCombatSignalDebug::ShouldPrintCombatSignalDebug()
 
 void FCombatSignalDebug::RecordWeaponCollisionWindowForAudit(const AActor* InOwnerActor, const AActor* InWeaponActor, FName InCollisionName, int32 InHitWindowId, int32 InCollisionCount, const TCHAR* InEvent, const TCHAR* InReason)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(
+			InOwnerActor,
+			InOwnerActor,
+			InWeaponActor,
+			InCollisionName,
+			InHitWindowId,
+			InEvent ? FString(InEvent) : FString(TEXT("CollisionWindow")),
+			InEvent ? InEvent : TEXT("CollisionWindow"),
+			InReason);
+	}
+
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(
@@ -266,6 +299,14 @@ void FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(float InDamag
 
 void FCombatSignalDebug::RecordTargetAcceptedForAudit(const FCombatSignalTargetPacket& InPacket)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordCombatTargetPacket(
+			ResolveTargetPacketWorldContext(InPacket),
+			InPacket,
+			TEXT("TargetAccepted"));
+	}
+
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(
@@ -288,6 +329,14 @@ void FCombatSignalDebug::RecordTargetAcceptedForAudit(const FCombatSignalTargetP
 
 void FCombatSignalDebug::RecordTargetRejectedForAudit(const FCombatSignalTargetPacket& InPacket)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordCombatTargetPacket(
+			ResolveTargetPacketWorldContext(InPacket),
+			InPacket,
+			TEXT("TargetRejected"));
+	}
+
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(
@@ -358,6 +407,15 @@ void FCombatSignalDebug::PrintTargetPacketDebug(const FCombatSignalTargetPacket&
 
 void FCombatSignalDebug::RecordCombatResultDispatchForAudit(const FCombatSignalTargetPacket& InTargetPacket, const FCombatResultPacket& InResultPacket, const AActor* InReceiverActor, const TCHAR* InEvent)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordCombatResult(
+			ResolveResultPacketWorldContext(InResultPacket, InReceiverActor),
+			InReceiverActor,
+			InResultPacket,
+			InEvent ? InEvent : TEXT("ResultDispatch"));
+	}
+
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(

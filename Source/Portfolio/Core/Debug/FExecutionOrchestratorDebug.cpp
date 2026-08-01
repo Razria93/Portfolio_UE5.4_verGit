@@ -1,8 +1,10 @@
 #include "Core/Debug/FExecutionOrchestratorDebug.h"
 
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
+#include "Type/CActionKeyTypes.h"
 
 #include "HAL/IConsoleManager.h"
 
@@ -109,6 +111,54 @@ namespace
 
 		return FString::Join(handlingNames, TEXT(","));
 	}
+
+	FString CompactExecutionEnumText(const FString& InValue)
+	{
+		int32 separatorIndex = INDEX_NONE;
+		return InValue.FindLastChar(TEXT(':'), separatorIndex)
+			&& separatorIndex > 0
+			&& InValue[separatorIndex - 1] == TEXT(':')
+			&& separatorIndex + 1 < InValue.Len()
+			? InValue.RightChop(separatorIndex + 1)
+			: InValue;
+	}
+
+	FString FormatGuardActionPhaseForOverlay(EGuardActionPhase InPhase)
+	{
+		switch (InPhase)
+		{
+		case EGuardActionPhase::In:
+			return TEXT("Guard In");
+		case EGuardActionPhase::Out:
+			return TEXT("Guard Out");
+		default:
+			return TEXT("Guard");
+		}
+	}
+
+	FString FormatActionSubjectForOverlay(const FActionDataKey& InKey)
+	{
+		if (InKey.ActionType == EActionType::Guard)
+		{
+			const EGuardActionPhase guardPhase = ResolveGuardActionPhase(InKey);
+			if (guardPhase == EGuardActionPhase::In || guardPhase == EGuardActionPhase::Out)
+			{
+				return FormatGuardActionPhaseForOverlay(guardPhase);
+			}
+
+			return TEXT("Guard");
+		}
+
+		const FString actionType = CompactExecutionEnumText(UEnum::GetValueAsString(InKey.ActionType));
+		return InKey.ActionIndex != INDEX_NONE
+			? FString::Printf(TEXT("%s[%d]"), *actionType, InKey.ActionIndex)
+			: actionType;
+	}
+
+	FString FormatReactionSubjectForOverlay(const FReactionDataKey& InKey)
+	{
+		return CompactExecutionEnumText(UEnum::GetValueAsString(InKey.ReactionType));
+	}
 }
 
 // Gate
@@ -156,6 +206,19 @@ void FExecutionOrchestratorDebug::RecordInvalidActiveParticipantsForAudit(const 
 
 void FExecutionOrchestratorDebug::RecordActionExecutionResultForAudit(const AActor* InOwnerActor, const FActionExecutionResult& InResult, const TCHAR* InEvent)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordExecutionDecision(
+			InOwnerActor,
+			InOwnerActor,
+			TEXT("Action"),
+			FormatActionSubjectForOverlay(InResult.ResolvedContext.ActionDataKey),
+			UEnum::GetValueAsString(InResult.Decision),
+			UEnum::GetValueAsString(InResult.ApplyMode),
+			UEnum::GetValueAsString(InResult.RejectReason),
+			InEvent ? InEvent : TEXT("ExecutionResult"));
+	}
+
 	if (!ShouldAuditActionRequest()) return;
 
 	FLog::Log(FString::Printf(
@@ -206,6 +269,19 @@ void FExecutionOrchestratorDebug::PrintActionExecutionDebug(const AActor* InOwne
 
 void FExecutionOrchestratorDebug::RecordReactionExecutionResultForAudit(const AActor* InOwnerActor, const FReactionExecutionResult& InResult, const TCHAR* InEvent)
 {
+	if (FDebugOverlaySnapshotStore::IsCollecting())
+	{
+		FDebugOverlaySnapshotStore::RecordExecutionDecision(
+			InOwnerActor,
+			InOwnerActor,
+			TEXT("Reaction"),
+			FormatReactionSubjectForOverlay(InResult.ResolvedContext.ReactionDataKey),
+			UEnum::GetValueAsString(InResult.Decision),
+			UEnum::GetValueAsString(InResult.ApplyMode),
+			UEnum::GetValueAsString(InResult.RejectReason),
+			InEvent ? InEvent : TEXT("ExecutionResult"));
+	}
+
 	if (!ShouldAuditReactionRequest()) return;
 
 	FLog::Log(FString::Printf(
