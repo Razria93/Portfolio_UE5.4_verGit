@@ -550,12 +550,10 @@ namespace
 						.Padding(4.f, 0.f, 0.f, 0.f)
 						[
 							SNew(SButton)
-							.Text(LOCTEXT("ClearTargetButton", "Clear Target"))
+							.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Actor"))
 							.OnClicked_Lambda([this]()
 							{
-								LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
-									DebugOverlayClearTargetCommand,
-									LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
+								LastTargetCommandStatus = ExecuteDebugOverlayOutlinerTargetCommand();
 								return FReply::Handled();
 							})
 						]
@@ -564,10 +562,12 @@ namespace
 					.AutoHeight()
 					[
 						SNew(SButton)
-						.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Actor"))
+						.Text(LOCTEXT("ClearTargetButton", "Clear Target"))
 						.OnClicked_Lambda([this]()
 						{
-							LastTargetCommandStatus = ExecuteDebugOverlayOutlinerTargetCommand();
+							LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
+								DebugOverlayClearTargetCommand,
+								LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
 							return FReply::Handled();
 						})
 					]
