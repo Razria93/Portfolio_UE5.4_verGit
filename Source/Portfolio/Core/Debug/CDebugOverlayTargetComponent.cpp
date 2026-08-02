@@ -4,7 +4,7 @@
 
 namespace
 {
-	FString FormatDebugOverlayTargetSource(EDebugOverlayTargetSource InSource)
+	FString FormatDebugOverlayFocusSource(EDebugOverlayTargetSource InSource)
 	{
 		switch (InSource)
 		{
@@ -27,36 +27,36 @@ UCDebugOverlayTargetComponent::UCDebugOverlayTargetComponent()
 // Focus Query
 bool UCDebugOverlayTargetComponent::HasDebugOverlayFocus() const
 {
-	return DebugOverlayTargetActor.IsValid();
+	return DebugOverlayFocusActor.IsValid();
 }
 
 bool UCDebugOverlayTargetComponent::HasDebugOverlayFocusCommandResult() const
 {
-	return !DebugOverlaySelectionSummary.IsEmpty();
+	return !DebugOverlayFocusCommandResult.IsEmpty();
 }
 
 AActor* UCDebugOverlayTargetComponent::GetDebugOverlayFocusActor() const
 {
-	return DebugOverlayTargetActor.Get();
+	return DebugOverlayFocusActor.Get();
 }
 
 FString UCDebugOverlayTargetComponent::GetDebugOverlayFocusActorText() const
 {
 	return HasDebugOverlayFocus()
-		? FString::Printf(TEXT("Selected: %s"), *GetNameSafe(DebugOverlayTargetActor.Get()))
+		? FString::Printf(TEXT("Selected: %s"), *GetNameSafe(DebugOverlayFocusActor.Get()))
 		: FString(TEXT("None"));
 }
 
 FString UCDebugOverlayTargetComponent::GetDebugOverlayFocusModeText() const
 {
 	return HasDebugOverlayFocus()
-		? FormatDebugOverlayTargetSource(DebugOverlayTargetSource)
+		? FormatDebugOverlayFocusSource(DebugOverlayFocusSource)
 		: FString(TEXT("None"));
 }
 
 FString UCDebugOverlayTargetComponent::GetDebugOverlayFocusCommandResultText() const
 {
-	return DebugOverlaySelectionSummary;
+	return DebugOverlayFocusCommandResult;
 }
 
 // Focus Mutation
@@ -68,24 +68,24 @@ void UCDebugOverlayTargetComponent::SetDebugOverlayFocus(AActor* InFocusActor, E
 		return;
 	}
 
-	DebugOverlayTargetActor = InFocusActor;
-	DebugOverlayTargetSource = InSource;
+	DebugOverlayFocusActor = InFocusActor;
+	DebugOverlayFocusSource = InSource;
 }
 
 void UCDebugOverlayTargetComponent::ClearDebugOverlayFocus()
 {
-	DebugOverlayTargetActor.Reset();
-	DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
+	DebugOverlayFocusActor.Reset();
+	DebugOverlayFocusSource = EDebugOverlayTargetSource::None;
 }
 
 void UCDebugOverlayTargetComponent::SetDebugOverlayFocusCommandResult(const FString& InResultText)
 {
-	DebugOverlaySelectionSummary = InResultText;
+	DebugOverlayFocusCommandResult = InResultText;
 }
 
 void UCDebugOverlayTargetComponent::ClearDebugOverlayFocusCommandResult()
 {
-	DebugOverlaySelectionSummary.Reset();
+	DebugOverlayFocusCommandResult.Reset();
 }
 
 // Compatibility Query

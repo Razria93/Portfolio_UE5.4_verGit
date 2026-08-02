@@ -20,9 +20,9 @@ public:
 	UCDebugOverlayTargetComponent();
 
 private:
-	TWeakObjectPtr<AActor> DebugOverlayTargetActor;
-	EDebugOverlayTargetSource DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
-	FString DebugOverlaySelectionSummary;
+	TWeakObjectPtr<AActor> DebugOverlayFocusActor;
+	EDebugOverlayTargetSource DebugOverlayFocusSource = EDebugOverlayTargetSource::None;
+	FString DebugOverlayFocusCommandResult;
 
 public:
 	// Focus Query
