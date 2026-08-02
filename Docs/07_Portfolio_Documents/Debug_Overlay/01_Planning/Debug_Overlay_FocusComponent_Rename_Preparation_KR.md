@@ -45,14 +45,14 @@ DebugOverlayClearTarget
 | 파일 | 남은 명칭 | 성격 |
 | --- | --- | --- |
 | `CDebugOverlayTargetComponent.h/.cpp` | `UCDebugOverlayTargetComponent` | class/file rename 후보 |
-| `CDebugOverlayTargetComponent.h/.cpp` | `DebugOverlayTargetActor`, `DebugOverlayTargetSource`, `DebugOverlaySelectionSummary` | 내부 필드 rename 후보 |
+| `CDebugOverlayTargetComponent.h/.cpp` | `DebugOverlayTargetActor`, `DebugOverlayTargetSource`, `DebugOverlaySelectionSummary` | Focus 명명으로 전환 완료 |
 | `CDebugOverlayTargetComponent.h/.cpp` | `GetDebugOverlayTarget*`, `SetDebugOverlayTarget`, `ClearDebugOverlayTarget`, `*SelectionSummary` | compatibility wrapper |
-| `CDebugOverlayTargetComponent.cpp` | `FormatDebugOverlayTargetSource` | 내부 helper rename 후보 |
-| `CPlayerController.h/.cpp` | `DebugOverlayTargetComponent` member | 내부 member rename 후보 |
+| `CDebugOverlayTargetComponent.cpp` | `FormatDebugOverlayTargetSource` | Focus 명명 helper로 전환 완료 |
+| `CPlayerController.h/.cpp` | `DebugOverlayTargetComponent` member | class/file rename 전까지 compatibility 명명 유지 |
 | `CPlayerController.h/.cpp` | `DebugOverlaySelectNearestTarget`, `DebugOverlaySelectActorTarget`, `DebugOverlayClearTarget` | command-facing compatibility |
-| `CPlayerController.h/.cpp` | `ClearDebugOverlayTarget()` | command-facing/internal bridge rename 후보 |
+| `CPlayerController.h/.cpp` | `ClearDebugOverlayTarget()` | public command는 유지, private helper는 `ClearDebugOverlayFocus()`로 전환 완료 |
 | `CDebugOverlayHUD.cpp/.h` | `ResolveTargetComponentEnemy` | 내부 helper rename 후보 |
-| `CDebugOverlayHUD.cpp` | `EnemySource:` legacy diagnostic strings | RecentCombat/WorldScanFallback diagnostic path |
+| `CDebugOverlayHUD.cpp` | `EnemySource:` legacy diagnostic strings | Runtime Display Data Cleanup에서 제거 |
 | `FDebugOverlayFocusResolver.*` | `EDebugOverlayTargetSource` | enum rename 후보, 후순위 |
 | `PortfolioDebugOverlayEditorModule.cpp` | command string constants | command sender compatibility |
 | `PortfolioDebugOverlayEditorModule.cpp` | `Target` section/button/status labels | Editor UI terminology rename 후보 |
@@ -122,13 +122,13 @@ DebugOverlaySelectActorTarget
 
 | 현재 이름 | 권장 방향 |
 | --- | --- |
-| `DebugOverlayTargetComponent` member | `DebugOverlayFocusComponent` |
-| `DebugOverlayTargetActor` | `DebugOverlayFocusActor` |
-| `DebugOverlayTargetSource` | `DebugOverlayFocusSource` |
-| `DebugOverlaySelectionSummary` | `DebugOverlayFocusCommandResult` |
-| `FormatDebugOverlayTargetSource` | `FormatDebugOverlayFocusSource` 또는 `FormatDebugOverlayFocusModeText` |
+| `DebugOverlayTargetComponent` member | class/file rename 전까지 유지 |
+| `DebugOverlayTargetActor` | `DebugOverlayFocusActor` 완료 |
+| `DebugOverlayTargetSource` | `DebugOverlayFocusSource` 완료 |
+| `DebugOverlaySelectionSummary` | `DebugOverlayFocusCommandResult` 완료 |
+| `FormatDebugOverlayTargetSource` | `FormatDebugOverlayFocusSource` 완료 |
 | `ResolveTargetComponentEnemy` | `ResolveFocusComponentEnemy` |
-| `ClearDebugOverlayTarget()` private bridge | command-facing wrapper 유지 여부를 보고 후순위 검토 |
+| `ClearDebugOverlayTarget()` private bridge | `ClearDebugOverlayFocus()` 내부 helper로 전환 완료 |
 
 주의:
 
@@ -164,7 +164,7 @@ CDebugOverlayTargetComponent.generated.h -> CDebugOverlayFocusComponent.generate
 | `DebugOverlayClearTarget` | console command compatibility 및 Editor command sender 의존 |
 | `GetDebugOverlayTarget*` 계열 | public compatibility wrapper |
 | `SetDebugOverlayTarget`, `ClearDebugOverlayTarget` | public compatibility wrapper |
-| `EnemySource:` legacy diagnostic strings | RecentCombat/WorldScanFallback diagnostic helper, Focus display main path 아님 |
+| `EnemySource:` legacy diagnostic strings | Runtime Display Data Cleanup에서 제거 |
 
 ### 4.6 이미 Focus로 전환 완료된 항목
 
@@ -172,6 +172,7 @@ CDebugOverlayTargetComponent.generated.h -> CDebugOverlayFocusComponent.generate
 
 - HUD는 Focus getter API를 사용한다.
 - Controller는 Focus setter/result API를 사용한다.
+- Controller private helper는 `TryFocusDebugOverlay...`, `ClearDebugOverlayFocus`, `RecordDebugOverlayFocusCommandResult` 계열을 사용한다.
 - FocusResolver는 `TargetComponent` 저장소에 직접 접근하지 않는다.
 - FocusResolver는 Store/HUD/ViewData/Formatter/Renderer를 직접 호출하지 않는다.
 - Enemy panel 표시는 `EnemyFocusMode`, `EnemyFocusActor`, `EnemyFocusCommand`를 사용한다.
@@ -211,11 +212,11 @@ Last Command: SelectOutlinerActor
 권장 순서:
 
 1. 내부 구현명 rename 1차
-   - `DebugOverlayTargetComponent` member를 `DebugOverlayFocusComponent`로 rename
+   - `DebugOverlayTargetComponent` member는 class/file rename 전까지 유지
    - `ResolveTargetComponentEnemy`를 `ResolveFocusComponentEnemy`로 rename
    - command 이름과 public Target API는 유지
 
-2. `CDebugOverlayTargetComponent` 내부 field/helper rename
+2. `CDebugOverlayTargetComponent` 내부 field/helper rename 완료
    - `DebugOverlayTargetActor` -> `DebugOverlayFocusActor`
    - `DebugOverlayTargetSource` -> `DebugOverlayFocusSource`
    - `DebugOverlaySelectionSummary` -> `DebugOverlayFocusCommandResult`

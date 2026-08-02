@@ -69,12 +69,12 @@ protected:
 
 #if !UE_BUILD_SHIPPING
 private:
-	// Debug Overlay Target
-	bool TrySelectDebugOverlayNearestEnemy();
-	bool TrySelectDebugOverlayActorTarget(const FString& InActorName);
-	void ClearDebugOverlayTarget();
+	// Debug Overlay Focus
+	bool TryFocusDebugOverlayNearestEnemy();
+	bool TryFocusDebugOverlayActorTarget(const FString& InActorName);
+	void ClearDebugOverlayFocus();
 
-	void RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const;
-	void RecordDebugOverlayEditorSelectionResult(const FString& InSummary) const;
+	void ApplyDebugOverlayFocusResolveResult(const struct FDebugOverlayFocusResolveResult& InResult) const;
+	void RecordDebugOverlayFocusCommandResult(const FString& InSummary) const;
 #endif
 };

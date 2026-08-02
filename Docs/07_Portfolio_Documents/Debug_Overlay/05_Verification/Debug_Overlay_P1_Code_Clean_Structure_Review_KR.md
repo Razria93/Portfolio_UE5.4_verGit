@@ -49,7 +49,7 @@ Debug Overlay 기준:
 | 파일 | 현재 역할 | 판단 |
 | --- | --- | --- |
 | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.h/.cpp` | Canvas 기반 3-panel HUD, actor state, recent summary, EventLog panel, target resolve, Current AI 표시 | 가장 큰 cleanup 후보 |
-| `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.h/.cpp` | debug-only selected target, source type, selection summary 저장 | 현재 구조 유지 |
+| `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.h/.cpp` | debug-only focus actor/source/command result 저장, public Target compatibility wrapper 유지 | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotTypes.h` | snapshot/event/recent summary data-only type | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.h/.cpp` | world별 snapshot store, event ring, EventLog filter, recent summary 기록/query | 섹션 정리 후보 |
 | `Source/Portfolio/Core/Debug/CDebugOverlayGameMode.h/.cpp` | TestRoom debug HUD 연결 | 현재 구조 유지 |
@@ -57,7 +57,7 @@ Debug Overlay 기준:
 | `Source/Portfolio/Core/Debug/FCombatSignalDebug.cpp` | collision window, target packet, combat result를 SnapshotStore에 기록하는 debug hook | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FCombatResultDebug.cpp` | combat result receive를 SnapshotStore에 기록하는 debug hook | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FAICombatBTDebug.cpp` | AI combat task event를 SnapshotStore에 기록하는 debug hook | 현재 구조 유지 |
-| `Source/Portfolio/Controller/CPlayerController.h/.cpp` | debug target Exec command와 TargetComponent subobject 소유 | 일부 판단 필요 |
+| `Source/Portfolio/Controller/CPlayerController.h/.cpp` | debug target Exec command entry, FocusResolver 호출, TargetComponent focus result apply | 현재 구조 유지 |
 
 ## 4. W05 / PR 축별 판단
 
@@ -88,8 +88,7 @@ Debug Overlay 기준:
 - Interaction panel formatting
 - EventLog panel formatting
 - panel layout / background / header draw
-- TargetComponent 기반 Enemy resolve
-- diagnostic 후보인 RecentCombat / WorldScan fallback helper
+- TargetComponent Focus API 기반 Enemy resolve
 
 현재 구조는 P1 마감 기준으로 허용 가능하다. Debug overlay는 개발 전용 tooling이고, 현재 파일 분리는 기능 안정화보다 리스크가 크다.
 
@@ -113,9 +112,9 @@ Debug Overlay 기준:
 
 ### 5.3 TargetComponent / PlayerController
 
-`UCDebugOverlayTargetComponent`는 debug-only target actor/source/selection summary만 저장하므로 현재 책임이 적절하다.
+`UCDebugOverlayTargetComponent`는 debug-only focus actor/source/command result만 저장하고 public Target API는 compatibility wrapper로 유지하므로 현재 책임이 적절하다.
 
-`ACPlayerController`는 debug Exec command를 보유한다. gameplay input/action flow를 바꾸지 않고 console command로만 동작하므로 P1에서는 유지한다.
+`ACPlayerController`는 debug Exec command entry, FocusResolver 호출, focus result apply, Output Log, command result recording만 담당한다. gameplay input/action flow를 바꾸지 않고 console command로만 동작하므로 P1에서는 유지한다.
 
 다만 `CPlayerController.h`에서 Exec command가 field보다 앞에 배치된 구조는 프로젝트 일반 UCLASS field-first 스타일과 다를 수 있다. console command 가시성 목적이 있으므로 이번 cleanup에서 임의로 이동하지 않는다.
 
@@ -175,7 +174,7 @@ LowRiskFix 기준:
 | --- | --- |
 | `FDebugOverlaySnapshotTypes.h` data-only 구조 | 현재 type header 역할이 명확하다. |
 | `FDebugOverlaySnapshotStore.h` static utility API 구조 | field가 없는 API-only class라 UCLASS field/API 배치 기준을 그대로 적용하지 않는다. |
-| `UCDebugOverlayTargetComponent` 책임 | debug-only target/source/summary 저장으로 충분히 좁다. |
+| `UCDebugOverlayTargetComponent` 책임 | debug-only focus actor/source/command result 저장소와 Target compatibility wrapper로 충분히 좁다. |
 | debug hook 파일 분산 | 도메인별 hook에서 Store record를 호출하는 현재 구조가 의존성을 낮춘다. |
 | `Pannel_01/02/03` 표시 | 현재 layout style lock 문서 기준으로 유지한다. |
 | EventLog CVar 이름 | console command contract이므로 임의 변경하지 않는다. |

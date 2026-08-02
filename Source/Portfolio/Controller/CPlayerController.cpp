@@ -77,21 +77,21 @@ void ACPlayerController::SetupInputComponent()
 void ACPlayerController::DebugOverlaySelectNearestTarget()
 {
 #if !UE_BUILD_SHIPPING
-	TrySelectDebugOverlayNearestEnemy();
+	TryFocusDebugOverlayNearestEnemy();
 #endif
 }
 
 void ACPlayerController::DebugOverlayClearTarget()
 {
 #if !UE_BUILD_SHIPPING
-	ClearDebugOverlayTarget();
+	ClearDebugOverlayFocus();
 #endif
 }
 
 void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
 {
 #if !UE_BUILD_SHIPPING
-	TrySelectDebugOverlayActorTarget(ActorName);
+	TryFocusDebugOverlayActorTarget(ActorName);
 #endif
 }
 
@@ -207,7 +207,7 @@ void ACPlayerController::PressDodge()
 
 #if !UE_BUILD_SHIPPING
 
-bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
+bool ACPlayerController::TryFocusDebugOverlayNearestEnemy()
 {
 	if (!IsValid(DebugOverlayTargetComponent))
 	{
@@ -220,16 +220,7 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 		GetPawn(),
 		DebugOverlayNearestTargetRadius);
 
-	if (result.Status != EDebugOverlayFocusResolveStatus::Selected)
-	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-		RecordDebugOverlayNearestSelectionResult(result.SummaryText);
-	}
-	else
-	{
-		DebugOverlayTargetComponent->SetDebugOverlayFocus(result.FocusActor.Get(), result.FocusSource);
-		RecordDebugOverlayNearestSelectionResult(result.SummaryText);
-	}
+	ApplyDebugOverlayFocusResolveResult(result);
 
 	switch (result.Status)
 	{
@@ -261,7 +252,7 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 	}
 }
 
-bool ACPlayerController::TrySelectDebugOverlayActorTarget(const FString& InActorName)
+bool ACPlayerController::TryFocusDebugOverlayActorTarget(const FString& InActorName)
 {
 	const FString actorName = InActorName.TrimStartAndEnd();
 
@@ -276,16 +267,7 @@ bool ACPlayerController::TrySelectDebugOverlayActorTarget(const FString& InActor
 		GetPawn(),
 		actorName);
 
-	if (result.Status != EDebugOverlayFocusResolveStatus::Selected)
-	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-		RecordDebugOverlayEditorSelectionResult(result.SummaryText);
-	}
-	else
-	{
-		DebugOverlayTargetComponent->SetDebugOverlayFocus(result.FocusActor.Get(), result.FocusSource);
-		RecordDebugOverlayEditorSelectionResult(result.SummaryText);
-	}
+	ApplyDebugOverlayFocusResolveResult(result);
 
 	switch (result.Status)
 	{
@@ -314,7 +296,7 @@ bool ACPlayerController::TrySelectDebugOverlayActorTarget(const FString& InActor
 	}
 }
 
-void ACPlayerController::ClearDebugOverlayTarget()
+void ACPlayerController::ClearDebugOverlayFocus()
 {
 	if (!IsValid(DebugOverlayTargetComponent)) return;
 
@@ -322,14 +304,23 @@ void ACPlayerController::ClearDebugOverlayTarget()
 	DebugOverlayTargetComponent->ClearDebugOverlayFocusCommandResult();
 }
 
-void ACPlayerController::RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const
+void ACPlayerController::ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& InResult) const
 {
 	if (!IsValid(DebugOverlayTargetComponent)) return;
 
-	DebugOverlayTargetComponent->SetDebugOverlayFocusCommandResult(InSummary);
+	if (InResult.Status == EDebugOverlayFocusResolveStatus::Selected)
+	{
+		DebugOverlayTargetComponent->SetDebugOverlayFocus(InResult.FocusActor.Get(), InResult.FocusSource);
+	}
+	else
+	{
+		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
+	}
+
+	RecordDebugOverlayFocusCommandResult(InResult.SummaryText);
 }
 
-void ACPlayerController::RecordDebugOverlayEditorSelectionResult(const FString& InSummary) const
+void ACPlayerController::RecordDebugOverlayFocusCommandResult(const FString& InSummary) const
 {
 	if (!IsValid(DebugOverlayTargetComponent)) return;
 
