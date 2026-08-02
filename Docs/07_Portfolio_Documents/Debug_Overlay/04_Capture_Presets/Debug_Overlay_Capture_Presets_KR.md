@@ -133,7 +133,7 @@ Portfolio.DebugOverlay.EventLogLimit 5
 | Player Reaction | `None` |
 | Player Movement | `Gait`, `Speed`, `Dir` 등이 pipe 구분으로 표시 |
 | Player HP | `HP=current/max`, `DeadState=Alive` |
-| EnemySource | `WorldScanFallback` 또는 enemy 미검출 상태 |
+| EnemyFocusMode | `TargetComponent.Nearest` 또는 `None` |
 | EventLog | 없으면 `NotCaptured`, 있으면 최근 event |
 
 Evidence 의미:
@@ -248,8 +248,8 @@ Evidence 의미:
 
 | 항목 | 기대 |
 | --- | --- |
-| EnemySource | `WorldScanFallback` |
-| EnemyFallback | `Selected=... Policy=FirstValid Count=1` |
+| EnemyFocusMode | `TargetComponent.Nearest` |
+| EnemyFocusActor | selected enemy actor name |
 | Enemy State | `Idle`, `Action`, `Reaction` 등 |
 | Enemy Action | `ComboAttack[n]` 또는 `None` |
 | Enemy Reaction | `Hit`, `Stagger`, `None` 등 |
@@ -257,8 +257,8 @@ Evidence 의미:
 
 Evidence 의미:
 
-- P0.5에서는 selected enemy가 world scan fallback임을 함께 설명해야 한다.
-- Target Component 기반 enemy selection evidence로 사용하지 않는다. 현재는 `WorldScanFallback` evidence로만 설명한다.
+- 현재 기준 selected enemy는 explicit focus command 결과로 설명한다.
+- Target Component 기반 enemy selection evidence는 `EnemyFocusMode: TargetComponent.Nearest`와 `EnemyFocusActor`를 기준으로 설명한다.
 
 ## P0.5 제외 프리셋
 

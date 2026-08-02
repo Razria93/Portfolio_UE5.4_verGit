@@ -73,19 +73,10 @@ namespace
 		return InValue.IsEmpty() ? FString(TEXT("None")) : InValue;
 	}
 
-	FString FormatFocusActorText(const FString& InCurrentActorText)
-	{
-		constexpr TCHAR SelectedPrefix[] = TEXT("Selected: ");
-		const FString actorText = InCurrentActorText.StartsWith(SelectedPrefix)
-			? InCurrentActorText.RightChop(FCString::Strlen(SelectedPrefix))
-			: InCurrentActorText;
-		return ValueOrNone(actorText);
-	}
-
 	void AppendFocusLines(TArray<FString>& InOutLines, const FDebugOverlayFocusViewData& InFocusViewData)
 	{
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusMode: %s"), *ValueOrNone(InFocusViewData.CurrentSourceText)));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusActor: %s"), *FormatFocusActorText(InFocusViewData.CurrentActorText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusMode: %s"), *ValueOrNone(InFocusViewData.CurrentModeText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusActor: %s"), *ValueOrNone(InFocusViewData.CurrentActorNameText)));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusCommand: %s"), *ValueOrNone(InFocusViewData.LastCommandText)));
 	}
 
@@ -200,7 +191,7 @@ namespace
 		}
 	}
 
-	TArray<FString> BuildMainPanelLines(const FDebugOverlayViewData& InViewData)
+	TArray<FString> BuildMainTextPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
 		lines.Reserve(32);
@@ -209,11 +200,6 @@ namespace
 		for (const FDebugOverlayActorPanelViewData& actorPanel : InViewData.ActorPanels)
 		{
 			AppendActorPanelLines(lines, actorPanel);
-		}
-
-		for (const FString& legacyLine : InViewData.MainPanelLines)
-		{
-			AppendFormattedOverlayLine(lines, legacyLine);
 		}
 
 		return lines;
@@ -332,7 +318,7 @@ namespace
 
 FDebugOverlayTextPanels FDebugOverlayTextFormatter::Format(const FDebugOverlayViewData& InViewData)
 {
-	const TArray<FString> mainPanelLines = BuildMainPanelLines(InViewData);
+	const TArray<FString> mainPanelLines = BuildMainTextPanelLines(InViewData);
 	const TArray<FString> eventLogPanelLines = BuildEventLogPanelLines(InViewData);
 	const TArray<FString> interactionPanelLines = BuildInteractionPanelLines(InViewData);
 

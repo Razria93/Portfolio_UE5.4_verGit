@@ -85,22 +85,23 @@ P0.5 표시 문자열은 캡처 evidence 가독성을 우선한다.
 
 Guard Hold / Guard Hit / Guard Parry는 P0.5에서 별도 action label로 표시하지 않는다. 해당 의미는 Guard 현재값, Reaction, Combat outcome에서 설명한다.
 
-### Enemy fallback 의미
+### Enemy focus 의미
 
-P0.5 Enemy 패널은 target component 또는 blackboard target 기반 선택이 아니라 world scan fallback으로 표시한다.
+현재 Enemy 패널은 explicit focus command 결과를 기준으로 표시한다.
 
-정상적으로 단일 enemy가 선택되면 다음처럼 표시한다.
+명시 focus가 없으면 다음처럼 표시한다.
 
 ```text
-EnemySource: WorldScanFallback
-EnemyFallback: Selected=BP_CEnemy_C_1 Policy=FirstValid Count=1
+EnemyFocusMode: None
+EnemyFocusActor: None
+EnemyFocusCommand: None
 ```
 
 주의:
 
-- 이 표시는 "현재 캡처 대상으로 선택된 enemy"를 보여주는 개발 전용 fallback이다.
-- 다중 enemy가 있거나 enemy를 찾지 못하면 enemy evidence 신뢰도를 제한한다.
-- Target Component 기반 enemy selection은 P1 후보로 둔다. Blackboard 기반 선택은 Target Component가 없을 때의 보조 검토 후보로만 둔다.
+- 이 표시는 "현재 명시 focus 대상이 없음"을 보여주는 개발 전용 상태다.
+- Enemy actor-derived 값을 성공 evidence처럼 설명하지 않는다.
+- Enemy 선택은 `DebugOverlaySelectNearestTarget` 또는 Editor tooling command를 통해 명시적으로 수행한다.
 
 ### EventLog 운영 판단
 

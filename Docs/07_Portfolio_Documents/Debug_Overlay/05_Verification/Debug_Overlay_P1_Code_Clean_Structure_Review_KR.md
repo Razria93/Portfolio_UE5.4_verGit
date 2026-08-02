@@ -155,7 +155,7 @@ LowRiskFix 기준:
 | `FDebugOverlayRecentCombatPair` 위치 | `FDebugOverlaySnapshotStore.h` 또는 `FDebugOverlaySnapshotTypes.h` | public query type이라 header 노출이 필요하다. type header로 옮길지 유지할지 결정이 필요하다. |
 | `CPlayerController.h` Exec API 위치 | `CPlayerController.h` | field-first 스타일과 console command 가시성 사이의 선택이다. 이번 cleanup에서는 임의 이동하지 않는다. |
 | debug log category 교체 | `CPlayerController.cpp` | `LogTemp`를 debug overlay 전용 log category로 바꾸려면 category 선언/소유 위치가 필요하다. 단순 cleanup보다 정책 결정 성격이 있으므로 마감 전 LowRiskFix에서 제외한다. |
-| diagnostic fallback helper 제거 | `CDebugOverlayHUD.h/.cpp` | RecentCombatTarget / WorldScanFallback helper는 기본 draw path에서 쓰지 않는다. 추후 diagnostic mode를 만들지 삭제할지 결정이 필요하다. |
+| diagnostic fallback helper 제거 | `CDebugOverlayHUD.h/.cpp` | RecentCombatTarget / WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
 
 ### 6.3 Later
 

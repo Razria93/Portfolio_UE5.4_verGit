@@ -14,19 +14,9 @@ class PORTFOLIO_API ACDebugOverlayHUD : public AHUD
 
 #if !UE_BUILD_SHIPPING
 private:
-	// Runtime State
-	TWeakObjectPtr<ACEnemy> CachedEnemy;
-	float LastEnemyScanTimeSeconds = -1.f;
-	int32 LastEnemyScanCount = 0;
-
 	// Enemy Resolution
 	ACEnemy* ResolveDisplayEnemy(FDebugOverlayFocusViewData& OutFocusViewData);
 	ACEnemy* ResolveTargetComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const;
-	ACEnemy* ResolveRecentCombatEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines) const;
-	ACEnemy* ResolveWorldScanFallbackEnemy(TArray<FString>& OutSourceLines);
-
-	// Enemy Cache
-	void RefreshCachedEnemyIfNeeded();
 #endif
 
 public:

@@ -36,8 +36,8 @@ DebugOverlaySelectNearestTarget
 선택 성공 시 Enemy panel에 다음과 같은 source가 표시되어야 한다.
 
 ```text
-EnemySource: TargetComponent.Nearest
-EnemyTarget: Selected=...
+EnemyFocusMode: TargetComponent.Nearest
+EnemyFocusActor: ...
 ```
 
 ## 3. Label 의미
@@ -136,7 +136,7 @@ P1 기본 검증에서 `Self`를 반드시 재현할 필요는 없다. 다만 �
 | 순서 | 액션 | 기대 |
 | --- | --- | --- |
 | 1 | PIE 진입 후 overlay 활성화 | `[Debug Overlay P0.5]` 표시 |
-| 2 | `DebugOverlaySelectNearestTarget` 실행 | `EnemySource: TargetComponent.Nearest` |
+| 2 | `DebugOverlaySelectNearestTarget` 실행 | `EnemyFocusMode: TargetComponent.Nearest` |
 | 3 | `Portfolio.DebugOverlay.EventLogFilter Combat` 입력 | Player/Enemy panel의 `[Event Log: Combat]` 표시 |
 | 4 | Player attack으로 target packet 발생 | Player `Outgoing`, Enemy `Incoming` |
 | 5 | Enemy attack / block / parry / hit 상황 발생 | Player `Incoming`, Enemy `Outgoing` |

@@ -72,8 +72,8 @@ struct FDebugOverlayRecentAIEventViewData
 
 struct FDebugOverlayFocusViewData
 {
-	FString CurrentSourceText;
-	FString CurrentActorText;
+	FString CurrentModeText;
+	FString CurrentActorNameText;
 	FString LastCommandText;
 };
 
@@ -125,7 +125,6 @@ struct FDebugOverlayViewData
 {
 	FString MainPanelTitle;
 	TArray<FDebugOverlayActorPanelViewData> ActorPanels;
-	TArray<FString> MainPanelLines;
 	FString EventLogPanelTitle;
 	FDebugOverlayEventLogViewData EventLog;
 	FString InteractionPanelTitle;

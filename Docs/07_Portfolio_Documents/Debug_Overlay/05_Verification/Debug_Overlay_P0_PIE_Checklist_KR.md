@@ -63,7 +63,7 @@ P0.5 구현 이후에는 다음 구조를 기준으로 확인한다.
 | Player/Enemy `Guard` | `Wants`, `Pose`, `CanGuard` 등이 pipe 구분으로 표시 |
 | Player/Enemy `Movement` | `Gait`, `Speed`, `Dir`, `CanMove`, `Falling`이 pipe 구분으로 표시 |
 | Player/Enemy `HP` | `HP=current/max`, `DeadState=Alive` 등 |
-| EnemySource | `WorldScanFallback` 또는 미검출/다중 enemy 상태 |
+| EnemyFocusMode | `TargetComponent.Nearest` 또는 `None` |
 | Recent Execution | subject 포함 compact summary |
 | Event Log | 현재 compact key/value format 유지 |
 
@@ -118,7 +118,7 @@ Recent Execution: Action(Guard In) | Decision=Accept | Apply=Start | RejectReaso
 | 5 | ComboAttack 입력 | Player Action, Recent Execution | `ComboAttack[n]`, `Action(ComboAttack[n])...` | action type/index, execution subject 전달 | action orchestration evidence |
 | 6 | 적 공격으로 Hit 유도 | Reaction, Recent Execution, Recent Combat | `Hit`, `Reaction(Hit)...`, damage 값 | reaction hook, combat result hook | reaction/combat evidence |
 | 7 | Parry 유도 | Reaction, Recent Combat, EventLog | `Parry`, `Outcome=Parry`, commit 0 계열 | defense outcome, combat result hook | parry evidence |
-| 8 | Enemy action/reaction 확인 | Enemy State/Action/Reaction/HP | enemy current 값 또는 `None` | enemy fallback 선택, enemy components | enemy 상태 evidence |
+| 8 | Enemy action/reaction 확인 | Enemy State/Action/Reaction/HP | enemy current 값 또는 `None` | explicit focus 선택, enemy components | enemy 상태 evidence |
 
 `|` 문자가 포함된 기대 표시값은 markdown table 구분과 충돌할 수 있으므로 결과 기록에서는 code span 또는 text block으로 남긴다.
 
@@ -186,11 +186,11 @@ Damage가 발생하지 않은 장면의 `NotCaptured`는 실패가 아니다. �
 확인 순서:
 
 1. TestRoom에 `ACEnemy` 기반 actor가 존재하는지 확인한다.
-2. Enemy가 0개면 `EnemyFallback: NotCaptured(NoEnemy)`가 정상이다.
-3. Enemy가 2개 이상이면 `EnemyFallback: Ambiguous(Count=N)` 상태를 성공 evidence로 사용하지 않는다.
-4. 단일 enemy인데 표시되지 않으면 world scan cache가 stale인지 확인한다.
+2. Enemy focus가 없으면 `EnemyFocusMode: None`이 정상이다.
+3. Enemy가 2개 이상이어도 자동 fallback으로 성공 evidence를 만들지 않는다.
+4. 단일 enemy인데 표시되지 않으면 `DebugOverlaySelectNearestTarget` 명시 command를 먼저 확인한다.
 
-P0.5 enemy selection은 `WorldScanFallback` 기반이다. Target Component 기반 선택 실패로 해석하지 않는다.
+현재 enemy selection은 explicit focus command 기반이다. 자동 world scan fallback 실패로 해석하지 않는다.
 
 ### 7.8 Guard In/Out이 index로 보임
 
@@ -232,7 +232,7 @@ P0.5 추가 완료 기준:
 | compact enum | State/Action/Reaction/Movement/HP에서 enum prefix가 제거된다. |
 | Guard label | `Guard In`, `Guard Out`이 index 없이 표시된다. |
 | subject summary | Recent Execution/EventLog에 `Action(...)`, `Reaction(...)` subject가 표시된다. |
-| Enemy fallback | `EnemySource`와 `EnemyFallback` 의미가 화면에서 확인된다. |
+| Enemy focus | `EnemyFocusMode`와 `EnemyFocusActor` 의미가 화면에서 확인된다. |
 | EventLog | 추가 축약 없이 현재 format으로 3~5 lines 표시된다. |
 
 AI combat task success/reject는 P0 필수 완료 기준이 아니라 가능 시 확인하는 보조 항목이다. P0 완료 판단은 Action/Reaction, Combat, EventLog, Store snapshot 갱신 확인을 기준으로 한다.

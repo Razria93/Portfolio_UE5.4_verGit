@@ -13,7 +13,7 @@
 P1 완료 기준:
 
 - `TargetComponent.Nearest` 기반 명시 target 표시
-- target 없음 상태에서 `EnemySource: None`
+- target 없음 상태에서 `EnemyFocusMode: None`
 - `DebugOverlaySelectNearestTarget` / `DebugOverlayClearTarget` 운용 가능
 - nearest radius `3000`
 - nearest diagnostic 표시
