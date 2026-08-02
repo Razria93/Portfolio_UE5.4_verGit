@@ -11,11 +11,12 @@
 #include "Component/CStateComponent.h"
 #include "Controller/CAIController.h"
 #include "Core/Debug/CDebugOverlayTargetComponent.h"
+#include "Core/Debug/FDebugOverlayCanvasRenderer.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
+#include "Core/Debug/FDebugOverlayTextPanelTypes.h"
 #include "Type/CActionKeyTypes.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Engine/Canvas.h"
 #include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -24,26 +25,9 @@
 namespace
 {
 	// Display Constants
-	static constexpr float DebugOverlayOriginX = 24.f;
-	static constexpr float DebugOverlayOriginY = 36.f;
-	static constexpr float DebugOverlayLineHeight = 20.f;
-	static constexpr float DebugOverlayFontScale = 1.05f;
-	static constexpr float DebugOverlayBackgroundPadding = 10.f;
-	static constexpr float DebugOverlayBackgroundWidth = 700.f;
-	static constexpr float DebugOverlayHeaderBottomPadding = 5.f;
-	static constexpr float DebugOverlayPanelGap = 24.f;
-	static constexpr float DebugOverlayRightMargin = 24.f;
-	static constexpr float DebugOverlayBottomMargin = 24.f;
-	static constexpr float DebugOverlayMinEventLogPanelWidth = 420.f;
-	static constexpr float DebugOverlayInteractionPanelWidth = 520.f;
 	static constexpr float DebugOverlayEnemyScanCooldownSeconds = 0.5f;
 	static constexpr float DebugOverlayRecentCombatTargetStaleSeconds = 3.0f;
 	static constexpr float DebugOverlayRecentAIEventStaleSeconds = 5.0f;
-	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
-	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
-	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
-	static const FLinearColor DebugOverlayInteractionHeaderColor(0.2f, 0.08f, 0.35f, 0.68f);
-	static const FLinearColor DebugOverlayDefaultHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
 
 	// Text Formatting
 	FString BoolText(bool bInValue)
@@ -505,170 +489,50 @@ namespace
 		AppendSnapshotSummaryBlock(InOutLines, TEXT("[Recent Combat]"), InSnapshot.LastCombat.Summary, InSnapshot.LastCombat.CaptureState, bInHasSnapshot, true);
 	}
 
-	// Panel Styling
-	struct FDebugOverlayRightPanelGeometry
+	// Text Panels
+	EDebugOverlayTextLineRole ResolveTextLineRole(EDebugOverlayTextPanelRole InPanelRole, const FString& InLine)
 	{
-		float EventLogBackgroundX = 0.f;
-		float EventLogBackgroundY = 0.f;
-		float EventLogAvailableWidth = 0.f;
-		float EventLogAvailableHeight = 0.f;
-		float InteractionBackgroundX = 0.f;
-		float InteractionBackgroundWidth = 0.f;
-		bool bCanDrawInteractionPanel = false;
-	};
+		if (InLine.StartsWith(TEXT("[Debug Overlay Pannel_")))
+		{
+			return EDebugOverlayTextLineRole::PanelTitle;
+		}
 
-	bool IsPanelHeaderLine(const FString& InLine)
-	{
-		return InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[Interaction]");
+		if (InPanelRole != EDebugOverlayTextPanelRole::EventLog
+			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[Interaction]")))
+		{
+			return EDebugOverlayTextLineRole::PanelHeader;
+		}
+
+		if (InPanelRole == EDebugOverlayTextPanelRole::EventLog && InLine.StartsWith(TEXT("[Event Log:")))
+		{
+			return EDebugOverlayTextLineRole::EventLogHeader;
+		}
+
+		return EDebugOverlayTextLineRole::Normal;
 	}
 
-	bool IsEventLogHeaderLine(const FString& InLine)
+	FDebugOverlayTextPanel MakeTextPanel(EDebugOverlayTextPanelRole InPanelRole, const TArray<FString>& InLines)
 	{
-		return InLine.StartsWith(TEXT("[Event Log:"));
-	}
-
-	FLinearColor GetPanelHeaderColor(const FString& InLine)
-	{
-		if (InLine == TEXT("[Player]")) return DebugOverlayPlayerHeaderColor;
-		if (InLine == TEXT("[Enemy]")) return DebugOverlayEnemyHeaderColor;
-		if (InLine == TEXT("[Interaction]")) return DebugOverlayInteractionHeaderColor;
-		return DebugOverlayDefaultHeaderColor;
-	}
-
-	bool IsOverlayHeaderLine(const FString& InLine, bool bInDrawPanelHeaders, bool bInDrawEventLogHeaders)
-	{
-		return (bInDrawPanelHeaders && IsPanelHeaderLine(InLine))
-			|| (bInDrawEventLogHeaders && IsEventLogHeaderLine(InLine));
-	}
-
-	float GetOverlayLineHeight(const FString& InLine, bool bInDrawPanelHeaders, bool bInDrawEventLogHeaders)
-	{
-		return DebugOverlayLineHeight
-			+ (IsOverlayHeaderLine(InLine, bInDrawPanelHeaders, bInDrawEventLogHeaders) ? DebugOverlayHeaderBottomPadding : 0.f);
-	}
-
-	float CalculateOverlayLinesHeight(
-		const TArray<FString>& InLines,
-		bool bInDrawPanelHeaders,
-		bool bInDrawEventLogHeaders)
-	{
-		float height = 0.f;
+		FDebugOverlayTextPanel panel(InPanelRole);
+		panel.Lines.Reserve(InLines.Num());
 		for (const FString& line : InLines)
 		{
-			height += GetOverlayLineHeight(line, bInDrawPanelHeaders, bInDrawEventLogHeaders);
+			panel.Lines.Add(FDebugOverlayTextLine(line, ResolveTextLineRole(InPanelRole, line)));
 		}
 
-		return height;
+		return panel;
 	}
 
-	int32 CalculateVisibleOverlayLineCount(
-		const TArray<FString>& InLines,
-		float InMaxTextHeight,
-		bool bInDrawPanelHeaders,
-		bool bInDrawEventLogHeaders)
+	FDebugOverlayTextPanels MakeTextPanels(
+		const TArray<FString>& InMainPanelLines,
+		const TArray<FString>& InEventLogPanelLines,
+		const TArray<FString>& InInteractionPanelLines)
 	{
-		float usedHeight = 0.f;
-		for (int32 lineIndex = 0; lineIndex < InLines.Num(); ++lineIndex)
-		{
-			const FString& line = InLines[lineIndex];
-			const float lineHeight = GetOverlayLineHeight(line, bInDrawPanelHeaders, bInDrawEventLogHeaders);
-
-			if (usedHeight + lineHeight > InMaxTextHeight)
-			{
-				return lineIndex;
-			}
-
-			usedHeight += lineHeight;
-		}
-
-		return InLines.Num();
-	}
-
-	TArray<FString> MakeVisibleOverlayLines(
-		const TArray<FString>& InLines,
-		float InMaxTextHeight,
-		bool bInDrawPanelHeaders,
-		bool bInDrawEventLogHeaders)
-	{
-		const int32 visibleLineCount = CalculateVisibleOverlayLineCount(
-			InLines,
-			InMaxTextHeight,
-			bInDrawPanelHeaders,
-			bInDrawEventLogHeaders);
-
-		TArray<FString> visibleLines;
-		visibleLines.Reserve(visibleLineCount);
-		for (int32 lineIndex = 0; lineIndex < visibleLineCount; ++lineIndex)
-		{
-			visibleLines.Add(InLines[lineIndex]);
-		}
-
-		return visibleLines;
-	}
-
-	FDebugOverlayRightPanelGeometry CalculateRightPanelGeometry(
-		const UCanvas* InCanvas,
-		float InLeftPanelBackgroundX,
-		float InLeftPanelBackgroundWidth,
-		float InTopBackgroundY,
-		bool bInHasInteractionLines)
-	{
-		FDebugOverlayRightPanelGeometry geometry;
-		if (!InCanvas) return geometry;
-
-		geometry.EventLogBackgroundX = InLeftPanelBackgroundX + InLeftPanelBackgroundWidth + DebugOverlayPanelGap;
-		geometry.EventLogBackgroundY = InTopBackgroundY;
-
-		const float rightPanelAvailableWidth = FMath::Max(0.f, InCanvas->SizeX - geometry.EventLogBackgroundX - DebugOverlayRightMargin);
-		geometry.bCanDrawInteractionPanel = bInHasInteractionLines
-			&& rightPanelAvailableWidth >= DebugOverlayMinEventLogPanelWidth + DebugOverlayPanelGap + DebugOverlayInteractionPanelWidth;
-		geometry.InteractionBackgroundWidth = geometry.bCanDrawInteractionPanel ? DebugOverlayInteractionPanelWidth : 0.f;
-		geometry.InteractionBackgroundX = geometry.bCanDrawInteractionPanel
-			? InCanvas->SizeX - DebugOverlayRightMargin - geometry.InteractionBackgroundWidth
-			: 0.f;
-		geometry.EventLogAvailableWidth = geometry.bCanDrawInteractionPanel
-			? FMath::Max(0.f, geometry.InteractionBackgroundX - DebugOverlayPanelGap - geometry.EventLogBackgroundX)
-			: rightPanelAvailableWidth;
-		geometry.EventLogAvailableHeight = FMath::Max(0.f, InCanvas->SizeY - geometry.EventLogBackgroundY - DebugOverlayBottomMargin);
-
-		return geometry;
-	}
-
-	void DrawOverlayLines(
-		ACDebugOverlayHUD& InHud,
-		const TArray<FString>& InLines,
-		float InTextX,
-		float InTextY,
-		float InBackgroundX,
-		float InBackgroundY,
-		float InBackgroundWidth,
-		float InBackgroundHeight,
-		bool bInDrawPanelHeaders,
-		bool bInDrawEventLogHeaders)
-	{
-		if (InBackgroundWidth > 0.f && InBackgroundHeight > 0.f)
-		{
-			InHud.DrawRect(DebugOverlayBackgroundColor, InBackgroundX, InBackgroundY, InBackgroundWidth, InBackgroundHeight);
-		}
-
-		float y = InTextY;
-		for (const FString& line : InLines)
-		{
-			const bool bDrawPanelHeader = bInDrawPanelHeaders && IsPanelHeaderLine(line);
-			const bool bDrawEventLogHeader = bInDrawEventLogHeaders && IsEventLogHeaderLine(line);
-
-			if ((bDrawPanelHeader || bDrawEventLogHeader) && InBackgroundWidth > 0.f)
-			{
-				InHud.DrawRect(GetPanelHeaderColor(line), InBackgroundX, y - 2.f, InBackgroundWidth, DebugOverlayLineHeight + 4.f);
-			}
-
-			InHud.DrawText(line, FLinearColor::White, InTextX, y, nullptr, DebugOverlayFontScale, false);
-			y += DebugOverlayLineHeight;
-			if (bDrawPanelHeader || bDrawEventLogHeader)
-			{
-				y += DebugOverlayHeaderBottomPadding;
-			}
-		}
+		FDebugOverlayTextPanels panels;
+		panels.MainPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Main, InMainPanelLines);
+		panels.EventLogPanel = MakeTextPanel(EDebugOverlayTextPanelRole::EventLog, InEventLogPanelLines);
+		panels.InteractionPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Interaction, InInteractionPanelLines);
+		return panels;
 	}
 
 	void AppendTargetSelectionSummary(TArray<FString>& InOutLines, const UCDebugOverlayTargetComponent* InTargetComp)
@@ -874,81 +738,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	AppendOverlayLine(interactionLines, TEXT("[Debug Overlay Pannel_03]"));
 	AppendInteractionPanelLines(interactionLines, snapshot, bHasSnapshot);
 
-	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
-	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
-	const float availableWidth = Canvas
-		? FMath::Max(0.f, Canvas->SizeX - backgroundX - DebugOverlayBackgroundPadding)
-		: DebugOverlayBackgroundWidth;
-	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
-	const float backgroundHeight = CalculateOverlayLinesHeight(lines, true, false) + (DebugOverlayBackgroundPadding * 2.f);
-
-	DrawOverlayLines(
-		*this,
-		lines,
-		DebugOverlayOriginX,
-		DebugOverlayOriginY,
-		backgroundX,
-		backgroundY,
-		backgroundWidth,
-		backgroundHeight,
-		true,
-		false);
-
-	if (Canvas && !eventLogLines.IsEmpty())
-	{
-		const FDebugOverlayRightPanelGeometry rightPanelGeometry = CalculateRightPanelGeometry(
-			Canvas,
-			backgroundX,
-			backgroundWidth,
-			backgroundY,
-			!interactionLines.IsEmpty());
-		const float maxEventLogTextHeight = FMath::Max(0.f, rightPanelGeometry.EventLogAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
-		const TArray<FString> visibleEventLogLines = MakeVisibleOverlayLines(eventLogLines, maxEventLogTextHeight, false, true);
-
-		const float eventLogBackgroundHeight = FMath::Min(
-			CalculateOverlayLinesHeight(visibleEventLogLines, false, true) + (DebugOverlayBackgroundPadding * 2.f),
-			rightPanelGeometry.EventLogAvailableHeight);
-
-		if (rightPanelGeometry.EventLogAvailableWidth >= DebugOverlayMinEventLogPanelWidth && eventLogBackgroundHeight > 0.f && !visibleEventLogLines.IsEmpty())
-		{
-			DrawOverlayLines(
-				*this,
-				visibleEventLogLines,
-				rightPanelGeometry.EventLogBackgroundX + DebugOverlayBackgroundPadding,
-				rightPanelGeometry.EventLogBackgroundY + DebugOverlayBackgroundPadding,
-				rightPanelGeometry.EventLogBackgroundX,
-				rightPanelGeometry.EventLogBackgroundY,
-				rightPanelGeometry.EventLogAvailableWidth,
-				eventLogBackgroundHeight,
-				false,
-				true);
-		}
-
-		if (rightPanelGeometry.bCanDrawInteractionPanel)
-		{
-			const float interactionAvailableHeight = FMath::Max(0.f, Canvas->SizeY - rightPanelGeometry.EventLogBackgroundY - DebugOverlayBottomMargin);
-			const float maxInteractionTextHeight = FMath::Max(0.f, interactionAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
-			const TArray<FString> visibleInteractionLines = MakeVisibleOverlayLines(interactionLines, maxInteractionTextHeight, true, false);
-
-			const float interactionBackgroundHeight = FMath::Min(
-				CalculateOverlayLinesHeight(visibleInteractionLines, true, false) + (DebugOverlayBackgroundPadding * 2.f),
-				interactionAvailableHeight);
-
-			if (interactionBackgroundHeight > 0.f && !visibleInteractionLines.IsEmpty())
-			{
-				DrawOverlayLines(
-					*this,
-					visibleInteractionLines,
-					rightPanelGeometry.InteractionBackgroundX + DebugOverlayBackgroundPadding,
-					rightPanelGeometry.EventLogBackgroundY + DebugOverlayBackgroundPadding,
-					rightPanelGeometry.InteractionBackgroundX,
-					rightPanelGeometry.EventLogBackgroundY,
-					rightPanelGeometry.InteractionBackgroundWidth,
-					interactionBackgroundHeight,
-					true,
-					false);
-			}
-		}
-	}
+	const FDebugOverlayTextPanels textPanels = MakeTextPanels(lines, eventLogLines, interactionLines);
+	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);
 #endif
 }
