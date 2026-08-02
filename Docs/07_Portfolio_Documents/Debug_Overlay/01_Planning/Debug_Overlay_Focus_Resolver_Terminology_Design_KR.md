@@ -2975,3 +2975,211 @@ Debug Overlay의 Runtime LOD 표시는 기존 N/A 정책을 유지한다.
 특히 P38/P41/P42/P43 기준을 Debug Overlay 구조 분리에 반영했다.
 다만 AI LOD, profiling asset, tuning config 승격은 이번 문서/구현 범위가 아니므로 보류한다.
 ```
+
+## 61. 구현 작업 분할 계획
+
+ViewData / TextFormatter / CanvasRenderer 전체 구조를 한 번에 구현하지 않는다. 신규 파일 수와 helper 이동량이 크고, HUD 표시 문자열/순서 회귀 검증 부담이 크기 때문이다.
+
+구현은 다음 순서로 분할한다.
+
+```text
+1. CanvasRenderer skeleton split
+   - Canvas layout/render 책임만 먼저 분리
+   - 표시 line 구성은 기존 흐름 유지
+   - TextPanelTypes 도입
+   - role 기반 header 처리 도입
+   - 실제 ellipsis truncation은 후속으로 보류 가능
+
+2. ViewDataBuilder / TextFormatter skeleton
+   - DrawHUD를 context -> builder -> formatter -> renderer 흐름으로 축소
+   - ViewDataBuilder는 구조화 data 생성
+   - TextFormatter는 ViewData -> TextPanels 변환
+
+3. ActorStatusViewData 구조화
+   - State / Action / Reaction / HP / Stagger / Guard / Movement / Runtime LOD
+   - 기존 표시 순서 유지
+
+4. EventLog / InteractionViewData 구조화
+   - EventLog history list와 Interaction latest summary block 분리
+   - Summary split은 TextFormatter 책임 유지
+
+5. EnemyAIViewData 구조화
+   - Current AI와 Recent AI Event 분리
+   - Blackboard live state와 Store evidence 분리
+
+6. FocusViewData terminology 전환
+   - EnemySource / EnemyTarget / EnemySelect를 Focus 표기로 전환
+   - Selected: 표기 제거
+   - 기존 console command 이름은 유지
+
+7. FocusResolver 도입
+   - NearestEnemy
+   - ActorByName / EditorSelection
+   - RecentCombat explicit command
+
+8. TargetComponent -> FocusComponent 전환
+   - Focus API 추가
+   - Target API wrapper는 임시 호환층
+   - 호출부 전환 후 wrapper 제거
+   - class/file rename은 작업 후반 수행
+
+9. Editor Tooling command button 정리
+   - RecentCombat command button 추가 가능
+   - Editor plugin은 command sender로 유지
+
+10. Canvas text ellipsis
+   - 실제 panel width / font scale 기준 text measurement 기반 truncation
+   - 표시 결과가 바뀌므로 별도 검증
+
+11. UMG / Blueprint adapter 검토
+   - structured ViewData 기반 override
+   - raw Store snapshot / weak actor pair 노출 금지
+```
+
+## 62. 1차 구현 계획: CanvasRenderer skeleton split
+
+1차 구현은 `CanvasRenderer` 분리만 수행한다.
+
+목표:
+
+```text
+HUD 표시 문자열과 line 구성은 유지한다.
+Canvas layout/render 책임만 FDebugOverlayCanvasRenderer로 분리한다.
+DrawHUD의 표시 data 생성 책임은 아직 유지한다.
+```
+
+대상 파일:
+
+```text
+수정
+- Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp
+
+신규
+- Source/Portfolio/Core/Debug/FDebugOverlayTextPanelTypes.h
+- Source/Portfolio/Core/Debug/FDebugOverlayCanvasRenderer.h
+- Source/Portfolio/Core/Debug/FDebugOverlayCanvasRenderer.cpp
+```
+
+1차에서 하지 않는 것:
+
+```text
+FDebugOverlayViewDataTypes.h 추가
+FDebugOverlayViewDataBuilder 추가
+FDebugOverlayTextFormatter 추가
+ViewData 구조화
+TextFormatter로 line 구성 이동
+Focus 용어 표시 변경
+TargetComponent rename
+FocusResolver 도입
+RecentCombat command 추가
+Store schema/API 변경
+Controller / Editor plugin 변경
+UMG / Blueprint 구현
+Runtime LOD actual 구현
+BT active node tracking 구현
+Stagger component 구현
+Console command 이름 변경
+```
+
+1차 구현 세부 내용:
+
+```text
+1. FDebugOverlayTextPanelTypes.h 추가
+   - EDebugOverlayTextLineRole
+   - EDebugOverlayTextPanelRole
+   - FDebugOverlayTextLine
+   - FDebugOverlayTextPanel
+   - FDebugOverlayTextPanels
+
+2. CDebugOverlayHUD.cpp에서 기존 TArray<FString> line을 TextPanel로 변환
+   - 기존 line text 유지
+   - panel title/header role 부여
+   - role 부여는 기존 문자열과 동일한 의미로만 수행
+
+3. FDebugOverlayCanvasRenderer 추가
+   - 기존 3-panel geometry 산식 이동
+   - CalculateOverlayLinesHeight 이동
+   - CalculateVisibleOverlayLineCount / MakeVisibleOverlayLines 이동
+   - DrawOverlayLines 이동
+   - header 판단은 line Role 기반으로 수행
+
+4. CDebugOverlayHUD::DrawHUD()
+   - 기존 line 생성은 유지
+   - renderer 호출만 FDebugOverlayCanvasRenderer::Draw(...)로 변경
+```
+
+보존할 표시 정책:
+
+```text
+Pannel_01/02/03 문자열 유지
+EnemySource / EnemyTarget / EnemySelect 유지
+Selected: 표기 유지
+NotCaptured / NoTarget / NotMatched / Stale 유지
+NoEvents(Filter: ...) 유지
+NoEvents(Filter: ... Limit: 0) 유지
+EventLog row "{Category}/{EventName}: {Summary}" 유지
+Recent Execution / Recent Combat 순서 유지
+Recent Combat 앞 빈 줄 유지
+Current AI / Recent AI Event 순서 유지
+3-panel layout 조건 유지
+Interaction panel width 520 유지
+EventLog min width 420 유지
+```
+
+검증 기준:
+
+```text
+git diff --check 통과
+허용 파일 외 변경 없음
+PortfolioEditor Win64 Development 빌드 성공
+Renderer가 Store / Actor / Blackboard / FocusComponent를 직접 읽지 않음
+CDebugOverlayHUD.cpp의 line 생성 결과가 기존 표시 정책과 동일함
+Store public API/schema 변경 없음
+Target/Controller/Editor plugin 변경 없음
+Build.cs / uproject / config / asset 변경 없음
+```
+
+권장 커밋 메시지:
+
+```text
+refactor(debug): split overlay canvas renderer
+```
+
+## 63. 1차 구현 목표모드 / 에이전트 운용
+
+1차 구현에서는 목표모드를 사용한다.
+
+권장 목표:
+
+```text
+Debug Overlay HUD 표시 문자열과 line 구성 정책을 유지하면서, Canvas layout/render 책임만 FDebugOverlayCanvasRenderer와 FDebugOverlayTextPanelTypes로 분리한다.
+```
+
+에이전트는 read-only 리뷰 역할로 사용한다. 실제 패치 작성과 최종 판단은 메인 에이전트가 수행한다.
+
+권장 에이전트:
+
+```text
+Agent A: Canvas layout 회귀 검토
+- 기존 3-panel geometry 산식 유지 여부 확인
+- EventLog / Interaction panel width, margin, clipping 조건 유지 여부 확인
+- header/background draw 정책 유지 여부 확인
+
+Agent B: 표시 문자열/line role 회귀 검토
+- Pannel_01/02/03 문자열 유지 여부 확인
+- EnemySource / EnemyTarget / EnemySelect 등 기존 line text 변경 여부 확인
+- line role이 표시 의미만 보조하고 text를 바꾸지 않는지 확인
+
+Agent C: 변경 범위/금지 항목 검토
+- Store / TargetComponent / Controller / Editor plugin 변경 여부 확인
+- Build.cs / uproject / config / asset 변경 여부 확인
+- Store schema/API 변경 여부 확인
+```
+
+에이전트 금지:
+
+```text
+에이전트가 직접 파일을 수정하지 않는다.
+에이전트가 표시 정책 변경을 제안하더라도 1차 구현에는 반영하지 않는다.
+에이전트 결과가 충돌하면 메인 에이전트가 판단하거나 사용자에게 질문한다.
+```
