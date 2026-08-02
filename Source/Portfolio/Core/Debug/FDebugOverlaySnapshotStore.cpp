@@ -69,6 +69,12 @@ namespace
 		bool bHasRecentCombatPair = false;
 	};
 
+	struct FDebugOverlaySnapshotStamp
+	{
+		uint64 FrameNumber = 0;
+		float WorldTimeSeconds = 0.f;
+	};
+
 	TMap<TObjectKey<UWorld>, FDebugOverlayWorldStore> StoresByWorld;
 
 	void RemoveStoreForWorld(UWorld* InWorld)
@@ -117,6 +123,14 @@ namespace
 	float GetWorldTimeSeconds(const UWorld* InWorld)
 	{
 		return IsValid(InWorld) ? InWorld->GetTimeSeconds() : 0.f;
+	}
+
+	FDebugOverlaySnapshotStamp MakeSnapshotStamp(const UWorld* InWorld)
+	{
+		FDebugOverlaySnapshotStamp stamp;
+		stamp.FrameNumber = GetCurrentFrameNumber();
+		stamp.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
+		return stamp;
 	}
 
 	FString ToSafeEventName(const TCHAR* InEventName, const TCHAR* InFallback)
@@ -393,9 +407,11 @@ namespace
 
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 	{
+		const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
+
 		FDebugOverlayEventEntry entry;
-		entry.FrameNumber = GetCurrentFrameNumber();
-		entry.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
+		entry.FrameNumber = stamp.FrameNumber;
+		entry.WorldTimeSeconds = stamp.WorldTimeSeconds;
 		entry.Category = InCategory;
 		entry.EventName = InEventName;
 		entry.OwnerName = InOwnerName;
@@ -425,12 +441,14 @@ namespace
 
 	void RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
 	{
+		const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
+
 		InStore.RecentCombatPair.SourceActor = InSourceActor;
 		InStore.RecentCombatPair.TargetActor = InTargetActor;
 		InStore.RecentCombatPair.SourceName = GetNameSafe(InSourceActor);
 		InStore.RecentCombatPair.TargetName = GetNameSafe(InTargetActor);
-		InStore.RecentCombatPair.FrameNumber = GetCurrentFrameNumber();
-		InStore.RecentCombatPair.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
+		InStore.RecentCombatPair.FrameNumber = stamp.FrameNumber;
+		InStore.RecentCombatPair.WorldTimeSeconds = stamp.WorldTimeSeconds;
 		InStore.RecentCombatPair.EventName = InEventName;
 		InStore.bHasRecentCombatPair = true;
 	}
@@ -558,6 +576,7 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	if (!store) return;
 
 	const UWorld* world = ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
 	const FString eventName = ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
@@ -570,8 +589,8 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 		*CompactStoreReasonText(InRejectReason));
 
 	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastExecution.FrameNumber = GetCurrentFrameNumber();
-	store->Snapshot.LastExecution.WorldTimeSeconds = GetWorldTimeSeconds(world);
+	store->Snapshot.LastExecution.FrameNumber = stamp.FrameNumber;
+	store->Snapshot.LastExecution.WorldTimeSeconds = stamp.WorldTimeSeconds;
 	store->Snapshot.LastExecution.OwnerName = ownerName;
 	store->Snapshot.LastExecution.Domain = InDomain;
 	store->Snapshot.LastExecution.Decision = InDecision;
@@ -616,6 +635,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	if (!store) return;
 
 	const UWorld* world = ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
 	const FString eventName = ToSafeEventName(InEventName, TEXT("CombatTargetPacket"));
 	const FString sourceName = GetNameSafe(InPacket.Context.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.Context.TargetActor);
@@ -633,8 +653,8 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 		InPacket.Result.bAccepted ? TEXT("true") : TEXT("false"));
 
 	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastCombat.FrameNumber = GetCurrentFrameNumber();
-	store->Snapshot.LastCombat.WorldTimeSeconds = GetWorldTimeSeconds(world);
+	store->Snapshot.LastCombat.FrameNumber = stamp.FrameNumber;
+	store->Snapshot.LastCombat.WorldTimeSeconds = stamp.WorldTimeSeconds;
 	store->Snapshot.LastCombat.SourceName = sourceName;
 	store->Snapshot.LastCombat.TargetName = targetName;
 	store->Snapshot.LastCombat.DamageCauserName = causerName;
@@ -662,6 +682,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	if (!store) return;
 
 	const UWorld* world = ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
 	const FString eventName = ToSafeEventName(InEventName, TEXT("CombatResult"));
 	const FString receiverName = GetNameSafe(InReceiverActor);
 	const FString sourceName = GetNameSafe(InPacket.SourceActor);
@@ -694,8 +715,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"));
 
 	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastCombat.FrameNumber = GetCurrentFrameNumber();
-	store->Snapshot.LastCombat.WorldTimeSeconds = GetWorldTimeSeconds(world);
+	store->Snapshot.LastCombat.FrameNumber = stamp.FrameNumber;
+	store->Snapshot.LastCombat.WorldTimeSeconds = stamp.WorldTimeSeconds;
 	store->Snapshot.LastCombat.SourceName = sourceName;
 	store->Snapshot.LastCombat.TargetName = targetName;
 	store->Snapshot.LastCombat.DamageCauserName = causerName;
@@ -725,6 +746,7 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	if (!store) return;
 
 	const UWorld* world = ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
 	const FString eventName = ToSafeEventName(InEventName, TEXT("AICombatTask"));
 	const FString controllerName = GetNameSafe(InAIController);
 	const FString pawnName = GetNameSafe(InOwnerPawn);
@@ -740,8 +762,8 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 		*CompactStoreReasonText(InRejectReason));
 
 	store->Snapshot.LastAI.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastAI.FrameNumber = GetCurrentFrameNumber();
-	store->Snapshot.LastAI.WorldTimeSeconds = GetWorldTimeSeconds(world);
+	store->Snapshot.LastAI.FrameNumber = stamp.FrameNumber;
+	store->Snapshot.LastAI.WorldTimeSeconds = stamp.WorldTimeSeconds;
 	store->Snapshot.LastAI.ControllerName = controllerName;
 	store->Snapshot.LastAI.PawnName = pawnName;
 	store->Snapshot.LastAI.TargetName = targetName;
@@ -847,7 +869,7 @@ void FDebugOverlaySnapshotStore::Reset(const UObject* InWorldContextObject)
 	UWorld* world = ResolveWorld(InWorldContextObject);
 	if (!IsValid(world)) return;
 
-	StoresByWorld.Remove(TObjectKey<UWorld>(world));
+	RemoveStoreForWorld(world);
 #endif
 }
 
