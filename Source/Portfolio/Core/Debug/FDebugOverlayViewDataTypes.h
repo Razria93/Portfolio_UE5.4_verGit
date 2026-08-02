@@ -72,6 +72,9 @@ struct FDebugOverlayRecentAIEventViewData
 
 struct FDebugOverlayFocusViewData
 {
+	FString CurrentSourceText;
+	FString CurrentActorText;
+	FString LastCommandText;
 	TArray<FString> LegacyLines;
 };
 
@@ -136,4 +139,5 @@ struct FDebugOverlayViewDataBuildContext
 	const APawn* ViewerPawn = nullptr;
 	const ACEnemy* DisplayEnemy = nullptr;
 	TArray<FString> EnemySourceLines;
+	FDebugOverlayFocusViewData EnemyFocus;
 };
