@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Core/Debug/CDebugOverlayTargetComponent.h"
+#include "Core/Debug/CDebugOverlayFocusComponent.h"
 
 class APawn;
 class UWorld;
@@ -21,7 +21,7 @@ struct FDebugOverlayFocusResolveResult
 {
 	EDebugOverlayFocusResolveStatus Status = EDebugOverlayFocusResolveStatus::InvalidContext;
 	TWeakObjectPtr<AActor> FocusActor;
-	EDebugOverlayTargetSource FocusSource = EDebugOverlayTargetSource::None;
+	EDebugOverlayFocusSource FocusSource = EDebugOverlayFocusSource::None;
 	FString SummaryText;
 	FString ActorName;
 	FString ClassName;

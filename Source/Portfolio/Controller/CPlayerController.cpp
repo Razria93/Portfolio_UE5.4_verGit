@@ -5,8 +5,8 @@
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
 #if !UE_BUILD_SHIPPING
+#include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusResolver.h"
-#include "Core/Debug/CDebugOverlayTargetComponent.h"
 #endif
 #include "Type/CActionOrchestrationTypes.h"
 
@@ -25,8 +25,8 @@ ACPlayerController::ACPlayerController()
 	check(PlayerFeedbackComponent);
 
 #if !UE_BUILD_SHIPPING
-	DebugOverlayTargetComponent = CreateDefaultSubobject<UCDebugOverlayTargetComponent>(TEXT("DebugOverlayTarget"));
-	check(DebugOverlayTargetComponent);
+	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayTarget"));
+	check(DebugOverlayFocusComponent);
 #endif
 }
 
@@ -209,7 +209,7 @@ void ACPlayerController::PressDodge()
 
 bool ACPlayerController::TryFocusDebugOverlayNearestEnemy()
 {
-	if (!IsValid(DebugOverlayTargetComponent))
+	if (!IsValid(DebugOverlayFocusComponent))
 	{
 		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: TargetComponentMissing"));
 		return false;
@@ -256,7 +256,7 @@ bool ACPlayerController::TryFocusDebugOverlayActorTarget(const FString& InActorN
 {
 	const FString actorName = InActorName.TrimStartAndEnd();
 
-	if (!IsValid(DebugOverlayTargetComponent))
+	if (!IsValid(DebugOverlayFocusComponent))
 	{
 		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: TargetComponentMissing | Name: %s"), *actorName);
 		return false;
@@ -298,23 +298,23 @@ bool ACPlayerController::TryFocusDebugOverlayActorTarget(const FString& InActorN
 
 void ACPlayerController::ClearDebugOverlayFocus()
 {
-	if (!IsValid(DebugOverlayTargetComponent)) return;
+	if (!IsValid(DebugOverlayFocusComponent)) return;
 
-	DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-	DebugOverlayTargetComponent->ClearDebugOverlayFocusCommandResult();
+	DebugOverlayFocusComponent->ClearDebugOverlayFocus();
+	DebugOverlayFocusComponent->ClearDebugOverlayFocusCommandResult();
 }
 
 void ACPlayerController::ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& InResult) const
 {
-	if (!IsValid(DebugOverlayTargetComponent)) return;
+	if (!IsValid(DebugOverlayFocusComponent)) return;
 
 	if (InResult.Status == EDebugOverlayFocusResolveStatus::Selected)
 	{
-		DebugOverlayTargetComponent->SetDebugOverlayFocus(InResult.FocusActor.Get(), InResult.FocusSource);
+		DebugOverlayFocusComponent->SetDebugOverlayFocus(InResult.FocusActor.Get(), InResult.FocusSource);
 	}
 	else
 	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
+		DebugOverlayFocusComponent->ClearDebugOverlayFocus();
 	}
 
 	RecordDebugOverlayFocusCommandResult(InResult.SummaryText);
@@ -322,9 +322,9 @@ void ACPlayerController::ApplyDebugOverlayFocusResolveResult(const FDebugOverlay
 
 void ACPlayerController::RecordDebugOverlayFocusCommandResult(const FString& InSummary) const
 {
-	if (!IsValid(DebugOverlayTargetComponent)) return;
+	if (!IsValid(DebugOverlayFocusComponent)) return;
 
-	DebugOverlayTargetComponent->SetDebugOverlayFocusCommandResult(InSummary);
+	DebugOverlayFocusComponent->SetDebugOverlayFocusCommandResult(InSummary);
 }
 
 #endif

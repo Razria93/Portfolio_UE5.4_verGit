@@ -16,7 +16,7 @@ class PORTFOLIO_API ACDebugOverlayHUD : public AHUD
 private:
 	// Enemy Resolution
 	ACEnemy* ResolveDisplayEnemy(FDebugOverlayFocusViewData& OutFocusViewData);
-	ACEnemy* ResolveTargetComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const;
+	ACEnemy* ResolveFocusComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const;
 #endif
 
 public:

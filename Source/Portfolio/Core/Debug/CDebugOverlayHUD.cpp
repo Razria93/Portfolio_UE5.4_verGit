@@ -1,7 +1,7 @@
 #include "Core/Debug/CDebugOverlayHUD.h"
 
 #include "Character/Enemy/CEnemy.h"
-#include "Core/Debug/CDebugOverlayTargetComponent.h"
+#include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayCanvasRenderer.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FDebugOverlayTextFormatter.h"
@@ -13,12 +13,12 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
-	void UpdateLastFocusCommand(FDebugOverlayFocusViewData& InOutFocusViewData, const UCDebugOverlayTargetComponent* InTargetComp)
+	void UpdateLastFocusCommand(FDebugOverlayFocusViewData& InOutFocusViewData, const UCDebugOverlayFocusComponent* InFocusComp)
 	{
-		if (!IsValid(InTargetComp)) return;
-		if (!InTargetComp->HasDebugOverlayFocusCommandResult()) return;
+		if (!IsValid(InFocusComp)) return;
+		if (!InFocusComp->HasDebugOverlayFocusCommandResult()) return;
 
-		InOutFocusViewData.LastCommandText = InTargetComp->GetDebugOverlayFocusCommandResultText();
+		InOutFocusViewData.LastCommandText = InFocusComp->GetDebugOverlayFocusCommandResultText();
 	}
 }
 #endif
@@ -26,36 +26,36 @@ namespace
 #if !UE_BUILD_SHIPPING
 ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(FDebugOverlayFocusViewData& OutFocusViewData)
 {
-	if (ACEnemy* targetComponentEnemy = ResolveTargetComponentEnemy(OutFocusViewData))
+	if (ACEnemy* focusComponentEnemy = ResolveFocusComponentEnemy(OutFocusViewData))
 	{
-		return targetComponentEnemy;
+		return focusComponentEnemy;
 	}
 
 	OutFocusViewData.CurrentModeText = TEXT("None");
 	OutFocusViewData.CurrentActorNameText = TEXT("None");
 	if (const APlayerController* owningPlayerController = GetOwningPlayerController())
 	{
-		const UCDebugOverlayTargetComponent* targetComp = owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>();
-		UpdateLastFocusCommand(OutFocusViewData, targetComp);
+		const UCDebugOverlayFocusComponent* focusComp = owningPlayerController->FindComponentByClass<UCDebugOverlayFocusComponent>();
+		UpdateLastFocusCommand(OutFocusViewData, focusComp);
 	}
 
 	return nullptr;
 }
 
-ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const
+ACEnemy* ACDebugOverlayHUD::ResolveFocusComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const
 {
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
 	if (!IsValid(owningPlayerController)) return nullptr;
 
-	const UCDebugOverlayTargetComponent* targetComp = owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>();
-	if (!IsValid(targetComp)) return nullptr;
+	const UCDebugOverlayFocusComponent* focusComp = owningPlayerController->FindComponentByClass<UCDebugOverlayFocusComponent>();
+	if (!IsValid(focusComp)) return nullptr;
 
-	ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayFocusActor());
+	ACEnemy* targetEnemy = Cast<ACEnemy>(focusComp->GetDebugOverlayFocusActor());
 	if (!IsValid(targetEnemy)) return nullptr;
 
-	OutFocusViewData.CurrentModeText = targetComp->GetDebugOverlayFocusModeText();
+	OutFocusViewData.CurrentModeText = focusComp->GetDebugOverlayFocusModeText();
 	OutFocusViewData.CurrentActorNameText = GetNameSafe(targetEnemy);
-	UpdateLastFocusCommand(OutFocusViewData, targetComp);
+	UpdateLastFocusCommand(OutFocusViewData, focusComp);
 	return targetEnemy;
 }
 #endif

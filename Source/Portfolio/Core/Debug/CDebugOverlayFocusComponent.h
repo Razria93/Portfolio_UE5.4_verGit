@@ -2,26 +2,28 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "CDebugOverlayTargetComponent.generated.h"
+#include "CDebugOverlayFocusComponent.generated.h"
 
-enum class EDebugOverlayTargetSource : uint8
+enum class EDebugOverlayFocusSource : uint8
 {
 	None,
 	Nearest,
 	EditorSelection,
 };
 
+using EDebugOverlayTargetSource = EDebugOverlayFocusSource;
+
 UCLASS(ClassGroup = (Debug))
-class PORTFOLIO_API UCDebugOverlayTargetComponent : public UActorComponent
+class PORTFOLIO_API UCDebugOverlayFocusComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UCDebugOverlayTargetComponent();
+	UCDebugOverlayFocusComponent();
 
 private:
 	TWeakObjectPtr<AActor> DebugOverlayFocusActor;
-	EDebugOverlayTargetSource DebugOverlayFocusSource = EDebugOverlayTargetSource::None;
+	EDebugOverlayFocusSource DebugOverlayFocusSource = EDebugOverlayFocusSource::None;
 	FString DebugOverlayFocusCommandResult;
 
 public:
@@ -34,7 +36,7 @@ public:
 	FString GetDebugOverlayFocusCommandResultText() const;
 
 	// Focus Mutation
-	void SetDebugOverlayFocus(AActor* InFocusActor, EDebugOverlayTargetSource InSource);
+	void SetDebugOverlayFocus(AActor* InFocusActor, EDebugOverlayFocusSource InSource);
 	void ClearDebugOverlayFocus();
 	void SetDebugOverlayFocusCommandResult(const FString& InResultText);
 	void ClearDebugOverlayFocusCommandResult();
@@ -48,7 +50,7 @@ public:
 	FString GetDebugOverlaySelectionSummary() const;
 
 	// Compatibility Mutation
-	void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource);
+	void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayFocusSource InSource);
 	void ClearDebugOverlayTarget();
 	void SetDebugOverlaySelectionSummary(const FString& InSummary);
 	void ClearDebugOverlaySelectionSummary();

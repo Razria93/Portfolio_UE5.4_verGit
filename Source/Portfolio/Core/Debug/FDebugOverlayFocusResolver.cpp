@@ -105,7 +105,7 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveNearestEnemy(
 
 	result.Status = EDebugOverlayFocusResolveStatus::Selected;
 	result.FocusActor = closestEnemy;
-	result.FocusSource = EDebugOverlayTargetSource::Nearest;
+	result.FocusSource = EDebugOverlayFocusSource::Nearest;
 	result.SummaryText = FString::Printf(
 		TEXT("NearestSelected | Target: %s | Distance: %.0f | Radius: %.0f"),
 		*result.ActorName,
@@ -161,7 +161,7 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveActorEnemy(
 
 	result.Status = EDebugOverlayFocusResolveStatus::Selected;
 	result.FocusActor = targetEnemy;
-	result.FocusSource = EDebugOverlayTargetSource::EditorSelection;
+	result.FocusSource = EDebugOverlayFocusSource::EditorSelection;
 	result.SummaryText = FString::Printf(TEXT("EditorSelected | Target: %s"), *GetNameSafe(targetEnemy));
 	return result;
 #endif
