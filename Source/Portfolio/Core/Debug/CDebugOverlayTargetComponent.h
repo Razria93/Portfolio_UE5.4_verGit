@@ -25,7 +25,21 @@ private:
 	FString DebugOverlaySelectionSummary;
 
 public:
-	// Query
+	// Focus Query
+	bool HasDebugOverlayFocus() const;
+	bool HasDebugOverlayFocusCommandResult() const;
+	AActor* GetDebugOverlayFocusActor() const;
+	FString GetDebugOverlayFocusActorText() const;
+	FString GetDebugOverlayFocusModeText() const;
+	FString GetDebugOverlayFocusCommandResultText() const;
+
+	// Focus Mutation
+	void SetDebugOverlayFocus(AActor* InFocusActor, EDebugOverlayTargetSource InSource);
+	void ClearDebugOverlayFocus();
+	void SetDebugOverlayFocusCommandResult(const FString& InResultText);
+	void ClearDebugOverlayFocusCommandResult();
+
+	// Compatibility Query
 	bool HasDebugOverlayTarget() const;
 	bool HasDebugOverlaySelectionSummary() const;
 	AActor* GetDebugOverlayTargetActor() const;
@@ -33,7 +47,7 @@ public:
 	FString GetDebugOverlayTargetSource() const;
 	FString GetDebugOverlaySelectionSummary() const;
 
-	// Mutation
+	// Compatibility Mutation
 	void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource);
 	void ClearDebugOverlayTarget();
 	void SetDebugOverlaySelectionSummary(const FString& InSummary);

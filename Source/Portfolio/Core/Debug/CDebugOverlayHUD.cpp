@@ -30,9 +30,9 @@ namespace
 	void UpdateLastFocusCommand(FDebugOverlayFocusViewData& InOutFocusViewData, const UCDebugOverlayTargetComponent* InTargetComp)
 	{
 		if (!IsValid(InTargetComp)) return;
-		if (!InTargetComp->HasDebugOverlaySelectionSummary()) return;
+		if (!InTargetComp->HasDebugOverlayFocusCommandResult()) return;
 
-		InOutFocusViewData.LastCommandText = InTargetComp->GetDebugOverlaySelectionSummary();
+		InOutFocusViewData.LastCommandText = InTargetComp->GetDebugOverlayFocusCommandResultText();
 	}
 }
 #endif
@@ -64,11 +64,11 @@ ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(FDebugOverlayFocusViewDa
 	const UCDebugOverlayTargetComponent* targetComp = owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>();
 	if (!IsValid(targetComp)) return nullptr;
 
-	ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayTargetActor());
+	ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayFocusActor());
 	if (!IsValid(targetEnemy)) return nullptr;
 
-	OutFocusViewData.CurrentSourceText = targetComp->GetDebugOverlayTargetSource();
-	OutFocusViewData.CurrentActorText = targetComp->GetDebugOverlayTargetSummary();
+	OutFocusViewData.CurrentSourceText = targetComp->GetDebugOverlayFocusModeText();
+	OutFocusViewData.CurrentActorText = targetComp->GetDebugOverlayFocusActorText();
 	UpdateLastFocusCommand(OutFocusViewData, targetComp);
 	return targetEnemy;
 }
