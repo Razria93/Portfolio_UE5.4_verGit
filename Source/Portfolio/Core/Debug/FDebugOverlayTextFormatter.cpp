@@ -155,9 +155,9 @@ namespace
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, InActorPanelViewData.HeaderText);
 
-		for (const FString& lineBeforeStatus : InActorPanelViewData.LinesBeforeStatus)
+		for (const FString& focusLine : InActorPanelViewData.Focus.LegacyLines)
 		{
-			AppendOverlayLine(InOutLines, lineBeforeStatus);
+			AppendOverlayLine(InOutLines, focusLine);
 		}
 
 		if (InActorPanelViewData.bAppendBlankBeforeStatus)

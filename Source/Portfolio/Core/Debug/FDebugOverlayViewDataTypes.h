@@ -70,10 +70,15 @@ struct FDebugOverlayRecentAIEventViewData
 	FString StaleAgeText;
 };
 
+struct FDebugOverlayFocusViewData
+{
+	TArray<FString> LegacyLines;
+};
+
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
-	TArray<FString> LinesBeforeStatus;
+	FDebugOverlayFocusViewData Focus;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
 	FDebugOverlayRecentExecutionViewData RecentExecution;

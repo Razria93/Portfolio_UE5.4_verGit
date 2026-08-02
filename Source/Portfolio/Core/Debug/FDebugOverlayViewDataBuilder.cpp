@@ -378,7 +378,7 @@ namespace
 		InOutViewData.ActorPanels.Add(BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorldContextObject, bInHasSnapshot));
 
 		FDebugOverlayActorPanelViewData enemyPanelViewData = BuildActorPanelViewData(TEXT("[Enemy]"), InEnemy, InWorldContextObject, bInHasSnapshot);
-		enemyPanelViewData.LinesBeforeStatus = InEnemySourceLines;
+		enemyPanelViewData.Focus.LegacyLines = InEnemySourceLines;
 		enemyPanelViewData.bAppendBlankBeforeStatus = true;
 		enemyPanelViewData.bIncludeCurrentAI = true;
 		enemyPanelViewData.CurrentAI = BuildEnemyCurrentAIViewData(InEnemy);
