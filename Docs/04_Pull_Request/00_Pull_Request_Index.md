@@ -6,6 +6,7 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P54 | Asset Reference Inspector Editor Plugin | `P54_UE5_Portfolio_Pull_Request.md` | `feature/asset-reference-inspector-plugin` |  | Editor Tooling, Asset Registry |
 | P53 | Debug Overlay Editor Tooling | `P53_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-editor-tooling` |  | Debug Overlay |
 | P52 | Debug Overlay Evidence Tooling | `P52_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-evidence-plan` |  | W05, Debug Overlay |
 | P51 | Tuning Constants Cleanup | `P51_UE5_Portfolio_Pull_Request.md` | `refactor/tuning-constants-cleanup` |  | W05 |
