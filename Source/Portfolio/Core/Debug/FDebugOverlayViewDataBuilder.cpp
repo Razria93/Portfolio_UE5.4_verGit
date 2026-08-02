@@ -30,7 +30,7 @@ namespace
 		return TEXT("N/A");
 	}
 
-	FString FormatAgeSeconds(float InAgeSeconds)
+	FString FormatBuilderAgeSeconds(float InAgeSeconds)
 	{
 		return FString::Printf(TEXT("%.2f"), FMath::Max(0.f, InAgeSeconds));
 	}
@@ -338,14 +338,14 @@ namespace
 		if (bEventStale)
 		{
 			recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::Stale;
-			recentAIEventViewData.StaleAgeText = FormatAgeSeconds(eventAge);
+			recentAIEventViewData.StaleAgeText = FormatBuilderAgeSeconds(eventAge);
 			return recentAIEventViewData;
 		}
 
 		recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::Captured;
 		recentAIEventViewData.TaskText = CompactEnumText(InSnapshot.LastAI.SubState);
 		recentAIEventViewData.ResultText = CompactEnumText(InSnapshot.LastAI.RequestResult);
-		recentAIEventViewData.AgeText = FormatAgeSeconds(eventAge);
+		recentAIEventViewData.AgeText = FormatBuilderAgeSeconds(eventAge);
 		recentAIEventViewData.RejectReasonText = CompactReasonText(InSnapshot.LastAI.RejectReason);
 		return recentAIEventViewData;
 	}
