@@ -10,6 +10,52 @@ namespace
 		InOutLines.Add(InLine);
 	}
 
+	FString CaptureStateText(EDebugOverlayCaptureState InState)
+	{
+		switch (InState)
+		{
+		case EDebugOverlayCaptureState::Captured:
+			return TEXT("Captured");
+		case EDebugOverlayCaptureState::Unavailable:
+			return TEXT("Unavailable");
+		case EDebugOverlayCaptureState::Stale:
+			return TEXT("Stale");
+		case EDebugOverlayCaptureState::NotCaptured:
+		default:
+			return TEXT("NotCaptured");
+		}
+	}
+
+	FString ValueOrNotCaptured(const FString& InValue, EDebugOverlayCaptureState InState)
+	{
+		return InState == EDebugOverlayCaptureState::Captured && !InValue.IsEmpty()
+			? InValue
+			: CaptureStateText(InState);
+	}
+
+	void AppendSummaryLines(TArray<FString>& InOutLines, const FString& InSummary, EDebugOverlayCaptureState InCaptureState)
+	{
+		const FString summary = ValueOrNotCaptured(InSummary, InCaptureState);
+		if (InCaptureState != EDebugOverlayCaptureState::Captured || summary.IsEmpty())
+		{
+			AppendOverlayLine(InOutLines, summary);
+			return;
+		}
+
+		TArray<FString> summaryParts;
+		summary.ParseIntoArray(summaryParts, TEXT(" | "), true);
+		if (summaryParts.IsEmpty())
+		{
+			AppendOverlayLine(InOutLines, summary);
+			return;
+		}
+
+		for (const FString& summaryPart : summaryParts)
+		{
+			AppendOverlayLine(InOutLines, summaryPart);
+		}
+	}
+
 	void AppendActorStatusLines(TArray<FString>& InOutLines, const FDebugOverlayActorStatusViewData& InStatusViewData)
 	{
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("State: %s"), *InStatusViewData.StateText));
@@ -131,6 +177,83 @@ namespace
 		return lines;
 	}
 
+	FString FormatEventLogEntryLine(const FDebugOverlayEventLogEntryViewData& InEntry)
+	{
+		return FString::Printf(
+			TEXT("%s/%s: %s"),
+			*InEntry.CategoryText,
+			*InEntry.EventNameText,
+			*InEntry.SummaryText);
+	}
+
+	TArray<FString> BuildEventLogPanelLines(const FDebugOverlayViewData& InViewData)
+	{
+		TArray<FString> lines;
+		lines.Reserve(InViewData.EventLog.Entries.Num() + 2);
+		AppendOverlayLine(lines, InViewData.EventLogPanelTitle);
+		AppendOverlayLine(lines, TEXT(""));
+		AppendOverlayLine(lines, FString::Printf(TEXT("[Event Log: %s]"), *InViewData.EventLog.FilterText));
+
+		if (!InViewData.EventLog.bHasSnapshot)
+		{
+			AppendOverlayLine(lines, TEXT("NotCaptured"));
+			return lines;
+		}
+
+		if (InViewData.EventLog.DisplayLimit == 0)
+		{
+			AppendOverlayLine(lines, FString::Printf(TEXT("NoEvents(Filter: %s Limit: 0)"), *InViewData.EventLog.FilterText));
+			return lines;
+		}
+
+		if (InViewData.EventLog.Entries.IsEmpty())
+		{
+			AppendOverlayLine(lines, FString::Printf(TEXT("NoEvents(Filter: %s)"), *InViewData.EventLog.FilterText));
+			return lines;
+		}
+
+		for (const FDebugOverlayEventLogEntryViewData& eventEntry : InViewData.EventLog.Entries)
+		{
+			AppendOverlayLine(lines, FormatEventLogEntryLine(eventEntry));
+		}
+
+		return lines;
+	}
+
+	void AppendRecentSummaryBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentSummaryBlockViewData& InBlockViewData)
+	{
+		if (InBlockViewData.bAppendLeadingBlank)
+		{
+			AppendOverlayLine(InOutLines, TEXT(""));
+		}
+
+		AppendOverlayLine(InOutLines, InBlockViewData.HeaderText);
+		if (InBlockViewData.bHasSnapshot)
+		{
+			AppendSummaryLines(InOutLines, InBlockViewData.SummaryText, InBlockViewData.CaptureState);
+		}
+		else
+		{
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+		}
+	}
+
+	TArray<FString> BuildInteractionPanelLines(const FDebugOverlayViewData& InViewData)
+	{
+		TArray<FString> lines;
+		lines.Reserve(16);
+		AppendOverlayLine(lines, InViewData.InteractionPanelTitle);
+		AppendOverlayLine(lines, TEXT(""));
+		AppendOverlayLine(lines, InViewData.Interaction.HeaderText);
+
+		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.Interaction.SummaryBlocks)
+		{
+			AppendRecentSummaryBlockLines(lines, summaryBlock);
+		}
+
+		return lines;
+	}
+
 	EDebugOverlayTextLineRole ResolveTextLineRole(EDebugOverlayTextPanelRole InPanelRole, const FString& InLine)
 	{
 		if (InLine.StartsWith(TEXT("[Debug Overlay Pannel_")))
@@ -168,10 +291,12 @@ namespace
 FDebugOverlayTextPanels FDebugOverlayTextFormatter::Format(const FDebugOverlayViewData& InViewData)
 {
 	const TArray<FString> mainPanelLines = BuildMainPanelLines(InViewData);
+	const TArray<FString> eventLogPanelLines = BuildEventLogPanelLines(InViewData);
+	const TArray<FString> interactionPanelLines = BuildInteractionPanelLines(InViewData);
 
 	FDebugOverlayTextPanels panels;
 	panels.MainPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Main, mainPanelLines);
-	panels.EventLogPanel = MakeTextPanel(EDebugOverlayTextPanelRole::EventLog, InViewData.EventLogPanelLines);
-	panels.InteractionPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Interaction, InViewData.InteractionPanelLines);
+	panels.EventLogPanel = MakeTextPanel(EDebugOverlayTextPanelRole::EventLog, eventLogPanelLines);
+	panels.InteractionPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Interaction, interactionPanelLines);
 	return panels;
 }

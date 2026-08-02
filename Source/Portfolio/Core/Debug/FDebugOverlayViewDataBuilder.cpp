@@ -262,60 +262,28 @@ namespace
 		}
 	}
 
-	void AppendSnapshotSummaryBlock(TArray<FString>& InOutLines, const TCHAR* InBlockName, const FString& InSummary, EDebugOverlayCaptureState InCaptureState, bool bInHasSnapshot, bool bInAppendLeadingBlank)
+	FDebugOverlayEventLogViewData BuildEventLogViewData(
+		bool bInHasSnapshot,
+		const TArray<FDebugOverlayEventEntry>& InEvents,
+		const FString& InEventLogFilter,
+		int32 InEventLogLimit)
 	{
-		if (bInAppendLeadingBlank)
-		{
-			AppendOverlayLine(InOutLines, TEXT(""));
-		}
-
-		AppendOverlayLine(InOutLines, InBlockName);
-		if (bInHasSnapshot)
-		{
-			AppendSummaryLines(InOutLines, InSummary, InCaptureState);
-		}
-		else
-		{
-			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
-		}
-	}
-
-	FString FormatEventLogEntryLine(const FDebugOverlayEventEntry& InEntry)
-	{
-		return FString::Printf(
-			TEXT("%s/%s: %s"),
-			*InEntry.Category,
-			*InEntry.EventName,
-			*InEntry.Summary);
-	}
-
-	void AppendEventLogBlock(TArray<FString>& InOutLines, bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
-	{
-		AppendOverlayLine(InOutLines, TEXT(""));
-		AppendOverlayLine(InOutLines, FString::Printf(TEXT("[Event Log: %s]"), *InEventLogFilter));
-
-		if (!bInHasSnapshot)
-		{
-			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
-			return;
-		}
-
-		if (InEventLogLimit == 0)
-		{
-			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter: %s Limit: 0)"), *InEventLogFilter));
-			return;
-		}
-
-		if (InEvents.IsEmpty())
-		{
-			AppendOverlayLine(InOutLines, FString::Printf(TEXT("NoEvents(Filter: %s)"), *InEventLogFilter));
-			return;
-		}
+		FDebugOverlayEventLogViewData eventLogViewData;
+		eventLogViewData.bHasSnapshot = bInHasSnapshot;
+		eventLogViewData.DisplayLimit = InEventLogLimit;
+		eventLogViewData.FilterText = InEventLogFilter;
+		eventLogViewData.Entries.Reserve(InEvents.Num());
 
 		for (const FDebugOverlayEventEntry& eventEntry : InEvents)
 		{
-			AppendOverlayLine(InOutLines, FormatEventLogEntryLine(eventEntry));
+			FDebugOverlayEventLogEntryViewData entryViewData;
+			entryViewData.CategoryText = eventEntry.Category;
+			entryViewData.EventNameText = eventEntry.EventName;
+			entryViewData.SummaryText = eventEntry.Summary;
+			eventLogViewData.Entries.Add(entryViewData);
 		}
+
+		return eventLogViewData;
 	}
 
 	FDebugOverlayActorStatusViewData BuildActorStatusViewData(const APawn* InPawn)
@@ -464,13 +432,40 @@ namespace
 		InOutViewData.ActorPanels.Add(enemyPanelViewData);
 	}
 
-	void AppendInteractionPanelLines(TArray<FString>& InOutLines, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
+	FDebugOverlayRecentSummaryBlockViewData BuildRecentSummaryBlockViewData(
+		const TCHAR* InBlockName,
+		const FString& InSummary,
+		EDebugOverlayCaptureState InCaptureState,
+		bool bInHasSnapshot,
+		bool bInAppendLeadingBlank)
 	{
-		AppendOverlayLine(InOutLines, TEXT(""));
-		AppendOverlayLine(InOutLines, TEXT("[Interaction]"));
+		FDebugOverlayRecentSummaryBlockViewData blockViewData;
+		blockViewData.HeaderText = InBlockName;
+		blockViewData.SummaryText = InSummary;
+		blockViewData.CaptureState = InCaptureState;
+		blockViewData.bHasSnapshot = bInHasSnapshot;
+		blockViewData.bAppendLeadingBlank = bInAppendLeadingBlank;
+		return blockViewData;
+	}
 
-		AppendSnapshotSummaryBlock(InOutLines, TEXT("[Recent Execution]"), InSnapshot.LastExecution.Summary, InSnapshot.LastExecution.CaptureState, bInHasSnapshot, false);
-		AppendSnapshotSummaryBlock(InOutLines, TEXT("[Recent Combat]"), InSnapshot.LastCombat.Summary, InSnapshot.LastCombat.CaptureState, bInHasSnapshot, true);
+	FDebugOverlayInteractionViewData BuildInteractionViewData(const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
+	{
+		FDebugOverlayInteractionViewData interactionViewData;
+		interactionViewData.HeaderText = TEXT("[Interaction]");
+		interactionViewData.SummaryBlocks.Reserve(2);
+		interactionViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
+			TEXT("[Recent Execution]"),
+			InSnapshot.LastExecution.Summary,
+			InSnapshot.LastExecution.CaptureState,
+			bInHasSnapshot,
+			false));
+		interactionViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
+			TEXT("[Recent Combat]"),
+			InSnapshot.LastCombat.Summary,
+			InSnapshot.LastCombat.CaptureState,
+			bInHasSnapshot,
+			true));
+		return interactionViewData;
 	}
 }
 
@@ -487,8 +482,6 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const FDebugOverlayVie
 
 	FDebugOverlayViewData viewData;
 	viewData.ActorPanels.Reserve(2);
-	viewData.EventLogPanelLines.Reserve(eventLogLimit + 2);
-	viewData.InteractionPanelLines.Reserve(16);
 
 	BuildMainActorPanelData(
 		viewData,
@@ -500,11 +493,11 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const FDebugOverlayVie
 		InContext.WorldContextObject,
 		InContext.World);
 
-	AppendOverlayLine(viewData.EventLogPanelLines, TEXT("[Debug Overlay Pannel_02]"));
-	AppendEventLogBlock(viewData.EventLogPanelLines, bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
+	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Pannel_02]");
+	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
-	AppendOverlayLine(viewData.InteractionPanelLines, TEXT("[Debug Overlay Pannel_03]"));
-	AppendInteractionPanelLines(viewData.InteractionPanelLines, snapshot, bHasSnapshot);
+	viewData.InteractionPanelTitle = TEXT("[Debug Overlay Pannel_03]");
+	viewData.Interaction = BuildInteractionViewData(snapshot, bHasSnapshot);
 
 	return viewData;
 }

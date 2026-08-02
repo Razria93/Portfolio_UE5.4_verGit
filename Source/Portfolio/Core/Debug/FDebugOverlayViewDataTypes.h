@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Debug/FDebugOverlaySnapshotTypes.h"
 
 class ACEnemy;
 class APawn;
@@ -67,13 +68,45 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayRecentAIEventViewData RecentAIEvent;
 };
 
+struct FDebugOverlayEventLogEntryViewData
+{
+	FString CategoryText;
+	FString EventNameText;
+	FString SummaryText;
+};
+
+struct FDebugOverlayEventLogViewData
+{
+	bool bHasSnapshot = false;
+	int32 DisplayLimit = 0;
+	FString FilterText;
+	TArray<FDebugOverlayEventLogEntryViewData> Entries;
+};
+
+struct FDebugOverlayRecentSummaryBlockViewData
+{
+	FString HeaderText;
+	FString SummaryText;
+	EDebugOverlayCaptureState CaptureState = EDebugOverlayCaptureState::NotCaptured;
+	bool bHasSnapshot = false;
+	bool bAppendLeadingBlank = false;
+};
+
+struct FDebugOverlayInteractionViewData
+{
+	FString HeaderText;
+	TArray<FDebugOverlayRecentSummaryBlockViewData> SummaryBlocks;
+};
+
 struct FDebugOverlayViewData
 {
 	FString MainPanelTitle;
 	TArray<FDebugOverlayActorPanelViewData> ActorPanels;
 	TArray<FString> MainPanelLines;
-	TArray<FString> EventLogPanelLines;
-	TArray<FString> InteractionPanelLines;
+	FString EventLogPanelTitle;
+	FDebugOverlayEventLogViewData EventLog;
+	FString InteractionPanelTitle;
+	FDebugOverlayInteractionViewData Interaction;
 };
 
 struct FDebugOverlayViewDataBuildContext
