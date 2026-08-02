@@ -211,11 +211,6 @@ namespace
 			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
 	}
 
-	void AppendOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
-	{
-		InOutLines.Add(InLine);
-	}
-
 	FDebugOverlayEventLogViewData BuildEventLogViewData(
 		bool bInHasSnapshot,
 		const TArray<FDebugOverlayEventEntry>& InEvents,
