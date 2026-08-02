@@ -211,55 +211,9 @@ namespace
 			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
 	}
 
-	FString CaptureStateText(EDebugOverlayCaptureState InState)
-	{
-		switch (InState)
-		{
-		case EDebugOverlayCaptureState::Captured:
-			return TEXT("Captured");
-		case EDebugOverlayCaptureState::Unavailable:
-			return TEXT("Unavailable");
-		case EDebugOverlayCaptureState::Stale:
-			return TEXT("Stale");
-		case EDebugOverlayCaptureState::NotCaptured:
-		default:
-			return TEXT("NotCaptured");
-		}
-	}
-
-	FString ValueOrNotCaptured(const FString& InValue, EDebugOverlayCaptureState InState)
-	{
-		return InState == EDebugOverlayCaptureState::Captured && !InValue.IsEmpty()
-			? InValue
-			: CaptureStateText(InState);
-	}
-
 	void AppendOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
 	{
 		InOutLines.Add(InLine);
-	}
-
-	void AppendSummaryLines(TArray<FString>& InOutLines, const FString& InSummary, EDebugOverlayCaptureState InCaptureState)
-	{
-		const FString summary = ValueOrNotCaptured(InSummary, InCaptureState);
-		if (InCaptureState != EDebugOverlayCaptureState::Captured || summary.IsEmpty())
-		{
-			AppendOverlayLine(InOutLines, summary);
-			return;
-		}
-
-		TArray<FString> summaryParts;
-		summary.ParseIntoArray(summaryParts, TEXT(" | "), true);
-		if (summaryParts.IsEmpty())
-		{
-			AppendOverlayLine(InOutLines, summary);
-			return;
-		}
-
-		for (const FString& summaryPart : summaryParts)
-		{
-			AppendOverlayLine(InOutLines, summaryPart);
-		}
 	}
 
 	FDebugOverlayEventLogViewData BuildEventLogViewData(
@@ -300,21 +254,20 @@ namespace
 		return statusViewData;
 	}
 
-	void AppendActorRecentExecutionBlock(TArray<FString>& InOutLines, const UObject* InWorldContextObject, bool bInHasSnapshot, const APawn* InPawn)
+	FDebugOverlayRecentExecutionViewData BuildActorRecentExecutionViewData(const UObject* InWorldContextObject, bool bInHasSnapshot, const APawn* InPawn)
 	{
-		AppendOverlayLine(InOutLines, TEXT(""));
-		AppendOverlayLine(InOutLines, TEXT("[Recent Execution]"));
-
+		FDebugOverlayRecentExecutionViewData recentExecutionViewData;
+		recentExecutionViewData.HeaderText = TEXT("[Recent Execution]");
 		if (!bInHasSnapshot)
 		{
-			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
-			return;
+			recentExecutionViewData.State = EDebugOverlayRecentExecutionViewState::NotCaptured;
+			return recentExecutionViewData;
 		}
 
 		if (!IsValid(InPawn))
 		{
-			AppendOverlayLine(InOutLines, TEXT("N/A"));
-			return;
+			recentExecutionViewData.State = EDebugOverlayRecentExecutionViewState::NoActor;
+			return recentExecutionViewData;
 		}
 
 		const TArray<FDebugOverlayEventEntry> executionEvents = FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(
@@ -325,11 +278,13 @@ namespace
 
 		if (executionEvents.IsEmpty())
 		{
-			AppendOverlayLine(InOutLines, TEXT("NoEvents(Filter: Execution)"));
-			return;
+			recentExecutionViewData.State = EDebugOverlayRecentExecutionViewState::NoEvents;
+			return recentExecutionViewData;
 		}
 
-		AppendSummaryLines(InOutLines, executionEvents[0].Summary, EDebugOverlayCaptureState::Captured);
+		recentExecutionViewData.State = EDebugOverlayRecentExecutionViewState::Captured;
+		recentExecutionViewData.SummaryText = executionEvents[0].Summary;
+		return recentExecutionViewData;
 	}
 
 	FDebugOverlayCurrentAIViewData BuildEnemyCurrentAIViewData(const ACEnemy* InEnemy)
@@ -405,7 +360,7 @@ namespace
 		FDebugOverlayActorPanelViewData actorPanelViewData;
 		actorPanelViewData.HeaderText = InPanelName;
 		actorPanelViewData.Status = BuildActorStatusViewData(InPawn);
-		AppendActorRecentExecutionBlock(actorPanelViewData.RecentExecutionLines, InWorldContextObject, bInHasSnapshot, InPawn);
+		actorPanelViewData.RecentExecution = BuildActorRecentExecutionViewData(InWorldContextObject, bInHasSnapshot, InPawn);
 		return actorPanelViewData;
 	}
 

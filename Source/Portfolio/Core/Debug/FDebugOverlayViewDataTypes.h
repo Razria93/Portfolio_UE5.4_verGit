@@ -17,6 +17,21 @@ enum class EDebugOverlayRecentAIEventViewState : uint8
 	Captured,
 };
 
+enum class EDebugOverlayRecentExecutionViewState : uint8
+{
+	NotCaptured,
+	NoActor,
+	NoEvents,
+	Captured,
+};
+
+struct FDebugOverlayRecentExecutionViewData
+{
+	EDebugOverlayRecentExecutionViewState State = EDebugOverlayRecentExecutionViewState::NotCaptured;
+	FString HeaderText;
+	FString SummaryText;
+};
+
 struct FDebugOverlayActorStatusViewData
 {
 	FString StateText;
@@ -61,7 +76,7 @@ struct FDebugOverlayActorPanelViewData
 	TArray<FString> LinesBeforeStatus;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
-	TArray<FString> RecentExecutionLines;
+	FDebugOverlayRecentExecutionViewData RecentExecution;
 	bool bIncludeCurrentAI = false;
 	FDebugOverlayCurrentAIViewData CurrentAI;
 	bool bIncludeRecentAIEvent = false;

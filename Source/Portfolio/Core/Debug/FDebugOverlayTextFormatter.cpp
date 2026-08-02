@@ -68,6 +68,31 @@ namespace
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
 	}
 
+	void AppendRecentExecutionBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentExecutionViewData& InRecentExecutionViewData)
+	{
+		AppendOverlayLine(InOutLines, TEXT(""));
+		AppendOverlayLine(InOutLines, InRecentExecutionViewData.HeaderText);
+
+		switch (InRecentExecutionViewData.State)
+		{
+		case EDebugOverlayRecentExecutionViewState::NotCaptured:
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+			return;
+		case EDebugOverlayRecentExecutionViewState::NoActor:
+			AppendOverlayLine(InOutLines, TEXT("N/A"));
+			return;
+		case EDebugOverlayRecentExecutionViewState::NoEvents:
+			AppendOverlayLine(InOutLines, TEXT("NoEvents(Filter: Execution)"));
+			return;
+		case EDebugOverlayRecentExecutionViewState::Captured:
+			AppendSummaryLines(InOutLines, InRecentExecutionViewData.SummaryText, EDebugOverlayCaptureState::Captured);
+			return;
+		default:
+			AppendOverlayLine(InOutLines, TEXT("NotCaptured"));
+			return;
+		}
+	}
+
 	void AppendCurrentAIBlock(TArray<FString>& InOutLines, const FDebugOverlayCurrentAIViewData& InCurrentAIViewData)
 	{
 		AppendOverlayLine(InOutLines, TEXT(""));
@@ -141,11 +166,7 @@ namespace
 		}
 
 		AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
-
-		for (const FString& recentExecutionLine : InActorPanelViewData.RecentExecutionLines)
-		{
-			AppendOverlayLine(InOutLines, recentExecutionLine);
-		}
+		AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);
 
 		if (InActorPanelViewData.bIncludeCurrentAI)
 		{
