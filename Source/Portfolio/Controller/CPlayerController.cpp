@@ -2,15 +2,13 @@
 
 #include "ProjectGlobal.h"
 
-#include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
 #if !UE_BUILD_SHIPPING
+#include "Core/Debug/FDebugOverlayFocusResolver.h"
 #include "Core/Debug/CDebugOverlayTargetComponent.h"
 #endif
 #include "Type/CActionOrchestrationTypes.h"
-
-#include "EngineUtils.h"
 
 #if !UE_BUILD_SHIPPING
 namespace
@@ -217,64 +215,50 @@ bool ACPlayerController::TrySelectDebugOverlayNearestEnemy()
 		return false;
 	}
 
-	if (!IsValid(GetWorld()) || !IsValid(GetPawn()))
+	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveNearestEnemy(
+		GetWorld(),
+		GetPawn(),
+		DebugOverlayNearestTargetRadius);
+
+	if (result.Status != EDebugOverlayFocusResolveStatus::Selected)
 	{
 		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
+		RecordDebugOverlayNearestSelectionResult(result.SummaryText);
+	}
+	else
+	{
+		DebugOverlayTargetComponent->SetDebugOverlayFocus(result.FocusActor.Get(), result.FocusSource);
+		RecordDebugOverlayNearestSelectionResult(result.SummaryText);
+	}
 
-		const FString summary = TEXT("NearestFailed | InvalidContext");
-		RecordDebugOverlayNearestSelectionResult(summary);
+	switch (result.Status)
+	{
+	case EDebugOverlayFocusResolveStatus::InvalidContext:
 		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: InvalidContext"));
 		return false;
-	}
-
-	float closestDistance = 0.f;
-	ACEnemy* closestEnemy = FindClosestDebugOverlayEnemy(closestDistance);
-	if (!IsValid(closestEnemy))
-	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-
-		const FString summary = FString::Printf(
-			TEXT("NearestFailed | NoEnemy | Radius: %.0f"),
-			DebugOverlayNearestTargetRadius);
-		RecordDebugOverlayNearestSelectionResult(summary);
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: NoEnemy | Radius: %.0f"), DebugOverlayNearestTargetRadius);
+	case EDebugOverlayFocusResolveStatus::NoEnemy:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: NoEnemy | Radius: %.0f"), result.Radius);
 		return false;
-	}
-
-	if (closestDistance > DebugOverlayNearestTargetRadius)
-	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-
-		const FString summary = FString::Printf(
-			TEXT("NearestFailed | OutOfRange | Closest: %.0f | Radius: %.0f"),
-			closestDistance,
-			DebugOverlayNearestTargetRadius);
-		RecordDebugOverlayNearestSelectionResult(summary);
+	case EDebugOverlayFocusResolveStatus::OutOfRange:
 		UE_LOG(
 			LogTemp,
 			Log,
 			TEXT("DebugOverlaySelectNearestTarget Result: OutOfRange | Closest: %.0f | Radius: %.0f"),
-			closestDistance,
-			DebugOverlayNearestTargetRadius);
+			result.Distance,
+			result.Radius);
+		return false;
+	case EDebugOverlayFocusResolveStatus::Selected:
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("DebugOverlaySelectNearestTarget Result: Selected | Target: %s | Distance: %.0f | Radius: %.0f"),
+			*result.ActorName,
+			result.Distance,
+			result.Radius);
+		return true;
+	default:
 		return false;
 	}
-
-	DebugOverlayTargetComponent->SetDebugOverlayFocus(closestEnemy, EDebugOverlayTargetSource::Nearest);
-
-	const FString summary = FString::Printf(
-		TEXT("NearestSelected | Target: %s | Distance: %.0f | Radius: %.0f"),
-		*GetNameSafe(closestEnemy),
-		closestDistance,
-		DebugOverlayNearestTargetRadius);
-	RecordDebugOverlayNearestSelectionResult(summary);
-	UE_LOG(
-		LogTemp,
-		Log,
-		TEXT("DebugOverlaySelectNearestTarget Result: Selected | Target: %s | Distance: %.0f | Radius: %.0f"),
-		*GetNameSafe(closestEnemy),
-		closestDistance,
-		DebugOverlayNearestTargetRadius);
-	return true;
 }
 
 bool ACPlayerController::TrySelectDebugOverlayActorTarget(const FString& InActorName)
@@ -287,59 +271,47 @@ bool ACPlayerController::TrySelectDebugOverlayActorTarget(const FString& InActor
 		return false;
 	}
 
-	if (!IsValid(GetWorld()) || !IsValid(GetPawn()))
+	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveActorEnemy(
+		GetWorld(),
+		GetPawn(),
+		actorName);
+
+	if (result.Status != EDebugOverlayFocusResolveStatus::Selected)
 	{
 		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-
-		const FString summary = TEXT("EditorSelectFailed | InvalidContext");
-		RecordDebugOverlayEditorSelectionResult(summary);
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: InvalidContext | Name: %s"), *actorName);
-		return false;
+		RecordDebugOverlayEditorSelectionResult(result.SummaryText);
+	}
+	else
+	{
+		DebugOverlayTargetComponent->SetDebugOverlayFocus(result.FocusActor.Get(), result.FocusSource);
+		RecordDebugOverlayEditorSelectionResult(result.SummaryText);
 	}
 
-	if (actorName.IsEmpty())
+	switch (result.Status)
 	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-
-		const FString summary = TEXT("EditorSelectFailed | NoActorName");
-		RecordDebugOverlayEditorSelectionResult(summary);
+	case EDebugOverlayFocusResolveStatus::InvalidContext:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: InvalidContext | Name: %s"), *result.ActorName);
+		return false;
+	case EDebugOverlayFocusResolveStatus::NoActorName:
 		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: NoActorName"));
 		return false;
-	}
-
-	AActor* targetActor = FindDebugOverlayActorByName(actorName);
-	if (!IsValid(targetActor))
-	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-
-		const FString summary = FString::Printf(TEXT("EditorSelectFailed | NoActor | Name: %s"), *actorName);
-		RecordDebugOverlayEditorSelectionResult(summary);
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: NoActor | Name: %s"), *actorName);
+	case EDebugOverlayFocusResolveStatus::NoActor:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: NoActor | Name: %s"), *result.ActorName);
 		return false;
-	}
-
-	ACEnemy* targetEnemy = Cast<ACEnemy>(targetActor);
-	if (!IsValid(targetEnemy))
-	{
-		DebugOverlayTargetComponent->ClearDebugOverlayFocus();
-
-		const FString summary = FString::Printf(TEXT("EditorSelectFailed | NotEnemy | Target: %s"), *GetNameSafe(targetActor));
-		RecordDebugOverlayEditorSelectionResult(summary);
+	case EDebugOverlayFocusResolveStatus::NotEnemy:
 		UE_LOG(
 			LogTemp,
 			Log,
 			TEXT("DebugOverlaySelectActorTarget Result: NotEnemy | Target: %s | Class: %s"),
-			*GetNameSafe(targetActor),
-			*GetNameSafe(targetActor->GetClass()));
+			*result.ActorName,
+			*result.ClassName);
+		return false;
+	case EDebugOverlayFocusResolveStatus::Selected:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: Selected | Target: %s"), *result.ActorName);
+		return true;
+	default:
 		return false;
 	}
-
-	DebugOverlayTargetComponent->SetDebugOverlayFocus(targetEnemy, EDebugOverlayTargetSource::EditorSelection);
-
-	const FString summary = FString::Printf(TEXT("EditorSelected | Target: %s"), *GetNameSafe(targetEnemy));
-	RecordDebugOverlayEditorSelectionResult(summary);
-	UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: Selected | Target: %s"), *GetNameSafe(targetEnemy));
-	return true;
 }
 
 void ACPlayerController::ClearDebugOverlayTarget()
@@ -362,63 +334,6 @@ void ACPlayerController::RecordDebugOverlayEditorSelectionResult(const FString& 
 	if (!IsValid(DebugOverlayTargetComponent)) return;
 
 	DebugOverlayTargetComponent->SetDebugOverlayFocusCommandResult(InSummary);
-}
-
-ACEnemy* ACPlayerController::FindClosestDebugOverlayEnemy(float& OutDistance) const
-{
-	OutDistance = 0.f;
-
-	UWorld* world = GetWorld();
-	const APawn* pawn = GetPawn();
-	if (!IsValid(world) || !IsValid(pawn)) return nullptr;
-
-	const FVector origin = pawn->GetActorLocation();
-
-	ACEnemy* closestEnemy = nullptr;
-	float closestDistanceSquared = TNumericLimits<float>::Max();
-
-	for (TActorIterator<ACEnemy> it(world); it; ++it)
-	{
-		ACEnemy* enemy = *it;
-		if (!IsValid(enemy)) continue;
-
-		const float distanceSquared = FVector::DistSquared(origin, enemy->GetActorLocation());
-		if (distanceSquared > closestDistanceSquared) continue;
-
-		closestDistanceSquared = distanceSquared;
-		closestEnemy = enemy;
-	}
-
-	if (!IsValid(closestEnemy)) return nullptr;
-
-	OutDistance = FMath::Sqrt(closestDistanceSquared);
-	return closestEnemy;
-}
-
-AActor* ACPlayerController::FindDebugOverlayActorByName(const FString& InActorName) const
-{
-	UWorld* world = GetWorld();
-	if (!IsValid(world) || InActorName.IsEmpty()) return nullptr;
-
-	for (TActorIterator<AActor> it(world); it; ++it)
-	{
-		AActor* actor = *it;
-		if (!IsValid(actor)) continue;
-
-		if (actor->GetName().Equals(InActorName, ESearchCase::IgnoreCase))
-		{
-			return actor;
-		}
-
-#if WITH_EDITOR
-		if (actor->GetActorLabel().Equals(InActorName, ESearchCase::IgnoreCase))
-		{
-			return actor;
-		}
-#endif
-	}
-
-	return nullptr;
 }
 
 #endif

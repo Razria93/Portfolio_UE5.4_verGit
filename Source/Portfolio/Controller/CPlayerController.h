@@ -76,7 +76,5 @@ private:
 
 	void RecordDebugOverlayNearestSelectionResult(const FString& InSummary) const;
 	void RecordDebugOverlayEditorSelectionResult(const FString& InSummary) const;
-	class ACEnemy* FindClosestDebugOverlayEnemy(float& OutDistance) const;
-	AActor* FindDebugOverlayActorByName(const FString& InActorName) const;
 #endif
 };
