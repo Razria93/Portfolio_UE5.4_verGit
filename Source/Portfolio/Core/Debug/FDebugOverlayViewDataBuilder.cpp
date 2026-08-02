@@ -368,7 +368,6 @@ namespace
 		FDebugOverlayViewData& InOutViewData,
 		const APawn* InPlayerPawn,
 		const ACEnemy* InEnemy,
-		const TArray<FString>& InEnemySourceLines,
 		const FDebugOverlayFocusViewData& InEnemyFocus,
 		const FDebugOverlaySnapshot& InSnapshot,
 		bool bInHasSnapshot,
@@ -379,11 +378,8 @@ namespace
 		InOutViewData.ActorPanels.Add(BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorldContextObject, bInHasSnapshot));
 
 		FDebugOverlayActorPanelViewData enemyPanelViewData = BuildActorPanelViewData(TEXT("[Enemy]"), InEnemy, InWorldContextObject, bInHasSnapshot);
+		enemyPanelViewData.bIncludeFocus = true;
 		enemyPanelViewData.Focus = InEnemyFocus;
-		if (enemyPanelViewData.Focus.LegacyLines.IsEmpty())
-		{
-			enemyPanelViewData.Focus.LegacyLines = InEnemySourceLines;
-		}
 		enemyPanelViewData.bAppendBlankBeforeStatus = true;
 		enemyPanelViewData.bIncludeCurrentAI = true;
 		enemyPanelViewData.CurrentAI = BuildEnemyCurrentAIViewData(InEnemy);
@@ -447,7 +443,6 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const FDebugOverlayVie
 		viewData,
 		InContext.ViewerPawn,
 		InContext.DisplayEnemy,
-		InContext.EnemySourceLines,
 		InContext.EnemyFocus,
 		snapshot,
 		bHasSnapshot,

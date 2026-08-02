@@ -75,12 +75,12 @@ struct FDebugOverlayFocusViewData
 	FString CurrentSourceText;
 	FString CurrentActorText;
 	FString LastCommandText;
-	TArray<FString> LegacyLines;
 };
 
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
+	bool bIncludeFocus = false;
 	FDebugOverlayFocusViewData Focus;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
@@ -138,6 +138,5 @@ struct FDebugOverlayViewDataBuildContext
 	UWorld* World = nullptr;
 	const APawn* ViewerPawn = nullptr;
 	const ACEnemy* DisplayEnemy = nullptr;
-	TArray<FString> EnemySourceLines;
 	FDebugOverlayFocusViewData EnemyFocus;
 };

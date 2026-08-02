@@ -68,6 +68,27 @@ namespace
 		AppendOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
 	}
 
+	FString ValueOrNone(const FString& InValue)
+	{
+		return InValue.IsEmpty() ? FString(TEXT("None")) : InValue;
+	}
+
+	FString FormatFocusActorText(const FString& InCurrentActorText)
+	{
+		constexpr TCHAR SelectedPrefix[] = TEXT("Selected: ");
+		const FString actorText = InCurrentActorText.StartsWith(SelectedPrefix)
+			? InCurrentActorText.RightChop(FCString::Strlen(SelectedPrefix))
+			: InCurrentActorText;
+		return ValueOrNone(actorText);
+	}
+
+	void AppendFocusLines(TArray<FString>& InOutLines, const FDebugOverlayFocusViewData& InFocusViewData)
+	{
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusMode: %s"), *ValueOrNone(InFocusViewData.CurrentSourceText)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusActor: %s"), *FormatFocusActorText(InFocusViewData.CurrentActorText)));
+		AppendOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusCommand: %s"), *ValueOrNone(InFocusViewData.LastCommandText)));
+	}
+
 	void AppendRecentExecutionBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentExecutionViewData& InRecentExecutionViewData)
 	{
 		AppendOverlayLine(InOutLines, TEXT(""));
@@ -155,9 +176,9 @@ namespace
 		AppendOverlayLine(InOutLines, TEXT(""));
 		AppendOverlayLine(InOutLines, InActorPanelViewData.HeaderText);
 
-		for (const FString& focusLine : InActorPanelViewData.Focus.LegacyLines)
+		if (InActorPanelViewData.bIncludeFocus)
 		{
-			AppendOverlayLine(InOutLines, focusLine);
+			AppendFocusLines(InOutLines, InActorPanelViewData.Focus);
 		}
 
 		if (InActorPanelViewData.bAppendBlankBeforeStatus)

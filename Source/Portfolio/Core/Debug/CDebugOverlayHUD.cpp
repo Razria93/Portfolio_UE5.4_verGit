@@ -27,45 +27,36 @@ namespace
 		InOutLines.Add(InLine);
 	}
 
-	void AppendFocusLegacyLine(TArray<FString>& InOutLines, FDebugOverlayFocusViewData& InOutFocusViewData, const FString& InLine)
-	{
-		AppendOverlayLine(InOutLines, InLine);
-		InOutFocusViewData.LegacyLines.Add(InLine);
-	}
-
-	void AppendTargetSelectionSummary(TArray<FString>& InOutLines, FDebugOverlayFocusViewData& InOutFocusViewData, const UCDebugOverlayTargetComponent* InTargetComp)
+	void UpdateLastFocusCommand(FDebugOverlayFocusViewData& InOutFocusViewData, const UCDebugOverlayTargetComponent* InTargetComp)
 	{
 		if (!IsValid(InTargetComp)) return;
 		if (!InTargetComp->HasDebugOverlaySelectionSummary()) return;
 
-		const FString selectionSummary = InTargetComp->GetDebugOverlaySelectionSummary();
-		InOutFocusViewData.LastCommandText = selectionSummary;
-		AppendFocusLegacyLine(InOutLines, InOutFocusViewData, FString::Printf(TEXT("EnemySelect: %s"), *selectionSummary));
+		InOutFocusViewData.LastCommandText = InTargetComp->GetDebugOverlaySelectionSummary();
 	}
 }
 #endif
 
 #if !UE_BUILD_SHIPPING
-ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(TArray<FString>& OutSourceLines, FDebugOverlayFocusViewData& OutFocusViewData)
+ACEnemy* ACDebugOverlayHUD::ResolveDisplayEnemy(FDebugOverlayFocusViewData& OutFocusViewData)
 {
-	if (ACEnemy* targetComponentEnemy = ResolveTargetComponentEnemy(OutSourceLines, OutFocusViewData))
+	if (ACEnemy* targetComponentEnemy = ResolveTargetComponentEnemy(OutFocusViewData))
 	{
 		return targetComponentEnemy;
 	}
 
 	OutFocusViewData.CurrentSourceText = TEXT("None");
-	OutFocusViewData.CurrentActorText.Reset();
-	AppendFocusLegacyLine(OutSourceLines, OutFocusViewData, TEXT("EnemySource: None"));
+	OutFocusViewData.CurrentActorText = TEXT("None");
 	if (const APlayerController* owningPlayerController = GetOwningPlayerController())
 	{
 		const UCDebugOverlayTargetComponent* targetComp = owningPlayerController->FindComponentByClass<UCDebugOverlayTargetComponent>();
-		AppendTargetSelectionSummary(OutSourceLines, OutFocusViewData, targetComp);
+		UpdateLastFocusCommand(OutFocusViewData, targetComp);
 	}
 
 	return nullptr;
 }
 
-ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(TArray<FString>& OutSourceLines, FDebugOverlayFocusViewData& OutFocusViewData) const
+ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const
 {
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
 	if (!IsValid(owningPlayerController)) return nullptr;
@@ -78,9 +69,7 @@ ACEnemy* ACDebugOverlayHUD::ResolveTargetComponentEnemy(TArray<FString>& OutSour
 
 	OutFocusViewData.CurrentSourceText = targetComp->GetDebugOverlayTargetSource();
 	OutFocusViewData.CurrentActorText = targetComp->GetDebugOverlayTargetSummary();
-	AppendFocusLegacyLine(OutSourceLines, OutFocusViewData, FString::Printf(TEXT("EnemySource: %s"), *OutFocusViewData.CurrentSourceText));
-	AppendFocusLegacyLine(OutSourceLines, OutFocusViewData, FString::Printf(TEXT("EnemyTarget: %s"), *OutFocusViewData.CurrentActorText));
-	AppendTargetSelectionSummary(OutSourceLines, OutFocusViewData, targetComp);
+	UpdateLastFocusCommand(OutFocusViewData, targetComp);
 	return targetEnemy;
 }
 
@@ -211,16 +200,14 @@ void ACDebugOverlayHUD::DrawHUD()
 	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 
 	UWorld* world = GetWorld();
-	TArray<FString> enemySourceLines;
 	FDebugOverlayFocusViewData enemyFocus;
-	const ACEnemy* enemy = ResolveDisplayEnemy(enemySourceLines, enemyFocus);
+	const ACEnemy* enemy = ResolveDisplayEnemy(enemyFocus);
 
 	FDebugOverlayViewDataBuildContext context;
 	context.WorldContextObject = world;
 	context.World = world;
 	context.ViewerPawn = GetOwningPawn();
 	context.DisplayEnemy = enemy;
-	context.EnemySourceLines = enemySourceLines;
 	context.EnemyFocus = enemyFocus;
 
 	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(context);
