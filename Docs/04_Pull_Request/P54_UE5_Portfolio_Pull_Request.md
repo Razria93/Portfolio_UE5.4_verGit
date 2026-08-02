@@ -18,6 +18,8 @@
 - [x] CSV export 동작 유지
 - [x] plugin README 링크 / 표현 정리
 - [x] plugin 기본 icon 추가
+- [x] Level Editor toolbar button 추가
+- [x] 대표 screenshot evidence 정리
 - [x] `PortfolioEditor Win64 Development` build 통과
 - [x] `git diff --check` 통과
 
@@ -26,6 +28,22 @@
 - Base: `main`
 - Branch: `feature/asset-reference-inspector-plugin`
 - Draft PR: 생성 예정
+
+## 대표 스크린샷
+
+### Toolbar button
+
+![Asset Reference Inspector toolbar button](../98_Evidence/01_Screenshot/AssetReferenceInspector/asset_reference_inspector_01_toolbar_button.jpg)
+
+- Level Editor 상단 toolbar의 `Asset Reference Inspector` button과 tooltip 표시를 확인한다.
+- Editor-only plugin 진입점 evidence이며 runtime gameplay 기능 claim으로 사용하지 않는다.
+
+### Nomad panel
+
+![Asset Reference Inspector Nomad panel](../98_Evidence/01_Screenshot/AssetReferenceInspector/asset_reference_inspector_02_nomad_panel.jpg)
+
+- Toolbar button 클릭 후 `Asset Reference Inspector` Nomad panel이 열리는 것을 확인한다.
+- Dependency / referencer 분석 UI 진입점과 Asset Registry 기반 inspection panel을 보여준다.
 
 ## 요약
 
@@ -103,15 +121,21 @@ Content Browser Sync
 - Tree node double-click 시 Content Browser Sync를 수행한다.
 - 현재 Tree 결과는 CSV로 export할 수 있다.
 
-### 4. 기본 icon 추가
+### 4. 기본 icon / toolbar 진입점 추가
 
-Plugin Browser 식별용 기본 icon을 추가한다.
+Plugin Browser 식별용 기본 icon을 추가하고, Editor UI entry에서 같은 plugin 성격이 드러나도록 연결한다.
 
 ```text
 Plugins/AssetReferenceInspector/Resources/Icon128.png
 ```
 
-이번 단계에서는 descriptor icon 중심으로 제한하고, Slate toolbar / custom style set icon 확장은 하지 않는다.
+추가 진입점:
+
+```text
+Level Editor toolbar button
+```
+
+Toolbar button은 panel open 진입점이다. Asset 분석 실행, CSV export, config 저장을 직접 수행하는 button으로 해석하지 않는다.
 
 ### 5. README 정리
 
@@ -129,6 +153,7 @@ Plugins/AssetReferenceInspector/Resources/Icon128.png
 ```text
 Docs/04_Pull_Request/P54_UE5_Portfolio_Pull_Request.md
 Docs/04_Pull_Request/00_Pull_Request_Index.md
+Docs/98_Evidence/01_Screenshot/AssetReferenceInspector/
 Plugins/AssetReferenceInspector/
 ```
 
@@ -180,9 +205,14 @@ Result: Pass
 
 ## Evidence 연결
 
-이번 PR 문서에는 별도 screenshot evidence를 포함하지 않는다.
+대표 screenshot:
 
-Editor menu / Nomad panel / CSV export 동작을 PR 본문에서 시각적으로 보강하려면 후속 작업으로 `P54 evidence screenshot capture`를 진행한다.
+| Evidence | 확인 내용 |
+| --- | --- |
+| `asset_reference_inspector_01_toolbar_button.jpg` | Level Editor toolbar button과 tooltip 표시 확인 |
+| `asset_reference_inspector_02_nomad_panel.jpg` | Toolbar button 클릭 후 Nomad panel open 및 dependency / referencer 분석 UI 진입점 확인 |
+
+Screenshot은 Editor-only tooling 진입점과 panel 표시 evidence로 사용한다. 실제 캡처에서 보이지 않는 CSV export 성공, generated output, packaged/runtime 기능 claim으로 사용하지 않는다.
 
 ## 제외 / 보류 항목
 
@@ -191,11 +221,10 @@ Editor menu / Nomad panel / CSV export 동작을 PR 본문에서 시각적으로
 - Packaged build feature claim
 - Plugin preset 저장
 - Plugin config 저장
-- Custom Slate style set icon 확장
 - Node Graph UI
 - Soft Reference / Manage Dependency 전용 UI 분리
 - Delete-safe unused asset 판정 claim
-- Screenshot evidence 촬영 / 패키징
+- 추가 screenshot 촬영 / 패키징
 
 ## PR 제출 전 확인
 
@@ -203,6 +232,8 @@ Editor menu / Nomad panel / CSV export 동작을 PR 본문에서 시각적으로
 - [x] Portfolio Tools menu grouping 확인
 - [x] README broken link 정리
 - [x] 기본 icon 추가
+- [x] Toolbar button 표시 확인
+- [x] 대표 screenshot evidence 정리
 - [x] Build 통과
 - [x] `git diff --check` 통과
 - [x] Generated output 제외
