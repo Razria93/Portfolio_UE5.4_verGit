@@ -48,7 +48,7 @@ Debug Overlay 기준:
 
 | 파일 | 현재 역할 | 판단 |
 | --- | --- | --- |
-| `Source/Portfolio/Core/Debug/CDebugOverlayHUD.h/.cpp` | Canvas 기반 3-panel HUD, actor state, recent summary, EventLog panel, target resolve, Current AI 표시 | 가장 큰 cleanup 후보 |
+| `Source/Portfolio/Core/Debug/CDebugOverlayHUD.h/.cpp` | Canvas 기반 3-panel HUD, actor state, recent summary, EventLog panel, focus resolve, Current AI 표시 | 가장 큰 cleanup 후보 |
 | `Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.h/.cpp` | debug-only focus actor/source/command result 저장, public Target compatibility wrapper 유지 | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotTypes.h` | snapshot/event/recent summary data-only type | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.h/.cpp` | world별 snapshot store, event ring, EventLog filter, recent summary 기록/query | 섹션 정리 후보 |
@@ -57,7 +57,7 @@ Debug Overlay 기준:
 | `Source/Portfolio/Core/Debug/FCombatSignalDebug.cpp` | collision window, target packet, combat result를 SnapshotStore에 기록하는 debug hook | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FCombatResultDebug.cpp` | combat result receive를 SnapshotStore에 기록하는 debug hook | 현재 구조 유지 |
 | `Source/Portfolio/Core/Debug/FAICombatBTDebug.cpp` | AI combat task event를 SnapshotStore에 기록하는 debug hook | 현재 구조 유지 |
-| `Source/Portfolio/Controller/CPlayerController.h/.cpp` | debug target Exec command entry, FocusResolver 호출, FocusComponent focus result apply | 현재 구조 유지 |
+| `Source/Portfolio/Controller/CPlayerController.h/.cpp` | debug focus Exec command entry, FocusResolver 호출, FocusComponent focus result apply | 현재 구조 유지 |
 
 ## 4. W05 / PR 축별 판단
 
@@ -67,7 +67,7 @@ Debug Overlay 기준:
 | P43 CVar Ownership | `Portfolio.DebugOverlay.*` CVar는 Store/HUD/Controller debug 경로에 한정된다. | 유지 |
 | P44 Comment / Section Cleanup | Store/HUD helper가 길어졌고 HUD anonymous namespace의 섹션 구분이 약하다. | LowRiskFix |
 | P45 Naming / API Cleanup | `Try`, `Append`, `Format`, `Resolve`, `Record` 계열 이름은 대체로 맞다. 일부 역할 이름 보강 후보가 있다. | LowRiskFix |
-| P46 Type Header Organization | SnapshotTypes는 data-only, Store는 API-only static utility, TargetComponent는 UActorComponent로 역할이 분리되어 있다. | 유지 |
+| P46 Type Header Organization | SnapshotTypes는 data-only, Store는 API-only static utility, FocusComponent는 UActorComponent로 역할이 분리되어 있다. | 유지 |
 | P47 Meaning Cleanup | `Pannel_01/02/03` 오탈자처럼 보이는 표현은 현재 style lock에 의해 표시값으로 고정되어 있다. | NoChange |
 | P48 Include Order Cleanup | 대부분 matching header -> project/internal -> engine 흐름을 따른다. 일부 재확인 후보만 있다. | LowRiskFix |
 | P49 API Const Consistency | getter/query const는 대체로 지켜진다. HUD draw/cache/diagnostic record는 const 대상이 아니다. | 유지 |
@@ -88,7 +88,7 @@ Debug Overlay 기준:
 - Interaction panel formatting
 - EventLog panel formatting
 - panel layout / background / header draw
-- TargetComponent Focus API 기반 Enemy resolve
+- FocusComponent API 기반 Enemy resolve
 
 현재 구조는 P1 마감 기준으로 허용 가능하다. Debug overlay는 개발 전용 tooling이고, 현재 파일 분리는 기능 안정화보다 리스크가 크다.
 

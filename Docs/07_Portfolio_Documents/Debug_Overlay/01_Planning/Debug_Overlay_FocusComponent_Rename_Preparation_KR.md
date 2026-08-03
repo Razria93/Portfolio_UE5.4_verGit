@@ -91,7 +91,7 @@ using EDebugOverlayTargetSource = EDebugOverlayFocusSource;
 | `DebugOverlaySelectActorTarget` | console command compatibility | 유지 |
 | `DebugOverlayClearTarget` | console command compatibility | 유지 |
 | `ExecuteDebugOverlayTargetCommand` | Editor command sender helper | command 문자열 호환 때문에 유지 |
-| `LastTargetCommandStatus` | Editor UI 상태명 | UI terminology cleanup 후보, 이번 작업 제외 |
+| `LastFocusCommandStatus` | Editor UI 상태명 | Focus terminology cleanup 완료 |
 | `TEXT("DebugOverlayTarget")` | native subobject name | asset/reference 안정성을 위해 유지 |
 | `Get/Set/ClearDebugOverlayTarget*` | public compatibility wrapper | 유지 |
 | `DebugOverlaySelectionSummary` | compatibility wrapper 명명 | 유지 |
