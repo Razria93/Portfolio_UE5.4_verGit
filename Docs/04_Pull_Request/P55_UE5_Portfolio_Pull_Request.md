@@ -23,9 +23,7 @@
 
 ## 브랜치
 
-- Base: `main`
-- Branch: `main`
-- Draft PR: 생성 예정
+- Branch: `feature/debug-overlay-focus-migration-closure`
 
 ## 대표 스크린샷
 
