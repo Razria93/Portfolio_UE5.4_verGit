@@ -220,3 +220,41 @@ Debug Overlay P1 마감 전 LowRiskFix cleanup으로 HUD/Store helper section과
 - 유지해야 할 `NoChange` 항목을 고정했다.
 
 다음 작업 후보는 이 문서의 `LowRiskFix`만 반영하는 작은 cleanup 구현이다. 실제 진행 여부와 범위는 별도 작업 시작 시 다시 확인한다.
+
+## 9. 현재 브랜치 / 다음 브랜치 고정 메모
+
+이 검증 문서는 현재 코드 구조 리뷰 결과를 보존하기 위한 문서이므로, 아래 경계를 후속 작업의 기준으로 남긴다.
+
+### 9.1 현재 브랜치에서 마무리할 것
+
+- Focus terminology cleanup 결과와 현재 코드 구조가 일치하는지 기록한다.
+- Editor UI 용어 정리와 문서 최신화가 완료됐는지 확인한다.
+- Target wrapper, enum alias, subobject name의 유지 사유를 검증 메모에 남긴다.
+- `git diff --check`와 Development build 성공 여부를 근거로 브랜치 종료 판단을 남긴다.
+
+### 9.2 다음 브랜치에서 구현할 것
+
+- Focus command result 구조체화
+- Focus mode enum 확장
+- RecentCombat 명시 command 경로
+- Target compatibility wrapper 실제 제거 여부 판단
+- `EDebugOverlayTargetSource` alias 실제 제거 여부 판단
+- `TEXT("DebugOverlayTarget")` subobject name 변경과 asset migration/Core Redirect 검토
+
+### 9.3 이번 브랜치에서 하지 않을 것
+
+- Canvas text overflow / ellipsis
+- Runtime LOD actual
+- BT active node tracking
+- Blueprint/UMG adapter
+- Blueprint/UMG override
+- Store schema/API 실제 변경
+- Core Redirect 선제 추가
+- gameplay target/lock-on system 구현
+- 자동 RecentCombat focus fallback 추가
+
+### 9.4 다음 브랜치 인계 기준
+
+- 호환성 제거 3종(wrapper, alias, subobject name)은 하나의 migration 패키지로 묶는다.
+- missing class/reference가 실제로 발견되기 전에는 Core Redirect를 추가하지 않는다.
+- 구조 리뷰 문서와 설계 문서의 역할을 분리 유지한다.

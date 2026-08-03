@@ -169,3 +169,42 @@ PortfolioEditor Win64 Development build
 2. Runtime LOD actual 데이터 소스 조사 및 구현
 3. BT active node tracking 설계
 4. Blueprint/UMG adapter/override 설계
+
+## 11. 현재 브랜치 / 다음 브랜치 고정 메모
+
+이 문서는 이주 결과와 호환성 범위를 고정하기 위한 문서이므로, 후속 작업에서 범위가 섞이지 않도록 아래처럼 분리한다.
+
+### 11.1 현재 브랜치에서 마무리할 것
+
+- Focus terminology cleanup을 마감한다.
+- Editor UI label/description/status 변수명을 Focus 기준으로 정리한다.
+- public command 문자열은 유지한다.
+- Target compatibility wrapper, `EDebugOverlayTargetSource` alias, `TEXT("DebugOverlayTarget")` 유지 사유를 문서로 남긴다.
+- 구조 검토/검증 문서와 내용이 일치하는지 맞춘다.
+
+### 11.2 다음 브랜치에서 구현할 것
+
+- Focus command result 구조체화
+- Focus mode enum 확장
+- RecentCombat 명시 command 경로
+- Target compatibility wrapper 실제 제거 여부 판단
+- `EDebugOverlayTargetSource` alias 실제 제거 여부 판단
+- `TEXT("DebugOverlayTarget")` subobject name 변경 및 asset migration/Core Redirect 검토
+
+### 11.3 이번 브랜치에서 하지 않을 것
+
+- Canvas text overflow / ellipsis
+- Runtime LOD actual
+- BT active node tracking
+- Blueprint/UMG adapter
+- Blueprint/UMG override
+- Store schema/API 실제 변경
+- Core Redirect 선제 추가
+- gameplay target/lock-on system 구현
+- 자동 RecentCombat focus fallback 추가
+
+### 11.4 다음 브랜치 인계 기준
+
+- wrapper/alias/subobject name은 하나의 호환성 제거 패키지로 묶는다.
+- missing class/reference가 실제로 확인되기 전에는 Core Redirect를 추가하지 않는다.
+- 구조 리뷰 문서는 현재 책임 분리만 추적하고 기능 확장 계획은 별도 문서로 분리한다.

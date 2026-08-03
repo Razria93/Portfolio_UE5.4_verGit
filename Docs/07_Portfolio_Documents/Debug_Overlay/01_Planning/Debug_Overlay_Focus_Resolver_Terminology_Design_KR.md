@@ -3183,3 +3183,43 @@ Agent C: 변경 범위/금지 항목 검토
 에이전트가 표시 정책 변경을 제안하더라도 1차 구현에는 반영하지 않는다.
 에이전트 결과가 충돌하면 메인 에이전트가 판단하거나 사용자에게 질문한다.
 ```
+
+## 64. 브랜치 고정 메모
+
+이 문서는 설계 메모이지만, 후속 브랜치로 내용이 흩어지지 않도록 현재 브랜치와 다음 브랜치의 경계를 고정해 둔다.
+
+### 64.1 현재 브랜치에서 마무리할 것
+
+- Debug Overlay 내부 용어를 Target에서 Focus로 정리한다.
+- Editor UI label, help text, command status 같은 표시 문자열을 Focus 기준으로 정리한다.
+- public console command 문자열은 유지한다.
+- Target compatibility wrapper, `EDebugOverlayTargetSource` alias, `TEXT("DebugOverlayTarget")` subobject name의 유지 사유를 문서로 남긴다.
+- 구조 리뷰와 검증 문서를 현재 구현 상태에 맞게 최신화한다.
+
+### 64.2 다음 브랜치에서 구현할 것
+
+- Focus command result를 문자열 요약에서 구조체 기반 모델로 전환한다.
+- Focus mode enum을 확장한다.
+- RecentCombat 명시 command 경로를 추가한다.
+- Target compatibility wrapper의 실제 제거 여부를 검증 후 판단한다.
+- `EDebugOverlayTargetSource` alias의 실제 제거 여부를 검증 후 판단한다.
+- `TEXT("DebugOverlayTarget")` subobject name 변경과 asset migration/Core Redirect 필요성을 별도 검토한다.
+
+### 64.3 이번 브랜치에서 하지 않을 것
+
+- Canvas text overflow / ellipsis
+- Runtime LOD actual
+- BT active node tracking
+- Blueprint/UMG adapter
+- Blueprint/UMG override
+- Store schema/API 실제 변경
+- Core Redirect 선제 추가
+- gameplay target/lock-on system 구현
+- 자동 RecentCombat focus fallback 추가
+
+### 64.4 다음 브랜치 인계 기준
+
+- current state 와 last command result 분리 설계가 필요할 때는 `FDebugOverlayFocusCommandResult`를 기준으로 구조화한다.
+- mode 확장이나 RecentCombat command 추가는 FocusResolver/Controller 경계에서 처리한다.
+- 호환성 제거 3종(wrapper, alias, subobject name)은 하나의 migration 패키지로 묶어 검토한다.
+- missing class/reference가 실제로 발견되기 전에는 Core Redirect를 추가하지 않는다.
