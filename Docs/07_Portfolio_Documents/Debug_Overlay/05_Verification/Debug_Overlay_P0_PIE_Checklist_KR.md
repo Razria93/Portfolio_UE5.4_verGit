@@ -63,7 +63,7 @@ P0.5 구현 이후에는 다음 구조를 기준으로 확인한다.
 | Player/Enemy `Guard` | `Wants`, `Pose`, `CanGuard` 등이 pipe 구분으로 표시 |
 | Player/Enemy `Movement` | `Gait`, `Speed`, `Dir`, `CanMove`, `Falling`이 pipe 구분으로 표시 |
 | Player/Enemy `HP` | `HP=current/max`, `DeadState=Alive` 등 |
-| EnemyFocusMode | `TargetComponent.Nearest` 또는 `None` |
+| EnemyFocusMode | `FocusComponent.Nearest` 또는 `None` |
 | Recent Execution | subject 포함 compact summary |
 | Event Log | 현재 compact key/value format 유지 |
 
