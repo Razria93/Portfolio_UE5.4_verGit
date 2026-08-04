@@ -193,7 +193,7 @@ namespace
 			EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Combat")));
 			EventLogFilterOptions.Add(MakeShared<FString>(TEXT("AI")));
 			RefreshEventLogFilterSelection();
-			LastTargetCommandStatus = LOCTEXT("TargetCommandNotRun", "Last Command: None");
+			LastFocusCommandStatus = LOCTEXT("FocusCommandNotRun", "Last Command: None");
 
 			ChildSlot
 			[
@@ -274,7 +274,7 @@ namespace
 						+ SVerticalBox::Slot()
 						.AutoHeight()
 						[
-							MakeTargetCommandSection()
+							MakeFocusCommandSection()
 						]
 					]
 				]
@@ -285,7 +285,7 @@ namespace
 		TArray<TSharedPtr<FString>> EventLogFilterOptions;
 		TSharedPtr<FString> SelectedEventLogFilter;
 		TSharedPtr<SComboBox<TSharedPtr<FString>>> EventLogFilterComboBox;
-		FText LastTargetCommandStatus;
+		FText LastFocusCommandStatus;
 
 		TSharedRef<SWidget> MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName) const
 		{
@@ -503,7 +503,7 @@ namespace
 				];
 		}
 
-		TSharedRef<SWidget> MakeTargetCommandSection()
+		TSharedRef<SWidget> MakeFocusCommandSection()
 		{
 			return SNew(SVerticalBox)
 				+ SVerticalBox::Slot()
@@ -511,14 +511,14 @@ namespace
 				.Padding(0.f, 0.f, 0.f, 4.f)
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("TargetSectionLabel", "Target"))
+					.Text(LOCTEXT("FocusSectionLabel", "Focus"))
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 6.f)
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("TargetSectionHelp", "Runs existing debug overlay target console commands during PIE. Check the HUD for the selection result."))
+					.Text(LOCTEXT("FocusSectionHelp", "Runs existing debug overlay focus console commands during PIE. Check the HUD for the selection result."))
 					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 				]
 				+ SVerticalBox::Slot()
@@ -536,10 +536,10 @@ namespace
 						.Padding(0.f, 0.f, 4.f, 0.f)
 						[
 							SNew(SButton)
-							.Text(LOCTEXT("SelectNearestTargetButton", "Select Nearest Target"))
+							.Text(LOCTEXT("SelectNearestFocusButton", "Select Nearest Focus"))
 							.OnClicked_Lambda([this]()
 							{
-								LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
+								LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
 									DebugOverlaySelectNearestTargetCommand,
 									LOCTEXT("SelectNearestTargetSent", "Last Command: SelectNearestTarget"));
 								return FReply::Handled();
@@ -553,7 +553,7 @@ namespace
 							.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Actor"))
 							.OnClicked_Lambda([this]()
 							{
-								LastTargetCommandStatus = ExecuteDebugOverlayOutlinerTargetCommand();
+								LastFocusCommandStatus = ExecuteDebugOverlayOutlinerTargetCommand();
 								return FReply::Handled();
 							})
 						]
@@ -562,10 +562,10 @@ namespace
 					.AutoHeight()
 					[
 						SNew(SButton)
-						.Text(LOCTEXT("ClearTargetButton", "Clear Target"))
+						.Text(LOCTEXT("ClearFocusButton", "Clear Focus"))
 						.OnClicked_Lambda([this]()
 						{
-							LastTargetCommandStatus = ExecuteDebugOverlayTargetCommand(
+							LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
 								DebugOverlayClearTargetCommand,
 								LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
 							return FReply::Handled();
@@ -578,7 +578,7 @@ namespace
 					SNew(STextBlock)
 					.Text_Lambda([this]()
 					{
-						return LastTargetCommandStatus;
+						return LastFocusCommandStatus;
 					})
 					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 				];

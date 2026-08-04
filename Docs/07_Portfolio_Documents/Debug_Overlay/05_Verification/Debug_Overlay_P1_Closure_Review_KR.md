@@ -18,7 +18,7 @@ FinalCandidate evidence package는 P1 closure 이후 별도 폴더와 문서로 
 
 | 영역 | 상태 | 마감 판단 |
 | --- | --- | --- |
-| TargetComponent 기반 Enemy 선택 | 완료 | `DebugOverlaySelectNearestTarget`, `DebugOverlayClearTarget`, `EnemySource: TargetComponent.Nearest`, `EnemySource: None` 기준으로 claim 가능 |
+| TargetComponent 기반 Enemy 선택 | 완료 | `DebugOverlaySelectNearestTarget`, `DebugOverlayClearTarget`, `EnemyFocusMode: TargetComponent.Nearest`, `EnemyFocusMode: None` 기준으로 claim 가능 |
 | Nearest target 운용성 | 완료 | nearest radius `3000` 기준으로 PIE 운용 가능 |
 | Player / Enemy current state panel | 완료 | actor current state 비교 claim 가능 |
 | Player / Enemy Recent Execution | 완료 | actor별 recent execution 분리 claim 가능 |
@@ -94,7 +94,7 @@ FinalCandidate로 패키징한 캡처 중 실제 화면에서 읽히는 범위�
 FinalCandidate package는 다음 기준으로 작성 완료 상태다.
 
 - `Pannel_01 / Pannel_02 / Pannel_03` layout이 유지된다.
-- `TargetComponent.Nearest`와 `EnemySource: None` 전환이 확인된다.
+- `TargetComponent.Nearest`와 `EnemyFocusMode: None` 전환이 확인된다.
 - Player / Enemy Recent Execution이 actor별로 분리되어 표시된다.
 - EventLog separate panel에서 filter / limit이 동작한다.
 - Enemy Current AI와 Recent AI Event가 분리되어 표시된다.

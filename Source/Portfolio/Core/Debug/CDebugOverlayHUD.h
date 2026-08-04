@@ -5,6 +5,7 @@
 #include "CDebugOverlayHUD.generated.h"
 
 class ACEnemy;
+struct FDebugOverlayFocusViewData;
 
 UCLASS()
 class PORTFOLIO_API ACDebugOverlayHUD : public AHUD
@@ -13,19 +14,9 @@ class PORTFOLIO_API ACDebugOverlayHUD : public AHUD
 
 #if !UE_BUILD_SHIPPING
 private:
-	// Runtime State
-	TWeakObjectPtr<ACEnemy> CachedEnemy;
-	float LastEnemyScanTimeSeconds = -1.f;
-	int32 LastEnemyScanCount = 0;
-
 	// Enemy Resolution
-	ACEnemy* ResolveDisplayEnemy(TArray<FString>& OutSourceLines);
-	ACEnemy* ResolveTargetComponentEnemy(TArray<FString>& OutSourceLines) const;
-	ACEnemy* ResolveRecentCombatEnemy(const APawn* InViewerPawn, TArray<FString>& OutSourceLines) const;
-	ACEnemy* ResolveWorldScanFallbackEnemy(TArray<FString>& OutSourceLines);
-
-	// Enemy Cache
-	void RefreshCachedEnemyIfNeeded();
+	ACEnemy* ResolveDisplayEnemy(FDebugOverlayFocusViewData& OutFocusViewData);
+	ACEnemy* ResolveFocusComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const;
 #endif
 
 public:

@@ -143,8 +143,8 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 | 11 | Stagger Count stack 1 | Enemy `Stagger: 1/3` | `Combat` |
 | 12 | Stagger Count stack 2 | Enemy `Stagger: 2/3` | `Combat` |
 | 13 | Stagger Count reset | Enemy stagger 이후 `0/3` reset | `Combat` |
-| 14 | TargetComponent.Nearest selected | `EnemySource: TargetComponent.Nearest` | `All` |
-| 15 | TargetComponent clear / no target | `DebugOverlayClearTarget` 후 `EnemySource: None` | `All` |
+| 14 | TargetComponent.Nearest selected | `EnemyFocusMode: TargetComponent.Nearest` | `All` |
+| 15 | TargetComponent clear / no target | `DebugOverlayClearTarget` 후 `EnemyFocusMode: None` | `All` |
 | 16 | Enemy Recent Execution | Enemy panel의 actor-local `[Recent Execution]` | `Execution` |
 | 17 | Interaction Recent Combat damage breakdown | `Request / Mitigated / Final / Commit` | `Combat` |
 | 18 | EventLog All | `[Event Log: All]` | `All` |
@@ -168,8 +168,8 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 | Enemy Stagger | parry stack threshold 후 enemy reaction | Enemy `Reaction: Stagger` | 장기 stagger 통계 |
 | Stagger stack 1 / 2 | 현재 parry stagger stack | Enemy `Stagger: 1/3`, `2/3` | 누적 총량 |
 | Stagger reset | stagger 이후 stack reset 상태 | Enemy `Stagger: 0/3` | reset 원인 전체 검증 |
-| Target selected | 명시 target source 기반 enemy evidence | `EnemySource: TargetComponent.Nearest`, `EnemySelect` | 범용 target system / lock-on / combat target flow 변경 |
-| Target clear | 명시 target 해제 후 no target 상태 | `EnemySource: None` | fallback enemy 자동 선택 성공 |
+| Target selected | 명시 target source 기반 enemy evidence | `EnemyFocusMode: TargetComponent.Nearest`, `EnemyFocusCommand` | 범용 target system / lock-on / combat target flow 변경 |
+| Target clear | 명시 target 해제 후 no target 상태 | `EnemyFocusMode: None` | fallback enemy 자동 선택 성공 |
 | Enemy Recent Execution | selected Enemy 기준 최근 execution 표시 | Enemy panel `[Recent Execution]` | Interaction recent execution과 동일한 의미라고 주장 |
 | Interaction damage | combat result breakdown | `Request`, `Mitigated`, `Final`, `Commit` | 모든 damage formula 성공 |
 | EventLog filters | EventLog 표시 범위 제어 | `[Event Log: ...]` | event 미발생 증명 |
@@ -186,7 +186,7 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 - Recent AI Event를 current AI처럼 설명하는 것
 - `BT_Default.uasset` Patrol range 변경을 HUD 기능처럼 설명하는 것
 - PIE 검증 캡처를 FinalCandidate로 승격하는 것
-- `EnemySource: None` 상태에서 Enemy current state를 성공 evidence처럼 설명하는 것
+- `EnemyFocusMode: None` 상태에서 Enemy current state를 성공 evidence처럼 설명하는 것
 - 범용 target system / lock-on / combat target flow 변경처럼 설명하는 것
 - Shipping HUD / gameplay HUD / UMG / Slate HUD처럼 보이는 설명
 
@@ -201,7 +201,7 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 | Windows taskbar / tooltip / notification 노출 | 제외 |
 | EventLog panel이 화면 밖으로 잘림 | 재촬영 |
 | Player / Enemy / Interaction / EventLog panel overlap | 재촬영 |
-| `EnemySource: None`인데 Enemy current state를 성공 evidence처럼 보임 | 제외 또는 claim 수정 |
+| `EnemyFocusMode: None`인데 Enemy current state를 성공 evidence처럼 보임 | 제외 또는 claim 수정 |
 | `Runtime LOD: N/A`가 Runtime LOD 성공처럼 보임 | 제외 또는 claim 수정 |
 | text clipping 또는 blur가 심함 | 재촬영 |
 | claim과 무관한 EventLog noise가 장면 해석을 방해함 | filter 조정 후 재촬영 |
@@ -269,7 +269,7 @@ Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate
 5. 기본 filter / limit / noise CVar를 적용한다.
 6. `DebugOverlaySelectNearestTarget`으로 selected Enemy를 지정한다.
 7. `Pannel_01 / Pannel_02 / Pannel_03`가 모두 보이는지 확인한다.
-8. `EnemySource: TargetComponent.Nearest`가 필요한 장면에서 보이는지 확인한다.
+8. `EnemyFocusMode: TargetComponent.Nearest`가 필요한 장면에서 보이는지 확인한다.
 9. 장면별 EventLog filter를 설정한다.
 10. editor console / Output Log / tooltip / taskbar가 claim을 가리지 않는지 확인한다.
 11. 캡처 후 파일명을 후보 규칙에 맞춘다.

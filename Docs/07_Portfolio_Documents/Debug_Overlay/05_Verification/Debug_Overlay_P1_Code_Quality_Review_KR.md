@@ -209,7 +209,7 @@
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
 | `CPlayerController.cpp`, `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | source claim 정확도 | 결정 완료. line trace 기반 `DebugOverlaySelectTarget`은 제거하고, P1 source claim은 `TargetComponent.Nearest` / `None`으로 제한한다. |
-| `CDebugOverlayHUD.cpp` | diagnostic helper 유지 | RecentCombatTarget/WorldScanFallback helper는 남아 있으나 기본 표시 path에서 사용하지 않는다. 후속 diagnostic mode를 만들 때 유지/삭제를 판단한다. |
+| `CDebugOverlayHUD.cpp` | diagnostic helper 제거 | RecentCombatTarget/WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
 
 ### Later
 
@@ -240,7 +240,7 @@
 | line trace target selection 유지 여부 | `CPlayerController.cpp`, `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | 결정 완료. P1에서는 line trace target selection을 제거하고 nearest command만 명시 target source로 사용한다. |
 | Exec command / reflected member shipping 노출 정책 | `CPlayerController.h`, `CDebugOverlayTargetComponent.*` | cpp body와 생성 경로는 no-op/guard되어 있으나 UFUNCTION/UPROPERTY/class surface는 shipping에도 남는다. UHT 안전성과 debug-only 엄격성 사이에서 결정이 필요하다. |
 | `ResolveWorld`의 `const_cast` 유지 여부 | `FDebugOverlaySnapshotStore.cpp` | 실제 mutation은 없지만 W05 위험 신호다. helper signature 변경 또는 현 상태 유지 중 결정한다. |
-| diagnostic helper 유지 여부 | `CDebugOverlayHUD.cpp` | RecentCombatTarget/WorldScanFallback helper는 기본 path에서 제외되어 있다. 후속 diagnostic mode에서 재사용할지 결정한다. |
+| diagnostic helper 제거 여부 | `CDebugOverlayHUD.cpp` | RecentCombatTarget/WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
 
 ### Later
 
@@ -398,7 +398,7 @@
    - 필요 시 `GetSnapshotCopy` naming 정리
 
 2. `DecisionNeeded` 항목 사용자 결정
-   - diagnostic helper를 유지할지 별도 mode로 노출할지 결정
+   - diagnostic helper를 별도 mode로 다시 노출할지 결정
    - 범용 TargetComponent로 승격할 때 target source 입력 방식을 결정
    - P1 Target Selection Decision 기준으로 nearest-only command 정책 유지
    - Exec command / UPROPERTY / component class shipping 노출 정책 결정
