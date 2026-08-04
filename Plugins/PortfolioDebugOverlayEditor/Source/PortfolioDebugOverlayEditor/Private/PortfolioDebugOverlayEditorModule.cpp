@@ -39,6 +39,7 @@ namespace
 	static constexpr const TCHAR* DebugOverlayHideNoiseEventsCVarName = TEXT("Portfolio.DebugOverlay.HideNoiseEvents");
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
 	static constexpr const TCHAR* DebugOverlaySelectNearestTargetCommand = TEXT("DebugOverlaySelectNearestTarget");
+	static constexpr const TCHAR* DebugOverlaySelectRecentCombatTargetCommand = TEXT("DebugOverlaySelectRecentCombatTarget");
 	static constexpr const TCHAR* DebugOverlayClearTargetCommand = TEXT("DebugOverlayClearTarget");
 	static constexpr const TCHAR* DebugOverlaySelectActorTargetCommand = TEXT("DebugOverlaySelectActorTarget");
 
@@ -548,6 +549,26 @@ namespace
 						+ SHorizontalBox::Slot()
 						.FillWidth(1.f)
 						.Padding(4.f, 0.f, 0.f, 0.f)
+								[
+									SNew(SButton)
+									.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
+									.OnClicked_Lambda([this]()
+									{
+										LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
+											DebugOverlaySelectRecentCombatTargetCommand,
+											LOCTEXT("SelectRecentCombatTargetSent", "Last Command: SelectRecentCombatTarget"));
+										return FReply::Handled();
+									})
+								]
+							]
+							+ SVerticalBox::Slot()
+							.AutoHeight()
+							.Padding(0.f, 4.f, 0.f, 4.f)
+							[
+								SNew(SHorizontalBox)
+								+ SHorizontalBox::Slot()
+								.FillWidth(1.f)
+								.Padding(0.f, 0.f, 0.f, 0.f)
 						[
 							SNew(SButton)
 							.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Actor"))
