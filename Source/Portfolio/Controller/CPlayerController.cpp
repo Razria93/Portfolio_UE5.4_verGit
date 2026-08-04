@@ -14,6 +14,44 @@
 namespace
 {
 	static constexpr float DebugOverlayNearestTargetRadius = 3000.f;
+
+	EDebugOverlayFocusCommandStatus ToFocusCommandStatus(EDebugOverlayFocusResolveStatus InStatus)
+	{
+		switch (InStatus)
+		{
+		case EDebugOverlayFocusResolveStatus::Selected:
+			return EDebugOverlayFocusCommandStatus::Selected;
+		case EDebugOverlayFocusResolveStatus::InvalidContext:
+			return EDebugOverlayFocusCommandStatus::InvalidContext;
+		case EDebugOverlayFocusResolveStatus::NoEnemy:
+			return EDebugOverlayFocusCommandStatus::NoEnemy;
+		case EDebugOverlayFocusResolveStatus::OutOfRange:
+			return EDebugOverlayFocusCommandStatus::OutOfRange;
+		case EDebugOverlayFocusResolveStatus::NoActorName:
+			return EDebugOverlayFocusCommandStatus::NoActorName;
+		case EDebugOverlayFocusResolveStatus::NoActor:
+			return EDebugOverlayFocusCommandStatus::NoActor;
+		case EDebugOverlayFocusResolveStatus::NotEnemy:
+			return EDebugOverlayFocusCommandStatus::NotEnemy;
+		case EDebugOverlayFocusResolveStatus::NoRecentCombat:
+			return EDebugOverlayFocusCommandStatus::NoRecentCombat;
+		default:
+			return EDebugOverlayFocusCommandStatus::None;
+		}
+	}
+
+	FDebugOverlayFocusCommandResult BuildFocusCommandResult(const FDebugOverlayFocusResolveResult& InResolveResult, EDebugOverlayFocusCommandType InCommandType)
+	{
+		FDebugOverlayFocusCommandResult result;
+		result.CommandType = InCommandType;
+		result.Status = ToFocusCommandStatus(InResolveResult.Status);
+		result.FocusMode = InResolveResult.FocusSource;
+		result.ActorName = InResolveResult.ActorName;
+		result.ClassName = InResolveResult.ClassName;
+		result.Distance = InResolveResult.Distance;
+		result.Radius = InResolveResult.Radius;
+		return result;
+	}
 }
 #endif
 
@@ -25,7 +63,7 @@ ACPlayerController::ACPlayerController()
 	check(PlayerFeedbackComponent);
 
 #if !UE_BUILD_SHIPPING
-	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayTarget"));
+	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
 	check(DebugOverlayFocusComponent);
 #endif
 }
@@ -92,6 +130,13 @@ void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
 {
 #if !UE_BUILD_SHIPPING
 	TryFocusDebugOverlayActorTarget(ActorName);
+#endif
+}
+
+void ACPlayerController::DebugOverlaySelectRecentCombatTarget()
+{
+#if !UE_BUILD_SHIPPING
+	TryFocusDebugOverlayRecentCombatEnemy();
 #endif
 }
 
@@ -220,7 +265,7 @@ bool ACPlayerController::TryFocusDebugOverlayNearestEnemy()
 		GetPawn(),
 		DebugOverlayNearestTargetRadius);
 
-	ApplyDebugOverlayFocusResolveResult(result);
+	ApplyDebugOverlayFocusResolveResult(result, EDebugOverlayFocusCommandType::SelectNearestTarget);
 
 	switch (result.Status)
 	{
@@ -267,7 +312,7 @@ bool ACPlayerController::TryFocusDebugOverlayActorTarget(const FString& InActorN
 		GetPawn(),
 		actorName);
 
-	ApplyDebugOverlayFocusResolveResult(result);
+	ApplyDebugOverlayFocusResolveResult(result, EDebugOverlayFocusCommandType::SelectActorTarget);
 
 	switch (result.Status)
 	{
@@ -296,15 +341,56 @@ bool ACPlayerController::TryFocusDebugOverlayActorTarget(const FString& InActorN
 	}
 }
 
+bool ACPlayerController::TryFocusDebugOverlayRecentCombatEnemy()
+{
+	if (!IsValid(DebugOverlayFocusComponent))
+	{
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectRecentCombatTarget Result: TargetComponentMissing"));
+		return false;
+	}
+
+	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveRecentCombatEnemy(
+		GetWorld(),
+		GetPawn(),
+		DebugOverlayNearestTargetRadius);
+
+	ApplyDebugOverlayFocusResolveResult(result, EDebugOverlayFocusCommandType::SelectRecentCombatTarget);
+
+	switch (result.Status)
+	{
+	case EDebugOverlayFocusResolveStatus::Selected:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectRecentCombatTarget Result: Selected | Target: %s"), *result.ActorName);
+		return true;
+	case EDebugOverlayFocusResolveStatus::NoRecentCombat:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectRecentCombatTarget Result: NoRecentCombat"));
+		return false;
+	case EDebugOverlayFocusResolveStatus::NoEnemy:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectRecentCombatTarget Result: NoEnemy"));
+		return false;
+	case EDebugOverlayFocusResolveStatus::OutOfRange:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectRecentCombatTarget Result: OutOfRange | Closest: %.0f | Radius: %.0f"), result.Distance, result.Radius);
+		return false;
+	case EDebugOverlayFocusResolveStatus::InvalidContext:
+		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectRecentCombatTarget Result: InvalidContext"));
+		return false;
+	default:
+		return false;
+	}
+}
+
 void ACPlayerController::ClearDebugOverlayFocus()
 {
 	if (!IsValid(DebugOverlayFocusComponent)) return;
 
 	DebugOverlayFocusComponent->ClearDebugOverlayFocus();
-	DebugOverlayFocusComponent->ClearDebugOverlayFocusCommandResult();
+
+	FDebugOverlayFocusCommandResult result;
+	result.CommandType = EDebugOverlayFocusCommandType::ClearTarget;
+	result.Status = EDebugOverlayFocusCommandStatus::Cleared;
+	RecordDebugOverlayFocusCommandResult(result);
 }
 
-void ACPlayerController::ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& InResult) const
+void ACPlayerController::ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& InResult, EDebugOverlayFocusCommandType InCommandType) const
 {
 	if (!IsValid(DebugOverlayFocusComponent)) return;
 
@@ -317,14 +403,14 @@ void ACPlayerController::ApplyDebugOverlayFocusResolveResult(const FDebugOverlay
 		DebugOverlayFocusComponent->ClearDebugOverlayFocus();
 	}
 
-	RecordDebugOverlayFocusCommandResult(InResult.SummaryText);
+	RecordDebugOverlayFocusCommandResult(BuildFocusCommandResult(InResult, InCommandType));
 }
 
-void ACPlayerController::RecordDebugOverlayFocusCommandResult(const FString& InSummary) const
+void ACPlayerController::RecordDebugOverlayFocusCommandResult(const FDebugOverlayFocusCommandResult& InResult) const
 {
 	if (!IsValid(DebugOverlayFocusComponent)) return;
 
-	DebugOverlayFocusComponent->SetDebugOverlayFocusCommandResult(InSummary);
+	DebugOverlayFocusComponent->SetDebugOverlayFocusCommandResult(InResult);
 }
 
 #endif

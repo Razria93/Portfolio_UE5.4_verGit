@@ -11,6 +11,7 @@ enum class EDebugOverlayFocusResolveStatus : uint8
 	Selected,
 	InvalidContext,
 	NoEnemy,
+	NoRecentCombat,
 	OutOfRange,
 	NoActorName,
 	NoActor,
@@ -22,7 +23,6 @@ struct FDebugOverlayFocusResolveResult
 	EDebugOverlayFocusResolveStatus Status = EDebugOverlayFocusResolveStatus::InvalidContext;
 	TWeakObjectPtr<AActor> FocusActor;
 	EDebugOverlayFocusSource FocusSource = EDebugOverlayFocusSource::None;
-	FString SummaryText;
 	FString ActorName;
 	FString ClassName;
 	float Distance = 0.f;
@@ -41,4 +41,9 @@ public:
 		UWorld* World,
 		const APawn* ViewerPawn,
 		const FString& ActorName);
+
+	static FDebugOverlayFocusResolveResult ResolveRecentCombatEnemy(
+		UWorld* World,
+		const APawn* ViewerPawn,
+		float FallbackRadius);
 };

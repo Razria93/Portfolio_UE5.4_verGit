@@ -8,14 +8,102 @@ namespace
 	{
 		switch (InSource)
 		{
-		case EDebugOverlayFocusSource::Nearest:
-			return TEXT("FocusComponent.Nearest");
+		case EDebugOverlayFocusSource::NearestEnemy:
+			return TEXT("FocusComponent.NearestEnemy");
+		case EDebugOverlayFocusSource::RecentCombat:
+			return TEXT("FocusComponent.RecentCombat");
+		case EDebugOverlayFocusSource::WorldScanFallback:
+			return TEXT("FocusComponent.WorldScanFallback");
+		case EDebugOverlayFocusSource::GameplayTarget:
+			return TEXT("FocusComponent.GameplayTarget");
 		case EDebugOverlayFocusSource::EditorSelection:
 			return TEXT("FocusComponent.EditorSelection");
 		case EDebugOverlayFocusSource::None:
 		default:
 			return TEXT("None");
 		}
+	}
+
+	FString FormatDebugOverlayFocusCommandType(EDebugOverlayFocusCommandType InCommandType)
+	{
+		switch (InCommandType)
+		{
+		case EDebugOverlayFocusCommandType::SelectNearestTarget:
+			return TEXT("SelectNearestTarget");
+		case EDebugOverlayFocusCommandType::SelectActorTarget:
+			return TEXT("SelectActorTarget");
+		case EDebugOverlayFocusCommandType::SelectRecentCombatTarget:
+			return TEXT("SelectRecentCombatTarget");
+		case EDebugOverlayFocusCommandType::ClearTarget:
+			return TEXT("ClearTarget");
+		case EDebugOverlayFocusCommandType::None:
+		default:
+			return TEXT("None");
+		}
+	}
+
+	FString FormatDebugOverlayFocusCommandStatus(EDebugOverlayFocusCommandStatus InStatus)
+	{
+		switch (InStatus)
+		{
+		case EDebugOverlayFocusCommandStatus::Selected:
+			return TEXT("Selected");
+		case EDebugOverlayFocusCommandStatus::Cleared:
+			return TEXT("Cleared");
+		case EDebugOverlayFocusCommandStatus::InvalidContext:
+			return TEXT("InvalidContext");
+		case EDebugOverlayFocusCommandStatus::NoEnemy:
+			return TEXT("NoEnemy");
+		case EDebugOverlayFocusCommandStatus::OutOfRange:
+			return TEXT("OutOfRange");
+		case EDebugOverlayFocusCommandStatus::NoActorName:
+			return TEXT("NoActorName");
+		case EDebugOverlayFocusCommandStatus::NoActor:
+			return TEXT("NoActor");
+		case EDebugOverlayFocusCommandStatus::NotEnemy:
+			return TEXT("NotEnemy");
+		case EDebugOverlayFocusCommandStatus::NoRecentCombat:
+			return TEXT("NoRecentCombat");
+		case EDebugOverlayFocusCommandStatus::None:
+		default:
+			return TEXT("None");
+		}
+	}
+
+	FString FormatDebugOverlayFocusCommandResult(const FDebugOverlayFocusCommandResult& InResult)
+	{
+		if (!InResult.SummaryTextOverride.IsEmpty())
+		{
+			return InResult.SummaryTextOverride;
+		}
+
+		if (InResult.CommandType == EDebugOverlayFocusCommandType::None
+			&& InResult.Status == EDebugOverlayFocusCommandStatus::None)
+		{
+			return FString();
+		}
+
+		TArray<FString> fields;
+		fields.Reserve(5);
+		fields.Add(FormatDebugOverlayFocusCommandType(InResult.CommandType));
+		fields.Add(FormatDebugOverlayFocusCommandStatus(InResult.Status));
+
+		if (!InResult.ActorName.IsEmpty())
+		{
+			fields.Add(FString::Printf(TEXT("Target: %s"), *InResult.ActorName));
+		}
+
+		if (InResult.Distance > 0.f)
+		{
+			fields.Add(FString::Printf(TEXT("Distance: %.0f"), InResult.Distance));
+		}
+
+		if (InResult.Radius > 0.f)
+		{
+			fields.Add(FString::Printf(TEXT("Radius: %.0f"), InResult.Radius));
+		}
+
+		return FString::Join(fields, TEXT(" | "));
 	}
 }
 
@@ -32,7 +120,9 @@ bool UCDebugOverlayFocusComponent::HasDebugOverlayFocus() const
 
 bool UCDebugOverlayFocusComponent::HasDebugOverlayFocusCommandResult() const
 {
-	return !DebugOverlayFocusCommandResult.IsEmpty();
+	return !DebugOverlayFocusCommandResult.SummaryTextOverride.IsEmpty()
+		|| DebugOverlayFocusCommandResult.CommandType != EDebugOverlayFocusCommandType::None
+		|| DebugOverlayFocusCommandResult.Status != EDebugOverlayFocusCommandStatus::None;
 }
 
 AActor* UCDebugOverlayFocusComponent::GetDebugOverlayFocusActor() const
@@ -54,9 +144,14 @@ FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusModeText() const
 		: FString(TEXT("None"));
 }
 
-FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusCommandResultText() const
+const FDebugOverlayFocusCommandResult& UCDebugOverlayFocusComponent::GetDebugOverlayFocusCommandResult() const
 {
 	return DebugOverlayFocusCommandResult;
+}
+
+FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusCommandResultText() const
+{
+	return FormatDebugOverlayFocusCommandResult(DebugOverlayFocusCommandResult);
 }
 
 // Focus Mutation
@@ -78,71 +173,12 @@ void UCDebugOverlayFocusComponent::ClearDebugOverlayFocus()
 	DebugOverlayFocusSource = EDebugOverlayFocusSource::None;
 }
 
-void UCDebugOverlayFocusComponent::SetDebugOverlayFocusCommandResult(const FString& InResultText)
+void UCDebugOverlayFocusComponent::SetDebugOverlayFocusCommandResult(const FDebugOverlayFocusCommandResult& InResult)
 {
-	DebugOverlayFocusCommandResult = InResultText;
+	DebugOverlayFocusCommandResult = InResult;
 }
 
 void UCDebugOverlayFocusComponent::ClearDebugOverlayFocusCommandResult()
 {
-	DebugOverlayFocusCommandResult.Reset();
-}
-
-// Compatibility Query
-bool UCDebugOverlayFocusComponent::HasDebugOverlayTarget() const
-{
-	return HasDebugOverlayFocus();
-}
-
-bool UCDebugOverlayFocusComponent::HasDebugOverlaySelectionSummary() const
-{
-	return HasDebugOverlayFocusCommandResult();
-}
-
-AActor* UCDebugOverlayFocusComponent::GetDebugOverlayTargetActor() const
-{
-	return GetDebugOverlayFocusActor();
-}
-
-FString UCDebugOverlayFocusComponent::GetDebugOverlayTargetSummary() const
-{
-	return GetDebugOverlayFocusActorText();
-}
-
-FString UCDebugOverlayFocusComponent::GetDebugOverlayTargetSource() const
-{
-	return GetDebugOverlayFocusModeText();
-}
-
-FString UCDebugOverlayFocusComponent::GetDebugOverlaySelectionSummary() const
-{
-	return GetDebugOverlayFocusCommandResultText();
-}
-
-// Compatibility Mutation
-void UCDebugOverlayFocusComponent::SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayFocusSource InSource)
-{
-	if (!IsValid(InTargetActor) || InSource == EDebugOverlayFocusSource::None)
-	{
-		ClearDebugOverlayTarget();
-		return;
-	}
-
-	SetDebugOverlayFocus(InTargetActor, InSource);
-}
-
-void UCDebugOverlayFocusComponent::ClearDebugOverlayTarget()
-{
-	ClearDebugOverlayFocus();
-	ClearDebugOverlayFocusCommandResult();
-}
-
-void UCDebugOverlayFocusComponent::SetDebugOverlaySelectionSummary(const FString& InSummary)
-{
-	SetDebugOverlayFocusCommandResult(InSummary);
-}
-
-void UCDebugOverlayFocusComponent::ClearDebugOverlaySelectionSummary()
-{
-	ClearDebugOverlayFocusCommandResult();
+	DebugOverlayFocusCommandResult = FDebugOverlayFocusCommandResult();
 }

@@ -4,6 +4,12 @@
 #include "GameFramework/PlayerController.h"
 #include "CPlayerController.generated.h"
 
+#if !UE_BUILD_SHIPPING
+struct FDebugOverlayFocusCommandResult;
+struct FDebugOverlayFocusResolveResult;
+enum class EDebugOverlayFocusCommandType : uint8;
+#endif
+
 UCLASS()
 class PORTFOLIO_API ACPlayerController : public APlayerController
 {
@@ -22,6 +28,9 @@ public:
 
 	UFUNCTION(Exec)
 	void DebugOverlaySelectActorTarget(const FString& ActorName);
+
+	UFUNCTION(Exec)
+	void DebugOverlaySelectRecentCombatTarget();
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -72,9 +81,10 @@ private:
 	// Debug Overlay Focus
 	bool TryFocusDebugOverlayNearestEnemy();
 	bool TryFocusDebugOverlayActorTarget(const FString& InActorName);
+	bool TryFocusDebugOverlayRecentCombatEnemy();
 	void ClearDebugOverlayFocus();
 
-	void ApplyDebugOverlayFocusResolveResult(const struct FDebugOverlayFocusResolveResult& InResult) const;
-	void RecordDebugOverlayFocusCommandResult(const FString& InSummary) const;
+	void ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& InResult, EDebugOverlayFocusCommandType InCommandType) const;
+	void RecordDebugOverlayFocusCommandResult(const FDebugOverlayFocusCommandResult& InResult) const;
 #endif
 };

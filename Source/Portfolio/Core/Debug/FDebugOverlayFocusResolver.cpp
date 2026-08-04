@@ -1,6 +1,7 @@
 #include "Core/Debug/FDebugOverlayFocusResolver.h"
 
 #include "Character/Enemy/CEnemy.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -61,6 +62,31 @@ namespace
 		OutDistance = FMath::Sqrt(closestDistanceSquared);
 		return closestEnemy;
 	}
+
+	ACEnemy* ResolveRecentCombatEnemyActor(UWorld* InWorld, ACEnemy*& OutSourceEnemy)
+	{
+		OutSourceEnemy = nullptr;
+
+		FDebugOverlayRecentCombatPair pair;
+		if (!FDebugOverlaySnapshotStore::TryGetRecentCombatPair(InWorld, pair))
+		{
+			return nullptr;
+		}
+
+		if (ACEnemy* targetEnemy = Cast<ACEnemy>(pair.TargetActor.Get()))
+		{
+			OutSourceEnemy = Cast<ACEnemy>(pair.SourceActor.Get());
+			return targetEnemy;
+		}
+
+		if (ACEnemy* sourceEnemy = Cast<ACEnemy>(pair.SourceActor.Get()))
+		{
+			OutSourceEnemy = sourceEnemy;
+			return sourceEnemy;
+		}
+
+		return nullptr;
+	}
 }
 #endif
 
@@ -78,7 +104,6 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveNearestEnemy(
 	if (!IsValid(World) || !IsValid(ViewerPawn))
 	{
 		result.Status = EDebugOverlayFocusResolveStatus::InvalidContext;
-		result.SummaryText = TEXT("NearestFailed | InvalidContext");
 		return result;
 	}
 
@@ -87,7 +112,6 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveNearestEnemy(
 	if (!IsValid(closestEnemy))
 	{
 		result.Status = EDebugOverlayFocusResolveStatus::NoEnemy;
-		result.SummaryText = FString::Printf(TEXT("NearestFailed | NoEnemy | Radius: %.0f"), Radius);
 		return result;
 	}
 
@@ -96,21 +120,12 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveNearestEnemy(
 	if (closestDistance > Radius)
 	{
 		result.Status = EDebugOverlayFocusResolveStatus::OutOfRange;
-		result.SummaryText = FString::Printf(
-			TEXT("NearestFailed | OutOfRange | Closest: %.0f | Radius: %.0f"),
-			closestDistance,
-			Radius);
 		return result;
 	}
 
 	result.Status = EDebugOverlayFocusResolveStatus::Selected;
 	result.FocusActor = closestEnemy;
-	result.FocusSource = EDebugOverlayFocusSource::Nearest;
-	result.SummaryText = FString::Printf(
-		TEXT("NearestSelected | Target: %s | Distance: %.0f | Radius: %.0f"),
-		*result.ActorName,
-		closestDistance,
-		Radius);
+	result.FocusSource = EDebugOverlayFocusSource::NearestEnemy;
 	return result;
 #endif
 }
@@ -129,14 +144,12 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveActorEnemy(
 	if (!IsValid(World) || !IsValid(ViewerPawn))
 	{
 		result.Status = EDebugOverlayFocusResolveStatus::InvalidContext;
-		result.SummaryText = TEXT("EditorSelectFailed | InvalidContext");
 		return result;
 	}
 
 	if (result.ActorName.IsEmpty())
 	{
 		result.Status = EDebugOverlayFocusResolveStatus::NoActorName;
-		result.SummaryText = TEXT("EditorSelectFailed | NoActorName");
 		return result;
 	}
 
@@ -144,7 +157,6 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveActorEnemy(
 	if (!IsValid(targetActor))
 	{
 		result.Status = EDebugOverlayFocusResolveStatus::NoActor;
-		result.SummaryText = FString::Printf(TEXT("EditorSelectFailed | NoActor | Name: %s"), *result.ActorName);
 		return result;
 	}
 
@@ -155,14 +167,77 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveActorEnemy(
 	if (!IsValid(targetEnemy))
 	{
 		result.Status = EDebugOverlayFocusResolveStatus::NotEnemy;
-		result.SummaryText = FString::Printf(TEXT("EditorSelectFailed | NotEnemy | Target: %s"), *result.ActorName);
 		return result;
 	}
 
 	result.Status = EDebugOverlayFocusResolveStatus::Selected;
 	result.FocusActor = targetEnemy;
 	result.FocusSource = EDebugOverlayFocusSource::EditorSelection;
-	result.SummaryText = FString::Printf(TEXT("EditorSelected | Target: %s"), *GetNameSafe(targetEnemy));
+	return result;
+#endif
+}
+
+FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveRecentCombatEnemy(
+	UWorld* World,
+	const APawn* ViewerPawn,
+	float FallbackRadius)
+{
+	FDebugOverlayFocusResolveResult result;
+	result.Radius = FallbackRadius;
+
+#if UE_BUILD_SHIPPING
+	return result;
+#else
+	if (!IsValid(World) || !IsValid(ViewerPawn))
+	{
+		result.Status = EDebugOverlayFocusResolveStatus::InvalidContext;
+		return result;
+	}
+
+	ACEnemy* sourceEnemy = nullptr;
+	if (ACEnemy* recentEnemy = ResolveRecentCombatEnemyActor(World, sourceEnemy))
+	{
+		result.Status = EDebugOverlayFocusResolveStatus::Selected;
+		result.FocusActor = recentEnemy;
+		result.FocusSource = EDebugOverlayFocusSource::RecentCombat;
+		result.ActorName = GetNameSafe(recentEnemy);
+		result.ClassName = GetNameSafe(recentEnemy->GetClass());
+		result.Distance = FVector::Dist(ViewerPawn->GetActorLocation(), recentEnemy->GetActorLocation());
+		return result;
+	}
+
+	FDebugOverlayRecentCombatPair pair;
+	const bool bHasRecentCombatPair = FDebugOverlaySnapshotStore::TryGetRecentCombatPair(World, pair);
+	if (!bHasRecentCombatPair)
+	{
+		result.Status = EDebugOverlayFocusResolveStatus::NoRecentCombat;
+	}
+
+	float closestDistance = 0.f;
+	ACEnemy* closestEnemy = FindClosestDebugOverlayEnemy(World, ViewerPawn, closestDistance);
+	if (!IsValid(closestEnemy))
+	{
+		if (result.Status == EDebugOverlayFocusResolveStatus::NoRecentCombat)
+		{
+			return result;
+		}
+
+		result.Status = EDebugOverlayFocusResolveStatus::NoEnemy;
+		return result;
+	}
+
+	result.Distance = closestDistance;
+	result.ActorName = GetNameSafe(closestEnemy);
+	result.ClassName = GetNameSafe(closestEnemy->GetClass());
+	if (closestDistance > FallbackRadius)
+	{
+		result.Status = EDebugOverlayFocusResolveStatus::OutOfRange;
+		return result;
+	}
+
+	result.Status = EDebugOverlayFocusResolveStatus::Selected;
+	result.FocusActor = closestEnemy;
+	result.FocusSource = EDebugOverlayFocusSource::WorldScanFallback;
 	return result;
 #endif
 }
