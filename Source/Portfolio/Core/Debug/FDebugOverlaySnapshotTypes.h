@@ -4,13 +4,9 @@
 
 enum class EDebugOverlayCaptureState : uint8
 {
-	// No capture has been recorded for this channel in the current world store.
 	NotCaptured,
-	// A valid capture has been recorded and can be consumed.
 	Captured,
-	// Capture is unavailable due to missing runtime context.
 	Unavailable,
-	// Capture exists but should be treated as outdated by the consumer policy.
 	Stale,
 };
 
