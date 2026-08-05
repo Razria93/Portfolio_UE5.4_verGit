@@ -38,10 +38,11 @@ namespace
 	static constexpr const TCHAR* DebugOverlayEventLogLimitCVarName = TEXT("Portfolio.DebugOverlay.EventLogLimit");
 	static constexpr const TCHAR* DebugOverlayHideNoiseEventsCVarName = TEXT("Portfolio.DebugOverlay.HideNoiseEvents");
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
+	static constexpr const TCHAR* DebugOverlayNearestTargetRadiusCVarName = TEXT("Portfolio.DebugOverlay.NearestTargetRadius");
 	static constexpr const TCHAR* DebugOverlaySelectNearestTargetCommand = TEXT("DebugOverlaySelectNearestTarget");
 	static constexpr const TCHAR* DebugOverlaySelectRecentCombatTargetCommand = TEXT("DebugOverlaySelectRecentCombatTarget");
 	static constexpr const TCHAR* DebugOverlayClearTargetCommand = TEXT("DebugOverlayClearTarget");
-	static constexpr const TCHAR* DebugOverlaySelectActorTargetCommand = TEXT("DebugOverlaySelectActorTarget");
+	static constexpr const TCHAR* DebugOverlaySelectOutlinerTargetCommand = TEXT("DebugOverlaySelectOutlinerTarget");
 
 	IConsoleVariable* FindDebugOverlayCVar(const TCHAR* InName)
 	{
@@ -77,6 +78,24 @@ namespace
 	}
 
 	void SetDebugOverlayIntCVar(const TCHAR* InName, int32 InValue)
+	{
+		if (IConsoleVariable* consoleVariable = FindDebugOverlayCVar(InName))
+		{
+			consoleVariable->Set(InValue, ECVF_SetByConsole);
+		}
+	}
+
+	float GetDebugOverlayFloatCVar(const TCHAR* InName)
+	{
+		if (const IConsoleVariable* consoleVariable = FindDebugOverlayCVar(InName))
+		{
+			return consoleVariable->GetFloat();
+		}
+
+		return 0.f;
+	}
+
+	void SetDebugOverlayFloatCVar(const TCHAR* InName, float InValue)
 	{
 		if (IConsoleVariable* consoleVariable = FindDebugOverlayCVar(InName))
 		{
@@ -175,10 +194,10 @@ namespace
 		}
 
 		const FString actorName = selectedActor->GetName();
-		const FString command = FString::Printf(TEXT("%s %s"), DebugOverlaySelectActorTargetCommand, *actorName);
+		const FString command = FString::Printf(TEXT("%s %s"), DebugOverlaySelectOutlinerTargetCommand, *actorName);
 		return ExecuteDebugOverlayTargetCommand(
 			*command,
-			FText::Format(LOCTEXT("SelectOutlinerActorSent", "Last Command: SelectOutlinerActor | Actor: {0}"), FText::FromString(actorName)));
+			FText::Format(LOCTEXT("SelectOutlinerActorSent", "Last Command: SelectOutlinerTarget | Actor: {0}"), FText::FromString(actorName)));
 	}
 
 	class SPortfolioDebugOverlayEditorWidget : public SCompoundWidget
@@ -482,6 +501,7 @@ namespace
 							&& FindDebugOverlayCVar(DebugOverlayCollectCVarName)
 							&& FindDebugOverlayCVar(DebugOverlayEventLogFilterCVarName)
 							&& FindDebugOverlayCVar(DebugOverlayEventLogLimitCVarName)
+							&& FindDebugOverlayCVar(DebugOverlayNearestTargetRadiusCVarName)
 							&& FindDebugOverlayCVar(DebugOverlayHideNoiseEventsCVarName)
 							&& FindDebugOverlayCVar(DebugOverlayHideCollisionWindowEventsCVarName);
 
@@ -501,6 +521,66 @@ namespace
 						RefreshEventLogFilterSelection();
 						return FReply::Handled();
 					})
+				];
+		}
+
+		TSharedRef<SWidget> MakeNearestTargetRadiusRow() const
+		{
+			return SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.f)
+				.VAlign(VAlign_Center)
+				.Padding(0.f, 4.f)
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("NearestTargetRadiusLabel", "Nearest Target Radius"))
+					]
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("NearestTargetRadiusHelp", "Radius used by Select Nearest Focus and Recent Combat Focus scan."))
+						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(12.f, 0.f)
+				[
+					SNew(SSpinBox<float>)
+					.IsEnabled_Lambda([]()
+					{
+						return FindDebugOverlayCVar(DebugOverlayNearestTargetRadiusCVarName) != nullptr;
+					})
+					.MinValue(0.f)
+					.MaxValue(20000.f)
+					.MinSliderValue(0.f)
+					.MaxSliderValue(10000.f)
+					.Delta(50.f)
+					.Value_Lambda([]()
+					{
+						return FMath::Clamp(GetDebugOverlayFloatCVar(DebugOverlayNearestTargetRadiusCVarName), 0.f, 20000.f);
+					})
+					.OnValueChanged_Lambda([](float InValue)
+					{
+						SetDebugOverlayFloatCVar(DebugOverlayNearestTargetRadiusCVarName, FMath::Clamp(InValue, 0.f, 20000.f));
+					})
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text_Lambda([]()
+					{
+						return GetCVarAvailabilityText(DebugOverlayNearestTargetRadiusCVarName);
+					})
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 				];
 		}
 
@@ -526,10 +606,16 @@ namespace
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 6.f)
 				[
+					MakeNearestTargetRadiusRow()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 6.f)
+				[
 					SNew(SVerticalBox)
 					+ SVerticalBox::Slot()
 					.AutoHeight()
-					.Padding(0.f, 0.f, 0.f, 4.f)
+					.Padding(0.f, 0.f, 0.f, 2.f)
 					[
 						SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot()
@@ -549,35 +635,29 @@ namespace
 						+ SHorizontalBox::Slot()
 						.FillWidth(1.f)
 						.Padding(4.f, 0.f, 0.f, 0.f)
-								[
-									SNew(SButton)
-									.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
-									.OnClicked_Lambda([this]()
-									{
-										LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
-											DebugOverlaySelectRecentCombatTargetCommand,
-											LOCTEXT("SelectRecentCombatTargetSent", "Last Command: SelectRecentCombatTarget"));
-										return FReply::Handled();
-									})
-								]
-							]
-							+ SVerticalBox::Slot()
-							.AutoHeight()
-							.Padding(0.f, 4.f, 0.f, 4.f)
-							[
-								SNew(SHorizontalBox)
-								+ SHorizontalBox::Slot()
-								.FillWidth(1.f)
-								.Padding(0.f, 0.f, 0.f, 0.f)
 						[
 							SNew(SButton)
-							.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Actor"))
+							.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Focus"))
 							.OnClicked_Lambda([this]()
 							{
 								LastFocusCommandStatus = ExecuteDebugOverlayOutlinerTargetCommand();
 								return FReply::Handled();
 							})
 						]
+					]
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.f, 0.f, 0.f, 10.f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
+						.OnClicked_Lambda([this]()
+						{
+							LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
+								DebugOverlaySelectRecentCombatTargetCommand,
+								LOCTEXT("SelectRecentCombatTargetSent", "Last Command: SelectRecentCombatTarget"));
+							return FReply::Handled();
+						})
 					]
 					+ SVerticalBox::Slot()
 					.AutoHeight()
