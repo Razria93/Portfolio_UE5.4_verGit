@@ -772,6 +772,10 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	store->Snapshot.LastAI.RequestResult = InRequestResult;
 	store->Snapshot.LastAI.RejectReason = InRejectReason;
 	store->Snapshot.LastAI.Summary = summary;
+	if (!pawnName.IsEmpty())
+	{
+		store->Snapshot.LastAIByPawnName.FindOrAdd(pawnName) = store->Snapshot.LastAI;
+	}
 
 	AddEventInternal(*store, MakeEventEntry(world, TEXT("AI"), eventName, pawnName, pawnName, targetName, summary));
 #endif
@@ -855,6 +859,26 @@ bool FDebugOverlaySnapshotStore::TryGetRecentCombatPair(const UObject* InWorldCo
 	if (!store || !store->bHasRecentCombatPair) return false;
 
 	OutPair = store->RecentCombatPair;
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary)
+{
+	OutSummary = FDebugOverlayAISummary();
+
+#if !UE_BUILD_SHIPPING
+	if (InPawnName.IsEmpty()) return false;
+
+	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	if (!store) return false;
+
+	const FDebugOverlayAISummary* summary = store->Snapshot.LastAIByPawnName.Find(InPawnName);
+	if (!summary) return false;
+
+	OutSummary = *summary;
 	return true;
 #else
 	return false;

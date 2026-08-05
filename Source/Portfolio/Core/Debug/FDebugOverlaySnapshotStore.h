@@ -54,6 +54,7 @@ public:
 	// Snapshot Query
 	static bool TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
 	static bool TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair);
+	static bool TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary);
 
 public:
 	// Lifecycle

@@ -77,5 +77,6 @@ struct PORTFOLIO_API FDebugOverlaySnapshot
 	FDebugOverlayExecutionSummary LastExecution;
 	FDebugOverlayCombatSummary LastCombat;
 	FDebugOverlayAISummary LastAI;
+	TMap<FString, FDebugOverlayAISummary> LastAIByPawnName;
 	TArray<FDebugOverlayEventEntry> RecentEvents;
 };
