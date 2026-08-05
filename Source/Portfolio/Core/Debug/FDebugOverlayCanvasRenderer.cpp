@@ -22,7 +22,6 @@ namespace
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
-	static const FLinearColor DebugOverlayInteractionHeaderColor(0.2f, 0.08f, 0.35f, 0.68f);
 	static const FLinearColor DebugOverlayDefaultHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
 
 	struct FDebugOverlayRightPanelGeometry
@@ -124,7 +123,6 @@ namespace
 	{
 		if (InLine.Text == TEXT("[Player]")) return DebugOverlayPlayerHeaderColor;
 		if (InLine.Text == TEXT("[Enemy]")) return DebugOverlayEnemyHeaderColor;
-		if (InLine.Text == TEXT("[Interaction]")) return DebugOverlayInteractionHeaderColor;
 		return DebugOverlayDefaultHeaderColor;
 	}
 

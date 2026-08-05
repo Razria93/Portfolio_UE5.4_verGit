@@ -75,9 +75,13 @@ namespace
 
 	void AppendFocusLines(TArray<FString>& InOutLines, const FDebugOverlayFocusViewData& InFocusViewData)
 	{
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusMode: %s"), *ValueOrNone(InFocusViewData.CurrentModeText)));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusActor: %s"), *ValueOrNone(InFocusViewData.CurrentActorNameText)));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusCommand: %s"), *ValueOrNone(InFocusViewData.LastCommandText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusDriver: %s"), *ValueOrNone(InFocusViewData.FocusDriverText)));
+		if (!InFocusViewData.RecentFocusStateText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RecentFocusState: %s"), *InFocusViewData.RecentFocusStateText));
+		}
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RuntimeFocusSource: %s"), *ValueOrNone(InFocusViewData.CurrentSourceText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusTarget: %s"), *ValueOrNone(InFocusViewData.CurrentActorNameText)));
 	}
 
 	void AppendRecentExecutionBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentExecutionViewData& InRecentExecutionViewData)
@@ -140,15 +144,17 @@ namespace
 		case EDebugOverlayRecentAIEventViewState::NotCaptured:
 			AppendFormattedOverlayLine(InOutLines, TEXT("NotCaptured"));
 			return;
-		case EDebugOverlayRecentAIEventViewState::NotMatched:
-			AppendFormattedOverlayLine(InOutLines, TEXT("NotMatched"));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Selected: %s"), *InRecentAIEventViewData.SelectedPawnName));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("LastPawn: %s"), *InRecentAIEventViewData.LastPawnName));
-			return;
 		case EDebugOverlayRecentAIEventViewState::Stale:
+			if (!InRecentAIEventViewData.TaskText.IsEmpty())
+			{
+				AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Task: %s"), *InRecentAIEventViewData.TaskText));
+			}
+			if (!InRecentAIEventViewData.ResultText.IsEmpty())
+			{
+				AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *InRecentAIEventViewData.ResultText));
+			}
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Stale Time: %ss"), *InRecentAIEventViewData.StaleAgeText));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Pawn: %s"), *InRecentAIEventViewData.LastPawnName));
-			AppendFormattedOverlayLine(InOutLines, TEXT("Note: Not current AI evidence"));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *ValueOrNone(InRecentAIEventViewData.RejectReasonText)));
 			return;
 		case EDebugOverlayRecentAIEventViewState::Captured:
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Task: %s"), *InRecentAIEventViewData.TaskText));
@@ -290,7 +296,7 @@ namespace
 		}
 
 		if (InPanelRole != EDebugOverlayTextPanelRole::EventLog
-			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[Interaction]")))
+			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[World]")))
 		{
 			return EDebugOverlayTextLineRole::PanelHeader;
 		}

@@ -249,7 +249,7 @@ namespace
 		return statusViewData;
 	}
 
-	FDebugOverlayRecentExecutionViewData BuildActorRecentExecutionViewData(const UObject* InWorldContextObject, bool bInHasSnapshot, const APawn* InPawn)
+	FDebugOverlayRecentExecutionViewData BuildActorRecentExecutionViewData(const UWorld* InWorld, bool bInHasSnapshot, const APawn* InPawn)
 	{
 		FDebugOverlayRecentExecutionViewData recentExecutionViewData;
 		recentExecutionViewData.HeaderText = TEXT("[Recent Execution]");
@@ -266,7 +266,7 @@ namespace
 		}
 
 		const TArray<FDebugOverlayEventEntry> executionEvents = FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(
-			InWorldContextObject,
+			InWorld,
 			1,
 			TEXT("Execution"),
 			GetNameSafe(InPawn));
@@ -307,7 +307,7 @@ namespace
 		return currentAIViewData;
 	}
 
-	FDebugOverlayRecentAIEventViewData BuildEnemyRecentAIEventViewData(const ACEnemy* InEnemy, const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot, const UWorld* InWorld)
+	FDebugOverlayRecentAIEventViewData BuildEnemyRecentAIEventViewData(const ACEnemy* InEnemy, bool bInHasSnapshot, const UWorld* InWorld)
 	{
 		FDebugOverlayRecentAIEventViewData recentAIEventViewData;
 		if (!IsValid(InEnemy))
@@ -316,46 +316,49 @@ namespace
 			return recentAIEventViewData;
 		}
 
-		if (!bInHasSnapshot || InSnapshot.LastAI.CaptureState != EDebugOverlayCaptureState::Captured)
+		if (!bInHasSnapshot)
 		{
 			recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::NotCaptured;
 			return recentAIEventViewData;
 		}
 
 		const FString enemyName = GetNameSafe(InEnemy);
-		recentAIEventViewData.SelectedPawnName = enemyName;
-		recentAIEventViewData.LastPawnName = InSnapshot.LastAI.PawnName;
-		if (InSnapshot.LastAI.PawnName != enemyName)
+		FDebugOverlayAISummary cachedSummary;
+		if (!FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(InWorld, enemyName, cachedSummary)
+			|| cachedSummary.CaptureState != EDebugOverlayCaptureState::Captured)
 		{
-			recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::NotMatched;
+			recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::NotCaptured;
 			return recentAIEventViewData;
 		}
 
-		const float currentTime = IsValid(InWorld) ? InWorld->GetTimeSeconds() : InSnapshot.LastAI.WorldTimeSeconds;
-		const float eventAge = currentTime - InSnapshot.LastAI.WorldTimeSeconds;
+		const float currentTime = IsValid(InWorld) ? InWorld->GetTimeSeconds() : cachedSummary.WorldTimeSeconds;
+		const float eventAge = currentTime - cachedSummary.WorldTimeSeconds;
 		const bool bEventStale = eventAge > DebugOverlayRecentAIEventStaleSeconds;
 
 		if (bEventStale)
 		{
 			recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::Stale;
 			recentAIEventViewData.StaleAgeText = FormatBuilderAgeSeconds(eventAge);
+			recentAIEventViewData.TaskText = CompactEnumText(cachedSummary.SubState);
+			recentAIEventViewData.ResultText = CompactEnumText(cachedSummary.RequestResult);
+			recentAIEventViewData.RejectReasonText = CompactReasonText(cachedSummary.RejectReason);
 			return recentAIEventViewData;
 		}
 
 		recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::Captured;
-		recentAIEventViewData.TaskText = CompactEnumText(InSnapshot.LastAI.SubState);
-		recentAIEventViewData.ResultText = CompactEnumText(InSnapshot.LastAI.RequestResult);
+		recentAIEventViewData.TaskText = CompactEnumText(cachedSummary.SubState);
+		recentAIEventViewData.ResultText = CompactEnumText(cachedSummary.RequestResult);
 		recentAIEventViewData.AgeText = FormatBuilderAgeSeconds(eventAge);
-		recentAIEventViewData.RejectReasonText = CompactReasonText(InSnapshot.LastAI.RejectReason);
+		recentAIEventViewData.RejectReasonText = CompactReasonText(cachedSummary.RejectReason);
 		return recentAIEventViewData;
 	}
 
-	FDebugOverlayActorPanelViewData BuildActorPanelViewData(const TCHAR* InPanelName, const APawn* InPawn, const UObject* InWorldContextObject, bool bInHasSnapshot)
+	FDebugOverlayActorPanelViewData BuildActorPanelViewData(const TCHAR* InPanelName, const APawn* InPawn, const UWorld* InWorld, bool bInHasSnapshot)
 	{
 		FDebugOverlayActorPanelViewData actorPanelViewData;
 		actorPanelViewData.HeaderText = InPanelName;
 		actorPanelViewData.Status = BuildActorStatusViewData(InPawn);
-		actorPanelViewData.RecentExecution = BuildActorRecentExecutionViewData(InWorldContextObject, bInHasSnapshot, InPawn);
+		actorPanelViewData.RecentExecution = BuildActorRecentExecutionViewData(InWorld, bInHasSnapshot, InPawn);
 		return actorPanelViewData;
 	}
 
@@ -364,22 +367,20 @@ namespace
 		const APawn* InPlayerPawn,
 		const ACEnemy* InEnemy,
 		const FDebugOverlayFocusViewData& InEnemyFocus,
-		const FDebugOverlaySnapshot& InSnapshot,
 		bool bInHasSnapshot,
-		const UObject* InWorldContextObject,
 		const UWorld* InWorld)
 	{
-		InOutViewData.MainPanelTitle = TEXT("[Debug Overlay Pannel_01]");
-		InOutViewData.ActorPanels.Add(BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorldContextObject, bInHasSnapshot));
+		InOutViewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
+		InOutViewData.ActorPanels.Add(BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorld, bInHasSnapshot));
 
-		FDebugOverlayActorPanelViewData enemyPanelViewData = BuildActorPanelViewData(TEXT("[Enemy]"), InEnemy, InWorldContextObject, bInHasSnapshot);
+		FDebugOverlayActorPanelViewData enemyPanelViewData = BuildActorPanelViewData(TEXT("[Enemy]"), InEnemy, InWorld, bInHasSnapshot);
 		enemyPanelViewData.bIncludeFocus = true;
 		enemyPanelViewData.Focus = InEnemyFocus;
 		enemyPanelViewData.bAppendBlankBeforeStatus = true;
 		enemyPanelViewData.bIncludeCurrentAI = true;
 		enemyPanelViewData.CurrentAI = BuildEnemyCurrentAIViewData(InEnemy);
 		enemyPanelViewData.bIncludeRecentAIEvent = true;
-		enemyPanelViewData.RecentAIEvent = BuildEnemyRecentAIEventViewData(InEnemy, InSnapshot, bInHasSnapshot, InWorld);
+		enemyPanelViewData.RecentAIEvent = BuildEnemyRecentAIEventViewData(InEnemy, bInHasSnapshot, InWorld);
 		InOutViewData.ActorPanels.Add(enemyPanelViewData);
 	}
 
@@ -402,8 +403,8 @@ namespace
 	FDebugOverlayInteractionViewData BuildInteractionViewData(const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
 	{
 		FDebugOverlayInteractionViewData interactionViewData;
-		interactionViewData.HeaderText = TEXT("[Interaction]");
-		interactionViewData.SummaryBlocks.Reserve(2);
+		interactionViewData.HeaderText = TEXT("[World]");
+		interactionViewData.SummaryBlocks.Reserve(3);
 		interactionViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
 			TEXT("[Recent Execution]"),
 			InSnapshot.LastExecution.Summary,
@@ -416,18 +417,24 @@ namespace
 			InSnapshot.LastCombat.CaptureState,
 			bInHasSnapshot,
 			true));
+		interactionViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
+			TEXT("[Recent AI Event]"),
+			InSnapshot.LastAI.Summary,
+			InSnapshot.LastAI.CaptureState,
+			bInHasSnapshot,
+			true));
 		return interactionViewData;
 	}
 }
 
-FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const FDebugOverlayViewDataBuildContext& InContext)
+FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus)
 {
 	FDebugOverlaySnapshot snapshot;
-	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(InContext.World, snapshot);
+	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(InWorld, snapshot);
 	const FString eventLogFilter = FDebugOverlaySnapshotStore::GetEventLogFilter();
 	const int32 eventLogLimit = FDebugOverlaySnapshotStore::GetEventLogDisplayLimit();
 	const TArray<FDebugOverlayEventEntry> recentEvents = FDebugOverlaySnapshotStore::GetRecentEventsCopy(
-		InContext.World,
+		InWorld,
 		eventLogLimit,
 		eventLogFilter);
 
@@ -436,13 +443,11 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const FDebugOverlayVie
 
 	BuildMainActorPanelData(
 		viewData,
-		InContext.ViewerPawn,
-		InContext.DisplayEnemy,
-		InContext.EnemyFocus,
-		snapshot,
+		InViewerPawn,
+		InDisplayEnemy,
+		InEnemyFocus,
 		bHasSnapshot,
-		InContext.WorldContextObject,
-		InContext.World);
+		InWorld);
 
 	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Pannel_02]");
 	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
