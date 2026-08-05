@@ -114,3 +114,14 @@
 - 빌드 성공
 - 회귀 체크리스트 통과
 - 호출부와 문서가 동일한 용어/의미를 사용
+
+## 8) Objective-Mode 진행 메모 (2026-08-06)
+- 물리 분리 적용 완료: `FDebugOverlaySnapshotStore.cpp` 내부 helper를 책임별 파일로 분리함.
+- 분리 파일:
+  - `FDebugOverlaySnapshotStoreStoreLifecycle.cpp`
+  - `FDebugOverlaySnapshotStoreEventFilterPolicy.cpp`
+  - `FDebugOverlaySnapshotStoreEventRingAccess.cpp`
+  - `FDebugOverlaySnapshotStoreRecordBuilders.cpp`
+  - `FDebugOverlaySnapshotStoreInternals.h`
+- `FDebugOverlaySnapshotStore.cpp`는 orchestration 책임(Gate/Record/Query/Lifecycle API) 중심으로 정리함.
+- 검증: `PortfolioEditor Win64 Development` 빌드 성공.
