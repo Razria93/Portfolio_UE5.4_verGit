@@ -77,149 +77,190 @@ namespace
 
 	TMap<TObjectKey<UWorld>, FDebugOverlayWorldStore> StoresByWorld;
 
-	void RemoveStoreForWorld(UWorld* InWorld)
+	namespace StoreLifecycle
 	{
-		if (!InWorld) return;
-
-		StoresByWorld.Remove(TObjectKey<UWorld>(InWorld));
+		UWorld* ResolveWorld(const UObject* InWorldContextObject);
+		void RemoveStoreForWorld(UWorld* InWorld);
 	}
 
-	void HandleWorldCleanup(UWorld* InWorld, bool, bool)
+	namespace EventFilterPolicy
 	{
-		RemoveStoreForWorld(InWorld);
+		int32 GetClampedEventLogDisplayLimit();
+		FString GetCanonicalEventLogFilter();
+		bool ShouldIncludeEventForDisplay(const FDebugOverlayEventEntry& InEntry, const FString& InFilter, bool bApplyDisplayFilters);
+		bool DoesEventMatchSubject(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName);
+		FDebugOverlayEventEntry MakeSubjectDisplayEventEntry(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName);
 	}
 
-	void EnsureWorldCleanupDelegateRegistered()
+	namespace EventRingAccess
 	{
-		static bool bRegistered = false;
-		if (bRegistered) return;
-
-		FWorldDelegates::OnWorldCleanup.AddStatic(&HandleWorldCleanup);
-		bRegistered = true;
+		TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters);
+		TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters);
+		void AddEventInternal(FDebugOverlayWorldStore& InStore, const FDebugOverlayEventEntry& InEntry);
 	}
 
-	int32 GetClampedEventLogDisplayLimit();
-	FString GetCanonicalEventLogFilter();
-	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters);
-	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters);
-
-	UWorld* ResolveWorld(const UObject* InWorldContextObject)
+	namespace SnapshotRecordBuilders
 	{
-		if (!IsValid(InWorldContextObject)) return nullptr;
+		FDebugOverlaySnapshotStamp MakeSnapshotStamp(const UWorld* InWorld);
+		FString ToSafeEventName(const TCHAR* InEventName, const TCHAR* InFallback);
+		FString ToSafeReason(const TCHAR* InReason);
+		FString GetDisplayNameOrNA(const UObject* InObject);
+		FString CompactStoreEnumText(const FString& InValue);
+		FString CompactStoreReasonText(const FString& InValue);
+		FString ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket);
+		bool IsSameCombatPair(const FDebugOverlayCombatSummary& InSummary, const FString& InSourceName, const FString& InTargetName);
+		FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary);
+		void RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName);
+	}
 
-		if (UWorld* world = Cast<UWorld>(const_cast<UObject*>(InWorldContextObject)))
+	namespace StoreLifecycle
+	{
+		void RemoveStoreForWorld(UWorld* InWorld)
 		{
-			return world;
+			if (!InWorld) return;
+
+			StoresByWorld.Remove(TObjectKey<UWorld>(InWorld));
 		}
 
-		return InWorldContextObject->GetWorld();
-	}
-
-	uint64 GetCurrentFrameNumber()
-	{
-		return GFrameCounter;
-	}
-
-	float GetWorldTimeSeconds(const UWorld* InWorld)
-	{
-		return IsValid(InWorld) ? InWorld->GetTimeSeconds() : 0.f;
-	}
-
-	FDebugOverlaySnapshotStamp MakeSnapshotStamp(const UWorld* InWorld)
-	{
-		FDebugOverlaySnapshotStamp stamp;
-		stamp.FrameNumber = GetCurrentFrameNumber();
-		stamp.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
-		return stamp;
-	}
-
-	FString ToSafeEventName(const TCHAR* InEventName, const TCHAR* InFallback)
-	{
-		return InEventName ? FString(InEventName) : FString(InFallback);
-	}
-
-	FString ToSafeReason(const TCHAR* InReason)
-	{
-		return InReason ? FString(InReason) : FString(TEXT("None"));
-	}
-
-	FString GetDisplayNameOrNA(const UObject* InObject)
-	{
-		return IsValid(InObject) ? GetNameSafe(InObject) : FString(TEXT("N/A"));
-	}
-
-	FString CompactStoreEnumText(const FString& InValue)
-	{
-		int32 separatorIndex = INDEX_NONE;
-		return InValue.FindLastChar(TEXT(':'), separatorIndex)
-			&& separatorIndex > 0
-			&& InValue[separatorIndex - 1] == TEXT(':')
-			&& separatorIndex + 1 < InValue.Len()
-			? InValue.RightChop(separatorIndex + 1)
-			: InValue;
-	}
-
-	FString CompactStoreReasonText(const FString& InValue)
-	{
-		return CompactStoreEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
-	}
-
-	FString ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket)
-	{
-		if (IsValid(InPacket.SourceActor) && InPacket.SourceActor != InResultReceiverActor)
+		void HandleWorldCleanup(UWorld* InWorld, bool, bool)
 		{
-			return GetNameSafe(InPacket.SourceActor);
+			RemoveStoreForWorld(InWorld);
 		}
 
-		if (IsValid(InPacket.TargetActor) && InPacket.TargetActor != InResultReceiverActor)
+		void EnsureWorldCleanupDelegateRegistered()
 		{
-			return GetNameSafe(InPacket.TargetActor);
+			static bool bRegistered = false;
+			if (bRegistered) return;
+
+			FWorldDelegates::OnWorldCleanup.AddStatic(&HandleWorldCleanup);
+			bRegistered = true;
 		}
 
-		return GetDisplayNameOrNA(InPacket.SourceActor);
+		UWorld* ResolveWorld(const UObject* InWorldContextObject)
+		{
+			if (!IsValid(InWorldContextObject)) return nullptr;
+
+			if (UWorld* world = Cast<UWorld>(const_cast<UObject*>(InWorldContextObject)))
+			{
+				return world;
+			}
+
+			return InWorldContextObject->GetWorld();
+		}
 	}
 
-	bool IsSameCombatPair(const FDebugOverlayCombatSummary& InSummary, const FString& InSourceName, const FString& InTargetName)
+	namespace SnapshotRecordBuilders
 	{
-		return InSummary.SourceName == InSourceName && InSummary.TargetName == InTargetName;
+
+		uint64 GetCurrentFrameNumber()
+		{
+			return GFrameCounter;
+		}
+
+		float GetWorldTimeSeconds(const UWorld* InWorld)
+		{
+			return IsValid(InWorld) ? InWorld->GetTimeSeconds() : 0.f;
+		}
+
+		FDebugOverlaySnapshotStamp MakeSnapshotStamp(const UWorld* InWorld)
+		{
+			FDebugOverlaySnapshotStamp stamp;
+			stamp.FrameNumber = GetCurrentFrameNumber();
+			stamp.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
+			return stamp;
+		}
+
+		FString ToSafeEventName(const TCHAR* InEventName, const TCHAR* InFallback)
+		{
+			return InEventName ? FString(InEventName) : FString(InFallback);
+		}
+
+		FString ToSafeReason(const TCHAR* InReason)
+		{
+			return InReason ? FString(InReason) : FString(TEXT("None"));
+		}
+
+		FString GetDisplayNameOrNA(const UObject* InObject)
+		{
+			return IsValid(InObject) ? GetNameSafe(InObject) : FString(TEXT("N/A"));
+		}
+
+		FString CompactStoreEnumText(const FString& InValue)
+		{
+			int32 separatorIndex = INDEX_NONE;
+			return InValue.FindLastChar(TEXT(':'), separatorIndex)
+				&& separatorIndex > 0
+				&& InValue[separatorIndex - 1] == TEXT(':')
+				&& separatorIndex + 1 < InValue.Len()
+				? InValue.RightChop(separatorIndex + 1)
+				: InValue;
+		}
+
+		FString CompactStoreReasonText(const FString& InValue)
+		{
+			return CompactStoreEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
+		}
+
+		FString ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket)
+		{
+			if (IsValid(InPacket.SourceActor) && InPacket.SourceActor != InResultReceiverActor)
+			{
+				return GetNameSafe(InPacket.SourceActor);
+			}
+
+			if (IsValid(InPacket.TargetActor) && InPacket.TargetActor != InResultReceiverActor)
+			{
+				return GetNameSafe(InPacket.TargetActor);
+			}
+
+			return GetDisplayNameOrNA(InPacket.SourceActor);
+		}
+
+		bool IsSameCombatPair(const FDebugOverlayCombatSummary& InSummary, const FString& InSourceName, const FString& InTargetName)
+		{
+			return InSummary.SourceName == InSourceName && InSummary.TargetName == InTargetName;
+		}
 	}
 
-	FString NormalizeEventLogFilter(const FString& InFilter)
+	namespace EventFilterPolicy
 	{
-		if (InFilter.Equals(TEXT("Execution"), ESearchCase::IgnoreCase))
+
+		FString NormalizeEventLogFilter(const FString& InFilter)
 		{
-			return TEXT("Execution");
+			if (InFilter.Equals(TEXT("Execution"), ESearchCase::IgnoreCase))
+			{
+				return TEXT("Execution");
+			}
+
+			if (InFilter.Equals(TEXT("Combat"), ESearchCase::IgnoreCase))
+			{
+				return TEXT("Combat");
+			}
+
+			if (InFilter.Equals(TEXT("AI"), ESearchCase::IgnoreCase))
+			{
+				return TEXT("AI");
+			}
+
+			return TEXT("All");
 		}
 
-		if (InFilter.Equals(TEXT("Combat"), ESearchCase::IgnoreCase))
+		bool DoesEventMatchFilter(const FDebugOverlayEventEntry& InEntry, const FString& InFilter)
 		{
-			return TEXT("Combat");
+			const FString filter = NormalizeEventLogFilter(InFilter);
+			if (filter == TEXT("All"))
+			{
+				return true;
+			}
+
+			if (filter == TEXT("Combat"))
+			{
+				return InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
+					|| InEntry.Category.Equals(TEXT("CombatResult"), ESearchCase::IgnoreCase);
+			}
+
+			return InEntry.Category.Equals(filter, ESearchCase::IgnoreCase);
 		}
-
-		if (InFilter.Equals(TEXT("AI"), ESearchCase::IgnoreCase))
-		{
-			return TEXT("AI");
-		}
-
-		return TEXT("All");
-	}
-
-	bool DoesEventMatchFilter(const FDebugOverlayEventEntry& InEntry, const FString& InFilter)
-	{
-		const FString filter = NormalizeEventLogFilter(InFilter);
-		if (filter == TEXT("All"))
-		{
-			return true;
-		}
-
-		if (filter == TEXT("Combat"))
-		{
-			return InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
-				|| InEntry.Category.Equals(TEXT("CombatResult"), ESearchCase::IgnoreCase);
-		}
-
-		return InEntry.Category.Equals(filter, ESearchCase::IgnoreCase);
-	}
 
 	FString ExtractSummaryFieldValue(const FString& InSummary, const FString& InFieldName)
 	{
@@ -405,96 +446,6 @@ namespace
 		return entry;
 	}
 
-	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
-	{
-		const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
-
-		FDebugOverlayEventEntry entry;
-		entry.FrameNumber = stamp.FrameNumber;
-		entry.WorldTimeSeconds = stamp.WorldTimeSeconds;
-		entry.Category = InCategory;
-		entry.EventName = InEventName;
-		entry.OwnerName = InOwnerName;
-		entry.SourceName = InSourceName;
-		entry.TargetName = InTargetName;
-		entry.Summary = InSummary;
-
-		return entry;
-	}
-
-	void AddEventInternal(FDebugOverlayWorldStore& InStore, const FDebugOverlayEventEntry& InEntry)
-	{
-		if (InStore.EventRing.Num() < DebugOverlayEventStoreCapacity)
-		{
-			InStore.EventRing.Add(InEntry);
-		}
-		else
-		{
-			InStore.EventRing[InStore.NextEventIndex] = InEntry;
-		}
-
-		InStore.NextEventIndex = (InStore.NextEventIndex + 1) % DebugOverlayEventStoreCapacity;
-		InStore.EventCount = FMath::Min(InStore.EventCount + 1, DebugOverlayEventStoreCapacity);
-
-		InStore.Snapshot.RecentEvents = GetRecentEventsCopyFromStore(InStore, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"), false);
-	}
-
-	void RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
-	{
-		const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
-
-		InStore.RecentCombatPair.SourceActor = InSourceActor;
-		InStore.RecentCombatPair.TargetActor = InTargetActor;
-		InStore.RecentCombatPair.SourceName = GetNameSafe(InSourceActor);
-		InStore.RecentCombatPair.TargetName = GetNameSafe(InTargetActor);
-		InStore.RecentCombatPair.FrameNumber = stamp.FrameNumber;
-		InStore.RecentCombatPair.WorldTimeSeconds = stamp.WorldTimeSeconds;
-		InStore.RecentCombatPair.EventName = InEventName;
-		InStore.bHasRecentCombatPair = true;
-	}
-
-	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters)
-	{
-		TArray<FDebugOverlayEventEntry> result;
-
-		const int32 maxEvents = FMath::Clamp(InMaxEvents, 0, InMaxClamp);
-		result.Reserve(maxEvents);
-
-		for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
-		{
-			const int32 index = (InStore.NextEventIndex - 1 - i + DebugOverlayEventStoreCapacity) % DebugOverlayEventStoreCapacity;
-			if (InStore.EventRing.IsValidIndex(index) && ShouldIncludeEventForDisplay(InStore.EventRing[index], InFilter, bApplyDisplayFilters))
-			{
-				result.Add(InStore.EventRing[index]);
-			}
-		}
-
-		return result;
-	}
-
-	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters)
-	{
-		TArray<FDebugOverlayEventEntry> result;
-		if (InSubjectName.IsEmpty()) return result;
-
-		const int32 maxEvents = FMath::Clamp(InMaxEvents, 0, InMaxClamp);
-		result.Reserve(maxEvents);
-
-		for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
-		{
-			const int32 index = (InStore.NextEventIndex - 1 - i + DebugOverlayEventStoreCapacity) % DebugOverlayEventStoreCapacity;
-			if (!InStore.EventRing.IsValidIndex(index)) continue;
-
-			const FDebugOverlayEventEntry& entry = InStore.EventRing[index];
-			if (ShouldIncludeEventForDisplay(entry, InFilter, bApplyDisplayFilters) && DoesEventMatchSubject(entry, InSubjectName))
-			{
-				result.Add(MakeSubjectDisplayEventEntry(entry, InSubjectName));
-			}
-		}
-
-		return result;
-	}
-
 	int32 GetClampedEventLogDisplayLimit()
 	{
 		return FMath::Clamp(
@@ -507,22 +458,129 @@ namespace
 	{
 		return NormalizeEventLogFilter(CVarDebugOverlayEventLogFilter.GetValueOnGameThread());
 	}
-
-	FDebugOverlayWorldStore* FindStore(const UObject* InWorldContextObject)
-	{
-		UWorld* world = ResolveWorld(InWorldContextObject);
-		if (!IsValid(world)) return nullptr;
-
-		return StoresByWorld.Find(TObjectKey<UWorld>(world));
 	}
 
-	FDebugOverlayWorldStore* FindOrAddStore(const UObject* InWorldContextObject)
+	namespace SnapshotRecordBuilders
 	{
-		UWorld* world = ResolveWorld(InWorldContextObject);
-		if (!IsValid(world)) return nullptr;
+		FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
+		{
+			const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
 
-		EnsureWorldCleanupDelegateRegistered();
-		return &StoresByWorld.FindOrAdd(TObjectKey<UWorld>(world));
+			FDebugOverlayEventEntry entry;
+			entry.FrameNumber = stamp.FrameNumber;
+			entry.WorldTimeSeconds = stamp.WorldTimeSeconds;
+			entry.Category = InCategory;
+			entry.EventName = InEventName;
+			entry.OwnerName = InOwnerName;
+			entry.SourceName = InSourceName;
+			entry.TargetName = InTargetName;
+			entry.Summary = InSummary;
+
+			return entry;
+		}
+
+		void RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
+		{
+			const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
+
+			InStore.RecentCombatPair.SourceActor = InSourceActor;
+			InStore.RecentCombatPair.TargetActor = InTargetActor;
+			InStore.RecentCombatPair.SourceName = GetNameSafe(InSourceActor);
+			InStore.RecentCombatPair.TargetName = GetNameSafe(InTargetActor);
+			InStore.RecentCombatPair.FrameNumber = stamp.FrameNumber;
+			InStore.RecentCombatPair.WorldTimeSeconds = stamp.WorldTimeSeconds;
+			InStore.RecentCombatPair.EventName = InEventName;
+			InStore.bHasRecentCombatPair = true;
+		}
+	}
+
+	namespace EventRingAccess
+	{
+		void AddEventInternal(FDebugOverlayWorldStore& InStore, const FDebugOverlayEventEntry& InEntry)
+		{
+			if (InStore.EventRing.Num() < DebugOverlayEventStoreCapacity)
+			{
+				InStore.EventRing.Add(InEntry);
+			}
+			else
+			{
+				InStore.EventRing[InStore.NextEventIndex] = InEntry;
+			}
+
+			InStore.NextEventIndex = (InStore.NextEventIndex + 1) % DebugOverlayEventStoreCapacity;
+			InStore.EventCount = FMath::Min(InStore.EventCount + 1, DebugOverlayEventStoreCapacity);
+
+			InStore.Snapshot.RecentEvents = GetRecentEventsCopyFromStore(
+				InStore,
+				EventFilterPolicy::GetClampedEventLogDisplayLimit(),
+				DebugOverlayMaxEventLogDisplayLimit,
+				TEXT("All"),
+				false);
+		}
+
+		TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters)
+		{
+			TArray<FDebugOverlayEventEntry> result;
+
+			const int32 maxEvents = FMath::Clamp(InMaxEvents, 0, InMaxClamp);
+			result.Reserve(maxEvents);
+
+			for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
+			{
+				const int32 index = (InStore.NextEventIndex - 1 - i + DebugOverlayEventStoreCapacity) % DebugOverlayEventStoreCapacity;
+				if (InStore.EventRing.IsValidIndex(index)
+					&& EventFilterPolicy::ShouldIncludeEventForDisplay(InStore.EventRing[index], InFilter, bApplyDisplayFilters))
+				{
+					result.Add(InStore.EventRing[index]);
+				}
+			}
+
+			return result;
+		}
+
+		TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters)
+		{
+			TArray<FDebugOverlayEventEntry> result;
+			if (InSubjectName.IsEmpty()) return result;
+
+			const int32 maxEvents = FMath::Clamp(InMaxEvents, 0, InMaxClamp);
+			result.Reserve(maxEvents);
+
+			for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
+			{
+				const int32 index = (InStore.NextEventIndex - 1 - i + DebugOverlayEventStoreCapacity) % DebugOverlayEventStoreCapacity;
+				if (!InStore.EventRing.IsValidIndex(index)) continue;
+
+				const FDebugOverlayEventEntry& entry = InStore.EventRing[index];
+				if (EventFilterPolicy::ShouldIncludeEventForDisplay(entry, InFilter, bApplyDisplayFilters)
+					&& EventFilterPolicy::DoesEventMatchSubject(entry, InSubjectName))
+				{
+					result.Add(EventFilterPolicy::MakeSubjectDisplayEventEntry(entry, InSubjectName));
+				}
+			}
+
+			return result;
+		}
+	}
+
+	namespace StoreLifecycle
+	{
+		FDebugOverlayWorldStore* FindStore(const UObject* InWorldContextObject)
+		{
+			UWorld* world = ResolveWorld(InWorldContextObject);
+			if (!IsValid(world)) return nullptr;
+
+			return StoresByWorld.Find(TObjectKey<UWorld>(world));
+		}
+
+		FDebugOverlayWorldStore* FindOrAddStore(const UObject* InWorldContextObject)
+		{
+			UWorld* world = ResolveWorld(InWorldContextObject);
+			if (!IsValid(world)) return nullptr;
+
+			EnsureWorldCleanupDelegateRegistered();
+			return &StoresByWorld.FindOrAdd(TObjectKey<UWorld>(world));
+		}
 	}
 #endif
 }
@@ -550,7 +608,7 @@ bool FDebugOverlaySnapshotStore::IsCollecting()
 int32 FDebugOverlaySnapshotStore::GetEventLogDisplayLimit()
 {
 #if !UE_BUILD_SHIPPING
-	return GetClampedEventLogDisplayLimit();
+	return EventFilterPolicy::GetClampedEventLogDisplayLimit();
 #else
 	return 0;
 #endif
@@ -559,7 +617,7 @@ int32 FDebugOverlaySnapshotStore::GetEventLogDisplayLimit()
 FString FDebugOverlaySnapshotStore::GetEventLogFilter()
 {
 #if !UE_BUILD_SHIPPING
-	return GetCanonicalEventLogFilter();
+	return EventFilterPolicy::GetCanonicalEventLogFilter();
 #else
 	return TEXT("All");
 #endif
@@ -572,21 +630,21 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
 
-	FDebugOverlayWorldStore* store = FindOrAddStore(InWorldContextObject);
+	FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
 	if (!store) return;
 
-	const UWorld* world = ResolveWorld(InWorldContextObject);
-	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
-	const FString eventName = ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
+	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
 		TEXT("Owner: %s | Domain: %s | Subject: %s | Decision: %s | Apply: %s | RejectReason: %s"),
-		*GetDisplayNameOrNA(InOwnerActor),
-		*CompactStoreEnumText(InDomain),
+		*SnapshotRecordBuilders::GetDisplayNameOrNA(InOwnerActor),
+		*SnapshotRecordBuilders::CompactStoreEnumText(InDomain),
 		InSubject.IsEmpty() ? TEXT("N/A") : *InSubject,
-		*CompactStoreEnumText(InDecision),
-		*CompactStoreEnumText(InApplyMode),
-		*CompactStoreReasonText(InRejectReason));
+		*SnapshotRecordBuilders::CompactStoreEnumText(InDecision),
+		*SnapshotRecordBuilders::CompactStoreEnumText(InApplyMode),
+		*SnapshotRecordBuilders::CompactStoreReasonText(InRejectReason));
 
 	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastExecution.FrameNumber = stamp.FrameNumber;
@@ -598,7 +656,7 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	store->Snapshot.LastExecution.RejectReason = InRejectReason;
 	store->Snapshot.LastExecution.Summary = summary;
 
-	AddEventInternal(*store, MakeEventEntry(world, TEXT("Execution"), eventName, ownerName, FString(), FString(), summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Execution"), eventName, ownerName, FString(), FString(), summary));
 #endif
 }
 
@@ -609,20 +667,20 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
 
-	FDebugOverlayWorldStore* store = FindOrAddStore(InWorldContextObject);
+	FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
 	if (!store) return;
 
-	const UWorld* world = ResolveWorld(InWorldContextObject);
-	const FString eventName = ToSafeEventName(InEventName, TEXT("WeaponCollisionWindow"));
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("WeaponCollisionWindow"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
 		TEXT("State: %s | HitWindow: %d | Collision: %s | Reason: %s"),
-		*CompactStoreEnumText(InHitWindowState),
+		*SnapshotRecordBuilders::CompactStoreEnumText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
-		*CompactStoreReasonText(ToSafeReason(InReason)));
+		*SnapshotRecordBuilders::CompactStoreReasonText(SnapshotRecordBuilders::ToSafeReason(InReason)));
 
-	AddEventInternal(*store, MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
 #endif
 }
 
@@ -631,21 +689,21 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
 
-	FDebugOverlayWorldStore* store = FindOrAddStore(InWorldContextObject);
+	FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
 	if (!store) return;
 
-	const UWorld* world = ResolveWorld(InWorldContextObject);
-	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
-	const FString eventName = ToSafeEventName(InEventName, TEXT("CombatTargetPacket"));
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
+	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("CombatTargetPacket"));
 	const FString sourceName = GetNameSafe(InPacket.Context.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.Context.TargetActor);
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString summary = FString::Printf(
 		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
-		*GetDisplayNameOrNA(InPacket.Context.SourceActor),
-		*GetDisplayNameOrNA(InPacket.Context.TargetActor),
-		*CompactStoreEnumText(outcome),
+		*SnapshotRecordBuilders::GetDisplayNameOrNA(InPacket.Context.SourceActor),
+		*SnapshotRecordBuilders::GetDisplayNameOrNA(InPacket.Context.TargetActor),
+		*SnapshotRecordBuilders::CompactStoreEnumText(outcome),
 		InPacket.Result.RequestDamage,
 		InPacket.Result.MitigatedDamage,
 		InPacket.Result.FinalTakenDamage,
@@ -667,9 +725,9 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	store->Snapshot.LastCombat.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.Result.CommittedDamage;
 	store->Snapshot.LastCombat.Summary = summary;
-	RecordRecentCombatPairInternal(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
+	SnapshotRecordBuilders::RecordRecentCombatPairInternal(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
 
-	AddEventInternal(*store, MakeEventEntry(world, TEXT("Combat"), eventName, targetName, sourceName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, targetName, sourceName, targetName, summary));
 #endif
 }
 
@@ -678,20 +736,20 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
 
-	FDebugOverlayWorldStore* store = FindOrAddStore(InWorldContextObject);
+	FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
 	if (!store) return;
 
-	const UWorld* world = ResolveWorld(InWorldContextObject);
-	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
-	const FString eventName = ToSafeEventName(InEventName, TEXT("CombatResult"));
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
+	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("CombatResult"));
 	const FString receiverName = GetNameSafe(InReceiverActor);
 	const FString sourceName = GetNameSafe(InPacket.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.TargetActor);
 	const FString causerName = GetNameSafe(InPacket.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
-	const FString resultSourceName = ResolveCombatResultSourceName(InReceiverActor, InPacket);
+	const FString resultSourceName = SnapshotRecordBuilders::ResolveCombatResultSourceName(InReceiverActor, InPacket);
 	const bool bHasPreviousDamageBreakdown = store->Snapshot.LastCombat.bHasDamageBreakdown
-		&& IsSameCombatPair(store->Snapshot.LastCombat, sourceName, targetName);
+		&& SnapshotRecordBuilders::IsSameCombatPair(store->Snapshot.LastCombat, sourceName, targetName);
 	const float requestDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.RequestDamage : 0.f;
 	const float mitigatedDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.MitigatedDamage : 0.f;
 	const float finalTakenDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.FinalTakenDamage : 0.f;
@@ -699,8 +757,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 		? FString::Printf(
 			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
-			*GetDisplayNameOrNA(InReceiverActor),
-			*CompactStoreEnumText(outcome),
+			*SnapshotRecordBuilders::GetDisplayNameOrNA(InReceiverActor),
+			*SnapshotRecordBuilders::CompactStoreEnumText(outcome),
 			requestDamage,
 			mitigatedDamage,
 			finalTakenDamage,
@@ -709,8 +767,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 		: FString::Printf(
 			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
-			*GetDisplayNameOrNA(InReceiverActor),
-			*CompactStoreEnumText(outcome),
+			*SnapshotRecordBuilders::GetDisplayNameOrNA(InReceiverActor),
+			*SnapshotRecordBuilders::CompactStoreEnumText(outcome),
 			InPacket.CommittedDamage,
 			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"));
 
@@ -729,9 +787,9 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	store->Snapshot.LastCombat.FinalTakenDamage = finalTakenDamage;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.CommittedDamage;
 	store->Snapshot.LastCombat.Summary = summary;
-	RecordRecentCombatPairInternal(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
+	SnapshotRecordBuilders::RecordRecentCombatPairInternal(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
 
-	AddEventInternal(*store, MakeEventEntry(world, TEXT("CombatResult"), eventName, receiverName, sourceName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("CombatResult"), eventName, receiverName, sourceName, targetName, summary));
 #endif
 }
 
@@ -742,24 +800,24 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
 
-	FDebugOverlayWorldStore* store = FindOrAddStore(InWorldContextObject);
+	FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
 	if (!store) return;
 
-	const UWorld* world = ResolveWorld(InWorldContextObject);
-	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(world);
-	const FString eventName = ToSafeEventName(InEventName, TEXT("AICombatTask"));
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	const FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
+	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("AICombatTask"));
 	const FString controllerName = GetNameSafe(InAIController);
 	const FString pawnName = GetNameSafe(InOwnerPawn);
 	const FString targetName = GetNameSafe(InTargetActor);
 	const FString summary = FString::Printf(
 		TEXT("Controller: %s | Pawn: %s | Target: %s | IntentState: %s | SubState: %s | Result: %s | RejectReason: %s"),
-		*GetDisplayNameOrNA(InAIController),
-		*GetDisplayNameOrNA(InOwnerPawn),
-		*GetDisplayNameOrNA(InTargetActor),
-		*CompactStoreEnumText(InIntentState),
-		*CompactStoreEnumText(InSubState),
-		*CompactStoreEnumText(InRequestResult),
-		*CompactStoreReasonText(InRejectReason));
+		*SnapshotRecordBuilders::GetDisplayNameOrNA(InAIController),
+		*SnapshotRecordBuilders::GetDisplayNameOrNA(InOwnerPawn),
+		*SnapshotRecordBuilders::GetDisplayNameOrNA(InTargetActor),
+		*SnapshotRecordBuilders::CompactStoreEnumText(InIntentState),
+		*SnapshotRecordBuilders::CompactStoreEnumText(InSubState),
+		*SnapshotRecordBuilders::CompactStoreEnumText(InRequestResult),
+		*SnapshotRecordBuilders::CompactStoreReasonText(InRejectReason));
 
 	store->Snapshot.LastAI.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastAI.FrameNumber = stamp.FrameNumber;
@@ -777,7 +835,7 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 		store->Snapshot.LastAIByPawnName.FindOrAdd(pawnName) = store->Snapshot.LastAI;
 	}
 
-	AddEventInternal(*store, MakeEventEntry(world, TEXT("AI"), eventName, pawnName, pawnName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("AI"), eventName, pawnName, pawnName, targetName, summary));
 #endif
 }
 
@@ -788,21 +846,21 @@ void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, c
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
 
-	FDebugOverlayWorldStore* store = FindOrAddStore(InWorldContextObject);
+	FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
 	if (!store) return;
 
-	const UWorld* world = ResolveWorld(InWorldContextObject);
-	AddEventInternal(*store, MakeEventEntry(world, InCategory, InEventName, InOwnerName, InSourceName, InTargetName, InSummary));
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, InCategory, InEventName, InOwnerName, InSourceName, InTargetName, InSummary));
 #endif
 }
 
 TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents)
 {
 #if !UE_BUILD_SHIPPING
-	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	const FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
-	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, TEXT("All"), true);
+	return EventRingAccess::GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, TEXT("All"), true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -811,10 +869,10 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter)
 {
 #if !UE_BUILD_SHIPPING
-	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	const FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
-	return GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, true);
+	return EventRingAccess::GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -823,10 +881,10 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const FString& InSubjectName)
 {
 #if !UE_BUILD_SHIPPING
-	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	const FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
-	return GetRecentEventsForSubjectCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, InSubjectName, true);
+	return EventRingAccess::GetRecentEventsForSubjectCopyFromStore(*store, InMaxEvents, DebugOverlayEventStoreCapacity, InFilter, InSubjectName, true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -839,11 +897,11 @@ bool FDebugOverlaySnapshotStore::TryGetSnapshotCopy(const UObject* InWorldContex
 	OutSnapshot = FDebugOverlaySnapshot();
 
 #if !UE_BUILD_SHIPPING
-	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	const FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return false;
 
 	OutSnapshot = store->Snapshot;
-	OutSnapshot.RecentEvents = GetRecentEventsCopyFromStore(*store, GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"), false);
+	OutSnapshot.RecentEvents = EventRingAccess::GetRecentEventsCopyFromStore(*store, EventFilterPolicy::GetClampedEventLogDisplayLimit(), DebugOverlayMaxEventLogDisplayLimit, TEXT("All"), false);
 	return true;
 #else
 	return false;
@@ -855,7 +913,7 @@ bool FDebugOverlaySnapshotStore::TryGetRecentCombatPair(const UObject* InWorldCo
 	OutPair = FDebugOverlayRecentCombatPair();
 
 #if !UE_BUILD_SHIPPING
-	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	const FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store || !store->bHasRecentCombatPair) return false;
 
 	OutPair = store->RecentCombatPair;
@@ -872,7 +930,7 @@ bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldCon
 #if !UE_BUILD_SHIPPING
 	if (InPawnName.IsEmpty()) return false;
 
-	const FDebugOverlayWorldStore* store = FindStore(InWorldContextObject);
+	const FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return false;
 
 	const FDebugOverlayAISummary* summary = store->Snapshot.LastAIByPawnName.Find(InPawnName);
@@ -890,10 +948,10 @@ bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldCon
 void FDebugOverlaySnapshotStore::Reset(const UObject* InWorldContextObject)
 {
 #if !UE_BUILD_SHIPPING
-	UWorld* world = ResolveWorld(InWorldContextObject);
+	UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	if (!IsValid(world)) return;
 
-	RemoveStoreForWorld(world);
+	StoreLifecycle::RemoveStoreForWorld(world);
 #endif
 }
 

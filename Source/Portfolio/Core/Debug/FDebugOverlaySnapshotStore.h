@@ -26,7 +26,9 @@ public:
 	// Gate
 	static bool IsEnabled();
 	static bool IsCollecting();
+	// Returns the display limit clamped to the internal accepted range.
 	static int32 GetEventLogDisplayLimit();
+	// Returns canonical filter text: All, Execution, Combat, or AI.
 	static FString GetEventLogFilter();
 
 public:
@@ -46,14 +48,23 @@ public:
 public:
 	// Event Log
 	static void AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary);
+	// Returns newest-first entries and applies display-level suppression filters.
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents);
+	// Same as above with category filter (InFilter is normalized internally).
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter);
+	// Returns newest-first entries scoped to a subject actor name and role-matched categories.
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const FString& InSubjectName);
 
 public:
 	// Snapshot Query
+	// Success: world store exists for InWorldContextObject and OutSnapshot receives a full copy.
+	// Failure: OutSnapshot is reset to default and function returns false.
 	static bool TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
+	// Success: world store exists and a recent combat pair was recorded.
+	// Failure: OutPair is reset to default and function returns false.
 	static bool TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair);
+	// Success: InPawnName is not empty, world store exists, and the pawn cache has an entry.
+	// Failure: OutSummary is reset to default and function returns false.
 	static bool TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary);
 
 public:

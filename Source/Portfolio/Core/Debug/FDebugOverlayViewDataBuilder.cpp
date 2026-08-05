@@ -185,6 +185,29 @@ namespace
 		return IsValid(InBlackboardComp) ? FString::Printf(TEXT("%.1f"), InBlackboardComp->GetValueAsFloat(InKeyName)) : MissingText();
 	}
 
+	bool TryGetCapturedRecentAISummary(const UWorld* InWorld, const ACEnemy* InEnemy, bool bInHasSnapshot, FDebugOverlayAISummary& OutSummary)
+	{
+		OutSummary = FDebugOverlayAISummary();
+
+		if (!bInHasSnapshot || !IsValid(InEnemy))
+		{
+			return false;
+		}
+
+		const FString enemyName = GetNameSafe(InEnemy);
+		if (enemyName.IsEmpty())
+		{
+			return false;
+		}
+
+		if (!FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(InWorld, enemyName, OutSummary))
+		{
+			return false;
+		}
+
+		return OutSummary.CaptureState == EDebugOverlayCaptureState::Captured;
+	}
+
 	FString FormatActorMovement(const APawn* InPawn)
 	{
 		const UCMovementComponent* movementComp = FindComponent<UCMovementComponent>(InPawn);
@@ -322,10 +345,8 @@ namespace
 			return recentAIEventViewData;
 		}
 
-		const FString enemyName = GetNameSafe(InEnemy);
 		FDebugOverlayAISummary cachedSummary;
-		if (!FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(InWorld, enemyName, cachedSummary)
-			|| cachedSummary.CaptureState != EDebugOverlayCaptureState::Captured)
+		if (!TryGetCapturedRecentAISummary(InWorld, InEnemy, bInHasSnapshot, cachedSummary))
 		{
 			recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::NotCaptured;
 			return recentAIEventViewData;

@@ -160,7 +160,7 @@ namespace
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Task: %s"), *InRecentAIEventViewData.TaskText));
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *InRecentAIEventViewData.ResultText));
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Age: %s"), *InRecentAIEventViewData.AgeText));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *InRecentAIEventViewData.RejectReasonText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *ValueOrNone(InRecentAIEventViewData.RejectReasonText)));
 			return;
 		default:
 			AppendFormattedOverlayLine(InOutLines, TEXT("NotCaptured"));
