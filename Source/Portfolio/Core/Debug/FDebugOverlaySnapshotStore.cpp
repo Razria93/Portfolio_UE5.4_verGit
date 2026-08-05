@@ -59,11 +59,11 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	const FString summary = FString::Printf(
 		TEXT("Owner: %s | Domain: %s | Subject: %s | Decision: %s | Apply: %s | RejectReason: %s"),
 		*SnapshotRecordBuilders::GetDisplayNameOrNA(InOwnerActor),
-		*SnapshotRecordBuilders::CompactStoreEnumText(InDomain),
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InDomain),
 		InSubject.IsEmpty() ? TEXT("N/A") : *InSubject,
-		*SnapshotRecordBuilders::CompactStoreEnumText(InDecision),
-		*SnapshotRecordBuilders::CompactStoreEnumText(InApplyMode),
-		*SnapshotRecordBuilders::CompactStoreReasonText(InRejectReason));
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InDecision),
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InApplyMode),
+		*SnapshotRecordBuilders::NormalizeReasonDisplayText(InRejectReason));
 
 	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastExecution.FrameNumber = stamp.FrameNumber;
@@ -92,10 +92,10 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
 		TEXT("State: %s | HitWindow: %d | Collision: %s | Reason: %s"),
-		*SnapshotRecordBuilders::CompactStoreEnumText(InHitWindowState),
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
-		*SnapshotRecordBuilders::CompactStoreReasonText(SnapshotRecordBuilders::ToSafeReason(InReason)));
+		*SnapshotRecordBuilders::NormalizeReasonDisplayText(SnapshotRecordBuilders::ToReasonOrNone(InReason)));
 
 	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
 #endif
@@ -120,7 +120,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
 		*SnapshotRecordBuilders::GetDisplayNameOrNA(InPacket.Context.SourceActor),
 		*SnapshotRecordBuilders::GetDisplayNameOrNA(InPacket.Context.TargetActor),
-		*SnapshotRecordBuilders::CompactStoreEnumText(outcome),
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(outcome),
 		InPacket.Result.RequestDamage,
 		InPacket.Result.MitigatedDamage,
 		InPacket.Result.FinalTakenDamage,
@@ -142,7 +142,8 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	store->Snapshot.LastCombat.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.Result.CommittedDamage;
 	store->Snapshot.LastCombat.Summary = summary;
-	SnapshotRecordBuilders::RecordRecentCombatPairInternal(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
+
+	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
 
 	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, targetName, sourceName, targetName, summary));
 #endif
@@ -175,7 +176,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
 			*SnapshotRecordBuilders::GetDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::CompactStoreEnumText(outcome),
+			*SnapshotRecordBuilders::NormalizeEnumDisplayText(outcome),
 			requestDamage,
 			mitigatedDamage,
 			finalTakenDamage,
@@ -185,7 +186,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
 			*SnapshotRecordBuilders::GetDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::CompactStoreEnumText(outcome),
+			*SnapshotRecordBuilders::NormalizeEnumDisplayText(outcome),
 			InPacket.CommittedDamage,
 			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"));
 
@@ -204,7 +205,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	store->Snapshot.LastCombat.FinalTakenDamage = finalTakenDamage;
 	store->Snapshot.LastCombat.CommittedDamage = InPacket.CommittedDamage;
 	store->Snapshot.LastCombat.Summary = summary;
-	SnapshotRecordBuilders::RecordRecentCombatPairInternal(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
+
+	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
 
 	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("CombatResult"), eventName, receiverName, sourceName, targetName, summary));
 #endif
@@ -229,10 +231,10 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 		*SnapshotRecordBuilders::GetDisplayNameOrNA(InAIController),
 		*SnapshotRecordBuilders::GetDisplayNameOrNA(InOwnerPawn),
 		*SnapshotRecordBuilders::GetDisplayNameOrNA(InTargetActor),
-		*SnapshotRecordBuilders::CompactStoreEnumText(InIntentState),
-		*SnapshotRecordBuilders::CompactStoreEnumText(InSubState),
-		*SnapshotRecordBuilders::CompactStoreEnumText(InRequestResult),
-		*SnapshotRecordBuilders::CompactStoreReasonText(InRejectReason));
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InIntentState),
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InSubState),
+		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InRequestResult),
+		*SnapshotRecordBuilders::NormalizeReasonDisplayText(InRejectReason));
 
 	store->Snapshot.LastAI.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastAI.FrameNumber = stamp.FrameNumber;

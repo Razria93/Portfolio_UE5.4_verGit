@@ -74,13 +74,13 @@ namespace SnapshotRecordBuilders
 {
 	DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp MakeSnapshotStamp(const UWorld* InWorld);
 	FString ToSafeEventName(const TCHAR* InEventName, const TCHAR* InFallback);
-	FString ToSafeReason(const TCHAR* InReason);
+	FString ToReasonOrNone(const TCHAR* InReason);
 	FString GetDisplayNameOrNA(const UObject* InObject);
-	FString CompactStoreEnumText(const FString& InValue);
-	FString CompactStoreReasonText(const FString& InValue);
+	FString NormalizeEnumDisplayText(const FString& InValue);
+	FString NormalizeReasonDisplayText(const FString& InValue);
 	FString ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket);
 	bool IsSameCombatPair(const FDebugOverlayCombatSummary& InSummary, const FString& InSourceName, const FString& InTargetName);
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary);
-	void RecordRecentCombatPairInternal(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName);
+	void UpdateRecentCombatPair(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName);
 }
 #endif

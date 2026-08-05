@@ -6,10 +6,11 @@
 #include "GameFramework/Actor.h"
 
 #if !UE_BUILD_SHIPPING
-using namespace DebugOverlaySnapshotStoreInternals;
-
 namespace
 {
+	constexpr TCHAR NoneText[] = TEXT("None");
+	constexpr TCHAR NotAvailableText[] = TEXT("N/A");
+
 	uint64 GetCurrentFrameNumber()
 	{
 		return GFrameCounter;
@@ -21,30 +22,22 @@ namespace
 	}
 }
 
-FDebugOverlaySnapshotStamp SnapshotRecordBuilders::MakeSnapshotStamp(const UWorld* InWorld)
-{
-	FDebugOverlaySnapshotStamp stamp;
-	stamp.FrameNumber = GetCurrentFrameNumber();
-	stamp.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
-	return stamp;
-}
-
 FString SnapshotRecordBuilders::ToSafeEventName(const TCHAR* InEventName, const TCHAR* InFallback)
 {
 	return InEventName ? FString(InEventName) : FString(InFallback);
 }
 
-FString SnapshotRecordBuilders::ToSafeReason(const TCHAR* InReason)
+FString SnapshotRecordBuilders::ToReasonOrNone(const TCHAR* InReason)
 {
-	return InReason ? FString(InReason) : FString(TEXT("None"));
+	return InReason ? FString(InReason) : FString(NoneText);
 }
 
 FString SnapshotRecordBuilders::GetDisplayNameOrNA(const UObject* InObject)
 {
-	return IsValid(InObject) ? GetNameSafe(InObject) : FString(TEXT("N/A"));
+	return IsValid(InObject) ? GetNameSafe(InObject) : FString(NotAvailableText);
 }
 
-FString SnapshotRecordBuilders::CompactStoreEnumText(const FString& InValue)
+FString SnapshotRecordBuilders::NormalizeEnumDisplayText(const FString& InValue)
 {
 	int32 separatorIndex = INDEX_NONE;
 	return InValue.FindLastChar(TEXT(':'), separatorIndex)
@@ -55,9 +48,9 @@ FString SnapshotRecordBuilders::CompactStoreEnumText(const FString& InValue)
 		: InValue;
 }
 
-FString SnapshotRecordBuilders::CompactStoreReasonText(const FString& InValue)
+FString SnapshotRecordBuilders::NormalizeReasonDisplayText(const FString& InValue)
 {
-	return CompactStoreEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
+	return NormalizeEnumDisplayText(InValue.IsEmpty() ? FString(NoneText) : InValue);
 }
 
 FString SnapshotRecordBuilders::ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket)
@@ -80,9 +73,17 @@ bool SnapshotRecordBuilders::IsSameCombatPair(const FDebugOverlayCombatSummary& 
 	return InSummary.SourceName == InSourceName && InSummary.TargetName == InTargetName;
 }
 
+DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp SnapshotRecordBuilders::MakeSnapshotStamp(const UWorld* InWorld)
+{
+	DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp;
+	stamp.FrameNumber = GetCurrentFrameNumber();
+	stamp.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
+	return stamp;
+}
+
 FDebugOverlayEventEntry SnapshotRecordBuilders::MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 {
-	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
+	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
 
 	FDebugOverlayEventEntry entry;
 	entry.FrameNumber = stamp.FrameNumber;
@@ -97,9 +98,9 @@ FDebugOverlayEventEntry SnapshotRecordBuilders::MakeEventEntry(const UWorld* InW
 	return entry;
 }
 
-void SnapshotRecordBuilders::RecordRecentCombatPairInternal(FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
+void SnapshotRecordBuilders::UpdateRecentCombatPair(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
 {
-	const FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
+	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = MakeSnapshotStamp(InWorld);
 
 	InStore.RecentCombatPair.SourceActor = InSourceActor;
 	InStore.RecentCombatPair.TargetActor = InTargetActor;
