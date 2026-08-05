@@ -9,6 +9,9 @@ class UWorld;
 struct FCombatResultPacket;
 
 #if !UE_BUILD_SHIPPING
+//==============================================================================
+// Internal Shared Types and Store State
+//==============================================================================
 namespace DebugOverlaySnapshotStoreInternals
 {
 	inline constexpr int32 EventStoreCapacity = 32;
@@ -34,6 +37,9 @@ namespace DebugOverlaySnapshotStoreInternals
 	extern TMap<TObjectKey<UWorld>, FDebugOverlayWorldStore> GStoresByWorld;
 }
 
+//==============================================================================
+// Runtime Config Accessors
+//==============================================================================
 namespace SnapshotStoreConfig
 {
 	bool IsEnabled();
@@ -44,6 +50,9 @@ namespace SnapshotStoreConfig
 	FString GetEventLogFilterRaw();
 }
 
+//==============================================================================
+// Store Lifecycle and World Mapping
+//==============================================================================
 namespace StoreLifecycle
 {
 	UWorld* ResolveWorld(const UObject* InWorldContextObject);
@@ -53,6 +62,9 @@ namespace StoreLifecycle
 	void ResetAllStores();
 }
 
+//==============================================================================
+// Event Display Filter Policy
+//==============================================================================
 namespace EventFilterPolicy
 {
 	FString NormalizeEventLogFilter(const FString& InFilter);
@@ -63,6 +75,9 @@ namespace EventFilterPolicy
 	FDebugOverlayEventEntry MakeSubjectDisplayEventEntry(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName);
 }
 
+//==============================================================================
+// Event Ring Read/Write Access
+//==============================================================================
 namespace EventRingAccess
 {
 	void AddEventInternal(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const FDebugOverlayEventEntry& InEntry);
@@ -70,6 +85,9 @@ namespace EventRingAccess
 	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters);
 }
 
+//==============================================================================
+// Snapshot Record Builders
+//==============================================================================
 namespace SnapshotRecordBuilders
 {
 	DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp MakeSnapshotStamp(const UWorld* InWorld);
