@@ -2,52 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Core/Debug/FDebugOverlayFocusTypes.h"
 #include "CDebugOverlayFocusComponent.generated.h"
-
-enum class EDebugOverlayFocusSource : uint8
-{
-	None,
-	NearestEnemy,
-	RecentCombat,
-	WorldScanFallback,
-	GameplayTarget,
-	EditorSelection,
-};
-
-enum class EDebugOverlayFocusCommandType : uint8
-{
-	None,
-	SelectNearestTarget,
-	SelectActorTarget,
-	SelectRecentCombatTarget,
-	ClearTarget,
-};
-
-enum class EDebugOverlayFocusCommandStatus : uint8
-{
-	None,
-	Selected,
-	Cleared,
-	InvalidContext,
-	NoEnemy,
-	OutOfRange,
-	NoActorName,
-	NoActor,
-	NotEnemy,
-	NoRecentCombat,
-};
-
-struct PORTFOLIO_API FDebugOverlayFocusCommandResult
-{
-	EDebugOverlayFocusCommandType CommandType = EDebugOverlayFocusCommandType::None;
-	EDebugOverlayFocusCommandStatus Status = EDebugOverlayFocusCommandStatus::None;
-	EDebugOverlayFocusSource FocusMode = EDebugOverlayFocusSource::None;
-	FString ActorName;
-	FString ClassName;
-	float Distance = 0.f;
-	float Radius = 0.f;
-	FString SummaryTextOverride;
-};
 
 UCLASS(ClassGroup = (Debug))
 class PORTFOLIO_API UCDebugOverlayFocusComponent : public UActorComponent
@@ -60,21 +16,32 @@ public:
 private:
 	TWeakObjectPtr<AActor> DebugOverlayFocusActor;
 	EDebugOverlayFocusSource DebugOverlayFocusSource = EDebugOverlayFocusSource::None;
-	FDebugOverlayFocusCommandResult DebugOverlayFocusCommandResult;
+	EDebugOverlayFocusDriver DebugOverlayFocusDriver = EDebugOverlayFocusDriver::None;
+	EDebugOverlayRecentFocusState DebugOverlayRecentFocusState = EDebugOverlayRecentFocusState::None;
 
 public:
-	// Focus Query
+	// Focus Value Query
 	bool HasDebugOverlayFocus() const;
-	bool HasDebugOverlayFocusCommandResult() const;
 	AActor* GetDebugOverlayFocusActor() const;
+	EDebugOverlayFocusSource GetDebugOverlayFocusSource() const;
+	EDebugOverlayFocusDriver GetDebugOverlayFocusDriver() const;
+	EDebugOverlayRecentFocusState GetDebugOverlayRecentFocusState() const;
+
+	// Focus Text Query
 	FString GetDebugOverlayFocusActorText() const;
-	FString GetDebugOverlayFocusModeText() const;
-	const FDebugOverlayFocusCommandResult& GetDebugOverlayFocusCommandResult() const;
-	FString GetDebugOverlayFocusCommandResultText() const;
+	FString GetDebugOverlayFocusActorNameText() const;
+	FString GetDebugOverlayFocusSourceText() const;
+	FString GetDebugOverlayFocusDriverText() const;
+	FString GetDebugOverlayRecentFocusStateText() const;
 
 	// Focus Mutation
-	void SetDebugOverlayFocus(AActor* InFocusActor, EDebugOverlayFocusSource InSource);
-	void ClearDebugOverlayFocus();
-	void SetDebugOverlayFocusCommandResult(const FDebugOverlayFocusCommandResult& InResult);
-	void ClearDebugOverlayFocusCommandResult();
+	// Set
+	void SetDebugOverlayFocusActorAndSource(AActor* InFocusActor, EDebugOverlayFocusSource InSource);
+	void SetDebugOverlayFocusDriver(EDebugOverlayFocusDriver InDriver);
+	void SetDebugOverlayRecentFocusState(EDebugOverlayRecentFocusState InState);
+
+	// Clear
+	void ClearDebugOverlayFocusActorAndSource();
+	void ClearDebugOverlayFocusDriver();
+	void ClearDebugOverlayRecentFocusState();
 };

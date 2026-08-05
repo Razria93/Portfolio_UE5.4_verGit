@@ -1,28 +1,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Core/Debug/CDebugOverlayFocusComponent.h"
+#include "Core/Debug/FDebugOverlayFocusTypes.h"
 
 class APawn;
 class UWorld;
 
-enum class EDebugOverlayFocusResolveStatus : uint8
+enum class EDebugOverlayFocusResolveOutcome : uint8
 {
 	Selected,
-	InvalidContext,
-	NoEnemy,
-	NoRecentCombat,
+	
+	NoTarget,
+	NoRecentCombatEvidence,
 	OutOfRange,
-	NoActorName,
+	
+	InvalidContext,
 	NoActor,
-	NotEnemy,
+	NoActorName,
+	TargetIsNotEnemy,
 };
 
 struct FDebugOverlayFocusResolveResult
 {
-	EDebugOverlayFocusResolveStatus Status = EDebugOverlayFocusResolveStatus::InvalidContext;
 	TWeakObjectPtr<AActor> FocusActor;
-	EDebugOverlayFocusSource FocusSource = EDebugOverlayFocusSource::None;
+	EDebugOverlayFocusSource Source = EDebugOverlayFocusSource::None;
+	EDebugOverlayFocusResolveOutcome Outcome = EDebugOverlayFocusResolveOutcome::InvalidContext;
 	FString ActorName;
 	FString ClassName;
 	float Distance = 0.f;
@@ -32,18 +34,7 @@ struct FDebugOverlayFocusResolveResult
 class PORTFOLIO_API FDebugOverlayFocusResolver
 {
 public:
-	static FDebugOverlayFocusResolveResult ResolveNearestEnemy(
-		UWorld* World,
-		const APawn* ViewerPawn,
-		float Radius);
-
-	static FDebugOverlayFocusResolveResult ResolveActorEnemy(
-		UWorld* World,
-		const APawn* ViewerPawn,
-		const FString& ActorName);
-
-	static FDebugOverlayFocusResolveResult ResolveRecentCombatEnemy(
-		UWorld* World,
-		const APawn* ViewerPawn,
-		float FallbackRadius);
+	static FDebugOverlayFocusResolveResult ResolveNearestTarget(UWorld* World, const APawn* ViewerPawn, float Radius);
+	static FDebugOverlayFocusResolveResult ResolveOutlinerTarget(UWorld* World, const APawn* ViewerPawn, const FString& ActorName);
+	static FDebugOverlayFocusResolveResult ResolveRecentCombatTarget(UWorld* World, const APawn* ViewerPawn, float FallbackRadius);
 };
