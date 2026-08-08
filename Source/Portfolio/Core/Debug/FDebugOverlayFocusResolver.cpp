@@ -10,6 +10,8 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
+	// ===== Actor Lookup Helpers =====
+
 	AActor* FindDebugOverlayActorByName(UWorld* InWorld, const FString& InActorName)
 	{
 		if (!IsValid(InWorld) || InActorName.IsEmpty()) return nullptr;
@@ -34,6 +36,8 @@ namespace
 
 		return nullptr;
 	}
+
+	// ===== Target Lookup =====
 
 	ACEnemy* FindClosestFocusTarget(UWorld* InWorld, const APawn* InViewerPawn, float& OutDistance)
 	{
