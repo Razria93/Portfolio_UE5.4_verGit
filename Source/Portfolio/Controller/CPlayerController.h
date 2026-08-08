@@ -18,12 +18,17 @@ private:
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCTargetingComponent* TargetingComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCDebugOverlayFocusComponent* DebugOverlayFocusComponent = nullptr;
 
 	// Cached input
 	FVector2D CachedMoveAxis2D = FVector2D::ZeroVector;
 
 public:
+	// Component Query
+	FORCEINLINE class UCTargetingComponent* GetTargetingComp() const { return TargetingComponent; }
 
 	// Debug Overlay Exec
 	UFUNCTION(Exec)
@@ -62,9 +67,10 @@ protected:
 	void PressJump();
 	void ReleaseJump();
 
-	void PressSwordToggle();
 	void PressComboAction();
+	void PressDodge();
 	void PressGuard();
 	void ReleaseGuard();
-	void PressDodge();
+	void PressSwordToggle();
+	void PressTargetLock();
 };

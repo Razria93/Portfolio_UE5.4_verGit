@@ -4,6 +4,7 @@
 
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
+#include "Component/CTargetingComponent.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
@@ -26,6 +27,9 @@ ACPlayerController::ACPlayerController()
 
 	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
 	check(PlayerFeedbackComponent);
+
+	TargetingComponent = CreateDefaultSubobject<UCTargetingComponent>(TEXT("Targeting"));
+	check(TargetingComponent);
 
 #if !UE_BUILD_SHIPPING
 	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
@@ -85,6 +89,11 @@ void ACPlayerController::PostInitializeComponents()
 	{
 		PlayerFeedbackComponent->InitializeReferences(this);
 	}
+
+	if (IsValid(TargetingComponent))
+	{
+		TargetingComponent->InitializeReferences(this);
+	}
 }
 
 void ACPlayerController::PlayerTick(float DeltaTime)
@@ -123,6 +132,7 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
 	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
+	InputComponent->BindAction("TargetLock", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetLock);
 }
 
 // ===== Look Input =====
@@ -233,4 +243,11 @@ void ACPlayerController::PressDodge()
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
+}
+
+void ACPlayerController::PressTargetLock()
+{
+	if (!IsValid(TargetingComponent)) return;
+
+	TargetingComponent->ToggleTargetLock();
 }
