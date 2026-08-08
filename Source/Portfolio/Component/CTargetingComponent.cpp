@@ -5,7 +5,6 @@
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CHealthComponent.h"
 
-#include "DrawDebugHelpers.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 
@@ -35,7 +34,6 @@ void UCTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 	ValidationElapsedTime = 0.f;
 	ValidateCurrentTarget();
-	DrawDebugState();
 }
 
 // ===== Target Command =====
@@ -72,7 +70,7 @@ bool UCTargetingComponent::AcquireBestTarget()
 
 	if (!IsValid(bestTarget)) return false;
 
-	SetCurrentTarget(bestTarget, bestScore);
+	SetCurrentTarget(bestTarget);
 	return true;
 }
 
@@ -91,6 +89,37 @@ bool UCTargetingComponent::HasTarget() const
 ACEnemy* UCTargetingComponent::GetCurrentTarget() const
 {
 	return CurrentTarget.Get();
+}
+
+bool UCTargetingComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const
+{
+	OutSnapshot = FTargetingDebugSnapshot();
+
+	ACEnemy* currentTarget = CurrentTarget.Get();
+	if (!IsValid(OwnerPlayerController_Injected)) return false;
+
+	FRotator viewRotation = FRotator::ZeroRotator;
+	OwnerPlayerController_Injected->GetPlayerViewPoint(OutSnapshot.ViewLocation, viewRotation);
+
+	OutSnapshot.ViewForward = viewRotation.Vector();
+	OutSnapshot.MaxTargetDistance = TargetingTuning.MaxTargetDistance;
+	if (!IsValid(currentTarget)) return true;
+
+	OutSnapshot.TargetActor = currentTarget;
+	OutSnapshot.TargetLocation = currentTarget->GetActorLocation();
+	const float safeMaxTargetDistance = FMath::Max(OutSnapshot.MaxTargetDistance, KINDA_SMALL_NUMBER);
+	OutSnapshot.Distance = FVector::Distance(OutSnapshot.ViewLocation, OutSnapshot.TargetLocation);
+	OutSnapshot.Dot = FVector::DotProduct(
+		OutSnapshot.ViewForward,
+		(OutSnapshot.TargetLocation - OutSnapshot.ViewLocation).GetSafeNormal());
+	OutSnapshot.MinDot = FMath::Cos(FMath::DegreesToRadians(TargetingTuning.MaxTargetAngleDegrees));
+	OutSnapshot.AngleScore = FMath::Clamp(FMath::GetRangePct(OutSnapshot.MinDot, 1.f, OutSnapshot.Dot), 0.f, 1.f);
+	OutSnapshot.DistanceScore = 1.f - FMath::Clamp(OutSnapshot.Distance / safeMaxTargetDistance, 0.f, 1.f);
+	OutSnapshot.FinalScore = (OutSnapshot.AngleScore * TargetingTuning.AngleScoreWeight)
+		+ (OutSnapshot.DistanceScore * TargetingTuning.DistanceScoreWeight);
+	OutSnapshot.bWithinRange = OutSnapshot.Distance <= TargetingTuning.MaxTargetDistance;
+	OutSnapshot.bWithinViewCone = OutSnapshot.Dot >= OutSnapshot.MinDot;
+	return true;
 }
 
 // ===== Validation =====
@@ -165,42 +194,11 @@ bool UCTargetingComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutSco
 
 // ===== Target State =====
 
-void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget, float InSelectedScore)
+void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget)
 {
 	ACEnemy* previousTarget = CurrentTarget.Get();
 	if (previousTarget == InNewTarget) return;
 
 	CurrentTarget = InNewTarget;
-	LastSelectedScore = IsValid(InNewTarget) ? InSelectedScore : 0.f;
 	OnTargetChanged.Broadcast(previousTarget, InNewTarget);
-}
-
-// ===== Debug =====
-
-void UCTargetingComponent::DrawDebugState() const
-{
-#if !UE_BUILD_SHIPPING
-	if (!TargetingTuning.bEnableDebugDraw) return;
-	if (!IsValid(OwnerPlayerController_Injected) || !GetWorld()) return;
-
-	FVector viewLocation = FVector::ZeroVector;
-	FRotator viewRotation = FRotator::ZeroRotator;
-	OwnerPlayerController_Injected->GetPlayerViewPoint(viewLocation, viewRotation);
-
-	// Draw MaxTargetRange
-	DrawDebugSphere(GetWorld(), viewLocation, TargetingTuning.MaxTargetDistance, 24, FColor::Cyan, false, TargetingTuning.ValidationInterval);
-
-	ACEnemy* currentTarget = CurrentTarget.Get();
-	if (!IsValid(currentTarget)) return;
-
-	const FVector targetLocation = currentTarget->GetActorLocation();
-	// Draw Selected Target Sphere 
-	DrawDebugSphere(GetWorld(), targetLocation, 100.f, 16, FColor::Green, false, TargetingTuning.ValidationInterval, 0, 3.f);
-	
-	// Draw Line to target from viewpoint
-	DrawDebugLine(GetWorld(), viewLocation, targetLocation, FColor::Green, false, TargetingTuning.ValidationInterval, 0, 1.5f);
-	
-	// Draw String for DebugData
-	DrawDebugString(GetWorld(), targetLocation + FVector(0.f, 0.f, 130.f), FString::Printf(TEXT("Target: %s | Score: %.2f"), *GetNameSafe(currentTarget), LastSelectedScore), nullptr, FColor::Green, TargetingTuning.ValidationInterval, false, 1.25f);
-#endif
 }

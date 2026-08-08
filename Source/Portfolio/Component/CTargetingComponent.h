@@ -29,7 +29,6 @@ private:
 	// Runtime State
 	TWeakObjectPtr<ACEnemy> CurrentTarget;
 	float ValidationElapsedTime = 0.f;
-	float LastSelectedScore = 0.f;
 
 public:
 	// Event
@@ -51,6 +50,7 @@ public:
 	// Target Query
 	bool HasTarget() const;
 	ACEnemy* GetCurrentTarget() const;
+	bool BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const;
 
 private:
 	// Validation
@@ -62,8 +62,6 @@ private:
 	bool TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const;
 
 	// Target State
-	void SetCurrentTarget(ACEnemy* InNewTarget, float InSelectedScore = 0.f);
+	void SetCurrentTarget(ACEnemy* InNewTarget);
 
-	// Debug
-	void DrawDebugState() const;
 };

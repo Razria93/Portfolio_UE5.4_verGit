@@ -92,6 +92,18 @@ namespace
 		}
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RuntimeFocusSource: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentSourceText)));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusActor: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentActorNameText)));
+
+		if (InFocusViewData.Targeting.bHasSnapshot)
+		{
+			AppendFormattedOverlayLine(InOutLines, TEXT("[Player Targeting]"));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime Target: %s"), *InFocusViewData.Targeting.RuntimeTargetText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Distance: %s"), *InFocusViewData.Targeting.DistanceText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Dot: %s"), *InFocusViewData.Targeting.DotText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Angle Score: %s"), *InFocusViewData.Targeting.AngleScoreText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Distance Score: %s"), *InFocusViewData.Targeting.DistanceScoreText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Final Score: %s"), *InFocusViewData.Targeting.FinalScoreText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("In Range: %s | In View Cone: %s"), *InFocusViewData.Targeting.RangeText, *InFocusViewData.Targeting.ViewConeText));
+		}
 	}
 
 	// [Recent Execution]

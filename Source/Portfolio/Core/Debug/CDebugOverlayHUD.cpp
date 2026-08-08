@@ -1,11 +1,14 @@
 #include "Core/Debug/CDebugOverlayHUD.h"
 
 #include "Character/Enemy/CEnemy.h"
+#include "Component/CTargetingComponent.h"
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayCanvasRenderer.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FDebugOverlayTextFormatter.h"
 #include "Core/Debug/FDebugOverlayViewDataBuilder.h"
+#include "Core/Debug/FTargetingDebug.h"
+#include "Type/CTargetingTypes.h"
 
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -61,6 +64,33 @@ namespace
 		ClearFocusViewData(focusComp, OutFocusViewData);
 		return nullptr;
 	}
+
+	void DrawTargetingDebug(const APlayerController* InOwningPlayerController, UWorld* InWorld)
+	{
+		if (!FTargetingDebug::IsEnabled()) return;
+		if (!IsValid(InOwningPlayerController)) return;
+
+		const UCTargetingComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCTargetingComponent>();
+		if (!IsValid(targetingComp)) return;
+
+		FTargetingDebugSnapshot targetingSnapshot;
+		if (!targetingComp->BuildDebugSnapshot(targetingSnapshot)) return;
+
+		FTargetingDebug::DrawWorldDebug(InWorld, targetingSnapshot);
+	}
+
+	void UpdateTargetingFocusViewData(const APlayerController* InOwningPlayerController, FDebugOverlayFocusViewData& OutFocusViewData)
+	{
+		if (!IsValid(InOwningPlayerController)) return;
+
+		const UCTargetingComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCTargetingComponent>();
+		if (!IsValid(targetingComp)) return;
+
+		FTargetingDebugSnapshot targetingSnapshot;
+		if (!targetingComp->BuildDebugSnapshot(targetingSnapshot)) return;
+
+		OutFocusViewData.Targeting = FTargetingDebug::BuildOverlayDetails(targetingSnapshot);
+	}
 }
 #endif
 
@@ -73,8 +103,10 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	UWorld* world = GetWorld();
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
+	DrawTargetingDebug(owningPlayerController, world);
 	FDebugOverlayFocusViewData enemyFocus;
 	const ACEnemy* focusedEnemy = ResolveDisplayFocusEnemy(owningPlayerController, enemyFocus);
+	UpdateTargetingFocusViewData(owningPlayerController, enemyFocus);
 
 	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);

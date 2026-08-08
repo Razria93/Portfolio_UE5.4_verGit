@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CTargetingTypes.generated.h"
 
+class AActor;
+
 USTRUCT(BlueprintType)
 struct FTargetingTuning
 {
@@ -22,7 +24,21 @@ struct FTargetingTuning
 
 	UPROPERTY(EditAnywhere, Category = "Targeting", meta = (ClampMin = "0.01"))
 	float ValidationInterval = 0.1f;
+};
 
-	UPROPERTY(EditAnywhere, Category = "Targeting|Debug")
-	bool bEnableDebugDraw = false;
+struct FTargetingDebugSnapshot
+{
+	TWeakObjectPtr<AActor> TargetActor;
+	FVector ViewLocation = FVector::ZeroVector;
+	FVector ViewForward = FVector::ForwardVector;
+	FVector TargetLocation = FVector::ZeroVector;
+	float Distance = 0.f;
+	float MaxTargetDistance = 0.f;
+	float Dot = 0.f;
+	float MinDot = 0.f;
+	float AngleScore = 0.f;
+	float DistanceScore = 0.f;
+	float FinalScore = 0.f;
+	bool bWithinRange = false;
+	bool bWithinViewCone = false;
 };
