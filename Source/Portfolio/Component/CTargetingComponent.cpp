@@ -9,16 +9,22 @@
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 
+// ===== Lifecycle =====
+
 UCTargetingComponent::UCTargetingComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
+
+// ===== Component Reference =====
 
 void UCTargetingComponent::InitializeReferences(APlayerController* InOwnerPlayerController)
 {
 	OwnerPlayerController_Injected = InOwnerPlayerController;
 	ValidateRequiredReferences();
 }
+
+// ===== Lifecycle =====
 
 void UCTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -31,6 +37,8 @@ void UCTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	ValidateCurrentTarget();
 	DrawDebugState();
 }
+
+// ===== Target Command =====
 
 void UCTargetingComponent::ToggleTargetLock()
 {
@@ -73,6 +81,8 @@ void UCTargetingComponent::ClearTarget()
 	SetCurrentTarget(nullptr);
 }
 
+// ===== Target Query =====
+
 bool UCTargetingComponent::HasTarget() const
 {
 	return IsValid(CurrentTarget.Get());
@@ -82,6 +92,8 @@ ACEnemy* UCTargetingComponent::GetCurrentTarget() const
 {
 	return CurrentTarget.Get();
 }
+
+// ===== Validation =====
 
 bool UCTargetingComponent::ValidateRequiredReferences() const
 {
@@ -120,6 +132,17 @@ bool UCTargetingComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireV
 	return FVector::DotProduct(viewRotation.Vector(), directionToTarget) >= minDot;
 }
 
+void UCTargetingComponent::ValidateCurrentTarget()
+{
+	ACEnemy* currentTarget = CurrentTarget.Get();
+	if (!IsValid(currentTarget)) return;
+	if (IsTargetValid(currentTarget, false)) return;
+
+	ClearTarget();
+}
+
+// ===== Candidate Selection =====
+
 bool UCTargetingComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const
 {
 	OutScore = 0.f;
@@ -140,6 +163,8 @@ bool UCTargetingComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutSco
 	return true;
 }
 
+// ===== Target State =====
+
 void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget, float InSelectedScore)
 {
 	ACEnemy* previousTarget = CurrentTarget.Get();
@@ -150,14 +175,7 @@ void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget, float InSelect
 	OnTargetChanged.Broadcast(previousTarget, InNewTarget);
 }
 
-void UCTargetingComponent::ValidateCurrentTarget()
-{
-	ACEnemy* currentTarget = CurrentTarget.Get();
-	if (!IsValid(currentTarget)) return;
-	if (IsTargetValid(currentTarget, false)) return;
-
-	ClearTarget();
-}
+// ===== Debug =====
 
 void UCTargetingComponent::DrawDebugState() const
 {
@@ -169,14 +187,20 @@ void UCTargetingComponent::DrawDebugState() const
 	FRotator viewRotation = FRotator::ZeroRotator;
 	OwnerPlayerController_Injected->GetPlayerViewPoint(viewLocation, viewRotation);
 
+	// Draw MaxTargetRange
 	DrawDebugSphere(GetWorld(), viewLocation, TargetingTuning.MaxTargetDistance, 24, FColor::Cyan, false, TargetingTuning.ValidationInterval);
 
 	ACEnemy* currentTarget = CurrentTarget.Get();
 	if (!IsValid(currentTarget)) return;
 
 	const FVector targetLocation = currentTarget->GetActorLocation();
+	// Draw Selected Target Sphere 
 	DrawDebugSphere(GetWorld(), targetLocation, 100.f, 16, FColor::Green, false, TargetingTuning.ValidationInterval, 0, 3.f);
+	
+	// Draw Line to target from viewpoint
 	DrawDebugLine(GetWorld(), viewLocation, targetLocation, FColor::Green, false, TargetingTuning.ValidationInterval, 0, 1.5f);
+	
+	// Draw String for DebugData
 	DrawDebugString(GetWorld(), targetLocation + FVector(0.f, 0.f, 130.f), FString::Printf(TEXT("Target: %s | Score: %.2f"), *GetNameSafe(currentTarget), LastSelectedScore), nullptr, FColor::Green, TargetingTuning.ValidationInterval, false, 1.25f);
 #endif
 }
