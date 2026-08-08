@@ -16,31 +16,13 @@ namespace
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
 	static constexpr const TCHAR* DebugOverlayNearestFocusRadiusCVarName = TEXT("Portfolio.DebugOverlay.NearestFocusRadius");
 
-	// ===== CVar Cache =====
-
-	TMap<FString, IConsoleVariable*>& GetCachedConsoleVariables()
-	{
-		static TMap<FString, IConsoleVariable*> cachedConsoleVariables;
-		return cachedConsoleVariables;
-	}
-
 	IConsoleVariable* FindCachedConsoleVariable(const TCHAR* InName)
 	{
 		if (!InName) return nullptr;
 
-		TMap<FString, IConsoleVariable*>& cachedConsoleVariables = GetCachedConsoleVariables();
-		if (IConsoleVariable** cachedConsoleVariable = cachedConsoleVariables.Find(InName))
-		{
-			return *cachedConsoleVariable;
-		}
-
-		IConsoleVariable* consoleVariable = IConsoleManager::Get().FindConsoleVariable(InName);
-		if (consoleVariable)
-		{
-			cachedConsoleVariables.Add(InName, consoleVariable);
-		}
-
-		return consoleVariable;
+		// Console variables can be unregistered and recreated during module reload.
+		// Do not retain their raw pointers across Slate attribute evaluations.
+		return IConsoleManager::Get().FindConsoleVariable(InName);
 	}
 }
 
