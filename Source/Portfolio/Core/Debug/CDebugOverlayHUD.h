@@ -12,13 +12,6 @@ class PORTFOLIO_API ACDebugOverlayHUD : public AHUD
 {
 	GENERATED_BODY()
 
-#if !UE_BUILD_SHIPPING
-private:
-	// Enemy Resolution
-	ACEnemy* ResolveDisplayEnemy(FDebugOverlayFocusViewData& OutFocusViewData);
-	ACEnemy* ResolveFocusComponentEnemy(FDebugOverlayFocusViewData& OutFocusViewData) const;
-#endif
-
 public:
 	// Rendering
 	virtual void DrawHUD() override;

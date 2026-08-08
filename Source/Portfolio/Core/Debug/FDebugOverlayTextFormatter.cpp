@@ -5,12 +5,9 @@
 
 namespace
 {
-	void AppendFormattedOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
-	{
-		InOutLines.Add(InLine);
-	}
+	// ===== Format Text Helpers =====
 
-	FString CaptureStateText(EDebugOverlayCaptureState InState)
+	FString FormatCaptureStateText(EDebugOverlayCaptureState InState)
 	{
 		switch (InState)
 		{
@@ -26,16 +23,28 @@ namespace
 		}
 	}
 
-	FString ValueOrNotCaptured(const FString& InValue, EDebugOverlayCaptureState InState)
+	FString FormatValueOrCaptureStateText(const FString& InValue, EDebugOverlayCaptureState InState)
 	{
 		return InState == EDebugOverlayCaptureState::Captured && !InValue.IsEmpty()
 			? InValue
-			: CaptureStateText(InState);
+			: FormatCaptureStateText(InState);
+	}
+
+	FString FormatValueOrNoneText(const FString& InValue)
+	{
+		return InValue.IsEmpty() ? FString(TEXT("None")) : InValue;
+	}
+
+	// ===== Append Line Helpers =====
+
+	void AppendFormattedOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
+	{
+		InOutLines.Add(InLine);
 	}
 
 	void AppendSummaryLines(TArray<FString>& InOutLines, const FString& InSummary, EDebugOverlayCaptureState InCaptureState)
 	{
-		const FString summary = ValueOrNotCaptured(InSummary, InCaptureState);
+		const FString summary = FormatValueOrCaptureStateText(InSummary, InCaptureState);
 		if (InCaptureState != EDebugOverlayCaptureState::Captured || summary.IsEmpty())
 		{
 			AppendFormattedOverlayLine(InOutLines, summary);
@@ -56,6 +65,9 @@ namespace
 		}
 	}
 
+	// [Player / Enemy Status]
+	// ===== Actor Status Lines =====
+
 	void AppendActorStatusLines(TArray<FString>& InOutLines, const FDebugOverlayActorStatusViewData& InStatusViewData)
 	{
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("State: %s"), *InStatusViewData.StateText));
@@ -68,17 +80,22 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
 	}
 
-	FString ValueOrNone(const FString& InValue)
-	{
-		return InValue.IsEmpty() ? FString(TEXT("None")) : InValue;
-	}
+	// [Focus]
+	// ===== Focus Lines =====
 
 	void AppendFocusLines(TArray<FString>& InOutLines, const FDebugOverlayFocusViewData& InFocusViewData)
 	{
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusMode: %s"), *ValueOrNone(InFocusViewData.CurrentModeText)));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusActor: %s"), *ValueOrNone(InFocusViewData.CurrentActorNameText)));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("EnemyFocusCommand: %s"), *ValueOrNone(InFocusViewData.LastCommandText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusDriver: %s"), *FormatValueOrNoneText(InFocusViewData.FocusDriverText)));
+		if (!InFocusViewData.RecentFocusStateText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RecentFocusState: %s"), *InFocusViewData.RecentFocusStateText));
+		}
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RuntimeFocusSource: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentSourceText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusTarget: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentActorNameText)));
 	}
+
+	// [Recent Execution]
+	// ===== Recent Execution Lines =====
 
 	void AppendRecentExecutionBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentExecutionViewData& InRecentExecutionViewData)
 	{
@@ -104,6 +121,9 @@ namespace
 			return;
 		}
 	}
+
+	// [Current AI / Recent AI Event]
+	// ===== AI Lines =====
 
 	void AppendCurrentAIBlock(TArray<FString>& InOutLines, const FDebugOverlayCurrentAIViewData& InCurrentAIViewData)
 	{
@@ -140,27 +160,32 @@ namespace
 		case EDebugOverlayRecentAIEventViewState::NotCaptured:
 			AppendFormattedOverlayLine(InOutLines, TEXT("NotCaptured"));
 			return;
-		case EDebugOverlayRecentAIEventViewState::NotMatched:
-			AppendFormattedOverlayLine(InOutLines, TEXT("NotMatched"));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Selected: %s"), *InRecentAIEventViewData.SelectedPawnName));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("LastPawn: %s"), *InRecentAIEventViewData.LastPawnName));
-			return;
 		case EDebugOverlayRecentAIEventViewState::Stale:
+			if (!InRecentAIEventViewData.TaskText.IsEmpty())
+			{
+				AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Task: %s"), *InRecentAIEventViewData.TaskText));
+			}
+			if (!InRecentAIEventViewData.ResultText.IsEmpty())
+			{
+				AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *InRecentAIEventViewData.ResultText));
+			}
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Stale Time: %ss"), *InRecentAIEventViewData.StaleAgeText));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Pawn: %s"), *InRecentAIEventViewData.LastPawnName));
-			AppendFormattedOverlayLine(InOutLines, TEXT("Note: Not current AI evidence"));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *FormatValueOrNoneText(InRecentAIEventViewData.RejectReasonText)));
 			return;
 		case EDebugOverlayRecentAIEventViewState::Captured:
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Task: %s"), *InRecentAIEventViewData.TaskText));
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *InRecentAIEventViewData.ResultText));
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Age: %s"), *InRecentAIEventViewData.AgeText));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *InRecentAIEventViewData.RejectReasonText));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *FormatValueOrNoneText(InRecentAIEventViewData.RejectReasonText)));
 			return;
 		default:
 			AppendFormattedOverlayLine(InOutLines, TEXT("NotCaptured"));
 			return;
 		}
 	}
+
+	// [Pannel_01]
+	// ===== Main Panel Lines =====
 
 	void AppendActorPanelLines(TArray<FString>& InOutLines, const FDebugOverlayActorPanelViewData& InActorPanelViewData)
 	{
@@ -205,6 +230,9 @@ namespace
 		return lines;
 	}
 
+	// [Pannel_02]
+	// ===== EventLog Panel Lines =====
+
 	FString FormatEventLogEntryLine(const FDebugOverlayEventLogEntryViewData& InEntry)
 	{
 		return FString::Printf(
@@ -248,6 +276,9 @@ namespace
 		return lines;
 	}
 
+	// [Pannel_03]
+	// ===== World Summary Panel Lines =====
+
 	void AppendRecentSummaryBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentSummaryBlockViewData& InBlockViewData)
 	{
 		if (InBlockViewData.bAppendLeadingBlank)
@@ -266,21 +297,23 @@ namespace
 		}
 	}
 
-	TArray<FString> BuildInteractionPanelLines(const FDebugOverlayViewData& InViewData)
+	TArray<FString> BuildWorldSummaryPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
 		lines.Reserve(16);
-		AppendFormattedOverlayLine(lines, InViewData.InteractionPanelTitle);
+		AppendFormattedOverlayLine(lines, InViewData.WorldSummaryPanelTitle);
 		AppendFormattedOverlayLine(lines, TEXT(""));
-		AppendFormattedOverlayLine(lines, InViewData.Interaction.HeaderText);
+		AppendFormattedOverlayLine(lines, InViewData.WorldSummary.HeaderText);
 
-		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.Interaction.SummaryBlocks)
+		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.WorldSummary.SummaryBlocks)
 		{
 			AppendRecentSummaryBlockLines(lines, summaryBlock);
 		}
 
 		return lines;
 	}
+
+	// ===== Text Panel Role Mapping =====
 
 	EDebugOverlayTextLineRole ResolveTextLineRole(EDebugOverlayTextPanelRole InPanelRole, const FString& InLine)
 	{
@@ -290,7 +323,7 @@ namespace
 		}
 
 		if (InPanelRole != EDebugOverlayTextPanelRole::EventLog
-			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[Interaction]")))
+			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[World Summary]")))
 		{
 			return EDebugOverlayTextLineRole::PanelHeader;
 		}
@@ -316,15 +349,17 @@ namespace
 	}
 }
 
+// ===== Public API =====
+
 FDebugOverlayTextPanels FDebugOverlayTextFormatter::Format(const FDebugOverlayViewData& InViewData)
 {
 	const TArray<FString> mainPanelLines = BuildMainTextPanelLines(InViewData);
 	const TArray<FString> eventLogPanelLines = BuildEventLogPanelLines(InViewData);
-	const TArray<FString> interactionPanelLines = BuildInteractionPanelLines(InViewData);
+	const TArray<FString> worldSummaryPanelLines = BuildWorldSummaryPanelLines(InViewData);
 
 	FDebugOverlayTextPanels panels;
 	panels.MainPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Main, mainPanelLines);
 	panels.EventLogPanel = MakeTextPanel(EDebugOverlayTextPanelRole::EventLog, eventLogPanelLines);
-	panels.InteractionPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Interaction, interactionPanelLines);
+	panels.WorldSummaryPanel = MakeTextPanel(EDebugOverlayTextPanelRole::WorldSummary, worldSummaryPanelLines);
 	return panels;
 }

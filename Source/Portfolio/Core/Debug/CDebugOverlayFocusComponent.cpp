@@ -8,15 +8,58 @@ namespace
 	{
 		switch (InSource)
 		{
-		case EDebugOverlayFocusSource::Nearest:
-			return TEXT("FocusComponent.Nearest");
-		case EDebugOverlayFocusSource::EditorSelection:
-			return TEXT("FocusComponent.EditorSelection");
+		case EDebugOverlayFocusSource::NearestTarget:
+			return TEXT("FocusComponent.NearestFocus");
+		case EDebugOverlayFocusSource::RecentCombat:
+			return TEXT("FocusComponent.RecentCombat");
+		case EDebugOverlayFocusSource::WorldScanFallback:
+			return TEXT("FocusComponent.WorldScanFallback");
+		case EDebugOverlayFocusSource::GameplayTarget:
+			return TEXT("FocusComponent.GameplayTarget");
+		case EDebugOverlayFocusSource::OutlinerTarget:
+			return TEXT("FocusComponent.OutlinerFocus");
 		case EDebugOverlayFocusSource::None:
 		default:
 			return TEXT("None");
 		}
 	}
+
+	FString FormatDebugOverlayFocusDriver(EDebugOverlayFocusDriver InDriver)
+	{
+		switch (InDriver)
+		{
+		case EDebugOverlayFocusDriver::ManualNearest:
+			return TEXT("NearestFocus");
+		case EDebugOverlayFocusDriver::ManualOutliner:
+			return TEXT("OutlinerFocus");
+		case EDebugOverlayFocusDriver::RecentCombatLive:
+			return TEXT("RecentCombatLive");
+		case EDebugOverlayFocusDriver::TargetComponentLive:
+			return TEXT("TargetComponentLive");
+		case EDebugOverlayFocusDriver::None:
+		default:
+			return TEXT("None");
+		}
+	}
+
+	FString FormatDebugOverlayRecentFocusState(EDebugOverlayRecentFocusState InState)
+	{
+		switch (InState)
+		{
+		case EDebugOverlayRecentFocusState::Selected:
+			return TEXT("Selected");
+		case EDebugOverlayRecentFocusState::NoTargetFound:
+			return TEXT("NoTargetFound");
+		case EDebugOverlayRecentFocusState::NoRecentCombatEvidence:
+			return TEXT("NoRecentCombatEvidence");
+		case EDebugOverlayRecentFocusState::ClosestOutOfRange:
+			return TEXT("ClosestOutOfRange");
+		case EDebugOverlayRecentFocusState::None:
+		default:
+			return TEXT("None");
+		}
+	}
+
 }
 
 UCDebugOverlayFocusComponent::UCDebugOverlayFocusComponent()
@@ -24,15 +67,10 @@ UCDebugOverlayFocusComponent::UCDebugOverlayFocusComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-// Focus Query
+// Focus Value Query
 bool UCDebugOverlayFocusComponent::HasDebugOverlayFocus() const
 {
 	return DebugOverlayFocusActor.IsValid();
-}
-
-bool UCDebugOverlayFocusComponent::HasDebugOverlayFocusCommandResult() const
-{
-	return !DebugOverlayFocusCommandResult.IsEmpty();
 }
 
 AActor* UCDebugOverlayFocusComponent::GetDebugOverlayFocusActor() const
@@ -40,6 +78,17 @@ AActor* UCDebugOverlayFocusComponent::GetDebugOverlayFocusActor() const
 	return DebugOverlayFocusActor.Get();
 }
 
+EDebugOverlayFocusSource UCDebugOverlayFocusComponent::GetDebugOverlayFocusSource() const
+{
+	return DebugOverlayFocusSource;
+}
+
+EDebugOverlayFocusDriver UCDebugOverlayFocusComponent::GetDebugOverlayFocusDriver() const
+{
+	return DebugOverlayFocusDriver;
+}
+
+// Focus Text Query
 FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusActorText() const
 {
 	return HasDebugOverlayFocus()
@@ -47,24 +96,41 @@ FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusActorText() const
 		: FString(TEXT("None"));
 }
 
-FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusModeText() const
+FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusActorNameText() const
+{
+	return HasDebugOverlayFocus()
+		? GetNameSafe(DebugOverlayFocusActor.Get())
+		: FString(TEXT("None"));
+}
+
+FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusSourceText() const
 {
 	return HasDebugOverlayFocus()
 		? FormatDebugOverlayFocusSource(DebugOverlayFocusSource)
 		: FString(TEXT("None"));
 }
 
-FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusCommandResultText() const
+FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusDriverText() const
 {
-	return DebugOverlayFocusCommandResult;
+	return FormatDebugOverlayFocusDriver(DebugOverlayFocusDriver);
+}
+
+EDebugOverlayRecentFocusState UCDebugOverlayFocusComponent::GetDebugOverlayRecentFocusState() const
+{
+	return DebugOverlayRecentFocusState;
+}
+
+FString UCDebugOverlayFocusComponent::GetDebugOverlayRecentFocusStateText() const
+{
+	return FormatDebugOverlayRecentFocusState(DebugOverlayRecentFocusState);
 }
 
 // Focus Mutation
-void UCDebugOverlayFocusComponent::SetDebugOverlayFocus(AActor* InFocusActor, EDebugOverlayFocusSource InSource)
+void UCDebugOverlayFocusComponent::SetDebugOverlayFocusActorAndSource(AActor* InFocusActor, EDebugOverlayFocusSource InSource)
 {
 	if (!IsValid(InFocusActor) || InSource == EDebugOverlayFocusSource::None)
 	{
-		ClearDebugOverlayFocus();
+		ClearDebugOverlayFocusActorAndSource();
 		return;
 	}
 
@@ -72,77 +138,28 @@ void UCDebugOverlayFocusComponent::SetDebugOverlayFocus(AActor* InFocusActor, ED
 	DebugOverlayFocusSource = InSource;
 }
 
-void UCDebugOverlayFocusComponent::ClearDebugOverlayFocus()
+void UCDebugOverlayFocusComponent::SetDebugOverlayFocusDriver(EDebugOverlayFocusDriver InDriver)
+{
+	DebugOverlayFocusDriver = InDriver;
+}
+
+void UCDebugOverlayFocusComponent::SetDebugOverlayRecentFocusState(EDebugOverlayRecentFocusState InState)
+{
+	DebugOverlayRecentFocusState = InState;
+}
+
+void UCDebugOverlayFocusComponent::ClearDebugOverlayFocusActorAndSource()
 {
 	DebugOverlayFocusActor.Reset();
 	DebugOverlayFocusSource = EDebugOverlayFocusSource::None;
 }
 
-void UCDebugOverlayFocusComponent::SetDebugOverlayFocusCommandResult(const FString& InResultText)
+void UCDebugOverlayFocusComponent::ClearDebugOverlayFocusDriver()
 {
-	DebugOverlayFocusCommandResult = InResultText;
+	DebugOverlayFocusDriver = EDebugOverlayFocusDriver::None;
 }
 
-void UCDebugOverlayFocusComponent::ClearDebugOverlayFocusCommandResult()
+void UCDebugOverlayFocusComponent::ClearDebugOverlayRecentFocusState()
 {
-	DebugOverlayFocusCommandResult.Reset();
-}
-
-// Compatibility Query
-bool UCDebugOverlayFocusComponent::HasDebugOverlayTarget() const
-{
-	return HasDebugOverlayFocus();
-}
-
-bool UCDebugOverlayFocusComponent::HasDebugOverlaySelectionSummary() const
-{
-	return HasDebugOverlayFocusCommandResult();
-}
-
-AActor* UCDebugOverlayFocusComponent::GetDebugOverlayTargetActor() const
-{
-	return GetDebugOverlayFocusActor();
-}
-
-FString UCDebugOverlayFocusComponent::GetDebugOverlayTargetSummary() const
-{
-	return GetDebugOverlayFocusActorText();
-}
-
-FString UCDebugOverlayFocusComponent::GetDebugOverlayTargetSource() const
-{
-	return GetDebugOverlayFocusModeText();
-}
-
-FString UCDebugOverlayFocusComponent::GetDebugOverlaySelectionSummary() const
-{
-	return GetDebugOverlayFocusCommandResultText();
-}
-
-// Compatibility Mutation
-void UCDebugOverlayFocusComponent::SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayFocusSource InSource)
-{
-	if (!IsValid(InTargetActor) || InSource == EDebugOverlayFocusSource::None)
-	{
-		ClearDebugOverlayTarget();
-		return;
-	}
-
-	SetDebugOverlayFocus(InTargetActor, InSource);
-}
-
-void UCDebugOverlayFocusComponent::ClearDebugOverlayTarget()
-{
-	ClearDebugOverlayFocus();
-	ClearDebugOverlayFocusCommandResult();
-}
-
-void UCDebugOverlayFocusComponent::SetDebugOverlaySelectionSummary(const FString& InSummary)
-{
-	SetDebugOverlayFocusCommandResult(InSummary);
-}
-
-void UCDebugOverlayFocusComponent::ClearDebugOverlaySelectionSummary()
-{
-	ClearDebugOverlayFocusCommandResult();
+	DebugOverlayRecentFocusState = EDebugOverlayRecentFocusState::None;
 }

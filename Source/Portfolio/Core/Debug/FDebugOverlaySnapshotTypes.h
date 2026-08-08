@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+// ===== Capture State =====
+
 enum class EDebugOverlayCaptureState : uint8
 {
 	NotCaptured,
@@ -9,6 +11,8 @@ enum class EDebugOverlayCaptureState : uint8
 	Unavailable,
 	Stale,
 };
+
+// ===== Event Log Entry =====
 
 struct PORTFOLIO_API FDebugOverlayEventEntry
 {
@@ -21,6 +25,8 @@ struct PORTFOLIO_API FDebugOverlayEventEntry
 	FString TargetName;
 	FString Summary;
 };
+
+// ===== Recent Summary Snapshots =====
 
 struct PORTFOLIO_API FDebugOverlayExecutionSummary
 {
@@ -72,10 +78,13 @@ struct PORTFOLIO_API FDebugOverlayAISummary
 	FString Summary;
 };
 
+// ===== Snapshot Aggregate =====
+
 struct PORTFOLIO_API FDebugOverlaySnapshot
 {
 	FDebugOverlayExecutionSummary LastExecution;
 	FDebugOverlayCombatSummary LastCombat;
 	FDebugOverlayAISummary LastAI;
+	TMap<FString, FDebugOverlayAISummary> LastAIByPawnName;
 	TArray<FDebugOverlayEventEntry> RecentEvents;
 };

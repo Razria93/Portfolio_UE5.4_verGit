@@ -6,16 +6,19 @@
 #include "Component/CPlayerFeedbackComponent.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
-#include "Core/Debug/FDebugOverlayFocusResolver.h"
+#include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
 #endif
 #include "Type/CActionOrchestrationTypes.h"
 
-#if !UE_BUILD_SHIPPING
 namespace
 {
-	static constexpr float DebugOverlayNearestTargetRadius = 3000.f;
+	// Runtime Pawn Helper
+	ACPlayer* ResolveControlledPlayer(APlayerController* InController)
+	{
+		if (!IsValid(InController)) return nullptr;
+		return Cast<ACPlayer>(InController->GetPawn());
+	}
 }
-#endif
 
 ACPlayerController::ACPlayerController()
 {
@@ -30,7 +33,54 @@ ACPlayerController::ACPlayerController()
 #endif
 }
 
-// Lifecycle
+// ===== Debug Overlay Exec =====
+
+void ACPlayerController::DebugOverlaySelectNearestTarget()
+{
+#if !UE_BUILD_SHIPPING
+	FDebugOverlayFocusRuntimeHelper::TryFocusNearestTarget(
+		DebugOverlayFocusComponent,
+		GetWorld(),
+		GetPawn(),
+		FDebugOverlayFocusRuntimeHelper::GetNearestTargetRadius());
+#endif
+}
+
+void ACPlayerController::DebugOverlaySelectOutlinerTarget(const FString& ActorName)
+{
+#if !UE_BUILD_SHIPPING
+	FDebugOverlayFocusRuntimeHelper::TryFocusOutlinerTarget(
+		DebugOverlayFocusComponent,
+		GetWorld(),
+		GetPawn(),
+		ActorName);
+#endif
+}
+
+void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
+{
+	DebugOverlaySelectOutlinerTarget(ActorName);
+}
+
+void ACPlayerController::DebugOverlaySelectRecentCombatTarget()
+{
+#if !UE_BUILD_SHIPPING
+	FDebugOverlayFocusRuntimeHelper::TryFocusRecentCombatTarget(
+		DebugOverlayFocusComponent,
+		GetWorld(),
+		GetPawn(),
+		FDebugOverlayFocusRuntimeHelper::GetNearestTargetRadius());
+#endif
+}
+
+void ACPlayerController::DebugOverlayClearTarget()
+{
+#if !UE_BUILD_SHIPPING
+	FDebugOverlayFocusRuntimeHelper::ClearFocus(DebugOverlayFocusComponent);
+#endif
+}
+
+// ===== Lifecycle =====
 
 void ACPlayerController::PostInitializeComponents()
 {
@@ -47,6 +97,14 @@ void ACPlayerController::PlayerTick(float DeltaTime)
 	Super::PlayerTick(DeltaTime);
 
 	FlushMoveInput();
+
+#if !UE_BUILD_SHIPPING
+	FDebugOverlayFocusRuntimeHelper::UpdateFocusRecentCombatTarget(
+		DebugOverlayFocusComponent,
+		GetWorld(),
+		GetPawn(),
+		FDebugOverlayFocusRuntimeHelper::GetNearestTargetRadius());
+#endif
 }
 
 void ACPlayerController::SetupInputComponent()
@@ -72,30 +130,7 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
 }
 
-// Debug Overlay Exec
-
-void ACPlayerController::DebugOverlaySelectNearestTarget()
-{
-#if !UE_BUILD_SHIPPING
-	TryFocusDebugOverlayNearestEnemy();
-#endif
-}
-
-void ACPlayerController::DebugOverlayClearTarget()
-{
-#if !UE_BUILD_SHIPPING
-	ClearDebugOverlayFocus();
-#endif
-}
-
-void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
-{
-#if !UE_BUILD_SHIPPING
-	TryFocusDebugOverlayActorTarget(ActorName);
-#endif
-}
-
-// Look Input
+// ===== Look Input =====
 
 void ACPlayerController::InputLookYaw(float InAxisValue)
 {
@@ -107,7 +142,7 @@ void ACPlayerController::InputLookPitch(float InAxisValue)
 	AddPitchInput(InAxisValue);
 }
 
-// Move Input
+// ===== Move Input =====
 
 void ACPlayerController::InputMoveForward(float InAxisValue)
 {
@@ -119,31 +154,31 @@ void ACPlayerController::InputMoveRight(float InAxisValue)
 	CachedMoveAxis2D.X = InAxisValue;
 }
 
-// Movement Dispatch
+// ===== Movement Dispatch =====
 
 void ACPlayerController::FlushMoveInput()
 {
 	if (CachedMoveAxis2D.IsNearlyZero()) return;
 
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleMove(CachedMoveAxis2D);
 }
 
-// Action Input
+// ===== Action Input =====
 
 void ACPlayerController::PressWalk()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
-	
+
 	FActionRequestResult result = player->HandleWalk();
 }
 
 void ACPlayerController::ReleaseWalk()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleRun();
@@ -151,23 +186,23 @@ void ACPlayerController::ReleaseWalk()
 
 void ACPlayerController::PressJump()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
-	
+
 	FActionRequestResult result = player->HandleJump();
 }
 
 void ACPlayerController::ReleaseJump()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
-	
+
 	FActionRequestResult result = player->HandleStopJump();
 }
 
 void ACPlayerController::PressSwordToggle()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleEquipmentAction(EEquipmentActionIntent::Toggle);
@@ -175,15 +210,15 @@ void ACPlayerController::PressSwordToggle()
 
 void ACPlayerController::PressComboAction()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
-	
+
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::ComboAttack);
 }
 
 void ACPlayerController::PressGuard()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Started);
@@ -191,7 +226,7 @@ void ACPlayerController::PressGuard()
 
 void ACPlayerController::ReleaseGuard()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Completed);
@@ -199,132 +234,8 @@ void ACPlayerController::ReleaseGuard()
 
 void ACPlayerController::PressDodge()
 {
-	ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
 }
-
-#if !UE_BUILD_SHIPPING
-
-bool ACPlayerController::TryFocusDebugOverlayNearestEnemy()
-{
-	if (!IsValid(DebugOverlayFocusComponent))
-	{
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: TargetComponentMissing"));
-		return false;
-	}
-
-	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveNearestEnemy(
-		GetWorld(),
-		GetPawn(),
-		DebugOverlayNearestTargetRadius);
-
-	ApplyDebugOverlayFocusResolveResult(result);
-
-	switch (result.Status)
-	{
-	case EDebugOverlayFocusResolveStatus::InvalidContext:
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: InvalidContext"));
-		return false;
-	case EDebugOverlayFocusResolveStatus::NoEnemy:
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectNearestTarget Result: NoEnemy | Radius: %.0f"), result.Radius);
-		return false;
-	case EDebugOverlayFocusResolveStatus::OutOfRange:
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("DebugOverlaySelectNearestTarget Result: OutOfRange | Closest: %.0f | Radius: %.0f"),
-			result.Distance,
-			result.Radius);
-		return false;
-	case EDebugOverlayFocusResolveStatus::Selected:
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("DebugOverlaySelectNearestTarget Result: Selected | Target: %s | Distance: %.0f | Radius: %.0f"),
-			*result.ActorName,
-			result.Distance,
-			result.Radius);
-		return true;
-	default:
-		return false;
-	}
-}
-
-bool ACPlayerController::TryFocusDebugOverlayActorTarget(const FString& InActorName)
-{
-	const FString actorName = InActorName.TrimStartAndEnd();
-
-	if (!IsValid(DebugOverlayFocusComponent))
-	{
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: TargetComponentMissing | Name: %s"), *actorName);
-		return false;
-	}
-
-	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveActorEnemy(
-		GetWorld(),
-		GetPawn(),
-		actorName);
-
-	ApplyDebugOverlayFocusResolveResult(result);
-
-	switch (result.Status)
-	{
-	case EDebugOverlayFocusResolveStatus::InvalidContext:
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: InvalidContext | Name: %s"), *result.ActorName);
-		return false;
-	case EDebugOverlayFocusResolveStatus::NoActorName:
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: NoActorName"));
-		return false;
-	case EDebugOverlayFocusResolveStatus::NoActor:
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: NoActor | Name: %s"), *result.ActorName);
-		return false;
-	case EDebugOverlayFocusResolveStatus::NotEnemy:
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("DebugOverlaySelectActorTarget Result: NotEnemy | Target: %s | Class: %s"),
-			*result.ActorName,
-			*result.ClassName);
-		return false;
-	case EDebugOverlayFocusResolveStatus::Selected:
-		UE_LOG(LogTemp, Log, TEXT("DebugOverlaySelectActorTarget Result: Selected | Target: %s"), *result.ActorName);
-		return true;
-	default:
-		return false;
-	}
-}
-
-void ACPlayerController::ClearDebugOverlayFocus()
-{
-	if (!IsValid(DebugOverlayFocusComponent)) return;
-
-	DebugOverlayFocusComponent->ClearDebugOverlayFocus();
-	DebugOverlayFocusComponent->ClearDebugOverlayFocusCommandResult();
-}
-
-void ACPlayerController::ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& InResult) const
-{
-	if (!IsValid(DebugOverlayFocusComponent)) return;
-
-	if (InResult.Status == EDebugOverlayFocusResolveStatus::Selected)
-	{
-		DebugOverlayFocusComponent->SetDebugOverlayFocus(InResult.FocusActor.Get(), InResult.FocusSource);
-	}
-	else
-	{
-		DebugOverlayFocusComponent->ClearDebugOverlayFocus();
-	}
-
-	RecordDebugOverlayFocusCommandResult(InResult.SummaryText);
-}
-
-void ACPlayerController::RecordDebugOverlayFocusCommandResult(const FString& InSummary) const
-{
-	if (!IsValid(DebugOverlayFocusComponent)) return;
-
-	DebugOverlayFocusComponent->SetDebugOverlayFocusCommandResult(InSummary);
-}
-
-#endif

@@ -12,7 +12,6 @@ enum class EDebugOverlayRecentAIEventViewState : uint8
 {
 	NoTarget,
 	NotCaptured,
-	NotMatched,
 	Stale,
 	Captured,
 };
@@ -61,8 +60,6 @@ struct FDebugOverlayCurrentAIViewData
 struct FDebugOverlayRecentAIEventViewData
 {
 	EDebugOverlayRecentAIEventViewState State = EDebugOverlayRecentAIEventViewState::NoTarget;
-	FString SelectedPawnName;
-	FString LastPawnName;
 	FString TaskText;
 	FString ResultText;
 	FString AgeText;
@@ -72,9 +69,10 @@ struct FDebugOverlayRecentAIEventViewData
 
 struct FDebugOverlayFocusViewData
 {
-	FString CurrentModeText;
+	FString CurrentSourceText;
 	FString CurrentActorNameText;
-	FString LastCommandText;
+	FString FocusDriverText;
+	FString RecentFocusStateText;
 };
 
 struct FDebugOverlayActorPanelViewData
@@ -115,7 +113,7 @@ struct FDebugOverlayRecentSummaryBlockViewData
 	bool bAppendLeadingBlank = false;
 };
 
-struct FDebugOverlayInteractionViewData
+struct FDebugOverlayWorldSummaryViewData
 {
 	FString HeaderText;
 	TArray<FDebugOverlayRecentSummaryBlockViewData> SummaryBlocks;
@@ -127,15 +125,6 @@ struct FDebugOverlayViewData
 	TArray<FDebugOverlayActorPanelViewData> ActorPanels;
 	FString EventLogPanelTitle;
 	FDebugOverlayEventLogViewData EventLog;
-	FString InteractionPanelTitle;
-	FDebugOverlayInteractionViewData Interaction;
-};
-
-struct FDebugOverlayViewDataBuildContext
-{
-	UObject* WorldContextObject = nullptr;
-	UWorld* World = nullptr;
-	const APawn* ViewerPawn = nullptr;
-	const ACEnemy* DisplayEnemy = nullptr;
-	FDebugOverlayFocusViewData EnemyFocus;
+	FString WorldSummaryPanelTitle;
+	FDebugOverlayWorldSummaryViewData WorldSummary;
 };

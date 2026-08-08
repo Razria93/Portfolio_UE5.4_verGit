@@ -6,6 +6,7 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P56 | Debug Overlay Focus Migration Package | `P56_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-focus-migration-package` |  | Debug Overlay |
 | P55 | Debug Overlay Focus Component Migration Closure | `P55_UE5_Portfolio_Pull_Request.md` | `main` |  | Debug Overlay |
 | P54 | Asset Reference Inspector Editor Plugin | `P54_UE5_Portfolio_Pull_Request.md` | `feature/asset-reference-inspector-plugin` |  | Editor Tooling, Asset Registry |
 | P53 | Debug Overlay Editor Tooling | `P53_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-editor-tooling` |  | Debug Overlay |

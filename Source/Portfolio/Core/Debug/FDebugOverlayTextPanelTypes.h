@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+// ===== Text Roles =====
+
 enum class EDebugOverlayTextLineRole : uint8
 {
 	Normal,
@@ -15,8 +17,10 @@ enum class EDebugOverlayTextPanelRole : uint8
 {
 	Main,
 	EventLog,
-	Interaction,
+	WorldSummary,
 };
+
+// ===== Text Line =====
 
 struct FDebugOverlayTextLine
 {
@@ -34,6 +38,8 @@ struct FDebugOverlayTextLine
 	}
 };
 
+// ===== Text Panel =====
+
 struct FDebugOverlayTextPanel
 {
 	EDebugOverlayTextPanelRole Role = EDebugOverlayTextPanelRole::Main;
@@ -47,16 +53,18 @@ struct FDebugOverlayTextPanel
 	}
 };
 
+// ===== Text Panel Set =====
+
 struct FDebugOverlayTextPanels
 {
 	FDebugOverlayTextPanel MainPanel;
 	FDebugOverlayTextPanel EventLogPanel;
-	FDebugOverlayTextPanel InteractionPanel;
+	FDebugOverlayTextPanel WorldSummaryPanel;
 
 	FDebugOverlayTextPanels()
 		: MainPanel(EDebugOverlayTextPanelRole::Main)
 		, EventLogPanel(EDebugOverlayTextPanelRole::EventLog)
-		, InteractionPanel(EDebugOverlayTextPanelRole::Interaction)
+		, WorldSummaryPanel(EDebugOverlayTextPanelRole::WorldSummary)
 	{
 	}
 };
