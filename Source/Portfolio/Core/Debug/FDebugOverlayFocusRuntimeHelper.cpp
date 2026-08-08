@@ -1,9 +1,13 @@
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
 
+#include "Character/Enemy/CEnemy.h"
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusLogHelper.h"
 #include "Core/Debug/FDebugOverlayFocusResolver.h"
+#include "Core/Debug/FTargetingDebug.h"
+#include "Component/CTargetingComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "GameFramework/PlayerController.h"
 
 namespace
 {
@@ -103,6 +107,21 @@ namespace
 			InFocusComponent->ClearDebugOverlayFocusDriver();
 		}
 	}
+
+	void ApplyPlayerTargetFocus(UCDebugOverlayFocusComponent* InFocusComponent, const APlayerController* InPlayerController)
+	{
+		if (!IsValid(InFocusComponent) || !IsValid(InPlayerController)) return;
+
+		const UCTargetingComponent* targetingComp = InPlayerController->FindComponentByClass<UCTargetingComponent>();
+		ACEnemy* playerTarget = IsValid(targetingComp) ? targetingComp->GetCurrentTarget() : nullptr;
+		if (IsValid(playerTarget))
+		{
+			InFocusComponent->SetDebugOverlayFocusActorAndSource(playerTarget, EDebugOverlayFocusSource::PlayerTargetFocus);
+			return;
+		}
+
+		InFocusComponent->ClearDebugOverlayFocusActorAndSource();
+	}
 }
 
 float FDebugOverlayFocusRuntimeHelper::GetNearestFocusRadius()
@@ -156,6 +175,19 @@ bool FDebugOverlayFocusRuntimeHelper::TryFocusRecentCombatFocus(UCDebugOverlayFo
 	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectRecentCombatFocus"), EDebugOverlayFocusResolveLogProfile::RecentCombat, result);
 }
 
+bool FDebugOverlayFocusRuntimeHelper::TryFocusPlayerTarget(UCDebugOverlayFocusComponent* InFocusComponent, const APlayerController* InPlayerController)
+{
+	if (!IsValid(InFocusComponent) || !IsValid(InPlayerController)) return false;
+
+	ApplyPlayerTargetFocus(InFocusComponent, InPlayerController);
+	InFocusComponent->SetDebugOverlayFocusDriver(
+		FTargetingDebug::ShouldLiveSyncPlayerTarget()
+			? EDebugOverlayFocusDriver::PlayerTargetLive
+			: EDebugOverlayFocusDriver::PlayerTargetFrozen);
+	InFocusComponent->ClearDebugOverlayRecentFocusState();
+	return InFocusComponent->HasDebugOverlayFocus();
+}
+
 void FDebugOverlayFocusRuntimeHelper::UpdateFocusRecentCombatFocus(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InFallbackRadius)
 {
 	if (!IsValid(InFocusComponent)) return;
@@ -164,6 +196,38 @@ void FDebugOverlayFocusRuntimeHelper::UpdateFocusRecentCombatFocus(UCDebugOverla
 	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveRecentCombatFocus(InWorld, InViewerPawn, InFallbackRadius);
 	ApplyDebugOverlayFocusResolveResult(InFocusComponent, result, EDebugOverlayFocusDriver::RecentCombatLive, false, false);
 	ApplyRecentCombatOutcomePolicy(InFocusComponent, result.Outcome);
+}
+
+void FDebugOverlayFocusRuntimeHelper::UpdateFocusPlayerTarget(UCDebugOverlayFocusComponent* InFocusComponent, const APlayerController* InPlayerController)
+{
+	if (!IsValid(InFocusComponent) || !IsValid(InPlayerController)) return;
+
+	const EDebugOverlayFocusDriver currentDriver = InFocusComponent->GetDebugOverlayFocusDriver();
+	const bool bIsPlayerTargetMode = currentDriver == EDebugOverlayFocusDriver::PlayerTargetLive
+		|| currentDriver == EDebugOverlayFocusDriver::PlayerTargetFrozen;
+	if (!bIsPlayerTargetMode) return;
+
+	const bool bShouldLiveSync = FTargetingDebug::ShouldLiveSyncPlayerTarget();
+	if (!bShouldLiveSync)
+	{
+		if (currentDriver == EDebugOverlayFocusDriver::PlayerTargetLive)
+		{
+			InFocusComponent->SetDebugOverlayFocusDriver(EDebugOverlayFocusDriver::PlayerTargetFrozen);
+		}
+
+		if (!InFocusComponent->HasDebugOverlayFocus())
+		{
+			InFocusComponent->ClearDebugOverlayFocusActorAndSource();
+		}
+		return;
+	}
+
+	if (currentDriver == EDebugOverlayFocusDriver::PlayerTargetFrozen)
+	{
+		InFocusComponent->SetDebugOverlayFocusDriver(EDebugOverlayFocusDriver::PlayerTargetLive);
+	}
+
+	ApplyPlayerTargetFocus(InFocusComponent, InPlayerController);
 }
 
 void FDebugOverlayFocusRuntimeHelper::ClearFocus(UCDebugOverlayFocusComponent* InFocusComponent)

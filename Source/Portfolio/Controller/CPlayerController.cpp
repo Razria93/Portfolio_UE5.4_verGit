@@ -72,6 +72,13 @@ void ACPlayerController::DebugOverlaySelectRecentCombatFocus()
 #endif
 }
 
+void ACPlayerController::DebugOverlaySelectPlayerTargetFocus()
+{
+#if !UE_BUILD_SHIPPING
+	FDebugOverlayFocusRuntimeHelper::TryFocusPlayerTarget(DebugOverlayFocusComponent, this);
+#endif
+}
+
 void ACPlayerController::DebugOverlayClearFocus()
 {
 #if !UE_BUILD_SHIPPING
@@ -108,6 +115,7 @@ void ACPlayerController::PlayerTick(float DeltaTime)
 		GetWorld(),
 		GetPawn(),
 		FDebugOverlayFocusRuntimeHelper::GetNearestFocusRadius());
+	FDebugOverlayFocusRuntimeHelper::UpdateFocusPlayerTarget(DebugOverlayFocusComponent, this);
 #endif
 }
 

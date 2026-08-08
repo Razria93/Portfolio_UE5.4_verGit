@@ -14,6 +14,8 @@ namespace
 			return TEXT("FocusComponent.RecentCombatFocus");
 		case EDebugOverlayFocusSource::WorldScanFallback:
 			return TEXT("FocusComponent.WorldScanFallback");
+		case EDebugOverlayFocusSource::PlayerTargetFocus:
+			return TEXT("FocusComponent.PlayerTargetFocus");
 		case EDebugOverlayFocusSource::GameplayFocus:
 			return TEXT("FocusComponent.GameplayFocus");
 		case EDebugOverlayFocusSource::OutlinerFocus:
@@ -34,6 +36,10 @@ namespace
 			return TEXT("OutlinerFocus");
 		case EDebugOverlayFocusDriver::RecentCombatLive:
 			return TEXT("RecentCombatLive");
+		case EDebugOverlayFocusDriver::PlayerTargetLive:
+			return TEXT("PlayerTargetLive");
+		case EDebugOverlayFocusDriver::PlayerTargetFrozen:
+			return TEXT("PlayerTargetFrozen");
 		case EDebugOverlayFocusDriver::FocusComponentLive:
 			return TEXT("FocusComponentLive");
 		case EDebugOverlayFocusDriver::None:

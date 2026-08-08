@@ -41,6 +41,9 @@ public:
 	void DebugOverlaySelectRecentCombatFocus();
 
 	UFUNCTION(Exec)
+	void DebugOverlaySelectPlayerTargetFocus();
+
+	UFUNCTION(Exec)
 	void DebugOverlayClearFocus();
 
 protected:
