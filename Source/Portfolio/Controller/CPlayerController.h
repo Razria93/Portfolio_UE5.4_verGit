@@ -33,6 +33,9 @@ public:
 	void DebugOverlaySelectOutlinerTarget(const FString& ActorName);
 
 	UFUNCTION(Exec)
+	void DebugOverlaySelectActorTarget(const FString& ActorName);
+
+	UFUNCTION(Exec)
 	void DebugOverlaySelectRecentCombatTarget();
 
 	UFUNCTION(Exec)

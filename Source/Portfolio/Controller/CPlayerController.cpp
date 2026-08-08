@@ -28,7 +28,7 @@ ACPlayerController::ACPlayerController()
 	check(PlayerFeedbackComponent);
 
 #if !UE_BUILD_SHIPPING
-	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
+	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayTarget"));
 	check(DebugOverlayFocusComponent);
 #endif
 }
@@ -55,6 +55,11 @@ void ACPlayerController::DebugOverlaySelectOutlinerTarget(const FString& ActorNa
 		GetPawn(),
 		ActorName);
 #endif
+}
+
+void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
+{
+	DebugOverlaySelectOutlinerTarget(ActorName);
 }
 
 void ACPlayerController::DebugOverlaySelectRecentCombatTarget()

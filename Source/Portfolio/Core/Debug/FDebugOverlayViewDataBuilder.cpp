@@ -485,7 +485,7 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld,
 	FDebugOverlayViewData viewData;
 	viewData.ActorPanels.Reserve(2);
 
-	viewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
+	viewData.MainPanelTitle = TEXT("[Debug Overlay Pannel_01]");
 	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, bHasSnapshot, InWorld);
 
 	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Pannel_02]");
