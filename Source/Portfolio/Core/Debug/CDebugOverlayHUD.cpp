@@ -79,7 +79,7 @@ namespace
 		FTargetingDebug::DrawWorldDebug(InWorld, targetingSnapshot);
 	}
 
-	void UpdateTargetingFocusViewData(const APlayerController* InOwningPlayerController, FDebugOverlayFocusViewData& OutFocusViewData)
+	void UpdatePlayerTargetingViewData(const APlayerController* InOwningPlayerController, FDebugOverlayPlayerTargetingViewData& OutPlayerTargetingViewData)
 	{
 		if (!IsValid(InOwningPlayerController)) return;
 
@@ -89,7 +89,7 @@ namespace
 		FTargetingDebugSnapshot targetingSnapshot;
 		if (!targetingComp->BuildDebugSnapshot(targetingSnapshot)) return;
 
-		OutFocusViewData.Targeting = FTargetingDebug::BuildOverlayDetails(targetingSnapshot);
+		OutPlayerTargetingViewData.Details = FTargetingDebug::BuildOverlayDetails(targetingSnapshot);
 	}
 }
 #endif
@@ -105,10 +105,11 @@ void ACDebugOverlayHUD::DrawHUD()
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
 	DrawTargetingDebug(owningPlayerController, world);
 	FDebugOverlayFocusViewData enemyFocus;
+	FDebugOverlayPlayerTargetingViewData playerTargeting;
 	const ACEnemy* focusedEnemy = ResolveDisplayFocusEnemy(owningPlayerController, enemyFocus);
-	UpdateTargetingFocusViewData(owningPlayerController, enemyFocus);
+	UpdatePlayerTargetingViewData(owningPlayerController, playerTargeting);
 
-	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus);
+	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);
 #endif

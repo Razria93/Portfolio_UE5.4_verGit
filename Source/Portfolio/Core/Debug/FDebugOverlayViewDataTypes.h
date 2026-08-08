@@ -74,7 +74,11 @@ struct FDebugOverlayFocusViewData
 	FString CurrentActorNameText;
 	FString FocusDriverText;
 	FString RecentFocusStateText;
-	FTargetingDebugOverlayDetails Targeting;
+};
+
+struct FDebugOverlayPlayerTargetingViewData
+{
+	FTargetingDebugOverlayDetails Details;
 };
 
 struct FDebugOverlayActorPanelViewData
@@ -82,6 +86,8 @@ struct FDebugOverlayActorPanelViewData
 	FString HeaderText;
 	bool bIncludeFocus = false;
 	FDebugOverlayFocusViewData Focus;
+	bool bIncludeTargeting = false;
+	FDebugOverlayPlayerTargetingViewData Targeting;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
 	FDebugOverlayRecentExecutionViewData RecentExecution;
