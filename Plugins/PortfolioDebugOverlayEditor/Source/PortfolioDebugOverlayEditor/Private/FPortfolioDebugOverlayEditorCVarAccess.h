@@ -13,6 +13,13 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetHideNoiseEventsCVarName();
 	const TCHAR* GetHideCollisionWindowEventsCVarName();
 	const TCHAR* GetNearestFocusRadiusCVarName();
+	const TCHAR* GetTargetingEnabledCVarName();
+	const TCHAR* GetTargetingDrawRangeSphereCVarName();
+	const TCHAR* GetTargetingDrawSelectedTargetSphereCVarName();
+	const TCHAR* GetTargetingDrawViewLineCVarName();
+	const TCHAR* GetTargetingDrawDebugTextCVarName();
+	const TCHAR* GetTargetingShowOverlayDetailsCVarName();
+	const TCHAR* GetTargetingLiveSyncPlayerTargetCVarName();
 
 	IConsoleVariable* FindCVar(const TCHAR* InName);
 

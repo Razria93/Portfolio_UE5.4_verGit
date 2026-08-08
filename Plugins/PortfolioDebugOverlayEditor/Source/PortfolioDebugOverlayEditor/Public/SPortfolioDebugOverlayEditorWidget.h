@@ -28,6 +28,7 @@ private:
 	TSharedRef<SWidget> MakeEventLogFilterRow();
 	TSharedRef<SWidget> MakeEventLogLimitRow() const;
 	TSharedRef<SWidget> MakeNearestFocusRadiusRow() const;
+	TSharedRef<SWidget> MakeTargetingDebugSection();
 
 	// ===== Status / Refresh =====
 
