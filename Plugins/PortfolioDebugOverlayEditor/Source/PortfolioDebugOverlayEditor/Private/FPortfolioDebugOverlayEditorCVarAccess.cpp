@@ -21,9 +21,9 @@ namespace
 	static constexpr const TCHAR* DebugOverlayTargetingDrawViewLineCVarName = TEXT("Portfolio.DebugOverlay.Targeting.DrawViewLine");
 	static constexpr const TCHAR* DebugOverlayTargetingDrawDebugTextCVarName = TEXT("Portfolio.DebugOverlay.Targeting.DrawDebugText");
 	static constexpr const TCHAR* DebugOverlayTargetingShowOverlayDetailsCVarName = TEXT("Portfolio.DebugOverlay.Targeting.ShowOverlayDetails");
-	static constexpr const TCHAR* DebugOverlayTargetingLiveSyncPlayerTargetCVarName = TEXT("Portfolio.DebugOverlay.Targeting.LiveSyncPlayerTarget");
+	static constexpr const TCHAR* DebugOverlayFocusLiveSyncPlayerTargetCVarName = TEXT("Portfolio.DebugOverlay.Focus.LiveSyncPlayerTarget");
 
-	IConsoleVariable* FindCachedConsoleVariable(const TCHAR* InName)
+	IConsoleVariable* FindConsoleVariable(const TCHAR* InName)
 	{
 		if (!InName) return nullptr;
 
@@ -76,13 +76,13 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingDrawSelectedTarg
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingDrawViewLineCVarName() { return DebugOverlayTargetingDrawViewLineCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingDrawDebugTextCVarName() { return DebugOverlayTargetingDrawDebugTextCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingShowOverlayDetailsCVarName() { return DebugOverlayTargetingShowOverlayDetailsCVarName; }
-const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingLiveSyncPlayerTargetCVarName() { return DebugOverlayTargetingLiveSyncPlayerTargetCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetFocusLiveSyncPlayerTargetCVarName() { return DebugOverlayFocusLiveSyncPlayerTargetCVarName; }
 
 // ===== CVar Access =====
 
 IConsoleVariable* PortfolioDebugOverlayEditorCVarAccess::FindCVar(const TCHAR* InName)
 {
-	return FindCachedConsoleVariable(InName);
+	return FindConsoleVariable(InName);
 }
 
 bool PortfolioDebugOverlayEditorCVarAccess::GetBool(const TCHAR* InName)
@@ -169,22 +169,30 @@ bool PortfolioDebugOverlayEditorCVarAccess::IsKnownEventLogFilter(const FString&
 
 // ===== Availability =====
 
-bool PortfolioDebugOverlayEditorCVarAccess::HasAllRequiredCVars()
+bool PortfolioDebugOverlayEditorCVarAccess::HasOverlayCVars()
 {
 	return FindCVar(DebugOverlayEnabledCVarName)
 		&& FindCVar(DebugOverlayCollectCVarName)
 		&& FindCVar(DebugOverlayEventLogFilterCVarName)
 		&& FindCVar(DebugOverlayEventLogLimitCVarName)
-		&& FindCVar(DebugOverlayNearestFocusRadiusCVarName)
 		&& FindCVar(DebugOverlayHideNoiseEventsCVarName)
-		&& FindCVar(DebugOverlayHideCollisionWindowEventsCVarName)
-		&& FindCVar(DebugOverlayTargetingEnabledCVarName)
+		&& FindCVar(DebugOverlayHideCollisionWindowEventsCVarName);
+}
+
+bool PortfolioDebugOverlayEditorCVarAccess::HasTargetingDisplayCVars()
+{
+	return FindCVar(DebugOverlayTargetingEnabledCVarName)
 		&& FindCVar(DebugOverlayTargetingDrawRangeSphereCVarName)
 		&& FindCVar(DebugOverlayTargetingDrawSelectedTargetSphereCVarName)
 		&& FindCVar(DebugOverlayTargetingDrawViewLineCVarName)
 		&& FindCVar(DebugOverlayTargetingDrawDebugTextCVarName)
-		&& FindCVar(DebugOverlayTargetingShowOverlayDetailsCVarName)
-		&& FindCVar(DebugOverlayTargetingLiveSyncPlayerTargetCVarName);
+		&& FindCVar(DebugOverlayTargetingShowOverlayDetailsCVarName);
+}
+
+bool PortfolioDebugOverlayEditorCVarAccess::HasFocusCVars()
+{
+	return FindCVar(DebugOverlayNearestFocusRadiusCVarName)
+		&& FindCVar(DebugOverlayFocusLiveSyncPlayerTargetCVarName);
 }
 
 FText PortfolioDebugOverlayEditorCVarAccess::GetAvailabilityText(const TCHAR* InName)

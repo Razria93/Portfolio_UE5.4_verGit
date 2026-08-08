@@ -44,11 +44,6 @@ namespace
 		TEXT("Show player targeting score details in Debug Overlay. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarTargetingLiveSyncPlayerTarget(
-		TEXT("Portfolio.DebugOverlay.Targeting.LiveSyncPlayerTarget"),
-		1,
-		TEXT("Continuously sync Debug Overlay PlayerTarget focus. 0: freeze last synced target, 1: live sync."),
-		ECVF_Default);
 #endif
 
 }
@@ -102,15 +97,6 @@ bool FTargetingDebug::ShouldShowOverlayDetails()
 {
 #if !UE_BUILD_SHIPPING
 	return IsEnabled() && CVarTargetingShowOverlayDetails.GetValueOnGameThread() != 0;
-#else
-	return false;
-#endif
-}
-
-bool FTargetingDebug::ShouldLiveSyncPlayerTarget()
-{
-#if !UE_BUILD_SHIPPING
-	return CVarTargetingLiveSyncPlayerTarget.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif

@@ -186,7 +186,8 @@ bool UCTargetingComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutSco
 	const float minDot = FMath::Cos(FMath::DegreesToRadians(TargetingTuning.MaxTargetAngleDegrees));
 	const float angleScore = FMath::GetRangePct(minDot, 1.f, dot);
 	const float distance = FVector::Distance(viewLocation, InTarget->GetActorLocation());
-	const float distanceScore = 1.f - FMath::Clamp(distance / TargetingTuning.MaxTargetDistance, 0.f, 1.f);
+	const float safeMaxTargetDistance = FMath::Max(TargetingTuning.MaxTargetDistance, KINDA_SMALL_NUMBER);
+	const float distanceScore = 1.f - FMath::Clamp(distance / safeMaxTargetDistance, 0.f, 1.f);
 
 	OutScore = (angleScore * TargetingTuning.AngleScoreWeight) + (distanceScore * TargetingTuning.DistanceScoreWeight);
 	return true;

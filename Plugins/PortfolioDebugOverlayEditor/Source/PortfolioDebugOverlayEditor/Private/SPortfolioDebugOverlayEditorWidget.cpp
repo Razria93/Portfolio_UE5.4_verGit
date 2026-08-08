@@ -136,12 +136,23 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeOverlayOptionsSectio
 TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDebugSection()
 {
 	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingEnabledLabel", "Enabled"), LOCTEXT("TargetingEnabledHelp", "Enable targeting debug visualization and detail output."), CVarAccess::GetTargetingEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingEnabledLabel", "Enabled"), LOCTEXT("TargetingEnabledHelp", "Enable targeting world debug and Overlay details. World debug remains available when the Overlay HUD is disabled."), CVarAccess::GetTargetingEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingRangeLabel", "Range Sphere"), LOCTEXT("TargetingRangeHelp", "Draw the maximum targeting range around the viewpoint."), CVarAccess::GetTargetingDrawRangeSphereCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingSphereLabel", "Selected Target Sphere"), LOCTEXT("TargetingSphereHelp", "Draw a sphere around the current player target."), CVarAccess::GetTargetingDrawSelectedTargetSphereCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLineLabel", "View Line"), LOCTEXT("TargetingLineHelp", "Draw a line from the viewpoint to the current player target."), CVarAccess::GetTargetingDrawViewLineCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingTextLabel", "World Debug Text"), LOCTEXT("TargetingTextHelp", "Draw distance, Dot and score at the current player target."), CVarAccess::GetTargetingDrawDebugTextCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingDetailsLabel", "Overlay Details"), LOCTEXT("TargetingDetailsHelp", "Show targeting score details in the Debug Overlay."), CVarAccess::GetTargetingShowOverlayDetailsCVarName())];
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingDetailsLabel", "Overlay Details"), LOCTEXT("TargetingDetailsHelp", "Show targeting score details in the Debug Overlay."), CVarAccess::GetTargetingShowOverlayDetailsCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([]()
+			{
+				return CVarAccess::HasTargetingDisplayCVars()
+					? LOCTEXT("TargetingCVarsAvailable", "Targeting Display CVars are available.")
+					: LOCTEXT("TargetingCVarsUnavailable", "Targeting Display CVars are unavailable. Start the game module or PIE if needed.");
+			})
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		];
 }
 
 // ===== CVar Rows =====
@@ -397,7 +408,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRefreshRow()
 			SNew(STextBlock)
 			.Text_Lambda([]()
 			{
-				return CVarAccess::HasAllRequiredCVars()
+				return CVarAccess::HasOverlayCVars()
 					? LOCTEXT("AllCVarsAvailable", "Debug Overlay CVars are available.")
 					: LOCTEXT("SomeCVarsUnavailable", "Some Debug Overlay CVars are unavailable. Start the game module or PIE if needed.");
 			})
@@ -451,6 +462,19 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusOptionsSection(
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([]()
+			{
+				return CVarAccess::HasFocusCVars()
+					? LOCTEXT("FocusCVarsAvailable", "Focus CVars are available.")
+					: LOCTEXT("FocusCVarsUnavailable", "Focus CVars are unavailable. Start the game module or PIE if needed.");
+			})
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
 		.Padding(0.f, 0.f, 0.f, 8.f)
 		[
 			MakeSectionCard(
@@ -475,7 +499,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusOptionsSection(
 			MakeSectionCard(
 				LOCTEXT("TargetingFocusGroupTitle", "Targeting"),
 				SNew(SVerticalBox)
-				+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLiveSyncLabel", "Live Sync Player Target"), LOCTEXT("TargetingLiveSyncHelp", "Update PlayerTarget Focus continuously; disabling it freezes the last synced target."), CVarAccess::GetTargetingLiveSyncPlayerTargetCVarName())]
+				+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLiveSyncLabel", "Live Sync Player Target"), LOCTEXT("TargetingLiveSyncHelp", "Update PlayerTarget Focus continuously; disabling it freezes the last synced target."), CVarAccess::GetFocusLiveSyncPlayerTargetCVarName())]
 				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
 				[
 					SNew(SButton)

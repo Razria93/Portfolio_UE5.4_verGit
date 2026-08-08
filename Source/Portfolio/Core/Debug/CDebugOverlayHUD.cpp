@@ -99,11 +99,11 @@ void ACDebugOverlayHUD::DrawHUD()
 #if !UE_BUILD_SHIPPING
 	Super::DrawHUD();
 
-	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
-
 	UWorld* world = GetWorld();
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
 	DrawTargetingDebug(owningPlayerController, world);
+
+	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 	FDebugOverlayFocusViewData enemyFocus;
 	FDebugOverlayPlayerTargetingViewData playerTargeting;
 	const ACEnemy* focusedEnemy = ResolveDisplayFocusEnemy(owningPlayerController, enemyFocus);

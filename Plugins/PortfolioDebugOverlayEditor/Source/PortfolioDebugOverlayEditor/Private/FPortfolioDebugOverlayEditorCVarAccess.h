@@ -19,7 +19,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetTargetingDrawViewLineCVarName();
 	const TCHAR* GetTargetingDrawDebugTextCVarName();
 	const TCHAR* GetTargetingShowOverlayDetailsCVarName();
-	const TCHAR* GetTargetingLiveSyncPlayerTargetCVarName();
+	const TCHAR* GetFocusLiveSyncPlayerTargetCVarName();
 
 	IConsoleVariable* FindCVar(const TCHAR* InName);
 
@@ -36,6 +36,8 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	void SetString(const TCHAR* InName, const FString& InValue);
 
 	bool IsKnownEventLogFilter(const FString& InValue);
-	bool HasAllRequiredCVars();
+	bool HasOverlayCVars();
+	bool HasTargetingDisplayCVars();
+	bool HasFocusCVars();
 	FText GetAvailabilityText(const TCHAR* InName);
 }

@@ -28,7 +28,6 @@ public:
 	static bool ShouldDrawViewLine();
 	static bool ShouldDrawDebugText();
 	static bool ShouldShowOverlayDetails();
-	static bool ShouldLiveSyncPlayerTarget();
 	static FTargetingDebugOverlayDetails BuildOverlayDetails(const FTargetingDebugSnapshot& InSnapshot);
 
 	// World Draw

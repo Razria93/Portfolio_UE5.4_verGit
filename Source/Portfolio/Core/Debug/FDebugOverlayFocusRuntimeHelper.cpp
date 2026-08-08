@@ -4,7 +4,6 @@
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusLogHelper.h"
 #include "Core/Debug/FDebugOverlayFocusResolver.h"
-#include "Core/Debug/FTargetingDebug.h"
 #include "Component/CTargetingComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/PlayerController.h"
@@ -17,6 +16,12 @@ namespace
 		TEXT("Portfolio.DebugOverlay.NearestFocusRadius"),
 		3000.f,
 		TEXT("Nearest focus search radius used by Debug Overlay focus commands."),
+		ECVF_Default);
+
+	static TAutoConsoleVariable<int32> CVarDebugOverlayFocusLiveSyncPlayerTarget(
+		TEXT("Portfolio.DebugOverlay.Focus.LiveSyncPlayerTarget"),
+		1,
+		TEXT("Continuously sync Player Target Focus. 0: freeze last synced target, 1: live sync."),
 		ECVF_Default);
 
 	// ===== Recent Combat Driver Policy =====
@@ -181,7 +186,7 @@ bool FDebugOverlayFocusRuntimeHelper::TryFocusPlayerTarget(UCDebugOverlayFocusCo
 
 	ApplyPlayerTargetFocus(InFocusComponent, InPlayerController);
 	InFocusComponent->SetDebugOverlayFocusDriver(
-		FTargetingDebug::ShouldLiveSyncPlayerTarget()
+		CVarDebugOverlayFocusLiveSyncPlayerTarget.GetValueOnGameThread() != 0
 			? EDebugOverlayFocusDriver::PlayerTargetLive
 			: EDebugOverlayFocusDriver::PlayerTargetFrozen);
 	InFocusComponent->ClearDebugOverlayRecentFocusState();
@@ -207,7 +212,7 @@ void FDebugOverlayFocusRuntimeHelper::UpdateFocusPlayerTarget(UCDebugOverlayFocu
 		|| currentDriver == EDebugOverlayFocusDriver::PlayerTargetFrozen;
 	if (!bIsPlayerTargetMode) return;
 
-	const bool bShouldLiveSync = FTargetingDebug::ShouldLiveSyncPlayerTarget();
+	const bool bShouldLiveSync = CVarDebugOverlayFocusLiveSyncPlayerTarget.GetValueOnGameThread() != 0;
 	if (!bShouldLiveSync)
 	{
 		if (currentDriver == EDebugOverlayFocusDriver::PlayerTargetLive)
