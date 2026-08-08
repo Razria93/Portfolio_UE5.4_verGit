@@ -7,15 +7,15 @@ enum class EDebugOverlayFocusSource : uint8
 	None,
 
 	// Runtime auto-resolution sources.
-	NearestTarget,
-	RecentCombat,
+	NearestFocus,
+	RecentCombatFocus,
 	WorldScanFallback,
 
 	// Gameplay-provided source.
-	GameplayTarget,
+	GameplayFocus,
 
 	// Editor-provided source.
-	OutlinerTarget,
+	OutlinerFocus,
 };
 
 enum class EDebugOverlayFocusDriver : uint8
@@ -25,14 +25,14 @@ enum class EDebugOverlayFocusDriver : uint8
 	ManualNearest,
 	ManualOutliner,
 	RecentCombatLive,
-	TargetComponentLive,
+	FocusComponentLive,
 };
 
 enum class EDebugOverlayRecentFocusState : uint8
 {
 	None,
 	Selected,
-	NoTargetFound,
+	NoFocusFound,
 	NoRecentCombatEvidence,
 	ClosestOutOfRange,
 };

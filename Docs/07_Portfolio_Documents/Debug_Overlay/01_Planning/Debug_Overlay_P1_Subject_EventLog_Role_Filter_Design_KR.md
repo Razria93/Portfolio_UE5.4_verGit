@@ -190,9 +190,9 @@ Parry와 damage commit은 하나의 combat interaction 안에서 여러 event에
 | Event | 표시 대상 | Match 기준 | 중복 허용 | 비고 |
 | --- | --- | --- | --- | --- |
 | `Execution/DecisionResolved` | 실행 주체 | `OwnerName` | 아니오 | Action/Reaction owner 기준 |
-| `Combat/CollisionEnabled` | hit window owner | `OwnerName` 또는 `SourceName` | 아니오 | target 없음 |
-| `Combat/CollisionDisabled` | hit window owner | `OwnerName` 또는 `SourceName` | 아니오 | target 없음 |
-| `Combat/CollisionDisabledIgnored` | hit window owner | `OwnerName` 또는 `SourceName` | 아니오 | target 없음 |
+| `Combat/CollisionEnabled` | hit window owner | `OwnerName` 또는 `SourceName` | 아니오 | focus 없음 |
+| `Combat/CollisionDisabled` | hit window owner | `OwnerName` 또는 `SourceName` | 아니오 | focus 없음 |
+| `Combat/CollisionDisabledIgnored` | hit window owner | `OwnerName` 또는 `SourceName` | 아니오 | focus 없음 |
 | `Combat/TargetAccepted` | source와 target | `SourceName` 또는 `TargetName` 또는 `OwnerName` | 예 | 양쪽 actor가 직접 관여 |
 | `Combat/TargetRejected` | source와 target | `SourceName` 또는 `TargetName` 또는 `OwnerName` | 예 | reject 이유 확인용 |
 | `CombatResult/Delivering` | receiver/target | `OwnerName` 또는 `TargetName` | 아니오 | subject panel 기본 제외 후보 |

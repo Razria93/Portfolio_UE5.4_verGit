@@ -119,7 +119,7 @@ resume / 기술문서 evidence를 위해 runtime action, reaction, combat, AI �
 - debug hook 연결
 - Canvas HUD
 - Player/Enemy panel
-- TargetComponent source chain
+- FocusComponent source chain
 
 코드 품질 축:
 

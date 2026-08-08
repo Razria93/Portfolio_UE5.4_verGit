@@ -107,9 +107,9 @@ Enemy panel은 selected enemy actor의 현재 상태와 enemy-specific detail을
 
 ```text
 [Enemy]
-EnemySource:
-EnemyTarget:
-EnemySelect:
+EnemyFocusMode:
+EnemyFocusActor:
+EnemyFocusCommand:
 
 State:
 Action:
@@ -127,9 +127,9 @@ AI:
 
 정책:
 
-- Enemy는 명시 target이 있을 때만 상태 evidence로 사용한다.
-- `EnemySource: TargetComponent.Nearest`는 명시 command 기반 selection evidence다.
-- `EnemySource: None`이면 Enemy current state는 `N/A`로 유지한다.
+- Enemy는 명시 focus이 있을 때만 상태 evidence로 사용한다.
+- `EnemyFocusMode: FocusComponent.NearestFocus`는 명시 command 기반 selection evidence다.
+- `EnemyFocusMode: None`이면 Enemy current state는 `N/A`로 유지한다.
 - Enemy full EventLog block은 기본 표시에서 제거한다.
 - Enemy Recent Execution은 selected enemy owner 기준으로 표시할 수 있다.
 
@@ -364,18 +364,18 @@ Movement:
 
 ### 10.2 Nearest target radius
 
-`DebugOverlaySelectNearestTarget` 기본 탐색거리는 `3000.f`로 조정한다.
+`DebugOverlaySelectNearestFocus` 기본 탐색거리는 `3000.f`로 조정한다.
 
 이유:
 
 - `1500.f`는 TestRoom 시작 위치에서 enemy 선택이 실패하기 쉽다.
 - 실패 원인은 동작 오류가 아니라 반경 제한이지만, 운용 중 혼동을 만든다.
-- `3000.f`는 debug overlay target selection 운용 기본값으로 더 적합하다.
+- `3000.f`는 debug overlay focus selection 운용 기본값으로 더 적합하다.
 
 정책:
 
 - line trace 기반 `DebugOverlaySelectTarget`은 복구하지 않는다.
-- `DebugOverlaySelectNearestTarget`은 명시 target 선택 경로로 유지한다.
+- `DebugOverlaySelectNearestFocus`은 명시 focus 선택 경로로 유지한다.
 - radius CVar화는 P1 후속 또는 P2 후보로 둔다.
 
 ## 11. 기존 설계와의 관계

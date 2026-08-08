@@ -25,9 +25,9 @@
 | `CDebugOverlayHUD.cpp` | Canvas 기반 3-panel runtime evidence HUD, actor state formatting, EventLog/Interaction line buffer, selected enemy 표시, Current AI/Recent AI Event 표시 | 가장 큰 low-risk cleanup 후보 |
 | `FDebugOverlaySnapshotStore.cpp` | world별 snapshot store, EventLog ring buffer, CVar gate, display filter, recent execution/combat/AI record/query | helper section 정리와 중복 축소 후보 |
 | `FDebugOverlaySnapshotTypes.h` | snapshot/event/recent summary data-only schema | 변경하지 않음 |
-| `CDebugOverlayTargetComponent.*` | debug overlay target actor/source/selection summary 저장 | 현재 책임 유지 |
-| `CPlayerController.cpp` | debug overlay Exec command bridge, nearest/editor-selected target 판정 | command flow 유지, 로그/summary 중복만 별도 후보 |
-| `PortfolioDebugOverlayEditor` | Editor-only Nomad tab, CVar UI, target command button, menu/toolbar registration | module cpp 분리 후보 |
+| `CDebugOverlayFocusComponent.*` | debug overlay target actor/source/selection summary 저장 | 현재 책임 유지 |
+| `CPlayerController.cpp` | debug overlay Exec command bridge, nearest/editor-selected focus 판정 | command flow 유지, 로그/summary 중복만 별도 후보 |
+| `PortfolioDebugOverlayEditor` | Editor-only Nomad tab, CVar UI, focus command button, menu/toolbar registration | module cpp 분리 후보 |
 
 `Source/Portfolio/Portfolio.Build.cs`에는 `UnrealEd`, `Slate`, `ToolMenus` 같은 Editor dependency가 섞이지 않았다. `Portfolio.uproject`에도 `PortfolioDebugOverlayEditor` plugin entry가 추가되어 있지 않다. Editor dependency는 `Plugins/PortfolioDebugOverlayEditor` 내부에 격리되어 있다.
 
@@ -37,7 +37,7 @@
 
 - `DrawHUD()`의 3-panel layout 산식을 작은 geometry helper로 추출한다.
   - 유지해야 하는 값: left origin, panel gap, right margin, EventLog 최소폭, Interaction 고정폭, line clipping 정책.
-  - 표시 정책은 `Pannel_01`, `Pannel_02`, `Pannel_03` 구조 그대로 둔다.
+  - 표시 정책은 `Panel_01`, `Panel_02`, `Panel_03` 구조 그대로 둔다.
 - EventLog/Interaction visible line copy 중복을 공통 helper로 줄인다.
 - `CalculateOverlayLinesHeight()`와 `CalculateVisibleOverlayLineCount()`가 공유하는 line height + header padding 계산을 내부 helper로 분리한다.
 - `AppendSnapshotLines()`는 실제 역할이 Interaction panel 구성에 가까우므로, 동작 변경 없이 `AppendInteractionPanelLines` 계열로 이름 정리를 검토한다.
@@ -53,7 +53,7 @@
 
 ### 하지 않는 것이 나은 것
 
-- `[Debug Overlay Pannel_01/02/03]`의 `Pannel` 표기를 `Panel`로 고치는 것. 현재 runtime style-lock 표시값이므로 문구 변경이다.
+- `[Debug Overlay Panel_01/02/03]`의 `Pannel` 표기를 `Panel`로 고치는 것. 현재 runtime style-lock 표시값이므로 문구 변경이다.
 - Player / Enemy / Interaction / EventLog 표시 순서 변경.
 - `NotCaptured`, `NoTarget`, `NotMatched`, `Stale`, `NoEvents(...)` 같은 evidence 문구 변경.
 - Interaction panel 표시 조건, EventLog 최소폭, Interaction 고정폭, AI stale seconds 변경.
@@ -84,17 +84,17 @@
 - `CollisionDisableIgnored` / `CollisionDisabledIgnored` 호환 방어 중 하나를 단순 삭제하는 것.
 - EventLog filter를 “event 미기록/삭제” 의미로 바꾸는 것. 현재는 display filter로 유지해야 한다.
 
-## 6. Target command / Controller bridge cleanup 후보
+## 6. Focus command / Controller bridge cleanup 후보
 
 ### 바로 해도 안전한 것
 
 - debug overlay command는 `UFUNCTION(Exec)` 3개로 노출되어 있다.
-  - `DebugOverlaySelectNearestTarget`
-  - `DebugOverlayClearTarget`
-  - `DebugOverlaySelectActorTarget`
+  - `DebugOverlaySelectNearestFocus`
+  - `DebugOverlayClearFocus`
+  - `DebugOverlaySelectOutlinerFocus`
 - `CPlayerController.cpp`의 nearest/editor-selected 실패 처리에서 clear + summary + log 반복을 작은 내부 helper로 줄일 수 있다.
 - `RecordDebugOverlayNearestSelectionResult()`와 `RecordDebugOverlayEditorSelectionResult()`는 현재 동일 동작이므로 helper 의미 정리를 검토할 수 있다.
-- `CDebugOverlayTargetComponent`는 weak actor, source, selection summary만 저장하므로 구조 유지가 안전하다.
+- `CDebugOverlayFocusComponent`는 weak actor, source, selection summary만 저장하므로 구조 유지가 안전하다.
 
 ### 별도 설계가 필요한 것
 
@@ -104,9 +104,9 @@
 
 ### 하지 않는 것이 나은 것
 
-- Editor plugin이 `CDebugOverlayTargetComponent`를 직접 include해 상태를 직접 변경하는 것.
+- Editor plugin이 `CDebugOverlayFocusComponent`를 직접 include해 상태를 직접 변경하는 것.
 - nearest radius, selected enemy 판정, non-enemy reject 정책 변경.
-- Shipping에서 동작하는 gameplay target command처럼 포장하는 것. Shipping에서는 구현 본문이 no-op 성격임을 유지한다.
+- Shipping에서 동작하는 gameplay focus command처럼 포장하는 것. Shipping에서는 구현 본문이 no-op 성격임을 유지한다.
 
 ## 7. Editor Tooling cleanup 후보
 
@@ -162,7 +162,7 @@
 
 2. `DebugOverlay editor module cleanup`
    - 대상: `Plugins/PortfolioDebugOverlayEditor` 내부 source.
-   - 범위: CVar helper, target command helper, Slate widget 파일 분리.
+   - 범위: CVar helper, focus command helper, Slate widget 파일 분리.
    - 금지: runtime module dependency 추가, config 저장, `.uproject` 변경.
 
 3. `DebugOverlay design follow-up`
@@ -207,7 +207,7 @@ Editor module 분리는 별도 PR로 두는 것이 좋다. runtime HUD/Store cle
 - `Portfolio.DebugOverlay.Collect`는 snapshot/event record gate로 유지.
 - `Portfolio.DebugOverlay.EventLogFilter`, `EventLogLimit`, `HideNoiseEvents`, `HideCollisionWindowEvents`는 display semantics 유지.
 - Player / Enemy / Interaction / EventLog 표시 순서와 문구 유지.
-- `Pannel_01 / Pannel_02 / Pannel_03` 표시 유지.
+- `Panel_01 / Panel_02 / Panel_03` 표시 유지.
 - EventLog filter로 숨겨진 event를 “발생하지 않음”으로 claim하지 않음.
 - `Runtime LOD: N/A`를 actual 표시 성공으로 claim하지 않음.
 - Shipping HUD, gameplay HUD, UMG/Slate runtime HUD처럼 표현하지 않음.

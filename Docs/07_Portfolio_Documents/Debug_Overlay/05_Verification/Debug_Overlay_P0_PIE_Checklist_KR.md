@@ -188,7 +188,7 @@ Damage가 발생하지 않은 장면의 `NotCaptured`는 실패가 아니다. �
 1. TestRoom에 `ACEnemy` 기반 actor가 존재하는지 확인한다.
 2. Enemy focus가 없으면 `EnemyFocusMode: None`이 정상이다.
 3. Enemy가 2개 이상이어도 자동 fallback으로 성공 evidence를 만들지 않는다.
-4. 단일 enemy인데 표시되지 않으면 `DebugOverlaySelectNearestTarget` 명시 command를 먼저 확인한다.
+4. 단일 enemy인데 표시되지 않으면 `DebugOverlaySelectNearestFocus` 명시 command를 먼저 확인한다.
 
 현재 enemy selection은 explicit focus command 기반이다. 자동 world scan fallback 실패로 해석하지 않는다.
 

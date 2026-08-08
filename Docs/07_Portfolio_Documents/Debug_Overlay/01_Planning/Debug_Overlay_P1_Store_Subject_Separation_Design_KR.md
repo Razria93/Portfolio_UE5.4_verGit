@@ -39,7 +39,7 @@ Debug hook
 | Category | Record API | Owner | Source | Target | 신뢰도 |
 | --- | --- | --- | --- | --- | --- |
 | `Execution` | `RecordExecutionDecision` | `InOwnerActor` | 비어 있음 | 비어 있음 | Owner 기준만 신뢰 가능 |
-| `Combat` hit window | `RecordWeaponCollisionWindow` | `InOwnerActor` | `InOwnerActor` | 비어 있음 | Source 기준 가능, target 없음 |
+| `Combat` hit window | `RecordWeaponCollisionWindow` | `InOwnerActor` | `InOwnerActor` | 비어 있음 | Source 기준 가능, focus 없음 |
 | `Combat` target packet | `RecordCombatTargetPacket` | `TargetActor` | `SourceActor` | `TargetActor` | Source/Target 기준 신뢰 가능 |
 | `CombatResult` | `RecordCombatResult` | `InReceiverActor` | `SourceActor` | `TargetActor` | Source/Target/Receiver 기준 신뢰 가능 |
 | `AI` | `RecordAICombatTask` | `InOwnerPawn` | `InOwnerPawn` | `InTargetActor` | Pawn/Target 기준 신뢰 가능 |
@@ -94,7 +94,7 @@ TargetName == PlayerName
 
 ### 5.3 Enemy EventLog
 
-Enemy EventLog는 현재 `TargetComponent.Nearest`로 선택된 Enemy 이름이 아래 중 하나와 일치하는 event를 포함한다.
+Enemy EventLog는 현재 `FocusComponent.NearestFocus`로 선택된 Enemy 이름이 아래 중 하나와 일치하는 event를 포함한다.
 
 ```text
 OwnerName == SelectedEnemyName
@@ -131,7 +131,7 @@ Common only
 | Category | Player 분리 기준 | Enemy 분리 기준 | 주의 |
 | --- | --- | --- | --- |
 | `Execution` | `OwnerName == PlayerName` | `OwnerName == SelectedEnemyName` | Source/Target이 없으므로 owner만 사용 |
-| `Combat` hit window | `OwnerName` 또는 `SourceName` match | `OwnerName` 또는 `SourceName` match | target 없음 |
+| `Combat` hit window | `OwnerName` 또는 `SourceName` match | `OwnerName` 또는 `SourceName` match | focus 없음 |
 | `Combat` target packet | owner/source/target match | owner/source/target match | 양쪽 panel에 같은 event가 중복 표시될 수 있음 |
 | `CombatResult` | owner/source/target match | owner/source/target match | receiver가 owner로 들어옴 |
 | `AI` | target이 Player인 경우 포함 가능 | owner/source가 selected Enemy인 경우 포함 | AI 성공 evidence로 과장 금지 |

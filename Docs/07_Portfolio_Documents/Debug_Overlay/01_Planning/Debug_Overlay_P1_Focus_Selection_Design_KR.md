@@ -1,4 +1,4 @@
-# Debug Overlay P1 Target Selection Design
+# Debug Overlay P1 Focus Selection Design
 
 ## 1. 목적
 
@@ -8,7 +8,7 @@ P0.5에서는 `WorldScanFallback`으로 월드에 존재하는 단일 `ACEnemy`�
 
 P1의 목표는 Enemy panel source chain을 명확히 만들고, `WorldScanFallback`을 최후 fallback으로 낮추는 것이다.
 
-> Update: P1 Target Selection 최종 정책은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다. 이후 구현은 자동 fallback chain이 아니라 `TargetComponent.Nearest`, `None` 기반 명시 target 정책을 따른다. 이 문서의 기존 fallback chain과 trace 설명은 과거 설계 맥락으로만 본다.
+> Update: P1 Focus Selection 최종 정책은 `Debug_Overlay_P1_Focus_Selection_Decision_KR.md`를 우선한다. 이후 구현은 자동 fallback chain이 아니라 `FocusComponent.NearestFocus`, `None` 기반 명시 focus 정책을 따른다. 이 문서의 기존 fallback chain과 trace 설명은 과거 설계 맥락으로만 본다.
 
 ## 2. 최종 결정
 
@@ -16,7 +16,7 @@ P1에서는 debug overlay 한정 component를 먼저 구현한다.
 
 | 항목 | 결정 |
 | --- | --- |
-| P1 component 이름 | `UCDebugOverlayTargetComponent` |
+| P1 component 이름 | `UCDebugOverlayFocusComponent` |
 | 소유 위치 | `ACPlayerController` |
 | 목적 | debug overlay가 읽을 selected enemy 제공 |
 | 범위 | overlay evidence용 target provider |
@@ -44,11 +44,11 @@ P1에서는 debug overlay 한정 component를 먼저 구현한다.
 | 코드 위치 | 근거 | 판단 |
 | --- | --- | --- |
 | `Source/Portfolio/Controller/CPlayerController.h` | `UCPlayerFeedbackComponent`를 controller-owned component로 보유 | target provider component를 controller에 붙이는 패턴이 가능 |
-| `Source/Portfolio/Controller/CPlayerController.cpp` | 입력 처리와 player intent dispatch 담당 | target selection 의도와 가까운 위치 |
+| `Source/Portfolio/Controller/CPlayerController.cpp` | 입력 처리와 player intent dispatch 담당 | focus selection 의도와 가까운 위치 |
 | `Source/Portfolio/Character/Player/CPlayer.h` | 전투/상태 component와 `FCharacterComponentReferences` 흐름이 많음 | P1에서 더 건드리면 범위가 커질 수 있음 |
 | `Source/Portfolio/Interface/TargetContextProvider.h` | AI perception용 `GetTargetPriority()` interface | overlay target provider와 의미가 다르므로 재사용하지 않음 |
 | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp` | 현재 `TActorIterator<ACEnemy>` 기반 fallback 사용 | P1에서 최후 fallback으로 낮춤 |
-| `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp` | combat target/result hook에서 source/target name 저장 | RecentCombatTarget diagnostic의 근거 |
+| `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp` | combat target/result hook에서 source/target name 저장 | RecentCombatFocus diagnostic의 근거 |
 | `Source/Portfolio/Type/CCombatSignalTargetTypes.h` | `FCombatSignalTargetPacket`에 Source/Target actor 존재 | Store recent combat pair 기록 가능 |
 | `Source/Portfolio/Type/CCombatResultTypes.h` | `FCombatResultPacket`에 Source/Target actor 존재 | Store recent combat pair 기록 가능 |
 
@@ -57,7 +57,7 @@ P1에서는 debug overlay 한정 component를 먼저 구현한다.
 P1 Enemy Selection source policy는 다음으로 고정한다.
 
 ```text
-TargetComponent.Nearest
+FocusComponent.NearestFocus
 None
 ```
 
@@ -65,14 +65,14 @@ None
 
 | Source | 의미 | Evidence claim |
 | --- | --- | --- |
-| `EnemySource: TargetComponent.Nearest` | 사용자 명령으로 nearest enemy를 명시 선택한 enemy | 명시 command 기반 target selection evidence |
-| `EnemySource: None` | 명시 target 없음 | 성공 evidence로 사용하지 않음 |
-| `EnemySource: RecentCombatTarget` | 최근 combat pair에서 player 기준 상대 Enemy를 선택 | P1 기본 source chain에서 제외. diagnostic 후보 |
-| `EnemySource: WorldScanFallback` | 월드 scan 결과 enemy가 1개라서 선택 | P1 기본 source chain에서 제외. diagnostic/debug fallback 후보 |
-| `EnemySource: Ambiguous` | 다중 후보로 대상 확정 불가 | 특정 Enemy evidence로 사용하지 않음 |
-| `EnemySource: Stale` | 이전 source가 invalid 또는 timeout됨 | fallback 또는 재확인 필요 |
+| `EnemyFocusMode: FocusComponent.NearestFocus` | 사용자 명령으로 nearest enemy를 명시 선택한 enemy | 명시 command 기반 focus selection evidence |
+| `EnemyFocusMode: None` | 명시 focus 없음 | 성공 evidence로 사용하지 않음 |
+| `EnemyFocusMode: RecentCombatFocus` | 최근 combat pair에서 player 기준 상대 Enemy를 선택 | P1 기본 source chain에서 제외. diagnostic 후보 |
+| `EnemyFocusMode: WorldScanFallback` | 월드 scan 결과 enemy가 1개라서 선택 | P1 기본 source chain에서 제외. diagnostic/debug fallback 후보 |
+| `EnemyFocusMode: Ambiguous` | 다중 후보로 대상 확정 불가 | 특정 Enemy evidence로 사용하지 않음 |
+| `EnemyFocusMode: Stale` | 이전 source가 invalid 또는 timeout됨 | fallback 또는 재확인 필요 |
 
-## 6. `UCDebugOverlayTargetComponent` 최소 책임
+## 6. `UCDebugOverlayFocusComponent` 최소 책임
 
 P1 component는 debug overlay 전용 read provider다.
 
@@ -95,7 +95,7 @@ P1 component는 debug overlay 전용 read provider다.
 
 ## 7. Component 위치 결정
 
-`UCDebugOverlayTargetComponent`는 `ACPlayerController`가 소유한다.
+`UCDebugOverlayFocusComponent`는 `ACPlayerController`가 소유한다.
 
 이유:
 
@@ -119,12 +119,12 @@ P1의 target provider는 "player/controller가 현재 overlay 대상으로 선�
 구체 API 이름은 구현 단계에서 코드 스타일에 맞춰 확정한다. 설계 기준은 다음과 같다.
 
 ```cpp
-bool HasDebugOverlayTarget() const;
-AActor* GetDebugOverlayTargetActor() const;
-FString GetDebugOverlayTargetSummary() const;
-FString GetDebugOverlayTargetSource() const;
-void SetDebugOverlayTarget(AActor* InTargetActor);
-void ClearDebugOverlayTarget();
+bool HasDebugOverlayFocus() const;
+AActor* GetDebugOverlayFocusActor() const;
+FString GetDebugOverlayFocusSummary() const;
+FString GetDebugOverlayFocusSource() const;
+void SetDebugOverlayFocus(AActor* InTargetActor);
+void ClearDebugOverlayFocus();
 ```
 
 권장 타입:
@@ -141,16 +141,16 @@ HUD는 target 선택의 주체가 아니라 consumer다.
 
 P1 HUD enemy resolve 순서:
 
-1. `GetOwningPlayerController()`에서 `UCDebugOverlayTargetComponent` 조회
-2. component가 valid target을 제공하면 `EnemySource: TargetComponent.Nearest`
-3. component가 없거나 target invalid면 `EnemySource: None`
-4. `RecentCombatTarget`과 `WorldScanFallback`은 기본 HUD path에서 자동 표시하지 않고 diagnostic 후보로만 둔다.
+1. `GetOwningPlayerController()`에서 `UCDebugOverlayFocusComponent` 조회
+2. component가 valid target을 제공하면 `EnemyFocusMode: FocusComponent.NearestFocus`
+3. component가 없거나 target invalid면 `EnemyFocusMode: None`
+4. `RecentCombatFocus`과 `WorldScanFallback`은 기본 HUD path에서 자동 표시하지 않고 diagnostic 후보로만 둔다.
 
-HUD는 이 source를 화면에 명시한다. 최종 evidence에서는 `TargetComponent.Nearest` source 캡처만 target selection claim으로 사용한다.
+HUD는 이 source를 화면에 명시한다. 최종 evidence에서는 `FocusComponent.NearestFocus` source 캡처만 focus selection claim으로 사용한다.
 
-## 11. RecentCombatTarget Diagnostic 설계
+## 11. RecentCombatFocus Diagnostic 설계
 
-RecentCombatTarget은 단일 `TargetActor`를 저장하는 방식으로 설계하지 않는다.
+RecentCombatFocus은 단일 `TargetActor`를 저장하는 방식으로 설계하지 않는다.
 
 combat 흐름에서는 방향이 바뀐다.
 
@@ -189,7 +189,7 @@ P1 구현 전 stale 기준은 다음 후보 중 하나로 결정한다.
 | --- | --- | --- |
 | 시간 기준 | 최근 combat 후 2~3초 이내만 유효 | 권장 |
 | frame 기준 | 기록 frame과 현재 frame 차이 기준 | 보조 |
-| explicit clear | combat 종료 또는 target clear 시 제거 | 후속 |
+| explicit clear | combat 종료 또는 focus clear 시 제거 | 후속 |
 
 P1 최소 구현에서는 시간 기준을 우선 검토한다. stale timeout 기본값은 구현 단계에서 사용자 결정이 필요하면 질문한다.
 
@@ -207,8 +207,8 @@ P1 최소 구현에서는 시간 기준을 우선 검토한다. stale timeout �
 
 - 다중 enemy면 `Ambiguous(Count=N)`로 표시한다.
 - enemy가 없으면 `None` 또는 `NotCaptured(NoEnemy)`로 표시한다.
-- `WorldScanFallback`을 `TargetComponent` 기반 evidence처럼 설명하지 않는다.
-- 최종 제출용 enemy claim은 가능한 한 `TargetComponent` source 기준으로만 사용한다.
+- `WorldScanFallback`을 `FocusComponent` 기반 evidence처럼 설명하지 않는다.
+- 최종 제출용 enemy claim은 가능한 한 `FocusComponent` source 기준으로만 사용한다.
 
 ## 14. 다중 Enemy 정책
 
@@ -216,10 +216,10 @@ P1 최소 정책:
 
 | 상황 | 표시 |
 | --- | --- |
-| TargetComponent valid target 있음 | `TargetComponent.Nearest` |
-| TargetComponent 없음 | `None` |
-| TargetComponent invalid | `None` |
-| RecentCombatTarget valid | P1 기본 Enemy panel에는 자동 표시하지 않음 |
+| FocusComponent valid target 있음 | `FocusComponent.NearestFocus` |
+| FocusComponent 없음 | `None` |
+| FocusComponent invalid | `None` |
+| RecentCombatFocus valid | P1 기본 Enemy panel에는 자동 표시하지 않음 |
 | world enemy 1개 | P1 기본 Enemy panel에는 자동 표시하지 않음 |
 
 임의 첫 번째 Enemy를 성공 evidence처럼 표시하지 않는다.
@@ -229,8 +229,8 @@ P1 최소 정책:
 다음 구현 단계의 후보 파일은 문서상 다음으로 둔다.
 
 ```text
-Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.h
-Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.cpp
+Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.h
+Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.cpp
 Source/Portfolio/Controller/CPlayerController.h
 Source/Portfolio/Controller/CPlayerController.cpp
 Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp
@@ -245,7 +245,7 @@ Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp
 구현 중 아래 항목이 필요해지면 임의 결정하지 않고 사용자에게 질문한다.
 
 - stale timeout 기본값
-- `UCDebugOverlayTargetComponent`를 Blueprint 노출할지 여부
+- `UCDebugOverlayFocusComponent`를 Blueprint 노출할지 여부
 - target set/clear 입력 또는 console command가 필요한지 여부
 - Store에 weak recent combat pair를 추가하는 API 이름
 - HUD 표시 문구가 길어져 layout 조정이 필요한 경우
@@ -261,7 +261,7 @@ P1 Target Selection에서는 다음을 하지 않는다.
 - target cycling UI 구현
 - combat action target 강제
 - camera/aim assist 구현
-- AI target selection 변경
+- AI focus selection 변경
 - 기존 `ITargetContextProvider` 확장
 - 기존 audit log format 변경
 - `.umap`, `.uasset`, config, `Build.cs` 변경
@@ -271,16 +271,16 @@ P1 Target Selection에서는 다음을 하지 않는다.
 
 이 설계 기준으로 다음 단계에 들어갈 수 있다.
 
-- `UCDebugOverlayTargetComponent`를 P1 debug-only provider로 고정
+- `UCDebugOverlayFocusComponent`를 P1 debug-only provider로 고정
 - component 소유 위치를 `ACPlayerController`로 고정
-- source 표시를 `TargetComponent.Nearest`, `None`으로 고정
+- source 표시를 `FocusComponent.NearestFocus`, `None`으로 고정
 - `WorldScanFallback`을 diagnostic/debug fallback 후보로 제한
-- RecentCombatTarget은 Store weak source/target pair 기반 diagnostic 후보로 둠
+- RecentCombatFocus은 Store weak source/target pair 기반 diagnostic 후보로 둠
 - 기존 `ITargetContextProvider`와 의미를 분리
-- 범용 Target Component 승격은 브랜치 마감 후 리팩터링 후보로 분리
+- 범용 Focus Component 승격은 브랜치 마감 후 리팩터링 후보로 분리
 
 ## 19. 다음 작업
 
-다음 작업은 `P1 Target Component 구현 계획 문서 작성`이다.
+다음 작업은 `P1 Focus Component 구현 계획 문서 작성`이다.
 
-구현 계획 문서에서는 `UCDebugOverlayTargetComponent`의 파일/API, `ACPlayerController` 연결 방식, source type 저장, HUD의 명시 target 표시 정책 변경 범위를 구현 단위로 확정한다.
+구현 계획 문서에서는 `UCDebugOverlayFocusComponent`의 파일/API, `ACPlayerController` 연결 방식, source type 저장, HUD의 명시 focus 표시 정책 변경 범위를 구현 단위로 확정한다.

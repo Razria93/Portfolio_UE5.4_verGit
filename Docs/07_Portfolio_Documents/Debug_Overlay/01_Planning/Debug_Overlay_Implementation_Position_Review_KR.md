@@ -90,7 +90,7 @@ RuntimeLODTier:
 - `ApplyMode`, `OverlayHandling`
   - decision result 최근값 저장소가 필요하다.
 - `DamageSpecKey`, `DefenseOutcome`, `FinalTakenDamage`, `DamageCommit`
-  - `FCombatSignalDebug` 또는 target component 처리 지점에서 최근 combat summary를 저장해야 한다.
+  - `FCombatSignalDebug` 또는 focus component 처리 지점에서 최근 combat summary를 저장해야 한다.
 - `AI Request`, `BT Interval`
   - `FAICombatBTDebug`와 `CBTServiceIntervalHelper`에 최근값 저장 hook이 필요하다.
 

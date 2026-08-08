@@ -4,10 +4,10 @@
 
 이 문서는 Debug Overlay의 Enemy 표시 대상 선택 구조를 리팩터링할 때 참고하기 위한 설계 메모이다.
 
-현재 runtime HUD에는 `EnemySource`, `EnemyTarget`, `EnemySelect` 표기가 존재한다. 이 표기는 동작 자체에는 문제가 없지만, 다음 문제가 있다.
+현재 runtime HUD에는 `EnemyFocusMode`, `EnemyFocusActor`, `EnemyFocusCommand` 표기가 존재한다. 이 표기는 동작 자체에는 문제가 없지만, 다음 문제가 있다.
 
 - `Source` / `Target` 용어가 Combat pipeline의 `SourceActor` / `TargetActor` 의미와 충돌한다.
-- `EnemyTarget: Selected: BP_Enemy_C_2`처럼 label 안에 다시 `Selected:`가 들어가 읽기 어렵다.
+- `EnemyFocusActor: Selected: BP_Enemy_C_2`처럼 label 안에 다시 `Selected:`가 들어가 읽기 어렵다.
 - 성공 케이스에서 현재 선택 대상과 마지막 선택 명령 결과가 같은 Actor 이름을 반복한다.
 - HUD가 장기적으로 ViewData / Renderer / UMG override 구조로 분리될 때 의미 단위가 불명확하다.
 
@@ -22,7 +22,7 @@ Editor Tooling / Console Command
         ↓
 ACPlayerController
         ↓
-UCDebugOverlayTargetComponent
+UCDebugOverlayFocusComponent
         ↓
 ACDebugOverlayHUD::ResolveTargetComponentEnemy()
         ↓
@@ -32,21 +32,21 @@ HUD Enemy Panel 표시
 현재 사용 중인 선택 정책은 두 가지이다.
 
 - Nearest 선택
-  - `DebugOverlaySelectNearestTarget`
+  - `DebugOverlaySelectNearestFocus`
   - `ACPlayerController::TrySelectDebugOverlayNearestEnemy()`
   - `ACPlayerController::FindClosestDebugOverlayEnemy()`
-  - 성공 시 `UCDebugOverlayTargetComponent::SetDebugOverlayTarget(..., EDebugOverlayTargetSource::Nearest)`
+  - 성공 시 `UCDebugOverlayFocusComponent::SetDebugOverlayFocus(..., EDebugOverlayFocusSource::Nearest)`
 
 - Editor Outliner 선택
-  - Editor plugin이 선택 Actor 이름으로 `DebugOverlaySelectActorTarget ActorName` console command 실행
+  - Editor plugin이 선택 Actor 이름으로 `DebugOverlaySelectOutlinerFocus ActorName` console command 실행
   - `ACPlayerController::TrySelectDebugOverlayActorTarget()`
   - `ACPlayerController::FindDebugOverlayActorByName()`
-  - `ACEnemy` 검증 후 `SetDebugOverlayTarget(..., EDebugOverlayTargetSource::EditorSelection)`
+  - `ACEnemy` 검증 후 `SetDebugOverlayFocus(..., EDebugOverlayFocusSource::EditorSelection)`
 
 HUD는 target을 직접 찾지 않고 다음 값을 읽는다.
 
 ```cpp
-ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayTargetActor());
+ACEnemy* targetEnemy = Cast<ACEnemy>(targetComp->GetDebugOverlayFocusActor());
 if (!IsValid(targetEnemy)) return nullptr;
 ```
 
@@ -60,7 +60,7 @@ ACPlayerController
 - ACEnemy 검증
 - 성공/실패 summary 생성
 
-UCDebugOverlayTargetComponent
+UCDebugOverlayFocusComponent
 - 선택된 actor 저장
 - 선택 source 저장
 - 마지막 선택 summary 저장
@@ -74,28 +74,28 @@ ACDebugOverlayHUD
 현재 성공 케이스 표기는 다음과 같은 형태이다.
 
 ```text
-EnemySource: TargetComponent.Nearest
-EnemyTarget: Selected: BP_Enemy_C_2
-EnemySelect: NearestSelected | Target: BP_Enemy_C_2 | Distance: 847 | Radius: 3000
+EnemyFocusMode: FocusComponent.NearestFocus
+EnemyFocusActor: Selected: BP_Enemy_C_2
+EnemyFocusCommand: NearestSelected | Target: BP_Enemy_C_2 | Distance: 847 | Radius: 3000
 ```
 
 문제점:
 
-- `EnemyTarget: Selected: ...`는 `:`가 두 번 들어가 읽기 불편하다.
-- `Selected`는 의미 중복이다. `EnemyTarget` label 자체가 이미 현재 선택 대상을 의미한다.
-- `EnemyTarget`의 Actor 이름과 `EnemySelect`의 `Target: ...` 값이 성공 케이스에서 반복된다.
+- `EnemyFocusActor: Selected: ...`는 `:`가 두 번 들어가 읽기 불편하다.
+- `Selected`는 의미 중복이다. `EnemyFocusActor` label 자체가 이미 현재 선택 대상을 의미한다.
+- `EnemyFocusActor`의 Actor 이름과 `EnemyFocusCommand`의 `Target: ...` 값이 성공 케이스에서 반복된다.
 - `Source` / `Target` 용어가 Combat summary의 `Source` / `Target`과 섞인다.
 
 실패 케이스에서는 현재 상태와 마지막 명령 결과를 분리해서 볼 필요가 있다.
 
 ```text
-EnemySource: None
-EnemySelect: EditorSelectFailed | NotEnemy | Target: BP_Chest_C_1
+EnemyFocusMode: None
+EnemyFocusCommand: EditorSelectFailed | NotEnemy | Target: BP_Chest_C_1
 ```
 
-이 경우 `EnemySource: None`은 현재 focus 대상이 없다는 뜻이고, `EnemySelect`는 마지막 선택 명령이 왜 실패했는지 보여주는 evidence이다.
+이 경우 `EnemyFocusMode: None`은 현재 focus 대상이 없다는 뜻이고, `EnemyFocusCommand`는 마지막 선택 명령이 왜 실패했는지 보여주는 evidence이다.
 
-따라서 성공 케이스의 중복을 없애기 위해 단순히 `EnemySelect`를 제거하면 실패 reason을 잃을 수 있다. 반대로 `EnemyTarget`만 남기면 마지막 명령 실패 이유를 보여줄 수 없다.
+따라서 성공 케이스의 중복을 없애기 위해 단순히 `EnemyFocusCommand`를 제거하면 실패 reason을 잃을 수 있다. 반대로 `EnemyFocusActor`만 남기면 마지막 명령 실패 이유를 보여줄 수 없다.
 
 ## 4. 권장 용어: Target 대신 Focus
 
@@ -175,7 +175,7 @@ struct FDebugOverlayFocusViewData
 현재 이름:
 
 ```cpp
-UCDebugOverlayTargetComponent
+UCDebugOverlayFocusComponent
 ```
 
 권장 장기 이름:
@@ -225,14 +225,14 @@ UCDebugOverlayFocusComponent
 기존 API:
 
 ```cpp
-bool HasDebugOverlayTarget() const;
-AActor* GetDebugOverlayTargetActor() const;
-FString GetDebugOverlayTargetSummary() const;
-FString GetDebugOverlayTargetSource() const;
+bool HasDebugOverlayFocus() const;
+AActor* GetDebugOverlayFocusActor() const;
+FString GetDebugOverlayFocusSummary() const;
+FString GetDebugOverlayFocusSource() const;
 FString GetDebugOverlaySelectionSummary() const;
 
-void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource);
-void ClearDebugOverlayTarget();
+void SetDebugOverlayFocus(AActor* InTargetActor, EDebugOverlayFocusSource InSource);
+void ClearDebugOverlayFocus();
 void SetDebugOverlaySelectionSummary(const FString& InSummary);
 void ClearDebugOverlaySelectionSummary();
 ```
@@ -261,7 +261,7 @@ void ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& 
 현재 enum:
 
 ```cpp
-enum class EDebugOverlayTargetSource : uint8
+enum class EDebugOverlayFocusSource : uint8
 {
     None,
     Nearest,
@@ -279,14 +279,14 @@ enum class EDebugOverlayFocusMode : uint8
     EditorSelection,
     RecentCombat,
     WorldScanFallback,
-    GameplayTarget,
+    GameplayFocus,
 };
 ```
 
 비고:
 
 - `NearestEnemy`는 `Nearest`보다 의미가 명확하다.
-- `GameplayTarget`은 나중에 실제 gameplay targeting component가 생겼을 때 adapter mode로 사용한다.
+- `GameplayFocus`은 나중에 실제 gameplay targeting component가 생겼을 때 adapter mode로 사용한다.
 - `RecentCombat`과 `WorldScanFallback`은 현재 HUD 파일에 함수가 남아 있지만 실제 `ResolveDisplayEnemy()` 흐름에서는 호출되지 않는다. 채택 여부는 별도 결정이 필요하다.
 
 ## 10. Focus Command Result 제안
@@ -301,7 +301,7 @@ struct FDebugOverlayFocusCommandResult
 };
 ```
 
-이 구조는 현재 `EnemySelect: ...` 문자열을 구조화한 것이다.
+이 구조는 현재 `EnemyFocusCommand: ...` 문자열을 구조화한 것이다.
 
 주의:
 
@@ -336,7 +336,7 @@ public:
     static FDebugOverlayFocusResolveResult ResolveSingleEnemyFallback(
         const UWorld* InWorld);
 
-    static FDebugOverlayFocusResolveResult ResolveGameplayTarget(
+    static FDebugOverlayFocusResolveResult ResolveGameplayFocus(
         const APawn* InViewerPawn);
 };
 ```
@@ -372,7 +372,7 @@ Resolver는 focus state를 직접 저장하지 않는다. 저장은 focus compon
 권장 흐름:
 
 ```cpp
-void ACPlayerController::DebugOverlaySelectNearestTarget()
+void ACPlayerController::DebugOverlaySelectNearestFocus()
 {
     const FDebugOverlayFocusResolveResult result =
         FDebugOverlayFocusResolver::ResolveNearestEnemy(
@@ -387,7 +387,7 @@ void ACPlayerController::DebugOverlaySelectNearestTarget()
 Editor Outliner 선택도 같은 흐름으로 정리한다.
 
 ```cpp
-void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
+void ACPlayerController::DebugOverlaySelectOutlinerFocus(const FString& ActorName)
 {
     const FDebugOverlayFocusResolveResult result =
         FDebugOverlayFocusResolver::ResolveActorByName(
@@ -418,7 +418,7 @@ RefreshCachedEnemyIfNeeded()
 
 - 자동 fallback으로 HUD에 다시 연결하지 않는다.
 - 채택하려면 명시 command로 분리한다.
-  - `DebugOverlaySelectRecentCombatTarget`
+  - `DebugOverlaySelectRecentCombatFocus`
   - `DebugOverlaySelectSingleEnemyFallback`
 - 구현 위치는 HUD가 아니라 `FDebugOverlayFocusResolver` 또는 controller helper이다.
 - `RecentCombat`은 Store를 조회할 수 있지만, Store schema/API를 변경하지 않는다.
@@ -450,7 +450,7 @@ HUD / UMG
 예상 resolver:
 
 ```cpp
-static FDebugOverlayFocusResolveResult ResolveGameplayTarget(
+static FDebugOverlayFocusResolveResult ResolveGameplayFocus(
     const APawn* InViewerPawn);
 ```
 
@@ -458,15 +458,15 @@ static FDebugOverlayFocusResolveResult ResolveGameplayTarget(
 
 - `NoViewerPawn`
 - `NoTargetingComponent`
-- `NoGameplayTarget`
+- `NoGameplayFocus`
 - `NotEnemy`
 
 성공 mode:
 
 ```text
-EnemyFocusMode: GameplayTarget
+EnemyFocusMode: GameplayFocus
 EnemyFocusActor: BP_Enemy_C_2
-EnemyFocusCommand: Selected | Actor: BP_Enemy_C_2 | Reason: GameplayTarget
+EnemyFocusCommand: Selected | Actor: BP_Enemy_C_2 | Reason: GameplayFocus
 ```
 
 ## 15. PR 분리 제안
@@ -482,14 +482,14 @@ EnemyFocusCommand: Selected | Actor: BP_Enemy_C_2 | Reason: GameplayTarget
 주의:
 
 - Store schema/API 변경 금지.
-- runtime target selection 정책 변경 금지.
+- runtime focus selection 정책 변경 금지.
 
 ### PR 2: HUD 표시 용어 정리
 
 목표:
 
-- `EnemySource` / `EnemyTarget` / `EnemySelect`를 `EnemyFocusMode` / `EnemyFocusActor` / `EnemyFocusCommand`로 전환한다.
-- `EnemyTarget: Selected: ...` 표기를 제거한다.
+- `EnemyFocusMode` / `EnemyFocusActor` / `EnemyFocusCommand`를 `EnemyFocusMode` / `EnemyFocusActor` / `EnemyFocusCommand`로 전환한다.
+- `EnemyFocusActor: Selected: ...` 표기를 제거한다.
 - `Target` 대신 `Actor` 또는 `FocusActor` 용어를 사용한다.
 
 주의:
@@ -501,7 +501,7 @@ EnemyFocusCommand: Selected | Actor: BP_Enemy_C_2 | Reason: GameplayTarget
 
 목표:
 
-- `UCDebugOverlayTargetComponent`를 `UCDebugOverlayFocusComponent`로 rename한다.
+- `UCDebugOverlayFocusComponent`를 `UCDebugOverlayFocusComponent`로 rename한다.
 - API 이름을 `Target`에서 `Focus`로 정리한다.
 
 주의:
@@ -526,7 +526,7 @@ EnemyFocusCommand: Selected | Actor: BP_Enemy_C_2 | Reason: GameplayTarget
 목표:
 
 - RecentCombat / WorldScanFallback을 실제 command로 채택할지 결정한다.
-- Gameplay TargetingComponent가 생긴 뒤 `GameplayTarget` resolver를 추가한다.
+- Gameplay TargetingComponent가 생긴 뒤 `GameplayFocus` resolver를 추가한다.
 
 주의:
 
@@ -538,7 +538,7 @@ EnemyFocusCommand: Selected | Actor: BP_Enemy_C_2 | Reason: GameplayTarget
 - Store public API/schema 변경 금지.
 - EventLog filter/noise/collision 의미 변경 금지.
 - HUD 표시 정책 변경은 별도 PR로 분리한다.
-- `Pannel_01/02/03` 문자열 변경은 별도 판단 전까지 금지한다.
+- `Panel_01/02/03` 문자열 변경은 별도 판단 전까지 금지한다.
 - RecentCombat / WorldScanFallback 자동 연결 금지.
 - Gameplay TargetingComponent를 Debug Overlay PR에서 새로 구현하지 않는다.
 - TargetComponent가 Store를 직접 조회하도록 만들지 않는다.
@@ -682,7 +682,7 @@ NearestEnemy
 EditorSelection
 RecentCombat
 WorldScanFallback
-GameplayTarget
+GameplayFocus
 ```
 
 Resolver는 focus actor를 찾고 `FDebugOverlayFocusResolveResult`를 반환한다. 필요하면 Store를 읽거나 gameplay targeting component를 조회할 수 있다.
@@ -735,11 +735,11 @@ FocusComponent에 결과 적용
 예상 흐름:
 
 ```text
-DebugOverlaySelectNearestTarget
+DebugOverlaySelectNearestFocus
     -> FDebugOverlayFocusResolver::ResolveNearestEnemy(...)
     -> FocusComponent->ApplyDebugOverlayFocusResolveResult(...)
 
-DebugOverlaySelectActorTarget
+DebugOverlaySelectOutlinerFocus
     -> FDebugOverlayFocusResolver::ResolveActorByName(...)
     -> FocusComponent->ApplyDebugOverlayFocusResolveResult(...)
 ```
@@ -925,7 +925,7 @@ struct FDebugOverlayTextPanel
 TextFormatter는 line text와 함께 role을 부여한다.
 
 ```text
-[Debug Overlay Pannel_01]
+[Debug Overlay Panel_01]
 -> PanelTitle
 
 [Player] / [Enemy] / [Interaction]
@@ -938,7 +938,7 @@ TextFormatter는 line text와 함께 role을 부여한다.
 -> Normal
 ```
 
-이 구조를 사용하면 Renderer가 문자열 비교로 header를 추측하지 않아도 된다. 기존 Canvas fallback의 `Pannel_01/02/03` 문자열은 유지하되, 해당 line의 의미는 `Role`로 표현한다.
+이 구조를 사용하면 Renderer가 문자열 비교로 header를 추측하지 않아도 된다. 기존 Canvas fallback의 `Panel_01/02/03` 문자열은 유지하되, 해당 line의 의미는 `Role`로 표현한다.
 
 ### 19.8 Canvas fallback 렌더링
 
@@ -1467,7 +1467,7 @@ const TArray<FDebugOverlayEventEntry> recentEvents =
 현재 Canvas fallback 표시 정책:
 
 ```text
-[Debug Overlay Pannel_02]
+[Debug Overlay Panel_02]
 
 [Event Log: {Filter}]
 
@@ -1535,7 +1535,7 @@ CanvasRenderer
 현재 Interaction panel은 Snapshot의 latest summary 두 개를 표시한다.
 
 ```text
-[Debug Overlay Pannel_03]
+[Debug Overlay Panel_03]
 
 [Interaction]
 [Recent Execution]
@@ -1955,7 +1955,7 @@ Store 내부 map/ring buffer/helper에 직접 접근하지 않는다.
 권장 흐름:
 
 ```text
-DebugOverlaySelectRecentCombatTarget
+DebugOverlaySelectRecentCombatFocus
 -> FDebugOverlayFocusResolver::ResolveRecentCombatEnemy(...)
 -> FDebugOverlaySnapshotStore::TryGetRecentCombatPair(...)
 -> viewer pawn과 SourceActor / TargetActor 비교
@@ -2250,25 +2250,25 @@ Role
 - CanvasRenderer가 `FDebugOverlaySnapshot`이나 `FDebugOverlayEventEntry`를 직접 받지 않게 한다.
 - UMG/Blueprint에 raw `FDebugOverlaySnapshot`이나 weak actor pair를 직접 넘기지 않는다.
 
-## 46. CDebugOverlayTargetComponent 현재 역할
+## 46. CDebugOverlayFocusComponent 현재 역할
 
-현재 `UCDebugOverlayTargetComponent`는 이름은 TargetComponent이지만 실제 역할은 gameplay combat target system이 아니라 Debug Overlay가 현재 보고 있는 actor 상태를 저장하는 component이다.
+현재 `UCDebugOverlayFocusComponent`는 이름은 TargetComponent이지만 실제 역할은 gameplay combat target system이 아니라 Debug Overlay가 현재 보고 있는 actor 상태를 저장하는 component이다.
 
 현재 저장 값:
 
 ```cpp
-TWeakObjectPtr<AActor> DebugOverlayTargetActor;
-EDebugOverlayTargetSource DebugOverlayTargetSource;
+TWeakObjectPtr<AActor> DebugOverlayFocusActor;
+EDebugOverlayFocusSource DebugOverlayFocusSource;
 FString DebugOverlaySelectionSummary;
 ```
 
 의미:
 
 ```text
-DebugOverlayTargetActor
+DebugOverlayFocusActor
 -> HUD가 현재 보고 있는 actor
 
-DebugOverlayTargetSource
+DebugOverlayFocusSource
 -> 그 actor가 어떤 방식으로 선택됐는지
 
 DebugOverlaySelectionSummary
@@ -2283,7 +2283,7 @@ EDebugOverlayFocusMode FocusMode;
 FDebugOverlayFocusCommandResult LastFocusCommandResult;
 ```
 
-따라서 장기적으로 `UCDebugOverlayTargetComponent`는 `UCDebugOverlayFocusComponent`로 전환한다.
+따라서 장기적으로 `UCDebugOverlayFocusComponent`는 `UCDebugOverlayFocusComponent`로 전환한다.
 
 ## 47. FocusComponent 전환 후 목표 구조
 
@@ -2328,14 +2328,14 @@ Text line 생성
 현재 API:
 
 ```cpp
-bool HasDebugOverlayTarget() const;
-AActor* GetDebugOverlayTargetActor() const;
-FString GetDebugOverlayTargetSummary() const;
-FString GetDebugOverlayTargetSource() const;
+bool HasDebugOverlayFocus() const;
+AActor* GetDebugOverlayFocusActor() const;
+FString GetDebugOverlayFocusSummary() const;
+FString GetDebugOverlayFocusSource() const;
 FString GetDebugOverlaySelectionSummary() const;
 
-void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayTargetSource InSource);
-void ClearDebugOverlayTarget();
+void SetDebugOverlayFocus(AActor* InTargetActor, EDebugOverlayFocusSource InSource);
+void ClearDebugOverlayFocus();
 void SetDebugOverlaySelectionSummary(const FString& InSummary);
 void ClearDebugOverlaySelectionSummary();
 ```
@@ -2359,22 +2359,22 @@ void ApplyDebugOverlayFocusResolveResult(const FDebugOverlayFocusResolveResult& 
 전환 방향:
 
 ```text
-GetDebugOverlayTargetActor()
+GetDebugOverlayFocusActor()
 -> GetDebugOverlayFocusActor()
 
-GetDebugOverlayTargetSource()
+GetDebugOverlayFocusSource()
 -> GetDebugOverlayFocusMode()
 
-GetDebugOverlayTargetSummary()
+GetDebugOverlayFocusSummary()
 -> GetDebugOverlayFocusActorName()
 
 GetDebugOverlaySelectionSummary()
 -> GetLastDebugOverlayFocusCommandResult()
 
-SetDebugOverlayTarget()
+SetDebugOverlayFocus()
 -> SetDebugOverlayFocusActor()
 
-ClearDebugOverlayTarget()
+ClearDebugOverlayFocus()
 -> ClearDebugOverlayFocusActor()
 ```
 
@@ -2383,16 +2383,16 @@ ClearDebugOverlayTarget()
 현재 표시:
 
 ```text
-EnemySource: TargetComponent.Nearest
-EnemyTarget: Selected: BP_Enemy_C_2
-EnemySelect: NearestSelected | Target: BP_Enemy_C_2 | Distance: 847 | Radius: 3000
+EnemyFocusMode: FocusComponent.NearestFocus
+EnemyFocusActor: Selected: BP_Enemy_C_2
+EnemyFocusCommand: NearestSelected | Target: BP_Enemy_C_2 | Distance: 847 | Radius: 3000
 ```
 
 문제:
 
 ```text
 Target 용어가 combat pipeline과 충돌한다.
-EnemyTarget: Selected: ... 는 ':'가 중복된다.
+EnemyFocusActor: Selected: ... 는 ':'가 중복된다.
 Selected는 의미 중복이다.
 성공 케이스에서 actor name이 반복된다.
 ```
@@ -2462,15 +2462,15 @@ struct FDebugOverlayFocusCommandResult
 
 ## 51. Clear focus와 LastFocusCommandResult 생명주기 분리
 
-현재 `ClearDebugOverlayTarget()`은 target actor/source와 selection summary를 같이 지운다.
+현재 `ClearDebugOverlayFocus()`은 target actor/source와 selection summary를 같이 지운다.
 
 현재:
 
 ```cpp
-void ClearDebugOverlayTarget()
+void ClearDebugOverlayFocus()
 {
-    DebugOverlayTargetActor.Reset();
-    DebugOverlayTargetSource = EDebugOverlayTargetSource::None;
+    DebugOverlayFocusActor.Reset();
+    DebugOverlayFocusSource = EDebugOverlayFocusSource::None;
     ClearDebugOverlaySelectionSummary();
 }
 ```
@@ -2506,7 +2506,7 @@ EnemyFocusCommand: Failed | Actor: BP_Chest_C_1 | Reason: NotEnemy
 현재 enum:
 
 ```cpp
-enum class EDebugOverlayTargetSource : uint8
+enum class EDebugOverlayFocusSource : uint8
 {
     None,
     Nearest,
@@ -2524,7 +2524,7 @@ enum class EDebugOverlayFocusMode : uint8
     EditorSelection,
     RecentCombat,
     WorldScanFallback,
-    GameplayTarget,
+    GameplayFocus,
 };
 ```
 
@@ -2533,7 +2533,7 @@ enum class EDebugOverlayFocusMode : uint8
 - `Nearest`보다 `NearestEnemy`를 사용한다.
 - `RecentCombat`은 채택한다.
 - `WorldScanFallback`은 자동 fallback이 아니라 별도 결정/명시 command 후보로 둔다.
-- `GameplayTarget`은 나중에 실제 gameplay targeting component가 생기면 adapter mode로 사용한다.
+- `GameplayFocus`은 나중에 실제 gameplay targeting component가 생기면 adapter mode로 사용한다.
 
 ## 53. 임시 Target API wrapper 정책
 
@@ -2542,12 +2542,12 @@ enum class EDebugOverlayFocusMode : uint8
 예:
 
 ```cpp
-AActor* GetDebugOverlayTargetActor() const
+AActor* GetDebugOverlayFocusActor() const
 {
     return GetDebugOverlayFocusActor();
 }
 
-void SetDebugOverlayTarget(AActor* InActor, EDebugOverlayTargetSource InSource)
+void SetDebugOverlayFocus(AActor* InActor, EDebugOverlayFocusSource InSource)
 {
     SetDebugOverlayFocusActor(InActor, ConvertTargetSourceToFocusMode(InSource));
 }
@@ -2575,7 +2575,7 @@ PR 2
 - Target API wrapper 제거
 
 PR 3
-- class/file rename이 필요하면 UCDebugOverlayTargetComponent -> UCDebugOverlayFocusComponent
+- class/file rename이 필요하면 UCDebugOverlayFocusComponent -> UCDebugOverlayFocusComponent
 ```
 
 규칙:
@@ -2584,7 +2584,7 @@ PR 3
 - 신규 코드는 Focus API만 사용한다.
 - wrapper 제거 PR을 별도로 계획한다.
 
-## 54. TargetComponent / FocusComponent 금지 항목
+## 54. FocusComponent / FocusComponent 금지 항목
 
 - FocusComponent가 Store를 직접 조회하지 않는다.
 - FocusComponent가 World scan을 수행하지 않는다.
@@ -2593,7 +2593,7 @@ PR 3
 - FocusComponent가 gameplay targeting policy를 구현하지 않는다.
 - FocusComponent가 ViewData/TextPanel을 만들지 않는다.
 - `Selected:` 같은 표시 문자열을 component API에서 만들지 않는다.
-- `TargetComponent.Nearest` 같은 표시 문자열을 component API에서 만들지 않는다.
+- `FocusComponent.NearestFocus` 같은 표시 문자열을 component API에서 만들지 않는다.
 
 ## 55. CPlayerController command entry / resolver 분리
 
@@ -2602,9 +2602,9 @@ PR 3
 현재 command entry:
 
 ```cpp
-void DebugOverlaySelectNearestTarget();
-void DebugOverlayClearTarget();
-void DebugOverlaySelectActorTarget(const FString& ActorName);
+void DebugOverlaySelectNearestFocus();
+void DebugOverlayClearFocus();
+void DebugOverlaySelectOutlinerFocus(const FString& ActorName);
 ```
 
 현재 search helper:
@@ -2638,7 +2638,7 @@ UCDebugOverlayFocusComponent
 예상 흐름:
 
 ```cpp
-void ACPlayerController::DebugOverlaySelectNearestTarget()
+void ACPlayerController::DebugOverlaySelectNearestFocus()
 {
     const FDebugOverlayFocusResolveResult Result =
         FDebugOverlayFocusResolver::ResolveNearestEnemy(
@@ -2657,9 +2657,9 @@ void ACPlayerController::DebugOverlaySelectNearestTarget()
 현재 이름:
 
 ```text
-DebugOverlaySelectNearestTarget
-DebugOverlaySelectActorTarget
-DebugOverlayClearTarget
+DebugOverlaySelectNearestFocus
+DebugOverlaySelectOutlinerFocus
+DebugOverlayClearFocus
 ```
 
 결정:
@@ -2672,13 +2672,13 @@ DebugOverlayClearTarget
 
 후반 정리 단계
 - 필요하면 Focus 기반 command alias 추가 검토
-- 기존 Target command 제거 여부는 별도 판단
+- 기존 Focus command 제거 여부는 별도 판단
 ```
 
 예:
 
 ```cpp
-void ACPlayerController::DebugOverlaySelectNearestTarget()
+void ACPlayerController::DebugOverlaySelectNearestFocus()
 {
     const FDebugOverlayFocusResolveResult Result =
         FDebugOverlayFocusResolver::ResolveNearestEnemy(...);
@@ -2707,17 +2707,17 @@ ViewData / Resolver / Renderer 구조화와 command rename을 동시에 섞지 �
 - `FindClosestDebugOverlayEnemy()`는 `FDebugOverlayFocusResolver::ResolveNearestEnemy()`로 이동 후보이다.
 - `FindDebugOverlayActorByName()`은 `FDebugOverlayFocusResolver::ResolveActorByName()`으로 이동 후보이다.
 - `TrySelectDebugOverlayNearestEnemy()`와 `TrySelectDebugOverlayActorTarget()`은 resolver 호출 + FocusComponent 적용 흐름으로 축소한다.
-- `DebugOverlaySelectRecentCombatTarget` command를 추가해 RecentCombat focus mode를 명시적으로 실행한다.
+- `DebugOverlaySelectRecentCombatFocus` command를 추가해 RecentCombat focus mode를 명시적으로 실행한다.
 - RecentCombat은 자동 fallback으로 연결하지 않는다.
 - Nearest radius는 CVar로 승격하지 않고 Controller 또는 command layer에서 resolver 인자로 전달한다.
-- 기존 Target command 이름은 초기 구현에서 유지한다.
+- 기존 Focus command 이름은 초기 구현에서 유지한다.
 
 보류:
 
 - Focus 기반 command alias 추가
   - 예: `DebugOverlaySelectNearestFocus`
   - 예: `DebugOverlayClearFocus`
-- 기존 Target command 제거 여부
+- 기존 Focus command 제거 여부
 - Clear command 실행 시 `LastFocusCommandResult = Cleared`를 남길지 여부
 
 권장:
@@ -2774,7 +2774,7 @@ Button label
 - Select Recent Combat Target
 
 Command
-- DebugOverlaySelectRecentCombatTarget
+- DebugOverlaySelectRecentCombatFocus
 
 Editor responsibility
 - PIE PlayerController에 command 전송만 수행
@@ -2815,7 +2815,7 @@ Editor plugin은 계속 runtime command bridge 역할로 제한한다.
    - BT active node tracking 구현 금지
 
 6. FocusViewData / Target display terminology 전환
-   - EnemySource / EnemyTarget / EnemySelect를 Focus 용어로 전환
+   - EnemyFocusMode / EnemyFocusActor / EnemyFocusCommand를 Focus 용어로 전환
    - Selected: 표기 제거
    - 기존 console command 이름은 유지
 
@@ -2825,7 +2825,7 @@ Editor plugin은 계속 runtime command bridge 역할로 제한한다.
    - RecentCombat explicit command
    - 자동 fallback 연결 금지
 
-8. TargetComponent -> FocusComponent 전환
+8. FocusComponent -> FocusComponent 전환
    - Focus API 추가
    - Target API wrapper는 임시 호환층으로만 사용
    - 호출부 전환 후 wrapper 제거
@@ -2923,10 +2923,10 @@ Editor plugin은 command status 표시만 수행
 
 ```text
 Target 용어를 Focus 용어로 전환
-EnemyTarget: Selected: ... 표기 제거 계획
+EnemyFocusActor: Selected: ... 표기 제거 계획
 Source / Target 용어는 RecentCombatPair 내부 의미로만 유지
 Public console command 이름은 호환을 위해 초기에는 유지
-Pannel_01/02/03 문자열은 별도 결정 전까지 유지
+Panel_01/02/03 문자열은 별도 결정 전까지 유지
 ```
 
 주의:
@@ -2945,7 +2945,7 @@ Runtime LOD actual 구현 금지
 BT active node tracking 구현 금지
 Stagger component 설계는 보류
 WorldScanFallback 자동 연결 금지
-GameplayTarget mode는 gameplay targeting component 구현 후 adapter로 검토
+GameplayFocus mode는 gameplay targeting component 구현 후 adapter로 검토
 Store Enemy state snapshot화 보류
 Store ViewData API 확장 보류
 ```
@@ -3008,7 +3008,7 @@ ViewData / TextFormatter / CanvasRenderer 전체 구조를 한 번에 구현하�
    - Blackboard live state와 Store evidence 분리
 
 6. FocusViewData terminology 전환
-   - EnemySource / EnemyTarget / EnemySelect를 Focus 표기로 전환
+   - EnemyFocusMode / EnemyFocusActor / EnemyFocusCommand를 Focus 표기로 전환
    - Selected: 표기 제거
    - 기존 console command 이름은 유지
 
@@ -3017,7 +3017,7 @@ ViewData / TextFormatter / CanvasRenderer 전체 구조를 한 번에 구현하�
    - ActorByName / EditorSelection
    - RecentCombat explicit command
 
-8. TargetComponent -> FocusComponent 전환
+8. FocusComponent -> FocusComponent 전환
    - Focus API 추가
    - Target API wrapper는 임시 호환층
    - 호출부 전환 후 wrapper 제거
@@ -3069,7 +3069,7 @@ FDebugOverlayTextFormatter 추가
 ViewData 구조화
 TextFormatter로 line 구성 이동
 Focus 용어 표시 변경
-TargetComponent rename
+FocusComponent rename
 FocusResolver 도입
 RecentCombat command 추가
 Store schema/API 변경
@@ -3111,8 +3111,8 @@ Console command 이름 변경
 보존할 표시 정책:
 
 ```text
-Pannel_01/02/03 문자열 유지
-EnemySource / EnemyTarget / EnemySelect 유지
+Panel_01/02/03 문자열 유지
+EnemyFocusMode / EnemyFocusActor / EnemyFocusCommand 유지
 Selected: 표기 유지
 NotCaptured / NoTarget / NotMatched / Stale 유지
 NoEvents(Filter: ...) 유지
@@ -3166,12 +3166,12 @@ Agent A: Canvas layout 회귀 검토
 - header/background draw 정책 유지 여부 확인
 
 Agent B: 표시 문자열/line role 회귀 검토
-- Pannel_01/02/03 문자열 유지 여부 확인
-- EnemySource / EnemyTarget / EnemySelect 등 기존 line text 변경 여부 확인
+- Panel_01/02/03 문자열 유지 여부 확인
+- EnemyFocusMode / EnemyFocusActor / EnemyFocusCommand 등 기존 line text 변경 여부 확인
 - line role이 표시 의미만 보조하고 text를 바꾸지 않는지 확인
 
 Agent C: 변경 범위/금지 항목 검토
-- Store / TargetComponent / Controller / Editor plugin 변경 여부 확인
+- Store / FocusComponent / Controller / Editor plugin 변경 여부 확인
 - Build.cs / uproject / config / asset 변경 여부 확인
 - Store schema/API 변경 여부 확인
 ```
@@ -3193,7 +3193,7 @@ Agent C: 변경 범위/금지 항목 검토
 - Debug Overlay 내부 용어를 Target에서 Focus로 정리한다.
 - Editor UI label, help text, command status 같은 표시 문자열을 Focus 기준으로 정리한다.
 - public console command 문자열은 유지한다.
-- Target compatibility wrapper, `EDebugOverlayTargetSource` alias, `TEXT("DebugOverlayTarget")` subobject name의 유지 사유를 문서로 남긴다.
+- Target compatibility wrapper, `EDebugOverlayFocusSource` alias, `TEXT("DebugOverlayFocus")` subobject name의 유지 사유를 문서로 남긴다.
 - 구조 리뷰와 검증 문서를 현재 구현 상태에 맞게 최신화한다.
 
 ### 64.2 다음 브랜치에서 구현할 것
@@ -3202,8 +3202,8 @@ Agent C: 변경 범위/금지 항목 검토
 - Focus mode enum을 확장한다.
 - RecentCombat 명시 command 경로를 추가한다.
 - Target compatibility wrapper의 실제 제거 여부를 검증 후 판단한다.
-- `EDebugOverlayTargetSource` alias의 실제 제거 여부를 검증 후 판단한다.
-- `TEXT("DebugOverlayTarget")` subobject name 변경과 asset migration/Core Redirect 필요성을 별도 검토한다.
+- `EDebugOverlayFocusSource` alias의 실제 제거 여부를 검증 후 판단한다.
+- `TEXT("DebugOverlayFocus")` subobject name 변경과 asset migration/Core Redirect 필요성을 별도 검토한다.
 
 ### 64.3 이번 브랜치에서 하지 않을 것
 

@@ -14,7 +14,7 @@
 | 맵 | TestRoom PIE |
 | Overlay | `Portfolio.DebugOverlay.Enabled 1` |
 | Collect | `Portfolio.DebugOverlay.Collect 1` |
-| Target source | `TargetComponent.Nearest` |
+| Focus source | `FocusComponent.NearestFocus` |
 | EventLog | separate panel |
 | Interaction | right-top separate panel |
 | Runtime LOD | P1 보류, `N/A` 유지 |
@@ -23,13 +23,13 @@
 
 | 파일 | 확인 내용 |
 | --- | --- |
-| `C:\Users\starb\Videos\Bandicam\bandicam 2026-08-01 00-50-10-176.jpg` | P1 통합 layout, TargetComponent nearest, EventLog separate panel, Interaction panel, Current AI, Recent AI Event, damage breakdown 확인 |
+| `C:\Users\starb\Videos\Bandicam\bandicam 2026-08-01 00-50-10-176.jpg` | P1 통합 layout, FocusComponent nearest, EventLog separate panel, Interaction panel, Current AI, Recent AI Event, damage breakdown 확인 |
 
 위 캡처는 최종 제출 후보가 아니다. P1 기능 검증과 마감 판단을 위한 참고 자료로만 사용한다.
 
 ## 4. 통합 표시 결과
 
-### 4.1 `Pannel_01`
+### 4.1 `Panel_01`
 
 왼쪽 panel은 Player / Enemy actor 상태와 actor-local recent evidence를 표시한다.
 
@@ -43,9 +43,9 @@
 
 확인된 Enemy 표시:
 
-- `EnemySource: TargetComponent.Nearest`
-- `EnemyTarget: Selected: BP_CEnemy_C_1`
-- `EnemySelect: NearestSelected | Target: BP_CEnemy_C_1 | Distance: 1687 | Radius: 3000`
+- `EnemyFocusMode: FocusComponent.NearestFocus`
+- `EnemyFocusActor: Selected: BP_CEnemy_C_1`
+- `EnemyFocusCommand: NearestSelected | Target: BP_CEnemy_C_1 | Distance: 1687 | Radius: 3000`
 - Enemy current state
 - Enemy `[Recent Execution]`
 - Enemy `[Current AI]`
@@ -53,13 +53,13 @@
 
 `Runtime LOD`는 현재도 `N/A`이며, P1 완료 주장 범위에 포함하지 않는다.
 
-### 4.2 `Pannel_02`
+### 4.2 `Panel_02`
 
 상단 중앙 panel은 EventLog 전용 panel이다.
 
 확인된 표시:
 
-- `[Debug Overlay Pannel_02]`
+- `[Debug Overlay Panel_02]`
 - `[Event Log: All]`
 - `Combat/TargetAccepted`
 - `Execution/DecisionResolved`
@@ -79,13 +79,13 @@ Combat/TargetAccepted: Attacker: BP_CEnemy_C_1 | Defender: BP_CPlayer_C_0 | Outc
 
 `Request`는 요청된 damage value, `Mitigated`는 방어/감산 이후 값, `Final`은 최종 판정 damage, `Commit`은 실제 commit 값으로 해석한다.
 
-### 4.3 `Pannel_03`
+### 4.3 `Panel_03`
 
 오른쪽 상단 panel은 Interaction recent summary 전용 panel이다.
 
 확인된 표시:
 
-- `[Debug Overlay Pannel_03]`
+- `[Debug Overlay Panel_03]`
 - `[Interaction]`
 - `[Recent Execution]`
 - `[Recent Combat]`
@@ -136,8 +136,8 @@ Recent AI Event는 다음처럼 event evidence로 표시된다.
 이번 통합 검증 기준으로 다음 항목은 P1 구현 완료로 본다.
 
 - Player / Enemy panel 분리
-- Enemy explicit target source
-- `DebugOverlaySelectNearestTarget` 기반 `TargetComponent.Nearest`
+- Enemy explicit focus source
+- `DebugOverlaySelectNearestFocus` 기반 `FocusComponent.NearestFocus`
 - nearest diagnostic 표시
 - Player / Enemy Recent Execution 분리
 - Interaction panel 분리
@@ -176,7 +176,7 @@ P1 debug overlay는 Runtime LOD actual 표시를 제외하면 처음 계획했�
 
 특히 다음 claim은 현재 캡처와 구현 기준으로 사용할 수 있다.
 
-- 명시 target source 기반 Enemy panel
+- 명시 focus source 기반 Enemy panel
 - Player / Enemy / Interaction / EventLog panel 역할 분리
 - Player / Enemy recent execution 분리
 - Interaction recent combat damage breakdown

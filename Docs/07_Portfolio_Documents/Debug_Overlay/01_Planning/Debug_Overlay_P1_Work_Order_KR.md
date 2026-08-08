@@ -1,20 +1,20 @@
 # Debug Overlay P1 Work Order
 
-## Target Selection 결정 보강
+## Focus Selection 결정 보강
 
 P1 Target Selection은 현재 브랜치에서 debug overlay evidence를 닫는 것을 우선한다.
 
-- P1 구현은 debug overlay 한정 `UCDebugOverlayTargetComponent`로 진행한다.
+- P1 구현은 debug overlay 한정 `UCDebugOverlayFocusComponent`로 진행한다.
 - component 소유 위치는 `ACPlayerController`를 우선한다.
-- source chain 결정은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다.
-- P1 기본 Enemy panel은 명시 target 기반이며, target이 없으면 `EnemySource: None`을 표시한다.
-- `RecentCombatTarget`과 `WorldScanFallback`은 기본 자동 fallback이 아니라 diagnostic 후보로 격하한다.
+- source chain 결정은 `Debug_Overlay_P1_Focus_Selection_Decision_KR.md`를 우선한다.
+- P1 기본 Enemy panel은 명시 focus 기반이며, target이 없으면 `EnemyFocusMode: None`을 표시한다.
+- `RecentCombatFocus`과 `WorldScanFallback`은 기본 자동 fallback이 아니라 diagnostic 후보로 격하한다.
 - 범용 combat target component는 이번 브랜치에서 구현하지 않는다.
 - 브랜치 마감 후 별도 리팩터링에서 `UCTargetSelectionComponent` 또는 `UCTargetProviderComponent`로 승격을 검토한다.
 
-세부 설계 기준은 `Debug_Overlay_P1_Target_Selection_Design_KR.md`를 따른다.
+세부 설계 기준은 `Debug_Overlay_P1_Focus_Selection_Design_KR.md`를 따른다.
 
-구현 계획 기준은 `Debug_Overlay_P1_Target_Component_Implementation_Plan_KR.md`를 따른다.
+구현 계획 기준은 `Debug_Overlay_P1_Focus_Component_Implementation_Plan_KR.md`를 따른다.
 
 ## 1. 목적
 
@@ -79,7 +79,7 @@ AI
 
 | 방향 | 설명 |
 | --- | --- |
-| Target Component 기반 Enemy Selection | `WorldScanFallback`이 아니라 실제 target source 기반 enemy 표시를 우선한다. |
+| Focus Component 기반 Enemy Selection | `WorldScanFallback`이 아니라 실제 focus source 기반 enemy 표시를 우선한다. |
 | Player/Enemy evidence 분리 | Player/Enemy panel뿐 아니라 Recent/EventLog의 subject 분리까지 검토한다. |
 | EventLog category filter | `All`, `Execution`, `Combat`, `AI` 등 특정 종류의 log만 볼 수 있게 한다. |
 | Player/Enemy별 EventLog 분리 | Store subject 분리 이후 진행한다. |
@@ -93,8 +93,8 @@ AI
 P1 최소 성공선은 다음으로 둔다.
 
 ```text
-Target Component 기반 Enemy Selection
-HUD EnemySource TargetComponent 우선 전환
+Focus Component 기반 Enemy Selection
+HUD EnemyFocusMode FocusComponent 우선 전환
 EventLog category filter
 P1 검증
 ```
@@ -116,9 +116,9 @@ P1 검증
 | 순서 | 작업 | 목적 | 산출물 |
 | --- | --- | --- | --- |
 | 1 | P1 범위 확정 | 필수/보강/보류 항목 분리 | P1 scope 문서 |
-| 2 | Target Component 기반 Enemy Selection 설계 | Enemy panel claim 강화 | target source 설계 문서 |
-| 3 | Target Component / Target Provider 구현 | 실제 target source 확보 | C++ component/provider |
-| 4 | HUD EnemySource 전환 | `TargetComponent.Nearest` 명시 선택 우선, target 없음은 `None` 표시 | HUD 표시 변경 |
+| 2 | Focus Component 기반 Enemy Selection 설계 | Enemy panel claim 강화 | focus source 설계 문서 |
+| 3 | Focus Component / Target Provider 구현 | 실제 focus source 확보 | C++ component/provider |
+| 4 | HUD EnemyFocusMode 전환 | `FocusComponent.NearestFocus` 명시 선택 우선, focus 없음은 `None` 표시 | HUD 표시 변경 |
 | 5 | Store subject 분리 설계 | Player/Enemy Recent/EventLog 분리 기반 마련 | Store subject 설계 문서 |
 | 6 | EventLog category filter 설계/구현 | 필요한 종류의 log만 표시 | CVar 또는 preset 기반 filter |
 | 7 | Player/Enemy Recent/EventLog 분리 | subject 기반 evidence 분리 | Store/HUD 확장 |
@@ -132,23 +132,23 @@ P1 검증
 
 | 의존성 | 판단 |
 | --- | --- |
-| Target Component 먼저 | Enemy panel이 특정 대상의 상태라고 주장하려면 target source가 먼저 필요하다. |
-| HUD EnemySource 전환 | Target Component 구현 직후 `EnemySource: TargetComponent`가 표시되어야 한다. |
+| Focus Component 먼저 | Enemy panel이 특정 대상의 상태라고 주장하려면 target source가 먼저 필요하다. |
+| HUD EnemyFocusMode 전환 | Focus Component 구현 직후 `EnemyFocusMode: FocusComponent`가 표시되어야 한다. |
 | Store subject 분리 | Player/Enemy Recent/EventLog 분리의 선행 조건이다. |
 | EventLog category filter | subject 분리 전/후 또는 병렬로 가능하다. category 기반이라 subject 분리보다 독립적이다. |
 | Runtime LOD 표시 | target enemy가 안정적으로 잡힌 이후 진행하는 것이 안전하다. |
-| AI 표시 보강 | Target Component 이후 보조 단계로 진행한다. |
+| AI 표시 보강 | Focus Component 이후 보조 단계로 진행한다. |
 | 최종 촬영 | P1 검증 이후로 미룬다. |
 
-이전 target source fallback chain:
+이전 focus source fallback chain:
 
 ```text
-TargetComponent
-RecentCombatTarget
+FocusComponent
+RecentCombatFocus
 WorldScanFallback
 ```
 
-위 chain은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`로 대체한다. P1 기본 HUD path에서는 `RecentCombatTarget`과 `WorldScanFallback`이 Enemy panel을 자동으로 채우지 않는다.
+위 chain은 `Debug_Overlay_P1_Focus_Selection_Decision_KR.md`로 대체한다. P1 기본 HUD path에서는 `RecentCombatFocus`과 `WorldScanFallback`이 Enemy panel을 자동으로 채우지 않는다.
 
 ## 8. P1 보류 가능 항목
 
@@ -169,8 +169,8 @@ P1에서 과도한 확장을 피한다. 표시 가능한 값과 claim이 분명�
 이 문서 이후 debug overlay 작업 제안 기준은 다음으로 전환한다.
 
 1. 촬영/패키징보다 P1 범위 확정을 먼저 제안한다.
-2. 그 다음 Target Component 기반 Enemy Selection 설계를 제안한다.
-3. Target Component 구현 전에는 enemy claim을 fallback 기준으로만 설명한다.
+2. 그 다음 Focus Component 기반 Enemy Selection 설계를 제안한다.
+3. Focus Component 구현 전에는 enemy claim을 fallback 기준으로만 설명한다.
 4. Store subject 분리 전에는 Player/Enemy Recent/EventLog 분리를 구현 완료처럼 말하지 않는다.
 5. EventLog 추가 compact는 사용자 결정에 따라 보류 상태를 유지한다.
 6. 최종 촬영/패키징은 P1 검증 이후에만 제안한다.
@@ -181,7 +181,7 @@ P1에서 과도한 확장을 피한다. 표시 가능한 값과 claim이 분명�
 - Shipping HUD처럼 보이게 만들지 않는다.
 - UMG/Slate 전환은 목표가 아니다.
 - `.umap`, `.uasset`, config, `Build.cs` 변경은 별도 결정 없이는 하지 않는다.
-- `WorldScanFallback`을 Target Component 기반 evidence로 설명하지 않는다.
+- `WorldScanFallback`을 Focus Component 기반 evidence로 설명하지 않는다.
 - Stagger Count는 현재 parry stack/threshold이며 누적 총량이나 장기 통계가 아니다.
 - Runtime LOD가 `N/A`이면 Runtime LOD 성공 evidence로 사용하지 않는다.
 
@@ -189,6 +189,6 @@ P1에서 과도한 확장을 피한다. 표시 가능한 값과 claim이 분명�
 
 P0.5는 임시 evidence 확보와 overlay 검증 단계로 닫고, 반복 촬영은 중단한다.
 
-P1은 Target Component 기반 Enemy Selection을 중심으로 enemy 대상 신뢰도를 먼저 강화한다. 이후 EventLog filter, Store subject 분리, Player/Enemy Recent/EventLog 분리, Runtime LOD/AI 보강을 순차적으로 진행한다.
+P1은 Focus Component 기반 Enemy Selection을 중심으로 enemy 대상 신뢰도를 먼저 강화한다. 이후 EventLog filter, Store subject 분리, Player/Enemy Recent/EventLog 분리, Runtime LOD/AI 보강을 순차적으로 진행한다.
 
 최종 촬영은 P1 검증 이후 한 번에 진행한다.

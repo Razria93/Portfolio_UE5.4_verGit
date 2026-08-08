@@ -12,16 +12,16 @@
 
 P1 완료 기준:
 
-- `TargetComponent.Nearest` 기반 명시 target 표시
-- target 없음 상태에서 `EnemyFocusMode: None`
-- `DebugOverlaySelectNearestTarget` / `DebugOverlayClearTarget` 운용 가능
+- `FocusComponent.NearestFocus` 기반 명시 focus 표시
+- focus 없음 상태에서 `EnemyFocusMode: None`
+- `DebugOverlaySelectNearestFocus` / `DebugOverlayClearFocus` 운용 가능
 - nearest radius `3000`
 - nearest diagnostic 표시
-- `RecentCombatTarget` / `WorldScanFallback` 자동 fallback 제외
+- `RecentCombatFocus` / `WorldScanFallback` 자동 fallback 제외
 
 성공 claim:
 
-- selected Enemy 기준 current state를 명시 target source와 함께 확인할 수 있다.
+- selected Enemy 기준 current state를 명시 focus source와 함께 확인할 수 있다.
 
 주의:
 
@@ -33,16 +33,16 @@ P1 완료 기준:
 P1 완료 기준:
 
 ```text
-Pannel_01
+Panel_01
 -> Player / Enemy actor state
 -> actor-local Recent Execution
 -> Enemy Current AI
 -> Enemy Recent AI Event
 
-Pannel_02
+Panel_02
 -> EventLog separate panel
 
-Pannel_03
+Panel_03
 -> Interaction recent summary
 ```
 

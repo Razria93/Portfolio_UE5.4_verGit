@@ -9,10 +9,10 @@ namespace
 {
 	// ===== CVars =====
 
-	static TAutoConsoleVariable<float> CVarDebugOverlayNearestTargetRadius(
-		TEXT("Portfolio.DebugOverlay.NearestTargetRadius"),
+	static TAutoConsoleVariable<float> CVarDebugOverlayNearestFocusRadius(
+		TEXT("Portfolio.DebugOverlay.NearestFocusRadius"),
 		3000.f,
-		TEXT("Nearest target search radius used by Debug Overlay focus commands."),
+		TEXT("Nearest focus search radius used by Debug Overlay focus commands."),
 		ECVF_Default);
 
 	// ===== Recent Combat Driver Policy =====
@@ -38,7 +38,7 @@ namespace
 		case EDebugOverlayFocusResolveOutcome::Selected:
 			return EDebugOverlayRecentFocusState::Selected;
 		case EDebugOverlayFocusResolveOutcome::NoTarget:
-			return EDebugOverlayRecentFocusState::NoTargetFound;
+			return EDebugOverlayRecentFocusState::NoFocusFound;
 		case EDebugOverlayFocusResolveOutcome::NoRecentCombatEvidence:
 			return EDebugOverlayRecentFocusState::NoRecentCombatEvidence;
 		case EDebugOverlayFocusResolveOutcome::OutOfRange:
@@ -105,63 +105,63 @@ namespace
 	}
 }
 
-float FDebugOverlayFocusRuntimeHelper::GetNearestTargetRadius()
+float FDebugOverlayFocusRuntimeHelper::GetNearestFocusRadius()
 {
-	return FMath::Max(0.f, CVarDebugOverlayNearestTargetRadius.GetValueOnGameThread());
+	return FMath::Max(0.f, CVarDebugOverlayNearestFocusRadius.GetValueOnGameThread());
 }
 
-bool FDebugOverlayFocusRuntimeHelper::TryFocusNearestTarget(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InRadius)
+bool FDebugOverlayFocusRuntimeHelper::TryFocusNearestFocus(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InRadius)
 {
 	if (!IsValid(InFocusComponent))
 	{
-		return FDebugOverlayFocusLogHelper::LogInvalidTargetComponent(TEXT("DebugOverlaySelectNearestTarget"));
+		return FDebugOverlayFocusLogHelper::LogInvalidFocusComponent(TEXT("DebugOverlaySelectNearestFocus"));
 	}
 
-	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveNearestTarget(InWorld, InViewerPawn, InRadius);
+	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveNearestFocus(InWorld, InViewerPawn, InRadius);
 	ApplyDebugOverlayFocusResolveResult(InFocusComponent, result, EDebugOverlayFocusDriver::ManualNearest, true, true);
 	InFocusComponent->ClearDebugOverlayRecentFocusState();
 
-	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectNearestTarget"), EDebugOverlayFocusResolveLogProfile::Nearest, result);
+	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectNearestFocus"), EDebugOverlayFocusResolveLogProfile::Nearest, result);
 }
 
-bool FDebugOverlayFocusRuntimeHelper::TryFocusOutlinerTarget(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, const FString& InActorName)
+bool FDebugOverlayFocusRuntimeHelper::TryFocusOutlinerFocus(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, const FString& InActorName)
 {
 	const FString actorName = InActorName.TrimStartAndEnd();
 
 	if (!IsValid(InFocusComponent))
 	{
-		return FDebugOverlayFocusLogHelper::LogInvalidTargetComponent(TEXT("DebugOverlaySelectOutlinerTarget"), &actorName);
+		return FDebugOverlayFocusLogHelper::LogInvalidFocusComponent(TEXT("DebugOverlaySelectOutlinerFocus"), &actorName);
 	}
 
-	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveOutlinerTarget(InWorld, InViewerPawn, actorName);
+	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveOutlinerFocus(InWorld, InViewerPawn, actorName);
 	ApplyDebugOverlayFocusResolveResult(InFocusComponent, result, EDebugOverlayFocusDriver::ManualOutliner, true, true);
 	InFocusComponent->ClearDebugOverlayRecentFocusState();
 
-	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectOutlinerTarget"), EDebugOverlayFocusResolveLogProfile::Outliner, result);
+	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectOutlinerFocus"), EDebugOverlayFocusResolveLogProfile::Outliner, result);
 }
 
-bool FDebugOverlayFocusRuntimeHelper::TryFocusRecentCombatTarget(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InFallbackRadius)
+bool FDebugOverlayFocusRuntimeHelper::TryFocusRecentCombatFocus(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InFallbackRadius)
 {
 	if (!IsValid(InFocusComponent))
 	{
-		return FDebugOverlayFocusLogHelper::LogInvalidTargetComponent(TEXT("DebugOverlaySelectRecentCombatTarget"));
+		return FDebugOverlayFocusLogHelper::LogInvalidFocusComponent(TEXT("DebugOverlaySelectRecentCombatFocus"));
 	}
 
 	InFocusComponent->SetDebugOverlayFocusDriver(EDebugOverlayFocusDriver::RecentCombatLive);
 
-	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveRecentCombatTarget(InWorld, InViewerPawn, InFallbackRadius);
+	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveRecentCombatFocus(InWorld, InViewerPawn, InFallbackRadius);
 	ApplyDebugOverlayFocusResolveResult(InFocusComponent, result, EDebugOverlayFocusDriver::RecentCombatLive, false, false);
 	ApplyRecentCombatOutcomePolicy(InFocusComponent, result.Outcome);
 
-	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectRecentCombatTarget"), EDebugOverlayFocusResolveLogProfile::RecentCombat, result);
+	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectRecentCombatFocus"), EDebugOverlayFocusResolveLogProfile::RecentCombat, result);
 }
 
-void FDebugOverlayFocusRuntimeHelper::UpdateFocusRecentCombatTarget(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InFallbackRadius)
+void FDebugOverlayFocusRuntimeHelper::UpdateFocusRecentCombatFocus(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InFallbackRadius)
 {
 	if (!IsValid(InFocusComponent)) return;
 	if (InFocusComponent->GetDebugOverlayFocusDriver() != EDebugOverlayFocusDriver::RecentCombatLive) return;
 
-	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveRecentCombatTarget(InWorld, InViewerPawn, InFallbackRadius);
+	const FDebugOverlayFocusResolveResult result = FDebugOverlayFocusResolver::ResolveRecentCombatFocus(InWorld, InViewerPawn, InFallbackRadius);
 	ApplyDebugOverlayFocusResolveResult(InFocusComponent, result, EDebugOverlayFocusDriver::RecentCombatLive, false, false);
 	ApplyRecentCombatOutcomePolicy(InFocusComponent, result.Outcome);
 }

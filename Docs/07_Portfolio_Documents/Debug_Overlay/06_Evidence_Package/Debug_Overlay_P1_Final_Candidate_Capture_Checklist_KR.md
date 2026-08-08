@@ -16,7 +16,7 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 
 `Pannel` 표기는 현재 runtime style-lock 표시값이므로 FinalCandidate 문서와 파일 설명에서 임의로 `Panel`로 정정하지 않는다.
 
-### 2.1 `Pannel_01`
+### 2.1 `Panel_01`
 
 역할:
 
@@ -29,11 +29,11 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 
 필수 확인:
 
-- `[Debug Overlay Pannel_01]`
+- `[Debug Overlay Panel_01]`
 - `[Player]`
 - `[Enemy]`
 - Player / Enemy의 `State`, `Action`, `Reaction`, `HP`, `Stagger`, `Guard`, `Movement`
-- Enemy target source와 selected target
+- Enemy target source와 selected focus
 - Enemy `[Current AI]`, `[Recent AI Event]`
 
 주의:
@@ -41,7 +41,7 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 - `Runtime LOD: N/A`는 표시될 수 있으나 성공 evidence로 사용하지 않는다.
 - `Recent AI Event`는 current AI state가 아니라 최근 AI task event다.
 
-### 2.2 `Pannel_02`
+### 2.2 `Panel_02`
 
 역할:
 
@@ -52,7 +52,7 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 
 필수 확인:
 
-- `[Debug Overlay Pannel_02]`
+- `[Debug Overlay Panel_02]`
 - `[Event Log: All]`
 - `[Event Log: Execution]`
 - `[Event Log: Combat]`
@@ -63,7 +63,7 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 - EventLog display filter는 화면 표시 제어다.
 - filter로 숨겨진 event를 “발생하지 않음”으로 주장하지 않는다.
 
-### 2.3 `Pannel_03`
+### 2.3 `Panel_03`
 
 역할:
 
@@ -73,7 +73,7 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 
 필수 확인:
 
-- `[Debug Overlay Pannel_03]`
+- `[Debug Overlay Panel_03]`
 - `[Interaction]`
 - `[Recent Execution]`
 - `[Recent Combat]`
@@ -94,8 +94,8 @@ Portfolio.DebugOverlay.EventLogFilter All
 Portfolio.DebugOverlay.EventLogLimit 5
 Portfolio.DebugOverlay.HideNoiseEvents 1
 Portfolio.DebugOverlay.HideCollisionWindowEvents 1
-DebugOverlaySelectNearestTarget
-DebugOverlayClearTarget
+DebugOverlaySelectNearestFocus
+DebugOverlayClearFocus
 ```
 
 장면에 따라 변경 가능한 값:
@@ -112,8 +112,8 @@ DebugOverlayClearTarget
 | collision diagnostic 숨김 | `Portfolio.DebugOverlay.HideCollisionWindowEvents 1` |
 | noise diagnostic 표시 확인 | `Portfolio.DebugOverlay.HideNoiseEvents 0` |
 | noise diagnostic 숨김 | `Portfolio.DebugOverlay.HideNoiseEvents 1` |
-| selected Enemy 지정 | `DebugOverlaySelectNearestTarget` |
-| selected Enemy 해제 | `DebugOverlayClearTarget` |
+| selected Enemy 지정 | `DebugOverlaySelectNearestFocus` |
+| selected Enemy 해제 | `DebugOverlayClearFocus` |
 | editor viewport 집중 | `LevelEditor.ToggleImmersive` |
 
 운영 기준:
@@ -143,8 +143,8 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 | 11 | Stagger Count stack 1 | Enemy `Stagger: 1/3` | `Combat` |
 | 12 | Stagger Count stack 2 | Enemy `Stagger: 2/3` | `Combat` |
 | 13 | Stagger Count reset | Enemy stagger 이후 `0/3` reset | `Combat` |
-| 14 | TargetComponent.Nearest selected | `EnemyFocusMode: TargetComponent.Nearest` | `All` |
-| 15 | TargetComponent clear / no target | `DebugOverlayClearTarget` 후 `EnemyFocusMode: None` | `All` |
+| 14 | FocusComponent.NearestFocus selected | `EnemyFocusMode: FocusComponent.NearestFocus` | `All` |
+| 15 | FocusComponent clear / no target | `DebugOverlayClearFocus` 후 `EnemyFocusMode: None` | `All` |
 | 16 | Enemy Recent Execution | Enemy panel의 actor-local `[Recent Execution]` | `Execution` |
 | 17 | Interaction Recent Combat damage breakdown | `Request / Mitigated / Final / Commit` | `Combat` |
 | 18 | EventLog All | `[Event Log: All]` | `All` |
@@ -158,7 +158,7 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 
 | 장면 | 주장할 수 있는 것 | 확인할 overlay line | 주장하지 않을 것 |
 | --- | --- | --- | --- |
-| Idle baseline | P1 3-panel overlay baseline | `Pannel_01`, `Pannel_02`, `Pannel_03` | 최종 gameplay HUD 완성 |
+| Idle baseline | P1 3-panel overlay baseline | `Panel_01`, `Panel_02`, `Panel_03` | 최종 gameplay HUD 완성 |
 | Walk / Run | movement current state 표시 | `Movement: Gait`, `Speed`, `CanMove` | 물리/animation 완전 검증 |
 | Guard In / Out | execution / guard transition 확인 | Player `Recent Execution`, `Guard` | guard balance 또는 frame-perfect 성능 |
 | Player Hit | player reaction / HP 변화 | Player `Reaction`, `HP` | damage formula 전체 검증 |
@@ -168,8 +168,8 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 | Enemy Stagger | parry stack threshold 후 enemy reaction | Enemy `Reaction: Stagger` | 장기 stagger 통계 |
 | Stagger stack 1 / 2 | 현재 parry stagger stack | Enemy `Stagger: 1/3`, `2/3` | 누적 총량 |
 | Stagger reset | stagger 이후 stack reset 상태 | Enemy `Stagger: 0/3` | reset 원인 전체 검증 |
-| Target selected | 명시 target source 기반 enemy evidence | `EnemyFocusMode: TargetComponent.Nearest`, `EnemyFocusCommand` | 범용 target system / lock-on / combat target flow 변경 |
-| Target clear | 명시 target 해제 후 no target 상태 | `EnemyFocusMode: None` | fallback enemy 자동 선택 성공 |
+| Focus selected | 명시 focus source 기반 enemy evidence | `EnemyFocusMode: FocusComponent.NearestFocus`, `EnemyFocusCommand` | 범용 target system / lock-on / combat target flow 변경 |
+| Focus clear | 명시 focus 해제 후 no target 상태 | `EnemyFocusMode: None` | fallback enemy 자동 선택 성공 |
 | Enemy Recent Execution | selected Enemy 기준 최근 execution 표시 | Enemy panel `[Recent Execution]` | Interaction recent execution과 동일한 의미라고 주장 |
 | Interaction damage | combat result breakdown | `Request`, `Mitigated`, `Final`, `Commit` | 모든 damage formula 성공 |
 | EventLog filters | EventLog 표시 범위 제어 | `[Event Log: ...]` | event 미발생 증명 |
@@ -267,9 +267,9 @@ Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate
 3. `Portfolio.DebugOverlay.Enabled 1`을 적용한다.
 4. `Portfolio.DebugOverlay.Collect 1`을 적용한다.
 5. 기본 filter / limit / noise CVar를 적용한다.
-6. `DebugOverlaySelectNearestTarget`으로 selected Enemy를 지정한다.
-7. `Pannel_01 / Pannel_02 / Pannel_03`가 모두 보이는지 확인한다.
-8. `EnemyFocusMode: TargetComponent.Nearest`가 필요한 장면에서 보이는지 확인한다.
+6. `DebugOverlaySelectNearestFocus`으로 selected Enemy를 지정한다.
+7. `Panel_01 / Panel_02 / Panel_03`가 모두 보이는지 확인한다.
+8. `EnemyFocusMode: FocusComponent.NearestFocus`가 필요한 장면에서 보이는지 확인한다.
 9. 장면별 EventLog filter를 설정한다.
 10. editor console / Output Log / tooltip / taskbar가 claim을 가리지 않는지 확인한다.
 11. 캡처 후 파일명을 후보 규칙에 맞춘다.

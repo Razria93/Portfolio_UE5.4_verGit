@@ -14,7 +14,7 @@ namespace
 	static constexpr const TCHAR* DebugOverlayEventLogLimitCVarName = TEXT("Portfolio.DebugOverlay.EventLogLimit");
 	static constexpr const TCHAR* DebugOverlayHideNoiseEventsCVarName = TEXT("Portfolio.DebugOverlay.HideNoiseEvents");
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
-	static constexpr const TCHAR* DebugOverlayNearestTargetRadiusCVarName = TEXT("Portfolio.DebugOverlay.NearestTargetRadius");
+	static constexpr const TCHAR* DebugOverlayNearestFocusRadiusCVarName = TEXT("Portfolio.DebugOverlay.NearestFocusRadius");
 }
 
 // ===== CVar Names =====
@@ -49,9 +49,9 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetHideCollisionWindowEvents
 	return DebugOverlayHideCollisionWindowEventsCVarName;
 }
 
-const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetNearestTargetRadiusCVarName()
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetNearestFocusRadiusCVarName()
 {
-	return DebugOverlayNearestTargetRadiusCVarName;
+	return DebugOverlayNearestFocusRadiusCVarName;
 }
 
 // ===== CVar Access =====
@@ -151,7 +151,7 @@ bool PortfolioDebugOverlayEditorCVarAccess::HasAllRequiredCVars()
 		&& FindCVar(DebugOverlayCollectCVarName)
 		&& FindCVar(DebugOverlayEventLogFilterCVarName)
 		&& FindCVar(DebugOverlayEventLogLimitCVarName)
-		&& FindCVar(DebugOverlayNearestTargetRadiusCVarName)
+		&& FindCVar(DebugOverlayNearestFocusRadiusCVarName)
 		&& FindCVar(DebugOverlayHideNoiseEventsCVarName)
 		&& FindCVar(DebugOverlayHideCollisionWindowEventsCVarName);
 }

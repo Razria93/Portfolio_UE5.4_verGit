@@ -8,15 +8,15 @@ namespace
 	{
 		switch (InSource)
 		{
-		case EDebugOverlayFocusSource::NearestTarget:
+		case EDebugOverlayFocusSource::NearestFocus:
 			return TEXT("FocusComponent.NearestFocus");
-		case EDebugOverlayFocusSource::RecentCombat:
-			return TEXT("FocusComponent.RecentCombat");
+		case EDebugOverlayFocusSource::RecentCombatFocus:
+			return TEXT("FocusComponent.RecentCombatFocus");
 		case EDebugOverlayFocusSource::WorldScanFallback:
 			return TEXT("FocusComponent.WorldScanFallback");
-		case EDebugOverlayFocusSource::GameplayTarget:
-			return TEXT("FocusComponent.GameplayTarget");
-		case EDebugOverlayFocusSource::OutlinerTarget:
+		case EDebugOverlayFocusSource::GameplayFocus:
+			return TEXT("FocusComponent.GameplayFocus");
+		case EDebugOverlayFocusSource::OutlinerFocus:
 			return TEXT("FocusComponent.OutlinerFocus");
 		case EDebugOverlayFocusSource::None:
 		default:
@@ -34,8 +34,8 @@ namespace
 			return TEXT("OutlinerFocus");
 		case EDebugOverlayFocusDriver::RecentCombatLive:
 			return TEXT("RecentCombatLive");
-		case EDebugOverlayFocusDriver::TargetComponentLive:
-			return TEXT("TargetComponentLive");
+		case EDebugOverlayFocusDriver::FocusComponentLive:
+			return TEXT("FocusComponentLive");
 		case EDebugOverlayFocusDriver::None:
 		default:
 			return TEXT("None");
@@ -48,8 +48,8 @@ namespace
 		{
 		case EDebugOverlayRecentFocusState::Selected:
 			return TEXT("Selected");
-		case EDebugOverlayRecentFocusState::NoTargetFound:
-			return TEXT("NoTargetFound");
+		case EDebugOverlayRecentFocusState::NoFocusFound:
+			return TEXT("NoFocusFound");
 		case EDebugOverlayRecentFocusState::NoRecentCombatEvidence:
 			return TEXT("NoRecentCombatEvidence");
 		case EDebugOverlayRecentFocusState::ClosestOutOfRange:

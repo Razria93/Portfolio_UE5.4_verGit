@@ -18,21 +18,21 @@ FinalCandidate evidence package는 P1 closure 이후 별도 폴더와 문서로 
 
 | 영역 | 상태 | 마감 판단 |
 | --- | --- | --- |
-| TargetComponent 기반 Enemy 선택 | 완료 | `DebugOverlaySelectNearestTarget`, `DebugOverlayClearTarget`, `EnemyFocusMode: TargetComponent.Nearest`, `EnemyFocusMode: None` 기준으로 claim 가능 |
+| FocusComponent 기반 Enemy 선택 | 완료 | `DebugOverlaySelectNearestFocus`, `DebugOverlayClearFocus`, `EnemyFocusMode: FocusComponent.NearestFocus`, `EnemyFocusMode: None` 기준으로 claim 가능 |
 | Nearest target 운용성 | 완료 | nearest radius `3000` 기준으로 PIE 운용 가능 |
 | Player / Enemy current state panel | 완료 | actor current state 비교 claim 가능 |
 | Player / Enemy Recent Execution | 완료 | actor별 recent execution 분리 claim 가능 |
 | Enemy Current AI | 완료 | selected Enemy의 현재 AI context 표시 claim 가능 |
 | Enemy Recent AI Event | 완료 | 최근 AI task event 표시 claim 가능. current AI state로 주장하지 않음 |
-| Interaction panel | 완료 | `Pannel_03`에서 world-level recent execution/combat summary 표시 |
-| EventLog separate panel | 완료 | `Pannel_02`에서 EventLog를 별도 panel로 표시 |
+| Interaction panel | 완료 | `Panel_03`에서 world-level recent execution/combat summary 표시 |
+| EventLog separate panel | 완료 | `Panel_02`에서 EventLog를 별도 panel로 표시 |
 | EventLog category filter | 완료 | `All / Execution / Combat / AI` 표시 filter claim 가능 |
 | EventLog limit | 완료 | `0~32` 표시 limit claim 가능 |
 | Reject / Ignore noise filter | 완료 | 표시 noise filter claim 가능 |
 | Collision window display filter | 완료 | EventLog 표시 제어 claim 가능 |
 | Recent Combat collision lifecycle 제외 | 완료 | collision lifecycle event가 Recent Combat을 덮어쓰지 않는 claim 가능 |
 | Recent Combat damage breakdown | 완료 | `Request / Mitigated / Final / Commit` 표시 claim 가능 |
-| 3-panel layout | 완료 | `Pannel_01 / Pannel_02 / Pannel_03` 구조 claim 가능 |
+| 3-panel layout | 완료 | `Panel_01 / Panel_02 / Panel_03` 구조 claim 가능 |
 
 ## P1 보류 / 후속 브랜치 항목
 
@@ -47,7 +47,7 @@ FinalCandidate evidence package는 P1 closure 이후 별도 폴더와 문서로 
 - HUD 파일 분리
 - Store role matcher 분리
 - Store schema/API 변경
-- 범용 target component 전환
+- 범용 focus component 전환
 - 필요 시 FinalCandidate 보강 캡처
 - 포트폴리오 본문 evidence claim 연결
 
@@ -55,7 +55,7 @@ FinalCandidate evidence package는 P1 closure 이후 별도 폴더와 문서로 
 
 FinalCandidate로 패키징한 캡처 중 실제 화면에서 읽히는 범위에 한해 아래 항목을 성공 evidence로 사용할 수 있다.
 
-- selected Enemy를 명시 target으로 고정해 Enemy current state를 표시한다.
+- selected Enemy를 명시 focus으로 고정해 Enemy current state를 표시한다.
 - Player / Enemy current state를 같은 화면에서 비교한다.
 - Player / Enemy Recent Execution을 actor별로 분리해 표시한다.
 - Interaction panel에서 world-level Recent Execution / Recent Combat 흐름을 표시한다.
@@ -93,8 +93,8 @@ FinalCandidate로 패키징한 캡처 중 실제 화면에서 읽히는 범위�
 
 FinalCandidate package는 다음 기준으로 작성 완료 상태다.
 
-- `Pannel_01 / Pannel_02 / Pannel_03` layout이 유지된다.
-- `TargetComponent.Nearest`와 `EnemyFocusMode: None` 전환이 확인된다.
+- `Panel_01 / Panel_02 / Panel_03` layout이 유지된다.
+- `FocusComponent.NearestFocus`와 `EnemyFocusMode: None` 전환이 확인된다.
 - Player / Enemy Recent Execution이 actor별로 분리되어 표시된다.
 - EventLog separate panel에서 filter / limit이 동작한다.
 - Enemy Current AI와 Recent AI Event가 분리되어 표시된다.

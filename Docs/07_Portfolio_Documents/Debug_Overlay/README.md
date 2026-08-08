@@ -33,11 +33,11 @@
 - `01_Planning/Debug_Overlay_P0_5_Remaining_Refactor_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_Work_Order_KR.md`
 - `01_Planning/Debug_Overlay_P1_Scope_KR.md`
-- `01_Planning/Debug_Overlay_P1_Target_Selection_Design_KR.md`
-- `01_Planning/Debug_Overlay_P1_Target_Selection_Decision_KR.md`
-- `01_Planning/Debug_Overlay_P1_Target_Component_Implementation_Plan_KR.md`
-- `01_Planning/Debug_Overlay_P1_Target_Set_Path_Design_KR.md`
-- `01_Planning/Debug_Overlay_P1_NearestTarget_Diagnostic_Plan_KR.md`
+- `01_Planning/Debug_Overlay_P1_Focus_Selection_Design_KR.md`
+- `01_Planning/Debug_Overlay_P1_Focus_Selection_Decision_KR.md`
+- `01_Planning/Debug_Overlay_P1_Focus_Component_Implementation_Plan_KR.md`
+- `01_Planning/Debug_Overlay_P1_Focus_Set_Path_Design_KR.md`
+- `01_Planning/Debug_Overlay_P1_NearestFocus_Diagnostic_Plan_KR.md`
 - `01_Planning/Debug_Overlay_P1_EventLog_Filter_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_EventLog_Noise_Filter_Design_KR.md`
 - `01_Planning/Debug_Overlay_P1_Store_Subject_Separation_Design_KR.md`
@@ -55,8 +55,8 @@
 - `03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md`
 - `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`
 - `05_Verification/Debug_Overlay_P0_PIE_Checklist_KR.md`
-- `05_Verification/Debug_Overlay_P1_TargetComponent_PIE_Checklist_KR.md`
-- `05_Verification/Debug_Overlay_P1_TargetComponent_PIE_Result_KR.md`
+- `05_Verification/Debug_Overlay_P1_FocusComponent_PIE_Checklist_KR.md`
+- `05_Verification/Debug_Overlay_P1_FocusComponent_PIE_Result_KR.md`
 - `05_Verification/Debug_Overlay_P1_EventLog_Filter_PIE_Checklist_KR.md`
 - `05_Verification/Debug_Overlay_P1_EventLog_Filter_PIE_Result_KR.md`
 - `05_Verification/Debug_Overlay_P1_Subject_Role_Label_PIE_Checklist_KR.md`
@@ -111,12 +111,12 @@ P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 e
 - multi-field 상태값은 `|`로 구분한다.
 - Guard action은 `Guard In`, `Guard Out`처럼 index 없이 표시한다.
 - Execution summary는 `Action(ComboAttack[1])`, `Reaction(Hit)`처럼 subject를 포함한다.
-- Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, Target Component 기반 선택은 P1 후보로 둔다.
+- Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, Focus Component 기반 선택은 P1 후보로 둔다.
 - EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 제외한다.
 
 현재 캡처 파일은 1차 패키지로만 정리한다. 반복 촬영/패키징은 P1 완료 전까지 중단하고, 최종 제출 후보는 P1 설계/구현/검증 이후 별도 패키지로 분리한다.
 
-P1 마감 기준의 최신 상태는 `01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`, `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`, `05_Verification/Debug_Overlay_P1_Closure_Review_KR.md`를 기준으로 확인한다. P1에서는 TargetComponent 기반 명시 target, 3-panel layout, EventLog filter/separate panel, Interaction panel, Player/Enemy Recent Execution, Enemy Current AI / Recent AI Event 분리를 완료 기준으로 두며, Runtime LOD actual 표시와 FinalCandidate 촬영/패키징은 후속 단계로 분리한다.
+P1 마감 기준의 최신 상태는 `01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`, `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`, `05_Verification/Debug_Overlay_P1_Closure_Review_KR.md`를 기준으로 확인한다. P1에서는 FocusComponent 기반 명시 focus, 3-panel layout, EventLog filter/separate panel, Interaction panel, Player/Enemy Recent Execution, Enemy Current AI / Recent AI Event 분리를 완료 기준으로 두며, Runtime LOD actual 표시와 FinalCandidate 촬영/패키징은 후속 단계로 분리한다.
 
 P1 FinalCandidate 촬영 전 장면 목록, CVar, 파일명, 제외 기준은 `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`를 따른다. 현재 패키징된 FinalCandidate 후보와 파일별 claim 범위는 `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Evidence_Package_KR.md`에서 확인한다.
 

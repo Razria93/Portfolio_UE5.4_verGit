@@ -12,7 +12,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetEventLogLimitCVarName();
 	const TCHAR* GetHideNoiseEventsCVarName();
 	const TCHAR* GetHideCollisionWindowEventsCVarName();
-	const TCHAR* GetNearestTargetRadiusCVarName();
+	const TCHAR* GetNearestFocusRadiusCVarName();
 
 	IConsoleVariable* FindCVar(const TCHAR* InName);
 

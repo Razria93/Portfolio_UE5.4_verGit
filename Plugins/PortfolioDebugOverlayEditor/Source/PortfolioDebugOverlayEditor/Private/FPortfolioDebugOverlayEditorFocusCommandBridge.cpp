@@ -12,10 +12,10 @@ namespace
 {
 	// ===== Constants =====
 
-	static constexpr const TCHAR* DebugOverlaySelectNearestTargetCommand = TEXT("DebugOverlaySelectNearestTarget");
-	static constexpr const TCHAR* DebugOverlaySelectRecentCombatTargetCommand = TEXT("DebugOverlaySelectRecentCombatTarget");
-	static constexpr const TCHAR* DebugOverlayClearTargetCommand = TEXT("DebugOverlayClearTarget");
-	static constexpr const TCHAR* DebugOverlaySelectOutlinerTargetCommand = TEXT("DebugOverlaySelectOutlinerTarget");
+	static constexpr const TCHAR* DebugOverlaySelectNearestFocusCommand = TEXT("DebugOverlaySelectNearestFocus");
+	static constexpr const TCHAR* DebugOverlaySelectRecentCombatFocusCommand = TEXT("DebugOverlaySelectRecentCombatFocus");
+	static constexpr const TCHAR* DebugOverlayClearFocusCommand = TEXT("DebugOverlayClearFocus");
+	static constexpr const TCHAR* DebugOverlaySelectOutlinerFocusCommand = TEXT("DebugOverlaySelectOutlinerFocus");
 
 	// ===== PIE World Access =====
 
@@ -78,22 +78,22 @@ namespace
 FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteSelectNearestFocusCommand()
 {
 	return ExecuteDebugOverlayFocusCommand(
-		DebugOverlaySelectNearestTargetCommand,
-		LOCTEXT("SelectNearestTargetSent", "Last Command: SelectNearestTarget"));
+		DebugOverlaySelectNearestFocusCommand,
+		LOCTEXT("SelectNearestFocusSent", "Last Command: SelectNearestFocus"));
 }
 
 FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteSelectRecentCombatFocusCommand()
 {
 	return ExecuteDebugOverlayFocusCommand(
-		DebugOverlaySelectRecentCombatTargetCommand,
-		LOCTEXT("SelectRecentCombatTargetSent", "Last Command: SelectRecentCombatTarget"));
+		DebugOverlaySelectRecentCombatFocusCommand,
+		LOCTEXT("SelectRecentCombatFocusSent", "Last Command: SelectRecentCombatFocus"));
 }
 
 FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteClearFocusCommand()
 {
 	return ExecuteDebugOverlayFocusCommand(
-		DebugOverlayClearTargetCommand,
-		LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
+		DebugOverlayClearFocusCommand,
+		LOCTEXT("ClearFocusSent", "Last Command: ClearFocus"));
 }
 
 FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteSelectOutlinerFocusCommand()
@@ -105,10 +105,10 @@ FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteSelectOutlinerFocusC
 	}
 
 	const FString actorName = selectedActor->GetName();
-	const FString command = FString::Printf(TEXT("%s %s"), DebugOverlaySelectOutlinerTargetCommand, *actorName);
+	const FString command = FString::Printf(TEXT("%s %s"), DebugOverlaySelectOutlinerFocusCommand, *actorName);
 	return ExecuteDebugOverlayFocusCommand(
 		*command,
-		FText::Format(LOCTEXT("SelectOutlinerActorSent", "Last Command: SelectOutlinerTarget | Actor: {0}"), FText::FromString(actorName)));
+		FText::Format(LOCTEXT("SelectOutlinerFocusSent", "Last Command: SelectOutlinerFocus | Actor: {0}"), FText::FromString(actorName)));
 }
 
 #undef LOCTEXT_NAMESPACE

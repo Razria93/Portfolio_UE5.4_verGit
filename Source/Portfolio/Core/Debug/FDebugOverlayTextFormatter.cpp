@@ -91,7 +91,7 @@ namespace
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RecentFocusState: %s"), *InFocusViewData.RecentFocusStateText));
 		}
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RuntimeFocusSource: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentSourceText)));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusTarget: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentActorNameText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusActor: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentActorNameText)));
 	}
 
 	// [Recent Execution]
@@ -184,7 +184,7 @@ namespace
 		}
 	}
 
-	// [Pannel_01]
+	// [Panel_01]
 	// ===== Main Panel Lines =====
 
 	void AppendActorPanelLines(TArray<FString>& InOutLines, const FDebugOverlayActorPanelViewData& InActorPanelViewData)
@@ -230,7 +230,7 @@ namespace
 		return lines;
 	}
 
-	// [Pannel_02]
+	// [Panel_02]
 	// ===== EventLog Panel Lines =====
 
 	FString FormatEventLogEntryLine(const FDebugOverlayEventLogEntryViewData& InEntry)
@@ -276,7 +276,7 @@ namespace
 		return lines;
 	}
 
-	// [Pannel_03]
+	// [Panel_03]
 	// ===== World Summary Panel Lines =====
 
 	void AppendRecentSummaryBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentSummaryBlockViewData& InBlockViewData)
@@ -317,7 +317,7 @@ namespace
 
 	EDebugOverlayTextLineRole ResolveTextLineRole(EDebugOverlayTextPanelRole InPanelRole, const FString& InLine)
 	{
-		if (InLine.StartsWith(TEXT("[Debug Overlay Pannel_")))
+		if (InLine.StartsWith(TEXT("[Debug Overlay Panel_")))
 		{
 			return EDebugOverlayTextLineRole::PanelTitle;
 		}

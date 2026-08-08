@@ -1,40 +1,40 @@
-# Debug Overlay P1 Target Component Implementation Plan
+# Debug Overlay P1 Focus Component Implementation Plan
 
 ## 1. 목적
 
-이 문서는 `UCDebugOverlayTargetComponent`를 실제 구현하기 전 구현 contract를 고정한다.
+이 문서는 `UCDebugOverlayFocusComponent`를 실제 구현하기 전 구현 contract를 고정한다.
 
-P1 Target Selection 설계에서 결정한 기준은 다음과 같다.
+P1 Focus Selection 설계에서 결정한 기준은 다음과 같다.
 
 - P1에서는 debug overlay 한정 component로 구현한다.
-- component 이름은 `UCDebugOverlayTargetComponent`로 둔다.
+- component 이름은 `UCDebugOverlayFocusComponent`로 둔다.
 - component 소유 위치는 `ACPlayerController`다.
-- Enemy source 최종 정책은 `Debug_Overlay_P1_Target_Selection_Decision_KR.md`를 우선한다.
-- P1 기본 HUD path는 `TargetComponent.Nearest`, `None`을 사용한다.
-- `RecentCombatTarget`과 `WorldScanFallback`은 기본 자동 fallback이 아니라 diagnostic 후보로 둔다.
+- Enemy source 최종 정책은 `Debug_Overlay_P1_Focus_Selection_Decision_KR.md`를 우선한다.
+- P1 기본 HUD path는 `FocusComponent.NearestFocus`, `None`을 사용한다.
+- `RecentCombatFocus`과 `WorldScanFallback`은 기본 자동 fallback이 아니라 diagnostic 후보로 둔다.
 - 범용 `UCTargetSelectionComponent` 승격은 브랜치 마감 후 별도 리팩터링 후보로 둔다.
 
 이번 문서는 코드 구현이 아니라, 다음 구현 단계에서 흔들리면 안 되는 파일/API/연결/검증 기준을 정리한다.
 
 ## 2. 구현 대상 파일
 
-P1 Target Component 구현 대상 파일은 다음으로 고정한다.
+P1 Focus Component 구현 대상 파일은 다음으로 고정한다.
 
 | 파일 | 목적 |
 | --- | --- |
-| `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.h` | debug overlay target provider component 선언 |
-| `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.cpp` | weak target 보관, getter, stale 판단 구현 |
+| `Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.h` | debug overlay target provider component 선언 |
+| `Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.cpp` | weak target 보관, getter, stale 판단 구현 |
 | `Source/Portfolio/Controller/CPlayerController.h` | component 멤버 선언 |
 | `Source/Portfolio/Controller/CPlayerController.cpp` | controller-owned subobject 생성 |
 | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp` | Enemy resolve chain 전환 |
-| `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.h` | RecentCombatTarget query API 추가 후보 |
+| `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.h` | RecentCombatFocus query API 추가 후보 |
 | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp` | recent combat pair 기록/query 구현 후보 |
 
 `Build.cs`, config, asset, map 파일은 변경하지 않는다. 구현 중 `Build.cs` 변경이 필요해 보이면 멈추고 사용자에게 질문한다.
 
 ## 3. Component 책임
 
-`UCDebugOverlayTargetComponent`는 debug overlay evidence용 target provider다.
+`UCDebugOverlayFocusComponent`는 debug overlay evidence용 target provider다.
 
 필수 책임:
 
@@ -59,12 +59,12 @@ P1 Target Component 구현 대상 파일은 다음으로 고정한다.
 P1 구현 시 component API 후보는 다음으로 둔다.
 
 ```cpp
-bool HasDebugOverlayTarget() const;
-AActor* GetDebugOverlayTargetActor() const;
-FString GetDebugOverlayTargetSummary() const;
-FString GetDebugOverlayTargetSource() const;
-void SetDebugOverlayTarget(AActor* InTargetActor);
-void ClearDebugOverlayTarget();
+bool HasDebugOverlayFocus() const;
+AActor* GetDebugOverlayFocusActor() const;
+FString GetDebugOverlayFocusSummary() const;
+FString GetDebugOverlayFocusSource() const;
+void SetDebugOverlayFocus(AActor* InTargetActor);
+void ClearDebugOverlayFocus();
 ```
 
 구현 정책:
@@ -72,7 +72,7 @@ void ClearDebugOverlayTarget();
 - 내부 저장은 `TWeakObjectPtr<AActor>`를 사용한다.
 - raw pointer는 HUD draw 시점의 순간 조회 반환으로만 허용한다.
 - actor name은 표시용 summary에 별도로 보관하거나 getter에서 `GetNameSafe`로 생성한다.
-- target이 invalid면 `HasDebugOverlayTarget()`은 false를 반환한다.
+- target이 invalid면 `HasDebugOverlayFocus()`은 false를 반환한다.
 - P1에서는 Blueprint 노출을 필수로 보지 않는다.
 
 Blueprint 노출이나 console command가 필요해지면 구현 전에 사용자에게 질문한다.
@@ -85,14 +85,14 @@ Blueprint 노출이나 console command가 필요해지면 구현 전에 사용�
 
 ```cpp
 UPROPERTY(VisibleAnywhere)
-class UCDebugOverlayTargetComponent* DebugOverlayTargetComponent = nullptr;
+class UCDebugOverlayFocusComponent* DebugOverlayFocusComponent = nullptr;
 ```
 
 생성 후보:
 
 ```cpp
-DebugOverlayTargetComponent = CreateDefaultSubobject<UCDebugOverlayTargetComponent>(TEXT("DebugOverlayTarget"));
-check(DebugOverlayTargetComponent);
+DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
+check(DebugOverlayFocusComponent);
 ```
 
 정책:
@@ -100,23 +100,23 @@ check(DebugOverlayTargetComponent);
 - `ACPlayer`의 `FCharacterComponentReferences` 흐름은 건드리지 않는다.
 - `ACPlayer`에 새 component를 붙이지 않는다.
 - HUD는 `GetOwningPlayerController()`에서 component를 조회한다.
-- component가 없으면 `EnemySource: None`을 표시한다.
+- component가 없으면 `EnemyFocusMode: None`을 표시한다.
 
-## 6. HUD Target Selection Path
+## 6. HUD Focus Selection Path
 
 HUD의 Enemy resolve 순서는 다음으로 전환한다.
 
 ```text
-TargetComponent.Nearest
+FocusComponent.NearestFocus
 None
 ```
 
 구현 순서:
 
-1. `GetOwningPlayerController()`에서 `UCDebugOverlayTargetComponent`를 찾는다.
+1. `GetOwningPlayerController()`에서 `UCDebugOverlayFocusComponent`를 찾는다.
 2. component가 valid target을 제공하면 해당 actor를 Enemy panel 대상으로 사용한다.
-3. 표시 문구는 source type에 따라 `EnemySource: TargetComponent.Nearest`를 사용한다.
-4. component가 없거나 target invalid면 `EnemySource: None`을 표시한다.
+3. 표시 문구는 source type에 따라 `EnemyFocusMode: FocusComponent.NearestFocus`를 사용한다.
+4. component가 없거나 target invalid면 `EnemyFocusMode: None`을 표시한다.
 5. Store recent combat pair와 world scan fallback은 P1 기본 HUD path에서 자동 표시하지 않는다.
 
 기존 `RefreshCachedEnemyIfNeeded()` / `ResolveDisplayEnemy()`는 삭제하지 않고 world scan fallback 구현부로 재배치하거나 유지한다.
@@ -125,33 +125,33 @@ None
 
 P1 표시 문구 후보는 다음으로 둔다.
 
-TargetComponent Nearest 성공:
+FocusComponent Nearest 성공:
 
 ```text
-EnemySource: TargetComponent.Nearest
-EnemyTarget: Selected=BP_CEnemy_C_1
+EnemyFocusMode: FocusComponent.NearestFocus
+EnemyFocusActor: Selected=BP_CEnemy_C_1
 ```
 
-target 없음:
+focus 없음:
 
 ```text
-EnemySource: None
+EnemyFocusMode: None
 ```
 
 diagnostic 후보:
 
 ```text
-EnemySource: RecentCombatTarget
-EnemySource: WorldScanFallback
-EnemySource: Ambiguous(Count=2)
-EnemySource: Stale
+EnemyFocusMode: RecentCombatFocus
+EnemyFocusMode: WorldScanFallback
+EnemyFocusMode: Ambiguous(Count=2)
+EnemyFocusMode: Stale
 ```
 
 최종 문구가 HUD 폭을 넘거나 capture 가독성을 해치면 구현 중 멈추고 사용자에게 문구 축약 여부를 질문한다.
 
 ## 8. Store Recent Combat Pair
 
-RecentCombatTarget은 Store 기반 diagnostic 후보로 유지한다.
+RecentCombatFocus은 Store 기반 diagnostic 후보로 유지한다.
 
 단일 `TargetActor`를 저장하지 않는다. combat 방향에 따라 enemy 후보가 `SourceActor`일 수도 있고 `TargetActor`일 수도 있기 때문이다.
 
@@ -197,7 +197,7 @@ P1 최소 구현에서는 Store가 Enemy를 직접 resolve하지 않는다. Stor
 후속 확장이 필요하면 result struct를 둘 수 있다.
 
 ```cpp
-struct FDebugOverlayTargetResolveResult
+struct FDebugOverlayFocusResolveResult
 {
 	TWeakObjectPtr<AActor> TargetActor;
 	FString Source;
@@ -211,7 +211,7 @@ P1 최소 구현에서는 header 확장 범위를 줄이기 위해 pair query AP
 
 ## 10. Player 기준 상대 Enemy 선택
 
-RecentCombatTarget query는 owning player actor 기준으로 상대편 Enemy를 고른다.
+RecentCombatFocus query는 owning player actor 기준으로 상대편 Enemy를 고른다.
 
 정책:
 
@@ -232,7 +232,7 @@ P1 구현 전 기본 후보는 시간 기준 stale이다.
 권장 후보:
 
 ```text
-RecentCombatTarget 유효 시간: 3.0초
+RecentCombatFocus 유효 시간: 3.0초
 ```
 
 판단:
@@ -260,15 +260,15 @@ P1 구현은 debug overlay evidence용이므로 shipping 노출을 피한다.
 
 ## 13. 구현 순서
 
-P1 Target Component 구현 순서는 다음으로 고정한다.
+P1 Focus Component 구현 순서는 다음으로 고정한다.
 
-1. `UCDebugOverlayTargetComponent` type/API 추가
+1. `UCDebugOverlayFocusComponent` type/API 추가
 2. `ACPlayerController`에 controller-owned subobject 연결
 3. Store 내부 recent combat pair 구조 추가
 4. `RecordCombatTargetPacket` / `RecordCombatResult`에서 pair 기록
 5. Store recent combat pair query API 추가
 6. HUD에서 player 기준 recent combat 상대 Enemy resolve 구현
-7. HUD enemy resolve path를 `TargetComponent.Nearest -> None`으로 전환
+7. HUD enemy resolve path를 `FocusComponent.NearestFocus -> None`으로 전환
 8. build 검증
 9. PIE 수동 확인
 
@@ -279,7 +279,7 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 다음 상황이 생기면 임의 결정하지 않고 사용자에게 질문한다.
 
 - stale timeout을 3.0초로 확정할지 여부
-- `UCDebugOverlayTargetComponent` Blueprint 노출 필요 여부
+- `UCDebugOverlayFocusComponent` Blueprint 노출 필요 여부
 - target set/clear를 console command, debug input, 자동 recent combat 중 무엇으로 시작할지 여부
 - Store query API를 pair output param으로 둘지 result struct로 확장할지 여부
 - HUD 표시 문구가 길어서 layout 조정이 필요한 경우
@@ -296,7 +296,7 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 - target cycling UI
 - combat action target 강제
 - camera/aim assist
-- AI target selection 변경
+- AI focus selection 변경
 - 기존 `ITargetContextProvider` 확장
 - 기존 audit log format 변경
 - `.umap`, `.uasset`, config, `Build.cs` 변경
@@ -306,7 +306,7 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 
 구현 계획 문서 단계의 검증:
 
-- 문서가 P1 Target Selection 설계와 충돌하지 않는지 확인한다.
+- 문서가 P1 Focus Selection 설계와 충돌하지 않는지 확인한다.
 - 구현 대상 파일이 P1 scope 밖으로 늘어나지 않았는지 확인한다.
 - code/asset/config/Build.cs 변경이 없는지 확인한다.
 - `git diff --check`를 수행한다.
@@ -315,23 +315,23 @@ PIE 캡처/패키징은 P1 검증 이후로 미룬다.
 
 - `PortfolioEditor Win64 Development` 빌드
 - Shipping guard 확인
-- `EnemySource: TargetComponent.Nearest` 표시 확인
-- TargetComponent target invalid 또는 clear 시 `EnemySource: None` 확인
-- RecentCombatTarget/WorldScanFallback이 target 없음 상태를 자동으로 채우지 않는지 확인
+- `EnemyFocusMode: FocusComponent.NearestFocus` 표시 확인
+- FocusComponent target invalid 또는 clear 시 `EnemyFocusMode: None` 확인
+- RecentCombatFocus/WorldScanFallback이 focus 없음 상태를 자동으로 채우지 않는지 확인
 
 ## 17. 완료 기준
 
 이 문서가 완료되면 다음이 확정된 것으로 본다.
 
-- `UCDebugOverlayTargetComponent` 구현 파일/API 후보
+- `UCDebugOverlayFocusComponent` 구현 파일/API 후보
 - `ACPlayerController` 연결 방식
 - Store recent combat pair 기록/query 방향
-- HUD target selection path 전환 기준
+- HUD focus selection path 전환 기준
 - Shipping/build 정책
 - 구현 중 질문해야 할 결정 요소
 
 ## 18. 다음 작업
 
-다음 작업은 `P1 Target Component 실제 구현`이다.
+다음 작업은 `P1 Focus Component 실제 구현`이다.
 
-구현 단계에서는 이 문서 범위를 기준으로 component, controller 연결, source type 저장, HUD target selection path만 최소 변경한다.
+구현 단계에서는 이 문서 범위를 기준으로 component, controller 연결, source type 저장, HUD focus selection path만 최소 변경한다.

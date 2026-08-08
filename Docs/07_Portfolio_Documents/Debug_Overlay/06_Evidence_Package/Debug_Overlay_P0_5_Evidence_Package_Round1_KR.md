@@ -4,7 +4,7 @@
 
 이 문서는 P0.5 debug overlay의 1차 evidence 패키지를 정리한다.
 
-현재 패키지는 최종 제출 후보가 아니다. 이후 debug overlay 리팩터링, target component 기반 enemy selection, capture preset 정리, 최종 재촬영이 남아 있으므로 현 시점에서는 동작 확인 및 기술문서 초안용 근거로만 사용한다.
+현재 패키지는 최종 제출 후보가 아니다. 이후 debug overlay 리팩터링, focus component 기반 enemy selection, capture preset 정리, 최종 재촬영이 남아 있으므로 현 시점에서는 동작 확인 및 기술문서 초안용 근거로만 사용한다.
 
 ## 패키지 전제
 
@@ -17,7 +17,7 @@
 - 전역 `GlobalDefaultGameMode` 변경 없음
 - `.umap`, `.uasset`, config, `Build.cs` 변경 없음
 - EventLog 추가 축약은 이번 패키지 기준에서 제외
-- Enemy 선택은 현재 `WorldScanFallback`이며, target component 기반 선택은 P1 후보
+- Enemy 선택은 현재 `WorldScanFallback`이며, focus component 기반 선택은 P1 후보
 
 ## 포함 파일
 
@@ -92,7 +92,7 @@ Stagger Count 표시 확인 기준:
 - 최종 제출 후보 확정
 - Shipping HUD 동작
 - 성능 최적화 성공
-- target component 기반 enemy selection
+- focus component 기반 enemy selection
 - Player/Enemy별 EventLog 분리
 - EventLog category filter
 - Runtime LOD 최종 evidence

@@ -27,19 +27,16 @@ public:
 
 	// Debug Overlay Exec
 	UFUNCTION(Exec)
-	void DebugOverlaySelectNearestTarget();
+	void DebugOverlaySelectNearestFocus();
 
 	UFUNCTION(Exec)
-	void DebugOverlaySelectOutlinerTarget(const FString& ActorName);
+	void DebugOverlaySelectOutlinerFocus(const FString& ActorName);
 
 	UFUNCTION(Exec)
-	void DebugOverlaySelectActorTarget(const FString& ActorName);
+	void DebugOverlaySelectRecentCombatFocus();
 
 	UFUNCTION(Exec)
-	void DebugOverlaySelectRecentCombatTarget();
-
-	UFUNCTION(Exec)
-	void DebugOverlayClearTarget();
+	void DebugOverlayClearFocus();
 
 protected:
 	// Lifecycle

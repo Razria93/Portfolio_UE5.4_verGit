@@ -27,13 +27,13 @@ namespace
 		return InOwningPlayerController->FindComponentByClass<UCDebugOverlayFocusComponent>();
 	}
 
-	ACEnemy* ResolveFocusComponentTarget(const UCDebugOverlayFocusComponent* InFocusComp)
+	ACEnemy* ResolveFocusComponentEnemy(const UCDebugOverlayFocusComponent* InFocusComp)
 	{
 		if (!IsValid(InFocusComp)) return nullptr;
 		return Cast<ACEnemy>(InFocusComp->GetDebugOverlayFocusActor());
 	}
 
-	void UpdateTargetViewData(const UCDebugOverlayFocusComponent* InFocusComp, FDebugOverlayFocusViewData& OutFocusViewData)
+	void UpdateFocusViewData(const UCDebugOverlayFocusComponent* InFocusComp, FDebugOverlayFocusViewData& OutFocusViewData)
 	{
 		if (!IsValid(InFocusComp)) return;
 
@@ -42,23 +42,23 @@ namespace
 		UpdateFocusDriverText(InFocusComp, OutFocusViewData);
 	}
 
-	void ClearTargetViewData(const UCDebugOverlayFocusComponent* InFocusComp, FDebugOverlayFocusViewData& InOutFocusViewData)
+	void ClearFocusViewData(const UCDebugOverlayFocusComponent* InFocusComp, FDebugOverlayFocusViewData& InOutFocusViewData)
 	{
 		InOutFocusViewData.CurrentSourceText = TEXT("None");
 		InOutFocusViewData.CurrentActorNameText = TEXT("None");
 		UpdateFocusDriverText(InFocusComp, InOutFocusViewData);
 	}
 
-	ACEnemy* ResolveDisplayTarget(const APlayerController* InOwningPlayerController, FDebugOverlayFocusViewData& OutFocusViewData)
+	ACEnemy* ResolveDisplayFocusEnemy(const APlayerController* InOwningPlayerController, FDebugOverlayFocusViewData& OutFocusViewData)
 	{
 		const UCDebugOverlayFocusComponent* focusComp = ResolveFocusComponent(InOwningPlayerController);
-		if (ACEnemy* focusComponentTarget = ResolveFocusComponentTarget(focusComp))
+		if (ACEnemy* focusComponentEnemy = ResolveFocusComponentEnemy(focusComp))
 		{
-			UpdateTargetViewData(focusComp, OutFocusViewData);
-			return focusComponentTarget;
+			UpdateFocusViewData(focusComp, OutFocusViewData);
+			return focusComponentEnemy;
 		}
 
-		ClearTargetViewData(focusComp, OutFocusViewData);
+		ClearFocusViewData(focusComp, OutFocusViewData);
 		return nullptr;
 	}
 }
@@ -73,10 +73,10 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	UWorld* world = GetWorld();
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
-	FDebugOverlayFocusViewData targetFocus;
-	const ACEnemy* target = ResolveDisplayTarget(owningPlayerController, targetFocus);
+	FDebugOverlayFocusViewData enemyFocus;
+	const ACEnemy* focusedEnemy = ResolveDisplayFocusEnemy(owningPlayerController, enemyFocus);
 
-	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), target, targetFocus);
+	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);
 #endif

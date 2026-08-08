@@ -13,6 +13,6 @@ enum class EDebugOverlayFocusResolveLogProfile : uint8
 class FDebugOverlayFocusLogHelper
 {
 public:
-	static bool LogInvalidTargetComponent(const TCHAR* InCommandName, const FString* InActorName = nullptr);
+	static bool LogInvalidFocusComponent(const TCHAR* InCommandName, const FString* InActorName = nullptr);
 	static bool LogResolveResult(const TCHAR* InCommandName, EDebugOverlayFocusResolveLogProfile InProfile, const FDebugOverlayFocusResolveResult& InResult);
 };

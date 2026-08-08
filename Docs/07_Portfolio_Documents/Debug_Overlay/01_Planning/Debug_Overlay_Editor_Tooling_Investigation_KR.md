@@ -107,8 +107,8 @@ Nomad settings panel에 1차로 노출하기 좋은 CVar는 다음이다.
 
 현재 PlayerController에는 debug overlay target 관련 Exec command가 있다.
 
-- `DebugOverlaySelectNearestTarget`
-- `DebugOverlayClearTarget`
+- `DebugOverlaySelectNearestFocus`
+- `DebugOverlayClearFocus`
 
 이들은 CVar가 아니라 PIE world의 PlayerController를 통해 실행해야 하는 command다. 1차 settings panel 핵심 범위에서는 제외하고, 후속으로 PIE 전용 action button 후보로 둔다.
 
@@ -148,7 +148,7 @@ UI 구성 후보는 다음이다.
 - Refresh button
 - Reset to evidence-friendly values button
 
-`ResetAll`, target clear, select nearest 같은 state-changing action은 후속 범위로 두는 편이 안전하다.
+`ResetAll`, focus clear, select nearest 같은 state-changing action은 후속 범위로 두는 편이 안전하다.
 
 ## 8. 권장 아키텍처
 
@@ -244,7 +244,7 @@ Source/PortfolioEditor/
    - operation guide
    - editor tooling checklist
 
-속도 우선이면 1~3을 한 작업으로 묶어도 된다. 다만 target selection button, reset button, preset 저장은 후속 작업으로 분리하는 것이 좋다.
+속도 우선이면 1~3을 한 작업으로 묶어도 된다. 다만 focus selection button, reset button, preset 저장은 후속 작업으로 분리하는 것이 좋다.
 
 ## 11. 검증 기준
 

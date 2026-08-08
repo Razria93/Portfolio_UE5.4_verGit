@@ -171,7 +171,7 @@ OwnerName == SubjectName
 - Player/Enemy 양쪽에서 같은 target packet이 표시되는 것은 허용되지만, label이 방향성 용어라 evidence 해석에 즉시 도움이 되지 않는다.
 - `CombatResult/Delivering`, `CombatResult/Delivered`, `CombatResult/PacketReceived`가 반복 표시되어 같은 parry/damage result가 여러 번 처리된 것처럼 보인다.
 - `EventLogFilter=All`은 검증 대상이 섞이므로 role label 검증에는 `Portfolio.DebugOverlay.EventLogFilter Combat`이 더 적합하다.
-- `EnemySelect` radius가 문서 기본값과 다르게 보이는 경우, target selection tuning 문서와 코드 정합성 검토가 별도로 필요하다.
+- `EnemyFocusCommand` radius가 문서 기본값과 다르게 보이는 경우, focus selection tuning 문서와 코드 정합성 검토가 별도로 필요하다.
 
 ## 9. 후속 구현 방향
 

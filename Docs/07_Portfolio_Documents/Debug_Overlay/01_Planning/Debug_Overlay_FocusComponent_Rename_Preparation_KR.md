@@ -2,7 +2,7 @@
 
 ## 1. 목적
 
-이 문서는 `UCDebugOverlayTargetComponent`를 `UCDebugOverlayFocusComponent`로 이주한 결과와, 남겨 둔 `Target` 명명의 호환성 범위를 정리한다.
+이 문서는 `UCDebugOverlayFocusComponent`를 `UCDebugOverlayFocusComponent`로 이주한 결과와, 남겨 둔 `Target` 명명의 호환성 범위를 정리한다.
 
 이번 작업은 구현성 확장 작업이 아니다. Canvas ellipsis, Blueprint/UMG, Runtime LOD actual, BT active node tracking은 포함하지 않는다.
 
@@ -10,19 +10,19 @@
 
 | 항목 | 결과 |
 | --- | --- |
-| class rename | `UCDebugOverlayTargetComponent` -> `UCDebugOverlayFocusComponent` |
-| file rename | `CDebugOverlayTargetComponent.h/.cpp` -> `CDebugOverlayFocusComponent.h/.cpp` |
+| class rename | `UCDebugOverlayFocusComponent` -> `UCDebugOverlayFocusComponent` |
+| file rename | `CDebugOverlayFocusComponent.h/.cpp` -> `CDebugOverlayFocusComponent.h/.cpp` |
 | generated header | `CDebugOverlayFocusComponent.generated.h` |
 | Controller member | `DebugOverlayFocusComponent` |
 | HUD component lookup | `FindComponentByClass<UCDebugOverlayFocusComponent>()` |
 | FocusResolver result source | `EDebugOverlayFocusSource` |
-| 기존 enum 이름 | `using EDebugOverlayTargetSource = EDebugOverlayFocusSource` alias로 유지 |
+| 기존 enum 이름 | `using EDebugOverlayFocusSource = EDebugOverlayFocusSource` alias로 유지 |
 | 기존 Target public API | `UCDebugOverlayFocusComponent` 내부 compatibility wrapper로 유지 |
 | console command 이름 | 기존 `Target` command 이름 유지 |
-| subobject name | `TEXT("DebugOverlayTarget")` 유지 |
+| subobject name | `TEXT("DebugOverlayFocus")` 유지 |
 | Store schema/API | 변경 없음 |
 
-`TEXT("DebugOverlayTarget")`는 native subobject/serialized reference 안정성을 위해 유지한다. class/file/type 이름은 Focus로 이주했지만, subobject instance name까지 바꾸는 것은 별도 asset migration 성격이 있으므로 이번 작업에서 제외한다.
+`TEXT("DebugOverlayFocus")`는 native subobject/serialized reference 안정성을 위해 유지한다. class/file/type 이름은 Focus로 이주했지만, subobject instance name까지 바꾸는 것은 별도 asset migration 성격이 있으므로 이번 작업에서 제외한다.
 
 ## 3. 현재 책임 분리
 
@@ -46,9 +46,9 @@ FocusComponent는 Store, World scan, resolver 책임을 갖지 않는다. Store�
 다음 command 이름은 Editor Tooling과 사용자 workflow가 의존하는 외부 인터페이스이므로 유지한다.
 
 ```cpp
-DebugOverlaySelectNearestTarget
-DebugOverlayClearTarget
-DebugOverlaySelectActorTarget
+DebugOverlaySelectNearestFocus
+DebugOverlayClearFocus
+DebugOverlaySelectOutlinerFocus
 ```
 
 내부 구현은 Focus helper와 FocusComponent API로 위임한다.
@@ -58,15 +58,15 @@ DebugOverlaySelectActorTarget
 다음 API는 `UCDebugOverlayFocusComponent` 안에 wrapper로 유지한다.
 
 ```cpp
-bool HasDebugOverlayTarget() const;
+bool HasDebugOverlayFocus() const;
 bool HasDebugOverlaySelectionSummary() const;
-AActor* GetDebugOverlayTargetActor() const;
-FString GetDebugOverlayTargetSummary() const;
-FString GetDebugOverlayTargetSource() const;
+AActor* GetDebugOverlayFocusActor() const;
+FString GetDebugOverlayFocusSummary() const;
+FString GetDebugOverlayFocusSource() const;
 FString GetDebugOverlaySelectionSummary() const;
 
-void SetDebugOverlayTarget(AActor* InTargetActor, EDebugOverlayFocusSource InSource);
-void ClearDebugOverlayTarget();
+void SetDebugOverlayFocus(AActor* InTargetActor, EDebugOverlayFocusSource InSource);
+void ClearDebugOverlayFocus();
 void SetDebugOverlaySelectionSummary(const FString& InSummary);
 void ClearDebugOverlaySelectionSummary();
 ```
@@ -75,10 +75,10 @@ void ClearDebugOverlaySelectionSummary();
 
 ### 4.3 Enum alias
 
-`EDebugOverlayFocusSource`를 주 타입으로 사용한다. 기존 `EDebugOverlayTargetSource` 이름은 alias로 남긴다.
+`EDebugOverlayFocusSource`를 주 타입으로 사용한다. 기존 `EDebugOverlayFocusSource` 이름은 alias로 남긴다.
 
 ```cpp
-using EDebugOverlayTargetSource = EDebugOverlayFocusSource;
+using EDebugOverlayFocusSource = EDebugOverlayFocusSource;
 ```
 
 기존 외부 코드가 enum 이름에 의존할 가능성을 고려한 호환 계층이다.
@@ -87,17 +87,17 @@ using EDebugOverlayTargetSource = EDebugOverlayFocusSource;
 
 | 남은 명명 | 분류 | 처리 |
 | --- | --- | --- |
-| `DebugOverlaySelectNearestTarget` | console command compatibility | 유지 |
-| `DebugOverlaySelectActorTarget` | console command compatibility | 유지 |
-| `DebugOverlayClearTarget` | console command compatibility | 유지 |
-| `ExecuteDebugOverlayTargetCommand` | Editor command sender helper | command 문자열 호환 때문에 유지 |
+| `DebugOverlaySelectNearestFocus` | console command compatibility | 유지 |
+| `DebugOverlaySelectOutlinerFocus` | console command compatibility | 유지 |
+| `DebugOverlayClearFocus` | console command compatibility | 유지 |
+| `ExecuteDebugOverlayFocusCommand` | Editor command sender helper | command 문자열 호환 때문에 유지 |
 | `LastFocusCommandStatus` | Editor UI 상태명 | Focus terminology cleanup 완료 |
-| `TEXT("DebugOverlayTarget")` | native subobject name | asset/reference 안정성을 위해 유지 |
-| `Get/Set/ClearDebugOverlayTarget*` | public compatibility wrapper | 유지 |
+| `TEXT("DebugOverlayFocus")` | native subobject name | asset/reference 안정성을 위해 유지 |
+| `Get/Set/ClearDebugOverlayFocus*` | public compatibility wrapper | 유지 |
 | `DebugOverlaySelectionSummary` | compatibility wrapper 명명 | 유지 |
 | `CCombatSignalTargetComponent` | gameplay combat signal system | Debug Overlay rename 대상 아님 |
 
-`TargetComponent.Nearest` / `TargetComponent.EditorSelection` 표시 문자열은 class rename 결과에 맞춰 `FocusComponent.Nearest` / `FocusComponent.EditorSelection`로 갱신했다.
+`FocusComponent.NearestFocus` / `FocusComponent.OutlinerFocus` 표시 문자열은 class rename 결과에 맞춰 `FocusComponent.Nearest` / `FocusComponent.EditorSelection`로 갱신했다.
 
 ## 6. Store schema/API 변경 판단
 
@@ -116,7 +116,7 @@ Store schema/API 변경은 필요하지 않다.
 
 ## 7. Core Redirect / asset reference 판단
 
-코드 검색과 `Content`/`Config` binary text 검색 기준으로 기존 `UCDebugOverlayTargetComponent`, `CDebugOverlayTargetComponent`, `DebugOverlayTargetComponent` serialized reference는 발견되지 않았다.
+코드 검색과 `Content`/`Config` binary text 검색 기준으로 기존 `UCDebugOverlayFocusComponent`, `CDebugOverlayFocusComponent`, `DebugOverlayFocusComponent` serialized reference는 발견되지 않았다.
 
 현재 판단:
 
@@ -129,9 +129,9 @@ Store schema/API 변경은 필요하지 않다.
 필수 확인:
 
 ```text
-rg "UCDebugOverlayTargetComponent|CDebugOverlayTargetComponent|DebugOverlayTargetComponent|ResolveTargetComponentEnemy|EDebugOverlayTargetSource|Core/Debug/CDebugOverlayTargetComponent" Source/Portfolio Plugins/PortfolioDebugOverlayEditor
-rg "DebugOverlayTarget|GetDebugOverlayTarget|SetDebugOverlayTarget|ClearDebugOverlayTarget|DebugOverlaySelection|TargetComponent\\." Source/Portfolio Plugins/PortfolioDebugOverlayEditor
-rg -a "UCDebugOverlayTargetComponent|CDebugOverlayTargetComponent|DebugOverlayTargetComponent" Content Config
+rg "UCDebugOverlayFocusComponent|CDebugOverlayFocusComponent|DebugOverlayFocusComponent|ResolveTargetComponentEnemy|EDebugOverlayFocusSource|Core/Debug/CDebugOverlayFocusComponent" Source/Portfolio Plugins/PortfolioDebugOverlayEditor
+rg "DebugOverlayFocus|GetDebugOverlayFocus|SetDebugOverlayFocus|ClearDebugOverlayFocus|DebugOverlaySelection|FocusComponent\\." Source/Portfolio Plugins/PortfolioDebugOverlayEditor
+rg -a "UCDebugOverlayFocusComponent|CDebugOverlayFocusComponent|DebugOverlayFocusComponent" Content Config
 git diff --check
 PortfolioEditor Win64 Development build
 ```
@@ -142,9 +142,9 @@ PortfolioEditor Win64 Development build
 - editor loading
 - BP compile
 - PIE 진입
-- `DebugOverlaySelectNearestTarget`
-- `DebugOverlaySelectActorTarget`
-- `DebugOverlayClearTarget`
+- `DebugOverlaySelectNearestFocus`
+- `DebugOverlaySelectOutlinerFocus`
+- `DebugOverlayClearFocus`
 - component/class reference 깨짐 없음
 
 ## 9. 이번 작업에서 제외한 항목
@@ -179,7 +179,7 @@ PortfolioEditor Win64 Development build
 - Focus terminology cleanup을 마감한다.
 - Editor UI label/description/status 변수명을 Focus 기준으로 정리한다.
 - public command 문자열은 유지한다.
-- Target compatibility wrapper, `EDebugOverlayTargetSource` alias, `TEXT("DebugOverlayTarget")` 유지 사유를 문서로 남긴다.
+- Target compatibility wrapper, `EDebugOverlayFocusSource` alias, `TEXT("DebugOverlayFocus")` 유지 사유를 문서로 남긴다.
 - 구조 검토/검증 문서와 내용이 일치하는지 맞춘다.
 
 ### 11.2 다음 브랜치에서 구현할 것
@@ -188,8 +188,8 @@ PortfolioEditor Win64 Development build
 - Focus mode enum 확장
 - RecentCombat 명시 command 경로
 - Target compatibility wrapper 실제 제거 여부 판단
-- `EDebugOverlayTargetSource` alias 실제 제거 여부 판단
-- `TEXT("DebugOverlayTarget")` subobject name 변경 및 asset migration/Core Redirect 검토
+- `EDebugOverlayFocusSource` alias 실제 제거 여부 판단
+- `TEXT("DebugOverlayFocus")` subobject name 변경 및 asset migration/Core Redirect 검토
 
 ### 11.3 이번 브랜치에서 하지 않을 것
 

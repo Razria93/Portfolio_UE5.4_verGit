@@ -98,7 +98,7 @@ Round1 파일을 final candidate로 승격하지 않는다. 최종 후보는 위
 - 관련 장면의 핵심 overlay line이 읽힌다.
 - EventLog는 3~5 lines 범위로 표시된다.
 - relevant Recent block이 장면과 충돌하지 않는다.
-- `WorldScanFallback` 상태를 target component evidence처럼 설명하지 않는다.
+- `WorldScanFallback` 상태를 focus component evidence처럼 설명하지 않는다.
 - `N/A`, `NotCaptured`는 성공 evidence로 사용하지 않는다.
 - Runtime LOD가 `N/A`이면 Runtime LOD 성공 evidence로 사용하지 않는다.
 - 캡처 목적과 무관한 editor panel, mouse tooltip, taskbar 노출을 피한다.
@@ -187,7 +187,7 @@ Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P0_5
 
 ## 12. 다음 작업
 
-다음 촬영/패키징 작업은 P1 검증 이후에 진행한다. P1 이전의 다음 작업은 P1 범위 확정과 Target Component 기반 Enemy Selection 설계다.
+다음 촬영/패키징 작업은 P1 검증 이후에 진행한다. P1 이전의 다음 작업은 P1 범위 확정과 Focus Component 기반 Enemy Selection 설계다.
 
 P1 이후 최종 촬영 진행 전 필요 파일:
 

@@ -101,7 +101,7 @@ EnemyFocusCommand: None
 
 - 이 표시는 "현재 명시 focus 대상이 없음"을 보여주는 개발 전용 상태다.
 - Enemy actor-derived 값을 성공 evidence처럼 설명하지 않는다.
-- Enemy 선택은 `DebugOverlaySelectNearestTarget` 또는 Editor tooling command를 통해 명시적으로 수행한다.
+- Enemy 선택은 `DebugOverlaySelectNearestFocus` 또는 Editor tooling command를 통해 명시적으로 수행한다.
 
 ### EventLog 운영 판단
 

@@ -4,7 +4,7 @@
 
 이 문서는 `PortfolioDebugOverlayEditor` Editor-only plugin이 P52 Debug Overlay runtime 기능을 Editor UI에서 조작할 수 있는지 확인한 PIE 검증 결과를 기록한다.
 
-검증 대상은 UE Editor Tooling 역량을 보여주는 Level Editor 진입점, Nomad 설정 패널, CVar read/write UI, 기존 target command 호출 흐름이다. Shipping HUD나 runtime 기능 확장 claim으로 사용하지 않는다.
+검증 대상은 UE Editor Tooling 역량을 보여주는 Level Editor 진입점, Nomad 설정 패널, CVar read/write UI, 기존 focus command 호출 흐름이다. Shipping HUD나 runtime 기능 확장 claim으로 사용하지 않는다.
 
 ## 2. 검증 전제
 
@@ -14,9 +14,9 @@
 | Plugin | `Plugins/PortfolioDebugOverlayEditor` |
 | Plugin 성격 | Editor-only plugin |
 | Runtime Debug Overlay | P52에서 구현된 기존 runtime 기능 사용 |
-| Runtime 코드 변경 | Outliner actor target command bridge용 debug-only exec / target source 보강 포함 |
+| Runtime 코드 변경 | Outliner actor focus command bridge용 debug-only exec / focus source 보강 포함 |
 | 제외 변경 | `Portfolio.Build.cs`, `.uproject`, `.umap`, `.uasset`, config 변경 없음 |
-| 확인 방식 | 사용자가 PIE에서 Nomad 패널 조작 및 target command 동작을 수동 확인 |
+| 확인 방식 | 사용자가 PIE에서 Nomad 패널 조작 및 focus command 동작을 수동 확인 |
 
 ## 3. Editor Tooling 구조
 
@@ -25,7 +25,7 @@
 - Nomad 패널은 `IConsoleManager`를 통해 Debug Overlay CVar를 읽고 쓴다.
 - 설정은 session-only이며 config 저장을 하지 않는다.
 - Target 조작 버튼은 기존 console command를 PIE PlayerController 경로로 호출한다.
-- Editor plugin이 `TargetComponent`나 runtime HUD/Store를 직접 조작하지 않는다.
+- Editor plugin이 `FocusComponent`나 runtime HUD/Store를 직접 조작하지 않는다.
 
 ## 4. Toolbar / Menu 진입점 검증 결과
 
@@ -34,18 +34,18 @@
 | `창 > Portfolio Tools > Debug Overlay` | 프로젝트 전용 menu entry가 유지되고 Nomad panel이 열린다. |
 | Level Editor toolbar button | 상단 toolbar에 `Debug Overlay` 버튼이 표시된다. |
 | Toolbar click | 버튼 클릭 시 기존 `Debug Overlay` Nomad panel이 열린다. |
-| Nomad panel | CVar UI와 Target command 버튼이 유지된다. |
+| Nomad panel | CVar UI와 Focus command 버튼이 유지된다. |
 
-toolbar button은 panel open 진입점이다. overlay enable/disable direct toggle, target command direct button, preset 저장 기능으로 해석하지 않는다.
+toolbar button은 panel open 진입점이다. overlay enable/disable direct toggle, focus command direct button, preset 저장 기능으로 해석하지 않는다.
 
 ## 5. 대표 스크린샷
 
 | 파일 | 확인 내용 |
 | --- | --- |
 | [debug_overlay_editor_tooling_01_toolbar_button.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_01_toolbar_button.jpg) | Level Editor toolbar의 `Debug Overlay` 버튼과 tooltip, Nomad panel open 상태 |
-| [debug_overlay_editor_tooling_02_nomad_panel_target_select.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_02_nomad_panel_target_select.jpg) | Nomad panel의 CVar UI / Target command 섹션과 `Select Nearest Target` 실행 확인 |
+| [debug_overlay_editor_tooling_02_nomad_panel_target_select.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_02_nomad_panel_target_select.jpg) | Nomad panel의 CVar UI / Focus command 섹션과 `Select Nearest Target` 실행 확인 |
 | [debug_overlay_editor_tooling_03_target_clear_filters.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_03_target_clear_filters.jpg) | EventLog filter 관련 UI와 `Clear Target` 실행 상태 확인 |
-| [debug_overlay_editor_tooling_04_outliner_target_selection.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_04_outliner_target_selection.jpg) | Outliner actor 선택 후 `Select Outliner Actor`로 `TargetComponent.EditorSelection` 반영 확인 |
+| [debug_overlay_editor_tooling_04_outliner_target_selection.jpg](../../../98_Evidence/01_Screenshot/DebugOverlay/EditorTooling/debug_overlay_editor_tooling_04_outliner_target_selection.jpg) | Outliner actor 선택 후 `Select Outliner Actor`로 `FocusComponent.OutlinerFocus` 반영 확인 |
 
 대표 스크린샷은 Editor Tooling 검증용이다. Shipping HUD, config 저장, preset 저장, runtime target system 변경 claim으로 사용하지 않는다.
 
@@ -60,26 +60,26 @@ toolbar button은 panel open 진입점이다. overlay enable/disable direct togg
 | HideNoiseEvents | `Portfolio.DebugOverlay.HideNoiseEvents` | noise event 표시 제어 반영 확인 |
 | HideCollisionWindowEvents | `Portfolio.DebugOverlay.HideCollisionWindowEvents` | collision window event 표시 제어 반영 확인 |
 
-## 7. Target Command 버튼 검증 결과
+## 7. Focus Command 버튼 검증 결과
 
 ### Select Nearest Target
 
-- 호출 command: `DebugOverlaySelectNearestTarget`
+- 호출 command: `DebugOverlaySelectNearestFocus`
 - PIE 중 기존 runtime command 경로로 실행된다.
-- HUD에서 `EnemySource: TargetComponent.Nearest` 또는 `EnemySelect` nearest diagnostic으로 결과를 확인한다.
+- HUD에서 `EnemyFocusMode: FocusComponent.NearestFocus` 또는 `EnemyFocusCommand` nearest diagnostic으로 결과를 확인한다.
 - Editor plugin은 nearest 탐색 로직을 직접 구현하지 않는다.
 
 ### Clear Target
 
-- 호출 command: `DebugOverlayClearTarget`
+- 호출 command: `DebugOverlayClearFocus`
 - PIE 중 기존 runtime command 경로로 실행된다.
-- HUD에서 `EnemySource: None`으로 target clear 결과를 확인한다.
-- Editor plugin은 `TargetComponent`를 직접 clear하지 않는다.
+- HUD에서 `EnemyFocusMode: None`으로 focus clear 결과를 확인한다.
+- Editor plugin은 `FocusComponent`를 직접 clear하지 않는다.
 
 ### Select Outliner Actor
 
 - Editor Outliner에서 선택한 actor를 대상으로 기존 runtime command 경로를 호출한다.
-- PIE 중 HUD에서 `EnemySource: TargetComponent.EditorSelection` 및 `EnemySelect: EditorSelected` 표시로 결과를 확인한다.
+- PIE 중 HUD에서 `EnemyFocusMode: FocusComponent.OutlinerFocus` 및 `EnemyFocusCommand: EditorSelected` 표시로 결과를 확인한다.
 - Editor plugin은 selected actor 전달만 담당하며, target panel 표시와 snapshot 반영은 runtime Debug Overlay 경로를 따른다.
 
 ### 제외 command
@@ -100,7 +100,7 @@ PIE world 또는 PlayerController를 찾지 못하면 command를 실행하지 �
 - PIE world 없음: `PIE world not available`
 - PlayerController 없음: `PlayerController not available`
 
-이 경로는 Editor button의 안전 실패 처리이며, target selection 성공 evidence로 사용하지 않는다.
+이 경로는 Editor button의 안전 실패 처리이며, focus selection 성공 evidence로 사용하지 않는다.
 
 ## 10. 성공 판단
 
@@ -114,7 +114,7 @@ PIE world 또는 PlayerController를 찾지 못하면 command를 실행하지 �
 
 ## 11. 보류 항목
 
-- target command 추가 확장
+- focus command 추가 확장
 - preset 저장
 - config 저장
 - Runtime LOD actual 표시

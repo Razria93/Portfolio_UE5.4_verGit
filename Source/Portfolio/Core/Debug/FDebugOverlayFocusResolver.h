@@ -17,7 +17,7 @@ enum class EDebugOverlayFocusResolveOutcome : uint8
 	InvalidContext,
 	NoActor,
 	NoActorName,
-	TargetIsNotEnemy,
+	FocusActorIsNotEnemy,
 };
 
 struct FDebugOverlayFocusResolveResult
@@ -34,7 +34,7 @@ struct FDebugOverlayFocusResolveResult
 class PORTFOLIO_API FDebugOverlayFocusResolver
 {
 public:
-	static FDebugOverlayFocusResolveResult ResolveNearestTarget(UWorld* World, const APawn* ViewerPawn, float Radius);
-	static FDebugOverlayFocusResolveResult ResolveOutlinerTarget(UWorld* World, const APawn* ViewerPawn, const FString& ActorName);
-	static FDebugOverlayFocusResolveResult ResolveRecentCombatTarget(UWorld* World, const APawn* ViewerPawn, float FallbackRadius);
+	static FDebugOverlayFocusResolveResult ResolveNearestFocus(UWorld* World, const APawn* ViewerPawn, float Radius);
+	static FDebugOverlayFocusResolveResult ResolveOutlinerFocus(UWorld* World, const APawn* ViewerPawn, const FString& ActorName);
+	static FDebugOverlayFocusResolveResult ResolveRecentCombatFocus(UWorld* World, const APawn* ViewerPawn, float FallbackRadius);
 };
