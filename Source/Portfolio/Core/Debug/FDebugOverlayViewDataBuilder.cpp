@@ -18,14 +18,18 @@
 
 namespace
 {
+	// ===== Constants =====
+
 	static constexpr float DebugOverlayRecentAIEventStaleSeconds = 5.0f;
 
-	FString BoolText(bool bInValue)
+	// ===== Common Text Helpers (Formatting) =====
+
+	FString FormatBoolText(bool bInValue)
 	{
 		return bInValue ? TEXT("true") : TEXT("false");
 	}
 
-	FString MissingText()
+	FString FormatMissingText()
 	{
 		return TEXT("N/A");
 	}
@@ -33,22 +37,6 @@ namespace
 	FString FormatBuilderAgeSeconds(float InAgeSeconds)
 	{
 		return FString::Printf(TEXT("%.2f"), FMath::Max(0.f, InAgeSeconds));
-	}
-
-	FString CompactEnumText(const FString& InValue)
-	{
-		int32 separatorIndex = INDEX_NONE;
-		return InValue.FindLastChar(TEXT(':'), separatorIndex)
-			&& separatorIndex > 0
-			&& InValue[separatorIndex - 1] == TEXT(':')
-			&& separatorIndex + 1 < InValue.Len()
-			? InValue.RightChop(separatorIndex + 1)
-			: InValue;
-	}
-
-	FString CompactReasonText(const FString& InValue)
-	{
-		return CompactEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
 	}
 
 	FString FormatGuardActionPhase(EGuardActionPhase InPhase)
@@ -64,22 +52,43 @@ namespace
 		}
 	}
 
+	FString FormatCompactEnumText(const FString& InValue)
+	{
+		int32 separatorIndex = INDEX_NONE;
+		return InValue.FindLastChar(TEXT(':'), separatorIndex)
+			&& separatorIndex > 0
+			&& InValue[separatorIndex - 1] == TEXT(':')
+			&& separatorIndex + 1 < InValue.Len()
+			? InValue.RightChop(separatorIndex + 1)
+			: InValue;
+	}
+
+	FString FormatCompactReasonText(const FString& InValue)
+	{
+		return FormatCompactEnumText(InValue.IsEmpty() ? FString(TEXT("None")) : InValue);
+	}
+
+	// ===== Component Access Helpers =====
+
 	template <typename TComponent>
 	TComponent* FindComponent(const APawn* InPawn)
 	{
 		return IsValid(InPawn) ? InPawn->FindComponentByClass<TComponent>() : nullptr;
 	}
 
+	// [Player / Enemy Status]
+	// ===== Actor Status Formatting =====
+
 	FString FormatExecutionState(const APawn* InPawn)
 	{
 		const UCStateComponent* stateComp = FindComponent<UCStateComponent>(InPawn);
-		return IsValid(stateComp) ? CompactEnumText(UEnum::GetValueAsString(stateComp->GetCurrentExecutionState())) : MissingText();
+		return IsValid(stateComp) ? FormatCompactEnumText(UEnum::GetValueAsString(stateComp->GetCurrentExecutionState())) : FormatMissingText();
 	}
 
 	FString FormatActiveAction(const APawn* InPawn)
 	{
 		const UCActionComponent* actionComp = FindComponent<UCActionComponent>(InPawn);
-		if (!IsValid(actionComp)) return MissingText();
+		if (!IsValid(actionComp)) return FormatMissingText();
 		if (!actionComp->IsActive()) return TEXT("None");
 
 		const EActionType actionType = actionComp->GetActiveActionType();
@@ -102,31 +111,29 @@ namespace
 
 		return FString::Printf(
 			TEXT("%s[%d]"),
-			*CompactEnumText(UEnum::GetValueAsString(actionType)),
+			*FormatCompactEnumText(UEnum::GetValueAsString(actionType)),
 			actionIndex);
 	}
 
 	FString FormatActiveReaction(const APawn* InPawn)
 	{
 		const UCReactionComponent* reactionComp = FindComponent<UCReactionComponent>(InPawn);
-		if (!IsValid(reactionComp)) return MissingText();
+		if (!IsValid(reactionComp)) return FormatMissingText();
 		if (!reactionComp->IsActive()) return TEXT("None");
 
-		return CompactEnumText(UEnum::GetValueAsString(reactionComp->GetActiveReactionType()));
+		return FormatCompactEnumText(UEnum::GetValueAsString(reactionComp->GetActiveReactionType()));
 	}
 
-	FString FormatGuardOverlay(const APawn* InPawn)
+	FString FormatActorHealth(const APawn* InPawn)
 	{
-		const UCDefenseComponent* defenseComp = FindComponent<UCDefenseComponent>(InPawn);
-		if (!IsValid(defenseComp)) return MissingText();
+		const UCHealthComponent* healthComp = FindComponent<UCHealthComponent>(InPawn);
+		if (!IsValid(healthComp)) return FormatMissingText();
 
 		return FString::Printf(
-			TEXT("Wants: %s | Pose: %s | CanGuard: %s | CanParry: %s | CanStart: %s"),
-			*BoolText(defenseComp->WantsGuarding()),
-			*BoolText(defenseComp->IsGuardingPose()),
-			*BoolText(defenseComp->CanGuard()),
-			*BoolText(defenseComp->CanParry()),
-			*BoolText(defenseComp->CanStartGuard()));
+			TEXT("%.1f/%.1f (DeadState: %s)"),
+			healthComp->GetCurrentHP(),
+			healthComp->GetMaxHP(),
+			*FormatCompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
 	}
 
 	FString FormatParryStaggerStack(const APawn* InPawn)
@@ -141,31 +148,87 @@ namespace
 			return FString::Printf(TEXT("%d/%d"), enemy->GetParryResultCount(), enemy->GetParryStaggerThreshold());
 		}
 
-		return MissingText();
+		return FormatMissingText();
+	}
+
+	FString FormatGuardOverlay(const APawn* InPawn)
+	{
+		const UCDefenseComponent* defenseComp = FindComponent<UCDefenseComponent>(InPawn);
+		if (!IsValid(defenseComp)) return FormatMissingText();
+
+		return FString::Printf(
+			TEXT("Wants: %s | Pose: %s | CanGuard: %s | CanParry: %s | CanStart: %s"),
+			*FormatBoolText(defenseComp->WantsGuarding()),
+			*FormatBoolText(defenseComp->IsGuardingPose()),
+			*FormatBoolText(defenseComp->CanGuard()),
+			*FormatBoolText(defenseComp->CanParry()),
+			*FormatBoolText(defenseComp->CanStartGuard()));
+	}
+
+	FString FormatActorMovement(const APawn* InPawn)
+	{
+		const UCMovementComponent* movementComp = FindComponent<UCMovementComponent>(InPawn);
+		if (!IsValid(movementComp)) return FormatMissingText();
+
+		return FString::Printf(
+			TEXT("Gait: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
+			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
+			movementComp->GetCurrentSpeed(),
+			movementComp->GetCurrentDirection(),
+			*FormatBoolText(movementComp->CanMove()),
+			*FormatBoolText(movementComp->IsFalling()));
 	}
 
 	FString FormatRuntimeLODTier()
 	{
-		return MissingText();
+		return FormatMissingText();
 	}
+
+	FDebugOverlayActorStatusViewData BuildActorStatusViewData(const APawn* InPawn)
+	{
+		FDebugOverlayActorStatusViewData statusViewData;
+		statusViewData.StateText = FormatExecutionState(InPawn);
+		statusViewData.ActionText = FormatActiveAction(InPawn);
+		statusViewData.ReactionText = FormatActiveReaction(InPawn);
+		statusViewData.HealthText = FormatActorHealth(InPawn);
+		statusViewData.StaggerText = FormatParryStaggerStack(InPawn);
+		statusViewData.GuardText = FormatGuardOverlay(InPawn);
+		statusViewData.MovementText = FormatActorMovement(InPawn);
+		statusViewData.RuntimeLODText = FormatRuntimeLODTier();
+		return statusViewData;
+	}
+
+	// ===== AI Text Helpers (Formatting) =====
 
 	FString FormatAIIntentState(const UBlackboardComponent* InBlackboardComp)
 	{
-		if (!IsValid(InBlackboardComp)) return MissingText();
+		if (!IsValid(InBlackboardComp)) return FormatMissingText();
 
 		const uint8 intentStateValue = InBlackboardComp->GetValueAsEnum(CAIKey::State::AIIntentState.KeyName);
-		if (intentStateValue >= static_cast<uint8>(EAIIntentState::Max)) return MissingText();
+		if (intentStateValue >= static_cast<uint8>(EAIIntentState::Max)) return FormatMissingText();
 
-		return CompactEnumText(UEnum::GetValueAsString(static_cast<EAIIntentState>(intentStateValue)));
+		return FormatCompactEnumText(UEnum::GetValueAsString(static_cast<EAIIntentState>(intentStateValue)));
 	}
 
 	FString FormatAITargetActor(const UBlackboardComponent* InBlackboardComp)
 	{
-		if (!IsValid(InBlackboardComp)) return MissingText();
+		if (!IsValid(InBlackboardComp)) return FormatMissingText();
 
 		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
-		return IsValid(targetObject) ? GetNameSafe(targetObject) : MissingText();
+		return IsValid(targetObject) ? GetNameSafe(targetObject) : FormatMissingText();
 	}
+
+	FString FormatBlackboardBool(const UBlackboardComponent* InBlackboardComp, FName InKeyName)
+	{
+		return IsValid(InBlackboardComp) ? FormatBoolText(InBlackboardComp->GetValueAsBool(InKeyName)) : FormatMissingText();
+	}
+
+	FString FormatBlackboardFloat(const UBlackboardComponent* InBlackboardComp, FName InKeyName)
+	{
+		return IsValid(InBlackboardComp) ? FString::Printf(TEXT("%.1f"), InBlackboardComp->GetValueAsFloat(InKeyName)) : FormatMissingText();
+	}
+
+	// ===== AI Query Helpers =====
 
 	bool HasAITargetActor(const UBlackboardComponent* InBlackboardComp)
 	{
@@ -173,16 +236,6 @@ namespace
 
 		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
 		return IsValid(targetObject);
-	}
-
-	FString FormatBlackboardBool(const UBlackboardComponent* InBlackboardComp, FName InKeyName)
-	{
-		return IsValid(InBlackboardComp) ? BoolText(InBlackboardComp->GetValueAsBool(InKeyName)) : MissingText();
-	}
-
-	FString FormatBlackboardFloat(const UBlackboardComponent* InBlackboardComp, FName InKeyName)
-	{
-		return IsValid(InBlackboardComp) ? FString::Printf(TEXT("%.1f"), InBlackboardComp->GetValueAsFloat(InKeyName)) : MissingText();
 	}
 
 	bool TryGetCapturedRecentAISummary(const UWorld* InWorld, const ACEnemy* InEnemy, bool bInHasSnapshot, FDebugOverlayAISummary& OutSummary)
@@ -208,69 +261,8 @@ namespace
 		return OutSummary.CaptureState == EDebugOverlayCaptureState::Captured;
 	}
 
-	FString FormatActorMovement(const APawn* InPawn)
-	{
-		const UCMovementComponent* movementComp = FindComponent<UCMovementComponent>(InPawn);
-		if (!IsValid(movementComp)) return MissingText();
-
-		return FString::Printf(
-			TEXT("Gait: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
-			*CompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
-			movementComp->GetCurrentSpeed(),
-			movementComp->GetCurrentDirection(),
-			*BoolText(movementComp->CanMove()),
-			*BoolText(movementComp->IsFalling()));
-	}
-
-	FString FormatActorHealth(const APawn* InPawn)
-	{
-		const UCHealthComponent* healthComp = FindComponent<UCHealthComponent>(InPawn);
-		if (!IsValid(healthComp)) return MissingText();
-
-		return FString::Printf(
-			TEXT("%.1f/%.1f (DeadState: %s)"),
-			healthComp->GetCurrentHP(),
-			healthComp->GetMaxHP(),
-			*CompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
-	}
-
-	FDebugOverlayEventLogViewData BuildEventLogViewData(
-		bool bInHasSnapshot,
-		const TArray<FDebugOverlayEventEntry>& InEvents,
-		const FString& InEventLogFilter,
-		int32 InEventLogLimit)
-	{
-		FDebugOverlayEventLogViewData eventLogViewData;
-		eventLogViewData.bHasSnapshot = bInHasSnapshot;
-		eventLogViewData.DisplayLimit = InEventLogLimit;
-		eventLogViewData.FilterText = InEventLogFilter;
-		eventLogViewData.Entries.Reserve(InEvents.Num());
-
-		for (const FDebugOverlayEventEntry& eventEntry : InEvents)
-		{
-			FDebugOverlayEventLogEntryViewData entryViewData;
-			entryViewData.CategoryText = eventEntry.Category;
-			entryViewData.EventNameText = eventEntry.EventName;
-			entryViewData.SummaryText = eventEntry.Summary;
-			eventLogViewData.Entries.Add(entryViewData);
-		}
-
-		return eventLogViewData;
-	}
-
-	FDebugOverlayActorStatusViewData BuildActorStatusViewData(const APawn* InPawn)
-	{
-		FDebugOverlayActorStatusViewData statusViewData;
-		statusViewData.StateText = FormatExecutionState(InPawn);
-		statusViewData.ActionText = FormatActiveAction(InPawn);
-		statusViewData.ReactionText = FormatActiveReaction(InPawn);
-		statusViewData.HealthText = FormatActorHealth(InPawn);
-		statusViewData.StaggerText = FormatParryStaggerStack(InPawn);
-		statusViewData.GuardText = FormatGuardOverlay(InPawn);
-		statusViewData.MovementText = FormatActorMovement(InPawn);
-		statusViewData.RuntimeLODText = FormatRuntimeLODTier();
-		return statusViewData;
-	}
+	// [Recent Execution]
+	// ===== Actor Panel ViewData =====
 
 	FDebugOverlayRecentExecutionViewData BuildActorRecentExecutionViewData(const UWorld* InWorld, bool bInHasSnapshot, const APawn* InPawn)
 	{
@@ -305,6 +297,9 @@ namespace
 		return recentExecutionViewData;
 	}
 
+	// [Current AI / Recent AI Event]
+	// ===== Enemy Panel ViewData =====
+
 	FDebugOverlayCurrentAIViewData BuildEnemyCurrentAIViewData(const ACEnemy* InEnemy)
 	{
 		FDebugOverlayCurrentAIViewData currentAIViewData;
@@ -325,7 +320,7 @@ namespace
 		currentAIViewData.ReturnHomeText = FormatBlackboardBool(blackboardComp, CAIKey::Navigation::bReturnHome.KeyName);
 		currentAIViewData.UsePatrolText = FormatBlackboardBool(blackboardComp, CAIKey::Patrol::bUsePatrol.KeyName);
 		currentAIViewData.HasLOSText = FormatBlackboardBool(blackboardComp, CAIKey::Perception::bHasLOS.KeyName);
-		currentAIViewData.DistanceToTargetText = bHasTarget ? FormatBlackboardFloat(blackboardComp, CAIKey::Metric::DistanceToTarget.KeyName) : MissingText();
+		currentAIViewData.DistanceToTargetText = bHasTarget ? FormatBlackboardFloat(blackboardComp, CAIKey::Metric::DistanceToTarget.KeyName) : FormatMissingText();
 		currentAIViewData.IsCombatActionText = FormatBlackboardBool(blackboardComp, CAIKey::Engage::bIsCombatAction.KeyName);
 		return currentAIViewData;
 	}
@@ -360,19 +355,22 @@ namespace
 		{
 			recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::Stale;
 			recentAIEventViewData.StaleAgeText = FormatBuilderAgeSeconds(eventAge);
-			recentAIEventViewData.TaskText = CompactEnumText(cachedSummary.SubState);
-			recentAIEventViewData.ResultText = CompactEnumText(cachedSummary.RequestResult);
-			recentAIEventViewData.RejectReasonText = CompactReasonText(cachedSummary.RejectReason);
+			recentAIEventViewData.TaskText = FormatCompactEnumText(cachedSummary.SubState);
+			recentAIEventViewData.ResultText = FormatCompactEnumText(cachedSummary.RequestResult);
+			recentAIEventViewData.RejectReasonText = FormatCompactReasonText(cachedSummary.RejectReason);
 			return recentAIEventViewData;
 		}
 
 		recentAIEventViewData.State = EDebugOverlayRecentAIEventViewState::Captured;
-		recentAIEventViewData.TaskText = CompactEnumText(cachedSummary.SubState);
-		recentAIEventViewData.ResultText = CompactEnumText(cachedSummary.RequestResult);
+		recentAIEventViewData.TaskText = FormatCompactEnumText(cachedSummary.SubState);
+		recentAIEventViewData.ResultText = FormatCompactEnumText(cachedSummary.RequestResult);
 		recentAIEventViewData.AgeText = FormatBuilderAgeSeconds(eventAge);
-		recentAIEventViewData.RejectReasonText = CompactReasonText(cachedSummary.RejectReason);
+		recentAIEventViewData.RejectReasonText = FormatCompactReasonText(cachedSummary.RejectReason);
 		return recentAIEventViewData;
 	}
+
+	// [Pannel_01]
+	// ===== Main Actor Panel ViewData =====
 
 	FDebugOverlayActorPanelViewData BuildActorPanelViewData(const TCHAR* InPanelName, const APawn* InPawn, const UWorld* InWorld, bool bInHasSnapshot)
 	{
@@ -383,17 +381,13 @@ namespace
 		return actorPanelViewData;
 	}
 
-	void BuildMainActorPanelData(
-		FDebugOverlayViewData& InOutViewData,
-		const APawn* InPlayerPawn,
-		const ACEnemy* InEnemy,
-		const FDebugOverlayFocusViewData& InEnemyFocus,
-		bool bInHasSnapshot,
-		const UWorld* InWorld)
+	void AppendPlayerPanelViewData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, bool bInHasSnapshot, const UWorld* InWorld)
 	{
-		InOutViewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
 		InOutViewData.ActorPanels.Add(BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorld, bInHasSnapshot));
+	}
 
+	void AppendEnemyPanelViewData(FDebugOverlayViewData& InOutViewData, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, bool bInHasSnapshot, const UWorld* InWorld)
+	{
 		FDebugOverlayActorPanelViewData enemyPanelViewData = BuildActorPanelViewData(TEXT("[Enemy]"), InEnemy, InWorld, bInHasSnapshot);
 		enemyPanelViewData.bIncludeFocus = true;
 		enemyPanelViewData.Focus = InEnemyFocus;
@@ -405,12 +399,39 @@ namespace
 		InOutViewData.ActorPanels.Add(enemyPanelViewData);
 	}
 
-	FDebugOverlayRecentSummaryBlockViewData BuildRecentSummaryBlockViewData(
-		const TCHAR* InBlockName,
-		const FString& InSummary,
-		EDebugOverlayCaptureState InCaptureState,
-		bool bInHasSnapshot,
-		bool bInAppendLeadingBlank)
+	void BuildMainActorPanelData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, bool bInHasSnapshot, const UWorld* InWorld)
+	{
+		AppendPlayerPanelViewData(InOutViewData, InPlayerPawn, bInHasSnapshot, InWorld);
+		AppendEnemyPanelViewData(InOutViewData, InEnemy, InEnemyFocus, bInHasSnapshot, InWorld);
+	}
+
+	// [Pannel_02]
+	// ===== EventLog ViewData =====
+
+	FDebugOverlayEventLogViewData BuildEventLogViewData(bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
+	{
+		FDebugOverlayEventLogViewData eventLogViewData;
+		eventLogViewData.bHasSnapshot = bInHasSnapshot;
+		eventLogViewData.DisplayLimit = InEventLogLimit;
+		eventLogViewData.FilterText = InEventLogFilter;
+		eventLogViewData.Entries.Reserve(InEvents.Num());
+
+		for (const FDebugOverlayEventEntry& eventEntry : InEvents)
+		{
+			FDebugOverlayEventLogEntryViewData entryViewData;
+			entryViewData.CategoryText = eventEntry.Category;
+			entryViewData.EventNameText = eventEntry.EventName;
+			entryViewData.SummaryText = eventEntry.Summary;
+			eventLogViewData.Entries.Add(entryViewData);
+		}
+
+		return eventLogViewData;
+	}
+
+	// [Pannel_03]
+	// ===== Interaction ViewData =====
+
+	FDebugOverlayRecentSummaryBlockViewData BuildRecentSummaryBlockViewData(const TCHAR* InBlockName, const FString& InSummary, EDebugOverlayCaptureState InCaptureState, bool bInHasSnapshot, bool bInAppendLeadingBlank)
 	{
 		FDebugOverlayRecentSummaryBlockViewData blockViewData;
 		blockViewData.HeaderText = InBlockName;
@@ -448,6 +469,8 @@ namespace
 	}
 }
 
+// ===== Public API =====
+
 FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus)
 {
 	FDebugOverlaySnapshot snapshot;
@@ -462,13 +485,8 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld,
 	FDebugOverlayViewData viewData;
 	viewData.ActorPanels.Reserve(2);
 
-	BuildMainActorPanelData(
-		viewData,
-		InViewerPawn,
-		InDisplayEnemy,
-		InEnemyFocus,
-		bHasSnapshot,
-		InWorld);
+	viewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
+	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, bHasSnapshot, InWorld);
 
 	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Pannel_02]");
 	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
