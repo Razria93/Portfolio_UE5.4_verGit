@@ -23,41 +23,42 @@ struct PORTFOLIO_API FDebugOverlayRecentCombatPair
 class PORTFOLIO_API FDebugOverlaySnapshotStore
 {
 public:
-	// Gate
+	// ===== Runtime Gates =====
+
 	static bool IsEnabled();
 	static bool IsCollecting();
 	static int32 GetEventLogDisplayLimit();
 	static FString GetEventLogFilter();
 
-public:
-	// Execution Record
+	// ===== Execution Record API =====
+
 	static void RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InSubject, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName);
 
-public:
-	// Combat Record
+	// ===== Combat Record API =====
+
 	static void RecordWeaponCollisionWindow(const UObject* InWorldContextObject, const AActor* InOwnerActor, const AActor* InWeaponActor, FName InCollisionName, int32 InHitWindowId, const FString& InHitWindowState, const TCHAR* InEventName, const TCHAR* InReason = nullptr);
 	static void RecordCombatTargetPacket(const UObject* InWorldContextObject, const FCombatSignalTargetPacket& InPacket, const TCHAR* InEventName);
 	static void RecordCombatResult(const UObject* InWorldContextObject, const AActor* InReceiverActor, const FCombatResultPacket& InPacket, const TCHAR* InEventName);
 
-public:
-	// AI Record
+	// ===== AI Record API =====
+
 	static void RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntentState, const FString& InSubState, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName);
 
-public:
-	// Event Log
+	// ===== Event Log API =====
+
 	static void AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const FString& InSubjectName);
 
-public:
-	// Snapshot Query
+	// ===== Snapshot Query API =====
+
 	static bool TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
 	static bool TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair);
 	static bool TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary);
 
-public:
-	// Lifecycle
+	// ===== Lifecycle API =====
+
 	static void Reset(const UObject* InWorldContextObject);
 	static void ResetAll();
 };

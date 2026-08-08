@@ -3,6 +3,8 @@
 #if !UE_BUILD_SHIPPING
 using namespace DebugOverlaySnapshotStoreInternals;
 
+// ===== Event Ring Write =====
+
 void EventRingAccess::AddEventInternal(FDebugOverlayWorldStore& InStore, const FDebugOverlayEventEntry& InEntry)
 {
 	if (InStore.EventRing.Num() < EventStoreCapacity)
@@ -24,6 +26,8 @@ void EventRingAccess::AddEventInternal(FDebugOverlayWorldStore& InStore, const F
 		TEXT("All"),
 		false);
 }
+
+// ===== Event Ring Read =====
 
 TArray<FDebugOverlayEventEntry> EventRingAccess::GetRecentEventsCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters)
 {

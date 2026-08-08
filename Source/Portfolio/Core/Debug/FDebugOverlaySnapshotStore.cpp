@@ -8,6 +8,8 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 
+// ===== Runtime Gates =====
+
 bool FDebugOverlaySnapshotStore::IsEnabled()
 {
 #if !UE_BUILD_SHIPPING
@@ -44,6 +46,8 @@ FString FDebugOverlaySnapshotStore::GetEventLogFilter()
 #endif
 }
 
+// ===== Execution Record API =====
+
 void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InSubject, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName)
 {
 #if !UE_BUILD_SHIPPING
@@ -54,16 +58,16 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
-	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("ExecutionDecision"));
+	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("ExecutionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
 		TEXT("Owner: %s | Domain: %s | Subject: %s | Decision: %s | Apply: %s | RejectReason: %s"),
-		*SnapshotRecordBuilders::GetDisplayNameOrNA(InOwnerActor),
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InDomain),
+		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InOwnerActor),
+		*SnapshotRecordBuilders::FormatCompactEnumText(InDomain),
 		InSubject.IsEmpty() ? TEXT("N/A") : *InSubject,
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InDecision),
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InApplyMode),
-		*SnapshotRecordBuilders::NormalizeReasonDisplayText(InRejectReason));
+		*SnapshotRecordBuilders::FormatCompactEnumText(InDecision),
+		*SnapshotRecordBuilders::FormatCompactEnumText(InApplyMode),
+		*SnapshotRecordBuilders::FormatCompactReasonText(InRejectReason));
 
 	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastExecution.FrameNumber = stamp.FrameNumber;
@@ -79,6 +83,8 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 #endif
 }
 
+// ===== Combat Record API =====
+
 void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWorldContextObject, const AActor* InOwnerActor, const AActor* InWeaponActor, FName InCollisionName, int32 InHitWindowId, const FString& InHitWindowState, const TCHAR* InEventName, const TCHAR* InReason)
 {
 #if !UE_BUILD_SHIPPING
@@ -88,14 +94,14 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	if (!store) return;
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
-	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("WeaponCollisionWindow"));
+	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("WeaponCollisionWindow"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
 		TEXT("State: %s | HitWindow: %d | Collision: %s | Reason: %s"),
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InHitWindowState),
+		*SnapshotRecordBuilders::FormatCompactEnumText(InHitWindowState),
 		InHitWindowId,
 		*InCollisionName.ToString(),
-		*SnapshotRecordBuilders::NormalizeReasonDisplayText(SnapshotRecordBuilders::ToReasonOrNone(InReason)));
+		*SnapshotRecordBuilders::FormatCompactReasonText(SnapshotRecordBuilders::FormatReasonOrNone(InReason)));
 
 	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
 #endif
@@ -111,16 +117,16 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
-	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("CombatTargetPacket"));
+	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("CombatTargetPacket"));
 	const FString sourceName = GetNameSafe(InPacket.Context.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.Context.TargetActor);
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString summary = FString::Printf(
 		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
-		*SnapshotRecordBuilders::GetDisplayNameOrNA(InPacket.Context.SourceActor),
-		*SnapshotRecordBuilders::GetDisplayNameOrNA(InPacket.Context.TargetActor),
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(outcome),
+		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.SourceActor),
+		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.TargetActor),
+		*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
 		InPacket.Result.RequestDamage,
 		InPacket.Result.MitigatedDamage,
 		InPacket.Result.FinalTakenDamage,
@@ -159,7 +165,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
-	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("CombatResult"));
+	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("CombatResult"));
 	const FString receiverName = GetNameSafe(InReceiverActor);
 	const FString sourceName = GetNameSafe(InPacket.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.TargetActor);
@@ -175,8 +181,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 		? FString::Printf(
 			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
-			*SnapshotRecordBuilders::GetDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::NormalizeEnumDisplayText(outcome),
+			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
+			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
 			requestDamage,
 			mitigatedDamage,
 			finalTakenDamage,
@@ -185,8 +191,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 		: FString::Printf(
 			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
-			*SnapshotRecordBuilders::GetDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::NormalizeEnumDisplayText(outcome),
+			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
+			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
 			InPacket.CommittedDamage,
 			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"));
 
@@ -212,6 +218,8 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 #endif
 }
 
+// ===== AI Record API =====
+
 void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntentState, const FString& InSubState, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName)
 {
 #if !UE_BUILD_SHIPPING
@@ -222,19 +230,19 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
-	const FString eventName = SnapshotRecordBuilders::ToSafeEventName(InEventName, TEXT("AICombatTask"));
+	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("AICombatTask"));
 	const FString controllerName = GetNameSafe(InAIController);
 	const FString pawnName = GetNameSafe(InOwnerPawn);
 	const FString targetName = GetNameSafe(InTargetActor);
 	const FString summary = FString::Printf(
 		TEXT("Controller: %s | Pawn: %s | Target: %s | IntentState: %s | SubState: %s | Result: %s | RejectReason: %s"),
-		*SnapshotRecordBuilders::GetDisplayNameOrNA(InAIController),
-		*SnapshotRecordBuilders::GetDisplayNameOrNA(InOwnerPawn),
-		*SnapshotRecordBuilders::GetDisplayNameOrNA(InTargetActor),
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InIntentState),
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InSubState),
-		*SnapshotRecordBuilders::NormalizeEnumDisplayText(InRequestResult),
-		*SnapshotRecordBuilders::NormalizeReasonDisplayText(InRejectReason));
+		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InAIController),
+		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InOwnerPawn),
+		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InTargetActor),
+		*SnapshotRecordBuilders::FormatCompactEnumText(InIntentState),
+		*SnapshotRecordBuilders::FormatCompactEnumText(InSubState),
+		*SnapshotRecordBuilders::FormatCompactEnumText(InRequestResult),
+		*SnapshotRecordBuilders::FormatCompactReasonText(InRejectReason));
 
 	store->Snapshot.LastAI.CaptureState = EDebugOverlayCaptureState::Captured;
 	store->Snapshot.LastAI.FrameNumber = stamp.FrameNumber;
@@ -255,6 +263,8 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("AI"), eventName, pawnName, pawnName, targetName, summary));
 #endif
 }
+
+// ===== Event Log API =====
 
 void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 {
@@ -304,6 +314,8 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForSu
 	return TArray<FDebugOverlayEventEntry>();
 #endif
 }
+
+// ===== Snapshot Query API =====
 
 bool FDebugOverlaySnapshotStore::TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot)
 {
@@ -360,6 +372,8 @@ bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldCon
 	return false;
 #endif
 }
+
+// ===== Lifecycle API =====
 
 void FDebugOverlaySnapshotStore::Reset(const UObject* InWorldContextObject)
 {

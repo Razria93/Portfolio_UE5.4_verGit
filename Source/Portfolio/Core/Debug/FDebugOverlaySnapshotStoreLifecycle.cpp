@@ -5,10 +5,14 @@
 #if !UE_BUILD_SHIPPING
 using namespace DebugOverlaySnapshotStoreInternals;
 
+// ===== Store State =====
+
 namespace DebugOverlaySnapshotStoreInternals
 {
 	TMap<TObjectKey<UWorld>, FDebugOverlayWorldStore> GStoresByWorld;
 }
+
+// ===== World Cleanup Delegate =====
 
 namespace
 {
@@ -27,6 +31,8 @@ namespace
 	}
 }
 
+// ===== World Resolution =====
+
 UWorld* StoreLifecycle::ResolveWorld(const UObject* InWorldContextObject)
 {
 	if (!IsValid(InWorldContextObject)) return nullptr;
@@ -39,12 +45,7 @@ UWorld* StoreLifecycle::ResolveWorld(const UObject* InWorldContextObject)
 	return InWorldContextObject->GetWorld();
 }
 
-void StoreLifecycle::RemoveStoreForWorld(UWorld* InWorld)
-{
-	if (!InWorld) return;
-
-	GStoresByWorld.Remove(TObjectKey<UWorld>(InWorld));
-}
+// ===== Store Lookup =====
 
 FDebugOverlayWorldStore* StoreLifecycle::FindStore(const UObject* InWorldContextObject)
 {
@@ -62,6 +63,15 @@ FDebugOverlayWorldStore* StoreLifecycle::FindOrAddStore(const UObject* InWorldCo
 	EnsureWorldCleanupDelegateRegistered();
 	return &GStoresByWorld.FindOrAdd(TObjectKey<UWorld>(world));
 }
+
+void StoreLifecycle::RemoveStoreForWorld(UWorld* InWorld)
+{
+	if (!InWorld) return;
+
+	GStoresByWorld.Remove(TObjectKey<UWorld>(InWorld));
+}
+
+// ===== Store Reset =====
 
 void StoreLifecycle::ResetAllStores()
 {

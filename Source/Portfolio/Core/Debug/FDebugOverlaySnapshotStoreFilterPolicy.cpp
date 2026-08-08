@@ -5,6 +5,8 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
+	// ===== CVars =====
+
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnabled(
 		TEXT("Portfolio.DebugOverlay.Enabled"),
 		0,
@@ -47,6 +49,8 @@ namespace
 		TEXT("Hide debug overlay collision window event log entries. 0: show all, 1: hide collision window events."),
 		ECVF_Default);
 
+	// ===== Summary Parsing =====
+
 	FString ExtractSummaryFieldValue(const FString& InSummary, const FString& InFieldName)
 	{
 		TArray<FString> summaryParts;
@@ -75,6 +79,8 @@ namespace
 
 		return FString();
 	}
+
+	// ===== Display Filter Helpers =====
 
 	bool IsExecutionNoiseEvent(const FDebugOverlayEventEntry& InEntry)
 	{
@@ -129,6 +135,8 @@ namespace
 		return false;
 	}
 
+	// ===== Subject Role Helpers =====
+
 	bool IsTargetPacketEvent(const FDebugOverlayEventEntry& InEntry)
 	{
 		return InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
@@ -163,6 +171,8 @@ namespace
 	}
 }
 
+// ===== Runtime Config Accessors =====
+
 bool SnapshotStoreConfig::IsEnabled()
 {
 	return CVarDebugOverlayEnabled.GetValueOnGameThread() != 0;
@@ -171,6 +181,16 @@ bool SnapshotStoreConfig::IsEnabled()
 bool SnapshotStoreConfig::IsCollecting()
 {
 	return CVarDebugOverlayCollect.GetValueOnGameThread() != 0;
+}
+
+int32 SnapshotStoreConfig::GetEventLogDisplayLimitRaw()
+{
+	return CVarDebugOverlayEventLogLimit.GetValueOnGameThread();
+}
+
+FString SnapshotStoreConfig::GetEventLogFilterRaw()
+{
+	return CVarDebugOverlayEventLogFilter.GetValueOnGameThread();
 }
 
 bool SnapshotStoreConfig::ShouldHideNoiseEvents()
@@ -183,15 +203,7 @@ bool SnapshotStoreConfig::ShouldHideCollisionWindowEvents()
 	return CVarDebugOverlayHideCollisionWindowEvents.GetValueOnGameThread() != 0;
 }
 
-int32 SnapshotStoreConfig::GetEventLogDisplayLimitRaw()
-{
-	return CVarDebugOverlayEventLogLimit.GetValueOnGameThread();
-}
-
-FString SnapshotStoreConfig::GetEventLogFilterRaw()
-{
-	return CVarDebugOverlayEventLogFilter.GetValueOnGameThread();
-}
+// ===== Event Filter Policy =====
 
 FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 {
@@ -213,17 +225,17 @@ FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 	return TEXT("All");
 }
 
+FString EventFilterPolicy::GetCanonicalEventLogFilter()
+{
+	return NormalizeEventLogFilter(SnapshotStoreConfig::GetEventLogFilterRaw());
+}
+
 int32 EventFilterPolicy::GetClampedEventLogDisplayLimit()
 {
 	return FMath::Clamp(
 		SnapshotStoreConfig::GetEventLogDisplayLimitRaw(),
 		0,
 		DebugOverlaySnapshotStoreInternals::MaxEventLogDisplayLimit);
-}
-
-FString EventFilterPolicy::GetCanonicalEventLogFilter()
-{
-	return NormalizeEventLogFilter(SnapshotStoreConfig::GetEventLogFilterRaw());
 }
 
 bool EventFilterPolicy::ShouldIncludeEventForDisplay(const FDebugOverlayEventEntry& InEntry, const FString& InFilter, bool bApplyDisplayFilters)
@@ -247,6 +259,8 @@ bool EventFilterPolicy::ShouldIncludeEventForDisplay(const FDebugOverlayEventEnt
 	if (bApplyDisplayFilters && IsEventExcludedByDisplayFilters(InEntry)) return false;
 	return true;
 }
+
+// ===== Subject Matching =====
 
 bool EventFilterPolicy::DoesEventMatchSubject(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
 {

@@ -8,8 +8,12 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
+	// ===== Constants =====
+
 	constexpr TCHAR NoneText[] = TEXT("None");
 	constexpr TCHAR NotAvailableText[] = TEXT("N/A");
+
+	// ===== Time Helpers =====
 
 	uint64 GetCurrentFrameNumber()
 	{
@@ -22,22 +26,24 @@ namespace
 	}
 }
 
-FString SnapshotRecordBuilders::ToSafeEventName(const TCHAR* InEventName, const TCHAR* InFallback)
+// ===== Text Helpers =====
+
+FString SnapshotRecordBuilders::FormatEventNameOrFallback(const TCHAR* InEventName, const TCHAR* InFallback)
 {
 	return InEventName ? FString(InEventName) : FString(InFallback);
 }
 
-FString SnapshotRecordBuilders::ToReasonOrNone(const TCHAR* InReason)
-{
-	return InReason ? FString(InReason) : FString(NoneText);
-}
-
-FString SnapshotRecordBuilders::GetDisplayNameOrNA(const UObject* InObject)
+FString SnapshotRecordBuilders::FormatDisplayNameOrNA(const UObject* InObject)
 {
 	return IsValid(InObject) ? GetNameSafe(InObject) : FString(NotAvailableText);
 }
 
-FString SnapshotRecordBuilders::NormalizeEnumDisplayText(const FString& InValue)
+FString SnapshotRecordBuilders::FormatReasonOrNone(const TCHAR* InReason)
+{
+	return InReason ? FString(InReason) : FString(NoneText);
+}
+
+FString SnapshotRecordBuilders::FormatCompactEnumText(const FString& InValue)
 {
 	int32 separatorIndex = INDEX_NONE;
 	return InValue.FindLastChar(TEXT(':'), separatorIndex)
@@ -48,10 +54,12 @@ FString SnapshotRecordBuilders::NormalizeEnumDisplayText(const FString& InValue)
 		: InValue;
 }
 
-FString SnapshotRecordBuilders::NormalizeReasonDisplayText(const FString& InValue)
+FString SnapshotRecordBuilders::FormatCompactReasonText(const FString& InValue)
 {
-	return NormalizeEnumDisplayText(InValue.IsEmpty() ? FString(NoneText) : InValue);
+	return FormatCompactEnumText(InValue.IsEmpty() ? FString(NoneText) : InValue);
 }
+
+// ===== Combat Helpers =====
 
 FString SnapshotRecordBuilders::ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket)
 {
@@ -65,13 +73,15 @@ FString SnapshotRecordBuilders::ResolveCombatResultSourceName(const AActor* InRe
 		return GetNameSafe(InPacket.TargetActor);
 	}
 
-	return GetDisplayNameOrNA(InPacket.SourceActor);
+	return FormatDisplayNameOrNA(InPacket.SourceActor);
 }
 
 bool SnapshotRecordBuilders::IsSameCombatPair(const FDebugOverlayCombatSummary& InSummary, const FString& InSourceName, const FString& InTargetName)
 {
 	return InSummary.SourceName == InSourceName && InSummary.TargetName == InTargetName;
 }
+
+// ===== Snapshot Stamp =====
 
 DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp SnapshotRecordBuilders::MakeSnapshotStamp(const UWorld* InWorld)
 {
@@ -80,6 +90,8 @@ DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp SnapshotRecordBui
 	stamp.WorldTimeSeconds = GetWorldTimeSeconds(InWorld);
 	return stamp;
 }
+
+// ===== Event Entry Builders =====
 
 FDebugOverlayEventEntry SnapshotRecordBuilders::MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
 {
@@ -97,6 +109,8 @@ FDebugOverlayEventEntry SnapshotRecordBuilders::MakeEventEntry(const UWorld* InW
 
 	return entry;
 }
+
+// ===== Recent Combat Pair =====
 
 void SnapshotRecordBuilders::UpdateRecentCombatPair(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName)
 {
