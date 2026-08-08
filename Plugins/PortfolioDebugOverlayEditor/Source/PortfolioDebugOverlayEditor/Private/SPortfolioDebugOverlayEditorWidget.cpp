@@ -4,6 +4,7 @@
 #include "FPortfolioDebugOverlayEditorFocusCommandBridge.h"
 
 #include "Math/UnrealMathUtility.h"
+#include "Styling/AppStyle.h"
 #include "Styling/SlateColor.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
@@ -49,88 +50,29 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 8.f)
 				[
-					MakeBoolCVarRow(
-						LOCTEXT("EnabledLabel", "Enabled"),
-						LOCTEXT("EnabledHelp", "Draw the debug overlay HUD."),
-						CVarAccess::GetEnabledCVarName())
+					MakeTopLevelSection(LOCTEXT("OverlayOptionsTitle", "Overlay Options"), MakeOverlayOptionsSection())
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
+					MakeTopLevelSection(LOCTEXT("TargetingDisplayOptionsTitle", "Targeting Display Options"), MakeTargetingDebugSection())
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				[
-					MakeBoolCVarRow(
-						LOCTEXT("CollectLabel", "Collect"),
-						LOCTEXT("CollectHelp", "Collect future debug overlay snapshots and events."),
-						CVarAccess::GetCollectCVarName())
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					MakeEventLogFilterRow()
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					MakeEventLogLimitRow()
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 8.f)
-				[
-					SNew(SSeparator)
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					MakeBoolCVarRow(
-						LOCTEXT("HideNoiseEventsLabel", "Hide Noise Events"),
-						LOCTEXT("HideNoiseEventsHelp", "Hide reject/ignore noise from the EventLog display."),
-						CVarAccess::GetHideNoiseEventsCVarName())
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					MakeBoolCVarRow(
-						LOCTEXT("HideCollisionWindowEventsLabel", "Hide Collision Window Events"),
-						LOCTEXT("HideCollisionWindowEventsHelp", "Hide collision window lifecycle events from the EventLog display."),
-						CVarAccess::GetHideCollisionWindowEventsCVarName())
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 12.f, 0.f, 0.f)
-				[
-					MakeRefreshRow()
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 12.f, 0.f, 8.f)
-				[
-					SNew(SSeparator)
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					MakeTargetingDebugSection()
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 12.f, 0.f, 8.f)
-				[
-					SNew(SSeparator)
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					MakeFocusCommandSection()
+					MakeFocusOptionsSection()
 				]
 			]
 		]
 	];
 }
 
-// ===== Targeting Debug =====
+// ===== Section Layout =====
 
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDebugSection()
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTopLevelSection(const FText& InTitle, const TSharedRef<SWidget>& InContent) const
 {
 	return SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
@@ -138,15 +80,68 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDebugSectio
 		.Padding(0.f, 0.f, 0.f, 6.f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("TargetingSectionTitle", "[Targeting]"))
+			.Text(InTitle)
+			.Font(FAppStyle::GetFontStyle("BoldFont"))
 		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(8.f)
+			[
+				InContent
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeSectionCard(const FText& InTitle, const TSharedRef<SWidget>& InContent) const
+{
+	return SNew(SBorder)
+		.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+		.Padding(8.f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.f, 0.f, 0.f, 6.f)
+			[
+				SNew(STextBlock)
+				.Text(InTitle)
+				.Font(FAppStyle::GetFontStyle("BoldFont"))
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				InContent
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeOverlayOptionsSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("EnabledLabel", "Enabled"), LOCTEXT("EnabledHelp", "Draw the debug overlay HUD."), CVarAccess::GetEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CollectLabel", "Collect"), LOCTEXT("CollectHelp", "Collect future debug overlay snapshots and events."), CVarAccess::GetCollectCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeEventLogFilterRow()]
+		+ SVerticalBox::Slot().AutoHeight()[MakeEventLogLimitRow()]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("HideNoiseEventsLabel", "Hide Noise Events"), LOCTEXT("HideNoiseEventsHelp", "Hide reject/ignore noise from the EventLog display."), CVarAccess::GetHideNoiseEventsCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("HideCollisionWindowEventsLabel", "Hide Collision Window Events"), LOCTEXT("HideCollisionWindowEventsHelp", "Hide collision window lifecycle events from the EventLog display."), CVarAccess::GetHideCollisionWindowEventsCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 12.f, 0.f, 0.f)[MakeRefreshRow()];
+}
+
+// ===== Targeting Debug =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDebugSection()
+{
+	return SNew(SVerticalBox)
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingEnabledLabel", "Enabled"), LOCTEXT("TargetingEnabledHelp", "Enable targeting debug visualization and detail output."), CVarAccess::GetTargetingEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingRangeLabel", "Range Sphere"), LOCTEXT("TargetingRangeHelp", "Draw the maximum targeting range around the viewpoint."), CVarAccess::GetTargetingDrawRangeSphereCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingSphereLabel", "Selected Target Sphere"), LOCTEXT("TargetingSphereHelp", "Draw a sphere around the current player target."), CVarAccess::GetTargetingDrawSelectedTargetSphereCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLineLabel", "View Line"), LOCTEXT("TargetingLineHelp", "Draw a line from the viewpoint to the current player target."), CVarAccess::GetTargetingDrawViewLineCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingTextLabel", "World Debug Text"), LOCTEXT("TargetingTextHelp", "Draw distance, Dot and score at the current player target."), CVarAccess::GetTargetingDrawDebugTextCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingDetailsLabel", "Overlay Details"), LOCTEXT("TargetingDetailsHelp", "Show targeting score details in the Debug Overlay."), CVarAccess::GetTargetingShowOverlayDetailsCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLiveSyncLabel", "Live Sync Player Target"), LOCTEXT("TargetingLiveSyncHelp", "Update PlayerTarget Focus continuously; disabling it freezes the last synced target."), CVarAccess::GetTargetingLiveSyncPlayerTargetCVarName())];
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingDetailsLabel", "Overlay Details"), LOCTEXT("TargetingDetailsHelp", "Show targeting score details in the Debug Overlay."), CVarAccess::GetTargetingShowOverlayDetailsCVarName())];
 }
 
 // ===== CVar Rows =====
@@ -441,45 +436,28 @@ void SPortfolioDebugOverlayEditorWidget::RefreshEventLogFilterSelection()
 	}
 }
 
-// ===== Focus Commands =====
+// ===== Focus Options =====
 
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusCommandSection()
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusOptionsSection()
 {
 	return SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 4.f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("FocusSectionLabel", "Focus"))
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
 		.Padding(0.f, 0.f, 0.f, 6.f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("FocusSectionHelp", "Runs existing debug overlay focus console commands during PIE. Check the HUD for the selection result."))
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+			.Text(LOCTEXT("FocusOptionsTitle", "Focus Options"))
+			.Font(FAppStyle::GetFontStyle("BoldFont"))
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
+		.Padding(0.f, 0.f, 0.f, 8.f)
 		[
-			MakeNearestFocusRadiusRow()
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0.f, 0.f, 0.f, 2.f)
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.FillWidth(1.f)
-				.Padding(0.f, 0.f, 4.f, 0.f)
+			MakeSectionCard(
+				LOCTEXT("NearestFocusGroupTitle", "Nearest"),
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()[MakeNearestFocusRadiusRow()]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
 				[
 					SNew(SButton)
 					.Text(LOCTEXT("SelectNearestFocusButton", "Select Nearest Focus"))
@@ -488,66 +466,91 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusCommandSection(
 						LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectNearestFocusCommand();
 						return FReply::Handled();
 					})
-				]
-				+ SHorizontalBox::Slot()
-				.FillWidth(1.f)
-				.Padding(4.f, 0.f, 0.f, 0.f)
+				])
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 8.f)
+		[
+			MakeSectionCard(
+				LOCTEXT("TargetingFocusGroupTitle", "Targeting"),
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLiveSyncLabel", "Live Sync Player Target"), LOCTEXT("TargetingLiveSyncHelp", "Update PlayerTarget Focus continuously; disabling it freezes the last synced target."), CVarAccess::GetTargetingLiveSyncPlayerTargetCVarName())]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
 				[
 					SNew(SButton)
-					.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Focus"))
+					.Text(LOCTEXT("SelectPlayerTargetFocusButton", "Select Player Target Focus"))
 					.OnClicked_Lambda([this]()
 					{
-						LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectOutlinerFocusCommand();
+						LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectPlayerTargetFocusCommand();
+						return FReply::Handled();
+					})
+				])
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 8.f)
+		[
+			MakeSectionCard(
+				LOCTEXT("SelectionFocusGroupTitle", "Selection"),
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("FocusSectionHelp", "Runs existing focus commands during PIE. Check the HUD for the selection result."))
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 2.f)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().FillWidth(1.f).Padding(0.f, 0.f, 4.f, 0.f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Focus"))
+						.OnClicked_Lambda([this]()
+						{
+							LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectOutlinerFocusCommand();
+							return FReply::Handled();
+						})
+					]
+					+ SHorizontalBox::Slot().FillWidth(1.f).Padding(4.f, 0.f, 0.f, 0.f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
+						.OnClicked_Lambda([this]()
+						{
+							LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectRecentCombatFocusCommand();
+							return FReply::Handled();
+						})
+					]
+				]
+				)
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 8.f)
+		[
+			MakeSectionCard(
+				LOCTEXT("ClearFocusGroupTitle", "Clear"),
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("ClearFocusButton", "Clear Focus"))
+					.OnClicked_Lambda([this]()
+					{
+						LastFocusCommandStatus = FocusCommandBridge::ExecuteClearFocusCommand();
 						return FReply::Handled();
 					})
 				]
-			]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 10.f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
-				.OnClicked_Lambda([this]()
-				{
-					LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectRecentCombatFocusCommand();
-					return FReply::Handled();
-			})
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
+				[
+					SNew(STextBlock)
+					.Text_Lambda([this]() { return LastFocusCommandStatus; })
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				])
 		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 10.f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("SelectPlayerTargetFocusButton", "Select Player Target Focus"))
-			.OnClicked_Lambda([this]()
-			{
-				LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectPlayerTargetFocusCommand();
-				return FReply::Handled();
-			})
-		]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("ClearFocusButton", "Clear Focus"))
-				.OnClicked_Lambda([this]()
-				{
-					LastFocusCommandStatus = FocusCommandBridge::ExecuteClearFocusCommand();
-					return FReply::Handled();
-				})
-			]
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text_Lambda([this]()
-			{
-				return LastFocusCommandStatus;
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		];
+		;
 }
 
 #undef LOCTEXT_NAMESPACE

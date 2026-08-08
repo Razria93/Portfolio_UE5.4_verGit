@@ -28,7 +28,11 @@ private:
 	TSharedRef<SWidget> MakeEventLogFilterRow();
 	TSharedRef<SWidget> MakeEventLogLimitRow() const;
 	TSharedRef<SWidget> MakeNearestFocusRadiusRow() const;
+	TSharedRef<SWidget> MakeOverlayOptionsSection();
 	TSharedRef<SWidget> MakeTargetingDebugSection();
+	TSharedRef<SWidget> MakeFocusOptionsSection();
+	TSharedRef<SWidget> MakeTopLevelSection(const FText& InTitle, const TSharedRef<SWidget>& InContent) const;
+	TSharedRef<SWidget> MakeSectionCard(const FText& InTitle, const TSharedRef<SWidget>& InContent) const;
 
 	// ===== Status / Refresh =====
 
@@ -37,5 +41,4 @@ private:
 
 	// ===== Focus Commands =====
 
-	TSharedRef<SWidget> MakeFocusCommandSection();
 };
