@@ -30,6 +30,8 @@
 
 namespace
 {
+	// ===== Constants =====
+
 	static const FName DebugOverlayTabName(TEXT("PortfolioDebugOverlayEditor"));
 
 	static constexpr const TCHAR* DebugOverlayEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enabled");
@@ -43,6 +45,8 @@ namespace
 	static constexpr const TCHAR* DebugOverlaySelectRecentCombatTargetCommand = TEXT("DebugOverlaySelectRecentCombatTarget");
 	static constexpr const TCHAR* DebugOverlayClearTargetCommand = TEXT("DebugOverlayClearTarget");
 	static constexpr const TCHAR* DebugOverlaySelectOutlinerTargetCommand = TEXT("DebugOverlaySelectOutlinerTarget");
+
+	// ===== CVar Access =====
 
 	IConsoleVariable* FindDebugOverlayCVar(const TCHAR* InName)
 	{
@@ -121,6 +125,15 @@ namespace
 		}
 	}
 
+	FText GetCVarAvailabilityText(const TCHAR* InName)
+	{
+		return FindDebugOverlayCVar(InName)
+			? FText::GetEmpty()
+			: LOCTEXT("UnavailableCVar", "Unavailable");
+	}
+
+	// ===== EventLog Filter Helpers =====
+
 	bool IsKnownEventLogFilter(const FString& InValue)
 	{
 		return InValue.Equals(TEXT("All"), ESearchCase::IgnoreCase)
@@ -129,12 +142,7 @@ namespace
 			|| InValue.Equals(TEXT("AI"), ESearchCase::IgnoreCase);
 	}
 
-	FText GetCVarAvailabilityText(const TCHAR* InName)
-	{
-		return FindDebugOverlayCVar(InName)
-			? FText::GetEmpty()
-			: LOCTEXT("UnavailableCVar", "Unavailable");
-	}
+	// ===== PIE World Access =====
 
 	UWorld* FindDebugOverlayPIEWorld()
 	{
@@ -151,7 +159,27 @@ namespace
 		return nullptr;
 	}
 
-	FText ExecuteDebugOverlayTargetCommand(const TCHAR* InCommand, const FText& InSuccessStatus)
+	// ===== Editor Selection =====
+
+	AActor* GetFirstSelectedEditorActor()
+	{
+		if (!GEditor) return nullptr;
+
+		USelection* selectedActors = GEditor->GetSelectedActors();
+		if (!IsValid(selectedActors) || selectedActors->Num() <= 0) return nullptr;
+
+		for (FSelectionIterator it(*selectedActors); it; ++it)
+		{
+			AActor* actor = Cast<AActor>(*it);
+			if (IsValid(actor)) return actor;
+		}
+
+		return nullptr;
+	}
+
+	// ===== Focus Command Bridge =====
+
+	FText ExecuteDebugOverlayFocusCommand(const TCHAR* InCommand, const FText& InSuccessStatus)
 	{
 		UWorld* world = FindDebugOverlayPIEWorld();
 		if (!IsValid(world))
@@ -169,25 +197,9 @@ namespace
 		return InSuccessStatus;
 	}
 
-	AActor* GetSingleSelectedEditorActor()
+	FText ExecuteDebugOverlayOutlinerFocusCommand()
 	{
-		if (!GEditor) return nullptr;
-
-		USelection* selectedActors = GEditor->GetSelectedActors();
-		if (!IsValid(selectedActors) || selectedActors->Num() <= 0) return nullptr;
-
-		for (FSelectionIterator it(*selectedActors); it; ++it)
-		{
-			AActor* actor = Cast<AActor>(*it);
-			if (IsValid(actor)) return actor;
-		}
-
-		return nullptr;
-	}
-
-	FText ExecuteDebugOverlayOutlinerTargetCommand()
-	{
-		AActor* selectedActor = GetSingleSelectedEditorActor();
+		AActor* selectedActor = GetFirstSelectedEditorActor();
 		if (!IsValid(selectedActor))
 		{
 			return LOCTEXT("NoEditorActorSelected", "No editor actor selected");
@@ -195,10 +207,12 @@ namespace
 
 		const FString actorName = selectedActor->GetName();
 		const FString command = FString::Printf(TEXT("%s %s"), DebugOverlaySelectOutlinerTargetCommand, *actorName);
-		return ExecuteDebugOverlayTargetCommand(
+		return ExecuteDebugOverlayFocusCommand(
 			*command,
 			FText::Format(LOCTEXT("SelectOutlinerActorSent", "Last Command: SelectOutlinerTarget | Actor: {0}"), FText::FromString(actorName)));
 	}
+
+	// ===== Editor Widget =====
 
 	class SPortfolioDebugOverlayEditorWidget : public SCompoundWidget
 	{
@@ -302,10 +316,14 @@ namespace
 		}
 
 	private:
+		// ===== State =====
+
 		TArray<TSharedPtr<FString>> EventLogFilterOptions;
 		TSharedPtr<FString> SelectedEventLogFilter;
 		TSharedPtr<SComboBox<TSharedPtr<FString>>> EventLogFilterComboBox;
 		FText LastFocusCommandStatus;
+
+		// ===== CVar Rows =====
 
 		TSharedRef<SWidget> MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName) const
 		{
@@ -487,43 +505,6 @@ namespace
 				];
 		}
 
-		TSharedRef<SWidget> MakeRefreshRow()
-		{
-			return SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.FillWidth(1.f)
-				[
-					SNew(STextBlock)
-					.Text_Lambda([]()
-					{
-						const bool bHasAllRequiredCVars =
-							FindDebugOverlayCVar(DebugOverlayEnabledCVarName)
-							&& FindDebugOverlayCVar(DebugOverlayCollectCVarName)
-							&& FindDebugOverlayCVar(DebugOverlayEventLogFilterCVarName)
-							&& FindDebugOverlayCVar(DebugOverlayEventLogLimitCVarName)
-							&& FindDebugOverlayCVar(DebugOverlayNearestTargetRadiusCVarName)
-							&& FindDebugOverlayCVar(DebugOverlayHideNoiseEventsCVarName)
-							&& FindDebugOverlayCVar(DebugOverlayHideCollisionWindowEventsCVarName);
-
-						return bHasAllRequiredCVars
-							? LOCTEXT("AllCVarsAvailable", "Debug Overlay CVars are available.")
-							: LOCTEXT("SomeCVarsUnavailable", "Some Debug Overlay CVars are unavailable. Start the game module or PIE if needed.");
-					})
-					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				[
-					SNew(SButton)
-					.Text(LOCTEXT("RefreshButton", "Refresh"))
-					.OnClicked_Lambda([this]()
-					{
-						RefreshEventLogFilterSelection();
-						return FReply::Handled();
-					})
-				];
-		}
-
 		TSharedRef<SWidget> MakeNearestTargetRadiusRow() const
 		{
 			return SNew(SHorizontalBox)
@@ -584,6 +565,67 @@ namespace
 				];
 		}
 
+		// ===== Status / Refresh =====
+
+		TSharedRef<SWidget> MakeRefreshRow()
+		{
+			return SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.f)
+				[
+					SNew(STextBlock)
+					.Text_Lambda([]()
+					{
+						const bool bHasAllRequiredCVars =
+							FindDebugOverlayCVar(DebugOverlayEnabledCVarName)
+							&& FindDebugOverlayCVar(DebugOverlayCollectCVarName)
+							&& FindDebugOverlayCVar(DebugOverlayEventLogFilterCVarName)
+							&& FindDebugOverlayCVar(DebugOverlayEventLogLimitCVarName)
+							&& FindDebugOverlayCVar(DebugOverlayNearestTargetRadiusCVarName)
+							&& FindDebugOverlayCVar(DebugOverlayHideNoiseEventsCVarName)
+							&& FindDebugOverlayCVar(DebugOverlayHideCollisionWindowEventsCVarName);
+
+						return bHasAllRequiredCVars
+							? LOCTEXT("AllCVarsAvailable", "Debug Overlay CVars are available.")
+							: LOCTEXT("SomeCVarsUnavailable", "Some Debug Overlay CVars are unavailable. Start the game module or PIE if needed.");
+					})
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("RefreshButton", "Refresh"))
+					.OnClicked_Lambda([this]()
+					{
+						RefreshEventLogFilterSelection();
+						return FReply::Handled();
+					})
+				];
+		}
+
+		void RefreshEventLogFilterSelection()
+		{
+			const FString currentValue = GetDebugOverlayStringCVar(DebugOverlayEventLogFilterCVarName);
+			SelectedEventLogFilter.Reset();
+
+			for (const TSharedPtr<FString>& option : EventLogFilterOptions)
+			{
+				if (option.IsValid() && option->Equals(currentValue, ESearchCase::IgnoreCase))
+				{
+					SelectedEventLogFilter = option;
+					break;
+				}
+			}
+
+			if (EventLogFilterComboBox.IsValid())
+			{
+				EventLogFilterComboBox->SetSelectedItem(SelectedEventLogFilter);
+			}
+		}
+
+		// ===== Focus Commands =====
+
 		TSharedRef<SWidget> MakeFocusCommandSection()
 		{
 			return SNew(SVerticalBox)
@@ -626,7 +668,7 @@ namespace
 							.Text(LOCTEXT("SelectNearestFocusButton", "Select Nearest Focus"))
 							.OnClicked_Lambda([this]()
 							{
-								LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
+								LastFocusCommandStatus = ExecuteDebugOverlayFocusCommand(
 									DebugOverlaySelectNearestTargetCommand,
 									LOCTEXT("SelectNearestTargetSent", "Last Command: SelectNearestTarget"));
 								return FReply::Handled();
@@ -640,7 +682,7 @@ namespace
 							.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Focus"))
 							.OnClicked_Lambda([this]()
 							{
-								LastFocusCommandStatus = ExecuteDebugOverlayOutlinerTargetCommand();
+								LastFocusCommandStatus = ExecuteDebugOverlayOutlinerFocusCommand();
 								return FReply::Handled();
 							})
 						]
@@ -653,7 +695,7 @@ namespace
 						.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
 						.OnClicked_Lambda([this]()
 						{
-							LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
+							LastFocusCommandStatus = ExecuteDebugOverlayFocusCommand(
 								DebugOverlaySelectRecentCombatTargetCommand,
 								LOCTEXT("SelectRecentCombatTargetSent", "Last Command: SelectRecentCombatTarget"));
 							return FReply::Handled();
@@ -666,7 +708,7 @@ namespace
 						.Text(LOCTEXT("ClearFocusButton", "Clear Focus"))
 						.OnClicked_Lambda([this]()
 						{
-							LastFocusCommandStatus = ExecuteDebugOverlayTargetCommand(
+							LastFocusCommandStatus = ExecuteDebugOverlayFocusCommand(
 								DebugOverlayClearTargetCommand,
 								LOCTEXT("ClearTargetSent", "Last Command: ClearTarget"));
 							return FReply::Handled();
@@ -684,28 +726,10 @@ namespace
 					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 				];
 		}
-
-		void RefreshEventLogFilterSelection()
-		{
-			const FString currentValue = GetDebugOverlayStringCVar(DebugOverlayEventLogFilterCVarName);
-			SelectedEventLogFilter.Reset();
-
-			for (const TSharedPtr<FString>& option : EventLogFilterOptions)
-			{
-				if (option.IsValid() && option->Equals(currentValue, ESearchCase::IgnoreCase))
-				{
-					SelectedEventLogFilter = option;
-					break;
-				}
-			}
-
-			if (EventLogFilterComboBox.IsValid())
-			{
-				EventLogFilterComboBox->SetSelectedItem(SelectedEventLogFilter);
-			}
-		}
 	};
 }
+
+// ===== Module Lifecycle =====
 
 void FPortfolioDebugOverlayEditorModule::StartupModule()
 {
@@ -726,6 +750,8 @@ void FPortfolioDebugOverlayEditorModule::ShutdownModule()
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(DebugOverlayTabName);
 }
+
+// ===== Menu Registration =====
 
 void FPortfolioDebugOverlayEditorModule::RegisterMenus()
 {
@@ -759,6 +785,8 @@ void FPortfolioDebugOverlayEditorModule::RegisterMenus()
 	toolbarEntry.StyleNameOverride = TEXT("AssetEditorToolbar");
 	toolbarSection.AddEntry(toolbarEntry);
 }
+
+// ===== Tab Spawning =====
 
 void FPortfolioDebugOverlayEditorModule::OpenDebugOverlayPanel()
 {

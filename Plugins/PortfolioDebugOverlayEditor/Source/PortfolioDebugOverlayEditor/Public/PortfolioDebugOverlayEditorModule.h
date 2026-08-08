@@ -13,7 +13,12 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
+	// ===== Menu Registration =====
+
 	void RegisterMenus();
+
+	// ===== Tab Spawning =====
+
 	void OpenDebugOverlayPanel();
 	TSharedRef<SDockTab> SpawnDebugOverlayTab(const FSpawnTabArgs& SpawnTabArgs);
 };
