@@ -429,7 +429,7 @@ namespace
 	}
 
 	// [Pannel_03]
-	// ===== Interaction ViewData =====
+	// ===== World Summary ViewData =====
 
 	FDebugOverlayRecentSummaryBlockViewData BuildRecentSummaryBlockViewData(const TCHAR* InBlockName, const FString& InSummary, EDebugOverlayCaptureState InCaptureState, bool bInHasSnapshot, bool bInAppendLeadingBlank)
 	{
@@ -442,30 +442,30 @@ namespace
 		return blockViewData;
 	}
 
-	FDebugOverlayInteractionViewData BuildInteractionViewData(const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
+	FDebugOverlayWorldSummaryViewData BuildWorldSummaryViewData(const FDebugOverlaySnapshot& InSnapshot, bool bInHasSnapshot)
 	{
-		FDebugOverlayInteractionViewData interactionViewData;
-		interactionViewData.HeaderText = TEXT("[World]");
-		interactionViewData.SummaryBlocks.Reserve(3);
-		interactionViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
+		FDebugOverlayWorldSummaryViewData worldSummaryViewData;
+		worldSummaryViewData.HeaderText = TEXT("[World Summary]");
+		worldSummaryViewData.SummaryBlocks.Reserve(3);
+		worldSummaryViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
 			TEXT("[Recent Execution]"),
 			InSnapshot.LastExecution.Summary,
 			InSnapshot.LastExecution.CaptureState,
 			bInHasSnapshot,
 			false));
-		interactionViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
+		worldSummaryViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
 			TEXT("[Recent Combat]"),
 			InSnapshot.LastCombat.Summary,
 			InSnapshot.LastCombat.CaptureState,
 			bInHasSnapshot,
 			true));
-		interactionViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
+		worldSummaryViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
 			TEXT("[Recent AI Event]"),
 			InSnapshot.LastAI.Summary,
 			InSnapshot.LastAI.CaptureState,
 			bInHasSnapshot,
 			true));
-		return interactionViewData;
+		return worldSummaryViewData;
 	}
 }
 
@@ -491,8 +491,8 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld,
 	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Pannel_02]");
 	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
-	viewData.InteractionPanelTitle = TEXT("[Debug Overlay Pannel_03]");
-	viewData.Interaction = BuildInteractionViewData(snapshot, bHasSnapshot);
+	viewData.WorldSummaryPanelTitle = TEXT("[Debug Overlay Pannel_03]");
+	viewData.WorldSummary = BuildWorldSummaryViewData(snapshot, bHasSnapshot);
 
 	return viewData;
 }

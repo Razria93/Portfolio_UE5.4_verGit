@@ -7,6 +7,8 @@
 
 namespace
 {
+	// ===== Constants =====
+
 	static constexpr float DebugOverlayOriginX = 24.f;
 	static constexpr float DebugOverlayOriginY = 36.f;
 	static constexpr float DebugOverlayLineHeight = 20.f;
@@ -18,22 +20,30 @@ namespace
 	static constexpr float DebugOverlayRightMargin = 24.f;
 	static constexpr float DebugOverlayBottomMargin = 24.f;
 	static constexpr float DebugOverlayMinEventLogPanelWidth = 420.f;
-	static constexpr float DebugOverlayInteractionPanelWidth = 520.f;
+	static constexpr float DebugOverlayWorldSummaryPanelWidth = 520.f;
 	static const FLinearColor DebugOverlayBackgroundColor(0.f, 0.f, 0.f, 0.72f);
 	static const FLinearColor DebugOverlayPlayerHeaderColor(0.02f, 0.20f, 0.78f, 0.68f);
 	static const FLinearColor DebugOverlayEnemyHeaderColor(0.78f, 0.06f, 0.04f, 0.68f);
 	static const FLinearColor DebugOverlayDefaultHeaderColor(0.24f, 0.24f, 0.24f, 0.72f);
 
-	struct FDebugOverlayRightPanelGeometry
+	// ===== Layout Structs =====
+
+	struct FDebugOverlayPanelRect
 	{
-		float EventLogBackgroundX = 0.f;
-		float EventLogBackgroundY = 0.f;
-		float EventLogAvailableWidth = 0.f;
-		float EventLogAvailableHeight = 0.f;
-		float InteractionBackgroundX = 0.f;
-		float InteractionBackgroundWidth = 0.f;
-		bool bCanDrawInteractionPanel = false;
+		float X = 0.f;
+		float Y = 0.f;
+		float Width = 0.f;
+		float Height = 0.f;
 	};
+
+	struct FDebugOverlayRightPanelLayout
+	{
+		FDebugOverlayPanelRect EventLogRect;
+		FDebugOverlayPanelRect WorldSummaryRect;
+		bool bCanDrawWorldSummaryPanel = false;
+	};
+
+	// ===== Line Metrics =====
 
 	bool IsOverlayHeaderLine(const FDebugOverlayTextLine& InLine)
 	{
@@ -91,33 +101,32 @@ namespace
 		return visiblePanel;
 	}
 
-	FDebugOverlayRightPanelGeometry CalculateRightPanelGeometry(
-		const UCanvas* InCanvas,
-		float InLeftPanelBackgroundX,
-		float InLeftPanelBackgroundWidth,
-		float InTopBackgroundY,
-		bool bInHasInteractionLines)
+	// ===== Panel Layout =====
+
+	FDebugOverlayRightPanelLayout CalculateRightPanelLayout(const UCanvas* InCanvas, float InLeftPanelBackgroundX, float InLeftPanelBackgroundWidth, float InTopBackgroundY, bool bInHasWorldSummaryLines)
 	{
-		FDebugOverlayRightPanelGeometry geometry;
-		if (!InCanvas) return geometry;
+		FDebugOverlayRightPanelLayout layout;
+		if (!InCanvas) return layout;
 
-		geometry.EventLogBackgroundX = InLeftPanelBackgroundX + InLeftPanelBackgroundWidth + DebugOverlayPanelGap;
-		geometry.EventLogBackgroundY = InTopBackgroundY;
+		layout.EventLogRect.X = InLeftPanelBackgroundX + InLeftPanelBackgroundWidth + DebugOverlayPanelGap;
+		layout.EventLogRect.Y = InTopBackgroundY;
+		layout.EventLogRect.Height = FMath::Max(0.f, InCanvas->SizeY - layout.EventLogRect.Y - DebugOverlayBottomMargin);
 
-		const float rightPanelAvailableWidth = FMath::Max(0.f, InCanvas->SizeX - geometry.EventLogBackgroundX - DebugOverlayRightMargin);
-		geometry.bCanDrawInteractionPanel = bInHasInteractionLines
-			&& rightPanelAvailableWidth >= DebugOverlayMinEventLogPanelWidth + DebugOverlayPanelGap + DebugOverlayInteractionPanelWidth;
-		geometry.InteractionBackgroundWidth = geometry.bCanDrawInteractionPanel ? DebugOverlayInteractionPanelWidth : 0.f;
-		geometry.InteractionBackgroundX = geometry.bCanDrawInteractionPanel
-			? InCanvas->SizeX - DebugOverlayRightMargin - geometry.InteractionBackgroundWidth
-			: 0.f;
-		geometry.EventLogAvailableWidth = geometry.bCanDrawInteractionPanel
-			? FMath::Max(0.f, geometry.InteractionBackgroundX - DebugOverlayPanelGap - geometry.EventLogBackgroundX)
-			: rightPanelAvailableWidth;
-		geometry.EventLogAvailableHeight = FMath::Max(0.f, InCanvas->SizeY - geometry.EventLogBackgroundY - DebugOverlayBottomMargin);
+		const float rightPanelAvailableWidth = FMath::Max(0.f, InCanvas->SizeX - layout.EventLogRect.X - DebugOverlayRightMargin);
 
-		return geometry;
+		layout.bCanDrawWorldSummaryPanel = bInHasWorldSummaryLines && rightPanelAvailableWidth >= DebugOverlayWorldSummaryPanelWidth;
+
+		layout.WorldSummaryRect.Width = layout.bCanDrawWorldSummaryPanel ? DebugOverlayWorldSummaryPanelWidth : 0.f;
+		layout.WorldSummaryRect.X = layout.bCanDrawWorldSummaryPanel ? InCanvas->SizeX - DebugOverlayRightMargin - layout.WorldSummaryRect.Width : 0.f;
+		layout.WorldSummaryRect.Y = layout.EventLogRect.Y;
+		layout.WorldSummaryRect.Height = layout.EventLogRect.Height;
+
+		layout.EventLogRect.Width = layout.bCanDrawWorldSummaryPanel ? FMath::Max(0.f, layout.WorldSummaryRect.X - DebugOverlayPanelGap - layout.EventLogRect.X) : rightPanelAvailableWidth;
+
+		return layout;
 	}
+
+	// ===== Panel Style =====
 
 	FLinearColor GetPanelHeaderColor(const FDebugOverlayTextLine& InLine)
 	{
@@ -126,15 +135,9 @@ namespace
 		return DebugOverlayDefaultHeaderColor;
 	}
 
-	void DrawOverlayPanel(
-		ACDebugOverlayHUD& InHud,
-		const FDebugOverlayTextPanel& InPanel,
-		float InTextX,
-		float InTextY,
-		float InBackgroundX,
-		float InBackgroundY,
-		float InBackgroundWidth,
-		float InBackgroundHeight)
+	// ===== Panel Drawing =====
+
+	void DrawOverlayPanel(ACDebugOverlayHUD& InHud, const FDebugOverlayTextPanel& InPanel, float InTextX, float InTextY, float InBackgroundX, float InBackgroundY, float InBackgroundWidth, float InBackgroundHeight)
 	{
 		if (InBackgroundWidth > 0.f && InBackgroundHeight > 0.f)
 		{
@@ -159,78 +162,78 @@ namespace
 			}
 		}
 	}
+
+	void DrawMainPanel(ACDebugOverlayHUD& InHud, const FDebugOverlayTextPanel& InPanel, const FDebugOverlayPanelRect& InRect)
+	{
+		DrawOverlayPanel(
+			InHud,
+			InPanel,
+			DebugOverlayOriginX,
+			DebugOverlayOriginY,
+			InRect.X,
+			InRect.Y,
+			InRect.Width,
+			InRect.Height);
+	}
+
+	void DrawEventLogPanelIfVisible(ACDebugOverlayHUD& InHud, const FDebugOverlayTextPanel& InPanel, const FDebugOverlayPanelRect& InRect)
+	{
+		if (InPanel.Lines.IsEmpty() || InRect.Width < DebugOverlayMinEventLogPanelWidth) return;
+
+		const float maxTextHeight = FMath::Max(0.f, InRect.Height - (DebugOverlayBackgroundPadding * 2.f));
+		const FDebugOverlayTextPanel visiblePanel = MakeVisibleOverlayPanel(InPanel, maxTextHeight);
+		const float backgroundHeight = FMath::Min(CalculateOverlayLinesHeight(visiblePanel) + (DebugOverlayBackgroundPadding * 2.f), InRect.Height);
+		if (backgroundHeight <= 0.f || visiblePanel.Lines.IsEmpty()) return;
+
+		DrawOverlayPanel(
+			InHud,
+			visiblePanel,
+			InRect.X + DebugOverlayBackgroundPadding,
+			InRect.Y + DebugOverlayBackgroundPadding,
+			InRect.X,
+			InRect.Y,
+			InRect.Width,
+			backgroundHeight);
+	}
+
+	void DrawWorldSummaryPanelIfVisible(ACDebugOverlayHUD& InHud, const FDebugOverlayTextPanel& InPanel, const FDebugOverlayPanelRect& InRect, bool bInCanDrawPanel)
+	{
+		if (!bInCanDrawPanel || InPanel.Lines.IsEmpty()) return;
+
+		const float maxTextHeight = FMath::Max(0.f, InRect.Height - (DebugOverlayBackgroundPadding * 2.f));
+		const FDebugOverlayTextPanel visiblePanel = MakeVisibleOverlayPanel(InPanel, maxTextHeight);
+		const float backgroundHeight = FMath::Min(CalculateOverlayLinesHeight(visiblePanel) + (DebugOverlayBackgroundPadding * 2.f), InRect.Height);
+		if (backgroundHeight <= 0.f || visiblePanel.Lines.IsEmpty()) return;
+
+		DrawOverlayPanel(
+			InHud,
+			visiblePanel,
+			InRect.X + DebugOverlayBackgroundPadding,
+			InRect.Y + DebugOverlayBackgroundPadding,
+			InRect.X,
+			InRect.Y,
+			InRect.Width,
+			backgroundHeight);
+	}
 }
+
+// ===== Public API =====
 
 void FDebugOverlayCanvasRenderer::Draw(ACDebugOverlayHUD& InHud, UCanvas* InCanvas, const FDebugOverlayTextPanels& InTextPanels)
 {
 	const float backgroundX = FMath::Max(0.f, DebugOverlayOriginX - DebugOverlayBackgroundPadding);
 	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
-	const float availableWidth = InCanvas
-		? FMath::Max(0.f, InCanvas->SizeX - backgroundX - DebugOverlayBackgroundPadding)
-		: DebugOverlayBackgroundWidth;
+	const float availableWidth = InCanvas ? FMath::Max(0.f, InCanvas->SizeX - backgroundX - DebugOverlayBackgroundPadding) : DebugOverlayBackgroundWidth;
 	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
 	const float backgroundHeight = CalculateOverlayLinesHeight(InTextPanels.MainPanel) + (DebugOverlayBackgroundPadding * 2.f);
+	const FDebugOverlayPanelRect mainPanelRect = { backgroundX, backgroundY, backgroundWidth, backgroundHeight };
 
-	DrawOverlayPanel(
-		InHud,
-		InTextPanels.MainPanel,
-		DebugOverlayOriginX,
-		DebugOverlayOriginY,
-		backgroundX,
-		backgroundY,
-		backgroundWidth,
-		backgroundHeight);
+	DrawMainPanel(InHud, InTextPanels.MainPanel, mainPanelRect);
 
-	if (InCanvas && !InTextPanels.EventLogPanel.Lines.IsEmpty())
-	{
-		const FDebugOverlayRightPanelGeometry rightPanelGeometry = CalculateRightPanelGeometry(
-			InCanvas,
-			backgroundX,
-			backgroundWidth,
-			backgroundY,
-			!InTextPanels.InteractionPanel.Lines.IsEmpty());
-		const float maxEventLogTextHeight = FMath::Max(0.f, rightPanelGeometry.EventLogAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
-		const FDebugOverlayTextPanel visibleEventLogPanel = MakeVisibleOverlayPanel(InTextPanels.EventLogPanel, maxEventLogTextHeight);
+	if (!InCanvas) return;
 
-		const float eventLogBackgroundHeight = FMath::Min(
-			CalculateOverlayLinesHeight(visibleEventLogPanel) + (DebugOverlayBackgroundPadding * 2.f),
-			rightPanelGeometry.EventLogAvailableHeight);
+	const FDebugOverlayRightPanelLayout rightPanelLayout = CalculateRightPanelLayout(InCanvas, mainPanelRect.X, mainPanelRect.Width, mainPanelRect.Y, !InTextPanels.WorldSummaryPanel.Lines.IsEmpty());
 
-		if (rightPanelGeometry.EventLogAvailableWidth >= DebugOverlayMinEventLogPanelWidth && eventLogBackgroundHeight > 0.f && !visibleEventLogPanel.Lines.IsEmpty())
-		{
-			DrawOverlayPanel(
-				InHud,
-				visibleEventLogPanel,
-				rightPanelGeometry.EventLogBackgroundX + DebugOverlayBackgroundPadding,
-				rightPanelGeometry.EventLogBackgroundY + DebugOverlayBackgroundPadding,
-				rightPanelGeometry.EventLogBackgroundX,
-				rightPanelGeometry.EventLogBackgroundY,
-				rightPanelGeometry.EventLogAvailableWidth,
-				eventLogBackgroundHeight);
-		}
-
-		if (rightPanelGeometry.bCanDrawInteractionPanel)
-		{
-			const float interactionAvailableHeight = FMath::Max(0.f, InCanvas->SizeY - rightPanelGeometry.EventLogBackgroundY - DebugOverlayBottomMargin);
-			const float maxInteractionTextHeight = FMath::Max(0.f, interactionAvailableHeight - (DebugOverlayBackgroundPadding * 2.f));
-			const FDebugOverlayTextPanel visibleInteractionPanel = MakeVisibleOverlayPanel(InTextPanels.InteractionPanel, maxInteractionTextHeight);
-
-			const float interactionBackgroundHeight = FMath::Min(
-				CalculateOverlayLinesHeight(visibleInteractionPanel) + (DebugOverlayBackgroundPadding * 2.f),
-				interactionAvailableHeight);
-
-			if (interactionBackgroundHeight > 0.f && !visibleInteractionPanel.Lines.IsEmpty())
-			{
-				DrawOverlayPanel(
-					InHud,
-					visibleInteractionPanel,
-					rightPanelGeometry.InteractionBackgroundX + DebugOverlayBackgroundPadding,
-					rightPanelGeometry.EventLogBackgroundY + DebugOverlayBackgroundPadding,
-					rightPanelGeometry.InteractionBackgroundX,
-					rightPanelGeometry.EventLogBackgroundY,
-					rightPanelGeometry.InteractionBackgroundWidth,
-					interactionBackgroundHeight);
-			}
-		}
-	}
+	DrawEventLogPanelIfVisible(InHud, InTextPanels.EventLogPanel, rightPanelLayout.EventLogRect);
+	DrawWorldSummaryPanelIfVisible(InHud, InTextPanels.WorldSummaryPanel, rightPanelLayout.WorldSummaryRect, rightPanelLayout.bCanDrawWorldSummaryPanel);
 }

@@ -277,7 +277,7 @@ namespace
 	}
 
 	// [Pannel_03]
-	// ===== Interaction Panel Lines =====
+	// ===== World Summary Panel Lines =====
 
 	void AppendRecentSummaryBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentSummaryBlockViewData& InBlockViewData)
 	{
@@ -297,15 +297,15 @@ namespace
 		}
 	}
 
-	TArray<FString> BuildInteractionPanelLines(const FDebugOverlayViewData& InViewData)
+	TArray<FString> BuildWorldSummaryPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
 		lines.Reserve(16);
-		AppendFormattedOverlayLine(lines, InViewData.InteractionPanelTitle);
+		AppendFormattedOverlayLine(lines, InViewData.WorldSummaryPanelTitle);
 		AppendFormattedOverlayLine(lines, TEXT(""));
-		AppendFormattedOverlayLine(lines, InViewData.Interaction.HeaderText);
+		AppendFormattedOverlayLine(lines, InViewData.WorldSummary.HeaderText);
 
-		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.Interaction.SummaryBlocks)
+		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.WorldSummary.SummaryBlocks)
 		{
 			AppendRecentSummaryBlockLines(lines, summaryBlock);
 		}
@@ -323,7 +323,7 @@ namespace
 		}
 
 		if (InPanelRole != EDebugOverlayTextPanelRole::EventLog
-			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[World]")))
+			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[World Summary]")))
 		{
 			return EDebugOverlayTextLineRole::PanelHeader;
 		}
@@ -355,11 +355,11 @@ FDebugOverlayTextPanels FDebugOverlayTextFormatter::Format(const FDebugOverlayVi
 {
 	const TArray<FString> mainPanelLines = BuildMainTextPanelLines(InViewData);
 	const TArray<FString> eventLogPanelLines = BuildEventLogPanelLines(InViewData);
-	const TArray<FString> interactionPanelLines = BuildInteractionPanelLines(InViewData);
+	const TArray<FString> worldSummaryPanelLines = BuildWorldSummaryPanelLines(InViewData);
 
 	FDebugOverlayTextPanels panels;
 	panels.MainPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Main, mainPanelLines);
 	panels.EventLogPanel = MakeTextPanel(EDebugOverlayTextPanelRole::EventLog, eventLogPanelLines);
-	panels.InteractionPanel = MakeTextPanel(EDebugOverlayTextPanelRole::Interaction, interactionPanelLines);
+	panels.WorldSummaryPanel = MakeTextPanel(EDebugOverlayTextPanelRole::WorldSummary, worldSummaryPanelLines);
 	return panels;
 }

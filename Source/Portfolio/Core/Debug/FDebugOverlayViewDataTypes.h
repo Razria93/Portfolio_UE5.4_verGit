@@ -113,7 +113,7 @@ struct FDebugOverlayRecentSummaryBlockViewData
 	bool bAppendLeadingBlank = false;
 };
 
-struct FDebugOverlayInteractionViewData
+struct FDebugOverlayWorldSummaryViewData
 {
 	FString HeaderText;
 	TArray<FDebugOverlayRecentSummaryBlockViewData> SummaryBlocks;
@@ -125,6 +125,6 @@ struct FDebugOverlayViewData
 	TArray<FDebugOverlayActorPanelViewData> ActorPanels;
 	FString EventLogPanelTitle;
 	FDebugOverlayEventLogViewData EventLog;
-	FString InteractionPanelTitle;
-	FDebugOverlayInteractionViewData Interaction;
+	FString WorldSummaryPanelTitle;
+	FDebugOverlayWorldSummaryViewData WorldSummary;
 };
