@@ -17,7 +17,7 @@ P0.5 확장은 P0 debug overlay가 TestRoom PIE에서 정상 동작하는 것을
 | 표시 방식 | Canvas Draw 유지 |
 | 데이터 조회 | 가능한 항목은 getter polling 우선 |
 | EventLog | Player / Enemy 분리 설계 필요 |
-| Enemy 선택 | P0.5는 world scan fallback, P1은 Target Component 우선 |
+| Enemy 선택 | P0.5는 world scan fallback, P1은 Focus Component 우선 |
 
 ## 3. 패널 구조
 
@@ -144,7 +144,7 @@ P1 우선순위:
 
 | 순위 | 방식 | 설명 |
 | --- | --- | --- |
-| 1 | Target Component | Player 또는 combat owner가 가진 `CurrentTarget`, `LockOnTarget`, `CombatTarget` 계열 runtime truth를 읽는다. |
+| 1 | Focus Component | Player 또는 combat owner가 가진 `CurrentTarget`, `LockOnTarget`, `CombatTarget` 계열 runtime truth를 읽는다. |
 | 2 | 최근 combat snapshot 기반 보조 추론 | Player가 source이면 target/receiver를 enemy 후보로, Player가 target이면 source를 enemy 후보로 본다. |
 | 3 | AIController / Blackboard target actor | Target Component가 없거나 AI 내부 target 확인이 필요할 때만 보조 후보로 검토한다. |
 | 4 | cached `ACEnemy` world scan fallback | 명확한 target source가 없을 때만 사용한다. |
@@ -156,7 +156,7 @@ P1 우선순위:
 - 캐시 갱신 interval은 0.25~0.5초 후보로 둔다.
 - cached enemy가 invalid, pending kill, world mismatch, 사망/제외 조건에 걸리면 재탐색한다.
 - 다중 enemy 환경에서 “처음 발견된 enemy”를 evidence 대상처럼 표시하지 않는다.
-- fallback scan으로 선택한 enemy는 표시상 `EnemySource=WorldScanFallback` 같은 보조 정보를 남긴다.
+- fallback scan으로 선택한 enemy는 표시상 `EnemyFocusMode=WorldScanFallback` 같은 보조 정보를 남긴다.
 
 ## 8. EventLog 분리 정책
 
@@ -210,7 +210,7 @@ P0.5에서는 구현 난이도와 evidence 신뢰도의 균형을 위해 `World 
 | --- | --- |
 | `SubjectName` | HUD에 표시할 대상 이름 |
 | `SubjectRole` | Player / Enemy / World / Unknown 구분 |
-| `SubjectSource` | TargetComponent / CombatSnapshot / Blackboard / WorldScanFallback 등 선택 근거 |
+| `SubjectSource` | FocusComponent / CombatSnapshot / Blackboard / WorldScanFallback 등 선택 근거 |
 
 `OwnerName`, `SourceName`, `TargetName`만으로는 Player/Enemy log를 안정적으로 분리하지 않는다. Combat result에서는 receiver/source/target 중 어느 actor를 subject로 볼지 문맥에 따라 달라지기 때문이다.
 
@@ -315,7 +315,7 @@ Execution: Action Accept / Apply=Start / Reject=None
 
 | 결정 항목 | 선택지 | 권장 |
 | --- | --- | --- |
-| Enemy 선택 우선순위 | Target Component / Combat snapshot / Blackboard / World scan | Target Component 우선 |
+| Enemy 선택 우선순위 | Focus Component / Combat snapshot / Blackboard / World scan | Focus Component 우선 |
 | Enemy fallback scan 주기 | 0.25초 / 0.5초 / 수동 갱신 | 0.5초 |
 | Store subject key | `SubjectActor` / `SubjectRole` | `SubjectActor` |
 | Event category filter 시점 | P0.5 포함 / P1 이관 | P1 또는 Store 분리 이후 |
@@ -338,7 +338,7 @@ Execution: Action Accept / Apply=Start / Reject=None
 P0.5는 다음 순서로 진행한다.
 
 1. HUD에 Player/Enemy 패널을 만들고 Movement/HP getter polling을 표시한다.
-2. Enemy 선택은 Target Component 구현 이후 해당 target을 우선 조회하는 방향으로 확장한다.
+2. Enemy 선택은 Focus Component 구현 이후 해당 target을 우선 조회하는 방향으로 확장한다.
 3. Target Component가 없거나 invalid일 때만 combat snapshot, Blackboard, cached world scan fallback 순서로 보조 후보를 검토한다.
 4. Store subject 분리 정책을 별도 작업에서 확정한 뒤 Player/Enemy EventLog 분리 구현 여부를 결정한다.
 5. compact summary와 category filter는 Store subject 분리 이후 후속 후보로 둔다.

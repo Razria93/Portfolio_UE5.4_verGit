@@ -44,12 +44,12 @@ Right panel은 EventLog 전용 panel이며, Player/Enemy current state나 Recent
 현재 overlay title convention은 다음 값을 기준으로 유지한다.
 
 ```text
-[Debug Overlay Pannel_01]
-[Debug Overlay Pannel_02]
+[Debug Overlay Panel_01]
+[Debug Overlay Panel_02]
 ```
 
-- `[Debug Overlay Pannel_01]`: left panel title
-- `[Debug Overlay Pannel_02]`: right EventLog panel title
+- `[Debug Overlay Panel_01]`: left panel title
+- `[Debug Overlay Panel_02]`: right EventLog panel title
 
 `Pannel` spelling을 포함해 현재 표시값을 그대로 유지한다. title 문구 변경은 별도 사용자 요청이 있을 때만 수행한다.
 

@@ -16,7 +16,7 @@
 | Overlay 수집 | `Portfolio.DebugOverlay.Collect 1` |
 | EventLog line | `Portfolio.DebugOverlay.EventLogLimit 5` |
 | EventLog filter | `Portfolio.DebugOverlay.EventLogFilter` |
-| 관련 target command | `DebugOverlaySelectNearestTarget`, `DebugOverlayClearTarget` |
+| 관련 focus command | `DebugOverlaySelectNearestFocus`, `DebugOverlayClearFocus` |
 
 EventLog filter는 표시 제어 기능이다. filter로 숨겨진 event를 "발생하지 않았다"는 evidence로 해석하지 않는다.
 
@@ -32,8 +32,8 @@ Portfolio.DebugOverlay.EventLogFilter AI
 Portfolio.DebugOverlay.EventLogFilter InvalidValue
 Portfolio.DebugOverlay.EventLogLimit 0
 Portfolio.DebugOverlay.EventLogLimit 5
-DebugOverlaySelectNearestTarget
-DebugOverlayClearTarget
+DebugOverlaySelectNearestFocus
+DebugOverlayClearFocus
 ```
 
 ## 4. 검증 결과 요약
@@ -47,8 +47,8 @@ DebugOverlayClearTarget
 | filter 결과 없음 | `NoEvents(Filter=...)` 표시 | 정상 동작 | 통과 |
 | `EventLogLimit 0` | `NoEvents(Filter=... Limit=0)` 표시 | NoEvents 상태 확인 | 통과 |
 | invalid filter value | `All` fallback | fallback 정상 동작 | 통과 |
-| `DebugOverlaySelectNearestTarget` | nearest target 선택 | 정상 동작 | 통과 |
-| `DebugOverlayClearTarget` | target clear | 정상 동작 | 통과 |
+| `DebugOverlaySelectNearestFocus` | nearest target 선택 | 정상 동작 | 통과 |
+| `DebugOverlayClearFocus` | focus clear | 정상 동작 | 통과 |
 
 ## 5. 성공 판단
 
@@ -58,7 +58,7 @@ DebugOverlayClearTarget
 - filter 결과가 없을 때 `NoEvents(Filter=...)` 계열 상태로 표시된다.
 - `EventLogLimit 0` 상태에서 event line이 표시되지 않고 NoEvents 상태가 표시된다.
 - 잘못된 filter 값은 `All`로 fallback된다.
-- target command인 `DebugOverlaySelectNearestTarget`과 `DebugOverlayClearTarget`도 현재 P1 명시 target 정책 기준으로 정상 동작한다.
+- focus command인 `DebugOverlaySelectNearestFocus`과 `DebugOverlayClearFocus`도 현재 P1 명시 focus 정책 기준으로 정상 동작한다.
 
 따라서 P1 EventLog category filter는 현재 구두 검증 기준으로 동작 확인된 것으로 본다.
 

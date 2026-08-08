@@ -41,7 +41,7 @@
 P52/P53 이후 Debug Overlay는 runtime HUD, SnapshotStore, Editor Tooling이 동작 가능한 상태였지만 다음 문제가 남아 있었다.
 
 - HUD / ViewDataBuilder / TextFormatter / CanvasRenderer의 표시 책임 경계가 흐렸다.
-- TargetComponent 명명과 Focus 개념이 섞여 있었다.
+- FocusComponent 명명과 Focus 개념이 섞여 있었다.
 - nearest/editor-selection/recent-combat focus command 흐름이 Controller, component, resolver에 분산되어 있었다.
 - SnapshotStore 단일 cpp에 record, filter, ring access, lifecycle 책임이 몰려 있었다.
 - Editor Tooling module cpp가 CVar access, Slate UI, PIE command bridge, module lifecycle을 모두 들고 있었다.
@@ -67,7 +67,7 @@ Source/Portfolio/Controller/CPlayerController.*
 
 - `FDebugOverlayFocusCommandResult` 기반으로 마지막 focus command 결과를 구조화했다.
 - focus source / command result / actor name / distance / radius 표시 정보를 분리했다.
-- `DebugOverlaySelectRecentCombatTarget` 명시 command 경로를 추가했다.
+- `DebugOverlaySelectRecentCombatFocus` 명시 command 경로를 추가했다.
 - Controller는 exec command entry와 resolver 호출, component 결과 적용만 담당하도록 정리했다.
 - FocusResolver는 nearest, outliner actor name, recent combat 기반 focus resolve를 담당한다.
 - FocusComponent는 focus 상태와 마지막 command result 저장소 역할로 정리했다.
@@ -103,7 +103,7 @@ Source/Portfolio/Core/Debug/FDebugOverlayCanvasRenderer.cpp
 
 표시 정책:
 
-- `[Debug Overlay Pannel_01/02/03]` 문자열은 유지한다.
+- `[Debug Overlay Panel_01/02/03]` 문자열은 유지한다.
 - `EnemyFocusMode`, `EnemyFocusActor`, `EnemyFocusCommand` 표시를 기준으로 정리했다.
 - EventLog filter/limit 의미는 변경하지 않았다.
 - Canvas text overflow / ellipsis는 이번 PR에서 구현하지 않았다.

@@ -27,16 +27,16 @@ Portfolio.DebugOverlay.EventLogLimit 5
 Portfolio.DebugOverlay.EventLogFilter Combat
 ```
 
-Enemy panel 확인을 위해 다음 command로 명시 target을 선택한다.
+Enemy panel 확인을 위해 다음 command로 명시 focus을 선택한다.
 
 ```text
-DebugOverlaySelectNearestTarget
+DebugOverlaySelectNearestFocus
 ```
 
 선택 성공 시 Enemy panel에 다음과 같은 source가 표시되어야 한다.
 
 ```text
-EnemyFocusMode: TargetComponent.Nearest
+EnemyFocusMode: FocusComponent.NearestFocus
 EnemyFocusActor: ...
 ```
 
@@ -136,7 +136,7 @@ P1 기본 검증에서 `Self`를 반드시 재현할 필요는 없다. 다만 �
 | 순서 | 액션 | 기대 |
 | --- | --- | --- |
 | 1 | PIE 진입 후 overlay 활성화 | `[Debug Overlay P0.5]` 표시 |
-| 2 | `DebugOverlaySelectNearestTarget` 실행 | `EnemyFocusMode: TargetComponent.Nearest` |
+| 2 | `DebugOverlaySelectNearestFocus` 실행 | `EnemyFocusMode: FocusComponent.NearestFocus` |
 | 3 | `Portfolio.DebugOverlay.EventLogFilter Combat` 입력 | Player/Enemy panel의 `[Event Log: Combat]` 표시 |
 | 4 | Player attack으로 target packet 발생 | Player `Outgoing`, Enemy `Incoming` |
 | 5 | Enemy attack / block / parry / hit 상황 발생 | Player `Incoming`, Enemy `Outgoing` |
@@ -154,7 +154,7 @@ P1 기본 검증에서 `Self`를 반드시 재현할 필요는 없다. 다만 �
 - `Incoming` / `Outgoing`이 source-target 관계와 반대로 보임
 - `EventLogLimit 0` 상태에서 event line이 계속 표시됨
 - target이 없는데 Enemy panel이 성공 evidence처럼 보임
-- `TargetComponent.Nearest` 선택 전 Enemy panel의 EventLog가 target 기반 evidence처럼 보임
+- `FocusComponent.NearestFocus` 선택 전 Enemy panel의 EventLog가 target 기반 evidence처럼 보임
 
 ## 8. 완료 기준
 

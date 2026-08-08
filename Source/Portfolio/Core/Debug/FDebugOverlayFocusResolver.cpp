@@ -37,16 +37,16 @@ namespace
 		return nullptr;
 	}
 
-	// ===== Target Lookup =====
+	// ===== Focus Lookup =====
 
-	ACEnemy* FindClosestFocusTarget(UWorld* InWorld, const APawn* InViewerPawn, float& OutDistance)
+	ACEnemy* FindClosestFocusEnemy(UWorld* InWorld, const APawn* InViewerPawn, float& OutDistance)
 	{
 		OutDistance = 0.f;
 		if (!IsValid(InWorld) || !IsValid(InViewerPawn)) return nullptr;
 
 		const FVector origin = InViewerPawn->GetActorLocation();
 
-		ACEnemy* closestTarget = nullptr;
+		ACEnemy* closestEnemy = nullptr;
 		float closestDistanceSquared = TNumericLimits<float>::Max();
 
 		for (TActorIterator<ACEnemy> enemyIt(InWorld); enemyIt; ++enemyIt)
@@ -58,16 +58,16 @@ namespace
 			if (distanceSquared > closestDistanceSquared) continue;
 
 			closestDistanceSquared = distanceSquared;
-			closestTarget = enemy;
+			closestEnemy = enemy;
 		}
 
-		if (!IsValid(closestTarget)) return nullptr;
+		if (!IsValid(closestEnemy)) return nullptr;
 
 		OutDistance = FMath::Sqrt(closestDistanceSquared);
-		return closestTarget;
+		return closestEnemy;
 	}
 
-	ACEnemy* ResolveRecentCombatTargetFromSnapshot(UWorld* InWorld, bool& bOutHasRecentCombatEvidence)
+	ACEnemy* ResolveRecentCombatFocusFromSnapshot(UWorld* InWorld, bool& bOutHasRecentCombatEvidence)
 	{
 		bOutHasRecentCombatEvidence = false;
 
@@ -79,9 +79,9 @@ namespace
 
 		bOutHasRecentCombatEvidence = true;
 
-		if (ACEnemy* targetEnemy = Cast<ACEnemy>(pair.TargetActor.Get()))
+		if (ACEnemy* focusEnemy = Cast<ACEnemy>(pair.TargetActor.Get()))
 		{
-			return targetEnemy;
+			return focusEnemy;
 		}
 
 		if (ACEnemy* sourceEnemy = Cast<ACEnemy>(pair.SourceActor.Get()))
@@ -94,7 +94,7 @@ namespace
 }
 #endif
 
-FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveNearestTarget(UWorld* World, const APawn* ViewerPawn, float Radius)
+FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveNearestFocus(UWorld* World, const APawn* ViewerPawn, float Radius)
 {
 	FDebugOverlayFocusResolveResult result;
 	result.Radius = Radius;
@@ -109,32 +109,32 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveNearestTarget
 	}
 
 	float closestDistance = 0.f;
-	ACEnemy* closestTarget = FindClosestFocusTarget(World, ViewerPawn, closestDistance);
-	if (!IsValid(closestTarget))
+	ACEnemy* closestFocusEnemy = FindClosestFocusEnemy(World, ViewerPawn, closestDistance);
+	if (!IsValid(closestFocusEnemy))
 	{
 		result.Outcome = EDebugOverlayFocusResolveOutcome::NoTarget;
 		return result;
 	}
 
-	const FString closestTargetName = GetNameSafe(closestTarget);
+	const FString closestFocusName = GetNameSafe(closestFocusEnemy);
 	if (closestDistance > Radius)
 	{
 		result.Outcome = EDebugOverlayFocusResolveOutcome::OutOfRange;
-		result.ActorName = closestTargetName;
+		result.ActorName = closestFocusName;
 		result.Distance = closestDistance;
 		return result;
 	}
 
-	result.FocusActor = closestTarget;
-	result.Source = EDebugOverlayFocusSource::NearestTarget;
+	result.FocusActor = closestFocusEnemy;
+	result.Source = EDebugOverlayFocusSource::NearestFocus;
 	result.Outcome = EDebugOverlayFocusResolveOutcome::Selected;
-	result.ActorName = closestTargetName;
+	result.ActorName = closestFocusName;
 	result.Distance = closestDistance;
 	return result;
 #endif
 }
 
-FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveOutlinerTarget(UWorld* World, const APawn* ViewerPawn, const FString& ActorName)
+FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveOutlinerFocus(UWorld* World, const APawn* ViewerPawn, const FString& ActorName)
 {
 	FDebugOverlayFocusResolveResult result;
 	const FString trimmedActorName = ActorName.TrimStartAndEnd();
@@ -155,36 +155,36 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveOutlinerTarge
 		return result;
 	}
 
-	AActor* targetActor = FindDebugOverlayActorByName(World, trimmedActorName);
-	if (!IsValid(targetActor))
+	AActor* focusActor = FindDebugOverlayActorByName(World, trimmedActorName);
+	if (!IsValid(focusActor))
 	{
 		result.Outcome = EDebugOverlayFocusResolveOutcome::NoActor;
 		result.ActorName = trimmedActorName;
 		return result;
 	}
 
-	const FString targetActorName = GetNameSafe(targetActor);
-	const FString targetActorClassName = GetNameSafe(targetActor->GetClass());
+	const FString focusActorName = GetNameSafe(focusActor);
+	const FString focusActorClassName = GetNameSafe(focusActor->GetClass());
 
-	ACEnemy* targetEnemy = Cast<ACEnemy>(targetActor);
-	if (!IsValid(targetEnemy))
+	ACEnemy* focusEnemy = Cast<ACEnemy>(focusActor);
+	if (!IsValid(focusEnemy))
 	{
-		result.Outcome = EDebugOverlayFocusResolveOutcome::TargetIsNotEnemy;
-		result.ActorName = targetActorName;
-		result.ClassName = targetActorClassName;
+		result.Outcome = EDebugOverlayFocusResolveOutcome::FocusActorIsNotEnemy;
+		result.ActorName = focusActorName;
+		result.ClassName = focusActorClassName;
 		return result;
 	}
 
-	result.FocusActor = targetEnemy;
-	result.Source = EDebugOverlayFocusSource::OutlinerTarget;
+	result.FocusActor = focusEnemy;
+	result.Source = EDebugOverlayFocusSource::OutlinerFocus;
 	result.Outcome = EDebugOverlayFocusResolveOutcome::Selected;
-	result.ActorName = targetActorName;
-	result.ClassName = targetActorClassName;
+	result.ActorName = focusActorName;
+	result.ClassName = focusActorClassName;
 	return result;
 #endif
 }
 
-FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveRecentCombatTarget(UWorld* World, const APawn* ViewerPawn, float FallbackRadius)
+FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveRecentCombatFocus(UWorld* World, const APawn* ViewerPawn, float FallbackRadius)
 {
 	FDebugOverlayFocusResolveResult result;
 	result.Radius = FallbackRadius;
@@ -199,14 +199,14 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveRecentCombatT
 	}
 
 	bool bHasRecentCombatEvidence = false;
-	if (ACEnemy* recentEnemy = ResolveRecentCombatTargetFromSnapshot(World, bHasRecentCombatEvidence))
+	if (ACEnemy* recentEnemy = ResolveRecentCombatFocusFromSnapshot(World, bHasRecentCombatEvidence))
 	{
 		const FString recentEnemyName = GetNameSafe(recentEnemy);
 		const FString recentEnemyClassName = GetNameSafe(recentEnemy->GetClass());
 		const float recentEnemyDistance = FVector::Dist(ViewerPawn->GetActorLocation(), recentEnemy->GetActorLocation());
 
 		result.FocusActor = recentEnemy;
-		result.Source = EDebugOverlayFocusSource::RecentCombat;
+		result.Source = EDebugOverlayFocusSource::RecentCombatFocus;
 		result.Outcome = EDebugOverlayFocusResolveOutcome::Selected;
 		result.ActorName = recentEnemyName;
 		result.ClassName = recentEnemyClassName;
@@ -220,8 +220,8 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveRecentCombatT
 	}
 
 	float closestDistance = 0.f;
-	ACEnemy* closestTarget = FindClosestFocusTarget(World, ViewerPawn, closestDistance);
-	if (!IsValid(closestTarget))
+	ACEnemy* closestFocusEnemy = FindClosestFocusEnemy(World, ViewerPawn, closestDistance);
+	if (!IsValid(closestFocusEnemy))
 	{
 		if (result.Outcome == EDebugOverlayFocusResolveOutcome::NoRecentCombatEvidence)
 		{
@@ -232,22 +232,22 @@ FDebugOverlayFocusResolveResult FDebugOverlayFocusResolver::ResolveRecentCombatT
 		return result;
 	}
 
-	const FString closestTargetName = GetNameSafe(closestTarget);
-	const FString closestTargetClassName = GetNameSafe(closestTarget->GetClass());
+	const FString closestFocusName = GetNameSafe(closestFocusEnemy);
+	const FString closestFocusClassName = GetNameSafe(closestFocusEnemy->GetClass());
 	if (closestDistance > FallbackRadius)
 	{
 		result.Outcome = EDebugOverlayFocusResolveOutcome::OutOfRange;
-		result.ActorName = closestTargetName;
-		result.ClassName = closestTargetClassName;
+		result.ActorName = closestFocusName;
+		result.ClassName = closestFocusClassName;
 		result.Distance = closestDistance;
 		return result;
 	}
 
-	result.FocusActor = closestTarget;
+	result.FocusActor = closestFocusEnemy;
 	result.Source = EDebugOverlayFocusSource::WorldScanFallback;
 	result.Outcome = EDebugOverlayFocusResolveOutcome::Selected;
-	result.ActorName = closestTargetName;
-	result.ClassName = closestTargetClassName;
+	result.ActorName = closestFocusName;
+	result.ClassName = closestFocusClassName;
 	result.Distance = closestDistance;
 	return result;
 #endif

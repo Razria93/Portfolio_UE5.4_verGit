@@ -133,7 +133,7 @@ Portfolio.DebugOverlay.EventLogLimit 5
 | Player Reaction | `None` |
 | Player Movement | `Gait`, `Speed`, `Dir` 등이 pipe 구분으로 표시 |
 | Player HP | `HP=current/max`, `DeadState=Alive` |
-| EnemyFocusMode | `TargetComponent.Nearest` 또는 `None` |
+| EnemyFocusMode | `FocusComponent.NearestFocus` 또는 `None` |
 | EventLog | 없으면 `NotCaptured`, 있으면 최근 event |
 
 Evidence 의미:
@@ -248,7 +248,7 @@ Evidence 의미:
 
 | 항목 | 기대 |
 | --- | --- |
-| EnemyFocusMode | `TargetComponent.Nearest` |
+| EnemyFocusMode | `FocusComponent.NearestFocus` |
 | EnemyFocusActor | selected enemy actor name |
 | Enemy State | `Idle`, `Action`, `Reaction` 등 |
 | Enemy Action | `ComboAttack[n]` 또는 `None` |
@@ -258,7 +258,7 @@ Evidence 의미:
 Evidence 의미:
 
 - 현재 기준 selected enemy는 explicit focus command 결과로 설명한다.
-- Target Component 기반 enemy selection evidence는 `EnemyFocusMode: TargetComponent.Nearest`와 `EnemyFocusActor`를 기준으로 설명한다.
+- Focus Component 기반 enemy selection evidence는 `EnemyFocusMode: FocusComponent.NearestFocus`와 `EnemyFocusActor`를 기준으로 설명한다.
 
 ## P0.5 제외 프리셋
 
@@ -270,5 +270,5 @@ Evidence 의미:
 | EventLog category filter | P1 Store/filter 작업 필요 |
 | Player/Enemy별 EventLog 분리 | Store subject 분리 필요 |
 | Runtime LOD 실제 tier 성공 캡처 | 현재 `N/A` 가능, hook 보강 필요 |
-| Target Component 기반 enemy selection | P1 후보 |
+| Focus Component 기반 enemy selection | P1 후보 |
 | capture automation | P1 후보 |

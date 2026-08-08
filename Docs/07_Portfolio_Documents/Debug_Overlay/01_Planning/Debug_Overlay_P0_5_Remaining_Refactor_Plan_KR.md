@@ -37,7 +37,7 @@ Round1 패키지 위치:
 | --- | --- | --- |
 | Overlay 동작 | PIE에서 정상 표시 | 유지 |
 | Player/Enemy panel | stacked layout과 blue/red tab 확인 | 유지 |
-| Enemy source | `WorldScanFallback` 표시 | P0.5에서는 유지, Target Component 구현 후 교체 |
+| Enemy source | `WorldScanFallback` 표시 | P0.5에서는 유지, Focus Component 구현 후 교체 |
 | EventLog | 현재 compact key/value format으로 충분 | 추가 축약 보류 |
 | Player/Enemy별 EventLog | world 단위 공통 log | P1 후보 |
 | Runtime LOD | `N/A` 가능 | 최종 성공 evidence에서 제외 |
@@ -138,7 +138,7 @@ P0.5에서 표시한다면 다음 중 하나를 선택한다.
 
 다음은 P0.5 최종 캡처 전 필수 작업이 아니다.
 
-- Target Component 기반 enemy selection
+- Focus Component 기반 enemy selection
 - Player/Enemy별 EventLog 분리
 - EventLog category filter
 - Runtime LOD 실제 tier hook 및 최종 evidence

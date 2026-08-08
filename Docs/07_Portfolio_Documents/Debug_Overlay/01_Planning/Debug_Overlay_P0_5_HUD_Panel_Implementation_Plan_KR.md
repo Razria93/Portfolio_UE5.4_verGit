@@ -152,7 +152,7 @@ Combat snapshot 기반 enemy 추론은 더 신뢰도가 높지만, Store/API 보
 예시:
 
 ```text
-EnemySource: WorldScanFallback
+EnemyFocusMode: WorldScanFallback
 EnemyFallback: Selected=BP_CAIController0_Pawn Policy=FirstValid Count=1
 ```
 
@@ -315,7 +315,7 @@ P0.5 HUD 1단계에서 구현하지 않을 것:
 - Event category filter
 - compact summary format 변경
 - combat snapshot 기반 enemy 추론
-- Target Component 기반 enemy selection
+- Focus Component 기반 enemy selection
 - Blackboard target actor 보조 검토
 - 다중 enemy cycling
 

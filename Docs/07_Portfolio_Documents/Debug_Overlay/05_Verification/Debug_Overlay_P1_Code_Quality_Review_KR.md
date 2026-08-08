@@ -23,7 +23,7 @@
 | 파일 | 역할 |
 | --- | --- |
 | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.h/.cpp` | Canvas 기반 P0.5 overlay 표시, Player/Enemy panel, source chain 표시 |
-| `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.h/.cpp` | debug overlay 전용 명시 target 저장 component |
+| `Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.h/.cpp` | debug overlay 전용 명시 focus 저장 component |
 | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotTypes.h` | overlay snapshot / summary / event entry 타입 |
 | `Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.h/.cpp` | World별 snapshot store, event ring, recent combat pair 저장 |
 | `Source/Portfolio/Core/Debug/CDebugOverlayGameMode.h/.cpp` | TestRoom 수동 연결용 debug overlay GameMode |
@@ -31,7 +31,7 @@
 | `Source/Portfolio/Core/Debug/FCombatSignalDebug.cpp` | collision window / target packet / combat result event를 SnapshotStore에 기록 |
 | `Source/Portfolio/Core/Debug/FCombatResultDebug.cpp` | combat result receive event를 SnapshotStore에 기록 |
 | `Source/Portfolio/Core/Debug/FAICombatBTDebug.cpp` | AI combat task event를 SnapshotStore에 기록 |
-| `Source/Portfolio/Controller/CPlayerController.h/.cpp` | debug target Exec command와 TargetComponent 소유 |
+| `Source/Portfolio/Controller/CPlayerController.h/.cpp` | debug target Exec command와 FocusComponent 소유 |
 | `Source/Portfolio/Character/Player/CPlayer.h` | overlay용 parry stagger count getter 제공 |
 | `Source/Portfolio/Character/Enemy/CEnemy.h` | overlay용 parry stagger count getter 제공 |
 
@@ -41,7 +41,7 @@
 
 | 위치 | 판단 |
 | --- | --- |
-| `CDebugOverlayTargetComponent.h:16-21` | public API가 `Has/Get/Set/Clear` 계열로 분리되어 있고 PascalCase를 따른다. |
+| `CDebugOverlayFocusComponent.h:16-21` | public API가 `Has/Get/Set/Clear` 계열로 분리되어 있고 PascalCase를 따른다. |
 | `FDebugOverlaySnapshotStore.h:27-58` | `Is/Record/Add/Get/Try/Reset` 계열로 gate, record, query, lifecycle 의미가 드러난다. |
 | `CPlayerController.h:18-24` | Exec command 이름이 console command로 읽기 쉽고 debug overlay prefix가 명확하다. |
 | `CPlayer.h:133-134`, `CEnemy.h:205-206` | Stagger getter는 read-only getter로 의미가 명확하다. |
@@ -59,7 +59,7 @@
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
-| `CDebugOverlayTargetComponent.h:19`, `CDebugOverlayTargetComponent.cpp:20-23` | API 책임명 | `GetDebugOverlayTargetSource()`는 항상 `"TargetComponent"`를 반환한다. HUD에서는 현재 이 API를 쓰지 않고 문자열을 직접 출력한다. 유지할지, 제거할지, HUD에서 사용하게 할지 결정이 필요하다. |
+| `CDebugOverlayFocusComponent.h:19`, `CDebugOverlayFocusComponent.cpp:20-23` | API 책임명 | `GetDebugOverlayFocusSource()`는 항상 `"FocusComponent"`를 반환한다. HUD에서는 현재 이 API를 쓰지 않고 문자열을 직접 출력한다. 유지할지, 제거할지, HUD에서 사용하게 할지 결정이 필요하다. |
 
 ## 4. API const 검토
 
@@ -69,7 +69,7 @@
 | --- | --- |
 | `CDebugOverlayHUD.h:18-19` | `ResolveDisplayEnemy`, `RefreshCachedEnemyIfNeeded`는 cache와 source line을 갱신하므로 non-const가 맞다. |
 | `CPlayerController.h` | `FindNearestDebugOverlayEnemy`는 조회 전용이므로 `const`가 적절하다. |
-| `CDebugOverlayTargetComponent.h:16-19` | `HasDebugOverlayTarget()`, `GetDebugOverlayTargetActor()`, `GetDebugOverlayTargetSummary()`, `GetDebugOverlayTargetSource()`는 상태 변경이 없는 query API로 `const`가 적절하다. |
+| `CDebugOverlayFocusComponent.h:16-19` | `HasDebugOverlayFocus()`, `GetDebugOverlayFocusActor()`, `GetDebugOverlayFocusSummary()`, `GetDebugOverlayFocusSource()`는 상태 변경이 없는 query API로 `const`가 적절하다. |
 | `FDebugOverlaySnapshotStore.h:27-58` | static store API라 member const 적용 대상이 아니다. `Record/Add/Reset` 계열은 mutation API로 명확하다. |
 | `CPlayer.h:133-134`, `CEnemy.h:205-206` | `GetParryResultCount()`, `GetParryStaggerThreshold()`는 read-only inline getter로 적합하다. |
 
@@ -99,7 +99,7 @@
 | 위치 | 판단 |
 | --- | --- |
 | `CDebugOverlayHUD.h:1-4` | `CoreMinimal.h`, required engine header, generated header 순서가 적절하다. |
-| `CDebugOverlayTargetComponent.h:1-5` | `CoreMinimal.h`, `ActorComponent.h`, generated header 순서가 적절하다. |
+| `CDebugOverlayFocusComponent.h:1-5` | `CoreMinimal.h`, `ActorComponent.h`, generated header 순서가 적절하다. |
 | `FDebugOverlaySnapshotStore.h:1-10` | snapshot type include와 forward declaration이 구분되어 있다. |
 
 ### LowRiskFix
@@ -107,7 +107,7 @@
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
 | `CDebugOverlayHUD.h` | UCLASS header layout | `CachedEnemy`, `LastEnemyScanTimeSeconds`, `LastEnemyScanCount` runtime field가 private helper 아래에 있었다. 기존 UCLASS 패턴에 맞춰 field를 helper 위로 올리는 low-risk cleanup이 가능하다. |
-| `CDebugOverlayTargetComponent.h` | UCLASS header layout | `DebugOverlayTargetActor` field가 public API 아래에 있었다. 파일은 짧지만 UCLASS 패턴과 맞추려면 constructor 이후 private field를 먼저 두고 public query/mutation API를 뒤에 두는 것이 더 일관적이다. |
+| `CDebugOverlayFocusComponent.h` | UCLASS header layout | `DebugOverlayFocusActor` field가 public API 아래에 있었다. 파일은 짧지만 UCLASS 패턴과 맞추려면 constructor 이후 private field를 먼저 두고 public query/mutation API를 뒤에 두는 것이 더 일관적이다. |
 | `CPlayerController.cpp:8-12` | include group 순서 | `EngineUtils.h`가 engine header인데 `Core/Debug`와 `Type` project headers 사이에 위치한다. W05 기준상 project internal header를 먼저 모으고 engine header를 뒤로 보내는 정리가 가능하다. |
 | `CDebugOverlayHUD.cpp:13-17` | include group 순서 | `Engine/Canvas.h`, `EngineUtils.h`, `GameFramework/*`가 `Type/CActionKeyTypes.h`보다 앞에 있다. W05 기준으로는 project Type header를 engine header보다 먼저 두는 정리가 가능하다. |
 | `FDebugOverlaySnapshotStore.cpp:3-10` | include group 순서 | `Type/CCombatResultTypes.h`, `Type/CCombatSignalTargetTypes.h`가 Unreal/Engine include 뒤에 있다. W05 기준으로 project Type include를 engine header보다 먼저 배치하는 정리가 가능하다. |
@@ -153,7 +153,7 @@
 | 위치 | 판단 |
 | --- | --- |
 | `FDebugOverlaySnapshotStore.h:26-57`, `FDebugOverlaySnapshotStore.cpp:207-419` | `Gate`, `Execution Record`, `Combat Record`, `AI Record`, `Event Log`, `Snapshot Query`, `Lifecycle` 섹션은 책임 단위가 분명하다. |
-| `CPlayerController.h:66-78`, `CPlayerController.cpp:77-98`, `212-305` | `Debug Overlay Exec`, `Debug Overlay Target` 섹션은 debug-only 확장 영역을 명확히 구분한다. |
+| `CPlayerController.h:66-78`, `CPlayerController.cpp:77-98`, `212-305` | `Debug Overlay Exec`, `Debug Overlay Focus` 섹션은 debug-only 확장 영역을 명확히 구분한다. |
 
 ### LowRiskFix
 
@@ -170,7 +170,7 @@
 | `CDebugOverlayGameMode.cpp:7-9` | Shipping에서는 HUDClass를 debug overlay HUD로 지정하지 않는다. |
 | `CDebugOverlayHUD.cpp:313-370` | `DrawHUD` 내부가 `#if !UE_BUILD_SHIPPING`으로 보호되고 `IsEnabled()` gate를 통과해야 그린다. |
 | `FDebugOverlaySnapshotStore.cpp:18-42`, `209-481` | CVar 선언과 store mutation이 non-shipping guard 안에 있다. Shipping query는 false/empty/no-op로 정리되어 있다. |
-| `CPlayerController.cpp:29-32`, `79-98`, `210-305` | TargetComponent 생성과 Exec 구현이 non-shipping guard 안에 있다. input asset/config 변경 없이 console command로만 접근한다. |
+| `CPlayerController.cpp:29-32`, `79-98`, `210-305` | FocusComponent 생성과 Exec 구현이 non-shipping guard 안에 있다. input asset/config 변경 없이 console command로만 접근한다. |
 | `FExecutionOrchestratorDebug.cpp:209-222`, `272-285` | overlay record 호출은 store의 `IsCollecting()` / record API를 통해 shipping no-op 경계에 걸려 있고, 기존 audit CVar return과 분리되어 있다. |
 | `FCombatSignalDebug.cpp:88-101`, `302-310`, `332-340`, `410-419` | overlay collect 경로가 기존 audit log gate와 분리되어 있고, shipping에서는 store API가 no-op으로 동작한다. |
 | `FCombatResultDebug.cpp:73-84` | combat result overlay 기록은 audit 출력보다 먼저 분리되어 있으며 shipping에서는 store API no-op 경계를 따른다. |
@@ -188,17 +188,17 @@
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
 | `CDebugOverlayHUD.cpp:313-370` | Shipping guard | shipping에서는 `DrawHUD()`가 정의는 유지되지만 `Super::DrawHUD()`도 호출하지 않고 완전 no-op이 된다. debug 전용 HUD라면 허용 가능하지만, shipping에서 이 HUD class가 지정될 가능성을 방어하려면 `Super::DrawHUD()` 위치 조정 여부를 결정해야 한다. |
-| `CDebugOverlayTargetComponent.h:7-24`, `CDebugOverlayTargetComponent.cpp:5-40` | Shipping guard | component class/API 자체는 shipping에서도 컴파일된다. 현재 생성 경로는 `ACPlayerController`에서 non-shipping guard로 차단되어 있으나, debug-only component 정책을 class/API까지 엄격히 적용할지 결정이 필요하다. |
+| `CDebugOverlayFocusComponent.h:7-24`, `CDebugOverlayFocusComponent.cpp:5-40` | Shipping guard | component class/API 자체는 shipping에서도 컴파일된다. 현재 생성 경로는 `ACPlayerController`에서 non-shipping guard로 차단되어 있으나, debug-only component 정책을 class/API까지 엄격히 적용할지 결정이 필요하다. |
 | `CPlayerController.h:17-24` | Shipping guard / UHT surface | `UFUNCTION(Exec)` 3개가 shipping class interface에도 남고 cpp body만 no-op 처리된다. runtime 동작은 차단되지만 command surface 자체를 shipping에서 제거할지 여부는 UHT/빌드 정책까지 포함해 결정해야 한다. |
-| `CPlayerController.h:30-31` | Shipping guard / reflected member | `DebugOverlayTargetComponent` UPROPERTY가 shipping class layout/reflection에도 남는다. constructor 생성은 non-shipping guard되어 있으나 debug-only reflected member를 shipping에 남길지 판단이 필요하다. |
+| `CPlayerController.h:30-31` | Shipping guard / reflected member | `DebugOverlayFocusComponent` UPROPERTY가 shipping class layout/reflection에도 남는다. constructor 생성은 non-shipping guard되어 있으나 debug-only reflected member를 shipping에 남길지 판단이 필요하다. |
 
-## 9. TargetComponent source chain / gameplay flow 검토
+## 9. FocusComponent source chain / gameplay flow 검토
 
 ### NoIssue
 
 | 위치 | 판단 |
 | --- | --- |
-| `CDebugOverlayHUD.cpp` | 기본 Enemy panel path는 `TargetComponent.Nearest -> None`으로 정리되어 있다. 명시 target이 없으면 자동 fallback으로 Enemy panel을 채우지 않는다. |
+| `CDebugOverlayHUD.cpp` | 기본 Enemy panel path는 `FocusComponent.NearestFocus -> None`으로 정리되어 있다. 명시 focus이 없으면 자동 fallback으로 Enemy panel을 채우지 않는다. |
 | `CDebugOverlayHUD.cpp` | recent combat pair helper는 diagnostic 후보로 남아 있지만 기본 Enemy panel source로 호출되지 않는다. |
 | `CDebugOverlayHUD.cpp` | world scan fallback helper는 diagnostic 후보로 남아 있지만 기본 Enemy panel source로 호출되지 않는다. |
 | `FDebugOverlaySnapshotStore.cpp:149-159` | recent combat pair는 weak actor pair와 name/time/frame/event만 저장하며 snapshot copy에 raw pointer를 넣지 않는다. |
@@ -208,16 +208,16 @@
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
-| `CPlayerController.cpp`, `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | source claim 정확도 | 결정 완료. line trace 기반 `DebugOverlaySelectTarget`은 제거하고, P1 source claim은 `TargetComponent.Nearest` / `None`으로 제한한다. |
-| `CDebugOverlayHUD.cpp` | diagnostic helper 제거 | RecentCombatTarget/WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
+| `CPlayerController.cpp`, `CDebugOverlayFocusComponent.*`, `CDebugOverlayHUD.cpp` | source claim 정확도 | 결정 완료. line trace 기반 `DebugOverlaySelectTarget`은 제거하고, P1 source claim은 `FocusComponent.NearestFocus` / `None`으로 제한한다. |
+| `CDebugOverlayHUD.cpp` | diagnostic helper 제거 | RecentCombatFocus/WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
 
 ### Later
 
 | 위치 | 기준 | 내용 |
 | --- | --- | --- |
-| `CPlayerController.cpp` | line trace target resolve | line trace 기반 target selection은 P1 정책에서 제거되었다. 후속 범용 TargetComponent 설계에서 필요할 때 별도 검토한다. |
+| `CPlayerController.cpp` | line trace target resolve | line trace 기반 target selection은 P1 정책에서 제거되었다. 후속 범용 FocusComponent 설계에서 필요할 때 별도 검토한다. |
 | `CDebugOverlayHUD.cpp:147-155` | evidence claim 범위 | Runtime LOD와 AI current value는 아직 `N/A` / `NotCaptured` placeholder다. P1 Runtime LOD / AI 보강 전까지 성공 evidence로 주장하지 않는다. |
-| `FDebugOverlaySnapshotStore.cpp:149-159` | subject ownership | recent combat pair는 P1 TargetComponent 기준은 충족한다. 다만 Player/Enemy EventLog 분리 시 subject ownership 모델을 별도 설계해야 한다. |
+| `FDebugOverlaySnapshotStore.cpp:149-159` | subject ownership | recent combat pair는 P1 FocusComponent 기준은 충족한다. 다만 Player/Enemy EventLog 분리 시 subject ownership 모델을 별도 설계해야 한다. |
 
 ## 10. Findings 요약
 
@@ -236,11 +236,11 @@
 
 | 항목 | 파일 | 결정 필요 내용 |
 | --- | --- | --- |
-| `GetDebugOverlayTargetSource()` 유지 여부 | `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | 현재 API는 `TargetComponent.Nearest` / `None` 표시를 위해 사용한다. 유지한다. |
-| line trace target selection 유지 여부 | `CPlayerController.cpp`, `CDebugOverlayTargetComponent.*`, `CDebugOverlayHUD.cpp` | 결정 완료. P1에서는 line trace target selection을 제거하고 nearest command만 명시 target source로 사용한다. |
-| Exec command / reflected member shipping 노출 정책 | `CPlayerController.h`, `CDebugOverlayTargetComponent.*` | cpp body와 생성 경로는 no-op/guard되어 있으나 UFUNCTION/UPROPERTY/class surface는 shipping에도 남는다. UHT 안전성과 debug-only 엄격성 사이에서 결정이 필요하다. |
+| `GetDebugOverlayFocusSource()` 유지 여부 | `CDebugOverlayFocusComponent.*`, `CDebugOverlayHUD.cpp` | 현재 API는 `FocusComponent.NearestFocus` / `None` 표시를 위해 사용한다. 유지한다. |
+| line trace focus selection 유지 여부 | `CPlayerController.cpp`, `CDebugOverlayFocusComponent.*`, `CDebugOverlayHUD.cpp` | 결정 완료. P1에서는 line trace target selection을 제거하고 nearest command만 명시 focus source로 사용한다. |
+| Exec command / reflected member shipping 노출 정책 | `CPlayerController.h`, `CDebugOverlayFocusComponent.*` | cpp body와 생성 경로는 no-op/guard되어 있으나 UFUNCTION/UPROPERTY/class surface는 shipping에도 남는다. UHT 안전성과 debug-only 엄격성 사이에서 결정이 필요하다. |
 | `ResolveWorld`의 `const_cast` 유지 여부 | `FDebugOverlaySnapshotStore.cpp` | 실제 mutation은 없지만 W05 위험 신호다. helper signature 변경 또는 현 상태 유지 중 결정한다. |
-| diagnostic helper 제거 여부 | `CDebugOverlayHUD.cpp` | RecentCombatTarget/WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
+| diagnostic helper 제거 여부 | `CDebugOverlayHUD.cpp` | RecentCombatFocus/WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
 
 ### Later
 
@@ -250,7 +250,7 @@
 | AI current value 보강 | `CDebugOverlayHUD.cpp` | P1 AI 표시 보강 단계에서 처리한다. |
 | Player/Enemy EventLog 분리 | `FDebugOverlaySnapshotStore.*`, `CDebugOverlayHUD.cpp` | subject ownership 설계 이후 처리한다. |
 | EventLog category filter | `FDebugOverlaySnapshotStore.*`, `CDebugOverlayHUD.cpp` | P1 별도 구현 단위로 처리한다. |
-| 범용 target source 설계 | `CPlayerController.cpp`, future target component | line trace는 P1에서 제거했다. 범용 target component로 승격할 때 입력 방식과 target source를 별도 설계한다. |
+| 범용 focus source 설계 | `CPlayerController.cpp`, future focus component | line trace는 P1에서 제거했다. 범용 target component로 승격할 때 입력 방식과 target source를 별도 설계한다. |
 
 ### NoIssue
 
@@ -265,9 +265,9 @@
 
 | 파일 | 판단 |
 | --- | --- |
-| `CDebugOverlayTargetComponent.h/.cpp` | constructor 이후 `Has/Get/Get/Get/Set/Clear` 순서가 header와 source에서 일치한다. Field는 source 구현 대응 대상이 아니므로 제외한다. |
+| `CDebugOverlayFocusComponent.h/.cpp` | constructor 이후 `Has/Get/Get/Get/Set/Clear` 순서가 header와 source에서 일치한다. Field는 source 구현 대응 대상이 아니므로 제외한다. |
 | `FDebugOverlaySnapshotStore.h/.cpp` | `Gate -> Execution Record -> Combat Record -> AI Record -> Event Log -> Snapshot Query -> Lifecycle` 순서가 header와 source에서 일치한다. |
-| `CPlayerController.h/.cpp` | `Debug Overlay Exec -> Lifecycle -> Look Input -> Move Input -> Movement Dispatch -> Action Input -> Debug Overlay Target` 순서가 header와 source에서 일치한다. |
+| `CPlayerController.h/.cpp` | `Debug Overlay Exec -> Lifecycle -> Look Input -> Move Input -> Movement Dispatch -> Action Input -> Debug Overlay Focus` 순서가 header와 source에서 일치한다. |
 | `CDebugOverlayHUD.h/.cpp` | 기존 source 구현 순서가 `RefreshCachedEnemyIfNeeded -> ResolveDisplayEnemy -> DrawHUD`였으나, header 선언 흐름에 맞춰 `DrawHUD -> ResolveDisplayEnemy -> RefreshCachedEnemyIfNeeded` 순서로 정리했다. |
 
 `CPlayerController.h`의 Exec command가 field보다 위에 있는 구조는 UCLASS field-first 패턴의 예외지만, source 구현 순서와는 일치한다. Console command entry point 가시성 의도가 있으므로 이번 cleanup에서는 위치를 유지한다.
@@ -304,15 +304,15 @@
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P0_5_Remaining_Refactor_Plan_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Work_Order_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Scope_KR.md` |
-| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Target_Selection_Design_KR.md` |
-| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Target_Component_Implementation_Plan_KR.md` |
-| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Target_Set_Path_Design_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Focus_Selection_Design_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Focus_Component_Implementation_Plan_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/01_Planning/Debug_Overlay_P1_Focus_Set_Path_Design_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/02_Operation/Debug_Overlay_Operation_Guide_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/03_Evidence_Map/Debug_Overlay_Evidence_Map_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P0_PIE_Checklist_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_Code_Quality_Review_KR.md` |
-| A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_TargetComponent_PIE_Checklist_KR.md` |
+| A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_P1_FocusComponent_PIE_Checklist_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/05_Verification/Debug_Overlay_W05_PR_Style_Gap_Review_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md` |
 | A | `Docs/07_Portfolio_Documents/Debug_Overlay/06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md` |
@@ -347,8 +347,8 @@
 | A | `Source/Portfolio/Core/Debug/CDebugOverlayGameMode.cpp` |
 | A | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.h` |
 | A | `Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp` |
-| A | `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.h` |
-| A | `Source/Portfolio/Core/Debug/CDebugOverlayTargetComponent.cpp` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.h` |
+| A | `Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.cpp` |
 | M | `Source/Portfolio/Core/Debug/FAICombatBTDebug.cpp` |
 | M | `Source/Portfolio/Core/Debug/FCombatResultDebug.cpp` |
 | M | `Source/Portfolio/Core/Debug/FCombatSignalDebug.cpp` |
@@ -399,8 +399,8 @@
 
 2. `DecisionNeeded` 항목 사용자 결정
    - diagnostic helper를 별도 mode로 다시 노출할지 결정
-   - 범용 TargetComponent로 승격할 때 target source 입력 방식을 결정
-   - P1 Target Selection Decision 기준으로 nearest-only command 정책 유지
+   - 범용 TargetComponent로 승격할 때 focus source 입력 방식을 결정
+   - P1 Focus Selection Decision 기준으로 nearest-only command 정책 유지
    - Exec command / UPROPERTY / component class shipping 노출 정책 결정
    - `ResolveWorld`의 `const_cast` 유지 여부 결정
 

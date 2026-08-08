@@ -130,9 +130,9 @@ AI:
 PlayerEventLog:
 
 [Enemy]
-EnemySource:
-EnemyTarget:
-EnemySelect:
+EnemyFocusMode:
+EnemyFocusActor:
+EnemyFocusCommand:
 
 State:
 Action:
@@ -171,7 +171,7 @@ PlayerEventLog: NoEvents(Filter=Combat)
 EnemyEventLog: NoEvents(Filter=Combat)
 ```
 
-Enemy target 없음:
+Enemy focus 없음:
 
 ```text
 EnemyEventLog: NoTarget
@@ -266,8 +266,8 @@ PIE에서 다음을 확인한다.
 | `EventLogFilter Combat` | Player/Enemy별 Combat/CombatResult 관련 event만 표시 |
 | `EventLogFilter AI` | 관련 AI event 또는 `NoEvents(Filter=AI)` |
 | `EventLogLimit 0` | subject log도 `NoEvents(Filter=... Limit=0)` |
-| `DebugOverlaySelectNearestTarget` | EnemyEventLog 기준 subject가 selected Enemy로 전환 |
-| `DebugOverlayClearTarget` | EnemyEventLog가 `NoTarget`으로 복귀 |
+| `DebugOverlaySelectNearestFocus` | EnemyEventLog 기준 subject가 selected Enemy로 전환 |
+| `DebugOverlayClearFocus` | EnemyEventLog가 `NoTarget`으로 복귀 |
 
 ## 14. 완료 기준
 

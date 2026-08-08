@@ -25,8 +25,8 @@
 | --- | --- | --- |
 | Store | `FDebugOverlaySnapshotStore.*`, `FDebugOverlaySnapshotTypes.h` | runtime evidence 원천 데이터, EventLog ring, CVar gate, filter/query |
 | HUD | `CDebugOverlayHUD.cpp` | Store query, actor state read, AI blackboard read, line buffer 생성, Canvas layout/draw |
-| Target bridge | `CDebugOverlayTargetComponent.*`, `CPlayerController.cpp` | selected enemy target/source/summary 저장 및 Exec command |
-| Editor Tooling | `PortfolioDebugOverlayEditorModule.cpp` | Editor-only CVar UI, target command button, menu/toolbar/tab |
+| Target bridge | `CDebugOverlayFocusComponent.*`, `CPlayerController.cpp` | selected enemy target/source/summary 저장 및 Exec command |
+| Editor Tooling | `PortfolioDebugOverlayEditorModule.cpp` | Editor-only CVar UI, focus command button, menu/toolbar/tab |
 
 ## 3. 현재 HUD 책임 분류
 
@@ -41,7 +41,7 @@
 | ViewData/line buffer 생성 | `AppendMainActorPanelLines`, `AppendInteractionPanelLines`, actor/event block append | 1차 ViewDataBuilder 추출 대상 |
 | Canvas panel layout | `CalculateRightPanelGeometry`, line height/visible lines helper | Canvas renderer 소유 |
 | Canvas draw | `DrawOverlayLines`, `DrawHUD()` | Canvas fallback renderer 소유 |
-| enemy target resolve | `ResolveDisplayEnemy`, `ResolveTargetComponentEnemy` | target selection view source 또는 HUD adapter 후보 |
+| enemy target resolve | `ResolveDisplayEnemy`, `ResolveTargetComponentEnemy` | focus selection view source 또는 HUD adapter 후보 |
 | fallback/diagnostic helper | `ResolveRecentCombatEnemy`, `ResolveWorldScanFallbackEnemy` | 별도 결정 전 유지/보류 |
 
 현재 구조는 P52/P53 evidence tooling으로는 동작하지만, UI 디자인을 Blueprint/UMG에서 override하려면 line buffer 생성과 Canvas draw가 분리되어야 한다.
@@ -141,7 +141,7 @@ TextFormatter는 현재 HUD/Store에 흩어진 표시 문자열 기본값을 한
 
 주의:
 
-- `Pannel_01/02/03` 표시 문자열은 style-lock 상태이므로 TextFormatter로 옮기더라도 값을 바꾸지 않는다.
+- `Panel_01/02/03` 표시 문자열은 style-lock 상태이므로 TextFormatter로 옮기더라도 값을 바꾸지 않는다.
 - `Runtime LOD: N/A`를 actual 구현처럼 바꾸지 않는다.
 
 ### 6.4 Canvas Renderer
@@ -253,7 +253,7 @@ Canvas fallback 유지 조건:
 
 - `Portfolio.DebugOverlay.Enabled`는 Canvas fallback 표시 gate로 유지.
 - `Portfolio.DebugOverlay.Collect`는 Store record gate로 유지.
-- `Pannel_01/02/03` 표시 문자열은 별도 표시 정책 PR 전까지 유지.
+- `Panel_01/02/03` 표시 문자열은 별도 표시 정책 PR 전까지 유지.
 - 기존 line order, `NoTarget`, `NotCaptured`, `NotMatched`, `Stale`, `NoEvents(...)` 문구 유지.
 
 ## 10. Store와 ViewData 경계
@@ -293,8 +293,8 @@ Blueprint에 직접 노출하지 않을 API:
 유지할 경계:
 
 - Editor Tooling은 CVar를 읽고 쓰는 session-only control panel이다.
-- target command button은 PIE PlayerController의 기존 Exec command를 호출한다.
-- Editor plugin이 `TargetComponent`, Store, ViewDataBuilder, Widget BP를 직접 조작하지 않는다.
+- focus command button은 PIE PlayerController의 기존 Exec command를 호출한다.
+- Editor plugin이 `FocusComponent`, Store, ViewDataBuilder, Widget BP를 직접 조작하지 않는다.
 - Editor Tooling module split은 ViewData/UMG 작업과 별도 PR로 둔다.
 - Editor-only plugin에 runtime ViewData/UMG ownership을 넣지 않는다.
 - runtime module에 `UnrealEd`, `ToolMenus`, Editor-only dependency를 추가하지 않는다.
@@ -339,7 +339,7 @@ Blueprint에 직접 노출하지 않을 API:
 검증:
 
 - 3-panel Canvas fallback 유지.
-- `Pannel_01/02/03` 유지.
+- `Panel_01/02/03` 유지.
 
 ### PR 4. UMG/Blueprint override 설계 또는 spike
 
@@ -359,7 +359,7 @@ Blueprint에 직접 노출하지 않을 API:
 
 목표:
 
-- `PortfolioDebugOverlayEditorModule.cpp`에서 CVar helper, target command helper, Slate widget 분리.
+- `PortfolioDebugOverlayEditorModule.cpp`에서 CVar helper, focus command helper, Slate widget 분리.
 - runtime UI override 구조와 섞지 않는다.
 
 검증:
@@ -369,18 +369,18 @@ Blueprint에 직접 노출하지 않을 API:
 
 이 PR은 PR 1~4와 독립적으로 진행할 수 있다. 다만 ViewData/UMG runtime presentation 작업과 같은 PR에 섞지 않는다.
 
-### PR 6. Target command bridge polish
+### PR 6. Focus command bridge polish
 
 목표:
 
-- `CPlayerController.*`, `CDebugOverlayTargetComponent.*`의 debug target command 실패 처리와 summary helper 중복을 정리.
-- runtime target command 정책은 유지.
+- `CPlayerController.*`, `CDebugOverlayFocusComponent.*`의 debug focus command 실패 처리와 summary helper 중복을 정리.
+- runtime focus command 정책은 유지.
 
 검증:
 
 - nearest radius `3000` 유지.
 - enemy-only selection 및 non-enemy reject 유지.
-- `DebugOverlaySelectNearestTarget`, `DebugOverlayClearTarget`, `DebugOverlaySelectActorTarget` command 의미 유지.
+- `DebugOverlaySelectNearestFocus`, `DebugOverlayClearFocus`, `DebugOverlaySelectOutlinerFocus` command 의미 유지.
 - Shipping gameplay command처럼 claim하지 않음.
 
 ### 별도 feature PR

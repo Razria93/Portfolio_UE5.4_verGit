@@ -68,7 +68,7 @@ Debug Overlay 기준:
 | P44 Comment / Section Cleanup | Store/HUD helper가 길어졌고 HUD anonymous namespace의 섹션 구분이 약하다. | LowRiskFix |
 | P45 Naming / API Cleanup | `Try`, `Append`, `Format`, `Resolve`, `Record` 계열 이름은 대체로 맞다. 일부 역할 이름 보강 후보가 있다. | LowRiskFix |
 | P46 Type Header Organization | SnapshotTypes는 data-only, Store는 API-only static utility, FocusComponent는 UActorComponent로 역할이 분리되어 있다. | 유지 |
-| P47 Meaning Cleanup | `Pannel_01/02/03` 오탈자처럼 보이는 표현은 현재 style lock에 의해 표시값으로 고정되어 있다. | NoChange |
+| P47 Meaning Cleanup | `Panel_01/02/03` 오탈자처럼 보이는 표현은 현재 style lock에 의해 표시값으로 고정되어 있다. | NoChange |
 | P48 Include Order Cleanup | 대부분 matching header -> project/internal -> engine 흐름을 따른다. 일부 재확인 후보만 있다. | LowRiskFix |
 | P49 API Const Consistency | getter/query const는 대체로 지켜진다. HUD draw/cache/diagnostic record는 const 대상이 아니다. | 유지 |
 | P50 Section Comment Consistency | Store API section은 유지 가능하다. HUD helper section은 더 명확히 나눌 수 있다. | LowRiskFix |
@@ -154,7 +154,7 @@ LowRiskFix 기준:
 | `FDebugOverlayRecentCombatPair` 위치 | `FDebugOverlaySnapshotStore.h` 또는 `FDebugOverlaySnapshotTypes.h` | public query type이라 header 노출이 필요하다. type header로 옮길지 유지할지 결정이 필요하다. |
 | `CPlayerController.h` Exec API 위치 | `CPlayerController.h` | field-first 스타일과 console command 가시성 사이의 선택이다. 이번 cleanup에서는 임의 이동하지 않는다. |
 | debug log category 교체 | `CPlayerController.cpp` | `LogTemp`를 debug overlay 전용 log category로 바꾸려면 category 선언/소유 위치가 필요하다. 단순 cleanup보다 정책 결정 성격이 있으므로 마감 전 LowRiskFix에서 제외한다. |
-| diagnostic fallback helper 제거 | `CDebugOverlayHUD.h/.cpp` | RecentCombatTarget / WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
+| diagnostic fallback helper 제거 | `CDebugOverlayHUD.h/.cpp` | RecentCombatFocus / WorldScanFallback helper는 Runtime Display Data Cleanup에서 제거한다. |
 
 ### 6.3 Later
 
@@ -163,7 +163,7 @@ LowRiskFix 기준:
 | Runtime LOD actual 표시 | P1 closure 기준 보류 항목이다. cleanup이 아니라 기능 구현이다. |
 | Behavior Tree active node 추적 | Current AI / Recent AI Event보다 깊은 AI evidence 기능이다. 별도 설계가 필요하다. |
 | EventLog line wrapping / compact | UI polish 성격이며 현재 separate panel로 P1 가독성은 확보했다. |
-| 범용 target component 전환 | 현재는 debug-only target component로 마감하고, P1 이후 별도 리팩터링으로 진행한다. |
+| 범용 focus component 전환 | 현재는 debug-only target component로 마감하고, P1 이후 별도 리팩터링으로 진행한다. |
 | Store event schema 확장 | `Role`, `ReceiverName`, `SubjectHint`, actor pointer 등은 P1 cleanup 범위가 아니다. |
 | UMG/Slate 전환 | Canvas HUD tooling을 유지한다. |
 | FinalCandidate 촬영/패키징 | P1 기능 마감 후 별도 단계다. |
@@ -176,7 +176,7 @@ LowRiskFix 기준:
 | `FDebugOverlaySnapshotStore.h` static utility API 구조 | field가 없는 API-only class라 UCLASS field/API 배치 기준을 그대로 적용하지 않는다. |
 | `UCDebugOverlayFocusComponent` 책임 | debug-only focus actor/source/command result 저장소와 Target compatibility wrapper로 충분히 좁다. |
 | debug hook 파일 분산 | 도메인별 hook에서 Store record를 호출하는 현재 구조가 의존성을 낮춘다. |
-| `Pannel_01/02/03` 표시 | 현재 layout style lock 문서 기준으로 유지한다. |
+| `Panel_01/02/03` 표시 | 현재 layout style lock 문서 기준으로 유지한다. |
 | EventLog CVar 이름 | console command contract이므로 임의 변경하지 않는다. |
 | HUD layout 수치 | 사용자가 수동 조정한 style lock 값이므로 기능 작업 중 임의 변경하지 않는다. |
 
@@ -238,8 +238,8 @@ Debug Overlay P1 마감 전 LowRiskFix cleanup으로 HUD/Store helper section과
 - Focus mode enum 확장
 - RecentCombat 명시 command 경로
 - Target compatibility wrapper 실제 제거 여부 판단
-- `EDebugOverlayTargetSource` alias 실제 제거 여부 판단
-- `TEXT("DebugOverlayTarget")` subobject name 변경과 asset migration/Core Redirect 검토
+- `EDebugOverlayFocusSource` alias 실제 제거 여부 판단
+- `TEXT("DebugOverlayFocus")` subobject name 변경과 asset migration/Core Redirect 검토
 
 ### 9.3 이번 브랜치에서 하지 않을 것
 

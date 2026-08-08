@@ -27,7 +27,7 @@ private:
 	TSharedRef<SWidget> MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName) const;
 	TSharedRef<SWidget> MakeEventLogFilterRow();
 	TSharedRef<SWidget> MakeEventLogLimitRow() const;
-	TSharedRef<SWidget> MakeNearestTargetRadiusRow() const;
+	TSharedRef<SWidget> MakeNearestFocusRadiusRow() const;
 
 	// ===== Status / Refresh =====
 

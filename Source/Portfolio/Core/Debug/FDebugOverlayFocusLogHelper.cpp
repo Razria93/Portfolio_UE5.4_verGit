@@ -9,7 +9,7 @@ namespace
 		switch (InResult.Outcome)
 		{
 		case EDebugOverlayFocusResolveOutcome::NoTarget:
-			UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: DriverEnabled | NoTargetFound"), InCommandName);
+			UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: DriverEnabled | NoFocusFound"), InCommandName);
 			bOutReturnValue = true;
 			return true;
 		case EDebugOverlayFocusResolveOutcome::NoRecentCombatEvidence:
@@ -29,24 +29,24 @@ namespace
 	{
 		if (InProfile == EDebugOverlayFocusResolveLogProfile::Nearest)
 		{
-			UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: Selected | Target: %s | Distance: %.0f | Radius: %.0f"), InCommandName, *InResult.ActorName, InResult.Distance, InResult.Radius);
+			UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: Selected | Focus: %s | Distance: %.0f | Radius: %.0f"), InCommandName, *InResult.ActorName, InResult.Distance, InResult.Radius);
 			return true;
 		}
 
-		UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: Selected | Target: %s"), InCommandName, *InResult.ActorName);
+		UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: Selected | Focus: %s"), InCommandName, *InResult.ActorName);
 		return true;
 	}
 }
 
-bool FDebugOverlayFocusLogHelper::LogInvalidTargetComponent(const TCHAR* InCommandName, const FString* InActorName)
+bool FDebugOverlayFocusLogHelper::LogInvalidFocusComponent(const TCHAR* InCommandName, const FString* InActorName)
 {
 	if (InActorName)
 	{
-		UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: InvalidTargetComponent | Name: %s"), InCommandName, **InActorName);
+		UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: InvalidFocusComponent | Name: %s"), InCommandName, **InActorName);
 		return false;
 	}
 
-	UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: InvalidTargetComponent"), InCommandName);
+	UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: InvalidFocusComponent"), InCommandName);
 	return false;
 }
 
@@ -81,8 +81,8 @@ bool FDebugOverlayFocusLogHelper::LogResolveResult(const TCHAR* InCommandName, E
 	case EDebugOverlayFocusResolveOutcome::NoActor:
 		UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: NoActor | Name: %s"), InCommandName, *InResult.ActorName);
 		return false;
-	case EDebugOverlayFocusResolveOutcome::TargetIsNotEnemy:
-		UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: TargetIsNotEnemy | Target: %s | Class: %s"), InCommandName, *InResult.ActorName, *InResult.ClassName);
+	case EDebugOverlayFocusResolveOutcome::FocusActorIsNotEnemy:
+		UE_LOG(LogDebugOverlayFocus, Log, TEXT("%s Result: FocusActorIsNotEnemy | Focus: %s | Class: %s"), InCommandName, *InResult.ActorName, *InResult.ClassName);
 		return false;
 	case EDebugOverlayFocusResolveOutcome::Selected:
 		return LogSelectedResolveResult(InCommandName, InProfile, InResult);

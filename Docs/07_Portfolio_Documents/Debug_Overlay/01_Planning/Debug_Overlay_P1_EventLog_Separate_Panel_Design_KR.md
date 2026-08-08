@@ -53,9 +53,9 @@ Runtime LOD:
 ...
 
 [Enemy]
-EnemySource:
-EnemyTarget:
-EnemySelect:
+EnemyFocusMode:
+EnemyFocusActor:
+EnemyFocusCommand:
 
 State:
 Action:

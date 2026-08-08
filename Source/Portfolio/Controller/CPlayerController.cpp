@@ -28,28 +28,28 @@ ACPlayerController::ACPlayerController()
 	check(PlayerFeedbackComponent);
 
 #if !UE_BUILD_SHIPPING
-	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayTarget"));
+	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
 	check(DebugOverlayFocusComponent);
 #endif
 }
 
 // ===== Debug Overlay Exec =====
 
-void ACPlayerController::DebugOverlaySelectNearestTarget()
+void ACPlayerController::DebugOverlaySelectNearestFocus()
 {
 #if !UE_BUILD_SHIPPING
-	FDebugOverlayFocusRuntimeHelper::TryFocusNearestTarget(
+	FDebugOverlayFocusRuntimeHelper::TryFocusNearestFocus(
 		DebugOverlayFocusComponent,
 		GetWorld(),
 		GetPawn(),
-		FDebugOverlayFocusRuntimeHelper::GetNearestTargetRadius());
+		FDebugOverlayFocusRuntimeHelper::GetNearestFocusRadius());
 #endif
 }
 
-void ACPlayerController::DebugOverlaySelectOutlinerTarget(const FString& ActorName)
+void ACPlayerController::DebugOverlaySelectOutlinerFocus(const FString& ActorName)
 {
 #if !UE_BUILD_SHIPPING
-	FDebugOverlayFocusRuntimeHelper::TryFocusOutlinerTarget(
+	FDebugOverlayFocusRuntimeHelper::TryFocusOutlinerFocus(
 		DebugOverlayFocusComponent,
 		GetWorld(),
 		GetPawn(),
@@ -57,23 +57,18 @@ void ACPlayerController::DebugOverlaySelectOutlinerTarget(const FString& ActorNa
 #endif
 }
 
-void ACPlayerController::DebugOverlaySelectActorTarget(const FString& ActorName)
-{
-	DebugOverlaySelectOutlinerTarget(ActorName);
-}
-
-void ACPlayerController::DebugOverlaySelectRecentCombatTarget()
+void ACPlayerController::DebugOverlaySelectRecentCombatFocus()
 {
 #if !UE_BUILD_SHIPPING
-	FDebugOverlayFocusRuntimeHelper::TryFocusRecentCombatTarget(
+	FDebugOverlayFocusRuntimeHelper::TryFocusRecentCombatFocus(
 		DebugOverlayFocusComponent,
 		GetWorld(),
 		GetPawn(),
-		FDebugOverlayFocusRuntimeHelper::GetNearestTargetRadius());
+		FDebugOverlayFocusRuntimeHelper::GetNearestFocusRadius());
 #endif
 }
 
-void ACPlayerController::DebugOverlayClearTarget()
+void ACPlayerController::DebugOverlayClearFocus()
 {
 #if !UE_BUILD_SHIPPING
 	FDebugOverlayFocusRuntimeHelper::ClearFocus(DebugOverlayFocusComponent);
@@ -99,11 +94,11 @@ void ACPlayerController::PlayerTick(float DeltaTime)
 	FlushMoveInput();
 
 #if !UE_BUILD_SHIPPING
-	FDebugOverlayFocusRuntimeHelper::UpdateFocusRecentCombatTarget(
+	FDebugOverlayFocusRuntimeHelper::UpdateFocusRecentCombatFocus(
 		DebugOverlayFocusComponent,
 		GetWorld(),
 		GetPawn(),
-		FDebugOverlayFocusRuntimeHelper::GetNearestTargetRadius());
+		FDebugOverlayFocusRuntimeHelper::GetNearestFocusRadius());
 #endif
 }
 

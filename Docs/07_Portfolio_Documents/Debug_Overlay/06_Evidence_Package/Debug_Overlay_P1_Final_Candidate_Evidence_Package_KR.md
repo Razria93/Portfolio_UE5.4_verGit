@@ -15,9 +15,9 @@ P1 Closure Review 이후 촬영한 clean viewport 캡처만 `FinalCandidate` 폴
   - `05_Verification/Debug_Overlay_P1_Closure_Review_KR.md`
   - `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`
 - runtime panel 표시:
-  - `[Debug Overlay Pannel_01]`: Player / Enemy actor state
-  - `[Debug Overlay Pannel_02]`: EventLog
-  - `[Debug Overlay Pannel_03]`: Interaction
+  - `[Debug Overlay Panel_01]`: Player / Enemy actor state
+  - `[Debug Overlay Panel_02]`: EventLog
+  - `[Debug Overlay Panel_03]`: Interaction
 - `Pannel` 표기는 현재 runtime style-lock 값이므로 임의로 `Panel`로 교정하지 않는다.
 - `Runtime LOD: N/A`는 Runtime LOD actual 구현 성공 evidence로 사용하지 않는다.
 - `BT_Default.uasset` patrol tuning은 overlay 기능 claim으로 사용하지 않는다.
@@ -27,7 +27,7 @@ P1 Closure Review 이후 촬영한 clean viewport 캡처만 `FinalCandidate` 폴
 | 패키지 파일 | 원본 파일 | 대상 장면 | visible evidence | claim |
 | --- | --- | --- | --- | --- |
 | `debug_overlay_p1_final_idle.png` | `bandicam 2026-08-01 00-11-22-419.jpg` | Idle baseline | `State: Idle`, `Action: None`, `Reaction: None`, 3-panel layout | Player/Enemy current state baseline과 3-panel layout 확인 |
-| `debug_overlay_p1_final_target_nearest.png` | `bandicam 2026-08-01 00-11-22-419.jpg` | TargetComponent.Nearest | `EnemySource: TargetComponent.Nearest`, `EnemyTarget: Selected=BP_CEnemy_C_1`, `Radius: 3000` | 명시 target 기반 Enemy panel 표시 |
+| `debug_overlay_p1_final_target_nearest.png` | `bandicam 2026-08-01 00-11-22-419.jpg` | FocusComponent.NearestFocus | `EnemyFocusMode: FocusComponent.NearestFocus`, `EnemyFocusActor: Selected=BP_CEnemy_C_1`, `Radius: 3000` | 명시 focus 기반 Enemy panel 표시 |
 | `debug_overlay_p1_final_move_run.png` | `bandicam 2026-08-01 05-44-17-600.jpg` | Run movement | `Movement: Gait: Run`, `Speed: 600.0`, `CanMove: true`, `Falling: false` | Player movement state가 current state panel에 표시됨 |
 | `debug_overlay_p1_final_guard_in.png` | `bandicam 2026-08-01 00-11-48-970.jpg` | Guard / BlockHit | `Guard: Wants: true`, `Pose: true`, `CanGuard: true`, `Reaction: BlockHit` | Guard 상태와 BlockHit 반응 표시 |
 | `debug_overlay_p1_final_guard_out.png` | `bandicam 2026-08-01 05-30-45-910.jpg` | Guard Out | Player `Action: Guard Out`, Player `[Recent Execution] Subject: Guard Out`, EventLog `Subject: Guard Out` | Player Action과 Player Recent Execution 분리 표시 |
@@ -60,9 +60,9 @@ P1 Closure Review 이후 촬영한 clean viewport 캡처만 `FinalCandidate` 폴
 
 | claim | 상태 | 근거 파일 | 주의 |
 | --- | --- | --- | --- |
-| 3-panel layout | Packaged | `debug_overlay_p1_final_idle.png`, `debug_overlay_p1_final_eventlog_all.png` | `Pannel_01/02/03` 표시 유지 |
-| TargetComponent.Nearest | Packaged | `debug_overlay_p1_final_target_nearest.png` | generic target system / lock-on claim 금지 |
-| EnemySource None | Packaged | `debug_overlay_p1_final_guard_out.png`, `debug_overlay_p1_final_parry.png` | clear/target 없음 상태 claim에 사용 가능 |
+| 3-panel layout | Packaged | `debug_overlay_p1_final_idle.png`, `debug_overlay_p1_final_eventlog_all.png` | `Panel_01/02/03` 표시 유지 |
+| FocusComponent.NearestFocus | Packaged | `debug_overlay_p1_final_target_nearest.png` | generic target system / lock-on claim 금지 |
+| EnemyFocusMode None | Packaged | `debug_overlay_p1_final_guard_out.png`, `debug_overlay_p1_final_parry.png` | clear/focus 없음 상태 claim에 사용 가능 |
 | Player movement Run | Packaged | `debug_overlay_p1_final_move_run.png` | movement state 표시 claim으로만 제한 |
 | Player Recent Execution | Packaged | `debug_overlay_p1_final_guard_out.png`, `debug_overlay_p1_final_parry.png` | actor-specific recent execution으로만 주장 |
 | Enemy Recent Execution | Packaged | `debug_overlay_p1_final_enemy_recent_execution.png` | Interaction recent와 역할 분리 |
@@ -102,7 +102,7 @@ P1 Closure Review 이후 촬영한 clean viewport 캡처만 `FinalCandidate` 폴
 | `debug_overlay_p1_final_stagger_stack_3.png` | Packaged |
 | `debug_overlay_p1_final_stagger_reset.png` | NotPackaged |
 | `debug_overlay_p1_final_target_nearest.png` | Packaged |
-| `debug_overlay_p1_final_target_none.png` | Covered by several `EnemySource: None` captures |
+| `debug_overlay_p1_final_target_none.png` | Covered by several `EnemyFocusMode: None` captures |
 | `debug_overlay_p1_final_enemy_recent_execution.png` | Packaged |
 | `debug_overlay_p1_final_interaction_combat_damage.png` | Packaged |
 | `debug_overlay_p1_final_eventlog_all.png` | Packaged |

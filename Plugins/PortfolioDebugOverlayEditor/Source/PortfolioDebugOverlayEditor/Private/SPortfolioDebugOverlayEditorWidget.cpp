@@ -299,7 +299,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogLimitRow() c
 		];
 }
 
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeNearestTargetRadiusRow() const
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeNearestFocusRadiusRow() const
 {
 	return SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
@@ -312,13 +312,13 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeNearestTargetRadiusR
 			.AutoHeight()
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("NearestTargetRadiusLabel", "Nearest Target Radius"))
+				.Text(LOCTEXT("NearestFocusRadiusLabel", "Nearest Focus Radius"))
 			]
 			+ SVerticalBox::Slot()
 			.AutoHeight()
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("NearestTargetRadiusHelp", "Radius used by Select Nearest Focus and Recent Combat Focus scan."))
+				.Text(LOCTEXT("NearestFocusRadiusHelp", "Radius used by Select Nearest Focus and Recent Combat Focus scan."))
 				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 			]
 		]
@@ -330,7 +330,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeNearestTargetRadiusR
 			SNew(SSpinBox<float>)
 			.IsEnabled_Lambda([]()
 			{
-				return CVarAccess::FindCVar(CVarAccess::GetNearestTargetRadiusCVarName()) != nullptr;
+				return CVarAccess::FindCVar(CVarAccess::GetNearestFocusRadiusCVarName()) != nullptr;
 			})
 			.MinValue(0.f)
 			.MaxValue(20000.f)
@@ -339,11 +339,11 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeNearestTargetRadiusR
 			.Delta(50.f)
 			.Value_Lambda([]()
 			{
-				return FMath::Clamp(CVarAccess::GetFloat(CVarAccess::GetNearestTargetRadiusCVarName()), 0.f, 20000.f);
+				return FMath::Clamp(CVarAccess::GetFloat(CVarAccess::GetNearestFocusRadiusCVarName()), 0.f, 20000.f);
 			})
 			.OnValueChanged_Lambda([](float InValue)
 			{
-				CVarAccess::SetFloat(CVarAccess::GetNearestTargetRadiusCVarName(), FMath::Clamp(InValue, 0.f, 20000.f));
+				CVarAccess::SetFloat(CVarAccess::GetNearestFocusRadiusCVarName(), FMath::Clamp(InValue, 0.f, 20000.f));
 			})
 		]
 		+ SHorizontalBox::Slot()
@@ -353,7 +353,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeNearestTargetRadiusR
 			SNew(STextBlock)
 			.Text_Lambda([]()
 			{
-				return CVarAccess::GetAvailabilityText(CVarAccess::GetNearestTargetRadiusCVarName());
+				return CVarAccess::GetAvailabilityText(CVarAccess::GetNearestFocusRadiusCVarName());
 			})
 			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 		];
@@ -433,7 +433,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusCommandSection(
 		.AutoHeight()
 		.Padding(0.f, 0.f, 0.f, 6.f)
 		[
-			MakeNearestTargetRadiusRow()
+			MakeNearestFocusRadiusRow()
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()

@@ -369,7 +369,7 @@ namespace
 		return recentAIEventViewData;
 	}
 
-	// [Pannel_01]
+	// [Panel_01]
 	// ===== Main Actor Panel ViewData =====
 
 	FDebugOverlayActorPanelViewData BuildActorPanelViewData(const TCHAR* InPanelName, const APawn* InPawn, const UWorld* InWorld, bool bInHasSnapshot)
@@ -405,7 +405,7 @@ namespace
 		AppendEnemyPanelViewData(InOutViewData, InEnemy, InEnemyFocus, bInHasSnapshot, InWorld);
 	}
 
-	// [Pannel_02]
+	// [Panel_02]
 	// ===== EventLog ViewData =====
 
 	FDebugOverlayEventLogViewData BuildEventLogViewData(bool bInHasSnapshot, const TArray<FDebugOverlayEventEntry>& InEvents, const FString& InEventLogFilter, int32 InEventLogLimit)
@@ -428,7 +428,7 @@ namespace
 		return eventLogViewData;
 	}
 
-	// [Pannel_03]
+	// [Panel_03]
 	// ===== World Summary ViewData =====
 
 	FDebugOverlayRecentSummaryBlockViewData BuildRecentSummaryBlockViewData(const TCHAR* InBlockName, const FString& InSummary, EDebugOverlayCaptureState InCaptureState, bool bInHasSnapshot, bool bInAppendLeadingBlank)
@@ -485,13 +485,13 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld,
 	FDebugOverlayViewData viewData;
 	viewData.ActorPanels.Reserve(2);
 
-	viewData.MainPanelTitle = TEXT("[Debug Overlay Pannel_01]");
+	viewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
 	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, bHasSnapshot, InWorld);
 
-	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Pannel_02]");
+	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Panel_02]");
 	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);
 
-	viewData.WorldSummaryPanelTitle = TEXT("[Debug Overlay Pannel_03]");
+	viewData.WorldSummaryPanelTitle = TEXT("[Debug Overlay Panel_03]");
 	viewData.WorldSummary = BuildWorldSummaryViewData(snapshot, bHasSnapshot);
 
 	return viewData;
