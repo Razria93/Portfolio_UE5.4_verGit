@@ -5,12 +5,9 @@
 
 namespace
 {
-	void AppendFormattedOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
-	{
-		InOutLines.Add(InLine);
-	}
+	// ===== Format Text Helpers =====
 
-	FString CaptureStateText(EDebugOverlayCaptureState InState)
+	FString FormatCaptureStateText(EDebugOverlayCaptureState InState)
 	{
 		switch (InState)
 		{
@@ -26,16 +23,28 @@ namespace
 		}
 	}
 
-	FString ValueOrNotCaptured(const FString& InValue, EDebugOverlayCaptureState InState)
+	FString FormatValueOrCaptureStateText(const FString& InValue, EDebugOverlayCaptureState InState)
 	{
 		return InState == EDebugOverlayCaptureState::Captured && !InValue.IsEmpty()
 			? InValue
-			: CaptureStateText(InState);
+			: FormatCaptureStateText(InState);
+	}
+
+	FString FormatValueOrNoneText(const FString& InValue)
+	{
+		return InValue.IsEmpty() ? FString(TEXT("None")) : InValue;
+	}
+
+	// ===== Append Line Helpers =====
+
+	void AppendFormattedOverlayLine(TArray<FString>& InOutLines, const FString& InLine)
+	{
+		InOutLines.Add(InLine);
 	}
 
 	void AppendSummaryLines(TArray<FString>& InOutLines, const FString& InSummary, EDebugOverlayCaptureState InCaptureState)
 	{
-		const FString summary = ValueOrNotCaptured(InSummary, InCaptureState);
+		const FString summary = FormatValueOrCaptureStateText(InSummary, InCaptureState);
 		if (InCaptureState != EDebugOverlayCaptureState::Captured || summary.IsEmpty())
 		{
 			AppendFormattedOverlayLine(InOutLines, summary);
@@ -56,6 +65,9 @@ namespace
 		}
 	}
 
+	// [Player / Enemy Status]
+	// ===== Actor Status Lines =====
+
 	void AppendActorStatusLines(TArray<FString>& InOutLines, const FDebugOverlayActorStatusViewData& InStatusViewData)
 	{
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("State: %s"), *InStatusViewData.StateText));
@@ -68,21 +80,22 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
 	}
 
-	FString ValueOrNone(const FString& InValue)
-	{
-		return InValue.IsEmpty() ? FString(TEXT("None")) : InValue;
-	}
+	// [Focus]
+	// ===== Focus Lines =====
 
 	void AppendFocusLines(TArray<FString>& InOutLines, const FDebugOverlayFocusViewData& InFocusViewData)
 	{
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusDriver: %s"), *ValueOrNone(InFocusViewData.FocusDriverText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusDriver: %s"), *FormatValueOrNoneText(InFocusViewData.FocusDriverText)));
 		if (!InFocusViewData.RecentFocusStateText.IsEmpty())
 		{
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RecentFocusState: %s"), *InFocusViewData.RecentFocusStateText));
 		}
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RuntimeFocusSource: %s"), *ValueOrNone(InFocusViewData.CurrentSourceText)));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusTarget: %s"), *ValueOrNone(InFocusViewData.CurrentActorNameText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RuntimeFocusSource: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentSourceText)));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusTarget: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentActorNameText)));
 	}
+
+	// [Recent Execution]
+	// ===== Recent Execution Lines =====
 
 	void AppendRecentExecutionBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentExecutionViewData& InRecentExecutionViewData)
 	{
@@ -108,6 +121,9 @@ namespace
 			return;
 		}
 	}
+
+	// [Current AI / Recent AI Event]
+	// ===== AI Lines =====
 
 	void AppendCurrentAIBlock(TArray<FString>& InOutLines, const FDebugOverlayCurrentAIViewData& InCurrentAIViewData)
 	{
@@ -154,19 +170,22 @@ namespace
 				AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *InRecentAIEventViewData.ResultText));
 			}
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Stale Time: %ss"), *InRecentAIEventViewData.StaleAgeText));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *ValueOrNone(InRecentAIEventViewData.RejectReasonText)));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *FormatValueOrNoneText(InRecentAIEventViewData.RejectReasonText)));
 			return;
 		case EDebugOverlayRecentAIEventViewState::Captured:
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Task: %s"), *InRecentAIEventViewData.TaskText));
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Result: %s"), *InRecentAIEventViewData.ResultText));
 			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Age: %s"), *InRecentAIEventViewData.AgeText));
-			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *ValueOrNone(InRecentAIEventViewData.RejectReasonText)));
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RejectReason: %s"), *FormatValueOrNoneText(InRecentAIEventViewData.RejectReasonText)));
 			return;
 		default:
 			AppendFormattedOverlayLine(InOutLines, TEXT("NotCaptured"));
 			return;
 		}
 	}
+
+	// [Pannel_01]
+	// ===== Main Panel Lines =====
 
 	void AppendActorPanelLines(TArray<FString>& InOutLines, const FDebugOverlayActorPanelViewData& InActorPanelViewData)
 	{
@@ -211,6 +230,9 @@ namespace
 		return lines;
 	}
 
+	// [Pannel_02]
+	// ===== EventLog Panel Lines =====
+
 	FString FormatEventLogEntryLine(const FDebugOverlayEventLogEntryViewData& InEntry)
 	{
 		return FString::Printf(
@@ -254,6 +276,9 @@ namespace
 		return lines;
 	}
 
+	// [Pannel_03]
+	// ===== Interaction Panel Lines =====
+
 	void AppendRecentSummaryBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentSummaryBlockViewData& InBlockViewData)
 	{
 		if (InBlockViewData.bAppendLeadingBlank)
@@ -288,6 +313,8 @@ namespace
 		return lines;
 	}
 
+	// ===== Text Panel Role Mapping =====
+
 	EDebugOverlayTextLineRole ResolveTextLineRole(EDebugOverlayTextPanelRole InPanelRole, const FString& InLine)
 	{
 		if (InLine.StartsWith(TEXT("[Debug Overlay Pannel_")))
@@ -321,6 +348,8 @@ namespace
 		return panel;
 	}
 }
+
+// ===== Public API =====
 
 FDebugOverlayTextPanels FDebugOverlayTextFormatter::Format(const FDebugOverlayViewData& InViewData)
 {
