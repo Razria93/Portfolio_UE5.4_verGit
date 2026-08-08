@@ -15,6 +15,33 @@ namespace
 	static constexpr const TCHAR* DebugOverlayHideNoiseEventsCVarName = TEXT("Portfolio.DebugOverlay.HideNoiseEvents");
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
 	static constexpr const TCHAR* DebugOverlayNearestFocusRadiusCVarName = TEXT("Portfolio.DebugOverlay.NearestFocusRadius");
+
+	// ===== CVar Cache =====
+
+	TMap<FString, IConsoleVariable*>& GetCachedConsoleVariables()
+	{
+		static TMap<FString, IConsoleVariable*> cachedConsoleVariables;
+		return cachedConsoleVariables;
+	}
+
+	IConsoleVariable* FindCachedConsoleVariable(const TCHAR* InName)
+	{
+		if (!InName) return nullptr;
+
+		TMap<FString, IConsoleVariable*>& cachedConsoleVariables = GetCachedConsoleVariables();
+		if (IConsoleVariable** cachedConsoleVariable = cachedConsoleVariables.Find(InName))
+		{
+			return *cachedConsoleVariable;
+		}
+
+		IConsoleVariable* consoleVariable = IConsoleManager::Get().FindConsoleVariable(InName);
+		if (consoleVariable)
+		{
+			cachedConsoleVariables.Add(InName, consoleVariable);
+		}
+
+		return consoleVariable;
+	}
 }
 
 // ===== CVar Names =====
@@ -58,7 +85,7 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetNearestFocusRadiusCVarNam
 
 IConsoleVariable* PortfolioDebugOverlayEditorCVarAccess::FindCVar(const TCHAR* InName)
 {
-	return IConsoleManager::Get().FindConsoleVariable(InName);
+	return FindCachedConsoleVariable(InName);
 }
 
 bool PortfolioDebugOverlayEditorCVarAccess::GetBool(const TCHAR* InName)
