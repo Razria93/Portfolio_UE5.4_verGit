@@ -9,11 +9,11 @@ class UWorld;
 enum class EDebugOverlayFocusResolveOutcome : uint8
 {
 	Selected,
-	
+
 	NoTarget,
 	NoRecentCombatEvidence,
 	OutOfRange,
-	
+
 	InvalidContext,
 	NoActor,
 	NoActorName,
