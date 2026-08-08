@@ -7,15 +7,16 @@
 
 namespace
 {
+	// ===== CVars =====
+
 	static TAutoConsoleVariable<float> CVarDebugOverlayNearestTargetRadius(
 		TEXT("Portfolio.DebugOverlay.NearestTargetRadius"),
 		3000.f,
 		TEXT("Nearest target search radius used by Debug Overlay focus commands."),
 		ECVF_Default);
-}
 
-namespace
-{
+	// ===== Recent Combat Driver Policy =====
+
 	bool IsRecentCombatOutcomeLive(EDebugOverlayFocusResolveOutcome InOutcome)
 	{
 		switch (InOutcome)
@@ -74,6 +75,8 @@ namespace
 		InFocusComponent->ClearDebugOverlayFocusDriver();
 		InFocusComponent->ClearDebugOverlayRecentFocusState();
 	}
+
+	// ===== Focus Result Apply =====
 
 	void ApplyDebugOverlayFocusResolveResult(UCDebugOverlayFocusComponent* InFocusComponent, const FDebugOverlayFocusResolveResult& InResult, EDebugOverlayFocusDriver InDriverOnSuccess, bool bUpdateDriver, bool bKeepFocusOnFailure)
 	{
@@ -137,7 +140,6 @@ bool FDebugOverlayFocusRuntimeHelper::TryFocusOutlinerTarget(UCDebugOverlayFocus
 	return FDebugOverlayFocusLogHelper::LogResolveResult(TEXT("DebugOverlaySelectOutlinerTarget"), EDebugOverlayFocusResolveLogProfile::Outliner, result);
 }
 
-// RecentCombatTarget (Runtime)
 bool FDebugOverlayFocusRuntimeHelper::TryFocusRecentCombatTarget(UCDebugOverlayFocusComponent* InFocusComponent, UWorld* InWorld, const APawn* InViewerPawn, float InFallbackRadius)
 {
 	if (!IsValid(InFocusComponent))

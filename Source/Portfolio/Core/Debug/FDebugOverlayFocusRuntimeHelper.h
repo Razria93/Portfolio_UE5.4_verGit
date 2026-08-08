@@ -6,6 +6,8 @@ class APawn;
 class UWorld;
 class UCDebugOverlayFocusComponent;
 
+// ===== Public Runtime API =====
+
 class PORTFOLIO_API FDebugOverlayFocusRuntimeHelper
 {
 public:
