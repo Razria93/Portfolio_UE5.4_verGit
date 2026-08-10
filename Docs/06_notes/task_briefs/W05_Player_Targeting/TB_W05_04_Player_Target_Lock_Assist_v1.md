@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-구현 완료 (PIE 검증 대기)
+완료
 ```
 
 ## 목적
@@ -179,7 +179,11 @@ Guard 시작·종료는 현재 락온 회전 정책을 변경하지 않는다.
 - 타겟 선택·전환·해제는 기존 `UCTargetingComponent` 계약을 그대로 사용한다.
 - Debug Overlay Movement 행에 현재 Rotation Mode를 추가했다.
 - UHT 및 `PortfolioEditor Win64 Development` 빌드가 성공했다.
-- 현재 프로젝트에는 W05-04용 자동화 테스트가 없어 런타임 동작은 PIE 수동 검증을 남겨 둔다.
+- 비락온 Normal / Combat / Guard 이동에서 이동 방향 정면을 확인했다.
+- 락온 Normal / Combat / Guard에서 타겟 정면 유지와 8Way 이동을 확인했다.
+- Guard 중 락온 시작·해제와 Guard 종료 후 Gait 복구를 확인했다.
+- 락온 중 Look 입력 억제와 해제 후 자유 Look 복구를 확인했다.
+- 타겟 전환 시 카메라 추적 연결과 Overlay Rotation Mode 전환을 확인했다.
 
 ## 예상 변경 파일
 
