@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-진행
+진행 (Destroy / 0도 경계 PIE 보류)
 ```
 
 ## 목적
@@ -105,7 +105,7 @@ FinalScore = AngleScore * AngleScoreWeight
 
 ### 5. 입력과 검증
 
-`TargetLock` Action Mapping을 `Tab`에 연결한다.
+`TargetLock` Action Mapping을 `MiddleMouseButton`에 연결한다.
 
 ```text
 타겟 없음 + 입력 -> 최적 후보 획득
@@ -128,12 +128,34 @@ Source/Portfolio/Controller/CPlayerController.cpp
 
 ## 완료 조건
 
-- `Tab`으로 카메라 전방의 살아 있는 적을 획득하거나 해제할 수 있다.
+- 마우스 가운데 버튼으로 카메라 전방의 살아 있는 적을 획득하거나 해제할 수 있다.
 - 정면에 여러 적이 있을 때 중앙에 더 가까운 적이 우선 선택된다.
 - 적 사망, 파괴, 거리 초과 시 현재 타겟이 안전하게 해제된다.
 - 타겟 변경 때마다 delegate가 정확히 한 번 발행된다.
 - Development 빌드에서 선택 대상과 해제 상태를 확인할 수 있다.
 - Editor Win64 Development 빌드가 성공한다.
+
+## PIE 검증 결과
+
+확인 완료:
+
+```text
+마우스 가운데 버튼 타겟 선택 / 해제
+중앙 우선 점수
+사망 자동 해제
+거리 초과 자동 해제
+Debug Snapshot과 실제 선택 점수 일치
+```
+
+수동 재현 경로가 준비되지 않아 보류:
+
+```text
+현재 타겟 직접 Destroy 시 DestroyedEnemy -> nullptr 이벤트
+사망 해제 후 Destroy 시 이벤트 중복 없음
+MaxTargetAngleDegrees = 0 경계에서 NaN 없음
+```
+
+보류 항목은 코드 경로와 Development 빌드 정합성까지 확인했으며, 자동화 테스트 또는 전용 PIE 재현 경로를 마련한 뒤 W05-01을 완료 처리한다.
 
 ## 후속 작업
 

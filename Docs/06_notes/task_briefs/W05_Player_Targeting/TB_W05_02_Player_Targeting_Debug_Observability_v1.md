@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-진행
+완료
 ```
 
 ## 목적
@@ -89,3 +89,20 @@ Editor Plugin에는 Targeting 섹션과 `Select Player Target Focus` 명령을 �
 - Live Sync OFF에서 타겟 변경은 FocusActor를 갱신하지 않는다.
 - Frozen FocusActor가 파괴되면 Overlay FocusActor가 비워진다.
 - Editor Win64 Development 빌드가 성공한다.
+
+## PIE 검증 결과
+
+다음 항목을 확인했다.
+
+```text
+Debug Snapshot과 실제 선택 점수 일치
+Range Sphere 개별 표시
+Selected Target Sphere 개별 표시
+Viewpoint to Target Line 개별 표시
+World Debug Text 개별 표시
+PlayerTarget Live / Frozen 전환
+Frozen 대상 파괴 시 FocusActor 해제
+Manual Focus가 PlayerTarget 갱신에 의해 덮어써지지 않음
+```
+
+`PortfolioEditor Win64 Development` 빌드 성공까지 확인하여 W05-02를 완료 처리한다.

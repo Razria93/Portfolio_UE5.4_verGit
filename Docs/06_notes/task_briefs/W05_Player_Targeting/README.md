@@ -4,8 +4,8 @@
 
 | ID | 제목 | 파일 | 상태 |
 | --- | --- | --- | --- |
-| W05-01 | Player Targeting Component v1 | `TB_W05_01_Player_Targeting_Component_v1.md` | 진행 |
-| W05-02 | Player Targeting Debug Observability v1 | `TB_W05_02_Player_Targeting_Debug_Observability_v1.md` | 진행 |
+| W05-01 | Player Targeting Component v1 | `TB_W05_01_Player_Targeting_Component_v1.md` | 진행 (Destroy / 0도 경계 PIE 보류) |
+| W05-02 | Player Targeting Debug Observability v1 | `TB_W05_02_Player_Targeting_Debug_Observability_v1.md` | 완료 |
 
 ## 확정 후속 순서
 
