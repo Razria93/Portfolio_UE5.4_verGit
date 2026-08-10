@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-구현 진행
+C++ 구현 완료 (Widget Blueprint 연결 및 PIE 검증 대기)
 ```
 
 ## 목적
@@ -157,6 +157,19 @@ Widget Class가 지정되지 않은 상태는 에셋 연결 전 정상 상태로
 - Marker 애니메이션과 사운드
 - Enemy별 WidgetComponent
 - 에디터 에셋 생성 및 데이터 연결
+
+## 구현 및 검증 기록
+
+- `FTargetMarkerTuning`과 `FTargetMarkerViewData`를 Targeting 공용 타입에 추가했다.
+- `UCTargetHUDWidget`이 ViewData를 캐시하고 Blueprint 구현 이벤트로 전달한다.
+- `UCTargetHUDPresenterComponent`가 Target 변경 이벤트 구독, Widget 수명, 화면 좌표 투영과 표시 상태를 담당한다.
+- 타겟이 카메라 뒤에 있거나 DPI 보정 Viewport 범위 밖이면 마커만 숨기고 Target Lock은 유지한다.
+- 타겟이 없거나 Widget Class가 지정되지 않은 경우 Presenter Tick을 실행하지 않는다.
+- `ACPlayerController`가 Presenter를 Default Subobject로 소유하고 기존 TargetingComponent 참조를 주입한다.
+- Runtime 모듈의 Public Dependency에 `UMG`를 추가했다.
+- 첫 빌드에서 UE 5.4 `GetViewportSize()`의 비-const World Context 계약을 확인하고 PlayerController를 전달하도록 수정했다.
+- UHT 및 `PortfolioEditor Win64 Development` 재빌드가 성공했다.
+- Widget Blueprint 생성·할당과 시각적 PIE 검증은 수동 에디터 작업으로 남겨 두었다.
 
 ## 예상 변경 파일
 

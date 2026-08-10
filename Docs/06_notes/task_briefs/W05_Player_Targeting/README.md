@@ -8,7 +8,7 @@
 | W05-02 | Player Targeting Debug Observability v1 | `TB_W05_02_Player_Targeting_Debug_Observability_v1.md` | 완료 |
 | W05-03 | Player Target Switching v1 | `TB_W05_03_Player_Target_Switching_v1.md` | 진행 (이전 타겟 Destroy PIE 보류) |
 | W05-04 | Player Target Lock Assist v1 | `TB_W05_04_Player_Target_Lock_Assist_v1.md` | 완료 |
-| W05-05A | Player Target Marker v1 | `TB_W05_05A_Player_Target_Marker_v1.md` | 구현 진행 |
+| W05-05A | Player Target Marker v1 | `TB_W05_05A_Player_Target_Marker_v1.md` | C++ 완료 (Widget BP / PIE 대기) |
 
 ## 확정 후속 순서
 
