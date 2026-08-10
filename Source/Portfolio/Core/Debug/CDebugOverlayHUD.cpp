@@ -16,13 +16,7 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
-	void UpdateFocusDriverText(const UCDebugOverlayFocusComponent* InFocusComp, FDebugOverlayFocusViewData& InOutFocusViewData)
-	{
-		if (!IsValid(InFocusComp)) return;
-
-		InOutFocusViewData.FocusDriverText = InFocusComp->GetDebugOverlayFocusDriverText();
-		InOutFocusViewData.RecentFocusStateText = InFocusComp->GetDebugOverlayRecentFocusStateText();
-	}
+	// ===== Focus View Data =====
 
 	const UCDebugOverlayFocusComponent* ResolveFocusComponent(const APlayerController* InOwningPlayerController)
 	{
@@ -34,6 +28,14 @@ namespace
 	{
 		if (!IsValid(InFocusComp)) return nullptr;
 		return Cast<ACEnemy>(InFocusComp->GetDebugOverlayFocusActor());
+	}
+
+	void UpdateFocusDriverText(const UCDebugOverlayFocusComponent* InFocusComp, FDebugOverlayFocusViewData& InOutFocusViewData)
+	{
+		if (!IsValid(InFocusComp)) return;
+
+		InOutFocusViewData.FocusDriverText = InFocusComp->GetDebugOverlayFocusDriverText();
+		InOutFocusViewData.RecentFocusStateText = InFocusComp->GetDebugOverlayRecentFocusStateText();
 	}
 
 	void UpdateFocusViewData(const UCDebugOverlayFocusComponent* InFocusComp, FDebugOverlayFocusViewData& OutFocusViewData)
@@ -65,6 +67,8 @@ namespace
 		return nullptr;
 	}
 
+	// ===== Targeting Debug =====
+
 	void DrawTargetingDebug(const APlayerController* InOwningPlayerController, UWorld* InWorld)
 	{
 		if (!FTargetingDebug::IsEnabled()) return;
@@ -94,6 +98,8 @@ namespace
 }
 #endif
 
+// ===== HUD Rendering =====
+
 void ACDebugOverlayHUD::DrawHUD()
 {
 #if !UE_BUILD_SHIPPING
@@ -101,6 +107,7 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	UWorld* world = GetWorld();
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
+
 	DrawTargetingDebug(owningPlayerController, world);
 
 	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
@@ -111,6 +118,7 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
+
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);
 #endif
 }

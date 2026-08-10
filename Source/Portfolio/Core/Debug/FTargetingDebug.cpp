@@ -43,7 +43,6 @@ namespace
 		1,
 		TEXT("Show player targeting score details in Debug Overlay. 0: disabled, 1: enabled."),
 		ECVF_Default);
-
 #endif
 
 }
@@ -110,11 +109,14 @@ FTargetingDebugOverlayDetails FTargetingDebug::BuildOverlayDetails(const FTarget
 	details.bHasSnapshot = true;
 	AActor* targetActor = InSnapshot.TargetActor.Get();
 	details.RuntimeTargetText = IsValid(targetActor) ? GetNameSafe(targetActor) : TEXT("None");
+
 	details.DistanceText = FString::Printf(TEXT("%.1f / %.1f"), InSnapshot.Distance, InSnapshot.MaxTargetDistance);
 	details.DotText = FString::Printf(TEXT("%.3f / Min %.3f"), InSnapshot.Dot, InSnapshot.MinDot);
+
 	details.AngleScoreText = FString::Printf(TEXT("%.3f"), InSnapshot.AngleScore);
 	details.DistanceScoreText = FString::Printf(TEXT("%.3f"), InSnapshot.DistanceScore);
 	details.FinalScoreText = FString::Printf(TEXT("%.3f"), InSnapshot.FinalScore);
+
 	details.RangeText = InSnapshot.bWithinRange ? TEXT("true") : TEXT("false");
 	details.ViewConeText = InSnapshot.bWithinViewCone ? TEXT("true") : TEXT("false");
 	return details;

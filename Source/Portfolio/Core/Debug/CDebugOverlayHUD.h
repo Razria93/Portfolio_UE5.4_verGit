@@ -13,6 +13,6 @@ class PORTFOLIO_API ACDebugOverlayHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	// Rendering
+	// HUD Rendering
 	virtual void DrawHUD() override;
 };
