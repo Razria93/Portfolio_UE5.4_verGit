@@ -25,7 +25,7 @@ void UCMovementComponent::InitializeReferences(const FCharacterComponentReferenc
 	StateComp_Injected = InReferences.StateComponent;
 
 	ValidateRequiredComponentReferences();
-	ApplyRotationMode(CurrentMovementRotationMode);
+	ApplyMovementRotationMode(CurrentMovementRotationMode);
 }
 
 bool UCMovementComponent::ValidateRequiredComponentReferences() const
@@ -270,17 +270,17 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 
 void UCMovementComponent::OnWalk()
 {
-	ChangeMovementGait(EMovementGait::Walk);
+	SetMovementGait(EMovementGait::Walk);
 }
 
 void UCMovementComponent::OnRun()
 {
-	ChangeMovementGait(EMovementGait::Run);
+	SetMovementGait(EMovementGait::Run);
 }
 
 void UCMovementComponent::OnSprint()
 {
-	ChangeMovementGait(EMovementGait::Sprint);
+	SetMovementGait(EMovementGait::Sprint);
 }
 
 void UCMovementComponent::OnJump()
@@ -324,10 +324,10 @@ void UCMovementComponent::SetMovementRotationMode(EMovementRotationMode InRotati
 	if (CurrentMovementRotationMode == InRotationMode) return;
 
 	CurrentMovementRotationMode = InRotationMode;
-	ApplyRotationMode(CurrentMovementRotationMode);
+	ApplyMovementRotationMode(CurrentMovementRotationMode);
 }
 
-void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
+void UCMovementComponent::SetMovementGait(EMovementGait InNewMovementGait)
 {
 	if (bHasMovementGaitOverride)
 	{
@@ -365,7 +365,7 @@ void UCMovementComponent::ApplyMovementGait(EMovementGait InNewMovementGait)
 	FMovementDebug::RecordMovementGaitAppliedForAudit(OwnerCharacter_Injected, this, InNewMovementGait, *speed);
 }
 
-void UCMovementComponent::ApplyRotationMode(EMovementRotationMode InRotationMode)
+void UCMovementComponent::ApplyMovementRotationMode(EMovementRotationMode InRotationMode)
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
 

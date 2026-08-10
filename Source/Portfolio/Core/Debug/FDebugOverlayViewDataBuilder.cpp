@@ -171,8 +171,9 @@ namespace
 		if (!IsValid(movementComp)) return FormatMissingText();
 
 		return FString::Printf(
-			TEXT("Gait: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
+			TEXT("Gait: %s | Rotation: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
 			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
+			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementRotationMode())),
 			movementComp->GetCurrentSpeed(),
 			movementComp->GetCurrentDirection(),
 			*FormatBoolText(movementComp->CanMove()),

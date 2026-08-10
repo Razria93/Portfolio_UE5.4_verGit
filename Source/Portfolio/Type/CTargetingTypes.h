@@ -35,6 +35,18 @@ struct FTargetingTuning
 	float ValidationInterval = 0.1f;
 };
 
+USTRUCT(BlueprintType)
+struct FTargetLockAssistTuning
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist", meta = (ClampMin = "0.0"))
+	float CameraRotationInterpSpeed = 8.f;
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist")
+	FVector TargetFocusOffset = FVector(0.f, 0.f, 80.f);
+};
+
 struct FTargetingDebugSnapshot
 {
 	TWeakObjectPtr<AActor> TargetActor;

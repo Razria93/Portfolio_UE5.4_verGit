@@ -143,11 +143,11 @@ public:
 	void SetMovementRotationMode(EMovementRotationMode InRotationMode);
 
 private:
-	void ChangeMovementGait(EMovementGait InNewMovementGait);
+	void SetMovementGait(EMovementGait InNewMovementGait);
 	void ApplyMovementGait(EMovementGait InNewMovementGait);
 
 private:
-	void ApplyRotationMode(EMovementRotationMode InRotationMode);
+	void ApplyMovementRotationMode(EMovementRotationMode InRotationMode);
 
 private:
 	void CalculateSpeed();

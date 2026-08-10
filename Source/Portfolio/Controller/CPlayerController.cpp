@@ -4,6 +4,7 @@
 
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
+#include "Component/CTargetLockAssistComponent.h"
 #include "Component/CTargetingComponent.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
@@ -30,6 +31,9 @@ ACPlayerController::ACPlayerController()
 
 	TargetingComponent = CreateDefaultSubobject<UCTargetingComponent>(TEXT("Targeting"));
 	check(TargetingComponent);
+
+	TargetLockAssistComponent = CreateDefaultSubobject<UCTargetLockAssistComponent>(TEXT("TargetLockAssist"));
+	check(TargetLockAssistComponent);
 
 #if !UE_BUILD_SHIPPING
 	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
@@ -101,6 +105,31 @@ void ACPlayerController::PostInitializeComponents()
 	{
 		TargetingComponent->InitializeReferences(this);
 	}
+
+	if (IsValid(TargetLockAssistComponent))
+	{
+		TargetLockAssistComponent->InitializeReferences(this, TargetingComponent);
+		TargetLockAssistComponent->SetControlledPlayer(ResolveControlledPlayer(this));
+	}
+}
+
+void ACPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (!IsValid(TargetLockAssistComponent)) return;
+
+	TargetLockAssistComponent->SetControlledPlayer(Cast<ACPlayer>(InPawn));
+}
+
+void ACPlayerController::OnUnPossess()
+{
+	if (IsValid(TargetLockAssistComponent))
+	{
+		TargetLockAssistComponent->ClearControlledPlayer();
+	}
+
+	Super::OnUnPossess();
 }
 
 void ACPlayerController::PlayerTick(float DeltaTime)
@@ -150,11 +179,15 @@ void ACPlayerController::SetupInputComponent()
 
 void ACPlayerController::InputLookYaw(float InAxisValue)
 {
+	if (IsValid(TargetLockAssistComponent) && TargetLockAssistComponent->ShouldSuppressLookInput()) return;
+
 	AddYawInput(InAxisValue);
 }
 
 void ACPlayerController::InputLookPitch(float InAxisValue)
 {
+	if (IsValid(TargetLockAssistComponent) && TargetLockAssistComponent->ShouldSuppressLookInput()) return;
+
 	AddPitchInput(InAxisValue);
 }
 

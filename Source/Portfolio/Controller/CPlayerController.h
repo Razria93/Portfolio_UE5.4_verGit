@@ -21,6 +21,9 @@ private:
 	class UCTargetingComponent* TargetingComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCTargetLockAssistComponent* TargetLockAssistComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCDebugOverlayFocusComponent* DebugOverlayFocusComponent = nullptr;
 
 	// Cached input
@@ -49,6 +52,8 @@ public:
 protected:
 	// Lifecycle
 	virtual void PostInitializeComponents() override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
 	virtual void PlayerTick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
 
