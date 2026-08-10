@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-계획 확정
+진행 (이전 타겟 Destroy PIE 보류)
 ```
 
 ## 목적
@@ -170,7 +170,7 @@ Switch Failure Reason
 
 초기 구현에서는 런타임 선택 정확성 검증에 필요한 최소 정보만 추가하고, Editor 패널의 새 옵션은 실제 표시 항목이 추가될 때만 확장한다.
 
-## 변경 예정 파일
+## 구현 파일
 
 ```text
 Config/DefaultInput.ini
@@ -189,6 +189,29 @@ Source/Portfolio/Core/Debug/FTargetingDebug.cpp
 Source/Portfolio/Core/Debug/FDebugOverlayViewDataTypes.h
 Source/Portfolio/Core/Debug/FDebugOverlayTextFormatter.cpp
 ```
+
+초기 구현에서는 기존 Selected Target Sphere와 Runtime Target 표시만으로 전환 결과를 검증할 수 있으므로 별도 Switch Debug Snapshot은 추가하지 않았다.
+
+## 구현 및 검증 기록
+
+- `ETargetSwitchDirection`과 `SwitchTarget()` 공개 명령을 추가했다.
+- 후보 탐색은 입력 시점의 `TActorIterator<ACEnemy>` 순회를 사용한다.
+- 기존 Target Evaluation으로 생존·거리·View Cone을 검증한 뒤 화면 투영·Viewport·방향 조건을 추가 적용한다.
+- 후보 비교는 수평 거리, 수직 거리, 기존 `FinalScore` 순서의 사전식 우선순위를 사용한다.
+- 실제 전환은 `SetCurrentTarget()`을 통해서만 수행한다.
+- `MouseScrollUp / MouseScrollDown`을 좌우 전환 입력에 연결했다.
+- `PortfolioEditor Win64 Development` 빌드가 성공했다.
+- 현재 프로젝트에는 W05 타게팅용 자동화 테스트 모듈이 없어 런타임 동작은 PIE 수동 검증을 남겨 둔다.
+
+PIE 확인 완료:
+
+- 현재 타겟 기준 마우스 휠 좌우 전환
+- 선택 방향에 후보가 없을 때 기존 타겟 유지
+- 실제 타겟 평가 점수 `1.00` 표시 및 선택 결과 확인
+
+PIE 확인 보류:
+
+- 전환 후 이전 타겟을 직접 Destroy해도 새 타겟이 해제되지 않는지 확인
 
 ## 제외 범위
 
