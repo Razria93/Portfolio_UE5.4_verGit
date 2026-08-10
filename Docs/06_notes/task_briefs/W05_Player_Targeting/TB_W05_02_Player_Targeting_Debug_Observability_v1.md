@@ -24,6 +24,7 @@ feat/player-targeting-component
 
 - `UCTargetingComponent`는 월드 디버그를 그리지 않는다.
 - 타게팅 컴포넌트는 `FTargetingDebugSnapshot`을 읽기 전용으로 제공한다.
+- 후보 선택과 Debug Snapshot은 `UCTargetingComponent::BuildTargetEvaluation()`의 동일한 계산 결과를 사용한다.
 - `FTargetingDebug`가 World Debug Draw와 Targeting CVar를 소유한다.
 - Player CurrentTarget과 Debug Overlay FocusTarget은 별도 상태다.
 - `PlayerTargetLive`는 CurrentTarget 변경을 Overlay Focus에 반영한다.
@@ -45,6 +46,10 @@ Dot / MinDot
 AngleScore / DistanceScore / FinalScore
 InRange / InViewCone
 ```
+
+Snapshot은 별도의 점수 공식을 재계산하지 않는다. 실제 후보 선택과 동일한 Target Evaluation을 복사해 표시하므로 Overlay의 `AngleScore / DistanceScore / FinalScore`는 런타임 선택 판단과 일치해야 한다.
+
+`MaxTargetAngleDegrees == 0`인 경계값도 런타임과 동일하게 처리한다. `1 - MinDot`이 `SMALL_NUMBER` 이하이면 정확히 같은 전방 방향만 `AngleScore = 1`이고 나머지는 `0`이다.
 
 ### 2. World Debug Draw
 

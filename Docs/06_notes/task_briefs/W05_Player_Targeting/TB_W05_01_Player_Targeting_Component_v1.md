@@ -31,6 +31,8 @@ feat/player-targeting-component
 - v1은 타겟 선택 / 유효성 검사 / 해제 / 개발용 디버그 표시까지만 구현한다.
 - v1은 카메라 강제 회전, 캐릭터 회전 보정, 타겟 전환, HUD 생성 및 UI를 포함하지 않는다.
 - 타겟 선택은 플레이어 위치가 아니라 `GetPlayerViewPoint()`의 카메라 위치와 방향을 기준으로 한다.
+- 후보 선택, 현재 타겟 검증, Debug Snapshot은 하나의 Target Evaluation 계산 결과를 공유한다.
+- 타겟이 없는 동안에도 Validation Tick은 유지한다. 현재 비용이 작고 명시적 Tick 활성화 상태를 추가하지 않는 단순성을 우선한다.
 
 ## 작업 범위
 
@@ -44,8 +46,9 @@ MaxTargetAngleDegrees
 DistanceScoreWeight
 AngleScoreWeight
 ValidationInterval
-bEnableDebugDraw
 ```
+
+Debug 활성화와 표현별 CVar는 `FTargetingTuning`에 포함하지 않고 W05-02의 `FTargetingDebug`가 소유한다.
 
 ### 2. 타게팅 컴포넌트
 
@@ -72,6 +75,22 @@ ACEnemy* GetCurrentTarget() const;
 
 후보 점수는 전방 중앙에 가까운 정도와 거리가 가까운 정도를 조합한다. 가장 높은 점수의 후보를 선택한다.
 
+선택과 Debug Snapshot은 다음 정규화 규칙을 공유한다.
+
+```text
+MinDot = cos(MaxTargetAngleDegrees)
+AngleScore = (Dot - MinDot) / (1 - MinDot)
+DistanceScore = 1 - clamp(Distance / MaxTargetDistance, 0, 1)
+FinalScore = AngleScore * AngleScoreWeight
+           + DistanceScore * DistanceScoreWeight
+```
+
+`MaxTargetAngleDegrees == 0`이면 `MinDot == 1`이므로 일반 정규화의 분모 `1 - MinDot`이 0이 된다. 이때는 NaN을 만들지 않고 카메라 전방과 타겟 방향이 완전히 같은 `Dot >= MinDot`일 때만 `AngleScore = 1`, 그 외에는 `0`으로 처리한다. 여기서 `Dot == 1`은 두 방향의 차이가 90도가 아니라 0도임을 의미한다.
+
+분모가 `SMALL_NUMBER`보다 크면 기존 범위 정규화를 수행하고 결과를 0~1로 Clamp한다.
+
+후보 탐색 전에는 `GetWorld()` 유효성을 검사하며, 유효한 World가 없으면 탐색을 시작하지 않는다.
+
 ### 4. 유지와 해제
 
 컴포넌트는 일정 주기로 현재 타겟만 검증한다. 다음 조건이면 자동 해제한다.
@@ -82,6 +101,8 @@ ACEnemy* GetCurrentTarget() const;
 
 화면 뒤 이동이나 일시적 Line Of Sight 상실은 v1 자동 해제 조건에 넣지 않는다.
 
+현재 타겟을 설정하면 해당 Enemy의 `OnDestroyed`를 구독하고, 변경·수동 해제 시 이전 구독을 해제한다. 직접 파괴된 경우에는 Destroy Callback이 전달한 Enemy를 PreviousTarget으로 사용해 `OnTargetChanged(DestroyedEnemy, nullptr)`를 정확히 한 번 발행한다.
+
 ### 5. 입력과 검증
 
 `TargetLock` Action Mapping을 `Tab`에 연결한다.
@@ -91,7 +112,7 @@ ACEnemy* GetCurrentTarget() const;
 타겟 있음 + 입력 -> 수동 해제
 ```
 
-Development 빌드에서는 현재 타겟, 탐색 반경, 선택 점수를 디버그 드로우로 확인할 수 있게 한다.
+Non-Shipping 빌드에서는 W05-02의 독립 디버그 표현 경로를 통해 현재 타겟, 탐색 반경, 선택 점수를 확인할 수 있게 한다.
 
 ## 변경 예정 파일
 
@@ -117,7 +138,9 @@ Source/Portfolio/Controller/CPlayerController.cpp
 ## 후속 작업
 
 ```text
-W05-02: 좌우 타겟 전환
-W05-03: 카메라 / 이동 락온 보정
-W05-04: 타겟 마커와 Enemy Status HUD 연결
+W05-03: 좌우 타겟 전환
+W05-04: 카메라 / 이동 락온 보정
+W05-05: 타겟 마커와 Enemy Status HUD 연결
 ```
+
+위 세 작업은 모두 순차 구현·검증한 뒤 다음 시스템 작업으로 이동한다.
