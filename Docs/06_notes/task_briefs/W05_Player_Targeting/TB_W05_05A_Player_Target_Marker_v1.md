@@ -72,9 +72,6 @@ struct FTargetMarkerTuning
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, Category = "Targeting|Marker")
-    FVector TargetWorldOffset = FVector(0.f, 0.f, 80.f);
-
-    UPROPERTY(EditAnywhere, Category = "Targeting|Marker")
     int32 WidgetZOrder = 10;
 };
 
@@ -93,10 +90,24 @@ struct FTargetMarkerViewData
 
 초기 ViewData에는 표시 여부와 위치만 둔다. Target Actor나 Enemy Resource를 Widget에 직접 전달하지 않으며, 후속 Enemy Status HUD 데이터도 Presenter가 별도 ViewData로 변환해 전달한다.
 
+Enemy는 다음 Target Presentation 계약을 소유한다.
+
+```cpp
+UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
+FName TargetMarkerSocketName = TEXT("TargetMarker");
+
+UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
+FVector TargetMarkerFallbackOffset = FVector::ZeroVector;
+
+FVector GetTargetMarkerWorldLocation() const;
+```
+
 ## 투영 및 가시성 정책
 
 - `UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(..., true)`를 사용해 DPI가 제거된 Widget 좌표를 얻는다.
-- 투영 위치는 `TargetActorLocation + TargetWorldOffset`이다.
+- Presenter는 `ACEnemy::GetTargetMarkerWorldLocation()`이 제공한 위치만 투영한다.
+- Enemy Mesh에 `TargetMarker` 소켓이 있으면 해당 소켓의 월드 위치를 사용한다.
+- 소켓이 없으면 `Enemy ActorLocation + TargetMarkerFallbackOffset`을 사용한다.
 - 현재 타겟이 있을 때만 Presenter Tick을 활성화한다.
 - 타겟이 없으면 즉시 숨기고 Tick을 중지한다.
 - Controller 또는 Pawn이 유효하지 않으면 숨긴다.
@@ -163,6 +174,9 @@ Widget Class가 지정되지 않은 상태는 에셋 연결 전 정상 상태로
 - `FTargetMarkerTuning`과 `FTargetMarkerViewData`를 Targeting 공용 타입에 추가했다.
 - `UCTargetHUDWidget`이 ViewData를 캐시하고 Blueprint 구현 이벤트로 전달한다.
 - `UCTargetHUDPresenterComponent`가 Target 변경 이벤트 구독, Widget 수명, 화면 좌표 투영과 표시 상태를 담당한다.
+- Target Marker의 월드 기준점은 Enemy가 소유하며, Presenter는 Mesh나 Socket 구조를 직접 알지 않는다.
+- Enemy별 `TargetMarker` 소켓을 우선 사용하고 누락 시 Enemy 설정의 fallback offset으로 복구한다.
+- Socket 기반 위치 API 추가 후 UHT 및 `PortfolioEditor Win64 Development` 빌드가 성공했다.
 - 타겟이 카메라 뒤에 있거나 DPI 보정 Viewport 범위 밖이면 마커만 숨기고 Target Lock은 유지한다.
 - 타겟이 없거나 Widget Class가 지정되지 않은 경우 Presenter Tick을 실행하지 않는다.
 - `ACPlayerController`가 Presenter를 Default Subobject로 소유하고 기존 TargetingComponent 참조를 주입한다.
@@ -179,6 +193,8 @@ Docs/06_notes/task_briefs/W05_Player_Targeting/TB_W05_05A_Player_Target_Marker_v
 
 Source/Portfolio/Portfolio.Build.cs
 Source/Portfolio/Type/CTargetingTypes.h
+Source/Portfolio/Character/Enemy/CEnemy.h
+Source/Portfolio/Character/Enemy/CEnemy.cpp
 Source/Portfolio/UI/CTargetHUDWidget.h
 Source/Portfolio/UI/CTargetHUDWidget.cpp
 Source/Portfolio/Component/CTargetHUDPresenterComponent.h
@@ -206,7 +222,8 @@ Source/Portfolio/Controller/CPlayerController.cpp
 2. 전체 화면 Canvas와 Marker 이미지 배치
 3. BP_OnTargetMarkerUpdated 구현
 4. PlayerController의 TargetHUDPresenter에 Widget Class 지정
-5. PIE에서 선택 / 전환 / 해제 / 화면 밖 재진입 검증
+5. Enemy Skeleton 또는 Skeletal Mesh에 `TargetMarker` 소켓 생성 및 위치 조정
+6. PIE에서 선택 / 전환 / 해제 / 화면 밖 재진입 검증
 ```
 
 ## 후속 작업

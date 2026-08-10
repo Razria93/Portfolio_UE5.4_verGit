@@ -168,7 +168,7 @@ bool UCTargetHUDPresenterComponent::TryBuildTargetMarkerViewData(const ACEnemy* 
 	if (!IsValid(OwnerPlayerController_Injected) || !IsValid(OwnerPlayerController_Injected->GetPawn())) return false;
 	if (!IsValid(InTarget)) return false;
 
-	const FVector targetWorldLocation = InTarget->GetActorLocation() + TargetMarkerTuning.TargetWorldOffset;
+	const FVector targetWorldLocation = InTarget->GetTargetMarkerWorldLocation();
 	FVector viewLocation = FVector::ZeroVector;
 	FRotator viewRotation = FRotator::ZeroRotator;
 	OwnerPlayerController_Injected->GetPlayerViewPoint(viewLocation, viewRotation);

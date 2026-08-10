@@ -44,16 +44,13 @@ struct FTargetLockAssistTuning
 	float CameraRotationInterpSpeed = 8.f;
 
 	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist")
-	FVector TargetFocusOffset = FVector(0.f, 0.f, 80.f);
+	FVector TargetFocusOffset = FVector(0.f, 0.f, 0.f);
 };
 
 USTRUCT(BlueprintType)
 struct FTargetMarkerTuning
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category = "Targeting|Marker")
-	FVector TargetWorldOffset = FVector(0.f, 0.f, 80.f);
 
 	UPROPERTY(EditAnywhere, Category = "Targeting|Marker")
 	int32 WidgetZOrder = 10;
