@@ -24,6 +24,9 @@ private:
 	class UCTargetLockAssistComponent* TargetLockAssistComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCTargetHUDPresenterComponent* TargetHUDPresenterComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCDebugOverlayFocusComponent* DebugOverlayFocusComponent = nullptr;
 
 	// Cached input

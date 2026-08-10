@@ -4,6 +4,7 @@
 
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
+#include "Component/CTargetHUDPresenterComponent.h"
 #include "Component/CTargetLockAssistComponent.h"
 #include "Component/CTargetingComponent.h"
 #if !UE_BUILD_SHIPPING
@@ -34,6 +35,9 @@ ACPlayerController::ACPlayerController()
 
 	TargetLockAssistComponent = CreateDefaultSubobject<UCTargetLockAssistComponent>(TEXT("TargetLockAssist"));
 	check(TargetLockAssistComponent);
+
+	TargetHUDPresenterComponent = CreateDefaultSubobject<UCTargetHUDPresenterComponent>(TEXT("TargetHUDPresenter"));
+	check(TargetHUDPresenterComponent);
 
 #if !UE_BUILD_SHIPPING
 	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
@@ -110,6 +114,11 @@ void ACPlayerController::PostInitializeComponents()
 	{
 		TargetLockAssistComponent->InitializeReferences(this, TargetingComponent);
 		TargetLockAssistComponent->SetControlledPlayer(ResolveControlledPlayer(this));
+	}
+
+	if (IsValid(TargetHUDPresenterComponent))
+	{
+		TargetHUDPresenterComponent->InitializeReferences(this, TargetingComponent);
 	}
 }
 

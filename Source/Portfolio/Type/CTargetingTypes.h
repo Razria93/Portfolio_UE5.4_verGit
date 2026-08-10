@@ -47,6 +47,30 @@ struct FTargetLockAssistTuning
 	FVector TargetFocusOffset = FVector(0.f, 0.f, 80.f);
 };
 
+USTRUCT(BlueprintType)
+struct FTargetMarkerTuning
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|Marker")
+	FVector TargetWorldOffset = FVector(0.f, 0.f, 80.f);
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|Marker")
+	int32 WidgetZOrder = 10;
+};
+
+USTRUCT(BlueprintType)
+struct FTargetMarkerViewData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Target HUD|Marker")
+	bool bVisible = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Target HUD|Marker")
+	FVector2D WidgetPosition = FVector2D::ZeroVector;
+};
+
 struct FTargetingDebugSnapshot
 {
 	TWeakObjectPtr<AActor> TargetActor;
