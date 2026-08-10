@@ -50,6 +50,7 @@ public:
 	// Target Command
 	void ToggleTargetLock();
 	bool AcquireBestTarget();
+	bool SwitchTarget(ETargetSwitchDirection InDirection);
 	void ClearTarget();
 
 public:
@@ -72,6 +73,7 @@ private:
 private:
 	// Candidate Selection
 	bool TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const;
+	bool ProjectTargetToViewport(const ACEnemy* InTarget, FVector2D& OutScreenPosition) const;
 
 private:
 	// Target Lifecycle

@@ -5,6 +5,15 @@
 
 class AActor;
 
+UENUM(BlueprintType)
+enum class ETargetSwitchDirection : uint8
+{
+	Left,
+	Right,
+
+	Max,
+};
+
 USTRUCT(BlueprintType)
 struct FTargetingTuning
 {

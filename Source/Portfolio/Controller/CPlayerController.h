@@ -75,5 +75,10 @@ protected:
 	void PressGuard();
 	void ReleaseGuard();
 	void PressSwordToggle();
+
+protected:
+	// Targeting
 	void PressTargetLock();
+	void PressTargetSwitchLeft();
+	void PressTargetSwitchRight();
 };

@@ -140,7 +140,10 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
 	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
+
 	InputComponent->BindAction("TargetLock", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetLock);
+	InputComponent->BindAction("TargetSwitchLeft", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetSwitchLeft);
+	InputComponent->BindAction("TargetSwitchRight", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetSwitchRight);
 }
 
 // ===== Look Input =====
@@ -253,9 +256,25 @@ void ACPlayerController::PressDodge()
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
 }
 
+// ===== Targeting =====
+
 void ACPlayerController::PressTargetLock()
 {
 	if (!IsValid(TargetingComponent)) return;
 
 	TargetingComponent->ToggleTargetLock();
+}
+
+void ACPlayerController::PressTargetSwitchLeft()
+{
+	if (!IsValid(TargetingComponent)) return;
+
+	TargetingComponent->SwitchTarget(ETargetSwitchDirection::Left);
+}
+
+void ACPlayerController::PressTargetSwitchRight()
+{
+	if (!IsValid(TargetingComponent)) return;
+
+	TargetingComponent->SwitchTarget(ETargetSwitchDirection::Right);
 }
