@@ -170,7 +170,7 @@ void UCDefenseComponent::HandleGuardInStarted()
 	CloseGuardWindow();
 	OpenParryWindow();
 
-	ApplyGuardMovementOverride();
+	ApplyGuardMovementGaitOverride();
 }
 
 void UCDefenseComponent::HandleGuardOutStarted()
@@ -181,7 +181,7 @@ void UCDefenseComponent::HandleGuardOutStarted()
 	CloseGuardWindow();
 	CloseParryWindow();
 
-	ClearMovementOverride();
+	ClearMovementGaitOverride();
 }
 
 void UCDefenseComponent::HandleSwitchToGuard()
@@ -223,7 +223,7 @@ void UCDefenseComponent::ClearGuardState()
 	CloseGuardWindow();
 	CloseParryWindow();
 
-	ClearMovementOverride();
+	ClearMovementGaitOverride();
 }
 
 void UCDefenseComponent::ClearGuardOverlay()
@@ -232,7 +232,7 @@ void UCDefenseComponent::ClearGuardOverlay()
 	CloseGuardWindow();
 	CloseParryWindow();
 
-	ClearMovementOverride();
+	ClearMovementGaitOverride();
 }
 
 void UCDefenseComponent::RestoreGuardOverlay()
@@ -243,7 +243,7 @@ void UCDefenseComponent::RestoreGuardOverlay()
 		OpenGuardWindow();
 		CloseParryWindow();
 
-		ApplyGuardMovementOverride();
+		ApplyGuardMovementGaitOverride();
 	}
 }
 
@@ -298,17 +298,17 @@ void UCDefenseComponent::CloseParryWindow()
 	bCanParry = false;
 }
 
-// Movement Override
-void UCDefenseComponent::ApplyGuardMovementOverride()
+// Movement Gait Override
+void UCDefenseComponent::ApplyGuardMovementGaitOverride()
 {
 	if (!IsValid(MovementComp_Injected)) return;
 
-	MovementComp_Injected->ApplyMovementOverride(EMovementGait::Walk, EMovementRotationMode::FixedFacing);
+	MovementComp_Injected->ApplyMovementGaitOverride(EMovementGait::Walk);
 }
 
-void UCDefenseComponent::ClearMovementOverride()
+void UCDefenseComponent::ClearMovementGaitOverride()
 {
 	if (!IsValid(MovementComp_Injected)) return;
 
-	MovementComp_Injected->ClearMovementOverride();
+	MovementComp_Injected->ClearMovementGaitOverride();
 }

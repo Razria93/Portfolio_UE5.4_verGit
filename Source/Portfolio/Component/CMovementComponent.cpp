@@ -25,6 +25,7 @@ void UCMovementComponent::InitializeReferences(const FCharacterComponentReferenc
 	StateComp_Injected = InReferences.StateComponent;
 
 	ValidateRequiredComponentReferences();
+	ApplyRotationMode(CurrentMovementRotationMode);
 }
 
 bool UCMovementComponent::ValidateRequiredComponentReferences() const
@@ -298,31 +299,37 @@ void UCMovementComponent::OnStopJump()
 
 // Movement Policy
 
-void UCMovementComponent::ApplyMovementOverride(EMovementGait InGait, EMovementRotationMode InRotationMode)
+void UCMovementComponent::ApplyMovementGaitOverride(EMovementGait InGait)
 {
-	if (!bHasMovementModeOverride)
+	if (!bHasMovementGaitOverride)
 	{
 		CachedMovementGait_BeforeOverride = CurrentMovementGait;
-		bHasMovementModeOverride = true;
+		bHasMovementGaitOverride = true;
 	}
 
-	ApplyRotationMode(InRotationMode);
 	ApplyMovementGait(InGait);
 }
 
-void UCMovementComponent::ClearMovementOverride()
+void UCMovementComponent::ClearMovementGaitOverride()
 {
-	ApplyRotationMode(EMovementRotationMode::OrientToMovement);
+	if (!bHasMovementGaitOverride) return;
 
-	if (!bHasMovementModeOverride) return;
-
-	bHasMovementModeOverride = false;
+	bHasMovementGaitOverride = false;
 	ApplyMovementGait(CachedMovementGait_BeforeOverride);
+}
+
+void UCMovementComponent::SetMovementRotationMode(EMovementRotationMode InRotationMode)
+{
+	if (InRotationMode == EMovementRotationMode::None || InRotationMode == EMovementRotationMode::Max) return;
+	if (CurrentMovementRotationMode == InRotationMode) return;
+
+	CurrentMovementRotationMode = InRotationMode;
+	ApplyRotationMode(CurrentMovementRotationMode);
 }
 
 void UCMovementComponent::ChangeMovementGait(EMovementGait InNewMovementGait)
 {
-	if (bHasMovementModeOverride)
+	if (bHasMovementGaitOverride)
 	{
 		// Keep override speed active, but remember the base gait to restore later.
 		CachedMovementGait_BeforeOverride = InNewMovementGait;

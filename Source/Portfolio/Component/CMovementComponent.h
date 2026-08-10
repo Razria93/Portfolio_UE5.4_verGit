@@ -34,7 +34,10 @@ private:
 	EMovementGait CachedMovementGait_BeforeOverride = EMovementGait::Run;
 
 	UPROPERTY(Transient)
-	bool bHasMovementModeOverride = false;
+	bool bHasMovementGaitOverride = false;
+
+	UPROPERTY(Transient)
+	EMovementRotationMode CurrentMovementRotationMode = EMovementRotationMode::OrientToMovement;
 
 private:
 	FRuntimeLODMovementState RuntimeLODMovementState;
@@ -96,6 +99,7 @@ public:
 	// Query
 	FORCEINLINE bool CheckCurrentMovementGait(EMovementGait InNewMovementGait) const { return CurrentMovementGait == InNewMovementGait; }
 	FORCEINLINE EMovementGait GetCurrentMovementGait() const { return CurrentMovementGait; }
+	FORCEINLINE EMovementRotationMode GetCurrentMovementRotationMode() const { return CurrentMovementRotationMode; }
 
 	FORCEINLINE bool CanMove() const { return bCanMove; }
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
@@ -134,8 +138,9 @@ public:
 
 public:
 	// Movement Policy
-	void ApplyMovementOverride(EMovementGait InGait, EMovementRotationMode InRotationMode);
-	void ClearMovementOverride();
+	void ApplyMovementGaitOverride(EMovementGait InGait);
+	void ClearMovementGaitOverride();
+	void SetMovementRotationMode(EMovementRotationMode InRotationMode);
 
 private:
 	void ChangeMovementGait(EMovementGait InNewMovementGait);
