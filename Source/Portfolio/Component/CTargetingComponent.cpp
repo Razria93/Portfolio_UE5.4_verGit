@@ -8,6 +8,20 @@
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 
+namespace
+{
+	float CalculateAngleScore(float InMinDot, float InDot)
+	{
+		const float scoreRange = 1.f - InMinDot;
+		if (scoreRange <= SMALL_NUMBER)
+		{
+			return InDot >= InMinDot ? 1.f : 0.f;
+		}
+
+		return FMath::Clamp(FMath::GetRangePct(InMinDot, 1.f, InDot), 0.f, 1.f);
+	}
+}
+
 // ===== Lifecycle =====
 
 UCTargetingComponent::UCTargetingComponent()
@@ -24,6 +38,15 @@ void UCTargetingComponent::InitializeReferences(APlayerController* InOwnerPlayer
 }
 
 // ===== Lifecycle =====
+
+void UCTargetingComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+{
+	UnbindTargetDestroyed(CurrentTarget.Get());
+	CurrentTarget.Reset();
+	ValidationElapsedTime = 0.f;
+
+	Super::EndPlay(InEndPlayReason);
+}
 
 void UCTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -53,10 +76,13 @@ bool UCTargetingComponent::AcquireBestTarget()
 {
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
 
+	UWorld* world = GetWorld();
+	if (!IsValid(world)) return false;
+
 	ACEnemy* bestTarget = nullptr;
 	float bestScore = -FLT_MAX;
 
-	for (TActorIterator<ACEnemy> iterator(GetWorld()); iterator; ++iterator)
+	for (TActorIterator<ACEnemy> iterator(world); iterator; ++iterator)
 	{
 		ACEnemy* candidate = *iterator;
 		float candidateScore = 0.f;
@@ -93,32 +119,10 @@ ACEnemy* UCTargetingComponent::GetCurrentTarget() const
 
 bool UCTargetingComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const
 {
-	OutSnapshot = FTargetingDebugSnapshot();
-
 	ACEnemy* currentTarget = CurrentTarget.Get();
-	if (!IsValid(OwnerPlayerController_Injected)) return false;
-
-	FRotator viewRotation = FRotator::ZeroRotator;
-	OwnerPlayerController_Injected->GetPlayerViewPoint(OutSnapshot.ViewLocation, viewRotation);
-
-	OutSnapshot.ViewForward = viewRotation.Vector();
-	OutSnapshot.MaxTargetDistance = TargetingTuning.MaxTargetDistance;
-	if (!IsValid(currentTarget)) return true;
+	if (!BuildTargetEvaluation(currentTarget, OutSnapshot)) return false;
 
 	OutSnapshot.TargetActor = currentTarget;
-	OutSnapshot.TargetLocation = currentTarget->GetActorLocation();
-	const float safeMaxTargetDistance = FMath::Max(OutSnapshot.MaxTargetDistance, KINDA_SMALL_NUMBER);
-	OutSnapshot.Distance = FVector::Distance(OutSnapshot.ViewLocation, OutSnapshot.TargetLocation);
-	OutSnapshot.Dot = FVector::DotProduct(
-		OutSnapshot.ViewForward,
-		(OutSnapshot.TargetLocation - OutSnapshot.ViewLocation).GetSafeNormal());
-	OutSnapshot.MinDot = FMath::Cos(FMath::DegreesToRadians(TargetingTuning.MaxTargetAngleDegrees));
-	OutSnapshot.AngleScore = FMath::Clamp(FMath::GetRangePct(OutSnapshot.MinDot, 1.f, OutSnapshot.Dot), 0.f, 1.f);
-	OutSnapshot.DistanceScore = 1.f - FMath::Clamp(OutSnapshot.Distance / safeMaxTargetDistance, 0.f, 1.f);
-	OutSnapshot.FinalScore = (OutSnapshot.AngleScore * TargetingTuning.AngleScoreWeight)
-		+ (OutSnapshot.DistanceScore * TargetingTuning.DistanceScoreWeight);
-	OutSnapshot.bWithinRange = OutSnapshot.Distance <= TargetingTuning.MaxTargetDistance;
-	OutSnapshot.bWithinViewCone = OutSnapshot.Dot >= OutSnapshot.MinDot;
 	return true;
 }
 
@@ -142,23 +146,10 @@ bool UCTargetingComponent::ValidateRequiredReferences() const
 
 bool UCTargetingComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireViewCone) const
 {
-	if (!IsValid(OwnerPlayerController_Injected)) return false;
-	if (!IsValid(InTarget)) return false;
+	FTargetingDebugSnapshot evaluation;
+	if (!BuildTargetEvaluation(InTarget, evaluation)) return false;
 
-	const UCHealthComponent* healthComp = InTarget->GetHealthComp();
-	if (!IsValid(healthComp) || !healthComp->IsAlive()) return false;
-
-	FVector viewLocation = FVector::ZeroVector;
-	FRotator viewRotation = FRotator::ZeroRotator;
-	OwnerPlayerController_Injected->GetPlayerViewPoint(viewLocation, viewRotation);
-
-	const float distance = FVector::Distance(viewLocation, InTarget->GetActorLocation());
-	if (distance > TargetingTuning.MaxTargetDistance) return false;
-	if (!bRequireViewCone) return true;
-
-	const FVector directionToTarget = (InTarget->GetActorLocation() - viewLocation).GetSafeNormal();
-	const float minDot = FMath::Cos(FMath::DegreesToRadians(TargetingTuning.MaxTargetAngleDegrees));
-	return FVector::DotProduct(viewRotation.Vector(), directionToTarget) >= minDot;
+	return IsTargetEvaluationValid(InTarget, evaluation, bRequireViewCone);
 }
 
 void UCTargetingComponent::ValidateCurrentTarget()
@@ -170,27 +161,88 @@ void UCTargetingComponent::ValidateCurrentTarget()
 	ClearTarget();
 }
 
+// ===== Target Evaluation =====
+
+bool UCTargetingComponent::BuildTargetEvaluation(const ACEnemy* InTarget, FTargetingDebugSnapshot& OutEvaluation) const
+{
+	OutEvaluation = FTargetingDebugSnapshot();
+	if (!IsValid(OwnerPlayerController_Injected)) return false;
+
+	FRotator viewRotation = FRotator::ZeroRotator;
+	OwnerPlayerController_Injected->GetPlayerViewPoint(OutEvaluation.ViewLocation, viewRotation);
+
+	OutEvaluation.ViewForward = viewRotation.Vector();
+	OutEvaluation.MaxTargetDistance = TargetingTuning.MaxTargetDistance;
+	if (!IsValid(InTarget)) return true;
+
+	OutEvaluation.TargetLocation = InTarget->GetActorLocation();
+
+	const float safeMaxTargetDistance = FMath::Max(OutEvaluation.MaxTargetDistance, KINDA_SMALL_NUMBER);
+	OutEvaluation.Distance = FVector::Distance(OutEvaluation.ViewLocation, OutEvaluation.TargetLocation);
+	OutEvaluation.DistanceScore = 1.f - FMath::Clamp(OutEvaluation.Distance / safeMaxTargetDistance, 0.f, 1.f);
+
+	OutEvaluation.Dot = FVector::DotProduct(OutEvaluation.ViewForward, (OutEvaluation.TargetLocation - OutEvaluation.ViewLocation).GetSafeNormal());
+	OutEvaluation.MinDot = FMath::Cos(FMath::DegreesToRadians(TargetingTuning.MaxTargetAngleDegrees));
+	OutEvaluation.AngleScore = CalculateAngleScore(OutEvaluation.MinDot, OutEvaluation.Dot);
+
+	OutEvaluation.FinalScore = (OutEvaluation.AngleScore * TargetingTuning.AngleScoreWeight) + (OutEvaluation.DistanceScore * TargetingTuning.DistanceScoreWeight);
+	OutEvaluation.bWithinRange = OutEvaluation.Distance <= OutEvaluation.MaxTargetDistance;
+	OutEvaluation.bWithinViewCone = OutEvaluation.Dot >= OutEvaluation.MinDot;
+	return true;
+}
+
+bool UCTargetingComponent::IsTargetEvaluationValid(
+	const ACEnemy* InTarget,
+	const FTargetingDebugSnapshot& InEvaluation,
+	bool bRequireViewCone) const
+{
+	if (!IsValid(InTarget)) return false;
+
+	const UCHealthComponent* healthComp = InTarget->GetHealthComp();
+	if (!IsValid(healthComp) || !healthComp->IsAlive()) return false;
+	if (!InEvaluation.bWithinRange) return false;
+
+	return !bRequireViewCone || InEvaluation.bWithinViewCone;
+}
+
 // ===== Candidate Selection =====
 
 bool UCTargetingComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const
 {
 	OutScore = 0.f;
-	if (!IsTargetValid(InTarget, true)) return false;
 
-	FVector viewLocation = FVector::ZeroVector;
-	FRotator viewRotation = FRotator::ZeroRotator;
-	OwnerPlayerController_Injected->GetPlayerViewPoint(viewLocation, viewRotation);
+	FTargetingDebugSnapshot evaluation;
+	if (!BuildTargetEvaluation(InTarget, evaluation)) return false;
+	if (!IsTargetEvaluationValid(InTarget, evaluation, true)) return false;
 
-	const FVector directionToTarget = (InTarget->GetActorLocation() - viewLocation).GetSafeNormal();
-	const float dot = FVector::DotProduct(viewRotation.Vector(), directionToTarget);
-	const float minDot = FMath::Cos(FMath::DegreesToRadians(TargetingTuning.MaxTargetAngleDegrees));
-	const float angleScore = FMath::GetRangePct(minDot, 1.f, dot);
-	const float distance = FVector::Distance(viewLocation, InTarget->GetActorLocation());
-	const float safeMaxTargetDistance = FMath::Max(TargetingTuning.MaxTargetDistance, KINDA_SMALL_NUMBER);
-	const float distanceScore = 1.f - FMath::Clamp(distance / safeMaxTargetDistance, 0.f, 1.f);
-
-	OutScore = (angleScore * TargetingTuning.AngleScoreWeight) + (distanceScore * TargetingTuning.DistanceScoreWeight);
+	OutScore = evaluation.FinalScore;
 	return true;
+}
+
+// ===== Target Lifecycle =====
+
+void UCTargetingComponent::BindTargetDestroyed(ACEnemy* InTarget)
+{
+	if (!IsValid(InTarget)) return;
+
+	InTarget->OnDestroyed.AddUniqueDynamic(this, &UCTargetingComponent::HandleCurrentTargetDestroyed);
+}
+
+void UCTargetingComponent::UnbindTargetDestroyed(ACEnemy* InTarget)
+{
+	if (!IsValid(InTarget)) return;
+
+	InTarget->OnDestroyed.RemoveDynamic(this, &UCTargetingComponent::HandleCurrentTargetDestroyed);
+}
+
+void UCTargetingComponent::HandleCurrentTargetDestroyed(AActor* InDestroyedActor)
+{
+	ACEnemy* destroyedTarget = Cast<ACEnemy>(InDestroyedActor);
+	if (!destroyedTarget) return;
+
+	CurrentTarget.Reset();
+	ValidationElapsedTime = 0.f;
+	OnTargetChanged.Broadcast(destroyedTarget, nullptr);
 }
 
 // ===== Target State =====
@@ -200,6 +252,8 @@ void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget)
 	ACEnemy* previousTarget = CurrentTarget.Get();
 	if (previousTarget == InNewTarget) return;
 
+	UnbindTargetDestroyed(previousTarget);
 	CurrentTarget = InNewTarget;
+	BindTargetDestroyed(InNewTarget);
 	OnTargetChanged.Broadcast(previousTarget, InNewTarget);
 }
