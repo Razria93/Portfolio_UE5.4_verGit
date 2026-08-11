@@ -159,7 +159,9 @@ void UCTargetLockAssistComponent::UpdateCameraTracking(float DeltaTime)
 	OwnerPlayerController_Injected->GetPlayerViewPoint(viewLocation, viewRotation);
 
 	const FVector targetFocusLocation = currentTarget->GetActorLocation() + TargetLockAssistTuning.TargetFocusOffset;
-	FRotator desiredRotation = (targetFocusLocation - viewLocation).Rotation();
+	const FVector directionToTarget = targetFocusLocation - viewLocation;
+	FRotator desiredRotation = directionToTarget.Rotation();
+	desiredRotation.Pitch = ResolveDesiredLockPitch(desiredRotation.Pitch, directionToTarget.Size2D());
 	desiredRotation.Roll = 0.f;
 
 	if (IsValid(OwnerPlayerController_Injected->PlayerCameraManager))
@@ -177,4 +179,35 @@ void UCTargetLockAssistComponent::UpdateCameraTracking(float DeltaTime)
 		: FMath::RInterpTo(currentRotation, desiredRotation, safeDeltaTime, TargetLockAssistTuning.CameraRotationInterpSpeed);
 
 	OwnerPlayerController_Injected->SetControlRotation(nextRotation);
+}
+
+float UCTargetLockAssistComponent::ResolveDesiredLockPitch(float InRawTargetPitch, float InHorizontalDistance) const
+{
+	const float nearDistance = FMath::Max(
+		FMath::Min(TargetLockAssistTuning.NearPitchHoldDistance, TargetLockAssistTuning.FullPitchTrackingDistance),
+		0.f);
+	const float fullTrackingDistance = FMath::Max(
+		FMath::Max(TargetLockAssistTuning.NearPitchHoldDistance, TargetLockAssistTuning.FullPitchTrackingDistance),
+		0.f);
+
+	float trackingAlpha = 0.f;
+	if (FMath::IsNearlyEqual(nearDistance, fullTrackingDistance))
+	{
+		trackingAlpha = InHorizontalDistance >= fullTrackingDistance ? 1.f : 0.f;
+	}
+	else
+	{
+		trackingAlpha = FMath::Clamp(
+			FMath::GetRangePct(nearDistance, fullTrackingDistance, FMath::Max(InHorizontalDistance, 0.f)),
+			0.f,
+			1.f);
+	}
+
+	const float smoothTrackingAlpha = trackingAlpha * trackingAlpha * (3.f - (2.f * trackingAlpha));
+	const float minLockPitch = FMath::Min(TargetLockAssistTuning.MinLockPitchDegrees, TargetLockAssistTuning.MaxLockPitchDegrees);
+	const float maxLockPitch = FMath::Max(TargetLockAssistTuning.MinLockPitchDegrees, TargetLockAssistTuning.MaxLockPitchDegrees);
+	const float nearLockPitch = FMath::Clamp(TargetLockAssistTuning.NearLockPitchDegrees, minLockPitch, maxLockPitch);
+	const float desiredPitch = FMath::Lerp(nearLockPitch, InRawTargetPitch, smoothTrackingAlpha);
+
+	return FMath::Clamp(desiredPitch, minLockPitch, maxLockPitch);
 }

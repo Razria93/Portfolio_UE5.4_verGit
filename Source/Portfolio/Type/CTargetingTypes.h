@@ -45,6 +45,21 @@ struct FTargetLockAssistTuning
 
 	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist")
 	FVector TargetFocusOffset = FVector(0.f, 0.f, 0.f);
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch", meta = (ClampMin = "0.0"))
+	float NearPitchHoldDistance = 300.f;
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch", meta = (ClampMin = "0.0"))
+	float FullPitchTrackingDistance = 900.f;
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch", meta = (ClampMin = "-89.0", ClampMax = "89.0"))
+	float NearLockPitchDegrees = -5.f;
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch", meta = (ClampMin = "-89.0", ClampMax = "89.0"))
+	float MinLockPitchDegrees = -12.f;
+
+	UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch", meta = (ClampMin = "-89.0", ClampMax = "89.0"))
+	float MaxLockPitchDegrees = 15.f;
 };
 
 USTRUCT(BlueprintType)

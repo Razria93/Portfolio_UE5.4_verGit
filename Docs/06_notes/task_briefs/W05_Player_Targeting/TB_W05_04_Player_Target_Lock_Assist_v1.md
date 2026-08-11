@@ -86,7 +86,10 @@ Guard는 `ApplyMovementGaitOverride(Walk)`만 사용한다. 락온 여부는 `Se
 ## 카메라 정책
 
 - 락온 중 PlayerController의 자유 Look Yaw / Pitch 입력을 억제한다.
-- 카메라 목표 회전은 Player ViewPoint에서 `TargetLocation + TargetFocusOffset`을 바라보는 회전으로 계산한다.
+- 카메라 목표 Yaw는 Player ViewPoint에서 `TargetLocation + TargetFocusOffset`을 바라보는 회전으로 계산한다.
+- 카메라 목표 Pitch는 근거리의 명시적 `NearLockPitchDegrees`와 원거리의 실제 Target Pitch를 수평거리에 따라 보간한다.
+- 근거리 기준 Pitch는 락온 진입 당시 카메라 상태를 캡처하지 않으며, 설정값으로 항상 재현 가능하게 유지한다.
+- 거리 보간에는 SmoothStep 곡선을 사용하고, 최종 Pitch는 LockAssist 제한과 PlayerCameraManager 제한을 순서대로 적용한다.
 - 현재 ControlRotation에서 목표 회전까지 `RInterpTo()`로 보간한다.
 - 타겟 전환 시 새 타겟 방향으로 연속 보간한다.
 - 락온 해제 시 자동 추적만 종료하고 마지막 카메라 각도는 유지한다.
@@ -105,9 +108,43 @@ struct FTargetLockAssistTuning
     float CameraRotationInterpSpeed = 8.f;
 
     UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist")
-    FVector TargetFocusOffset = FVector(0.f, 0.f, 80.f);
+    FVector TargetFocusOffset = FVector::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch", meta = (ClampMin = "0.0"))
+    float NearPitchHoldDistance = 300.f;
+
+    UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch", meta = (ClampMin = "0.0"))
+    float FullPitchTrackingDistance = 900.f;
+
+    UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch")
+    float NearLockPitchDegrees = -5.f;
+
+    UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch")
+    float MinLockPitchDegrees = -12.f;
+
+    UPROPERTY(EditAnywhere, Category = "Targeting|LockAssist|Pitch")
+    float MaxLockPitchDegrees = 15.f;
 };
 ```
+
+Pitch 거리 정책:
+
+```text
+HorizontalDistance <= NearPitchHoldDistance
+-> NearLockPitchDegrees
+
+HorizontalDistance >= FullPitchTrackingDistance
+-> Raw Target Pitch
+
+Between
+-> SmoothStep(NearLockPitchDegrees, Raw Target Pitch)
+
+Final
+-> Clamp(MinLockPitchDegrees, MaxLockPitchDegrees)
+-> Clamp(PlayerCameraManager ViewPitchMin, ViewPitchMax)
+```
+
+두 거리값 또는 최소·최대 Pitch가 역전되어도 런타임 계산에서 작은 값과 큰 값을 정렬한다. 두 거리값이 같으면 해당 거리에서 근거리/완전 추적을 단계적으로 전환해 0 나눗셈을 방지한다.
 
 ## Target 변경 처리
 
@@ -176,6 +213,12 @@ Guard 시작·종료는 현재 락온 회전 정책을 변경하지 않는다.
 - Guard는 Walk Gait만 적용하며 더 이상 `FixedFacing`을 요청하지 않는다.
 - `UCTargetLockAssistComponent`가 Target 변경, Possession, 카메라 추적과 회전 정책 연결을 담당한다.
 - 락온 중 Look Yaw / Pitch 입력을 억제하고 타겟 방향으로 ControlRotation을 보간한다.
+- 근거리에서는 설정된 기준 Pitch를 사용하고 원거리 Target Pitch까지 수평거리 기반 SmoothStep으로 연결한다.
+- 락온 시작 Pitch를 런타임 상태로 저장하지 않아 시작 시점의 과도한 시점 각도가 근거리 구도로 고착되지 않는다.
+- 거리 및 Pitch 범위가 동일하거나 역전된 설정에서도 입력을 정렬하고 0 나눗셈 없이 계산한다.
+- 거리 기반 Pitch 보완 후 UHT 및 `PortfolioEditor Win64 Development` 빌드가 성공했다.
+- PlayerController 에디터 설정에서 추가된 LockAssist Pitch 튜닝값 노출을 확인했다.
+- PIE에서 근거리 접근 시 과도한 하향 구도가 억제되고, 거리 기반 Pitch 연결과 전반적인 카메라 사용감이 개선된 것을 확인했다.
 - 타겟 선택·전환·해제는 기존 `UCTargetingComponent` 계약을 그대로 사용한다.
 - Debug Overlay Movement 행에 현재 Rotation Mode를 추가했다.
 - UHT 및 `PortfolioEditor Win64 Development` 빌드가 성공했다.
@@ -212,6 +255,10 @@ Source/Portfolio/Core/Debug/FDebugOverlayViewDataBuilder.cpp
 - 락온 중 자유 Look Yaw / Pitch 입력이 억제된다.
 - 락온 해제 즉시 자유 Look 입력이 복구된다.
 - 타겟 전환 시 카메라가 새 타겟으로 부드럽게 연결된다.
+- 타겟에 접근해도 카메라 Pitch가 과도한 하향 각도로 증가하지 않는다.
+- 타겟에서 멀어질 때 실제 Target Pitch 추적으로 부드럽게 복귀한다.
+- 근거리 좌우 타겟 전환에서 Pitch가 다시 캡처되거나 튀지 않는다.
+- 락온 해제 후 다른 카메라 각도에서 재진입해도 근거리 구도가 같은 설정값으로 수렴한다.
 - 타겟 사망·거리 초과·Destroy 해제 시 `OrientToMovement`로 복구된다.
 - Possess / UnPossess / EndPlay에서 이전 Player에 락온 회전 정책이 남지 않는다.
 - 기존 W05-01~03 타겟 선택·전환 계약이 유지된다.

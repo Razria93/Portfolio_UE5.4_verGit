@@ -64,4 +64,5 @@ private:
 private:
 	// Camera Tracking
 	void UpdateCameraTracking(float DeltaTime);
+	float ResolveDesiredLockPitch(float InRawTargetPitch, float InHorizontalDistance) const;
 };
