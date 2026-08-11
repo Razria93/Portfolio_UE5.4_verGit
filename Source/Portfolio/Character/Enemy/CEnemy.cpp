@@ -28,6 +28,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "TimerManager.h"
 
 namespace
 {
@@ -161,12 +162,23 @@ void ACEnemy::BeginPlay()
 	{
 		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
 	}
+	if (IsValid(HealthComponent))
+	{
+		HealthComponent->OnDeadStateChanged.AddUObject(this, &ACEnemy::HandleOwnerDeadStateChanged);
+	}
+	if (IsValid(ReactionComponent))
+	{
+		ReactionComponent->OnReactionExecutionLifecycleEvent.AddUObject(this, &ACEnemy::HandleReactionExecutionLifecycleEvent);
+	}
 
 	HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
 }
 
 void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
+
 	if (IsValid(ActionComponent))
 	{
 		ActionComponent->OnActionTypeChanged.RemoveAll(this);
@@ -176,6 +188,12 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (IsValid(HealthComponent))
 	{
 		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
+		HealthComponent->OnDeadStateChanged.RemoveAll(this);
+	}
+
+	if (IsValid(ReactionComponent))
+	{
+		ReactionComponent->OnReactionExecutionLifecycleEvent.RemoveAll(this);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -567,6 +585,148 @@ bool ACEnemy::TryStartKill()
 bool ACEnemy::TryStartRevive(float InReviveHP)
 {
 	return IsValid(HealthComponent) && HealthComponent->TryRevive(InReviveHP);
+}
+
+// Death Lifecycle
+
+void ACEnemy::RequestFinalizeDeath()
+{
+	if (!bDeathLifecycleActive || bDeathFinalizationRequested || bDeathFinalized) return;
+	if (!IsValid(HealthComponent)) return;
+
+	const EDeadState deadState = HealthComponent->GetDeadState();
+	if (deadState != EDeadState::Dying && deadState != EDeadState::Dead) return;
+
+	bDeathFinalizationRequested = true;
+	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	DeathFinalizeTimerHandle = GetWorldTimerManager().SetTimerForNextTick(this, &ACEnemy::FinalizeDeath);
+}
+
+void ACEnemy::BeginDeathLifecycle()
+{
+	if (bDeathLifecycleActive || bDeathFinalized) return;
+
+	bDeathLifecycleActive = true;
+	bDeathFinalizationRequested = false;
+
+	if (ACAIController* aiController = Cast<ACAIController>(GetController()))
+	{
+		aiController->StopMovement();
+	}
+
+	if (IsValid(ActionOrchestratorComponent))
+	{
+		ActionOrchestratorComponent->ClearAllDeferredActions();
+	}
+
+	if (IsValid(WeaponComponent))
+	{
+		WeaponComponent->ClearWeaponRuntimeState();
+	}
+
+	DeadReactionStartFallbackTimerHandle = GetWorldTimerManager().SetTimerForNextTick(this, &ACEnemy::ValidateDeadReactionStarted);
+}
+
+void ACEnemy::CancelDeathLifecycle()
+{
+	if (bDeathFinalized) return;
+
+	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
+	bDeathLifecycleActive = false;
+	bDeathFinalizationRequested = false;
+}
+
+void ACEnemy::ValidateDeadReactionStarted()
+{
+	if (!bDeathLifecycleActive || bDeathFinalizationRequested || bDeathFinalized) return;
+
+	if (!IsValid(ReactionComponent) || !ReactionComponent->IsActiveReactionType(EReactionType::Dead))
+	{
+		RequestFinalizeDeath();
+	}
+}
+
+void ACEnemy::FinalizeDeath()
+{
+	bDeathFinalizationRequested = false;
+	if (!bDeathLifecycleActive || bDeathFinalized) return;
+	if (!IsValid(HealthComponent))
+	{
+		CancelDeathLifecycle();
+		return;
+	}
+
+	const EDeadState deadState = HealthComponent->GetDeadState();
+	if (deadState != EDeadState::Dying && deadState != EDeadState::Dead)
+	{
+		CancelDeathLifecycle();
+		return;
+	}
+
+	bDeathFinalized = true;
+	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+
+	if (!HealthComponent->IsDead())
+	{
+		HealthComponent->EnterDeadState();
+	}
+
+	CleanupDeathGameplayRuntime();
+	Destroy();
+}
+
+void ACEnemy::CleanupDeathGameplayRuntime()
+{
+	if (ACAIController* aiController = Cast<ACAIController>(GetController()))
+	{
+		aiController->StopMovement();
+	}
+
+	if (IsValid(ActionOrchestratorComponent))
+	{
+		ActionOrchestratorComponent->ClearAllDeferredActions();
+	}
+
+	if (IsValid(WeaponComponent))
+	{
+		WeaponComponent->ClearWeaponRuntimeState();
+	}
+}
+
+void ACEnemy::HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState)
+{
+	if (bDeathFinalized) return;
+
+	if (InNewDeadState == EDeadState::Dying || (InNewDeadState == EDeadState::Dead && !bDeathLifecycleActive))
+	{
+		BeginDeathLifecycle();
+		return;
+	}
+
+	if (InNewDeadState == EDeadState::Alive || InNewDeadState == EDeadState::Reviving)
+	{
+		CancelDeathLifecycle();
+	}
+}
+
+void ACEnemy::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)
+{
+	if (!bDeathLifecycleActive || bDeathFinalized) return;
+	if (InEvent.Context.ReactionDataKey.ReactionType != EReactionType::Dead) return;
+
+	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Started)
+	{
+		GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+		return;
+	}
+
+	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed
+		|| InEvent.EventType == EReactionExecutionLifecycleEventType::Interrupted
+		|| InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored)
+	{
+		RequestFinalizeDeath();
+	}
 }
 
 // Combat Action Query

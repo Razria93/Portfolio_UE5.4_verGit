@@ -15,6 +15,7 @@
 #include "CReactionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReactionTypeChanged, class ACharacter*, InOwnerCharacter, EReactionType, InPrevReactionType, EReactionType, InNewReactionType);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnReactionExecutionLifecycleEvent, const FReactionExecutionLifecycleEvent& /* Event */);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCReactionComponent : public UActorComponent
@@ -45,6 +46,9 @@ private:
 	UPROPERTY(Transient)
 	class UCReaction* ActiveReactionExecutor = nullptr;
 
+	UPROPERTY(Transient)
+	FReactionExecutionContext ActiveReactionContext = FReactionExecutionContext();
+
 private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
@@ -69,6 +73,7 @@ private:
 
 public:
 	FReactionTypeChanged OnReactionTypeChanged;
+	FOnReactionExecutionLifecycleEvent OnReactionExecutionLifecycleEvent;
 
 public:
 	// Component Reference
@@ -90,6 +95,7 @@ public:
 	EReactionType GetActiveReactionType() const;
 	bool GetActiveReactionData(FReactionData& OutData) const;
 	UCReaction* GetActiveReactionExecutor() const;
+	bool GetActiveReactionContext(FReactionExecutionContext& OutContext) const;
 
 public:
 	// Data Resolve
@@ -163,6 +169,7 @@ private:
 	// Active Context
 	void SetActiveReactionContext(const FReactionExecutionContext& InContext);
 	void ClearActiveReactionContext();
+	void BroadcastReactionExecutionLifecycleEvent(EReactionExecutionLifecycleEventType InEventType, EReactionFinishReason InFinishReason, const FReactionExecutionContext& InContext);
 
 private:
 	// State Transition

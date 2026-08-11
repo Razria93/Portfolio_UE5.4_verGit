@@ -7,7 +7,9 @@
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCharacterSetupTypes.h"
 #include "Type/CActionTypes.h"
+#include "Type/CHealthTypes.h"
 #include "Type/CCombatResultTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
 #include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
 
@@ -159,6 +161,13 @@ private:
 	FRuntimeLODMeshState RuntimeLODMeshState;
 	FRuntimeLODActorTickState RuntimeLODActorTickState;
 
+private:
+	FTimerHandle DeadReactionStartFallbackTimerHandle;
+	FTimerHandle DeathFinalizeTimerHandle;
+	bool bDeathLifecycleActive = false;
+	bool bDeathFinalizationRequested = false;
+	bool bDeathFinalized = false;
+
 protected:
 	// Lifecycle
 	void OnConstruction(const FTransform& Transform) override;
@@ -275,6 +284,21 @@ public:
 	// Runtime State
 	bool TryStartKill();
 	bool TryStartRevive(float InReviveHP);
+
+public:
+	// Death Lifecycle
+	void RequestFinalizeDeath();
+
+private:
+	void BeginDeathLifecycle();
+	void CancelDeathLifecycle();
+	void ValidateDeadReactionStarted();
+	void FinalizeDeath();
+	void CleanupDeathGameplayRuntime();
+
+private:
+	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
+	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 
 private:
 	// Combat Action Query
