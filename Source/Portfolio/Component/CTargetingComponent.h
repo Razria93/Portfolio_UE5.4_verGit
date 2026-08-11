@@ -86,5 +86,6 @@ private:
 private:
 	// Target State
 	void SetCurrentTarget(ACEnemy* InNewTarget);
+	void ClearExpiredTarget();
 
 };

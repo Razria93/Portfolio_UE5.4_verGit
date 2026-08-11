@@ -232,6 +232,12 @@ bool UCTargetingComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireV
 
 void UCTargetingComponent::ValidateCurrentTarget()
 {
+	if (CurrentTarget.IsStale())
+	{
+		ClearExpiredTarget();
+		return;
+	}
+
 	ACEnemy* currentTarget = CurrentTarget.Get();
 	if (!IsValid(currentTarget)) return;
 	if (IsTargetValid(currentTarget, false)) return;
@@ -335,6 +341,9 @@ void UCTargetingComponent::HandleCurrentTargetDestroyed(AActor* InDestroyedActor
 	ACEnemy* destroyedTarget = Cast<ACEnemy>(InDestroyedActor);
 	if (!destroyedTarget) return;
 
+	const TWeakObjectPtr<ACEnemy> destroyedTargetWeak(destroyedTarget);
+	if (!CurrentTarget.HasSameIndexAndSerialNumber(destroyedTargetWeak)) return;
+
 	CurrentTarget.Reset();
 	ValidationElapsedTime = 0.f;
 	OnTargetChanged.Broadcast(destroyedTarget, nullptr);
@@ -351,4 +360,11 @@ void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget)
 	CurrentTarget = InNewTarget;
 	BindTargetDestroyed(InNewTarget);
 	OnTargetChanged.Broadcast(previousTarget, InNewTarget);
+}
+
+void UCTargetingComponent::ClearExpiredTarget()
+{
+	CurrentTarget.Reset();
+	ValidationElapsedTime = 0.f;
+	OnTargetChanged.Broadcast(nullptr, nullptr);
 }
