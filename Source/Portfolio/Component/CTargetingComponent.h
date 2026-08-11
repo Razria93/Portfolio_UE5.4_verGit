@@ -77,14 +77,15 @@ private:
 
 private:
 	// Target Lifecycle
-	void BindTargetDestroyed(ACEnemy* InTarget);
-	void UnbindTargetDestroyed(ACEnemy* InTarget);
+	void BindTargetEndPlay(ACEnemy* InTarget);
+	void UnbindTargetEndPlay(ACEnemy* InTarget);
 
 	UFUNCTION()
-	void HandleCurrentTargetDestroyed(AActor* InDestroyedActor);
+	void HandleCurrentTargetEndPlay(AActor* InActor, EEndPlayReason::Type InEndPlayReason);
 
 private:
 	// Target State
 	void SetCurrentTarget(ACEnemy* InNewTarget);
+	void ClearExpiredTarget();
 
 };
