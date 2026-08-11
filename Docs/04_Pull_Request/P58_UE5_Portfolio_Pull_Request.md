@@ -2,7 +2,7 @@
 
 ## 제목
 
-**P57: Player Targeting and Lock-On Presentation**
+**P58: Player Targeting and Lock-On Presentation**
 
 ## 날짜
 
