@@ -13,14 +13,14 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-C++ 구현 완료 (Widget Blueprint 연결 및 PIE 검증 대기)
+완료
 ```
 
 ## 목적
 
 Player의 `CurrentTarget`을 화면 공간 마커로 표시한다. 타겟 선택·유효성은 기존 `UCTargetingComponent`가 유지하고, HUD 생성과 화면 좌표 투영은 별도의 Presenter가 담당한다.
 
-이번 단계는 Enemy Status HUD의 기반이 되는 Target HUD 뼈대까지만 구현하며, 실제 Widget Blueprint와 이미지 자산 연결은 에디터 작업으로 남긴다.
+이번 단계는 Enemy Status HUD의 기반이 되는 Target HUD 뼈대와 실제 Widget Blueprint, Marker 이미지 자산 및 Enemy Socket 연결까지 구현한다.
 
 ## 책임 경계
 
@@ -167,7 +167,6 @@ Widget Class가 지정되지 않은 상태는 에셋 연결 전 정상 상태로
 - 화면 가장자리 Clamp
 - Marker 애니메이션과 사운드
 - Enemy별 WidgetComponent
-- 에디터 에셋 생성 및 데이터 연결
 
 ## 구현 및 검증 기록
 
@@ -183,7 +182,11 @@ Widget Class가 지정되지 않은 상태는 에셋 연결 전 정상 상태로
 - Runtime 모듈의 Public Dependency에 `UMG`를 추가했다.
 - 첫 빌드에서 UE 5.4 `GetViewportSize()`의 비-const World Context 계약을 확인하고 PlayerController를 전달하도록 수정했다.
 - UHT 및 `PortfolioEditor Win64 Development` 재빌드가 성공했다.
-- Widget Blueprint 생성·할당과 시각적 PIE 검증은 수동 에디터 작업으로 남겨 두었다.
+- `BP_CTargetHUDWidget`에 전체 화면 Canvas, 중앙 정렬 Marker Image, Visibility와 Canvas Slot 위치 갱신을 연결했다.
+- 흰색 원형 `T_TargetMarkerDot` 자산을 Marker Image Brush에 연결하고 최종 색상과 투명도는 Widget에서 조정하도록 구성했다.
+- Enemy Skeleton의 `TargetMarker` 소켓을 기준점으로 사용해 애니메이션 중에도 마커가 Enemy를 추적하도록 구성했다.
+- 1280x720 미리보기의 DPI Scale 0.67 환경에서 DPI가 제거된 Widget Position을 Canvas 좌표로 그대로 사용하고 위치가 일치하는 것을 확인했다.
+- PIE에서 Target 선택, 전환, 해제, 화면 밖 숨김, Lock 유지와 화면 재진입 표시가 정상 동작하는 것을 확인했다.
 
 ## 예상 변경 파일
 
@@ -215,19 +218,19 @@ Source/Portfolio/Controller/CPlayerController.cpp
 - Widget Class 미지정 상태에서 크래시하지 않는다.
 - `PortfolioEditor Win64 Development` 빌드가 성공한다.
 
-## 수동 에디터 작업
+## 에디터 구성 및 PIE 완료 기록
 
 ```text
-1. UCTargetHUDWidget 기반 WBP_TargetHUD 생성
-2. 전체 화면 Canvas와 Marker 이미지 배치
-3. BP_OnTargetMarkerUpdated 구현
+1. `UCTargetHUDWidget` 기반 `BP_CTargetHUDWidget` 생성
+2. 전체 화면 Canvas와 Marker Image 배치
+3. `BP_OnTargetMarkerUpdated`에서 Visibility와 Canvas Slot Position 반영
 4. PlayerController의 TargetHUDPresenter에 Widget Class 지정
-5. Enemy Skeleton 또는 Skeletal Mesh에 `TargetMarker` 소켓 생성 및 위치 조정
-6. PIE에서 선택 / 전환 / 해제 / 화면 밖 재진입 검증
+5. Enemy Skeleton에 `TargetMarker` 소켓 생성 및 위치 조정
+6. PIE에서 선택 / 전환 / 해제 / 화면 밖 숨김과 재진입 표시 검증 완료
 ```
 
 ## 후속 작업
 
 ```text
-W05-05B: Enemy Status HUD
+별도 UI 후속 작업: Enemy Status HUD
 ```
