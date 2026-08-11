@@ -22,25 +22,43 @@
 
 ## 요약
 
-이번 Fix PR에서는 `UCTargetingComponent`가 `OnDestroyed` 없이 만료된 Weak Target을 정리하지 못하거나, 교체된 이전 Target의 늦은 Destroy callback이 현재 Target을 해제할 수 있는 수명 경계 문제를 보정한다.
+이번 Fix PR에서는 `UCTargetingComponent`가 World에서 수명을 종료한 Target을 계속 유지하거나, 교체된 이전 Target의 늦은 lifecycle callback이 현재 Target을 해제할 수 있는 수명 경계 문제를 보정한다.
 
-Target이 사라지는 경로와 Destroy callback의 객체 정체성을 명시적으로 구분해 Lock Assist와 Target HUD가 실제 Target 상태와 일치하도록 유지한다.
+Actor의 정상적인 gameplay 수명 종료는 `OnEndPlay`로 관찰하고, 이미 Weak Object가 만료된 예외 경로는 `IsStale()` 검사로 보완해 Lock Assist와 Target HUD가 실제 Target 상태와 일치하도록 유지한다.
 
 ---
 
 ## 원인
 
-- `ValidateCurrentTarget()`이 `CurrentTarget.Get() == nullptr`인 경우 바로 반환해, 명시적인 null과 GC 또는 Level Streaming Unload로 만료된 Weak Target을 구분하지 못했다.
+- 기존 `OnDestroyed` 구독은 명시적 `Destroy()`만 관찰하므로 Streaming Level 제거처럼 Actor가 `EndPlay(RemovedFromWorld)`에 진입하지만 파괴되거나 GC되지 않는 경로를 처리하지 못했다.
 
-- 만료 정리 이벤트가 발행되지 않으면 `UCTargetLockAssistComponent`와 `UCTargetHUDPresenterComponent`가 Target 해제를 통지받지 못해 이전 정책을 유지할 수 있었다.
+- 이 상태에서는 `CurrentTarget.IsStale() == false`이고 Actor도 `IsValid()`일 수 있어, Health와 거리 검증이 통과하면 World에서 제거된 Target을 계속 유지할 가능성이 있었다.
 
-- `HandleCurrentTargetDestroyed()`가 callback actor가 현재 Target인지 확인하지 않고 `CurrentTarget`을 초기화해, 교체된 이전 Target의 지연 또는 재진입 callback이 새 Target을 해제할 가능성이 있었다.
+- 만료 또는 EndPlay 정리 이벤트가 발행되지 않으면 `UCTargetLockAssistComponent`와 `UCTargetHUDPresenterComponent`가 Target 해제를 통지받지 못해 이전 정책을 유지할 수 있었다.
+
+- lifecycle callback actor가 현재 Target인지 확인하지 않고 `CurrentTarget`을 초기화하면, 교체된 이전 Target의 지연 또는 재진입 callback이 새 Target을 해제할 가능성이 있었다.
 
 ---
 
 ## 변경 사항
 
-- `ValidateCurrentTarget()`에서 `CurrentTarget.IsStale()`을 먼저 검사한다.
+- Target lifecycle의 주 구독을 `OnDestroyed`에서 `OnEndPlay`로 변경한다.
+
+- `OnEndPlay`는 명시적 Destroy뿐 아니라 `RemovedFromWorld`, Level Transition, PIE 종료와 같은 Actor의 World 수명 종료 경로를 포괄한다.
+
+- `HandleCurrentTargetEndPlay()`는 callback actor를 현재 `CurrentTarget`과 `HasSameIndexAndSerialNumber()`로 비교한다.
+
+- Object Index와 Serial Number가 모두 일치하는 현재 Target의 EndPlay callback만 다음과 같이 처리한다.
+
+```text
+CurrentTarget Reset
+ValidationElapsedTime Reset
+OnTargetChanged(EndedTarget, nullptr)
+```
+
+- 교체된 이전 Target의 늦은 callback과 같은 주소를 재사용한 다른 UObject의 callback은 현재 Target을 변경하지 않는다.
+
+- `ValidateCurrentTarget()`의 `CurrentTarget.IsStale()` 검사는 EndPlay callback을 놓쳤거나 Weak Object가 먼저 만료된 경우를 정리하는 fallback으로 유지한다.
 
 - 만료된 Weak Target은 `ClearExpiredTarget()`에서 다음과 같이 정리한다.
 
@@ -51,12 +69,6 @@ OnTargetChanged(nullptr, nullptr)
 ```
 
 - 명시적으로 Target이 없는 상태에서는 기존처럼 불필요한 변경 이벤트를 발행하지 않는다.
-
-- Destroy callback actor는 현재 `CurrentTarget`과 `HasSameIndexAndSerialNumber()`로 비교한다.
-
-- Object Index와 Serial Number가 모두 일치하는 현재 Target의 Destroy callback만 `OnTargetChanged(DestroyedTarget, nullptr)`로 처리한다.
-
-- 교체된 이전 Target의 늦은 callback과 같은 주소를 재사용한 다른 UObject의 callback은 현재 Target을 변경하지 않는다.
 
 ---
 
@@ -82,9 +94,11 @@ OnTargetChanged(nullptr, nullptr)
 
 - `PortfolioEditor Win64 Development` 빌드 성공
 
+- UE 5.4 `AActor::Destroyed()`가 `RouteEndPlay(EEndPlayReason::Destroyed)`를 먼저 호출하므로 `OnEndPlay` 단일 구독으로 직접 Destroy까지 포괄하는 경로 확인
+
 - Lock Assist와 Target HUD Presenter가 `OnTargetChanged` 수신 후 TargetingComponent의 현재 상태를 다시 조회하는 경로 확인
 
-- 실제 Streaming Level Unload와 지연 Destroy callback을 강제로 발생시키는 PIE 재현은 후속 Character Destroy Lifecycle 통합 검증 범위로 유지한다.
+- 실제 Streaming Level 제거와 지연 EndPlay callback을 강제로 발생시키는 PIE 재현은 후속 Character Destroy Lifecycle 통합 검증 범위로 유지한다.
 
 ---
 

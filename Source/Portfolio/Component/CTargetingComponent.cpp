@@ -69,7 +69,7 @@ void UCTargetingComponent::InitializeReferences(APlayerController* InOwnerPlayer
 
 void UCTargetingComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
-	UnbindTargetDestroyed(CurrentTarget.Get());
+	UnbindTargetEndPlay(CurrentTarget.Get());
 	CurrentTarget.Reset();
 	ValidationElapsedTime = 0.f;
 
@@ -322,31 +322,31 @@ bool UCTargetingComponent::ProjectTargetToViewport(const ACEnemy* InTarget, FVec
 
 // ===== Target Lifecycle =====
 
-void UCTargetingComponent::BindTargetDestroyed(ACEnemy* InTarget)
+void UCTargetingComponent::BindTargetEndPlay(ACEnemy* InTarget)
 {
 	if (!IsValid(InTarget)) return;
 
-	InTarget->OnDestroyed.AddUniqueDynamic(this, &UCTargetingComponent::HandleCurrentTargetDestroyed);
+	InTarget->OnEndPlay.AddUniqueDynamic(this, &UCTargetingComponent::HandleCurrentTargetEndPlay);
 }
 
-void UCTargetingComponent::UnbindTargetDestroyed(ACEnemy* InTarget)
+void UCTargetingComponent::UnbindTargetEndPlay(ACEnemy* InTarget)
 {
 	if (!IsValid(InTarget)) return;
 
-	InTarget->OnDestroyed.RemoveDynamic(this, &UCTargetingComponent::HandleCurrentTargetDestroyed);
+	InTarget->OnEndPlay.RemoveDynamic(this, &UCTargetingComponent::HandleCurrentTargetEndPlay);
 }
 
-void UCTargetingComponent::HandleCurrentTargetDestroyed(AActor* InDestroyedActor)
+void UCTargetingComponent::HandleCurrentTargetEndPlay(AActor* InActor, EEndPlayReason::Type)
 {
-	ACEnemy* destroyedTarget = Cast<ACEnemy>(InDestroyedActor);
-	if (!destroyedTarget) return;
+	ACEnemy* endedTarget = Cast<ACEnemy>(InActor);
+	if (!endedTarget) return;
 
-	const TWeakObjectPtr<ACEnemy> destroyedTargetWeak(destroyedTarget);
-	if (!CurrentTarget.HasSameIndexAndSerialNumber(destroyedTargetWeak)) return;
+	const TWeakObjectPtr<ACEnemy> endedTargetWeak(endedTarget);
+	if (!CurrentTarget.HasSameIndexAndSerialNumber(endedTargetWeak)) return;
 
 	CurrentTarget.Reset();
 	ValidationElapsedTime = 0.f;
-	OnTargetChanged.Broadcast(destroyedTarget, nullptr);
+	OnTargetChanged.Broadcast(endedTarget, nullptr);
 }
 
 // ===== Target State =====
@@ -356,9 +356,9 @@ void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget)
 	ACEnemy* previousTarget = CurrentTarget.Get();
 	if (previousTarget == InNewTarget) return;
 
-	UnbindTargetDestroyed(previousTarget);
+	UnbindTargetEndPlay(previousTarget);
 	CurrentTarget = InNewTarget;
-	BindTargetDestroyed(InNewTarget);
+	BindTargetEndPlay(InNewTarget);
 	OnTargetChanged.Broadcast(previousTarget, InNewTarget);
 }
 
