@@ -80,6 +80,20 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
 	}
 
+	void AppendPlayerLocomotionLines(TArray<FString>& InOutLines, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotionViewData)
+	{
+		const FMovementDebugOverlayDetails& locomotion = InPlayerLocomotionViewData.Details;
+		if (!locomotion.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Locomotion Inputs]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Speed: %s | Direction: %s"), *locomotion.SpeedText, *locomotion.DirectionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Velocity World XY: %s"), *locomotion.VelocityWorldText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Velocity Local: %s"), *locomotion.VelocityLocalText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Input World XY: %s"), *locomotion.LastInputWorldText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Input Local: %s"), *locomotion.LastInputLocalText));
+	}
+
 	// [Focus]
 	// ===== Focus Lines =====
 
@@ -235,6 +249,11 @@ namespace
 		}
 
 		AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
+
+		if (InActorPanelViewData.bIncludeLocomotion)
+		{
+			AppendPlayerLocomotionLines(InOutLines, InActorPanelViewData.Locomotion);
+		}
 
 		if (InActorPanelViewData.bIncludeTargeting)
 		{

@@ -63,6 +63,12 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
+					MakeMovementDisplayOptionsSection()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
 				[
 					MakeFocusOptionsSection()
 				]
@@ -194,6 +200,55 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDebugSectio
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLineLabel", "View Line"), LOCTEXT("TargetingLineHelp", "Draw a line from the viewpoint to the current player target."), CVarAccess::GetTargetingDrawViewLineCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingTextLabel", "World Debug Text"), LOCTEXT("TargetingTextHelp", "Draw distance, Dot and score at the current player target."), CVarAccess::GetTargetingDrawDebugTextCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingDetailsLabel", "Overlay Details"), LOCTEXT("TargetingDetailsHelp", "Show targeting score details in the Debug Overlay."), CVarAccess::GetTargetingShowOverlayDetailsCVarName())];
+}
+
+// ===== Movement Debug =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDisplayOptionsSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("MovementDisplayOptionsTitle", "Movement Display Options"))
+			.Font(FAppStyle::GetFontStyle("BoldFont"))
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([]()
+			{
+				return CVarAccess::HasMovementDisplayCVars()
+					? LOCTEXT("MovementCVarsAvailable", "Movement Display CVars are available.")
+					: LOCTEXT("MovementCVarsUnavailable", "Movement Display CVars are unavailable. Start the game module or PIE if needed.");
+			})
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(8.f)
+			[
+				MakeMovementDebugSection()
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDebugSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementEnabledLabel", "Enabled"), LOCTEXT("MovementEnabledHelp", "Enable movement world debug and Overlay details. World debug remains available when the Overlay HUD is disabled."), CVarAccess::GetMovementEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementVelocityLabel", "Velocity Arrow"), LOCTEXT("MovementVelocityHelp", "Draw the current world velocity direction and magnitude."), CVarAccess::GetMovementDrawVelocityCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementInputLabel", "Last Input Arrow"), LOCTEXT("MovementInputHelp", "Draw the last movement input direction."), CVarAccess::GetMovementDrawInputCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementFacingLabel", "Facing Arrow"), LOCTEXT("MovementFacingHelp", "Draw the current actor facing direction."), CVarAccess::GetMovementDrawFacingCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementTextLabel", "World Debug Text"), LOCTEXT("MovementTextHelp", "Draw movement speed and direction near the player."), CVarAccess::GetMovementDrawDebugTextCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementDetailsLabel", "Overlay Details"), LOCTEXT("MovementDetailsHelp", "Show movement inputs in the Debug Overlay."), CVarAccess::GetMovementShowOverlayDetailsCVarName())];
 }
 
 // ===== CVar Rows =====

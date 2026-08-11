@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Type/CMovementTypes.h"
 #include "Type/CWeaponTypes.h"
 #include "Type/CHealthTypes.h"
 #include "CAnimInstance.generated.h"
@@ -20,6 +21,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsInAir = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	ELocomotionPresentationMode LocomotionPresentationMode = ELocomotionPresentationMode::Forward;
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
@@ -55,6 +59,10 @@ public:
 	void NativeInitializeAnimation() override;
 	void NativeUninitializeAnimation() override;
 	void NativeUpdateAnimation(float DeltaSeconds) override;
+
+public:
+	// Locomotion Presentation Query
+	FORCEINLINE ELocomotionPresentationMode GetLocomotionPresentationMode() const { return LocomotionPresentationMode; }
 
 private:
 	// Reference Cache

@@ -1,6 +1,7 @@
 #include "Core/Debug/FDebugOverlayViewDataBuilder.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "Character/CAnimInstance.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CActionComponent.h"
@@ -15,6 +16,8 @@
 #include "Type/CActionKeyTypes.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 
 namespace
@@ -171,12 +174,18 @@ namespace
 		const UCMovementComponent* movementComp = FindComponent<UCMovementComponent>(InPawn);
 		if (!IsValid(movementComp)) return FormatMissingText();
 
+		const ACharacter* character = Cast<ACharacter>(InPawn);
+		const USkeletalMeshComponent* meshComp = IsValid(character) ? character->GetMesh() : nullptr;
+		const UCAnimInstance* animInstance = IsValid(meshComp) ? Cast<UCAnimInstance>(meshComp->GetAnimInstance()) : nullptr;
+		const FString presentationText = IsValid(animInstance)
+			? FormatCompactEnumText(UEnum::GetValueAsString(animInstance->GetLocomotionPresentationMode()))
+			: FormatMissingText();
+
 		return FString::Printf(
-			TEXT("Gait: %s | Rotation: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
+			TEXT("Gait: %s | Rotation: %s | Presentation: %s | CanMove: %s | Falling: %s"),
 			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
 			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementRotationMode())),
-			movementComp->GetCurrentSpeed(),
-			movementComp->GetCurrentDirection(),
+			*presentationText,
 			*FormatBoolText(movementComp->CanMove()),
 			*FormatBoolText(movementComp->IsFalling()));
 	}
@@ -410,11 +419,13 @@ namespace
 		return actorPanelViewData;
 	}
 
-	void AppendPlayerPanelViewData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, bool bInHasSnapshot, const UWorld* InWorld)
+	void AppendPlayerPanelViewData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, bool bInHasSnapshot, const UWorld* InWorld)
 	{
 		FDebugOverlayActorPanelViewData playerPanelViewData = BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorld, bInHasSnapshot);
 		playerPanelViewData.bIncludeTargeting = InPlayerTargeting.Details.bHasSnapshot;
 		playerPanelViewData.Targeting = InPlayerTargeting;
+		playerPanelViewData.bIncludeLocomotion = InPlayerLocomotion.Details.bHasSnapshot;
+		playerPanelViewData.Locomotion = InPlayerLocomotion;
 		InOutViewData.ActorPanels.Add(playerPanelViewData);
 	}
 
@@ -433,9 +444,9 @@ namespace
 		InOutViewData.ActorPanels.Add(enemyPanelViewData);
 	}
 
-	void BuildMainActorPanelData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, bool bInHasSnapshot, const UWorld* InWorld)
+	void BuildMainActorPanelData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, bool bInHasSnapshot, const UWorld* InWorld)
 	{
-		AppendPlayerPanelViewData(InOutViewData, InPlayerPawn, InPlayerTargeting, bInHasSnapshot, InWorld);
+		AppendPlayerPanelViewData(InOutViewData, InPlayerPawn, InPlayerTargeting, InPlayerLocomotion, bInHasSnapshot, InWorld);
 		AppendEnemyPanelViewData(InOutViewData, InEnemy, InEnemyFocus, bInHasSnapshot, InWorld);
 	}
 
@@ -505,7 +516,7 @@ namespace
 
 // ===== Public API =====
 
-FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting)
+FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion)
 {
 	FDebugOverlaySnapshot snapshot;
 	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(InWorld, snapshot);
@@ -520,7 +531,7 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld,
 	viewData.ActorPanels.Reserve(2);
 
 	viewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
-	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, InPlayerTargeting, bHasSnapshot, InWorld);
+	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, InPlayerTargeting, InPlayerLocomotion, bHasSnapshot, InWorld);
 
 	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Panel_02]");
 	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);

@@ -3,6 +3,7 @@
 #include "ProjectGlobal.h"
 
 #include "Character/Player/CPlayer.h"
+#include "Component/CMovementComponent.h"
 #include "Component/CPlayerFeedbackComponent.h"
 #include "Component/CTargetHUDPresenterComponent.h"
 #include "Component/CTargetLockAssistComponent.h"
@@ -136,6 +137,8 @@ void ACPlayerController::OnPossess(APawn* InPawn)
 	}
 
 	SynchronizeCombatTargetReferences();
+	CachedMovementRotationMode = GetControlledPlayerMovementRotationMode();
+	RefreshLocomotionGaitInput();
 }
 
 void ACPlayerController::OnUnPossess()
@@ -147,12 +150,23 @@ void ACPlayerController::OnUnPossess()
 		TargetLockAssistComponent->ClearControlledPlayer();
 	}
 
+	CachedMovementRotationMode = EMovementRotationMode::None;
+	bWalkInputHeld = false;
+	bSprintInputHeld = false;
+
 	Super::OnUnPossess();
 }
 
 void ACPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
+
+	const EMovementRotationMode currentRotationMode = GetControlledPlayerMovementRotationMode();
+	if (CachedMovementRotationMode != currentRotationMode)
+	{
+		CachedMovementRotationMode = currentRotationMode;
+		RefreshLocomotionGaitInput();
+	}
 
 	FlushMoveInput();
 
@@ -178,6 +192,8 @@ void ACPlayerController::SetupInputComponent()
 
 	InputComponent->BindAction("Walk", EInputEvent::IE_Pressed, this, &ACPlayerController::PressWalk);
 	InputComponent->BindAction("Walk", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseWalk);
+	InputComponent->BindAction("Sprint", EInputEvent::IE_Pressed, this, &ACPlayerController::PressSprint);
+	InputComponent->BindAction("Sprint", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseSprint);
 
 	InputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ACPlayerController::PressJump);
 	InputComponent->BindAction("Jump", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseJump);
@@ -233,22 +249,47 @@ void ACPlayerController::FlushMoveInput()
 	FActionRequestResult result = player->HandleMove(CachedMoveAxis2D);
 }
 
+// ===== Locomotion Input Dispatch =====
+
+void ACPlayerController::RefreshLocomotionGaitInput()
+{
+	ACPlayer* player = ResolveControlledPlayer(this);
+	if (!IsValid(player)) return;
+
+	player->HandleLocomotionGaitInput(bWalkInputHeld, bSprintInputHeld);
+}
+
+EMovementRotationMode ACPlayerController::GetControlledPlayerMovementRotationMode() const
+{
+	const ACPlayer* player = Cast<ACPlayer>(GetPawn());
+	const UCMovementComponent* movementComp = IsValid(player) ? player->GetMovementComp() : nullptr;
+	return IsValid(movementComp) ? movementComp->GetCurrentMovementRotationMode() : EMovementRotationMode::None;
+}
+
 // ===== Action Input =====
 
 void ACPlayerController::PressWalk()
 {
-	ACPlayer* player = ResolveControlledPlayer(this);
-	if (!IsValid(player)) return;
-
-	FActionRequestResult result = player->HandleWalk();
+	bWalkInputHeld = true;
+	RefreshLocomotionGaitInput();
 }
 
 void ACPlayerController::ReleaseWalk()
 {
-	ACPlayer* player = ResolveControlledPlayer(this);
-	if (!IsValid(player)) return;
+	bWalkInputHeld = false;
+	RefreshLocomotionGaitInput();
+}
 
-	FActionRequestResult result = player->HandleRun();
+void ACPlayerController::PressSprint()
+{
+	bSprintInputHeld = true;
+	RefreshLocomotionGaitInput();
+}
+
+void ACPlayerController::ReleaseSprint()
+{
+	bSprintInputHeld = false;
+	RefreshLocomotionGaitInput();
 }
 
 void ACPlayerController::PressJump()

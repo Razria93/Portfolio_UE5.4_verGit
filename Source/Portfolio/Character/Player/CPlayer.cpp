@@ -336,6 +336,21 @@ FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
 	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
+FActionRequestResult ACPlayer::HandleLocomotionGaitInput(const bool bWalkInputHeld, const bool bSprintInputHeld)
+{
+	if (bWalkInputHeld) return HandleWalk();
+
+	const EMovementRotationMode rotationMode = IsValid(MovementComponent)
+		? MovementComponent->GetCurrentMovementRotationMode()
+		: EMovementRotationMode::None;
+	if (bSprintInputHeld && rotationMode == EMovementRotationMode::OrientToMovement)
+	{
+		return HandleSprint();
+	}
+
+	return HandleRun();
+}
+
 FActionRequestResult ACPlayer::HandleWalk()
 {
 	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();

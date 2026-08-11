@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Type/CMovementTypes.h"
 #include "CPlayerController.generated.h"
 
 UCLASS()
@@ -31,6 +32,9 @@ private:
 
 	// Cached input
 	FVector2D CachedMoveAxis2D = FVector2D::ZeroVector;
+	bool bWalkInputHeld = false;
+	bool bSprintInputHeld = false;
+	EMovementRotationMode CachedMovementRotationMode = EMovementRotationMode::None;
 
 public:
 	// Component Query
@@ -71,9 +75,15 @@ protected:
 	// Movement Dispatch
 	void FlushMoveInput();
 
+	// Locomotion Input Dispatch
+	void RefreshLocomotionGaitInput();
+	EMovementRotationMode GetControlledPlayerMovementRotationMode() const;
+
 	// Action Input
 	void PressWalk();
 	void ReleaseWalk();
+	void PressSprint();
+	void ReleaseSprint();
 
 	void PressJump();
 	void ReleaseJump();

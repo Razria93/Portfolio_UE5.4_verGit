@@ -6,7 +6,7 @@
 
 namespace
 {
-	// ===== Constants =====
+	// ===== Overlay CVar Names =====
 
 	static constexpr const TCHAR* DebugOverlayEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enabled");
 	static constexpr const TCHAR* DebugOverlayCollectCVarName = TEXT("Portfolio.DebugOverlay.Collect");
@@ -16,13 +16,30 @@ namespace
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
 	static constexpr const TCHAR* DeathLifecycleAuditCVarName = TEXT("Portfolio.Debug.DeathLifecycleAudit");
 	static constexpr const TCHAR* DebugOverlayNearestFocusRadiusCVarName = TEXT("Portfolio.DebugOverlay.NearestFocusRadius");
+
+	// ===== Targeting Display CVar Names =====
+
 	static constexpr const TCHAR* DebugOverlayTargetingEnabledCVarName = TEXT("Portfolio.DebugOverlay.Targeting.Enabled");
 	static constexpr const TCHAR* DebugOverlayTargetingDrawRangeSphereCVarName = TEXT("Portfolio.DebugOverlay.Targeting.DrawRangeSphere");
 	static constexpr const TCHAR* DebugOverlayTargetingDrawSelectedTargetSphereCVarName = TEXT("Portfolio.DebugOverlay.Targeting.DrawSelectedTargetSphere");
 	static constexpr const TCHAR* DebugOverlayTargetingDrawViewLineCVarName = TEXT("Portfolio.DebugOverlay.Targeting.DrawViewLine");
 	static constexpr const TCHAR* DebugOverlayTargetingDrawDebugTextCVarName = TEXT("Portfolio.DebugOverlay.Targeting.DrawDebugText");
 	static constexpr const TCHAR* DebugOverlayTargetingShowOverlayDetailsCVarName = TEXT("Portfolio.DebugOverlay.Targeting.ShowOverlayDetails");
+
+	// ===== Movement Display CVar Names =====
+
+	static constexpr const TCHAR* DebugOverlayMovementEnabledCVarName = TEXT("Portfolio.DebugOverlay.Movement.Enabled");
+	static constexpr const TCHAR* DebugOverlayMovementDrawVelocityCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawVelocity");
+	static constexpr const TCHAR* DebugOverlayMovementDrawInputCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawInput");
+	static constexpr const TCHAR* DebugOverlayMovementDrawFacingCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawFacing");
+	static constexpr const TCHAR* DebugOverlayMovementDrawDebugTextCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawDebugText");
+	static constexpr const TCHAR* DebugOverlayMovementShowOverlayDetailsCVarName = TEXT("Portfolio.DebugOverlay.Movement.ShowOverlayDetails");
+
+	// ===== Focus CVar Names =====
+
 	static constexpr const TCHAR* DebugOverlayFocusLiveSyncPlayerTargetCVarName = TEXT("Portfolio.DebugOverlay.Focus.LiveSyncPlayerTarget");
+
+	// ===== Generic Lookup =====
 
 	IConsoleVariable* FindConsoleVariable(const TCHAR* InName)
 	{
@@ -34,7 +51,7 @@ namespace
 	}
 }
 
-// ===== CVar Names =====
+// ===== Overlay CVar Names =====
 
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnabledCVarName()
 {
@@ -76,12 +93,24 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetNearestFocusRadiusCVarNam
 	return DebugOverlayNearestFocusRadiusCVarName;
 }
 
+// ===== Targeting Display CVar Names =====
+
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingEnabledCVarName() { return DebugOverlayTargetingEnabledCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingDrawRangeSphereCVarName() { return DebugOverlayTargetingDrawRangeSphereCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingDrawSelectedTargetSphereCVarName() { return DebugOverlayTargetingDrawSelectedTargetSphereCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingDrawViewLineCVarName() { return DebugOverlayTargetingDrawViewLineCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingDrawDebugTextCVarName() { return DebugOverlayTargetingDrawDebugTextCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetTargetingShowOverlayDetailsCVarName() { return DebugOverlayTargetingShowOverlayDetailsCVarName; }
+// ===== Movement Display CVar Names =====
+
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementEnabledCVarName() { return DebugOverlayMovementEnabledCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawVelocityCVarName() { return DebugOverlayMovementDrawVelocityCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawInputCVarName() { return DebugOverlayMovementDrawInputCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawFacingCVarName() { return DebugOverlayMovementDrawFacingCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawDebugTextCVarName() { return DebugOverlayMovementDrawDebugTextCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementShowOverlayDetailsCVarName() { return DebugOverlayMovementShowOverlayDetailsCVarName; }
+// ===== Focus CVar Names =====
+
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetFocusLiveSyncPlayerTargetCVarName() { return DebugOverlayFocusLiveSyncPlayerTargetCVarName; }
 
 // ===== CVar Access =====
@@ -195,6 +224,16 @@ bool PortfolioDebugOverlayEditorCVarAccess::HasTargetingDisplayCVars()
 		&& FindCVar(DebugOverlayTargetingDrawViewLineCVarName)
 		&& FindCVar(DebugOverlayTargetingDrawDebugTextCVarName)
 		&& FindCVar(DebugOverlayTargetingShowOverlayDetailsCVarName);
+}
+
+bool PortfolioDebugOverlayEditorCVarAccess::HasMovementDisplayCVars()
+{
+	return FindCVar(DebugOverlayMovementEnabledCVarName)
+		&& FindCVar(DebugOverlayMovementDrawVelocityCVarName)
+		&& FindCVar(DebugOverlayMovementDrawInputCVarName)
+		&& FindCVar(DebugOverlayMovementDrawFacingCVarName)
+		&& FindCVar(DebugOverlayMovementDrawDebugTextCVarName)
+		&& FindCVar(DebugOverlayMovementShowOverlayDetailsCVarName);
 }
 
 bool PortfolioDebugOverlayEditorCVarAccess::HasFocusCVars()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
 #include "Core/Debug/FTargetingDebug.h"
 
@@ -91,6 +92,11 @@ struct FDebugOverlayPlayerTargetingViewData
 	FTargetingDebugOverlayDetails Details;
 };
 
+struct FDebugOverlayPlayerLocomotionViewData
+{
+	FMovementDebugOverlayDetails Details;
+};
+
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
@@ -98,6 +104,8 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayFocusViewData Focus;
 	bool bIncludeTargeting = false;
 	FDebugOverlayPlayerTargetingViewData Targeting;
+	bool bIncludeLocomotion = false;
+	FDebugOverlayPlayerLocomotionViewData Locomotion;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
 	FDebugOverlayRecentExecutionViewData RecentExecution;

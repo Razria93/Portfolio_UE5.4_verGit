@@ -156,6 +156,7 @@ public:
 public:
 	// Movement Intent
 	FActionRequestResult HandleMove(const FVector2D& InAxis2D);
+	FActionRequestResult HandleLocomotionGaitInput(bool bWalkInputHeld, bool bSprintInputHeld);
 
 public:
 	// Action Intent

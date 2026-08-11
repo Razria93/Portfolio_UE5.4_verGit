@@ -2,6 +2,7 @@
 
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
+#include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayCanvasRenderer.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
@@ -83,6 +84,20 @@ namespace
 		FTargetingDebug::DrawWorldDebug(InWorld, targetingEvaluation);
 	}
 
+	FMovementDebugSnapshot BuildPlayerLocomotionSnapshot(const APlayerController* InOwningPlayerController)
+	{
+		if (!FMovementDebug::IsEnabled()) return FMovementDebugSnapshot();
+		const APawn* playerPawn = IsValid(InOwningPlayerController) ? InOwningPlayerController->GetPawn() : nullptr;
+		return IsValid(playerPawn) ? FMovementDebug::BuildSnapshot(playerPawn) : FMovementDebugSnapshot();
+	}
+
+	void DrawMovementDebug(UWorld* InWorld, const APawn* InPlayerPawn, const FMovementDebugSnapshot& InSnapshot)
+	{
+		if (!InSnapshot.bHasSnapshot) return;
+
+		FMovementDebug::DrawWorldDebug(InWorld, InPlayerPawn, InSnapshot);
+	}
+
 	void UpdatePlayerTargetingViewData(const APlayerController* InOwningPlayerController, FDebugOverlayPlayerTargetingViewData& OutPlayerTargetingViewData)
 	{
 		if (!IsValid(InOwningPlayerController)) return;
@@ -94,6 +109,13 @@ namespace
 		if (!targetingComp->BuildSelectionDebugSnapshot(targetingEvaluation)) return;
 
 		OutPlayerTargetingViewData.Details = FTargetingDebug::BuildOverlayDetails(targetingEvaluation);
+	}
+
+	void UpdatePlayerLocomotionViewData(const FMovementDebugSnapshot& InSnapshot, FDebugOverlayPlayerLocomotionViewData& OutPlayerLocomotionViewData)
+	{
+		if (!FMovementDebug::ShouldShowOverlayDetails()) return;
+
+		OutPlayerLocomotionViewData.Details = FMovementDebug::BuildOverlayDetails(InSnapshot);
 	}
 }
 #endif
@@ -107,16 +129,21 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	UWorld* world = GetWorld();
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
+	const APawn* playerPawn = IsValid(owningPlayerController) ? owningPlayerController->GetPawn() : nullptr;
+	const FMovementDebugSnapshot playerLocomotionSnapshot = BuildPlayerLocomotionSnapshot(owningPlayerController);
 
 	DrawTargetingDebug(owningPlayerController, world);
+	DrawMovementDebug(world, playerPawn, playerLocomotionSnapshot);
 
 	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 	FDebugOverlayFocusViewData enemyFocus;
 	FDebugOverlayPlayerTargetingViewData playerTargeting;
+	FDebugOverlayPlayerLocomotionViewData playerLocomotion;
 	const ACEnemy* focusedEnemy = ResolveDisplayFocusEnemy(owningPlayerController, enemyFocus);
 	UpdatePlayerTargetingViewData(owningPlayerController, playerTargeting);
+	UpdatePlayerLocomotionViewData(playerLocomotionSnapshot, playerLocomotion);
 
-	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting);
+	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
 
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);
