@@ -4,7 +4,7 @@ Enemy의 사망 연출과 Actor 생명주기 종료를 기존 Action / Reaction 
 
 | ID | 제목 | 파일 | 상태 |
 | --- | --- | --- | --- |
-| W06-01 | Enemy Dead / Destroy Lifecycle v1 | `TB_W06_01_Enemy_Dead_Destroy_Lifecycle_v1.md` | 계획 확정 / 구현 전 |
+| W06-01 | Enemy Dead / Destroy Lifecycle v1 | `TB_W06_01_Enemy_Dead_Destroy_Lifecycle_v1.md` | Goal 1 Runtime 구현 / 에디터 연결 대기 |
 
 ## 구현 순서
 
@@ -16,4 +16,3 @@ W06-01 Goal 4: 리뷰 대응 + Merge Ready 확정
 ```
 
 실제 `main` Merge는 Goal 4 완료 후 사용자가 일반 Merge 방식으로 수행한다.
-

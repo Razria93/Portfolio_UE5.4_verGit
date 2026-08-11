@@ -21,7 +21,7 @@ feature/dead-actor-destroy-flow
 ## 상태
 
 ```text
-계획 확정 / 구현 전
+Goal 1 Runtime 구현 / 에디터 연결 대기
 ```
 
 ## 목적
@@ -84,6 +84,112 @@ Enemy Destroy
 ```
 
 `OnEndPlay`를 정규 Actor 수명 종료 경로로 유지하고 `TWeakObjectPtr::IsStale()` 검사는 callback 누락 또는 Weak Object 선행 만료를 위한 fallback으로 유지한다.
+
+## Goal 1 실제 구현 계약
+
+### P0 조사 결론
+
+```text
+Health
+- HP가 0 이하가 되면 Alive -> Dying
+- 기존 Enter Dead State Notify가 Dying -> Dead 확정
+
+실행 차단
+- ActionOrchestrator와 CombatSignalTarget은 Alive가 아니면 신규 요청 거절
+- MovementComponent는 Dead 실행 상태와 이동 불가 상태에서 입력 거절
+- Enemy는 Dying 진입 즉시 AI path movement를 정지하고 deferred action을 제거
+
+실행 정리
+- Dead Reaction은 기존 Independent / Exclusive Intervention 경로 재사용
+- Dead는 활성 Action / Reaction을 정리하며 자신은 추가 Intervention을 허용하지 않음
+
+독립 Runtime
+- Dying 진입에서 Weapon collision, trail, hit context를 즉시 정리
+- Weapon Actor 파괴와 각 Component teardown은 기존 EndPlay 책임 유지
+- 현재 main에는 BalanceComponent와 Balance Timer가 없으므로 이번 변경 대상 아님
+
+Targeting
+- Enemy Destroy -> OnEndPlay -> TargetingComponent callback 계약을 그대로 재사용
+- TargetingComponent 수정 없음
+```
+
+### Reaction 생명주기 통지
+
+`UCReactionComponent`는 활성 `FReactionExecutionContext`를 보존하고 다음 native event를 발행한다.
+
+```text
+Started
+Completed
+Interrupted
+Ignored
+```
+
+Dead Reaction만 Enemy 사망 생명주기에서 해석한다. 명시적 Intervention은 기존 종료 경로가 담당하고, 엔진 측 몽타주 비정상 중단은 `Interrupted`로 종료해 Active Reaction 고착을 방지한다.
+
+### Enemy 사망 생명주기
+
+```text
+OnDeadStateChanged(Dying)
+-> BeginDeathLifecycle
+-> StopMovement
+-> ClearAllDeferredActions
+-> ClearWeaponRuntimeState
+-> 다음 틱 Dead Reaction 시작 watchdog 예약
+
+Dead Reaction Started
+-> 시작 watchdog 해제
+
+Finalize Enemy Death Notify
+또는 Dead Reaction Completed / Interrupted / Ignored
+또는 다음 틱까지 Dead Reaction 미시작(Rejected / 요청 누락)
+-> RequestFinalizeDeath
+-> 다음 틱 FinalizeDeath 예약
+```
+
+`RequestFinalizeDeath()`는 공개된 Notify 진입점이다. 실제 `Destroy()`는 Reaction 및 Anim Notify callback stack이 반환된 다음 틱에 수행해 재진입을 피한다.
+
+```text
+FinalizeDeath
+-> 요청/실행 flag로 중복 방지
+-> 아직 Dying이면 Dead 상태 확정
+-> 최종 gameplay runtime cleanup
+-> ACEnemy::Destroy
+-> 기존 Actor / Component EndPlay teardown
+```
+
+Reviving 또는 Alive 전이가 Finalize 예약보다 먼저 발생하면 watchdog과 Finalize timer를 취소한다. Player에는 이 생명주기를 연결하지 않는다.
+
+### gameplay cleanup과 EndPlay teardown
+
+```text
+Destroy 직전 gameplay cleanup
+- AI path movement 정지
+- deferred action 제거
+- Weapon collision / trail / hit context 정리
+
+EndPlay teardown
+- Action / Health / Reaction delegate 구독 해제
+- 사망 watchdog / finalize timer 해제
+- 각 Component runtime map과 delegate 정리
+- WeaponComponent가 Weapon Actor 파괴
+- Pawn 종료에 따른 AIController UnPossess / runtime teardown
+```
+
+두 단계에서 안전한 API를 일부 반복 호출할 수 있지만, Weapon Actor 파괴나 Controller teardown 책임을 Enemy가 중복 소유하지 않는다.
+
+### 사용자 에디터 작업
+
+Enemy Dead Montage에는 기존 `Enter Dead State` Notify 뒤, 몽타주 후반의 시각 효과가 보존되는 마지막 안전 프레임에 `Finalize Enemy Death` Notify를 배치한다.
+
+```text
+Dead Montage 시작
+-> Enter Dead State
+-> 사망 후반 연출 / feedback
+-> Finalize Enemy Death
+-> 다음 틱 Enemy Destroy
+```
+
+Finalize Notify를 누락해도 Montage Completed fallback으로 Destroy되지만, 정상 경로의 의도된 제거 시점은 전용 Notify가 결정한다.
 
 ## 책임 경계
 

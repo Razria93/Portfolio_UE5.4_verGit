@@ -25,6 +25,8 @@ Execution Runtime Cleanup Boundary
 
 ## 1. Dead Destroy Flow
 
+> 구현 상태: W06-01 Goal 1에서 Enemy Runtime 계약 구현 완료. 실제 Montage Notify 배치와 PIE 통합 검증 대기.
+
 ### 문제 / 필요성
 
 현재 Dead는 전투 상태와 reaction 흐름 안에서 처리된다. Dead 이후 actor가 언제, 어떤 절차로 Destroy되는지는 후속 구현 범위에서 고정한다.
@@ -76,6 +78,28 @@ Dead 이후 Destroy flow가 추가되면 다음 문제를 검토해야 한다.
 ### 해결 방향
 
 Dead 이후 Destroy는 별도 feature 또는 refactor branch에서 다룬다.
+
+W06-01에서는 다음 경계로 구현을 고정했다.
+
+```text
+Dying
+-> 기존 권한 gate 재사용
+-> AI 이동, deferred action, Weapon runtime 즉시 차단
+
+Dead Reaction
+-> 기존 Orchestrator / Intervention 재사용
+-> Started / Completed / Interrupted native lifecycle event 발행
+
+Finalize
+-> 전용 Notify 또는 fallback이 Enemy 공개 API 요청
+-> callback 재진입 방지를 위해 다음 틱 멱등 FinalizeDeath
+-> gameplay cleanup 후 Enemy Destroy
+
+EndPlay
+-> delegate / timer / component / controller teardown
+```
+
+Reaction 요청이 동기 처리된다는 현재 계약을 이용해 Dying 다음 틱까지 Dead Reaction이 시작되지 않으면 Rejected 또는 요청 누락으로 판정한다. Notify 누락은 Completed, 비정상 몽타주 중단은 Interrupted가 같은 Finalize 경로로 복구한다.
 
 P31에서는 Destroy가 발생했을 때 호출될 lifecycle cleanup hook을 점검한다.
 
