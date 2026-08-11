@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-진행 (Destroy / 0도 경계 PIE 보류)
+구현 완료 (Destroy Lifecycle 연계 검증 이관)
 ```
 
 ## 목적
@@ -147,7 +147,7 @@ Source/Portfolio/Controller/CPlayerController.cpp
 Debug Snapshot과 실제 선택 점수 일치
 ```
 
-수동 재현 경로가 준비되지 않아 보류:
+후속 Character Destroy Lifecycle 작업으로 연계 검증 이관:
 
 ```text
 현재 타겟 직접 Destroy 시 DestroyedEnemy -> nullptr 이벤트
@@ -155,14 +155,14 @@ Debug Snapshot과 실제 선택 점수 일치
 MaxTargetAngleDegrees = 0 경계에서 NaN 없음
 ```
 
-보류 항목은 코드 경로와 Development 빌드 정합성까지 확인했으며, 자동화 테스트 또는 전용 PIE 재현 경로를 마련한 뒤 W05-01을 완료 처리한다.
+현재 브랜치에는 Dead 이후 Actor를 실제로 Destroy하는 정책이 없으므로 Destroy 경계를 위한 임시 gameplay 경로를 추가하지 않는다. `OnDestroyed` bind/unbind와 callback identity 처리, 0도 View Cone의 안전한 계산 경로는 구현을 완료했다. 직접 Destroy event cardinality, 사망 해제 뒤 Destroy 중복 방지, 0도 자동화 경계는 다음 Character Destroy Lifecycle 작업에서 실제 Destroy 경로와 함께 통합 검증한다.
 
-## 후속 작업
+## 연계 결과
 
 ```text
-W05-03: 좌우 타겟 전환
-W05-04: 카메라 / 이동 락온 보정
-W05-05: 타겟 마커와 Enemy Status HUD 연결
+W05-03: 좌우 타겟 전환 완료
+W05-04: 카메라 / 이동 락온 보정 완료
+W05-05A: 타겟 마커 완료
+후속: Character Destroy Lifecycle에서 Destroy 경계 통합 검증
+별도 UI 작업: Enemy Status HUD
 ```
-
-위 세 작업은 모두 순차 구현·검증한 뒤 다음 시스템 작업으로 이동한다.

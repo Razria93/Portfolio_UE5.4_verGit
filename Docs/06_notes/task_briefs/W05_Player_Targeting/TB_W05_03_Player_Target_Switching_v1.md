@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-진행 (이전 타겟 Destroy PIE 보류)
+구현 완료 (Destroy Lifecycle 연계 검증 이관)
 ```
 
 ## 목적
@@ -209,9 +209,11 @@ PIE 확인 완료:
 - 선택 방향에 후보가 없을 때 기존 타겟 유지
 - 실제 타겟 평가 점수 `1.00` 표시 및 선택 결과 확인
 
-PIE 확인 보류:
+후속 Character Destroy Lifecycle 작업으로 연계 검증 이관:
 
 - 전환 후 이전 타겟을 직접 Destroy해도 새 타겟이 해제되지 않는지 확인
+
+전환 성공 시 `SetCurrentTarget()`이 이전 타겟의 Destroy delegate를 해제하고 새 타겟에 다시 binding하는 구현은 완료했다. 현재 브랜치에는 실제 Actor Destroy 정책이 없으므로 임시 Destroy 경로를 추가하지 않으며, 이전 타겟 Destroy가 새 타겟 상태에 영향을 주지 않는지는 다음 Character Destroy Lifecycle 작업에서 통합 검증한다.
 
 ## 제외 범위
 
@@ -237,9 +239,11 @@ PIE 확인 보류:
 - Debug 표시를 추가한 경우 실제 선택 후보와 표시 결과가 일치한다.
 - Editor Win64 Development 빌드가 성공한다.
 
-## 후속 작업
+## 연계 결과
 
 ```text
-W05-04: 카메라 / 이동 락온 보정
-W05-05: 타겟 마커와 Enemy Status HUD
+W05-04: 카메라 / 이동 락온 보정 완료
+W05-05A: 타겟 마커 완료
+후속: Character Destroy Lifecycle에서 이전 Target Destroy 경계 통합 검증
+별도 UI 작업: Enemy Status HUD
 ```

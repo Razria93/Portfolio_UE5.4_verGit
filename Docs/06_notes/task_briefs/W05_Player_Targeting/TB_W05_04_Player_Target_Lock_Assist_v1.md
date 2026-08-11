@@ -265,8 +265,9 @@ Source/Portfolio/Core/Debug/FDebugOverlayViewDataBuilder.cpp
 - Debug Overlay Movement 행에서 현재 Rotation Mode와 8Way Direction을 확인할 수 있다.
 - `PortfolioEditor Win64 Development` 빌드가 성공한다.
 
-## 후속 작업
+## 연계 결과
 
 ```text
-W05-05: 타겟 마커와 Enemy Status HUD
+W05-05A: 타겟 마커 완료
+별도 UI 작업: Enemy Status HUD
 ```
