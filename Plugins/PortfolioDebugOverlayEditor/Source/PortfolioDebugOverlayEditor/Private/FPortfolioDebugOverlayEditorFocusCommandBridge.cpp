@@ -14,6 +14,7 @@ namespace
 
 	static constexpr const TCHAR* DebugOverlaySelectNearestFocusCommand = TEXT("DebugOverlaySelectNearestFocus");
 	static constexpr const TCHAR* DebugOverlaySelectRecentCombatFocusCommand = TEXT("DebugOverlaySelectRecentCombatFocus");
+	static constexpr const TCHAR* DebugOverlaySelectPlayerTargetFocusCommand = TEXT("DebugOverlaySelectPlayerTargetFocus");
 	static constexpr const TCHAR* DebugOverlayClearFocusCommand = TEXT("DebugOverlayClearFocus");
 	static constexpr const TCHAR* DebugOverlaySelectOutlinerFocusCommand = TEXT("DebugOverlaySelectOutlinerFocus");
 
@@ -87,6 +88,13 @@ FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteSelectRecentCombatFo
 	return ExecuteDebugOverlayFocusCommand(
 		DebugOverlaySelectRecentCombatFocusCommand,
 		LOCTEXT("SelectRecentCombatFocusSent", "Last Command: SelectRecentCombatFocus"));
+}
+
+FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteSelectPlayerTargetFocusCommand()
+{
+	return ExecuteDebugOverlayFocusCommand(
+		DebugOverlaySelectPlayerTargetFocusCommand,
+		LOCTEXT("SelectPlayerTargetFocusSent", "Last Command: SelectPlayerTargetFocus"));
 }
 
 FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteClearFocusCommand()

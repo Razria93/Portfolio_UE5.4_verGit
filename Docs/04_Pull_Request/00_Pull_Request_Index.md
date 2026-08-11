@@ -6,6 +6,8 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P58 | Player Targeting and Lock-On Presentation | `P58_UE5_Portfolio_Pull_Request.md` | `feat/player-targeting-component` | #113 | W05, Targeting, Debug Overlay |
+| P57 | Debug Overlay Focus Naming Finalization | `P57_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-focus-naming-finalization` | #112 | Debug Overlay |
 | P56 | Debug Overlay Focus Migration Package | `P56_UE5_Portfolio_Pull_Request.md` | `feature/debug-overlay-focus-migration-package` |  | Debug Overlay |
 | P55 | Debug Overlay Focus Component Migration Closure | `P55_UE5_Portfolio_Pull_Request.md` | `main` |  | Debug Overlay |
 | P54 | Asset Reference Inspector Editor Plugin | `P54_UE5_Portfolio_Pull_Request.md` | `feature/asset-reference-inspector-plugin` |  | Editor Tooling, Asset Registry |

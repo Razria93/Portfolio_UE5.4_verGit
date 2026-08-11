@@ -199,6 +199,19 @@ void ACEnemy::ApplyCharacterSetup()
 	characterMovementComp->MaxWalkSpeed = MovementSetup.DefaultWalkSpeed;
 }
 
+// Target Presentation Query
+
+FVector ACEnemy::GetTargetMarkerWorldLocation() const
+{
+	const USkeletalMeshComponent* meshComp = GetMesh();
+	if (IsValid(meshComp) && !TargetMarkerSocketName.IsNone() && meshComp->DoesSocketExist(TargetMarkerSocketName))
+	{
+		return meshComp->GetSocketLocation(TargetMarkerSocketName);
+	}
+
+	return GetActorLocation() + TargetMarkerFallbackOffset;
+}
+
 // Component Reference
 
 void ACEnemy::RecoverReferences()

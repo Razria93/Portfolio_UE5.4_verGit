@@ -19,6 +19,7 @@ public class Portfolio : ModuleRules
             "EnhancedInput",
             "AIModule",
             "Niagara",
+            "UMG",
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });

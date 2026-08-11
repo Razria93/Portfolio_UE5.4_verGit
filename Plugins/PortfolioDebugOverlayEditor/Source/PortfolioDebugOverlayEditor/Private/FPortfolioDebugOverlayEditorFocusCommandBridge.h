@@ -6,6 +6,7 @@ namespace PortfolioDebugOverlayEditorFocusCommandBridge
 {
 	FText ExecuteSelectNearestFocusCommand();
 	FText ExecuteSelectRecentCombatFocusCommand();
+	FText ExecuteSelectPlayerTargetFocusCommand();
 	FText ExecuteClearFocusCommand();
 	FText ExecuteSelectOutlinerFocusCommand();
 }

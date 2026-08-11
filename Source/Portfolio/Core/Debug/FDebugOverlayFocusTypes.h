@@ -10,6 +10,7 @@ enum class EDebugOverlayFocusSource : uint8
 	NearestFocus,
 	RecentCombatFocus,
 	WorldScanFallback,
+	PlayerTargetFocus,
 
 	// Gameplay-provided source.
 	GameplayFocus,
@@ -25,6 +26,8 @@ enum class EDebugOverlayFocusDriver : uint8
 	ManualNearest,
 	ManualOutliner,
 	RecentCombatLive,
+	PlayerTargetLive,
+	PlayerTargetFrozen,
 	FocusComponentLive,
 };
 

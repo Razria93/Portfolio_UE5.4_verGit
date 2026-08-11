@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
+#include "Core/Debug/FTargetingDebug.h"
 
 class ACEnemy;
 class APawn;
@@ -75,11 +76,18 @@ struct FDebugOverlayFocusViewData
 	FString RecentFocusStateText;
 };
 
+struct FDebugOverlayPlayerTargetingViewData
+{
+	FTargetingDebugOverlayDetails Details;
+};
+
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
 	bool bIncludeFocus = false;
 	FDebugOverlayFocusViewData Focus;
+	bool bIncludeTargeting = false;
+	FDebugOverlayPlayerTargetingViewData Targeting;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
 	FDebugOverlayRecentExecutionViewData RecentExecution;

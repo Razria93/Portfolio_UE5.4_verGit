@@ -4,6 +4,9 @@
 
 #include "Character/Player/CPlayer.h"
 #include "Component/CPlayerFeedbackComponent.h"
+#include "Component/CTargetHUDPresenterComponent.h"
+#include "Component/CTargetLockAssistComponent.h"
+#include "Component/CTargetingComponent.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
@@ -26,6 +29,15 @@ ACPlayerController::ACPlayerController()
 
 	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
 	check(PlayerFeedbackComponent);
+
+	TargetingComponent = CreateDefaultSubobject<UCTargetingComponent>(TEXT("Targeting"));
+	check(TargetingComponent);
+
+	TargetLockAssistComponent = CreateDefaultSubobject<UCTargetLockAssistComponent>(TEXT("TargetLockAssist"));
+	check(TargetLockAssistComponent);
+
+	TargetHUDPresenterComponent = CreateDefaultSubobject<UCTargetHUDPresenterComponent>(TEXT("TargetHUDPresenter"));
+	check(TargetHUDPresenterComponent);
 
 #if !UE_BUILD_SHIPPING
 	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
@@ -68,6 +80,13 @@ void ACPlayerController::DebugOverlaySelectRecentCombatFocus()
 #endif
 }
 
+void ACPlayerController::DebugOverlaySelectPlayerTargetFocus()
+{
+#if !UE_BUILD_SHIPPING
+	FDebugOverlayFocusRuntimeHelper::TryFocusPlayerTarget(DebugOverlayFocusComponent, this);
+#endif
+}
+
 void ACPlayerController::DebugOverlayClearFocus()
 {
 #if !UE_BUILD_SHIPPING
@@ -85,6 +104,41 @@ void ACPlayerController::PostInitializeComponents()
 	{
 		PlayerFeedbackComponent->InitializeReferences(this);
 	}
+
+	if (IsValid(TargetingComponent))
+	{
+		TargetingComponent->InitializeReferences(this);
+	}
+
+	if (IsValid(TargetLockAssistComponent))
+	{
+		TargetLockAssistComponent->InitializeReferences(this, TargetingComponent);
+		TargetLockAssistComponent->SetControlledPlayer(ResolveControlledPlayer(this));
+	}
+
+	if (IsValid(TargetHUDPresenterComponent))
+	{
+		TargetHUDPresenterComponent->InitializeReferences(this, TargetingComponent);
+	}
+}
+
+void ACPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (!IsValid(TargetLockAssistComponent)) return;
+
+	TargetLockAssistComponent->SetControlledPlayer(Cast<ACPlayer>(InPawn));
+}
+
+void ACPlayerController::OnUnPossess()
+{
+	if (IsValid(TargetLockAssistComponent))
+	{
+		TargetLockAssistComponent->ClearControlledPlayer();
+	}
+
+	Super::OnUnPossess();
 }
 
 void ACPlayerController::PlayerTick(float DeltaTime)
@@ -99,6 +153,7 @@ void ACPlayerController::PlayerTick(float DeltaTime)
 		GetWorld(),
 		GetPawn(),
 		FDebugOverlayFocusRuntimeHelper::GetNearestFocusRadius());
+	FDebugOverlayFocusRuntimeHelper::UpdateFocusPlayerTarget(DebugOverlayFocusComponent, this);
 #endif
 }
 
@@ -123,17 +178,25 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
 	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
+
+	InputComponent->BindAction("TargetLock", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetLock);
+	InputComponent->BindAction("TargetSwitchLeft", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetSwitchLeft);
+	InputComponent->BindAction("TargetSwitchRight", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetSwitchRight);
 }
 
 // ===== Look Input =====
 
 void ACPlayerController::InputLookYaw(float InAxisValue)
 {
+	if (IsValid(TargetLockAssistComponent) && TargetLockAssistComponent->ShouldSuppressLookInput()) return;
+
 	AddYawInput(InAxisValue);
 }
 
 void ACPlayerController::InputLookPitch(float InAxisValue)
 {
+	if (IsValid(TargetLockAssistComponent) && TargetLockAssistComponent->ShouldSuppressLookInput()) return;
+
 	AddPitchInput(InAxisValue);
 }
 
@@ -233,4 +296,27 @@ void ACPlayerController::PressDodge()
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
+}
+
+// ===== Targeting =====
+
+void ACPlayerController::PressTargetLock()
+{
+	if (!IsValid(TargetingComponent)) return;
+
+	TargetingComponent->ToggleTargetLock();
+}
+
+void ACPlayerController::PressTargetSwitchLeft()
+{
+	if (!IsValid(TargetingComponent)) return;
+
+	TargetingComponent->SwitchTarget(ETargetSwitchDirection::Left);
+}
+
+void ACPlayerController::PressTargetSwitchRight()
+{
+	if (!IsValid(TargetingComponent)) return;
+
+	TargetingComponent->SwitchTarget(ETargetSwitchDirection::Right);
 }

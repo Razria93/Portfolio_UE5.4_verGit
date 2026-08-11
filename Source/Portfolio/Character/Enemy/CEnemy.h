@@ -45,6 +45,14 @@ private:
 	FCharacterMovementSetup MovementSetup;
 
 private:
+	// Target Presentation
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
+	FName TargetMarkerSocketName = TEXT("TargetMarker");
+
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
+	FVector TargetMarkerFallbackOffset = FVector::ZeroVector;
+
+private:
 	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol")
 	bool bUsePatrol;
 
@@ -204,6 +212,10 @@ public:
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
 	FORCEINLINE int32 GetParryResultCount() const { return ParryResultCount; }
 	FORCEINLINE int32 GetParryStaggerThreshold() const { return ParryStaggerThreshold; }
+
+public:
+	// Target Presentation Query
+	FVector GetTargetMarkerWorldLocation() const;
 
 public:
 	// AI Config Query

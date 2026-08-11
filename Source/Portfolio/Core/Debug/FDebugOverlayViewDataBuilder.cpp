@@ -171,8 +171,9 @@ namespace
 		if (!IsValid(movementComp)) return FormatMissingText();
 
 		return FString::Printf(
-			TEXT("Gait: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
+			TEXT("Gait: %s | Rotation: %s | Speed: %.1f | Dir: %.1f | CanMove: %s | Falling: %s"),
 			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
+			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementRotationMode())),
 			movementComp->GetCurrentSpeed(),
 			movementComp->GetCurrentDirection(),
 			*FormatBoolText(movementComp->CanMove()),
@@ -381,9 +382,12 @@ namespace
 		return actorPanelViewData;
 	}
 
-	void AppendPlayerPanelViewData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, bool bInHasSnapshot, const UWorld* InWorld)
+	void AppendPlayerPanelViewData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, bool bInHasSnapshot, const UWorld* InWorld)
 	{
-		InOutViewData.ActorPanels.Add(BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorld, bInHasSnapshot));
+		FDebugOverlayActorPanelViewData playerPanelViewData = BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorld, bInHasSnapshot);
+		playerPanelViewData.bIncludeTargeting = InPlayerTargeting.Details.bHasSnapshot;
+		playerPanelViewData.Targeting = InPlayerTargeting;
+		InOutViewData.ActorPanels.Add(playerPanelViewData);
 	}
 
 	void AppendEnemyPanelViewData(FDebugOverlayViewData& InOutViewData, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, bool bInHasSnapshot, const UWorld* InWorld)
@@ -399,9 +403,9 @@ namespace
 		InOutViewData.ActorPanels.Add(enemyPanelViewData);
 	}
 
-	void BuildMainActorPanelData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, bool bInHasSnapshot, const UWorld* InWorld)
+	void BuildMainActorPanelData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, bool bInHasSnapshot, const UWorld* InWorld)
 	{
-		AppendPlayerPanelViewData(InOutViewData, InPlayerPawn, bInHasSnapshot, InWorld);
+		AppendPlayerPanelViewData(InOutViewData, InPlayerPawn, InPlayerTargeting, bInHasSnapshot, InWorld);
 		AppendEnemyPanelViewData(InOutViewData, InEnemy, InEnemyFocus, bInHasSnapshot, InWorld);
 	}
 
@@ -471,7 +475,7 @@ namespace
 
 // ===== Public API =====
 
-FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus)
+FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting)
 {
 	FDebugOverlaySnapshot snapshot;
 	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(InWorld, snapshot);
@@ -486,7 +490,7 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld,
 	viewData.ActorPanels.Reserve(2);
 
 	viewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
-	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, bHasSnapshot, InWorld);
+	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, InPlayerTargeting, bHasSnapshot, InWorld);
 
 	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Panel_02]");
 	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);

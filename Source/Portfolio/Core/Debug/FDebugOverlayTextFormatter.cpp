@@ -92,6 +92,23 @@ namespace
 		}
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("RuntimeFocusSource: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentSourceText)));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("FocusActor: %s"), *FormatValueOrNoneText(InFocusViewData.CurrentActorNameText)));
+
+	}
+
+	void AppendPlayerTargetingLines(TArray<FString>& InOutLines, const FDebugOverlayPlayerTargetingViewData& InPlayerTargetingViewData)
+	{
+		const FTargetingDebugOverlayDetails& targeting = InPlayerTargetingViewData.Details;
+		if (!targeting.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Targeting]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime Target: %s"), *targeting.RuntimeTargetText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Distance: %s"), *targeting.DistanceText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Dot: %s"), *targeting.DotText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Angle Score: %s"), *targeting.AngleScoreText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Distance Score: %s"), *targeting.DistanceScoreText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Final Score: %s"), *targeting.FinalScoreText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("In Range: %s | In View Cone: %s"), *targeting.RangeText, *targeting.ViewConeText));
 	}
 
 	// [Recent Execution]
@@ -203,6 +220,12 @@ namespace
 		}
 
 		AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
+
+		if (InActorPanelViewData.bIncludeTargeting)
+		{
+			AppendPlayerTargetingLines(InOutLines, InActorPanelViewData.Targeting);
+		}
+
 		AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);
 
 		if (InActorPanelViewData.bIncludeCurrentAI)

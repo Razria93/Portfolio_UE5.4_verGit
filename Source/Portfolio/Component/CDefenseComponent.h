@@ -107,7 +107,7 @@ private:
 	void CloseParryWindow();
 
 private:
-	// Movement Override
-	void ApplyGuardMovementOverride();
-	void ClearMovementOverride();
+	// Movement Gait Override
+	void ApplyGuardMovementGaitOverride();
+	void ClearMovementGaitOverride();
 };
