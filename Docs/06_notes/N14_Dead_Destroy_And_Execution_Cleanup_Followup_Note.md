@@ -1,5 +1,7 @@
 # N14. Dead Destroy and Execution Cleanup Follow-up Note
 
+> **2026-08-12 최신 결정:** Enemy Dead / Destroy의 구현 기준은 S31 개정안으로 이동했다. 생명 상태는 `Alive / Dead`, 사망 진입은 `DeadIn Reaction`, 지속 Pose는 `DeadLoop Locomotion`, 제거 연출은 Feedback Component의 Dissolve Presentation으로 분리한다. 정상 Destroy는 Dissolve 완료 이벤트가 요청하며, Timer는 `ExpectedDuration + SafetyMargin`을 하한으로 하는 완료 누락 Watchdog이다. 아래의 `Dying`, Finalize Notify 기반 내용은 최초 구현 이력이며 최신 계약보다 우선하지 않는다.
+
 ## 목적
 
 이 문서는 P31 작업 중 논의된 후속 작업 후보를 정리한다.
@@ -99,7 +101,7 @@ EndPlay
 -> delegate / timer / component / controller teardown
 ```
 
-Reaction 요청이 동기 처리된다는 현재 계약을 이용해 Dying 다음 틱까지 Dead Reaction이 시작되지 않으면 Rejected 또는 요청 누락으로 판정한다. Notify 누락은 Completed, 비정상 몽타주 중단은 Interrupted가 같은 Finalize 경로로 복구한다.
+Reaction 요청이 동기 처리된다는 현재 계약을 이용해 Dying 다음 틱까지 Dead Reaction이 시작되지 않으면 Rejected 또는 요청 누락으로 판정한다. Notify 누락은 `Completed`, 정규 Stop / Intervention 경로에서 발행된 `Interrupted` / `Ignored`는 같은 Finalize 경로로 복구한다. 엔진 측 `OnMontageEnd(bInterrupted)`는 정규 Stop을 대체하지 않으며 계약 위반 Audit만 기록한다.
 
 P31에서는 Destroy가 발생했을 때 호출될 lifecycle cleanup hook을 점검한다.
 

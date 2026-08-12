@@ -1,5 +1,51 @@
 # TB W06-01 Enemy Dead / Destroy Lifecycle v1
 
+> **2026-08-12 정책 개정:** 이 Task Brief 아래쪽에는 최초 `Alive -> Dying -> Dead`, Finalize Notify 기반 구현 기록과 당시 실행 프롬프트가 보존되어 있다. 최신 구현 기준은 `Docs/05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md`의 `Alive / Dead + DeadIn / DeadLoop + Feedback Presentation + 완료 이벤트 기반 Destroy` 계약이다. AnimBP/BT 자산 마이그레이션과 레거시 코드 제거까지 완료했으며, 상충하는 기존 문구는 구현 기준으로 사용하지 않는다.
+
+## 최신 확정 흐름
+
+```text
+Health Alive -> Dead
+-> AnimBP bIsDead = true / DeadLoop 준비
+-> DeadIn Reaction
+-> DeadIn Completed
+-> Enemy가 Feedback Component에 Death Presentation 요청
+-> Dissolve Finished
+-> Presentation Watchdog 해제
+-> RequestFinalizeDeath
+-> 다음 Tick cleanup / Destroy
+```
+
+정상 Destroy 시점은 Dissolve 완료 이벤트가 소유한다. Timer는 `ExpectedDuration + SafetyMargin` 이후 Presentation 완료 이벤트 누락을 복구하는 Watchdog으로만 사용한다. DeadIn Reject와 formal Interrupted / Ignored는 즉시 Destroy하지 않고 동일한 Presentation 경로로 합류한다. DeadIn Started 후 종결 이벤트 누락은 Enemy Timer로 우회하지 않으며 Reaction lifecycle 계약 위반으로 취급한다.
+
+최신 정책에서 기존 `Enter Dead State`, `Enter Alive State`, `Finalize Enemy Death` Notify는 정상 흐름에 사용하지 않는다. 아래의 기존 구현 기록은 마이그레이션 대상 파악과 이력 보존 목적으로만 유지한다.
+
+## 2026-08-12 C++ 구현 상태
+
+```yaml
+Runtime C++: 완료
+Development Build: 성공
+Life-State UAsset Migration: 완료
+Death Presentation Asset Integration: 대기
+PIE: 대기
+Commit / Push: 수행하지 않음
+```
+
+구현된 파일 축:
+
+```text
+Type/CCharacterFeedbackTypes
+Component/CCharacterFeedbackComponent
+Component/CHealthComponent
+Component/CStateComponent
+Component/CMovementComponent
+Character/CAnimInstance
+Character/Enemy/CEnemy
+Legacy Revive / Health Notify / Finalize Notify source removed
+```
+
+첫 빌드에서는 `CStateComponent.h`의 Query 접근 지정자 이동 실수가 발견됐고 즉시 수정했다. 재빌드는 `PortfolioEditor Win64 Development`에서 성공했다.
+
 ## 작업명
 
 ```text
@@ -21,12 +67,14 @@ feature/dead-actor-destroy-flow
 ## 상태
 
 ```text
-Goal 1 Runtime 구현 / 에디터 연결 대기
+Goal 1 Runtime 구현 / 생명 상태 자산 마이그레이션 완료 / Presentation 연결 및 PIE 대기
 ```
 
 ## 목적
 
 Enemy의 사망 판정, Dead Reaction 연출, 최종 gameplay cleanup과 Actor `Destroy()`를 하나의 설명 가능한 생명주기로 연결한다.
+
+확정된 Runtime 구조와 책임 계약은 `Docs/05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md`를 기준으로 한다. 본 Task Brief는 구현 절차, 에디터 연결과 검증 상태를 기록한다.
 
 기존 Action / Reaction 파이프라인을 사망 연출과 실행 충돌 해결의 정규 경로로 유지하고, Enemy는 사망 생명주기의 시작과 최종 종료를 조정한다. W05 Player Targeting에서 실제 Actor Destroy 정책이 없어 이관했던 Target 해제 경계도 이번 작업에서 통합 검증한다.
 
@@ -124,7 +172,7 @@ Interrupted
 Ignored
 ```
 
-Dead Reaction만 Enemy 사망 생명주기에서 해석한다. 명시적 Intervention은 기존 종료 경로가 담당하고, 엔진 측 몽타주 비정상 중단은 `Interrupted`로 종료해 Active Reaction 고착을 방지한다.
+Dead Reaction만 Enemy 사망 생명주기에서 해석한다. 명시적 Intervention은 기존 종료 경로가 담당하며, 해당 정규 경로에서 발행된 `Interrupted` / `Ignored` 생명주기 이벤트만 Finalize fallback으로 해석한다. 엔진 측 `OnMontageEnd(bInterrupted)`는 명시적 Stop 경로 밖에서 발생한 계약 위반으로 Audit만 기록하고 종료 상태를 대신 정리하지 않는다.
 
 ### Enemy 사망 생명주기
 
