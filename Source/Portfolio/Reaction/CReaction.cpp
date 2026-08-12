@@ -400,13 +400,6 @@ void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, ui
 	if (bInterrupted)
 	{
 		FReactionComponentDebug::RecordReactionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("MontageEnd"), TEXT("UnexpectedInterruption"));
-
-		// Explicit intervention owns its shutdown path. Engine-side montage interruption
-		// must still terminate the active reaction and publish an Interrupted result.
-		if (LastStopReason_Cached == EReactionStopReason::None)
-		{
-			HandleReactionStop(EReactionStopReason::Interrupted);
-		}
 		return;
 	}
 

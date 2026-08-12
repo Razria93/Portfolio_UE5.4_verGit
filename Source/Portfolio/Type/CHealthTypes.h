@@ -8,10 +8,8 @@
 UENUM(BlueprintType)
 enum class EDeadState : uint8
 {
-	Alive,
-	Dying,
-	Dead,
-	Reviving
+	Alive = 0,
+	Dead = 2,
 };
 
 UENUM(BlueprintType)

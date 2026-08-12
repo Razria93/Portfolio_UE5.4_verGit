@@ -76,7 +76,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 	if (!CanAcceptActionRequest(rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
 
-	const EExecutionState executionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Dead;
+	const EExecutionState executionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Max;
 
 	if (executionState == EExecutionState::Reaction)
 		return BuildActionRequestResult(EActionRequestResultType::Ignored);
@@ -227,14 +227,6 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	}
 
 	if (!HealthComp_Injected->IsAlive())
-	{
-		OutRejectReason = EActionRequestRejectReason::Dead;
-		return false;
-	}
-
-	const EExecutionState executionState = StateComp_Injected->GetCurrentExecutionState();
-
-	if (executionState == EExecutionState::Dead)
 	{
 		OutRejectReason = EActionRequestRejectReason::Dead;
 		return false;
@@ -485,7 +477,7 @@ FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
 {
 	FExecutionSnapshot snapshot;
 
-	snapshot.ExecutionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Dead;
+	snapshot.ExecutionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Max;
 	snapshot.bIsDead = !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive();
 
 	if (IsValid(ObservableOverlayComp_Injected))

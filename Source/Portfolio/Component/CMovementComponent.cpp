@@ -3,6 +3,7 @@
 #include "ProjectGlobal.h"
 
 #include "AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.h"
+#include "Component/CHealthComponent.h"
 #include "Component/CStateComponent.h"
 #include "Core/Debug/FMovementDebug.h"
 
@@ -23,6 +24,7 @@ void UCMovementComponent::InitializeReferences(const FCharacterComponentReferenc
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 	CharacterMovementComp_Injected = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetCharacterMovement() : nullptr;
 	StateComp_Injected = InReferences.StateComponent;
+	HealthComp_Injected = InReferences.HealthComponent;
 
 	ValidateRequiredComponentReferences();
 	ApplyMovementRotationMode(CurrentMovementRotationMode);
@@ -37,6 +39,7 @@ bool UCMovementComponent::ValidateRequiredComponentReferences() const
 		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
 		{ CharacterMovementComp_Injected, TEXT("UCharacterMovementComponent") },
 		{ StateComp_Injected, TEXT("UCStateComponent") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
 	};
 
 	for (const FRequiredReference& reference : requiredReferences)
@@ -185,13 +188,13 @@ void UCMovementComponent::StopRuntimeLODActiveMovement()
 bool UCMovementComponent::CanAcceptMoveInput() const
 {
 	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
 	if (!bCanMove) return false;
 
 	if (IsValid(StateComp_Injected))
 	{
 		const EExecutionState executionState = StateComp_Injected->GetCurrentExecutionState();
 
-		if (executionState == EExecutionState::Dead) return false;
 		if (executionState == EExecutionState::Reaction) return false;
 	}
 
@@ -226,6 +229,10 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 		{
 			reason = TEXT("InvalidOwner");
 		}
+		else if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
+		{
+			reason = TEXT("DeadState");
+		}
 		else if (bRuntimeLODMovementIntentBlocked)
 		{
 			reason = TEXT("RuntimeLODIntentBlocked");
@@ -233,10 +240,6 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 		else if (!bCanMove)
 		{
 			reason = TEXT("CannotMove");
-		}
-		else if (executionState == EExecutionState::Dead)
-		{
-			reason = TEXT("DeadState");
 		}
 		else if (executionState == EExecutionState::Reaction)
 		{

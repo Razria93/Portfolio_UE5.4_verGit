@@ -9,11 +9,10 @@ UENUM(BlueprintType)
 enum class EExecutionState : uint8
 {
 	Idle = 0,
-	Action,
-	Reaction,
-	Dead,
+	Action = 1,
+	Reaction = 2,
 
-	Max
+	Max = 4,
 };
 
 UENUM(BlueprintType)

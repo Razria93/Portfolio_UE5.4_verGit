@@ -810,11 +810,6 @@ void UCReactionComponent::EnterReactionState(const FReactionData& InData)
 
 void UCReactionComponent::ExitReactionState(const FReactionData& InData)
 {
-	const bool bAlive = IsValid(HealthComp_Injected) && HealthComp_Injected->IsAlive();
-	const bool bDeadExecution = IsValid(StateComp_Injected) && StateComp_Injected->GetCurrentExecutionState() == EExecutionState::Dead;
-
-	if (!bAlive || bDeadExecution) return;
-
 	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
 		MovementComp_Injected->SetMove();

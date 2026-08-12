@@ -69,6 +69,9 @@ private:
 	UPROPERTY(Transient)
 	class UCStateComponent* StateComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCHealthComponent* HealthComp_Injected = nullptr;
+
 public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);

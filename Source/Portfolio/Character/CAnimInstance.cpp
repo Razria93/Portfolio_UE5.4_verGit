@@ -68,6 +68,8 @@ bool UCAnimInstance::CacheOwnerAndComponents()
 
 void UCAnimInstance::ClearCachedReferences()
 {
+	bIsDeadPose = false;
+
 	OwnerCharacter_Cached = nullptr;
 	MovementComp_Cached = nullptr;
 	WeaponComp_Cached = nullptr;
@@ -77,17 +79,30 @@ void UCAnimInstance::ClearCachedReferences()
 
 void UCAnimInstance::BindComponentEvents()
 {
-	if (!IsValid(WeaponComp_Cached)) return;
+	if (IsValid(WeaponComp_Cached))
+	{
+		WeaponComp_Cached->OnWeaponTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+		CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
+	}
 
-	WeaponComp_Cached->OnWeaponTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
-	CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
+	if (IsValid(HealthComp_Cached))
+	{
+		HealthComp_Cached->OnDeadStateChanged.AddUObject(this, &UCAnimInstance::OnDeadStateChanged);
+		OnDeadStateChanged(EDeadState::Alive, HealthComp_Cached->GetDeadState());
+	}
 }
 
 void UCAnimInstance::UnbindComponentEvents()
 {
-	if (!IsValid(WeaponComp_Cached)) return;
+	if (IsValid(WeaponComp_Cached))
+	{
+		WeaponComp_Cached->OnWeaponTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+	}
 
-	WeaponComp_Cached->OnWeaponTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+	if (IsValid(HealthComp_Cached))
+	{
+		HealthComp_Cached->OnDeadStateChanged.RemoveAll(this);
+	}
 }
 
 // Animation Profiling Gate
@@ -191,7 +206,7 @@ void UCAnimInstance::RefreshStateParameters()
 
 	if (IsValid(HealthComp_Cached))
 	{
-		DeadState = HealthComp_Cached->GetDeadState();
+		bIsDeadPose = HealthComp_Cached->IsDead();
 	}
 
 	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
@@ -204,4 +219,9 @@ void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponTy
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(InOwnerCharacter) || (OwnerCharacter_Cached != InOwnerCharacter)) return;
 
 	CurrentWeaponType = InNewWeaponType;
+}
+
+void UCAnimInstance::OnDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState)
+{
+	bIsDeadPose = InNewDeadState == EDeadState::Dead;
 }

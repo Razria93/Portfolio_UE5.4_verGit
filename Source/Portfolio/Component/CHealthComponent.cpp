@@ -82,31 +82,6 @@ bool UCHealthComponent::TryKill()
 
 	PreviousHP = CurrentHP;
 	CurrentHP = 0.f;
-	ChangeDeadState(EDeadState::Dying);
-
-	return true;
-}
-
-bool UCHealthComponent::TryRevive(float InReviveHP)
-{
-	if (!CanRevive()) return false;
-	if (MaxHP <= 0.f) return false;
-
-	const float reviveHP = FMath::Clamp(InReviveHP, 1.f, MaxHP);
-
-	PreviousHP = CurrentHP;
-	CurrentHP = reviveHP;
-	ChangeDeadState(EDeadState::Reviving);
-
-	return true;
-}
-
-bool UCHealthComponent::TryCancelRevive()
-{
-	if (DeadState != EDeadState::Reviving) return false;
-
-	PreviousHP = CurrentHP;
-	CurrentHP = 0.f;
 	ChangeDeadState(EDeadState::Dead);
 
 	return true;
@@ -196,38 +171,13 @@ bool UCHealthComponent::CanKill() const
 	return IsAlive();
 }
 
-bool UCHealthComponent::CanRevive() const
-{
-	return IsDead();
-}
-
-// State Transition
-
-void UCHealthComponent::EnterDeadState()
-{
-	ChangeDeadState(EDeadState::Dead);
-}
-
-void UCHealthComponent::EnterAliveState()
-{
-	ChangeDeadState(EDeadState::Alive);
-}
-
-// Notify Routing
-
-void UCHealthComponent::HandleDeadStateNotify(EDeadState InDeadState)
-{
-	ChangeDeadState(InDeadState);
-}
-
 void UCHealthComponent::UpdateDeadState()
 {
 	bool bDeadFlag = (CurrentHP <= 0.f);
 
-	// Revive is an explicit gameplay transition handled by SetRevive().
 	if (DeadState == EDeadState::Alive && bDeadFlag)
 	{
-		ChangeDeadState(EDeadState::Dying);
+		ChangeDeadState(EDeadState::Dead);
 	}
 }
 

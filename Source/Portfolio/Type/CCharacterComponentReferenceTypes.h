@@ -8,6 +8,7 @@ class UCActionFeedbackComponent;
 class UCActionOrchestratorComponent;
 class UCCombatSignalSourceComponent;
 class UCCombatSignalTargetComponent;
+class UCCharacterFeedbackComponent;
 class UCDefenseComponent;
 class UCHealthComponent;
 class UCHitFeedbackComponent;
@@ -44,4 +45,5 @@ struct FCharacterComponentReferences
 	UCHitFeedbackComponent* HitFeedbackComponent = nullptr;
 	UCActionFeedbackComponent* ActionFeedbackComponent = nullptr;
 	UCReactionFeedbackComponent* ReactionFeedbackComponent = nullptr;
+	UCCharacterFeedbackComponent* CharacterFeedbackComponent = nullptr;
 };

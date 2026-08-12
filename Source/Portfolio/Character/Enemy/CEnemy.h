@@ -9,6 +9,7 @@
 #include "Type/CActionTypes.h"
 #include "Type/CHealthTypes.h"
 #include "Type/CCombatResultTypes.h"
+#include "Type/CCharacterFeedbackTypes.h"
 #include "Type/CReactionOrchestrationTypes.h"
 #include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
@@ -150,6 +151,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Feedback")
+	class UCCharacterFeedbackComponent* CharacterFeedbackComponent;
+
 private:
 	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry", meta = (ClampMin = 1))
 	int32 ParryStaggerThreshold = 3;
@@ -162,9 +166,19 @@ private:
 	FRuntimeLODActorTickState RuntimeLODActorTickState;
 
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "Death|Watchdog", meta = (ClampMin = 0.0))
+	float DeathPresentationWatchdogMinimumDuration = 5.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Death|Watchdog", meta = (ClampMin = 0.0))
+	float DeathPresentationWatchdogSafetyMargin = 0.5f;
+
+private:
 	FTimerHandle DeadReactionStartFallbackTimerHandle;
+	FTimerHandle DeathPresentationWatchdogTimerHandle;
 	FTimerHandle DeathFinalizeTimerHandle;
+
 	bool bDeathLifecycleActive = false;
+	bool bDeathPresentationStarted = false;
 	bool bDeathFinalizationRequested = false;
 	bool bDeathFinalized = false;
 
@@ -219,6 +233,7 @@ public:
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
+	FORCEINLINE UCCharacterFeedbackComponent* GetCharacterFeedbackComp() const { return CharacterFeedbackComponent; }
 	FORCEINLINE int32 GetParryResultCount() const { return ParryResultCount; }
 	FORCEINLINE int32 GetParryStaggerThreshold() const { return ParryStaggerThreshold; }
 
@@ -283,22 +298,28 @@ public:
 public:
 	// Runtime State
 	bool TryStartKill();
-	bool TryStartRevive(float InReviveHP);
-
-public:
-	// Death Lifecycle
-	void RequestFinalizeDeath();
 
 private:
+	// Death Lifecycle Entry / State
+	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
 	void BeginDeathLifecycle();
-	void CancelDeathLifecycle();
+	void AbortDeathLifecycle();
+
+	// Death Reaction Observation / Fallback
+	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 	void ValidateDeadReactionStarted();
+
+	// Death Presentation
+	void BeginDeathPresentation(EDeathPresentationReason InReason);
+	void ScheduleDeathPresentationWatchdog(float InExpectedDuration);
+
+	void HandleDeathPresentationFinished();
+	void HandleDeathPresentationWatchdogExpired();
+
+	// Death Finalization
+	void RequestFinalizeDeath(EDeathFinalizeReason InReason);
 	void FinalizeDeath();
 	void CleanupDeathGameplayRuntime();
-
-private:
-	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
-	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 
 private:
 	// Combat Action Query
