@@ -13,6 +13,7 @@ PIE Integration: 완료
 Debug Observability: 완료
 Documentation Sync: 완료
 Development Build: 성공
+PR Document: 작성 완료
 Push / PR / Merge: 미수행
 ```
 
@@ -324,9 +325,10 @@ c88f8ea4 docs(dead): align enemy death lifecycle contract
 de6b043d assets(dead): configure character and weapon dissolve presentation
 814b3cac feat(debug): expose death lifecycle diagnostics
 6a05a7c5 docs(dead): update presentation and diagnostics contract
+fc7d5b84 docs(dead): synchronize lifecycle review documentation
 ```
 
-본 P0 문서 동기화 변경은 아직 커밋하지 않는다.
+P0 문서 동기화와 리뷰 기준 정리는 `fc7d5b84`에 반영했다.
 
 ---
 
