@@ -179,6 +179,11 @@ void ACEnemy::BeginPlay()
 	}
 
 	HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
+
+	if (IsValid(HealthComponent) && HealthComponent->IsDead())
+	{
+		BeginDeathLifecycle();
+	}
 }
 
 void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
