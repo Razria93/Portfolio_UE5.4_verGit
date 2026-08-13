@@ -139,6 +139,21 @@ namespace
 		}
 	}
 
+	// [Death Lifecycle]
+	// ===== Death Lifecycle Lines =====
+
+	void AppendDeathLifecycleBlock(TArray<FString>& InOutLines, const FDebugOverlayDeathLifecycleViewData& InViewData)
+	{
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Death Lifecycle]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Health State: %s"), *InViewData.HealthStateText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Lifecycle: %s"), *InViewData.LifecycleText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("DeadIn: %s"), *InViewData.DeadInText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Presentation: %s"), *InViewData.PresentationText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Fallback Timer: %s"), *InViewData.FallbackTimerText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Finalization: %s"), *InViewData.FinalizationText));
+	}
+
 	// [Current AI / Recent AI Event]
 	// ===== AI Lines =====
 
@@ -224,6 +239,11 @@ namespace
 		if (InActorPanelViewData.bIncludeTargeting)
 		{
 			AppendPlayerTargetingLines(InOutLines, InActorPanelViewData.Targeting);
+		}
+
+		if (InActorPanelViewData.bIncludeDeathLifecycle)
+		{
+			AppendDeathLifecycleBlock(InOutLines, InActorPanelViewData.DeathLifecycle);
 		}
 
 		AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);

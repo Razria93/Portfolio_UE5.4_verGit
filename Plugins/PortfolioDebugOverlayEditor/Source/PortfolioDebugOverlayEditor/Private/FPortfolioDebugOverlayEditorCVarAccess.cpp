@@ -14,6 +14,7 @@ namespace
 	static constexpr const TCHAR* DebugOverlayEventLogLimitCVarName = TEXT("Portfolio.DebugOverlay.EventLogLimit");
 	static constexpr const TCHAR* DebugOverlayHideNoiseEventsCVarName = TEXT("Portfolio.DebugOverlay.HideNoiseEvents");
 	static constexpr const TCHAR* DebugOverlayHideCollisionWindowEventsCVarName = TEXT("Portfolio.DebugOverlay.HideCollisionWindowEvents");
+	static constexpr const TCHAR* DeathLifecycleAuditCVarName = TEXT("Portfolio.Debug.DeathLifecycleAudit");
 	static constexpr const TCHAR* DebugOverlayNearestFocusRadiusCVarName = TEXT("Portfolio.DebugOverlay.NearestFocusRadius");
 	static constexpr const TCHAR* DebugOverlayTargetingEnabledCVarName = TEXT("Portfolio.DebugOverlay.Targeting.Enabled");
 	static constexpr const TCHAR* DebugOverlayTargetingDrawRangeSphereCVarName = TEXT("Portfolio.DebugOverlay.Targeting.DrawRangeSphere");
@@ -63,6 +64,11 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetHideNoiseEventsCVarName()
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetHideCollisionWindowEventsCVarName()
 {
 	return DebugOverlayHideCollisionWindowEventsCVarName;
+}
+
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetDeathLifecycleAuditCVarName()
+{
+	return DeathLifecycleAuditCVarName;
 }
 
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetNearestFocusRadiusCVarName()
@@ -164,7 +170,8 @@ bool PortfolioDebugOverlayEditorCVarAccess::IsKnownEventLogFilter(const FString&
 	return InValue.Equals(TEXT("All"), ESearchCase::IgnoreCase)
 		|| InValue.Equals(TEXT("Execution"), ESearchCase::IgnoreCase)
 		|| InValue.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
-		|| InValue.Equals(TEXT("AI"), ESearchCase::IgnoreCase);
+		|| InValue.Equals(TEXT("AI"), ESearchCase::IgnoreCase)
+		|| InValue.Equals(TEXT("Death"), ESearchCase::IgnoreCase);
 }
 
 // ===== Availability =====
@@ -176,7 +183,8 @@ bool PortfolioDebugOverlayEditorCVarAccess::HasOverlayCVars()
 		&& FindCVar(DebugOverlayEventLogFilterCVarName)
 		&& FindCVar(DebugOverlayEventLogLimitCVarName)
 		&& FindCVar(DebugOverlayHideNoiseEventsCVarName)
-		&& FindCVar(DebugOverlayHideCollisionWindowEventsCVarName);
+		&& FindCVar(DebugOverlayHideCollisionWindowEventsCVarName)
+		&& FindCVar(DeathLifecycleAuditCVarName);
 }
 
 bool PortfolioDebugOverlayEditorCVarAccess::HasTargetingDisplayCVars()

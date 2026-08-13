@@ -4,7 +4,6 @@
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CStateTypes.h"
-#include "Type/CHealthTypes.h"
 #include "CStateComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FExecutionStateChanged, class ACharacter*, InOwnerCharacter, EExecutionState, InPrevExecutionState, EExecutionState, InNewExecutionState);
@@ -36,9 +35,6 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
-	// Health State Sync
-	void OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState);
-
 	// Query
 	FORCEINLINE bool CheckCurExecutionState(EExecutionState InNewExecutionState) const { return CurrentExecutionState == InNewExecutionState; }
 	FORCEINLINE EExecutionState GetCurrentExecutionState() const { return CurrentExecutionState; }
@@ -48,7 +44,6 @@ public:
 	void SetIdleState();
 	void SetActionState();
 	void SetReactionState();
-	void SetDeadState();
 
 private:
 	void ChangeExecutionState(EExecutionState InNewExecutionState);

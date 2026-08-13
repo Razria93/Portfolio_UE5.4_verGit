@@ -127,20 +127,10 @@ void ACPlayer::PostInitializeComponents()
 void ACPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (IsValid(HealthComponent) && IsValid(StateComponent))
-	{
-		HealthComponent->OnDeadStateChanged.AddUObject(StateComponent, &UCStateComponent::OnDeadStateChanged);
-	}
 }
 
 void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (IsValid(HealthComponent))
-	{
-		HealthComponent->OnDeadStateChanged.RemoveAll(StateComponent);
-	}
-
 	Super::EndPlay(EndPlayReason);
 }
 

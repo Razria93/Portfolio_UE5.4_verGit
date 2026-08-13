@@ -124,7 +124,7 @@ public:
 
 	bool IsDead() const
 	{
-		return bIsDead || ExecutionState == EExecutionState::Dead;
+		return bIsDead;
 	}
 
 	bool HasObservableOverlay() const

@@ -4,6 +4,7 @@
 #include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CActionComponent.h"
+#include "Component/CCharacterFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CMovementComponent.h"
@@ -370,6 +371,33 @@ namespace
 		return recentAIEventViewData;
 	}
 
+	FDebugOverlayDeathLifecycleViewData BuildEnemyDeathLifecycleViewData(const ACEnemy* InEnemy)
+	{
+		FDebugOverlayDeathLifecycleViewData viewData;
+		if (!IsValid(InEnemy))
+		{
+			viewData.HealthStateText = FormatMissingText();
+			viewData.LifecycleText = FormatMissingText();
+			viewData.DeadInText = FormatMissingText();
+			viewData.PresentationText = FormatMissingText();
+			viewData.FallbackTimerText = FormatMissingText();
+			viewData.FinalizationText = FormatMissingText();
+			return viewData;
+		}
+
+		const UCHealthComponent* healthComp = InEnemy->GetHealthComp();
+		const UCReactionComponent* reactionComp = InEnemy->GetReactionComp();
+		const UCCharacterFeedbackComponent* feedbackComp = InEnemy->GetCharacterFeedbackComp();
+
+		viewData.HealthStateText = IsValid(healthComp) ? FormatCompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())) : FormatMissingText();
+		viewData.LifecycleText = InEnemy->IsDeathLifecycleActive() ? TEXT("Active") : TEXT("Inactive");
+		viewData.DeadInText = IsValid(reactionComp) && reactionComp->IsActiveReactionType(EReactionType::Dead) ? TEXT("Active") : (InEnemy->IsDeathPresentationRequested() ? TEXT("Exited") : TEXT("Inactive"));
+		viewData.PresentationText = IsValid(feedbackComp) ? FormatCompactEnumText(UEnum::GetValueAsString(feedbackComp->GetDeathPresentationState())) : FormatMissingText();
+		viewData.FallbackTimerText = InEnemy->IsDeathPresentationFallbackPending() ? TEXT("Pending") : TEXT("Inactive");
+		viewData.FinalizationText = InEnemy->IsDeathFinalized() ? TEXT("Finalized") : (InEnemy->IsDeathFinalizationRequested() ? TEXT("Requested") : TEXT("Inactive"));
+		return viewData;
+	}
+
 	// [Panel_01]
 	// ===== Main Actor Panel ViewData =====
 
@@ -396,6 +424,8 @@ namespace
 		enemyPanelViewData.bIncludeFocus = true;
 		enemyPanelViewData.Focus = InEnemyFocus;
 		enemyPanelViewData.bAppendBlankBeforeStatus = true;
+		enemyPanelViewData.bIncludeDeathLifecycle = true;
+		enemyPanelViewData.DeathLifecycle = BuildEnemyDeathLifecycleViewData(InEnemy);
 		enemyPanelViewData.bIncludeCurrentAI = true;
 		enemyPanelViewData.CurrentAI = BuildEnemyCurrentAIViewData(InEnemy);
 		enemyPanelViewData.bIncludeRecentAIEvent = true;

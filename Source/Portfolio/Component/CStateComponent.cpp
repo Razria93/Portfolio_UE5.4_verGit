@@ -3,7 +3,6 @@
 #include "ProjectGlobal.h"
 
 #include "Type/CStateTypes.h"
-#include "Type/CHealthTypes.h"
 
 #include "GameFramework/Character.h"
 
@@ -36,41 +35,6 @@ bool UCStateComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
-// Health State Sync
-void UCStateComponent::OnDeadStateChanged(EDeadState InPrevDeadState, EDeadState InNewDeadState)
-{
-	if (!IsValid(OwnerCharacter_Injected)) return;
-
-	switch (InNewDeadState)
-	{
-	case EDeadState::Alive:
-	{
-		if (CheckCurExecutionState(EExecutionState::Dead))
-		{
-			// [Health: Alive] [Execution: Dead] -> restore Idle
-			SetIdleState();
-			break;
-		}
-
-		// [Health: Alive] [Execution: Non-Dead] -> keep current execution
-		break;
-	}
-
-	// Dying / Dead / Reviving : Non-Alive
-	case EDeadState::Dying:
-	case EDeadState::Dead:
-	case EDeadState::Reviving:
-	{
-		// [Health: Non-Alive] [Execution: Any] -> force Dead
-		SetDeadState();
-		break;
-	}
-
-	default:
-		break;
-	}
-}
-
 // Mutation
 void UCStateComponent::SetIdleState()
 {
@@ -91,13 +55,6 @@ void UCStateComponent::SetReactionState()
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	ChangeExecutionState(EExecutionState::Reaction);
-}
-
-void UCStateComponent::SetDeadState()
-{
-	if (!IsValid(OwnerCharacter_Injected)) return;
-
-	ChangeExecutionState(EExecutionState::Dead);
 }
 
 void UCStateComponent::ChangeExecutionState(EExecutionState InNewExecutionState)

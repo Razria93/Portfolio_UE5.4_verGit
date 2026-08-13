@@ -58,8 +58,6 @@ public:
 	// State Transition
 	void InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy);
 	bool TryKill();
-	bool TryRevive(float InReviveHP);
-	bool TryCancelRevive();
 	bool TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUpdatePolicy);
 
 public:
@@ -71,7 +69,6 @@ public:
 	bool IsAlive() const;
 	bool IsDead() const;
 	bool CanKill() const;
-	bool CanRevive() const;
 
 public:
 	// Query
@@ -79,15 +76,6 @@ public:
 	float GetCurrentHP() const { return CurrentHP; }
 	float GetPreviousHP() const { return PreviousHP; }
 	EDeadState GetDeadState() const { return DeadState; }
-
-public:
-	// State Transition
-	void EnterDeadState();
-	void EnterAliveState();
-
-public:
-	// Notify Routing
-	void HandleDeadStateNotify(EDeadState InDeadState);
 
 private:
 	void UpdateDeadState();

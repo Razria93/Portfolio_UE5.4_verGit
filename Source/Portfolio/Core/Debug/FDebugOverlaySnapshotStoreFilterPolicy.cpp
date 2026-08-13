@@ -34,7 +34,7 @@ namespace
 	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogFilter(
 		TEXT("Portfolio.DebugOverlay.EventLogFilter"),
 		TEXT("All"),
-		TEXT("Filter debug overlay event log. Values: All, Execution, Combat, AI."),
+		TEXT("Filter debug overlay event log. Values: All, Execution, Combat, AI, Death."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarDebugOverlayHideNoiseEvents(
@@ -220,6 +220,11 @@ FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 	if (InFilter.Equals(TEXT("AI"), ESearchCase::IgnoreCase))
 	{
 		return TEXT("AI");
+	}
+
+	if (InFilter.Equals(TEXT("Death"), ESearchCase::IgnoreCase))
+	{
+		return TEXT("Death");
 	}
 
 	return TEXT("All");

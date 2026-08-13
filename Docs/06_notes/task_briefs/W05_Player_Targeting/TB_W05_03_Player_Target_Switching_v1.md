@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-구현 완료 (Destroy Lifecycle 연계 검증 이관)
+완료 (W06 Destroy Lifecycle 통합 검증 포함)
 ```
 
 ## 목적
@@ -34,7 +34,7 @@ W05-03은 타겟 선택 상태만 변경한다. 카메라 추적, 캐릭터 이�
 - 선택 방향에 후보가 없으면 현재 타겟을 유지한다.
 - 반대편 끝으로 자동 순환하는 Wrap Around는 v1에서 사용하지 않는다.
 - 현재 타겟이 없을 때 좌우 전환 입력이 들어오면 기존 `AcquireBestTarget()`을 실행한다.
-- 실제 상태 변경은 기존 `SetCurrentTarget()`을 통해 처리해 `OnTargetChanged`와 Destroy Bind/Unbind 계약을 유지한다.
+- 실제 상태 변경은 기존 `SetCurrentTarget()`을 통해 처리해 `OnTargetChanged`와 EndPlay Bind/Unbind 계약을 유지한다.
 
 ## 입력 정책
 
@@ -142,8 +142,8 @@ TargetSwitch 입력
 
 후보 있음
 -> SetCurrentTarget(BestSwitchTarget)
--> Previous OnDestroyed Unbind
--> New OnDestroyed Bind
+-> Previous OnEndPlay Unbind
+-> New OnEndPlay Bind
 -> OnTargetChanged(Previous, New) 1회
 
 후보 없음
@@ -209,11 +209,11 @@ PIE 확인 완료:
 - 선택 방향에 후보가 없을 때 기존 타겟 유지
 - 실제 타겟 평가 점수 `1.00` 표시 및 선택 결과 확인
 
-후속 Character Destroy Lifecycle 작업으로 연계 검증 이관:
+W06 Character Destroy Lifecycle에서 통합 검증 완료:
 
 - 전환 후 이전 타겟을 직접 Destroy해도 새 타겟이 해제되지 않는지 확인
 
-전환 성공 시 `SetCurrentTarget()`이 이전 타겟의 Destroy delegate를 해제하고 새 타겟에 다시 binding하는 구현은 완료했다. 현재 브랜치에는 실제 Actor Destroy 정책이 없으므로 임시 Destroy 경로를 추가하지 않으며, 이전 타겟 Destroy가 새 타겟 상태에 영향을 주지 않는지는 다음 Character Destroy Lifecycle 작업에서 통합 검증한다.
+전환 성공 시 `SetCurrentTarget()`은 이전 타겟의 EndPlay delegate를 해제하고 새 타겟에 다시 binding한다. W06의 실제 Actor Destroy 경로에서 A에서 B로 전환한 뒤 A가 종료되어도 B가 유지되는 것을 확인했다. 늦은 콜백은 callback Actor와 현재 weak target의 index/serial identity가 다르면 무시한다.
 
 ## 제외 범위
 
@@ -244,6 +244,6 @@ PIE 확인 완료:
 ```text
 W05-04: 카메라 / 이동 락온 보정 완료
 W05-05A: 타겟 마커 완료
-후속: Character Destroy Lifecycle에서 이전 Target Destroy 경계 통합 검증
+W06: Character Destroy Lifecycle에서 이전 Target 종료 경계 통합 검증 완료
 별도 UI 작업: Enemy Status HUD
 ```

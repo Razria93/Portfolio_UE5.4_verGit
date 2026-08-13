@@ -27,6 +27,8 @@ M04-S09: Combat Feedback 계층 구성
 
 이후 `feature/reaction-orchestration`에서 hit result 기반 feedback은 `DamageFeedback`으로 분리되고, `ReactionFeedback`은 reaction execution timing 기준으로 재정의되었으며, 자세한 내용은 `S17`에서 다룸.
 
+Enemy 사망 제거 연출은 이 Combat Feedback 계층의 후속 적용 사례다. `UCCharacterFeedbackComponent`가 Blueprint 표현 요청과 결과 통지 경계를 제공하지만, Dead 상태와 Actor Destroy 권한은 소유하지 않는다. 최신 책임 계약은 [S31 Enemy Dead / Presentation / Destroy 생명주기 설계](S31_UE5_Portfolio_System_Architecture.md)를 기준으로 한다.
+
 ---
 ## 4. 기존 시스템의 형태
 

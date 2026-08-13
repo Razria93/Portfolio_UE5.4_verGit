@@ -105,8 +105,9 @@ Stop
 -> interrupted / cancelled / ignored reason 포함
 
 MontageEnd
--> engine callback
--> 이미 처리된 stop의 중복 정리를 막아야 함
+-> engine callback과 정상 완료 fallback
+-> 유효한 montage / play serial일 때만 처리
+-> 이미 처리된 Complete / Stop의 중복 정리를 막아야 함
 ```
 
 Component는 executor가 finish를 알리면 active state를 정리함.
@@ -145,6 +146,28 @@ MontageEnd
 Executor는 montage lifecycle을 담당하고, component는 active runtime state를 담당함.
 
 Fallback 처리와 unexpected interruption log는 유지하되, 정상 stop 흐름과 비정상 montage callback 흐름을 구분해야 함.
+
+### 현재 Action / Reaction 대칭 계약
+
+현재 Action과 Reaction은 모두 명시적 Complete Notify를 정상 종료 권한으로 사용한다.
+
+```text
+Complete Notify
+-> Executor Complete()
+-> Component Finish
+-> active context / execution state 정리
+
+MontageEnded(interrupted == false)
+-> Notify 누락을 위한 정상 완료 fallback
+
+MontageEnded(interrupted == true)
+-> 정규 Stop을 대신하지 않음
+-> unexpected interruption Audit
+```
+
+모든 callback은 Montage와 Play Serial을 검증한다. 명시적 Complete나 Stop이 먼저 상태를 정리했다면 뒤늦은 MontageEnded는 stale callback으로 무시한다.
+
+Enemy `DeadIn`도 이 공통 Reaction 계약을 사용한다. Dead 전용 예상 길이 Timer로 Reaction 종료를 추측하지 않으며, `DeadIn Completed` 이후의 Presentation / Destroy 계약은 [S31](S31_UE5_Portfolio_System_Architecture.md)을 따른다.
 
 
 

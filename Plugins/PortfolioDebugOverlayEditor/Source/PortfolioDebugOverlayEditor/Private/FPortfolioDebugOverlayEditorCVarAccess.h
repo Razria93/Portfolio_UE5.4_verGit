@@ -12,6 +12,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetEventLogLimitCVarName();
 	const TCHAR* GetHideNoiseEventsCVarName();
 	const TCHAR* GetHideCollisionWindowEventsCVarName();
+	const TCHAR* GetDeathLifecycleAuditCVarName();
 	const TCHAR* GetNearestFocusRadiusCVarName();
 	const TCHAR* GetTargetingEnabledCVarName();
 	const TCHAR* GetTargetingDrawRangeSphereCVarName();

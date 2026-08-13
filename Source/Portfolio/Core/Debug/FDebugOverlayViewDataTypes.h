@@ -58,6 +58,16 @@ struct FDebugOverlayCurrentAIViewData
 	FString IsCombatActionText;
 };
 
+struct FDebugOverlayDeathLifecycleViewData
+{
+	FString HealthStateText;
+	FString LifecycleText;
+	FString DeadInText;
+	FString PresentationText;
+	FString FallbackTimerText;
+	FString FinalizationText;
+};
+
 struct FDebugOverlayRecentAIEventViewData
 {
 	EDebugOverlayRecentAIEventViewState State = EDebugOverlayRecentAIEventViewState::NoTarget;
@@ -91,6 +101,8 @@ struct FDebugOverlayActorPanelViewData
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
 	FDebugOverlayRecentExecutionViewData RecentExecution;
+	bool bIncludeDeathLifecycle = false;
+	FDebugOverlayDeathLifecycleViewData DeathLifecycle;
 	bool bIncludeCurrentAI = false;
 	FDebugOverlayCurrentAIViewData CurrentAI;
 	bool bIncludeRecentAIEvent = false;

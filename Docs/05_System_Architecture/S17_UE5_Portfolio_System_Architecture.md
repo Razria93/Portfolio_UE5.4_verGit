@@ -307,6 +307,25 @@ Feedback authoring 정리 대상
 - hit normal 방향 정책 정의
 ```
 
+### Character Death Presentation 경계
+
+현재 Enemy 사망의 Dissolve와 Destroy 대기는 DamageFeedback이나 ReactionFeedback의 책임이 아니다. DeadIn Reaction은 사망 진입 연출만 실행하고, DeadIn 완료 뒤 캐릭터·장착 무기의 Dissolve를 시작하고 완료를 통지하는 책임은 `UCCharacterFeedbackComponent`에 둔다.
+
+```yaml
+ReactionFeedback
+- DeadIn 실행 중 montage timing feedback
+
+CharacterFeedback
+- DeadIn 완료 뒤 Death Presentation 요청
+- Character / Skeletal Weapon Dissolve 표현
+- Started / Unavailable / Finished 결과 통지
+
+ACEnemy
+- Death Presentation 결과에 따른 fallback 또는 Destroy 결정
+```
+
+이 경계의 최신 생명주기 계약과 Blueprint 연결 순서는 [S31 Enemy Dead / DeadIn / DeadLoop / Death Presentation / Destroy 생명주기](S31_UE5_Portfolio_System_Architecture.md)를 기준으로 한다.
+
 ---
 ## 8. 관련 문서
 

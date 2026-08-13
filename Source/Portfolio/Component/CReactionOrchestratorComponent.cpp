@@ -296,7 +296,7 @@ FExecutionSnapshot UCReactionOrchestratorComponent::BuildSnapshot() const
 {
 	FExecutionSnapshot snapshot;
 
-	snapshot.ExecutionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Dead;
+	snapshot.ExecutionState = IsValid(StateComp_Injected) ? StateComp_Injected->GetCurrentExecutionState() : EExecutionState::Max;
 	snapshot.bIsDead = !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive();
 
 	if (IsValid(ObservableOverlayComp_Injected))

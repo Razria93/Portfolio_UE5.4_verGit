@@ -13,7 +13,7 @@ feat/player-targeting-component
 ## 상태
 
 ```text
-구현 완료 (Destroy Lifecycle 연계 검증 이관)
+완료 (W06 Destroy Lifecycle 통합 검증 포함)
 ```
 
 ## 목적
@@ -101,7 +101,7 @@ FinalScore = AngleScore * AngleScoreWeight
 
 화면 뒤 이동이나 일시적 Line Of Sight 상실은 v1 자동 해제 조건에 넣지 않는다.
 
-현재 타겟을 설정하면 해당 Enemy의 `OnDestroyed`를 구독하고, 변경·수동 해제 시 이전 구독을 해제한다. 직접 파괴된 경우에는 Destroy Callback이 전달한 Enemy를 PreviousTarget으로 사용해 `OnTargetChanged(DestroyedEnemy, nullptr)`를 정확히 한 번 발행한다.
+현재 타겟을 설정하면 해당 Enemy의 `OnEndPlay`를 구독하고, 변경·수동 해제 시 이전 구독을 해제한다. Actor가 Destroy, Level Transition, Level Streaming Removal 등으로 월드를 떠나면 종료 Callback이 전달한 Actor와 현재 weak target을 index/serial identity로 비교한다. 동일한 현재 타겟일 때만 `OnTargetChanged(EndedEnemy, nullptr)`를 정확히 한 번 발행한다.
 
 ### 5. 입력과 검증
 
@@ -147,15 +147,14 @@ Source/Portfolio/Controller/CPlayerController.cpp
 Debug Snapshot과 실제 선택 점수 일치
 ```
 
-후속 Character Destroy Lifecycle 작업으로 연계 검증 이관:
+W06 Character Destroy Lifecycle에서 통합 검증 완료:
 
 ```text
-현재 타겟 직접 Destroy 시 DestroyedEnemy -> nullptr 이벤트
+현재 타겟 직접 Destroy 시 EndedEnemy -> nullptr 이벤트
 사망 해제 후 Destroy 시 이벤트 중복 없음
-MaxTargetAngleDegrees = 0 경계에서 NaN 없음
 ```
 
-현재 브랜치에는 Dead 이후 Actor를 실제로 Destroy하는 정책이 없으므로 Destroy 경계를 위한 임시 gameplay 경로를 추가하지 않는다. `OnDestroyed` bind/unbind와 callback identity 처리, 0도 View Cone의 안전한 계산 경로는 구현을 완료했다. 직접 Destroy event cardinality, 사망 해제 뒤 Destroy 중복 방지, 0도 자동화 경계는 다음 Character Destroy Lifecycle 작업에서 실제 Destroy 경로와 함께 통합 검증한다.
+W06에서 Dead 이후 Actor를 실제로 Destroy하는 정책을 구현해 현재 타겟 종료, 사망 해제 뒤 Destroy 중복 방지, Targeting/Lock Assist/Marker 해제를 통합 검증했다. 타겟 수명 구독은 `OnEndPlay`를 사용하고 callback identity는 weak object index/serial로 판별한다. 0도 View Cone의 안전한 계산 경로는 구현됐으며 해당 수학 경계의 자동화 테스트는 별도 검증 부채로 남긴다.
 
 ## 연계 결과
 
@@ -163,6 +162,6 @@ MaxTargetAngleDegrees = 0 경계에서 NaN 없음
 W05-03: 좌우 타겟 전환 완료
 W05-04: 카메라 / 이동 락온 보정 완료
 W05-05A: 타겟 마커 완료
-후속: Character Destroy Lifecycle에서 Destroy 경계 통합 검증
+W06: Character Destroy Lifecycle에서 Destroy 경계 통합 검증 완료
 별도 UI 작업: Enemy Status HUD
 ```

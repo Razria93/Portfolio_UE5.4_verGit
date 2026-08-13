@@ -26,7 +26,7 @@ protected:
 	EWeaponType CurrentWeaponType = EWeaponType::Max;
 
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	EDeadState DeadState = EDeadState::Alive;
+	bool bIsDeadPose = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Action")
 	bool bIsGuardingPose = false;
@@ -96,4 +96,5 @@ private:
 	// Component Event Callback
 	UFUNCTION()
 	void OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType);
+	void OnDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
 };

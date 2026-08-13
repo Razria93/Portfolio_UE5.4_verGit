@@ -117,6 +117,7 @@ void UCReactionComponent::ResetActiveReactionRuntimeState()
 	ActiveReactionType = EReactionType::None;
 	ActiveReactionData = FReactionData();
 	ActiveReactionExecutor = nullptr;
+	ActiveReactionContext = FReactionExecutionContext();
 }
 
 // Query
@@ -151,6 +152,15 @@ UCReaction* UCReactionComponent::GetActiveReactionExecutor() const
 	if (!IsValid(ActiveReactionExecutor)) return nullptr;
 
 	return ActiveReactionExecutor;
+}
+
+bool UCReactionComponent::GetActiveReactionContext(FReactionExecutionContext& OutContext) const
+{
+	OutContext = FReactionExecutionContext();
+	if (!IsActive() || !ActiveReactionContext.IsValidMinimal()) return false;
+
+	OutContext = ActiveReactionContext;
+	return true;
 }
 
 // Data Resolve
@@ -677,6 +687,7 @@ bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InConte
 	}
 
 	SetActiveReactionContext(InContext);
+	BroadcastReactionExecutionLifecycleEvent(EReactionExecutionLifecycleEventType::Started, EReactionFinishReason::None, InContext);
 	FReactionComponentDebug::RecordReactionRuntimeAcceptedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"));
 	return true;
 }
@@ -712,10 +723,7 @@ bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason
 	if (!IsActive()) return true;
 
 	const FReactionData activeData = ActiveReactionData;
-	FReactionExecutionContext activeContext;
-	activeContext.ReactionDataKey = activeData.ReactionDataKey;
-	activeContext.ReactionData = activeData;
-	activeContext.ReactionExecutor = ActiveReactionExecutor;
+	const FReactionExecutionContext activeContext = ActiveReactionContext;
 
 	if (activeData.IsValidMinimal())
 	{
@@ -723,6 +731,17 @@ bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason
 	}
 
 	ClearActiveReactionContext();
+
+	EReactionExecutionLifecycleEventType lifecycleEventType = EReactionExecutionLifecycleEventType::Ignored;
+	if (InFinishReason == EReactionFinishReason::Completed)
+	{
+		lifecycleEventType = EReactionExecutionLifecycleEventType::Completed;
+	}
+	else if (InFinishReason == EReactionFinishReason::Interrupted)
+	{
+		lifecycleEventType = EReactionExecutionLifecycleEventType::Interrupted;
+	}
+	BroadcastReactionExecutionLifecycleEvent(lifecycleEventType, InFinishReason, activeContext);
 
 	FReactionComponentDebug::RecordReactionRuntimeAcceptedForAudit(OwnerCharacter_Injected, activeContext, TEXT("End"));
 
@@ -740,6 +759,7 @@ void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionConte
 	ActiveReactionType = InContext.ReactionDataKey.ReactionType;
 	ActiveReactionData = InContext.ReactionData;
 	ActiveReactionExecutor = InContext.ReactionExecutor;
+	ActiveReactionContext = InContext;
 
 	if (OnReactionTypeChanged.IsBound())
 	{
@@ -754,11 +774,23 @@ void UCReactionComponent::ClearActiveReactionContext()
 	ActiveReactionType = EReactionType::None;
 	ActiveReactionData = FReactionData();
 	ActiveReactionExecutor = nullptr;
+	ActiveReactionContext = FReactionExecutionContext();
 
 	if (OnReactionTypeChanged.IsBound())
 	{
 		OnReactionTypeChanged.Broadcast(OwnerCharacter_Injected, prevReactionType, ActiveReactionType);
 	}
+}
+
+void UCReactionComponent::BroadcastReactionExecutionLifecycleEvent(EReactionExecutionLifecycleEventType InEventType, EReactionFinishReason InFinishReason, const FReactionExecutionContext& InContext)
+{
+	if (!OnReactionExecutionLifecycleEvent.IsBound()) return;
+
+	FReactionExecutionLifecycleEvent event;
+	event.EventType = InEventType;
+	event.FinishReason = InFinishReason;
+	event.Context = InContext;
+	OnReactionExecutionLifecycleEvent.Broadcast(event);
 }
 
 // State Transition
@@ -778,11 +810,6 @@ void UCReactionComponent::EnterReactionState(const FReactionData& InData)
 
 void UCReactionComponent::ExitReactionState(const FReactionData& InData)
 {
-	const bool bAlive = IsValid(HealthComp_Injected) && HealthComp_Injected->IsAlive();
-	const bool bDeadExecution = IsValid(StateComp_Injected) && StateComp_Injected->GetCurrentExecutionState() == EExecutionState::Dead;
-
-	if (!bAlive || bDeadExecution) return;
-
 	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
 		MovementComp_Injected->SetMove();

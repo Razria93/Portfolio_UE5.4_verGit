@@ -1,16 +1,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Notify/CAnimNotify_HealthBase.h"
-#include "CAnimNotify_EnterDeadState.generated.h"
+#include "Notify/CAnimNotify_ReactionBase.h"
+#include "CAnimNotify_CompleteReaction.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCAnimNotify_EnterDeadState : public UCAnimNotify_HealthBase
+class PORTFOLIO_API UCAnimNotify_CompleteReaction : public UCAnimNotify_ReactionBase
 {
 	GENERATED_BODY()
-	
+
 public:
-	UCAnimNotify_EnterDeadState();
+	UCAnimNotify_CompleteReaction();
 
 private:
 	FString GetNotifyName_Implementation() const override;

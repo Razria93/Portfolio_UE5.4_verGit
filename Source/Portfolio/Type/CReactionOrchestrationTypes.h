@@ -81,6 +81,19 @@ enum class EReactionRequestRejectReason : uint8
 };
 
 UENUM(BlueprintType)
+enum class EReactionExecutionLifecycleEventType : uint8
+{
+	None = 0,
+
+	Started,
+	Completed,
+	Interrupted,
+	Ignored,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EReactionIntentSource : uint8
 {
 	None = 0,
@@ -160,6 +173,22 @@ public:
 		return ResultType == EReactionRequestResultType::Started
 			|| ResultType == EReactionRequestResultType::Intervened;
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FReactionExecutionLifecycleEvent
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	EReactionExecutionLifecycleEventType EventType = EReactionExecutionLifecycleEventType::None;
+
+	UPROPERTY(Transient)
+	EReactionFinishReason FinishReason = EReactionFinishReason::None;
+
+	UPROPERTY(Transient)
+	FReactionExecutionContext Context = FReactionExecutionContext();
 };
 
 USTRUCT(BlueprintType)
