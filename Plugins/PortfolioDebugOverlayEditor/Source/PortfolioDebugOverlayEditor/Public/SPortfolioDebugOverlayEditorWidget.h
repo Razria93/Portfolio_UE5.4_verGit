@@ -30,8 +30,13 @@ private:
 	// ===== Options Sections =====
 
 	TSharedRef<SWidget> MakeOverlayOptionsSection();
+	TSharedRef<SWidget> MakeTargetingDisplayOptionsSection();
 	TSharedRef<SWidget> MakeTargetingDebugSection();
 	TSharedRef<SWidget> MakeFocusOptionsSection();
+	TSharedRef<SWidget> MakeFocusSearchSettingsCard() const;
+	TSharedRef<SWidget> MakeManualFocusSelectionCard();
+	TSharedRef<SWidget> MakeRuntimeFocusSourcesCard();
+	TSharedRef<SWidget> MakeClearFocusCard();
 
 	// ===== CVar Rows =====
 
