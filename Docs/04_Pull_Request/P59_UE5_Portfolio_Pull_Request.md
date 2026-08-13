@@ -30,7 +30,7 @@
 - Base: `main`
 - Branch: `feature/dead-actor-destroy-flow`
 - Base HEAD: `7a0463b9 Merge pull request #114 from Razria93/fix/targeting-stale-target-lifecycle`
-- Implementation HEAD: `fc7d5b84 docs(dead): synchronize lifecycle review documentation`
+- Implementation HEAD: `487444b0 assets(death): relocate dissolve presentation assets`
 - Merge Policy: 일반 Merge Commit
 
 ## 대표 스크린샷
@@ -149,7 +149,7 @@ Source/Portfolio/Component/CWeaponComponent.*
 Source/Portfolio/Weapon/CWeaponActor.h
 Content/01_Character/02_Enemy/BP_CEnemy.uasset
 Content/06_Weapon/BP_CWeaponActor_Sword.uasset
-Content/07_FX/Niagara/P_DissolveEdge_SK_1.uasset
+Content/07_FX/DissolveEdgeVFX/Niagara/P_DissolveEdge_SK_1.uasset
 Character / Weapon Dissolve Material assets
 ```
 
@@ -393,6 +393,8 @@ de6b043d assets(dead): configure character and weapon dissolve presentation
 814b3cac feat(debug): expose death lifecycle diagnostics
 6a05a7c5 docs(dead): update presentation and diagnostics contract
 fc7d5b84 docs(dead): synchronize lifecycle review documentation
+949e1572 fix(death): reconcile initial dead enemy lifecycle
+487444b0 assets(death): relocate dissolve presentation assets
 ```
 
 ## 정리
