@@ -131,6 +131,18 @@ public:
 	void ToggleTrailActive(bool bEnable);
 
 public:
+	// Dissolve Presentation
+	// Synchronous presentation participant only. Enemy finalization remains owned by the character death lifecycle.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon|Presentation|Dissolve")
+	void ReceiveWeaponDissolveStarted();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon|Presentation|Dissolve")
+	void ReceiveWeaponDissolveAmount(float InAmount);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon|Presentation|Dissolve")
+	void ReceiveWeaponDissolveFinished();
+
+public:
 	// Equip Notify Events
 	void AttachToHandSocket();
 	void AttachToHolsterSocket();

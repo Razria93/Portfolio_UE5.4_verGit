@@ -166,19 +166,16 @@ private:
 	FRuntimeLODActorTickState RuntimeLODActorTickState;
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "Death|Watchdog", meta = (ClampMin = 0.0))
-	float DeathPresentationWatchdogMinimumDuration = 5.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Death|Watchdog", meta = (ClampMin = 0.0))
-	float DeathPresentationWatchdogSafetyMargin = 0.5f;
+	UPROPERTY(EditDefaultsOnly, Category = "Death|Presentation", meta = (ClampMin = 0.0))
+	float DeathPresentationFallbackDelay = 3.f;
 
 private:
 	FTimerHandle DeadReactionStartFallbackTimerHandle;
-	FTimerHandle DeathPresentationWatchdogTimerHandle;
+	FTimerHandle DeathPresentationFallbackTimerHandle;
 	FTimerHandle DeathFinalizeTimerHandle;
 
 	bool bDeathLifecycleActive = false;
-	bool bDeathPresentationStarted = false;
+	bool bDeathPresentationRequested = false;
 	bool bDeathFinalizationRequested = false;
 	bool bDeathFinalized = false;
 
@@ -221,7 +218,10 @@ public:
 public:
 	// Component Query
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "Component|Weapon")
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
+
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
@@ -233,7 +233,11 @@ public:
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "Component|Feedback")
 	FORCEINLINE UCCharacterFeedbackComponent* GetCharacterFeedbackComp() const { return CharacterFeedbackComponent; }
+
+public:
 	FORCEINLINE int32 GetParryResultCount() const { return ParryResultCount; }
 	FORCEINLINE int32 GetParryStaggerThreshold() const { return ParryStaggerThreshold; }
 
@@ -299,6 +303,14 @@ public:
 	// Runtime State
 	bool TryStartKill();
 
+public:
+	// Death Lifecycle Query
+	FORCEINLINE bool IsDeathLifecycleActive() const { return bDeathLifecycleActive; }
+	FORCEINLINE bool IsDeathPresentationRequested() const { return bDeathPresentationRequested; }
+	bool IsDeathPresentationFallbackPending() const;
+	FORCEINLINE bool IsDeathFinalizationRequested() const { return bDeathFinalizationRequested; }
+	FORCEINLINE bool IsDeathFinalized() const { return bDeathFinalized; }
+
 private:
 	// Death Lifecycle Entry / State
 	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
@@ -311,10 +323,10 @@ private:
 
 	// Death Presentation
 	void BeginDeathPresentation(EDeathPresentationReason InReason);
-	void ScheduleDeathPresentationWatchdog(float InExpectedDuration);
+	void ScheduleDeathPresentationFallback();
 
-	void HandleDeathPresentationFinished();
-	void HandleDeathPresentationWatchdogExpired();
+	void HandleDeathPresentationEvent(EDeathPresentationEventType InEventType);
+	void HandleDeathPresentationFallbackExpired();
 
 	// Death Finalization
 	void RequestFinalizeDeath(EDeathFinalizeReason InReason);

@@ -151,6 +151,27 @@ void UCWeaponComponent::ClearWeaponRuntimeState()
 	}
 }
 
+void UCWeaponComponent::StartWeaponDissolve()
+{
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->ReceiveWeaponDissolveStarted();
+}
+
+void UCWeaponComponent::SetWeaponDissolveAmount(float InAmount)
+{
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->ReceiveWeaponDissolveAmount(InAmount);
+}
+
+void UCWeaponComponent::FinishWeaponDissolve()
+{
+	if (!IsValid(WeaponActor)) return;
+
+	WeaponActor->ReceiveWeaponDissolveFinished();
+}
+
 // Weapon Actor
 
 void UCWeaponComponent::DestroyWeaponActor()

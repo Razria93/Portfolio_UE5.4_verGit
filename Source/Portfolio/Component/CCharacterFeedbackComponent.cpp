@@ -2,6 +2,8 @@
 
 #include "ProjectGlobal.h"
 
+#include "Core/Debug/FDeathLifecycleDebug.h"
+
 #include "GameFramework/Character.h"
 
 UCCharacterFeedbackComponent::UCCharacterFeedbackComponent()
@@ -35,39 +37,61 @@ bool UCCharacterFeedbackComponent::ValidateRequiredComponentReferences() const
 
 // Death Presentation
 
-FDeathPresentationStartResult UCCharacterFeedbackComponent::StartDeathPresentation(EDeathPresentationReason InReason)
+bool UCCharacterFeedbackComponent::RequestDeathPresentation(EDeathPresentationReason InReason)
 {
-	FDeathPresentationStartResult result;
-	result.ExpectedDuration = FMath::Max(DeathPresentationExpectedDuration, 0.f);
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+	if (InReason == EDeathPresentationReason::None || InReason == EDeathPresentationReason::Max) return false;
 
-	if (!IsValid(OwnerCharacter_Injected)) return result;
-	if (InReason == EDeathPresentationReason::None || InReason == EDeathPresentationReason::Max) return result;
-
-	if (bDeathPresentationActive)
+	if (DeathPresentationState != EDeathPresentationRuntimeState::Inactive)
 	{
-		result.bStarted = true;
-		return result;
+		return true;
 	}
 
-	if (!OnDeathPresentationRequested.IsBound()) return result;
+	if (!OnDeathPresentationRequested.IsBound()) return false;
 
-	bDeathPresentationActive = true;
-
-	result.bStarted = true;
+	DeathPresentationState = EDeathPresentationRuntimeState::Requested;
 
 	OnDeathPresentationRequested.Broadcast(InReason);
-	return result;
+	return true;
+}
+
+void UCCharacterFeedbackComponent::NotifyDeathPresentationStarted()
+{
+	if (DeathPresentationState != EDeathPresentationRuntimeState::Requested)
+	{
+		FDeathLifecycleDebug::RecordContractViolationForAudit(OwnerCharacter_Injected, TEXT("PresentationNotifyIgnored"), FString::Printf(TEXT("Event: Started | State: %s"), *UEnum::GetValueAsString(DeathPresentationState)));
+		return;
+	}
+
+	DeathPresentationState = EDeathPresentationRuntimeState::Active;
+	OnDeathPresentationEvent.Broadcast(EDeathPresentationEventType::Started);
+}
+
+void UCCharacterFeedbackComponent::NotifyDeathPresentationUnavailable()
+{
+	if (DeathPresentationState != EDeathPresentationRuntimeState::Requested)
+	{
+		FDeathLifecycleDebug::RecordContractViolationForAudit(OwnerCharacter_Injected, TEXT("PresentationNotifyIgnored"), FString::Printf(TEXT("Event: Unavailable | State: %s"), *UEnum::GetValueAsString(DeathPresentationState)));
+		return;
+	}
+
+	DeathPresentationState = EDeathPresentationRuntimeState::Inactive;
+	OnDeathPresentationEvent.Broadcast(EDeathPresentationEventType::Unavailable);
 }
 
 void UCCharacterFeedbackComponent::NotifyDeathPresentationFinished()
 {
-	if (!bDeathPresentationActive) return;
+	if (DeathPresentationState != EDeathPresentationRuntimeState::Active)
+	{
+		FDeathLifecycleDebug::RecordContractViolationForAudit(OwnerCharacter_Injected, TEXT("PresentationNotifyIgnored"), FString::Printf(TEXT("Event: Finished | State: %s"), *UEnum::GetValueAsString(DeathPresentationState)));
+		return;
+	}
 
-	bDeathPresentationActive = false;
-	OnDeathPresentationFinished.Broadcast();
+	DeathPresentationState = EDeathPresentationRuntimeState::Inactive;
+	OnDeathPresentationEvent.Broadcast(EDeathPresentationEventType::Finished);
 }
 
 void UCCharacterFeedbackComponent::ClearRuntimeFeedback()
 {
-	bDeathPresentationActive = false;
+	DeathPresentationState = EDeathPresentationRuntimeState::Inactive;
 }

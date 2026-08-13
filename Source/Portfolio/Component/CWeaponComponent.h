@@ -78,6 +78,18 @@ public:
 	void ClearWeaponRuntimeState();
 
 public:
+	// Dissolve Presentation
+	// Synchronous forwarding only; Enemy death lifecycle owns completion and Actor destruction.
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Presentation|Dissolve")
+	void StartWeaponDissolve();
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Presentation|Dissolve")
+	void SetWeaponDissolveAmount(float InAmount);
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Presentation|Dissolve")
+	void FinishWeaponDissolve();
+
+public:
 	void OpenCollisionWindow(FName InCollisionName);
 	void CloseCollisionWindow();
 

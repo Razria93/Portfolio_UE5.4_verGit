@@ -4,6 +4,7 @@
 
 #include "Controller/CAIController.h"
 #include "Core/Debug/FCombatResultDebug.h"
+#include "Core/Debug/FDeathLifecycleDebug.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -174,7 +175,7 @@ void ACEnemy::BeginPlay()
 
 	if (IsValid(CharacterFeedbackComponent))
 	{
-		CharacterFeedbackComponent->OnDeathPresentationFinished.AddUObject(this, &ACEnemy::HandleDeathPresentationFinished);
+		CharacterFeedbackComponent->OnDeathPresentationEvent.AddUObject(this, &ACEnemy::HandleDeathPresentationEvent);
 	}
 
 	HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
@@ -183,7 +184,7 @@ void ACEnemy::BeginPlay()
 void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
-	GetWorldTimerManager().ClearTimer(DeathPresentationWatchdogTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
 
 	if (IsValid(ActionComponent))
@@ -204,7 +205,7 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	if (IsValid(CharacterFeedbackComponent))
 	{
-		CharacterFeedbackComponent->OnDeathPresentationFinished.RemoveAll(this);
+		CharacterFeedbackComponent->OnDeathPresentationEvent.RemoveAll(this);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -606,7 +607,7 @@ bool ACEnemy::TryStartKill()
 // Fallback:
 // DeadIn start failure / formal stop
 // -> BeginDeathPresentation
-// -> presentation start failure / presentation watchdog
+// -> presentation unavailable / fallback delay
 // -> RequestFinalizeDeath -> FinalizeDeath
 
 // Entry / State
@@ -627,8 +628,10 @@ void ACEnemy::BeginDeathLifecycle()
 	if (bDeathLifecycleActive || bDeathFinalized) return;
 
 	bDeathLifecycleActive = true;
-	bDeathPresentationStarted = false;
+	bDeathPresentationRequested = false;
 	bDeathFinalizationRequested = false;
+
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("LifecycleStarted"));
 
 	if (ACAIController* aiController = Cast<ACAIController>(GetController()))
 	{
@@ -652,8 +655,10 @@ void ACEnemy::AbortDeathLifecycle()
 {
 	if (bDeathFinalized) return;
 
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("LifecycleAborted"));
+
 	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
-	GetWorldTimerManager().ClearTimer(DeathPresentationWatchdogTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
 
 	if (IsValid(CharacterFeedbackComponent))
@@ -662,7 +667,7 @@ void ACEnemy::AbortDeathLifecycle()
 	}
 
 	bDeathLifecycleActive = false;
-	bDeathPresentationStarted = false;
+	bDeathPresentationRequested = false;
 	bDeathFinalizationRequested = false;
 }
 
@@ -676,11 +681,13 @@ void ACEnemy::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLife
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Started)
 	{
 		GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("DeadInStarted"));
 		return;
 	}
 
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed)
 	{
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("DeadInCompleted"));
 		BeginDeathPresentation(EDeathPresentationReason::DeadInCompleted);
 		return;
 	}
@@ -688,7 +695,7 @@ void ACEnemy::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLife
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Interrupted
 		|| InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored)
 	{
-		FLog::Log(FString::Printf(TEXT("[DeathLifecycle|DeadInStopped] Owner=%s | Event=%s"), *GetNameSafe(this), *UEnum::GetValueAsString(InEvent.EventType)));
+		FDeathLifecycleDebug::RecordContractViolationForAudit(this, TEXT("DeadInStopped"), FString::Printf(TEXT("Event: %s"), *UEnum::GetValueAsString(InEvent.EventType)));
 		BeginDeathPresentation(EDeathPresentationReason::DeadInInterrupted);
 	}
 }
@@ -697,11 +704,11 @@ void ACEnemy::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLife
 
 void ACEnemy::ValidateDeadReactionStarted()
 {
-	if (!bDeathLifecycleActive || bDeathPresentationStarted || bDeathFinalizationRequested || bDeathFinalized) return;
+	if (!bDeathLifecycleActive || bDeathPresentationRequested || bDeathFinalizationRequested || bDeathFinalized) return;
 
 	if (!IsValid(ReactionComponent) || !ReactionComponent->IsActiveReactionType(EReactionType::Dead))
 	{
-		FLog::Log(FString::Printf(TEXT("[DeathLifecycle|DeadInStartFailed] Owner=%s"), *GetNameSafe(this)));
+		FDeathLifecycleDebug::RecordContractViolationForAudit(this, TEXT("DeadInStartFailed"));
 		BeginDeathPresentation(EDeathPresentationReason::DeadInStartFailed);
 	}
 }
@@ -710,63 +717,79 @@ void ACEnemy::ValidateDeadReactionStarted()
 
 void ACEnemy::BeginDeathPresentation(EDeathPresentationReason InReason)
 {
-	if (!bDeathLifecycleActive || bDeathPresentationStarted || bDeathFinalizationRequested || bDeathFinalized) return;
+	if (!bDeathLifecycleActive || bDeathPresentationRequested || bDeathFinalizationRequested || bDeathFinalized) return;
 	if (!IsValid(HealthComponent) || HealthComponent->IsAlive()) return;
 
-	bDeathPresentationStarted = true;
+	bDeathPresentationRequested = true;
 	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+
+	ScheduleDeathPresentationFallback();
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PresentationRequested"), FString::Printf(TEXT("Reason: %s"), *UEnum::GetValueAsString(InReason)));
 
 	if (!IsValid(CharacterFeedbackComponent))
 	{
-		FLog::Log(FString::Printf(TEXT("[DeathLifecycle|PresentationStartFailed] Owner=%s | Reason=InvalidCharacterFeedback"), *GetNameSafe(this)));
-		RequestFinalizeDeath(EDeathFinalizeReason::PresentationStartFailed);
+		FDeathLifecycleDebug::RecordContractViolationForAudit(this, TEXT("PresentationUnavailable"), TEXT("Reason: InvalidCharacterFeedback"));
 		return;
 	}
 
-	const FDeathPresentationStartResult result = CharacterFeedbackComponent->StartDeathPresentation(InReason);
-	if (!result.bStarted)
+	if (!CharacterFeedbackComponent->RequestDeathPresentation(InReason))
 	{
-		FLog::Log(FString::Printf(TEXT("[DeathLifecycle|PresentationStartFailed] Owner=%s | Reason=NoPresentationListener"), *GetNameSafe(this)));
-		RequestFinalizeDeath(EDeathFinalizeReason::PresentationStartFailed);
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PresentationUnavailable"), TEXT("Reason: NoPresentationListener"));
 		return;
 	}
-
-	// A Blueprint presentation may complete synchronously while StartDeathPresentation broadcasts.
-	if (bDeathFinalizationRequested || bDeathFinalized || !CharacterFeedbackComponent->IsDeathPresentationActive()) return;
-
-	ScheduleDeathPresentationWatchdog(result.ExpectedDuration);
 }
 
-void ACEnemy::ScheduleDeathPresentationWatchdog(float InExpectedDuration)
+void ACEnemy::ScheduleDeathPresentationFallback()
 {
-	GetWorldTimerManager().ClearTimer(DeathPresentationWatchdogTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 
-	const float watchdogDuration = FMath::Max(
-		FMath::Max(DeathPresentationWatchdogMinimumDuration, 0.f),
-		FMath::Max(InExpectedDuration, 0.f) + FMath::Max(DeathPresentationWatchdogSafetyMargin, 0.f));
+	const float fallbackDelay = FMath::Max(DeathPresentationFallbackDelay, 0.f);
+	if (fallbackDelay <= 0.f)
+	{
+		DeathPresentationFallbackTimerHandle = GetWorldTimerManager().SetTimerForNextTick(this, &ACEnemy::HandleDeathPresentationFallbackExpired);
+		return;
+	}
 
 	GetWorldTimerManager().SetTimer(
-		DeathPresentationWatchdogTimerHandle,
+		DeathPresentationFallbackTimerHandle,
 		this,
-		&ACEnemy::HandleDeathPresentationWatchdogExpired,
-		watchdogDuration,
+		&ACEnemy::HandleDeathPresentationFallbackExpired,
+		fallbackDelay,
 		false);
 }
 
-void ACEnemy::HandleDeathPresentationFinished()
+void ACEnemy::HandleDeathPresentationEvent(EDeathPresentationEventType InEventType)
 {
-	if (!bDeathLifecycleActive || !bDeathPresentationStarted || bDeathFinalized) return;
+	if (!bDeathLifecycleActive || !bDeathPresentationRequested || bDeathFinalized) return;
 
-	GetWorldTimerManager().ClearTimer(DeathPresentationWatchdogTimerHandle);
-	RequestFinalizeDeath(EDeathFinalizeReason::PresentationCompleted);
+	switch (InEventType)
+	{
+	case EDeathPresentationEventType::Started:
+		GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PresentationStarted"));
+		return;
+
+	case EDeathPresentationEventType::Unavailable:
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PresentationUnavailable"));
+		return;
+
+	case EDeathPresentationEventType::Finished:
+		GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PresentationFinished"));
+		RequestFinalizeDeath(EDeathFinalizeReason::PresentationCompleted);
+		return;
+
+	default:
+		return;
+	}
 }
 
-void ACEnemy::HandleDeathPresentationWatchdogExpired()
+void ACEnemy::HandleDeathPresentationFallbackExpired()
 {
-	if (!bDeathLifecycleActive || !bDeathPresentationStarted || bDeathFinalizationRequested || bDeathFinalized) return;
+	if (!bDeathLifecycleActive || !bDeathPresentationRequested || bDeathFinalizationRequested || bDeathFinalized) return;
 
-	FLog::Log(FString::Printf(TEXT("[DeathLifecycle|PresentationTimedOut] Owner=%s"), *GetNameSafe(this)));
-	RequestFinalizeDeath(EDeathFinalizeReason::PresentationTimedOut);
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PresentationFallbackExpired"));
+	RequestFinalizeDeath(EDeathFinalizeReason::PresentationFallbackExpired);
 }
 
 // Finalization Gateway
@@ -779,9 +802,9 @@ void ACEnemy::RequestFinalizeDeath(EDeathFinalizeReason InReason)
 	if (!HealthComponent->IsDead()) return;
 
 	bDeathFinalizationRequested = true;
-	FLog::Log(FString::Printf(TEXT("[DeathLifecycle|FinalizeRequested] Owner=%s | Reason=%s"), *GetNameSafe(this), *UEnum::GetValueAsString(InReason)));
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("FinalizeRequested"), FString::Printf(TEXT("Reason: %s"), *UEnum::GetValueAsString(InReason)));
 	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
-	GetWorldTimerManager().ClearTimer(DeathPresentationWatchdogTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	DeathFinalizeTimerHandle = GetWorldTimerManager().SetTimerForNextTick(this, &ACEnemy::FinalizeDeath);
 }
 
@@ -802,8 +825,9 @@ void ACEnemy::FinalizeDeath()
 	}
 
 	bDeathFinalized = true;
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("Finalized"));
 	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
-	GetWorldTimerManager().ClearTimer(DeathPresentationWatchdogTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
 
 	CleanupDeathGameplayRuntime();
@@ -831,6 +855,14 @@ void ACEnemy::CleanupDeathGameplayRuntime()
 	{
 		CharacterFeedbackComponent->ClearRuntimeFeedback();
 	}
+}
+
+// Death Lifecycle Query
+
+bool ACEnemy::IsDeathPresentationFallbackPending() const
+{
+	const UWorld* world = GetWorld();
+	return IsValid(world) && world->GetTimerManager().IsTimerActive(DeathPresentationFallbackTimerHandle);
 }
 
 // Combat Action Query

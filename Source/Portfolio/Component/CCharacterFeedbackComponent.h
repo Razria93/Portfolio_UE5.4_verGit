@@ -7,7 +7,7 @@
 #include "CCharacterFeedbackComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDeathPresentationRequested, EDeathPresentationReason, InReason);
-DECLARE_MULTICAST_DELEGATE(FDeathPresentationFinished);
+DECLARE_MULTICAST_DELEGATE_OneParam(FDeathPresentationEvent, EDeathPresentationEventType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCCharacterFeedbackComponent : public UActorComponent
@@ -18,20 +18,19 @@ public:
 	UCCharacterFeedbackComponent();
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category = "CharacterFeedback|Death", meta = (ClampMin = 0.0))
-	float DeathPresentationExpectedDuration = 1.f;
-
-private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	bool bDeathPresentationActive = false;
+	EDeathPresentationRuntimeState DeathPresentationState = EDeathPresentationRuntimeState::Inactive;
 
 public:
+	// Event
 	UPROPERTY(BlueprintAssignable, Category = "CharacterFeedback|Death")
 	FDeathPresentationRequested OnDeathPresentationRequested;
-	FDeathPresentationFinished OnDeathPresentationFinished;
+
+	// Native Event
+	FDeathPresentationEvent OnDeathPresentationEvent;
 
 public:
 	// Component Reference
@@ -41,15 +40,24 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
-	// Death Presentation
-	FDeathPresentationStartResult StartDeathPresentation(EDeathPresentationReason InReason);
+	// Death Presentation Command
+	bool RequestDeathPresentation(EDeathPresentationReason InReason);
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterFeedback|Death")
+	void NotifyDeathPresentationStarted();
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterFeedback|Death")
+	void NotifyDeathPresentationUnavailable();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterFeedback|Death")
 	void NotifyDeathPresentationFinished();
 
+	// Runtime Cleanup
 	void ClearRuntimeFeedback();
 
 public:
 	// Query
-	FORCEINLINE bool IsDeathPresentationActive() const { return bDeathPresentationActive; }
+	FORCEINLINE EDeathPresentationRuntimeState GetDeathPresentationState() const { return DeathPresentationState; }
+	FORCEINLINE bool IsDeathPresentationRequested() const { return DeathPresentationState == EDeathPresentationRuntimeState::Requested; }
+	FORCEINLINE bool IsDeathPresentationActive() const { return DeathPresentationState == EDeathPresentationRuntimeState::Active; }
 };

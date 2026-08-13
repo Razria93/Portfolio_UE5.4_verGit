@@ -17,27 +17,31 @@ enum class EDeathPresentationReason : uint8
 };
 
 UENUM(BlueprintType)
-enum class EDeathFinalizeReason : uint8
+enum class EDeathPresentationRuntimeState : uint8
 {
-	None = 0,
-	PresentationCompleted,
-	PresentationStartFailed,
-	PresentationTimedOut,
+	Inactive = 0,
+	Requested,
+	Active,
 
 	Max
 };
 
-// Runtime Result
-
-USTRUCT(BlueprintType)
-struct FDeathPresentationStartResult
+UENUM()
+enum class EDeathPresentationEventType : uint8
 {
-	GENERATED_BODY()
+	Started = 0,
+	Unavailable,
+	Finished,
 
-public:
-	UPROPERTY(BlueprintReadOnly)
-	bool bStarted = false;
+	Max
+};
 
-	UPROPERTY(BlueprintReadOnly)
-	float ExpectedDuration = 0.f;
+UENUM(BlueprintType)
+enum class EDeathFinalizeReason : uint8
+{
+	None = 0,
+	PresentationCompleted,
+	PresentationFallbackExpired,
+
+	Max
 };
