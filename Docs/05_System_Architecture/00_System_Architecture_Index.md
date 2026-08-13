@@ -36,6 +36,6 @@
 | S27 | 전투 판정 책임 분리 결정 | `S27_UE5_Portfolio_System_Architecture.md` | 설계 결정 | System Design Records | Combat Resolution 도입 전 기록 |
 | S28 | 실행 개입 키 윈도우 모델 | `S28_UE5_Portfolio_System_Architecture.md` | 구조 모델 | System Design Records / Engine Technique 후보 | Notify window 설명 분리 검토 |
 | S29 | 실행 개입 정책 / 게이트 리팩터링 | `S29_UE5_Portfolio_System_Architecture.md` | 리팩터링 방향 | System Design Records |  |
-| S31 | Enemy Dead / Presentation / Destroy 생명주기 설계 | `S31_UE5_Portfolio_System_Architecture.md` | 최신 확정 설계 계약 | Current System / System Design Records | S30은 Balance / Collapse 설계 번호로 예약됨 |
+| S31 | Enemy Dead / Presentation / Destroy 생명주기 설계 | `S31_UE5_Portfolio_System_Architecture.md` | 구현·에셋·PIE와 동기화된 최신 계약 | Current System | Enemy Dead 구조 리뷰의 단일 기준 |
 
 ---

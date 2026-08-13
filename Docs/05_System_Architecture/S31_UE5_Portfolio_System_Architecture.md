@@ -7,7 +7,7 @@
 구현과 코드 리뷰에서는 이 문서를 Enemy Dead / Destroy 구조의 기준으로 사용한다. W06 Task Brief는 구현 절차와 검증 기록을 담당하고, 본 문서는 최신 확정 정책과 책임 경계를 담당한다.
 
 ```yaml
-Status: Runtime C++ Implemented / Asset Integration Completed / PIE Verified / Merge Preparation Pending
+Status: Runtime C++ Implemented / Asset Integration Completed / PIE Verified / Documentation Synchronized / Merge Preparation Pending
 Scope: Enemy Runtime
 Player Destroy: Out of Scope
 Ragdoll / Pooling / Respawn: Out of Scope
@@ -449,9 +449,9 @@ Enemy가 TargetingComponent를 직접 호출하지 않는다. 사망 판정에 �
 
 ---
 
-## 9. 제거 및 전환 대상
+## 9. 제거 및 전환 완료 항목
 
-최신 설계를 구현할 때 다음 기존 구조를 전수조사 후 제거 또는 교체한다.
+최신 설계를 구현하면서 다음 기존 구조의 소스 및 UAsset 참조를 전수조사한 뒤 제거하거나 교체했다.
 
 ```text
 - EDeadState의 Dying / Reviving 단계
@@ -462,7 +462,7 @@ Enemy가 TargetingComponent를 직접 호출하지 않는다. 사망 판정에 �
 - Dead Montage 후반 Finalize Notify가 직접 Destroy 시점을 소유하는 구조
 ```
 
-다음 구조는 유지한다.
+다음 기존 구조는 최신 계약과 호환되므로 유지했다.
 
 ```text
 - Health의 Alive / Dead 권한
@@ -495,7 +495,7 @@ Dissolve
 - Weapon은 동일 Timeline을 따르는 동기 참여자이며 완료 barrier에는 포함하지 않음
 ```
 
-기존 `Enter Dead State`, `Enter Alive State`, `Finalize Enemy Death` Notify는 최신 정상 흐름에 사용하지 않는다. 실제 제거는 참조 전수조사와 자산 마이그레이션을 마친 뒤 수행한다.
+기존 `Enter Dead State`, `Enter Alive State`, `Finalize Enemy Death` Notify는 최신 정상 흐름에 사용하지 않는다. 소스와 UAsset 참조 전수조사 및 자산 마이그레이션을 마친 뒤 관련 호환 코드와 Notify 클래스를 제거했다.
 
 ---
 
@@ -675,8 +675,8 @@ Enemy Death Lifecycle abort
 5. 기존 Dying / Reviving AnimBP 분기와 레거시 Notify 참조 제거
 ```
 
-실제 Blueprint에는 `Requested -> Started/Unavailable -> Finished` 통지와 Character / Weapon
-Dissolve 연결이 남아 있다. 이 자산 작업은 제거된 생명 상태 호환층과는 별개다.
+Blueprint의 `Requested -> Started/Unavailable -> Finished` 통지와 Character / Weapon
+Dissolve 연결도 완료했다. 이 표현 자산은 제거된 생명 상태 호환층에 의존하지 않는다.
 
 ## 15. Death Lifecycle Debug Overlay 계약
 
@@ -727,3 +727,83 @@ Debug Overlay Editor 패널의 `Overlay Options > Diagnostic Logging > Death Con
 Overlay 이벤트 수집에는 기존 `Collect` CVar가 적용된다. Editor 패널의 EventLog Filter에는
 `Death` 항목을 제공하며, Enemy Focus 상태 블록은 EventLog 수집 여부와 독립적으로 현재
 Snapshot을 표시한다.
+
+## 16. 구현 코드 지도와 리뷰 순서
+
+### 16.1 권장 리뷰 순서
+
+```text
+1. Type/CHealthTypes.h
+   - Alive / Dead 생명 상태 정의
+
+2. Component/CHealthComponent.*
+   - HP Commit, Dead 판정, OnDeadStateChanged
+
+3. Character/CAnimInstance.*
+   - Health 이벤트 구독과 bIsDead 표현 캐시
+
+4. Reaction/CReaction_Dead.*
+   Component/CReactionComponent.*
+   Notify/CAnimNotify_CompleteReaction.*
+   - DeadIn 후보, 실행, 명시적 완료와 MontageEnded fallback
+
+5. Character/Enemy/CEnemy.*
+   - 사망 생명주기 조정, fallback, Finalize, Destroy
+
+6. Type/CCharacterFeedbackTypes.h
+   Component/CCharacterFeedbackComponent.*
+   - Requested / Active 프로토콜과 BP 결과 통지
+
+7. Component/CWeaponComponent.*
+   Weapon/CWeaponActor.*
+   - Character Timeline을 따르는 Weapon Dissolve 참여
+
+8. Component/CTargetingComponent.*
+   - Actor OnEndPlay에 따른 Target 해제
+
+9. Core/Debug/FDeathLifecycleDebug.*
+   Debug Overlay Runtime / Editor
+   - 현재 상태, 이벤트, 계약 위반 관찰
+```
+
+### 16.2 Blueprint / UAsset 리뷰 순서
+
+```text
+1. BP_CEnemy ReactionData
+   - Dead Reaction executor와 DeadIn FullBody Montage
+
+2. DeadIn Montage
+   - Complete Reaction Notify
+   - 제거된 Health / Finalize Notify가 없는지
+
+3. AnimBP
+   - bIsDead 기반 DeadLoop base pose
+
+4. BP_CEnemy CharacterFeedback 이벤트
+   - Character Niagara spawn 성공 / 실패 통지
+   - Character / Weapon Material Timeline
+   - Niagara OnSystemFinished 완료 통지
+
+5. Character / Weapon Material 및 Niagara
+   - 유한 재생과 자연 완료
+   - Weapon이 독립 완료 barrier를 만들지 않는지
+```
+
+### 16.3 문서 책임
+
+```text
+S31
+- 현재 구조, 책임, 정상 / fallback 계약의 단일 기준
+
+S02 / S09 / S26
+- 각각 Intent, Feedback, Montage 생명주기에서 S31 경계 연결
+
+W06-01
+- 구현 범위, 자산 연결, 검증과 커밋 상태 기록
+
+N14
+- Dead / Destroy 안건의 해결 기록과 아직 남은 Execution cleanup 후속 항목
+
+W05
+- Targeting OnEndPlay 통합 검증 결과
+```

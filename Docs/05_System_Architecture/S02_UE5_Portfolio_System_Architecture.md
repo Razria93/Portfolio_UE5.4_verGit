@@ -57,7 +57,8 @@ Enemy는 사용자 입력 대신 AI 의사결정 계층이 intent를 생성함.
 
 - Perception 결과 기반 타겟 추적 결정
 - Blackboard 기반 AttackIndex 선택
-- BT를 통한 Chase / Engage / Reaction / Dead 진입 결정
+- BT를 통한 Chase / Engage 의도 결정
+- 외부 Combat Result에 따른 Reaction 요청 관찰
 
 즉, Enemy에게서 BT는 사실상 Player의 입력 계층을 대체함.
 
@@ -73,9 +74,8 @@ Enemy는 사용자 입력 대신 AI 의사결정 계층이 intent를 생성함.
 
 - `Idle -> Action`
 - `Idle -> Equip`
-- `Alive -> Reaction`
-- `Alive -> Dying`
-- `Dying -> Dead`
+- `Idle -> Reaction`
+- `Alive -> Dead`
 
 상태변환의 목적은 다음과 같음.
 
@@ -140,7 +140,7 @@ Player는 다음 정보를 기반으로 현재 실행 가능 여부를 판단함
 
 - 공격 입력 시 `Idle` 상태일 때만 공격 가능함
 - 피격 시 `Reaction` 상태에 진입함
-- HP가 0이 되면 `Dying`에 진입함
+- HP가 0이 되면 Health의 생명 상태가 `Alive -> Dead`로 확정됨
 
 ### 3.4 액션 실행
 
@@ -151,7 +151,7 @@ Player는 다음 정보를 기반으로 현재 실행 가능 여부를 판단함
 - `ActionComp`가 montage를 실행함
 - `WeaponComp`에 ActionContext를 주입함
 - `ReactionComp`가 HitReact를 실행함
-- `HealthComp`가 DeadState를 갱신함
+- `HealthComp`가 DeadState를 갱신하고 Enemy가 DeadIn Reaction을 조정함
 
 
 ---
@@ -211,7 +211,7 @@ BT는 현재 맥락에 따라 적절한 상태를 선택함.
 - 리액션 실행
 - Dead 처리
 
-즉, Enemy에서는 `BT + Blackboard + Task`가 Player의 `StateComp + ActionComp` 역할을 사실상 대체함.
+BT는 Enemy의 의도 계층을 담당하지만, Damage / CombatResult에 의해 확정된 Reaction과 DeadIn은 Target / Reaction Orchestrator가 실행한다. BT가 모든 Reaction을 직접 결정하거나 생명 상태를 소유하지 않는다.
 
 
 ---
@@ -321,6 +321,21 @@ Player와 Enemy는 제어 방식은 다르지만, 실행 구조는 동일한 추
 - 공용 전투 컴포넌트의 Player 편향 제거
 - Player / Enemy의 orchestration 계층 분리
 - 공용 파이프라인은 전투 실행 규칙만 담당하도록 정리
+
+## 9. 현재 Dead 경계
+
+Dead는 실행 상태가 아니라 Health가 소유하는 생명 상태다.
+
+```text
+Health Alive -> Dead
+-> Enemy Death Lifecycle 시작
+-> DeadIn Reaction이 현재 실행을 덮음
+-> DeadIn 완료 후 AnimBP DeadLoop 노출
+-> Feedback Presentation 완료
+-> Enemy Finalize / Destroy
+```
+
+`DeadIn`은 Reaction 실행이며 `DeadLoop`는 Locomotion 표현이다. AnimInstance의 `bIsDead`는 Health 상태를 캐시하는 표현 값일 뿐 새로운 상태 원본이 아니다. 상세 계약은 [S31 Enemy Dead / Presentation / Destroy 생명주기 설계](S31_UE5_Portfolio_System_Architecture.md)를 기준으로 한다.
 
 
 ---
