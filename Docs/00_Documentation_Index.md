@@ -22,6 +22,7 @@ PFxx -> Portfolio Document
 
 | 문서 유형 | 역할 | 인덱스 |
 | --- | --- | --- |
+| Project Plan | 프로젝트 개요 / 마일스톤 / 현재 개발 순서 관리 | `Docs/00_plan/P00_UE5_Portfolio_Plan_Overview (KR).md` / `Docs/00_plan/P02_UE5 Portfolio_Development Roadmap (KR).md` |
 | Issue Checklist | 작업 전 목표 / 체크리스트 / 검증 기준 기록 | `Docs/99_Legacy/Issue_CheckList/00_Issue_Checklist_Index.md` |
 | Work List | Branch 작업 범위 / 완료 기준 / 검증 기준 기록 | `Docs/01_Work_List/00_Work_List_Index.md` |
 | Bug Report | 재현 가능한 문제, 원인, 수정 기준 기록 | `Docs/02_Bug_Report/00_Bug_Report_Index.md` |

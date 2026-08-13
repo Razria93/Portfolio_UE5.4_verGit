@@ -37,5 +37,6 @@
 | S28 | 실행 개입 키 윈도우 모델 | `S28_UE5_Portfolio_System_Architecture.md` | 구조 모델 | System Design Records / Engine Technique 후보 | Notify window 설명 분리 검토 |
 | S29 | 실행 개입 정책 / 게이트 리팩터링 | `S29_UE5_Portfolio_System_Architecture.md` | 리팩터링 방향 | System Design Records |  |
 | S31 | Enemy Dead / Presentation / Destroy 생명주기 설계 | `S31_UE5_Portfolio_System_Architecture.md` | 구현·에셋·PIE와 동기화된 최신 계약 | Current System | Enemy Dead 구조 리뷰의 단일 기준 |
+| S32 | 공통 Combat Target 상태 및 의사결정 경계 설계 | `S32_UE5_Portfolio_System_Architecture.md` | Player/Enemy 공통 Target SoT, Perception/BT/Blackboard 경계와 단계별 마이그레이션 | Current System | 확정 설계. Goal 1 조사 완료, 구현은 Goal 2부터 진행 |
 
 ---
