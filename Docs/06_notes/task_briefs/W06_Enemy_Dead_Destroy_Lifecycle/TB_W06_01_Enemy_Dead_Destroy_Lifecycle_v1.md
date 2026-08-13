@@ -1,6 +1,6 @@
 # TB W06-01 Enemy Dead / Destroy Lifecycle v1
 
-> **2026-08-12 정책 개정:** 이 Task Brief 아래쪽에는 최초 `Alive -> Dying -> Dead`, Finalize Notify 기반 구현 기록과 당시 실행 프롬프트가 보존되어 있다. 최신 구현 기준은 `Docs/05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md`의 `Alive / Dead + DeadIn / DeadLoop + Feedback Presentation + 완료 이벤트 기반 Destroy` 계약이다. AnimBP/BT 자산 마이그레이션과 레거시 코드 제거까지 완료했으며, 상충하는 기존 문구는 구현 기준으로 사용하지 않는다.
+> **2026-08-13 정책 개정:** 이 Task Brief 아래쪽에는 최초 `Alive -> Dying -> Dead`, Finalize Notify 및 ExpectedDuration Watchdog 기반 구현 기록과 당시 실행 프롬프트가 보존되어 있다. 최신 구현 기준은 `Docs/05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md`의 `Alive / Dead + DeadIn / DeadLoop + Requested/Active Presentation + 완료 이벤트 기반 Destroy` 계약이다. 상충하는 기존 문구는 구현 기준으로 사용하지 않는다.
 
 ## 최신 확정 흐름
 
@@ -9,14 +9,17 @@ Health Alive -> Dead
 -> AnimBP bIsDead = true / DeadLoop 준비
 -> DeadIn Reaction
 -> DeadIn Completed
--> Enemy가 Feedback Component에 Death Presentation 요청
--> Dissolve Finished
--> Presentation Watchdog 해제
+-> Enemy가 Presentation Fallback Delay를 예약하고 Feedback Component에 요청
+-> 필수 Character Niagara 생성 성공
+-> NotifyDeathPresentationStarted / Fallback Delay 해제
+-> Character + Weapon Dissolve 진행
+-> Character Niagara OnSystemFinished
+-> NotifyDeathPresentationFinished
 -> RequestFinalizeDeath
 -> 다음 Tick cleanup / Destroy
 ```
 
-정상 Destroy 시점은 Dissolve 완료 이벤트가 소유한다. Timer는 `ExpectedDuration + SafetyMargin` 이후 Presentation 완료 이벤트 누락을 복구하는 Watchdog으로만 사용한다. DeadIn Reject와 formal Interrupted / Ignored는 즉시 Destroy하지 않고 동일한 Presentation 경로로 합류한다. DeadIn Started 후 종결 이벤트 누락은 Enemy Timer로 우회하지 않으며 Reaction lifecycle 계약 위반으로 취급한다.
+정상 Destroy 시점은 Character Niagara `OnSystemFinished`가 소유한다. Weapon Dissolve는 같은 Timeline을 따르는 동기 표현 참여자이며 독립 완료 barrier가 아니다. 정상 Presentation이 Started를 통지하면 Timer를 해제해 파티클 수명을 자르지 않는다. Timer는 listener 없음, 표현 미구현 또는 필수 Niagara 생성 실패 시 DeadLoop 잔존 시간을 보장하는 fallback delay로만 사용한다. DeadIn Reject와 formal Interrupted / Ignored는 즉시 Destroy하지 않고 동일한 Presentation 경로로 합류한다. DeadIn Started 후 종결 이벤트 누락은 Reaction lifecycle 계약 위반으로 취급한다.
 
 최신 정책에서 기존 `Enter Dead State`, `Enter Alive State`, `Finalize Enemy Death` Notify는 정상 흐름에 사용하지 않는다. 아래의 기존 구현 기록은 마이그레이션 대상 파악과 이력 보존 목적으로만 유지한다.
 
@@ -26,8 +29,8 @@ Health Alive -> Dead
 Runtime C++: 완료
 Development Build: 성공
 Life-State UAsset Migration: 완료
-Death Presentation Asset Integration: 대기
-PIE: 대기
+Death Presentation BP Result Integration: 완료
+PIE: 정상 / fallback / Targeting Destroy / Debug Overlay 검증 완료
 Commit / Push: 수행하지 않음
 ```
 
@@ -67,7 +70,7 @@ feature/dead-actor-destroy-flow
 ## 상태
 
 ```text
-Goal 1 Runtime 구현 / 생명 상태 자산 마이그레이션 완료 / Presentation 연결 및 PIE 대기
+Runtime / 생명 상태 자산 마이그레이션 / Presentation 연결 / PIE 통합 검증 완료 / Merge 준비 대기
 ```
 
 ## 목적
@@ -410,26 +413,31 @@ Finalize Notify 누락 후 Reaction Completed
 
 ### 작업 범위
 
-사용자가 다음 에디터 작업을 담당한다.
+다음 에디터 통합 작업을 완료했다.
 
-- Enemy Dead Montage 후반에 Finalize Death Notify 배치
-- 필요한 Blueprint / ReactionData 연결 확인
-- PIE 실행과 결과 전달
+- AnimBP `bIsDead` 기반 DeadLoop 연결
+- Dead ReactionData의 DeadIn FullBody Montage 연결
+- Character / Weapon Dissolve Presentation 연결
+- Character Niagara 결과를 Started / Unavailable / Finished 통지 API에 연결
+- 실제 PIE 정상 / fallback / Targeting Destroy / Debug Overlay 검증
 
-에이전트는 정확한 배치 위치와 검증 순서를 안내하고, 결과에 따라 필요한 최소 코드 보완을 수행한다.
+기존 `Finalize Enemy Death` Notify는 사용하지 않는다. Destroy 시점은 Character Niagara의 정상
+완료 또는 Presentation 미구현·생성 실패 fallback delay가 결정한다.
 
 ### 검증 항목
 
 ```text
 정상 사망
--> Dying
--> Dead Reaction
--> Finalize Notify
+-> Alive -> Dead
+-> DeadIn Reaction
+-> Presentation Started
+-> Character Niagara Finished
 -> Destroy
 
 Fallback
--> Finalize Notify 누락
--> Dead Reaction Completed
+-> Presentation listener 없음 또는 필수 Niagara 생성 실패
+-> Presentation Unavailable
+-> fallback delay 만료
 -> Destroy
 
 Targeting
@@ -442,6 +450,20 @@ Switching
 -> A Destroy
 -> B 유지
 ```
+
+검증 결과:
+
+```text
+PASS - 정상 DeadIn / Presentation / Destroy
+PASS - Presentation fallback
+PASS - Targeting 해제 및 이전 Target Destroy 안전성
+PASS - Death Lifecycle 상태 블록과 Death EventLog 필터
+PASS - AI / Action / Movement / Weapon runtime 정리
+```
+
+Weapon의 기존 Material 삭제 항목은 파일 소실이 아니라 Dissolve Material 구조 도입에 따른
+폴더 트리 변경이다. 최종 변경 범위 감사에서는 이동·대체된 Material과 Mesh Slot 참조가 함께
+커밋되는지만 확인한다.
 
 ### 실행 프롬프트
 
@@ -614,10 +636,11 @@ Enemy Dead / Destroy Feature PR의 리뷰 대응과 Merge Ready 검증을 목표
 ## 최종 완료 조건
 
 ```text
-- Enemy Dying에서 신규 전투 의도가 차단된다.
-- Dead Reaction이 기존 Intervention 경로로 실행된다.
-- Finalize Notify에서 최종 cleanup과 Destroy가 실행된다.
-- Reject / 비정상 Interrupt / Notify 누락에서 fallback이 실행된다.
+- Enemy Alive → Dead 진입에서 신규 전투 의도가 차단된다.
+- DeadIn Reaction이 기존 Intervention 경로로 실행된다.
+- DeadIn Completed가 Death Presentation을 요청한다.
+- Character Niagara 완료 또는 Presentation fallback delay 만료 후 최종 cleanup과 Destroy가 실행된다.
+- DeadIn 시작 실패 / formal stop은 동일한 Presentation 경로로 합류한다.
 - FinalizeDeath는 중복 호출에 안전하다.
 - Destroy와 EndPlay cleanup이 충돌하지 않는다.
 - 현재 Target Destroy가 정확히 한 번 Target을 해제한다.
@@ -630,6 +653,30 @@ Enemy Dead / Destroy Feature PR의 리뷰 대응과 Merge Ready 검증을 목표
 - 미해결 Review Thread와 Merge conflict가 없다.
 - 실제 일반 Merge만 사용자에게 남는다.
 ```
+
+## Death Lifecycle Debug Overlay 검증 계약
+
+Enemy Focus 패널은 다음 런타임 상태를 `[Death Lifecycle]` 블록에 표시한다.
+
+```text
+Health State
+Lifecycle
+DeadIn
+Presentation
+Fallback Timer
+Finalization
+```
+
+패널의 `Collect`를 활성화하고 `EventLog Filter = Death`를 선택하면 정상 전이와 fallback을
+확인할 수 있다. 계약 위반도 같은 이벤트 카테고리에 남기며, Output Log 병행이 필요한 진단
+세션에서만 다음 CVar를 활성화한다.
+
+```text
+Portfolio.Debug.DeathLifecycleAudit 1
+```
+
+직접 `FLog` 호출은 Death 생명주기의 관찰 계약으로 사용하지 않는다. 정상 전이는 Overlay로
+관찰하고, 계약 위반만 선택적 audit log를 병행한다.
 
 ## 후속 작업
 

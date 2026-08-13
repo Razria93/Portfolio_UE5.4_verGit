@@ -7,7 +7,7 @@
 구현과 코드 리뷰에서는 이 문서를 Enemy Dead / Destroy 구조의 기준으로 사용한다. W06 Task Brief는 구현 절차와 검증 기록을 담당하고, 본 문서는 최신 확정 정책과 책임 경계를 담당한다.
 
 ```yaml
-Status: Runtime C++ Implemented / Life-State Asset Migration Completed / Presentation Integration And PIE Pending
+Status: Runtime C++ Implemented / Asset Integration Completed / PIE Verified / Merge Preparation Pending
 Scope: Enemy Runtime
 Player Destroy: Out of Scope
 Ragdoll / Pooling / Respawn: Out of Scope
@@ -33,6 +33,16 @@ Death Animation / Presentation
 - DeadLoop: AnimBP Locomotion
 - Dissolve: Feedback Presentation
 - Destroy: Enemy Lifecycle Finalization
+```
+
+Destroy의 최신 정상 경로는 다음과 같다.
+
+```text
+DeadIn Reaction Completed
+-> Death Presentation 요청
+-> Character Niagara 완료 또는 fallback delay 만료
+-> 최종 gameplay cleanup
+-> Enemy Destroy
 ```
 
 ---
@@ -89,18 +99,20 @@ Destroy
 - ACEnemy Death Lifecycle이 최종 결정
 ```
 
-### 2.4 정상 Destroy 시점은 Dissolve 완료 이벤트가 결정한다
+### 2.4 정상 Destroy 시점은 표현 자원의 완료 이벤트가 결정한다
 
 정상 경로에서 고정 Destroy Timer로 Dissolve 시간을 추측하지 않는다.
 
 ```text
-Dissolve Finished
+Character Niagara OnSystemFinished
 -> Enemy::RequestFinalizeDeath(PresentationCompleted)
 -> 다음 Tick FinalizeDeath()
 -> Destroy()
 ```
 
-Timer는 정상 연출 시간을 결정하는 수단이 아니라, 완료 이벤트 누락으로 Actor가 영구 잔류하는 것을 막는 Watchdog으로만 사용한다.
+정상 표현이 실제로 시작된 뒤에는 시간 제한을 두지 않는다. 파티클이 자연 수명을 모두 소비한 시점이 시각적 완결점이며, Timer가 이를 앞질러 Actor를 제거하지 않는다.
+
+`DeathPresentationFallbackDelay`는 Watchdog이 아니다. 표현 리스너가 없거나 필수 Character Niagara 생성이 실패해 정상 완료 이벤트를 기대할 수 없을 때만, DeadLoop 시체가 최소 시간 잔존하도록 보장하는 fallback delay다.
 
 ---
 
@@ -124,7 +136,7 @@ Timer는 정상 연출 시간을 결정하는 수단이 아니라, 완료 이벤
 - 신규 AI / Action / Movement 의도 차단 연결
 - DeadIn Reaction lifecycle 관찰
 - Death Presentation 시작 요청
-- DeadIn / Presentation Watchdog 소유
+- Presentation 미구현 / 시작 실패 fallback delay 소유
 - 멱등적인 Finalize 요청과 최종 gameplay cleanup
 - Actor Destroy
 ```
@@ -153,17 +165,26 @@ Enemy는 Material Parameter, Timeline, Niagara, Sound의 구체적인 표현을 
 
 `bIsDead`는 애니메이션 표현을 위한 캐시이며 생명 상태의 새로운 권한이 아니다.
 
-### Feedback Component
+### UCCharacterFeedbackComponent
 
 ```text
-- Dissolve
-- Material Overlay
-- Death FX / Sound
-- Death Presentation 완료 이벤트
-- 예상 Presentation 시간 제공
+- Death Presentation 요청을 Blueprint에 전달
+- Requested / Active 런타임 상태 관리
+- Started / Unavailable / Finished 결과 통지 API 제공
+- 결과를 단일 native event로 Enemy에 반환
 ```
 
-기존 Action / Reaction Feedback 구조를 우선 재사용한다. 정확한 클래스 배치는 기존 S09 / S17 책임과 실제 코드를 감사한 뒤 결정하되, Feedback Component가 Actor `Destroy()`를 직접 호출하지 않는 원칙은 고정한다.
+Blueprint는 Character Material, Niagara, Sound 및 Weapon Dissolve를 조율한다. Feedback Component는 구체적인 표현 자원을 직접 소유하지 않으며 Actor `Destroy()`도 호출하지 않는다.
+
+### UCWeaponComponent / ACWeaponActor
+
+```text
+- Character Death Presentation의 동기 표현 참여자
+- Start / Amount / Finish 값을 현재 Weapon Actor에 전달
+- 독립적인 완료 권한이나 Destroy 권한은 소유하지 않음
+```
+
+Weapon은 Character와 같은 Timeline 값을 받아 Dissolve되지만, 전체 Presentation의 완료 barrier에는 참여하지 않는다. Weapon이 없거나 profiling 정책으로 생성되지 않은 경우에도 Character Presentation은 정상 진행할 수 있다.
 
 ### EndPlay
 
@@ -203,15 +224,18 @@ Reaction System
 
 ACEnemy
 -> BeginDeathPresentation(Normal)
--> Feedback Component에 Dissolve 요청
--> Presentation Watchdog 예약
+-> Presentation Fallback Delay 예약
+-> Feedback Component에 Presentation 요청
 
-Feedback Component
--> Dissolve / Overlay / FX / Sound 재생
--> OnDeathPresentationFinished
+Blueprint Presentation
+-> 필수 Character Niagara 생성 성공
+-> NotifyDeathPresentationStarted
+-> Enemy가 Fallback Delay 해제
+-> Character / Weapon Material Dissolve 및 FX / Sound 재생
+-> Character Niagara OnSystemFinished
+-> NotifyDeathPresentationFinished
 
 ACEnemy
--> Presentation Watchdog 해제
 -> RequestFinalizeDeath(PresentationCompleted)
 -> 다음 Tick FinalizeDeath()
 -> 최종 gameplay cleanup
@@ -227,69 +251,78 @@ Health가 먼저 Dead가 되므로 DeadIn Montage가 시작되기 전부터 Dead
 
 ## 5. Death Presentation 계약
 
-### 5.1 시작 결과
-
-Feedback 진입점은 최소한 다음 정보를 Enemy에 반환해야 한다.
-
-```cpp
-struct FDeathPresentationStartResult
-{
-    bool bStarted = false;
-    float ExpectedDuration = 0.f;
-};
-```
-
-정확한 타입과 API 이름은 구현 시 기존 Feedback 패턴에 맞추되 의미는 유지한다.
+### 5.1 런타임 상태와 BP 결과 통지
 
 ```text
-bStarted == true
--> ExpectedDuration + SafetyMargin으로 Watchdog 예약
+Inactive
+-> RequestDeathPresentation()
+-> Requested
 
-bStarted == false
--> Audit
--> RequestFinalizeDeath(PresentationStartFailed)
+Requested
+-> NotifyDeathPresentationStarted()
+-> Active
+
+Requested
+-> NotifyDeathPresentationUnavailable()
+-> Inactive
+
+Active
+-> NotifyDeathPresentationFinished()
+-> Inactive
 ```
 
-### 5.2 정상 완료
+`Started`는 필수 Character Niagara 등 정상 완료 이벤트를 만들 표현 자원이 실제로 생성됐다는 뜻이다. 단순히 Blueprint listener가 바인딩됐다는 사실은 시작 성공이 아니다.
 
-Timeline, Niagara 또는 Feedback 실행기가 실제 완료 시점을 알고 완료 이벤트를 발행한다.
+잘못된 순서나 중복 BP 통지는 상태를 변경하지 않고 Audit한다.
+
+### 5.2 단일 native 결과 이벤트
+
+Feedback Component는 다음 세 결과를 하나의 native event로 Enemy에 전달한다.
 
 ```text
-Timeline Finished
-또는 Niagara Finished
-또는 Feedback Sequence Completed
--> OnDeathPresentationFinished
--> Watchdog 해제
+Started
+- 실제 표현 시작 성공
+- Enemy가 fallback delay를 해제
+- 정상 종료 권한을 표현 자원에 위임
+
+Unavailable
+- 표현 미구현 또는 필수 자원 생성 실패
+- Enemy가 fallback delay를 유지
+
+Finished
+- Character Niagara가 자연 수명을 모두 소비
+- Enemy가 정상 Finalize 요청
+```
+
+BP Callable 함수는 상태 변경의 입력이고, native event는 그 결과를 Enemy에 알리는 출력이다. 두 층을 분리해 Blueprint가 Enemy 생명주기를 직접 소유하지 않게 한다.
+
+### 5.3 정상 완료 권한과 Weapon 참여
+
+정상 완료 권한은 Character Niagara의 `OnSystemFinished`가 소유한다.
+
+```text
+Character Niagara OnSystemFinished
+-> NotifyDeathPresentationFinished()
 -> RequestFinalizeDeath(PresentationCompleted)
 ```
 
-### 5.3 Presentation Watchdog
+Weapon Dissolve는 같은 Timeline 값을 받는 동기 참여자다. Weapon Actor는 독립적인 비동기 완료 이벤트를 제공하지 않으며, 전체 완료를 기다리는 barrier에도 포함하지 않는다.
 
-Watchdog은 정상 Destroy Timer가 아니다. 완료 이벤트 누락에 대한 최종 안전장치다.
+### 5.4 Presentation fallback delay
 
-```text
-WatchdogDuration = ExpectedDuration + SafetyMargin
-```
-
-Watchdog 값이 예상 Dissolve 시간보다 짧아 연출 도중 Actor를 제거하지 않도록 다음 하한을 보장한다.
-
-```cpp
-WatchdogDuration = FMath::Max(
-    ConfiguredWatchdogDuration,
-    ExpectedDuration + SafetyMargin);
-```
+Enemy는 Presentation 요청 전에 `DeathPresentationFallbackDelay`를 예약한다. Blueprint callback은 동기적으로 결과를 반환할 수 있으므로 Timer를 먼저 예약해야 한다.
 
 ```text
-Presentation Finished
--> Watchdog 취소
+Started
+-> fallback delay 해제
+-> 정상 표현 완료까지 시간 제한 없음
 
-Presentation Finished 누락
--> Watchdog 만료
--> Audit: DeathPresentationTimedOut
--> RequestFinalizeDeath(PresentationTimedOut)
+Unavailable / listener 없음 / request 실패
+-> fallback delay 유지
+-> 만료 후 RequestFinalizeDeath(PresentationFallbackExpired)
 ```
 
-`RequestFinalizeDeath()`와 `FinalizeDeath()`는 경합 또는 중복 callback에도 한 번만 파괴하도록 멱등성을 유지한다. 다만 멱등성은 정상적으로 두 번 호출하기 위한 구조가 아니라 마지막 방어 장치다.
+이 Timer는 활성 Niagara의 완료 누락을 끊는 Watchdog이 아니다. 정상 표현이 시작되면 반드시 해제한다. `RequestFinalizeDeath()`와 `FinalizeDeath()`는 경합 또는 중복 callback에도 한 번만 파괴하도록 멱등성을 유지한다.
 
 ---
 
@@ -345,8 +378,7 @@ DeadIn formal Interrupted / Ignored
 -> BeginDeathPresentation(Reason)
 
 Presentation 정상 완료
-Presentation 시작 실패
-Presentation 완료 누락 Watchdog
+Presentation 미구현 / 필수 자원 생성 실패 후 fallback delay 만료
 -> RequestFinalizeDeath(Reason)
 -> 다음 Tick FinalizeDeath()
 ```
@@ -382,7 +414,7 @@ RequestFinalizeDeath()
 FinalizeDeath()
 -> 생명 상태와 lifecycle 검증
 -> bDeathFinalized를 cleanup보다 먼저 설정
--> 모든 Death Watchdog 해제
+-> 모든 Death Timer 해제
 -> CleanupDeathGameplayRuntime()
 -> Destroy()
 ```
@@ -456,9 +488,11 @@ DeadLoop
 - DeadIn Montage 아래에서 항상 준비된 Pose로 사용
 
 Dissolve
-- Feedback Blueprint / Component에서 Timeline 또는 정규 Feedback 실행기 구성
-- 완료 시 Enemy 공개 완료 API 호출
-- ExpectedDuration을 C++ Watchdog 계산에 제공
+- Feedback Blueprint에서 Character / Weapon Material Timeline과 FX / Sound 구성
+- 필수 Character Niagara 생성 성공 시 NotifyDeathPresentationStarted 호출
+- 생성 실패 또는 미구현 시 NotifyDeathPresentationUnavailable 호출
+- Character Niagara OnSystemFinished에서 NotifyDeathPresentationFinished 호출
+- Weapon은 동일 Timeline을 따르는 동기 참여자이며 완료 barrier에는 포함하지 않음
 ```
 
 기존 `Enter Dead State`, `Enter Alive State`, `Finalize Enemy Death` Notify는 최신 정상 흐름에 사용하지 않는다. 실제 제거는 참조 전수조사와 자산 마이그레이션을 마친 뒤 수행한다.
@@ -475,7 +509,8 @@ Dissolve
 - DeadLoop가 기반 Pose로 준비됨
 - DeadIn Reaction이 재생됨
 - DeadIn Completed 후 Dissolve가 시작됨
-- Dissolve Finished에서 Watchdog이 해제됨
+- Character Niagara 생성 성공 시 fallback delay가 해제됨
+- Character Niagara OnSystemFinished에서 정상 완료가 통지됨
 - 다음 Tick Finalize 후 Destroy됨
 - 정상 경로에서 Destroy가 한 번만 호출됨
 ```
@@ -493,10 +528,11 @@ Dissolve
 ### Presentation Fallback
 
 ```text
-- Presentation 시작 실패 시 Audit 후 Finalize됨
-- Dissolve 완료 이벤트 누락 시 ExpectedDuration + Margin 이후 Finalize됨
-- Watchdog이 정상 Dissolve보다 먼저 Actor를 제거하지 않음
-- 정상 Finished와 Watchdog 경합에도 Destroy가 한 번만 실행됨
+- Presentation listener 없음 / request 실패 시 fallback delay 이후 Finalize됨
+- 필수 Character Niagara 생성 실패 시 Unavailable이 통지되고 fallback delay 이후 Finalize됨
+- Started 이후에는 fallback Timer가 해제되어 정상 Niagara 수명을 자르지 않음
+- 정상 Finished와 fallback 경합에도 Destroy가 한 번만 실행됨
+- Weapon Actor가 없거나 profiling에서 생략돼도 Character Presentation은 정상 완료됨
 ```
 
 ### Runtime / Targeting
@@ -565,27 +601,41 @@ AnimInstance
 Enemy
 - Completed / formal Interrupted / Ignored / 시작 실패를
   멱등 BeginDeathPresentation으로 합류
-- Feedback 완료 또는 Presentation Watchdog에서 다음 Tick FinalizeDeath
+- Feedback 정상 완료 또는 Presentation fallback delay에서 다음 Tick FinalizeDeath
 - 최종 gameplay cleanup 후 Destroy
 
 CharacterFeedbackComponent
 - Death Presentation 시작 요청을 Blueprint에 전달
-- ExpectedDuration 제공
-- Blueprint 완료 통지를 native delegate로 Enemy에 반환
+- Inactive / Requested / Active 런타임 상태 관리
+- Started / Unavailable / Finished BP 통지를 단일 native event로 Enemy에 반환
 - Actor Destroy 권한은 소유하지 않음
+
+WeaponComponent / WeaponActor
+- Character와 같은 Dissolve Timeline 값을 전달받는 동기 표현 참여자
+- 독립 완료 권한과 Actor Destroy 권한은 소유하지 않음
 ```
 
-### Watchdog 계산
+### 2026-08-13 Presentation 결과 계약 개정
 
-```cpp
-PresentationWatchdog = Max(
-    DeathPresentationWatchdogMinimumDuration,
-    ExpectedDuration + DeathPresentationWatchdogSafetyMargin);
+```text
+Presentation 요청 전
+-> DeathPresentationFallbackDelay 예약
+
+NotifyDeathPresentationStarted
+-> fallback delay 해제
+-> 정상 완료 권한을 Character Niagara OnSystemFinished에 위임
+
+NotifyDeathPresentationUnavailable / listener 없음 / request 실패
+-> fallback delay 유지
+-> 만료 후 PresentationFallbackExpired로 Finalize
+
+NotifyDeathPresentationFinished
+-> PresentationCompleted로 Finalize
 ```
 
-DeadIn에는 Watchdog을 두지 않는다. Reaction의 명시적 Complete / Stop 계약이 실행
-생명주기를 소유한다. Presentation Timer만 외부 Blueprint/Material 연출의 완료 통지
-누락을 복구하며, 정상 경로에서는 `NotifyDeathPresentationFinished()`가 이를 해제한다.
+DeadIn에는 Timer를 두지 않는다. Reaction의 명시적 Complete / Stop 계약이 실행
+생명주기를 소유한다. Active Presentation에도 Watchdog을 두지 않으므로 Character Niagara와
+잔여 파티클이 자연 수명을 모두 소비할 수 있다.
 
 ### 자산 마이그레이션 완료 상태
 
@@ -625,4 +675,55 @@ Enemy Death Lifecycle abort
 5. 기존 Dying / Reviving AnimBP 분기와 레거시 Notify 참조 제거
 ```
 
-실제 Dissolve Timeline과 `NotifyDeathPresentationFinished()` 연결은 Presentation 자산 작업으로 남으며, 제거된 생명 상태 호환층과는 별개다.
+실제 Blueprint에는 `Requested -> Started/Unavailable -> Finished` 통지와 Character / Weapon
+Dissolve 연결이 남아 있다. 이 자산 작업은 제거된 생명 상태 호환층과는 별개다.
+
+## 15. Death Lifecycle Debug Overlay 계약
+
+Death 생명주기 진단은 런타임 책임을 변경하지 않는 관찰 전용 축으로 둔다.
+
+```text
+ACEnemy / UCCharacterFeedbackComponent
+-> FDeathLifecycleDebug
+-> FDebugOverlaySnapshotStore
+-> Enemy Focus 패널 / Death EventLog
+```
+
+Enemy Focus 패널의 `[Death Lifecycle]` 상태 블록은 다음을 표시한다.
+
+```text
+Health State   : HealthComponent의 Alive / Dead
+Lifecycle      : Enemy Death Lifecycle 활성 여부
+DeadIn         : Inactive / Active / Exited
+Presentation   : Inactive / Requested / Active
+Fallback Timer : Pending / Inactive
+Finalization   : Inactive / Requested / Finalized
+```
+
+정상 전이는 `Death` 이벤트 카테고리에만 기록한다. 생명주기 계약 위반은 Overlay 이벤트에
+항상 기록하고 Output Log에도 기본적으로 복제한다. 다음 CVar로 Output Log 복제를 세션 중
+제어할 수 있다.
+
+```text
+Portfolio.Debug.DeathLifecycleAudit
+- Default: 1
+- 0: Output Log 복제 비활성
+- 1: Output Log 복제 활성
+```
+
+```text
+정상 전이
+-> Debug Overlay Death 이벤트
+
+계약 위반
+-> Debug Overlay Death 이벤트
+-> CVar 활성 시 audit log 병행
+```
+
+Debug Overlay Editor 패널의 `Overlay Options > Diagnostic Logging > Death Contract Audit Log`
+체크박스가 이 CVar를 제어한다. 이 설정은 정상 생명주기 이벤트의 Output Log 출력 여부에는
+영향을 주지 않는다.
+
+Overlay 이벤트 수집에는 기존 `Collect` CVar가 적용된다. Editor 패널의 EventLog Filter에는
+`Death` 항목을 제공하며, Enemy Focus 상태 블록은 EventLog 수집 여부와 독립적으로 현재
+Snapshot을 표시한다.
