@@ -66,6 +66,7 @@ private:
 	TMap<class ACAIController*, FEngageRequestContext> ConsumeRequestSnapshot();
 	void BuildRequestBucket(const TMap<class ACAIController*, FEngageRequestContext>& InRequestSnapshot, TMap<class AActor*, TArray<FEngageRequestContext>>& OutRequestBucket) const;
 	void SortRequestContexts(TArray<FEngageRequestContext>& InOutRequestContexts) const;
+	bool IsCombatTargetRevisionCurrent(const class ACAIController* InAIController, const class AActor* InTargetActor, int32 InTargetRevision) const;
 
 private:
 	// Assignment Warmup

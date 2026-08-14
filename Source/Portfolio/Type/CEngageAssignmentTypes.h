@@ -47,6 +47,9 @@ public:
 	AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
+	int32 TargetRevision = 0;
+
+	UPROPERTY(Transient)
 	int TargetPriority = INT_MAX;
 
 	UPROPERTY(Transient)
@@ -69,6 +72,9 @@ struct FEngageAssignmentContext
 public:
 	UPROPERTY(Transient)
 	AActor* TargetActor = nullptr;
+
+	UPROPERTY(Transient)
+	int32 TargetRevision = 0;
 
 	UPROPERTY(Transient)
 	ECombatRole CombatRole = ECombatRole::None;

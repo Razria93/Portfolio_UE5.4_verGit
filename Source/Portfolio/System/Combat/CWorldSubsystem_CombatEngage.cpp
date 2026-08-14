@@ -1,5 +1,8 @@
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 
+#include "Character/Enemy/CEnemy.h"
+#include "Component/CCombatTargetComponent.h"
+
 #include "ProjectGlobal.h"
 
 #include "Controller/CAIController.h"
@@ -188,9 +191,20 @@ void UCWorldSubsystem_CombatEngage::BuildRequestBucket(const TMap<ACAIController
 		const FEngageRequestContext& request = pair.Value;
 
 		if (!IsValid(request.RequestController) || !IsValid(request.TargetActor)) continue;
+		if (!IsCombatTargetRevisionCurrent(request.RequestController, request.TargetActor, request.TargetRevision)) continue;
 
 		OutRequestBucket.FindOrAdd(request.TargetActor).Add(request);
 	}
+}
+
+bool UCWorldSubsystem_CombatEngage::IsCombatTargetRevisionCurrent(const ACAIController* InAIController, const AActor* InTargetActor, int32 InTargetRevision) const
+{
+	const ACEnemy* enemy = IsValid(InAIController) ? Cast<ACEnemy>(InAIController->GetPawn()) : nullptr;
+	const UCCombatTargetComponent* combatTargetComp = IsValid(enemy) ? enemy->GetCombatTargetComp() : nullptr;
+	if (!IsValid(combatTargetComp)) return false;
+
+	const FCombatTargetSnapshot snapshot = combatTargetComp->GetCombatTargetSnapshot();
+	return snapshot.TargetActor == InTargetActor && snapshot.Revision == InTargetRevision;
 }
 
 void UCWorldSubsystem_CombatEngage::SortRequestContexts(TArray<FEngageRequestContext>& InOutRequestContexts) const
@@ -252,6 +266,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingEngageAssignments(TMap<ACAIC
 		const FEngageAssignmentContext& previousAssignment = pair.Value;
 
 		if (!IsValid(aiController)) continue;
+		if (!IsCombatTargetRevisionCurrent(aiController, previousAssignment.TargetActor, previousAssignment.TargetRevision)) continue;
 
 		if (!previousAssignment.IsValidAssignment()) continue;
 		if (previousAssignment.CombatRole != ECombatRole::Engage) continue;
@@ -303,6 +318,7 @@ void UCWorldSubsystem_CombatEngage::PromoteExistingAlertAssignments(const TMap<A
 
 			FEngageAssignmentContext promotedAssignment;
 			promotedAssignment.TargetActor = targetActor;
+			promotedAssignment.TargetRevision = requestContexts[i].TargetRevision;
 			promotedAssignment.CombatRole = ECombatRole::Engage;
 
 			if (!TryReserveAssignmentSlot(promotedAssignment, InOutSlotState)) continue;
@@ -327,6 +343,7 @@ void UCWorldSubsystem_CombatEngage::PreserveExistingAlertAssignments(TMap<ACAICo
 		const FEngageAssignmentContext& previousAssignment = pair.Value;
 
 		if (!IsValid(aiController)) continue;
+		if (!IsCombatTargetRevisionCurrent(aiController, previousAssignment.TargetActor, previousAssignment.TargetRevision)) continue;
 		if (InOutNextAssignments.Contains(aiController)) continue;
 
 		if (!previousAssignment.IsValidAssignment()) continue;
@@ -370,6 +387,7 @@ void UCWorldSubsystem_CombatEngage::ApplyFreshRequestAssignments(const TMap<AAct
 
 			FEngageAssignmentContext freshAssignment;
 			freshAssignment.TargetActor = targetActor;
+			freshAssignment.TargetRevision = requestContexts[i].TargetRevision;
 
 			FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindOrAdd(targetActor);
 			if (targetSlotState.EngageCount < GetEngageAssignmentEngageCap())

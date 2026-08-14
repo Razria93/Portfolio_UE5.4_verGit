@@ -260,6 +260,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	FEngageRequestContext requestContext;
 	requestContext.RequestController = aiController;
 	requestContext.TargetActor = InOutAIContext.CombatTargetActor;
+	requestContext.TargetRevision = InOutAIContext.CombatTargetRevision;
 	requestContext.TargetPriority = InOutAIContext.TargetPriority;
 	requestContext.DistanceToTarget = InOutAIContext.DistanceToTarget;
 	requestContext.bWasEngaged = previousAssignmentContext.IsValidAssignment() && previousAssignmentContext.CombatRole == ECombatRole::Engage;

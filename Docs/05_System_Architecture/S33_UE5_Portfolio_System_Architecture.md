@@ -879,6 +879,12 @@ Combat Signal Source Target 해석
 - Enemy Blackboard에 `PerceivedTargetActor` Object/Actor 키와 `CombatTargetRevision` Int 키를 추가한다.
 - 기존 `TargetActor` Object/Actor 키는 삭제·이름 변경하지 않고 Combat Target projection으로 사용한다.
 - Perception 후보가 준비된 BT 경로에 `Request Combat Target Selection` Task를 연결한다. Task 연결 전에는 Perception만 갱신되고 Combat Target은 확정되지 않는다.
+
+### Goal 5-A 구현 메모 — Engage Revision과 Combat Signal Target
+
+- `FEngageRequestContext`와 `FEngageAssignmentContext`는 Target Actor와 함께 `TargetRevision`을 보존한다.
+- Engage Subsystem은 request bucket 구성과 기존 assignment lease 보존 전에 Enemy Combat Target Snapshot의 Actor·Revision을 함께 검증한다. 일치하지 않는 지연 요청·할당은 다음 결과에 반영하지 않는다.
+- Combat Signal timing cue의 기본 Target 해석은 AI Blackboard가 아니라 Owner Character의 `UCCombatTargetComponent` Snapshot을 사용한다.
 6. Player와 Enemy의 선택 정책을 억지로 공통화했는가?
 7. Target Consumer가 Selection 또는 수명 책임을 침범하는가?
 8. Destroy·EndPlay·stale·이전 callback 경계가 안전한가?
