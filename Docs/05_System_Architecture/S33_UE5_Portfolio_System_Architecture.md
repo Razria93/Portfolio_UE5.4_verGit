@@ -15,7 +15,7 @@
 - 설계 계약: 확정
 - Goal 1 — 조사와 설계 확정: 완료
 - Goal 2 — 공통 Combat Target Kernel: 구현 완료
-- Player Target 마이그레이션: 후속 작업
+- Goal 3 — Player Target 마이그레이션: 구현 완료
 - Enemy Target Selection 및 Blackboard 투영: 후속 작업
 - Engage·Facing 연동: 후속 작업
 
@@ -288,26 +288,20 @@ Consumer는 이벤트 payload만으로 해당 변경 세대를 해석할 수 있
 - 이전 Target의 늦은 종료 callback 방어
 - Player·Enemy에서 Combat Target Component 접근 API 제공
 
-## 4.2 아직 기존 구조가 소유하는 기능
+## 4.2 Player 마이그레이션 완료
 
-기존 `UCTargetingComponent`는 아직 다음을 함께 가진다.
+`UCTargetingComponent`는 다음 Player 선택 정책만 소유한다.
 
 - Player 후보 수집
 - 후보 점수 계산
 - Target 선택·전환
-- 자체 CurrentTarget 저장
-- 자체 TargetChanged 이벤트
-- Target 수명 처리
+- 거리·View Cone·생존 상태 기반 정책 유효성 검사
+- 선택 평가용 Debug Snapshot
 
-따라서 현재는 `UCCombatTargetComponent` Kernel이 추가되었지만 Player Runtime의 완전한 SoT 전환은 끝나지 않았다.
+확정 Target 저장, 변경 이벤트, Target EndPlay 구독, stale weak 정리는 모두 `UCCombatTargetComponent`가 소유한다. Player Runtime의 Combat Target SoT는 하나다.
 
 ## 4.3 후속 마이그레이션 대상
 
-- `UCTargetingComponent`의 자체 Target 상태 제거
-- Player Target 선택 결과를 `UCCombatTargetComponent`에 Commit
-- Target Lock Assist가 Combat Target SoT를 소비하도록 전환
-- Target HUD Presenter가 Combat Target SoT를 소비하도록 전환
-- Debug Overlay Player Target Focus가 Combat Target SoT를 소비하도록 전환
 - Enemy Target Selection Component 추가
 - Blackboard TargetActor를 SoT 투영값으로 전환
 - Combat Signal Source의 Blackboard 직접 Target 의존 제거
@@ -352,6 +346,14 @@ Input
 ```text
 UCPlayerTargetSelectionComponent
 ```
+
+현 구현에서는 UAsset과 Blueprint 연결을 유지하기 위해 `UCTargetingComponent` 이름을 유지한다. 이름 변경은 별도 자산 마이그레이션 작업에서 판단한다.
+
+### Player Consumer 참조 수명
+
+`ACPlayerController`가 소유한 Targeting, Lock Assist, HUD Consumer는 Possess 시 현재 `ACPlayer`의 `CombatTargetComponent`를 주입받는다. 각 Consumer는 변경 이벤트를 구독한 뒤 Snapshot을 조회해 현재 상태로 재조정한다.
+
+UnPossess 시에는 Combat Target Component 참조와 이벤트 구독을 먼저 해제한다. Lock Assist는 그 뒤 Controlled Player의 회전 정책을 복구하고, HUD는 Target Marker를 숨긴다.
 
 ---
 
@@ -672,6 +674,8 @@ TargetRevisionPolicy
 
 ## Goal 3 — Player Target 마이그레이션
 
+상태: 구현 완료
+
 ```text
 기존 TargetingComponent
 → Selection 책임만 유지
@@ -685,6 +689,7 @@ TargetRevisionPolicy
 - Player Combat Target SoT가 하나뿐임
 - 기존 선택·전환·카메라·마커 동작 회귀 없음
 - Target Destroy/EndPlay 시 이벤트가 한 번만 발생
+- Possess/UnPossess 뒤 Consumer가 Snapshot으로 현재 Player 상태를 재조정하고 이전 Player 구독을 남기지 않음
 
 ## Goal 4 — Enemy Target Selection과 BB 투영
 

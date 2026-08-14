@@ -142,9 +142,7 @@ bool UCTargetingComponent::SwitchTarget(ETargetSwitchDirection InDirection)
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
 	if (!IsValid(CombatTargetComponent_Injected)) return false;
 
-	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected)
-		? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor())
-		: nullptr;
+	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected) ? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor()) : nullptr;
 	if (!IsValid(currentTarget)) return AcquireBestTarget();
 
 	FVector2D currentScreenPosition = FVector2D::ZeroVector;
@@ -198,9 +196,7 @@ void UCTargetingComponent::ClearTarget()
 
 bool UCTargetingComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const
 {
-	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected)
-		? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor())
-		: nullptr;
+	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected) ? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor()) : nullptr;
 	if (!BuildTargetEvaluation(currentTarget, OutSnapshot)) return false;
 
 	OutSnapshot.TargetActor = currentTarget;
@@ -274,10 +270,7 @@ bool UCTargetingComponent::BuildTargetEvaluation(const ACEnemy* InTarget, FTarge
 	return true;
 }
 
-bool UCTargetingComponent::IsTargetEvaluationValid(
-	const ACEnemy* InTarget,
-	const FTargetingDebugSnapshot& InEvaluation,
-	bool bRequireViewCone) const
+bool UCTargetingComponent::IsTargetEvaluationValid(const ACEnemy* InTarget, const FTargetingDebugSnapshot& InEvaluation, bool bRequireViewCone) const
 {
 	if (!IsValid(InTarget)) return false;
 
