@@ -866,6 +866,19 @@ Combat Signal Source Target 해석
 3. 지연 결과가 Target Revision을 검증하는가?
 4. Event 구독자가 초기 Snapshot을 읽는가?
 5. Perception·Blackboard·Engage·Combat Target의 의미가 섞였는가?
+
+### Goal 4 구현 메모 — Enemy Target Selection과 Blackboard Projection
+
+- `UCEnemyTargetSelectionComponent`는 BT가 전달한 명시 후보를 검증해 `UCCombatTargetComponent`에만 commit 요청한다. Component 자체는 Current Target을 저장하지 않는다.
+- `PerceivedTargetActor`는 Perception 후보이며, 기존 `TargetActor` 키는 확정 Combat Target의 projection으로 유지한다. `CombatTargetRevision`은 동일 Snapshot 세대의 Revision이다.
+- `UCBTTask_RequestCombatTargetSelection`만 후보를 Target 선택 요청으로 승격한다. Blackboard write는 Combat Target을 변경하지 않는다.
+- Projection은 `UCBTService_UpdateAIContext`가 Tick 중 Snapshot을 읽어 수행한다. 후보 상실은 Perception 값만 clear하며 현재 Combat Target을 자동 clear하지 않는다.
+
+### Goal 4 UAsset 수동 연결
+
+- Enemy Blackboard에 `PerceivedTargetActor` Object/Actor 키와 `CombatTargetRevision` Int 키를 추가한다.
+- 기존 `TargetActor` Object/Actor 키는 삭제·이름 변경하지 않고 Combat Target projection으로 사용한다.
+- Perception 후보가 준비된 BT 경로에 `Request Combat Target Selection` Task를 연결한다. Task 연결 전에는 Perception만 갱신되고 Combat Target은 확정되지 않는다.
 6. Player와 Enemy의 선택 정책을 억지로 공통화했는가?
 7. Target Consumer가 Selection 또는 수명 책임을 침범하는가?
 8. Destroy·EndPlay·stale·이전 callback 경계가 안전한가?

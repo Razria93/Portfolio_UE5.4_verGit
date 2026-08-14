@@ -3,6 +3,7 @@
 #include "ProjectGlobal.h"
 
 #include "Character/Enemy/CEnemy.h"
+#include "Component/CCombatTargetComponent.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "Core/Debug/FAICombatBTDebug.h"
 #include "Type/CActionOrchestrationTypes.h"
@@ -32,10 +33,16 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	}
 
 	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
-	AActor* targetActor = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	const UCCombatTargetComponent* combatTargetComp = IsValid(enemy) ? enemy->GetCombatTargetComp() : nullptr;
+	AActor* targetActor = IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetSnapshot().TargetActor : nullptr;
 	if (!IsValid(enemy))
 	{
 		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, aiController->GetPawn(), targetActor, CombatActionIntent, FActionRequestResult(), TEXT("InvalidEnemyPawn"));
+		return EBTNodeResult::Failed;
+	}
+	if (!IsValid(targetActor))
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("MissingCombatTarget"));
 		return EBTNodeResult::Failed;
 	}
 

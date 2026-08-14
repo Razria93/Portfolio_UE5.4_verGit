@@ -41,6 +41,7 @@ namespace CAIKeyRegistry
 		{
 			// Targeting
 			CAIKey::Targeting::TargetActor,
+			CAIKey::Targeting::CombatTargetRevision,
 			CAIKey::Targeting::TargetPriority,
 
 			// State
@@ -48,6 +49,7 @@ namespace CAIKeyRegistry
 
 			// Perception
 			CAIKey::Perception::bHasLOS,
+			CAIKey::Perception::PerceivedTargetActor,
 			CAIKey::Perception::LastSeenTime,
 			CAIKey::Perception::LastKnownLocation,
 

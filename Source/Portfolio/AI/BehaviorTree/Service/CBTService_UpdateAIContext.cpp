@@ -6,6 +6,8 @@
 #include "Controller/CAIController.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CCombatTargetComponent.h"
+#include "Character/Enemy/CEnemy.h"
 #include "System/Combat/CWorldSubsystem_CombatEngage.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
@@ -56,6 +58,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 		ClearHomeMetricContext(blackboardComp);
 
 		ClearPerceptionContext(blackboardComp);
+		ClearCombatTargetProjection(blackboardComp);
 
 		ClearAlertRangeContext(blackboardComp);
 		ClearEngageAssignmentContext(blackboardComp);
@@ -92,26 +95,30 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	else
 		ClearHomeMetricContext(blackboardComp);
 
-	// Build perception-based target context before target-dependent metrics.
+	// Perception only produces a candidate; it never commits Combat Target state.
 	EContextBuildResult buildResult = BuildPerceptionContext(ownerPawn, aiContext);
-
-	if (buildResult != EContextBuildResult::Success)
+	if (buildResult == EContextBuildResult::Success)
 	{
-		FAICombatBTDebug::RecordAIContextClearedForAudit(aiOwner, ownerPawn, aiContext.TargetActor, TEXT("PerceptionContext"), *UEnum::GetValueAsString(buildResult));
+		UpdatePerceptionContext(blackboardComp, aiContext);
+	}
+	else
+	{
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiOwner, ownerPawn, nullptr, TEXT("PerceptionContext"), *UEnum::GetValueAsString(buildResult));
 		ClearPerceptionContext(blackboardComp);
-
-		ClearAlertRangeContext(blackboardComp);
-		ClearEngageAssignmentContext(blackboardComp);
-
-		aiOwner->RefreshRuntimeLODTierFromBlackboard();
-
-		return;
 	}
 
-	UpdatePerceptionContext(blackboardComp, aiContext);
-	aiOwner->RecordBlackboardTargetSetForAudit(aiContext.TargetActor);
+	const EContextBuildResult combatTargetResult = BuildCombatTargetContext(ownerPawn, aiContext);
+	if (combatTargetResult == EContextBuildResult::Success)
+	{
+		UpdateCombatTargetProjection(blackboardComp, aiContext);
+		aiOwner->RecordBlackboardTargetSetForAudit(aiContext.CombatTargetActor);
+	}
+	else
+	{
+		ClearCombatTargetProjection(blackboardComp);
+	}
 
-	// Compute target-actor based context after perception succeeds.
+	// Alert remains perception-based; Engage uses only committed Combat Target state.
 	EContextBuildResult engageMetricResult = ComputeAlertRangeContext(ownerPawn, blackboardComp, aiContext);
 
 	if (engageMetricResult == EContextBuildResult::Success)
@@ -144,7 +151,7 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* I
 	if (Result == EPerceptionBuildResult::Error) return EContextBuildResult::Error;
 	if (Result == EPerceptionBuildResult::NoData) return EContextBuildResult::NoData;
 
-	OutAIContext.TargetActor = topState.TargetActor;
+	OutAIContext.PerceivedTargetActor = topState.TargetActor;
 	OutAIContext.TargetPriority = topState.TargetPriority;
 	OutAIContext.bHasLOS = topState.bHasLOS;
 	OutAIContext.LastSeenTime = topState.LastSeenTime;
@@ -152,6 +159,20 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildPerceptionContext(APawn* I
 
 	aiController->RecordPerceptionContextBuiltForAudit(topState.TargetActor);
 
+	return EContextBuildResult::Success;
+}
+
+EContextBuildResult UCBTService_UpdateAIContext::BuildCombatTargetContext(APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext) const
+{
+	const ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
+	const UCCombatTargetComponent* combatTargetComp = IsValid(enemy) ? enemy->GetCombatTargetComp() : nullptr;
+	if (!IsValid(combatTargetComp)) return EContextBuildResult::Error;
+
+	const FCombatTargetSnapshot snapshot = combatTargetComp->GetCombatTargetSnapshot();
+	if (!IsValid(snapshot.TargetActor)) return EContextBuildResult::NoData;
+
+	OutAIContext.CombatTargetActor = snapshot.TargetActor;
+	OutAIContext.CombatTargetRevision = snapshot.Revision;
 	return EContextBuildResult::Success;
 }
 
@@ -175,7 +196,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeHomeMetricContext(APawn*
 EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn* InOwnerPawn, UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InOutAIContext) const
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp)) return EContextBuildResult::Error;
-	if (!IsValid(InOutAIContext.TargetActor)) return EContextBuildResult::NoData;
+	if (!IsValid(InOutAIContext.PerceivedTargetActor)) return EContextBuildResult::NoData;
 
 	float chaseOffsetRange = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseOffsetRange.KeyName);
 	float chaseEnterBuffer = InBlackboardComp->GetValueAsFloat(CAIKey::Chase::ChaseEnterBuffer.KeyName);
@@ -184,7 +205,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 	bool bInAlertRange = InBlackboardComp->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
 
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
-	FVector targetLocation = InOutAIContext.TargetActor->GetActorLocation();
+	FVector targetLocation = InOutAIContext.PerceivedTargetActor->GetActorLocation();
 
 	float distanceToTarget = FVector::Dist(ownerLocation, targetLocation);
 
@@ -210,19 +231,19 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
 	{
-		FAICombatBTDebug::RecordAIContextClearedForAudit(nullptr, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("InvalidInput"));
+		FAICombatBTDebug::RecordAIContextClearedForAudit(nullptr, InOwnerPawn, InOutAIContext.CombatTargetActor, TEXT("EngageAssignmentContext"), TEXT("InvalidInput"));
 		return EContextBuildResult::Error;
 	}
-	if (!IsValid(InOutAIContext.TargetActor))
+	if (!IsValid(InOutAIContext.CombatTargetActor))
 	{
-		FAICombatBTDebug::RecordAIContextClearedForAudit(nullptr, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingTarget"));
+		FAICombatBTDebug::RecordAIContextClearedForAudit(nullptr, InOwnerPawn, InOutAIContext.CombatTargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingTarget"));
 		return EContextBuildResult::NoData;
 	}
 
 	ACAIController* aiController = Cast<ACAIController>(InOwnerPawn->GetController());
 	if (!IsValid(aiController))
 	{
-		FAICombatBTDebug::RecordAIContextClearedForAudit(aiController, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingAIController"));
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiController, InOwnerPawn, InOutAIContext.CombatTargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingAIController"));
 		return EContextBuildResult::Error;
 	}
 
@@ -230,7 +251,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	UCWorldSubsystem_CombatEngage* subsystem = IsValid(world) ? world->GetSubsystem<UCWorldSubsystem_CombatEngage>() : nullptr;
 	if (!IsValid(subsystem))
 	{
-		FAICombatBTDebug::RecordAIContextClearedForAudit(aiController, InOwnerPawn, InOutAIContext.TargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingEngageSubsystem"));
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiController, InOwnerPawn, InOutAIContext.CombatTargetActor, TEXT("EngageAssignmentContext"), TEXT("MissingEngageSubsystem"));
 		return EContextBuildResult::Error;
 	}
 
@@ -238,13 +259,13 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 
 	FEngageRequestContext requestContext;
 	requestContext.RequestController = aiController;
-	requestContext.TargetActor = InOutAIContext.TargetActor;
+	requestContext.TargetActor = InOutAIContext.CombatTargetActor;
 	requestContext.TargetPriority = InOutAIContext.TargetPriority;
 	requestContext.DistanceToTarget = InOutAIContext.DistanceToTarget;
 	requestContext.bWasEngaged = previousAssignmentContext.IsValidAssignment() && previousAssignmentContext.CombatRole == ECombatRole::Engage;
 
 	subsystem->SubmitRequest(requestContext);
-	aiController->RecordEngageRequestSubmittedForAudit(InOutAIContext.TargetActor);
+	aiController->RecordEngageRequestSubmittedForAudit(InOutAIContext.CombatTargetActor);
 
 	const FEngageAssignmentContext curAssignmentContext = subsystem->GetAssignment(aiController); // Current Context
 
@@ -252,11 +273,11 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeEngageAssignmentContext(
 	InOutAIContext.bShouldEngage = InOutAIContext.CombatRole == ECombatRole::Engage;
 	if (InOutAIContext.bShouldEngage)
 	{
-		aiController->RecordEngageAssignmentResolvedForAudit(InOutAIContext.TargetActor);
+		aiController->RecordEngageAssignmentResolvedForAudit(InOutAIContext.CombatTargetActor);
 	}
 	else
 	{
-		FAICombatBTDebug::RecordAIContextEngageAssignmentForAudit(aiController, InOwnerPawn, InOutAIContext.TargetActor, InOutAIContext.CombatRole, InOutAIContext.bShouldEngage, TEXT("EngageAssignmentPending"));
+		FAICombatBTDebug::RecordAIContextEngageAssignmentForAudit(aiController, InOwnerPawn, InOutAIContext.CombatTargetActor, InOutAIContext.CombatRole, InOutAIContext.bShouldEngage, TEXT("EngageAssignmentPending"));
 	}
 
 	return EContextBuildResult::Success;
@@ -291,13 +312,20 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeDeadContext(APawn* InOwn
 void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
-	if (!IsValid(InAIContext.TargetActor)) return;
+	if (!IsValid(InAIContext.PerceivedTargetActor)) return;
 
-	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::Targeting::TargetActor.KeyName, InAIContext.TargetActor);
+	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::Perception::PerceivedTargetActor.KeyName, InAIContext.PerceivedTargetActor);
 	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Targeting::TargetPriority.KeyName, InAIContext.TargetPriority);
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Perception::bHasLOS.KeyName, InAIContext.bHasLOS);
 	CAIBlackboardValueHelper::SetFloatIfChanged(InBlackboardComp, CAIKey::Perception::LastSeenTime.KeyName, InAIContext.LastSeenTime);
 	CAIBlackboardValueHelper::SetVectorIfChanged(InBlackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, InAIContext.LastKnownLocation);
+}
+
+void UCBTService_UpdateAIContext::UpdateCombatTargetProjection(UBlackboardComponent* InBlackboardComp, const FAIBlackboardUpdateContext& InAIContext)
+{
+	if (!IsValid(InBlackboardComp)) return;
+	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::Targeting::TargetActor.KeyName, InAIContext.CombatTargetActor);
+	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Targeting::CombatTargetRevision.KeyName, InAIContext.CombatTargetRevision);
 }
 
 void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
@@ -345,9 +373,16 @@ void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* I
 {
 	if (!IsValid(InBlackboardComp)) return;
 
-	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
+	InBlackboardComp->ClearValue(CAIKey::Perception::PerceivedTargetActor.KeyName);
 	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetPriority.KeyName);
 	InBlackboardComp->ClearValue(CAIKey::Perception::bHasLOS.KeyName);
+}
+
+void UCBTService_UpdateAIContext::ClearCombatTargetProjection(UBlackboardComponent* InBlackboardComp)
+{
+	if (!IsValid(InBlackboardComp)) return;
+	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
+	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Targeting::CombatTargetRevision.KeyName, 0);
 }
 
 void UCBTService_UpdateAIContext::ClearHomeMetricContext(UBlackboardComponent* InBlackboardComp)

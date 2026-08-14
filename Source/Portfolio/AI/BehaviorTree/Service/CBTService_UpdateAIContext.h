@@ -25,6 +25,7 @@ protected:
 private:
 	// Context Build
 	EContextBuildResult BuildPerceptionContext(class APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext);
+	EContextBuildResult BuildCombatTargetContext(class APawn* InOwnerPawn, FAIBlackboardUpdateContext& OutAIContext) const;
 
 private:
 	// Context Compute
@@ -37,6 +38,7 @@ private:
 private:
 	// Blackboard Update
 	void UpdatePerceptionContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
+	void UpdateCombatTargetProjection(class UBlackboardComponent* InBlackboardComp, const FAIBlackboardUpdateContext& InAIContext);
 	void UpdateHomeMetricContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
 	void UpdateAlertRangeContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
 	void UpdateEngageAssignmentContext(class UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext);
@@ -46,6 +48,7 @@ private:
 private:
 	// Blackboard Clear
 	void ClearPerceptionContext(class UBlackboardComponent* InBlackboardComp);
+	void ClearCombatTargetProjection(class UBlackboardComponent* InBlackboardComp);
 	void ClearHomeMetricContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearAlertRangeContext(class UBlackboardComponent* InBlackboardComp);
 	void ClearEngageAssignmentContext(class UBlackboardComponent* InBlackboardComp);

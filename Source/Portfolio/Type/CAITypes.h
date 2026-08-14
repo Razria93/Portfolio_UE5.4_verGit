@@ -68,7 +68,7 @@ struct FTargetPerceptionState
 
 public:
     UPROPERTY(Transient)
-    class AActor* TargetActor = nullptr;
+	class AActor* TargetActor = nullptr;
 
     UPROPERTY(Transient)
     int TargetPriority = INT_MAX;
@@ -80,7 +80,7 @@ public:
     float LastSeenTime = 0.f;
 
     UPROPERTY(Transient)
-    FVector LastKnownLocation = FVector::ZeroVector;
+	FVector LastKnownLocation = FVector::ZeroVector;
 
 public:
     FTargetPerceptionState() = default;
@@ -90,7 +90,7 @@ public:
 public:
     bool IsValidData() const
     {
-        return IsValid(TargetActor);
+		return IsValid(TargetActor);
     }
 };
 
@@ -104,7 +104,7 @@ struct FAIBlackboardUpdateContext
 public:
     // Perception Context
     UPROPERTY(Transient)
-    class AActor* TargetActor = nullptr;
+    class AActor* PerceivedTargetActor = nullptr;
 
     UPROPERTY(Transient)
     int TargetPriority = INT_MAX;
@@ -117,6 +117,13 @@ public:
 
     UPROPERTY(Transient)
     FVector LastKnownLocation = FVector::ZeroVector;
+
+    // Combat Target projection context
+    UPROPERTY(Transient)
+    class AActor* CombatTargetActor = nullptr;
+
+    UPROPERTY(Transient)
+    int32 CombatTargetRevision = 0;
 
     // Metric Context (Home)
     UPROPERTY(Transient)
@@ -156,7 +163,7 @@ public:
 public:
     bool IsValidContext() const
     {
-        return IsValid(TargetActor);
+        return IsValid(CombatTargetActor);
     }
 };
 

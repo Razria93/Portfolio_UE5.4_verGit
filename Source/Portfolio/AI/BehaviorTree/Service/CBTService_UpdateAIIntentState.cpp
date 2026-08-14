@@ -73,10 +73,11 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 
 	// Gather blackboard context for intent selection.
 	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	AActor* perceivedTarget = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Perception::PerceivedTargetActor.KeyName));
 
 	const bool bHasTarget = IsValid(target);
 	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
-	const bool bHasAwareness = bHasTarget || bHasLOS;
+	const bool bHasAwareness = IsValid(perceivedTarget) || bHasLOS;
 
 	const bool bUseInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName);
 	const bool bShouldInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName);

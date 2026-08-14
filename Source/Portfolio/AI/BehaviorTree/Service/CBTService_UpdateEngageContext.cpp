@@ -2,6 +2,7 @@
 
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Character/Enemy/CEnemy.h"
+#include "Component/CCombatTargetComponent.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Core/Debug/FAICombatBTDebug.h"
@@ -90,7 +91,8 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 		return EContextBuildResult::Error;
 	}
 
-	OutEngageContext.TargetActor = Cast<AActor>(InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	const UCCombatTargetComponent* combatTargetComp = enemy->GetCombatTargetComp();
+	OutEngageContext.TargetActor = IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetSnapshot().TargetActor : nullptr;
 	if (!IsValid(OutEngageContext.TargetActor))
 	{
 		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingTarget"));

@@ -30,7 +30,7 @@ FAIRuntimeLODTierContext FAIRuntimeLODTierResolver::BuildContext(const UBlackboa
 	context.AIIntentState = static_cast<EAIIntentState>(InBlackboardComp.GetValueAsEnum(CAIKey::State::AIIntentState.KeyName));
 	context.CombatRole = static_cast<ECombatRole>(InBlackboardComp.GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
 
-	const AActor* targetActor = Cast<AActor>(InBlackboardComp.GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	const AActor* targetActor = Cast<AActor>(InBlackboardComp.GetValueAsObject(CAIKey::Perception::PerceivedTargetActor.KeyName));
 	const bool bHasLOS = InBlackboardComp.GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
 	context.bHasTargetAwareness = IsValid(targetActor) || bHasLOS;
 
