@@ -8,11 +8,10 @@
 
 namespace CAIKey
 {
-	namespace Targeting
+	namespace CombatTarget
 	{
-		static const FAIBlackboardKeySpec TargetActor = CAIKeyFactory::FixedObjectNull(TEXT("TargetActor"));
+		static const FAIBlackboardKeySpec Actor = CAIKeyFactory::FixedObjectNull(TEXT("CombatTargetActor"));
 		static const FAIBlackboardKeySpec CombatTargetRevision = CAIKeyFactory::FixedInt(TEXT("CombatTargetRevision"), 0);
-		static const FAIBlackboardKeySpec TargetPriority = CAIKeyFactory::FixedInt(TEXT("TargetPriority"), INT_MAX);
 	}
 
 	namespace State
@@ -24,6 +23,7 @@ namespace CAIKey
 	{
 		static const FAIBlackboardKeySpec bHasLOS = CAIKeyFactory::FixedBool(TEXT("bHasLOS"), false);
 		static const FAIBlackboardKeySpec PerceivedTargetActor = CAIKeyFactory::FixedObjectNull(TEXT("PerceivedTargetActor"));
+		static const FAIBlackboardKeySpec PerceivedTargetPriority = CAIKeyFactory::FixedInt(TEXT("PerceivedTargetPriority"), INT_MAX);
 		static const FAIBlackboardKeySpec LastSeenTime = CAIKeyFactory::RuntimeFloat(TEXT("LastSeenTime"));
 		static const FAIBlackboardKeySpec LastKnownLocation = CAIKeyFactory::RuntimeVector(TEXT("LastKnownLocation"));
 	}

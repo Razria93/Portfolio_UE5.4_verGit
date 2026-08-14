@@ -63,7 +63,7 @@ private:
 	// Target Lifecycle
 	void BindCombatTarget(AActor* InTarget);
 	void UnbindCombatTarget(AActor* InTarget);
-	void ReleaseCombatTargetForOwnerEndPlay();
+	void CleanupCombatTargetForOwnerEndPlay();
 
 	UFUNCTION()
 	void HandleCombatTargetEndPlay(AActor* InActor, EEndPlayReason::Type InEndPlayReason);
@@ -71,5 +71,6 @@ private:
 private:
 	// Target State
 	void BroadcastCombatTargetChanged(AActor* InPreviousTarget);
+	bool CommitSetCombatTarget(AActor* InPreviousTarget, AActor* InCurrentTarget, ECombatTargetChangeReason InReason);
 	bool CommitClearCombatTarget(AActor* InPreviousTarget, ECombatTargetChangeReason InReason);
 };

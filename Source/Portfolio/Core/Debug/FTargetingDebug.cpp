@@ -101,47 +101,47 @@ bool FTargetingDebug::ShouldShowOverlayDetails()
 #endif
 }
 
-FTargetingDebugOverlayDetails FTargetingDebug::BuildOverlayDetails(const FTargetingDebugSnapshot& InSnapshot)
+FTargetingDebugOverlayDetails FTargetingDebug::BuildOverlayDetails(const FTargetingEvaluation& InEvaluation)
 {
 	FTargetingDebugOverlayDetails details;
 	if (!ShouldShowOverlayDetails()) return details;
 
 	details.bHasSnapshot = true;
-	AActor* targetActor = InSnapshot.TargetActor.Get();
+	AActor* targetActor = InEvaluation.TargetActor.Get();
 	details.RuntimeTargetText = IsValid(targetActor) ? GetNameSafe(targetActor) : TEXT("None");
 
-	details.DistanceText = FString::Printf(TEXT("%.1f / %.1f"), InSnapshot.Distance, InSnapshot.MaxTargetDistance);
-	details.DotText = FString::Printf(TEXT("%.3f / Min %.3f"), InSnapshot.Dot, InSnapshot.MinDot);
+	details.DistanceText = FString::Printf(TEXT("%.1f / %.1f"), InEvaluation.Distance, InEvaluation.MaxTargetDistance);
+	details.DotText = FString::Printf(TEXT("%.3f / Min %.3f"), InEvaluation.Dot, InEvaluation.MinDot);
 
-	details.AngleScoreText = FString::Printf(TEXT("%.3f"), InSnapshot.AngleScore);
-	details.DistanceScoreText = FString::Printf(TEXT("%.3f"), InSnapshot.DistanceScore);
-	details.FinalScoreText = FString::Printf(TEXT("%.3f"), InSnapshot.FinalScore);
+	details.AngleScoreText = FString::Printf(TEXT("%.3f"), InEvaluation.AngleScore);
+	details.DistanceScoreText = FString::Printf(TEXT("%.3f"), InEvaluation.DistanceScore);
+	details.FinalScoreText = FString::Printf(TEXT("%.3f"), InEvaluation.FinalScore);
 
-	details.RangeText = InSnapshot.bWithinRange ? TEXT("true") : TEXT("false");
-	details.ViewConeText = InSnapshot.bWithinViewCone ? TEXT("true") : TEXT("false");
+	details.RangeText = InEvaluation.bWithinRange ? TEXT("true") : TEXT("false");
+	details.ViewConeText = InEvaluation.bWithinViewCone ? TEXT("true") : TEXT("false");
 	return details;
 }
 
-void FTargetingDebug::DrawWorldDebug(UWorld* InWorld, const FTargetingDebugSnapshot& InSnapshot)
+void FTargetingDebug::DrawWorldDebug(UWorld* InWorld, const FTargetingEvaluation& InEvaluation)
 {
 #if !UE_BUILD_SHIPPING
 	if (!IsValid(InWorld)) return;
 	if (ShouldDrawRangeSphere())
 	{
-		DrawDebugSphere(InWorld, InSnapshot.ViewLocation, InSnapshot.MaxTargetDistance, 24, FColor::Cyan, false, 0.f);
+		DrawDebugSphere(InWorld, InEvaluation.ViewLocation, InEvaluation.MaxTargetDistance, 24, FColor::Cyan, false, 0.f);
 	}
 
-	AActor* targetActor = InSnapshot.TargetActor.Get();
+	AActor* targetActor = InEvaluation.TargetActor.Get();
 	if (!IsValid(targetActor)) return;
 
 	if (ShouldDrawSelectedTargetSphere())
 	{
-		DrawDebugSphere(InWorld, InSnapshot.TargetLocation, 100.f, 16, FColor::Green, false, 0.f, 0, 3.f);
+		DrawDebugSphere(InWorld, InEvaluation.TargetLocation, 100.f, 16, FColor::Green, false, 0.f, 0, 3.f);
 	}
 
 	if (ShouldDrawViewLine())
 	{
-		DrawDebugLine(InWorld, InSnapshot.ViewLocation, InSnapshot.TargetLocation, FColor::Green, false, 0.f, 0, 1.5f);
+		DrawDebugLine(InWorld, InEvaluation.ViewLocation, InEvaluation.TargetLocation, FColor::Green, false, 0.f, 0, 1.5f);
 	}
 
 	if (ShouldDrawDebugText())
@@ -149,10 +149,10 @@ void FTargetingDebug::DrawWorldDebug(UWorld* InWorld, const FTargetingDebugSnaps
 		const FString text = FString::Printf(
 			TEXT("Target: %s | Dist: %.1f | Dot: %.3f | Score: %.3f"),
 			*GetNameSafe(targetActor),
-			InSnapshot.Distance,
-			InSnapshot.Dot,
-			InSnapshot.FinalScore);
-		DrawDebugString(InWorld, InSnapshot.TargetLocation + FVector(0.f, 0.f, 130.f), text, nullptr, FColor::Green, 0.f, false, 1.25f);
+			InEvaluation.Distance,
+			InEvaluation.Dot,
+			InEvaluation.FinalScore);
+		DrawDebugString(InWorld, InEvaluation.TargetLocation + FVector(0.f, 0.f, 130.f), text, nullptr, FColor::Green, 0.f, false, 1.25f);
 	}
 #endif
 }

@@ -6,6 +6,7 @@
 #include "Type/CEngageAssignmentTypes.h"
 
 class AAIController;
+class ACAIController;
 class APawn;
 
 class PORTFOLIO_API FAICombatBTDebug
@@ -23,6 +24,7 @@ public:
 	// AI Context / Engage Assignment Diagnostic Hook
 	static void RecordAIContextClearedForAudit(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const TCHAR* InEvent, const TCHAR* InReason);
 	static void RecordAIContextEngageAssignmentForAudit(const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, ECombatRole InCombatRole, bool bInShouldEngage, const TCHAR* InEvent);
+	static void RecordBlackboardTargetSetForAudit(ACAIController* InAIController, AActor* InTargetActor);
 
 public:
 	// Engage Context Gate Diagnostic Hook

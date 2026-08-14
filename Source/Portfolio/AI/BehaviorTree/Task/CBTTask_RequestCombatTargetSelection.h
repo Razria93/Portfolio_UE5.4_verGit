@@ -8,8 +8,10 @@ UCLASS()
 class PORTFOLIO_API UCBTTask_RequestCombatTargetSelection : public UBTTaskNode
 {
 	GENERATED_BODY()
+
 public:
 	UCBTTask_RequestCombatTargetSelection();
+
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

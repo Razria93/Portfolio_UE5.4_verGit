@@ -50,8 +50,8 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	APawn* ownerPawn = IsValid(aiOwner) ? aiOwner->GetPawn() : nullptr;
 	if (!IsValid(ownerPawn))
 	{
-		AActor* targetActor = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
-		FAICombatBTDebug::RecordAIContextClearedForAudit(aiOwner, ownerPawn, targetActor, TEXT("AIContext"), TEXT("MissingOwnerPawn"));
+		AActor* combatTargetActor = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName));
+		FAICombatBTDebug::RecordAIContextClearedForAudit(aiOwner, ownerPawn, combatTargetActor, TEXT("AIContext"), TEXT("MissingOwnerPawn"));
 
 		ClearDeadContext(blackboardComp);
 		ClearReactionContext(blackboardComp);
@@ -111,7 +111,7 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	if (combatTargetResult == EContextBuildResult::Success)
 	{
 		UpdateCombatTargetProjection(blackboardComp, aiContext);
-		aiOwner->RecordBlackboardTargetSetForAudit(aiContext.CombatTargetActor);
+		FAICombatBTDebug::RecordBlackboardTargetSetForAudit(aiOwner, aiContext.CombatTargetActor);
 	}
 	else
 	{
@@ -169,8 +169,6 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildCombatTargetContext(APawn*
 	if (!IsValid(combatTargetComp)) return EContextBuildResult::Error;
 
 	const FCombatTargetSnapshot snapshot = combatTargetComp->GetCombatTargetSnapshot();
-	if (!IsValid(snapshot.TargetActor)) return EContextBuildResult::NoData;
-
 	OutAIContext.CombatTargetActor = snapshot.TargetActor;
 	OutAIContext.CombatTargetRevision = snapshot.Revision;
 	return EContextBuildResult::Success;
@@ -316,7 +314,7 @@ void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* 
 	if (!IsValid(InAIContext.PerceivedTargetActor)) return;
 
 	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::Perception::PerceivedTargetActor.KeyName, InAIContext.PerceivedTargetActor);
-	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Targeting::TargetPriority.KeyName, InAIContext.TargetPriority);
+	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Perception::PerceivedTargetPriority.KeyName, InAIContext.TargetPriority);
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Perception::bHasLOS.KeyName, InAIContext.bHasLOS);
 	CAIBlackboardValueHelper::SetFloatIfChanged(InBlackboardComp, CAIKey::Perception::LastSeenTime.KeyName, InAIContext.LastSeenTime);
 	CAIBlackboardValueHelper::SetVectorIfChanged(InBlackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, InAIContext.LastKnownLocation);
@@ -325,8 +323,8 @@ void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* 
 void UCBTService_UpdateAIContext::UpdateCombatTargetProjection(UBlackboardComponent* InBlackboardComp, const FAIBlackboardUpdateContext& InAIContext)
 {
 	if (!IsValid(InBlackboardComp)) return;
-	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::Targeting::TargetActor.KeyName, InAIContext.CombatTargetActor);
-	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Targeting::CombatTargetRevision.KeyName, InAIContext.CombatTargetRevision);
+	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::CombatTarget::Actor.KeyName, InAIContext.CombatTargetActor);
+	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::CombatTarget::CombatTargetRevision.KeyName, InAIContext.CombatTargetRevision);
 }
 
 void UCBTService_UpdateAIContext::UpdateHomeMetricContext(UBlackboardComponent* InBlackboardComp, FAIBlackboardUpdateContext& InAIContext)
@@ -375,15 +373,15 @@ void UCBTService_UpdateAIContext::ClearPerceptionContext(UBlackboardComponent* I
 	if (!IsValid(InBlackboardComp)) return;
 
 	InBlackboardComp->ClearValue(CAIKey::Perception::PerceivedTargetActor.KeyName);
-	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetPriority.KeyName);
+	InBlackboardComp->ClearValue(CAIKey::Perception::PerceivedTargetPriority.KeyName);
 	InBlackboardComp->ClearValue(CAIKey::Perception::bHasLOS.KeyName);
 }
 
 void UCBTService_UpdateAIContext::ClearCombatTargetProjection(UBlackboardComponent* InBlackboardComp)
 {
 	if (!IsValid(InBlackboardComp)) return;
-	InBlackboardComp->ClearValue(CAIKey::Targeting::TargetActor.KeyName);
-	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Targeting::CombatTargetRevision.KeyName, 0);
+	InBlackboardComp->ClearValue(CAIKey::CombatTarget::Actor.KeyName);
+	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::CombatTarget::CombatTargetRevision.KeyName, 0);
 }
 
 void UCBTService_UpdateAIContext::ClearHomeMetricContext(UBlackboardComponent* InBlackboardComp)

@@ -127,9 +127,7 @@ void UCTargetHUDPresenterComponent::HandleCombatTargetChanged(const FCombatTarge
 
 void UCTargetHUDPresenterComponent::SynchronizeTargetState()
 {
-	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected)
-		? CombatTargetComponent_Injected->GetCombatTargetSnapshot()
-		: FCombatTargetSnapshot();
+	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected) ? CombatTargetComponent_Injected->GetCombatTargetSnapshot() : FCombatTargetSnapshot();
 	const bool bHasTarget = IsValid(snapshot.TargetActor);
 
 	SetComponentTickEnabled(bHasTarget && IsValid(TargetHUDWidget));

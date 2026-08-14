@@ -19,10 +19,11 @@ EBTNodeResult::Type UCBTTask_RequestCombatTargetSelection::ExecuteTask(UBehavior
 	const AAIController* aiController = OwnerComp.GetAIOwner();
 	ACEnemy* enemy = IsValid(aiController) ? Cast<ACEnemy>(aiController->GetPawn()) : nullptr;
 	UCEnemyTargetSelectionComponent* selectionComp = IsValid(enemy) ? enemy->GetEnemyTargetSelectionComp() : nullptr;
+
 	if (!IsValid(blackboardComp) || !IsValid(selectionComp)) return EBTNodeResult::Failed;
 
 	AActor* candidate = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Perception::PerceivedTargetActor.KeyName));
 	const FEnemyTargetSelectionResult result = selectionComp->RequestSelectCombatTarget(candidate, ECombatTargetChangeReason::AIDecision);
-	return result.Decision == EEnemyTargetSelectionDecision::Committed || result.Decision == EEnemyTargetSelectionDecision::Unchanged
-		? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
+
+	return result.Decision == EEnemyTargetSelectionDecision::Committed || result.Decision == EEnemyTargetSelectionDecision::Unchanged ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

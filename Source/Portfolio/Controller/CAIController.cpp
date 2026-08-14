@@ -181,7 +181,6 @@ bool ACAIController::BindPerceptionEvents()
 
 	UnbindPerceptionEvents();
 
-	AIPerceptionComp->OnPerceptionUpdated.AddUniqueDynamic(this, &ACAIController::OnPerceptionUpdated);
 	AIPerceptionComp->OnTargetPerceptionUpdated.AddUniqueDynamic(this, &ACAIController::OnTargetPerceptionUpdated);
 	AIPerceptionComp->OnTargetPerceptionForgotten.AddUniqueDynamic(this, &ACAIController::OnTargetPerceptionForgotten);
 
@@ -192,7 +191,6 @@ void ACAIController::UnbindPerceptionEvents()
 {
 	if (!IsValid(AIPerceptionComp)) return;
 
-	AIPerceptionComp->OnPerceptionUpdated.RemoveDynamic(this, &ACAIController::OnPerceptionUpdated);
 	AIPerceptionComp->OnTargetPerceptionUpdated.RemoveDynamic(this, &ACAIController::OnTargetPerceptionUpdated);
 	AIPerceptionComp->OnTargetPerceptionForgotten.RemoveDynamic(this, &ACAIController::OnTargetPerceptionForgotten);
 }
@@ -278,11 +276,6 @@ void ACAIController::StopBehaviorTreeRuntime()
 }
 
 // Perception Event Callback
-
-void ACAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
-{
-	// Target-specific perception updates are handled by OnTargetPerceptionUpdated.
-}
 
 void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {

@@ -216,7 +216,7 @@ namespace
 	{
 		if (!IsValid(InBlackboardComp)) return FormatMissingText();
 
-		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
+		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName);
 		return IsValid(targetObject) ? GetNameSafe(targetObject) : FormatMissingText();
 	}
 
@@ -236,7 +236,7 @@ namespace
 	{
 		if (!IsValid(InBlackboardComp)) return false;
 
-		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName);
+		const UObject* targetObject = InBlackboardComp->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName);
 		return IsValid(targetObject);
 	}
 

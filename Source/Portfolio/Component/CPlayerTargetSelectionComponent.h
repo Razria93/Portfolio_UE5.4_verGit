@@ -32,12 +32,16 @@ private:
 	UPROPERTY(Transient)
 	UCCombatTargetComponent* CombatTargetComponent_Injected = nullptr;
 
-	float ValidationElapsedTime = 0.f;
+	float CurrentTargetMaintenanceElapsedTime = 0.f;
 
 public:
 	// Component Reference
 	void InitializeReferences(class APlayerController* InOwnerPlayerController);
 	void SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent);
+
+private:
+	// Validation
+	bool ValidateRequiredReferences() const;
 
 protected:
 	// Lifecycle
@@ -45,30 +49,32 @@ protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	// Target Command
-	void ToggleTargetLock();
-	bool AcquireBestTarget();
-	bool SwitchTarget(ETargetSwitchDirection InDirection);
-	void ClearTarget();
+	// Player Target Selection Command
+	void ToggleCombatTargetSelection();
+	bool SelectBestTarget();
+	bool SelectAdjacentTarget(ETargetSwitchDirection InDirection);
+	void ClearCombatTarget();
 
 public:
 	// Debug Query
-	bool BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const;
+	bool BuildSelectionDebugSnapshot(FTargetingEvaluation& OutEvaluation) const;
 
 private:
-	// Validation
-	bool ValidateRequiredReferences() const;
-	bool IsTargetValid(const ACEnemy* InTarget, bool bRequireViewCone) const;
-	void ValidateCurrentTarget();
+	// Current Target Maintenance
+	void MaintainCurrentTarget();
 
 private:
 	// Target Evaluation
-	bool BuildTargetEvaluation(const ACEnemy* InTarget, FTargetingDebugSnapshot& OutEvaluation) const;
-	bool IsTargetEvaluationValid(const ACEnemy* InTarget, const FTargetingDebugSnapshot& InEvaluation, bool bRequireViewCone) const;
+	bool BuildTargetEvaluation(const ACEnemy* InTarget, FTargetingEvaluation& OutEvaluation) const;
+
+private:
+	// Target Criteria
+	bool CanSelectTarget(const ACEnemy* InTarget, const FTargetingEvaluation& InEvaluation) const;
+	bool CanRetainCombatTarget(const ACEnemy* InTarget, const FTargetingEvaluation& InEvaluation) const;
 
 private:
 	// Candidate Selection
-	bool TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const;
+	bool TryCalculateTargetScore(const ACEnemy* InTarget, float& OutScore) const;
 	bool ProjectTargetToViewport(const ACEnemy* InTarget, FVector2D& OutScreenPosition) const;
 
 };

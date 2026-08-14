@@ -51,7 +51,7 @@ namespace
 	}
 }
 
-// ===== Lifecycle =====
+// ===== Construction =====
 
 UCPlayerTargetSelectionComponent::UCPlayerTargetSelectionComponent()
 {
@@ -68,7 +68,23 @@ void UCPlayerTargetSelectionComponent::InitializeReferences(APlayerController* I
 void UCPlayerTargetSelectionComponent::SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent)
 {
 	CombatTargetComponent_Injected = InCombatTargetComponent;
-	ValidationElapsedTime = 0.f;
+	CurrentTargetMaintenanceElapsedTime = 0.f;
+}
+
+bool UCPlayerTargetSelectionComponent::ValidateRequiredReferences() const
+{
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerPlayerController_Injected, TEXT("APlayerController Owner") },
+	};
+
+	bool bValid = true;
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerPlayerController_Injected, this);
+	}
+
+	return bValid;
 }
 
 // ===== Lifecycle =====
@@ -76,7 +92,7 @@ void UCPlayerTargetSelectionComponent::SetCombatTargetComponent(UCCombatTargetCo
 void UCPlayerTargetSelectionComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
 	CombatTargetComponent_Injected = nullptr;
-	ValidationElapsedTime = 0.f;
+	CurrentTargetMaintenanceElapsedTime = 0.f;
 
 	Super::EndPlay(InEndPlayReason);
 }
@@ -85,29 +101,29 @@ void UCPlayerTargetSelectionComponent::TickComponent(float DeltaTime, ELevelTick
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	ValidationElapsedTime += FMath::Max(DeltaTime, 0.f);
-	if (ValidationElapsedTime < TargetingTuning.ValidationInterval) return;
+	CurrentTargetMaintenanceElapsedTime += FMath::Max(DeltaTime, 0.f);
+	if (CurrentTargetMaintenanceElapsedTime < TargetingTuning.ValidationInterval) return;
 
-	ValidationElapsedTime = 0.f;
-	ValidateCurrentTarget();
+	CurrentTargetMaintenanceElapsedTime = 0.f;
+	MaintainCurrentTarget();
 }
 
-// ===== Target Command =====
+// ===== Player Target Selection Command =====
 
-void UCPlayerTargetSelectionComponent::ToggleTargetLock()
+void UCPlayerTargetSelectionComponent::ToggleCombatTargetSelection()
 {
 	if (!IsValid(CombatTargetComponent_Injected)) return;
 
 	if (IsValid(CombatTargetComponent_Injected) && CombatTargetComponent_Injected->HasCombatTarget())
 	{
-		ClearTarget();
+		ClearCombatTarget();
 		return;
 	}
 
-	AcquireBestTarget();
+	SelectBestTarget();
 }
 
-bool UCPlayerTargetSelectionComponent::AcquireBestTarget()
+bool UCPlayerTargetSelectionComponent::SelectBestTarget()
 {
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
 	if (!IsValid(CombatTargetComponent_Injected)) return false;
@@ -123,7 +139,7 @@ bool UCPlayerTargetSelectionComponent::AcquireBestTarget()
 		ACEnemy* candidate = *iterator;
 		float candidateScore = 0.f;
 
-		if (!TryScoreTarget(candidate, candidateScore)) continue;
+		if (!TryCalculateTargetScore(candidate, candidateScore)) continue;
 		if (candidateScore <= bestScore) continue;
 
 		bestTarget = candidate;
@@ -136,14 +152,14 @@ bool UCPlayerTargetSelectionComponent::AcquireBestTarget()
 		&& CombatTargetComponent_Injected->RequestSetCombatTarget(bestTarget, ECombatTargetChangeReason::PlayerSelection);
 }
 
-bool UCPlayerTargetSelectionComponent::SwitchTarget(ETargetSwitchDirection InDirection)
+bool UCPlayerTargetSelectionComponent::SelectAdjacentTarget(ETargetSwitchDirection InDirection)
 {
 	if (InDirection != ETargetSwitchDirection::Left && InDirection != ETargetSwitchDirection::Right) return false;
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
 	if (!IsValid(CombatTargetComponent_Injected)) return false;
 
 	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected) ? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor()) : nullptr;
-	if (!IsValid(currentTarget)) return AcquireBestTarget();
+	if (!IsValid(currentTarget)) return SelectBestTarget();
 
 	FVector2D currentScreenPosition = FVector2D::ZeroVector;
 	if (!ProjectTargetToViewport(currentTarget, currentScreenPosition)) return false;
@@ -159,9 +175,9 @@ bool UCPlayerTargetSelectionComponent::SwitchTarget(ETargetSwitchDirection InDir
 		ACEnemy* candidate = *iterator;
 		if (candidate == currentTarget) continue;
 
-		FTargetingDebugSnapshot targetEvaluation;
+		FTargetingEvaluation targetEvaluation;
 		if (!BuildTargetEvaluation(candidate, targetEvaluation)) continue;
-		if (!IsTargetEvaluationValid(candidate, targetEvaluation, true)) continue;
+		if (!CanSelectTarget(candidate, targetEvaluation)) continue;
 
 		FTargetSwitchCandidateEvaluation candidateEvaluation;
 		candidateEvaluation.Target = candidate;
@@ -187,64 +203,44 @@ bool UCPlayerTargetSelectionComponent::SwitchTarget(ETargetSwitchDirection InDir
 		&& CombatTargetComponent_Injected->RequestSetCombatTarget(bestCandidate.Target, ECombatTargetChangeReason::PlayerSelection);
 }
 
-void UCPlayerTargetSelectionComponent::ClearTarget()
+void UCPlayerTargetSelectionComponent::ClearCombatTarget()
 {
 	if (!IsValid(CombatTargetComponent_Injected)) return;
 
 	CombatTargetComponent_Injected->RequestClearCombatTarget(ECombatTargetChangeReason::ManualClear);
 }
 
-bool UCPlayerTargetSelectionComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const
+// ===== Debug Query =====
+
+bool UCPlayerTargetSelectionComponent::BuildSelectionDebugSnapshot(FTargetingEvaluation& OutEvaluation) const
 {
 	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected) ? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor()) : nullptr;
-	if (!BuildTargetEvaluation(currentTarget, OutSnapshot)) return false;
+	if (!BuildTargetEvaluation(currentTarget, OutEvaluation)) return false;
 
-	OutSnapshot.TargetActor = currentTarget;
+	OutEvaluation.TargetActor = currentTarget;
 	return true;
 }
 
-// ===== Validation =====
+// ===== Current Target Maintenance =====
 
-bool UCPlayerTargetSelectionComponent::ValidateRequiredReferences() const
-{
-	const FRequiredReference requiredReferences[] =
-	{
-		{ OwnerPlayerController_Injected, TEXT("APlayerController Owner") },
-	};
-
-	bool bValid = true;
-	for (const FRequiredReference& reference : requiredReferences)
-	{
-		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerPlayerController_Injected, this);
-	}
-
-	return bValid;
-}
-
-bool UCPlayerTargetSelectionComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireViewCone) const
-{
-	FTargetingDebugSnapshot evaluation;
-	if (!BuildTargetEvaluation(InTarget, evaluation)) return false;
-
-	return IsTargetEvaluationValid(InTarget, evaluation, bRequireViewCone);
-}
-
-void UCPlayerTargetSelectionComponent::ValidateCurrentTarget()
+void UCPlayerTargetSelectionComponent::MaintainCurrentTarget()
 {
 	if (!IsValid(CombatTargetComponent_Injected)) return;
 
 	ACEnemy* currentTarget = Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor());
 	if (!IsValid(currentTarget)) return;
-	if (IsTargetValid(currentTarget, false)) return;
+
+	FTargetingEvaluation evaluation;
+	if (BuildTargetEvaluation(currentTarget, evaluation) && CanRetainCombatTarget(currentTarget, evaluation)) return;
 
 	CombatTargetComponent_Injected->RequestClearCombatTarget(ECombatTargetChangeReason::PolicyInvalidated);
 }
 
 // ===== Target Evaluation =====
 
-bool UCPlayerTargetSelectionComponent::BuildTargetEvaluation(const ACEnemy* InTarget, FTargetingDebugSnapshot& OutEvaluation) const
+bool UCPlayerTargetSelectionComponent::BuildTargetEvaluation(const ACEnemy* InTarget, FTargetingEvaluation& OutEvaluation) const
 {
-	OutEvaluation = FTargetingDebugSnapshot();
+	OutEvaluation = FTargetingEvaluation();
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
 
 	FRotator viewRotation = FRotator::ZeroRotator;
@@ -270,7 +266,14 @@ bool UCPlayerTargetSelectionComponent::BuildTargetEvaluation(const ACEnemy* InTa
 	return true;
 }
 
-bool UCPlayerTargetSelectionComponent::IsTargetEvaluationValid(const ACEnemy* InTarget, const FTargetingDebugSnapshot& InEvaluation, bool bRequireViewCone) const
+// ===== Target Criteria =====
+
+bool UCPlayerTargetSelectionComponent::CanSelectTarget(const ACEnemy* InTarget, const FTargetingEvaluation& InEvaluation) const
+{
+	return CanRetainCombatTarget(InTarget, InEvaluation) && InEvaluation.bWithinViewCone;
+}
+
+bool UCPlayerTargetSelectionComponent::CanRetainCombatTarget(const ACEnemy* InTarget, const FTargetingEvaluation& InEvaluation) const
 {
 	if (!IsValid(InTarget)) return false;
 
@@ -278,18 +281,18 @@ bool UCPlayerTargetSelectionComponent::IsTargetEvaluationValid(const ACEnemy* In
 	if (!IsValid(healthComp) || !healthComp->IsAlive()) return false;
 	if (!InEvaluation.bWithinRange) return false;
 
-	return !bRequireViewCone || InEvaluation.bWithinViewCone;
+	return true;
 }
 
 // ===== Candidate Selection =====
 
-bool UCPlayerTargetSelectionComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const
+bool UCPlayerTargetSelectionComponent::TryCalculateTargetScore(const ACEnemy* InTarget, float& OutScore) const
 {
 	OutScore = 0.f;
 
-	FTargetingDebugSnapshot evaluation;
+	FTargetingEvaluation evaluation;
 	if (!BuildTargetEvaluation(InTarget, evaluation)) return false;
-	if (!IsTargetEvaluationValid(InTarget, evaluation, true)) return false;
+	if (!CanSelectTarget(InTarget, evaluation)) return false;
 
 	OutScore = evaluation.FinalScore;
 	return true;

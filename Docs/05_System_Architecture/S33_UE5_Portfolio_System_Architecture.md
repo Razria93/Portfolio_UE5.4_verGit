@@ -79,7 +79,7 @@ Blackboard의 Target 값은 `UCCombatTargetComponent` 상태를 AI 의사결정 
 UCCombatTargetComponent
 → Target Changed Event
 → AI Adapter / Service
-→ Blackboard TargetActor, TargetRevision
+→ Blackboard CombatTargetActor, CombatTargetRevision
 ```
 
 BT가 Blackboard 값을 직접 변경하여 Combat Target을 확정하면 안 된다. BT는 선택 요청을 만들고, Commit 결과를 다시 읽는다.
@@ -303,7 +303,7 @@ Consumer는 이벤트 payload만으로 해당 변경 세대를 해석할 수 있
 ## 4.3 후속 마이그레이션 대상
 
 - Enemy Target Selection Component 추가
-- Blackboard TargetActor를 SoT 투영값으로 전환
+- Blackboard CombatTargetActor를 SoT 투영값으로 전환
 - Combat Signal Source의 Blackboard 직접 Target 의존 제거
 - Engage 결과에 Target Revision 검증 추가
 
@@ -689,7 +689,7 @@ Player Target Selection Component
 - 최소 Selection Recipe 구현
 - Perception 후보와 Combat Target 분리
 - TargetChanged Event + Snapshot Adapter
-- Blackboard TargetActor/Revision 투영
+- Blackboard CombatTargetActor/Revision 투영
 
 완료 기준:
 
@@ -870,14 +870,16 @@ Combat Signal Source Target 해석
 ### Goal 4 구현 메모 — Enemy Target Selection과 Blackboard Projection
 
 - `UCEnemyTargetSelectionComponent`는 BT가 전달한 명시 후보를 검증해 `UCCombatTargetComponent`에만 commit 요청한다. Component 자체는 Current Target을 저장하지 않는다.
-- `PerceivedTargetActor`는 Perception 후보이며, 기존 `TargetActor` 키는 확정 Combat Target의 projection으로 유지한다. `CombatTargetRevision`은 동일 Snapshot 세대의 Revision이다.
+- `PerceivedTargetActor`는 Perception 후보이며, `CombatTargetActor`는 확정 Combat Target의 projection이다. `CombatTargetRevision`은 동일 Snapshot 세대의 Revision이며, Clear된 상태도 `CombatTargetActor = None`과 증가한 현재 Revision으로 투영한다.
 - `UCBTTask_RequestCombatTargetSelection`만 후보를 Target 선택 요청으로 승격한다. Blackboard write는 Combat Target을 변경하지 않는다.
 - Projection은 `UCBTService_UpdateAIContext`가 Tick 중 Snapshot을 읽어 수행한다. 후보 상실은 Perception 값만 clear하며 현재 Combat Target을 자동 clear하지 않는다.
 
 ### Goal 4 UAsset 수동 연결
 
 - Enemy Blackboard에 `PerceivedTargetActor` Object/Actor 키와 `CombatTargetRevision` Int 키를 추가한다.
-- 기존 `TargetActor` Object/Actor 키는 삭제·이름 변경하지 않고 Combat Target projection으로 사용한다.
+- Blackboard의 기존 `TargetActor` Object/Actor 키는 `CombatTargetActor`로 이름을 변경한다. BT의 해당 key selector 참조도 함께 갱신한다.
+- Blackboard의 기존 `TargetPriority` Int 키는 `PerceivedTargetPriority`로 이름을 변경한다. 인지 후보를 참조하는 BT key selector도 함께 갱신한다.
+- 기존 `Set Focus` BT Task는 `Set Combat Target Focus`로 교체한다. `Clear Focus`는 Gameplay Focus 공용 해제 Task로 유지한다.
 - Perception 후보가 준비된 BT 경로에 `Request Combat Target Selection` Task를 연결한다. Task 연결 전에는 Perception만 갱신되고 Combat Target은 확정되지 않는다.
 
 ### Goal 5-A 구현 메모 — Engage Revision과 Combat Signal Target

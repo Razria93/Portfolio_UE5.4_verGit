@@ -12,7 +12,7 @@ UCCombatTargetComponent::UCCombatTargetComponent()
 
 void UCCombatTargetComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ReleaseCombatTargetForOwnerEndPlay();
+	CleanupCombatTargetForOwnerEndPlay();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -34,17 +34,7 @@ bool UCCombatTargetComponent::RequestSetCombatTarget(AActor* InTarget, ECombatTa
 	AActor* previousTarget = CurrentTarget.Get();
 	if (previousTarget == InTarget) return false;
 
-	UnbindCombatTarget(previousTarget);
-	CurrentTarget = InTarget;
-	BindCombatTarget(InTarget);
-
-	++CombatTargetRevision;
-	LastChangeReason = InReason;
-
-	SetComponentTickEnabled(true);
-
-	BroadcastCombatTargetChanged(previousTarget);
-	return true;
+	return CommitSetCombatTarget(previousTarget, InTarget, InReason);
 }
 
 bool UCCombatTargetComponent::RequestClearCombatTarget(ECombatTargetChangeReason InReason)
@@ -75,7 +65,7 @@ AActor* UCCombatTargetComponent::GetCombatTargetActor() const
 FCombatTargetSnapshot UCCombatTargetComponent::GetCombatTargetSnapshot() const
 {
 	FCombatTargetSnapshot snapshot;
-	snapshot.TargetActor = GetCombatTargetActor();
+	snapshot.TargetActor = CurrentTarget.Get();
 	snapshot.Revision = CombatTargetRevision;
 	snapshot.LastChangeReason = LastChangeReason;
 	return snapshot;
@@ -106,7 +96,7 @@ void UCCombatTargetComponent::UnbindCombatTarget(AActor* InTarget)
 	InTarget->OnEndPlay.RemoveDynamic(this, &UCCombatTargetComponent::HandleCombatTargetEndPlay);
 }
 
-void UCCombatTargetComponent::ReleaseCombatTargetForOwnerEndPlay()
+void UCCombatTargetComponent::CleanupCombatTargetForOwnerEndPlay()
 {
 	UnbindCombatTarget(CurrentTarget.Get());
 	CurrentTarget.Reset();
@@ -130,6 +120,22 @@ void UCCombatTargetComponent::BroadcastCombatTargetChanged(AActor* InPreviousTar
 	change.CurrentSnapshot = GetCombatTargetSnapshot();
 
 	OnCombatTargetChanged.Broadcast(change);
+}
+
+bool UCCombatTargetComponent::CommitSetCombatTarget(AActor* InPreviousTarget, AActor* InCurrentTarget, ECombatTargetChangeReason InReason)
+{
+	UnbindCombatTarget(InPreviousTarget);
+	CurrentTarget = InCurrentTarget;
+	BindCombatTarget(InCurrentTarget);
+
+	++CombatTargetRevision;
+	LastChangeReason = InReason;
+
+	SetComponentTickEnabled(true);
+
+	BroadcastCombatTargetChanged(InPreviousTarget);
+
+	return true;
 }
 
 bool UCCombatTargetComponent::CommitClearCombatTarget(AActor* InPreviousTarget, ECombatTargetChangeReason InReason)

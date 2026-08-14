@@ -100,9 +100,6 @@ private:
 private:
 	// Perception Event Callback
 	UFUNCTION()
-	void OnPerceptionUpdated(const TArray<class AActor*>& InUpdatedActors);
-
-	UFUNCTION()
 	void OnTargetPerceptionUpdated(class AActor* Actor, FAIStimulus Stimulus);
 
 	UFUNCTION()

@@ -352,19 +352,19 @@ void ACPlayerController::PressTargetLock()
 {
 	if (!IsValid(PlayerTargetSelectionComponent)) return;
 
-	PlayerTargetSelectionComponent->ToggleTargetLock();
+	PlayerTargetSelectionComponent->ToggleCombatTargetSelection();
 }
 
 void ACPlayerController::PressTargetSwitchLeft()
 {
 	if (!IsValid(PlayerTargetSelectionComponent)) return;
 
-	PlayerTargetSelectionComponent->SwitchTarget(ETargetSwitchDirection::Left);
+	PlayerTargetSelectionComponent->SelectAdjacentTarget(ETargetSwitchDirection::Left);
 }
 
 void ACPlayerController::PressTargetSwitchRight()
 {
 	if (!IsValid(PlayerTargetSelectionComponent)) return;
 
-	PlayerTargetSelectionComponent->SwitchTarget(ETargetSwitchDirection::Right);
+	PlayerTargetSelectionComponent->SelectAdjacentTarget(ETargetSwitchDirection::Right);
 }

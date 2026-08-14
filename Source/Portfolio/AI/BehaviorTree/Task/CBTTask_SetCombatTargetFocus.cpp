@@ -1,4 +1,4 @@
-#include "AI/BehaviorTree/Task/CBTTask_SetFocus.h"
+#include "AI/BehaviorTree/Task/CBTTask_SetCombatTargetFocus.h"
 
 #include "ProjectGlobal.h"
 
@@ -9,12 +9,12 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-UCBTTask_SetFocus::UCBTTask_SetFocus()
+UCBTTask_SetCombatTargetFocus::UCBTTask_SetCombatTargetFocus()
 {
-	NodeName = TEXT("Set Focus");
+	NodeName = TEXT("Set Combat Target Focus");
 }
 
-EBTNodeResult::Type UCBTTask_SetFocus::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UCBTTask_SetCombatTargetFocus::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
 	AAIController* aiController = OwnerComp.GetAIOwner();
@@ -24,10 +24,13 @@ EBTNodeResult::Type UCBTTask_SetFocus::ExecuteTask(UBehaviorTreeComponent& Owner
 	const UCCombatTargetComponent* combatTargetComp = IsValid(enemy) ? enemy->GetCombatTargetComp() : nullptr;
 	const FCombatTargetSnapshot snapshot = IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetSnapshot() : FCombatTargetSnapshot();
 	AActor* target = snapshot.TargetActor;
+
 	if (!IsValid(target)) return EBTNodeResult::Failed;
-	if (blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName) != target) return EBTNodeResult::Failed;
-	if (blackboardComp->GetValueAsInt(CAIKey::Targeting::CombatTargetRevision.KeyName) != snapshot.Revision) return EBTNodeResult::Failed;
+
+	if (blackboardComp->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName) != target) return EBTNodeResult::Failed;
+	if (blackboardComp->GetValueAsInt(CAIKey::CombatTarget::CombatTargetRevision.KeyName) != snapshot.Revision) return EBTNodeResult::Failed;
 
 	aiController->SetFocus(target, EAIFocusPriority::Gameplay);
+
 	return EBTNodeResult::Succeeded;
 }

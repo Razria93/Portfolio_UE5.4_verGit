@@ -72,7 +72,7 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 		return EAIIntentState::Engage;
 
 	// Gather blackboard context for intent selection.
-	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName));
 	AActor* perceivedTarget = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Perception::PerceivedTargetActor.KeyName));
 
 	const bool bHasTarget = IsValid(target);

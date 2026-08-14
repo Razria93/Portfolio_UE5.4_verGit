@@ -1,6 +1,7 @@
 #include "Core/Debug/FAICombatBTDebug.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "Controller/CAIController.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 #include "Type/CStateTypes.h"
@@ -135,6 +136,13 @@ void FAICombatBTDebug::RecordAIContextEngageAssignmentForAudit(const AAIControll
 		*GetNameSafe(InTargetActor),
 		*UEnum::GetValueAsString(InCombatRole),
 		bInShouldEngage ? TEXT("true") : TEXT("false")));
+}
+
+void FAICombatBTDebug::RecordBlackboardTargetSetForAudit(ACAIController* InAIController, AActor* InTargetActor)
+{
+	if (!IsValid(InAIController)) return;
+
+	InAIController->RecordBlackboardTargetSetForAudit(InTargetActor);
 }
 
 // Engage Context Gate Diagnostic Hook

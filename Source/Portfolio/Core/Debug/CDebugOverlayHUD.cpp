@@ -77,10 +77,10 @@ namespace
 		const UCPlayerTargetSelectionComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCPlayerTargetSelectionComponent>();
 		if (!IsValid(targetingComp)) return;
 
-		FTargetingDebugSnapshot targetingSnapshot;
-		if (!targetingComp->BuildDebugSnapshot(targetingSnapshot)) return;
+		FTargetingEvaluation targetingEvaluation;
+		if (!targetingComp->BuildSelectionDebugSnapshot(targetingEvaluation)) return;
 
-		FTargetingDebug::DrawWorldDebug(InWorld, targetingSnapshot);
+		FTargetingDebug::DrawWorldDebug(InWorld, targetingEvaluation);
 	}
 
 	void UpdatePlayerTargetingViewData(const APlayerController* InOwningPlayerController, FDebugOverlayPlayerTargetingViewData& OutPlayerTargetingViewData)
@@ -90,10 +90,10 @@ namespace
 		const UCPlayerTargetSelectionComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCPlayerTargetSelectionComponent>();
 		if (!IsValid(targetingComp)) return;
 
-		FTargetingDebugSnapshot targetingSnapshot;
-		if (!targetingComp->BuildDebugSnapshot(targetingSnapshot)) return;
+		FTargetingEvaluation targetingEvaluation;
+		if (!targetingComp->BuildSelectionDebugSnapshot(targetingEvaluation)) return;
 
-		OutPlayerTargetingViewData.Details = FTargetingDebug::BuildOverlayDetails(targetingSnapshot);
+		OutPlayerTargetingViewData.Details = FTargetingDebug::BuildOverlayDetails(targetingEvaluation);
 	}
 }
 #endif

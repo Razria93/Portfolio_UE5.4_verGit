@@ -2,15 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "CBTTask_SetFocus.generated.h"
+#include "CBTTask_SetCombatTargetFocus.generated.h"
 
 UCLASS()
-class PORTFOLIO_API UCBTTask_SetFocus : public UBTTaskNode
+class PORTFOLIO_API UCBTTask_SetCombatTargetFocus : public UBTTaskNode
 {
 	GENERATED_BODY()
 	
 public:
-	UCBTTask_SetFocus();
+	UCBTTask_SetCombatTargetFocus();
 
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

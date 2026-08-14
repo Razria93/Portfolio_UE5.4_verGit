@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 
 class UWorld;
-struct FTargetingDebugSnapshot;
+struct FTargetingEvaluation;
 
 struct FTargetingDebugOverlayDetails
 {
@@ -28,8 +28,8 @@ public:
 	static bool ShouldDrawViewLine();
 	static bool ShouldDrawDebugText();
 	static bool ShouldShowOverlayDetails();
-	static FTargetingDebugOverlayDetails BuildOverlayDetails(const FTargetingDebugSnapshot& InSnapshot);
+	static FTargetingDebugOverlayDetails BuildOverlayDetails(const FTargetingEvaluation& InEvaluation);
 
 	// World Draw
-	static void DrawWorldDebug(UWorld* InWorld, const FTargetingDebugSnapshot& InSnapshot);
+	static void DrawWorldDebug(UWorld* InWorld, const FTargetingEvaluation& InEvaluation);
 };

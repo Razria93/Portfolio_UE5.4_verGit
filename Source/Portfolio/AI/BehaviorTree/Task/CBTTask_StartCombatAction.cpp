@@ -46,8 +46,8 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("MissingCombatTarget"));
 		return EBTNodeResult::Failed;
 	}
-	if (blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName) != targetActor
-		|| blackboardComp->GetValueAsInt(CAIKey::Targeting::CombatTargetRevision.KeyName) != targetSnapshot.Revision)
+	if (blackboardComp->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName) != targetActor
+		|| blackboardComp->GetValueAsInt(CAIKey::CombatTarget::CombatTargetRevision.KeyName) != targetSnapshot.Revision)
 	{
 		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("StaleCombatTargetProjection"));
 		return EBTNodeResult::Failed;

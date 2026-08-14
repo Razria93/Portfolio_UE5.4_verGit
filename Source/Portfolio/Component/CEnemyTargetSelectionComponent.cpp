@@ -39,6 +39,7 @@ FEnemyTargetSelectionResult UCEnemyTargetSelectionComponent::RequestSelectCombat
 
 	CombatTargetComponent_Injected->RequestSetCombatTarget(InCandidate, InReason);
 	const FCombatTargetSnapshot committedSnapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();
+
 	result.Decision = EEnemyTargetSelectionDecision::Committed;
 	result.CommittedTarget = committedSnapshot.TargetActor;
 	result.Revision = committedSnapshot.Revision;
@@ -61,6 +62,7 @@ FEnemyTargetSelectionResult UCEnemyTargetSelectionComponent::RequestClearCombatT
 
 	CombatTargetComponent_Injected->RequestClearCombatTarget(InReason);
 	const FCombatTargetSnapshot snapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();
+
 	result.Decision = EEnemyTargetSelectionDecision::Cleared;
 	result.CommittedTarget = snapshot.TargetActor;
 	result.Revision = snapshot.Revision;
