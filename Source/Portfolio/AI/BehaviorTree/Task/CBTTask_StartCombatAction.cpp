@@ -34,7 +34,8 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 
 	ACEnemy* enemy = Cast<ACEnemy>(aiController->GetPawn());
 	const UCCombatTargetComponent* combatTargetComp = IsValid(enemy) ? enemy->GetCombatTargetComp() : nullptr;
-	AActor* targetActor = IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetSnapshot().TargetActor : nullptr;
+	const FCombatTargetSnapshot targetSnapshot = IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetSnapshot() : FCombatTargetSnapshot();
+	AActor* targetActor = targetSnapshot.TargetActor;
 	if (!IsValid(enemy))
 	{
 		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, aiController->GetPawn(), targetActor, CombatActionIntent, FActionRequestResult(), TEXT("InvalidEnemyPawn"));
@@ -43,6 +44,12 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	if (!IsValid(targetActor))
 	{
 		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("MissingCombatTarget"));
+		return EBTNodeResult::Failed;
+	}
+	if (blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName) != targetActor
+		|| blackboardComp->GetValueAsInt(CAIKey::Targeting::CombatTargetRevision.KeyName) != targetSnapshot.Revision)
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("StaleCombatTargetProjection"));
 		return EBTNodeResult::Failed;
 	}
 
@@ -65,7 +72,7 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 		aiController->StopMovement();
 	}
 
-	const FActionRequestResult requestResult = enemy->HandleAICombatAction(CombatActionIntent);
+	const FActionRequestResult requestResult = enemy->HandleAICombatAction(CombatActionIntent, targetSnapshot);
 	if (!requestResult.IsStartedResult())
 	{
 		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, requestResult, TEXT("ActionRequestFailed"));

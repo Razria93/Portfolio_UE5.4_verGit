@@ -885,6 +885,12 @@ Combat Signal Source Target 해석
 - `FEngageRequestContext`와 `FEngageAssignmentContext`는 Target Actor와 함께 `TargetRevision`을 보존한다.
 - Engage Subsystem은 request bucket 구성과 기존 assignment lease 보존 전에 Enemy Combat Target Snapshot의 Actor·Revision을 함께 검증한다. 일치하지 않는 지연 요청·할당은 다음 결과에 반영하지 않는다.
 - Combat Signal timing cue의 기본 Target 해석은 AI Blackboard가 아니라 Owner Character의 `UCCombatTargetComponent` Snapshot을 사용한다.
+
+### Goal 6 구현 메모 — Enemy Facing과 Action Consumer Revision 검증
+
+- Focus Task는 Blackboard projection의 Target Actor·Revision이 현재 Combat Target Snapshot과 일치할 때만 Gameplay Focus를 설정한다.
+- Combat Action Task는 같은 projection 검증 뒤 Snapshot을 Enemy에 전달하며, Enemy는 Action 요청 직전에 Snapshot을 다시 검증한다.
+- Combo chain 예약은 최초 수락된 Combat Target Snapshot을 보존하고, chain window에서 같은 Actor·Revision인지 재검증한다. Target 세대가 바뀌면 예약을 진행하지 않는다.
 6. Player와 Enemy의 선택 정책을 억지로 공통화했는가?
 7. Target Consumer가 Selection 또는 수명 책임을 침범하는가?
 8. Destroy·EndPlay·stale·이전 callback 경계가 안전한가?

@@ -11,6 +11,7 @@
 #include "Type/CCombatResultTypes.h"
 #include "Type/CCharacterFeedbackTypes.h"
 #include "Type/CReactionOrchestrationTypes.h"
+#include "Type/CCombatTargetTypes.h"
 #include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
 
@@ -184,6 +185,7 @@ private:
 	bool bDeathPresentationRequested = false;
 	bool bDeathFinalizationRequested = false;
 	bool bDeathFinalized = false;
+	FCombatTargetSnapshot ActiveCombatActionTargetSnapshot;
 
 protected:
 	// Lifecycle
@@ -305,7 +307,7 @@ public:
 
 	// AI Action Intent
 	FActionRequestResult HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
-	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent);
+	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent, const FCombatTargetSnapshot& InTargetSnapshot);
 
 public:
 	// Runtime State
@@ -344,6 +346,7 @@ private:
 private:
 	// Combat Action Query
 	bool IsCombatActionType(EActionType InActionType) const;
+	bool IsCombatTargetSnapshotCurrent(const FCombatTargetSnapshot& InSnapshot) const;
 
 private:
 	UFUNCTION()

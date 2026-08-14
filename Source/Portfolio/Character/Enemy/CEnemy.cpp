@@ -594,16 +594,28 @@ FActionRequestResult ACEnemy::HandleAIEquipmentAction(EEquipmentActionIntent InE
 	return ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
-FActionRequestResult ACEnemy::HandleAICombatAction(ECombatActionIntent InCombatActionIntent)
+FActionRequestResult ACEnemy::HandleAICombatAction(ECombatActionIntent InCombatActionIntent, const FCombatTargetSnapshot& InTargetSnapshot)
 {
 	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
+	if (!IsCombatTargetSnapshotCurrent(InTargetSnapshot))
+	{
+		FActionRequestResult staleTargetResult;
+		staleTargetResult.ResultType = EActionRequestResultType::Rejected;
+		staleTargetResult.RejectReason = EActionRequestRejectReason::StaleCombatTarget;
+		return staleTargetResult;
+	}
 
 	FCombatActionRequest request;
 	request.IntentSource = EActionIntentSource::AI;
 	request.IntentType = InCombatActionIntent;
 	request.IntentEvent = EActionIntentEvent::Started;
 
-	return ActionOrchestratorComponent->RequestCombatAction(request);
+	const FActionRequestResult result = ActionOrchestratorComponent->RequestCombatAction(request);
+	if (result.IsStartedResult() || result.IsReservedResult())
+	{
+		ActiveCombatActionTargetSnapshot = InTargetSnapshot;
+	}
+	return result;
 }
 
 // Runtime State
@@ -897,6 +909,15 @@ bool ACEnemy::IsCombatActionType(EActionType InActionType) const
 	}
 }
 
+bool ACEnemy::IsCombatTargetSnapshotCurrent(const FCombatTargetSnapshot& InSnapshot) const
+{
+	const UCCombatTargetComponent* combatTargetComp = GetCombatTargetComp();
+	if (!IsValid(combatTargetComp) || !IsValid(InSnapshot.TargetActor)) return false;
+
+	const FCombatTargetSnapshot currentSnapshot = combatTargetComp->GetCombatTargetSnapshot();
+	return currentSnapshot.TargetActor == InSnapshot.TargetActor && currentSnapshot.Revision == InSnapshot.Revision;
+}
+
 // Action Event Routing
 
 void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPreviousActionType, EActionType InNewActionType)
@@ -909,6 +930,10 @@ void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPr
 
 	const bool bIsCombatAction = IsCombatActionType(InNewActionType);
 	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName, bIsCombatAction);
+	if (!bIsCombatAction)
+	{
+		ActiveCombatActionTargetSnapshot = FCombatTargetSnapshot();
+	}
 }
 
 void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)
@@ -931,7 +956,9 @@ void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionI
 	const ECombatActionIntent combatActionIntent = ResolveChainCombatIntent(InActionType, InActionIndex);
 	if (combatActionIntent == ECombatActionIntent::None) return;
 
-	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent);
+	if (!IsCombatTargetSnapshotCurrent(ActiveCombatActionTargetSnapshot)) return;
+
+	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent, ActiveCombatActionTargetSnapshot);
 	if (!actionRequestResult.IsReservedResult()) return;
 }
 

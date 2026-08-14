@@ -138,6 +138,7 @@ enum class EActionRequestRejectReason : uint8
 	InvalidState,
 	InvalidEquipment,
 	InvalidCombatAction,
+	StaleCombatTarget,
 
 	InvalidQuery,
 
