@@ -271,7 +271,7 @@ Revision은 비동기·지연 소비자가 오래된 타겟 변경 결과를 구
 ```cpp
 bool HasCombatTarget() const;
 AActor* GetCombatTargetActor() const;
-uint32 GetCombatTargetRevision() const;
+int32 GetCombatTargetRevision() const;
 
 bool RequestSetCombatTarget(AActor* InTarget, ECombatTargetChangeReason InReason);
 bool RequestClearCombatTarget(ECombatTargetChangeReason InReason);
@@ -284,7 +284,7 @@ FOnCombatTargetChanged OnCombatTargetChanged;
 ```text
 PlayerSelection
 AIDecision
-HitReactive
+HitReceived
 PolicyInvalidated
 TargetEndPlay
 OwnerLifecycle
