@@ -290,7 +290,7 @@ Consumer는 이벤트 payload만으로 해당 변경 세대를 해석할 수 있
 
 ## 4.2 Player 마이그레이션 완료
 
-`UCTargetingComponent`는 다음 Player 선택 정책만 소유한다.
+`UCPlayerTargetSelectionComponent`는 다음 Player 선택 정책만 소유한다.
 
 - Player 후보 수집
 - 후보 점수 계산
@@ -339,15 +339,7 @@ Input
 - 캐릭터 회전
 - HUD 좌표 투영
 
-기존 `UCTargetingComponent`는 마이그레이션 후 이 책임에 맞는 이름으로 정리한다.
-
-권장 이름:
-
-```text
-UCPlayerTargetSelectionComponent
-```
-
-현 구현에서는 UAsset과 Blueprint 연결을 유지하기 위해 `UCTargetingComponent` 이름을 유지한다. 이름 변경은 별도 자산 마이그레이션 작업에서 판단한다.
+Player 선택 정책 Component는 `UCPlayerTargetSelectionComponent`로 이름을 정리했다. 기존 Blueprint/UAsset class path와 Controller property path는 Core Redirect로 호환한다.
 
 ### Player Consumer 참조 수명
 
@@ -677,7 +669,7 @@ TargetRevisionPolicy
 상태: 구현 완료
 
 ```text
-기존 TargetingComponent
+Player Target Selection Component
 → Selection 책임만 유지
 → 결과를 CombatTargetComponent에 Commit
 → LockAssist / HUD / Debug Consumer 전환
@@ -845,7 +837,7 @@ Source/Portfolio/Character/Enemy/CEnemy.cpp
 후속 Player 마이그레이션 조사 대상:
 
 ```text
-Source/Portfolio/Component/CTargetingComponent.*
+Source/Portfolio/Component/CPlayerTargetSelectionComponent.*
 Source/Portfolio/Component/CTargetLockAssistComponent.*
 Source/Portfolio/Component/CTargetHUDPresenterComponent.*
 Player Controller 입력 및 Debug Overlay Target Focus 경로

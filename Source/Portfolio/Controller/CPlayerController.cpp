@@ -6,7 +6,7 @@
 #include "Component/CPlayerFeedbackComponent.h"
 #include "Component/CTargetHUDPresenterComponent.h"
 #include "Component/CTargetLockAssistComponent.h"
-#include "Component/CTargetingComponent.h"
+#include "Component/CPlayerTargetSelectionComponent.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
@@ -30,8 +30,8 @@ ACPlayerController::ACPlayerController()
 	PlayerFeedbackComponent = CreateDefaultSubobject<UCPlayerFeedbackComponent>(TEXT("PlayerFeedback"));
 	check(PlayerFeedbackComponent);
 
-	TargetingComponent = CreateDefaultSubobject<UCTargetingComponent>(TEXT("Targeting"));
-	check(TargetingComponent);
+	PlayerTargetSelectionComponent = CreateDefaultSubobject<UCPlayerTargetSelectionComponent>(TEXT("Targeting"));
+	check(PlayerTargetSelectionComponent);
 
 	TargetLockAssistComponent = CreateDefaultSubobject<UCTargetLockAssistComponent>(TEXT("TargetLockAssist"));
 	check(TargetLockAssistComponent);
@@ -105,9 +105,9 @@ void ACPlayerController::PostInitializeComponents()
 		PlayerFeedbackComponent->InitializeReferences(this);
 	}
 
-	if (IsValid(TargetingComponent))
+	if (IsValid(PlayerTargetSelectionComponent))
 	{
-		TargetingComponent->InitializeReferences(this);
+		PlayerTargetSelectionComponent->InitializeReferences(this);
 	}
 
 	if (IsValid(TargetLockAssistComponent))
@@ -307,16 +307,16 @@ void ACPlayerController::PressDodge()
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
 }
 
-// ===== Targeting =====
+// ===== Player Target Selection =====
 
 void ACPlayerController::SynchronizeCombatTargetReferences()
 {
 	ACPlayer* player = ResolveControlledPlayer(this);
 	UCCombatTargetComponent* combatTargetComponent = IsValid(player) ? player->GetCombatTargetComp() : nullptr;
 
-	if (IsValid(TargetingComponent))
+	if (IsValid(PlayerTargetSelectionComponent))
 	{
-		TargetingComponent->SetCombatTargetComponent(combatTargetComponent);
+		PlayerTargetSelectionComponent->SetCombatTargetComponent(combatTargetComponent);
 	}
 
 	if (IsValid(TargetLockAssistComponent))
@@ -332,9 +332,9 @@ void ACPlayerController::SynchronizeCombatTargetReferences()
 
 void ACPlayerController::ClearCombatTargetReferences()
 {
-	if (IsValid(TargetingComponent))
+	if (IsValid(PlayerTargetSelectionComponent))
 	{
-		TargetingComponent->SetCombatTargetComponent(nullptr);
+		PlayerTargetSelectionComponent->SetCombatTargetComponent(nullptr);
 	}
 
 	if (IsValid(TargetLockAssistComponent))
@@ -350,21 +350,21 @@ void ACPlayerController::ClearCombatTargetReferences()
 
 void ACPlayerController::PressTargetLock()
 {
-	if (!IsValid(TargetingComponent)) return;
+	if (!IsValid(PlayerTargetSelectionComponent)) return;
 
-	TargetingComponent->ToggleTargetLock();
+	PlayerTargetSelectionComponent->ToggleTargetLock();
 }
 
 void ACPlayerController::PressTargetSwitchLeft()
 {
-	if (!IsValid(TargetingComponent)) return;
+	if (!IsValid(PlayerTargetSelectionComponent)) return;
 
-	TargetingComponent->SwitchTarget(ETargetSwitchDirection::Left);
+	PlayerTargetSelectionComponent->SwitchTarget(ETargetSwitchDirection::Left);
 }
 
 void ACPlayerController::PressTargetSwitchRight()
 {
-	if (!IsValid(TargetingComponent)) return;
+	if (!IsValid(PlayerTargetSelectionComponent)) return;
 
-	TargetingComponent->SwitchTarget(ETargetSwitchDirection::Right);
+	PlayerTargetSelectionComponent->SwitchTarget(ETargetSwitchDirection::Right);
 }

@@ -1,7 +1,7 @@
 #include "Core/Debug/CDebugOverlayHUD.h"
 
 #include "Character/Enemy/CEnemy.h"
-#include "Component/CTargetingComponent.h"
+#include "Component/CPlayerTargetSelectionComponent.h"
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayCanvasRenderer.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
@@ -74,7 +74,7 @@ namespace
 		if (!FTargetingDebug::IsEnabled()) return;
 		if (!IsValid(InOwningPlayerController)) return;
 
-		const UCTargetingComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCTargetingComponent>();
+		const UCPlayerTargetSelectionComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCPlayerTargetSelectionComponent>();
 		if (!IsValid(targetingComp)) return;
 
 		FTargetingDebugSnapshot targetingSnapshot;
@@ -87,7 +87,7 @@ namespace
 	{
 		if (!IsValid(InOwningPlayerController)) return;
 
-		const UCTargetingComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCTargetingComponent>();
+		const UCPlayerTargetSelectionComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCPlayerTargetSelectionComponent>();
 		if (!IsValid(targetingComp)) return;
 
 		FTargetingDebugSnapshot targetingSnapshot;

@@ -18,7 +18,7 @@ private:
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
-	class UCTargetingComponent* TargetingComponent = nullptr;
+	class UCPlayerTargetSelectionComponent* PlayerTargetSelectionComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCTargetLockAssistComponent* TargetLockAssistComponent = nullptr;
@@ -34,7 +34,7 @@ private:
 
 public:
 	// Component Query
-	FORCEINLINE class UCTargetingComponent* GetTargetingComp() const { return TargetingComponent; }
+	FORCEINLINE class UCPlayerTargetSelectionComponent* GetPlayerTargetSelectionComp() const { return PlayerTargetSelectionComponent; }
 
 	// Debug Overlay Exec
 	UFUNCTION(Exec)
@@ -85,7 +85,7 @@ protected:
 	void PressSwordToggle();
 
 protected:
-	// Targeting
+	// Player Target Selection
 	void SynchronizeCombatTargetReferences();
 	void ClearCombatTargetReferences();
 

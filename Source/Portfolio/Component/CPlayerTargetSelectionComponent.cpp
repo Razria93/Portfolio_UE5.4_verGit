@@ -1,4 +1,4 @@
-#include "Component/CTargetingComponent.h"
+#include "Component/CPlayerTargetSelectionComponent.h"
 
 #include "ProjectGlobal.h"
 
@@ -53,19 +53,19 @@ namespace
 
 // ===== Lifecycle =====
 
-UCTargetingComponent::UCTargetingComponent()
+UCPlayerTargetSelectionComponent::UCPlayerTargetSelectionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
 // ===== Component Reference =====
 
-void UCTargetingComponent::InitializeReferences(APlayerController* InOwnerPlayerController)
+void UCPlayerTargetSelectionComponent::InitializeReferences(APlayerController* InOwnerPlayerController)
 {
 	OwnerPlayerController_Injected = InOwnerPlayerController;
 	ValidateRequiredReferences();
 }
-void UCTargetingComponent::SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent)
+void UCPlayerTargetSelectionComponent::SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent)
 {
 	CombatTargetComponent_Injected = InCombatTargetComponent;
 	ValidationElapsedTime = 0.f;
@@ -73,7 +73,7 @@ void UCTargetingComponent::SetCombatTargetComponent(UCCombatTargetComponent* InC
 
 // ===== Lifecycle =====
 
-void UCTargetingComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+void UCPlayerTargetSelectionComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
 	CombatTargetComponent_Injected = nullptr;
 	ValidationElapsedTime = 0.f;
@@ -81,7 +81,7 @@ void UCTargetingComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 	Super::EndPlay(InEndPlayReason);
 }
 
-void UCTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UCPlayerTargetSelectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -94,7 +94,7 @@ void UCTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 // ===== Target Command =====
 
-void UCTargetingComponent::ToggleTargetLock()
+void UCPlayerTargetSelectionComponent::ToggleTargetLock()
 {
 	if (!IsValid(CombatTargetComponent_Injected)) return;
 
@@ -107,7 +107,7 @@ void UCTargetingComponent::ToggleTargetLock()
 	AcquireBestTarget();
 }
 
-bool UCTargetingComponent::AcquireBestTarget()
+bool UCPlayerTargetSelectionComponent::AcquireBestTarget()
 {
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
 	if (!IsValid(CombatTargetComponent_Injected)) return false;
@@ -136,7 +136,7 @@ bool UCTargetingComponent::AcquireBestTarget()
 		&& CombatTargetComponent_Injected->RequestSetCombatTarget(bestTarget, ECombatTargetChangeReason::PlayerSelection);
 }
 
-bool UCTargetingComponent::SwitchTarget(ETargetSwitchDirection InDirection)
+bool UCPlayerTargetSelectionComponent::SwitchTarget(ETargetSwitchDirection InDirection)
 {
 	if (InDirection != ETargetSwitchDirection::Left && InDirection != ETargetSwitchDirection::Right) return false;
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
@@ -187,14 +187,14 @@ bool UCTargetingComponent::SwitchTarget(ETargetSwitchDirection InDirection)
 		&& CombatTargetComponent_Injected->RequestSetCombatTarget(bestCandidate.Target, ECombatTargetChangeReason::PlayerSelection);
 }
 
-void UCTargetingComponent::ClearTarget()
+void UCPlayerTargetSelectionComponent::ClearTarget()
 {
 	if (!IsValid(CombatTargetComponent_Injected)) return;
 
 	CombatTargetComponent_Injected->RequestClearCombatTarget(ECombatTargetChangeReason::ManualClear);
 }
 
-bool UCTargetingComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const
+bool UCPlayerTargetSelectionComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const
 {
 	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected) ? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor()) : nullptr;
 	if (!BuildTargetEvaluation(currentTarget, OutSnapshot)) return false;
@@ -205,7 +205,7 @@ bool UCTargetingComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapsh
 
 // ===== Validation =====
 
-bool UCTargetingComponent::ValidateRequiredReferences() const
+bool UCPlayerTargetSelectionComponent::ValidateRequiredReferences() const
 {
 	const FRequiredReference requiredReferences[] =
 	{
@@ -221,7 +221,7 @@ bool UCTargetingComponent::ValidateRequiredReferences() const
 	return bValid;
 }
 
-bool UCTargetingComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireViewCone) const
+bool UCPlayerTargetSelectionComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireViewCone) const
 {
 	FTargetingDebugSnapshot evaluation;
 	if (!BuildTargetEvaluation(InTarget, evaluation)) return false;
@@ -229,7 +229,7 @@ bool UCTargetingComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireV
 	return IsTargetEvaluationValid(InTarget, evaluation, bRequireViewCone);
 }
 
-void UCTargetingComponent::ValidateCurrentTarget()
+void UCPlayerTargetSelectionComponent::ValidateCurrentTarget()
 {
 	if (!IsValid(CombatTargetComponent_Injected)) return;
 
@@ -242,7 +242,7 @@ void UCTargetingComponent::ValidateCurrentTarget()
 
 // ===== Target Evaluation =====
 
-bool UCTargetingComponent::BuildTargetEvaluation(const ACEnemy* InTarget, FTargetingDebugSnapshot& OutEvaluation) const
+bool UCPlayerTargetSelectionComponent::BuildTargetEvaluation(const ACEnemy* InTarget, FTargetingDebugSnapshot& OutEvaluation) const
 {
 	OutEvaluation = FTargetingDebugSnapshot();
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
@@ -270,7 +270,7 @@ bool UCTargetingComponent::BuildTargetEvaluation(const ACEnemy* InTarget, FTarge
 	return true;
 }
 
-bool UCTargetingComponent::IsTargetEvaluationValid(const ACEnemy* InTarget, const FTargetingDebugSnapshot& InEvaluation, bool bRequireViewCone) const
+bool UCPlayerTargetSelectionComponent::IsTargetEvaluationValid(const ACEnemy* InTarget, const FTargetingDebugSnapshot& InEvaluation, bool bRequireViewCone) const
 {
 	if (!IsValid(InTarget)) return false;
 
@@ -283,7 +283,7 @@ bool UCTargetingComponent::IsTargetEvaluationValid(const ACEnemy* InTarget, cons
 
 // ===== Candidate Selection =====
 
-bool UCTargetingComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const
+bool UCPlayerTargetSelectionComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const
 {
 	OutScore = 0.f;
 
@@ -295,7 +295,7 @@ bool UCTargetingComponent::TryScoreTarget(const ACEnemy* InTarget, float& OutSco
 	return true;
 }
 
-bool UCTargetingComponent::ProjectTargetToViewport(const ACEnemy* InTarget, FVector2D& OutScreenPosition) const
+bool UCPlayerTargetSelectionComponent::ProjectTargetToViewport(const ACEnemy* InTarget, FVector2D& OutScreenPosition) const
 {
 	OutScreenPosition = FVector2D::ZeroVector;
 	if (!IsValid(OwnerPlayerController_Injected) || !IsValid(InTarget)) return false;

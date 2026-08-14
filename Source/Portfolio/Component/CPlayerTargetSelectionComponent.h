@@ -3,19 +3,19 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CTargetingTypes.h"
-#include "CTargetingComponent.generated.h"
+#include "CPlayerTargetSelectionComponent.generated.h"
 
 class AActor;
 class ACEnemy;
 class UCCombatTargetComponent;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class PORTFOLIO_API UCTargetingComponent : public UActorComponent
+class PORTFOLIO_API UCPlayerTargetSelectionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UCTargetingComponent();
+	UCPlayerTargetSelectionComponent();
 
 private:
 	// Tuning
