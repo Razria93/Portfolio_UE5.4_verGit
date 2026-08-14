@@ -124,6 +124,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Overlay")
 	class UCObservableOverlayComponent* ObservableOverlayComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCCombatTargetComponent* CombatTargetComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
 	class UCCombatSignalSourceComponent* CombatSignalSourceComponent;
 
@@ -225,6 +228,7 @@ public:
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
+	FORCEINLINE UCCombatTargetComponent* GetCombatTargetComp() const { return CombatTargetComponent; }
 	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
 	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }

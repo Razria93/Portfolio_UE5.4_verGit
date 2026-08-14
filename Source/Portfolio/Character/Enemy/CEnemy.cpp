@@ -10,6 +10,7 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CObservableOverlayComponent.h"
+#include "Component/CCombatTargetComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
@@ -96,6 +97,9 @@ ACEnemy::ACEnemy()
 
 	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
 	check(ObservableOverlayComponent);
+
+	CombatTargetComponent = CreateDefaultSubobject<UCCombatTargetComponent>(TEXT("CombatTarget"));
+	check(CombatTargetComponent);
 
 	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
 	check(CombatSignalSourceComponent);
@@ -256,6 +260,7 @@ void ACEnemy::RecoverReferences()
 	FComponentReferenceHelper::RecoverIfInvalid(this, StateComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, HealthComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, ObservableOverlayComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, CombatTargetComponent);
 
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalSourceComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalTargetComponent);
@@ -281,6 +286,7 @@ void ACEnemy::BuildReferences(FCharacterComponentReferences& OutReferences)
 	OutReferences.StateComponent = StateComponent;
 	OutReferences.HealthComponent = HealthComponent;
 	OutReferences.ObservableOverlayComponent = ObservableOverlayComponent;
+	OutReferences.CombatTargetComponent = CombatTargetComponent;
 
 	OutReferences.CombatSignalSourceComponent = CombatSignalSourceComponent;
 	OutReferences.CombatSignalTargetComponent = CombatSignalTargetComponent;
