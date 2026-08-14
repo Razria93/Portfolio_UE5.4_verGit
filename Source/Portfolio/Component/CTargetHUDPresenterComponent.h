@@ -8,7 +8,8 @@
 class ACEnemy;
 class APlayerController;
 class UCTargetHUDWidget;
-class UCTargetingComponent;
+class UCCombatTargetComponent;
+struct FCombatTargetChange;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCTargetHUDPresenterComponent : public UActorComponent
@@ -32,7 +33,7 @@ private:
 	APlayerController* OwnerPlayerController_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	UCTargetingComponent* TargetingComponent_Injected = nullptr;
+	UCCombatTargetComponent* CombatTargetComponent_Injected = nullptr;
 
 private:
 	// Runtime Widget
@@ -41,7 +42,8 @@ private:
 
 public:
 	// Component Reference
-	void InitializeReferences(APlayerController* InOwnerPlayerController, UCTargetingComponent* InTargetingComponent);
+	void InitializeReferences(APlayerController* InOwnerPlayerController);
+	void SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent);
 
 protected:
 	// Lifecycle
@@ -60,7 +62,7 @@ private:
 
 private:
 	// Target State
-	void HandleTargetChanged(ACEnemy* InPreviousTarget, ACEnemy* InNewTarget);
+	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 	void SynchronizeTargetState();
 
 private:

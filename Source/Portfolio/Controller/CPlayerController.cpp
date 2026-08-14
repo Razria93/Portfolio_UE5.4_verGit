@@ -112,27 +112,36 @@ void ACPlayerController::PostInitializeComponents()
 
 	if (IsValid(TargetLockAssistComponent))
 	{
-		TargetLockAssistComponent->InitializeReferences(this, TargetingComponent);
+		TargetLockAssistComponent->InitializeReferences(this);
 		TargetLockAssistComponent->SetControlledPlayer(ResolveControlledPlayer(this));
 	}
 
 	if (IsValid(TargetHUDPresenterComponent))
 	{
-		TargetHUDPresenterComponent->InitializeReferences(this, TargetingComponent);
+		TargetHUDPresenterComponent->InitializeReferences(this);
 	}
+
+	SynchronizeCombatTargetReferences();
 }
 
 void ACPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	if (!IsValid(TargetLockAssistComponent)) return;
+	ClearCombatTargetReferences();
 
-	TargetLockAssistComponent->SetControlledPlayer(Cast<ACPlayer>(InPawn));
+	if (IsValid(TargetLockAssistComponent))
+	{
+		TargetLockAssistComponent->SetControlledPlayer(Cast<ACPlayer>(InPawn));
+	}
+
+	SynchronizeCombatTargetReferences();
 }
 
 void ACPlayerController::OnUnPossess()
 {
+	ClearCombatTargetReferences();
+
 	if (IsValid(TargetLockAssistComponent))
 	{
 		TargetLockAssistComponent->ClearControlledPlayer();
@@ -299,6 +308,45 @@ void ACPlayerController::PressDodge()
 }
 
 // ===== Targeting =====
+
+void ACPlayerController::SynchronizeCombatTargetReferences()
+{
+	ACPlayer* player = ResolveControlledPlayer(this);
+	UCCombatTargetComponent* combatTargetComponent = IsValid(player) ? player->GetCombatTargetComp() : nullptr;
+
+	if (IsValid(TargetingComponent))
+	{
+		TargetingComponent->SetCombatTargetComponent(combatTargetComponent);
+	}
+
+	if (IsValid(TargetLockAssistComponent))
+	{
+		TargetLockAssistComponent->SetCombatTargetComponent(combatTargetComponent);
+	}
+
+	if (IsValid(TargetHUDPresenterComponent))
+	{
+		TargetHUDPresenterComponent->SetCombatTargetComponent(combatTargetComponent);
+	}
+}
+
+void ACPlayerController::ClearCombatTargetReferences()
+{
+	if (IsValid(TargetingComponent))
+	{
+		TargetingComponent->SetCombatTargetComponent(nullptr);
+	}
+
+	if (IsValid(TargetLockAssistComponent))
+	{
+		TargetLockAssistComponent->SetCombatTargetComponent(nullptr);
+	}
+
+	if (IsValid(TargetHUDPresenterComponent))
+	{
+		TargetHUDPresenterComponent->SetCombatTargetComponent(nullptr);
+	}
+}
 
 void ACPlayerController::PressTargetLock()
 {

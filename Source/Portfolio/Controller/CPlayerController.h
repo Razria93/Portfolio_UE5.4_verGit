@@ -86,6 +86,9 @@ protected:
 
 protected:
 	// Targeting
+	void SynchronizeCombatTargetReferences();
+	void ClearCombatTargetReferences();
+
 	void PressTargetLock();
 	void PressTargetSwitchLeft();
 	void PressTargetSwitchRight();

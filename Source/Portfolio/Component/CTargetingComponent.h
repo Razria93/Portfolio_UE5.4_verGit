@@ -7,8 +7,7 @@
 
 class AActor;
 class ACEnemy;
-
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTargetChanged, ACEnemy* /* PreviousTarget */, ACEnemy* /* NewTarget */);
+class UCCombatTargetComponent;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCTargetingComponent : public UActorComponent
@@ -30,16 +29,15 @@ private:
 
 private:
 	// Runtime State
-	TWeakObjectPtr<ACEnemy> CurrentTarget;
-	float ValidationElapsedTime = 0.f;
+	UPROPERTY(Transient)
+	UCCombatTargetComponent* CombatTargetComponent_Injected = nullptr;
 
-public:
-	// Event
-	FOnTargetChanged OnTargetChanged;
+	float ValidationElapsedTime = 0.f;
 
 public:
 	// Component Reference
 	void InitializeReferences(class APlayerController* InOwnerPlayerController);
+	void SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent);
 
 protected:
 	// Lifecycle
@@ -54,9 +52,7 @@ public:
 	void ClearTarget();
 
 public:
-	// Target Query
-	bool HasTarget() const;
-	ACEnemy* GetCurrentTarget() const;
+	// Debug Query
 	bool BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const;
 
 private:
@@ -74,18 +70,5 @@ private:
 	// Candidate Selection
 	bool TryScoreTarget(const ACEnemy* InTarget, float& OutScore) const;
 	bool ProjectTargetToViewport(const ACEnemy* InTarget, FVector2D& OutScreenPosition) const;
-
-private:
-	// Target Lifecycle
-	void BindTargetEndPlay(ACEnemy* InTarget);
-	void UnbindTargetEndPlay(ACEnemy* InTarget);
-
-	UFUNCTION()
-	void HandleCurrentTargetEndPlay(AActor* InActor, EEndPlayReason::Type InEndPlayReason);
-
-private:
-	// Target State
-	void SetCurrentTarget(ACEnemy* InNewTarget);
-	void ClearExpiredTarget();
 
 };

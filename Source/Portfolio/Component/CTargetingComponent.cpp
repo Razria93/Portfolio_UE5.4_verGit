@@ -3,6 +3,7 @@
 #include "ProjectGlobal.h"
 
 #include "Character/Enemy/CEnemy.h"
+#include "Component/CCombatTargetComponent.h"
 #include "Component/CHealthComponent.h"
 
 #include "EngineUtils.h"
@@ -64,13 +65,17 @@ void UCTargetingComponent::InitializeReferences(APlayerController* InOwnerPlayer
 	OwnerPlayerController_Injected = InOwnerPlayerController;
 	ValidateRequiredReferences();
 }
+void UCTargetingComponent::SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent)
+{
+	CombatTargetComponent_Injected = InCombatTargetComponent;
+	ValidationElapsedTime = 0.f;
+}
 
 // ===== Lifecycle =====
 
 void UCTargetingComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
-	UnbindTargetEndPlay(CurrentTarget.Get());
-	CurrentTarget.Reset();
+	CombatTargetComponent_Injected = nullptr;
 	ValidationElapsedTime = 0.f;
 
 	Super::EndPlay(InEndPlayReason);
@@ -91,7 +96,9 @@ void UCTargetingComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 void UCTargetingComponent::ToggleTargetLock()
 {
-	if (HasTarget())
+	if (!IsValid(CombatTargetComponent_Injected)) return;
+
+	if (IsValid(CombatTargetComponent_Injected) && CombatTargetComponent_Injected->HasCombatTarget())
 	{
 		ClearTarget();
 		return;
@@ -103,6 +110,7 @@ void UCTargetingComponent::ToggleTargetLock()
 bool UCTargetingComponent::AcquireBestTarget()
 {
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
+	if (!IsValid(CombatTargetComponent_Injected)) return false;
 
 	UWorld* world = GetWorld();
 	if (!IsValid(world)) return false;
@@ -124,16 +132,19 @@ bool UCTargetingComponent::AcquireBestTarget()
 
 	if (!IsValid(bestTarget)) return false;
 
-	SetCurrentTarget(bestTarget);
-	return true;
+	return IsValid(CombatTargetComponent_Injected)
+		&& CombatTargetComponent_Injected->RequestSetCombatTarget(bestTarget, ECombatTargetChangeReason::PlayerSelection);
 }
 
 bool UCTargetingComponent::SwitchTarget(ETargetSwitchDirection InDirection)
 {
 	if (InDirection != ETargetSwitchDirection::Left && InDirection != ETargetSwitchDirection::Right) return false;
 	if (!IsValid(OwnerPlayerController_Injected)) return false;
+	if (!IsValid(CombatTargetComponent_Injected)) return false;
 
-	ACEnemy* currentTarget = CurrentTarget.Get();
+	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected)
+		? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor())
+		: nullptr;
 	if (!IsValid(currentTarget)) return AcquireBestTarget();
 
 	FVector2D currentScreenPosition = FVector2D::ZeroVector;
@@ -174,30 +185,22 @@ bool UCTargetingComponent::SwitchTarget(ETargetSwitchDirection InDirection)
 
 	if (!bHasBestCandidate || !IsValid(bestCandidate.Target)) return false;
 
-	SetCurrentTarget(bestCandidate.Target);
-	return true;
+	return IsValid(CombatTargetComponent_Injected)
+		&& CombatTargetComponent_Injected->RequestSetCombatTarget(bestCandidate.Target, ECombatTargetChangeReason::PlayerSelection);
 }
 
 void UCTargetingComponent::ClearTarget()
 {
-	SetCurrentTarget(nullptr);
-}
+	if (!IsValid(CombatTargetComponent_Injected)) return;
 
-// ===== Target Query =====
-
-bool UCTargetingComponent::HasTarget() const
-{
-	return IsValid(CurrentTarget.Get());
-}
-
-ACEnemy* UCTargetingComponent::GetCurrentTarget() const
-{
-	return CurrentTarget.Get();
+	CombatTargetComponent_Injected->RequestClearCombatTarget(ECombatTargetChangeReason::ManualClear);
 }
 
 bool UCTargetingComponent::BuildDebugSnapshot(FTargetingDebugSnapshot& OutSnapshot) const
 {
-	ACEnemy* currentTarget = CurrentTarget.Get();
+	ACEnemy* currentTarget = IsValid(CombatTargetComponent_Injected)
+		? Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor())
+		: nullptr;
 	if (!BuildTargetEvaluation(currentTarget, OutSnapshot)) return false;
 
 	OutSnapshot.TargetActor = currentTarget;
@@ -232,17 +235,13 @@ bool UCTargetingComponent::IsTargetValid(const ACEnemy* InTarget, bool bRequireV
 
 void UCTargetingComponent::ValidateCurrentTarget()
 {
-	if (CurrentTarget.IsStale())
-	{
-		ClearExpiredTarget();
-		return;
-	}
+	if (!IsValid(CombatTargetComponent_Injected)) return;
 
-	ACEnemy* currentTarget = CurrentTarget.Get();
+	ACEnemy* currentTarget = Cast<ACEnemy>(CombatTargetComponent_Injected->GetCombatTargetActor());
 	if (!IsValid(currentTarget)) return;
 	if (IsTargetValid(currentTarget, false)) return;
 
-	ClearTarget();
+	CombatTargetComponent_Injected->RequestClearCombatTarget(ECombatTargetChangeReason::PolicyInvalidated);
 }
 
 // ===== Target Evaluation =====
@@ -318,53 +317,4 @@ bool UCTargetingComponent::ProjectTargetToViewport(const ACEnemy* InTarget, FVec
 		&& OutScreenPosition.X < static_cast<float>(viewportSizeX)
 		&& OutScreenPosition.Y >= 0.f
 		&& OutScreenPosition.Y < static_cast<float>(viewportSizeY);
-}
-
-// ===== Target Lifecycle =====
-
-void UCTargetingComponent::BindTargetEndPlay(ACEnemy* InTarget)
-{
-	if (!IsValid(InTarget)) return;
-
-	InTarget->OnEndPlay.AddUniqueDynamic(this, &UCTargetingComponent::HandleCurrentTargetEndPlay);
-}
-
-void UCTargetingComponent::UnbindTargetEndPlay(ACEnemy* InTarget)
-{
-	if (!IsValid(InTarget)) return;
-
-	InTarget->OnEndPlay.RemoveDynamic(this, &UCTargetingComponent::HandleCurrentTargetEndPlay);
-}
-
-void UCTargetingComponent::HandleCurrentTargetEndPlay(AActor* InActor, EEndPlayReason::Type)
-{
-	ACEnemy* endedTarget = Cast<ACEnemy>(InActor);
-	if (!endedTarget) return;
-
-	const TWeakObjectPtr<ACEnemy> endedTargetWeak(endedTarget);
-	if (!CurrentTarget.HasSameIndexAndSerialNumber(endedTargetWeak)) return;
-
-	CurrentTarget.Reset();
-	ValidationElapsedTime = 0.f;
-	OnTargetChanged.Broadcast(endedTarget, nullptr);
-}
-
-// ===== Target State =====
-
-void UCTargetingComponent::SetCurrentTarget(ACEnemy* InNewTarget)
-{
-	ACEnemy* previousTarget = CurrentTarget.Get();
-	if (previousTarget == InNewTarget) return;
-
-	UnbindTargetEndPlay(previousTarget);
-	CurrentTarget = InNewTarget;
-	BindTargetEndPlay(InNewTarget);
-	OnTargetChanged.Broadcast(previousTarget, InNewTarget);
-}
-
-void UCTargetingComponent::ClearExpiredTarget()
-{
-	CurrentTarget.Reset();
-	ValidationElapsedTime = 0.f;
-	OnTargetChanged.Broadcast(nullptr, nullptr);
 }

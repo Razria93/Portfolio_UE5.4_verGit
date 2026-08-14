@@ -1,10 +1,11 @@
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
 
 #include "Character/Enemy/CEnemy.h"
+#include "Character/Player/CPlayer.h"
+#include "Component/CCombatTargetComponent.h"
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusLogHelper.h"
 #include "Core/Debug/FDebugOverlayFocusResolver.h"
-#include "Component/CTargetingComponent.h"
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/PlayerController.h"
 
@@ -117,8 +118,9 @@ namespace
 	{
 		if (!IsValid(InFocusComponent) || !IsValid(InPlayerController)) return;
 
-		const UCTargetingComponent* targetingComp = InPlayerController->FindComponentByClass<UCTargetingComponent>();
-		ACEnemy* playerTarget = IsValid(targetingComp) ? targetingComp->GetCurrentTarget() : nullptr;
+		const ACPlayer* player = Cast<ACPlayer>(InPlayerController->GetPawn());
+		const UCCombatTargetComponent* combatTargetComp = IsValid(player) ? player->GetCombatTargetComp() : nullptr;
+		AActor* playerTarget = IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetActor() : nullptr;
 		if (IsValid(playerTarget))
 		{
 			InFocusComponent->SetDebugOverlayFocusActorAndSource(playerTarget, EDebugOverlayFocusSource::PlayerTargetFocus);
