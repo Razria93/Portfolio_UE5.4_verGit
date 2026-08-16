@@ -42,6 +42,8 @@ namespace CAIKeyRegistry
 			// Targeting
 			CAIKey::CombatTarget::Actor,
 			CAIKey::CombatTarget::CombatTargetRevision,
+			CAIKey::CombatParticipation::State,
+			CAIKey::CombatParticipation::AssignmentRevision,
 			CAIKey::Perception::PerceivedTargetPriority,
 
 			// State

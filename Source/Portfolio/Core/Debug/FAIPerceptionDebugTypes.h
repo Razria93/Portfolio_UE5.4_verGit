@@ -18,7 +18,7 @@ struct FPerceptionCandidateAuditState
 	uint64 FirstValidTargetFrame = 0;
 
 	int32 RawPerceptionEventCount = 0;
-	int32 MaxTargetPerceptionStateMapSize = 0;
+	int32 MaxPerceptionTargetContextMapSize = 0;
 
 	TSet<TWeakObjectPtr<AActor>> RawPerceptionActors;
 	TSet<TWeakObjectPtr<AActor>> ValidTargetProviderActors;
@@ -38,7 +38,7 @@ struct FPerceptionCandidateAuditState
 		FirstValidTargetFrame = 0;
 
 		RawPerceptionEventCount = 0;
-		MaxTargetPerceptionStateMapSize = 0;
+		MaxPerceptionTargetContextMapSize = 0;
 
 		RawPerceptionActors.Reset();
 		ValidTargetProviderActors.Reset();

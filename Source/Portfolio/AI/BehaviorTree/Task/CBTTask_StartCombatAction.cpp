@@ -4,6 +4,7 @@
 
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatTargetComponent.h"
+#include "Component/CEnemyCombatParticipationComponent.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "Core/Debug/FAICombatBTDebug.h"
 #include "Type/CActionOrchestrationTypes.h"
@@ -53,6 +54,14 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 		return EBTNodeResult::Failed;
 	}
 
+	const int32 participationRevision = blackboardComp->GetValueAsInt(CAIKey::CombatParticipation::AssignmentRevision.KeyName);
+	const ECombatRole participationRole = static_cast<ECombatRole>(blackboardComp->GetValueAsEnum(CAIKey::CombatParticipation::State.KeyName));
+	if (participationRole != ECombatRole::Engage || !enemy->IsCombatActionAuthorityCurrent(targetSnapshot, participationRevision))
+	{
+		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, FActionRequestResult(), TEXT("StaleCombatParticipationAuthority"));
+		return EBTNodeResult::Failed;
+	}
+
 	const bool bCanCombatAction = blackboardComp->GetValueAsBool(CAIKey::Engage::bCanCombatAction.KeyName);
 	if (!bCanCombatAction)
 	{
@@ -72,7 +81,7 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 		aiController->StopMovement();
 	}
 
-	const FActionRequestResult requestResult = enemy->HandleAICombatAction(CombatActionIntent, targetSnapshot);
+	const FActionRequestResult requestResult = enemy->HandleAICombatAction(CombatActionIntent, targetSnapshot, participationRevision);
 	if (!requestResult.IsStartedResult())
 	{
 		FAICombatBTDebug::RecordCombatActionTaskRejectedForAudit(aiController, enemy, targetActor, CombatActionIntent, requestResult, TEXT("ActionRequestFailed"));

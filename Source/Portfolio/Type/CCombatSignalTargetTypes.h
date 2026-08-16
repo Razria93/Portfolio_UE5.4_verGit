@@ -181,6 +181,9 @@ struct FCombatSignalTargetPacket
 	GENERATED_BODY()
 
 	UPROPERTY(Transient)
+	uint64 ResultSerial = 0;
+
+	UPROPERTY(Transient)
 	FCombatSignalTargetPayload Payload;
 
 	UPROPERTY(Transient)

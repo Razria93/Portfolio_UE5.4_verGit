@@ -50,6 +50,16 @@ bool UCCombatTargetComponent::RequestClearCombatTarget(ECombatTargetChangeReason
 	return CommitClearCombatTarget(previousTarget, InReason);
 }
 
+bool UCCombatTargetComponent::RequestClearCombatTargetIfCurrent(AActor* InExpectedTarget, int32 InExpectedRevision, ECombatTargetChangeReason InReason)
+{
+	if (!IsValid(InExpectedTarget)) return false;
+
+	const FCombatTargetSnapshot snapshot = GetCombatTargetSnapshot();
+	if (snapshot.TargetActor != InExpectedTarget || snapshot.Revision != InExpectedRevision) return false;
+
+	return RequestClearCombatTarget(InReason);
+}
+
 // ===== Target Query =====
 
 bool UCCombatTargetComponent::HasCombatTarget() const

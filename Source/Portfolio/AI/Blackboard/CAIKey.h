@@ -19,6 +19,12 @@ namespace CAIKey
 		static const FAIBlackboardKeySpec AIIntentState = CAIKeyFactory::FixedEnum(TEXT("AIIntentState"), static_cast<uint8>(EAIIntentState::Idle));
 	}
 
+	namespace CombatParticipation
+	{
+		static const FAIBlackboardKeySpec State = CAIKeyFactory::FixedEnum(TEXT("CombatParticipationState"), static_cast<uint8>(ECombatRole::None));
+		static const FAIBlackboardKeySpec AssignmentRevision = CAIKeyFactory::FixedInt(TEXT("CombatParticipationRevision"), 0);
+	}
+
 	namespace Perception
 	{
 		static const FAIBlackboardKeySpec bHasLOS = CAIKeyFactory::FixedBool(TEXT("bHasLOS"), false);

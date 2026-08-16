@@ -129,7 +129,13 @@ private:
 	class UCCombatTargetComponent* CombatTargetComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
-	class UCEnemyTargetSelectionComponent* EnemyTargetSelectionComponent;
+	class UCEnemyCombatTargetFacingComponent* EnemyCombatTargetFacingComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCEnemyCombatParticipationComponent* EnemyCombatParticipationComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCEnemyHitReactiveComponent* EnemyHitReactiveComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
 	class UCCombatSignalSourceComponent* CombatSignalSourceComponent;
@@ -186,6 +192,7 @@ private:
 	bool bDeathFinalizationRequested = false;
 	bool bDeathFinalized = false;
 	FCombatTargetSnapshot ActiveCombatActionTargetSnapshot;
+	int32 ActiveCombatActionParticipationRevision = 0;
 
 protected:
 	// Lifecycle
@@ -234,7 +241,9 @@ public:
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCCombatTargetComponent* GetCombatTargetComp() const { return CombatTargetComponent; }
-	FORCEINLINE UCEnemyTargetSelectionComponent* GetEnemyTargetSelectionComp() const { return EnemyTargetSelectionComponent; }
+	FORCEINLINE UCEnemyCombatTargetFacingComponent* GetEnemyCombatTargetFacingComp() const { return EnemyCombatTargetFacingComponent; }
+	FORCEINLINE UCEnemyCombatParticipationComponent* GetEnemyCombatParticipationComp() const { return EnemyCombatParticipationComponent; }
+	FORCEINLINE UCEnemyHitReactiveComponent* GetEnemyHitReactiveComp() const { return EnemyHitReactiveComponent; }
 	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
 	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
@@ -307,7 +316,8 @@ public:
 
 	// AI Action Intent
 	FActionRequestResult HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
-	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent, const FCombatTargetSnapshot& InTargetSnapshot);
+	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent, const FCombatTargetSnapshot& InTargetSnapshot, int32 InParticipationRevision);
+	bool IsCombatActionAuthorityCurrent(const FCombatTargetSnapshot& InTargetSnapshot, int32 InParticipationRevision) const;
 
 public:
 	// Runtime State

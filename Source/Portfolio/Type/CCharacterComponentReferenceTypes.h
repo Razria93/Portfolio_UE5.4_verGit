@@ -9,7 +9,9 @@ class UCActionOrchestratorComponent;
 class UCCombatSignalSourceComponent;
 class UCCombatSignalTargetComponent;
 class UCCombatTargetComponent;
-class UCEnemyTargetSelectionComponent;
+class UCEnemyCombatTargetFacingComponent;
+class UCEnemyCombatParticipationComponent;
+class UCEnemyHitReactiveComponent;
 class UCCharacterFeedbackComponent;
 class UCDefenseComponent;
 class UCHealthComponent;
@@ -35,7 +37,9 @@ struct FCharacterComponentReferences
 	UCDefenseComponent* DefenseComponent = nullptr;
 	UCObservableOverlayComponent* ObservableOverlayComponent = nullptr;
 	UCCombatTargetComponent* CombatTargetComponent = nullptr;
-	UCEnemyTargetSelectionComponent* EnemyTargetSelectionComponent = nullptr;
+	UCEnemyCombatTargetFacingComponent* EnemyCombatTargetFacingComponent = nullptr;
+	UCEnemyCombatParticipationComponent* EnemyCombatParticipationComponent = nullptr;
+	UCEnemyHitReactiveComponent* EnemyHitReactiveComponent = nullptr;
 
 	UCCombatSignalSourceComponent* CombatSignalSourceComponent = nullptr;
 	UCCombatSignalTargetComponent* CombatSignalTargetComponent = nullptr;

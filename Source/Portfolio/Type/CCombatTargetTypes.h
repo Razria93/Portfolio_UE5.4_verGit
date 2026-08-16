@@ -9,12 +9,22 @@ UENUM(BlueprintType)
 enum class ECombatTargetChangeReason : uint8
 {
 	None = 0,
+
+	// Player Policy
 	PlayerSelection,
-	AIDecision,
-	HitReceived,
+
+	// AI Participation Lifecycle
+	ParticipationAssigned,
+	ParticipationRevoked,
+
+	// Policy Invalidation
 	PolicyInvalidated,
+
+	// Target Lifetime
 	TargetEndPlay,
 	OwnerLifecycle,
+
+	// Explicit Command
 	ManualClear,
 
 	Max,

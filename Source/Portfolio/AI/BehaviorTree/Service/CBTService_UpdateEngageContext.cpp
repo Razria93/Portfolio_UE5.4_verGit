@@ -3,6 +3,7 @@
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatTargetComponent.h"
+#include "Component/CEnemyCombatParticipationComponent.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Core/Debug/FAICombatBTDebug.h"
@@ -92,7 +93,24 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 	}
 
 	const UCCombatTargetComponent* combatTargetComp = enemy->GetCombatTargetComp();
-	OutEngageContext.TargetActor = IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetSnapshot().TargetActor : nullptr;
+	const UCEnemyCombatParticipationComponent* participationComp = enemy->GetEnemyCombatParticipationComp();
+	if (!IsValid(combatTargetComp) || !IsValid(participationComp))
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingParticipationComponent"));
+		return EContextBuildResult::Error;
+	}
+
+	const FCombatParticipationAppliedSnapshot appliedSnapshot = participationComp->GetAppliedSnapshot();
+	const FCombatTargetSnapshot combatTargetSnapshot = combatTargetComp->GetCombatTargetSnapshot();
+	if (!appliedSnapshot.IsAssigned() || appliedSnapshot.CombatRole != ECombatRole::Engage
+		|| appliedSnapshot.TargetActor != combatTargetSnapshot.TargetActor
+		|| appliedSnapshot.CombatTargetRevision != combatTargetSnapshot.Revision)
+	{
+		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingEngageAuthority"));
+		return EContextBuildResult::NoData;
+	}
+
+	OutEngageContext.TargetActor = appliedSnapshot.TargetActor;
 	if (!IsValid(OutEngageContext.TargetActor))
 	{
 		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingTarget"));

@@ -153,8 +153,10 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, committedResult);
 
 	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
+	OnCombatSignalTargetAccepted.Broadcast(combatSignalTargetPacket);
 	DispatchAcceptedCombatResult(combatSignalTargetPacket);
 	DispatchCombatResultToReceiver(combatSignalTargetPacket);
+
 	FCombatSignalDebug::RecordTargetAcceptedForAudit(combatSignalTargetPacket);
 	FCombatSignalDebug::PrintTargetPacketDebug(combatSignalTargetPacket);
 
@@ -437,9 +439,14 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 
 // Packet
 
-FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult) const
+FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult)
 {
 	FCombatSignalTargetPacket combatSignalTargetPacket;
+
+	if (InCombatSignalTargetResult.bAccepted)
+	{
+		combatSignalTargetPacket.ResultSerial = NextAcceptedResultSerial++;
+	}
 
 	combatSignalTargetPacket.Payload = InCombatSignalTargetPayload;
 	combatSignalTargetPacket.Context = InCombatSignalTargetContext;

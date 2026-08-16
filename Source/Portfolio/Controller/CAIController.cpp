@@ -4,6 +4,8 @@
 
 #include "Character/Player/CPlayer.h"
 #include "Character/Enemy/CEnemy.h"
+#include "Component/CEnemyCombatParticipationComponent.h"
+#include "Component/CEnemyCombatTargetFacingComponent.h"
 #include "Core/Debug/FAIPerceptionDebug.h"
 #include "Core/Profiling/CAIPerceptionProfiling.h"
 #include "AI/Patrol/CPatrolPath.h"
@@ -116,7 +118,7 @@ bool ACAIController::InitializeControllerRuntime(APawn* InPawn)
 {
 	if (!SetPossessionRuntimeState(InPawn)) return false;
 
-	ClearTargetPerceptionStateMap();
+	ClearPerceptionTargetContextMap();
 	InitializeRuntimeLODTierSnapshot();
 	InitializePerceptionStateForProfiling();
 	InitializePerceptionCandidateAudit();
@@ -153,7 +155,7 @@ void ACAIController::UninitializeControllerRuntime()
 	ClearPerceptionCandidateAudit();
 	ClearPerceptionStateForProfiling();
 	ClearRuntimeLODTierSnapshot();
-	ClearTargetPerceptionStateMap();
+	ClearPerceptionTargetContextMap();
 
 	ResetPossessionRuntimeState();
 }
@@ -165,11 +167,38 @@ bool ACAIController::SetPossessionRuntimeState(APawn* InPawn)
 	if (!IsValid(InPawn)) return false;
 
 	ControlledPawn_Cached = InPawn;
+
+	ACEnemy* enemy = Cast<ACEnemy>(InPawn);
+	UCEnemyCombatTargetFacingComponent* combatTargetFacingComp = IsValid(enemy) ? enemy->GetEnemyCombatTargetFacingComp() : nullptr;
+	if (IsValid(combatTargetFacingComp))
+	{
+		combatTargetFacingComp->SetAIController(this);
+	}
+
+	UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr;
+	if (IsValid(combatParticipationComp))
+	{
+		combatParticipationComp->SetAIController(this);
+	}
+
 	return true;
 }
 
 void ACAIController::ResetPossessionRuntimeState()
 {
+	ACEnemy* enemy = Cast<ACEnemy>(ControlledPawn_Cached);
+	UCEnemyCombatTargetFacingComponent* combatTargetFacingComp = IsValid(enemy) ? enemy->GetEnemyCombatTargetFacingComp() : nullptr;
+	if (IsValid(combatTargetFacingComp))
+	{
+		combatTargetFacingComp->ClearAIController();
+	}
+
+	UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr;
+	if (IsValid(combatParticipationComp))
+	{
+		combatParticipationComp->ClearAIController();
+	}
+
 	ControlledPawn_Cached = nullptr;
 }
 
@@ -299,9 +328,27 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 
 	if (!bHasTargetProvider) return;
 
-	FTargetPerceptionState& data = TargetPerceptionStateMap.FindOrAdd(Actor);
+	ACEnemy* enemy = Cast<ACEnemy>(GetPawn());
+	UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr;
+	ITargetContextProvider* targetProvider = Cast<ITargetContextProvider>(Actor);
+	if (IsValid(combatParticipationComp) && targetProvider)
+	{
+		if (Stimulus.WasSuccessfullySensed())
+		{
+			FCombatParticipationEvidenceContext evidenceContext;
+			evidenceContext.TargetPriority = targetProvider->GetTargetPriority();
+			evidenceContext.DistanceToTarget = FVector::Dist(GetPawn()->GetActorLocation(), Actor->GetActorLocation());
+			combatParticipationComp->ReportEvidence(ECombatParticipationSource::Perception, Actor, evidenceContext);
+		}
+		else
+		{
+			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, Actor);
+		}
+	}
 
-	RecordTargetPerceptionStateMapSizeForAudit();
+	FPerceptionTargetContext& data = PerceptionTargetContextMap.FindOrAdd(Actor);
+
+	RecordPerceptionTargetContextMapSizeForAudit();
 
 	if (Stimulus.WasSuccessfullySensed())
 	{
@@ -321,17 +368,17 @@ void ACAIController::OnTargetPerceptionForgotten(AActor* Actor)
 
 // Query
 
-EPerceptionBuildResult ACAIController::BuildPerceptionContext(FTargetPerceptionState& OutTargetPerceptionState)
+EPerceptionBuildResult ACAIController::BuildPerceptionContext(FPerceptionTargetContext& OutPerceptionTargetContext)
 {
 	if (bPerceptionDisabledForProfiling) return EPerceptionBuildResult::NoData;
 
-	UpdateTargetPerceptionStateMap();
-	return SelectTopPriority(OutTargetPerceptionState);
+	UpdatePerceptionTargetContextMap();
+	return SelectTopPriority(OutPerceptionTargetContext);
 }
 
 // Target Data
 
-void ACAIController::UpdateTargetPerceptionStateMap()
+void ACAIController::UpdatePerceptionTargetContextMap()
 {
 	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return;
@@ -342,12 +389,12 @@ void ACAIController::UpdateTargetPerceptionStateMap()
 	float nowTime = world->GetTimeSeconds();
 
 	TArray<AActor*> removeKeys;
-	for (TPair<AActor*, FTargetPerceptionState>& pair : TargetPerceptionStateMap)
+	for (TPair<AActor*, FPerceptionTargetContext>& pair : PerceptionTargetContextMap)
 	{
 		AActor* actorKey = pair.Key;
-		FTargetPerceptionState& data = pair.Value;
+		FPerceptionTargetContext& data = pair.Value;
 
-		if (!IsValid(actorKey) || !data.IsValidData())
+		if (!IsValid(actorKey) || !data.HasTarget())
 		{
 			removeKeys.Add(actorKey);
 			continue;
@@ -364,9 +411,9 @@ void ACAIController::UpdateTargetPerceptionStateMap()
 		}
 		else // bHasLOS == false
 		{
-			bool bMemoryValid = ((nowTime - data.LastSeenTime) > PerceptionSetup.TargetMemoryTimeout);
+			bool bMemoryExpired = ((nowTime - data.LastSeenTime) > PerceptionSetup.TargetMemoryTimeout);
 
-			if (bMemoryValid)
+			if (bMemoryExpired)
 			{
 				removeKeys.Add(actorKey);
 				continue;
@@ -376,46 +423,62 @@ void ACAIController::UpdateTargetPerceptionStateMap()
 
 	for (AActor* removeKey : removeKeys)
 	{
-		TargetPerceptionStateMap.Remove(removeKey);
+		ACEnemy* enemy = Cast<ACEnemy>(GetPawn());
+		if (UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr)
+		{
+			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, removeKey);
+		}
+
+		PerceptionTargetContextMap.Remove(removeKey);
 	}
 
-	RecordTargetPerceptionStateMapSizeForAudit();
+	RecordPerceptionTargetContextMapSizeForAudit();
 }
 
-void ACAIController::ClearTargetPerceptionStateMap()
+void ACAIController::ClearPerceptionTargetContextMap()
 {
-	TargetPerceptionStateMap.Reset();
+	ACEnemy* enemy = Cast<ACEnemy>(GetPawn());
+	UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr;
+	if (IsValid(combatParticipationComp))
+	{
+		for (const TPair<AActor*, FPerceptionTargetContext>& pair : PerceptionTargetContextMap)
+		{
+			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, pair.Key);
+		}
+	}
+
+	PerceptionTargetContextMap.Reset();
 }
 
-EPerceptionBuildResult ACAIController::SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState) const
+EPerceptionBuildResult ACAIController::SelectTopPriority(FPerceptionTargetContext& OutPerceptionTargetContext) const
 {
-	OutTargetPerceptionState = FTargetPerceptionState();
+	OutPerceptionTargetContext = FPerceptionTargetContext();
 
 	const UBlackboardComponent* blackboardComp = GetBlackboardComponent();
 	if (!IsValid(blackboardComp)) return EPerceptionBuildResult::Error;
 
-	if (TargetPerceptionStateMap.IsEmpty()) return EPerceptionBuildResult::NoData;
+	if (PerceptionTargetContextMap.IsEmpty()) return EPerceptionBuildResult::NoData;
 
 	int bestPriority = INT_MAX;
-	FTargetPerceptionState topState;
+	FPerceptionTargetContext topContext;
 
-	for (const TPair<AActor*, FTargetPerceptionState>& pair : TargetPerceptionStateMap)
+	for (const TPair<AActor*, FPerceptionTargetContext>& pair : PerceptionTargetContextMap)
 	{
 		AActor* actorKey = pair.Key;
-		const FTargetPerceptionState& data = pair.Value;
+		const FPerceptionTargetContext& data = pair.Value;
 
-		if (!IsValid(actorKey) || !data.IsValidData()) continue;
+		if (!IsValid(actorKey) || !data.HasTarget()) continue;
 
 		if (data.TargetPriority < bestPriority)
 		{
 			bestPriority = data.TargetPriority;
-			topState = data;
+			topContext = data;
 		}
 	}
 
-	if (bestPriority == INT_MAX || !topState.IsValidData()) return EPerceptionBuildResult::NoData;
+	if (bestPriority == INT_MAX || !topContext.HasTarget()) return EPerceptionBuildResult::NoData;
 
-	OutTargetPerceptionState = topState;
+	OutPerceptionTargetContext = topContext;
 	return EPerceptionBuildResult::Success;
 }
 
@@ -474,7 +537,7 @@ bool ACAIController::ShouldDisableEnemyPerceptionForProfiling() const
 void ACAIController::DisableEnemyPerceptionForProfiling()
 {
 	bPerceptionDisabledForProfiling = true;
-	ClearTargetPerceptionStateMap();
+	ClearPerceptionTargetContextMap();
 	SetPerceptionSenseEnabledForProfiling(false);
 }
 
@@ -559,13 +622,13 @@ void ACAIController::RecordInvalidTargetProvider(AActor* InActor)
 	PerceptionCandidateAuditState.InvalidTargetProviderActors.Add(InActor);
 }
 
-void ACAIController::RecordTargetPerceptionStateMapSizeForAudit()
+void ACAIController::RecordPerceptionTargetContextMapSizeForAudit()
 {
 	if (!PerceptionCandidateAuditState.bEnabled) return;
 
-	PerceptionCandidateAuditState.MaxTargetPerceptionStateMapSize = FMath::Max(
-		PerceptionCandidateAuditState.MaxTargetPerceptionStateMapSize,
-		TargetPerceptionStateMap.Num());
+	PerceptionCandidateAuditState.MaxPerceptionTargetContextMapSize = FMath::Max(
+		PerceptionCandidateAuditState.MaxPerceptionTargetContextMapSize,
+		PerceptionTargetContextMap.Num());
 }
 
 // Blackboard / Engage Latency Audit Lifecycle

@@ -38,6 +38,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CombatTarget")
 	bool RequestClearCombatTarget(ECombatTargetChangeReason InReason);
 
+	bool RequestClearCombatTargetIfCurrent(AActor* InExpectedTarget, int32 InExpectedRevision, ECombatTargetChangeReason InReason);
+
 public:
 	// Target Query
 	UFUNCTION(BlueprintPure, Category = "CombatTarget")

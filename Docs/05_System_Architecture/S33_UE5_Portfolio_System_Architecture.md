@@ -16,8 +16,10 @@
 - Goal 1 — 조사와 설계 확정: 완료
 - Goal 2 — 공통 Combat Target Kernel: 구현 완료
 - Goal 3 — Player Target 마이그레이션: 구현 완료
-- Enemy Target Selection 및 Blackboard 투영: 후속 작업
-- Engage·Facing 연동: 후속 작업
+- Goal 4 — Enemy Target Selection 및 Blackboard 투영: 구현 완료 (Participation 전환 전 중간 단계)
+- Goal 7 — Enemy Combat Participation Lifecycle: Phase A~E 및 Goal 8~11 producer/time policy/Intent/Action lock 구현, UAsset consumer 전환과 grace/cooldown 보류
+
+Enemy Participation의 Evidence, Commitment, Engage Admission, Revision 정책은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 정규 기준으로 사용한다.
 
 ### S32와의 관계
 
@@ -53,23 +55,25 @@ Player / Enemy
 
 후보 탐색, 점수 계산, AI 판단, Engage 승인, 카메라 보정은 책임지지 않는다.
 
-### 1.2 선택 정책은 별도 계층
+### 1.2 Combat Target 생애주기 정책은 Player와 Enemy에서 분리한다
 
-Player와 Enemy는 입력과 판단 재료가 다르므로 선택 계층은 분리한다.
+Player와 Enemy는 확정 Target의 저장 계약은 공유하지만, 생애주기를 결정하는 상위 정책이 다르다.
 
 ```text
 Player
-Input / Screen / Camera
+PlayerController
 → UCPlayerTargetSelectionComponent
-→ UCCombatTargetComponent
+→ CPlayer::UCCombatTargetComponent
 
 Enemy
-Perception / BT Request / Candidate Set / Recipe
-→ UCEnemyTargetSelectionComponent
-→ UCCombatTargetComponent
+AIController Perception / CEnemy HitReactive
+→ UCEnemyCombatParticipationComponent
+→ UWorldSubsystem_CombatParticipation
+→ UCEnemyCombatParticipationComponent
+→ CEnemy::UCCombatTargetComponent
 ```
 
-두 선택기는 같은 SoT에 결과를 Commit하지만, 같은 컴포넌트로 억지 통합하지 않는다.
+`UCPlayerTargetSelectionComponent`는 사용자 입력 기반의 후보 평가·요청 정책이다. `UCEnemyCombatParticipationComponent`는 여러 AI Target 정보 Source와 전투 참여 관리 시스템 사이의 Character 측 ingress/egress Adapter다. 후보 비교·선택 권한은 없으며, 양쪽 모두 Combat Target SoT를 소유하지 않는다. SoT는 오직 `UCCombatTargetComponent`다. Enemy의 세부 정책은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다.
 
 ### 1.3 Blackboard는 SoT가 아니다
 
@@ -82,7 +86,7 @@ UCCombatTargetComponent
 → Blackboard CombatTargetActor, CombatTargetRevision
 ```
 
-BT가 Blackboard 값을 직접 변경하여 Combat Target을 확정하면 안 된다. BT는 선택 요청을 만들고, Commit 결과를 다시 읽는다.
+BT가 Blackboard 값을 직접 변경하여 Combat Target을 확정하면 안 된다. BT는 투영값을 읽어 행동을 분기·실행할 뿐이며, Enemy Combat Target 생애주기를 결정하지 않는다.
 
 ### 1.4 Perception Target과 Combat Target은 다르다
 
@@ -91,28 +95,35 @@ BT가 Blackboard 값을 직접 변경하여 Combat Target을 확정하면 안 �
 
 인지했다는 사실만으로 전투 대상이 되지는 않는다.
 
-### 1.5 Target과 Engage는 별개다
+### 1.5 Combat Participation이 Enemy Combat Target 생애주기 정책이다
 
-- Combat Target: 누구와 싸우는가
-- Engage: 그 대상에게 현재 공격·점유·전투 진입이 허용되는가
+Enemy의 Combat Participation은 특정 대상에 대해 전투 관련 의도를 유지할 자격과 생애주기를 뜻한다.
 
-Target 선택 성공이 Engage 성공을 의미하지 않으며, Engage 거절이 Target 삭제를 의미하지도 않는다.
+| 참여 상태 | Combat Target | 의미 |
+|---|---|---|
+| `None` | 없음 | 해당 대상에 대한 전투 참여 없음 |
+| `Observe` | 있음 | 대상을 인지하고 전투 참여 대상으로 관찰 중 |
+| `Alert` | 있음 | 경계·추적 단계의 참여자 |
+| `Engage` | 있음 | 적극 전투 참여자 |
+
+`Observe → Alert → Engage`처럼 대상이 유지되는 승격·강등은 참여 상태만 바꾸며 Combat Target을 재등록하지 않는다. `None` 전환 또는 대상 교체만 Character 측 Participation Adapter의 Combat Target Clear/Set 요청을 발생시킨다. `EAIIntentState`는 참여 결과를 소비·표현하지만, Dead·HitReact 같은 로컬 상태까지 Participation System이 소유하지 않는다.
 
 ---
 
 ## 2. 전체 계층 구조
 
-공통 Target 흐름은 네 계층으로 나눈다.
+공통 Target 흐름은 Kernel과 Consumer를 공유하지만, Player와 Enemy의 상위 결정 계층은 분리한다.
 
 ```text
 1. Candidate Collection
    후보를 발견하고 관찰 가능한 재료를 수집
 
-2. Target Selection
-   후보와 정책을 평가하여 전투 대상 후보를 결정
+2. Lifecycle Decision
+   Player: 입력 기반 Target Selection
+   Enemy: Evidence 기반 Combat Participation Assignment
 
 3. Combat Target Kernel
-   확정 대상을 Commit하고 수명과 Revision을 관리
+   승인된 상위 결정 결과를 반영하고 수명과 Revision을 관리
 
 4. Target Consumers
    확정 대상을 카메라·이동·액션·UI·AI 판단에 사용
@@ -133,14 +144,16 @@ Enemy의 대표 입력:
 
 - AI Perception 감지 Actor
 - 시야·청각·기억 정보
-- BT가 구성한 후보 목록
-- 전투 형태에 따른 Selection Recipe
+- Character HitReactive 등 향후 Source
+- Participant 생명주기와 명시 revoke
 
-### 2.2 Target Selection
+### 2.2 Lifecycle Decision
 
-선택기는 후보를 평가하고 `UCCombatTargetComponent`에 Commit을 요청한다.
+Player는 `UCPlayerTargetSelectionComponent`가 후보를 평가하고 `UCCombatTargetComponent`에 Commit을 요청한다.
 
-선택 결과는 최소한 다음을 구분할 수 있어야 한다.
+Enemy는 Source Evidence를 `UWorldSubsystem_CombatParticipation`에 등록한다. Subsystem이 Target과 Participation assignment를 결정하고, Character Adapter가 그 결과만 Kernel에 반영한다. Enemy의 세부 계약은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다.
+
+Player selection 결과는 최소한 다음을 구분할 수 있어야 한다.
 
 - Accepted
 - Unchanged
@@ -151,7 +164,7 @@ Enemy의 대표 입력:
 
 ### 2.3 Combat Target Kernel
 
-Kernel은 선택 정책을 알지 않는다. 전달받은 대상에 대해 공통 수명 계약만 적용한다.
+Kernel은 Player selection 또는 Enemy participation 정책을 알지 않는다. 승인된 요청에 대해 공통 수명 계약만 적용한다.
 
 ### 2.4 Target Consumers
 
@@ -349,59 +362,42 @@ UnPossess 시에는 Combat Target Component 참조와 이벤트 구독을 먼저
 
 ---
 
-## 6. Enemy Target Selection 계약
+## 6. Enemy Combat Participation 계약
 
-Enemy의 선택기는 Perception 자체가 아니라 **인지 후보 중 전투 대상으로 확정할 대상을 선택하는 정책 계층**이다.
+Enemy의 Character 측 Participation Component는 대상을 선택·승인하지 않는다. Perception, HitReactive 등 Source가 제공한 Evidence를 전투 참여 관리 시스템에 등록·갱신·철회하고, 그 assignment 결과만 `UCCombatTargetComponent` 변경 요청으로 반영한다.
+
+최종 Evidence, Commitment, Slot Admission, Revision 계약은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다. 이 절은 S33의 구조 요약이다.
 
 ## 6.1 입력
 
-- BT가 전달한 후보 목록 또는 후보 조회 Context
-- 현재 Combat Target과 Revision
-- 선택 Recipe
-- 거리·가시성·위협도·전투 역할
-- 후보의 생존·수용 가능 상태
+- Perception, HitReactive, 향후 Source의 Target Evidence
+- Participant 생명주기와 명시 revoke
+- 현재 assignment와 applied snapshot
 
-## 6.2 Recipe 예시
+## 6.2 책임 흐름
 
 ```text
-SingleMeleeTarget
-RangedTargetFromGroup
-HighestThreat
-NearestVisible
-PreserveCurrentIfValid
+Source Evidence
+→ UCEnemyCombatParticipationComponent
+→ UWorldSubsystem_CombatParticipation
+   → Source×Target Evidence registry
+   → Target 선택, commitment, role/admission assignment
+→ UCEnemyCombatParticipationComponent
+   → assignment를 Combat Target Kernel에 적용
+→ Facing / Blackboard / Action Consumer
 ```
 
-초기 구현은 필요한 최소 Recipe만 지원하고, 하나의 거대한 점수 함수로 모든 전투 형태를 섞지 않는다.
+Source와 Adapter는 Combat Target을 직접 Set/Clear하지 않는다. Blackboard도 assignment 또는 Combat Target SoT가 아니다.
 
-## 6.3 처리 흐름
+## 6.3 Kernel 반영
 
-```text
-BT
-→ Target Selection Request
-→ UCEnemyTargetSelectionComponent
-   → 후보·Recipe 검증
-   → 후보 평가
-   → UCCombatTargetComponent에 Commit
-   → Result + Revision 반환
-→ BT는 SoT Snapshot을 다시 조회
-→ Blackboard에 투영
-```
+`Observe / Alert / Engage`의 같은 Target 간 전이는 Participation assignment만 바꾸며 Kernel Target을 재등록하지 않는다. `None` 전환 또는 Target 교체만 Clear/Set을 요청한다.
 
-BT가 요청한 후보가 선택되지 않을 수 있으므로, 요청 인자를 그대로 Blackboard에 쓰면 안 된다.
+늦은 A revoke가 새 B Target을 지우지 않도록, Adapter는 자신이 A assignment로 실제 적용한 Target·CombatTargetRevision을 보관하고 그 값으로만 조건부 Clear한다.
 
-## 6.4 요청 결과
+## 6.4 Blackboard projection
 
-동기 구현이라도 다음 정보는 명시하는 것이 좋다.
-
-```text
-RequestId 또는 RequestSerial
-Decision
-CommittedTarget
-CommittedRevision
-RejectReason
-```
-
-후속 비동기 확장 시 같은 계약을 유지할 수 있다.
+Blackboard는 assignment Target과 Combat Target Snapshot Target이 일치할 때만 유효한 projection을 기록한다. Action은 실행 직전에 Participation assignment와 Combat Target Snapshot을 함께 재검증한다.
 
 ---
 
@@ -417,7 +413,7 @@ Actor B의 소리를 들음
 Actor C를 마지막으로 본 위치를 기억함
 ```
 
-이 값은 후보 재료이지 Combat Target SoT가 아니다.
+이 값은 후보 재료이지 Combat Target SoT가 아니다. Perception은 후보를 `UCEnemyCombatParticipationComponent`에 전달할 뿐 Target을 직접 확정하지 않는다. HitReactive 등 다른 Source도 같은 창구를 사용한다.
 
 ## 7.2 Behavior Tree
 
@@ -540,16 +536,15 @@ BT는 Task 결과로 요청의 성공 여부를 확인하고, Blackboard 투영�
 권장 흐름:
 
 ```text
-Damage / Combat Result 수신
-→ 공격자를 Perception 또는 강제 후보 Context에 반영
-→ Enemy Target Selection Request
-→ Combat Target Commit
-→ 해당 Target + Revision으로 Engage Request
-→ Engage 결과 검증
-→ AI Intent를 Engage로 투영
+유효 Combat Signal 수신
+→ 공격자 identity 정규화
+→ HitReactive Evidence 등록
+→ Combat Participation System assignment
+→ Adapter의 Combat Target Kernel 반영
+→ Facing / Blackboard / Action Consumer
 ```
 
-이미 더 높은 우선순위의 Combat Target이 있거나 공격자가 유효하지 않다면 기존 Target을 유지할 수 있다.
+HitReactive는 Kernel을 직접 변경하지 않는 Evidence Source다. Extra admission을 포함한 세부 정책은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다.
 
 ---
 
@@ -685,17 +680,15 @@ Player Target Selection Component
 
 ## Goal 4 — Enemy Target Selection과 BB 투영
 
+상태: 구현 완료 (Participation Lifecycle 전환 전의 중간 단계)
+
 - `UCEnemyTargetSelectionComponent` 추가
-- 최소 Selection Recipe 구현
 - Perception 후보와 Combat Target 분리
 - TargetChanged Event + Snapshot Adapter
 - Blackboard CombatTargetActor/Revision 투영
+- BT Selection Request를 통한 명시적 Kernel Commit
 
-완료 기준:
-
-- Perception 감지만으로 Combat Target이 자동 확정되지 않음
-- BT는 Request를 통해서만 Target 변경
-- Blackboard가 SoT를 역으로 덮어쓰지 않음
+이 단계는 Blackboard를 Combat Target SoT에서 분리한 기반 구현이다. 다음 Participation Lifecycle 전환에서는 BT Selection Request와 직접 Commit 경로를 제거한다.
 
 ## Goal 5 — Engage와 피격 정책
 
@@ -704,12 +697,29 @@ Player Target Selection Component
 - 피격 공격자를 후보로 반영
 - Selection과 Engage 승인 후 Intent 갱신
 
+이 단계의 Engage request는 Combat Target Snapshot을 선행 검증한다. Participation Lifecycle 전환 후에는 후보 요청이 Combat Target보다 먼저 들어오고, assignment 결과가 Combat Target을 만들도록 방향을 정렬한다.
+
 ## Goal 6 — Action Facing 및 Consumer 정리
 
 - Player/Enemy Action Facing Window
 - Combat Signal Source SoT 전환
 - Debug Overlay의 Perception/Target/Engage 구분
 - 잔여 Blackboard 직접 Target 의존 제거
+
+Facing Consumer는 Combat Target Snapshot만 소비하는 구조로 유지한다. BT가 Focus/Facing을 직접 제어하지 않는 원칙도 Participation Lifecycle 전환 후 그대로 유지한다.
+
+## Goal 7 — Enemy Combat Participation Lifecycle Migration
+
+상태: 설계 보완 필요 — 현재 C++ 초기 구현은 최종 계약으로 간주하지 않음
+
+- `UWorldSubsystem_CombatParticipation`으로 역할·명칭 전환하고 기존 class path는 Core Redirect로 호환
+- `UCEnemyCombatParticipationComponent`가 `UCEnemyTargetSelectionComponent`를 대체하며 기존 class/property path는 Core Redirect로 호환
+- `None / Observe / Alert / Engage` 초기 assignment 및 Observe 정책 도입
+- Perception Source → Participation Component → Subsystem 흐름의 초기 전환
+- `UBTTask_RequestCombatTargetSelection` 제거
+- CombatTargetActor/Revision과 CombatParticipationState/Revision Blackboard projection 추가
+
+Phase A~D와 Phase E의 Action authority, Goal 8~11 producer/time policy/Intent/Action lock까지 Source×Target Evidence registry, Adapter 후보 선택 제거, commitment-first ladder, GeneralBase/HitReactiveExtra admission, applied snapshot, coherent Blackboard projection, Action 직전 authority 검증, accepted Combat Signal 결과의 HitReactive evidence ingress, TTL/Extra commitment, Participation-based Intent와 Action Lock을 구현했다. UAsset consumer의 실제 전환과 Perception grace/cooldown은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)의 후속 단계로 보류한다.
 
 ---
 
@@ -794,11 +804,11 @@ Component Owner EndPlay
 ## 16. 불변 규칙
 
 1. 확정 Combat Target은 `UCCombatTargetComponent`만 저장한다.
-2. Selection Component는 선택 결과를 Commit하지만 Target 수명을 소유하지 않는다.
+2. Player Selection Component는 선택 결과를 Commit하지만 Target 수명을 소유하지 않는다. Enemy의 Target 생애주기는 Participation assignment가 결정한다.
 3. Consumer는 Target을 직접 교체하지 않는다.
 4. Perception과 Blackboard는 Combat Target SoT가 아니다.
 5. Target 변경 결과와 지연된 정책 결과는 Revision으로 검증한다.
-6. Engage 승인과 Target 선택은 별도 계약이다.
+6. Player의 Target Selection과 Enemy의 Participation assignment는 별도 생애주기 계약이다.
 7. Event 구독자는 재진입 시 Snapshot으로 현재 상태를 재조정한다.
 8. Target의 늦은 종료 Callback이 새 Target을 지우면 안 된다.
 9. Action Facing은 데이터가 허용한 Tracking Window에서만 작동한다.
@@ -867,11 +877,11 @@ Combat Signal Source Target 해석
 4. Event 구독자가 초기 Snapshot을 읽는가?
 5. Perception·Blackboard·Engage·Combat Target의 의미가 섞였는가?
 
-### Goal 4 구현 메모 — Enemy Target Selection과 Blackboard Projection
+### Goal 4 역사 메모 — Enemy Target Selection과 Blackboard Projection
 
-- `UCEnemyTargetSelectionComponent`는 BT가 전달한 명시 후보를 검증해 `UCCombatTargetComponent`에만 commit 요청한다. Component 자체는 Current Target을 저장하지 않는다.
-- `PerceivedTargetActor`는 Perception 후보이며, `CombatTargetActor`는 확정 Combat Target의 projection이다. `CombatTargetRevision`은 동일 Snapshot 세대의 Revision이며, Clear된 상태도 `CombatTargetActor = None`과 증가한 현재 Revision으로 투영한다.
-- `UCBTTask_RequestCombatTargetSelection`만 후보를 Target 선택 요청으로 승격한다. Blackboard write는 Combat Target을 변경하지 않는다.
+- 이전 중간 구현의 `UCEnemyTargetSelectionComponent`와 BT Selection Request는 Goal 7에서 제거되고, class/property path는 `UCEnemyCombatParticipationComponent`로 Redirect된다.
+- `PerceivedTargetActor`는 Perception 후보이며, `CombatTargetActor`는 Adapter applied snapshot과 Kernel Snapshot이 모두 일치한 확정 Combat Target의 projection이다. `CombatTargetRevision`은 동일 Snapshot 세대의 Revision이며, 정상 Clear 상태도 `CombatTargetActor = None`과 증가한 현재 Revision으로 투영한다. applied snapshot과 Kernel Snapshot이 불일치한 과도 상태의 `None / 0`은 유효 Clear Snapshot이 아닌 unavailable sentinel이다.
+- Blackboard write는 Combat Target을 변경하지 않는다.
 - Projection은 `UCBTService_UpdateAIContext`가 Tick 중 Snapshot을 읽어 수행한다. 후보 상실은 Perception 값만 clear하며 현재 Combat Target을 자동 clear하지 않는다.
 
 ### Goal 4 UAsset 수동 연결
@@ -879,20 +889,31 @@ Combat Signal Source Target 해석
 - Enemy Blackboard에 `PerceivedTargetActor` Object/Actor 키와 `CombatTargetRevision` Int 키를 추가한다.
 - Blackboard의 기존 `TargetActor` Object/Actor 키는 `CombatTargetActor`로 이름을 변경한다. BT의 해당 key selector 참조도 함께 갱신한다.
 - Blackboard의 기존 `TargetPriority` Int 키는 `PerceivedTargetPriority`로 이름을 변경한다. 인지 후보를 참조하는 BT key selector도 함께 갱신한다.
-- 기존 `Set Focus` BT Task는 `Set Combat Target Focus`로 교체한다. `Clear Focus`는 Gameplay Focus 공용 해제 Task로 유지한다.
-- Perception 후보가 준비된 BT 경로에 `Request Combat Target Selection` Task를 연결한다. Task 연결 전에는 Perception만 갱신되고 Combat Target은 확정되지 않는다.
+- `Request Combat Target Selection` BT Task는 UAsset 배치 이력이 없으므로 수동 제거 작업이 없다.
+- `Set Combat Target Focus` BT Task의 UAsset 참조는 별도 asset audit 뒤에 삭제 유지 또는 호환 조치를 결정한다. Combat Target Clear 반응에는 BT Focus Task를 사용하지 않는다.
+- Enemy Blackboard에 `CombatParticipationState` Enum 키와 `CombatParticipationRevision` Int 키를 추가한다. 초기 Enum 값은 `None`이며, C++에서는 기존 `CombatRole`도 호환 projection으로 병행 기록한다.
+- BT Decorator/Service는 UAsset 전환이 끝날 때까지 기존 `CombatRole`을 유지할 수 있다. 전환 후에는 `CombatParticipationState`를 참여 상태 분기 기준으로 사용한다.
 
 ### Goal 5-A 구현 메모 — Engage Revision과 Combat Signal Target
 
-- `FEngageRequestContext`와 `FEngageAssignmentContext`는 Target Actor와 함께 `TargetRevision`을 보존한다.
-- Engage Subsystem은 request bucket 구성과 기존 assignment lease 보존 전에 Enemy Combat Target Snapshot의 Actor·Revision을 함께 검증한다. 일치하지 않는 지연 요청·할당은 다음 결과에 반영하지 않는다.
+- Participation Source request는 Combat Target Revision을 선행 입력으로 요구하지 않는다. Source×Target Evidence와 assignment는 Subsystem이 소유한다.
+- Assignment가 Kernel에 적용된 뒤 Adapter가 보관한 applied snapshot으로 늦은 revoke와 Action authority를 검증한다.
 - Combat Signal timing cue의 기본 Target 해석은 AI Blackboard가 아니라 Owner Character의 `UCCombatTargetComponent` Snapshot을 사용한다.
 
 ### Goal 6 구현 메모 — Enemy Facing과 Action Consumer Revision 검증
 
-- Focus Task는 Blackboard projection의 Target Actor·Revision이 현재 Combat Target Snapshot과 일치할 때만 Gameplay Focus를 설정한다.
+- `UCEnemyCombatTargetFacingComponent`는 Enemy Combat Target Changed event와 Possess 시점 Snapshot을 소비한다. Target이 있으면 Controller Gameplay Focus와 `ControllerDesired` 회전을 적용하고, Target이 없으면 Focus를 해제하고 `OrientToMovement`으로 복구한다.
+- BT의 Combat Target Selection 요청은 제거됐다. Focus / Facing 반응은 어느 경우에도 Alert·Observe·Chase·Engage BT 분기에서 직접 관리하지 않는다.
+- Owner EndPlay는 Kernel event를 기다리지 않고 Facing Consumer 자신의 EndPlay 정리로 Focus 해제와 회전 정책 복구를 수행한다.
 - Combat Action Task는 같은 projection 검증 뒤 Snapshot을 Enemy에 전달하며, Enemy는 Action 요청 직전에 Snapshot을 다시 검증한다.
 - Combo chain 예약은 최초 수락된 Combat Target Snapshot을 보존하고, chain window에서 같은 Actor·Revision인지 재검증한다. Target 세대가 바뀌면 예약을 진행하지 않는다.
+
+### Goal 7 구현 메모 — Enemy Combat Participation Lifecycle
+
+- Goal 7의 최종 정책은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)로 분리했다. Phase A~D와 Action authority, Goal 8 producer 단계에서 Source×Target Evidence registry, Adapter 후보 선택 제거, participant unregister, Target별 Evidence 확인, commitment-first ladder, admission allocator, applied revision, coherent projection, Action 직전 authority 검증과 Combat Signal 기반 HitReactive evidence ingress를 구현했다. UAsset consumer 전환과 time policy는 수동 asset audit 및 별도 정책 단계 뒤에 진행한다.
+- `UCEnemyCombatParticipationComponent`는 모든 Source의 ingress/assignment egress Adapter이며 후보 선택을 하지 않는다. `UWorldSubsystem_CombatParticipation`이 Evidence registry와 commitment-first assignment를 소유한다. Adapter는 assignment change의 Current snapshot을 Kernel에 적용하고 실제 Kernel revision을 ack로 보관한다. revoke는 이 ack만 기대값으로 사용한다.
+- `EAIIntentState`는 Participation assignment를 소비·표현한다. Dead, HitReact, Action Lock 같은 Character 로컬 상태는 Participation System의 소유 범위에 넣지 않는다.
+- Blackboard는 Combat Target Snapshot과 Participation 상태의 projection이며, BT는 이를 읽어 행동을 분기·실행한다. `CombatParticipationState`와 `CombatParticipationRevision`의 UAsset 전환은 기존 `CombatRole` 호환을 확인한 뒤 진행한다.
 6. Player와 Enemy의 선택 정책을 억지로 공통화했는가?
 7. Target Consumer가 Selection 또는 수명 책임을 침범하는가?
 8. Destroy·EndPlay·stale·이전 callback 경계가 안전한가?
