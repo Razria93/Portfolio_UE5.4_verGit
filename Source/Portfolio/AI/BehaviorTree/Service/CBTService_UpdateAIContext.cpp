@@ -168,6 +168,7 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildCombatTargetContext(APawn*
 
 	const FCombatParticipationAppliedSnapshot appliedSnapshot = participationComp->GetAppliedSnapshot();
 	const FCombatTargetSnapshot combatTargetSnapshot = combatTargetComp->GetCombatTargetSnapshot();
+
 	if (!appliedSnapshot.bIsApplied) return EContextBuildResult::NoData;
 	if (appliedSnapshot.TargetActor != combatTargetSnapshot.TargetActor) return EContextBuildResult::NoData;
 	if (appliedSnapshot.CombatTargetRevision != combatTargetSnapshot.Revision) return EContextBuildResult::NoData;
@@ -177,6 +178,7 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildCombatTargetContext(APawn*
 	OutAIContext.CombatParticipation.CombatRole = appliedSnapshot.CombatRole;
 	OutAIContext.CombatParticipation.CombatParticipationRevision = appliedSnapshot.AssignmentRevision;
 	OutAIContext.CombatParticipation.bHasCombatParticipationProjection = true;
+
 	return EContextBuildResult::Success;
 }
 

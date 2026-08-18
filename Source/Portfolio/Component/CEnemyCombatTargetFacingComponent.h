@@ -40,6 +40,8 @@ protected:
 private:
 	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 	void SynchronizeCombatTargetFacing();
+
+private:
 	void ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot);
 	void ClearCombatTargetFacing();
 };

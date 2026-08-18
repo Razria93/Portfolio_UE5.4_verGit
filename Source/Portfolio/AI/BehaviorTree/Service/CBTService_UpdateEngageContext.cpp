@@ -81,14 +81,12 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("InvalidInput"));
 		return EContextBuildResult::Error;
 	}
 
 	ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
 	if (!IsValid(enemy))
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("InvalidEnemyPawn"));
 		return EContextBuildResult::Error;
 	}
 
@@ -96,7 +94,6 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 	const UCEnemyCombatParticipationComponent* participationComp = enemy->GetEnemyCombatParticipationComp();
 	if (!IsValid(combatTargetComp) || !IsValid(participationComp))
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingParticipationComponent"));
 		return EContextBuildResult::Error;
 	}
 
@@ -106,14 +103,12 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 		|| appliedSnapshot.TargetActor != combatTargetSnapshot.TargetActor
 		|| appliedSnapshot.CombatTargetRevision != combatTargetSnapshot.Revision)
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingEngageAuthority"));
 		return EContextBuildResult::NoData;
 	}
 
 	OutEngageContext.TargetActor = appliedSnapshot.TargetActor;
 	if (!IsValid(OutEngageContext.TargetActor))
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingTarget"));
 		return EContextBuildResult::NoData;
 	}
 

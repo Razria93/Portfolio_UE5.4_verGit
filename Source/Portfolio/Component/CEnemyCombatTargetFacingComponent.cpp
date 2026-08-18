@@ -70,9 +70,7 @@ void UCEnemyCombatTargetFacingComponent::HandleCombatTargetChanged(const FCombat
 
 void UCEnemyCombatTargetFacingComponent::SynchronizeCombatTargetFacing()
 {
-	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected)
-		? CombatTargetComponent_Injected->GetCombatTargetSnapshot()
-		: FCombatTargetSnapshot();
+	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected) ? CombatTargetComponent_Injected->GetCombatTargetSnapshot() : FCombatTargetSnapshot();
 	ApplyCombatTargetFacing(snapshot);
 }
 
