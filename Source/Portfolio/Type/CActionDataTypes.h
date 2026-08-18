@@ -59,6 +59,9 @@ public:
 	FActionDataKey ActionDataKey = FActionDataKey();
 
 	UPROPERTY(Transient)
+	uint32 ActionRequestSerial = 0;
+
+	UPROPERTY(Transient)
 	FActionData ActionData = FActionData();
 
 	UPROPERTY(Transient)

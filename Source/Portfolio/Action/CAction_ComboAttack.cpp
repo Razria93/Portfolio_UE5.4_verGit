@@ -55,11 +55,12 @@ FExecutionDecisionResult UCAction_ComboAttack::ResolveExecutionDecision(const FE
 
 // Chain Reservation
 
-bool UCAction_ComboAttack::ReserveChain(const FActionData& InData)
+bool UCAction_ComboAttack::ReserveChain(const FActionData& InData, const uint32 InActionRequestSerial)
 {
 	if (!CanReserveChain(InData)) return false;
 
 	ReservingChainData = InData;
+	ReservingChainActionRequestSerial = InActionRequestSerial;
 	bHasReservingChain = true;
 	bReserveChainWindowOpened = false;
 
@@ -73,6 +74,7 @@ void UCAction_ComboAttack::ClearRuntime()
 	Super::ClearRuntime();
 
 	ReservingChainData = FActionData();
+	ReservingChainActionRequestSerial = 0;
 	bHasReservingChain = false;
 	bReserveChainWindowOpened = false;
 }
@@ -125,6 +127,7 @@ void UCAction_ComboAttack::CloseReserveChainWindow()
 void UCAction_ComboAttack::ConsumeChain()
 {
 	const FActionData nextData = ReservingChainData;
+	const uint32 nextActionRequestSerial = ReservingChainActionRequestSerial;
 
 	if (!CanConsumeChain(nextData))
 	{
@@ -132,11 +135,13 @@ void UCAction_ComboAttack::ConsumeChain()
 	}
 
 	ReservingChainData = FActionData();
+	ReservingChainActionRequestSerial = 0;
 	bHasReservingChain = false;
 	bReserveChainWindowOpened = false;
 
 	ActiveDataKey_Cached = nextData.ActionDataKey;
 	ActiveData_Cached = nextData;
+	ActionRequestSerial_Cached = nextActionRequestSerial;
 	ActiveMontage_Cached = nextData.Montage;
 	LastStopReason_Cached = EActionStopReason::None;
 
@@ -155,7 +160,7 @@ void UCAction_ComboAttack::ConsumeChain()
 	if (IsValid(ActionComp_Injected))
 	{
 		// Keep the owning action component synchronized with the consumed chain.
-		if (!ActionComp_Injected->HandleApplyActionConsumed(this, nextData))
+		if (!ActionComp_Injected->HandleApplyActionConsumed(this, nextData, nextActionRequestSerial))
 		{
 			Stop(EActionStopReason::Ignored);
 			return;
@@ -164,6 +169,7 @@ void UCAction_ComboAttack::ConsumeChain()
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Chain);
 	PlayFeedbackRequest(feedbackRequest);
+	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached.ActionIndex);
 	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached.ActionIndex);
 }
 

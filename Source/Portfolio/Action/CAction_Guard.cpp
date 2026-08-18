@@ -12,9 +12,9 @@
 
 // Lifecycle
 
-bool UCAction_Guard::Start(const FActionData& InData)
+bool UCAction_Guard::Start(const FActionData& InData, const uint32 InActionRequestSerial)
 {
-	const bool bStarted = Super::Start(InData);
+	const bool bStarted = Super::Start(InData, InActionRequestSerial);
 	if (!bStarted) return false;
 
 	if (IsValid(ActionComp_Injected))

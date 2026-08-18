@@ -83,7 +83,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FCombatParticipationActionLock
+struct FCombatParticipationAssignmentLock
 {
 	GENERATED_BODY()
 

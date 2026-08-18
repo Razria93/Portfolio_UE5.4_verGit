@@ -33,7 +33,7 @@ private:
 	// Assignment State
 	int32 LastAssignmentRevision = 0;
 	FCombatParticipationAppliedSnapshot AppliedSnapshot;
-	FCombatParticipationActionLock ActiveActionLock;
+	FCombatParticipationAssignmentLock ActiveAssignmentLock;
 
 public:
 	// Component Reference
@@ -45,8 +45,9 @@ public:
 	void ReportEvidence(ECombatParticipationSource InSource, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext);
 	void WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget);
 	FCombatParticipationAppliedSnapshot GetAppliedSnapshot() const;
-	bool AcquireCombatActionLock(const FCombatTargetSnapshot& InTargetSnapshot, int32 InAssignmentRevision);
-	void ReleaseCombatActionLock();
+	bool TryGetCurrentEngageAssignment(FCombatTargetSnapshot& OutTargetSnapshot, int32& OutAssignmentRevision) const;
+	bool AcquireParticipationAssignmentLock(const FCombatTargetSnapshot& InTargetSnapshot, int32 InAssignmentRevision);
+	void ReleaseParticipationAssignmentLock();
 	void ReleaseParticipationForOwnerDeath();
 
 protected:

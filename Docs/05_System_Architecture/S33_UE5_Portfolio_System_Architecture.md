@@ -912,7 +912,7 @@ Combat Signal Source Target 해석
 
 - Goal 7의 최종 정책은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)로 분리했다. Phase A~D와 Action authority, Goal 8 producer 단계에서 Source×Target Evidence registry, Adapter 후보 선택 제거, participant unregister, Target별 Evidence 확인, commitment-first ladder, admission allocator, applied revision, coherent projection, Action 직전 authority 검증과 Combat Signal 기반 HitReactive evidence ingress를 구현했다. UAsset consumer 전환과 time policy는 수동 asset audit 및 별도 정책 단계 뒤에 진행한다.
 - `UCEnemyCombatParticipationComponent`는 모든 Source의 ingress/assignment egress Adapter이며 후보 선택을 하지 않는다. `UWorldSubsystem_CombatParticipation`이 Evidence registry와 commitment-first assignment를 소유한다. Adapter는 assignment change의 Current snapshot을 Kernel에 적용하고 실제 Kernel revision을 ack로 보관한다. revoke는 이 ack만 기대값으로 사용한다.
-- `EAIIntentState`는 Participation assignment를 소비·표현한다. Dead, HitReact, Action Lock 같은 Character 로컬 상태는 Participation System의 소유 범위에 넣지 않는다.
+- `EAIIntentState`는 Participation assignment를 소비·표현한다. Dead와 HitReact는 Character 로컬 source 상태다. 반면 Combat Action이 요청하는 Assignment Lock은 현재 assignment의 유지 권위를 보호하는 Participation System 상태이며, Action 자체의 실행 시간·animation 상태는 Character 로컬 상태로 남는다.
 - Blackboard는 Combat Target Snapshot과 Participation 상태의 projection이며, BT는 이를 읽어 행동을 분기·실행한다. `CombatParticipationState`와 `CombatParticipationRevision`의 UAsset 전환은 기존 `CombatRole` 호환을 확인한 뒤 진행한다.
 6. Player와 Enemy의 선택 정책을 억지로 공통화했는가?
 7. Target Consumer가 Selection 또는 수명 책임을 침범하는가?

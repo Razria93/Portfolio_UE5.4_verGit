@@ -173,6 +173,9 @@ public:
 	UPROPERTY(Transient)
 	FActionDataKey ActionDataKey = FActionDataKey();
 
+	UPROPERTY(Transient)
+	uint32 ActionRequestSerial = 0;
+
 public:
 	bool IsValidMinimal() const
 	{
@@ -254,6 +257,9 @@ public:
 	EActionIntentSource IntentSource = EActionIntentSource::None;
 
 	UPROPERTY(Transient)
+	uint32 ActionRequestSerial = 0;
+
+	UPROPERTY(Transient)
 	ECombatActionIntent IntentType = ECombatActionIntent::None;
 
 	UPROPERTY(Transient)
@@ -263,8 +269,9 @@ public:
 	FString ToDebugString() const
 	{
 		return FString::Printf(
-			TEXT("Source=%s | Intent=%s | Event=%s"),
+			TEXT("Source=%s | Serial=%u | Intent=%s | Event=%s"),
 			*UEnum::GetValueAsString(IntentSource),
+			ActionRequestSerial,
 			*UEnum::GetValueAsString(IntentType),
 			*UEnum::GetValueAsString(IntentEvent)
 		);
@@ -303,6 +310,9 @@ struct FActionRequestResult
 public:
 	UPROPERTY(Transient)
 	EActionRequestResultType ResultType = EActionRequestResultType::None;
+
+	UPROPERTY(Transient)
+	uint32 ActionRequestSerial = 0;
 
 	UPROPERTY(Transient)
 	EActionRequestRejectReason RejectReason = EActionRequestRejectReason::None;

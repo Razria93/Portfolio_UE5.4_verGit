@@ -42,35 +42,56 @@ FCombatParticipationAppliedSnapshot UCEnemyCombatParticipationComponent::GetAppl
 	return AppliedSnapshot;
 }
 
-bool UCEnemyCombatParticipationComponent::AcquireCombatActionLock(const FCombatTargetSnapshot& InTargetSnapshot, const int32 InAssignmentRevision)
+bool UCEnemyCombatParticipationComponent::TryGetCurrentEngageAssignment(FCombatTargetSnapshot& OutTargetSnapshot, int32& OutAssignmentRevision) const
 {
-	if (!IsValid(AIController_Injected) || !AppliedSnapshot.IsAssigned()) return false;
-	if (AppliedSnapshot.CombatRole != ECombatRole::Engage) return false;
-	if (AppliedSnapshot.TargetActor != InTargetSnapshot.TargetActor) return false;
-	if (AppliedSnapshot.CombatTargetRevision != InTargetSnapshot.Revision) return false;
-	if (AppliedSnapshot.AssignmentRevision != InAssignmentRevision) return false;
+	OutTargetSnapshot = FCombatTargetSnapshot();
+	OutAssignmentRevision = 0;
+
+	if (!AppliedSnapshot.IsAssigned() || AppliedSnapshot.CombatRole != ECombatRole::Engage) return false;
+	if (!IsValid(CombatTargetComponent_Injected)) return false;
+
+	const FCombatTargetSnapshot currentSnapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();
+	if (!IsValid(currentSnapshot.TargetActor)) return false;
+	if (currentSnapshot.TargetActor != AppliedSnapshot.TargetActor) return false;
+	if (currentSnapshot.Revision != AppliedSnapshot.CombatTargetRevision) return false;
+
+	OutTargetSnapshot = currentSnapshot;
+	OutAssignmentRevision = AppliedSnapshot.AssignmentRevision;
+	return true;
+}
+
+bool UCEnemyCombatParticipationComponent::AcquireParticipationAssignmentLock(const FCombatTargetSnapshot& InTargetSnapshot, const int32 InAssignmentRevision)
+{
+	if (!IsValid(AIController_Injected)) return false;
+
+	FCombatTargetSnapshot currentSnapshot;
+	int32 currentAssignmentRevision = 0;
+	if (!TryGetCurrentEngageAssignment(currentSnapshot, currentAssignmentRevision)) return false;
+	if (currentSnapshot.TargetActor != InTargetSnapshot.TargetActor) return false;
+	if (currentSnapshot.Revision != InTargetSnapshot.Revision) return false;
+	if (currentAssignmentRevision != InAssignmentRevision) return false;
 
 	UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem();
 	if (!IsValid(subsystem)) return false;
 
-	FCombatParticipationActionLock actionLock;
+	FCombatParticipationAssignmentLock actionLock;
 	actionLock.TargetActor = InTargetSnapshot.TargetActor;
 	actionLock.CombatTargetRevision = InTargetSnapshot.Revision;
 	actionLock.AssignmentRevision = InAssignmentRevision;
-	if (!subsystem->AcquireActionLock(AIController_Injected, actionLock)) return false;
+	if (!subsystem->AcquireAssignmentLock(AIController_Injected, actionLock)) return false;
 
-	ActiveActionLock = actionLock;
+	ActiveAssignmentLock = actionLock;
 	return true;
 }
 
-void UCEnemyCombatParticipationComponent::ReleaseCombatActionLock()
+void UCEnemyCombatParticipationComponent::ReleaseParticipationAssignmentLock()
 {
-	ActiveActionLock = FCombatParticipationActionLock();
+	ActiveAssignmentLock = FCombatParticipationAssignmentLock();
 	if (!IsValid(AIController_Injected)) return;
 
 	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
-		subsystem->ReleaseActionLock(AIController_Injected);
+		subsystem->ReleaseAssignmentLock(AIController_Injected);
 	}
 }
 
@@ -81,7 +102,7 @@ void UCEnemyCombatParticipationComponent::ReleaseParticipationForOwnerDeath()
 
 void UCEnemyCombatParticipationComponent::ClearAIController(const bool bReleaseCombatTarget)
 {
-	ActiveActionLock = FCombatParticipationActionLock();
+	ActiveAssignmentLock = FCombatParticipationAssignmentLock();
 
 	if (IsValid(AIController_Injected))
 	{
@@ -205,22 +226,22 @@ void UCEnemyCombatParticipationComponent::HandleCombatParticipationChanged(ACAIC
 
 void UCEnemyCombatParticipationComponent::HandleCombatTargetChanged(const FCombatTargetChange& InChange)
 {
-	if (!IsValid(ActiveActionLock.TargetActor)) return;
+	if (!IsValid(ActiveAssignmentLock.TargetActor)) return;
 
 	const FCombatTargetSnapshot& currentSnapshot = InChange.CurrentSnapshot;
-	if (currentSnapshot.TargetActor == ActiveActionLock.TargetActor
-		&& currentSnapshot.Revision == ActiveActionLock.CombatTargetRevision) return;
+	if (currentSnapshot.TargetActor == ActiveAssignmentLock.TargetActor
+		&& currentSnapshot.Revision == ActiveAssignmentLock.CombatTargetRevision) return;
 
-	ReleaseCombatActionLock();
+	ReleaseParticipationAssignmentLock();
 }
 
 void UCEnemyCombatParticipationComponent::ApplyParticipationAssignment(const FEngageAssignmentContext& InAssignment)
 {
 	if (!IsValid(CombatTargetComponent_Injected)) return;
 
-	if (!ActiveActionLock.Matches(InAssignment))
+	if (!ActiveAssignmentLock.Matches(InAssignment))
 	{
-		ActiveActionLock = FCombatParticipationActionLock();
+		ActiveAssignmentLock = FCombatParticipationAssignmentLock();
 	}
 
 	if (InAssignment.IsValidAssignment())

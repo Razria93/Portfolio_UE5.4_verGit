@@ -129,7 +129,7 @@ bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDeci
 
 // Lifecycle
 
-bool UCAction::Start(const FActionData& InData)
+bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSerial)
 {
 	if (!InData.IsValidMinimal())
 	{
@@ -145,6 +145,7 @@ bool UCAction::Start(const FActionData& InData)
 
 	ActiveDataKey_Cached = InData.ActionDataKey;
 	ActiveData_Cached = InData;
+	ActionRequestSerial_Cached = InActionRequestSerial;
 	ActiveMontage_Cached = InData.Montage;
 
 	if (!PlayMontage(InData))
@@ -230,7 +231,7 @@ void UCAction::Complete()
 	}
 }
 
-bool UCAction::ReserveChain(const FActionData& InData)
+bool UCAction::ReserveChain(const FActionData& InData, const uint32 InActionRequestSerial)
 {
 	return false;
 }
@@ -306,6 +307,7 @@ void UCAction::ClearRuntime()
 
 	ActiveDataKey_Cached = FActionDataKey();
 	ActiveData_Cached = FActionData();
+	ActionRequestSerial_Cached = 0;
 	ActiveMontage_Cached = nullptr;
 	LastStopReason_Cached = EActionStopReason::None;
 
@@ -656,5 +658,5 @@ void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex
 
 	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : ActiveDataKey_Cached.ActionIndex;
 
-	ActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, InEventType);
+	ActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, ActionRequestSerial_Cached, InEventType);
 }

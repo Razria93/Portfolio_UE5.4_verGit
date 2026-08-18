@@ -11,7 +11,7 @@
 #include "CActionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FActionTypeChanged, class ACharacter*, InOwnerCharacter, EActionType, InPrevActionType, EActionType, InNewActionType);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FActionEventSignature, class ACharacter*, InOwnerCharacter, EActionType, InActionType, int32, InActionIndex, EActionEventType, InActionEventType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FActionEventSignature, class ACharacter*, InOwnerCharacter, EActionType, InActionType, int32, InActionIndex, uint32, InActionRequestSerial, EActionEventType, InActionEventType);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionComponent : public UActorComponent
@@ -38,6 +38,9 @@ private:
 
 	UPROPERTY(Transient)
 	int32 ActiveActionIndex = INDEX_NONE;
+
+	UPROPERTY(Transient)
+	uint32 ActiveActionRequestSerial = 0;
 
 	UPROPERTY(Transient)
 	FActionData ActiveActionData = FActionData();
@@ -100,6 +103,7 @@ public:
 
 	EActionType GetActiveActionType() const;
 	int32 GetActiveActionIndex() const;
+	uint32 GetActiveActionRequestSerial() const;
 	bool GetActiveActionData(FActionData& OutData) const;
 	class UCAction* GetActiveActionExecutor() const;
 
@@ -117,7 +121,7 @@ public:
 
 public:
 	// Execution Result Hooks
-	bool HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData);
+	bool HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData, uint32 InActionRequestSerial);
 	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InFinishReason);
 
 public:
@@ -145,7 +149,7 @@ public:
 
 public:
 	// Event Broadcast
-	void BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType);
+	void BroadcastActionEvent(EActionType InType, int32 InIndex, uint32 InActionRequestSerial, EActionEventType InEventType);
 
 private:
 	// Runtime Lifecycle

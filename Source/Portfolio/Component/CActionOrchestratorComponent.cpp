@@ -138,17 +138,17 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
 
 	if (!IsValid(ActionComp_Injected))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent, InIncomingRequest.ActionRequestSerial);
 
 	if (!CanAcceptActionRequest(rejectReason))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, InIncomingRequest.ActionRequestSerial);
 
 	ApplyCombatActionInputSideEffects(InIncomingRequest);
 
 	FActionCandidate incomingCandidate;
 
 	if (!ResolveCombatActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, InIncomingRequest.ActionRequestSerial);
 
 	return ProcessActionCandidate(incomingCandidate);
 }
@@ -294,6 +294,7 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	}
 
 	FActionCandidate incomingCandidate;
+	incomingCandidate.ActionRequestSerial = InIncomingRequest.ActionRequestSerial;
 
 	switch (InIncomingRequest.IntentType)
 	{
@@ -385,7 +386,7 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 	FActionExecutionContext incomingContext;
 
 	if (!ResolveActionContext(InIncomingCandidate, incomingContext, rejectReason))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, InIncomingCandidate.ActionRequestSerial);
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
 
@@ -437,6 +438,7 @@ bool UCActionOrchestratorComponent::ResolveActionContext(const FActionCandidate&
 	}
 
 	OutIncomingContext.ActionDataKey = incomingActionDataKey;
+	OutIncomingContext.ActionRequestSerial = InIncomingCandidate.ActionRequestSerial;
 	OutIncomingContext.ActionData = incomingActionData;
 	OutIncomingContext.ActionExecutor = incomingActionExecutor;
 
@@ -548,6 +550,7 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 			FActionExecutionContext context;
 
 			context.ActionDataKey = activeData.ActionDataKey;
+			context.ActionRequestSerial = ActionComp_Injected->GetActiveActionRequestSerial();
 			context.ActionData = activeData;
 			context.ActionExecutor = ActionComp_Injected->GetActiveActionExecutor();
 
@@ -581,17 +584,17 @@ bool UCActionOrchestratorComponent::TryResolveDeferredConsumeKey(const FActionCa
 FActionRequestResult UCActionOrchestratorComponent::DeferActionCandidate(const FActionCandidate& InIncomingCandidate, EDeferredActionConsumeKey InConsumeKey)
 {
 	if (!InIncomingCandidate.IsValidMinimal())
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest, InIncomingCandidate.ActionRequestSerial);
 
 	if (InConsumeKey == EDeferredActionConsumeKey::None || InConsumeKey == EDeferredActionConsumeKey::Max)
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest, InIncomingCandidate.ActionRequestSerial);
 
 	FDeferredActionCandidate deferredCandidate;
 	deferredCandidate.Candidate = InIncomingCandidate;
 	deferredCandidate.ConsumeKey = InConsumeKey;
 
 	if (!deferredCandidate.IsValidMinimal())
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidRequest, InIncomingCandidate.ActionRequestSerial);
 
 	// Clear the same deferred candidate before storing the latest one.
 	DeferredActionCandidates.RemoveAll(
@@ -602,7 +605,7 @@ FActionRequestResult UCActionOrchestratorComponent::DeferActionCandidate(const F
 
 	DeferredActionCandidates.Add(deferredCandidate);
 
-	return BuildActionRequestResult(EActionRequestResultType::Deferred);
+	return BuildActionRequestResult(EActionRequestResultType::Deferred, EActionRequestRejectReason::None, InIncomingCandidate.ActionRequestSerial);
 }
 
 // Decision Build
@@ -875,20 +878,20 @@ bool UCActionOrchestratorComponent::BuildInterventionDirective(const FExecutionI
 FActionRequestResult UCActionOrchestratorComponent::DispatchActionDecision(const FActionExecutionResult& InResult)
 {
 	if (InResult.Decision == EExecutionDecision::Ignore)
-		return BuildActionRequestResult(EActionRequestResultType::Ignored);
+		return BuildActionRequestResult(EActionRequestResultType::Ignored, EActionRequestRejectReason::None, InResult.ResolvedContext.ActionRequestSerial);
 
 	if (!InResult.IsAcceptedDecision())
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, InResult.RejectReason);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, InResult.RejectReason, InResult.ResolvedContext.ActionRequestSerial);
 
 	if (!IsValid(ActionComp_Injected))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent, InResult.ResolvedContext.ActionRequestSerial);
 
 	if (!ActionComp_Injected->ApplyActionDecision(InResult))
-		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::ActionExecutionFailed);
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::ActionExecutionFailed, InResult.ResolvedContext.ActionRequestSerial);
 
 	EActionRequestResultType resultType = ConvertDecisionToResultType(InResult);
 
-	return BuildActionRequestResult(resultType);
+	return BuildActionRequestResult(resultType, EActionRequestRejectReason::None, InResult.ResolvedContext.ActionRequestSerial);
 }
 
 // Result Build
@@ -917,11 +920,12 @@ EActionRequestResultType UCActionOrchestratorComponent::ConvertDecisionToResultT
 	}
 }
 
-FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason) const
+FActionRequestResult UCActionOrchestratorComponent::BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason, const uint32 InActionRequestSerial) const
 {
 	FActionRequestResult result;
 
 	result.ResultType = InResultType;
+	result.ActionRequestSerial = InActionRequestSerial;
 	result.RejectReason = InRejectReason;
 
 	if (InResultType == EActionRequestResultType::Rejected)

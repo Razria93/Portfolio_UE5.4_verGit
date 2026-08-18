@@ -122,7 +122,7 @@ HitReactive → A
 | --- | --- |
 | Evidence grace | 순간 LOS 상실이나 갱신 지연을 흡수한다. |
 | Commitment hold | 현재 assignment의 즉시 탈취를 막는다. |
-| Action lock | 공격·Hit window 중 역할 교체 제한을 결정한다. |
+| Assignment lock | 현재 assignment의 유지 권위를 보호한다. Combat Action은 현재 이 lock을 요청하는 사용 사례다. |
 | Demotion / reacquire cooldown | 경계에서 Alert·Observe 왕복을 줄인다. |
 
 `AlertStep`은 Alert 상태의 이동 보정이며, assignment 경쟁을 매 tick 흔드는 점수가 아니다.
@@ -442,12 +442,12 @@ AI Combat Action started
 
 - Enemy는 Action request 직전에 이미 검증한 Target/CombatTargetRevision/AssignmentRevision으로 lock을 요청한다. Adapter는 applied snapshot과 일치할 때만 Subsystem에 전달하고, Subsystem은 현재 Engage assignment와 target hostility·생존 상태를 다시 검증한다.
 - lock은 새 assignment나 새 Target을 만들지 않는다. evidence가 순간적으로 사라져도 lock이 살아 있는 동안 **동일 assignment**만 유지한다. 새로운 후보·거리·priority는 기존 lock을 탈취하지 못한다.
-- lock은 `Portfolio.AI.CombatParticipation.ActionLockTimeout` CVar(기본 3초)로 failsafe 만료된다. 새 combo action이 실제 시작되면 같은 identity의 lock timeout을 새 action 기준으로 갱신한다.
+- Assignment lock은 `Portfolio.AI.CombatParticipation.AssignmentLockTimeout` CVar(기본 3초)로 failsafe 만료된다. 새 combo action이 실제 시작되면 같은 identity의 lock timeout을 새 action 기준으로 갱신한다.
 - Combat Action이 끝나거나 Interrupted되어 Action Type이 Combat Action이 아니게 되면 Adapter가 lock을 해제하고 즉시 allocator를 재평가한다.
-- Target EndPlay와 Target Health의 `Dead` 전이는 evidence·Action Lock을 즉시 제거하고 rebuild한다. hostility 상실, participant unregister/UnPossess, Enemy death도 hard release다. Kernel TargetActor 또는 CombatTargetRevision이 lock 기록과 달라져도 Adapter가 lock을 즉시 해제한다. lock은 이 사유를 기다리지 않으며 evidence·assignment와 함께 제거된다. Enemy death는 participation adapter를 unregister하고 conditional Combat Target clear를 수행한다.
+- Target EndPlay와 Target Health의 `Dead` 전이는 evidence·Assignment Lock을 즉시 제거하고 rebuild한다. hostility 상실, participant unregister/UnPossess, Enemy death도 hard release다. Kernel TargetActor 또는 CombatTargetRevision이 lock 기록과 달라져도 Adapter가 lock을 즉시 해제한다. lock은 이 사유를 기다리지 않으며 evidence·assignment와 함께 제거된다. Enemy death는 participation adapter를 unregister하고 conditional Combat Target clear를 수행한다.
 - Target EndPlay binding은 evidence가 TTL로 사라진 뒤에도 action lock이 남아 있으면 유지한다. 따라서 lock만 남은 Target도 EndPlay에서 즉시 해제된다.
 
-Action lock은 현재 assignment 유지 장치일 뿐, 공격의 실제 실행 시간·동시 공격 예산을 결정하지 않는다. Action execution 예산과 animation/hit-window별 lock 세분화는 별도 정책이다.
+Assignment Lock은 현재 assignment 유지 장치일 뿐, 공격의 실제 실행 시간·동시 공격 예산을 결정하지 않는다. Combat Action은 현재 이 lock을 요청하는 첫 사용 사례이며, Action execution 예산과 animation/hit-window별 lock 세분화는 별도 정책이다.
 
 
 ### Goal 8 — Combat Signal HitReactive Evidence Producer (완료)

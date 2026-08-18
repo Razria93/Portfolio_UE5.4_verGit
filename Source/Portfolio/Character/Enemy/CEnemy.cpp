@@ -194,11 +194,13 @@ void ACEnemy::BeginPlay()
 		CharacterFeedbackComponent->OnDeathPresentationEvent.AddUObject(this, &ACEnemy::HandleDeathPresentationEvent);
 	}
 
-	HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
-
 	if (IsValid(HealthComponent) && HealthComponent->IsDead())
 	{
 		BeginDeathLifecycle();
+	}
+	else
+	{
+		HandleAIEquipmentAction(EEquipmentActionIntent::Equip);
 	}
 }
 
@@ -248,19 +250,6 @@ void ACEnemy::ApplyCharacterSetup()
 	UCharacterMovementComponent* characterMovementComp = GetCharacterMovement();
 	check(characterMovementComp);
 	characterMovementComp->MaxWalkSpeed = MovementSetup.DefaultWalkSpeed;
-}
-
-// Target Presentation Query
-
-FVector ACEnemy::GetTargetMarkerWorldLocation() const
-{
-	const USkeletalMeshComponent* meshComp = GetMesh();
-	if (IsValid(meshComp) && !TargetMarkerSocketName.IsNone() && meshComp->DoesSocketExist(TargetMarkerSocketName))
-	{
-		return meshComp->GetSocketLocation(TargetMarkerSocketName);
-	}
-
-	return GetActorLocation() + TargetMarkerFallbackOffset;
 }
 
 // Component Reference
@@ -460,6 +449,19 @@ void ACEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+// Target Presentation Query
+
+FVector ACEnemy::GetTargetMarkerWorldLocation() const
+{
+	const USkeletalMeshComponent* meshComp = GetMesh();
+	if (IsValid(meshComp) && !TargetMarkerSocketName.IsNone() && meshComp->DoesSocketExist(TargetMarkerSocketName))
+	{
+		return meshComp->GetSocketLocation(TargetMarkerSocketName);
+	}
+
+	return GetActorLocation() + TargetMarkerFallbackOffset;
+}
+
 // Damage
 
 float ACEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -495,6 +497,8 @@ void ACEnemy::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResul
 		HandleParryCombatResult(InCombatResultPacket);
 	}
 }
+
+// Combat Result Handling
 
 void ACEnemy::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
 {
@@ -594,7 +598,7 @@ FActionRequestResult ACEnemy::HandleAIStopJump()
 	return ActionOrchestratorComponent->RequestMovementAction(request);
 }
 
-// AI Action Intent
+// AI Equip Action Intent
 
 FActionRequestResult ACEnemy::HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent)
 {
@@ -608,10 +612,16 @@ FActionRequestResult ACEnemy::HandleAIEquipmentAction(EEquipmentActionIntent InE
 	return ActionOrchestratorComponent->RequestEquipmentAction(request);
 }
 
-FActionRequestResult ACEnemy::HandleAICombatAction(ECombatActionIntent InCombatActionIntent, const FCombatTargetSnapshot& InTargetSnapshot, const int32 InParticipationRevision)
+// AI Combat Action Intent
+
+FActionRequestResult ACEnemy::HandleAICombatAction(ECombatActionIntent InCombatActionIntent)
 {
 	if (!IsValid(ActionOrchestratorComponent)) return FActionRequestResult();
-	if (!IsCombatActionAuthorityCurrent(InTargetSnapshot, InParticipationRevision))
+
+	UCEnemyCombatParticipationComponent* participationComp = GetEnemyCombatParticipationComp();
+	FCombatTargetSnapshot targetSnapshot;
+	int32 participationRevision = 0;
+	if (!IsValid(participationComp) || !participationComp->TryGetCurrentEngageAssignment(targetSnapshot, participationRevision))
 	{
 		FActionRequestResult staleTargetResult;
 		staleTargetResult.ResultType = EActionRequestResultType::Rejected;
@@ -619,26 +629,37 @@ FActionRequestResult ACEnemy::HandleAICombatAction(ECombatActionIntent InCombatA
 		return staleTargetResult;
 	}
 
+	if (NextCombatActionRequestSerial == 0)
+	{
+		NextCombatActionRequestSerial = 1;
+	}
+
+	const uint32 actionRequestSerial = NextCombatActionRequestSerial++;
+
 	FCombatActionRequest request;
 	request.IntentSource = EActionIntentSource::AI;
 	request.IntentType = InCombatActionIntent;
 	request.IntentEvent = EActionIntentEvent::Started;
+	request.ActionRequestSerial = actionRequestSerial;
+
+	PendingCombatActionTargetSnapshot = targetSnapshot;
+	PendingCombatActionParticipationRevision = participationRevision;
+	PendingCombatActionRequestSerial = actionRequestSerial;
 
 	const FActionRequestResult result = ActionOrchestratorComponent->RequestCombatAction(request);
-	if (result.IsStartedResult() || result.IsReservedResult())
-	{
-		ActiveCombatActionTargetSnapshot = InTargetSnapshot;
-		ActiveCombatActionParticipationRevision = InParticipationRevision;
 
-		if (result.IsStartedResult() && IsValid(EnemyCombatParticipationComponent))
-		{
-			EnemyCombatParticipationComponent->AcquireCombatActionLock(InTargetSnapshot, InParticipationRevision);
-		}
+	if ((!result.IsStartedResult() && !result.IsReservedResult())
+		&& PendingCombatActionRequestSerial == actionRequestSerial)
+	{
+		PendingCombatActionTargetSnapshot = FCombatTargetSnapshot();
+		PendingCombatActionParticipationRevision = 0;
+		PendingCombatActionRequestSerial = 0;
 	}
+
 	return result;
 }
 
-// Runtime State
+// Health / Death Command
 
 bool ACEnemy::TryStartKill()
 {
@@ -659,6 +680,14 @@ bool ACEnemy::TryStartKill()
 // -> BeginDeathPresentation
 // -> presentation unavailable / fallback delay
 // -> RequestFinalizeDeath -> FinalizeDeath
+
+// Query
+
+bool ACEnemy::IsDeathPresentationFallbackPending() const
+{
+	const UWorld* world = GetWorld();
+	return IsValid(world) && world->GetTimerManager().IsTimerActive(DeathPresentationFallbackTimerHandle);
+}
 
 // Entry / State
 
@@ -912,80 +941,48 @@ void ACEnemy::CleanupDeathGameplayRuntime()
 	}
 }
 
-// Death Lifecycle Query
+// Action Event Handling
 
-bool ACEnemy::IsDeathPresentationFallbackPending() const
-{
-	const UWorld* world = GetWorld();
-	return IsValid(world) && world->GetTimerManager().IsTimerActive(DeathPresentationFallbackTimerHandle);
-}
-
-// Combat Action Query
-
-bool ACEnemy::IsCombatActionType(EActionType InActionType) const
-{
-	switch (InActionType)
-	{
-	case EActionType::ComboAttack:
-		return true;
-
-	default:
-		return false; // Idle / Equip / Unequip etc..
-	}
-}
-
-bool ACEnemy::IsCombatTargetSnapshotCurrent(const FCombatTargetSnapshot& InSnapshot) const
-{
-	const UCCombatTargetComponent* combatTargetComp = GetCombatTargetComp();
-	if (!IsValid(combatTargetComp) || !IsValid(InSnapshot.TargetActor)) return false;
-
-	const FCombatTargetSnapshot currentSnapshot = combatTargetComp->GetCombatTargetSnapshot();
-	return currentSnapshot.TargetActor == InSnapshot.TargetActor && currentSnapshot.Revision == InSnapshot.Revision;
-}
-
-bool ACEnemy::IsCombatActionAuthorityCurrent(const FCombatTargetSnapshot& InTargetSnapshot, const int32 InParticipationRevision) const
-{
-	if (!IsCombatTargetSnapshotCurrent(InTargetSnapshot)) return false;
-
-	const UCEnemyCombatParticipationComponent* participationComp = GetEnemyCombatParticipationComp();
-	if (!IsValid(participationComp)) return false;
-
-	const FCombatParticipationAppliedSnapshot appliedSnapshot = participationComp->GetAppliedSnapshot();
-	return appliedSnapshot.IsAssigned()
-		&& appliedSnapshot.CombatRole == ECombatRole::Engage
-		&& appliedSnapshot.TargetActor == InTargetSnapshot.TargetActor
-		&& appliedSnapshot.CombatTargetRevision == InTargetSnapshot.Revision
-		&& appliedSnapshot.AssignmentRevision == InParticipationRevision;
-}
-
-// Action Event Routing
+// Event Callback
 
 void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPreviousActionType, EActionType InNewActionType)
 {
 	ACAIController* aiController = Cast<ACAIController>(GetController());
-	if (!IsValid(aiController)) return;
-
-	UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return;
-
 	const bool bIsCombatAction = IsCombatActionType(InNewActionType);
-	blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName, bIsCombatAction);
+	if (IsValid(aiController))
+	{
+		if (UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent())
+		{
+			blackboardComp->SetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName, bIsCombatAction);
+		}
+	}
+
 	if (!bIsCombatAction)
 	{
-		if (IsValid(EnemyCombatParticipationComponent))
-		{
-			EnemyCombatParticipationComponent->ReleaseCombatActionLock();
-		}
-
-		ActiveCombatActionTargetSnapshot = FCombatTargetSnapshot();
-		ActiveCombatActionParticipationRevision = 0;
+		ReleaseCombatActionAuthority();
 	}
 }
 
-void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType)
+void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, const uint32 InActionRequestSerial, EActionEventType InActionEventType)
 {
 	switch (InActionEventType)
 	{
+	case EActionEventType::ActionStarted:
+	{
+		if (IsCombatActionType(InActionType))
+		{
+			ActivatePendingCombatActionAuthority(InActionRequestSerial);
+		}
+		break;
+	}
+
+	case EActionEventType::ActionInterrupted:
+	case EActionEventType::ActionIgnored:
+	{
+		ReleaseCombatActionAuthority();
+		break;
+	}
+
 	case EActionEventType::ReserveChainWindowOpened:
 	{
 		RequestChainCombatAction(InActionType, InActionIndex);
@@ -997,14 +994,60 @@ void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionTy
 	}
 }
 
+void ACEnemy::ActivatePendingCombatActionAuthority(const uint32 InActionRequestSerial)
+{
+	if (InActionRequestSerial == 0 || PendingCombatActionRequestSerial != InActionRequestSerial) return;
+
+	UCEnemyCombatParticipationComponent* participationComp = GetEnemyCombatParticipationComp();
+	FCombatTargetSnapshot currentTargetSnapshot;
+	int32 currentParticipationRevision = 0;
+
+	if (!IsValid(participationComp)
+		|| !participationComp->TryGetCurrentEngageAssignment(currentTargetSnapshot, currentParticipationRevision)
+		|| currentTargetSnapshot.TargetActor != PendingCombatActionTargetSnapshot.TargetActor
+		|| currentTargetSnapshot.Revision != PendingCombatActionTargetSnapshot.Revision
+		|| currentParticipationRevision != PendingCombatActionParticipationRevision)
+	{
+		PendingCombatActionTargetSnapshot = FCombatTargetSnapshot();
+		PendingCombatActionParticipationRevision = 0;
+		PendingCombatActionRequestSerial = 0;
+		return;
+	}
+
+	ActiveCombatActionTargetSnapshot = PendingCombatActionTargetSnapshot;
+	ActiveCombatActionParticipationRevision = PendingCombatActionParticipationRevision;
+
+	PendingCombatActionTargetSnapshot = FCombatTargetSnapshot();
+	PendingCombatActionParticipationRevision = 0;
+	PendingCombatActionRequestSerial = 0;
+
+	if (IsValid(EnemyCombatParticipationComponent))
+	{
+		EnemyCombatParticipationComponent->AcquireParticipationAssignmentLock(ActiveCombatActionTargetSnapshot, ActiveCombatActionParticipationRevision);
+	}
+}
+
+void ACEnemy::ReleaseCombatActionAuthority()
+{
+	if (IsValid(EnemyCombatParticipationComponent))
+	{
+		EnemyCombatParticipationComponent->ReleaseParticipationAssignmentLock();
+	}
+
+	ActiveCombatActionTargetSnapshot = FCombatTargetSnapshot();
+	ActiveCombatActionParticipationRevision = 0;
+
+	PendingCombatActionTargetSnapshot = FCombatTargetSnapshot();
+	PendingCombatActionParticipationRevision = 0;
+	PendingCombatActionRequestSerial = 0;
+}
+
 void ACEnemy::RequestChainCombatAction(EActionType InActionType, int32 InActionIndex)
 {
 	const ECombatActionIntent combatActionIntent = ResolveChainCombatIntent(InActionType, InActionIndex);
 	if (combatActionIntent == ECombatActionIntent::None) return;
 
-	if (!IsCombatActionAuthorityCurrent(ActiveCombatActionTargetSnapshot, ActiveCombatActionParticipationRevision)) return;
-
-	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent, ActiveCombatActionTargetSnapshot, ActiveCombatActionParticipationRevision);
+	const FActionRequestResult actionRequestResult = HandleAICombatAction(combatActionIntent);
 	if (!actionRequestResult.IsReservedResult()) return;
 }
 
@@ -1017,5 +1060,19 @@ ECombatActionIntent ACEnemy::ResolveChainCombatIntent(EActionType InActionType, 
 
 	default:
 		return ECombatActionIntent::None;
+	}
+}
+
+// Combat Action Classification
+
+bool ACEnemy::IsCombatActionType(EActionType InActionType) const
+{
+	switch (InActionType)
+	{
+	case EActionType::ComboAttack:
+		return true;
+
+	default:
+		return false; // Idle / Equip / Unequip etc..
 	}
 }

@@ -91,8 +91,8 @@ private:
 	TMap<class ACAIController*, FHitReactiveExtraCommitment> ExtraAssignmentByParticipant;
 
 private:
-	// Action Lock State
-	TMap<class ACAIController*, FCombatParticipationActionLock> ActionLockByParticipant;
+	// Assignment Lock State
+	TMap<class ACAIController*, FCombatParticipationAssignmentLock> AssignmentLockByParticipant;
 
 public:
 	// -----------------------------------------------------------------------------
@@ -116,9 +116,9 @@ public:
 	void WithdrawEvidence(class ACAIController* InParticipant, ECombatParticipationSource InSource, class AActor* InTarget);
 	void UnregisterParticipant(class ACAIController* InParticipant);
 
-	// Action Lock
-	bool AcquireActionLock(class ACAIController* InParticipant, const FCombatParticipationActionLock& InActionLock);
-	void ReleaseActionLock(class ACAIController* InParticipant);
+	// Assignment Lock
+	bool AcquireAssignmentLock(class ACAIController* InParticipant, const FCombatParticipationAssignmentLock& InAssignmentLock);
+	void ReleaseAssignmentLock(class ACAIController* InParticipant);
 
 private:
 	struct FAssignmentRebuildContext;
@@ -132,7 +132,7 @@ private:
 
 	// Rebuild Preprocessing
 	void PruneInvalidEvidence();
-	void PruneExpiredActionLocks();
+	void PruneExpiredAssignmentLocks();
 
 	// Assignment Warmup
 	bool ShouldDelayAssignmentForWarmup() const;
@@ -178,7 +178,7 @@ private:
 	bool HasEvidenceForTarget(const class ACAIController* InParticipant, const class AActor* InTarget) const;
 	bool HasValidEvidenceForAssignment(const class ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment) const;
 	bool IsHitReactiveExtraCommitmentActive(const class ACAIController* InParticipant, const FEngageAssignmentContext& InAssignment) const;
-	bool IsActionLockActive(const class ACAIController* InParticipant, const FEngageAssignmentContext& InAssignment) const;
+	bool IsAssignmentLockActive(const class ACAIController* InParticipant, const FEngageAssignmentContext& InAssignment) const;
 
 private:
 	// -----------------------------------------------------------------------------
