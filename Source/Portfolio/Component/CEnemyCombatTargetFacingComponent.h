@@ -7,9 +7,11 @@
 class AAIController;
 class UCCombatTargetComponent;
 class UCMovementComponent;
+class UCReactionComponent;
 struct FCharacterComponentReferences;
 struct FCombatTargetChange;
 struct FCombatTargetSnapshot;
+struct FReactionExecutionLifecycleEvent;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCEnemyCombatTargetFacingComponent : public UActorComponent
@@ -27,7 +29,14 @@ private:
 	UCMovementComponent* MovementComponent_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	UCReactionComponent* ReactionComponent_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	AAIController* AIController_Injected = nullptr;
+
+	bool bCombatTargetFacingSyncPending = false;
+	bool bCombatTargetFacingSyncQueued = false;
+	FTimerHandle CombatTargetFacingSyncTimerHandle;
 
 public:
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
@@ -39,9 +48,14 @@ protected:
 
 private:
 	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
+	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 	void SynchronizeCombatTargetFacing();
+	void QueueCombatTargetFacingSync();
+	void ResolveQueuedCombatTargetFacingSync();
+	void CancelQueuedCombatTargetFacingSync();
 
 private:
+	bool ShouldDeferCombatTargetFacing() const;
 	void ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot);
 	void ClearCombatTargetFacing();
 };
