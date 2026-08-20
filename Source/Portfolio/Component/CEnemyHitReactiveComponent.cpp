@@ -4,11 +4,13 @@
 #include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CEnemyCombatParticipationComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
 #include "Controller/CAIController.h"
 #include "Interface/TargetContextProvider.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCombatParticipationTypes.h"
 #include "Type/CCombatSignalTargetTypes.h"
+#include "Type/CReactionOrchestrationTypes.h"
 
 #include "GameFramework/Pawn.h"
 
@@ -27,6 +29,7 @@ void UCEnemyHitReactiveComponent::InitializeReferences(const FCharacterComponent
 	HealthComp_Injected = InReferences.HealthComponent;
 	CombatSignalTargetComp_Injected = InReferences.CombatSignalTargetComponent;
 	CombatParticipationComp_Injected = InReferences.EnemyCombatParticipationComponent;
+	ReactionComp_Injected = InReferences.ReactionComponent;
 
 	BindCombatSignalTarget();
 }
@@ -55,6 +58,14 @@ void UCEnemyHitReactiveComponent::BindCombatSignalTarget()
 
 	CombatSignalTargetComp_Injected->OnCombatSignalTargetAccepted.RemoveAll(this);
 	CombatSignalTargetComp_Injected->OnCombatSignalTargetAccepted.AddUObject(this, &UCEnemyHitReactiveComponent::HandleCombatSignalTargetAccepted);
+	CombatSignalTargetComp_Injected->OnCombatSignalTargetReactionResolved.RemoveAll(this);
+	CombatSignalTargetComp_Injected->OnCombatSignalTargetReactionResolved.AddUObject(this, &UCEnemyHitReactiveComponent::HandleCombatSignalTargetReactionResolved);
+
+	if (IsValid(ReactionComp_Injected))
+	{
+		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
+		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.AddUObject(this, &UCEnemyHitReactiveComponent::HandleReactionExecutionLifecycleEvent);
+	}
 }
 
 void UCEnemyHitReactiveComponent::UnbindCombatSignalTarget()
@@ -62,6 +73,14 @@ void UCEnemyHitReactiveComponent::UnbindCombatSignalTarget()
 	if (!IsValid(CombatSignalTargetComp_Injected)) return;
 
 	CombatSignalTargetComp_Injected->OnCombatSignalTargetAccepted.RemoveAll(this);
+	CombatSignalTargetComp_Injected->OnCombatSignalTargetReactionResolved.RemoveAll(this);
+
+	if (IsValid(ReactionComp_Injected))
+	{
+		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
+	}
+
+	PendingCombatantTargetByResultSerial.Reset();
 }
 
 void UCEnemyHitReactiveComponent::HandleCombatSignalTargetAccepted(const FCombatSignalTargetPacket& InPacket)
@@ -81,7 +100,34 @@ void UCEnemyHitReactiveComponent::HandleCombatSignalTargetAccepted(const FCombat
 	evidenceContext.TargetPriority = targetProvider->GetTargetPriority();
 	evidenceContext.DistanceToTarget = FVector::Dist(OwnerCharacter_Injected->GetActorLocation(), combatantTarget->GetActorLocation());
 
-	CombatParticipationComp_Injected->ReportEvidence(ECombatParticipationSource::HitReactive, combatantTarget, evidenceContext);
+	PendingCombatantTargetByResultSerial.Add(InPacket.ResultSerial, combatantTarget);
+	CombatParticipationComp_Injected->ReportHitReactiveEvidence(combatantTarget, evidenceContext, InPacket.ResultSerial);
+}
+
+void UCEnemyHitReactiveComponent::HandleCombatSignalTargetReactionResolved(const FCombatSignalTargetPacket& InPacket, const FReactionRequestResult& InResult)
+{
+	TWeakObjectPtr<AActor>* combatantTarget = PendingCombatantTargetByResultSerial.Find(InPacket.ResultSerial);
+	if (!combatantTarget || !combatantTarget->IsValid()) return;
+
+	if (InResult.IsAccepted()) return;
+
+	CombatParticipationComp_Injected->StartHitReactivePostReactionTTL(combatantTarget->Get(), InPacket.ResultSerial);
+	PendingCombatantTargetByResultSerial.Remove(InPacket.ResultSerial);
+}
+
+void UCEnemyHitReactiveComponent::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)
+{
+	if (InEvent.EventType != EReactionExecutionLifecycleEventType::Completed
+		&& InEvent.EventType != EReactionExecutionLifecycleEventType::Interrupted
+		&& InEvent.EventType != EReactionExecutionLifecycleEventType::Ignored) return;
+
+	const uint64 resultSerial = InEvent.Context.CombatSignalResultSerial;
+
+	TWeakObjectPtr<AActor>* combatantTarget = PendingCombatantTargetByResultSerial.Find(resultSerial);
+	if (!combatantTarget || !combatantTarget->IsValid()) return;
+
+	CombatParticipationComp_Injected->StartHitReactivePostReactionTTL(combatantTarget->Get(), resultSerial);
+	PendingCombatantTargetByResultSerial.Remove(resultSerial);
 }
 
 // ===== Evidence =====

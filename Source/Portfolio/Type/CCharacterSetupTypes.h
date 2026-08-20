@@ -44,11 +44,11 @@ struct FPlayerCameraSetup
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	FVector SpringArmRelativeLocation = FVector(0.0f, 0.0f, 55.0f);
+	FVector SpringArmRelativeLocation = FVector(0.0f, 15.0f, 55.0f);
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float BoomLength = 300.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	FVector CameraRelativeLocation = FVector(0.0f, 40.0f, 0.0f);
+	FVector CameraRelativeLocation = FVector::ZeroVector;
 };

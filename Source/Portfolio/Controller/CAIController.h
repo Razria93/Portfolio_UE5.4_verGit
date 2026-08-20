@@ -108,6 +108,7 @@ private:
 public:
 	// Query
 	EPerceptionBuildResult BuildPerceptionContext(FPerceptionTargetContext& OutPerceptionTargetContext);
+	void RefreshParticipationEvidenceFromPerception();
 
 public:
 	// Runtime LOD Snapshot

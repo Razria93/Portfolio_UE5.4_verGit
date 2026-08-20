@@ -35,6 +35,13 @@ namespace
 	static constexpr const TCHAR* DebugOverlayMovementDrawDebugTextCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawDebugText");
 	static constexpr const TCHAR* DebugOverlayMovementShowOverlayDetailsCVarName = TEXT("Portfolio.DebugOverlay.Movement.ShowOverlayDetails");
 
+	// ===== Combat Participation Display CVar Names =====
+
+	static constexpr const TCHAR* DebugOverlayCombatParticipationEnabledCVarName = TEXT("Portfolio.DebugOverlay.CombatParticipation.Enabled");
+	static constexpr const TCHAR* DebugOverlayCombatParticipationDrawWorldTextCVarName = TEXT("Portfolio.DebugOverlay.CombatParticipation.DrawWorldText");
+	static constexpr const TCHAR* DebugOverlayCombatParticipationDrawWorldRingCVarName = TEXT("Portfolio.DebugOverlay.CombatParticipation.DrawWorldRing");
+	static constexpr const TCHAR* DebugOverlayCombatParticipationShowOverlayDetailsCVarName = TEXT("Portfolio.DebugOverlay.CombatParticipation.ShowOverlayDetails");
+
 	// ===== Focus CVar Names =====
 
 	static constexpr const TCHAR* DebugOverlayFocusLiveSyncPlayerTargetCVarName = TEXT("Portfolio.DebugOverlay.Focus.LiveSyncPlayerTarget");
@@ -109,6 +116,14 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawInputCVarName
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawFacingCVarName() { return DebugOverlayMovementDrawFacingCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawDebugTextCVarName() { return DebugOverlayMovementDrawDebugTextCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementShowOverlayDetailsCVarName() { return DebugOverlayMovementShowOverlayDetailsCVarName; }
+
+// ===== Combat Participation Display CVar Names =====
+
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetCombatParticipationEnabledCVarName() { return DebugOverlayCombatParticipationEnabledCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetCombatParticipationDrawWorldTextCVarName() { return DebugOverlayCombatParticipationDrawWorldTextCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetCombatParticipationDrawWorldRingCVarName() { return DebugOverlayCombatParticipationDrawWorldRingCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetCombatParticipationShowOverlayDetailsCVarName() { return DebugOverlayCombatParticipationShowOverlayDetailsCVarName; }
+
 // ===== Focus CVar Names =====
 
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetFocusLiveSyncPlayerTargetCVarName() { return DebugOverlayFocusLiveSyncPlayerTargetCVarName; }
@@ -234,6 +249,14 @@ bool PortfolioDebugOverlayEditorCVarAccess::HasMovementDisplayCVars()
 		&& FindCVar(DebugOverlayMovementDrawFacingCVarName)
 		&& FindCVar(DebugOverlayMovementDrawDebugTextCVarName)
 		&& FindCVar(DebugOverlayMovementShowOverlayDetailsCVarName);
+}
+
+bool PortfolioDebugOverlayEditorCVarAccess::HasCombatParticipationDisplayCVars()
+{
+	return FindCVar(DebugOverlayCombatParticipationEnabledCVarName)
+		&& FindCVar(DebugOverlayCombatParticipationDrawWorldTextCVarName)
+		&& FindCVar(DebugOverlayCombatParticipationDrawWorldRingCVarName)
+		&& FindCVar(DebugOverlayCombatParticipationShowOverlayDetailsCVarName);
 }
 
 bool PortfolioDebugOverlayEditorCVarAccess::HasFocusCVars()

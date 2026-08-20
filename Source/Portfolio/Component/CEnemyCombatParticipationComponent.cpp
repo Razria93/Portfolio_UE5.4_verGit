@@ -42,6 +42,18 @@ FCombatParticipationAppliedSnapshot UCEnemyCombatParticipationComponent::GetAppl
 	return AppliedSnapshot;
 }
 
+bool UCEnemyCombatParticipationComponent::HasActiveEvidenceForTarget(const AActor* InTarget) const
+{
+	if (!IsValid(AIController_Injected) || !IsValid(InTarget)) return false;
+
+	if (const UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
+	{
+		return subsystem->HasActiveEvidenceForParticipantTarget(AIController_Injected, InTarget);
+	}
+
+	return false;
+}
+
 bool UCEnemyCombatParticipationComponent::TryGetCurrentEngageAssignment(FCombatTargetSnapshot& OutTargetSnapshot, int32& OutAssignmentRevision) const
 {
 	OutTargetSnapshot = FCombatTargetSnapshot();
@@ -136,6 +148,26 @@ void UCEnemyCombatParticipationComponent::ReportEvidence(ECombatParticipationSou
 	}
 }
 
+void UCEnemyCombatParticipationComponent::ReportHitReactiveEvidence(AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, const uint64 InResultSerial)
+{
+	if (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;
+
+	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
+	{
+		subsystem->ReportHitReactiveEvidence(AIController_Injected, InTarget, InContext, InResultSerial);
+	}
+}
+
+void UCEnemyCombatParticipationComponent::StartHitReactivePostReactionTTL(AActor* InTarget, const uint64 InResultSerial)
+{
+	if (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;
+
+	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
+	{
+		subsystem->StartHitReactivePostReactionTTL(AIController_Injected, InTarget, InResultSerial);
+	}
+}
+
 void UCEnemyCombatParticipationComponent::WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget)
 {
 	if (!IsValid(AIController_Injected) || !IsValid(InTarget)) return;
@@ -143,6 +175,33 @@ void UCEnemyCombatParticipationComponent::WithdrawEvidence(ECombatParticipationS
 	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
 		subsystem->WithdrawEvidence(AIController_Injected, InSource, InTarget);
+	}
+}
+
+// ===== Participation Release =====
+
+void UCEnemyCombatParticipationComponent::WithdrawAllEvidenceForOwner()
+{
+	if (!IsValid(AIController_Injected)) return;
+
+	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
+	{
+		subsystem->WithdrawAllEvidenceForParticipant(AIController_Injected);
+	}
+}
+
+void UCEnemyCombatParticipationComponent::SetParticipationSuppressed(const bool bSuppressed)
+{
+	if (!IsValid(AIController_Injected)) return;
+
+	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
+	{
+		subsystem->SetParticipationSuppressed(AIController_Injected, bSuppressed);
+	}
+
+	if (!bSuppressed)
+	{
+		AIController_Injected->RefreshParticipationEvidenceFromPerception();
 	}
 }
 

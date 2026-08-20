@@ -125,6 +125,22 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("In Range: %s | In View Cone: %s"), *targeting.RangeText, *targeting.ViewConeText));
 	}
 
+	// [Combat Participation]
+	// ===== Combat Participation Lines =====
+
+	void AppendCombatParticipationLines(TArray<FString>& InOutLines, const FDebugOverlayCombatParticipationViewData& InCombatParticipationViewData)
+	{
+		const FCombatParticipationDebugOverlayDetails& details = InCombatParticipationViewData.FocusedEnemyDetails;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Combat Participation]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Role: %s | Admission: %s"), *details.RoleText, *details.AdmissionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Evidence: %s"), *details.EvidenceText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Target: %s | Assignment Revision: %s"), *details.TargetText, *details.AssignmentRevisionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Protection: %s"), *details.RetentionText));
+	}
+
 	// [Recent Execution]
 	// ===== Recent Execution Lines =====
 
@@ -260,6 +276,11 @@ namespace
 			AppendPlayerTargetingLines(InOutLines, InActorPanelViewData.Targeting);
 		}
 
+		if (InActorPanelViewData.bIncludeCombatParticipation)
+		{
+			AppendCombatParticipationLines(InOutLines, InActorPanelViewData.CombatParticipation);
+		}
+
 		if (InActorPanelViewData.bIncludeDeathLifecycle)
 		{
 			AppendDeathLifecycleBlock(InOutLines, InActorPanelViewData.DeathLifecycle);
@@ -370,6 +391,16 @@ namespace
 		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.WorldSummary.SummaryBlocks)
 		{
 			AppendRecentSummaryBlockLines(lines, summaryBlock);
+		}
+
+		if (InViewData.WorldSummary.bIncludeCombatParticipation)
+		{
+			AppendFormattedOverlayLine(lines, TEXT(""));
+			AppendFormattedOverlayLine(lines, TEXT("[Combat Participation]"));
+			for (const FString& summaryLine : InViewData.WorldSummary.CombatParticipation.WorldSummaryLines)
+			{
+				AppendFormattedOverlayLine(lines, summaryLine);
+			}
 		}
 
 		return lines;

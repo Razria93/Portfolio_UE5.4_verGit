@@ -89,10 +89,32 @@ void UCBTService_UpdateAIContext::TickNode(UBehaviorTreeComponent& OwnerComp, ui
 	else
 		ClearReactionContext(blackboardComp);
 
+	const bool bWasReturningHome = blackboardComp->GetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName);
 	EContextBuildResult homeResult = ComputeHomeMetricContext(ownerPawn, blackboardComp, aiContext);
 
 	if (homeResult == EContextBuildResult::Success)
+	{
 		UpdateHomeMetricContext(blackboardComp, aiContext);
+
+		if (ACEnemy* enemy = Cast<ACEnemy>(ownerPawn))
+		{
+			if (UCEnemyCombatParticipationComponent* participationComp = enemy->GetEnemyCombatParticipationComp())
+			{
+				if (!bWasReturningHome && aiContext.Home.bReturnHome)
+				{
+					participationComp->SetParticipationSuppressed(true);
+
+					CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
+					CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bIsInvestigating.KeyName, false);
+					CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldEndInvestigate.KeyName, false);
+				}
+				else if (bWasReturningHome && !aiContext.Home.bReturnHome)
+				{
+					participationComp->SetParticipationSuppressed(false);
+				}
+			}
+		}
+	}
 	else
 		ClearHomeMetricContext(blackboardComp);
 

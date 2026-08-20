@@ -8,8 +8,11 @@ class AActor;
 class UCCombatSignalTargetComponent;
 class UCEnemyCombatParticipationComponent;
 class UCHealthComponent;
+class UCReactionComponent;
 struct FCharacterComponentReferences;
 struct FCombatSignalTargetPacket;
+struct FReactionExecutionLifecycleEvent;
+struct FReactionRequestResult;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCEnemyHitReactiveComponent : public UActorComponent
@@ -33,8 +36,12 @@ private:
 	UPROPERTY(Transient)
 	UCEnemyCombatParticipationComponent* CombatParticipationComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	UCReactionComponent* ReactionComp_Injected = nullptr;
+
 	// Runtime State
 	uint64 LastAcceptedResultSerial = 0;
+	TMap<uint64, TWeakObjectPtr<AActor>> PendingCombatantTargetByResultSerial;
 
 public:
 	// Component Reference
@@ -50,6 +57,8 @@ private:
 	void BindCombatSignalTarget();
 	void UnbindCombatSignalTarget();
 	void HandleCombatSignalTargetAccepted(const FCombatSignalTargetPacket& InPacket);
+	void HandleCombatSignalTargetReactionResolved(const FCombatSignalTargetPacket& InPacket, const FReactionRequestResult& InResult);
+	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 
 	// Evidence
 	bool IsEligibleHitReactiveResult(const FCombatSignalTargetPacket& InPacket) const;

@@ -2,6 +2,7 @@
 
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
+#include "Core/Debug/FCombatParticipationDebug.h"
 #include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayCanvasRenderer.h"
@@ -9,6 +10,7 @@
 #include "Core/Debug/FDebugOverlayTextFormatter.h"
 #include "Core/Debug/FDebugOverlayViewDataBuilder.h"
 #include "Core/Debug/FTargetingDebug.h"
+#include "System/Combat/CWorldSubsystem_CombatParticipation.h"
 #include "Type/CTargetingTypes.h"
 
 #include "GameFramework/Pawn.h"
@@ -117,6 +119,22 @@ namespace
 
 		OutPlayerLocomotionViewData.Details = FMovementDebug::BuildOverlayDetails(InSnapshot);
 	}
+
+	FCombatParticipationDebugSnapshot BuildCombatParticipationSnapshot(UWorld* InWorld)
+	{
+		if (!FCombatParticipationDebug::IsEnabled() || !IsValid(InWorld)) return FCombatParticipationDebugSnapshot();
+
+		const UCWorldSubsystem_CombatParticipation* participationSubsystem = InWorld->GetSubsystem<UCWorldSubsystem_CombatParticipation>();
+		return IsValid(participationSubsystem) ? participationSubsystem->BuildDebugSnapshot() : FCombatParticipationDebugSnapshot();
+	}
+
+	void UpdateCombatParticipationViewData(const FCombatParticipationDebugSnapshot& InSnapshot, const ACEnemy* InFocusedEnemy, FDebugOverlayCombatParticipationViewData& OutCombatParticipationViewData)
+	{
+		if (!FCombatParticipationDebug::ShouldShowOverlayDetails()) return;
+
+		OutCombatParticipationViewData.FocusedEnemyDetails = FCombatParticipationDebug::BuildOverlayDetails(InSnapshot, InFocusedEnemy);
+		OutCombatParticipationViewData.WorldSummaryLines = FCombatParticipationDebug::BuildWorldSummaryLines(InSnapshot);
+	}
 }
 #endif
 
@@ -131,19 +149,23 @@ void ACDebugOverlayHUD::DrawHUD()
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
 	const APawn* playerPawn = IsValid(owningPlayerController) ? owningPlayerController->GetPawn() : nullptr;
 	const FMovementDebugSnapshot playerLocomotionSnapshot = BuildPlayerLocomotionSnapshot(owningPlayerController);
+	const FCombatParticipationDebugSnapshot combatParticipationSnapshot = BuildCombatParticipationSnapshot(world);
 
 	DrawTargetingDebug(owningPlayerController, world);
 	DrawMovementDebug(world, playerPawn, playerLocomotionSnapshot);
+	FCombatParticipationDebug::DrawWorldDebug(world, combatParticipationSnapshot);
 
 	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 	FDebugOverlayFocusViewData enemyFocus;
 	FDebugOverlayPlayerTargetingViewData playerTargeting;
 	FDebugOverlayPlayerLocomotionViewData playerLocomotion;
+	FDebugOverlayCombatParticipationViewData combatParticipation;
 	const ACEnemy* focusedEnemy = ResolveDisplayFocusEnemy(owningPlayerController, enemyFocus);
 	UpdatePlayerTargetingViewData(owningPlayerController, playerTargeting);
 	UpdatePlayerLocomotionViewData(playerLocomotionSnapshot, playerLocomotion);
+	UpdateCombatParticipationViewData(combatParticipationSnapshot, focusedEnemy, combatParticipation);
 
-	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion);
+	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, combatParticipation);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
 
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);

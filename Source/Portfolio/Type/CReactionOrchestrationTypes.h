@@ -115,6 +115,9 @@ public:
 	UPROPERTY(Transient)
 	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
+	UPROPERTY(Transient)
+	uint64 CombatSignalResultSerial = 0;
+
 public:
 	bool IsValidMinimal() const
 	{

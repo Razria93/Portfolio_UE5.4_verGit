@@ -43,8 +43,17 @@ public:
 
 	// Evidence Ingress
 	void ReportEvidence(ECombatParticipationSource InSource, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext);
+	void ReportHitReactiveEvidence(AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, uint64 InResultSerial);
+	void StartHitReactivePostReactionTTL(AActor* InTarget, uint64 InResultSerial);
 	void WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget);
+
+	// Participation Release
+	void WithdrawAllEvidenceForOwner();
+	void SetParticipationSuppressed(bool bSuppressed);
+
+	// Assignment Query / Protection
 	FCombatParticipationAppliedSnapshot GetAppliedSnapshot() const;
+	bool HasActiveEvidenceForTarget(const AActor* InTarget) const;
 	bool TryGetCurrentEngageAssignment(FCombatTargetSnapshot& OutTargetSnapshot, int32& OutAssignmentRevision) const;
 	bool AcquireParticipationAssignmentLock(const FCombatTargetSnapshot& InTargetSnapshot, int32 InAssignmentRevision);
 	void ReleaseParticipationAssignmentLock();

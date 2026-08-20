@@ -35,6 +35,13 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetMovementDrawDebugTextCVarName();
 	const TCHAR* GetMovementShowOverlayDetailsCVarName();
 
+	// ===== Combat Participation Display CVars =====
+
+	const TCHAR* GetCombatParticipationEnabledCVarName();
+	const TCHAR* GetCombatParticipationDrawWorldTextCVarName();
+	const TCHAR* GetCombatParticipationDrawWorldRingCVarName();
+	const TCHAR* GetCombatParticipationShowOverlayDetailsCVarName();
+
 	// ===== Focus CVars =====
 
 	const TCHAR* GetFocusLiveSyncPlayerTargetCVarName();
@@ -60,6 +67,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	bool HasOverlayCVars();
 	bool HasTargetingDisplayCVars();
 	bool HasMovementDisplayCVars();
+	bool HasCombatParticipationDisplayCVars();
 	bool HasFocusCVars();
 	FText GetAvailabilityText(const TCHAR* InName);
 

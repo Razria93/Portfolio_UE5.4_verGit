@@ -140,6 +140,7 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 
 	OutIncomingCandidate.ReactionDataKey.DamageSpecKey = InIncomingRequest.CombatSignalTargetPacket.Result.DamageSpecKey;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = reactionType;
+	OutIncomingCandidate.CombatSignalResultSerial = InIncomingRequest.CombatSignalTargetPacket.ResultSerial;
 	return true;
 }
 
@@ -256,6 +257,7 @@ bool UCReactionOrchestratorComponent::ResolveReactionContext(const FReactionCand
 	OutIncomingContext.ReactionDataKey = incomingReactionDataKey;
 	OutIncomingContext.ReactionData = incomingReactionData;
 	OutIncomingContext.ReactionExecutor = incomingReactionExecutor;
+	OutIncomingContext.CombatSignalResultSerial = InIncomingCandidate.CombatSignalResultSerial;
 
 	return true;
 }

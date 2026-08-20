@@ -19,7 +19,7 @@
 - Goal 4 — Enemy Target Selection 및 Blackboard 투영: 구현 완료 (Participation 전환 전 중간 단계)
 - Goal 7 — Enemy Combat Participation Lifecycle: Phase A~E 및 Goal 8~11 producer/time policy/Intent/Action lock 구현, UAsset consumer 전환과 grace/cooldown 보류
 
-Enemy Participation의 Evidence, Commitment, Engage Admission, Revision 정책은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 정규 기준으로 사용한다.
+Enemy Participation의 Evidence, Engage Admission, Assignment lifecycle 정책은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 정규 기준으로 사용한다.
 
 ### S32와의 관계
 
@@ -366,7 +366,7 @@ UnPossess 시에는 Combat Target Component 참조와 이벤트 구독을 먼저
 
 Enemy의 Character 측 Participation Component는 대상을 선택·승인하지 않는다. Perception, HitReactive 등 Source가 제공한 Evidence를 전투 참여 관리 시스템에 등록·갱신·철회하고, 그 assignment 결과만 `UCCombatTargetComponent` 변경 요청으로 반영한다.
 
-최종 Evidence, Commitment, Slot Admission, Revision 계약은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다. 이 절은 S33의 구조 요약이다.
+최종 Evidence, Slot Admission, Assignment lifecycle 계약은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다. `None`은 비전투이며 Investigate는 CombatTarget을 소유하지 않는 별도 BT context다. 이 절은 S33의 구조 요약이다.
 
 ## 6.1 입력
 

@@ -34,6 +34,8 @@ private:
 	TSharedRef<SWidget> MakeTargetingDebugSection();
 	TSharedRef<SWidget> MakeMovementDisplayOptionsSection();
 	TSharedRef<SWidget> MakeMovementDebugSection();
+	TSharedRef<SWidget> MakeCombatParticipationDisplayOptionsSection();
+	TSharedRef<SWidget> MakeCombatParticipationDebugSection();
 	TSharedRef<SWidget> MakeFocusOptionsSection();
 	TSharedRef<SWidget> MakeFocusSearchSettingsCard() const;
 	TSharedRef<SWidget> MakeManualFocusSelectionCard();

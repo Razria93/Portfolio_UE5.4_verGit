@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Debug/FCombatParticipationDebug.h"
 #include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
 #include "Core/Debug/FTargetingDebug.h"
@@ -97,6 +98,12 @@ struct FDebugOverlayPlayerLocomotionViewData
 	FMovementDebugOverlayDetails Details;
 };
 
+struct FDebugOverlayCombatParticipationViewData
+{
+	FCombatParticipationDebugOverlayDetails FocusedEnemyDetails;
+	TArray<FString> WorldSummaryLines;
+};
+
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
@@ -106,6 +113,8 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayPlayerTargetingViewData Targeting;
 	bool bIncludeLocomotion = false;
 	FDebugOverlayPlayerLocomotionViewData Locomotion;
+	bool bIncludeCombatParticipation = false;
+	FDebugOverlayCombatParticipationViewData CombatParticipation;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
 	FDebugOverlayRecentExecutionViewData RecentExecution;
@@ -145,6 +154,8 @@ struct FDebugOverlayWorldSummaryViewData
 {
 	FString HeaderText;
 	TArray<FDebugOverlayRecentSummaryBlockViewData> SummaryBlocks;
+	bool bIncludeCombatParticipation = false;
+	FDebugOverlayCombatParticipationViewData CombatParticipation;
 };
 
 struct FDebugOverlayViewData

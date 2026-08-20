@@ -340,10 +340,6 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 			evidenceContext.DistanceToTarget = FVector::Dist(GetPawn()->GetActorLocation(), Actor->GetActorLocation());
 			combatParticipationComp->ReportEvidence(ECombatParticipationSource::Perception, Actor, evidenceContext);
 		}
-		else
-		{
-			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, Actor);
-		}
 	}
 
 	FPerceptionTargetContext& data = PerceptionTargetContextMap.FindOrAdd(Actor);
@@ -374,6 +370,27 @@ EPerceptionBuildResult ACAIController::BuildPerceptionContext(FPerceptionTargetC
 
 	UpdatePerceptionTargetContextMap();
 	return SelectTopPriority(OutPerceptionTargetContext);
+}
+
+void ACAIController::RefreshParticipationEvidenceFromPerception()
+{
+	ACEnemy* enemy = Cast<ACEnemy>(GetPawn());
+	UCEnemyCombatParticipationComponent* participationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr;
+	if (!IsValid(participationComp)) return;
+
+	for (const TPair<AActor*, FPerceptionTargetContext>& pair : PerceptionTargetContextMap)
+	{
+		const FPerceptionTargetContext& context = pair.Value;
+		if (!context.bHasLOS || !IsValid(context.TargetActor)) continue;
+
+		ITargetContextProvider* targetProvider = Cast<ITargetContextProvider>(context.TargetActor);
+		if (!targetProvider) continue;
+
+		FCombatParticipationEvidenceContext evidenceContext;
+		evidenceContext.TargetPriority = targetProvider->GetTargetPriority();
+		evidenceContext.DistanceToTarget = FVector::Dist(GetPawn()->GetActorLocation(), context.TargetActor->GetActorLocation());
+		participationComp->ReportEvidence(ECombatParticipationSource::Perception, context.TargetActor, evidenceContext);
+	}
 }
 
 // Target Data
@@ -427,6 +444,22 @@ void ACAIController::UpdatePerceptionTargetContextMap()
 		if (UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr)
 		{
 			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, removeKey);
+
+			const FCombatParticipationAppliedSnapshot appliedSnapshot = combatParticipationComp->GetAppliedSnapshot();
+			const FPerceptionTargetContext* removedContext = PerceptionTargetContextMap.Find(removeKey);
+
+			if (appliedSnapshot.IsAssigned()
+				&& appliedSnapshot.TargetActor == removeKey
+				&& !combatParticipationComp->HasActiveEvidenceForTarget(removeKey)
+				&& removedContext
+				&& !blackboardComp->GetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName)
+				&& !blackboardComp->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName)
+				&& !blackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName))
+			{
+				CAIBlackboardValueHelper::SetVectorIfChanged(blackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, removedContext->LastKnownLocation);
+				CAIBlackboardValueHelper::SetFloatIfChanged(blackboardComp, CAIKey::Perception::LastSeenTime.KeyName, removedContext->LastSeenTime);
+				CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
+			}
 		}
 
 		PerceptionTargetContextMap.Remove(removeKey);

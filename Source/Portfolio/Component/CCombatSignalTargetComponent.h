@@ -10,6 +10,7 @@
 #include "CCombatSignalTargetComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatSignalTargetAccepted, const FCombatSignalTargetPacket&);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCombatSignalTargetReactionResolved, const FCombatSignalTargetPacket&, const struct FReactionRequestResult&);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCCombatSignalTargetComponent : public UActorComponent
@@ -42,6 +43,7 @@ private:
 public:
 	// Event
 	FOnCombatSignalTargetAccepted OnCombatSignalTargetAccepted;
+	FOnCombatSignalTargetReactionResolved OnCombatSignalTargetReactionResolved;
 
 public:
 	// Component Reference

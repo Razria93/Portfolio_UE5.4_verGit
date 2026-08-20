@@ -43,12 +43,6 @@ struct FCombatParticipationCandidateKey
 	}
 };
 
-struct FHitReactiveExtraCommitment
-{
-	AActor* TargetActor = nullptr;
-	float ExpireTimeSeconds = 0.f;
-};
-
 	namespace CCombatEngageConstants
 {
 	constexpr float UnsetAssignmentWarmupStartTime = -1.f;
@@ -73,11 +67,11 @@ private:
 	bool bAssignmentWarmupCompleted = false;
 	int32 AssignmentRebuildId = CCombatEngageConstants::InitialAssignmentRebuildId;
 	int32 AssignmentRevisionSerial = 0;
-	int32 EvidenceGenerationSerial = 0;
 
 private:
 	// Evidence Registry
 	TMap<FCombatParticipationEvidenceKey, FCombatParticipationEvidence> EvidenceRegistry;
+	TSet<class ACAIController*> SuppressedParticipants;
 
 private:
 	// Target Lifecycle Binding
@@ -88,7 +82,6 @@ private:
 	// Assignment State
 	UPROPERTY()
 	TMap<class ACAIController*, FEngageAssignmentContext> AssignmentByParticipant;
-	TMap<class ACAIController*, FHitReactiveExtraCommitment> ExtraAssignmentByParticipant;
 
 private:
 	// Assignment Lock State
@@ -110,11 +103,19 @@ public:
 
 	// Query
 	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
+	bool HasActiveEvidenceForParticipantTarget(const class ACAIController* InParticipant, const class AActor* InTarget) const;
+	FCombatParticipationDebugSnapshot BuildDebugSnapshot() const;
 
 	// Evidence Ingress
 	void ReportEvidence(class ACAIController* InParticipant, ECombatParticipationSource InSource, class AActor* InTarget, const FCombatParticipationEvidenceContext& InContext);
+	void ReportHitReactiveEvidence(class ACAIController* InParticipant, class AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, uint64 InResultSerial);
+	void StartHitReactivePostReactionTTL(class ACAIController* InParticipant, class AActor* InTarget, uint64 InResultSerial);
 	void WithdrawEvidence(class ACAIController* InParticipant, ECombatParticipationSource InSource, class AActor* InTarget);
+
+	// Participation Release
+	void WithdrawAllEvidenceForParticipant(class ACAIController* InParticipant);
 	void UnregisterParticipant(class ACAIController* InParticipant);
+	void SetParticipationSuppressed(class ACAIController* InParticipant, bool bSuppressed);
 
 	// Assignment Lock
 	bool AcquireAssignmentLock(class ACAIController* InParticipant, const FCombatParticipationAssignmentLock& InAssignmentLock);
@@ -147,9 +148,6 @@ private:
 	void PromoteCommittedRole(ECombatRole InFromRole, ECombatRole InToRole, FAssignmentRebuildContext& InOutContext) const;
 	void AssignFreshRole(ECombatRole InRole, FAssignmentRebuildContext& InOutContext) const;
 
-	// Assignment Retention
-	void UpdateHitReactiveExtraCommitments(const TMap<class ACAIController*, FEngageAssignmentContext>& InPreviousAssignments, const TMap<class ACAIController*, FEngageAssignmentContext>& InNextAssignments);
-
 	// Assignment Result
 	void PublishAssignmentChanges(const TMap<class ACAIController*, FEngageAssignmentContext>& InPreviousAssignments);
 
@@ -175,9 +173,7 @@ private:
 	bool TryReserveAssignmentSlot(const FEngageAssignmentContext& InAssignment, TMap<class AActor*, struct FEngageAssignmentSlotState>& InOutSlotState) const;
 
 	// Assignment Retention Support
-	bool HasEvidenceForTarget(const class ACAIController* InParticipant, const class AActor* InTarget) const;
-	bool HasValidEvidenceForAssignment(const class ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment) const;
-	bool IsHitReactiveExtraCommitmentActive(const class ACAIController* InParticipant, const FEngageAssignmentContext& InAssignment) const;
+	bool CanRetainAssignment(const class ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment) const;
 	bool IsAssignmentLockActive(const class ACAIController* InParticipant, const FEngageAssignmentContext& InAssignment) const;
 
 private:
@@ -189,7 +185,7 @@ private:
 	void BindParticipationTargetLifecycle(class AActor* InTarget);
 	void BindParticipationTargetEndPlay(class AActor* InTarget);
 	void BindParticipationTargetDeadState(class AActor* InTarget);
-	void UnbindUnusedParticipationTargetLifecycle();
+	void UnbindUnusedCombatParticipationTargetLifecycle();
 
 	// Target State Release
 	void ReleaseTargetParticipationState(class AActor* InTarget);
@@ -203,5 +199,5 @@ private:
 	// -----------------------------------------------------------------------------
 	// Runtime Cleanup
 	// -----------------------------------------------------------------------------
-	void ClearEngageRuntimeState();
+	void ClearCombatParticipationRuntimeState();
 };

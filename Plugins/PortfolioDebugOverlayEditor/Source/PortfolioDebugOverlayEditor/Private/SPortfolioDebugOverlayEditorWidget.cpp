@@ -69,6 +69,12 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
+					MakeCombatParticipationDisplayOptionsSection()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
 				[
 					MakeFocusOptionsSection()
 				]
@@ -249,6 +255,53 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDebugSection
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementFacingLabel", "Facing Arrow"), LOCTEXT("MovementFacingHelp", "Draw the current actor facing direction."), CVarAccess::GetMovementDrawFacingCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementTextLabel", "World Debug Text"), LOCTEXT("MovementTextHelp", "Draw movement speed and direction near the player."), CVarAccess::GetMovementDrawDebugTextCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementDetailsLabel", "Overlay Details"), LOCTEXT("MovementDetailsHelp", "Show movement inputs in the Debug Overlay."), CVarAccess::GetMovementShowOverlayDetailsCVarName())];
+}
+
+// ===== Combat Participation Debug =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatParticipationDisplayOptionsSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("CombatParticipationDisplayOptionsTitle", "Combat Participation Display Options"))
+			.Font(FAppStyle::GetFontStyle("BoldFont"))
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([]()
+			{
+				return CVarAccess::HasCombatParticipationDisplayCVars()
+					? LOCTEXT("CombatParticipationCVarsAvailable", "Combat Participation Display CVars are available.")
+					: LOCTEXT("CombatParticipationCVarsUnavailable", "Combat Participation Display CVars are unavailable. Start the game module or PIE if needed.");
+			})
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(8.f)
+			[
+				MakeCombatParticipationDebugSection()
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatParticipationDebugSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationEnabledLabel", "Enabled"), LOCTEXT("CombatParticipationEnabledHelp", "Enable Combat Participation world debug and Overlay details. World debug remains available when the Overlay HUD is disabled."), CVarAccess::GetCombatParticipationEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationWorldTextLabel", "World Text"), LOCTEXT("CombatParticipationWorldTextHelp", "Draw role, evidence, target and protection state above participating Enemy actors."), CVarAccess::GetCombatParticipationDrawWorldTextCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationWorldRingLabel", "World Ring"), LOCTEXT("CombatParticipationWorldRingHelp", "Draw role and admission color rings below participating Enemy actors."), CVarAccess::GetCombatParticipationDrawWorldRingCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationDetailsLabel", "Overlay Details"), LOCTEXT("CombatParticipationDetailsHelp", "Show focused Enemy participation details and target slot summaries in the Debug Overlay."), CVarAccess::GetCombatParticipationShowOverlayDetailsCVarName())];
 }
 
 // ===== CVar Rows =====

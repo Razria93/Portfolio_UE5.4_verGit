@@ -92,8 +92,6 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 
 	if (combatParticipationState == ECombatRole::Engage)
 	{
-		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboard, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
-
 		if (bIsCombatAction) return EAIIntentState::Engage;
 		return bInAlertRange ? EAIIntentState::Engage : EAIIntentState::Chase;
 	}

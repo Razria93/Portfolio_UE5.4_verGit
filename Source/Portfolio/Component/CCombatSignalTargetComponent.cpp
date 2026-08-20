@@ -467,7 +467,12 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 		damageReactionRequest.IntentSource = EReactionIntentSource::CombatSignalTarget;
 		damageReactionRequest.CombatSignalTargetPacket = InCombatSignalTargetPacket;
 
-		ReactionOrchestratorComp_Injected->RequestDamageReaction(damageReactionRequest);
+		const FReactionRequestResult reactionResult = ReactionOrchestratorComp_Injected->RequestDamageReaction(damageReactionRequest);
+		OnCombatSignalTargetReactionResolved.Broadcast(InCombatSignalTargetPacket, reactionResult);
+	}
+	else
+	{
+		OnCombatSignalTargetReactionResolved.Broadcast(InCombatSignalTargetPacket, FReactionRequestResult());
 	}
 
 	if (IsValid(HitFeedbackComp_Injected))
