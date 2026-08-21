@@ -80,8 +80,8 @@ private:
 
 private:
 	// Target Lifecycle Binding
-	TSet<class AActor*> EvidenceTargetEndPlayBindings;
-	TSet<class UCHealthComponent*> EvidenceTargetHealthBindings;
+	TSet<class AActor*> TargetEndPlayBindings;
+	TSet<class UCHealthComponent*> TargetHealthBindings;
 
 private:
 	// Assignment State
@@ -119,8 +119,8 @@ public:
 
 	// Participation Release
 	void SetParticipationSuppressed(class ACAIController* InParticipant, bool bSuppressed);
-	void WithdrawAllEvidenceForParticipant(class ACAIController* InParticipant);
-	void UnregisterParticipant(class ACAIController* InParticipant);
+	void SoftReleaseParticipationForParticipant(class ACAIController* InParticipant);
+	void HardReleaseParticipationForParticipant(class ACAIController* InParticipant);
 
 	// Query
 	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
@@ -202,15 +202,15 @@ private:
 	void BindParticipationTargetLifecycle(class AActor* InTarget);
 	void BindParticipationTargetEndPlay(class AActor* InTarget);
 	void BindParticipationTargetDeadState(class AActor* InTarget);
-	void UnbindUnusedCombatParticipationTargetLifecycle();
+	void UnbindUnusedTargetLifecycleBindings();
 
 	// Target State Release
 	void ReleaseTargetParticipationState(class AActor* InTarget);
 
 	// Lifecycle Callback
 	UFUNCTION()
-	void HandleEvidenceTargetEndPlay(class AActor* InTarget, EEndPlayReason::Type InEndPlayReason);
-	void HandleEvidenceTargetDeadStateChanged(EDeadState InPreviousState, EDeadState InNewState, class UCHealthComponent* InHealthComponent);
+	void HandleTargetEndPlay(class AActor* InTarget, EEndPlayReason::Type InEndPlayReason);
+	void HandleTargetDeadStateChanged(EDeadState InPreviousState, EDeadState InNewState, class UCHealthComponent* InHealthComponent);
 
 private:
 	// -----------------------------------------------------------------------------

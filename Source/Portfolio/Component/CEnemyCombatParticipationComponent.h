@@ -45,20 +45,26 @@ public:
 	// Evidence Ingress
 	void ReportEvidence(ECombatParticipationSource InSource, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext);
 	void ReportHitReactiveEvidence(AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, uint64 InResultSerial);
+
+	// HitReactive Evidence Lifetime
 	void StartHitReactiveEvidencePostReactionTTL(AActor* InTarget, uint64 InResultSerial);
+
+	// Evidence Removal
 	void WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget, bool bAllowInvestigateHandoff = true);
 
-	// Participation Release
-	void WithdrawAllEvidenceForOwner();
-	void SetParticipationSuppressed(bool bSuppressed);
-
-	// Assignment Query / Protection
+	// Assignment Query
 	FCombatParticipationAppliedSnapshot GetAppliedSnapshot() const;
 	bool HasActiveEvidenceForTarget(const AActor* InTarget) const;
 	bool TryGetCurrentEngageAssignment(FCombatTargetSnapshot& OutTargetSnapshot, int32& OutAssignmentRevision) const;
+
+	// Assignment Lock
 	bool AcquireParticipationAssignmentLock(const FCombatTargetSnapshot& InTargetSnapshot, int32 InAssignmentRevision);
 	void ReleaseParticipationAssignmentLock();
-	void ReleaseParticipationForOwnerDeath();
+
+	// Participation Release
+	void SetParticipationSuppressed(bool bSuppressed);
+	void SoftReleaseParticipationForOwner();
+	void HardReleaseParticipationForOwnerDeath();
 
 protected:
 	// Lifecycle

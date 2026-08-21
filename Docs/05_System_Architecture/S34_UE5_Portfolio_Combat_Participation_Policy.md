@@ -142,8 +142,9 @@ HitReactive 종료, Perception 생존
 → event 없음; Extra 자격은 즉시 종료
 
 마지막 Active Evidence 종료
-→ EvidenceExhausted event 1회
+→ EvidenceExhausted pending event 1회 예약
 → 정확히 일치하는 Action lock이 없다면 allocator가 Assignment 제거
+→ Assignment = None 확인 후 EvidenceExhausted event 1회
 → Investigate handoff
 ```
 
@@ -156,9 +157,9 @@ Investigate를 요청한다.
 - ReturnHome 또는 participation suppression 상태가 아니다.
 - 이미 Investigate 요청 또는 진행 상태가 아니다.
 
-정확히 일치하는 Action lock이 남아 있으면 `bShouldInvestigate`를 한 번 기록하되 Combat
-Intent는 lock 해제까지 유지한다. 이후 `Assignment = None`이 되면 Intent service가 대기 중인
-요청을 소비한다.
+정확히 일치하는 Action lock이 남아 있으면 pending event는 발행하지 않고 유지한다. lock 해제
+또는 만료 뒤 allocator가 `Assignment = None`을 반영한 후에만 event를 발행한다. 따라서
+`bShouldInvestigate`는 Combat Action이 실제 종료된 뒤에만 기록된다.
 
 새 Perception 또는 Hit Evidence는 대기 중이거나 진행 중인 Investigate context를 취소한 뒤
 combat Intent를 재개한다. 이 규칙은 재인지 뒤 stale Investigate 요청이 남는 것을 막는다.

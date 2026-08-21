@@ -251,7 +251,7 @@ void UCWorldSubsystem_CombatParticipation::WithdrawEvidence(ACAIController* InPa
 	EvidenceRegistry.Remove(key);
 	ProcessEvidenceExhaustion(removedEvidence, bAllowInvestigateHandoff);
 
-	UnbindUnusedCombatParticipationTargetLifecycle();
+	UnbindUnusedTargetLifecycleBindings();
 }
 
 // Participation Release
@@ -267,10 +267,10 @@ void UCWorldSubsystem_CombatParticipation::SetParticipationSuppressed(ACAIContro
 	}
 
 	SuppressedParticipants.Add(InParticipant);
-	WithdrawAllEvidenceForParticipant(InParticipant);
+	SoftReleaseParticipationForParticipant(InParticipant);
 }
 
-void UCWorldSubsystem_CombatParticipation::WithdrawAllEvidenceForParticipant(ACAIController* InParticipant)
+void UCWorldSubsystem_CombatParticipation::SoftReleaseParticipationForParticipant(ACAIController* InParticipant)
 {
 	if (!IsValid(InParticipant)) return;
 
@@ -285,11 +285,11 @@ void UCWorldSubsystem_CombatParticipation::WithdrawAllEvidenceForParticipant(ACA
 	ClearLastKnownTargetContextsForParticipant(InParticipant);
 	if (!bChanged) return;
 
-	UnbindUnusedCombatParticipationTargetLifecycle();
+	UnbindUnusedTargetLifecycleBindings();
 	RebuildAssignments();
 }
 
-void UCWorldSubsystem_CombatParticipation::UnregisterParticipant(ACAIController* InParticipant)
+void UCWorldSubsystem_CombatParticipation::HardReleaseParticipationForParticipant(ACAIController* InParticipant)
 {
 	if (!IsValid(InParticipant)) return;
 
@@ -310,7 +310,7 @@ void UCWorldSubsystem_CombatParticipation::UnregisterParticipant(ACAIController*
 	bRemovedState |= AssignmentByParticipant.Remove(InParticipant) > 0;
 	bRemovedState |= AssignmentLockByParticipant.Remove(InParticipant) > 0;
 
-	UnbindUnusedCombatParticipationTargetLifecycle();
+	UnbindUnusedTargetLifecycleBindings();
 	if (bRemovedState) RebuildAssignments();
 }
 
@@ -454,7 +454,7 @@ void UCWorldSubsystem_CombatParticipation::RebuildAssignments()
 	++AssignmentRebuildId;
 	PruneInactiveEvidence();
 	PruneInactiveAssignmentLocks();
-	UnbindUnusedCombatParticipationTargetLifecycle();
+	UnbindUnusedTargetLifecycleBindings();
 
 	// Delay assignment rebuild until warmup has completed.
 	if (ShouldDelayAssignmentForWarmup())
@@ -504,7 +504,7 @@ void UCWorldSubsystem_CombatParticipation::RebuildAssignments()
 
 	const TMap<ACAIController*, FEngageAssignmentContext> previousAssignments = AssignmentByParticipant;
 	AssignmentByParticipant = MoveTemp(nextAssignments);
-	UnbindUnusedCombatParticipationTargetLifecycle();
+	UnbindUnusedTargetLifecycleBindings();
 	PublishAssignmentChanges(previousAssignments);
 	DispatchPendingEvidenceExhaustedEvents();
 }
@@ -789,6 +789,18 @@ void UCWorldSubsystem_CombatParticipation::DispatchPendingEvidenceExhaustedEvent
 		if (!IsCombatParticipationPairValid(event.Participant, event.TargetActor)) continue;
 		if (SuppressedParticipants.Contains(event.Participant)) continue;
 		if (HasActiveEvidenceForParticipationPair(event.Participant, event.TargetActor)) continue;
+
+		const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(event.Participant);
+		if (assignment && assignment->IsValidAssignment())
+		{
+			if (assignment->TargetActor == event.TargetActor)
+			{
+				// A matching action lock retains this Assignment until its action ends.
+				// Dispatch only after the allocator has actually removed the combat participation.
+				PendingEvidenceExhaustedEvents.Add(event);
+			}
+			continue;
+		}
 
 		OnCombatParticipationEvidenceExhausted.Broadcast(event);
 	}
@@ -1078,24 +1090,25 @@ void UCWorldSubsystem_CombatParticipation::BindParticipationTargetLifecycle(AAct
 
 void UCWorldSubsystem_CombatParticipation::BindParticipationTargetEndPlay(AActor* InTarget)
 {
-	if (!IsValid(InTarget) || EvidenceTargetEndPlayBindings.Contains(InTarget)) return;
+	if (!IsValid(InTarget) || TargetEndPlayBindings.Contains(InTarget)) return;
 
-	InTarget->OnEndPlay.AddDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleEvidenceTargetEndPlay);
-	EvidenceTargetEndPlayBindings.Add(InTarget);
+	InTarget->OnEndPlay.AddDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
+	TargetEndPlayBindings.Add(InTarget);
 }
 
 void UCWorldSubsystem_CombatParticipation::BindParticipationTargetDeadState(AActor* InTarget)
 {
 	UCHealthComponent* healthComp = IsValid(InTarget) ? InTarget->FindComponentByClass<UCHealthComponent>() : nullptr;
-	if (!IsValid(healthComp) || EvidenceTargetHealthBindings.Contains(healthComp)) return;
+	if (!IsValid(healthComp) || TargetHealthBindings.Contains(healthComp)) return;
 
-	healthComp->OnDeadStateChanged.AddUObject(this, &UCWorldSubsystem_CombatParticipation::HandleEvidenceTargetDeadStateChanged, healthComp);
-	EvidenceTargetHealthBindings.Add(healthComp);
+	healthComp->OnDeadStateChanged.AddUObject(this, &UCWorldSubsystem_CombatParticipation::HandleTargetDeadStateChanged, healthComp);
+	TargetHealthBindings.Add(healthComp);
 }
 
-void UCWorldSubsystem_CombatParticipation::UnbindUnusedCombatParticipationTargetLifecycle()
+void UCWorldSubsystem_CombatParticipation::UnbindUnusedTargetLifecycleBindings()
 {
-	for (auto iterator = EvidenceTargetEndPlayBindings.CreateIterator(); iterator; ++iterator)
+	// Keep target lifecycle bindings while any Evidence, Assignment, or Assignment Lock references the target.
+	for (auto iterator = TargetEndPlayBindings.CreateIterator(); iterator; ++iterator)
 	{
 		AActor* targetActor = *iterator;
 		bool bHasTargetReference = false;
@@ -1135,12 +1148,12 @@ void UCWorldSubsystem_CombatParticipation::UnbindUnusedCombatParticipationTarget
 		if (bHasTargetReference) continue;
 		if (IsValid(targetActor))
 		{
-			targetActor->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleEvidenceTargetEndPlay);
+			targetActor->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
 
 			if (UCHealthComponent* healthComp = targetActor->FindComponentByClass<UCHealthComponent>())
 			{
 				healthComp->OnDeadStateChanged.RemoveAll(this);
-				EvidenceTargetHealthBindings.Remove(healthComp);
+				TargetHealthBindings.Remove(healthComp);
 			}
 		}
 		iterator.RemoveCurrent();
@@ -1172,25 +1185,25 @@ void UCWorldSubsystem_CombatParticipation::ReleaseTargetParticipationState(AActo
 
 	if (IsValid(InTarget))
 	{
-		InTarget->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleEvidenceTargetEndPlay);
+		InTarget->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
 	}
-	EvidenceTargetEndPlayBindings.Remove(InTarget);
+	TargetEndPlayBindings.Remove(InTarget);
 	if (UCHealthComponent* healthComp = InTarget->FindComponentByClass<UCHealthComponent>())
 	{
 		healthComp->OnDeadStateChanged.RemoveAll(this);
-		EvidenceTargetHealthBindings.Remove(healthComp);
+		TargetHealthBindings.Remove(healthComp);
 	}
 	RebuildAssignments();
 }
 
 // Lifecycle Callback
 
-void UCWorldSubsystem_CombatParticipation::HandleEvidenceTargetEndPlay(AActor* InTarget, EEndPlayReason::Type InEndPlayReason)
+void UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay(AActor* InTarget, EEndPlayReason::Type InEndPlayReason)
 {
 	ReleaseTargetParticipationState(InTarget);
 }
 
-void UCWorldSubsystem_CombatParticipation::HandleEvidenceTargetDeadStateChanged(const EDeadState InPreviousState, const EDeadState InNewState, UCHealthComponent* InHealthComponent)
+void UCWorldSubsystem_CombatParticipation::HandleTargetDeadStateChanged(const EDeadState InPreviousState, const EDeadState InNewState, UCHealthComponent* InHealthComponent)
 {
 	if (InNewState != EDeadState::Dead) return;
 
@@ -1216,15 +1229,15 @@ void UCWorldSubsystem_CombatParticipation::ClearCombatParticipationRuntimeState(
 	PendingEvidenceExhaustedEvents.Reset();
 	SuppressedParticipants.Reset();
 	AssignmentLockByParticipant.Reset();
-	for (AActor* targetActor : EvidenceTargetEndPlayBindings)
+	for (AActor* targetActor : TargetEndPlayBindings)
 	{
-		if (IsValid(targetActor)) targetActor->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleEvidenceTargetEndPlay);
+		if (IsValid(targetActor)) targetActor->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
 	}
-	EvidenceTargetEndPlayBindings.Reset();
-	for (UCHealthComponent* healthComp : EvidenceTargetHealthBindings)
+	TargetEndPlayBindings.Reset();
+	for (UCHealthComponent* healthComp : TargetHealthBindings)
 	{
 		if (IsValid(healthComp)) healthComp->OnDeadStateChanged.RemoveAll(this);
 	}
-	EvidenceTargetHealthBindings.Reset();
+	TargetHealthBindings.Reset();
 	AssignmentByParticipant.Reset();
 }

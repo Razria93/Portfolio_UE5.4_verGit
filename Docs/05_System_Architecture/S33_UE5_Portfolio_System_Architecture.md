@@ -392,6 +392,8 @@ Source와 Adapter는 Combat Target을 직접 Set/Clear하지 않는다. Blackboa
 
 Active Evidence가 하나라도 남아 있으면 Candidate와 Assignment가 유지된다. 마지막 Active
 Evidence가 normal soft release로 끝나면 Subsystem은 passive Last Known Target Context를 담은
+pending `EvidenceExhausted`를 예약한다. 정확히 일치하는 Action lock이 기존 Assignment를
+보존하는 동안에는 event를 발행하지 않으며, allocator가 `Assignment = None`을 반영한 뒤에만
 `OnCombatParticipationEvidenceExhausted`를 한 번 전달한다. Adapter와 Controller는 직전 Combat
 Target, ReturnHome suppression, 새 Assignment를 재검증한 뒤에만 Blackboard Investigate 요청으로
 변환한다. 이 context는 Candidate나 CombatTarget을 만들지 않으며 handoff 뒤 제거된다.

@@ -712,7 +712,7 @@ void ACEnemy::BeginDeathLifecycle()
 
 	if (IsValid(EnemyCombatParticipationComponent))
 	{
-		EnemyCombatParticipationComponent->ReleaseParticipationForOwnerDeath();
+		EnemyCombatParticipationComponent->HardReleaseParticipationForOwnerDeath();
 	}
 
 	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("LifecycleStarted"));

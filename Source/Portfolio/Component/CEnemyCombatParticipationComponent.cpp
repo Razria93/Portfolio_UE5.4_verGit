@@ -32,84 +32,8 @@ void UCEnemyCombatParticipationComponent::SetAIController(ACAIController* InAICo
 }
 
 void UCEnemyCombatParticipationComponent::ClearAIController()
-
 {
 	ClearAIController(true);
-}
-
-FCombatParticipationAppliedSnapshot UCEnemyCombatParticipationComponent::GetAppliedSnapshot() const
-{
-	return AppliedSnapshot;
-}
-
-bool UCEnemyCombatParticipationComponent::HasActiveEvidenceForTarget(const AActor* InTarget) const
-{
-	if (!IsValid(AIController_Injected) || !IsValid(InTarget)) return false;
-
-	if (const UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
-	{
-		return subsystem->HasActiveEvidenceForParticipationPair(AIController_Injected, InTarget);
-	}
-
-	return false;
-}
-
-bool UCEnemyCombatParticipationComponent::TryGetCurrentEngageAssignment(FCombatTargetSnapshot& OutTargetSnapshot, int32& OutAssignmentRevision) const
-{
-	OutTargetSnapshot = FCombatTargetSnapshot();
-	OutAssignmentRevision = 0;
-
-	if (!AppliedSnapshot.IsAssigned() || AppliedSnapshot.CombatRole != ECombatRole::Engage) return false;
-	if (!IsValid(CombatTargetComponent_Injected)) return false;
-
-	const FCombatTargetSnapshot currentSnapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();
-	if (!IsValid(currentSnapshot.TargetActor)) return false;
-	if (currentSnapshot.TargetActor != AppliedSnapshot.TargetActor) return false;
-	if (currentSnapshot.Revision != AppliedSnapshot.CombatTargetRevision) return false;
-
-	OutTargetSnapshot = currentSnapshot;
-	OutAssignmentRevision = AppliedSnapshot.AssignmentRevision;
-	return true;
-}
-
-bool UCEnemyCombatParticipationComponent::AcquireParticipationAssignmentLock(const FCombatTargetSnapshot& InTargetSnapshot, const int32 InAssignmentRevision)
-{
-	if (!IsValid(AIController_Injected)) return false;
-
-	FCombatTargetSnapshot currentSnapshot;
-	int32 currentAssignmentRevision = 0;
-	if (!TryGetCurrentEngageAssignment(currentSnapshot, currentAssignmentRevision)) return false;
-	if (currentSnapshot.TargetActor != InTargetSnapshot.TargetActor) return false;
-	if (currentSnapshot.Revision != InTargetSnapshot.Revision) return false;
-	if (currentAssignmentRevision != InAssignmentRevision) return false;
-
-	UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem();
-	if (!IsValid(subsystem)) return false;
-
-	FCombatParticipationAssignmentLock actionLock;
-	actionLock.TargetActor = InTargetSnapshot.TargetActor;
-	actionLock.CombatTargetRevision = InTargetSnapshot.Revision;
-	actionLock.AssignmentRevision = InAssignmentRevision;
-	if (!subsystem->AcquireAssignmentLock(AIController_Injected, actionLock)) return false;
-
-	ActiveAssignmentLock = actionLock;
-	return true;
-}
-
-void UCEnemyCombatParticipationComponent::ReleaseParticipationAssignmentLock()
-{
-	ActiveAssignmentLock = FCombatParticipationAssignmentLock();
-	if (!IsValid(AIController_Injected)) return;
-
-	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
-	{
-		subsystem->ReleaseAssignmentLock(AIController_Injected);
-	}
-}
-
-void UCEnemyCombatParticipationComponent::ReleaseParticipationForOwnerDeath()
-{
-	ClearAIController();
 }
 
 void UCEnemyCombatParticipationComponent::ClearAIController(const bool bReleaseCombatTarget)
@@ -120,7 +44,7 @@ void UCEnemyCombatParticipationComponent::ClearAIController(const bool bReleaseC
 	{
 		if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 		{
-			subsystem->UnregisterParticipant(AIController_Injected);
+			subsystem->HardReleaseParticipationForParticipant(AIController_Injected);
 		}
 	}
 
@@ -162,6 +86,8 @@ void UCEnemyCombatParticipationComponent::ReportHitReactiveEvidence(AActor* InTa
 	}
 }
 
+// ===== HitReactive Evidence Lifetime =====
+
 void UCEnemyCombatParticipationComponent::StartHitReactiveEvidencePostReactionTTL(AActor* InTarget, const uint64 InResultSerial)
 {
 	if (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;
@@ -171,6 +97,8 @@ void UCEnemyCombatParticipationComponent::StartHitReactiveEvidencePostReactionTT
 		subsystem->StartHitReactiveEvidencePostReactionTTL(AIController_Injected, InTarget, InResultSerial);
 	}
 }
+
+// ===== Evidence Removal =====
 
 void UCEnemyCombatParticipationComponent::WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget, const bool bAllowInvestigateHandoff)
 {
@@ -182,17 +110,81 @@ void UCEnemyCombatParticipationComponent::WithdrawEvidence(ECombatParticipationS
 	}
 }
 
-// ===== Participation Release =====
+// ===== Assignment Query =====
 
-void UCEnemyCombatParticipationComponent::WithdrawAllEvidenceForOwner()
+FCombatParticipationAppliedSnapshot UCEnemyCombatParticipationComponent::GetAppliedSnapshot() const
 {
+	return AppliedSnapshot;
+}
+
+bool UCEnemyCombatParticipationComponent::HasActiveEvidenceForTarget(const AActor* InTarget) const
+{
+	if (!IsValid(AIController_Injected) || !IsValid(InTarget)) return false;
+
+	if (const UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
+	{
+		return subsystem->HasActiveEvidenceForParticipationPair(AIController_Injected, InTarget);
+	}
+
+	return false;
+}
+
+bool UCEnemyCombatParticipationComponent::TryGetCurrentEngageAssignment(FCombatTargetSnapshot& OutTargetSnapshot, int32& OutAssignmentRevision) const
+{
+	OutTargetSnapshot = FCombatTargetSnapshot();
+	OutAssignmentRevision = 0;
+
+	if (!AppliedSnapshot.IsAssigned() || AppliedSnapshot.CombatRole != ECombatRole::Engage) return false;
+	if (!IsValid(CombatTargetComponent_Injected)) return false;
+
+	const FCombatTargetSnapshot currentSnapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();
+	if (!IsValid(currentSnapshot.TargetActor)) return false;
+	if (currentSnapshot.TargetActor != AppliedSnapshot.TargetActor) return false;
+	if (currentSnapshot.Revision != AppliedSnapshot.CombatTargetRevision) return false;
+
+	OutTargetSnapshot = currentSnapshot;
+	OutAssignmentRevision = AppliedSnapshot.AssignmentRevision;
+	return true;
+}
+
+// ===== Assignment Lock =====
+
+bool UCEnemyCombatParticipationComponent::AcquireParticipationAssignmentLock(const FCombatTargetSnapshot& InTargetSnapshot, const int32 InAssignmentRevision)
+{
+	if (!IsValid(AIController_Injected)) return false;
+
+	FCombatTargetSnapshot currentSnapshot;
+	int32 currentAssignmentRevision = 0;
+	if (!TryGetCurrentEngageAssignment(currentSnapshot, currentAssignmentRevision)) return false;
+	if (currentSnapshot.TargetActor != InTargetSnapshot.TargetActor) return false;
+	if (currentSnapshot.Revision != InTargetSnapshot.Revision) return false;
+	if (currentAssignmentRevision != InAssignmentRevision) return false;
+
+	UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem();
+	if (!IsValid(subsystem)) return false;
+
+	FCombatParticipationAssignmentLock actionLock;
+	actionLock.TargetActor = InTargetSnapshot.TargetActor;
+	actionLock.CombatTargetRevision = InTargetSnapshot.Revision;
+	actionLock.AssignmentRevision = InAssignmentRevision;
+	if (!subsystem->AcquireAssignmentLock(AIController_Injected, actionLock)) return false;
+
+	ActiveAssignmentLock = actionLock;
+	return true;
+}
+
+void UCEnemyCombatParticipationComponent::ReleaseParticipationAssignmentLock()
+{
+	ActiveAssignmentLock = FCombatParticipationAssignmentLock();
 	if (!IsValid(AIController_Injected)) return;
 
 	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
-		subsystem->WithdrawAllEvidenceForParticipant(AIController_Injected);
+		subsystem->ReleaseAssignmentLock(AIController_Injected);
 	}
 }
+
+// ===== Participation Release =====
 
 void UCEnemyCombatParticipationComponent::SetParticipationSuppressed(const bool bSuppressed)
 {
@@ -207,6 +199,21 @@ void UCEnemyCombatParticipationComponent::SetParticipationSuppressed(const bool 
 	{
 		AIController_Injected->RefreshParticipationEvidenceFromPerception();
 	}
+}
+
+void UCEnemyCombatParticipationComponent::SoftReleaseParticipationForOwner()
+{
+	if (!IsValid(AIController_Injected)) return;
+
+	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
+	{
+		subsystem->SoftReleaseParticipationForParticipant(AIController_Injected);
+	}
+}
+
+void UCEnemyCombatParticipationComponent::HardReleaseParticipationForOwnerDeath()
+{
+	ClearAIController();
 }
 
 // ===== Lifecycle =====
