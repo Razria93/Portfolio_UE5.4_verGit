@@ -48,7 +48,7 @@ bool UCEnemyCombatParticipationComponent::HasActiveEvidenceForTarget(const AActo
 
 	if (const UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
-		return subsystem->HasActiveEvidenceForParticipantTarget(AIController_Injected, InTarget);
+		return subsystem->HasActiveEvidenceForParticipationPair(AIController_Injected, InTarget);
 	}
 
 	return false;
@@ -142,6 +142,8 @@ void UCEnemyCombatParticipationComponent::ReportEvidence(ECombatParticipationSou
 	if (!IsValid(InTarget) || InTarget == GetOwner()) return;
 	if (!IsValid(AIController_Injected)) return;
 
+	AIController_Injected->CancelInvestigateForNewCombatEvidence();
+
 	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
 		subsystem->ReportEvidence(AIController_Injected, InSource, InTarget, InContext);
@@ -152,29 +154,31 @@ void UCEnemyCombatParticipationComponent::ReportHitReactiveEvidence(AActor* InTa
 {
 	if (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;
 
+	AIController_Injected->CancelInvestigateForNewCombatEvidence();
+
 	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
 		subsystem->ReportHitReactiveEvidence(AIController_Injected, InTarget, InContext, InResultSerial);
 	}
 }
 
-void UCEnemyCombatParticipationComponent::StartHitReactivePostReactionTTL(AActor* InTarget, const uint64 InResultSerial)
+void UCEnemyCombatParticipationComponent::StartHitReactiveEvidencePostReactionTTL(AActor* InTarget, const uint64 InResultSerial)
 {
 	if (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;
 
 	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
-		subsystem->StartHitReactivePostReactionTTL(AIController_Injected, InTarget, InResultSerial);
+		subsystem->StartHitReactiveEvidencePostReactionTTL(AIController_Injected, InTarget, InResultSerial);
 	}
 }
 
-void UCEnemyCombatParticipationComponent::WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget)
+void UCEnemyCombatParticipationComponent::WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget, const bool bAllowInvestigateHandoff)
 {
 	if (!IsValid(AIController_Injected) || !IsValid(InTarget)) return;
 
 	if (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())
 	{
-		subsystem->WithdrawEvidence(AIController_Injected, InSource, InTarget);
+		subsystem->WithdrawEvidence(AIController_Injected, InSource, InTarget, bAllowInvestigateHandoff);
 	}
 }
 
@@ -237,6 +241,8 @@ void UCEnemyCombatParticipationComponent::BindParticipationSubsystem()
 
 	subsystem->OnCombatParticipationChanged.RemoveAll(this);
 	subsystem->OnCombatParticipationChanged.AddUObject(this, &UCEnemyCombatParticipationComponent::HandleCombatParticipationChanged);
+	subsystem->OnCombatParticipationEvidenceExhausted.RemoveAll(this);
+	subsystem->OnCombatParticipationEvidenceExhausted.AddUObject(this, &UCEnemyCombatParticipationComponent::HandleCombatParticipationEvidenceExhausted);
 }
 
 void UCEnemyCombatParticipationComponent::UnbindParticipationSubsystem()
@@ -245,6 +251,7 @@ void UCEnemyCombatParticipationComponent::UnbindParticipationSubsystem()
 	if (!IsValid(subsystem)) return;
 
 	subsystem->OnCombatParticipationChanged.RemoveAll(this);
+	subsystem->OnCombatParticipationEvidenceExhausted.RemoveAll(this);
 }
 
 void UCEnemyCombatParticipationComponent::BindCombatTargetComponent()
@@ -281,6 +288,15 @@ void UCEnemyCombatParticipationComponent::HandleCombatParticipationChanged(ACAIC
 
 	LastAssignmentRevision = assignment.AssignmentRevision;
 	ApplyParticipationAssignment(assignment);
+}
+
+void UCEnemyCombatParticipationComponent::HandleCombatParticipationEvidenceExhausted(const FCombatParticipationEvidenceExhaustedEvent& InEvent)
+{
+	if (InEvent.Participant != AIController_Injected || !InEvent.bWasAppliedCombatTarget) return;
+	if (!IsValid(InEvent.TargetActor) || !IsValid(AIController_Injected)) return;
+
+	if (AppliedSnapshot.IsAssigned() && AppliedSnapshot.TargetActor != InEvent.TargetActor) return;
+	AIController_Injected->HandleCombatParticipationEvidenceExhausted(InEvent);
 }
 
 void UCEnemyCombatParticipationComponent::HandleCombatTargetChanged(const FCombatTargetChange& InChange)

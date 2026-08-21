@@ -23,6 +23,44 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BrainComponent.h"
+#include "NavigationSystem.h"
+#include "HAL/IConsoleManager.h"
+
+namespace
+{
+	TAutoConsoleVariable<float> CVarHitReactiveInvestigatePredictionLeadSeconds(
+		TEXT("Portfolio.AI.CombatParticipation.HitReactiveInvestigatePredictionLeadSeconds"),
+		1.0f,
+		TEXT("Seconds of last observed Target velocity used when HitReactive is the final Evidence source for Investigate."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<float> CVarHitReactiveInvestigateMaxPredictionDistance(
+		TEXT("Portfolio.AI.CombatParticipation.HitReactiveInvestigateMaxPredictionDistance"),
+		600.0f,
+		TEXT("Maximum distance from LastKnownLocation for HitReactive terminal Investigate prediction. 0: use LastKnownLocation."),
+		ECVF_Default);
+
+	FVector ResolveHitReactiveInvestigateLocation(UWorld* InWorld, const FCombatParticipationLastKnownTargetContext& InContext)
+	{
+		FVector location = InContext.LastKnownLocation;
+		const FVector velocity2D = InContext.LastObservedVelocity.GetSafeNormal2D();
+		const float speed2D = InContext.LastObservedVelocity.Size2D();
+		const float leadSeconds = FMath::Max(0.f, CVarHitReactiveInvestigatePredictionLeadSeconds.GetValueOnGameThread());
+		const float maxDistance = FMath::Max(0.f, CVarHitReactiveInvestigateMaxPredictionDistance.GetValueOnGameThread());
+		if (!velocity2D.IsNearlyZero() && speed2D > KINDA_SMALL_NUMBER && leadSeconds > 0.f && maxDistance > 0.f)
+		{
+			location += velocity2D * FMath::Min(speed2D * leadSeconds, maxDistance);
+		}
+
+		if (const UNavigationSystemV1* navigationSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(InWorld))
+		{
+			FNavLocation projectedLocation;
+			if (navigationSystem->ProjectPointToNavigation(location, projectedLocation)) return projectedLocation.Location;
+		}
+
+		return InContext.LastKnownLocation;
+	}
+}
 
 ACAIController::ACAIController()
 {
@@ -338,6 +376,9 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 			FCombatParticipationEvidenceContext evidenceContext;
 			evidenceContext.TargetPriority = targetProvider->GetTargetPriority();
 			evidenceContext.DistanceToTarget = FVector::Dist(GetPawn()->GetActorLocation(), Actor->GetActorLocation());
+			evidenceContext.ObservedTargetLocation = Actor->GetActorLocation();
+			evidenceContext.ObservedTargetVelocity = Actor->GetVelocity();
+			evidenceContext.bHasTargetObservation = true;
 			combatParticipationComp->ReportEvidence(ECombatParticipationSource::Perception, Actor, evidenceContext);
 		}
 	}
@@ -389,8 +430,51 @@ void ACAIController::RefreshParticipationEvidenceFromPerception()
 		FCombatParticipationEvidenceContext evidenceContext;
 		evidenceContext.TargetPriority = targetProvider->GetTargetPriority();
 		evidenceContext.DistanceToTarget = FVector::Dist(GetPawn()->GetActorLocation(), context.TargetActor->GetActorLocation());
+		evidenceContext.ObservedTargetLocation = context.TargetActor->GetActorLocation();
+		evidenceContext.ObservedTargetVelocity = context.TargetActor->GetVelocity();
+		evidenceContext.bHasTargetObservation = true;
 		participationComp->ReportEvidence(ECombatParticipationSource::Perception, context.TargetActor, evidenceContext);
 	}
+}
+
+void ACAIController::HandleCombatParticipationEvidenceExhausted(const FCombatParticipationEvidenceExhaustedEvent& InEvent)
+{
+	if (!InEvent.LastKnownTargetContext.bHasObservation) return;
+
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	UWorld* world = GetWorld();
+	if (!IsValid(blackboardComp) || !IsValid(world)) return;
+	if (!blackboardComp->GetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName)) return;
+	if (blackboardComp->GetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName)) return;
+	if (blackboardComp->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName)) return;
+	if (blackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName)) return;
+
+	const FVector investigateLocation = InEvent.FinalEvidenceSource == ECombatParticipationSource::HitReactive
+		? ResolveHitReactiveInvestigateLocation(world, InEvent.LastKnownTargetContext)
+		: InEvent.LastKnownTargetContext.LastKnownLocation;
+
+	CAIBlackboardValueHelper::SetVectorIfChanged(blackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, investigateLocation);
+	CAIBlackboardValueHelper::SetFloatIfChanged(blackboardComp, CAIKey::Perception::LastSeenTime.KeyName, world->GetTimeSeconds());
+	CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
+}
+
+void ACAIController::CancelInvestigateForNewCombatEvidence()
+{
+	UBlackboardComponent* blackboardComp = GetBlackboardComponent();
+	if (!IsValid(blackboardComp)) return;
+
+	const bool bHasInvestigateContext = blackboardComp->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName)
+		|| blackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName)
+		|| blackboardComp->GetValueAsBool(CAIKey::Investigate::bShouldEndInvestigate.KeyName);
+	if (!bHasInvestigateContext) return;
+
+	CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, false);
+	CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bIsInvestigating.KeyName, false);
+	CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldEndInvestigate.KeyName, false);
+	blackboardComp->ClearValue(CAIKey::Investigate::InvestigateLocation.KeyName);
+	CAIBlackboardValueHelper::SetIntIfChanged(blackboardComp, CAIKey::Investigate::InvestigateIndex.KeyName, INDEX_NONE);
+	blackboardComp->ClearValue(CAIKey::Perception::LastSeenTime.KeyName);
+	blackboardComp->ClearValue(CAIKey::Perception::LastKnownLocation.KeyName);
 }
 
 // Target Data
@@ -404,6 +488,8 @@ void ACAIController::UpdatePerceptionTargetContextMap()
 	if (!IsValid(world)) return;
 
 	float nowTime = world->GetTimeSeconds();
+	ACEnemy* enemy = Cast<ACEnemy>(GetPawn());
+	UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr;
 
 	TArray<AActor*> removeKeys;
 	for (TPair<AActor*, FPerceptionTargetContext>& pair : PerceptionTargetContextMap)
@@ -425,6 +511,17 @@ void ACAIController::UpdatePerceptionTargetContextMap()
 			data.TargetPriority = provider->GetTargetPriority();
 			data.LastSeenTime = nowTime;
 			data.LastKnownLocation = data.TargetActor->GetActorLocation();
+
+			if (IsValid(combatParticipationComp))
+			{
+				FCombatParticipationEvidenceContext evidenceContext;
+				evidenceContext.TargetPriority = data.TargetPriority;
+				evidenceContext.DistanceToTarget = FVector::Dist(GetPawn()->GetActorLocation(), data.LastKnownLocation);
+				evidenceContext.ObservedTargetLocation = data.LastKnownLocation;
+				evidenceContext.ObservedTargetVelocity = data.TargetActor->GetVelocity();
+				evidenceContext.bHasTargetObservation = true;
+				combatParticipationComp->ReportEvidence(ECombatParticipationSource::Perception, data.TargetActor, evidenceContext);
+			}
 		}
 		else // bHasLOS == false
 		{
@@ -440,26 +537,9 @@ void ACAIController::UpdatePerceptionTargetContextMap()
 
 	for (AActor* removeKey : removeKeys)
 	{
-		ACEnemy* enemy = Cast<ACEnemy>(GetPawn());
-		if (UCEnemyCombatParticipationComponent* combatParticipationComp = IsValid(enemy) ? enemy->GetEnemyCombatParticipationComp() : nullptr)
+		if (IsValid(combatParticipationComp))
 		{
 			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, removeKey);
-
-			const FCombatParticipationAppliedSnapshot appliedSnapshot = combatParticipationComp->GetAppliedSnapshot();
-			const FPerceptionTargetContext* removedContext = PerceptionTargetContextMap.Find(removeKey);
-
-			if (appliedSnapshot.IsAssigned()
-				&& appliedSnapshot.TargetActor == removeKey
-				&& !combatParticipationComp->HasActiveEvidenceForTarget(removeKey)
-				&& removedContext
-				&& !blackboardComp->GetValueAsBool(CAIKey::Navigation::bReturnHome.KeyName)
-				&& !blackboardComp->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName)
-				&& !blackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName))
-			{
-				CAIBlackboardValueHelper::SetVectorIfChanged(blackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, removedContext->LastKnownLocation);
-				CAIBlackboardValueHelper::SetFloatIfChanged(blackboardComp, CAIKey::Perception::LastSeenTime.KeyName, removedContext->LastSeenTime);
-				CAIBlackboardValueHelper::SetBoolIfChanged(blackboardComp, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
-			}
 		}
 
 		PerceptionTargetContextMap.Remove(removeKey);
@@ -476,7 +556,7 @@ void ACAIController::ClearPerceptionTargetContextMap()
 	{
 		for (const TPair<AActor*, FPerceptionTargetContext>& pair : PerceptionTargetContextMap)
 		{
-			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, pair.Key);
+			combatParticipationComp->WithdrawEvidence(ECombatParticipationSource::Perception, pair.Key, false);
 		}
 	}
 

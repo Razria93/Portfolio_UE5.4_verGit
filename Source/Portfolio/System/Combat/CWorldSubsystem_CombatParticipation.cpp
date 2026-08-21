@@ -60,6 +60,12 @@ namespace
 		TEXT("Seconds a HitReactive Evidence remains valid after its correlated Reaction ends. 0: expire immediately."),
 		ECVF_Default);
 
+	TAutoConsoleVariable<float> CVarCombatParticipationHitReactiveEvidenceAnchorRadius(
+		TEXT("Portfolio.AI.CombatParticipation.HitReactiveEvidenceAnchorRadius"),
+		1000.0f,
+		TEXT("Maximum Target distance from the Enemy's accepted-hit anchor while post-reaction HitReactive Evidence is active. 0: expire when the Target leaves the anchor."),
+		ECVF_Default);
+
 	TAutoConsoleVariable<float> CVarCombatParticipationAssignmentLockTimeout(
 		TEXT("Portfolio.AI.CombatParticipation.AssignmentLockTimeout"),
 		3.0f,
@@ -99,6 +105,11 @@ namespace
 	float GetHitReactivePostReactionTTL()
 	{
 		return FMath::Max(0.f, CVarCombatParticipationHitReactivePostReactionTTL.GetValueOnGameThread());
+	}
+
+	float GetHitReactiveEvidenceAnchorRadius()
+	{
+		return FMath::Max(0.f, CVarCombatParticipationHitReactiveEvidenceAnchorRadius.GetValueOnGameThread());
 	}
 
 	float GetCombatParticipationAssignmentLockTimeout()
@@ -156,6 +167,153 @@ TStatId UCWorldSubsystem_CombatParticipation::GetStatId() const
 	RETURN_QUICK_DECLARE_CYCLE_STAT(UCWorldSubsystem_CombatParticipation, STATGROUP_Tickables);
 }
 
+// Evidence Ingress
+
+void UCWorldSubsystem_CombatParticipation::ReportEvidence(ACAIController* InParticipant, ECombatParticipationSource InSource, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget)) return;
+	if (SuppressedParticipants.Contains(InParticipant)) return;
+
+	StartAssignmentWarmupIfNeeded();
+
+	const FCombatParticipationEvidenceKey key{ InParticipant, InSource, InTarget };
+	FCombatParticipationEvidence& evidence = EvidenceRegistry.FindOrAdd(key);
+
+	evidence.Participant = InParticipant;
+	evidence.Source = InSource;
+	evidence.TargetActor = InTarget;
+	evidence.Context = InContext;
+
+	UpdateLastKnownTargetContextFromEvidence(evidence);
+
+	if (InSource != ECombatParticipationSource::HitReactive)
+	{
+		evidence.HitReactiveResultSerial = 0;
+		evidence.HitReactiveExpireTimeSeconds = 0.f;
+		evidence.bHasStartedHitReactivePostReactionTTL = true;
+
+		evidence.HitReactiveEvidenceAnchorLocation = FVector::ZeroVector;
+		evidence.bHasHitReactiveEvidenceAnchor = false;
+	}
+
+	BindParticipationTargetLifecycle(InTarget);
+}
+
+void UCWorldSubsystem_CombatParticipation::ReportHitReactiveEvidence(ACAIController* InParticipant, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, const uint64 InResultSerial)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;
+
+	ReportEvidence(InParticipant, ECombatParticipationSource::HitReactive, InTarget, InContext);
+
+	FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });
+	if (!evidence) return;
+
+	evidence->HitReactiveResultSerial = InResultSerial;
+	evidence->HitReactiveExpireTimeSeconds = 0.f;
+	evidence->bHasStartedHitReactivePostReactionTTL = false;
+
+	if (const APawn* participantPawn = InParticipant->GetPawn())
+	{
+		evidence->HitReactiveEvidenceAnchorLocation = participantPawn->GetActorLocation();
+		evidence->bHasHitReactiveEvidenceAnchor = true;
+	}
+}
+
+// HitReactive Evidence Lifetime
+
+void UCWorldSubsystem_CombatParticipation::StartHitReactiveEvidencePostReactionTTL(ACAIController* InParticipant, AActor* InTarget, const uint64 InResultSerial)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;
+
+	FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });
+	if (!evidence || evidence->HitReactiveResultSerial != InResultSerial) return;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	evidence->HitReactiveExpireTimeSeconds = world->GetTimeSeconds() + GetHitReactivePostReactionTTL();
+	evidence->bHasStartedHitReactivePostReactionTTL = true;
+
+	RebuildAssignments();
+}
+
+// Evidence Removal
+
+void UCWorldSubsystem_CombatParticipation::WithdrawEvidence(ACAIController* InParticipant, ECombatParticipationSource InSource, AActor* InTarget, const bool bAllowInvestigateHandoff)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget)) return;
+
+	const FCombatParticipationEvidenceKey key{ InParticipant, InSource, InTarget };
+	const FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(key);
+	if (!evidence) return;
+
+	const FCombatParticipationEvidence removedEvidence = *evidence;
+	EvidenceRegistry.Remove(key);
+	ProcessEvidenceExhaustion(removedEvidence, bAllowInvestigateHandoff);
+
+	UnbindUnusedCombatParticipationTargetLifecycle();
+}
+
+// Participation Release
+
+void UCWorldSubsystem_CombatParticipation::SetParticipationSuppressed(ACAIController* InParticipant, const bool bSuppressed)
+{
+	if (!IsValid(InParticipant)) return;
+
+	if (!bSuppressed)
+	{
+		SuppressedParticipants.Remove(InParticipant);
+		return;
+	}
+
+	SuppressedParticipants.Add(InParticipant);
+	WithdrawAllEvidenceForParticipant(InParticipant);
+}
+
+void UCWorldSubsystem_CombatParticipation::WithdrawAllEvidenceForParticipant(ACAIController* InParticipant)
+{
+	if (!IsValid(InParticipant)) return;
+
+	bool bChanged = false;
+	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().Participant != InParticipant) continue;
+		iterator.RemoveCurrent();
+		bChanged = true;
+	}
+
+	ClearLastKnownTargetContextsForParticipant(InParticipant);
+	if (!bChanged) return;
+
+	UnbindUnusedCombatParticipationTargetLifecycle();
+	RebuildAssignments();
+}
+
+void UCWorldSubsystem_CombatParticipation::UnregisterParticipant(ACAIController* InParticipant)
+{
+	if (!IsValid(InParticipant)) return;
+
+	bool bRemovedState = false;
+	SuppressedParticipants.Remove(InParticipant);
+
+	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().Participant == InParticipant)
+		{
+			iterator.RemoveCurrent();
+			bRemovedState = true;
+		}
+	}
+
+	ClearLastKnownTargetContextsForParticipant(InParticipant);
+
+	bRemovedState |= AssignmentByParticipant.Remove(InParticipant) > 0;
+	bRemovedState |= AssignmentLockByParticipant.Remove(InParticipant) > 0;
+
+	UnbindUnusedCombatParticipationTargetLifecycle();
+	if (bRemovedState) RebuildAssignments();
+}
+
 // Query
 
 FEngageAssignmentContext UCWorldSubsystem_CombatParticipation::GetAssignment(const ACAIController* InCAIController) const
@@ -171,7 +329,7 @@ FEngageAssignmentContext UCWorldSubsystem_CombatParticipation::GetAssignment(con
 FCombatParticipationDebugSnapshot UCWorldSubsystem_CombatParticipation::BuildDebugSnapshot() const
 {
 	FCombatParticipationDebugSnapshot snapshot;
-	TMap<FCombatParticipationCandidateKey, int32> entryIndexByEvidence;
+	TMap<FCombatParticipationPairKey, int32> entryIndexByEvidence;
 
 	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentByParticipant)
 	{
@@ -179,7 +337,7 @@ FCombatParticipationDebugSnapshot UCWorldSubsystem_CombatParticipation::BuildDeb
 		const FEngageAssignmentContext& assignment = pair.Value;
 		if (!IsValid(participant)) continue;
 
-		const FCombatParticipationCandidateKey key{ participant, assignment.TargetActor };
+		const FCombatParticipationPairKey key{ participant, assignment.TargetActor };
 		int32* entryIndex = entryIndexByEvidence.Find(key);
 		if (!entryIndex)
 		{
@@ -202,7 +360,7 @@ FCombatParticipationDebugSnapshot UCWorldSubsystem_CombatParticipation::BuildDeb
 		const FCombatParticipationEvidence& evidence = pair.Value;
 		if (!IsValid(evidence.Participant)) continue;
 
-		const FCombatParticipationCandidateKey key{ evidence.Participant, evidence.TargetActor };
+		const FCombatParticipationPairKey key{ evidence.Participant, evidence.TargetActor };
 		int32* entryIndex = entryIndexByEvidence.Find(key);
 		if (!entryIndex)
 		{
@@ -255,122 +413,6 @@ FCombatParticipationDebugSnapshot UCWorldSubsystem_CombatParticipation::BuildDeb
 	return snapshot;
 }
 
-// Evidence Ingress
-
-void UCWorldSubsystem_CombatParticipation::ReportEvidence(ACAIController* InParticipant, ECombatParticipationSource InSource, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext)
-{
-	if (!IsValid(InParticipant) || !IsValid(InTarget)) return;
-	if (SuppressedParticipants.Contains(InParticipant)) return;
-
-	StartAssignmentWarmupIfNeeded();
-
-	const FCombatParticipationEvidenceKey key{ InParticipant, InSource, InTarget };
-	FCombatParticipationEvidence& evidence = EvidenceRegistry.FindOrAdd(key);
-
-	evidence.Participant = InParticipant;
-	evidence.Source = InSource;
-	evidence.TargetActor = InTarget;
-	evidence.Context = InContext;
-
-	if (InSource != ECombatParticipationSource::HitReactive)
-	{
-		evidence.HitReactiveResultSerial = 0;
-		evidence.HitReactiveExpireTimeSeconds = 0.f;
-		evidence.bHasStartedHitReactivePostReactionTTL = true;
-	}
-
-	BindParticipationTargetLifecycle(InTarget);
-}
-
-void UCWorldSubsystem_CombatParticipation::ReportHitReactiveEvidence(ACAIController* InParticipant, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, const uint64 InResultSerial)
-{
-	if (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;
-
-	ReportEvidence(InParticipant, ECombatParticipationSource::HitReactive, InTarget, InContext);
-
-	FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });
-	if (!evidence) return;
-
-	evidence->HitReactiveResultSerial = InResultSerial;
-	evidence->HitReactiveExpireTimeSeconds = 0.f;
-	evidence->bHasStartedHitReactivePostReactionTTL = false;
-}
-
-void UCWorldSubsystem_CombatParticipation::StartHitReactivePostReactionTTL(ACAIController* InParticipant, AActor* InTarget, const uint64 InResultSerial)
-{
-	if (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;
-
-	FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });
-	if (!evidence || evidence->HitReactiveResultSerial != InResultSerial) return;
-
-	const UWorld* world = GetWorld();
-	if (!IsValid(world)) return;
-
-	evidence->HitReactiveExpireTimeSeconds = world->GetTimeSeconds() + GetHitReactivePostReactionTTL();
-	evidence->bHasStartedHitReactivePostReactionTTL = true;
-
-	RebuildAssignments();
-}
-
-void UCWorldSubsystem_CombatParticipation::WithdrawEvidence(ACAIController* InParticipant, ECombatParticipationSource InSource, AActor* InTarget)
-{
-	if (!IsValid(InParticipant) || !IsValid(InTarget)) return;
-
-	EvidenceRegistry.Remove(FCombatParticipationEvidenceKey{ InParticipant, InSource, InTarget });
-	UnbindUnusedCombatParticipationTargetLifecycle();
-}
-
-void UCWorldSubsystem_CombatParticipation::WithdrawAllEvidenceForParticipant(ACAIController* InParticipant)
-{
-	if (!IsValid(InParticipant)) return;
-
-	bool bChanged = false;
-	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
-	{
-		if (iterator.Key().Participant != InParticipant) continue;
-		iterator.RemoveCurrent();
-		bChanged = true;
-	}
-	if (!bChanged) return;
-	UnbindUnusedCombatParticipationTargetLifecycle();
-	RebuildAssignments();
-}
-
-void UCWorldSubsystem_CombatParticipation::UnregisterParticipant(ACAIController* InParticipant)
-{
-	if (!IsValid(InParticipant)) return;
-	bool bRemovedState = false;
-	SuppressedParticipants.Remove(InParticipant);
-
-	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
-	{
-		if (iterator.Key().Participant == InParticipant)
-		{
-			iterator.RemoveCurrent();
-			bRemovedState = true;
-		}
-	}
-
-	bRemovedState |= AssignmentByParticipant.Remove(InParticipant) > 0;
-	bRemovedState |= AssignmentLockByParticipant.Remove(InParticipant) > 0;
-	UnbindUnusedCombatParticipationTargetLifecycle();
-	if (bRemovedState) RebuildAssignments();
-}
-
-void UCWorldSubsystem_CombatParticipation::SetParticipationSuppressed(ACAIController* InParticipant, const bool bSuppressed)
-{
-	if (!IsValid(InParticipant)) return;
-
-	if (!bSuppressed)
-	{
-		SuppressedParticipants.Remove(InParticipant);
-		return;
-	}
-
-	SuppressedParticipants.Add(InParticipant);
-	WithdrawAllEvidenceForParticipant(InParticipant);
-}
-
 // Assignment Lock
 
 bool UCWorldSubsystem_CombatParticipation::AcquireAssignmentLock(ACAIController* InParticipant, const FCombatParticipationAssignmentLock& InAssignmentLock)
@@ -379,7 +421,7 @@ bool UCWorldSubsystem_CombatParticipation::AcquireAssignmentLock(ACAIController*
 
 	const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(InParticipant);
 	if (!assignment || !InAssignmentLock.Matches(*assignment)) return false;
-	if (!IsCombatParticipationTargetValid(InParticipant, InAssignmentLock.TargetActor)) return false;
+	if (!IsCombatParticipationPairValid(InParticipant, InAssignmentLock.TargetActor)) return false;
 
 	const UWorld* world = GetWorld();
 	if (!IsValid(world)) return false;
@@ -410,8 +452,8 @@ void UCWorldSubsystem_CombatParticipation::RebuildAssignments()
 	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_RebuildAssignments);
 
 	++AssignmentRebuildId;
-	PruneInvalidEvidence();
-	PruneExpiredAssignmentLocks();
+	PruneInactiveEvidence();
+	PruneInactiveAssignmentLocks();
 	UnbindUnusedCombatParticipationTargetLifecycle();
 
 	// Delay assignment rebuild until warmup has completed.
@@ -464,23 +506,34 @@ void UCWorldSubsystem_CombatParticipation::RebuildAssignments()
 	AssignmentByParticipant = MoveTemp(nextAssignments);
 	UnbindUnusedCombatParticipationTargetLifecycle();
 	PublishAssignmentChanges(previousAssignments);
+	DispatchPendingEvidenceExhaustedEvents();
 }
 
 // Rebuild Preprocessing
 
-void UCWorldSubsystem_CombatParticipation::PruneInvalidEvidence()
+void UCWorldSubsystem_CombatParticipation::PruneInactiveEvidence()
 {
 	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
 	{
 		const FCombatParticipationEvidence& evidence = iterator.Value();
-		if (!IsCombatParticipationTargetValid(evidence.Participant, evidence.TargetActor) || IsEvidenceExpired(evidence))
+		if (!IsCombatParticipationPairValid(evidence.Participant, evidence.TargetActor))
 		{
+			const FCombatParticipationPairKey key{ evidence.Participant, evidence.TargetActor };
 			iterator.RemoveCurrent();
+			ClearLastKnownTargetContextForParticipationPair(key);
+			continue;
+		}
+
+		if (IsHitReactiveEvidenceInactive(evidence))
+		{
+			const FCombatParticipationEvidence removedEvidence = evidence;
+			iterator.RemoveCurrent();
+			ProcessEvidenceExhaustion(removedEvidence, true);
 		}
 	}
 }
 
-void UCWorldSubsystem_CombatParticipation::PruneExpiredAssignmentLocks()
+void UCWorldSubsystem_CombatParticipation::PruneInactiveAssignmentLocks()
 {
 	for (auto iterator = AssignmentLockByParticipant.CreateIterator(); iterator; ++iterator)
 	{
@@ -489,7 +542,7 @@ void UCWorldSubsystem_CombatParticipation::PruneExpiredAssignmentLocks()
 		const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(participant);
 		if (!IsValid(participant)
 			|| !assignmentLock.Matches(assignment ? *assignment : FEngageAssignmentContext())
-			|| !IsCombatParticipationTargetValid(participant, assignmentLock.TargetActor))
+			|| !IsCombatParticipationPairValid(participant, assignmentLock.TargetActor))
 		{
 			iterator.RemoveCurrent();
 			continue;
@@ -528,14 +581,14 @@ float UCWorldSubsystem_CombatParticipation::GetAssignmentWarmupElapsedTime() con
 
 void UCWorldSubsystem_CombatParticipation::BuildParticipationCandidates(TArray<FCombatParticipationCandidate>& OutCandidates) const
 {
-	TMap<FCombatParticipationCandidateKey, FCombatParticipationCandidate> candidatesByKey;
+	TMap<FCombatParticipationPairKey, FCombatParticipationCandidate> candidatesByKey;
 
 	for (const TPair<FCombatParticipationEvidenceKey, FCombatParticipationEvidence>& pair : EvidenceRegistry)
 	{
 		const FCombatParticipationEvidence& evidence = pair.Value;
-		if (!IsCombatParticipationTargetValid(evidence.Participant, evidence.TargetActor) || IsEvidenceExpired(evidence)) continue;
+		if (!IsCombatParticipationPairValid(evidence.Participant, evidence.TargetActor) || IsHitReactiveEvidenceInactive(evidence)) continue;
 
-		FCombatParticipationCandidate& candidate = candidatesByKey.FindOrAdd(FCombatParticipationCandidateKey{ evidence.Participant, evidence.TargetActor });
+		FCombatParticipationCandidate& candidate = candidatesByKey.FindOrAdd(FCombatParticipationPairKey{ evidence.Participant, evidence.TargetActor });
 		candidate.Participant = evidence.Participant;
 		candidate.TargetActor = evidence.TargetActor;
 		candidate.TargetPriority = FMath::Min(candidate.TargetPriority, evidence.Context.TargetPriority);
@@ -728,6 +781,19 @@ void UCWorldSubsystem_CombatParticipation::PublishAssignmentChanges(const TMap<A
 	}
 }
 
+void UCWorldSubsystem_CombatParticipation::DispatchPendingEvidenceExhaustedEvents()
+{
+	TArray<FCombatParticipationEvidenceExhaustedEvent> pendingEvents = MoveTemp(PendingEvidenceExhaustedEvents);
+	for (const FCombatParticipationEvidenceExhaustedEvent& event : pendingEvents)
+	{
+		if (!IsCombatParticipationPairValid(event.Participant, event.TargetActor)) continue;
+		if (SuppressedParticipants.Contains(event.Participant)) continue;
+		if (HasActiveEvidenceForParticipationPair(event.Participant, event.TargetActor)) continue;
+
+		OnCombatParticipationEvidenceExhausted.Broadcast(event);
+	}
+}
+
 // -----------------------------------------------------------------------------
 // Assignment Rebuild Support
 // -----------------------------------------------------------------------------
@@ -744,9 +810,9 @@ void UCWorldSubsystem_CombatParticipation::StartAssignmentWarmupIfNeeded()
 	AssignmentWarmupStartTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
 }
 
-// Rebuild Preprocessing Support
+// Evidence Lifecycle Support
 
-bool UCWorldSubsystem_CombatParticipation::IsCombatParticipationTargetValid(const ACAIController* InParticipant, const AActor* InTarget) const
+bool UCWorldSubsystem_CombatParticipation::IsCombatParticipationPairValid(const ACAIController* InParticipant, const AActor* InTarget) const
 {
 	if (!IsValid(InParticipant) || !IsValid(InTarget)) return false;
 	if (InParticipant->GetTeamAttitudeTowards(*InTarget) != ETeamAttitude::Hostile) return false;
@@ -755,7 +821,7 @@ bool UCWorldSubsystem_CombatParticipation::IsCombatParticipationTargetValid(cons
 	return !IsValid(healthComp) || healthComp->IsAlive();
 }
 
-bool UCWorldSubsystem_CombatParticipation::IsEvidenceExpired(const FCombatParticipationEvidence& InEvidence) const
+bool UCWorldSubsystem_CombatParticipation::IsHitReactiveEvidenceInactive(const FCombatParticipationEvidence& InEvidence) const
 {
 	if (InEvidence.Source != ECombatParticipationSource::HitReactive) return false;
 	if (!InEvidence.bHasStartedHitReactivePostReactionTTL) return false;
@@ -763,20 +829,115 @@ bool UCWorldSubsystem_CombatParticipation::IsEvidenceExpired(const FCombatPartic
 	const UWorld* world = GetWorld();
 	if (!IsValid(world)) return false;
 
-	return world->GetTimeSeconds() >= InEvidence.HitReactiveExpireTimeSeconds;
+	return world->GetTimeSeconds() >= InEvidence.HitReactiveExpireTimeSeconds || IsHitReactiveEvidenceAnchorExceeded(InEvidence);
 }
 
-bool UCWorldSubsystem_CombatParticipation::HasActiveEvidenceForParticipantTarget(const ACAIController* InParticipant, const AActor* InTarget) const
+bool UCWorldSubsystem_CombatParticipation::IsHitReactiveEvidenceAnchorExceeded(const FCombatParticipationEvidence& InEvidence) const
 {
-	if (!IsCombatParticipationTargetValid(InParticipant, InTarget)) return false;
+	if (InEvidence.Source != ECombatParticipationSource::HitReactive) return false;
+	if (!InEvidence.bHasHitReactiveEvidenceAnchor || !IsValid(InEvidence.TargetActor)) return false;
+
+	const float anchorRadius = GetHitReactiveEvidenceAnchorRadius();
+	return FVector::Dist2D(InEvidence.TargetActor->GetActorLocation(), InEvidence.HitReactiveEvidenceAnchorLocation) > anchorRadius;
+}
+
+bool UCWorldSubsystem_CombatParticipation::HasActiveEvidenceForParticipationPair(const ACAIController* InParticipant, const AActor* InTarget) const
+{
+	if (!IsCombatParticipationPairValid(InParticipant, InTarget)) return false;
 
 	for (const TPair<FCombatParticipationEvidenceKey, FCombatParticipationEvidence>& pair : EvidenceRegistry)
 	{
 		const FCombatParticipationEvidence& evidence = pair.Value;
-		if (evidence.Participant == InParticipant && evidence.TargetActor == InTarget && !IsEvidenceExpired(evidence)) return true;
+		if (evidence.Participant == InParticipant && evidence.TargetActor == InTarget && !IsHitReactiveEvidenceInactive(evidence)) return true;
 	}
 
 	return false;
+}
+
+void UCWorldSubsystem_CombatParticipation::UpdateLastKnownTargetContextFromEvidence(const FCombatParticipationEvidence& InEvidence)
+{
+	if (!InEvidence.Context.bHasTargetObservation) return;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	const FCombatParticipationPairKey key{ InEvidence.Participant, InEvidence.TargetActor };
+	FCombatParticipationLastKnownTargetContext& context = LastKnownTargetContextByParticipationPair.FindOrAdd(key);
+	const float observationTimeSeconds = world->GetTimeSeconds();
+	if (context.bHasObservation && observationTimeSeconds < context.LastObservedTimeSeconds) return;
+
+	context.LastKnownLocation = InEvidence.Context.ObservedTargetLocation;
+	context.LastObservedVelocity = InEvidence.Context.ObservedTargetVelocity;
+	context.LastObservedTimeSeconds = observationTimeSeconds;
+	context.LastObservedSource = InEvidence.Source;
+	context.bHasObservation = true;
+}
+
+void UCWorldSubsystem_CombatParticipation::ProcessEvidenceExhaustion(const FCombatParticipationEvidence& InEvidence, const bool bAllowInvestigateHandoff)
+{
+	const FCombatParticipationPairKey key{ InEvidence.Participant, InEvidence.TargetActor };
+
+	if (HasActiveEvidenceForParticipationPair(InEvidence.Participant, InEvidence.TargetActor)) return;
+
+	if (!bAllowInvestigateHandoff)
+	{
+		ClearLastKnownTargetContextForParticipationPair(key);
+		return;
+	}
+
+	const FCombatParticipationLastKnownTargetContext* context = LastKnownTargetContextByParticipationPair.Find(key);
+	if (!context || !context->bHasObservation)
+	{
+		ClearLastKnownTargetContextForParticipationPair(key);
+		return;
+	}
+
+	FCombatParticipationEvidenceExhaustedEvent event;
+	event.Participant = InEvidence.Participant;
+	event.TargetActor = InEvidence.TargetActor;
+	event.LastKnownTargetContext = *context;
+	event.FinalEvidenceSource = InEvidence.Source;
+
+	if (const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(InEvidence.Participant))
+	{
+		event.bWasAppliedCombatTarget = assignment->IsValidAssignment() && assignment->TargetActor == InEvidence.TargetActor;
+	}
+
+	LastKnownTargetContextByParticipationPair.Remove(key);
+	PendingEvidenceExhaustedEvents.Add(event);
+}
+
+void UCWorldSubsystem_CombatParticipation::ClearLastKnownTargetContextForParticipationPair(const FCombatParticipationPairKey& InKey)
+{
+	LastKnownTargetContextByParticipationPair.Remove(InKey);
+	PendingEvidenceExhaustedEvents.RemoveAll([&InKey](const FCombatParticipationEvidenceExhaustedEvent& event)
+		{
+			return event.Participant == InKey.Participant && event.TargetActor == InKey.TargetActor;
+		});
+}
+
+void UCWorldSubsystem_CombatParticipation::ClearLastKnownTargetContextsForParticipant(const ACAIController* InParticipant)
+{
+	for (auto iterator = LastKnownTargetContextByParticipationPair.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().Participant == InParticipant) iterator.RemoveCurrent();
+	}
+	PendingEvidenceExhaustedEvents.RemoveAll([InParticipant](const FCombatParticipationEvidenceExhaustedEvent& event)
+		{
+			return event.Participant == InParticipant;
+		});
+}
+
+void UCWorldSubsystem_CombatParticipation::ClearLastKnownTargetContextsForTarget(const AActor* InTarget)
+{
+	for (auto iterator = LastKnownTargetContextByParticipationPair.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().TargetActor == InTarget) iterator.RemoveCurrent();
+	}
+	PendingEvidenceExhaustedEvents.RemoveAll([InTarget](const FCombatParticipationEvidenceExhaustedEvent& event)
+		{
+			return event.TargetActor == InTarget;
+		});
 }
 
 // Candidate Build Support
@@ -889,7 +1050,7 @@ bool UCWorldSubsystem_CombatParticipation::TryReserveAssignmentSlot(const FEngag
 bool UCWorldSubsystem_CombatParticipation::CanRetainAssignment(const ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment) const
 {
 	return InAssignment.IsValidAssignment()
-		&& (HasActiveEvidenceForParticipantTarget(InCAIController, InAssignment.TargetActor)
+		&& (HasActiveEvidenceForParticipationPair(InCAIController, InAssignment.TargetActor)
 			|| IsAssignmentLockActive(InCAIController, InAssignment));
 }
 
@@ -897,7 +1058,7 @@ bool UCWorldSubsystem_CombatParticipation::IsAssignmentLockActive(const ACAICont
 {
 	const FCombatParticipationAssignmentLock* assignmentLock = AssignmentLockByParticipant.Find(InParticipant);
 	if (!assignmentLock || !assignmentLock->Matches(InAssignment)) return false;
-	if (!IsCombatParticipationTargetValid(InParticipant, assignmentLock->TargetActor)) return false;
+	if (!IsCombatParticipationPairValid(InParticipant, assignmentLock->TargetActor)) return false;
 
 	const UWorld* world = GetWorld();
 	return IsValid(world) && world->GetTimeSeconds() < assignmentLock->ExpireTimeSeconds;
@@ -991,6 +1152,7 @@ void UCWorldSubsystem_CombatParticipation::UnbindUnusedCombatParticipationTarget
 void UCWorldSubsystem_CombatParticipation::ReleaseTargetParticipationState(AActor* InTarget)
 {
 	if (!InTarget) return;
+	ClearLastKnownTargetContextsForTarget(InTarget);
 
 	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
 	{
@@ -1050,6 +1212,8 @@ void UCWorldSubsystem_CombatParticipation::ClearCombatParticipationRuntimeState(
 	AssignmentRebuildId = CCombatEngageConstants::InitialAssignmentRebuildId;
 	AssignmentRevisionSerial = 0;
 	EvidenceRegistry.Reset();
+	LastKnownTargetContextByParticipationPair.Reset();
+	PendingEvidenceExhaustedEvents.Reset();
 	SuppressedParticipants.Reset();
 	AssignmentLockByParticipant.Reset();
 	for (AActor* targetActor : EvidenceTargetEndPlayBindings)

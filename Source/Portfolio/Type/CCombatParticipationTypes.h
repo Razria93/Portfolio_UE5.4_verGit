@@ -26,6 +26,15 @@ struct FCombatParticipationEvidenceContext
 
 	UPROPERTY(Transient)
 	float DistanceToTarget = 0.f;
+
+	UPROPERTY(Transient)
+	FVector ObservedTargetLocation = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	FVector ObservedTargetVelocity = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	bool bHasTargetObservation = false;
 };
 
 USTRUCT(BlueprintType)
@@ -53,6 +62,54 @@ struct FCombatParticipationEvidence
 
 	UPROPERTY(Transient)
 	bool bHasStartedHitReactivePostReactionTTL = true;
+
+	UPROPERTY(Transient)
+	FVector HitReactiveEvidenceAnchorLocation = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	bool bHasHitReactiveEvidenceAnchor = false;
+};
+
+USTRUCT(BlueprintType)
+struct FCombatParticipationLastKnownTargetContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient)
+	FVector LastKnownLocation = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	FVector LastObservedVelocity = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	float LastObservedTimeSeconds = 0.f;
+
+	UPROPERTY(Transient)
+	ECombatParticipationSource LastObservedSource = ECombatParticipationSource::Perception;
+
+	UPROPERTY(Transient)
+	bool bHasObservation = false;
+};
+
+USTRUCT(BlueprintType)
+struct FCombatParticipationEvidenceExhaustedEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient)
+	ACAIController* Participant = nullptr;
+
+	UPROPERTY(Transient)
+	AActor* TargetActor = nullptr;
+
+	UPROPERTY(Transient)
+	FCombatParticipationLastKnownTargetContext LastKnownTargetContext;
+
+	UPROPERTY(Transient)
+	ECombatParticipationSource FinalEvidenceSource = ECombatParticipationSource::Perception;
+
+	UPROPERTY(Transient)
+	bool bWasAppliedCombatTarget = false;
 };
 
 USTRUCT(BlueprintType)

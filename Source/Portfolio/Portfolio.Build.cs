@@ -22,7 +22,10 @@ public class Portfolio : ModuleRules
             "UMG",
         });
 
-        PrivateDependencyModuleNames.AddRange(new string[] { });
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            "NavigationSystem",
+        });
 
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

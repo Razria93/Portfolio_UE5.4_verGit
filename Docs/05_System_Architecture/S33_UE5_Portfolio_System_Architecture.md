@@ -381,13 +381,20 @@ Source Evidence
 → UCEnemyCombatParticipationComponent
 → UWorldSubsystem_CombatParticipation
    → Source×Target Evidence registry
-   → Target 선택, commitment, role/admission assignment
+   → Passive Last Known Target Context
+   → Target 선택, role/admission assignment
 → UCEnemyCombatParticipationComponent
    → assignment를 Combat Target Kernel에 적용
 → Facing / Blackboard / Action Consumer
 ```
 
 Source와 Adapter는 Combat Target을 직접 Set/Clear하지 않는다. Blackboard도 assignment 또는 Combat Target SoT가 아니다.
+
+Active Evidence가 하나라도 남아 있으면 Candidate와 Assignment가 유지된다. 마지막 Active
+Evidence가 normal soft release로 끝나면 Subsystem은 passive Last Known Target Context를 담은
+`OnCombatParticipationEvidenceExhausted`를 한 번 전달한다. Adapter와 Controller는 직전 Combat
+Target, ReturnHome suppression, 새 Assignment를 재검증한 뒤에만 Blackboard Investigate 요청으로
+변환한다. 이 context는 Candidate나 CombatTarget을 만들지 않으며 handoff 뒤 제거된다.
 
 ## 6.3 Kernel 반영
 
@@ -719,7 +726,13 @@ Facing Consumer는 Combat Target Snapshot만 소비하는 구조로 유지한다
 - `UBTTask_RequestCombatTargetSelection` 제거
 - CombatTargetActor/Revision과 CombatParticipationState/Revision Blackboard projection 추가
 
-Phase A~D와 Phase E의 Action authority, Goal 8~11 producer/time policy/Intent/Action lock까지 Source×Target Evidence registry, Adapter 후보 선택 제거, commitment-first ladder, GeneralBase/HitReactiveExtra admission, applied snapshot, coherent Blackboard projection, Action 직전 authority 검증, accepted Combat Signal 결과의 HitReactive evidence ingress, TTL/Extra commitment, Participation-based Intent와 Action Lock을 구현했다. UAsset consumer의 실제 전환과 Perception grace/cooldown은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)의 후속 단계로 보류한다.
+Phase A~D와 Phase E의 Action authority, Goal 8~11 producer/time policy/Intent/Action lock까지
+Source×Target Evidence registry, Adapter 후보 선택 제거, GeneralBase/HitReactiveExtra admission,
+applied snapshot, coherent Blackboard projection, Action 직전 authority 검증, accepted Combat Signal
+결과의 HitReactive Evidence ingress, Participation-based Intent와 Action Lock을 구현했다. 마지막
+Active Evidence 종료, Last Known Target Context, HitReactive anchor, non-combat Investigate handoff의
+최종 계약은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다. UAsset consumer의 실제
+전환은 수동 asset audit 범위로 남긴다.
 
 ---
 

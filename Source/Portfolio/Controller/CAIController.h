@@ -109,6 +109,8 @@ public:
 	// Query
 	EPerceptionBuildResult BuildPerceptionContext(FPerceptionTargetContext& OutPerceptionTargetContext);
 	void RefreshParticipationEvidenceFromPerception();
+	void HandleCombatParticipationEvidenceExhausted(const struct FCombatParticipationEvidenceExhaustedEvent& InEvent);
+	void CancelInvestigateForNewCombatEvidence();
 
 public:
 	// Runtime LOD Snapshot

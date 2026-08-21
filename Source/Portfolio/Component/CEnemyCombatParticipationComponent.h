@@ -11,6 +11,7 @@ class UCWorldSubsystem_CombatParticipation;
 struct FCharacterComponentReferences;
 struct FEngageAssignmentContext;
 struct FCombatParticipationChange;
+struct FCombatParticipationEvidenceExhaustedEvent;
 struct FCombatTargetChange;
 struct FCombatTargetSnapshot;
 
@@ -44,8 +45,8 @@ public:
 	// Evidence Ingress
 	void ReportEvidence(ECombatParticipationSource InSource, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext);
 	void ReportHitReactiveEvidence(AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, uint64 InResultSerial);
-	void StartHitReactivePostReactionTTL(AActor* InTarget, uint64 InResultSerial);
-	void WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget);
+	void StartHitReactiveEvidencePostReactionTTL(AActor* InTarget, uint64 InResultSerial);
+	void WithdrawEvidence(ECombatParticipationSource InSource, AActor* InTarget, bool bAllowInvestigateHandoff = true);
 
 	// Participation Release
 	void WithdrawAllEvidenceForOwner();
@@ -75,6 +76,7 @@ private:
 	// Participation Assignment
 	void SynchronizeParticipation();
 	void HandleCombatParticipationChanged(ACAIController* InAIController, const FCombatParticipationChange& InChange);
+	void HandleCombatParticipationEvidenceExhausted(const FCombatParticipationEvidenceExhaustedEvent& InEvent);
 	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 	void ApplyParticipationAssignment(const FEngageAssignmentContext& InAssignment);
 	void RecordAppliedSnapshot(const FEngageAssignmentContext& InAssignment, const FCombatTargetSnapshot& InCombatTargetSnapshot);

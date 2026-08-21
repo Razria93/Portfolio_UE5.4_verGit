@@ -9,6 +9,7 @@
 #include "CWorldSubsystem_CombatParticipation.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCombatParticipationChanged, class ACAIController*, const FCombatParticipationChange&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatParticipationEvidenceExhausted, const FCombatParticipationEvidenceExhaustedEvent&);
 
 struct FCombatParticipationEvidenceKey
 {
@@ -27,17 +28,19 @@ struct FCombatParticipationEvidenceKey
 	}
 };
 
-struct FCombatParticipationCandidateKey
+// CombatParticipationPair means one Participant × Target combination.
+// It is a neutral identity key, not a Candidate lifecycle object.
+struct FCombatParticipationPairKey
 {
 	ACAIController* Participant = nullptr;
 	AActor* TargetActor = nullptr;
 
-	bool operator==(const FCombatParticipationCandidateKey& InOther) const
+	bool operator==(const FCombatParticipationPairKey& InOther) const
 	{
 		return Participant == InOther.Participant && TargetActor == InOther.TargetActor;
 	}
 
-	friend uint32 GetTypeHash(const FCombatParticipationCandidateKey& InKey)
+	friend uint32 GetTypeHash(const FCombatParticipationPairKey& InKey)
 	{
 		return HashCombine(::GetTypeHash(InKey.Participant), ::GetTypeHash(InKey.TargetActor));
 	}
@@ -71,6 +74,8 @@ private:
 private:
 	// Evidence Registry
 	TMap<FCombatParticipationEvidenceKey, FCombatParticipationEvidence> EvidenceRegistry;
+	TMap<FCombatParticipationPairKey, FCombatParticipationLastKnownTargetContext> LastKnownTargetContextByParticipationPair;
+	TArray<FCombatParticipationEvidenceExhaustedEvent> PendingEvidenceExhaustedEvents;
 	TSet<class ACAIController*> SuppressedParticipants;
 
 private:
@@ -92,6 +97,7 @@ public:
 	// Public API
 	// -----------------------------------------------------------------------------
 	FOnCombatParticipationChanged OnCombatParticipationChanged;
+	FOnCombatParticipationEvidenceExhausted OnCombatParticipationEvidenceExhausted;
 
 	// Lifecycle
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -101,21 +107,25 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
 
-	// Query
-	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
-	bool HasActiveEvidenceForParticipantTarget(const class ACAIController* InParticipant, const class AActor* InTarget) const;
-	FCombatParticipationDebugSnapshot BuildDebugSnapshot() const;
-
 	// Evidence Ingress
 	void ReportEvidence(class ACAIController* InParticipant, ECombatParticipationSource InSource, class AActor* InTarget, const FCombatParticipationEvidenceContext& InContext);
 	void ReportHitReactiveEvidence(class ACAIController* InParticipant, class AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, uint64 InResultSerial);
-	void StartHitReactivePostReactionTTL(class ACAIController* InParticipant, class AActor* InTarget, uint64 InResultSerial);
-	void WithdrawEvidence(class ACAIController* InParticipant, ECombatParticipationSource InSource, class AActor* InTarget);
+
+	// HitReactive Evidence Lifetime
+	void StartHitReactiveEvidencePostReactionTTL(class ACAIController* InParticipant, class AActor* InTarget, uint64 InResultSerial);
+
+	// Evidence Removal
+	void WithdrawEvidence(class ACAIController* InParticipant, ECombatParticipationSource InSource, class AActor* InTarget, bool bAllowInvestigateHandoff = true);
 
 	// Participation Release
+	void SetParticipationSuppressed(class ACAIController* InParticipant, bool bSuppressed);
 	void WithdrawAllEvidenceForParticipant(class ACAIController* InParticipant);
 	void UnregisterParticipant(class ACAIController* InParticipant);
-	void SetParticipationSuppressed(class ACAIController* InParticipant, bool bSuppressed);
+
+	// Query
+	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
+	bool HasActiveEvidenceForParticipationPair(const class ACAIController* InParticipant, const class AActor* InTarget) const;
+	FCombatParticipationDebugSnapshot BuildDebugSnapshot() const;
 
 	// Assignment Lock
 	bool AcquireAssignmentLock(class ACAIController* InParticipant, const FCombatParticipationAssignmentLock& InAssignmentLock);
@@ -132,8 +142,8 @@ private:
 	void RebuildAssignments();
 
 	// Rebuild Preprocessing
-	void PruneInvalidEvidence();
-	void PruneExpiredAssignmentLocks();
+	void PruneInactiveEvidence();
+	void PruneInactiveAssignmentLocks();
 
 	// Assignment Warmup
 	bool ShouldDelayAssignmentForWarmup() const;
@@ -150,6 +160,7 @@ private:
 
 	// Assignment Result
 	void PublishAssignmentChanges(const TMap<class ACAIController*, FEngageAssignmentContext>& InPreviousAssignments);
+	void DispatchPendingEvidenceExhaustedEvents();
 
 private:
 	// -----------------------------------------------------------------------------
@@ -159,9 +170,15 @@ private:
 	// Assignment Warmup Support
 	void StartAssignmentWarmupIfNeeded();
 
-	// Rebuild Preprocessing Support
-	bool IsCombatParticipationTargetValid(const class ACAIController* InParticipant, const class AActor* InTarget) const;
-	bool IsEvidenceExpired(const FCombatParticipationEvidence& InEvidence) const;
+	// Evidence Lifecycle Support
+	bool IsCombatParticipationPairValid(const class ACAIController* InParticipant, const class AActor* InTarget) const;
+	bool IsHitReactiveEvidenceInactive(const FCombatParticipationEvidence& InEvidence) const;
+	bool IsHitReactiveEvidenceAnchorExceeded(const FCombatParticipationEvidence& InEvidence) const;
+	void UpdateLastKnownTargetContextFromEvidence(const FCombatParticipationEvidence& InEvidence);
+	void ProcessEvidenceExhaustion(const FCombatParticipationEvidence& InEvidence, bool bAllowInvestigateHandoff);
+	void ClearLastKnownTargetContextForParticipationPair(const FCombatParticipationPairKey& InKey);
+	void ClearLastKnownTargetContextsForParticipant(const class ACAIController* InParticipant);
+	void ClearLastKnownTargetContextsForTarget(const class AActor* InTarget);
 
 	// Candidate Build Support
 	bool IsCandidatePreferred(const FCombatParticipationCandidate& InCandidate, const FCombatParticipationCandidate& InCurrent) const;

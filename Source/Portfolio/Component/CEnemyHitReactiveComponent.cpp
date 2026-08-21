@@ -99,6 +99,9 @@ void UCEnemyHitReactiveComponent::HandleCombatSignalTargetAccepted(const FCombat
 
 	evidenceContext.TargetPriority = targetProvider->GetTargetPriority();
 	evidenceContext.DistanceToTarget = FVector::Dist(OwnerCharacter_Injected->GetActorLocation(), combatantTarget->GetActorLocation());
+	evidenceContext.ObservedTargetLocation = combatantTarget->GetActorLocation();
+	evidenceContext.ObservedTargetVelocity = combatantTarget->GetVelocity();
+	evidenceContext.bHasTargetObservation = true;
 
 	PendingCombatantTargetByResultSerial.Add(InPacket.ResultSerial, combatantTarget);
 	CombatParticipationComp_Injected->ReportHitReactiveEvidence(combatantTarget, evidenceContext, InPacket.ResultSerial);
@@ -111,7 +114,7 @@ void UCEnemyHitReactiveComponent::HandleCombatSignalTargetReactionResolved(const
 
 	if (InResult.IsAccepted()) return;
 
-	CombatParticipationComp_Injected->StartHitReactivePostReactionTTL(combatantTarget->Get(), InPacket.ResultSerial);
+	CombatParticipationComp_Injected->StartHitReactiveEvidencePostReactionTTL(combatantTarget->Get(), InPacket.ResultSerial);
 	PendingCombatantTargetByResultSerial.Remove(InPacket.ResultSerial);
 }
 
@@ -126,7 +129,7 @@ void UCEnemyHitReactiveComponent::HandleReactionExecutionLifecycleEvent(const FR
 	TWeakObjectPtr<AActor>* combatantTarget = PendingCombatantTargetByResultSerial.Find(resultSerial);
 	if (!combatantTarget || !combatantTarget->IsValid()) return;
 
-	CombatParticipationComp_Injected->StartHitReactivePostReactionTTL(combatantTarget->Get(), resultSerial);
+	CombatParticipationComp_Injected->StartHitReactiveEvidencePostReactionTTL(combatantTarget->Get(), resultSerial);
 	PendingCombatantTargetByResultSerial.Remove(resultSerial);
 }
 
