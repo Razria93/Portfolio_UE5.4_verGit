@@ -269,7 +269,8 @@ immediate invalidation producer가 된다.
 | --- | --- | --- |
 | `f3b6bac` 대비 구조/책임 감사 | 통과 | request/lease 기반 구조에서 Evidence-centric authority로 전환됐으며, active source에 삭제된 request API 참조가 없다. |
 | C++/UHT build | 통과 | `PortfolioEditor Win64 Development` build 성공. |
-| Blueprint compile commandlet | 통과 | `CompileAllBlueprints -ProjectOnly -NoSave` 결과 0 errors, failed-load 0. Profiling용 `ABP_AIPerf_Character`의 `bIsDead` warning은 Combat Participation 범위 밖 별도 추적 항목이다. |
+| Blueprint compile commandlet | 통과 | `CompileAllBlueprints -ProjectOnly -NoSave` 결과 0 errors, 0 warnings, failed-load 0. `ABP_AIPerf_Character` 정리 뒤에도 같은 결과를 재확인했다. |
 | TestRoom headless load | 통과 | `/Game/00_UnitTest/TestRoom`을 `-game -NullRHI`로 기동해 `LoadMap`, `Bringing World ... up for play`, 정상 teardown을 확인했다. |
 | `git diff --check` | 통과 | 문서 및 Pair validity 보완 뒤 whitespace error 없음. |
 | TestRoom PIE matrix | 통과 | §9의 runtime/BT/Blackboard/UAsset 시나리오를 수동 확인했다. A/B Target에서는 기존 PlayerDummy Pair의 Engage/Alert Assignment를 유지하고 Player Pair는 unassigned candidate로 남아 Participant당 하나의 Assignment를 유지했다. 마지막 Evidence 종료 뒤 다른 Target Assignment가 있으면 stale Investigate도 시작하지 않았다. |
+| AIPerf Baseline compatibility | 통과 | `BB_AIPerf_Default`의 Combat Participation key를 동기화하고 Focus 의존성과 stale BT 값을 정리했다. Baseline 40Enemy headless load와 PIE에서 ensure·stale 값 없이 상태 전이를 확인했다. |

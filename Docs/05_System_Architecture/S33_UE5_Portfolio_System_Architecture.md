@@ -17,7 +17,7 @@
 - Goal 2 — 공통 Combat Target Kernel: 구현 완료
 - Goal 3 — Player Target 마이그레이션: 구현 완료
 - Goal 4 — Enemy Target Selection 및 Blackboard 투영: 구현 완료 (Participation 전환 전 중간 단계)
-- Goal 7 — Enemy Combat Participation Lifecycle: Evidence-centric runtime 구조와 producer/time policy/Intent/Action lock 구현 완료. 현재 브랜치 마감 전 코드·UAsset consumer·PIE 최종 검증 진행 중이며, grace/cooldown은 별도 정책 범위다.
+- Goal 7 — Enemy Combat Participation Lifecycle: Evidence-centric runtime 구조와 producer/time policy/Intent/Action lock 구현 및 코드·UAsset consumer·PIE 최종 검증 완료. grace/cooldown은 별도 정책 범위다.
 
 Enemy Participation의 Evidence, Engage Admission, Assignment lifecycle 정책은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 정규 기준으로 사용한다.
 
@@ -720,7 +720,7 @@ Facing Consumer는 Combat Target Snapshot만 소비하는 구조로 유지한다
 
 ## Goal 7 — Enemy Combat Participation Lifecycle Migration
 
-상태: Evidence-centric runtime 구현 완료 — 브랜치 마감 전 코드·문서·UAsset consumer·PIE 최종 검증 진행 중
+상태: Evidence-centric runtime 구현 및 코드·문서·UAsset consumer·PIE 최종 검증 완료
 
 - `UWorldSubsystem_CombatParticipation`으로 역할·명칭 전환하고 기존 class path는 Core Redirect로 호환
 - `UCEnemyCombatParticipationComponent`가 `UCEnemyTargetSelectionComponent`를 대체하며 기존 class/property path는 Core Redirect로 호환

@@ -3,12 +3,14 @@
 ## 1. 문서 상태
 
 ```text
-Status: 확정 설계 / 구현 전
-Current Scope: Goal 1 — 현행 조사와 설계 확정
-Target Branch: feature/combat-target-provider
+Status: Historical Design Baseline / 구현 완료 후 참조 기록
+Original Scope: Goal 1 — 현행 조사와 설계 확정
+Implemented Branch: feature/combat-target-participation
 ```
 
 이 문서는 Player와 Enemy가 공통으로 사용하는 전투 대상 상태의 Source of Truth와, 그 상태를 결정·투영·소비하는 계층의 경계를 고정한다.
+
+> **현재 계약 안내**: 이 문서는 구현 전 단계에서 작성한 경계 설계와 마이그레이션 계획을 보존한다. 본문에 남아 있는 `UCBTTask_SetFocus`, `ICombatTargetProvider`, Goal 1 이후 계획은 당시의 조사·전환 기준이며 현재 runtime API가 아니다. 현재 공통 Combat Target 구현은 [S33](S33_UE5_Portfolio_System_Architecture.md), Enemy Evidence·Assignment·Investigate 정책은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 정규 기준으로 사용한다.
 
 기존 S32의 다음 방안은 폐기한다.
 
