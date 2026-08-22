@@ -109,6 +109,7 @@ public:
 	// Query
 	EPerceptionBuildResult BuildPerceptionContext(FPerceptionTargetContext& OutPerceptionTargetContext);
 	void RefreshParticipationEvidenceFromPerception();
+	bool TryGetPerceptionEvidenceLifetimeDebug(const class AActor* InTarget, bool& OutHasLOS, float& OutMemoryRemainingSeconds) const;
 	void HandleCombatParticipationEvidenceExhausted(const struct FCombatParticipationEvidenceExhaustedEvent& InEvent);
 	void CancelInvestigateForNewCombatEvidence();
 

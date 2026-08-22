@@ -27,7 +27,6 @@ public:
 	static bool ShouldDrawSelectedTargetSphere();
 	static bool ShouldDrawViewLine();
 	static bool ShouldDrawDebugText();
-	static bool ShouldShowOverlayDetails();
 	static FTargetingDebugOverlayDetails BuildOverlayDetails(const FTargetingEvaluation& InEvaluation);
 
 	// World Draw

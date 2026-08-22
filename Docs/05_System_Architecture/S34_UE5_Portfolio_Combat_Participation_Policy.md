@@ -39,7 +39,7 @@ Evidence는 active Evidence Registry에서 즉시 제거해야 하며, stale Can
 
 ## 3. HitReactive Evidence 수명
 
-`Portfolio.AI.CombatParticipation.HitReactivePostReactionTTL`의 기본값은 60초다. 이것은
+`Portfolio.AI.CombatParticipation.HitReactivePostReactionTTL`의 기본값은 20초다. 이것은
 Extra slot 전용 hold가 아니라 HitReactive Evidence 자체의 유효 기간이다.
 
 ```text

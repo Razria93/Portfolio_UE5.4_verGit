@@ -59,6 +59,49 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 12.f)
 				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.f, 0.f, 0.f, 6.f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("MainPanelSectionsTitle", "Main Panel Sections"))
+						.Font(FAppStyle::GetFontStyle("BoldFont"))
+					]
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.f, 0.f, 0.f, 6.f)
+					[
+						SNew(STextBlock)
+						.Text_Lambda([]()
+						{
+							return CVarAccess::HasMainPanelSectionCVars()
+								? LOCTEXT("MainPanelSectionsDescription", "Select the actor sections and detail blocks shown in Panel_01.")
+								: LOCTEXT("MainPanelSectionsUnavailable", "Main panel section CVars are unavailable. Start the game module or PIE if needed.");
+						})
+						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+					]
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SBorder)
+						.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+						.Padding(8.f)
+						[
+							MakeMainPanelSections()
+						]
+					]
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
+					MakeTopLevelSection(LOCTEXT("WorldSummarySectionsTitle", "World Summary Sections"), MakeWorldSummarySections())
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
 					MakeTargetingDisplayOptionsSection()
 				]
 				+ SVerticalBox::Slot()
@@ -159,6 +202,44 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeOverlayOptionsSectio
 		+ SVerticalBox::Slot().AutoHeight()[MakeRefreshRow()];
 }
 
+// ===== Main Panel Sections =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelSections()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()
+		[
+			MakeBoolCVarRow(LOCTEXT("PlayerPanelLabel", "Player"), LOCTEXT("PlayerPanelHelp", "Show or hide all Player detail blocks. Child selections are retained."), CVarAccess::GetPlayerPanelEnabledCVarName())
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerStatusLabel", "Status"), LOCTEXT("PlayerStatusHelp", "Show Player state, action, reaction, health and movement."), CVarAccess::GetPlayerStatusEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerLocomotionLabel", "Locomotion"), LOCTEXT("PlayerLocomotionHelp", "Show Player locomotion input details."), CVarAccess::GetPlayerLocomotionEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerTargetingLabel", "Targeting"), LOCTEXT("PlayerTargetingHelp", "Show Player targeting score details."), CVarAccess::GetPlayerTargetingEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerRecentExecutionLabel", "Recent Execution"), LOCTEXT("PlayerRecentExecutionHelp", "Show the most recent Player execution event."), CVarAccess::GetPlayerRecentExecutionEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
+		+ SVerticalBox::Slot().AutoHeight()
+		[
+			MakeBoolCVarRow(LOCTEXT("EnemyPanelLabel", "Enemy"), LOCTEXT("EnemyPanelHelp", "Show or hide all Enemy detail blocks. Child selections are retained."), CVarAccess::GetEnemyPanelEnabledCVarName())
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyFocusLabel", "Focus"), LOCTEXT("EnemyFocusHelp", "Show selected Enemy focus details."), CVarAccess::GetEnemyFocusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyStatusLabel", "Status"), LOCTEXT("EnemyStatusHelp", "Show Enemy state, action, reaction, health and movement."), CVarAccess::GetEnemyStatusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCombatParticipationLabel", "Combat Participation"), LOCTEXT("EnemyCombatParticipationHelp", "Show focused Enemy combat participation details."), CVarAccess::GetEnemyCombatParticipationEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyDeathLifecycleLabel", "Death Lifecycle"), LOCTEXT("EnemyDeathLifecycleHelp", "Show Enemy death lifecycle details."), CVarAccess::GetEnemyDeathLifecycleEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyRecentExecutionLabel", "Recent Execution"), LOCTEXT("EnemyRecentExecutionHelp", "Show the most recent Enemy execution event."), CVarAccess::GetEnemyRecentExecutionEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCurrentAILabel", "Current AI"), LOCTEXT("EnemyCurrentAIHelp", "Show the focused Enemy AI state."), CVarAccess::GetEnemyCurrentAIEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyRecentAIEventLabel", "Recent AI Event"), LOCTEXT("EnemyRecentAIEventHelp", "Show the most recent focused Enemy AI event."), CVarAccess::GetEnemyRecentAIEventEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())];
+}
+
+// ===== World Summary Sections =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeWorldSummarySections()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()
+		[
+			MakeBoolCVarRow(LOCTEXT("WorldSummaryCombatParticipationLabel", "Combat Participation"), LOCTEXT("WorldSummaryCombatParticipationHelp", "Show target slot and participation summaries in Panel_03."), CVarAccess::GetWorldSummaryCombatParticipationEnabledCVarName())
+		];
+}
+
 // ===== Targeting Debug =====
 
 TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDisplayOptionsSection()
@@ -200,12 +281,11 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDisplayOpti
 TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDebugSection()
 {
 	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingEnabledLabel", "Enabled"), LOCTEXT("TargetingEnabledHelp", "Enable targeting world debug and Overlay details. World debug remains available when the Overlay HUD is disabled."), CVarAccess::GetTargetingEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingEnabledLabel", "Enabled"), LOCTEXT("TargetingEnabledHelp", "Enable targeting debug data and world visualization. Panel_01 targeting display requires this domain gate."), CVarAccess::GetTargetingEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingRangeLabel", "Range Sphere"), LOCTEXT("TargetingRangeHelp", "Draw the maximum targeting range around the viewpoint."), CVarAccess::GetTargetingDrawRangeSphereCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingSphereLabel", "Selected Target Sphere"), LOCTEXT("TargetingSphereHelp", "Draw a sphere around the current player target."), CVarAccess::GetTargetingDrawSelectedTargetSphereCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLineLabel", "View Line"), LOCTEXT("TargetingLineHelp", "Draw a line from the viewpoint to the current player target."), CVarAccess::GetTargetingDrawViewLineCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingTextLabel", "World Debug Text"), LOCTEXT("TargetingTextHelp", "Draw distance, Dot and score at the current player target."), CVarAccess::GetTargetingDrawDebugTextCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingDetailsLabel", "Overlay Details"), LOCTEXT("TargetingDetailsHelp", "Show targeting score details in the Debug Overlay."), CVarAccess::GetTargetingShowOverlayDetailsCVarName())];
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingTextLabel", "World Debug Text"), LOCTEXT("TargetingTextHelp", "Draw distance, Dot and score at the current player target."), CVarAccess::GetTargetingDrawDebugTextCVarName())];
 }
 
 // ===== Movement Debug =====
@@ -249,12 +329,11 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDisplayOptio
 TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDebugSection()
 {
 	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementEnabledLabel", "Enabled"), LOCTEXT("MovementEnabledHelp", "Enable movement world debug and Overlay details. World debug remains available when the Overlay HUD is disabled."), CVarAccess::GetMovementEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementEnabledLabel", "Enabled"), LOCTEXT("MovementEnabledHelp", "Enable movement debug data and world visualization. Panel_01 locomotion display requires this domain gate."), CVarAccess::GetMovementEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementVelocityLabel", "Velocity Arrow"), LOCTEXT("MovementVelocityHelp", "Draw the current world velocity direction and magnitude."), CVarAccess::GetMovementDrawVelocityCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementInputLabel", "Last Input Arrow"), LOCTEXT("MovementInputHelp", "Draw the last movement input direction."), CVarAccess::GetMovementDrawInputCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementFacingLabel", "Facing Arrow"), LOCTEXT("MovementFacingHelp", "Draw the current actor facing direction."), CVarAccess::GetMovementDrawFacingCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementTextLabel", "World Debug Text"), LOCTEXT("MovementTextHelp", "Draw movement speed and direction near the player."), CVarAccess::GetMovementDrawDebugTextCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementDetailsLabel", "Overlay Details"), LOCTEXT("MovementDetailsHelp", "Show movement inputs in the Debug Overlay."), CVarAccess::GetMovementShowOverlayDetailsCVarName())];
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementTextLabel", "World Debug Text"), LOCTEXT("MovementTextHelp", "Draw movement speed and direction near the player."), CVarAccess::GetMovementDrawDebugTextCVarName())];
 }
 
 // ===== Combat Participation Debug =====
@@ -298,15 +377,15 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatParticipationD
 TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatParticipationDebugSection()
 {
 	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationEnabledLabel", "Enabled"), LOCTEXT("CombatParticipationEnabledHelp", "Enable Combat Participation world debug and Overlay details. World debug remains available when the Overlay HUD is disabled."), CVarAccess::GetCombatParticipationEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationEnabledLabel", "Enabled"), LOCTEXT("CombatParticipationEnabledHelp", "Enable Combat Participation debug data and world visualization. Panel_01 and Panel_03 require this domain gate."), CVarAccess::GetCombatParticipationEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationWorldTextLabel", "World Text"), LOCTEXT("CombatParticipationWorldTextHelp", "Draw role, evidence, target and protection state above participating Enemy actors."), CVarAccess::GetCombatParticipationDrawWorldTextCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationWorldRingLabel", "World Ring"), LOCTEXT("CombatParticipationWorldRingHelp", "Draw role and admission color rings below participating Enemy actors."), CVarAccess::GetCombatParticipationDrawWorldRingCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationDetailsLabel", "Overlay Details"), LOCTEXT("CombatParticipationDetailsHelp", "Show focused Enemy participation details and target slot summaries in the Debug Overlay."), CVarAccess::GetCombatParticipationShowOverlayDetailsCVarName())];
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationWorldRingLabel", "World Ring"), LOCTEXT("CombatParticipationWorldRingHelp", "Draw role and evidence color rings below participating Enemy actors."), CVarAccess::GetCombatParticipationDrawWorldRingCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationHitReactiveEvidenceAnchorLabel", "HitReactive Evidence Anchor"), LOCTEXT("CombatParticipationHitReactiveEvidenceAnchorHelp", "Draw each live HitReactive Evidence anchor point, Target connection and active 2D radius."), CVarAccess::GetCombatParticipationDrawHitReactiveEvidenceAnchorCVarName())];
 }
 
 // ===== CVar Rows =====
 
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName) const
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, TFunction<bool()> InAdditionalEnabledPredicate) const
 {
 	return SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot()
@@ -335,9 +414,10 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBoolCVarRow(const FT
 		.Padding(12.f, 0.f)
 		[
 			SNew(SCheckBox)
-			.IsEnabled_Lambda([InCVarName]()
+			.IsEnabled_Lambda([InCVarName, InAdditionalEnabledPredicate]()
 			{
-				return CVarAccess::FindCVar(InCVarName) != nullptr;
+				return CVarAccess::FindCVar(InCVarName) != nullptr
+					&& (!InAdditionalEnabledPredicate || InAdditionalEnabledPredicate());
 			})
 			.IsChecked_Lambda([InCVarName]()
 			{
@@ -359,6 +439,14 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBoolCVarRow(const FT
 			})
 			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelChildRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, const TCHAR* InParentCVarName) const
+{
+	return MakeBoolCVarRow(InLabel, InHelp, InCVarName, [InParentCVarName]()
+	{
+		return CVarAccess::GetBool(InParentCVarName);
+	});
 }
 
 TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogFilterRow()

@@ -433,8 +433,28 @@ void ACAIController::RefreshParticipationEvidenceFromPerception()
 		evidenceContext.ObservedTargetLocation = context.TargetActor->GetActorLocation();
 		evidenceContext.ObservedTargetVelocity = context.TargetActor->GetVelocity();
 		evidenceContext.bHasTargetObservation = true;
+
 		participationComp->ReportEvidence(ECombatParticipationSource::Perception, context.TargetActor, evidenceContext);
 	}
+}
+
+bool ACAIController::TryGetPerceptionEvidenceLifetimeDebug(const AActor* InTarget, bool& OutHasLOS, float& OutMemoryRemainingSeconds) const
+{
+	OutHasLOS = false;
+	OutMemoryRemainingSeconds = 0.f;
+	if (!IsValid(InTarget)) return false;
+
+	const FPerceptionTargetContext* context = PerceptionTargetContextMap.Find(const_cast<AActor*>(InTarget));
+	if (!context || !context->HasTarget()) return false;
+
+	OutHasLOS = context->bHasLOS;
+	if (OutHasLOS) return true;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return false;
+
+	OutMemoryRemainingSeconds = FMath::Max(0.f, PerceptionSetup.TargetMemoryTimeout - (world->GetTimeSeconds() - context->LastSeenTime));
+	return true;
 }
 
 void ACAIController::HandleCombatParticipationEvidenceExhausted(const FCombatParticipationEvidenceExhaustedEvent& InEvent)

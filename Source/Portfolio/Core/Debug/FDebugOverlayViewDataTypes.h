@@ -109,6 +109,7 @@ struct FDebugOverlayActorPanelViewData
 	FString HeaderText;
 	bool bIncludeFocus = false;
 	FDebugOverlayFocusViewData Focus;
+	bool bIncludeStatus = false;
 	bool bIncludeTargeting = false;
 	FDebugOverlayPlayerTargetingViewData Targeting;
 	bool bIncludeLocomotion = false;
@@ -120,6 +121,7 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayRecentExecutionViewData RecentExecution;
 	bool bIncludeDeathLifecycle = false;
 	FDebugOverlayDeathLifecycleViewData DeathLifecycle;
+	bool bIncludeRecentExecution = false;
 	bool bIncludeCurrentAI = false;
 	FDebugOverlayCurrentAIViewData CurrentAI;
 	bool bIncludeRecentAIEvent = false;

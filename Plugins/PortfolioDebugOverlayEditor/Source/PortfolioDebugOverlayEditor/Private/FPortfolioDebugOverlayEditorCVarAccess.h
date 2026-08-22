@@ -17,6 +17,26 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetDeathLifecycleAuditCVarName();
 	const TCHAR* GetNearestFocusRadiusCVarName();
 
+	// ===== Main Panel Section CVars =====
+
+	const TCHAR* GetPlayerPanelEnabledCVarName();
+	const TCHAR* GetPlayerStatusEnabledCVarName();
+	const TCHAR* GetPlayerTargetingEnabledCVarName();
+	const TCHAR* GetPlayerLocomotionEnabledCVarName();
+	const TCHAR* GetPlayerRecentExecutionEnabledCVarName();
+	const TCHAR* GetEnemyPanelEnabledCVarName();
+	const TCHAR* GetEnemyFocusEnabledCVarName();
+	const TCHAR* GetEnemyStatusEnabledCVarName();
+	const TCHAR* GetEnemyCombatParticipationEnabledCVarName();
+	const TCHAR* GetEnemyDeathLifecycleEnabledCVarName();
+	const TCHAR* GetEnemyRecentExecutionEnabledCVarName();
+	const TCHAR* GetEnemyCurrentAIEnabledCVarName();
+	const TCHAR* GetEnemyRecentAIEventEnabledCVarName();
+
+	// ===== World Summary Section CVars =====
+
+	const TCHAR* GetWorldSummaryCombatParticipationEnabledCVarName();
+
 	// ===== Targeting Display CVars =====
 
 	const TCHAR* GetTargetingEnabledCVarName();
@@ -24,7 +44,6 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetTargetingDrawSelectedTargetSphereCVarName();
 	const TCHAR* GetTargetingDrawViewLineCVarName();
 	const TCHAR* GetTargetingDrawDebugTextCVarName();
-	const TCHAR* GetTargetingShowOverlayDetailsCVarName();
 
 	// ===== Movement Display CVars =====
 
@@ -33,14 +52,13 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetMovementDrawInputCVarName();
 	const TCHAR* GetMovementDrawFacingCVarName();
 	const TCHAR* GetMovementDrawDebugTextCVarName();
-	const TCHAR* GetMovementShowOverlayDetailsCVarName();
 
 	// ===== Combat Participation Display CVars =====
 
 	const TCHAR* GetCombatParticipationEnabledCVarName();
 	const TCHAR* GetCombatParticipationDrawWorldTextCVarName();
 	const TCHAR* GetCombatParticipationDrawWorldRingCVarName();
-	const TCHAR* GetCombatParticipationShowOverlayDetailsCVarName();
+	const TCHAR* GetCombatParticipationDrawHitReactiveEvidenceAnchorCVarName();
 
 	// ===== Focus CVars =====
 
@@ -65,6 +83,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	// ===== CVar Availability =====
 
 	bool HasOverlayCVars();
+	bool HasMainPanelSectionCVars();
 	bool HasTargetingDisplayCVars();
 	bool HasMovementDisplayCVars();
 	bool HasCombatParticipationDisplayCVars();

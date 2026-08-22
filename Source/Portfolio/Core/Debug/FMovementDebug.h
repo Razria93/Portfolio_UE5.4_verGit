@@ -39,7 +39,6 @@ public:
 	static bool ShouldDrawInput();
 	static bool ShouldDrawFacing();
 	static bool ShouldDrawDebugText();
-	static bool ShouldShowOverlayDetails();
 
 	// ===== Audit Gate =====
 

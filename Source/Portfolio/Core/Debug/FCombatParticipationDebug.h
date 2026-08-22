@@ -11,6 +11,8 @@ struct FCombatParticipationDebugOverlayDetails
 	FString RoleText;
 	FString AdmissionText;
 	FString EvidenceText;
+	FString PerceptionLifetimeText;
+	FString HitReactiveLifetimeText;
 	FString TargetText;
 	FString AssignmentRevisionText;
 	FString RetentionText;
@@ -22,7 +24,7 @@ public:
 	static bool IsEnabled();
 	static bool ShouldDrawWorldText();
 	static bool ShouldDrawWorldRing();
-	static bool ShouldShowOverlayDetails();
+	static bool ShouldDrawHitReactiveEvidenceAnchor();
 
 	static FCombatParticipationDebugOverlayDetails BuildOverlayDetails(const FCombatParticipationDebugSnapshot& InSnapshot, const AActor* InParticipantActor);
 	static TArray<FString> BuildWorldSummaryLines(const FCombatParticipationDebugSnapshot& InSnapshot);

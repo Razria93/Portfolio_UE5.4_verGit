@@ -38,11 +38,6 @@ namespace
 		TEXT("Draw player targeting debug text at the current target. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarTargetingShowOverlayDetails(
-		TEXT("Portfolio.DebugOverlay.Targeting.ShowOverlayDetails"),
-		1,
-		TEXT("Show player targeting score details in Debug Overlay. 0: disabled, 1: enabled."),
-		ECVF_Default);
 #endif
 
 }
@@ -92,19 +87,10 @@ bool FTargetingDebug::ShouldDrawDebugText()
 #endif
 }
 
-bool FTargetingDebug::ShouldShowOverlayDetails()
-{
-#if !UE_BUILD_SHIPPING
-	return IsEnabled() && CVarTargetingShowOverlayDetails.GetValueOnGameThread() != 0;
-#else
-	return false;
-#endif
-}
-
 FTargetingDebugOverlayDetails FTargetingDebug::BuildOverlayDetails(const FTargetingEvaluation& InEvaluation)
 {
 	FTargetingDebugOverlayDetails details;
-	if (!ShouldShowOverlayDetails()) return details;
+	if (!IsEnabled()) return details;
 
 	details.bHasSnapshot = true;
 	AActor* targetActor = InEvaluation.TargetActor.Get();

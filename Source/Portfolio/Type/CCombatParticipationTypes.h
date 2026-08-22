@@ -189,7 +189,15 @@ struct FCombatParticipationDebugEntry
 	EEngageAdmissionKind EngageAdmission = EEngageAdmissionKind::None;
 	int32 AssignmentRevision = 0;
 	bool bHasPerceptionEvidence = false;
+	bool bHasPerceptionEvidenceLifetimeState = false;
+	bool bHasPerceptionLOS = false;
+	float PerceptionMemoryRemainingSeconds = 0.f;
 	bool bHasHitReactiveEvidence = false;
+	bool bHasStartedHitReactivePostReactionTTL = false;
+	float HitReactivePostReactionTTLRemainingSeconds = 0.f;
+	bool bHasHitReactiveEvidenceAnchor = false;
+	FVector HitReactiveEvidenceAnchorLocation = FVector::ZeroVector;
+	float HitReactiveEvidenceAnchorRadius = 0.f;
 	bool bHasAssignmentLock = false;
 };
 

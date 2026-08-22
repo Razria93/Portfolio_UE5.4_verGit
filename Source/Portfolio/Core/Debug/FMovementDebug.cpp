@@ -18,7 +18,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarMovementDebugEnabled(
 		TEXT("Portfolio.DebugOverlay.Movement.Enabled"),
 		0,
-		TEXT("Enable movement debug visualization and Debug Overlay locomotion details. 0: disabled, 1: enabled."),
+		TEXT("Enable movement debug data and world visualization. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarMovementDrawVelocity(
@@ -43,12 +43,6 @@ namespace
 		TEXT("Portfolio.DebugOverlay.Movement.DrawDebugText"),
 		1,
 		TEXT("Draw movement speed and direction debug text. 0: disabled, 1: enabled."),
-		ECVF_Default);
-
-	TAutoConsoleVariable<int32> CVarMovementShowOverlayDetails(
-		TEXT("Portfolio.DebugOverlay.Movement.ShowOverlayDetails"),
-		1,
-		TEXT("Show locomotion details in Debug Overlay. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
 	// ===== Audit CVar =====
@@ -163,15 +157,6 @@ bool FMovementDebug::ShouldDrawDebugText()
 #endif
 }
 
-bool FMovementDebug::ShouldShowOverlayDetails()
-{
-#if !UE_BUILD_SHIPPING
-	return IsEnabled() && CVarMovementShowOverlayDetails.GetValueOnGameThread() != 0;
-#else
-	return false;
-#endif
-}
-
 // ===== Audit Gate =====
 
 bool FMovementDebug::ShouldAuditMovement()
@@ -212,7 +197,7 @@ FMovementDebugSnapshot FMovementDebug::BuildSnapshot(const APawn* InPawn)
 FMovementDebugOverlayDetails FMovementDebug::BuildOverlayDetails(const FMovementDebugSnapshot& InSnapshot)
 {
 	FMovementDebugOverlayDetails details;
-	if (!ShouldShowOverlayDetails() || !InSnapshot.bHasSnapshot) return details;
+	if (!IsEnabled() || !InSnapshot.bHasSnapshot) return details;
 
 	details.bHasSnapshot = true;
 	details.VelocityWorldText = FormatMovementDebugVector2D(InSnapshot.VelocityWorld);

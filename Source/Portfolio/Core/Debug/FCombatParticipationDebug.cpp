@@ -7,10 +7,10 @@
 namespace
 {
 #if !UE_BUILD_SHIPPING
-	TAutoConsoleVariable<int32> CVarCombatParticipationDebugEnabled(TEXT("Portfolio.DebugOverlay.CombatParticipation.Enabled"), 0, TEXT("Enable Combat Participation world debug and Overlay details. 0: disabled, 1: enabled."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarCombatParticipationDebugEnabled(TEXT("Portfolio.DebugOverlay.CombatParticipation.Enabled"), 0, TEXT("Enable Combat Participation debug data and world visualization. 0: disabled, 1: enabled."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarCombatParticipationDrawWorldText(TEXT("Portfolio.DebugOverlay.CombatParticipation.DrawWorldText"), 1, TEXT("Draw Combat Participation state text above Enemy actors. 0: disabled, 1: enabled."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarCombatParticipationDrawWorldRing(TEXT("Portfolio.DebugOverlay.CombatParticipation.DrawWorldRing"), 1, TEXT("Draw Combat Participation state rings below Enemy actors. 0: disabled, 1: enabled."), ECVF_Default);
-	TAutoConsoleVariable<int32> CVarCombatParticipationShowOverlayDetails(TEXT("Portfolio.DebugOverlay.CombatParticipation.ShowOverlayDetails"), 1, TEXT("Show Combat Participation details in Debug Overlay. 0: disabled, 1: enabled."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarCombatParticipationDrawHitReactiveEvidenceAnchor(TEXT("Portfolio.DebugOverlay.CombatParticipation.DrawHitReactiveEvidenceAnchor"), 0, TEXT("Draw each live HitReactive Evidence anchor point, Target connection and 2D radius. 0: disabled, 1: enabled."), ECVF_Default);
 #endif
 
 	FString FormatRole(ECombatRole InRole)
@@ -42,6 +42,23 @@ namespace
 		return TEXT("None");
 	}
 
+	FString FormatPerceptionEvidenceLifetime(const FCombatParticipationDebugEntry& InEntry)
+	{
+		if (!InEntry.bHasPerceptionEvidence) return FString();
+		if (!InEntry.bHasPerceptionEvidenceLifetimeState) return TEXT("Context unavailable");
+		if (InEntry.bHasPerceptionLOS) return TEXT("LOS");
+
+		return FString::Printf(TEXT("Memory %.1fs"), InEntry.PerceptionMemoryRemainingSeconds);
+	}
+
+	FString FormatHitReactiveEvidenceLifetime(const FCombatParticipationDebugEntry& InEntry)
+	{
+		if (!InEntry.bHasHitReactiveEvidence) return FString();
+		if (!InEntry.bHasStartedHitReactivePostReactionTTL) return TEXT("Awaiting reaction");
+
+		return FString::Printf(TEXT("TTL %.1fs"), InEntry.HitReactivePostReactionTTLRemainingSeconds);
+	}
+
 	FString FormatAssignmentState(const FCombatParticipationDebugEntry& InEntry)
 	{
 		TArray<FString> states;
@@ -51,10 +68,27 @@ namespace
 
 	FColor ResolveRoleColor(const FCombatParticipationDebugEntry& InEntry)
 	{
-		if (InEntry.CombatRole == ECombatRole::Engage) return FColor::Orange;
+		if (InEntry.CombatRole == ECombatRole::Engage)
+		{
+			if (InEntry.bHasPerceptionEvidence && InEntry.bHasHitReactiveEvidence) return FColor::Red;
+			if (InEntry.bHasHitReactiveEvidence) return FColor::Magenta;
+			return FColor::Orange;
+		}
 		if (InEntry.CombatRole == ECombatRole::Alert) return FColor::Yellow;
 		if (InEntry.CombatRole == ECombatRole::Observe) return FColor::Blue;
 		return FColor::Silver;
+	}
+
+	void DrawHitReactiveEvidenceAnchor(UWorld* InWorld, const FCombatParticipationDebugEntry& InEntry)
+	{
+		if (!IsValid(InWorld) || !InEntry.bHasHitReactiveEvidence || !InEntry.bHasHitReactiveEvidenceAnchor || !IsValid(InEntry.TargetActor)) return;
+
+		const FColor anchorColor = FColor::Cyan;
+		const FVector anchorLocation = InEntry.HitReactiveEvidenceAnchorLocation;
+		const FVector targetLocation = InEntry.TargetActor->GetActorLocation();
+		DrawDebugPoint(InWorld, anchorLocation + FVector(0.f, 0.f, 8.f), 16.f, anchorColor, false, 0.f);
+		DrawDebugLine(InWorld, anchorLocation + FVector(0.f, 0.f, 8.f), targetLocation + FVector(0.f, 0.f, 16.f), anchorColor, false, 0.f, 0, 1.5f);
+		DrawDebugCircle(InWorld, anchorLocation + FVector(0.f, 0.f, 4.f), InEntry.HitReactiveEvidenceAnchorRadius, 48, anchorColor, false, 0.f, 0, 1.5f, FVector::ForwardVector, FVector::RightVector, false);
 	}
 }
 
@@ -85,10 +119,10 @@ bool FCombatParticipationDebug::ShouldDrawWorldRing()
 #endif
 }
 
-bool FCombatParticipationDebug::ShouldShowOverlayDetails()
+bool FCombatParticipationDebug::ShouldDrawHitReactiveEvidenceAnchor()
 {
 #if !UE_BUILD_SHIPPING
-	return IsEnabled() && CVarCombatParticipationShowOverlayDetails.GetValueOnGameThread() != 0;
+	return IsEnabled() && CVarCombatParticipationDrawHitReactiveEvidenceAnchor.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -97,7 +131,7 @@ bool FCombatParticipationDebug::ShouldShowOverlayDetails()
 FCombatParticipationDebugOverlayDetails FCombatParticipationDebug::BuildOverlayDetails(const FCombatParticipationDebugSnapshot& InSnapshot, const AActor* InParticipantActor)
 {
 	FCombatParticipationDebugOverlayDetails details;
-	if (!InSnapshot.bHasSnapshot || !IsValid(InParticipantActor)) return details;
+	if (!IsEnabled() || !InSnapshot.bHasSnapshot || !IsValid(InParticipantActor)) return details;
 
 	for (const FCombatParticipationDebugEntry& entry : InSnapshot.Entries)
 	{
@@ -107,6 +141,8 @@ FCombatParticipationDebugOverlayDetails FCombatParticipationDebug::BuildOverlayD
 		details.RoleText = FormatRole(entry.CombatRole);
 		details.AdmissionText = FormatAdmission(entry.EngageAdmission);
 		details.EvidenceText = FormatEvidence(entry);
+		details.PerceptionLifetimeText = FormatPerceptionEvidenceLifetime(entry);
+		details.HitReactiveLifetimeText = FormatHitReactiveEvidenceLifetime(entry);
 		details.TargetText = GetNameSafe(entry.TargetActor);
 		details.AssignmentRevisionText = FString::FromInt(entry.AssignmentRevision);
 		details.RetentionText = FormatAssignmentState(entry);
@@ -119,18 +155,22 @@ FCombatParticipationDebugOverlayDetails FCombatParticipationDebug::BuildOverlayD
 TArray<FString> FCombatParticipationDebug::BuildWorldSummaryLines(const FCombatParticipationDebugSnapshot& InSnapshot)
 {
 	TArray<FString> lines;
-	if (!InSnapshot.bHasSnapshot || InSnapshot.TargetSummaries.IsEmpty()) return lines;
+	if (!IsEnabled() || !InSnapshot.bHasSnapshot || InSnapshot.TargetSummaries.IsEmpty()) return lines;
 
-	for (const FCombatParticipationDebugTargetSummary& summary : InSnapshot.TargetSummaries)
+	for (int32 summaryIndex = 0; summaryIndex < InSnapshot.TargetSummaries.Num(); ++summaryIndex)
 	{
-		lines.Add(FString::Printf(
-			TEXT("Target: %s | Engage: %d / %d (Base %d/%d | Extra %d/%d) | Alert: %d / %d | Observe: %d / %d"),
-			*GetNameSafe(summary.TargetActor),
-			summary.EngageCount, summary.TotalEngageCap,
-			summary.GeneralBaseEngageCount, summary.GeneralBaseEngageCap,
-			summary.HitReactiveExtraEngageCount, summary.HitReactiveExtraEngageCap,
-			summary.AlertCount, summary.AlertCap,
-			summary.ObserveCount, summary.ObserveCap));
+		const FCombatParticipationDebugTargetSummary& summary = InSnapshot.TargetSummaries[summaryIndex];
+		if (summaryIndex > 0)
+		{
+			lines.Add(TEXT(""));
+		}
+
+		lines.Add(FString::Printf(TEXT("Target: %s"), *GetNameSafe(summary.TargetActor)));
+		lines.Add(FString::Printf(TEXT("Engage: %d / %d"), summary.EngageCount, summary.TotalEngageCap));
+		lines.Add(FString::Printf(TEXT("  - Base: %d / %d"), summary.GeneralBaseEngageCount, summary.GeneralBaseEngageCap));
+		lines.Add(FString::Printf(TEXT("  - HitReactive Extra: %d / %d"), summary.HitReactiveExtraEngageCount, summary.HitReactiveExtraEngageCap));
+		lines.Add(FString::Printf(TEXT("Alert: %d / %d"), summary.AlertCount, summary.AlertCap));
+		lines.Add(FString::Printf(TEXT("Observe: %d / %d"), summary.ObserveCount, summary.ObserveCap));
 	}
 
 	return lines;
@@ -140,6 +180,7 @@ void FCombatParticipationDebug::DrawWorldDebug(UWorld* InWorld, const FCombatPar
 {
 	if (!IsEnabled() || !IsValid(InWorld) || !InSnapshot.bHasSnapshot) return;
 
+	TMap<const AActor*, int32> worldTextRowByParticipant;
 	for (const FCombatParticipationDebugEntry& entry : InSnapshot.Entries)
 	{
 		if (!IsValid(entry.ParticipantActor)) continue;
@@ -151,13 +192,25 @@ void FCombatParticipationDebug::DrawWorldDebug(UWorld* InWorld, const FCombatPar
 			DrawDebugCircle(InWorld, location + FVector(0.f, 0.f, 8.f), 42.f, 24, color, false, 0.f, 0, 2.f, FVector::ForwardVector, FVector::RightVector, false);
 			if (entry.bHasAssignmentLock) DrawDebugCircle(InWorld, location + FVector(0.f, 0.f, 10.f), 48.f, 24, FColor::White, false, 0.f, 0, 1.f, FVector::ForwardVector, FVector::RightVector, false);
 		}
+		if (ShouldDrawHitReactiveEvidenceAnchor()) DrawHitReactiveEvidenceAnchor(InWorld, entry);
 
 		if (ShouldDrawWorldText())
 		{
-			const FString text = FString::Printf(TEXT("[%s | %s]\nEvidence: %s\nTarget: %s | Rev: %d | State: %s"),
-				*FormatRole(entry.CombatRole), *FormatAdmission(entry.EngageAdmission), *FormatEvidence(entry), *GetNameSafe(entry.TargetActor), entry.AssignmentRevision,
-				*FormatAssignmentState(entry));
-			DrawDebugString(InWorld, location + FVector(0.f, 0.f, 120.f), text, nullptr, color, 0.f, false, 1.f);
+			TArray<FString> textLines;
+			textLines.Add(FString::Printf(TEXT("[%s | %s]"), *FormatRole(entry.CombatRole), *FormatAdmission(entry.EngageAdmission)));
+			textLines.Add(FString::Printf(TEXT("Evidence: %s"), *FormatEvidence(entry)));
+
+			const FString perceptionLifetimeText = FormatPerceptionEvidenceLifetime(entry);
+			if (!perceptionLifetimeText.IsEmpty()) textLines.Add(FString::Printf(TEXT("Perception: %s"), *perceptionLifetimeText));
+
+			const FString hitReactiveLifetimeText = FormatHitReactiveEvidenceLifetime(entry);
+			if (!hitReactiveLifetimeText.IsEmpty()) textLines.Add(FString::Printf(TEXT("HitReactive: %s"), *hitReactiveLifetimeText));
+
+			textLines.Add(FString::Printf(TEXT("Target: %s | Rev: %d | State: %s"), *GetNameSafe(entry.TargetActor), entry.AssignmentRevision, *FormatAssignmentState(entry)));
+
+			int32& worldTextRow = worldTextRowByParticipant.FindOrAdd(entry.ParticipantActor);
+			const FVector textLocation = location + FVector(0.f, 0.f, 120.f + (worldTextRow++ * 96.f));
+			DrawDebugString(InWorld, textLocation, FString::Join(textLines, TEXT("\n")), nullptr, color, 0.f, false, 1.f);
 		}
 	}
 }

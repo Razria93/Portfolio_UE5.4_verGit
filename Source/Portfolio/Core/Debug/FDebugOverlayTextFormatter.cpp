@@ -137,6 +137,14 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, TEXT("[Combat Participation]"));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Role: %s | Admission: %s"), *details.RoleText, *details.AdmissionText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Evidence: %s"), *details.EvidenceText));
+		if (!details.PerceptionLifetimeText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Perception Lifetime: %s"), *details.PerceptionLifetimeText));
+		}
+		if (!details.HitReactiveLifetimeText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("HitReactive Lifetime: %s"), *details.HitReactiveLifetimeText));
+		}
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Target: %s | Assignment Revision: %s"), *details.TargetText, *details.AssignmentRevisionText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Protection: %s"), *details.RetentionText));
 	}
@@ -264,7 +272,10 @@ namespace
 			AppendFormattedOverlayLine(InOutLines, TEXT(""));
 		}
 
-		AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
+		if (InActorPanelViewData.bIncludeStatus)
+		{
+			AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
+		}
 
 		if (InActorPanelViewData.bIncludeLocomotion)
 		{
@@ -286,7 +297,10 @@ namespace
 			AppendDeathLifecycleBlock(InOutLines, InActorPanelViewData.DeathLifecycle);
 		}
 
-		AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);
+		if (InActorPanelViewData.bIncludeRecentExecution)
+		{
+			AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);
+		}
 
 		if (InActorPanelViewData.bIncludeCurrentAI)
 		{
@@ -302,6 +316,8 @@ namespace
 	TArray<FString> BuildMainTextPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
+		if (InViewData.MainPanelTitle.IsEmpty()) return lines;
+
 		lines.Reserve(32);
 		AppendFormattedOverlayLine(lines, InViewData.MainPanelTitle);
 

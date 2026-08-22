@@ -419,37 +419,67 @@ namespace
 		return actorPanelViewData;
 	}
 
-	void AppendPlayerPanelViewData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, bool bInHasSnapshot, const UWorld* InWorld)
+	void AppendPlayerPanelViewData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, bool bInHasSnapshot, const UWorld* InWorld, const FDebugOverlayPanelVisibility& InVisibility)
 	{
 		FDebugOverlayActorPanelViewData playerPanelViewData = BuildActorPanelViewData(TEXT("[Player]"), InPlayerPawn, InWorld, bInHasSnapshot);
-		playerPanelViewData.bIncludeTargeting = InPlayerTargeting.Details.bHasSnapshot;
+		playerPanelViewData.bIncludeStatus = InVisibility.bShowPlayerStatus;
+		playerPanelViewData.bIncludeTargeting = InVisibility.bShowPlayerTargeting && InPlayerTargeting.Details.bHasSnapshot;
 		playerPanelViewData.Targeting = InPlayerTargeting;
-		playerPanelViewData.bIncludeLocomotion = InPlayerLocomotion.Details.bHasSnapshot;
+		playerPanelViewData.bIncludeLocomotion = InVisibility.bShowPlayerLocomotion && InPlayerLocomotion.Details.bHasSnapshot;
 		playerPanelViewData.Locomotion = InPlayerLocomotion;
+		playerPanelViewData.bIncludeRecentExecution = InVisibility.bShowPlayerRecentExecution;
+		if (!playerPanelViewData.bIncludeStatus
+			&& !playerPanelViewData.bIncludeTargeting
+			&& !playerPanelViewData.bIncludeLocomotion
+			&& !playerPanelViewData.bIncludeRecentExecution)
+		{
+			return;
+		}
+
 		InOutViewData.ActorPanels.Add(playerPanelViewData);
 	}
 
-	void AppendEnemyPanelViewData(FDebugOverlayViewData& InOutViewData, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayCombatParticipationViewData& InCombatParticipation, bool bInHasSnapshot, const UWorld* InWorld)
+	void AppendEnemyPanelViewData(FDebugOverlayViewData& InOutViewData, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayCombatParticipationViewData& InCombatParticipation, bool bInHasSnapshot, const UWorld* InWorld, const FDebugOverlayPanelVisibility& InVisibility)
 	{
 		FDebugOverlayActorPanelViewData enemyPanelViewData = BuildActorPanelViewData(TEXT("[Enemy]"), InEnemy, InWorld, bInHasSnapshot);
-		enemyPanelViewData.bIncludeFocus = true;
+		enemyPanelViewData.bIncludeFocus = InVisibility.bShowEnemyFocus;
 		enemyPanelViewData.Focus = InEnemyFocus;
-		enemyPanelViewData.bIncludeCombatParticipation = InCombatParticipation.FocusedEnemyDetails.bHasSnapshot;
+		enemyPanelViewData.bIncludeStatus = InVisibility.bShowEnemyStatus;
+		enemyPanelViewData.bIncludeCombatParticipation = InVisibility.bShowEnemyCombatParticipation && InCombatParticipation.FocusedEnemyDetails.bHasSnapshot;
 		enemyPanelViewData.CombatParticipation = InCombatParticipation;
-		enemyPanelViewData.bAppendBlankBeforeStatus = true;
-		enemyPanelViewData.bIncludeDeathLifecycle = true;
+		enemyPanelViewData.bAppendBlankBeforeStatus = enemyPanelViewData.bIncludeFocus && enemyPanelViewData.bIncludeStatus;
+		enemyPanelViewData.bIncludeDeathLifecycle = InVisibility.bShowEnemyDeathLifecycle;
 		enemyPanelViewData.DeathLifecycle = BuildEnemyDeathLifecycleViewData(InEnemy);
-		enemyPanelViewData.bIncludeCurrentAI = true;
+		enemyPanelViewData.bIncludeRecentExecution = InVisibility.bShowEnemyRecentExecution;
+		enemyPanelViewData.bIncludeCurrentAI = InVisibility.bShowEnemyCurrentAI;
 		enemyPanelViewData.CurrentAI = BuildEnemyCurrentAIViewData(InEnemy);
-		enemyPanelViewData.bIncludeRecentAIEvent = true;
+		enemyPanelViewData.bIncludeRecentAIEvent = InVisibility.bShowEnemyRecentAIEvent;
 		enemyPanelViewData.RecentAIEvent = BuildEnemyRecentAIEventViewData(InEnemy, bInHasSnapshot, InWorld);
+		if (!enemyPanelViewData.bIncludeFocus
+			&& !enemyPanelViewData.bIncludeStatus
+			&& !enemyPanelViewData.bIncludeCombatParticipation
+			&& !enemyPanelViewData.bIncludeDeathLifecycle
+			&& !enemyPanelViewData.bIncludeRecentExecution
+			&& !enemyPanelViewData.bIncludeCurrentAI
+			&& !enemyPanelViewData.bIncludeRecentAIEvent)
+		{
+			return;
+		}
+
 		InOutViewData.ActorPanels.Add(enemyPanelViewData);
 	}
 
-	void BuildMainActorPanelData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, const FDebugOverlayCombatParticipationViewData& InCombatParticipation, bool bInHasSnapshot, const UWorld* InWorld)
+	void BuildMainActorPanelData(FDebugOverlayViewData& InOutViewData, const APawn* InPlayerPawn, const ACEnemy* InEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, const FDebugOverlayCombatParticipationViewData& InCombatParticipation, bool bInHasSnapshot, const UWorld* InWorld, const FDebugOverlayPanelVisibility& InVisibility)
 	{
-		AppendPlayerPanelViewData(InOutViewData, InPlayerPawn, InPlayerTargeting, InPlayerLocomotion, bInHasSnapshot, InWorld);
-		AppendEnemyPanelViewData(InOutViewData, InEnemy, InEnemyFocus, InCombatParticipation, bInHasSnapshot, InWorld);
+		if (InVisibility.bShowPlayer)
+		{
+			AppendPlayerPanelViewData(InOutViewData, InPlayerPawn, InPlayerTargeting, InPlayerLocomotion, bInHasSnapshot, InWorld, InVisibility);
+		}
+
+		if (InVisibility.bShowEnemy)
+		{
+			AppendEnemyPanelViewData(InOutViewData, InEnemy, InEnemyFocus, InCombatParticipation, bInHasSnapshot, InWorld, InVisibility);
+		}
 	}
 
 	// [Panel_02]
@@ -520,7 +550,7 @@ namespace
 
 // ===== Public API =====
 
-FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, const FDebugOverlayCombatParticipationViewData& InCombatParticipation)
+FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld, const APawn* InViewerPawn, const ACEnemy* InDisplayEnemy, const FDebugOverlayFocusViewData& InEnemyFocus, const FDebugOverlayPlayerTargetingViewData& InPlayerTargeting, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotion, const FDebugOverlayCombatParticipationViewData& InCombatParticipation, const FDebugOverlayPanelVisibility& InPanelVisibility)
 {
 	FDebugOverlaySnapshot snapshot;
 	const bool bHasSnapshot = FDebugOverlaySnapshotStore::TryGetSnapshotCopy(InWorld, snapshot);
@@ -534,8 +564,11 @@ FDebugOverlayViewData FDebugOverlayViewDataBuilder::Build(const UWorld* InWorld,
 	FDebugOverlayViewData viewData;
 	viewData.ActorPanels.Reserve(2);
 
-	viewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
-	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, InPlayerTargeting, InPlayerLocomotion, InCombatParticipation, bHasSnapshot, InWorld);
+	BuildMainActorPanelData(viewData, InViewerPawn, InDisplayEnemy, InEnemyFocus, InPlayerTargeting, InPlayerLocomotion, InCombatParticipation, bHasSnapshot, InWorld, InPanelVisibility);
+	if (!viewData.ActorPanels.IsEmpty())
+	{
+		viewData.MainPanelTitle = TEXT("[Debug Overlay Panel_01]");
+	}
 
 	viewData.EventLogPanelTitle = TEXT("[Debug Overlay Panel_02]");
 	viewData.EventLog = BuildEventLogViewData(bHasSnapshot, recentEvents, eventLogFilter, eventLogLimit);

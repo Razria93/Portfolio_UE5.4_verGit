@@ -56,7 +56,7 @@ namespace
 
 	TAutoConsoleVariable<float> CVarCombatParticipationHitReactivePostReactionTTL(
 		TEXT("Portfolio.AI.CombatParticipation.HitReactivePostReactionTTL"),
-		60.0f,
+		20.0f,
 		TEXT("Seconds a HitReactive Evidence remains valid after its correlated Reaction ends. 0: expire immediately."),
 		ECVF_Default);
 
@@ -283,9 +283,11 @@ void UCWorldSubsystem_CombatParticipation::SoftReleaseParticipationForParticipan
 	}
 
 	ClearLastKnownTargetContextsForParticipant(InParticipant);
+
 	if (!bChanged) return;
 
 	UnbindUnusedTargetLifecycleBindings();
+
 	RebuildAssignments();
 }
 
@@ -311,6 +313,7 @@ void UCWorldSubsystem_CombatParticipation::HardReleaseParticipationForParticipan
 	bRemovedState |= AssignmentLockByParticipant.Remove(InParticipant) > 0;
 
 	UnbindUnusedTargetLifecycleBindings();
+
 	if (bRemovedState) RebuildAssignments();
 }
 
@@ -330,6 +333,8 @@ FCombatParticipationDebugSnapshot UCWorldSubsystem_CombatParticipation::BuildDeb
 {
 	FCombatParticipationDebugSnapshot snapshot;
 	TMap<FCombatParticipationPairKey, int32> entryIndexByEvidence;
+	const UWorld* world = GetWorld();
+	const float nowTimeSeconds = IsValid(world) ? world->GetTimeSeconds() : 0.f;
 
 	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentByParticipant)
 	{
@@ -372,8 +377,25 @@ FCombatParticipationDebugSnapshot UCWorldSubsystem_CombatParticipation::BuildDeb
 		}
 
 		FCombatParticipationDebugEntry& entry = snapshot.Entries[*entryIndex];
-		entry.bHasPerceptionEvidence |= evidence.Source == ECombatParticipationSource::Perception;
-		entry.bHasHitReactiveEvidence |= evidence.Source == ECombatParticipationSource::HitReactive;
+		if (evidence.Source == ECombatParticipationSource::Perception)
+		{
+			entry.bHasPerceptionEvidence = true;
+			entry.bHasPerceptionEvidenceLifetimeState = evidence.Participant->TryGetPerceptionEvidenceLifetimeDebug(
+				evidence.TargetActor,
+				entry.bHasPerceptionLOS,
+				entry.PerceptionMemoryRemainingSeconds);
+		}
+		else if (evidence.Source == ECombatParticipationSource::HitReactive)
+		{
+			entry.bHasHitReactiveEvidence = true;
+			entry.bHasStartedHitReactivePostReactionTTL = evidence.bHasStartedHitReactivePostReactionTTL;
+			entry.HitReactivePostReactionTTLRemainingSeconds = entry.bHasStartedHitReactivePostReactionTTL
+				? FMath::Max(0.f, evidence.HitReactiveExpireTimeSeconds - nowTimeSeconds)
+				: 0.f;
+			entry.bHasHitReactiveEvidenceAnchor = evidence.bHasHitReactiveEvidenceAnchor;
+			entry.HitReactiveEvidenceAnchorLocation = evidence.HitReactiveEvidenceAnchorLocation;
+			entry.HitReactiveEvidenceAnchorRadius = GetHitReactiveEvidenceAnchorRadius();
+		}
 	}
 
 	TMap<AActor*, int32> summaryIndexByTarget;
