@@ -8,7 +8,8 @@
 class ACEnemy;
 class ACPlayer;
 class APlayerController;
-class UCTargetingComponent;
+class UCCombatTargetComponent;
+struct FCombatTargetChange;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCTargetLockAssistComponent : public UActorComponent
@@ -29,7 +30,7 @@ private:
 	APlayerController* OwnerPlayerController_Injected = nullptr;
 
 	UPROPERTY(Transient)
-	UCTargetingComponent* TargetingComponent_Injected = nullptr;
+	UCCombatTargetComponent* CombatTargetComponent_Injected = nullptr;
 
 private:
 	// Runtime State
@@ -37,7 +38,8 @@ private:
 
 public:
 	// Component Reference
-	void InitializeReferences(APlayerController* InOwnerPlayerController, UCTargetingComponent* InTargetingComponent);
+	void InitializeReferences(APlayerController* InOwnerPlayerController);
+	void SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent);
 	void SetControlledPlayer(ACPlayer* InControlledPlayer);
 	void ClearControlledPlayer();
 
@@ -57,7 +59,7 @@ private:
 
 private:
 	// Target State
-	void HandleTargetChanged(ACEnemy* InPreviousTarget, ACEnemy* InNewTarget);
+	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 	void ApplyCurrentTargetPolicy();
 	void RestoreControlledPlayerPolicy();
 

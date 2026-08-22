@@ -1,7 +1,8 @@
 # System Architecture Index
 
 이 문서는 System Architecture 문서의 식별 제목과 다음 분류 후보를 관리한다.
-현재 브랜치에서는 최종 분류를 확정하지 않고, 다음 브랜치에서 `Current System` / `System Design Records` / `Archive`로 재분류한다.
+각 문서의 현재 역할은 표의 `다음 분류 후보` 열로 관리한다. `Current System`은 현재 runtime 계약의
+정규 기준이고, `System Design Records`와 `Archive`는 당시의 설계·검증 기록으로 보존한다.
 
 ---
 
@@ -37,5 +38,8 @@
 | S28 | 실행 개입 키 윈도우 모델 | `S28_UE5_Portfolio_System_Architecture.md` | 구조 모델 | System Design Records / Engine Technique 후보 | Notify window 설명 분리 검토 |
 | S29 | 실행 개입 정책 / 게이트 리팩터링 | `S29_UE5_Portfolio_System_Architecture.md` | 리팩터링 방향 | System Design Records |  |
 | S31 | Enemy Dead / Presentation / Destroy 생명주기 설계 | `S31_UE5_Portfolio_System_Architecture.md` | 구현·에셋·PIE와 동기화된 최신 계약 | Current System | Enemy Dead 구조 리뷰의 단일 기준 |
+| S32 | 공통 Combat Target 상태 및 의사결정 경계 설계 | `S32_UE5_Portfolio_System_Architecture.md` | Player/Enemy 공통 Target SoT, Perception/BT/Blackboard 경계와 단계별 마이그레이션 | Historical Design | 구현 전 경계 설계 기록. 현재 구현 계약은 S33, Enemy Evidence 정책은 S34 참조 |
+| S33 | 공통 Combat Target Kernel 및 의사결정 통합 설계 | `S33_UE5_Portfolio_System_Architecture.md` | Player/Enemy 공통 Combat Target 최신 구조와 구현 Goal 상태 | Current System | Enemy Participation 세부 정책은 S34 참조 |
+| S34 | Combat Participation Policy | `S34_UE5_Portfolio_Combat_Participation_Policy.md` | Enemy Evidence, shared allocator, Assignment lifecycle, HitReactive/ExtraSlot 정책 | Current System | Evidence-centric runtime contract |
 
 ---

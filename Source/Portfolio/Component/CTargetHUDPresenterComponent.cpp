@@ -3,7 +3,7 @@
 #include "ProjectGlobal.h"
 
 #include "Character/Enemy/CEnemy.h"
-#include "Component/CTargetingComponent.h"
+#include "Component/CCombatTargetComponent.h"
 #include "UI/CTargetHUDWidget.h"
 
 #include "Blueprint/WidgetLayoutLibrary.h"
@@ -17,22 +17,34 @@ UCTargetHUDPresenterComponent::UCTargetHUDPresenterComponent()
 
 // ===== Component Reference =====
 
-void UCTargetHUDPresenterComponent::InitializeReferences(APlayerController* InOwnerPlayerController, UCTargetingComponent* InTargetingComponent)
+void UCTargetHUDPresenterComponent::InitializeReferences(APlayerController* InOwnerPlayerController)
 {
-	if (IsValid(TargetingComponent_Injected))
-	{
-		TargetingComponent_Injected->OnTargetChanged.RemoveAll(this);
-	}
-
 	OwnerPlayerController_Injected = InOwnerPlayerController;
-	TargetingComponent_Injected = InTargetingComponent;
-
-	if (IsValid(TargetingComponent_Injected))
-	{
-		TargetingComponent_Injected->OnTargetChanged.AddUObject(this, &UCTargetHUDPresenterComponent::HandleTargetChanged);
-	}
 
 	ValidateRequiredReferences();
+	SynchronizeTargetState();
+}
+
+void UCTargetHUDPresenterComponent::SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent)
+{
+	if (CombatTargetComponent_Injected == InCombatTargetComponent)
+	{
+		SynchronizeTargetState();
+		return;
+	}
+
+	if (IsValid(CombatTargetComponent_Injected))
+	{
+		CombatTargetComponent_Injected->OnCombatTargetChanged.RemoveAll(this);
+	}
+
+	CombatTargetComponent_Injected = InCombatTargetComponent;
+
+	if (IsValid(CombatTargetComponent_Injected))
+	{
+		CombatTargetComponent_Injected->OnCombatTargetChanged.AddUObject(this, &UCTargetHUDPresenterComponent::HandleCombatTargetChanged);
+	}
+
 	SynchronizeTargetState();
 }
 
@@ -48,14 +60,10 @@ void UCTargetHUDPresenterComponent::BeginPlay()
 
 void UCTargetHUDPresenterComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
-	if (IsValid(TargetingComponent_Injected))
-	{
-		TargetingComponent_Injected->OnTargetChanged.RemoveAll(this);
-	}
+	SetCombatTargetComponent(nullptr);
 
 	SetComponentTickEnabled(false);
 	DestroyTargetHUDWidget();
-	TargetingComponent_Injected = nullptr;
 	OwnerPlayerController_Injected = nullptr;
 
 	Super::EndPlay(InEndPlayReason);
@@ -75,7 +83,6 @@ bool UCTargetHUDPresenterComponent::ValidateRequiredReferences() const
 	const FRequiredReference requiredReferences[] =
 	{
 		{ OwnerPlayerController_Injected, TEXT("APlayerController Owner") },
-		{ TargetingComponent_Injected, TEXT("UCTargetingComponent") },
 	};
 
 	bool bValid = true;
@@ -113,15 +120,15 @@ void UCTargetHUDPresenterComponent::DestroyTargetHUDWidget()
 
 // ===== Target State =====
 
-void UCTargetHUDPresenterComponent::HandleTargetChanged(ACEnemy* InPreviousTarget, ACEnemy* InNewTarget)
+void UCTargetHUDPresenterComponent::HandleCombatTargetChanged(const FCombatTargetChange& InChange)
 {
 	SynchronizeTargetState();
 }
 
 void UCTargetHUDPresenterComponent::SynchronizeTargetState()
 {
-	const bool bHasTarget = IsValid(TargetingComponent_Injected)
-		&& IsValid(TargetingComponent_Injected->GetCurrentTarget());
+	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected) ? CombatTargetComponent_Injected->GetCombatTargetSnapshot() : FCombatTargetSnapshot();
+	const bool bHasTarget = IsValid(snapshot.TargetActor);
 
 	SetComponentTickEnabled(bHasTarget && IsValid(TargetHUDWidget));
 
@@ -139,14 +146,15 @@ void UCTargetHUDPresenterComponent::SynchronizeTargetState()
 void UCTargetHUDPresenterComponent::UpdateTargetMarker()
 {
 	if (!IsValid(TargetHUDWidget)) return;
-	if (!IsValid(TargetingComponent_Injected))
+	if (!IsValid(CombatTargetComponent_Injected))
 	{
 		HideTargetMarker();
 		return;
 	}
 
 	FTargetMarkerViewData viewData;
-	if (!TryBuildTargetMarkerViewData(TargetingComponent_Injected->GetCurrentTarget(), viewData))
+	const FCombatTargetSnapshot snapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();
+	if (!TryBuildTargetMarkerViewData(Cast<ACEnemy>(snapshot.TargetActor), viewData))
 	{
 		HideTargetMarker();
 		return;

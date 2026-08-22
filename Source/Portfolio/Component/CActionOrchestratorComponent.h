@@ -128,5 +128,5 @@ private:
 private:
 	// Result Build
 	EActionRequestResultType ConvertDecisionToResultType(const FActionExecutionResult& InResult) const;
-	FActionRequestResult BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason = EActionRequestRejectReason::None) const;
+	FActionRequestResult BuildActionRequestResult(EActionRequestResultType InResultType, EActionRequestRejectReason InRejectReason = EActionRequestRejectReason::None, uint32 InActionRequestSerial = 0) const;
 };

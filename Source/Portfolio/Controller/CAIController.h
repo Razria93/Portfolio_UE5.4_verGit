@@ -21,7 +21,7 @@ protected:
 
 protected:
 	UPROPERTY(Transient)
-	TMap<AActor*, FTargetPerceptionState> TargetPerceptionStateMap;
+	TMap<AActor*, FPerceptionTargetContext> PerceptionTargetContextMap;
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -100,9 +100,6 @@ private:
 private:
 	// Perception Event Callback
 	UFUNCTION()
-	void OnPerceptionUpdated(const TArray<class AActor*>& InUpdatedActors);
-
-	UFUNCTION()
 	void OnTargetPerceptionUpdated(class AActor* Actor, FAIStimulus Stimulus);
 
 	UFUNCTION()
@@ -110,7 +107,11 @@ private:
 
 public:
 	// Query
-	EPerceptionBuildResult BuildPerceptionContext(FTargetPerceptionState& OutTargetPerceptionState);
+	EPerceptionBuildResult BuildPerceptionContext(FPerceptionTargetContext& OutPerceptionTargetContext);
+	void RefreshParticipationEvidenceFromPerception();
+	bool TryGetPerceptionEvidenceLifetimeDebug(const class AActor* InTarget, bool& OutHasLOS, float& OutMemoryRemainingSeconds) const;
+	void HandleCombatParticipationEvidenceExhausted(const struct FCombatParticipationEvidenceExhaustedEvent& InEvent);
+	void CancelInvestigateForNewCombatEvidence();
 
 public:
 	// Runtime LOD Snapshot
@@ -126,9 +127,9 @@ public:
 
 private:
 	// Target Data
-	void UpdateTargetPerceptionStateMap();
-	void ClearTargetPerceptionStateMap();
-	EPerceptionBuildResult SelectTopPriority(FTargetPerceptionState& OutTargetPerceptionState) const;
+	void UpdatePerceptionTargetContextMap();
+	void ClearPerceptionTargetContextMap();
+	EPerceptionBuildResult SelectTopPriority(FPerceptionTargetContext& OutPerceptionTargetContext) const;
 
 private:
 	// Runtime LOD Snapshot
@@ -153,7 +154,7 @@ private:
 	void RecordRawPerceptionCandidate(class AActor* InActor);
 	void RecordValidTargetProvider(class AActor* InActor);
 	void RecordInvalidTargetProvider(class AActor* InActor);
-	void RecordTargetPerceptionStateMapSizeForAudit();
+	void RecordPerceptionTargetContextMapSizeForAudit();
 
 private:
 	// Blackboard / Engage Latency Audit

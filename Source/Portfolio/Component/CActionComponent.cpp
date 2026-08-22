@@ -162,6 +162,11 @@ int32 UCActionComponent::GetActiveActionIndex() const
 	return ActiveActionIndex;
 }
 
+uint32 UCActionComponent::GetActiveActionRequestSerial() const
+{
+	return ActiveActionRequestSerial;
+}
+
 bool UCActionComponent::GetActiveActionData(FActionData& OutData) const
 {
 	OutData = FActionData();
@@ -323,7 +328,7 @@ bool UCActionComponent::RequestInterruptActiveAction(const FExecutionInterventio
 
 // Execution Result Hooks
 
-bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData)
+bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData, const uint32 InActionRequestSerial)
 {
 	if (!IsActive()) return false;
 	if (!IsValid(InAction)) return false;
@@ -332,6 +337,7 @@ bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, cons
 
 	ActiveActionType = InData.ActionDataKey.ActionType;
 	ActiveActionIndex = InData.ActionDataKey.ActionIndex;
+	ActiveActionRequestSerial = InActionRequestSerial;
 	ActiveActionData = InData;
 
 	return true;
@@ -554,13 +560,13 @@ void UCActionComponent::ClearDeferredActions(EDeferredActionConsumeKey InConsume
 
 // Event Broadcast
 
-void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, EActionEventType InEventType)
+void UCActionComponent::BroadcastActionEvent(EActionType InType, int32 InIndex, const uint32 InActionRequestSerial, EActionEventType InEventType)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	if (OnActionEvent.IsBound())
 	{
-		OnActionEvent.Broadcast(OwnerCharacter_Injected, InType, InIndex, InEventType);
+		OnActionEvent.Broadcast(OwnerCharacter_Injected, InType, InIndex, InActionRequestSerial, InEventType);
 	}
 }
 
@@ -736,7 +742,7 @@ bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 
 	EnterActionState(incomingData);
 
-	if (!incomingExecutor->Start(incomingData))
+	if (!incomingExecutor->Start(incomingData, InContext.ActionRequestSerial))
 	{
 		ExitActionState(incomingData);
 		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("ExecutorStartFailed"));
@@ -771,7 +777,7 @@ bool UCActionComponent::ReserveAction(const FActionExecutionContext& InContext)
 
 	const FActionData& incomingData = InContext.ActionData;
 
-	bool bReserved = activeExecutor->ReserveChain(incomingData);
+	bool bReserved = activeExecutor->ReserveChain(incomingData, InContext.ActionRequestSerial);
 	if (!bReserved)
 	{
 		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("ReserveAction"), TEXT("ExecutorReserveFailed"));
@@ -829,6 +835,7 @@ void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& In
 
 	ActiveActionType = InContext.ActionData.ActionDataKey.ActionType;
 	ActiveActionIndex = InContext.ActionData.ActionDataKey.ActionIndex;
+	ActiveActionRequestSerial = InContext.ActionRequestSerial;
 	ActiveActionData = InContext.ActionData;
 	ActiveActionExecutor = InContext.ActionExecutor;
 
@@ -844,6 +851,7 @@ void UCActionComponent::ClearActiveActionContext()
 
 	ActiveActionType = EActionType::None;
 	ActiveActionIndex = INDEX_NONE;
+	ActiveActionRequestSerial = 0;
 	ActiveActionData = FActionData();
 	ActiveActionExecutor = nullptr;
 

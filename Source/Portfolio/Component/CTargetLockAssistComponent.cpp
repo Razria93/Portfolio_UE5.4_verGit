@@ -4,8 +4,8 @@
 
 #include "Character/Enemy/CEnemy.h"
 #include "Character/Player/CPlayer.h"
+#include "Component/CCombatTargetComponent.h"
 #include "Component/CMovementComponent.h"
-#include "Component/CTargetingComponent.h"
 
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
@@ -18,22 +18,34 @@ UCTargetLockAssistComponent::UCTargetLockAssistComponent()
 
 // ===== Component Reference =====
 
-void UCTargetLockAssistComponent::InitializeReferences(APlayerController* InOwnerPlayerController, UCTargetingComponent* InTargetingComponent)
+void UCTargetLockAssistComponent::InitializeReferences(APlayerController* InOwnerPlayerController)
 {
-	if (IsValid(TargetingComponent_Injected))
-	{
-		TargetingComponent_Injected->OnTargetChanged.RemoveAll(this);
-	}
-
 	OwnerPlayerController_Injected = InOwnerPlayerController;
-	TargetingComponent_Injected = InTargetingComponent;
-
-	if (IsValid(TargetingComponent_Injected))
-	{
-		TargetingComponent_Injected->OnTargetChanged.AddUObject(this, &UCTargetLockAssistComponent::HandleTargetChanged);
-	}
 
 	ValidateRequiredReferences();
+	ApplyCurrentTargetPolicy();
+}
+
+void UCTargetLockAssistComponent::SetCombatTargetComponent(UCCombatTargetComponent* InCombatTargetComponent)
+{
+	if (CombatTargetComponent_Injected == InCombatTargetComponent)
+	{
+		ApplyCurrentTargetPolicy();
+		return;
+	}
+
+	if (IsValid(CombatTargetComponent_Injected))
+	{
+		CombatTargetComponent_Injected->OnCombatTargetChanged.RemoveAll(this);
+	}
+
+	CombatTargetComponent_Injected = InCombatTargetComponent;
+
+	if (IsValid(CombatTargetComponent_Injected))
+	{
+		CombatTargetComponent_Injected->OnCombatTargetChanged.AddUObject(this, &UCTargetLockAssistComponent::HandleCombatTargetChanged);
+	}
+
 	ApplyCurrentTargetPolicy();
 }
 
@@ -60,13 +72,9 @@ void UCTargetLockAssistComponent::ClearControlledPlayer()
 
 void UCTargetLockAssistComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
-	if (IsValid(TargetingComponent_Injected))
-	{
-		TargetingComponent_Injected->OnTargetChanged.RemoveAll(this);
-	}
+	SetCombatTargetComponent(nullptr);
 
 	ClearControlledPlayer();
-	TargetingComponent_Injected = nullptr;
 	OwnerPlayerController_Injected = nullptr;
 
 	Super::EndPlay(InEndPlayReason);
@@ -83,9 +91,12 @@ void UCTargetLockAssistComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 bool UCTargetLockAssistComponent::IsTargetLockActive() const
 {
+	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected)
+		? CombatTargetComponent_Injected->GetCombatTargetSnapshot()
+		: FCombatTargetSnapshot();
+
 	return IsValid(ControlledPlayer.Get())
-		&& IsValid(TargetingComponent_Injected)
-		&& TargetingComponent_Injected->HasTarget();
+		&& IsValid(snapshot.TargetActor);
 }
 
 bool UCTargetLockAssistComponent::ShouldSuppressLookInput() const
@@ -100,7 +111,6 @@ bool UCTargetLockAssistComponent::ValidateRequiredReferences() const
 	const FRequiredReference requiredReferences[] =
 	{
 		{ OwnerPlayerController_Injected, TEXT("APlayerController Owner") },
-		{ TargetingComponent_Injected, TEXT("UCTargetingComponent") },
 	};
 
 	bool bValid = true;
@@ -114,7 +124,7 @@ bool UCTargetLockAssistComponent::ValidateRequiredReferences() const
 
 // ===== Target State =====
 
-void UCTargetLockAssistComponent::HandleTargetChanged(ACEnemy* InPreviousTarget, ACEnemy* InNewTarget)
+void UCTargetLockAssistComponent::HandleCombatTargetChanged(const FCombatTargetChange& InChange)
 {
 	ApplyCurrentTargetPolicy();
 }
@@ -151,7 +161,8 @@ void UCTargetLockAssistComponent::UpdateCameraTracking(float DeltaTime)
 {
 	if (!IsValid(OwnerPlayerController_Injected) || !IsTargetLockActive()) return;
 
-	ACEnemy* currentTarget = TargetingComponent_Injected->GetCurrentTarget();
+	const FCombatTargetSnapshot snapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();
+	ACEnemy* currentTarget = Cast<ACEnemy>(snapshot.TargetActor);
 	if (!IsValid(currentTarget)) return;
 
 	FVector viewLocation = FVector::ZeroVector;

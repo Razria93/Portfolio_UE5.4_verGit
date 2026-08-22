@@ -64,6 +64,9 @@ public:
 	UPROPERTY(Transient)
 	class UCReaction* ReactionExecutor = nullptr;
 
+	UPROPERTY(Transient)
+	uint64 CombatSignalResultSerial = 0;
+
 public:
 	FReactionExecutionContext() = default;
 

@@ -24,7 +24,7 @@ EBTNodeResult::Type UCBTTask_SelectAlertPoint::ExecuteTask(UBehaviorTreeComponen
 	APawn* pawn = aiController->GetPawn();
 	if (!IsValid(pawn)) return EBTNodeResult::Failed;
 
-	AActor* target = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	AActor* target = Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Perception::PerceivedTargetActor.KeyName));
 	if (!IsValid(target)) return EBTNodeResult::Failed;
 
 	bool bUseAlertStep = blackboardComp->GetValueAsBool(CAIKey::Alert::bUseAlertStep.KeyName);

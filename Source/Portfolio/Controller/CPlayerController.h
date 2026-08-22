@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Type/CMovementTypes.h"
 #include "CPlayerController.generated.h"
 
 UCLASS()
@@ -18,7 +19,7 @@ private:
 	class UCPlayerFeedbackComponent* PlayerFeedbackComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
-	class UCTargetingComponent* TargetingComponent = nullptr;
+	class UCPlayerTargetSelectionComponent* PlayerTargetSelectionComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
 	class UCTargetLockAssistComponent* TargetLockAssistComponent = nullptr;
@@ -31,10 +32,13 @@ private:
 
 	// Cached input
 	FVector2D CachedMoveAxis2D = FVector2D::ZeroVector;
+	bool bWalkInputHeld = false;
+	bool bSprintInputHeld = false;
+	EMovementRotationMode CachedMovementRotationMode = EMovementRotationMode::None;
 
 public:
 	// Component Query
-	FORCEINLINE class UCTargetingComponent* GetTargetingComp() const { return TargetingComponent; }
+	FORCEINLINE class UCPlayerTargetSelectionComponent* GetPlayerTargetSelectionComp() const { return PlayerTargetSelectionComponent; }
 
 	// Debug Overlay Exec
 	UFUNCTION(Exec)
@@ -71,9 +75,15 @@ protected:
 	// Movement Dispatch
 	void FlushMoveInput();
 
+	// Locomotion Input Dispatch
+	void RefreshLocomotionGaitInput();
+	EMovementRotationMode GetControlledPlayerMovementRotationMode() const;
+
 	// Action Input
 	void PressWalk();
 	void ReleaseWalk();
+	void PressSprint();
+	void ReleaseSprint();
 
 	void PressJump();
 	void ReleaseJump();
@@ -85,7 +95,10 @@ protected:
 	void PressSwordToggle();
 
 protected:
-	// Targeting
+	// Player Target Selection
+	void SynchronizeCombatTargetReferences();
+	void ClearCombatTargetReferences();
+
 	void PressTargetLock();
 	void PressTargetSwitchLeft();
 	void PressTargetSwitchRight();

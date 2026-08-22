@@ -11,7 +11,7 @@ class PORTFOLIO_API UCAction_Guard : public UCAction
 
 public:
 	// Lifecycle
-	bool Start(const FActionData& InData) override;
+	bool Start(const FActionData& InData, uint32 InActionRequestSerial = 0) override;
 	void Interrupt(const FExecutionInterventionDirective& InDirective) override;
 	void Complete() override;
 

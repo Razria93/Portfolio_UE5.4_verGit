@@ -72,42 +72,35 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 		return EAIIntentState::Engage;
 
 	// Gather blackboard context for intent selection.
-	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
-
+	AActor* target = Cast<AActor>(InBlackboard->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName));
 	const bool bHasTarget = IsValid(target);
-	const bool bHasLOS = InBlackboard->GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
-	const bool bHasAwareness = bHasTarget || bHasLOS;
 
 	const bool bUseInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName);
 	const bool bShouldInvestigate = InBlackboard->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName);
 	const bool bIsInvestigating = InBlackboard->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName);
 
 	const bool bInAlertRange = InBlackboard->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
-	const ECombatRole combatRole = static_cast<ECombatRole>(InBlackboard->GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
+	const ECombatRole combatParticipationState = static_cast<ECombatRole>(InBlackboard->GetValueAsEnum(CAIKey::CombatParticipation::State.KeyName));
+	const bool bHasCombatParticipation = bHasTarget && combatParticipationState != ECombatRole::None;
 
-	// No awareness: investigate only when requested or already active.
-	if (!bHasAwareness)
+	// Participation is the authority for Enemy combat intent. Perception only owns the no-participation fallback.
+	if (!bHasCombatParticipation)
 	{
 		if (bUseInvestigate && (bShouldInvestigate || bIsInvestigating)) return EAIIntentState::Investigate;
 		return EAIIntentState::Idle;
 	}
 
-	// Aware + no combat role: observe only.
-	if (combatRole == ECombatRole::None) return EAIIntentState::Observe;
-
-	// Aware + combat role: remember Engage as investigate candidate.
-	if (combatRole == ECombatRole::Engage)
+	if (combatParticipationState == ECombatRole::Engage)
 	{
-		CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboard, CAIKey::Investigate::bShouldInvestigate.KeyName, true);
+		if (bIsCombatAction) return EAIIntentState::Engage;
+		return bInAlertRange ? EAIIntentState::Engage : EAIIntentState::Chase;
 	}
 
-	// Aware + combat role: movement/combat state.
-	if (!bInAlertRange) return EAIIntentState::Chase;
+	if (combatParticipationState == ECombatRole::Alert)
+	{
+		return bInAlertRange ? EAIIntentState::Alert : EAIIntentState::Chase;
+	}
 
-	if (combatRole == ECombatRole::Engage) return EAIIntentState::Engage;
-	if (combatRole == ECombatRole::Alert) return EAIIntentState::Alert;
-
-	// Aware fallback.
 	return EAIIntentState::Observe;
 }
 

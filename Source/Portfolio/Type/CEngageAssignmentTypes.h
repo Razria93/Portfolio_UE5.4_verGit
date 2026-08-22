@@ -12,9 +12,20 @@ class AActor;
 UENUM(BlueprintType)
 enum class ECombatRole : uint8
 {
-	None,
-	Engage,
-	Alert
+	None = 0,
+	Engage = 1,
+	Alert = 2,
+	Observe = 3,
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EEngageAdmissionKind : uint8
+{
+	None = 0,
+	GeneralBase,
+	HitReactiveExtra,
+	Max,
 };
 
 // Data / Config
@@ -27,36 +38,6 @@ struct FEngageAssignmentTuning
 public:
 	UPROPERTY(EditAnywhere, Category = "Assignment")
 	float RebuildInterval = 0.1f;
-
-	UPROPERTY(EditAnywhere, Category = "Assignment")
-	float LeaseDuration = 0.5f;
-};
-
-// Request
-
-USTRUCT(BlueprintType)
-struct FEngageRequestContext
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	ACAIController* RequestController = nullptr;
-
-	UPROPERTY(Transient)
-	AActor* TargetActor = nullptr;
-
-	UPROPERTY(Transient)
-	int TargetPriority = INT_MAX;
-
-	UPROPERTY(Transient)
-	float DistanceToTarget = 0.f;
-
-	UPROPERTY(Transient)
-	bool bWasEngaged = false;
-
-public:
-	FEngageRequestContext() = default;
 };
 
 // Runtime Context
@@ -71,7 +52,13 @@ public:
 	AActor* TargetActor = nullptr;
 
 	UPROPERTY(Transient)
+	int32 AssignmentRevision = 0;
+
+	UPROPERTY(Transient)
 	ECombatRole CombatRole = ECombatRole::None;
+
+	UPROPERTY(Transient)
+	EEngageAdmissionKind EngageAdmission = EEngageAdmissionKind::None;
 
 public:
 	FEngageAssignmentContext() = default;
@@ -83,10 +70,25 @@ public:
 	}
 };
 
+USTRUCT(BlueprintType)
+struct FCombatParticipationChange
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient)
+	FEngageAssignmentContext PreviousAssignment;
+
+	UPROPERTY(Transient)
+	FEngageAssignmentContext CurrentAssignment;
+};
+
 // Runtime State
 
 struct FEngageAssignmentSlotState
 {
 	int32 EngageCount = 0;
+	int32 GeneralBaseEngageCount = 0;
+	int32 HitReactiveExtraEngageCount = 0;
 	int32 AlertCount = 0;
+	int32 ObserveCount = 0;
 };

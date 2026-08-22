@@ -35,6 +35,9 @@ protected:
 	FActionData ActiveData_Cached = FActionData();
 
 	UPROPERTY(Transient)
+	uint32 ActionRequestSerial_Cached = 0;
+
+	UPROPERTY(Transient)
 	UAnimMontage* ActiveMontage_Cached = nullptr;
 
 	UPROPERTY(Transient)
@@ -88,13 +91,13 @@ protected:
 
 public:
 	// Lifecycle
-	virtual bool Start(const FActionData& InData);
+	virtual bool Start(const FActionData& InData, uint32 InActionRequestSerial = 0);
 	virtual void Interrupt(const FExecutionInterventionDirective& InDirective);
 	virtual void Stop(EActionStopReason InStopReason);
 	virtual void Complete();
 
 public:
-	virtual bool ReserveChain(const FActionData& InData);
+	virtual bool ReserveChain(const FActionData& InData, uint32 InActionRequestSerial = 0);
 	virtual void ConsumeChain();
 
 protected:

@@ -28,9 +28,9 @@ FAIRuntimeLODTierContext FAIRuntimeLODTierResolver::BuildContext(const UBlackboa
 {
 	FAIRuntimeLODTierContext context;
 	context.AIIntentState = static_cast<EAIIntentState>(InBlackboardComp.GetValueAsEnum(CAIKey::State::AIIntentState.KeyName));
-	context.CombatRole = static_cast<ECombatRole>(InBlackboardComp.GetValueAsEnum(CAIKey::Engage::CombatRole.KeyName));
+	context.CombatRole = static_cast<ECombatRole>(InBlackboardComp.GetValueAsEnum(CAIKey::CombatParticipation::State.KeyName));
 
-	const AActor* targetActor = Cast<AActor>(InBlackboardComp.GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	const AActor* targetActor = Cast<AActor>(InBlackboardComp.GetValueAsObject(CAIKey::Perception::PerceivedTargetActor.KeyName));
 	const bool bHasLOS = InBlackboardComp.GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
 	context.bHasTargetAwareness = IsValid(targetActor) || bHasLOS;
 
@@ -56,6 +56,9 @@ EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const FAIRuntimeLODTier
 
 	case ECombatRole::Alert:
 		return EAIRuntimeLODTier::CombatSupport;
+
+	case ECombatRole::Observe:
+		return EAIRuntimeLODTier::Awareness;
 
 	case ECombatRole::None:
 	default:

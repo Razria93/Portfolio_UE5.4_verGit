@@ -70,7 +70,11 @@
 - `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Evidence_Package_KR.md`
 
-## 현재 상태
+## 현재 runtime 운영 기준
+
+현재 runtime의 Panel 구성, CVar gate, World Summary, Combat Participation Evidence 수명·anchor 표시는
+[운영 가이드](02_Operation/Debug_Overlay_Operation_Guide_KR.md)를 정규 기준으로 사용한다. 아래 P0.5/P1
+계획·검증·캡처 문서는 작성 시점의 설계 및 증적 기록이며, 현재 runtime 계약을 대체하지 않는다.
 
 P0.5 기준 overlay는 TestRoom PIE에서 다음 화면 구조로 확인한다.
 
@@ -120,9 +124,10 @@ P1 마감 기준의 최신 상태는 `01_Planning/Debug_Overlay_P1_Closure_Crite
 
 P1 FinalCandidate 촬영 전 장면 목록, CVar, 파일명, 제외 기준은 `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`를 따른다. 현재 패키징된 FinalCandidate 후보와 파일별 claim 범위는 `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Evidence_Package_KR.md`에서 확인한다.
 
-## 현재 브랜치
+## 기록된 브랜치 정보
 
-- `feature/debug-overlay-evidence-plan`
+- 개별 계획·캡처 문서에 적힌 브랜치명은 당시 기록의 메타데이터다. 현재 운영 기준은 특정 브랜치에
+  고정하지 않고 위 운영 가이드를 따른다.
 
 ## PR / 품질 리뷰 문서
 

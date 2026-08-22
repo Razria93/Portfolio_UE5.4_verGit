@@ -11,6 +11,24 @@
 
 #include "GameFramework/Character.h"
 
+namespace
+{
+	ELocomotionPresentationMode ResolveLocomotionPresentationMode(EMovementRotationMode InRotationMode)
+	{
+		switch (InRotationMode)
+		{
+		case EMovementRotationMode::ControllerDesired:
+		case EMovementRotationMode::FixedFacing:
+			return ELocomotionPresentationMode::Directional;
+		case EMovementRotationMode::OrientToMovement:
+		case EMovementRotationMode::None:
+		case EMovementRotationMode::Max:
+		default:
+			return ELocomotionPresentationMode::Forward;
+		}
+	}
+}
+
 // Lifecycle
 
 void UCAnimInstance::NativeInitializeAnimation()
@@ -194,6 +212,7 @@ void UCAnimInstance::RefreshMovementParameters()
 		Speed = MovementComp_Cached->GetCurrentSpeed();
 		Direction = MovementComp_Cached->GetCurrentDirection();
 		bIsInAir = MovementComp_Cached->IsFalling();
+		LocomotionPresentationMode = ResolveLocomotionPresentationMode(MovementComp_Cached->GetCurrentMovementRotationMode());
 	}
 }
 

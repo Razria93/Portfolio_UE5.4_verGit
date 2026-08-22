@@ -59,6 +59,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Overlay")
 	class UCObservableOverlayComponent* ObservableOverlayComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCCombatTargetComponent* CombatTargetComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
 	class UCCombatSignalSourceComponent* CombatSignalSourceComponent;
 
@@ -122,6 +125,7 @@ public:
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCDefenseComponent* GetDefenseComp() const { return DefenseComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
+	FORCEINLINE UCCombatTargetComponent* GetCombatTargetComp() const { return CombatTargetComponent; }
 	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
 	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
@@ -152,6 +156,7 @@ public:
 public:
 	// Movement Intent
 	FActionRequestResult HandleMove(const FVector2D& InAxis2D);
+	FActionRequestResult HandleLocomotionGaitInput(bool bWalkInputHeld, bool bSprintInputHeld);
 
 public:
 	// Action Intent

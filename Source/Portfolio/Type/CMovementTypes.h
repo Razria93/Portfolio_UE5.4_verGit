@@ -28,3 +28,12 @@ enum class EMovementRotationMode : uint8
 
 	Max
 };
+
+UENUM(BlueprintType)
+enum class ELocomotionPresentationMode : uint8
+{
+	Forward = 0,
+	Directional,
+
+	Max
+};

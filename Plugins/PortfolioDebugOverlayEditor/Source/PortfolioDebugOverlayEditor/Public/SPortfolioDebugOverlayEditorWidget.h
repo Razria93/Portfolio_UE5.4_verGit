@@ -30,8 +30,14 @@ private:
 	// ===== Options Sections =====
 
 	TSharedRef<SWidget> MakeOverlayOptionsSection();
+	TSharedRef<SWidget> MakeMainPanelSections();
+	TSharedRef<SWidget> MakeWorldSummarySections();
 	TSharedRef<SWidget> MakeTargetingDisplayOptionsSection();
 	TSharedRef<SWidget> MakeTargetingDebugSection();
+	TSharedRef<SWidget> MakeMovementDisplayOptionsSection();
+	TSharedRef<SWidget> MakeMovementDebugSection();
+	TSharedRef<SWidget> MakeCombatParticipationDisplayOptionsSection();
+	TSharedRef<SWidget> MakeCombatParticipationDebugSection();
 	TSharedRef<SWidget> MakeFocusOptionsSection();
 	TSharedRef<SWidget> MakeFocusSearchSettingsCard() const;
 	TSharedRef<SWidget> MakeManualFocusSelectionCard();
@@ -40,7 +46,8 @@ private:
 
 	// ===== CVar Rows =====
 
-	TSharedRef<SWidget> MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName) const;
+	TSharedRef<SWidget> MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, TFunction<bool()> InAdditionalEnabledPredicate = TFunction<bool()>()) const;
+	TSharedRef<SWidget> MakeMainPanelChildRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, const TCHAR* InParentCVarName) const;
 	TSharedRef<SWidget> MakeEventLogFilterRow();
 	TSharedRef<SWidget> MakeEventLogLimitRow() const;
 	TSharedRef<SWidget> MakeNearestFocusRadiusRow() const;

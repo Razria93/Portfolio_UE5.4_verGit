@@ -83,7 +83,7 @@ struct FTargetMarkerViewData
 	FVector2D WidgetPosition = FVector2D::ZeroVector;
 };
 
-struct FTargetingDebugSnapshot
+struct FTargetingEvaluation
 {
 	TWeakObjectPtr<AActor> TargetActor;
 	FVector ViewLocation = FVector::ZeroVector;

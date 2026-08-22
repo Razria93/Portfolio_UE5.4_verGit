@@ -44,6 +44,87 @@ Portfolio.DebugOverlay.EventLogLimit 5
 - `Portfolio.DebugOverlay.Collect`: 기존 debug hook에서 SnapshotStore에 최근 evidence를 기록할지 여부
 - `Portfolio.DebugOverlay.EventLogLimit`: 화면에 표시할 최근 event line 수
 
+### Main Panel 섹션 표시 제어
+
+`Panel_01`의 Player/Enemy 정보량은 수집 여부와 분리된 표시 전용 CVar로 제어한다. 모든 CVar의 기본값은 `1`이며, Editor Debug Overlay 패널의 `Main Panel Sections`에서도 같은 값을 세션 단위로 변경할 수 있다.
+
+```text
+Portfolio.DebugOverlay.Player.Enabled
+Portfolio.DebugOverlay.Player.Status.Enabled
+Portfolio.DebugOverlay.Player.Targeting.Enabled
+Portfolio.DebugOverlay.Player.Locomotion.Enabled
+Portfolio.DebugOverlay.Player.RecentExecution.Enabled
+
+Portfolio.DebugOverlay.Enemy.Enabled
+Portfolio.DebugOverlay.Enemy.Focus.Enabled
+Portfolio.DebugOverlay.Enemy.Status.Enabled
+Portfolio.DebugOverlay.Enemy.CombatParticipation.Enabled
+Portfolio.DebugOverlay.Enemy.DeathLifecycle.Enabled
+Portfolio.DebugOverlay.Enemy.RecentExecution.Enabled
+Portfolio.DebugOverlay.Enemy.CurrentAI.Enabled
+Portfolio.DebugOverlay.Enemy.RecentAIEvent.Enabled
+```
+
+- `Player.Enabled` 또는 `Enemy.Enabled`가 `0`이면 해당 Actor 섹션의 모든 하위 블록을 숨긴다. 하위 CVar 값은 변경하지 않으므로 부모를 다시 켜면 이전 선택이 복원된다.
+- 하위 CVar는 해당 블록만 숨긴다. Snapshot/EventLog 수집, focus 선택, 타게팅·이동·Combat Participation 월드 디버그에는 영향을 주지 않는다.
+- Player와 Enemy를 모두 숨기면 `Panel_01` 자체를 그리지 않고 Event Log/World Summary 패널을 좌측 기준으로 재배치한다.
+- Editor의 표시 순서는 실제 Panel_01과 같게 `Player: Status → Locomotion → Targeting → Recent Execution`, `Enemy: Focus → Status → Combat Participation → Death Lifecycle → Recent Execution → Current AI → Recent AI Event`로 유지한다.
+- 기존 `Targeting.ShowOverlayDetails`, `Movement.ShowOverlayDetails`, `CombatParticipation.ShowOverlayDetails`는 제거한다. Panel_01 상세 생성은 각 블록의 표시 CVar가 단독으로 결정한다.
+- Targeting/Movement/Combat Participation의 기존 도메인 패널에는 도메인 활성화와 월드 디버그 옵션만 남긴다.
+
+### World Summary 섹션 표시 제어
+
+`Panel_03`의 Combat Participation 전역 요약은 Panel_01의 focused Enemy 상세와 독립적으로 제어한다.
+
+```text
+Portfolio.DebugOverlay.WorldSummary.CombatParticipation.Enabled
+```
+
+- `Enemy.CombatParticipation.Enabled`: focused Enemy 한 명의 개인 상세를 Panel_01에 표시한다.
+- `WorldSummary.CombatParticipation.Enabled`: Target별 전체 참여·슬롯 요약을 Panel_03에 표시한다.
+- 두 CVar는 독립적이다. 한쪽을 꺼도 다른 위치의 Combat Participation 출력에는 영향을 주지 않는다.
+- Target별 World Summary는 폭을 넘는 pipe 한 줄 대신 아래와 같이 의미 단위 행으로 출력한다.
+
+```text
+Target: BP_Player_C_0
+Engage: 1 / 5
+  - Base: 1 / 2
+  - HitReactive Extra: 0 / 3
+Alert: 0 / 6
+Observe: 0 / 6
+```
+
+### Combat Participation Evidence 수명 표시
+
+`Enemy.CombatParticipation.Enabled`가 켜진 Panel_01 상세와 `Portfolio.DebugOverlay.CombatParticipation.DrawWorldText`의 Enemy 머리 위 World Text는 현재 활성 Evidence의 수명 상태를 함께 표시한다. 이 표시는 Debug Snapshot 전용이며 Evidence 등록·철회, allocator, Investigate 정책을 바꾸지 않는다.
+
+| CVar | 기본값 | 표시 범위 | 의존성 |
+| --- | ---: | --- | --- |
+| `Portfolio.DebugOverlay.CombatParticipation.Enabled` | 0 | Combat Participation snapshot 및 모든 world 표시의 domain gate | non-shipping 전용 |
+| `Portfolio.DebugOverlay.CombatParticipation.DrawWorldText` | 1 | Enemy 머리 위 Evidence/role/TTL text | domain gate가 1일 때만 유효 |
+| `Portfolio.DebugOverlay.CombatParticipation.DrawWorldRing` | 1 | Enemy 발밑 role ring과 AssignmentLock ring | domain gate가 1일 때만 유효 |
+| `Portfolio.DebugOverlay.CombatParticipation.DrawHitReactiveEvidenceAnchor` | 0 | HitReactive anchor point, Target 연결선, 2D 반경 | domain gate가 1일 때만 유효 |
+
+`Enemy.CombatParticipation.Enabled`는 Panel_01 focused Enemy 상세의 표시 gate이고, 위 domain gate와
+독립적이다. `WorldSummary.CombatParticipation.Enabled`도 Panel_03의 별도 표시 gate다.
+
+- Perception Evidence가 LOS를 유지하면 `Perception: LOS`로 표시한다. LOS가 유지되는 동안에는 Evidence가 계속 갱신되므로 카운트다운을 표시하지 않는다.
+- LOS가 끊기면 `Perception: Memory 12.3s`처럼 `TargetMemoryTimeout`의 남은 시간을 표시한다.
+- HitReactive Evidence가 Reaction 종료를 기다리는 중이면 `HitReactive: Awaiting reaction`으로 표시한다.
+- Reaction이 종료되어 post-reaction TTL이 시작되면 `HitReactive: TTL 58.7s`처럼 남은 시간을 표시한다.
+- 해당 source의 Active Evidence가 없으면 그 source의 수명 행을 표시하지 않는다.
+- 한 Enemy가 여러 Target에 대한 Evidence를 동시에 보유하면, 머리 위 World Text는 Target별 블록을 위쪽으로 누적 배치해 서로 겹치지 않게 한다.
+
+### HitReactive Evidence anchor 월드 표시
+
+`Portfolio.DebugOverlay.CombatParticipation.DrawHitReactiveEvidenceAnchor`는 live HitReactive Evidence마다 다음 세 가지를 한 묶음으로 표시한다. 기본값은 `0`이며, Combat Participation Debug 패널의 `HitReactive Evidence Anchor` 체크박스로 변경할 수 있다.
+
+- Cyan point: 유효 hit 수용 시점의 Enemy 위치인 `HitReactiveEvidenceAnchorLocation`
+- Cyan line: 현재 Target 위치에서 anchor로 연결되는 leash
+- Cyan 2D circle: `HitReactiveEvidenceAnchorRadius`의 유효 반경
+
+Anchor는 Last Known Target Context나 Investigate 위치가 아니라 HitReactive Evidence 자체의 유효성 판정 데이터다. Engage ring과 머리 위 텍스트는 Evidence 조합에 따라 `Perception + HitReactive = Red`, `HitReactive only = Magenta`, `Perception only = Orange`로 표시한다. Alert / Observe / None은 기존 역할 색상을 유지한다.
+
 ### 확인 절차
 
 1. `/Game/00_UnitTest/TestRoom`에서 PIE를 실행한다.
@@ -172,9 +253,10 @@ Event Log가 비어 있을 때:
 - 구현 전에 실제 코드 위치와 표시 가능 여부를 먼저 확인한다.
 - 에이전트 활용이 유효하다고 판단되면 적극적으로 사용한다.
 
-## 작업 브랜치
+## 작업 기록의 기준 브랜치
 
-- `feature/debug-overlay-evidence-plan`
+- 이 문서는 특정 작업 브랜치에 고정되지 않는 현재 운영 가이드다. 과거 capture/evidence 문서에 기록된
+  브랜치명은 당시 자료의 메타데이터로만 해석한다.
 
 ## 작업 범위
 
@@ -209,11 +291,14 @@ Portfolio.DebugOverlay.Enabled
 Portfolio.DebugOverlay.Collect
 Portfolio.DebugOverlay.Preset
 Portfolio.DebugOverlay.EventLogLimit
+Portfolio.DebugOverlay.Player.*.Enabled
+Portfolio.DebugOverlay.Enemy.*.Enabled
+Portfolio.DebugOverlay.WorldSummary.*.Enabled
 ```
 
 기존 debug cvar와 충돌하지 않도록 `Portfolio.DebugOverlay.*` 네임스페이스를 사용한다.
 
-P0.5 실행 확인에서는 `Enabled`, `Collect`, `EventLogLimit`를 필수로 본다. `Preset`은 후속 preset 확장용이며, 현재 P0.5 수동 캡처 절차의 필수 CVar는 아니다.
+P0.5 실행 확인에서는 `Enabled`, `Collect`, `EventLogLimit`를 필수로 본다. `Preset`은 후속 preset 확장용이며, 현재 P0.5 수동 캡처 절차의 필수 CVar는 아니다. `Player.*.Enabled`, `Enemy.*.Enabled`는 Panel_01, `WorldSummary.*.Enabled`는 Panel_03의 정보 밀도를 조절하는 운영 CVar다.
 
 ## 목표모드 사용 기준
 

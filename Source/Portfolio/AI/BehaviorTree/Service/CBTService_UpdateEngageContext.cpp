@@ -2,6 +2,8 @@
 
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Character/Enemy/CEnemy.h"
+#include "Component/CCombatTargetComponent.h"
+#include "Component/CEnemyCombatParticipationComponent.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Core/Debug/FAICombatBTDebug.h"
@@ -79,21 +81,34 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 {
 	if (!IsValid(InOwnerPawn) || !IsValid(InBlackboardComp))
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("InvalidInput"));
 		return EContextBuildResult::Error;
 	}
 
 	ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
 	if (!IsValid(enemy))
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("InvalidEnemyPawn"));
 		return EContextBuildResult::Error;
 	}
 
-	OutEngageContext.TargetActor = Cast<AActor>(InBlackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	const UCCombatTargetComponent* combatTargetComp = enemy->GetCombatTargetComp();
+	const UCEnemyCombatParticipationComponent* participationComp = enemy->GetEnemyCombatParticipationComp();
+	if (!IsValid(combatTargetComp) || !IsValid(participationComp))
+	{
+		return EContextBuildResult::Error;
+	}
+
+	const FCombatParticipationAppliedSnapshot appliedSnapshot = participationComp->GetAppliedSnapshot();
+	const FCombatTargetSnapshot combatTargetSnapshot = combatTargetComp->GetCombatTargetSnapshot();
+	if (!appliedSnapshot.IsAssigned() || appliedSnapshot.CombatRole != ECombatRole::Engage
+		|| appliedSnapshot.TargetActor != combatTargetSnapshot.TargetActor
+		|| appliedSnapshot.CombatTargetRevision != combatTargetSnapshot.Revision)
+	{
+		return EContextBuildResult::NoData;
+	}
+
+	OutEngageContext.TargetActor = appliedSnapshot.TargetActor;
 	if (!IsValid(OutEngageContext.TargetActor))
 	{
-		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, OutEngageContext, TEXT("Build"), TEXT("MissingTarget"));
 		return EContextBuildResult::NoData;
 	}
 

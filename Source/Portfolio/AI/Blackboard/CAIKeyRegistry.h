@@ -40,14 +40,18 @@ namespace CAIKeyRegistry
 		static const TArray<FAIBlackboardKeySpec> keySpecs =
 		{
 			// Targeting
-			CAIKey::Targeting::TargetActor,
-			CAIKey::Targeting::TargetPriority,
+			CAIKey::CombatTarget::Actor,
+			CAIKey::CombatTarget::CombatTargetRevision,
+			CAIKey::CombatParticipation::State,
+			CAIKey::CombatParticipation::AssignmentRevision,
+			CAIKey::Perception::PerceivedTargetPriority,
 
 			// State
 			CAIKey::State::AIIntentState,
 
 			// Perception
 			CAIKey::Perception::bHasLOS,
+			CAIKey::Perception::PerceivedTargetActor,
 			CAIKey::Perception::LastSeenTime,
 			CAIKey::Perception::LastKnownLocation,
 

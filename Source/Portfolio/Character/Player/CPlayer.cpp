@@ -9,6 +9,7 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CObservableOverlayComponent.h"
+#include "Component/CCombatTargetComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
@@ -73,6 +74,9 @@ ACPlayer::ACPlayer()
 
 	ObservableOverlayComponent = CreateDefaultSubobject<UCObservableOverlayComponent>(TEXT("ObservableOverlay"));
 	check(ObservableOverlayComponent);
+
+	CombatTargetComponent = CreateDefaultSubobject<UCCombatTargetComponent>(TEXT("CombatTarget"));
+	check(CombatTargetComponent);
 
 	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
 	check(CombatSignalSourceComponent);
@@ -173,6 +177,7 @@ void ACPlayer::RecoverReferences()
 	FComponentReferenceHelper::RecoverIfInvalid(this, HealthComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, DefenseComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, ObservableOverlayComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, CombatTargetComponent);
 
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalSourceComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalTargetComponent);
@@ -198,6 +203,7 @@ void ACPlayer::BuildReferences(FCharacterComponentReferences& OutReferences)
 	OutReferences.HealthComponent = HealthComponent;
 	OutReferences.DefenseComponent = DefenseComponent;
 	OutReferences.ObservableOverlayComponent = ObservableOverlayComponent;
+	OutReferences.CombatTargetComponent = CombatTargetComponent;
 
 	OutReferences.CombatSignalSourceComponent = CombatSignalSourceComponent;
 	OutReferences.CombatSignalTargetComponent = CombatSignalTargetComponent;
@@ -328,6 +334,21 @@ FActionRequestResult ACPlayer::HandleMove(const FVector2D& InAxis2D)
 	request.Axis2D = InAxis2D;
 
 	return ActionOrchestratorComponent->RequestMovementAction(request);
+}
+
+FActionRequestResult ACPlayer::HandleLocomotionGaitInput(const bool bWalkInputHeld, const bool bSprintInputHeld)
+{
+	if (bWalkInputHeld) return HandleWalk();
+
+	const EMovementRotationMode rotationMode = IsValid(MovementComponent)
+		? MovementComponent->GetCurrentMovementRotationMode()
+		: EMovementRotationMode::None;
+	if (bSprintInputHeld && rotationMode == EMovementRotationMode::OrientToMovement)
+	{
+		return HandleSprint();
+	}
+
+	return HandleRun();
 }
 
 FActionRequestResult ACPlayer::HandleWalk()

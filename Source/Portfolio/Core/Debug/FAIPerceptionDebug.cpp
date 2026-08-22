@@ -59,13 +59,13 @@ void FAIPerceptionDebug::PrintPerceptionCandidateAuditSummary(const AActor* InOw
 		: -1.f;
 
 	FLog::Log(FString::Printf(
-		TEXT("[AI|Perception|CandidateAuditSummary] Owner=%s | RawEvents=%d | RawActors=%d | ValidProviders=%d | InvalidProviders=%d | MaxTargetPerceptionStateMap=%d | FirstRawLatency=%.3f | FirstValidLatency=%.3f | StartFrame=%llu | FirstRawFrame=%llu | FirstValidFrame=%llu"),
+		TEXT("[AI|Perception|CandidateAuditSummary] Owner=%s | RawEvents=%d | RawActors=%d | ValidProviders=%d | InvalidProviders=%d | MaxPerceptionTargetContextMap=%d | FirstRawLatency=%.3f | FirstValidLatency=%.3f | StartFrame=%llu | FirstRawFrame=%llu | FirstValidFrame=%llu"),
 		*GetNameSafe(InOwnerActor),
 		InState.RawPerceptionEventCount,
 		InState.RawPerceptionActors.Num(),
 		InState.ValidTargetProviderActors.Num(),
 		InState.InvalidTargetProviderActors.Num(),
-		InState.MaxTargetPerceptionStateMapSize,
+		InState.MaxPerceptionTargetContextMapSize,
 		firstRawLatency,
 		firstValidLatency,
 		InState.RuntimeStartFrame,

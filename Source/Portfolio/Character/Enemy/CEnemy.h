@@ -11,6 +11,7 @@
 #include "Type/CCombatResultTypes.h"
 #include "Type/CCharacterFeedbackTypes.h"
 #include "Type/CReactionOrchestrationTypes.h"
+#include "Type/CCombatTargetTypes.h"
 #include "Interface/CombatResultReceiver.h"
 #include "CEnemy.generated.h"
 
@@ -124,6 +125,18 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Overlay")
 	class UCObservableOverlayComponent* ObservableOverlayComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCCombatTargetComponent* CombatTargetComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCEnemyCombatTargetFacingComponent* EnemyCombatTargetFacingComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCEnemyCombatParticipationComponent* EnemyCombatParticipationComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
+	class UCEnemyHitReactiveComponent* EnemyHitReactiveComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
 	class UCCombatSignalSourceComponent* CombatSignalSourceComponent;
 
@@ -162,10 +175,21 @@ private:
 	int32 ParryResultCount = 0;
 
 private:
+	// Runtime LOD State
 	FRuntimeLODMeshState RuntimeLODMeshState;
 	FRuntimeLODActorTickState RuntimeLODActorTickState;
 
 private:
+	// Combat Action Runtime State
+	FCombatTargetSnapshot ActiveCombatActionTargetSnapshot;
+	int32 ActiveCombatActionParticipationRevision = 0;
+	FCombatTargetSnapshot PendingCombatActionTargetSnapshot;
+	int32 PendingCombatActionParticipationRevision = 0;
+	uint32 PendingCombatActionRequestSerial = 0;
+	uint32 NextCombatActionRequestSerial = 1;
+
+private:
+	// Death Lifecycle State
 	UPROPERTY(EditDefaultsOnly, Category = "Death|Presentation", meta = (ClampMin = 0.0))
 	float DeathPresentationFallbackDelay = 3.f;
 
@@ -208,14 +232,10 @@ private:
 	void DisableRuntimeLODActorTick();
 
 public:
-	// Tick
+	// Engine Override
 	void Tick(float DeltaTime) override;
-
-public:
-	// Input
 	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-public:
 	// Component Query
 	FORCEINLINE UCMovementComponent* GetMovementComp() const { return MovementComponent; }
 
@@ -225,6 +245,10 @@ public:
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
+	FORCEINLINE UCCombatTargetComponent* GetCombatTargetComp() const { return CombatTargetComponent; }
+	FORCEINLINE UCEnemyCombatTargetFacingComponent* GetEnemyCombatTargetFacingComp() const { return EnemyCombatTargetFacingComponent; }
+	FORCEINLINE UCEnemyCombatParticipationComponent* GetEnemyCombatParticipationComp() const { return EnemyCombatParticipationComponent; }
+	FORCEINLINE UCEnemyHitReactiveComponent* GetEnemyHitReactiveComp() const { return EnemyHitReactiveComponent; }
 	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
 	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
@@ -237,52 +261,49 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Component|Feedback")
 	FORCEINLINE UCCharacterFeedbackComponent* GetCharacterFeedbackComp() const { return CharacterFeedbackComponent; }
 
-public:
+	// Combat Result Query
 	FORCEINLINE int32 GetParryResultCount() const { return ParryResultCount; }
 	FORCEINLINE int32 GetParryStaggerThreshold() const { return ParryStaggerThreshold; }
 
-public:
 	// Target Presentation Query
 	FVector GetTargetMarkerWorldLocation() const;
 
-public:
 	// AI Config Query
+	// Patrol
 	FORCEINLINE bool ShouldUsePatrol() const { return bUsePatrol; }
 	FORCEINLINE ACPatrolPath* GetPatrolPath() const { return PatrolPath; }
 	FORCEINLINE EPatrolMode GetPatrolMode() const { return PatrolMode; }
 
-public:
+	// Investigate
 	FORCEINLINE bool ShouldUseInvestigate() const { return bUseInvestigate; }
 	FORCEINLINE float GetInvestigateDuration() const { return InvestigateDuration; }
 	FORCEINLINE int32 GetInvestigateMaxIndex() const { return InvestigateMaxIndex; }
 
-public:
+	// Chase
 	FORCEINLINE float GetChaseOffsetRange() const { return ChaseOffsetRange; }
 	FORCEINLINE float GetChaseEnterBuffer() const { return ChaseEnterBuffer; }
 	FORCEINLINE float GetChaseExitBuffer() const { return ChaseExitBuffer; }
 
-public:
+	// Alert
 	FORCEINLINE bool ShouldUseAlertStep() const { return bUseAlertStep; }
 	FORCEINLINE float GetStepSideDistance() const { return StepSideDistance; }
 	FORCEINLINE float GetStepForwardDistance() const { return StepForwardDistance; }
 
-public:
+	// Engage
 	FORCEINLINE float GetEngageOffsetRange() const { return EngageOffsetRange; }
 	FORCEINLINE float GetEngageEnterBuffer() const { return EngageEnterBuffer; }
 	FORCEINLINE float GetEngageExitBuffer() const { return EngageExitBuffer; }
 
-public:
 	FORCEINLINE float GetCombatActionCooldown() const { return CombatActionCooldown; }
 
-public:
 	// Damage
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
 
-public:
 	// Combat Result
 	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
 
 private:
+	// Combat Result Handling
 	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
 	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
@@ -295,15 +316,20 @@ public:
 	FActionRequestResult HandleAIJump();
 	FActionRequestResult HandleAIStopJump();
 
-	// AI Action Intent
+	// AI Equip Action Intent
 	FActionRequestResult HandleAIEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
+
+	// AI Combat Action Intent
 	FActionRequestResult HandleAICombatAction(ECombatActionIntent InCombatActionIntent);
 
 public:
-	// Runtime State
+	// Health / Death Command
 	bool TryStartKill();
 
 public:
+	// -----------------------------------------------------------------------------
+	// Death Lifecycle
+	// -----------------------------------------------------------------------------
 	// Death Lifecycle Query
 	FORCEINLINE bool IsDeathLifecycleActive() const { return bDeathLifecycleActive; }
 	FORCEINLINE bool IsDeathPresentationRequested() const { return bDeathPresentationRequested; }
@@ -312,12 +338,15 @@ public:
 	FORCEINLINE bool IsDeathFinalized() const { return bDeathFinalized; }
 
 private:
-	// Death Lifecycle Entry / State
+	// -----------------------------------------------------------------------------
+	// Death Lifecycle Implementation
+	// -----------------------------------------------------------------------------
+	// Entry / State
 	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
 	void BeginDeathLifecycle();
 	void AbortDeathLifecycle();
 
-	// Death Reaction Observation / Fallback
+	// Reaction Observation / Fallback
 	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 	void ValidateDeadReactionStarted();
 
@@ -333,20 +362,22 @@ private:
 	void FinalizeDeath();
 	void CleanupDeathGameplayRuntime();
 
-private:
-	// Combat Action Query
-	bool IsCombatActionType(EActionType InActionType) const;
-
-private:
+	// -----------------------------------------------------------------------------
+	// Action Event Handling
+	// -----------------------------------------------------------------------------
+	// Event Callback
 	UFUNCTION()
 	void OnActionTypeChanged(class ACharacter* InOwnerCharacter, EActionType InPreviousActionType, EActionType InNewActionType);
 
-private:
 	UFUNCTION()
-	void OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, EActionEventType InActionEventType);
+	void OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, uint32 InActionRequestSerial, EActionEventType InActionEventType);
 
-private:
 	// Action Event Routing
+	void ActivatePendingCombatActionAuthority(uint32 InActionRequestSerial);
+	void ReleaseCombatActionAuthority();
 	void RequestChainCombatAction(EActionType InActionType, int32 InActionIndex);
 	ECombatActionIntent ResolveChainCombatIntent(EActionType InActionType, int32 InActionIndex) const;
+
+	// Combat Action Classification
+	bool IsCombatActionType(EActionType InActionType) const;
 };

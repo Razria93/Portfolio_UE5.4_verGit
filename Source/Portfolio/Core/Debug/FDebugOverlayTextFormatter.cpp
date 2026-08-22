@@ -80,6 +80,20 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
 	}
 
+	void AppendPlayerLocomotionLines(TArray<FString>& InOutLines, const FDebugOverlayPlayerLocomotionViewData& InPlayerLocomotionViewData)
+	{
+		const FMovementDebugOverlayDetails& locomotion = InPlayerLocomotionViewData.Details;
+		if (!locomotion.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Locomotion Inputs]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Speed: %s | Direction: %s"), *locomotion.SpeedText, *locomotion.DirectionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Velocity World XY: %s"), *locomotion.VelocityWorldText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Velocity Local: %s"), *locomotion.VelocityLocalText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Input World XY: %s"), *locomotion.LastInputWorldText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Input Local: %s"), *locomotion.LastInputLocalText));
+	}
+
 	// [Focus]
 	// ===== Focus Lines =====
 
@@ -109,6 +123,30 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Distance Score: %s"), *targeting.DistanceScoreText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Final Score: %s"), *targeting.FinalScoreText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("In Range: %s | In View Cone: %s"), *targeting.RangeText, *targeting.ViewConeText));
+	}
+
+	// [Combat Participation]
+	// ===== Combat Participation Lines =====
+
+	void AppendCombatParticipationLines(TArray<FString>& InOutLines, const FDebugOverlayCombatParticipationViewData& InCombatParticipationViewData)
+	{
+		const FCombatParticipationDebugOverlayDetails& details = InCombatParticipationViewData.FocusedEnemyDetails;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Combat Participation]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Role: %s | Admission: %s"), *details.RoleText, *details.AdmissionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Evidence: %s"), *details.EvidenceText));
+		if (!details.PerceptionLifetimeText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Perception Lifetime: %s"), *details.PerceptionLifetimeText));
+		}
+		if (!details.HitReactiveLifetimeText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("HitReactive Lifetime: %s"), *details.HitReactiveLifetimeText));
+		}
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Target: %s | Assignment Revision: %s"), *details.TargetText, *details.AssignmentRevisionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Protection: %s"), *details.RetentionText));
 	}
 
 	// [Recent Execution]
@@ -234,11 +272,24 @@ namespace
 			AppendFormattedOverlayLine(InOutLines, TEXT(""));
 		}
 
-		AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
+		if (InActorPanelViewData.bIncludeStatus)
+		{
+			AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
+		}
+
+		if (InActorPanelViewData.bIncludeLocomotion)
+		{
+			AppendPlayerLocomotionLines(InOutLines, InActorPanelViewData.Locomotion);
+		}
 
 		if (InActorPanelViewData.bIncludeTargeting)
 		{
 			AppendPlayerTargetingLines(InOutLines, InActorPanelViewData.Targeting);
+		}
+
+		if (InActorPanelViewData.bIncludeCombatParticipation)
+		{
+			AppendCombatParticipationLines(InOutLines, InActorPanelViewData.CombatParticipation);
 		}
 
 		if (InActorPanelViewData.bIncludeDeathLifecycle)
@@ -246,7 +297,10 @@ namespace
 			AppendDeathLifecycleBlock(InOutLines, InActorPanelViewData.DeathLifecycle);
 		}
 
-		AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);
+		if (InActorPanelViewData.bIncludeRecentExecution)
+		{
+			AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);
+		}
 
 		if (InActorPanelViewData.bIncludeCurrentAI)
 		{
@@ -262,6 +316,8 @@ namespace
 	TArray<FString> BuildMainTextPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
+		if (InViewData.MainPanelTitle.IsEmpty()) return lines;
+
 		lines.Reserve(32);
 		AppendFormattedOverlayLine(lines, InViewData.MainPanelTitle);
 
@@ -351,6 +407,16 @@ namespace
 		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.WorldSummary.SummaryBlocks)
 		{
 			AppendRecentSummaryBlockLines(lines, summaryBlock);
+		}
+
+		if (InViewData.WorldSummary.bIncludeCombatParticipation)
+		{
+			AppendFormattedOverlayLine(lines, TEXT(""));
+			AppendFormattedOverlayLine(lines, TEXT("[Combat Participation]"));
+			for (const FString& summaryLine : InViewData.WorldSummary.CombatParticipation.WorldSummaryLines)
+			{
+				AppendFormattedOverlayLine(lines, summaryLine);
+			}
 		}
 
 		return lines;

@@ -1,0 +1,1267 @@
+#include "System/Combat/CWorldSubsystem_CombatParticipation.h"
+
+#include "Character/Enemy/CEnemy.h"
+#include "Component/CCombatTargetComponent.h"
+#include "Component/CHealthComponent.h"
+
+#include "ProjectGlobal.h"
+
+#include "Controller/CAIController.h"
+#include "Core/Debug/FCombatEngageDebug.h"
+#include "Core/Profiling/CCombatCollisionProfilingCounters.h"
+#include "Core/Profiling/CCombatFeedbackProfiling.h"
+#include "Interface/TargetContextProvider.h"
+#include "Type/CEngageAssignmentTypes.h"
+
+#include "HAL/IConsoleManager.h"
+#include "ProfilingDebugging/CsvProfiler.h"
+#include "AIController.h"
+
+namespace
+{
+	TAutoConsoleVariable<float> CVarEngageAssignmentWarmupTime(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentWarmupTime"),
+		0.0f,
+		TEXT("Delays the first CombatEngage assignment rebuild until request candidates are warmed up. 0: disabled."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentEngageCap(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap"),
+		2,
+		TEXT("Controls the GeneralBase Engage cap per target for AI Runtime LOD assignment. Default: 2."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentHitReactiveExtraCap(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentHitReactiveExtraCap"),
+		3,
+		TEXT("Controls the HitReactiveExtra Engage cap per target. Default: 3."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentTotalCap(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentTotalCap"),
+		5,
+		TEXT("Controls the total Engage cap per target across GeneralBase and HitReactiveExtra. Default: 5."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentAlertCap(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap"),
+		6,
+		TEXT("Controls max Alert assignees per target for AI Runtime LOD assignment. Default: 6."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<int32> CVarEngageAssignmentObserveCap(
+		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentObserveCap"),
+		12,
+		TEXT("Controls max Observe assignees per target for AI Runtime LOD assignment. Default: 12."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<float> CVarCombatParticipationHitReactivePostReactionTTL(
+		TEXT("Portfolio.AI.CombatParticipation.HitReactivePostReactionTTL"),
+		20.0f,
+		TEXT("Seconds a HitReactive Evidence remains valid after its correlated Reaction ends. 0: expire immediately."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<float> CVarCombatParticipationHitReactiveEvidenceAnchorRadius(
+		TEXT("Portfolio.AI.CombatParticipation.HitReactiveEvidenceAnchorRadius"),
+		1000.0f,
+		TEXT("Maximum Target distance from the Enemy's accepted-hit anchor while post-reaction HitReactive Evidence is active. 0: expire when the Target leaves the anchor."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<float> CVarCombatParticipationAssignmentLockTimeout(
+		TEXT("Portfolio.AI.CombatParticipation.AssignmentLockTimeout"),
+		3.0f,
+		TEXT("Maximum seconds a started AI Combat Action can retain its exact Engage assignment. 0: lock expires immediately."),
+		ECVF_Default);
+
+	float GetEngageAssignmentWarmupTime()
+	{
+		return FMath::Max(0.f, CVarEngageAssignmentWarmupTime.GetValueOnGameThread());
+	}
+
+	int32 GetEngageAssignmentEngageCap()
+	{
+		return FMath::Max(0, CVarEngageAssignmentEngageCap.GetValueOnGameThread());
+	}
+
+	int32 GetEngageAssignmentHitReactiveExtraCap()
+	{
+		return FMath::Max(0, CVarEngageAssignmentHitReactiveExtraCap.GetValueOnGameThread());
+	}
+
+	int32 GetEngageAssignmentTotalCap()
+	{
+		return FMath::Max(0, CVarEngageAssignmentTotalCap.GetValueOnGameThread());
+	}
+
+	int32 GetEngageAssignmentAlertCap()
+	{
+		return FMath::Max(0, CVarEngageAssignmentAlertCap.GetValueOnGameThread());
+	}
+
+	int32 GetEngageAssignmentObserveCap()
+	{
+		return FMath::Max(0, CVarEngageAssignmentObserveCap.GetValueOnGameThread());
+	}
+
+	float GetHitReactivePostReactionTTL()
+	{
+		return FMath::Max(0.f, CVarCombatParticipationHitReactivePostReactionTTL.GetValueOnGameThread());
+	}
+
+	float GetHitReactiveEvidenceAnchorRadius()
+	{
+		return FMath::Max(0.f, CVarCombatParticipationHitReactiveEvidenceAnchorRadius.GetValueOnGameThread());
+	}
+
+	float GetCombatParticipationAssignmentLockTimeout()
+	{
+		return FMath::Max(0.f, CVarCombatParticipationAssignmentLockTimeout.GetValueOnGameThread());
+	}
+}
+
+struct UCWorldSubsystem_CombatParticipation::FAssignmentRebuildContext
+{
+	const TArray<FCombatParticipationCandidate>& Candidates;
+	TMap<ACAIController*, FEngageAssignmentContext>& NextAssignments;
+	TMap<AActor*, FEngageAssignmentSlotState>& SlotState;
+	FEngageAssignmentRebuildDebugState& DebugState;
+};
+
+// -----------------------------------------------------------------------------
+// Public API
+// -----------------------------------------------------------------------------
+
+// Lifecycle
+
+void UCWorldSubsystem_CombatParticipation::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+}
+
+void UCWorldSubsystem_CombatParticipation::Deinitialize()
+{
+	ClearCombatParticipationRuntimeState();
+
+	Super::Deinitialize();
+}
+
+// Tick
+
+void UCWorldSubsystem_CombatParticipation::Tick(float DeltaTime)
+{
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_Tick);
+	FCombatCollisionProfilingCounters::FlushToCsv();
+	FCombatFeedbackProfiling::FlushToCsv();
+
+	Super::Tick(DeltaTime);
+
+	ElapsedTime += DeltaTime;
+	if (ElapsedTime < AssignmentTuning.RebuildInterval) return;
+
+	ElapsedTime = 0.f;
+	RebuildAssignments();
+}
+
+TStatId UCWorldSubsystem_CombatParticipation::GetStatId() const
+{
+	// Unreal uses this stat id to track the tickable subsystem.
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UCWorldSubsystem_CombatParticipation, STATGROUP_Tickables);
+}
+
+// Evidence Ingress
+
+void UCWorldSubsystem_CombatParticipation::ReportEvidence(ACAIController* InParticipant, ECombatParticipationSource InSource, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget)) return;
+	if (SuppressedParticipants.Contains(InParticipant)) return;
+
+	StartAssignmentWarmupIfNeeded();
+
+	const FCombatParticipationEvidenceKey key{ InParticipant, InSource, InTarget };
+	FCombatParticipationEvidence& evidence = EvidenceRegistry.FindOrAdd(key);
+
+	evidence.Participant = InParticipant;
+	evidence.Source = InSource;
+	evidence.TargetActor = InTarget;
+	evidence.Context = InContext;
+
+	UpdateLastKnownTargetContextFromEvidence(evidence);
+
+	if (InSource != ECombatParticipationSource::HitReactive)
+	{
+		evidence.HitReactiveResultSerial = 0;
+		evidence.HitReactiveExpireTimeSeconds = 0.f;
+		evidence.bHasStartedHitReactivePostReactionTTL = true;
+
+		evidence.HitReactiveEvidenceAnchorLocation = FVector::ZeroVector;
+		evidence.bHasHitReactiveEvidenceAnchor = false;
+	}
+
+	BindParticipationTargetLifecycle(InTarget);
+}
+
+void UCWorldSubsystem_CombatParticipation::ReportHitReactiveEvidence(ACAIController* InParticipant, AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, const uint64 InResultSerial)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;
+
+	ReportEvidence(InParticipant, ECombatParticipationSource::HitReactive, InTarget, InContext);
+
+	FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });
+	if (!evidence) return;
+
+	evidence->HitReactiveResultSerial = InResultSerial;
+	evidence->HitReactiveExpireTimeSeconds = 0.f;
+	evidence->bHasStartedHitReactivePostReactionTTL = false;
+
+	if (const APawn* participantPawn = InParticipant->GetPawn())
+	{
+		evidence->HitReactiveEvidenceAnchorLocation = participantPawn->GetActorLocation();
+		evidence->bHasHitReactiveEvidenceAnchor = true;
+	}
+}
+
+// HitReactive Evidence Lifetime
+
+void UCWorldSubsystem_CombatParticipation::StartHitReactiveEvidencePostReactionTTL(ACAIController* InParticipant, AActor* InTarget, const uint64 InResultSerial)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;
+
+	FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });
+	if (!evidence || evidence->HitReactiveResultSerial != InResultSerial) return;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	evidence->HitReactiveExpireTimeSeconds = world->GetTimeSeconds() + GetHitReactivePostReactionTTL();
+	evidence->bHasStartedHitReactivePostReactionTTL = true;
+
+	RebuildAssignments();
+}
+
+// Evidence Removal
+
+void UCWorldSubsystem_CombatParticipation::WithdrawEvidence(ACAIController* InParticipant, ECombatParticipationSource InSource, AActor* InTarget, const bool bAllowInvestigateHandoff)
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget)) return;
+
+	const FCombatParticipationEvidenceKey key{ InParticipant, InSource, InTarget };
+	const FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(key);
+	if (!evidence) return;
+
+	const FCombatParticipationEvidence removedEvidence = *evidence;
+	EvidenceRegistry.Remove(key);
+	ProcessEvidenceExhaustion(removedEvidence, bAllowInvestigateHandoff);
+
+	UnbindUnusedTargetLifecycleBindings();
+}
+
+// Participation Release
+
+void UCWorldSubsystem_CombatParticipation::SetParticipationSuppressed(ACAIController* InParticipant, const bool bSuppressed)
+{
+	if (!IsValid(InParticipant)) return;
+
+	if (!bSuppressed)
+	{
+		SuppressedParticipants.Remove(InParticipant);
+		return;
+	}
+
+	SuppressedParticipants.Add(InParticipant);
+	SoftReleaseParticipationForParticipant(InParticipant);
+}
+
+void UCWorldSubsystem_CombatParticipation::SoftReleaseParticipationForParticipant(ACAIController* InParticipant)
+{
+	if (!IsValid(InParticipant)) return;
+
+	bool bChanged = false;
+	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().Participant != InParticipant) continue;
+		iterator.RemoveCurrent();
+		bChanged = true;
+	}
+
+	ClearLastKnownTargetContextsForParticipant(InParticipant);
+
+	if (!bChanged) return;
+
+	UnbindUnusedTargetLifecycleBindings();
+
+	RebuildAssignments();
+}
+
+void UCWorldSubsystem_CombatParticipation::HardReleaseParticipationForParticipant(ACAIController* InParticipant)
+{
+	if (!IsValid(InParticipant)) return;
+
+	bool bRemovedState = false;
+	SuppressedParticipants.Remove(InParticipant);
+
+	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().Participant == InParticipant)
+		{
+			iterator.RemoveCurrent();
+			bRemovedState = true;
+		}
+	}
+
+	ClearLastKnownTargetContextsForParticipant(InParticipant);
+
+	bRemovedState |= AssignmentByParticipant.Remove(InParticipant) > 0;
+	bRemovedState |= AssignmentLockByParticipant.Remove(InParticipant) > 0;
+
+	UnbindUnusedTargetLifecycleBindings();
+
+	if (bRemovedState) RebuildAssignments();
+}
+
+// Query
+
+FEngageAssignmentContext UCWorldSubsystem_CombatParticipation::GetAssignment(const ACAIController* InCAIController) const
+{
+	if (!IsValid(InCAIController)) return FEngageAssignmentContext();
+
+	const FEngageAssignmentContext* found = AssignmentByParticipant.Find(InCAIController);
+	if (!found) return FEngageAssignmentContext();
+
+	return *found;
+}
+
+FCombatParticipationDebugSnapshot UCWorldSubsystem_CombatParticipation::BuildDebugSnapshot() const
+{
+	FCombatParticipationDebugSnapshot snapshot;
+	TMap<FCombatParticipationPairKey, int32> entryIndexByEvidence;
+	const UWorld* world = GetWorld();
+	const float nowTimeSeconds = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+
+	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentByParticipant)
+	{
+		ACAIController* participant = pair.Key;
+		const FEngageAssignmentContext& assignment = pair.Value;
+		if (!IsValid(participant)) continue;
+
+		const FCombatParticipationPairKey key{ participant, assignment.TargetActor };
+		int32* entryIndex = entryIndexByEvidence.Find(key);
+		if (!entryIndex)
+		{
+			FCombatParticipationDebugEntry& entry = snapshot.Entries.AddDefaulted_GetRef();
+			entry.ParticipantActor = participant->GetPawn();
+			entry.TargetActor = assignment.TargetActor;
+			entryIndexByEvidence.Add(key, snapshot.Entries.Num() - 1);
+			entryIndex = entryIndexByEvidence.Find(key);
+		}
+
+		FCombatParticipationDebugEntry& entry = snapshot.Entries[*entryIndex];
+		entry.CombatRole = assignment.CombatRole;
+		entry.EngageAdmission = assignment.EngageAdmission;
+		entry.AssignmentRevision = assignment.AssignmentRevision;
+		entry.bHasAssignmentLock = IsAssignmentLockActive(participant, assignment);
+	}
+
+	for (const TPair<FCombatParticipationEvidenceKey, FCombatParticipationEvidence>& pair : EvidenceRegistry)
+	{
+		const FCombatParticipationEvidence& evidence = pair.Value;
+		if (!IsValid(evidence.Participant)) continue;
+
+		const FCombatParticipationPairKey key{ evidence.Participant, evidence.TargetActor };
+		int32* entryIndex = entryIndexByEvidence.Find(key);
+		if (!entryIndex)
+		{
+			FCombatParticipationDebugEntry& entry = snapshot.Entries.AddDefaulted_GetRef();
+			entry.ParticipantActor = evidence.Participant->GetPawn();
+			entry.TargetActor = evidence.TargetActor;
+			entryIndexByEvidence.Add(key, snapshot.Entries.Num() - 1);
+			entryIndex = entryIndexByEvidence.Find(key);
+		}
+
+		FCombatParticipationDebugEntry& entry = snapshot.Entries[*entryIndex];
+		if (evidence.Source == ECombatParticipationSource::Perception)
+		{
+			entry.bHasPerceptionEvidence = true;
+			entry.bHasPerceptionEvidenceLifetimeState = evidence.Participant->TryGetPerceptionEvidenceLifetimeDebug(
+				evidence.TargetActor,
+				entry.bHasPerceptionLOS,
+				entry.PerceptionMemoryRemainingSeconds);
+		}
+		else if (evidence.Source == ECombatParticipationSource::HitReactive)
+		{
+			entry.bHasHitReactiveEvidence = true;
+			entry.bHasStartedHitReactivePostReactionTTL = evidence.bHasStartedHitReactivePostReactionTTL;
+			entry.HitReactivePostReactionTTLRemainingSeconds = entry.bHasStartedHitReactivePostReactionTTL
+				? FMath::Max(0.f, evidence.HitReactiveExpireTimeSeconds - nowTimeSeconds)
+				: 0.f;
+			entry.bHasHitReactiveEvidenceAnchor = evidence.bHasHitReactiveEvidenceAnchor;
+			entry.HitReactiveEvidenceAnchorLocation = evidence.HitReactiveEvidenceAnchorLocation;
+			entry.HitReactiveEvidenceAnchorRadius = GetHitReactiveEvidenceAnchorRadius();
+		}
+	}
+
+	TMap<AActor*, int32> summaryIndexByTarget;
+	for (const FCombatParticipationDebugEntry& entry : snapshot.Entries)
+	{
+		if (!IsValid(entry.TargetActor)) continue;
+
+		int32* summaryIndex = summaryIndexByTarget.Find(entry.TargetActor);
+		if (!summaryIndex)
+		{
+			FCombatParticipationDebugTargetSummary& summary = snapshot.TargetSummaries.AddDefaulted_GetRef();
+			summary.TargetActor = entry.TargetActor;
+			summary.GeneralBaseEngageCap = GetEngageAssignmentEngageCap();
+			summary.HitReactiveExtraEngageCap = GetEngageAssignmentHitReactiveExtraCap();
+			summary.TotalEngageCap = GetEngageAssignmentTotalCap();
+			summary.AlertCap = GetEngageAssignmentAlertCap();
+			summary.ObserveCap = GetEngageAssignmentObserveCap();
+			summaryIndexByTarget.Add(entry.TargetActor, snapshot.TargetSummaries.Num() - 1);
+			summaryIndex = summaryIndexByTarget.Find(entry.TargetActor);
+		}
+
+		FCombatParticipationDebugTargetSummary& summary = snapshot.TargetSummaries[*summaryIndex];
+		switch (entry.CombatRole)
+		{
+		case ECombatRole::Engage:
+			++summary.EngageCount;
+			if (entry.EngageAdmission == EEngageAdmissionKind::GeneralBase) ++summary.GeneralBaseEngageCount;
+			if (entry.EngageAdmission == EEngageAdmissionKind::HitReactiveExtra) ++summary.HitReactiveExtraEngageCount;
+			break;
+		case ECombatRole::Alert: ++summary.AlertCount; break;
+		case ECombatRole::Observe: ++summary.ObserveCount; break;
+		default: break;
+		}
+	}
+
+	snapshot.bHasSnapshot = !snapshot.Entries.IsEmpty() || !snapshot.TargetSummaries.IsEmpty();
+	return snapshot;
+}
+
+// Assignment Lock
+
+bool UCWorldSubsystem_CombatParticipation::AcquireAssignmentLock(ACAIController* InParticipant, const FCombatParticipationAssignmentLock& InAssignmentLock)
+{
+	if (!IsValid(InParticipant) || !IsValid(InAssignmentLock.TargetActor)) return false;
+
+	const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(InParticipant);
+	if (!assignment || !InAssignmentLock.Matches(*assignment)) return false;
+	if (!IsCombatParticipationPairValid(InParticipant, InAssignmentLock.TargetActor)) return false;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return false;
+
+	FCombatParticipationAssignmentLock assignmentLock = InAssignmentLock;
+	assignmentLock.ExpireTimeSeconds = world->GetTimeSeconds() + GetCombatParticipationAssignmentLockTimeout();
+	AssignmentLockByParticipant.Add(InParticipant, assignmentLock);
+	BindParticipationTargetLifecycle(assignmentLock.TargetActor);
+	return true;
+}
+
+void UCWorldSubsystem_CombatParticipation::ReleaseAssignmentLock(ACAIController* InParticipant)
+{
+	if (!IsValid(InParticipant)) return;
+	if (AssignmentLockByParticipant.Remove(InParticipant) == 0) return;
+
+	RebuildAssignments();
+}
+
+// -----------------------------------------------------------------------------
+// Assignment Rebuild
+// -----------------------------------------------------------------------------
+
+// Rebuild Entry
+
+void UCWorldSubsystem_CombatParticipation::RebuildAssignments()
+{
+	CSV_SCOPED_TIMING_STAT_GLOBAL(PortfolioAI_CombatEngage_RebuildAssignments);
+
+	++AssignmentRebuildId;
+	PruneInactiveEvidence();
+	PruneInactiveAssignmentLocks();
+	UnbindUnusedTargetLifecycleBindings();
+
+	// Delay assignment rebuild until warmup has completed.
+	if (ShouldDelayAssignmentForWarmup())
+	{
+		FCombatEngageDebug::RecordEngageAssignmentWarmupDelayedForAudit(AssignmentRebuildId, EvidenceRegistry.Num(), GetAssignmentWarmupElapsedTime(), GetEngageAssignmentWarmupTime());
+
+		return;
+	}
+
+	bool bCompletedWarmupThisRebuild = false;
+
+	// Mark warmup completion on the first rebuild after the delay.
+	if (!bAssignmentWarmupCompleted)
+	{
+		if (GetEngageAssignmentWarmupTime() > 0.f && AssignmentWarmupStartTime == CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return;
+
+		bAssignmentWarmupCompleted = true;
+		bCompletedWarmupThisRebuild = true;
+	}
+
+	TMap<ACAIController*, FEngageAssignmentContext> nextAssignments;
+	TMap<AActor*, FEngageAssignmentSlotState> slotState;
+	FEngageAssignmentRebuildDebugState rebuildDebugState;
+
+	TArray<FCombatParticipationCandidate> candidates;
+	BuildParticipationCandidates(candidates);
+	SortCandidates(candidates);
+	rebuildDebugState.CandidateCount = candidates.Num();
+	FAssignmentRebuildContext rebuildContext{ candidates, nextAssignments, slotState, rebuildDebugState };
+
+	PreserveCommittedRole(ECombatRole::Engage, rebuildContext);
+	PromoteCommittedRole(ECombatRole::Alert, ECombatRole::Engage, rebuildContext);
+	PromoteCommittedRole(ECombatRole::Observe, ECombatRole::Engage, rebuildContext);
+	AssignFreshRole(ECombatRole::Engage, rebuildContext);
+
+	PreserveCommittedRole(ECombatRole::Alert, rebuildContext);
+	PromoteCommittedRole(ECombatRole::Observe, ECombatRole::Alert, rebuildContext);
+	AssignFreshRole(ECombatRole::Alert, rebuildContext);
+
+	PreserveCommittedRole(ECombatRole::Observe, rebuildContext);
+	AssignFreshRole(ECombatRole::Observe, rebuildContext);
+
+	if (FCombatEngageDebug::ShouldAuditEngageAssignment() && (bCompletedWarmupThisRebuild || AssignmentRebuildId == CCombatEngageConstants::FirstAssignmentRebuildId))
+	{
+		FCombatEngageDebug::RecordEngageAssignmentRebuildSummaryForAudit(AssignmentRebuildId, rebuildDebugState, nextAssignments, GetEngageAssignmentEngageCap(), GetEngageAssignmentHitReactiveExtraCap(), GetEngageAssignmentTotalCap(), GetEngageAssignmentAlertCap(), GetEngageAssignmentObserveCap());
+	}
+
+	const TMap<ACAIController*, FEngageAssignmentContext> previousAssignments = AssignmentByParticipant;
+	AssignmentByParticipant = MoveTemp(nextAssignments);
+	UnbindUnusedTargetLifecycleBindings();
+	PublishAssignmentChanges(previousAssignments);
+	DispatchPendingEvidenceExhaustedEvents();
+}
+
+// Rebuild Preprocessing
+
+void UCWorldSubsystem_CombatParticipation::PruneInactiveEvidence()
+{
+	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
+	{
+		const FCombatParticipationEvidence& evidence = iterator.Value();
+		if (!IsCombatParticipationPairValid(evidence.Participant, evidence.TargetActor))
+		{
+			const FCombatParticipationPairKey key{ evidence.Participant, evidence.TargetActor };
+			iterator.RemoveCurrent();
+			ClearLastKnownTargetContextForParticipationPair(key);
+			continue;
+		}
+
+		if (IsHitReactiveEvidenceInactive(evidence))
+		{
+			const FCombatParticipationEvidence removedEvidence = evidence;
+			iterator.RemoveCurrent();
+			ProcessEvidenceExhaustion(removedEvidence, true);
+		}
+	}
+}
+
+void UCWorldSubsystem_CombatParticipation::PruneInactiveAssignmentLocks()
+{
+	for (auto iterator = AssignmentLockByParticipant.CreateIterator(); iterator; ++iterator)
+	{
+		ACAIController* participant = iterator.Key();
+		const FCombatParticipationAssignmentLock& assignmentLock = iterator.Value();
+		const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(participant);
+		if (!IsValid(participant)
+			|| !assignmentLock.Matches(assignment ? *assignment : FEngageAssignmentContext())
+			|| !IsCombatParticipationPairValid(participant, assignmentLock.TargetActor))
+		{
+			iterator.RemoveCurrent();
+			continue;
+		}
+
+		const UWorld* world = GetWorld();
+		if (!IsValid(world) || world->GetTimeSeconds() >= assignmentLock.ExpireTimeSeconds)
+		{
+			iterator.RemoveCurrent();
+		}
+	}
+}
+
+// Assignment Warmup
+
+bool UCWorldSubsystem_CombatParticipation::ShouldDelayAssignmentForWarmup() const
+{
+	if (bAssignmentWarmupCompleted) return false;
+	if (AssignmentWarmupStartTime == CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return false;
+	if (GetEngageAssignmentWarmupTime() <= 0.f) return false;
+
+	return GetAssignmentWarmupElapsedTime() < GetEngageAssignmentWarmupTime();
+}
+
+float UCWorldSubsystem_CombatParticipation::GetAssignmentWarmupElapsedTime() const
+{
+	if (AssignmentWarmupStartTime == CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return 0.f;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return 0.f;
+
+	return FMath::Max(0.f, world->GetTimeSeconds() - AssignmentWarmupStartTime);
+}
+
+// Candidate Build
+
+void UCWorldSubsystem_CombatParticipation::BuildParticipationCandidates(TArray<FCombatParticipationCandidate>& OutCandidates) const
+{
+	TMap<FCombatParticipationPairKey, FCombatParticipationCandidate> candidatesByKey;
+
+	for (const TPair<FCombatParticipationEvidenceKey, FCombatParticipationEvidence>& pair : EvidenceRegistry)
+	{
+		const FCombatParticipationEvidence& evidence = pair.Value;
+		if (!IsCombatParticipationPairValid(evidence.Participant, evidence.TargetActor) || IsHitReactiveEvidenceInactive(evidence)) continue;
+
+		FCombatParticipationCandidate& candidate = candidatesByKey.FindOrAdd(FCombatParticipationPairKey{ evidence.Participant, evidence.TargetActor });
+		candidate.Participant = evidence.Participant;
+		candidate.TargetActor = evidence.TargetActor;
+		candidate.TargetPriority = FMath::Min(candidate.TargetPriority, evidence.Context.TargetPriority);
+
+		const APawn* participantPawn = evidence.Participant->GetPawn();
+		candidate.DistanceToTarget = IsValid(participantPawn) ? FVector::Dist(participantPawn->GetActorLocation(), evidence.TargetActor->GetActorLocation()) : evidence.Context.DistanceToTarget;
+
+		candidate.bHasPerceptionEvidence |= evidence.Source == ECombatParticipationSource::Perception;
+		candidate.bHasHitReactiveEvidence |= evidence.Source == ECombatParticipationSource::HitReactive;
+	}
+
+	candidatesByKey.GenerateValueArray(OutCandidates);
+}
+
+void UCWorldSubsystem_CombatParticipation::SortCandidates(TArray<FCombatParticipationCandidate>& InOutCandidates) const
+{
+	InOutCandidates.Sort([](const FCombatParticipationCandidate& A, const FCombatParticipationCandidate& B)
+		{
+			if (A.TargetPriority != B.TargetPriority) return A.TargetPriority < B.TargetPriority;
+			if (!FMath::IsNearlyEqual(A.DistanceToTarget, B.DistanceToTarget)) return A.DistanceToTarget < B.DistanceToTarget;
+			if (A.TargetActor != B.TargetActor) return GetTypeHash(A.TargetActor) < GetTypeHash(B.TargetActor);
+
+			return GetTypeHash(A.Participant) < GetTypeHash(B.Participant);
+		});
+}
+
+// Assignment Ladder
+
+void UCWorldSubsystem_CombatParticipation::PreserveCommittedRole(const ECombatRole InRole, FAssignmentRebuildContext& InOutContext) const
+{
+	const TArray<FCombatParticipationCandidate>& InCandidates = InOutContext.Candidates;
+	TMap<ACAIController*, FEngageAssignmentContext>& InOutNextAssignments = InOutContext.NextAssignments;
+	TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState = InOutContext.SlotState;
+	FEngageAssignmentRebuildDebugState& InOutDebugState = InOutContext.DebugState;
+
+	const EEngageAdmissionKind admissionOrder[]
+	{
+		EEngageAdmissionKind::GeneralBase,
+		EEngageAdmissionKind::HitReactiveExtra,
+		EEngageAdmissionKind::None,
+	};
+	const int32 admissionPassCount = InRole == ECombatRole::Engage ? UE_ARRAY_COUNT(admissionOrder) : 1;
+
+	for (int32 admissionPass = 0; admissionPass < admissionPassCount; ++admissionPass)
+	{
+		for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentByParticipant)
+		{
+			ACAIController* participant = pair.Key;
+			const FEngageAssignmentContext& previousAssignment = pair.Value;
+			if (!IsValid(participant) || InOutNextAssignments.Contains(participant)) continue;
+			if (!previousAssignment.IsValidAssignment() || previousAssignment.CombatRole != InRole) continue;
+			if (InRole == ECombatRole::Engage && previousAssignment.EngageAdmission != admissionOrder[admissionPass]) continue;
+
+			const FCombatParticipationCandidate* candidate = FindCandidate(InCandidates, participant, previousAssignment.TargetActor);
+			const bool bHasActiveAssignmentLock = InRole == ECombatRole::Engage && IsAssignmentLockActive(participant, previousAssignment);
+			if (!candidate && !bHasActiveAssignmentLock) continue;
+
+			FEngageAssignmentContext assignment = previousAssignment;
+			bool bReserved = false;
+			if (InRole == ECombatRole::Engage)
+			{
+				if (bHasActiveAssignmentLock)
+				{
+					bReserved = TryReserveAssignmentSlot(assignment, InOutSlotState);
+				}
+				if (!bReserved && candidate && TryBuildEngageAssignment(*candidate, assignment, InOutSlotState))
+				{
+					bReserved = TryReserveAssignmentSlot(assignment, InOutSlotState);
+				}
+			}
+			else
+			{
+				bReserved = TryReserveAssignmentSlot(assignment, InOutSlotState);
+			}
+
+			if (!bReserved) continue;
+
+			InOutNextAssignments.Add(participant, assignment);
+			switch (InRole)
+			{
+			case ECombatRole::Engage: ++InOutDebugState.PreservedEngageCount; break;
+			case ECombatRole::Alert: ++InOutDebugState.PreservedAlertCount; break;
+			case ECombatRole::Observe: ++InOutDebugState.PreservedObserveCount; break;
+			default: break;
+			}
+		}
+	}
+}
+
+void UCWorldSubsystem_CombatParticipation::PromoteCommittedRole(const ECombatRole InFromRole, const ECombatRole InToRole, FAssignmentRebuildContext& InOutContext) const
+{
+	const TArray<FCombatParticipationCandidate>& InCandidates = InOutContext.Candidates;
+	TMap<ACAIController*, FEngageAssignmentContext>& InOutNextAssignments = InOutContext.NextAssignments;
+	TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState = InOutContext.SlotState;
+	FEngageAssignmentRebuildDebugState& InOutDebugState = InOutContext.DebugState;
+
+	for (const FCombatParticipationCandidate& candidate : InCandidates)
+	{
+		if (!IsValid(candidate.Participant) || !IsValid(candidate.TargetActor)) continue;
+		if (InOutNextAssignments.Contains(candidate.Participant)) continue;
+
+		const FEngageAssignmentContext* previousAssignment = AssignmentByParticipant.Find(candidate.Participant);
+		if (!previousAssignment || !previousAssignment->IsValidAssignment()) continue;
+		if (previousAssignment->CombatRole != InFromRole || previousAssignment->TargetActor != candidate.TargetActor) continue;
+
+		FEngageAssignmentContext promotedAssignment;
+		if (InToRole == ECombatRole::Engage)
+		{
+			if (!TryBuildEngageAssignment(candidate, promotedAssignment, InOutSlotState)) continue;
+		}
+		else
+		{
+			promotedAssignment.TargetActor = candidate.TargetActor;
+			promotedAssignment.CombatRole = InToRole;
+		}
+
+		if (!TryReserveAssignmentSlot(promotedAssignment, InOutSlotState)) continue;
+
+		InOutNextAssignments.Add(candidate.Participant, promotedAssignment);
+		if (InFromRole == ECombatRole::Alert && InToRole == ECombatRole::Engage) ++InOutDebugState.PromotedAlertToEngageCount;
+		if (InFromRole == ECombatRole::Observe && InToRole == ECombatRole::Engage) ++InOutDebugState.PromotedObserveToEngageCount;
+		if (InFromRole == ECombatRole::Observe && InToRole == ECombatRole::Alert) ++InOutDebugState.PromotedObserveToAlertCount;
+	}
+}
+
+void UCWorldSubsystem_CombatParticipation::AssignFreshRole(const ECombatRole InRole, FAssignmentRebuildContext& InOutContext) const
+{
+	const TArray<FCombatParticipationCandidate>& InCandidates = InOutContext.Candidates;
+	TMap<ACAIController*, FEngageAssignmentContext>& InOutNextAssignments = InOutContext.NextAssignments;
+	TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState = InOutContext.SlotState;
+	FEngageAssignmentRebuildDebugState& InOutDebugState = InOutContext.DebugState;
+
+	for (const FCombatParticipationCandidate& candidate : InCandidates)
+	{
+		if (!IsValid(candidate.Participant) || !IsValid(candidate.TargetActor)) continue;
+		if (InOutNextAssignments.Contains(candidate.Participant) || !CanAssignCandidateAtRole(candidate, InRole)) continue;
+
+		FEngageAssignmentContext assignment;
+		if (InRole == ECombatRole::Engage)
+		{
+			if (!TryBuildEngageAssignment(candidate, assignment, InOutSlotState)) continue;
+		}
+		else
+		{
+			assignment.TargetActor = candidate.TargetActor;
+			assignment.CombatRole = InRole;
+		}
+
+		if (!TryReserveAssignmentSlot(assignment, InOutSlotState)) continue;
+
+		InOutNextAssignments.Add(candidate.Participant, assignment);
+		switch (InRole)
+		{
+		case ECombatRole::Engage: ++InOutDebugState.FreshEngageCount; break;
+		case ECombatRole::Alert: ++InOutDebugState.FreshAlertCount; break;
+		case ECombatRole::Observe: ++InOutDebugState.FreshObserveCount; break;
+		default: break;
+		}
+	}
+}
+
+// Assignment Result
+
+void UCWorldSubsystem_CombatParticipation::PublishAssignmentChanges(const TMap<ACAIController*, FEngageAssignmentContext>& InPreviousAssignments)
+{
+	TSet<ACAIController*> controllers;
+	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : InPreviousAssignments) controllers.Add(pair.Key);
+	for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentByParticipant) controllers.Add(pair.Key);
+
+	for (ACAIController* controller : controllers)
+	{
+		const FEngageAssignmentContext* previous = InPreviousAssignments.Find(controller);
+		FEngageAssignmentContext* current = AssignmentByParticipant.Find(controller);
+		const FEngageAssignmentContext previousAssignment = previous ? *previous : FEngageAssignmentContext();
+		FEngageAssignmentContext currentAssignment = current ? *current : FEngageAssignmentContext();
+		if (previousAssignment.TargetActor == currentAssignment.TargetActor
+			&& previousAssignment.CombatRole == currentAssignment.CombatRole
+			&& previousAssignment.EngageAdmission == currentAssignment.EngageAdmission)
+		{
+			continue;
+		}
+
+		currentAssignment.AssignmentRevision = ++AssignmentRevisionSerial;
+		if (current) current->AssignmentRevision = currentAssignment.AssignmentRevision;
+
+		FCombatParticipationChange change;
+		change.PreviousAssignment = previousAssignment;
+		change.CurrentAssignment = currentAssignment;
+		OnCombatParticipationChanged.Broadcast(controller, change);
+	}
+}
+
+void UCWorldSubsystem_CombatParticipation::DispatchPendingEvidenceExhaustedEvents()
+{
+	TArray<FCombatParticipationEvidenceExhaustedEvent> pendingEvents = MoveTemp(PendingEvidenceExhaustedEvents);
+	for (const FCombatParticipationEvidenceExhaustedEvent& event : pendingEvents)
+	{
+		if (!IsCombatParticipationPairValid(event.Participant, event.TargetActor)) continue;
+		if (SuppressedParticipants.Contains(event.Participant)) continue;
+		if (HasActiveEvidenceForParticipationPair(event.Participant, event.TargetActor)) continue;
+
+		const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(event.Participant);
+		if (assignment && assignment->IsValidAssignment())
+		{
+			if (assignment->TargetActor == event.TargetActor)
+			{
+				// A matching action lock retains this Assignment until its action ends.
+				// Dispatch only after the allocator has actually removed the combat participation.
+				PendingEvidenceExhaustedEvents.Add(event);
+			}
+			continue;
+		}
+
+		OnCombatParticipationEvidenceExhausted.Broadcast(event);
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Assignment Rebuild Support
+// -----------------------------------------------------------------------------
+
+// Assignment Warmup Support
+
+void UCWorldSubsystem_CombatParticipation::StartAssignmentWarmupIfNeeded()
+{
+	if (bAssignmentWarmupCompleted) return;
+	if (AssignmentWarmupStartTime != CCombatEngageConstants::UnsetAssignmentWarmupStartTime) return;
+	if (GetEngageAssignmentWarmupTime() <= 0.f) return;
+
+	const UWorld* world = GetWorld();
+	AssignmentWarmupStartTime = IsValid(world) ? world->GetTimeSeconds() : 0.f;
+}
+
+// Evidence Lifecycle Support
+
+bool UCWorldSubsystem_CombatParticipation::IsCombatParticipationPairValid(const ACAIController* InParticipant, const AActor* InTarget) const
+{
+	if (!IsValid(InParticipant) || !IsValid(InTarget)) return false;
+	if (!Cast<ITargetContextProvider>(InTarget)) return false;
+	if (InParticipant->GetTeamAttitudeTowards(*InTarget) != ETeamAttitude::Hostile) return false;
+
+	const UCHealthComponent* healthComp = InTarget->FindComponentByClass<UCHealthComponent>();
+	return !IsValid(healthComp) || healthComp->IsAlive();
+}
+
+bool UCWorldSubsystem_CombatParticipation::IsHitReactiveEvidenceInactive(const FCombatParticipationEvidence& InEvidence) const
+{
+	if (InEvidence.Source != ECombatParticipationSource::HitReactive) return false;
+	if (!InEvidence.bHasStartedHitReactivePostReactionTTL) return false;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return false;
+
+	return world->GetTimeSeconds() >= InEvidence.HitReactiveExpireTimeSeconds || IsHitReactiveEvidenceAnchorExceeded(InEvidence);
+}
+
+bool UCWorldSubsystem_CombatParticipation::IsHitReactiveEvidenceAnchorExceeded(const FCombatParticipationEvidence& InEvidence) const
+{
+	if (InEvidence.Source != ECombatParticipationSource::HitReactive) return false;
+	if (!InEvidence.bHasHitReactiveEvidenceAnchor || !IsValid(InEvidence.TargetActor)) return false;
+
+	const float anchorRadius = GetHitReactiveEvidenceAnchorRadius();
+	return FVector::Dist2D(InEvidence.TargetActor->GetActorLocation(), InEvidence.HitReactiveEvidenceAnchorLocation) > anchorRadius;
+}
+
+bool UCWorldSubsystem_CombatParticipation::HasActiveEvidenceForParticipationPair(const ACAIController* InParticipant, const AActor* InTarget) const
+{
+	if (!IsCombatParticipationPairValid(InParticipant, InTarget)) return false;
+
+	for (const TPair<FCombatParticipationEvidenceKey, FCombatParticipationEvidence>& pair : EvidenceRegistry)
+	{
+		const FCombatParticipationEvidence& evidence = pair.Value;
+		if (evidence.Participant == InParticipant && evidence.TargetActor == InTarget && !IsHitReactiveEvidenceInactive(evidence)) return true;
+	}
+
+	return false;
+}
+
+void UCWorldSubsystem_CombatParticipation::UpdateLastKnownTargetContextFromEvidence(const FCombatParticipationEvidence& InEvidence)
+{
+	if (!InEvidence.Context.bHasTargetObservation) return;
+
+	const UWorld* world = GetWorld();
+	if (!IsValid(world)) return;
+
+	const FCombatParticipationPairKey key{ InEvidence.Participant, InEvidence.TargetActor };
+	FCombatParticipationLastKnownTargetContext& context = LastKnownTargetContextByParticipationPair.FindOrAdd(key);
+	const float observationTimeSeconds = world->GetTimeSeconds();
+	if (context.bHasObservation && observationTimeSeconds < context.LastObservedTimeSeconds) return;
+
+	context.LastKnownLocation = InEvidence.Context.ObservedTargetLocation;
+	context.LastObservedVelocity = InEvidence.Context.ObservedTargetVelocity;
+	context.LastObservedTimeSeconds = observationTimeSeconds;
+	context.LastObservedSource = InEvidence.Source;
+	context.bHasObservation = true;
+}
+
+void UCWorldSubsystem_CombatParticipation::ProcessEvidenceExhaustion(const FCombatParticipationEvidence& InEvidence, const bool bAllowInvestigateHandoff)
+{
+	const FCombatParticipationPairKey key{ InEvidence.Participant, InEvidence.TargetActor };
+
+	if (HasActiveEvidenceForParticipationPair(InEvidence.Participant, InEvidence.TargetActor)) return;
+
+	if (!bAllowInvestigateHandoff)
+	{
+		ClearLastKnownTargetContextForParticipationPair(key);
+		return;
+	}
+
+	const FCombatParticipationLastKnownTargetContext* context = LastKnownTargetContextByParticipationPair.Find(key);
+	if (!context || !context->bHasObservation)
+	{
+		ClearLastKnownTargetContextForParticipationPair(key);
+		return;
+	}
+
+	FCombatParticipationEvidenceExhaustedEvent event;
+	event.Participant = InEvidence.Participant;
+	event.TargetActor = InEvidence.TargetActor;
+	event.LastKnownTargetContext = *context;
+	event.FinalEvidenceSource = InEvidence.Source;
+
+	if (const FEngageAssignmentContext* assignment = AssignmentByParticipant.Find(InEvidence.Participant))
+	{
+		event.bWasAppliedCombatTarget = assignment->IsValidAssignment() && assignment->TargetActor == InEvidence.TargetActor;
+	}
+
+	LastKnownTargetContextByParticipationPair.Remove(key);
+	PendingEvidenceExhaustedEvents.Add(event);
+}
+
+void UCWorldSubsystem_CombatParticipation::ClearLastKnownTargetContextForParticipationPair(const FCombatParticipationPairKey& InKey)
+{
+	LastKnownTargetContextByParticipationPair.Remove(InKey);
+	PendingEvidenceExhaustedEvents.RemoveAll([&InKey](const FCombatParticipationEvidenceExhaustedEvent& event)
+		{
+			return event.Participant == InKey.Participant && event.TargetActor == InKey.TargetActor;
+		});
+}
+
+void UCWorldSubsystem_CombatParticipation::ClearLastKnownTargetContextsForParticipant(const ACAIController* InParticipant)
+{
+	for (auto iterator = LastKnownTargetContextByParticipationPair.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().Participant == InParticipant) iterator.RemoveCurrent();
+	}
+	PendingEvidenceExhaustedEvents.RemoveAll([InParticipant](const FCombatParticipationEvidenceExhaustedEvent& event)
+		{
+			return event.Participant == InParticipant;
+		});
+}
+
+void UCWorldSubsystem_CombatParticipation::ClearLastKnownTargetContextsForTarget(const AActor* InTarget)
+{
+	for (auto iterator = LastKnownTargetContextByParticipationPair.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Key().TargetActor == InTarget) iterator.RemoveCurrent();
+	}
+	PendingEvidenceExhaustedEvents.RemoveAll([InTarget](const FCombatParticipationEvidenceExhaustedEvent& event)
+		{
+			return event.TargetActor == InTarget;
+		});
+}
+
+// Candidate Build Support
+
+bool UCWorldSubsystem_CombatParticipation::IsCandidatePreferred(const FCombatParticipationCandidate& InCandidate, const FCombatParticipationCandidate& InCurrent) const
+{
+	if (InCandidate.TargetPriority != InCurrent.TargetPriority) return InCandidate.TargetPriority < InCurrent.TargetPriority;
+	if (!FMath::IsNearlyEqual(InCandidate.DistanceToTarget, InCurrent.DistanceToTarget)) return InCandidate.DistanceToTarget < InCurrent.DistanceToTarget;
+
+	return GetTypeHash(InCandidate.TargetActor) < GetTypeHash(InCurrent.TargetActor);
+}
+
+// Assignment Ladder Support
+
+const FCombatParticipationCandidate* UCWorldSubsystem_CombatParticipation::FindCandidate(const TArray<FCombatParticipationCandidate>& InCandidates, const ACAIController* InParticipant, const AActor* InTarget) const
+{
+	for (const FCombatParticipationCandidate& candidate : InCandidates)
+	{
+		if (candidate.Participant == InParticipant && candidate.TargetActor == InTarget) return &candidate;
+	}
+
+	return nullptr;
+}
+
+bool UCWorldSubsystem_CombatParticipation::CanAssignCandidateAtRole(const FCombatParticipationCandidate& InCandidate, const ECombatRole InRole) const
+{
+	const FEngageAssignmentContext* previousAssignment = AssignmentByParticipant.Find(InCandidate.Participant);
+	if (!previousAssignment || !previousAssignment->IsValidAssignment()) return true;
+	if (!CanRetainAssignment(InCandidate.Participant, *previousAssignment)) return true;
+	if (previousAssignment->TargetActor != InCandidate.TargetActor) return false;
+	return static_cast<uint8>(previousAssignment->CombatRole) < static_cast<uint8>(InRole);
+}
+
+bool UCWorldSubsystem_CombatParticipation::TryBuildEngageAssignment(const FCombatParticipationCandidate& InCandidate, FEngageAssignmentContext& OutAssignment, const TMap<AActor*, FEngageAssignmentSlotState>& InSlotState) const
+{
+	if (!IsValid(InCandidate.TargetActor)) return false;
+
+	const FEngageAssignmentSlotState* slotState = InSlotState.Find(InCandidate.TargetActor);
+	const FEngageAssignmentSlotState emptySlotState;
+	const FEngageAssignmentSlotState& targetSlotState = slotState ? *slotState : emptySlotState;
+	if (targetSlotState.EngageCount >= GetEngageAssignmentTotalCap()) return false;
+
+	OutAssignment.TargetActor = InCandidate.TargetActor;
+	OutAssignment.CombatRole = ECombatRole::Engage;
+	if (targetSlotState.GeneralBaseEngageCount < GetEngageAssignmentEngageCap())
+	{
+		OutAssignment.EngageAdmission = EEngageAdmissionKind::GeneralBase;
+		return true;
+	}
+
+	if (InCandidate.bHasHitReactiveEvidence && targetSlotState.HitReactiveExtraEngageCount < GetEngageAssignmentHitReactiveExtraCap())
+	{
+		OutAssignment.EngageAdmission = EEngageAdmissionKind::HitReactiveExtra;
+		return true;
+	}
+
+	return false;
+}
+
+bool UCWorldSubsystem_CombatParticipation::TryReserveAssignmentSlot(const FEngageAssignmentContext& InAssignment, TMap<AActor*, FEngageAssignmentSlotState>& InOutSlotState) const
+{
+	if (!InAssignment.IsValidAssignment()) return false;
+
+	FEngageAssignmentSlotState& targetSlotState = InOutSlotState.FindOrAdd(InAssignment.TargetActor);
+
+	if (InAssignment.CombatRole == ECombatRole::Engage)
+	{
+		if (targetSlotState.EngageCount >= GetEngageAssignmentTotalCap()) return false;
+
+		if (InAssignment.EngageAdmission == EEngageAdmissionKind::GeneralBase)
+		{
+			if (targetSlotState.GeneralBaseEngageCount >= GetEngageAssignmentEngageCap()) return false;
+			++targetSlotState.GeneralBaseEngageCount;
+		}
+		else if (InAssignment.EngageAdmission == EEngageAdmissionKind::HitReactiveExtra)
+		{
+			if (targetSlotState.HitReactiveExtraEngageCount >= GetEngageAssignmentHitReactiveExtraCap()) return false;
+			++targetSlotState.HitReactiveExtraEngageCount;
+		}
+		else
+		{
+			return false;
+		}
+
+		++targetSlotState.EngageCount;
+		return true;
+	}
+
+	if (InAssignment.CombatRole == ECombatRole::Alert)
+	{
+		if (targetSlotState.AlertCount >= GetEngageAssignmentAlertCap()) return false;
+
+		++targetSlotState.AlertCount;
+		return true;
+	}
+
+	if (InAssignment.CombatRole == ECombatRole::Observe)
+	{
+		if (targetSlotState.ObserveCount >= GetEngageAssignmentObserveCap()) return false;
+
+		++targetSlotState.ObserveCount;
+		return true;
+	}
+
+	return false;
+}
+
+// Assignment Retention Support
+
+bool UCWorldSubsystem_CombatParticipation::CanRetainAssignment(const ACAIController* InCAIController, const FEngageAssignmentContext& InAssignment) const
+{
+	return InAssignment.IsValidAssignment()
+		&& (HasActiveEvidenceForParticipationPair(InCAIController, InAssignment.TargetActor)
+			|| IsAssignmentLockActive(InCAIController, InAssignment));
+}
+
+bool UCWorldSubsystem_CombatParticipation::IsAssignmentLockActive(const ACAIController* InParticipant, const FEngageAssignmentContext& InAssignment) const
+{
+	const FCombatParticipationAssignmentLock* assignmentLock = AssignmentLockByParticipant.Find(InParticipant);
+	if (!assignmentLock || !assignmentLock->Matches(InAssignment)) return false;
+	if (!IsCombatParticipationPairValid(InParticipant, assignmentLock->TargetActor)) return false;
+
+	const UWorld* world = GetWorld();
+	return IsValid(world) && world->GetTimeSeconds() < assignmentLock->ExpireTimeSeconds;
+}
+
+// -----------------------------------------------------------------------------
+// Target Lifecycle
+// -----------------------------------------------------------------------------
+
+// Lifecycle Binding
+
+void UCWorldSubsystem_CombatParticipation::BindParticipationTargetLifecycle(AActor* InTarget)
+{
+	BindParticipationTargetEndPlay(InTarget);
+	BindParticipationTargetDeadState(InTarget);
+}
+
+void UCWorldSubsystem_CombatParticipation::BindParticipationTargetEndPlay(AActor* InTarget)
+{
+	if (!IsValid(InTarget) || TargetEndPlayBindings.Contains(InTarget)) return;
+
+	InTarget->OnEndPlay.AddDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
+	TargetEndPlayBindings.Add(InTarget);
+}
+
+void UCWorldSubsystem_CombatParticipation::BindParticipationTargetDeadState(AActor* InTarget)
+{
+	UCHealthComponent* healthComp = IsValid(InTarget) ? InTarget->FindComponentByClass<UCHealthComponent>() : nullptr;
+	if (!IsValid(healthComp) || TargetHealthBindings.Contains(healthComp)) return;
+
+	healthComp->OnDeadStateChanged.AddUObject(this, &UCWorldSubsystem_CombatParticipation::HandleTargetDeadStateChanged, healthComp);
+	TargetHealthBindings.Add(healthComp);
+}
+
+void UCWorldSubsystem_CombatParticipation::UnbindUnusedTargetLifecycleBindings()
+{
+	// Keep target lifecycle bindings while any Evidence, Assignment, or Assignment Lock references the target.
+	for (auto iterator = TargetEndPlayBindings.CreateIterator(); iterator; ++iterator)
+	{
+		AActor* targetActor = *iterator;
+		bool bHasTargetReference = false;
+		for (const TPair<FCombatParticipationEvidenceKey, FCombatParticipationEvidence>& pair : EvidenceRegistry)
+		{
+			if (pair.Value.TargetActor == targetActor)
+			{
+				bHasTargetReference = true;
+				break;
+			}
+		}
+
+		if (!bHasTargetReference)
+		{
+			for (const TPair<ACAIController*, FEngageAssignmentContext>& pair : AssignmentByParticipant)
+			{
+				if (pair.Value.TargetActor == targetActor)
+				{
+					bHasTargetReference = true;
+					break;
+				}
+			}
+		}
+
+		if (!bHasTargetReference)
+		{
+			for (const TPair<ACAIController*, FCombatParticipationAssignmentLock>& pair : AssignmentLockByParticipant)
+			{
+				if (pair.Value.TargetActor == targetActor)
+				{
+					bHasTargetReference = true;
+					break;
+				}
+			}
+		}
+
+		if (bHasTargetReference) continue;
+		if (IsValid(targetActor))
+		{
+			targetActor->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
+
+			if (UCHealthComponent* healthComp = targetActor->FindComponentByClass<UCHealthComponent>())
+			{
+				healthComp->OnDeadStateChanged.RemoveAll(this);
+				TargetHealthBindings.Remove(healthComp);
+			}
+		}
+		iterator.RemoveCurrent();
+	}
+}
+
+// Target State Release
+
+void UCWorldSubsystem_CombatParticipation::ReleaseTargetParticipationState(AActor* InTarget)
+{
+	if (!InTarget) return;
+	ClearLastKnownTargetContextsForTarget(InTarget);
+
+	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Value().TargetActor == InTarget)
+		{
+			iterator.RemoveCurrent();
+		}
+	}
+
+	for (auto iterator = AssignmentLockByParticipant.CreateIterator(); iterator; ++iterator)
+	{
+		if (iterator.Value().TargetActor == InTarget)
+		{
+			iterator.RemoveCurrent();
+		}
+	}
+
+	if (IsValid(InTarget))
+	{
+		InTarget->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
+	}
+	TargetEndPlayBindings.Remove(InTarget);
+	if (UCHealthComponent* healthComp = InTarget->FindComponentByClass<UCHealthComponent>())
+	{
+		healthComp->OnDeadStateChanged.RemoveAll(this);
+		TargetHealthBindings.Remove(healthComp);
+	}
+	RebuildAssignments();
+}
+
+// Lifecycle Callback
+
+void UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay(AActor* InTarget, EEndPlayReason::Type InEndPlayReason)
+{
+	ReleaseTargetParticipationState(InTarget);
+}
+
+void UCWorldSubsystem_CombatParticipation::HandleTargetDeadStateChanged(const EDeadState InPreviousState, const EDeadState InNewState, UCHealthComponent* InHealthComponent)
+{
+	if (InNewState != EDeadState::Dead) return;
+
+	AActor* targetActor = IsValid(InHealthComponent) ? InHealthComponent->GetOwner() : nullptr;
+	if (!IsValid(targetActor)) return;
+
+	ReleaseTargetParticipationState(targetActor);
+}
+
+// -----------------------------------------------------------------------------
+// Runtime Cleanup
+// -----------------------------------------------------------------------------
+
+void UCWorldSubsystem_CombatParticipation::ClearCombatParticipationRuntimeState()
+{
+	ElapsedTime = 0.f;
+	AssignmentWarmupStartTime = CCombatEngageConstants::UnsetAssignmentWarmupStartTime;
+	bAssignmentWarmupCompleted = false;
+	AssignmentRebuildId = CCombatEngageConstants::InitialAssignmentRebuildId;
+	AssignmentRevisionSerial = 0;
+	EvidenceRegistry.Reset();
+	LastKnownTargetContextByParticipationPair.Reset();
+	PendingEvidenceExhaustedEvents.Reset();
+	SuppressedParticipants.Reset();
+	AssignmentLockByParticipant.Reset();
+	for (AActor* targetActor : TargetEndPlayBindings)
+	{
+		if (IsValid(targetActor)) targetActor->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
+	}
+	TargetEndPlayBindings.Reset();
+	for (UCHealthComponent* healthComp : TargetHealthBindings)
+	{
+		if (IsValid(healthComp)) healthComp->OnDeadStateChanged.RemoveAll(this);
+	}
+	TargetHealthBindings.Reset();
+	AssignmentByParticipant.Reset();
+}

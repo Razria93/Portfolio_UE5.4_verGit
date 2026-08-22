@@ -2,7 +2,7 @@
 
 #include "ProjectGlobal.h"
 
-#include "AI/Blackboard/CAIKey.h"
+#include "Component/CCombatTargetComponent.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatSignalTargetComponent.h"
 #include "Core/Debug/FCombatSignalDebug.h"
@@ -13,8 +13,6 @@
 #include "Type/CCombatDamageTypes.h"
 #include "Type/CCombatSignalSourceTypes.h"
 
-#include "AIController.h"
-#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/ShapeComponent.h"
 #include "GameFramework/Character.h"
 
@@ -579,13 +577,8 @@ AActor* UCCombatSignalSourceComponent::ResolveCueTargetActor() const
 {
 	if (!IsValid(OwnerCharacter_Injected)) return nullptr;
 
-	const AAIController* aiController = Cast<AAIController>(OwnerCharacter_Injected->GetController());
-	if (!IsValid(aiController)) return nullptr;
-
-	const UBlackboardComponent* blackboardComp = aiController->GetBlackboardComponent();
-	if (!IsValid(blackboardComp)) return nullptr;
-
-	return Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::Targeting::TargetActor.KeyName));
+	const UCCombatTargetComponent* combatTargetComp = OwnerCharacter_Injected->FindComponentByClass<UCCombatTargetComponent>();
+	return IsValid(combatTargetComp) ? combatTargetComp->GetCombatTargetSnapshot().TargetActor : nullptr;
 }
 
 FCombatSignal UCCombatSignalSourceComponent::BuildCueSignal(AActor* InTargetActor, FName InCueTag, const FVector& InCueLocation, const FVector& InDirection, AActor* InSignalCauser) const

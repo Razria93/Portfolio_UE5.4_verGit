@@ -103,12 +103,12 @@ namespace
 
 	// ===== Panel Layout =====
 
-	FDebugOverlayRightPanelLayout CalculateRightPanelLayout(const UCanvas* InCanvas, float InLeftPanelBackgroundX, float InLeftPanelBackgroundWidth, float InTopBackgroundY, bool bInHasWorldSummaryLines)
+	FDebugOverlayRightPanelLayout CalculateRightPanelLayout(const UCanvas* InCanvas, float InLeftPanelBackgroundX, float InLeftPanelBackgroundWidth, float InTopBackgroundY, bool bInHasLeftPanel, bool bInHasWorldSummaryLines)
 	{
 		FDebugOverlayRightPanelLayout layout;
 		if (!InCanvas) return layout;
 
-		layout.EventLogRect.X = InLeftPanelBackgroundX + InLeftPanelBackgroundWidth + DebugOverlayPanelGap;
+		layout.EventLogRect.X = InLeftPanelBackgroundX + (bInHasLeftPanel ? InLeftPanelBackgroundWidth + DebugOverlayPanelGap : 0.f);
 		layout.EventLogRect.Y = InTopBackgroundY;
 		layout.EventLogRect.Height = FMath::Max(0.f, InCanvas->SizeY - layout.EventLogRect.Y - DebugOverlayBottomMargin);
 
@@ -225,14 +225,18 @@ void FDebugOverlayCanvasRenderer::Draw(ACDebugOverlayHUD& InHud, UCanvas* InCanv
 	const float backgroundY = FMath::Max(0.f, DebugOverlayOriginY - DebugOverlayBackgroundPadding);
 	const float availableWidth = InCanvas ? FMath::Max(0.f, InCanvas->SizeX - backgroundX - DebugOverlayBackgroundPadding) : DebugOverlayBackgroundWidth;
 	const float backgroundWidth = FMath::Min(DebugOverlayBackgroundWidth, availableWidth);
-	const float backgroundHeight = CalculateOverlayLinesHeight(InTextPanels.MainPanel) + (DebugOverlayBackgroundPadding * 2.f);
-	const FDebugOverlayPanelRect mainPanelRect = { backgroundX, backgroundY, backgroundWidth, backgroundHeight };
+	const bool bHasMainPanel = !InTextPanels.MainPanel.Lines.IsEmpty();
+	const float backgroundHeight = bHasMainPanel ? CalculateOverlayLinesHeight(InTextPanels.MainPanel) + (DebugOverlayBackgroundPadding * 2.f) : 0.f;
+	const FDebugOverlayPanelRect mainPanelRect = { backgroundX, backgroundY, bHasMainPanel ? backgroundWidth : 0.f, backgroundHeight };
 
-	DrawMainPanel(InHud, InTextPanels.MainPanel, mainPanelRect);
+	if (bHasMainPanel)
+	{
+		DrawMainPanel(InHud, InTextPanels.MainPanel, mainPanelRect);
+	}
 
 	if (!InCanvas) return;
 
-	const FDebugOverlayRightPanelLayout rightPanelLayout = CalculateRightPanelLayout(InCanvas, mainPanelRect.X, mainPanelRect.Width, mainPanelRect.Y, !InTextPanels.WorldSummaryPanel.Lines.IsEmpty());
+	const FDebugOverlayRightPanelLayout rightPanelLayout = CalculateRightPanelLayout(InCanvas, mainPanelRect.X, mainPanelRect.Width, mainPanelRect.Y, bHasMainPanel, !InTextPanels.WorldSummaryPanel.Lines.IsEmpty());
 
 	DrawEventLogPanelIfVisible(InHud, InTextPanels.EventLogPanel, rightPanelLayout.EventLogRect);
 	DrawWorldSummaryPanelIfVisible(InHud, InTextPanels.WorldSummaryPanel, rightPanelLayout.WorldSummaryRect, rightPanelLayout.bCanDrawWorldSummaryPanel);

@@ -8,10 +8,10 @@
 
 namespace CAIKey
 {
-	namespace Targeting
+	namespace CombatTarget
 	{
-		static const FAIBlackboardKeySpec TargetActor = CAIKeyFactory::FixedObjectNull(TEXT("TargetActor"));
-		static const FAIBlackboardKeySpec TargetPriority = CAIKeyFactory::FixedInt(TEXT("TargetPriority"), INT_MAX);
+		static const FAIBlackboardKeySpec Actor = CAIKeyFactory::FixedObjectNull(TEXT("CombatTargetActor"));
+		static const FAIBlackboardKeySpec CombatTargetRevision = CAIKeyFactory::FixedInt(TEXT("CombatTargetRevision"), 0);
 	}
 
 	namespace State
@@ -19,9 +19,17 @@ namespace CAIKey
 		static const FAIBlackboardKeySpec AIIntentState = CAIKeyFactory::FixedEnum(TEXT("AIIntentState"), static_cast<uint8>(EAIIntentState::Idle));
 	}
 
+	namespace CombatParticipation
+	{
+		static const FAIBlackboardKeySpec State = CAIKeyFactory::FixedEnum(TEXT("CombatParticipationState"), static_cast<uint8>(ECombatRole::None));
+		static const FAIBlackboardKeySpec AssignmentRevision = CAIKeyFactory::FixedInt(TEXT("CombatParticipationRevision"), 0);
+	}
+
 	namespace Perception
 	{
 		static const FAIBlackboardKeySpec bHasLOS = CAIKeyFactory::FixedBool(TEXT("bHasLOS"), false);
+		static const FAIBlackboardKeySpec PerceivedTargetActor = CAIKeyFactory::FixedObjectNull(TEXT("PerceivedTargetActor"));
+		static const FAIBlackboardKeySpec PerceivedTargetPriority = CAIKeyFactory::FixedInt(TEXT("PerceivedTargetPriority"), INT_MAX);
 		static const FAIBlackboardKeySpec LastSeenTime = CAIKeyFactory::RuntimeFloat(TEXT("LastSeenTime"));
 		static const FAIBlackboardKeySpec LastKnownLocation = CAIKeyFactory::RuntimeVector(TEXT("LastKnownLocation"));
 	}

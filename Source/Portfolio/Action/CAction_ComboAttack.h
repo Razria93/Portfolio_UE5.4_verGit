@@ -21,13 +21,16 @@ private:
 	UPROPERTY(Transient)
 	FActionData ReservingChainData = FActionData();
 
+	UPROPERTY(Transient)
+	uint32 ReservingChainActionRequestSerial = 0;
+
 public:
 	// Decision
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 
 public:
 	// Chain Reservation
-	bool ReserveChain(const FActionData& InData) override;
+	bool ReserveChain(const FActionData& InData, uint32 InActionRequestSerial = 0) override;
 	void ConsumeChain() override;
 
 protected:

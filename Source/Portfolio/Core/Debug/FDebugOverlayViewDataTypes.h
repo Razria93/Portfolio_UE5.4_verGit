@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Debug/FCombatParticipationDebug.h"
+#include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
 #include "Core/Debug/FTargetingDebug.h"
 
@@ -91,18 +93,35 @@ struct FDebugOverlayPlayerTargetingViewData
 	FTargetingDebugOverlayDetails Details;
 };
 
+struct FDebugOverlayPlayerLocomotionViewData
+{
+	FMovementDebugOverlayDetails Details;
+};
+
+struct FDebugOverlayCombatParticipationViewData
+{
+	FCombatParticipationDebugOverlayDetails FocusedEnemyDetails;
+	TArray<FString> WorldSummaryLines;
+};
+
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
 	bool bIncludeFocus = false;
 	FDebugOverlayFocusViewData Focus;
+	bool bIncludeStatus = false;
 	bool bIncludeTargeting = false;
 	FDebugOverlayPlayerTargetingViewData Targeting;
+	bool bIncludeLocomotion = false;
+	FDebugOverlayPlayerLocomotionViewData Locomotion;
+	bool bIncludeCombatParticipation = false;
+	FDebugOverlayCombatParticipationViewData CombatParticipation;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
 	FDebugOverlayRecentExecutionViewData RecentExecution;
 	bool bIncludeDeathLifecycle = false;
 	FDebugOverlayDeathLifecycleViewData DeathLifecycle;
+	bool bIncludeRecentExecution = false;
 	bool bIncludeCurrentAI = false;
 	FDebugOverlayCurrentAIViewData CurrentAI;
 	bool bIncludeRecentAIEvent = false;
@@ -137,6 +156,8 @@ struct FDebugOverlayWorldSummaryViewData
 {
 	FString HeaderText;
 	TArray<FDebugOverlayRecentSummaryBlockViewData> SummaryBlocks;
+	bool bIncludeCombatParticipation = false;
+	FDebugOverlayCombatParticipationViewData CombatParticipation;
 };
 
 struct FDebugOverlayViewData

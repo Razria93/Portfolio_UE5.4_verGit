@@ -9,6 +9,9 @@
 #include "Type/CCombatSignalTargetTypes.h"
 #include "CCombatSignalTargetComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatSignalTargetAccepted, const FCombatSignalTargetPacket&);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCombatSignalTargetReactionResolved, const FCombatSignalTargetPacket&, const struct FReactionRequestResult&);
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCCombatSignalTargetComponent : public UActorComponent
 {
@@ -18,6 +21,7 @@ public:
 	UCCombatSignalTargetComponent();
 
 private:
+	// Component Reference
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -33,11 +37,20 @@ private:
 	UPROPERTY(Transient)
 	class UCHitFeedbackComponent* HitFeedbackComp_Injected = nullptr;
 
+	// Runtime State
+	uint64 NextAcceptedResultSerial = 1;
+
+public:
+	// Event
+	FOnCombatSignalTargetAccepted OnCombatSignalTargetAccepted;
+	FOnCombatSignalTargetReactionResolved OnCombatSignalTargetReactionResolved;
+
 public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
 private:
+	// Validation
 	bool ValidateRequiredComponentReferences() const;
 
 public:
@@ -73,7 +86,7 @@ private:
 
 private:
 	// Packet
-	FCombatSignalTargetPacket BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult) const;
+	FCombatSignalTargetPacket BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult);
 
 private:
 	// Notify
