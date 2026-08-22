@@ -1,6 +1,6 @@
 # S34. Combat Participation 정책
 
-> 상태: Evidence 중심 참여 구조 구현 완료. 마지막 Evidence 종료 기반 Investigate handoff 구현·검증 진행 중.
+> 상태: Evidence 중심 참여 구조 구현 및 정적·PIE 최종 검증 완료.
 
 ## 1. 핵심 모델
 
@@ -95,6 +95,28 @@ AND Distance(Target 현재 위치, HitReactiveEvidenceAnchorLocation)
   Assignment를 제거한다.
 - 정확히 일치하는 Engage Action lock만 Evidence 종료 뒤에도 action 종료 또는 lock 만료까지
   현재 Assignment를 임시 보존할 수 있다.
+
+`live HitReactive Evidence`에 따른 **새 Extra admission 자격**은 Evidence가 끝나는 즉시 사라진다.
+다만 정확히 일치하는 Action lock이 이미 존재하면 진행 중인 action 보호를 위해 기존
+`HitReactiveExtra` Assignment와 slot 점유를 action 종료 또는 lock 만료까지 임시 보존할 수 있다.
+lock 해제 뒤에는 현재 live Evidence만으로 다시 allocator를 실행하므로, 기존 Extra admission은
+독립적으로 유지되지 않는다.
+
+### 4.1 Runtime tuning과 반영 지연
+
+| 항목 | 소유자 | 기본값 | 계약 |
+| --- | --- | ---: | --- |
+| `HitReactivePostReactionTTL` | `Portfolio.AI.CombatParticipation.HitReactivePostReactionTTL` | 20초 | reaction terminal 뒤 HitReactive Evidence 수명 |
+| `HitReactiveEvidenceAnchorRadius` | `Portfolio.AI.CombatParticipation.HitReactiveEvidenceAnchorRadius` | 1000 | 고정 accepted-hit anchor에서 Target의 2D 유효 반경 |
+| `AssignmentLockTimeout` | `Portfolio.AI.CombatParticipation.AssignmentLockTimeout` | 3초 | 정확히 일치하는 진행 중 Engage action 보호의 상한 |
+| GeneralBase / HitReactiveExtra / Total Engage cap | `Portfolio.AI.RuntimeLOD.EngageAssignment*Cap` | 2 / 3 / 5 | Target당 Engage admission cap |
+| Alert / Observe cap | `Portfolio.AI.RuntimeLOD.EngageAssignment*Cap` | 6 / 12 | Target당 비-Engage Assignment cap |
+| Perception memory | `FPerceptionSetup::TargetMemoryTimeout` | 3초 | LOS 상실 뒤 Perception Evidence 수명. Source 설정값이다. |
+| allocator rebuild interval | `FEngageAssignmentTuning::RebuildInterval` | 0.1초 | 일반 Evidence report/withdraw가 Assignment에 반영되는 최대 주기 |
+| assignment warmup | `Portfolio.AI.RuntimeLOD.EngageAssignmentWarmupTime` | 0초 | 첫 allocator rebuild 지연. 기본 비활성화 |
+
+일반 Perception/HitReactive Evidence report와 source withdraw는 다음 periodic rebuild에서 Assignment를
+재평가한다. TTL 시작, Action lock 해제·만료, soft/hard release는 즉시 rebuild를 요청한다.
 
 ## 5. Last Known Target Context
 
@@ -206,15 +228,48 @@ Evidence를 철회한다. suppress 중 새 Evidence는 Candidate를 만들 수 �
 현재 LOS Perception Evidence를 다시 report한다. ReturnHome 철회는 Investigate handoff event를
 발행하지 않으며 passive Last Known Target Context도 clear한다.
 
-다음은 soft Evidence exhaustion이 아닌 hard release다.
+soft Evidence exhaustion과 달리 hard release는 lock을 무시하고 Evidence, Last Known Target Context,
+Assignment, Action lock을 함께 제거하며 Investigate를 시작하지 않는다. **감지 시점**은 source마다 다르다.
 
-- Participant 또는 Target 사망
-- EndPlay
-- UnPossess / unregister
-- hostility 또는 Target identity 무효
+- lifecycle producer가 있는 immediate trigger: Participant 또는 Target 사망, EndPlay, UnPossess / unregister
+- periodic validity trigger: hostility 또는 Target identity 무효
 
-Target/Participant 사망, EndPlay, UnPossess/unregister처럼 lifecycle producer가 있는 hard release는
-lock 상태와 관계없이 Evidence, Last Known Target Context, Assignment, Action lock을 즉시 제거하며
-Investigate를 시작하지 않는다. hostility 또는 Target identity 무효는 현재 Registry의 주기적
-validity 검사에서도 같은 방식으로 정리된다. 프레임 동기 즉시성을 요구하게 되면 별도 invalidation
-producer를 추가해야 한다.
+첫 번째는 lifecycle callback에서 즉시 hard release한다. 두 번째는 현재 Registry의 주기적 validity 검사에서
+발견한 뒤 같은 hard release 정리를 수행한다. 따라서 현재 동적 hostility/identity invalidation은
+`RebuildInterval` 범위의 검출 지연이 있으며, frame-immediate 동작이 필요해질 때만 별도 invalidation
+producer를 추가한다.
+
+현재 Target identity는 `ITargetContextProvider` 구현 여부다. Evidence ingress와 Pair validity 검사가
+같은 조건을 사용하므로, 해당 identity 조건을 만족하지 않는 Actor는 active Evidence/Assignment/lock을
+유지할 수 없다. 동적으로 identity 또는 hostility가 바뀌는 시스템을 도입하면 해당 변경 event가
+immediate invalidation producer가 된다.
+
+## 9. 브랜치 마감 검증 매트릭스
+
+이 표는 현재 runtime 계약의 검증 항목이다. `정적 확인`은 코드 경로를 추적해 확인한 항목이고,
+`PIE 확인`은 TestRoom에서 실제 Blackboard, CombatTarget, role/slot debug 표시까지 확인해야 마감할 수 있는 항목이다.
+
+| 시나리오 | 기대 결과 | 확인 방식 |
+| --- | --- | --- |
+| LOS 상실 → memory timeout | Perception Evidence만 만료되고 다른 source가 남으면 Assignment/Investigate는 유지 | 정적 확인 + PIE |
+| accepted Hit → reaction terminal → TTL | 최신 ResultSerial만 TTL을 시작하며 stale terminal callback은 무시 | 정적 확인 + PIE |
+| TTL 또는 anchor 반경 이탈 | HitReactive Evidence와 새 Extra 자격이 제거되고 allocator가 재평가 | 정적 확인 + PIE |
+| Base 2/2 + Extra 3/3 | GeneralBase를 우선 배정하고 live HitReactive Evidence만 Extra를 사용 | 정적 확인 + PIE |
+| Extra Evidence 만료 중 exact Action lock | 자격은 종료하되 기존 Extra Assignment는 해당 lock 해제/만료까지 보호 | 정적 확인 + PIE |
+| 두 source의 종료 순서 | 마지막 Active Evidence 하나가 끝날 때만 EvidenceExhausted를 예약 | 정적 확인 + PIE |
+| 마지막 Evidence 종료 뒤 새 Evidence 또는 다른 Target Assignment | stale Investigate event를 취소하거나 폐기 | 정적 확인 + PIE |
+| ReturnHome | suppress 중 ingress와 Investigate handoff를 막고, 해제 뒤 현재 LOS를 다시 report | 정적 확인 + PIE |
+| participant/target death, EndPlay, UnPossess/unregister | Evidence, context, Assignment, lock을 즉시 hard release | 정적 확인 + PIE |
+| hostility/identity invalid | 현재 `RebuildInterval` 범위의 periodic validity 검사 뒤 hard release. future dynamic system이 frame-immediate를 요구하면 producer 추가 | 정적 확인 + PIE |
+| Evidence / Assignment / lock-only Target 참조 | 세 참조가 모두 사라진 뒤에만 Target lifecycle binding 해제 | 정적 확인 + PIE |
+
+### 9.1 현재 브랜치 감사 기록
+
+| Gate | 결과 | 비고 |
+| --- | --- | --- |
+| `f3b6bac` 대비 구조/책임 감사 | 통과 | request/lease 기반 구조에서 Evidence-centric authority로 전환됐으며, active source에 삭제된 request API 참조가 없다. |
+| C++/UHT build | 통과 | `PortfolioEditor Win64 Development` build 성공. |
+| Blueprint compile commandlet | 통과 | `CompileAllBlueprints -ProjectOnly -NoSave` 결과 0 errors, failed-load 0. Profiling용 `ABP_AIPerf_Character`의 `bIsDead` warning은 Combat Participation 범위 밖 별도 추적 항목이다. |
+| TestRoom headless load | 통과 | `/Game/00_UnitTest/TestRoom`을 `-game -NullRHI`로 기동해 `LoadMap`, `Bringing World ... up for play`, 정상 teardown을 확인했다. |
+| `git diff --check` | 통과 | 문서 및 Pair validity 보완 뒤 whitespace error 없음. |
+| TestRoom PIE matrix | 통과 | §9의 runtime/BT/Blackboard/UAsset 시나리오를 수동 확인했다. A/B Target에서는 기존 PlayerDummy Pair의 Engage/Alert Assignment를 유지하고 Player Pair는 unassigned candidate로 남아 Participant당 하나의 Assignment를 유지했다. 마지막 Evidence 종료 뒤 다른 Target Assignment가 있으면 stale Investigate도 시작하지 않았다. |

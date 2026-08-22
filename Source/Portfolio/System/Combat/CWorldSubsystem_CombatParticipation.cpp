@@ -10,6 +10,7 @@
 #include "Core/Debug/FCombatEngageDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
+#include "Interface/TargetContextProvider.h"
 #include "Type/CEngageAssignmentTypes.h"
 
 #include "HAL/IConsoleManager.h"
@@ -849,6 +850,7 @@ void UCWorldSubsystem_CombatParticipation::StartAssignmentWarmupIfNeeded()
 bool UCWorldSubsystem_CombatParticipation::IsCombatParticipationPairValid(const ACAIController* InParticipant, const AActor* InTarget) const
 {
 	if (!IsValid(InParticipant) || !IsValid(InTarget)) return false;
+	if (!Cast<ITargetContextProvider>(InTarget)) return false;
 	if (InParticipant->GetTeamAttitudeTowards(*InTarget) != ETeamAttitude::Hostile) return false;
 
 	const UCHealthComponent* healthComp = InTarget->FindComponentByClass<UCHealthComponent>();

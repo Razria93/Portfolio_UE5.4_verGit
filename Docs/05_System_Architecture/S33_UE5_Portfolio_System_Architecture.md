@@ -17,7 +17,7 @@
 - Goal 2 — 공통 Combat Target Kernel: 구현 완료
 - Goal 3 — Player Target 마이그레이션: 구현 완료
 - Goal 4 — Enemy Target Selection 및 Blackboard 투영: 구현 완료 (Participation 전환 전 중간 단계)
-- Goal 7 — Enemy Combat Participation Lifecycle: Phase A~E 및 Goal 8~11 producer/time policy/Intent/Action lock 구현, UAsset consumer 전환과 grace/cooldown 보류
+- Goal 7 — Enemy Combat Participation Lifecycle: Evidence-centric runtime 구조와 producer/time policy/Intent/Action lock 구현 완료. 현재 브랜치 마감 전 코드·UAsset consumer·PIE 최종 검증 진행 중이며, grace/cooldown은 별도 정책 범위다.
 
 Enemy Participation의 Evidence, Engage Admission, Assignment lifecycle 정책은 [S34 Combat Participation Policy](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 정규 기준으로 사용한다.
 
@@ -390,7 +390,8 @@ Source Evidence
 
 Source와 Adapter는 Combat Target을 직접 Set/Clear하지 않는다. Blackboard도 assignment 또는 Combat Target SoT가 아니다.
 
-Active Evidence가 하나라도 남아 있으면 Candidate와 Assignment가 유지된다. 마지막 Active
+Active Evidence가 하나라도 남아 있으면 해당 Pair는 Candidate 자격을 유지한다. Assignment는
+allocator의 cap, priority, admission, Participant당 하나의 Assignment 제약에 따라 별도로 결정된다. 마지막 Active
 Evidence가 normal soft release로 끝나면 Subsystem은 passive Last Known Target Context를 담은
 pending `EvidenceExhausted`를 예약한다. 정확히 일치하는 Action lock이 기존 Assignment를
 보존하는 동안에는 event를 발행하지 않으며, allocator가 `Assignment = None`을 반영한 뒤에만
@@ -719,7 +720,7 @@ Facing Consumer는 Combat Target Snapshot만 소비하는 구조로 유지한다
 
 ## Goal 7 — Enemy Combat Participation Lifecycle Migration
 
-상태: 설계 보완 필요 — 현재 C++ 초기 구현은 최종 계약으로 간주하지 않음
+상태: Evidence-centric runtime 구현 완료 — 브랜치 마감 전 코드·문서·UAsset consumer·PIE 최종 검증 진행 중
 
 - `UWorldSubsystem_CombatParticipation`으로 역할·명칭 전환하고 기존 class path는 Core Redirect로 호환
 - `UCEnemyCombatParticipationComponent`가 `UCEnemyTargetSelectionComponent`를 대체하며 기존 class/property path는 Core Redirect로 호환
@@ -733,8 +734,8 @@ Source×Target Evidence registry, Adapter 후보 선택 제거, GeneralBase/HitR
 applied snapshot, coherent Blackboard projection, Action 직전 authority 검증, accepted Combat Signal
 결과의 HitReactive Evidence ingress, Participation-based Intent와 Action Lock을 구현했다. 마지막
 Active Evidence 종료, Last Known Target Context, HitReactive anchor, non-combat Investigate handoff의
-최종 계약은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다. UAsset consumer의 실제
-전환은 수동 asset audit 범위로 남긴다.
+현재 정책 계약은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)를 따른다. 변경된 UAsset consumer의
+실제 binding은 자동 diff가 아닌 수동 asset audit과 PIE 검증으로 확인한다.
 
 ---
 
@@ -925,7 +926,7 @@ Combat Signal Source Target 해석
 
 ### Goal 7 구현 메모 — Enemy Combat Participation Lifecycle
 
-- Goal 7의 최종 정책은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)로 분리했다. Phase A~D와 Action authority, Goal 8 producer 단계에서 Source×Target Evidence registry, Adapter 후보 선택 제거, participant unregister, Target별 Evidence 확인, commitment-first ladder, admission allocator, applied revision, coherent projection, Action 직전 authority 검증과 Combat Signal 기반 HitReactive evidence ingress를 구현했다. UAsset consumer 전환과 time policy는 수동 asset audit 및 별도 정책 단계 뒤에 진행한다.
+- Goal 7의 현재 정책은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)로 분리했다. Phase A~D와 Action authority, Goal 8 producer 단계에서 Source×Target Evidence registry, Adapter 후보 선택 제거, participant unregister, Target별 Evidence 확인, admission allocator, applied revision, coherent projection, Action 직전 authority 검증과 Combat Signal 기반 HitReactive evidence ingress를 구현했다. Perception memory, HitReactive post-reaction TTL, anchor, 마지막 Evidence Investigate handoff까지의 time policy도 현재 runtime 계약에 포함한다. UAsset consumer binding은 수동 asset audit과 PIE에서 검증한다.
 - `UCEnemyCombatParticipationComponent`는 모든 Source의 ingress/assignment egress Adapter이며 후보 선택을 하지 않는다. `UWorldSubsystem_CombatParticipation`이 Evidence registry와 commitment-first assignment를 소유한다. Adapter는 assignment change의 Current snapshot을 Kernel에 적용하고 실제 Kernel revision을 ack로 보관한다. revoke는 이 ack만 기대값으로 사용한다.
 - `EAIIntentState`는 Participation assignment를 소비·표현한다. Dead와 HitReact는 Character 로컬 source 상태다. 반면 Combat Action이 요청하는 Assignment Lock은 현재 assignment의 유지 권위를 보호하는 Participation System 상태이며, Action 자체의 실행 시간·animation 상태는 Character 로컬 상태로 남는다.
 - Blackboard는 Combat Target Snapshot과 Participation 상태의 projection이며, BT는 이를 읽어 행동을 분기·실행한다. `CombatParticipationState`와 `CombatParticipationRevision`의 UAsset 전환은 기존 `CombatRole` 호환을 확인한 뒤 진행한다.

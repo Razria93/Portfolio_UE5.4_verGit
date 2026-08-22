@@ -98,6 +98,16 @@ Observe: 0 / 6
 
 `Enemy.CombatParticipation.Enabled`가 켜진 Panel_01 상세와 `Portfolio.DebugOverlay.CombatParticipation.DrawWorldText`의 Enemy 머리 위 World Text는 현재 활성 Evidence의 수명 상태를 함께 표시한다. 이 표시는 Debug Snapshot 전용이며 Evidence 등록·철회, allocator, Investigate 정책을 바꾸지 않는다.
 
+| CVar | 기본값 | 표시 범위 | 의존성 |
+| --- | ---: | --- | --- |
+| `Portfolio.DebugOverlay.CombatParticipation.Enabled` | 0 | Combat Participation snapshot 및 모든 world 표시의 domain gate | non-shipping 전용 |
+| `Portfolio.DebugOverlay.CombatParticipation.DrawWorldText` | 1 | Enemy 머리 위 Evidence/role/TTL text | domain gate가 1일 때만 유효 |
+| `Portfolio.DebugOverlay.CombatParticipation.DrawWorldRing` | 1 | Enemy 발밑 role ring과 AssignmentLock ring | domain gate가 1일 때만 유효 |
+| `Portfolio.DebugOverlay.CombatParticipation.DrawHitReactiveEvidenceAnchor` | 0 | HitReactive anchor point, Target 연결선, 2D 반경 | domain gate가 1일 때만 유효 |
+
+`Enemy.CombatParticipation.Enabled`는 Panel_01 focused Enemy 상세의 표시 gate이고, 위 domain gate와
+독립적이다. `WorldSummary.CombatParticipation.Enabled`도 Panel_03의 별도 표시 gate다.
+
 - Perception Evidence가 LOS를 유지하면 `Perception: LOS`로 표시한다. LOS가 유지되는 동안에는 Evidence가 계속 갱신되므로 카운트다운을 표시하지 않는다.
 - LOS가 끊기면 `Perception: Memory 12.3s`처럼 `TargetMemoryTimeout`의 남은 시간을 표시한다.
 - HitReactive Evidence가 Reaction 종료를 기다리는 중이면 `HitReactive: Awaiting reaction`으로 표시한다.
@@ -243,9 +253,10 @@ Event Log가 비어 있을 때:
 - 구현 전에 실제 코드 위치와 표시 가능 여부를 먼저 확인한다.
 - 에이전트 활용이 유효하다고 판단되면 적극적으로 사용한다.
 
-## 작업 브랜치
+## 작업 기록의 기준 브랜치
 
-- `feature/debug-overlay-evidence-plan`
+- 이 문서는 특정 작업 브랜치에 고정되지 않는 현재 운영 가이드다. 과거 capture/evidence 문서에 기록된
+  브랜치명은 당시 자료의 메타데이터로만 해석한다.
 
 ## 작업 범위
 

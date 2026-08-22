@@ -1,7 +1,8 @@
 # System Architecture Index
 
 이 문서는 System Architecture 문서의 식별 제목과 다음 분류 후보를 관리한다.
-현재 브랜치에서는 최종 분류를 확정하지 않고, 다음 브랜치에서 `Current System` / `System Design Records` / `Archive`로 재분류한다.
+각 문서의 현재 역할은 표의 `다음 분류 후보` 열로 관리한다. `Current System`은 현재 runtime 계약의
+정규 기준이고, `System Design Records`와 `Archive`는 당시의 설계·검증 기록으로 보존한다.
 
 ---
 
