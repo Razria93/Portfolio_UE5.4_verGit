@@ -166,7 +166,7 @@ private:
 
 protected:
 	// Event
-	void EmitActionEvent(EActionEventType InEventType, int32 InActionIndex = INDEX_NONE) const;
+	void EmitActionEvent(EActionEventType InEventType, const FActionDataKey& InActionDataKey, uint32 InActionRequestSerial) const;
 
 public:
 	// Legacy Delegate
