@@ -1,6 +1,7 @@
 #include "Component/CEnemyCombatTargetFacingComponent.h"
 
 #include "Component/CCombatTargetComponent.h"
+#include "Component/CBalanceComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
@@ -29,10 +30,15 @@ void UCEnemyCombatTargetFacingComponent::InitializeReferences(const FCharacterCo
 	{
 		ReactionComponent_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
 	}
+	if (IsValid(BalanceComponent_Injected))
+	{
+		BalanceComponent_Injected->OnBalanceLifecycleStateChanged.RemoveAll(this);
+	}
 
 	CombatTargetComponent_Injected = InReferences.CombatTargetComponent;
 	MovementComponent_Injected = InReferences.MovementComponent;
 	ReactionComponent_Injected = InReferences.ReactionComponent;
+	BalanceComponent_Injected = InReferences.BalanceComponent;
 
 	if (IsValid(CombatTargetComponent_Injected))
 	{
@@ -41,6 +47,10 @@ void UCEnemyCombatTargetFacingComponent::InitializeReferences(const FCharacterCo
 	if (IsValid(ReactionComponent_Injected))
 	{
 		ReactionComponent_Injected->OnReactionExecutionLifecycleEvent.AddUObject(this, &UCEnemyCombatTargetFacingComponent::HandleReactionExecutionLifecycleEvent);
+	}
+	if (IsValid(BalanceComponent_Injected))
+	{
+		BalanceComponent_Injected->OnBalanceLifecycleStateChanged.AddUObject(this, &UCEnemyCombatTargetFacingComponent::HandleBalanceLifecycleStateChanged);
 	}
 
 	SynchronizeCombatTargetFacing();
@@ -78,11 +88,16 @@ void UCEnemyCombatTargetFacingComponent::EndPlay(const EEndPlayReason::Type InEn
 	{
 		ReactionComponent_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
 	}
+	if (IsValid(BalanceComponent_Injected))
+	{
+		BalanceComponent_Injected->OnBalanceLifecycleStateChanged.RemoveAll(this);
+	}
 
 	ClearAIController();
 	CombatTargetComponent_Injected = nullptr;
 	MovementComponent_Injected = nullptr;
 	ReactionComponent_Injected = nullptr;
+	BalanceComponent_Injected = nullptr;
 
 	Super::EndPlay(InEndPlayReason);
 }
@@ -100,8 +115,26 @@ void UCEnemyCombatTargetFacingComponent::HandleReactionExecutionLifecycleEvent(c
 	QueueCombatTargetFacingSync();
 }
 
+void UCEnemyCombatTargetFacingComponent::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InCurrentState)
+{
+	if (IsCombatTargetFacingSuppressed())
+	{
+		CancelQueuedCombatTargetFacingSync();
+		bCombatTargetFacingSyncPending = false;
+		ClearCombatTargetFacing();
+		return;
+	}
+
+	SynchronizeCombatTargetFacing();
+}
+
 void UCEnemyCombatTargetFacingComponent::QueueCombatTargetFacingSync()
 {
+	if (IsCombatTargetFacingSuppressed())
+	{
+		bCombatTargetFacingSyncPending = false;
+		return;
+	}
 	if (!bCombatTargetFacingSyncPending || bCombatTargetFacingSyncQueued) return;
 
 	UWorld* world = GetWorld();
@@ -115,6 +148,13 @@ void UCEnemyCombatTargetFacingComponent::ResolveQueuedCombatTargetFacingSync()
 {
 	bCombatTargetFacingSyncQueued = false;
 	CombatTargetFacingSyncTimerHandle.Invalidate();
+
+	if (IsCombatTargetFacingSuppressed())
+	{
+		bCombatTargetFacingSyncPending = false;
+		ClearCombatTargetFacing();
+		return;
+	}
 
 	if (!bCombatTargetFacingSyncPending || ShouldDeferCombatTargetFacing()) return;
 
@@ -144,8 +184,20 @@ bool UCEnemyCombatTargetFacingComponent::ShouldDeferCombatTargetFacing() const
 	return IsValid(ReactionComponent_Injected) && ReactionComponent_Injected->IsActive();
 }
 
+bool UCEnemyCombatTargetFacingComponent::IsCombatTargetFacingSuppressed() const
+{
+	return IsValid(BalanceComponent_Injected) && BalanceComponent_Injected->ShouldSuppressCombatTargetFacing();
+}
+
 void UCEnemyCombatTargetFacingComponent::ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot)
 {
+	if (IsCombatTargetFacingSuppressed())
+	{
+		bCombatTargetFacingSyncPending = false;
+		ClearCombatTargetFacing();
+		return;
+	}
+
 	if (ShouldDeferCombatTargetFacing())
 	{
 		bCombatTargetFacingSyncPending = true;

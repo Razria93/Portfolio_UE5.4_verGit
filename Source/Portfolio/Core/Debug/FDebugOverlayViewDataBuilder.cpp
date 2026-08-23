@@ -3,11 +3,11 @@
 #include "AI/Blackboard/CAIKey.h"
 #include "Character/CAnimInstance.h"
 #include "Character/Enemy/CEnemy.h"
-#include "Character/Player/CPlayer.h"
 #include "Component/CActionComponent.h"
 #include "Component/CCharacterFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CBalanceComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CStateComponent.h"
@@ -140,19 +140,20 @@ namespace
 			*FormatCompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
 	}
 
-	FString FormatParryStaggerStack(const APawn* InPawn)
+	void BuildResourceStatus(const APawn* InPawn, FString& OutLabel, FString& OutValue)
 	{
-		if (const ACPlayer* player = Cast<ACPlayer>(InPawn))
-		{
-			return FString::Printf(TEXT("%d/%d"), player->GetParryResultCount(), player->GetParryStaggerThreshold());
-		}
+		OutLabel = TEXT("Resource");
+		OutValue = FormatMissingText();
 
 		if (const ACEnemy* enemy = Cast<ACEnemy>(InPawn))
 		{
-			return FString::Printf(TEXT("%d/%d"), enemy->GetParryResultCount(), enemy->GetParryStaggerThreshold());
+			const UCBalanceComponent* balanceComp = enemy->GetBalanceComp();
+			OutLabel = TEXT("Balance");
+			OutValue = IsValid(balanceComp)
+				? FString::Printf(TEXT("%d/%d | %s"), balanceComp->GetCurrentBalanceCount(), balanceComp->GetBalanceThreshold(), *FormatCompactEnumText(UEnum::GetValueAsString(balanceComp->GetBalanceLifecycleState())))
+				: FormatMissingText();
+			return;
 		}
-
-		return FormatMissingText();
 	}
 
 	FString FormatGuardOverlay(const APawn* InPawn)
@@ -202,7 +203,7 @@ namespace
 		statusViewData.ActionText = FormatActiveAction(InPawn);
 		statusViewData.ReactionText = FormatActiveReaction(InPawn);
 		statusViewData.HealthText = FormatActorHealth(InPawn);
-		statusViewData.StaggerText = FormatParryStaggerStack(InPawn);
+		BuildResourceStatus(InPawn, statusViewData.ResourceLabelText, statusViewData.ResourceValueText);
 		statusViewData.GuardText = FormatGuardOverlay(InPawn);
 		statusViewData.MovementText = FormatActorMovement(InPawn);
 		statusViewData.RuntimeLODText = FormatRuntimeLODTier();

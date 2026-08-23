@@ -5,7 +5,10 @@
 #include "Type/CMovementTypes.h"
 #include "Type/CWeaponTypes.h"
 #include "Type/CHealthTypes.h"
+#include "Type/CStateTypes.h"
 #include "CAnimInstance.generated.h"
+
+enum class EBalanceLifecycleState : uint8;
 
 UCLASS()
 class PORTFOLIO_API UCAnimInstance : public UAnimInstance
@@ -13,6 +16,10 @@ class PORTFOLIO_API UCAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 protected:
+	// Animation Blueprint Parameters - Movement
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	ELocomotionPresentationMode LocomotionPresentationMode = ELocomotionPresentationMode::Forward;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float Speed = 0.f;
 
@@ -22,20 +29,29 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsInAir = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	ELocomotionPresentationMode LocomotionPresentationMode = ELocomotionPresentationMode::Forward;
+protected:
+	// Animation Blueprint Parameters - Weapon
+	UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+	EWeaponType CurrentWeaponType = EWeaponType::Max;
 
 protected:
+	// Animation Blueprint Parameters - State
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	EWeaponType CurrentWeaponType = EWeaponType::Max;
+	EExecutionState CurrentExecutionState = EExecutionState::Max;
 
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsDeadPose = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	bool bIsCollapsePose = false;
+
+protected:
+	// Animation Blueprint Parameters - Action
 	UPROPERTY(BlueprintReadOnly, Category = "Action")
 	bool bIsGuardingPose = false;
 
 private:
+	// Cached Component References
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Cached = nullptr;
 
@@ -51,8 +67,15 @@ private:
 	UPROPERTY(Transient)
 	class UCDefenseComponent* DefenseComp_Cached = nullptr;
 
+	UPROPERTY(Transient)
+	class UCStateComponent* StateComp_Cached = nullptr;
+
+	UPROPERTY(Transient)
+	class UCBalanceComponent* BalanceComp_Cached = nullptr;
+
 private:
-	float RuntimeLODAnimationRefreshElapsed = 0.f;
+	// Runtime LOD Animation Refresh State
+	float AnimationRefreshThrottleElapsedSeconds = 0.f;
 
 public:
 	// Lifecycle
@@ -65,29 +88,31 @@ public:
 	FORCEINLINE ELocomotionPresentationMode GetLocomotionPresentationMode() const { return LocomotionPresentationMode; }
 
 private:
-	// Reference Cache
-	bool CacheOwnerAndComponents();
-	void ClearCachedReferences();
+	// Reference Lifecycle
+	bool CacheOwnerAndComponentReferences();
+	void ClearCachedComponentReferences();
 	void BindComponentEvents();
 	void UnbindComponentEvents();
 
 private:
-	// Animation Profiling Gate
-	void InitializeAnimationStateForProfiling();
-	void ClearAnimationStateForProfiling();
+	// Animation Parameter Lifecycle
+	void ResetAnimationParameters();
+	void RefreshMovementParameters();
+	void RefreshStateParameters();
 
-	// Condition
-	bool ShouldReduceEnemyAnimationRefreshForProfiling() const;
-	bool IsEnemyAnimationProfilingTarget() const;
+	// Runtime LOD Animation Refresh State
+	void ResetRuntimeLODAnimationRefreshState();
 
-	// Query
-	float GetReducedAnimationRefreshIntervalForProfiling() const;
+	// Runtime LOD Animation Refresh Policy Query
+	bool ShouldThrottleAnimationRefreshForRuntimeLOD() const;
+	float GetRuntimeLODAnimationRefreshInterval() const;
 
-	// Gate
+	// Animation Refresh Gate Evaluation
 	bool ShouldRefreshAnimationParameters(float DeltaSeconds);
 
 private:
-	// Animation Refresh Audit
+	// Runtime LOD Animation Refresh Audit
+	bool IsEnemyAnimationProfilingTarget() const;
 	bool ShouldAuditAnimationRefreshForProfiling() const;
 
 	// Record
@@ -96,13 +121,9 @@ private:
 	void RecordAnimationRefreshSkipped() const;
 
 private:
-	// Parameter Refresh
-	void RefreshMovementParameters();
-	void RefreshStateParameters();
-
-private:
-	// Component Event Callback
+	// Component Event Handlers
 	UFUNCTION()
-	void OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType);
-	void OnDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
+	void HandleWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPreviousWeaponType, EWeaponType InCurrentWeaponType);
+	void HandleDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InCurrentDeadState);
+	void HandleBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState, EBalanceLifecycleState InCurrentState);
 };

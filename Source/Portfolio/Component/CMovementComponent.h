@@ -6,6 +6,8 @@
 #include "Type/CMovementTypes.h"
 #include "CMovementComponent.generated.h"
 
+enum class EBalanceLifecycleState : uint8;
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCMovementComponent : public UActorComponent
 {
@@ -72,6 +74,9 @@ private:
 	UPROPERTY(Transient)
 	class UCHealthComponent* HealthComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCBalanceComponent* BalanceComp_Injected = nullptr;
+
 public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
@@ -82,6 +87,7 @@ private:
 protected:
 	// Lifecycle
 	void BeginPlay() override;
+	void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
@@ -96,7 +102,8 @@ private:
 	void DisableRuntimeLODMovementStateRefresh();
 	void AllowRuntimeLODMovementIntent();
 	void BlockRuntimeLODMovementIntent();
-	void StopRuntimeLODActiveMovement();
+	void StopActiveAIMovement();
+	void HandleBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState, EBalanceLifecycleState InNewState);
 
 public:
 	// Query

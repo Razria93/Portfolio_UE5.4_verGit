@@ -299,25 +299,30 @@ void ACAIController::InitializeCustomBlackboardValues(UBlackboardComponent* InBl
 	const ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
 	if (!IsValid(enemy)) return;
 
+	const FEnemyPatrolConfig& patrolConfig = enemy->GetPatrolConfig();
+	const FEnemyInvestigateConfig& investigateConfig = enemy->GetInvestigateConfig();
+	const FEnemyChaseConfig& chaseConfig = enemy->GetChaseConfig();
+	const FEnemyAlertConfig& alertConfig = enemy->GetAlertConfig();
+
 	// Apply patrol blackboard values.
-	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::bUsePatrol, enemy->ShouldUsePatrol(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomObject(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolPath, enemy->GetPatrolPath(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomEnum(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolMode, static_cast<uint8>(enemy->GetPatrolMode()), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::bUsePatrol, patrolConfig.bUsePatrol, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomObject(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolPath, patrolConfig.PatrolPath, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomEnum(InBlackboardComp, InOutPendingKeys, CAIKey::Patrol::PatrolMode, static_cast<uint8>(patrolConfig.PatrolMode), ControlledPawn_Cached);
 
 	// Apply investigate blackboard values.
-	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::bUseInvestigate, enemy->ShouldUseInvestigate(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateDuration, enemy->GetInvestigateDuration(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomInt(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateMaxIndex, enemy->GetInvestigateMaxIndex(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::bUseInvestigate, investigateConfig.bUseInvestigate, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateDuration, investigateConfig.Duration, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomInt(InBlackboardComp, InOutPendingKeys, CAIKey::Investigate::InvestigateMaxIndex, investigateConfig.MaxIndex, ControlledPawn_Cached);
 
 	// Apply chase blackboard values.
-	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseOffsetRange, enemy->GetChaseOffsetRange(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseEnterBuffer, enemy->GetChaseEnterBuffer(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseExitBuffer, enemy->GetChaseExitBuffer(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseOffsetRange, chaseConfig.DistanceBand.OffsetRange, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseEnterBuffer, chaseConfig.DistanceBand.EnterBuffer, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Chase::ChaseExitBuffer, chaseConfig.DistanceBand.ExitBuffer, ControlledPawn_Cached);
 
 	// Apply alert blackboard values.
-	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::bUseAlertStep, enemy->ShouldUseAlertStep(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepForwardDistance, enemy->GetStepForwardDistance(), ControlledPawn_Cached);
-	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepSideDistance, enemy->GetStepSideDistance(), ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomBool(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::bUseAlertStep, alertConfig.bUseAlertStep, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepForwardDistance, alertConfig.StepForwardDistance, ControlledPawn_Cached);
+	CAIBlackboardValueHelper::ApplyCustomFloat(InBlackboardComp, InOutPendingKeys, CAIKey::Alert::StepSideDistance, alertConfig.StepSideDistance, ControlledPawn_Cached);
 }
 
 void ACAIController::ClearBlackboardValues()

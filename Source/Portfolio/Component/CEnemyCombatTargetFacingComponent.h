@@ -6,8 +6,10 @@
 
 class AAIController;
 class UCCombatTargetComponent;
+class UCBalanceComponent;
 class UCMovementComponent;
 class UCReactionComponent;
+enum class EBalanceLifecycleState : uint8;
 struct FCharacterComponentReferences;
 struct FCombatTargetChange;
 struct FCombatTargetSnapshot;
@@ -32,6 +34,9 @@ private:
 	UCReactionComponent* ReactionComponent_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	UCBalanceComponent* BalanceComponent_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	AAIController* AIController_Injected = nullptr;
 
 	bool bCombatTargetFacingSyncPending = false;
@@ -49,6 +54,7 @@ protected:
 private:
 	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
+	void HandleBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState, EBalanceLifecycleState InCurrentState);
 	void SynchronizeCombatTargetFacing();
 	void QueueCombatTargetFacingSync();
 	void ResolveQueuedCombatTargetFacingSync();
@@ -56,6 +62,7 @@ private:
 
 private:
 	bool ShouldDeferCombatTargetFacing() const;
+	bool IsCombatTargetFacingSuppressed() const;
 	void ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot);
 	void ClearCombatTargetFacing();
 };

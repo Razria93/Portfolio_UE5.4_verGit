@@ -4,6 +4,7 @@
 
 #include "AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CBalanceComponent.h"
 #include "Component/CStateComponent.h"
 #include "Core/Debug/FMovementDebug.h"
 
@@ -25,6 +26,12 @@ void UCMovementComponent::InitializeReferences(const FCharacterComponentReferenc
 	CharacterMovementComp_Injected = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetCharacterMovement() : nullptr;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
+	BalanceComp_Injected = InReferences.BalanceComponent;
+	if (IsValid(BalanceComp_Injected))
+	{
+		BalanceComp_Injected->OnBalanceLifecycleStateChanged.RemoveAll(this);
+		BalanceComp_Injected->OnBalanceLifecycleStateChanged.AddUObject(this, &UCMovementComponent::HandleBalanceLifecycleStateChanged);
+	}
 
 	ValidateRequiredComponentReferences();
 	ApplyMovementRotationMode(CurrentMovementRotationMode);
@@ -57,6 +64,16 @@ void UCMovementComponent::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateRuntimeLODMovementMode();
+}
+
+void UCMovementComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+{
+	if (IsValid(BalanceComp_Injected))
+	{
+		BalanceComp_Injected->OnBalanceLifecycleStateChanged.RemoveAll(this);
+	}
+
+	Super::EndPlay(InEndPlayReason);
 }
 
 void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -138,7 +155,7 @@ void UCMovementComponent::ApplyRuntimeLODMovementIntentBlocked()
 {
 	RestoreRuntimeLODMovementStateRefresh();
 	BlockRuntimeLODMovementIntent();
-	StopRuntimeLODActiveMovement();
+	StopActiveAIMovement();
 }
 
 void UCMovementComponent::RestoreRuntimeLODMovementStateRefresh()
@@ -174,12 +191,20 @@ void UCMovementComponent::BlockRuntimeLODMovementIntent()
 	BlockMovementIntentForRuntimeLOD();
 }
 
-void UCMovementComponent::StopRuntimeLODActiveMovement()
+void UCMovementComponent::StopActiveAIMovement()
 {
 	AAIController* aiController = IsValid(OwnerCharacter_Injected) ? Cast<AAIController>(OwnerCharacter_Injected->GetController()) : nullptr;
 	if (!IsValid(aiController)) return;
 
 	aiController->StopMovement();
+}
+
+void UCMovementComponent::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InNewState)
+{
+	if (InPreviousState != EBalanceLifecycleState::Accumulating) return;
+	if (InNewState == EBalanceLifecycleState::Accumulating) return;
+
+	StopActiveAIMovement();
 }
 
 // Movement Arbitration
@@ -190,6 +215,7 @@ bool UCMovementComponent::CanAcceptMoveInput() const
 	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
 	if (!bCanMove) return false;
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return false;
 
 	if (IsValid(StateComp_Injected))
 	{
@@ -237,10 +263,14 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 		{
 			reason = TEXT("RuntimeLODIntentBlocked");
 		}
-		else if (!bCanMove)
+	else if (!bCanMove)
 		{
-			reason = TEXT("CannotMove");
-		}
+		reason = TEXT("CannotMove");
+	}
+	else if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking())
+	{
+		reason = TEXT("BalanceLifecycleBlocking");
+	}
 		else if (executionState == EExecutionState::Reaction)
 		{
 			reason = TEXT("ReactionState");
@@ -273,21 +303,25 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 
 void UCMovementComponent::OnWalk()
 {
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
 	SetMovementGait(EMovementGait::Walk);
 }
 
 void UCMovementComponent::OnRun()
 {
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
 	SetMovementGait(EMovementGait::Run);
 }
 
 void UCMovementComponent::OnSprint()
 {
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
 	SetMovementGait(EMovementGait::Sprint);
 }
 
 void UCMovementComponent::OnJump()
 {
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	OwnerCharacter_Injected->Jump();

@@ -6,6 +6,7 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CBalanceComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
@@ -27,6 +28,7 @@ void UCActionOrchestratorComponent::InitializeReferences(const FCharacterCompone
 	WeaponComp_Injected = InReferences.WeaponComponent;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
+	BalanceComp_Injected = InReferences.BalanceComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	ActionComp_Injected = InReferences.ActionComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
@@ -229,6 +231,12 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	if (!HealthComp_Injected->IsAlive())
 	{
 		OutRejectReason = EActionRequestRejectReason::Dead;
+		return false;
+	}
+
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking())
+	{
+		OutRejectReason = EActionRequestRejectReason::BalanceLifecycleBlocking;
 		return false;
 	}
 
@@ -519,16 +527,10 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 	// Preferred: active reaction participant.
 	if (bHasActiveReaction)
 	{
-		FReactionData activeData;
+		FReactionExecutionContext context;
 
-		if (ReactionComp_Injected->GetActiveReactionData(activeData))
+		if (ReactionComp_Injected->GetActiveReactionContext(context))
 		{
-			FReactionExecutionContext context;
-
-			context.ReactionDataKey = activeData.ReactionDataKey;
-			context.ReactionData = activeData;
-			context.ReactionExecutor = ReactionComp_Injected->GetActiveReactionExecutor();
-
 			if (context.IsValidMinimal())
 			{
 				participant.bIsValid = true;

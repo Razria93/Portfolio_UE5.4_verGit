@@ -8,18 +8,21 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Component/CBalanceComponent.h"
+#include "Component/CStateComponent.h"
 
 #include "GameFramework/Character.h"
 
 namespace
 {
-	ELocomotionPresentationMode ResolveLocomotionPresentationMode(EMovementRotationMode InRotationMode)
+	ELocomotionPresentationMode ResolveLocomotionPresentationModeFromRotationMode(EMovementRotationMode InRotationMode)
 	{
 		switch (InRotationMode)
 		{
 		case EMovementRotationMode::ControllerDesired:
 		case EMovementRotationMode::FixedFacing:
 			return ELocomotionPresentationMode::Directional;
+
 		case EMovementRotationMode::OrientToMovement:
 		case EMovementRotationMode::None:
 		case EMovementRotationMode::Max:
@@ -36,11 +39,11 @@ void UCAnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 
 	UnbindComponentEvents();
-	ClearCachedReferences();
+	ResetAnimationParameters();
+	ClearCachedComponentReferences();
+	ResetRuntimeLODAnimationRefreshState();
 
-	InitializeAnimationStateForProfiling();
-
-	if (!CacheOwnerAndComponents()) return;
+	if (!CacheOwnerAndComponentReferences()) return;
 
 	BindComponentEvents();
 
@@ -51,9 +54,9 @@ void UCAnimInstance::NativeInitializeAnimation()
 void UCAnimInstance::NativeUninitializeAnimation()
 {
 	UnbindComponentEvents();
-	ClearCachedReferences();
-
-	ClearAnimationStateForProfiling();
+	ResetAnimationParameters();
+	ClearCachedComponentReferences();
+	ResetRuntimeLODAnimationRefreshState();
 
 	Super::NativeUninitializeAnimation();
 }
@@ -69,9 +72,9 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	RefreshStateParameters();
 }
 
-// Reference Cache
+// Reference Lifecycle
 
-bool UCAnimInstance::CacheOwnerAndComponents()
+bool UCAnimInstance::CacheOwnerAndComponentReferences()
 {
 	OwnerCharacter_Cached = Cast<ACharacter>(TryGetPawnOwner());
 	if (!IsValid(OwnerCharacter_Cached)) return false;
@@ -80,33 +83,41 @@ bool UCAnimInstance::CacheOwnerAndComponents()
 	WeaponComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCWeaponComponent>();
 	HealthComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCHealthComponent>();
 	DefenseComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCDefenseComponent>();
+	StateComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCStateComponent>();
+	BalanceComp_Cached = OwnerCharacter_Cached->FindComponentByClass<UCBalanceComponent>();
 
 	return true;
 }
 
-void UCAnimInstance::ClearCachedReferences()
+void UCAnimInstance::ClearCachedComponentReferences()
 {
-	bIsDeadPose = false;
-
 	OwnerCharacter_Cached = nullptr;
 	MovementComp_Cached = nullptr;
 	WeaponComp_Cached = nullptr;
 	HealthComp_Cached = nullptr;
 	DefenseComp_Cached = nullptr;
+	StateComp_Cached = nullptr;
+	BalanceComp_Cached = nullptr;
 }
 
 void UCAnimInstance::BindComponentEvents()
 {
 	if (IsValid(WeaponComp_Cached))
 	{
-		WeaponComp_Cached->OnWeaponTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+		WeaponComp_Cached->OnWeaponTypeChanged.AddUniqueDynamic(this, &UCAnimInstance::HandleWeaponTypeChanged);
 		CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
 	}
 
 	if (IsValid(HealthComp_Cached))
 	{
-		HealthComp_Cached->OnDeadStateChanged.AddUObject(this, &UCAnimInstance::OnDeadStateChanged);
-		OnDeadStateChanged(EDeadState::Alive, HealthComp_Cached->GetDeadState());
+		HealthComp_Cached->OnDeadStateChanged.AddUObject(this, &UCAnimInstance::HandleDeadStateChanged);
+		HandleDeadStateChanged(EDeadState::Alive, HealthComp_Cached->GetDeadState());
+	}
+
+	if (IsValid(BalanceComp_Cached))
+	{
+		BalanceComp_Cached->OnBalanceLifecycleStateChanged.AddUObject(this, &UCAnimInstance::HandleBalanceLifecycleStateChanged);
+		bIsCollapsePose = BalanceComp_Cached->IsCollapseLoopPoseActive();
 	}
 }
 
@@ -114,68 +125,116 @@ void UCAnimInstance::UnbindComponentEvents()
 {
 	if (IsValid(WeaponComp_Cached))
 	{
-		WeaponComp_Cached->OnWeaponTypeChanged.RemoveDynamic(this, &UCAnimInstance::OnWeaponTypeChanged);
+		WeaponComp_Cached->OnWeaponTypeChanged.RemoveDynamic(this, &UCAnimInstance::HandleWeaponTypeChanged);
 	}
 
 	if (IsValid(HealthComp_Cached))
 	{
 		HealthComp_Cached->OnDeadStateChanged.RemoveAll(this);
 	}
+
+	if (IsValid(BalanceComp_Cached))
+	{
+		BalanceComp_Cached->OnBalanceLifecycleStateChanged.RemoveAll(this);
+	}
 }
 
-// Animation Profiling Gate
+// Animation Parameter Lifecycle
 
-void UCAnimInstance::InitializeAnimationStateForProfiling()
+void UCAnimInstance::ResetAnimationParameters()
 {
-	RuntimeLODAnimationRefreshElapsed = 0.f;
+	Speed = 0.f;
+	Direction = 0.f;
+	bIsInAir = false;
+	LocomotionPresentationMode = ELocomotionPresentationMode::Forward;
+
+	CurrentWeaponType = EWeaponType::Max;
+	bIsDeadPose = false;
+	bIsCollapsePose = false;
+	CurrentExecutionState = EExecutionState::Max;
+	bIsGuardingPose = false;
 }
 
-void UCAnimInstance::ClearAnimationStateForProfiling()
+void UCAnimInstance::RefreshMovementParameters()
 {
-	RuntimeLODAnimationRefreshElapsed = 0.f;
+	if (IsValid(MovementComp_Cached))
+	{
+		Speed = MovementComp_Cached->GetCurrentSpeed();
+		Direction = MovementComp_Cached->GetCurrentDirection();
+		bIsInAir = MovementComp_Cached->IsFalling();
+		LocomotionPresentationMode = ResolveLocomotionPresentationModeFromRotationMode(MovementComp_Cached->GetCurrentMovementRotationMode());
+	}
 }
 
-bool UCAnimInstance::ShouldReduceEnemyAnimationRefreshForProfiling() const
+void UCAnimInstance::RefreshStateParameters()
+{
+	if (IsValid(WeaponComp_Cached))
+	{
+		CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
+	}
+
+	if (IsValid(HealthComp_Cached))
+	{
+		bIsDeadPose = HealthComp_Cached->IsDead();
+	}
+
+	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
+	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseLoopPoseActive();
+	CurrentExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Max;
+}
+
+// Runtime LOD Animation Refresh State
+
+void UCAnimInstance::ResetRuntimeLODAnimationRefreshState()
+{
+	AnimationRefreshThrottleElapsedSeconds = 0.f;
+}
+
+// Runtime LOD Animation Refresh Policy Query
+
+bool UCAnimInstance::ShouldThrottleAnimationRefreshForRuntimeLOD() const
 {
 	return FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(OwnerCharacter_Cached) > 0;
 }
 
-bool UCAnimInstance::IsEnemyAnimationProfilingTarget() const
-{
-	return FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(OwnerCharacter_Cached);
-}
-
-float UCAnimInstance::GetReducedAnimationRefreshIntervalForProfiling() const
+float UCAnimInstance::GetRuntimeLODAnimationRefreshInterval() const
 {
 	return FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval();
 }
+
+// Animation Refresh Gate Evaluation
 
 bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 {
 	RecordAnimationRefreshAttempt();
 
-	if (!ShouldReduceEnemyAnimationRefreshForProfiling())
+	if (!ShouldThrottleAnimationRefreshForRuntimeLOD())
 	{
-		RuntimeLODAnimationRefreshElapsed = 0.f;
+		AnimationRefreshThrottleElapsedSeconds = 0.f;
 		RecordAnimationRefreshExecuted();
 		return true;
 	}
 
-	RuntimeLODAnimationRefreshElapsed += DeltaSeconds;
+	AnimationRefreshThrottleElapsedSeconds += DeltaSeconds;
 
-	const float refreshInterval = GetReducedAnimationRefreshIntervalForProfiling();
-	if (RuntimeLODAnimationRefreshElapsed < refreshInterval)
+	const float refreshInterval = GetRuntimeLODAnimationRefreshInterval();
+	if (AnimationRefreshThrottleElapsedSeconds < refreshInterval)
 	{
 		RecordAnimationRefreshSkipped();
 		return false;
 	}
 
-	RuntimeLODAnimationRefreshElapsed = 0.f;
+	AnimationRefreshThrottleElapsedSeconds = 0.f;
 	RecordAnimationRefreshExecuted();
 	return true;
 }
 
-// Animation Refresh Audit
+// Runtime LOD Animation Refresh Audit
+
+bool UCAnimInstance::IsEnemyAnimationProfilingTarget() const
+{
+	return FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(OwnerCharacter_Cached);
+}
 
 bool UCAnimInstance::ShouldAuditAnimationRefreshForProfiling() const
 {
@@ -203,44 +262,21 @@ void UCAnimInstance::RecordAnimationRefreshSkipped() const
 	FAIAnimationProfiling::RecordAnimationRefreshSkipped();
 }
 
-// Parameter Refresh
+// Component Event Handlers
 
-void UCAnimInstance::RefreshMovementParameters()
-{
-	if (IsValid(MovementComp_Cached))
-	{
-		Speed = MovementComp_Cached->GetCurrentSpeed();
-		Direction = MovementComp_Cached->GetCurrentDirection();
-		bIsInAir = MovementComp_Cached->IsFalling();
-		LocomotionPresentationMode = ResolveLocomotionPresentationMode(MovementComp_Cached->GetCurrentMovementRotationMode());
-	}
-}
-
-void UCAnimInstance::RefreshStateParameters()
-{
-	if (IsValid(WeaponComp_Cached))
-	{
-		CurrentWeaponType = WeaponComp_Cached->GetCurrentWeaponType();
-	}
-
-	if (IsValid(HealthComp_Cached))
-	{
-		bIsDeadPose = HealthComp_Cached->IsDead();
-	}
-
-	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
-}
-
-// Component Event Callback
-
-void UCAnimInstance::OnWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPrevWeaponType, EWeaponType InNewWeaponType)
+void UCAnimInstance::HandleWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPreviousWeaponType, EWeaponType InCurrentWeaponType)
 {
 	if (!IsValid(OwnerCharacter_Cached) || !IsValid(InOwnerCharacter) || (OwnerCharacter_Cached != InOwnerCharacter)) return;
 
-	CurrentWeaponType = InNewWeaponType;
+	CurrentWeaponType = InCurrentWeaponType;
 }
 
-void UCAnimInstance::OnDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState)
+void UCAnimInstance::HandleDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InCurrentDeadState)
 {
-	bIsDeadPose = InNewDeadState == EDeadState::Dead;
+	bIsDeadPose = InCurrentDeadState == EDeadState::Dead;
+}
+
+void UCAnimInstance::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InCurrentState)
+{
+	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseLoopPoseActive();
 }

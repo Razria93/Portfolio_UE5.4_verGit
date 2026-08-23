@@ -4,6 +4,7 @@
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CCombatTargetComponent.h"
 #include "Component/CEnemyCombatParticipationComponent.h"
+#include "Component/CBalanceComponent.h"
 #include "AI/Blackboard/CAIKey.h"
 #include "AI/Blackboard/CAIBlackboardValueHelper.h"
 #include "Core/Debug/FAICombatBTDebug.h"
@@ -112,9 +113,10 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 		return EContextBuildResult::NoData;
 	}
 
-	OutEngageContext.EngageOffsetRange = enemy->GetEngageOffsetRange();
-	OutEngageContext.EngageEnterBuffer = enemy->GetEngageEnterBuffer();
-	OutEngageContext.EngageExitBuffer = enemy->GetEngageExitBuffer();
+	const FEnemyAIDistanceBand& engageDistanceBand = enemy->GetEngageConfig().DistanceBand;
+	OutEngageContext.EngageOffsetRange = engageDistanceBand.OffsetRange;
+	OutEngageContext.EngageEnterBuffer = engageDistanceBand.EnterBuffer;
+	OutEngageContext.EngageExitBuffer = engageDistanceBand.ExitBuffer;
 
 	OutEngageContext.bPrevInEngageRange = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bInEngageRange.KeyName);
 	OutEngageContext.NextCombatActionTime = InBlackboardComp->GetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName);
@@ -161,6 +163,10 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 
 	const bool bIsCombatAction = InBlackboardComp->GetValueAsBool(CAIKey::Engage::bIsCombatAction.KeyName);
 	const bool bIsActiveReaction = InBlackboardComp->GetValueAsBool(CAIKey::Reaction::bIsActiveReaction.KeyName);
+	const ACEnemy* enemy = Cast<ACEnemy>(InOwnerPawn);
+	const bool bIsBalanceLifecycleBlocking = IsValid(enemy)
+		&& IsValid(enemy->GetBalanceComp())
+		&& enemy->GetBalanceComp()->IsBalanceLifecycleBlocking();
 
 	InOutEngageContext.EngageOuterRange = engageOuterRange;
 	InOutEngageContext.EngageInnerRange = engageInnerRange;
@@ -172,7 +178,8 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 		bInEngageRange				// for ActionRange Check
 		&& bCooldownElapsed			// for ActionCooldown Check
 		&& !bIsCombatAction			// for ActionType Check
-		&& !bIsActiveReaction;		// for ActiveReaction Check
+		&& !bIsActiveReaction		// for ActiveReaction Check
+		&& !bIsBalanceLifecycleBlocking;	// for BalanceLifecycle Check
 
 	FAICombatBTDebug::RecordEngageContextComputedForAudit(InOwnerPawn, InOutEngageContext, bCooldownElapsed, bIsCombatAction, bIsActiveReaction);
 
@@ -194,6 +201,10 @@ EContextBuildResult UCBTService_UpdateEngageContext::ComputeEngageContext(APawn*
 		else if (bIsActiveReaction)
 		{
 			reason = TEXT("ActiveReaction");
+		}
+		else if (bIsBalanceLifecycleBlocking)
+		{
+			reason = TEXT("BalanceLifecycleBlocking");
 		}
 
 		FAICombatBTDebug::RecordEngageContextRejectedForAudit(InOwnerPawn, InOutEngageContext, TEXT("Gate"), reason);
