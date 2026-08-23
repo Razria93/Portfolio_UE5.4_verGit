@@ -165,7 +165,7 @@ bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSeri
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
 	PlayFeedbackRequest(feedbackRequest);
-	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached.ActionIndex);
+	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached, ActionRequestSerial_Cached);
 	FActionComponentDebug::RecordActionExecutorStartedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached);
 	FActionComponentDebug::PrintActionExecutorRuntimeDebug(OwnerCharacter_Injected, this, ActiveData_Cached, ActiveMontage_Cached, CachedSerial_ActivePlay, TEXT("Start"));
 
@@ -216,13 +216,14 @@ void UCAction::Complete()
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Complete);
 	const FActionData activeData = ActiveData_Cached;
-	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
+	const FActionDataKey actionDataKey = ActiveDataKey_Cached;
+	const uint32 actionRequestSerial = ActionRequestSerial_Cached;
 
 	CleanupRuntimeEffects();
 	ClearRuntime();
 
 	PlayFeedbackRequest(feedbackRequest);
-	EmitActionEvent(EActionEventType::ActionCompleted, actionIndex);
+	EmitActionEvent(EActionEventType::ActionCompleted, actionDataKey, actionRequestSerial);
 	FActionComponentDebug::RecordActionExecutorStoppedForAudit(OwnerCharacter_Injected, this, activeData, TEXT("Completed"));
 
 	if (IsValid(ActionComp_Injected))
@@ -284,14 +285,15 @@ void UCAction::HandleActionStop(EActionStopReason InStopReason)
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(feedbackTiming);
 	const FActionData activeData = ActiveData_Cached;
-	const int32 actionIndex = ActiveDataKey_Cached.ActionIndex;
+	const FActionDataKey actionDataKey = ActiveDataKey_Cached;
+	const uint32 actionRequestSerial = ActionRequestSerial_Cached;
 
 	StopMontage();
 	CleanupRuntimeEffects();
 	ClearRuntime();
 
 	PlayFeedbackRequest(feedbackRequest);
-	EmitActionEvent(eventType, actionIndex);
+	EmitActionEvent(eventType, actionDataKey, actionRequestSerial);
 	const FString finishReasonName = UEnum::GetValueAsString(finishReason);
 	FActionComponentDebug::RecordActionExecutorStoppedForAudit(OwnerCharacter_Injected, this, activeData, *finishReasonName);
 
@@ -652,11 +654,9 @@ bool UCAction::MatchesAnyInterventionFilter(const TArray<FExecutionInterventionP
 
 // Event
 
-void UCAction::EmitActionEvent(EActionEventType InEventType, int32 InActionIndex) const
+void UCAction::EmitActionEvent(EActionEventType InEventType, const FActionDataKey& InActionDataKey, const uint32 InActionRequestSerial) const
 {
 	if (!IsValid(ActionComp_Injected)) return;
 
-	const int32 actionIndex = (InActionIndex != INDEX_NONE) ? InActionIndex : ActiveDataKey_Cached.ActionIndex;
-
-	ActionComp_Injected->BroadcastActionEvent(ActiveDataKey_Cached.ActionType, actionIndex, ActionRequestSerial_Cached, InEventType);
+	ActionComp_Injected->BroadcastActionEvent(InActionDataKey.ActionType, InActionDataKey.ActionIndex, InActionRequestSerial, InEventType);
 }

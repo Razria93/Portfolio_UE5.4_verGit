@@ -110,7 +110,7 @@ void UCAction_ComboAttack::OpenReserveChainWindow()
 
 	bReserveChainWindowOpened = true;
 
-	EmitActionEvent(EActionEventType::ReserveChainWindowOpened, ActiveDataKey_Cached.ActionIndex);
+	EmitActionEvent(EActionEventType::ReserveChainWindowOpened, ActiveDataKey_Cached, ActionRequestSerial_Cached);
 }
 
 void UCAction_ComboAttack::CloseReserveChainWindow()
@@ -119,7 +119,7 @@ void UCAction_ComboAttack::CloseReserveChainWindow()
 
 	bReserveChainWindowOpened = false;
 
-	EmitActionEvent(EActionEventType::ReserveChainWindowClosed, ActiveDataKey_Cached.ActionIndex);
+	EmitActionEvent(EActionEventType::ReserveChainWindowClosed, ActiveDataKey_Cached, ActionRequestSerial_Cached);
 }
 
 // Chain Consume
@@ -169,8 +169,8 @@ void UCAction_ComboAttack::ConsumeChain()
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Chain);
 	PlayFeedbackRequest(feedbackRequest);
-	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached.ActionIndex);
-	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached.ActionIndex);
+	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached, ActionRequestSerial_Cached);
+	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached, ActionRequestSerial_Cached);
 }
 
 // Chain Query
