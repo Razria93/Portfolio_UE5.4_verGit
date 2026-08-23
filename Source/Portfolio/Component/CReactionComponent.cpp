@@ -21,6 +21,8 @@
 
 #include "GameFramework/Character.h"
 
+// Construction
+
 UCReactionComponent::UCReactionComponent()
 {
 }
@@ -38,29 +40,6 @@ void UCReactionComponent::InitializeReferences(const FCharacterComponentReferenc
 	ValidateRequiredComponentReferences();
 }
 
-bool UCReactionComponent::ValidateRequiredComponentReferences() const
-{
-	bool bValid = true;
-
-	const FRequiredReference requiredReferences[] =
-	{
-		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
-		{ MovementComp_Injected, TEXT("UCMovementComponent") },
-		{ StateComp_Injected, TEXT("UCStateComponent") },
-		{ HealthComp_Injected, TEXT("UCHealthComponent") },
-		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
-		{ ActionComp_Injected, TEXT("UCActionComponent") },
-		{ ReactionFeedbackComp_Injected, TEXT("UCReactionFeedbackComponent") },
-	};
-
-	for (const FRequiredReference& reference : requiredReferences)
-	{
-		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
-	}
-
-	return bValid;
-}
-
 // Lifecycle
 
 void UCReactionComponent::BeginPlay()
@@ -75,49 +54,6 @@ void UCReactionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	UninitializeReactionRuntime();
 
 	Super::EndPlay(EndPlayReason);
-}
-
-// Runtime Lifecycle
-
-void UCReactionComponent::InitializeReactionRuntime()
-{
-	BuildReactionRuntimeMaps();
-	SetInitialActiveReactionRuntimeState();
-}
-
-void UCReactionComponent::UninitializeReactionRuntime()
-{
-	ResetActiveReactionRuntimeState();
-	ClearReactionRuntimeMaps();
-}
-
-// Runtime Map
-
-void UCReactionComponent::BuildReactionRuntimeMaps()
-{
-	BuildReactionDataMap(true);
-	BuildReactionExecutorMap(true);
-}
-
-void UCReactionComponent::ClearReactionRuntimeMaps()
-{
-	ReactionExecutorMap.Reset();
-	ReactionDataMap.Reset();
-}
-
-// Active Runtime State
-
-void UCReactionComponent::SetInitialActiveReactionRuntimeState()
-{
-	ActiveReactionType = EReactionType::Idle;
-}
-
-void UCReactionComponent::ResetActiveReactionRuntimeState()
-{
-	ActiveReactionType = EReactionType::None;
-	ActiveReactionData = FReactionData();
-	ActiveReactionExecutor = nullptr;
-	ActiveReactionContext = FReactionExecutionContext();
 }
 
 // Query
@@ -175,37 +111,18 @@ bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey,
 		return false;
 	}
 
-	TArray<FDamageSpecKey> candidateKeys;
-	EReactionType reactionType = InDataKey.ReactionType;
-	
-	// Resolve candidate spec keys before data lookup.
-	BuildCandidateSpecKeys(InDataKey.DamageSpecKey, candidateKeys);
-
-	for (int32 candidateIndex = 0; candidateIndex < candidateKeys.Num(); ++candidateIndex)
+	switch (InDataKey.MatchMode)
 	{
-		const FDamageSpecKey& candidateKey = candidateKeys[candidateIndex];
-		FReactionDataKey reactionDataKey;
+	case EReactionDataMatchMode::Global:
+		return ResolveGlobalReactionData(InDataKey, OutData);
 
-		reactionDataKey.DamageSpecKey = candidateKey;
-		reactionDataKey.ReactionType = reactionType;
+	case EReactionDataMatchMode::DamageSpec:
+		return ResolveDamageSpecReactionData(InDataKey, OutData);
 
-		const FReactionData* foundPtr = ReactionDataMap.Find(reactionDataKey);
-		if (!foundPtr) continue;
-
-		const FReactionData& found = *foundPtr;
-		if (!found.IsValidMinimal())
-		{
-			FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, reactionDataKey, TEXT("InvalidResolvedData"));
-			continue;
-		}
-
-		OutData = found;
-		FReactionComponentDebug::RecordReactionDataResolvedForAudit(OwnerCharacter_Injected, InDataKey, found, candidateIndex);
-		return true;
+	default:
+		FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("UnsupportedMatchMode"));
+		return false;
 	}
-
-	FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("NotFound"));
-	return false;
 }
 
 UCReaction* UCReactionComponent::ResolveReactionExecutor(const FReactionData& InData)
@@ -369,6 +286,11 @@ void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InN
 		return;
 	}
 
+	if (ActiveReactionContext.IsValidMinimal())
+	{
+		OnReactionExecutionNotifyCommand.Broadcast(ActiveReactionContext, InNotifyCommand);
+	}
+
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
@@ -460,6 +382,74 @@ void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
 	}
 
 	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
+}
+
+// Component Reference Validation
+
+bool UCReactionComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ MovementComp_Injected, TEXT("UCMovementComponent") },
+		{ StateComp_Injected, TEXT("UCStateComponent") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+		{ ObservableOverlayComp_Injected, TEXT("UCObservableOverlayComponent") },
+		{ ActionComp_Injected, TEXT("UCActionComponent") },
+		{ ReactionFeedbackComp_Injected, TEXT("UCReactionFeedbackComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
+}
+
+// Runtime Lifecycle
+
+void UCReactionComponent::InitializeReactionRuntime()
+{
+	BuildReactionRuntimeMaps();
+	SetInitialActiveReactionRuntimeState();
+}
+
+void UCReactionComponent::UninitializeReactionRuntime()
+{
+	ResetActiveReactionRuntimeState();
+	ClearReactionRuntimeMaps();
+}
+
+// Runtime Map
+
+void UCReactionComponent::BuildReactionRuntimeMaps()
+{
+	BuildReactionDataMap(true);
+	BuildReactionExecutorMap(true);
+}
+
+void UCReactionComponent::ClearReactionRuntimeMaps()
+{
+	ReactionExecutorMap.Reset();
+	ReactionDataMap.Reset();
+}
+
+// Active Runtime State
+
+void UCReactionComponent::SetInitialActiveReactionRuntimeState()
+{
+	ActiveReactionType = EReactionType::Idle;
+}
+
+void UCReactionComponent::ResetActiveReactionRuntimeState()
+{
+	ActiveReactionType = EReactionType::None;
+	ActiveReactionData = FReactionData();
+	ActiveReactionExecutor = nullptr;
+	ActiveReactionContext = FReactionExecutionContext();
 }
 
 // Data Build
@@ -580,7 +570,59 @@ UCReaction* UCReactionComponent::FindReactionExecutor(const UClass* InClass)
 	return found;
 }
 
-// Data Resolve Helpers
+// Data Resolve - Match Mode
+
+bool UCReactionComponent::ResolveGlobalReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData)
+{
+	const FReactionData* foundPtr = ReactionDataMap.Find(InDataKey);
+	if (!foundPtr || !foundPtr->IsValidMinimal())
+	{
+		FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("GlobalNotFound"));
+		return false;
+	}
+
+	OutData = *foundPtr;
+	FReactionComponentDebug::RecordReactionDataResolvedForAudit(OwnerCharacter_Injected, InDataKey, OutData, 0);
+	return true;
+}
+
+bool UCReactionComponent::ResolveDamageSpecReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData)
+{
+	TArray<FDamageSpecKey> candidateKeys;
+	const EReactionType reactionType = InDataKey.ReactionType;
+
+	BuildCandidateSpecKeys(InDataKey.DamageSpecKey, candidateKeys);
+
+	for (int32 candidateIndex = 0; candidateIndex < candidateKeys.Num(); ++candidateIndex)
+	{
+		const FDamageSpecKey& candidateKey = candidateKeys[candidateIndex];
+		FReactionDataKey reactionDataKey;
+
+		reactionDataKey.MatchMode = EReactionDataMatchMode::DamageSpec;
+		reactionDataKey.DamageSpecKey = candidateKey;
+		reactionDataKey.ReactionType = reactionType;
+		reactionDataKey.ReactionIndex = InDataKey.ReactionIndex;
+
+		const FReactionData* foundPtr = ReactionDataMap.Find(reactionDataKey);
+		if (!foundPtr) continue;
+
+		const FReactionData& found = *foundPtr;
+		if (!found.IsValidMinimal())
+		{
+			FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, reactionDataKey, TEXT("InvalidResolvedData"));
+			continue;
+		}
+
+		OutData = found;
+		FReactionComponentDebug::RecordReactionDataResolvedForAudit(OwnerCharacter_Injected, InDataKey, found, candidateIndex);
+		return true;
+	}
+
+	FReactionComponentDebug::RecordReactionDataResolveFailedForAudit(OwnerCharacter_Injected, InDataKey, TEXT("NotFound"));
+	return false;
+}
+
+// Data Resolve - DamageSpec Fallback
 
 void UCReactionComponent::BuildCandidateSpecKeys(const FDamageSpecKey& InSpecKey, TArray<FDamageSpecKey>& OutSpecKeys) const
 {

@@ -4,7 +4,6 @@
 #include "Type/CReactionTypes.h"
 #include "Type/CReactionDataTypes.h"
 #include "Type/CCombatSignalTargetTypes.h"
-#include "Type/CCombatResultTypes.h"
 #include "Type/CExecutionTypes.h"
 #include "CReactionOrchestrationTypes.generated.h"
 
@@ -99,7 +98,7 @@ enum class EReactionIntentSource : uint8
 	None = 0,
 
 	CombatSignalTarget,
-	CombatResult,
+	BalanceLifecycle,
 
 	Max,
 };
@@ -117,6 +116,8 @@ public:
 
 	UPROPERTY(Transient)
 	uint64 CombatSignalResultSerial = 0;
+
+	uint32 BalanceLifecycleSerial = 0;
 
 public:
 	bool IsValidMinimal() const
@@ -141,19 +142,19 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FCombatResultReactionRequest
+struct FBalanceLifecycleReactionRequest
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(Transient)
-	EReactionIntentSource IntentSource = EReactionIntentSource::CombatResult;
-
-	UPROPERTY(Transient)
-	FCombatResultPacket CombatResultPacket = FCombatResultPacket();
+	EReactionIntentSource IntentSource = EReactionIntentSource::BalanceLifecycle;
 
 	UPROPERTY(Transient)
 	EReactionType ReactionType = EReactionType::None;
+
+	UPROPERTY(Transient)
+	uint32 BalanceLifecycleSerial = 0;
 };
 
 // Result

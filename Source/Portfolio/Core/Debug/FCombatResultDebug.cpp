@@ -11,7 +11,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarCombatResultAudit(
 		TEXT("Portfolio.Debug.CombatResultAudit"),
 		0,
-		TEXT("Print combat result receiver, parry stack, and stagger reaction diagnostic hook logs. 0: disabled, 1: enabled."),
+		TEXT("Print combat result receiver diagnostic hook logs. 0: disabled, 1: enabled."),
 		ECVF_Default);
 #endif
 
@@ -36,14 +36,6 @@ namespace
 			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"),
 			InPacket.CommittedDamage,
 			*FormatCombatResultDamageSpecKey(InPacket.DamageSpecKey));
-	}
-
-	FString FormatReactionRequestResult(const FReactionRequestResult& InResult)
-	{
-		return FString::Printf(
-			TEXT("Result=%s | RejectReason=%s"),
-			*UEnum::GetValueAsString(InResult.ResultType),
-			*UEnum::GetValueAsString(InResult.RejectReason));
 	}
 
 	const UObject* ResolveCombatResultWorldContext(const AActor* InReceiverActor, const FCombatResultPacket& InPacket)
@@ -87,48 +79,5 @@ void FCombatResultDebug::RecordCombatResultReceivedForAudit(const AActor* InRece
 		TEXT("[CombatResult|Receiver|PacketReceived] Owner=%s | Receiver=%s | %s"),
 		*GetNameSafe(InReceiverActor),
 		*GetNameSafe(InReceiverActor),
-		*FormatCombatResultPacket(InPacket)));
-}
-
-// Parry Result Diagnostic Hook
-
-void FCombatResultDebug::RecordParryStackUpdatedForAudit(const AActor* InReceiverActor, const FCombatResultPacket& InPacket, int32 InCount, int32 InThreshold, bool bInStaggerReady)
-{
-	if (!ShouldAuditCombatResult()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResult|Parry|StackUpdated] Owner=%s | Receiver=%s | Requester=%s | Count=%d/%d | StaggerReady=%s | Outcome=%s"),
-		*GetNameSafe(InReceiverActor),
-		*GetNameSafe(InReceiverActor),
-		*GetNameSafe(InPacket.TargetActor),
-		InCount,
-		InThreshold,
-		bInStaggerReady ? TEXT("true") : TEXT("false"),
-		*UEnum::GetValueAsString(InPacket.DefenseOutcome)));
-}
-
-void FCombatResultDebug::RecordParryStaggerReactionRequestedForAudit(const AActor* InReceiverActor, const FCombatResultPacket& InPacket, const FReactionRequestResult& InResult)
-{
-	if (!ShouldAuditCombatResult()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResult|Parry|StaggerReactionRequested] Owner=%s | Receiver=%s | Requester=%s | %s | %s"),
-		*GetNameSafe(InReceiverActor),
-		*GetNameSafe(InReceiverActor),
-		*GetNameSafe(InPacket.TargetActor),
-		*FormatReactionRequestResult(InResult),
-		*FormatCombatResultPacket(InPacket)));
-}
-
-void FCombatResultDebug::RecordParryStaggerReactionRejectedForAudit(const AActor* InReceiverActor, const FCombatResultPacket& InPacket, const TCHAR* InReason)
-{
-	if (!ShouldAuditCombatResult()) return;
-
-	FLog::Log(FString::Printf(
-		TEXT("[CombatResult|Parry|StaggerReactionRejected] Reason=%s | Owner=%s | Receiver=%s | Requester=%s | %s"),
-		InReason ? InReason : TEXT("Rejected"),
-		*GetNameSafe(InReceiverActor),
-		*GetNameSafe(InReceiverActor),
-		*GetNameSafe(InPacket.TargetActor),
 		*FormatCombatResultPacket(InPacket)));
 }

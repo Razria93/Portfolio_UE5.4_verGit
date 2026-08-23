@@ -9,8 +9,15 @@
 #include "Type/CCombatSignalTargetTypes.h"
 #include "CCombatSignalTargetComponent.generated.h"
 
+enum class EReactionNotifyCommand : uint8;
+enum class EReactionType : uint8;
+struct FBalanceLifecyclePacket;
+struct FReactionExecutionContext;
+struct FReactionExecutionLifecycleEvent;
+
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatSignalTargetAccepted, const FCombatSignalTargetPacket&);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCombatSignalTargetReactionResolved, const FCombatSignalTargetPacket&, const struct FReactionRequestResult&);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnBalanceLifecycleReactionResolved, const FBalanceLifecyclePacket&, const struct FReactionRequestResult&);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCCombatSignalTargetComponent : public UActorComponent
@@ -37,42 +44,73 @@ private:
 	UPROPERTY(Transient)
 	class UCHitFeedbackComponent* HitFeedbackComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCBalanceComponent* BalanceComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCReactionComponent* ReactionComp_Injected = nullptr;
+
 	// Runtime State
 	uint64 NextAcceptedResultSerial = 1;
-
-public:
-	// Event
-	FOnCombatSignalTargetAccepted OnCombatSignalTargetAccepted;
-	FOnCombatSignalTargetReactionResolved OnCombatSignalTargetReactionResolved;
 
 public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
+protected:
+	// Component Lifecycle
+	void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
+
 private:
-	// Validation
+	// Component Reference Validation
 	bool ValidateRequiredComponentReferences() const;
 
 public:
-	// Entry
-	float RequestCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
+	// Event
+	FOnCombatSignalTargetAccepted OnCombatSignalTargetAccepted;
+	FOnCombatSignalTargetReactionResolved OnCombatSignalTargetReactionResolved;
+	FOnBalanceLifecycleReactionResolved OnBalanceLifecycleReactionResolved;
+
+public:
+	// Combat Damage Pipeline - Entry
+	float RequestCombatDamageTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
+
+	// Combat Signal Pipeline - Entry
 	bool RequestCombatSignalTarget(const FCombatSignal& InCombatSignal);
 
-private:
-	float ProcessCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
-	bool ProcessCombatSignalTarget(const FCombatSignal& InCombatSignal);
-	float HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
-	bool HandleTimingCueSignal(const FCombatSignal& InCombatSignal);
+	// Combat Result Pipeline - Entry
+	void RequestCombatResultTarget(const FCombatResultPacket& InCombatResultPacket);
 
 private:
-	// Receive
+	// Combat Result Pipeline - Validation
+	bool ValidateCombatResultTargetRequest(const FCombatResultPacket& InCombatResultPacket) const;
+
+	// Combat Damage Pipeline - Process / Handler
+	float ProcessCombatDamageTarget(float DamageAmount, FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser);
+	float HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, class AController* InDamageInstigator, class AActor* InDamageCauser);
+
+	// Combat Signal Pipeline - Process / Handler
+	bool ProcessCombatSignalTarget(const FCombatSignal& InCombatSignal);
+	bool HandleTimingCueSignal(const FCombatSignal& InCombatSignal);
+
+	// Combat Result Pipeline - Process / Handler
+	void ProcessCombatResultTarget(const FCombatResultPacket& InCombatResultPacket);
+	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
+
+	// Balance / Collapse Lifecycle Event Handlers
+	void HandleBalanceCollapseLoopExpired(uint32 InBalanceLifecycleSerial);
+	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
+	void HandleReactionExecutionNotifyCommand(const FReactionExecutionContext& InContext, EReactionNotifyCommand InCommand);
+
+private:
+	// Combat Damage Pipeline - Validation
 	bool ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser);
 	bool ValidateSignalRequest(const FCombatSignal& InCombatSignal) const;
 	FCombatSignalTargetPayload BuildPayload(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser) const;
 	FCombatSignalTargetContext BuildContext(const FCombatSignalTargetPayload& InCombatSignalTargetPayload) const;
 
 private:
-	// Evaluate
+	// Combat Damage Pipeline - Evaluate
 	bool ValidateContext(FCombatSignalTargetContext& InOutCombatSignalTargetContext);
 	bool CanReceiveCombatSignal(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	void ComputeTargetDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
@@ -81,21 +119,24 @@ private:
 	FCombatSignalTargetResult BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const;
 
 private:
-	// Apply
+	// Combat Damage Pipeline - Apply
 	void CommitCombatSignalTarget(FCombatSignalTargetContext& InOutCombatSignalTargetContext);
 
 private:
-	// Packet
+	// Combat Damage Pipeline - Packet
 	FCombatSignalTargetPacket BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult);
 
 private:
-	// Notify
+	// Combat Damage Pipeline - Dispatch
 	void DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 	void DispatchRejectedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 	void DispatchCombatResultToReceiver(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;
 
+	// Combat Result Pipeline - Dispatch
+	void DispatchBalanceLifecycleReaction(const FBalanceLifecyclePacket& InBalanceLifecyclePacket) const;
+
 private:
-	// Helper
+	// Combat Damage Pipeline - Helper
 	AController* ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const;
 	float CommitDamageToHealth(const FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	AActor* ResolveCombatResultReceiverActor(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const;

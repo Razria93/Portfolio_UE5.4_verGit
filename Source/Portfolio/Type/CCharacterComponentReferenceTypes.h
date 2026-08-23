@@ -23,6 +23,7 @@ class UCReactionFeedbackComponent;
 class UCReactionOrchestratorComponent;
 class UCStateComponent;
 class UCWeaponComponent;
+class UCBalanceComponent;
 
 // Runtime Context
 
@@ -34,6 +35,7 @@ struct FCharacterComponentReferences
 	UCWeaponComponent* WeaponComponent = nullptr;
 	UCStateComponent* StateComponent = nullptr;
 	UCHealthComponent* HealthComponent = nullptr;
+	UCBalanceComponent* BalanceComponent = nullptr;
 	UCDefenseComponent* DefenseComponent = nullptr;
 	UCObservableOverlayComponent* ObservableOverlayComponent = nullptr;
 	UCCombatTargetComponent* CombatTargetComponent = nullptr;

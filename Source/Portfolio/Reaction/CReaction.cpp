@@ -400,6 +400,7 @@ void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, ui
 	if (bInterrupted)
 	{
 		FReactionComponentDebug::RecordReactionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("MontageEnd"), TEXT("UnexpectedInterruption"));
+		Stop(EReactionStopReason::Interrupted);
 		return;
 	}
 

@@ -89,13 +89,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
 
-private:
-	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry", meta = (ClampMin = 1))
-	int32 ParryStaggerThreshold = 3;
-
-	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
-	int32 ParryResultCount = 0;
-
 protected:
 	// Lifecycle
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -134,8 +127,6 @@ public:
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
-	FORCEINLINE int32 GetParryResultCount() const { return ParryResultCount; }
-	FORCEINLINE int32 GetParryStaggerThreshold() const { return ParryStaggerThreshold; }
 
 public:
 	// Damage
@@ -144,10 +135,6 @@ public:
 public:
 	// Combat Result
 	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
-
-private:
-	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
-	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
 	// Interface

@@ -19,6 +19,8 @@ enum class EReactionType : uint8
 	Stagger,
 
 	All,		// Wildcard
+	CollapseIn,
+	CollapseOut,
 
 	Max,		// Sentinel
 };
@@ -29,6 +31,7 @@ enum class EReactionNotifyCommand : uint8
 	None = 0,
 
 	Complete,
+	ResetBalance,
 
 	Max,
 };

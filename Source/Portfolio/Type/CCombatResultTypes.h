@@ -39,6 +39,9 @@ public:
 	UPROPERTY(Transient)
 	float CommittedDamage = 0.f;
 
+	UPROPERTY(Transient)
+	uint64 CombatSignalResultSerial = 0;
+
 public:
 	FCombatResultPacket() = default;
 

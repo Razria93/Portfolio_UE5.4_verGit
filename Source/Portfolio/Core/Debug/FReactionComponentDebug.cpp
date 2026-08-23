@@ -33,9 +33,18 @@ namespace
 
 	FString FormatReactionComponentDataKey(const FReactionDataKey& InDataKey)
 	{
+		if (InDataKey.MatchMode == EReactionDataMatchMode::Global)
+		{
+			return FString::Printf(
+				TEXT("MatchMode=Global | ReactionType=%s | ReactionIndex=%d"),
+				*UEnum::GetValueAsString(InDataKey.ReactionType),
+				InDataKey.ReactionIndex);
+		}
+
 		return FString::Printf(
-			TEXT("ReactionType=%s | %s"),
+			TEXT("MatchMode=DamageSpec | ReactionType=%s | ReactionIndex=%d | %s"),
 			*UEnum::GetValueAsString(InDataKey.ReactionType),
+			InDataKey.ReactionIndex,
 			*FormatReactionComponentDamageSpecKey(InDataKey.DamageSpecKey));
 	}
 

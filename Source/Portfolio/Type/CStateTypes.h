@@ -27,5 +27,6 @@ enum class EAIIntentState : uint8
 	Engage,
 	HitReact,
 	Dead,
+	Incapacitated,
 	Max,
 };

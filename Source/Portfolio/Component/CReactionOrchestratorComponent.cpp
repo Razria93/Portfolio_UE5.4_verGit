@@ -70,7 +70,7 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 	return ProcessReactionCandidate(candidate);
 }
 
-FReactionRequestResult UCReactionOrchestratorComponent::RequestCombatResultReaction(const FCombatResultReactionRequest& InIncomingRequest)
+FReactionRequestResult UCReactionOrchestratorComponent::RequestBalanceLifecycleReaction(const FBalanceLifecycleReactionRequest& InIncomingRequest)
 {
 	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
 
@@ -82,7 +82,7 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestCombatResultReact
 
 	FReactionCandidate candidate;
 
-	if (!ResolveCombatResultReactionCandidate(InIncomingRequest, candidate, rejectReason))
+	if (!ResolveBalanceLifecycleReactionCandidate(InIncomingRequest, candidate, rejectReason))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
 
 	return ProcessReactionCandidate(candidate);
@@ -139,36 +139,9 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 	}
 
 	OutIncomingCandidate.ReactionDataKey.DamageSpecKey = InIncomingRequest.CombatSignalTargetPacket.Result.DamageSpecKey;
+	OutIncomingCandidate.ReactionDataKey.MatchMode = EReactionDataMatchMode::DamageSpec;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = reactionType;
 	OutIncomingCandidate.CombatSignalResultSerial = InIncomingRequest.CombatSignalTargetPacket.ResultSerial;
-	return true;
-}
-
-bool UCReactionOrchestratorComponent::ResolveCombatResultReactionCandidate(const FCombatResultReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const
-{
-	OutIncomingCandidate = FReactionCandidate();
-	OutRejectReason = EReactionRequestRejectReason::None;
-
-	if (InIncomingRequest.IntentSource != EReactionIntentSource::CombatResult)
-	{
-		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
-		return false;
-	}
-
-	if (!InIncomingRequest.CombatResultPacket.IsValidMinimal())
-	{
-		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
-		return false;
-	}
-
-	if (InIncomingRequest.ReactionType == EReactionType::None || InIncomingRequest.ReactionType == EReactionType::Max)
-	{
-		OutRejectReason = EReactionRequestRejectReason::ReactionCandidateNotFound;
-		return false;
-	}
-
-	OutIncomingCandidate.ReactionDataKey.DamageSpecKey = InIncomingRequest.CombatResultPacket.DamageSpecKey;
-	OutIncomingCandidate.ReactionDataKey.ReactionType = InIncomingRequest.ReactionType;
 	return true;
 }
 
@@ -199,6 +172,32 @@ EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const F
 	}
 
 	return EReactionType::None;
+}
+
+bool UCReactionOrchestratorComponent::ResolveBalanceLifecycleReactionCandidate(const FBalanceLifecycleReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const
+{
+	OutIncomingCandidate = FReactionCandidate();
+	OutRejectReason = EReactionRequestRejectReason::None;
+
+	if (InIncomingRequest.IntentSource != EReactionIntentSource::BalanceLifecycle
+		|| InIncomingRequest.BalanceLifecycleSerial == 0)
+	{
+		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	if (InIncomingRequest.ReactionType != EReactionType::CollapseIn
+		&& InIncomingRequest.ReactionType != EReactionType::CollapseOut)
+	{
+		OutRejectReason = EReactionRequestRejectReason::ReactionCandidateNotFound;
+		return false;
+	}
+
+	OutIncomingCandidate.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+	OutIncomingCandidate.ReactionDataKey.ReactionType = InIncomingRequest.ReactionType;
+	OutIncomingCandidate.ReactionDataKey.ReactionIndex = INDEX_NONE;
+	OutIncomingCandidate.BalanceLifecycleSerial = InIncomingRequest.BalanceLifecycleSerial;
+	return true;
 }
 
 // Orchestration Pipeline
@@ -258,6 +257,7 @@ bool UCReactionOrchestratorComponent::ResolveReactionContext(const FReactionCand
 	OutIncomingContext.ReactionData = incomingReactionData;
 	OutIncomingContext.ReactionExecutor = incomingReactionExecutor;
 	OutIncomingContext.CombatSignalResultSerial = InIncomingCandidate.CombatSignalResultSerial;
+	OutIncomingContext.BalanceLifecycleSerial = InIncomingCandidate.BalanceLifecycleSerial;
 
 	return true;
 }
@@ -338,16 +338,10 @@ FExecutionParticipant UCReactionOrchestratorComponent::BuildActiveExecutionParti
 	// Preferred: active reaction participant.
 	if (bHasActiveReaction)
 	{
-		FReactionData activeData;
+		FReactionExecutionContext context;
 
-		if (ReactionComp_Injected->GetActiveReactionData(activeData))
+		if (ReactionComp_Injected->GetActiveReactionContext(context))
 		{
-			FReactionExecutionContext context;
-
-			context.ReactionDataKey = activeData.ReactionDataKey;
-			context.ReactionData = activeData;
-			context.ReactionExecutor = ReactionComp_Injected->GetActiveReactionExecutor();
-
 			if (context.IsValidMinimal())
 			{
 				participant.bIsValid = true;
