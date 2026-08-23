@@ -1179,10 +1179,10 @@ HP
 - UCHealthComponent::GetMaxHP()
 - UCHealthComponent::GetDeadState()
 
-Stagger
-- 현재 ACPlayer / ACEnemy 직접 cast 후 GetParryResultCount(), GetParryStaggerThreshold() 사용
-- 장기적으로는 별도 component 책임으로 이동하는 것이 적절함
-- 현재 작업에서는 기존 방식 유지
+Balance
+- Enemy는 UCBalanceComponent query를 사용
+- Player Balance policy는 Enemy Parry gameplay 구현 시점까지 TODO
+- Player/Enemy policy가 모두 활성화되면 동일 component query를 사용
 
 Guard
 - UCDefenseComponent::WantsGuarding()

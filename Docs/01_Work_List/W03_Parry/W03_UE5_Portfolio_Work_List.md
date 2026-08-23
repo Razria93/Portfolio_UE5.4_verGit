@@ -404,6 +404,8 @@ TakeDamagePacket
 
 > 2026.06.21 최신화: 4.11 작성 이후 attacker 측 `ParryStack -> Stagger` v1 연결과 `CReaction_Stagger` / `EReactionType::Stagger` / stagger montage 연결 확인까지 완료했다.
 
+> 2026.08.24 구조 최신화: 위 v1의 Actor 직접 `ParryStack -> Stagger` request 경로는 제거됐다. Player와 Enemy 모두 `ReceiveCombatResultPacket()`에서 `UCCombatSignalTargetComponent`로 forwarding한다. Enemy는 `UCBalanceComponent` policy를 사용하며, Player Balance policy는 Enemy Parry gameplay 구현 시점의 TODO다. 기존 Stagger asset은 이번 구조 정리에서 수정하지 않는다.
+
 ---
 
 ## 5. 비범위

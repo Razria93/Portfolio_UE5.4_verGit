@@ -20,6 +20,10 @@ N23_Debug_Log_And_Diagnostic_Code_Policy_Note.md
 N24_Debug_Log_Cleanup_Inventory_Note.md
 ```
 
+> 2026.08.24 최신화: 아래의 Player/Enemy Actor 직접 `ParryStack -> Stagger` 예시와 inventory는
+> CombatResult 공통 ingress 전환 이전의 설계 기록이다. 현재 runtime은 `ACPlayer`/`ACEnemy` 모두
+> `UCCombatSignalTargetComponent`로 forwarding하며, 최신 파일 inventory는 N26을 기준으로 한다.
+
 현재까지의 cleanup은 다음을 주로 처리했다.
 
 ```text

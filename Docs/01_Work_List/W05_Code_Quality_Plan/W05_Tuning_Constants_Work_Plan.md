@@ -550,7 +550,7 @@ Source/Portfolio/AI/Patrol/CPatrolPoint.cpp
 -> assignment lease age 누락값은 CCombatEngageConstants::MissingAssignmentLeaseAge로 이름을 부여한다.
 -> CActionFeedbackTypes의 RelativeScale 기본값은 FVector::OneVector를 사용한다.
 -> Execution Intervention notify editor color는 ExecutionInterventionWindowEditorColor로 이름을 부여한다.
--> ParryStaggerThreshold는 ClampMin = 1과 runtime MinimumParryStaggerThreshold guard를 함께 사용한다.
+-> 기존 ParryStaggerThreshold와 runtime guard는 Player 직접 CombatResult Stagger 경로 제거와 함께 삭제했다.
 ```
 
 설계상 보류:
@@ -826,23 +826,9 @@ Source/Portfolio/Action/CAction_ComboAttack.cpp
 Parry result tuning:
 
 ```text
-Source/Portfolio/Character/Player/CPlayer.h
--> ParryStaggerThreshold = 3
-
-Source/Portfolio/Character/Enemy/CEnemy.h
--> ParryStaggerThreshold = 3
-
-Source/Portfolio/Character/Player/CPlayer.cpp
-Source/Portfolio/Character/Enemy/CEnemy.cpp
--> MinimumParryStaggerThreshold = 1
-
-후보:
--> FDefenseParryTuning 또는 combat result tuning으로 이동.
--> Player / Enemy 공통 기준으로 둘지, character archetype별 override로 둘지 결정.
-
-주의:
--> ParryStaggerThreshold는 serialized UPROPERTY이므로 이동 / regrouping 시 migration 대상이다.
--> 지금 바로 옮기면 asset 저장 / Editor load / Blueprint compile / PIE smoke 검증이 필요하다.
+기존 Player/Enemy Actor-owned ParryStaggerThreshold는 제거됐다.
+Enemy는 UCBalanceComponent의 BalanceThreshold를 사용한다.
+Player Balance policy는 Enemy Parry gameplay가 구현되는 시점에 동일 Balance 계약으로 도입한다.
 ```
 
 AI behavior tuning:

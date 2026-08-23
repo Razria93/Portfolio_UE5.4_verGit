@@ -41,5 +41,6 @@
 | S32 | 공통 Combat Target 상태 및 의사결정 경계 설계 | `S32_UE5_Portfolio_System_Architecture.md` | Player/Enemy 공통 Target SoT, Perception/BT/Blackboard 경계와 단계별 마이그레이션 | Historical Design | 구현 전 경계 설계 기록. 현재 구현 계약은 S33, Enemy Evidence 정책은 S34 참조 |
 | S33 | 공통 Combat Target Kernel 및 의사결정 통합 설계 | `S33_UE5_Portfolio_System_Architecture.md` | Player/Enemy 공통 Combat Target 최신 구조와 구현 Goal 상태 | Current System | Enemy Participation 세부 정책은 S34 참조 |
 | S34 | Combat Participation Policy | `S34_UE5_Portfolio_Combat_Participation_Policy.md` | Enemy Evidence, shared allocator, Assignment lifecycle, HitReactive/ExtraSlot 정책 | Current System | Evidence-centric runtime contract |
+| S35 | Enemy Balance / Collapse Lifecycle 설계 | `S35_UE5_Portfolio_Enemy_Balance_Collapse_Architecture.md` | Enemy Balance Count, Collapse In / Loop / Out, TTL, Count lock 및 미래 Execution 경계 | Current System (C++ 구현 완료; asset/PIE 검증 대기) | R07 구현 기준. 과거 S30은 설계 근거로만 참조 |
 
 ---
