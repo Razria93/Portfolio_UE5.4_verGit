@@ -409,6 +409,17 @@ bool UCReactionComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
+bool UCReactionComponent::CancelActiveReactionForSystem()
+{
+	if (!IsActive()) return true;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return EndActiveReaction(EReactionFinishReason::Interrupted);
+
+	activeExecutor->Stop(EReactionStopReason::Interrupted);
+	return !IsActive();
+}
+
 // Runtime Lifecycle
 
 void UCReactionComponent::InitializeReactionRuntime()

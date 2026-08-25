@@ -111,6 +111,7 @@ public:
 	// Execution Entry
 	bool ApplyReactionDecision(const FReactionExecutionResult& InResult);
 	bool RequestInterruptActiveReaction(const FExecutionInterventionDirective& InDirective);
+	bool CancelActiveReactionForSystem();
 
 public:
 	// Execution Result Hooks

@@ -5,6 +5,7 @@
 #include "Type/CReactionDataTypes.h"
 #include "Type/CCombatSignalTargetTypes.h"
 #include "Type/CExecutionTypes.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "CReactionOrchestrationTypes.generated.h"
 
 // Enum
@@ -99,6 +100,7 @@ enum class EReactionIntentSource : uint8
 
 	CombatSignalTarget,
 	BalanceLifecycle,
+	ExecutionCollaboration,
 
 	Max,
 };
@@ -155,6 +157,16 @@ public:
 
 	UPROPERTY(Transient)
 	uint32 BalanceLifecycleSerial = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionReactionRequest
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FExecutionCollaborationContext CollaborationContext = FExecutionCollaborationContext();
 };
 
 // Result

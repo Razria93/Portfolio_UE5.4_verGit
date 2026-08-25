@@ -155,6 +155,24 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	return ProcessActionCandidate(incomingCandidate);
 }
 
+FActionRequestResult UCActionOrchestratorComponent::RequestExecutionAction(const FExecutionActionRequest& InIncomingRequest)
+{
+	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
+	const uint32 requestSerial = InIncomingRequest.CollaborationContext.SessionId.Serial;
+
+	if (!IsValid(ActionComp_Injected))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent, requestSerial);
+
+	if (!CanAcceptActionRequest(rejectReason))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, requestSerial);
+
+	FActionCandidate candidate;
+	if (!ResolveExecutionActionCandidate(InIncomingRequest, candidate, rejectReason))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, requestSerial);
+
+	return ProcessActionCandidate(candidate);
+}
+
 // Deferred Entry
 
 FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
@@ -356,6 +374,24 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	}
 
 	OutIncomingCandidate = incomingCandidate;
+	return true;
+}
+
+bool UCActionOrchestratorComponent::ResolveExecutionActionCandidate(const FExecutionActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const
+{
+	OutIncomingCandidate = FActionCandidate();
+	OutRejectReason = EActionRequestRejectReason::None;
+
+	const FExecutionCollaborationContext& context = InIncomingRequest.CollaborationContext;
+	if (!context.IsValidMinimal() || context.SessionId.SourceActor != OwnerCharacter_Injected)
+	{
+		OutRejectReason = EActionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	OutIncomingCandidate.ActionDataKey.ActionType = EActionType::Execution;
+	OutIncomingCandidate.ActionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
+	OutIncomingCandidate.ActionRequestSerial = context.SessionId.Serial;
 	return true;
 }
 

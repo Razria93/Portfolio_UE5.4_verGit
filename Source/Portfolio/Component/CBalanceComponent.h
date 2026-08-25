@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Type/CBalanceTypes.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "Type/CReactionTypes.h"
 #include "CBalanceComponent.generated.h"
 
@@ -46,6 +47,9 @@ private:
 	// Timer Runtime
 	FTimerHandle CollapseLoopTimerHandle;
 
+	// Execution Opportunity Runtime
+	FExecutionOpportunityReservation ExecutionOpportunityReservation;
+
 	// Result Deduplication Runtime
 	TMap<TWeakObjectPtr<class AActor>, uint64> LastAcceptedParryResultSerialByTarget;
 
@@ -75,6 +79,8 @@ public:
 
 	bool IsCollapsePoseActive() const;
 	bool IsCollapseLoopActive() const;
+	bool IsExecutionOpportunityAvailable() const;
+	bool IsExecutionOpportunityReservationCurrent(const FExecutionOpportunityReservation& InReservation) const;
 	bool IsBalanceLifecycleBlocking() const;
 	bool ShouldSuppressCombatTargetFacing() const;
 
@@ -93,6 +99,12 @@ public:
 	bool TryCommitCollapseReset(uint32 InBalanceLifecycleSerial);
 
 public:
+	// Execution Opportunity Reservation
+	bool TryReserveExecutionOpportunity(const FExecutionSessionId& InSessionId, FExecutionOpportunityReservation& OutReservation);
+	bool ReleaseExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
+	bool ConsumeExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
+
+public:
 	// Lifecycle Release
 	void AbortBalanceLifecycle(EBalanceAbortReason InReason);
 	void ShutdownBalanceRuntime();
@@ -105,10 +117,14 @@ private:
 
 private:
 	// Collapse Loop Timer
-	void StartCollapseLoopTimer();
+	void StartCollapseLoopTimer(float InDurationSeconds = -1.f);
 	void ClearCollapseLoopTimer();
 	void HandleCollapseLoopExpired();
 	void RequestCollapseOutFromLoopExpiry();
+	void RequestCollapseOutFromExecutionConsume();
+
+	// Execution Opportunity Runtime
+	void ClearExecutionOpportunityReservation();
 
 private:
 	// Packet Deduplication

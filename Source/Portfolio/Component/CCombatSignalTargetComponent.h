@@ -7,6 +7,7 @@
 #include "Type/CCombatDamageTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Type/CCombatSignalTargetTypes.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "CCombatSignalTargetComponent.generated.h"
 
 enum class EReactionNotifyCommand : uint8;
@@ -50,6 +51,9 @@ private:
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComp_Injected = nullptr;
+
 	// Runtime State
 	uint64 NextAcceptedResultSerial = 1;
 
@@ -81,6 +85,9 @@ public:
 	// Combat Result Pipeline - Entry
 	void RequestCombatResultTarget(const FCombatResultPacket& InCombatResultPacket);
 
+	// Execution Outcome - Entry
+	bool RequestExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket);
+
 private:
 	// Combat Result Pipeline - Validation
 	bool ValidateCombatResultTargetRequest(const FCombatResultPacket& InCombatResultPacket) const;
@@ -96,6 +103,9 @@ private:
 	// Combat Result Pipeline - Process / Handler
 	void ProcessCombatResultTarget(const FCombatResultPacket& InCombatResultPacket);
 	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
+
+	// Execution Outcome - Process / Handler
+	bool ProcessExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket);
 
 	// Balance / Collapse Lifecycle Event Handlers
 	void HandleBalanceLifecycleReactionRequested(const FBalanceLifecyclePacket& InBalanceLifecyclePacket);

@@ -77,6 +77,9 @@ private:
 	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Injected = nullptr;
 
 public:
@@ -118,6 +121,7 @@ public:
 	// Execution Entry
 	bool ApplyActionDecision(const FActionExecutionResult& InResult);
 	bool RequestInterruptActiveAction(const FExecutionInterventionDirective& InDirective);
+	bool CancelActiveActionForSystem();
 
 public:
 	// Execution Result Hooks

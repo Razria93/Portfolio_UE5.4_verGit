@@ -17,6 +17,7 @@ enum class EReactionType : uint8
 	BlockHit,
 	Parry,
 	Stagger,
+	Execution,
 
 	All,		// Wildcard
 	CollapseIn,

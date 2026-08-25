@@ -58,6 +58,7 @@ public:
 	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InIncomingRequest);
 	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest);
 	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InIncomingRequest);
+	FActionRequestResult RequestExecutionAction(const FExecutionActionRequest& InIncomingRequest);
 
 public:
 	// Deferred Entry
@@ -77,6 +78,7 @@ private:
 	// Candidate Resolve
 	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveExecutionActionCandidate(const FExecutionActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
 	// Request Side Effects

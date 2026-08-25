@@ -52,6 +52,16 @@ bool UCBalanceComponent::IsCollapseLoopActive() const
 	return BalanceLifecycleState == EBalanceLifecycleState::CollapseLoopActive;
 }
 
+bool UCBalanceComponent::IsExecutionOpportunityAvailable() const
+{
+	return IsCollapseLoopActive() && !ExecutionOpportunityReservation.IsValidMinimal();
+}
+
+bool UCBalanceComponent::IsExecutionOpportunityReservationCurrent(const FExecutionOpportunityReservation& InReservation) const
+{
+	return IsCollapseLoopActive() && ExecutionOpportunityReservation.Matches(InReservation);
+}
+
 bool UCBalanceComponent::IsBalanceLifecycleBlocking() const
 {
 	return BalanceLifecycleState != EBalanceLifecycleState::Accumulating;
@@ -206,6 +216,54 @@ bool UCBalanceComponent::TryCommitCollapseReset(const uint32 InBalanceLifecycleS
 	return true;
 }
 
+// Execution Opportunity Reservation
+
+bool UCBalanceComponent::TryReserveExecutionOpportunity(const FExecutionSessionId& InSessionId, FExecutionOpportunityReservation& OutReservation)
+{
+	OutReservation = FExecutionOpportunityReservation();
+	if (!InSessionId.IsValidMinimal() || !IsExecutionOpportunityAvailable()) return false;
+
+	FExecutionOpportunityReservation reservation;
+	reservation.SessionId = InSessionId;
+	reservation.BalanceLifecycleSerial = BalanceLifecycleSerial;
+	reservation.SuspendedLoopRemainingSeconds = GetCollapseLoopRemainingSeconds();
+
+	ClearCollapseLoopTimer();
+	ExecutionOpportunityReservation = reservation;
+	OutReservation = reservation;
+
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("ExecutionOpportunityReserved"));
+	return true;
+}
+
+bool UCBalanceComponent::ReleaseExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation)
+{
+	if (!ExecutionOpportunityReservation.Matches(InReservation)) return false;
+
+	const float resumeDuration = ExecutionOpportunityReservation.SuspendedLoopRemainingSeconds;
+	ClearExecutionOpportunityReservation();
+
+	if (IsCollapseLoopActive())
+	{
+		StartCollapseLoopTimer(resumeDuration);
+	}
+
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("ExecutionOpportunityReleased"));
+	return true;
+}
+
+bool UCBalanceComponent::ConsumeExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation)
+{
+	if (!ExecutionOpportunityReservation.Matches(InReservation)) return false;
+
+	ClearCollapseLoopTimer();
+	ClearExecutionOpportunityReservation();
+	RequestCollapseOutFromExecutionConsume();
+
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("ExecutionOpportunityConsumed"));
+	return true;
+}
+
 // Lifecycle Release
 
 void UCBalanceComponent::AbortBalanceLifecycle(const EBalanceAbortReason InReason)
@@ -220,6 +278,7 @@ void UCBalanceComponent::AbortBalanceLifecycle(const EBalanceAbortReason InReaso
 void UCBalanceComponent::ShutdownBalanceRuntime()
 {
 	ClearCollapseLoopTimer();
+	ClearExecutionOpportunityReservation();
 	CurrentBalanceCount = 0;
 	BalanceLifecycleState = EBalanceLifecycleState::Accumulating;
 	LastAcceptedParryResultSerialByTarget.Reset();
@@ -246,7 +305,7 @@ void UCBalanceComponent::SetBalanceLifecycleState(const EBalanceLifecycleState I
 
 // Collapse Loop Timer
 
-void UCBalanceComponent::StartCollapseLoopTimer()
+void UCBalanceComponent::StartCollapseLoopTimer(const float InDurationSeconds)
 {
 	ClearCollapseLoopTimer();
 
@@ -257,13 +316,14 @@ void UCBalanceComponent::StartCollapseLoopTimer()
 		return;
 	}
 
-	if (CollapseLoopDuration <= 0.f)
+	const float durationSeconds = InDurationSeconds >= 0.f ? InDurationSeconds : CollapseLoopDuration;
+	if (durationSeconds <= 0.f)
 	{
 		HandleCollapseLoopExpired();
 		return;
 	}
 
-	world->GetTimerManager().SetTimer(CollapseLoopTimerHandle, this, &UCBalanceComponent::HandleCollapseLoopExpired, CollapseLoopDuration, false);
+	world->GetTimerManager().SetTimer(CollapseLoopTimerHandle, this, &UCBalanceComponent::HandleCollapseLoopExpired, durationSeconds, false);
 	FBalanceDebug::RecordLifecycleEvent(this, TEXT("LoopTimerArmed"));
 }
 
@@ -296,9 +356,27 @@ void UCBalanceComponent::RequestCollapseOutFromLoopExpiry()
 	OnBalanceLifecycleReactionRequested.Broadcast(balanceLifecyclePacket);
 }
 
+void UCBalanceComponent::RequestCollapseOutFromExecutionConsume()
+{
+	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseLoopActive) return;
+
+	SetBalanceLifecycleState(EBalanceLifecycleState::CollapseOutPending);
+
+	FBalanceLifecyclePacket balanceLifecyclePacket;
+	balanceLifecyclePacket.ReactionType = EReactionType::CollapseOut;
+	balanceLifecyclePacket.BalanceLifecycleSerial = BalanceLifecycleSerial;
+	OnBalanceLifecycleReactionRequested.Broadcast(balanceLifecyclePacket);
+}
+
+void UCBalanceComponent::ClearExecutionOpportunityReservation()
+{
+	ExecutionOpportunityReservation = FExecutionOpportunityReservation();
+}
+
 void UCBalanceComponent::ResetBalanceRuntime()
 {
 	ClearCollapseLoopTimer();
+	ClearExecutionOpportunityReservation();
 	CurrentBalanceCount = 0;
 	SetBalanceLifecycleState(EBalanceLifecycleState::Accumulating);
 }

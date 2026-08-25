@@ -44,6 +44,7 @@ public:
 	// Request Entry
 	FReactionRequestResult RequestDamageReaction(const FDamageReactionRequest& InIncomingRequest);
 	FReactionRequestResult RequestBalanceLifecycleReaction(const FBalanceLifecycleReactionRequest& InIncomingRequest);
+	FReactionRequestResult RequestExecutionReaction(const FExecutionReactionRequest& InIncomingRequest);
 
 private:
 	// Request Validation
@@ -56,6 +57,7 @@ private:
 
 	// Candidate Resolve - Balance Lifecycle
 	bool ResolveBalanceLifecycleReactionCandidate(const FBalanceLifecycleReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
+	bool ResolveExecutionReactionCandidate(const FExecutionReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
 
 private:
 	// Orchestration Pipeline

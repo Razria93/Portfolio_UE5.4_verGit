@@ -88,6 +88,23 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestBalanceLifecycleR
 	return ProcessReactionCandidate(candidate);
 }
 
+FReactionRequestResult UCReactionOrchestratorComponent::RequestExecutionReaction(const FExecutionReactionRequest& InIncomingRequest)
+{
+	EReactionRequestRejectReason rejectReason = EReactionRequestRejectReason::None;
+
+	if (!IsValid(ReactionComp_Injected))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::InvalidComponent);
+
+	if (!CanAcceptReactionRequest(rejectReason))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
+
+	FReactionCandidate candidate;
+	if (!ResolveExecutionReactionCandidate(InIncomingRequest, candidate, rejectReason))
+		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
+
+	return ProcessReactionCandidate(candidate);
+}
+
 // Request Validation
 
 bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const
@@ -181,6 +198,24 @@ bool UCReactionOrchestratorComponent::ResolveBalanceLifecycleReactionCandidate(c
 	OutIncomingCandidate.ReactionDataKey.ReactionType = InIncomingRequest.ReactionType;
 	OutIncomingCandidate.ReactionDataKey.ReactionIndex = INDEX_NONE;
 	OutIncomingCandidate.BalanceLifecycleSerial = InIncomingRequest.BalanceLifecycleSerial;
+	return true;
+}
+
+bool UCReactionOrchestratorComponent::ResolveExecutionReactionCandidate(const FExecutionReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const
+{
+	OutIncomingCandidate = FReactionCandidate();
+	OutRejectReason = EReactionRequestRejectReason::None;
+
+	const FExecutionCollaborationContext& context = InIncomingRequest.CollaborationContext;
+	if (!context.IsValidMinimal() || context.TargetActor != OwnerCharacter_Injected)
+	{
+		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	OutIncomingCandidate.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+	OutIncomingCandidate.ReactionDataKey.ReactionType = EReactionType::Execution;
+	OutIncomingCandidate.ReactionDataKey.ReactionIndex = INDEX_NONE;
 	return true;
 }
 

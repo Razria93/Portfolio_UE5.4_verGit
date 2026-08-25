@@ -8,6 +8,7 @@
 #include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
 #include "Type/CReactionTypes.h"
@@ -40,6 +41,7 @@ void UCCombatSignalTargetComponent::InitializeReferences(const FCharacterCompone
 	HitFeedbackComp_Injected = InReferences.HitFeedbackComponent;
 	BalanceComp_Injected = InReferences.BalanceComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
+	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
 
 	if (IsValid(BalanceComp_Injected))
 	{
@@ -121,6 +123,13 @@ bool UCCombatSignalTargetComponent::RequestCombatSignalTarget(const FCombatSigna
 void UCCombatSignalTargetComponent::RequestCombatResultTarget(const FCombatResultPacket& InCombatResultPacket)
 {
 	ProcessCombatResultTarget(InCombatResultPacket);
+}
+
+// Execution Outcome - Entry
+
+bool UCCombatSignalTargetComponent::RequestExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket)
+{
+	return ProcessExecutionOutcomeTarget(InExecutionOutcomePacket);
 }
 
 // Combat Result Pipeline - Validation
@@ -277,6 +286,19 @@ void UCCombatSignalTargetComponent::HandleParryCombatResult(const FCombatResultP
 	balanceLifecyclePacket.BalanceLifecycleSerial = balanceAdvanceResult.BalanceLifecycleSerial;
 
 	DispatchBalanceLifecycleReaction(balanceLifecyclePacket);
+}
+
+// Execution Outcome - Process / Handler
+
+bool UCCombatSignalTargetComponent::ProcessExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket)
+{
+	const FExecutionCollaborationContext& context = InExecutionOutcomePacket.CollaborationContext;
+	if (!InExecutionOutcomePacket.IsValidMinimal() || context.TargetActor != OwnerCharacter_Injected) return false;
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+	if (context.OutcomePolicy == EExecutionOutcomePolicy::Lethal && !HealthComp_Injected->CanKill()) return false;
+	if (!IsValid(ExecutionCollaborationComp_Injected) || !ExecutionCollaborationComp_Injected->CommitExecutionOutcome(InExecutionOutcomePacket)) return false;
+
+	return context.OutcomePolicy != EExecutionOutcomePolicy::Lethal || HealthComp_Injected->TryKill();
 }
 
 // Balance / Collapse Lifecycle Event Handlers
