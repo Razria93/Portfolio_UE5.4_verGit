@@ -203,6 +203,7 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
 	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
+	InputComponent->BindAction("Execution", EInputEvent::IE_Pressed, this, &ACPlayerController::PressExecution);
 
 	InputComponent->BindAction("TargetLock", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetLock);
 	InputComponent->BindAction("TargetSwitchLeft", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetSwitchLeft);
@@ -346,6 +347,14 @@ void ACPlayerController::PressDodge()
 	if (!IsValid(player)) return;
 
 	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
+}
+
+void ACPlayerController::PressExecution()
+{
+	ACPlayer* player = ResolveControlledPlayer(this);
+	if (!IsValid(player)) return;
+
+	player->RequestExecutionForCurrentTarget();
 }
 
 // ===== Player Target Selection =====

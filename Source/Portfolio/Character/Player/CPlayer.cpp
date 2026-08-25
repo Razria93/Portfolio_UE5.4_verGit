@@ -10,6 +10,7 @@
 #include "Component/CDefenseComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatTargetComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
@@ -68,6 +69,9 @@ ACPlayer::ACPlayer()
 
 	CombatTargetComponent = CreateDefaultSubobject<UCCombatTargetComponent>(TEXT("CombatTarget"));
 	check(CombatTargetComponent);
+
+	ExecutionCollaborationComponent = CreateDefaultSubobject<UCExecutionCollaborationComponent>(TEXT("ExecutionCollaboration"));
+	check(ExecutionCollaborationComponent);
 
 	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
 	check(CombatSignalSourceComponent);
@@ -169,6 +173,7 @@ void ACPlayer::RecoverReferences()
 	FComponentReferenceHelper::RecoverIfInvalid(this, DefenseComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, ObservableOverlayComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatTargetComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ExecutionCollaborationComponent);
 
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalSourceComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalTargetComponent);
@@ -195,6 +200,7 @@ void ACPlayer::BuildReferences(FCharacterComponentReferences& OutReferences)
 	OutReferences.DefenseComponent = DefenseComponent;
 	OutReferences.ObservableOverlayComponent = ObservableOverlayComponent;
 	OutReferences.CombatTargetComponent = CombatTargetComponent;
+	OutReferences.ExecutionCollaborationComponent = ExecutionCollaborationComponent;
 
 	OutReferences.CombatSignalSourceComponent = CombatSignalSourceComponent;
 	OutReferences.CombatSignalTargetComponent = CombatSignalTargetComponent;
@@ -218,6 +224,7 @@ void ACPlayer::InjectReferences(const FCharacterComponentReferences& InReference
 	FComponentReferenceHelper::InjectIfValid(HealthComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(DefenseComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(ObservableOverlayComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ExecutionCollaborationComponent, InReferences);
 
 	FComponentReferenceHelper::InjectIfValid(CombatSignalSourceComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(CombatSignalTargetComponent, InReferences);
@@ -389,4 +396,10 @@ FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatAc
 	request.IntentEvent = InIntentEvent;
 
 	return ActionOrchestratorComponent->RequestCombatAction(request);
+}
+
+bool ACPlayer::RequestExecutionForCurrentTarget()
+{
+	return IsValid(ExecutionCollaborationComponent)
+		&& ExecutionCollaborationComponent->RequestExecutionForCurrentTarget();
 }

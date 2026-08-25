@@ -133,6 +133,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
 	class UCCombatTargetComponent* CombatTargetComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Execution")
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
 	class UCEnemyCombatTargetFacingComponent* EnemyCombatTargetFacingComponent;
 
@@ -240,6 +243,7 @@ public:
 	FORCEINLINE UCBalanceComponent* GetBalanceComp() const { return BalanceComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCCombatTargetComponent* GetCombatTargetComp() const { return CombatTargetComponent; }
+	FORCEINLINE UCExecutionCollaborationComponent* GetExecutionCollaborationComp() const { return ExecutionCollaborationComponent; }
 	FORCEINLINE UCEnemyCombatTargetFacingComponent* GetEnemyCombatTargetFacingComp() const { return EnemyCombatTargetFacingComponent; }
 	FORCEINLINE UCEnemyCombatParticipationComponent* GetEnemyCombatParticipationComp() const { return EnemyCombatParticipationComponent; }
 	FORCEINLINE UCEnemyHitReactiveComponent* GetEnemyHitReactiveComp() const { return EnemyHitReactiveComponent; }

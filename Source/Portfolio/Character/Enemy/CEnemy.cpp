@@ -12,6 +12,7 @@
 #include "Component/CBalanceComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatTargetComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CEnemyCombatTargetFacingComponent.h"
 #include "Component/CEnemyCombatParticipationComponent.h"
 #include "Component/CEnemyHitReactiveComponent.h"
@@ -102,6 +103,9 @@ ACEnemy::ACEnemy()
 
 	CombatTargetComponent = CreateDefaultSubobject<UCCombatTargetComponent>(TEXT("CombatTarget"));
 	check(CombatTargetComponent);
+
+	ExecutionCollaborationComponent = CreateDefaultSubobject<UCExecutionCollaborationComponent>(TEXT("ExecutionCollaboration"));
+	check(ExecutionCollaborationComponent);
 
 	EnemyCombatTargetFacingComponent = CreateDefaultSubobject<UCEnemyCombatTargetFacingComponent>(TEXT("EnemyCombatTargetFacing"));
 	check(EnemyCombatTargetFacingComponent);
@@ -267,6 +271,7 @@ void ACEnemy::RecoverReferences()
 	FComponentReferenceHelper::RecoverIfInvalid(this, BalanceComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, ObservableOverlayComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatTargetComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ExecutionCollaborationComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, EnemyCombatTargetFacingComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, EnemyCombatParticipationComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, EnemyHitReactiveComponent);
@@ -297,6 +302,7 @@ void ACEnemy::BuildReferences(FCharacterComponentReferences& OutReferences)
 	OutReferences.BalanceComponent = BalanceComponent;
 	OutReferences.ObservableOverlayComponent = ObservableOverlayComponent;
 	OutReferences.CombatTargetComponent = CombatTargetComponent;
+	OutReferences.ExecutionCollaborationComponent = ExecutionCollaborationComponent;
 	OutReferences.EnemyCombatTargetFacingComponent = EnemyCombatTargetFacingComponent;
 	OutReferences.EnemyCombatParticipationComponent = EnemyCombatParticipationComponent;
 	OutReferences.EnemyHitReactiveComponent = EnemyHitReactiveComponent;
@@ -324,6 +330,7 @@ void ACEnemy::InjectReferences(const FCharacterComponentReferences& InReferences
 	FComponentReferenceHelper::InjectIfValid(HealthComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(BalanceComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(ObservableOverlayComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ExecutionCollaborationComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(EnemyCombatTargetFacingComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(EnemyCombatParticipationComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(EnemyHitReactiveComponent, InReferences);
