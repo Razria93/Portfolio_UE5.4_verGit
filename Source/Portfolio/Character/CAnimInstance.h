@@ -96,26 +96,19 @@ private:
 
 private:
 	// Animation Parameter Lifecycle
-	void ResetAnimationParameters();
 	void RefreshMovementParameters();
 	void RefreshStateParameters();
-
-	// Runtime LOD Animation Refresh State
-	void ResetRuntimeLODAnimationRefreshState();
-
-	// Runtime LOD Animation Refresh Policy Query
-	bool ShouldThrottleAnimationRefreshForRuntimeLOD() const;
-	float GetRuntimeLODAnimationRefreshInterval() const;
-
-	// Animation Refresh Gate Evaluation
-	bool ShouldRefreshAnimationParameters(float DeltaSeconds);
+	void ResetAnimationParameters();
 
 private:
-	// Runtime LOD Animation Refresh Audit
-	bool IsEnemyAnimationProfilingTarget() const;
-	bool ShouldAuditAnimationRefreshForProfiling() const;
+	// Runtime LOD Animation Refresh Gate
+	bool TryConsumeAnimationRefreshGate(float DeltaSeconds);
+	void ResetAnimationRefreshThrottle();
 
-	// Record
+private:
+	// Animation Refresh Audit
+	bool ShouldRecordAnimationRefreshAudit() const;
+
 	void RecordAnimationRefreshAttempt() const;
 	void RecordAnimationRefreshExecuted() const;
 	void RecordAnimationRefreshSkipped() const;

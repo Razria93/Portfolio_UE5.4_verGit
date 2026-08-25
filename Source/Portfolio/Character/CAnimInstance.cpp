@@ -41,7 +41,7 @@ void UCAnimInstance::NativeInitializeAnimation()
 	UnbindComponentEvents();
 	ResetAnimationParameters();
 	ClearCachedComponentReferences();
-	ResetRuntimeLODAnimationRefreshState();
+	ResetAnimationRefreshThrottle();
 
 	if (!CacheOwnerAndComponentReferences()) return;
 
@@ -56,7 +56,7 @@ void UCAnimInstance::NativeUninitializeAnimation()
 	UnbindComponentEvents();
 	ResetAnimationParameters();
 	ClearCachedComponentReferences();
-	ResetRuntimeLODAnimationRefreshState();
+	ResetAnimationRefreshThrottle();
 
 	Super::NativeUninitializeAnimation();
 }
@@ -66,7 +66,7 @@ void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
 	if (!IsValid(OwnerCharacter_Cached)) return;
-	if (!ShouldRefreshAnimationParameters(DeltaSeconds)) return;
+	if (!TryConsumeAnimationRefreshGate(DeltaSeconds)) return;
 
 	RefreshMovementParameters();
 	RefreshStateParameters();
@@ -141,20 +141,6 @@ void UCAnimInstance::UnbindComponentEvents()
 
 // Animation Parameter Lifecycle
 
-void UCAnimInstance::ResetAnimationParameters()
-{
-	Speed = 0.f;
-	Direction = 0.f;
-	bIsInAir = false;
-	LocomotionPresentationMode = ELocomotionPresentationMode::Forward;
-
-	CurrentWeaponType = EWeaponType::Max;
-	bIsDeadPose = false;
-	bIsCollapsePose = false;
-	CurrentExecutionState = EExecutionState::Max;
-	bIsGuardingPose = false;
-}
-
 void UCAnimInstance::RefreshMovementParameters()
 {
 	if (IsValid(MovementComp_Cached))
@@ -183,32 +169,28 @@ void UCAnimInstance::RefreshStateParameters()
 	CurrentExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Max;
 }
 
-// Runtime LOD Animation Refresh State
-
-void UCAnimInstance::ResetRuntimeLODAnimationRefreshState()
+void UCAnimInstance::ResetAnimationParameters()
 {
-	AnimationRefreshThrottleElapsedSeconds = 0.f;
+	Speed = 0.f;
+	Direction = 0.f;
+	bIsInAir = false;
+	LocomotionPresentationMode = ELocomotionPresentationMode::Forward;
+
+	CurrentWeaponType = EWeaponType::Max;
+	bIsDeadPose = false;
+	bIsCollapsePose = false;
+	CurrentExecutionState = EExecutionState::Max;
+	bIsGuardingPose = false;
 }
 
-// Runtime LOD Animation Refresh Policy Query
+// Runtime LOD Animation Refresh Gate
 
-bool UCAnimInstance::ShouldThrottleAnimationRefreshForRuntimeLOD() const
-{
-	return FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(OwnerCharacter_Cached) > 0;
-}
-
-float UCAnimInstance::GetRuntimeLODAnimationRefreshInterval() const
-{
-	return FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval();
-}
-
-// Animation Refresh Gate Evaluation
-
-bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
+bool UCAnimInstance::TryConsumeAnimationRefreshGate(float DeltaSeconds)
 {
 	RecordAnimationRefreshAttempt();
 
-	if (!ShouldThrottleAnimationRefreshForRuntimeLOD())
+	const int32 animationMode = FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(OwnerCharacter_Cached);
+	if (animationMode <= 0)
 	{
 		AnimationRefreshThrottleElapsedSeconds = 0.f;
 		RecordAnimationRefreshExecuted();
@@ -217,7 +199,7 @@ bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 
 	AnimationRefreshThrottleElapsedSeconds += DeltaSeconds;
 
-	const float refreshInterval = GetRuntimeLODAnimationRefreshInterval();
+	const float refreshInterval = FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval();
 	if (AnimationRefreshThrottleElapsedSeconds < refreshInterval)
 	{
 		RecordAnimationRefreshSkipped();
@@ -229,35 +211,36 @@ bool UCAnimInstance::ShouldRefreshAnimationParameters(float DeltaSeconds)
 	return true;
 }
 
-// Runtime LOD Animation Refresh Audit
-
-bool UCAnimInstance::IsEnemyAnimationProfilingTarget() const
+void UCAnimInstance::ResetAnimationRefreshThrottle()
 {
-	return FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(OwnerCharacter_Cached);
+	AnimationRefreshThrottleElapsedSeconds = 0.f;
 }
 
-bool UCAnimInstance::ShouldAuditAnimationRefreshForProfiling() const
+// Animation Refresh Audit
+
+bool UCAnimInstance::ShouldRecordAnimationRefreshAudit() const
 {
-	return IsEnemyAnimationProfilingTarget() && FAIAnimationProfiling::ShouldAuditAnimationRefresh();
+	return FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(OwnerCharacter_Cached)
+		&& FAIAnimationProfiling::ShouldAuditAnimationRefresh();
 }
 
 void UCAnimInstance::RecordAnimationRefreshAttempt() const
 {
-	if (!ShouldAuditAnimationRefreshForProfiling()) return;
+	if (!ShouldRecordAnimationRefreshAudit()) return;
 
 	FAIAnimationProfiling::RecordAnimationRefreshAttempt();
 }
 
 void UCAnimInstance::RecordAnimationRefreshExecuted() const
 {
-	if (!ShouldAuditAnimationRefreshForProfiling()) return;
+	if (!ShouldRecordAnimationRefreshAudit()) return;
 
 	FAIAnimationProfiling::RecordAnimationRefreshExecuted();
 }
 
 void UCAnimInstance::RecordAnimationRefreshSkipped() const
 {
-	if (!ShouldAuditAnimationRefreshForProfiling()) return;
+	if (!ShouldRecordAnimationRefreshAudit()) return;
 
 	FAIAnimationProfiling::RecordAnimationRefreshSkipped();
 }
