@@ -12,6 +12,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+// Construction
+
 UCMovementComponent::UCMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -35,26 +37,6 @@ void UCMovementComponent::InitializeReferences(const FCharacterComponentReferenc
 
 	ValidateRequiredComponentReferences();
 	ApplyMovementRotationMode(CurrentMovementRotationMode);
-}
-
-bool UCMovementComponent::ValidateRequiredComponentReferences() const
-{
-	bool bValid = true;
-
-	const FRequiredReference requiredReferences[] =
-	{
-		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
-		{ CharacterMovementComp_Injected, TEXT("UCharacterMovementComponent") },
-		{ StateComp_Injected, TEXT("UCStateComponent") },
-		{ HealthComp_Injected, TEXT("UCHealthComponent") },
-	};
-
-	for (const FRequiredReference& reference : requiredReferences)
-	{
-		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
-	}
-
-	return bValid;
 }
 
 // Lifecycle
@@ -90,131 +72,15 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	bIsFalling = CharacterMovementComp_Injected->IsFalling();
 }
 
-// Runtime LOD
+// Query: Movement Arbitration
 
-void UCMovementComponent::UpdateRuntimeLODMovementMode()
-{
-	if (!FAIMovementRuntimeLODPolicy::IsEnemyMovementRuntimeLODTarget(OwnerCharacter_Injected)) return;
-
-	const int32 requestedMovementMode = FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(OwnerCharacter_Injected);
-
-	EnsureRuntimeLODMovementOriginalStateCached();
-
-	if (RuntimeLODMovementState.AppliedMode != requestedMovementMode)
-	{
-		const int32 previousMovementMode = RuntimeLODMovementState.AppliedMode;
-		ApplyRuntimeLODMovementMode(requestedMovementMode);
-		RuntimeLODMovementState.AppliedMode = requestedMovementMode;
-		FMovementDebug::RecordRuntimeLODMovementModeAppliedForAudit(OwnerCharacter_Injected, this, previousMovementMode, requestedMovementMode, IsComponentTickEnabled(), bCanMove, bRuntimeLODMovementIntentBlocked);
-	}
-
-	if (FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(requestedMovementMode))
-	{
-		BlockRuntimeLODMovementIntent();
-	}
-}
-
-void UCMovementComponent::EnsureRuntimeLODMovementOriginalStateCached()
-{
-	if (RuntimeLODMovementState.bOriginalStateCached) return;
-
-	RuntimeLODMovementState.bOriginalMovementComponentTickEnabled = IsComponentTickEnabled();
-	RuntimeLODMovementState.bOriginalStateCached = true;
-}
-
-void UCMovementComponent::ApplyRuntimeLODMovementMode(int32 InMovementMode)
-{
-	if (FAIMovementRuntimeLODPolicy::ShouldDisableMovementStateRefresh(InMovementMode))
-	{
-		ApplyRuntimeLODMovementStateRefreshDisabled();
-		return;
-	}
-
-	if (FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(InMovementMode))
-	{
-		ApplyRuntimeLODMovementIntentBlocked();
-		return;
-	}
-
-	ApplyRuntimeLODMovementDefault();
-}
-
-void UCMovementComponent::ApplyRuntimeLODMovementDefault()
-{
-	RestoreRuntimeLODMovementStateRefresh();
-	AllowRuntimeLODMovementIntent();
-}
-
-void UCMovementComponent::ApplyRuntimeLODMovementStateRefreshDisabled()
-{
-	AllowRuntimeLODMovementIntent();
-	DisableRuntimeLODMovementStateRefresh();
-}
-
-void UCMovementComponent::ApplyRuntimeLODMovementIntentBlocked()
-{
-	RestoreRuntimeLODMovementStateRefresh();
-	BlockRuntimeLODMovementIntent();
-	StopActiveAIMovement();
-}
-
-void UCMovementComponent::RestoreRuntimeLODMovementStateRefresh()
-{
-	SetComponentTickEnabled(RuntimeLODMovementState.bOriginalMovementComponentTickEnabled);
-}
-
-void UCMovementComponent::DisableRuntimeLODMovementStateRefresh()
-{
-	SetComponentTickEnabled(false);
-}
-
-// Movement State
-
-void UCMovementComponent::AllowRuntimeLODMovementIntent()
-{
-	if (bRuntimeLODMovementIntentBlocked)
-	{
-		FMovementDebug::RecordRuntimeLODMovementIntentAllowedForAudit(OwnerCharacter_Injected, this, TEXT("RuntimeLODMode"));
-	}
-
-	ClearMovementIntentBlockForRuntimeLOD();
-	SetMove();
-}
-
-void UCMovementComponent::BlockRuntimeLODMovementIntent()
-{
-	if (!bRuntimeLODMovementIntentBlocked)
-	{
-		FMovementDebug::RecordRuntimeLODMovementIntentBlockedForAudit(OwnerCharacter_Injected, this, TEXT("RuntimeLODMode"));
-	}
-
-	BlockMovementIntentForRuntimeLOD();
-}
-
-void UCMovementComponent::StopActiveAIMovement()
-{
-	AAIController* aiController = IsValid(OwnerCharacter_Injected) ? Cast<AAIController>(OwnerCharacter_Injected->GetController()) : nullptr;
-	if (!IsValid(aiController)) return;
-
-	aiController->StopMovement();
-}
-
-void UCMovementComponent::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InNewState)
-{
-	if (InPreviousState != EBalanceLifecycleState::Accumulating) return;
-	if (InNewState == EBalanceLifecycleState::Accumulating) return;
-
-	StopActiveAIMovement();
-}
-
-// Movement Arbitration
-
-// Final movement gate for axis input accepted by the orchestrator.
-bool UCMovementComponent::CanAcceptMoveInput() const
+// Final movement gate shared by player input and AI movement intent.
+bool UCMovementComponent::CanAcceptMovementIntent() const
 {
 	if (!IsValid(OwnerCharacter_Injected)) return false;
 	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
-	if (!bCanMove) return false;
+	if (!bIsMovementEnabled) return false;
+	if (bRuntimeLODMovementIntentBlocked) return false;
 	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return false;
 
 	if (IsValid(StateComp_Injected))
@@ -227,20 +93,16 @@ bool UCMovementComponent::CanAcceptMoveInput() const
 	return true;
 }
 
-void UCMovementComponent::BlockMovementIntentForRuntimeLOD()
+// Gameplay Movement Permission
+
+void UCMovementComponent::SetMovementEnabled(const bool bEnabled)
 {
-	bRuntimeLODMovementIntentBlocked = true;
-	bCanMove = false;
+	bIsMovementEnabled = bEnabled;
 }
 
-void UCMovementComponent::ClearMovementIntentBlockForRuntimeLOD()
-{
-	bRuntimeLODMovementIntentBlocked = false;
-}
+// Movement Input Handling
 
-// Movement Input
-
-void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
+void UCMovementComponent::HandleMoveInput(const FVector2D& InAxis2D)
 {
 	EExecutionState executionState = EExecutionState::Max;
 	if (IsValid(StateComp_Injected))
@@ -248,7 +110,7 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 		executionState = StateComp_Injected->GetCurrentExecutionState();
 	}
 
-	if (!CanAcceptMoveInput())
+	if (!CanAcceptMovementIntent())
 	{
 		const TCHAR* reason = TEXT("Rejected");
 		if (!IsValid(OwnerCharacter_Injected))
@@ -259,34 +121,34 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 		{
 			reason = TEXT("DeadState");
 		}
+		else if (!bIsMovementEnabled)
+		{
+			reason = TEXT("MovementDisabled");
+		}
 		else if (bRuntimeLODMovementIntentBlocked)
 		{
 			reason = TEXT("RuntimeLODIntentBlocked");
 		}
-	else if (!bCanMove)
+		else if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking())
 		{
-		reason = TEXT("CannotMove");
-	}
-	else if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking())
-	{
-		reason = TEXT("BalanceLifecycleBlocking");
-	}
+			reason = TEXT("BalanceLifecycleBlocking");
+		}
 		else if (executionState == EExecutionState::Reaction)
 		{
 			reason = TEXT("ReactionState");
 		}
 
-		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, reason, executionState, bCanMove, bRuntimeLODMovementIntentBlocked);
+		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, reason, executionState, bIsMovementEnabled, bRuntimeLODMovementIntentBlocked);
 		return;
 	}
 	if (InAxis2D.IsNearlyZero())
 	{
-		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, TEXT("ZeroAxis"), executionState, bCanMove, bRuntimeLODMovementIntentBlocked);
+		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, TEXT("ZeroAxis"), executionState, bIsMovementEnabled, bRuntimeLODMovementIntentBlocked);
 		return;
 	}
 	if (!IsValid(OwnerCharacter_Injected))
 	{
-		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, TEXT("InvalidOwner"), executionState, bCanMove, bRuntimeLODMovementIntentBlocked);
+		FMovementDebug::RecordMovementInputRejectedForAudit(OwnerCharacter_Injected, this, InAxis2D, TEXT("InvalidOwner"), executionState, bIsMovementEnabled, bRuntimeLODMovementIntentBlocked);
 		return;
 	}
 
@@ -301,33 +163,33 @@ void UCMovementComponent::OnMove(const FVector2D& InAxis2D)
 	FMovementDebug::RecordMovementInputAcceptedForAudit(OwnerCharacter_Injected, this, InAxis2D, CurrentMovementGait);
 }
 
-void UCMovementComponent::OnWalk()
+void UCMovementComponent::HandleWalkInput()
 {
-	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
+	if (!CanAcceptMovementIntent()) return;
 	SetMovementGait(EMovementGait::Walk);
 }
 
-void UCMovementComponent::OnRun()
+void UCMovementComponent::HandleRunInput()
 {
-	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
+	if (!CanAcceptMovementIntent()) return;
 	SetMovementGait(EMovementGait::Run);
 }
 
-void UCMovementComponent::OnSprint()
+void UCMovementComponent::HandleSprintInput()
 {
-	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
+	if (!CanAcceptMovementIntent()) return;
 	SetMovementGait(EMovementGait::Sprint);
 }
 
-void UCMovementComponent::OnJump()
+void UCMovementComponent::HandleJumpInput()
 {
-	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return;
+	if (!CanAcceptMovementIntent()) return;
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
 	OwnerCharacter_Injected->Jump();
 }
 
-void UCMovementComponent::OnStopJump()
+void UCMovementComponent::HandleJumpInputReleased()
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
@@ -340,7 +202,7 @@ void UCMovementComponent::ApplyMovementGaitOverride(EMovementGait InGait)
 {
 	if (!bHasMovementGaitOverride)
 	{
-		CachedMovementGait_BeforeOverride = CurrentMovementGait;
+		CachedMovementGaitBeforeOverride = CurrentMovementGait;
 		bHasMovementGaitOverride = true;
 	}
 
@@ -352,7 +214,7 @@ void UCMovementComponent::ClearMovementGaitOverride()
 	if (!bHasMovementGaitOverride) return;
 
 	bHasMovementGaitOverride = false;
-	ApplyMovementGait(CachedMovementGait_BeforeOverride);
+	ApplyMovementGait(CachedMovementGaitBeforeOverride);
 }
 
 void UCMovementComponent::SetMovementRotationMode(EMovementRotationMode InRotationMode)
@@ -364,12 +226,100 @@ void UCMovementComponent::SetMovementRotationMode(EMovementRotationMode InRotati
 	ApplyMovementRotationMode(CurrentMovementRotationMode);
 }
 
+// Component Reference Validation
+
+bool UCMovementComponent::ValidateRequiredComponentReferences() const
+{
+	bool bValid = true;
+
+	const FRequiredReference requiredReferences[] =
+	{
+		{ OwnerCharacter_Injected, TEXT("ACharacter Owner") },
+		{ CharacterMovementComp_Injected, TEXT("UCharacterMovementComponent") },
+		{ StateComp_Injected, TEXT("UCStateComponent") },
+		{ HealthComp_Injected, TEXT("UCHealthComponent") },
+	};
+
+	for (const FRequiredReference& reference : requiredReferences)
+	{
+		bValid &= FReferenceValidation::EnsureRequiredReference(reference.Object, reference.Label, OwnerCharacter_Injected, this);
+	}
+
+	return bValid;
+}
+
+// Runtime LOD Update
+
+void UCMovementComponent::UpdateRuntimeLODMovementMode()
+{
+	if (!FAIMovementRuntimeLODPolicy::IsEnemyMovementRuntimeLODTarget(OwnerCharacter_Injected)) return;
+
+	const int32 requestedMovementMode = FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(OwnerCharacter_Injected);
+	if (RuntimeLODMovementState.AppliedMode == requestedMovementMode) return;
+
+	const int32 previousMovementMode = RuntimeLODMovementState.AppliedMode;
+
+	ApplyRuntimeLODMovementMode(requestedMovementMode);
+	RuntimeLODMovementState.AppliedMode = requestedMovementMode;
+
+	FMovementDebug::RecordRuntimeLODMovementModeAppliedForAudit(OwnerCharacter_Injected, this, previousMovementMode, requestedMovementMode, bIsMovementEnabled, bRuntimeLODMovementIntentBlocked);
+}
+
+void UCMovementComponent::ApplyRuntimeLODMovementMode(const int32 InMovementMode)
+{
+	const bool bShouldBlockMovementIntent = FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(InMovementMode);
+	const bool bWasMovementIntentBlocked = bRuntimeLODMovementIntentBlocked;
+
+	SetRuntimeLODMovementIntentBlocked(bShouldBlockMovementIntent);
+
+	if (!bWasMovementIntentBlocked && bShouldBlockMovementIntent)
+	{
+		StopActiveAIMovement();
+	}
+}
+
+void UCMovementComponent::SetRuntimeLODMovementIntentBlocked(const bool bBlocked)
+{
+	if (bRuntimeLODMovementIntentBlocked == bBlocked) return;
+
+	bRuntimeLODMovementIntentBlocked = bBlocked;
+
+	if (bBlocked)
+	{
+		FMovementDebug::RecordRuntimeLODMovementIntentBlockedForAudit(OwnerCharacter_Injected, this, TEXT("RuntimeLODMode"));
+	}
+	else
+	{
+		FMovementDebug::RecordRuntimeLODMovementIntentAllowedForAudit(OwnerCharacter_Injected, this, TEXT("RuntimeLODMode"));
+	}
+}
+
+void UCMovementComponent::StopActiveAIMovement()
+{
+	AAIController* aiController = IsValid(OwnerCharacter_Injected) ? Cast<AAIController>(OwnerCharacter_Injected->GetController()) : nullptr;
+	if (!IsValid(aiController)) return;
+
+	aiController->StopMovement();
+}
+
+// Balance Lifecycle Event
+
+void UCMovementComponent::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InNewState)
+{
+	if (InPreviousState != EBalanceLifecycleState::Accumulating) return;
+	if (InNewState == EBalanceLifecycleState::Accumulating) return;
+
+	StopActiveAIMovement();
+}
+
+// Gait Implementation
+
 void UCMovementComponent::SetMovementGait(EMovementGait InNewMovementGait)
 {
 	if (bHasMovementGaitOverride)
 	{
 		// Keep override speed active, but remember the base gait to restore later.
-		CachedMovementGait_BeforeOverride = InNewMovementGait;
+		CachedMovementGaitBeforeOverride = InNewMovementGait;
 		return;
 	}
 
@@ -402,6 +352,8 @@ void UCMovementComponent::ApplyMovementGait(EMovementGait InNewMovementGait)
 	FMovementDebug::RecordMovementGaitAppliedForAudit(OwnerCharacter_Injected, this, InNewMovementGait, *speed);
 }
 
+// Rotation Implementation
+
 void UCMovementComponent::ApplyMovementRotationMode(EMovementRotationMode InRotationMode)
 {
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
@@ -431,7 +383,7 @@ void UCMovementComponent::ApplyMovementRotationMode(EMovementRotationMode InRota
 	}
 }
 
-// Runtime State
+// Runtime State Refresh
 
 void UCMovementComponent::CalculateSpeed()
 {

@@ -206,7 +206,7 @@ Source/Portfolio/AI/RuntimeLOD/CAIStateRuntimeLODPolicy.cpp
 -> State policy mode 0 / 1
 
 Source/Portfolio/AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.cpp
--> Movement mode 0 / 1 / 2
+-> Movement mode 0 (Default) / 1 (BlockMovementIntent)
 
 Source/Portfolio/AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.cpp
 -> Animation mode 0 / 1
@@ -953,7 +953,7 @@ RuntimeLOD mode CVar:
 
 ```text
 Source/Portfolio/AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.cpp
--> movement mode 0 / 1 / 2
+-> movement mode 0 (Default) / 1 (BlockMovementIntent)
 
 Source/Portfolio/AI/RuntimeLOD/CAIStateRuntimeLODPolicy.cpp
 -> state policy mode 0 / 1

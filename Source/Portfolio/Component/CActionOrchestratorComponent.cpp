@@ -71,7 +71,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 	// Release-style cleanup is allowed before hard-block checks.
 	if (InIncomingRequest.IntentType == EMovementActionIntent::StopJump)
 	{
-		MovementComp_Injected->OnStopJump();
+		MovementComp_Injected->HandleJumpInputReleased();
 		return BuildActionRequestResult(EActionRequestResultType::Handled);
 	}
 
@@ -87,27 +87,27 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 	{
 	case EMovementActionIntent::Move:
 	{
-		MovementComp_Injected->OnMove(InIncomingRequest.Axis2D);
+		MovementComp_Injected->HandleMoveInput(InIncomingRequest.Axis2D);
 		break;
 	}
 	case EMovementActionIntent::Walk:
 	{
-		MovementComp_Injected->OnWalk();
+		MovementComp_Injected->HandleWalkInput();
 		break;
 	}
 	case EMovementActionIntent::Run:
 	{
-		MovementComp_Injected->OnRun();
+		MovementComp_Injected->HandleRunInput();
 		break;
 	}
 	case EMovementActionIntent::Sprint:
 	{
-		MovementComp_Injected->OnSprint();
+		MovementComp_Injected->HandleSprintInput();
 		break;
 	}
 	case EMovementActionIntent::Jump:
 	{
-		MovementComp_Injected->OnJump();
+		MovementComp_Injected->HandleJumpInput();
 		break;
 	}
 	default:

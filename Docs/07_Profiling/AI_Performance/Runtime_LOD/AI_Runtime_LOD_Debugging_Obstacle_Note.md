@@ -1,5 +1,7 @@
 # AI Runtime LOD Debugging Obstacle Note
 
+> 2026.08.24 closure note: any historical statement below that describes Movement mode `0 / 1 / 2` is a profiling record. The current movement policy retains only `0: Default` and `1: BlockMovementIntent`; state-refresh tick disable was not adopted.
+
 ## 목적
 
 P35 AI Runtime LOD 작업 중 측정 방향과 설계 포인트를 바꾸게 만든 장애요소를 정리한다.

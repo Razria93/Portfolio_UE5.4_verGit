@@ -14,26 +14,28 @@ class PORTFOLIO_API UCMovementComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	// Construction
 	UCMovementComponent();
 
 private:
+	// Runtime Type
 	struct FRuntimeLODMovementState
 	{
 		int32 AppliedMode = INDEX_NONE;
-		bool bOriginalMovementComponentTickEnabled = true;
-		bool bOriginalStateCached = false;
 	};
 
 private:
+	// Config
 	UPROPERTY(EditAnywhere, Category = "Movement|Gait")
 	TMap<EMovementGait, float> GaitSpeedMap;
 
 private:
+	// Locomotion Policy Runtime
 	UPROPERTY(Transient)
 	EMovementGait CurrentMovementGait = EMovementGait::Run;
 
 	UPROPERTY(Transient)
-	EMovementGait CachedMovementGait_BeforeOverride = EMovementGait::Run;
+	EMovementGait CachedMovementGaitBeforeOverride = EMovementGait::Run;
 
 	UPROPERTY(Transient)
 	bool bHasMovementGaitOverride = false;
@@ -42,19 +44,19 @@ private:
 	EMovementRotationMode CurrentMovementRotationMode = EMovementRotationMode::OrientToMovement;
 
 private:
-	FRuntimeLODMovementState RuntimeLODMovementState;
-
-private:
+	// Gameplay Movement Gate
 	UPROPERTY(Transient)
-	bool bCanMove = true;
+	bool bIsMovementEnabled = true;
 
+	// Runtime LOD Overlay Gate
 	UPROPERTY(Transient)
 	bool bRuntimeLODMovementIntentBlocked = false;
 
+	FRuntimeLODMovementState RuntimeLODMovementState;
+
+	// Observed Movement State
 	UPROPERTY(Transient)
 	bool bIsFalling = false;
-
-private:
 	UPROPERTY(Transient)
 	float CurrentSpeed = 0.f;
 
@@ -62,6 +64,7 @@ private:
 	float CurrentDirection = 0.f;
 
 private:
+	// Component References
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -81,70 +84,37 @@ public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
-private:
-	bool ValidateRequiredComponentReferences() const;
-
 protected:
 	// Lifecycle
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-private:
-	// Runtime LOD
-	void UpdateRuntimeLODMovementMode();
-	void EnsureRuntimeLODMovementOriginalStateCached();
-	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
-	void ApplyRuntimeLODMovementDefault();
-	void ApplyRuntimeLODMovementStateRefreshDisabled();
-	void ApplyRuntimeLODMovementIntentBlocked();
-	void RestoreRuntimeLODMovementStateRefresh();
-	void DisableRuntimeLODMovementStateRefresh();
-	void AllowRuntimeLODMovementIntent();
-	void BlockRuntimeLODMovementIntent();
-	void StopActiveAIMovement();
-	void HandleBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState, EBalanceLifecycleState InNewState);
-
 public:
-	// Query
-	FORCEINLINE bool CheckCurrentMovementGait(EMovementGait InNewMovementGait) const { return CurrentMovementGait == InNewMovementGait; }
+	// Query: Locomotion State
 	FORCEINLINE EMovementGait GetCurrentMovementGait() const { return CurrentMovementGait; }
 	FORCEINLINE EMovementRotationMode GetCurrentMovementRotationMode() const { return CurrentMovementRotationMode; }
 
-	FORCEINLINE bool CanMove() const { return bCanMove; }
 	FORCEINLINE bool IsFalling() const { return bIsFalling; }
 	FORCEINLINE float GetCurrentSpeed() const { return CurrentSpeed; }
 	FORCEINLINE float GetCurrentDirection() const { return CurrentDirection; }
 
 public:
-	// Mutation
-	FORCEINLINE void SetStop() { bCanMove = false; }
-	FORCEINLINE void SetMove()
-	{
-		if (bRuntimeLODMovementIntentBlocked) return;
-
-		bCanMove = true;
-	}
+	// Query: Movement Arbitration
+	FORCEINLINE bool IsMovementEnabled() const { return bIsMovementEnabled; }
+	bool CanAcceptMovementIntent() const;
 
 public:
-	// Movement Arbitration
-	bool CanAcceptMoveInput() const;
-
-	void BlockMovementIntentForRuntimeLOD();
-	void ClearMovementIntentBlockForRuntimeLOD();
+	// Gameplay Movement Permission
+	void SetMovementEnabled(bool bEnabled);
 
 public:
-	// Movement Input
-	void OnMove(const FVector2D& InAxis2D);
-
-public:
-	void OnWalk();
-	void OnRun();
-	void OnSprint();
-
-public:
-	void OnJump();
-	void OnStopJump();
+	// Movement Input Handling
+	void HandleMoveInput(const FVector2D& InAxis2D);
+	void HandleWalkInput();
+	void HandleRunInput();
+	void HandleSprintInput();
+	void HandleJumpInput();
+	void HandleJumpInputReleased();
 
 public:
 	// Movement Policy
@@ -153,13 +123,31 @@ public:
 	void SetMovementRotationMode(EMovementRotationMode InRotationMode);
 
 private:
+	// Component Reference Validation
+	bool ValidateRequiredComponentReferences() const;
+
+private:
+	// Runtime LOD Update
+	void UpdateRuntimeLODMovementMode();
+	void ApplyRuntimeLODMovementMode(int32 InMovementMode);
+	void SetRuntimeLODMovementIntentBlocked(bool bBlocked);
+	void StopActiveAIMovement();
+
+private:
+	// Balance Lifecycle Event
+	void HandleBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState, EBalanceLifecycleState InNewState);
+
+private:
+	// Gait Implementation
 	void SetMovementGait(EMovementGait InNewMovementGait);
 	void ApplyMovementGait(EMovementGait InNewMovementGait);
 
 private:
+	// Rotation Implementation
 	void ApplyMovementRotationMode(EMovementRotationMode InRotationMode);
 
 private:
+	// Runtime State Refresh
 	void CalculateSpeed();
 	void CalculateDirection();
 };

@@ -867,7 +867,7 @@ void UCActionComponent::EnterActionState(const FActionData& InData)
 {
 	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
-		MovementComp_Injected->SetStop();
+		MovementComp_Injected->SetMovementEnabled(false);
 	}
 
 	if (IsValid(StateComp_Injected))
@@ -880,7 +880,7 @@ void UCActionComponent::ExitActionState(const FActionData& InData)
 {
 	if (IsValid(MovementComp_Injected) && !InData.bCanMove)
 	{
-		MovementComp_Injected->SetMove();
+		MovementComp_Injected->SetMovementEnabled(true);
 	}
 
 	if (IsValid(StateComp_Injected))

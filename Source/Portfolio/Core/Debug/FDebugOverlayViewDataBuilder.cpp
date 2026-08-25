@@ -180,11 +180,11 @@ namespace
 			: FormatMissingText();
 
 		return FString::Printf(
-			TEXT("Gait: %s | Rotation: %s | Presentation: %s | CanMove: %s | Falling: %s"),
+			TEXT("Gait: %s | Rotation: %s | Presentation: %s | MovementEnabled: %s | Falling: %s"),
 			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementGait())),
 			*FormatCompactEnumText(UEnum::GetValueAsString(movementComp->GetCurrentMovementRotationMode())),
 			*presentationText,
-			*FormatBoolText(movementComp->CanMove()),
+			*FormatBoolText(movementComp->IsMovementEnabled()),
 			*FormatBoolText(movementComp->IsFalling()));
 	}
 

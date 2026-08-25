@@ -12,8 +12,7 @@ namespace
 	enum class EAIMovementRuntimeLODMode : int32
 	{
 		Default = 0,
-		DisableStateRefresh = 1,
-		BlockMovementIntent = 2,
+		BlockMovementIntent = 1,
 	};
 
 	constexpr int32 ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode InMode)
@@ -24,7 +23,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMovementMode(
 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMovementMode"),
 		ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default),
-		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: disable movement state refresh, 2: block movement intent."),
+		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: block movement intent."),
 		ECVF_Default);
 }
 
@@ -49,11 +48,6 @@ int32 FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(const AActor* InOwner)
 bool FAIMovementRuntimeLODPolicy::IsEnemyMovementRuntimeLODTarget(const AActor* InOwner)
 {
 	return IsValid(InOwner) && InOwner->IsA<ACEnemy>();
-}
-
-bool FAIMovementRuntimeLODPolicy::ShouldDisableMovementStateRefresh(int32 InMovementMode)
-{
-	return InMovementMode == ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::DisableStateRefresh);
 }
 
 bool FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(int32 InMovementMode)

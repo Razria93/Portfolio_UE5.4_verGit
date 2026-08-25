@@ -54,7 +54,7 @@ public:
 public:
 	// ===== Runtime LOD Audit Hooks =====
 
-	static void RecordRuntimeLODMovementModeAppliedForAudit(const AActor* InOwnerActor, const UObject* InComponent, int32 InPreviousMode, int32 InNewMode, bool bInTickEnabled, bool bInCanMove, bool bInIntentBlocked);
+	static void RecordRuntimeLODMovementModeAppliedForAudit(const AActor* InOwnerActor, const UObject* InComponent, int32 InPreviousMode, int32 InNewMode, bool bInMovementEnabled, bool bInIntentBlocked);
 	static void RecordRuntimeLODMovementIntentAllowedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent);
 	static void RecordRuntimeLODMovementIntentBlockedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InEvent);
 
@@ -62,7 +62,7 @@ public:
 	// ===== Movement Gate Audit Hooks =====
 
 	static void RecordMovementInputAcceptedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FVector2D& InAxis2D, EMovementGait InGait);
-	static void RecordMovementInputRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FVector2D& InAxis2D, const TCHAR* InReason, EExecutionState InExecutionState, bool bInCanMove, bool bInIntentBlocked);
+	static void RecordMovementInputRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FVector2D& InAxis2D, const TCHAR* InReason, EExecutionState InExecutionState, bool bInMovementEnabled, bool bInIntentBlocked);
 
 public:
 	// ===== Movement Data Audit Hooks =====

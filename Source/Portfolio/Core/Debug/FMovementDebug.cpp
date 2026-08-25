@@ -100,12 +100,12 @@ namespace
 
 	// ===== Audit Formatting =====
 
-	FString FormatMovementGateState(EExecutionState InExecutionState, bool bInCanMove, bool bInIntentBlocked)
+	FString FormatMovementGateState(EExecutionState InExecutionState, bool bInMovementEnabled, bool bInIntentBlocked)
 	{
 		return FString::Printf(
-			TEXT("ExecutionState=%s | CanMove=%s | RuntimeLODIntentBlocked=%s"),
+			TEXT("ExecutionState=%s | MovementEnabled=%s | RuntimeLODIntentBlocked=%s"),
 			*UEnum::GetValueAsString(InExecutionState),
-			bInCanMove ? TEXT("true") : TEXT("false"),
+			bInMovementEnabled ? TEXT("true") : TEXT("false"),
 			bInIntentBlocked ? TEXT("true") : TEXT("false"));
 	}
 }
@@ -247,18 +247,17 @@ void FMovementDebug::DrawWorldDebug(UWorld* InWorld, const APawn* InPawn, const 
 
 // ===== Runtime LOD Audit Hooks =====
 
-void FMovementDebug::RecordRuntimeLODMovementModeAppliedForAudit(const AActor* InOwnerActor, const UObject* InComponent, int32 InPreviousMode, int32 InNewMode, bool bInTickEnabled, bool bInCanMove, bool bInIntentBlocked)
+void FMovementDebug::RecordRuntimeLODMovementModeAppliedForAudit(const AActor* InOwnerActor, const UObject* InComponent, int32 InPreviousMode, int32 InNewMode, bool bInMovementEnabled, bool bInIntentBlocked)
 {
 	if (!ShouldAuditMovement()) return;
 
 	FLog::Log(FString::Printf(
-		TEXT("[Movement|RuntimeLOD|ModeApplied] Owner=%s | Component=%s | PreviousMode=%d | NewMode=%d | TickEnabled=%s | CanMove=%s | RuntimeLODIntentBlocked=%s"),
+		TEXT("[Movement|RuntimeLOD|ModeApplied] Owner=%s | Component=%s | PreviousMode=%d | NewMode=%d | MovementEnabled=%s | RuntimeLODIntentBlocked=%s"),
 		*GetNameSafe(InOwnerActor),
 		*GetNameSafe(InComponent),
 		InPreviousMode,
 		InNewMode,
-		bInTickEnabled ? TEXT("true") : TEXT("false"),
-		bInCanMove ? TEXT("true") : TEXT("false"),
+		bInMovementEnabled ? TEXT("true") : TEXT("false"),
 		bInIntentBlocked ? TEXT("true") : TEXT("false")));
 }
 
@@ -299,7 +298,7 @@ void FMovementDebug::RecordMovementInputAcceptedForAudit(const AActor* InOwnerAc
 		*UEnum::GetValueAsString(InGait)));
 }
 
-void FMovementDebug::RecordMovementInputRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FVector2D& InAxis2D, const TCHAR* InReason, EExecutionState InExecutionState, bool bInCanMove, bool bInIntentBlocked)
+void FMovementDebug::RecordMovementInputRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FVector2D& InAxis2D, const TCHAR* InReason, EExecutionState InExecutionState, bool bInMovementEnabled, bool bInIntentBlocked)
 {
 	if (!ShouldAuditMovement()) return;
 
@@ -310,7 +309,7 @@ void FMovementDebug::RecordMovementInputRejectedForAudit(const AActor* InOwnerAc
 		*GetNameSafe(InComponent),
 		InAxis2D.X,
 		InAxis2D.Y,
-		*FormatMovementGateState(InExecutionState, bInCanMove, bInIntentBlocked)));
+		*FormatMovementGateState(InExecutionState, bInMovementEnabled, bInIntentBlocked)));
 }
 
 // ===== Movement Data Audit Hooks =====

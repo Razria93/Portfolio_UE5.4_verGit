@@ -1,5 +1,7 @@
 # AI Movement / Nav LOD Measurement Plan
 
+> 2026.08.24 current implementation note: this document preserves the historical 0 / 1 / 2 measurement cases. `MovementStateRefreshDisabled` (old mode 1) was removed because its measured gain was limited and it left locomotion state stale. The current `EnemyMovementMode` contract is `0: Default`, `1: BlockMovementIntent` (historical mode 2). `UCMovementComponent` tick remains enabled; Runtime LOD only controls its movement-intent overlay gate.
+
 ## 목적
 
 `Movement / Nav` 축이 40 / 80 Enemy 조건에서 실제 frame budget에 어느 정도 영향을 주는지 분리한다.
@@ -43,7 +45,7 @@ MovementIntent
 
 ```text
 Pawn FindComponentByClass<UCMovementComponent>
--> CanAcceptMoveInput
+-> CanAcceptMovementIntent
 ```
 
 `CBTService_UpdateAIContext`
@@ -172,12 +174,12 @@ Portfolio.AI.RuntimeLOD.EnemyMovementMode
 현재 구현 위치:
 
 ```text
-ACEnemy::UpdateRuntimeLODMovementMode
--> EnemyMovementMode CVar를 읽는다.
--> Mode 1은 UCMovementComponent tick을 비활성화해 speed / direction / falling state refresh를 멈춘다.
--> Mode 2는 UCMovementComponent::SetStop으로 movement intent를 차단한다.
--> Mode 2 진입 시 현재 path following은 AIController::StopMovement로 1회 정리한다.
--> Mode 2 유지 중에는 Action / Reaction 종료가 SetMove를 호출해도 SetStop 상태를 다시 유지한다.
+UCMovementComponent::UpdateRuntimeLODMovementMode
+-> EnemyMovementMode CVar 또는 state-based tier에서 mode를 읽는다.
+-> Mode 0은 Runtime LOD movement-intent overlay gate를 해제한다.
+-> Mode 1은 overlay gate를 차단하고, 새 Block 진입 시 현재 path following을 AIController::StopMovement로 1회 정리한다.
+-> UCMovementComponent tick은 유지되며 speed / direction / falling state refresh도 계속 실행한다.
+-> Action / Reaction의 SetMovementEnabled 상태는 Runtime LOD가 변경하지 않는다.
 ```
 
 ## 측정 범위
