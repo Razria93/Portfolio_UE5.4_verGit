@@ -1,6 +1,6 @@
 # S35. Enemy Balance / Collapse Lifecycle 설계
 
-> 상태: R07 C++ lifecycle 및 Damage Reaction Outcome 계약 구현 완료. CollapseHit asset 연결 및 PIE 검증 대기.
+> 상태: R07 C++ lifecycle, Damage Reaction Outcome, CollapseHit asset 연결 및 PIE 검증 완료. Balance / Collapse debug observability 구현 완료.
 > 범위: Enemy Balance 누적, Collapse In / Loop / Out, Collapse Loop 피격 표현, Count 잠금, Collapse Loop TTL 및 안전한 복구.
 > 제외: Player Beta/Burst, Player Balance policy 활성화, Source/Target Execution 협업, Execution consume, UI 완성.
 
@@ -582,7 +582,41 @@ Execution availability Notify는 R08 전에는 추가하지 않는다.
 
 ---
 
-## 13. 검증 기준
+## 13. Debug Observability
+
+Balance / Collapse debug는 별도 runtime state를 만들지 않고 `UCBalanceComponent`의 Count, lifecycle,
+timer 및 파생 query를 읽는 `FBalanceDebugSnapshot`으로만 투영한다.
+
+```text
+UCBalanceComponent SoT
+→ FBalanceDebugSnapshot
+→ Enemy Balance / Collapse panel
+→ focused Enemy world text
+→ Balance Event Log / optional Output Log audit
+```
+
+- Main panel의 `Balance / Collapse`은 Count, lifecycle state/serial, Loop remaining, pose/loop,
+  lifecycle blocking, facing suppression, last abort reason을 표시한다.
+- World text는 focused Enemy 한 명에게만 표시한다. Combat Participation의 바닥 ring/text와 충돌하지
+  않도록 새 ring을 만들지 않으며 lifecycle 색상과 Count segment만 사용한다.
+- `CollapseLoopActive`에서만 Loop remaining을 표시하고, 나머지 state에서는 `--`로 표시한다.
+- Event Log category는 `Balance`다. Parry accepted, threshold crossed, request resolution, lifecycle
+  transition, timer arm/expiry, reset, abort를 lifecycle serial 및 Count와 함께 기록한다.
+- `Portfolio.Debug.BalanceAudit`은 같은 lifecycle event를 Output Log에도 기록하는 진단용 gate다.
+
+관련 CVar는 다음과 같다.
+
+```text
+Portfolio.DebugOverlay.Enemy.BalanceCollapse.Enabled
+Portfolio.DebugOverlay.Balance.Enabled
+Portfolio.DebugOverlay.Balance.DrawWorldText
+Portfolio.DebugOverlay.Balance.DrawLifecycleBar
+Portfolio.Debug.BalanceAudit
+```
+
+---
+
+## 14. 검증 기준
 
 | 시나리오 | 기대 결과 |
 | --- | --- |
@@ -607,7 +641,7 @@ Execution availability Notify는 R08 전에는 추가하지 않는다.
 
 ---
 
-## 14. 범위 밖
+## 15. 범위 밖
 
 - Player Beta / Burst 자원 모델 및 소비 정책
 - Source / Target Execution 협업과 consume

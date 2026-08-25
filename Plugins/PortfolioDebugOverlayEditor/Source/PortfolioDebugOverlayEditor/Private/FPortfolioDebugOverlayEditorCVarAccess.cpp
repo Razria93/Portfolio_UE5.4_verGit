@@ -27,6 +27,7 @@ namespace
 	static constexpr const TCHAR* DebugOverlayEnemyPanelEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enemy.Enabled");
 	static constexpr const TCHAR* DebugOverlayEnemyFocusEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enemy.Focus.Enabled");
 	static constexpr const TCHAR* DebugOverlayEnemyStatusEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enemy.Status.Enabled");
+	static constexpr const TCHAR* DebugOverlayEnemyBalanceCollapseEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enemy.BalanceCollapse.Enabled");
 	static constexpr const TCHAR* DebugOverlayEnemyCombatParticipationEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enemy.CombatParticipation.Enabled");
 	static constexpr const TCHAR* DebugOverlayEnemyDeathLifecycleEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enemy.DeathLifecycle.Enabled");
 	static constexpr const TCHAR* DebugOverlayEnemyRecentExecutionEnabledCVarName = TEXT("Portfolio.DebugOverlay.Enemy.RecentExecution.Enabled");
@@ -49,6 +50,13 @@ namespace
 	static constexpr const TCHAR* DebugOverlayMovementDrawInputCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawInput");
 	static constexpr const TCHAR* DebugOverlayMovementDrawFacingCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawFacing");
 	static constexpr const TCHAR* DebugOverlayMovementDrawDebugTextCVarName = TEXT("Portfolio.DebugOverlay.Movement.DrawDebugText");
+
+	// ===== Balance Display CVar Names =====
+
+	static constexpr const TCHAR* DebugOverlayBalanceEnabledCVarName = TEXT("Portfolio.DebugOverlay.Balance.Enabled");
+	static constexpr const TCHAR* DebugOverlayBalanceDrawWorldTextCVarName = TEXT("Portfolio.DebugOverlay.Balance.DrawWorldText");
+	static constexpr const TCHAR* DebugOverlayBalanceDrawLifecycleBarCVarName = TEXT("Portfolio.DebugOverlay.Balance.DrawLifecycleBar");
+	static constexpr const TCHAR* BalanceAuditCVarName = TEXT("Portfolio.Debug.BalanceAudit");
 
 	// ===== Combat Participation Display CVar Names =====
 
@@ -125,6 +133,7 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetPlayerRecentExecutionEnab
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnemyPanelEnabledCVarName() { return DebugOverlayEnemyPanelEnabledCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnemyFocusEnabledCVarName() { return DebugOverlayEnemyFocusEnabledCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnemyStatusEnabledCVarName() { return DebugOverlayEnemyStatusEnabledCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnemyBalanceCollapseEnabledCVarName() { return DebugOverlayEnemyBalanceCollapseEnabledCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnemyCombatParticipationEnabledCVarName() { return DebugOverlayEnemyCombatParticipationEnabledCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnemyDeathLifecycleEnabledCVarName() { return DebugOverlayEnemyDeathLifecycleEnabledCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetEnemyRecentExecutionEnabledCVarName() { return DebugOverlayEnemyRecentExecutionEnabledCVarName; }
@@ -146,6 +155,13 @@ const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawVelocityCVarN
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawInputCVarName() { return DebugOverlayMovementDrawInputCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawFacingCVarName() { return DebugOverlayMovementDrawFacingCVarName; }
 const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetMovementDrawDebugTextCVarName() { return DebugOverlayMovementDrawDebugTextCVarName; }
+
+// ===== Balance Display CVars =====
+
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetBalanceEnabledCVarName() { return DebugOverlayBalanceEnabledCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetBalanceDrawWorldTextCVarName() { return DebugOverlayBalanceDrawWorldTextCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetBalanceDrawLifecycleBarCVarName() { return DebugOverlayBalanceDrawLifecycleBarCVarName; }
+const TCHAR* PortfolioDebugOverlayEditorCVarAccess::GetBalanceAuditCVarName() { return BalanceAuditCVarName; }
 
 // ===== Combat Participation Display CVar Names =====
 
@@ -245,6 +261,7 @@ bool PortfolioDebugOverlayEditorCVarAccess::IsKnownEventLogFilter(const FString&
 		|| InValue.Equals(TEXT("Execution"), ESearchCase::IgnoreCase)
 		|| InValue.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
 		|| InValue.Equals(TEXT("AI"), ESearchCase::IgnoreCase)
+		|| InValue.Equals(TEXT("Balance"), ESearchCase::IgnoreCase)
 		|| InValue.Equals(TEXT("Death"), ESearchCase::IgnoreCase);
 }
 
@@ -280,6 +297,7 @@ bool PortfolioDebugOverlayEditorCVarAccess::HasMainPanelSectionCVars()
 		&& FindCVar(DebugOverlayEnemyPanelEnabledCVarName)
 		&& FindCVar(DebugOverlayEnemyFocusEnabledCVarName)
 		&& FindCVar(DebugOverlayEnemyStatusEnabledCVarName)
+		&& FindCVar(DebugOverlayEnemyBalanceCollapseEnabledCVarName)
 		&& FindCVar(DebugOverlayEnemyCombatParticipationEnabledCVarName)
 		&& FindCVar(DebugOverlayEnemyDeathLifecycleEnabledCVarName)
 		&& FindCVar(DebugOverlayEnemyRecentExecutionEnabledCVarName)
@@ -294,6 +312,14 @@ bool PortfolioDebugOverlayEditorCVarAccess::HasMovementDisplayCVars()
 		&& FindCVar(DebugOverlayMovementDrawInputCVarName)
 		&& FindCVar(DebugOverlayMovementDrawFacingCVarName)
 		&& FindCVar(DebugOverlayMovementDrawDebugTextCVarName);
+}
+
+bool PortfolioDebugOverlayEditorCVarAccess::HasBalanceDisplayCVars()
+{
+	return FindCVar(DebugOverlayBalanceEnabledCVarName)
+		&& FindCVar(DebugOverlayBalanceDrawWorldTextCVarName)
+		&& FindCVar(DebugOverlayBalanceDrawLifecycleBarCVarName)
+		&& FindCVar(BalanceAuditCVarName);
 }
 
 bool PortfolioDebugOverlayEditorCVarAccess::HasCombatParticipationDisplayCVars()

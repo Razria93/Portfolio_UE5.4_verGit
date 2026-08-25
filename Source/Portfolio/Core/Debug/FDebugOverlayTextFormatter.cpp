@@ -125,6 +125,24 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("In Range: %s | In View Cone: %s"), *targeting.RangeText, *targeting.ViewConeText));
 	}
 
+	// [Balance / Collapse]
+	// ===== Balance / Collapse Lines =====
+
+	void AppendBalanceCollapseLines(TArray<FString>& InOutLines, const FDebugOverlayBalanceCollapseViewData& InBalanceCollapseViewData)
+	{
+		const FBalanceDebugOverlayDetails& details = InBalanceCollapseViewData.Details;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Balance / Collapse]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Count: %s"), *details.CountText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Lifecycle: %s | Serial: %s"), *details.LifecycleText, *details.LifecycleSerialText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Loop Remaining: %s"), *details.LoopLifetimeText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Pose: %s | Loop: %s"), *details.CollapsePoseText, *details.CollapseLoopText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Blocking: %s | Facing Suppressed: %s"), *details.LifecycleBlockingText, *details.FacingSuppressedText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Abort: %s"), *details.LastAbortText));
+	}
+
 	// [Combat Participation]
 	// ===== Combat Participation Lines =====
 
@@ -285,6 +303,11 @@ namespace
 		if (InActorPanelViewData.bIncludeTargeting)
 		{
 			AppendPlayerTargetingLines(InOutLines, InActorPanelViewData.Targeting);
+		}
+
+		if (InActorPanelViewData.bIncludeBalanceCollapse)
+		{
+			AppendBalanceCollapseLines(InOutLines, InActorPanelViewData.BalanceCollapse);
 		}
 
 		if (InActorPanelViewData.bIncludeCombatParticipation)

@@ -70,6 +70,8 @@ public:
 	uint32 GetBalanceLifecycleSerial() const { return BalanceLifecycleSerial; }
 	EBalanceLifecycleState GetBalanceLifecycleState() const { return BalanceLifecycleState; }
 	EBalanceAbortReason GetLastAbortReason() const { return LastAbortReason; }
+	float GetCollapseLoopDuration() const { return CollapseLoopDuration; }
+	float GetCollapseLoopRemainingSeconds() const;
 
 	bool IsCollapsePoseActive() const;
 	bool IsCollapseLoopActive() const;

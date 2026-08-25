@@ -27,6 +27,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetEnemyPanelEnabledCVarName();
 	const TCHAR* GetEnemyFocusEnabledCVarName();
 	const TCHAR* GetEnemyStatusEnabledCVarName();
+	const TCHAR* GetEnemyBalanceCollapseEnabledCVarName();
 	const TCHAR* GetEnemyCombatParticipationEnabledCVarName();
 	const TCHAR* GetEnemyDeathLifecycleEnabledCVarName();
 	const TCHAR* GetEnemyRecentExecutionEnabledCVarName();
@@ -52,6 +53,13 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetMovementDrawInputCVarName();
 	const TCHAR* GetMovementDrawFacingCVarName();
 	const TCHAR* GetMovementDrawDebugTextCVarName();
+
+	// ===== Balance Display CVars =====
+
+	const TCHAR* GetBalanceEnabledCVarName();
+	const TCHAR* GetBalanceDrawWorldTextCVarName();
+	const TCHAR* GetBalanceDrawLifecycleBarCVarName();
+	const TCHAR* GetBalanceAuditCVarName();
 
 	// ===== Combat Participation Display CVars =====
 
@@ -86,6 +94,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	bool HasMainPanelSectionCVars();
 	bool HasTargetingDisplayCVars();
 	bool HasMovementDisplayCVars();
+	bool HasBalanceDisplayCVars();
 	bool HasCombatParticipationDisplayCVars();
 	bool HasFocusCVars();
 	FText GetAvailabilityText(const TCHAR* InName);

@@ -222,6 +222,11 @@ FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 		return TEXT("AI");
 	}
 
+	if (InFilter.Equals(TEXT("Balance"), ESearchCase::IgnoreCase))
+	{
+		return TEXT("Balance");
+	}
+
 	if (InFilter.Equals(TEXT("Death"), ESearchCase::IgnoreCase))
 	{
 		return TEXT("Death");

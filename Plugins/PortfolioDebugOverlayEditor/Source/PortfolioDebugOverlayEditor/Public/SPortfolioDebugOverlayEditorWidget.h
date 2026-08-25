@@ -36,6 +36,8 @@ private:
 	TSharedRef<SWidget> MakeTargetingDebugSection();
 	TSharedRef<SWidget> MakeMovementDisplayOptionsSection();
 	TSharedRef<SWidget> MakeMovementDebugSection();
+	TSharedRef<SWidget> MakeBalanceDisplayOptionsSection();
+	TSharedRef<SWidget> MakeBalanceDebugSection();
 	TSharedRef<SWidget> MakeCombatParticipationDisplayOptionsSection();
 	TSharedRef<SWidget> MakeCombatParticipationDebugSection();
 	TSharedRef<SWidget> MakeFocusOptionsSection();

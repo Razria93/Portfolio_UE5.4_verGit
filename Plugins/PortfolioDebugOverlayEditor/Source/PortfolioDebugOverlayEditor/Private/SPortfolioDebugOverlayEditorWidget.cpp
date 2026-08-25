@@ -29,6 +29,7 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Execution")));
 	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Combat")));
 	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("AI")));
+	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Balance")));
 	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Death")));
 	RefreshEventLogFilterSelection();
 	LastFocusCommandStatus = LOCTEXT("FocusCommandNotRun", "Last Command: None");
@@ -109,6 +110,12 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				.Padding(0.f, 0.f, 0.f, 12.f)
 				[
 					MakeMovementDisplayOptionsSection()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
+					MakeBalanceDisplayOptionsSection()
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
@@ -222,6 +229,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelSections()
 		]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyFocusLabel", "Focus"), LOCTEXT("EnemyFocusHelp", "Show selected Enemy focus details."), CVarAccess::GetEnemyFocusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyStatusLabel", "Status"), LOCTEXT("EnemyStatusHelp", "Show Enemy state, action, reaction, health and movement."), CVarAccess::GetEnemyStatusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyBalanceCollapseLabel", "Balance / Collapse"), LOCTEXT("EnemyBalanceCollapseHelp", "Show focused Enemy Balance count, Collapse lifecycle and derived gates."), CVarAccess::GetEnemyBalanceCollapseEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCombatParticipationLabel", "Combat Participation"), LOCTEXT("EnemyCombatParticipationHelp", "Show focused Enemy combat participation details."), CVarAccess::GetEnemyCombatParticipationEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyDeathLifecycleLabel", "Death Lifecycle"), LOCTEXT("EnemyDeathLifecycleHelp", "Show Enemy death lifecycle details."), CVarAccess::GetEnemyDeathLifecycleEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyRecentExecutionLabel", "Recent Execution"), LOCTEXT("EnemyRecentExecutionHelp", "Show the most recent Enemy execution event."), CVarAccess::GetEnemyRecentExecutionEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
@@ -334,6 +342,53 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDebugSection
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementInputLabel", "Last Input Arrow"), LOCTEXT("MovementInputHelp", "Draw the last movement input direction."), CVarAccess::GetMovementDrawInputCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementFacingLabel", "Facing Arrow"), LOCTEXT("MovementFacingHelp", "Draw the current actor facing direction."), CVarAccess::GetMovementDrawFacingCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementTextLabel", "World Debug Text"), LOCTEXT("MovementTextHelp", "Draw movement speed and direction near the player."), CVarAccess::GetMovementDrawDebugTextCVarName())];
+}
+
+// ===== Balance Debug =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBalanceDisplayOptionsSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("BalanceDisplayOptionsTitle", "Balance / Collapse Display Options"))
+			.Font(FAppStyle::GetFontStyle("BoldFont"))
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([]()
+			{
+				return CVarAccess::HasBalanceDisplayCVars()
+					? LOCTEXT("BalanceCVarsAvailable", "Balance and Collapse display CVars are available.")
+					: LOCTEXT("BalanceCVarsUnavailable", "Balance and Collapse display CVars are unavailable. Start the game module or PIE if needed.");
+			})
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(8.f)
+			[
+				MakeBalanceDebugSection()
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBalanceDebugSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceEnabledLabel", "Enabled"), LOCTEXT("BalanceEnabledHelp", "Enable Balance and Collapse debug data. Panel_01 Balance / Collapse requires this domain gate."), CVarAccess::GetBalanceEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceWorldTextLabel", "World Text"), LOCTEXT("BalanceWorldTextHelp", "Draw focused Enemy Balance count, lifecycle and derived gates in the world."), CVarAccess::GetBalanceDrawWorldTextCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceLifecycleBarLabel", "Count Segments"), LOCTEXT("BalanceLifecycleBarHelp", "Show threshold segments in the focused Enemy Balance world text."), CVarAccess::GetBalanceDrawLifecycleBarCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceAuditLabel", "Lifecycle Audit Log"), LOCTEXT("BalanceAuditHelp", "Also write Balance and Collapse lifecycle events to the Output Log."), CVarAccess::GetBalanceAuditCVarName())];
 }
 
 // ===== Combat Participation Debug =====

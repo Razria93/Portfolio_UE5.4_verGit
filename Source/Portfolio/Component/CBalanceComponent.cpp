@@ -1,5 +1,6 @@
 #include "Component/CBalanceComponent.h"
 
+#include "Core/Debug/FBalanceDebug.h"
 #include "Type/CReactionDataTypes.h"
 #include "Type/CReactionOrchestrationTypes.h"
 #include "Type/CReactionTypes.h"
@@ -30,6 +31,14 @@ void UCBalanceComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 }
 
 // Query: Balance State
+
+float UCBalanceComponent::GetCollapseLoopRemainingSeconds() const
+{
+	if (!IsCollapseLoopActive()) return 0.f;
+
+	const UWorld* world = GetWorld();
+	return IsValid(world) ? FMath::Max(0.f, world->GetTimerManager().GetTimerRemaining(CollapseLoopTimerHandle)) : 0.f;
+}
 
 bool UCBalanceComponent::IsCollapsePoseActive() const
 {
@@ -79,7 +88,11 @@ FBalanceAdvanceResult UCBalanceComponent::AdvanceBalanceFromParry(const FCombatR
 	result.Threshold = threshold;
 	result.bThresholdCrossed = result.PreviousCount < threshold && CurrentBalanceCount >= threshold;
 
-	if (!result.bThresholdCrossed) return result;
+	if (!result.bThresholdCrossed)
+	{
+		FBalanceDebug::RecordLifecycleEvent(this, TEXT("ParryAccepted"));
+		return result;
+	}
 
 	++BalanceLifecycleSerial;
 	if (BalanceLifecycleSerial == 0)
@@ -90,6 +103,7 @@ FBalanceAdvanceResult UCBalanceComponent::AdvanceBalanceFromParry(const FCombatR
 	result.BalanceLifecycleSerial = BalanceLifecycleSerial;
 	LastAbortReason = EBalanceAbortReason::None;
 	SetBalanceLifecycleState(EBalanceLifecycleState::CollapseInPending);
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("ThresholdCrossed"));
 	return result;
 }
 
@@ -97,6 +111,11 @@ FBalanceAdvanceResult UCBalanceComponent::AdvanceBalanceFromParry(const FCombatR
 
 void UCBalanceComponent::HandleBalanceLifecycleReactionRequestResolved(const FBalanceLifecyclePacket& InBalanceLifecyclePacket, const FReactionRequestResult& InResult)
 {
+	FBalanceDebug::RecordLifecycleEvent(
+		this,
+		InResult.IsAccepted() ? TEXT("LifecycleRequestAccepted") : TEXT("LifecycleRequestRejected"),
+		FString::Printf(TEXT("Reaction=%s"), *UEnum::GetValueAsString(InBalanceLifecyclePacket.ReactionType)));
+
 	if (InResult.IsAccepted()) return;
 	if (InBalanceLifecyclePacket.BalanceLifecycleSerial == 0 || InBalanceLifecyclePacket.BalanceLifecycleSerial != BalanceLifecycleSerial) return;
 
@@ -121,6 +140,7 @@ bool UCBalanceComponent::HandleCollapseReactionExecutionStarted(const FReactionE
 	if (MatchesLifecycleContext(InContext, EReactionType::CollapseIn))
 	{
 		if (BalanceLifecycleState != EBalanceLifecycleState::CollapseInPending) return false;
+		FBalanceDebug::RecordLifecycleEvent(this, TEXT("CollapseInStarted"));
 		SetBalanceLifecycleState(EBalanceLifecycleState::CollapseInActive);
 		return true;
 	}
@@ -128,6 +148,7 @@ bool UCBalanceComponent::HandleCollapseReactionExecutionStarted(const FReactionE
 	if (MatchesLifecycleContext(InContext, EReactionType::CollapseOut))
 	{
 		if (BalanceLifecycleState != EBalanceLifecycleState::CollapseOutPending) return false;
+		FBalanceDebug::RecordLifecycleEvent(this, TEXT("CollapseOutStarted"));
 		SetBalanceLifecycleState(EBalanceLifecycleState::CollapseRecovering);
 		return true;
 	}
@@ -146,6 +167,7 @@ void UCBalanceComponent::HandleCollapseReactionExecutionTerminal(const FReaction
 		if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed
 			&& BalanceLifecycleState == EBalanceLifecycleState::CollapseInActive)
 		{
+			FBalanceDebug::RecordLifecycleEvent(this, TEXT("CollapseInCompleted"));
 			SetBalanceLifecycleState(EBalanceLifecycleState::CollapseLoopActive);
 			StartCollapseLoopTimer();
 			return;
@@ -163,6 +185,7 @@ void UCBalanceComponent::HandleCollapseReactionExecutionTerminal(const FReaction
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed
 		&& BalanceLifecycleState == EBalanceLifecycleState::CollapseRecovering)
 	{
+		FBalanceDebug::RecordLifecycleEvent(this, TEXT("CollapseOutCompletedWithoutReset"));
 		AbortBalanceLifecycle(EBalanceAbortReason::ResetNotifyMissing);
 		return;
 	}
@@ -178,6 +201,7 @@ bool UCBalanceComponent::TryCommitCollapseReset(const uint32 InBalanceLifecycleS
 	if (InBalanceLifecycleSerial == 0 || InBalanceLifecycleSerial != BalanceLifecycleSerial) return false;
 	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseRecovering) return false;
 
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("CollapseResetCommitted"));
 	ResetBalanceRuntime();
 	return true;
 }
@@ -189,6 +213,7 @@ void UCBalanceComponent::AbortBalanceLifecycle(const EBalanceAbortReason InReaso
 	if (BalanceLifecycleState == EBalanceLifecycleState::Accumulating) return;
 
 	LastAbortReason = InReason;
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("LifecycleAborted"), FString::Printf(TEXT("Reason=%s"), *UEnum::GetValueAsString(InReason)));
 	ResetBalanceRuntime();
 }
 
@@ -215,6 +240,7 @@ void UCBalanceComponent::SetBalanceLifecycleState(const EBalanceLifecycleState I
 
 	const EBalanceLifecycleState previousState = BalanceLifecycleState;
 	BalanceLifecycleState = InState;
+	FBalanceDebug::RecordLifecycleStateChanged(this, previousState, BalanceLifecycleState);
 	OnBalanceLifecycleStateChanged.Broadcast(previousState, BalanceLifecycleState);
 }
 
@@ -238,6 +264,7 @@ void UCBalanceComponent::StartCollapseLoopTimer()
 	}
 
 	world->GetTimerManager().SetTimer(CollapseLoopTimerHandle, this, &UCBalanceComponent::HandleCollapseLoopExpired, CollapseLoopDuration, false);
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("LoopTimerArmed"));
 }
 
 void UCBalanceComponent::ClearCollapseLoopTimer()
@@ -252,6 +279,7 @@ void UCBalanceComponent::ClearCollapseLoopTimer()
 
 void UCBalanceComponent::HandleCollapseLoopExpired()
 {
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("LoopTimerExpired"));
 	RequestCollapseOutFromLoopExpiry();
 }
 
