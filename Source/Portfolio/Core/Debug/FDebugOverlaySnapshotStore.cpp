@@ -121,12 +121,14 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString sourceName = GetNameSafe(InPacket.Context.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.Context.TargetActor);
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
-	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
+	const FString defenseOutcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
+	const FString reactionOutcome = UEnum::GetValueAsString(InPacket.Result.ReactionOutcome);
 	const FString summary = FString::Printf(
-		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
+		TEXT("Attacker: %s | Defender: %s | Defense: %s | Reaction: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
 		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.SourceActor),
 		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.TargetActor),
-		*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
+		*SnapshotRecordBuilders::FormatCompactEnumText(defenseOutcome),
+		*SnapshotRecordBuilders::FormatCompactEnumText(reactionOutcome),
 		InPacket.Result.RequestDamage,
 		InPacket.Result.MitigatedDamage,
 		InPacket.Result.FinalTakenDamage,
@@ -139,7 +141,8 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	store->Snapshot.LastCombat.SourceName = sourceName;
 	store->Snapshot.LastCombat.TargetName = targetName;
 	store->Snapshot.LastCombat.DamageCauserName = causerName;
-	store->Snapshot.LastCombat.DefenseOutcome = outcome;
+	store->Snapshot.LastCombat.DefenseOutcome = defenseOutcome;
+	store->Snapshot.LastCombat.ReactionOutcome = reactionOutcome;
 	store->Snapshot.LastCombat.bHasDamageCommit = true;
 	store->Snapshot.LastCombat.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
 	store->Snapshot.LastCombat.bHasDamageBreakdown = true;
@@ -177,19 +180,21 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	const float requestDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.RequestDamage : 0.f;
 	const float mitigatedDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.MitigatedDamage : 0.f;
 	const float finalTakenDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.FinalTakenDamage : 0.f;
+	const FString reactionOutcome = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.ReactionOutcome : FString();
 	const FString summary = bHasPreviousDamageBreakdown
 		? FString::Printf(
-			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
+			TEXT("ResultFrom: %s | ResultReceiver: %s | Defense: %s | Reaction: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
 			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
 			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
+			*SnapshotRecordBuilders::FormatCompactEnumText(reactionOutcome),
 			requestDamage,
 			mitigatedDamage,
 			finalTakenDamage,
 			InPacket.CommittedDamage,
 			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"))
 		: FString::Printf(
-			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Commit: %.3f | DamageCommitted: %s"),
+			TEXT("ResultFrom: %s | ResultReceiver: %s | Defense: %s | Commit: %.3f | DamageCommitted: %s"),
 			*resultSourceName,
 			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
 			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
@@ -203,6 +208,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	store->Snapshot.LastCombat.TargetName = targetName;
 	store->Snapshot.LastCombat.DamageCauserName = causerName;
 	store->Snapshot.LastCombat.DefenseOutcome = outcome;
+	store->Snapshot.LastCombat.ReactionOutcome = reactionOutcome;
 	store->Snapshot.LastCombat.bHasDamageCommit = true;
 	store->Snapshot.LastCombat.bDamageCommitted = InPacket.bDamageCommitted;
 	store->Snapshot.LastCombat.bHasDamageBreakdown = bHasPreviousDamageBreakdown;

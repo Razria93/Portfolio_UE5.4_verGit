@@ -9,12 +9,13 @@ enum class EBalanceLifecycleState : uint8
 {
 	Accumulating = 0,
 
-	CollapseInPending,
-	CollapseActive,
-	CollapseOutPending,
-	CollapseRecovering,
+	CollapseInPending = 1,
+	CollapseInActive = 2,
+	CollapseLoopActive = 5,
+	CollapseOutPending = 3,
+	CollapseRecovering = 4,
 
-	Max,
+	Max = 6,
 };
 
 UENUM(BlueprintType)

@@ -71,7 +71,8 @@ public:
 	EBalanceLifecycleState GetBalanceLifecycleState() const { return BalanceLifecycleState; }
 	EBalanceAbortReason GetLastAbortReason() const { return LastAbortReason; }
 
-	bool IsCollapseLoopPoseActive() const;
+	bool IsCollapsePoseActive() const;
+	bool IsCollapseLoopActive() const;
 	bool IsBalanceLifecycleBlocking() const;
 	bool ShouldSuppressCombatTargetFacing() const;
 

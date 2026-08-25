@@ -1,7 +1,7 @@
 # S35. Enemy Balance / Collapse Lifecycle 설계
 
-> 상태: R07 C++ lifecycle 계약 구현 완료. Editor asset 연결 및 PIE 검증 대기.
-> 범위: Enemy Balance 누적, Collapse In / Loop / Out, Count 잠금, Collapse Loop TTL 및 안전한 복구.
+> 상태: R07 C++ lifecycle 및 Damage Reaction Outcome 계약 구현 완료. CollapseHit asset 연결 및 PIE 검증 대기.
+> 범위: Enemy Balance 누적, Collapse In / Loop / Out, Collapse Loop 피격 표현, Count 잠금, Collapse Loop TTL 및 안전한 복구.
 > 제외: Player Beta/Burst, Player Balance policy 활성화, Source/Target Execution 협업, Execution consume, UI 완성.
 
 ---
@@ -18,6 +18,7 @@ Parry CombatResultPacket
 → threshold 최초 도달
 → CollapseIn Reaction
 → Collapse Loop
+→ CollapseHit Reaction (실제 피해 수신 시)
 → Collapse Loop TTL
 → CollapseOut Reaction
 → Balance reset
@@ -53,6 +54,10 @@ Parry CombatResultPacket
     `Dead → active Reaction → Incapacitated → Combat Action → Participation-derived intent`다.
 14. Collapse는 CombatTarget을 유지하되 dynamic target-facing과 Gameplay Focus를 즉시 억제한다.
     CollapseOut Reset 뒤에만 현재 유효 CombatTarget을 기준으로 Focus/Facing을 복구한다.
+15. `EDamageDefenseOutcome`은 Guard / Parry 같은 방어 판정 사실만 보존한다. 최종 피격 표현은
+    `EDamageReactionOutcome`으로 별도 확정해 Target Packet에 기록한다.
+16. `CollapseHit`은 실제 피해가 Collapse Loop 중에 확정됐을 때 선택되는 Damage Reaction이다. Count,
+    Balance lifecycle serial, Loop TTL을 변경하거나 연장하지 않는다.
 
 ---
 
@@ -65,9 +70,13 @@ Parry CombatResultPacket
 | Collapse lifecycle | CollapseIn Started부터 CollapseOut Reset 또는 Abort까지의 보호된 수명 |
 | Collapse Loop | CollapseIn이 끝난 뒤 Idle locomotion 위에서 보이는 무력화 표현 |
 | Collapse Loop TTL | CollapseIn Completed 뒤부터 CollapseOut 요청까지의 Loop 유지 시간 |
-| `IsCollapseLoopPoseActive()` | Weak Loop pose를 보여야 하는지. `CollapseActive`, `CollapseOutPending`에서만 true |
+| `IsCollapsePoseActive()` | Collapse pose를 보여야 하는지. `CollapseInActive`, `CollapseLoopActive`, `CollapseOutPending`에서 true |
+| `IsCollapseLoopActive()` | 실제 Collapse Loop 구간인지. `CollapseLoopActive`에서만 true |
 | `IsBalanceLifecycleBlocking()` | 일반 Action / Movement를 차단해야 하는지. `Accumulating` 이외 state에서 true |
 | `ShouldSuppressCombatTargetFacing()` | Gameplay Focus / dynamic target-facing을 억제해야 하는지. In Started 뒤부터 Reset 전까지 true |
+| `EDamageDefenseOutcome` | Target의 방어 판정 사실. `None`, `Guard`, `Parry` |
+| `EDamageReactionOutcome` | Target이 확정한 피격 Reaction 결과. `None`, `Hit`, `BlockHit`, `Parry`, `CollapseHit`, `Dead` |
+| CollapseHit | `CommittedDamage > 0`이고 `IsCollapseLoopActive()`일 때 선택되는 Loop 전용 Damage Reaction |
 | Execution capability | 향후 Source/Target 협업 실행을 허용하는 별도 상태. R07에는 구현하지 않음 |
 | Abort | Reject, Interrupted, Notify 누락, Death 같은 실패·강제 종료에서 Count와 runtime을 안전하게 초기화하는 경로 |
 | Shutdown | EndPlay에서 gameplay delegate를 새로 발행하지 않고 timer와 runtime을 정리하는 silent teardown 경로 |
@@ -82,9 +91,9 @@ Parry CombatResultPacket
 | 책임 | 소유자 | 하지 않는 일 |
 | --- | --- | --- |
 | Count, Max, 잠금, lifecycle ID, Collapse Loop TTL | `UCBalanceComponent` | packet 수신·검증, montage 선택, Combat Participation 해제 |
-| Parry CombatResult 검증, Balance commit, CollapseIn/Out Reaction 요청, Balance 관련 Reaction event/Notify 전달 | `UCCombatSignalTargetComponent` | Count lifecycle 직접 수정, montage 실행 상태 소유 |
+| Damage / Defense / Health commit, `EDamageReactionOutcome` 확정, Parry CombatResult 검증, Balance commit, CollapseIn/Out Reaction 요청, Balance 관련 Reaction event/Notify 전달 | `UCCombatSignalTargetComponent` | Count lifecycle 직접 수정, montage 실행 상태 소유 |
 | CombatResult packet 수신과 TargetComponent forwarding | `ACPlayer`, `ACEnemy` | Count 누적, Reaction 직접 요청 |
-| CollapseIn / CollapseOut candidate, key resolve, intervention | `UCReactionOrchestratorComponent` | Balance Count 변경 |
+| Damage ReactionOutcome mapping, CollapseIn / CollapseOut candidate, key resolve, intervention | `UCReactionOrchestratorComponent` | Damage·Defense·Balance Count 결정 |
 | 실제 Reaction Started / terminal event | `UCReactionComponent` | Balance 의미 해석 |
 | locomotion 표현 | AnimBP | gameplay state 변경 |
 | Collapse 중 intent 억제 | AI Context / BT adapter | Evidence나 Assignment 해제 |
@@ -149,14 +158,15 @@ CollapseLoopTimer
 | --- | --- | --- |
 | `Accumulating` | 정상 누적 상태 | 허용 |
 | `CollapseInPending` | Max commit은 완료됐고 CollapseIn Started를 기다림 | 잠금 |
-| `CollapseActive` | CollapseIn 또는 Weak Loop가 진행 중인 상태 | 잠금 |
+| `CollapseInActive` | CollapseIn montage가 실행 중인 상태 | 잠금 |
+| `CollapseLoopActive` | CollapseIn이 정상 완료됐고 Loop TTL이 진행 중인 상태 | 잠금 |
 | `CollapseOutPending` | TTL 만료 뒤 CollapseOut request를 보냈고 실제 Started를 기다리는 상태 | 잠금 |
 | `CollapseRecovering` | CollapseOut이 Started됐고 Reset Notify를 기다리는 상태 | 잠금 |
 
 `WeakLoop`, `Executionable`을 별도 lifecycle state로 저장하지 않는다. `CollapseRecovering`은
 Weak Loop의 표현 상태가 아니라 Count reset 및 lock 해제 전의 CollapseOut 실행 수명을 표현한다.
 
-- Weak Loop는 `ExecutionState == Idle && IsCollapseLoopPoseActive()`의 표현 결과다.
+- Collapse Loop는 `ExecutionState == Idle && IsCollapsePoseActive()`의 표현 결과다.
 - CollapseIn / CollapseOut은 active Reaction Context로 확인한다.
 - Execution capability는 R08에서 실제 producer와 consumer가 생길 때 별도 상태로 도입한다.
 
@@ -164,15 +174,16 @@ Weak Loop의 표현 상태가 아니라 Count reset 및 lock 해제 전의 Colla
 
 `EBalanceLifecycleState` 하나에서 소비자별 query를 파생한다.
 
-| Lifecycle state | `IsCollapseLoopPoseActive()` | `IsBalanceLifecycleBlocking()` | `ShouldSuppressCombatTargetFacing()` |
-| --- | --- | --- | --- |
-| `Accumulating` | false | false | false |
-| `CollapseInPending` | false | true | false |
-| `CollapseActive` | true | true | true |
-| `CollapseOutPending` | true | true | true |
-| `CollapseRecovering` | false | true | true |
+| Lifecycle state | `IsCollapsePoseActive()` | `IsCollapseLoopActive()` | `IsBalanceLifecycleBlocking()` | `ShouldSuppressCombatTargetFacing()` |
+| --- | --- | --- | --- | --- |
+| `Accumulating` | false | false | false | false |
+| `CollapseInPending` | false | false | true | false |
+| `CollapseInActive` | true | false | true | true |
+| `CollapseLoopActive` | true | true | true | true |
+| `CollapseOutPending` | true | false | true | true |
+| `CollapseRecovering` | false | false | true | true |
 
-`CollapseOut Started`에서 pose query만 false가 된다. 이는 Weak_Out montage가 재생되는 동안
+`CollapseOut Started`에서 pose query만 false가 된다. 이는 Collapse_End montage가 재생되는 동안
 AnimBP가 normal locomotion 결과를 준비하게 하기 위함이다. Count lock, 일반 행동 차단, Facing
 suppression은 Reset Notify까지 유지한다.
 
@@ -235,10 +246,10 @@ CollapseInPending
 → CollapseIn request
 → ReactionComponent Started(full context)
 → BalanceLifecycleSerial / Global key 검증
-→ CollapseActive
+→ CollapseInActive
 ```
 
-`Accepted` 반환만으로 `CollapseActive`로 전이하면 안 된다. request가 수락됐더라도 실제 실행
+`Accepted` 반환만으로 `CollapseInActive`로 전이하면 안 된다. request가 수락됐더라도 실제 실행
 시작이 누락될 수 있기 때문이다. CollapseIn Started가 pose, Facing suppression, lifecycle 시작의
 실제 권위다.
 
@@ -246,6 +257,7 @@ CollapseIn Started 이후:
 
 ```text
 CollapseIn Completed
+→ CollapseLoopActive
 → Collapse Loop TTL 시작
 
 CollapseIn Interrupted / Ignored
@@ -262,7 +274,7 @@ CollapseIn이 완료되면 Reaction state는 Idle로 복귀한다. AnimBP는 다
 
 ```text
 ExecutionState == Idle
-AND IsCollapseLoopPoseActive() == true
+AND IsCollapsePoseActive() == true
 → Collapse Loop overlay
 ```
 
@@ -277,7 +289,7 @@ Collapse Loop TTL 만료
 → CollapseOut request
 → CollapseOut Started
 → CollapseRecovering
-→ IsCollapseLoopPoseActive() = false
+→ IsCollapsePoseActive() = false
 → Reset Notify
 → Count = 0
 → Accumulating
@@ -308,6 +320,7 @@ Balance lifecycle Reaction은 특정 DamageSpec에 종속되지 않는다.
 ```text
 CollapseIn  = Global + CollapseIn  + INDEX_NONE
 CollapseOut = Global + CollapseOut + INDEX_NONE
+CollapseHit = DamageSpec + CollapseHit + INDEX_NONE
 ```
 
 따라서 `FReactionDataKey`는 기존 DamageSpec mode의 직렬화 호환을 유지하면서 Global match mode와
@@ -325,6 +338,66 @@ Reaction key match mode (Global)
 
 별도 `BalanceStage` enum은 만들지 않는다. stage 의미는 ReactionType과 lifecycle state의 조합으로
 판별할 수 있다.
+
+### 8.1 Damage Reaction Outcome 계약
+
+`FCombatSignalTargetResult`은 방어 판정과 최종 피격 표현을 분리해 보존한다.
+
+```text
+EDamageDefenseOutcome
+→ 방어 사실: None / Guard / Parry
+
+EDamageReactionOutcome
+→ 표현 결과: None / Hit / BlockHit / Parry / CollapseHit / Dead
+```
+
+`UCCombatSignalTargetComponent`는 Damage와 Health commit이 끝난 뒤 다음 순서로
+`ReactionOutcome`을 확정한다.
+
+```text
+Dead transition
+→ Dead
+
+DefenseOutcome = Parry
+→ Parry
+
+DefenseOutcome = Guard
+→ BlockHit
+
+CommittedDamage > 0
+AND IsCollapseLoopActive() == true
+→ CollapseHit
+
+CommittedDamage > 0
+→ Hit
+```
+
+`UCReactionOrchestratorComponent`는 Balance, Defense, HP를 다시 해석하지 않는다.
+Packet의 `ReactionOutcome`을 `EReactionType`으로 mapping하고 ReactionData / Executor를
+resolve·orchestrate한다. 따라서 Debug와 Packet audit은 Defense와 Reaction을 각각 확인할 수 있다.
+
+`CollapseHit`은 `CollapseLoopActive`에서만 선택한다. CollapseIn montage 실행 중인
+`CollapseInActive`, CollapseOut 요청·복구 구간에서는 선택하지 않는다. 이는 In/Out lifecycle을
+별도 피격 표현이 중단시키지 않게 하기 위한 계약이다.
+
+### 8.2 CollapseHit 실행 계약
+
+```text
+CollapseLoopActive
+→ 실제 Damage 확정
+→ DamageReactionOutcome = CollapseHit
+→ UCReaction_CollapseHit montage 재생
+→ terminal event
+→ 기존 Collapse Loop pose로 복귀
+```
+
+CollapseHit은 Balance Count, BalanceLifecycleSerial, Collapse Loop TTL을 변경하거나 연장하지 않는다.
+CollapseHit executor는 intervention 예외를 직접 소유하지 않는다. 실행 중인 CollapseHit은
+ReactionData의 `AllowInterventionRules`에서 incoming `CollapseOut`을 `Always`로 허용해 정상
+lifecycle recovery를 통과시킨다. Dead는 기존 Orchestrator 강제 intervention 규칙을 따른다.
+첫 구현에서 `WantInterventionRules`는 비워 두므로 CollapseHit은 다른 실행을 강제로 중단하지 않으며,
+반복 CollapseHit도 재시작하지 않는다. 향후 연출 요구가 생기면 Want / Allow rule 조합만으로 별도
+정책을 연다.
 
 ---
 
@@ -344,7 +417,7 @@ Dead
 ```
 
 ```text
-CollapseInPending / CollapseActive / CollapseOutPending / CollapseRecovering
+CollapseInPending / CollapseInActive / CollapseLoopActive / CollapseOutPending / CollapseRecovering
 → EAIIntentState::Incapacitated
 
 CollapseIn / CollapseOut Reaction 실행 중
@@ -478,7 +551,7 @@ position / facing alignment
 complete / cancel / death 정책
 ```
 
-`IsCollapseLoopPoseActive()`와 미래 `bCanStartExecution`은 같은 의미가 아니며, Execution
+`IsCollapsePoseActive()`와 미래 `bCanStartExecution`은 같은 의미가 아니며, Execution
 availability가 Collapse montage의 어느 Notify 또는 Loop 시점에 열리는지도 R08의 소비자 계약과 함께
 결정한다.
 
@@ -490,16 +563,17 @@ R07의 수동 Editor 작업은 코드 계약이 확정된 뒤 수행한다.
 
 | 대상 | Editor 작업 | 완료 조건 |
 | --- | --- | --- |
-| `Weak_In` | `UCAnimNotify_CompleteReaction` 배치 | CollapseIn이 terminal event를 남긴다. |
-| `Weak_Out` | 실제 회복 frame에 `UCAnimNotify_ResetBalanceLifecycle`, 그 뒤 `UCAnimNotify_CompleteReaction` 배치 | Reset 이후에만 Out terminal이 발생한다. |
-| `BP_CEnemy` | Reaction Data에 `Global + CollapseIn + INDEX_NONE`, `Global + CollapseOut + INDEX_NONE` entry를 각각 추가하고 `Weak_In` / `Weak_Out`, `UCReaction_CollapseIn` / `UCReaction_CollapseOut`을 연결 | Global key에 DamageSpec 값이 남아도 lookup 의미에는 영향이 없지만, entry 자체는 이 두 key와 정확히 일치한다. |
+| `Collapse_Start_Montage` | `UCAnimNotify_CompleteReaction` 배치 | CollapseIn이 terminal event를 남긴다. |
+| `Collapse_End_Montage` | 실제 회복 frame에 `UCAnimNotify_ResetBalanceLifecycle`, 그 뒤 `UCAnimNotify_CompleteReaction` 배치 | Reset 이후에만 Out terminal이 발생한다. |
+| `Collapse_Hit01_Montage` | `Collapse_Hit01`을 source로 montage를 만들고 `UCAnimNotify_CompleteReaction` 배치 | 정상 Complete 뒤에는 Loop pose로 복귀하고, CollapseOut interruption이면 recovery로 전환한다. |
+| `BP_CEnemy` | Reaction Data에 `Global + CollapseIn + INDEX_NONE`, `Global + CollapseOut + INDEX_NONE`, `DamageSpec + CollapseHit + INDEX_NONE` entry를 추가하고 해당 montage 및 executor를 연결한다. CollapseHit의 `WantInterventionRules`는 비우고, `AllowInterventionRules`에는 incoming `CollapseOut`, `Always`를 추가한다. | CollapseIn/Out은 Global, CollapseHit은 기존 DamageSpec fallback 계약을 사용한다. CollapseOut 허용은 executor 예외가 아닌 data policy다. |
 | `BP_AIPerf_Enemy` | parent 상속이 두 Reaction Data와 Component를 그대로 받는지 확인 | AIPerf actor도 같은 Collapse lifecycle을 실행한다. |
-| `ABP_Character` | Idle overlay에 `bIsCollapsePose && CurrentExecutionState == Idle` 조건으로 `Weak_Loop`을 연결 | Dead는 계속 최상위 우선순위이고, CollapseOut Started 직후 locomotion 결과를 준비한다. |
+| `ABP_Character` | Idle overlay에 `bIsCollapsePose && CurrentExecutionState == Idle` 조건으로 `Collapse_Loop`을 연결하고, Full-body Reaction Slot이 그 뒤에서 CollapseHit montage를 재생하는지 확인 | Dead는 계속 최상위 우선순위이고, CollapseOut Started 직후 locomotion 결과를 준비한다. |
 | `ABP_AIPerf_Character` | 위 AnimBP 계약을 동일하게 반영 | AIPerf refresh throttle과 무관하게 lifecycle delegate 값이 즉시 투영된다. |
 | `BT_Default` / `BT_AIPerf_Default` | `Incapacitated` Intent의 passive branch를 추가한다. branch는 `IsBalanceLifecycleBlocking()`이 false가 될 때까지 행동 요청을 보내지 않는다. | Collapse 중 기존 HitReact/Combat/Participation branch가 재진입하지 않는다. |
 | `BB_Default` / `BB_AIPerf_Default` | enum key가 `Incapacitated` 값을 해석하는지 compile·save로 확인 | 새 Blackboard key는 만들지 않는다. |
 
-`Weak_Loop`은 montage가 아니라 AnimBP 표현이다. 따라서 Loop TTL은 CollapseIn Completed event에서
+`Collapse_Loop`은 montage가 아니라 AnimBP 표현이다. 따라서 Loop TTL은 CollapseIn Completed event에서
 시작하며 Loop에 별도 Complete Notify를 추가하지 않는다. `ResetBalanceLifecycle` Notify는
 `CompleteReaction`보다 반드시 먼저 배치한다.
 
@@ -515,8 +589,10 @@ Execution availability Notify는 R08 전에는 추가하지 않는다.
 | Parry 후 Max 미도달 | Count만 증가, CollapseIn request 없음 |
 | threshold 최초 도달 | Pending과 lock이 먼저 commit되고 CollapseIn request는 한 번 |
 | Pending 중 추가 Parry | Count와 lifecycle 변경 없음 |
-| CollapseIn Started | `CollapseActive`, Weak Loop pose 준비 및 Facing suppression 시작 |
-| CollapseIn Completed | Collapse Loop TTL 시작 |
+| CollapseIn Started | `CollapseInActive`, Collapse pose 준비 및 Facing suppression 시작 |
+| CollapseIn Completed | `CollapseLoopActive`, Collapse Loop TTL 시작 |
+| Collapse Loop 중 실제 피해 | `Defense: None`, `Reaction: CollapseHit`, 전용 montage 재생 뒤 Loop pose 복귀 |
+| CollapseHit 실행 중 TTL 만료 | CollapseOut이 CollapseHit을 중단하고 정상 recovery 진행 |
 | CollapseIn Reject / Interrupt / Ignore | Abort, Count 0, unlock |
 | Loop TTL 만료 | `CollapseOutPending`, CollapseOut request, Weak Loop pose 유지 |
 | CollapseOut Started | `CollapseRecovering`, Weak Loop pose 해제, normal locomotion 결과 준비, lock/Facing suppression 유지 |

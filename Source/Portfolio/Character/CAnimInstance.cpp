@@ -117,7 +117,7 @@ void UCAnimInstance::BindComponentEvents()
 	if (IsValid(BalanceComp_Cached))
 	{
 		BalanceComp_Cached->OnBalanceLifecycleStateChanged.AddUObject(this, &UCAnimInstance::HandleBalanceLifecycleStateChanged);
-		bIsCollapsePose = BalanceComp_Cached->IsCollapseLoopPoseActive();
+		bIsCollapsePose = BalanceComp_Cached->IsCollapsePoseActive();
 	}
 }
 
@@ -165,7 +165,7 @@ void UCAnimInstance::RefreshStateParameters()
 	}
 
 	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
-	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseLoopPoseActive();
+	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapsePoseActive();
 	CurrentExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Max;
 }
 
@@ -261,5 +261,5 @@ void UCAnimInstance::HandleDeadStateChanged(EDeadState InPreviousDeadState, EDea
 
 void UCAnimInstance::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InCurrentState)
 {
-	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseLoopPoseActive();
+	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapsePoseActive();
 }

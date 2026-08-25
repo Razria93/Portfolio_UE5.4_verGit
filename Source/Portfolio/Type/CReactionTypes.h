@@ -21,6 +21,7 @@ enum class EReactionType : uint8
 	All,		// Wildcard
 	CollapseIn,
 	CollapseOut,
+	CollapseHit,
 
 	Max,		// Sentinel
 };

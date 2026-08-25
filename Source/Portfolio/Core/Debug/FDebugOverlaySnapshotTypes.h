@@ -52,6 +52,7 @@ struct PORTFOLIO_API FDebugOverlayCombatSummary
 	int32 HitWindowId = INDEX_NONE;
 	FString HitWindowState;
 	FString DefenseOutcome;
+	FString ReactionOutcome;
 	bool bHasDamageCommit = false;
 	bool bDamageCommitted = false;
 	bool bHasDamageBreakdown = false;

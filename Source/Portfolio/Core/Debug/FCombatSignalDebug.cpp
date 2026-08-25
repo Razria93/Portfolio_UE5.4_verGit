@@ -310,8 +310,9 @@ void FCombatSignalDebug::RecordTargetAcceptedForAudit(const FCombatSignalTargetP
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(
-		TEXT("[Combat|SignalTarget|Accepted] Outcome=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f | HP=%.3f->%.3f | DeadState=%s->%s"),
+		TEXT("[Combat|SignalTarget|Accepted] Defense=%s | Reaction=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f | HP=%.3f->%.3f | DeadState=%s->%s"),
 		*UEnum::GetValueAsString(InPacket.Result.DefenseOutcome),
+		*UEnum::GetValueAsString(InPacket.Result.ReactionOutcome),
 		*GetNameSafe(InPacket.Context.SourceActor),
 		*GetNameSafe(InPacket.Context.TargetActor),
 		*GetNameSafe(InPacket.Context.DamageCauser),
@@ -340,9 +341,10 @@ void FCombatSignalDebug::RecordTargetRejectedForAudit(const FCombatSignalTargetP
 	if (!ShouldAuditCombatSignal()) return;
 
 	FLog::Log(FString::Printf(
-		TEXT("[Combat|SignalTarget|Rejected] Reason=%s | Outcome=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f"),
+		TEXT("[Combat|SignalTarget|Rejected] Reason=%s | Defense=%s | Reaction=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f"),
 		*UEnum::GetValueAsString(InPacket.Result.RejectReason),
 		*UEnum::GetValueAsString(InPacket.Result.DefenseOutcome),
+		*UEnum::GetValueAsString(InPacket.Result.ReactionOutcome),
 		*GetNameSafe(InPacket.Context.SourceActor),
 		*GetNameSafe(InPacket.Context.TargetActor),
 		*GetNameSafe(InPacket.Context.DamageCauser),
@@ -386,10 +388,11 @@ void FCombatSignalDebug::PrintTargetPacketDebug(const FCombatSignalTargetPacket&
 	if (!ShouldPrintCombatSignalDebug()) return;
 
 	FLog::Log(FString::Printf(
-		TEXT("[Combat|SignalTarget|PacketDump] Accepted=%s | Reason=%s | Outcome=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f | HP=%.3f->%.3f"),
+		TEXT("[Combat|SignalTarget|PacketDump] Accepted=%s | Reason=%s | Defense=%s | Reaction=%s | Source=%s | Target=%s | DamageCauser=%s | Instigator=%s | %s | RequestDamage=%.3f | MitigatedDamage=%.3f | FinalTakenDamage=%.3f | CommittedDamage=%.3f | HP=%.3f->%.3f"),
 		InPacket.Result.bAccepted ? TEXT("true") : TEXT("false"),
 		*UEnum::GetValueAsString(InPacket.Result.RejectReason),
 		*UEnum::GetValueAsString(InPacket.Result.DefenseOutcome),
+		*UEnum::GetValueAsString(InPacket.Result.ReactionOutcome),
 		*GetNameSafe(InPacket.Context.SourceActor),
 		*GetNameSafe(InPacket.Context.TargetActor),
 		*GetNameSafe(InPacket.Context.DamageCauser),

@@ -81,7 +81,24 @@ CombatSignalTargetComponent
 
 AnimBP, Enemy, Targeting, Action / Reaction gate는 HealthComponent의 생명 상태 또는 그 이벤트를 관찰한다. 별도의 경쟁하는 Dead 원본을 만들지 않는다.
 
-### 2.3 DeadIn, DeadLoop, Dissolve의 책임을 분리한다
+### 2.3 방어 판정과 피격 Reaction 결과를 분리한다
+
+`EDamageDefenseOutcome`은 Target이 Damage를 어떤 방어 판정으로 해석했는지의 사실만 나타낸다.
+`EDamageReactionOutcome`은 commit 뒤 Target이 표현해야 할 최종 Reaction을 나타낸다. 두 값은
+`FCombatSignalTargetResult`에 함께 기록되고, `UCReactionOrchestratorComponent`는 후자만
+`EReactionType`으로 mapping한다.
+
+```text
+DefenseOutcome: None / Guard / Parry
+ReactionOutcome: None / Hit / BlockHit / Parry / CollapseHit / Dead
+```
+
+따라서 Guard는 `DefenseOutcome = Guard`, `ReactionOutcome = BlockHit`으로 남고, Collapse Loop 중의
+정상 피해는 `DefenseOutcome = None`, `ReactionOutcome = CollapseHit`으로 남는다. Reaction
+Orchestrator가 Defense, HP, Balance lifecycle을 다시 해석하지 않도록 TargetComponent가 Health commit
+뒤 Outcome을 확정한다.
+
+### 2.4 DeadIn, DeadLoop, Dissolve의 책임을 분리한다
 
 ```text
 DeadIn
@@ -99,7 +116,7 @@ Destroy
 - ACEnemy Death Lifecycle이 최종 결정
 ```
 
-### 2.4 정상 Destroy 시점은 표현 자원의 완료 이벤트가 결정한다
+### 2.5 정상 Destroy 시점은 표현 자원의 완료 이벤트가 결정한다
 
 정상 경로에서 고정 Destroy Timer로 Dissolve 시간을 추측하지 않는다.
 

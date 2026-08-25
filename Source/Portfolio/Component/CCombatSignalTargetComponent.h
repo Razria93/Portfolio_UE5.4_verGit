@@ -116,6 +116,7 @@ private:
 	void ComputeTargetDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	float ComputeMitigatedDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	float ComputeFinalTakenDamage(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
+	void ResolveDamageReactionOutcome(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const;
 	FCombatSignalTargetResult BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const;
 
 private:

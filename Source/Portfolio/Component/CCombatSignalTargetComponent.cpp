@@ -198,6 +198,7 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 
 	// Apply: commit accepted damage to target-side resource state.
 	CommitCombatSignalTarget(combatSignalTargetContext);
+	ResolveDamageReactionOutcome(combatSignalTargetContext);
 
 	// Packet: combine payload, context, and result for notify/debug consumers.
 	const FCombatSignalTargetResult committedResult = BuildResult(combatSignalTargetContext);
@@ -520,6 +521,46 @@ float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTarget
 	return FMath::Max(0.f, finalTakenDamage);
 }
 
+void UCCombatSignalTargetComponent::ResolveDamageReactionOutcome(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
+{
+	InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::None;
+
+	if (!InOutCombatSignalTargetContext.bAccepted) return;
+
+	if (InOutCombatSignalTargetContext.DeadState_Before == EDeadState::Alive
+		&& InOutCombatSignalTargetContext.DeadState_After != EDeadState::Alive)
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Dead;
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.DefenseOutcome == EDamageDefenseOutcome::Parry)
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Parry;
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.DefenseOutcome == EDamageDefenseOutcome::Guard)
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::BlockHit;
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.CommittedDamage <= KINDA_SMALL_NUMBER
+		|| InOutCombatSignalTargetContext.DeadState_After != EDeadState::Alive)
+	{
+		return;
+	}
+
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsCollapseLoopActive())
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::CollapseHit;
+		return;
+	}
+
+	InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Hit;
+}
+
 FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const
 {
 	FCombatSignalTargetResult combatSignalTargetResult = FCombatSignalTargetResult();
@@ -527,6 +568,7 @@ FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FComb
 	combatSignalTargetResult.bAccepted = InCombatSignalTargetContext.bAccepted;
 	combatSignalTargetResult.RejectReason = InCombatSignalTargetContext.RejectReason;
 	combatSignalTargetResult.DefenseOutcome = InCombatSignalTargetContext.DefenseOutcome;
+	combatSignalTargetResult.ReactionOutcome = InCombatSignalTargetContext.ReactionOutcome;
 	combatSignalTargetResult.bShouldCommitDamage = InCombatSignalTargetContext.bShouldCommitDamage;
 
 	combatSignalTargetResult.DamageSpecKey = InCombatSignalTargetContext.DamageSpecKey;

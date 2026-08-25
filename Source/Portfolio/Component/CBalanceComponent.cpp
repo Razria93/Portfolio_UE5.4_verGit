@@ -31,10 +31,16 @@ void UCBalanceComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 
 // Query: Balance State
 
-bool UCBalanceComponent::IsCollapseLoopPoseActive() const
+bool UCBalanceComponent::IsCollapsePoseActive() const
 {
-	return BalanceLifecycleState == EBalanceLifecycleState::CollapseActive
+	return BalanceLifecycleState == EBalanceLifecycleState::CollapseInActive
+		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseLoopActive
 		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseOutPending;
+}
+
+bool UCBalanceComponent::IsCollapseLoopActive() const
+{
+	return BalanceLifecycleState == EBalanceLifecycleState::CollapseLoopActive;
 }
 
 bool UCBalanceComponent::IsBalanceLifecycleBlocking() const
@@ -44,7 +50,8 @@ bool UCBalanceComponent::IsBalanceLifecycleBlocking() const
 
 bool UCBalanceComponent::ShouldSuppressCombatTargetFacing() const
 {
-	return BalanceLifecycleState == EBalanceLifecycleState::CollapseActive
+	return BalanceLifecycleState == EBalanceLifecycleState::CollapseInActive
+		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseLoopActive
 		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseOutPending
 		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseRecovering;
 }
@@ -114,7 +121,7 @@ bool UCBalanceComponent::HandleCollapseReactionExecutionStarted(const FReactionE
 	if (MatchesLifecycleContext(InContext, EReactionType::CollapseIn))
 	{
 		if (BalanceLifecycleState != EBalanceLifecycleState::CollapseInPending) return false;
-		SetBalanceLifecycleState(EBalanceLifecycleState::CollapseActive);
+		SetBalanceLifecycleState(EBalanceLifecycleState::CollapseInActive);
 		return true;
 	}
 
@@ -137,8 +144,9 @@ void UCBalanceComponent::HandleCollapseReactionExecutionTerminal(const FReaction
 	if (reactionType == EReactionType::CollapseIn)
 	{
 		if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed
-			&& BalanceLifecycleState == EBalanceLifecycleState::CollapseActive)
+			&& BalanceLifecycleState == EBalanceLifecycleState::CollapseInActive)
 		{
+			SetBalanceLifecycleState(EBalanceLifecycleState::CollapseLoopActive);
 			StartCollapseLoopTimer();
 			return;
 		}
@@ -249,7 +257,7 @@ void UCBalanceComponent::HandleCollapseLoopExpired()
 
 void UCBalanceComponent::RequestCollapseOutFromLoopExpiry()
 {
-	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseActive) return;
+	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseLoopActive) return;
 
 	ClearCollapseLoopTimer();
 	SetBalanceLifecycleState(EBalanceLifecycleState::CollapseOutPending);

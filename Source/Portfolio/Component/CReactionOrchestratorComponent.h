@@ -52,7 +52,7 @@ private:
 private:
 	// Candidate Resolve - Damage
 	bool ResolveDamageReactionCandidate(const FDamageReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
-	EReactionType ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const;
+	EReactionType ResolveDamageReactionType(EDamageReactionOutcome InOutcome) const;
 
 	// Candidate Resolve - Balance Lifecycle
 	bool ResolveBalanceLifecycleReactionCandidate(const FBalanceLifecycleReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;

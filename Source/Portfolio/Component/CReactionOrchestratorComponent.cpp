@@ -130,7 +130,7 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 		return false;
 	}
 
-	const EReactionType reactionType = ResolveDamageReactionType(InIncomingRequest);
+	const EReactionType reactionType = ResolveDamageReactionType(InIncomingRequest.CombatSignalTargetPacket.Result.ReactionOutcome);
 
 	if (reactionType == EReactionType::None || reactionType == EReactionType::Max)
 	{
@@ -145,33 +145,17 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 	return true;
 }
 
-EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const
+EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const EDamageReactionOutcome InOutcome) const
 {
-	const FCombatSignalTargetResult& combatSignalTargetResult = InIncomingRequest.CombatSignalTargetPacket.Result;
-
-	if (!combatSignalTargetResult.bAccepted) return EReactionType::None;
-
-	if (combatSignalTargetResult.DeadState_Before == EDeadState::Alive && combatSignalTargetResult.DeadState_After != EDeadState::Alive)
+	switch (InOutcome)
 	{
-		return EReactionType::Dead;
+	case EDamageReactionOutcome::Hit: return EReactionType::Hit;
+	case EDamageReactionOutcome::BlockHit: return EReactionType::BlockHit;
+	case EDamageReactionOutcome::Parry: return EReactionType::Parry;
+	case EDamageReactionOutcome::CollapseHit: return EReactionType::CollapseHit;
+	case EDamageReactionOutcome::Dead: return EReactionType::Dead;
+	default: return EReactionType::None;
 	}
-
-	if (combatSignalTargetResult.DefenseOutcome == EDamageDefenseOutcome::Parry)
-	{
-		return EReactionType::Parry;
-	}
-
-	if (combatSignalTargetResult.DefenseOutcome == EDamageDefenseOutcome::Guard)
-	{
-		return EReactionType::BlockHit;
-	}
-
-	if (combatSignalTargetResult.CommittedDamage > KINDA_SMALL_NUMBER && combatSignalTargetResult.DeadState_After == EDeadState::Alive)
-	{
-		return EReactionType::Hit;
-	}
-
-	return EReactionType::None;
 }
 
 bool UCReactionOrchestratorComponent::ResolveBalanceLifecycleReactionCandidate(const FBalanceLifecycleReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const

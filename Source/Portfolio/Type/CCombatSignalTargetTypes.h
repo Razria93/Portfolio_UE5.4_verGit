@@ -98,6 +98,9 @@ public:
 	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
 
 	UPROPERTY(Transient)
+	EDamageReactionOutcome ReactionOutcome = EDamageReactionOutcome::None;
+
+	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;
 
 	UPROPERTY(Transient)
@@ -144,6 +147,9 @@ public:
 
 	UPROPERTY(Transient)
 	EDamageDefenseOutcome DefenseOutcome = EDamageDefenseOutcome::None;
+
+	UPROPERTY(Transient)
+	EDamageReactionOutcome ReactionOutcome = EDamageReactionOutcome::None;
 
 	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;
