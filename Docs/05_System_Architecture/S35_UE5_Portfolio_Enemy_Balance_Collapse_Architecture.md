@@ -532,28 +532,25 @@ EndPlay에서는 gameplay delegate를 새로 발행하지 않는 silent shutdown
 
 ---
 
-## 11. Future Execution Boundary
+## 11. Execution Extension Boundary
 
-R07은 timeout 기반 Collapse lifecycle까지만 구현한다.
-
-```text
-CollapseIn → Collapse Loop → TTL → CollapseOut → Reset
-```
-
-R08에서 실제 Source/Target Execution 협업이 확정된 뒤에만 다음을 추가한다.
+R07의 자연 Collapse 흐름은 다음과 같다.
 
 ```text
-bCanStartExecution
-Execution consume
-Source / Target reservation
-CombatTarget revision 재검증
-position / facing alignment
-complete / cancel / death 정책
+CollapseIn → CollapseLoopActive → TTL → CollapseOut → Reset → Accumulating
 ```
 
-`IsCollapsePoseActive()`와 미래 `bCanStartExecution`은 같은 의미가 아니며, Execution
-availability가 Collapse montage의 어느 Notify 또는 Loop 시점에 열리는지도 R08의 소비자 계약과 함께
-결정한다.
+R08 Execution은 위 흐름에 `CollapseOut`를 하나 더 호출하는 기능이 아니다. 최종 계약은
+[S36 Execution Collaboration Architecture](S36_UE5_Portfolio_Execution_Collaboration_Architecture.md)가 소유한다.
+
+- Standard Execution은 opportunity 소비 후 Balance-owned `Execution Down` 상태로 전이하고,
+  `ExecutionRecovery`가 끝난 뒤에만 Balance를 reset한다.
+- Lethal Execution은 target Health의 `Dead` 전이와 execution-specific death presentation으로
+  handoff하며, generic `Dead` reaction을 중복 요청하지 않는다.
+- `IsExecutionOpportunityAvailable()`은 `CollapseLoopActive`이면서 reservation이 없는 경우에만
+  true다. 별도의 `bExecutable` 상태는 두지 않는다.
+- S35는 자연 TTL/recovery와 Balance 기본 query를 소유하며, pair collaboration·commit·cancel은
+  S36의 책임이다.
 
 ---
 
