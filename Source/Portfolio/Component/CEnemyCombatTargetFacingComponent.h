@@ -21,9 +21,11 @@ class PORTFOLIO_API UCEnemyCombatTargetFacingComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	// Construction
 	UCEnemyCombatTargetFacingComponent();
 
 private:
+	// Component References
 	UPROPERTY(Transient)
 	UCCombatTargetComponent* CombatTargetComponent_Injected = nullptr;
 
@@ -36,33 +38,56 @@ private:
 	UPROPERTY(Transient)
 	UCBalanceComponent* BalanceComponent_Injected = nullptr;
 
+	// AI Controller Binding
 	UPROPERTY(Transient)
-	AAIController* AIController_Injected = nullptr;
+	AAIController* AIController_Bound = nullptr;
 
-	bool bCombatTargetFacingSyncPending = false;
-	bool bCombatTargetFacingSyncQueued = false;
-	FTimerHandle CombatTargetFacingSyncTimerHandle;
+	// Deferred Facing Synchronization Runtime
+	bool bDeferredCombatTargetFacingSyncPending = false;
+	bool bDeferredCombatTargetFacingSyncQueued = false;
+	FTimerHandle DeferredCombatTargetFacingSyncTimerHandle;
 
 public:
+	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
+
+	// AI Controller Binding
 	void SetAIController(AAIController* InAIController);
 	void ClearAIController();
 
 protected:
+	// Lifecycle
 	virtual void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
 
 private:
+	// Component Event Binding
+	void BindCombatTargetFacingEvents();
+	void UnbindCombatTargetFacingEvents();
+
+private:
+	// Event Handlers
 	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 	void HandleBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState, EBalanceLifecycleState InCurrentState);
-	void SynchronizeCombatTargetFacing();
-	void QueueCombatTargetFacingSync();
-	void ResolveQueuedCombatTargetFacingSync();
-	void CancelQueuedCombatTargetFacingSync();
 
 private:
-	bool ShouldDeferCombatTargetFacing() const;
-	bool IsCombatTargetFacingSuppressed() const;
+	// Deferred Facing Synchronization
+	void QueueDeferredCombatTargetFacingSync();
+	void ResolveDeferredCombatTargetFacingSync();
+	void CancelDeferredCombatTargetFacingSync();
+
+private:
+	// Facing Synchronization
+	void SynchronizeCombatTargetFacing();
 	void ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot);
 	void ClearCombatTargetFacing();
+
+private:
+	// Facing Policy
+	bool ShouldDeferCombatTargetFacingForReaction() const;
+	bool IsCombatTargetFacingSuppressedByBalance() const;
+
+private:
+	// Component Reference Validation
+	bool ValidateRequiredComponentReferences() const;
 };
