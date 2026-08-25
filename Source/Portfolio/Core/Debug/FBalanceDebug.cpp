@@ -59,7 +59,7 @@ namespace
 	FString segments;
 	for (int32 index = 0; index < threshold; ++index)
 	{
-			segments += index < InSnapshot.CurrentCount ? TEXT("■") : TEXT("□");
+			segments += index < InSnapshot.CurrentCount ? TEXT("\u25A0") : TEXT("\u25A1");
 	}
 		return segments;
 	}
