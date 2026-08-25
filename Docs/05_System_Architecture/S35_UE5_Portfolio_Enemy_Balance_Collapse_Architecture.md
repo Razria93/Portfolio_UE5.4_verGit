@@ -69,7 +69,8 @@ Parry CombatResultPacket
 | `IsBalanceLifecycleBlocking()` | 일반 Action / Movement를 차단해야 하는지. `Accumulating` 이외 state에서 true |
 | `ShouldSuppressCombatTargetFacing()` | Gameplay Focus / dynamic target-facing을 억제해야 하는지. In Started 뒤부터 Reset 전까지 true |
 | Execution capability | 향후 Source/Target 협업 실행을 허용하는 별도 상태. R07에는 구현하지 않음 |
-| Abort | Reject, Interrupted, Notify 누락, Death, EndPlay 같은 실패·강제 종료에서 Count와 runtime을 안전하게 초기화하는 경로 |
+| Abort | Reject, Interrupted, Notify 누락, Death 같은 실패·강제 종료에서 Count와 runtime을 안전하게 초기화하는 경로 |
+| Shutdown | EndPlay에서 gameplay delegate를 새로 발행하지 않고 timer와 runtime을 정리하는 silent teardown 경로 |
 
 이 query들은 저장 상태가 아니라 `EBalanceLifecycleState`에서 파생한다. 따라서 pose 전환,
 행동 차단, Facing 억제의 서로 다른 수명을 별도 bool로 중복 소유하지 않는다.
@@ -103,13 +104,13 @@ ACPlayer / ACEnemy::ReceiveCombatResultPacket
 ACEnemy::ReceiveCombatResultPacket
 → UCCombatSignalTargetComponent::RequestCombatResultTarget
 → ProcessCombatResultTarget / HandleParryCombatResult
-→ UCBalanceComponent::AdvanceFromParry
+→ UCBalanceComponent::AdvanceBalanceFromParry
 → FBalanceLifecyclePacket
 → UCCombatSignalTargetComponent::DispatchBalanceLifecycleReaction
   → FBalanceLifecycleReactionRequest 조립
 → UCReactionOrchestratorComponent::RequestBalanceLifecycleReaction
-→ OnBalanceLifecycleReactionResolved(BalanceLifecyclePacket, Result)
-→ UCBalanceComponent::HandleBalanceLifecycleReactionResolved
+→ OnBalanceLifecycleReactionRequestResolved(BalanceLifecyclePacket, Result)
+→ UCBalanceComponent::HandleBalanceLifecycleReactionRequestResolved
   → accepted면 Started lifecycle event 대기
   → rejected / ignored면 같은 BalanceLifecycleSerial과 Pending state일 때만 Abort
 
@@ -119,12 +120,12 @@ UCReactionComponent lifecycle event
 
 UCReactionComponent ResetBalance notify command
 → UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand
-→ UCBalanceComponent::CommitCollapseReset
+→ UCBalanceComponent::TryCommitCollapseReset
 
-UCBalanceComponent Collapse Loop TTL event
-→ UCCombatSignalTargetComponent::HandleBalanceCollapseLoopExpired
-→ BeginCollapseOutRequest
-→ FBalanceLifecyclePacket
+UCBalanceComponent Collapse Loop TTL expiry
+→ UCBalanceComponent internally transitions to CollapseOutPending
+→ OnBalanceLifecycleReactionRequested(FBalanceLifecyclePacket)
+→ UCCombatSignalTargetComponent::HandleBalanceLifecycleReactionRequested
 → UCCombatSignalTargetComponent::DispatchBalanceLifecycleReaction
 ```
 
@@ -175,8 +176,8 @@ Weak Loop의 표현 상태가 아니라 Count reset 및 lock 해제 전의 Colla
 AnimBP가 normal locomotion 결과를 준비하게 하기 위함이다. Count lock, 일반 행동 차단, Facing
 suppression은 Reset Notify까지 유지한다.
 
-`UCBalanceComponent`의 구현 API는 `AdvanceFromParry`, `HandleCollapseReactionStarted`,
-`HandleCollapseReactionTerminal`, `BeginCollapseOutRequest`, `CommitCollapseReset`,
+`UCBalanceComponent`의 구현 API는 `AdvanceBalanceFromParry`, `HandleCollapseReactionExecutionStarted`,
+`HandleCollapseReactionExecutionTerminal`, `TryCommitCollapseReset`,
 `AbortBalanceLifecycle`로 구성한다. Parry packet은 TargetActor와 CombatSignalResultSerial로
 중복 수신을 방지한다.
 

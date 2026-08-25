@@ -24,11 +24,12 @@ enum class EBalanceAbortReason : uint8
 
 	CollapseInRejected,
 	CollapseInInterrupted,
+
 	CollapseOutRejected,
 	CollapseOutInterrupted,
+
 	ResetNotifyMissing,
 	OwnerDeath,
-	EndPlay,
 
 	Max,
 };

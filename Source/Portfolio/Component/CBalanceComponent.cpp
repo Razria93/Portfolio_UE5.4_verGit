@@ -8,16 +8,50 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 
+// Construction
+
 UCBalanceComponent::UCBalanceComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+// Component Reference
+
 void UCBalanceComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
 }
 
-FBalanceAdvanceResult UCBalanceComponent::AdvanceFromParry(const FCombatResultPacket& InPacket)
+// Lifecycle
+
+void UCBalanceComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+{
+	ShutdownBalanceRuntime();
+	Super::EndPlay(InEndPlayReason);
+}
+
+// Query: Balance State
+
+bool UCBalanceComponent::IsCollapseLoopPoseActive() const
+{
+	return BalanceLifecycleState == EBalanceLifecycleState::CollapseActive
+		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseOutPending;
+}
+
+bool UCBalanceComponent::IsBalanceLifecycleBlocking() const
+{
+	return BalanceLifecycleState != EBalanceLifecycleState::Accumulating;
+}
+
+bool UCBalanceComponent::ShouldSuppressCombatTargetFacing() const
+{
+	return BalanceLifecycleState == EBalanceLifecycleState::CollapseActive
+		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseOutPending
+		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseRecovering;
+}
+
+// Balance Result Ingress
+
+FBalanceAdvanceResult UCBalanceComponent::AdvanceBalanceFromParry(const FCombatResultPacket& InPacket)
 {
 	FBalanceAdvanceResult result;
 	result.PreviousCount = CurrentBalanceCount;
@@ -52,7 +86,9 @@ FBalanceAdvanceResult UCBalanceComponent::AdvanceFromParry(const FCombatResultPa
 	return result;
 }
 
-void UCBalanceComponent::HandleBalanceLifecycleReactionResolved(const FBalanceLifecyclePacket& InBalanceLifecyclePacket, const FReactionRequestResult& InResult)
+// Reaction Request Resolution
+
+void UCBalanceComponent::HandleBalanceLifecycleReactionRequestResolved(const FBalanceLifecyclePacket& InBalanceLifecyclePacket, const FReactionRequestResult& InResult)
 {
 	if (InResult.IsAccepted()) return;
 	if (InBalanceLifecyclePacket.BalanceLifecycleSerial == 0 || InBalanceLifecyclePacket.BalanceLifecycleSerial != BalanceLifecycleSerial) return;
@@ -71,7 +107,9 @@ void UCBalanceComponent::HandleBalanceLifecycleReactionResolved(const FBalanceLi
 	}
 }
 
-bool UCBalanceComponent::HandleCollapseReactionStarted(const FReactionExecutionContext& InContext)
+// Reaction Execution Lifecycle
+
+bool UCBalanceComponent::HandleCollapseReactionExecutionStarted(const FReactionExecutionContext& InContext)
 {
 	if (MatchesLifecycleContext(InContext, EReactionType::CollapseIn))
 	{
@@ -90,7 +128,7 @@ bool UCBalanceComponent::HandleCollapseReactionStarted(const FReactionExecutionC
 	return false;
 }
 
-void UCBalanceComponent::HandleCollapseReactionTerminal(const FReactionExecutionLifecycleEvent& InEvent)
+void UCBalanceComponent::HandleCollapseReactionExecutionTerminal(const FReactionExecutionLifecycleEvent& InEvent)
 {
 	const EReactionType reactionType = InEvent.Context.ReactionDataKey.ReactionType;
 	if (reactionType != EReactionType::CollapseIn && reactionType != EReactionType::CollapseOut) return;
@@ -114,23 +152,20 @@ void UCBalanceComponent::HandleCollapseReactionTerminal(const FReactionExecution
 		return;
 	}
 
+	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed
+		&& BalanceLifecycleState == EBalanceLifecycleState::CollapseRecovering)
+	{
+		AbortBalanceLifecycle(EBalanceAbortReason::ResetNotifyMissing);
+		return;
+	}
+
 	if (BalanceLifecycleState == EBalanceLifecycleState::Accumulating) return;
 	AbortBalanceLifecycle(InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored
 		? EBalanceAbortReason::CollapseOutRejected
 		: EBalanceAbortReason::CollapseOutInterrupted);
 }
 
-bool UCBalanceComponent::BeginCollapseOutRequest(const uint32 InBalanceLifecycleSerial)
-{
-	if (InBalanceLifecycleSerial == 0 || InBalanceLifecycleSerial != BalanceLifecycleSerial) return false;
-	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseActive) return false;
-
-	ClearCollapseLoopTimer();
-	SetBalanceLifecycleState(EBalanceLifecycleState::CollapseOutPending);
-	return true;
-}
-
-bool UCBalanceComponent::CommitCollapseReset(const uint32 InBalanceLifecycleSerial)
+bool UCBalanceComponent::TryCommitCollapseReset(const uint32 InBalanceLifecycleSerial)
 {
 	if (InBalanceLifecycleSerial == 0 || InBalanceLifecycleSerial != BalanceLifecycleSerial) return false;
 	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseRecovering) return false;
@@ -138,6 +173,8 @@ bool UCBalanceComponent::CommitCollapseReset(const uint32 InBalanceLifecycleSeri
 	ResetBalanceRuntime();
 	return true;
 }
+
+// Lifecycle Release
 
 void UCBalanceComponent::AbortBalanceLifecycle(const EBalanceAbortReason InReason)
 {
@@ -152,31 +189,10 @@ void UCBalanceComponent::ShutdownBalanceRuntime()
 	ClearCollapseLoopTimer();
 	CurrentBalanceCount = 0;
 	BalanceLifecycleState = EBalanceLifecycleState::Accumulating;
+	LastAcceptedParryResultSerialByTarget.Reset();
 }
 
-bool UCBalanceComponent::IsCollapseLoopPoseActive() const
-{
-	return BalanceLifecycleState == EBalanceLifecycleState::CollapseActive
-		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseOutPending;
-}
-
-bool UCBalanceComponent::IsBalanceLifecycleBlocking() const
-{
-	return BalanceLifecycleState != EBalanceLifecycleState::Accumulating;
-}
-
-bool UCBalanceComponent::ShouldSuppressCombatTargetFacing() const
-{
-	return BalanceLifecycleState == EBalanceLifecycleState::CollapseActive
-		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseOutPending
-		|| BalanceLifecycleState == EBalanceLifecycleState::CollapseRecovering;
-}
-
-void UCBalanceComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
-{
-	ShutdownBalanceRuntime();
-	Super::EndPlay(InEndPlayReason);
-}
+// Lifecycle State Transition
 
 bool UCBalanceComponent::MatchesLifecycleContext(const FReactionExecutionContext& InContext, const EReactionType InReactionType) const
 {
@@ -193,6 +209,8 @@ void UCBalanceComponent::SetBalanceLifecycleState(const EBalanceLifecycleState I
 	BalanceLifecycleState = InState;
 	OnBalanceLifecycleStateChanged.Broadcast(previousState, BalanceLifecycleState);
 }
+
+// Collapse Loop Timer
 
 void UCBalanceComponent::StartCollapseLoopTimer()
 {
@@ -226,8 +244,20 @@ void UCBalanceComponent::ClearCollapseLoopTimer()
 
 void UCBalanceComponent::HandleCollapseLoopExpired()
 {
+	RequestCollapseOutFromLoopExpiry();
+}
+
+void UCBalanceComponent::RequestCollapseOutFromLoopExpiry()
+{
 	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseActive) return;
-	OnBalanceCollapseLoopExpired.Broadcast(BalanceLifecycleSerial);
+
+	ClearCollapseLoopTimer();
+	SetBalanceLifecycleState(EBalanceLifecycleState::CollapseOutPending);
+
+	FBalanceLifecyclePacket balanceLifecyclePacket;
+	balanceLifecyclePacket.ReactionType = EReactionType::CollapseOut;
+	balanceLifecyclePacket.BalanceLifecycleSerial = BalanceLifecycleSerial;
+	OnBalanceLifecycleReactionRequested.Broadcast(balanceLifecyclePacket);
 }
 
 void UCBalanceComponent::ResetBalanceRuntime()
@@ -236,6 +266,8 @@ void UCBalanceComponent::ResetBalanceRuntime()
 	CurrentBalanceCount = 0;
 	SetBalanceLifecycleState(EBalanceLifecycleState::Accumulating);
 }
+
+// Packet Deduplication
 
 bool UCBalanceComponent::IsDuplicateParryPacket(const FCombatResultPacket& InPacket) const
 {

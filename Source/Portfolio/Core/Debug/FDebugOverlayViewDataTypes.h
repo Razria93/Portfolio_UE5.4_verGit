@@ -40,8 +40,7 @@ struct FDebugOverlayActorStatusViewData
 	FString ActionText;
 	FString ReactionText;
 	FString HealthText;
-	FString ResourceLabelText;
-	FString ResourceValueText;
+	FString BalanceText;
 	FString GuardText;
 	FString MovementText;
 	FString RuntimeLODText;

@@ -43,10 +43,10 @@ void UCCombatSignalTargetComponent::InitializeReferences(const FCharacterCompone
 
 	if (IsValid(BalanceComp_Injected))
 	{
-		BalanceComp_Injected->OnBalanceCollapseLoopExpired.RemoveAll(this);
-		BalanceComp_Injected->OnBalanceCollapseLoopExpired.AddUObject(this, &UCCombatSignalTargetComponent::HandleBalanceCollapseLoopExpired);
-		OnBalanceLifecycleReactionResolved.RemoveAll(BalanceComp_Injected);
-		OnBalanceLifecycleReactionResolved.AddUObject(BalanceComp_Injected, &UCBalanceComponent::HandleBalanceLifecycleReactionResolved);
+		BalanceComp_Injected->OnBalanceLifecycleReactionRequested.RemoveAll(this);
+		BalanceComp_Injected->OnBalanceLifecycleReactionRequested.AddUObject(this, &UCCombatSignalTargetComponent::HandleBalanceLifecycleReactionRequested);
+		OnBalanceLifecycleReactionRequestResolved.RemoveAll(BalanceComp_Injected);
+		OnBalanceLifecycleReactionRequestResolved.AddUObject(BalanceComp_Injected, &UCBalanceComponent::HandleBalanceLifecycleReactionRequestResolved);
 	}
 
 	if (IsValid(BalanceComp_Injected) && IsValid(ReactionComp_Injected))
@@ -66,8 +66,8 @@ void UCCombatSignalTargetComponent::EndPlay(const EEndPlayReason::Type InEndPlay
 {
 	if (IsValid(BalanceComp_Injected))
 	{
-		BalanceComp_Injected->OnBalanceCollapseLoopExpired.RemoveAll(this);
-		OnBalanceLifecycleReactionResolved.RemoveAll(BalanceComp_Injected);
+		BalanceComp_Injected->OnBalanceLifecycleReactionRequested.RemoveAll(this);
+		OnBalanceLifecycleReactionRequestResolved.RemoveAll(BalanceComp_Injected);
 	}
 
 	if (IsValid(ReactionComp_Injected))
@@ -268,7 +268,7 @@ void UCCombatSignalTargetComponent::HandleParryCombatResult(const FCombatResultP
 {
 	if (!IsValid(BalanceComp_Injected)) return;
 
-	const FBalanceAdvanceResult balanceAdvanceResult = BalanceComp_Injected->AdvanceFromParry(InCombatResultPacket);
+	const FBalanceAdvanceResult balanceAdvanceResult = BalanceComp_Injected->AdvanceBalanceFromParry(InCombatResultPacket);
 	if (!balanceAdvanceResult.ShouldDispatchCollapseIn()) return;
 
 	FBalanceLifecyclePacket balanceLifecyclePacket;
@@ -280,15 +280,9 @@ void UCCombatSignalTargetComponent::HandleParryCombatResult(const FCombatResultP
 
 // Balance / Collapse Lifecycle Event Handlers
 
-void UCCombatSignalTargetComponent::HandleBalanceCollapseLoopExpired(const uint32 InBalanceLifecycleSerial)
+void UCCombatSignalTargetComponent::HandleBalanceLifecycleReactionRequested(const FBalanceLifecyclePacket& InBalanceLifecyclePacket)
 {
-	if (!IsValid(BalanceComp_Injected)) return;
-	if (!BalanceComp_Injected->BeginCollapseOutRequest(InBalanceLifecycleSerial)) return;
-
-	FBalanceLifecyclePacket balanceLifecyclePacket;
-	balanceLifecyclePacket.ReactionType = EReactionType::CollapseOut;
-	balanceLifecyclePacket.BalanceLifecycleSerial = InBalanceLifecycleSerial;
-	DispatchBalanceLifecycleReaction(balanceLifecyclePacket);
+	DispatchBalanceLifecycleReaction(InBalanceLifecyclePacket);
 }
 
 void UCCombatSignalTargetComponent::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)
@@ -297,11 +291,11 @@ void UCCombatSignalTargetComponent::HandleReactionExecutionLifecycleEvent(const 
 
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Started)
 	{
-		BalanceComp_Injected->HandleCollapseReactionStarted(InEvent.Context);
+		BalanceComp_Injected->HandleCollapseReactionExecutionStarted(InEvent.Context);
 		return;
 	}
 
-	BalanceComp_Injected->HandleCollapseReactionTerminal(InEvent);
+	BalanceComp_Injected->HandleCollapseReactionExecutionTerminal(InEvent);
 }
 
 void UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand(const FReactionExecutionContext& InContext, const EReactionNotifyCommand InCommand)
@@ -310,7 +304,7 @@ void UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand(const F
 	if (!IsValid(BalanceComp_Injected)) return;
 	if (InContext.ReactionDataKey.ReactionType != EReactionType::CollapseOut) return;
 
-	BalanceComp_Injected->CommitCollapseReset(InContext.BalanceLifecycleSerial);
+	BalanceComp_Injected->TryCommitCollapseReset(InContext.BalanceLifecycleSerial);
 }
 
 // Combat Damage Pipeline - Validation
@@ -652,7 +646,7 @@ void UCCombatSignalTargetComponent::DispatchBalanceLifecycleReaction(const FBala
 		FReactionRequestResult rejectedReactionResult;
 		rejectedReactionResult.ResultType = EReactionRequestResultType::Rejected;
 		rejectedReactionResult.RejectReason = EReactionRequestRejectReason::InvalidComponent;
-		OnBalanceLifecycleReactionResolved.Broadcast(InBalanceLifecyclePacket, rejectedReactionResult);
+		OnBalanceLifecycleReactionRequestResolved.Broadcast(InBalanceLifecyclePacket, rejectedReactionResult);
 		return;
 	}
 
@@ -662,7 +656,7 @@ void UCCombatSignalTargetComponent::DispatchBalanceLifecycleReaction(const FBala
 	balanceLifecycleReactionRequest.BalanceLifecycleSerial = InBalanceLifecyclePacket.BalanceLifecycleSerial;
 
 	const FReactionRequestResult reactionResult = ReactionOrchestratorComp_Injected->RequestBalanceLifecycleReaction(balanceLifecycleReactionRequest);
-	OnBalanceLifecycleReactionResolved.Broadcast(InBalanceLifecyclePacket, reactionResult);
+	OnBalanceLifecycleReactionRequestResolved.Broadcast(InBalanceLifecyclePacket, reactionResult);
 }
 
 // Combat Damage Pipeline - Helper

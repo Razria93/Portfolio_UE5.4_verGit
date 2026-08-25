@@ -17,7 +17,7 @@ struct FReactionExecutionLifecycleEvent;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatSignalTargetAccepted, const FCombatSignalTargetPacket&);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCombatSignalTargetReactionResolved, const FCombatSignalTargetPacket&, const struct FReactionRequestResult&);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnBalanceLifecycleReactionResolved, const FBalanceLifecyclePacket&, const struct FReactionRequestResult&);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnBalanceLifecycleReactionRequestResolved, const FBalanceLifecyclePacket&, const struct FReactionRequestResult&);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCCombatSignalTargetComponent : public UActorComponent
@@ -69,7 +69,7 @@ public:
 	// Event
 	FOnCombatSignalTargetAccepted OnCombatSignalTargetAccepted;
 	FOnCombatSignalTargetReactionResolved OnCombatSignalTargetReactionResolved;
-	FOnBalanceLifecycleReactionResolved OnBalanceLifecycleReactionResolved;
+	FOnBalanceLifecycleReactionRequestResolved OnBalanceLifecycleReactionRequestResolved;
 
 public:
 	// Combat Damage Pipeline - Entry
@@ -98,7 +98,7 @@ private:
 	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
 
 	// Balance / Collapse Lifecycle Event Handlers
-	void HandleBalanceCollapseLoopExpired(uint32 InBalanceLifecycleSerial);
+	void HandleBalanceLifecycleReactionRequested(const FBalanceLifecyclePacket& InBalanceLifecyclePacket);
 	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 	void HandleReactionExecutionNotifyCommand(const FReactionExecutionContext& InContext, EReactionNotifyCommand InCommand);
 

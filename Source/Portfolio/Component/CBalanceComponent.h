@@ -11,7 +11,7 @@ struct FReactionExecutionLifecycleEvent;
 struct FReactionRequestResult;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnBalanceLifecycleStateChanged, EBalanceLifecycleState, EBalanceLifecycleState);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnBalanceCollapseLoopExpired, uint32);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnBalanceLifecycleReactionRequested, const FBalanceLifecyclePacket&);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCBalanceComponent : public UActorComponent
@@ -19,15 +19,18 @@ class PORTFOLIO_API UCBalanceComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	// Construction
 	UCBalanceComponent();
 
 private:
+	// Balance Config
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 1))
 	int32 BalanceThreshold = 3;
 
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0.0))
 	float CollapseLoopDuration = 5.f;
 
+	// Runtime State
 	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
 	int32 CurrentBalanceCount = 0;
 
@@ -40,26 +43,28 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
 	EBalanceAbortReason LastAbortReason = EBalanceAbortReason::None;
 
+	// Timer Runtime
 	FTimerHandle CollapseLoopTimerHandle;
 
-public:
-	FOnBalanceLifecycleStateChanged OnBalanceLifecycleStateChanged;
-	FOnBalanceCollapseLoopExpired OnBalanceCollapseLoopExpired;
+	// Result Deduplication Runtime
+	TMap<TWeakObjectPtr<class AActor>, uint64> LastAcceptedParryResultSerialByTarget;
 
 public:
+	// Component Reference
+	// Intentionally empty: participates in the shared component reference-injection contract.
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
-public:
-	FBalanceAdvanceResult AdvanceFromParry(const struct FCombatResultPacket& InPacket);
-	void HandleBalanceLifecycleReactionResolved(const FBalanceLifecyclePacket& InBalanceLifecyclePacket, const FReactionRequestResult& InResult);
-	bool HandleCollapseReactionStarted(const struct FReactionExecutionContext& InContext);
-	void HandleCollapseReactionTerminal(const FReactionExecutionLifecycleEvent& InEvent);
-	bool BeginCollapseOutRequest(uint32 InBalanceLifecycleSerial);
-	bool CommitCollapseReset(uint32 InBalanceLifecycleSerial);
-	void AbortBalanceLifecycle(EBalanceAbortReason InReason);
-	void ShutdownBalanceRuntime();
+protected:
+	// Lifecycle
+	virtual void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
 
 public:
+	// Events
+	FOnBalanceLifecycleStateChanged OnBalanceLifecycleStateChanged;
+	FOnBalanceLifecycleReactionRequested OnBalanceLifecycleReactionRequested;
+
+public:
+	// Query: Balance State
 	int32 GetCurrentBalanceCount() const { return CurrentBalanceCount; }
 	int32 GetBalanceThreshold() const { return BalanceThreshold; }
 	uint32 GetBalanceLifecycleSerial() const { return BalanceLifecycleSerial; }
@@ -70,19 +75,40 @@ public:
 	bool IsBalanceLifecycleBlocking() const;
 	bool ShouldSuppressCombatTargetFacing() const;
 
-protected:
-	virtual void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
+public:
+	// Balance Result Ingress
+	FBalanceAdvanceResult AdvanceBalanceFromParry(const struct FCombatResultPacket& InPacket);
+
+public:
+	// Reaction Request Resolution
+	void HandleBalanceLifecycleReactionRequestResolved(const FBalanceLifecyclePacket& InBalanceLifecyclePacket, const FReactionRequestResult& InResult);
+
+public:
+	// Reaction Execution Lifecycle
+	bool HandleCollapseReactionExecutionStarted(const struct FReactionExecutionContext& InContext);
+	void HandleCollapseReactionExecutionTerminal(const FReactionExecutionLifecycleEvent& InEvent);
+	bool TryCommitCollapseReset(uint32 InBalanceLifecycleSerial);
+
+public:
+	// Lifecycle Release
+	void AbortBalanceLifecycle(EBalanceAbortReason InReason);
+	void ShutdownBalanceRuntime();
 
 private:
+	// Lifecycle State Transition
 	bool MatchesLifecycleContext(const struct FReactionExecutionContext& InContext, EReactionType InReactionType) const;
 	void SetBalanceLifecycleState(EBalanceLifecycleState InState);
+	void ResetBalanceRuntime();
+
+private:
+	// Collapse Loop Timer
 	void StartCollapseLoopTimer();
 	void ClearCollapseLoopTimer();
 	void HandleCollapseLoopExpired();
-	void ResetBalanceRuntime();
-	bool IsDuplicateParryPacket(const struct FCombatResultPacket& InPacket) const;
-	void RememberAcceptedParryPacket(const struct FCombatResultPacket& InPacket);
+	void RequestCollapseOutFromLoopExpiry();
 
 private:
-	TMap<TWeakObjectPtr<class AActor>, uint64> LastAcceptedParryResultSerialByTarget;
+	// Packet Deduplication
+	bool IsDuplicateParryPacket(const struct FCombatResultPacket& InPacket) const;
+	void RememberAcceptedParryPacket(const struct FCombatResultPacket& InPacket);
 };

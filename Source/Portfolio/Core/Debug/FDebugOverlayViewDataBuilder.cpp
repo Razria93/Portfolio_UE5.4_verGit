@@ -140,20 +140,17 @@ namespace
 			*FormatCompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())));
 	}
 
-	void BuildResourceStatus(const APawn* InPawn, FString& OutLabel, FString& OutValue)
+	FString FormatActorBalance(const APawn* InPawn)
 	{
-		OutLabel = TEXT("Resource");
-		OutValue = FormatMissingText();
-
 		if (const ACEnemy* enemy = Cast<ACEnemy>(InPawn))
 		{
 			const UCBalanceComponent* balanceComp = enemy->GetBalanceComp();
-			OutLabel = TEXT("Balance");
-			OutValue = IsValid(balanceComp)
+			return IsValid(balanceComp)
 				? FString::Printf(TEXT("%d/%d | %s"), balanceComp->GetCurrentBalanceCount(), balanceComp->GetBalanceThreshold(), *FormatCompactEnumText(UEnum::GetValueAsString(balanceComp->GetBalanceLifecycleState())))
 				: FormatMissingText();
-			return;
 		}
+
+		return FormatMissingText();
 	}
 
 	FString FormatGuardOverlay(const APawn* InPawn)
@@ -203,7 +200,7 @@ namespace
 		statusViewData.ActionText = FormatActiveAction(InPawn);
 		statusViewData.ReactionText = FormatActiveReaction(InPawn);
 		statusViewData.HealthText = FormatActorHealth(InPawn);
-		BuildResourceStatus(InPawn, statusViewData.ResourceLabelText, statusViewData.ResourceValueText);
+		statusViewData.BalanceText = FormatActorBalance(InPawn);
 		statusViewData.GuardText = FormatGuardOverlay(InPawn);
 		statusViewData.MovementText = FormatActorMovement(InPawn);
 		statusViewData.RuntimeLODText = FormatRuntimeLODTier();

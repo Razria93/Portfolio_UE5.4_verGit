@@ -74,7 +74,7 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Action: %s"), *InStatusViewData.ActionText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *InStatusViewData.ReactionText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("HP: %s"), *InStatusViewData.HealthText));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("%s: %s"), *InStatusViewData.ResourceLabelText, *InStatusViewData.ResourceValueText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Balance: %s"), *InStatusViewData.BalanceText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *InStatusViewData.GuardText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *InStatusViewData.MovementText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
