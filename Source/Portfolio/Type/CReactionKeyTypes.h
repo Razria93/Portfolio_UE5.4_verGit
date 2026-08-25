@@ -10,9 +10,7 @@
 UENUM(BlueprintType)
 enum class EReactionDataMatchMode : uint8
 {
-	// Weapon / action DamageSpec exact and fallback lookup.
 	DamageSpec = 0,
-	// Exact ReactionType lookup that ignores DamageSpec.
 	Global,
 
 	Max,
@@ -52,7 +50,17 @@ public:
 			return false;
 		}
 
-		return MatchMode == EReactionDataMatchMode::Global || DamageSpecKey == InOther.DamageSpecKey;
+		switch (MatchMode)
+		{
+		case EReactionDataMatchMode::Global:
+			return true;
+
+		case EReactionDataMatchMode::DamageSpec:
+			return DamageSpecKey == InOther.DamageSpecKey;
+
+		default:
+			return false;
+		}
 	}
 };
 
