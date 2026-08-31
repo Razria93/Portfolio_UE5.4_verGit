@@ -13,6 +13,19 @@ enum class EDeathPresentationReason : uint8
 	DeadInStartFailed,
 	DeadInInterrupted,
 
+	ExecutionLethalInCompleted,
+	ExecutionLethalInStartFailed,
+	ExecutionLethalInInterrupted,
+
+	Max
+};
+
+UENUM(BlueprintType)
+enum class EDeathPresentationMode : uint8
+{
+	Default = 0,
+	ExecutionLethal,
+
 	Max
 };
 

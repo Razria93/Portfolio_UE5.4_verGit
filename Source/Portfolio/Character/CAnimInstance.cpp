@@ -10,6 +10,7 @@
 #include "Component/CDefenseComponent.h"
 #include "Component/CBalanceComponent.h"
 #include "Component/CStateComponent.h"
+#include "Character/Enemy/CEnemy.h"
 
 #include "GameFramework/Character.h"
 
@@ -117,7 +118,7 @@ void UCAnimInstance::BindComponentEvents()
 	if (IsValid(BalanceComp_Cached))
 	{
 		BalanceComp_Cached->OnBalanceLifecycleStateChanged.AddUObject(this, &UCAnimInstance::HandleBalanceLifecycleStateChanged);
-		bIsCollapsePose = BalanceComp_Cached->IsCollapsePoseActive();
+		bIsCollapsePose = BalanceComp_Cached->IsCollapseActive();
 	}
 }
 
@@ -165,7 +166,13 @@ void UCAnimInstance::RefreshStateParameters()
 	}
 
 	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
-	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapsePoseActive();
+	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseActive();
+	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsExecutionDownActive();
+	DeathPresentationMode = EDeathPresentationMode::Default;
+	if (const ACEnemy* enemy = Cast<ACEnemy>(OwnerCharacter_Cached))
+	{
+		DeathPresentationMode = enemy->GetDeathPresentationMode();
+	}
 	CurrentExecutionState = IsValid(StateComp_Cached) ? StateComp_Cached->GetCurrentExecutionState() : EExecutionState::Max;
 }
 
@@ -179,6 +186,8 @@ void UCAnimInstance::ResetAnimationParameters()
 	CurrentWeaponType = EWeaponType::Max;
 	bIsDeadPose = false;
 	bIsCollapsePose = false;
+	bIsExecutionDownPose = false;
+	DeathPresentationMode = EDeathPresentationMode::Default;
 	CurrentExecutionState = EExecutionState::Max;
 	bIsGuardingPose = false;
 }
@@ -261,5 +270,6 @@ void UCAnimInstance::HandleDeadStateChanged(EDeadState InPreviousDeadState, EDea
 
 void UCAnimInstance::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InCurrentState)
 {
-	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapsePoseActive();
+	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseActive();
+	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsExecutionDownActive();
 }

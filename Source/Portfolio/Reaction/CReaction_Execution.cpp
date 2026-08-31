@@ -6,7 +6,8 @@ FExecutionDecisionResult UCReaction_Execution::ResolveExecutionDecision(const FE
 {
 	FExecutionDecisionResult result;
 	if (!IsValid(OwnerCharacter_Injected)
-		|| !IsIncomingReactionType(InQuery, EReactionType::Execution)
+		|| (!IsIncomingReactionType(InQuery, EReactionType::ExecutionStandard)
+			&& !IsIncomingReactionType(InQuery, EReactionType::ExecutionLethal))
 		|| !CanResolveIndependentRelationship(InQuery))
 	{
 		result.Decision = EExecutionDecision::Reject;

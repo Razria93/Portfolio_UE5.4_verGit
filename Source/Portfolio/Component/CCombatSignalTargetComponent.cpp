@@ -293,12 +293,21 @@ void UCCombatSignalTargetComponent::HandleParryCombatResult(const FCombatResultP
 bool UCCombatSignalTargetComponent::ProcessExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket)
 {
 	const FExecutionCollaborationContext& context = InExecutionOutcomePacket.CollaborationContext;
-	if (!InExecutionOutcomePacket.IsValidMinimal() || context.TargetActor != OwnerCharacter_Injected) return false;
+
+	if (!InExecutionOutcomePacket.IsValidMinimal() || context.TargetSnapshot.TargetActor != OwnerCharacter_Injected) return false;
 	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
-	if (context.OutcomePolicy == EExecutionOutcomePolicy::Lethal && !HealthComp_Injected->CanKill()) return false;
+
+	const float currentHealth = HealthComp_Injected->GetCurrentHP();
+	const bool bIsLethal = context.OutcomePolicy == EExecutionOutcomePolicy::Lethal;
+	const float appliedDamage = bIsLethal ? currentHealth : FMath::Min(InExecutionOutcomePacket.StandardExecutionDamage, FMath::Max(0.f, currentHealth - 1.f));
+
+	if (appliedDamage <= KINDA_SMALL_NUMBER) return false;
+	if (bIsLethal && !HealthComp_Injected->CanKill()) return false;
+
 	if (!IsValid(ExecutionCollaborationComp_Injected) || !ExecutionCollaborationComp_Injected->CommitExecutionOutcome(InExecutionOutcomePacket)) return false;
 
-	return context.OutcomePolicy != EExecutionOutcomePolicy::Lethal || HealthComp_Injected->TryKill();
+	const float committedDamage = HealthComp_Injected->TakeDamage(appliedDamage);
+	return committedDamage > KINDA_SMALL_NUMBER && (!bIsLethal || HealthComp_Injected->IsDead());
 }
 
 // Balance / Collapse Lifecycle Event Handlers
@@ -314,20 +323,23 @@ void UCCombatSignalTargetComponent::HandleReactionExecutionLifecycleEvent(const 
 
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Started)
 	{
-		BalanceComp_Injected->HandleCollapseReactionExecutionStarted(InEvent.Context);
+		BalanceComp_Injected->HandleBalanceLifecycleReactionExecutionStarted(InEvent.Context);
 		return;
 	}
 
-	BalanceComp_Injected->HandleCollapseReactionExecutionTerminal(InEvent);
+	BalanceComp_Injected->HandleBalanceLifecycleReactionExecutionTerminal(InEvent);
 }
 
 void UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand(const FReactionExecutionContext& InContext, const EReactionNotifyCommand InCommand)
 {
 	if (InCommand != EReactionNotifyCommand::ResetBalance) return;
 	if (!IsValid(BalanceComp_Injected)) return;
-	if (InContext.ReactionDataKey.ReactionType != EReactionType::CollapseOut) return;
+	if (InContext.ReactionDataKey.ReactionType != EReactionType::CollapseOut && InContext.ReactionDataKey.ReactionType != EReactionType::ExecutionRecovery)
+	{
+		return;
+	}
 
-	BalanceComp_Injected->TryCommitCollapseReset(InContext.BalanceLifecycleSerial);
+	BalanceComp_Injected->TryCommitBalanceLifecycleReset(InContext);
 }
 
 // Combat Damage Pipeline - Validation

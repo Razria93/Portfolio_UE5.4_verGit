@@ -41,14 +41,14 @@ namespace
 		ECVF_Default);
 #endif
 
-	FString FormatCompactEnumText(const FString& InQualifiedName)
+	FString FormatBalanceCompactEnumText(const FString& InQualifiedName)
 	{
 		int32 separatorIndex = INDEX_NONE;
 		if (!InQualifiedName.FindLastChar(TEXT(':'), separatorIndex)) return InQualifiedName;
 		return InQualifiedName.Mid(separatorIndex + 1);
 	}
 
-	FString FormatBoolText(const bool bInValue)
+	FString FormatBalanceBoolText(const bool bInValue)
 	{
 		return bInValue ? TEXT("true") : TEXT("false");
 	}
@@ -72,7 +72,12 @@ namespace
 		case EBalanceLifecycleState::CollapseInActive: return FColor(255, 140, 0);
 		case EBalanceLifecycleState::CollapseLoopActive: return FColor::Red;
 		case EBalanceLifecycleState::CollapseOutPending: return FColor::Cyan;
-		case EBalanceLifecycleState::CollapseRecovering: return FColor(180, 80, 255);
+		case EBalanceLifecycleState::CollapseOutActive: return FColor(100, 170, 255);
+		case EBalanceLifecycleState::ExecutionPrimaryActive: return FColor(255, 80, 255);
+		case EBalanceLifecycleState::ExecutionPrimaryCommitted: return FColor(210, 70, 255);
+		case EBalanceLifecycleState::ExecutionDownActive: return FColor(160, 80, 255);
+		case EBalanceLifecycleState::ExecutionRecoveryPending: return FColor(150, 90, 255);
+		case EBalanceLifecycleState::ExecutionRecoveryActive: return FColor(180, 80, 255);
 		case EBalanceLifecycleState::Accumulating:
 		default: return FColor::White;
 		}
@@ -91,7 +96,7 @@ namespace
 	{
 		if (!IsValid(InBalanceComp)) return InDetail;
 
-		const FString stateText = FormatCompactEnumText(UEnum::GetValueAsString(InBalanceComp->GetBalanceLifecycleState()));
+		const FString stateText = FormatBalanceCompactEnumText(UEnum::GetValueAsString(InBalanceComp->GetBalanceLifecycleState()));
 		const FString baseSummary = FString::Printf(
 			TEXT("Count=%d/%d | State=%s | Lifecycle=%u"),
 			InBalanceComp->GetCurrentBalanceCount(),
@@ -160,8 +165,11 @@ FBalanceDebugSnapshot FBalanceDebug::BuildSnapshot(const ACEnemy* InEnemy)
 	snapshot.LastAbortReason = balanceComp->GetLastAbortReason();
 	snapshot.LoopRemainingSeconds = balanceComp->GetCollapseLoopRemainingSeconds();
 	snapshot.LoopDurationSeconds = balanceComp->GetCollapseLoopDuration();
-	snapshot.bIsCollapsePoseActive = balanceComp->IsCollapsePoseActive();
+	snapshot.ExecutionDownRemainingSeconds = balanceComp->GetExecutionDownRemainingSeconds();
+	snapshot.ExecutionDownDurationSeconds = balanceComp->GetExecutionDownDuration();
+	snapshot.bIsCollapsePoseActive = balanceComp->IsCollapseActive();
 	snapshot.bIsCollapseLoopActive = balanceComp->IsCollapseLoopActive();
+	snapshot.bIsExecutionDownPoseActive = balanceComp->IsExecutionDownActive();
 	snapshot.bIsLifecycleBlocking = balanceComp->IsBalanceLifecycleBlocking();
 	snapshot.bIsFacingSuppressed = balanceComp->ShouldSuppressCombatTargetFacing();
 	return snapshot;
@@ -174,16 +182,20 @@ FBalanceDebugOverlayDetails FBalanceDebug::BuildOverlayDetails(const FBalanceDeb
 
 	details.bHasSnapshot = true;
 	details.CountText = FString::Printf(TEXT("%d / %d"), InSnapshot.CurrentCount, InSnapshot.Threshold);
-	details.LifecycleText = FormatCompactEnumText(UEnum::GetValueAsString(InSnapshot.LifecycleState));
+	details.LifecycleText = FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.LifecycleState));
 	details.LifecycleSerialText = FString::FromInt(InSnapshot.LifecycleSerial);
 	details.LoopLifetimeText = InSnapshot.bIsCollapseLoopActive
 		? FString::Printf(TEXT("%.2f / %.2f s"), InSnapshot.LoopRemainingSeconds, InSnapshot.LoopDurationSeconds)
 		: TEXT("--");
-	details.CollapsePoseText = FormatBoolText(InSnapshot.bIsCollapsePoseActive);
-	details.CollapseLoopText = FormatBoolText(InSnapshot.bIsCollapseLoopActive);
-	details.LifecycleBlockingText = FormatBoolText(InSnapshot.bIsLifecycleBlocking);
-	details.FacingSuppressedText = FormatBoolText(InSnapshot.bIsFacingSuppressed);
-	details.LastAbortText = FormatCompactEnumText(UEnum::GetValueAsString(InSnapshot.LastAbortReason));
+	details.ExecutionDownLifetimeText = InSnapshot.bIsExecutionDownPoseActive
+		? FString::Printf(TEXT("%.2f / %.2f s"), InSnapshot.ExecutionDownRemainingSeconds, InSnapshot.ExecutionDownDurationSeconds)
+		: TEXT("--");
+	details.CollapsePoseText = FormatBalanceBoolText(InSnapshot.bIsCollapsePoseActive);
+	details.CollapseLoopText = FormatBalanceBoolText(InSnapshot.bIsCollapseLoopActive);
+	details.ExecutionDownPoseText = FormatBalanceBoolText(InSnapshot.bIsExecutionDownPoseActive);
+	details.LifecycleBlockingText = FormatBalanceBoolText(InSnapshot.bIsLifecycleBlocking);
+	details.FacingSuppressedText = FormatBalanceBoolText(InSnapshot.bIsFacingSuppressed);
+	details.LastAbortText = FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.LastAbortReason));
 	return details;
 }
 
@@ -193,18 +205,28 @@ void FBalanceDebug::DrawWorldDebug(UWorld* InWorld, const ACEnemy* InEnemy, cons
 	if (!ShouldDrawWorldText() || !IsValid(InWorld) || !IsValid(InEnemy) || !InSnapshot.bHasSnapshot) return;
 
 	TArray<FString> textLines;
-	const FString lifecycleText = FormatCompactEnumText(UEnum::GetValueAsString(InSnapshot.LifecycleState));
-	textLines.Add(InSnapshot.bIsCollapseLoopActive
-		? FString::Printf(TEXT("[COLLAPSE | %s | %.2f s]"), *lifecycleText, InSnapshot.LoopRemainingSeconds)
-		: FString::Printf(TEXT("[BALANCE | %s]"), *lifecycleText));
+	const FString lifecycleText = FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.LifecycleState));
+	if (InSnapshot.bIsCollapseLoopActive)
+	{
+		textLines.Add(FString::Printf(TEXT("[COLLAPSE | %s | %.2f s]"), *lifecycleText, InSnapshot.LoopRemainingSeconds));
+	}
+	else if (InSnapshot.bIsExecutionDownPoseActive)
+	{
+		textLines.Add(FString::Printf(TEXT("[EXECUTION DOWN | %s | %.2f s]"), *lifecycleText, InSnapshot.ExecutionDownRemainingSeconds));
+	}
+	else
+	{
+		textLines.Add(FString::Printf(TEXT("[BALANCE | %s]"), *lifecycleText));
+	}
 
 	const FString countText = ShouldDrawLifecycleBar()
 		? FString::Printf(TEXT("[%s] %d / %d | L#%u"), *FormatCountSegments(InSnapshot), InSnapshot.CurrentCount, InSnapshot.Threshold, InSnapshot.LifecycleSerial)
 		: FString::Printf(TEXT("Count: %d / %d | L#%u"), InSnapshot.CurrentCount, InSnapshot.Threshold, InSnapshot.LifecycleSerial);
 	textLines.Add(countText);
 	textLines.Add(FString::Printf(
-		TEXT("Pose: %s | Block: %s | Facing: %s"),
+		TEXT("Collapse Pose: %s | Execution Down: %s | Block: %s | Facing: %s"),
 		InSnapshot.bIsCollapsePoseActive ? TEXT("On") : TEXT("Off"),
+		InSnapshot.bIsExecutionDownPoseActive ? TEXT("On") : TEXT("Off"),
 		InSnapshot.bIsLifecycleBlocking ? TEXT("On") : TEXT("Off"),
 		InSnapshot.bIsFacingSuppressed ? TEXT("Suppressed") : TEXT("Active")));
 
@@ -247,6 +269,6 @@ void FBalanceDebug::RecordLifecycleStateChanged(const UCBalanceComponent* InBala
 		TEXT("LifecycleStateChanged"),
 		FString::Printf(
 			TEXT("Previous=%s | New=%s"),
-			*FormatCompactEnumText(UEnum::GetValueAsString(InPreviousState)),
-			*FormatCompactEnumText(UEnum::GetValueAsString(InNewState))));
+			*FormatBalanceCompactEnumText(UEnum::GetValueAsString(InPreviousState)),
+			*FormatBalanceCompactEnumText(UEnum::GetValueAsString(InNewState))));
 }

@@ -398,8 +398,9 @@ FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatAc
 	return ActionOrchestratorComponent->RequestCombatAction(request);
 }
 
-bool ACPlayer::RequestExecutionForCurrentTarget()
+bool ACPlayer::HandleCombatExecution()
 {
-	return IsValid(ExecutionCollaborationComponent)
-		&& ExecutionCollaborationComponent->RequestExecutionForCurrentTarget();
+	if (!IsValid(ExecutionCollaborationComponent)) return false;
+
+	return ExecutionCollaborationComponent->RequestCombatExecution();
 }

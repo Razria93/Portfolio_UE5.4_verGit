@@ -10,7 +10,6 @@
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
 #include "Component/CReactionComponent.h"
-#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Action/CAction.h"
 #include "Type/CActionTypes.h"
@@ -40,7 +39,6 @@ void UCActionComponent::InitializeReferences(const FCharacterComponentReferences
 	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
 	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
-	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
 	ActionFeedbackComp_Injected = InReferences.ActionFeedbackComponent;
 
 	ValidateRequiredComponentReferences();
@@ -372,17 +370,6 @@ void UCActionComponent::HandleActionNotifyCommand(EActionNotifyCommand InNotifyC
 	if (InNotifyCommand == EActionNotifyCommand::None || InNotifyCommand == EActionNotifyCommand::Max)
 	{
 		FActionComponentDebug::RecordActionNotifyCommandIgnoredForAudit(OwnerCharacter_Injected, nullptr, InNotifyCommand, TEXT("InvalidCommand"));
-		return;
-	}
-
-	if (InNotifyCommand == EActionNotifyCommand::CommitExecution)
-	{
-		if (ActiveActionType != EActionType::Execution
-			|| !IsValid(ExecutionCollaborationComp_Injected)
-			|| !ExecutionCollaborationComp_Injected->HandleSourceExecutionCommit(ActiveActionRequestSerial))
-		{
-			FActionComponentDebug::RecordActionNotifyCommandIgnoredForAudit(OwnerCharacter_Injected, GetActiveActionExecutor(), InNotifyCommand, TEXT("ExecutionCommitRejected"));
-		}
 		return;
 	}
 

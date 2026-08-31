@@ -189,7 +189,12 @@ void ACEnemy::BeginPlay()
 
 	if (IsValid(ReactionComponent))
 	{
-		ReactionComponent->OnReactionExecutionLifecycleEvent.AddUObject(this, &ACEnemy::HandleReactionExecutionLifecycleEvent);
+		ReactionComponent->OnReactionExecutionLifecycleEvent.AddUObject(this, &ACEnemy::HandleDeathEntryReactionLifecycleEvent);
+	}
+
+	if (IsValid(ExecutionCollaborationComponent))
+	{
+		ExecutionCollaborationComponent->OnExecutionLethalDeathEntryExpected.AddUObject(this, &ACEnemy::HandleExecutionLethalDeathEntryExpected);
 	}
 
 	if (IsValid(CharacterFeedbackComponent))
@@ -209,7 +214,7 @@ void ACEnemy::BeginPlay()
 
 void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathEntryReactionStartFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
 
@@ -227,6 +232,11 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (IsValid(ReactionComponent))
 	{
 		ReactionComponent->OnReactionExecutionLifecycleEvent.RemoveAll(this);
+	}
+
+	if (IsValid(ExecutionCollaborationComponent))
+	{
+		ExecutionCollaborationComponent->OnExecutionLethalDeathEntryExpected.RemoveAll(this);
 	}
 
 	if (IsValid(BalanceComponent))
@@ -803,6 +813,14 @@ void ACEnemy::HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadS
 	}
 }
 
+void ACEnemy::HandleExecutionLethalDeathEntryExpected(const FExecutionSessionId& InSessionId)
+{
+	if (!InSessionId.IsValidMinimal()) return;
+
+	DeathPresentationMode = EDeathPresentationMode::ExecutionLethal;
+	ExpectedExecutionLethalDeathSessionId = InSessionId;
+}
+
 void ACEnemy::BeginDeathLifecycle()
 {
 	if (bDeathLifecycleActive || bDeathFinalized) return;
@@ -838,7 +856,7 @@ void ACEnemy::BeginDeathLifecycle()
 		WeaponComponent->ClearWeaponRuntimeState();
 	}
 
-	DeadReactionStartFallbackTimerHandle = GetWorldTimerManager().SetTimerForNextTick(this, &ACEnemy::ValidateDeadReactionStarted);
+	DeathEntryReactionStartFallbackTimerHandle = GetWorldTimerManager().SetTimerForNextTick(this, &ACEnemy::ValidateDeathEntryReactionStarted);
 }
 
 void ACEnemy::AbortDeathLifecycle()
@@ -847,7 +865,7 @@ void ACEnemy::AbortDeathLifecycle()
 
 	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("LifecycleAborted"));
 
-	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathEntryReactionStartFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
 
@@ -859,47 +877,75 @@ void ACEnemy::AbortDeathLifecycle()
 	bDeathLifecycleActive = false;
 	bDeathPresentationRequested = false;
 	bDeathFinalizationRequested = false;
+	DeathPresentationMode = EDeathPresentationMode::Default;
+	ExpectedExecutionLethalDeathSessionId = FExecutionSessionId();
 }
 
-// Dead Reaction Observation
+// Death Entry Reaction Contract
 
-void ACEnemy::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)
+EReactionType ACEnemy::GetExpectedDeathEntryReactionType() const
+{
+	return DeathPresentationMode == EDeathPresentationMode::ExecutionLethal
+		? EReactionType::ExecutionLethal
+		: EReactionType::Dead;
+}
+
+bool ACEnemy::IsExpectedDeathEntryReaction(const FReactionExecutionContext& InContext) const
+{
+	if (InContext.ReactionDataKey.ReactionType != GetExpectedDeathEntryReactionType()) return false;
+	return DeathPresentationMode != EDeathPresentationMode::ExecutionLethal
+		|| InContext.ExecutionSessionId == ExpectedExecutionLethalDeathSessionId;
+}
+
+// Death Entry Reaction Observation
+
+void ACEnemy::HandleDeathEntryReactionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)
 {
 	if (!bDeathLifecycleActive || bDeathFinalized) return;
-	if (InEvent.Context.ReactionDataKey.ReactionType != EReactionType::Dead) return;
+	if (!IsExpectedDeathEntryReaction(InEvent.Context)) return;
 
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Started)
 	{
-		GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
-		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("DeadInStarted"));
+		GetWorldTimerManager().ClearTimer(DeathEntryReactionStartFallbackTimerHandle);
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, DeathPresentationMode == EDeathPresentationMode::ExecutionLethal ? TEXT("ExecutionLethalInStarted") : TEXT("DeadInStarted"));
 		return;
 	}
 
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed)
 	{
-		FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("DeadInCompleted"));
-		BeginDeathPresentation(EDeathPresentationReason::DeadInCompleted);
+		const bool bExecutionLethal = DeathPresentationMode == EDeathPresentationMode::ExecutionLethal;
+		FDeathLifecycleDebug::RecordLifecycleEvent(this, bExecutionLethal ? TEXT("ExecutionLethalInCompleted") : TEXT("DeadInCompleted"));
+		BeginDeathPresentation(bExecutionLethal
+			? EDeathPresentationReason::ExecutionLethalInCompleted
+			: EDeathPresentationReason::DeadInCompleted);
 		return;
 	}
 
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Interrupted
 		|| InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored)
 	{
-		FDeathLifecycleDebug::RecordContractViolationForAudit(this, TEXT("DeadInStopped"), FString::Printf(TEXT("Event: %s"), *UEnum::GetValueAsString(InEvent.EventType)));
-		BeginDeathPresentation(EDeathPresentationReason::DeadInInterrupted);
+		const bool bExecutionLethal = DeathPresentationMode == EDeathPresentationMode::ExecutionLethal;
+		FDeathLifecycleDebug::RecordContractViolationForAudit(this, bExecutionLethal ? TEXT("ExecutionLethalInStopped") : TEXT("DeadInStopped"), FString::Printf(TEXT("Event: %s"), *UEnum::GetValueAsString(InEvent.EventType)));
+		BeginDeathPresentation(bExecutionLethal
+			? EDeathPresentationReason::ExecutionLethalInInterrupted
+			: EDeathPresentationReason::DeadInInterrupted);
 	}
 }
 
-// Dead Reaction Start Fallback
+// Death Entry Reaction Start Fallback
 
-void ACEnemy::ValidateDeadReactionStarted()
+void ACEnemy::ValidateDeathEntryReactionStarted()
 {
 	if (!bDeathLifecycleActive || bDeathPresentationRequested || bDeathFinalizationRequested || bDeathFinalized) return;
 
-	if (!IsValid(ReactionComponent) || !ReactionComponent->IsActiveReactionType(EReactionType::Dead))
+	FReactionExecutionContext context;
+	if (!IsValid(ReactionComponent) || !ReactionComponent->GetActiveReactionContext(context) || !IsExpectedDeathEntryReaction(context))
 	{
-		FDeathLifecycleDebug::RecordContractViolationForAudit(this, TEXT("DeadInStartFailed"));
-		BeginDeathPresentation(EDeathPresentationReason::DeadInStartFailed);
+		const bool bExecutionLethal = DeathPresentationMode == EDeathPresentationMode::ExecutionLethal;
+		FDeathLifecycleDebug::RecordContractViolationForAudit(this, bExecutionLethal ? TEXT("ExecutionLethalInStartFailed") : TEXT("DeadInStartFailed"));
+		BeginDeathPresentation(bExecutionLethal
+			? EDeathPresentationReason::ExecutionLethalInStartFailed
+			: EDeathPresentationReason::DeadInStartFailed);
 	}
 }
 
@@ -911,7 +957,7 @@ void ACEnemy::BeginDeathPresentation(EDeathPresentationReason InReason)
 	if (!IsValid(HealthComponent) || HealthComponent->IsAlive()) return;
 
 	bDeathPresentationRequested = true;
-	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathEntryReactionStartFallbackTimerHandle);
 
 	ScheduleDeathPresentationFallback();
 	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PresentationRequested"), FString::Printf(TEXT("Reason: %s"), *UEnum::GetValueAsString(InReason)));
@@ -993,7 +1039,7 @@ void ACEnemy::RequestFinalizeDeath(EDeathFinalizeReason InReason)
 
 	bDeathFinalizationRequested = true;
 	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("FinalizeRequested"), FString::Printf(TEXT("Reason: %s"), *UEnum::GetValueAsString(InReason)));
-	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathEntryReactionStartFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	DeathFinalizeTimerHandle = GetWorldTimerManager().SetTimerForNextTick(this, &ACEnemy::FinalizeDeath);
 }
@@ -1016,7 +1062,7 @@ void ACEnemy::FinalizeDeath()
 
 	bDeathFinalized = true;
 	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("Finalized"));
-	GetWorldTimerManager().ClearTimer(DeadReactionStartFallbackTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathEntryReactionStartFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathPresentationFallbackTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathFinalizeTimerHandle);
 

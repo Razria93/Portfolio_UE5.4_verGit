@@ -91,12 +91,9 @@ void UCTargetLockAssistComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 bool UCTargetLockAssistComponent::IsTargetLockActive() const
 {
-	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected)
-		? CombatTargetComponent_Injected->GetCombatTargetSnapshot()
-		: FCombatTargetSnapshot();
+	const FCombatTargetSnapshot snapshot = IsValid(CombatTargetComponent_Injected) ? CombatTargetComponent_Injected->GetCombatTargetSnapshot() : FCombatTargetSnapshot();
 
-	return IsValid(ControlledPlayer.Get())
-		&& IsValid(snapshot.TargetActor);
+	return IsValid(ControlledPlayer.Get()) && IsValid(snapshot.TargetActor);
 }
 
 bool UCTargetLockAssistComponent::ShouldSuppressLookInput() const

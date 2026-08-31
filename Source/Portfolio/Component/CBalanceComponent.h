@@ -31,6 +31,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0.0))
 	float CollapseLoopDuration = 5.f;
 
+	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0.0))
+	float ExecutionDownDuration = 3.f;
+
 	// Runtime State
 	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
 	int32 CurrentBalanceCount = 0;
@@ -46,6 +49,7 @@ private:
 
 	// Timer Runtime
 	FTimerHandle CollapseLoopTimerHandle;
+	FTimerHandle ExecutionDownTimerHandle;
 
 	// Execution Opportunity Runtime
 	FExecutionOpportunityReservation ExecutionOpportunityReservation;
@@ -74,13 +78,20 @@ public:
 	uint32 GetBalanceLifecycleSerial() const { return BalanceLifecycleSerial; }
 	EBalanceLifecycleState GetBalanceLifecycleState() const { return BalanceLifecycleState; }
 	EBalanceAbortReason GetLastAbortReason() const { return LastAbortReason; }
+
 	float GetCollapseLoopDuration() const { return CollapseLoopDuration; }
 	float GetCollapseLoopRemainingSeconds() const;
 
-	bool IsCollapsePoseActive() const;
+	float GetExecutionDownDuration() const { return ExecutionDownDuration; }
+	float GetExecutionDownRemainingSeconds() const;
+
+	bool IsCollapseActive() const;
 	bool IsCollapseLoopActive() const;
+
+	bool IsExecutionDownActive() const;
 	bool IsExecutionOpportunityAvailable() const;
 	bool IsExecutionOpportunityReservationCurrent(const FExecutionOpportunityReservation& InReservation) const;
+
 	bool IsBalanceLifecycleBlocking() const;
 	bool ShouldSuppressCombatTargetFacing() const;
 
@@ -94,15 +105,17 @@ public:
 
 public:
 	// Reaction Execution Lifecycle
-	bool HandleCollapseReactionExecutionStarted(const struct FReactionExecutionContext& InContext);
-	void HandleCollapseReactionExecutionTerminal(const FReactionExecutionLifecycleEvent& InEvent);
-	bool TryCommitCollapseReset(uint32 InBalanceLifecycleSerial);
+	bool HandleBalanceLifecycleReactionExecutionStarted(const struct FReactionExecutionContext& InContext);
+	void HandleBalanceLifecycleReactionExecutionTerminal(const FReactionExecutionLifecycleEvent& InEvent);
+	bool TryCommitBalanceLifecycleReset(const struct FReactionExecutionContext& InContext);
 
 public:
 	// Execution Opportunity Reservation
 	bool TryReserveExecutionOpportunity(const FExecutionSessionId& InSessionId, FExecutionOpportunityReservation& OutReservation);
+	bool ActivateExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
 	bool ReleaseExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
-	bool ConsumeExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
+	bool CommitExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
+	bool EnterExecutionDown(uint32 InBalanceLifecycleSerial);
 
 public:
 	// Lifecycle Release
@@ -121,7 +134,12 @@ private:
 	void ClearCollapseLoopTimer();
 	void HandleCollapseLoopExpired();
 	void RequestCollapseOutFromLoopExpiry();
-	void RequestCollapseOutFromExecutionConsume();
+
+	// Standard Execution Recovery Timer
+	void StartExecutionDownTimer();
+	void ClearExecutionDownTimer();
+	void HandleExecutionDownExpired();
+	void RequestExecutionRecovery();
 
 	// Execution Opportunity Runtime
 	void ClearExecutionOpportunityReservation();

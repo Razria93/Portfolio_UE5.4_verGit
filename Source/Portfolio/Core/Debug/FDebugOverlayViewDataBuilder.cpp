@@ -385,7 +385,7 @@ namespace
 		{
 			viewData.HealthStateText = FormatMissingText();
 			viewData.LifecycleText = FormatMissingText();
-			viewData.DeadInText = FormatMissingText();
+			viewData.DeathEntryText = FormatMissingText();
 			viewData.PresentationText = FormatMissingText();
 			viewData.FallbackTimerText = FormatMissingText();
 			viewData.FinalizationText = FormatMissingText();
@@ -398,7 +398,17 @@ namespace
 
 		viewData.HealthStateText = IsValid(healthComp) ? FormatCompactEnumText(UEnum::GetValueAsString(healthComp->GetDeadState())) : FormatMissingText();
 		viewData.LifecycleText = InEnemy->IsDeathLifecycleActive() ? TEXT("Active") : TEXT("Inactive");
-		viewData.DeadInText = IsValid(reactionComp) && reactionComp->IsActiveReactionType(EReactionType::Dead) ? TEXT("Active") : (InEnemy->IsDeathPresentationRequested() ? TEXT("Exited") : TEXT("Inactive"));
+		const EReactionType deathEntryReactionType = InEnemy->GetDeathPresentationMode() == EDeathPresentationMode::ExecutionLethal
+			? EReactionType::ExecutionLethal
+			: EReactionType::Dead;
+		const FString deathEntryTypeText = FormatCompactEnumText(UEnum::GetValueAsString(deathEntryReactionType));
+		const FString deathEntryStateText = IsValid(reactionComp) && reactionComp->IsActiveReactionType(deathEntryReactionType)
+			? TEXT("Active")
+			: (InEnemy->IsDeathPresentationRequested() ? TEXT("Exited") : TEXT("Inactive"));
+		const FExecutionSessionId& expectedSessionId = InEnemy->GetExpectedExecutionLethalDeathSessionId();
+		viewData.DeathEntryText = expectedSessionId.IsValidMinimal()
+			? FString::Printf(TEXT("%s / %s / Session %u"), *deathEntryTypeText, *deathEntryStateText, expectedSessionId.Serial)
+			: FString::Printf(TEXT("%s / %s"), *deathEntryTypeText, *deathEntryStateText);
 		viewData.PresentationText = IsValid(feedbackComp) ? FormatCompactEnumText(UEnum::GetValueAsString(feedbackComp->GetDeathPresentationState())) : FormatMissingText();
 		viewData.FallbackTimerText = InEnemy->IsDeathPresentationFallbackPending() ? TEXT("Pending") : TEXT("Inactive");
 		viewData.FinalizationText = InEnemy->IsDeathFinalized() ? TEXT("Finalized") : (InEnemy->IsDeathFinalizationRequested() ? TEXT("Requested") : TEXT("Inactive"));

@@ -79,14 +79,16 @@ void UCExecutionCollaborationComponent::EndPlay(const EEndPlayReason::Type InEnd
 
 // Source Request
 
-bool UCExecutionCollaborationComponent::RequestExecutionForCurrentTarget(const EExecutionOutcomePolicy InOutcomePolicy)
+bool UCExecutionCollaborationComponent::RequestCombatExecution()
 {
 	if (HasActiveExecutionSession() || !CanStartSourceExecution()) return false;
-	if (InOutcomePolicy == EExecutionOutcomePolicy::None || InOutcomePolicy == EExecutionOutcomePolicy::Max) return false;
 	if (!IsValid(CombatTargetComp_Injected) || !IsValid(ActionOrchestratorComp_Injected)) return false;
 
 	const FCombatTargetSnapshot targetSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
 	if (!IsValid(targetSnapshot.TargetActor) || targetSnapshot.Revision <= 0) return false;
+
+	if (!IsSourceExecutionStartGeometryValid(targetSnapshot)) return false;
+
 	UCExecutionCollaborationComponent* targetCollaborationComp = targetSnapshot.TargetActor->FindComponentByClass<UCExecutionCollaborationComponent>();
 	if (!IsValid(targetCollaborationComp)) return false;
 
@@ -95,13 +97,25 @@ bool UCExecutionCollaborationComponent::RequestExecutionForCurrentTarget(const E
 	sessionId.Serial = AllocateSessionSerial();
 
 	FExecutionCollaborationContext context;
-	if (!targetCollaborationComp->AcceptExecutionReservation(sessionId, OwnerCharacter_Injected, targetSnapshot.Revision, InOutcomePolicy, context)) return false;
+	if (!targetCollaborationComp->AcceptExecutionReservation(sessionId, targetSnapshot, context)) return false;
 
 	ActiveContext = context;
 	CollaborationState = EExecutionCollaborationState::Reserved;
 	bIsSourceRole = true;
 	bSourceActionTerminal = false;
 	bTargetReactionTerminal = false;
+
+	if (!CanResolveSourceExecutionAction(ActiveContext.OutcomePolicy))
+	{
+		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::SourceActionRejected, true);
+		return false;
+	}
+
+	if (!AlignTargetExecutionFacing(ActiveContext.TargetSnapshot))
+	{
+		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::InvalidParticipant, true);
+		return false;
+	}
 
 	if (!StartTargetExecutionReaction())
 	{
@@ -115,21 +129,29 @@ bool UCExecutionCollaborationComponent::RequestExecutionForCurrentTarget(const E
 		return false;
 	}
 
-	CollaborationState = EExecutionCollaborationState::Active;
+	if (!ActivateExecutionPair())
+	{
+		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::InvalidParticipant, true);
+		return false;
+	}
+
 	return true;
 }
 
 // Source Commit
 
-bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32 InActionRequestSerial)
+bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32 InActionRequestSerial, const float InStandardExecutionDamage)
 {
 	if (!bIsSourceRole || CollaborationState != EExecutionCollaborationState::Active) return false;
 	if (InActionRequestSerial == 0 || InActionRequestSerial != ActiveContext.SessionId.Serial) return false;
-	if (!IsSourceTargetSnapshotCurrent())
+	if (ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Standard && InStandardExecutionDamage <= KINDA_SMALL_NUMBER) return false;
+
+	if (!IsTargetSnapshotCurrent())
 	{
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::TargetChanged, true);
 		return false;
 	}
+
 	if (!IsTargetExecutionOpportunityCurrent())
 	{
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
@@ -146,6 +168,8 @@ bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32
 
 	FExecutionOutcomePacket outcomePacket;
 	outcomePacket.CollaborationContext = ActiveContext;
+	outcomePacket.StandardExecutionDamage = InStandardExecutionDamage;
+
 	if (!targetSignalComp->RequestExecutionOutcomeTarget(outcomePacket))
 	{
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
@@ -156,6 +180,7 @@ bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32
 	{
 		CollaborationState = EExecutionCollaborationState::Committed;
 	}
+
 	return true;
 }
 
@@ -164,19 +189,29 @@ bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32
 bool UCExecutionCollaborationComponent::CommitExecutionOutcome(const FExecutionOutcomePacket& InPacket)
 {
 	const FExecutionCollaborationContext& context = InPacket.CollaborationContext;
+
 	if (!IsActiveSession(context.SessionId) || bIsSourceRole || !context.IsValidMinimal()) return false;
-	if (CollaborationState == EExecutionCollaborationState::Committed) return false;
+	if (CollaborationState != EExecutionCollaborationState::Active) return false;
+
 	if (!ActiveContext.OpportunityReservation.Matches(context.OpportunityReservation)
+		|| ActiveContext.TargetSnapshot.TargetActor != context.TargetSnapshot.TargetActor
+		|| ActiveContext.TargetSnapshot.Revision != context.TargetSnapshot.Revision
 		|| ActiveContext.OutcomePolicy != context.OutcomePolicy)
 	{
 		return false;
 	}
 
-	CollaborationState = EExecutionCollaborationState::Committed;
-	if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->ConsumeExecutionOpportunityReservation(context.OpportunityReservation))
+	if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->CommitExecutionOpportunityReservation(context.OpportunityReservation))
 	{
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
 		return false;
+	}
+
+	CollaborationState = EExecutionCollaborationState::Committed;
+
+	if (context.OutcomePolicy == EExecutionOutcomePolicy::Lethal)
+	{
+		OnExecutionLethalDeathEntryExpected.Broadcast(context.SessionId);
 	}
 
 	if (UCExecutionCollaborationComponent* sourceCollaborationComp = FindPartnerCollaborationComponent())
@@ -190,8 +225,7 @@ bool UCExecutionCollaborationComponent::CommitExecutionOutcome(const FExecutionO
 
 bool UCExecutionCollaborationComponent::HasActiveExecutionSession() const
 {
-	return ActiveContext.IsValidMinimal()
-		&& CollaborationState != EExecutionCollaborationState::None;
+	return ActiveContext.IsValidMinimal() && CollaborationState != EExecutionCollaborationState::None;
 }
 
 // Participant Event Observation
@@ -210,10 +244,12 @@ void UCExecutionCollaborationComponent::HandleActionEvent(ACharacter* InOwnerCha
 		}
 
 		bSourceActionTerminal = true;
+
 		if (UCExecutionCollaborationComponent* targetCollaborationComp = FindPartnerCollaborationComponent())
 		{
 			targetCollaborationComp->ReceivePartnerSourceActionTerminal(ActiveContext.SessionId);
 		}
+
 		TryCompleteActiveExecutionSession();
 		return;
 	}
@@ -227,6 +263,7 @@ void UCExecutionCollaborationComponent::HandleActionEvent(ACharacter* InOwnerCha
 			{
 				targetCollaborationComp->ReceivePartnerSourceActionTerminal(ActiveContext.SessionId);
 			}
+
 			TryCompleteActiveExecutionSession();
 			return;
 		}
@@ -238,7 +275,10 @@ void UCExecutionCollaborationComponent::HandleActionEvent(ACharacter* InOwnerCha
 void UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)
 {
 	if (bIsSourceRole || !HasActiveExecutionSession()) return;
-	if (InEvent.Context.ReactionDataKey.ReactionType != EReactionType::Execution) return;
+	if (InEvent.Context.ExecutionSessionId != ActiveContext.SessionId || InEvent.Context.ReactionDataKey.ReactionType != GetPrimaryReactionType())
+	{
+		return;
+	}
 
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed)
 	{
@@ -249,10 +289,12 @@ void UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent(co
 		}
 
 		bTargetReactionTerminal = true;
+
 		if (UCExecutionCollaborationComponent* sourceCollaborationComp = FindPartnerCollaborationComponent())
 		{
 			sourceCollaborationComp->ReceivePartnerTargetReactionTerminal(ActiveContext.SessionId);
 		}
+
 		TryCompleteActiveExecutionSession();
 		return;
 	}
@@ -266,6 +308,7 @@ void UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent(co
 			{
 				sourceCollaborationComp->ReceivePartnerTargetReactionTerminal(ActiveContext.SessionId);
 			}
+
 			TryCompleteActiveExecutionSession();
 			return;
 		}
@@ -278,6 +321,13 @@ void UCExecutionCollaborationComponent::HandleDeadStateChanged(const EDeadState 
 {
 	if (InNewState != EDeadState::Alive)
 	{
+		if (!bIsSourceRole
+			&& CollaborationState == EExecutionCollaborationState::Committed
+			&& ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Lethal)
+		{
+			return;
+		}
+
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::ParticipantDeath, true);
 	}
 }
@@ -287,7 +337,7 @@ void UCExecutionCollaborationComponent::HandleCombatTargetChanged(const FCombatT
 	if (bIsSourceRole
 		&& CollaborationState != EExecutionCollaborationState::Committed
 		&& HasActiveExecutionSession()
-		&& !IsSourceTargetSnapshotCurrent())
+		&& !IsTargetSnapshotCurrent())
 	{
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::TargetChanged, true);
 	}
@@ -295,27 +345,41 @@ void UCExecutionCollaborationComponent::HandleCombatTargetChanged(const FCombatT
 
 // Partner Coordination
 
-bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecutionSessionId& InSessionId, AActor* InSourceActor, const int32 InSourceTargetRevision, const EExecutionOutcomePolicy InOutcomePolicy, FExecutionCollaborationContext& OutContext)
+bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecutionSessionId& InSessionId, const FCombatTargetSnapshot& InTargetSnapshot, FExecutionCollaborationContext& OutContext)
 {
 	OutContext = FExecutionCollaborationContext();
-	if (HasActiveExecutionSession() || !InSessionId.IsValidMinimal() || !IsValid(InSourceActor) || InSourceTargetRevision <= 0) return false;
+
+	if (HasActiveExecutionSession()
+		|| !InSessionId.IsValidMinimal()
+		|| !IsValid(InTargetSnapshot.TargetActor)
+		|| InTargetSnapshot.TargetActor != OwnerCharacter_Injected
+		|| InTargetSnapshot.Revision <= 0)
+	{
+		return false;
+	}
+
 	if (!CanStartTargetExecution()) return false;
+
+	const EExecutionOutcomePolicy outcomePolicy = ResolveTargetExecutionOutcomePolicy();
+	if (outcomePolicy == EExecutionOutcomePolicy::None || outcomePolicy == EExecutionOutcomePolicy::Max) return false;
+
+	if (!CanResolveTargetExecutionReaction(outcomePolicy)) return false;
 
 	FExecutionOpportunityReservation reservation;
 	if (!BalanceComp_Injected->TryReserveExecutionOpportunity(InSessionId, reservation)) return false;
 
 	FExecutionCollaborationContext context;
 	context.SessionId = InSessionId;
-	context.TargetActor = OwnerCharacter_Injected;
-	context.SourceTargetRevision = InSourceTargetRevision;
+	context.TargetSnapshot = InTargetSnapshot;
 	context.OpportunityReservation = reservation;
-	context.OutcomePolicy = InOutcomePolicy;
+	context.OutcomePolicy = outcomePolicy;
 
 	ActiveContext = context;
 	CollaborationState = EExecutionCollaborationState::Reserved;
 	bIsSourceRole = false;
 	bSourceActionTerminal = false;
 	bTargetReactionTerminal = false;
+
 	OutContext = context;
 	return true;
 }
@@ -323,6 +387,7 @@ bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecut
 void UCExecutionCollaborationComponent::ReceivePartnerSourceActionTerminal(const FExecutionSessionId& InSessionId)
 {
 	if (!IsActiveSession(InSessionId)) return;
+
 	bSourceActionTerminal = true;
 	TryCompleteActiveExecutionSession();
 }
@@ -330,6 +395,7 @@ void UCExecutionCollaborationComponent::ReceivePartnerSourceActionTerminal(const
 void UCExecutionCollaborationComponent::ReceivePartnerTargetReactionTerminal(const FExecutionSessionId& InSessionId)
 {
 	if (!IsActiveSession(InSessionId)) return;
+
 	bTargetReactionTerminal = true;
 	TryCompleteActiveExecutionSession();
 }
@@ -337,12 +403,14 @@ void UCExecutionCollaborationComponent::ReceivePartnerTargetReactionTerminal(con
 void UCExecutionCollaborationComponent::ReceivePartnerCommit(const FExecutionSessionId& InSessionId)
 {
 	if (!IsActiveSession(InSessionId)) return;
+
 	CollaborationState = EExecutionCollaborationState::Committed;
 }
 
 void UCExecutionCollaborationComponent::ReceivePartnerCancellation(const FExecutionSessionId& InSessionId, const EExecutionCollaborationCancelReason InReason)
 {
 	if (!IsActiveSession(InSessionId)) return;
+
 	CancelActiveExecutionSession(InReason, false);
 }
 
@@ -355,11 +423,10 @@ bool UCExecutionCollaborationComponent::StartTargetExecutionReaction()
 
 	FExecutionReactionRequest request;
 	request.CollaborationContext = ActiveContext;
-	const FReactionRequestResult result = targetCollaborationComp->ReactionOrchestratorComp_Injected->RequestExecutionReaction(request);
-	if (!result.IsAccepted()) return false;
 
-	targetCollaborationComp->CollaborationState = EExecutionCollaborationState::Starting;
-	return true;
+	const FReactionRequestResult result = targetCollaborationComp->ReactionOrchestratorComp_Injected->RequestExecutionReaction(request);
+
+	return result.IsAccepted();
 }
 
 bool UCExecutionCollaborationComponent::StartSourceExecutionAction()
@@ -368,8 +435,35 @@ bool UCExecutionCollaborationComponent::StartSourceExecutionAction()
 
 	FExecutionActionRequest request;
 	request.CollaborationContext = ActiveContext;
+
 	const FActionRequestResult result = ActionOrchestratorComp_Injected->RequestExecutionAction(request);
+
 	return result.IsAccepted();
+}
+
+bool UCExecutionCollaborationComponent::ActivateExecutionPair()
+{
+	if (!bIsSourceRole || CollaborationState != EExecutionCollaborationState::Reserved) return false;
+
+	UCExecutionCollaborationComponent* targetCollaborationComp = FindPartnerCollaborationComponent();
+
+	if (!IsValid(targetCollaborationComp)
+		|| !targetCollaborationComp->IsActiveSession(ActiveContext.SessionId)
+		|| targetCollaborationComp->bIsSourceRole
+		|| targetCollaborationComp->CollaborationState != EExecutionCollaborationState::Reserved)
+	{
+		return false;
+	}
+
+	if (!IsValid(targetCollaborationComp->BalanceComp_Injected)
+		|| !targetCollaborationComp->BalanceComp_Injected->ActivateExecutionOpportunityReservation(ActiveContext.OpportunityReservation))
+	{
+		return false;
+	}
+
+	CollaborationState = EExecutionCollaborationState::Active;
+	targetCollaborationComp->CollaborationState = EExecutionCollaborationState::Active;
+	return true;
 }
 
 void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExecutionCollaborationCancelReason InReason, const bool bNotifyPartner)
@@ -379,6 +473,7 @@ void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExec
 	const FExecutionCollaborationContext context = ActiveContext;
 	const FExecutionSessionId sessionId = context.SessionId;
 	const bool bWasSourceRole = bIsSourceRole;
+	const EReactionType primaryReactionType = GetPrimaryReactionType();
 	UCExecutionCollaborationComponent* partnerCollaborationComp = bNotifyPartner ? FindPartnerCollaborationComponent() : nullptr;
 
 	ResetActiveExecutionSession();
@@ -388,7 +483,7 @@ void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExec
 		BalanceComp_Injected->ReleaseExecutionOpportunityReservation(context.OpportunityReservation);
 	}
 
-	CancelLocalExecutionParticipant(bWasSourceRole);
+	CancelLocalExecutionParticipant(bWasSourceRole, primaryReactionType);
 
 	if (IsValid(partnerCollaborationComp))
 	{
@@ -399,6 +494,7 @@ void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExec
 void UCExecutionCollaborationComponent::CompleteActiveExecutionSession()
 {
 	if (!HasActiveExecutionSession()) return;
+
 	ResetActiveExecutionSession();
 }
 
@@ -406,10 +502,19 @@ void UCExecutionCollaborationComponent::TryCompleteActiveExecutionSession()
 {
 	if (CollaborationState != EExecutionCollaborationState::Committed) return;
 	if (!bSourceActionTerminal || !bTargetReactionTerminal) return;
+	if (!bIsSourceRole && ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Standard)
+	{
+		if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->EnterExecutionDown(ActiveContext.OpportunityReservation.BalanceLifecycleSerial))
+		{
+			CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
+			return;
+		}
+	}
+
 	CompleteActiveExecutionSession();
 }
 
-void UCExecutionCollaborationComponent::CancelLocalExecutionParticipant(const bool bWasSourceRole)
+void UCExecutionCollaborationComponent::CancelLocalExecutionParticipant(const bool bWasSourceRole, const EReactionType InPrimaryReactionType)
 {
 	if (bWasSourceRole)
 	{
@@ -420,7 +525,7 @@ void UCExecutionCollaborationComponent::CancelLocalExecutionParticipant(const bo
 		return;
 	}
 
-	if (IsValid(ReactionComp_Injected) && ReactionComp_Injected->IsActiveReactionType(EReactionType::Execution))
+	if (IsValid(ReactionComp_Injected) && ReactionComp_Injected->IsActiveReactionType(InPrimaryReactionType))
 	{
 		ReactionComp_Injected->CancelActiveReactionForSystem();
 	}
@@ -433,63 +538,12 @@ bool UCExecutionCollaborationComponent::IsActiveSession(const FExecutionSessionI
 	return HasActiveExecutionSession() && ActiveContext.SessionId == InSessionId;
 }
 
-bool UCExecutionCollaborationComponent::CanStartSourceExecution()
-{
-	if (!IsValid(OwnerCharacter_Injected)
-		|| !IsValid(HealthComp_Injected)
-		|| !HealthComp_Injected->IsAlive()
-		|| !IsValid(StateComp_Injected)
-		|| StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle
-		|| !IsValid(ActionComp_Injected)
-		|| ActionComp_Injected->IsActive()
-		|| !IsValid(ActionOrchestratorComp_Injected))
-	{
-		return false;
-	}
-
-	FActionDataKey actionDataKey;
-	actionDataKey.ActionType = EActionType::Execution;
-	actionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
-
-	FActionData actionData;
-	return ActionComp_Injected->ResolveActionData(actionDataKey, actionData)
-		&& actionData.IsValidMinimal()
-		&& IsValid(ActionComp_Injected->ResolveActionExecutor(actionData));
-}
-
-bool UCExecutionCollaborationComponent::CanStartTargetExecution()
-{
-	if (!IsValid(OwnerCharacter_Injected)
-		|| !IsValid(HealthComp_Injected)
-		|| !HealthComp_Injected->IsAlive()
-		|| !IsValid(StateComp_Injected)
-		|| StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle
-		|| !IsValid(BalanceComp_Injected)
-		|| !BalanceComp_Injected->IsExecutionOpportunityAvailable()
-		|| !IsValid(ReactionComp_Injected)
-		|| ReactionComp_Injected->IsActive()
-		|| !IsValid(ReactionOrchestratorComp_Injected))
-	{
-		return false;
-	}
-
-	FReactionDataKey reactionDataKey;
-	reactionDataKey.MatchMode = EReactionDataMatchMode::Global;
-	reactionDataKey.ReactionType = EReactionType::Execution;
-	reactionDataKey.ReactionIndex = INDEX_NONE;
-
-	FReactionData reactionData;
-	return ReactionComp_Injected->ResolveReactionData(reactionDataKey, reactionData)
-		&& reactionData.IsValidMinimal()
-		&& IsValid(ReactionComp_Injected->ResolveReactionExecutor(reactionData));
-}
-
-bool UCExecutionCollaborationComponent::IsSourceTargetSnapshotCurrent() const
+bool UCExecutionCollaborationComponent::IsTargetSnapshotCurrent() const
 {
 	if (!bIsSourceRole || !IsValid(CombatTargetComp_Injected)) return false;
 	const FCombatTargetSnapshot currentSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
-	return currentSnapshot.TargetActor == ActiveContext.TargetActor
-		&& currentSnapshot.Revision == ActiveContext.SourceTargetRevision;
+	return currentSnapshot.TargetActor == ActiveContext.TargetSnapshot.TargetActor
+		&& currentSnapshot.Revision == ActiveContext.TargetSnapshot.Revision;
 }
 
 bool UCExecutionCollaborationComponent::IsTargetExecutionOpportunityCurrent() const
@@ -506,12 +560,189 @@ bool UCExecutionCollaborationComponent::IsTargetExecutionOpportunityCurrent() co
 		&& targetCollaborationComp->IsTargetExecutionOpportunityCurrent();
 }
 
+// Execution Startup Validation
+
+bool UCExecutionCollaborationComponent::CanStartSourceExecution() const
+{
+	if (!IsValid(OwnerCharacter_Injected)
+		|| !IsValid(HealthComp_Injected)
+		|| !HealthComp_Injected->IsAlive()
+		|| !IsValid(StateComp_Injected)
+		|| StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle
+		|| !IsValid(ActionComp_Injected)
+		|| ActionComp_Injected->IsActive()
+		|| !IsValid(ActionOrchestratorComp_Injected))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool UCExecutionCollaborationComponent::CanResolveSourceExecutionAction(const EExecutionOutcomePolicy InOutcomePolicy) const
+{
+	if ((InOutcomePolicy != EExecutionOutcomePolicy::Standard && InOutcomePolicy != EExecutionOutcomePolicy::Lethal)
+		|| !IsValid(ActionComp_Injected))
+	{
+		return false;
+	}
+
+	FActionDataKey actionDataKey;
+	actionDataKey.ActionType = EActionType::Execution;
+	actionDataKey.ActionIndex = GetExecutionActionIndex(InOutcomePolicy);
+
+	FActionData actionData;
+	if (!ActionComp_Injected->ResolveActionData(actionDataKey, actionData)
+		|| !actionData.IsValidMinimal()
+		|| !IsValid(ActionComp_Injected->ResolveActionExecutor(actionData)))
+	{
+		return false;
+	}
+
+	return InOutcomePolicy != EExecutionOutcomePolicy::Standard
+		|| actionData.StandardExecutionDamage > KINDA_SMALL_NUMBER;
+}
+
+bool UCExecutionCollaborationComponent::CanStartTargetExecution() const
+{
+	if (!IsValid(OwnerCharacter_Injected)
+		|| !IsValid(HealthComp_Injected)
+		|| !HealthComp_Injected->IsAlive()
+		|| !IsValid(StateComp_Injected)
+		|| StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle
+		|| !IsValid(BalanceComp_Injected)
+		|| !BalanceComp_Injected->IsExecutionOpportunityAvailable()
+		|| !IsValid(ReactionComp_Injected)
+		|| ReactionComp_Injected->IsActive()
+		|| !IsValid(ReactionOrchestratorComp_Injected))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool UCExecutionCollaborationComponent::CanResolveTargetExecutionReaction(const EExecutionOutcomePolicy InOutcomePolicy) const
+{
+	if ((InOutcomePolicy != EExecutionOutcomePolicy::Standard && InOutcomePolicy != EExecutionOutcomePolicy::Lethal) || !IsValid(ReactionComp_Injected))
+	{
+		return false;
+	}
+
+	FReactionDataKey reactionDataKey;
+	reactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+	reactionDataKey.ReactionType = InOutcomePolicy == EExecutionOutcomePolicy::Lethal ? EReactionType::ExecutionLethal : EReactionType::ExecutionStandard;
+	reactionDataKey.ReactionIndex = INDEX_NONE;
+
+	FReactionData reactionData;
+	return ReactionComp_Injected->ResolveReactionData(reactionDataKey, reactionData)
+		&& reactionData.IsValidMinimal()
+		&& IsValid(ReactionComp_Injected->ResolveReactionExecutor(reactionData));
+}
+
+bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot) const
+{
+	if (!StartGeometrySettings.IsValid()
+		|| !IsValid(OwnerCharacter_Injected)
+		|| !IsValid(InTargetSnapshot.TargetActor))
+	{
+		return false;
+	}
+
+	ACharacter* targetCharacter = Cast<ACharacter>(InTargetSnapshot.TargetActor);
+	if (!IsValid(targetCharacter)) return false;
+
+	FVector sourceForward2D = OwnerCharacter_Injected->GetActorForwardVector();
+	sourceForward2D.Z = 0.f;
+	
+	if (!sourceForward2D.Normalize()) return false;
+
+	const FVector sourceLocation = OwnerCharacter_Injected->GetActorLocation();
+	const FVector targetLocation = targetCharacter->GetActorLocation();
+	FVector sourceToTarget2D = targetLocation - sourceLocation;
+	sourceToTarget2D.Z = 0.f;
+
+	const float currentDistance = sourceToTarget2D.Size();
+	if (currentDistance <= KINDA_SMALL_NUMBER || currentDistance > StartGeometrySettings.MaxStartDistance) return false;
+
+	sourceToTarget2D /= currentDistance;
+	const float dot = FMath::Clamp(FVector::DotProduct(sourceForward2D, sourceToTarget2D), -1.f, 1.f);
+	const float angleDegrees = FMath::RadiansToDegrees(FMath::Acos(dot));
+
+	return angleDegrees <= StartGeometrySettings.MaxSourceFacingAngleDegrees;
+}
+
+bool UCExecutionCollaborationComponent::AlignTargetExecutionFacing(const FCombatTargetSnapshot& InTargetSnapshot) const
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+
+	ACharacter* targetCharacter = Cast<ACharacter>(InTargetSnapshot.TargetActor);
+	if (!IsValid(targetCharacter)) return false;
+
+	FVector targetToSource2D = OwnerCharacter_Injected->GetActorLocation() - targetCharacter->GetActorLocation();
+	targetToSource2D.Z = 0.f;
+	if (!targetToSource2D.Normalize()) return false;
+
+	FRotator targetFacingRotation = targetToSource2D.Rotation();
+	targetFacingRotation.Pitch = 0.f;
+	targetFacingRotation.Roll = 0.f;
+	targetCharacter->SetActorRotation(targetFacingRotation);
+	return true;
+}
+
+// Target Outcome Resolution
+
+EExecutionOutcomePolicy UCExecutionCollaborationComponent::ResolveTargetExecutionOutcomePolicy() const
+{
+	return CanResolveLethalExecutionOutcome()
+		? EExecutionOutcomePolicy::Lethal
+		: EExecutionOutcomePolicy::Standard;
+}
+
+bool UCExecutionCollaborationComponent::CanResolveLethalExecutionOutcome() const
+{
+	if (LethalCondition != EExecutionLethalCondition::HealthRatio
+		|| !IsValid(HealthComp_Injected)
+		|| !HealthComp_Injected->CanKill())
+	{
+		return false;
+	}
+
+	const float maxHealth = HealthComp_Injected->GetMaxHP();
+	if (maxHealth <= KINDA_SMALL_NUMBER) return false;
+
+	const float currentHealthRatio = HealthComp_Injected->GetCurrentHP() / maxHealth;
+	return currentHealthRatio <= LethalHealthRatio;
+}
+
+// Execution Policy Resolution
+
+EReactionType UCExecutionCollaborationComponent::GetPrimaryReactionType() const
+{
+	return ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Lethal
+		? EReactionType::ExecutionLethal
+		: EReactionType::ExecutionStandard;
+}
+
+int32 UCExecutionCollaborationComponent::GetExecutionActionIndex(const EExecutionOutcomePolicy InOutcomePolicy) const
+{
+	return InOutcomePolicy == EExecutionOutcomePolicy::Lethal
+		? CExecutionActionIndex::Lethal
+		: CExecutionActionIndex::Standard;
+}
+
+// Partner Lookup
+
 UCExecutionCollaborationComponent* UCExecutionCollaborationComponent::FindPartnerCollaborationComponent() const
 {
 	if (!ActiveContext.IsValidMinimal()) return nullptr;
-	const AActor* partnerActor = bIsSourceRole ? ActiveContext.TargetActor : ActiveContext.SessionId.SourceActor;
+
+	const AActor* partnerActor = bIsSourceRole ? ActiveContext.TargetSnapshot.TargetActor : ActiveContext.SessionId.SourceActor;
+
 	return IsValid(partnerActor) ? partnerActor->FindComponentByClass<UCExecutionCollaborationComponent>() : nullptr;
 }
+
+// Session Runtime
 
 uint32 UCExecutionCollaborationComponent::AllocateSessionSerial()
 {

@@ -114,6 +114,9 @@ struct FReactionCandidate
 
 public:
 	UPROPERTY(Transient)
+	FExecutionSessionId ExecutionSessionId = FExecutionSessionId();
+
+	UPROPERTY(Transient)
 	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
 	UPROPERTY(Transient)

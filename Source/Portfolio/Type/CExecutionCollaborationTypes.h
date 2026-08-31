@@ -1,7 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Type/CCombatTargetTypes.h"
 #include "CExecutionCollaborationTypes.generated.h"
+
+namespace CExecutionActionIndex
+{
+	constexpr int32 Standard = 0;
+	constexpr int32 Lethal = 1;
+}
 
 UENUM(BlueprintType)
 enum class EExecutionOutcomePolicy : uint8
@@ -15,12 +22,20 @@ enum class EExecutionOutcomePolicy : uint8
 };
 
 UENUM(BlueprintType)
+enum class EExecutionLethalCondition : uint8
+{
+	Disabled = 0,
+	HealthRatio,
+
+	Max,
+};
+
+UENUM(BlueprintType)
 enum class EExecutionCollaborationState : uint8
 {
 	None = 0,
 
 	Reserved,
-	Starting,
 	Active,
 	Committed,
 
@@ -50,6 +65,27 @@ enum class EExecutionCollaborationCancelReason : uint8
 	ParticipantEndPlay,
 
 	Max,
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionStartGeometrySettings
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Execution|Start Geometry", meta = (ClampMin = 0.0))
+	float MaxStartDistance = 300.f;
+
+	UPROPERTY(EditAnywhere, Category = "Execution|Start Geometry", meta = (ClampMin = 0.0, ClampMax = 180.0))
+	float MaxSourceFacingAngleDegrees = 15.f;
+
+public:
+	bool IsValid() const
+	{
+		return MaxStartDistance > KINDA_SMALL_NUMBER
+			&& MaxSourceFacingAngleDegrees > KINDA_SMALL_NUMBER
+			&& MaxSourceFacingAngleDegrees <= 180.f;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -116,10 +152,7 @@ public:
 	FExecutionSessionId SessionId = FExecutionSessionId();
 
 	UPROPERTY(Transient)
-	AActor* TargetActor = nullptr;
-
-	UPROPERTY(Transient)
-	int32 SourceTargetRevision = 0;
+	FCombatTargetSnapshot TargetSnapshot = FCombatTargetSnapshot();
 
 	UPROPERTY(Transient)
 	FExecutionOpportunityReservation OpportunityReservation = FExecutionOpportunityReservation();
@@ -131,8 +164,8 @@ public:
 	bool IsValidMinimal() const
 	{
 		return SessionId.IsValidMinimal()
-			&& IsValid(TargetActor)
-			&& SourceTargetRevision > 0
+			&& IsValid(TargetSnapshot.TargetActor)
+			&& TargetSnapshot.Revision > 0
 			&& OpportunityReservation.IsValidMinimal()
 			&& OutcomePolicy != EExecutionOutcomePolicy::None
 			&& OutcomePolicy != EExecutionOutcomePolicy::Max;
@@ -148,9 +181,14 @@ public:
 	UPROPERTY(Transient)
 	FExecutionCollaborationContext CollaborationContext = FExecutionCollaborationContext();
 
+	UPROPERTY(Transient)
+	float StandardExecutionDamage = 0.f;
+
 public:
 	bool IsValidMinimal() const
 	{
-		return CollaborationContext.IsValidMinimal();
+		if (!CollaborationContext.IsValidMinimal()) return false;
+		return CollaborationContext.OutcomePolicy != EExecutionOutcomePolicy::Standard
+			|| StandardExecutionDamage > KINDA_SMALL_NUMBER;
 	}
 };

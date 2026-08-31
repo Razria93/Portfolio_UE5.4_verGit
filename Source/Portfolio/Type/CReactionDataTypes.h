@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Type/CReactionKeyTypes.h"
 #include "Type/CExecutionRuleTypes.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "CReactionDataTypes.generated.h"
 
 // Data / Config
@@ -55,6 +56,9 @@ struct FReactionExecutionContext
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(Transient)
+	FExecutionSessionId ExecutionSessionId = FExecutionSessionId();
+
 	UPROPERTY(Transient)
 	FReactionDataKey ReactionDataKey = FReactionDataKey();
 

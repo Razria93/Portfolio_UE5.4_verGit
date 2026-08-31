@@ -298,7 +298,7 @@ void ACPlayerController::PressJump()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleJump();
+	player->HandleJump();
 }
 
 void ACPlayerController::ReleaseJump()
@@ -306,7 +306,7 @@ void ACPlayerController::ReleaseJump()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleStopJump();
+	player->HandleStopJump();
 }
 
 void ACPlayerController::PressSwordToggle()
@@ -314,7 +314,7 @@ void ACPlayerController::PressSwordToggle()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleEquipmentAction(EEquipmentActionIntent::Toggle);
+	player->HandleEquipmentAction(EEquipmentActionIntent::Toggle);
 }
 
 void ACPlayerController::PressComboAction()
@@ -322,7 +322,7 @@ void ACPlayerController::PressComboAction()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::ComboAttack);
+	player->HandleCombatAction(ECombatActionIntent::ComboAttack);
 }
 
 void ACPlayerController::PressGuard()
@@ -330,7 +330,7 @@ void ACPlayerController::PressGuard()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Started);
+	player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Started);
 }
 
 void ACPlayerController::ReleaseGuard()
@@ -338,7 +338,7 @@ void ACPlayerController::ReleaseGuard()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Completed);
+	player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Completed);
 }
 
 void ACPlayerController::PressDodge()
@@ -346,15 +346,15 @@ void ACPlayerController::PressDodge()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
+	player->HandleCombatAction(ECombatActionIntent::Dodge);
 }
 
 void ACPlayerController::PressExecution()
 {
 	ACPlayer* player = ResolveControlledPlayer(this);
-	if (!IsValid(player)) return;
+	if (!IsValid(player) || !IsValid(TargetLockAssistComponent) || !TargetLockAssistComponent->IsTargetLockActive()) return;
 
-	player->RequestExecutionForCurrentTarget();
+	player->HandleCombatExecution();
 }
 
 // ===== Player Target Selection =====

@@ -70,7 +70,7 @@ Parry CombatResultPacket
 | Collapse lifecycle | CollapseIn Started부터 CollapseOut Reset 또는 Abort까지의 보호된 수명 |
 | Collapse Loop | CollapseIn이 끝난 뒤 Idle locomotion 위에서 보이는 무력화 표현 |
 | Collapse Loop TTL | CollapseIn Completed 뒤부터 CollapseOut 요청까지의 Loop 유지 시간 |
-| `IsCollapsePoseActive()` | Collapse pose를 보여야 하는지. `CollapseInActive`, `CollapseLoopActive`, `CollapseOutPending`에서 true |
+| `IsCollapseActive()` | Collapse pose를 유지해야 하는지. `CollapseInActive`, `CollapseLoopActive`, `CollapseOutPending`, `ExecutionPrimaryActive`, `ExecutionPrimaryCommitted`에서 true |
 | `IsCollapseLoopActive()` | 실제 Collapse Loop 구간인지. `CollapseLoopActive`에서만 true |
 | `IsBalanceLifecycleBlocking()` | 일반 Action / Movement를 차단해야 하는지. `Accumulating` 이외 state에서 true |
 | `ShouldSuppressCombatTargetFacing()` | Gameplay Focus / dynamic target-facing을 억제해야 하는지. In Started 뒤부터 Reset 전까지 true |
@@ -129,7 +129,7 @@ UCReactionComponent lifecycle event
 
 UCReactionComponent ResetBalance notify command
 → UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand
-→ UCBalanceComponent::TryCommitCollapseReset
+→ UCBalanceComponent::TryCommitBalanceLifecycleReset
 
 UCBalanceComponent Collapse Loop TTL expiry
 → UCBalanceComponent internally transitions to CollapseOutPending
@@ -161,12 +161,17 @@ CollapseLoopTimer
 | `CollapseInActive` | CollapseIn montage가 실행 중인 상태 | 잠금 |
 | `CollapseLoopActive` | CollapseIn이 정상 완료됐고 Loop TTL이 진행 중인 상태 | 잠금 |
 | `CollapseOutPending` | TTL 만료 뒤 CollapseOut request를 보냈고 실제 Started를 기다리는 상태 | 잠금 |
-| `CollapseRecovering` | CollapseOut이 Started됐고 Reset Notify를 기다리는 상태 | 잠금 |
+| `CollapseOutActive` | CollapseOut이 Started됐고 Reset Notify를 기다리는 상태 | 잠금 |
+| `ExecutionPrimaryActive` | Source/Target primary pair가 실제로 실행 중이며 아직 Commit 전인 상태 | 잠금 |
+| `ExecutionPrimaryCommitted` | Source Commit Notify를 통과해 execution outcome이 확정된 상태 | 잠금 |
+| `ExecutionDownActive` | Standard Execution 뒤 Down pose와 down timer를 유지하는 상태 | 잠금 |
+| `ExecutionRecoveryPending` | ExecutionRecovery request를 보냈고 실제 Started를 기다리는 상태 | 잠금 |
+| `ExecutionRecoveryActive` | ExecutionRecovery가 Started됐고 Reset Notify를 기다리는 상태 | 잠금 |
 
-`WeakLoop`, `Executionable`을 별도 lifecycle state로 저장하지 않는다. `CollapseRecovering`은
+`WeakLoop`, `Executionable`을 별도 lifecycle state로 저장하지 않는다. `CollapseOutActive`는
 Weak Loop의 표현 상태가 아니라 Count reset 및 lock 해제 전의 CollapseOut 실행 수명을 표현한다.
 
-- Collapse Loop는 `ExecutionState == Idle && IsCollapsePoseActive()`의 표현 결과다.
+- Collapse Loop는 `ExecutionState == Idle && IsCollapseActive()`의 표현 결과다.
 - CollapseIn / CollapseOut은 active Reaction Context로 확인한다.
 - Execution capability는 R08에서 실제 producer와 consumer가 생길 때 별도 상태로 도입한다.
 
@@ -174,21 +179,26 @@ Weak Loop의 표현 상태가 아니라 Count reset 및 lock 해제 전의 Colla
 
 `EBalanceLifecycleState` 하나에서 소비자별 query를 파생한다.
 
-| Lifecycle state | `IsCollapsePoseActive()` | `IsCollapseLoopActive()` | `IsBalanceLifecycleBlocking()` | `ShouldSuppressCombatTargetFacing()` |
+| Lifecycle state | `IsCollapseActive()` | `IsCollapseLoopActive()` | `IsBalanceLifecycleBlocking()` | `ShouldSuppressCombatTargetFacing()` |
 | --- | --- | --- | --- | --- |
 | `Accumulating` | false | false | false | false |
 | `CollapseInPending` | false | false | true | false |
 | `CollapseInActive` | true | false | true | true |
 | `CollapseLoopActive` | true | true | true | true |
 | `CollapseOutPending` | true | false | true | true |
-| `CollapseRecovering` | false | false | true | true |
+| `CollapseOutActive` | false | false | true | true |
+| `ExecutionPrimaryActive` | true | false | true | true |
+| `ExecutionPrimaryCommitted` | true | false | true | true |
+| `ExecutionDownActive` | false | false | true | true |
+| `ExecutionRecoveryPending` | false | false | true | true |
+| `ExecutionRecoveryActive` | false | false | true | true |
 
 `CollapseOut Started`에서 pose query만 false가 된다. 이는 Collapse_End montage가 재생되는 동안
 AnimBP가 normal locomotion 결과를 준비하게 하기 위함이다. Count lock, 일반 행동 차단, Facing
 suppression은 Reset Notify까지 유지한다.
 
-`UCBalanceComponent`의 구현 API는 `AdvanceBalanceFromParry`, `HandleCollapseReactionExecutionStarted`,
-`HandleCollapseReactionExecutionTerminal`, `TryCommitCollapseReset`,
+`UCBalanceComponent`의 구현 API는 `AdvanceBalanceFromParry`, `HandleBalanceLifecycleReactionExecutionStarted`,
+`HandleBalanceLifecycleReactionExecutionTerminal`, `TryCommitBalanceLifecycleReset`,
 `AbortBalanceLifecycle`로 구성한다. Parry packet은 TargetActor와 CombatSignalResultSerial로
 중복 수신을 방지한다.
 
@@ -274,7 +284,7 @@ CollapseIn이 완료되면 Reaction state는 Idle로 복귀한다. AnimBP는 다
 
 ```text
 ExecutionState == Idle
-AND IsCollapsePoseActive() == true
+AND IsCollapseActive() == true
 → Collapse Loop overlay
 ```
 
@@ -288,8 +298,8 @@ Collapse Loop TTL 만료
 → CollapseOutPending
 → CollapseOut request
 → CollapseOut Started
-→ CollapseRecovering
-→ IsCollapsePoseActive() = false
+→ CollapseOutActive
+→ IsCollapseActive() = false
 → Reset Notify
 → Count = 0
 → Accumulating
@@ -297,7 +307,7 @@ Collapse Loop TTL 만료
 
 TTL 만료에서는 Weak Loop pose를 유지한다. 반면 CollapseOut Started에서는 Weak Loop pose를
 해제해 AnimBP가 normal locomotion 결과를 준비하게 한다. Count lock과 Facing suppression은
-`CollapseRecovering` 동안에도 유지한다.
+`CollapseOutActive` 동안에도 유지한다.
 
 Reset Notify는 Enemy가 다시 전투 가능한 상태로 회복되는 정확한 animation frame에 둔다.
 
@@ -417,7 +427,9 @@ Dead
 ```
 
 ```text
-CollapseInPending / CollapseInActive / CollapseLoopActive / CollapseOutPending / CollapseRecovering
+CollapseInPending / CollapseInActive / CollapseLoopActive / CollapseOutPending / CollapseOutActive
+ / ExecutionPrimaryActive / ExecutionPrimaryCommitted / ExecutionDownActive
+ / ExecutionRecoveryPending / ExecutionRecoveryActive
 → EAIIntentState::Incapacitated
 
 CollapseIn / CollapseOut Reaction 실행 중
@@ -626,7 +638,7 @@ Portfolio.Debug.BalanceAudit
 | CollapseHit 실행 중 TTL 만료 | CollapseOut이 CollapseHit을 중단하고 정상 recovery 진행 |
 | CollapseIn Reject / Interrupt / Ignore | Abort, Count 0, unlock |
 | Loop TTL 만료 | `CollapseOutPending`, CollapseOut request, Weak Loop pose 유지 |
-| CollapseOut Started | `CollapseRecovering`, Weak Loop pose 해제, normal locomotion 결과 준비, lock/Facing suppression 유지 |
+| CollapseOut Started | `CollapseOutActive`, Weak Loop pose 해제, normal locomotion 결과 준비, lock/Facing suppression 유지 |
 | CollapseOut Reset Notify | Count 0, unlock, `Accumulating`, 현재 target 기준 Focus/Facing 재개 |
 | Out terminal인데 Reset Notify 없음 | Abort 및 audit |
 | Collapse 중 AI/Action/Movement 요청 | 일반 전투 요청 차단 |

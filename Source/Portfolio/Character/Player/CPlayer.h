@@ -160,5 +160,5 @@ public:
 
 	FActionRequestResult HandleEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
 	FActionRequestResult HandleCombatAction(ECombatActionIntent InCombatActionIntent, EActionIntentEvent InIntentEvent = EActionIntentEvent::Started);
-	bool RequestExecutionForCurrentTarget();
+	bool HandleCombatExecution();
 };

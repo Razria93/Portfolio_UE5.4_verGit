@@ -190,7 +190,7 @@ private:
 	float DeathPresentationFallbackDelay = 3.f;
 
 private:
-	FTimerHandle DeadReactionStartFallbackTimerHandle;
+	FTimerHandle DeathEntryReactionStartFallbackTimerHandle;
 	FTimerHandle DeathPresentationFallbackTimerHandle;
 	FTimerHandle DeathFinalizeTimerHandle;
 
@@ -198,6 +198,9 @@ private:
 	bool bDeathPresentationRequested = false;
 	bool bDeathFinalizationRequested = false;
 	bool bDeathFinalized = false;
+
+	EDeathPresentationMode DeathPresentationMode = EDeathPresentationMode::Default;
+	FExecutionSessionId ExpectedExecutionLethalDeathSessionId = FExecutionSessionId();
 
 protected:
 	// Lifecycle
@@ -320,6 +323,8 @@ public:
 	// -----------------------------------------------------------------------------
 	// Death Lifecycle Query
 	FORCEINLINE bool IsDeathLifecycleActive() const { return bDeathLifecycleActive; }
+	FORCEINLINE EDeathPresentationMode GetDeathPresentationMode() const { return DeathPresentationMode; }
+	FORCEINLINE const FExecutionSessionId& GetExpectedExecutionLethalDeathSessionId() const { return ExpectedExecutionLethalDeathSessionId; }
 	FORCEINLINE bool IsDeathPresentationRequested() const { return bDeathPresentationRequested; }
 	bool IsDeathPresentationFallbackPending() const;
 	FORCEINLINE bool IsDeathFinalizationRequested() const { return bDeathFinalizationRequested; }
@@ -331,12 +336,19 @@ private:
 	// -----------------------------------------------------------------------------
 	// Entry / State
 	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
+	void HandleExecutionLethalDeathEntryExpected(const FExecutionSessionId& InSessionId);
 	void BeginDeathLifecycle();
 	void AbortDeathLifecycle();
 
-	// Reaction Observation / Fallback
-	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
-	void ValidateDeadReactionStarted();
+	// Death Entry Reaction Contract
+	EReactionType GetExpectedDeathEntryReactionType() const;
+	bool IsExpectedDeathEntryReaction(const FReactionExecutionContext& InContext) const;
+
+	// Death Entry Reaction Observation
+	void HandleDeathEntryReactionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
+
+	// Death Entry Reaction Start Fallback
+	void ValidateDeathEntryReactionStarted();
 
 	// Death Presentation
 	void BeginDeathPresentation(EDeathPresentationReason InReason);

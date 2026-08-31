@@ -390,7 +390,9 @@ bool UCActionOrchestratorComponent::ResolveExecutionActionCandidate(const FExecu
 	}
 
 	OutIncomingCandidate.ActionDataKey.ActionType = EActionType::Execution;
-	OutIncomingCandidate.ActionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
+	OutIncomingCandidate.ActionDataKey.ActionIndex = context.OutcomePolicy == EExecutionOutcomePolicy::Lethal
+		? CExecutionActionIndex::Lethal
+		: CExecutionActionIndex::Standard;
 	OutIncomingCandidate.ActionRequestSerial = context.SessionId.Serial;
 	return true;
 }

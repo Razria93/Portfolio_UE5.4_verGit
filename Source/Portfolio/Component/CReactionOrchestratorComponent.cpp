@@ -188,7 +188,8 @@ bool UCReactionOrchestratorComponent::ResolveBalanceLifecycleReactionCandidate(c
 	}
 
 	if (InIncomingRequest.ReactionType != EReactionType::CollapseIn
-		&& InIncomingRequest.ReactionType != EReactionType::CollapseOut)
+		&& InIncomingRequest.ReactionType != EReactionType::CollapseOut
+		&& InIncomingRequest.ReactionType != EReactionType::ExecutionRecovery)
 	{
 		OutRejectReason = EReactionRequestRejectReason::ReactionCandidateNotFound;
 		return false;
@@ -207,15 +208,18 @@ bool UCReactionOrchestratorComponent::ResolveExecutionReactionCandidate(const FE
 	OutRejectReason = EReactionRequestRejectReason::None;
 
 	const FExecutionCollaborationContext& context = InIncomingRequest.CollaborationContext;
-	if (!context.IsValidMinimal() || context.TargetActor != OwnerCharacter_Injected)
+	if (!context.IsValidMinimal() || context.TargetSnapshot.TargetActor != OwnerCharacter_Injected)
 	{
 		OutRejectReason = EReactionRequestRejectReason::InvalidRequest;
 		return false;
 	}
 
 	OutIncomingCandidate.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
-	OutIncomingCandidate.ReactionDataKey.ReactionType = EReactionType::Execution;
+	OutIncomingCandidate.ReactionDataKey.ReactionType = context.OutcomePolicy == EExecutionOutcomePolicy::Lethal
+		? EReactionType::ExecutionLethal
+		: EReactionType::ExecutionStandard;
 	OutIncomingCandidate.ReactionDataKey.ReactionIndex = INDEX_NONE;
+	OutIncomingCandidate.ExecutionSessionId = context.SessionId;
 	return true;
 }
 
@@ -277,6 +281,7 @@ bool UCReactionOrchestratorComponent::ResolveReactionContext(const FReactionCand
 	OutIncomingContext.ReactionExecutor = incomingReactionExecutor;
 	OutIncomingContext.CombatSignalResultSerial = InIncomingCandidate.CombatSignalResultSerial;
 	OutIncomingContext.BalanceLifecycleSerial = InIncomingCandidate.BalanceLifecycleSerial;
+	OutIncomingContext.ExecutionSessionId = InIncomingCandidate.ExecutionSessionId;
 
 	return true;
 }

@@ -11,6 +11,9 @@
 
 struct FCombatTargetChange;
 struct FReactionExecutionLifecycleEvent;
+class ACharacter;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnExecutionLethalDeathEntryExpected, const FExecutionSessionId&);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCExecutionCollaborationComponent : public UActorComponent
@@ -52,6 +55,17 @@ private:
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
+	// Source Start Geometry Config
+	UPROPERTY(EditAnywhere, Category = "Execution|Start Geometry")
+	FExecutionStartGeometrySettings StartGeometrySettings;
+
+	// Target Outcome Config
+	UPROPERTY(EditAnywhere, Category = "Execution|Outcome")
+	EExecutionLethalCondition LethalCondition = EExecutionLethalCondition::Disabled;
+
+	UPROPERTY(EditAnywhere, Category = "Execution|Outcome", meta = (ClampMin = 0.0, ClampMax = 1.0, EditCondition = "LethalCondition == EExecutionLethalCondition::HealthRatio"))
+	float LethalHealthRatio = 0.25f;
+
 	// Session Runtime
 	FExecutionCollaborationContext ActiveContext;
 	EExecutionCollaborationState CollaborationState = EExecutionCollaborationState::None;
@@ -69,11 +83,14 @@ protected:
 	void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
 
 public:
+	// Lethal Death Entry Bridge
+	FOnExecutionLethalDeathEntryExpected OnExecutionLethalDeathEntryExpected;
+
 	// Source Request
-	bool RequestExecutionForCurrentTarget(EExecutionOutcomePolicy InOutcomePolicy = EExecutionOutcomePolicy::Standard);
+	bool RequestCombatExecution();
 
 	// Source Commit
-	bool HandleSourceExecutionCommit(uint32 InActionRequestSerial);
+	bool HandleSourceExecutionCommit(uint32 InActionRequestSerial, float InStandardExecutionDamage);
 
 	// Target Outcome
 	bool CommitExecutionOutcome(const FExecutionOutcomePacket& InPacket);
@@ -92,7 +109,7 @@ private:
 	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 
 	// Partner Coordination
-	bool AcceptExecutionReservation(const FExecutionSessionId& InSessionId, AActor* InSourceActor, int32 InSourceTargetRevision, EExecutionOutcomePolicy InOutcomePolicy, FExecutionCollaborationContext& OutContext);
+	bool AcceptExecutionReservation(const FExecutionSessionId& InSessionId, const FCombatTargetSnapshot& InTargetSnapshot, FExecutionCollaborationContext& OutContext);
 	void ReceivePartnerSourceActionTerminal(const FExecutionSessionId& InSessionId);
 	void ReceivePartnerTargetReactionTerminal(const FExecutionSessionId& InSessionId);
 	void ReceivePartnerCommit(const FExecutionSessionId& InSessionId);
@@ -101,18 +118,37 @@ private:
 	// Session Control
 	bool StartTargetExecutionReaction();
 	bool StartSourceExecutionAction();
+	bool ActivateExecutionPair();
 	void CancelActiveExecutionSession(EExecutionCollaborationCancelReason InReason, bool bNotifyPartner);
 	void CompleteActiveExecutionSession();
 	void TryCompleteActiveExecutionSession();
-	void CancelLocalExecutionParticipant(bool bWasSourceRole);
+	void CancelLocalExecutionParticipant(bool bWasSourceRole, EReactionType InPrimaryReactionType);
 
 	// Session Validation
 	bool IsActiveSession(const FExecutionSessionId& InSessionId) const;
-	bool CanStartSourceExecution();
-	bool CanStartTargetExecution();
-	bool IsSourceTargetSnapshotCurrent() const;
+	bool IsTargetSnapshotCurrent() const;
 	bool IsTargetExecutionOpportunityCurrent() const;
+
+	// Execution Startup Validation
+	bool CanStartSourceExecution() const;
+	bool CanResolveSourceExecutionAction(EExecutionOutcomePolicy InOutcomePolicy) const;
+	bool CanStartTargetExecution() const;
+	bool CanResolveTargetExecutionReaction(EExecutionOutcomePolicy InOutcomePolicy) const;
+	bool IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot) const;
+	bool AlignTargetExecutionFacing(const FCombatTargetSnapshot& InTargetSnapshot) const;
+
+	// Target Outcome Resolution
+	EExecutionOutcomePolicy ResolveTargetExecutionOutcomePolicy() const;
+	bool CanResolveLethalExecutionOutcome() const;
+
+	// Execution Policy Resolution
+	EReactionType GetPrimaryReactionType() const;
+	int32 GetExecutionActionIndex(EExecutionOutcomePolicy InOutcomePolicy) const;
+
+	// Partner Lookup
 	class UCExecutionCollaborationComponent* FindPartnerCollaborationComponent() const;
+
+	// Session Runtime
 	uint32 AllocateSessionSerial();
 	void ResetActiveExecutionSession();
 };

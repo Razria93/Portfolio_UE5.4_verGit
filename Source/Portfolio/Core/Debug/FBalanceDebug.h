@@ -17,8 +17,11 @@ struct FBalanceDebugSnapshot
 	EBalanceAbortReason LastAbortReason = EBalanceAbortReason::None;
 	float LoopRemainingSeconds = 0.f;
 	float LoopDurationSeconds = 0.f;
+	float ExecutionDownRemainingSeconds = 0.f;
+	float ExecutionDownDurationSeconds = 0.f;
 	bool bIsCollapsePoseActive = false;
 	bool bIsCollapseLoopActive = false;
+	bool bIsExecutionDownPoseActive = false;
 	bool bIsLifecycleBlocking = false;
 	bool bIsFacingSuppressed = false;
 };
@@ -30,8 +33,10 @@ struct FBalanceDebugOverlayDetails
 	FString LifecycleText;
 	FString LifecycleSerialText;
 	FString LoopLifetimeText;
+	FString ExecutionDownLifetimeText;
 	FString CollapsePoseText;
 	FString CollapseLoopText;
+	FString ExecutionDownPoseText;
 	FString LifecycleBlockingText;
 	FString FacingSuppressedText;
 	FString LastAbortText;

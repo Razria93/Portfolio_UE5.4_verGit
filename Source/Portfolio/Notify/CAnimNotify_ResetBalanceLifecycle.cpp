@@ -4,7 +4,7 @@
 
 UCAnimNotify_ResetBalanceLifecycle::UCAnimNotify_ResetBalanceLifecycle()
 {
-	TriggerReactionType = EReactionType::CollapseOut;
+	TriggerReactionType = EReactionType::All;
 }
 
 FString UCAnimNotify_ResetBalanceLifecycle::GetNotifyName_Implementation() const

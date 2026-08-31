@@ -88,12 +88,12 @@ protected:
 	void PressJump();
 	void ReleaseJump();
 
+	void PressSwordToggle();
 	void PressComboAction();
-	void PressDodge();
-	void PressExecution();
 	void PressGuard();
 	void ReleaseGuard();
-	void PressSwordToggle();
+	void PressDodge();
+	void PressExecution();
 
 protected:
 	// Player Target Selection

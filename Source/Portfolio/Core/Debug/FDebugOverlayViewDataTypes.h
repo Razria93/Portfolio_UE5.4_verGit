@@ -65,7 +65,7 @@ struct FDebugOverlayDeathLifecycleViewData
 {
 	FString HealthStateText;
 	FString LifecycleText;
-	FString DeadInText;
+	FString DeathEntryText;
 	FString PresentationText;
 	FString FallbackTimerText;
 	FString FinalizationText;

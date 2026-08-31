@@ -5,6 +5,7 @@
 #include "Type/CMovementTypes.h"
 #include "Type/CWeaponTypes.h"
 #include "Type/CHealthTypes.h"
+#include "Type/CCharacterFeedbackTypes.h"
 #include "Type/CStateTypes.h"
 #include "CAnimInstance.generated.h"
 
@@ -44,6 +45,12 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsCollapsePose = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	bool bIsExecutionDownPose = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	EDeathPresentationMode DeathPresentationMode = EDeathPresentationMode::Default;
 
 protected:
 	// Animation Blueprint Parameters - Action

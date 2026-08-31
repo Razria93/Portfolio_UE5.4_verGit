@@ -138,7 +138,8 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Count: %s"), *details.CountText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Lifecycle: %s | Serial: %s"), *details.LifecycleText, *details.LifecycleSerialText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Loop Remaining: %s"), *details.LoopLifetimeText));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Pose: %s | Loop: %s"), *details.CollapsePoseText, *details.CollapseLoopText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Execution Down Remaining: %s"), *details.ExecutionDownLifetimeText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Collapse Pose: %s | Loop: %s | Execution Down: %s"), *details.CollapsePoseText, *details.CollapseLoopText, *details.ExecutionDownPoseText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Blocking: %s | Facing Suppressed: %s"), *details.LifecycleBlockingText, *details.FacingSuppressedText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Abort: %s"), *details.LastAbortText));
 	}
@@ -204,7 +205,7 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, TEXT("[Death Lifecycle]"));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Health State: %s"), *InViewData.HealthStateText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Lifecycle: %s"), *InViewData.LifecycleText));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("DeadIn: %s"), *InViewData.DeadInText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Death Entry: %s"), *InViewData.DeathEntryText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Presentation: %s"), *InViewData.PresentationText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Fallback Timer: %s"), *InViewData.FallbackTimerText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Finalization: %s"), *InViewData.FinalizationText));

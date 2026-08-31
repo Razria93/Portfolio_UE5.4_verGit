@@ -9,13 +9,25 @@ enum class EBalanceLifecycleState : uint8
 {
 	Accumulating = 0,
 
-	CollapseInPending = 1,
-	CollapseInActive = 2,
-	CollapseLoopActive = 5,
-	CollapseOutPending = 3,
-	CollapseRecovering = 4,
+	// Collapse
+	CollapseInPending,
+	CollapseInActive,
 
-	Max = 6,
+	CollapseLoopActive,
+
+	CollapseOutPending,
+	CollapseOutActive,
+
+	// Execution
+	ExecutionPrimaryActive,
+	ExecutionPrimaryCommitted,
+
+	ExecutionDownActive,
+
+	ExecutionRecoveryPending,
+	ExecutionRecoveryActive,
+
+	Max,
 };
 
 UENUM(BlueprintType)
@@ -28,6 +40,9 @@ enum class EBalanceAbortReason : uint8
 
 	CollapseOutRejected,
 	CollapseOutInterrupted,
+
+	ExecutionRecoveryRejected,
+	ExecutionRecoveryInterrupted,
 
 	ResetNotifyMissing,
 	OwnerDeath,
