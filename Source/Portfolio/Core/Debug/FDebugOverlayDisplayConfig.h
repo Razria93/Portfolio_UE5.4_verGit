@@ -8,12 +8,14 @@ struct FDebugOverlayPanelVisibility
 	bool bShowPlayerStatus = true;
 	bool bShowPlayerTargeting = true;
 	bool bShowPlayerLocomotion = true;
+	bool bShowPlayerExecutionCollaboration = true;
 	bool bShowPlayerRecentExecution = true;
 
 	bool bShowEnemy = true;
 	bool bShowEnemyFocus = true;
 	bool bShowEnemyStatus = true;
 	bool bShowEnemyBalanceCollapse = true;
+	bool bShowEnemyExecutionCollaboration = true;
 	bool bShowEnemyCombatParticipation = true;
 	bool bShowEnemyDeathLifecycle = true;
 	bool bShowEnemyRecentExecution = true;

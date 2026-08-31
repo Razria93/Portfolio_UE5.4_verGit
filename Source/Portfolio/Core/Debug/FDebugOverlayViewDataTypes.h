@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Core/Debug/FBalanceDebug.h"
 #include "Core/Debug/FCombatParticipationDebug.h"
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
 #include "Core/Debug/FTargetingDebug.h"
@@ -110,6 +111,11 @@ struct FDebugOverlayBalanceCollapseViewData
 	FBalanceDebugOverlayDetails Details;
 };
 
+struct FDebugOverlayExecutionCollaborationViewData
+{
+	FExecutionCollaborationDebugOverlayDetails Details;
+};
+
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
@@ -122,6 +128,8 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayPlayerLocomotionViewData Locomotion;
 	bool bIncludeBalanceCollapse = false;
 	FDebugOverlayBalanceCollapseViewData BalanceCollapse;
+	bool bIncludeExecutionCollaboration = false;
+	FDebugOverlayExecutionCollaborationViewData ExecutionCollaboration;
 	bool bIncludeCombatParticipation = false;
 	FDebugOverlayCombatParticipationViewData CombatParticipation;
 	bool bAppendBlankBeforeStatus = false;

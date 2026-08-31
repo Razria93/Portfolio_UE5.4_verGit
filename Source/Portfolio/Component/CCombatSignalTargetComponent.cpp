@@ -9,6 +9,7 @@
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CExecutionCollaborationComponent.h"
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
 #include "Type/CReactionTypes.h"
@@ -307,6 +308,10 @@ bool UCCombatSignalTargetComponent::ProcessExecutionOutcomeTarget(const FExecuti
 	if (!IsValid(ExecutionCollaborationComp_Injected) || !ExecutionCollaborationComp_Injected->CommitExecutionOutcome(InExecutionOutcomePacket)) return false;
 
 	const float committedDamage = HealthComp_Injected->TakeDamage(appliedDamage);
+	if (committedDamage > KINDA_SMALL_NUMBER)
+	{
+		FExecutionCollaborationDebug::RecordOutcomeDamageApplied(ExecutionCollaborationComp_Injected, committedDamage, bIsLethal);
+	}
 	return committedDamage > KINDA_SMALL_NUMBER && (!bIsLethal || HealthComp_Injected->IsDead());
 }
 

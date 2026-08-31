@@ -326,11 +326,58 @@ Lethal은 Death lifecycle에 책임을 넘긴다. 장기 Down 또는 Dead presen
    - `bIsExecutionDownPose`를 Balance lifecycle state에서 파생한다.
    - death presentation mode로 Default / ExecutionLethal Dead Loop를 선택한다.
    - Standard Down remaining time과 lifecycle state의 focused debug visibility를 추가한다.
-   - Session ID, reservation, outcome policy, death presentation mode의 dedicated debug 표시는 UAsset/PIE authoring과 함께 추가 검토한다.
+   - pair session, reservation, outcome policy, terminal, 시작 기하 조건의 전용 Execution Collaboration debug 표시를 추가한다.
 
 ---
 
-## 10. 필요한 Editor 작업
+## 10. Execution Collaboration Debug 계약
+
+Execution Collaboration debug는 Balance lifecycle debug와 Recent Execution event summary를 대체하지 않는다.
+각 도메인은 다음의 서로 다른 권위를 관찰한다.
+
+| 도메인 | 관찰하는 권위 |
+| --- | --- |
+| Balance / Collapse | Target Balance count, lifecycle, Loop / Down TTL |
+| Execution Collaboration | Source × Target pair session, reservation, outcome, primary terminal, 시작 기하 조건 |
+| Recent Execution | Event Log에 남은 가장 최근 Execution audit event |
+
+`Panel_01`의 Player / Enemy detail block은 각 Actor 관점에서 다음을 표시한다.
+
+- 역할(Source / Target), partner actor, pair session serial, collaboration state(Reserved / Active / Committed)
+- 선택된 outcome(Standard / Lethal), Target의 Collapse opportunity reservation, Source Action / Target Reaction terminal
+- Player Source에서는 현재 Combat Target에 대한 시작 거리·정면 각도·허용 여부
+
+World debug는 gameplay 상태를 바꾸지 않는 read-only 시각화다.
+
+```text
+Source 시작 기하 조건
+→ 최대 시작 거리 원, Source forward ± 허용각 경계, Source → Target line
+→ 유효: Green / 무효: Red
+
+활성 pair session
+→ Source ↔ Target link와 중앙 session label
+→ Reserved: Yellow / Active: Magenta / Committed: Purple
+```
+
+제어 CVar는 다음으로 고정한다.
+
+```text
+Portfolio.DebugOverlay.ExecutionCollaboration.Enabled
+Portfolio.DebugOverlay.ExecutionCollaboration.DrawStartGeometry
+Portfolio.DebugOverlay.ExecutionCollaboration.DrawPairLink
+Portfolio.DebugOverlay.ExecutionCollaboration.DrawWorldText
+Portfolio.Debug.ExecutionCollaborationAudit
+
+Portfolio.DebugOverlay.Player.ExecutionCollaboration.Enabled
+Portfolio.DebugOverlay.Enemy.ExecutionCollaboration.Enabled
+```
+
+`Execution` Event Log category에는 reservation, pair activation, commit, damage apply, terminal,
+cancel, completion event를 기록한다. Audit CVar는 같은 lifecycle record를 Output Log에도 남긴다.
+
+---
+
+## 11. 필요한 Editor 작업
 
 C++ cutover 완료 뒤 runtime 계약을 바꾸지 않는 범위에서 다음을 구성한다.
 
@@ -343,7 +390,7 @@ C++ cutover 완료 뒤 runtime 계약을 바꾸지 않는 범위에서 다음을
 
 ---
 
-## 11. 검증 기준
+## 12. 검증 기준
 
 - Standard와 Lethal이 서로 다른 authored Source/Target primary pair를 resolve한다.
 - `LethalCondition = Disabled`면 Standard pair만 선택되고, `HealthRatio`에서는 threshold 전후가 각각 Standard/Lethal pair를 고른다.

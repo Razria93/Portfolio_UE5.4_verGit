@@ -192,3 +192,26 @@ public:
 			|| StandardExecutionDamage > KINDA_SMALL_NUMBER;
 	}
 };
+
+struct FExecutionCollaborationRuntimeSnapshot
+{
+	bool bHasActiveSession = false;
+	bool bIsSourceRole = false;
+	EExecutionCollaborationState CollaborationState = EExecutionCollaborationState::None;
+	FExecutionCollaborationContext CollaborationContext;
+	bool bSourceActionTerminal = false;
+	bool bTargetReactionTerminal = false;
+};
+
+struct FExecutionStartGeometrySnapshot
+{
+	bool bHasTarget = false;
+	AActor* TargetActor = nullptr;
+	float CurrentDistance = 0.f;
+	float MaxDistance = 0.f;
+	float CurrentFacingAngleDegrees = 0.f;
+	float MaxFacingAngleDegrees = 0.f;
+	bool bIsWithinDistance = false;
+	bool bIsWithinFacingAngle = false;
+	bool bIsValid = false;
+};

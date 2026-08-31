@@ -121,6 +121,12 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 12.f)
 				[
+					MakeExecutionCollaborationDisplayOptionsSection()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
 					MakeCombatParticipationDisplayOptionsSection()
 				]
 				+ SVerticalBox::Slot()
@@ -221,6 +227,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelSections()
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerStatusLabel", "Status"), LOCTEXT("PlayerStatusHelp", "Show Player state, action, reaction, health and movement."), CVarAccess::GetPlayerStatusEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerLocomotionLabel", "Locomotion"), LOCTEXT("PlayerLocomotionHelp", "Show Player locomotion input details."), CVarAccess::GetPlayerLocomotionEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerTargetingLabel", "Targeting"), LOCTEXT("PlayerTargetingHelp", "Show Player targeting score details."), CVarAccess::GetPlayerTargetingEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerExecutionCollaborationLabel", "Execution Collaboration"), LOCTEXT("PlayerExecutionCollaborationHelp", "Show Player live Execution Collaboration state and start geometry."), CVarAccess::GetPlayerExecutionCollaborationEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerRecentExecutionLabel", "Recent Execution"), LOCTEXT("PlayerRecentExecutionHelp", "Show the most recent Player execution event."), CVarAccess::GetPlayerRecentExecutionEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
 		+ SVerticalBox::Slot().AutoHeight()
@@ -230,6 +237,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelSections()
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyFocusLabel", "Focus"), LOCTEXT("EnemyFocusHelp", "Show selected Enemy focus details."), CVarAccess::GetEnemyFocusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyStatusLabel", "Status"), LOCTEXT("EnemyStatusHelp", "Show Enemy state, action, reaction, health and movement."), CVarAccess::GetEnemyStatusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyBalanceCollapseLabel", "Balance / Collapse"), LOCTEXT("EnemyBalanceCollapseHelp", "Show focused Enemy Balance count, Collapse lifecycle and derived gates."), CVarAccess::GetEnemyBalanceCollapseEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyExecutionCollaborationLabel", "Execution Collaboration"), LOCTEXT("EnemyExecutionCollaborationHelp", "Show focused Enemy live Execution Collaboration state."), CVarAccess::GetEnemyExecutionCollaborationEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCombatParticipationLabel", "Combat Participation"), LOCTEXT("EnemyCombatParticipationHelp", "Show focused Enemy combat participation details."), CVarAccess::GetEnemyCombatParticipationEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyDeathLifecycleLabel", "Death Lifecycle"), LOCTEXT("EnemyDeathLifecycleHelp", "Show Enemy death lifecycle details."), CVarAccess::GetEnemyDeathLifecycleEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyRecentExecutionLabel", "Recent Execution"), LOCTEXT("EnemyRecentExecutionHelp", "Show the most recent Enemy execution event."), CVarAccess::GetEnemyRecentExecutionEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
@@ -389,6 +397,49 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBalanceDebugSection(
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceWorldTextLabel", "World Text"), LOCTEXT("BalanceWorldTextHelp", "Draw focused Enemy Balance count, lifecycle and derived gates in the world."), CVarAccess::GetBalanceDrawWorldTextCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceLifecycleBarLabel", "Count Segments"), LOCTEXT("BalanceLifecycleBarHelp", "Show threshold segments in the focused Enemy Balance world text."), CVarAccess::GetBalanceDrawLifecycleBarCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceAuditLabel", "Lifecycle Audit Log"), LOCTEXT("BalanceAuditHelp", "Also write Balance and Collapse lifecycle events to the Output Log."), CVarAccess::GetBalanceAuditCVarName())];
+}
+
+// ===== Execution Collaboration Debug =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeExecutionCollaborationDisplayOptionsSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("ExecutionCollaborationDisplayOptionsTitle", "Execution Collaboration Display Options"))
+			.Font(FAppStyle::GetFontStyle("BoldFont"))
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([]()
+			{
+				return CVarAccess::HasExecutionCollaborationDisplayCVars()
+					? LOCTEXT("ExecutionCollaborationCVarsAvailable", "Execution Collaboration display CVars are available.")
+					: LOCTEXT("ExecutionCollaborationCVarsUnavailable", "Execution Collaboration display CVars are unavailable. Start the game module or PIE if needed.");
+			})
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot().AutoHeight()
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(8.f)
+			[
+				MakeExecutionCollaborationDebugSection()
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeExecutionCollaborationDebugSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationEnabledLabel", "Enabled"), LOCTEXT("ExecutionCollaborationEnabledHelp", "Enable Execution Collaboration debug data and visualization. Panel_01 live sections require this domain gate."), CVarAccess::GetExecutionCollaborationEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationStartGeometryLabel", "Start Geometry"), LOCTEXT("ExecutionCollaborationStartGeometryHelp", "Draw the Source start distance radius, facing angle boundaries and current Target link."), CVarAccess::GetExecutionCollaborationDrawStartGeometryCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationPairLinkLabel", "Pair Link"), LOCTEXT("ExecutionCollaborationPairLinkHelp", "Draw the active Source-to-Target collaboration link with lifecycle colors."), CVarAccess::GetExecutionCollaborationDrawPairLinkCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationWorldTextLabel", "World Text"), LOCTEXT("ExecutionCollaborationWorldTextHelp", "Draw the active Execution Collaboration session summary at the pair midpoint."), CVarAccess::GetExecutionCollaborationDrawWorldTextCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationAuditLabel", "Lifecycle Audit Log"), LOCTEXT("ExecutionCollaborationAuditHelp", "Also write Execution Collaboration lifecycle events to the Output Log."), CVarAccess::GetExecutionCollaborationAuditCVarName())];
 }
 
 // ===== Combat Participation Debug =====

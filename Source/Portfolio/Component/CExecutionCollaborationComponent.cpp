@@ -1,5 +1,6 @@
 #include "Component/CExecutionCollaborationComponent.h"
 
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Action/CAction.h"
 #include "Component/CActionComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
@@ -104,6 +105,7 @@ bool UCExecutionCollaborationComponent::RequestCombatExecution()
 	bIsSourceRole = true;
 	bSourceActionTerminal = false;
 	bTargetReactionTerminal = false;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("ReservationAccepted"));
 
 	if (!CanResolveSourceExecutionAction(ActiveContext.OutcomePolicy))
 	{
@@ -179,6 +181,7 @@ bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32
 	if (IsActiveSession(outcomePacket.CollaborationContext.SessionId))
 	{
 		CollaborationState = EExecutionCollaborationState::Committed;
+		FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("PartnerCommitted"));
 	}
 
 	return true;
@@ -208,6 +211,7 @@ bool UCExecutionCollaborationComponent::CommitExecutionOutcome(const FExecutionO
 	}
 
 	CollaborationState = EExecutionCollaborationState::Committed;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("OutcomeCommitted"));
 
 	if (context.OutcomePolicy == EExecutionOutcomePolicy::Lethal)
 	{
@@ -228,6 +232,51 @@ bool UCExecutionCollaborationComponent::HasActiveExecutionSession() const
 	return ActiveContext.IsValidMinimal() && CollaborationState != EExecutionCollaborationState::None;
 }
 
+FExecutionCollaborationRuntimeSnapshot UCExecutionCollaborationComponent::GetExecutionCollaborationRuntimeSnapshot() const
+{
+	FExecutionCollaborationRuntimeSnapshot snapshot;
+	snapshot.bHasActiveSession = HasActiveExecutionSession();
+	snapshot.bIsSourceRole = bIsSourceRole;
+	snapshot.CollaborationState = CollaborationState;
+	snapshot.CollaborationContext = ActiveContext;
+	snapshot.bSourceActionTerminal = bSourceActionTerminal;
+	snapshot.bTargetReactionTerminal = bTargetReactionTerminal;
+	return snapshot;
+}
+
+bool UCExecutionCollaborationComponent::BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const
+{
+	OutSnapshot = FExecutionStartGeometrySnapshot();
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CombatTargetComp_Injected) || !StartGeometrySettings.IsValid()) return false;
+
+	const FCombatTargetSnapshot targetSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
+	ACharacter* targetCharacter = Cast<ACharacter>(targetSnapshot.TargetActor);
+	if (!IsValid(targetCharacter)) return false;
+
+	OutSnapshot.bHasTarget = true;
+	OutSnapshot.TargetActor = targetCharacter;
+	OutSnapshot.MaxDistance = StartGeometrySettings.MaxStartDistance;
+	OutSnapshot.MaxFacingAngleDegrees = StartGeometrySettings.MaxSourceFacingAngleDegrees;
+
+	FVector sourceForward2D = OwnerCharacter_Injected->GetActorForwardVector();
+	sourceForward2D.Z = 0.f;
+	if (!sourceForward2D.Normalize()) return false;
+
+	FVector sourceToTarget2D = targetCharacter->GetActorLocation() - OwnerCharacter_Injected->GetActorLocation();
+	sourceToTarget2D.Z = 0.f;
+	OutSnapshot.CurrentDistance = sourceToTarget2D.Size();
+	OutSnapshot.bIsWithinDistance = OutSnapshot.CurrentDistance > KINDA_SMALL_NUMBER
+		&& OutSnapshot.CurrentDistance <= OutSnapshot.MaxDistance;
+	if (OutSnapshot.CurrentDistance <= KINDA_SMALL_NUMBER) return false;
+
+	sourceToTarget2D /= OutSnapshot.CurrentDistance;
+	const float dot = FMath::Clamp(FVector::DotProduct(sourceForward2D, sourceToTarget2D), -1.f, 1.f);
+	OutSnapshot.CurrentFacingAngleDegrees = FMath::RadiansToDegrees(FMath::Acos(dot));
+	OutSnapshot.bIsWithinFacingAngle = OutSnapshot.CurrentFacingAngleDegrees <= OutSnapshot.MaxFacingAngleDegrees;
+	OutSnapshot.bIsValid = OutSnapshot.bIsWithinDistance && OutSnapshot.bIsWithinFacingAngle;
+	return true;
+}
+
 // Participant Event Observation
 
 void UCExecutionCollaborationComponent::HandleActionEvent(ACharacter* InOwnerCharacter, const EActionType InActionType, const int32 InActionIndex, const uint32 InActionRequestSerial, const EActionEventType InActionEventType)
@@ -244,6 +293,7 @@ void UCExecutionCollaborationComponent::HandleActionEvent(ACharacter* InOwnerCha
 		}
 
 		bSourceActionTerminal = true;
+		FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("SourceTerminal"));
 
 		if (UCExecutionCollaborationComponent* targetCollaborationComp = FindPartnerCollaborationComponent())
 		{
@@ -259,6 +309,7 @@ void UCExecutionCollaborationComponent::HandleActionEvent(ACharacter* InOwnerCha
 		if (CollaborationState == EExecutionCollaborationState::Committed)
 		{
 			bSourceActionTerminal = true;
+			FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("SourceTerminalInterrupted"));
 			if (UCExecutionCollaborationComponent* targetCollaborationComp = FindPartnerCollaborationComponent())
 			{
 				targetCollaborationComp->ReceivePartnerSourceActionTerminal(ActiveContext.SessionId);
@@ -289,6 +340,7 @@ void UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent(co
 		}
 
 		bTargetReactionTerminal = true;
+		FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("TargetTerminal"));
 
 		if (UCExecutionCollaborationComponent* sourceCollaborationComp = FindPartnerCollaborationComponent())
 		{
@@ -304,6 +356,7 @@ void UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent(co
 		if (CollaborationState == EExecutionCollaborationState::Committed)
 		{
 			bTargetReactionTerminal = true;
+			FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("TargetTerminalInterrupted"));
 			if (UCExecutionCollaborationComponent* sourceCollaborationComp = FindPartnerCollaborationComponent())
 			{
 				sourceCollaborationComp->ReceivePartnerTargetReactionTerminal(ActiveContext.SessionId);
@@ -381,6 +434,7 @@ bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecut
 	bTargetReactionTerminal = false;
 
 	OutContext = context;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("ReservationAccepted"));
 	return true;
 }
 
@@ -389,6 +443,7 @@ void UCExecutionCollaborationComponent::ReceivePartnerSourceActionTerminal(const
 	if (!IsActiveSession(InSessionId)) return;
 
 	bSourceActionTerminal = true;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("PartnerSourceTerminal"));
 	TryCompleteActiveExecutionSession();
 }
 
@@ -397,6 +452,7 @@ void UCExecutionCollaborationComponent::ReceivePartnerTargetReactionTerminal(con
 	if (!IsActiveSession(InSessionId)) return;
 
 	bTargetReactionTerminal = true;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("PartnerTargetTerminal"));
 	TryCompleteActiveExecutionSession();
 }
 
@@ -405,6 +461,7 @@ void UCExecutionCollaborationComponent::ReceivePartnerCommit(const FExecutionSes
 	if (!IsActiveSession(InSessionId)) return;
 
 	CollaborationState = EExecutionCollaborationState::Committed;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("PartnerCommitted"));
 }
 
 void UCExecutionCollaborationComponent::ReceivePartnerCancellation(const FExecutionSessionId& InSessionId, const EExecutionCollaborationCancelReason InReason)
@@ -463,6 +520,8 @@ bool UCExecutionCollaborationComponent::ActivateExecutionPair()
 
 	CollaborationState = EExecutionCollaborationState::Active;
 	targetCollaborationComp->CollaborationState = EExecutionCollaborationState::Active;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("PairActivated"));
+	FExecutionCollaborationDebug::RecordLifecycleEvent(targetCollaborationComp, TEXT("PairActivated"));
 	return true;
 }
 
@@ -475,6 +534,7 @@ void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExec
 	const bool bWasSourceRole = bIsSourceRole;
 	const EReactionType primaryReactionType = GetPrimaryReactionType();
 	UCExecutionCollaborationComponent* partnerCollaborationComp = bNotifyPartner ? FindPartnerCollaborationComponent() : nullptr;
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("Cancelled"), UEnum::GetValueAsString(InReason));
 
 	ResetActiveExecutionSession();
 
@@ -495,6 +555,7 @@ void UCExecutionCollaborationComponent::CompleteActiveExecutionSession()
 {
 	if (!HasActiveExecutionSession()) return;
 
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("Completed"));
 	ResetActiveExecutionSession();
 }
 

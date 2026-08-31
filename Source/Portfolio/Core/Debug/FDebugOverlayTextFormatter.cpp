@@ -144,6 +144,23 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Abort: %s"), *details.LastAbortText));
 	}
 
+	// [Execution Collaboration]
+	// ===== Execution Collaboration Lines =====
+
+	void AppendExecutionCollaborationLines(TArray<FString>& InOutLines, const FDebugOverlayExecutionCollaborationViewData& InExecutionCollaborationViewData)
+	{
+		const FExecutionCollaborationDebugOverlayDetails& details = InExecutionCollaborationViewData.Details;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Execution Collaboration]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Role: %s | State: %s | Outcome: %s"), *details.RoleText, *details.StateText, *details.OutcomeText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Partner: %s | Session: %s"), *details.PartnerText, *details.SessionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Reservation: %s"), *details.ReservationText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Terminal: %s"), *details.TerminalText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Geometry: %s"), *details.GeometryText));
+	}
+
 	// [Combat Participation]
 	// ===== Combat Participation Lines =====
 
@@ -309,6 +326,11 @@ namespace
 		if (InActorPanelViewData.bIncludeBalanceCollapse)
 		{
 			AppendBalanceCollapseLines(InOutLines, InActorPanelViewData.BalanceCollapse);
+		}
+
+		if (InActorPanelViewData.bIncludeExecutionCollaboration)
+		{
+			AppendExecutionCollaborationLines(InOutLines, InActorPanelViewData.ExecutionCollaboration);
 		}
 
 		if (InActorPanelViewData.bIncludeCombatParticipation)

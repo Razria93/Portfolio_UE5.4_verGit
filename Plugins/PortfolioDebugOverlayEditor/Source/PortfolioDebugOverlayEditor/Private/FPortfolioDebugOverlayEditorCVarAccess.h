@@ -23,11 +23,13 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetPlayerStatusEnabledCVarName();
 	const TCHAR* GetPlayerTargetingEnabledCVarName();
 	const TCHAR* GetPlayerLocomotionEnabledCVarName();
+	const TCHAR* GetPlayerExecutionCollaborationEnabledCVarName();
 	const TCHAR* GetPlayerRecentExecutionEnabledCVarName();
 	const TCHAR* GetEnemyPanelEnabledCVarName();
 	const TCHAR* GetEnemyFocusEnabledCVarName();
 	const TCHAR* GetEnemyStatusEnabledCVarName();
 	const TCHAR* GetEnemyBalanceCollapseEnabledCVarName();
+	const TCHAR* GetEnemyExecutionCollaborationEnabledCVarName();
 	const TCHAR* GetEnemyCombatParticipationEnabledCVarName();
 	const TCHAR* GetEnemyDeathLifecycleEnabledCVarName();
 	const TCHAR* GetEnemyRecentExecutionEnabledCVarName();
@@ -60,6 +62,14 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetBalanceDrawWorldTextCVarName();
 	const TCHAR* GetBalanceDrawLifecycleBarCVarName();
 	const TCHAR* GetBalanceAuditCVarName();
+
+	// ===== Execution Collaboration Display CVars =====
+
+	const TCHAR* GetExecutionCollaborationEnabledCVarName();
+	const TCHAR* GetExecutionCollaborationDrawStartGeometryCVarName();
+	const TCHAR* GetExecutionCollaborationDrawPairLinkCVarName();
+	const TCHAR* GetExecutionCollaborationDrawWorldTextCVarName();
+	const TCHAR* GetExecutionCollaborationAuditCVarName();
 
 	// ===== Combat Participation Display CVars =====
 
@@ -95,6 +105,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	bool HasTargetingDisplayCVars();
 	bool HasMovementDisplayCVars();
 	bool HasBalanceDisplayCVars();
+	bool HasExecutionCollaborationDisplayCVars();
 	bool HasCombatParticipationDisplayCVars();
 	bool HasFocusCVars();
 	FText GetAvailabilityText(const TCHAR* InName);

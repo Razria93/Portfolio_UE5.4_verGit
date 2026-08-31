@@ -98,6 +98,8 @@ public:
 	// Query
 	bool HasActiveExecutionSession() const;
 	EExecutionCollaborationState GetExecutionCollaborationState() const { return CollaborationState; }
+	FExecutionCollaborationRuntimeSnapshot GetExecutionCollaborationRuntimeSnapshot() const;
+	bool BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const;
 
 private:
 	// Participant Event Observation
