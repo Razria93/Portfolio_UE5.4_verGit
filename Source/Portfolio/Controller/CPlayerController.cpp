@@ -8,6 +8,7 @@
 #include "Component/CTargetHUDPresenterComponent.h"
 #include "Component/CTargetLockAssistComponent.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
@@ -351,10 +352,29 @@ void ACPlayerController::PressDodge()
 
 void ACPlayerController::PressExecution()
 {
-	ACPlayer* player = ResolveControlledPlayer(this);
-	if (!IsValid(player) || !IsValid(TargetLockAssistComponent) || !TargetLockAssistComponent->IsTargetLockActive()) return;
+	FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("InputReceived"));
 
-	player->HandleCombatExecution();
+	ACPlayer* player = ResolveControlledPlayer(this);
+	if (!IsValid(player))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("InputRejected"), TEXT("InvalidControlledPlayer"));
+		return;
+	}
+
+	if (!IsValid(TargetLockAssistComponent))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(player, TEXT("InputRejected"), TEXT("InvalidTargetLockAssist"));
+		return;
+	}
+
+	if (!TargetLockAssistComponent->IsTargetLockActive())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(player, TEXT("InputRejected"), TEXT("TargetLockInactiveOrNoCombatTarget"));
+		return;
+	}
+
+	const bool bStarted = player->HandleCombatExecution();
+	FExecutionCollaborationDebug::RecordStartTrace(player, TEXT("InputForwarded"), bStarted ? TEXT("RequestAccepted") : TEXT("RequestRejected"));
 }
 
 // ===== Player Target Selection =====

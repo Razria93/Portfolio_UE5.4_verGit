@@ -4,6 +4,7 @@
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 
+#include "Components/CapsuleComponent.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/Character.h"
 #include "HAL/IConsoleManager.h"
@@ -25,7 +26,7 @@ namespace
 		TEXT("Draw active Execution Collaboration state text at the pair midpoint. 0: disabled, 1: enabled."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarExecutionCollaborationAudit(
 		TEXT("Portfolio.Debug.ExecutionCollaborationAudit"), 0,
-		TEXT("Write Execution Collaboration lifecycle diagnostics to the Output Log. 0: disabled, 1: enabled."), ECVF_Default);
+		TEXT("Write Execution Collaboration start and lifecycle diagnostics to the Output Log. 0: disabled, 1: enabled."), ECVF_Default);
 #endif
 
 	FString CompactEnumText(const FString& InQualifiedName)
@@ -69,6 +70,22 @@ namespace
 		case EExecutionCollaborationState::Committed: return FColor(200, 90, 255);
 		default: return FColor::White;
 		}
+	}
+
+	FVector ResolveCharacterBottomAnchor(const AActor* InActor)
+	{
+		if (!IsValid(InActor)) return FVector::ZeroVector;
+
+		if (const ACharacter* character = Cast<ACharacter>(InActor))
+		{
+			if (const UCapsuleComponent* capsule = character->GetCapsuleComponent())
+			{
+				// Keep ground-oriented geometry readable without z-fighting against the floor.
+				return capsule->GetComponentLocation() - FVector(0.f, 0.f, capsule->GetScaledCapsuleHalfHeight()) + FVector(0.f, 0.f, 2.f);
+			}
+		}
+
+		return InActor->GetActorLocation() + FVector(0.f, 0.f, 2.f);
 	}
 }
 
@@ -188,25 +205,27 @@ void FExecutionCollaborationDebug::DrawWorldDebug(UWorld* InWorld, const FExecut
 	if (ShouldDrawStartGeometry() && geometry.bHasTarget && IsValid(geometry.TargetActor))
 	{
 		const FColor geometryColor = geometry.bIsValid ? FColor::Green : FColor::Red;
-		DrawDebugCircle(InWorld, sourceLocation, geometry.MaxDistance, 48, geometryColor, false, 0.f, 0, 1.25f, FVector::ForwardVector, FVector::RightVector, false);
+		const FVector sourceGeometryAnchor = ResolveCharacterBottomAnchor(InSourceSnapshot.OwnerCharacter);
+		const FVector targetGeometryAnchor = ResolveCharacterBottomAnchor(geometry.TargetActor);
+		DrawDebugCircle(InWorld, sourceGeometryAnchor, geometry.MaxDistance, 48, geometryColor, false, 0.f, 0, 1.25f, FVector::ForwardVector, FVector::RightVector, false);
 
 		const FVector sourceForward = InSourceSnapshot.OwnerCharacter->GetActorForwardVector().GetSafeNormal2D();
 		const FVector leftBoundary = sourceForward.RotateAngleAxis(-geometry.MaxFacingAngleDegrees, FVector::UpVector) * geometry.MaxDistance;
 		const FVector rightBoundary = sourceForward.RotateAngleAxis(geometry.MaxFacingAngleDegrees, FVector::UpVector) * geometry.MaxDistance;
-		DrawDebugLine(InWorld, sourceLocation, sourceLocation + leftBoundary, geometryColor, false, 0.f, 0, 1.5f);
-		DrawDebugLine(InWorld, sourceLocation, sourceLocation + rightBoundary, geometryColor, false, 0.f, 0, 1.5f);
-		DrawDebugLine(InWorld, sourceLocation, geometry.TargetActor->GetActorLocation(), geometryColor, false, 0.f, 0, 2.f);
+		DrawDebugLine(InWorld, sourceGeometryAnchor, sourceGeometryAnchor + leftBoundary, geometryColor, false, 0.f, 0, 1.5f);
+		DrawDebugLine(InWorld, sourceGeometryAnchor, sourceGeometryAnchor + rightBoundary, geometryColor, false, 0.f, 0, 1.5f);
+		DrawDebugLine(InWorld, sourceGeometryAnchor, targetGeometryAnchor, geometryColor, false, 0.f, 0, 2.f);
 	}
 
 	const FExecutionCollaborationRuntimeSnapshot& runtime = InSourceSnapshot.Runtime;
 	if (!runtime.bHasActiveSession || !runtime.bIsSourceRole || !IsValid(runtime.CollaborationContext.TargetSnapshot.TargetActor)) return;
 
 	const FVector targetLocation = runtime.CollaborationContext.TargetSnapshot.TargetActor->GetActorLocation();
-	const FVector midpoint = (sourceLocation + targetLocation) * 0.5f + FVector(0.f, 0.f, 115.f);
+	const FVector midpoint = (sourceLocation + targetLocation) * 0.5f;
 	const FColor pairColor = ResolvePairColor(runtime.CollaborationState);
 	if (ShouldDrawPairLink())
 	{
-		DrawDebugLine(InWorld, sourceLocation + FVector(0.f, 0.f, 70.f), targetLocation + FVector(0.f, 0.f, 70.f), pairColor, false, 0.f, 0, 3.f);
+		DrawDebugLine(InWorld, sourceLocation, targetLocation, pairColor, false, 0.f, 0, 3.f);
 	}
 
 	if (ShouldDrawWorldText())
@@ -234,6 +253,16 @@ void FExecutionCollaborationDebug::RecordLifecycleEvent(const UCExecutionCollabo
 
 	if (!ShouldAuditExecutionCollaboration()) return;
 	FLog::Log(FString::Printf(TEXT("[ExecutionCollaboration|%s] Owner=%s | %s"), InEvent ? InEvent : TEXT("Unknown"), *GetNameSafe(ownerActor), *summary));
+}
+
+void FExecutionCollaborationDebug::RecordStartTrace(const UObject* InOwnerObject, const TCHAR* InStage, const FString& InDetail)
+{
+	if (!ShouldAuditExecutionCollaboration()) return;
+
+	FLog::Log(FString::Printf(TEXT("[ExecutionCollaboration|StartTrace] Owner=%s | Stage=%s | %s"),
+		*GetNameSafe(InOwnerObject),
+		InStage ? InStage : TEXT("Unknown"),
+		InDetail.IsEmpty() ? TEXT("None") : *InDetail));
 }
 
 void FExecutionCollaborationDebug::RecordOutcomeDamageApplied(const UCExecutionCollaborationComponent* InComponent, const float InAppliedDamage, const bool bInLethal)

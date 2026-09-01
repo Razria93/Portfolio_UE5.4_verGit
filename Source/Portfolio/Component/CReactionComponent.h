@@ -12,11 +12,13 @@
 #include "Type/CExecutionTypes.h"
 #include "Type/CActionOrchestrationTypes.h"
 #include "Type/CReactionOrchestrationTypes.h"
+#include "Type/CBalanceTypes.h"
 #include "CReactionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReactionTypeChanged, class ACharacter*, InOwnerCharacter, EReactionType, InPrevReactionType, EReactionType, InNewReactionType);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnReactionExecutionLifecycleEvent, const FReactionExecutionLifecycleEvent& /* Event */);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnReactionExecutionNotifyCommand, const FReactionExecutionContext& /* Context */, EReactionNotifyCommand /* Command */);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnReactionIncapacitatedPresentationRequested, const FReactionExecutionContext& /* Context */, EIncapacitatedPresentation /* Presentation */);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCReactionComponent : public UActorComponent
@@ -82,6 +84,7 @@ public:
 	FReactionTypeChanged OnReactionTypeChanged;
 	FOnReactionExecutionLifecycleEvent OnReactionExecutionLifecycleEvent;
 	FOnReactionExecutionNotifyCommand OnReactionExecutionNotifyCommand;
+	FOnReactionIncapacitatedPresentationRequested OnReactionIncapacitatedPresentationRequested;
 
 public:
 	// Component Reference
@@ -124,6 +127,7 @@ public:
 public:
 	// Notify Routing
 	void HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand);
+	void HandleReactionIncapacitatedPresentationNotify(EIncapacitatedPresentation InPresentation);
 
 	void HandleReactionAllowInterventionWindowBegin(FName InWindowKey);
 	void HandleReactionAllowInterventionWindowEnd(FName InWindowKey);

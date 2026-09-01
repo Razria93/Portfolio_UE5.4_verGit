@@ -82,23 +82,46 @@ void UCExecutionCollaborationComponent::EndPlay(const EEndPlayReason::Type InEnd
 
 bool UCExecutionCollaborationComponent::RequestCombatExecution()
 {
-	if (HasActiveExecutionSession() || !CanStartSourceExecution()) return false;
-	if (!IsValid(CombatTargetComp_Injected) || !IsValid(ActionOrchestratorComp_Injected)) return false;
+	FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestReceived"));
+	if (HasActiveExecutionSession())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("SourceSessionAlreadyActive"));
+		return false;
+	}
+
+	if (!CanStartSourceExecution()) return false;
+	if (!IsValid(CombatTargetComp_Injected) || !IsValid(ActionOrchestratorComp_Injected))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("MissingSourceTargetOrActionOrchestrator"));
+		return false;
+	}
 
 	const FCombatTargetSnapshot targetSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
-	if (!IsValid(targetSnapshot.TargetActor) || targetSnapshot.Revision <= 0) return false;
+	if (!IsValid(targetSnapshot.TargetActor) || targetSnapshot.Revision <= 0)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("InvalidCombatTargetSnapshot"));
+		return false;
+	}
 
 	if (!IsSourceExecutionStartGeometryValid(targetSnapshot)) return false;
 
 	UCExecutionCollaborationComponent* targetCollaborationComp = targetSnapshot.TargetActor->FindComponentByClass<UCExecutionCollaborationComponent>();
-	if (!IsValid(targetCollaborationComp)) return false;
+	if (!IsValid(targetCollaborationComp))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("MissingTargetCollaborationComponent"));
+		return false;
+	}
 
 	FExecutionSessionId sessionId;
 	sessionId.SourceActor = OwnerCharacter_Injected;
 	sessionId.Serial = AllocateSessionSerial();
 
 	FExecutionCollaborationContext context;
-	if (!targetCollaborationComp->AcceptExecutionReservation(sessionId, targetSnapshot, context)) return false;
+	if (!targetCollaborationComp->AcceptExecutionReservation(sessionId, targetSnapshot, context))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("TargetReservationRejected"));
+		return false;
+	}
 
 	ActiveContext = context;
 	CollaborationState = EExecutionCollaborationState::Reserved;
@@ -144,9 +167,37 @@ bool UCExecutionCollaborationComponent::RequestCombatExecution()
 
 bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32 InActionRequestSerial, const float InStandardExecutionDamage)
 {
-	if (!bIsSourceRole || CollaborationState != EExecutionCollaborationState::Active) return false;
-	if (InActionRequestSerial == 0 || InActionRequestSerial != ActiveContext.SessionId.Serial) return false;
-	if (ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Standard && InStandardExecutionDamage <= KINDA_SMALL_NUMBER) return false;
+	FExecutionCollaborationDebug::RecordStartTrace(
+		OwnerCharacter_Injected,
+		TEXT("SourceCommitHandlerEntered"),
+		FString::Printf(
+			TEXT("Role=%s | State=%s | ActionSerial=%u | SessionSerial=%u | Damage=%.1f"),
+			bIsSourceRole ? TEXT("Source") : TEXT("Target"),
+			*UEnum::GetValueAsString(CollaborationState),
+			InActionRequestSerial,
+			ActiveContext.SessionId.Serial,
+			InStandardExecutionDamage));
+
+	if (!bIsSourceRole)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitRejected"), TEXT("NotSourceRole"));
+		return false;
+	}
+	if (CollaborationState != EExecutionCollaborationState::Active)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitRejected"), FString::Printf(TEXT("CollaborationState=%s"), *UEnum::GetValueAsString(CollaborationState)));
+		return false;
+	}
+	if (InActionRequestSerial == 0 || InActionRequestSerial != ActiveContext.SessionId.Serial)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitRejected"), FString::Printf(TEXT("ActionSerial=%u | SessionSerial=%u"), InActionRequestSerial, ActiveContext.SessionId.Serial));
+		return false;
+	}
+	if (ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Standard && InStandardExecutionDamage <= KINDA_SMALL_NUMBER)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitRejected"), TEXT("StandardDamageIsZero"));
+		return false;
+	}
 
 	if (!IsTargetSnapshotCurrent())
 	{
@@ -171,9 +222,11 @@ bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32
 	FExecutionOutcomePacket outcomePacket;
 	outcomePacket.CollaborationContext = ActiveContext;
 	outcomePacket.StandardExecutionDamage = InStandardExecutionDamage;
+	FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitDispatchTargetOutcome"));
 
 	if (!targetSignalComp->RequestExecutionOutcomeTarget(outcomePacket))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitRejected"), TEXT("TargetOutcomeRejected"));
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
 		return false;
 	}
@@ -192,20 +245,40 @@ bool UCExecutionCollaborationComponent::HandleSourceExecutionCommit(const uint32
 bool UCExecutionCollaborationComponent::CommitExecutionOutcome(const FExecutionOutcomePacket& InPacket)
 {
 	const FExecutionCollaborationContext& context = InPacket.CollaborationContext;
+	FExecutionCollaborationDebug::RecordStartTrace(
+		OwnerCharacter_Injected,
+		TEXT("TargetOutcomeCommitHandlerEntered"),
+		FString::Printf(
+			TEXT("Role=%s | State=%s | PacketSession=%u | ActiveSession=%u | Outcome=%s"),
+			bIsSourceRole ? TEXT("Source") : TEXT("Target"),
+			*UEnum::GetValueAsString(CollaborationState),
+			context.SessionId.Serial,
+			ActiveContext.SessionId.Serial,
+			*UEnum::GetValueAsString(context.OutcomePolicy)));
 
-	if (!IsActiveSession(context.SessionId) || bIsSourceRole || !context.IsValidMinimal()) return false;
-	if (CollaborationState != EExecutionCollaborationState::Active) return false;
+	if (!IsActiveSession(context.SessionId) || bIsSourceRole || !context.IsValidMinimal())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeCommitRejected"), TEXT("InvalidSessionRoleOrContext"));
+		return false;
+	}
+	if (CollaborationState != EExecutionCollaborationState::Active)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeCommitRejected"), FString::Printf(TEXT("CollaborationState=%s"), *UEnum::GetValueAsString(CollaborationState)));
+		return false;
+	}
 
 	if (!ActiveContext.OpportunityReservation.Matches(context.OpportunityReservation)
 		|| ActiveContext.TargetSnapshot.TargetActor != context.TargetSnapshot.TargetActor
 		|| ActiveContext.TargetSnapshot.Revision != context.TargetSnapshot.Revision
 		|| ActiveContext.OutcomePolicy != context.OutcomePolicy)
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeCommitRejected"), TEXT("ContextMismatch"));
 		return false;
 	}
 
 	if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->CommitExecutionOpportunityReservation(context.OpportunityReservation))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeCommitRejected"), TEXT("BalanceCommitRejected"));
 		CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
 		return false;
 	}
@@ -331,6 +404,15 @@ void UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent(co
 		return;
 	}
 
+	FExecutionCollaborationDebug::RecordStartTrace(
+		OwnerCharacter_Injected,
+		TEXT("TargetReactionLifecycleReceived"),
+		FString::Printf(
+			TEXT("Event=%s | Finish=%s | CollaborationState=%s"),
+			*UEnum::GetValueAsString(InEvent.EventType),
+			*UEnum::GetValueAsString(InEvent.FinishReason),
+			*UEnum::GetValueAsString(CollaborationState)));
+
 	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed)
 	{
 		if (CollaborationState != EExecutionCollaborationState::Committed)
@@ -408,18 +490,27 @@ bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecut
 		|| InTargetSnapshot.TargetActor != OwnerCharacter_Injected
 		|| InTargetSnapshot.Revision <= 0)
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetReservationRejected"), TEXT("InvalidSessionOrTargetSnapshot"));
 		return false;
 	}
 
 	if (!CanStartTargetExecution()) return false;
 
 	const EExecutionOutcomePolicy outcomePolicy = ResolveTargetExecutionOutcomePolicy();
-	if (outcomePolicy == EExecutionOutcomePolicy::None || outcomePolicy == EExecutionOutcomePolicy::Max) return false;
+	if (outcomePolicy == EExecutionOutcomePolicy::None || outcomePolicy == EExecutionOutcomePolicy::Max)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetReservationRejected"), TEXT("OutcomePolicyUnavailable"));
+		return false;
+	}
 
 	if (!CanResolveTargetExecutionReaction(outcomePolicy)) return false;
 
 	FExecutionOpportunityReservation reservation;
-	if (!BalanceComp_Injected->TryReserveExecutionOpportunity(InSessionId, reservation)) return false;
+	if (!BalanceComp_Injected->TryReserveExecutionOpportunity(InSessionId, reservation))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetReservationRejected"), TEXT("BalanceReservationRejected"));
+		return false;
+	}
 
 	FExecutionCollaborationContext context;
 	context.SessionId = InSessionId;
@@ -476,24 +567,40 @@ void UCExecutionCollaborationComponent::ReceivePartnerCancellation(const FExecut
 bool UCExecutionCollaborationComponent::StartTargetExecutionReaction()
 {
 	UCExecutionCollaborationComponent* targetCollaborationComp = FindPartnerCollaborationComponent();
-	if (!IsValid(targetCollaborationComp) || !IsValid(targetCollaborationComp->ReactionOrchestratorComp_Injected)) return false;
+	if (!IsValid(targetCollaborationComp) || !IsValid(targetCollaborationComp->ReactionOrchestratorComp_Injected))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetReactionStartRejected"), TEXT("MissingTargetReactionOrchestrator"));
+		return false;
+	}
 
 	FExecutionReactionRequest request;
 	request.CollaborationContext = ActiveContext;
 
 	const FReactionRequestResult result = targetCollaborationComp->ReactionOrchestratorComp_Injected->RequestExecutionReaction(request);
+	if (!result.IsAccepted())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetReactionStartRejected"), UEnum::GetValueAsString(result.RejectReason));
+	}
 
 	return result.IsAccepted();
 }
 
 bool UCExecutionCollaborationComponent::StartSourceExecutionAction()
 {
-	if (!IsValid(ActionOrchestratorComp_Injected)) return false;
+	if (!IsValid(ActionOrchestratorComp_Injected))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceActionStartRejected"), TEXT("MissingSourceActionOrchestrator"));
+		return false;
+	}
 
 	FExecutionActionRequest request;
 	request.CollaborationContext = ActiveContext;
 
 	const FActionRequestResult result = ActionOrchestratorComp_Injected->RequestExecutionAction(request);
+	if (!result.IsAccepted())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceActionStartRejected"), UEnum::GetValueAsString(result.RejectReason));
+	}
 
 	return result.IsAccepted();
 }
@@ -565,7 +672,7 @@ void UCExecutionCollaborationComponent::TryCompleteActiveExecutionSession()
 	if (!bSourceActionTerminal || !bTargetReactionTerminal) return;
 	if (!bIsSourceRole && ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Standard)
 	{
-		if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->EnterExecutionDown(ActiveContext.OpportunityReservation.BalanceLifecycleSerial))
+		if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->EnterExecutionDownLifecycle(ActiveContext.OpportunityReservation.BalanceLifecycleSerial))
 		{
 			CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
 			return;
@@ -625,15 +732,39 @@ bool UCExecutionCollaborationComponent::IsTargetExecutionOpportunityCurrent() co
 
 bool UCExecutionCollaborationComponent::CanStartSourceExecution() const
 {
-	if (!IsValid(OwnerCharacter_Injected)
-		|| !IsValid(HealthComp_Injected)
-		|| !HealthComp_Injected->IsAlive()
-		|| !IsValid(StateComp_Injected)
-		|| StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle
-		|| !IsValid(ActionComp_Injected)
-		|| ActionComp_Injected->IsActive()
-		|| !IsValid(ActionOrchestratorComp_Injected))
+	if (!IsValid(OwnerCharacter_Injected))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("SourcePreconditionRejected"), TEXT("InvalidOwner"));
+		return false;
+	}
+
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), TEXT("SourceNotAlive"));
+		return false;
+	}
+
+	if (!IsValid(StateComp_Injected) || StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle)
+	{
+		const FString stateText = IsValid(StateComp_Injected)
+			? UEnum::GetValueAsString(StateComp_Injected->GetCurrentExecutionState())
+			: TEXT("InvalidStateComponent");
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), FString::Printf(TEXT("SourceState=%s"), *stateText));
+		return false;
+	}
+
+	if (!IsValid(ActionComp_Injected) || ActionComp_Injected->IsActive())
+	{
+		const FString actionText = IsValid(ActionComp_Injected)
+			? UEnum::GetValueAsString(ActionComp_Injected->GetActiveActionType())
+			: TEXT("InvalidActionComponent");
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), FString::Printf(TEXT("ActiveAction=%s"), *actionText));
+		return false;
+	}
+
+	if (!IsValid(ActionOrchestratorComp_Injected))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), TEXT("InvalidActionOrchestrator"));
 		return false;
 	}
 
@@ -645,6 +776,7 @@ bool UCExecutionCollaborationComponent::CanResolveSourceExecutionAction(const EE
 	if ((InOutcomePolicy != EExecutionOutcomePolicy::Standard && InOutcomePolicy != EExecutionOutcomePolicy::Lethal)
 		|| !IsValid(ActionComp_Injected))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), TEXT("InvalidOutcomeOrActionComponent"));
 		return false;
 	}
 
@@ -657,26 +789,60 @@ bool UCExecutionCollaborationComponent::CanResolveSourceExecutionAction(const EE
 		|| !actionData.IsValidMinimal()
 		|| !IsValid(ActionComp_Injected->ResolveActionExecutor(actionData)))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), FString::Printf(TEXT("Action=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(actionDataKey.ActionType), actionDataKey.ActionIndex));
 		return false;
 	}
 
-	return InOutcomePolicy != EExecutionOutcomePolicy::Standard
-		|| actionData.StandardExecutionDamage > KINDA_SMALL_NUMBER;
+	if (InOutcomePolicy == EExecutionOutcomePolicy::Standard && actionData.StandardExecutionDamage <= KINDA_SMALL_NUMBER)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), TEXT("StandardExecutionDamageIsZero"));
+		return false;
+	}
+
+	return true;
 }
 
 bool UCExecutionCollaborationComponent::CanStartTargetExecution() const
 {
-	if (!IsValid(OwnerCharacter_Injected)
-		|| !IsValid(HealthComp_Injected)
-		|| !HealthComp_Injected->IsAlive()
-		|| !IsValid(StateComp_Injected)
-		|| StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle
-		|| !IsValid(BalanceComp_Injected)
-		|| !BalanceComp_Injected->IsExecutionOpportunityAvailable()
-		|| !IsValid(ReactionComp_Injected)
-		|| ReactionComp_Injected->IsActive()
-		|| !IsValid(ReactionOrchestratorComp_Injected))
+	if (!IsValid(OwnerCharacter_Injected))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("TargetPreconditionRejected"), TEXT("InvalidOwner"));
+		return false;
+	}
+
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("TargetNotAlive"));
+		return false;
+	}
+
+	if (!IsValid(StateComp_Injected) || StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle)
+	{
+		const FString stateText = IsValid(StateComp_Injected)
+			? UEnum::GetValueAsString(StateComp_Injected->GetCurrentExecutionState())
+			: TEXT("InvalidStateComponent");
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), FString::Printf(TEXT("TargetState=%s"), *stateText));
+		return false;
+	}
+
+	if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->IsExecutionOpportunityAvailable())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("CollapseOpportunityUnavailable"));
+		return false;
+	}
+
+	if (!IsValid(ReactionComp_Injected) || ReactionComp_Injected->IsActive())
+	{
+		const FString reactionText = IsValid(ReactionComp_Injected)
+			? UEnum::GetValueAsString(ReactionComp_Injected->GetActiveReactionType())
+			: TEXT("InvalidReactionComponent");
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), FString::Printf(TEXT("ActiveReaction=%s"), *reactionText));
+		return false;
+	}
+
+	if (!IsValid(ReactionOrchestratorComp_Injected))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("InvalidReactionOrchestrator"));
 		return false;
 	}
 
@@ -687,6 +853,7 @@ bool UCExecutionCollaborationComponent::CanResolveTargetExecutionReaction(const 
 {
 	if ((InOutcomePolicy != EExecutionOutcomePolicy::Standard && InOutcomePolicy != EExecutionOutcomePolicy::Lethal) || !IsValid(ReactionComp_Injected))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetDataRejected"), TEXT("InvalidOutcomeOrReactionComponent"));
 		return false;
 	}
 
@@ -696,9 +863,15 @@ bool UCExecutionCollaborationComponent::CanResolveTargetExecutionReaction(const 
 	reactionDataKey.ReactionIndex = INDEX_NONE;
 
 	FReactionData reactionData;
-	return ReactionComp_Injected->ResolveReactionData(reactionDataKey, reactionData)
-		&& reactionData.IsValidMinimal()
-		&& IsValid(ReactionComp_Injected->ResolveReactionExecutor(reactionData));
+	if (!ReactionComp_Injected->ResolveReactionData(reactionDataKey, reactionData)
+		|| !reactionData.IsValidMinimal()
+		|| !IsValid(ReactionComp_Injected->ResolveReactionExecutor(reactionData)))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetDataRejected"), FString::Printf(TEXT("Reaction=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(reactionDataKey.ReactionType), reactionDataKey.ReactionIndex));
+		return false;
+	}
+
+	return true;
 }
 
 bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot) const
@@ -707,16 +880,25 @@ bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(cons
 		|| !IsValid(OwnerCharacter_Injected)
 		|| !IsValid(InTargetSnapshot.TargetActor))
 	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("InvalidSettingsOrParticipant"));
 		return false;
 	}
 
 	ACharacter* targetCharacter = Cast<ACharacter>(InTargetSnapshot.TargetActor);
-	if (!IsValid(targetCharacter)) return false;
+	if (!IsValid(targetCharacter))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("TargetIsNotCharacter"));
+		return false;
+	}
 
 	FVector sourceForward2D = OwnerCharacter_Injected->GetActorForwardVector();
 	sourceForward2D.Z = 0.f;
 	
-	if (!sourceForward2D.Normalize()) return false;
+	if (!sourceForward2D.Normalize())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("InvalidSourceForward"));
+		return false;
+	}
 
 	const FVector sourceLocation = OwnerCharacter_Injected->GetActorLocation();
 	const FVector targetLocation = targetCharacter->GetActorLocation();
@@ -724,13 +906,24 @@ bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(cons
 	sourceToTarget2D.Z = 0.f;
 
 	const float currentDistance = sourceToTarget2D.Size();
-	if (currentDistance <= KINDA_SMALL_NUMBER || currentDistance > StartGeometrySettings.MaxStartDistance) return false;
+	if (currentDistance <= KINDA_SMALL_NUMBER || currentDistance > StartGeometrySettings.MaxStartDistance)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), FString::Printf(TEXT("Distance=%.1f / %.1f"), currentDistance, StartGeometrySettings.MaxStartDistance));
+		return false;
+	}
 
 	sourceToTarget2D /= currentDistance;
 	const float dot = FMath::Clamp(FVector::DotProduct(sourceForward2D, sourceToTarget2D), -1.f, 1.f);
 	const float angleDegrees = FMath::RadiansToDegrees(FMath::Acos(dot));
 
-	return angleDegrees <= StartGeometrySettings.MaxSourceFacingAngleDegrees;
+	if (angleDegrees > StartGeometrySettings.MaxSourceFacingAngleDegrees)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), FString::Printf(TEXT("Angle=%.1f / %.1f"), angleDegrees, StartGeometrySettings.MaxSourceFacingAngleDegrees));
+		return false;
+	}
+
+	FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryAccepted"), FString::Printf(TEXT("Distance=%.1f / %.1f | Angle=%.1f / %.1f"), currentDistance, StartGeometrySettings.MaxStartDistance, angleDegrees, StartGeometrySettings.MaxSourceFacingAngleDegrees));
+	return true;
 }
 
 bool UCExecutionCollaborationComponent::AlignTargetExecutionFacing(const FCombatTargetSnapshot& InTargetSnapshot) const

@@ -4,6 +4,7 @@
 
 #include "AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.h"
 #include "Core/Profiling/CAIAnimationProfiling.h"
+#include "Core/Debug/FBalanceDebug.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CHealthComponent.h"
@@ -118,7 +119,10 @@ void UCAnimInstance::BindComponentEvents()
 	if (IsValid(BalanceComp_Cached))
 	{
 		BalanceComp_Cached->OnBalanceLifecycleStateChanged.AddUObject(this, &UCAnimInstance::HandleBalanceLifecycleStateChanged);
+		BalanceComp_Cached->OnIncapacitatedPresentationChanged.AddUObject(this, &UCAnimInstance::HandleIncapacitatedPresentationChanged);
+		IncapacitatedPresentation = BalanceComp_Cached->GetIncapacitatedPresentation();
 		bIsCollapsePose = BalanceComp_Cached->IsCollapseActive();
+		bIsExecutionDownPose = BalanceComp_Cached->ShouldUseExecutionDownPose();
 	}
 }
 
@@ -137,6 +141,7 @@ void UCAnimInstance::UnbindComponentEvents()
 	if (IsValid(BalanceComp_Cached))
 	{
 		BalanceComp_Cached->OnBalanceLifecycleStateChanged.RemoveAll(this);
+		BalanceComp_Cached->OnIncapacitatedPresentationChanged.RemoveAll(this);
 	}
 }
 
@@ -166,8 +171,13 @@ void UCAnimInstance::RefreshStateParameters()
 	}
 
 	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
+	IncapacitatedPresentation = IsValid(BalanceComp_Cached)
+		? BalanceComp_Cached->GetIncapacitatedPresentation()
+		: EIncapacitatedPresentation::None;
+	// Compatibility: the current AnimGraph still reads the two bools. Its
+	// migration to IncapacitatedPresentation is intentionally asset-side.
 	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseActive();
-	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsExecutionDownActive();
+	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->ShouldUseExecutionDownPose();
 	DeathPresentationMode = EDeathPresentationMode::Default;
 	if (const ACEnemy* enemy = Cast<ACEnemy>(OwnerCharacter_Cached))
 	{
@@ -185,6 +195,7 @@ void UCAnimInstance::ResetAnimationParameters()
 
 	CurrentWeaponType = EWeaponType::Max;
 	bIsDeadPose = false;
+	IncapacitatedPresentation = EIncapacitatedPresentation::None;
 	bIsCollapsePose = false;
 	bIsExecutionDownPose = false;
 	DeathPresentationMode = EDeathPresentationMode::Default;
@@ -271,5 +282,21 @@ void UCAnimInstance::HandleDeadStateChanged(EDeadState InPreviousDeadState, EDea
 void UCAnimInstance::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InCurrentState)
 {
 	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseActive();
-	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsExecutionDownActive();
+	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->ShouldUseExecutionDownPose();
+}
+
+void UCAnimInstance::HandleIncapacitatedPresentationChanged(const EIncapacitatedPresentation InPresentation)
+{
+	IncapacitatedPresentation = InPresentation;
+	bIsExecutionDownPose = IncapacitatedPresentation == EIncapacitatedPresentation::ExecutionDown;
+	if (IsValid(BalanceComp_Cached))
+	{
+		FBalanceDebug::RecordLifecycleEvent(
+			BalanceComp_Cached,
+			TEXT("IncapacitatedPresentationAnimUpdated"),
+			FString::Printf(
+				TEXT("Presentation=%s | LegacyExecutionDownPose=%s"),
+				*UEnum::GetValueAsString(IncapacitatedPresentation),
+				bIsExecutionDownPose ? TEXT("true") : TEXT("false")));
+	}
 }

@@ -7,9 +7,8 @@
 #include "Type/CHealthTypes.h"
 #include "Type/CCharacterFeedbackTypes.h"
 #include "Type/CStateTypes.h"
+#include "Type/CBalanceTypes.h"
 #include "CAnimInstance.generated.h"
-
-enum class EBalanceLifecycleState : uint8;
 
 UCLASS()
 class PORTFOLIO_API UCAnimInstance : public UAnimInstance
@@ -43,6 +42,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsDeadPose = false;
 
+	// Authoritative full-body incapacity input for new AnimGraph presentation.
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	EIncapacitatedPresentation IncapacitatedPresentation = EIncapacitatedPresentation::None;
+
+	// Compatibility inputs for the current AnimGraph. Remove after the graph has
+	// migrated to IncapacitatedPresentation.
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bIsCollapsePose = false;
 
@@ -126,4 +131,5 @@ private:
 	void HandleWeaponTypeChanged(ACharacter* InOwnerCharacter, EWeaponType InPreviousWeaponType, EWeaponType InCurrentWeaponType);
 	void HandleDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InCurrentDeadState);
 	void HandleBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState, EBalanceLifecycleState InCurrentState);
+	void HandleIncapacitatedPresentationChanged(EIncapacitatedPresentation InPresentation);
 };

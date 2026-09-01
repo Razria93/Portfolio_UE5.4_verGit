@@ -9,6 +9,7 @@
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Component/CExecutionCollaborationComponent.h"
+#include "Core/Debug/FBalanceDebug.h"
 #include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
@@ -58,6 +59,8 @@ void UCCombatSignalTargetComponent::InitializeReferences(const FCharacterCompone
 		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.AddUObject(this, &UCCombatSignalTargetComponent::HandleReactionExecutionLifecycleEvent);
 		ReactionComp_Injected->OnReactionExecutionNotifyCommand.RemoveAll(this);
 		ReactionComp_Injected->OnReactionExecutionNotifyCommand.AddUObject(this, &UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand);
+		ReactionComp_Injected->OnReactionIncapacitatedPresentationRequested.RemoveAll(this);
+		ReactionComp_Injected->OnReactionIncapacitatedPresentationRequested.AddUObject(this, &UCCombatSignalTargetComponent::HandleReactionIncapacitatedPresentationRequested);
 	}
 
 	ValidateRequiredComponentReferences();
@@ -77,6 +80,7 @@ void UCCombatSignalTargetComponent::EndPlay(const EEndPlayReason::Type InEndPlay
 	{
 		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
 		ReactionComp_Injected->OnReactionExecutionNotifyCommand.RemoveAll(this);
+		ReactionComp_Injected->OnReactionIncapacitatedPresentationRequested.RemoveAll(this);
 	}
 
 	Super::EndPlay(InEndPlayReason);
@@ -294,18 +298,48 @@ void UCCombatSignalTargetComponent::HandleParryCombatResult(const FCombatResultP
 bool UCCombatSignalTargetComponent::ProcessExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket)
 {
 	const FExecutionCollaborationContext& context = InExecutionOutcomePacket.CollaborationContext;
+	FExecutionCollaborationDebug::RecordStartTrace(
+		OwnerCharacter_Injected,
+		TEXT("TargetOutcomeIngressEntered"),
+		FString::Printf(
+			TEXT("PacketValid=%s | PacketTarget=%s | Owner=%s | Outcome=%s | StandardDamage=%.1f"),
+			InExecutionOutcomePacket.IsValidMinimal() ? TEXT("true") : TEXT("false"),
+			*GetNameSafe(context.TargetSnapshot.TargetActor),
+			*GetNameSafe(OwnerCharacter_Injected),
+			*UEnum::GetValueAsString(context.OutcomePolicy),
+			InExecutionOutcomePacket.StandardExecutionDamage));
 
-	if (!InExecutionOutcomePacket.IsValidMinimal() || context.TargetSnapshot.TargetActor != OwnerCharacter_Injected) return false;
-	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+	if (!InExecutionOutcomePacket.IsValidMinimal() || context.TargetSnapshot.TargetActor != OwnerCharacter_Injected)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("InvalidPacketOrTargetMismatch"));
+		return false;
+	}
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("TargetNotAlive"));
+		return false;
+	}
 
 	const float currentHealth = HealthComp_Injected->GetCurrentHP();
 	const bool bIsLethal = context.OutcomePolicy == EExecutionOutcomePolicy::Lethal;
 	const float appliedDamage = bIsLethal ? currentHealth : FMath::Min(InExecutionOutcomePacket.StandardExecutionDamage, FMath::Max(0.f, currentHealth - 1.f));
 
-	if (appliedDamage <= KINDA_SMALL_NUMBER) return false;
-	if (bIsLethal && !HealthComp_Injected->CanKill()) return false;
+	if (appliedDamage <= KINDA_SMALL_NUMBER)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), FString::Printf(TEXT("AppliedDamageIsZero | CurrentHP=%.1f"), currentHealth));
+		return false;
+	}
+	if (bIsLethal && !HealthComp_Injected->CanKill())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("LethalNotAllowed"));
+		return false;
+	}
 
-	if (!IsValid(ExecutionCollaborationComp_Injected) || !ExecutionCollaborationComp_Injected->CommitExecutionOutcome(InExecutionOutcomePacket)) return false;
+	if (!IsValid(ExecutionCollaborationComp_Injected) || !ExecutionCollaborationComp_Injected->CommitExecutionOutcome(InExecutionOutcomePacket))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("CollaborationCommitRejected"));
+		return false;
+	}
 
 	const float committedDamage = HealthComp_Injected->TakeDamage(appliedDamage);
 	if (committedDamage > KINDA_SMALL_NUMBER)
@@ -337,14 +371,59 @@ void UCCombatSignalTargetComponent::HandleReactionExecutionLifecycleEvent(const 
 
 void UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand(const FReactionExecutionContext& InContext, const EReactionNotifyCommand InCommand)
 {
-	if (InCommand != EReactionNotifyCommand::ResetBalance) return;
 	if (!IsValid(BalanceComp_Injected)) return;
-	if (InContext.ReactionDataKey.ReactionType != EReactionType::CollapseOut && InContext.ReactionDataKey.ReactionType != EReactionType::ExecutionRecovery)
+
+	switch (InCommand)
 	{
+	case EReactionNotifyCommand::EnterExecutionDownPresentation:
+		FBalanceDebug::RecordLifecycleEvent(
+			BalanceComp_Injected,
+			TEXT("ExecutionDownPresentationTargetReceived"),
+			FString::Printf(
+				TEXT("ContextReaction=%s | ContextLifecycle=%u"),
+				*UEnum::GetValueAsString(InContext.ReactionDataKey.ReactionType),
+				InContext.BalanceLifecycleSerial));
+		if (InContext.ReactionDataKey.ReactionType == EReactionType::ExecutionStandard)
+		{
+			const bool bAccepted = BalanceComp_Injected->TryEnterExecutionDownPresentation(InContext);
+			FBalanceDebug::RecordLifecycleEvent(
+				BalanceComp_Injected,
+				bAccepted ? TEXT("ExecutionDownPresentationTargetAccepted") : TEXT("ExecutionDownPresentationTargetRejected"));
+		}
+		else
+		{
+			FBalanceDebug::RecordLifecycleEvent(BalanceComp_Injected, TEXT("ExecutionDownPresentationTargetRejected"), TEXT("Reason=UnexpectedReactionType"));
+		}
+		return;
+
+	case EReactionNotifyCommand::ExitExecutionDownPresentation:
+		if (InContext.ReactionDataKey.ReactionType == EReactionType::ExecutionRecovery)
+		{
+			BalanceComp_Injected->TryExitExecutionDownPresentation(InContext);
+		}
+		return;
+
+	case EReactionNotifyCommand::ResetBalance:
+		if (InContext.ReactionDataKey.ReactionType == EReactionType::CollapseOut)
+		{
+			BalanceComp_Injected->TryCommitBalanceLifecycleReset(InContext);
+		}
+		return;
+
+	default:
 		return;
 	}
+}
 
-	BalanceComp_Injected->TryCommitBalanceLifecycleReset(InContext);
+void UCCombatSignalTargetComponent::HandleReactionIncapacitatedPresentationRequested(const FReactionExecutionContext& InContext, const EIncapacitatedPresentation InPresentation)
+{
+	if (!IsValid(BalanceComp_Injected)) return;
+
+	const bool bAccepted = BalanceComp_Injected->TrySetIncapacitatedPresentation(InContext, InPresentation);
+	FBalanceDebug::RecordLifecycleEvent(
+		BalanceComp_Injected,
+		bAccepted ? TEXT("IncapacitatedPresentationTargetAccepted") : TEXT("IncapacitatedPresentationTargetRejected"),
+		FString::Printf(TEXT("Target=%s"), *UEnum::GetValueAsString(InPresentation)));
 }
 
 // Combat Damage Pipeline - Validation

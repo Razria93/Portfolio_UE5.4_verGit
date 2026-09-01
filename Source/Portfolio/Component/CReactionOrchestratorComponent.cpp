@@ -220,6 +220,10 @@ bool UCReactionOrchestratorComponent::ResolveExecutionReactionCandidate(const FE
 		: EReactionType::ExecutionStandard;
 	OutIncomingCandidate.ReactionDataKey.ReactionIndex = INDEX_NONE;
 	OutIncomingCandidate.ExecutionSessionId = context.SessionId;
+	// Execution reactions still belong to the Balance lifecycle that issued the opportunity.
+	// Preserve its serial so presentation notifies can validate their reaction context against
+	// the target's current Balance lifecycle instead of receiving the default serial (0).
+	OutIncomingCandidate.BalanceLifecycleSerial = context.OpportunityReservation.BalanceLifecycleSerial;
 	return true;
 }
 

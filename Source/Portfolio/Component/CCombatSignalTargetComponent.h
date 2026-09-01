@@ -12,6 +12,7 @@
 
 enum class EReactionNotifyCommand : uint8;
 enum class EReactionType : uint8;
+enum class EIncapacitatedPresentation : uint8;
 struct FBalanceLifecyclePacket;
 struct FReactionExecutionContext;
 struct FReactionExecutionLifecycleEvent;
@@ -111,6 +112,7 @@ private:
 	void HandleBalanceLifecycleReactionRequested(const FBalanceLifecyclePacket& InBalanceLifecyclePacket);
 	void HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent);
 	void HandleReactionExecutionNotifyCommand(const FReactionExecutionContext& InContext, EReactionNotifyCommand InCommand);
+	void HandleReactionIncapacitatedPresentationRequested(const FReactionExecutionContext& InContext, EIncapacitatedPresentation InPresentation);
 
 private:
 	// Combat Damage Pipeline - Validation

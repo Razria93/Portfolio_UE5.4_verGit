@@ -7,6 +7,7 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CObservableOverlayComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
 #include "Component/CReactionComponent.h"
@@ -19,6 +20,7 @@
 #include "Type/CObservableOverlayTypes.h"
 #include "Type/CExecutionTypes.h"
 #include "Core/Debug/FActionComponentDebug.h"
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "GameFramework/Character.h"
@@ -36,6 +38,7 @@ void UCActionComponent::InitializeReferences(const FCharacterComponentReferences
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
+	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
 	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
 	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
@@ -361,6 +364,54 @@ void UCActionComponent::HandleApplyActionFinished(const UCAction* InAction, EAct
 	if (InAction != GetActiveActionExecutor()) return;
 
 	EndActiveAction(InFinishReason);
+}
+
+// Execution Collaboration Bridge
+
+bool UCActionComponent::TryCommitActiveExecution(const UCAction* InAction, const uint32 InActionRequestSerial)
+{
+	FExecutionCollaborationDebug::RecordStartTrace(
+		OwnerCharacter_Injected,
+		TEXT("SourceCommitNotifyReceived"),
+		FString::Printf(TEXT("ActionSerial=%u | StandardDamage=%.1f"), InActionRequestSerial, ActiveActionData.StandardExecutionDamage));
+
+	if (!IsActive()
+		|| !IsValid(InAction)
+		|| InAction != GetActiveActionExecutor()
+		|| ActiveActionType != EActionType::Execution
+		|| ActiveActionRequestSerial != InActionRequestSerial
+		|| !ActiveActionData.IsValidMinimal())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitNotifyRejected"), TEXT("InvalidActiveExecution"));
+		return false;
+	}
+
+	if (!IsValid(ExecutionCollaborationComp_Injected))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitDispatchPreflight"), TEXT("InvalidCollaborationComponent"));
+		return false;
+	}
+
+	const FExecutionCollaborationRuntimeSnapshot runtimeSnapshot = ExecutionCollaborationComp_Injected->GetExecutionCollaborationRuntimeSnapshot();
+	FExecutionCollaborationDebug::RecordStartTrace(
+		OwnerCharacter_Injected,
+		TEXT("SourceCommitDispatchPreflight"),
+		FString::Printf(
+			TEXT("HasSession=%s | Role=%s | State=%s | SessionSerial=%u | Outcome=%s"),
+			runtimeSnapshot.bHasActiveSession ? TEXT("true") : TEXT("false"),
+			runtimeSnapshot.bIsSourceRole ? TEXT("Source") : TEXT("Target"),
+			*UEnum::GetValueAsString(runtimeSnapshot.CollaborationState),
+			runtimeSnapshot.CollaborationContext.SessionId.Serial,
+			*UEnum::GetValueAsString(runtimeSnapshot.CollaborationContext.OutcomePolicy)));
+
+	if (!ExecutionCollaborationComp_Injected->HandleSourceExecutionCommit(ActiveActionRequestSerial, ActiveActionData.StandardExecutionDamage))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitNotifyRejected"), TEXT("CollaborationRejected"));
+		return false;
+	}
+
+	FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceCommitNotifyAccepted"));
+	return true;
 }
 
 // Notify Routing

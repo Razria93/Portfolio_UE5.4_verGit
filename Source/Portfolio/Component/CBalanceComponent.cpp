@@ -67,6 +67,11 @@ bool UCBalanceComponent::IsExecutionDownActive() const
 	return BalanceLifecycleState == EBalanceLifecycleState::ExecutionDownActive;
 }
 
+bool UCBalanceComponent::ShouldUseExecutionDownPose() const
+{
+	return IncapacitatedPresentation == EIncapacitatedPresentation::ExecutionDown;
+}
+
 bool UCBalanceComponent::IsExecutionOpportunityAvailable() const
 {
 	return IsCollapseLoopActive() && !ExecutionOpportunityReservation.IsValidMinimal();
@@ -233,40 +238,114 @@ void UCBalanceComponent::HandleBalanceLifecycleReactionExecutionTerminal(const F
 		return;
 	}
 
-	const EBalanceLifecycleState expectedRecoveryState = reactionType == EReactionType::ExecutionRecovery
-		? EBalanceLifecycleState::ExecutionRecoveryActive
-		: EBalanceLifecycleState::CollapseOutActive;
-	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed && BalanceLifecycleState == expectedRecoveryState)
+	if (reactionType == EReactionType::ExecutionRecovery)
 	{
-		FBalanceDebug::RecordLifecycleEvent(this, reactionType == EReactionType::ExecutionRecovery ? TEXT("ExecutionRecoveryCompletedWithoutReset") : TEXT("CollapseOutCompletedWithoutReset"));
+		if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed
+			&& BalanceLifecycleState == EBalanceLifecycleState::ExecutionRecoveryActive)
+		{
+			FBalanceDebug::RecordLifecycleEvent(this, TEXT("ExecutionRecoveryCompleted"));
+			ResetBalanceRuntime();
+			return;
+		}
+
+		if (BalanceLifecycleState != EBalanceLifecycleState::Accumulating)
+		{
+			AbortBalanceLifecycle(InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored
+				? EBalanceAbortReason::ExecutionRecoveryRejected
+				: EBalanceAbortReason::ExecutionRecoveryInterrupted);
+		}
+
+		return;
+	}
+
+	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Completed
+		&& BalanceLifecycleState == EBalanceLifecycleState::CollapseOutActive)
+	{
+		FBalanceDebug::RecordLifecycleEvent(this, TEXT("CollapseOutCompletedWithoutReset"));
 		AbortBalanceLifecycle(EBalanceAbortReason::ResetNotifyMissing);
 		return;
 	}
 
 	if (BalanceLifecycleState == EBalanceLifecycleState::Accumulating) return;
-	if (reactionType == EReactionType::ExecutionRecovery)
-	{
-		AbortBalanceLifecycle(InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored ? EBalanceAbortReason::ExecutionRecoveryRejected : EBalanceAbortReason::ExecutionRecoveryInterrupted);
-		return;
-	}
-
 	AbortBalanceLifecycle(InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored ? EBalanceAbortReason::CollapseOutRejected : EBalanceAbortReason::CollapseOutInterrupted);
 }
 
 bool UCBalanceComponent::TryCommitBalanceLifecycleReset(const FReactionExecutionContext& InContext)
 {
 	const EReactionType reactionType = InContext.ReactionDataKey.ReactionType;
-	if (reactionType != EReactionType::CollapseOut && reactionType != EReactionType::ExecutionRecovery) return false;
+	if (reactionType != EReactionType::CollapseOut) return false;
 	if (!MatchesLifecycleContext(InContext, reactionType)) return false;
 
-	const EBalanceLifecycleState expectedRecoveryState = reactionType == EReactionType::ExecutionRecovery
-		? EBalanceLifecycleState::ExecutionRecoveryActive
-		: EBalanceLifecycleState::CollapseOutActive;
-	if (BalanceLifecycleState != expectedRecoveryState) return false;
+	if (BalanceLifecycleState != EBalanceLifecycleState::CollapseOutActive) return false;
 
 	FBalanceDebug::RecordLifecycleEvent(this, TEXT("CollapseResetCommitted"));
 	ResetBalanceRuntime();
 	return true;
+}
+
+// Incapacitated Presentation
+
+bool UCBalanceComponent::TrySetIncapacitatedPresentation(const FReactionExecutionContext& InContext, const EIncapacitatedPresentation InPresentation)
+{
+	FBalanceDebug::RecordLifecycleEvent(
+		this,
+		TEXT("IncapacitatedPresentationRequested"),
+		FString::Printf(
+			TEXT("Target=%s | ContextReaction=%s | ContextLifecycle=%u | Current=%s"),
+			*UEnum::GetValueAsString(InPresentation),
+			*UEnum::GetValueAsString(InContext.ReactionDataKey.ReactionType),
+			InContext.BalanceLifecycleSerial,
+			*UEnum::GetValueAsString(IncapacitatedPresentation)));
+
+	if (InPresentation == EIncapacitatedPresentation::None)
+	{
+		const bool bIsCollapseOut = MatchesLifecycleContext(InContext, EReactionType::CollapseOut)
+			&& BalanceLifecycleState == EBalanceLifecycleState::CollapseOutActive;
+		const bool bIsExecutionRecovery = MatchesLifecycleContext(InContext, EReactionType::ExecutionRecovery)
+			&& BalanceLifecycleState == EBalanceLifecycleState::ExecutionRecoveryActive;
+		if (!bIsCollapseOut && !bIsExecutionRecovery)
+		{
+			FBalanceDebug::RecordLifecycleEvent(this, TEXT("IncapacitatedPresentationRejected"), TEXT("Reason=NoneRequiresActiveCollapseOutOrExecutionRecovery"));
+			return false;
+		}
+	}
+	else if (InPresentation == EIncapacitatedPresentation::Collapse)
+	{
+		if (!MatchesLifecycleContext(InContext, EReactionType::CollapseIn)
+			|| BalanceLifecycleState != EBalanceLifecycleState::CollapseInActive)
+		{
+			FBalanceDebug::RecordLifecycleEvent(this, TEXT("IncapacitatedPresentationRejected"), TEXT("Reason=CollapseRequiresActiveCollapseIn"));
+			return false;
+		}
+	}
+	else if (InPresentation == EIncapacitatedPresentation::ExecutionDown)
+	{
+		if (!MatchesLifecycleContext(InContext, EReactionType::ExecutionStandard)
+			|| BalanceLifecycleState != EBalanceLifecycleState::ExecutionPrimaryCommitted)
+		{
+			FBalanceDebug::RecordLifecycleEvent(this, TEXT("IncapacitatedPresentationRejected"), TEXT("Reason=ExecutionDownRequiresCommittedStandardExecution"));
+			return false;
+		}
+	}
+	else
+	{
+		FBalanceDebug::RecordLifecycleEvent(this, TEXT("IncapacitatedPresentationRejected"), TEXT("Reason=InvalidPresentation"));
+		return false;
+	}
+
+	SetIncapacitatedPresentation(InPresentation);
+	FBalanceDebug::RecordLifecycleEvent(this, TEXT("IncapacitatedPresentationAccepted"));
+	return true;
+}
+
+bool UCBalanceComponent::TryEnterExecutionDownPresentation(const FReactionExecutionContext& InContext)
+{
+	return TrySetIncapacitatedPresentation(InContext, EIncapacitatedPresentation::ExecutionDown);
+}
+
+bool UCBalanceComponent::TryExitExecutionDownPresentation(const FReactionExecutionContext& InContext)
+{
+	return TrySetIncapacitatedPresentation(InContext, EIncapacitatedPresentation::None);
 }
 
 // Execution Opportunity Reservation
@@ -312,6 +391,7 @@ bool UCBalanceComponent::ReleaseExecutionOpportunityReservation(const FExecution
 	const float resumeDuration = ExecutionOpportunityReservation.SuspendedLoopRemainingSeconds;
 
 	ClearExecutionOpportunityReservation();
+	SetIncapacitatedPresentation(EIncapacitatedPresentation::None);
 
 	if (BalanceLifecycleState == EBalanceLifecycleState::ExecutionPrimaryActive)
 	{
@@ -337,7 +417,7 @@ bool UCBalanceComponent::CommitExecutionOpportunityReservation(const FExecutionO
 	return true;
 }
 
-bool UCBalanceComponent::EnterExecutionDown(const uint32 InBalanceLifecycleSerial)
+bool UCBalanceComponent::EnterExecutionDownLifecycle(const uint32 InBalanceLifecycleSerial)
 {
 	if (InBalanceLifecycleSerial == 0 || InBalanceLifecycleSerial != BalanceLifecycleSerial) return false;
 	if (BalanceLifecycleState != EBalanceLifecycleState::ExecutionPrimaryCommitted) return false;
@@ -364,6 +444,7 @@ void UCBalanceComponent::ShutdownBalanceRuntime()
 	ClearCollapseLoopTimer();
 	ClearExecutionDownTimer();
 	ClearExecutionOpportunityReservation();
+	SetIncapacitatedPresentation(EIncapacitatedPresentation::None);
 	CurrentBalanceCount = 0;
 	BalanceLifecycleState = EBalanceLifecycleState::Accumulating;
 	LastAcceptedParryResultSerialByTarget.Reset();
@@ -499,11 +580,33 @@ void UCBalanceComponent::ClearExecutionOpportunityReservation()
 	ExecutionOpportunityReservation = FExecutionOpportunityReservation();
 }
 
+void UCBalanceComponent::SetIncapacitatedPresentation(const EIncapacitatedPresentation InPresentation)
+{
+	if (IncapacitatedPresentation == InPresentation)
+	{
+		FBalanceDebug::RecordLifecycleEvent(this, TEXT("IncapacitatedPresentationUnchanged"), FString::Printf(TEXT("Presentation=%s"), *UEnum::GetValueAsString(InPresentation)));
+		return;
+	}
+
+	const EIncapacitatedPresentation previousPresentation = IncapacitatedPresentation;
+	IncapacitatedPresentation = InPresentation;
+	FBalanceDebug::RecordLifecycleEvent(
+		this,
+		TEXT("IncapacitatedPresentationChanged"),
+		FString::Printf(
+			TEXT("Previous=%s | New=%s"),
+			*UEnum::GetValueAsString(previousPresentation),
+			*UEnum::GetValueAsString(IncapacitatedPresentation)));
+	OnIncapacitatedPresentationChanged.Broadcast(IncapacitatedPresentation);
+	OnExecutionDownPresentationChanged.Broadcast(IsExecutionDownPresentationActive());
+}
+
 void UCBalanceComponent::ResetBalanceRuntime()
 {
 	ClearCollapseLoopTimer();
 	ClearExecutionDownTimer();
 	ClearExecutionOpportunityReservation();
+	SetIncapacitatedPresentation(EIncapacitatedPresentation::None);
 	CurrentBalanceCount = 0;
 	SetBalanceLifecycleState(EBalanceLifecycleState::Accumulating);
 }

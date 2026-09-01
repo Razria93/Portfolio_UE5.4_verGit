@@ -167,8 +167,10 @@ FBalanceDebugSnapshot FBalanceDebug::BuildSnapshot(const ACEnemy* InEnemy)
 	snapshot.LoopDurationSeconds = balanceComp->GetCollapseLoopDuration();
 	snapshot.ExecutionDownRemainingSeconds = balanceComp->GetExecutionDownRemainingSeconds();
 	snapshot.ExecutionDownDurationSeconds = balanceComp->GetExecutionDownDuration();
+	snapshot.IncapacitatedPresentation = balanceComp->GetIncapacitatedPresentation();
 	snapshot.bIsCollapsePoseActive = balanceComp->IsCollapseActive();
 	snapshot.bIsCollapseLoopActive = balanceComp->IsCollapseLoopActive();
+	snapshot.bIsExecutionDownPresentationActive = balanceComp->IsExecutionDownPresentationActive();
 	snapshot.bIsExecutionDownPoseActive = balanceComp->IsExecutionDownActive();
 	snapshot.bIsLifecycleBlocking = balanceComp->IsBalanceLifecycleBlocking();
 	snapshot.bIsFacingSuppressed = balanceComp->ShouldSuppressCombatTargetFacing();
@@ -190,9 +192,13 @@ FBalanceDebugOverlayDetails FBalanceDebug::BuildOverlayDetails(const FBalanceDeb
 	details.ExecutionDownLifetimeText = InSnapshot.bIsExecutionDownPoseActive
 		? FString::Printf(TEXT("%.2f / %.2f s"), InSnapshot.ExecutionDownRemainingSeconds, InSnapshot.ExecutionDownDurationSeconds)
 		: TEXT("--");
+	details.IncapacitatedPresentationText = FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.IncapacitatedPresentation));
 	details.CollapsePoseText = FormatBalanceBoolText(InSnapshot.bIsCollapsePoseActive);
 	details.CollapseLoopText = FormatBalanceBoolText(InSnapshot.bIsCollapseLoopActive);
-	details.ExecutionDownPoseText = FormatBalanceBoolText(InSnapshot.bIsExecutionDownPoseActive);
+	details.ExecutionDownPresentationText = FormatBalanceBoolText(InSnapshot.bIsExecutionDownPresentationActive);
+	details.ExecutionDownPoseText = InSnapshot.bIsExecutionDownPoseActive
+		? TEXT("Active")
+		: (InSnapshot.bIsExecutionDownPresentationActive ? TEXT("Presentation") : TEXT("Off"));
 	details.LifecycleBlockingText = FormatBalanceBoolText(InSnapshot.bIsLifecycleBlocking);
 	details.FacingSuppressedText = FormatBalanceBoolText(InSnapshot.bIsFacingSuppressed);
 	details.LastAbortText = FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.LastAbortReason));
@@ -214,6 +220,10 @@ void FBalanceDebug::DrawWorldDebug(UWorld* InWorld, const ACEnemy* InEnemy, cons
 	{
 		textLines.Add(FString::Printf(TEXT("[EXECUTION DOWN | %s | %.2f s]"), *lifecycleText, InSnapshot.ExecutionDownRemainingSeconds));
 	}
+	else if (InSnapshot.bIsExecutionDownPresentationActive)
+	{
+		textLines.Add(FString::Printf(TEXT("[EXECUTION DOWN PRESENTATION | %s]"), *lifecycleText));
+	}
 	else
 	{
 		textLines.Add(FString::Printf(TEXT("[BALANCE | %s]"), *lifecycleText));
@@ -224,7 +234,8 @@ void FBalanceDebug::DrawWorldDebug(UWorld* InWorld, const ACEnemy* InEnemy, cons
 		: FString::Printf(TEXT("Count: %d / %d | L#%u"), InSnapshot.CurrentCount, InSnapshot.Threshold, InSnapshot.LifecycleSerial);
 	textLines.Add(countText);
 	textLines.Add(FString::Printf(
-		TEXT("Collapse Pose: %s | Execution Down: %s | Block: %s | Facing: %s"),
+		TEXT("Incapacitated: %s | Collapse Lifecycle: %s | Execution Down: %s | Block: %s | Facing: %s"),
+		*FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.IncapacitatedPresentation)),
 		InSnapshot.bIsCollapsePoseActive ? TEXT("On") : TEXT("Off"),
 		InSnapshot.bIsExecutionDownPoseActive ? TEXT("On") : TEXT("Off"),
 		InSnapshot.bIsLifecycleBlocking ? TEXT("On") : TEXT("Off"),

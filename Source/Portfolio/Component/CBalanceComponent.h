@@ -13,6 +13,10 @@ struct FReactionRequestResult;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnBalanceLifecycleStateChanged, EBalanceLifecycleState, EBalanceLifecycleState);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnBalanceLifecycleReactionRequested, const FBalanceLifecyclePacket&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnIncapacitatedPresentationChanged, EIncapacitatedPresentation);
+// Compatibility event for the existing Execution Down consumer. New code should
+// subscribe to OnIncapacitatedPresentationChanged instead.
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnExecutionDownPresentationChanged, bool /* bIsPresentationActive */);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCBalanceComponent : public UActorComponent
@@ -47,6 +51,10 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
 	EBalanceAbortReason LastAbortReason = EBalanceAbortReason::None;
 
+	// Incapacitated Presentation Runtime
+	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
+	EIncapacitatedPresentation IncapacitatedPresentation = EIncapacitatedPresentation::None;
+
 	// Timer Runtime
 	FTimerHandle CollapseLoopTimerHandle;
 	FTimerHandle ExecutionDownTimerHandle;
@@ -70,6 +78,8 @@ public:
 	// Events
 	FOnBalanceLifecycleStateChanged OnBalanceLifecycleStateChanged;
 	FOnBalanceLifecycleReactionRequested OnBalanceLifecycleReactionRequested;
+	FOnIncapacitatedPresentationChanged OnIncapacitatedPresentationChanged;
+	FOnExecutionDownPresentationChanged OnExecutionDownPresentationChanged;
 
 public:
 	// Query: Balance State
@@ -89,6 +99,10 @@ public:
 	bool IsCollapseLoopActive() const;
 
 	bool IsExecutionDownActive() const;
+	EIncapacitatedPresentation GetIncapacitatedPresentation() const { return IncapacitatedPresentation; }
+	bool IsCollapsePresentationActive() const { return IncapacitatedPresentation == EIncapacitatedPresentation::Collapse; }
+	bool IsExecutionDownPresentationActive() const { return IncapacitatedPresentation == EIncapacitatedPresentation::ExecutionDown; }
+	bool ShouldUseExecutionDownPose() const;
 	bool IsExecutionOpportunityAvailable() const;
 	bool IsExecutionOpportunityReservationCurrent(const FExecutionOpportunityReservation& InReservation) const;
 
@@ -110,12 +124,21 @@ public:
 	bool TryCommitBalanceLifecycleReset(const struct FReactionExecutionContext& InContext);
 
 public:
+	// Incapacitated Presentation
+	bool TrySetIncapacitatedPresentation(const struct FReactionExecutionContext& InContext, EIncapacitatedPresentation InPresentation);
+
+	// Compatibility wrappers for existing saved montage notifies. New montages use
+	// CAnimNotify_SetIncapacitatedPresentation directly.
+	bool TryEnterExecutionDownPresentation(const struct FReactionExecutionContext& InContext);
+	bool TryExitExecutionDownPresentation(const struct FReactionExecutionContext& InContext);
+
+public:
 	// Execution Opportunity Reservation
 	bool TryReserveExecutionOpportunity(const FExecutionSessionId& InSessionId, FExecutionOpportunityReservation& OutReservation);
 	bool ActivateExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
 	bool ReleaseExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
 	bool CommitExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
-	bool EnterExecutionDown(uint32 InBalanceLifecycleSerial);
+	bool EnterExecutionDownLifecycle(uint32 InBalanceLifecycleSerial);
 
 public:
 	// Lifecycle Release
@@ -143,6 +166,9 @@ private:
 
 	// Execution Opportunity Runtime
 	void ClearExecutionOpportunityReservation();
+
+	// Incapacitated Presentation Runtime
+	void SetIncapacitatedPresentation(EIncapacitatedPresentation InPresentation);
 
 private:
 	// Packet Deduplication

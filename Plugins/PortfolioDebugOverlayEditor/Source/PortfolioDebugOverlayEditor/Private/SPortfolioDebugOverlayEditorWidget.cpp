@@ -439,7 +439,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeExecutionCollaborati
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationStartGeometryLabel", "Start Geometry"), LOCTEXT("ExecutionCollaborationStartGeometryHelp", "Draw the Source start distance radius, facing angle boundaries and current Target link."), CVarAccess::GetExecutionCollaborationDrawStartGeometryCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationPairLinkLabel", "Pair Link"), LOCTEXT("ExecutionCollaborationPairLinkHelp", "Draw the active Source-to-Target collaboration link with lifecycle colors."), CVarAccess::GetExecutionCollaborationDrawPairLinkCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationWorldTextLabel", "World Text"), LOCTEXT("ExecutionCollaborationWorldTextHelp", "Draw the active Execution Collaboration session summary at the pair midpoint."), CVarAccess::GetExecutionCollaborationDrawWorldTextCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationAuditLabel", "Lifecycle Audit Log"), LOCTEXT("ExecutionCollaborationAuditHelp", "Also write Execution Collaboration lifecycle events to the Output Log."), CVarAccess::GetExecutionCollaborationAuditCVarName())];
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("ExecutionCollaborationAuditLabel", "Start / Lifecycle Audit Log"), LOCTEXT("ExecutionCollaborationAuditHelp", "Write Execution Collaboration input, start validation and lifecycle diagnostics to the Output Log."), CVarAccess::GetExecutionCollaborationAuditCVarName())];
 }
 
 // ===== Combat Participation Debug =====

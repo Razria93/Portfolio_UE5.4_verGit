@@ -46,6 +46,7 @@ public:
 	static void DrawWorldDebug(UWorld* InWorld, const FExecutionCollaborationDebugSnapshot& InSourceSnapshot);
 
 	// Lifecycle Audit
+	static void RecordStartTrace(const UObject* InOwnerObject, const TCHAR* InStage, const FString& InDetail = FString());
 	static void RecordLifecycleEvent(const UCExecutionCollaborationComponent* InComponent, const TCHAR* InEvent, const FString& InDetail = FString());
 	static void RecordOutcomeDamageApplied(const UCExecutionCollaborationComponent* InComponent, float InAppliedDamage, bool bInLethal);
 };

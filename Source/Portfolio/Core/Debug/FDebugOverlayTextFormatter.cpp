@@ -139,7 +139,7 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Lifecycle: %s | Serial: %s"), *details.LifecycleText, *details.LifecycleSerialText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Loop Remaining: %s"), *details.LoopLifetimeText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Execution Down Remaining: %s"), *details.ExecutionDownLifetimeText));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Collapse Pose: %s | Loop: %s | Execution Down: %s"), *details.CollapsePoseText, *details.CollapseLoopText, *details.ExecutionDownPoseText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Incapacitated: %s | Collapse Lifecycle: %s | Loop: %s | Execution Down: %s"), *details.IncapacitatedPresentationText, *details.CollapsePoseText, *details.CollapseLoopText, *details.ExecutionDownPoseText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Blocking: %s | Facing Suppressed: %s"), *details.LifecycleBlockingText, *details.FacingSuppressedText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Abort: %s"), *details.LastAbortText));
 	}

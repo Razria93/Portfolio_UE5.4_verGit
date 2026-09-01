@@ -1,17 +1,9 @@
 #include "Action/CAction_Execution.h"
 
-#include "Component/CExecutionCollaborationComponent.h"
+#include "Component/CActionComponent.h"
 #include "Core/Debug/FActionComponentDebug.h"
 
 #include "GameFramework/Character.h"
-
-// Component Reference
-
-void UCAction_Execution::InitializeReferences(const FCharacterComponentReferences& InReferences)
-{
-	Super::InitializeReferences(InReferences);
-	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
-}
 
 // Execution Arbitration
 
@@ -29,14 +21,14 @@ FExecutionDecisionResult UCAction_Execution::ResolveExecutionDecision(const FExe
 	return result;
 }
 
-// Execution Notify
+// Execution Notify Bridge
 
 void UCAction_Execution::HandleSpecificNotifyCommand(const EActionNotifyCommand InCommand)
 {
 	if (InCommand != EActionNotifyCommand::CommitExecution) return;
 
-	if (!IsValid(ExecutionCollaborationComp_Injected)
-		|| !ExecutionCollaborationComp_Injected->HandleSourceExecutionCommit(ActionRequestSerial_Cached, ActiveData_Cached.StandardExecutionDamage))
+	if (!IsValid(ActionComp_Injected)
+		|| !ActionComp_Injected->TryCommitActiveExecution(this, ActionRequestSerial_Cached))
 	{
 		FActionComponentDebug::RecordActionNotifyCommandIgnoredForAudit(OwnerCharacter_Injected, this, InCommand, TEXT("ExecutionCommitRejected"));
 	}

@@ -42,6 +42,8 @@ enum class EReactionNotifyCommand : uint8
 
 	Complete,
 	ResetBalance,
+	EnterExecutionDownPresentation,
+	ExitExecutionDownPresentation,
 
 	Max,
 };

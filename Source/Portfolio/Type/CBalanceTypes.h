@@ -50,6 +50,19 @@ enum class EBalanceAbortReason : uint8
 	Max,
 };
 
+// Full-body incapacity presentation. This is deliberately independent from the
+// Balance lifecycle: the lifecycle owns gameplay while montage notifies choose
+// the safe visual hand-off moment.
+UENUM(BlueprintType)
+enum class EIncapacitatedPresentation : uint8
+{
+	None = 0,
+	Collapse,
+	ExecutionDown,
+
+	Max,
+};
+
 USTRUCT(BlueprintType)
 struct FBalanceLifecyclePacket
 {
