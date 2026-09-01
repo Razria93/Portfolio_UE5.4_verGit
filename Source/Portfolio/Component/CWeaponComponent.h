@@ -69,6 +69,15 @@ public:
 	void AttachWeaponToHolster();
 
 public:
+	// Temporary weapon presentation override.
+	// A notify state owns a handle while active; normal attachment state remains the
+	// baseline and is restored automatically when the handle is released.
+	bool BeginWeaponPresentationOverride(const FTransform& InTargetRelativeOffset, uint32& OutOverrideHandle);
+	bool UpdateWeaponPresentationOverride(uint32 InOverrideHandle, float InAlpha);
+	void EndWeaponPresentationOverride(uint32 InOverrideHandle);
+	void ClearWeaponPresentationOverride();
+
+public:
 	void CommitEquipWeapon();
 	void CommitUnequipWeapon();
 
@@ -95,6 +104,8 @@ public:
 
 private:
 	void ChangeWeaponType(EWeaponType InNewWeaponType);
+	bool CaptureWeaponAttachmentRelativeTransform();
+	bool ApplyWeaponPresentationOverride(float InAlpha);
 
 private:
 	// Runtime Lifecycle
@@ -102,6 +113,22 @@ private:
 
 	// Weapon Actor
 	void DestroyWeaponActor();
+
+private:
+	UPROPERTY(Transient)
+	FTransform WeaponAttachmentRelativeTransform_Base = FTransform::Identity;
+
+	UPROPERTY(Transient)
+	FTransform WeaponPresentationTargetRelativeOffset = FTransform::Identity;
+
+	UPROPERTY(Transient)
+	uint32 ActiveWeaponPresentationOverrideHandle = 0;
+
+	UPROPERTY(Transient)
+	uint32 NextWeaponPresentationOverrideHandle = 1;
+
+	UPROPERTY(Transient)
+	bool bHasWeaponAttachmentRelativeTransform = false;
 
 private:
 	FWeaponContext BuildWeaponContext() const;

@@ -46,6 +46,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EIncapacitatedPresentation IncapacitatedPresentation = EIncapacitatedPresentation::None;
 
+	// Derived AnimGraph gate. The Balance Component owns only
+	// IncapacitatedPresentation; this value must never be authored separately.
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	bool bIsIncapacitatedPose = false;
+
 	// Compatibility inputs for the current AnimGraph. Remove after the graph has
 	// migrated to IncapacitatedPresentation.
 	UPROPERTY(BlueprintReadOnly, Category = "State")
@@ -111,6 +116,7 @@ private:
 	void RefreshMovementParameters();
 	void RefreshStateParameters();
 	void ResetAnimationParameters();
+	void ApplyIncapacitatedPresentationState(EIncapacitatedPresentation InPresentation);
 
 private:
 	// Runtime LOD Animation Refresh Gate

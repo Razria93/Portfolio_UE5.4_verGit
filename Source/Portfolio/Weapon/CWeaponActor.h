@@ -147,6 +147,12 @@ public:
 	void AttachToHandSocket();
 	void AttachToHolsterSocket();
 
+	// Presentation
+	// WeaponComponent owns the base attachment transform and supplies the composed
+	// runtime presentation transform. The weapon actor only applies it to its root.
+	bool GetAttachmentRelativeTransform(FTransform& OutRelativeTransform) const;
+	bool SetAttachmentRelativeTransform(const FTransform& InRelativeTransform);
+
 public:
 	// Collision Notify Events
 	void CollisionEnabled(FName InName);

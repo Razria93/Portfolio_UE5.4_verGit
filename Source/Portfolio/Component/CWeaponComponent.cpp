@@ -89,14 +89,80 @@ void UCWeaponComponent::AttachWeaponToHand()
 {
 	if (!IsValid(WeaponActor)) return;
 
+	ClearWeaponPresentationOverride();
 	WeaponActor->AttachToHandSocket();
+	CaptureWeaponAttachmentRelativeTransform();
 }
 
 void UCWeaponComponent::AttachWeaponToHolster()
 {
 	if (!IsValid(WeaponActor)) return;
 
+	ClearWeaponPresentationOverride();
 	WeaponActor->AttachToHolsterSocket();
+	CaptureWeaponAttachmentRelativeTransform();
+}
+
+bool UCWeaponComponent::BeginWeaponPresentationOverride(const FTransform& InTargetRelativeOffset, uint32& OutOverrideHandle)
+{
+	OutOverrideHandle = 0;
+
+	if (!IsValid(WeaponActor)) return false;
+
+	if (ActiveWeaponPresentationOverrideHandle != 0)
+	{
+		ensureMsgf(
+			false,
+			TEXT("[Weapon|PresentationOverrideRejected] Reason=AnotherOverrideAlreadyActive | Owner=%s | ActiveHandle=%u"),
+			*GetNameSafe(GetOwner()),
+			ActiveWeaponPresentationOverrideHandle);
+		return false;
+	}
+
+	if (!CaptureWeaponAttachmentRelativeTransform()) return false;
+
+	WeaponPresentationTargetRelativeOffset = InTargetRelativeOffset;
+	ActiveWeaponPresentationOverrideHandle = NextWeaponPresentationOverrideHandle++;
+
+	// Keep zero as the invalid-handle sentinel even if the counter wraps.
+	if (NextWeaponPresentationOverrideHandle == 0)
+	{
+		++NextWeaponPresentationOverrideHandle;
+	}
+
+	if (!ApplyWeaponPresentationOverride(0.f))
+	{
+		ClearWeaponPresentationOverride();
+		return false;
+	}
+
+	OutOverrideHandle = ActiveWeaponPresentationOverrideHandle;
+	return true;
+}
+
+bool UCWeaponComponent::UpdateWeaponPresentationOverride(uint32 InOverrideHandle, float InAlpha)
+{
+	if (InOverrideHandle == 0 || InOverrideHandle != ActiveWeaponPresentationOverrideHandle) return false;
+
+	return ApplyWeaponPresentationOverride(InAlpha);
+}
+
+void UCWeaponComponent::EndWeaponPresentationOverride(uint32 InOverrideHandle)
+{
+	if (InOverrideHandle == 0 || InOverrideHandle != ActiveWeaponPresentationOverrideHandle) return;
+
+	ClearWeaponPresentationOverride();
+}
+
+void UCWeaponComponent::ClearWeaponPresentationOverride()
+{
+	if (ActiveWeaponPresentationOverrideHandle != 0 && bHasWeaponAttachmentRelativeTransform && IsValid(WeaponActor))
+	{
+		WeaponActor->SetAttachmentRelativeTransform(WeaponAttachmentRelativeTransform_Base);
+	}
+
+	WeaponPresentationTargetRelativeOffset = FTransform::Identity;
+	ActiveWeaponPresentationOverrideHandle = 0;
 }
 
 void UCWeaponComponent::CommitEquipWeapon()
@@ -142,6 +208,7 @@ void UCWeaponComponent::ClearContext()
 
 void UCWeaponComponent::ClearWeaponRuntimeState()
 {
+	ClearWeaponPresentationOverride();
 	ClearContext();
 
 	if (IsValid(WeaponActor))
@@ -178,8 +245,10 @@ void UCWeaponComponent::DestroyWeaponActor()
 {
 	if (!IsValid(WeaponActor)) return;
 
+	ClearWeaponPresentationOverride();
 	WeaponActor->Destroy();
 	WeaponActor = nullptr;
+	bHasWeaponAttachmentRelativeTransform = false;
 }
 
 void UCWeaponComponent::OpenCollisionWindow(FName InCollisionName)
@@ -209,6 +278,32 @@ void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
 
 	if (OnWeaponTypeChanged.IsBound())
 		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Injected, prevWeaponType, CurrentWeaponType);
+}
+
+bool UCWeaponComponent::CaptureWeaponAttachmentRelativeTransform()
+{
+	if (!IsValid(WeaponActor)) return false;
+
+	FTransform attachmentRelativeTransform;
+	if (!WeaponActor->GetAttachmentRelativeTransform(attachmentRelativeTransform)) return false;
+
+	WeaponAttachmentRelativeTransform_Base = attachmentRelativeTransform;
+	bHasWeaponAttachmentRelativeTransform = true;
+	return true;
+}
+
+bool UCWeaponComponent::ApplyWeaponPresentationOverride(float InAlpha)
+{
+	if (!IsValid(WeaponActor)) return false;
+	if (!bHasWeaponAttachmentRelativeTransform) return false;
+
+	const float alpha = FMath::Clamp(InAlpha, 0.f, 1.f);
+	const FTransform targetRelativeTransform = WeaponPresentationTargetRelativeOffset * WeaponAttachmentRelativeTransform_Base;
+
+	FTransform blendedRelativeTransform;
+	blendedRelativeTransform.Blend(WeaponAttachmentRelativeTransform_Base, targetRelativeTransform, alpha);
+
+	return WeaponActor->SetAttachmentRelativeTransform(blendedRelativeTransform);
 }
 
 FWeaponContext UCWeaponComponent::BuildWeaponContext() const
@@ -266,6 +361,7 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	weaponActor->ApplyInitialWeaponState(InWeaponType);
 
 	WeaponActor = weaponActor;
+	CaptureWeaponAttachmentRelativeTransform();
 
 	return true;
 }

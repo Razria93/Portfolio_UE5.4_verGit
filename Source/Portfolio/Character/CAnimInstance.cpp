@@ -120,9 +120,8 @@ void UCAnimInstance::BindComponentEvents()
 	{
 		BalanceComp_Cached->OnBalanceLifecycleStateChanged.AddUObject(this, &UCAnimInstance::HandleBalanceLifecycleStateChanged);
 		BalanceComp_Cached->OnIncapacitatedPresentationChanged.AddUObject(this, &UCAnimInstance::HandleIncapacitatedPresentationChanged);
-		IncapacitatedPresentation = BalanceComp_Cached->GetIncapacitatedPresentation();
+		ApplyIncapacitatedPresentationState(BalanceComp_Cached->GetIncapacitatedPresentation());
 		bIsCollapsePose = BalanceComp_Cached->IsCollapseActive();
-		bIsExecutionDownPose = BalanceComp_Cached->ShouldUseExecutionDownPose();
 	}
 }
 
@@ -171,13 +170,12 @@ void UCAnimInstance::RefreshStateParameters()
 	}
 
 	bIsGuardingPose = IsValid(DefenseComp_Cached) && DefenseComp_Cached->IsGuardingPose();
-	IncapacitatedPresentation = IsValid(BalanceComp_Cached)
+	ApplyIncapacitatedPresentationState(IsValid(BalanceComp_Cached)
 		? BalanceComp_Cached->GetIncapacitatedPresentation()
-		: EIncapacitatedPresentation::None;
+		: EIncapacitatedPresentation::None);
 	// Compatibility: the current AnimGraph still reads the two bools. Its
 	// migration to IncapacitatedPresentation is intentionally asset-side.
 	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseActive();
-	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->ShouldUseExecutionDownPose();
 	DeathPresentationMode = EDeathPresentationMode::Default;
 	if (const ACEnemy* enemy = Cast<ACEnemy>(OwnerCharacter_Cached))
 	{
@@ -195,12 +193,20 @@ void UCAnimInstance::ResetAnimationParameters()
 
 	CurrentWeaponType = EWeaponType::Max;
 	bIsDeadPose = false;
-	IncapacitatedPresentation = EIncapacitatedPresentation::None;
+	ApplyIncapacitatedPresentationState(EIncapacitatedPresentation::None);
 	bIsCollapsePose = false;
-	bIsExecutionDownPose = false;
 	DeathPresentationMode = EDeathPresentationMode::Default;
 	CurrentExecutionState = EExecutionState::Max;
 	bIsGuardingPose = false;
+}
+
+void UCAnimInstance::ApplyIncapacitatedPresentationState(const EIncapacitatedPresentation InPresentation)
+{
+	IncapacitatedPresentation = InPresentation;
+	bIsIncapacitatedPose = IncapacitatedPresentation != EIncapacitatedPresentation::None;
+
+	// Compatibility input until all AnimGraph references migrate to the enum.
+	bIsExecutionDownPose = IncapacitatedPresentation == EIncapacitatedPresentation::ExecutionDown;
 }
 
 // Runtime LOD Animation Refresh Gate
@@ -282,21 +288,20 @@ void UCAnimInstance::HandleDeadStateChanged(EDeadState InPreviousDeadState, EDea
 void UCAnimInstance::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InCurrentState)
 {
 	bIsCollapsePose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->IsCollapseActive();
-	bIsExecutionDownPose = IsValid(BalanceComp_Cached) && BalanceComp_Cached->ShouldUseExecutionDownPose();
 }
 
 void UCAnimInstance::HandleIncapacitatedPresentationChanged(const EIncapacitatedPresentation InPresentation)
 {
-	IncapacitatedPresentation = InPresentation;
-	bIsExecutionDownPose = IncapacitatedPresentation == EIncapacitatedPresentation::ExecutionDown;
+	ApplyIncapacitatedPresentationState(InPresentation);
 	if (IsValid(BalanceComp_Cached))
 	{
 		FBalanceDebug::RecordLifecycleEvent(
 			BalanceComp_Cached,
 			TEXT("IncapacitatedPresentationAnimUpdated"),
 			FString::Printf(
-				TEXT("Presentation=%s | LegacyExecutionDownPose=%s"),
+				TEXT("Presentation=%s | IsIncapacitatedPose=%s | LegacyExecutionDownPose=%s"),
 				*UEnum::GetValueAsString(IncapacitatedPresentation),
+				bIsIncapacitatedPose ? TEXT("true") : TEXT("false"),
 				bIsExecutionDownPose ? TEXT("true") : TEXT("false")));
 	}
 }

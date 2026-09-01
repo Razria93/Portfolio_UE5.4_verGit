@@ -20,6 +20,7 @@ struct FBalanceDebugSnapshot
 	float ExecutionDownRemainingSeconds = 0.f;
 	float ExecutionDownDurationSeconds = 0.f;
 	EIncapacitatedPresentation IncapacitatedPresentation = EIncapacitatedPresentation::None;
+	bool bIsIncapacitatedPoseActive = false;
 	bool bIsCollapsePoseActive = false;
 	bool bIsCollapseLoopActive = false;
 	bool bIsExecutionDownPresentationActive = false;
@@ -37,6 +38,7 @@ struct FBalanceDebugOverlayDetails
 	FString LoopLifetimeText;
 	FString ExecutionDownLifetimeText;
 	FString IncapacitatedPresentationText;
+	FString IncapacitatedPoseText;
 	FString CollapsePoseText;
 	FString CollapseLoopText;
 	FString ExecutionDownPresentationText;

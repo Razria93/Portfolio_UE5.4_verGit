@@ -4,10 +4,12 @@
 
 #include "Component/CCombatTargetComponent.h"
 #include "Component/CBalanceComponent.h"
+#include "Component/CHealthComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCombatTargetTypes.h"
+#include "Type/CHealthTypes.h"
 #include "Type/CReactionOrchestrationTypes.h"
 
 #include "AIController.h"
@@ -31,6 +33,7 @@ void UCEnemyCombatTargetFacingComponent::InitializeReferences(const FCharacterCo
 	MovementComponent_Injected = InReferences.MovementComponent;
 	ReactionComponent_Injected = InReferences.ReactionComponent;
 	BalanceComponent_Injected = InReferences.BalanceComponent;
+	HealthComponent_Injected = InReferences.HealthComponent;
 
 	BindCombatTargetFacingEvents();
 	ValidateRequiredComponentReferences();
@@ -72,6 +75,7 @@ void UCEnemyCombatTargetFacingComponent::EndPlay(const EEndPlayReason::Type InEn
 	MovementComponent_Injected = nullptr;
 	ReactionComponent_Injected = nullptr;
 	BalanceComponent_Injected = nullptr;
+	HealthComponent_Injected = nullptr;
 
 	Super::EndPlay(InEndPlayReason);
 }
@@ -92,6 +96,10 @@ void UCEnemyCombatTargetFacingComponent::BindCombatTargetFacingEvents()
 	{
 		BalanceComponent_Injected->OnBalanceLifecycleStateChanged.AddUObject(this, &UCEnemyCombatTargetFacingComponent::HandleBalanceLifecycleStateChanged);
 	}
+	if (IsValid(HealthComponent_Injected))
+	{
+		HealthComponent_Injected->OnDeadStateChanged.AddUObject(this, &UCEnemyCombatTargetFacingComponent::HandleDeadStateChanged);
+	}
 }
 
 void UCEnemyCombatTargetFacingComponent::UnbindCombatTargetFacingEvents()
@@ -107,6 +115,10 @@ void UCEnemyCombatTargetFacingComponent::UnbindCombatTargetFacingEvents()
 	if (IsValid(BalanceComponent_Injected))
 	{
 		BalanceComponent_Injected->OnBalanceLifecycleStateChanged.RemoveAll(this);
+	}
+	if (IsValid(HealthComponent_Injected))
+	{
+		HealthComponent_Injected->OnDeadStateChanged.RemoveAll(this);
 	}
 }
 
@@ -128,7 +140,20 @@ void UCEnemyCombatTargetFacingComponent::HandleReactionExecutionLifecycleEvent(c
 
 void UCEnemyCombatTargetFacingComponent::HandleBalanceLifecycleStateChanged(const EBalanceLifecycleState InPreviousState, const EBalanceLifecycleState InCurrentState)
 {
-	if (IsCombatTargetFacingSuppressedByBalance())
+	if (ShouldSuppressCombatTargetFacing())
+	{
+		CancelDeferredCombatTargetFacingSync();
+		bDeferredCombatTargetFacingSyncPending = false;
+		ClearCombatTargetFacing();
+		return;
+	}
+
+	SynchronizeCombatTargetFacing();
+}
+
+void UCEnemyCombatTargetFacingComponent::HandleDeadStateChanged(const EDeadState InPreviousDeadState, const EDeadState InCurrentDeadState)
+{
+	if (InCurrentDeadState == EDeadState::Dead)
 	{
 		CancelDeferredCombatTargetFacingSync();
 		bDeferredCombatTargetFacingSyncPending = false;
@@ -143,7 +168,7 @@ void UCEnemyCombatTargetFacingComponent::HandleBalanceLifecycleStateChanged(cons
 
 void UCEnemyCombatTargetFacingComponent::QueueDeferredCombatTargetFacingSync()
 {
-	if (IsCombatTargetFacingSuppressedByBalance())
+	if (ShouldSuppressCombatTargetFacing())
 	{
 		bDeferredCombatTargetFacingSyncPending = false;
 		return;
@@ -162,7 +187,7 @@ void UCEnemyCombatTargetFacingComponent::ResolveDeferredCombatTargetFacingSync()
 	bDeferredCombatTargetFacingSyncQueued = false;
 	DeferredCombatTargetFacingSyncTimerHandle.Invalidate();
 
-	if (IsCombatTargetFacingSuppressedByBalance())
+	if (ShouldSuppressCombatTargetFacing())
 	{
 		bDeferredCombatTargetFacingSyncPending = false;
 		ClearCombatTargetFacing();
@@ -196,8 +221,19 @@ void UCEnemyCombatTargetFacingComponent::SynchronizeCombatTargetFacing()
 
 void UCEnemyCombatTargetFacingComponent::ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot)
 {
-	if (IsCombatTargetFacingSuppressedByBalance())
+	if (ShouldSuppressCombatTargetFacing())
 	{
+		CancelDeferredCombatTargetFacingSync();
+		bDeferredCombatTargetFacingSyncPending = false;
+		ClearCombatTargetFacing();
+		return;
+	}
+
+	// Target removal is safety-critical. It must never be delayed by an active reaction,
+	// otherwise the AI can retain an obsolete gameplay focus through a death reaction.
+	if (!IsValid(InSnapshot.TargetActor))
+	{
+		CancelDeferredCombatTargetFacingSync();
 		bDeferredCombatTargetFacingSyncPending = false;
 		ClearCombatTargetFacing();
 		return;
@@ -210,7 +246,7 @@ void UCEnemyCombatTargetFacingComponent::ApplyCombatTargetFacing(const FCombatTa
 	}
 	bDeferredCombatTargetFacingSyncPending = false;
 
-	if (!IsValid(AIController_Bound) || !IsValid(InSnapshot.TargetActor))
+	if (!IsValid(AIController_Bound))
 	{
 		ClearCombatTargetFacing();
 		return;
@@ -243,9 +279,10 @@ bool UCEnemyCombatTargetFacingComponent::ShouldDeferCombatTargetFacingForReactio
 	return IsValid(ReactionComponent_Injected) && ReactionComponent_Injected->IsActive();
 }
 
-bool UCEnemyCombatTargetFacingComponent::IsCombatTargetFacingSuppressedByBalance() const
+bool UCEnemyCombatTargetFacingComponent::ShouldSuppressCombatTargetFacing() const
 {
-	return IsValid(BalanceComponent_Injected) && BalanceComponent_Injected->ShouldSuppressCombatTargetFacing();
+	return (IsValid(HealthComponent_Injected) && HealthComponent_Injected->IsDead())
+		|| (IsValid(BalanceComponent_Injected) && BalanceComponent_Injected->ShouldSuppressCombatTargetFacing());
 }
 
 // Component Reference Validation
@@ -261,6 +298,7 @@ bool UCEnemyCombatTargetFacingComponent::ValidateRequiredComponentReferences() c
 		{ MovementComponent_Injected, TEXT("UCMovementComponent") },
 		{ ReactionComponent_Injected, TEXT("UCReactionComponent") },
 		{ BalanceComponent_Injected, TEXT("UCBalanceComponent") },
+		{ HealthComponent_Injected, TEXT("UCHealthComponent") },
 	};
 
 	for (const FRequiredReference& reference : requiredReferences)

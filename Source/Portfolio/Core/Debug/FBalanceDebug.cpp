@@ -168,6 +168,7 @@ FBalanceDebugSnapshot FBalanceDebug::BuildSnapshot(const ACEnemy* InEnemy)
 	snapshot.ExecutionDownRemainingSeconds = balanceComp->GetExecutionDownRemainingSeconds();
 	snapshot.ExecutionDownDurationSeconds = balanceComp->GetExecutionDownDuration();
 	snapshot.IncapacitatedPresentation = balanceComp->GetIncapacitatedPresentation();
+	snapshot.bIsIncapacitatedPoseActive = snapshot.IncapacitatedPresentation != EIncapacitatedPresentation::None;
 	snapshot.bIsCollapsePoseActive = balanceComp->IsCollapseActive();
 	snapshot.bIsCollapseLoopActive = balanceComp->IsCollapseLoopActive();
 	snapshot.bIsExecutionDownPresentationActive = balanceComp->IsExecutionDownPresentationActive();
@@ -193,6 +194,7 @@ FBalanceDebugOverlayDetails FBalanceDebug::BuildOverlayDetails(const FBalanceDeb
 		? FString::Printf(TEXT("%.2f / %.2f s"), InSnapshot.ExecutionDownRemainingSeconds, InSnapshot.ExecutionDownDurationSeconds)
 		: TEXT("--");
 	details.IncapacitatedPresentationText = FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.IncapacitatedPresentation));
+	details.IncapacitatedPoseText = FormatBalanceBoolText(InSnapshot.bIsIncapacitatedPoseActive);
 	details.CollapsePoseText = FormatBalanceBoolText(InSnapshot.bIsCollapsePoseActive);
 	details.CollapseLoopText = FormatBalanceBoolText(InSnapshot.bIsCollapseLoopActive);
 	details.ExecutionDownPresentationText = FormatBalanceBoolText(InSnapshot.bIsExecutionDownPresentationActive);
@@ -234,8 +236,9 @@ void FBalanceDebug::DrawWorldDebug(UWorld* InWorld, const ACEnemy* InEnemy, cons
 		: FString::Printf(TEXT("Count: %d / %d | L#%u"), InSnapshot.CurrentCount, InSnapshot.Threshold, InSnapshot.LifecycleSerial);
 	textLines.Add(countText);
 	textLines.Add(FString::Printf(
-		TEXT("Incapacitated: %s | Collapse Lifecycle: %s | Execution Down: %s | Block: %s | Facing: %s"),
+		TEXT("Incapacitated: %s | Pose Active: %s | Collapse Lifecycle: %s | Execution Down: %s | Block: %s | Facing: %s"),
 		*FormatBalanceCompactEnumText(UEnum::GetValueAsString(InSnapshot.IncapacitatedPresentation)),
+		InSnapshot.bIsIncapacitatedPoseActive ? TEXT("On") : TEXT("Off"),
 		InSnapshot.bIsCollapsePoseActive ? TEXT("On") : TEXT("Off"),
 		InSnapshot.bIsExecutionDownPoseActive ? TEXT("On") : TEXT("Off"),
 		InSnapshot.bIsLifecycleBlocking ? TEXT("On") : TEXT("Off"),
