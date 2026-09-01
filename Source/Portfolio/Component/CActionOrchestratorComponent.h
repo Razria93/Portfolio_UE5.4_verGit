@@ -34,6 +34,9 @@ private:
 	class UCBalanceComponent* BalanceComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -72,7 +75,7 @@ public:
 
 private:
 	// Request Validation
-	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
+	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason, bool bIsExternalRequest = true) const;
 
 private:
 	// Candidate Resolve

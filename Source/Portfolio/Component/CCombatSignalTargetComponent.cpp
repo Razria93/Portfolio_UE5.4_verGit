@@ -172,6 +172,9 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 
 	FCombatSignalTargetPayload combatSignalTargetPayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
 	FCombatSignalTargetContext combatSignalTargetContext = BuildContext(combatSignalTargetPayload);
+	combatSignalTargetContext.ExternalInputPolicy = IsValid(ExecutionCollaborationComp_Injected)
+		? ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy()
+		: EExternalCombatInputPolicy::Normal;
 
 	// Evaluate: validate target-side context and defensive policy before applying state changes.
 	if (!ValidateContext(combatSignalTargetContext))
@@ -272,6 +275,11 @@ bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& I
 void UCCombatSignalTargetComponent::ProcessCombatResultTarget(const FCombatResultPacket& InCombatResultPacket)
 {
 	if (!ValidateCombatResultTargetRequest(InCombatResultPacket)) return;
+	if (IsValid(ExecutionCollaborationComp_Injected)
+		&& ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy() != EExternalCombatInputPolicy::Normal)
+	{
+		return;
+	}
 
 	if (InCombatResultPacket.IsParryResult())
 	{
@@ -560,6 +568,22 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 		return false;
 	}
 
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::RejectAll)
+	{
+		InOutCombatSignalTargetContext.bAccepted = false;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::ExternalInputBlocked;
+		return false;
+	}
+
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::DamageOnly)
+	{
+		InOutCombatSignalTargetContext.bAccepted = true;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
+		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::None;
+		InOutCombatSignalTargetContext.bShouldCommitDamage = true;
+		return true;
+	}
+
 	// Gate: parry window intercepts incoming damage before damage commit.
 	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanParry())
 	{
@@ -612,7 +636,9 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 
 	float mitigatedDamage = requestedDamage;
 
-	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanGuard())
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::Normal
+		&& IsValid(DefenseComp_Injected)
+		&& DefenseComp_Injected->CanGuard())
 	{
 		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
 		mitigatedDamage *= DefenseComp_Injected->GetGuardDamageTakenMultiplier();
@@ -652,6 +678,11 @@ void UCCombatSignalTargetComponent::ResolveDamageReactionOutcome(FCombatSignalTa
 		return;
 	}
 
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::DamageOnly)
+	{
+		return;
+	}
+
 	if (InOutCombatSignalTargetContext.DefenseOutcome == EDamageDefenseOutcome::Parry)
 	{
 		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Parry;
@@ -687,6 +718,7 @@ FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FComb
 	combatSignalTargetResult.RejectReason = InCombatSignalTargetContext.RejectReason;
 	combatSignalTargetResult.DefenseOutcome = InCombatSignalTargetContext.DefenseOutcome;
 	combatSignalTargetResult.ReactionOutcome = InCombatSignalTargetContext.ReactionOutcome;
+	combatSignalTargetResult.ExternalInputPolicy = InCombatSignalTargetContext.ExternalInputPolicy;
 	combatSignalTargetResult.bShouldCommitDamage = InCombatSignalTargetContext.bShouldCommitDamage;
 
 	combatSignalTargetResult.DamageSpecKey = InCombatSignalTargetContext.DamageSpecKey;
@@ -740,7 +772,8 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 {
 	if (!InCombatSignalTargetPacket.Result.bAccepted) return;
 
-	if (IsValid(ReactionOrchestratorComp_Injected))
+	if (InCombatSignalTargetPacket.Result.ReactionOutcome != EDamageReactionOutcome::None
+		&& IsValid(ReactionOrchestratorComp_Injected))
 	{
 		FDamageReactionRequest damageReactionRequest;
 		damageReactionRequest.IntentSource = EReactionIntentSource::CombatSignalTarget;
@@ -751,7 +784,9 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 	}
 	else
 	{
-		OnCombatSignalTargetReactionResolved.Broadcast(InCombatSignalTargetPacket, FReactionRequestResult());
+		FReactionRequestResult reactionResult;
+		reactionResult.ResultType = EReactionRequestResultType::Ignored;
+		OnCombatSignalTargetReactionResolved.Broadcast(InCombatSignalTargetPacket, reactionResult);
 	}
 
 	if (IsValid(HitFeedbackComp_Injected))

@@ -4,6 +4,7 @@
 
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
@@ -22,6 +23,7 @@ void UCReactionOrchestratorComponent::InitializeReferences(const FCharacterCompo
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
+	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	ActionComp_Injected = InReferences.ActionComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
@@ -58,6 +60,14 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestDamageReaction(co
 
 	if (!IsValid(ReactionComp_Injected))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, EReactionRequestRejectReason::InvalidComponent);
+
+	const bool bIsDeadOutcome = InIncomingRequest.CombatSignalTargetPacket.Result.ReactionOutcome == EDamageReactionOutcome::Dead;
+	if (IsValid(ExecutionCollaborationComp_Injected)
+		&& ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy() != EExternalCombatInputPolicy::Normal
+		&& !bIsDeadOutcome)
+	{
+		return BuildReactionRequestResult(EReactionRequestResultType::Ignored);
+	}
 
 	if (!CanAcceptReactionRequest(rejectReason))
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);

@@ -173,7 +173,7 @@ void UCBalanceComponent::HandleBalanceLifecycleReactionRequestResolved(const FBa
 	if (InBalanceLifecyclePacket.ReactionType == EReactionType::ExecutionRecovery
 		&& BalanceLifecycleState == EBalanceLifecycleState::ExecutionRecoveryPending)
 	{
-		AbortBalanceLifecycle(EBalanceAbortReason::ExecutionRecoveryRejected);
+		HandleExecutionRecoveryFailure(EBalanceAbortReason::ExecutionRecoveryRejected);
 	}
 }
 
@@ -250,7 +250,7 @@ void UCBalanceComponent::HandleBalanceLifecycleReactionExecutionTerminal(const F
 
 		if (BalanceLifecycleState != EBalanceLifecycleState::Accumulating)
 		{
-			AbortBalanceLifecycle(InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored
+			HandleExecutionRecoveryFailure(InEvent.EventType == EReactionExecutionLifecycleEventType::Ignored
 				? EBalanceAbortReason::ExecutionRecoveryRejected
 				: EBalanceAbortReason::ExecutionRecoveryInterrupted);
 		}
@@ -422,6 +422,8 @@ bool UCBalanceComponent::EnterExecutionDownLifecycle(const uint32 InBalanceLifec
 	if (InBalanceLifecycleSerial == 0 || InBalanceLifecycleSerial != BalanceLifecycleSerial) return false;
 	if (BalanceLifecycleState != EBalanceLifecycleState::ExecutionPrimaryCommitted) return false;
 
+	ClearExecutionRecoveryRetryTimer();
+	ExecutionRecoveryRetryCount = 0;
 	SetBalanceLifecycleState(EBalanceLifecycleState::ExecutionDownActive);
 	StartExecutionDownTimer();
 	FBalanceDebug::RecordLifecycleEvent(this, TEXT("ExecutionDownEntered"));
@@ -443,6 +445,8 @@ void UCBalanceComponent::ShutdownBalanceRuntime()
 {
 	ClearCollapseLoopTimer();
 	ClearExecutionDownTimer();
+	ClearExecutionRecoveryRetryTimer();
+	ExecutionRecoveryRetryCount = 0;
 	ClearExecutionOpportunityReservation();
 	SetIncapacitatedPresentation(EIncapacitatedPresentation::None);
 	CurrentBalanceCount = 0;
@@ -580,6 +584,51 @@ void UCBalanceComponent::ClearExecutionOpportunityReservation()
 	ExecutionOpportunityReservation = FExecutionOpportunityReservation();
 }
 
+void UCBalanceComponent::HandleExecutionRecoveryFailure(const EBalanceAbortReason InReason)
+{
+	if (BalanceLifecycleState != EBalanceLifecycleState::ExecutionRecoveryPending
+		&& BalanceLifecycleState != EBalanceLifecycleState::ExecutionRecoveryActive)
+	{
+		return;
+	}
+
+	const int32 maxRetryCount = FMath::Max(0, MaxExecutionRecoveryRetryCount);
+	UWorld* world = GetWorld();
+	if (ExecutionRecoveryRetryCount >= maxRetryCount || !IsValid(world))
+	{
+		AbortBalanceLifecycle(InReason);
+		return;
+	}
+
+	++ExecutionRecoveryRetryCount;
+	SetBalanceLifecycleState(EBalanceLifecycleState::ExecutionDownActive);
+	SetIncapacitatedPresentation(EIncapacitatedPresentation::ExecutionDown);
+	ClearExecutionRecoveryRetryTimer();
+
+	const float retryDelay = FMath::Max(0.f, ExecutionRecoveryRetryDelay);
+	world->GetTimerManager().SetTimer(
+		ExecutionRecoveryRetryTimerHandle,
+		this,
+		&UCBalanceComponent::RequestExecutionRecovery,
+		retryDelay,
+		false);
+
+	FBalanceDebug::RecordLifecycleEvent(
+		this,
+		TEXT("ExecutionRecoveryRetryScheduled"),
+		FString::Printf(TEXT("Reason=%s | Attempt=%d/%d | Delay=%.2f"), *UEnum::GetValueAsString(InReason), ExecutionRecoveryRetryCount, maxRetryCount, retryDelay));
+}
+
+void UCBalanceComponent::ClearExecutionRecoveryRetryTimer()
+{
+	if (UWorld* world = GetWorld())
+	{
+		world->GetTimerManager().ClearTimer(ExecutionRecoveryRetryTimerHandle);
+	}
+
+	ExecutionRecoveryRetryTimerHandle.Invalidate();
+}
+
 void UCBalanceComponent::SetIncapacitatedPresentation(const EIncapacitatedPresentation InPresentation)
 {
 	if (IncapacitatedPresentation == InPresentation)
@@ -605,6 +654,8 @@ void UCBalanceComponent::ResetBalanceRuntime()
 {
 	ClearCollapseLoopTimer();
 	ClearExecutionDownTimer();
+	ClearExecutionRecoveryRetryTimer();
+	ExecutionRecoveryRetryCount = 0;
 	ClearExecutionOpportunityReservation();
 	SetIncapacitatedPresentation(EIncapacitatedPresentation::None);
 	CurrentBalanceCount = 0;

@@ -42,6 +42,19 @@ enum class EExecutionCollaborationState : uint8
 	Max,
 };
 
+// Applies only to ordinary, external combat input. Execution and Balance
+// lifecycle requests are trusted internal flows and intentionally bypass it.
+UENUM(BlueprintType)
+enum class EExternalCombatInputPolicy : uint8
+{
+	Normal = 0,
+
+	RejectAll,
+	DamageOnly,
+
+	Max,
+};
+
 UENUM(BlueprintType)
 enum class EExecutionCollaborationCancelReason : uint8
 {

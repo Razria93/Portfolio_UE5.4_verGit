@@ -136,6 +136,7 @@ enum class EActionRequestRejectReason : uint8
 	InvalidComponent,
 
 	Dead,
+	ExternalInputBlocked,
 	BalanceLifecycleBlocking,
 
 	InvalidState,

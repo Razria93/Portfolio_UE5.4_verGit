@@ -4,6 +4,7 @@
 #include "Type/CCombatDamageTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Type/CHealthTypes.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "CCombatSignalTargetTypes.generated.h"
 
 // Enum
@@ -18,6 +19,7 @@ enum class ECombatSignalTargetRejectReason : uint8
 	InvalidInstigator,
 
 	AlreadyDead,
+	ExternalInputBlocked,
 	ZeroDamage,
 
 	UnknownCueTag,
@@ -101,6 +103,9 @@ public:
 	EDamageReactionOutcome ReactionOutcome = EDamageReactionOutcome::None;
 
 	UPROPERTY(Transient)
+	EExternalCombatInputPolicy ExternalInputPolicy = EExternalCombatInputPolicy::Normal;
+
+	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;
 
 	UPROPERTY(Transient)
@@ -150,6 +155,9 @@ public:
 
 	UPROPERTY(Transient)
 	EDamageReactionOutcome ReactionOutcome = EDamageReactionOutcome::None;
+
+	UPROPERTY(Transient)
+	EExternalCombatInputPolicy ExternalInputPolicy = EExternalCombatInputPolicy::Normal;
 
 	UPROPERTY(Transient)
 	bool bShouldCommitDamage = true;

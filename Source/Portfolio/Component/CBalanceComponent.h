@@ -38,6 +38,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0.0))
 	float ExecutionDownDuration = 3.f;
 
+	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0.0))
+	float ExecutionRecoveryRetryDelay = 0.25f;
+
+	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0))
+	int32 MaxExecutionRecoveryRetryCount = 2;
+
 	// Runtime State
 	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
 	int32 CurrentBalanceCount = 0;
@@ -58,6 +64,8 @@ private:
 	// Timer Runtime
 	FTimerHandle CollapseLoopTimerHandle;
 	FTimerHandle ExecutionDownTimerHandle;
+	FTimerHandle ExecutionRecoveryRetryTimerHandle;
+	int32 ExecutionRecoveryRetryCount = 0;
 
 	// Execution Opportunity Runtime
 	FExecutionOpportunityReservation ExecutionOpportunityReservation;
@@ -163,6 +171,8 @@ private:
 	void ClearExecutionDownTimer();
 	void HandleExecutionDownExpired();
 	void RequestExecutionRecovery();
+	void HandleExecutionRecoveryFailure(EBalanceAbortReason InReason);
+	void ClearExecutionRecoveryRetryTimer();
 
 	// Execution Opportunity Runtime
 	void ClearExecutionOpportunityReservation();

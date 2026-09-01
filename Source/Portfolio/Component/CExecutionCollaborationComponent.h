@@ -97,6 +97,7 @@ public:
 
 	// Query
 	bool HasActiveExecutionSession() const;
+	EExternalCombatInputPolicy GetExternalCombatInputPolicy() const;
 	EExecutionCollaborationState GetExecutionCollaborationState() const { return CollaborationState; }
 	FExecutionCollaborationRuntimeSnapshot GetExecutionCollaborationRuntimeSnapshot() const;
 	bool BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const;

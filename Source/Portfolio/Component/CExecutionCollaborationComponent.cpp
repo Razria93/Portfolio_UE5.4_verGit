@@ -24,6 +24,32 @@ UCExecutionCollaborationComponent::UCExecutionCollaborationComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+EExternalCombatInputPolicy UCExecutionCollaborationComponent::GetExternalCombatInputPolicy() const
+{
+	// Both collaboration participants are protected while their shared session
+	// owns the cinematic action/reaction sequence.
+	if (HasActiveExecutionSession())
+	{
+		return EExternalCombatInputPolicy::RejectAll;
+	}
+
+	if (!IsValid(BalanceComp_Injected))
+	{
+		return EExternalCombatInputPolicy::Normal;
+	}
+
+	switch (BalanceComp_Injected->GetBalanceLifecycleState())
+	{
+	case EBalanceLifecycleState::ExecutionDownActive:
+	case EBalanceLifecycleState::ExecutionRecoveryPending:
+	case EBalanceLifecycleState::ExecutionRecoveryActive:
+		return EExternalCombatInputPolicy::DamageOnly;
+
+	default:
+		return EExternalCombatInputPolicy::Normal;
+	}
+}
+
 // Component Reference
 
 void UCExecutionCollaborationComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)

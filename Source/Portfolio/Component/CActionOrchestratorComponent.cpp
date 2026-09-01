@@ -7,6 +7,7 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CBalanceComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
@@ -29,6 +30,7 @@ void UCActionOrchestratorComponent::InitializeReferences(const FCharacterCompone
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
 	BalanceComp_Injected = InReferences.BalanceComponent;
+	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	ActionComp_Injected = InReferences.ActionComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
@@ -163,7 +165,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestExecutionAction(const
 	if (!IsValid(ActionComp_Injected))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent, requestSerial);
 
-	if (!CanAcceptActionRequest(rejectReason))
+	if (!CanAcceptActionRequest(rejectReason, false))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, requestSerial);
 
 	FActionCandidate candidate;
@@ -191,6 +193,12 @@ FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDefer
 
 	const FActionCandidate candidate = DeferredActionCandidates[foundIndex].Candidate;
 	DeferredActionCandidates.RemoveAt(foundIndex);
+
+	if (IsValid(ExecutionCollaborationComp_Injected)
+		&& ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy() != EExternalCombatInputPolicy::Normal)
+	{
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::ExternalInputBlocked, candidate.ActionRequestSerial);
+	}
 
 	return ProcessActionCandidate(candidate);
 }
@@ -230,7 +238,7 @@ void UCActionOrchestratorComponent::ClearDeferredActions(EDeferredActionConsumeK
 
 // Request Validation
 
-bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
+bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason, const bool bIsExternalRequest) const
 {
 	OutRejectReason = EActionRequestRejectReason::None;
 
@@ -249,6 +257,14 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	if (!HealthComp_Injected->IsAlive())
 	{
 		OutRejectReason = EActionRequestRejectReason::Dead;
+		return false;
+	}
+
+	if (bIsExternalRequest
+		&& IsValid(ExecutionCollaborationComp_Injected)
+		&& ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy() != EExternalCombatInputPolicy::Normal)
+	{
+		OutRejectReason = EActionRequestRejectReason::ExternalInputBlocked;
 		return false;
 	}
 
