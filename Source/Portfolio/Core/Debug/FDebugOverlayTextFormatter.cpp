@@ -144,6 +144,30 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Abort: %s"), *details.LastAbortText));
 	}
 
+	// [Combat Target Facing]
+	// ===== Enemy Combat Target Facing Lines =====
+
+	void AppendCombatTargetFacingLines(TArray<FString>& InOutLines, const FDebugOverlayCombatTargetFacingViewData& InCombatTargetFacingViewData)
+	{
+		const FEnemyCombatTargetFacingDebugOverlayDetails& details = InCombatTargetFacingViewData.Details;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Combat Target Facing]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Policy: %s | Consistency: %s"), *details.PolicyText, *details.ConsistencyText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Controller Binding: %s"), *details.ControllerBindingText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Combat Target: %s"), *details.CombatTargetText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Gameplay Focus: %s | Rotation: %s"), *details.GameplayFocusText, *details.RotationText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Reaction: %s | Deferred: %s"), *details.ReactionText, *details.DeferredText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Command: %s"), *details.ExpectedText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(
+			TEXT("Last Facing Decision: Sequence: %s | Recorded At: %s | Trigger: %s | Decision: %s"),
+			*details.LastDecisionSequenceText,
+			*details.LastDecisionTimeText,
+			*details.LastDecisionTriggerText,
+			*details.LastDecisionResultText));
+	}
+
 	// [Execution Collaboration]
 	// ===== Execution Collaboration Lines =====
 
@@ -328,6 +352,11 @@ namespace
 			AppendBalanceCollapseLines(InOutLines, InActorPanelViewData.BalanceCollapse);
 		}
 
+		if (InActorPanelViewData.bIncludeCombatTargetFacing)
+		{
+			AppendCombatTargetFacingLines(InOutLines, InActorPanelViewData.CombatTargetFacing);
+		}
+
 		if (InActorPanelViewData.bIncludeExecutionCollaboration)
 		{
 			AppendExecutionCollaborationLines(InOutLines, InActorPanelViewData.ExecutionCollaboration);
@@ -390,10 +419,24 @@ namespace
 	TArray<FString> BuildEventLogPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
-		lines.Reserve(InViewData.EventLog.Entries.Num() + 2);
+		lines.Reserve(InViewData.EventLog.Entries.Num() + 3);
 		AppendFormattedOverlayLine(lines, InViewData.EventLogPanelTitle);
 		AppendFormattedOverlayLine(lines, TEXT(""));
-		AppendFormattedOverlayLine(lines, FString::Printf(TEXT("[Event Log: %s]"), *InViewData.EventLog.FilterText));
+		const FString eventLogHeader = FString::Printf(
+			TEXT("[Event Log: %s | Scope: %s]"),
+			*InViewData.EventLog.FilterText,
+			*InViewData.EventLog.ScopeText);
+		AppendFormattedOverlayLine(lines, eventLogHeader);
+		if (!InViewData.EventLog.SubjectText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(lines, FString::Printf(TEXT("[Subject: %s]"), *InViewData.EventLog.SubjectText));
+		}
+
+		if (InViewData.EventLog.bFocusedScopeWithoutSubject)
+		{
+			AppendFormattedOverlayLine(lines, TEXT("No focused Enemy selected."));
+			return lines;
+		}
 
 		if (!InViewData.EventLog.bHasSnapshot)
 		{

@@ -5,6 +5,7 @@
 #include "Core/Debug/FBalanceDebug.h"
 #include "Core/Debug/FCombatParticipationDebug.h"
 #include "Core/Debug/FDebugOverlayDisplayConfig.h"
+#include "Core/Debug/FEnemyCombatTargetFacingDebug.h"
 #include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
@@ -137,6 +138,18 @@ namespace
 		OutBalanceCollapseViewData.Details = FBalanceDebug::BuildOverlayDetails(InSnapshot);
 	}
 
+	FEnemyCombatTargetFacingDebugSnapshot BuildCombatTargetFacingSnapshot(const ACEnemy* InFocusedEnemy)
+	{
+		return FEnemyCombatTargetFacingDebug::BuildSnapshot(InFocusedEnemy);
+	}
+
+	void UpdateCombatTargetFacingViewData(const FEnemyCombatTargetFacingDebugSnapshot& InSnapshot, const FDebugOverlayPanelVisibility& InPanelVisibility, FDebugOverlayCombatTargetFacingViewData& OutCombatTargetFacingViewData)
+	{
+		if (!InPanelVisibility.bShowEnemy || !InPanelVisibility.bShowEnemyCombatTargetFacing) return;
+
+		OutCombatTargetFacingViewData.Details = FEnemyCombatTargetFacingDebug::BuildOverlayDetails(InSnapshot);
+	}
+
 	FExecutionCollaborationDebugSnapshot BuildExecutionCollaborationSnapshot(const ACharacter* InCharacter)
 	{
 		return FExecutionCollaborationDebug::BuildSnapshot(InCharacter);
@@ -190,6 +203,7 @@ void ACDebugOverlayHUD::DrawHUD()
 	FDebugOverlayFocusViewData enemyFocus;
 	const ACEnemy* focusedEnemy = ResolveDisplayFocusEnemy(owningPlayerController, enemyFocus);
 	const FBalanceDebugSnapshot balanceCollapseSnapshot = BuildBalanceCollapseSnapshot(focusedEnemy);
+	const FEnemyCombatTargetFacingDebugSnapshot combatTargetFacingSnapshot = BuildCombatTargetFacingSnapshot(focusedEnemy);
 	const FExecutionCollaborationDebugSnapshot playerExecutionCollaborationSnapshot = BuildExecutionCollaborationSnapshot(playerCharacter);
 	const FExecutionCollaborationDebugSnapshot enemyExecutionCollaborationSnapshot = BuildExecutionCollaborationSnapshot(focusedEnemy);
 
@@ -205,16 +219,18 @@ void ACDebugOverlayHUD::DrawHUD()
 	FDebugOverlayPlayerLocomotionViewData playerLocomotion;
 	FDebugOverlayExecutionCollaborationViewData playerExecutionCollaboration;
 	FDebugOverlayBalanceCollapseViewData balanceCollapse;
+	FDebugOverlayCombatTargetFacingViewData combatTargetFacing;
 	FDebugOverlayExecutionCollaborationViewData enemyExecutionCollaboration;
 	FDebugOverlayCombatParticipationViewData combatParticipation;
 	UpdatePlayerTargetingViewData(owningPlayerController, panelVisibility, playerTargeting);
 	UpdatePlayerLocomotionViewData(playerLocomotionSnapshot, panelVisibility, playerLocomotion);
 	UpdateExecutionCollaborationViewData(playerExecutionCollaborationSnapshot, panelVisibility.bShowPlayer && panelVisibility.bShowPlayerExecutionCollaboration, playerExecutionCollaboration);
 	UpdateBalanceCollapseViewData(balanceCollapseSnapshot, panelVisibility, balanceCollapse);
+	UpdateCombatTargetFacingViewData(combatTargetFacingSnapshot, panelVisibility, combatTargetFacing);
 	UpdateExecutionCollaborationViewData(enemyExecutionCollaborationSnapshot, panelVisibility.bShowEnemy && panelVisibility.bShowEnemyExecutionCollaboration, enemyExecutionCollaboration);
 	UpdateCombatParticipationViewData(combatParticipationSnapshot, focusedEnemy, panelVisibility, combatParticipation);
 
-	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, playerExecutionCollaboration, balanceCollapse, enemyExecutionCollaboration, combatParticipation, panelVisibility);
+	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, playerExecutionCollaboration, balanceCollapse, combatTargetFacing, enemyExecutionCollaboration, combatParticipation, panelVisibility);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
 
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);

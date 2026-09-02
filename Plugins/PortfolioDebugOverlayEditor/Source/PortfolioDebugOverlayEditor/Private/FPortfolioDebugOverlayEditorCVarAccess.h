@@ -11,6 +11,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetEnabledCVarName();
 	const TCHAR* GetCollectCVarName();
 	const TCHAR* GetEventLogFilterCVarName();
+	const TCHAR* GetEventLogScopeCVarName();
 	const TCHAR* GetEventLogLimitCVarName();
 	const TCHAR* GetHideNoiseEventsCVarName();
 	const TCHAR* GetHideCollisionWindowEventsCVarName();
@@ -29,6 +30,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetEnemyFocusEnabledCVarName();
 	const TCHAR* GetEnemyStatusEnabledCVarName();
 	const TCHAR* GetEnemyBalanceCollapseEnabledCVarName();
+	const TCHAR* GetEnemyCombatTargetFacingEnabledCVarName();
 	const TCHAR* GetEnemyExecutionCollaborationEnabledCVarName();
 	const TCHAR* GetEnemyCombatParticipationEnabledCVarName();
 	const TCHAR* GetEnemyDeathLifecycleEnabledCVarName();
@@ -62,6 +64,11 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	const TCHAR* GetBalanceDrawWorldTextCVarName();
 	const TCHAR* GetBalanceDrawLifecycleBarCVarName();
 	const TCHAR* GetBalanceAuditCVarName();
+
+	// ===== Combat Target Facing Display CVars =====
+
+	const TCHAR* GetCombatTargetFacingEnabledCVarName();
+	const TCHAR* GetCombatTargetFacingAuditCVarName();
 
 	// ===== Execution Collaboration Display CVars =====
 
@@ -105,6 +112,7 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	bool HasTargetingDisplayCVars();
 	bool HasMovementDisplayCVars();
 	bool HasBalanceDisplayCVars();
+	bool HasCombatTargetFacingDisplayCVars();
 	bool HasExecutionCollaborationDisplayCVars();
 	bool HasCombatParticipationDisplayCVars();
 	bool HasFocusCVars();
@@ -113,4 +121,5 @@ namespace PortfolioDebugOverlayEditorCVarAccess
 	// ===== EventLog Filter =====
 
 	bool IsKnownEventLogFilter(const FString& InValue);
+	bool IsKnownEventLogScope(const FString& InValue);
 }

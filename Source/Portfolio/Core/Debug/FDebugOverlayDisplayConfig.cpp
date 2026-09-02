@@ -18,6 +18,7 @@ namespace
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyFocusEnabled(TEXT("Portfolio.DebugOverlay.Enemy.Focus.Enabled"), 1, TEXT("Show Enemy focus details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyStatusEnabled(TEXT("Portfolio.DebugOverlay.Enemy.Status.Enabled"), 1, TEXT("Show Enemy status details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyBalanceCollapseEnabled(TEXT("Portfolio.DebugOverlay.Enemy.BalanceCollapse.Enabled"), 1, TEXT("Show Enemy Balance and Collapse details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyCombatTargetFacingEnabled(TEXT("Portfolio.DebugOverlay.Enemy.CombatTargetFacing.Enabled"), 1, TEXT("Show Enemy Combat Target Facing details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyExecutionCollaborationEnabled(TEXT("Portfolio.DebugOverlay.Enemy.ExecutionCollaboration.Enabled"), 1, TEXT("Show Enemy Execution Collaboration details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyCombatParticipationEnabled(TEXT("Portfolio.DebugOverlay.Enemy.CombatParticipation.Enabled"), 1, TEXT("Show Enemy Combat Participation details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyDeathLifecycleEnabled(TEXT("Portfolio.DebugOverlay.Enemy.DeathLifecycle.Enabled"), 1, TEXT("Show Enemy death lifecycle details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
@@ -47,6 +48,7 @@ FDebugOverlayPanelVisibility DebugOverlayDisplayConfig::GetPanelVisibility()
 	visibility.bShowEnemyFocus = CVarDebugOverlayEnemyFocusEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyStatus = CVarDebugOverlayEnemyStatusEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyBalanceCollapse = CVarDebugOverlayEnemyBalanceCollapseEnabled.GetValueOnGameThread() != 0;
+	visibility.bShowEnemyCombatTargetFacing = CVarDebugOverlayEnemyCombatTargetFacingEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyExecutionCollaboration = CVarDebugOverlayEnemyExecutionCollaborationEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyCombatParticipation = CVarDebugOverlayEnemyCombatParticipationEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyDeathLifecycle = CVarDebugOverlayEnemyDeathLifecycleEnabled.GetValueOnGameThread() != 0;

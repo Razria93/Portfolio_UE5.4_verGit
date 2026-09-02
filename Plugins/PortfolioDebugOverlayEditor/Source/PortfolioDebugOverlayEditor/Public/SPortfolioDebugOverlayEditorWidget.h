@@ -20,6 +20,9 @@ private:
 	TArray<TSharedPtr<FString>> EventLogFilterOptions;
 	TSharedPtr<FString> SelectedEventLogFilter;
 	TSharedPtr<SComboBox<TSharedPtr<FString>>> EventLogFilterComboBox;
+	TArray<TSharedPtr<FString>> EventLogScopeOptions;
+	TSharedPtr<FString> SelectedEventLogScope;
+	TSharedPtr<SComboBox<TSharedPtr<FString>>> EventLogScopeComboBox;
 	FText LastFocusCommandStatus;
 
 	// ===== Layout =====
@@ -38,6 +41,8 @@ private:
 	TSharedRef<SWidget> MakeMovementDebugSection();
 	TSharedRef<SWidget> MakeBalanceDisplayOptionsSection();
 	TSharedRef<SWidget> MakeBalanceDebugSection();
+	TSharedRef<SWidget> MakeCombatTargetFacingDisplayOptionsSection();
+	TSharedRef<SWidget> MakeCombatTargetFacingDebugSection();
 	TSharedRef<SWidget> MakeExecutionCollaborationDisplayOptionsSection();
 	TSharedRef<SWidget> MakeExecutionCollaborationDebugSection();
 	TSharedRef<SWidget> MakeCombatParticipationDisplayOptionsSection();
@@ -53,6 +58,7 @@ private:
 	TSharedRef<SWidget> MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, TFunction<bool()> InAdditionalEnabledPredicate = TFunction<bool()>()) const;
 	TSharedRef<SWidget> MakeMainPanelChildRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, const TCHAR* InParentCVarName) const;
 	TSharedRef<SWidget> MakeEventLogFilterRow();
+	TSharedRef<SWidget> MakeEventLogScopeRow();
 	TSharedRef<SWidget> MakeEventLogLimitRow() const;
 	TSharedRef<SWidget> MakeNearestFocusRadiusRow() const;
 
@@ -60,5 +66,6 @@ private:
 
 	TSharedRef<SWidget> MakeRefreshRow();
 	void RefreshEventLogFilterSelection();
+	void RefreshEventLogScopeSelection();
 
 };

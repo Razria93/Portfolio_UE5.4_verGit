@@ -31,7 +31,11 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("AI")));
 	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Balance")));
 	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Death")));
+	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Facing")));
+	EventLogScopeOptions.Add(MakeShared<FString>(TEXT("World")));
+	EventLogScopeOptions.Add(MakeShared<FString>(TEXT("Focused Enemy")));
 	RefreshEventLogFilterSelection();
+	RefreshEventLogScopeSelection();
 	LastFocusCommandStatus = LOCTEXT("FocusCommandNotRun", "Last Command: None");
 
 	ChildSlot
@@ -121,6 +125,12 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 12.f)
 				[
+					MakeCombatTargetFacingDisplayOptionsSection()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.f, 0.f, 0.f, 12.f)
+				[
 					MakeExecutionCollaborationDisplayOptionsSection()
 				]
 				+ SVerticalBox::Slot()
@@ -193,6 +203,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeOverlayOptionsSectio
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("EnabledLabel", "Enabled"), LOCTEXT("EnabledHelp", "Draw the debug overlay HUD."), CVarAccess::GetEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CollectLabel", "Collect"), LOCTEXT("CollectHelp", "Collect future debug overlay snapshots and events."), CVarAccess::GetCollectCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeEventLogFilterRow()]
+		+ SVerticalBox::Slot().AutoHeight()[MakeEventLogScopeRow()]
 		+ SVerticalBox::Slot().AutoHeight()[MakeEventLogLimitRow()]
 		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("HideNoiseEventsLabel", "Hide Noise Events"), LOCTEXT("HideNoiseEventsHelp", "Hide reject/ignore noise from the EventLog display."), CVarAccess::GetHideNoiseEventsCVarName())]
@@ -237,6 +248,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelSections()
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyFocusLabel", "Focus"), LOCTEXT("EnemyFocusHelp", "Show selected Enemy focus details."), CVarAccess::GetEnemyFocusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyStatusLabel", "Status"), LOCTEXT("EnemyStatusHelp", "Show Enemy state, action, reaction, health and movement."), CVarAccess::GetEnemyStatusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyBalanceCollapseLabel", "Balance / Collapse"), LOCTEXT("EnemyBalanceCollapseHelp", "Show focused Enemy Balance count, Collapse lifecycle and derived gates."), CVarAccess::GetEnemyBalanceCollapseEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCombatTargetFacingLabel", "Combat Target Facing"), LOCTEXT("EnemyCombatTargetFacingHelp", "Show focused Enemy Combat Target Facing policy, actual Gameplay Focus and rotation consistency."), CVarAccess::GetEnemyCombatTargetFacingEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyExecutionCollaborationLabel", "Execution Collaboration"), LOCTEXT("EnemyExecutionCollaborationHelp", "Show focused Enemy live Execution Collaboration state."), CVarAccess::GetEnemyExecutionCollaborationEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCombatParticipationLabel", "Combat Participation"), LOCTEXT("EnemyCombatParticipationHelp", "Show focused Enemy combat participation details."), CVarAccess::GetEnemyCombatParticipationEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
 		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyDeathLifecycleLabel", "Death Lifecycle"), LOCTEXT("EnemyDeathLifecycleHelp", "Show Enemy death lifecycle details."), CVarAccess::GetEnemyDeathLifecycleEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
@@ -397,6 +409,46 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBalanceDebugSection(
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceWorldTextLabel", "World Text"), LOCTEXT("BalanceWorldTextHelp", "Draw focused Enemy Balance count, lifecycle and derived gates in the world."), CVarAccess::GetBalanceDrawWorldTextCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceLifecycleBarLabel", "Count Segments"), LOCTEXT("BalanceLifecycleBarHelp", "Show threshold segments in the focused Enemy Balance world text."), CVarAccess::GetBalanceDrawLifecycleBarCVarName())]
 		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("BalanceAuditLabel", "Lifecycle Audit Log"), LOCTEXT("BalanceAuditHelp", "Also write Balance and Collapse lifecycle events to the Output Log."), CVarAccess::GetBalanceAuditCVarName())];
+}
+
+// ===== Combat Target Facing Debug =====
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatTargetFacingDisplayOptionsSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("CombatTargetFacingDisplayOptionsTitle", "Combat Target Facing Display Options"))
+			.Font(FAppStyle::GetFontStyle("BoldFont"))
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([]()
+			{
+				return CVarAccess::HasCombatTargetFacingDisplayCVars()
+					? LOCTEXT("CombatTargetFacingCVarsAvailable", "Combat Target Facing display CVars are available.")
+					: LOCTEXT("CombatTargetFacingCVarsUnavailable", "Combat Target Facing display CVars are unavailable. Start the game module or PIE if needed.");
+			})
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot().AutoHeight()
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(8.f)
+			[
+				MakeCombatTargetFacingDebugSection()
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatTargetFacingDebugSection()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatTargetFacingEnabledLabel", "Enabled"), LOCTEXT("CombatTargetFacingEnabledHelp", "Enable Combat Target Facing runtime snapshots. Panel_01 Facing details require this domain gate."), CVarAccess::GetCombatTargetFacingEnabledCVarName())]
+		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatTargetFacingAuditLabel", "Facing Audit Log"), LOCTEXT("CombatTargetFacingAuditHelp", "Also write Facing policy decisions and external Gameplay Focus clears to the Output Log."), CVarAccess::GetCombatTargetFacingAuditCVarName())];
 }
 
 // ===== Execution Collaboration Debug =====
@@ -568,7 +620,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogFilterRow()
 			.AutoHeight()
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("EventLogFilterLabel", "EventLog Filter"))
+				.Text(LOCTEXT("EventLogFilterLabel", "Event Category"))
 			]
 			+ SVerticalBox::Slot()
 			.AutoHeight()
@@ -616,6 +668,80 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogFilterRow()
 					return CVarAccess::IsKnownEventLogFilter(currentValue)
 						? FText::FromString(currentValue)
 						: FText::FromString(FString::Printf(TEXT("Unknown (%s)"), *currentValue));
+				})
+			]
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogScopeRow()
+{
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.FillWidth(1.f)
+		.VAlign(VAlign_Center)
+		.Padding(0.f, 4.f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("EventLogScopeLabel", "Event Scope"))
+			]
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("EventLogScopeHelp", "World shows all events. FocusedEnemy shows only events related to the selected Enemy."))
+				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+			]
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.VAlign(VAlign_Center)
+		.Padding(12.f, 0.f)
+		[
+			SAssignNew(EventLogScopeComboBox, SComboBox<TSharedPtr<FString>>)
+			.IsEnabled_Lambda([]()
+			{
+				return CVarAccess::FindCVar(CVarAccess::GetEventLogScopeCVarName()) != nullptr;
+			})
+			.OptionsSource(&EventLogScopeOptions)
+			.InitiallySelectedItem(SelectedEventLogScope)
+			.OnGenerateWidget_Lambda([](TSharedPtr<FString> InItem)
+			{
+				return SNew(STextBlock)
+					.Text(FText::FromString(InItem.IsValid() ? *InItem : FString()));
+			})
+			.OnSelectionChanged_Lambda([this](TSharedPtr<FString> InSelection, ESelectInfo::Type)
+			{
+				if (InSelection.IsValid())
+				{
+					SelectedEventLogScope = InSelection;
+					CVarAccess::SetString(
+						CVarAccess::GetEventLogScopeCVarName(),
+						InSelection->Equals(TEXT("Focused Enemy"), ESearchCase::IgnoreCase) ? TEXT("FocusedEnemy") : *InSelection);
+				}
+			})
+			[
+				SNew(STextBlock)
+				.Text_Lambda([this]()
+				{
+					const FString currentValue = CVarAccess::GetString(CVarAccess::GetEventLogScopeCVarName());
+					if (!CVarAccess::FindCVar(CVarAccess::GetEventLogScopeCVarName()))
+					{
+						return LOCTEXT("EventLogScopeUnavailable", "Unavailable");
+					}
+
+					if (CVarAccess::IsKnownEventLogScope(currentValue))
+					{
+						const FString displayValue = currentValue.Equals(TEXT("FocusedEnemy"), ESearchCase::IgnoreCase)
+							? FString(TEXT("Focused Enemy"))
+							: currentValue;
+						return FText::FromString(displayValue);
+					}
+
+					return FText::FromString(FString::Printf(TEXT("Unknown (%s)"), *currentValue));
 				})
 			]
 		];
@@ -765,6 +891,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRefreshRow()
 			.OnClicked_Lambda([this]()
 			{
 				RefreshEventLogFilterSelection();
+				RefreshEventLogScopeSelection();
 				return FReply::Handled();
 			})
 		];
@@ -787,6 +914,27 @@ void SPortfolioDebugOverlayEditorWidget::RefreshEventLogFilterSelection()
 	if (EventLogFilterComboBox.IsValid())
 	{
 		EventLogFilterComboBox->SetSelectedItem(SelectedEventLogFilter);
+	}
+}
+
+void SPortfolioDebugOverlayEditorWidget::RefreshEventLogScopeSelection()
+{
+	const FString rawCurrentValue = CVarAccess::GetString(CVarAccess::GetEventLogScopeCVarName());
+	const FString currentValue = rawCurrentValue.Equals(TEXT("FocusedEnemy"), ESearchCase::IgnoreCase) ? TEXT("Focused Enemy") : rawCurrentValue;
+	SelectedEventLogScope.Reset();
+
+	for (const TSharedPtr<FString>& option : EventLogScopeOptions)
+	{
+		if (option.IsValid() && option->Equals(currentValue, ESearchCase::IgnoreCase))
+		{
+			SelectedEventLogScope = option;
+			break;
+		}
+	}
+
+	if (EventLogScopeComboBox.IsValid())
+	{
+		EventLogScopeComboBox->SetSelectedItem(SelectedEventLogScope);
 	}
 }
 

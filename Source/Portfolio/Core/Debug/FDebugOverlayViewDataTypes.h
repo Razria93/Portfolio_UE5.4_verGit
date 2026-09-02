@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Core/Debug/FBalanceDebug.h"
 #include "Core/Debug/FCombatParticipationDebug.h"
+#include "Core/Debug/FEnemyCombatTargetFacingDebug.h"
 #include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
@@ -111,6 +112,11 @@ struct FDebugOverlayBalanceCollapseViewData
 	FBalanceDebugOverlayDetails Details;
 };
 
+struct FDebugOverlayCombatTargetFacingViewData
+{
+	FEnemyCombatTargetFacingDebugOverlayDetails Details;
+};
+
 struct FDebugOverlayExecutionCollaborationViewData
 {
 	FExecutionCollaborationDebugOverlayDetails Details;
@@ -128,6 +134,8 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayPlayerLocomotionViewData Locomotion;
 	bool bIncludeBalanceCollapse = false;
 	FDebugOverlayBalanceCollapseViewData BalanceCollapse;
+	bool bIncludeCombatTargetFacing = false;
+	FDebugOverlayCombatTargetFacingViewData CombatTargetFacing;
 	bool bIncludeExecutionCollaboration = false;
 	FDebugOverlayExecutionCollaborationViewData ExecutionCollaboration;
 	bool bIncludeCombatParticipation = false;
@@ -156,6 +164,9 @@ struct FDebugOverlayEventLogViewData
 	bool bHasSnapshot = false;
 	int32 DisplayLimit = 0;
 	FString FilterText;
+	FString ScopeText;
+	FString SubjectText;
+	bool bFocusedScopeWithoutSubject = false;
 	TArray<FDebugOverlayEventLogEntryViewData> Entries;
 };
 

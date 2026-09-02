@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Type/CEnemyCombatTargetFacingTypes.h"
+#include "Type/CMovementTypes.h"
 #include "CEnemyCombatTargetFacingComponent.generated.h"
 
 class AAIController;
@@ -51,6 +53,12 @@ private:
 	bool bDeferredCombatTargetFacingSyncPending = false;
 	bool bDeferredCombatTargetFacingSyncQueued = false;
 	FTimerHandle DeferredCombatTargetFacingSyncTimerHandle;
+	EEnemyCombatTargetFacingFocusDirective LastExpectedFocusDirective = EEnemyCombatTargetFacingFocusDirective::None;
+	EEnemyCombatTargetFacingRotationDirective LastExpectedRotationDirective = EEnemyCombatTargetFacingRotationDirective::None;
+	uint32 LastTransitionSequence = 0;
+	float LastTransitionWorldTimeSeconds = 0.f;
+	FString LastFacingEventName;
+	FString LastFacingDecision;
 
 public:
 	// Component Reference
@@ -59,9 +67,12 @@ public:
 	// AI Controller Binding
 	void SetAIController(AAIController* InAIController);
 	void ClearAIController();
+	void ClearGameplayFocusFromExternal(AAIController* InAIController, const TCHAR* InSource);
+	FEnemyCombatTargetFacingRuntimeSnapshot GetRuntimeSnapshot() const;
 
 protected:
 	// Lifecycle
+	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
 
 private:
@@ -81,12 +92,15 @@ private:
 	void QueueDeferredCombatTargetFacingSync();
 	void ResolveDeferredCombatTargetFacingSync();
 	void CancelDeferredCombatTargetFacingSync();
+	void SynchronizeAIControllerBindingFromOwner(const TCHAR* InEvent);
+	AAIController* ResolveOwnerAIController() const;
 
 private:
 	// Facing Synchronization
-	void SynchronizeCombatTargetFacing();
-	void ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot);
-	void ClearCombatTargetFacing();
+	void SynchronizeCombatTargetFacing(const TCHAR* InEvent);
+	void ApplyCombatTargetFacing(const FCombatTargetSnapshot& InSnapshot, const TCHAR* InEvent);
+	void ClearCombatTargetFacing(const TCHAR* InEvent, const TCHAR* InDecision);
+	void RecordCombatTargetFacingDecision(const TCHAR* InEvent, const TCHAR* InDecision, EMovementRotationMode InPreviousRotationMode, AActor* InPreviousGameplayFocusActor = nullptr);
 
 private:
 	// Facing Policy
