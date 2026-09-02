@@ -828,6 +828,7 @@ void ACEnemy::BeginDeathLifecycle()
 	bDeathLifecycleActive = true;
 	bDeathPresentationRequested = false;
 	bDeathFinalizationRequested = false;
+	ApplyDeathPawnCollisionPolicy();
 
 	if (IsValid(BalanceComponent))
 	{
@@ -863,6 +864,7 @@ void ACEnemy::AbortDeathLifecycle()
 {
 	if (bDeathFinalized) return;
 
+	RestoreDeathPawnCollisionPolicy();
 	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("LifecycleAborted"));
 
 	GetWorldTimerManager().ClearTimer(DeathEntryReactionStartFallbackTimerHandle);
@@ -879,6 +881,33 @@ void ACEnemy::AbortDeathLifecycle()
 	bDeathFinalizationRequested = false;
 	DeathPresentationMode = EDeathPresentationMode::Default;
 	ExpectedExecutionLethalDeathSessionId = FExecutionSessionId();
+}
+
+void ACEnemy::ApplyDeathPawnCollisionPolicy()
+{
+	if (bDeathPawnCollisionPolicyApplied) return;
+
+	UCapsuleComponent* capsuleComp = GetCapsuleComponent();
+	if (!IsValid(capsuleComp)) return;
+
+	CachedPawnCollisionResponseBeforeDeath = capsuleComp->GetCollisionResponseToChannel(ECC_Pawn);
+	capsuleComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	bDeathPawnCollisionPolicyApplied = true;
+
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PawnCollisionIgnored"));
+}
+
+void ACEnemy::RestoreDeathPawnCollisionPolicy()
+{
+	if (!bDeathPawnCollisionPolicyApplied) return;
+
+	if (UCapsuleComponent* capsuleComp = GetCapsuleComponent())
+	{
+		capsuleComp->SetCollisionResponseToChannel(ECC_Pawn, CachedPawnCollisionResponseBeforeDeath);
+	}
+
+	bDeathPawnCollisionPolicyApplied = false;
+	FDeathLifecycleDebug::RecordLifecycleEvent(this, TEXT("PawnCollisionRestored"));
 }
 
 // Death Entry Reaction Contract

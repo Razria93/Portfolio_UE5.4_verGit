@@ -198,6 +198,8 @@ private:
 	bool bDeathPresentationRequested = false;
 	bool bDeathFinalizationRequested = false;
 	bool bDeathFinalized = false;
+	bool bDeathPawnCollisionPolicyApplied = false;
+	ECollisionResponse CachedPawnCollisionResponseBeforeDeath = ECR_Block;
 
 	EDeathPresentationMode DeathPresentationMode = EDeathPresentationMode::Default;
 	FExecutionSessionId ExpectedExecutionLethalDeathSessionId = FExecutionSessionId();
@@ -339,6 +341,10 @@ private:
 	void HandleExecutionLethalDeathEntryExpected(const FExecutionSessionId& InSessionId);
 	void BeginDeathLifecycle();
 	void AbortDeathLifecycle();
+
+	// Keep world collision during death presentation while allowing characters to pass through the corpse.
+	void ApplyDeathPawnCollisionPolicy();
+	void RestoreDeathPawnCollisionPolicy();
 
 	// Death Entry Reaction Contract
 	EReactionType GetExpectedDeathEntryReactionType() const;
