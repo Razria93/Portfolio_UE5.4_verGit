@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+class AActor;
+
 // ===== Capture State =====
 
 enum class EDebugOverlayCaptureState : uint8
@@ -23,6 +25,9 @@ struct PORTFOLIO_API FDebugOverlayEventEntry
 	FString OwnerName;
 	FString SourceName;
 	FString TargetName;
+	TWeakObjectPtr<AActor> OwnerActor;
+	TWeakObjectPtr<AActor> SourceActor;
+	TWeakObjectPtr<AActor> TargetActor;
 	FString Summary;
 };
 
@@ -79,6 +84,38 @@ struct PORTFOLIO_API FDebugOverlayAISummary
 	FString Summary;
 };
 
+// ===== Enemy Combat Target Facing =====
+
+struct PORTFOLIO_API FDebugOverlayFacingSummary
+{
+	EDebugOverlayCaptureState CaptureState = EDebugOverlayCaptureState::NotCaptured;
+	uint64 FrameNumber = 0;
+	float WorldTimeSeconds = 0.f;
+	uint32 TransitionSequence = 0;
+	FString OwnerName;
+	FString OwnerControllerName;
+	FString BoundControllerName;
+	FString CombatTargetName;
+	FString GameplayFocusName;
+	FString RotationMode;
+	FString PolicyState;
+	FString ExpectedFocusDirective;
+	FString ExpectedRotationDirective;
+	FString EventName;
+	FString Decision;
+	bool bControllerBindingMatchesOwner = false;
+	FString Summary;
+};
+
+struct PORTFOLIO_API FDebugOverlayFacingTransition
+{
+	FDebugOverlayFacingSummary Current;
+	TWeakObjectPtr<AActor> OwnerActor;
+	TWeakObjectPtr<AActor> CombatTargetActor;
+	FString PreviousGameplayFocusName;
+	FString PreviousRotationMode;
+};
+
 // ===== Snapshot Aggregate =====
 
 struct PORTFOLIO_API FDebugOverlaySnapshot
@@ -87,5 +124,6 @@ struct PORTFOLIO_API FDebugOverlaySnapshot
 	FDebugOverlayCombatSummary LastCombat;
 	FDebugOverlayAISummary LastAI;
 	TMap<FString, FDebugOverlayAISummary> LastAIByPawnName;
+	TMap<FString, FDebugOverlayFacingSummary> LastFacingByPawnName;
 	TArray<FDebugOverlayEventEntry> RecentEvents;
 };

@@ -34,7 +34,13 @@ namespace
 	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogFilter(
 		TEXT("Portfolio.DebugOverlay.EventLogFilter"),
 		TEXT("All"),
-		TEXT("Filter debug overlay event log. Values: All, Execution, Combat, AI, Death."),
+		TEXT("Filter debug overlay event log. Values: All, Execution, Combat, AI, Balance, Death, Facing."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogScope(
+		TEXT("Portfolio.DebugOverlay.EventLogScope"),
+		TEXT("World"),
+		TEXT("Scope debug overlay event log. Values: World, FocusedEnemy (displayed as Focused Enemy)."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarDebugOverlayHideNoiseEvents(
@@ -193,6 +199,11 @@ FString SnapshotStoreConfig::GetEventLogFilterRaw()
 	return CVarDebugOverlayEventLogFilter.GetValueOnGameThread();
 }
 
+FString SnapshotStoreConfig::GetEventLogScopeRaw()
+{
+	return CVarDebugOverlayEventLogScope.GetValueOnGameThread();
+}
+
 bool SnapshotStoreConfig::ShouldHideNoiseEvents()
 {
 	return CVarDebugOverlayHideNoiseEvents.GetValueOnGameThread() != 0;
@@ -232,12 +243,30 @@ FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 		return TEXT("Death");
 	}
 
+	if (InFilter.Equals(TEXT("Facing"), ESearchCase::IgnoreCase))
+	{
+		return TEXT("Facing");
+	}
+
 	return TEXT("All");
 }
 
 FString EventFilterPolicy::GetCanonicalEventLogFilter()
 {
 	return NormalizeEventLogFilter(SnapshotStoreConfig::GetEventLogFilterRaw());
+}
+
+FString EventFilterPolicy::NormalizeEventLogScope(const FString& InScope)
+{
+	return InScope.Equals(TEXT("FocusedEnemy"), ESearchCase::IgnoreCase)
+		|| InScope.Equals(TEXT("Focused Enemy"), ESearchCase::IgnoreCase)
+		? TEXT("Focused Enemy")
+		: TEXT("World");
+}
+
+FString EventFilterPolicy::GetCanonicalEventLogScope()
+{
+	return NormalizeEventLogScope(SnapshotStoreConfig::GetEventLogScopeRaw());
 }
 
 int32 EventFilterPolicy::GetClampedEventLogDisplayLimit()

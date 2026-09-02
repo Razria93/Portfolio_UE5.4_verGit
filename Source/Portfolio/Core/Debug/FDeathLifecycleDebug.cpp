@@ -50,7 +50,9 @@ void FDeathLifecycleDebug::RecordLifecycleEvent(const AActor* InOwnerActor, cons
 		ownerName,
 		ownerName,
 		FString(),
-		FormatDeathLifecycleSummary(InOwnerActor, InSummary));
+		FormatDeathLifecycleSummary(InOwnerActor, InSummary),
+		InOwnerActor,
+		InOwnerActor);
 }
 
 void FDeathLifecycleDebug::RecordContractViolationForAudit(const AActor* InOwnerActor, const TCHAR* InEvent, const FString& InSummary)

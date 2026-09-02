@@ -46,6 +46,15 @@ FString FDebugOverlaySnapshotStore::GetEventLogFilter()
 #endif
 }
 
+FString FDebugOverlaySnapshotStore::GetEventLogScope()
+{
+#if !UE_BUILD_SHIPPING
+	return EventFilterPolicy::GetCanonicalEventLogScope();
+#else
+	return TEXT("World");
+#endif
+}
+
 // ===== Execution Record API =====
 
 void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InSubject, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName)
@@ -79,7 +88,7 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 	store->Snapshot.LastExecution.RejectReason = InRejectReason;
 	store->Snapshot.LastExecution.Summary = summary;
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Execution"), eventName, ownerName, FString(), FString(), summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Execution"), eventName, ownerName, FString(), FString(), summary), InOwnerActor);
 #endif
 }
 
@@ -103,7 +112,7 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 		*InCollisionName.ToString(),
 		*SnapshotRecordBuilders::FormatCompactReasonText(SnapshotRecordBuilders::FormatReasonOrNone(InReason)));
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary), InOwnerActor, InWeaponActor);
 #endif
 }
 
@@ -154,7 +163,7 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 
 	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, targetName, sourceName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, targetName, sourceName, targetName, summary), InPacket.Context.TargetActor, InPacket.Context.SourceActor, InPacket.Context.TargetActor);
 #endif
 }
 
@@ -220,7 +229,7 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 
 	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("CombatResult"), eventName, receiverName, sourceName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("CombatResult"), eventName, receiverName, sourceName, targetName, summary), InReceiverActor, InPacket.SourceActor, InPacket.TargetActor);
 #endif
 }
 
@@ -266,13 +275,51 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 		store->Snapshot.LastAIByPawnName.FindOrAdd(pawnName) = store->Snapshot.LastAI;
 	}
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("AI"), eventName, pawnName, pawnName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("AI"), eventName, pawnName, pawnName, targetName, summary), InOwnerPawn, InOwnerPawn, InTargetActor);
+#endif
+}
+
+// ===== Facing Record API =====
+
+void FDebugOverlaySnapshotStore::RecordFacingTransition(const UObject* InWorldContextObject, const FDebugOverlayFacingTransition& InTransition)
+{
+#if !UE_BUILD_SHIPPING
+	if (!IsCollecting()) return;
+
+	DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
+	if (!store) return;
+
+	FDebugOverlayFacingTransition transition = InTransition;
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
+	transition.Current.CaptureState = EDebugOverlayCaptureState::Captured;
+	transition.Current.FrameNumber = stamp.FrameNumber;
+	transition.Current.WorldTimeSeconds = stamp.WorldTimeSeconds;
+
+	const FString ownerName = transition.Current.OwnerName;
+	if (ownerName.IsEmpty()) return;
+
+	store->Snapshot.LastFacingByPawnName.FindOrAdd(ownerName) = transition.Current;
+
+	EventRingAccess::AddEventInternal(
+		*store,
+		SnapshotRecordBuilders::MakeEventEntry(
+			world,
+			TEXT("Facing"),
+			transition.Current.EventName,
+			ownerName,
+			transition.Current.BoundControllerName,
+			transition.Current.CombatTargetName,
+			transition.Current.Summary),
+		transition.OwnerActor.Get(),
+		nullptr,
+		transition.CombatTargetActor.Get());
 #endif
 }
 
 // ===== Event Log API =====
 
-void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
+void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary, const AActor* InOwnerActor, const AActor* InSourceActor, const AActor* InTargetActor)
 {
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
@@ -281,7 +328,7 @@ void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, c
 	if (!store) return;
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, InCategory, InEventName, InOwnerName, InSourceName, InTargetName, InSummary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, InCategory, InEventName, InOwnerName, InSourceName, InTargetName, InSummary), InOwnerActor, InSourceActor, InTargetActor);
 #endif
 }
 
@@ -370,6 +417,48 @@ bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldCon
 	if (!store) return false;
 
 	const FDebugOverlayAISummary* summary = store->Snapshot.LastAIByPawnName.Find(InPawnName);
+	if (!summary) return false;
+
+	OutSummary = *summary;
+	return true;
+#else
+	return false;
+#endif
+}
+
+void FDebugOverlaySnapshotStore::RemoveActorEventHistory(const UObject* InWorldContextObject, const AActor* InActor)
+{
+#if !UE_BUILD_SHIPPING
+	DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
+	if (!store) return;
+
+	EventRingAccess::RemoveActorEventHistoryFromStore(*store, InActor);
+#endif
+}
+
+TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForActorCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const AActor* InActor)
+{
+#if !UE_BUILD_SHIPPING
+	const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
+	if (!store) return TArray<FDebugOverlayEventEntry>();
+
+	return EventRingAccess::GetRecentEventsForActorCopyFromStore(*store, InMaxEvents, DebugOverlaySnapshotStoreInternals::EventStoreCapacity, InFilter, InActor, true);
+#else
+	return TArray<FDebugOverlayEventEntry>();
+#endif
+}
+
+bool FDebugOverlaySnapshotStore::TryGetRecentFacingForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayFacingSummary& OutSummary)
+{
+	OutSummary = FDebugOverlayFacingSummary();
+
+#if !UE_BUILD_SHIPPING
+	if (InPawnName.IsEmpty()) return false;
+
+	const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
+	if (!store) return false;
+
+	const FDebugOverlayFacingSummary* summary = store->Snapshot.LastFacingByPawnName.Find(InPawnName);
 	if (!summary) return false;
 
 	OutSummary = *summary;

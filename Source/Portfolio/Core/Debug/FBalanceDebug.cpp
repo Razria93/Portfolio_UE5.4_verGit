@@ -265,7 +265,9 @@ void FBalanceDebug::RecordLifecycleEvent(const UCBalanceComponent* InBalanceComp
 		GetNameSafe(ownerActor),
 		GetNameSafe(ownerActor),
 		FString(),
-		summary);
+		summary,
+		ownerActor,
+		ownerActor);
 
 	if (!ShouldAuditBalance()) return;
 

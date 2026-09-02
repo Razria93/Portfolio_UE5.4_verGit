@@ -5,6 +5,7 @@
 #include "Controller/CAIController.h"
 #include "Core/Debug/FCombatResultDebug.h"
 #include "Core/Debug/FDeathLifecycleDebug.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
@@ -248,6 +249,8 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		CharacterFeedbackComponent->OnDeathPresentationEvent.RemoveAll(this);
 	}
+
+	FDebugOverlaySnapshotStore::RemoveActorEventHistory(this, this);
 
 	Super::EndPlay(EndPlayReason);
 }

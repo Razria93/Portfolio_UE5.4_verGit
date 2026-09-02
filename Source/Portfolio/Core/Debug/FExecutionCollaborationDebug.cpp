@@ -248,8 +248,11 @@ void FExecutionCollaborationDebug::RecordLifecycleEvent(const UCExecutionCollabo
 	const AActor* ownerActor = InComponent->GetOwner();
 	if (!IsValid(ownerActor)) return;
 
+	const FExecutionCollaborationRuntimeSnapshot runtime = InComponent->GetExecutionCollaborationRuntimeSnapshot();
+	const AActor* sourceActor = runtime.bHasActiveSession ? runtime.CollaborationContext.SessionId.SourceActor : ownerActor;
+	const AActor* targetActor = runtime.bHasActiveSession ? runtime.CollaborationContext.TargetSnapshot.TargetActor : nullptr;
 	const FString summary = BuildAuditSummary(InComponent, InDetail);
-	FDebugOverlaySnapshotStore::AddEvent(ownerActor, TEXT("Execution"), InEvent ? InEvent : TEXT("CollaborationUnknown"), GetNameSafe(ownerActor), GetNameSafe(ownerActor), FString(), summary);
+	FDebugOverlaySnapshotStore::AddEvent(ownerActor, TEXT("Execution"), InEvent ? InEvent : TEXT("CollaborationUnknown"), GetNameSafe(ownerActor), GetNameSafe(sourceActor), GetNameSafe(targetActor), summary, ownerActor, sourceActor, targetActor);
 
 	if (!ShouldAuditExecutionCollaboration()) return;
 	FLog::Log(FString::Printf(TEXT("[ExecutionCollaboration|%s] Owner=%s | %s"), InEvent ? InEvent : TEXT("Unknown"), *GetNameSafe(ownerActor), *summary));
