@@ -1,6 +1,7 @@
 #include "Core/Debug/FExecutionCollaborationDebug.h"
 
 #include "Component/CExecutionCollaborationComponent.h"
+#include "Core/Debug/FDebugOverlayEventCategory.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FLog.h"
 
@@ -12,21 +13,21 @@
 namespace
 {
 #if !UE_BUILD_SHIPPING
-	TAutoConsoleVariable<int32> CVarExecutionCollaborationDebugEnabled(
-		TEXT("Portfolio.DebugOverlay.ExecutionCollaboration.Enabled"), 0,
-		TEXT("Enable Execution Collaboration debug data and world visualization. 0: disabled, 1: enabled."), ECVF_Default);
-	TAutoConsoleVariable<int32> CVarExecutionCollaborationDrawStartGeometry(
-		TEXT("Portfolio.DebugOverlay.ExecutionCollaboration.DrawStartGeometry"), 1,
+	TAutoConsoleVariable<int32> CVarExecutionSessionDebugEnabled(
+		TEXT("Portfolio.DebugOverlay.ExecutionSession.Enabled"), 0,
+		TEXT("Enable Execution Session debug data and world visualization. 0: disabled, 1: enabled."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarExecutionSessionDrawStartGeometry(
+		TEXT("Portfolio.DebugOverlay.ExecutionSession.DrawStartGeometry"), 1,
 		TEXT("Draw the current Source Execution start distance and facing geometry. 0: disabled, 1: enabled."), ECVF_Default);
-	TAutoConsoleVariable<int32> CVarExecutionCollaborationDrawPairLink(
-		TEXT("Portfolio.DebugOverlay.ExecutionCollaboration.DrawPairLink"), 1,
-		TEXT("Draw the active Execution Collaboration Source-to-Target link. 0: disabled, 1: enabled."), ECVF_Default);
-	TAutoConsoleVariable<int32> CVarExecutionCollaborationDrawWorldText(
-		TEXT("Portfolio.DebugOverlay.ExecutionCollaboration.DrawWorldText"), 1,
-		TEXT("Draw active Execution Collaboration state text at the pair midpoint. 0: disabled, 1: enabled."), ECVF_Default);
-	TAutoConsoleVariable<int32> CVarExecutionCollaborationAudit(
-		TEXT("Portfolio.Debug.ExecutionCollaborationAudit"), 0,
-		TEXT("Write Execution Collaboration start and lifecycle diagnostics to the Output Log. 0: disabled, 1: enabled."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarExecutionSessionDrawPairLink(
+		TEXT("Portfolio.DebugOverlay.ExecutionSession.DrawPairLink"), 1,
+		TEXT("Draw the active Execution Session Source-to-Target link. 0: disabled, 1: enabled."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarExecutionSessionDrawWorldText(
+		TEXT("Portfolio.DebugOverlay.ExecutionSession.DrawWorldText"), 1,
+		TEXT("Draw active Execution Session state text at the pair midpoint. 0: disabled, 1: enabled."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarExecutionSessionAudit(
+		TEXT("Portfolio.Debug.ExecutionSessionAudit"), 0,
+		TEXT("Write Execution Session start and lifecycle diagnostics to the Output Log. 0: disabled, 1: enabled."), ECVF_Default);
 #endif
 
 	FString CompactEnumText(const FString& InQualifiedName)
@@ -92,7 +93,7 @@ namespace
 bool FExecutionCollaborationDebug::IsEnabled()
 {
 #if !UE_BUILD_SHIPPING
-	return CVarExecutionCollaborationDebugEnabled.GetValueOnGameThread() != 0;
+	return CVarExecutionSessionDebugEnabled.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -101,7 +102,7 @@ bool FExecutionCollaborationDebug::IsEnabled()
 bool FExecutionCollaborationDebug::ShouldDrawStartGeometry()
 {
 #if !UE_BUILD_SHIPPING
-	return IsEnabled() && CVarExecutionCollaborationDrawStartGeometry.GetValueOnGameThread() != 0;
+	return IsEnabled() && CVarExecutionSessionDrawStartGeometry.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -110,7 +111,7 @@ bool FExecutionCollaborationDebug::ShouldDrawStartGeometry()
 bool FExecutionCollaborationDebug::ShouldDrawPairLink()
 {
 #if !UE_BUILD_SHIPPING
-	return IsEnabled() && CVarExecutionCollaborationDrawPairLink.GetValueOnGameThread() != 0;
+	return IsEnabled() && CVarExecutionSessionDrawPairLink.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -119,7 +120,7 @@ bool FExecutionCollaborationDebug::ShouldDrawPairLink()
 bool FExecutionCollaborationDebug::ShouldDrawWorldText()
 {
 #if !UE_BUILD_SHIPPING
-	return IsEnabled() && CVarExecutionCollaborationDrawWorldText.GetValueOnGameThread() != 0;
+	return IsEnabled() && CVarExecutionSessionDrawWorldText.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -128,7 +129,7 @@ bool FExecutionCollaborationDebug::ShouldDrawWorldText()
 bool FExecutionCollaborationDebug::ShouldAuditExecutionCollaboration()
 {
 #if !UE_BUILD_SHIPPING
-	return CVarExecutionCollaborationAudit.GetValueOnGameThread() != 0;
+	return CVarExecutionSessionAudit.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -252,7 +253,7 @@ void FExecutionCollaborationDebug::RecordLifecycleEvent(const UCExecutionCollabo
 	const AActor* sourceActor = runtime.bHasActiveSession ? runtime.CollaborationContext.SessionId.SourceActor : ownerActor;
 	const AActor* targetActor = runtime.bHasActiveSession ? runtime.CollaborationContext.TargetSnapshot.TargetActor : nullptr;
 	const FString summary = BuildAuditSummary(InComponent, InDetail);
-	FDebugOverlaySnapshotStore::AddEvent(ownerActor, TEXT("Execution"), InEvent ? InEvent : TEXT("CollaborationUnknown"), GetNameSafe(ownerActor), GetNameSafe(sourceActor), GetNameSafe(targetActor), summary, ownerActor, sourceActor, targetActor);
+	FDebugOverlaySnapshotStore::AddEvent(ownerActor, DebugOverlayEventCategory::ExecutionSession, InEvent ? InEvent : TEXT("SessionUnknown"), GetNameSafe(ownerActor), GetNameSafe(sourceActor), GetNameSafe(targetActor), summary, ownerActor, sourceActor, targetActor);
 
 	if (!ShouldAuditExecutionCollaboration()) return;
 	FLog::Log(FString::Printf(TEXT("[ExecutionCollaboration|%s] Owner=%s | %s"), InEvent ? InEvent : TEXT("Unknown"), *GetNameSafe(ownerActor), *summary));

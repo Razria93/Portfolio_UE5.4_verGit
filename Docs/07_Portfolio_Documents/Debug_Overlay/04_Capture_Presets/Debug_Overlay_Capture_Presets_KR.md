@@ -102,8 +102,8 @@ P0.5 제출 캡처는 현재 구현된 Player/Enemy 패널과 공통 recent bloc
 - CVar:
 
 ```text
-Portfolio.DebugOverlay.Enabled 1
-Portfolio.DebugOverlay.Collect 1
+Portfolio.DebugOverlay.HUDVisible 1
+Portfolio.DebugOverlay.CaptureEnabled 1
 Portfolio.DebugOverlay.EventLogLimit 5
 ```
 
@@ -112,7 +112,8 @@ Portfolio.DebugOverlay.EventLogLimit 5
 - `[Player]` blue tab
 - `[Enemy]` red tab
 - State / Action / Reaction / Guard / Movement / HP / Runtime LOD / AI
-- `[Recent Execution]`
+- `[Recent Action / Reaction]`
+- `[Execution Session]` (처형 pair-session이 활성일 때)
 - `[Recent Combat]`
 - `[Recent AI]`
 - `[Event Log]`
@@ -153,8 +154,8 @@ Evidence 의미:
 | --- | --- |
 | Player Action | `Guard In` |
 | Player Guard | `Wants=true`, `Pose=...`, `CanGuard=...` |
-| Recent Execution | `Action(Guard In)`, `Decision=Accept`, `Apply=Start`, `RejectReason=None` |
-| EventLog | `Execution/DecisionResolved` line 포함 |
+| Recent Action / Reaction | `Action(Guard In)`, `Decision=Accept`, `Apply=Start`, `RejectReason=None` |
+| EventLog | `ActionReaction/DecisionResolved` line 포함 |
 
 Evidence 의미:
 
@@ -173,7 +174,7 @@ Evidence 의미:
 | --- | --- |
 | Player Action | `Guard Out` 또는 active 종료 후 `None` |
 | Player Guard | `Wants=false` 또는 pose/capability 변화 |
-| Recent Execution | `Action(Guard Out)`, `Decision=Accept`, `Apply=Start`, `RejectReason=None` |
+| Recent Action / Reaction | `Action(Guard Out)`, `Decision=Accept`, `Apply=Start`, `RejectReason=None` |
 | EventLog | Guard Out decision line 포함 |
 
 Evidence 의미:
@@ -191,9 +192,9 @@ Evidence 의미:
 | 항목 | 기대 |
 | --- | --- |
 | Player Action | `ComboAttack[0]`, `ComboAttack[1]` 등 |
-| Recent Execution | `Action(ComboAttack[n])`, `Decision=Accept`, `Apply=Start...` |
+| Recent Action / Reaction | `Action(ComboAttack[n])`, `Decision=Accept`, `Apply=Start...` |
 | Recent Combat | HitWindow 또는 combat target event |
-| EventLog | Execution + Combat line |
+| EventLog | ActionReaction + Combat line |
 
 Evidence 의미:
 
@@ -210,7 +211,7 @@ Evidence 의미:
 | 항목 | 기대 |
 | --- | --- |
 | Reaction | `Hit` |
-| Recent Execution | `Reaction(Hit)`, `Decision=Accept`, `Apply=Intervene...` 또는 유사 flow |
+| Recent Action / Reaction | `Reaction(Hit)`, `Decision=Accept`, `Apply=Intervene...` 또는 유사 flow |
 | Recent Combat | `Outcome=None`, `Final=...`, `Commit=...` |
 | HP | damage 후 current HP 변화 |
 

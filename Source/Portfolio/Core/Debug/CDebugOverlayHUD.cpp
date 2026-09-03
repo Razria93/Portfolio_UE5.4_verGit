@@ -75,34 +75,11 @@ namespace
 		return nullptr;
 	}
 
-	// ===== Targeting Debug =====
-
-	void DrawTargetingDebug(const APlayerController* InOwningPlayerController, UWorld* InWorld)
-	{
-		if (!FTargetingDebug::IsEnabled()) return;
-		if (!IsValid(InOwningPlayerController)) return;
-
-		const UCPlayerTargetSelectionComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCPlayerTargetSelectionComponent>();
-		if (!IsValid(targetingComp)) return;
-
-		FTargetingEvaluation targetingEvaluation;
-		if (!targetingComp->BuildSelectionDebugSnapshot(targetingEvaluation)) return;
-
-		FTargetingDebug::DrawWorldDebug(InWorld, targetingEvaluation);
-	}
-
 	FMovementDebugSnapshot BuildPlayerLocomotionSnapshot(const APlayerController* InOwningPlayerController)
 	{
 		if (!FMovementDebug::IsEnabled()) return FMovementDebugSnapshot();
 		const APawn* playerPawn = IsValid(InOwningPlayerController) ? InOwningPlayerController->GetPawn() : nullptr;
 		return IsValid(playerPawn) ? FMovementDebug::BuildSnapshot(playerPawn) : FMovementDebugSnapshot();
-	}
-
-	void DrawMovementDebug(UWorld* InWorld, const APawn* InPlayerPawn, const FMovementDebugSnapshot& InSnapshot)
-	{
-		if (!InSnapshot.bHasSnapshot) return;
-
-		FMovementDebug::DrawWorldDebug(InWorld, InPlayerPawn, InSnapshot);
 	}
 
 	void UpdatePlayerTargetingViewData(const APlayerController* InOwningPlayerController, const FDebugOverlayPanelVisibility& InPanelVisibility, FDebugOverlayPlayerTargetingViewData& OutPlayerTargetingViewData)
@@ -155,11 +132,11 @@ namespace
 		return FExecutionCollaborationDebug::BuildSnapshot(InCharacter);
 	}
 
-	void UpdateExecutionCollaborationViewData(const FExecutionCollaborationDebugSnapshot& InSnapshot, const bool bInVisible, FDebugOverlayExecutionCollaborationViewData& OutExecutionCollaborationViewData)
+	void UpdateExecutionSessionViewData(const FExecutionCollaborationDebugSnapshot& InSnapshot, const bool bInVisible, FDebugOverlayExecutionSessionViewData& OutExecutionSessionViewData)
 	{
 		if (!bInVisible) return;
 
-		OutExecutionCollaborationViewData.Details = FExecutionCollaborationDebug::BuildOverlayDetails(InSnapshot);
+		OutExecutionSessionViewData.Details = FExecutionCollaborationDebug::BuildOverlayDetails(InSnapshot);
 	}
 
 	FCombatParticipationDebugSnapshot BuildCombatParticipationSnapshot(UWorld* InWorld)
@@ -194,6 +171,8 @@ void ACDebugOverlayHUD::DrawHUD()
 #if !UE_BUILD_SHIPPING
 	Super::DrawHUD();
 
+	if (!FDebugOverlaySnapshotStore::IsHudVisible()) return;
+
 	UWorld* world = GetWorld();
 	const APlayerController* owningPlayerController = GetOwningPlayerController();
 	const APawn* playerPawn = IsValid(owningPlayerController) ? owningPlayerController->GetPawn() : nullptr;
@@ -207,30 +186,31 @@ void ACDebugOverlayHUD::DrawHUD()
 	const FExecutionCollaborationDebugSnapshot playerExecutionCollaborationSnapshot = BuildExecutionCollaborationSnapshot(playerCharacter);
 	const FExecutionCollaborationDebugSnapshot enemyExecutionCollaborationSnapshot = BuildExecutionCollaborationSnapshot(focusedEnemy);
 
-	DrawTargetingDebug(owningPlayerController, world);
-	DrawMovementDebug(world, playerPawn, playerLocomotionSnapshot);
+	FTargetingDebug::DrawWorldDebug(world, owningPlayerController);
+	FMovementDebug::DrawWorldDebug(world, playerPawn, playerLocomotionSnapshot);
 	FCombatParticipationDebug::DrawWorldDebug(world, combatParticipationSnapshot);
 	FBalanceDebug::DrawWorldDebug(world, focusedEnemy, balanceCollapseSnapshot);
 	FExecutionCollaborationDebug::DrawWorldDebug(world, playerExecutionCollaborationSnapshot);
 
-	if (!FDebugOverlaySnapshotStore::IsEnabled()) return;
 	const FDebugOverlayPanelVisibility panelVisibility = DebugOverlayDisplayConfig::GetPanelVisibility();
+
 	FDebugOverlayPlayerTargetingViewData playerTargeting;
 	FDebugOverlayPlayerLocomotionViewData playerLocomotion;
-	FDebugOverlayExecutionCollaborationViewData playerExecutionCollaboration;
+	FDebugOverlayExecutionSessionViewData playerExecutionSession;
 	FDebugOverlayBalanceCollapseViewData balanceCollapse;
 	FDebugOverlayCombatTargetFacingViewData combatTargetFacing;
-	FDebugOverlayExecutionCollaborationViewData enemyExecutionCollaboration;
+	FDebugOverlayExecutionSessionViewData enemyExecutionSession;
 	FDebugOverlayCombatParticipationViewData combatParticipation;
+
 	UpdatePlayerTargetingViewData(owningPlayerController, panelVisibility, playerTargeting);
 	UpdatePlayerLocomotionViewData(playerLocomotionSnapshot, panelVisibility, playerLocomotion);
-	UpdateExecutionCollaborationViewData(playerExecutionCollaborationSnapshot, panelVisibility.bShowPlayer && panelVisibility.bShowPlayerExecutionCollaboration, playerExecutionCollaboration);
+	UpdateExecutionSessionViewData(playerExecutionCollaborationSnapshot, panelVisibility.bShowPlayer && panelVisibility.bShowPlayerExecutionSession, playerExecutionSession);
 	UpdateBalanceCollapseViewData(balanceCollapseSnapshot, panelVisibility, balanceCollapse);
 	UpdateCombatTargetFacingViewData(combatTargetFacingSnapshot, panelVisibility, combatTargetFacing);
-	UpdateExecutionCollaborationViewData(enemyExecutionCollaborationSnapshot, panelVisibility.bShowEnemy && panelVisibility.bShowEnemyExecutionCollaboration, enemyExecutionCollaboration);
+	UpdateExecutionSessionViewData(enemyExecutionCollaborationSnapshot, panelVisibility.bShowEnemy && panelVisibility.bShowEnemyExecutionSession, enemyExecutionSession);
 	UpdateCombatParticipationViewData(combatParticipationSnapshot, focusedEnemy, panelVisibility, combatParticipation);
 
-	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, playerExecutionCollaboration, balanceCollapse, combatTargetFacing, enemyExecutionCollaboration, combatParticipation, panelVisibility);
+	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, playerExecutionSession, balanceCollapse, combatTargetFacing, enemyExecutionSession, combatParticipation, panelVisibility);
 	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
 
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);

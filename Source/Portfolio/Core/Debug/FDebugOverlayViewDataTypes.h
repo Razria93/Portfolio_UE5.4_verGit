@@ -22,7 +22,7 @@ enum class EDebugOverlayRecentAIEventViewState : uint8
 	Captured,
 };
 
-enum class EDebugOverlayRecentExecutionViewState : uint8
+enum class EDebugOverlayRecentActionReactionViewState : uint8
 {
 	NotCaptured,
 	NoActor,
@@ -30,9 +30,9 @@ enum class EDebugOverlayRecentExecutionViewState : uint8
 	Captured,
 };
 
-struct FDebugOverlayRecentExecutionViewData
+struct FDebugOverlayRecentActionReactionViewData
 {
-	EDebugOverlayRecentExecutionViewState State = EDebugOverlayRecentExecutionViewState::NotCaptured;
+	EDebugOverlayRecentActionReactionViewState State = EDebugOverlayRecentActionReactionViewState::NotCaptured;
 	FString HeaderText;
 	FString SummaryText;
 };
@@ -45,7 +45,8 @@ struct FDebugOverlayActorStatusViewData
 	FString HealthText;
 	FString BalanceText;
 	FString GuardText;
-	FString MovementText;
+	FString MovementGaitRotationText;
+	FString LocomotionPresentationStateText;
 	FString RuntimeLODText;
 };
 
@@ -117,7 +118,7 @@ struct FDebugOverlayCombatTargetFacingViewData
 	FEnemyCombatTargetFacingDebugOverlayDetails Details;
 };
 
-struct FDebugOverlayExecutionCollaborationViewData
+struct FDebugOverlayExecutionSessionViewData
 {
 	FExecutionCollaborationDebugOverlayDetails Details;
 };
@@ -136,16 +137,16 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayBalanceCollapseViewData BalanceCollapse;
 	bool bIncludeCombatTargetFacing = false;
 	FDebugOverlayCombatTargetFacingViewData CombatTargetFacing;
-	bool bIncludeExecutionCollaboration = false;
-	FDebugOverlayExecutionCollaborationViewData ExecutionCollaboration;
+	bool bIncludeExecutionSession = false;
+	FDebugOverlayExecutionSessionViewData ExecutionSession;
 	bool bIncludeCombatParticipation = false;
 	FDebugOverlayCombatParticipationViewData CombatParticipation;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
-	FDebugOverlayRecentExecutionViewData RecentExecution;
+	FDebugOverlayRecentActionReactionViewData RecentActionReaction;
 	bool bIncludeDeathLifecycle = false;
 	FDebugOverlayDeathLifecycleViewData DeathLifecycle;
-	bool bIncludeRecentExecution = false;
+	bool bIncludeRecentActionReaction = false;
 	bool bIncludeCurrentAI = false;
 	FDebugOverlayCurrentAIViewData CurrentAI;
 	bool bIncludeRecentAIEvent = false;
@@ -189,10 +190,7 @@ struct FDebugOverlayWorldSummaryViewData
 
 struct FDebugOverlayViewData
 {
-	FString MainPanelTitle;
 	TArray<FDebugOverlayActorPanelViewData> ActorPanels;
-	FString EventLogPanelTitle;
 	FDebugOverlayEventLogViewData EventLog;
-	FString WorldSummaryPanelTitle;
 	FDebugOverlayWorldSummaryViewData WorldSummary;
 };

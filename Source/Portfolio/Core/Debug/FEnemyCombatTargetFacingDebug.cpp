@@ -224,49 +224,46 @@ bool FEnemyCombatTargetFacingDebug::ShouldAuditCombatTargetFacing()
 
 // Facing Decision Diagnostic Hook
 
-void FEnemyCombatTargetFacingDebug::RecordFacingDecision(
-	const UCEnemyCombatTargetFacingComponent* InFacingComponent,
-	const EMovementRotationMode InPreviousRotationMode,
-	const AActor* InPreviousGameplayFocusActor,
-	const TCHAR* InEvent,
-	const TCHAR* InDecision)
+void FEnemyCombatTargetFacingDebug::RecordFacingDecision(const UCEnemyCombatTargetFacingComponent* InFacingComponent, const EMovementRotationMode InPreviousRotationMode, const AActor* InPreviousGameplayFocusActor, const TCHAR* InEvent, const TCHAR* InDecision)
 {
 	if (!IsValid(InFacingComponent)) return;
 
 	const AActor* ownerActor = InFacingComponent->GetOwner();
 	if (!IsValid(ownerActor)) return;
+	const bool bRecordTransition = IsEnabled() && FDebugOverlaySnapshotStore::IsCollecting();
+	const bool bAuditTransition = ShouldAuditCombatTargetFacing();
+	if (!bRecordTransition && !bAuditTransition) return;
 
 	const FEnemyCombatTargetFacingRuntimeSnapshot runtime = InFacingComponent->GetRuntimeSnapshot();
 	const FString eventName = InEvent ? InEvent : TEXT("Unknown");
 	const FString decision = InDecision ? InDecision : TEXT("Unknown");
 	const FString summary = BuildTransitionSummary(runtime, InPreviousRotationMode, InPreviousGameplayFocusActor);
 
-	FDebugOverlayFacingTransition transition;
-	transition.Current.TransitionSequence = runtime.LastTransitionSequence;
-	transition.Current.OwnerName = GetNameSafe(ownerActor);
-	transition.Current.OwnerControllerName = GetNameSafe(runtime.OwnerAIController);
-	transition.Current.BoundControllerName = GetNameSafe(runtime.BoundAIController);
-	transition.Current.CombatTargetName = GetNameSafe(runtime.CombatTargetActor);
-	transition.Current.GameplayFocusName = GetNameSafe(runtime.GameplayFocusActor);
-	transition.Current.RotationMode = FormatRotationMode(runtime.RotationMode);
-	transition.Current.PolicyState = FormatPolicyState(runtime.PolicyState);
-	transition.Current.ExpectedFocusDirective = FormatFocusDirective(runtime.ExpectedFocusDirective);
-	transition.Current.ExpectedRotationDirective = FormatRotationDirective(runtime.ExpectedRotationDirective);
-	transition.Current.EventName = eventName;
-	transition.Current.Decision = decision;
-	transition.Current.bControllerBindingMatchesOwner = runtime.bControllerBindingMatchesOwner;
-	transition.Current.Summary = summary;
-	transition.OwnerActor = const_cast<AActor*>(ownerActor);
-	transition.CombatTargetActor = runtime.CombatTargetActor;
-	transition.PreviousGameplayFocusName = GetNameSafe(InPreviousGameplayFocusActor);
-	transition.PreviousRotationMode = FormatRotationMode(InPreviousRotationMode);
-	FDebugOverlaySnapshotStore::RecordFacingTransition(ownerActor, transition);
+	if (bRecordTransition)
+	{
+		FDebugOverlayFacingTransition transition;
+		transition.Current.TransitionSequence = runtime.LastTransitionSequence;
+		transition.Current.OwnerName = GetNameSafe(ownerActor);
+		transition.Current.OwnerControllerName = GetNameSafe(runtime.OwnerAIController);
+		transition.Current.BoundControllerName = GetNameSafe(runtime.BoundAIController);
+		transition.Current.CombatTargetName = GetNameSafe(runtime.CombatTargetActor);
+		transition.Current.GameplayFocusName = GetNameSafe(runtime.GameplayFocusActor);
+		transition.Current.RotationMode = FormatRotationMode(runtime.RotationMode);
+		transition.Current.PolicyState = FormatPolicyState(runtime.PolicyState);
+		transition.Current.ExpectedFocusDirective = FormatFocusDirective(runtime.ExpectedFocusDirective);
+		transition.Current.ExpectedRotationDirective = FormatRotationDirective(runtime.ExpectedRotationDirective);
+		transition.Current.EventName = eventName;
+		transition.Current.Decision = decision;
+		transition.Current.bControllerBindingMatchesOwner = runtime.bControllerBindingMatchesOwner;
+		transition.Current.Summary = summary;
+		transition.OwnerActor = const_cast<AActor*>(ownerActor);
+		transition.CombatTargetActor = runtime.CombatTargetActor;
+		transition.PreviousGameplayFocusName = GetNameSafe(InPreviousGameplayFocusActor);
+		transition.PreviousRotationMode = FormatRotationMode(InPreviousRotationMode);
+		FDebugOverlaySnapshotStore::RecordFacingTransition(ownerActor, transition);
+	}
 
-	if (!ShouldAuditCombatTargetFacing()) return;
+	if (!bAuditTransition) return;
 
-	FLog::Log(FString::Printf(
-		TEXT("[Enemy|CombatTargetFacing|%s] Owner=%s | %s"),
-		*eventName,
-		*GetNameSafe(ownerActor),
-		*summary));
+	FLog::Log(FString::Printf(TEXT("[Enemy|CombatTargetFacing|%s] Owner=%s | %s"), *eventName, *GetNameSafe(ownerActor), *summary));
 }

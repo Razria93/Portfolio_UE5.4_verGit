@@ -33,7 +33,7 @@ struct PORTFOLIO_API FDebugOverlayEventEntry
 
 // ===== Recent Summary Snapshots =====
 
-struct PORTFOLIO_API FDebugOverlayExecutionSummary
+struct PORTFOLIO_API FDebugOverlayActionReactionSummary
 {
 	EDebugOverlayCaptureState CaptureState = EDebugOverlayCaptureState::NotCaptured;
 	uint64 FrameNumber = 0;
@@ -120,7 +120,7 @@ struct PORTFOLIO_API FDebugOverlayFacingTransition
 
 struct PORTFOLIO_API FDebugOverlaySnapshot
 {
-	FDebugOverlayExecutionSummary LastExecution;
+	FDebugOverlayActionReactionSummary LastActionReaction;
 	FDebugOverlayCombatSummary LastCombat;
 	FDebugOverlayAISummary LastAI;
 	TMap<FString, FDebugOverlayAISummary> LastAIByPawnName;

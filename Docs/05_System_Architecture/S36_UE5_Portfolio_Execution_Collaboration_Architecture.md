@@ -330,16 +330,16 @@ Lethal은 Death lifecycle에 책임을 넘긴다. 장기 Down 또는 Dead presen
 
 ---
 
-## 10. Execution Collaboration Debug 계약
+## 10. Execution Session Debug 계약
 
-Execution Collaboration debug는 Balance lifecycle debug와 Recent Execution event summary를 대체하지 않는다.
+Execution Session debug는 Balance lifecycle debug와 Recent Action / Reaction event summary를 대체하지 않는다.
 각 도메인은 다음의 서로 다른 권위를 관찰한다.
 
 | 도메인 | 관찰하는 권위 |
 | --- | --- |
 | Balance / Collapse | Target Balance count, lifecycle, Loop / Down TTL |
-| Execution Collaboration | Source × Target pair session, reservation, outcome, primary terminal, 시작 기하 조건 |
-| Recent Execution | Event Log에 남은 가장 최근 Execution audit event |
+| Execution Session | Source × Target pair session, reservation, outcome, primary terminal, 시작 기하 조건 |
+| Recent Action / Reaction | Event Log에 남은 가장 최근 Action / Reaction 판단 |
 
 `Panel_01`의 Player / Enemy detail block은 각 Actor 관점에서 다음을 표시한다.
 
@@ -362,18 +362,18 @@ Source 시작 기하 조건
 제어 CVar는 다음으로 고정한다.
 
 ```text
-Portfolio.DebugOverlay.ExecutionCollaboration.Enabled
-Portfolio.DebugOverlay.ExecutionCollaboration.DrawStartGeometry
-Portfolio.DebugOverlay.ExecutionCollaboration.DrawPairLink
-Portfolio.DebugOverlay.ExecutionCollaboration.DrawWorldText
-Portfolio.Debug.ExecutionCollaborationAudit
+Portfolio.DebugOverlay.ExecutionSession.Enabled
+Portfolio.DebugOverlay.ExecutionSession.DrawStartGeometry
+Portfolio.DebugOverlay.ExecutionSession.DrawPairLink
+Portfolio.DebugOverlay.ExecutionSession.DrawWorldText
+Portfolio.Debug.ExecutionSessionAudit
 
-Portfolio.DebugOverlay.Player.ExecutionCollaboration.Enabled
-Portfolio.DebugOverlay.Enemy.ExecutionCollaboration.Enabled
+Portfolio.DebugOverlay.Player.ExecutionSession.Enabled
+Portfolio.DebugOverlay.Enemy.ExecutionSession.Enabled
 ```
 
-`Execution` Event Log category에는 reservation, pair activation, commit, damage apply, terminal,
-cancel, completion event를 기록한다. Audit CVar는 같은 lifecycle record를 Output Log에도 남긴다.
+`ExecutionSession` Event Log category에는 reservation, pair activation, commit, damage apply, terminal,
+cancel, completion event를 기록한다. 일반 Action / Reaction 판단은 별도 `ActionReaction` category에 기록한다. Audit CVar는 같은 lifecycle record를 Output Log에도 남긴다.
 
 ---
 

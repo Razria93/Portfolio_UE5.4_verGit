@@ -150,27 +150,4 @@ TArray<FDebugOverlayEventEntry> EventRingAccess::GetRecentEventsCopyFromStore(co
 	return result;
 }
 
-TArray<FDebugOverlayEventEntry> EventRingAccess::GetRecentEventsForSubjectCopyFromStore(const FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters)
-{
-	TArray<FDebugOverlayEventEntry> result;
-	if (InSubjectName.IsEmpty()) return result;
-
-	const int32 maxEvents = FMath::Clamp(InMaxEvents, 0, InMaxClamp);
-	result.Reserve(maxEvents);
-
-	for (int32 i = 0; i < InStore.EventCount && result.Num() < maxEvents; ++i)
-	{
-		const int32 index = (InStore.NextEventIndex - 1 - i + EventStoreCapacity) % EventStoreCapacity;
-		if (!InStore.EventRing.IsValidIndex(index)) continue;
-
-		const FDebugOverlayEventEntry& entry = InStore.EventRing[index];
-		if (EventFilterPolicy::ShouldIncludeEventForDisplay(entry, InFilter, bApplyDisplayFilters)
-			&& EventFilterPolicy::DoesEventMatchSubject(entry, InSubjectName))
-		{
-			result.Add(EventFilterPolicy::MakeSubjectDisplayEventEntry(entry, InSubjectName));
-		}
-	}
-
-	return result;
-}
 #endif

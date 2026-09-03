@@ -1,5 +1,7 @@
 #include "Core/Debug/FBalanceDebug.h"
 
+#include "Core/Debug/FDebugOverlayEventCategory.h"
+
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CBalanceComponent.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
@@ -260,7 +262,7 @@ void FBalanceDebug::RecordLifecycleEvent(const UCBalanceComponent* InBalanceComp
 	const FString summary = BuildAuditSummary(InBalanceComp, InDetail);
 	FDebugOverlaySnapshotStore::AddEvent(
 		ownerActor,
-		TEXT("Balance"),
+		DebugOverlayEventCategory::Balance,
 		InEvent ? InEvent : TEXT("Unknown"),
 		GetNameSafe(ownerActor),
 		GetNameSafe(ownerActor),

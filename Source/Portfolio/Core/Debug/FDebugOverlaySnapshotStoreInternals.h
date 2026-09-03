@@ -52,7 +52,7 @@ namespace DebugOverlaySnapshotStoreInternals
 
 namespace SnapshotStoreConfig
 {
-	bool IsEnabled();
+	bool IsHudVisible();
 	bool IsCollecting();
 	int32 GetEventLogDisplayLimitRaw();
 	FString GetEventLogFilterRaw();
@@ -98,8 +98,6 @@ namespace EventFilterPolicy
 	FString GetCanonicalEventLogScope();
 	int32 GetClampedEventLogDisplayLimit();
 	bool ShouldIncludeEventForDisplay(const FDebugOverlayEventEntry& InEntry, const FString& InFilter, bool bApplyDisplayFilters);
-	bool DoesEventMatchSubject(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName);
-	FDebugOverlayEventEntry MakeSubjectDisplayEventEntry(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName);
 }
 
 // ===== Event Ring Access =====
@@ -108,7 +106,6 @@ namespace EventRingAccess
 {
 	void AddEventInternal(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const FDebugOverlayEventEntry& InEntry, const AActor* InOwnerActor = nullptr, const AActor* InSourceActor = nullptr, const AActor* InTargetActor = nullptr);
 	TArray<FDebugOverlayEventEntry> GetRecentEventsCopyFromStore(const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, bool bApplyDisplayFilters);
-	TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopyFromStore(const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const FString& InSubjectName, bool bApplyDisplayFilters);
 	TArray<FDebugOverlayEventEntry> GetRecentEventsForActorCopyFromStore(const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, int32 InMaxEvents, int32 InMaxClamp, const FString& InFilter, const AActor* InActor, bool bApplyDisplayFilters);
 	void RemoveActorEventHistoryFromStore(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const AActor* InActor);
 }

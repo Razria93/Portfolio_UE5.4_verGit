@@ -25,7 +25,7 @@ class PORTFOLIO_API FDebugOverlaySnapshotStore
 public:
 	// ===== Runtime Gates =====
 
-	static bool IsEnabled();
+	static bool IsHudVisible();
 	static bool IsCollecting();
 	static int32 GetEventLogDisplayLimit();
 	static FString GetEventLogFilter();
@@ -55,7 +55,6 @@ public:
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsForActorCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const AActor* InActor);
-	static TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const FString& InSubjectName);
 	static void RemoveActorEventHistory(const UObject* InWorldContextObject, const AActor* InActor);
 
 	// ===== Snapshot Query API =====
