@@ -6,6 +6,7 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P61 | Enemy Balance Collapse and Execution Collaboration | `P61_UE5_Portfolio_Pull_Request.md` | `feat/balance-collapse-execution` |  | S35, S36, Debug Overlay |
 | P60 | Shared Combat Target and Evidence-Based Combat Participation | `P60_UE5_Portfolio_Pull_Request.md` | `feature/combat-target-participation` |  | S32, S33, S34, Debug Overlay, AIPerf |
 | P59 | Enemy Death Presentation and Destroy Lifecycle | `P59_UE5_Portfolio_Pull_Request.md` | `feature/dead-actor-destroy-flow` | #115 | W06, S31, N14, W05 |
 | P58 | Player Targeting and Lock-On Presentation | `P58_UE5_Portfolio_Pull_Request.md` | `feat/player-targeting-component` | #113 | W05, Targeting, Debug Overlay |
