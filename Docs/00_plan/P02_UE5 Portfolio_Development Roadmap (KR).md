@@ -90,8 +90,8 @@ Phase A의 공통 대상 및 실행 계약이 안정된 뒤 전투 자원과 협
 
 | ID  | 작업             | 상태  | 핵심 결과                                                                |
 | --- | -------------- | --- | -------------------------------------------------------------------- |
-| R07 | Resource 계층 정리 | 진행  | Enemy Balance Collapse lifecycle C++ 구현 완료, Editor asset 연결 및 PIE 검증 대기 |
-| R08 | Execution 시스템  | 대기  | 일반/즉사 처형의 Action·Reaction 협업 실행                                      |
+| R07 | Resource 계층 정리 | 완료  | Enemy Balance / Collapse lifecycle, authored asset 연결, 기본 PIE 흐름을 반영. 세부 outcome 회귀 매트릭스는 지속 검증 |
+| R08 | Execution 시스템  | 구현 완료 / 검증 진행 | Standard / Lethal Action·Reaction pair, Balance / Death handoff, participant movement collision 정책을 반영 |
 
 권장 의존성:
 
@@ -238,6 +238,7 @@ P02에는 다음 내용만 갱신한다.
 - [Documentation Index](../00_Documentation_Index.md)
 - [System Architecture Index](../05_System_Architecture/00_System_Architecture_Index.md)
 - [S35 Enemy Balance / Collapse Lifecycle](../05_System_Architecture/S35_UE5_Portfolio_Enemy_Balance_Collapse_Architecture.md)
+- [S36 Execution Collaboration Architecture](../05_System_Architecture/S36_UE5_Portfolio_Execution_Collaboration_Architecture.md)
 - [S31 Enemy Death / Presentation / Destroy](../05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md)
 - [S33 Common Combat Target / Participation Architecture](../05_System_Architecture/S33_UE5_Portfolio_System_Architecture.md)
 - [S34 Combat Participation Policy](../05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md)
@@ -249,10 +250,10 @@ P02에는 다음 내용만 갱신한다.
 현재 프로젝트의 우선순위는 개별 전투 기능을 빠르게 추가하는 것이 아니라, 후속 기능이 공통으로 의존할 Target·Facing·Feedback·Death 기반을 먼저 고정하는 것이다.
 
 ```text
-현재: R07 Resource 계층 정리
-→ S35 Enemy Balance / Collapse Lifecycle 기준의 Enemy Balance C++ lifecycle 구현 완료
-→ Editor asset 연결 및 PIE 검증 진행
-그 이후: R08 Execution → R09/R10 반응·회피 확장
+현재: R07 Resource 계층 및 R08 Execution Collaboration 구현 반영
+→ S35의 Enemy Balance / Collapse lifecycle과 S36의 pair-session 계약을 기준으로 운영
+→ Standard / Lethal outcome별 회귀 검증과 증적 캡처를 지속
+그 이후: R09/R10 반응·회피 확장
 후속: 특수 Action → UI/Debug
 ```
 

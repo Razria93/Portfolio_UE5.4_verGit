@@ -133,28 +133,24 @@ Anchor는 Last Known Target Context나 Investigate 위치가 아니라 HitReacti
 ### 확인 절차
 
 1. `/Game/00_UnitTest/TestRoom`에서 PIE를 실행한다.
-2. 화면 좌상단에 `[Debug Overlay P0.5]`가 표시되는지 확인한다.
+2. Character Details의 `[Player]`와 `[Enemy]`, Event Log의 `[Event Log: All | Scope: World]`, World Summary의 `[World Summary]`가 표시되는지 확인한다.
 3. player action, reaction, guard, combat event를 발생시킨다.
-4. `Recent Action / Reaction`, `Execution Session`, `Recent Combat`, `Recent AI`, `Event Log`가 각자의 이벤트에서 갱신되는지 확인한다.
+4. Character Details의 `Recent Action / Reaction`, 활성 중인 `Execution Session`, World Summary의 `Recent Combat`/`Recent AI`, Event Log가 각자의 이벤트에서 갱신되는지 확인한다.
 5. event가 아직 없으면 `NotCaptured`로 표시되는 것이 정상이다.
 6. 대상 AI 선택 로직이 없는 상태에서는 `RuntimeLODTier`가 `N/A`로 표시될 수 있다.
 7. 실제 combat result가 capture되기 전에는 `FinalTakenDamage`가 `NotCaptured`로 표시될 수 있다.
 
-## P0.5 운영 기준
+## 현재 Overlay 운영 기준
 
-P0.5 overlay는 Player/Enemy 상태 패널과 공통 recent block으로 구성한다.
+Overlay는 Character Details, Event Log, World Summary의 세 영역으로 구성한다.
 
 ```text
-[Debug Overlay P0.5]
-[Player]
-[Enemy]
-[Recent Action / Reaction]
-[Recent Combat]
-[Recent AI]
-[Event Log]
+[Player] / [Enemy]                         : Character Details
+[Event Log: <Category> | Scope: <Scope>]   : Event Log
+[World Summary]                            : World Summary
 ```
 
-Player tab은 blue, Enemy tab은 red로 표시한다. 색상은 대상 구분용이며 gameplay 위험도나 성공/실패 의미를 갖지 않는다.
+Player header는 blue, Enemy header는 red로 표시한다. 색상은 대상 구분용이며 gameplay 위험도나 성공/실패 의미를 갖지 않는다.
 
 ### 표시 정책
 
@@ -166,8 +162,8 @@ P0.5 표시 문자열은 캡처 evidence 가독성을 우선한다.
 | Action subject | type/index compact | `ComboAttack[1]` |
 | Reaction subject | type compact | `Hit`, `Parry` |
 | Guard action | index 제거 | `Guard In`, `Guard Out` |
-| multi-field 상태값 | pipe 문자로 구분 | `Gait=Run`, `Speed=0.0`, `Dir=0.0` |
-| Action / Reaction summary | subject 포함 | `Action(Guard In)`, `Decision=Accept`, `Apply=Start`, `RejectReason=None` |
+| multi-field 상태값 | pipe 문자로 구분 | `Gait: Run | Rotation: OrientToMovement` |
+| Action / Reaction summary | subject 포함 | `Action: Guard In | Decision: Accept | Apply: Start | Reject: None` |
 
 Guard Hold / Guard Hit / Guard Parry는 P0.5에서 별도 action label로 표시하지 않는다. 해당 의미는 Guard 현재값, Reaction, Combat outcome에서 설명한다.
 
@@ -189,15 +185,20 @@ EnemyFocusCommand: None
 - Enemy actor-derived 값을 성공 evidence처럼 설명하지 않는다.
 - Enemy 선택은 `DebugOverlaySelectNearestFocus` 또는 Editor tooling command를 통해 명시적으로 수행한다.
 
-### EventLog 운영 판단
+### Event Log 운영 판단
 
-P0.5에서는 EventLog 추가 축약을 하지 않는다.
+Event Log는 Event Category와 Event Scope를 먼저 적용하고, noise/collision filter와 표시 limit을 차례로 적용한다.
 
-이유:
+```text
+Category: All / ActionReaction / ExecutionSession / Combat / AI / Balance / Death / Facing
+Scope:    World / FocusedEnemy
+```
 
-- 현재 compact key/value format이 캡처에서 충분히 읽힌다.
-- 더 줄이면 action/combat 흐름 설명에 필요한 key가 사라질 수 있다.
-- category filter와 Player/Enemy별 EventLog 분리는 Store subject 정책이 필요하므로 P1로 둔다.
+- `ActionReaction`은 일반 Action/Reaction 실행 판단이다.
+- `ExecutionSession`은 처형 pair의 reservation, activation, commit, terminal, cancel, completion lifecycle이다.
+- `FocusedEnemy`는 선택 Enemy가 Owner, Source, Target 중 하나인 event만 해당 Actor 인스턴스 이력에서 조회한다.
+- 선택 Enemy가 없으면 World로 조용히 fallback하지 않고 `No focused Enemy selected.`를 표시한다.
+- Event Log의 compact format은 Source/Target, 결과, damage 등 현재 event가 실제로 가진 값만 표시한다. 직전 Combat 결과를 fallback으로 섞지 않는다.
 
 ### Evidence 파일 규칙
 
@@ -235,8 +236,8 @@ Event Log가 비어 있을 때:
 
 - `Portfolio.DebugOverlay.CaptureEnabled`가 `1`인지 확인한다.
 - Action / Reaction / Combat / AI event가 실제로 발생했는지 확인한다.
-- 현재 연결된 hook 범위가 P0 대상인지 확인한다.
-- 기존 audit log CVar와 overlay collect CVar는 분리되어 있으므로, 기존 `Portfolio.Debug.*Audit` 값이 꺼져 있어도 collect는 가능해야 한다.
+- 선택한 Category/Scope에 event가 실제로 있는지 확인한다.
+- `Portfolio.Debug.*Audit`는 Output Log 기록 전용이며 `CaptureEnabled`와 독립이다.
 
 ### 금지 사항
 
@@ -246,7 +247,7 @@ Event Log가 비어 있을 때:
 - UMG/Slate dependency를 추가하지 않는다.
 - Shipping HUD처럼 사용하지 않는다.
 - 실제 코드에서 읽지 못한 값을 성공 evidence처럼 표시하지 않는다.
-- EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 구현하지 않는다.
+- Event Log에 없는 값을 직전 snapshot fallback으로 조립하지 않는다.
 
 ## 고정 정책
 
@@ -302,7 +303,7 @@ Portfolio.DebugOverlay.WorldSummary.*.Enabled
 
 기존 debug cvar와 충돌하지 않도록 `Portfolio.DebugOverlay.*` 네임스페이스를 사용한다.
 
-P0.5 실행 확인에서는 `HUDVisible`, `CaptureEnabled`, `EventLogLimit`를 필수로 본다. `Player.*.Enabled`, `Enemy.*.Enabled`는 Character Details, `WorldSummary.*.Enabled`는 World Summary의 정보 밀도를 조절하는 운영 CVar다.
+현재 runtime 실행 확인에서는 `HUDVisible`, `CaptureEnabled`, `EventLogLimit`를 필수로 본다. `Player.*.Enabled`, `Enemy.*.Enabled`는 Character Details, `WorldSummary.*.Enabled`는 World Summary의 정보 밀도를 조절하는 운영 CVar다.
 
 ## 목표모드 사용 기준
 

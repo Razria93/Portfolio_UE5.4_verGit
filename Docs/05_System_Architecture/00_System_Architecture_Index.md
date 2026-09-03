@@ -42,6 +42,6 @@
 | S33 | 공통 Combat Target Kernel 및 의사결정 통합 설계 | `S33_UE5_Portfolio_System_Architecture.md` | Player/Enemy 공통 Combat Target 최신 구조와 구현 Goal 상태 | Current System | Enemy Participation 세부 정책은 S34 참조 |
 | S34 | Combat Participation Policy | `S34_UE5_Portfolio_Combat_Participation_Policy.md` | Enemy Evidence, shared allocator, Assignment lifecycle, HitReactive/ExtraSlot 정책 | Current System | Evidence-centric runtime contract |
 | S35 | Enemy Balance / Collapse Lifecycle 설계 | `S35_UE5_Portfolio_Enemy_Balance_Collapse_Architecture.md` | Enemy Balance Count, Collapse In / Loop / Out, TTL, Count lock 및 Standard Execution의 Balance extension 경계 | Current System | R07 자연 Collapse lifecycle 기준. Execution의 최종 계약은 S36 참조 |
-| S36 | Execution Collaboration Architecture | `S36_UE5_Portfolio_Execution_Collaboration_Architecture.md` | Source/Target pair session, Standard Execution Down/Recovery, Lethal Death presentation handoff | Current System (C++ cutover complete; asset/PIE verification pending) | R08의 구현·검증 기준 |
+| S36 | Execution Collaboration Architecture | `S36_UE5_Portfolio_Execution_Collaboration_Architecture.md` | Source/Target pair session, Standard Execution Down/Recovery, Lethal Death presentation handoff | Current System | 구현·authoring 반영 완료. outcome별 회귀 검증 기준 |
 
 ---

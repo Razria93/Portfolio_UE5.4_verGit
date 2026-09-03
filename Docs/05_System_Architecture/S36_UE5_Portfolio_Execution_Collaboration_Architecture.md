@@ -1,8 +1,8 @@
 # S36. Execution Collaboration Architecture
 
-> 상태: R08 Execution Collaboration의 현재 구현 계약. C++는 pair session, target revision,
-> Standard Balance lifecycle, Lethal Health/Death handoff까지 이 문서의 계약으로 cutover했다.
-> Execution Action/Reaction data, Montage Notify, AnimBP pose, PIE 검증은 별도 Editor 작업으로 남아 있다.
+> 상태: R08 Execution Collaboration의 현재 구현 계약. C++, Action/Reaction data, Montage Notify,
+> AnimBP pose, Standard/Lethal authored pair가 이 문서의 계약으로 반영됐다. 세부 outcome별 회귀
+> 검증과 제출용 증적 캡처는 계속 보완한다.
 >
 > 범위: Collapse Loop 기회 예약, Source/Target 동기 연출, Standard / Lethal outcome, Commit,
 > 취소, death presentation handoff.
@@ -144,7 +144,14 @@ Player Execution Input
 
 시작 정렬은 Target의 위치를 이동하지 않는다. pitch/roll, Player transform, 매 Tick 추적·보정도 사용하지
 않는다. 이후 위치와 root motion은 각 Primary montage가 소유한다. 따라서 sweep, 위치 보정 거리, 부분 이동
-복원 같은 별도 이동 정책은 없다.
+복원 같은 별도 위치 보정 정책은 없다.
+
+다만 Primary pair가 활성인 동안에는 authored root motion이 상대 Actor capsule에 막혀 연출 시작점이
+어긋나지 않도록 Source와 Target이 서로를 `MoveIgnoreActorAdd`로 등록한다. 이는 pair **상호 간의
+CharacterMovement sweep 충돌만** 무시하는 정책이며, world 또는 다른 Actor와의 충돌 규칙을 바꾸지 않는다.
+session 완료·취소·external death·EndPlay에서 각 Actor가 `MoveIgnoreActorRemove`로 자신의 등록을
+반드시 해제한다. 이 정책은 위치 보정이나 teleport가 아니라, 이미 선택된 pair montage가 의도한 root motion을
+재생할 수 있게 하는 수명 한정 collision 예외다.
 
 Target Lock은 Controller rotation을 Target 방향으로 보조하지만, Character actor yaw가 항상 즉시 일치한다는
 보장은 없다. 그래서 최종 시작 허가는 Target Lock 상태만으로 결정하지 않고 실제 Source Actor Forward의
@@ -341,7 +348,7 @@ Execution Session debug는 Balance lifecycle debug와 Recent Action / Reaction e
 | Execution Session | Source × Target pair session, reservation, outcome, primary terminal, 시작 기하 조건 |
 | Recent Action / Reaction | Event Log에 남은 가장 최근 Action / Reaction 판단 |
 
-`Panel_01`의 Player / Enemy detail block은 각 Actor 관점에서 다음을 표시한다.
+`Character Details`의 Player / Enemy detail block은 각 Actor 관점에서 다음을 표시한다.
 
 - 역할(Source / Target), partner actor, pair session serial, collaboration state(Reserved / Active / Committed)
 - 선택된 outcome(Standard / Lethal), Target의 Collapse opportunity reservation, Source Action / Target Reaction terminal
@@ -377,16 +384,16 @@ cancel, completion event를 기록한다. 일반 Action / Reaction 판단은 별
 
 ---
 
-## 11. 필요한 Editor 작업
+## 11. 반영된 Editor Authoring 계약
 
-C++ cutover 완료 뒤 runtime 계약을 바꾸지 않는 범위에서 다음을 구성한다.
+다음 authoring은 runtime 계약을 바꾸지 않는 범위에서 반영되어 있다. 이후 montage를 교체하거나
+execution variant를 추가할 때도 같은 계약을 유지한다.
 
-- `BP_CPlayer`: `EActionType::Execution` Standard index `0`, Lethal index `1` Data와 각각의 Source montage를 등록한다. Standard Data에는 0보다 큰 `StandardExecutionDamage`를 설정한다. 두 Data 모두 `UCAction_Execution`을 사용한다. Source `ExecutionCollaboration`의 `Start Geometry`에서 authored montage의 시작 허용 범위에 맞춰 `MaxStartDistance`, `MaxSourceFacingAngleDegrees`를 설정한다.
-- `BP_CEnemy`: Global `ExecutionStandard`, `ExecutionLethal`, `ExecutionRecovery` Reaction Data를 등록한다. Primary 둘은 `UCReaction_Execution`, Recovery는 `UCReaction_ExecutionRecovery`를 사용한다. `Execution|Outcome`에서 `LethalCondition`과 `LethalHealthRatio`를 설정한다.
-- Source Standard/Lethal montage에는 각각 impact frame의 `Commit Execution` 및 terminal의 `Complete Action` Notify를 둔다.
-- Target Standard/Lethal In montage에는 `Complete Reaction` Notify를 둔다. Standard Recovery montage에는 `Reset Balance Lifecycle` 뒤 `Complete Reaction` Notify를 둔다.
-- `ABP_Character`: `bIsExecutionDownPose`로 Standard Execution Down loop를 선택하고, Dead branch에서는 `DeathPresentationMode`로 Default/ExecutionLethal Dead Loop를 선택한다. Dead branch가 Execution Down보다 우선한다.
-- committed primary pair와 Standard Recovery를 일반 Hit/Action이 밀어내지 않도록 intervention rule을 authoring한다. Death/EndPlay hard release는 이 규칙과 별개로 계속 작동한다.
+- `BP_CPlayer`는 `EActionType::Execution` Standard index `0`, Lethal index `1` Data와 각각의 Source montage를 사용한다. Standard Data는 0보다 큰 `StandardExecutionDamage`를 가지며, 두 Data 모두 `UCAction_Execution`을 사용한다.
+- `BP_CEnemy`는 Global `ExecutionStandard`, `ExecutionLethal`, `ExecutionRecovery` Reaction Data를 사용한다. Primary 둘은 `UCReaction_Execution`, Recovery는 `UCReaction_ExecutionRecovery`를 사용하며 `Execution|Outcome`에서 `LethalCondition`과 `LethalHealthRatio`를 정한다.
+- Source Standard/Lethal montage는 impact frame에 `Commit Execution`, terminal에 `Complete Action` Notify를 둔다. Target Standard/Lethal In은 `Complete Reaction`, Standard Recovery는 `Reset Balance Lifecycle` 뒤 `Complete Reaction` Notify를 둔다.
+- `ABP_Character`는 `bIsExecutionDownPose`로 Standard Execution Down loop를 고르고, Dead branch에서는 `DeathPresentationMode`로 Default/ExecutionLethal Dead Loop를 고른다. Dead branch가 Execution Down보다 우선한다.
+- committed primary pair와 Standard Recovery가 일반 Hit/Action에 밀리지 않도록 intervention rule을 authoring한다. Death/EndPlay hard release는 이 규칙과 별개로 계속 작동한다.
 
 ---
 
@@ -406,3 +413,4 @@ C++ cutover 완료 뒤 runtime 계약을 바꾸지 않는 범위에서 다음을
 - EndPlay와 external death는 runtime을 안전하게 정리하며 committed opportunity를 복원하거나 Lethal Target을 되살리지 않는다.
 - Target Lock이 비활성인 Player 입력은 Execution 요청을 만들지 않는다. 활성 상태여도 실제 Player Actor Forward가 `MaxSourceFacingAngleDegrees` 밖이거나 `MaxStartDistance` 밖이면 reservation 없이 시작을 거절한다.
 - 기하 조건을 통과한 Target은 Primary pair 시작 직전에 위치를 유지한 채 Player를 향하는 yaw만 한 번 정렬된다. 이후 startup이 거절되면 reservation이 해제되고 Collapse Loop TTL이 재개된다.
+- Active pair는 양쪽 CharacterMovement가 서로를 ignore해 root motion이 partner capsule에 막히지 않는다. session 완료·취소·external death·EndPlay 뒤에는 양쪽 ignore 등록이 제거된다.
