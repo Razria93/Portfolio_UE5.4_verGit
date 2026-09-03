@@ -42,7 +42,7 @@ Portfolio.DebugOverlay.EventLogLimit 5
 
 - `Portfolio.DebugOverlay.HUDVisible` (`HUD Visible`): HUD 조회, 월드 시각화, Panel 렌더링을 모두 켠다. `0`이면 HUD는 Snapshot/Focus 조회 전에 즉시 반환한다.
 - `Portfolio.DebugOverlay.CaptureEnabled` (`Capture Enabled`): Event Log, 최근 Snapshot, Actor별 이력의 새 기록을 켠다. HUD 표시와 독립적이므로 HUD를 숨긴 상태에서도 수집만 할 수 있다.
-- `Portfolio.DebugOverlay.CombatTargetFacing.Enabled` (`Facing Diagnostics Enabled`): Combat Target Facing Snapshot과 Facing transition 이력 생성을 켠다. `Collect=1`만으로 Facing 이력이 기록되지는 않는다.
+- `Portfolio.DebugOverlay.CombatTargetFacing.Enabled` (`Facing Diagnostics Enabled`): Combat Target Facing Snapshot과 Facing transition 이력 생성을 켠다. `CaptureEnabled=1`만으로 Facing 이력이 기록되지는 않는다.
 - `Portfolio.DebugOverlay.Enemy.CombatTargetFacing.Enabled` (`Enemy Facing Visible`): 이미 생성된 Facing 정보를 Character Details에 표시할지만 제어한다. Facing 진단/수집 자체에는 영향을 주지 않는다.
 - `Portfolio.DebugOverlay.EventLogLimit`: 화면에 표시할 최근 event line 수
 

@@ -9,6 +9,56 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 
+#if !UE_BUILD_SHIPPING
+namespace
+{
+	void PruneInvalidAIActorSummaries(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore)
+	{
+		for (auto it = InStore.LastAIByPawn.CreateIterator(); it; ++it)
+		{
+			if (!it.Key().IsValid())
+			{
+				it.RemoveCurrent();
+			}
+		}
+	}
+
+	void EnforceAIActorSummaryCapacity(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore)
+	{
+		while (InStore.LastAIByPawn.Num() >= DebugOverlaySnapshotStoreInternals::MaxAIActorSummaries)
+		{
+			TOptional<TWeakObjectPtr<APawn>> oldestKey;
+			uint64 oldestFrameNumber = MAX_uint64;
+			for (const TPair<TWeakObjectPtr<APawn>, FDebugOverlayAISummary>& pair : InStore.LastAIByPawn)
+			{
+				if (pair.Value.FrameNumber < oldestFrameNumber)
+				{
+					oldestKey = pair.Key;
+					oldestFrameNumber = pair.Value.FrameNumber;
+				}
+			}
+
+			if (!oldestKey.IsSet()) return;
+			InStore.LastAIByPawn.Remove(oldestKey.GetValue());
+		}
+	}
+
+	void RecordAIActorSummary(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const APawn* InPawn, const FDebugOverlayAISummary& InSummary)
+	{
+		if (!IsValid(InPawn)) return;
+
+		const TWeakObjectPtr<APawn> pawnKey(const_cast<APawn*>(InPawn));
+		if (!InStore.LastAIByPawn.Contains(pawnKey))
+		{
+			PruneInvalidAIActorSummaries(InStore);
+			EnforceAIActorSummaryCapacity(InStore);
+		}
+
+		InStore.LastAIByPawn.FindOrAdd(pawnKey) = InSummary;
+	}
+}
+#endif
+
 // ===== Runtime Gates =====
 
 bool FDebugOverlaySnapshotStore::IsHudVisible()
@@ -235,10 +285,7 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	store->Snapshot.LastAI.RequestResult = InRequestResult;
 	store->Snapshot.LastAI.RejectReason = InRejectReason;
 	store->Snapshot.LastAI.Summary = summary;
-	if (!pawnName.IsEmpty())
-	{
-		store->Snapshot.LastAIByPawnName.FindOrAdd(pawnName) = store->Snapshot.LastAI;
-	}
+	RecordAIActorSummary(*store, InOwnerPawn, store->Snapshot.LastAI);
 
 	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, DebugOverlayEventCategory::AI, eventName, pawnName, pawnName, targetName, summary), InOwnerPawn, InOwnerPawn, InTargetActor);
 #endif
@@ -263,8 +310,6 @@ void FDebugOverlaySnapshotStore::RecordFacingTransition(const UObject* InWorldCo
 
 	const FString ownerName = transition.Current.OwnerName;
 	if (ownerName.IsEmpty()) return;
-
-	store->Snapshot.LastFacingByPawnName.FindOrAdd(ownerName) = transition.Current;
 
 	EventRingAccess::AddEventInternal(
 		*store,
@@ -359,17 +404,17 @@ bool FDebugOverlaySnapshotStore::TryGetRecentCombatPair(const UObject* InWorldCo
 #endif
 }
 
-bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary)
+bool FDebugOverlaySnapshotStore::TryGetRecentAIForActor(const UObject* InWorldContextObject, const APawn* InPawn, FDebugOverlayAISummary& OutSummary)
 {
 	OutSummary = FDebugOverlayAISummary();
 
 #if !UE_BUILD_SHIPPING
-	if (InPawnName.IsEmpty()) return false;
+	if (!IsValid(InPawn)) return false;
 
 	const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return false;
 
-	const FDebugOverlayAISummary* summary = store->Snapshot.LastAIByPawnName.Find(InPawnName);
+	const FDebugOverlayAISummary* summary = store->LastAIByPawn.Find(TWeakObjectPtr<APawn>(const_cast<APawn*>(InPawn)));
 	if (!summary) return false;
 
 	OutSummary = *summary;
@@ -379,13 +424,17 @@ bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldCon
 #endif
 }
 
-void FDebugOverlaySnapshotStore::RemoveActorEventHistory(const UObject* InWorldContextObject, const AActor* InActor)
+void FDebugOverlaySnapshotStore::RemoveActorDebugData(const UObject* InWorldContextObject, const AActor* InActor)
 {
 #if !UE_BUILD_SHIPPING
 	DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return;
 
 	EventRingAccess::RemoveActorEventHistoryFromStore(*store, InActor);
+	if (const APawn* pawn = Cast<APawn>(InActor))
+	{
+		store->LastAIByPawn.Remove(TWeakObjectPtr<APawn>(const_cast<APawn*>(pawn)));
+	}
 #endif
 }
 
@@ -398,26 +447,6 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForAc
 	return EventRingAccess::GetRecentEventsForActorCopyFromStore(*store, InMaxEvents, DebugOverlaySnapshotStoreInternals::EventStoreCapacity, InFilter, InActor, true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
-#endif
-}
-
-bool FDebugOverlaySnapshotStore::TryGetRecentFacingForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayFacingSummary& OutSummary)
-{
-	OutSummary = FDebugOverlayFacingSummary();
-
-#if !UE_BUILD_SHIPPING
-	if (InPawnName.IsEmpty()) return false;
-
-	const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
-	if (!store) return false;
-
-	const FDebugOverlayFacingSummary* summary = store->Snapshot.LastFacingByPawnName.Find(InPawnName);
-	if (!summary) return false;
-
-	OutSummary = *summary;
-	return true;
-#else
-	return false;
 #endif
 }
 

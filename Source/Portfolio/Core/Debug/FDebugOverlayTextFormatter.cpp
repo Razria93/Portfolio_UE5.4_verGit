@@ -320,7 +320,6 @@ namespace
 
 	void AppendActorPanelLines(TArray<FString>& InOutLines, const FDebugOverlayActorPanelViewData& InActorPanelViewData)
 	{
-		AppendFormattedOverlayLine(InOutLines, TEXT(""));
 		AppendFormattedOverlayLine(InOutLines, InActorPanelViewData.HeaderText);
 
 		if (InActorPanelViewData.bIncludeFocus)
@@ -396,6 +395,11 @@ namespace
 
 		for (const FDebugOverlayActorPanelViewData& actorPanel : InViewData.ActorPanels)
 		{
+			if (!lines.IsEmpty())
+			{
+				AppendFormattedOverlayLine(lines, TEXT(""));
+			}
+
 			AppendActorPanelLines(lines, actorPanel);
 		}
 

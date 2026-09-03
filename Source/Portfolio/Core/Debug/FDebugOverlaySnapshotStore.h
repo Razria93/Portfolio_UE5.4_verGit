@@ -55,14 +55,13 @@ public:
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsForActorCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const AActor* InActor);
-	static void RemoveActorEventHistory(const UObject* InWorldContextObject, const AActor* InActor);
+	static void RemoveActorDebugData(const UObject* InWorldContextObject, const AActor* InActor);
 
 	// ===== Snapshot Query API =====
 
 	static bool TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
 	static bool TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair);
-	static bool TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary);
-	static bool TryGetRecentFacingForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayFacingSummary& OutSummary);
+	static bool TryGetRecentAIForActor(const UObject* InWorldContextObject, const APawn* InPawn, FDebugOverlayAISummary& OutSummary);
 
 	// ===== Lifecycle API =====
 

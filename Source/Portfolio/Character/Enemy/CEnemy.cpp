@@ -250,7 +250,7 @@ void ACEnemy::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		CharacterFeedbackComponent->OnDeathPresentationEvent.RemoveAll(this);
 	}
 
-	FDebugOverlaySnapshotStore::RemoveActorEventHistory(this, this);
+	FDebugOverlaySnapshotStore::RemoveActorDebugData(this, this);
 
 	Super::EndPlay(EndPlayReason);
 }

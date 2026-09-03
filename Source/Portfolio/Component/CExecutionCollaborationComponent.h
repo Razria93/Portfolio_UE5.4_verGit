@@ -74,6 +74,9 @@ private:
 	bool bTargetReactionTerminal = false;
 	uint32 NextSessionSerial = 1;
 
+	// Participant Movement Collision Runtime
+	TWeakObjectPtr<ACharacter> MovementIgnoredExecutionPartner;
+
 public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
@@ -117,6 +120,10 @@ private:
 	void ReceivePartnerTargetReactionTerminal(const FExecutionSessionId& InSessionId);
 	void ReceivePartnerCommit(const FExecutionSessionId& InSessionId);
 	void ReceivePartnerCancellation(const FExecutionSessionId& InSessionId, EExecutionCollaborationCancelReason InReason);
+
+	// Participant Movement Collision Policy
+	bool ApplyExecutionParticipantMovementIgnore(UCExecutionCollaborationComponent* InPartnerComponent);
+	void RestoreExecutionParticipantMovementIgnore();
 
 	// Session Control
 	bool StartTargetExecutionReaction();

@@ -16,6 +16,7 @@ namespace DebugOverlaySnapshotStoreInternals
 	inline constexpr int32 EventStoreCapacity = 256;
 	inline constexpr int32 ActorEventHistoryCapacity = 128;
 	inline constexpr int32 MaxActorEventHistories = 64;
+	inline constexpr int32 MaxAIActorSummaries = 64;
 	inline constexpr int32 DefaultEventLogDisplayLimit = 16;
 	inline constexpr int32 MaxEventLogDisplayLimit = 32;
 
@@ -32,6 +33,7 @@ namespace DebugOverlaySnapshotStoreInternals
 		TArray<FDebugOverlayEventEntry> EventRing;
 		FDebugOverlayRecentCombatPair RecentCombatPair;
 		TMap<TObjectKey<AActor>, FDebugOverlayActorEventHistory> EventHistoryByActor;
+		TMap<TWeakObjectPtr<APawn>, FDebugOverlayAISummary> LastAIByPawn;
 		int32 NextEventIndex = 0;
 		int32 EventCount = 0;
 		uint64 EventWriteSerial = 0;

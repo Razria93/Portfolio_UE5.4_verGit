@@ -653,9 +653,60 @@ bool UCExecutionCollaborationComponent::ActivateExecutionPair()
 
 	CollaborationState = EExecutionCollaborationState::Active;
 	targetCollaborationComp->CollaborationState = EExecutionCollaborationState::Active;
+
+	if (!ApplyExecutionParticipantMovementIgnore(targetCollaborationComp))
+	{
+		CollaborationState = EExecutionCollaborationState::Reserved;
+		targetCollaborationComp->CollaborationState = EExecutionCollaborationState::Reserved;
+		return false;
+	}
+
 	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("PairActivated"));
 	FExecutionCollaborationDebug::RecordLifecycleEvent(targetCollaborationComp, TEXT("PairActivated"));
 	return true;
+}
+
+// Participant Movement Collision Policy
+
+bool UCExecutionCollaborationComponent::ApplyExecutionParticipantMovementIgnore(UCExecutionCollaborationComponent* const InPartnerComponent)
+{
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(InPartnerComponent) || !IsValid(InPartnerComponent->OwnerCharacter_Injected)) return false;
+
+	ACharacter* const partnerCharacter = InPartnerComponent->OwnerCharacter_Injected;
+	if (partnerCharacter == OwnerCharacter_Injected) return false;
+
+	if (MovementIgnoredExecutionPartner.IsValid() || InPartnerComponent->MovementIgnoredExecutionPartner.IsValid())
+	{
+		return MovementIgnoredExecutionPartner.Get() == partnerCharacter
+			&& InPartnerComponent->MovementIgnoredExecutionPartner.Get() == OwnerCharacter_Injected;
+	}
+
+	OwnerCharacter_Injected->MoveIgnoreActorAdd(partnerCharacter);
+	partnerCharacter->MoveIgnoreActorAdd(OwnerCharacter_Injected);
+
+	MovementIgnoredExecutionPartner = partnerCharacter;
+	InPartnerComponent->MovementIgnoredExecutionPartner = OwnerCharacter_Injected;
+
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("PairMovementIgnoreApplied"), FString::Printf(TEXT("Partner=%s"), *GetNameSafe(partnerCharacter)));
+	return true;
+}
+
+void UCExecutionCollaborationComponent::RestoreExecutionParticipantMovementIgnore()
+{
+	ACharacter* const partnerCharacter = MovementIgnoredExecutionPartner.Get();
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(partnerCharacter))
+	{
+		MovementIgnoredExecutionPartner.Reset();
+		return;
+	}
+
+	OwnerCharacter_Injected->MoveIgnoreActorRemove(partnerCharacter);
+	MovementIgnoredExecutionPartner.Reset();
+
+	FExecutionCollaborationDebug::RecordLifecycleEvent(
+		this,
+		TEXT("ParticipantMovementIgnoreRestored"),
+		FString::Printf(TEXT("Partner=%s"), *GetNameSafe(partnerCharacter)));
 }
 
 void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExecutionCollaborationCancelReason InReason, const bool bNotifyPartner)
@@ -919,7 +970,7 @@ bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(cons
 
 	FVector sourceForward2D = OwnerCharacter_Injected->GetActorForwardVector();
 	sourceForward2D.Z = 0.f;
-	
+
 	if (!sourceForward2D.Normalize())
 	{
 		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("InvalidSourceForward"));
@@ -1036,6 +1087,7 @@ uint32 UCExecutionCollaborationComponent::AllocateSessionSerial()
 
 void UCExecutionCollaborationComponent::ResetActiveExecutionSession()
 {
+	RestoreExecutionParticipantMovementIgnore();
 	ActiveContext = FExecutionCollaborationContext();
 	CollaborationState = EExecutionCollaborationState::None;
 	bIsSourceRole = false;

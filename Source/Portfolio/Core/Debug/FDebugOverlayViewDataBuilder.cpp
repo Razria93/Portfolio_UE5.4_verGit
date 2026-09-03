@@ -526,13 +526,7 @@ namespace
 			return false;
 		}
 
-		const FString enemyName = GetNameSafe(InEnemy);
-		if (enemyName.IsEmpty())
-		{
-			return false;
-		}
-
-		if (!FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(InWorld, enemyName, OutSummary))
+		if (!FDebugOverlaySnapshotStore::TryGetRecentAIForActor(InWorld, InEnemy, OutSummary))
 		{
 			return false;
 		}

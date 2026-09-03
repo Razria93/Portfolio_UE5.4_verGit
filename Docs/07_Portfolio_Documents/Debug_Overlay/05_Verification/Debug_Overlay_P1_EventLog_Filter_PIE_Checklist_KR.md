@@ -22,8 +22,8 @@
 PIE 시작 후 콘솔에서 다음 값을 설정한다.
 
 ```text
-Portfolio.DebugOverlay.Enabled 1
-Portfolio.DebugOverlay.Collect 1
+Portfolio.DebugOverlay.HUDVisible 1
+Portfolio.DebugOverlay.CaptureEnabled 1
 Portfolio.DebugOverlay.EventLogLimit 5
 Portfolio.DebugOverlay.EventLogFilter All
 ```
@@ -36,7 +36,8 @@ Portfolio.DebugOverlay.EventLogFilter All
 
 ```text
 Portfolio.DebugOverlay.EventLogFilter All
-Portfolio.DebugOverlay.EventLogFilter Execution
+Portfolio.DebugOverlay.EventLogFilter ActionReaction
+Portfolio.DebugOverlay.EventLogFilter ExecutionSession
 Portfolio.DebugOverlay.EventLogFilter Combat
 Portfolio.DebugOverlay.EventLogFilter AI
 Portfolio.DebugOverlay.EventLogFilter InvalidValue
@@ -51,12 +52,13 @@ Portfolio.DebugOverlay.EventLogLimit 5
 | 상태 | 기대 표시 |
 | --- | --- |
 | 전체 표시 | `[Event Log: All]` |
-| Execution filter | `[Event Log: Execution]` |
+| Action / Reaction filter | `[Event Log: ActionReaction]` |
+| Execution Session filter | `[Event Log: ExecutionSession]` |
 | Combat filter | `[Event Log: Combat]` |
 | AI filter | `[Event Log: AI]` |
 | store/snapshot 없음 | `NotCaptured` |
-| filter 결과 없음 | `NoEvents(Filter=Execution)` |
-| limit 0 | `NoEvents(Filter=Execution Limit=0)` |
+| filter 결과 없음 | `NoEvents(Filter=ActionReaction)` |
+| limit 0 | `NoEvents(Filter=ActionReaction Limit=0)` |
 | 잘못된 filter 값 | `[Event Log: All]` |
 
 `NoEvents(Filter=...)`는 실패가 아니다. 현재 filter 조건에 맞는 최근 event가 없다는 뜻이다.
@@ -66,27 +68,29 @@ Portfolio.DebugOverlay.EventLogLimit 5
 | Filter | 허용 category | 확인 기준 |
 | --- | --- | --- |
 | `All` | 전체 | 기존과 동일하게 모든 category가 표시될 수 있다. |
-| `Execution` | `Execution` | `Execution/...` line만 표시된다. |
-| `Combat` | `Combat`, `CombatResult` | `Combat/...`, `CombatResult/...` line이 표시될 수 있다. |
+| `ActionReaction` | `ActionReaction` | `ActionReaction/...` line만 표시된다. |
+| `ExecutionSession` | `ExecutionSession` | `ExecutionSession/...` line만 표시된다. |
+| `Combat` | `Combat` | `Combat/...` line만 표시된다. |
 | `AI` | `AI` | `AI/...` line만 표시된다. |
 
-`CombatResult`는 Combat 계열 event로 취급한다. 따라서 `Portfolio.DebugOverlay.EventLogFilter Combat` 상태에서 `CombatResult/...` line이 보이는 것은 정상이다.
+Combat result 전달 단계는 현재 `Combat` category의 `Combat/...` event로 기록된다.
 
 ## 7. 테스트 액션 순서
 
 | 순서 | 액션 | 기대 결과 |
 | --- | --- | --- |
 | 1 | PIE 진입 후 기본 CVar 설정 | `[Debug Overlay P0.5]`, `[Event Log: All]` 표시 |
-| 2 | Action 또는 Reaction event 발생 | `Execution/...` event 수집 |
-| 3 | `EventLogFilter Execution` 입력 | `Execution/...` line만 표시 |
-| 4 | 공격 hit window 또는 target accepted/rejected 유도 | `Combat/...` event 수집 |
-| 5 | CombatResult 발생 유도 | `CombatResult/...` event 수집 가능 |
-| 6 | `EventLogFilter Combat` 입력 | `Combat/...`, `CombatResult/...` line 표시 |
-| 7 | 가능하면 AI combat task event 유도 | `AI/...` event 수집 |
-| 8 | `EventLogFilter AI` 입력 | `AI/...` line만 표시 또는 `NoEvents(Filter=AI)` |
-| 9 | `EventLogFilter InvalidValue` 입력 | `[Event Log: All]` fallback |
-| 10 | `EventLogLimit 0` 입력 | `NoEvents(Filter=... Limit=0)` |
-| 11 | `EventLogLimit 5` 입력 | filter 기준 event line 재표시 |
+| 2 | Action 또는 Reaction event 발생 | `ActionReaction/...` event 수집 |
+| 3 | `EventLogFilter ActionReaction` 입력 | `ActionReaction/...` line만 표시 |
+| 4 | 처형 세션 발생 유도 | `ExecutionSession/...` event 수집 가능 |
+| 5 | `EventLogFilter ExecutionSession` 입력 | `ExecutionSession/...` line만 표시 |
+| 6 | 공격 hit window 또는 target accepted/rejected 유도 | `Combat/...` event 수집 |
+| 7 | `EventLogFilter Combat` 입력 | `Combat/...` line만 표시 |
+| 8 | 가능하면 AI combat task event 유도 | `AI/...` event 수집 |
+| 9 | `EventLogFilter AI` 입력 | `AI/...` line만 표시 또는 `NoEvents(Filter=AI)` |
+| 10 | `EventLogFilter InvalidValue` 입력 | `[Event Log: All]` fallback |
+| 11 | `EventLogLimit 0` 입력 | `NoEvents(Filter=... Limit=0)` |
+| 12 | `EventLogLimit 5` 입력 | filter 기준 event line 재표시 |
 
 AI event는 현재 테스트 상황에 따라 발생하지 않을 수 있다. 이 경우 `NoEvents(Filter=AI)`가 정상일 수 있으며, AI 성공 evidence로 사용하지 않는다.
 
@@ -104,7 +108,8 @@ AI event는 현재 테스트 상황에 따라 발생하지 않을 수 있다. �
 
 ```text
 [Event Log: All]
-[Event Log: Execution]
+[Event Log: ActionReaction]
+[Event Log: ExecutionSession]
 [Event Log: Combat]
 [Event Log: AI]
 ```
@@ -119,32 +124,23 @@ AI event는 현재 테스트 상황에 따라 발생하지 않을 수 있다. �
 실패 예:
 
 ```text
-[Event Log: Execution]
+[Event Log: ActionReaction]
 Combat/...
 ```
 
 기대:
 
-- `Execution` filter에서는 `Execution/...`만 표시된다.
+- `ActionReaction` filter에서는 `ActionReaction/...`만 표시된다.
+- `ExecutionSession` filter에서는 `ExecutionSession/...`만 표시된다.
 - `AI` filter에서는 `AI/...`만 표시된다.
-- `Combat` filter에서는 `Combat/...`, `CombatResult/...`만 표시된다.
+- `Combat` filter에서는 `Combat/...`만 표시된다.
 
 확인 위치:
 
 - `FDebugOverlaySnapshotStore.cpp` category match helper
 - `GetRecentEventsCopy(...)` filter-aware query
 
-### 8.3 Combat filter에서 CombatResult가 누락됨
-
-실패 조건:
-
-- `CombatResult/...` event가 발생했는데 `EventLogFilter Combat`에서 표시되지 않음
-
-기대:
-
-- `Combat` filter는 `Combat`과 `CombatResult` category를 함께 포함한다.
-
-### 8.4 Filter 결과 없음과 NotCaptured가 구분되지 않음
+### 8.3 Filter 결과 없음과 NotCaptured가 구분되지 않음
 
 실패 조건:
 
@@ -161,7 +157,7 @@ NotCaptured
 NoEvents(Filter=AI)
 ```
 
-### 8.5 EventLogLimit 0인데 event line이 표시됨
+### 8.4 EventLogLimit 0인데 event line이 표시됨
 
 실패 조건:
 
@@ -179,11 +175,11 @@ NoEvents(Filter=All Limit=0)
 NoEvents(Filter=Combat Limit=0)
 ```
 
-### 8.6 Filter로 숨겨진 event를 미발생처럼 해석함
+### 8.5 Filter로 숨겨진 event를 미발생처럼 해석함
 
 주의:
 
-- `EventLogFilter Execution` 상태에서 Combat event가 보이지 않는 것은 정상이다.
+- `EventLogFilter ActionReaction` 상태에서 Combat event가 보이지 않는 것은 정상이다.
 - 이 상태를 "Combat event가 발생하지 않았다"는 evidence로 사용하지 않는다.
 - event 발생 여부 확인은 `All` 또는 해당 category filter에서 다시 확인한다.
 
@@ -191,14 +187,21 @@ NoEvents(Filter=Combat Limit=0)
 
 | 완료 항목 | 기준 |
 | --- | --- |
-| Header | `All / Execution / Combat / AI` header 확인 |
-| Execution filter | `Execution/...`만 표시되는지 확인 |
-| Combat filter | `Combat/...`, `CombatResult/...` 표시 확인 |
+| Header | `All / ActionReaction / ExecutionSession / Combat / AI` header 확인 |
+| Action / Reaction filter | `ActionReaction/...`만 표시되는지 확인 |
+| Execution Session filter | `ExecutionSession/...`만 표시되는지 확인 |
+| Combat filter | `Combat/...` 표시 확인 |
 | AI filter | `AI/...` 또는 `NoEvents(Filter=AI)` 확인 |
 | Empty state | `NoEvents(Filter=...)` 확인 |
 | Limit 0 | `NoEvents(Filter=... Limit=0)` 확인 |
 | Invalid value | 잘못된 filter 값이 `All`로 fallback되는지 확인 |
 | Scope guard | Player/Enemy별 EventLog 분리나 EventLog 추가 compact를 성공 기준에 넣지 않음 |
+
+### Actor 인스턴스 이력 정합성 범위
+
+Focused Enemy의 Recent AI Event와 Actor별 Event Log 이력은 표시명 문자열이 아니라 실제 Actor 인스턴스 키로 분리한다. 이 정책은 Store 자료구조와 Editor build로 검증한다.
+
+현재 TestRoom에는 동일 이름 Enemy를 제거 후 재스폰하는 전용 스포너가 없으므로, **동일 이름 재스폰 시나리오는 이 PIE 체크리스트의 마감 조건에 포함하지 않는다.** 향후 재스폰 기능 또는 전용 테스트 명령을 추가할 때 별도 lifecycle 테스트로 검증한다.
 
 ## 10. 결과 기록 템플릿
 
@@ -210,7 +213,8 @@ GameMode/HUD 연결:
 CVar:
 
 All:
-Execution:
+ActionReaction:
+ExecutionSession:
 Combat:
 AI:
 InvalidValue fallback:
@@ -225,4 +229,4 @@ EventLogLimit 0:
 
 이 체크리스트를 기준으로 PIE 수동 검증을 수행한다.
 
-검증 후 다음 작업은 `P1 EventLog Filter PIE 검증 결과 문서화`로 진행한다. 이후 Store subject 분리 설계 또는 Player/Enemy EventLog 분리 설계로 넘어간다.
+검증 후 결과는 `P1 EventLog Filter PIE 검증 결과 문서화`에 기록한다. Focused Enemy scope는 별도 범위 검증에서 확인한다.

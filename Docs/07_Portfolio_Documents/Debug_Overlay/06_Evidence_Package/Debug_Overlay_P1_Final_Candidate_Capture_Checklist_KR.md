@@ -46,7 +46,7 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 역할:
 
 - EventLog separate panel
-- `All / Execution / Combat / AI` filter 결과 표시
+- `All / ActionReaction / ExecutionSession / Combat / AI` filter 결과 표시
 - `EventLogLimit 0~32`
 - noise / collision display filter 결과 표시
 
@@ -54,7 +54,8 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 
 - `[Debug Overlay Panel_02]`
 - `[Event Log: All]`
-- `[Event Log: Execution]`
+- `[Event Log: ActionReaction]`
+- `[Event Log: ExecutionSession]`
 - `[Event Log: Combat]`
 - `[Event Log: AI]`
 
@@ -88,8 +89,8 @@ P1 최종 촬영은 다음 3-panel layout을 기준으로 한다.
 촬영 전 기본 설정은 다음을 권장한다.
 
 ```text
-Portfolio.DebugOverlay.Enabled 1
-Portfolio.DebugOverlay.Collect 1
+Portfolio.DebugOverlay.HUDVisible 1
+Portfolio.DebugOverlay.CaptureEnabled 1
 Portfolio.DebugOverlay.EventLogFilter All
 Portfolio.DebugOverlay.EventLogLimit 5
 Portfolio.DebugOverlay.HideNoiseEvents 1
@@ -103,7 +104,8 @@ DebugOverlayClearFocus
 | 목적 | 권장 명령 |
 | --- | --- |
 | EventLog 전체 확인 | `Portfolio.DebugOverlay.EventLogFilter All` |
-| Execution log 확인 | `Portfolio.DebugOverlay.EventLogFilter Execution` |
+| Action / Reaction log 확인 | `Portfolio.DebugOverlay.EventLogFilter ActionReaction` |
+| Execution Session log 확인 | `Portfolio.DebugOverlay.EventLogFilter ExecutionSession` |
 | Combat log 확인 | `Portfolio.DebugOverlay.EventLogFilter Combat` |
 | AI log 확인 | `Portfolio.DebugOverlay.EventLogFilter AI` |
 | EventLog 줄 수 확대 | `Portfolio.DebugOverlay.EventLogLimit 10` 또는 필요 시 `32` 이하 |
@@ -148,11 +150,12 @@ P1 FinalCandidate 촬영 후보 장면은 다음을 기준으로 한다.
 | 16 | Enemy Recent Execution | Enemy panel의 actor-local `[Recent Execution]` | `Execution` |
 | 17 | Interaction Recent Combat damage breakdown | `Request / Mitigated / Final / Commit` | `Combat` |
 | 18 | EventLog All | `[Event Log: All]` | `All` |
-| 19 | EventLog Execution | `[Event Log: Execution]` | `Execution` |
-| 20 | EventLog Combat | `[Event Log: Combat]` | `Combat` |
-| 21 | EventLog AI | `[Event Log: AI]` | `AI` |
-| 22 | Enemy Current AI visible | `[Current AI]` blackboard 값 | `AI` |
-| 23 | Enemy Recent AI Event visible 또는 stale | `[Recent AI Event]` event/stale 상태 | `AI` |
+| 19 | EventLog Action / Reaction | `[Event Log: ActionReaction]` | `ActionReaction` |
+| 20 | EventLog Execution Session | `[Event Log: ExecutionSession]` | `ExecutionSession` |
+| 21 | EventLog Combat | `[Event Log: Combat]` | `Combat` |
+| 22 | EventLog AI | `[Event Log: AI]` | `AI` |
+| 23 | Enemy Current AI visible | `[Current AI]` blackboard 값 | `AI` |
+| 24 | Enemy Recent AI Event visible 또는 stale | `[Recent AI Event]` event/stale 상태 | `AI` |
 
 ## 5. 장면별 Claim 기준
 
@@ -264,8 +267,8 @@ Docs/98_Evidence/01_Screenshot/DebugOverlay/FinalCandidate
 
 1. Live Coding이 꺼져 있는지 확인한다.
 2. TestRoom PIE 또는 의도한 검증 맵으로 진입한다.
-3. `Portfolio.DebugOverlay.Enabled 1`을 적용한다.
-4. `Portfolio.DebugOverlay.Collect 1`을 적용한다.
+3. `Portfolio.DebugOverlay.HUDVisible 1`을 적용한다.
+4. `Portfolio.DebugOverlay.CaptureEnabled 1`을 적용한다.
 5. 기본 filter / limit / noise CVar를 적용한다.
 6. `DebugOverlaySelectNearestFocus`으로 selected Enemy를 지정한다.
 7. `Panel_01 / Panel_02 / Panel_03`가 모두 보이는지 확인한다.
