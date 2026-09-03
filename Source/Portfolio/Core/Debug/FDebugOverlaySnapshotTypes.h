@@ -16,6 +16,34 @@ enum class EDebugOverlayCaptureState : uint8
 
 // ===== Event Log Entry =====
 
+enum class EDebugOverlayCombatEventKind : uint8
+{
+	None,
+	CollisionWindow,
+	TargetResolution,
+	ResultDelivery,
+};
+
+struct PORTFOLIO_API FDebugOverlayCombatEventDetails
+{
+	EDebugOverlayCombatEventKind Kind = EDebugOverlayCombatEventKind::None;
+	FString DefenseOutcome;
+	FString ReactionOutcome;
+	bool bHasDamageBreakdown = false;
+	float RequestDamage = 0.f;
+	float MitigatedDamage = 0.f;
+	float FinalTakenDamage = 0.f;
+	bool bHasDamageCommit = false;
+	bool bDamageCommitted = false;
+	float CommittedDamage = 0.f;
+	bool bHasAccepted = false;
+	bool bAccepted = false;
+	FString CollisionState;
+	int32 HitWindowId = INDEX_NONE;
+	FString CollisionName;
+	FString Reason;
+};
+
 struct PORTFOLIO_API FDebugOverlayEventEntry
 {
 	uint64 FrameNumber = 0;
@@ -28,6 +56,7 @@ struct PORTFOLIO_API FDebugOverlayEventEntry
 	TWeakObjectPtr<AActor> OwnerActor;
 	TWeakObjectPtr<AActor> SourceActor;
 	TWeakObjectPtr<AActor> TargetActor;
+	FDebugOverlayCombatEventDetails CombatDetails;
 	FString Summary;
 };
 
@@ -46,7 +75,10 @@ struct PORTFOLIO_API FDebugOverlayActionReactionSummary
 	FString Summary;
 };
 
-struct PORTFOLIO_API FDebugOverlayCombatSummary
+// A complete combat resolution captured from FCombatSignalTargetPacket.
+// Result-delivery packets intentionally do not update this snapshot because
+// they do not contain the complete damage and reaction breakdown.
+struct PORTFOLIO_API FDebugOverlayCombatResolutionSummary
 {
 	EDebugOverlayCaptureState CaptureState = EDebugOverlayCaptureState::NotCaptured;
 	uint64 FrameNumber = 0;
@@ -65,7 +97,6 @@ struct PORTFOLIO_API FDebugOverlayCombatSummary
 	float MitigatedDamage = 0.f;
 	float FinalTakenDamage = 0.f;
 	float CommittedDamage = 0.f;
-	FString Summary;
 };
 
 struct PORTFOLIO_API FDebugOverlayAISummary
@@ -121,7 +152,7 @@ struct PORTFOLIO_API FDebugOverlayFacingTransition
 struct PORTFOLIO_API FDebugOverlaySnapshot
 {
 	FDebugOverlayActionReactionSummary LastActionReaction;
-	FDebugOverlayCombatSummary LastCombat;
+	FDebugOverlayCombatResolutionSummary LastCombatResolution;
 	FDebugOverlayAISummary LastAI;
 	TMap<FString, FDebugOverlayAISummary> LastAIByPawnName;
 	TMap<FString, FDebugOverlayFacingSummary> LastFacingByPawnName;

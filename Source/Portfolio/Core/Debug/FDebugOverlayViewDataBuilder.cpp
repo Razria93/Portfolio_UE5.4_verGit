@@ -147,38 +147,59 @@ namespace
 		return !sourceName.IsEmpty() ? sourceName : targetName;
 	}
 
+	FString BuildCombatActorRelationship(const FDebugOverlayEventEntry& InEvent, const FString& InFocusedSubjectName)
+	{
+		TArray<FString> parts;
+		const FString sourceName = FormatEventActorName(
+			!InEvent.SourceName.IsEmpty() ? InEvent.SourceName : InEvent.OwnerName,
+			InFocusedSubjectName);
+		const FString targetName = FormatEventActorName(InEvent.TargetName, InFocusedSubjectName);
+		AddEventSummaryPart(parts, sourceName, TEXT("Source"));
+		AddEventSummaryPart(parts, targetName, TEXT("Target"));
+		return FString::Join(parts, TEXT(" | "));
+	}
+
 	FString BuildCompactCombatEventSummary(const FDebugOverlayEventEntry& InEvent, const FString& InFocusedSubjectName)
 	{
 		TArray<FString> parts;
-		AddEventSummaryPart(parts, BuildEventActorRelationship(InEvent, InFocusedSubjectName));
+		AddEventSummaryPart(parts, BuildCombatActorRelationship(InEvent, InFocusedSubjectName));
+		const FDebugOverlayCombatEventDetails& combatDetails = InEvent.CombatDetails;
+		switch (combatDetails.Kind)
+		{
+		case EDebugOverlayCombatEventKind::CollisionWindow:
+			AddEventSummaryPart(parts, combatDetails.CollisionState);
+			if (combatDetails.HitWindowId != INDEX_NONE)
+			{
+				AddEventSummaryPart(parts, FString::FromInt(combatDetails.HitWindowId), TEXT("Window"));
+			}
+			AddEventSummaryPart(parts, combatDetails.CollisionName, TEXT("Collision"));
+			AddEventSummaryPart(parts, combatDetails.Reason, TEXT("Reason"));
+			break;
 
-		const FString state = FindEventSummaryValue(InEvent.Summary, TEXT("State"));
-		if (IsEventSummaryValueMeaningful(state))
-		{
-			AddEventSummaryPart(parts, state);
-			AddEventSummaryPart(parts, FindEventSummaryValue(InEvent.Summary, TEXT("HitWindow")), TEXT("Window"));
-			AddEventSummaryPart(parts, FindEventSummaryValue(InEvent.Summary, TEXT("Collision")), TEXT("Collision"));
-			AddEventSummaryPart(parts, FindEventSummaryValue(InEvent.Summary, TEXT("Reason")), TEXT("Reason"));
-			return FString::Join(parts, TEXT(" | "));
-		}
+		case EDebugOverlayCombatEventKind::TargetResolution:
+			AddEventSummaryPart(parts, FormatCompactEnumText(combatDetails.DefenseOutcome), TEXT("Defense"));
+			AddEventSummaryPart(parts, FormatCompactEnumText(combatDetails.ReactionOutcome), TEXT("Reaction"));
+			if (combatDetails.bHasDamageBreakdown)
+			{
+				AddEventSummaryPart(parts, FString::Printf(TEXT("%.3f -> %.3f"), combatDetails.RequestDamage, combatDetails.FinalTakenDamage), TEXT("Damage"));
+			}
+			if (combatDetails.bHasDamageCommit)
+			{
+				AddEventSummaryPart(parts, FString::Printf(TEXT("%.3f"), combatDetails.CommittedDamage), TEXT("Commit"));
+			}
+			break;
 
-		AddEventSummaryPart(parts, FindEventSummaryValue(InEvent.Summary, TEXT("Defense")));
-		AddEventSummaryPart(parts, FindEventSummaryValue(InEvent.Summary, TEXT("Reaction")));
-		const FString requestDamage = FindEventSummaryValue(InEvent.Summary, TEXT("Request"));
-		const FString finalDamage = FindEventSummaryValue(InEvent.Summary, TEXT("Final"));
-		if (IsEventSummaryValueMeaningful(requestDamage) && IsEventSummaryValueMeaningful(finalDamage))
-		{
-			AddEventSummaryPart(parts, FString::Printf(TEXT("%s -> %s"), *requestDamage, *finalDamage), TEXT("Damage"));
-		}
-		else
-		{
-			AddEventSummaryPart(parts, finalDamage, TEXT("Damage"));
-		}
+		case EDebugOverlayCombatEventKind::ResultDelivery:
+			AddEventSummaryPart(parts, FormatCompactEnumText(combatDetails.DefenseOutcome), TEXT("Defense"));
+			if (combatDetails.bHasDamageCommit)
+			{
+				AddEventSummaryPart(parts, FString::Printf(TEXT("%.3f"), combatDetails.CommittedDamage), TEXT("Commit"));
+			}
+			break;
 
-		const FString commitDamage = FindEventSummaryValue(InEvent.Summary, TEXT("Commit"));
-		if (!commitDamage.IsEmpty())
-		{
-			AddEventSummaryPart(parts, commitDamage, TEXT("Commit"));
+		case EDebugOverlayCombatEventKind::None:
+		default:
+			return InEvent.Summary;
 		}
 
 		return FString::Join(parts, TEXT(" | "));
@@ -791,6 +812,25 @@ namespace
 		return blockViewData;
 	}
 
+	FString BuildRecentCombatResolutionSummary(const FDebugOverlayCombatResolutionSummary& InResolution)
+	{
+		TArray<FString> parts;
+		AddEventSummaryPart(parts, InResolution.SourceName, TEXT("Source"));
+		AddEventSummaryPart(parts, InResolution.TargetName, TEXT("Target"));
+		AddEventSummaryPart(parts, FormatCompactEnumText(InResolution.DefenseOutcome), TEXT("Defense"));
+		AddEventSummaryPart(parts, FormatCompactEnumText(InResolution.ReactionOutcome), TEXT("Reaction"));
+		if (InResolution.bHasDamageBreakdown)
+		{
+			AddEventSummaryPart(parts, FString::Printf(TEXT("%.1f -> %.1f"), InResolution.RequestDamage, InResolution.FinalTakenDamage), TEXT("Damage"));
+		}
+		if (InResolution.bHasDamageCommit)
+		{
+			AddEventSummaryPart(parts, FString::Printf(TEXT("%.1f"), InResolution.CommittedDamage), TEXT("Commit"));
+		}
+
+		return FString::Join(parts, TEXT(" | "));
+	}
+
 	FDebugOverlayWorldSummaryViewData BuildWorldSummaryViewData(const FDebugOverlaySnapshot& InSnapshot, const FDebugOverlayCombatParticipationViewData& InCombatParticipation, bool bInHasSnapshot)
 	{
 		FDebugOverlayWorldSummaryViewData worldSummaryViewData;
@@ -804,8 +844,8 @@ namespace
 			false));
 		worldSummaryViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(
 			TEXT("[Recent Combat]"),
-			InSnapshot.LastCombat.Summary,
-			InSnapshot.LastCombat.CaptureState,
+			BuildRecentCombatResolutionSummary(InSnapshot.LastCombatResolution),
+			InSnapshot.LastCombatResolution.CaptureState,
 			bInHasSnapshot,
 			true));
 		worldSummaryViewData.SummaryBlocks.Add(BuildRecentSummaryBlockViewData(

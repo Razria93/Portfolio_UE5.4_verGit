@@ -1,4 +1,5 @@
 #include "Core/Debug/FDebugOverlaySnapshotStoreInternals.h"
+#include "Core/Debug/FDebugOverlayEventCategory.h"
 
 #include "Type/CCombatResultTypes.h"
 
@@ -59,28 +60,6 @@ FString SnapshotRecordBuilders::FormatCompactReasonText(const FString& InValue)
 	return FormatCompactEnumText(InValue.IsEmpty() ? FString(NoneText) : InValue);
 }
 
-// ===== Combat Helpers =====
-
-FString SnapshotRecordBuilders::ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket)
-{
-	if (IsValid(InPacket.SourceActor) && InPacket.SourceActor != InResultReceiverActor)
-	{
-		return GetNameSafe(InPacket.SourceActor);
-	}
-
-	if (IsValid(InPacket.TargetActor) && InPacket.TargetActor != InResultReceiverActor)
-	{
-		return GetNameSafe(InPacket.TargetActor);
-	}
-
-	return FormatDisplayNameOrNA(InPacket.SourceActor);
-}
-
-bool SnapshotRecordBuilders::IsSameCombatPair(const FDebugOverlayCombatSummary& InSummary, const FString& InSourceName, const FString& InTargetName)
-{
-	return InSummary.SourceName == InSourceName && InSummary.TargetName == InTargetName;
-}
-
 // ===== Snapshot Stamp =====
 
 DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp SnapshotRecordBuilders::MakeSnapshotStamp(const UWorld* InWorld)
@@ -107,6 +86,13 @@ FDebugOverlayEventEntry SnapshotRecordBuilders::MakeEventEntry(const UWorld* InW
 	entry.TargetName = InTargetName;
 	entry.Summary = InSummary;
 
+	return entry;
+}
+
+FDebugOverlayEventEntry SnapshotRecordBuilders::MakeCombatEventEntry(const UWorld* InWorld, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FDebugOverlayCombatEventDetails& InCombatDetails)
+{
+	FDebugOverlayEventEntry entry = MakeEventEntry(InWorld, DebugOverlayEventCategory::Combat, InEventName, InOwnerName, InSourceName, InTargetName, FString());
+	entry.CombatDetails = InCombatDetails;
 	return entry;
 }
 

@@ -106,14 +106,15 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("WeaponCollisionWindow"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
-	const FString summary = FString::Printf(
-		TEXT("State: %s | HitWindow: %d | Collision: %s | Reason: %s"),
-		*SnapshotRecordBuilders::FormatCompactEnumText(InHitWindowState),
-		InHitWindowId,
-		*InCollisionName.ToString(),
-		*SnapshotRecordBuilders::FormatCompactReasonText(SnapshotRecordBuilders::FormatReasonOrNone(InReason)));
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, DebugOverlayEventCategory::Combat, eventName, ownerName, ownerName, FString(), summary), InOwnerActor, InWeaponActor);
+	FDebugOverlayCombatEventDetails combatDetails;
+	combatDetails.Kind = EDebugOverlayCombatEventKind::CollisionWindow;
+	combatDetails.CollisionState = SnapshotRecordBuilders::FormatCompactEnumText(InHitWindowState);
+	combatDetails.HitWindowId = InHitWindowId;
+	combatDetails.CollisionName = InCollisionName.ToString();
+	combatDetails.Reason = SnapshotRecordBuilders::FormatCompactReasonText(SnapshotRecordBuilders::FormatReasonOrNone(InReason));
+
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeCombatEventEntry(world, eventName, ownerName, ownerName, FString(), combatDetails), InOwnerActor, InWeaponActor);
 #endif
 }
 
@@ -133,38 +134,41 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
 	const FString defenseOutcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
 	const FString reactionOutcome = UEnum::GetValueAsString(InPacket.Result.ReactionOutcome);
-	const FString summary = FString::Printf(
-		TEXT("Attacker: %s | Defender: %s | Defense: %s | Reaction: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
-		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.SourceActor),
-		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.TargetActor),
-		*SnapshotRecordBuilders::FormatCompactEnumText(defenseOutcome),
-		*SnapshotRecordBuilders::FormatCompactEnumText(reactionOutcome),
-		InPacket.Result.RequestDamage,
-		InPacket.Result.MitigatedDamage,
-		InPacket.Result.FinalTakenDamage,
-		InPacket.Result.CommittedDamage,
-		InPacket.Result.bAccepted ? TEXT("true") : TEXT("false"));
 
-	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastCombat.FrameNumber = stamp.FrameNumber;
-	store->Snapshot.LastCombat.WorldTimeSeconds = stamp.WorldTimeSeconds;
-	store->Snapshot.LastCombat.SourceName = sourceName;
-	store->Snapshot.LastCombat.TargetName = targetName;
-	store->Snapshot.LastCombat.DamageCauserName = causerName;
-	store->Snapshot.LastCombat.DefenseOutcome = defenseOutcome;
-	store->Snapshot.LastCombat.ReactionOutcome = reactionOutcome;
-	store->Snapshot.LastCombat.bHasDamageCommit = true;
-	store->Snapshot.LastCombat.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
-	store->Snapshot.LastCombat.bHasDamageBreakdown = true;
-	store->Snapshot.LastCombat.RequestDamage = InPacket.Result.RequestDamage;
-	store->Snapshot.LastCombat.MitigatedDamage = InPacket.Result.MitigatedDamage;
-	store->Snapshot.LastCombat.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
-	store->Snapshot.LastCombat.CommittedDamage = InPacket.Result.CommittedDamage;
-	store->Snapshot.LastCombat.Summary = summary;
+	FDebugOverlayCombatEventDetails combatDetails;
+	combatDetails.Kind = EDebugOverlayCombatEventKind::TargetResolution;
+	combatDetails.DefenseOutcome = defenseOutcome;
+	combatDetails.ReactionOutcome = reactionOutcome;
+	combatDetails.bHasDamageBreakdown = true;
+	combatDetails.RequestDamage = InPacket.Result.RequestDamage;
+	combatDetails.MitigatedDamage = InPacket.Result.MitigatedDamage;
+	combatDetails.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
+	combatDetails.bHasDamageCommit = true;
+	combatDetails.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
+	combatDetails.CommittedDamage = InPacket.Result.CommittedDamage;
+	combatDetails.bHasAccepted = true;
+	combatDetails.bAccepted = InPacket.Result.bAccepted;
+
+	FDebugOverlayCombatResolutionSummary& lastCombatResolution = store->Snapshot.LastCombatResolution;
+	lastCombatResolution.CaptureState = EDebugOverlayCaptureState::Captured;
+	lastCombatResolution.FrameNumber = stamp.FrameNumber;
+	lastCombatResolution.WorldTimeSeconds = stamp.WorldTimeSeconds;
+	lastCombatResolution.SourceName = sourceName;
+	lastCombatResolution.TargetName = targetName;
+	lastCombatResolution.DamageCauserName = causerName;
+	lastCombatResolution.DefenseOutcome = defenseOutcome;
+	lastCombatResolution.ReactionOutcome = reactionOutcome;
+	lastCombatResolution.bHasDamageCommit = true;
+	lastCombatResolution.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
+	lastCombatResolution.bHasDamageBreakdown = true;
+	lastCombatResolution.RequestDamage = InPacket.Result.RequestDamage;
+	lastCombatResolution.MitigatedDamage = InPacket.Result.MitigatedDamage;
+	lastCombatResolution.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
+	lastCombatResolution.CommittedDamage = InPacket.Result.CommittedDamage;
 
 	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, DebugOverlayEventCategory::Combat, eventName, targetName, sourceName, targetName, summary), InPacket.Context.TargetActor, InPacket.Context.SourceActor, InPacket.Context.TargetActor);
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeCombatEventEntry(world, eventName, targetName, sourceName, targetName, combatDetails), InPacket.Context.TargetActor, InPacket.Context.SourceActor, InPacket.Context.TargetActor);
 #endif
 }
 
@@ -177,60 +181,20 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	if (!store) return;
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
-	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
 	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("CombatResult"));
 	const FString receiverName = GetNameSafe(InReceiverActor);
 	const FString sourceName = GetNameSafe(InPacket.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.TargetActor);
-	const FString causerName = GetNameSafe(InPacket.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
-	const FString resultSourceName = SnapshotRecordBuilders::ResolveCombatResultSourceName(InReceiverActor, InPacket);
-	const bool bHasPreviousDamageBreakdown = store->Snapshot.LastCombat.bHasDamageBreakdown
-		&& SnapshotRecordBuilders::IsSameCombatPair(store->Snapshot.LastCombat, sourceName, targetName);
-	const float requestDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.RequestDamage : 0.f;
-	const float mitigatedDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.MitigatedDamage : 0.f;
-	const float finalTakenDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.FinalTakenDamage : 0.f;
-	const FString reactionOutcome = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.ReactionOutcome : FString();
-	const FString summary = bHasPreviousDamageBreakdown
-		? FString::Printf(
-			TEXT("ResultFrom: %s | ResultReceiver: %s | Defense: %s | Reaction: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
-			*resultSourceName,
-			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
-			*SnapshotRecordBuilders::FormatCompactEnumText(reactionOutcome),
-			requestDamage,
-			mitigatedDamage,
-			finalTakenDamage,
-			InPacket.CommittedDamage,
-			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"))
-		: FString::Printf(
-			TEXT("ResultFrom: %s | ResultReceiver: %s | Defense: %s | Commit: %.3f | DamageCommitted: %s"),
-			*resultSourceName,
-			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
-			InPacket.CommittedDamage,
-			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"));
 
-	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastCombat.FrameNumber = stamp.FrameNumber;
-	store->Snapshot.LastCombat.WorldTimeSeconds = stamp.WorldTimeSeconds;
-	store->Snapshot.LastCombat.SourceName = sourceName;
-	store->Snapshot.LastCombat.TargetName = targetName;
-	store->Snapshot.LastCombat.DamageCauserName = causerName;
-	store->Snapshot.LastCombat.DefenseOutcome = outcome;
-	store->Snapshot.LastCombat.ReactionOutcome = reactionOutcome;
-	store->Snapshot.LastCombat.bHasDamageCommit = true;
-	store->Snapshot.LastCombat.bDamageCommitted = InPacket.bDamageCommitted;
-	store->Snapshot.LastCombat.bHasDamageBreakdown = bHasPreviousDamageBreakdown;
-	store->Snapshot.LastCombat.RequestDamage = requestDamage;
-	store->Snapshot.LastCombat.MitigatedDamage = mitigatedDamage;
-	store->Snapshot.LastCombat.FinalTakenDamage = finalTakenDamage;
-	store->Snapshot.LastCombat.CommittedDamage = InPacket.CommittedDamage;
-	store->Snapshot.LastCombat.Summary = summary;
+	FDebugOverlayCombatEventDetails combatDetails;
+	combatDetails.Kind = EDebugOverlayCombatEventKind::ResultDelivery;
+	combatDetails.DefenseOutcome = outcome;
+	combatDetails.bHasDamageCommit = true;
+	combatDetails.bDamageCommitted = InPacket.bDamageCommitted;
+	combatDetails.CommittedDamage = InPacket.CommittedDamage;
 
-	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
-
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, DebugOverlayEventCategory::Combat, eventName, receiverName, sourceName, targetName, summary), InReceiverActor, InPacket.SourceActor, InPacket.TargetActor);
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeCombatEventEntry(world, eventName, receiverName, sourceName, targetName, combatDetails), InReceiverActor, InPacket.SourceActor, InPacket.TargetActor);
 #endif
 }
 

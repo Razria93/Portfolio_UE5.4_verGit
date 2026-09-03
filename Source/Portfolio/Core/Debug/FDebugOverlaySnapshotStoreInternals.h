@@ -7,7 +7,6 @@
 
 class UWorld;
 class AActor;
-struct FCombatResultPacket;
 
 #if !UE_BUILD_SHIPPING
 // ===== Internal Store State =====
@@ -81,10 +80,9 @@ namespace SnapshotRecordBuilders
 	FString FormatDisplayNameOrNA(const UObject* InObject);
 	FString FormatCompactEnumText(const FString& InValue);
 	FString FormatCompactReasonText(const FString& InValue);
-	FString ResolveCombatResultSourceName(const AActor* InResultReceiverActor, const FCombatResultPacket& InPacket);
-	bool IsSameCombatPair(const FDebugOverlayCombatSummary& InSummary, const FString& InSourceName, const FString& InTargetName);
 	DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp MakeSnapshotStamp(const UWorld* InWorld);
 	FDebugOverlayEventEntry MakeEventEntry(const UWorld* InWorld, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary);
+	FDebugOverlayEventEntry MakeCombatEventEntry(const UWorld* InWorld, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FDebugOverlayCombatEventDetails& InCombatDetails);
 	void UpdateRecentCombatPair(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const UWorld* InWorld, AActor* InSourceActor, AActor* InTargetActor, const FString& InEventName);
 }
 
