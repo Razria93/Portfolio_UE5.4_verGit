@@ -135,11 +135,6 @@ public:
 	// Incapacitated Presentation
 	bool TrySetIncapacitatedPresentation(const struct FReactionExecutionContext& InContext, EIncapacitatedPresentation InPresentation);
 
-	// Compatibility wrappers for existing saved montage notifies. New montages use
-	// CAnimNotify_SetIncapacitatedPresentation directly.
-	bool TryEnterExecutionDownPresentation(const struct FReactionExecutionContext& InContext);
-	bool TryExitExecutionDownPresentation(const struct FReactionExecutionContext& InContext);
-
 public:
 	// Execution Opportunity Reservation
 	bool TryReserveExecutionOpportunity(const FExecutionSessionId& InSessionId, FExecutionOpportunityReservation& OutReservation);

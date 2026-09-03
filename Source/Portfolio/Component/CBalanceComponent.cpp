@@ -338,16 +338,6 @@ bool UCBalanceComponent::TrySetIncapacitatedPresentation(const FReactionExecutio
 	return true;
 }
 
-bool UCBalanceComponent::TryEnterExecutionDownPresentation(const FReactionExecutionContext& InContext)
-{
-	return TrySetIncapacitatedPresentation(InContext, EIncapacitatedPresentation::ExecutionDown);
-}
-
-bool UCBalanceComponent::TryExitExecutionDownPresentation(const FReactionExecutionContext& InContext)
-{
-	return TrySetIncapacitatedPresentation(InContext, EIncapacitatedPresentation::None);
-}
-
 // Execution Opportunity Reservation
 
 bool UCBalanceComponent::TryReserveExecutionOpportunity(const FExecutionSessionId& InSessionId, FExecutionOpportunityReservation& OutReservation)

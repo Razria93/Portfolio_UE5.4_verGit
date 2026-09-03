@@ -383,34 +383,6 @@ void UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand(const F
 
 	switch (InCommand)
 	{
-	case EReactionNotifyCommand::EnterExecutionDownPresentation:
-		FBalanceDebug::RecordLifecycleEvent(
-			BalanceComp_Injected,
-			TEXT("ExecutionDownPresentationTargetReceived"),
-			FString::Printf(
-				TEXT("ContextReaction=%s | ContextLifecycle=%u"),
-				*UEnum::GetValueAsString(InContext.ReactionDataKey.ReactionType),
-				InContext.BalanceLifecycleSerial));
-		if (InContext.ReactionDataKey.ReactionType == EReactionType::ExecutionStandard)
-		{
-			const bool bAccepted = BalanceComp_Injected->TryEnterExecutionDownPresentation(InContext);
-			FBalanceDebug::RecordLifecycleEvent(
-				BalanceComp_Injected,
-				bAccepted ? TEXT("ExecutionDownPresentationTargetAccepted") : TEXT("ExecutionDownPresentationTargetRejected"));
-		}
-		else
-		{
-			FBalanceDebug::RecordLifecycleEvent(BalanceComp_Injected, TEXT("ExecutionDownPresentationTargetRejected"), TEXT("Reason=UnexpectedReactionType"));
-		}
-		return;
-
-	case EReactionNotifyCommand::ExitExecutionDownPresentation:
-		if (InContext.ReactionDataKey.ReactionType == EReactionType::ExecutionRecovery)
-		{
-			BalanceComp_Injected->TryExitExecutionDownPresentation(InContext);
-		}
-		return;
-
 	case EReactionNotifyCommand::ResetBalance:
 		if (InContext.ReactionDataKey.ReactionType == EReactionType::CollapseOut)
 		{
