@@ -4,6 +4,8 @@
 
 #include "AI/BehaviorTree/Service/CBTServiceIntervalHelper.h"
 #include "Controller/CAIController.h"
+#include "Character/Enemy/CEnemy.h"
+#include "Component/CBalanceComponent.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Type/CStateTypes.h"
 #include "Type/CHealthTypes.h"
@@ -40,11 +42,11 @@ void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp
 
 	const float currentTime = world->GetTimeSeconds();
 
-	const EAIIntentState nextAIIntentState = DecideNextAIIntentState(blackboardComp, currentTime);
+	ACAIController* aiOwner = Cast<ACAIController>(OwnerComp.GetAIOwner());
+	const EAIIntentState nextAIIntentState = DecideNextAIIntentState(blackboardComp, aiOwner, currentTime);
 
 	if (ChangeAIIntentState(blackboardComp, nextAIIntentState))
 	{
-		ACAIController* aiOwner = Cast<ACAIController>(OwnerComp.GetAIOwner());
 		if (IsValid(aiOwner))
 		{
 			aiOwner->RefreshRuntimeLODTierFromBlackboard();
@@ -54,7 +56,7 @@ void UCBTService_UpdateAIIntentState::TickNode(UBehaviorTreeComponent& OwnerComp
 
 // Intent Decision
 
-EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackboardComponent* InBlackboard, float InCurrentTime)
+EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackboardComponent* InBlackboard, AAIController* InAIController, float InCurrentTime)
 {
 	// Absolute states override contextual intent decisions.
 	const EDeadState deadState = static_cast<EDeadState>(InBlackboard->GetValueAsEnum(CAIKey::Dead::DeadState.KeyName));
@@ -66,6 +68,11 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 
 	if (bIsActiveReaction)
 		return EAIIntentState::HitReact;
+
+	const ACEnemy* enemy = IsValid(InAIController) ? Cast<ACEnemy>(InAIController->GetPawn()) : nullptr;
+	const UCBalanceComponent* balanceComp = IsValid(enemy) ? enemy->GetBalanceComp() : nullptr;
+	if (IsValid(balanceComp) && balanceComp->IsBalanceLifecycleBlocking())
+		return EAIIntentState::Incapacitated;
 
 	// Keep Engage while current attack action is still active.
 	if (bIsCombatAction)

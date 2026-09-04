@@ -16,8 +16,6 @@ namespace
 			return TEXT("FocusComponent.WorldScanFallback");
 		case EDebugOverlayFocusSource::PlayerTargetFocus:
 			return TEXT("FocusComponent.PlayerTargetFocus");
-		case EDebugOverlayFocusSource::GameplayFocus:
-			return TEXT("FocusComponent.GameplayFocus");
 		case EDebugOverlayFocusSource::OutlinerFocus:
 			return TEXT("FocusComponent.OutlinerFocus");
 		case EDebugOverlayFocusSource::None:
@@ -95,13 +93,6 @@ EDebugOverlayFocusDriver UCDebugOverlayFocusComponent::GetDebugOverlayFocusDrive
 }
 
 // Focus Text Query
-FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusActorText() const
-{
-	return HasDebugOverlayFocus()
-		? FString::Printf(TEXT("Selected: %s"), *GetNameSafe(DebugOverlayFocusActor.Get()))
-		: FString(TEXT("None"));
-}
-
 FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusActorNameText() const
 {
 	return HasDebugOverlayFocus()
@@ -119,11 +110,6 @@ FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusSourceText() const
 FString UCDebugOverlayFocusComponent::GetDebugOverlayFocusDriverText() const
 {
 	return FormatDebugOverlayFocusDriver(DebugOverlayFocusDriver);
-}
-
-EDebugOverlayRecentFocusState UCDebugOverlayFocusComponent::GetDebugOverlayRecentFocusState() const
-{
-	return DebugOverlayRecentFocusState;
 }
 
 FString UCDebugOverlayFocusComponent::GetDebugOverlayRecentFocusStateText() const

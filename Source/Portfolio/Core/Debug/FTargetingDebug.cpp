@@ -1,8 +1,10 @@
 #include "Core/Debug/FTargetingDebug.h"
 
+#include "Component/CPlayerTargetSelectionComponent.h"
 #include "Type/CTargetingTypes.h"
 
 #include "DrawDebugHelpers.h"
+#include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 
 namespace
@@ -106,6 +108,21 @@ FTargetingDebugOverlayDetails FTargetingDebug::BuildOverlayDetails(const FTarget
 	details.RangeText = InEvaluation.bWithinRange ? TEXT("true") : TEXT("false");
 	details.ViewConeText = InEvaluation.bWithinViewCone ? TEXT("true") : TEXT("false");
 	return details;
+}
+
+void FTargetingDebug::DrawWorldDebug(UWorld* InWorld, const APlayerController* InOwningPlayerController)
+{
+#if !UE_BUILD_SHIPPING
+	if (!IsEnabled() || !IsValid(InOwningPlayerController)) return;
+
+	const UCPlayerTargetSelectionComponent* targetingComp = InOwningPlayerController->FindComponentByClass<UCPlayerTargetSelectionComponent>();
+	if (!IsValid(targetingComp)) return;
+
+	FTargetingEvaluation targetingEvaluation;
+	if (!targetingComp->BuildSelectionDebugSnapshot(targetingEvaluation)) return;
+
+	DrawWorldDebug(InWorld, targetingEvaluation);
+#endif
 }
 
 void FTargetingDebug::DrawWorldDebug(UWorld* InWorld, const FTargetingEvaluation& InEvaluation)

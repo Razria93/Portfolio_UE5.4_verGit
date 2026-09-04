@@ -231,7 +231,7 @@ ACWeaponActor::OnComponentBeginOverlap
 
 ```text
 AActor::TakeDamage
--> UCCombatSignalTargetComponent::RequestCombatSignalTarget(float, FDamageEvent, Instigator, DamageCauser)
+-> UCCombatSignalTargetComponent::RequestCombatDamageTarget(float, FDamageEvent, Instigator, DamageCauser)
 -> FDefaultDamageEvent 검증
 -> FCombatSignalTargetPayload / Context 구성
 -> Guard / Parry / Hit / Dead 평가
@@ -382,36 +382,36 @@ ValidateCueSignal
 SendCueSignal
 ```
 
-이번 단계에서는 기존 hit 호출부를 유지한 채 cue target hook만 연결한다. public entry rename은 별도 후속 작업으로 미룬다.
+Target ingress 명칭 정렬은 후속 작업에서 완료했다.
 
-### Target entry naming 후속 정리
+### Target entry naming 정렬 완료
 
-target public entry도 현재는 임시 overload 상태다.
-
-```text
-RequestCombatSignalTarget(float, FDamageEvent, ...)
-RequestCombatSignalTarget(FCombatSignal)
-```
-
-두 함수는 각각 UE damage event adapter entry와 `FCombatSignal` direct entry로 성격이 다르다.
-
-후속 후보:
+Target은 Engine Damage, custom Signal, Result feedback을 서로 다른 ingress로 구분한다.
 
 ```text
-RequestCombatSignalTarget(float, FDamageEvent, ...)
--> ReceiveDamageEvent
-
+RequestCombatDamageTarget(float, FDamageEvent, ...)
 RequestCombatSignalTarget(FCombatSignal)
--> ReceiveCombatSignal
-
-ProcessCombatSignalTarget(float, FDamageEvent, ...)
--> ProcessDamageEvent
-
-ProcessCombatSignalTarget(FCombatSignal)
--> ProcessCombatSignal
+RequestCombatResultTarget(FCombatResultPacket)
 ```
 
-이번 단계에서는 cue receive hook 연결을 우선하고, Source / Target entry naming 정렬은 별도 후속 작업으로 미룬다.
+세 entry는 각각 UE damage event adapter, `FCombatSignal` direct signal, source로 되돌아온
+combat result feedback을 처리한다.
+
+대응하는 내부 흐름은 다음과 같다.
+
+```text
+RequestCombatDamageTarget(float, FDamageEvent, ...)
+-> ProcessCombatDamageTarget(...)
+
+RequestCombatSignalTarget(FCombatSignal)
+-> ProcessCombatSignalTarget(...)
+
+RequestCombatResultTarget(FCombatResultPacket)
+-> ProcessCombatResultTarget(...)
+```
+
+`FCombatSignalTargetPayload / Context / Packet`은 Damage ingress 뒤의 공통 Signal Target
+pipeline 타입이므로 그대로 유지한다.
 
 ### 3. Target-side cue receive / evaluation hook 추가
 

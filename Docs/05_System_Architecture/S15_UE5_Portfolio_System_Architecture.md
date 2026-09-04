@@ -147,14 +147,14 @@ Task는 action request 결과가 `Started`인 경우에만 성공으로 처리�
 Movement request는 orchestrator가 직접 `MovementComponent` API를 호출함.
 
 ```yaml
-1. Move   -> MovementComp::OnMove()
-2. Walk   -> MovementComp::OnWalk()
-3. Run    -> MovementComp::OnRun()
-4. Sprint -> MovementComp::OnSprint()
-5. Jump   -> MovementComp::OnJump()
+1. Move   -> MovementComp::HandleMoveInput()
+2. Walk   -> MovementComp::HandleWalkInput()
+3. Run    -> MovementComp::HandleRunInput()
+4. Sprint -> MovementComp::HandleSprintInput()
+5. Jump   -> MovementComp::HandleJumpInput()
 ```
 
-`StopJump`는 release-style cleanup으로 보고 hard-block gate 전에 처리함.
+`StopJump`는 `MovementComp::HandleJumpInputReleased()`로 전달하며, release-style cleanup으로 보고 hard-block gate 전에 처리함.
 
 ### Equipment Request
 

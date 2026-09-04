@@ -31,6 +31,12 @@ private:
 	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCBalanceComponent* BalanceComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -55,6 +61,7 @@ public:
 	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InIncomingRequest);
 	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest);
 	FActionRequestResult RequestCombatAction(const FCombatActionRequest& InIncomingRequest);
+	FActionRequestResult RequestExecutionAction(const FExecutionActionRequest& InIncomingRequest);
 
 public:
 	// Deferred Entry
@@ -68,12 +75,13 @@ public:
 
 private:
 	// Request Validation
-	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const;
+	bool CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason, bool bIsExternalRequest = true) const;
 
 private:
 	// Candidate Resolve
 	bool ResolveEquipmentActionCandidate(const FEquipmentActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 	bool ResolveCombatActionCandidate(const FCombatActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
+	bool ResolveExecutionActionCandidate(const FExecutionActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const;
 
 private:
 	// Request Side Effects

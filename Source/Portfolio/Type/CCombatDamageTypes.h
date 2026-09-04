@@ -21,6 +21,20 @@ enum class EDamageDefenseOutcome : uint8
 	Max,
 };
 
+UENUM(BlueprintType)
+enum class EDamageReactionOutcome : uint8
+{
+	None = 0,
+
+	Hit,
+	BlockHit,
+	Parry,
+	CollapseHit,
+	Dead,
+
+	Max,
+};
+
 // Key / Identifier
 
 USTRUCT(BlueprintType)

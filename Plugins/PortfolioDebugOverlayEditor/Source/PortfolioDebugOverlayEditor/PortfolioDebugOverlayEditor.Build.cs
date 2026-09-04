@@ -13,6 +13,7 @@ public class PortfolioDebugOverlayEditor : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
+			"Portfolio",
 			"CoreUObject",
 			"Engine",
 			"InputCore",

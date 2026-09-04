@@ -34,6 +34,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
 
+	UPROPERTY(EditAnywhere, Category = "Execution", meta = (ClampMin = 0.0))
+	float StandardExecutionDamage = 0.f;
+
 	UPROPERTY(EditAnywhere, Category = "Intervention|Want")
 	TArray<FExecutionInterventionWantRule> WantInterventionRules;
 

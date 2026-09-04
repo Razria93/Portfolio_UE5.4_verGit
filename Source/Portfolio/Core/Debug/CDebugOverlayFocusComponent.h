@@ -25,10 +25,8 @@ public:
 	AActor* GetDebugOverlayFocusActor() const;
 	EDebugOverlayFocusSource GetDebugOverlayFocusSource() const;
 	EDebugOverlayFocusDriver GetDebugOverlayFocusDriver() const;
-	EDebugOverlayRecentFocusState GetDebugOverlayRecentFocusState() const;
 
 	// Focus Text Query
-	FString GetDebugOverlayFocusActorText() const;
 	FString GetDebugOverlayFocusActorNameText() const;
 	FString GetDebugOverlayFocusSourceText() const;
 	FString GetDebugOverlayFocusDriverText() const;

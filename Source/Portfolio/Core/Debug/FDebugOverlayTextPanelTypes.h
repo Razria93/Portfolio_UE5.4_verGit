@@ -7,7 +7,6 @@
 enum class EDebugOverlayTextLineRole : uint8
 {
 	Normal,
-	PanelTitle,
 	PanelHeader,
 	EventLogHeader,
 	Warning,

@@ -3,9 +3,14 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CHealthComponent.h"
+#include "Component/CBalanceComponent.h"
+#include "Component/CReactionComponent.h"
 #include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CHitFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
+#include "Core/Debug/FBalanceDebug.h"
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Debug/FCombatSignalDebug.h"
 #include "Interface/CombatResultReceiver.h"
 #include "Type/CReactionTypes.h"
@@ -36,9 +41,52 @@ void UCCombatSignalTargetComponent::InitializeReferences(const FCharacterCompone
 	DefenseComp_Injected = InReferences.DefenseComponent;
 	ReactionOrchestratorComp_Injected = InReferences.ReactionOrchestratorComponent;
 	HitFeedbackComp_Injected = InReferences.HitFeedbackComponent;
+	BalanceComp_Injected = InReferences.BalanceComponent;
+	ReactionComp_Injected = InReferences.ReactionComponent;
+	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
+
+	if (IsValid(BalanceComp_Injected))
+	{
+		BalanceComp_Injected->OnBalanceLifecycleReactionRequested.RemoveAll(this);
+		BalanceComp_Injected->OnBalanceLifecycleReactionRequested.AddUObject(this, &UCCombatSignalTargetComponent::HandleBalanceLifecycleReactionRequested);
+		OnBalanceLifecycleReactionRequestResolved.RemoveAll(BalanceComp_Injected);
+		OnBalanceLifecycleReactionRequestResolved.AddUObject(BalanceComp_Injected, &UCBalanceComponent::HandleBalanceLifecycleReactionRequestResolved);
+	}
+
+	if (IsValid(BalanceComp_Injected) && IsValid(ReactionComp_Injected))
+	{
+		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
+		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.AddUObject(this, &UCCombatSignalTargetComponent::HandleReactionExecutionLifecycleEvent);
+		ReactionComp_Injected->OnReactionExecutionNotifyCommand.RemoveAll(this);
+		ReactionComp_Injected->OnReactionExecutionNotifyCommand.AddUObject(this, &UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand);
+		ReactionComp_Injected->OnReactionIncapacitatedPresentationRequested.RemoveAll(this);
+		ReactionComp_Injected->OnReactionIncapacitatedPresentationRequested.AddUObject(this, &UCCombatSignalTargetComponent::HandleReactionIncapacitatedPresentationRequested);
+	}
 
 	ValidateRequiredComponentReferences();
 }
+
+// Component Lifecycle
+
+void UCCombatSignalTargetComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+{
+	if (IsValid(BalanceComp_Injected))
+	{
+		BalanceComp_Injected->OnBalanceLifecycleReactionRequested.RemoveAll(this);
+		OnBalanceLifecycleReactionRequestResolved.RemoveAll(BalanceComp_Injected);
+	}
+
+	if (IsValid(ReactionComp_Injected))
+	{
+		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
+		ReactionComp_Injected->OnReactionExecutionNotifyCommand.RemoveAll(this);
+		ReactionComp_Injected->OnReactionIncapacitatedPresentationRequested.RemoveAll(this);
+	}
+
+	Super::EndPlay(InEndPlayReason);
+}
+
+// Component Reference Validation
 
 bool UCCombatSignalTargetComponent::ValidateRequiredComponentReferences() const
 {
@@ -60,19 +108,65 @@ bool UCCombatSignalTargetComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
-// Entry
+// Event
+// Combat Damage Pipeline - Entry
 
-float UCCombatSignalTargetComponent::RequestCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+float UCCombatSignalTargetComponent::RequestCombatDamageTarget(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	return ProcessCombatSignalTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	return ProcessCombatDamageTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
+
+// Combat Signal Pipeline - Entry
 
 bool UCCombatSignalTargetComponent::RequestCombatSignalTarget(const FCombatSignal& InCombatSignal)
 {
 	return ProcessCombatSignalTarget(InCombatSignal);
 }
 
-float UCCombatSignalTargetComponent::ProcessCombatSignalTarget(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+// Combat Result Pipeline - Entry
+
+void UCCombatSignalTargetComponent::RequestCombatResultTarget(const FCombatResultPacket& InCombatResultPacket)
+{
+	ProcessCombatResultTarget(InCombatResultPacket);
+}
+
+// Execution Outcome - Entry
+
+bool UCCombatSignalTargetComponent::RequestExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket)
+{
+	return ProcessExecutionOutcomeTarget(InExecutionOutcomePacket);
+}
+
+bool UCCombatSignalTargetComponent::TryResolveExecutionAppliedDamage(const EExecutionOutcomePolicy InOutcomePolicy, const float InStandardExecutionDamage, float& OutAppliedDamage) const
+{
+	OutAppliedDamage = 0.f;
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+
+	if (InOutcomePolicy == EExecutionOutcomePolicy::Lethal)
+	{
+		if (!HealthComp_Injected->CanKill()) return false;
+		OutAppliedDamage = HealthComp_Injected->GetCurrentHP();
+		return OutAppliedDamage > KINDA_SMALL_NUMBER;
+	}
+
+	if (InOutcomePolicy != EExecutionOutcomePolicy::Standard || InStandardExecutionDamage <= KINDA_SMALL_NUMBER) return false;
+
+	OutAppliedDamage = FMath::Min(InStandardExecutionDamage, FMath::Max(0.f, HealthComp_Injected->GetCurrentHP() - 1.f));
+	return OutAppliedDamage > KINDA_SMALL_NUMBER;
+}
+
+// Combat Result Pipeline - Validation
+
+bool UCCombatSignalTargetComponent::ValidateCombatResultTargetRequest(const FCombatResultPacket& InCombatResultPacket) const
+{
+	return IsValid(OwnerCharacter_Injected)
+		&& InCombatResultPacket.IsValidMinimal()
+		&& InCombatResultPacket.SourceActor == OwnerCharacter_Injected;
+}
+
+// Combat Damage Pipeline - Process / Handler
+
+float UCCombatSignalTargetComponent::ProcessCombatDamageTarget(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (DamageEvent.IsOfType(FDefaultDamageEvent::ClassID))
 	{
@@ -82,17 +176,6 @@ float UCCombatSignalTargetComponent::ProcessCombatSignalTarget(float DamageAmoun
 
 	FCombatSignalDebug::RecordTargetDamageRequestRejectedForAudit(DamageAmount, DamageEvent, EventInstigator, DamageCauser, TEXT("UnsupportedDamageEvent"));
 	return 0.f;
-}
-
-bool UCCombatSignalTargetComponent::ProcessCombatSignalTarget(const FCombatSignal& InCombatSignal)
-{
-	if (InCombatSignal.Header.SignalType == ECombatSignalType::TimingCue)
-	{
-		return HandleTimingCueSignal(InCombatSignal);
-	}
-
-	FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("UnsupportedSignalType"));
-	return false;
 }
 
 float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount, const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
@@ -107,6 +190,9 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 
 	FCombatSignalTargetPayload combatSignalTargetPayload = BuildPayload(DamageAmount, InDefaultDamageEvent, InDamageInstigator, InDamageCauser);
 	FCombatSignalTargetContext combatSignalTargetContext = BuildContext(combatSignalTargetPayload);
+	combatSignalTargetContext.ExternalInputPolicy = IsValid(ExecutionCollaborationComp_Injected)
+		? ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy()
+		: EExternalCombatInputPolicy::Normal;
 
 	// Evaluate: validate target-side context and defensive policy before applying state changes.
 	if (!ValidateContext(combatSignalTargetContext))
@@ -147,6 +233,7 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 
 	// Apply: commit accepted damage to target-side resource state.
 	CommitCombatSignalTarget(combatSignalTargetContext);
+	ResolveDamageReactionOutcome(combatSignalTargetContext);
 
 	// Packet: combine payload, context, and result for notify/debug consumers.
 	const FCombatSignalTargetResult committedResult = BuildResult(combatSignalTargetContext);
@@ -161,6 +248,19 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	FCombatSignalDebug::PrintTargetPacketDebug(combatSignalTargetPacket);
 
 	return committedResult.CommittedDamage;
+}
+
+// Combat Signal Pipeline - Process / Handler
+
+bool UCCombatSignalTargetComponent::ProcessCombatSignalTarget(const FCombatSignal& InCombatSignal)
+{
+	if (InCombatSignal.Header.SignalType == ECombatSignalType::TimingCue)
+	{
+		return HandleTimingCueSignal(InCombatSignal);
+	}
+
+	FCombatSignalDebug::RecordTimingCueRejectedForAudit(InCombatSignal, TEXT("UnsupportedSignalType"));
+	return false;
 }
 
 bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& InCombatSignal)
@@ -188,7 +288,131 @@ bool UCCombatSignalTargetComponent::HandleTimingCueSignal(const FCombatSignal& I
 	return false;
 }
 
-// Receive
+// Combat Result Pipeline - Process / Handler
+
+void UCCombatSignalTargetComponent::ProcessCombatResultTarget(const FCombatResultPacket& InCombatResultPacket)
+{
+	if (!ValidateCombatResultTargetRequest(InCombatResultPacket)) return;
+	if (IsValid(ExecutionCollaborationComp_Injected)
+		&& ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy() != EExternalCombatInputPolicy::Normal)
+	{
+		return;
+	}
+
+	if (InCombatResultPacket.IsParryResult())
+	{
+		HandleParryCombatResult(InCombatResultPacket);
+	}
+}
+
+void UCCombatSignalTargetComponent::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
+{
+	if (!IsValid(BalanceComp_Injected)) return;
+
+	const FBalanceAdvanceResult balanceAdvanceResult = BalanceComp_Injected->AdvanceBalanceFromParry(InCombatResultPacket);
+	if (!balanceAdvanceResult.ShouldDispatchCollapseIn()) return;
+
+	FBalanceLifecyclePacket balanceLifecyclePacket;
+	balanceLifecyclePacket.ReactionType = EReactionType::CollapseIn;
+	balanceLifecyclePacket.BalanceLifecycleSerial = balanceAdvanceResult.BalanceLifecycleSerial;
+
+	DispatchBalanceLifecycleReaction(balanceLifecyclePacket);
+}
+
+// Execution Outcome - Process / Handler
+
+bool UCCombatSignalTargetComponent::ProcessExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket)
+{
+	const FExecutionCollaborationContext& context = InExecutionOutcomePacket.CollaborationContext;
+	FExecutionCollaborationDebug::RecordStartTrace(
+		OwnerCharacter_Injected,
+		TEXT("TargetOutcomeIngressEntered"),
+		FString::Printf(
+			TEXT("PacketValid=%s | PacketTarget=%s | Owner=%s | Outcome=%s | StandardDamage=%.1f"),
+			InExecutionOutcomePacket.IsValidMinimal() ? TEXT("true") : TEXT("false"),
+			*GetNameSafe(context.TargetSnapshot.TargetActor),
+			*GetNameSafe(OwnerCharacter_Injected),
+			*UEnum::GetValueAsString(context.OutcomePolicy),
+			InExecutionOutcomePacket.StandardExecutionDamage));
+
+	if (!InExecutionOutcomePacket.IsValidMinimal() || context.TargetSnapshot.TargetActor != OwnerCharacter_Injected)
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("InvalidPacketOrTargetMismatch"));
+		return false;
+	}
+	const bool bIsLethal = context.OutcomePolicy == EExecutionOutcomePolicy::Lethal;
+	float appliedDamage = 0.f;
+	if (!TryResolveExecutionAppliedDamage(context.OutcomePolicy, InExecutionOutcomePacket.StandardExecutionDamage, appliedDamage))
+	{
+		const float currentHealth = IsValid(HealthComp_Injected) ? HealthComp_Injected->GetCurrentHP() : 0.f;
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), FString::Printf(TEXT("OutcomeNotApplicable | CurrentHP=%.1f | StandardDamage=%.1f"), currentHealth, InExecutionOutcomePacket.StandardExecutionDamage));
+		return false;
+	}
+
+	if (!IsValid(ExecutionCollaborationComp_Injected) || !ExecutionCollaborationComp_Injected->CommitExecutionOutcome(InExecutionOutcomePacket))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("CollaborationCommitRejected"));
+		return false;
+	}
+
+	const float committedDamage = HealthComp_Injected->TakeDamage(appliedDamage);
+	if (committedDamage > KINDA_SMALL_NUMBER)
+	{
+		FExecutionCollaborationDebug::RecordOutcomeDamageApplied(ExecutionCollaborationComp_Injected, committedDamage, bIsLethal);
+	}
+	return committedDamage > KINDA_SMALL_NUMBER && (!bIsLethal || HealthComp_Injected->IsDead());
+}
+
+// Balance / Collapse Lifecycle Event Handlers
+
+void UCCombatSignalTargetComponent::HandleBalanceLifecycleReactionRequested(const FBalanceLifecyclePacket& InBalanceLifecyclePacket)
+{
+	DispatchBalanceLifecycleReaction(InBalanceLifecyclePacket);
+}
+
+void UCCombatSignalTargetComponent::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)
+{
+	if (!IsValid(BalanceComp_Injected)) return;
+
+	if (InEvent.EventType == EReactionExecutionLifecycleEventType::Started)
+	{
+		BalanceComp_Injected->HandleBalanceLifecycleReactionExecutionStarted(InEvent.Context);
+		return;
+	}
+
+	BalanceComp_Injected->HandleBalanceLifecycleReactionExecutionTerminal(InEvent);
+}
+
+void UCCombatSignalTargetComponent::HandleReactionExecutionNotifyCommand(const FReactionExecutionContext& InContext, const EReactionNotifyCommand InCommand)
+{
+	if (!IsValid(BalanceComp_Injected)) return;
+
+	switch (InCommand)
+	{
+	case EReactionNotifyCommand::ResetBalance:
+		if (InContext.ReactionDataKey.ReactionType == EReactionType::CollapseOut)
+		{
+			BalanceComp_Injected->TryCommitBalanceLifecycleReset(InContext);
+		}
+		return;
+
+	default:
+		return;
+	}
+}
+
+void UCCombatSignalTargetComponent::HandleReactionIncapacitatedPresentationRequested(const FReactionExecutionContext& InContext, const EIncapacitatedPresentation InPresentation)
+{
+	if (!IsValid(BalanceComp_Injected)) return;
+
+	const bool bAccepted = BalanceComp_Injected->TrySetIncapacitatedPresentation(InContext, InPresentation);
+	FBalanceDebug::RecordLifecycleEvent(
+		BalanceComp_Injected,
+		bAccepted ? TEXT("IncapacitatedPresentationTargetAccepted") : TEXT("IncapacitatedPresentationTargetRejected"),
+		FString::Printf(TEXT("Target=%s"), *UEnum::GetValueAsString(InPresentation)));
+}
+
+// Combat Damage Pipeline - Validation
 
 bool UCCombatSignalTargetComponent::ValidateRequest(const FDefaultDamageEvent& InDefaultDamageEvent, AController* InDamageInstigator, AActor* InDamageCauser)
 {
@@ -277,7 +501,7 @@ FCombatSignalTargetContext UCCombatSignalTargetComponent::BuildContext(const FCo
 	return combatSignalTargetContext;
 }
 
-// Evaluate
+// Combat Damage Pipeline - Evaluate
 
 bool UCCombatSignalTargetComponent::ValidateContext(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
@@ -320,6 +544,22 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::AlreadyDead;
 
 		return false;
+	}
+
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::RejectAll)
+	{
+		InOutCombatSignalTargetContext.bAccepted = false;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::ExternalInputBlocked;
+		return false;
+	}
+
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::DamageOnly)
+	{
+		InOutCombatSignalTargetContext.bAccepted = true;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
+		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::None;
+		InOutCombatSignalTargetContext.bShouldCommitDamage = true;
+		return true;
 	}
 
 	// Gate: parry window intercepts incoming damage before damage commit.
@@ -374,7 +614,9 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 
 	float mitigatedDamage = requestedDamage;
 
-	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanGuard())
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::Normal
+		&& IsValid(DefenseComp_Injected)
+		&& DefenseComp_Injected->CanGuard())
 	{
 		InOutCombatSignalTargetContext.DefenseOutcome = EDamageDefenseOutcome::Guard;
 		mitigatedDamage *= DefenseComp_Injected->GetGuardDamageTakenMultiplier();
@@ -401,6 +643,51 @@ float UCCombatSignalTargetComponent::ComputeFinalTakenDamage(FCombatSignalTarget
 	return FMath::Max(0.f, finalTakenDamage);
 }
 
+void UCCombatSignalTargetComponent::ResolveDamageReactionOutcome(FCombatSignalTargetContext& InOutCombatSignalTargetContext) const
+{
+	InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::None;
+
+	if (!InOutCombatSignalTargetContext.bAccepted) return;
+
+	if (InOutCombatSignalTargetContext.DeadState_Before == EDeadState::Alive
+		&& InOutCombatSignalTargetContext.DeadState_After != EDeadState::Alive)
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Dead;
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::DamageOnly)
+	{
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.DefenseOutcome == EDamageDefenseOutcome::Parry)
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Parry;
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.DefenseOutcome == EDamageDefenseOutcome::Guard)
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::BlockHit;
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.CommittedDamage <= KINDA_SMALL_NUMBER
+		|| InOutCombatSignalTargetContext.DeadState_After != EDeadState::Alive)
+	{
+		return;
+	}
+
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsCollapseLoopActive())
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::CollapseHit;
+		return;
+	}
+
+	InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Hit;
+}
+
 FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const
 {
 	FCombatSignalTargetResult combatSignalTargetResult = FCombatSignalTargetResult();
@@ -408,6 +695,8 @@ FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FComb
 	combatSignalTargetResult.bAccepted = InCombatSignalTargetContext.bAccepted;
 	combatSignalTargetResult.RejectReason = InCombatSignalTargetContext.RejectReason;
 	combatSignalTargetResult.DefenseOutcome = InCombatSignalTargetContext.DefenseOutcome;
+	combatSignalTargetResult.ReactionOutcome = InCombatSignalTargetContext.ReactionOutcome;
+	combatSignalTargetResult.ExternalInputPolicy = InCombatSignalTargetContext.ExternalInputPolicy;
 	combatSignalTargetResult.bShouldCommitDamage = InCombatSignalTargetContext.bShouldCommitDamage;
 
 	combatSignalTargetResult.DamageSpecKey = InCombatSignalTargetContext.DamageSpecKey;
@@ -423,7 +712,7 @@ FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FComb
 	return combatSignalTargetResult;
 }
 
-// Apply
+// Combat Damage Pipeline - Apply
 
 void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTargetContext& InOutCombatSignalTargetContext)
 {
@@ -437,7 +726,7 @@ void UCCombatSignalTargetComponent::CommitCombatSignalTarget(FCombatSignalTarget
 	InOutCombatSignalTargetContext.HealthPointAfter = HealthComp_Injected->GetCurrentHP();
 }
 
-// Packet
+// Combat Damage Pipeline - Packet
 
 FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FCombatSignalTargetPayload& InCombatSignalTargetPayload, const FCombatSignalTargetContext& InCombatSignalTargetContext, const FCombatSignalTargetResult& InCombatSignalTargetResult)
 {
@@ -455,13 +744,14 @@ FCombatSignalTargetPacket UCCombatSignalTargetComponent::BuildPacket(const FComb
 	return combatSignalTargetPacket;
 }
 
-// Notify
+// Combat Damage Pipeline - Dispatch
 
 void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSignalTargetPacket& InCombatSignalTargetPacket) const
 {
 	if (!InCombatSignalTargetPacket.Result.bAccepted) return;
 
-	if (IsValid(ReactionOrchestratorComp_Injected))
+	if (InCombatSignalTargetPacket.Result.ReactionOutcome != EDamageReactionOutcome::None
+		&& IsValid(ReactionOrchestratorComp_Injected))
 	{
 		FDamageReactionRequest damageReactionRequest;
 		damageReactionRequest.IntentSource = EReactionIntentSource::CombatSignalTarget;
@@ -472,7 +762,9 @@ void UCCombatSignalTargetComponent::DispatchAcceptedCombatResult(const FCombatSi
 	}
 	else
 	{
-		OnCombatSignalTargetReactionResolved.Broadcast(InCombatSignalTargetPacket, FReactionRequestResult());
+		FReactionRequestResult reactionResult;
+		reactionResult.ResultType = EReactionRequestResultType::Ignored;
+		OnCombatSignalTargetReactionResolved.Broadcast(InCombatSignalTargetPacket, reactionResult);
 	}
 
 	if (IsValid(HitFeedbackComp_Injected))
@@ -518,7 +810,29 @@ void UCCombatSignalTargetComponent::DispatchCombatResultToReceiver(const FCombat
 	FCombatSignalDebug::RecordCombatResultDispatchForAudit(InCombatSignalTargetPacket, combatResultPacket, receiverActor, TEXT("Delivered"));
 }
 
-// Helper
+// Combat Result Pipeline - Dispatch
+
+void UCCombatSignalTargetComponent::DispatchBalanceLifecycleReaction(const FBalanceLifecyclePacket& InBalanceLifecyclePacket) const
+{
+	if (!IsValid(ReactionOrchestratorComp_Injected))
+	{
+		FReactionRequestResult rejectedReactionResult;
+		rejectedReactionResult.ResultType = EReactionRequestResultType::Rejected;
+		rejectedReactionResult.RejectReason = EReactionRequestRejectReason::InvalidComponent;
+		OnBalanceLifecycleReactionRequestResolved.Broadcast(InBalanceLifecyclePacket, rejectedReactionResult);
+		return;
+	}
+
+	FBalanceLifecycleReactionRequest balanceLifecycleReactionRequest;
+	balanceLifecycleReactionRequest.IntentSource = EReactionIntentSource::BalanceLifecycle;
+	balanceLifecycleReactionRequest.ReactionType = InBalanceLifecyclePacket.ReactionType;
+	balanceLifecycleReactionRequest.BalanceLifecycleSerial = InBalanceLifecyclePacket.BalanceLifecycleSerial;
+
+	const FReactionRequestResult reactionResult = ReactionOrchestratorComp_Injected->RequestBalanceLifecycleReaction(balanceLifecycleReactionRequest);
+	OnBalanceLifecycleReactionRequestResolved.Broadcast(InBalanceLifecyclePacket, reactionResult);
+}
+
+// Combat Damage Pipeline - Helper
 
 AController* UCCombatSignalTargetComponent::ResolveInstigatorController(AController* EventInstigator, AActor* DamageCauser) const
 {
@@ -598,6 +912,7 @@ FCombatResultPacket UCCombatSignalTargetComponent::BuildCombatResultPacket(const
 	combatResultPacket.DefenseOutcome = InCombatSignalTargetPacket.Result.DefenseOutcome;
 	combatResultPacket.bDamageCommitted = InCombatSignalTargetPacket.Result.bShouldCommitDamage;
 	combatResultPacket.CommittedDamage = InCombatSignalTargetPacket.Result.CommittedDamage;
+	combatResultPacket.CombatSignalResultSerial = InCombatSignalTargetPacket.ResultSerial;
 
 	return combatResultPacket;
 }

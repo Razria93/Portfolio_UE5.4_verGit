@@ -209,6 +209,22 @@ void ACWeaponActor::AttachToHolsterSocket()
 	AttachToOwnerSocket(SocketName_Holster);
 }
 
+bool ACWeaponActor::GetAttachmentRelativeTransform(FTransform& OutRelativeTransform) const
+{
+	if (!IsValid(RootSceneComponent)) return false;
+
+	OutRelativeTransform = RootSceneComponent->GetRelativeTransform();
+	return true;
+}
+
+bool ACWeaponActor::SetAttachmentRelativeTransform(const FTransform& InRelativeTransform)
+{
+	if (!IsValid(RootSceneComponent)) return false;
+
+	RootSceneComponent->SetRelativeTransform(InRelativeTransform);
+	return true;
+}
+
 // Collision Notify Events
 
 void ACWeaponActor::CollisionEnabled(FName InName)

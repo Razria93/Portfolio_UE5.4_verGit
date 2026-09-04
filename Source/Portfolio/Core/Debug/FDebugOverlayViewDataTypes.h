@@ -1,7 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Debug/FBalanceDebug.h"
 #include "Core/Debug/FCombatParticipationDebug.h"
+#include "Core/Debug/FEnemyCombatTargetFacingDebug.h"
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Debug/FMovementDebug.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
 #include "Core/Debug/FTargetingDebug.h"
@@ -19,7 +22,7 @@ enum class EDebugOverlayRecentAIEventViewState : uint8
 	Captured,
 };
 
-enum class EDebugOverlayRecentExecutionViewState : uint8
+enum class EDebugOverlayRecentActionReactionViewState : uint8
 {
 	NotCaptured,
 	NoActor,
@@ -27,9 +30,9 @@ enum class EDebugOverlayRecentExecutionViewState : uint8
 	Captured,
 };
 
-struct FDebugOverlayRecentExecutionViewData
+struct FDebugOverlayRecentActionReactionViewData
 {
-	EDebugOverlayRecentExecutionViewState State = EDebugOverlayRecentExecutionViewState::NotCaptured;
+	EDebugOverlayRecentActionReactionViewState State = EDebugOverlayRecentActionReactionViewState::NotCaptured;
 	FString HeaderText;
 	FString SummaryText;
 };
@@ -40,9 +43,10 @@ struct FDebugOverlayActorStatusViewData
 	FString ActionText;
 	FString ReactionText;
 	FString HealthText;
-	FString StaggerText;
+	FString BalanceText;
 	FString GuardText;
-	FString MovementText;
+	FString MovementGaitRotationText;
+	FString LocomotionPresentationStateText;
 	FString RuntimeLODText;
 };
 
@@ -64,7 +68,7 @@ struct FDebugOverlayDeathLifecycleViewData
 {
 	FString HealthStateText;
 	FString LifecycleText;
-	FString DeadInText;
+	FString DeathEntryText;
 	FString PresentationText;
 	FString FallbackTimerText;
 	FString FinalizationText;
@@ -104,6 +108,21 @@ struct FDebugOverlayCombatParticipationViewData
 	TArray<FString> WorldSummaryLines;
 };
 
+struct FDebugOverlayBalanceCollapseViewData
+{
+	FBalanceDebugOverlayDetails Details;
+};
+
+struct FDebugOverlayCombatTargetFacingViewData
+{
+	FEnemyCombatTargetFacingDebugOverlayDetails Details;
+};
+
+struct FDebugOverlayExecutionSessionViewData
+{
+	FExecutionCollaborationDebugOverlayDetails Details;
+};
+
 struct FDebugOverlayActorPanelViewData
 {
 	FString HeaderText;
@@ -114,14 +133,20 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayPlayerTargetingViewData Targeting;
 	bool bIncludeLocomotion = false;
 	FDebugOverlayPlayerLocomotionViewData Locomotion;
+	bool bIncludeBalanceCollapse = false;
+	FDebugOverlayBalanceCollapseViewData BalanceCollapse;
+	bool bIncludeCombatTargetFacing = false;
+	FDebugOverlayCombatTargetFacingViewData CombatTargetFacing;
+	bool bIncludeExecutionSession = false;
+	FDebugOverlayExecutionSessionViewData ExecutionSession;
 	bool bIncludeCombatParticipation = false;
 	FDebugOverlayCombatParticipationViewData CombatParticipation;
 	bool bAppendBlankBeforeStatus = false;
 	FDebugOverlayActorStatusViewData Status;
-	FDebugOverlayRecentExecutionViewData RecentExecution;
+	FDebugOverlayRecentActionReactionViewData RecentActionReaction;
 	bool bIncludeDeathLifecycle = false;
 	FDebugOverlayDeathLifecycleViewData DeathLifecycle;
-	bool bIncludeRecentExecution = false;
+	bool bIncludeRecentActionReaction = false;
 	bool bIncludeCurrentAI = false;
 	FDebugOverlayCurrentAIViewData CurrentAI;
 	bool bIncludeRecentAIEvent = false;
@@ -140,6 +165,9 @@ struct FDebugOverlayEventLogViewData
 	bool bHasSnapshot = false;
 	int32 DisplayLimit = 0;
 	FString FilterText;
+	FString ScopeText;
+	FString SubjectText;
+	bool bFocusedScopeWithoutSubject = false;
 	TArray<FDebugOverlayEventLogEntryViewData> Entries;
 };
 
@@ -162,10 +190,7 @@ struct FDebugOverlayWorldSummaryViewData
 
 struct FDebugOverlayViewData
 {
-	FString MainPanelTitle;
 	TArray<FDebugOverlayActorPanelViewData> ActorPanels;
-	FString EventLogPanelTitle;
 	FDebugOverlayEventLogViewData EventLog;
-	FString WorldSummaryPanelTitle;
 	FDebugOverlayWorldSummaryViewData WorldSummary;
 };

@@ -1,5 +1,7 @@
 # UE5 Portfolio - AI Runtime LOD Policy Note
 
+> 2026.08.24 current Movement / Nav contract: `DisableStateRefresh` and `UCMovementComponent` tick disable were removed. `Portfolio.AI.RuntimeLOD.EnemyMovementMode` now supports only `0: Default` and `1: BlockMovementIntent`. Runtime LOD owns only the movement-intent overlay gate; Action / Reaction / Death own gameplay movement permission.
+
 ## 목적
 
 이 문서는 `P35: AI Runtime LOD 정책 정리`의 작업 기준을 정리한다.
@@ -140,7 +142,7 @@ ACEnemy는 movement LOD를 직접 polling하지 않는다.
 
 | 축 | Policy / Helper 책임 | Domain owner 책임 | 우선순위 |
 | --- | --- | --- | --- |
-| Movement / Nav | `FAIMovementRuntimeLODPolicy`가 `EnemyMovementMode`와 적용 mode를 해석 | `UCMovementComponent`가 movement intent, state refresh, active movement stop을 적용 | 적용됨 |
+| Movement / Nav | `FAIMovementRuntimeLODPolicy`가 `EnemyMovementMode`의 Default / BlockMovementIntent mode를 해석 | `UCMovementComponent`가 Runtime LOD overlay gate와 block 진입 시 active movement stop을 적용. Speed / Direction / Falling은 계속 갱신 | 적용됨 |
 | Enemy Actor Tick | Actor tick mode 해석은 별도 helper로 분리 가능 | `ACEnemy`가 actor tick enable / disable 적용 | 낮음 |
 | Mesh / Pose Visibility | mesh mode, combat-capable 여부, pose skip 허용 여부 판단 | `ACEnemy` 또는 mesh owner가 visibility / animation tick option 적용 | 중간 |
 | Animation Parameter Refresh | animation mode, refresh interval, counter gate 판단 | `CAnimInstance`가 parameter refresh skip / 실행 적용 | 높음 |

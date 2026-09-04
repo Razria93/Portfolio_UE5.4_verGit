@@ -4,6 +4,7 @@
 #include "Type/CActionTypes.h"
 #include "Type/CActionDataTypes.h"
 #include "Type/CExecutionTypes.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "CActionOrchestrationTypes.generated.h"
 
 // Enum
@@ -15,6 +16,7 @@ enum class EActionIntentSource : uint8
 
 	PlayerInput,
 	AI,
+	ExecutionCollaboration,
 
 	Max,
 };
@@ -134,6 +136,8 @@ enum class EActionRequestRejectReason : uint8
 	InvalidComponent,
 
 	Dead,
+	ExternalInputBlocked,
+	BalanceLifecycleBlocking,
 
 	InvalidState,
 	InvalidEquipment,
@@ -276,6 +280,16 @@ public:
 			*UEnum::GetValueAsString(IntentEvent)
 		);
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FExecutionActionRequest
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	FExecutionCollaborationContext CollaborationContext = FExecutionCollaborationContext();
 };
 
 // Resolution / Resolve Result

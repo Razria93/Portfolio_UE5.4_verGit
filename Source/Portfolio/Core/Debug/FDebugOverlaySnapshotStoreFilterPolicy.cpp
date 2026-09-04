@@ -1,4 +1,5 @@
 #include "Core/Debug/FDebugOverlaySnapshotStoreInternals.h"
+#include "Core/Debug/FDebugOverlayEventCategory.h"
 
 #include "HAL/IConsoleManager.h"
 
@@ -7,22 +8,16 @@ namespace
 {
 	// ===== CVars =====
 
-	TAutoConsoleVariable<int32> CVarDebugOverlayEnabled(
-		TEXT("Portfolio.DebugOverlay.Enabled"),
+	TAutoConsoleVariable<int32> CVarDebugOverlayHUDVisible(
+		TEXT("Portfolio.DebugOverlay.HUDVisible"),
 		0,
-		TEXT("Draw debug overlay evidence HUD. 0: disabled, 1: enabled."),
+		TEXT("Show the Debug Overlay HUD and world diagnostics. 0: hidden, 1: visible."),
 		ECVF_Default);
 
-	TAutoConsoleVariable<int32> CVarDebugOverlayCollect(
-		TEXT("Portfolio.DebugOverlay.Collect"),
+	TAutoConsoleVariable<int32> CVarDebugOverlayCaptureEnabled(
+		TEXT("Portfolio.DebugOverlay.CaptureEnabled"),
 		0,
-		TEXT("Collect debug overlay snapshot evidence. 0: disabled, 1: enabled."),
-		ECVF_Default);
-
-	TAutoConsoleVariable<int32> CVarDebugOverlayPreset(
-		TEXT("Portfolio.DebugOverlay.Preset"),
-		0,
-		TEXT("Select debug overlay display preset. 0: P0 minimum."),
+		TEXT("Capture future Debug Overlay Event Log entries and Actor histories. 0: disabled, 1: enabled."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarDebugOverlayEventLogLimit(
@@ -34,7 +29,13 @@ namespace
 	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogFilter(
 		TEXT("Portfolio.DebugOverlay.EventLogFilter"),
 		TEXT("All"),
-		TEXT("Filter debug overlay event log. Values: All, Execution, Combat, AI, Death."),
+		TEXT("Filter debug overlay event log. Values: All, ActionReaction, ExecutionSession, Combat, AI, Balance, Death, Facing."),
+		ECVF_Default);
+
+	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogScope(
+		TEXT("Portfolio.DebugOverlay.EventLogScope"),
+		TEXT("World"),
+		TEXT("Scope debug overlay event log. Values: World, FocusedEnemy."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarDebugOverlayHideNoiseEvents(
@@ -82,9 +83,9 @@ namespace
 
 	// ===== Display Filter Helpers =====
 
-	bool IsExecutionNoiseEvent(const FDebugOverlayEventEntry& InEntry)
+	bool IsActionReactionNoiseEvent(const FDebugOverlayEventEntry& InEntry)
 	{
-		if (!InEntry.Category.Equals(TEXT("Execution"), ESearchCase::IgnoreCase)) return false;
+		if (!InEntry.Category.Equals(DebugOverlayEventCategory::ActionReaction, ESearchCase::IgnoreCase)) return false;
 		if (!InEntry.EventName.Equals(TEXT("DecisionResolved"), ESearchCase::IgnoreCase)) return false;
 
 		const FString decision = ExtractSummaryFieldValue(InEntry.Summary, TEXT("Decision"));
@@ -123,7 +124,7 @@ namespace
 	{
 		if (SnapshotStoreConfig::ShouldHideNoiseEvents())
 		{
-			if (IsExecutionNoiseEvent(InEntry)) return true;
+			if (IsActionReactionNoiseEvent(InEntry)) return true;
 			if (IsCollisionDisableIgnoredEvent(InEntry)) return true;
 		}
 
@@ -135,52 +136,18 @@ namespace
 		return false;
 	}
 
-	// ===== Subject Role Helpers =====
-
-	bool IsTargetPacketEvent(const FDebugOverlayEventEntry& InEntry)
-	{
-		return InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
-			&& (InEntry.EventName.Contains(TEXT("TargetAccepted"), ESearchCase::IgnoreCase)
-				|| InEntry.EventName.Contains(TEXT("TargetRejected"), ESearchCase::IgnoreCase));
-	}
-
-	FString GetSubjectEventRoleLabel(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
-	{
-		if (!IsTargetPacketEvent(InEntry) || InSubjectName.IsEmpty()) return FString();
-
-		const bool bIsSource = InEntry.SourceName == InSubjectName;
-		const bool bIsTarget = InEntry.TargetName == InSubjectName;
-		const bool bIsOwner = InEntry.OwnerName == InSubjectName;
-
-		if (bIsSource && bIsTarget)
-		{
-			return TEXT("Self");
-		}
-
-		if (bIsSource)
-		{
-			return TEXT("Outgoing");
-		}
-
-		if (bIsTarget || bIsOwner)
-		{
-			return TEXT("Incoming");
-		}
-
-		return FString();
-	}
 }
 
 // ===== Runtime Config Accessors =====
 
-bool SnapshotStoreConfig::IsEnabled()
+bool SnapshotStoreConfig::IsHudVisible()
 {
-	return CVarDebugOverlayEnabled.GetValueOnGameThread() != 0;
+	return CVarDebugOverlayHUDVisible.GetValueOnGameThread() != 0;
 }
 
 bool SnapshotStoreConfig::IsCollecting()
 {
-	return CVarDebugOverlayCollect.GetValueOnGameThread() != 0;
+	return CVarDebugOverlayCaptureEnabled.GetValueOnGameThread() != 0;
 }
 
 int32 SnapshotStoreConfig::GetEventLogDisplayLimitRaw()
@@ -191,6 +158,11 @@ int32 SnapshotStoreConfig::GetEventLogDisplayLimitRaw()
 FString SnapshotStoreConfig::GetEventLogFilterRaw()
 {
 	return CVarDebugOverlayEventLogFilter.GetValueOnGameThread();
+}
+
+FString SnapshotStoreConfig::GetEventLogScopeRaw()
+{
+	return CVarDebugOverlayEventLogScope.GetValueOnGameThread();
 }
 
 bool SnapshotStoreConfig::ShouldHideNoiseEvents()
@@ -207,24 +179,39 @@ bool SnapshotStoreConfig::ShouldHideCollisionWindowEvents()
 
 FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 {
-	if (InFilter.Equals(TEXT("Execution"), ESearchCase::IgnoreCase))
+	if (InFilter.Equals(DebugOverlayEventCategory::ActionReaction, ESearchCase::IgnoreCase))
 	{
-		return TEXT("Execution");
+		return DebugOverlayEventCategory::ActionReaction;
 	}
 
-	if (InFilter.Equals(TEXT("Combat"), ESearchCase::IgnoreCase))
+	if (InFilter.Equals(DebugOverlayEventCategory::ExecutionSession, ESearchCase::IgnoreCase))
 	{
-		return TEXT("Combat");
+		return DebugOverlayEventCategory::ExecutionSession;
 	}
 
-	if (InFilter.Equals(TEXT("AI"), ESearchCase::IgnoreCase))
+	if (InFilter.Equals(DebugOverlayEventCategory::Combat, ESearchCase::IgnoreCase))
 	{
-		return TEXT("AI");
+		return DebugOverlayEventCategory::Combat;
 	}
 
-	if (InFilter.Equals(TEXT("Death"), ESearchCase::IgnoreCase))
+	if (InFilter.Equals(DebugOverlayEventCategory::AI, ESearchCase::IgnoreCase))
 	{
-		return TEXT("Death");
+		return DebugOverlayEventCategory::AI;
+	}
+
+	if (InFilter.Equals(DebugOverlayEventCategory::Balance, ESearchCase::IgnoreCase))
+	{
+		return DebugOverlayEventCategory::Balance;
+	}
+
+	if (InFilter.Equals(DebugOverlayEventCategory::Death, ESearchCase::IgnoreCase))
+	{
+		return DebugOverlayEventCategory::Death;
+	}
+
+	if (InFilter.Equals(DebugOverlayEventCategory::Facing, ESearchCase::IgnoreCase))
+	{
+		return DebugOverlayEventCategory::Facing;
 	}
 
 	return TEXT("All");
@@ -233,6 +220,18 @@ FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 FString EventFilterPolicy::GetCanonicalEventLogFilter()
 {
 	return NormalizeEventLogFilter(SnapshotStoreConfig::GetEventLogFilterRaw());
+}
+
+FString EventFilterPolicy::NormalizeEventLogScope(const FString& InScope)
+{
+	return InScope.Equals(TEXT("FocusedEnemy"), ESearchCase::IgnoreCase)
+		? TEXT("FocusedEnemy")
+		: TEXT("World");
+}
+
+FString EventFilterPolicy::GetCanonicalEventLogScope()
+{
+	return NormalizeEventLogScope(SnapshotStoreConfig::GetEventLogScopeRaw());
 }
 
 int32 EventFilterPolicy::GetClampedEventLogDisplayLimit()
@@ -248,14 +247,7 @@ bool EventFilterPolicy::ShouldIncludeEventForDisplay(const FDebugOverlayEventEnt
 	const FString filter = NormalizeEventLogFilter(InFilter);
 	if (filter != TEXT("All"))
 	{
-		if (filter == TEXT("Combat"))
-		{
-			const bool bIsCombatCategory =
-				InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase)
-				|| InEntry.Category.Equals(TEXT("CombatResult"), ESearchCase::IgnoreCase);
-			if (!bIsCombatCategory) return false;
-		}
-		else if (!InEntry.Category.Equals(filter, ESearchCase::IgnoreCase))
+		if (!InEntry.Category.Equals(filter, ESearchCase::IgnoreCase))
 		{
 			return false;
 		}
@@ -267,55 +259,4 @@ bool EventFilterPolicy::ShouldIncludeEventForDisplay(const FDebugOverlayEventEnt
 
 // ===== Subject Matching =====
 
-bool EventFilterPolicy::DoesEventMatchSubject(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
-{
-	if (InSubjectName.IsEmpty()) return false;
-
-	const bool bMatchesAnyRole =
-		InEntry.OwnerName == InSubjectName
-		|| InEntry.SourceName == InSubjectName
-		|| InEntry.TargetName == InSubjectName;
-
-	if (InEntry.Category.Equals(TEXT("Execution"), ESearchCase::IgnoreCase))
-	{
-		return InEntry.OwnerName == InSubjectName;
-	}
-
-	if (InEntry.Category.Equals(TEXT("AI"), ESearchCase::IgnoreCase))
-	{
-		return InEntry.OwnerName == InSubjectName
-			|| InEntry.SourceName == InSubjectName;
-	}
-
-	if (InEntry.Category.Equals(TEXT("CombatResult"), ESearchCase::IgnoreCase))
-	{
-		return InEntry.OwnerName == InSubjectName
-			|| InEntry.TargetName == InSubjectName;
-	}
-
-	if (InEntry.Category.Equals(TEXT("Combat"), ESearchCase::IgnoreCase))
-	{
-		if (InEntry.EventName.Contains(TEXT("Collision"), ESearchCase::IgnoreCase))
-		{
-			return InEntry.OwnerName == InSubjectName
-				|| InEntry.SourceName == InSubjectName;
-		}
-
-		return bMatchesAnyRole;
-	}
-
-	return bMatchesAnyRole;
-}
-
-FDebugOverlayEventEntry EventFilterPolicy::MakeSubjectDisplayEventEntry(const FDebugOverlayEventEntry& InEntry, const FString& InSubjectName)
-{
-	FDebugOverlayEventEntry entry = InEntry;
-	const FString roleLabel = GetSubjectEventRoleLabel(entry, InSubjectName);
-	if (!roleLabel.IsEmpty())
-	{
-		entry.EventName = FString::Printf(TEXT("%s(%s)"), *entry.EventName, *roleLabel);
-	}
-
-	return entry;
-}
 #endif

@@ -12,9 +12,6 @@ enum class EDebugOverlayFocusSource : uint8
 	WorldScanFallback,
 	PlayerTargetFocus,
 
-	// Gameplay-provided source.
-	GameplayFocus,
-
 	// Editor-provided source.
 	OutlinerFocus,
 };

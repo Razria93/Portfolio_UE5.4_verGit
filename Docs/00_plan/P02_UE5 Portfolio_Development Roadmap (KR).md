@@ -23,25 +23,27 @@
 
 ```text
 최근 완료
-→ Enemy Death Presentation / Destroy Lifecycle
+→ P60. Shared Combat Target and Evidence-Based Combat Participation
 
-현재 진행
-→ R01. 공통 Combat Target 상태 기반
+현재 보완
+→ F07. Combat Participation Review Follow-up
 
-다음 작업
-→ R02. 피격 기반 Enemy Engage 진입
+현재 작업
+→ R07. Resource 계층 정리
 ```
 
 현재 브랜치:
 
 ```text
-feature/combat-target-provider
+fix/combat-participation-review-followup
 ```
 
 현재 작업의 상세 기준 문서:
 
-- [S32 Common Combat Target Architecture](../05_System_Architecture/S32_UE5_Portfolio_System_Architecture.md)
-- 브랜치에서 별도 생성하는 Combat Target Migration WorkPlan
+- [P60 Shared Combat Target and Evidence-Based Combat Participation](../04_Pull_Request/P60_UE5_Portfolio_Pull_Request.md)
+- [S33 Combat Target / Participation Architecture](../05_System_Architecture/S33_UE5_Portfolio_System_Architecture.md)
+- [S34 Combat Participation Policy](../05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md)
+- [S31 Enemy Death Lifecycle Architecture](../05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md)
 
 ---
 
@@ -51,33 +53,45 @@ feature/combat-target-provider
 
 이 단계는 Player와 Enemy가 같은 전투 계약을 사용할 수 있도록 Target, Facing, Feedback, Death 경계를 정리한다.
 
-| ID | 작업 | 상태 | 핵심 결과 |
-|---|---|---|---|
-| R01 | 공통 Combat Target 상태 기반 | 진행 | Player/Enemy의 전투 대상 SoT와 수명 계약을 Character 공통 컴포넌트로 통합 |
-| R02 | 피격 기반 Enemy Engage 진입 | 다음 | 피격한 공격자를 유효한 전투 대상으로 반영하고 Engage 유지 |
-| R03 | Action 구간 기반 Facing 보정 | 대기 | 공격 초반에는 목표를 부드럽게 추적하고 타격 구간에서는 방향 고정 |
-| R04 | Enemy Focus 및 8Way 이동 정리 | 대기 | Alert/Engage 이동과 공격 방향이 현재 전투 대상에 일치 |
-| R05 | Player/Enemy 컴포넌트 계약 대칭화 | 대기 | Targeting·Feedback 등 한쪽에만 존재하는 책임을 공통 계약으로 정리 |
-| R06 | Enemy Death Lifecycle 컴포넌트화 검토·적용 | 대기 | Character에 집중된 사망 생명주기 책임의 독립 여부 확정 |
+| ID  | 작업                                | 상태  | 핵심 결과                                                                                                               |
+| --- | --------------------------------- | --- | ------------------------------------------------------------------------------------------------------------------- |
+| R01 | 공통 Combat Target 상태 기반            | 완료  | Player/Enemy의 Combat Target SoT, weak/EndPlay/revision 수명 계약을 공통 컴포넌트로 통합                                           |
+| R02 | 피격 기반 Enemy Engage 진입             | 완료  | Perception/HitReactive Active Evidence를 공통 allocator로 통합하고, live HitReactive Evidence 기반 Extra Engage admission을 적용 |
+| R03 | Action 구간 기반 Facing 보정            | 비채택 | 현재 Combat Target 기반 Focus/Facing과 directional locomotion이 자연스러운 경험을 제공하므로 별도 Action 구간 고정 정책은 적용하지 않음               |
+| R04 | Enemy Focus 및 8Way 이동 정리          | 완료  | Combat Target 기반 Gameplay Focus/Facing, ControllerDesired와 directional locomotion presentation으로 이동·공격 방향을 정렬       |
+| R05 | Player/Enemy 컴포넌트 계약 대칭화          | 완료  | 공통 Target/Action/Signal 수명 계약을 정리하고, 입력·AI 선택·표현·제거 정책의 비대칭은 역할 차이로 유지                                              |
+| R06 | Enemy Death Lifecycle 컴포넌트화 검토·적용 | 완료  | Health·Reaction·Feedback·ACEnemy coordinator 경계를 확정하고, 현 규모에서는 Actor-owned coordinator를 유지                          |
 
 Phase A 완료 기준:
 
 ```text
 Player와 Enemy 모두 동일한 Target 계약 사용
 → 피격·AI 의도·플레이어 락온이 일관된 대상 문맥으로 수렴
-→ Action이 필요한 구간에서만 회전 보정
 → 이동·공격·피격 후 전투태세가 같은 Target을 기준으로 동작
-→ Feedback와 Death 책임 경계가 양측 캐릭터에서 일관됨
+→ Target/Action/Signal의 공통 수명 계약과 Player·Enemy별 의도 정책이 분리됨
+→ Health·Reaction·Feedback·Actor finalization의 Death 책임 경계가 명확함
 ```
+
+### Phase A 후속 TODO / 재검토 조건
+
+아래 항목은 Phase A 완료 조건이 아니다. 실제 요구가 생길 때만 별도 작업으로 다시 연다.
+
+| 항목                      | 다시 여는 조건                                                            | 처리 방향                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Action 구간 Facing 보정     | 현재 Focus/Facing만으로 해결되지 않는 실제 조작감 또는 공격 연출 문제가 확인될 때                | R03을 별도 설계로 재개한다. 공격 종류별 회전 고정이 아니라 문제 상황과 필요한 presentation 계약부터 정의한다.                                                      |
+| Player Death 정책         | Player 사망, Game Over, checkpoint, respawn 또는 spectator 규칙이 확정될 때    | `UCHealthComponent`의 공통 Dead 상태와 `UCCharacterFeedbackComponent`의 presentation capability를 사용하되, Player 최종 정책은 Player가 소유한다. |
+| Death Lifecycle 컴포넌트 추출 | pooling, revive, 다수 Enemy 계열의 재사용, lifecycle variant 증가 중 하나가 발생할 때 | `ACEnemy` coordinator를 먼저 일반화하지 않는다. 재사용되는 상태 전이와 presentation 계약만 검증한 뒤 component extraction을 검토한다.                        |
+| Component reference 분할  | 공통 reference bag의 actor 전용 capability가 실제 유지보수 비용이나 잘못된 의존성을 만들 때   | `FCharacterComponentReferences`를 기능별 capability context로 분할하는 리팩터링을 별도 범위로 검토한다.                                            |
+| Player CombatResult policy 활성화 | Enemy가 Player에게 Parry를 적용하는 gameplay와 Player Balance/Collapse 정책이 확정될 때 | Player도 `ReceiveCombatResultPacket → UCCombatSignalTargetComponent` 공통 ingress만 사용한다. `UCBalanceComponent` 도입과 Player 전용 표현 정책은 해당 시점에 함께 구현한다. |
 
 ### Phase B. 전투 자원과 처형 기반
 
 Phase A의 공통 대상 및 실행 계약이 안정된 뒤 전투 자원과 협업 실행을 확장한다.
 
-| ID | 작업 | 상태 | 핵심 결과 |
-|---|---|---|---|
-| R07 | Resource 계층 정리 | 대기 | Enemy Balance와 Player Beta/Burst 자원의 소유·이벤트 계약 확정 |
-| R08 | Execution 시스템 | 대기 | 일반/즉사 처형의 Action·Reaction 협업 실행 |
+| ID  | 작업             | 상태  | 핵심 결과                                                                |
+| --- | -------------- | --- | -------------------------------------------------------------------- |
+| R07 | Resource 계층 정리 | 완료  | Enemy Balance / Collapse lifecycle, authored asset 연결, 기본 PIE 흐름을 반영. 세부 outcome 회귀 매트릭스는 지속 검증 |
+| R08 | Execution 시스템  | 구현 완료 / 검증 진행 | Standard / Lethal Action·Reaction pair, Balance / Death handoff, participant movement collision 정책을 반영 |
 
 권장 의존성:
 
@@ -158,16 +172,16 @@ Phase E
 
 현재 로드맵은 14개의 상위 작업 단위로 관리한다.
 
-| 구간 | 전체 | 진행 | 다음 | 대기 |
-|---|---:|---:|---:|---:|
-| Phase A. 공통 전투 기반 | 6 | 1 | 1 | 4 |
-| Phase B. 자원·처형 | 2 | 0 | 0 | 2 |
-| Phase C. 반응·회피 | 2 | 0 | 0 | 2 |
-| Phase D. 특수 액션 | 2 | 0 | 0 | 2 |
-| Phase E. UI·Debug | 2 | 0 | 0 | 2 |
-| **합계** | **14** | **1** | **1** | **12** |
+| 구간 | 전체 | 완료 | 진행 | 다음 | 대기 | 비채택 |
+|---|---:|---:|---:|---:|---:|---:|
+| Phase A. 공통 전투 기반 | 6 | 5 | 0 | 0 | 0 | 1 |
+| Phase B. 자원·처형 | 2 | 0 | 1 | 0 | 1 | 0 |
+| Phase C. 반응·회피 | 2 | 0 | 0 | 0 | 2 | 0 |
+| Phase D. 특수 액션 | 2 | 0 | 0 | 0 | 2 | 0 |
+| Phase E. UI·Debug | 2 | 0 | 0 | 0 | 2 | 0 |
+| **합계** | **14** | **5** | **1** | **0** | **7** | **1** |
 
-즉 현재 브랜치를 포함해 14개의 상위 단계가 남아 있으며, 현재 작업 완료 후에는 13개의 후속 단계가 남는다. 각 상위 단계는 구현 전 프로젝트 조사 결과에 따라 하나 이상의 브랜치로 분할될 수 있다.
+따라서 완료된 5개 항목과 비채택 R03을 제외하면, 현재 R07을 포함해 구현 대상으로 남은 상위 단계는 8개다. 각 상위 단계는 구현 전 프로젝트 조사 결과에 따라 하나 이상의 브랜치로 분할될 수 있다.
 
 이 숫자는 작업량의 절대 시간 추정치가 아니라, 기능군의 남은 범위를 확인하기 위한 진행 지표다.
 
@@ -223,9 +237,11 @@ P02에는 다음 내용만 갱신한다.
 
 - [Documentation Index](../00_Documentation_Index.md)
 - [System Architecture Index](../05_System_Architecture/00_System_Architecture_Index.md)
-- [S30 Balance / Collapse / Executionable](../05_System_Architecture/S30_UE5_Portfolio_System_Architecture.md)
+- [S35 Enemy Balance / Collapse Lifecycle](../05_System_Architecture/S35_UE5_Portfolio_Enemy_Balance_Collapse_Architecture.md)
+- [S36 Execution Collaboration Architecture](../05_System_Architecture/S36_UE5_Portfolio_Execution_Collaboration_Architecture.md)
 - [S31 Enemy Death / Presentation / Destroy](../05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md)
-- [S32 Common Combat Target Architecture](../05_System_Architecture/S32_UE5_Portfolio_System_Architecture.md)
+- [S33 Common Combat Target / Participation Architecture](../05_System_Architecture/S33_UE5_Portfolio_System_Architecture.md)
+- [S34 Combat Participation Policy](../05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md)
 
 ---
 
@@ -234,10 +250,11 @@ P02에는 다음 내용만 갱신한다.
 현재 프로젝트의 우선순위는 개별 전투 기능을 빠르게 추가하는 것이 아니라, 후속 기능이 공통으로 의존할 Target·Facing·Feedback·Death 기반을 먼저 고정하는 것이다.
 
 ```text
-현재: R01 Combat Target Foundation
-다음: R02 Hit Engage
-그 이후: Facing → Focus/8Way → Contract Symmetry → Death Boundary
-후속: Resource → Execution → Hit/Dodge → Special Actions → UI/Debug
+현재: R07 Resource 계층 및 R08 Execution Collaboration 구현 반영
+→ S35의 Enemy Balance / Collapse lifecycle과 S36의 pair-session 계약을 기준으로 운영
+→ Standard / Lethal outcome별 회귀 검증과 증적 캡처를 지속
+그 이후: R09/R10 반응·회피 확장
+후속: 특수 Action → UI/Debug
 ```
 
 이 문서를 통해 현재 브랜치가 끝났을 때 다음 작업과 전체 잔여 범위를 바로 확인할 수 있어야 한다.

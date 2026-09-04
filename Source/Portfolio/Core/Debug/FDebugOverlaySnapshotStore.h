@@ -25,10 +25,11 @@ class PORTFOLIO_API FDebugOverlaySnapshotStore
 public:
 	// ===== Runtime Gates =====
 
-	static bool IsEnabled();
+	static bool IsHudVisible();
 	static bool IsCollecting();
 	static int32 GetEventLogDisplayLimit();
 	static FString GetEventLogFilter();
+	static FString GetEventLogScope();
 
 	// ===== Execution Record API =====
 
@@ -44,18 +45,23 @@ public:
 
 	static void RecordAICombatTask(const UObject* InWorldContextObject, const AAIController* InAIController, const APawn* InOwnerPawn, const AActor* InTargetActor, const FString& InIntentState, const FString& InSubState, const FString& InRequestResult, const FString& InRejectReason, const TCHAR* InEventName);
 
+	// ===== Facing Record API =====
+
+	static void RecordFacingTransition(const UObject* InWorldContextObject, const FDebugOverlayFacingTransition& InTransition);
+
 	// ===== Event Log API =====
 
-	static void AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary);
+	static void AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary, const AActor* InOwnerActor = nullptr, const AActor* InSourceActor = nullptr, const AActor* InTargetActor = nullptr);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter);
-	static TArray<FDebugOverlayEventEntry> GetRecentEventsForSubjectCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const FString& InSubjectName);
+	static TArray<FDebugOverlayEventEntry> GetRecentEventsForActorCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const AActor* InActor);
+	static void RemoveActorDebugData(const UObject* InWorldContextObject, const AActor* InActor);
 
 	// ===== Snapshot Query API =====
 
 	static bool TryGetSnapshotCopy(const UObject* InWorldContextObject, FDebugOverlaySnapshot& OutSnapshot);
 	static bool TryGetRecentCombatPair(const UObject* InWorldContextObject, FDebugOverlayRecentCombatPair& OutPair);
-	static bool TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary);
+	static bool TryGetRecentAIForActor(const UObject* InWorldContextObject, const APawn* InPawn, FDebugOverlayAISummary& OutSummary);
 
 	// ===== Lifecycle API =====
 

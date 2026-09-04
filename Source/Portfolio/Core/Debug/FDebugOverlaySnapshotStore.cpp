@@ -1,5 +1,6 @@
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FDebugOverlaySnapshotStoreInternals.h"
+#include "Core/Debug/FDebugOverlayEventCategory.h"
 
 #include "Type/CCombatResultTypes.h"
 #include "Type/CCombatSignalTargetTypes.h"
@@ -8,12 +9,62 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 
+#if !UE_BUILD_SHIPPING
+namespace
+{
+	void PruneInvalidAIActorSummaries(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore)
+	{
+		for (auto it = InStore.LastAIByPawn.CreateIterator(); it; ++it)
+		{
+			if (!it.Key().IsValid())
+			{
+				it.RemoveCurrent();
+			}
+		}
+	}
+
+	void EnforceAIActorSummaryCapacity(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore)
+	{
+		while (InStore.LastAIByPawn.Num() >= DebugOverlaySnapshotStoreInternals::MaxAIActorSummaries)
+		{
+			TOptional<TWeakObjectPtr<APawn>> oldestKey;
+			uint64 oldestFrameNumber = MAX_uint64;
+			for (const TPair<TWeakObjectPtr<APawn>, FDebugOverlayAISummary>& pair : InStore.LastAIByPawn)
+			{
+				if (pair.Value.FrameNumber < oldestFrameNumber)
+				{
+					oldestKey = pair.Key;
+					oldestFrameNumber = pair.Value.FrameNumber;
+				}
+			}
+
+			if (!oldestKey.IsSet()) return;
+			InStore.LastAIByPawn.Remove(oldestKey.GetValue());
+		}
+	}
+
+	void RecordAIActorSummary(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore, const APawn* InPawn, const FDebugOverlayAISummary& InSummary)
+	{
+		if (!IsValid(InPawn)) return;
+
+		const TWeakObjectPtr<APawn> pawnKey(const_cast<APawn*>(InPawn));
+		if (!InStore.LastAIByPawn.Contains(pawnKey))
+		{
+			PruneInvalidAIActorSummaries(InStore);
+			EnforceAIActorSummaryCapacity(InStore);
+		}
+
+		InStore.LastAIByPawn.FindOrAdd(pawnKey) = InSummary;
+	}
+}
+#endif
+
 // ===== Runtime Gates =====
 
-bool FDebugOverlaySnapshotStore::IsEnabled()
+bool FDebugOverlaySnapshotStore::IsHudVisible()
 {
 #if !UE_BUILD_SHIPPING
-	return SnapshotStoreConfig::IsEnabled();
+	return SnapshotStoreConfig::IsHudVisible();
 #else
 	return false;
 #endif
@@ -46,6 +97,15 @@ FString FDebugOverlaySnapshotStore::GetEventLogFilter()
 #endif
 }
 
+FString FDebugOverlaySnapshotStore::GetEventLogScope()
+{
+#if !UE_BUILD_SHIPPING
+	return EventFilterPolicy::GetCanonicalEventLogScope();
+#else
+	return TEXT("World");
+#endif
+}
+
 // ===== Execution Record API =====
 
 void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldContextObject, const AActor* InOwnerActor, const FString& InDomain, const FString& InSubject, const FString& InDecision, const FString& InApplyMode, const FString& InRejectReason, const TCHAR* InEventName)
@@ -58,7 +118,7 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
-	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("ExecutionDecision"));
+	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("ActionReactionDecision"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	const FString summary = FString::Printf(
 		TEXT("Owner: %s | Domain: %s | Subject: %s | Decision: %s | Apply: %s | RejectReason: %s"),
@@ -69,17 +129,17 @@ void FDebugOverlaySnapshotStore::RecordExecutionDecision(const UObject* InWorldC
 		*SnapshotRecordBuilders::FormatCompactEnumText(InApplyMode),
 		*SnapshotRecordBuilders::FormatCompactReasonText(InRejectReason));
 
-	store->Snapshot.LastExecution.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastExecution.FrameNumber = stamp.FrameNumber;
-	store->Snapshot.LastExecution.WorldTimeSeconds = stamp.WorldTimeSeconds;
-	store->Snapshot.LastExecution.OwnerName = ownerName;
-	store->Snapshot.LastExecution.Domain = InDomain;
-	store->Snapshot.LastExecution.Decision = InDecision;
-	store->Snapshot.LastExecution.ApplyMode = InApplyMode;
-	store->Snapshot.LastExecution.RejectReason = InRejectReason;
-	store->Snapshot.LastExecution.Summary = summary;
+	store->Snapshot.LastActionReaction.CaptureState = EDebugOverlayCaptureState::Captured;
+	store->Snapshot.LastActionReaction.FrameNumber = stamp.FrameNumber;
+	store->Snapshot.LastActionReaction.WorldTimeSeconds = stamp.WorldTimeSeconds;
+	store->Snapshot.LastActionReaction.OwnerName = ownerName;
+	store->Snapshot.LastActionReaction.Domain = InDomain;
+	store->Snapshot.LastActionReaction.Decision = InDecision;
+	store->Snapshot.LastActionReaction.ApplyMode = InApplyMode;
+	store->Snapshot.LastActionReaction.RejectReason = InRejectReason;
+	store->Snapshot.LastActionReaction.Summary = summary;
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Execution"), eventName, ownerName, FString(), FString(), summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, DebugOverlayEventCategory::ActionReaction, eventName, ownerName, FString(), FString(), summary), InOwnerActor);
 #endif
 }
 
@@ -96,14 +156,15 @@ void FDebugOverlaySnapshotStore::RecordWeaponCollisionWindow(const UObject* InWo
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
 	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("WeaponCollisionWindow"));
 	const FString ownerName = GetNameSafe(InOwnerActor);
-	const FString summary = FString::Printf(
-		TEXT("State: %s | HitWindow: %d | Collision: %s | Reason: %s"),
-		*SnapshotRecordBuilders::FormatCompactEnumText(InHitWindowState),
-		InHitWindowId,
-		*InCollisionName.ToString(),
-		*SnapshotRecordBuilders::FormatCompactReasonText(SnapshotRecordBuilders::FormatReasonOrNone(InReason)));
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, ownerName, ownerName, FString(), summary));
+	FDebugOverlayCombatEventDetails combatDetails;
+	combatDetails.Kind = EDebugOverlayCombatEventKind::CollisionWindow;
+	combatDetails.CollisionState = SnapshotRecordBuilders::FormatCompactEnumText(InHitWindowState);
+	combatDetails.HitWindowId = InHitWindowId;
+	combatDetails.CollisionName = InCollisionName.ToString();
+	combatDetails.Reason = SnapshotRecordBuilders::FormatCompactReasonText(SnapshotRecordBuilders::FormatReasonOrNone(InReason));
+
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeCombatEventEntry(world, eventName, ownerName, ownerName, FString(), combatDetails), InOwnerActor, InWeaponActor);
 #endif
 }
 
@@ -121,37 +182,43 @@ void FDebugOverlaySnapshotStore::RecordCombatTargetPacket(const UObject* InWorld
 	const FString sourceName = GetNameSafe(InPacket.Context.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.Context.TargetActor);
 	const FString causerName = GetNameSafe(InPacket.Context.DamageCauser);
-	const FString outcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
-	const FString summary = FString::Printf(
-		TEXT("Attacker: %s | Defender: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | Accepted: %s"),
-		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.SourceActor),
-		*SnapshotRecordBuilders::FormatDisplayNameOrNA(InPacket.Context.TargetActor),
-		*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
-		InPacket.Result.RequestDamage,
-		InPacket.Result.MitigatedDamage,
-		InPacket.Result.FinalTakenDamage,
-		InPacket.Result.CommittedDamage,
-		InPacket.Result.bAccepted ? TEXT("true") : TEXT("false"));
+	const FString defenseOutcome = UEnum::GetValueAsString(InPacket.Result.DefenseOutcome);
+	const FString reactionOutcome = UEnum::GetValueAsString(InPacket.Result.ReactionOutcome);
 
-	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastCombat.FrameNumber = stamp.FrameNumber;
-	store->Snapshot.LastCombat.WorldTimeSeconds = stamp.WorldTimeSeconds;
-	store->Snapshot.LastCombat.SourceName = sourceName;
-	store->Snapshot.LastCombat.TargetName = targetName;
-	store->Snapshot.LastCombat.DamageCauserName = causerName;
-	store->Snapshot.LastCombat.DefenseOutcome = outcome;
-	store->Snapshot.LastCombat.bHasDamageCommit = true;
-	store->Snapshot.LastCombat.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
-	store->Snapshot.LastCombat.bHasDamageBreakdown = true;
-	store->Snapshot.LastCombat.RequestDamage = InPacket.Result.RequestDamage;
-	store->Snapshot.LastCombat.MitigatedDamage = InPacket.Result.MitigatedDamage;
-	store->Snapshot.LastCombat.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
-	store->Snapshot.LastCombat.CommittedDamage = InPacket.Result.CommittedDamage;
-	store->Snapshot.LastCombat.Summary = summary;
+	FDebugOverlayCombatEventDetails combatDetails;
+	combatDetails.Kind = EDebugOverlayCombatEventKind::TargetResolution;
+	combatDetails.DefenseOutcome = defenseOutcome;
+	combatDetails.ReactionOutcome = reactionOutcome;
+	combatDetails.bHasDamageBreakdown = true;
+	combatDetails.RequestDamage = InPacket.Result.RequestDamage;
+	combatDetails.MitigatedDamage = InPacket.Result.MitigatedDamage;
+	combatDetails.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
+	combatDetails.bHasDamageCommit = true;
+	combatDetails.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
+	combatDetails.CommittedDamage = InPacket.Result.CommittedDamage;
+	combatDetails.bHasAccepted = true;
+	combatDetails.bAccepted = InPacket.Result.bAccepted;
+
+	FDebugOverlayCombatResolutionSummary& lastCombatResolution = store->Snapshot.LastCombatResolution;
+	lastCombatResolution.CaptureState = EDebugOverlayCaptureState::Captured;
+	lastCombatResolution.FrameNumber = stamp.FrameNumber;
+	lastCombatResolution.WorldTimeSeconds = stamp.WorldTimeSeconds;
+	lastCombatResolution.SourceName = sourceName;
+	lastCombatResolution.TargetName = targetName;
+	lastCombatResolution.DamageCauserName = causerName;
+	lastCombatResolution.DefenseOutcome = defenseOutcome;
+	lastCombatResolution.ReactionOutcome = reactionOutcome;
+	lastCombatResolution.bHasDamageCommit = true;
+	lastCombatResolution.bDamageCommitted = !FMath::IsNearlyZero(InPacket.Result.CommittedDamage);
+	lastCombatResolution.bHasDamageBreakdown = true;
+	lastCombatResolution.RequestDamage = InPacket.Result.RequestDamage;
+	lastCombatResolution.MitigatedDamage = InPacket.Result.MitigatedDamage;
+	lastCombatResolution.FinalTakenDamage = InPacket.Result.FinalTakenDamage;
+	lastCombatResolution.CommittedDamage = InPacket.Result.CommittedDamage;
 
 	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.Context.SourceActor, InPacket.Context.TargetActor, eventName);
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("Combat"), eventName, targetName, sourceName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeCombatEventEntry(world, eventName, targetName, sourceName, targetName, combatDetails), InPacket.Context.TargetActor, InPacket.Context.SourceActor, InPacket.Context.TargetActor);
 #endif
 }
 
@@ -164,57 +231,20 @@ void FDebugOverlaySnapshotStore::RecordCombatResult(const UObject* InWorldContex
 	if (!store) return;
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
-	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
 	const FString eventName = SnapshotRecordBuilders::FormatEventNameOrFallback(InEventName, TEXT("CombatResult"));
 	const FString receiverName = GetNameSafe(InReceiverActor);
 	const FString sourceName = GetNameSafe(InPacket.SourceActor);
 	const FString targetName = GetNameSafe(InPacket.TargetActor);
-	const FString causerName = GetNameSafe(InPacket.DamageCauser);
 	const FString outcome = UEnum::GetValueAsString(InPacket.DefenseOutcome);
-	const FString resultSourceName = SnapshotRecordBuilders::ResolveCombatResultSourceName(InReceiverActor, InPacket);
-	const bool bHasPreviousDamageBreakdown = store->Snapshot.LastCombat.bHasDamageBreakdown
-		&& SnapshotRecordBuilders::IsSameCombatPair(store->Snapshot.LastCombat, sourceName, targetName);
-	const float requestDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.RequestDamage : 0.f;
-	const float mitigatedDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.MitigatedDamage : 0.f;
-	const float finalTakenDamage = bHasPreviousDamageBreakdown ? store->Snapshot.LastCombat.FinalTakenDamage : 0.f;
-	const FString summary = bHasPreviousDamageBreakdown
-		? FString::Printf(
-			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Request: %.3f | Mitigated: %.3f | Final: %.3f | Commit: %.3f | DamageCommitted: %s"),
-			*resultSourceName,
-			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
-			requestDamage,
-			mitigatedDamage,
-			finalTakenDamage,
-			InPacket.CommittedDamage,
-			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"))
-		: FString::Printf(
-			TEXT("ResultFrom: %s | ResultReceiver: %s | Outcome: %s | Commit: %.3f | DamageCommitted: %s"),
-			*resultSourceName,
-			*SnapshotRecordBuilders::FormatDisplayNameOrNA(InReceiverActor),
-			*SnapshotRecordBuilders::FormatCompactEnumText(outcome),
-			InPacket.CommittedDamage,
-			InPacket.bDamageCommitted ? TEXT("true") : TEXT("false"));
 
-	store->Snapshot.LastCombat.CaptureState = EDebugOverlayCaptureState::Captured;
-	store->Snapshot.LastCombat.FrameNumber = stamp.FrameNumber;
-	store->Snapshot.LastCombat.WorldTimeSeconds = stamp.WorldTimeSeconds;
-	store->Snapshot.LastCombat.SourceName = sourceName;
-	store->Snapshot.LastCombat.TargetName = targetName;
-	store->Snapshot.LastCombat.DamageCauserName = causerName;
-	store->Snapshot.LastCombat.DefenseOutcome = outcome;
-	store->Snapshot.LastCombat.bHasDamageCommit = true;
-	store->Snapshot.LastCombat.bDamageCommitted = InPacket.bDamageCommitted;
-	store->Snapshot.LastCombat.bHasDamageBreakdown = bHasPreviousDamageBreakdown;
-	store->Snapshot.LastCombat.RequestDamage = requestDamage;
-	store->Snapshot.LastCombat.MitigatedDamage = mitigatedDamage;
-	store->Snapshot.LastCombat.FinalTakenDamage = finalTakenDamage;
-	store->Snapshot.LastCombat.CommittedDamage = InPacket.CommittedDamage;
-	store->Snapshot.LastCombat.Summary = summary;
+	FDebugOverlayCombatEventDetails combatDetails;
+	combatDetails.Kind = EDebugOverlayCombatEventKind::ResultDelivery;
+	combatDetails.DefenseOutcome = outcome;
+	combatDetails.bHasDamageCommit = true;
+	combatDetails.bDamageCommitted = InPacket.bDamageCommitted;
+	combatDetails.CommittedDamage = InPacket.CommittedDamage;
 
-	SnapshotRecordBuilders::UpdateRecentCombatPair(*store, world, InPacket.SourceActor, InPacket.TargetActor, eventName);
-
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("CombatResult"), eventName, receiverName, sourceName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeCombatEventEntry(world, eventName, receiverName, sourceName, targetName, combatDetails), InReceiverActor, InPacket.SourceActor, InPacket.TargetActor);
 #endif
 }
 
@@ -255,18 +285,51 @@ void FDebugOverlaySnapshotStore::RecordAICombatTask(const UObject* InWorldContex
 	store->Snapshot.LastAI.RequestResult = InRequestResult;
 	store->Snapshot.LastAI.RejectReason = InRejectReason;
 	store->Snapshot.LastAI.Summary = summary;
-	if (!pawnName.IsEmpty())
-	{
-		store->Snapshot.LastAIByPawnName.FindOrAdd(pawnName) = store->Snapshot.LastAI;
-	}
+	RecordAIActorSummary(*store, InOwnerPawn, store->Snapshot.LastAI);
 
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, TEXT("AI"), eventName, pawnName, pawnName, targetName, summary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, DebugOverlayEventCategory::AI, eventName, pawnName, pawnName, targetName, summary), InOwnerPawn, InOwnerPawn, InTargetActor);
+#endif
+}
+
+// ===== Facing Record API =====
+
+void FDebugOverlaySnapshotStore::RecordFacingTransition(const UObject* InWorldContextObject, const FDebugOverlayFacingTransition& InTransition)
+{
+#if !UE_BUILD_SHIPPING
+	if (!IsCollecting()) return;
+
+	DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindOrAddStore(InWorldContextObject);
+	if (!store) return;
+
+	FDebugOverlayFacingTransition transition = InTransition;
+	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
+	const DebugOverlaySnapshotStoreInternals::FDebugOverlaySnapshotStamp stamp = SnapshotRecordBuilders::MakeSnapshotStamp(world);
+	transition.Current.CaptureState = EDebugOverlayCaptureState::Captured;
+	transition.Current.FrameNumber = stamp.FrameNumber;
+	transition.Current.WorldTimeSeconds = stamp.WorldTimeSeconds;
+
+	const FString ownerName = transition.Current.OwnerName;
+	if (ownerName.IsEmpty()) return;
+
+	EventRingAccess::AddEventInternal(
+		*store,
+		SnapshotRecordBuilders::MakeEventEntry(
+			world,
+			DebugOverlayEventCategory::Facing,
+			transition.Current.EventName,
+			ownerName,
+			transition.Current.BoundControllerName,
+			transition.Current.CombatTargetName,
+			transition.Current.Summary),
+		transition.OwnerActor.Get(),
+		nullptr,
+		transition.CombatTargetActor.Get());
 #endif
 }
 
 // ===== Event Log API =====
 
-void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary)
+void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, const FString& InCategory, const FString& InEventName, const FString& InOwnerName, const FString& InSourceName, const FString& InTargetName, const FString& InSummary, const AActor* InOwnerActor, const AActor* InSourceActor, const AActor* InTargetActor)
 {
 #if !UE_BUILD_SHIPPING
 	if (!IsCollecting()) return;
@@ -275,7 +338,7 @@ void FDebugOverlaySnapshotStore::AddEvent(const UObject* InWorldContextObject, c
 	if (!store) return;
 
 	const UWorld* world = StoreLifecycle::ResolveWorld(InWorldContextObject);
-	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, InCategory, InEventName, InOwnerName, InSourceName, InTargetName, InSummary));
+	EventRingAccess::AddEventInternal(*store, SnapshotRecordBuilders::MakeEventEntry(world, InCategory, InEventName, InOwnerName, InSourceName, InTargetName, InSummary), InOwnerActor, InSourceActor, InTargetActor);
 #endif
 }
 
@@ -298,18 +361,6 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsCopy(
 	if (!store) return TArray<FDebugOverlayEventEntry>();
 
 	return EventRingAccess::GetRecentEventsCopyFromStore(*store, InMaxEvents, DebugOverlaySnapshotStoreInternals::EventStoreCapacity, InFilter, true);
-#else
-	return TArray<FDebugOverlayEventEntry>();
-#endif
-}
-
-TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForSubjectCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const FString& InSubjectName)
-{
-#if !UE_BUILD_SHIPPING
-	const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
-	if (!store) return TArray<FDebugOverlayEventEntry>();
-
-	return EventRingAccess::GetRecentEventsForSubjectCopyFromStore(*store, InMaxEvents, DebugOverlaySnapshotStoreInternals::EventStoreCapacity, InFilter, InSubjectName, true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
 #endif
@@ -353,23 +404,49 @@ bool FDebugOverlaySnapshotStore::TryGetRecentCombatPair(const UObject* InWorldCo
 #endif
 }
 
-bool FDebugOverlaySnapshotStore::TryGetRecentAIForPawn(const UObject* InWorldContextObject, const FString& InPawnName, FDebugOverlayAISummary& OutSummary)
+bool FDebugOverlaySnapshotStore::TryGetRecentAIForActor(const UObject* InWorldContextObject, const APawn* InPawn, FDebugOverlayAISummary& OutSummary)
 {
 	OutSummary = FDebugOverlayAISummary();
 
 #if !UE_BUILD_SHIPPING
-	if (InPawnName.IsEmpty()) return false;
+	if (!IsValid(InPawn)) return false;
 
 	const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
 	if (!store) return false;
 
-	const FDebugOverlayAISummary* summary = store->Snapshot.LastAIByPawnName.Find(InPawnName);
+	const FDebugOverlayAISummary* summary = store->LastAIByPawn.Find(TWeakObjectPtr<APawn>(const_cast<APawn*>(InPawn)));
 	if (!summary) return false;
 
 	OutSummary = *summary;
 	return true;
 #else
 	return false;
+#endif
+}
+
+void FDebugOverlaySnapshotStore::RemoveActorDebugData(const UObject* InWorldContextObject, const AActor* InActor)
+{
+#if !UE_BUILD_SHIPPING
+	DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
+	if (!store) return;
+
+	EventRingAccess::RemoveActorEventHistoryFromStore(*store, InActor);
+	if (const APawn* pawn = Cast<APawn>(InActor))
+	{
+		store->LastAIByPawn.Remove(TWeakObjectPtr<APawn>(const_cast<APawn*>(pawn)));
+	}
+#endif
+}
+
+TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForActorCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const AActor* InActor)
+{
+#if !UE_BUILD_SHIPPING
+	const DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
+	if (!store) return TArray<FDebugOverlayEventEntry>();
+
+	return EventRingAccess::GetRecentEventsForActorCopyFromStore(*store, InMaxEvents, DebugOverlaySnapshotStoreInternals::EventStoreCapacity, InFilter, InActor, true);
+#else
+	return TArray<FDebugOverlayEventEntry>();
 #endif
 }
 

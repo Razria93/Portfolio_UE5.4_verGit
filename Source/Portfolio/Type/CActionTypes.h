@@ -16,6 +16,7 @@ enum class EActionType : uint8
 	Unequip,
 
 	ComboAttack,
+	Execution,
 
 	Guard,
 	Dodge,
@@ -58,6 +59,7 @@ enum class EActionNotifyCommand : uint8
 
 	SwitchToGuard,
 	AllowGuardStart,
+	CommitExecution,
 
 	Max,
 };

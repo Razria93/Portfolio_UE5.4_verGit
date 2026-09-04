@@ -146,11 +146,7 @@ Diagnostic helper API 배치는 request/gate reject를 먼저 두고, 같은 레
 | 파일 | 위치 | 현재 상태 | 후보 이벤트 | 빈도 | 권장 처리 |
 | --- | --- | --- | --- | --- | --- |
 | `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `ReceiveCombatResultPacket` | helper gated | combat result packet 수신/내용 | combat event마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
-| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `HandleParryCombatResult` | helper gated | parry stack / stagger threshold | parry result마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
-| `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `TryRequestParryStaggerReaction` | helper gated | stagger reaction request result | parry threshold 도달 시 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
 | `Source/Portfolio/Character/Player/CPlayer.cpp` | `ReceiveCombatResultPacket` | helper gated | combat result packet 수신/내용 | combat event마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
-| `Source/Portfolio/Character/Player/CPlayer.cpp` | `HandleParryCombatResult` | helper gated | parry stack / stagger threshold | parry result마다 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
-| `Source/Portfolio/Character/Player/CPlayer.cpp` | `TryRequestParryStaggerReaction` | helper gated | stagger reaction request result | parry threshold 도달 시 | `FCombatResultDebug` + `CombatResultAudit` 처리 완료 |
 
 판단:
 
@@ -163,9 +159,6 @@ Diagnostic helper API 배치는 request/gate reject를 먼저 두고, 같은 레
 
 ```cpp
 FCombatResultDebug::RecordCombatResultReceivedForAudit(Receiver, Packet);
-FCombatResultDebug::RecordParryStackUpdatedForAudit(Receiver, Packet, Count, Threshold, bStaggerReady);
-FCombatResultDebug::RecordParryStaggerReactionRequestedForAudit(Receiver, Packet, Result);
-FCombatResultDebug::RecordParryStaggerReactionRejectedForAudit(Receiver, Packet, Reason);
 ```
 
 ### 1-2. CombatResult Dispatch / CombatSignal Target
@@ -329,7 +322,7 @@ reject reason이 이미 구조화되어 있으므로 본문에 FLog를 직접 �
 | --- | --- | --- | --- | --- |
 | `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `RequestMovementAction`, `RequestEquipmentAction`, `RequestCombatAction` | accepted / ignored / rejected / deferred | helper gated | `FExecutionOrchestratorDebug::RecordActionRequestResultForAudit` 처리 완료 |
 | `Source/Portfolio/Component/CActionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FExecutionOrchestratorDebug::RecordActionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
-| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `RequestDamageReaction`, `RequestCombatResultReaction` | accepted / ignored / rejected | helper gated | `FExecutionOrchestratorDebug::RecordReactionRequestResultForAudit` 처리 완료 |
+| `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `RequestDamageReaction`, `RequestBalanceLifecycleReaction` | accepted / ignored / rejected | helper gated | `FExecutionOrchestratorDebug::RecordReactionRequestResultForAudit` 처리 완료 |
 | `Source/Portfolio/Component/CReactionOrchestratorComponent.cpp` | `BuildDecisionResult`, `ResolveExecutionApplyMode`, `ResolveInterventionDirective`, `ResolveObservableOverlayGate` | reject reason 세분화 | helper gated | `FExecutionOrchestratorDebug::RecordReactionExecutionResultForAudit` 처리 완료. overlay reject는 `RejectedByOverlay` 보존 |
 
 판단:

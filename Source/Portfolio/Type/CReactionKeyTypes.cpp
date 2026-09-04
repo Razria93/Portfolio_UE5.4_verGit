@@ -2,7 +2,9 @@
 
 bool FReactionDataKey::IsValidMinimal() const
 {
-	return ReactionType != EReactionType::None
-		&& ReactionType != EReactionType::Max
-		&& DamageSpecKey.IsValidMinimal();
+	if (ReactionType == EReactionType::None || ReactionType == EReactionType::Max) return false;
+	if (MatchMode == EReactionDataMatchMode::DamageSpec) return DamageSpecKey.IsValidMinimal();
+	if (MatchMode == EReactionDataMatchMode::Global) return ReactionIndex == INDEX_NONE;
+
+	return false;
 }

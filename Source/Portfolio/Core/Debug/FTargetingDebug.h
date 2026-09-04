@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class UWorld;
+class APlayerController;
 struct FTargetingEvaluation;
 
 struct FTargetingDebugOverlayDetails
@@ -30,5 +31,6 @@ public:
 	static FTargetingDebugOverlayDetails BuildOverlayDetails(const FTargetingEvaluation& InEvaluation);
 
 	// World Draw
+	static void DrawWorldDebug(UWorld* InWorld, const APlayerController* InOwningPlayerController);
 	static void DrawWorldDebug(UWorld* InWorld, const FTargetingEvaluation& InEvaluation);
 };

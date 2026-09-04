@@ -13,6 +13,7 @@ namespace
 		{
 		case EAIIntentState::Dead:
 		case EAIIntentState::HitReact:
+		case EAIIntentState::Incapacitated:
 			return true;
 
 		case EAIIntentState::Max:

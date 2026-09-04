@@ -68,6 +68,9 @@ private:
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCCombatSignalSourceComponent* CombatSignalSourceComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -118,11 +121,16 @@ public:
 	// Execution Entry
 	bool ApplyActionDecision(const FActionExecutionResult& InResult);
 	bool RequestInterruptActiveAction(const FExecutionInterventionDirective& InDirective);
+	bool CancelActiveActionForSystem();
 
 public:
 	// Execution Result Hooks
 	bool HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData, uint32 InActionRequestSerial);
 	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InFinishReason);
+
+public:
+	// Execution Collaboration Bridge
+	bool TryCommitActiveExecution(const class UCAction* InAction, uint32 InActionRequestSerial);
 
 public:
 	// Notify Routing

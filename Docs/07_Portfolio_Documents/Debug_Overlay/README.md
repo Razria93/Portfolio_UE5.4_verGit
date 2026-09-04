@@ -65,6 +65,7 @@
 - `05_Verification/Debug_Overlay_P1_Closure_Review_KR.md`
 - `05_Verification/Debug_Overlay_P1_Code_Clean_Structure_Review_KR.md`
 - `05_Verification/Debug_Overlay_Editor_Tooling_PIE_Result_KR.md`
+- `05_Verification/Debug_Overlay_Execution_Collaboration_Branch_Verification_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Evidence_Package_Round1_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P0_5_Final_Capture_Candidate_Plan_KR.md`
 - `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`
@@ -72,57 +73,27 @@
 
 ## 현재 runtime 운영 기준
 
-현재 runtime의 Panel 구성, CVar gate, World Summary, Combat Participation Evidence 수명·anchor 표시는
-[운영 가이드](02_Operation/Debug_Overlay_Operation_Guide_KR.md)를 정규 기준으로 사용한다. 아래 P0.5/P1
-계획·검증·캡처 문서는 작성 시점의 설계 및 증적 기록이며, 현재 runtime 계약을 대체하지 않는다.
+현재 runtime의 Character Details, Event Log, World Summary, CVar gate, Combat Participation Evidence
+수명·anchor 표시는 [운영 가이드](02_Operation/Debug_Overlay_Operation_Guide_KR.md)를 정규 기준으로 사용한다.
 
-P0.5 기준 overlay는 TestRoom PIE에서 다음 화면 구조로 확인한다.
+현재 화면 계약의 최소 단위는 다음과 같다.
 
 ```text
-[Debug Overlay P0.5]
-
-[Player]
-State:
-Action:
-Reaction:
-Guard:
-Movement:
-HP:
-Runtime LOD:
-AI:
-
-[Enemy]
-State:
-Action:
-Reaction:
-Guard:
-Movement:
-HP:
-Runtime LOD:
-AI:
-
-[Recent Execution]
-[Recent Combat]
-[Recent AI]
-[Event Log]
+[Player] / [Enemy]                 : Character Details
+[Event Log: Category | Scope: ...] : World 또는 Focused Enemy 이력
+[World Summary]                    : 최신 전역 Action/Reaction·Combat·AI 요약
 ```
 
-P0.5의 핵심은 Player/Enemy 상태를 같은 순서로 비교하고, 최근 execution/combat/AI/event evidence를 공통 recent block으로 확인하는 것이다.
+- Event Log category는 `Action / Reaction`, `Execution Session`, `Combat`, `AI`, `Balance`, `Death`, `Facing`으로 구분한다.
+- Event Log scope는 `World`와 `Focused Enemy`를 지원한다.
+- Character Details의 `[Recent Action / Reaction]`은 actor별 최신 실행 판단이며, `[Execution Session]`은 활성 처형 pair-session의 실시간 상태다.
+- enum prefix는 표시에서 제거하고, multi-field 상태값은 `|`로 구분한다.
 
-현재 P0.5에서 확정한 표시 정책:
+`01_Planning`, 과거 P0/P0.5/P1 검증 결과, 이전 evidence package는 작성 당시의 설계·증적 기록이다. 이들은
+현재 runtime 계약을 대체하지 않으며, 당시의 panel 명칭·CVar·화면 제목을 소급 수정하지 않는다.
 
-- enum prefix는 overlay 표시에서 제거한다.
-- multi-field 상태값은 `|`로 구분한다.
-- Guard action은 `Guard In`, `Guard Out`처럼 index 없이 표시한다.
-- Execution summary는 `Action(ComboAttack[1])`, `Reaction(Hit)`처럼 subject를 포함한다.
-- Enemy는 P0.5에서 `WorldScanFallback` 기반으로 표시하며, Focus Component 기반 선택은 P1 후보로 둔다.
-- EventLog 추가 축약, category filter, Player/Enemy별 EventLog 분리는 P0.5에서 제외한다.
-
-현재 캡처 파일은 1차 패키지로만 정리한다. 반복 촬영/패키징은 P1 완료 전까지 중단하고, 최종 제출 후보는 P1 설계/구현/검증 이후 별도 패키지로 분리한다.
-
-P1 마감 기준의 최신 상태는 `01_Planning/Debug_Overlay_P1_Closure_Criteria_KR.md`, `05_Verification/Debug_Overlay_P1_Integrated_PIE_Result_KR.md`, `05_Verification/Debug_Overlay_P1_Closure_Review_KR.md`를 기준으로 확인한다. P1에서는 FocusComponent 기반 명시 focus, 3-panel layout, EventLog filter/separate panel, Interaction panel, Player/Enemy Recent Execution, Enemy Current AI / Recent AI Event 분리를 완료 기준으로 두며, Runtime LOD actual 표시와 FinalCandidate 촬영/패키징은 후속 단계로 분리한다.
-
-P1 FinalCandidate 촬영 전 장면 목록, CVar, 파일명, 제외 기준은 `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Capture_Checklist_KR.md`를 따른다. 현재 패키징된 FinalCandidate 후보와 파일별 claim 범위는 `06_Evidence_Package/Debug_Overlay_P1_Final_Candidate_Evidence_Package_KR.md`에서 확인한다.
+현재 제출 장면의 선택 기준은 `04_Capture_Presets/Debug_Overlay_Capture_Presets_KR.md`를 따른다. 과거
+FinalCandidate package는 당시 capture record로만 참조한다.
 
 ## 기록된 브랜치 정보
 

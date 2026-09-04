@@ -25,7 +25,9 @@ enum class EAIIntentState : uint8
 	Chase,
 	Alert,
 	Engage,
+	Incapacitated,
 	HitReact,
 	Dead,
+
 	Max,
 };

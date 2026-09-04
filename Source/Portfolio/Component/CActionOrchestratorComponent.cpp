@@ -6,6 +6,8 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CBalanceComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CObservableOverlayComponent.h"
@@ -27,6 +29,8 @@ void UCActionOrchestratorComponent::InitializeReferences(const FCharacterCompone
 	WeaponComp_Injected = InReferences.WeaponComponent;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
+	BalanceComp_Injected = InReferences.BalanceComponent;
+	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	ActionComp_Injected = InReferences.ActionComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
@@ -69,7 +73,7 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 	// Release-style cleanup is allowed before hard-block checks.
 	if (InIncomingRequest.IntentType == EMovementActionIntent::StopJump)
 	{
-		MovementComp_Injected->OnStopJump();
+		MovementComp_Injected->HandleJumpInputReleased();
 		return BuildActionRequestResult(EActionRequestResultType::Handled);
 	}
 
@@ -85,27 +89,27 @@ FActionRequestResult UCActionOrchestratorComponent::RequestMovementAction(const 
 	{
 	case EMovementActionIntent::Move:
 	{
-		MovementComp_Injected->OnMove(InIncomingRequest.Axis2D);
+		MovementComp_Injected->HandleMoveInput(InIncomingRequest.Axis2D);
 		break;
 	}
 	case EMovementActionIntent::Walk:
 	{
-		MovementComp_Injected->OnWalk();
+		MovementComp_Injected->HandleWalkInput();
 		break;
 	}
 	case EMovementActionIntent::Run:
 	{
-		MovementComp_Injected->OnRun();
+		MovementComp_Injected->HandleRunInput();
 		break;
 	}
 	case EMovementActionIntent::Sprint:
 	{
-		MovementComp_Injected->OnSprint();
+		MovementComp_Injected->HandleSprintInput();
 		break;
 	}
 	case EMovementActionIntent::Jump:
 	{
-		MovementComp_Injected->OnJump();
+		MovementComp_Injected->HandleJumpInput();
 		break;
 	}
 	default:
@@ -153,6 +157,24 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	return ProcessActionCandidate(incomingCandidate);
 }
 
+FActionRequestResult UCActionOrchestratorComponent::RequestExecutionAction(const FExecutionActionRequest& InIncomingRequest)
+{
+	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
+	const uint32 requestSerial = InIncomingRequest.CollaborationContext.SessionId.Serial;
+
+	if (!IsValid(ActionComp_Injected))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::InvalidComponent, requestSerial);
+
+	if (!CanAcceptActionRequest(rejectReason, false))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, requestSerial);
+
+	FActionCandidate candidate;
+	if (!ResolveExecutionActionCandidate(InIncomingRequest, candidate, rejectReason))
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, requestSerial);
+
+	return ProcessActionCandidate(candidate);
+}
+
 // Deferred Entry
 
 FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDeferredActionConsumeKey InConsumeKey)
@@ -171,6 +193,12 @@ FActionRequestResult UCActionOrchestratorComponent::ConsumeDeferredAction(EDefer
 
 	const FActionCandidate candidate = DeferredActionCandidates[foundIndex].Candidate;
 	DeferredActionCandidates.RemoveAt(foundIndex);
+
+	if (IsValid(ExecutionCollaborationComp_Injected)
+		&& ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy() != EExternalCombatInputPolicy::Normal)
+	{
+		return BuildActionRequestResult(EActionRequestResultType::Rejected, EActionRequestRejectReason::ExternalInputBlocked, candidate.ActionRequestSerial);
+	}
 
 	return ProcessActionCandidate(candidate);
 }
@@ -210,7 +238,7 @@ void UCActionOrchestratorComponent::ClearDeferredActions(EDeferredActionConsumeK
 
 // Request Validation
 
-bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason) const
+bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectReason& OutRejectReason, const bool bIsExternalRequest) const
 {
 	OutRejectReason = EActionRequestRejectReason::None;
 
@@ -229,6 +257,20 @@ bool UCActionOrchestratorComponent::CanAcceptActionRequest(EActionRequestRejectR
 	if (!HealthComp_Injected->IsAlive())
 	{
 		OutRejectReason = EActionRequestRejectReason::Dead;
+		return false;
+	}
+
+	if (bIsExternalRequest
+		&& IsValid(ExecutionCollaborationComp_Injected)
+		&& ExecutionCollaborationComp_Injected->GetExternalCombatInputPolicy() != EExternalCombatInputPolicy::Normal)
+	{
+		OutRejectReason = EActionRequestRejectReason::ExternalInputBlocked;
+		return false;
+	}
+
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking())
+	{
+		OutRejectReason = EActionRequestRejectReason::BalanceLifecycleBlocking;
 		return false;
 	}
 
@@ -348,6 +390,26 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	}
 
 	OutIncomingCandidate = incomingCandidate;
+	return true;
+}
+
+bool UCActionOrchestratorComponent::ResolveExecutionActionCandidate(const FExecutionActionRequest& InIncomingRequest, FActionCandidate& OutIncomingCandidate, EActionRequestRejectReason& OutRejectReason) const
+{
+	OutIncomingCandidate = FActionCandidate();
+	OutRejectReason = EActionRequestRejectReason::None;
+
+	const FExecutionCollaborationContext& context = InIncomingRequest.CollaborationContext;
+	if (!context.IsValidMinimal() || context.SessionId.SourceActor != OwnerCharacter_Injected)
+	{
+		OutRejectReason = EActionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	OutIncomingCandidate.ActionDataKey.ActionType = EActionType::Execution;
+	OutIncomingCandidate.ActionDataKey.ActionIndex = context.OutcomePolicy == EExecutionOutcomePolicy::Lethal
+		? CExecutionActionIndex::Lethal
+		: CExecutionActionIndex::Standard;
+	OutIncomingCandidate.ActionRequestSerial = context.SessionId.Serial;
 	return true;
 }
 
@@ -519,16 +581,10 @@ FExecutionParticipant UCActionOrchestratorComponent::BuildActiveExecutionPartici
 	// Preferred: active reaction participant.
 	if (bHasActiveReaction)
 	{
-		FReactionData activeData;
+		FReactionExecutionContext context;
 
-		if (ReactionComp_Injected->GetActiveReactionData(activeData))
+		if (ReactionComp_Injected->GetActiveReactionContext(context))
 		{
-			FReactionExecutionContext context;
-
-			context.ReactionDataKey = activeData.ReactionDataKey;
-			context.ReactionData = activeData;
-			context.ReactionExecutor = ReactionComp_Injected->GetActiveReactionExecutor();
-
 			if (context.IsValidMinimal())
 			{
 				participant.bIsValid = true;

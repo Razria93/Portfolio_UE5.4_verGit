@@ -20,7 +20,7 @@ protected:
 
 private:
 	// Intent Decision
-	EAIIntentState DecideNextAIIntentState(UBlackboardComponent* InBlackboardComp, float InCurrentTime);
+	EAIIntentState DecideNextAIIntentState(UBlackboardComponent* InBlackboardComp, class AAIController* InAIController, float InCurrentTime);
 	bool ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState);
 
 	// Intent Transition

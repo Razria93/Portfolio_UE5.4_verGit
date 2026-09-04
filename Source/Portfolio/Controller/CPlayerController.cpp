@@ -8,6 +8,7 @@
 #include "Component/CTargetHUDPresenterComponent.h"
 #include "Component/CTargetLockAssistComponent.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
+#include "Core/Debug/FExecutionCollaborationDebug.h"
 #if !UE_BUILD_SHIPPING
 #include "Core/Debug/CDebugOverlayFocusComponent.h"
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
@@ -203,6 +204,7 @@ void ACPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Guard", EInputEvent::IE_Pressed, this, &ACPlayerController::PressGuard);
 	InputComponent->BindAction("Guard", EInputEvent::IE_Released, this, &ACPlayerController::ReleaseGuard);
 	InputComponent->BindAction("Dodge", EInputEvent::IE_Pressed, this, &ACPlayerController::PressDodge);
+	InputComponent->BindAction("Execution", EInputEvent::IE_Pressed, this, &ACPlayerController::PressExecution);
 
 	InputComponent->BindAction("TargetLock", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetLock);
 	InputComponent->BindAction("TargetSwitchLeft", EInputEvent::IE_Pressed, this, &ACPlayerController::PressTargetSwitchLeft);
@@ -297,7 +299,7 @@ void ACPlayerController::PressJump()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleJump();
+	player->HandleJump();
 }
 
 void ACPlayerController::ReleaseJump()
@@ -305,7 +307,7 @@ void ACPlayerController::ReleaseJump()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleStopJump();
+	player->HandleStopJump();
 }
 
 void ACPlayerController::PressSwordToggle()
@@ -313,7 +315,7 @@ void ACPlayerController::PressSwordToggle()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleEquipmentAction(EEquipmentActionIntent::Toggle);
+	player->HandleEquipmentAction(EEquipmentActionIntent::Toggle);
 }
 
 void ACPlayerController::PressComboAction()
@@ -321,7 +323,7 @@ void ACPlayerController::PressComboAction()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::ComboAttack);
+	player->HandleCombatAction(ECombatActionIntent::ComboAttack);
 }
 
 void ACPlayerController::PressGuard()
@@ -329,7 +331,7 @@ void ACPlayerController::PressGuard()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Started);
+	player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Started);
 }
 
 void ACPlayerController::ReleaseGuard()
@@ -337,7 +339,7 @@ void ACPlayerController::ReleaseGuard()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Completed);
+	player->HandleCombatAction(ECombatActionIntent::Guard, EActionIntentEvent::Completed);
 }
 
 void ACPlayerController::PressDodge()
@@ -345,7 +347,34 @@ void ACPlayerController::PressDodge()
 	ACPlayer* player = ResolveControlledPlayer(this);
 	if (!IsValid(player)) return;
 
-	FActionRequestResult result = player->HandleCombatAction(ECombatActionIntent::Dodge);
+	player->HandleCombatAction(ECombatActionIntent::Dodge);
+}
+
+void ACPlayerController::PressExecution()
+{
+	FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("InputReceived"));
+
+	ACPlayer* player = ResolveControlledPlayer(this);
+	if (!IsValid(player))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("InputRejected"), TEXT("InvalidControlledPlayer"));
+		return;
+	}
+
+	if (!IsValid(TargetLockAssistComponent))
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(player, TEXT("InputRejected"), TEXT("InvalidTargetLockAssist"));
+		return;
+	}
+
+	if (!TargetLockAssistComponent->IsTargetLockActive())
+	{
+		FExecutionCollaborationDebug::RecordStartTrace(player, TEXT("InputRejected"), TEXT("TargetLockInactiveOrNoCombatTarget"));
+		return;
+	}
+
+	const bool bStarted = player->HandleCombatExecution();
+	FExecutionCollaborationDebug::RecordStartTrace(player, TEXT("InputForwarded"), bStarted ? TEXT("RequestAccepted") : TEXT("RequestRejected"));
 }
 
 // ===== Player Target Selection =====

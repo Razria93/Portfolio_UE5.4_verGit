@@ -13,6 +13,11 @@
 				"CoreUObject",
 				"AIModule"
 			]
+		},
+		{
+			"Name": "PortfolioEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

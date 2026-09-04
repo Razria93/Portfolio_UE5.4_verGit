@@ -74,9 +74,10 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Action: %s"), *InStatusViewData.ActionText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Reaction: %s"), *InStatusViewData.ReactionText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("HP: %s"), *InStatusViewData.HealthText));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Stagger: %s"), *InStatusViewData.StaggerText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Balance: %s"), *InStatusViewData.BalanceText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Guard: %s"), *InStatusViewData.GuardText));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *InStatusViewData.MovementText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Movement: %s"), *InStatusViewData.MovementGaitRotationText));
+		AppendFormattedOverlayLine(InOutLines, InStatusViewData.LocomotionPresentationStateText);
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Runtime LOD: %s"), *InStatusViewData.RuntimeLODText));
 	}
 
@@ -125,6 +126,66 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("In Range: %s | In View Cone: %s"), *targeting.RangeText, *targeting.ViewConeText));
 	}
 
+	// [Balance / Collapse]
+	// ===== Balance / Collapse Lines =====
+
+	void AppendBalanceCollapseLines(TArray<FString>& InOutLines, const FDebugOverlayBalanceCollapseViewData& InBalanceCollapseViewData)
+	{
+		const FBalanceDebugOverlayDetails& details = InBalanceCollapseViewData.Details;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Balance / Collapse]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Count: %s"), *details.CountText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Lifecycle: %s | Serial: %s"), *details.LifecycleText, *details.LifecycleSerialText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Loop Remaining: %s"), *details.LoopLifetimeText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Execution Down Remaining: %s"), *details.ExecutionDownLifetimeText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Incapacitated: %s | Pose Active: %s | Collapse Lifecycle: %s | Loop: %s | Execution Down: %s"), *details.IncapacitatedPresentationText, *details.IncapacitatedPoseText, *details.CollapsePoseText, *details.CollapseLoopText, *details.ExecutionDownPoseText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Blocking: %s | Facing Suppressed: %s"), *details.LifecycleBlockingText, *details.FacingSuppressedText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Abort: %s"), *details.LastAbortText));
+	}
+
+	// [Combat Target Facing]
+	// ===== Enemy Combat Target Facing Lines =====
+
+	void AppendCombatTargetFacingLines(TArray<FString>& InOutLines, const FDebugOverlayCombatTargetFacingViewData& InCombatTargetFacingViewData)
+	{
+		const FEnemyCombatTargetFacingDebugOverlayDetails& details = InCombatTargetFacingViewData.Details;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Combat Target Facing]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Policy: %s | Consistency: %s"), *details.PolicyText, *details.ConsistencyText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Controller Binding: %s"), *details.ControllerBindingText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Combat Target: %s"), *details.CombatTargetText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Gameplay Focus: %s | Rotation: %s"), *details.GameplayFocusText, *details.RotationText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Reaction: %s | Deferred: %s"), *details.ReactionText, *details.DeferredText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Last Command: %s"), *details.ExpectedText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(
+			TEXT("Last Facing Decision: %s @ %s"),
+			*details.LastDecisionSequenceText,
+			*details.LastDecisionTimeText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Trigger: %s"), *details.LastDecisionTriggerText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Decision: %s"), *details.LastDecisionResultText));
+	}
+
+	// [Execution Session]
+	// ===== Execution Session Lines =====
+
+	void AppendExecutionSessionLines(TArray<FString>& InOutLines, const FDebugOverlayExecutionSessionViewData& InExecutionSessionViewData)
+	{
+		const FExecutionCollaborationDebugOverlayDetails& details = InExecutionSessionViewData.Details;
+		if (!details.bHasSnapshot) return;
+
+		AppendFormattedOverlayLine(InOutLines, TEXT(""));
+		AppendFormattedOverlayLine(InOutLines, TEXT("[Execution Session]"));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Role: %s | State: %s | Outcome: %s"), *details.RoleText, *details.StateText, *details.OutcomeText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Partner: %s | Session: %s"), *details.PartnerText, *details.SessionText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Reservation: %s"), *details.ReservationText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Terminal: %s"), *details.TerminalText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Geometry: %s"), *details.GeometryText));
+	}
+
 	// [Combat Participation]
 	// ===== Combat Participation Lines =====
 
@@ -149,27 +210,27 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Protection: %s"), *details.RetentionText));
 	}
 
-	// [Recent Execution]
-	// ===== Recent Execution Lines =====
+	// [Recent Action / Reaction]
+	// ===== Recent Action / Reaction Lines =====
 
-	void AppendRecentExecutionBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentExecutionViewData& InRecentExecutionViewData)
+	void AppendRecentActionReactionBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentActionReactionViewData& InRecentActionReactionViewData)
 	{
 		AppendFormattedOverlayLine(InOutLines, TEXT(""));
-		AppendFormattedOverlayLine(InOutLines, InRecentExecutionViewData.HeaderText);
+		AppendFormattedOverlayLine(InOutLines, InRecentActionReactionViewData.HeaderText);
 
-		switch (InRecentExecutionViewData.State)
+		switch (InRecentActionReactionViewData.State)
 		{
-		case EDebugOverlayRecentExecutionViewState::NotCaptured:
+		case EDebugOverlayRecentActionReactionViewState::NotCaptured:
 			AppendFormattedOverlayLine(InOutLines, TEXT("NotCaptured"));
 			return;
-		case EDebugOverlayRecentExecutionViewState::NoActor:
+		case EDebugOverlayRecentActionReactionViewState::NoActor:
 			AppendFormattedOverlayLine(InOutLines, TEXT("N/A"));
 			return;
-		case EDebugOverlayRecentExecutionViewState::NoEvents:
-			AppendFormattedOverlayLine(InOutLines, TEXT("NoEvents(Filter: Execution)"));
+		case EDebugOverlayRecentActionReactionViewState::NoEvents:
+			AppendFormattedOverlayLine(InOutLines, TEXT("NoEvents(Filter: ActionReaction)"));
 			return;
-		case EDebugOverlayRecentExecutionViewState::Captured:
-			AppendSummaryLines(InOutLines, InRecentExecutionViewData.SummaryText, EDebugOverlayCaptureState::Captured);
+		case EDebugOverlayRecentActionReactionViewState::Captured:
+			AppendSummaryLines(InOutLines, InRecentActionReactionViewData.SummaryText, EDebugOverlayCaptureState::Captured);
 			return;
 		default:
 			AppendFormattedOverlayLine(InOutLines, TEXT("NotCaptured"));
@@ -186,7 +247,7 @@ namespace
 		AppendFormattedOverlayLine(InOutLines, TEXT("[Death Lifecycle]"));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Health State: %s"), *InViewData.HealthStateText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Lifecycle: %s"), *InViewData.LifecycleText));
-		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("DeadIn: %s"), *InViewData.DeadInText));
+		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Death Entry: %s"), *InViewData.DeathEntryText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Presentation: %s"), *InViewData.PresentationText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Fallback Timer: %s"), *InViewData.FallbackTimerText));
 		AppendFormattedOverlayLine(InOutLines, FString::Printf(TEXT("Finalization: %s"), *InViewData.FinalizationText));
@@ -254,12 +315,11 @@ namespace
 		}
 	}
 
-	// [Panel_01]
+	// [Character Details]
 	// ===== Main Panel Lines =====
 
 	void AppendActorPanelLines(TArray<FString>& InOutLines, const FDebugOverlayActorPanelViewData& InActorPanelViewData)
 	{
-		AppendFormattedOverlayLine(InOutLines, TEXT(""));
 		AppendFormattedOverlayLine(InOutLines, InActorPanelViewData.HeaderText);
 
 		if (InActorPanelViewData.bIncludeFocus)
@@ -277,6 +337,16 @@ namespace
 			AppendActorStatusLines(InOutLines, InActorPanelViewData.Status);
 		}
 
+		if (InActorPanelViewData.bIncludeRecentActionReaction)
+		{
+			AppendRecentActionReactionBlockLines(InOutLines, InActorPanelViewData.RecentActionReaction);
+		}
+
+		if (InActorPanelViewData.bIncludeExecutionSession)
+		{
+			AppendExecutionSessionLines(InOutLines, InActorPanelViewData.ExecutionSession);
+		}
+
 		if (InActorPanelViewData.bIncludeLocomotion)
 		{
 			AppendPlayerLocomotionLines(InOutLines, InActorPanelViewData.Locomotion);
@@ -287,6 +357,16 @@ namespace
 			AppendPlayerTargetingLines(InOutLines, InActorPanelViewData.Targeting);
 		}
 
+		if (InActorPanelViewData.bIncludeBalanceCollapse)
+		{
+			AppendBalanceCollapseLines(InOutLines, InActorPanelViewData.BalanceCollapse);
+		}
+
+		if (InActorPanelViewData.bIncludeCombatTargetFacing)
+		{
+			AppendCombatTargetFacingLines(InOutLines, InActorPanelViewData.CombatTargetFacing);
+		}
+
 		if (InActorPanelViewData.bIncludeCombatParticipation)
 		{
 			AppendCombatParticipationLines(InOutLines, InActorPanelViewData.CombatParticipation);
@@ -295,11 +375,6 @@ namespace
 		if (InActorPanelViewData.bIncludeDeathLifecycle)
 		{
 			AppendDeathLifecycleBlock(InOutLines, InActorPanelViewData.DeathLifecycle);
-		}
-
-		if (InActorPanelViewData.bIncludeRecentExecution)
-		{
-			AppendRecentExecutionBlockLines(InOutLines, InActorPanelViewData.RecentExecution);
 		}
 
 		if (InActorPanelViewData.bIncludeCurrentAI)
@@ -316,20 +391,22 @@ namespace
 	TArray<FString> BuildMainTextPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
-		if (InViewData.MainPanelTitle.IsEmpty()) return lines;
-
 		lines.Reserve(32);
-		AppendFormattedOverlayLine(lines, InViewData.MainPanelTitle);
 
 		for (const FDebugOverlayActorPanelViewData& actorPanel : InViewData.ActorPanels)
 		{
+			if (!lines.IsEmpty())
+			{
+				AppendFormattedOverlayLine(lines, TEXT(""));
+			}
+
 			AppendActorPanelLines(lines, actorPanel);
 		}
 
 		return lines;
 	}
 
-	// [Panel_02]
+	// [Event Log]
 	// ===== EventLog Panel Lines =====
 
 	FString FormatEventLogEntryLine(const FDebugOverlayEventLogEntryViewData& InEntry)
@@ -344,10 +421,22 @@ namespace
 	TArray<FString> BuildEventLogPanelLines(const FDebugOverlayViewData& InViewData)
 	{
 		TArray<FString> lines;
-		lines.Reserve(InViewData.EventLog.Entries.Num() + 2);
-		AppendFormattedOverlayLine(lines, InViewData.EventLogPanelTitle);
-		AppendFormattedOverlayLine(lines, TEXT(""));
-		AppendFormattedOverlayLine(lines, FString::Printf(TEXT("[Event Log: %s]"), *InViewData.EventLog.FilterText));
+		lines.Reserve(InViewData.EventLog.Entries.Num() + 3);
+		const FString eventLogHeader = FString::Printf(
+			TEXT("[Event Log: %s | Scope: %s]"),
+			*InViewData.EventLog.FilterText,
+			*InViewData.EventLog.ScopeText);
+		AppendFormattedOverlayLine(lines, eventLogHeader);
+		if (!InViewData.EventLog.SubjectText.IsEmpty())
+		{
+			AppendFormattedOverlayLine(lines, FString::Printf(TEXT("[Subject: %s]"), *InViewData.EventLog.SubjectText));
+		}
+
+		if (InViewData.EventLog.bFocusedScopeWithoutSubject)
+		{
+			AppendFormattedOverlayLine(lines, TEXT("No focused Enemy selected."));
+			return lines;
+		}
 
 		if (!InViewData.EventLog.bHasSnapshot)
 		{
@@ -375,7 +464,7 @@ namespace
 		return lines;
 	}
 
-	// [Panel_03]
+	// [World Summary]
 	// ===== World Summary Panel Lines =====
 
 	void AppendRecentSummaryBlockLines(TArray<FString>& InOutLines, const FDebugOverlayRecentSummaryBlockViewData& InBlockViewData)
@@ -400,8 +489,6 @@ namespace
 	{
 		TArray<FString> lines;
 		lines.Reserve(16);
-		AppendFormattedOverlayLine(lines, InViewData.WorldSummaryPanelTitle);
-		AppendFormattedOverlayLine(lines, TEXT(""));
 		AppendFormattedOverlayLine(lines, InViewData.WorldSummary.HeaderText);
 
 		for (const FDebugOverlayRecentSummaryBlockViewData& summaryBlock : InViewData.WorldSummary.SummaryBlocks)
@@ -426,11 +513,6 @@ namespace
 
 	EDebugOverlayTextLineRole ResolveTextLineRole(EDebugOverlayTextPanelRole InPanelRole, const FString& InLine)
 	{
-		if (InLine.StartsWith(TEXT("[Debug Overlay Panel_")))
-		{
-			return EDebugOverlayTextLineRole::PanelTitle;
-		}
-
 		if (InPanelRole != EDebugOverlayTextPanelRole::EventLog
 			&& (InLine == TEXT("[Player]") || InLine == TEXT("[Enemy]") || InLine == TEXT("[World Summary]")))
 		{

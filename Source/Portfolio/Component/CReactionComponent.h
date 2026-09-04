@@ -12,10 +12,13 @@
 #include "Type/CExecutionTypes.h"
 #include "Type/CActionOrchestrationTypes.h"
 #include "Type/CReactionOrchestrationTypes.h"
+#include "Type/CBalanceTypes.h"
 #include "CReactionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReactionTypeChanged, class ACharacter*, InOwnerCharacter, EReactionType, InPrevReactionType, EReactionType, InNewReactionType);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnReactionExecutionLifecycleEvent, const FReactionExecutionLifecycleEvent& /* Event */);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnReactionExecutionNotifyCommand, const FReactionExecutionContext& /* Context */, EReactionNotifyCommand /* Command */);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnReactionIncapacitatedPresentationRequested, const FReactionExecutionContext& /* Context */, EIncapacitatedPresentation /* Presentation */);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCReactionComponent : public UActorComponent
@@ -23,13 +26,16 @@ class PORTFOLIO_API UCReactionComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	// Construction
 	UCReactionComponent();
 
 private:
+	// Data Configuration
 	UPROPERTY(EditAnywhere, Category = "Reaction|Data")
 	TArray<FReactionData> ReactionDatas;
 
 private:
+	// Runtime Map
 	UPROPERTY(Transient)
 	TMap<FReactionDataKey, FReactionData> ReactionDataMap;
 
@@ -37,6 +43,7 @@ private:
 	TMap<class UClass*, class UCReaction*> ReactionExecutorMap;
 
 private:
+	// Active Runtime State
 	UPROPERTY(Transient)
 	EReactionType ActiveReactionType = EReactionType::Max;
 
@@ -50,6 +57,7 @@ private:
 	FReactionExecutionContext ActiveReactionContext = FReactionExecutionContext();
 
 private:
+	// Component References
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -72,15 +80,15 @@ private:
 	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
 
 public:
+	// Event
 	FReactionTypeChanged OnReactionTypeChanged;
 	FOnReactionExecutionLifecycleEvent OnReactionExecutionLifecycleEvent;
+	FOnReactionExecutionNotifyCommand OnReactionExecutionNotifyCommand;
+	FOnReactionIncapacitatedPresentationRequested OnReactionIncapacitatedPresentationRequested;
 
 public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
-
-private:
-	bool ValidateRequiredComponentReferences() const;
 
 protected:
 	// Lifecycle
@@ -106,6 +114,7 @@ public:
 	// Execution Entry
 	bool ApplyReactionDecision(const FReactionExecutionResult& InResult);
 	bool RequestInterruptActiveReaction(const FExecutionInterventionDirective& InDirective);
+	bool CancelActiveReactionForSystem();
 
 public:
 	// Execution Result Hooks
@@ -118,6 +127,7 @@ public:
 public:
 	// Notify Routing
 	void HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand);
+	void HandleReactionIncapacitatedPresentationNotify(EIncapacitatedPresentation InPresentation);
 
 	void HandleReactionAllowInterventionWindowBegin(FName InWindowKey);
 	void HandleReactionAllowInterventionWindowEnd(FName InWindowKey);
@@ -125,6 +135,10 @@ public:
 	void HandleReactionFeedback(FName InTriggerKey);
 	void HandleReactionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleReactionFeedbackWindowEnd(FName InTriggerKey);
+
+private:
+	// Component Reference Validation
+	bool ValidateRequiredComponentReferences() const;
 
 private:
 	// Runtime Lifecycle
@@ -151,7 +165,11 @@ private:
 	UCReaction* FindReactionExecutor(const UClass* InClass);
 
 private:
-	// Data Resolve Helpers
+	// Data Resolve - Match Mode
+	bool ResolveGlobalReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData);
+	bool ResolveDamageSpecReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData);
+
+	// Data Resolve - DamageSpec Fallback
 	void BuildCandidateSpecKeys(const FDamageSpecKey& InSpecKey, TArray<FDamageSpecKey>& OutSpecKeys) const;
 
 private:

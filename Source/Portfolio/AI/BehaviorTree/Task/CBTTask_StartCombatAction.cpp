@@ -39,7 +39,7 @@ EBTNodeResult::Type UCBTTask_StartCombatAction::ExecuteTask(UBehaviorTreeCompone
 	if (!requestResult.IsStartedResult()) return EBTNodeResult::Failed;
 
 	const float currentTime = OwnerComp.GetWorld()->GetTimeSeconds();
-	const float cooldown = enemy->GetCombatActionCooldown();
+	const float cooldown = enemy->GetEngageConfig().CombatActionCooldown;
 	const float nextCombatActionTime = currentTime + cooldown;
 	
 	blackboardComp->SetValueAsFloat(CAIKey::Engage::NextCombatActionTime.KeyName, nextCombatActionTime);

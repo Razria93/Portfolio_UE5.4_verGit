@@ -1,6 +1,7 @@
 #include "Core/Debug/FDeathLifecycleDebug.h"
 
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
+#include "Core/Debug/FDebugOverlayEventCategory.h"
 #include "Core/Debug/FLog.h"
 
 #include "GameFramework/Actor.h"
@@ -45,12 +46,14 @@ void FDeathLifecycleDebug::RecordLifecycleEvent(const AActor* InOwnerActor, cons
 	const FString ownerName = GetNameSafe(InOwnerActor);
 	FDebugOverlaySnapshotStore::AddEvent(
 		InOwnerActor,
-		TEXT("Death"),
+		DebugOverlayEventCategory::Death,
 		InEvent ? InEvent : TEXT("Unknown"),
 		ownerName,
 		ownerName,
 		FString(),
-		FormatDeathLifecycleSummary(InOwnerActor, InSummary));
+		FormatDeathLifecycleSummary(InOwnerActor, InSummary),
+		InOwnerActor,
+		InOwnerActor);
 }
 
 void FDeathLifecycleDebug::RecordContractViolationForAudit(const AActor* InOwnerActor, const TCHAR* InEvent, const FString& InSummary)

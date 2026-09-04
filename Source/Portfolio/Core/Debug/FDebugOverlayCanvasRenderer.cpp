@@ -135,9 +135,48 @@ namespace
 		return DebugOverlayDefaultHeaderColor;
 	}
 
+	FString TruncateOverlayTextToWidth(ACDebugOverlayHUD& InHud, const FString& InText, float InMaxWidth)
+	{
+		if (InText.IsEmpty() || InMaxWidth <= 0.f)
+		{
+			return FString();
+		}
+
+		float textWidth = 0.f;
+		float textHeight = 0.f;
+		InHud.GetTextSize(InText, textWidth, textHeight, nullptr, DebugOverlayFontScale);
+		if (textWidth <= InMaxWidth)
+		{
+			return InText;
+		}
+
+		const FString ellipsis = TEXT("...");
+		float ellipsisWidth = 0.f;
+		InHud.GetTextSize(ellipsis, ellipsisWidth, textHeight, nullptr, DebugOverlayFontScale);
+		if (ellipsisWidth > InMaxWidth)
+		{
+			return FString();
+		}
+
+		int32 visibleCharacterCount = InText.Len();
+		while (visibleCharacterCount > 0)
+		{
+			const FString truncatedText = InText.Left(visibleCharacterCount) + ellipsis;
+			InHud.GetTextSize(truncatedText, textWidth, textHeight, nullptr, DebugOverlayFontScale);
+			if (textWidth <= InMaxWidth)
+			{
+				return truncatedText;
+			}
+
+			--visibleCharacterCount;
+		}
+
+		return ellipsis;
+	}
+
 	// ===== Panel Drawing =====
 
-	void DrawOverlayPanel(ACDebugOverlayHUD& InHud, const FDebugOverlayTextPanel& InPanel, float InTextX, float InTextY, float InBackgroundX, float InBackgroundY, float InBackgroundWidth, float InBackgroundHeight)
+	void DrawOverlayPanel(ACDebugOverlayHUD& InHud, const FDebugOverlayTextPanel& InPanel, float InTextX, float InTextY, float InBackgroundX, float InBackgroundY, float InBackgroundWidth, float InBackgroundHeight, bool bInTruncateTextToPanel = false)
 	{
 		if (InBackgroundWidth > 0.f && InBackgroundHeight > 0.f)
 		{
@@ -154,7 +193,11 @@ namespace
 				InHud.DrawRect(GetPanelHeaderColor(line), InBackgroundX, y - 2.f, InBackgroundWidth, DebugOverlayLineHeight + 4.f);
 			}
 
-			InHud.DrawText(line.Text, FLinearColor::White, InTextX, y, nullptr, DebugOverlayFontScale, false);
+			const float maxTextWidth = FMath::Max(0.f, InBackgroundWidth - (InTextX - InBackgroundX) - DebugOverlayBackgroundPadding);
+			const FString textToDraw = bInTruncateTextToPanel
+				? TruncateOverlayTextToWidth(InHud, line.Text, maxTextWidth)
+				: line.Text;
+			InHud.DrawText(textToDraw, FLinearColor::White, InTextX, y, nullptr, DebugOverlayFontScale, false);
 			y += DebugOverlayLineHeight;
 			if (bDrawHeader)
 			{
@@ -193,7 +236,8 @@ namespace
 			InRect.X,
 			InRect.Y,
 			InRect.Width,
-			backgroundHeight);
+			backgroundHeight,
+			true);
 	}
 
 	void DrawWorldSummaryPanelIfVisible(ACDebugOverlayHUD& InHud, const FDebugOverlayTextPanel& InPanel, const FDebugOverlayPanelRect& InRect, bool bInCanDrawPanel)

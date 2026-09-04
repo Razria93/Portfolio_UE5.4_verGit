@@ -62,6 +62,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "CombatTarget")
 	class UCCombatTargetComponent* CombatTargetComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Execution")
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComponent;
+
 	UPROPERTY(VisibleAnywhere, Category = "CombatSignal")
 	class UCCombatSignalSourceComponent* CombatSignalSourceComponent;
 
@@ -88,13 +91,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Feedback")
 	class UCReactionFeedbackComponent* ReactionFeedbackComponent;
-
-private:
-	UPROPERTY(EditAnywhere, Category = "CombatResult|Parry", meta = (ClampMin = 1))
-	int32 ParryStaggerThreshold = 3;
-
-	UPROPERTY(VisibleInstanceOnly, Category = "CombatResult|Parry")
-	int32 ParryResultCount = 0;
 
 protected:
 	// Lifecycle
@@ -126,6 +122,7 @@ public:
 	FORCEINLINE UCDefenseComponent* GetDefenseComp() const { return DefenseComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
 	FORCEINLINE UCCombatTargetComponent* GetCombatTargetComp() const { return CombatTargetComponent; }
+	FORCEINLINE UCExecutionCollaborationComponent* GetExecutionCollaborationComp() const { return ExecutionCollaborationComponent; }
 	FORCEINLINE UCCombatSignalSourceComponent* GetCombatSignalSourceComp() const { return CombatSignalSourceComponent; }
 	FORCEINLINE UCCombatSignalTargetComponent* GetCombatSignalTargetComp() const { return CombatSignalTargetComponent; }
 	FORCEINLINE UCActionOrchestratorComponent* GetActionOrchestratorComp() const { return ActionOrchestratorComponent; }
@@ -134,8 +131,6 @@ public:
 	FORCEINLINE UCReactionComponent* GetReactionComp() const { return ReactionComponent; }
 	FORCEINLINE UCHitFeedbackComponent* GetHitFeedbackComp() const { return HitFeedbackComponent; }
 	FORCEINLINE UCActionFeedbackComponent* GetActionFeedbackComp() const { return ActionFeedbackComponent; }
-	FORCEINLINE int32 GetParryResultCount() const { return ParryResultCount; }
-	FORCEINLINE int32 GetParryStaggerThreshold() const { return ParryStaggerThreshold; }
 
 public:
 	// Damage
@@ -144,10 +139,6 @@ public:
 public:
 	// Combat Result
 	void ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket) override;
-
-private:
-	void HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket);
-	bool TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket);
 
 public:
 	// Interface
@@ -169,4 +160,5 @@ public:
 
 	FActionRequestResult HandleEquipmentAction(EEquipmentActionIntent InEquipmentActionIntent);
 	FActionRequestResult HandleCombatAction(ECombatActionIntent InCombatActionIntent, EActionIntentEvent InIntentEvent = EActionIntentEvent::Started);
+	bool HandleCombatExecution();
 };

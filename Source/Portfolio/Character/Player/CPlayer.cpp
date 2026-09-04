@@ -10,6 +10,7 @@
 #include "Component/CDefenseComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatTargetComponent.h"
+#include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
@@ -21,7 +22,6 @@
 #include "Component/CReactionFeedbackComponent.h"
 #include "Action/CAction.h"
 #include "Type/CActionTypes.h"
-#include "Type/CReactionTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Type/CStateTypes.h"
 #include "Type/CActionOrchestrationTypes.h"
@@ -30,14 +30,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
-
-namespace
-{
-	namespace PlayerCombatDefaults
-	{
-		constexpr int32 MinimumParryStaggerThreshold = 1;
-	}
-}
 
 ACPlayer::ACPlayer()
 {
@@ -77,6 +69,9 @@ ACPlayer::ACPlayer()
 
 	CombatTargetComponent = CreateDefaultSubobject<UCCombatTargetComponent>(TEXT("CombatTarget"));
 	check(CombatTargetComponent);
+
+	ExecutionCollaborationComponent = CreateDefaultSubobject<UCExecutionCollaborationComponent>(TEXT("ExecutionCollaboration"));
+	check(ExecutionCollaborationComponent);
 
 	CombatSignalSourceComponent = CreateDefaultSubobject<UCCombatSignalSourceComponent>(TEXT("CombatSignalSource"));
 	check(CombatSignalSourceComponent);
@@ -178,6 +173,7 @@ void ACPlayer::RecoverReferences()
 	FComponentReferenceHelper::RecoverIfInvalid(this, DefenseComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, ObservableOverlayComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatTargetComponent);
+	FComponentReferenceHelper::RecoverIfInvalid(this, ExecutionCollaborationComponent);
 
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalSourceComponent);
 	FComponentReferenceHelper::RecoverIfInvalid(this, CombatSignalTargetComponent);
@@ -204,6 +200,7 @@ void ACPlayer::BuildReferences(FCharacterComponentReferences& OutReferences)
 	OutReferences.DefenseComponent = DefenseComponent;
 	OutReferences.ObservableOverlayComponent = ObservableOverlayComponent;
 	OutReferences.CombatTargetComponent = CombatTargetComponent;
+	OutReferences.ExecutionCollaborationComponent = ExecutionCollaborationComponent;
 
 	OutReferences.CombatSignalSourceComponent = CombatSignalSourceComponent;
 	OutReferences.CombatSignalTargetComponent = CombatSignalTargetComponent;
@@ -227,6 +224,7 @@ void ACPlayer::InjectReferences(const FCharacterComponentReferences& InReference
 	FComponentReferenceHelper::InjectIfValid(HealthComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(DefenseComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(ObservableOverlayComponent, InReferences);
+	FComponentReferenceHelper::InjectIfValid(ExecutionCollaborationComponent, InReferences);
 
 	FComponentReferenceHelper::InjectIfValid(CombatSignalSourceComponent, InReferences);
 	FComponentReferenceHelper::InjectIfValid(CombatSignalTargetComponent, InReferences);
@@ -261,7 +259,7 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 
 	if (IsValid(CombatSignalTargetComponent))
 	{
-		finalDamage = CombatSignalTargetComponent->RequestCombatSignalTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+		finalDamage = CombatSignalTargetComponent->RequestCombatDamageTarget(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	}
 	else
 	{
@@ -278,47 +276,10 @@ float ACPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, 
 void ACPlayer::ReceiveCombatResultPacket(const FCombatResultPacket& InCombatResultPacket)
 {
 	FCombatResultDebug::RecordCombatResultReceivedForAudit(this, InCombatResultPacket);
+	if (!IsValid(CombatSignalTargetComponent)) return;
 
-	if (InCombatResultPacket.IsParryResult())
-	{
-		HandleParryCombatResult(InCombatResultPacket);
-	}
-}
-
-void ACPlayer::HandleParryCombatResult(const FCombatResultPacket& InCombatResultPacket)
-{
-	const int32 threshold = FMath::Max(PlayerCombatDefaults::MinimumParryStaggerThreshold, ParryStaggerThreshold);
-	ParryResultCount = FMath::Min(ParryResultCount + 1, threshold);
-
-	const bool bStaggerReady = ParryResultCount >= threshold;
-
-	FCombatResultDebug::RecordParryStackUpdatedForAudit(this, InCombatResultPacket, ParryResultCount, threshold, bStaggerReady);
-
-	if (bStaggerReady && TryRequestParryStaggerReaction(InCombatResultPacket))
-	{
-		ParryResultCount = 0;
-	}
-}
-
-bool ACPlayer::TryRequestParryStaggerReaction(const FCombatResultPacket& InCombatResultPacket)
-{
-	if (!IsValid(ReactionOrchestratorComponent))
-	{
-		FCombatResultDebug::RecordParryStaggerReactionRejectedForAudit(this, InCombatResultPacket, TEXT("InvalidReactionOrchestrator"));
-		return false;
-	}
-
-	FCombatResultReactionRequest request;
-	request.IntentSource = EReactionIntentSource::CombatResult;
-	request.CombatResultPacket = InCombatResultPacket;
-	request.ReactionType = EReactionType::Stagger;
-
-	const FReactionRequestResult result = ReactionOrchestratorComponent->RequestCombatResultReaction(request);
-	bool bStarted = result.IsAccepted();
-
-	FCombatResultDebug::RecordParryStaggerReactionRequestedForAudit(this, InCombatResultPacket, result);
-
-	return bStarted;
+	// TODO(CombatResult): Enable Player Balance policy when Enemy parry gameplay is introduced.
+	CombatSignalTargetComponent->RequestCombatResultTarget(InCombatResultPacket);
 }
 
 // Movement Intent
@@ -435,4 +396,11 @@ FActionRequestResult ACPlayer::HandleCombatAction(ECombatActionIntent InCombatAc
 	request.IntentEvent = InIntentEvent;
 
 	return ActionOrchestratorComponent->RequestCombatAction(request);
+}
+
+bool ACPlayer::HandleCombatExecution()
+{
+	if (!IsValid(ExecutionCollaborationComponent)) return false;
+
+	return ExecutionCollaborationComponent->RequestCombatExecution();
 }

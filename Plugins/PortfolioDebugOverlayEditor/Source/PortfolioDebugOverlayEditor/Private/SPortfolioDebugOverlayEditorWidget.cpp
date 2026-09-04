@@ -3,6 +3,8 @@
 #include "FPortfolioDebugOverlayEditorCVarAccess.h"
 #include "FPortfolioDebugOverlayEditorFocusCommandBridge.h"
 
+#include "Core/Debug/FDebugOverlaySettingsRegistry.h"
+
 #include "Math/UnrealMathUtility.h"
 #include "Styling/AppStyle.h"
 #include "Styling/SlateColor.h"
@@ -21,16 +23,9 @@
 namespace CVarAccess = PortfolioDebugOverlayEditorCVarAccess;
 namespace FocusCommandBridge = PortfolioDebugOverlayEditorFocusCommandBridge;
 
-// ===== Construct =====
-
 void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 {
-	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("All")));
-	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Execution")));
-	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Combat")));
-	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("AI")));
-	EventLogFilterOptions.Add(MakeShared<FString>(TEXT("Death")));
-	RefreshEventLogFilterSelection();
+	InitializeEnumOptions();
 	LastFocusCommandStatus = LOCTEXT("FocusCommandNotRun", "Last Command: None");
 
 	ChildSlot
@@ -51,96 +46,331 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
-				.Padding(0.f, 0.f, 0.f, 8.f)
 				[
-					MakeTopLevelSection(LOCTEXT("OverlayOptionsTitle", "Overlay Options"), MakeOverlayOptionsSection())
+					MakeRegisteredSettingsSections()
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 12.f)
 				[
-					SNew(SVerticalBox)
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(0.f, 0.f, 0.f, 6.f)
-					[
-						SNew(STextBlock)
-						.Text(LOCTEXT("MainPanelSectionsTitle", "Main Panel Sections"))
-						.Font(FAppStyle::GetFontStyle("BoldFont"))
-					]
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(0.f, 0.f, 0.f, 6.f)
-					[
-						SNew(STextBlock)
-						.Text_Lambda([]()
-						{
-							return CVarAccess::HasMainPanelSectionCVars()
-								? LOCTEXT("MainPanelSectionsDescription", "Select the actor sections and detail blocks shown in Panel_01.")
-								: LOCTEXT("MainPanelSectionsUnavailable", "Main panel section CVars are unavailable. Start the game module or PIE if needed.");
-						})
-						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-					]
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SBorder)
-						.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-						.Padding(8.f)
-						[
-							MakeMainPanelSections()
-						]
-					]
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 0.f, 0.f, 12.f)
-				[
-					MakeTopLevelSection(LOCTEXT("WorldSummarySectionsTitle", "World Summary Sections"), MakeWorldSummarySections())
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 0.f, 0.f, 12.f)
-				[
-					MakeTargetingDisplayOptionsSection()
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 0.f, 0.f, 12.f)
-				[
-					MakeMovementDisplayOptionsSection()
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.f, 0.f, 0.f, 12.f)
-				[
-					MakeCombatParticipationDisplayOptionsSection()
-				]
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					MakeFocusOptionsSection()
+					MakeFocusActionsSection()
 				]
 			]
 		]
 	];
 }
 
-// ===== Section Layout =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTopLevelSection(const FText& InTitle, const TSharedRef<SWidget>& InContent) const
+void SPortfolioDebugOverlayEditorWidget::InitializeEnumOptions()
 {
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
+	EnumOptionsByCVar.Empty();
+
+	for (const FDebugOverlaySettingDefinition& definition : FDebugOverlaySettingsRegistry::GetSettings())
+	{
+		if (definition.Type != EDebugOverlaySettingType::Enum) continue;
+
+		TArray<TSharedPtr<FString>>& options = EnumOptionsByCVar.FindOrAdd(definition.CVarName);
+		for (const FDebugOverlayEnumOption& option : definition.EnumOptions)
+		{
+			options.Add(MakeShared<FString>(option.DisplayName));
+		}
+	}
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRegisteredSettingsSections()
+{
+	TSharedRef<SVerticalBox> settingsBox = SNew(SVerticalBox);
+
+	for (const FDebugOverlaySettingsCategory& category : FDebugOverlaySettingsRegistry::GetCategories())
+	{
+		settingsBox->AddSlot()
 		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
+		.Padding(0.f, 0.f, 0.f, 12.f)
+		[
+			MakeRegisteredSettingsSection(category)
+		];
+	}
+
+	return settingsBox;
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRegisteredSettingsSection(const FDebugOverlaySettingsCategory& InCategory)
+{
+	TSharedRef<SVerticalBox> settingsBox = SNew(SVerticalBox);
+	bool bHasSettings = false;
+
+	for (const FDebugOverlaySettingDefinition& definition : FDebugOverlaySettingsRegistry::GetSettings())
+	{
+		if (definition.Category != InCategory.Id) continue;
+
+		bHasSettings = true;
+		settingsBox->AddSlot()
+		.AutoHeight()
+		.Padding(definition.ParentGateCVarName.IsEmpty() ? 0.f : 16.f, 0.f, 0.f, 0.f)
+		[
+			MakeRegisteredSettingRow(definition)
+		];
+	}
+
+	if (!bHasSettings)
+	{
+		settingsBox->AddSlot().AutoHeight()
 		[
 			SNew(STextBlock)
-			.Text(InTitle)
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
+			.Text(LOCTEXT("NoRegisteredSettings", "No registered settings."))
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		];
+	}
+
+	return MakeTopLevelSection(
+		FText::FromString(InCategory.DisplayName),
+		FText::FromString(InCategory.Description),
+		settingsBox);
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRegisteredSettingRow(const FDebugOverlaySettingDefinition& InDefinition)
+{
+	switch (InDefinition.Type)
+	{
+	case EDebugOverlaySettingType::Bool:
+		return MakeBoolSettingRow(InDefinition);
+
+	case EDebugOverlaySettingType::Int:
+		return MakeIntSettingRow(InDefinition);
+
+	case EDebugOverlaySettingType::Float:
+		return MakeFloatSettingRow(InDefinition);
+
+	case EDebugOverlaySettingType::Enum:
+		return MakeEnumSettingRow(InDefinition);
+
+	default:
+		return SNew(STextBlock).Text(LOCTEXT("UnsupportedSettingType", "Unsupported setting type."));
+	}
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBoolSettingRow(const FDebugOverlaySettingDefinition& InDefinition)
+{
+	const FString cvarName = InDefinition.CVarName;
+	const FString parentGate = InDefinition.ParentGateCVarName;
+	const FText label = FText::FromString(InDefinition.DisplayName);
+	const FText help = FText::FromString(InDefinition.HelpText);
+
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.FillWidth(1.f)
+		.VAlign(VAlign_Center)
+		.Padding(0.f, 4.f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[SNew(STextBlock).Text(label)]
+			+ SVerticalBox::Slot().AutoHeight()
+			[
+				SNew(STextBlock)
+				.Text(help)
+				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+			]
 		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.VAlign(VAlign_Center)
+		.Padding(12.f, 0.f)
+		[
+			SNew(SCheckBox)
+			.IsEnabled_Lambda([cvarName, parentGate]()
+			{
+				return CVarAccess::FindCVar(*cvarName)
+					&& (parentGate.IsEmpty() || CVarAccess::GetBool(*parentGate));
+			})
+			.IsChecked_Lambda([cvarName]()
+			{
+				return CVarAccess::GetBool(*cvarName) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+			})
+			.OnCheckStateChanged_Lambda([cvarName](const ECheckBoxState InNewState)
+			{
+				CVarAccess::SetBool(*cvarName, InNewState == ECheckBoxState::Checked);
+			})
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([cvarName]() { return CVarAccess::GetAvailabilityText(*cvarName); })
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeIntSettingRow(const FDebugOverlaySettingDefinition& InDefinition)
+{
+	const FString cvarName = InDefinition.CVarName;
+	const FString parentGate = InDefinition.ParentGateCVarName;
+	const FText label = FText::FromString(InDefinition.DisplayName);
+	const FText help = FText::FromString(InDefinition.HelpText);
+	const int32 minValue = FMath::RoundToInt(InDefinition.MinValue);
+	const int32 maxValue = FMath::RoundToInt(InDefinition.MaxValue);
+
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center).Padding(0.f, 4.f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[SNew(STextBlock).Text(label)]
+			+ SVerticalBox::Slot().AutoHeight()[SNew(STextBlock).Text(help).ColorAndOpacity(FSlateColor::UseSubduedForeground())]
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(12.f, 0.f)
+		[
+			SNew(SSpinBox<int32>)
+			.IsEnabled_Lambda([cvarName, parentGate]()
+			{
+				return CVarAccess::FindCVar(*cvarName)
+					&& (parentGate.IsEmpty() || CVarAccess::GetBool(*parentGate));
+			})
+			.MinValue(minValue)
+			.MaxValue(maxValue)
+			.MinSliderValue(minValue)
+			.MaxSliderValue(maxValue)
+			.Value_Lambda([cvarName, minValue, maxValue]()
+			{
+				return FMath::Clamp(CVarAccess::GetInt(*cvarName), minValue, maxValue);
+			})
+			.OnValueChanged_Lambda([cvarName, minValue, maxValue](const int32 InValue)
+			{
+				CVarAccess::SetInt(*cvarName, FMath::Clamp(InValue, minValue, maxValue));
+			})
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([cvarName]() { return CVarAccess::GetAvailabilityText(*cvarName); })
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFloatSettingRow(const FDebugOverlaySettingDefinition& InDefinition)
+{
+	const FString cvarName = InDefinition.CVarName;
+	const FString parentGate = InDefinition.ParentGateCVarName;
+	const FText label = FText::FromString(InDefinition.DisplayName);
+	const FText help = FText::FromString(InDefinition.HelpText);
+	const float minValue = InDefinition.MinValue;
+	const float maxValue = InDefinition.MaxValue;
+
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center).Padding(0.f, 4.f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[SNew(STextBlock).Text(label)]
+			+ SVerticalBox::Slot().AutoHeight()[SNew(STextBlock).Text(help).ColorAndOpacity(FSlateColor::UseSubduedForeground())]
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(12.f, 0.f)
+		[
+			SNew(SSpinBox<float>)
+			.IsEnabled_Lambda([cvarName, parentGate]()
+			{
+				return CVarAccess::FindCVar(*cvarName)
+					&& (parentGate.IsEmpty() || CVarAccess::GetBool(*parentGate));
+			})
+			.MinValue(minValue)
+			.MaxValue(maxValue)
+			.MinSliderValue(minValue)
+			.MaxSliderValue(maxValue)
+			.Delta(50.f)
+			.Value_Lambda([cvarName, minValue, maxValue]()
+			{
+				return FMath::Clamp(CVarAccess::GetFloat(*cvarName), minValue, maxValue);
+			})
+			.OnValueChanged_Lambda([cvarName, minValue, maxValue](const float InValue)
+			{
+				CVarAccess::SetFloat(*cvarName, FMath::Clamp(InValue, minValue, maxValue));
+			})
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([cvarName]() { return CVarAccess::GetAvailabilityText(*cvarName); })
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEnumSettingRow(const FDebugOverlaySettingDefinition& InDefinition)
+{
+	const FString cvarName = InDefinition.CVarName;
+	const FString parentGate = InDefinition.ParentGateCVarName;
+	const FText label = FText::FromString(InDefinition.DisplayName);
+	const FText help = FText::FromString(InDefinition.HelpText);
+	const TArray<TSharedPtr<FString>>& options = EnumOptionsByCVar.FindChecked(cvarName);
+
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center).Padding(0.f, 4.f)
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight()[SNew(STextBlock).Text(label)]
+			+ SVerticalBox::Slot().AutoHeight()[SNew(STextBlock).Text(help).ColorAndOpacity(FSlateColor::UseSubduedForeground())]
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(12.f, 0.f)
+		[
+			SNew(SComboBox<TSharedPtr<FString>>)
+			.IsEnabled_Lambda([cvarName, parentGate]()
+			{
+				return CVarAccess::FindCVar(*cvarName)
+					&& (parentGate.IsEmpty() || CVarAccess::GetBool(*parentGate));
+			})
+			.OptionsSource(&options)
+			.OnGenerateWidget_Lambda([](TSharedPtr<FString> InItem)
+			{
+				return SNew(STextBlock).Text(FText::FromString(InItem.IsValid() ? *InItem : FString()));
+			})
+			.OnSelectionChanged_Lambda([cvarName, InDefinition](TSharedPtr<FString> InSelection, ESelectInfo::Type)
+			{
+				if (!InSelection.IsValid()) return;
+
+				for (const FDebugOverlayEnumOption& option : InDefinition.EnumOptions)
+				{
+					if (option.DisplayName.Equals(*InSelection, ESearchCase::CaseSensitive))
+					{
+						CVarAccess::SetString(*cvarName, option.Value);
+						return;
+					}
+				}
+			})
+			[
+				SNew(STextBlock)
+				.Text_Lambda([cvarName, InDefinition]()
+				{
+					const FString currentValue = CVarAccess::GetString(*cvarName);
+					if (!CVarAccess::FindCVar(*cvarName)) return LOCTEXT("EnumUnavailable", "Unavailable");
+
+					for (const FDebugOverlayEnumOption& option : InDefinition.EnumOptions)
+					{
+						if (option.Value.Equals(currentValue, ESearchCase::IgnoreCase))
+						{
+							return FText::FromString(option.DisplayName);
+						}
+					}
+
+					return FText::FromString(FString::Printf(TEXT("Unknown (%s)"), *currentValue));
+				})
+			]
+		]
+		+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+		[
+			SNew(STextBlock)
+			.Text_Lambda([cvarName]() { return CVarAccess::GetAvailabilityText(*cvarName); })
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTopLevelSection(const FText& InTitle, const FText& InDescription, const TSharedRef<SWidget>& InContent) const
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock).Text(InTitle).Font(FAppStyle::GetFontStyle("BoldFont"))
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 6.f)
+		[
+			SNew(STextBlock).Text(InDescription).ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot().AutoHeight()
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
@@ -158,717 +388,96 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeSectionCard(const FT
 		.Padding(8.f)
 		[
 			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0.f, 0.f, 0.f, 6.f)
+			+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 6.f)
 			[
-				SNew(STextBlock)
-				.Text(InTitle)
-				.Font(FAppStyle::GetFontStyle("BoldFont"))
+				SNew(STextBlock).Text(InTitle).Font(FAppStyle::GetFontStyle("BoldFont"))
 			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				InContent
-			]
+			+ SVerticalBox::Slot().AutoHeight()[InContent]
 		];
 }
 
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeOverlayOptionsSection()
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusActionsSection()
 {
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("EnabledLabel", "Enabled"), LOCTEXT("EnabledHelp", "Draw the debug overlay HUD."), CVarAccess::GetEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CollectLabel", "Collect"), LOCTEXT("CollectHelp", "Collect future debug overlay snapshots and events."), CVarAccess::GetCollectCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeEventLogFilterRow()]
-		+ SVerticalBox::Slot().AutoHeight()[MakeEventLogLimitRow()]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("HideNoiseEventsLabel", "Hide Noise Events"), LOCTEXT("HideNoiseEventsHelp", "Hide reject/ignore noise from the EventLog display."), CVarAccess::GetHideNoiseEventsCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("HideCollisionWindowEventsLabel", "Hide Collision Window Events"), LOCTEXT("HideCollisionWindowEventsHelp", "Hide collision window lifecycle events from the EventLog display."), CVarAccess::GetHideCollisionWindowEventsCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 4.f)
+	return MakeTopLevelSection(
+		LOCTEXT("FocusActionsTitle", "Focus Actions"),
+		LOCTEXT("FocusActionsDescription", "Select or clear the Enemy used by Character Details and Focused Enemy Event Scope."),
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 8.f)
 		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("DiagnosticLoggingTitle", "Diagnostic Logging"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("DeathContractAuditLogLabel", "Death Contract Audit Log"), LOCTEXT("DeathContractAuditLogHelp", "Also write Death lifecycle contract violations to the Output Log."), CVarAccess::GetDeathLifecycleAuditCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 4.f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("CVarStatusTitle", "CVar Status"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot().AutoHeight()[MakeRefreshRow()];
-}
-
-// ===== Main Panel Sections =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelSections()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			MakeBoolCVarRow(LOCTEXT("PlayerPanelLabel", "Player"), LOCTEXT("PlayerPanelHelp", "Show or hide all Player detail blocks. Child selections are retained."), CVarAccess::GetPlayerPanelEnabledCVarName())
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerStatusLabel", "Status"), LOCTEXT("PlayerStatusHelp", "Show Player state, action, reaction, health and movement."), CVarAccess::GetPlayerStatusEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerLocomotionLabel", "Locomotion"), LOCTEXT("PlayerLocomotionHelp", "Show Player locomotion input details."), CVarAccess::GetPlayerLocomotionEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerTargetingLabel", "Targeting"), LOCTEXT("PlayerTargetingHelp", "Show Player targeting score details."), CVarAccess::GetPlayerTargetingEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("PlayerRecentExecutionLabel", "Recent Execution"), LOCTEXT("PlayerRecentExecutionHelp", "Show the most recent Player execution event."), CVarAccess::GetPlayerRecentExecutionEnabledCVarName(), CVarAccess::GetPlayerPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			MakeBoolCVarRow(LOCTEXT("EnemyPanelLabel", "Enemy"), LOCTEXT("EnemyPanelHelp", "Show or hide all Enemy detail blocks. Child selections are retained."), CVarAccess::GetEnemyPanelEnabledCVarName())
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyFocusLabel", "Focus"), LOCTEXT("EnemyFocusHelp", "Show selected Enemy focus details."), CVarAccess::GetEnemyFocusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyStatusLabel", "Status"), LOCTEXT("EnemyStatusHelp", "Show Enemy state, action, reaction, health and movement."), CVarAccess::GetEnemyStatusEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCombatParticipationLabel", "Combat Participation"), LOCTEXT("EnemyCombatParticipationHelp", "Show focused Enemy combat participation details."), CVarAccess::GetEnemyCombatParticipationEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyDeathLifecycleLabel", "Death Lifecycle"), LOCTEXT("EnemyDeathLifecycleHelp", "Show Enemy death lifecycle details."), CVarAccess::GetEnemyDeathLifecycleEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyRecentExecutionLabel", "Recent Execution"), LOCTEXT("EnemyRecentExecutionHelp", "Show the most recent Enemy execution event."), CVarAccess::GetEnemyRecentExecutionEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyCurrentAILabel", "Current AI"), LOCTEXT("EnemyCurrentAIHelp", "Show the focused Enemy AI state."), CVarAccess::GetEnemyCurrentAIEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight().Padding(16.f, 0.f, 0.f, 0.f)[MakeMainPanelChildRow(LOCTEXT("EnemyRecentAIEventLabel", "Recent AI Event"), LOCTEXT("EnemyRecentAIEventHelp", "Show the most recent focused Enemy AI event."), CVarAccess::GetEnemyRecentAIEventEnabledCVarName(), CVarAccess::GetEnemyPanelEnabledCVarName())];
-}
-
-// ===== World Summary Sections =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeWorldSummarySections()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			MakeBoolCVarRow(LOCTEXT("WorldSummaryCombatParticipationLabel", "Combat Participation"), LOCTEXT("WorldSummaryCombatParticipationHelp", "Show target slot and participation summaries in Panel_03."), CVarAccess::GetWorldSummaryCombatParticipationEnabledCVarName())
-		];
-}
-
-// ===== Targeting Debug =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDisplayOptionsSection()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("TargetingDisplayOptionsTitle", "Targeting Display Options"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([]()
-			{
-				return CVarAccess::HasTargetingDisplayCVars()
-					? LOCTEXT("TargetingCVarsAvailable", "Targeting Display CVars are available.")
-					: LOCTEXT("TargetingCVarsUnavailable", "Targeting Display CVars are unavailable. Start the game module or PIE if needed.");
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-			.Padding(8.f)
-			[
-				MakeTargetingDebugSection()
-			]
-		];
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeTargetingDebugSection()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingEnabledLabel", "Enabled"), LOCTEXT("TargetingEnabledHelp", "Enable targeting debug data and world visualization. Panel_01 targeting display requires this domain gate."), CVarAccess::GetTargetingEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingRangeLabel", "Range Sphere"), LOCTEXT("TargetingRangeHelp", "Draw the maximum targeting range around the viewpoint."), CVarAccess::GetTargetingDrawRangeSphereCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingSphereLabel", "Selected Target Sphere"), LOCTEXT("TargetingSphereHelp", "Draw a sphere around the current player target."), CVarAccess::GetTargetingDrawSelectedTargetSphereCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingLineLabel", "View Line"), LOCTEXT("TargetingLineHelp", "Draw a line from the viewpoint to the current player target."), CVarAccess::GetTargetingDrawViewLineCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("TargetingTextLabel", "World Debug Text"), LOCTEXT("TargetingTextHelp", "Draw distance, Dot and score at the current player target."), CVarAccess::GetTargetingDrawDebugTextCVarName())];
-}
-
-// ===== Movement Debug =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDisplayOptionsSection()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("MovementDisplayOptionsTitle", "Movement Display Options"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([]()
-			{
-				return CVarAccess::HasMovementDisplayCVars()
-					? LOCTEXT("MovementCVarsAvailable", "Movement Display CVars are available.")
-					: LOCTEXT("MovementCVarsUnavailable", "Movement Display CVars are unavailable. Start the game module or PIE if needed.");
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-			.Padding(8.f)
-			[
-				MakeMovementDebugSection()
-			]
-		];
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMovementDebugSection()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementEnabledLabel", "Enabled"), LOCTEXT("MovementEnabledHelp", "Enable movement debug data and world visualization. Panel_01 locomotion display requires this domain gate."), CVarAccess::GetMovementEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementVelocityLabel", "Velocity Arrow"), LOCTEXT("MovementVelocityHelp", "Draw the current world velocity direction and magnitude."), CVarAccess::GetMovementDrawVelocityCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementInputLabel", "Last Input Arrow"), LOCTEXT("MovementInputHelp", "Draw the last movement input direction."), CVarAccess::GetMovementDrawInputCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementFacingLabel", "Facing Arrow"), LOCTEXT("MovementFacingHelp", "Draw the current actor facing direction."), CVarAccess::GetMovementDrawFacingCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("MovementTextLabel", "World Debug Text"), LOCTEXT("MovementTextHelp", "Draw movement speed and direction near the player."), CVarAccess::GetMovementDrawDebugTextCVarName())];
-}
-
-// ===== Combat Participation Debug =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatParticipationDisplayOptionsSection()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("CombatParticipationDisplayOptionsTitle", "Combat Participation Display Options"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([]()
-			{
-				return CVarAccess::HasCombatParticipationDisplayCVars()
-					? LOCTEXT("CombatParticipationCVarsAvailable", "Combat Participation Display CVars are available.")
-					: LOCTEXT("CombatParticipationCVarsUnavailable", "Combat Participation Display CVars are unavailable. Start the game module or PIE if needed.");
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-			.Padding(8.f)
-			[
-				MakeCombatParticipationDebugSection()
-			]
-		];
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeCombatParticipationDebugSection()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationEnabledLabel", "Enabled"), LOCTEXT("CombatParticipationEnabledHelp", "Enable Combat Participation debug data and world visualization. Panel_01 and Panel_03 require this domain gate."), CVarAccess::GetCombatParticipationEnabledCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationWorldTextLabel", "World Text"), LOCTEXT("CombatParticipationWorldTextHelp", "Draw role, evidence, target and protection state above participating Enemy actors."), CVarAccess::GetCombatParticipationDrawWorldTextCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationWorldRingLabel", "World Ring"), LOCTEXT("CombatParticipationWorldRingHelp", "Draw role and evidence color rings below participating Enemy actors."), CVarAccess::GetCombatParticipationDrawWorldRingCVarName())]
-		+ SVerticalBox::Slot().AutoHeight()[MakeBoolCVarRow(LOCTEXT("CombatParticipationHitReactiveEvidenceAnchorLabel", "HitReactive Evidence Anchor"), LOCTEXT("CombatParticipationHitReactiveEvidenceAnchorHelp", "Draw each live HitReactive Evidence anchor point, Target connection and active 2D radius."), CVarAccess::GetCombatParticipationDrawHitReactiveEvidenceAnchorCVarName())];
-}
-
-// ===== CVar Rows =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBoolCVarRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, TFunction<bool()> InAdditionalEnabledPredicate) const
-{
-	return SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		.VAlign(VAlign_Center)
-		.Padding(0.f, 4.f)
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(InLabel)
-			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(InHelp)
-				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-			]
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		.Padding(12.f, 0.f)
-		[
-			SNew(SCheckBox)
-			.IsEnabled_Lambda([InCVarName, InAdditionalEnabledPredicate]()
-			{
-				return CVarAccess::FindCVar(InCVarName) != nullptr
-					&& (!InAdditionalEnabledPredicate || InAdditionalEnabledPredicate());
-			})
-			.IsChecked_Lambda([InCVarName]()
-			{
-				return CVarAccess::GetBool(InCVarName) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-			})
-			.OnCheckStateChanged_Lambda([InCVarName](ECheckBoxState InNewState)
-			{
-				CVarAccess::SetBool(InCVarName, InNewState == ECheckBoxState::Checked);
-			})
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([InCVarName]()
-			{
-				return CVarAccess::GetAvailabilityText(InCVarName);
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		];
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeMainPanelChildRow(const FText& InLabel, const FText& InHelp, const TCHAR* InCVarName, const TCHAR* InParentCVarName) const
-{
-	return MakeBoolCVarRow(InLabel, InHelp, InCVarName, [InParentCVarName]()
-	{
-		return CVarAccess::GetBool(InParentCVarName);
-	});
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogFilterRow()
-{
-	return SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		.VAlign(VAlign_Center)
-		.Padding(0.f, 4.f)
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("EventLogFilterLabel", "EventLog Filter"))
-			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("EventLogFilterHelp", "Controls the displayed EventLog category."))
-				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-			]
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		.Padding(12.f, 0.f)
-		[
-			SAssignNew(EventLogFilterComboBox, SComboBox<TSharedPtr<FString>>)
-			.IsEnabled_Lambda([]()
-			{
-				return CVarAccess::FindCVar(CVarAccess::GetEventLogFilterCVarName()) != nullptr;
-			})
-			.OptionsSource(&EventLogFilterOptions)
-			.InitiallySelectedItem(SelectedEventLogFilter)
-			.OnGenerateWidget_Lambda([](TSharedPtr<FString> InItem)
-			{
-				return SNew(STextBlock)
-					.Text(FText::FromString(InItem.IsValid() ? *InItem : FString()));
-			})
-			.OnSelectionChanged_Lambda([this](TSharedPtr<FString> InSelection, ESelectInfo::Type)
-			{
-				if (InSelection.IsValid())
-				{
-					SelectedEventLogFilter = InSelection;
-					CVarAccess::SetString(CVarAccess::GetEventLogFilterCVarName(), *InSelection);
-				}
-			})
-			[
-				SNew(STextBlock)
-				.Text_Lambda([this]()
-				{
-					const FString currentValue = CVarAccess::GetString(CVarAccess::GetEventLogFilterCVarName());
-					if (!CVarAccess::FindCVar(CVarAccess::GetEventLogFilterCVarName()))
+			MakeSectionCard(
+				LOCTEXT("ManualSelectionTitle", "Manual Selection"),
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("SelectNearestFocusButton", "Select Nearest Focus"))
+					.OnClicked_Lambda([this]()
 					{
-						return LOCTEXT("EventLogFilterUnavailable", "Unavailable");
-					}
-
-					return CVarAccess::IsKnownEventLogFilter(currentValue)
-						? FText::FromString(currentValue)
-						: FText::FromString(FString::Printf(TEXT("Unknown (%s)"), *currentValue));
-				})
-			]
-		];
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogLimitRow() const
-{
-	return SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		.VAlign(VAlign_Center)
-		.Padding(0.f, 4.f)
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("EventLogLimitLabel", "EventLog Limit"))
-			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("EventLogLimitHelp", "Maximum EventLog lines to display. Range: 0-32."))
-				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-			]
+						LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectNearestFocusCommand();
+						return FReply::Handled();
+					})
+				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("SelectOutlinerFocusButton", "Select Outliner Focus"))
+					.OnClicked_Lambda([this]()
+					{
+						LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectOutlinerFocusCommand();
+						return FReply::Handled();
+					})
+				]
+			)
 		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		.Padding(12.f, 0.f)
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 8.f)
 		[
-			SNew(SSpinBox<int32>)
-			.IsEnabled_Lambda([]()
-			{
-				return CVarAccess::FindCVar(CVarAccess::GetEventLogLimitCVarName()) != nullptr;
-			})
-			.MinValue(0)
-			.MaxValue(32)
-			.MinSliderValue(0)
-			.MaxSliderValue(32)
-			.Value_Lambda([]()
-			{
-				return FMath::Clamp(CVarAccess::GetInt(CVarAccess::GetEventLogLimitCVarName()), 0, 32);
-			})
-			.OnValueChanged_Lambda([](int32 InValue)
-			{
-				CVarAccess::SetInt(CVarAccess::GetEventLogLimitCVarName(), FMath::Clamp(InValue, 0, 32));
-			})
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([]()
-			{
-				return CVarAccess::GetAvailabilityText(CVarAccess::GetEventLogLimitCVarName());
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		];
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeNearestFocusRadiusRow() const
-{
-	return SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		.VAlign(VAlign_Center)
-		.Padding(0.f, 4.f)
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("NearestFocusRadiusLabel", "Focus Search Radius"))
-			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("NearestFocusRadiusHelp", "Search radius used by Nearest and Recent Combat focus selection."))
-				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-			]
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		.Padding(12.f, 0.f)
-		[
-			SNew(SSpinBox<float>)
-			.IsEnabled_Lambda([]()
-			{
-				return CVarAccess::FindCVar(CVarAccess::GetNearestFocusRadiusCVarName()) != nullptr;
-			})
-			.MinValue(0.f)
-			.MaxValue(20000.f)
-			.MinSliderValue(0.f)
-			.MaxSliderValue(10000.f)
-			.Delta(50.f)
-			.Value_Lambda([]()
-			{
-				return FMath::Clamp(CVarAccess::GetFloat(CVarAccess::GetNearestFocusRadiusCVarName()), 0.f, 20000.f);
-			})
-			.OnValueChanged_Lambda([](float InValue)
-			{
-				CVarAccess::SetFloat(CVarAccess::GetNearestFocusRadiusCVarName(), FMath::Clamp(InValue, 0.f, 20000.f));
-			})
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		.VAlign(VAlign_Center)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([]()
-			{
-				return CVarAccess::GetAvailabilityText(CVarAccess::GetNearestFocusRadiusCVarName());
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		];
-}
-
-// ===== Status / Refresh =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRefreshRow()
-{
-	return SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([]()
-			{
-				return CVarAccess::HasOverlayCVars()
-					? LOCTEXT("AllCVarsAvailable", "Debug Overlay CVars are available.")
-					: LOCTEXT("SomeCVarsUnavailable", "Some Debug Overlay CVars are unavailable. Start the game module or PIE if needed.");
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("RefreshButton", "Refresh"))
-			.OnClicked_Lambda([this]()
-			{
-				RefreshEventLogFilterSelection();
-				return FReply::Handled();
-			})
-		];
-}
-
-void SPortfolioDebugOverlayEditorWidget::RefreshEventLogFilterSelection()
-{
-	const FString currentValue = CVarAccess::GetString(CVarAccess::GetEventLogFilterCVarName());
-	SelectedEventLogFilter.Reset();
-
-	for (const TSharedPtr<FString>& option : EventLogFilterOptions)
-	{
-		if (option.IsValid() && option->Equals(currentValue, ESearchCase::IgnoreCase))
-		{
-			SelectedEventLogFilter = option;
-			break;
-		}
-	}
-
-	if (EventLogFilterComboBox.IsValid())
-	{
-		EventLogFilterComboBox->SetSelectedItem(SelectedEventLogFilter);
-	}
-}
-
-// ===== Focus Options =====
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusOptionsSection()
-{
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("FocusOptionsTitle", "Focus Options"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 6.f)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([]()
-			{
-				return CVarAccess::HasFocusCVars()
-					? LOCTEXT("FocusCVarsAvailable", "Focus CVars are available.")
-					: LOCTEXT("FocusCVarsUnavailable", "Focus CVars are unavailable. Start the game module or PIE if needed.");
-			})
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 8.f)
-		[
-			MakeFocusSearchSettingsCard()
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 8.f)
-		[
-			MakeManualFocusSelectionCard()
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 8.f)
-		[
-			MakeRuntimeFocusSourcesCard()
-		]
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(0.f, 0.f, 0.f, 8.f)
-		[
-			MakeClearFocusCard()
-		]
-		;
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusSearchSettingsCard() const
-{
-	return MakeSectionCard(
-		LOCTEXT("FocusSearchSettingsGroupTitle", "Search Settings"),
-		MakeNearestFocusRadiusRow());
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeManualFocusSelectionCard()
-{
-	return MakeSectionCard(
-		LOCTEXT("ManualFocusSelectionGroupTitle", "Manual Selection"),
-		SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("NearestFocusSourceLabel", "Nearest"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
+			MakeSectionCard(
+				LOCTEXT("RuntimeSelectionTitle", "Runtime Sources"),
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("SelectPlayerTargetFocusButton", "Select Player Target Focus"))
+					.OnClicked_Lambda([this]()
+					{
+						LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectPlayerTargetFocusCommand();
+						return FReply::Handled();
+					})
+				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
+					.OnClicked_Lambda([this]()
+					{
+						LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectRecentCombatFocusCommand();
+						return FReply::Handled();
+					})
+				]
+			)
 		]
 		+ SVerticalBox::Slot().AutoHeight()
 		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("NearestFocusSourceHelp", "Select the nearest eligible actor around the player."))
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("SelectNearestFocusButton", "Select Nearest Focus"))
-			.OnClicked_Lambda([this]()
-			{
-				LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectNearestFocusCommand();
-				return FReply::Handled();
-			})
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("OutlinerFocusSourceLabel", "Outliner"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("OutlinerFocusSourceHelp", "Use the actor currently selected in the editor Outliner."))
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("SelectOutlinerActorButton", "Select Outliner Focus"))
-			.OnClicked_Lambda([this]()
-			{
-				LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectOutlinerFocusCommand();
-				return FReply::Handled();
-			})
-		]);
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRuntimeFocusSourcesCard()
-{
-	return MakeSectionCard(
-		LOCTEXT("RuntimeFocusSourcesGroupTitle", "Runtime Sources"),
-		SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("PlayerTargetFocusSourceLabel", "Player Target"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			MakeBoolCVarRow(
-				LOCTEXT("TargetingLiveSyncLabel", "Live Sync Player Target"),
-				LOCTEXT("TargetingLiveSyncHelp", "Update PlayerTarget Focus continuously; disabling it freezes the last synced target."),
-				CVarAccess::GetFocusLiveSyncPlayerTargetCVarName())
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("SelectPlayerTargetFocusButton", "Select Player Target Focus"))
-			.OnClicked_Lambda([this]()
-			{
-				LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectPlayerTargetFocusCommand();
-				return FReply::Handled();
-			})
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)[SNew(SSeparator)]
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("RecentCombatFocusSourceLabel", "Recent Combat"))
-			.Font(FAppStyle::GetFontStyle("BoldFont"))
-		]
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("RecentCombatFocusSourceHelp", "Select the latest eligible actor recorded by the runtime combat context."))
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("SelectRecentCombatFocusButton", "Select Recent Combat Focus"))
-			.OnClicked_Lambda([this]()
-			{
-				LastFocusCommandStatus = FocusCommandBridge::ExecuteSelectRecentCombatFocusCommand();
-				return FReply::Handled();
-			})
-		]);
-}
-
-TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeClearFocusCard()
-{
-	return MakeSectionCard(
-		LOCTEXT("ClearFocusGroupTitle", "Clear"),
-		SNew(SVerticalBox)
-		+ SVerticalBox::Slot().AutoHeight()
-		[
-			SNew(SButton)
-			.Text(LOCTEXT("ClearFocusButton", "Clear Focus"))
-			.OnClicked_Lambda([this]()
-			{
-				LastFocusCommandStatus = FocusCommandBridge::ExecuteClearFocusCommand();
-				return FReply::Handled();
-			})
-		]
-		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
-		[
-			SNew(STextBlock)
-			.Text_Lambda([this]() { return LastFocusCommandStatus; })
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+			MakeSectionCard(
+				LOCTEXT("ClearSelectionTitle", "Clear"),
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("ClearFocusButton", "Clear Focus"))
+					.OnClicked_Lambda([this]()
+					{
+						LastFocusCommandStatus = FocusCommandBridge::ExecuteClearFocusCommand();
+						return FReply::Handled();
+					})
+				]
+				+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 0.f)
+				[
+					SNew(STextBlock)
+					.Text_Lambda([this]() { return LastFocusCommandStatus; })
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+			)
 		]);
 }
 

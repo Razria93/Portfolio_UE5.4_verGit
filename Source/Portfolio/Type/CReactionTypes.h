@@ -13,10 +13,22 @@ enum class EReactionType : uint8
 	Idle,
 
 	Hit,
-	Dead,
 	BlockHit,
 	Parry,
 	Stagger,
+
+	// Balance Lifecycle
+	CollapseIn,
+	CollapseOut,
+	CollapseHit,
+
+	// Execution Lifecycle
+	ExecutionStandard,
+	ExecutionRecovery,
+	ExecutionLethal,
+
+	// Death Lifecycle
+	Dead,
 
 	All,		// Wildcard
 
@@ -29,6 +41,7 @@ enum class EReactionNotifyCommand : uint8
 	None = 0,
 
 	Complete,
+	ResetBalance,
 
 	Max,
 };

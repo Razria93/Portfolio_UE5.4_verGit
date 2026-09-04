@@ -25,6 +25,9 @@ private:
 	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCExecutionCollaborationComponent* ExecutionCollaborationComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -43,17 +46,21 @@ private:
 public:
 	// Request Entry
 	FReactionRequestResult RequestDamageReaction(const FDamageReactionRequest& InIncomingRequest);
-	FReactionRequestResult RequestCombatResultReaction(const FCombatResultReactionRequest& InIncomingRequest);
+	FReactionRequestResult RequestBalanceLifecycleReaction(const FBalanceLifecycleReactionRequest& InIncomingRequest);
+	FReactionRequestResult RequestExecutionReaction(const FExecutionReactionRequest& InIncomingRequest);
 
 private:
 	// Request Validation
 	bool CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const;
 
 private:
-	// Candidate Resolve
+	// Candidate Resolve - Damage
 	bool ResolveDamageReactionCandidate(const FDamageReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
-	bool ResolveCombatResultReactionCandidate(const FCombatResultReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
-	EReactionType ResolveDamageReactionType(const FDamageReactionRequest& InIncomingRequest) const;
+	EReactionType ResolveDamageReactionType(EDamageReactionOutcome InOutcome) const;
+
+	// Candidate Resolve - Balance Lifecycle
+	bool ResolveBalanceLifecycleReactionCandidate(const FBalanceLifecycleReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
+	bool ResolveExecutionReactionCandidate(const FExecutionReactionRequest& InIncomingRequest, FReactionCandidate& OutIncomingCandidate, EReactionRequestRejectReason& OutRejectReason) const;
 
 private:
 	// Orchestration Pipeline

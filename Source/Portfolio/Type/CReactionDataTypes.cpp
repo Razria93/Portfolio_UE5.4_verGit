@@ -4,9 +4,8 @@
 
 bool FReactionData::IsValidMinimal() const
 {
-	return ReactionDataKey.ReactionType != EReactionType::None
+	return ReactionDataKey.IsValidMinimal()
 		&& ReactionDataKey.ReactionType != EReactionType::All
-		&& ReactionDataKey.ReactionType != EReactionType::Max
 		&& IsValid(ReactionExecutorKey)
 		&& IsValid(Montage);
 }

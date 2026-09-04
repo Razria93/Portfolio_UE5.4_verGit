@@ -71,7 +71,6 @@
 | `CPlayerController.h` | `FindNearestDebugOverlayEnemy`는 조회 전용이므로 `const`가 적절하다. |
 | `CDebugOverlayFocusComponent.h:16-19` | `HasDebugOverlayFocus()`, `GetDebugOverlayFocusActor()`, `GetDebugOverlayFocusSummary()`, `GetDebugOverlayFocusSource()`는 상태 변경이 없는 query API로 `const`가 적절하다. |
 | `FDebugOverlaySnapshotStore.h:27-58` | static store API라 member const 적용 대상이 아니다. `Record/Add/Reset` 계열은 mutation API로 명확하다. |
-| `CPlayer.h:133-134`, `CEnemy.h:205-206` | `GetParryResultCount()`, `GetParryStaggerThreshold()`는 read-only inline getter로 적합하다. |
 
 ### LowRiskFix
 

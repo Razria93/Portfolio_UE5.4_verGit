@@ -87,52 +87,33 @@ Round1 패키지 위치:
 
 ### 6.1 코드 근거
 
-Player와 Enemy 모두 parry 누적 count를 갖고 있다.
+기존 Player/Enemy 공통 ParryStagger count 경로는 제거됐고, 현재 Enemy만 `UCBalanceComponent`를 통해 Balance lifecycle을 소유한다.
 
 | 대상 | 파일 | 현재 구조 |
 | --- | --- | --- |
-| Player | `Source/Portfolio/Character/Player/CPlayer.h` | `ParryStaggerThreshold`, `ParryResultCount` |
-| Player | `Source/Portfolio/Character/Player/CPlayer.cpp` | `HandleParryCombatResult()`에서 count 증가, threshold 도달 시 stagger request 후 reset |
-| Enemy | `Source/Portfolio/Character/Enemy/CEnemy.h` | `ParryStaggerThreshold`, `ParryResultCount` |
-| Enemy | `Source/Portfolio/Character/Enemy/CEnemy.cpp` | `HandleParryCombatResult()`에서 count 증가, threshold 도달 시 stagger request 후 reset |
-| Debug hook | `Source/Portfolio/Core/Debug/FCombatResultDebug.cpp` | `RecordParryStackUpdatedForAudit()`가 `Count=%d/%d`, `StaggerReady` audit log 출력 |
+| Player | `Source/Portfolio/Character/Player/CPlayer.cpp` | `ReceiveCombatResultPacket()`에서 `UCCombatSignalTargetComponent`로 forwarding. Player Balance policy는 TODO. |
+| Enemy | `Source/Portfolio/Component/CBalanceComponent.*` | Balance count, lock, Collapse lifecycle을 소유 |
+| Debug hook | `Source/Portfolio/Core/Debug/FCombatResultDebug.cpp` | packet 수신 audit만 유지 |
 
 ### 6.2 현재 상태 분류
 
-`Stagger Count`는 현재 overlay 표시 기준으로 `HookNeeded`에 가깝다.
+`Stagger Count`는 더 이상 현재 overlay 표시 대상이 아니다.
 
 이유:
 
-- count 자체는 실제 gameplay code에 존재한다.
-- Player/Enemy 모두 같은 개념을 가진다.
-- 하지만 현재 HUD에서 바로 읽을 public getter는 확인되지 않았다.
-- `RecordParryStackUpdatedForAudit()`는 audit log만 출력하고 SnapshotStore에는 아직 기록하지 않는다.
+- Player Balance policy는 아직 구현하지 않았다.
+- Enemy는 Balance lifecycle을 overlay Resource 값으로 표시한다.
+- 추후 Player Balance policy를 활성화할 때 동일한 Balance query를 표시 기준으로 사용한다.
 
 ### 6.3 표시 방식 후보
 
-P0.5에서 표시한다면 다음 중 하나를 선택한다.
-
-| 방식 | 예시 | 장점 | 리스크 |
-| --- | --- | --- | --- |
-| current panel getter | `Stagger: 1/3` | Player/Enemy 현재 상태와 자연스럽게 결합 | `ACPlayer`, `ACEnemy` getter 추가 필요 |
-| recent combat hook | `ParryStack: Count=1/3 | Ready=false` | 실제 parry event 시점 evidence에 적합 | SnapshotStore API/summary 확장 필요 |
-| 둘 다 표시 | panel + recent/event | 가장 명확 | P0.5 범위가 커짐 |
-
-권장:
-
-- P0.5 보강으로 진행한다면 먼저 `ACPlayer`, `ACEnemy`에 읽기 전용 getter를 추가하고 panel에 `Stagger: Count/Threshold`를 표시한다.
-- Recent/EventLog까지 연결하는 작업은 SnapshotStore 확장이 필요하므로 별도 작업으로 분리한다.
+Player Balance policy 활성화 이후에는 Player/Enemy가 동일한 `UCBalanceComponent` query를 사용한다.
+별도 `ParryStack` / `Stagger Count` overlay는 다시 만들지 않는다.
 
 ### 6.4 표시 정책
 
-표시할 경우 다음 정책을 따른다.
-
-- Player/Enemy 모두 같은 위치에 표시한다.
-- `Reaction` 값과 별도 라인으로 둔다.
-- 권장 라벨: `Stagger: 1/3`
-- count가 없거나 대상 actor가 없으면 `Stagger: N/A`
-- threshold 도달 후 reset되는 값이므로 “누적 총량”이 아니라 “현재 parry stack”으로 설명한다.
-- 실제 코드에서 읽지 못하는 경우 성공 evidence로 표시하지 않는다.
+현재 Enemy는 `Balance: Count/Threshold | LifecycleState`를 Resource line에 표시한다.
+Player는 Balance policy가 없으므로 해당 line에 resource 값을 표시하지 않는다.
 
 ## 7. P1로 넘길 항목
 

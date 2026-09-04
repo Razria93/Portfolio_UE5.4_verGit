@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Type/CReactionKeyTypes.h"
 #include "Type/CExecutionRuleTypes.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "CReactionDataTypes.generated.h"
 
 // Data / Config
@@ -56,6 +57,9 @@ struct FReactionExecutionContext
 
 public:
 	UPROPERTY(Transient)
+	FExecutionSessionId ExecutionSessionId = FExecutionSessionId();
+
+	UPROPERTY(Transient)
 	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
 	UPROPERTY(Transient)
@@ -66,6 +70,9 @@ public:
 
 	UPROPERTY(Transient)
 	uint64 CombatSignalResultSerial = 0;
+
+	UPROPERTY(Transient)
+	uint32 BalanceLifecycleSerial = 0;
 
 public:
 	FReactionExecutionContext() = default;
