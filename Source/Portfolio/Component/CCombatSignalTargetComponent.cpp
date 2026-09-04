@@ -137,6 +137,24 @@ bool UCCombatSignalTargetComponent::RequestExecutionOutcomeTarget(const FExecuti
 	return ProcessExecutionOutcomeTarget(InExecutionOutcomePacket);
 }
 
+bool UCCombatSignalTargetComponent::TryResolveExecutionAppliedDamage(const EExecutionOutcomePolicy InOutcomePolicy, const float InStandardExecutionDamage, float& OutAppliedDamage) const
+{
+	OutAppliedDamage = 0.f;
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+
+	if (InOutcomePolicy == EExecutionOutcomePolicy::Lethal)
+	{
+		if (!HealthComp_Injected->CanKill()) return false;
+		OutAppliedDamage = HealthComp_Injected->GetCurrentHP();
+		return OutAppliedDamage > KINDA_SMALL_NUMBER;
+	}
+
+	if (InOutcomePolicy != EExecutionOutcomePolicy::Standard || InStandardExecutionDamage <= KINDA_SMALL_NUMBER) return false;
+
+	OutAppliedDamage = FMath::Min(InStandardExecutionDamage, FMath::Max(0.f, HealthComp_Injected->GetCurrentHP() - 1.f));
+	return OutAppliedDamage > KINDA_SMALL_NUMBER;
+}
+
 // Combat Result Pipeline - Validation
 
 bool UCCombatSignalTargetComponent::ValidateCombatResultTargetRequest(const FCombatResultPacket& InCombatResultPacket) const
@@ -322,24 +340,12 @@ bool UCCombatSignalTargetComponent::ProcessExecutionOutcomeTarget(const FExecuti
 		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("InvalidPacketOrTargetMismatch"));
 		return false;
 	}
-	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("TargetNotAlive"));
-		return false;
-	}
-
-	const float currentHealth = HealthComp_Injected->GetCurrentHP();
 	const bool bIsLethal = context.OutcomePolicy == EExecutionOutcomePolicy::Lethal;
-	const float appliedDamage = bIsLethal ? currentHealth : FMath::Min(InExecutionOutcomePacket.StandardExecutionDamage, FMath::Max(0.f, currentHealth - 1.f));
-
-	if (appliedDamage <= KINDA_SMALL_NUMBER)
+	float appliedDamage = 0.f;
+	if (!TryResolveExecutionAppliedDamage(context.OutcomePolicy, InExecutionOutcomePacket.StandardExecutionDamage, appliedDamage))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), FString::Printf(TEXT("AppliedDamageIsZero | CurrentHP=%.1f"), currentHealth));
-		return false;
-	}
-	if (bIsLethal && !HealthComp_Injected->CanKill())
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), TEXT("LethalNotAllowed"));
+		const float currentHealth = IsValid(HealthComp_Injected) ? HealthComp_Injected->GetCurrentHP() : 0.f;
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetOutcomeRejected"), FString::Printf(TEXT("OutcomeNotApplicable | CurrentHP=%.1f | StandardDamage=%.1f"), currentHealth, InExecutionOutcomePacket.StandardExecutionDamage));
 		return false;
 	}
 

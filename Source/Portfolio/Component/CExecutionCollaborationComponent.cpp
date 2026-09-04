@@ -142,8 +142,9 @@ bool UCExecutionCollaborationComponent::RequestCombatExecution()
 	sessionId.SourceActor = OwnerCharacter_Injected;
 	sessionId.Serial = AllocateSessionSerial();
 
+	const float standardExecutionDamage = ResolveStandardExecutionDamageForReservation();
 	FExecutionCollaborationContext context;
-	if (!targetCollaborationComp->AcceptExecutionReservation(sessionId, targetSnapshot, context))
+	if (!targetCollaborationComp->AcceptExecutionReservation(sessionId, targetSnapshot, standardExecutionDamage, context))
 	{
 		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("TargetReservationRejected"));
 		return false;
@@ -506,7 +507,7 @@ void UCExecutionCollaborationComponent::HandleCombatTargetChanged(const FCombatT
 
 // Partner Coordination
 
-bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecutionSessionId& InSessionId, const FCombatTargetSnapshot& InTargetSnapshot, FExecutionCollaborationContext& OutContext)
+bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecutionSessionId& InSessionId, const FCombatTargetSnapshot& InTargetSnapshot, const float InStandardExecutionDamage, FExecutionCollaborationContext& OutContext)
 {
 	OutContext = FExecutionCollaborationContext();
 
@@ -526,6 +527,15 @@ bool UCExecutionCollaborationComponent::AcceptExecutionReservation(const FExecut
 	if (outcomePolicy == EExecutionOutcomePolicy::None || outcomePolicy == EExecutionOutcomePolicy::Max)
 	{
 		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetReservationRejected"), TEXT("OutcomePolicyUnavailable"));
+		return false;
+	}
+
+	float appliedDamage = 0.f;
+	if (!IsValid(CombatSignalTargetComp_Injected)
+		|| !CombatSignalTargetComp_Injected->TryResolveExecutionAppliedDamage(outcomePolicy, InStandardExecutionDamage, appliedDamage))
+	{
+		const float currentHealth = IsValid(HealthComp_Injected) ? HealthComp_Injected->GetCurrentHP() : 0.f;
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetReservationRejected"), FString::Printf(TEXT("OutcomeNotApplicable | Outcome=%s | CurrentHP=%.1f | StandardDamage=%.1f"), *UEnum::GetValueAsString(outcomePolicy), currentHealth, InStandardExecutionDamage));
 		return false;
 	}
 
@@ -877,6 +887,20 @@ bool UCExecutionCollaborationComponent::CanResolveSourceExecutionAction(const EE
 	}
 
 	return true;
+}
+
+float UCExecutionCollaborationComponent::ResolveStandardExecutionDamageForReservation() const
+{
+	if (!IsValid(ActionComp_Injected)) return 0.f;
+
+	FActionDataKey actionDataKey;
+	actionDataKey.ActionType = EActionType::Execution;
+	actionDataKey.ActionIndex = GetExecutionActionIndex(EExecutionOutcomePolicy::Standard);
+
+	FActionData actionData;
+	return ActionComp_Injected->ResolveActionData(actionDataKey, actionData) && actionData.IsValidMinimal()
+		? actionData.StandardExecutionDamage
+		: 0.f;
 }
 
 bool UCExecutionCollaborationComponent::CanStartTargetExecution() const

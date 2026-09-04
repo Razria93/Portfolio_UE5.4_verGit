@@ -115,7 +115,7 @@ private:
 	void HandleCombatTargetChanged(const FCombatTargetChange& InChange);
 
 	// Partner Coordination
-	bool AcceptExecutionReservation(const FExecutionSessionId& InSessionId, const FCombatTargetSnapshot& InTargetSnapshot, FExecutionCollaborationContext& OutContext);
+	bool AcceptExecutionReservation(const FExecutionSessionId& InSessionId, const FCombatTargetSnapshot& InTargetSnapshot, float InStandardExecutionDamage, FExecutionCollaborationContext& OutContext);
 	void ReceivePartnerSourceActionTerminal(const FExecutionSessionId& InSessionId);
 	void ReceivePartnerTargetReactionTerminal(const FExecutionSessionId& InSessionId);
 	void ReceivePartnerCommit(const FExecutionSessionId& InSessionId);
@@ -142,6 +142,7 @@ private:
 	// Execution Startup Validation
 	bool CanStartSourceExecution() const;
 	bool CanResolveSourceExecutionAction(EExecutionOutcomePolicy InOutcomePolicy) const;
+	float ResolveStandardExecutionDamageForReservation() const;
 	bool CanStartTargetExecution() const;
 	bool CanResolveTargetExecutionReaction(EExecutionOutcomePolicy InOutcomePolicy) const;
 	bool IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot) const;

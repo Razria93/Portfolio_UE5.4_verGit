@@ -88,6 +88,7 @@ public:
 
 	// Execution Outcome - Entry
 	bool RequestExecutionOutcomeTarget(const FExecutionOutcomePacket& InExecutionOutcomePacket);
+	bool TryResolveExecutionAppliedDamage(EExecutionOutcomePolicy InOutcomePolicy, float InStandardExecutionDamage, float& OutAppliedDamage) const;
 
 private:
 	// Combat Result Pipeline - Validation
