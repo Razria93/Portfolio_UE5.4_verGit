@@ -414,3 +414,56 @@ execution variant를 추가할 때도 같은 계약을 유지한다.
 - Target Lock이 비활성인 Player 입력은 Execution 요청을 만들지 않는다. 활성 상태여도 실제 Player Actor Forward가 `MaxSourceFacingAngleDegrees` 밖이거나 `MaxStartDistance` 밖이면 reservation 없이 시작을 거절한다.
 - 기하 조건을 통과한 Target은 Primary pair 시작 직전에 위치를 유지한 채 Player를 향하는 yaw만 한 번 정렬된다. 이후 startup이 거절되면 reservation이 해제되고 Collapse Loop TTL이 재개된다.
 - Active pair는 양쪽 CharacterMovement가 서로를 ignore해 root motion이 partner capsule에 막히지 않는다. session 완료·취소·external death·EndPlay 뒤에는 양쪽 ignore 등록이 제거된다.
+
+---
+
+## 13. Combat Signal과 Execution Pair의 경계
+
+Execution Pair는 Combat Signal의 특수 Packet이나 일반 Damage 처리의 하위 분기가 아니다. 두 구조는 다음처럼 다른 성립 조건을 갖는다.
+
+| 구분 | Combat Signal | Execution Pair |
+| --- | --- | --- |
+| 기본 형태 | Source의 사실 전달 → Target의 독립 소비 | Source와 Target의 상호 조건 확인·협업 거래 |
+| 시작 조건 | Source hit/cue의 유효성, Target 수신 가능 여부 | 양측 Actor 상태, Target Snapshot/Revision, 기회, 기하 조건, data/executor, reservation |
+| 상태 | Target-side packet/outcome | Pair Session, Reserved / Active / Committed, terminal correlation |
+| 취소 | Target packet reject 또는 결과 consumer의 처리 | Commit 전 Pair cancel과 reservation release, partner cancellation 통지 |
+| 대표 적용 | 일반 Hit, Guard, Parry, Timing Cue 전달 | Standard/Lethal Execution primary pair |
+
+`UCExecutionCollaborationComponent`가 Pair transaction을 소유하고, Action/Reaction Orchestrator는 각 Actor 내부의 execution arbitration만 소유한다. 일반 `UCCombatSignalSourceComponent`는 Pair를 성립시키지 않으며, `UCCombatSignalTargetComponent`도 Pair reservation을 소유하지 않는다.
+
+### 13.1. 실제 접점: Target Execution Outcome
+
+Source Action의 Commit Notify는 `UCExecutionCollaborationComponent::HandleSourceExecutionCommit()`으로 들어온다. 이 함수는 active session, target snapshot/revision, opportunity를 검증한 뒤 Target의 `UCCombatSignalTargetComponent::RequestExecutionOutcomeTarget()`에 `FExecutionOutcomePacket`을 전달한다.
+
+```text
+Pair Source Commit
+  → FExecutionOutcomePacket
+  → Target RequestExecutionOutcomeTarget
+  → TryResolveExecutionAppliedDamage
+  → Target Collaboration CommitExecutionOutcome
+  → Health::TakeDamage
+  → partner commit 통지
+```
+
+이 경로는 `HandleDefaultDamageEvent()`와 `FCombatSignalTargetPacket`을 사용하는 일반 Combat Signal Damage 경로와 다르다. Pair는 Target Component의 적용 피해·Health 경계를 재사용하지만, Pair 성립·예약·commit·release 계약을 일반 Damage packet에 위임하지 않는다.
+
+### 13.2. Commit 전후 계약
+
+| 시점 | Pair 계약 |
+| --- | --- |
+| Reserved / Active, Commit 전 | 취소 시 Target Balance reservation을 release하고 보관한 Collapse Loop TTL을 재개한다. |
+| Committed 후 | opportunity는 소비되어 `ExecutionPrimaryCommitted`가 되며 이전 Collapse Loop로 rollback하지 않는다. |
+| terminal | Source Action과 Target primary Reaction terminal을 correlation한 뒤 완료한다. Standard는 Balance Down/Recovery, Lethal은 Health Dead/Death lifecycle으로 이어진다. |
+
+## 14. 포트폴리오 증거와 표현 제한
+
+| 주장 | 코드 | 기존 문서 | 제출용 상태 |
+| --- | --- | --- | --- |
+| 양측 조건 확인·reservation·active pair | Confirmed | S36 본문 | Needs Capture |
+| Commit 전 cancellation·release | Confirmed | S36 본문 | Needs Capture |
+| Commit 이후 Standard/Lethal 분기 | Confirmed | S36 본문 | Needs Capture |
+| Pair Commit의 Target Execution Outcome 접점 | Confirmed | S36 §13 | Needs Capture |
+
+포트폴리오에서는 "프레임 단위 완전 동시 실행"이라고 표현하지 않는다. `양측 Reserved → Active → Commit → terminal 또는 Release`라는 코드 확인 계약으로 제한한다.
+
+9p는 Pair의 게임플레이 결과와 Runtime data를 보여 주고, 신규 15p는 위 책임·상태·시퀀스 구조를 설명한다. 두 페이지는 같은 구조를 반복하지 않는다.
