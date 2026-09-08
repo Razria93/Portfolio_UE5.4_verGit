@@ -1,5 +1,10 @@
 # UE5 액션 RPG 전투 시스템 포트폴리오
 
+## 제출 포트폴리오
+
+- [Project Stellar 문서 원본 및 배포 안내](Docs/07_Portfolio_Documents/Portfolio_Production/README.md)
+- [문서 유지보수 TODO](Docs/01_Work_List/Documentation_Maintenance_TODO.md)
+
 Unreal Engine 5.4 기반 3인칭 액션 RPG 전투 시스템 포트폴리오입니다.
 
 본 프로젝트는 단일 전투 기능 구현보다 `Action`, `Reaction`, `Damage`, `Feedback`, `AI`가 서로 연결되는 실행 구조를 정리하는 데 초점을 둡니다. Player와 Enemy가 공통 component-driven 실행 구조를 공유하도록 구성하고, 전투 실행 흐름을 코드와 문서로 함께 관리합니다.

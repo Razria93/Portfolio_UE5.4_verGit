@@ -20,4 +20,5 @@
 | B11 | Guard In 중 Release 입력 시 Guard Hold 고정 | `B11_UE5_Portfolio_Bug_Report.md` | - | Guard / Deferred request | 완료 |
 | B12 | Guard Out 중 Hit reaction Overlay handling 실패 | `B12_UE5_Portfolio_Bug_Report.md` | - | Guard / Observable overlay | 완료 |
 | B13 | Native Component Rename 후 C++ 멤버 참조 유실 | `B13_UE5_Portfolio_Bug_Report.md` | P24 | Blueprint / Native component rename | 완료 |
+| B14 | Enemy Combat Target Facing 정책 불일치 | `B14_UE5_Portfolio_Bug_Report.md` | P61 | AI / Combat Target Facing | 완료 |
 ---

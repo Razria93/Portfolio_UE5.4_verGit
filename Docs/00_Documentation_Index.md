@@ -1,5 +1,14 @@
 # Documentation Index
 
+## Current entry points
+
+- [Submitted Project Stellar portfolio](07_Portfolio_Documents/Portfolio_Production/README.md): 23-page submitted HTML, publication rule, and production records.
+- [Portfolio maintenance TODO](01_Work_List/Documentation_Maintenance_TODO.md): post-submission evidence and documentation follow-up.
+- [System Architecture Index](05_System_Architecture/00_System_Architecture_Index.md): current runtime architecture records.
+- [Evidence Ledger](98_Evidence/Portfolio_Evidence_Capture_Ledger%20(KR).md): capture status and evidence scope.
+
+`Docs/ignore/` is a non-canonical archive. Its historical plans and broken links are not active document entry points.
+
 이 문서는 UE5 Portfolio 문서 유형의 상위 라우터다.
 개별 문서 목록은 각 문서 유형별 `00_*_Index.md`에서 관리한다.
 
