@@ -1,198 +1,68 @@
-# UE5 액션 RPG 전투 시스템 포트폴리오
+# Project Stellar — UE5.4 C++ Action RPG Combat Portfolio
 
-## 제출 포트폴리오
+`Project Stellar`는 Player와 Enemy가 공유하는 Action / Reaction 실행 구조를 설계하고, 런타임 관찰·검증 도구와 Editor 도구까지 구현한 Unreal Engine 5.4 C++ 액션 RPG 포트폴리오입니다.
 
-- [Project Stellar 문서 원본 및 배포 안내](Docs/07_Portfolio_Documents/Portfolio_Production/README.md)
-- [문서 유지보수 TODO](Docs/01_Work_List/Documentation_Maintenance_TODO.md)
+[Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [Gameplay Video — 업로드 예정](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119) · [Portfolio Production Docs](Docs/07_Portfolio_Documents/Portfolio_Production/README.md) · [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md)
 
-Unreal Engine 5.4 기반 3인칭 액션 RPG 전투 시스템 포트폴리오입니다.
+## At a glance
 
-본 프로젝트는 단일 전투 기능 구현보다 `Action`, `Reaction`, `Damage`, `Feedback`, `AI`가 서로 연결되는 실행 구조를 정리하는 데 초점을 둡니다. Player와 Enemy가 공통 component-driven 실행 구조를 공유하도록 구성하고, 전투 실행 흐름을 코드와 문서로 함께 관리합니다.
+| Area | What this repository demonstrates |
+| --- | --- |
+| Combat execution | Action / Reaction 요청을 Decision → Relationship → Apply로 분리하고, Independent / Sequential / Exclusive 관계에 따라 Start / Reserve / Intervene을 결정합니다. |
+| Measurement & validation | Runtime Debug Overlay, Focus 기반 상태 관찰, Event Log, CSV profiling과 증거 문서로 구현 결과를 재현·검증합니다. |
+| Editor tooling | session-only Overlay 제어 패널, Asset Reference Inspector, Root Motion Transfer 도구로 authoring·조사·검증 경로를 제공합니다. |
 
----
+## Key implementation
 
-## 1. 프로젝트 정보
+### Shared combat execution
 
-```yaml
-프로젝트명: UE5 Action RPG Combat Portfolio
-엔진: Unreal Engine 5.4
-개발 환경: Visual Studio 2022
-언어 / 구성: C++ / Blueprint
-버전 관리: Git / GitHub
-문서화: Markdown / Obsidian
-목표 플랫폼: Windows PC / Unreal Editor 실행 기준
-```
+- Player 입력과 AI Behavior Tree가 공통 Action / Reaction Orchestrator로 요청을 전달합니다.
+- 현재 실행과의 관계를 판정해 Independent는 즉시 시작하고, Sequential은 다음 실행을 예약하며, Exclusive는 기존 실행을 정리한 뒤 개입합니다.
+- Combo, Guard, Parry, Dodge, Execution은 같은 요청·수락·적용 계약 위에서 동작합니다.
 
----
+### Combat signal and damage pipeline
 
-## 2. 구현 범위
+- Hit Context와 Source Payload를 구성해 Unreal Engine의 `FDamageEvent` / `AActor::TakeDamage()` 경로 위에 Target 처리 계층을 연결합니다.
+- Target은 상태와 방어 규칙을 해석해 Normal / Guard / Parry 등의 Outcome을 확정하고, Reaction·Feedback 경로로 이어집니다.
+- Montage Notify와 Notify State가 Combo chain, collision window, execution commit 등 시간 창을 제어합니다.
 
-현재 프로젝트는 다음 전투 시스템을 중심으로 구성되어 있습니다.
+### AI and runtime observation
 
-```yaml
-Player
-- Movement / Camera / Input
-- Weapon Equip / Unequip
-- Combo Attack
-- Dodge
-- Action 실행 흐름
+- Behavior Tree / Blackboard 기반 AI가 공통 실행 경로를 사용하며, Combat Participation과 Runtime LOD 정책으로 전투 참여와 갱신 비용을 관리합니다.
+- Runtime Debug Overlay는 Focus 대상의 상태·실행 문맥·최근 Event를 읽기 전용 ViewData로 표시합니다.
+- 캡처·CSV·문서 근거를 함께 남겨 구현 결과와 검증 조건을 추적합니다.
 
-Combat
-- Hit Collision Window
-- Hit Context / Damage Context
-- ApplyDamage -> FDamageEvent -> TakeDamage 기반 Damage Pipeline
-- Action / Reaction / Damage Feedback
-- Hit / Dead Reaction
+### Editor tools
 
-Enemy AI
-- Behavior Tree / Blackboard
-- AI Action Intent Dispatch
-- Player / AI 공통 실행 흐름 연결
+- **Portfolio Debug Overlay Editor**: Nomad Panel에서 session-only 표시 옵션과 PIE Focus 요청을 준비합니다.
+- **Asset Reference Inspector**: Dependencies / Referencers 관계 Tree, unused candidate scan, timestamped CSV export를 제공합니다.
+- **Root Motion Tool**: Animation Modifier 기반으로 Apply 전 검증, Track backup, Revert 계약을 제공합니다.
 
-Documentation
-- Work List
-- Pull Request
-- Bug Report
-- System Architecture
-- Portfolio Documents
-- AI Workflow / Prompt Library
-```
+## Run locally
 
----
+1. Unreal Engine **5.4**와 Visual Studio 2022 C++ 개발 환경을 준비합니다.
+2. `Portfolio.uproject`를 열고 필요 시 Visual Studio project files를 생성합니다.
+3. `PortfolioEditor | Win64 | Development`로 빌드합니다.
+4. Editor에서 `TestRoom`을 열어 Player / Enemy 전투와 Debug Overlay 흐름을 확인합니다.
 
-## 3. 핵심 설계 포인트
+프로젝트에는 `PortfolioDebugOverlayEditor`와 `AssetReferenceInspector` Editor 플러그인이 포함됩니다.
 
-### Action / Reaction Execution Pipeline
+## Documentation
 
-Action과 Reaction을 공통 request / decision / apply / lifecycle 흐름으로 정리합니다.
+- [Current submitted portfolio source and publication guide](Docs/07_Portfolio_Documents/Portfolio_Production/README.md)
+- [System Architecture Index](Docs/05_System_Architecture/00_System_Architecture_Index.md)
+- [Evidence ledger and documentation maintenance TODO](Docs/01_Work_List/Documentation_Maintenance_TODO.md)
+- [Legacy technical notes (PF00–PF07)](Docs/07_Portfolio_Documents/00_Portfolio_Document_Index.md)
 
-### Execution Decision / Relationship / ApplyMode
+현재 제출 기준은 `Portfolio_Production`의 23페이지 HTML과 GitHub Pages입니다. PF00–PF07은 이전 포트폴리오 설계 기록으로 보존합니다.
 
-실행 가능 여부, 현재 실행 중인 action / reaction과의 관계, 실제 적용 방식을 분리합니다.
+## Repository notes
 
-### Cross-Domain Intervention
+- 새 Unreal binary asset(`.uasset`, `.umap`)은 forward-only Git LFS 정책으로 추적합니다. 기존 이력은 변환하지 않습니다.
+- `output/`은 HTML 원본에서 생성하는 PDF·정적 배포 staging 경로이며 Git에서 추적하지 않습니다.
 
-HitReaction이 Action을 interrupt하거나 DodgeAction이 Reaction을 cancel할 수 있는 구조를 다룹니다.
+## Remaining roadmap
 
-### Damage Pipeline
-
-Unreal Engine 표준 `FDamageEvent`, `AActor::TakeDamage()` 흐름을 유지하면서 프로젝트 전용 hit context, damage result, reaction request, feedback request를 연결합니다.
-
-### Data-Driven Resolve
-
-Action, Reaction, Damage, Feedback을 key 기반으로 조회하고 실행 데이터와 executor를 resolve합니다.
-
-### Montage Notify Timing Window
-
-Chain, collision, feedback, intervention window를 montage timeline 위에서 제어합니다.
-
-### Player / AI 공통 실행 구조
-
-Player input과 AI Behavior Tree가 서로 다른 decision source를 가지더라도 실제 action / reaction 실행은 공통 component와 orchestrator 흐름을 사용합니다.
-
----
-
-## 4. 문서 구조
-
-### 포트폴리오 문서
-
-[Docs/07_Portfolio_Documents](Docs/07_Portfolio_Documents)
-
-포트폴리오 제출용으로 압축한 기술 설명 문서입니다.
-
-### 시스템 구조 문서
-
-[Docs/05_System_Architecture](Docs/05_System_Architecture)
-
-전투 실행 구조, 책임 경계, orchestration, damage / feedback / reaction 흐름을 정리한 문서입니다.
-
-### Work List 문서
-
-[Docs/01_Work_List](Docs/01_Work_List)
-
-작업 단위별 목표, 범위, 체크 항목, 검증 기준을 기록합니다.
-
-### Pull Request 문서
-
-[Docs/04_Pull_Request](Docs/04_Pull_Request)
-
-PR 단위 변경사항, 관련 문서, 검증 결과, 후속 작업을 정리합니다.
-
-### Bug Report
-
-[Docs/02_Bug_Report](Docs/02_Bug_Report)
-
-구현 중 발생한 문제, 원인, 수정 내용, 검증 결과를 기록합니다.
-
-### AI Workflow
-
-[Docs/08_AI_Workflow](Docs/08_AI_Workflow)
-
-Codex와 함께 작업하기 위한 AI 기반 작업 흐름, Prompt Library, Work Brief / Planning / Checklist 흐름을 정리합니다.
-
----
-
-## 5. 대표 기술 문서
-
-```yaml
-포트폴리오 개요
--> Docs/07_Portfolio_Documents/PF00_UE5_Portfolio_Document.md
-
-프로젝트 기술 요약
--> Docs/07_Portfolio_Documents/PF01_UE5_Portfolio_Document.md
-
-전투 데이터 처리 파이프라인
--> Docs/07_Portfolio_Documents/PF02_UE5_Portfolio_Document.md
-
-Action / Reaction 실행 파이프라인
--> Docs/07_Portfolio_Documents/PF03_UE5_Portfolio_Document.md
-
-Enemy AI 전투 행동 설계
--> Docs/07_Portfolio_Documents/PF04_UE5_Portfolio_Document.md
-
-Data-Driven 설계
--> Docs/07_Portfolio_Documents/PF05_UE5_Portfolio_Document.md
-
-Troubleshooting
--> Docs/07_Portfolio_Documents/PF06_UE5_Portfolio_Document.md
-
-AI 기반 개발 Workflow
--> Docs/07_Portfolio_Documents/PF07_UE5_Portfolio_Document.md
-```
-
----
-
-## 6. 실행 기준
-
-1. Unreal Engine 5.4에서 `Portfolio.uproject`를 엽니다.
-2. `PortfolioEditor Win64 Development` 기준으로 빌드합니다.
-3. 테스트 레벨에서 Player / Enemy combat, damage, reaction, AI 흐름을 확인합니다.
-
----
-
-## 7. 후속 확장 방향
-
-```yaml
-Combat
-- Guard / Parry / Counter 판정
-- Combat Resolution 계층 도입
-- Resource / state system 고도화
-
-Data
-- DataAsset 기반 authoring 구조 정리
-- Action / Reaction / Feedback data 확장
-
-AI
-- Boss pattern
-- Enemy pattern data 확장
-- AI decision source와 공통 execution pipeline 연결 강화
-
-Feedback
-- Damage feedback / reaction feedback 고도화
-- VFX / SFX / camera feedback polish
-
-Documentation
-- System Architecture / Engine Technique 문서 체계 정리
-- Technical Document 제출용 요약 보강
-- AI Workflow 실사용 기반 refactor
-```
+- DataAsset 기반 authoring 확장과 Counter / Boss pattern 설계
+- AI pattern·Runtime LOD·profiling 범위 확장
+- VFX / SFX / camera feedback polish와 추가 런타임 증거 확보

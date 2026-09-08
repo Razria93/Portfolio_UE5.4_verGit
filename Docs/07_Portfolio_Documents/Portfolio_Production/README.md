@@ -6,6 +6,8 @@
 
 | Role | Canonical item | Policy |
 | --- | --- | --- |
+| Live web portfolio | [GitHub Pages](https://razria93.github.io/Portfolio_UE5.4_verGit/) | 현재 제출 HTML과 Assets를 공개하는 배포본입니다. |
+| Gameplay video | [Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119) | 영상 업로드 전 안내 허브이며, 업로드 후 같은 링크에서 재생·타임스탬프를 관리합니다. |
 | Submitted document source | [염동섭_UE5_Portfolio_Project_Stellar.html](염동섭_UE5_Portfolio_Project_Stellar.html) | 현재 제출 기준 HTML. 23개의 보이는 페이지를 가진다. |
 | Visual assets | [Assets/](Assets/) | HTML의 상대 경로로 참조되는 캡처·다이어그램 원본이다. |
 | Generated PDF | `output/pdf/UE5_Portfolio_Project_Stellar.pdf` | HTML에서 생성하는 산출물이며 Git 원본으로 추적하지 않는다. |
@@ -26,4 +28,4 @@
 
 ## Publication rule
 
-온라인 문서판은 제출 HTML을 직접 복사한 `index.html`과 필요한 `Assets/`로만 구성한다. 배포본을 직접 수정하지 않으며, 문서 원본을 수정한 뒤 publish script를 다시 실행한다.
+온라인 문서판은 제출 HTML을 직접 복사한 `index.html`과 필요한 `Assets/`로만 구성한다. 배포본을 직접 수정하지 않으며, 문서 원본을 수정한 뒤 publish script를 다시 실행한다. `main`에 원본·Assets·publish script 변경을 push하면 GitHub Pages workflow가 배포본을 갱신한다.
