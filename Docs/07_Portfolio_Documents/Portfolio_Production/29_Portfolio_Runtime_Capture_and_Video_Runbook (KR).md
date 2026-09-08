@@ -4,6 +4,8 @@
 
 이 문서는 포트폴리오의 런타임 검증과 YouTube 영상 촬영 세션에서 사용하는 단일 운영 기준이다.
 
+카테고리 영상의 Shot 선택, 편집 순서, 자막 및 페이지별 증거 추적은 [Portfolio Gameplay Video Evidence Plan](30_Portfolio_Gameplay_Video_Evidence_Plan%20%28KR%29.md)을 따른다. 이 문서는 PIE 환경·Overlay preset·PASS·재촬영 기준만 소유한다.
+
 - 촬영 중에는 본 문서의 **순서**, **Overlay preset**, **성공 조건**을 따른다.
 - 각 장면이 끝난 직후에는 영상 타임스탬프와 관측값을 기록한다.
 - 촬영이 끝난 뒤에만 A4 문서의 placeholder를 실제 evidence로 교체한다.
