@@ -4,6 +4,9 @@
 
 struct FDebugOverlayPanelVisibility
 {
+	bool bShowEventLogPanel = true;
+	bool bShowWorldSummaryPanel = true;
+
 	bool bShowPlayer = true;
 	bool bShowPlayerStatus = true;
 	bool bShowPlayerTargeting = true;

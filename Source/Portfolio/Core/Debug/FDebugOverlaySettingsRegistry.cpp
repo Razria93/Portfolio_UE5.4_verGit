@@ -69,10 +69,11 @@ const TArray<FDebugOverlaySettingDefinition>& FDebugOverlaySettingsRegistry::Get
 	static const TArray<FDebugOverlaySettingDefinition> settings = []
 	{
 		TArray<FDebugOverlaySettingDefinition> result;
-		result.Reserve(47);
+		result.Reserve(55);
 
 		result.Add(MakeBool(TEXT("Overlay"), TEXT("Portfolio.DebugOverlay.HUDVisible"), TEXT("HUD Visible"), TEXT("Show the Debug Overlay HUD and world diagnostics."), TEXT("0")));
 		result.Add(MakeBool(TEXT("Overlay"), TEXT("Portfolio.DebugOverlay.CaptureEnabled"), TEXT("Capture Enabled"), TEXT("Capture future Event Log entries and Actor histories."), TEXT("0")));
+		result.Add(MakeBool(TEXT("Overlay"), TEXT("Portfolio.DebugOverlay.EventLog.Visible"), TEXT("Event Log Visible"), TEXT("Show or hide the Event Log panel without changing event capture."), TEXT("1")));
 		result.Add(MakeEnum(TEXT("Overlay"), TEXT("Portfolio.DebugOverlay.EventLogFilter"), TEXT("Event Log Filter"), TEXT("Controls the displayed Event Log category."), TEXT("All"), { { TEXT("All"), TEXT("All") }, { TEXT("ActionReaction"), TEXT("Action / Reaction") }, { TEXT("ExecutionSession"), TEXT("Execution Session") }, { TEXT("Combat"), TEXT("Combat") }, { TEXT("AI"), TEXT("AI") }, { TEXT("Balance"), TEXT("Balance") }, { TEXT("Death"), TEXT("Death") }, { TEXT("Facing"), TEXT("Facing") } }));
 		result.Add(MakeEnum(TEXT("Overlay"), TEXT("Portfolio.DebugOverlay.EventLogScope"), TEXT("Event Log Scope"), TEXT("World shows all events. Focused Enemy shows only events related to the selected Enemy."), TEXT("World"), { { TEXT("World"), TEXT("World") }, { TEXT("FocusedEnemy"), TEXT("Focused Enemy") } }));
 		result.Add(MakeInt(TEXT("Overlay"), TEXT("Portfolio.DebugOverlay.EventLogLimit"), TEXT("Event Log Limit"), TEXT("Maximum Event Log lines to display."), TEXT("16"), 0.f, 32.f));
@@ -97,7 +98,8 @@ const TArray<FDebugOverlaySettingDefinition>& FDebugOverlaySettingsRegistry::Get
 		result.Add(MakeBool(TEXT("CharacterDetails"), TEXT("Portfolio.DebugOverlay.Enemy.RecentAIEvent.Enabled"), TEXT("Enemy: Recent AI Event"), TEXT("Show the most recent focused Enemy AI event."), TEXT("1"), TEXT("Portfolio.DebugOverlay.Enemy.Enabled")));
 		result.Add(MakeBool(TEXT("CharacterDetails"), TEXT("Portfolio.DebugOverlay.Enemy.CombatTargetFacing.Enabled"), TEXT("Enemy Facing Visible"), TEXT("Show the already-created focused Enemy Combat Target Facing policy, Gameplay Focus, and rotation consistency in Character Details."), TEXT("1"), TEXT("Portfolio.DebugOverlay.Enemy.Enabled")));
 
-		result.Add(MakeBool(TEXT("WorldSummary"), TEXT("Portfolio.DebugOverlay.WorldSummary.CombatParticipation.Enabled"), TEXT("Combat Participation"), TEXT("Show target slot and participation summaries in World Summary."), TEXT("1")));
+		result.Add(MakeBool(TEXT("WorldSummary"), TEXT("Portfolio.DebugOverlay.WorldSummary.Visible"), TEXT("World Summary Visible"), TEXT("Show or hide the World Summary panel."), TEXT("1")));
+		result.Add(MakeBool(TEXT("WorldSummary"), TEXT("Portfolio.DebugOverlay.WorldSummary.CombatParticipation.Enabled"), TEXT("Combat Participation"), TEXT("Show target slot and participation summaries in World Summary."), TEXT("1"), TEXT("Portfolio.DebugOverlay.WorldSummary.Visible")));
 
 		result.Add(MakeBool(TEXT("Targeting"), TEXT("Portfolio.DebugOverlay.Targeting.Enabled"), TEXT("Targeting Diagnostics Enabled"), TEXT("Enable targeting debug data and world visualization."), TEXT("0")));
 		result.Add(MakeBool(TEXT("Targeting"), TEXT("Portfolio.DebugOverlay.Targeting.DrawRangeSphere"), TEXT("Range Sphere"), TEXT("Draw the maximum targeting range around the viewpoint."), TEXT("1"), TEXT("Portfolio.DebugOverlay.Targeting.Enabled")));

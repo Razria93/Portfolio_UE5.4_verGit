@@ -211,7 +211,15 @@ void ACDebugOverlayHUD::DrawHUD()
 	UpdateCombatParticipationViewData(combatParticipationSnapshot, focusedEnemy, panelVisibility, combatParticipation);
 
 	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, playerExecutionSession, balanceCollapse, combatTargetFacing, enemyExecutionSession, combatParticipation, panelVisibility);
-	const FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
+	FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
+	if (!panelVisibility.bShowEventLogPanel)
+	{
+		textPanels.EventLogPanel.Lines.Reset();
+	}
+	if (!panelVisibility.bShowWorldSummaryPanel)
+	{
+		textPanels.WorldSummaryPanel.Lines.Reset();
+	}
 
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);
 #endif

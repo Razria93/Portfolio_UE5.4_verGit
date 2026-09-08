@@ -5,6 +5,11 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
+	// ===== Overlay Panel CVars =====
+
+	TAutoConsoleVariable<int32> CVarDebugOverlayEventLogVisible(TEXT("Portfolio.DebugOverlay.EventLog.Visible"), 1, TEXT("Show the Event Log panel in the Debug Overlay HUD. 0: hidden, 1: shown."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarDebugOverlayWorldSummaryVisible(TEXT("Portfolio.DebugOverlay.WorldSummary.Visible"), 1, TEXT("Show the World Summary panel in the Debug Overlay HUD. 0: hidden, 1: shown."), ECVF_Default);
+
 	// ===== Main Panel Section CVars =====
 
 	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerEnabled(TEXT("Portfolio.DebugOverlay.Player.Enabled"), 1, TEXT("Show the Player section in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
@@ -37,6 +42,9 @@ FDebugOverlayPanelVisibility DebugOverlayDisplayConfig::GetPanelVisibility()
 	FDebugOverlayPanelVisibility visibility;
 
 #if !UE_BUILD_SHIPPING
+	visibility.bShowEventLogPanel = CVarDebugOverlayEventLogVisible.GetValueOnGameThread() != 0;
+	visibility.bShowWorldSummaryPanel = CVarDebugOverlayWorldSummaryVisible.GetValueOnGameThread() != 0;
+
 	visibility.bShowPlayer = CVarDebugOverlayPlayerEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowPlayerStatus = CVarDebugOverlayPlayerStatusEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowPlayerTargeting = CVarDebugOverlayPlayerTargetingEnabled.GetValueOnGameThread() != 0;
