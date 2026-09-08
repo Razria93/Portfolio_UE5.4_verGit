@@ -1,0 +1,4 @@
+# Unreal Engine binary assets are stored through Git LFS from this point forward.
+# Do not migrate existing history as part of this policy change.
+*.uasset filter=lfs diff=lfs merge=lfs -text
+*.umap   filter=lfs diff=lfs merge=lfs -text
