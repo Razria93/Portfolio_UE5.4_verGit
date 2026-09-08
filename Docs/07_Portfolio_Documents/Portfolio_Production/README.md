@@ -1,0 +1,29 @@
+# Portfolio Production
+
+이 폴더는 `Project Stellar` 제출 포트폴리오의 원본, 제작 기록, 캡처·다이어그램을 관리한다.
+
+## Current canonical artifacts
+
+| Role | Canonical item | Policy |
+| --- | --- | --- |
+| Submitted document source | [염동섭_UE5_Portfolio_Project_Stellar.html](염동섭_UE5_Portfolio_Project_Stellar.html) | 현재 제출 기준 HTML. 23개의 보이는 페이지를 가진다. |
+| Visual assets | [Assets/](Assets/) | HTML의 상대 경로로 참조되는 캡처·다이어그램 원본이다. |
+| Generated PDF | `output/pdf/UE5_Portfolio_Project_Stellar.pdf` | HTML에서 생성하는 산출물이며 Git 원본으로 추적하지 않는다. |
+| Static publication staging | `output/portfolio-pages/` | `Scripts/Publish/Publish-PortfolioDocument.ps1`로 생성한다. |
+
+## Submission scope
+
+- 제출본은 표지·인덱스·본문을 포함한 23페이지다.
+- p.24 `AI Workflow`와 p.25 `Traceability`는 향후 보완을 위한 숨김 초안으로 HTML 소스에만 보존하며, 현재 제출본·정적 배포본에는 포함하지 않는다.
+- 예전 `UE5_Portfolio_A4_Wireframe.html`, 25페이지 전환 계획, Word Handoff는 역사적 제작 기록이다. 현재 제출 원본으로 사용하지 않는다.
+
+## Navigation
+
+- [Page Spec Index](00_Portfolio_Page_Spec_Index%20(KR).md): 페이지별 메시지·근거 계획의 역사적 기준
+- [Portfolio Review Checklist](Portfolio_Review_Checklist%20(KR).md): 제출 전 점검 기록
+- [Runtime Capture and Video Runbook](29_Portfolio_Runtime_Capture_and_Video_Runbook%20(KR).md): 캡처·영상 확보 절차
+- [Documentation Maintenance TODO](../../01_Work_List/Documentation_Maintenance_TODO.md): 제출 이후 보완·동기화 작업의 단일 목록
+
+## Publication rule
+
+온라인 문서판은 제출 HTML을 직접 복사한 `index.html`과 필요한 `Assets/`로만 구성한다. 배포본을 직접 수정하지 않으며, 문서 원본을 수정한 뒤 publish script를 다시 실행한다.

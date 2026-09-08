@@ -1,0 +1,7 @@
+flowchart LR
+    A[Execution Request] --> B[Validate Target / Opportunity]
+    B --> C[Reserve Pair]
+    C --> D[Source Action + Target Reaction]
+    D --> E{Commit?}
+    E -->|before commit| F[Release]
+    E -->|after commit| G[Standard Recovery / Death Lifecycle]

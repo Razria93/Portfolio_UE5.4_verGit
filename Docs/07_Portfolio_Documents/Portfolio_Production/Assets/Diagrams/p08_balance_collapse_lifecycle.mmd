@@ -1,0 +1,7 @@
+flowchart LR
+    A[Parry Result] --> B[Balance Count]
+    B --> C{Threshold}
+    C --> D[CollapseIn Started]
+    D --> E[Collapse Loop TTL]
+    E --> F[Reset Notify]
+    F --> B

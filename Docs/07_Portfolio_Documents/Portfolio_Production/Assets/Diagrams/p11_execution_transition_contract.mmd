@@ -1,0 +1,41 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "Malgun Gothic, Noto Sans KR, Arial, sans-serif",
+    "fontSize": "16px",
+    "primaryColor": "#ffffff",
+    "primaryTextColor": "#151515",
+    "primaryBorderColor": "#151515",
+    "lineColor": "#151515",
+    "secondaryColor": "#f4f4f4",
+    "tertiaryColor": "#fafafa"
+  },
+  "flowchart": {
+    "defaultRenderer": "elk",
+    "curve": "stepAfter",
+    "nodeSpacing": 52,
+    "rankSpacing": 54,
+    "htmlLabels": true,
+    "useMaxWidth": false
+  }
+}}%%
+flowchart TB
+    Request("01. 새 Execution 요청<br/>Action / Reaction 요청")
+    Active{"전환 대상 Active<br/>실행 존재?"}
+    Directive("02. 전환 Directive<br/>중단 대상 · 사유 · 후속 시작")
+    Cleanup("03. 기존 실행 정리<br/>Stop Montage<br/>↓<br/>Cleanup Runtime")
+    Start("04. 새 Executor Start<br/>다음 Action / Reaction 시작")
+
+    Request --> Active
+    Active -->|아니오| Start
+    Active -->|예| Directive
+    Directive --> Cleanup
+    Cleanup --> Start
+
+    classDef step fill:#ffffff,stroke:#151515,stroke-width:1.5px,color:#151515;
+    classDef decision fill:#fafafa,stroke:#151515,stroke-width:1.5px,color:#151515;
+    classDef cleanup fill:#f4f4f4,stroke:#151515,stroke-width:1.5px,color:#151515;
+
+    class Request,Directive,Start step;
+    class Active decision;
+    class Cleanup cleanup;

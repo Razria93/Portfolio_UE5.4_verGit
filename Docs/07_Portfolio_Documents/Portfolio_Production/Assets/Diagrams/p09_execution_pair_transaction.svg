@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 520" role="img" aria-labelledby="title desc">
+  <title id="title">Execution pair transaction</title>
+  <desc id="desc">Execution Request가 Target과 Opportunity를 검증하고 Pair를 예약한 뒤 Source Action과 Target Reaction을 같은 세션으로 시작하여 Commit 또는 Release로 끝나는 흐름.</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#151515"/></marker></defs>
+  <rect width="1320" height="520" fill="#ffffff"/>
+  <text x="54" y="58" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#151515">EXECUTION PAIR TRANSACTION</text>
+  <text x="54" y="91" font-family="Arial, sans-serif" font-size="17" fill="#555555">One session verifies, reserves, activates, and resolves both actors together.</text>
+  <g font-family="Arial, sans-serif" fill="#151515">
+    <g transform="translate(54 176)"><rect width="186" height="102" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="37" font-size="18" font-weight="700">01</text><text x="18" y="68" font-size="21" font-weight="700">Request</text><text x="18" y="90" font-size="15" fill="#555555">source asks execution</text></g>
+    <g transform="translate(292 176)"><rect width="208" height="102" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="37" font-size="18" font-weight="700">02</text><text x="18" y="68" font-size="21" font-weight="700">Validate</text><text x="18" y="90" font-size="15" fill="#555555">target · revision · opportunity</text></g>
+    <g transform="translate(552 176)"><rect width="184" height="102" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="37" font-size="18" font-weight="700">03</text><text x="18" y="68" font-size="21" font-weight="700">Reserve Pair</text><text x="18" y="90" font-size="15" fill="#555555">session ownership</text></g>
+    <g transform="translate(788 146)"><rect width="222" height="164" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="36" font-size="18" font-weight="700">04 · SAME SESSION</text><line x1="18" y1="52" x2="204" y2="52" stroke="#151515"/><text x="18" y="87" font-size="21" font-weight="700">Source Action</text><text x="18" y="111" font-size="15" fill="#555555">primary pair</text><text x="18" y="143" font-size="21" font-weight="700">Target Reaction</text></g>
+    <g transform="translate(1062 176)"><path d="M96 0L192 51L96 102L0 51Z" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="69" y="47" font-size="18" font-weight="700">Commit?</text></g>
+    <g transform="translate(822 366)"><rect width="188" height="94" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="21" font-weight="700">Release</text><text x="18" y="65" font-size="15" fill="#555555">cancel before commit</text></g>
+    <g transform="translate(1062 366)"><rect width="210" height="94" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="20" font-weight="700">Outcome Route</text><text x="18" y="65" font-size="15" fill="#555555">recovery or death lifecycle</text></g>
+  </g>
+  <g fill="none" stroke="#151515" stroke-width="3" marker-end="url(#arrow)"><path d="M240 227H292"/><path d="M500 227H552"/><path d="M736 227H788"/><path d="M1010 227H1062"/><path d="M1158 278V340H916V366"/><path d="M1158 278V366H1167"/></g>
+  <text x="54" y="492" font-family="Arial, sans-serif" font-size="16" fill="#555555">Runtime captures are pending; this diagram states the verified code and design contract only.</text>
+</svg>

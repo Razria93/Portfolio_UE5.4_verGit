@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 520" role="img" aria-labelledby="title desc">
+  <title id="title">Balance / Collapse lifecycle</title>
+  <desc id="desc">Parry Result에서 Balance Count, Threshold, CollapseIn Started, Loop TTL, Reset Notify를 거쳐 다시 Accumulating으로 돌아가는 수명주기 흐름.</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#151515"/></marker></defs>
+  <rect width="1320" height="520" fill="#ffffff"/>
+  <text x="54" y="58" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#151515">BALANCE / COLLAPSE LIFECYCLE</text>
+  <text x="54" y="91" font-family="Arial, sans-serif" font-size="17" fill="#555555">Parry result is accumulated, then lifecycle state owns collapse, loop TTL, and recovery.</text>
+  <g font-family="Arial, sans-serif" fill="#151515">
+    <g transform="translate(54 172)"><rect width="178" height="106" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="18" font-weight="700">01</text><text x="18" y="69" font-size="21" font-weight="700">Parry Result</text><text x="18" y="91" font-size="15" fill="#555555">accepted packet</text></g>
+    <g transform="translate(282 172)"><rect width="178" height="106" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="18" font-weight="700">02</text><text x="18" y="69" font-size="21" font-weight="700">Balance Count</text><text x="18" y="91" font-size="15" fill="#555555">serial-aware update</text></g>
+    <g transform="translate(510 172)"><rect width="178" height="106" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="18" font-weight="700">03</text><text x="18" y="69" font-size="21" font-weight="700">Threshold</text><text x="18" y="91" font-size="15" fill="#555555">request collapse</text></g>
+    <g transform="translate(738 172)"><rect width="178" height="106" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="18" font-weight="700">04</text><text x="18" y="69" font-size="21" font-weight="700">CollapseIn</text><text x="18" y="91" font-size="15" fill="#555555">Started = state authority</text></g>
+    <g transform="translate(966 172)"><rect width="178" height="106" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="18" font-weight="700">05</text><text x="18" y="69" font-size="21" font-weight="700">Loop TTL</text><text x="18" y="91" font-size="15" fill="#555555">blocking period</text></g>
+    <g transform="translate(738 352)"><rect width="178" height="106" rx="4" fill="#f4f4f4" stroke="#151515" stroke-width="2"/><text x="18" y="38" font-size="18" font-weight="700">06</text><text x="18" y="69" font-size="21" font-weight="700">Reset Notify</text><text x="18" y="91" font-size="15" fill="#555555">return to accumulating</text></g>
+  </g>
+  <g fill="none" stroke="#151515" stroke-width="3" marker-end="url(#arrow)"><path d="M232 225H282"/><path d="M460 225H510"/><path d="M688 225H738"/><path d="M916 225H966"/><path d="M1055 278V330H827V352"/><path d="M738 405H372V278"/></g>
+  <text x="54" y="492" font-family="Arial, sans-serif" font-size="16" fill="#555555">State · Serial · Timer are owned by the Balance lifecycle, not by a montage end alone.</text>
+</svg>
