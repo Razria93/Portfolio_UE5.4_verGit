@@ -1,0 +1,49 @@
+name: Deploy Project Stellar Portfolio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Docs/07_Portfolio_Documents/Portfolio_Production/**'
+      - 'Scripts/Publish/Publish-PortfolioDocument.ps1'
+      - '.github/workflows/deploy-portfolio-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: portfolio-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static portfolio package
+        shell: pwsh
+        run: ./Scripts/Publish/Publish-PortfolioDocument.ps1 -Destination output/portfolio-pages
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: output/portfolio-pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

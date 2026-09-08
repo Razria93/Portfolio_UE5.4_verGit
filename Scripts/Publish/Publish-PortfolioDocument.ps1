@@ -5,7 +5,7 @@ param(
 )
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$sourceDirectory = Join-Path $repoRoot 'Docs\07_Portfolio_Documents\Portfolio_Production'
+$sourceDirectory = Join-Path (Join-Path (Join-Path $repoRoot 'Docs') '07_Portfolio_Documents') 'Portfolio_Production'
 $submittedSources = Get-ChildItem -LiteralPath $sourceDirectory -File -Filter '*_UE5_Portfolio_Project_Stellar.html'
 $sourceHtml = if ($submittedSources.Count -eq 1) { $submittedSources[0].FullName } else { $null }
 $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $repoRoot 'output'))
@@ -36,7 +36,7 @@ Copy-Item -LiteralPath (Join-Path $sourceDirectory 'Assets') -Destination (Join-
 
 $publishedHtml = Get-Content -LiteralPath (Join-Path $destinationPath 'index.html') -Raw
 $imageReferences = [regex]::Matches($publishedHtml, 'src="([^"]+)"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
-$missing = $imageReferences | Where-Object { -not (Test-Path -LiteralPath (Join-Path $destinationPath ($_ -replace '/', '\'))) }
+$missing = $imageReferences | Where-Object { -not (Test-Path -LiteralPath (Join-Path $destinationPath $_)) }
 if ($missing) {
     throw "Publish validation failed. Missing asset references:`n$($missing -join "`n")"
 }
