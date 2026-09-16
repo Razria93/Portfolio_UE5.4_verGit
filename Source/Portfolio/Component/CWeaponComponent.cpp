@@ -326,32 +326,6 @@ void UCWeaponComponent::EndWeaponPivotRotationOverride(uint32 InOverrideHandle)
 	ApplyWeaponPivotRotation();
 }
 
-// Legacy Weapon Presentation Override compatibility
-
-bool UCWeaponComponent::BeginWeaponPresentationOverride(const FTransform& InTargetRelativeOffset, uint32& OutOverrideHandle)
-{
-	if (InTargetRelativeOffset.ContainsNaN())
-	{
-		OutOverrideHandle = 0;
-		return false;
-	}
-
-	FWeaponPivotRotationSpec rotationSpec;
-	rotationSpec.Mode = EWeaponPivotRotationMode::TargetOrientation;
-	rotationSpec.TargetOrientation = InTargetRelativeOffset.GetRotation().Rotator();
-	return BeginWeaponPivotRotationOverride(rotationSpec, OutOverrideHandle);
-}
-
-bool UCWeaponComponent::UpdateWeaponPresentationOverride(uint32 InOverrideHandle, float InAlpha)
-{
-	return UpdateWeaponPivotRotationOverride(InOverrideHandle, InAlpha);
-}
-
-void UCWeaponComponent::EndWeaponPresentationOverride(uint32 InOverrideHandle)
-{
-	EndWeaponPivotRotationOverride(InOverrideHandle);
-}
-
 // Equip / Unequip Commit
 
 void UCWeaponComponent::CommitEquipWeapon()

@@ -145,11 +145,6 @@ public:
 	bool UpdateWeaponPivotRotationOverride(uint32 InOverrideHandle, float InAlpha);
 	void EndWeaponPivotRotationOverride(uint32 InOverrideHandle);
 
-	// Legacy Weapon Presentation Override compatibility.
-	bool BeginWeaponPresentationOverride(const FTransform& InTargetRelativeOffset, uint32& OutOverrideHandle);
-	bool UpdateWeaponPresentationOverride(uint32 InOverrideHandle, float InAlpha);
-	void EndWeaponPresentationOverride(uint32 InOverrideHandle);
-
 public:
 	// Equip / Unequip Commit
 	void CommitEquipWeapon();
