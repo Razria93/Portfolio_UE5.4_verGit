@@ -8,7 +8,7 @@
 UENUM(BlueprintType)
 enum class EActionType : uint8
 {
-	None = 0,	// Invalid, Unset
+	None = 0,
 
 	Idle,
 
@@ -21,9 +21,9 @@ enum class EActionType : uint8
 	Guard,
 	Dodge,
 
-	All,		// Wildcard
+	All,
 
-	Max,		// Sentinel
+	Max,
 };
 
 UENUM(BlueprintType)
@@ -45,21 +45,21 @@ enum class EActionNotifyCommand : uint8
 {
 	None = 0,
 
-	Complete,
+	Complete = 1,
 
-	PushHitContext,
-	ClearHitContext,
+	PushHitContext = 2,
+	ClearHitContext = 3,
 
-	OpenReserveChainWindow,
-	CloseReserveChainWindow,
-	ConsumeChain,
-
-	Equip,
-	Unequip,
+	OpenReserveChainWindow = 4,
+	CloseReserveChainWindow = 5,
+	ConsumeChain = 6,
 
 	SwitchToGuard,
 	AllowGuardStart,
 	CommitExecution,
+
+	CommitEquipWeapon,
+	CommitUnequipWeapon,
 
 	Max,
 };

@@ -48,5 +48,6 @@ void UCAnimNotify_SetIncapacitatedPresentation::Notify(USkeletalMeshComponent* M
 	{
 		FBalanceDebug::RecordLifecycleEvent(balanceComp, TEXT("IncapacitatedPresentationNotifyRouted"));
 	}
+
 	reactionComp->HandleReactionIncapacitatedPresentationNotify(TargetPresentation);
 }

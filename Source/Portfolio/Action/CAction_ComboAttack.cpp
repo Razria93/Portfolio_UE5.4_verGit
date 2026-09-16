@@ -145,26 +145,28 @@ void UCAction_ComboAttack::ConsumeChain()
 	ActiveMontage_Cached = nextData.Montage;
 	LastStopReason_Cached = EActionStopReason::None;
 
+	if (IsValid(ActionComp_Injected))
+	{
+		// Publish the next step before montage playback can dispatch a time-zero notify.
+		if (!ActionComp_Injected->HandleApplyActionConsumed(this, nextData, nextActionRequestSerial))
+		{
+			Stop(EActionStopReason::Ignored);
+			return;
+		}
+	}
+
 	if (!PlayMontage(nextData))
 	{
 		Stop(EActionStopReason::Ignored);
 		return;
 	}
 
+	if (!bIsActive) return;
+
 	if (!BindMontageEndDelegate())
 	{
 		Stop(EActionStopReason::Ignored);
 		return;
-	}
-
-	if (IsValid(ActionComp_Injected))
-	{
-		// Keep the owning action component synchronized with the consumed chain.
-		if (!ActionComp_Injected->HandleApplyActionConsumed(this, nextData, nextActionRequestSerial))
-		{
-			Stop(EActionStopReason::Ignored);
-			return;
-		}
 	}
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Chain);

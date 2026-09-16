@@ -8,14 +8,25 @@
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
-	None = 0,	// Invalid, Unset
+	None = 0,
 
 	Unarmed,
 	Sword,
 
-	All,		// Wildcard
+	All,
 
-	Max,		// Sentinel
+	Max,
+};
+
+UENUM(BlueprintType)
+enum class EWeaponSocketSlot : uint8
+{
+	None = 0,
+
+	Hand,
+	Holster,
+
+	Max,
 };
 
 // Runtime Context

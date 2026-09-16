@@ -135,12 +135,16 @@ void UCActionComponent::ClearActionRuntimeMaps()
 void UCActionComponent::SetInitialActiveActionRuntimeState()
 {
 	ActiveActionType = EActionType::Idle;
+	ActiveWeaponActionPoseScopeHandle = 0;
 }
 
 void UCActionComponent::ResetActiveActionRuntimeState()
 {
+	ReleaseActiveWeaponActionPoseScope();
+
 	ActiveActionType = EActionType::None;
 	ActiveActionIndex = INDEX_NONE;
+	ActiveActionRequestSerial = 0;
 	ActiveActionData = FActionData();
 	ActiveActionExecutor = nullptr;
 }
@@ -168,6 +172,11 @@ int32 UCActionComponent::GetActiveActionIndex() const
 uint32 UCActionComponent::GetActiveActionRequestSerial() const
 {
 	return ActiveActionRequestSerial;
+}
+
+uint32 UCActionComponent::GetActiveWeaponActionPoseScopeHandle() const
+{
+	return ActiveWeaponActionPoseScopeHandle;
 }
 
 bool UCActionComponent::GetActiveActionData(FActionData& OutData) const
@@ -221,11 +230,9 @@ bool UCActionComponent::ResolveActionData(const FActionDataKey& InDataKey, FActi
 
 UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 {
-	// Preferred: reuse cached action executor.
 	UCAction* found = FindActionExecutor(InData.ActionExecutorKey.Get());
 	if (IsValid(found)) return found;
 
-	// Fallback: create and cache action executor.
 	UCAction* add = AddActionExecutor(InData.ActionExecutorKey);
 	if (IsValid(add)) return add;
 
@@ -337,7 +344,12 @@ bool UCActionComponent::CancelActiveActionForSystem()
 	if (!IsValid(activeExecutor)) return EndActiveAction(EActionFinishReason::Interrupted);
 
 	activeExecutor->Stop(EActionStopReason::Interrupted);
-	return !IsActive();
+	if (IsActive())
+	{
+		return EndActiveAction(EActionFinishReason::Interrupted);
+	}
+
+	return true;
 }
 
 // Execution Result Hooks
@@ -638,8 +650,6 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
 
-	// Rebuild clears stale action data; append keeps the existing map.
-
 	if (bRebuildAll)
 	{
 		ActionDataMap.Reset();
@@ -659,13 +669,12 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 				FActionComponentDebug::RecordActionDataDuplicateForAudit(OwnerCharacter_Injected, actionData, bRebuildAll);
 				ActionDataMap[actionDataKey] = actionData;
 			}
-			else // bRebuildAll == false
+			else
 			{
-				// Duplicate action data is skipped unless the map is being rebuilt.
 				continue;
 			}
 		}
-		else // Contains(actionDataKey) == false
+		else
 		{
 			ActionDataMap.Add(actionDataKey, actionData);
 		}
@@ -675,8 +684,6 @@ void UCActionComponent::BuildActionDataMap(bool bRebuildAll)
 void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 {
 	if (!IsValid(OwnerCharacter_Injected)) return;
-
-	// Rebuild clears stale action executors; append keeps existing cache entries.
 
 	if (bRebuildAll)
 	{
@@ -690,14 +697,12 @@ void UCActionComponent::BuildActionExecutorMap(bool bRebuildAll)
 		UClass* executorKey = actionData.ActionExecutorKey.Get();
 		if (!IsValid(executorKey)) continue;
 
-		// Preferred: keep existing cached action executor.
 		if (!bRebuildAll)
 		{
 			const UCAction* found = FindActionExecutor(executorKey);
 			if (IsValid(found)) continue;
 		}
 
-		// Fallback: create cached action executor.
 		UCAction* add = AddActionExecutor(executorKey);
 		if (!IsValid(add))
 		{
@@ -801,17 +806,39 @@ bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 	}
 
 	const FActionData& incomingData = InContext.ActionData;
+	const uint32 actionPoseScopeHandle = AllocateWeaponActionPoseScopeHandle();
 
+	if (actionPoseScopeHandle == 0)
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("ActionPoseScopeAllocationFailed"));
+		return false;
+	}
+
+	if (IsValid(WeaponComp_Injected) && !WeaponComp_Injected->BeginWeaponActionPoseScope(actionPoseScopeHandle))
+	{
+		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("ActionPoseScopeBeginFailed"));
+		return false;
+	}
+
+	ActiveWeaponActionPoseScopeHandle = actionPoseScopeHandle;
+	SetActiveActionContext(InContext);
 	EnterActionState(incomingData);
 
 	if (!incomingExecutor->Start(incomingData, InContext.ActionRequestSerial))
 	{
-		ExitActionState(incomingData);
+		// Start may synchronously finish and clear the action through a time-zero notify.
+		if (IsActive()
+			&& GetActiveActionExecutor() == incomingExecutor
+			&& ActiveActionRequestSerial == InContext.ActionRequestSerial)
+		{
+			ReleaseActiveWeaponActionPoseScope();
+			ExitActionState(incomingData);
+			ClearActiveActionContext();
+		}
 		FActionComponentDebug::RecordActionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("StartAction"), TEXT("ExecutorStartFailed"));
 		return false;
 	}
 
-	SetActiveActionContext(InContext);
 	FActionComponentDebug::PrintActionExecutionContextDebug(OwnerCharacter_Injected, InContext, TEXT("StartAction"));
 	return true;
 }
@@ -856,7 +883,6 @@ bool UCActionComponent::InterruptActiveAction(const FExecutionInterventionDirect
 	UCAction* activeExecutor = GetActiveActionExecutor();
 	if (!IsValid(activeExecutor))
 	{
-		// Force end when the active executor is already invalid.
 		return EndActiveAction(finishReason);
 	}
 
@@ -864,7 +890,6 @@ bool UCActionComponent::InterruptActiveAction(const FExecutionInterventionDirect
 
 	if (IsActive())
 	{
-		// Force end when the executor interrupt callback did not clear active state.
 		return EndActiveAction(finishReason);
 	}
 
@@ -877,6 +902,8 @@ bool UCActionComponent::EndActiveAction(EActionFinishReason InFinishReason)
 
 	const FActionData activeData = ActiveActionData;
 
+	ReleaseActiveWeaponActionPoseScope();
+
 	if (activeData.IsValidMinimal())
 	{
 		ExitActionState(activeData);
@@ -885,6 +912,39 @@ bool UCActionComponent::EndActiveAction(EActionFinishReason InFinishReason)
 	ClearActiveActionContext();
 
 	return !IsActive();
+}
+
+// Weapon Action Pose Scope
+
+uint32 UCActionComponent::AllocateWeaponActionPoseScopeHandle()
+{
+	uint32 result = NextWeaponActionPoseScopeHandle++;
+	if (NextWeaponActionPoseScopeHandle == 0)
+	{
+		++NextWeaponActionPoseScopeHandle;
+	}
+
+	if (result == 0)
+	{
+		result = NextWeaponActionPoseScopeHandle++;
+		if (NextWeaponActionPoseScopeHandle == 0)
+		{
+			++NextWeaponActionPoseScopeHandle;
+		}
+	}
+
+	return result;
+}
+
+void UCActionComponent::ReleaseActiveWeaponActionPoseScope()
+{
+	const uint32 scopeHandle = ActiveWeaponActionPoseScopeHandle;
+	ActiveWeaponActionPoseScopeHandle = 0;
+
+	if (scopeHandle != 0 && IsValid(WeaponComp_Injected))
+	{
+		WeaponComp_Injected->EndWeaponActionPoseScope(scopeHandle);
+	}
 }
 
 // Active Context

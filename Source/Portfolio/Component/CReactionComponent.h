@@ -127,7 +127,6 @@ public:
 public:
 	// Notify Routing
 	void HandleReactionNotifyCommand(EReactionNotifyCommand InNotifyCommand);
-	void HandleReactionIncapacitatedPresentationNotify(EIncapacitatedPresentation InPresentation);
 
 	void HandleReactionAllowInterventionWindowBegin(FName InWindowKey);
 	void HandleReactionAllowInterventionWindowEnd(FName InWindowKey);
@@ -135,6 +134,8 @@ public:
 	void HandleReactionFeedback(FName InTriggerKey);
 	void HandleReactionFeedbackWindowBegin(FName InTriggerKey);
 	void HandleReactionFeedbackWindowEnd(FName InTriggerKey);
+
+	void HandleReactionIncapacitatedPresentationNotify(EIncapacitatedPresentation InPresentation);
 
 private:
 	// Component Reference Validation

@@ -16,8 +16,4 @@ public:
 protected:
 	// Notify
 	void HandleSpecificNotifyCommand(EActionNotifyCommand InCommand) override;
-
-private:
-	// Weapon
-	void AttachWeapon();
 };

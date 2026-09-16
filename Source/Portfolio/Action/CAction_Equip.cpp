@@ -53,21 +53,14 @@ void UCAction_Equip::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
 	switch (InCommand)
 	{
-	case EActionNotifyCommand::Equip:
-		AttachWeapon();
+	case EActionNotifyCommand::CommitEquipWeapon:
+		if (IsValid(WeaponComp_Injected))
+		{
+			WeaponComp_Injected->CommitEquipWeapon();
+		}
 		return;
 
 	default:
 		return;
 	}
-}
-
-// Weapon
-
-void UCAction_Equip::AttachWeapon()
-{
-	if (!IsValid(WeaponComp_Injected)) return;
-
-	WeaponComp_Injected->AttachWeaponToHand();
-	WeaponComp_Injected->CommitEquipWeapon();
 }

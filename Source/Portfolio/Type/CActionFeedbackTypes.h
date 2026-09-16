@@ -69,6 +69,26 @@ public:
 		return ActionType == InOther.ActionType
 			&& ActionIndex == InOther.ActionIndex;
 	}
+
+	EActionFeedbackMatchTier CalculateMatchTier(const FActionFeedbackMatchKey& InRequestKey) const
+	{
+		const bool bActionExact = (ActionType == InRequestKey.ActionType);
+		const bool bActionAny = (ActionType == EActionType::All);
+
+		const bool bIndexExact = (ActionIndex == InRequestKey.ActionIndex);
+		const bool bIndexAny = (ActionIndex == INDEX_NONE);
+
+		if (bActionExact && bIndexExact)
+			return EActionFeedbackMatchTier::ExactActionExactIndex;
+
+		if (bActionExact && bIndexAny)
+			return EActionFeedbackMatchTier::ExactActionAnyIndex;
+
+		if (bActionAny && bIndexAny)
+			return EActionFeedbackMatchTier::AnyActionAnyIndex;
+
+		return EActionFeedbackMatchTier::None;
+	}
 };
 
 // Request
@@ -93,28 +113,6 @@ public:
 };
 
 // Data / Config
-
-USTRUCT(BlueprintType)
-struct FActionTrailFeedbackData
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere)
-	FActionFeedbackMatchKey ActionFeedbackMatchKey = FActionFeedbackMatchKey();
-
-	UPROPERTY(EditAnywhere)
-	EActionFeedbackTiming ActionFeedbackTiming = EActionFeedbackTiming::None;
-
-	UPROPERTY(EditAnywhere)
-	FName TriggerKey = NAME_None;
-
-	UPROPERTY(EditAnywhere)
-	bool bTrailActive = false;
-
-public:
-	FActionTrailFeedbackData() = default;
-};
 
 USTRUCT(BlueprintType)
 struct FActionVFXFeedbackData

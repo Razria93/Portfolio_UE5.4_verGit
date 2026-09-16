@@ -418,12 +418,14 @@ Unequip 실행 판단은 다음과 같음.
 Equip / Unequip의 실제 weapon state 변경은 montage notify 계열 API에서 처리됨.
 
 ```yaml
-1. UCAction_Equip::AttachWeapon()
--> WeaponComp::AttachWeaponToHand()
+1. UCAnimNotifyState_EquipSocketTransformTransition
+-> WeaponComp::CompleteWeaponSocketTransformTransition()
+-> UCAction_Equip::HandleSpecificNotifyCommand()
 -> WeaponComp::CommitEquipWeapon()
 
-2. UCAction_Unequip::DetachWeapon()
--> WeaponComp::AttachWeaponToHolster()
+2. UCAnimNotifyState_UnequipSocketTransformTransition
+-> WeaponComp::CompleteWeaponSocketTransformTransition()
+-> UCAction_Unequip::HandleSpecificNotifyCommand()
 -> WeaponComp::CommitUnequipWeapon()
 ```
 

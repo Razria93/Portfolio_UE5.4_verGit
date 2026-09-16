@@ -399,8 +399,8 @@ void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, ui
 	}
 	if (bInterrupted)
 	{
+		// Do not stop or clear here: interrupted MontageEnd is audit-only; formal termination enters via Stop/Interrupt.
 		FReactionComponentDebug::RecordReactionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("MontageEnd"), TEXT("UnexpectedInterruption"));
-		Stop(EReactionStopReason::Interrupted);
 		return;
 	}
 

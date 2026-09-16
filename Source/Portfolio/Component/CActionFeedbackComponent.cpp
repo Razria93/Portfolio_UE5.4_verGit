@@ -61,14 +61,14 @@ void UCActionFeedbackComponent::PlayFeedback(const FActionFeedbackRequest& InAct
 		return;
 	}
 
-	ExecuteTrailFeedbacks(InActionFeedbackRequest);
+	ExecuteWeaponTrailFeedback(InActionFeedbackRequest);
 	ExecuteVFXFeedbacks(InActionFeedbackRequest);
 	ExecuteSFXFeedbacks(InActionFeedbackRequest);
 }
 
 void UCActionFeedbackComponent::ClearRuntimeFeedback()
 {
-	ToggleTrailActive(false);
+	DeactivateWeaponTrails();
 }
 
 // Query
@@ -104,22 +104,7 @@ EActionFeedbackMatchTier UCActionFeedbackComponent::CalculateMatchTier(const FAc
 	if (InDataTriggerKey != InActionFeedbackRequest.TriggerKey)
 		return EActionFeedbackMatchTier::None;
 
-	const bool bActionExact = (InDataKey.ActionType == InActionFeedbackRequest.ActionFeedbackMatchKey.ActionType);
-	const bool bActionAny = (InDataKey.ActionType == EActionType::All);
-
-	const bool bIndexExact = (InDataKey.ActionIndex == InActionFeedbackRequest.ActionFeedbackMatchKey.ActionIndex);
-	const bool bIndexAny = (InDataKey.ActionIndex == INDEX_NONE);
-
-	if (bActionExact && bIndexExact)
-		return EActionFeedbackMatchTier::ExactActionExactIndex;
-
-	if (bActionExact && bIndexAny)
-		return EActionFeedbackMatchTier::ExactActionAnyIndex;
-
-	if (bActionAny && bIndexAny)
-		return EActionFeedbackMatchTier::AnyActionAnyIndex;
-
-	return EActionFeedbackMatchTier::None;
+	return InDataKey.CalculateMatchTier(InActionFeedbackRequest.ActionFeedbackMatchKey);
 }
 
 // Runtime Key / Playback Key
@@ -150,44 +135,37 @@ FActionSFXPlaybackKey UCActionFeedbackComponent::BuildActionSFXPlaybackKey(const
 
 // Execution
 
-void UCActionFeedbackComponent::ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
+void UCActionFeedbackComponent::ExecuteWeaponTrailFeedback(const FActionFeedbackRequest& InActionFeedbackRequest)
 {
-	EActionFeedbackMatchTier bestTier = EActionFeedbackMatchTier::None;
-	const FActionTrailFeedbackData* bestData = nullptr;
-	int32 bestMatchCount = 0;
-
-	for (const FActionTrailFeedbackData& trailFeedbackData : TrailFeedbackDatas)
+	if (InActionFeedbackRequest.ActionFeedbackTiming != EActionFeedbackTiming::TriggerWindowBegin
+		&& InActionFeedbackRequest.ActionFeedbackTiming != EActionFeedbackTiming::TriggerWindowEnd)
 	{
-		const EActionFeedbackMatchTier matchTier = CalculateMatchTier(trailFeedbackData.ActionFeedbackMatchKey, trailFeedbackData.ActionFeedbackTiming, trailFeedbackData.TriggerKey, InActionFeedbackRequest);
-
-		if (matchTier == EActionFeedbackMatchTier::None) continue;
-		if (static_cast<uint8>(matchTier) < static_cast<uint8>(bestTier)) continue;
-
-		if (static_cast<uint8>(matchTier) > static_cast<uint8>(bestTier))
-		{
-			bestTier = matchTier;
-			bestData = &trailFeedbackData;
-			bestMatchCount = 1;
-			continue;
-		}
-
-		++bestMatchCount;
-	}
-
-	if (!bestData)
-	{
-		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), TEXT("NoMatch"));
 		return;
 	}
 
-	if (bestMatchCount > 1)
+	if (!IsValid(WeaponComp_Injected))
 	{
-		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), TEXT("DuplicateBestMatch"), bestMatchCount);
+		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), TEXT("InvalidWeaponComponent"));
 		return;
 	}
 
-	FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), bestMatchCount);
-	ToggleTrailActive(bestData->bTrailActive);
+	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(WeaponComp_Injected->GetWeaponActor());
+	if (!IsValid(weaponActor))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), TEXT("InvalidWeaponActor"));
+		return;
+	}
+
+	if (!weaponActor->HandleTrailFeedback(InActionFeedbackRequest))
+	{
+		FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(OwnerCharacter_Injected, this, InActionFeedbackRequest, TEXT("Trail"), TEXT("NoWeaponTrailDefinitionMatch"));
+		return;
+	}
+
+	const bool bActivated = InActionFeedbackRequest.ActionFeedbackTiming == EActionFeedbackTiming::TriggerWindowBegin;
+	FCombatFeedbackProfiling::RecordActionTrail(bActivated);
+	FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), weaponActor,
+		*FString::Printf(TEXT("%s:%s"), bActivated ? TEXT("Activate") : TEXT("Deactivate"), *InActionFeedbackRequest.TriggerKey.ToString()));
 }
 
 void UCActionFeedbackComponent::ExecuteVFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest)
@@ -372,30 +350,12 @@ void UCActionFeedbackComponent::PlayActionSFX(const FActionSFXFeedbackData& InAc
 	}
 }
 
-void UCActionFeedbackComponent::ToggleTrailActive(bool bActive)
+void UCActionFeedbackComponent::DeactivateWeaponTrails()
 {
-	if (!IsValid(WeaponComp_Injected))
-	{
-		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), nullptr, TEXT("InvalidWeaponComponent"));
-		return;
-	}
+	if (!IsValid(WeaponComp_Injected)) return;
 
-	UObject* uobject = WeaponComp_Injected->GetWeaponActor();
-	if (!IsValid(uobject))
-	{
-		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), uobject, TEXT("InvalidWeaponActorObject"));
-		return;
-	}
+	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(WeaponComp_Injected->GetWeaponActor());
+	if (!IsValid(weaponActor)) return;
 
-	ACWeaponActor* weaponActor = Cast<ACWeaponActor>(uobject);
-	if (!IsValid(weaponActor))
-	{
-		FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), uobject, TEXT("InvalidWeaponActor"));
-		return;
-	}
-
-	FCombatFeedbackProfiling::RecordActionTrail(bActive);
-	FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("Trail"), weaponActor, bActive ? TEXT("Activate") : TEXT("Deactivate"));
-
-	weaponActor->ToggleTrailActive(bActive);
+	weaponActor->DeactivateAllTrails();
 }

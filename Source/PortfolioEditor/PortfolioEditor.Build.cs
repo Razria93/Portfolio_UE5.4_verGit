@@ -11,6 +11,7 @@ public class PortfolioEditor : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
+			"Portfolio",
 			"AnimationModifiers",
 			"AnimationBlueprintLibrary",
 		});
