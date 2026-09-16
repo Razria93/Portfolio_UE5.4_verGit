@@ -68,14 +68,6 @@ void UCWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-// Runtime Lifecycle
-
-void UCWeaponComponent::UninitializeWeaponRuntime()
-{
-	ClearWeaponRuntimeState();
-	DestroyWeaponActor();
-}
-
 // Query
 
 ACWeaponActor* UCWeaponComponent::GetWeaponActor() const
@@ -83,87 +75,284 @@ ACWeaponActor* UCWeaponComponent::GetWeaponActor() const
 	return IsValid(WeaponActor) ? WeaponActor : nullptr;
 }
 
-// Mutation
+// Weapon Presentation - Action Pose Scope
 
-void UCWeaponComponent::AttachWeaponToHand()
+bool UCWeaponComponent::BeginWeaponActionPoseScope(uint32 InScopeHandle)
 {
-	if (!IsValid(WeaponActor)) return;
+	if (InScopeHandle == 0 || ActionPoseScopeState.ActiveHandle != 0) return false;
 
-	ClearWeaponPresentationOverride();
-	WeaponActor->AttachToHandSocket();
-	CaptureWeaponAttachmentRelativeTransform();
+	ClearWeaponSocketTransformTransition(true);
+	ClearWeaponPivotRuntimeEffects();
+
+	ActionPoseScopeState.ActiveHandle = InScopeHandle;
+
+	ActionPoseScopeState.ScopedWeaponActor = WeaponActor;
+
+	ActionPoseScopeState.bHasSocketBaseline = false;
+
+	ActionPoseScopeState.BaselineSocketName = NAME_None;
+	ActionPoseScopeState.BaselinePivotRotation = CommittedPivotRotation;
+
+	if (IsValid(WeaponActor))
+	{
+		ActionPoseScopeState.bHasSocketBaseline = WeaponActor->GetCurrentOwnerSocketName(ActionPoseScopeState.BaselineSocketName);
+	}
+
+	return true;
 }
 
-void UCWeaponComponent::AttachWeaponToHolster()
+bool UCWeaponComponent::EndWeaponActionPoseScope(uint32 InScopeHandle)
 {
-	if (!IsValid(WeaponActor)) return;
+	if (!IsWeaponActionPoseScopeActive(InScopeHandle)) return false;
 
-	ClearWeaponPresentationOverride();
-	WeaponActor->AttachToHolsterSocket();
-	CaptureWeaponAttachmentRelativeTransform();
+	ACWeaponActor* scopedWeaponActor = ActionPoseScopeState.ScopedWeaponActor.Get();
+
+	const bool bCanRestoreScopedActor = IsValid(scopedWeaponActor) && scopedWeaponActor == WeaponActor;
+	const bool bRestoreSocket = bCanRestoreScopedActor && ActionPoseScopeState.bHasSocketBaseline;
+
+	const FName baselineSocketName = ActionPoseScopeState.BaselineSocketName;
+	const FQuat baselinePivotRotation = ActionPoseScopeState.BaselinePivotRotation;
+
+	// Invalidate first so late NotifyEnd callbacks cannot mutate the next action.
+	ActionPoseScopeState.ActiveHandle = 0;
+	ClearWeaponSocketTransformTransition(false);
+	ClearWeaponPivotRuntimeEffects();
+
+	if (bCanRestoreScopedActor)
+	{
+		if (bRestoreSocket)
+		{
+			WeaponActor->AttachToOwnerSocket(baselineSocketName);
+		}
+
+		CommittedPivotRotation = baselinePivotRotation;
+		ApplyWeaponPivotRotation();
+	}
+
+	ResetWeaponActionPoseScope();
+	return true;
 }
 
-bool UCWeaponComponent::BeginWeaponPresentationOverride(const FTransform& InTargetRelativeOffset, uint32& OutOverrideHandle)
+bool UCWeaponComponent::IsWeaponActionPoseScopeActive(uint32 InScopeHandle) const
+{
+	return InScopeHandle != 0 && InScopeHandle == ActionPoseScopeState.ActiveHandle;
+}
+
+// Weapon Presentation - Socket Transform Transition
+
+bool UCWeaponComponent::BeginWeaponSocketTransformTransition(EWeaponSocketSlot InTargetSlot, uint32& OutTransitionHandle)
+{
+	OutTransitionHandle = 0;
+
+	if (ActionPoseScopeState.ActiveHandle == 0) return false;
+	if (!IsValid(WeaponActor)) return false;
+	if (InTargetSlot == EWeaponSocketSlot::None || InTargetSlot == EWeaponSocketSlot::Max) return false;
+
+	FName targetSocketName;
+	if (!WeaponActor->ResolveSocketName(InTargetSlot, targetSocketName)) return false;
+
+	return BeginWeaponSocketTransformTransitionInternal(ActionPoseScopeState.ActiveHandle, NAME_None, targetSocketName, OutTransitionHandle);
+}
+
+bool UCWeaponComponent::BeginWeaponSocketTransformTransition(FName InExpectedSourceSocketName, FName InTargetSocketName, uint32& OutTransitionHandle)
+{
+	OutTransitionHandle = 0;
+
+	if (ActionPoseScopeState.ActiveHandle == 0) return false;
+
+	return BeginWeaponSocketTransformTransitionInternal(ActionPoseScopeState.ActiveHandle, InExpectedSourceSocketName, InTargetSocketName, OutTransitionHandle);
+}
+
+bool UCWeaponComponent::UpdateWeaponSocketTransformTransition(uint32 InTransitionHandle, float InAlpha)
+{
+	if (InTransitionHandle == 0 || InTransitionHandle != SocketTransformTransitionState.ActiveHandle) return false;
+	if (!IsWeaponActionPoseScopeActive(SocketTransformTransitionState.ActionPoseScopeHandle)) return false;
+	if (!IsValid(WeaponActor)) return false;
+
+	FTransform sourceWorldTransform;
+	if (!WeaponActor->GetOwnerSocketWorldTransform(SocketTransformTransitionState.SourceSocketName, sourceWorldTransform))
+	{
+		return false;
+	}
+
+	FTransform targetWorldTransform;
+	if (!WeaponActor->GetOwnerSocketWorldTransform(SocketTransformTransitionState.TargetSocketName, targetWorldTransform)) return false;
+
+	FTransform blendedWorldTransform;
+	blendedWorldTransform.Blend(sourceWorldTransform, targetWorldTransform, FMath::Clamp(InAlpha, 0.f, 1.f));
+
+	return WeaponActor->SetActorRootWorldTransform(blendedWorldTransform);
+}
+
+bool UCWeaponComponent::CompleteWeaponSocketTransformTransition(uint32 InTransitionHandle)
+{
+	if (InTransitionHandle == 0 || InTransitionHandle != SocketTransformTransitionState.ActiveHandle) return false;
+	if (!IsWeaponActionPoseScopeActive(SocketTransformTransitionState.ActionPoseScopeHandle)) return false;
+	if (!IsValid(WeaponActor)) return false;
+
+	const bool bAttached = WeaponActor->AttachToOwnerSocket(SocketTransformTransitionState.TargetSocketName);
+	ClearWeaponSocketTransformTransition(false);
+	return bAttached;
+}
+
+void UCWeaponComponent::CancelWeaponSocketTransformTransition(uint32 InTransitionHandle)
+{
+	if (InTransitionHandle == 0 || InTransitionHandle != SocketTransformTransitionState.ActiveHandle) return;
+	if (!IsWeaponActionPoseScopeActive(SocketTransformTransitionState.ActionPoseScopeHandle)) return;
+
+	ClearWeaponSocketTransformTransition(true);
+}
+
+// Weapon Presentation - Pivot Rotation Transition
+
+bool UCWeaponComponent::BeginWeaponPivotRotationTransition(const FWeaponPivotRotationSpec& InRotationSpec, uint32& OutTransitionHandle)
+{
+	OutTransitionHandle = 0;
+
+	if (ActionPoseScopeState.ActiveHandle == 0 || !InRotationSpec.IsValid()) return false;
+	if (!IsValid(WeaponActor) || !WeaponActor->HasValidPivot()) return false;
+
+	if (PivotRotationTransitionState.ActiveHandle != 0)
+	{
+		ensureMsgf(false,
+			TEXT("[Weapon|PivotRotationTransitionRejected] Reason=AnotherTransitionAlreadyActive | Owner=%s | ActiveHandle=%u"),
+			*GetNameSafe(GetOwner()),
+			PivotRotationTransitionState.ActiveHandle);
+		return false;
+	}
+
+	PivotRotationTransitionState.SourceRotation = CommittedPivotRotation;
+	PivotRotationTransitionState.CurrentRotation = CommittedPivotRotation;
+	PivotRotationTransitionState.RotationSpec = InRotationSpec;
+	PivotRotationTransitionState.ActiveHandle = PivotRotationTransitionState.NextHandle++;
+	PivotRotationTransitionState.ActionPoseScopeHandle = ActionPoseScopeState.ActiveHandle;
+
+	if (PivotRotationTransitionState.NextHandle == 0)
+	{
+		++PivotRotationTransitionState.NextHandle;
+	}
+
+	if (!ApplyWeaponPivotRotation())
+	{
+		ClearWeaponPivotRotationTransitionState();
+		return false;
+	}
+
+	OutTransitionHandle = PivotRotationTransitionState.ActiveHandle;
+	return true;
+}
+
+bool UCWeaponComponent::UpdateWeaponPivotRotationTransition(uint32 InTransitionHandle, float InAlpha)
+{
+	if (InTransitionHandle == 0 || InTransitionHandle != PivotRotationTransitionState.ActiveHandle) return false;
+	if (PivotRotationTransitionState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationTransitionState.ActionPoseScopeHandle)) return false;
+
+	PivotRotationTransitionState.CurrentRotation = PivotRotationTransitionState.RotationSpec.Evaluate(PivotRotationTransitionState.SourceRotation, InAlpha);
+	return ApplyWeaponPivotRotation();
+}
+
+bool UCWeaponComponent::CompleteWeaponPivotRotationTransition(uint32 InTransitionHandle)
+{
+	if (InTransitionHandle == 0 || InTransitionHandle != PivotRotationTransitionState.ActiveHandle) return false;
+	if (PivotRotationTransitionState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationTransitionState.ActionPoseScopeHandle)) return false;
+
+	CommittedPivotRotation = PivotRotationTransitionState.RotationSpec.Evaluate(PivotRotationTransitionState.SourceRotation, 1.f);
+	ClearWeaponPivotRotationTransitionState();
+	return ApplyWeaponPivotRotation();
+}
+
+void UCWeaponComponent::CancelWeaponPivotRotationTransition(uint32 InTransitionHandle)
+{
+	if (InTransitionHandle == 0 || InTransitionHandle != PivotRotationTransitionState.ActiveHandle) return;
+	if (PivotRotationTransitionState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationTransitionState.ActionPoseScopeHandle)) return;
+
+	ClearWeaponPivotRotationTransitionState();
+	ApplyWeaponPivotRotation();
+}
+
+// Weapon Presentation - Pivot Rotation Override
+
+bool UCWeaponComponent::BeginWeaponPivotRotationOverride(const FWeaponPivotRotationSpec& InRotationSpec, uint32& OutOverrideHandle)
 {
 	OutOverrideHandle = 0;
 
-	if (!IsValid(WeaponActor)) return false;
+	if (ActionPoseScopeState.ActiveHandle == 0 || !InRotationSpec.IsValid()) return false;
+	if (!IsValid(WeaponActor) || !WeaponActor->HasValidPivot()) return false;
 
-	if (ActiveWeaponPresentationOverrideHandle != 0)
+	if (PivotRotationOverrideState.ActiveHandle != 0)
 	{
-		ensureMsgf(
-			false,
-			TEXT("[Weapon|PresentationOverrideRejected] Reason=AnotherOverrideAlreadyActive | Owner=%s | ActiveHandle=%u"),
+		ensureMsgf(false,
+			TEXT("[Weapon|PivotRotationOverrideRejected] Reason=AnotherOverrideAlreadyActive | Owner=%s | ActiveHandle=%u"),
 			*GetNameSafe(GetOwner()),
-			ActiveWeaponPresentationOverrideHandle);
+			PivotRotationOverrideState.ActiveHandle);
 		return false;
 	}
 
-	if (!CaptureWeaponAttachmentRelativeTransform()) return false;
+	PivotRotationOverrideState.TemporaryRotationOffset = FQuat::Identity;
+	PivotRotationOverrideState.RotationSpec = InRotationSpec;
+	PivotRotationOverrideState.ActiveHandle = PivotRotationOverrideState.NextHandle++;
+	PivotRotationOverrideState.ActionPoseScopeHandle = ActionPoseScopeState.ActiveHandle;
 
-	WeaponPresentationTargetRelativeOffset = InTargetRelativeOffset;
-	ActiveWeaponPresentationOverrideHandle = NextWeaponPresentationOverrideHandle++;
-
-	// Keep zero as the invalid-handle sentinel even if the counter wraps.
-	if (NextWeaponPresentationOverrideHandle == 0)
+	if (PivotRotationOverrideState.NextHandle == 0)
 	{
-		++NextWeaponPresentationOverrideHandle;
+		++PivotRotationOverrideState.NextHandle;
 	}
 
-	if (!ApplyWeaponPresentationOverride(0.f))
+	if (!ApplyWeaponPivotRotation())
 	{
-		ClearWeaponPresentationOverride();
+		ClearWeaponPivotRotationOverrideState();
 		return false;
 	}
 
-	OutOverrideHandle = ActiveWeaponPresentationOverrideHandle;
+	OutOverrideHandle = PivotRotationOverrideState.ActiveHandle;
 	return true;
+}
+
+bool UCWeaponComponent::UpdateWeaponPivotRotationOverride(uint32 InOverrideHandle, float InAlpha)
+{
+	if (InOverrideHandle == 0 || InOverrideHandle != PivotRotationOverrideState.ActiveHandle) return false;
+	if (PivotRotationOverrideState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationOverrideState.ActionPoseScopeHandle)) return false;
+
+	PivotRotationOverrideState.TemporaryRotationOffset = PivotRotationOverrideState.RotationSpec.Evaluate(FQuat::Identity, InAlpha);
+	return ApplyWeaponPivotRotation();
+}
+
+void UCWeaponComponent::EndWeaponPivotRotationOverride(uint32 InOverrideHandle)
+{
+	if (InOverrideHandle == 0 || InOverrideHandle != PivotRotationOverrideState.ActiveHandle) return;
+	if (PivotRotationOverrideState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationOverrideState.ActionPoseScopeHandle)) return;
+
+	ClearWeaponPivotRotationOverrideState();
+	ApplyWeaponPivotRotation();
+}
+
+// Legacy Weapon Presentation Override compatibility
+
+bool UCWeaponComponent::BeginWeaponPresentationOverride(const FTransform& InTargetRelativeOffset, uint32& OutOverrideHandle)
+{
+	if (InTargetRelativeOffset.ContainsNaN())
+	{
+		OutOverrideHandle = 0;
+		return false;
+	}
+
+	FWeaponPivotRotationSpec rotationSpec;
+	rotationSpec.Mode = EWeaponPivotRotationMode::TargetOrientation;
+	rotationSpec.TargetOrientation = InTargetRelativeOffset.GetRotation().Rotator();
+	return BeginWeaponPivotRotationOverride(rotationSpec, OutOverrideHandle);
 }
 
 bool UCWeaponComponent::UpdateWeaponPresentationOverride(uint32 InOverrideHandle, float InAlpha)
 {
-	if (InOverrideHandle == 0 || InOverrideHandle != ActiveWeaponPresentationOverrideHandle) return false;
-
-	return ApplyWeaponPresentationOverride(InAlpha);
+	return UpdateWeaponPivotRotationOverride(InOverrideHandle, InAlpha);
 }
 
 void UCWeaponComponent::EndWeaponPresentationOverride(uint32 InOverrideHandle)
 {
-	if (InOverrideHandle == 0 || InOverrideHandle != ActiveWeaponPresentationOverrideHandle) return;
-
-	ClearWeaponPresentationOverride();
+	EndWeaponPivotRotationOverride(InOverrideHandle);
 }
 
-void UCWeaponComponent::ClearWeaponPresentationOverride()
-{
-	if (ActiveWeaponPresentationOverrideHandle != 0 && bHasWeaponAttachmentRelativeTransform && IsValid(WeaponActor))
-	{
-		WeaponActor->SetAttachmentRelativeTransform(WeaponAttachmentRelativeTransform_Base);
-	}
-
-	WeaponPresentationTargetRelativeOffset = FTransform::Identity;
-	ActiveWeaponPresentationOverrideHandle = 0;
-}
+// Equip / Unequip Commit
 
 void UCWeaponComponent::CommitEquipWeapon()
 {
@@ -174,12 +363,16 @@ void UCWeaponComponent::CommitEquipWeapon()
 	}
 
 	ChangeWeaponType(WeaponActor->GetWeaponType());
+	RebaseWeaponActionPoseScopeSocket();
 }
 
 void UCWeaponComponent::CommitUnequipWeapon()
 {
 	ChangeWeaponType(EWeaponType::Unarmed);
+	RebaseWeaponActionPoseScopeSocket();
 }
+
+// Combat Context
 
 void UCWeaponComponent::PushActionDataKey(const FActionDataKey& InActionDataKey)
 {
@@ -194,7 +387,7 @@ void UCWeaponComponent::PushActionDataKey(const FActionDataKey& InActionDataKey)
 	provider->SetLastActionDataKey(InActionDataKey);
 }
 
-void UCWeaponComponent::ClearContext()
+void UCWeaponComponent::ClearWeaponCombatContext()
 {
 	if (!IsValid(WeaponActor)) return;
 
@@ -206,17 +399,27 @@ void UCWeaponComponent::ClearContext()
 	provider->SetLastActionDataKey(FActionDataKey());
 }
 
-void UCWeaponComponent::ClearWeaponRuntimeState()
-{
-	ClearWeaponPresentationOverride();
-	ClearContext();
+// Collision
 
-	if (IsValid(WeaponActor))
-	{
-		WeaponActor->CollisionDisabled();
-		WeaponActor->ToggleTrailActive(false);
-	}
+void UCWeaponComponent::OpenCollisionWindow(FName InCollisionName)
+{
+	if (!IsValid(WeaponActor)) return;
+
+	FCombatCollisionProfilingCounters::RecordWeaponComponentOpenCollisionWindow();
+
+	WeaponActor->CollisionEnabled(InCollisionName);
 }
+
+void UCWeaponComponent::CloseCollisionWindow()
+{
+	if (!IsValid(WeaponActor)) return;
+
+	FCombatCollisionProfilingCounters::RecordWeaponComponentCloseCollisionWindow();
+
+	WeaponActor->CollisionDisabled();
+}
+
+// Feedback - Dissolve
 
 void UCWeaponComponent::StartWeaponDissolve()
 {
@@ -239,81 +442,30 @@ void UCWeaponComponent::FinishWeaponDissolve()
 	WeaponActor->ReceiveWeaponDissolveFinished();
 }
 
-// Weapon Actor
+// Runtime Cleanup
 
-void UCWeaponComponent::DestroyWeaponActor()
+void UCWeaponComponent::ClearWeaponRuntimeState()
 {
-	if (!IsValid(WeaponActor)) return;
+	ClearWeaponSocketTransformTransition(true);
+	ClearWeaponPivotRuntimeEffects();
+	ClearWeaponCombatContext();
 
-	ClearWeaponPresentationOverride();
-	WeaponActor->Destroy();
-	WeaponActor = nullptr;
-	bHasWeaponAttachmentRelativeTransform = false;
+	if (IsValid(WeaponActor))
+	{
+		WeaponActor->CollisionDisabled();
+		WeaponActor->DeactivateAllTrails();
+	}
 }
 
-void UCWeaponComponent::OpenCollisionWindow(FName InCollisionName)
+// Weapon Runtime Lifecycle
+
+void UCWeaponComponent::UninitializeWeaponRuntime()
 {
-	if (!IsValid(WeaponActor)) return;
-
-	FCombatCollisionProfilingCounters::RecordWeaponComponentOpenCollisionWindow();
-
-	WeaponActor->CollisionEnabled(InCollisionName);
+	ClearWeaponRuntimeState();
+	DestroyWeaponActor();
 }
 
-void UCWeaponComponent::CloseCollisionWindow()
-{
-	if (!IsValid(WeaponActor)) return;
-
-	FCombatCollisionProfilingCounters::RecordWeaponComponentCloseCollisionWindow();
-
-	WeaponActor->CollisionDisabled();
-}
-
-void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
-{
-	if (!IsValid(OwnerCharacter_Injected)) return;
-
-	EWeaponType prevWeaponType = CurrentWeaponType;
-	CurrentWeaponType = InNewWeaponType;
-
-	if (OnWeaponTypeChanged.IsBound())
-		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Injected, prevWeaponType, CurrentWeaponType);
-}
-
-bool UCWeaponComponent::CaptureWeaponAttachmentRelativeTransform()
-{
-	if (!IsValid(WeaponActor)) return false;
-
-	FTransform attachmentRelativeTransform;
-	if (!WeaponActor->GetAttachmentRelativeTransform(attachmentRelativeTransform)) return false;
-
-	WeaponAttachmentRelativeTransform_Base = attachmentRelativeTransform;
-	bHasWeaponAttachmentRelativeTransform = true;
-	return true;
-}
-
-bool UCWeaponComponent::ApplyWeaponPresentationOverride(float InAlpha)
-{
-	if (!IsValid(WeaponActor)) return false;
-	if (!bHasWeaponAttachmentRelativeTransform) return false;
-
-	const float alpha = FMath::Clamp(InAlpha, 0.f, 1.f);
-	const FTransform targetRelativeTransform = WeaponPresentationTargetRelativeOffset * WeaponAttachmentRelativeTransform_Base;
-
-	FTransform blendedRelativeTransform;
-	blendedRelativeTransform.Blend(WeaponAttachmentRelativeTransform_Base, targetRelativeTransform, alpha);
-
-	return WeaponActor->SetAttachmentRelativeTransform(blendedRelativeTransform);
-}
-
-FWeaponContext UCWeaponComponent::BuildWeaponContext() const
-{
-	FWeaponContext weaponContext;
-
-	weaponContext.WeaponType = CurrentWeaponType;
-
-	return weaponContext;
-}
+// Weapon Actor Lifecycle
 
 FCharacterComponentReferences UCWeaponComponent::BuildWeaponActorReferences() const
 {
@@ -361,9 +513,179 @@ bool UCWeaponComponent::CreateWeaponActor(AActor* InOwnerCharacter, EWeaponType 
 	weaponActor->ApplyInitialWeaponState(InWeaponType);
 
 	WeaponActor = weaponActor;
-	CaptureWeaponAttachmentRelativeTransform();
+	ResetWeaponPivotRotationState();
 
 	return true;
+}
+
+void UCWeaponComponent::DestroyWeaponActor()
+{
+	if (!IsValid(WeaponActor))
+	{
+		ResetWeaponActionPoseScope();
+		return;
+	}
+
+	ClearWeaponSocketTransformTransition(false);
+	ResetWeaponPivotRotationState();
+	ResetWeaponActionPoseScope();
+	WeaponActor->Destroy();
+	WeaponActor = nullptr;
+}
+
+// Weapon State Helpers
+
+void UCWeaponComponent::ChangeWeaponType(EWeaponType InNewWeaponType)
+{
+	if (!IsValid(OwnerCharacter_Injected)) return;
+
+	EWeaponType prevWeaponType = CurrentWeaponType;
+	CurrentWeaponType = InNewWeaponType;
+
+	if (OnWeaponTypeChanged.IsBound())
+		OnWeaponTypeChanged.Broadcast(OwnerCharacter_Injected, prevWeaponType, CurrentWeaponType);
+}
+
+// Weapon Presentation - Action Pose Scope Helpers
+
+void UCWeaponComponent::RebaseWeaponActionPoseScopeSocket()
+{
+	if (ActionPoseScopeState.ActiveHandle == 0 || !IsValid(WeaponActor)) return;
+	if (ActionPoseScopeState.ScopedWeaponActor.Get() != WeaponActor) return;
+
+	ActionPoseScopeState.bHasSocketBaseline = WeaponActor->GetCurrentOwnerSocketName(ActionPoseScopeState.BaselineSocketName);
+}
+
+void UCWeaponComponent::ResetWeaponActionPoseScope()
+{
+	ActionPoseScopeState = FWeaponActionPoseScopeState();
+	SocketTransformTransitionState.ActionPoseScopeHandle = 0;
+	PivotRotationTransitionState.ActionPoseScopeHandle = 0;
+	PivotRotationOverrideState.ActionPoseScopeHandle = 0;
+}
+
+// Weapon Presentation - Socket Transform Transition Helpers
+
+bool UCWeaponComponent::BeginWeaponSocketTransformTransitionInternal(uint32 InActionPoseScopeHandle, FName InExpectedSourceSocketName, FName InTargetSocketName, uint32& OutTransitionHandle)
+{
+	OutTransitionHandle = 0;
+
+	if (!IsValid(WeaponActor) || InTargetSocketName.IsNone()) return false;
+
+	if (SocketTransformTransitionState.ActiveHandle != 0)
+	{
+		ensureMsgf(false,
+			TEXT("[Weapon|SocketTransformTransitionRejected] Reason=AnotherTransitionAlreadyActive | Owner=%s | ActiveHandle=%u"),
+			*GetNameSafe(GetOwner()),
+			SocketTransformTransitionState.ActiveHandle);
+		return false;
+	}
+
+	FName sourceSocketName;
+	FTransform unusedTargetWorldTransform;
+	if (!WeaponActor->GetCurrentOwnerSocketName(sourceSocketName)) return false;
+	if (!InExpectedSourceSocketName.IsNone() && sourceSocketName != InExpectedSourceSocketName) return false;
+	if (!WeaponActor->GetOwnerSocketWorldTransform(InTargetSocketName, unusedTargetWorldTransform)) return false;
+
+	SocketTransformTransitionState.SourceSocketName = sourceSocketName;
+	SocketTransformTransitionState.TargetSocketName = InTargetSocketName;
+	SocketTransformTransitionState.ActionPoseScopeHandle = InActionPoseScopeHandle;
+	SocketTransformTransitionState.ActiveHandle = SocketTransformTransitionState.NextHandle++;
+
+	if (SocketTransformTransitionState.NextHandle == 0)
+	{
+		++SocketTransformTransitionState.NextHandle;
+	}
+
+	OutTransitionHandle = SocketTransformTransitionState.ActiveHandle;
+	return true;
+}
+
+bool UCWeaponComponent::ClearWeaponSocketTransformTransition(bool bRestoreSourceSocket)
+{
+	if (SocketTransformTransitionState.ActiveHandle == 0)
+	{
+		return false;
+	}
+
+	if (bRestoreSourceSocket && IsValid(WeaponActor))
+	{
+		WeaponActor->AttachToOwnerSocket(SocketTransformTransitionState.SourceSocketName);
+	}
+
+	SocketTransformTransitionState.SourceSocketName = NAME_None;
+	SocketTransformTransitionState.TargetSocketName = NAME_None;
+	SocketTransformTransitionState.ActiveHandle = 0;
+	SocketTransformTransitionState.ActionPoseScopeHandle = 0;
+	return true;
+}
+
+// Weapon Presentation - Pivot Helpers
+
+bool UCWeaponComponent::ApplyWeaponPivotRotation()
+{
+	if (!IsValid(WeaponActor)) return false;
+
+	const FQuat baseRotation = PivotRotationTransitionState.ActiveHandle != 0
+		? PivotRotationTransitionState.CurrentRotation
+		: CommittedPivotRotation;
+
+	FQuat finalRotation = baseRotation * PivotRotationOverrideState.TemporaryRotationOffset;
+	finalRotation.Normalize();
+
+	return WeaponActor->ApplyPivotRotation(finalRotation);
+}
+
+void UCWeaponComponent::ClearWeaponPivotRotationTransitionState()
+{
+	PivotRotationTransitionState.SourceRotation = FQuat::Identity;
+	PivotRotationTransitionState.CurrentRotation = FQuat::Identity;
+	PivotRotationTransitionState.RotationSpec = FWeaponPivotRotationSpec();
+	PivotRotationTransitionState.ActiveHandle = 0;
+	PivotRotationTransitionState.ActionPoseScopeHandle = 0;
+}
+
+void UCWeaponComponent::ClearWeaponPivotRotationOverrideState()
+{
+	PivotRotationOverrideState.TemporaryRotationOffset = FQuat::Identity;
+	PivotRotationOverrideState.RotationSpec = FWeaponPivotRotationSpec();
+	PivotRotationOverrideState.ActiveHandle = 0;
+	PivotRotationOverrideState.ActionPoseScopeHandle = 0;
+}
+
+void UCWeaponComponent::ClearWeaponPivotRuntimeEffects()
+{
+	ClearWeaponPivotRotationTransitionState();
+	ClearWeaponPivotRotationOverrideState();
+	ApplyWeaponPivotRotation();
+}
+
+void UCWeaponComponent::ResetWeaponPivotRotationState()
+{
+	const uint32 nextTransitionHandle = PivotRotationTransitionState.NextHandle;
+	const uint32 nextOverrideHandle = PivotRotationOverrideState.NextHandle;
+
+	CommittedPivotRotation = FQuat::Identity;
+	PivotRotationTransitionState = FWeaponPivotRotationTransitionState();
+	PivotRotationOverrideState = FWeaponPivotRotationOverrideState();
+	PivotRotationTransitionState.NextHandle = nextTransitionHandle;
+	PivotRotationOverrideState.NextHandle = nextOverrideHandle;
+
+	if (IsValid(WeaponActor))
+	{
+		WeaponActor->ResetPivotRotation();
+	}
+}
+
+// Combat Context Helpers
+
+FWeaponContext UCWeaponComponent::BuildWeaponContext() const
+{
+	FWeaponContext weaponContext;
+
+	weaponContext.WeaponType = CurrentWeaponType;
+
+	return weaponContext;
 }
 
 // Profiling

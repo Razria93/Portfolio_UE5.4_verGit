@@ -97,13 +97,11 @@ bool UCAction::IsIncomingActionType(const FExecutionInterventionQuery& InQuery, 
 
 bool UCAction::CanResolveIndependentRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// Idle state accepts independent action requests.
 	return InQuery.Snapshot.IsIdle() && !InQuery.HasActivePart();
 }
 
 bool UCAction::CanResolveExclusiveRelationship(const FExecutionDecisionQuery& InQuery) const
 {
-	// Active state can accept exclusive requests against the current part.
 	return !InQuery.Snapshot.IsIdle() && InQuery.HasActivePart();
 }
 
@@ -111,7 +109,6 @@ bool UCAction::TryResolveIndependentOrExclusiveRelationship(const FExecutionDeci
 {
 	OutRelationship = EExecutionRelationship::None;
 
-	// Idle state resolves to an independent relationship.
 	if (CanResolveIndependentRelationship(InQuery))
 	{
 		OutRelationship = EExecutionRelationship::Independent;
@@ -147,6 +144,7 @@ bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSeri
 	ActiveData_Cached = InData;
 	ActionRequestSerial_Cached = InActionRequestSerial;
 	ActiveMontage_Cached = InData.Montage;
+	bIsActive = true;
 
 	if (!PlayMontage(InData))
 	{
@@ -154,14 +152,15 @@ bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSeri
 		return false;
 	}
 
+	// Montage playback may synchronously finish the action through a time-zero notify.
+	if (!bIsActive) return false;
+
 	if (!BindMontageEndDelegate())
 	{
 		StopMontage();
 		ClearRuntime();
 		return false;
 	}
-
-	bIsActive = true;
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
 	PlayFeedbackRequest(feedbackRequest);
@@ -438,6 +437,7 @@ void UCAction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint
 
 	if (bInterrupted)
 	{
+		// Do not stop or clear here: interrupted MontageEnd is audit-only; formal termination enters via Stop/Interrupt.
 		FActionComponentDebug::RecordActionMontageRejectedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached, TEXT("MontageEnd"), TEXT("UnexpectedInterruption"));
 		return;
 	}
@@ -547,7 +547,7 @@ void UCAction::ClearHitContext()
 		return;
 	}
 
-	WeaponComp_Injected->ClearContext();
+	WeaponComp_Injected->ClearWeaponCombatContext();
 }
 
 // Intervention Window
@@ -593,12 +593,10 @@ void UCAction::ResolveObservableOverlayCondition(const FObservableOverlayQuery& 
 
 	if (!InQuery.DecisionQuery.IncomingPart.IsActionParticipant())
 	{
-		// Reject non-Action overlay queries.
 		OutDecision.Decision = EExecutionDecision::Reject;
 		return;
 	}
 
-	// Default Action overlay handling accepts without cleanup.
 	OutDecision.Decision = EExecutionDecision::Accept;
 }
 

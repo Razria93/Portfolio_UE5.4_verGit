@@ -17,9 +17,6 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
-	TArray<FActionTrailFeedbackData> TrailFeedbackDatas;
-
-	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
 	TArray<FActionVFXFeedbackData> VFXFeedbackDatas;
 
 	UPROPERTY(EditAnywhere, Category = "ActionFeedback|Data")
@@ -59,7 +56,7 @@ private:
 
 private:
 	// Execution
-	void ExecuteTrailFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
+	void ExecuteWeaponTrailFeedback(const FActionFeedbackRequest& InActionFeedbackRequest);
 	void ExecuteVFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
 	void ExecuteSFXFeedbacks(const FActionFeedbackRequest& InActionFeedbackRequest);
 
@@ -67,5 +64,5 @@ private:
 	// Playback
 	void PlayActionVFX(const FActionVFXFeedbackData& InActionVFXFeedbackData);
 	void PlayActionSFX(const FActionSFXFeedbackData& InActionSFXFeedbackData);
-	void ToggleTrailActive(bool bActive);
+	void DeactivateWeaponTrails();
 };

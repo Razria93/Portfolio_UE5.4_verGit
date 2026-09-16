@@ -294,24 +294,6 @@ void UCReactionComponent::HandleReactionNotifyCommand(EReactionNotifyCommand InN
 	activeExecutor->HandleNotifyCommand(InNotifyCommand);
 }
 
-void UCReactionComponent::HandleReactionIncapacitatedPresentationNotify(const EIncapacitatedPresentation InPresentation)
-{
-	if (InPresentation == EIncapacitatedPresentation::Max)
-	{
-		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("IncapacitatedPresentation"), NAME_None, TEXT("InvalidPresentation"));
-		return;
-	}
-
-	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor) || !ActiveReactionContext.IsValidMinimal())
-	{
-		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("IncapacitatedPresentation"), NAME_None, TEXT("InvalidExecutorOrContext"));
-		return;
-	}
-
-	OnReactionIncapacitatedPresentationRequested.Broadcast(ActiveReactionContext, InPresentation);
-}
-
 void UCReactionComponent::HandleReactionAllowInterventionWindowBegin(FName InWindowKey)
 {
 	if (InWindowKey.IsNone())
@@ -400,6 +382,24 @@ void UCReactionComponent::HandleReactionFeedbackWindowEnd(FName InTriggerKey)
 	}
 
 	activeExecutor->HandleNotifyFeedback(EReactionFeedbackTiming::TriggerWindowEnd, InTriggerKey);
+}
+
+void UCReactionComponent::HandleReactionIncapacitatedPresentationNotify(const EIncapacitatedPresentation InPresentation)
+{
+	if (InPresentation == EIncapacitatedPresentation::Max)
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, ActiveReactionExecutor, TEXT("IncapacitatedPresentation"), NAME_None, TEXT("InvalidPresentation"));
+		return;
+	}
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor) || !ActiveReactionContext.IsValidMinimal())
+	{
+		FReactionComponentDebug::RecordReactionNotifyIgnoredForAudit(OwnerCharacter_Injected, activeExecutor, TEXT("IncapacitatedPresentation"), NAME_None, TEXT("InvalidExecutorOrContext"));
+		return;
+	}
+
+	OnReactionIncapacitatedPresentationRequested.Broadcast(ActiveReactionContext, InPresentation);
 }
 
 // Component Reference Validation

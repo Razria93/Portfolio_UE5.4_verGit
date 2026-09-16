@@ -11,7 +11,7 @@
 #include "Type/CActionOrchestrationTypes.h"
 #include "CAction.generated.h"
 
-UCLASS(Abstract) // Base Action Class
+UCLASS(Abstract)
 class PORTFOLIO_API UCAction : public UObject
 {
 	GENERATED_BODY()
@@ -24,8 +24,8 @@ protected:
 	TSet<FName> AllowInterventionWindowKeys;
 
 protected:
-	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Action
-	uint32 CachedSerial_ActivePlay = 0;	// Cached Serial of Active Play Action
+	uint32 Serial_CurrentPlay = 0;
+	uint32 CachedSerial_ActivePlay = 0;
 
 protected:
 	UPROPERTY(Transient)

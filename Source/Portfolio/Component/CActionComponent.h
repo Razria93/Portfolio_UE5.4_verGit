@@ -48,6 +48,13 @@ private:
 	UPROPERTY(Transient)
 	class UCAction* ActiveActionExecutor = nullptr;
 
+	// Action Pose Scope
+	UPROPERTY(Transient)
+	uint32 ActiveWeaponActionPoseScopeHandle = 0;
+
+	UPROPERTY(Transient)
+	uint32 NextWeaponActionPoseScopeHandle = 1;
+
 private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
@@ -107,6 +114,7 @@ public:
 	EActionType GetActiveActionType() const;
 	int32 GetActiveActionIndex() const;
 	uint32 GetActiveActionRequestSerial() const;
+	uint32 GetActiveWeaponActionPoseScopeHandle() const;
 	bool GetActiveActionData(FActionData& OutData) const;
 	class UCAction* GetActiveActionExecutor() const;
 
@@ -194,6 +202,11 @@ private:
 	bool ReserveAction(const FActionExecutionContext& InContext);
 	bool InterruptActiveAction(const FExecutionInterventionDirective& InDirective);
 	bool EndActiveAction(EActionFinishReason InFinishReason);
+
+private:
+	// Weapon Action Pose Scope
+	uint32 AllocateWeaponActionPoseScopeHandle();
+	void ReleaseActiveWeaponActionPoseScope();
 
 private:
 	// Active Context

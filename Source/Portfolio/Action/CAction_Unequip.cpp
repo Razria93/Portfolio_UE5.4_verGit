@@ -53,21 +53,14 @@ void UCAction_Unequip::HandleSpecificNotifyCommand(EActionNotifyCommand InComman
 {
 	switch (InCommand)
 	{
-	case EActionNotifyCommand::Unequip:
-		DetachWeapon();
+	case EActionNotifyCommand::UnequipSocketTransformTransition:
+		if (IsValid(WeaponComp_Injected))
+		{
+			WeaponComp_Injected->CommitUnequipWeapon();
+		}
 		return;
 
 	default:
 		return;
 	}
-}
-
-// Weapon
-
-void UCAction_Unequip::DetachWeapon()
-{
-	if (!IsValid(WeaponComp_Injected)) return;
-
-	WeaponComp_Injected->AttachWeaponToHolster();
-	WeaponComp_Injected->CommitUnequipWeapon();
 }
