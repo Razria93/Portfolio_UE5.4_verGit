@@ -53,7 +53,7 @@ void UCAction_Equip::HandleSpecificNotifyCommand(EActionNotifyCommand InCommand)
 {
 	switch (InCommand)
 	{
-	case EActionNotifyCommand::EquipSocketTransformTransition:
+	case EActionNotifyCommand::CommitEquipWeapon:
 		if (IsValid(WeaponComp_Injected))
 		{
 			WeaponComp_Injected->CommitEquipWeapon();

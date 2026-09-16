@@ -54,17 +54,14 @@ enum class EActionNotifyCommand : uint8
 	CloseReserveChainWindow = 5,
 	ConsumeChain = 6,
 
-	Equip = 7,
-	Unequip = 8,
+	SwitchToGuard,
+	AllowGuardStart,
+	CommitExecution,
 
-	SwitchToGuard = 9,
-	AllowGuardStart = 10,
-	CommitExecution = 11,
+	CommitEquipWeapon,
+	CommitUnequipWeapon,
 
-	EquipSocketTransformTransition = 12,
-	UnequipSocketTransformTransition = 13,
-
-	Max = 14,
+	Max,
 };
 
 UENUM(BlueprintType)

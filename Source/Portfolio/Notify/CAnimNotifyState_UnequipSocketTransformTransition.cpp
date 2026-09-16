@@ -4,5 +4,5 @@ UCAnimNotifyState_UnequipSocketTransformTransition::UCAnimNotifyState_UnequipSoc
 {
 	TriggerActionType = EActionType::Unequip;
 	TargetSlot = EWeaponSocketSlot::Holster;
-	CompletionCommand = EActionNotifyCommand::UnequipSocketTransformTransition;
+	CompletionCommand = EActionNotifyCommand::CommitUnequipWeapon;
 }

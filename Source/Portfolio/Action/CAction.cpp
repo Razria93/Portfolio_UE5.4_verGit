@@ -442,7 +442,8 @@ void UCAction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, uint
 		return;
 	}
 
-	Complete();
+	// Natural MontageEnd is audit-only; Complete Notify owns termination.
+	FActionComponentDebug::RecordActionMontageIgnoredForAudit(OwnerCharacter_Injected, this, InAnimMontage, InSerial, CachedSerial_ActivePlay, TEXT("NaturalMontageEndObserved"));
 }
 
 bool UCAction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const

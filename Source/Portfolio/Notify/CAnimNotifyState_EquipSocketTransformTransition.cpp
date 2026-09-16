@@ -4,5 +4,5 @@ UCAnimNotifyState_EquipSocketTransformTransition::UCAnimNotifyState_EquipSocketT
 {
 	TriggerActionType = EActionType::Equip;
 	TargetSlot = EWeaponSocketSlot::Hand;
-	CompletionCommand = EActionNotifyCommand::EquipSocketTransformTransition;
+	CompletionCommand = EActionNotifyCommand::CommitEquipWeapon;
 }

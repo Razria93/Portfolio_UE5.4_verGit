@@ -53,7 +53,7 @@ void UCAction_Unequip::HandleSpecificNotifyCommand(EActionNotifyCommand InComman
 {
 	switch (InCommand)
 	{
-	case EActionNotifyCommand::UnequipSocketTransformTransition:
+	case EActionNotifyCommand::CommitUnequipWeapon:
 		if (IsValid(WeaponComp_Injected))
 		{
 			WeaponComp_Injected->CommitUnequipWeapon();
