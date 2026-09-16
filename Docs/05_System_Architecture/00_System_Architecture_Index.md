@@ -45,5 +45,6 @@
 | S36 | Execution Collaboration Architecture | `S36_UE5_Portfolio_Execution_Collaboration_Architecture.md` | Source/Target pair session, Standard Execution Down/Recovery, Lethal Death presentation handoff | Current System | 구현·authoring 반영 완료. outcome별 회귀 검증 기준 |
 | S37 | Execution Transition and Intervention Architecture | `S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md` | Action/Reaction 공통 Decision·Relationship·ApplyMode 계약 | Current System | 전환·개입 정책 경계와 runtime evidence 제한 |
 | S38 | Combat Signal Architecture | `S38_UE5_Portfolio_Combat_Signal_Architecture.md` | Source 사실 전달과 Target Outcome 확정 경계 | Current System | 일반 Signal과 Execution Pair의 책임 분리 |
+| S39 | Weapon Presentation Pivot Architecture | `S39_UE5_Portfolio_Weapon_Presentation_Pivot_Architecture.md` | 캐릭터 장착 좌표와 무기 HandGrip 기준 Presentation 회전의 분리·합성 계약 | Current System | Pivot 수학, Action Pose Scope, 소켓 전환, 회전 모드, authoring 및 검증 기준 |
 
 ---
