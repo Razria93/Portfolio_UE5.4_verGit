@@ -198,6 +198,8 @@ Action 종료·취소 시:
 
 따라서 오른손↔왼손 전환 도중 Montage가 끊겨도 Action 시작 소켓으로 돌아온다. Equip/Unequip처럼 영구 상태를 바꾸는 전환은 완료 후 활성 Scope의 소켓 기준선을 새 상태로 재설정하므로 Action 종료가 장착 결과를 되돌리지 않는다.
 
+복구의 진입점은 정식 Complete/Stop/Interrupt 흐름이며 MontageEnd 콜백 자체가 아니다. 장탈착은 Socket NotifyState의 물리 전환 완료 → `CommitEquipWeapon` / `CommitUnequipWeapon`의 논리 상태 확정 → 명시적 Complete 순서로 저작한다. Action과 Reaction의 자연 MontageEnd는 관측용이다. [F08](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)의 검증 범위와 한계를 함께 참조한다.
+
 ---
 
 ## 8. 피벗 회전 채널
