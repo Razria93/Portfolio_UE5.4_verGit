@@ -138,6 +138,7 @@ bool UCReaction::Start(const FReactionData& InData)
 	ActiveData_Cached = InData;
 	ActiveMontage_Cached = InData.Montage;
 	LastStopReason_Cached = EReactionStopReason::None;
+	bIsActive = true;
 
 	if (!PlayMontage(InData))
 	{
@@ -145,14 +146,15 @@ bool UCReaction::Start(const FReactionData& InData)
 		return false;
 	}
 
+	// Playback may have ended this execution through a callback.
+	if (!bIsActive) return false;
+
 	if (!BindMontageEndDelegate())
 	{
 		StopMontage(0.f);
 		ClearRuntime();
 		return false;
 	}
-
-	bIsActive = true;
 
 	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Start);
 	PlayFeedbackRequest(feedbackRequest);

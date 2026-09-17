@@ -748,16 +748,21 @@ bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InConte
 
 	const FReactionData& incomingData = InContext.ReactionData;
 
+	SetActiveReactionContext(InContext);
 	EnterReactionState(incomingData);
 
 	if (!incomingExecutor->Start(incomingData))
 	{
-		ExitReactionState(incomingData);
+		// A callback may already have cleared the active context.
+		if (IsActive() && GetActiveReactionExecutor() == incomingExecutor)
+		{
+			ExitReactionState(incomingData);
+			ClearActiveReactionContext();
+		}
 		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"), TEXT("ExecutorStartFailed"));
 		return false;
 	}
 
-	SetActiveReactionContext(InContext);
 	BroadcastReactionExecutionLifecycleEvent(EReactionExecutionLifecycleEventType::Started, EReactionFinishReason::None, InContext);
 	FReactionComponentDebug::RecordReactionRuntimeAcceptedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"));
 	return true;
