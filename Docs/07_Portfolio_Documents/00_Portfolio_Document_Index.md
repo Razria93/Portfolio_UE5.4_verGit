@@ -2,6 +2,8 @@
 
 ## Current submission
 
+- [Stellar Asset Integration](Stellar_Asset_Integration/README.md): post-submission integration case reports; not a replacement for the submitted HTML.
+
 - [Project Stellar Portfolio Production](Portfolio_Production/README.md): current 23-page submitted HTML, source assets, publication rule, and post-submission TODO.
 - The PF00–PF07 documents below are legacy portfolio design records. They are not the current submitted document source.
 

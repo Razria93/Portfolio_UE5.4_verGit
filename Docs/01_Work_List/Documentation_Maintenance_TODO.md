@@ -19,6 +19,13 @@
 
 ## P1 — Current portfolio evidence
 
+### Stellar asset integration follow-up (2026-09-17)
+
+- [ ] I03: 현재 Retargeter Spine Rotation Alpha 확인. 당시 0.7 시각 개선 사용자 기록은 확보됨. 최종 설정 화면만 필요하며 전체 PIE 반복은 요구하지 않음.
+- [ ] I07: 충돌을 수정한 대표 메시/설정과 조명 주요 설정·선택 이유 확인. 맵 도입 이력과 사용자 작업 진술은 확보됐으나 상세 해결 기록은 미확보.
+- [ ] I08: Placeholder_Normal 보존 판단 당시 조회 화면이 AssetReferenceInspector인지 확인. 참조/Material 조사와 T_CELESTE_FlatNormal 이주는 확보됨. 당시 자료가 없으면 현재 재현 자료로 표시.
+- 관련 문서: [전체 개요](../07_Portfolio_Documents/Stellar_Asset_Integration/README.md), [근거 목록](../98_Evidence/Stellar_Asset_Integration/README.md).
+
 - [ ] 대표 Gameplay Video를 Issue #119에 업로드하고 Evidence Ledger를 갱신한다.
   - 상태: Needs Capture
   - 대상: p.1 Cover, `Docs/98_Evidence/Portfolio_Evidence_Capture_Ledger (KR).md`

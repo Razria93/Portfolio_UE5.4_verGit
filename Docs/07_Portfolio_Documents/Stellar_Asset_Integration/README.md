@@ -1,0 +1,33 @@
+# Stellar 캐릭터·무기·환경 통합 사례
+
+## 1. 작업의 중심
+
+새 캐릭터·애니메이션·무기·환경 세트를 기존 전투 프로젝트에 통합했다. 단순 에셋 교체가 아니라 체형·무기 중심·부착 소켓·표현 수명·참조 구조의 차이를 해결하는 작업이었다.
+
+원본 캐릭터·애니메이션·무기·환경 콘텐츠의 제작은 이 프로젝트의 기여로 주장하지 않는다. 본인의 작업은 리타게팅과 연결·설정, 충돌·조명 환경 구성, 통합에 필요한 C++ 구조와 검증·참조 관리다. 이 문서는 기존 제출 HTML을 대체하지 않는 후속 사례 기록이다.
+
+## 2. 문제와 결과
+
+| 통합 과정의 문제 | 해결 방향 | 상세 |
+| --- | --- | --- |
+| 체구 차이로 상체가 눌리는 리타게팅 | Spine 회전 전달 조정과 새 캐릭터 세트 연결 | [I03](../../03_Issue_Analysis_Report/I03_UE5_Portfolio_Issue_Analysis_Report.md) |
+| 장탈착 이격·양손 전환·손잡이 중심 회전 | Socket Transition, HandGrip Pivot, 무기 자식 계층, Action Scope | [I04](../../03_Issue_Analysis_Report/I04_UE5_Portfolio_Issue_Analysis_Report.md) |
+| Trail 설정이 여러 곳에 분산 | 데이터 정의 집중화, 무기 Actor의 인스턴스 관리 | [I05](../../03_Issue_Analysis_Report/I05_UE5_Portfolio_Issue_Analysis_Report.md) |
+| 자동 완료에 가려진 잘못된 Notify 설정 | 명시적 종료, Trigger 감사, 사용자 PIE 검증 | [I06](../../03_Issue_Analysis_Report/I06_UE5_Portfolio_Issue_Analysis_Report.md) |
+| 새 맵의 플레이 환경 구성 | 맵 도입·충돌·조명 작업 기록; 상세 설정은 확인 대기 | [I07](../../03_Issue_Analysis_Report/I07_UE5_Portfolio_Issue_Analysis_Report.md) |
+| 대량 경로 정리에서 참조와 호환성 보존 | 실제 사용 확인 후 보존/이주, redirects, forward-only LFS | [I08](../../03_Issue_Analysis_Report/I08_UE5_Portfolio_Issue_Analysis_Report.md) |
+
+## 3. 검증의 범위
+
+코드·커밋과 당시 세션을 대조했고, 기존 감사 로그 및 사용자 PIE 정상 확인을 연결했다. 바이너리 파일의 존재만으로 내부 설정이 맞다고 판단하지 않았다. 당시 리타게팅 Alpha 0.7의 시각 개선은 확인했지만 현재 최종 설정은 별도 확인 대상이다. 환경 설정의 정확한 변경 내역과 당시 자체 플러그인의 조회 화면도 추가 근거가 필요하다.
+
+기술적으로는 새 에셋 규격에 맞춰 변환 책임과 종료 책임을 나눈 것이 핵심이다. 운영 측면에서는 Placeholder 리소스라도 실제 Material 사용을 확인한 뒤 보존한 판단이 대표 사례다. 성능 개선이나 모든 참조의 완전 검증은 주장하지 않는다.
+
+## 4. 근거로 이동
+
+- [통합 작업 내역 W07](../../01_Work_List/W07_Stellar_Asset_Integration/W07_UE5_Portfolio_Work_List.md)
+- [주장별 근거 목록](../../98_Evidence/Stellar_Asset_Integration/README.md)
+- [최종 Fix 기록 F08](../../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)
+- [현재 Weapon 설계 S39](../../05_System_Architecture/S39_UE5_Portfolio_Weapon_Presentation_Pivot_Architecture.md)
+
+---

@@ -17,6 +17,7 @@
 - `fix/execution-montage-terminal-contract`
 - Base: `2122e331` (최종 에셋 이주 PR 병합)
 - 선행 에셋/도구 커밋: `af6778aa`, `a68bd30d`, `62378b3f`
+- 종료 계약·감사 보완: `051a5884`; 계약 문서 마감: `93c4ba22`
 
 ---
 
