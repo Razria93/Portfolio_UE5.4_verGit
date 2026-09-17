@@ -113,6 +113,15 @@ Montage의 Complete Notify
 
 ## 검증 한계
 
+### PR #122 리뷰 후 로컬 보완
+
+- P1: UE5.4의 실제 `ACharacter::PlayAnimMontage`와 Section 점프를 임시 Montage/테스트 AnimInstance로 검사했다. 0초(양의 trigger offset 포함) Queued/BranchingPoint Notify 모두 두 호출 안에서는 미전달, 이후 엔진 Montage 업데이트에서 각각 1회 전달됐다. 이 테스트 경로에서는 동기 Complete 누락 전제가 재현되지 않아 Action/Reaction 런타임은 변경하지 않았다. Blueprint 사용자 콜백·기존 Montage 종료 재진입·실제 Reaction/Balance 통합 전체를 검증한 결과는 아니다.
+- P2: 시작 Section과 authored NextSection 연결로 도달 가능한 직접 Notify만 검사한다. 없는 시작/다음 Section과 비양수 유효 재생 속도는 오류로 보고한다. 다중 Section·루프의 NotifyState 순서는 수동 검토 경고로 남기며 동적 연결 변경은 보장하지 않는다.
+- Editor Development 빌드 및 `Portfolio.Animation.Audit.SectionPath`, `Portfolio.Animation.Runtime.StartNotifyDelivery` 자동 테스트 통과. 초기 테스트 환경 중복 초기화와 양성 대조 실패는 테스트 코드 수정 후 재실행했으며 최종 결과와 구분한다.
+- 강화된 현재 감사: 1,399 packages, 로드 실패 0, DataRows 93, Errors 4 / Warnings 3. 이전의 0/0은 강화 전 기록이다. `FailOnIssues=true` 실행은 의도대로 종료 코드 1이다.
+- 오류 4행은 Default/Stellar `M_Parry_Sword_Up_L` 두 에셋의 존재하지 않는 다음 Section `Start` 참조다. 경고 3행은 Default `M_HitReact` 한 에셋의 다중 Section/루프 순서 검토다. 중복 데이터 참조 수와 고유 에셋 수를 구분한다. 에셋은 자동 수정하지 않았으며, 실제 종료 누락이 재현됐다는 의미도 아니다.
+- 로컬 로그: `Saved/Logs/PR122AnimationFinal.log`, `Saved/Logs/PR122SectionFinal.log`; 상세 결과: `Saved/Audit/PR122SectionAudit.csv`.
+
 감사는 Blueprint CDO component 데이터와 Montage에 직접 배치된 Notify를 대상으로 한다. Sequence 내부 Notify, 레벨 인스턴스 override, 동적 참조, 실행 중 Notify 전달은 보장하지 않는다. 검색된 component 데이터에서 미참조라는 결과는 미사용·삭제 가능 판정이 아니다. 수학 테스트 구현의 존재와 이번 실행 성공도 구분한다.
 
 ## 관련 문서

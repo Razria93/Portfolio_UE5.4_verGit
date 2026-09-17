@@ -1,4 +1,5 @@
 #include "Audit/CExecutionMontageAuditCommandlet.h"
+#include "Audit/MontageSectionPath.h"
 
 #include "Algo/Unique.h"
 #include "Animation/AnimMontage.h"
@@ -310,7 +311,7 @@ namespace ExecutionMontageAudit
 			&& (Index == INDEX_NONE || Index == ExpectedIndex);
 	}
 
-	FMontageNotifySummary SummarizeMontage(const UAnimMontage* Montage, EExecutionDomain Domain, int64 ExpectedType, int32 ExpectedIndex)
+	FMontageNotifySummary SummarizeMontage(const UAnimMontage* Montage, EExecutionDomain Domain, int64 ExpectedType, int32 ExpectedIndex, const FSectionPath& Path)
 	{
 		FMontageNotifySummary Summary;
 		if (!IsValid(Montage)) return Summary;
@@ -320,6 +321,7 @@ namespace ExecutionMontageAudit
 
 		for (const FAnimNotifyEvent& Event : Montage->Notifies)
 		{
+			if (!Path.ContainsTime(Montage, Event.GetTriggerTime())) continue;
 			if (IsValid(Event.Notify))
 			{
 				const FString ClassName = Event.Notify->GetClass()->GetName();
@@ -370,7 +372,9 @@ namespace ExecutionMontageAudit
 		const UClass* ExecutorClass,
 		const UAnimMontage* Montage,
 		int64 ExpectedType,
-		int32 ExpectedIndex)
+		int32 ExpectedIndex,
+		FName StartSection,
+		float PlayRate)
 	{
 		FAuditRow Row;
 		Row.RecordType = TEXT("ExecutionMontage");
@@ -390,7 +394,16 @@ namespace ExecutionMontageAudit
 			return;
 		}
 
-		const FMontageNotifySummary Summary = SummarizeMontage(Montage, Domain, ExpectedType, ExpectedIndex);
+		const FSectionPath Path = BuildSectionPath(Montage, StartSection, PlayRate);
+		if (!Path.Error.IsEmpty())
+		{
+			Row.Severity = TEXT("Error");
+			Row.Details = Path.Error;
+			AddRow(InOutCsvLines, Row);
+			++InOutErrorCount;
+			return;
+		}
+		const FMontageNotifySummary Summary = SummarizeMontage(Montage, Domain, ExpectedType, ExpectedIndex, Path);
 		Row.CorrectCompleteCount = FString::FromInt(Summary.CorrectCompleteCount);
 		Row.OppositeCompleteCount = FString::FromInt(Summary.OppositeCompleteCount);
 		Row.LastCompleteTime = Summary.LastCorrectCompleteTime >= 0.f
@@ -401,7 +414,7 @@ namespace ExecutionMontageAudit
 			: FString();
 		Row.NotifyStateClasses = FString::Join(Summary.NotifyStateClasses, TEXT("|"));
 		Row.Severity = TEXT("Info");
-		Row.Details = TEXT("Direct Montage terminal class, trigger and timing checks passed; runtime delivery is not verified.");
+		Row.Details = TEXT("Direct terminal class and trigger checks passed on the authored section path; runtime overrides and delivery are not verified.");
 
 		if (Summary.CorrectCompleteCount == 0)
 		{
@@ -425,6 +438,12 @@ namespace ExecutionMontageAudit
 		{
 			Row.Severity = TEXT("Warning");
 			Row.Details = TEXT("Multiple matching terminal notifies require Editor review.");
+			++InOutWarningCount;
+		}
+		else if (Path.bLoops || Path.Sections.Num() > 1)
+		{
+			Row.Severity = TEXT("Warning");
+			Row.Details = TEXT("Reachable Complete found; multi-section/loop NotifyState ordering requires Editor review.");
 			++InOutWarningCount;
 		}
 		else if (Summary.LastNotifyStateEndTime >= 0.f && Summary.LastCorrectCompleteTime < Summary.LastNotifyStateEndTime)
@@ -463,7 +482,9 @@ namespace ExecutionMontageAudit
 				Data->ActionExecutorKey.Get(),
 				Data->Montage,
 				static_cast<int64>(Data->ActionDataKey.ActionType),
-				Data->ActionDataKey.ActionIndex);
+				Data->ActionDataKey.ActionIndex,
+				Data->StartSectionName,
+				Data->PlayRate);
 		}
 	}
 
@@ -493,7 +514,9 @@ namespace ExecutionMontageAudit
 				Data->ReactionExecutorKey.Get(),
 				Data->Montage,
 				static_cast<int64>(Data->ReactionDataKey.ReactionType),
-				Data->ReactionDataKey.ReactionIndex);
+				Data->ReactionDataKey.ReactionIndex,
+				Data->StartSectionName,
+				Data->PlayRate);
 		}
 	}
 
