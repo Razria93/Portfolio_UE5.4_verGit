@@ -27,7 +27,7 @@
 
 ## 3. 대안 검토와 결정
 
-당시 세션 A:122에서 Spine Rotation Alpha 조정을 제안했고, A:129에서 사용자가 0.7 적용 후 느낌이 괜찮다고 확인했다. 본별 보정과 Additive Layer Track도 논의했지만 실제 키 저장 완료 근거는 확보하지 못했다.
+당시 세션 A:122에서 Spine Rotation Alpha 조정을 제안했고, A:129에서 사용자가 0.7 적용 후 느낌이 괜찮다고 확인했다. 후속 사용자 설명으로 Additive Layer Track은 사용하지 않았음을 확정했다. Action과 Movement용 Retargeter를 분리하고 체인 회전 전달을 조정해 흉부가 접혀 내려앉아 보이는 문제를 완화했다.
 
 ## 4. 구현·에셋 변경
 
@@ -35,11 +35,20 @@
 
 ## 5. 검증 결과와 한계
 
-당시 특정 조정의 시각 개선과 현재 통합 후 사용자 PIE 정상 확인을 확보했다. 현재 Retargeter의 최종 Alpha·chain·pose 설정 및 전체 export 결과는 이번 문서 작업에서 에디터로 재검사하지 않았다.
+사용자가 제공한 설정 화면에서 다음 값을 확인했다. 두 Retargeter 모두 표시된 Spine의 Rotation Mode는 Interpolated, Translation Mode는 None이다.
 
-## 6. 추가 확인
+| 용도 | Retargeter | 표시된 Rotation Alpha |
+| --- | --- | --- |
+| Movement | `RTG_Celeste_Move` | Spine 0.7, Head 0.0 |
+| Action | `RTG_Celeste` | Spine 0.7, Neck 0.8 |
 
-현재 설정 화면 한 장으로 당시 0.7 조정이 최종본에 남았는지 확인하면 된다. Additive 보정을 실제 저장했다면 해당 본·애니메이션만 추가 확인한다.
+저작 원본은 임시 import 프로젝트 `C:/UE5_Portfolio/Temp_AssetImport/Temp_AssetImport/Content/`에서 두 파일의 존재를 확인했다. 본 프로젝트의 자동 생성 Retargeter만으로 저작 과정을 판단하지 않는다. 함께 존재하는 RTG_Celeste_Sprint는 실제 사용 범위를 확인하지 않았으므로 별도 성과로 주장하지 않는다.
+
+5번째 Idle_Anim_Temp 화면은 사용자가 지정한 보정 전 흉부 접힘의 예시다. 나머지는 Run/Attack 프리뷰로 서로 다른 애니메이션이므로 동일 프레임 Before/After 정량 비교로 사용하지 않는다. 화면 밖 체인 설정이나 전체 export 결과까지 독립 검증한 것은 아니다. 기존 사용자 PIE 정상 확인은 별도로 유지한다.
+
+## 6. 확인 상태
+
+설정 화면과 사용자 설명으로 이번 확인 요청을 종료한다. 추가 Additive 적용 확인이나 전체 PIE 반복은 요구하지 않는다. [첨부 화면 기록](../98_Evidence/Stellar_Asset_Integration/Capture_Record.md)에 화면별 내용을 보존했다.
 
 ## 7. 근거와 관련 문서
 

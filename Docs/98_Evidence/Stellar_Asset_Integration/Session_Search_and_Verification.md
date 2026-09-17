@@ -12,18 +12,18 @@
 
 | 항목 | 발견한 근거 | 확정 가능한 범위 | 남은 확인 |
 | --- | --- | --- | --- |
-| Retarget | 세션 A:93 상체 눌림, :122 조정 제안, :129 사용자 0.7 개선 확인 | 당시 Spine Rotation Alpha 조정에 대한 시각적 만족 | 현재 최종 저장값, Additive 키 실제 적용 여부 |
+| Retarget | 과거 세션과 후속 사용자 설정 화면 | Action/Movement 분리, Spine 0.7, Additive 미사용 확인 | 확인 요청 종료 |
 | 맵 충돌 | 환경 도입 커밋과 사용자 작업 진술 | 맵 도입 및 충돌 작업 수행 진술 | 대상 메시·설정·해결 방법 직접 근거 미확보 |
 | 조명 | 사용자 작업 진술, 현재 맵 존재 | 조명 환경 구성 작업 진술 | 주요 설정·수치·선택 이유 직접 근거 미확보 |
-| 캐릭터 참조 정리 | 세션 C의 Placeholder_Normal 질의, Material export/graph 도구 조사, 보존·이주 요청 | 실제 사용을 확인해 리소스를 보존하고 현재 FlatNormal 경로로 정리한 사례 | 당시 화면이 자체 Inspector인지 표준 Reference Viewer인지 미확정 |
+| 캐릭터 참조 정리 | 세션 C와 후속 Placeholder Referencers 화면 | 자체 Inspector 사용과 보존·이주 판단 확인 | 확인 요청 종료; CSV 실행 주장은 하지 않음 |
 
-세션 A/C 파일 식별과 줄은 [근거 목록](README.md)에 있다. Additive Layer Track 사용법 대화는 적용 완료로 간주하지 않았다. 당시 Material 그래프 조사 기록은 현재 Material 재검사와 구분했다.
+세션 A/C 파일 식별과 줄은 [근거 목록](README.md)에 있다. 후속 설명으로 Additive Layer Track 미사용을 확정했다. 당시 Material 그래프 조사 기록은 현재 Material 재검사와 구분했다. [첨부 화면 기록](Capture_Record.md)에 보완 근거를 정리했다.
 
-## 3. 사용자에게 필요한 최소 확인
+## 3. 사용자 확인 완료 및 범위 결정
 
-1. I03: 현재 Retargeter의 Spine 설정 화면. 0.7을 최종 사용했는지와 Additive 보정을 실제 저장했는지만 확인.
-2. I07: 충돌을 해결한 대표 메시 이름과 바꾼 옵션 또는 처리 방법. 조명은 주요 설정 화면과 선택 이유 한두 문장.
-3. I08: 당시 Placeholder 의존성 화면의 도구 종류. 당시 Tree/CSV가 없으면 없다고 기록하고 현재 조회 화면은 재검증 자료로 사용 가능.
+1. I03: 설정 화면 확보. Action/Movement 분리와 Additive 미사용 확인 완료.
+2. I07: 사용자 결정으로 추가 확인 요청 종료. 충돌 해결·조명 구성은 간단한 작업 내역으로만 기록하며 상세 증거 수집은 진행하지 않는다.
+3. I08: 당시 자체 Asset Reference Inspector의 Referencers 화면 확보. 도구 확인 완료.
 
 이는 전체 PIE 재검수 요청이 아니다. 이미 사용자가 확인한 동작은 수동 검증 완료로 보존한다. 후속 상태는 [Maintenance TODO](../../01_Work_List/Documentation_Maintenance_TODO.md)에서 관리한다.
 

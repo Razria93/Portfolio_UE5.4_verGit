@@ -10,18 +10,20 @@
 
 | 통합 과정의 문제 | 해결 방향 | 상세 |
 | --- | --- | --- |
-| 체구 차이로 상체가 눌리는 리타게팅 | Spine 회전 전달 조정과 새 캐릭터 세트 연결 | [I03](../../03_Issue_Analysis_Report/I03_UE5_Portfolio_Issue_Analysis_Report.md) |
+| 체구 차이로 상체가 눌리는 리타게팅 | Action/Movement 분리, Spine 회전 전달 조정; Additive 미사용 | [I03](../../03_Issue_Analysis_Report/I03_UE5_Portfolio_Issue_Analysis_Report.md) |
 | 장탈착 이격·양손 전환·손잡이 중심 회전 | Socket Transition, HandGrip Pivot, 무기 자식 계층, Action Scope | [I04](../../03_Issue_Analysis_Report/I04_UE5_Portfolio_Issue_Analysis_Report.md) |
 | Trail 설정이 여러 곳에 분산 | 데이터 정의 집중화, 무기 Actor의 인스턴스 관리 | [I05](../../03_Issue_Analysis_Report/I05_UE5_Portfolio_Issue_Analysis_Report.md) |
 | 자동 완료에 가려진 잘못된 Notify 설정 | 명시적 종료, Trigger 감사, 사용자 PIE 검증 | [I06](../../03_Issue_Analysis_Report/I06_UE5_Portfolio_Issue_Analysis_Report.md) |
-| 새 맵의 플레이 환경 구성 | 맵 도입·충돌·조명 작업 기록; 상세 설정은 확인 대기 | [I07](../../03_Issue_Analysis_Report/I07_UE5_Portfolio_Issue_Analysis_Report.md) |
+| 새 맵의 플레이 환경 구성 | 맵 도입·충돌 해결·조명 구성의 간단한 작업 내역 | [I07](../../03_Issue_Analysis_Report/I07_UE5_Portfolio_Issue_Analysis_Report.md) |
 | 대량 경로 정리에서 참조와 호환성 보존 | 실제 사용 확인 후 보존/이주, redirects, forward-only LFS | [I08](../../03_Issue_Analysis_Report/I08_UE5_Portfolio_Issue_Analysis_Report.md) |
 
 ## 3. 검증의 범위
 
-코드·커밋과 당시 세션을 대조했고, 기존 감사 로그 및 사용자 PIE 정상 확인을 연결했다. 바이너리 파일의 존재만으로 내부 설정이 맞다고 판단하지 않았다. 당시 리타게팅 Alpha 0.7의 시각 개선은 확인했지만 현재 최종 설정은 별도 확인 대상이다. 환경 설정의 정확한 변경 내역과 당시 자체 플러그인의 조회 화면도 추가 근거가 필요하다.
+코드·커밋과 당시 세션을 대조했고, 기존 감사 로그 및 사용자 PIE 정상 확인을 연결했다. 바이너리 파일의 존재만으로 내부 설정이 맞다고 판단하지 않았다. 리타게팅과 참조 조회의 근거 상태는 개별 보고서에서 구분한다. 환경의 충돌·조명은 사용자 설명에 근거한 간단한 작업 내역으로 한정하며 추가 증거 제출을 요구하지 않는다.
 
 기술적으로는 새 에셋 규격에 맞춰 변환 책임과 종료 책임을 나눈 것이 핵심이다. 운영 측면에서는 Placeholder 리소스라도 실제 Material 사용을 확인한 뒤 보존한 판단이 대표 사례다. 성능 개선이나 모든 참조의 완전 검증은 주장하지 않는다.
+
+후속 사용자 화면으로 Retargeter의 Spine 0.7 등 설정과 자체 Asset Reference Inspector의 Placeholder Referencers 조회를 확인했다. [화면 기록](../../98_Evidence/Stellar_Asset_Integration/Capture_Record.md)에 관찰 내용을 정리했으며, 이미지 원본 파일은 저장소에 포함하지 않았다.
 
 ## 4. 근거로 이동
 

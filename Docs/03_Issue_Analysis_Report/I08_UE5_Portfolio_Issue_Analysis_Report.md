@@ -35,11 +35,11 @@ Content는 역할별 경로로 이동하고 legacy Notify를 제거했다. Weapo
 
 ## 5. 검증 결과와 한계
 
-사용자는 캐릭터 정리에 AssetReferenceInspector를 사용했다고 확인했다. 다만 Placeholder 당시 화면이 자체 플러그인인지 표준 Reference Viewer인지 아직 구분되지 않는다. 기존 에셋참조 실사례 이미지는 Lightning BlockHit FX Dependencies이므로 캐릭터 정리 증거로 쓰지 않는다.
+사용자가 당시 활용 화면을 제공하여 자체 Asset Reference Inspector 사용을 확인했다. 대상은 `/Game/StellarGirlCeleste/Demo/Textures/Placeholder_Normal`, 모드는 Referencers, Max Depth 2, Path Filter `/Game/`이다. Tree에는 M_CELESTE_HEAD, 관련 Material Instance와 SK_CELESTE_HEAD_01이 나타난다. 이 조회와 당시 Material 그래프 조사 기록을 연결해 보존 판단을 설명한다. 기존 Lightning BlockHit FX 이미지는 이 사례의 근거로 대체 사용하지 않는다.
 
-## 6. 추가 확인
+## 6. 확인 상태와 한계
 
-당시 조회 화면/CSV가 있으면 도구와 조회 조건을 확인한다. 없으면 현재 캐릭터 참조 조회를 재현해 현재 검증으로 기록한다. Unused Candidate는 삭제 허가가 아니며, 로컬 LFS 검사도 원격 객체 존재를 보장하지 않는다.
+조회 도구 확인 요청은 종료한다. 화면에 Export CSV 버튼이 보인다는 사실만으로 실제 export 실행을 주장하지 않으며 추가 CSV를 요구하지 않는다. Unused Candidate는 삭제 허가가 아니며, 로컬 LFS 검사도 원격 객체 존재를 보장하지 않는다. [첨부 화면 기록](../98_Evidence/Stellar_Asset_Integration/Capture_Record.md) 참조.
 
 ## 7. 근거와 관련 문서
 

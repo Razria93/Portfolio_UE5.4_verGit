@@ -21,9 +21,9 @@
 
 ### Stellar asset integration follow-up (2026-09-17)
 
-- [ ] I03: 현재 Retargeter Spine Rotation Alpha 확인. 당시 0.7 시각 개선 사용자 기록은 확보됨. 최종 설정 화면만 필요하며 전체 PIE 반복은 요구하지 않음.
-- [ ] I07: 충돌을 수정한 대표 메시/설정과 조명 주요 설정·선택 이유 확인. 맵 도입 이력과 사용자 작업 진술은 확보됐으나 상세 해결 기록은 미확보.
-- [ ] I08: Placeholder_Normal 보존 판단 당시 조회 화면이 AssetReferenceInspector인지 확인. 참조/Material 조사와 T_CELESTE_FlatNormal 이주는 확보됨. 당시 자료가 없으면 현재 재현 자료로 표시.
+- [x] I03: 사용자 설정 화면으로 Action/Movement 분리와 Spine 0.7 확인, Additive 미사용 확정. 확인 요청 종료.
+- [x] I07: 사용자 결정에 따라 충돌·조명은 간단한 작업 내역으로 한정. 상세 증거 수집·설정 확인 요청은 종료하며 기술적 원인을 단정하지 않음.
+- [x] I08: 사용자 제공 Placeholder_Normal Referencers 화면으로 자체 Asset Reference Inspector 활용 확인. 확인 요청 종료.
 - 관련 문서: [전체 개요](../07_Portfolio_Documents/Stellar_Asset_Integration/README.md), [근거 목록](../98_Evidence/Stellar_Asset_Integration/README.md).
 
 - [ ] 대표 Gameplay Video를 Issue #119에 업로드하고 Evidence Ledger를 갱신한다.
