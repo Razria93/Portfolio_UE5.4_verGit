@@ -290,7 +290,7 @@ Demo 경로와 Placeholder라는 이름은 미사용 근거가 아니었다. 참
 
 1. Montage 명시적 종료 설정과 Action/Reaction 종료 정책 보완은 후속 Fix 브랜치에서 구분해 기록한다.
 2. legacy material import 경고는 별도 Content 정리 대상으로 둔다.
-3. 작업 내역·문제 해결 보고서·화면 근거는 후속 문서 브랜치에서 유지한다. 본 PR의 구현 범위를 늘리지 않는다.
+3. 작업 내역·문제 해결 보고서·화면 근거는 후속 Fix 브랜치 `fix/stellar-asset-integration`에 함께 포함한다. 본 PR의 구현 범위를 늘리지 않는다.
 
 ## 관련 문서
 

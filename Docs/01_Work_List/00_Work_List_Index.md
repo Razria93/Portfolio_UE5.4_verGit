@@ -11,6 +11,6 @@
 | W03 | Guard / Parry Action v1 구현 | `W03_Parry/W03_UE5_Portfolio_Work_List.md` | `feature/combat-guard-parry` | P20 | 완료 |
 | W04 | Combat Signal Boundary v1 | `W04_Combat_Signal_Boundary/W04_UE5_Portfolio_Work_List.md` | `refactor/combat-signal-boundary` | P21 | 완료 |
 | W05 | Code Quality 정리 계획 | `W05_Code_Quality_Plan/W05_UE5_Portfolio_Work_List.md` | multiple refactor branches | P27-P30 | 진행 |
-| W07 | Stellar 에셋 통합 기록 | [W07](W07_Stellar_Asset_Integration/W07_UE5_Portfolio_Work_List.md) | `docs/stellar-asset-integration-reports` | F08 / 문서 PR 미생성 | 작성 / 일부 근거 확인 대기 |
+| W07 | Stellar 에셋 통합 기록 | [W07](W07_Stellar_Asset_Integration/W07_UE5_Portfolio_Work_List.md) | `fix/stellar-asset-integration` | F08 | 작성·사용자 확인 반영 / 미게시 |
 
 ---

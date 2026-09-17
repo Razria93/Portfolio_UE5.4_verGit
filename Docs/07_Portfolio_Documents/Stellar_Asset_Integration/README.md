@@ -27,6 +27,8 @@
 
 ## 4. 근거로 이동
 
+문서별 역할은 구분한다. 작업 내역은 추가·이동·변경·제거를, 문제 해결 보고서는 증상과 선택 이유·결과를, 근거 목록은 출처와 확인 한계를, 설계 문서는 현재 책임과 실행 계약을 설명한다. 과거 PR의 당시 결과를 최신 계약으로 덮어쓰지 않는다.
+
 - [통합 작업 내역 W07](../../01_Work_List/W07_Stellar_Asset_Integration/W07_UE5_Portfolio_Work_List.md)
 - [주장별 근거 목록](../../98_Evidence/Stellar_Asset_Integration/README.md)
 - [최종 Fix 기록 F08](../../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)

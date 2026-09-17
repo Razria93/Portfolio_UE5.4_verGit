@@ -37,12 +37,24 @@
 
 - [사용자 첨부 화면의 설정·관찰 기록](Capture_Record.md): 원본 이미지 파일의 저장소 포함 여부와 입증 범위를 명시.
 
-- [추가 세션 조사·로컬 검증·최소 사용자 확인](Session_Search_and_Verification.md)
+- 2026-09-17 문서 작성 당시 `git diff --check`, 신규 Markdown 상대 링크 대상 확인, `git lfs fsck --objects HEAD`, `git lfs fsck --pointers HEAD`를 통과했다. LFS 검사는 당시 HEAD의 로컬 객체·포인터에 한정하며 과거 전체 이력이나 원격 객체의 완전성을 보장하지 않는다.
 
 - UBT `Log.txt`: 두 수정 cpp 컴파일, Portfolio/PortfolioEditor 링크, WriteMetadata 8/8 완료를 재확인. 이번 문서 작업에서 빌드를 재실행하지 않음.
 - `Saved/Logs/Portfolio-backup-2026.09.17-08.49.08.log:829`: 1,399 packages 로드, 실패 0, 감사 Errors 0 / Warnings 0, DataRows 93.
 - 같은 로그: 49 Montage / 151 직접 Notify, commandlet result 0. 별도 legacy material import 경고 2개 존재.
 - 사용자 최종 PIE 정상 확인은 세션의 수동 검증 근거. 원시 실행 영상은 현재 문서에 포함하지 않음.
 - [F08](../../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)에 검사 범위·비범위를 기록함.
+
+## 조사 범위와 확인 종료 기준
+
+2026-09-17 읽기 전용 에이전트 3개가 코드·Git/문서·세션을 조사하고 주 에이전트가 대조했다. 주 저장소는 Portfolio이며 promotion worktree는 변경하지 않았다. 9월 주요 세션과 분할 기록부터 조사하고 환경 근거는 8월 1일~9월 1일 기록으로 확장했다. 검색 주제는 Retarget/Spine/Alpha, SciFi/맵 충돌/Collision/콜리전, 조명/노출/Lumen/스카이, Placeholder/참조/Inspector였다.
+
+현재 대화의 반복 요약과 상속된 대화는 독립된 과거 증거로 집계하지 않았다. 점유된 9월 16일 세션도 공유 읽기로 확인했으나 구체적인 당시 환경 설정 근거는 추가 확보하지 못했다. 첨부 이미지 전체와 이미지 포함 대형 행 모두를 시각 판독한 것은 아니므로, 자료 미확보를 작업 미수행이나 세션 전체에 근거가 없다는 뜻으로 해석하지 않는다.
+
+- 리타게팅: 후속 사용자 화면과 설명으로 Action/Movement 분리, Spine 0.7, Additive 미사용을 확인해 요청을 종료했다.
+- 충돌·조명: 도입 커밋·맵 존재·사용자 작업 진술을 확보했다. 대상 메시와 정확한 변경 옵션, 조명 수치·선택 이유의 직접 근거는 미확보다. 사용자 결정에 따라 간단한 작업 내역으로 한정하고 추가 증거 수집을 종료했다.
+- 캐릭터 참조 정리: 세션 C와 자체 Inspector의 Placeholder Referencers 화면으로 확인을 종료했다. 당시 Material 그래프 조사와 현재 재검사는 구분하며 CSV export 실행을 주장하지 않는다.
+
+이미 정상 확인한 PIE를 다시 요구하지 않는다. 확인 상태는 [Maintenance TODO](../../01_Work_List/Documentation_Maintenance_TODO.md)와 연계한다. 기존 Root Motion 도구의 신규 개발, FX 조회 이미지를 캐릭터 정리 증거로 대체하는 것, 감사 0건을 모든 UE 경고·런타임 경로의 안전성으로 확대하는 것, 측정 없는 성능 개선은 이번 성과에서 제외한다.
 
 ---

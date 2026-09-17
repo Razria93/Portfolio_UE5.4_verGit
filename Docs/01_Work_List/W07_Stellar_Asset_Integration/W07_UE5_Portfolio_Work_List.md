@@ -7,8 +7,8 @@
 ## 관련 브랜치
 
 - 구현: `staging/portfolio-v1-split`, `promotion/portfolio-v1-final`
-- 후속 보완: `fix/execution-montage-terminal-contract`
-- 문서: `docs/stellar-asset-integration-reports`
+- 현재 보완·문서: `fix/stellar-asset-integration`
+- 이전 작업명: `fix/execution-montage-terminal-contract`, `docs/stellar-asset-integration-reports`. 별도 PR 분리는 취소했으며 현재 브랜치 하나로 마감한다.
 
 ## 상태
 

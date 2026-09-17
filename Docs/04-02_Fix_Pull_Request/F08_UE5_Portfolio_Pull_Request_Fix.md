@@ -2,7 +2,7 @@
 
 ## 제목
 
-**F08: Montage 명시적 종료 계약과 통합 에셋 보완**
+**F08: Stellar 에셋 통합 후 Montage·종료 계약·검증 보완**
 
 ## 날짜
 
@@ -10,15 +10,23 @@
 
 ## 상태
 
-- 로컬 구현·사용자 PIE 확인 완료. Push / PR 생성은 수행하지 않음.
+- [x] Montage의 실행 역할·Complete 설정과 통합 에셋 보완
+- [x] Reaction 자연 MontageEnd를 관측용으로 변경
+- [x] Complete Trigger 감사 및 검사 범위 명확화
+- [x] 빌드·감사 결과와 사용자 PIE 정상 확인
+- [x] 작업 내역·사례·설정 화면 근거 및 PR #121 본문 교체안 정리
+- [ ] 원격 게시 및 리뷰
 
 ## 브랜치
 
-- `fix/execution-montage-terminal-contract`
-- Base: `2122e331` (최종 에셋 이주 PR 병합)
+- Branch: `fix/stellar-asset-integration`
+- Base branch: `main`
+- Base HEAD: `2122e331` (최종 에셋 이주 PR 병합)
 - 선행 에셋/도구 커밋: `af6778aa`, `a68bd30d`, `62378b3f`
 - 종료 계약·감사 보완: `051a5884`; 계약 문서 마감: `93c4ba22`
 - 관련 작업 문서화: `e7ec7a15`, `84f3a3de`. 문서 전용 PR로 분리하지 않고 본 Fix에 포함한다.
+- PR 문서 정리: `1ee5236a`.
+- 기존 작업명 `fix/execution-montage-terminal-contract`와 임시 문서 분리 계획은 현재 브랜치 하나로 통합했다. 새 PR은 본 문서를 사용하며 별도 문서 전용 PR은 만들지 않는다.
 
 ---
 
@@ -36,14 +44,46 @@ Action의 자연 MontageEnd 자동 완료를 제거한 뒤 Stellar Equip의 Comp
 
 ## 변경 사항
 
-- `af6778aa`: Montage 설정 보완과 Execution Montage 감사 도구 도입.
-- `a68bd30d`: promotion 작업본과 대조한 Montage·무기·Trail 등 Content 42개 통합.
-- `62378b3f`: 검증한 Stellar Player Blueprint 포함.
-- `UCReaction::OnMontageEnd`: 자연 종료 시 `Complete()` 대신 `NaturalMontageEndObserved`만 기록.
-- 감사: Complete 클래스 외 Type과 Action Index를 검사. None/Max 및 불일치를 오류로 판정.
-- 감사 결과의 미참조 표현을 `NoScannedComponentDataReference`로 한정. Notify 없는 Montage 행과 실제 이벤트 수를 분리.
-- S26/S31/S39의 현행 계약 동기화. 과거 PR 기록은 덮어쓰지 않음.
-- 에셋 통합의 작업 내역·문제 해결·검증 근거를 연결하고 사용자 설정 화면에 맞춰 확인 상태를 정리했다. Additive 미사용과 Action/Movement 리타게팅 분리, 자체 Inspector 참조 조회를 반영했다. 충돌·조명은 간단한 작업 내역만 남긴다.
+### 1. Montage 종료 설정과 관련 에셋 정리
+
+Montage가 끝나는 것만으로 실행 완료를 추정하지 않도록, 실행 역할에 맞는 Complete 클래스와 Trigger를 정리했다. Execution의 Source는 Action, Target은 Reaction으로 처리한다. Equip/Unequip은 물리 소켓 전환과 논리 장착 확정 뒤 명시적으로 Action을 완료하는 기존 설계에 맞춘다.
+
+promotion 작업본과 대조한 Montage·무기·Trail·Player 변경을 현재 프로젝트에 통합했다. `a68bd30d`의 42개 Content는 Montage 34개와 Player BP, 무기 Skeleton/BP, Niagara 및 Trail DataAsset 변경을 포함한다. Stellar Player BP는 `62378b3f`로 별도 반영했다. 이 파일 수는 앞선 커밋과 합산한 고유 변경 수가 아니다. 새 기능을 추가하기보다 실제 검증한 에셋 설정이 주 프로젝트에 반영되도록 정리한 변경이다.
+
+### 2. Action과 Reaction의 명시적 종료 원칙 통일
+
+Action에 이미 적용된 관측 정책을 Reaction에도 적용했다. `UCReaction::OnMontageEnd`는 자연 종료 시 `Complete()`를 호출하지 않고 `NaturalMontageEndObserved`를 기록한다. 정상 완료는 명시적 Complete가, 중단·복구는 정식 Stop/Interrupt 흐름이 담당한다.
+
+따라서 잘못된 Complete 설정을 자연 종료 fallback이 숨기지 않는다. 기존 stale callback 검증과 time-zero Notify 방어는 유지하며, MontageEnd에 Action Pose Scope 해제나 Trail 정리 책임을 새로 부여하지 않는다.
+
+### 3. Complete 클래스뿐 아니라 실행 조건을 검사
+
+감사 도구가 Blueprint CDO의 Action/Reaction 데이터와 Montage의 직접 Notify를 대조하도록 구성했다. Complete 클래스가 맞아도 Type 또는 Action Index가 실행 데이터와 맞지 않으면 오류로 보고한다. None/Max는 거부하고 All 및 Action Index의 와일드카드는 런타임 조건에 맞춰 처리한다.
+
+검색한 데이터에서 참조를 찾지 못한 경우는 `NoScannedComponentDataReference`로 표시한다. 이를 미사용 판정으로 오해하지 않도록 범위를 명시하고, 직접 Notify가 없는 Montage 행과 실제 Notify 이벤트 수를 분리했다.
+
+### 4. 구현 계약과 문제 해결 기록 연결
+
+S26/S31/S39의 현재 종료 계약을 동기화하고 W07·I03~I08·근거 목록을 연결했다. 리타게팅은 Action/Movement 분리와 Additive 미사용, 참조 정리는 자체 Inspector를 이용한 Placeholder 보존 판단을 사용자 설명·화면에 맞춰 기록했다. 충돌·조명은 간단한 작업 내역으로만 남긴다.
+
+기존 PR #121의 교체안 P62는 해당 PR의 `8b23f642` 시점에 고정했다. Reaction fallback 제거 등 이번 Fix를 과거 완료 내용으로 소급하지 않는다. 문서 작업은 별도 PR로 분리하지 않는다.
+
+## 주요 처리 흐름
+
+```text
+Montage의 Complete Notify
+-> 실행 역할과 Trigger 조건 일치 확인
+-> 해당 Action / Reaction의 Complete
+-> Component 실행 상태 정리
+
+정식 Stop / Interrupt
+-> 실행 중단 및 관련 runtime 정리
+-> Action의 임시 소켓·회전 복구와 Trail 정리
+
+자연 MontageEnd
+-> Montage / Play Serial 유효성 확인
+-> 관측 기록만 남김 (완료 대체 없음)
+```
 
 ## 변경하지 않은 것
 
@@ -51,6 +91,16 @@ Action의 자연 MontageEnd 자동 완료를 제거한 뒤 Stellar Equip의 Comp
 - Execution Source/Target 역할 및 장탈착의 물리 전환 후 논리 commit 순서.
 - `DeathPresentationFallbackDelay`: 사망 표현 실패에 대한 별개 정책.
 - enum 추가 재배열, 기존 Git 이력, LFS 과거 이력, 원격 브랜치.
+
+## 테스트 방법
+
+1. Montage에 배치된 Complete 클래스와 Type/Action Index를 실행 데이터와 대조한다.
+2. 장탈착의 물리 전환·논리 commit 이후 Action 완료 순서를 확인한다.
+3. Source Execution Action과 Target Reaction의 정상 종료, 중단 시 정리를 PIE에서 확인한다.
+4. `PortfolioEditor Win64 Development` 빌드와 `CExecutionMontageAudit`를 실행해 컴파일·에셋 검사 결과를 확인한다.
+5. 문서의 당시/현재 계약, 상대 링크와 `git diff --check`를 검사한다.
+
+다음은 기존에 수행·확인한 결과다. PR 본문 정리를 위해 빌드나 PIE를 새로 실행한 것으로 기록하지 않는다.
 
 ## 검증 결과
 
@@ -74,5 +124,9 @@ Action의 자연 MontageEnd 자동 완료를 제거한 뒤 Stellar Equip의 Comp
 - [S26](../05_System_Architecture/S26_UE5_Portfolio_System_Architecture.md)
 - [S31](../05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md)
 - [S39](../05_System_Architecture/S39_UE5_Portfolio_Weapon_Presentation_Pivot_Architecture.md)
+
+## 정리
+
+이번 Fix는 에셋 통합 이후의 Montage 설정과 실행 종료 책임을 맞추고, 이를 검출하는 감사와 설명 문서를 함께 보완한다. 명시적 완료·정식 중단·엔진 관측을 구분하면서 검증한 에셋 결과를 현재 프로젝트에 일관되게 반영한다.
 
 ---

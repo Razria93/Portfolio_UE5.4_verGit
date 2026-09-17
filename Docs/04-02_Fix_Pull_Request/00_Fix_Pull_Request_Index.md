@@ -4,6 +4,6 @@
 
 | ID | 제목 | 문서 | 상태 |
 | --- | --- | --- | --- |
-| F08 | Montage 명시적 종료 계약과 통합 에셋 보완 | [F08](F08_UE5_Portfolio_Pull_Request_Fix.md) | 로컬 검증 완료 / 미게시 |
+| F08 | Stellar 에셋 통합 후 Montage·종료 계약·검증 보완 | [F08](F08_UE5_Portfolio_Pull_Request_Fix.md) | `fix/stellar-asset-integration` / 로컬 검증 완료 / 미게시 |
 
 ---

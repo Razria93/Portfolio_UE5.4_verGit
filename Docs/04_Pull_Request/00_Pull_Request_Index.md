@@ -6,7 +6,7 @@
 
 ## 현재 보완 브랜치 PR
 
-- [F08: Montage 명시적 종료 계약과 통합 에셋 보완](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md): `fix/execution-montage-terminal-contract`. Montage·에셋 정리, 종료 계약·감사 보완과 관련 문서화를 하나의 Fix 범위로 관리한다. 문서 전용 PR 계획은 취소했으며 P63은 미사용 초안으로만 보존한다.
+- [F08: Stellar 에셋 통합 후 Montage·종료 계약·검증 보완](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md): `fix/stellar-asset-integration`. Montage·에셋 정리, 종료 계약·감사 보완과 관련 문서화를 하나의 Fix 범위로 관리한다. 별도 문서 전용 PR은 만들지 않는다.
 
 이 문서는 Pull Request 문서의 목록과 브랜치 / 관련 문서 연결을 관리한다.
 
