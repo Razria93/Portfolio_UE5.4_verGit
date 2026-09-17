@@ -18,12 +18,15 @@
 - Base: `2122e331` (최종 에셋 이주 PR 병합)
 - 선행 에셋/도구 커밋: `af6778aa`, `a68bd30d`, `62378b3f`
 - 종료 계약·감사 보완: `051a5884`; 계약 문서 마감: `93c4ba22`
+- 관련 작업 문서화: `e7ec7a15`, `84f3a3de`. 문서 전용 PR로 분리하지 않고 본 Fix에 포함한다.
 
 ---
 
 ## 요약
 
 새 에셋 통합 후 Montage 종료를 명시적 Complete로 통일하고, 실제 에셋의 종료 설정과 검사 도구를 보완한다. Source Execution은 Action, Target Execution은 Reaction으로 각각의 종료 Notify를 사용한다. 무기 표현·Montage·Player 에셋의 검증된 변경도 본 Fix 브랜치에 통합했다.
+
+이 보완의 판단 근거와 원래 에셋 통합 과정을 함께 문서화했다. W07 작업 내역, I03~I08 사례, 사용자 Retargeter·Inspector 화면 기록을 연결한다. 문서화는 별도 기능 PR이 아니라 실제 Montage 정리·검증에 수반되는 작업이다. P62는 기존 PR #121의 본문 교체안으로 별도 유지한다.
 
 ## 원인
 
@@ -40,6 +43,7 @@ Action의 자연 MontageEnd 자동 완료를 제거한 뒤 Stellar Equip의 Comp
 - 감사: Complete 클래스 외 Type과 Action Index를 검사. None/Max 및 불일치를 오류로 판정.
 - 감사 결과의 미참조 표현을 `NoScannedComponentDataReference`로 한정. Notify 없는 Montage 행과 실제 이벤트 수를 분리.
 - S26/S31/S39의 현행 계약 동기화. 과거 PR 기록은 덮어쓰지 않음.
+- 에셋 통합의 작업 내역·문제 해결·검증 근거를 연결하고 사용자 설정 화면에 맞춰 확인 상태를 정리했다. Additive 미사용과 Action/Movement 리타게팅 분리, 자체 Inspector 참조 조회를 반영했다. 충돌·조명은 간단한 작업 내역만 남긴다.
 
 ## 변경하지 않은 것
 
@@ -62,6 +66,10 @@ Action의 자연 MontageEnd 자동 완료를 제거한 뒤 Stellar Equip의 Comp
 감사는 Blueprint CDO component 데이터와 Montage에 직접 배치된 Notify를 대상으로 한다. Sequence 내부 Notify, 레벨 인스턴스 override, 동적 참조, 실행 중 Notify 전달은 보장하지 않는다. 검색된 component 데이터에서 미참조라는 결과는 미사용·삭제 가능 판정이 아니다. 수학 테스트 구현의 존재와 이번 실행 성공도 구분한다.
 
 ## 관련 문서
+
+- Work List: `W07_UE5_Portfolio_Work_List.md`.
+- Issue Analysis: `I03_UE5_Portfolio_Issue_Analysis_Report.md` ~ `I08_UE5_Portfolio_Issue_Analysis_Report.md`.
+- Evidence: `Docs/98_Evidence/Stellar_Asset_Integration/README.md`, `Capture_Record.md`.
 
 - [S26](../05_System_Architecture/S26_UE5_Portfolio_System_Architecture.md)
 - [S31](../05_System_Architecture/S31_UE5_Portfolio_System_Architecture.md)
