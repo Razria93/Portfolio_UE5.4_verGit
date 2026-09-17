@@ -2,6 +2,10 @@
 
 ## Current entry points
 
+- [Stellar asset integration](07_Portfolio_Documents/Stellar_Asset_Integration/README.md): character, weapon and environment integration cases; evidence limits included.
+- [Issue analysis reports](03_Issue_Analysis_Report/00_Issue_Analysis_Report_Index.md): integration problem-solving records.
+- [Fix PR records](04-02_Fix_Pull_Request/00_Fix_Pull_Request_Index.md): local follow-up contracts and verification.
+
 - [Submitted Project Stellar portfolio](07_Portfolio_Documents/Portfolio_Production/README.md): 23-page submitted HTML, publication rule, and production records.
 - [Portfolio maintenance TODO](01_Work_List/Documentation_Maintenance_TODO.md): post-submission evidence and documentation follow-up.
 - [System Architecture Index](05_System_Architecture/00_System_Architecture_Index.md): current runtime architecture records.

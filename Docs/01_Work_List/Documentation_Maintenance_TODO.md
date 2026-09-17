@@ -19,6 +19,13 @@
 
 ## P1 — Current portfolio evidence
 
+### Stellar asset integration follow-up (2026-09-17)
+
+- [x] I03: 사용자 설정 화면으로 Action/Movement 분리와 Spine 0.7 확인, Additive 미사용 확정. 확인 요청 종료.
+- [x] I07: 사용자 결정에 따라 충돌·조명은 간단한 작업 내역으로 한정. 상세 증거 수집·설정 확인 요청은 종료하며 기술적 원인을 단정하지 않음.
+- [x] I08: 사용자 제공 Placeholder_Normal Referencers 화면으로 자체 Asset Reference Inspector 활용 확인. 확인 요청 종료.
+- 관련 문서: [전체 개요](../07_Portfolio_Documents/Stellar_Asset_Integration/README.md), [근거 목록](../98_Evidence/Stellar_Asset_Integration/README.md).
+
 - [ ] 대표 Gameplay Video를 Issue #119에 업로드하고 Evidence Ledger를 갱신한다.
   - 상태: Needs Capture
   - 대상: p.1 Cover, `Docs/98_Evidence/Portfolio_Evidence_Capture_Ledger (KR).md`

@@ -762,7 +762,7 @@ Snapshot을 표시한다.
 4. Reaction/CReaction_Dead.*
    Component/CReactionComponent.*
    Notify/CAnimNotify_CompleteReaction.*
-   - DeadIn 후보, 실행, 명시적 완료와 MontageEnded fallback
+   - DeadIn 후보, 실행, 명시적 완료와 MontageEnded 관측 (자동 Complete 없음)
 
 5. Character/Enemy/CEnemy.*
    - 사망 생명주기 조정, fallback, Finalize, Destroy

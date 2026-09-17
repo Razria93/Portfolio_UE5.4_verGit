@@ -71,7 +71,9 @@ Component
 
 ---
 
-## 5. 리팩터링 방안 제안
+## 5. 당시 리팩터링 방안 (역사적 기록)
+
+이 절의 정상 MontageEnd fallback은 당시 방안임. 현재 계약은 7절의 명시적 종료 계약을 따름.
 
 ### Executor / Component 책임 분리
 
@@ -145,7 +147,7 @@ MontageEnd
 
 Executor는 montage lifecycle을 담당하고, component는 active runtime state를 담당함.
 
-Fallback 처리와 unexpected interruption log는 유지하되, 정상 stop 흐름과 비정상 montage callback 흐름을 구분해야 함.
+Component의 방어적 정리와 unexpected interruption log는 정상 MontageEnd 자동 완료와 구분함. 현재 MontageEnd는 종료 권한을 갖지 않음.
 
 ### 현재 Action / Reaction 대칭 계약
 
@@ -158,7 +160,8 @@ Complete Notify
 -> active context / execution state 정리
 
 MontageEnded(interrupted == false)
--> Notify 누락을 위한 정상 완료 fallback
+-> NaturalMontageEndObserved Audit만 기록
+-> Complete Notify 누락을 자동 완료로 숨기지 않음
 
 MontageEnded(interrupted == true)
 -> 정규 Stop을 대신하지 않음
@@ -166,6 +169,10 @@ MontageEnded(interrupted == true)
 ```
 
 모든 callback은 Montage와 Play Serial을 검증한다. 명시적 Complete나 Stop이 먼저 상태를 정리했다면 뒤늦은 MontageEnded는 stale callback으로 무시한다.
+
+정식 Stop/Interrupt가 중단·복구를 담당한다. Action Pose Scope 해제와 Trail 정리는 해당 종료 흐름에서 처리하며 MontageEnd로 되돌리지 않는다. Montage 재생 직후 time-zero Notify로 실행이 종료되는 경우의 방어는 유지한다.
+
+2026-09-17 보완: Action에 먼저 적용된 관측 정책을 Reaction에도 적용했다. 에셋의 Complete 클래스·Trigger·순서 검사는 정적 감사, 실제 전달과 종료는 PIE로 구분해 검증한다. [F08](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md) 참조.
 
 Enemy `DeadIn`도 이 공통 Reaction 계약을 사용한다. Dead 전용 예상 길이 Timer로 Reaction 종료를 추측하지 않으며, `DeadIn Completed` 이후의 Presentation / Destroy 계약은 [S31](S31_UE5_Portfolio_System_Architecture.md)을 따른다.
 

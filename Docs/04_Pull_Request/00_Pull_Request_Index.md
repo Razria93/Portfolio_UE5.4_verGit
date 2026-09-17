@@ -1,5 +1,13 @@
 # Pull Request Index
 
+## 에셋 통합 PR 본문 교체안
+
+- [P62: Stellar 캐릭터·무기·환경 에셋 통합과 Weapon Presentation 재구성](P62_UE5_Portfolio_Pull_Request.md): GitHub PR #121, `promotion/portfolio-v1-final`, 기준 HEAD `8b23f642`. PR #118의 문서 구성을 기준으로 재작성한 로컬 본문이며 GitHub에는 아직 반영하지 않음.
+
+## 현재 보완 브랜치 PR
+
+- [F08: Stellar 에셋 통합 후 Montage·종료 계약·검증 보완](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md): `fix/stellar-asset-integration`. Montage·에셋 정리, 종료 계약·감사 보완과 관련 문서화를 하나의 Fix 범위로 관리한다. 별도 문서 전용 PR은 만들지 않는다.
+
 이 문서는 Pull Request 문서의 목록과 브랜치 / 관련 문서 연결을 관리한다.
 
 ---

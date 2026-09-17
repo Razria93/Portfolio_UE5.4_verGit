@@ -138,6 +138,7 @@ bool UCReaction::Start(const FReactionData& InData)
 	ActiveData_Cached = InData;
 	ActiveMontage_Cached = InData.Montage;
 	LastStopReason_Cached = EReactionStopReason::None;
+	bIsActive = true;
 
 	if (!PlayMontage(InData))
 	{
@@ -145,14 +146,15 @@ bool UCReaction::Start(const FReactionData& InData)
 		return false;
 	}
 
+	// Playback may have ended this execution through a callback.
+	if (!bIsActive) return false;
+
 	if (!BindMontageEndDelegate())
 	{
 		StopMontage(0.f);
 		ClearRuntime();
 		return false;
 	}
-
-	bIsActive = true;
 
 	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Start);
 	PlayFeedbackRequest(feedbackRequest);
@@ -404,7 +406,8 @@ void UCReaction::OnMontageEnd(UAnimMontage* InAnimMontage, bool bInterrupted, ui
 		return;
 	}
 
-	Complete();
+	// Natural MontageEnd is audit-only; Complete Notify owns termination.
+	FReactionComponentDebug::RecordReactionMontageIgnoredForAudit(OwnerCharacter_Injected, this, InAnimMontage, InSerial, CachedSerial_ActivePlay, TEXT("NaturalMontageEndObserved"));
 }
 
 bool UCReaction::CanHandleMontageEnd(UAnimMontage* InMontage, uint32 InSerial) const
