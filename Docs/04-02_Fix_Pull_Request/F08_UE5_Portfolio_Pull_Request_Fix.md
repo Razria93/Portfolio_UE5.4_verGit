@@ -122,6 +122,15 @@ Montage의 Complete Notify
 - 오류 4행은 Default/Stellar `M_Parry_Sword_Up_L` 두 에셋의 존재하지 않는 다음 Section `Start` 참조다. 경고 3행은 Default `M_HitReact` 한 에셋의 다중 Section/루프 순서 검토다. 중복 데이터 참조 수와 고유 에셋 수를 구분한다. 에셋은 자동 수정하지 않았으며, 실제 종료 누락이 재현됐다는 의미도 아니다.
 - 로컬 로그: `Saved/Logs/PR122AnimationFinal.log`, `Saved/Logs/PR122SectionFinal.log`; 상세 결과: `Saved/Audit/PR122SectionAudit.csv`.
 
+### Section 검토 후 마감 결과
+
+- Parry 두 에셋은 `Default` 한 Section(0~0.233333초)만 있으며 `Next=Start`가 남아 있었다. 엔진은 없는 이름을 `INDEX_NONE`으로 해석하므로 `None`으로 정리해 기존 종료 경로를 유지했다. Complete는 0.216667초로 그대로다. 정확한 두 경로와 기존 값을 검사한 임시 저장 코드는 작업 후 제거했다.
+- Default HitReact는 `Default(0~0.166667) → Start(0.166667~1.133333) → None`의 연속 경로다. Intervention NotifyState는 0.2~0.533333초, Complete는 1.1초이므로 에셋 변경 없이 정상으로 판정했다. 감사는 연속 순방향 Section에 기존 시각 비교를 적용하고, 건너뛰기·역방향·루프는 계속 검토 경고로 남긴다.
+- 최종 재로드 감사: 1,399 packages / 실패 0 / DataRows 93 / Errors 0 / Warnings 0, `FailOnIssues=true` 종료 코드 0. 기존 legacy material import 경고 2개는 별개로 남는다.
+- Editor Development 빌드와 Animation 자동 테스트 2개 통과. 수정 전후 전체 Notify inventory가 동일함을 비교했다. 실제 PIE를 새로 수행한 결과는 아니다.
+- 최종 로컬 근거: `Saved/Logs/PR122ClosedAudit.log`, `Saved/Logs/PR122ClosedTests.log`, `Saved/Audit/PR122Closed.csv`, `Saved/Audit/PR122ClosedInventory.csv`.
+- 리뷰 답변 예정: P1은 검사한 실제 엔진 경로에서 미재현이며 사용자 Blueprint 재진입 전반까지 보장하지 않는다고 설명한다. P2는 시작 경로 검사·회귀 테스트·위 에셋 정리와 최종 감사 결과를 제시한다. 원격 답변 및 Push는 별도 승인 전까지 수행하지 않는다.
+
 감사는 Blueprint CDO component 데이터와 Montage에 직접 배치된 Notify를 대상으로 한다. Sequence 내부 Notify, 레벨 인스턴스 override, 동적 참조, 실행 중 Notify 전달은 보장하지 않는다. 검색된 component 데이터에서 미참조라는 결과는 미사용·삭제 가능 판정이 아니다. 수학 테스트 구현의 존재와 이번 실행 성공도 구분한다.
 
 ## 관련 문서

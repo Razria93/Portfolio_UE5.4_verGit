@@ -12,6 +12,14 @@ namespace ExecutionMontageAudit
 		FString Error;
 		bool bLoops = false;
 
+		bool HasLinearTimeline() const
+		{
+			if (bLoops) return false;
+			for (int32 Index = 1; Index < Sections.Num(); ++Index)
+				if (Sections[Index] != Sections[Index - 1] + 1) return false;
+			return true;
+		}
+
 		bool ContainsTime(const UAnimMontage* Montage, float Time) const
 		{
 			return Sections.Contains(Montage->GetSectionIndexFromPosition(Time));

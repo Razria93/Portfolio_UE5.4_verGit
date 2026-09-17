@@ -1,6 +1,6 @@
 # UE5 Portfolio Issue Analysis Report
 
-> PR #122 후속 검증: Section 경로 감사를 추가했다. 강화된 검사에서는 Parry 두 에셋의 없는 `Start` 연결과 HitReact의 다중 Section 순서 검토가 발견됐다. 과거 감사 0/0과 구분하며 [F08](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)의 리뷰 후 로컬 보완 결과를 참조한다. 일반 time-zero Notify의 재생 호출 내 동기 전달은 엔진 기반 테스트에서 재현되지 않아 런타임 시작 구조는 변경하지 않았다.
+> PR #122 후속 검증: Section 경로 감사를 추가하고 Parry 두 에셋의 없는 `Start` 연결을 `None`으로 정리했다. HitReact는 연속 순방향 경로와 Complete 순서가 정상이라 수정하지 않았다. 최종 재감사 0/0 및 테스트 결과는 [F08](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)의 Section 검토 후 마감 결과를 참조한다. 일반 time-zero Notify의 재생 호출 내 동기 전달은 엔진 기반 테스트에서 재현되지 않아 런타임 시작 구조는 변경하지 않았다.
 
 ## 제목
 

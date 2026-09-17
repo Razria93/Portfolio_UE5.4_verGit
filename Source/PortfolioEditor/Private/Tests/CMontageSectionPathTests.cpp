@@ -20,6 +20,10 @@ bool FMontageSectionPathTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Default start reaches all sections"), Default.Sections.Num(), 3);
 	const FSectionPath FromB = BuildSectionPath(Montage, TEXT("B"), 1.f);
 	TestEqual(TEXT("Explicit start skips A"), FromB.Sections.Num(), 2);
+	TestTrue(TEXT("Adjacent forward sections preserve timeline ordering"), FromB.HasLinearTimeline());
+	FSectionPath Discontinuous;
+	Discontinuous.Sections = {0, 2};
+	TestFalse(TEXT("Skipped interval requires ordering review"), Discontinuous.HasLinearTimeline());
 	TestFalse(TEXT("Earlier Complete is unreachable"), FromB.ContainsTime(Montage, 0.5f));
 	TestTrue(TEXT("Complete in B is reachable"), FromB.ContainsTime(Montage, 1.5f));
 	TestFalse(TEXT("Invalid start is rejected"), BuildSectionPath(Montage, TEXT("Missing"), 1.f).Error.IsEmpty());
@@ -28,6 +32,7 @@ bool FMontageSectionPathTest::RunTest(const FString& Parameters)
 	Montage->CompositeSections[1].NextSectionName = TEXT("A");
 	const FSectionPath Loop = BuildSectionPath(Montage, TEXT("B"), 1.f);
 	TestTrue(TEXT("Backward loop detected"), Loop.bLoops);
+	TestFalse(TEXT("Loop is not a linear timeline"), Loop.HasLinearTimeline());
 	TestEqual(TEXT("Loop traversal terminates"), Loop.Sections.Num(), 2);
 	Montage->CompositeSections[1].NextSectionName = TEXT("Missing");
 	TestFalse(TEXT("Broken link rejected"), BuildSectionPath(Montage, TEXT("B"), 1.f).Error.IsEmpty());

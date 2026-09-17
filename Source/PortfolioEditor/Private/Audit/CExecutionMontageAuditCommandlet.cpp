@@ -395,6 +395,17 @@ namespace ExecutionMontageAudit
 		}
 
 		const FSectionPath Path = BuildSectionPath(Montage, StartSection, PlayRate);
+		if (!Path.Error.IsEmpty() || Path.Sections.Num() > 1 || Path.bLoops)
+		{
+			UE_LOG(LogTemp, Display, TEXT("[SectionReview] %s Start=%s"), *Montage->GetPathName(), *StartSection.ToString());
+			for (int32 SectionIndex = 0; SectionIndex < Montage->CompositeSections.Num(); ++SectionIndex)
+			{
+				float StartTime, EndTime;
+				Montage->GetSectionStartAndEndTime(SectionIndex, StartTime, EndTime);
+				const FCompositeSection& Section = Montage->CompositeSections[SectionIndex];
+				UE_LOG(LogTemp, Display, TEXT("[SectionReview] %s %.6f..%.6f Next=%s Reachable=%d"), *Section.SectionName.ToString(), StartTime, EndTime, *Section.NextSectionName.ToString(), Path.Sections.Contains(SectionIndex));
+			}
+		}
 		if (!Path.Error.IsEmpty())
 		{
 			Row.Severity = TEXT("Error");
@@ -440,10 +451,10 @@ namespace ExecutionMontageAudit
 			Row.Details = TEXT("Multiple matching terminal notifies require Editor review.");
 			++InOutWarningCount;
 		}
-		else if (Path.bLoops || Path.Sections.Num() > 1)
+		else if (!Path.HasLinearTimeline())
 		{
 			Row.Severity = TEXT("Warning");
-			Row.Details = TEXT("Reachable Complete found; multi-section/loop NotifyState ordering requires Editor review.");
+			Row.Details = TEXT("Reachable Complete found; discontinuous/loop NotifyState ordering requires Editor review.");
 			++InOutWarningCount;
 		}
 		else if (Summary.LastNotifyStateEndTime >= 0.f && Summary.LastCorrectCompleteTime < Summary.LastNotifyStateEndTime)
