@@ -30,6 +30,7 @@ namespace ExecutionMontageAudit
 	struct FMontageNotifySummary
 	{
 		int32 CorrectCompleteCount = 0;
+		int32 TriggerMismatchCount = 0;
 		int32 OppositeCompleteCount = 0;
 		float LastCorrectCompleteTime = -1.f;
 		float LastNotifyStateEndTime = -1.f;
@@ -211,7 +212,7 @@ namespace ExecutionMontageAudit
 		Row.RecordType = TEXT("MontageNotify");
 		Row.BlueprintPath = GetPathNameSafe(Montage);
 		Row.ComponentClass = TrackName;
-		Row.Domain = Domains.IsEmpty() ? TEXT("Unreferenced") : Domains;
+		Row.Domain = Domains.IsEmpty() ? TEXT("NoScannedComponentDataReference") : Domains;
 		Row.DataKey = DataReferences;
 		Row.ExecutorClass = bIsState ? TEXT("NotifyState") : TEXT("Notify");
 		Row.MontagePath = FString::SanitizeFloat(Montage->GetPlayLength());
@@ -282,7 +283,34 @@ namespace ExecutionMontageAudit
 			: TEXT("CAnimNotify_CompleteAction");
 	}
 
-	FMontageNotifySummary SummarizeMontage(const UAnimMontage* Montage, EExecutionDomain Domain)
+	bool ReadIntegerProperty(const UObject* Object, const TCHAR* Name, int64& OutValue)
+	{
+		const FProperty* Property = Object->GetClass()->FindPropertyByName(Name);
+		if (!Property) return false;
+		const void* Address = Property->ContainerPtrToValuePtr<void>(Object);
+		const FNumericProperty* Numeric = CastField<FNumericProperty>(Property);
+		if (const FEnumProperty* Enum = CastField<FEnumProperty>(Property)) Numeric = Enum->GetUnderlyingProperty();
+		if (!Numeric || !Numeric->IsInteger()) return false;
+		OutValue = Numeric->GetSignedIntPropertyValue(Address);
+		return true;
+	}
+
+	bool MatchesTerminalTrigger(const UObject* Notify, EExecutionDomain Domain, int64 ExpectedType, int32 ExpectedIndex)
+	{
+		int64 Type = 0;
+		const bool bAction = Domain == EExecutionDomain::Action;
+		if (!ReadIntegerProperty(Notify, bAction ? TEXT("TriggerActionType") : TEXT("TriggerReactionType"), Type)) return false;
+		const int64 All = bAction ? static_cast<int64>(EActionType::All) : static_cast<int64>(EReactionType::All);
+		const int64 None = bAction ? static_cast<int64>(EActionType::None) : static_cast<int64>(EReactionType::None);
+		const int64 Max = bAction ? static_cast<int64>(EActionType::Max) : static_cast<int64>(EReactionType::Max);
+		if (Type == None || Type == Max || (Type != All && Type != ExpectedType)) return false;
+		if (!bAction) return true;
+		int64 Index = 0;
+		return ReadIntegerProperty(Notify, TEXT("TriggerActionIndex"), Index)
+			&& (Index == INDEX_NONE || Index == ExpectedIndex);
+	}
+
+	FMontageNotifySummary SummarizeMontage(const UAnimMontage* Montage, EExecutionDomain Domain, int64 ExpectedType, int32 ExpectedIndex)
 	{
 		FMontageNotifySummary Summary;
 		if (!IsValid(Montage)) return Summary;
@@ -298,6 +326,7 @@ namespace ExecutionMontageAudit
 				if (ClassName == ExpectedClass)
 				{
 					++Summary.CorrectCompleteCount;
+					if (!MatchesTerminalTrigger(Event.Notify, Domain, ExpectedType, ExpectedIndex)) ++Summary.TriggerMismatchCount;
 					Summary.LastCorrectCompleteTime = FMath::Max(Summary.LastCorrectCompleteTime, Event.GetTriggerTime());
 				}
 				else if (ClassName == OppositeClass)
@@ -339,7 +368,9 @@ namespace ExecutionMontageAudit
 		EExecutionDomain Domain,
 		const FString& DataKey,
 		const UClass* ExecutorClass,
-		const UAnimMontage* Montage)
+		const UAnimMontage* Montage,
+		int64 ExpectedType,
+		int32 ExpectedIndex)
 	{
 		FAuditRow Row;
 		Row.RecordType = TEXT("ExecutionMontage");
@@ -359,7 +390,7 @@ namespace ExecutionMontageAudit
 			return;
 		}
 
-		const FMontageNotifySummary Summary = SummarizeMontage(Montage, Domain);
+		const FMontageNotifySummary Summary = SummarizeMontage(Montage, Domain, ExpectedType, ExpectedIndex);
 		Row.CorrectCompleteCount = FString::FromInt(Summary.CorrectCompleteCount);
 		Row.OppositeCompleteCount = FString::FromInt(Summary.OppositeCompleteCount);
 		Row.LastCompleteTime = Summary.LastCorrectCompleteTime >= 0.f
@@ -370,7 +401,7 @@ namespace ExecutionMontageAudit
 			: FString();
 		Row.NotifyStateClasses = FString::Join(Summary.NotifyStateClasses, TEXT("|"));
 		Row.Severity = TEXT("Info");
-		Row.Details = TEXT("Terminal notify contract satisfied.");
+		Row.Details = TEXT("Direct Montage terminal class, trigger and timing checks passed; runtime delivery is not verified.");
 
 		if (Summary.CorrectCompleteCount == 0)
 		{
@@ -382,6 +413,12 @@ namespace ExecutionMontageAudit
 		{
 			Row.Severity = TEXT("Error");
 			Row.Details = FString::Printf(TEXT("Contains %s in %s data."), *GetOppositeNotifyClassName(Domain), *GetDomainName(Domain));
+			++InOutErrorCount;
+		}
+		else if (Summary.TriggerMismatchCount > 0)
+		{
+			Row.Severity = TEXT("Error");
+			Row.Details = TEXT("Complete Notify trigger does not match this data entry, or trigger properties are unreadable.");
 			++InOutErrorCount;
 		}
 		else if (Summary.CorrectCompleteCount > 1)
@@ -424,7 +461,9 @@ namespace ExecutionMontageAudit
 				EExecutionDomain::Action,
 				FormatActionDataKey(Data->ActionDataKey),
 				Data->ActionExecutorKey.Get(),
-				Data->Montage);
+				Data->Montage,
+				static_cast<int64>(Data->ActionDataKey.ActionType),
+				Data->ActionDataKey.ActionIndex);
 		}
 	}
 
@@ -452,7 +491,9 @@ namespace ExecutionMontageAudit
 				EExecutionDomain::Reaction,
 				FormatReactionDataKey(Data->ReactionDataKey),
 				Data->ReactionExecutorKey.Get(),
-				Data->Montage);
+				Data->Montage,
+				static_cast<int64>(Data->ReactionDataKey.ReactionType),
+				Data->ReactionDataKey.ReactionIndex);
 		}
 	}
 
@@ -573,6 +614,7 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 	}
 
 	TArray<FString> InventoryCsvLines;
+	int32 NotifyEventCount = 0;
 	InventoryCsvLines.Add(TEXT("RecordType,MontagePath,Track,OwnershipDomain,DataReferences,EventKind,MontageLength,NotifyClass,NotifyDisplayName,StartTime,EndTime,Duration,Severity,ConfigAndRecommendation"));
 	LoadedMontages.Sort([](const TWeakObjectPtr<UAnimMontage>& Left, const TWeakObjectPtr<UAnimMontage>& Right)
 	{
@@ -597,9 +639,9 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 		if (Montage->Notifies.IsEmpty())
 		{
 			FAuditRow EmptyRow;
-			EmptyRow.RecordType = TEXT("MontageNotify");
+			EmptyRow.RecordType = TEXT("MontageWithoutDirectNotifies");
 			EmptyRow.BlueprintPath = GetPathNameSafe(Montage);
-			EmptyRow.Domain = Domains.IsEmpty() ? TEXT("Unreferenced") : Domains;
+			EmptyRow.Domain = Domains.IsEmpty() ? TEXT("NoScannedComponentDataReference") : Domains;
 			EmptyRow.DataKey = DataReferences;
 			EmptyRow.Severity = TEXT("Info");
 			EmptyRow.Details = TEXT("No AnimNotify or AnimNotifyState events.");
@@ -610,6 +652,7 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 		for (const FAnimNotifyEvent& Event : Montage->Notifies)
 		{
 			AddInventoryRow(InventoryCsvLines, Montage, Event, Domains, DataReferences);
+			++NotifyEventCount;
 		}
 	}
 
@@ -668,7 +711,8 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 		UE_LOG(LogTemp, Error, TEXT("[ExecutionMontageAudit] Cannot write inventory: %s"), *InventoryOutputFilename);
 		return 4;
 	}
-	UE_LOG(LogTemp, Display, TEXT("[ExecutionMontageAudit] Wrote notify inventory: %s | Events=%d | Montages=%d"), *InventoryOutputFilename, FMath::Max(0, InventoryCsvLines.Num() - 1), LoadedMontages.Num());
+	UE_LOG(LogTemp, Display, TEXT("[ExecutionMontageAudit] Wrote notify inventory: %s | Events=%d | Montages=%d"), *InventoryOutputFilename, NotifyEventCount, LoadedMontages.Num());
+	UE_LOG(LogTemp, Display, TEXT("[ExecutionMontageAudit] Scope: direct Montage notifies and Blueprint CDO component data only. Sequence notifies, level overrides, dynamic references and runtime notify delivery are not verified. NoScannedComponentDataReference does not mean unused."));
 
 	bool bFailOnIssues = false;
 	FParse::Bool(*Params, TEXT("FailOnIssues="), bFailOnIssues);
