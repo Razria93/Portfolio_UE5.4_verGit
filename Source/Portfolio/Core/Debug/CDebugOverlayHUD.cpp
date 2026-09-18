@@ -20,6 +20,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
+#include "Templates/UnrealTemplate.h"
 
 #if !UE_BUILD_SHIPPING
 namespace
@@ -221,6 +222,9 @@ void ACDebugOverlayHUD::DrawHUD()
 		textPanels.WorldSummaryPanel.Lines.Reset();
 	}
 
+	if (!DebugCanvas) return;
+	// AHUD drawing helpers use Canvas; route only these panels above Slate/UMG.
+	TGuardValue<TObjectPtr<UCanvas>> foregroundCanvas(Canvas, DebugCanvas);
 	FDebugOverlayCanvasRenderer::Draw(*this, Canvas, textPanels);
 #endif
 }
