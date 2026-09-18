@@ -14,6 +14,11 @@ public class PortfolioEditor : ModuleRules
 			"Portfolio",
 			"AnimationModifiers",
 			"AnimationBlueprintLibrary",
+			"UMG",
+			"SlateCore",
+			"UnrealEd",
+			"RenderCore",
+			"RHI",
 		});
 	}
 }

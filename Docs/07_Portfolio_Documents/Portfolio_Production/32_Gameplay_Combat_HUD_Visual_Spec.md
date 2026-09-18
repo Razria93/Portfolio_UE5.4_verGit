@@ -131,6 +131,10 @@ built-in imagegen 편집 결과이며 정확한 pixel 보존 또는 실제 UMG �
 - [x] 기존 프로젝트 캡처 기반 배치 시안 (최신 PIE 아님).
 - [x] 사용자 폰트 조합 승인.
 - [x] 사용자 축소 배치 v2 확인, HP/SH 행 교체 요청 반영.
-- [ ] UMG·데이터 연결·빌드·자동검사·PIE.
+- [x] Native UMG·데이터 연결·Editor 빌드·HUD 자동검사 6개.
+- [x] 1080p·1440p·3440×1440 실제 UMG 오프스크린 렌더와 한글 fallback 확인.
+- [ ] 실제 PIE의 밝고 어두운 배경·Marker/Overlay 겹침·시각 최종 승인.
+
+구현·검증 범위와 최소 PIE 체크는 [33 구현 기록](33_Gameplay_Combat_HUD_Implementation_and_Validation.md)을 참조함. 생성 시안은 계속 디자인 자료로만 취급함.
 
 전체 구현은 [31 계획](31_Gameplay_Combat_HUD_Design_and_Implementation_Plan%20%28KR%29.md)을 따름.

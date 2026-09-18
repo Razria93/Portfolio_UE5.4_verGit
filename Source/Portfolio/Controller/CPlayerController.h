@@ -28,6 +28,9 @@ private:
 	class UCTargetHUDPresenterComponent* TargetHUDPresenterComponent = nullptr;
 
 	UPROPERTY(VisibleAnywhere)
+	class UCCombatHUDPresenterComponent* CombatHUDPresenterComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
 	class UCDebugOverlayFocusComponent* DebugOverlayFocusComponent = nullptr;
 
 	// Cached input

@@ -74,7 +74,7 @@ Balance는 화면에서 남은 값 `Clamp(Threshold - CurrentCount, 0, Threshold
 
 현재 LFS 정책은 uasset/umap만 지정함. PNG/TTF도 자동 LFS 대상이라고 가정하지 않음. Runtime import는 첫 승인 후 수행하며 과거 이력은 변경하지 않음.
 
-이번 검색에서 UMG 생성 자동화 스크립트를 발견하지 못함. PortfolioEditor 모듈은 있으나 uproject에 PythonScriptPlugin 명시 활성화는 없음. 무단 활성화하지 않고 승인 후 Editor C++ 경로의 Widget Blueprint 생성·compile·save를 검증함. 불가능한 부분만 수동 작업으로 전달함.
+초기 검색에서 UMG 생성 자동화 스크립트를 발견하지 못했음. 구현에서는 플러그인 활성화나 기존 Blueprint 변경 없이 Native UUserWidget의 WidgetTree로 실제 UMG를 구성함. 별도 WBP 생성은 필요하지 않으며, 현재 레이아웃은 C++에서 관리함. 폰트·아이콘은 create-only Editor Commandlet으로 생성함. 적용·검증 기록은 [33 구현 기록](33_Gameplay_Combat_HUD_Implementation_and_Validation.md)을 참조함.
 
 ---
 
