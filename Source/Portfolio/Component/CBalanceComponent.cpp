@@ -8,6 +8,7 @@
 
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Misc/ScopeExit.h"
 
 // Construction
 
@@ -106,6 +107,8 @@ bool UCBalanceComponent::ShouldSuppressCombatTargetFacing() const
 
 FBalanceAdvanceResult UCBalanceComponent::AdvanceBalanceFromParry(const FCombatResultPacket& InPacket)
 {
+	const int32 oldCount = CurrentBalanceCount;
+	ON_SCOPE_EXIT { if (oldCount != CurrentBalanceCount) OnBalanceValuesChanged.Broadcast(); };
 	FBalanceAdvanceResult result;
 	result.PreviousCount = CurrentBalanceCount;
 	result.CurrentCount = CurrentBalanceCount;
@@ -433,6 +436,8 @@ void UCBalanceComponent::AbortBalanceLifecycle(const EBalanceAbortReason InReaso
 
 void UCBalanceComponent::ShutdownBalanceRuntime()
 {
+	const int32 oldCount = CurrentBalanceCount;
+	ON_SCOPE_EXIT { if (oldCount != CurrentBalanceCount) OnBalanceValuesChanged.Broadcast(); };
 	ClearCollapseLoopTimer();
 	ClearExecutionDownTimer();
 	ClearExecutionRecoveryRetryTimer();
@@ -642,6 +647,8 @@ void UCBalanceComponent::SetIncapacitatedPresentation(const EIncapacitatedPresen
 
 void UCBalanceComponent::ResetBalanceRuntime()
 {
+	const int32 oldCount = CurrentBalanceCount;
+	ON_SCOPE_EXIT { if (oldCount != CurrentBalanceCount) OnBalanceValuesChanged.Broadcast(); };
 	ClearCollapseLoopTimer();
 	ClearExecutionDownTimer();
 	ClearExecutionRecoveryRetryTimer();

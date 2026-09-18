@@ -7,6 +7,7 @@
 #include "CHealthComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDeadStateChanged, EDeadState, EDeadState);
+DECLARE_MULTICAST_DELEGATE(FOnHealthValuesChanged);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCHealthComponent : public UActorComponent
@@ -46,6 +47,8 @@ private:
 
 public:
 	FOnDeadStateChanged OnDeadStateChanged;
+	// Observation only; consumers query the current snapshot after notification.
+	FOnHealthValuesChanged OnHealthValuesChanged;
 
 public:
 	// Component Reference

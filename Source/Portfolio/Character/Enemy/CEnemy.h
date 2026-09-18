@@ -92,6 +92,9 @@ private:
 	FName TargetMarkerSocketName = TEXT("TargetMarker");
 
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
+	FText CombatHUDDisplayName;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
 	FVector TargetMarkerFallbackOffset = FVector::ZeroVector;
 
 private:
@@ -244,6 +247,7 @@ public:
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
+	const FText& GetCombatHUDDisplayName() const { return CombatHUDDisplayName; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCBalanceComponent* GetBalanceComp() const { return BalanceComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }

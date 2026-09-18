@@ -12,6 +12,7 @@ struct FReactionExecutionLifecycleEvent;
 struct FReactionRequestResult;
 
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnBalanceLifecycleStateChanged, EBalanceLifecycleState, EBalanceLifecycleState);
+DECLARE_MULTICAST_DELEGATE(FOnBalanceValuesChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnBalanceLifecycleReactionRequested, const FBalanceLifecyclePacket&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnIncapacitatedPresentationChanged, EIncapacitatedPresentation);
 // Compatibility event for the existing Execution Down consumer. New code should
@@ -85,6 +86,7 @@ protected:
 public:
 	// Events
 	FOnBalanceLifecycleStateChanged OnBalanceLifecycleStateChanged;
+	FOnBalanceValuesChanged OnBalanceValuesChanged;
 	FOnBalanceLifecycleReactionRequested OnBalanceLifecycleReactionRequested;
 	FOnIncapacitatedPresentationChanged OnIncapacitatedPresentationChanged;
 	FOnExecutionDownPresentationChanged OnExecutionDownPresentationChanged;
