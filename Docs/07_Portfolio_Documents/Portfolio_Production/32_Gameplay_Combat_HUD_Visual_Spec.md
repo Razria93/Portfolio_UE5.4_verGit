@@ -7,7 +7,7 @@
 ## 관련 브랜치
 
 - `feat/stellar-combat-hud`
-- 상태: 디자인 승인 전. 아래 치수는 제안값이며 원작 측정값 또는 적용 완료값이 아님.
+- 상태: 폰트·v2 크기/배치 사용자 승인 (2026-09-18). HP/SH 순서 교체를 요청받아 v3 시안 반영. 아래 치수는 구현 시작값이며 원작 측정값 또는 적용 완료값이 아님.
 
 ---
 
@@ -35,29 +35,31 @@
 
 | 요소 | anchor / 위치 | 크기 초안 |
 | --- | --- | --- |
-| Target | 상단 중앙, 위 48 | 폭 880, 이름 28, HP 높이 28 |
-| 보조 자원 | HP 아래 | 높이 12, 미구현 outline |
-| Balance | 그 아래 왼쪽 | 마름모 12, 간격 7, 실제 threshold 개수 |
-| Player | 좌하단 x=190, 아래 72 | HP 폭 580, 행 간격 28 |
+| Target | 상단 중앙, 위 48 | 폭 640–690, 이름 24, HP 한 줄 높이 10–12 |
+| 보조 자원 | HP 아래, 간격 6 | 높이 8, 미구현 outline |
+| Balance | 그 아래 왼쪽, 간격 6 | 회전 후 bounding box 8–10, 간격 5, 실제 threshold 개수 |
+| Player | 좌하단 x=190, 아래 72 | HP 폭 360–400, 행 간격 24, HP 한 줄 높이 10 |
 | 아이템 | Player 왼쪽 x=64 | 48–56, 세로 배치 |
 | 스킬 | 우하단 오른쪽 64, 아래 72 | 직경 64–72, 4개 마름모 배치 |
 | 보조 스킬 | 그룹 상단/옆 | 24–32, 미구현 |
 
-Player 행 순서는 BU → BE → HP → SH. HP/글자 #F1F2EE, 보조 자원 #9ACBCB, Balance #E9D864, 미구현 outline #69767D. 얇은 어두운 외곽선·그림자를 사용하고 큰 불투명 패널을 피함.
+Player 행 순서는 BU → BE → SH → HP. HP/글자 #F1F2EE, 보조 자원 #9ACBCB, Balance #E9D864, 미구현 outline #69767D. 얇은 어두운 외곽선·그림자를 사용하고 큰 불투명 패널을 피함.
 
 TODO는 빈 outline·대시·미구현 기호로 실제 0과 구분함. 잠금만으로 해금 가능한 기능처럼 보이지 않도록 디자인 검토 화면에는 설명을 함께 둠.
 
 ---
 
-## 3. 폰트 후보
+## 3. 승인된 폰트 조합
+
+사용자는 폰트 조합을 승인함. 아래 크기는 축소 피드백에 따른 조정안이며 UMG에서의 최종 가독성 확인은 남아 있음.
 
 저장소 검색에서 독립 TTF/OTF 원본을 발견하지 못함. 로컬 UE5.4 Slate/Fonts에는 Roboto와 DroidSansFallback 등이 있음. Font uasset 내부 전수 감사 결과는 아님.
 
 | 용도 | 후보 | 1440p 시각 크기 |
 | --- | --- | --- |
-| 이름 | Oxanium Medium | 28px, 자간 약 0.18em |
-| 라벨 | Oxanium Regular | 22px, 자간 약 0.06em |
-| 숫자 | Oxanium Medium | 22px, 고정 폭 영역 |
+| 이름 | Oxanium Medium | 24px, 자간 약 0.18em |
+| 라벨 | Oxanium Regular | 20px, 자간 약 0.06em |
+| 숫자 | Oxanium Medium | 20px, 고정 폭 영역 |
 | 한글/안내 | Noto Sans CJK KR Regular | 20–22px |
 | 외부 미도입 대안 | 엔진 Roboto + fallback | 같은 크기에서 비교 |
 
@@ -78,6 +80,28 @@ Oxanium [upstream OFL](https://github.com/sevmeyer/oxanium/blob/master/OFL.txt),
 ---
 
 ## 4. 생성 시안
+
+### 현재 기준: HP/SH 교체 v3
+
+[v3 시안](Assets/HUD/hud-layout-project-preview-v3.png)은 사용자가 승인한 v2 크기·배치를 바탕으로 좌하단 HP와 SH의 라벨·게이지를 함께 맞바꾼 이미지임. BU/BE/SH는 미구현 빈 격자, 맨 아래 HP는 흰색 채움 게이지임. 다른 요소의 크기·배치를 변경하는 요청은 하지 않았음.
+
+built-in imagegen 편집 결과이며 정확한 pixel 보존 또는 실제 UMG 실행 결과를 의미하지 않음. [v3 프롬프트](Assets/HUD/layout-v3-prompt.txt)를 보존함.
+
+### 현재 검토본: 축소 v2
+
+[축소 배치 v2](Assets/HUD/hud-layout-project-preview-v2.png). 2026-09-18 사용자 피드백에 따라 기존 프리뷰보다 Concept A의 작은 화면 점유율을 우선함. built-in imagegen으로 편집했으며 실제 UMG가 아님.
+
+- 적·Player HP를 얇은 한 줄 격자로 변경하고 패널 폭을 축소함.
+- Balance 다이아몬드를 눈에 띄게 축소하고 왼쪽에 밀집 배치함.
+- 큰 TODO 제목·퍼센트 숫자·상단 장식선을 제거함. 미구현 칸은 빈 격자와 대시로 구분함.
+- 폰트 조합은 승인 상태로 유지함. 이미지의 생성 글자는 실제 Oxanium 렌더가 아님.
+- 생성 시안은 2절 치수의 정밀 도면이 아님. 특히 이번 출력의 상단 폭은 목표보다 좁아 보이며, 실제 UMG에서는 명세 치수를 시작점으로 조정함.
+- 기존 프리뷰의 보조 원형 표시 일부가 이번 생성본에서 누락됨. 구현 범위에서 삭제한 것은 아니며 작은 TODO 슬롯으로 유지함.
+- 밝은 배경에서 미구현 outline과 작은 글자의 대비는 UMG 단계에서 확인함.
+
+[v2 편집 프롬프트](Assets/HUD/layout-v2-prompt.txt)
+
+### 이전 검토본
 
 [Concept A](Assets/HUD/hud-concept-a.png)는 built-in imagegen 생성 디자인 보드임. 실제 프로젝트 화면/UMG가 아니며 글자는 특정 폰트의 specimen이 아님.
 
@@ -105,7 +129,8 @@ Oxanium [upstream OFL](https://github.com/sevmeyer/oxanium/blob/master/OFL.txt),
 - [x] 폰트 후보·라이선스 출처 조사.
 - [x] 실제 폰트 크기별 비교 및 샘플 한글 육안 확인 (UMG fallback 미검증).
 - [x] 기존 프로젝트 캡처 기반 배치 시안 (최신 PIE 아님).
-- [ ] 사용자 디자인 확인.
+- [x] 사용자 폰트 조합 승인.
+- [x] 사용자 축소 배치 v2 확인, HP/SH 행 교체 요청 반영.
 - [ ] UMG·데이터 연결·빌드·자동검사·PIE.
 
 전체 구현은 [31 계획](31_Gameplay_Combat_HUD_Design_and_Implementation_Plan%20%28KR%29.md)을 따름.
