@@ -6,6 +6,11 @@
 #include "Type/CCombatResultTypes.h"
 #include "Engine/World.h"
 #include "UI/CCombatHUDWidget.h"
+#include "UI/CCombatHUDGaugeLayout.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Image.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/CanvasPanel.h"
 #include "Slate/WidgetRenderer.h"
 #include "ImageUtils.h"
 #include "Misc/FileHelper.h"
@@ -105,13 +110,22 @@ bool FHUDResourceViewTest::RunTest(const FString& Parameters)
 	value.Maximum = 100.f;
 	value.Current = 50.f;
 	TestEqual(TEXT("Fraction"), value.GetFraction(), 0.5f);
+	TestEqual(TEXT("Current / maximum text"), value.GetValueText().ToString(), FString(TEXT("50 / 100")));
 	value.Current = 0.f;
+	TestEqual(TEXT("Real zero shown numerically"), value.GetValueText().ToString(), FString(TEXT("0 / 100")));
 	TestTrue(TEXT("Zero is still available"), value.Availability == EHUDResourceAvailability::Available);
 	value.Availability = EHUDResourceAvailability::Unimplemented;
+	TestEqual(TEXT("TODO stays a dash"), value.GetValueText().ToString(), FString(TEXT("\u2014")));
 	TestTrue(TEXT("TODO distinct from zero"), value.Availability != EHUDResourceAvailability::Available);
 	value.Availability = EHUDResourceAvailability::Available;
 	value.Maximum = 0.f;
 	TestEqual(TEXT("Zero denominator safe"), value.GetFraction(), 0.f);
+	TestEqual(TEXT("Invalid max has no fake ratio"), value.GetValueText().ToString(), FString(TEXT("\u2014")));
+	value.Maximum = 1000.f;
+	value.Current = 850.f;
+	TestEqual(TEXT("Grouped maximum"), value.GetValueText().ToString(), FString(TEXT("850 / ")) + FText::AsNumber(1000).ToString());
+	value.Current = 0.1f;
+	TestTrue(TEXT("Positive fractional HP not displayed as zero"), value.GetValueText().ToString().StartsWith(TEXT("1 / ")));
 	return true;
 }
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHUDWidgetConstructionTest,
@@ -134,6 +148,29 @@ bool FHUDWidgetConstructionTest::RunTest(const FString& Parameters)
 	data.BalanceRemaining = 2;
 	widget->ApplyViewData(data);
 	TestEqual(TEXT("Current player data"), widget->GetViewData().PlayerHealth.GetFraction(), 0.5f);
+	int32 partialCells = 0;
+	widget->WidgetTree->ForEachWidget([&](UWidget* child) {
+		const UImage* cell = Cast<UImage>(child);
+		const UCanvasPanelSlot* slot = cell ? Cast<UCanvasPanelSlot>(cell->Slot) : nullptr;
+		if (slot && FMath::IsNearlyEqual(slot->GetSize().X, 2.5f) && FMath::IsNearlyEqual(slot->GetSize().Y, 5.f)
+			&& cell->GetVisibility() == ESlateVisibility::HitTestInvisible) ++partialCells;
+	});
+	TestEqual(TEXT("Half-filled boundary column clips all three rows to half width"), partialCells, 3);
+	UCanvasPanel* healthGrid = Cast<UCanvasPanel>(widget->WidgetTree->FindWidget(TEXT("PlayerHealthGrid")));
+	if (TestNotNull(TEXT("Player fixed-unit grid"), healthGrid))
+	{
+		TestEqual(TEXT("100 HP capacity: one column, foreground and background"), healthGrid->GetChildrenCount(), 6);
+		data.PlayerHealth.Maximum = 5000;
+		data.PlayerHealth.Current = 3650;
+		widget->ApplyViewData(data);
+		TestEqual(TEXT("Capacity growth rebuilds to fifty columns"), healthGrid->GetChildrenCount(), 300);
+		data.PlayerHealth.Current = 1000;
+		widget->ApplyViewData(data);
+		TestEqual(TEXT("Damage does not change capacity"), healthGrid->GetChildrenCount(), 300);
+		data.PlayerHealth.Maximum = 200;
+		widget->ApplyViewData(data);
+		TestEqual(TEXT("Capacity shrink removes old columns"), healthGrid->GetChildrenCount(), 12);
+	}
 	widget->ApplyViewData(FCombatHUDViewData());
 	TestFalse(TEXT("Clear removes target"), widget->GetViewData().bHasTarget);
 	widget->ReleaseSlateResources(true);
@@ -157,8 +194,8 @@ bool FHUDRenderPreviewTest::RunTest(const FString& Parameters)
 	data.bHasPlayer = data.bHasTarget = true;
 	data.TargetName = FText::FromString(TEXT("TARGET / 스텔라"));
 	data.PlayerHealth.Availability = data.TargetHealth.Availability = EHUDResourceAvailability::Available;
-	data.PlayerHealth.Current = 72;
-	data.PlayerHealth.Maximum = 100;
+	data.PlayerHealth.Current = 3650;
+	data.PlayerHealth.Maximum = 5000;
 	data.TargetHealth.Current = 60;
 	data.TargetHealth.Maximum = 100;
 	data.BalanceMaximum = 3;
@@ -181,6 +218,58 @@ bool FHUDRenderPreviewTest::RunTest(const FString& Parameters)
 	}
 	BeginCleanup(renderer);
 	widget->ReleaseSlateResources(true);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHUDGaugeLayoutTest,
+	"Portfolio.UI.CombatHUD.GaugeLayout",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHUDGaugeLayoutTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatHUDGauge;
+	TestEqual(TEXT("BU 1600: eight 2-column units"), ResourceColumns(1600, EnergyPerCell * 2, 64), 16);
+	TestEqual(TEXT("BE 1400: seven units"), ResourceColumns(1400, EnergyPerCell * 2, 64), 14);
+	TestEqual(TEXT("HP 5000: fifty columns"), ResourceColumns(5000, PlayerHealthPerColumn, 77), 50);
+	TestEqual(TEXT("SH 800: two 10-column units"), ResourceColumns(800, ShieldPerColumn, 64), 20);
+	TestEqual(TEXT("HP non-multiple capacity adds boundary column"), ResourceColumns(5050, PlayerHealthPerColumn, 77), 51);
+	TestEqual(TEXT("Resource allocation bounded"), ResourceColumns(1.e20f, PlayerHealthPerColumn, 77), 77);
+	TestEqual(TEXT("BU 125: third cell half alpha"), UnitFill(125, 1600, EnergyPerCell, 2), 0.5f);
+	TestEqual(TEXT("BU 125: fourth cell empty"), UnitFill(125, 1600, EnergyPerCell, 3), 0.f);
+	TestEqual(TEXT("HP 5050: half final column"), UnitFill(5050, 5050, PlayerHealthPerColumn, 50), 0.5f);
+	TestEqual(TEXT("SH 420: half eleventh column"), UnitFill(420, 800, ShieldPerColumn, 10), 0.5f);
+	TestEqual(TEXT("Boss SH has five complete groups"), BossGroups, 5);
+	TestEqual(TEXT("HP three-row height with wider gaps"), Height(3), 20.f);
+	TestEqual(TEXT("Two-row resource height"), Height(2), 12.5f);
+	TestEqual(TEXT("Cell spacing within a unit"), ColumnX(1, 2) - CellSize, 2.5f);
+	for (float scale : { 0.5f, 0.75f, 0.967f, 1.f, 1.25f, 1.5f })
+	{
+		const FPixelMetrics pixels(scale);
+		TestEqual(TEXT("Boss HP and SH have identical physical width"), pixels.ColumnX(BossHealthColumns - 1, 0),
+			pixels.ColumnX(BossGroups * BossUnitColumns - 1, BossUnitColumns, true));
+		TestTrue(TEXT("Pixel cell and gap remain visible"), pixels.Cell > 0 && pixels.Gap > 0);
+		for (int32 unit : { 0, 2, 11 })
+		{
+			const int32 count = ColumnsForWidth(580.f, unit);
+			TestTrue(TEXT("Pixel grid stays within width budget"), pixels.ColumnX(count - 1, unit) + pixels.Cell <= 580.f * scale);
+			for (int32 column = 1; column < count; ++column)
+				TestEqual(TEXT("Uniform physical pixel gaps"), pixels.ColumnX(column, unit) - pixels.ColumnX(column - 1, unit) - pixels.Cell,
+					unit > 0 && column % unit == 0 ? pixels.GroupGap : pixels.Gap);
+		}
+	}
+	for (int32 unit : { 0, 2, 11 })
+	{
+		const int32 columns = ColumnsForWidth(320.f, unit);
+		TestTrue(TEXT("Grid fits width without stretching cells"), ColumnX(columns - 1, unit) + CellSize <= 320.f);
+		if (unit) TestEqual(TEXT("Whole units only"), columns % unit, 0);
+	}
+	TestEqual(TEXT("BU/BE group gap"), ColumnX(2, 2) - ColumnX(1, 2) - CellSize, UnitGap);
+	TestEqual(TEXT("SH group gap"), ColumnX(11, 11) - ColumnX(10, 11) - CellSize, UnitGap);
+	TestEqual(TEXT("Empty"), ColumnFill(0.f, 0, 10), 0.f);
+	TestEqual(TEXT("Full last column"), ColumnFill(1.f, 9, 10), 1.f);
+	TestEqual(TEXT("Partial column area"), ColumnFill(0.25f, 2, 10), 0.5f);
+	TestEqual(TEXT("Same fraction does not light following column"), ColumnFill(0.25f, 3, 10), 0.f);
+	TestEqual(TEXT("Exact column boundary"), ColumnFill(0.3f, 3, 10), 0.f);
 	return true;
 }
 

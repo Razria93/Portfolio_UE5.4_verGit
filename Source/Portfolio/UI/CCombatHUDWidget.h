@@ -22,6 +22,9 @@ public:
 	FCombatHUDViewData GetViewData() const { return ViewData; }
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	// Editor-only visual samples. Never used as gameplay resource state.
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Preview")
+	bool bShowResourceSamples = true;
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
 	TObjectPtr<UFont> LabelFont;
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
@@ -37,13 +40,17 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UCanvasPanel> PlayerPanel;
 	UPROPERTY(Transient)
+	TObjectPtr<UCanvasPanel> PlayerHealthGrid;
+	UPROPERTY(Transient)
 	TObjectPtr<UCanvasPanel> SkillsPanel;
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> TargetName;
 	UPROPERTY(Transient)
-	TObjectPtr<UTextBlock> PlayerHealthUnavailable;
+	TObjectPtr<UTextBlock> PlayerHealthValue;
 	UPROPERTY(Transient)
-	TObjectPtr<UTextBlock> TargetHealthUnavailable;
+	TObjectPtr<UTextBlock> TargetHealthValue;
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> TargetBalanceValue;
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UImage>> PlayerCells;
 	UPROPERTY(Transient)
@@ -51,10 +58,13 @@ private:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UImage>> BalanceCells;
 	FCombatHUDViewData ViewData;
+	int32 PlayerHealthColumns = -1;
+	float LastPlayerMaximum = -1.f;
 
 	UTextBlock* AddLabel(UCanvasPanel* Parent, const FString& Text, FVector2D Position, FVector2D Size, int32 FontSize);
 	UImage* AddImage(UCanvasPanel* Parent, FVector2D Position, FVector2D Size, FLinearColor Color);
 	void AddSlotFrame(UCanvasPanel* Parent, FVector2D Position, float Size, float Radius);
-	void AddGauge(UCanvasPanel* Parent, FVector2D Position, float Width, int32 Count, TArray<TObjectPtr<UImage>>& Cells);
+	void AddGauge(UCanvasPanel* Parent, FVector2D Position, float Width, int32 Rows, int32 UnitColumns,
+		TArray<TObjectPtr<UImage>>& Cells, bool bUnimplemented = false, int32 ExplicitColumns = -1, bool bBoss = false);
 	void UpdatePresentation();
 };
