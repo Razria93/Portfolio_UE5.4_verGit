@@ -35,7 +35,8 @@ private:
 
 public:
 	// Overlay Snapshot
-	void WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot);
+	// Refreshes the policy registry if needed, then gathers current policy state.
+	void BuildOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot);
 
 	// Overlay Event
 	bool ApplyOverlayEvent(const FObservableOverlayEventContext& InContext);

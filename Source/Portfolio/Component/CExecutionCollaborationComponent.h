@@ -20,10 +20,37 @@ class PORTFOLIO_API UCExecutionCollaborationComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+	friend class FBalanceLifecycleBoundaryTest;
+
 public:
+	// Construction
 	UCExecutionCollaborationComponent();
 
 private:
+	// Source Configuration
+	UPROPERTY(EditAnywhere, Category = "Execution|Start Geometry")
+	FExecutionStartGeometrySettings StartGeometrySettings;
+
+	// Target Configuration
+	UPROPERTY(EditAnywhere, Category = "Execution|Outcome")
+	EExecutionLethalCondition LethalCondition = EExecutionLethalCondition::Disabled;
+
+	UPROPERTY(EditAnywhere, Category = "Execution|Outcome", meta = (ClampMin = 0.0, ClampMax = 1.0, EditCondition = "LethalCondition == EExecutionLethalCondition::HealthRatio"))
+	float LethalHealthRatio = 0.25f;
+
+	// Active Session Runtime
+	FExecutionCollaborationContext ActiveContext;
+	EExecutionCollaborationState CollaborationState = EExecutionCollaborationState::None;
+	bool bIsSourceRole = false;
+	bool bSourceActionTerminal = false;
+	bool bTargetReactionTerminal = false;
+
+	// Session Identity Runtime
+	uint32 NextSessionSerial = 1;
+
+	// Participant Collision Runtime
+	TWeakObjectPtr<ACharacter> MovementIgnoredExecutionPartner;
+
 	// Component References
 	UPROPERTY(Transient)
 	ACharacter* OwnerCharacter_Injected = nullptr;
@@ -55,29 +82,10 @@ private:
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
-	// Source Start Geometry Config
-	UPROPERTY(EditAnywhere, Category = "Execution|Start Geometry")
-	FExecutionStartGeometrySettings StartGeometrySettings;
-
-	// Target Outcome Config
-	UPROPERTY(EditAnywhere, Category = "Execution|Outcome")
-	EExecutionLethalCondition LethalCondition = EExecutionLethalCondition::Disabled;
-
-	UPROPERTY(EditAnywhere, Category = "Execution|Outcome", meta = (ClampMin = 0.0, ClampMax = 1.0, EditCondition = "LethalCondition == EExecutionLethalCondition::HealthRatio"))
-	float LethalHealthRatio = 0.25f;
-
-	// Session Runtime
-	FExecutionCollaborationContext ActiveContext;
-	EExecutionCollaborationState CollaborationState = EExecutionCollaborationState::None;
-	bool bIsSourceRole = false;
-	bool bSourceActionTerminal = false;
-	bool bTargetReactionTerminal = false;
-	uint32 NextSessionSerial = 1;
-
-	// Participant Movement Collision Runtime
-	TWeakObjectPtr<ACharacter> MovementIgnoredExecutionPartner;
-
 public:
+	// Event
+	FOnExecutionLethalDeathEntryExpected OnExecutionLethalDeathEntryExpected;
+
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
@@ -86,8 +94,15 @@ protected:
 	void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
 
 public:
-	// Lethal Death Entry Bridge
-	FOnExecutionLethalDeathEntryExpected OnExecutionLethalDeathEntryExpected;
+	// Query
+	bool HasActiveExecutionSession() const;
+
+	EExecutionCollaborationState GetExecutionCollaborationState() const { return CollaborationState; }
+	FExecutionCollaborationRuntimeSnapshot GetExecutionCollaborationRuntimeSnapshot() const;
+	EExternalCombatInputPolicy GetExternalCombatInputPolicy() const;
+	
+	bool QueryCombatExecutionAvailability(EExecutionAvailabilityBlock& OutBlock) const;
+	bool BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const;
 
 	// Source Request
 	bool RequestCombatExecution();
@@ -98,14 +113,23 @@ public:
 	// Target Outcome
 	bool CommitExecutionOutcome(const FExecutionOutcomePacket& InPacket);
 
-	// Query
-	bool HasActiveExecutionSession() const;
-	EExternalCombatInputPolicy GetExternalCombatInputPolicy() const;
-	EExecutionCollaborationState GetExecutionCollaborationState() const { return CollaborationState; }
-	FExecutionCollaborationRuntimeSnapshot GetExecutionCollaborationRuntimeSnapshot() const;
-	bool BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const;
-
 private:
+	// Start Evaluation
+	struct FExecutionStartEvaluation
+	{
+		EExecutionAvailabilityBlock Block = EExecutionAvailabilityBlock::None;
+		FCombatTargetSnapshot TargetSnapshot;
+		UCExecutionCollaborationComponent* Target = nullptr;
+		float StandardExecutionDamage = 0.f;
+		FString FailureDetail;
+	};
+
+	bool EvaluateExecutionStart(FExecutionStartEvaluation& OutEvaluation) const;
+
+	// Participant Event Binding
+	void BindParticipantEvents();
+	void UnbindParticipantEvents();
+
 	// Participant Event Observation
 	UFUNCTION()
 	void HandleActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, uint32 InActionRequestSerial, EActionEventType InActionEventType);
@@ -121,38 +145,44 @@ private:
 	void ReceivePartnerCommit(const FExecutionSessionId& InSessionId);
 	void ReceivePartnerCancellation(const FExecutionSessionId& InSessionId, EExecutionCollaborationCancelReason InReason);
 
-	// Participant Movement Collision Policy
-	bool ApplyExecutionParticipantMovementIgnore(UCExecutionCollaborationComponent* InPartnerComponent);
-	void RestoreExecutionParticipantMovementIgnore();
-
-	// Session Control
+	// Session Startup
+	bool AlignTargetExecutionFacing(const FCombatTargetSnapshot& InTargetSnapshot) const;
 	bool StartTargetExecutionReaction();
 	bool StartSourceExecutionAction();
 	bool ActivateExecutionPair();
-	void CancelActiveExecutionSession(EExecutionCollaborationCancelReason InReason, bool bNotifyPartner);
-	void CompleteActiveExecutionSession();
+
+	// Session Termination
 	void TryCompleteActiveExecutionSession();
+	void CompleteActiveExecutionSession();
+	void CancelActiveExecutionSession(EExecutionCollaborationCancelReason InReason, bool bNotifyPartner);
 	void CancelLocalExecutionParticipant(bool bWasSourceRole, EReactionType InPrimaryReactionType);
+
+	// Participant Movement Collision
+	bool ApplyExecutionParticipantMovementIgnore(UCExecutionCollaborationComponent* InPartnerComponent);
+	void RestoreExecutionParticipantMovementIgnore();
 
 	// Session Validation
 	bool IsActiveSession(const FExecutionSessionId& InSessionId) const;
 	bool IsTargetSnapshotCurrent() const;
 	bool IsTargetExecutionOpportunityCurrent() const;
 
-	// Execution Startup Validation
-	bool CanStartSourceExecution() const;
-	bool CanResolveSourceExecutionAction(EExecutionOutcomePolicy InOutcomePolicy) const;
-	float ResolveStandardExecutionDamageForReservation() const;
-	bool CanStartTargetExecution() const;
-	bool CanResolveTargetExecutionReaction(EExecutionOutcomePolicy InOutcomePolicy) const;
-	bool IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot) const;
-	bool AlignTargetExecutionFacing(const FCombatTargetSnapshot& InTargetSnapshot) const;
+	// Participant Validation
+	bool CanStartSourceExecution(bool bLogFailure = true, FString* OutFailureDetail = nullptr) const;
+	bool CanStartTargetExecution(bool bLogFailure = true, FString* OutFailureDetail = nullptr) const;
 
-	// Target Outcome Resolution
+	// Execution Data
+	bool CanResolveSourceExecutionAction(EExecutionOutcomePolicy InOutcomePolicy, bool bLogFailure = true, FString* OutFailureDetail = nullptr) const;
+	bool CanResolveTargetExecutionReaction(EExecutionOutcomePolicy InOutcomePolicy, bool bLogFailure = true, FString* OutFailureDetail = nullptr) const;
+	float ResolveStandardExecutionDamageForReservation() const;
+
+	// Start Geometry
+	bool IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot, bool bLogFailure = true, FString* OutFailureDetail = nullptr) const;
+
+	// Outcome Policy
 	EExecutionOutcomePolicy ResolveTargetExecutionOutcomePolicy() const;
 	bool CanResolveLethalExecutionOutcome() const;
 
-	// Execution Policy Resolution
+	// Execution Mapping
 	EReactionType GetPrimaryReactionType() const;
 	int32 GetExecutionActionIndex(EExecutionOutcomePolicy InOutcomePolicy) const;
 

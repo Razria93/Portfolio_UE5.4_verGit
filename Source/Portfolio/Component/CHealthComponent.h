@@ -47,7 +47,6 @@ private:
 
 public:
 	FOnDeadStateChanged OnDeadStateChanged;
-	// Observation only; consumers query the current snapshot after notification.
 	FOnHealthValuesChanged OnHealthValuesChanged;
 
 public:

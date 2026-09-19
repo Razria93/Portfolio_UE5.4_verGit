@@ -57,6 +57,11 @@ private:
 	bool ValidateRequiredComponentReferences() const;
 
 public:
+	// Availability Query
+	bool QueryCombatActionAvailability(ECombatActionIntent InIntent, EActionRequestRejectReason& OutReason) const;
+	bool QueryPreparedActionAvailability(const FActionDataKey& InKey, bool bExternal, EActionRequestRejectReason& OutReason) const;
+
+public:
 	// Request Entry
 	FActionRequestResult RequestMovementAction(const FMovementActionRequest& InIncomingRequest);
 	FActionRequestResult RequestEquipmentAction(const FEquipmentActionRequest& InIncomingRequest);
@@ -90,6 +95,10 @@ private:
 private:
 	// Orchestration Pipeline
 	FActionRequestResult ProcessActionCandidate(const FActionCandidate& InIncomingCandidate);
+
+private:
+	// Execution Evaluation
+	FActionExecutionResult EvaluateActionContext(const FActionExecutionContext& InContext, const FExecutionDecisionQuery& InQuery) const;
 
 private:
 	// Execution Context Resolve

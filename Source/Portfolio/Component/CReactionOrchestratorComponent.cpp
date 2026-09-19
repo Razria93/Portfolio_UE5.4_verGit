@@ -115,6 +115,57 @@ FReactionRequestResult UCReactionOrchestratorComponent::RequestExecutionReaction
 	return ProcessReactionCandidate(candidate);
 }
 
+// Availability Query
+
+bool UCReactionOrchestratorComponent::QueryPreparedExecutionReactionAvailability(EReactionType InType, EReactionRequestRejectReason& OutReason) const
+{
+	if (InType != EReactionType::ExecutionStandard && InType != EReactionType::ExecutionLethal)
+	{
+		OutReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	FReactionDataKey key;
+	key.MatchMode = EReactionDataMatchMode::Global;
+	key.ReactionType = InType;
+	key.ReactionIndex = INDEX_NONE;
+
+	return QueryPreparedReactionAvailability(key, true, OutReason);
+}
+
+bool UCReactionOrchestratorComponent::QueryPreparedReactionAvailability(const FReactionDataKey& InKey, bool bRequireStart, EReactionRequestRejectReason& OutReason) const
+{
+	if (!CanAcceptReactionRequest(OutReason)) return false;
+
+	if (InKey.MatchMode != EReactionDataMatchMode::Global || !InKey.IsValidMinimal())
+	{
+		OutReason = EReactionRequestRejectReason::InvalidRequest;
+		return false;
+	}
+
+	FReactionExecutionContext context;
+	if (!ReactionComp_Injected->FindPreparedGlobalReactionContext(InKey, context))
+	{
+		OutReason = EReactionRequestRejectReason::ReactionDataNotFound;
+		return false;
+	}
+
+	const FExecutionDecisionQuery query = BuildDecisionQuery(context);
+	const FReactionExecutionResult result = EvaluateReactionContext(context, query);
+
+	OutReason = result.RejectReason;
+	if (!result.IsAcceptedDecision()) return false;
+
+	if (result.ApplyMode != EExecutionApplyMode::Start
+		&& (bRequireStart || result.ApplyMode != EExecutionApplyMode::Intervene))
+	{
+		OutReason = EReactionRequestRejectReason::NoExecutableReaction;
+		return false;
+	}
+
+	return true;
+}
+
 // Request Validation
 
 bool UCReactionOrchestratorComponent::CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const
@@ -249,16 +300,25 @@ FReactionRequestResult UCReactionOrchestratorComponent::ProcessReactionCandidate
 		return BuildReactionRequestResult(EReactionRequestResultType::Rejected, rejectReason);
 
 	const FExecutionDecisionQuery decisionQuery = BuildDecisionQuery(incomingContext);
-	const FExecutionDecisionResult decisionResult = BuildDecisionResult(decisionQuery, rejectReason);
-	FReactionExecutionResult executionResult = BuildReactionExecutionResult(incomingContext, decisionResult, rejectReason);
-
-	ResolveExecutionApplyMode(decisionQuery, executionResult);
-	ResolveObservableOverlayGate(decisionQuery, executionResult);
+	const FReactionExecutionResult executionResult = EvaluateReactionContext(incomingContext, decisionQuery);
 
 	FExecutionOrchestratorDebug::RecordReactionExecutionResultForAudit(OwnerCharacter_Injected, executionResult, TEXT("DecisionResolved"));
 	FExecutionOrchestratorDebug::PrintReactionExecutionDebug(OwnerCharacter_Injected, decisionQuery, executionResult);
 
 	return DispatchReactionDecision(executionResult);
+}
+
+// Execution Evaluation
+
+FReactionExecutionResult UCReactionOrchestratorComponent::EvaluateReactionContext(const FReactionExecutionContext& InContext, const FExecutionDecisionQuery& InQuery) const
+{
+	EReactionRequestRejectReason reason = EReactionRequestRejectReason::None;
+
+	const FExecutionDecisionResult decision = BuildDecisionResult(InQuery, reason);
+	FReactionExecutionResult result = BuildReactionExecutionResult(InContext, decision, reason);
+	ResolveExecutionApplyMode(InQuery, result);
+	ResolveObservableOverlayGate(InQuery, result);
+	return result;
 }
 
 // Execution Context Resolve
@@ -341,7 +401,7 @@ FExecutionSnapshot UCReactionOrchestratorComponent::BuildSnapshot() const
 
 	if (IsValid(ObservableOverlayComp_Injected))
 	{
-		ObservableOverlayComp_Injected->WriteOverlaySnapshot(snapshot.ObservableOverlay);
+		ObservableOverlayComp_Injected->BuildOverlaySnapshot(snapshot.ObservableOverlay);
 	}
 
 	return snapshot;

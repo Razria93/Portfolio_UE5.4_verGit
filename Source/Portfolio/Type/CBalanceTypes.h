@@ -4,6 +4,8 @@
 #include "Type/CReactionTypes.h"
 #include "CBalanceTypes.generated.h"
 
+// Enum
+
 UENUM(BlueprintType)
 enum class EBalanceLifecycleState : uint8
 {
@@ -46,13 +48,11 @@ enum class EBalanceAbortReason : uint8
 
 	ResetNotifyMissing,
 	OwnerDeath,
+	ExecutionCancelled,
 
 	Max,
 };
 
-// Full-body incapacity presentation. This is deliberately independent from the
-// Balance lifecycle: the lifecycle owns gameplay while montage notifies choose
-// the safe visual hand-off moment.
 UENUM(BlueprintType)
 enum class EIncapacitatedPresentation : uint8
 {
@@ -63,18 +63,7 @@ enum class EIncapacitatedPresentation : uint8
 	Max,
 };
 
-USTRUCT(BlueprintType)
-struct FBalanceLifecyclePacket
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient)
-	EReactionType ReactionType = EReactionType::None;
-
-	UPROPERTY(Transient)
-	uint32 BalanceLifecycleSerial = 0;
-};
+// Result
 
 USTRUCT(BlueprintType)
 struct FBalanceAdvanceResult
@@ -82,6 +71,7 @@ struct FBalanceAdvanceResult
 	GENERATED_BODY()
 
 public:
+	// Data
 	UPROPERTY(Transient)
 	int32 PreviousCount = 0;
 
@@ -98,5 +88,22 @@ public:
 	bool bThresholdCrossed = false;
 
 public:
+	// Query
 	bool ShouldDispatchCollapseIn() const { return bThresholdCrossed && BalanceLifecycleSerial != 0; }
+};
+
+// Lifecycle Packet
+
+USTRUCT(BlueprintType)
+struct FBalanceLifecyclePacket
+{
+	GENERATED_BODY()
+
+public:
+	// Data
+	UPROPERTY(Transient)
+	EReactionType ReactionType = EReactionType::None;
+
+	UPROPERTY(Transient)
+	uint32 BalanceLifecycleSerial = 0;
 };

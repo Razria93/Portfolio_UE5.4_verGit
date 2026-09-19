@@ -105,6 +105,8 @@ public:
 	UCReaction* GetActiveReactionExecutor() const;
 	bool GetActiveReactionContext(FReactionExecutionContext& OutContext) const;
 
+	bool FindPreparedGlobalReactionContext(const FReactionDataKey& InKey, FReactionExecutionContext& OutContext) const;
+
 public:
 	// Data Resolve
 	bool ResolveReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData);

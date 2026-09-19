@@ -4,11 +4,15 @@
 #include "Type/CCombatTargetTypes.h"
 #include "CExecutionCollaborationTypes.generated.h"
 
+// Constants
+
 namespace CExecutionActionIndex
 {
 	constexpr int32 Standard = 0;
 	constexpr int32 Lethal = 1;
 }
+
+// Enum
 
 UENUM(BlueprintType)
 enum class EExecutionOutcomePolicy : uint8
@@ -42,8 +46,6 @@ enum class EExecutionCollaborationState : uint8
 	Max,
 };
 
-// Applies only to ordinary, external combat input. Execution and Balance
-// lifecycle requests are trusted internal flows and intentionally bypass it.
 UENUM(BlueprintType)
 enum class EExternalCombatInputPolicy : uint8
 {
@@ -53,6 +55,21 @@ enum class EExternalCombatInputPolicy : uint8
 	DamageOnly,
 
 	Max,
+};
+
+enum class EExecutionAvailabilityBlock : uint8
+{
+	None,
+
+	SessionActive,
+	SourceUnavailable,
+	NoTarget,
+	Geometry,
+	TargetUnavailable,
+	NoOpportunity,
+	MissingData,
+	OutcomeUnavailable,
+	ExecutionBlocked
 };
 
 UENUM(BlueprintType)
@@ -80,12 +97,15 @@ enum class EExecutionCollaborationCancelReason : uint8
 	Max,
 };
 
+// Configuration
+
 USTRUCT(BlueprintType)
 struct FExecutionStartGeometrySettings
 {
 	GENERATED_BODY()
 
 public:
+	// Data
 	UPROPERTY(EditAnywhere, Category = "Execution|Start Geometry", meta = (ClampMin = 0.0))
 	float MaxStartDistance = 300.f;
 
@@ -93,6 +113,7 @@ public:
 	float MaxSourceFacingAngleDegrees = 15.f;
 
 public:
+	// Validation
 	bool IsValid() const
 	{
 		return MaxStartDistance > KINDA_SMALL_NUMBER
@@ -101,12 +122,15 @@ public:
 	}
 };
 
+// Session Identity
+
 USTRUCT(BlueprintType)
 struct FExecutionSessionId
 {
 	GENERATED_BODY()
 
 public:
+	// Data
 	UPROPERTY(Transient)
 	AActor* SourceActor = nullptr;
 
@@ -114,16 +138,20 @@ public:
 	uint32 Serial = 0;
 
 public:
+	// Validation
 	bool IsValidMinimal() const
 	{
 		return IsValid(SourceActor) && Serial != 0;
 	}
 
+	// Comparison
 	bool operator==(const FExecutionSessionId& InOther) const
 	{
 		return SourceActor == InOther.SourceActor && Serial == InOther.Serial;
 	}
 };
+
+// Opportunity Reservation
 
 USTRUCT(BlueprintType)
 struct FExecutionOpportunityReservation
@@ -131,6 +159,7 @@ struct FExecutionOpportunityReservation
 	GENERATED_BODY()
 
 public:
+	// Data
 	UPROPERTY(Transient)
 	FExecutionSessionId SessionId = FExecutionSessionId();
 
@@ -141,11 +170,13 @@ public:
 	float SuspendedLoopRemainingSeconds = 0.f;
 
 public:
+	// Validation
 	bool IsValidMinimal() const
 	{
 		return SessionId.IsValidMinimal() && BalanceLifecycleSerial != 0;
 	}
 
+	// Comparison
 	bool Matches(const FExecutionOpportunityReservation& InOther) const
 	{
 		return IsValidMinimal()
@@ -155,12 +186,15 @@ public:
 	}
 };
 
+// Runtime Context
+
 USTRUCT(BlueprintType)
 struct FExecutionCollaborationContext
 {
 	GENERATED_BODY()
 
 public:
+	// Data
 	UPROPERTY(Transient)
 	FExecutionSessionId SessionId = FExecutionSessionId();
 
@@ -174,6 +208,7 @@ public:
 	EExecutionOutcomePolicy OutcomePolicy = EExecutionOutcomePolicy::Standard;
 
 public:
+	// Validation
 	bool IsValidMinimal() const
 	{
 		return SessionId.IsValidMinimal()
@@ -185,12 +220,15 @@ public:
 	}
 };
 
+// Outcome Packet
+
 USTRUCT(BlueprintType)
 struct FExecutionOutcomePacket
 {
 	GENERATED_BODY()
 
 public:
+	// Data
 	UPROPERTY(Transient)
 	FExecutionCollaborationContext CollaborationContext = FExecutionCollaborationContext();
 
@@ -198,6 +236,7 @@ public:
 	float StandardExecutionDamage = 0.f;
 
 public:
+	// Validation
 	bool IsValidMinimal() const
 	{
 		if (!CollaborationContext.IsValidMinimal()) return false;
@@ -205,6 +244,8 @@ public:
 			|| StandardExecutionDamage > KINDA_SMALL_NUMBER;
 	}
 };
+
+// Snapshot
 
 struct FExecutionCollaborationRuntimeSnapshot
 {

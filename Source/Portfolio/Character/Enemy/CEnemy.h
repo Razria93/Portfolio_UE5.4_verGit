@@ -87,15 +87,17 @@ private:
 	FCharacterMovementSetup MovementSetup;
 
 private:
-	// Target Presentation
+	// Target Marker Presentation
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
 	FName TargetMarkerSocketName = TEXT("TargetMarker");
 
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
-	FText CombatHUDDisplayName;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Targeting|Presentation")
 	FVector TargetMarkerFallbackOffset = FVector::ZeroVector;
+
+private:
+	// Combat HUD Presentation
+	UPROPERTY(EditDefaultsOnly, Category = "CombatHUD|Presentation")
+	FText CombatHUDDisplayName;
 
 private:
 	// AI Policy Config
@@ -247,7 +249,6 @@ public:
 	FORCEINLINE UCWeaponComponent* GetWeaponComp() const { return WeaponComponent; }
 
 	FORCEINLINE UCStateComponent* GetStateComp() const { return StateComponent; }
-	const FText& GetCombatHUDDisplayName() const { return CombatHUDDisplayName; }
 	FORCEINLINE UCHealthComponent* GetHealthComp() const { return HealthComponent; }
 	FORCEINLINE UCBalanceComponent* GetBalanceComp() const { return BalanceComponent; }
 	FORCEINLINE UCObservableOverlayComponent* GetObservableOverlayComp() const { return ObservableOverlayComponent; }
@@ -270,6 +271,9 @@ public:
 
 	// Target Presentation Query
 	FVector GetTargetMarkerWorldLocation() const;
+
+	// Combat HUD Presentation Query
+	const FText& GetCombatHUDDisplayName() const { return CombatHUDDisplayName; }
 
 	// AI Config Query
 	FORCEINLINE const FEnemyPatrolConfig& GetPatrolConfig() const { return PatrolConfig; }
