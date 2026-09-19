@@ -47,8 +47,8 @@ UCCombatHUDWidget::UCCombatHUDWidget(const FObjectInitializer& ObjectInitializer
 	LabelFont = label.Object;
 	NameFont = name.Object;
 	const TCHAR* paths[] = {
-		TEXT("/Game/08_UI/CombatHUD/T_HUDSlash"), TEXT("/Game/08_UI/CombatHUD/T_HUDSweep"),
-		TEXT("/Game/08_UI/CombatHUD/T_HUDShield"), TEXT("/Game/08_UI/CombatHUD/T_HUDStrike") };
+		TEXT("/Game/08_UI/CombatHUD/T_HUDActionGuard"), TEXT("/Game/08_UI/CombatHUD/T_HUDActionDodge"),
+		TEXT("/Game/08_UI/CombatHUD/T_HUDActionCounter"), TEXT("/Game/08_UI/CombatHUD/T_HUDActionExecution") };
 	for (const TCHAR* path : paths)
 	{
 		ConstructorHelpers::FObjectFinder<UTexture2D> icon(path);
@@ -56,6 +56,10 @@ UCCombatHUDWidget::UCCombatHUDWidget(const FObjectInitializer& ObjectInitializer
 	}
 	static ConstructorHelpers::FObjectFinder<UTexture2D> vial(TEXT("/Game/08_UI/CombatHUD/T_HUDVial"));
 	ItemIcon = vial.Object;
+	static ConstructorHelpers::FObjectFinder<UTexture2D> rush(TEXT("/Game/08_UI/CombatHUD/T_HUDActionRush"));
+	RushIcon = rush.Object;
+	static ConstructorHelpers::FObjectFinder<UTexture2D> guardBreak(TEXT("/Game/08_UI/CombatHUD/T_HUDActionGuardBreak"));
+	GuardBreakIcon = guardBreak.Object;
 }
 
 void UCCombatHUDWidget::AddSlotFrame(UCanvasPanel* Parent, FVector2D Position, float Size, float Radius)
@@ -254,6 +258,9 @@ TSharedRef<SWidget> UCCombatHUDWidget::RebuildWidget()
 	}
 	AddLabel(SkillsPanel, TEXT("TODO"), FVector2D(92, 0), FVector2D(72, 26), 11)->SetJustification(ETextJustify::Center);
 	AddSlotFrame(SkillsPanel, FVector2D(114, -38), 28.f, 14.f);
+	// Presentation only: action availability and cooldowns are not connected yet.
+	UImage* rushIcon = AddImage(SkillsPanel, FVector2D(114, -38), FVector2D(28, 28), Pending);
+	if (RushIcon) rushIcon->SetBrushFromTexture(RushIcon);
 	UpdatePresentation();
 	return Super::RebuildWidget();
 }

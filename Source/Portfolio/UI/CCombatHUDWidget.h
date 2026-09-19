@@ -33,6 +33,11 @@ protected:
 	TArray<TObjectPtr<UTexture2D>> SkillIcons;
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
 	TObjectPtr<UTexture2D> ItemIcon;
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
+	TObjectPtr<UTexture2D> RushIcon;
+	// Reserved alternate image; not driven by gameplay until action state is wired.
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
+	TObjectPtr<UTexture2D> GuardBreakIcon;
 
 private:
 	UPROPERTY(Transient)

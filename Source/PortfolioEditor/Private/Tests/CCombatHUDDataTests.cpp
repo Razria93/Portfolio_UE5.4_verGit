@@ -156,6 +156,22 @@ bool FHUDWidgetConstructionTest::RunTest(const FString& Parameters)
 			&& cell->GetVisibility() == ESlateVisibility::HitTestInvisible) ++partialCells;
 	});
 	TestEqual(TEXT("Half-filled boundary column clips all three rows to half width"), partialCells, 3);
+	TMap<FString, FVector2D> actionPositions;
+	widget->WidgetTree->ForEachWidget([&](UWidget* child) {
+		const UImage* image = Cast<UImage>(child);
+		const UCanvasPanelSlot* slot = image ? Cast<UCanvasPanelSlot>(image->Slot) : nullptr;
+		const UObject* resource = image ? image->GetBrush().GetResourceObject() : nullptr;
+		if (slot && resource && resource->GetName().StartsWith(TEXT("T_HUDAction")))
+			actionPositions.Add(resource->GetName(), slot->GetPosition());
+	});
+	TestEqual(TEXT("Five selected action icons are rendered"), actionPositions.Num(), 5);
+	const TCHAR* actions[] = { TEXT("Guard"), TEXT("Dodge"), TEXT("Counter"), TEXT("Execution"), TEXT("Rush") };
+	const FVector2D positions[] = { {92,30}, {0,112}, {184,112}, {92,194}, {114,-38} };
+	for (int32 i = 0; i < 5; ++i)
+	{
+		const FVector2D* position = actionPositions.Find(FString(TEXT("T_HUDAction")) + actions[i]);
+		if (TestNotNull(actions[i], position)) TestEqual(actions[i], *position, positions[i]);
+	}
 	UCanvasPanel* healthGrid = Cast<UCanvasPanel>(widget->WidgetTree->FindWidget(TEXT("PlayerHealthGrid")));
 	if (TestNotNull(TEXT("Player fixed-unit grid"), healthGrid))
 	{
