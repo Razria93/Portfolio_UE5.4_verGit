@@ -1,58 +1,72 @@
 # 전투 HUD 구현 및 검증
 
-기준: 2026-09-18, `feat/stellar-combat-hud`. 축소 배치·폰트 승인 및 HP/SH 교체 요청 이후 구현. 이후 사용자 PIE에서 너무 작다는 피드백으로 축소 전 명세 크기를 재적용함. 사용자 PIE 최종 확인 전이며 Push/PR/merge는 수행하지 않음.
+기준일: 2026-09-20. 브랜치: `feat/stellar-combat-hud`.
+구현 기준: `48eaae82..65157687`. 이후 마감 검토의 변경은 문서 최신화와 줄 끝 공백 정리다.
+브랜치 전체의 변경 이유·게임플레이 보완·검증 한계는 [34 마감 기록](34_Gameplay_Combat_HUD_Branch_Closure.md)을 따른다.
 
-## 구현
+## 현재 구조
 
-- `CPlayerController`의 새 `CombatHUDPresenter`가 로컬 플레이어 HUD를 생성함. 기존 Target Marker·Debug Overlay는 변경하지 않음.
-- `CCombatHUDPresenterComponent`: Player HP, 현재 Combat Target의 표시명·HP·Balance를 구독하고 표시 snapshot을 만듦. 매 프레임 폴링하지 않음. 타겟 교체·해제·사망·EndPlay·플레이어 교체/해제 시 구독과 표시를 정리함.
-- `CHealthComponent`/`CBalanceComponent`: 실제 값이 변경된 함수 종료 시 관측용 native delegate를 전달함. 피해 계산·사망·Action/Reaction 종료 정책은 변경하지 않음.
-- `CEnemy::CombatHUDDisplayName`: Blueprint 기본값에서 설정하는 표시명. 미설정은 `TARGET`이며 Actor label을 사용하지 않음.
-- `CCombatHUDWidget`: Native UMG WidgetTree. 현재 비교안은 Target 880px·Player HP 580px·스킬 슬롯 72px의 2560×1440 기준 배치. Player 행은 `BU → BE → SH → HP`.
-- Balance는 `Clamp(Threshold - CurrentCount, 0, Threshold)`의 남은 칸. 작은 노란 다이아몬드로 표시하며 표시 allocation은 64개로 제한함. gameplay threshold는 변경하지 않음.
-- 실제 HP 0은 빈 실선 격자, 미확보 HP는 대시, 미구현 자원은 빈 outline 격자와 대시로 구분함. 스킬·아이템·보조 원형 슬롯은 비활성 TODO 표현이며 입력·수량·쿨다운을 가장하지 않음.
-- 외형 검토용 예외: Editor에서 `bShowResourceSamples` 기본 활성화. BU `1,200 / 1,600`(산호색), BE `700 / 1,400`(청색), SH `560 / 800`(민트색)을 고정 표시하고 SAMPLE 라벨로 구분함. Presenter/게임 상태에는 값을 주입하지 않으며 HP는 실제 값 유지. 옵션 비활성화 또는 비 Editor 빌드에서는 미구현 표현으로 복귀함. 보완 후 Editor 빌드와 HUD 자동검사 7개 통과, 실제 UMG 렌더에서 색·수치 배치 확인.
-- 현재 값은 즉시 표시함. HP 잔상·감소 애니메이션은 아직 넣지 않았으며 첫 PIE 가독성 확인 후 필요 여부를 판단함.
-- 후속 시각 보완: 공통 5×5 셀, BU/BE 2×2 묶음, SH 2×11 묶음, Player/Target HP 연속 3행. HP 경계 열은 세 행 모두 실제 폭으로 부분 채움. 상세 치수는 32 시각 명세의 현재 구현을 따름. 경계 반짝임은 미적용.
+- `CPlayerController`의 `CombatHUDPresenter`가 로컬 컨트롤러에서 HUD를 생성한다. 기본 클래스는 Native `UCCombatHUDWidget`, ZOrder는 5다.
+- Presenter가 플레이어·현재 Combat Target을 관측해 `FCombatHUDViewData`를 전달한다. HP·Balance·타깃 변경은 이벤트 기반이며, 가드·닷지·처형 상태는 `TG_PostUpdateWork`에서 조회한다. 액션 데이터가 달라질 때만 액션 표시를 갱신한다.
+- Widget은 C++에서 UMG 트리를 구성한다. 표시 계층이 입력 실행·자원 소모·처형 예약을 소유하지 않는다. `WBP_CombatHUD`를 필수로 만들거나 하드코딩된 WBP 경로를 로드하지 않는다.
+- 플레이어/타깃 교체, 해제, 사망, EndPlay에 맞춰 구독과 표시를 정리한다.
+- `CEnemy::CombatHUDDisplayName`이 대상 이름의 원천이다. 비어 있거나 해당 Enemy 타입이 아니면 `TARGET`을 사용한다.
+- 디버그 텍스트 패널은 `DebugCanvas`를 사용해 UMG보다 앞에 그린다. 전투 HUD의 ZOrder를 무작정 올리는 방식이 아니다.
 
-## 리소스와 편집 위치
+## 실제 연결과 샘플 구분
 
-- Runtime: `/Game/08_UI/CombatHUD/` — 폰트 2개, FontFace 3개, 아이콘 Texture 5개.
-- 원본 및 정확한 생성 프롬프트: [Resources/CombatHUD](../../../Resources/CombatHUD/README.md).
-- Oxanium Regular/Medium + Noto Sans CJK KR fallback. OFL 원문 동봉.
-- imagegen 스킬의 built-in 생성 경로로 개별 RGBA 아이콘 제작. 원형 테두리는 UMG 도형으로 별도 구성. 원작 텍스처를 추출한 것이 아님.
-- uasset은 기존 Git LFS 정책 적용. PNG/TTF/OTF 원본은 현 정책상 일반 Git. 과거 이력 변경 없음.
-- `CCombatHUDAssetsCommandlet -CreateMissing`: 없는 전용 에셋만 생성. 기존 에셋은 덮어쓰지 않음. 일반 실행에 필요한 도구가 아님.
-- 스타일 속성은 Widget 기본값에서 변경 가능하지만 현재 배치 트리는 C++이 생성함. UMG Designer에서 드래그 편집하는 WBP는 이번 구현에 없음.
-- 21:9에서는 중앙 16:9 안전 영역을 유지함. 검은 letterbox를 그리지 않으며 외곽은 투명함. 실제 viewport DPI/플랫폼 safe zone은 PIE에서 확인 필요.
+| 표시 | 현재 상태 |
+| --- | --- |
+| Player HP / Target HP | 실제 Health 값. 0은 숫자 0, 미확보 값은 대시 |
+| Target Balance | `Clamp(Threshold - CurrentCount, 0, Threshold)`의 남은 수량 |
+| 가드 | 실행 가능 여부와 실제 가드 자세에 따라 Ready/Active/Unavailable |
+| 패링 | 승인된 자기 대상 패링 결과를 게임 시간 0.25초 강조; serial 중복 방지 |
+| 닷지 | 실행 가능 여부와 액션 실행 중 상태. 퍼펙트 닷지 성공 표시는 아님 |
+| 처형 | 락온 + 공통 시작 조건 평가로 Ready, 시전자 협업 세션으로 Active |
+| BU / BE / Player SH / Target SH | 실제 자원 시스템 미연결. Editor 외형 검토 샘플 또는 빈 외곽선·대시 |
+| 돌진 / 카운터 / 아이템·수량 / 보조 작은 원 | 미구현 자리표시. 쿨타임·비용·입력을 가장하지 않음 |
+| 가드브레이크 | 아이콘 보관·로드만 함. 브레이크 판정·쿨타임·아이콘 교체 미구현 |
 
-## 로컬 검증
+`bShowResourceSamples`는 Editor에서 기본 true다. BU 1200/1600, BE 700/1400, Player SH 560/800, Target SH 2700/4500을 SAMPLE 라벨과 함께 표시한다.
+옵션을 끄거나 비 Editor 빌드에서는 샘플을 표시하지 않는다. HP와 Balance는 샘플 자원으로 대체하지 않는다.
+TODO 문자열과 포션 위 작은 원은 제거했고, 우측 상단 돌진 슬롯과 액션 옆 작은 원은 남겨둔다.
 
-- `PortfolioEditor Win64 Development`: UHT/C++ 빌드 통과.
-- 신규 리소스 import: 0 errors / 0 warnings.
-- `Portfolio.UI.CombatHUD`: 공통 셀 보완 후 7개 통과.
-- 후속 디버그 우선순위 보완: `ACDebugOverlayHUD`의 패널 렌더 구간만 전경 `DebugCanvas`로 전환하고 scope 종료 시 원래 Canvas를 복원함. 엔진의 Slate/UMG 앞쪽 레이어를 사용하므로 전투 HUD·타겟 마커의 ZOrder는 변경하지 않음. 패널 투명도·입력·월드 디버그 출력은 유지. 사용자 적용 확인 완료(2026-09-18). 이 변경에 대해 에이전트가 별도로 빌드·PIE를 실행한 것은 아니며 diff 검사는 통과함.
-- Enemy HP·Balance 실수치, SH Editor 샘플 2700/4500 추가 후 빌드·7개 자동검사 및 실제 UMG 렌더 확인. 그 이후 TODO 두 곳 가운데 정렬과 기능 미확정 원 두 개 제거는 소스 반영 및 diff 검사만 완료; 열린 에디터를 유지하기 위해 재빌드/PIE는 수행하지 않음. 사용자가 게이지 표현을 정상 확인했으며, 디버그 오버레이 표시 우선순위는 논의만 했고 변경하지 않음.
-- 고정 자원 단위 / 보스 5묶음 보완: BU·BE 200/유닛(50/셀, 알파), Player HP 100/열, SH 400/10열 유닛(40/열). 최대 HP 증감 시 위젯 열 재구성, 피해만 받을 때 열 수 유지, 부분 단위 및 비정상적으로 큰 최대치의 할당 상한을 검사함. 보스 HP 114열과 SH 22열×5묶음의 정수 픽셀 폭 일치를 6개 배율에서 검사. 보스 SH 실제 데이터 연결은 범위 밖.
-- 픽셀 정렬 보완 후 빌드 및 동일 7개 재통과. 6개 배율에서 고정 pitch·폭 예산을 검사함. 실제 UMG 렌더 PNG의 Player HP 완전 충전 셀을 측정: 1920×1080은 3×3px / 가로·세로 틈 2px, 2560×1440 및 3440×1440은 5×5px / 틈 2px로 균일. 부분 충전 경계는 측정에서 구분함. PIE 및 창 크기 변경의 사용자 검수는 별도이며, 캡처 후 이미지 리사이즈까지 보장하지 않음.
-  - HealthObservation: 초기화·피해·회복·최대값 변경·사망·무효 입력·0 최대값.
-  - BalanceObservation: 중간 패리·중복 serial·threshold·shutdown/reset.
-  - ResourceView: 비율 및 0/미구현 구분.
-  - WidgetConstruction: 실제 UMG 트리 생성·snapshot 적용/초기화.
-  - GaugeLayout: 공통 셀 높이·묶음 간격·폭 제한·부분 열 계산. WidgetConstruction에서도 HP 경계 열의 세 행이 실제 절반 폭으로 표시되는지 검사함.
-  - PresenterLifecycle: 타겟 획득·교체·이전 구독 해제·사망·clear·EndPlay·플레이어 해제.
-  - RenderPreview: RHI를 사용한 1920×1080, 2560×1440, 3440×1440 UMG 렌더 및 PNG export.
-- PresenterLifecycle의 EndPlay는 테스트 world에서 delegate를 직접 전달한 검사임. 실제 레벨 전환/Destroy의 모든 순서를 검증했다는 의미가 아님.
-- 결과: `Saved/Automation/CombatHUD/index.json`, `hud-*.png` (로컬 생성물).
-- 자동 렌더는 sample snapshot이며 실제 플레이 결과가 아님. 한글·영문·격자·아이콘 출력 및 화면 경계 안 배치를 확인함.
-- Editor 시작 로그의 기존 DebugOverlay Console object 조회 성능 경고 등은 별개이며, 전체 프로젝트 로그 무경고를 주장하지 않음.
-- 패키징/cook, 실제 밝고 어두운 게임 배경 대비, Marker/Debug Overlay 중첩, 사용자 PIE는 미검증.
+## 게이지와 배치
 
-## 사용자 확인 — 한 번에 확인할 최소 범위
+- 기준 캔버스는 2560×1440, ScaleToFit. 21:9에서는 중앙 16:9 영역을 사용하고 외곽에 검은 배경을 그리지 않는다.
+- Player HP는 3행, 열당 100. 최대값이 바뀌어 열 수가 달라질 때만 다시 만든다. 580 논리 폭 기준 77열/7700까지 표시하고 초과 시 숫자는 실제 값을 유지한다.
+- BU·BE는 2행×2열/유닛당 200, 셀당 50. 셀 너비 대신 알파를 채운다. 현재는 샘플 구현이다.
+- Player SH는 2행×10열/유닛당 400, 열당 40. 현재는 샘플 구현이다.
+- Target HP는 고정 114열, Target SH는 22열×5묶음. 880 논리 폭 예산에서 양 끝을 맞춘다. 열 수를 퍼센트 숫자 100과 억지로 일치시키지 않는다.
+- 실제 HP의 경계 열은 세 행의 너비를 동일 비율로 줄인다. 게임플레이 HP 자체를 정수화하지 않는다.
+- 논리 셀 크기 5, 틈 2.5, 묶음 틈 5를 최종 Paint 배율에서 정수 픽셀로 변환한다. 완충 셀의 크기와 반복 간격을 통일하되 부분 충전 폭은 비율을 유지한다.
+- Balance 도형은 최대 64개만 할당하고 숫자는 실제 최대값을 유지한다.
+- HP 숫자는 표시만 올림해서 양수 소수 체력이 0으로 보이지 않도록 한다. 비정상 수치와 미확보 데이터는 대시/0 비율로 처리한다.
 
-1. 에디터를 새 빌드로 열고 기존 게임 맵에서 PIE. 기존 `CPlayerController` 계열을 쓰면 별도 위젯 배치 없이 표시되어야 함.
-2. Player 피해·회복, 적 선택·교체·해제·처치, 패리 후 Balance 감소/복구를 확인. 이전 타겟 값이 남지 않아야 함.
-3. `BU → BE → SH → HP` 순서, 작은 Balance, 아이콘·한글 표시명과 밝은/어두운 배경 가독성 확인. 미구현 칸은 작동하지 않는 자리를 의미함.
-4. 창 크기 변경 및 PIE 재시작. 잘림·HUD 중복·기존 Target Marker/Debug Overlay 가림 여부 확인.
+## 리소스
 
-문제가 있으면 해상도와 캡처 한 장, 수행한 동작만 전달하면 됨. 기존 전투 전체를 다시 검수할 필요는 없음. 확인 후 필요한 표현 조정과 최종 마감 커밋을 진행함.
+- 런타임: `/Game/08_UI/CombatHUD/`의 Composite Font 2개, FontFace 3개, Texture 7개.
+- 일반 라벨·숫자: Oxanium Regular, 이름: Oxanium Medium, 한글 fallback: Noto Sans CJK KR. 원본 및 OFL 라이선스는 `Resources/CombatHUD/Fonts`에 보관한다.
+- 아이콘은 생성한 원본을 프로젝트에 통합한 것이다. 원형 테두리는 UMG에서 구성한다.
+- `CCombatHUDAssetsCommandlet -CreateMissing`은 없는 에셋 생성 도구다. 기존 에셋의 최신 내용 검증/재임포트 도구가 아니다.
+- Target Marker의 위젯/텍스처 에셋 경로 정리도 브랜치에 포함한다. 추적 기능을 신규 구현한 것으로 집계하지 않는다.
+
+## 검증 결과
+
+2026-09-20 마감 검토:
+
+- `PortfolioEditor Win64 Development` 빌드 성공. 첫 시도는 열린 Editor의 DLL 잠금으로 링크 실패했으며, 사용자 종료 후 재시도 성공.
+- `Portfolio.UI.CombatHUD.` 12개 + `Portfolio.Balance.` 2개: 총 14개 모두 성공.
+- 로그: `Saved/Logs/HUDClosureValidation.log` (로컬 산출물).
+- `git lfs fsck`: 성공. 로컬 검사이며 원격 업로드 완료를 뜻하지 않는다.
+- 사용자 PIE 확인 완료. 사용자 확인을 에이전트가 직접 실행한 시나리오별 검증으로 확대 해석하지 않는다.
+- 기존 HUD 12개 반복 실행 성공 기록: `HUDFixtureFixFull1.log`, `HUDFixtureFixFull2.log`.
+- RenderPreview는 RHI로 1920×1080, 2560×1440, 3440×1440 샘플 UMG를 렌더한다. 실제 전투 입력/애니메이션 재생 테스트가 아니다.
+
+자동 검사는 값 관측, 비정상 값, 게이지 단위·간격, Widget 재구성·색상, Presenter 구독 수명, 준비된 액션/처형 조회, Balance 이벤트 경계·복구·타이머 정리를 다룬다.
+패키징/cook, 모든 Montage 조합, 장시간 플레이, 플랫폼 전체 DPI와 배경 대비의 완전한 검증은 주장하지 않는다.
+
+## 마감 범위
+
+브랜치 마감 때문에 가드 게이지·브레이크·돌진·카운터·BE 스킬·새 WBP 구조를 추가하지 않는다.
+현재 구현과 사용자 PIE 확인을 기준으로 HUD 작업을 마감하고, 미구현 기능은 후속 게임플레이 요구사항으로 분리한다.

@@ -1,6 +1,8 @@
 # Combat HUD source resources
 
-Generated raster icons: built-in imagegen, 2026-09-18. Original pictograms, not extracted game textures. Transparent RGBA originals retained; imported UI textures capped at 256px. Small-scale readability still requires PIE visual approval.
+Current implementation and closure (2026-09-20): [branch record](../../Docs/07_Portfolio_Documents/Portfolio_Production/34_Gameplay_Combat_HUD_Branch_Closure.md). User PIE review is confirmed. The prompt history below includes earlier concepts; the retained action icon selection is documented in [ActionSelection](Icons/ActionSelection.md). GuardBreak is a reserved asset, not a connected gameplay state.
+
+Generated raster icons: built-in imagegen, 2026-09-18. Original pictograms, not extracted game textures. Transparent RGBA originals retained; imported UI textures capped at 256px. PIE approval does not imply readability testing on every platform and resolution.
 
 Fonts: Oxanium (Regular/Medium), Noto Sans CJK KR (Regular); accompanying OFL licenses apply. Composite fonts use Noto as fallback. Source fonts retained for reproducible import.
 

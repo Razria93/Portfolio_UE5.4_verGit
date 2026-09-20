@@ -1,5 +1,7 @@
 # Gameplay Combat HUD Visual Spec
 
+> 2026-09-20 최종 상태: 사용자 PIE 확인 완료. TODO 문자열은 제거했고 가드·닷지·처형과 패링 강조를 실제 상태에 연결했다. 우측 상단 작은 원은 미구현 돌진 슬롯이다. 가드브레이크는 리소스만 보관한다. 아래 시안·대기·TODO 기록은 변경 이력이며, 현재 구현은 [33 구현·검증](33_Gameplay_Combat_HUD_Implementation_and_Validation.md), 전체 변경은 [34 마감 기록](34_Gameplay_Combat_HUD_Branch_Closure.md)을 따른다.
+
 ## 목적
 
 32: Stellar Blade 참고 HUD의 배치·리소스·폰트·미구현 표현 초안.

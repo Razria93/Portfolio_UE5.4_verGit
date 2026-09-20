@@ -1,5 +1,7 @@
 # Gameplay Combat HUD Design and Implementation Plan
 
+> 이 문서는 최초 승인·계획 기록이다. 2026-09-20 구현 및 사용자 PIE 확인을 반영한 현재 상태는 [33 구현·검증](33_Gameplay_Combat_HUD_Implementation_and_Validation.md), 브랜치 전체 결과는 [34 마감 기록](34_Gameplay_Combat_HUD_Branch_Closure.md)을 따른다. 아래 TODO 표현·미실시 상태는 당시 계획이며 최종 상태가 아니다.
+
 ## 목적
 
 Stellar Blade 전투 HUD 전체를 구성하고 현재 구현된 전투 데이터만 연결함. 미구현 리소스·스킬·아이템은 비활성 TODO 슬롯으로 유지함.

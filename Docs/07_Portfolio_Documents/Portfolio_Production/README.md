@@ -24,6 +24,7 @@
 - [Gameplay Combat HUD Plan](31_Gameplay_Combat_HUD_Design_and_Implementation_Plan%20(KR).md): 전체 HUD 및 현재 데이터 연결 범위
 - [Gameplay Combat HUD Visual Spec](32_Gameplay_Combat_HUD_Visual_Spec.md): 배치·폰트·아이콘·TODO 초안
 - [Gameplay Combat HUD Implementation](33_Gameplay_Combat_HUD_Implementation_and_Validation.md): 구현·자동검사·사용자 PIE 확인 범위
+- [Gameplay Combat HUD Branch Closure](34_Gameplay_Combat_HUD_Branch_Closure.md): 브랜치 전체 변경·설계 판단·마감 검토·범위 밖 항목
 - [Page Spec Index](00_Portfolio_Page_Spec_Index%20(KR).md): 페이지별 메시지·근거 계획의 역사적 기준
 - [Portfolio Review Checklist](Portfolio_Review_Checklist%20(KR).md): 제출 전 점검 기록
 - [Runtime Capture and Video Runbook](29_Portfolio_Runtime_Capture_and_Video_Runbook%20(KR).md): 캡처·영상 확보 절차
