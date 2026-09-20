@@ -11,6 +11,7 @@
 #include "Components/Image.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/CanvasPanel.h"
+#include "Components/TextBlock.h"
 #include "Slate/WidgetRenderer.h"
 #include "ImageUtils.h"
 #include "Misc/FileHelper.h"
@@ -165,6 +166,27 @@ bool FHUDWidgetConstructionTest::RunTest(const FString& Parameters)
 			actionPositions.Add(resource->GetName(), slot->GetPosition());
 	});
 	TestEqual(TEXT("Five selected action icons are rendered"), actionPositions.Num(), 5);
+	FHUDActionViewData actionsView;
+	actionsView.Guard = EHUDActionState::Ready;
+	actionsView.Dodge = EHUDActionState::Active;
+	actionsView.Execution = EHUDActionState::Ready;
+	widget->ApplyActionViewData(actionsView);
+	widget->WidgetTree->ForEachWidget([&](UWidget* child) {
+		const UImage* image = Cast<UImage>(child);
+		const UObject* resource = image ? image->GetBrush().GetResourceObject() : nullptr;
+		if (!resource) return;
+		if (resource->GetName() == TEXT("T_HUDActionGuard")) TestEqual(TEXT("Ready guard opaque"), image->GetColorAndOpacity().A, 1.f);
+		if (resource->GetName() == TEXT("T_HUDActionCounter")) TestTrue(TEXT("Counter stays pending"), image->GetColorAndOpacity().A < 1.f);
+		if (resource->GetName() == TEXT("T_HUDActionExecution")) TestEqual(TEXT("Ready execution highlighted"), image->GetColorAndOpacity(), FLinearColor(1.f, 0.85f, 0.38f, 1.f));
+	});
+	int32 partialAfterActionUpdate = 0;
+	widget->WidgetTree->ForEachWidget([&](UWidget* child) {
+		const UImage* cell = Cast<UImage>(child);
+		const UCanvasPanelSlot* slot = cell ? Cast<UCanvasPanelSlot>(cell->Slot) : nullptr;
+		if (slot && FMath::IsNearlyEqual(slot->GetSize().X, CombatHUDGauge::CellSize * 0.5f)
+			&& cell->GetVisibility() == ESlateVisibility::HitTestInvisible) ++partialAfterActionUpdate;
+	});
+	TestEqual(TEXT("Action-only update leaves health geometry untouched"), partialAfterActionUpdate, partialCells);
 	const TCHAR* actions[] = { TEXT("Guard"), TEXT("Dodge"), TEXT("Counter"), TEXT("Execution"), TEXT("Rush") };
 	const FVector2D positions[] = { {92,30}, {0,112}, {184,112}, {92,194}, {114,-38} };
 	for (int32 i = 0; i < 5; ++i)
@@ -192,6 +214,93 @@ bool FHUDWidgetConstructionTest::RunTest(const FString& Parameters)
 	widget->ReleaseSlateResources(true);
 	return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHUDWidgetLifecycleTest,
+	"Portfolio.UI.CombatHUD.WidgetLifecycle",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHUDWidgetLifecycleTest::RunTest(const FString& Parameters)
+{
+	for (const bool showSamples : { false, true })
+	{
+		UCCombatHUDWidget* widget = NewObject<UCCombatHUDWidget>();
+		widget->bShowResourceSamples = showSamples;
+		if (!TestTrue(TEXT("Widget initializes"), widget->Initialize())) return false;
+
+		FCombatHUDViewData data;
+		data.bHasPlayer = data.bHasTarget = true;
+		data.TargetName = FText::FromString(TEXT("REBUILD TARGET"));
+		data.PlayerHealth.Availability = data.TargetHealth.Availability = EHUDResourceAvailability::Available;
+		data.PlayerHealth.Current = 150.f;
+		data.PlayerHealth.Maximum = 200.f;
+		data.TargetHealth.Current = 50.f;
+		data.TargetHealth.Maximum = 100.f;
+		data.BalanceMaximum = 3;
+		data.BalanceRemaining = 2;
+		widget->ApplyViewData(data);
+
+		FHUDActionViewData actions;
+		actions.Guard = EHUDActionState::Active;
+		actions.Dodge = EHUDActionState::Ready;
+		actions.Execution = EHUDActionState::Ready;
+		actions.bParrySuccess = true;
+		widget->ApplyActionViewData(actions);
+		TestTrue(TEXT("Data accepted before widget construction"), widget->GetViewData().Actions == actions);
+
+		int32 firstWidgetCount = 0;
+		TWeakObjectPtr<UImage> previousGuard;
+		for (int32 pass = 0; pass < 3; ++pass)
+		{
+			widget->TakeWidget();
+			if (!TestNotNull(TEXT("Player health grid built"), widget->PlayerHealthGrid.Get())
+				|| !TestNotNull(TEXT("Guard image built"), widget->GuardImage.Get())) return false;
+
+			TestEqual(TEXT("HP data retained across construction"), widget->GetViewData().PlayerHealth.Current, 150.f);
+			TestEqual(TEXT("Two HP columns, three rows, foreground and background"), widget->PlayerHealthGrid->GetChildrenCount(), 12);
+			TestEqual(TEXT("Foreground cell cache rebuilt"), widget->PlayerCells.Num(), 6);
+			TestEqual(TEXT("Balance cache rebuilt"), widget->BalanceCells.Num(), 3);
+			TestEqual(TEXT("Target name retained"), widget->TargetName->GetText().ToString(), FString(TEXT("REBUILD TARGET")));
+			TestEqual(TEXT("Parry highlight takes priority over active guard"), widget->GuardImage->GetColorAndOpacity(), FLinearColor(1.f, 0.9f, 0.4f, 1.f));
+			TestEqual(TEXT("Dodge ready uses normal ink"), widget->DodgeImage->GetColorAndOpacity(), FLinearColor(0.9f, 0.91f, 0.86f, 1.f));
+			TestEqual(TEXT("Execution ready uses gold"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(1.f, 0.85f, 0.38f, 1.f));
+			TestEqual(TEXT("Counter remains pending"), widget->CounterImage->GetColorAndOpacity(), FLinearColor(0.30f, 0.36f, 0.39f, 0.55f));
+			if (pass > 0) TestTrue(TEXT("New action image replaces previous reference"), widget->GuardImage.Get() != previousGuard.Get());
+			previousGuard = widget->GuardImage;
+
+			int32 widgetCount = 0;
+			int32 sampleLabels = 0;
+			int32 resourceCellCount = 0;
+			widget->WidgetTree->ForEachWidget([&](UWidget* child) {
+				++widgetCount;
+				const UTextBlock* text = Cast<UTextBlock>(child);
+				if (text && text->GetText().ToString().StartsWith(TEXT("SAMPLE:"))) ++sampleLabels;
+				const UImage* image = Cast<UImage>(child);
+				const UCanvasPanelSlot* slot = image ? Cast<UCanvasPanelSlot>(image->Slot) : nullptr;
+				if (slot && child->GetParent() == widget->PlayerPanel.Get()
+					&& FMath::IsNearlyEqual(slot->GetSize().Y, CombatHUDGauge::CellSize)) ++resourceCellCount;
+			});
+			if (pass == 0) firstWidgetCount = widgetCount;
+			else TestEqual(TEXT("Rebuild does not accumulate reachable widgets"), widgetCount, firstWidgetCount);
+			TestEqual(TEXT("Preview labels follow configuration"), sampleLabels, showSamples ? 2 : 0);
+			TestEqual(TEXT("Preview-off keeps BU BE SH capacity"), resourceCellCount, showSamples ? 200 : 100);
+
+			for (int32 i = 0; i < widget->PlayerCells.Num(); ++i)
+			{
+				const UCanvasPanelSlot* slot = CastChecked<UCanvasPanelSlot>(widget->PlayerCells[i]->Slot);
+				TestEqual(TEXT("Partial HP width retained"), slot->GetSize().X, i < 3 ? 5.0 : 2.5);
+			}
+
+			FHUDActionViewData unavailable;
+			widget->ApplyActionViewData(unavailable);
+			TestEqual(TEXT("Guard returns to unavailable"), widget->GuardImage->GetColorAndOpacity(), FLinearColor(0.48f, 0.52f, 0.54f, 0.45f));
+			TestEqual(TEXT("Execution returns to unavailable"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(0.48f, 0.52f, 0.54f, 0.45f));
+			TestEqual(TEXT("Action update preserves health cell count"), widget->PlayerHealthGrid->GetChildrenCount(), 12);
+			widget->ApplyActionViewData(actions);
+			widget->ReleaseSlateResources(true);
+		}
+	}
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHUDRenderPreviewTest,
 	"Portfolio.UI.CombatHUD.RenderPreview",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
