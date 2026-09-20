@@ -100,7 +100,7 @@ public:
 	EExecutionCollaborationState GetExecutionCollaborationState() const { return CollaborationState; }
 	FExecutionCollaborationRuntimeSnapshot GetExecutionCollaborationRuntimeSnapshot() const;
 	EExternalCombatInputPolicy GetExternalCombatInputPolicy() const;
-	
+
 	bool QueryCombatExecutionAvailability(EExecutionAvailabilityBlock& OutBlock) const;
 	bool BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const;
 

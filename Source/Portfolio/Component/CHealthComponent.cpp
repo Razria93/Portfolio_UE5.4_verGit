@@ -45,7 +45,7 @@ void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentH
 	const float oldMax = MaxHP;
 
 	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP || oldMax != MaxHP) OnHealthValuesChanged.Broadcast(); };
-	
+
 	if (InInitMaxHP <= 0.f)
 	{
 		MaxHP = 0.f;
@@ -86,7 +86,7 @@ bool UCHealthComponent::TryKill()
 	const float oldCurrent = CurrentHP;
 
 	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP) OnHealthValuesChanged.Broadcast(); };
-	
+
 	if (!CanKill()) return false;
 
 	PreviousHP = CurrentHP;
@@ -100,9 +100,9 @@ bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUp
 {
 	const float oldCurrent = CurrentHP;
 	const float oldMax = MaxHP;
-	
+
 	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP || oldMax != MaxHP) OnHealthValuesChanged.Broadcast(); };
-	
+
 	if (!IsAlive()) return false;
 	if (InNewMaxHP <= 0.f) return false;
 
@@ -128,7 +128,7 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 	const float oldCurrent = CurrentHP;
 
 	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP) OnHealthValuesChanged.Broadcast(); };
-	
+
 	if (!IsAlive()) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeDamageAmount <= 0.f) return 0.f;
@@ -154,7 +154,7 @@ float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 	const float oldCurrent = CurrentHP;
 
 	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP) OnHealthValuesChanged.Broadcast(); };
-	
+
 	if (!IsAlive()) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeHealAmount <= 0.f) return 0.f;

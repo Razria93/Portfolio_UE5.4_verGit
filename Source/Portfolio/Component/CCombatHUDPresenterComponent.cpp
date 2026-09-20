@@ -318,7 +318,7 @@ void UCCombatHUDPresenterComponent::HandlePlayerEndPlay(AActor*, EEndPlayReason:
 void UCCombatHUDPresenterComponent::HandleTargetEndPlay(AActor* Actor, EEndPlayReason::Type)
 {
 	if (Target.Get() != Actor) return;
-	
+
 	UnbindTarget();
 	RefreshView();
 }

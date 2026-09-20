@@ -147,7 +147,7 @@ bool UCActionOrchestratorComponent::QueryCombatActionAvailability(ECombatActionI
 
 	FActionCandidate candidate;
 	if (!ResolveCombatActionCandidate(request, candidate, OutReason)) return false;
-	
+
 	return QueryPreparedActionAvailability(candidate.ActionDataKey, true, OutReason);
 }
 
@@ -161,7 +161,7 @@ bool UCActionOrchestratorComponent::QueryPreparedActionAvailability(const FActio
 		OutReason = EActionRequestRejectReason::ActionDataNotFound;
 		return false;
 	}
-	
+
 	const FExecutionDecisionQuery query = BuildDecisionQuery(context);
 	const FActionExecutionResult result = EvaluateActionContext(context, query);
 

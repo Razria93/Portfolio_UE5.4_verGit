@@ -4,7 +4,6 @@
 #include "Components/Image.h"
 #include "CPixelAlignedGaugeImage.generated.h"
 
-// Axis-aligned HUD grid cell. Snap the grid pitch, not each cell independently.
 UCLASS()
 class PORTFOLIO_API UCPixelAlignedGaugeImage : public UImage
 {

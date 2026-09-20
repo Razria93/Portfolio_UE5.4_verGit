@@ -19,8 +19,7 @@ public:
 public:
 	// Painting
 	virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& Geometry,
-		const FSlateRect& CullingRect, FSlateWindowElementList& Elements, int32 Layer,
-		const FWidgetStyle& Style, bool bParentEnabled) const override
+		const FSlateRect& CullingRect, FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bParentEnabled) const override
 	{
 		if (bBossOffsetOnly)
 		{
@@ -44,7 +43,9 @@ private:
 	{
 		const FVector2D origin = Geometry.LocalToAbsolute(FVector2D::ZeroVector);
 		const float scale = Geometry.GetAccumulatedLayoutTransform().GetScale();
+
 		const CombatHUDGauge::FPixelMetrics pixels(scale);
+
 		const int32 gridPixelWidth = pixels.ColumnX(CombatHUDGauge::BossHealthColumns - 1, 0) + pixels.Cell;
 		const float offsetX = FMath::RoundToFloat((CombatHUDGauge::BossWidth * scale - gridPixelWidth) / 2.f);
 		const FVector2D localOffset = Geometry.AbsoluteToLocal(origin + FVector2D(offsetX, 0));
@@ -52,8 +53,7 @@ private:
 		return Geometry.MakeChild(Geometry.GetLocalSize(), FSlateLayoutTransform(localOffset));
 	}
 
-	FGeometry BuildPixelAlignedGeometry(const FGeometry& Geometry,
-		const FVector2D& Origin, const FVector2D& AxisScale) const
+	FGeometry BuildPixelAlignedGeometry(const FGeometry& Geometry, const FVector2D& Origin, const FVector2D& AxisScale) const
 	{
 		const CombatHUDGauge::FPixelMetrics xPixels(AxisScale.X);
 		const CombatHUDGauge::FPixelMetrics yPixels(AxisScale.Y);

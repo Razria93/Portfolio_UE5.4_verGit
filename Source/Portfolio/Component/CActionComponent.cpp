@@ -204,14 +204,14 @@ bool UCActionComponent::FindPreparedActionContext(const FActionDataKey& InKey, F
 
 	const FActionData* data = ActionDataMap.Find(InKey);
 	if (!data || !data->IsValidMinimal()) return false;
-	
+
 	UCAction* const* executor = ActionExecutorMap.Find(data->ActionExecutorKey.Get());
 	if (!executor || !IsValid(*executor)) return false;
-	
+
 	OutContext.ActionDataKey = InKey;
 	OutContext.ActionData = *data;
 	OutContext.ActionExecutor = *executor;
-	
+
 	return true;
 }
 

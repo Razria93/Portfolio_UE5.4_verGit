@@ -41,7 +41,7 @@ struct FHUDResourceViewData
 	FText GetValueText() const
 	{
 		if (Availability != EHUDResourceAvailability::Available || Maximum <= 0.f || !FMath::IsFinite(Current) || !FMath::IsFinite(Maximum))
-			return FText::FromString(TEXT("\u2014")); // \u2014 : '-' 
+			return FText::FromString(TEXT("\u2014")); // \u2014 : '-'
 
 		FNumberFormattingOptions options;
 
@@ -107,19 +107,19 @@ struct FCombatHUDViewData
 	// Target
 	UPROPERTY(BlueprintReadOnly)
 	bool bHasTarget = false;
-	
+
 	UPROPERTY(BlueprintReadOnly)
 	FText TargetName;
-	
+
 	UPROPERTY(BlueprintReadOnly)
 	FHUDResourceViewData TargetHealth;
-	
+
 	UPROPERTY(BlueprintReadOnly)
 	int32 BalanceRemaining = 0;
-	
+
 	UPROPERTY(BlueprintReadOnly)
 	int32 BalanceMaximum = 0;
-	
+
 	UPROPERTY(BlueprintReadOnly)
 	int32 TargetRevision = 0;
 };
