@@ -284,10 +284,7 @@ void UCCombatHUDWidget::BuildPlayerPanel(UCanvasPanel* Root, bool bShowSamples)
 			TArray<TObjectPtr<UImage>> resourceCells;
 
 			const int32 unitColumns = bIsShield ? CombatHUDGauge::ShieldUnitColumns : 2;
-
-			const float valuePerColumn = bIsShield
-				? CombatHUDGauge::ShieldPerColumn
-				: 2.f * CombatHUDGauge::EnergyPerCell;
+			const float valuePerColumn = bIsShield ? CombatHUDGauge::ShieldPerColumn : 2.f * CombatHUDGauge::EnergyPerCell;
 
 			const int32 columns = CombatHUDGauge::ResourceColumns(PlayerResourceCapacities[row], valuePerColumn, 64);
 			const float width = CombatHUDGauge::ColumnX(columns - 1, unitColumns) + CombatHUDGauge::CellSize;
@@ -476,9 +473,7 @@ void UCCombatHUDWidget::RefreshPlayerHealthLayout()
 		ViewData.PlayerHealth.Availability == EHUDResourceAvailability::Available
 		&& FMath::IsFinite(ViewData.PlayerHealth.Maximum);
 
-	const float maximum = bHasValidMaximum
-		? FMath::Max(0.f, ViewData.PlayerHealth.Maximum)
-		: 0.f;
+	const float maximum = bHasValidMaximum ? FMath::Max(0.f, ViewData.PlayerHealth.Maximum) : 0.f;
 	const int32 limit = CombatHUDGauge::ColumnsForWidth(CombatHUDGauge::PlayerHealthWidth, 0);
 	const int32 columns = CombatHUDGauge::ResourceColumns(maximum, CombatHUDGauge::PlayerHealthPerColumn, limit);
 
@@ -495,12 +490,11 @@ void UCCombatHUDWidget::RefreshPlayerHealthLayout()
 		PlayerCells.Reset();
 		PlayerHealthColumns = columns;
 
-		AddGauge(PlayerHealthGrid, FVector2D::ZeroVector, CombatHUDGauge::PlayerHealthWidth,
-			CombatHUDGauge::HealthRows, 0, PlayerCells, false, columns);
+		AddGauge(PlayerHealthGrid, FVector2D::ZeroVector, CombatHUDGauge::PlayerHealthWidth, CombatHUDGauge::HealthRows, 0, PlayerCells, false, columns);
 
-		UCanvasPanelSlot* valueSlot = CastChecked<UCanvasPanelSlot>(PlayerHealthValue->Slot);
 		const float width = columns > 0 ? CombatHUDGauge::ColumnX(columns - 1, 0) + CombatHUDGauge::CellSize : 0.f;
 
+		UCanvasPanelSlot* valueSlot = CastChecked<UCanvasPanelSlot>(PlayerHealthValue->Slot);
 		valueSlot->SetPosition(FVector2D(PlayerGaugeX + width + ResourceValueGap, valueSlot->GetPosition().Y));
 	}
 }
@@ -520,10 +514,9 @@ void UCCombatHUDWidget::UpdateTargetBalancePresentation()
 		cell->bBossOffsetOnly = true;
 		cell->SetBrush(*FCoreStyle::Get().GetBrush("WhiteBrush"));
 		cell->SetColorAndOpacity(Empty);
+		cell->SetRenderTransformAngle(45.f);
 
 		Place(TargetPanel, cell, FVector2D(0, 110), FVector2D(8.5f, 8.5f));
-
-		cell->SetRenderTransformAngle(45.f);
 
 		BalanceCells.Add(cell);
 	}
