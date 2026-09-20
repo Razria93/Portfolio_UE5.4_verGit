@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "UObject/UnrealType.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
 #include "Animation/AnimMontage.h"
 #include "Character/Player/CPlayer.h"
 #include "Action/CAction_Guard.h"
@@ -25,6 +26,7 @@
 #include "Component/CCombatSignalTargetComponent.h"
 #include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CCombatHUDPresenterComponent.h"
+#include "Component/CObservableOverlayComponent.h"
 
 namespace HUDActionTest
 {
@@ -56,6 +58,7 @@ namespace HUDActionTest
 		r.CombatTargetComponent = Comp<UCCombatTargetComponent>(Player);
 		r.CombatSignalTargetComponent = Comp<UCCombatSignalTargetComponent>(Player);
 		r.BalanceComponent = Comp<UCBalanceComponent>(Player);
+		r.ObservableOverlayComponent = Comp<UCObservableOverlayComponent>(Player);
 		return r;
 	}
 	FActionExecutionContext Prepare(ACPlayer* Player, EActionType Type, int32 Index, UClass* Class)
@@ -88,8 +91,13 @@ bool FHUDActionAvailabilityTest::RunTest(const FString& Parameters)
 	UCActionComponent* action = Comp<UCActionComponent>(player);
 	UCActionOrchestratorComponent* query = Comp<UCActionOrchestratorComponent>(player);
 	UCDefenseComponent* defense = Comp<UCDefenseComponent>(player);
-	EActionRequestRejectReason reason;
+	const FCharacterComponentReferences references = References(player);
+	query->InitializeReferences(references);
+	Comp<UCStateComponent>(player)->InitializeReferences(references);
+	Comp<UCObservableOverlayComponent>(player)->InitializeReferences(references);
+	EActionRequestRejectReason reason = EActionRequestRejectReason::None;
 	TestFalse(TEXT("Missing prepared data is unavailable"), query->QueryCombatActionAvailability(ECombatActionIntent::Dodge, reason));
+	TestTrue(TEXT("Missing data reason returned"), reason == EActionRequestRejectReason::ActionDataNotFound);
 	TestEqual(TEXT("Query does not allocate executors"), Field<TMap<UClass*, UCAction*>>(action, TEXT("ActionExecutorMap")).Num(), 0);
 	const FActionExecutionContext guard = Prepare(player, EActionType::Guard, GetGuardActionPhaseIndex(EGuardActionPhase::In), UCAction_Guard::StaticClass());
 	Prepare(player, EActionType::Dodge, 0, UCAction_Dodge::StaticClass());
@@ -135,6 +143,7 @@ bool FHUDActionAvailabilityTest::RunTest(const FString& Parameters)
 	Comp<UCStateComponent>(player)->SetIdleState();
 	player->GetHealthComp()->TryKill();
 	TestFalse(TEXT("Dead player cannot dodge"), query->QueryCombatActionAvailability(ECombatActionIntent::Dodge, reason));
+	TestTrue(TEXT("Dead player reason returned"), reason == EActionRequestRejectReason::Dead);
 	world->DestroyWorld(false);
 	return true;
 }
@@ -260,9 +269,12 @@ bool FHUDActionPresentationTest::RunTest(const FString& Parameters)
 {
 	using namespace HUDActionTest;
 	UWorld* world = UWorld::CreateWorld(EWorldType::Game, false);
+	GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(world);
 	ACPlayer* player = world->SpawnActor<ACPlayer>();
 	player->GetHealthComp()->InitializeHealth(100.f, 100.f, EMaxHPUpdatePolicy::ClampCurrent);
 	UCCombatHUDPresenterComponent* presenter = NewObject<UCCombatHUDPresenterComponent>(player);
+	player->AddInstanceComponent(presenter);
+	presenter->RegisterComponentWithWorld(world);
 	presenter->SetControlledPlayer(player);
 	UActorComponent* tick = presenter;
 	UCDefenseComponent* defense = Comp<UCDefenseComponent>(player);
@@ -275,22 +287,32 @@ bool FHUDActionPresentationTest::RunTest(const FString& Parameters)
 	packet.Context.TargetActor = player;
 	packet.ResultSerial = 1;
 	packet.Result.DefenseOutcome = EDamageDefenseOutcome::Parry;
+	packet.Result.bAccepted = false;
+	signals->OnCombatSignalTargetAccepted.Broadcast(packet);
+	tick->TickComponent(0.f, LEVELTICK_All, nullptr);
+	TestFalse(TEXT("Unaccepted parry does not flash"), presenter->GetViewData().Actions.bParrySuccess);
+	packet.Result.bAccepted = true;
 	signals->OnCombatSignalTargetAccepted.Broadcast(packet);
 	tick->TickComponent(0.f, LEVELTICK_All, nullptr);
 	TestTrue(TEXT("Accepted parry flashes"), presenter->GetViewData().Actions.bParrySuccess);
+	const double parryStartTime = world->GetTimeSeconds();
 	world->Tick(LEVELTICK_TimeOnly, 0.3f);
+	TestTrue(TEXT("World time advances beyond parry highlight"), world->GetTimeSeconds() - parryStartTime > 0.25);
 	signals->OnCombatSignalTargetAccepted.Broadcast(packet);
 	tick->TickComponent(0.f, LEVELTICK_All, nullptr);
 	TestFalse(TEXT("Flash expires; duplicate does not restart it"), presenter->GetViewData().Actions.bParrySuccess);
 	packet.ResultSerial = 2;
 	signals->OnCombatSignalTargetAccepted.Broadcast(packet);
 	tick->TickComponent(0.f, LEVELTICK_All, nullptr);
+	TestTrue(TEXT("New parry result restarts highlight"), presenter->GetViewData().Actions.bParrySuccess);
 	player->GetHealthComp()->TryKill();
 	TestFalse(TEXT("Death clears success"), presenter->GetViewData().Actions.bParrySuccess);
 	TestTrue(TEXT("Death clears active guard"), presenter->GetViewData().Actions.Guard == EHUDActionState::Unavailable);
 	presenter->SetControlledPlayer(nullptr);
 	TestFalse(TEXT("Unpossess removes combat subscription"), signals->OnCombatSignalTargetAccepted.IsBoundToObject(presenter));
 	TestFalse(TEXT("Unpossess disables polling"), presenter->IsComponentTickEnabled());
+	presenter->DestroyComponent();
+	GEngine->DestroyWorldContext(world);
 	world->DestroyWorld(false);
 	return true;
 }
