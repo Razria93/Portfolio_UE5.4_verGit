@@ -11,30 +11,34 @@ struct FCharacterComponentReferences;
 struct FReactionExecutionLifecycleEvent;
 struct FReactionRequestResult;
 
+DECLARE_MULTICAST_DELEGATE(FOnBalanceValuesChanged);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnBalanceLifecycleStateChanged, EBalanceLifecycleState, EBalanceLifecycleState);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnBalanceLifecycleReactionRequested, const FBalanceLifecyclePacket&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnIncapacitatedPresentationChanged, EIncapacitatedPresentation);
-// Compatibility event for the existing Execution Down consumer. New code should
-// subscribe to OnIncapacitatedPresentationChanged instead.
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnExecutionDownPresentationChanged, bool /* bIsPresentationActive */);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnExecutionDownPresentationChanged, bool);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnBalanceLifecycleReactionRequested, const FBalanceLifecyclePacket&);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCBalanceComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+	friend class FBalanceLifecycleBoundaryTest;
+
 public:
 	// Construction
 	UCBalanceComponent();
 
 private:
-	// Balance Config
+	// Config
+	// Balance
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 1))
 	int32 BalanceThreshold = 3;
 
+	// Collapse
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0.0))
 	float CollapseLoopDuration = 5.f;
 
+	// Execution Recovery
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0.0))
 	float ExecutionDownDuration = 3.f;
 
@@ -44,10 +48,13 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Balance", meta = (ClampMin = 0))
 	int32 MaxExecutionRecoveryRetryCount = 2;
 
-	// Runtime State
+private:
+	// Runtime
+	// Balance Value Runtime
 	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
 	int32 CurrentBalanceCount = 0;
 
+	// Lifecycle Identity, State and Diagnostics
 	UPROPERTY(VisibleInstanceOnly, Category = "Balance")
 	uint32 BalanceLifecycleSerial = 0;
 
@@ -65,6 +72,8 @@ private:
 	FTimerHandle CollapseLoopTimerHandle;
 	FTimerHandle ExecutionDownTimerHandle;
 	FTimerHandle ExecutionRecoveryRetryTimerHandle;
+
+	// Execution Recovery Runtime
 	int32 ExecutionRecoveryRetryCount = 0;
 
 	// Execution Opportunity Runtime
@@ -74,20 +83,24 @@ private:
 	TMap<TWeakObjectPtr<class AActor>, uint64> LastAcceptedParryResultSerialByTarget;
 
 public:
+	// Balance Observation
+	FOnBalanceValuesChanged OnBalanceValuesChanged;
+	FOnBalanceLifecycleStateChanged OnBalanceLifecycleStateChanged;
+
+	// Presentation Observation
+	FOnIncapacitatedPresentationChanged OnIncapacitatedPresentationChanged;
+	FOnExecutionDownPresentationChanged OnExecutionDownPresentationChanged;
+
+	// Reaction Request
+	FOnBalanceLifecycleReactionRequested OnBalanceLifecycleReactionRequested;
+
+public:
 	// Component Reference
-	// Intentionally empty: participates in the shared component reference-injection contract.
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
 protected:
 	// Lifecycle
 	virtual void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
-
-public:
-	// Events
-	FOnBalanceLifecycleStateChanged OnBalanceLifecycleStateChanged;
-	FOnBalanceLifecycleReactionRequested OnBalanceLifecycleReactionRequested;
-	FOnIncapacitatedPresentationChanged OnIncapacitatedPresentationChanged;
-	FOnExecutionDownPresentationChanged OnExecutionDownPresentationChanged;
 
 public:
 	// Query: Balance State
@@ -97,23 +110,28 @@ public:
 	EBalanceLifecycleState GetBalanceLifecycleState() const { return BalanceLifecycleState; }
 	EBalanceAbortReason GetLastAbortReason() const { return LastAbortReason; }
 
+	bool IsCollapseActive() const;
+	bool IsCollapseLoopActive() const;
+	bool IsExecutionDownActive() const;
+
+	// Query: Timers
 	float GetCollapseLoopDuration() const { return CollapseLoopDuration; }
 	float GetCollapseLoopRemainingSeconds() const;
 
 	float GetExecutionDownDuration() const { return ExecutionDownDuration; }
 	float GetExecutionDownRemainingSeconds() const;
 
-	bool IsCollapseActive() const;
-	bool IsCollapseLoopActive() const;
-
-	bool IsExecutionDownActive() const;
+	// Query: Presentation
 	EIncapacitatedPresentation GetIncapacitatedPresentation() const { return IncapacitatedPresentation; }
 	bool IsCollapsePresentationActive() const { return IncapacitatedPresentation == EIncapacitatedPresentation::Collapse; }
 	bool IsExecutionDownPresentationActive() const { return IncapacitatedPresentation == EIncapacitatedPresentation::ExecutionDown; }
 	bool ShouldUseExecutionDownPose() const;
+
+	// Query: Execution Opportunity
 	bool IsExecutionOpportunityAvailable() const;
 	bool IsExecutionOpportunityReservationCurrent(const FExecutionOpportunityReservation& InReservation) const;
 
+	// Query: Combat Policy
 	bool IsBalanceLifecycleBlocking() const;
 	bool ShouldSuppressCombatTargetFacing() const;
 
@@ -141,6 +159,9 @@ public:
 	bool ActivateExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
 	bool ReleaseExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
 	bool CommitExecutionOpportunityReservation(const FExecutionOpportunityReservation& InReservation);
+
+public:
+	// Execution Down Lifecycle
 	bool EnterExecutionDownLifecycle(uint32 InBalanceLifecycleSerial);
 
 public:
@@ -149,19 +170,28 @@ public:
 	void ShutdownBalanceRuntime();
 
 private:
-	// Lifecycle State Transition
+	// Lifecycle Context Validation
 	bool MatchesLifecycleContext(const struct FReactionExecutionContext& InContext, EReactionType InReactionType) const;
+
+	// Lifecycle State Transition
 	void SetBalanceLifecycleState(EBalanceLifecycleState InState);
+	void NotifyBalanceLifecycleStateChanged(EBalanceLifecycleState InPreviousState);
+
+	// Balance Value Notification
+	void NotifyBalanceValuesChanged(int32 InPreviousCount);
+
+	// Runtime Reset
+	void ClearBalanceTransientResources();
 	void ResetBalanceRuntime();
 
 private:
-	// Collapse Loop Timer
+	// Collapse Loop and Exit
 	void StartCollapseLoopTimer(float InDurationSeconds = -1.f);
 	void ClearCollapseLoopTimer();
 	void HandleCollapseLoopExpired();
 	void RequestCollapseOutFromLoopExpiry();
 
-	// Standard Execution Recovery Timer
+	// Execution Recovery
 	void StartExecutionDownTimer();
 	void ClearExecutionDownTimer();
 	void HandleExecutionDownExpired();
@@ -174,6 +204,7 @@ private:
 
 	// Incapacitated Presentation Runtime
 	void SetIncapacitatedPresentation(EIncapacitatedPresentation InPresentation);
+	void NotifyIncapacitatedPresentationChanged(EIncapacitatedPresentation InPreviousPresentation);
 
 private:
 	// Packet Deduplication

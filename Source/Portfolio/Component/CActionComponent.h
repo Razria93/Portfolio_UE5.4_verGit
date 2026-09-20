@@ -118,6 +118,8 @@ public:
 	bool GetActiveActionData(FActionData& OutData) const;
 	class UCAction* GetActiveActionExecutor() const;
 
+	bool FindPreparedActionContext(const FActionDataKey& InKey, FActionExecutionContext& OutContext) const;
+
 public:
 	// Data Resolve
 	bool ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData);

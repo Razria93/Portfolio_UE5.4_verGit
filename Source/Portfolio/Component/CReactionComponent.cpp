@@ -99,6 +99,25 @@ bool UCReactionComponent::GetActiveReactionContext(FReactionExecutionContext& Ou
 	return true;
 }
 
+bool UCReactionComponent::FindPreparedGlobalReactionContext(const FReactionDataKey& InKey, FReactionExecutionContext& OutContext) const
+{
+	OutContext = FReactionExecutionContext();
+
+	if (InKey.MatchMode != EReactionDataMatchMode::Global) return false;
+
+	const FReactionData* data = ReactionDataMap.Find(InKey);
+	if (!data || !data->IsValidMinimal()) return false;
+
+	UCReaction* const* executor = ReactionExecutorMap.Find(data->ReactionExecutorKey.Get());
+	if (!executor || !IsValid(*executor)) return false;
+
+	OutContext.ReactionDataKey = InKey;
+	OutContext.ReactionData = *data;
+	OutContext.ReactionExecutor = *executor;
+
+	return true;
+}
+
 // Data Resolve
 
 bool UCReactionComponent::ResolveReactionData(const FReactionDataKey& InDataKey, FReactionData& OutData)
@@ -210,7 +229,7 @@ bool UCReactionComponent::ApplyReactionDecision(const FReactionExecutionResult& 
 		}
 		return bStarted;
 	}
-	
+
 	default:
 		FReactionComponentDebug::RecordReactionDecisionRejectedForAudit(OwnerCharacter_Injected, InResult, TEXT("ApplyDecision"), TEXT("UnsupportedApplyMode"));
 		return false;

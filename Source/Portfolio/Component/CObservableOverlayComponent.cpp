@@ -40,7 +40,7 @@ bool UCObservableOverlayComponent::ValidateRequiredComponentReferences() const
 
 // Overlay Snapshot
 
-void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot)
+void UCObservableOverlayComponent::BuildOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot)
 {
 	RefreshPolicyRegistry();
 
@@ -49,7 +49,6 @@ void UCObservableOverlayComponent::WriteOverlaySnapshot(FObservableOverlaySnapsh
 		const IObservableOverlayPolicy* overlayPolicy = policy.GetInterface();
 		if (!overlayPolicy) continue;
 
-		// Each overlay policy writes its runtime state into the shared snapshot.
 		overlayPolicy->WriteOverlaySnapshot(OutSnapshot);
 	}
 }

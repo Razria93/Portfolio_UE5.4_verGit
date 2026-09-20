@@ -19,15 +19,65 @@
 
 #include "GameFramework/Character.h"
 
+// Construction
+
 UCExecutionCollaborationComponent::UCExecutionCollaborationComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+// Component Reference
+
+void UCExecutionCollaborationComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
+{
+	UnbindParticipantEvents();
+
+	OwnerCharacter_Injected = InReferences.OwnerCharacter;
+	HealthComp_Injected = InReferences.HealthComponent;
+	StateComp_Injected = InReferences.StateComponent;
+	BalanceComp_Injected = InReferences.BalanceComponent;
+	CombatTargetComp_Injected = InReferences.CombatTargetComponent;
+	CombatSignalTargetComp_Injected = InReferences.CombatSignalTargetComponent;
+	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
+	ReactionOrchestratorComp_Injected = InReferences.ReactionOrchestratorComponent;
+	ActionComp_Injected = InReferences.ActionComponent;
+	ReactionComp_Injected = InReferences.ReactionComponent;
+
+	BindParticipantEvents();
+}
+
+// Lifecycle
+
+void UCExecutionCollaborationComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+{
+	CancelActiveExecutionSession(EExecutionCollaborationCancelReason::ParticipantEndPlay, true);
+
+	UnbindParticipantEvents();
+
+	Super::EndPlay(InEndPlayReason);
+}
+
+// Query
+
+bool UCExecutionCollaborationComponent::HasActiveExecutionSession() const
+{
+	return ActiveContext.IsValidMinimal() && CollaborationState != EExecutionCollaborationState::None;
+}
+
+FExecutionCollaborationRuntimeSnapshot UCExecutionCollaborationComponent::GetExecutionCollaborationRuntimeSnapshot() const
+{
+	FExecutionCollaborationRuntimeSnapshot snapshot;
+	snapshot.bHasActiveSession = HasActiveExecutionSession();
+	snapshot.bIsSourceRole = bIsSourceRole;
+	snapshot.CollaborationState = CollaborationState;
+	snapshot.CollaborationContext = ActiveContext;
+	snapshot.bSourceActionTerminal = bSourceActionTerminal;
+	snapshot.bTargetReactionTerminal = bTargetReactionTerminal;
+	return snapshot;
+}
+
 EExternalCombatInputPolicy UCExecutionCollaborationComponent::GetExternalCombatInputPolicy() const
 {
-	// Both collaboration participants are protected while their shared session
-	// owns the cinematic action/reaction sequence.
 	if (HasActiveExecutionSession())
 	{
 		return EExternalCombatInputPolicy::RejectAll;
@@ -50,58 +100,45 @@ EExternalCombatInputPolicy UCExecutionCollaborationComponent::GetExternalCombatI
 	}
 }
 
-// Component Reference
-
-void UCExecutionCollaborationComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
+bool UCExecutionCollaborationComponent::QueryCombatExecutionAvailability(EExecutionAvailabilityBlock& OutBlock) const
 {
-	OwnerCharacter_Injected = InReferences.OwnerCharacter;
-	HealthComp_Injected = InReferences.HealthComponent;
-	StateComp_Injected = InReferences.StateComponent;
-	BalanceComp_Injected = InReferences.BalanceComponent;
-	CombatTargetComp_Injected = InReferences.CombatTargetComponent;
-	CombatSignalTargetComp_Injected = InReferences.CombatSignalTargetComponent;
-	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
-	ReactionOrchestratorComp_Injected = InReferences.ReactionOrchestratorComponent;
-	ActionComp_Injected = InReferences.ActionComponent;
-	ReactionComp_Injected = InReferences.ReactionComponent;
-
-	if (IsValid(HealthComp_Injected))
-	{
-		HealthComp_Injected->OnDeadStateChanged.RemoveAll(this);
-		HealthComp_Injected->OnDeadStateChanged.AddUObject(this, &UCExecutionCollaborationComponent::HandleDeadStateChanged);
-	}
-
-	if (IsValid(CombatTargetComp_Injected))
-	{
-		CombatTargetComp_Injected->OnCombatTargetChanged.RemoveAll(this);
-		CombatTargetComp_Injected->OnCombatTargetChanged.AddUObject(this, &UCExecutionCollaborationComponent::HandleCombatTargetChanged);
-	}
-
-	if (IsValid(ActionComp_Injected))
-	{
-		ActionComp_Injected->OnActionEvent.RemoveAll(this);
-		ActionComp_Injected->OnActionEvent.AddDynamic(this, &UCExecutionCollaborationComponent::HandleActionEvent);
-	}
-
-	if (IsValid(ReactionComp_Injected))
-	{
-		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
-		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.AddUObject(this, &UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent);
-	}
+	FExecutionStartEvaluation evaluation;
+	const bool bAvailable = EvaluateExecutionStart(evaluation);
+	OutBlock = evaluation.Block;
+	return bAvailable;
 }
 
-// Lifecycle
-
-void UCExecutionCollaborationComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+bool UCExecutionCollaborationComponent::BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const
 {
-	CancelActiveExecutionSession(EExecutionCollaborationCancelReason::ParticipantEndPlay, true);
+	OutSnapshot = FExecutionStartGeometrySnapshot();
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CombatTargetComp_Injected) || !StartGeometrySettings.IsValid()) return false;
 
-	if (IsValid(HealthComp_Injected)) HealthComp_Injected->OnDeadStateChanged.RemoveAll(this);
-	if (IsValid(CombatTargetComp_Injected)) CombatTargetComp_Injected->OnCombatTargetChanged.RemoveAll(this);
-	if (IsValid(ActionComp_Injected)) ActionComp_Injected->OnActionEvent.RemoveAll(this);
-	if (IsValid(ReactionComp_Injected)) ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
+	const FCombatTargetSnapshot targetSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
+	ACharacter* targetCharacter = Cast<ACharacter>(targetSnapshot.TargetActor);
+	if (!IsValid(targetCharacter)) return false;
 
-	Super::EndPlay(InEndPlayReason);
+	OutSnapshot.bHasTarget = true;
+	OutSnapshot.TargetActor = targetCharacter;
+	OutSnapshot.MaxDistance = StartGeometrySettings.MaxStartDistance;
+	OutSnapshot.MaxFacingAngleDegrees = StartGeometrySettings.MaxSourceFacingAngleDegrees;
+
+	FVector sourceForward2D = OwnerCharacter_Injected->GetActorForwardVector();
+	sourceForward2D.Z = 0.f;
+	if (!sourceForward2D.Normalize()) return false;
+
+	FVector sourceToTarget2D = targetCharacter->GetActorLocation() - OwnerCharacter_Injected->GetActorLocation();
+	sourceToTarget2D.Z = 0.f;
+	OutSnapshot.CurrentDistance = sourceToTarget2D.Size();
+	OutSnapshot.bIsWithinDistance = OutSnapshot.CurrentDistance > KINDA_SMALL_NUMBER
+		&& OutSnapshot.CurrentDistance <= OutSnapshot.MaxDistance;
+	if (OutSnapshot.CurrentDistance <= KINDA_SMALL_NUMBER) return false;
+
+	sourceToTarget2D /= OutSnapshot.CurrentDistance;
+	const float dot = FMath::Clamp(FVector::DotProduct(sourceForward2D, sourceToTarget2D), -1.f, 1.f);
+	OutSnapshot.CurrentFacingAngleDegrees = FMath::RadiansToDegrees(FMath::Acos(dot));
+	OutSnapshot.bIsWithinFacingAngle = OutSnapshot.CurrentFacingAngleDegrees <= OutSnapshot.MaxFacingAngleDegrees;
+	OutSnapshot.bIsValid = OutSnapshot.bIsWithinDistance && OutSnapshot.bIsWithinFacingAngle;
+	return true;
 }
 
 // Source Request
@@ -109,32 +146,11 @@ void UCExecutionCollaborationComponent::EndPlay(const EEndPlayReason::Type InEnd
 bool UCExecutionCollaborationComponent::RequestCombatExecution()
 {
 	FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestReceived"));
-	if (HasActiveExecutionSession())
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("SourceSessionAlreadyActive"));
-		return false;
-	}
 
-	if (!CanStartSourceExecution()) return false;
-	if (!IsValid(CombatTargetComp_Injected) || !IsValid(ActionOrchestratorComp_Injected))
+	FExecutionStartEvaluation evaluation;
+	if (!EvaluateExecutionStart(evaluation))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("MissingSourceTargetOrActionOrchestrator"));
-		return false;
-	}
-
-	const FCombatTargetSnapshot targetSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
-	if (!IsValid(targetSnapshot.TargetActor) || targetSnapshot.Revision <= 0)
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("InvalidCombatTargetSnapshot"));
-		return false;
-	}
-
-	if (!IsSourceExecutionStartGeometryValid(targetSnapshot)) return false;
-
-	UCExecutionCollaborationComponent* targetCollaborationComp = targetSnapshot.TargetActor->FindComponentByClass<UCExecutionCollaborationComponent>();
-	if (!IsValid(targetCollaborationComp))
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("MissingTargetCollaborationComponent"));
+		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), evaluation.FailureDetail);
 		return false;
 	}
 
@@ -142,9 +158,8 @@ bool UCExecutionCollaborationComponent::RequestCombatExecution()
 	sessionId.SourceActor = OwnerCharacter_Injected;
 	sessionId.Serial = AllocateSessionSerial();
 
-	const float standardExecutionDamage = ResolveStandardExecutionDamageForReservation();
 	FExecutionCollaborationContext context;
-	if (!targetCollaborationComp->AcceptExecutionReservation(sessionId, targetSnapshot, standardExecutionDamage, context))
+	if (!evaluation.Target->AcceptExecutionReservation(sessionId, evaluation.TargetSnapshot, evaluation.StandardExecutionDamage, context))
 	{
 		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceRequestRejected"), TEXT("TargetReservationRejected"));
 		return false;
@@ -325,56 +340,143 @@ bool UCExecutionCollaborationComponent::CommitExecutionOutcome(const FExecutionO
 	return true;
 }
 
-// Query
+// Start Evaluation
 
-bool UCExecutionCollaborationComponent::HasActiveExecutionSession() const
+bool UCExecutionCollaborationComponent::EvaluateExecutionStart(FExecutionStartEvaluation& OutEvaluation) const
 {
-	return ActiveContext.IsValidMinimal() && CollaborationState != EExecutionCollaborationState::None;
-}
+	OutEvaluation = FExecutionStartEvaluation();
 
-FExecutionCollaborationRuntimeSnapshot UCExecutionCollaborationComponent::GetExecutionCollaborationRuntimeSnapshot() const
-{
-	FExecutionCollaborationRuntimeSnapshot snapshot;
-	snapshot.bHasActiveSession = HasActiveExecutionSession();
-	snapshot.bIsSourceRole = bIsSourceRole;
-	snapshot.CollaborationState = CollaborationState;
-	snapshot.CollaborationContext = ActiveContext;
-	snapshot.bSourceActionTerminal = bSourceActionTerminal;
-	snapshot.bTargetReactionTerminal = bTargetReactionTerminal;
-	return snapshot;
-}
+	if (HasActiveExecutionSession())
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::SessionActive;
+		OutEvaluation.FailureDetail = TEXT("SourceSessionAlreadyActive");
+		return false;
+	}
 
-bool UCExecutionCollaborationComponent::BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const
-{
-	OutSnapshot = FExecutionStartGeometrySnapshot();
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CombatTargetComp_Injected) || !StartGeometrySettings.IsValid()) return false;
+	if (!CanStartSourceExecution(false, &OutEvaluation.FailureDetail))
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::SourceUnavailable;
+		OutEvaluation.FailureDetail = TEXT("SourcePreconditionRejected | ") + OutEvaluation.FailureDetail;
+		return false;
+	}
 
-	const FCombatTargetSnapshot targetSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
-	ACharacter* targetCharacter = Cast<ACharacter>(targetSnapshot.TargetActor);
-	if (!IsValid(targetCharacter)) return false;
+	if (!IsValid(CombatTargetComp_Injected))
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::NoTarget;
+		OutEvaluation.FailureDetail = TEXT("MissingSourceTargetComponent");
+		return false;
+	}
 
-	OutSnapshot.bHasTarget = true;
-	OutSnapshot.TargetActor = targetCharacter;
-	OutSnapshot.MaxDistance = StartGeometrySettings.MaxStartDistance;
-	OutSnapshot.MaxFacingAngleDegrees = StartGeometrySettings.MaxSourceFacingAngleDegrees;
+	OutEvaluation.TargetSnapshot = CombatTargetComp_Injected->GetCombatTargetSnapshot();
+	const FCombatTargetSnapshot& snapshot = OutEvaluation.TargetSnapshot;
+	if (!IsValid(snapshot.TargetActor) || snapshot.TargetActor->IsActorBeingDestroyed() || snapshot.Revision <= 0)
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::NoTarget;
+		OutEvaluation.FailureDetail = FString::Printf(TEXT("InvalidCombatTargetSnapshot | Target=%s | Revision=%d"), *GetNameSafe(snapshot.TargetActor), snapshot.Revision);
+		return false;
+	}
 
-	FVector sourceForward2D = OwnerCharacter_Injected->GetActorForwardVector();
-	sourceForward2D.Z = 0.f;
-	if (!sourceForward2D.Normalize()) return false;
+	if (!IsSourceExecutionStartGeometryValid(snapshot, false, &OutEvaluation.FailureDetail))
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::Geometry;
+		return false;
+	}
 
-	FVector sourceToTarget2D = targetCharacter->GetActorLocation() - OwnerCharacter_Injected->GetActorLocation();
-	sourceToTarget2D.Z = 0.f;
-	OutSnapshot.CurrentDistance = sourceToTarget2D.Size();
-	OutSnapshot.bIsWithinDistance = OutSnapshot.CurrentDistance > KINDA_SMALL_NUMBER
-		&& OutSnapshot.CurrentDistance <= OutSnapshot.MaxDistance;
-	if (OutSnapshot.CurrentDistance <= KINDA_SMALL_NUMBER) return false;
+	OutEvaluation.Target = snapshot.TargetActor->FindComponentByClass<UCExecutionCollaborationComponent>();
+	UCExecutionCollaborationComponent* target = OutEvaluation.Target;
+	if (!IsValid(target) || target->HasActiveExecutionSession())
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::TargetUnavailable;
+		OutEvaluation.FailureDetail = IsValid(target) ? TEXT("TargetSessionAlreadyActive") : TEXT("MissingTargetCollaborationComponent");
+		return false;
+	}
 
-	sourceToTarget2D /= OutSnapshot.CurrentDistance;
-	const float dot = FMath::Clamp(FVector::DotProduct(sourceForward2D, sourceToTarget2D), -1.f, 1.f);
-	OutSnapshot.CurrentFacingAngleDegrees = FMath::RadiansToDegrees(FMath::Acos(dot));
-	OutSnapshot.bIsWithinFacingAngle = OutSnapshot.CurrentFacingAngleDegrees <= OutSnapshot.MaxFacingAngleDegrees;
-	OutSnapshot.bIsValid = OutSnapshot.bIsWithinDistance && OutSnapshot.bIsWithinFacingAngle;
+	if (!IsValid(target->BalanceComp_Injected) || !target->BalanceComp_Injected->IsExecutionOpportunityAvailable())
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::NoOpportunity;
+		OutEvaluation.FailureDetail = TEXT("CollapseOpportunityUnavailable");
+		return false;
+	}
+
+	if (!target->CanStartTargetExecution(false, &OutEvaluation.FailureDetail))
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::TargetUnavailable;
+		OutEvaluation.FailureDetail = TEXT("TargetPreconditionRejected | ") + OutEvaluation.FailureDetail;
+		return false;
+	}
+
+	const EExecutionOutcomePolicy outcome = target->ResolveTargetExecutionOutcomePolicy();
+	if (!CanResolveSourceExecutionAction(outcome, false, &OutEvaluation.FailureDetail)
+		|| !target->CanResolveTargetExecutionReaction(outcome, false, &OutEvaluation.FailureDetail))
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::MissingData;
+		return false;
+	}
+
+	FActionDataKey key;
+	key.ActionType = EActionType::Execution;
+	key.ActionIndex = GetExecutionActionIndex(outcome);
+
+	const EReactionType reactionType = outcome == EExecutionOutcomePolicy::Lethal ? EReactionType::ExecutionLethal : EReactionType::ExecutionStandard;
+
+	EActionRequestRejectReason actionReason = EActionRequestRejectReason::None;
+	EReactionRequestRejectReason reactionReason = EReactionRequestRejectReason::None;
+
+	if (!ActionOrchestratorComp_Injected->QueryPreparedActionAvailability(key, false, actionReason)
+		|| !target->ReactionOrchestratorComp_Injected->QueryPreparedExecutionReactionAvailability(reactionType, reactionReason))
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::ExecutionBlocked;
+		OutEvaluation.FailureDetail = FString::Printf(TEXT("ExecutionBlocked | ActionReason=%s | ReactionReason=%s"),
+			*UEnum::GetValueAsString(actionReason), *UEnum::GetValueAsString(reactionReason));
+		return false;
+	}
+
+	OutEvaluation.StandardExecutionDamage = ResolveStandardExecutionDamageForReservation();
+	float appliedDamage = 0.f;
+	if (!IsValid(target->CombatSignalTargetComp_Injected)
+		|| !target->CombatSignalTargetComp_Injected->TryResolveExecutionAppliedDamage(outcome, OutEvaluation.StandardExecutionDamage, appliedDamage))
+	{
+		OutEvaluation.Block = EExecutionAvailabilityBlock::OutcomeUnavailable;
+		OutEvaluation.FailureDetail = FString::Printf(TEXT("OutcomeNotApplicable | Outcome=%s | CurrentHP=%.1f | StandardDamage=%.1f | SignalTarget=%s"),
+			*UEnum::GetValueAsString(outcome), target->HealthComp_Injected->GetCurrentHP(),
+			OutEvaluation.StandardExecutionDamage, *GetNameSafe(target->CombatSignalTargetComp_Injected));
+		return false;
+	}
+
 	return true;
+}
+
+// Participant Event Binding
+
+void UCExecutionCollaborationComponent::BindParticipantEvents()
+{
+	if (IsValid(HealthComp_Injected))
+	{
+		HealthComp_Injected->OnDeadStateChanged.AddUObject(this, &UCExecutionCollaborationComponent::HandleDeadStateChanged);
+	}
+
+	if (IsValid(CombatTargetComp_Injected))
+	{
+		CombatTargetComp_Injected->OnCombatTargetChanged.AddUObject(this, &UCExecutionCollaborationComponent::HandleCombatTargetChanged);
+	}
+
+	if (IsValid(ActionComp_Injected))
+	{
+		ActionComp_Injected->OnActionEvent.AddDynamic(this, &UCExecutionCollaborationComponent::HandleActionEvent);
+	}
+
+	if (IsValid(ReactionComp_Injected))
+	{
+		ReactionComp_Injected->OnReactionExecutionLifecycleEvent.AddUObject(this, &UCExecutionCollaborationComponent::HandleReactionExecutionLifecycleEvent);
+	}
+}
+
+void UCExecutionCollaborationComponent::UnbindParticipantEvents()
+{
+	if (IsValid(HealthComp_Injected)) HealthComp_Injected->OnDeadStateChanged.RemoveAll(this);
+	if (IsValid(CombatTargetComp_Injected)) CombatTargetComp_Injected->OnCombatTargetChanged.RemoveAll(this);
+	if (IsValid(ActionComp_Injected)) ActionComp_Injected->OnActionEvent.RemoveAll(this);
+	if (IsValid(ReactionComp_Injected)) ReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);
 }
 
 // Participant Event Observation
@@ -598,7 +700,25 @@ void UCExecutionCollaborationComponent::ReceivePartnerCancellation(const FExecut
 	CancelActiveExecutionSession(InReason, false);
 }
 
-// Session Control
+// Session Startup
+
+bool UCExecutionCollaborationComponent::AlignTargetExecutionFacing(const FCombatTargetSnapshot& InTargetSnapshot) const
+{
+	if (!IsValid(OwnerCharacter_Injected)) return false;
+
+	ACharacter* targetCharacter = Cast<ACharacter>(InTargetSnapshot.TargetActor);
+	if (!IsValid(targetCharacter)) return false;
+
+	FVector targetToSource2D = OwnerCharacter_Injected->GetActorLocation() - targetCharacter->GetActorLocation();
+	targetToSource2D.Z = 0.f;
+	if (!targetToSource2D.Normalize()) return false;
+
+	FRotator targetFacingRotation = targetToSource2D.Rotation();
+	targetFacingRotation.Pitch = 0.f;
+	targetFacingRotation.Roll = 0.f;
+	targetCharacter->SetActorRotation(targetFacingRotation);
+	return true;
+}
 
 bool UCExecutionCollaborationComponent::StartTargetExecutionReaction()
 {
@@ -676,7 +796,88 @@ bool UCExecutionCollaborationComponent::ActivateExecutionPair()
 	return true;
 }
 
-// Participant Movement Collision Policy
+// Session Termination
+
+void UCExecutionCollaborationComponent::TryCompleteActiveExecutionSession()
+{
+	if (CollaborationState != EExecutionCollaborationState::Committed) return;
+	if (!bSourceActionTerminal || !bTargetReactionTerminal) return;
+	if (!bIsSourceRole && ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Standard)
+	{
+		if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->EnterExecutionDownLifecycle(ActiveContext.OpportunityReservation.BalanceLifecycleSerial))
+		{
+			CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
+			return;
+		}
+	}
+
+	CompleteActiveExecutionSession();
+}
+
+void UCExecutionCollaborationComponent::CompleteActiveExecutionSession()
+{
+	if (!HasActiveExecutionSession()) return;
+
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("Completed"));
+	ResetActiveExecutionSession();
+}
+
+void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExecutionCollaborationCancelReason InReason, const bool bNotifyPartner)
+{
+	if (!HasActiveExecutionSession()) return;
+
+	const FExecutionCollaborationContext context = ActiveContext;
+	const FExecutionSessionId sessionId = context.SessionId;
+
+	const bool bWasSourceRole = bIsSourceRole;
+	const bool bWasCommitted = CollaborationState == EExecutionCollaborationState::Committed;
+
+	const EReactionType primaryReactionType = GetPrimaryReactionType();
+	UCExecutionCollaborationComponent* partnerCollaborationComp = bNotifyPartner ? FindPartnerCollaborationComponent() : nullptr;
+
+	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("Cancelled"), UEnum::GetValueAsString(InReason));
+
+	ResetActiveExecutionSession();
+
+	CancelLocalExecutionParticipant(bWasSourceRole, primaryReactionType);
+
+	if (!bWasSourceRole && IsValid(BalanceComp_Injected))
+	{
+		if (!bWasCommitted)
+		{
+			BalanceComp_Injected->ReleaseExecutionOpportunityReservation(context.OpportunityReservation);
+		}
+		else if (BalanceComp_Injected->GetBalanceLifecycleSerial() == context.OpportunityReservation.BalanceLifecycleSerial
+			&& BalanceComp_Injected->GetBalanceLifecycleState() == EBalanceLifecycleState::ExecutionPrimaryCommitted)
+		{
+			BalanceComp_Injected->AbortBalanceLifecycle(EBalanceAbortReason::ExecutionCancelled);
+		}
+	}
+
+	if (IsValid(partnerCollaborationComp))
+	{
+		partnerCollaborationComp->ReceivePartnerCancellation(sessionId, InReason);
+	}
+}
+
+void UCExecutionCollaborationComponent::CancelLocalExecutionParticipant(const bool bWasSourceRole, const EReactionType InPrimaryReactionType)
+{
+	if (bWasSourceRole)
+	{
+		if (IsValid(ActionComp_Injected) && ActionComp_Injected->IsActiveActionType(EActionType::Execution))
+		{
+			ActionComp_Injected->CancelActiveActionForSystem();
+		}
+		return;
+	}
+
+	if (IsValid(ReactionComp_Injected) && ReactionComp_Injected->IsActiveReactionType(InPrimaryReactionType))
+	{
+		ReactionComp_Injected->CancelActiveReactionForSystem();
+	}
+}
+
+// Participant Movement Collision
 
 bool UCExecutionCollaborationComponent::ApplyExecutionParticipantMovementIgnore(UCExecutionCollaborationComponent* const InPartnerComponent)
 {
@@ -719,73 +920,6 @@ void UCExecutionCollaborationComponent::RestoreExecutionParticipantMovementIgnor
 		FString::Printf(TEXT("Partner=%s"), *GetNameSafe(partnerCharacter)));
 }
 
-void UCExecutionCollaborationComponent::CancelActiveExecutionSession(const EExecutionCollaborationCancelReason InReason, const bool bNotifyPartner)
-{
-	if (!HasActiveExecutionSession()) return;
-
-	const FExecutionCollaborationContext context = ActiveContext;
-	const FExecutionSessionId sessionId = context.SessionId;
-	const bool bWasSourceRole = bIsSourceRole;
-	const EReactionType primaryReactionType = GetPrimaryReactionType();
-	UCExecutionCollaborationComponent* partnerCollaborationComp = bNotifyPartner ? FindPartnerCollaborationComponent() : nullptr;
-	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("Cancelled"), UEnum::GetValueAsString(InReason));
-
-	ResetActiveExecutionSession();
-
-	if (!bWasSourceRole && IsValid(BalanceComp_Injected))
-	{
-		BalanceComp_Injected->ReleaseExecutionOpportunityReservation(context.OpportunityReservation);
-	}
-
-	CancelLocalExecutionParticipant(bWasSourceRole, primaryReactionType);
-
-	if (IsValid(partnerCollaborationComp))
-	{
-		partnerCollaborationComp->ReceivePartnerCancellation(sessionId, InReason);
-	}
-}
-
-void UCExecutionCollaborationComponent::CompleteActiveExecutionSession()
-{
-	if (!HasActiveExecutionSession()) return;
-
-	FExecutionCollaborationDebug::RecordLifecycleEvent(this, TEXT("Completed"));
-	ResetActiveExecutionSession();
-}
-
-void UCExecutionCollaborationComponent::TryCompleteActiveExecutionSession()
-{
-	if (CollaborationState != EExecutionCollaborationState::Committed) return;
-	if (!bSourceActionTerminal || !bTargetReactionTerminal) return;
-	if (!bIsSourceRole && ActiveContext.OutcomePolicy == EExecutionOutcomePolicy::Standard)
-	{
-		if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->EnterExecutionDownLifecycle(ActiveContext.OpportunityReservation.BalanceLifecycleSerial))
-		{
-			CancelActiveExecutionSession(EExecutionCollaborationCancelReason::BalanceOpportunityInvalidated, true);
-			return;
-		}
-	}
-
-	CompleteActiveExecutionSession();
-}
-
-void UCExecutionCollaborationComponent::CancelLocalExecutionParticipant(const bool bWasSourceRole, const EReactionType InPrimaryReactionType)
-{
-	if (bWasSourceRole)
-	{
-		if (IsValid(ActionComp_Injected) && ActionComp_Injected->IsActiveActionType(EActionType::Execution))
-		{
-			ActionComp_Injected->CancelActiveActionForSystem();
-		}
-		return;
-	}
-
-	if (IsValid(ReactionComp_Injected) && ReactionComp_Injected->IsActiveReactionType(InPrimaryReactionType))
-	{
-		ReactionComp_Injected->CancelActiveReactionForSystem();
-	}
-}
-
 // Session Validation
 
 bool UCExecutionCollaborationComponent::IsActiveSession(const FExecutionSessionId& InSessionId) const
@@ -815,19 +949,21 @@ bool UCExecutionCollaborationComponent::IsTargetExecutionOpportunityCurrent() co
 		&& targetCollaborationComp->IsTargetExecutionOpportunityCurrent();
 }
 
-// Execution Startup Validation
+// Participant Validation
 
-bool UCExecutionCollaborationComponent::CanStartSourceExecution() const
+bool UCExecutionCollaborationComponent::CanStartSourceExecution(const bool bLogFailure, FString* OutFailureDetail) const
 {
 	if (!IsValid(OwnerCharacter_Injected))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("SourcePreconditionRejected"), TEXT("InvalidOwner"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidOwner");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("SourcePreconditionRejected"), TEXT("InvalidOwner"));
 		return false;
 	}
 
 	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), TEXT("SourceNotAlive"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("SourceNotAlive");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), TEXT("SourceNotAlive"));
 		return false;
 	}
 
@@ -836,7 +972,8 @@ bool UCExecutionCollaborationComponent::CanStartSourceExecution() const
 		const FString stateText = IsValid(StateComp_Injected)
 			? UEnum::GetValueAsString(StateComp_Injected->GetCurrentExecutionState())
 			: TEXT("InvalidStateComponent");
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), FString::Printf(TEXT("SourceState=%s"), *stateText));
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("SourceState=%s"), *stateText);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), FString::Printf(TEXT("SourceState=%s"), *stateText));
 		return false;
 	}
 
@@ -845,25 +982,83 @@ bool UCExecutionCollaborationComponent::CanStartSourceExecution() const
 		const FString actionText = IsValid(ActionComp_Injected)
 			? UEnum::GetValueAsString(ActionComp_Injected->GetActiveActionType())
 			: TEXT("InvalidActionComponent");
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), FString::Printf(TEXT("ActiveAction=%s"), *actionText));
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("ActiveAction=%s"), *actionText);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), FString::Printf(TEXT("ActiveAction=%s"), *actionText));
 		return false;
 	}
 
 	if (!IsValid(ActionOrchestratorComp_Injected))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), TEXT("InvalidActionOrchestrator"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidActionOrchestrator");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourcePreconditionRejected"), TEXT("InvalidActionOrchestrator"));
 		return false;
 	}
 
 	return true;
 }
 
-bool UCExecutionCollaborationComponent::CanResolveSourceExecutionAction(const EExecutionOutcomePolicy InOutcomePolicy) const
+bool UCExecutionCollaborationComponent::CanStartTargetExecution(const bool bLogFailure, FString* OutFailureDetail) const
+{
+	if (!IsValid(OwnerCharacter_Injected))
+	{
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidOwner");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("TargetPreconditionRejected"), TEXT("InvalidOwner"));
+		return false;
+	}
+
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
+	{
+		if (OutFailureDetail) *OutFailureDetail = TEXT("TargetNotAlive");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("TargetNotAlive"));
+		return false;
+	}
+
+	if (!IsValid(StateComp_Injected) || StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle)
+	{
+		const FString stateText = IsValid(StateComp_Injected)
+			? UEnum::GetValueAsString(StateComp_Injected->GetCurrentExecutionState())
+			: TEXT("InvalidStateComponent");
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("TargetState=%s"), *stateText);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), FString::Printf(TEXT("TargetState=%s"), *stateText));
+		return false;
+	}
+
+	if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->IsExecutionOpportunityAvailable())
+	{
+		if (OutFailureDetail) *OutFailureDetail = TEXT("CollapseOpportunityUnavailable");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("CollapseOpportunityUnavailable"));
+		return false;
+	}
+
+	if (!IsValid(ReactionComp_Injected) || ReactionComp_Injected->IsActive())
+	{
+		const FString reactionText = IsValid(ReactionComp_Injected)
+			? UEnum::GetValueAsString(ReactionComp_Injected->GetActiveReactionType())
+			: TEXT("InvalidReactionComponent");
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("ActiveReaction=%s"), *reactionText);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), FString::Printf(TEXT("ActiveReaction=%s"), *reactionText));
+		return false;
+	}
+
+	if (!IsValid(ReactionOrchestratorComp_Injected))
+	{
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidReactionOrchestrator");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("InvalidReactionOrchestrator"));
+		return false;
+	}
+
+	return true;
+}
+
+// Execution Data
+
+bool UCExecutionCollaborationComponent::CanResolveSourceExecutionAction(const EExecutionOutcomePolicy InOutcomePolicy, const bool bLogFailure, FString* OutFailureDetail) const
 {
 	if ((InOutcomePolicy != EExecutionOutcomePolicy::Standard && InOutcomePolicy != EExecutionOutcomePolicy::Lethal)
 		|| !IsValid(ActionComp_Injected))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), TEXT("InvalidOutcomeOrActionComponent"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidOutcomeOrActionComponent");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), TEXT("InvalidOutcomeOrActionComponent"));
 		return false;
 	}
 
@@ -871,18 +1066,43 @@ bool UCExecutionCollaborationComponent::CanResolveSourceExecutionAction(const EE
 	actionDataKey.ActionType = EActionType::Execution;
 	actionDataKey.ActionIndex = GetExecutionActionIndex(InOutcomePolicy);
 
-	FActionData actionData;
-	if (!ActionComp_Injected->ResolveActionData(actionDataKey, actionData)
-		|| !actionData.IsValidMinimal()
-		|| !IsValid(ActionComp_Injected->ResolveActionExecutor(actionData)))
+	FActionExecutionContext prepared;
+	if (!ActionComp_Injected->FindPreparedActionContext(actionDataKey, prepared))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), FString::Printf(TEXT("Action=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(actionDataKey.ActionType), actionDataKey.ActionIndex));
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("Action=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(actionDataKey.ActionType), actionDataKey.ActionIndex);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), FString::Printf(TEXT("Action=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(actionDataKey.ActionType), actionDataKey.ActionIndex));
 		return false;
 	}
 
-	if (InOutcomePolicy == EExecutionOutcomePolicy::Standard && actionData.StandardExecutionDamage <= KINDA_SMALL_NUMBER)
+	if (InOutcomePolicy == EExecutionOutcomePolicy::Standard && prepared.ActionData.StandardExecutionDamage <= KINDA_SMALL_NUMBER)
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), TEXT("StandardExecutionDamageIsZero"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("StandardExecutionDamageIsZero");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("SourceDataRejected"), TEXT("StandardExecutionDamageIsZero"));
+		return false;
+	}
+
+	return true;
+}
+
+bool UCExecutionCollaborationComponent::CanResolveTargetExecutionReaction(const EExecutionOutcomePolicy InOutcomePolicy, const bool bLogFailure, FString* OutFailureDetail) const
+{
+	if ((InOutcomePolicy != EExecutionOutcomePolicy::Standard && InOutcomePolicy != EExecutionOutcomePolicy::Lethal) || !IsValid(ReactionComp_Injected))
+	{
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidOutcomeOrReactionComponent");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetDataRejected"), TEXT("InvalidOutcomeOrReactionComponent"));
+		return false;
+	}
+
+	FReactionDataKey reactionDataKey;
+	reactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+	reactionDataKey.ReactionType = InOutcomePolicy == EExecutionOutcomePolicy::Lethal ? EReactionType::ExecutionLethal : EReactionType::ExecutionStandard;
+	reactionDataKey.ReactionIndex = INDEX_NONE;
+
+	FReactionExecutionContext prepared;
+	if (!ReactionComp_Injected->FindPreparedGlobalReactionContext(reactionDataKey, prepared))
+	{
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("Reaction=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(reactionDataKey.ReactionType), reactionDataKey.ReactionIndex);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetDataRejected"), FString::Printf(TEXT("Reaction=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(reactionDataKey.ReactionType), reactionDataKey.ReactionIndex));
 		return false;
 	}
 
@@ -897,98 +1117,30 @@ float UCExecutionCollaborationComponent::ResolveStandardExecutionDamageForReserv
 	actionDataKey.ActionType = EActionType::Execution;
 	actionDataKey.ActionIndex = GetExecutionActionIndex(EExecutionOutcomePolicy::Standard);
 
-	FActionData actionData;
-	return ActionComp_Injected->ResolveActionData(actionDataKey, actionData) && actionData.IsValidMinimal()
-		? actionData.StandardExecutionDamage
+	FActionExecutionContext prepared;
+	return ActionComp_Injected->FindPreparedActionContext(actionDataKey, prepared)
+		? prepared.ActionData.StandardExecutionDamage
 		: 0.f;
 }
 
-bool UCExecutionCollaborationComponent::CanStartTargetExecution() const
-{
-	if (!IsValid(OwnerCharacter_Injected))
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(this, TEXT("TargetPreconditionRejected"), TEXT("InvalidOwner"));
-		return false;
-	}
+// Start Geometry
 
-	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive())
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("TargetNotAlive"));
-		return false;
-	}
-
-	if (!IsValid(StateComp_Injected) || StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Idle)
-	{
-		const FString stateText = IsValid(StateComp_Injected)
-			? UEnum::GetValueAsString(StateComp_Injected->GetCurrentExecutionState())
-			: TEXT("InvalidStateComponent");
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), FString::Printf(TEXT("TargetState=%s"), *stateText));
-		return false;
-	}
-
-	if (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->IsExecutionOpportunityAvailable())
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("CollapseOpportunityUnavailable"));
-		return false;
-	}
-
-	if (!IsValid(ReactionComp_Injected) || ReactionComp_Injected->IsActive())
-	{
-		const FString reactionText = IsValid(ReactionComp_Injected)
-			? UEnum::GetValueAsString(ReactionComp_Injected->GetActiveReactionType())
-			: TEXT("InvalidReactionComponent");
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), FString::Printf(TEXT("ActiveReaction=%s"), *reactionText));
-		return false;
-	}
-
-	if (!IsValid(ReactionOrchestratorComp_Injected))
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetPreconditionRejected"), TEXT("InvalidReactionOrchestrator"));
-		return false;
-	}
-
-	return true;
-}
-
-bool UCExecutionCollaborationComponent::CanResolveTargetExecutionReaction(const EExecutionOutcomePolicy InOutcomePolicy) const
-{
-	if ((InOutcomePolicy != EExecutionOutcomePolicy::Standard && InOutcomePolicy != EExecutionOutcomePolicy::Lethal) || !IsValid(ReactionComp_Injected))
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetDataRejected"), TEXT("InvalidOutcomeOrReactionComponent"));
-		return false;
-	}
-
-	FReactionDataKey reactionDataKey;
-	reactionDataKey.MatchMode = EReactionDataMatchMode::Global;
-	reactionDataKey.ReactionType = InOutcomePolicy == EExecutionOutcomePolicy::Lethal ? EReactionType::ExecutionLethal : EReactionType::ExecutionStandard;
-	reactionDataKey.ReactionIndex = INDEX_NONE;
-
-	FReactionData reactionData;
-	if (!ReactionComp_Injected->ResolveReactionData(reactionDataKey, reactionData)
-		|| !reactionData.IsValidMinimal()
-		|| !IsValid(ReactionComp_Injected->ResolveReactionExecutor(reactionData)))
-	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("TargetDataRejected"), FString::Printf(TEXT("Reaction=%s | Index=%d | MissingDataOrExecutor"), *UEnum::GetValueAsString(reactionDataKey.ReactionType), reactionDataKey.ReactionIndex));
-		return false;
-	}
-
-	return true;
-}
-
-bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot) const
+bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(const FCombatTargetSnapshot& InTargetSnapshot, const bool bLogFailure, FString* OutFailureDetail) const
 {
 	if (!StartGeometrySettings.IsValid()
 		|| !IsValid(OwnerCharacter_Injected)
 		|| !IsValid(InTargetSnapshot.TargetActor))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("InvalidSettingsOrParticipant"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidSettingsOrParticipant");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("InvalidSettingsOrParticipant"));
 		return false;
 	}
 
 	ACharacter* targetCharacter = Cast<ACharacter>(InTargetSnapshot.TargetActor);
 	if (!IsValid(targetCharacter))
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("TargetIsNotCharacter"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("TargetIsNotCharacter");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("TargetIsNotCharacter"));
 		return false;
 	}
 
@@ -997,7 +1149,8 @@ bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(cons
 
 	if (!sourceForward2D.Normalize())
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("InvalidSourceForward"));
+		if (OutFailureDetail) *OutFailureDetail = TEXT("InvalidSourceForward");
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), TEXT("InvalidSourceForward"));
 		return false;
 	}
 
@@ -1009,7 +1162,8 @@ bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(cons
 	const float currentDistance = sourceToTarget2D.Size();
 	if (currentDistance <= KINDA_SMALL_NUMBER || currentDistance > StartGeometrySettings.MaxStartDistance)
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), FString::Printf(TEXT("Distance=%.1f / %.1f"), currentDistance, StartGeometrySettings.MaxStartDistance));
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("Distance=%.1f / %.1f"), currentDistance, StartGeometrySettings.MaxStartDistance);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), FString::Printf(TEXT("Distance=%.1f / %.1f"), currentDistance, StartGeometrySettings.MaxStartDistance));
 		return false;
 	}
 
@@ -1019,33 +1173,16 @@ bool UCExecutionCollaborationComponent::IsSourceExecutionStartGeometryValid(cons
 
 	if (angleDegrees > StartGeometrySettings.MaxSourceFacingAngleDegrees)
 	{
-		FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), FString::Printf(TEXT("Angle=%.1f / %.1f"), angleDegrees, StartGeometrySettings.MaxSourceFacingAngleDegrees));
+		if (OutFailureDetail) *OutFailureDetail = FString::Printf(TEXT("Angle=%.1f / %.1f"), angleDegrees, StartGeometrySettings.MaxSourceFacingAngleDegrees);
+		if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryRejected"), FString::Printf(TEXT("Angle=%.1f / %.1f"), angleDegrees, StartGeometrySettings.MaxSourceFacingAngleDegrees));
 		return false;
 	}
 
-	FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryAccepted"), FString::Printf(TEXT("Distance=%.1f / %.1f | Angle=%.1f / %.1f"), currentDistance, StartGeometrySettings.MaxStartDistance, angleDegrees, StartGeometrySettings.MaxSourceFacingAngleDegrees));
+	if (bLogFailure) FExecutionCollaborationDebug::RecordStartTrace(OwnerCharacter_Injected, TEXT("GeometryAccepted"), FString::Printf(TEXT("Distance=%.1f / %.1f | Angle=%.1f / %.1f"), currentDistance, StartGeometrySettings.MaxStartDistance, angleDegrees, StartGeometrySettings.MaxSourceFacingAngleDegrees));
 	return true;
 }
 
-bool UCExecutionCollaborationComponent::AlignTargetExecutionFacing(const FCombatTargetSnapshot& InTargetSnapshot) const
-{
-	if (!IsValid(OwnerCharacter_Injected)) return false;
-
-	ACharacter* targetCharacter = Cast<ACharacter>(InTargetSnapshot.TargetActor);
-	if (!IsValid(targetCharacter)) return false;
-
-	FVector targetToSource2D = OwnerCharacter_Injected->GetActorLocation() - targetCharacter->GetActorLocation();
-	targetToSource2D.Z = 0.f;
-	if (!targetToSource2D.Normalize()) return false;
-
-	FRotator targetFacingRotation = targetToSource2D.Rotation();
-	targetFacingRotation.Pitch = 0.f;
-	targetFacingRotation.Roll = 0.f;
-	targetCharacter->SetActorRotation(targetFacingRotation);
-	return true;
-}
-
-// Target Outcome Resolution
+// Outcome Policy
 
 EExecutionOutcomePolicy UCExecutionCollaborationComponent::ResolveTargetExecutionOutcomePolicy() const
 {
@@ -1070,7 +1207,7 @@ bool UCExecutionCollaborationComponent::CanResolveLethalExecutionOutcome() const
 	return currentHealthRatio <= LethalHealthRatio;
 }
 
-// Execution Policy Resolution
+// Execution Mapping
 
 EReactionType UCExecutionCollaborationComponent::GetPrimaryReactionType() const
 {

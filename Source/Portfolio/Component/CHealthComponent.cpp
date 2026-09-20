@@ -1,10 +1,10 @@
 #include "Component/CHealthComponent.h"
-
 #include "ProjectGlobal.h"
 
-#include "Type/CHealthTypes.h"
-
 #include "GameFramework/Character.h"
+#include "Misc/ScopeExit.h"
+
+#include "Type/CHealthTypes.h"
 
 UCHealthComponent::UCHealthComponent()
 {
@@ -41,6 +41,11 @@ bool UCHealthComponent::ValidateRequiredComponentReferences() const
 
 void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentHP, EMaxHPUpdatePolicy InUpdatePolicy)
 {
+	const float oldCurrent = CurrentHP;
+	const float oldMax = MaxHP;
+
+	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP || oldMax != MaxHP) OnHealthValuesChanged.Broadcast(); };
+
 	if (InInitMaxHP <= 0.f)
 	{
 		MaxHP = 0.f;
@@ -78,6 +83,10 @@ void UCHealthComponent::InitializeHealth(float InInitMaxHP, float InInitCurrentH
 
 bool UCHealthComponent::TryKill()
 {
+	const float oldCurrent = CurrentHP;
+
+	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP) OnHealthValuesChanged.Broadcast(); };
+
 	if (!CanKill()) return false;
 
 	PreviousHP = CurrentHP;
@@ -89,6 +98,11 @@ bool UCHealthComponent::TryKill()
 
 bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUpdatePolicy)
 {
+	const float oldCurrent = CurrentHP;
+	const float oldMax = MaxHP;
+
+	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP || oldMax != MaxHP) OnHealthValuesChanged.Broadcast(); };
+
 	if (!IsAlive()) return false;
 	if (InNewMaxHP <= 0.f) return false;
 
@@ -111,6 +125,10 @@ bool UCHealthComponent::TryUpdateMaxHP(float InNewMaxHP, EMaxHPUpdatePolicy InUp
 
 float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 {
+	const float oldCurrent = CurrentHP;
+
+	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP) OnHealthValuesChanged.Broadcast(); };
+
 	if (!IsAlive()) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeDamageAmount <= 0.f) return 0.f;
@@ -133,6 +151,10 @@ float UCHealthComponent::TakeDamage(float InTakeDamageAmount)
 
 float UCHealthComponent::TakeHeal(float InTakeHealAmount)
 {
+	const float oldCurrent = CurrentHP;
+
+	ON_SCOPE_EXIT { if (oldCurrent != CurrentHP) OnHealthValuesChanged.Broadcast(); };
+
 	if (!IsAlive()) return 0.f;
 	if (MaxHP <= 0.f) return 0.f;
 	if (InTakeHealAmount <= 0.f) return 0.f;

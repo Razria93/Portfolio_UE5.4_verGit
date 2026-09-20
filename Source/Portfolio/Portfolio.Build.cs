@@ -25,6 +25,8 @@ public class Portfolio : ModuleRules
         PrivateDependencyModuleNames.AddRange(new string[]
         {
             "NavigationSystem",
+            "Slate",
+            "SlateCore",
         });
 
         // Uncomment if you are using Slate UI

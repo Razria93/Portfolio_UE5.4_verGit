@@ -49,6 +49,11 @@ public:
 	FReactionRequestResult RequestBalanceLifecycleReaction(const FBalanceLifecycleReactionRequest& InIncomingRequest);
 	FReactionRequestResult RequestExecutionReaction(const FExecutionReactionRequest& InIncomingRequest);
 
+public:
+	// Availability Query
+	bool QueryPreparedExecutionReactionAvailability(EReactionType InType, EReactionRequestRejectReason& OutReason) const;
+	bool QueryPreparedReactionAvailability(const FReactionDataKey& InKey, bool bRequireStart, EReactionRequestRejectReason& OutReason) const;
+
 private:
 	// Request Validation
 	bool CanAcceptReactionRequest(EReactionRequestRejectReason& OutRejectReason) const;
@@ -65,6 +70,10 @@ private:
 private:
 	// Orchestration Pipeline
 	FReactionRequestResult ProcessReactionCandidate(const FReactionCandidate& InIncomingCandidate);
+
+private:
+	// Execution Evaluation
+	FReactionExecutionResult EvaluateReactionContext(const FReactionExecutionContext& InContext, const FExecutionDecisionQuery& InQuery) const;
 
 private:
 	// Execution Context Resolve

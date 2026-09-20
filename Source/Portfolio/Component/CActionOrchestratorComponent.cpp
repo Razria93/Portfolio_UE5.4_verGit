@@ -137,6 +137,49 @@ FActionRequestResult UCActionOrchestratorComponent::RequestEquipmentAction(const
 	return ProcessActionCandidate(incomingCandidate);
 }
 
+// Availability Query
+
+bool UCActionOrchestratorComponent::QueryCombatActionAvailability(ECombatActionIntent InIntent, EActionRequestRejectReason& OutReason) const
+{
+	FCombatActionRequest request;
+	request.IntentType = InIntent;
+	request.IntentEvent = EActionIntentEvent::Started;
+
+	FActionCandidate candidate;
+	if (!ResolveCombatActionCandidate(request, candidate, OutReason)) return false;
+
+	return QueryPreparedActionAvailability(candidate.ActionDataKey, true, OutReason);
+}
+
+bool UCActionOrchestratorComponent::QueryPreparedActionAvailability(const FActionDataKey& InKey, bool bExternal, EActionRequestRejectReason& OutReason) const
+{
+	if (!CanAcceptActionRequest(OutReason, bExternal)) return false;
+
+	FActionExecutionContext context;
+	if (!IsValid(ActionComp_Injected) || !ActionComp_Injected->FindPreparedActionContext(InKey, context))
+	{
+		OutReason = EActionRequestRejectReason::ActionDataNotFound;
+		return false;
+	}
+
+	const FExecutionDecisionQuery query = BuildDecisionQuery(context);
+	const FActionExecutionResult result = EvaluateActionContext(context, query);
+
+	OutReason = result.RejectReason;
+	if (!result.IsAcceptedDecision()) return false;
+
+	if (result.ApplyMode != EExecutionApplyMode::Start
+		&& result.ApplyMode != EExecutionApplyMode::Intervene)
+	{
+		OutReason = EActionRequestRejectReason::NoExecutableAction;
+		return false;
+	}
+
+	return true;
+}
+
+// Request Entry
+
 FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FCombatActionRequest& InIncomingRequest)
 {
 	EActionRequestRejectReason rejectReason = EActionRequestRejectReason::None;
@@ -458,16 +501,25 @@ FActionRequestResult UCActionOrchestratorComponent::ProcessActionCandidate(const
 		return DeferActionCandidate(InIncomingCandidate, consumeKey);
 	}
 
-	const FExecutionDecisionResult decisionResult = BuildDecisionResult(decisionQuery, rejectReason);
-	FActionExecutionResult executionResult = BuildActionExecutionResult(incomingContext, decisionResult, rejectReason);
-
-	ResolveExecutionApplyMode(decisionQuery, executionResult);
-	ResolveObservableOverlayGate(decisionQuery, executionResult);
+	const FActionExecutionResult executionResult = EvaluateActionContext(incomingContext, decisionQuery);
 
 	FExecutionOrchestratorDebug::RecordActionExecutionResultForAudit(OwnerCharacter_Injected, executionResult, TEXT("DecisionResolved"));
 	FExecutionOrchestratorDebug::PrintActionExecutionDebug(OwnerCharacter_Injected, decisionQuery, executionResult);
 
 	return DispatchActionDecision(executionResult);
+}
+
+// Execution Evaluation
+
+FActionExecutionResult UCActionOrchestratorComponent::EvaluateActionContext(const FActionExecutionContext& InContext, const FExecutionDecisionQuery& InQuery) const
+{
+	EActionRequestRejectReason reason = EActionRequestRejectReason::None;
+
+	const FExecutionDecisionResult decision = BuildDecisionResult(InQuery, reason);
+	FActionExecutionResult result = BuildActionExecutionResult(InContext, decision, reason);
+	ResolveExecutionApplyMode(InQuery, result);
+	ResolveObservableOverlayGate(InQuery, result);
+	return result;
 }
 
 // Execution Context Resolve
@@ -546,7 +598,7 @@ FExecutionSnapshot UCActionOrchestratorComponent::BuildSnapshot() const
 
 	if (IsValid(ObservableOverlayComp_Injected))
 	{
-		ObservableOverlayComp_Injected->WriteOverlaySnapshot(snapshot.ObservableOverlay);
+		ObservableOverlayComp_Injected->BuildOverlaySnapshot(snapshot.ObservableOverlay);
 	}
 
 	return snapshot;

@@ -6,6 +6,7 @@
 #include "Component/CMovementComponent.h"
 #include "Component/CPlayerFeedbackComponent.h"
 #include "Component/CTargetHUDPresenterComponent.h"
+#include "Component/CCombatHUDPresenterComponent.h"
 #include "Component/CTargetLockAssistComponent.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
 #include "Core/Debug/FExecutionCollaborationDebug.h"
@@ -40,6 +41,7 @@ ACPlayerController::ACPlayerController()
 
 	TargetHUDPresenterComponent = CreateDefaultSubobject<UCTargetHUDPresenterComponent>(TEXT("TargetHUDPresenter"));
 	check(TargetHUDPresenterComponent);
+	CombatHUDPresenterComponent = CreateDefaultSubobject<UCCombatHUDPresenterComponent>(TEXT("CombatHUDPresenter"));
 
 #if !UE_BUILD_SHIPPING
 	DebugOverlayFocusComponent = CreateDefaultSubobject<UCDebugOverlayFocusComponent>(TEXT("DebugOverlayFocus"));
@@ -382,6 +384,7 @@ void ACPlayerController::PressExecution()
 void ACPlayerController::SynchronizeCombatTargetReferences()
 {
 	ACPlayer* player = ResolveControlledPlayer(this);
+	if (IsValid(CombatHUDPresenterComponent)) CombatHUDPresenterComponent->SetControlledPlayer(player);
 	UCCombatTargetComponent* combatTargetComponent = IsValid(player) ? player->GetCombatTargetComp() : nullptr;
 
 	if (IsValid(PlayerTargetSelectionComponent))
@@ -402,6 +405,7 @@ void ACPlayerController::SynchronizeCombatTargetReferences()
 
 void ACPlayerController::ClearCombatTargetReferences()
 {
+	if (IsValid(CombatHUDPresenterComponent)) CombatHUDPresenterComponent->SetControlledPlayer(nullptr);
 	if (IsValid(PlayerTargetSelectionComponent))
 	{
 		PlayerTargetSelectionComponent->SetCombatTargetComponent(nullptr);
