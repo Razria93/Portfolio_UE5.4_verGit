@@ -14,6 +14,7 @@
 
 | ID | 제목 | 파일 | 브랜치 | GitHub PR | 관련 문서 |
 | --- | --- | --- | --- | --- | --- |
+| P64 | 일반 Hit 지상 넉백·공격 시작 페이싱과 전투 이동 디버그 | [P64_UE5_Portfolio_Pull_Request.md](P64_UE5_Portfolio_Pull_Request.md) | `feat/combat-knockback` | 초안 | Portfolio Production 35~38, Debug 측정 가이드 |
 | P61 | Enemy Balance Collapse and Execution Collaboration | `P61_UE5_Portfolio_Pull_Request.md` | `feat/balance-collapse-execution` |  | S35, S36, Debug Overlay |
 | P60 | Shared Combat Target and Evidence-Based Combat Participation | `P60_UE5_Portfolio_Pull_Request.md` | `feature/combat-target-participation` |  | S32, S33, S34, Debug Overlay, AIPerf |
 | P59 | Enemy Death Presentation and Destroy Lifecycle | `P59_UE5_Portfolio_Pull_Request.md` | `feature/dead-actor-destroy-flow` | #115 | W06, S31, N14, W05 |

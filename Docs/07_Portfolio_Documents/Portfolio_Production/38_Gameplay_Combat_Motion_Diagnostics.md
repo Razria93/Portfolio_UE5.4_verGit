@@ -104,6 +104,14 @@ Portfolio.DebugOverlay.EventLogFilter Knockback
 
 ## 검증
 
+### 최종 통합 재검증
+
+2026-09-21, 코드 기준 `385738b6`: Editor Development 및 Shipping 빌드 성공, `-RenderOffscreen`에서 `Automation RunTests Portfolio.` 36/36 성공(실패 0, 종료 코드 0), `git lfs fsck` OK. 진단 8개·넉백 6개·페이싱 4개와 기존 회귀를 포함한다. 로그: `Saved/Logs/CombatKnockbackPRFinalValidation.log`.
+
+기존 Regacy 메쉬 머티리얼 참조 누락·반복 CVar 조회 경고는 남아 있다. LFS 검사는 로컬 객체 무결성이지 UE 전체 참조·원격 업로드 검증이 아니며, Shipping 컴파일은 Cook·패키징·실행 검증이 아니다. 실제 맵 경계 시나리오의 수동 확인은 별도다.
+
+### 이전 구현 단계 기록
+
 2026-09-21 실행 결과:
 
 - `PortfolioEditor Win64 Development` 빌드 성공.
@@ -119,6 +127,10 @@ Portfolio.DebugOverlay.EventLogFilter Knockback
 - `git diff --check` 통과. 에셋·Config 변경 없음. 커밋·푸시·PR 없음.
 
 ## 사용자 PIE 확인 절차
+
+### 사용자 경계·환경 검증 결과
+
+2026-09-21 사용자 보고로, 넉백 지속 시간 2.0초와 Hit 몽타주 실행 배율 0.1의 관찰용 설정에서 안내한 필수 경계·환경 시나리오를 확인했고 문제를 발견하지 않았다. 언덕·벽, 두 캐릭터를 겹치거나 번갈아 타격하는 시험을 포함한다. 상세 범위와 제한은 [P64 사용자 수동 검증 기록](../../04_Pull_Request/P64_UE5_Portfolio_Pull_Request.md)을 참고한다. 기본 속도의 최종 타격감이나 내부 콜백 경계의 계측 검증과는 구분하며, 임시 설정 복구 여부는 별도 확인 대상이다.
 
 ### 발밑 표시 보완 검증 상태
 
