@@ -1,5 +1,9 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
+#include "HAL/IConsoleManager.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
+#include "Core/Debug/FActionFacingDebug.h"
 #include "UObject/UnrealType.h"
 #include "Tests/CActionFacingProbe.h"
 #include "Animation/AnimInstance.h"
@@ -316,4 +320,84 @@ bool FActionFacingRootMotionTest::RunTest(const FString& Parameters)
 	AddInfo(FString::Printf(TEXT("Root motion displacement=%.2f, yaw=%.2f"), FVector::Dist2D(before, f.Player->GetActorLocation()), f.Player->GetActorRotation().Yaw));
 	return true;
 }
+
+#if !UE_BUILD_SHIPPING
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FActionFacingDiagnosticTest, "Portfolio.DebugOverlay.CombatMotion.FacingLifecycle",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FActionFacingDiagnosticTest::RunTest(const FString& Parameters)
+{
+	TArray<IConsoleVariable*> variables;
+	TArray<FString> previousValues;
+	TArray<EConsoleVariableFlags> previousFlags;
+	for (const TCHAR* name : { TEXT("Portfolio.DebugOverlay.AttackFacing.Enabled"), TEXT("Portfolio.DebugOverlay.CaptureEnabled") })
+	{
+		IConsoleVariable* variable = IConsoleManager::Get().FindConsoleVariable(name);
+		if (!TestNotNull(name, variable)) return false;
+		variables.Add(variable);
+		previousValues.Add(variable->GetString());
+		previousFlags.Add(static_cast<EConsoleVariableFlags>(variable->GetFlags() & ECVF_SetByMask));
+		variable->Set(1, ECVF_SetByCode);
+	}
+	ON_SCOPE_EXIT
+	{
+		for (int32 i = 0; i < variables.Num(); ++i)
+		{
+			variables[i]->Set(*previousValues[i], ECVF_SetByCode);
+			variables[i]->ClearFlags(ECVF_SetByMask);
+			variables[i]->SetFlags(previousFlags[i]);
+		}
+	};
+	ActionFacingTest::FFixture f;
+	FActionFacingDebugRecord record;
+	TestTrue(TEXT("Diagnostic attack starts"), f.Action->ApplyActionDecision(f.Result(50)));
+	TestTrue(TEXT("Queued record exists"), FDebugOverlaySnapshotStore::TryGetAttackFacingDiagnostic(f.Player, record));
+	TestEqual(TEXT("Actual playback queues facing"), record.Result, FName(TEXT("Queued")));
+	const uint64 firstGeneration = record.Generation;
+	f.Tick();
+	FDebugOverlaySnapshotStore::TryGetAttackFacingDiagnostic(f.Player, record);
+	TestEqual(TEXT("Actual tick records applied"), record.Result, FName(TEXT("Applied")));
+	TestEqual(TEXT("Pre-correction yaw captured"), record.BeforeYaw, 0.f);
+	TestTrue(TEXT("Post-correction yaw captured"), FMath::IsNearlyEqual(record.AfterYaw, 45.f));
+	FActionFacingDebug::DrawWorldDebug(f.World, f.Player);
+	const FVector capturedTarget = record.TargetLocation;
+	const int32 appliedEvents = FDebugOverlaySnapshotStore::GetRecentEventsCopy(f.World, 32, TEXT("AttackFacing")).Num();
+	f.Target->SetActorLocation(FVector(0.f, 300.f, 0.f));
+	f.Tick();
+	f.Tick();
+	FDebugOverlaySnapshotStore::TryGetAttackFacingDiagnostic(f.Player, record);
+	TestEqual(TEXT("Idle ticks preserve applied record"), record.Result, FName(TEXT("Applied")));
+	TestTrue(TEXT("Historical target location does not follow target"), record.TargetLocation.Equals(capturedTarget));
+	TestEqual(TEXT("No repeated Tick events"), FDebugOverlaySnapshotStore::GetRecentEventsCopy(f.World, 32, TEXT("AttackFacing")).Num(), appliedEvents);
+	f.Action->CancelActiveActionForSystem();
+	f.Player->SetActorRotation(FRotator::ZeroRotator);
+	f.Target->SetActorLocation(FVector(200.f, 200.f, 0.f));
+	TestTrue(TEXT("Cancellation setup"), f.Action->ApplyActionDecision(f.Result(51)));
+	f.Action->HandleApplyActionStarted(f.Probe, firstGeneration);
+	FDebugOverlaySnapshotStore::TryGetAttackFacingDiagnostic(f.Player, record);
+	TestTrue(TEXT("Stale start cannot overwrite new queued generation"), record.Generation > firstGeneration && record.Result == FName(TEXT("Queued")));
+	f.Action->CancelActiveActionForSystem();
+	f.Tick();
+	FDebugOverlaySnapshotStore::TryGetAttackFacingDiagnostic(f.Player, record);
+	TestEqual(TEXT("Pending cancel is recorded"), record.Result, FName(TEXT("Cancelled")));
+	for (int32 mode = 0; mode < 4; ++mode)
+	{
+		f.CombatTarget->RequestSetCombatTarget(f.Target, ECombatTargetChangeReason::PlayerSelection);
+		FActionExecutionResult result = f.Result(52 + mode);
+		if (mode == 1) result.ResolvedContext.ActionData.StartFacingMaxDistance = 100.f;
+		if (mode == 2) result.ResolvedContext.ActionData.StartFacingMaxAngle = 20.f;
+		if (mode == 3) result.ResolvedContext.ActionData.bFaceCombatTargetOnStart = false;
+		TestTrue(TEXT("Gate setup starts"), f.Action->ApplyActionDecision(result));
+		if (mode == 0) f.CombatTarget->RequestClearCombatTarget(ECombatTargetChangeReason::ManualClear);
+		f.Tick();
+		FDebugOverlaySnapshotStore::TryGetAttackFacingDiagnostic(f.Player, record);
+		const TCHAR* expected[] = { TEXT("TargetChanged"), TEXT("OutOfRange"), TEXT("OutOfAngle"), TEXT("OptionOff") };
+		TestEqual(FString::Printf(TEXT("Gate %d records actual reason"), mode), record.Reason, FName(expected[mode]));
+		TestEqual(TEXT("Excluded facing does not rotate"), f.Player->GetActorRotation().Yaw, 0.0);
+		if (mode == 3) TestEqual(TEXT("Option off is distinct from missing record"), record.Result, FName(TEXT("Disabled")));
+		f.Action->CancelActiveActionForSystem();
+	}
+	FDebugOverlaySnapshotStore::Reset(f.World);
+	return true;
+}
+#endif
 #endif

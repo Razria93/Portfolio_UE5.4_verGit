@@ -1,5 +1,8 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
+#include "HAL/IConsoleManager.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Tests/CCombatKnockbackProbe.h"
 #include "Engine/World.h"
 #include "Animation/AnimMontage.h"
@@ -347,4 +350,77 @@ bool FCombatKnockbackFrameRateTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("30Hz and 144Hz displacement stay within one 30Hz frame"), FMath::Abs(distances[0] - distances[2]) <= 10.1);
 	return true;
 }
+
+#if !UE_BUILD_SHIPPING
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FKnockbackReactionDiagnosticTest, "Portfolio.DebugOverlay.CombatMotion.ReactionLifecycle",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FKnockbackReactionDiagnosticTest::RunTest(const FString& Parameters)
+{
+	IConsoleVariable* enabled = IConsoleManager::Get().FindConsoleVariable(TEXT("Portfolio.DebugOverlay.Knockback.Enabled"));
+	if (!TestNotNull(TEXT("Knockback diagnostic CVar"), enabled)) return false;
+	const int32 previous = enabled->GetInt();
+	const auto previousPriority = static_cast<EConsoleVariableFlags>(enabled->GetFlags() & ECVF_SetByMask);
+	enabled->Set(1, ECVF_SetByCode);
+	ON_SCOPE_EXIT
+	{
+		enabled->Set(previous, ECVF_SetByCode);
+		enabled->ClearFlags(ECVF_SetByMask);
+		enabled->SetFlags(previousPriority);
+	};
+	CombatKnockbackTest::FFixture f;
+	UCCombatKnockbackProbe* probe = NewObject<UCCombatKnockbackProbe>(f.Reaction);
+	probe->InitializeReferences(f.References);
+	FReactionExecutionResult result = f.MakeResult(probe);
+	FCombatKnockbackDebugHistory history;
+	const auto expectReason = [this, &f, &history](const TCHAR* Reason)
+	{
+		TestTrue(TEXT("Reaction diagnostic captured"), FDebugOverlaySnapshotStore::TryGetKnockbackDiagnostic(f.Player, history));
+		TestEqual(TEXT("Observed reason matches lifecycle"), history.Last.Reason, FName(Reason));
+	};
+	f.Reaction->OnReactionTypeChanged.AddDynamic(probe, &UCCombatKnockbackProbe::CancelOnTypeChanged);
+	TestFalse(TEXT("Setup callback cancels actual start"), f.Reaction->ApplyReactionDecision(result));
+	expectReason(TEXT("EndedDuringContextSetup"));
+	f.Reaction->OnReactionTypeChanged.RemoveDynamic(probe, &UCCombatKnockbackProbe::CancelOnTypeChanged);
+	probe->bFailStart = true;
+	TestFalse(TEXT("Executor rejects actual start"), f.Reaction->ApplyReactionDecision(result));
+	expectReason(TEXT("ExecutorStartFailed"));
+	TestFalse(TEXT("Failure creates no motion"), f.Movement->IsKnockbackActive());
+	probe->bFailStart = false;
+	probe->bCompleteDuringStart = true;
+	f.Reaction->ApplyReactionDecision(result);
+	expectReason(TEXT("EndedDuringStart"));
+	TestFalse(TEXT("Synchronous completion creates no motion"), f.Movement->IsKnockbackActive());
+	probe->bCompleteDuringStart = false;
+	TestTrue(TEXT("Normal hit starts"), f.Reaction->ApplyReactionDecision(result));
+	probe->Complete();
+	expectReason(TEXT("ReactionCompleted"));
+	TestTrue(TEXT("Interrupt setup starts"), f.Reaction->ApplyReactionDecision(result));
+	f.Reaction->CancelActiveReactionForSystem();
+	expectReason(TEXT("ReactionInterrupted"));
+	result = f.MakeResult(probe, EReactionType::CollapseHit);
+	TestTrue(TEXT("Excluded reaction still starts normally"), f.Reaction->ApplyReactionDecision(result));
+	expectReason(TEXT("NotHit"));
+	TestFalse(TEXT("Excluded reaction creates no motion"), f.Movement->IsKnockbackActive());
+	probe->Complete();
+	UAnimMontage* rootMotion = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/04_Montage/Combat/Sword/Stellar/Combo/Attack_Combo_01_01_Anim_Stellar_Montage.Attack_Combo_01_01_Anim_Stellar_Montage"));
+	if (TestNotNull(TEXT("Existing root motion montage"), rootMotion))
+	{
+		TestTrue(TEXT("Asset contains root motion"), rootMotion->HasRootMotion());
+		result = f.MakeResult(probe);
+		result.ResolvedContext.ReactionData.Montage = rootMotion;
+		TestTrue(TEXT("Root motion reaction probe starts"), f.Reaction->ApplyReactionDecision(result));
+		expectReason(TEXT("MontageRootMotion"));
+		TestFalse(TEXT("Montage exclusion creates no knockback"), f.Movement->IsKnockbackActive());
+		probe->Complete();
+	}
+	result = f.MakeResult(probe);
+	TestTrue(TEXT("Reference reset setup starts"), f.Reaction->ApplyReactionDecision(result));
+	f.Movement->InitializeReferences(f.References);
+	expectReason(TEXT("ReferencesReset"));
+	TestFalse(TEXT("Reset removes owned source"), f.Movement->IsKnockbackActive());
+	probe->Complete();
+	FDebugOverlaySnapshotStore::Reset(f.World);
+	return true;
+}
+#endif
 #endif
