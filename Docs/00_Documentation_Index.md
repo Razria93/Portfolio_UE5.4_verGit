@@ -2,6 +2,7 @@
 
 ## Current entry points
 
+- [Combat knockback and attack facing](07_Portfolio_Documents/Portfolio_Production/37_Gameplay_Knockback_and_Facing_Review_Guide.md): 구현·코드 열람·자동 검증 및 사용자 PIE 범위.
 - [Stellar asset integration](07_Portfolio_Documents/Stellar_Asset_Integration/README.md): character, weapon and environment integration cases; evidence limits included.
 - [Issue analysis reports](03_Issue_Analysis_Report/00_Issue_Analysis_Report_Index.md): integration problem-solving records.
 - [Fix PR records](04-02_Fix_Pull_Request/00_Fix_Pull_Request_Index.md): local follow-up contracts and verification.
