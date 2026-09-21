@@ -307,6 +307,7 @@ void ACEnemy::RecoverReferences()
 void ACEnemy::BuildReferences(FCharacterComponentReferences& OutReferences)
 {
 	OutReferences.OwnerCharacter = this;
+	OutReferences.CharacterMovementComponent = GetCharacterMovement();
 
 	OutReferences.MovementComponent = MovementComponent;
 	OutReferences.WeaponComponent = WeaponComponent;

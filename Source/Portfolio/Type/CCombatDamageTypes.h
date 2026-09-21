@@ -6,6 +6,7 @@
 #include "Type/CWeaponTypes.h"
 #include "Type/CActionTypes.h"
 #include "Type/CCombatHitTypes.h"
+#include "Type/CCombatKnockbackTypes.h"
 #include "CCombatDamageTypes.generated.h"
 
 // Enum
@@ -96,6 +97,9 @@ struct FDamageSpec
 public:
 	UPROPERTY(EditAnywhere)
 	float BaseDamage = 0.f;
+
+	UPROPERTY(EditAnywhere)
+	FCombatKnockbackSpec Knockback;
 
 public:
 	FDamageSpec() = default;

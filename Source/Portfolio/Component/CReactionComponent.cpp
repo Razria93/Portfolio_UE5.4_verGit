@@ -20,6 +20,7 @@
 #include "Type/CExecutionTypes.h"
 
 #include "GameFramework/Character.h"
+#include "Animation/AnimMontage.h"
 
 // Construction
 
@@ -27,8 +28,12 @@ UCReactionComponent::UCReactionComponent()
 {
 }
 
+// Component Reference
+
 void UCReactionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	StopReactionKnockback(ActiveReactionGeneration);
+
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 	MovementComp_Injected = InReferences.MovementComponent;
 	StateComp_Injected = InReferences.StateComponent;
@@ -252,6 +257,17 @@ bool UCReactionComponent::RequestInterruptActiveReaction(const FExecutionInterve
 	return InterruptActiveReaction(InDirective);
 }
 
+bool UCReactionComponent::CancelActiveReactionForSystem()
+{
+	if (!IsActive()) return true;
+
+	UCReaction* activeExecutor = GetActiveReactionExecutor();
+	if (!IsValid(activeExecutor)) return EndActiveReaction(EReactionFinishReason::Interrupted);
+
+	activeExecutor->Stop(EReactionStopReason::Interrupted);
+	return !IsActive();
+}
+
 // Execution Result Hooks
 
 void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason)
@@ -446,17 +462,6 @@ bool UCReactionComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
-bool UCReactionComponent::CancelActiveReactionForSystem()
-{
-	if (!IsActive()) return true;
-
-	UCReaction* activeExecutor = GetActiveReactionExecutor();
-	if (!IsValid(activeExecutor)) return EndActiveReaction(EReactionFinishReason::Interrupted);
-
-	activeExecutor->Stop(EReactionStopReason::Interrupted);
-	return !IsActive();
-}
-
 // Runtime Lifecycle
 
 void UCReactionComponent::InitializeReactionRuntime()
@@ -494,6 +499,10 @@ void UCReactionComponent::SetInitialActiveReactionRuntimeState()
 
 void UCReactionComponent::ResetActiveReactionRuntimeState()
 {
+	StopReactionKnockback(ActiveReactionGeneration);
+
+	++ActiveReactionGeneration;
+
 	ActiveReactionType = EReactionType::None;
 	ActiveReactionData = FReactionData();
 	ActiveReactionExecutor = nullptr;
@@ -765,20 +774,40 @@ bool UCReactionComponent::StartReaction(const FReactionExecutionContext& InConte
 		return false;
 	}
 
-	const FReactionData& incomingData = InContext.ReactionData;
+	const FReactionData incomingData = InContext.ReactionData;
+
+	const uint64 generation = ActiveReactionGeneration + 1;
 
 	SetActiveReactionContext(InContext);
+	if (!IsActiveReactionGeneration(generation)) return false;
+
 	EnterReactionState(incomingData);
+	if (!IsActiveReactionGeneration(generation)) return false;
 
 	if (!incomingExecutor->Start(incomingData))
 	{
-		// A callback may already have cleared the active context.
-		if (IsActive() && GetActiveReactionExecutor() == incomingExecutor)
+		if (IsActiveReactionGeneration(generation))
 		{
 			ExitReactionState(incomingData);
 			ClearActiveReactionContext();
 		}
+
 		FReactionComponentDebug::RecordReactionRuntimeRejectedForAudit(OwnerCharacter_Injected, InContext, TEXT("Start"), TEXT("ExecutorStartFailed"));
+		return false;
+	}
+
+	if (!IsActiveReactionGeneration(generation)) return false;
+
+	if (InContext.ReactionDataKey.ReactionType == EReactionType::Hit
+		&& InContext.Knockback.IsValid() && IsValid(MovementComp_Injected)
+		&& !incomingData.Montage->HasRootMotion())
+	{
+		MovementComp_Injected->StartKnockback(InContext.Knockback, generation);
+	}
+
+	if (!IsActiveReactionGeneration(generation))
+	{
+		StopReactionKnockback(generation);
 		return false;
 	}
 
@@ -845,9 +874,16 @@ bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason
 
 // Active Context
 
+bool UCReactionComponent::IsActiveReactionGeneration(uint64 InGeneration) const
+{
+	return IsActive() && ActiveReactionGeneration == InGeneration;
+}
+
 void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionContext& InContext)
 {
 	if (!InContext.IsValidMinimal()) return;
+
+	++ActiveReactionGeneration;
 
 	const EReactionType prevReactionType = ActiveReactionType;
 
@@ -864,6 +900,10 @@ void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionConte
 
 void UCReactionComponent::ClearActiveReactionContext()
 {
+	StopReactionKnockback(ActiveReactionGeneration);
+	
+	++ActiveReactionGeneration;
+	
 	const EReactionType prevReactionType = ActiveReactionType;
 
 	ActiveReactionType = EReactionType::None;
@@ -877,6 +917,8 @@ void UCReactionComponent::ClearActiveReactionContext()
 	}
 }
 
+// Event Broadcast
+
 void UCReactionComponent::BroadcastReactionExecutionLifecycleEvent(EReactionExecutionLifecycleEventType InEventType, EReactionFinishReason InFinishReason, const FReactionExecutionContext& InContext)
 {
 	if (!OnReactionExecutionLifecycleEvent.IsBound()) return;
@@ -886,6 +928,14 @@ void UCReactionComponent::BroadcastReactionExecutionLifecycleEvent(EReactionExec
 	event.FinishReason = InFinishReason;
 	event.Context = InContext;
 	OnReactionExecutionLifecycleEvent.Broadcast(event);
+}
+
+// Knockback
+
+void UCReactionComponent::StopReactionKnockback(uint64 InGeneration)
+{
+	if (IsValid(MovementComp_Injected))
+		MovementComp_Injected->StopKnockback(InGeneration);
 }
 
 // State Transition

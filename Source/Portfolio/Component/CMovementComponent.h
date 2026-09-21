@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CMovementTypes.h"
+#include "Type/CCombatKnockbackTypes.h"
 #include "CMovementComponent.generated.h"
 
 enum class EBalanceLifecycleState : uint8;
@@ -64,6 +65,12 @@ private:
 	float CurrentDirection = 0.f;
 
 private:
+	// Knockback Runtime
+	TSharedPtr<struct FRootMotionSource> KnockbackSource;
+	uint64 KnockbackOwnerSerial = 0;
+	uint64 KnockbackGeneration = 0;
+
+private:
 	// Component References
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
@@ -104,8 +111,17 @@ public:
 	bool CanAcceptMovementIntent() const;
 
 public:
+	// Query: Knockback State
+	bool IsKnockbackActive() const;
+
+public:
 	// Gameplay Movement Permission
 	void SetMovementEnabled(bool bEnabled);
+
+public:
+	// Knockback
+	bool StartKnockback(const FCombatKnockbackContext& InContext, uint64 InOwnerSerial);
+	void StopKnockback(uint64 InOwnerSerial);
 
 public:
 	// Movement Input Handling
@@ -122,9 +138,19 @@ public:
 	void ClearMovementGaitOverride();
 	void SetMovementRotationMode(EMovementRotationMode InRotationMode);
 
+public:
+	// Facing
+	bool TryFaceTarget(const FVector& InTargetLocation, float InMaxDistance, float InMaxAngle);
+
 private:
 	// Component Reference Validation
 	bool ValidateRequiredComponentReferences() const;
+
+private:
+	// Knockback Implementation
+	bool CanApplyKnockback() const;
+	void UpdateKnockback();
+	void ClearKnockback();
 
 private:
 	// Runtime LOD Update

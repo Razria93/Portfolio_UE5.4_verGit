@@ -34,6 +34,15 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Data")
 	bool bCanMove = false;
 
+	UPROPERTY(EditAnywhere, Category = "Facing")
+	bool bFaceCombatTargetOnStart = false;
+
+	UPROPERTY(EditAnywhere, Category = "Facing", meta = (EditCondition = "bFaceCombatTargetOnStart", ClampMin = "0.0", Units = "cm"))
+	float StartFacingMaxDistance = 450.f;
+
+	UPROPERTY(EditAnywhere, Category = "Facing", meta = (EditCondition = "bFaceCombatTargetOnStart", ClampMin = "0.0", ClampMax = "180.0", Units = "deg"))
+	float StartFacingMaxAngle = 90.f;
+
 	UPROPERTY(EditAnywhere, Category = "Execution", meta = (ClampMin = 0.0))
 	float StandardExecutionDamage = 0.f;
 

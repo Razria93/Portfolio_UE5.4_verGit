@@ -21,6 +21,7 @@
 #include "Type/CCombatSignalTargetTypes.h"
 
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 namespace
 {
@@ -234,6 +235,7 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	// Apply: commit accepted damage to target-side resource state.
 	CommitCombatSignalTarget(combatSignalTargetContext);
 	ResolveDamageReactionOutcome(combatSignalTargetContext);
+	ResolveDamageKnockback(combatSignalTargetPayload, combatSignalTargetContext);
 
 	// Packet: combine payload, context, and result for notify/debug consumers.
 	const FCombatSignalTargetResult committedResult = BuildResult(combatSignalTargetContext);
@@ -686,6 +688,25 @@ void UCCombatSignalTargetComponent::ResolveDamageReactionOutcome(FCombatSignalTa
 	}
 
 	InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::Hit;
+}
+
+void UCCombatSignalTargetComponent::ResolveDamageKnockback(const FCombatSignalTargetPayload& InPayload, FCombatSignalTargetContext& InOutContext) const
+{
+	InOutContext.Knockback = FCombatKnockbackContext();
+
+	if (!InOutContext.bAccepted || InOutContext.ReactionOutcome != EDamageReactionOutcome::Hit) return;
+	if (InOutContext.ExternalInputPolicy != EExternalCombatInputPolicy::Normal) return;
+	if (!InPayload.DamageSpec.Knockback.IsValid()) return;
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(InOutContext.SourceActor)) return;
+
+	const UCharacterMovementComponent* movement = OwnerCharacter_Injected->GetCharacterMovement();
+	if (!IsValid(movement) || !movement->IsMovingOnGround()) return;
+
+	const FVector direction = (OwnerCharacter_Injected->GetActorLocation() - InOutContext.SourceActor->GetActorLocation()).GetSafeNormal2D();
+	if (direction.ContainsNaN() || direction.IsNearlyZero()) return;
+
+	InOutContext.Knockback.Spec = InPayload.DamageSpec.Knockback;
+	InOutContext.Knockback.Direction = direction;
 }
 
 FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const

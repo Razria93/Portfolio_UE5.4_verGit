@@ -56,6 +56,9 @@ private:
 	UPROPERTY(Transient)
 	FReactionExecutionContext ActiveReactionContext = FReactionExecutionContext();
 
+	// Execution Generation
+	uint64 ActiveReactionGeneration = 0;
+
 private:
 	// Component References
 	UPROPERTY(Transient)
@@ -188,9 +191,17 @@ private:
 
 private:
 	// Active Context
+	bool IsActiveReactionGeneration(uint64 InGeneration) const;
 	void SetActiveReactionContext(const FReactionExecutionContext& InContext);
 	void ClearActiveReactionContext();
+
+private:
+	// Event Broadcast
 	void BroadcastReactionExecutionLifecycleEvent(EReactionExecutionLifecycleEventType InEventType, EReactionFinishReason InFinishReason, const FReactionExecutionContext& InContext);
+
+private:
+	// Knockback
+	void StopReactionKnockback(uint64 InGeneration);
 
 private:
 	// State Transition

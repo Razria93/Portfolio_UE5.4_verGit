@@ -220,6 +220,7 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 	OutIncomingCandidate.ReactionDataKey.MatchMode = EReactionDataMatchMode::DamageSpec;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = reactionType;
 	OutIncomingCandidate.CombatSignalResultSerial = InIncomingRequest.CombatSignalTargetPacket.ResultSerial;
+	OutIncomingCandidate.Knockback = InIncomingRequest.CombatSignalTargetPacket.Context.Knockback;
 	return true;
 }
 
@@ -350,12 +351,13 @@ bool UCReactionOrchestratorComponent::ResolveReactionContext(const FReactionCand
 		return false;
 	}
 
+	OutIncomingContext.ExecutionSessionId = InIncomingCandidate.ExecutionSessionId;
 	OutIncomingContext.ReactionDataKey = incomingReactionDataKey;
 	OutIncomingContext.ReactionData = incomingReactionData;
 	OutIncomingContext.ReactionExecutor = incomingReactionExecutor;
 	OutIncomingContext.CombatSignalResultSerial = InIncomingCandidate.CombatSignalResultSerial;
 	OutIncomingContext.BalanceLifecycleSerial = InIncomingCandidate.BalanceLifecycleSerial;
-	OutIncomingContext.ExecutionSessionId = InIncomingCandidate.ExecutionSessionId;
+	OutIncomingContext.Knockback = InIncomingCandidate.Knockback;
 
 	return true;
 }

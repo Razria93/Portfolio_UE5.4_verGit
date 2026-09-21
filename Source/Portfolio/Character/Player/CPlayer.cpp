@@ -192,6 +192,7 @@ void ACPlayer::RecoverReferences()
 void ACPlayer::BuildReferences(FCharacterComponentReferences& OutReferences)
 {
 	OutReferences.OwnerCharacter = this;
+	OutReferences.CharacterMovementComponent = GetCharacterMovement();
 
 	OutReferences.MovementComponent = MovementComponent;
 	OutReferences.WeaponComponent = WeaponComponent;

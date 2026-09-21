@@ -11,6 +11,13 @@
 #include "AIController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/RootMotionSource.h"
+
+namespace
+{
+	// Knockback Policy
+	constexpr uint16 CombatKnockbackPriority = 500;
+}
 
 // Construction
 
@@ -18,17 +25,28 @@ UCMovementComponent::UCMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
+	PrimaryComponentTick.TickGroup = TG_PrePhysics;
 }
 
 // Component Reference
 
 void UCMovementComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	ClearKnockback();
+
+	if (IsValid(CharacterMovementComp_Injected))
+		CharacterMovementComp_Injected->RemoveTickPrerequisiteComponent(this);
+
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
-	CharacterMovementComp_Injected = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->GetCharacterMovement() : nullptr;
+	CharacterMovementComp_Injected = InReferences.CharacterMovementComponent;
+
+	if (IsValid(CharacterMovementComp_Injected))
+		CharacterMovementComp_Injected->AddTickPrerequisiteComponent(this);
+
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
 	BalanceComp_Injected = InReferences.BalanceComponent;
+
 	if (IsValid(BalanceComp_Injected))
 	{
 		BalanceComp_Injected->OnBalanceLifecycleStateChanged.RemoveAll(this);
@@ -50,6 +68,9 @@ void UCMovementComponent::BeginPlay()
 
 void UCMovementComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
+	ClearKnockback();
+
+	if (IsValid(CharacterMovementComp_Injected)) CharacterMovementComp_Injected->RemoveTickPrerequisiteComponent(this);
 	if (IsValid(BalanceComp_Injected))
 	{
 		BalanceComp_Injected->OnBalanceLifecycleStateChanged.RemoveAll(this);
@@ -65,6 +86,7 @@ void UCMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	if (!IsValid(OwnerCharacter_Injected) || !IsValid(CharacterMovementComp_Injected)) return;
 
 	UpdateRuntimeLODMovementMode();
+	UpdateKnockback();
 
 	CalculateSpeed();
 	CalculateDirection();
@@ -93,11 +115,62 @@ bool UCMovementComponent::CanAcceptMovementIntent() const
 	return true;
 }
 
+// Query: Knockback State
+
+bool UCMovementComponent::IsKnockbackActive() const
+{
+	return KnockbackSource.IsValid()
+		&& IsValid(CharacterMovementComp_Injected)
+		&& CharacterMovementComp_Injected->GetRootMotionSourceByID(KnockbackSource->LocalID) == KnockbackSource
+		&& !KnockbackSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished)
+		&& !KnockbackSource->Status.HasFlag(ERootMotionSourceStatusFlags::MarkedForRemoval);
+}
+
 // Gameplay Movement Permission
 
 void UCMovementComponent::SetMovementEnabled(const bool bEnabled)
 {
 	bIsMovementEnabled = bEnabled;
+}
+
+// Knockback
+
+bool UCMovementComponent::StartKnockback(const FCombatKnockbackContext& InContext, const uint64 InOwnerSerial)
+{
+	if (InOwnerSerial == 0 || !InContext.IsValid() || !CanApplyKnockback()) return false;
+	if (KnockbackOwnerSerial == InOwnerSerial) return false;
+
+	ClearKnockback();
+
+	const uint64 generation = KnockbackGeneration;
+
+	StopActiveAIMovement();
+
+	if (KnockbackGeneration != generation || !CanApplyKnockback()) return false;
+
+	TSharedPtr<FRootMotionSource_ConstantForce> source = MakeShared<FRootMotionSource_ConstantForce>();
+
+	source->InstanceName = TEXT("CombatKnockback");
+	source->Priority = CombatKnockbackPriority;
+	source->AccumulateMode = ERootMotionAccumulateMode::Override;
+	source->Force = InContext.Direction * InContext.Spec.Speed;
+	source->Duration = InContext.Spec.Duration;
+	source->Settings.SetFlag(ERootMotionSourceSettingsFlags::IgnoreZAccumulate);
+	source->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::MaintainLastRootMotionVelocity;
+
+	const uint16 sourceId = CharacterMovementComp_Injected->ApplyRootMotionSource(source);
+	if (sourceId == static_cast<uint16>(ERootMotionSourceID::Invalid)) return false;
+
+	KnockbackSource = source;
+	KnockbackOwnerSerial = InOwnerSerial;
+
+	return true;
+}
+
+void UCMovementComponent::StopKnockback(const uint64 InOwnerSerial)
+{
+	if (InOwnerSerial == 0 || InOwnerSerial != KnockbackOwnerSerial) return;
+	ClearKnockback();
 }
 
 // Movement Input Handling
@@ -226,6 +299,30 @@ void UCMovementComponent::SetMovementRotationMode(EMovementRotationMode InRotati
 	ApplyMovementRotationMode(CurrentMovementRotationMode);
 }
 
+// Facing
+
+bool UCMovementComponent::TryFaceTarget(const FVector& InTargetLocation, const float InMaxDistance, const float InMaxAngle)
+{
+	if (!IsValid(OwnerCharacter_Injected) || OwnerCharacter_Injected->IsActorBeingDestroyed()) return false;
+	if (!IsValid(CharacterMovementComp_Injected) || !CharacterMovementComp_Injected->IsMovingOnGround()) return false;
+	if (InTargetLocation.ContainsNaN() || !FMath::IsFinite(InMaxDistance) || !FMath::IsFinite(InMaxAngle)) return false;
+	if (InMaxDistance <= 0.f || InMaxAngle <= 0.f || InMaxAngle > 180.f) return false;
+
+	FVector direction = InTargetLocation - OwnerCharacter_Injected->GetActorLocation();
+	direction.Z = 0.f;
+
+	const double distance = direction.Size();
+
+	if (!FMath::IsFinite(distance) || distance > InMaxDistance || !direction.Normalize()) return false;
+
+	const FRotator current = OwnerCharacter_Injected->GetActorRotation();
+	const float yaw = direction.Rotation().Yaw;
+
+	if (FMath::Abs(FMath::FindDeltaAngleDegrees(current.Yaw, yaw)) > InMaxAngle) return false;
+
+	return OwnerCharacter_Injected->SetActorRotation(FRotator(current.Pitch, yaw, current.Roll));
+}
+
 // Component Reference Validation
 
 bool UCMovementComponent::ValidateRequiredComponentReferences() const
@@ -246,6 +343,65 @@ bool UCMovementComponent::ValidateRequiredComponentReferences() const
 	}
 
 	return bValid;
+}
+
+// Knockback Implementation
+
+bool UCMovementComponent::CanApplyKnockback() const
+{
+	return IsValid(OwnerCharacter_Injected)
+		&& !OwnerCharacter_Injected->IsActorBeingDestroyed()
+		&& !OwnerCharacter_Injected->IsPlayingRootMotion()
+
+		&& IsValid(CharacterMovementComp_Injected)
+		&& CharacterMovementComp_Injected->IsActive()
+		&& CharacterMovementComp_Injected->IsMovingOnGround()
+
+		&& IsValid(HealthComp_Injected)
+		&& HealthComp_Injected->IsAlive()
+
+		&& (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->IsBalanceLifecycleBlocking());
+}
+
+void UCMovementComponent::UpdateKnockback()
+{
+	if (KnockbackSource.IsValid() && (!IsKnockbackActive() || !CanApplyKnockback())) ClearKnockback();
+}
+
+void UCMovementComponent::ClearKnockback()
+{
+	++KnockbackGeneration;
+
+	if (KnockbackSource.IsValid() 
+		&& IsValid(CharacterMovementComp_Injected) 
+		&& CharacterMovementComp_Injected->GetRootMotionSourceByID(KnockbackSource->LocalID) == KnockbackSource)
+	{
+		const FRootMotionSourceGroup& sources = CharacterMovementComp_Injected->CurrentRootMotion;
+
+		const auto hasOtherSource = [this](const TSharedPtr<FRootMotionSource>& InSource)
+			{
+				return InSource.IsValid() && InSource != KnockbackSource;
+			};
+
+		const bool bHasOtherSource = sources.RootMotionSources.ContainsByPredicate(hasOtherSource) || sources.PendingAddRootMotionSources.ContainsByPredicate(hasOtherSource);
+
+		const FVector sourceVelocity = KnockbackSource->RootMotionParams.GetRootMotionTransform().GetTranslation();
+		const bool bHasOwnedVelocity = FVector2D(CharacterMovementComp_Injected->Velocity).Equals(FVector2D(sourceVelocity), KINDA_SMALL_NUMBER);
+
+		if (!bHasOtherSource 
+			&& CharacterMovementComp_Injected->IsMovingOnGround()
+			&& IsValid(OwnerCharacter_Injected) && !OwnerCharacter_Injected->IsPlayingRootMotion()
+			&& KnockbackSource->Status.HasFlag(ERootMotionSourceStatusFlags::Prepared) && bHasOwnedVelocity)
+		{
+			CharacterMovementComp_Injected->Velocity.X = 0.f;
+			CharacterMovementComp_Injected->Velocity.Y = 0.f;
+		}
+
+		CharacterMovementComp_Injected->RemoveRootMotionSourceByID(KnockbackSource->LocalID);
+	}
+
+	KnockbackSource.Reset();
+	KnockbackOwnerSerial = 0;
 }
 
 // Runtime LOD Update

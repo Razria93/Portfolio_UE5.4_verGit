@@ -155,7 +155,13 @@ void UCAction_ComboAttack::ConsumeChain()
 		}
 	}
 
-	if (!PlayMontage(nextData))
+	const uint64 actionGeneration = IsValid(ActionComp_Injected) ? ActionComp_Injected->GetActiveActionGeneration() : 0;
+	const bool bPlayed = PlayMontage(nextData);
+
+	if (IsValid(ActionComp_Injected) && ActionComp_Injected->GetActiveActionGeneration() != actionGeneration)
+		return;
+
+	if (!bPlayed)
 	{
 		Stop(EActionStopReason::Ignored);
 		return;
@@ -169,8 +175,13 @@ void UCAction_ComboAttack::ConsumeChain()
 		return;
 	}
 
+	if (IsValid(ActionComp_Injected))
+		ActionComp_Injected->HandleApplyActionStarted(this, actionGeneration);
+
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Chain);
+
 	PlayFeedbackRequest(feedbackRequest);
+
 	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached, ActionRequestSerial_Cached);
 	EmitActionEvent(EActionEventType::ActionChained, ActiveDataKey_Cached, ActionRequestSerial_Cached);
 }
