@@ -121,6 +121,8 @@ Incoming Damage Packet
 
 Target은 Damage를 Commit한 뒤 Dead 상태와 Defense Outcome을 사용해 Reaction Outcome을 확정하고, 그 후 `FCombatSignalTargetPacket`을 Reaction·Feedback·Result consumer에 전달한다.
 
+2026-09-21 일반 Hit 넉백 확장에서는 Outcome 확정 뒤 `ResolveDamageKnockback`이 공격의 `FDamageSpec.Knockback`과 대상 지상 상태를 확인하고 수평 방향을 Context에 채운다. 이 단계는 이동을 실행하지 않는다. Candidate/ExecutionContext를 거쳐 일반 Hit가 실제 시작된 뒤 Reaction이 Movement에 이동을 요청한다. Guard/Parry/CollapseHit/처형/사망은 이 경로의 적용 대상이 아니다. 자세한 소유권·Root Motion 제한·검증은 [넉백 구현](../07_Portfolio_Documents/Portfolio_Production/35_Gameplay_Combat_Knockback_Implementation.md) 및 [통합 검토 가이드](../07_Portfolio_Documents/Portfolio_Production/37_Gameplay_Knockback_and_Facing_Review_Guide.md)를 참조한다.
+
 ### 5.3. Source 성공 상태의 제한
 
 Source의 `CommitCombatSignalSource()`는 `SendDamageToTarget()` 반환 Damage가 0 이하이면 Source Context를 `CommitFailed`로 기록한다. Parry는 Target이 accepted packet을 dispatch하면서도 damage를 commit하지 않아 반환값이 0일 수 있다.

@@ -4,6 +4,7 @@
 #include "Type/CReactionKeyTypes.h"
 #include "Type/CExecutionRuleTypes.h"
 #include "Type/CExecutionCollaborationTypes.h"
+#include "Type/CCombatKnockbackTypes.h"
 #include "CReactionDataTypes.generated.h"
 
 // Data / Config
@@ -68,11 +69,16 @@ public:
 	UPROPERTY(Transient)
 	class UCReaction* ReactionExecutor = nullptr;
 
+	// Source Identity
 	UPROPERTY(Transient)
 	uint64 CombatSignalResultSerial = 0;
 
 	UPROPERTY(Transient)
 	uint32 BalanceLifecycleSerial = 0;
+
+	// Knockback
+	UPROPERTY(Transient)
+	FCombatKnockbackContext Knockback;
 
 public:
 	FReactionExecutionContext() = default;

@@ -13,6 +13,8 @@
 #include "Component/CStateComponent.h"
 #include "Controller/CAIController.h"
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
+#include "Core/Debug/FCombatKnockbackDebug.h"
+#include "Core/Debug/FActionFacingDebug.h"
 #include "Core/Debug/FDebugOverlayEventCategory.h"
 #include "Type/CActionKeyTypes.h"
 
@@ -699,12 +701,20 @@ namespace
 		playerPanelViewData.Targeting = InPlayerTargeting;
 		playerPanelViewData.bIncludeLocomotion = InVisibility.bShowPlayerLocomotion && InPlayerLocomotion.Details.bHasSnapshot;
 		playerPanelViewData.Locomotion = InPlayerLocomotion;
+		playerPanelViewData.bIncludeKnockback = InVisibility.bShowPlayerKnockback && FCombatKnockbackDebug::IsEnabled();
+		if (playerPanelViewData.bIncludeKnockback)
+			playerPanelViewData.KnockbackLines = FCombatKnockbackDebug::BuildOverlayLines(InPlayerPawn);
+		playerPanelViewData.bIncludeAttackFacing = InVisibility.bShowPlayerAttackFacing && FActionFacingDebug::IsEnabled();
+		if (playerPanelViewData.bIncludeAttackFacing)
+			playerPanelViewData.AttackFacingLines = FActionFacingDebug::BuildOverlayLines(InPlayerPawn);
 		playerPanelViewData.bIncludeExecutionSession = InVisibility.bShowPlayerExecutionSession && InExecutionSession.Details.bHasSnapshot;
 		playerPanelViewData.ExecutionSession = InExecutionSession;
 		playerPanelViewData.bIncludeRecentActionReaction = InVisibility.bShowPlayerRecentActionReaction;
 		if (!playerPanelViewData.bIncludeStatus
 			&& !playerPanelViewData.bIncludeTargeting
 			&& !playerPanelViewData.bIncludeLocomotion
+			&& !playerPanelViewData.bIncludeKnockback
+			&& !playerPanelViewData.bIncludeAttackFacing
 			&& !playerPanelViewData.bIncludeExecutionSession
 			&& !playerPanelViewData.bIncludeRecentActionReaction)
 		{
@@ -720,6 +730,12 @@ namespace
 		enemyPanelViewData.bIncludeFocus = InVisibility.bShowEnemyFocus;
 		enemyPanelViewData.Focus = InEnemyFocus;
 		enemyPanelViewData.bIncludeStatus = InVisibility.bShowEnemyStatus;
+		enemyPanelViewData.bIncludeKnockback = InVisibility.bShowEnemyKnockback && FCombatKnockbackDebug::IsEnabled();
+		if (enemyPanelViewData.bIncludeKnockback)
+			enemyPanelViewData.KnockbackLines = FCombatKnockbackDebug::BuildOverlayLines(InEnemy);
+		enemyPanelViewData.bIncludeAttackFacing = InVisibility.bShowEnemyAttackFacing && FActionFacingDebug::IsEnabled();
+		if (enemyPanelViewData.bIncludeAttackFacing)
+			enemyPanelViewData.AttackFacingLines = FActionFacingDebug::BuildOverlayLines(InEnemy);
 		enemyPanelViewData.bIncludeBalanceCollapse = InVisibility.bShowEnemyBalanceCollapse && InBalanceCollapse.Details.bHasSnapshot;
 		enemyPanelViewData.BalanceCollapse = InBalanceCollapse;
 		enemyPanelViewData.bIncludeCombatTargetFacing = InVisibility.bShowEnemyCombatTargetFacing && InCombatTargetFacing.Details.bHasSnapshot;
@@ -738,6 +754,8 @@ namespace
 		enemyPanelViewData.RecentAIEvent = BuildEnemyRecentAIEventViewData(InEnemy, bInHasSnapshot, InWorld);
 		if (!enemyPanelViewData.bIncludeFocus
 			&& !enemyPanelViewData.bIncludeStatus
+			&& !enemyPanelViewData.bIncludeKnockback
+			&& !enemyPanelViewData.bIncludeAttackFacing
 			&& !enemyPanelViewData.bIncludeBalanceCollapse
 			&& !enemyPanelViewData.bIncludeCombatTargetFacing
 			&& !enemyPanelViewData.bIncludeExecutionSession

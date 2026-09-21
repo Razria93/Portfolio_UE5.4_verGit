@@ -1,5 +1,14 @@
 # Debug Overlay 운영 가이드
 
+## 넉백·공격 시작 페이싱 진단
+
+- 측정 시 바로 참고할 문서: [넉백·공격 시작 페이싱 측정 가이드](Combat_Motion_Debug_Measurement_Guide_KR.md).
+- 사용법·표시 의미·변경 파일·검증 및 PIE 절차: [Combat Motion Diagnostics](../../Portfolio_Production/38_Gameplay_Combat_Motion_Diagnostics.md).
+- `Portfolio.DebugOverlay.Knockback.Enabled 1`, `Portfolio.DebugOverlay.AttackFacing.Enabled 1`로 최신 진단을 활성화한다. 화면은 `HUDVisible`, 이벤트 수집은 `CaptureEnabled`로 별도 제어한다.
+- 이벤트 필터에 `Knockback`, `AttackFacing`이 추가됐다. 기존 `Facing`은 Enemy AI Focus 정책 진단으로 유지된다.
+- Player/Enemy별 새 섹션 토글은 패널만 제어한다. 월드 드로우는 각 도메인의 `DrawWorld`로 제어한다.
+- 전체 상세 섹션을 동시에 켜면 기존 메인 패널이 화면 아래로 넘칠 수 있으므로, 진단할 때 불필요한 상세 섹션을 숨긴다.
+
 ## TestRoom 수동 연결 절차
 
 ### 전제

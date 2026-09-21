@@ -119,10 +119,15 @@ public:
 	UPROPERTY(Transient)
 	FReactionDataKey ReactionDataKey = FReactionDataKey();
 
+	// Source Identity
 	UPROPERTY(Transient)
 	uint64 CombatSignalResultSerial = 0;
 
 	uint32 BalanceLifecycleSerial = 0;
+
+	// Knockback
+	UPROPERTY(Transient)
+	FCombatKnockbackContext Knockback;
 
 public:
 	bool IsValidMinimal() const

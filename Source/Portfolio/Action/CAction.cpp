@@ -146,7 +146,13 @@ bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSeri
 	ActiveMontage_Cached = InData.Montage;
 	bIsActive = true;
 
-	if (!PlayMontage(InData))
+	const uint64 actionGeneration = IsValid(ActionComp_Injected) ? ActionComp_Injected->GetActiveActionGeneration() : 0;
+	const bool bPlayed = PlayMontage(InData);
+
+	if (IsValid(ActionComp_Injected) && ActionComp_Injected->GetActiveActionGeneration() != actionGeneration)
+		return false;
+
+	if (!bPlayed)
 	{
 		ClearRuntime();
 		return false;
@@ -162,9 +168,14 @@ bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSeri
 		return false;
 	}
 
+	if (IsValid(ActionComp_Injected))
+		ActionComp_Injected->HandleApplyActionStarted(this, actionGeneration);
+
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
+
 	PlayFeedbackRequest(feedbackRequest);
 	EmitActionEvent(EActionEventType::ActionStarted, ActiveDataKey_Cached, ActionRequestSerial_Cached);
+
 	FActionComponentDebug::RecordActionExecutorStartedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached);
 	FActionComponentDebug::PrintActionExecutorRuntimeDebug(OwnerCharacter_Injected, this, ActiveData_Cached, ActiveMontage_Cached, CachedSerial_ActivePlay, TEXT("Start"));
 

@@ -21,6 +21,10 @@
 
 ## Navigation
 
+- [Combat Motion Diagnostics](38_Gameplay_Combat_Motion_Diagnostics.md): 넉백·공격 시작 페이싱 관측 구조, 사용법, 변경 파일 및 PIE 확인 절차
+- [Knockback and Attack Facing Review Guide](37_Gameplay_Knockback_and_Facing_Review_Guide.md): 통합 열람 순서·코드 지도·최신 검증·미확인 경계
+- [Grounded Hit Knockback](35_Gameplay_Combat_Knockback_Implementation.md): 공격별 설정·데이터 전달·실행 소유권·이동 정리
+- [Attack Start Facing](36_Gameplay_Attack_Start_Facing.md): 콤보별 일회성 방향 보정·내부 실행 세대·Root Motion 경계
 - [Gameplay Combat HUD Plan](31_Gameplay_Combat_HUD_Design_and_Implementation_Plan%20(KR).md): 전체 HUD 및 현재 데이터 연결 범위
 - [Gameplay Combat HUD Visual Spec](32_Gameplay_Combat_HUD_Visual_Spec.md): 배치·폰트·아이콘·TODO 초안
 - [Gameplay Combat HUD Implementation](33_Gameplay_Combat_HUD_Implementation_and_Validation.md): 구현·자동검사·사용자 PIE 확인 범위

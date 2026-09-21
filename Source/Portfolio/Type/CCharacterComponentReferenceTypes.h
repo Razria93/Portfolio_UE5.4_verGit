@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 
 class ACharacter;
+class UCharacterMovementComponent;
 class UCActionComponent;
 class UCActionFeedbackComponent;
 class UCActionOrchestratorComponent;
@@ -31,6 +32,7 @@ class UCBalanceComponent;
 struct FCharacterComponentReferences
 {
 	ACharacter* OwnerCharacter = nullptr;
+	UCharacterMovementComponent* CharacterMovementComponent = nullptr;
 
 	UCMovementComponent* MovementComponent = nullptr;
 	UCWeaponComponent* WeaponComponent = nullptr;

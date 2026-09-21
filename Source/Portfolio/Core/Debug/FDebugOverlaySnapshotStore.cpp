@@ -431,6 +431,8 @@ void FDebugOverlaySnapshotStore::RemoveActorDebugData(const UObject* InWorldCont
 	if (!store) return;
 
 	EventRingAccess::RemoveActorEventHistoryFromStore(*store, InActor);
+	store->KnockbackByActor.Remove(TWeakObjectPtr<AActor>(const_cast<AActor*>(InActor)));
+	store->AttackFacingByActor.Remove(TWeakObjectPtr<AActor>(const_cast<AActor*>(InActor)));
 	if (const APawn* pawn = Cast<APawn>(InActor))
 	{
 		store->LastAIByPawn.Remove(TWeakObjectPtr<APawn>(const_cast<APawn*>(pawn)));

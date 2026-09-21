@@ -23,6 +23,7 @@
 
 ## 주요 문서
 
+- [넉백·공격 시작 페이싱 측정 가이드](02_Operation/Combat_Motion_Debug_Measurement_Guide_KR.md): 측정 조건, 색상·도형 의미, 설정과 문제 확인 절차.
 - `01_Planning/Debug_Overlay_Plan_KR.md`
 - `01_Planning/Debug_Overlay_Implementation_Position_Review_KR.md`
 - `01_Planning/Debug_Overlay_P0_Final_Decision_KR.md`

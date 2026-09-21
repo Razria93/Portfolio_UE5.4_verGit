@@ -7,6 +7,7 @@
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CObservableOverlayComponent.h"
+#include "Component/CCombatTargetComponent.h"
 #include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
@@ -20,32 +21,92 @@
 #include "Type/CObservableOverlayTypes.h"
 #include "Type/CExecutionTypes.h"
 #include "Core/Debug/FActionComponentDebug.h"
+#include "Core/Debug/FActionFacingDebug.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+// Construction
 
 UCActionComponent::UCActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.TickGroup = TG_PrePhysics;
 }
+
+// Component Reference
 
 void UCActionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	ClearPendingStartFacing();
+	ActiveActionGeneration = 0;
+
+	if (IsValid(OwnerCharacter_Injected) && IsValid(OwnerCharacter_Injected->GetCharacterMovement()))
+		OwnerCharacter_Injected->GetCharacterMovement()->RemoveTickPrerequisiteComponent(this);
+
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 	MovementComp_Injected = InReferences.MovementComponent;
 	WeaponComp_Injected = InReferences.WeaponComponent;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
+	CombatTargetComp_Injected = InReferences.CombatTargetComponent;
 	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
 	CombatSignalSourceComp_Injected = InReferences.CombatSignalSourceComponent;
 	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
 	ActionFeedbackComp_Injected = InReferences.ActionFeedbackComponent;
 
+	ClearPendingStartFacing();
+
+	if (IsValid(OwnerCharacter_Injected) && IsValid(OwnerCharacter_Injected->GetCharacterMovement()))
+		OwnerCharacter_Injected->GetCharacterMovement()->AddTickPrerequisiteComponent(this);
+
 	ValidateRequiredComponentReferences();
 }
+
+// Lifecycle
+
+void UCActionComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitializeActionRuntime();
+}
+
+void UCActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ActiveActionGeneration = 0;
+	ClearPendingStartFacing();
+
+	if (IsValid(OwnerCharacter_Injected) && IsValid(OwnerCharacter_Injected->GetCharacterMovement()))
+		OwnerCharacter_Injected->GetCharacterMovement()->RemoveTickPrerequisiteComponent(this);
+
+	UninitializeActionRuntime();
+	FDebugOverlaySnapshotStore::RemoveActorDebugData(this, GetOwner());
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	ApplyPendingStartFacing();
+
+	for (TPair<UClass*, UCAction*>& pair : ActionExecutorMap)
+	{
+		UCAction* actionExecutor = pair.Value;
+		if (!IsValid(actionExecutor)) continue;
+
+		actionExecutor->Tick(DeltaTime);
+	}
+}
+
+// Component Reference Validation
 
 bool UCActionComponent::ValidateRequiredComponentReferences() const
 {
@@ -71,35 +132,6 @@ bool UCActionComponent::ValidateRequiredComponentReferences() const
 	}
 
 	return bValid;
-}
-
-// Lifecycle
-
-void UCActionComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	InitializeActionRuntime();
-}
-
-void UCActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	UninitializeActionRuntime();
-
-	Super::EndPlay(EndPlayReason);
-}
-
-void UCActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	for (TPair<UClass*, UCAction*>& pair : ActionExecutorMap)
-	{
-		UCAction* actionExecutor = pair.Value;
-		if (!IsValid(actionExecutor)) continue;
-
-		actionExecutor->Tick(DeltaTime);
-	}
 }
 
 // Runtime Lifecycle
@@ -134,12 +166,20 @@ void UCActionComponent::ClearActionRuntimeMaps()
 
 void UCActionComponent::SetInitialActiveActionRuntimeState()
 {
+	ActiveActionGeneration = 0;
+
+	ClearPendingStartFacing();
+
 	ActiveActionType = EActionType::Idle;
 	ActiveWeaponActionPoseScopeHandle = 0;
 }
 
 void UCActionComponent::ResetActiveActionRuntimeState()
 {
+	ActiveActionGeneration = 0;
+
+	ClearPendingStartFacing();
+
 	ReleaseActiveWeaponActionPoseScope();
 
 	ActiveActionType = EActionType::None;
@@ -215,6 +255,22 @@ bool UCActionComponent::FindPreparedActionContext(const FActionDataKey& InKey, F
 	return true;
 }
 
+bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionData& InData) const
+{
+	if (!IsActive()) return false;
+
+	if (!IsValid(InAction)) return false;
+	if (InAction != GetActiveActionExecutor()) return false;
+	if (!InData.IsValidMinimal()) return false;
+
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+
+	if (!IsValid(StateComp_Injected)) return false;
+	if (StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Action) return false;
+
+	return true;
+}
+
 // Data Resolve
 
 bool UCActionComponent::ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData)
@@ -255,22 +311,6 @@ UCAction* UCActionComponent::ResolveActionExecutor(const FActionData& InData)
 
 	FActionComponentDebug::RecordActionExecutorResolveFailedForAudit(OwnerCharacter_Injected, InData, TEXT("AddExecutorFailed"));
 	return nullptr;
-}
-
-bool UCActionComponent::CanCommitChain(const UCAction* InAction, const FActionData& InData) const
-{
-	if (!IsActive()) return false;
-
-	if (!IsValid(InAction)) return false;
-	if (InAction != GetActiveActionExecutor()) return false;
-	if (!InData.IsValidMinimal()) return false;
-
-	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
-
-	if (!IsValid(StateComp_Injected)) return false;
-	if (StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Action) return false;
-
-	return true;
 }
 
 // Execution Entry
@@ -371,12 +411,38 @@ bool UCActionComponent::CancelActiveActionForSystem()
 
 // Execution Result Hooks
 
+void UCActionComponent::HandleApplyActionStarted(const UCAction* InAction, const uint64 InActionGeneration)
+{
+	if (!IsActive() || !IsValid(InAction) || !InAction->IsActive()) return;
+	if (InAction != ActiveActionExecutor || InActionGeneration == 0 || InActionGeneration != ActiveActionGeneration) return;
+
+	ClearPendingStartFacing();
+
+	if (ActiveActionType != EActionType::ComboAttack) return;
+	if (!ActiveActionData.bFaceCombatTargetOnStart)
+	{
+		FActionFacingDebug::Record(this, InActionGeneration, nullptr, TEXT("Disabled"), TEXT("OptionOff"));
+		return;
+	}
+	if (!IsValid(CombatTargetComp_Injected))
+	{
+		FActionFacingDebug::Record(this, InActionGeneration, nullptr, TEXT("Skipped"), TEXT("TargetComponentUnavailable"));
+		return;
+	}
+
+	PendingStartFacingTarget = CombatTargetComp_Injected->GetCombatTargetActor();
+	PendingStartFacingGeneration = InActionGeneration;
+	FActionFacingDebug::Record(this, InActionGeneration, PendingStartFacingTarget.Get(), TEXT("Queued"), TEXT("None"));
+}
+
 bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData, const uint32 InActionRequestSerial)
 {
 	if (!IsActive()) return false;
 	if (!IsValid(InAction)) return false;
 	if (InAction != GetActiveActionExecutor()) return false;
 	if (!InData.IsValidMinimal()) return false;
+
+	AdvanceActionGeneration();
 
 	ActiveActionType = InData.ActionDataKey.ActionType;
 	ActiveActionIndex = InData.ActionDataKey.ActionIndex;
@@ -839,6 +905,7 @@ bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 
 	ActiveWeaponActionPoseScopeHandle = actionPoseScopeHandle;
 	SetActiveActionContext(InContext);
+	const uint64 actionGeneration = ActiveActionGeneration;
 	EnterActionState(incomingData);
 
 	if (!incomingExecutor->Start(incomingData, InContext.ActionRequestSerial))
@@ -846,7 +913,7 @@ bool UCActionComponent::StartAction(const FActionExecutionContext& InContext)
 		// Start may synchronously finish and clear the action through a time-zero notify.
 		if (IsActive()
 			&& GetActiveActionExecutor() == incomingExecutor
-			&& ActiveActionRequestSerial == InContext.ActionRequestSerial)
+			&& ActiveActionGeneration == actionGeneration)
 		{
 			ReleaseActiveWeaponActionPoseScope();
 			ExitActionState(incomingData);
@@ -966,9 +1033,21 @@ void UCActionComponent::ReleaseActiveWeaponActionPoseScope()
 
 // Active Context
 
+void UCActionComponent::AdvanceActionGeneration()
+{
+	ClearPendingStartFacing();
+
+	if (++NextActionGeneration == 0)
+		++NextActionGeneration;
+
+	ActiveActionGeneration = NextActionGeneration;
+}
+
 void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& InContext)
 {
 	if (!InContext.IsValidMinimal()) return;
+
+	AdvanceActionGeneration();
 
 	const EActionType prevActionType = ActiveActionType;
 
@@ -986,6 +1065,10 @@ void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& In
 
 void UCActionComponent::ClearActiveActionContext()
 {
+	ActiveActionGeneration = 0;
+
+	ClearPendingStartFacing();
+
 	const EActionType prevActionType = ActiveActionType;
 
 	ActiveActionType = EActionType::None;
@@ -998,6 +1081,48 @@ void UCActionComponent::ClearActiveActionContext()
 	{
 		OnActionTypeChanged.Broadcast(OwnerCharacter_Injected, prevActionType, ActiveActionType);
 	}
+}
+
+// Start Facing
+
+void UCActionComponent::ApplyPendingStartFacing()
+{
+	const uint64 generation = PendingStartFacingGeneration;
+	AActor* target = PendingStartFacingTarget.Get();
+
+	ClearPendingStartFacing(true);
+	if (generation == 0) return;
+	const auto skip = [this, generation, target](const TCHAR* Reason)
+	{
+		FActionFacingDebug::Record(this, generation, target, TEXT("Skipped"), Reason);
+	};
+
+	if (!IsActive() || generation != ActiveActionGeneration) { skip(TEXT("ExecutionChanged")); return; }
+	if (!IsValid(ActiveActionExecutor) || !ActiveActionExecutor->IsActive()) { skip(TEXT("ExecutorInactive")); return; }
+
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) { skip(TEXT("HealthUnavailable")); return; }
+	if (!IsValid(StateComp_Injected) || StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Action) { skip(TEXT("NotInActionState")); return; }
+	if (!IsValid(MovementComp_Injected)) { skip(TEXT("MovementUnavailable")); return; }
+
+	if (!IsValid(target) || target->IsActorBeingDestroyed() || target == OwnerCharacter_Injected) { skip(TEXT("TargetUnavailable")); return; }
+	if (!IsValid(CombatTargetComp_Injected) || CombatTargetComp_Injected->GetCombatTargetActor() != target) { skip(TEXT("TargetChanged")); return; }
+
+	const UCHealthComponent* targetHealth = target->FindComponentByClass<UCHealthComponent>();
+	if (IsValid(targetHealth) && !targetHealth->IsAlive()) { skip(TEXT("TargetDead")); return; }
+
+	const FVector origin = GetOwner()->GetActorLocation();
+	const float beforeYaw = GetOwner()->GetActorRotation().Yaw;
+	const TCHAR* reason = TEXT("None");
+	const bool applied = MovementComp_Injected->TryFaceTarget(target->GetActorLocation(), ActiveActionData.StartFacingMaxDistance, ActiveActionData.StartFacingMaxAngle, &reason);
+	FActionFacingDebug::Record(this, generation, target, applied ? TEXT("Applied") : TEXT("Skipped"), reason, &origin, &beforeYaw);
+}
+
+void UCActionComponent::ClearPendingStartFacing(bool bConsumed)
+{
+	if (!bConsumed && PendingStartFacingGeneration != 0)
+		FActionFacingDebug::Record(this, PendingStartFacingGeneration, PendingStartFacingTarget.Get(), TEXT("Cancelled"), TEXT("ExecutionClearedOrReplaced"));
+	PendingStartFacingGeneration = 0;
+	PendingStartFacingTarget.Reset();
 }
 
 // State Transition

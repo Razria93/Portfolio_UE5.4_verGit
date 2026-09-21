@@ -352,6 +352,22 @@ namespace
 			AppendPlayerLocomotionLines(InOutLines, InActorPanelViewData.Locomotion);
 		}
 
+		if (InActorPanelViewData.bIncludeKnockback)
+		{
+			AppendFormattedOverlayLine(InOutLines, TEXT(""));
+			AppendFormattedOverlayLine(InOutLines, TEXT("[Knockback]"));
+			for (const FString& line : InActorPanelViewData.KnockbackLines)
+				AppendFormattedOverlayLine(InOutLines, line);
+		}
+
+		if (InActorPanelViewData.bIncludeAttackFacing)
+		{
+			AppendFormattedOverlayLine(InOutLines, TEXT(""));
+			AppendFormattedOverlayLine(InOutLines, TEXT("[Attack Facing]"));
+			for (const FString& line : InActorPanelViewData.AttackFacingLines)
+				AppendFormattedOverlayLine(InOutLines, line);
+		}
+
 		if (InActorPanelViewData.bIncludeTargeting)
 		{
 			AppendPlayerTargetingLines(InOutLines, InActorPanelViewData.Targeting);

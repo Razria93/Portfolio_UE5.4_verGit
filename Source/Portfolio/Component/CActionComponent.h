@@ -17,15 +17,19 @@ UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	friend class FActionFacingDebug;
 
 public:
+	// Construction
 	UCActionComponent();
 
 private:
+	// Data Configuration
 	UPROPERTY(EditAnywhere, Category = "Action|Data")
 	TArray<FActionData> ActionDatas;
 
 private:
+	// Runtime Map
 	UPROPERTY(Transient)
 	TMap<FActionDataKey, FActionData> ActionDataMap;
 
@@ -33,6 +37,7 @@ private:
 	TMap<class UClass*, class UCAction*> ActionExecutorMap;
 
 private:
+	// Active Runtime State
 	UPROPERTY(Transient)
 	EActionType ActiveActionType = EActionType::Max;
 
@@ -48,6 +53,14 @@ private:
 	UPROPERTY(Transient)
 	class UCAction* ActiveActionExecutor = nullptr;
 
+	// Execution Generation
+	uint64 ActiveActionGeneration = 0;
+	uint64 NextActionGeneration = 0;
+
+	// Start Facing Runtime
+	uint64 PendingStartFacingGeneration = 0;
+	TWeakObjectPtr<AActor> PendingStartFacingTarget;
+
 	// Action Pose Scope
 	UPROPERTY(Transient)
 	uint32 ActiveWeaponActionPoseScopeHandle = 0;
@@ -56,6 +69,7 @@ private:
 	uint32 NextWeaponActionPoseScopeHandle = 1;
 
 private:
+	// Component References
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
@@ -75,6 +89,9 @@ private:
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCCombatTargetComponent* CombatTargetComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCExecutionCollaborationComponent* ExecutionCollaborationComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -90,15 +107,13 @@ private:
 	class UCActionFeedbackComponent* ActionFeedbackComp_Injected = nullptr;
 
 public:
+	// Event
 	FActionTypeChanged OnActionTypeChanged;
 	FActionEventSignature OnActionEvent;
 
 public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
-
-private:
-	bool ValidateRequiredComponentReferences() const;
 
 protected:
 	// Lifecycle
@@ -114,18 +129,18 @@ public:
 	EActionType GetActiveActionType() const;
 	int32 GetActiveActionIndex() const;
 	uint32 GetActiveActionRequestSerial() const;
+	uint64 GetActiveActionGeneration() const { return ActiveActionGeneration; }
 	uint32 GetActiveWeaponActionPoseScopeHandle() const;
 	bool GetActiveActionData(FActionData& OutData) const;
 	class UCAction* GetActiveActionExecutor() const;
 
 	bool FindPreparedActionContext(const FActionDataKey& InKey, FActionExecutionContext& OutContext) const;
+	bool CanCommitChain(const UCAction* InAction, const FActionData& InData) const;
 
 public:
 	// Data Resolve
 	bool ResolveActionData(const FActionDataKey& InDataKey, FActionData& OutData);
 	class UCAction* ResolveActionExecutor(const FActionData& InData);
-
-	bool CanCommitChain(const UCAction* InAction, const FActionData& InData) const;
 
 public:
 	// Execution Entry
@@ -135,6 +150,7 @@ public:
 
 public:
 	// Execution Result Hooks
+	void HandleApplyActionStarted(const UCAction* InAction, uint64 InActionGeneration);
 	bool HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData, uint32 InActionRequestSerial);
 	void HandleApplyActionFinished(const class UCAction* InAction, EActionFinishReason InFinishReason);
 
@@ -168,6 +184,10 @@ public:
 public:
 	// Event Broadcast
 	void BroadcastActionEvent(EActionType InType, int32 InIndex, uint32 InActionRequestSerial, EActionEventType InEventType);
+
+private:
+	// Component Reference Validation
+	bool ValidateRequiredComponentReferences() const;
 
 private:
 	// Runtime Lifecycle
@@ -212,8 +232,14 @@ private:
 
 private:
 	// Active Context
+	void AdvanceActionGeneration();
 	void SetActiveActionContext(const FActionExecutionContext& InContext);
 	void ClearActiveActionContext();
+
+private:
+	// Start Facing
+	void ApplyPendingStartFacing();
+	void ClearPendingStartFacing(bool bConsumed = false);
 
 private:
 	// State Transition

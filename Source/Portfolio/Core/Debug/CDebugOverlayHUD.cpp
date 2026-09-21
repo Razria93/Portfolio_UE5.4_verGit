@@ -3,6 +3,8 @@
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
 #include "Core/Debug/FBalanceDebug.h"
+#include "Core/Debug/FCombatKnockbackDebug.h"
+#include "Core/Debug/FActionFacingDebug.h"
 #include "Core/Debug/FCombatParticipationDebug.h"
 #include "Core/Debug/FDebugOverlayDisplayConfig.h"
 #include "Core/Debug/FEnemyCombatTargetFacingDebug.h"
@@ -192,6 +194,13 @@ void ACDebugOverlayHUD::DrawHUD()
 	FCombatParticipationDebug::DrawWorldDebug(world, combatParticipationSnapshot);
 	FBalanceDebug::DrawWorldDebug(world, focusedEnemy, balanceCollapseSnapshot);
 	FExecutionCollaborationDebug::DrawWorldDebug(world, playerExecutionCollaborationSnapshot);
+	FCombatKnockbackDebug::DrawWorldDebug(world, playerPawn);
+	FActionFacingDebug::DrawWorldDebug(world, playerPawn);
+	if (focusedEnemy != playerPawn)
+	{
+		FCombatKnockbackDebug::DrawWorldDebug(world, focusedEnemy);
+		FActionFacingDebug::DrawWorldDebug(world, focusedEnemy);
+	}
 
 	const FDebugOverlayPanelVisibility panelVisibility = DebugOverlayDisplayConfig::GetPanelVisibility();
 

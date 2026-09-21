@@ -34,6 +34,8 @@ namespace DebugOverlaySnapshotStoreInternals
 		FDebugOverlayRecentCombatPair RecentCombatPair;
 		TMap<TObjectKey<AActor>, FDebugOverlayActorEventHistory> EventHistoryByActor;
 		TMap<TWeakObjectPtr<APawn>, FDebugOverlayAISummary> LastAIByPawn;
+		TMap<TWeakObjectPtr<AActor>, FCombatKnockbackDebugHistory> KnockbackByActor;
+		TMap<TWeakObjectPtr<AActor>, FActionFacingDebugRecord> AttackFacingByActor;
 		int32 NextEventIndex = 0;
 		int32 EventCount = 0;
 		uint64 EventWriteSerial = 0;

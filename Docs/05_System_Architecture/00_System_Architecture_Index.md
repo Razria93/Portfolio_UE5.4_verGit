@@ -4,6 +4,8 @@
 각 문서의 현재 역할은 표의 `다음 분류 후보` 열로 관리한다. `Current System`은 현재 runtime 계약의
 정규 기준이고, `System Design Records`와 `Archive`는 당시의 설계·검증 기록으로 보존한다.
 
+최근 구현 확장: [일반 Hit 넉백·공격 시작 방향 보정 검토 가이드](../07_Portfolio_Documents/Portfolio_Production/37_Gameplay_Knockback_and_Facing_Review_Guide.md). S37/S38의 실행·판정 경계를 유지한 이동 연결이며, 세부 코드와 검증 범위는 연결 문서에서 관리한다.
+
 ---
 
 | ID | 제목 | 파일 | 현재 역할 | 다음 분류 후보 | 비고 |

@@ -103,6 +103,9 @@ public:
 	EDamageReactionOutcome ReactionOutcome = EDamageReactionOutcome::None;
 
 	UPROPERTY(Transient)
+	FCombatKnockbackContext Knockback;
+
+	UPROPERTY(Transient)
 	EExternalCombatInputPolicy ExternalInputPolicy = EExternalCombatInputPolicy::Normal;
 
 	UPROPERTY(Transient)

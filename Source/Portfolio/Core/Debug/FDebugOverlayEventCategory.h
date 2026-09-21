@@ -11,4 +11,6 @@ namespace DebugOverlayEventCategory
 	inline constexpr TCHAR Balance[] = TEXT("Balance");
 	inline constexpr TCHAR Death[] = TEXT("Death");
 	inline constexpr TCHAR Facing[] = TEXT("Facing");
+	inline constexpr TCHAR Knockback[] = TEXT("Knockback");
+	inline constexpr TCHAR AttackFacing[] = TEXT("AttackFacing");
 }
