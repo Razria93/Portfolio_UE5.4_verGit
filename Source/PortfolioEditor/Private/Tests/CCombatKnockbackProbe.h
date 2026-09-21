@@ -3,7 +3,17 @@
 #include "CoreMinimal.h"
 #include "Reaction/CReaction.h"
 #include "Component/CReactionComponent.h"
+#include "Character/Player/CPlayer.h"
 #include "CCombatKnockbackProbe.generated.h"
+
+UCLASS(Transient)
+class ACCombatKnockbackCharacterProbe : public ACPlayer
+{
+	GENERATED_BODY()
+
+protected:
+	void PostInitializeComponents() override { ACharacter::PostInitializeComponents(); }
+};
 
 UCLASS(Transient)
 class UCCombatKnockbackProbe : public UCReaction

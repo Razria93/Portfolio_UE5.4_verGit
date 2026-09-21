@@ -5,6 +5,8 @@
 #include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Tests/CCombatKnockbackProbe.h"
 #include "Engine/World.h"
+#include "Engine/Engine.h"
+#include "GameFramework/WorldSettings.h"
 #include "Animation/AnimMontage.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CMovementComponent.h"
@@ -43,7 +45,8 @@ namespace CombatKnockbackTest
 		UCharacterMovementComponent* CharacterMovement = Player->GetCharacterMovement();
 		FCharacterComponentReferences References;
 
-		FFixture()
+		FFixture(bool bWorldTick = false)
+			: Player(bWorldTick ? World->SpawnActor<ACCombatKnockbackCharacterProbe>() : World->SpawnActor<ACPlayer>())
 		{
 			References.OwnerCharacter = Player;
 			References.CharacterMovementComponent = CharacterMovement;
@@ -348,6 +351,185 @@ bool FCombatKnockbackFrameRateTest::RunTest(const FString& Parameters)
 		TestTrue(TEXT("Distance matches speed times duration within one 30Hz frame"), FMath::Abs(distances.Last() - 150.0) <= 10.1);
 	}
 	TestTrue(TEXT("30Hz and 144Hz displacement stay within one 30Hz frame"), FMath::Abs(distances[0] - distances[2]) <= 10.1);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCombatKnockbackExpiryReviewTest, "Portfolio.Combat.Knockback.ExpiryBoundary",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCombatKnockbackExpiryReviewTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatKnockbackTest;
+	for (int32 scenario = 0; scenario < 4; ++scenario)
+	for (int32 rate : {30, 60, 144})
+	for (bool noBraking : {false, true})
+	{
+		FFixture fixture;
+		APlayerController* controller = fixture.World->SpawnActor<APlayerController>();
+		controller->Possess(fixture.Player);
+		UBoxComponent* floor = fixture.AddBox(FVector(0, 0, -20), FVector(2000, 2000, 20));
+		if (scenario == 2) floor->SetWorldRotation(FRotator(15, 0, 0));
+		fixture.Player->SetActorLocation(FVector(0, 0, 100));
+		for (int32 i = 0; i < 30; ++i) fixture.TickMovement();
+		if (!TestTrue(TEXT("Review fixture grounded"), fixture.CharacterMovement->IsMovingOnGround())) continue;
+		if (scenario == 1)
+		{
+			UBoxComponent* wall = fixture.AddBox(FVector(80, 0, 100), FVector(10, 500, 200));
+			wall->SetWorldRotation(FRotator(0, 30, 0));
+		}
+		if (noBraking)
+		{
+			fixture.CharacterMovement->GroundFriction = 0.f;
+			fixture.CharacterMovement->BrakingFriction = 0.f;
+			fixture.CharacterMovement->BrakingDecelerationWalking = 0.f;
+		}
+		FCombatKnockbackContext context = Context();
+		context.Spec.Duration = 0.213f;
+		TestTrue(TEXT("Review motion starts"), fixture.Movement->StartKnockback(context, 100));
+		if (scenario == 3)
+		{
+			auto other = MakeShared<FRootMotionSource_ConstantForce>();
+			other->InstanceName = TEXT("ReviewOther");
+			other->Priority = 600;
+			other->AccumulateMode = ERootMotionAccumulateMode::Override;
+			other->Force = FVector(0, 40, 0);
+			other->Duration = 2.f;
+			fixture.CharacterMovement->ApplyRootMotionSource(other);
+		}
+		const float dt = 1.f / rate;
+		const FVector start = fixture.Player->GetActorLocation();
+		TSharedPtr<FRootMotionSource> source;
+		for (int32 frame = 0; frame < rate; ++frame)
+		{
+			fixture.TickMovement(dt);
+			for (const auto& candidate : fixture.CharacterMovement->CurrentRootMotion.RootMotionSources)
+				if (candidate.IsValid() && candidate->InstanceName == TEXT("CombatKnockback")) source = candidate;
+			if (!source.IsValid() || !source->Status.HasFlag(ERootMotionSourceStatusFlags::Finished)) continue;
+			const FVector before = fixture.Player->GetActorLocation();
+			const FVector velocityBefore = fixture.CharacterMovement->Velocity;
+			const FVector prepared = source->RootMotionParams.GetRootMotionTransform().GetTranslation();
+			const bool present = fixture.CharacterMovement->GetRootMotionSourceByID(source->LocalID) == source;
+			static_cast<UActorComponent*>(fixture.Movement)->TickComponent(dt, LEVELTICK_All, &fixture.Movement->PrimaryComponentTick);
+			const FVector afterCleanup = fixture.CharacterMovement->Velocity;
+			fixture.CharacterMovement->TickComponent(dt, LEVELTICK_All, &fixture.CharacterMovement->PrimaryComponentTick);
+			const double firstDrift = FVector::Dist2D(before, fixture.Player->GetActorLocation());
+			for (int32 i = 0; i < 5; ++i) fixture.TickMovement(dt);
+			TestTrue(TEXT("Owned source still exists before project cleanup"), present);
+			if (scenario < 3)
+			{
+				TestTrue(TEXT("Expiration clears horizontal velocity immediately"), afterCleanup.Size2D() < 0.001);
+				TestTrue(TEXT("First post-expiration frame has no residual displacement"), firstDrift < 0.001);
+				TestTrue(TEXT("Following frames have no residual displacement"), FVector::Dist2D(before, fixture.Player->GetActorLocation()) < 0.001);
+			}
+			else
+			{
+				TestTrue(TEXT("Other source velocity survives cleanup"), afterCleanup.Equals(FVector(0, 40, 0), 0.001));
+				TestTrue(TEXT("Other source continues moving"), FMath::IsNearlyEqual(fixture.Player->GetActorLocation().Y - before.Y, 40.0 * dt * 6, 0.01));
+			}
+			AddInfo(FString::Printf(TEXT("ExpiryReview scenario=%d hz=%d noBraking=%d present=%d sourceTime=%.6f before=(%.6f,%.6f) prepared=(%.6f,%.6f) afterCleanup=(%.6f,%.6f) firstDrift=%.6f sixFrameDrift=%.6f grounded=%d motionDelta=%s"),
+				scenario, rate, noBraking, present, source->GetTime(), velocityBefore.X, velocityBefore.Y, prepared.X, prepared.Y,
+				afterCleanup.X, afterCleanup.Y, firstDrift, FVector::Dist2D(before, fixture.Player->GetActorLocation()), fixture.CharacterMovement->IsMovingOnGround(), *(before - start).ToString()));
+			TestFalse(TEXT("Expired owner is inactive"), fixture.Movement->IsKnockbackActive());
+			break;
+		}
+		TestTrue(TEXT("Review reached natural expiration"), source.IsValid() && source->Status.HasFlag(ERootMotionSourceStatusFlags::Finished));
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCombatKnockbackExpiryCounterfactualTest, "Portfolio.Combat.Knockback.ExpiryCounterfactual",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCombatKnockbackExpiryCounterfactualTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatKnockbackTest;
+	FFixture f;
+	f.AddBox(FVector(0, 0, -20), FVector(2000, 2000, 20));
+	f.Player->SetActorLocation(FVector(0, 0, 100));
+	f.World->SpawnActor<APlayerController>()->Possess(f.Player);
+	for (int32 i = 0; i < 30; ++i) f.TickMovement();
+	f.CharacterMovement->GroundFriction = 0;
+	f.CharacterMovement->BrakingFriction = 0;
+	f.CharacterMovement->BrakingDecelerationWalking = 0;
+	TestTrue(TEXT("Counterfactual starts"), f.Movement->StartKnockback(Context(), 100));
+	bool observed = false;
+	for (int32 i = 0; i < 60; ++i)
+	{
+		f.TickMovement();
+		TSharedPtr<FRootMotionSource> expired;
+		for (const auto& source : f.CharacterMovement->CurrentRootMotion.RootMotionSources)
+			if (source.IsValid() && source->InstanceName == TEXT("CombatKnockback") && source->Status.HasFlag(ERootMotionSourceStatusFlags::Finished)) expired = source;
+		if (!expired) continue;
+		// Counterfactual: intentionally bypass the registered tick prerequisite.
+		f.CharacterMovement->TickComponent(1.f / 60.f, LEVELTICK_All, &f.CharacterMovement->PrimaryComponentTick);
+		TestFalse(TEXT("Engine-first tick removed the source"), f.CharacterMovement->GetRootMotionSourceByID(expired->LocalID).IsValid());
+		static_cast<UActorComponent*>(f.Movement)->TickComponent(1.f / 60.f, LEVELTICK_All, &f.Movement->PrimaryComponentTick);
+		TestTrue(TEXT("Counterfactual retains velocity; not the supported tick order"), f.CharacterMovement->Velocity.Size2D() > 299.0);
+		observed = true;
+		break;
+	}
+	TestTrue(TEXT("Counterfactual reached expiry"), observed);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCombatKnockbackWorldTickExpiryTest, "Portfolio.Combat.Knockback.WorldTickExpiry",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCombatKnockbackWorldTickExpiryTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatKnockbackTest;
+	for (int32 rate : {30, 60, 144})
+	{
+		FFixture f(true);
+		GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(f.World);
+		ON_SCOPE_EXIT { GEngine->DestroyWorldContext(f.World); };
+		f.AddBox(FVector(0, 0, -20), FVector(2000, 2000, 20));
+		f.Player->SetActorLocation(FVector(0, 0, 100));
+		f.World->SpawnActor<APlayerController>()->Possess(f.Player);
+		f.World->InitializeActorsForPlay(FURL());
+		f.World->GetWorldSettings()->NotifyBeginPlay();
+		f.Movement->InitializeReferences(f.References);
+		f.Player->GetHealthComp()->InitializeHealth(100, 100, EMaxHPUpdatePolicy::ClampCurrent);
+		const float dt = 1.f / rate;
+		const auto tickWorld = [&f, dt]()
+		{
+			// TickTaskManager queues each tick function once per engine frame.
+			++GFrameCounter;
+			f.World->Tick(LEVELTICK_All, dt);
+		};
+		TestTrue(TEXT("CharacterMovement depends on project Movement tick"), f.CharacterMovement->PrimaryComponentTick.GetPrerequisites().ContainsByPredicate([&f](const FTickPrerequisite& Prerequisite)
+		{
+			return Prerequisite.Get() == &f.Movement->PrimaryComponentTick;
+		}));
+		for (int32 i = 0; i < rate; ++i) tickWorld();
+		TestTrue(TEXT("World tick fixture is grounded"), f.CharacterMovement->IsMovingOnGround());
+		f.CharacterMovement->GroundFriction = 0;
+		f.CharacterMovement->BrakingFriction = 0;
+		f.CharacterMovement->BrakingDecelerationWalking = 0;
+		FCombatKnockbackContext context = Context();
+		context.Spec.Duration = 0.213f;
+		TestTrue(TEXT("World tick starts motion"), f.Movement->StartKnockback(context, 100));
+		bool reached = false;
+		const FVector start = f.Player->GetActorLocation();
+		for (int32 i = 0; i < rate; ++i)
+		{
+			tickWorld();
+			bool finished = false;
+			for (const auto& source : f.CharacterMovement->CurrentRootMotion.RootMotionSources)
+				if (source.IsValid() && source->InstanceName == TEXT("CombatKnockback")) finished = source->Status.HasFlag(ERootMotionSourceStatusFlags::Finished);
+			if (!finished) continue;
+			const FVector end = f.Player->GetActorLocation();
+			TestTrue(TEXT("Scheduler actually advanced knockback"), FVector::Dist2D(start, end) > 20);
+			for (int32 frame = 0; frame < 6; ++frame)
+			{
+				tickWorld();
+				TestTrue(TEXT("World scheduler clears residual velocity"), f.CharacterMovement->Velocity.Size2D() < 0.001);
+				TestTrue(TEXT("World scheduler prevents post-expiry drift"), FVector::Dist2D(end, f.Player->GetActorLocation()) < 0.001);
+			}
+			TestFalse(TEXT("World scheduler cleared owned motion"), f.Movement->IsKnockbackActive());
+			AddInfo(FString::Printf(TEXT("WorldTickExpiry hz=%d displacement=%.6f residual=%.6f"), rate, FVector::Dist2D(start, end), FVector::Dist2D(end, f.Player->GetActorLocation())));
+			reached = true;
+			break;
+		}
+		TestTrue(TEXT("World scheduler reached source expiration"), reached);
+	}
 	return true;
 }
 
