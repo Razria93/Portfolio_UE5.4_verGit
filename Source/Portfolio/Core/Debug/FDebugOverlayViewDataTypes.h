@@ -133,6 +133,10 @@ struct FDebugOverlayActorPanelViewData
 	FDebugOverlayPlayerTargetingViewData Targeting;
 	bool bIncludeLocomotion = false;
 	FDebugOverlayPlayerLocomotionViewData Locomotion;
+	bool bIncludeKnockback = false;
+	TArray<FString> KnockbackLines;
+	bool bIncludeAttackFacing = false;
+	TArray<FString> AttackFacingLines;
 	bool bIncludeBalanceCollapse = false;
 	FDebugOverlayBalanceCollapseViewData BalanceCollapse;
 	bool bIncludeCombatTargetFacing = false;

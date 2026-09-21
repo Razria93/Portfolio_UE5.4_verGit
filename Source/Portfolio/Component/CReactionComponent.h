@@ -193,7 +193,7 @@ private:
 	// Active Context
 	bool IsActiveReactionGeneration(uint64 InGeneration) const;
 	void SetActiveReactionContext(const FReactionExecutionContext& InContext);
-	void ClearActiveReactionContext();
+	void ClearActiveReactionContext(const TCHAR* InReason = TEXT("ReactionCleared"));
 
 private:
 	// Event Broadcast
@@ -201,7 +201,7 @@ private:
 
 private:
 	// Knockback
-	void StopReactionKnockback(uint64 InGeneration);
+	void StopReactionKnockback(uint64 InGeneration, const TCHAR* InReason = TEXT("ReactionReset"));
 
 private:
 	// State Transition

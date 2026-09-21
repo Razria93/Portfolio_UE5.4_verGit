@@ -21,6 +21,8 @@
 #include "Type/CObservableOverlayTypes.h"
 #include "Type/CExecutionTypes.h"
 #include "Core/Debug/FActionComponentDebug.h"
+#include "Core/Debug/FActionFacingDebug.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 #include "Core/Debug/FExecutionCollaborationDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 
@@ -39,6 +41,7 @@ UCActionComponent::UCActionComponent()
 
 void UCActionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	ClearPendingStartFacing();
 	ActiveActionGeneration = 0;
 
 	if (IsValid(OwnerCharacter_Injected) && IsValid(OwnerCharacter_Injected->GetCharacterMovement()))
@@ -83,6 +86,7 @@ void UCActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		OwnerCharacter_Injected->GetCharacterMovement()->RemoveTickPrerequisiteComponent(this);
 
 	UninitializeActionRuntime();
+	FDebugOverlaySnapshotStore::RemoveActorDebugData(this, GetOwner());
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -414,11 +418,21 @@ void UCActionComponent::HandleApplyActionStarted(const UCAction* InAction, const
 
 	ClearPendingStartFacing();
 
-	if (ActiveActionType != EActionType::ComboAttack || !ActiveActionData.bFaceCombatTargetOnStart) return;
-	if (!IsValid(CombatTargetComp_Injected)) return;
+	if (ActiveActionType != EActionType::ComboAttack) return;
+	if (!ActiveActionData.bFaceCombatTargetOnStart)
+	{
+		FActionFacingDebug::Record(this, InActionGeneration, nullptr, TEXT("Disabled"), TEXT("OptionOff"));
+		return;
+	}
+	if (!IsValid(CombatTargetComp_Injected))
+	{
+		FActionFacingDebug::Record(this, InActionGeneration, nullptr, TEXT("Skipped"), TEXT("TargetComponentUnavailable"));
+		return;
+	}
 
 	PendingStartFacingTarget = CombatTargetComp_Injected->GetCombatTargetActor();
 	PendingStartFacingGeneration = InActionGeneration;
+	FActionFacingDebug::Record(this, InActionGeneration, PendingStartFacingTarget.Get(), TEXT("Queued"), TEXT("None"));
 }
 
 bool UCActionComponent::HandleApplyActionConsumed(const UCAction* InAction, const FActionData& InData, const uint32 InActionRequestSerial)
@@ -1076,26 +1090,37 @@ void UCActionComponent::ApplyPendingStartFacing()
 	const uint64 generation = PendingStartFacingGeneration;
 	AActor* target = PendingStartFacingTarget.Get();
 
-	ClearPendingStartFacing();
+	ClearPendingStartFacing(true);
+	if (generation == 0) return;
+	const auto skip = [this, generation, target](const TCHAR* Reason)
+	{
+		FActionFacingDebug::Record(this, generation, target, TEXT("Skipped"), Reason);
+	};
 
-	if (!IsActive() || generation == 0 || generation != ActiveActionGeneration) return;
-	if (!IsValid(ActiveActionExecutor) || !ActiveActionExecutor->IsActive()) return;
+	if (!IsActive() || generation != ActiveActionGeneration) { skip(TEXT("ExecutionChanged")); return; }
+	if (!IsValid(ActiveActionExecutor) || !ActiveActionExecutor->IsActive()) { skip(TEXT("ExecutorInactive")); return; }
 
-	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return;
-	if (!IsValid(StateComp_Injected) || StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Action) return;
-	if (!IsValid(MovementComp_Injected)) return;
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) { skip(TEXT("HealthUnavailable")); return; }
+	if (!IsValid(StateComp_Injected) || StateComp_Injected->GetCurrentExecutionState() != EExecutionState::Action) { skip(TEXT("NotInActionState")); return; }
+	if (!IsValid(MovementComp_Injected)) { skip(TEXT("MovementUnavailable")); return; }
 
-	if (!IsValid(target) || target->IsActorBeingDestroyed() || target == OwnerCharacter_Injected) return;
-	if (!IsValid(CombatTargetComp_Injected) || CombatTargetComp_Injected->GetCombatTargetActor() != target) return;
+	if (!IsValid(target) || target->IsActorBeingDestroyed() || target == OwnerCharacter_Injected) { skip(TEXT("TargetUnavailable")); return; }
+	if (!IsValid(CombatTargetComp_Injected) || CombatTargetComp_Injected->GetCombatTargetActor() != target) { skip(TEXT("TargetChanged")); return; }
 
 	const UCHealthComponent* targetHealth = target->FindComponentByClass<UCHealthComponent>();
-	if (IsValid(targetHealth) && !targetHealth->IsAlive()) return;
+	if (IsValid(targetHealth) && !targetHealth->IsAlive()) { skip(TEXT("TargetDead")); return; }
 
-	MovementComp_Injected->TryFaceTarget(target->GetActorLocation(), ActiveActionData.StartFacingMaxDistance, ActiveActionData.StartFacingMaxAngle);
+	const FVector origin = GetOwner()->GetActorLocation();
+	const float beforeYaw = GetOwner()->GetActorRotation().Yaw;
+	const TCHAR* reason = TEXT("None");
+	const bool applied = MovementComp_Injected->TryFaceTarget(target->GetActorLocation(), ActiveActionData.StartFacingMaxDistance, ActiveActionData.StartFacingMaxAngle, &reason);
+	FActionFacingDebug::Record(this, generation, target, applied ? TEXT("Applied") : TEXT("Skipped"), reason, &origin, &beforeYaw);
 }
 
-void UCActionComponent::ClearPendingStartFacing()
+void UCActionComponent::ClearPendingStartFacing(bool bConsumed)
 {
+	if (!bConsumed && PendingStartFacingGeneration != 0)
+		FActionFacingDebug::Record(this, PendingStartFacingGeneration, PendingStartFacingTarget.Get(), TEXT("Cancelled"), TEXT("ExecutionClearedOrReplaced"));
 	PendingStartFacingGeneration = 0;
 	PendingStartFacingTarget.Reset();
 }

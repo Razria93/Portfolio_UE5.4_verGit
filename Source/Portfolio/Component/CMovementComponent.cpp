@@ -7,6 +7,8 @@
 #include "Component/CBalanceComponent.h"
 #include "Component/CStateComponent.h"
 #include "Core/Debug/FMovementDebug.h"
+#include "Core/Debug/FCombatKnockbackDebug.h"
+#include "Core/Debug/FDebugOverlaySnapshotStore.h"
 
 #include "AIController.h"
 #include "GameFramework/Character.h"
@@ -32,7 +34,7 @@ UCMovementComponent::UCMovementComponent()
 
 void UCMovementComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
-	ClearKnockback();
+	ClearKnockback(TEXT("ReferencesReset"));
 
 	if (IsValid(CharacterMovementComp_Injected))
 		CharacterMovementComp_Injected->RemoveTickPrerequisiteComponent(this);
@@ -68,7 +70,8 @@ void UCMovementComponent::BeginPlay()
 
 void UCMovementComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 {
-	ClearKnockback();
+	ClearKnockback(TEXT("EndPlay"));
+	FDebugOverlaySnapshotStore::RemoveActorDebugData(this, GetOwner());
 
 	if (IsValid(CharacterMovementComp_Injected)) CharacterMovementComp_Injected->RemoveTickPrerequisiteComponent(this);
 	if (IsValid(BalanceComp_Injected))
@@ -137,16 +140,26 @@ void UCMovementComponent::SetMovementEnabled(const bool bEnabled)
 
 bool UCMovementComponent::StartKnockback(const FCombatKnockbackContext& InContext, const uint64 InOwnerSerial)
 {
-	if (InOwnerSerial == 0 || !InContext.IsValid() || !CanApplyKnockback()) return false;
+	const TCHAR* reason = TEXT("InvalidContext");
+	if (InOwnerSerial == 0 || !InContext.IsValid() || !CanApplyKnockback(&reason))
+	{
+		FCombatKnockbackDebug::Record(GetOwner(), TEXT("Movement"), TEXT("Rejected"), reason, InContext, InOwnerSerial);
+		return false;
+	}
 	if (KnockbackOwnerSerial == InOwnerSerial) return false;
 
-	ClearKnockback();
+	ClearKnockback(TEXT("Replaced"));
 
 	const uint64 generation = KnockbackGeneration;
 
 	StopActiveAIMovement();
 
-	if (KnockbackGeneration != generation || !CanApplyKnockback()) return false;
+	if (KnockbackGeneration != generation) return false;
+	if (!CanApplyKnockback(&reason))
+	{
+		FCombatKnockbackDebug::Record(GetOwner(), TEXT("Movement"), TEXT("Rejected"), reason, InContext, InOwnerSerial);
+		return false;
+	}
 
 	TSharedPtr<FRootMotionSource_ConstantForce> source = MakeShared<FRootMotionSource_ConstantForce>();
 
@@ -159,18 +172,23 @@ bool UCMovementComponent::StartKnockback(const FCombatKnockbackContext& InContex
 	source->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::MaintainLastRootMotionVelocity;
 
 	const uint16 sourceId = CharacterMovementComp_Injected->ApplyRootMotionSource(source);
-	if (sourceId == static_cast<uint16>(ERootMotionSourceID::Invalid)) return false;
+	if (sourceId == static_cast<uint16>(ERootMotionSourceID::Invalid))
+	{
+		FCombatKnockbackDebug::Record(GetOwner(), TEXT("Movement"), TEXT("Rejected"), TEXT("SourceRegistrationFailed"), InContext, InOwnerSerial);
+		return false;
+	}
 
 	KnockbackSource = source;
 	KnockbackOwnerSerial = InOwnerSerial;
+	FCombatKnockbackDebug::RecordStarted(this, InContext);
 
 	return true;
 }
 
-void UCMovementComponent::StopKnockback(const uint64 InOwnerSerial)
+void UCMovementComponent::StopKnockback(const uint64 InOwnerSerial, const TCHAR* InReason)
 {
 	if (InOwnerSerial == 0 || InOwnerSerial != KnockbackOwnerSerial) return;
-	ClearKnockback();
+	ClearKnockback(InReason);
 }
 
 // Movement Input Handling
@@ -301,26 +319,31 @@ void UCMovementComponent::SetMovementRotationMode(EMovementRotationMode InRotati
 
 // Facing
 
-bool UCMovementComponent::TryFaceTarget(const FVector& InTargetLocation, const float InMaxDistance, const float InMaxAngle)
+bool UCMovementComponent::TryFaceTarget(const FVector& InTargetLocation, const float InMaxDistance, const float InMaxAngle, const TCHAR** OutReason)
 {
-	if (!IsValid(OwnerCharacter_Injected) || OwnerCharacter_Injected->IsActorBeingDestroyed()) return false;
-	if (!IsValid(CharacterMovementComp_Injected) || !CharacterMovementComp_Injected->IsMovingOnGround()) return false;
-	if (InTargetLocation.ContainsNaN() || !FMath::IsFinite(InMaxDistance) || !FMath::IsFinite(InMaxAngle)) return false;
-	if (InMaxDistance <= 0.f || InMaxAngle <= 0.f || InMaxAngle > 180.f) return false;
+	const auto reject = [OutReason](const TCHAR* Reason) { if (OutReason) *OutReason = Reason; return false; };
+	if (!IsValid(OwnerCharacter_Injected) || OwnerCharacter_Injected->IsActorBeingDestroyed()) return reject(TEXT("OwnerUnavailable"));
+	if (!IsValid(CharacterMovementComp_Injected) || !CharacterMovementComp_Injected->IsMovingOnGround()) return reject(TEXT("NotGrounded"));
+	if (InTargetLocation.ContainsNaN() || !FMath::IsFinite(InMaxDistance) || !FMath::IsFinite(InMaxAngle)) return reject(TEXT("InvalidSettings"));
+	if (InMaxDistance <= 0.f || InMaxAngle <= 0.f || InMaxAngle > 180.f) return reject(TEXT("InvalidSettings"));
 
 	FVector direction = InTargetLocation - OwnerCharacter_Injected->GetActorLocation();
 	direction.Z = 0.f;
 
 	const double distance = direction.Size();
 
-	if (!FMath::IsFinite(distance) || distance > InMaxDistance || !direction.Normalize()) return false;
+	if (!FMath::IsFinite(distance)) return reject(TEXT("InvalidDistance"));
+	if (distance > InMaxDistance) return reject(TEXT("OutOfRange"));
+	if (!direction.Normalize()) return reject(TEXT("ZeroDirection"));
 
 	const FRotator current = OwnerCharacter_Injected->GetActorRotation();
 	const float yaw = direction.Rotation().Yaw;
 
-	if (FMath::Abs(FMath::FindDeltaAngleDegrees(current.Yaw, yaw)) > InMaxAngle) return false;
+	if (FMath::Abs(FMath::FindDeltaAngleDegrees(current.Yaw, yaw)) > InMaxAngle) return reject(TEXT("OutOfAngle"));
 
-	return OwnerCharacter_Injected->SetActorRotation(FRotator(current.Pitch, yaw, current.Roll));
+	const bool applied = OwnerCharacter_Injected->SetActorRotation(FRotator(current.Pitch, yaw, current.Roll));
+	if (OutReason) *OutReason = applied ? TEXT("None") : TEXT("RotationRejected");
+	return applied;
 }
 
 // Component Reference Validation
@@ -347,29 +370,34 @@ bool UCMovementComponent::ValidateRequiredComponentReferences() const
 
 // Knockback Implementation
 
-bool UCMovementComponent::CanApplyKnockback() const
+bool UCMovementComponent::CanApplyKnockback(const TCHAR** OutReason) const
 {
-	return IsValid(OwnerCharacter_Injected)
-		&& !OwnerCharacter_Injected->IsActorBeingDestroyed()
-		&& !OwnerCharacter_Injected->IsPlayingRootMotion()
-
-		&& IsValid(CharacterMovementComp_Injected)
-		&& CharacterMovementComp_Injected->IsActive()
-		&& CharacterMovementComp_Injected->IsMovingOnGround()
-
-		&& IsValid(HealthComp_Injected)
-		&& HealthComp_Injected->IsAlive()
-
-		&& (!IsValid(BalanceComp_Injected) || !BalanceComp_Injected->IsBalanceLifecycleBlocking());
+	const auto reject = [OutReason](const TCHAR* Reason) { if (OutReason) *OutReason = Reason; return false; };
+	if (!IsValid(OwnerCharacter_Injected) || OwnerCharacter_Injected->IsActorBeingDestroyed()) return reject(TEXT("OwnerUnavailable"));
+	if (OwnerCharacter_Injected->IsPlayingRootMotion()) return reject(TEXT("AnimationRootMotion"));
+	if (!IsValid(CharacterMovementComp_Injected) || !CharacterMovementComp_Injected->IsActive()) return reject(TEXT("MovementUnavailable"));
+	if (!CharacterMovementComp_Injected->IsMovingOnGround()) return reject(TEXT("NotGrounded"));
+	if (!IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return reject(TEXT("HealthUnavailable"));
+	if (IsValid(BalanceComp_Injected) && BalanceComp_Injected->IsBalanceLifecycleBlocking()) return reject(TEXT("BalanceBlocking"));
+	if (OutReason) *OutReason = TEXT("None");
+	return true;
 }
 
 void UCMovementComponent::UpdateKnockback()
 {
-	if (KnockbackSource.IsValid() && (!IsKnockbackActive() || !CanApplyKnockback())) ClearKnockback();
+	if (!KnockbackSource.IsValid()) return;
+	if (!IsKnockbackActive())
+	{
+		ClearKnockback(KnockbackSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished) ? TEXT("SourceFinished") : TEXT("SourceRemoved"));
+		return;
+	}
+	const TCHAR* reason = TEXT("None");
+	if (!CanApplyKnockback(&reason)) ClearKnockback(reason);
 }
 
-void UCMovementComponent::ClearKnockback()
+void UCMovementComponent::ClearKnockback(const TCHAR* InReason)
 {
+	FCombatKnockbackDebug::RecordStopped(this, InReason);
 	++KnockbackGeneration;
 
 	if (KnockbackSource.IsValid() 

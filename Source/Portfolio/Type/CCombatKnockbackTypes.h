@@ -39,6 +39,11 @@ public:
 	UPROPERTY(Transient)
 	FVector Direction = FVector::ZeroVector;
 
+#if !UE_BUILD_SHIPPING
+	// Diagnostic Association
+	TWeakObjectPtr<class AActor> DebugSourceActor;
+#endif
+
 public:
 	bool IsValid() const
 	{

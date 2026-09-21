@@ -29,7 +29,7 @@ namespace
 	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogFilter(
 		TEXT("Portfolio.DebugOverlay.EventLogFilter"),
 		TEXT("All"),
-		TEXT("Filter debug overlay event log. Values: All, ActionReaction, ExecutionSession, Combat, AI, Balance, Death, Facing."),
+		TEXT("Filter debug overlay event log. Values: All, ActionReaction, ExecutionSession, Combat, AI, Balance, Death, Facing, Knockback, AttackFacing."),
 		ECVF_Default);
 
 	TAutoConsoleVariable<FString> CVarDebugOverlayEventLogScope(
@@ -212,6 +212,14 @@ FString EventFilterPolicy::NormalizeEventLogFilter(const FString& InFilter)
 	if (InFilter.Equals(DebugOverlayEventCategory::Facing, ESearchCase::IgnoreCase))
 	{
 		return DebugOverlayEventCategory::Facing;
+	}
+	if (InFilter.Equals(DebugOverlayEventCategory::Knockback, ESearchCase::IgnoreCase))
+	{
+		return DebugOverlayEventCategory::Knockback;
+	}
+	if (InFilter.Equals(DebugOverlayEventCategory::AttackFacing, ESearchCase::IgnoreCase))
+	{
+		return DebugOverlayEventCategory::AttackFacing;
 	}
 
 	return TEXT("All");

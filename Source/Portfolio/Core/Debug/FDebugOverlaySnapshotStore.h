@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Core/Debug/FDebugOverlaySnapshotTypes.h"
+#include "Core/Debug/FCombatMotionDebugTypes.h"
 
 class AAIController;
 class AActor;
@@ -23,6 +24,12 @@ struct PORTFOLIO_API FDebugOverlayRecentCombatPair
 class PORTFOLIO_API FDebugOverlaySnapshotStore
 {
 public:
+	// Combat Motion Diagnostics
+	static void RecordKnockbackDiagnostic(const AActor* InActor, const FCombatKnockbackDebugRecord& InRecord);
+	static void RecordAttackFacingDiagnostic(const AActor* InActor, const FActionFacingDebugRecord& InRecord);
+	static bool TryGetKnockbackDiagnostic(const AActor* InActor, FCombatKnockbackDebugHistory& OutHistory);
+	static bool TryGetAttackFacingDiagnostic(const AActor* InActor, FActionFacingDebugRecord& OutRecord);
+
 	// ===== Runtime Gates =====
 
 	static bool IsHudVisible();

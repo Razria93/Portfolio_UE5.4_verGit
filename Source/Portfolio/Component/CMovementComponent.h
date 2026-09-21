@@ -13,6 +13,7 @@ UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCMovementComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	friend class FCombatKnockbackDebug;
 
 public:
 	// Construction
@@ -121,7 +122,7 @@ public:
 public:
 	// Knockback
 	bool StartKnockback(const FCombatKnockbackContext& InContext, uint64 InOwnerSerial);
-	void StopKnockback(uint64 InOwnerSerial);
+	void StopKnockback(uint64 InOwnerSerial, const TCHAR* InReason = TEXT("ReactionEnded"));
 
 public:
 	// Movement Input Handling
@@ -140,7 +141,7 @@ public:
 
 public:
 	// Facing
-	bool TryFaceTarget(const FVector& InTargetLocation, float InMaxDistance, float InMaxAngle);
+	bool TryFaceTarget(const FVector& InTargetLocation, float InMaxDistance, float InMaxAngle, const TCHAR** OutReason = nullptr);
 
 private:
 	// Component Reference Validation
@@ -148,9 +149,9 @@ private:
 
 private:
 	// Knockback Implementation
-	bool CanApplyKnockback() const;
+	bool CanApplyKnockback(const TCHAR** OutReason = nullptr) const;
 	void UpdateKnockback();
-	void ClearKnockback();
+	void ClearKnockback(const TCHAR* InReason = TEXT("Cleared"));
 
 private:
 	// Runtime LOD Update

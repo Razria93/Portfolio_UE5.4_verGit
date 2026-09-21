@@ -17,6 +17,7 @@ UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	friend class FActionFacingDebug;
 
 public:
 	// Construction
@@ -238,7 +239,7 @@ private:
 private:
 	// Start Facing
 	void ApplyPendingStartFacing();
-	void ClearPendingStartFacing();
+	void ClearPendingStartFacing(bool bConsumed = false);
 
 private:
 	// State Transition

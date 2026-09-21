@@ -16,12 +16,16 @@ namespace
 	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerStatusEnabled(TEXT("Portfolio.DebugOverlay.Player.Status.Enabled"), 1, TEXT("Show Player status details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerTargetingEnabled(TEXT("Portfolio.DebugOverlay.Player.Targeting.Enabled"), 1, TEXT("Show Player targeting details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerLocomotionEnabled(TEXT("Portfolio.DebugOverlay.Player.Locomotion.Enabled"), 1, TEXT("Show Player locomotion details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerKnockbackEnabled(TEXT("Portfolio.DebugOverlay.Player.Knockback.Enabled"), 1, TEXT("Show Player Knockback details in Character Details."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerAttackFacingEnabled(TEXT("Portfolio.DebugOverlay.Player.AttackFacing.Enabled"), 1, TEXT("Show Player Attack Facing details in Character Details."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerExecutionSessionEnabled(TEXT("Portfolio.DebugOverlay.Player.ExecutionSession.Enabled"), 1, TEXT("Show Player Execution Session details in Character Details. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayPlayerRecentActionReactionEnabled(TEXT("Portfolio.DebugOverlay.Player.RecentActionReaction.Enabled"), 1, TEXT("Show Player recent Action / Reaction details in Character Details. 0: hidden, 1: shown."), ECVF_Default);
 
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyEnabled(TEXT("Portfolio.DebugOverlay.Enemy.Enabled"), 1, TEXT("Show the Enemy section in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyFocusEnabled(TEXT("Portfolio.DebugOverlay.Enemy.Focus.Enabled"), 1, TEXT("Show Enemy focus details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyStatusEnabled(TEXT("Portfolio.DebugOverlay.Enemy.Status.Enabled"), 1, TEXT("Show Enemy status details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyKnockbackEnabled(TEXT("Portfolio.DebugOverlay.Enemy.Knockback.Enabled"), 1, TEXT("Show focused Enemy Knockback details in Character Details."), ECVF_Default);
+	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyAttackFacingEnabled(TEXT("Portfolio.DebugOverlay.Enemy.AttackFacing.Enabled"), 1, TEXT("Show focused Enemy Attack Facing details in Character Details."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyBalanceCollapseEnabled(TEXT("Portfolio.DebugOverlay.Enemy.BalanceCollapse.Enabled"), 1, TEXT("Show Enemy Balance and Collapse details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyCombatTargetFacingEnabled(TEXT("Portfolio.DebugOverlay.Enemy.CombatTargetFacing.Enabled"), 1, TEXT("Show Enemy Combat Target Facing details in the Debug Overlay main panel. 0: hidden, 1: shown."), ECVF_Default);
 	TAutoConsoleVariable<int32> CVarDebugOverlayEnemyExecutionSessionEnabled(TEXT("Portfolio.DebugOverlay.Enemy.ExecutionSession.Enabled"), 1, TEXT("Show Enemy Execution Session details in Character Details. 0: hidden, 1: shown."), ECVF_Default);
@@ -49,12 +53,16 @@ FDebugOverlayPanelVisibility DebugOverlayDisplayConfig::GetPanelVisibility()
 	visibility.bShowPlayerStatus = CVarDebugOverlayPlayerStatusEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowPlayerTargeting = CVarDebugOverlayPlayerTargetingEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowPlayerLocomotion = CVarDebugOverlayPlayerLocomotionEnabled.GetValueOnGameThread() != 0;
+	visibility.bShowPlayerKnockback = CVarDebugOverlayPlayerKnockbackEnabled.GetValueOnGameThread() != 0;
+	visibility.bShowPlayerAttackFacing = CVarDebugOverlayPlayerAttackFacingEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowPlayerExecutionSession = CVarDebugOverlayPlayerExecutionSessionEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowPlayerRecentActionReaction = CVarDebugOverlayPlayerRecentActionReactionEnabled.GetValueOnGameThread() != 0;
 
 	visibility.bShowEnemy = CVarDebugOverlayEnemyEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyFocus = CVarDebugOverlayEnemyFocusEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyStatus = CVarDebugOverlayEnemyStatusEnabled.GetValueOnGameThread() != 0;
+	visibility.bShowEnemyKnockback = CVarDebugOverlayEnemyKnockbackEnabled.GetValueOnGameThread() != 0;
+	visibility.bShowEnemyAttackFacing = CVarDebugOverlayEnemyAttackFacingEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyBalanceCollapse = CVarDebugOverlayEnemyBalanceCollapseEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyCombatTargetFacing = CVarDebugOverlayEnemyCombatTargetFacingEnabled.GetValueOnGameThread() != 0;
 	visibility.bShowEnemyExecutionSession = CVarDebugOverlayEnemyExecutionSessionEnabled.GetValueOnGameThread() != 0;

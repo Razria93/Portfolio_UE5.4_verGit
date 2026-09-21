@@ -1,4 +1,5 @@
 #include "Component/CCombatSignalTargetComponent.h"
+#include "Core/Debug/FCombatKnockbackDebug.h"
 
 #include "ProjectGlobal.h"
 
@@ -693,20 +694,30 @@ void UCCombatSignalTargetComponent::ResolveDamageReactionOutcome(FCombatSignalTa
 void UCCombatSignalTargetComponent::ResolveDamageKnockback(const FCombatSignalTargetPayload& InPayload, FCombatSignalTargetContext& InOutContext) const
 {
 	InOutContext.Knockback = FCombatKnockbackContext();
+	const auto excluded = [this, &InPayload, &InOutContext](const TCHAR* Reason)
+	{
+		FCombatKnockbackContext diagnosticContext;
+		diagnosticContext.Spec = InPayload.DamageSpec.Knockback;
+		FCombatKnockbackDebug::Record(GetOwner(), TEXT("Damage"), TEXT("Excluded"), Reason, diagnosticContext, 0, InOutContext.SourceActor);
+	};
 
-	if (!InOutContext.bAccepted || InOutContext.ReactionOutcome != EDamageReactionOutcome::Hit) return;
-	if (InOutContext.ExternalInputPolicy != EExternalCombatInputPolicy::Normal) return;
-	if (!InPayload.DamageSpec.Knockback.IsValid()) return;
-	if (!IsValid(OwnerCharacter_Injected) || !IsValid(InOutContext.SourceActor)) return;
+	if (!InOutContext.bAccepted || InOutContext.ReactionOutcome != EDamageReactionOutcome::Hit) { excluded(TEXT("NotAcceptedHit")); return; }
+	if (InOutContext.ExternalInputPolicy != EExternalCombatInputPolicy::Normal) { excluded(TEXT("ExternalInputPolicy")); return; }
+	if (!InPayload.DamageSpec.Knockback.IsValid()) { excluded(TEXT("InvalidSpec")); return; }
+	if (!IsValid(OwnerCharacter_Injected) || !IsValid(InOutContext.SourceActor)) { excluded(TEXT("ActorUnavailable")); return; }
 
 	const UCharacterMovementComponent* movement = OwnerCharacter_Injected->GetCharacterMovement();
-	if (!IsValid(movement) || !movement->IsMovingOnGround()) return;
+	if (!IsValid(movement) || !movement->IsMovingOnGround()) { excluded(TEXT("NotGrounded")); return; }
 
 	const FVector direction = (OwnerCharacter_Injected->GetActorLocation() - InOutContext.SourceActor->GetActorLocation()).GetSafeNormal2D();
-	if (direction.ContainsNaN() || direction.IsNearlyZero()) return;
+	if (direction.ContainsNaN() || direction.IsNearlyZero()) { excluded(TEXT("InvalidDirection")); return; }
 
 	InOutContext.Knockback.Spec = InPayload.DamageSpec.Knockback;
 	InOutContext.Knockback.Direction = direction;
+#if !UE_BUILD_SHIPPING
+	InOutContext.Knockback.DebugSourceActor = InOutContext.SourceActor;
+#endif
+	FCombatKnockbackDebug::Record(GetOwner(), TEXT("Damage"), TEXT("Resolved"), TEXT("None"), InOutContext.Knockback, 0, InOutContext.SourceActor);
 }
 
 FCombatSignalTargetResult UCCombatSignalTargetComponent::BuildResult(const FCombatSignalTargetContext& InCombatSignalTargetContext) const

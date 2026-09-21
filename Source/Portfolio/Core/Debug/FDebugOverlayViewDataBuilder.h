@@ -4,7 +4,7 @@
 #include "Core/Debug/FDebugOverlayDisplayConfig.h"
 #include "Core/Debug/FDebugOverlayViewDataTypes.h"
 
-class FDebugOverlayViewDataBuilder
+class PORTFOLIO_API FDebugOverlayViewDataBuilder
 {
 public:
 	static FDebugOverlayViewData Build(
