@@ -54,3 +54,13 @@ Blink는 별도 실행 객체로 만든다. 반경 합 + 여유 거리라는 간
 Development 빌드 성공. `DodgeRushFOV04Tests.log`에서 **58/58 성공**, Error 없음, exit 0. 추가 RushFOV 테스트는 무이동 시 비활성 강도, 중간 보간, 최대 강도, 벽 차단에 해당하는 0 이동 입력, 오래된 실행 ID 무시, 종료/재초기화 복원, 외부 FOV 보존을 검증했다. 이는 카메라 값 검증이며 실제 화면의 속도감 승인은 아니다.
 
 Niagara 이동 리본/파티클과 잔상 검토는 아직 남아 있다. FOV만으로 이동 전용 연출 전체가 완료됐다고 간주하지 않는다.
+
+## 이동 Niagara 런타임 수명 (2026-09-22 재개)
+
+`CReactionFeedbackComponent`에 RushMovementVFX, RushVFXOffset, RushVFXScale, RushVFXMovementThreshold(기본 0.05), RushVFXTail(기본 0.2초, 최대 2초)을 추가했다. 실제 전진 비율이 임계값을 넘을 때만 별도 Niagara 컴포넌트를 생성한다. 벽에 막혀 비율이 낮아지면 Deactivate하며, 다시 이동하면 같은 컴포넌트를 재활성화한다. 따라서 사용 에셋은 Deactivate에 반응하는 이미터 구성이어야 한다.
+
+러시 종료는 즉시 Deactivate하고 KeepWorldTransform으로 부착을 해제한다. 잔여 파티클이 후속 공격을 따라가지 않게 하며, 실시간 Tail 예산 이후 컴포넌트를 강제로 정리한다. 사망/재초기화/EndPlay/다음 실행 시작에서는 즉시 정리한다. 이전 실행의 종료 ID는 무시하고, 같은 종료 요청을 반복해도 Tail이 연장되지 않는다. 카메라 FOV 비활성 또는 외부 카메라 소유권 변경은 Niagara 수명을 취소하지 않는다. Dedicated Server에서는 생성하지 않는다.
+
+재개 후 Development 빌드 성공. `Saved/Logs/DodgeRushVFX06Tests.log` 전체 **58/58 성공**, Error 없음, exit 0. 기존 RushFOV 테스트를 확장해 FOV와 독립된 실행, 반복 종료, Tail 종료, 후속 공격 부착 해제, 재초기화 즉시 정리를 확인했다. 테스트는 비어 있는 Niagara 컴포넌트로 수명 계약을 확인한 것이며 실제 파티클 렌더링 검증이 아니다.
+
+**현재 RushMovementVFX 기본값은 nullptr이며 BP 에셋 연결도 아직 하지 않았다.** 따라서 이 단계만으로 PIE에 새 이동 파티클이 표시되지는 않는다. 전용 Niagara 복제본 구성·저장·재로드 검증과 사용자 시각 검토가 남아 있다. 사용자 변경 프레넬 에셋은 이 단계 커밋에 포함하지 않는다.

@@ -34,3 +34,13 @@ BP_CWeaponActor_Sword의 `K2Node_CallFunction_0` (Set Scalar Parameter Value):
 | Vfx_SpeedUp | User.AudioOn, Color01, Color03, Color2, ColorBottom, Duration, GlobleSize, LightOn | 부가 음향/광원 비활성 및 색/시간 조절 후보. 이름만으로 러시 속도선에 적합하다고 판단하지 않는다. |
 
 다음 작업은 후보의 이미터/렌더러와 종료 방식을 확인한 뒤 전용 복제본 및 이동 전용 런타임 수명을 구성하는 것이다. 현재 FOV 구현만으로 Niagara 이동 연출이 완료된 것은 아니다. 기존 공격 무기 Trail은 변경하거나 러시 이동 이펙트와 합치지 않는다.
+
+## 이미터 추가 조사
+
+`DodgeEmitterAudit06.log`: 확장한 읽기 전용 도구 실행 성공, 0 errors / 0 warnings, exit 0.
+
+- NS_Trail_Tech: 활성 Trail(Ribbon), Shape/ShapeBig(Sprite), 모두 월드 공간 CPU 구성.
+- NS_Trail_Water: 활성 Trail(Ribbon), Water/Spark는 비활성, 모두 월드 공간 CPU 구성.
+- Vfx_SpeedUp: 활성 NE_follow_ribbon은 월드 공간 Ribbon. NE_spell_particle_up은 로컬 공간 Sprite. 그 외 활성 바닥 Mesh, Light, Cyclone Mesh가 있어 원본 통째 적용은 부가 장식까지 포함한다.
+
+따라서 SpeedUp의 전용 복제본에서 이동 리본 및 필요한 입자만 남기는 것을 우선 후보로 삼는다. 이미터 목록만으로 속도선 형태, 발생률, 파티클 수명, Deactivate 반응을 증명하지는 못한다. 실제 모듈 설정 및 PIE 검토가 다음 단계다.
