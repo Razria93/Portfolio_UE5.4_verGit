@@ -31,6 +31,7 @@ public:
 	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 	bool Start(const FActionData& InData, uint32 InActionRequestSerial = 0) override;
 	void CommitStarted();
+	void EndCounterAttackPresentation();
 
 protected:
 	void CleanupRuntimeEffects() override;

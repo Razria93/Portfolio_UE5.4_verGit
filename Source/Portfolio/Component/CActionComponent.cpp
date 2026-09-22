@@ -660,6 +660,8 @@ void UCActionComponent::HandleActionCollisionWindowBegin(FName InCollisionName)
 
 void UCActionComponent::HandleActionCollisionWindowEnd()
 {
+	if (auto* rush = Cast<UCAction_CounterRush>(GetActiveActionExecutor()))
+		rush->EndCounterAttackPresentation();
 	if (!IsValid(WeaponComp_Injected))
 	{
 		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("CollisionWindowEnd"), NAME_None, TEXT("InvalidWeaponComponent"));

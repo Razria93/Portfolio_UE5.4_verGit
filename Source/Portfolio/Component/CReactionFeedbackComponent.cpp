@@ -13,6 +13,9 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
+#include "Component/CWeaponComponent.h"
+#include "Weapon/CWeaponActor.h"
 #include "System/Combat/CWorldSubsystem_CombatFeedback.h"
 
 // Helper
@@ -30,6 +33,8 @@ namespace
 UCReactionFeedbackComponent::UCReactionFeedbackComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PerfectBodyEnvelope.Hold = .4f;
+	PerfectBodyEnvelope.FadeOut = .22f;
 }
 
 // Component Reference
@@ -93,12 +98,25 @@ void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, ui
 	if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
 		PerfectSlowSerial = subsystem->RequestPerfectDodgeSlow(OwnerCharacter_Injected, InAttacker, PerfectSlowDuration, PerfectSlowDilation);
 	const double now = FPlatformTime::Seconds();
-	if (IsValid(PerfectBodyMaterial) && FMath::IsFinite(PerfectBodyDuration) && PerfectBodyDuration > 0.f)
+	if (IsValid(PerfectBodyMaterial) && BodyEnvelopeState.Start(PerfectBodyEnvelope, now))
 	{
-		PreviousOverlay = OwnerCharacter_Injected->GetMesh()->GetOverlayMaterial();
-		OwnerCharacter_Injected->GetMesh()->SetOverlayMaterial(PerfectBodyMaterial);
-		bOwnsBody = true;
-		BodyExpiresAt = now + PerfectBodyDuration;
+		TArray<UMeshComponent*> parts;
+		parts.Add(OwnerCharacter_Injected->GetMesh());
+		TArray<USkeletalMeshComponent*> candidates;
+		OwnerCharacter_Injected->GetComponents(candidates);
+		for (USkeletalMeshComponent* part : candidates)
+			if (part->GetSkinnedAsset() && (PerfectBodyParts.Contains(part->GetFName())
+				|| (!PerfectBodyPartTag.IsNone() && part->ComponentHasTag(PerfectBodyPartTag)))) parts.AddUnique(part);
+		BodyOverlay.Start(this, parts, PerfectBodyMaterial, GlowWeightParameter);
+	}
+	const auto* weaponComp = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
+	GlowWeapon = weaponComp ? weaponComp->GetWeaponActor() : nullptr;
+	if (GlowWeapon.IsValid() && IsValid(CounterWeaponMaterial) && WeaponEnvelopeState.Start(CounterWeaponEnvelope, now, true))
+	{
+		TArray<UMeshComponent*> parts;
+		GlowWeapon->GetComponents(parts);
+		if (WeaponOverlay.Start(this, parts, CounterWeaponMaterial, GlowWeightParameter)) WeaponOpportunitySerial = InResultSerial;
+		else RestoreCounterWeapon();
 	}
 	if (OwnerCharacter_Injected->IsLocallyControlled() && FMath::IsFinite(PerfectScreenDuration) && PerfectScreenDuration > 0.f)
 	{
@@ -121,16 +139,50 @@ void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick In
 	const UCHealthComponent* health = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->FindComponentByClass<UCHealthComponent>() : nullptr;
 	if (!IsValid(health) || !health->IsAlive()) { ClearPerfectDodgePresentation(); return; }
 	const double now = FPlatformTime::Seconds();
-	if (bOwnsBody && now >= BodyExpiresAt) RestorePerfectBody();
+	BodyOverlay.SetWeight(BodyEnvelopeState.Evaluate(now));
+	if (BodyEnvelopeState.IsFinished(now)) RestorePerfectBody();
+	if (WeaponOpportunitySerial != 0)
+	{
+		const auto* weaponComp = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
+		const auto* defense = OwnerCharacter_Injected->FindComponentByClass<UCDefenseComponent>();
+		if (!GlowWeapon.IsValid() || !weaponComp || weaponComp->GetWeaponActor() != GlowWeapon.Get())
+			RestoreCounterWeapon();
+		else
+		{
+			if (!bWeaponTransferredToAttack && (!defense || !defense->IsCounterRushPresentationPending(WeaponOpportunitySerial)))
+				ReleaseCounterWeapon(WeaponOpportunitySerial);
+			WeaponOverlay.SetWeight(WeaponEnvelopeState.Evaluate(now));
+			if (WeaponEnvelopeState.IsFinished(now)) RestoreCounterWeapon();
+		}
+	}
 	if (PerfectCamera.IsValid() && now >= ScreenExpiresAt) RestorePerfectScreen();
 }
 
 void UCReactionFeedbackComponent::RestorePerfectBody()
 {
-	if (bOwnsBody && IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->GetMesh()->GetOverlayMaterial() == PerfectBodyMaterial)
-		OwnerCharacter_Injected->GetMesh()->SetOverlayMaterial(PreviousOverlay);
-	bOwnsBody = false;
-	PreviousOverlay = nullptr;
+	BodyOverlay.Restore();
+	BodyEnvelopeState.Reset();
+}
+
+void UCReactionFeedbackComponent::TransferCounterWeaponToAttack(uint64 InOpportunitySerial)
+{
+	if (InOpportunitySerial != 0 && WeaponOpportunitySerial == InOpportunitySerial && !WeaponEnvelopeState.bReleased)
+		bWeaponTransferredToAttack = true;
+}
+
+void UCReactionFeedbackComponent::ReleaseCounterWeapon(uint64 InOpportunitySerial)
+{
+	if (InOpportunitySerial != 0 && WeaponOpportunitySerial == InOpportunitySerial)
+		WeaponEnvelopeState.Release(FPlatformTime::Seconds());
+}
+
+void UCReactionFeedbackComponent::RestoreCounterWeapon()
+{
+	WeaponOverlay.Restore();
+	WeaponEnvelopeState.Reset();
+	GlowWeapon.Reset();
+	WeaponOpportunitySerial = 0;
+	bWeaponTransferredToAttack = false;
 }
 
 void UCReactionFeedbackComponent::RestorePerfectScreen()
@@ -146,6 +198,7 @@ void UCReactionFeedbackComponent::RestorePerfectScreen()
 void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
 {
 	RestorePerfectBody();
+	RestoreCounterWeapon();
 	RestorePerfectScreen();
 	if (PerfectSlowSerial != 0)
 		if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)

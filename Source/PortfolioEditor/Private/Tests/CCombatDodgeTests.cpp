@@ -22,6 +22,8 @@
 #include "Component/CReactionOrchestratorComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CWeaponComponent.h"
+#include "Weapon/CWeaponActor.h"
+#include "Materials/MaterialInterface.h"
 #include "Animation/AnimMontage.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -293,6 +295,15 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	using namespace CombatDodgeTest;
 	FFixture f;
 	if (!TestNotNull(TEXT("Montage loaded"), f.Montage)) return false;
+	auto* feedback = f.References.ReactionFeedbackComponent;
+	feedback->InitializeReferences(f.References);
+	UMaterialInterface* glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/CharacterOverlay/Materials/Material_Instance/MI_Fresnel"));
+	if (!TestNotNull(TEXT("Glow material loaded"), glow)) return false;
+	Field<UMaterialInterface*>(feedback, TEXT("PerfectBodyMaterial")) = glow;
+	Field<UMaterialInterface*>(feedback, TEXT("CounterWeaponMaterial")) = glow;
+	UClass* weaponClass = LoadClass<ACWeaponActor>(nullptr, TEXT("/Game/06_Weapon/BP_CWeaponActor_Sword.BP_CWeaponActor_Sword_C"));
+	if (!TestNotNull(TEXT("Authored weapon class"), weaponClass)) return false;
+	Field<ACWeaponActor*>(f.References.WeaponComponent, TEXT("WeaponActor")) = f.World->SpawnActor<ACWeaponActor>(weaponClass);
 	Field<FDefenseDodgeTuning>(f.Defense, TEXT("DodgeTuning")).PerfectEnd = 0.18f;
 	FReactionData data;
 	data.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
@@ -308,6 +319,9 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Dodge interrupted"), !f.Actions->IsActive());
 	TestTrue(TEXT("Actual success reaction owns immunity"), f.Defense->IsPerfectDodgeActive());
 	TestNull(TEXT("Counter connection not open at start"), f.Defense->GetCounterRushTarget());
+	TestTrue(TEXT("Presentation includes preparation before input opens"), f.Defense->IsCounterRushPresentationPending(f.LastPacket.ResultSerial));
+	TestTrue(TEXT("Success starts body envelope"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("BodyEnvelopeState")).bRunning);
+	TestTrue(TEXT("Success sustains weapon independently"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bSustain);
 	const uint64 perfectGeneration = f.References.ReactionComponent->GetActiveReactionGeneration();
 	f.Defense->EndDodgeExecution(dodgeGeneration);
 	TestTrue(TEXT("Old dodge cleanup preserves perfect immunity"), f.Defense->IsPerfectDodgeActive());
@@ -323,6 +337,7 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Completion grants real-time grace"), f.Defense->GetCounterRushTarget() == f.Attacker);
 	f.Attacker->SetActorLocation(FVector(1000.f, 0.f, 0.f));
 	TestNull(TEXT("Out of range rejected"), f.Defense->GetCounterRushTarget());
+	TestTrue(TEXT("Temporary distance does not flicker preparation glow"), f.Defense->IsCounterRushPresentationPending(opportunity));
 	f.Attacker->SetActorLocation(FVector(250.f, 0.f, 0.f));
 	UCAction_CounterRush* rush = NewObject<UCAction_CounterRush>(f.Actions);
 	rush->InitializeReferences(f.References);
@@ -337,6 +352,10 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	rushResult.ResolvedContext.ActionData.Montage = f.Montage;
 	TestTrue(TEXT("Rush starts during grace"), f.Actions->ApplyActionDecision(rushResult));
 	TestEqual(TEXT("Actual rush consumes once"), f.Defense->GetCounterRushSerial(), uint64(0));
+	TestFalse(TEXT("Consumed opportunity no longer pending"), f.Defense->IsCounterRushPresentationPending(opportunity));
+	TestFalse(TEXT("Consumption preserves weapon envelope"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
+	f.Actions->HandleActionCollisionWindowEnd();
+	TestTrue(TEXT("Collision end releases glow even without a hit"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
 	TestFalse(TEXT("Rush inherits no invulnerability"), f.Defense->CanDodge() || f.Defense->IsPerfectDodgeActive());
 	TestFalse(TEXT("Repeated request cannot reuse success"), f.Actions->ApplyActionDecision(rushResult));
 	f.Actions->CancelActiveActionForSystem();

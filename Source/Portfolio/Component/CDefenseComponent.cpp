@@ -251,6 +251,14 @@ uint64 UCDefenseComponent::GetCounterRushSerial() const
 	return GetCounterRushTarget() ? CounterSerial : 0;
 }
 
+bool UCDefenseComponent::IsCounterRushPresentationPending(uint64 InSerial) const
+{
+	if (InSerial == 0 || CounterSerial != InSerial || !CounterTarget.IsValid()
+		|| CounterTarget->IsActorBeingDestroyed() || !CounterTargetHealth.IsValid() || !CounterTargetHealth->IsAlive()
+		|| !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+	return PerfectGeneration != 0 ? IsPerfectDodgeActive() : CounterExpiresAt > FPlatformTime::Seconds();
+}
+
 bool UCDefenseComponent::BeginCounterRushTransition()
 {
 	if (bCounterTransition || !GetCounterRushTarget()) return false;

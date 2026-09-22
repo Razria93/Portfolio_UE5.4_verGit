@@ -90,27 +90,8 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 {
 	using namespace DodgeAssets;
 	const bool bApply = FParse::Param(*Params, TEXT("Apply"));
-	const FString bodyPath = TEXT("/Game/04_Montage/Dodge/M_PerfectDodgeOverlay");
-	UMaterial* body = LoadObject<UMaterial>(nullptr, *bodyPath, nullptr, LOAD_NoWarn);
-	if (!body && bApply)
-	{
-		body = NewObject<UMaterial>(CreatePackage(*bodyPath), TEXT("M_PerfectDodgeOverlay"), RF_Public | RF_Standalone);
-		body->BlendMode = BLEND_Translucent;
-		body->SetShadingModel(MSM_Unlit);
-		bool needsCompile = false;
-		body->SetMaterialUsage(needsCompile, MATUSAGE_SkeletalMesh);
-		auto* color = NewObject<UMaterialExpressionConstant3Vector>(body);
-		color->Constant = FLinearColor(3.f, 0.015f, 0.08f);
-		auto* rim = NewObject<UMaterialExpressionFresnel>(body);
-		rim->Exponent = 3.f;
-		rim->BaseReflectFraction = 0.08f;
-		body->GetExpressionCollection().AddExpression(color);
-		body->GetExpressionCollection().AddExpression(rim);
-		body->GetEditorOnlyData()->EmissiveColor.Expression = color;
-		body->GetEditorOnlyData()->Opacity.Expression = rim;
-		body->PostEditChange();
-		if (!Save(body)) return 1;
-	}
+	const FString bodyPath = TEXT("/Game/CharacterOverlay/Materials/Material_Instance/MI_Fresnel");
+	UMaterialInterface* body = LoadObject<UMaterialInterface>(nullptr, *bodyPath, nullptr, LOAD_NoWarn);
 	if (!body) return 1;
 	const FString root = TEXT("/Game/04_Montage/Dodge/");
 	for (const FString variant : { FString(TEXT("Default")), FString(TEXT("Stellar")) })
@@ -127,6 +108,18 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 		if (!reactions || !actions || !source || !feedback) return 1;
 		if (bApply) Field<UMaterialInterface*>(feedback, TEXT("PerfectBodyMaterial")) = body;
 		else if (Field<UMaterialInterface*>(feedback, TEXT("PerfectBodyMaterial")) != body) return 1;
+		if (bApply)
+		{
+			Field<UMaterialInterface*>(feedback, TEXT("CounterWeaponMaterial")) = body;
+			Field<TArray<FName>>(feedback, TEXT("PerfectBodyParts")) = bStellar
+				? TArray<FName>{TEXT("HEAD"), TEXT("NECK")} : TArray<FName>{};
+		}
+		else
+		{
+			if (Field<UMaterialInterface*>(feedback, TEXT("CounterWeaponMaterial")) != body) return 1;
+			const auto& parts = Field<TArray<FName>>(feedback, TEXT("PerfectBodyParts"));
+			if (bStellar && (!parts.Contains(TEXT("HEAD")) || !parts.Contains(TEXT("NECK")))) return 1;
+		}
 		const FString perfectPath = root + variant + TEXT("/M_PerfectDodge") + suffix;
 		UAnimMontage* perfect = LoadObject<UAnimMontage>(nullptr, *perfectPath, nullptr, LOAD_NoWarn);
 		if (!perfect && bApply)
@@ -137,7 +130,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 			perfect->Notifies.Reset();
 			Complete(perfect, true, 1.3f);
 			perfect->RefreshCacheData();
-			if (!Save(perfect)) return 1;
+			if (!DodgeAssets::Save(perfect)) return 1;
 		}
 		if (!perfect) return 1;
 		auto& reactionRows = Field<TArray<FReactionData>>(reactions, TEXT("ReactionDatas"));
@@ -165,7 +158,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 				sequence->bEnableRootMotion = false;
 				sequence->bForceRootLock = true;
 				sequence->RootMotionRootLock = ERootMotionRootLock::AnimFirstFrame;
-				if (!Save(sequence)) return 1;
+				if (!DodgeAssets::Save(sequence)) return 1;
 			}
 			if (!sequence || !sequence->bForceRootLock || sequence->bEnableRootMotion) return 1;
 			// Dedicated playback owns all gameplay notifies on the montage, not the source sequence.
@@ -195,7 +188,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 				Window<UCAnimNotifyState_Collision>(rush, 0.3f, 0.7f);
 				Complete(rush, false, 1.5f);
 				rush->RefreshCacheData();
-				if (!Save(rush)) return 1;
+				if (!DodgeAssets::Save(rush)) return 1;
 			}
 			if (!rush) return 1;
 			UWeaponTrailDataAsset* trails = LoadObject<UWeaponTrailDataAsset>(nullptr, TEXT("/Game/09_DataAsset/DA_WeaponTrail_ScifiSword"));
@@ -213,7 +206,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 				definition.ActionFeedbackMatchKey.ActionType = EActionType::CounterRush;
 				definition.ActionFeedbackMatchKey.ActionIndex = 0;
 				trails->TrailDefinitions.Add(definition);
-				if (!Save(trails)) return 1;
+				if (!DodgeAssets::Save(trails)) return 1;
 			}
 			else if (!hasTrail) return 1;
 			const bool hasTrailWindow = rush->Notifies.ContainsByPredicate([rushTrail](const FAnimNotifyEvent& InEvent)
@@ -226,7 +219,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 				Window<UCAnimNotifyState_ActionFeedback>(rush, 0.02f, 0.75f);
 				CastChecked<UCAnimNotifyState_ActionFeedback>(rush->Notifies.Last().NotifyStateClass)->TriggerKey = rushTrail;
 				rush->RefreshCacheData();
-				if (!Save(rush)) return 1;
+				if (!DodgeAssets::Save(rush)) return 1;
 			}
 			else if (!hasTrailWindow) return 1;
 			auto& actionRows = Field<TArray<FActionData>>(actions, TEXT("ActionDatas"));
@@ -256,7 +249,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 			}
 			else if (!specs.Contains(key)) return 1;
 		}
-		if (bApply && !Save(bp)) return 1;
+		if (bApply && !DodgeAssets::Save(bp)) return 1;
 		UE_LOG(LogTemp, Display, TEXT("DodgeAssets %s: %s"), *variant, bApply ? TEXT("Applied") : TEXT("Verified persisted data"));
 	}
 	return 0;

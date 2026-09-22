@@ -103,6 +103,8 @@ public:
 	bool CanCommitPerfectDodge(uint64 InResultSerial) const;
 	AActor* GetCounterRushTarget() const;
 	uint64 GetCounterRushSerial() const;
+	// Presentation lifetime, not input eligibility: includes the pre-connect preparation phase.
+	bool IsCounterRushPresentationPending(uint64 InSerial) const;
 	AActor* GetPerfectDodgeAttacker() const { return PerfectGeneration != 0 ? PerfectAttacker.Get() : nullptr; }
 
 public:

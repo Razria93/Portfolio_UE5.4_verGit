@@ -3,6 +3,7 @@
 #include "Component/CDefenseComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
+#include "Component/CReactionFeedbackComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
@@ -88,11 +89,23 @@ void UCAction_CounterRush::CommitStarted()
 		return;
 	}
 	if (IsValid(MovementComp_Injected))
+	{
 		MovementComp_Injected->TryFaceTarget(TargetLocation, 600.f, 180.f);
+	}
+	if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+		feedback->TransferCounterWeaponToAttack(OpportunitySerial);
+}
+
+void UCAction_CounterRush::EndCounterAttackPresentation()
+{
+	if (IsValid(OwnerCharacter_Injected))
+		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+			feedback->ReleaseCounterWeapon(OpportunitySerial);
 }
 
 void UCAction_CounterRush::CleanupRuntimeEffects()
 {
+	EndCounterAttackPresentation();
 	if (RushSource.IsValid() && IsValid(OwnerCharacter_Injected))
 	{
 		UCharacterMovementComponent* movement = OwnerCharacter_Injected->GetCharacterMovement();
