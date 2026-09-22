@@ -18,6 +18,9 @@ USTRUCT(BlueprintType)
 struct FDefenseDodgeTuning
 {
 	GENERATED_BODY()
+	// Explicit migration: old assets keep their reviewed numeric intervals until enabled.
+	UPROPERTY(EditAnywhere, Category = "Dodge")
+	bool bUseMontageWindows = false;
 
 	// Provisional values in montage position seconds, unaffected by playback speed.
 	UPROPERTY(EditAnywhere, Category = "Dodge", meta = (ClampMin = "0.0", Units = "s"))

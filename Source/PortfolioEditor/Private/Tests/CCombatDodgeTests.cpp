@@ -7,6 +7,7 @@
 #include "Reaction/CReaction_PerfectDodge.h"
 #include "Notify/CAnimNotify_PerfectDodgePresentation.h"
 #include "Notify/CAnimNotify_WeaponGlow.h"
+#include "Notify/CAnimNotifyState_DodgeWindow.h"
 #include "Component/CReactionFeedbackComponent.h"
 #include "NiagaraComponent.h"
 #include "Component/CActionComponent.h"
@@ -170,6 +171,46 @@ bool FDodgeWindowBoundsTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("NaN rejected"), tuning.ContainsInvulnerabilityPosition(std::numeric_limits<float>::quiet_NaN()));
 	tuning.InvulnerabilityEnd = 0.05f;
 	TestFalse(TEXT("Reversed window rejected"), tuning.ContainsInvulnerabilityPosition(0.1f));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDodgeMontageWindowTest, "Portfolio.Combat.Dodge.MontageWindows",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FDodgeMontageWindowTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatDodgeTest;
+	FFixture f;
+	if (!TestNotNull(TEXT("Montage"), f.Montage)) return false;
+	auto& tuning = Field<FDefenseDodgeTuning>(f.Defense, TEXT("DodgeTuning"));
+	TestFalse(TEXT("Existing assets retain legacy timing"), tuning.bUseMontageWindows);
+	tuning.bUseMontageWindows = true;
+	TestTrue(TEXT("Dodge starts"), f.Actions->ApplyActionDecision(f.MakeStart()));
+	TestFalse(TEXT("Missing markers fail closed, no numeric fallback"), f.Defense->CanDodge());
+	const auto add = [&f](EDodgeWindowKind kind, float start, float end)
+	{
+		auto* marker = NewObject<UCAnimNotifyState_DodgeWindow>(f.Montage);
+		marker->Kind = kind;
+		auto& event = f.Montage->Notifies.AddDefaulted_GetRef();
+		event.NotifyStateClass = marker;
+		event.Link(f.Montage, start);
+		event.SetDuration(end - start);
+		event.EndLink.Link(f.Montage, end);
+	};
+	add(EDodgeWindowKind::Invulnerability, .1f, .5f);
+	add(EDodgeWindowKind::Perfect, 0.f, .25f);
+	auto* anim = f.Player->GetMesh()->GetAnimInstance();
+	anim->Montage_SetPosition(f.Montage, .05f);
+	TestTrue(TEXT("Perfect marker outside immunity cannot grant defense"), f.Defense->ResolveDodgeContact() == EDamageDefenseOutcome::None);
+	anim->Montage_SetPosition(f.Montage, .1f);
+	TestTrue(TEXT("Start inclusive without NotifyBegin delivery"), f.Defense->CanDodge());
+	TestTrue(TEXT("Perfect contact"), f.Defense->ResolveDodgeContact() == EDamageDefenseOutcome::PerfectDodge);
+	TestTrue(TEXT("Success only once per execution"), f.Defense->ResolveDodgeContact() == EDamageDefenseOutcome::Dodge);
+	anim->Montage_SetPosition(f.Montage, .5f);
+	TestFalse(TEXT("End exclusive without NotifyEnd delivery"), f.Defense->CanDodge());
+	TestFalse(TEXT("NaN rejected"), UCAnimNotifyState_DodgeWindow::Contains(f.Montage, EDodgeWindowKind::Perfect, std::numeric_limits<float>::quiet_NaN()));
+	anim->Montage_SetPosition(f.Montage, .2f);
+	f.Actions->CancelActiveActionForSystem();
+	TestFalse(TEXT("Interrupt clears ownership inside interval"), f.Defense->CanDodge());
 	return true;
 }
 

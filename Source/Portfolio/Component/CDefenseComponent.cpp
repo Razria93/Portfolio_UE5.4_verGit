@@ -8,6 +8,7 @@
 #include "Component/CReactionComponent.h"
 #include "Reaction/CReaction.h"
 #include "Action/CAction.h"
+#include "Notify/CAnimNotifyState_DodgeWindow.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -138,16 +139,22 @@ bool UCDefenseComponent::TryGetDodgePosition(float& OutPosition) const
 bool UCDefenseComponent::CanDodge() const
 {
 	float position;
-	return TryGetDodgePosition(position) && DodgeTuning.ContainsInvulnerabilityPosition(position);
+	return TryGetDodgePosition(position) && (DodgeTuning.bUseMontageWindows
+		? UCAnimNotifyState_DodgeWindow::Contains(DodgeMontage.Get(), EDodgeWindowKind::Invulnerability, position)
+		: DodgeTuning.ContainsInvulnerabilityPosition(position));
 }
 
 EDamageDefenseOutcome UCDefenseComponent::ResolveDodgeContact()
 {
 	if (IsPerfectDodgeActive()) return EDamageDefenseOutcome::Dodge;
 	float position;
-	if (!TryGetDodgePosition(position) || !DodgeTuning.ContainsInvulnerabilityPosition(position))
+	if (!TryGetDodgePosition(position) || !(DodgeTuning.bUseMontageWindows
+		? UCAnimNotifyState_DodgeWindow::Contains(DodgeMontage.Get(), EDodgeWindowKind::Invulnerability, position)
+		: DodgeTuning.ContainsInvulnerabilityPosition(position)))
 		return EDamageDefenseOutcome::None;
-	if (!bPerfectConsumed && DodgeTuning.ContainsPerfectPosition(position))
+	if (!bPerfectConsumed && (DodgeTuning.bUseMontageWindows
+		? UCAnimNotifyState_DodgeWindow::Contains(DodgeMontage.Get(), EDodgeWindowKind::Perfect, position)
+		: DodgeTuning.ContainsPerfectPosition(position)))
 	{
 		bPerfectConsumed = true;
 		return EDamageDefenseOutcome::PerfectDodge;
