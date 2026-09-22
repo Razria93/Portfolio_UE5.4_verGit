@@ -1,6 +1,8 @@
 #include "Action/CAction_CounterRush.h"
 
 #include "Component/CDefenseComponent.h"
+#include "Component/CActionComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
@@ -42,12 +44,17 @@ bool UCAction_CounterRush::WantIntervention(const FExecutionInterventionQuery& I
 bool UCAction_CounterRush::Start(const FActionData& InData, uint32 InActionRequestSerial)
 {
 	AActor* target = IsValid(DefenseComp_Injected) ? DefenseComp_Injected->GetCounterRushTarget() : nullptr;
-	if (!IsValid(target) || !IsValid(OwnerCharacter_Injected) || bIsActive
-		|| !FMath::IsFinite(RushDuration) || RushDuration <= 0.f
-		|| !FMath::IsFinite(MaxTravelDistance) || MaxTravelDistance < 0.f
-		|| !FMath::IsFinite(StopDistance) || StopDistance < 0.f) return false;
+	if (!IsValid(target) || !IsValid(OwnerCharacter_Injected) || !IsValid(ActionComp_Injected) || bIsActive) return false;
+	ActiveRushTuning = ActionComp_Injected->GetCounterRushTuning();
+	if (!ActiveRushTuning.IsValid()) return false;
 	OpportunitySerial = DefenseComp_Injected->GetCounterRushSerial();
 	TargetLocation = target->GetActorLocation();
+	const UCapsuleComponent* targetCapsule = target->FindComponentByClass<UCapsuleComponent>();
+	const UCapsuleComponent* playerCapsule = OwnerCharacter_Injected->GetCapsuleComponent();
+	RushPlan = FCounterRushPlan::Build(OwnerCharacter_Injected->GetActorLocation(), TargetLocation,
+		playerCapsule ? playerCapsule->GetScaledCapsuleRadius() : 0.f,
+		targetCapsule ? targetCapsule->GetScaledCapsuleRadius() : 0.f, ActiveRushTuning);
+	if (!RushPlan.bValid) return false;
 	return Super::Start(InData, InActionRequestSerial);
 }
 
@@ -61,17 +68,15 @@ void UCAction_CounterRush::CommitStarted()
 	}
 	UCharacterMovementComponent* movement = OwnerCharacter_Injected->GetCharacterMovement();
 	if (!IsValid(movement)) { Stop(EActionStopReason::Interrupted); return; }
-	FVector delta = TargetLocation - OwnerCharacter_Injected->GetActorLocation();
-	delta.Z = 0.f;
-	const float distance = FMath::Clamp(delta.Size() - StopDistance, 0.f, MaxTravelDistance);
+	const float distance = RushPlan.TravelDistance;
 	if (distance > KINDA_SMALL_NUMBER)
 	{
 		RushSource = MakeShared<FRootMotionSource_ConstantForce>();
 		RushSource->InstanceName = TEXT("CounterRush");
 		RushSource->Priority = 900;
 		RushSource->AccumulateMode = ERootMotionAccumulateMode::Override;
-		RushSource->Force = delta.GetSafeNormal() * (distance / RushDuration);
-		RushSource->Duration = RushDuration;
+		RushSource->Force = RushPlan.Direction * (distance / ActiveRushTuning.Duration);
+		RushSource->Duration = ActiveRushTuning.Duration;
 		RushSource->Settings.SetFlag(ERootMotionSourceSettingsFlags::IgnoreZAccumulate);
 		// Stop horizontal drift on natural expiry without slowing an existing fall.
 		RushSource->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::ClampVelocity;
@@ -94,6 +99,24 @@ void UCAction_CounterRush::CommitStarted()
 	}
 	if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
 		feedback->TransferCounterWeaponToAttack(OpportunitySerial);
+	RushDebug.Begin(OwnerCharacter_Injected, RushPlan, OpportunitySerial, ActiveRushTuning.Duration);
+	bRushMovementActive = RushSource.IsValid();
+	if (!bRushMovementActive) RushDebug.End(OwnerCharacter_Injected, TEXT("NoTravelNeeded"));
+}
+
+void UCAction_CounterRush::Tick(float InDeltaTime)
+{
+	Super::Tick(InDeltaTime);
+	if (!bRushMovementActive || !IsValid(OwnerCharacter_Injected)) return;
+	RushDebug.Sample(OwnerCharacter_Injected);
+	auto* movement = OwnerCharacter_Injected->GetCharacterMovement();
+	if (!RushSource.IsValid() || !movement || RushSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished)
+		|| movement->GetRootMotionSourceByID(RushSource->LocalID) != RushSource)
+	{
+		const bool ended = RushSource.IsValid() && RushSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished);
+		RushDebug.End(OwnerCharacter_Injected, ended ? TEXT("SourceFinished") : TEXT("SourceRemoved"));
+		bRushMovementActive = false;
+	}
 }
 
 void UCAction_CounterRush::EndCounterAttackPresentation()
@@ -106,6 +129,8 @@ void UCAction_CounterRush::EndCounterAttackPresentation()
 void UCAction_CounterRush::CleanupRuntimeEffects()
 {
 	EndCounterAttackPresentation();
+	if (bRushMovementActive) RushDebug.End(OwnerCharacter_Injected, TEXT("ActionCleanup"));
+	bRushMovementActive = false;
 	if (RushSource.IsValid() && IsValid(OwnerCharacter_Injected))
 	{
 		UCharacterMovementComponent* movement = OwnerCharacter_Injected->GetCharacterMovement();

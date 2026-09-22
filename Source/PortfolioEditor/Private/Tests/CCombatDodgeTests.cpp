@@ -34,6 +34,7 @@
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/UnrealType.h"
 #include <limits>
 
@@ -342,6 +343,11 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestNull(TEXT("Out of range rejected"), f.Defense->GetCounterRushTarget());
 	TestTrue(TEXT("Temporary distance does not flicker preparation glow"), f.Defense->IsCounterRushPresentationPending(opportunity));
 	f.Attacker->SetActorLocation(FVector(250.f, 0.f, 0.f));
+	f.Player->SetActorScale3D(FVector(1.25));
+	f.Attacker->SetActorScale3D(FVector(2.));
+	auto& rushTuning = Field<FCounterRushTuning>(f.Actions, TEXT("CounterRushTuning"));
+	rushTuning.MaxTravelDistance = 75.f;
+	rushTuning.ExtraGap = 17.f;
 	UCAction_CounterRush* rush = NewObject<UCAction_CounterRush>(f.Actions);
 	rush->InitializeReferences(f.References);
 	FActionExecutionResult rushResult = f.MakeStart();
@@ -354,6 +360,14 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Failed rush preserves opportunity"), f.Defense->GetCounterRushSerial(), opportunity);
 	rushResult.ResolvedContext.ActionData.Montage = f.Montage;
 	TestTrue(TEXT("Rush starts during grace"), f.Actions->ApplyActionDecision(rushResult));
+	const FCounterRushPlan committedPlan = rush->GetRushPlan();
+	TestEqual(TEXT("Runtime plan uses scaled player capsule"), committedPlan.PlayerRadius, f.Player->GetCapsuleComponent()->GetScaledCapsuleRadius());
+	TestEqual(TEXT("Runtime plan uses scaled target capsule"), committedPlan.TargetRadius, f.Attacker->GetCapsuleComponent()->GetScaledCapsuleRadius());
+	TestEqual(TEXT("Component tuning supplies gap"), committedPlan.CenterSpacing, committedPlan.PlayerRadius + committedPlan.TargetRadius + 17.f);
+	TestTrue(TEXT("Component tuning limits distance"), committedPlan.TravelDistance <= 75.f);
+	f.Attacker->SetActorLocation(FVector(300.f, 200.f, 0.f));
+	rush->Tick(0.f);
+	TestTrue(TEXT("Rush does not retarget after commit"), rush->GetRushPlan().Target.Equals(committedPlan.Target));
 	TestEqual(TEXT("Actual rush consumes once"), f.Defense->GetCounterRushSerial(), uint64(0));
 	TestFalse(TEXT("Consumed opportunity no longer pending"), f.Defense->IsCounterRushPresentationPending(opportunity));
 	TestFalse(TEXT("Consumption preserves weapon envelope"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
@@ -520,6 +534,72 @@ bool FPerfectVignetteEnvelopeTest::RunTest(const FString& Parameters)
 	static_cast<UActorComponent*>(feedback)->TickComponent(0.f, LEVELTICK_All, nullptr);
 	feedback->InitializeReferences(f.References);
 	TestEqual(TEXT("External vignette owner survives cleanup"), camera->PostProcessSettings.VignetteIntensity, .93f);
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCounterRushMovementTest, "Portfolio.Combat.CounterRush.MovementAndWall",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCounterRushMovementTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatDodgeTest;
+	for (bool blocked : {false, true})
+	{
+		FFixture f;
+		if (!TestNotNull(TEXT("Fixture montage"), f.Montage)) return false;
+		f.Attacker->SetActorLocation(FVector(400,0,0));
+		Field<FDefenseDodgeTuning>(f.Defense, TEXT("DodgeTuning")).PerfectEnd = .18f;
+		FReactionData data;
+		data.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+		data.ReactionDataKey.ReactionType = EReactionType::PerfectDodge;
+		data.ReactionExecutorKey = UCReaction_PerfectDodge::StaticClass();
+		data.Montage = f.Montage;
+		Field<TMap<FReactionDataKey, FReactionData>>(f.References.ReactionComponent, TEXT("ReactionDataMap")).Add(data.ReactionDataKey, data);
+		TestTrue(TEXT("Dodge setup"), f.Actions->ApplyActionDecision(f.MakeStart()));
+		f.Target->RequestCombatDamageTarget(10.f, f.Damage(), f.Controller, f.Attacker);
+		f.Player->GetMesh()->GetAnimInstance()->Montage_SetPosition(data.Montage, .9f);
+		f.References.ReactionComponent->GetActiveReactionExecutor()->Complete();
+		auto& tuning = Field<FCounterRushTuning>(f.Actions, TEXT("CounterRushTuning"));
+		tuning.MaxTravelDistance = 200.f;
+		tuning.Duration = .25f;
+		if (blocked)
+		{
+			AActor* wall = f.World->SpawnActor<AActor>();
+			auto* box = NewObject<UBoxComponent>(wall);
+			wall->SetRootComponent(box);
+			box->SetBoxExtent(FVector(10,200,200));
+			box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			box->SetCollisionObjectType(ECC_WorldStatic);
+			box->SetCollisionResponseToAllChannels(ECR_Block);
+			box->RegisterComponent();
+			wall->SetActorLocation(FVector(120,0,0));
+		}
+		auto* movement = f.Player->GetCharacterMovement();
+		movement->Activate(true);
+		movement->bRunPhysicsWithNoController = true;
+		movement->SetMovementMode(MOVE_Flying);
+		f.Player->GetMesh()->GetAnimInstance()->SetRootMotionMode(ERootMotionMode::IgnoreRootMotion);
+		auto* rush = NewObject<UCAction_CounterRush>(f.Actions);
+		rush->InitializeReferences(f.References);
+		auto request = f.MakeStart();
+		request.ResolvedContext.ActionDataKey.ActionType = EActionType::CounterRush;
+		request.ResolvedContext.ActionExecutor = rush;
+		request.ResolvedContext.ActionData.ActionDataKey = request.ResolvedContext.ActionDataKey;
+		request.ResolvedContext.ActionData.ActionExecutorKey = rush->GetClass();
+		if (!TestTrue(TEXT("Rush started"), f.Actions->ApplyActionDecision(request))) return false;
+		const FCounterRushPlan plan = rush->GetRushPlan();
+		for (int32 i = 0; i < 30; ++i)
+		{
+			movement->TickComponent(1.f/60.f, LEVELTICK_All, &movement->PrimaryComponentTick);
+			rush->Tick(1.f/60.f);
+		}
+		const float actual = FVector::Dist2D(plan.Origin, f.Player->GetActorLocation());
+		TestTrue(TEXT("Movement happened"), actual > 1.f);
+		if (blocked)
+		{
+			TestTrue(TEXT("Wall stops capsule before wall face"), f.Player->GetActorLocation().X + f.Player->GetCapsuleComponent()->GetScaledCapsuleRadius() <= 111.f);
+			TestTrue(TEXT("Blocked displacement below planned travel"), actual < plan.TravelDistance - 10.f);
+		}
+		else TestTrue(TEXT("Open movement reaches capped endpoint without drift"), FMath::IsNearlyEqual(actual, plan.TravelDistance, 2.f));
+	}
 	return true;
 }
 #endif

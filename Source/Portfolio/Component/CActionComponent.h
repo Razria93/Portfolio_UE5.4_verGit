@@ -8,6 +8,7 @@
 #include "Type/CActionOrchestrationTypes.h"
 #include "Type/CObservableOverlayTypes.h"
 #include "Type/CExecutionTypes.h"
+#include "Type/CCounterRushTypes.h"
 #include "CActionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FActionTypeChanged, class ACharacter*, InOwnerCharacter, EActionType, InPrevActionType, EActionType, InNewActionType);
@@ -27,6 +28,12 @@ private:
 	// Data Configuration
 	UPROPERTY(EditAnywhere, Category = "Action|Data")
 	TArray<FActionData> ActionDatas;
+	// Exposed on the character BP, even when the executor uses a native class.
+	UPROPERTY(EditAnywhere, Category = "Action|CounterRush")
+	FCounterRushTuning CounterRushTuning;
+
+public:
+	const FCounterRushTuning& GetCounterRushTuning() const { return CounterRushTuning; }
 
 private:
 	// Runtime Map

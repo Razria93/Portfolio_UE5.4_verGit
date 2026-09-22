@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Action/CAction.h"
+#include "Type/CCounterRushTypes.h"
+#include "Core/Debug/FCombatCounterRushDebug.h"
 #include "CAction_CounterRush.generated.h"
 
 UCLASS()
@@ -17,13 +19,10 @@ private:
 	TSharedPtr<struct FRootMotionSource_ConstantForce> RushSource;
 	uint64 OpportunitySerial = 0;
 	FVector TargetLocation = FVector::ZeroVector;
-
-	UPROPERTY(EditDefaultsOnly, Category = "CounterRush", meta = (ClampMin = "0.01", Units = "s"))
-	float RushDuration = 0.25f;
-	UPROPERTY(EditDefaultsOnly, Category = "CounterRush", meta = (ClampMin = "0.0", Units = "cm"))
-	float MaxTravelDistance = 450.f;
-	UPROPERTY(EditDefaultsOnly, Category = "CounterRush", meta = (ClampMin = "0.0", Units = "cm"))
-	float StopDistance = 120.f;
+	FCounterRushTuning ActiveRushTuning;
+	FCounterRushPlan RushPlan;
+	FCombatCounterRushDebug RushDebug;
+	bool bRushMovementActive = false;
 
 public:
 	void InitializeReferences(const FCharacterComponentReferences& InReferences) override;
@@ -32,6 +31,8 @@ public:
 	bool Start(const FActionData& InData, uint32 InActionRequestSerial = 0) override;
 	void CommitStarted();
 	void EndCounterAttackPresentation();
+	const FCounterRushPlan& GetRushPlan() const { return RushPlan; }
+	void Tick(float InDeltaTime) override;
 
 protected:
 	void CleanupRuntimeEffects() override;
