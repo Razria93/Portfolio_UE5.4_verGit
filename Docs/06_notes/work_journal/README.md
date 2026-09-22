@@ -18,4 +18,5 @@
 | ID | 제목 | 파일 | 브랜치 |
 | --- | --- | --- | --- |
 | J01 | Combat Signal Boundary Work Journal | `J01_Combat_Signal_Boundary_Work_Journal.md` | `refactor/combat-signal-boundary` |
+| J02 | Dodge / PerfectDodge / CounterRush AI Review | [J02_Dodge_Perfect_CounterRush_AI_Review.md](J02_Dodge_Perfect_CounterRush_AI_Review.md) | `feat/combat-dodge` / `dodge-review-01` |
 
