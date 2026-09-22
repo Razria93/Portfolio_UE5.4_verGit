@@ -154,6 +154,7 @@ void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick In
 	if (!IsValid(health) || !health->IsAlive()) { ClearPerfectDodgePresentation(); return; }
 	const double now = FPlatformTime::Seconds();
 	BodyOverlay.SetWeight(BodyEnvelopeState.Evaluate(now));
+	TickRushPresentation(now);
 	if (BodyEnvelopeState.IsFinished(now)) RestorePerfectBody();
 	if (WeaponOpportunitySerial != 0)
 	{
@@ -228,6 +229,7 @@ void UCReactionFeedbackComponent::RestorePerfectScreen()
 
 void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
 {
+	RestoreRushPresentation();
 	RestorePerfectBody();
 	RestoreCounterWeapon();
 	RestorePerfectScreen();
@@ -236,6 +238,62 @@ void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
 			subsystem->CancelPerfectDodgeSlow(PerfectSlowSerial);
 	PerfectSlowSerial = 0;
 	PerfectAttacker.Reset();
+}
+
+void UCReactionFeedbackComponent::BeginRushPresentation(uint64 InSerial)
+{
+	RestoreRushPresentation();
+	if (!InSerial || !IsValid(OwnerCharacter_Injected) || !OwnerCharacter_Injected->IsLocallyControlled()
+		|| !FMath::IsFinite(RushFOVOffset) || RushFOVOffset <= 0.f
+		|| !FMath::IsFinite(RushFOVBlendIn) || RushFOVBlendIn <= 0.f
+		|| !FMath::IsFinite(RushFOVBlendOut) || RushFOVBlendOut <= 0.f) return;
+	RushCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
+	if (!RushCamera.IsValid()) return;
+	RushPresentationSerial = InSerial;
+	RushBaseFOV = RushLastFOV = RushCamera->FieldOfView;
+	RushLastRealTime = FPlatformTime::Seconds();
+}
+
+void UCReactionFeedbackComponent::UpdateRushPresentation(uint64 InSerial, float InMovementRatio)
+{
+	if (InSerial && InSerial == RushPresentationSerial && !bRushPresentationReleased)
+		RushMotionWeight = FMath::IsFinite(InMovementRatio) ? FMath::Clamp(InMovementRatio, 0.f, 1.f) : 0.f;
+}
+
+void UCReactionFeedbackComponent::EndRushPresentation(uint64 InSerial)
+{
+	if (!InSerial || InSerial != RushPresentationSerial) return;
+	RushMotionWeight = 0.f;
+	bRushPresentationReleased = true;
+}
+
+void UCReactionFeedbackComponent::TickRushPresentation(double InNow)
+{
+	if (!RushPresentationSerial) return;
+	if (!RushCamera.IsValid() || !FMath::IsNearlyEqual(RushCamera->FieldOfView, RushLastFOV))
+	{
+		// A different camera writer wins; never restore over its new value.
+		RestoreRushPresentation();
+		return;
+	}
+	const float elapsed = float(FMath::Max(0., InNow - RushLastRealTime));
+	RushLastRealTime = InNow;
+	const float blend = RushMotionWeight > RushFOVWeight ? RushFOVBlendIn : RushFOVBlendOut;
+	RushFOVWeight = FMath::FInterpConstantTo(RushFOVWeight, RushMotionWeight, elapsed, 1.f / FMath::Max(.001f, blend));
+	const float smooth = RushFOVWeight * RushFOVWeight * (3.f - 2.f * RushFOVWeight);
+	RushLastFOV = FMath::Clamp(RushBaseFOV + FMath::Clamp(RushFOVOffset, 0.f, 20.f) * smooth, 5.f, 170.f);
+	RushCamera->SetFieldOfView(RushLastFOV);
+	if (bRushPresentationReleased && RushFOVWeight <= KINDA_SMALL_NUMBER) RestoreRushPresentation();
+}
+
+void UCReactionFeedbackComponent::RestoreRushPresentation()
+{
+	if (RushCamera.IsValid() && FMath::IsNearlyEqual(RushCamera->FieldOfView, RushLastFOV))
+		RushCamera->SetFieldOfView(RushBaseFOV);
+	RushCamera.Reset();
+	RushPresentationSerial = 0;
+	RushMotionWeight = RushFOVWeight = 0.f;
+	bRushPresentationReleased = false;
 }
 
 void UCReactionFeedbackComponent::EndPlay(const EEndPlayReason::Type InReason)

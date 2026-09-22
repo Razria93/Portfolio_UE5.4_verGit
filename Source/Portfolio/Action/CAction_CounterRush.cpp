@@ -101,6 +101,10 @@ void UCAction_CounterRush::CommitStarted()
 		feedback->TransferCounterWeaponToAttack(OpportunitySerial);
 	RushDebug.Begin(OwnerCharacter_Injected, RushPlan, OpportunitySerial, ActiveRushTuning.Duration);
 	bRushMovementActive = RushSource.IsValid();
+	LastPresentationLocation = OwnerCharacter_Injected->GetActorLocation();
+	if (bRushMovementActive)
+		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+			feedback->BeginRushPresentation(OpportunitySerial);
 	if (!bRushMovementActive) RushDebug.End(OwnerCharacter_Injected, TEXT("NoTravelNeeded"));
 }
 
@@ -109,6 +113,12 @@ void UCAction_CounterRush::Tick(float InDeltaTime)
 	Super::Tick(InDeltaTime);
 	if (!bRushMovementActive || !IsValid(OwnerCharacter_Injected)) return;
 	RushDebug.Sample(OwnerCharacter_Injected);
+	const FVector location = OwnerCharacter_Injected->GetActorLocation();
+	const float expected = RushPlan.TravelDistance / ActiveRushTuning.Duration * InDeltaTime;
+	const float actual = float(FMath::Max(0., FVector::DotProduct(location - LastPresentationLocation, RushPlan.Direction)));
+	LastPresentationLocation = location;
+	if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+		feedback->UpdateRushPresentation(OpportunitySerial, expected > KINDA_SMALL_NUMBER ? actual / expected : 0.f);
 	auto* movement = OwnerCharacter_Injected->GetCharacterMovement();
 	if (!RushSource.IsValid() || !movement || RushSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished)
 		|| movement->GetRootMotionSourceByID(RushSource->LocalID) != RushSource)
@@ -116,6 +126,8 @@ void UCAction_CounterRush::Tick(float InDeltaTime)
 		const bool ended = RushSource.IsValid() && RushSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished);
 		RushDebug.End(OwnerCharacter_Injected, ended ? TEXT("SourceFinished") : TEXT("SourceRemoved"));
 		bRushMovementActive = false;
+		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+			feedback->EndRushPresentation(OpportunitySerial);
 	}
 }
 
@@ -128,6 +140,9 @@ void UCAction_CounterRush::EndCounterAttackPresentation()
 
 void UCAction_CounterRush::CleanupRuntimeEffects()
 {
+	if (IsValid(OwnerCharacter_Injected))
+		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+			feedback->EndRushPresentation(OpportunitySerial);
 	EndCounterAttackPresentation();
 	if (bRushMovementActive) RushDebug.End(OwnerCharacter_Injected, TEXT("ActionCleanup"));
 	bRushMovementActive = false;

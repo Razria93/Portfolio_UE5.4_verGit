@@ -23,6 +23,7 @@ private:
 	FCounterRushPlan RushPlan;
 	FCombatCounterRushDebug RushDebug;
 	bool bRushMovementActive = false;
+	FVector LastPresentationLocation = FVector::ZeroVector;
 
 public:
 	void InitializeReferences(const FCharacterComponentReferences& InReferences) override;

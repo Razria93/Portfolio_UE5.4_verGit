@@ -536,6 +536,50 @@ bool FPerfectVignetteEnvelopeTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("External vignette owner survives cleanup"), camera->PostProcessSettings.VignetteIntensity, .93f);
 	return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCounterRushFOVTest, "Portfolio.Combat.Presentation.RushFOV",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCounterRushFOVTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatDodgeTest;
+	FFixture f;
+	f.Controller->Possess(f.Player);
+	auto* feedback = f.References.ReactionFeedbackComponent;
+	feedback->InitializeReferences(f.References);
+	auto* camera = f.Player->FindComponentByClass<UCameraComponent>();
+	if (!TestNotNull(TEXT("Player camera"), camera)) return false;
+	camera->SetFieldOfView(90.f);
+	feedback->BeginRushPresentation(41);
+	const double start = feedback->RushLastRealTime;
+	feedback->TickRushPresentation(start + 1.);
+	TestEqual(TEXT("No actual movement means no FOV expansion"), camera->FieldOfView, 90.f);
+	feedback->UpdateRushPresentation(41, 1.f);
+	feedback->TickRushPresentation(start + 1.02);
+	TestTrue(TEXT("FOV blends through midpoint"), FMath::IsNearlyEqual(camera->FieldOfView, 92.5f, .01f));
+	feedback->TickRushPresentation(start + 1.04);
+	TestEqual(TEXT("Full movement reaches configured offset"), camera->FieldOfView, 95.f);
+	feedback->EndRushPresentation(40);
+	TestFalse(TEXT("Stale execution cannot end current cue"), feedback->bRushPresentationReleased);
+	feedback->UpdateRushPresentation(41, 0.f);
+	feedback->TickRushPresentation(start + 1.16);
+	TestTrue(TEXT("Blocked movement fades back"), FMath::IsNearlyEqual(camera->FieldOfView, 90.f));
+	feedback->EndRushPresentation(41);
+	feedback->TickRushPresentation(start + 1.3);
+	TestEqual(TEXT("Finished cue releases serial"), feedback->RushPresentationSerial, uint64(0));
+	feedback->BeginRushPresentation(42);
+	feedback->UpdateRushPresentation(42, 1.f);
+	feedback->TickRushPresentation(feedback->RushLastRealTime + 1.);
+	camera->SetFieldOfView(77.f);
+	feedback->TickRushPresentation(feedback->RushLastRealTime + 1.);
+	feedback->InitializeReferences(f.References);
+	TestEqual(TEXT("External FOV survives cleanup"), camera->FieldOfView, 77.f);
+	feedback->BeginRushPresentation(43);
+	feedback->UpdateRushPresentation(43, 1.f);
+	feedback->TickRushPresentation(feedback->RushLastRealTime + 1.);
+	feedback->InitializeReferences(f.References);
+	TestEqual(TEXT("Owned FOV restored on reinitialization"), camera->FieldOfView, 77.f);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCounterRushMovementTest, "Portfolio.Combat.CounterRush.MovementAndWall",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FCounterRushMovementTest::RunTest(const FString& Parameters)

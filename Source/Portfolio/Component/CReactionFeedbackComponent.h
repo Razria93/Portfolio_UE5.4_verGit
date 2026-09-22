@@ -12,6 +12,7 @@ UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCReactionFeedbackComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	friend class FCounterRushFOVTest;
 
 public:
 	UCReactionFeedbackComponent();
@@ -64,6 +65,20 @@ private:
 	TWeakObjectPtr<AActor> PerfectAttacker;
 	uint64 PerfectSlowSerial = 0;
 	uint64 LastPerfectResultSerial = 0;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush", meta = (ClampMin = "0", ClampMax = "20"))
+	float RushFOVOffset = 5.f;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush", meta = (ClampMin = "0.001", Units = "s"))
+	float RushFOVBlendIn = .04f;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush", meta = (ClampMin = "0.001", Units = "s"))
+	float RushFOVBlendOut = .12f;
+	TWeakObjectPtr<class UCameraComponent> RushCamera;
+	uint64 RushPresentationSerial = 0;
+	float RushBaseFOV = 0.f;
+	float RushLastFOV = 0.f;
+	float RushMotionWeight = 0.f;
+	float RushFOVWeight = 0.f;
+	double RushLastRealTime = 0.;
+	bool bRushPresentationReleased = false;
 
 public:
 	// Component Reference
@@ -81,6 +96,9 @@ public:
 	void ReleaseCounterWeapon(uint64 InOpportunitySerial);
 	void StartPerfectDodgeSlow(const FCombatPresentationEnvelope& InEnvelope, float InDilation, bool bInPlayer, bool bInAttacker);
 	void StartPerfectDodgeVignette(const FCombatPresentationEnvelope& InEnvelope, float InPeakIntensity);
+	void BeginRushPresentation(uint64 InSerial);
+	void UpdateRushPresentation(uint64 InSerial, float InMovementRatio);
+	void EndRushPresentation(uint64 InSerial);
 
 protected:
 	void TickComponent(float InDeltaTime, ELevelTick InTickType, FActorComponentTickFunction* InTickFunction) override;
@@ -91,6 +109,8 @@ private:
 	void RestorePerfectBody();
 	void RestoreCounterWeapon();
 	void RestorePerfectScreen();
+	void RestoreRushPresentation();
+	void TickRushPresentation(double InNow);
 
 private:
 	// Query
