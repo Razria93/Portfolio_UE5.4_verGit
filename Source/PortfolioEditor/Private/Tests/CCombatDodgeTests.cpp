@@ -24,9 +24,12 @@
 #include "Component/CWeaponComponent.h"
 #include "Weapon/CWeaponActor.h"
 #include "Materials/MaterialInterface.h"
+#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
+#include "HAL/PlatformProcess.h"
 #include "Animation/AnimMontage.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
@@ -429,6 +432,7 @@ bool FDodgeAuthoredPlaybackTest::RunTest(const FString& Parameters)
 {
 	using namespace CombatDodgeTest;
 	FFixture f;
+	f.References.ReactionFeedbackComponent->InitializeReferences(f.References);
 	UAnimMontage* normal = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/04_Montage/Dodge/Default/M_Dodge"));
 	f.Montage = normal;
 	TestTrue(TEXT("Original dodge starts"), f.Actions->ApplyActionDecision(f.MakeStart()));
@@ -447,6 +451,17 @@ bool FDodgeAuthoredPlaybackTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Dodge before authored perfect"), f.Actions->ApplyActionDecision(f.MakeStart()));
 	f.Target->RequestCombatDamageTarget(10.f, f.Damage(), f.Controller, f.Attacker);
 	TestTrue(TEXT("Authored perfect owns immunity"), f.Defense->IsPerfectDodgeActive());
+	TestFalse(TEXT("Success itself does not start vignette before Notify"),
+		Field<FCombatPresentationEnvelopeState>(f.References.ReactionFeedbackComponent, TEXT("ScreenEnvelopeState")).bRunning);
+	TestEqual(TEXT("Success itself does not start slow before Notify"), f.Player->CustomTimeDilation, 1.f);
+	f.Controller->Possess(f.Player);
+	anim->AdvanceWeightedProbe(.04f);
+	TestTrue(TEXT("Authored point Notify starts vignette"),
+		Field<FCombatPresentationEnvelopeState>(f.References.ReactionFeedbackComponent, TEXT("ScreenEnvelopeState")).bRunning);
+	FPlatformProcess::Sleep(.04f);
+	f.World->GetSubsystem<UCWorldSubsystem_CombatFeedback>()->Tick(0.f);
+	TestTrue(TEXT("Authored point Notify slows player"), f.Player->CustomTimeDilation < 1.f);
+	TestTrue(TEXT("Authored point Notify slows remembered attacker"), f.Attacker->CustomTimeDilation < 1.f);
 	for (int32 tick = 0; tick < 60; ++tick) anim->AdvanceWeightedProbe(1.f / 30.f);
 	TestFalse(TEXT("Authored complete reaction notify exits success"), f.References.ReactionComponent->IsActive());
 	TestFalse(TEXT("Authored completion clears perfect immunity"), f.Defense->IsPerfectDodgeActive());
@@ -469,6 +484,42 @@ bool FDodgeAuthoredPlaybackTest::RunTest(const FString& Parameters)
 	for (int32 tick = 0; tick < 60; ++tick) anim->AdvanceWeightedProbe(1.f / 30.f);
 	TestFalse(TEXT("Authored rush complete notify exits action"), f.Actions->IsActive());
 	TestEqual(TEXT("Authored rush consumes opportunity"), f.Defense->GetCounterRushSerial(), uint64(0));
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPerfectVignetteEnvelopeTest, "Portfolio.Combat.Presentation.VignetteLifetime",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FPerfectVignetteEnvelopeTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatDodgeTest;
+	FFixture f;
+	f.Controller->Possess(f.Player);
+	auto* feedback = f.References.ReactionFeedbackComponent;
+	feedback->InitializeReferences(f.References);
+	auto* camera = f.Player->FindComponentByClass<UCameraComponent>();
+	if (!TestNotNull(TEXT("Player camera"), camera)) return false;
+	camera->PostProcessSettings.VignetteIntensity = .2f;
+	camera->PostProcessSettings.bOverride_VignetteIntensity = false;
+	FCombatPresentationEnvelope profile;
+	profile.FadeIn = profile.FadeOut = 2.f;
+	profile.Hold = 1.f;
+	feedback->StartPerfectDodgeVignette(profile, .8f);
+	TestEqual(TEXT("Start does not jump to peak"), camera->PostProcessSettings.VignetteIntensity, .2f);
+	auto& state = Field<FCombatPresentationEnvelopeState>(feedback, TEXT("ScreenEnvelopeState"));
+	state.StartedAt = FPlatformTime::Seconds() - 1.;
+	static_cast<UActorComponent*>(feedback)->TickComponent(0.f, LEVELTICK_All, nullptr);
+	TestTrue(TEXT("Fade in reaches midpoint"), FMath::IsNearlyEqual(camera->PostProcessSettings.VignetteIntensity, .5f, .01f));
+	state.StartedAt = FPlatformTime::Seconds() - 4.;
+	static_cast<UActorComponent*>(feedback)->TickComponent(0.f, LEVELTICK_All, nullptr);
+	TestTrue(TEXT("Fade out reaches midpoint"), FMath::IsNearlyEqual(camera->PostProcessSettings.VignetteIntensity, .5f, .01f));
+	state.StartedAt = FPlatformTime::Seconds() - 6.;
+	static_cast<UActorComponent*>(feedback)->TickComponent(0.f, LEVELTICK_All, nullptr);
+	TestEqual(TEXT("Original intensity restored"), camera->PostProcessSettings.VignetteIntensity, .2f);
+	TestFalse(TEXT("Original override restored"), camera->PostProcessSettings.bOverride_VignetteIntensity);
+	feedback->StartPerfectDodgeVignette(profile, .8f);
+	camera->PostProcessSettings.VignetteIntensity = .93f;
+	static_cast<UActorComponent*>(feedback)->TickComponent(0.f, LEVELTICK_All, nullptr);
+	feedback->InitializeReferences(f.References);
+	TestEqual(TEXT("External vignette owner survives cleanup"), camera->PostProcessSettings.VignetteIntensity, .93f);
 	return true;
 }
 #endif

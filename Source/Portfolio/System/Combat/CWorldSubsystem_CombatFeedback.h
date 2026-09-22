@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Type/CCombatFeedbackTypes.h"
+#include "Type/CCombatPresentationEnvelope.h"
+#include "UObject/StrongObjectPtr.h"
 #include "CWorldSubsystem_CombatFeedback.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnCombatCameraShakeRequested, const FCameraShakeRequest& InCameraShakeRequest);
@@ -19,6 +21,10 @@ private:
 		double ExpiresAt = 0.;
 		bool bRealTime = false;
 		uint64 OwnerSerial = 0;
+		bool bEnvelope = false;
+		FCombatPresentationEnvelopeState Envelope;
+		// Native effect storage is not traversed by GC. Pin the optional curve for this lease.
+		TStrongObjectPtr<UCurveFloat> CurveKeepAlive;
 	};
 	struct FActorTimeEffects
 	{
@@ -44,12 +50,14 @@ public:
 	void RequestHitStop(const FHitStopRequest& InHitStopRequest);
 	void RequestCameraShake(const FCameraShakeRequest& InCameraShakeRequest);
 	uint64 RequestPerfectDodgeSlow(AActor* InPlayer, AActor* InAttacker, float InDuration, float InDilation);
+	uint64 RequestPerfectDodgeSlow(AActor* InPlayer, AActor* InAttacker, const FCombatPresentationEnvelope& InEnvelope, float InDilation);
 	void CancelPerfectDodgeSlow(uint64 InSerial);
 
 private:
 	// HitStop
 	void ApplyHitStop(AActor* InActor, float InDuration, float InDilation);
 	void AddTimeEffect(AActor* InActor, float InDuration, float InDilation, bool bRealTime, uint64 InSerial);
+	void AddEnvelopeTimeEffect(AActor* InActor, const FCombatPresentationEnvelope& InEnvelope, float InDilation, uint64 InSerial);
 	void RefreshTimeEffects();
 	void ClearHitStop();
 

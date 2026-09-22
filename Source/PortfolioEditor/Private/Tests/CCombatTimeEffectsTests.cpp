@@ -114,4 +114,43 @@ bool FCombatTimeEffectsCleanupTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("World cleanup restores attacker baseline"), f.Attacker->CustomTimeDilation, .6f);
 	return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCombatTimeEnvelopeTest, "Portfolio.Combat.TimeEffects.PresentationEnvelope",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCombatTimeEnvelopeTest::RunTest(const FString& Parameters)
+{
+	CombatTimeEffectsTest::FFixture f;
+	FCombatPresentationEnvelope profile;
+	profile.Delay = 60.f;
+	const uint64 delayed = f.Feedback->RequestPerfectDodgeSlow(f.Player, f.Attacker, profile, .15f);
+	TestTrue(TEXT("Valid envelope token"), delayed != 0);
+	TestEqual(TEXT("Delay preserves player baseline"), f.Player->CustomTimeDilation, .8f);
+	TestEqual(TEXT("Delay preserves attacker baseline"), f.Attacker->CustomTimeDilation, .6f);
+	f.Feedback->CancelPerfectDodgeSlow(delayed);
+	profile.Delay = 0.f;
+	profile.FadeIn = 60.f;
+	profile.BlendCurve = NewObject<UCurveFloat>();
+	profile.BlendCurve->FloatCurve.AddKey(0.f, .5f);
+	profile.BlendCurve->FloatCurve.AddKey(1.f, .5f);
+	const uint64 gradual = f.Feedback->RequestPerfectDodgeSlow(f.Player, f.Attacker, profile, .2f);
+	f.Feedback->Tick(0.f);
+	TestTrue(TEXT("Envelope blends from individual player baseline"), FMath::IsNearlyEqual(f.Player->CustomTimeDilation, .5f));
+	TestTrue(TEXT("Envelope blends from individual attacker baseline"), FMath::IsNearlyEqual(f.Attacker->CustomTimeDilation, .4f));
+	f.HitStop(60.f, .05f);
+	f.Feedback->CancelPerfectDodgeSlow(gradual);
+	TestEqual(TEXT("Cancelling interpolated slow preserves HitStop"), f.Player->CustomTimeDilation, .05f);
+	// Use an independent actor to prove real-time expiry while the overlapping HitStop stays active.
+	profile.BlendCurve = nullptr;
+	profile.FadeIn = 0.f;
+	profile.Hold = .001f;
+	profile.FadeOut = .001f;
+	const double gameTime = f.World->GetTimeSeconds();
+	f.Feedback->RequestPerfectDodgeSlow(f.Bystander, nullptr, profile, .1f);
+	FPlatformProcess::Sleep(.01f);
+	f.Feedback->Tick(0.f);
+	TestEqual(TEXT("Envelope expires without game-time advancement"), f.Bystander->CustomTimeDilation, 1.f);
+	TestEqual(TEXT("Game clock did not advance"), f.World->GetTimeSeconds(), gameTime);
+	profile.FadeOut = -1.f;
+	TestEqual(TEXT("Invalid envelope returns no lease"), f.Feedback->RequestPerfectDodgeSlow(f.Bystander, nullptr, profile, .1f), uint64(0));
+	return true;
+}
 #endif

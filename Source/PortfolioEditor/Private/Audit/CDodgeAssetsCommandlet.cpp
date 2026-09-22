@@ -10,6 +10,7 @@
 #include "Component/CCombatSignalSourceComponent.h"
 #include "Notify/CAnimNotify_CompleteAction.h"
 #include "Notify/CAnimNotify_CompleteReaction.h"
+#include "Notify/CAnimNotify_PerfectDodgePresentation.h"
 #include "Notify/CAnimNotifyState_HitContext.h"
 #include "Notify/CAnimNotifyState_Collision.h"
 #include "Notify/CAnimNotifyState_ActionFeedback.h"
@@ -133,6 +134,38 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 			if (!DodgeAssets::Save(perfect)) return 1;
 		}
 		if (!perfect) return 1;
+		bool addedPresentation = false;
+		for (EPerfectDodgePresentationCue cue : { EPerfectDodgePresentationCue::Slow, EPerfectDodgePresentationCue::Vignette })
+		{
+			int32 count = 0;
+			for (const FAnimNotifyEvent& event : perfect->Notifies)
+				if (const auto* notify = Cast<UCAnimNotify_PerfectDodgePresentation>(event.Notify); notify && notify->Cue == cue)
+				{
+					++count;
+					if (!notify->Envelope.IsValid() || notify->Envelope.Duration() <= 0.
+						|| event.GetTime() < 0.f || event.GetTime() >= perfect->GetPlayLength()) return 1;
+				}
+			if (count > 1 || (count == 0 && !bApply)) return 1;
+			if (count == 0)
+			{
+				auto* notify = NewObject<UCAnimNotify_PerfectDodgePresentation>(perfect);
+				notify->Cue = cue;
+				const bool slow = cue == EPerfectDodgePresentationCue::Slow;
+				notify->Envelope.FadeIn = slow ? .03f : .06f;
+				notify->Envelope.Hold = slow ? .12f : .14f;
+				notify->Envelope.FadeOut = slow ? .07f : .2f;
+				auto& event = perfect->Notifies.AddDefaulted_GetRef();
+				event.Notify = notify;
+				event.Link(perfect, .01f);
+				event.TriggerWeightThreshold = 0.f;
+				addedPresentation = true;
+			}
+		}
+		if (addedPresentation)
+		{
+			perfect->RefreshCacheData();
+			if (!DodgeAssets::Save(perfect)) return 1;
+		}
 		auto& reactionRows = Field<TArray<FReactionData>>(reactions, TEXT("ReactionDatas"));
 		const FReactionData* found = reactionRows.FindByPredicate([](const FReactionData& InData)
 			{ return InData.ReactionDataKey.ReactionType == EReactionType::PerfectDodge; });
@@ -166,7 +199,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 			{
 				sequence->Notifies.Reset();
 				sequence->RefreshCacheData();
-				if (!Save(sequence)) return 1;
+				if (!DodgeAssets::Save(sequence)) return 1;
 			}
 			if (!sequence->Notifies.IsEmpty()) return 1;
 			const FString rushPath = root + TEXT("Stellar/M_CounterRush_Stellar");

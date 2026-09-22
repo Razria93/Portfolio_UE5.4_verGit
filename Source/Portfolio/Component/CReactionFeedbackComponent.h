@@ -27,11 +27,7 @@ private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
-	// Provisional presentation tuning; independent real-time lifetimes.
-	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
-	float PerfectSlowDuration = 0.22f;
-	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
-	float PerfectSlowDilation = 0.15f;
+	// Body and weapon are success cues; slow/screen are authored as point Notifies.
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
 	FCombatPresentationEnvelope PerfectBodyEnvelope;
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
@@ -43,8 +39,6 @@ private:
 	FName PerfectBodyPartTag = TEXT("PerfectDodgeGlow");
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
 	FName GlowWeightParameter = TEXT("Alpha");
-	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
-	float PerfectScreenDuration = 0.4f;
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
 	class UMaterialInterface* PerfectBodyMaterial = nullptr;
 	UPROPERTY(Transient)
@@ -63,7 +57,11 @@ private:
 	TWeakObjectPtr<class UCameraComponent> PerfectCamera;
 	float PreviousVignette = 0.f;
 	bool bPreviousVignetteOverride = false;
-	double ScreenExpiresAt = 0.;
+	float LastWrittenVignette = 0.f;
+	float PeakVignette = .85f;
+	UPROPERTY(Transient)
+	FCombatPresentationEnvelopeState ScreenEnvelopeState;
+	TWeakObjectPtr<AActor> PerfectAttacker;
 	uint64 PerfectSlowSerial = 0;
 	uint64 LastPerfectResultSerial = 0;
 
@@ -81,6 +79,8 @@ public:
 	void PlayPerfectDodgeSuccess(AActor* InAttacker, uint64 InResultSerial);
 	void TransferCounterWeaponToAttack(uint64 InOpportunitySerial);
 	void ReleaseCounterWeapon(uint64 InOpportunitySerial);
+	void StartPerfectDodgeSlow(const FCombatPresentationEnvelope& InEnvelope, float InDilation, bool bInPlayer, bool bInAttacker);
+	void StartPerfectDodgeVignette(const FCombatPresentationEnvelope& InEnvelope, float InPeakIntensity);
 
 protected:
 	void TickComponent(float InDeltaTime, ELevelTick InTickType, FActorComponentTickFunction* InTickFunction) override;

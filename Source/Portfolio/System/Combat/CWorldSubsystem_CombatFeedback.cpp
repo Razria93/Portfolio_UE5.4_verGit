@@ -101,6 +101,40 @@ void UCWorldSubsystem_CombatFeedback::CancelPerfectDodgeSlow(uint64 InSerial)
 	RefreshTimeEffects();
 }
 
+uint64 UCWorldSubsystem_CombatFeedback::RequestPerfectDodgeSlow(AActor* InPlayer, AActor* InAttacker,
+	const FCombatPresentationEnvelope& InEnvelope, float InDilation)
+{
+	if (!InEnvelope.IsValid() || InEnvelope.Duration() <= 0. || !FMath::IsFinite(InDilation)
+		|| InDilation < 0.f || InDilation > 1.f || (!IsValid(InPlayer) && !IsValid(InAttacker))) return 0;
+	const uint64 serial = ++NextSlowSerial;
+	AddEnvelopeTimeEffect(InPlayer, InEnvelope, InDilation, serial);
+	if (InAttacker != InPlayer) AddEnvelopeTimeEffect(InAttacker, InEnvelope, InDilation, serial);
+	return serial;
+}
+
+void UCWorldSubsystem_CombatFeedback::AddEnvelopeTimeEffect(AActor* InActor,
+	const FCombatPresentationEnvelope& InEnvelope, float InDilation, uint64 InSerial)
+{
+	if (!IsValid(InActor) || !GetWorld()) return;
+	RefreshTimeEffects();
+	FActorTimeEffects* state = ActorTimeEffects.Find(InActor);
+	if (!state)
+	{
+		state = &ActorTimeEffects.Add(InActor);
+		state->Baseline = InActor->CustomTimeDilation;
+	}
+	FTimeEffect effect;
+	effect.Dilation = InDilation;
+	effect.bRealTime = effect.bEnvelope = true;
+	effect.OwnerSerial = InSerial;
+	const double now = FPlatformTime::Seconds();
+	effect.ExpiresAt = now + InEnvelope.Duration();
+	effect.Envelope.Start(InEnvelope, now);
+	effect.CurveKeepAlive.Reset(InEnvelope.BlendCurve);
+	state->Effects.Add(MoveTemp(effect));
+	RefreshTimeEffects();
+}
+
 void UCWorldSubsystem_CombatFeedback::Tick(float InDeltaTime)
 {
 	RefreshTimeEffects();
@@ -120,7 +154,13 @@ void UCWorldSubsystem_CombatFeedback::RefreshTimeEffects()
 			return InEffect.ExpiresAt <= (InEffect.bRealTime ? realNow : gameNow);
 		});
 		float dilation = state.Baseline;
-		for (const FTimeEffect& effect : state.Effects) dilation = FMath::Min(dilation, effect.Dilation);
+		for (const FTimeEffect& effect : state.Effects)
+		{
+			const float requested = effect.bEnvelope
+				? FMath::Lerp(state.Baseline, FMath::Min(state.Baseline, effect.Dilation), effect.Envelope.Evaluate(realNow))
+				: effect.Dilation;
+			dilation = FMath::Min(dilation, requested);
+		}
 		actor->CustomTimeDilation = dilation;
 		if (state.Effects.IsEmpty()) it.RemoveCurrent();
 	}

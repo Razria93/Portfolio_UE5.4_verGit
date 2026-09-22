@@ -95,8 +95,7 @@ void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, ui
 	if (!IsValid(OwnerCharacter_Injected) || InResultSerial == 0 || InResultSerial == LastPerfectResultSerial) return;
 	ClearPerfectDodgePresentation();
 	LastPerfectResultSerial = InResultSerial;
-	if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
-		PerfectSlowSerial = subsystem->RequestPerfectDodgeSlow(OwnerCharacter_Injected, InAttacker, PerfectSlowDuration, PerfectSlowDilation);
+	PerfectAttacker = InAttacker;
 	const double now = FPlatformTime::Seconds();
 	if (IsValid(PerfectBodyMaterial) && BodyEnvelopeState.Start(PerfectBodyEnvelope, now))
 	{
@@ -118,19 +117,34 @@ void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, ui
 		if (WeaponOverlay.Start(this, parts, CounterWeaponMaterial, GlowWeightParameter)) WeaponOpportunitySerial = InResultSerial;
 		else RestoreCounterWeapon();
 	}
-	if (OwnerCharacter_Injected->IsLocallyControlled() && FMath::IsFinite(PerfectScreenDuration) && PerfectScreenDuration > 0.f)
+}
+
+void UCReactionFeedbackComponent::StartPerfectDodgeSlow(const FCombatPresentationEnvelope& InEnvelope,
+	float InDilation, bool bInPlayer, bool bInAttacker)
+{
+	if (!IsValid(OwnerCharacter_Injected) || !InEnvelope.IsValid() || InEnvelope.Duration() <= 0.
+		|| !FMath::IsFinite(InDilation) || InDilation < 0.f || InDilation > 1.f || (!bInPlayer && !bInAttacker)) return;
+	if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
 	{
-		PerfectCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
-		if (PerfectCamera.IsValid())
-		{
-			auto& settings = PerfectCamera->PostProcessSettings;
-			PreviousVignette = settings.VignetteIntensity;
-			bPreviousVignetteOverride = settings.bOverride_VignetteIntensity;
-			settings.bOverride_VignetteIntensity = true;
-			settings.VignetteIntensity = 0.85f;
-			ScreenExpiresAt = now + PerfectScreenDuration;
-		}
+		subsystem->CancelPerfectDodgeSlow(PerfectSlowSerial);
+		PerfectSlowSerial = subsystem->RequestPerfectDodgeSlow(bInPlayer ? OwnerCharacter_Injected : nullptr,
+			bInAttacker ? PerfectAttacker.Get() : nullptr, InEnvelope, InDilation);
 	}
+}
+
+void UCReactionFeedbackComponent::StartPerfectDodgeVignette(const FCombatPresentationEnvelope& InEnvelope, float InPeakIntensity)
+{
+	if (!IsValid(OwnerCharacter_Injected) || !OwnerCharacter_Injected->IsLocallyControlled()
+		|| !InEnvelope.IsValid() || InEnvelope.Duration() <= 0. || !FMath::IsFinite(InPeakIntensity)) return;
+	RestorePerfectScreen();
+	PerfectCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
+	if (!PerfectCamera.IsValid()) return;
+	auto& settings = PerfectCamera->PostProcessSettings;
+	PreviousVignette = LastWrittenVignette = settings.VignetteIntensity;
+	bPreviousVignetteOverride = settings.bOverride_VignetteIntensity;
+	PeakVignette = FMath::Clamp(InPeakIntensity, 0.f, 1.f);
+	settings.bOverride_VignetteIntensity = true;
+	ScreenEnvelopeState.Start(InEnvelope, FPlatformTime::Seconds());
 }
 
 void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick InTickType, FActorComponentTickFunction* InTickFunction)
@@ -155,7 +169,22 @@ void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick In
 			if (WeaponEnvelopeState.IsFinished(now)) RestoreCounterWeapon();
 		}
 	}
-	if (PerfectCamera.IsValid() && now >= ScreenExpiresAt) RestorePerfectScreen();
+	if (PerfectCamera.IsValid())
+	{
+		auto& settings = PerfectCamera->PostProcessSettings;
+		if (!settings.bOverride_VignetteIntensity || !FMath::IsNearlyEqual(settings.VignetteIntensity, LastWrittenVignette))
+		{
+			// An external camera effect took ownership. Stop writing rather than fighting it.
+			PerfectCamera.Reset();
+			ScreenEnvelopeState.Reset();
+		}
+		else if (ScreenEnvelopeState.IsFinished(now)) RestorePerfectScreen();
+		else
+		{
+			LastWrittenVignette = FMath::Lerp(PreviousVignette, PeakVignette, ScreenEnvelopeState.Evaluate(now));
+			settings.VignetteIntensity = LastWrittenVignette;
+		}
+	}
 }
 
 void UCReactionFeedbackComponent::RestorePerfectBody()
@@ -187,12 +216,14 @@ void UCReactionFeedbackComponent::RestoreCounterWeapon()
 
 void UCReactionFeedbackComponent::RestorePerfectScreen()
 {
-	if (PerfectCamera.IsValid() && FMath::IsNearlyEqual(PerfectCamera->PostProcessSettings.VignetteIntensity, 0.85f))
+	if (PerfectCamera.IsValid() && PerfectCamera->PostProcessSettings.bOverride_VignetteIntensity
+		&& FMath::IsNearlyEqual(PerfectCamera->PostProcessSettings.VignetteIntensity, LastWrittenVignette))
 	{
 		PerfectCamera->PostProcessSettings.VignetteIntensity = PreviousVignette;
 		PerfectCamera->PostProcessSettings.bOverride_VignetteIntensity = bPreviousVignetteOverride;
 	}
 	PerfectCamera.Reset();
+	ScreenEnvelopeState.Reset();
 }
 
 void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
@@ -204,6 +235,7 @@ void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
 		if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
 			subsystem->CancelPerfectDodgeSlow(PerfectSlowSerial);
 	PerfectSlowSerial = 0;
+	PerfectAttacker.Reset();
 }
 
 void UCReactionFeedbackComponent::EndPlay(const EEndPlayReason::Type InReason)
