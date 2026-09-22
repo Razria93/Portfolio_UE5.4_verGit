@@ -176,6 +176,11 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 		for (const FName part : parts) UE_LOG(LogTemp, Display, TEXT("PerfectBodyPart=%s"), *part.ToString());
 		return parts.Contains(TEXT("BANG")) && parts.Contains(TEXT("HAIR")) ? 0 : 1;
 	}
+	if (bApply && !FParse::Param(*Params, TEXT("LegacyBootstrapApply")))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Full bootstrap overwrites presentation defaults. Use narrow authoring modes, or explicitly opt in with -LegacyBootstrapApply."));
+		return 1;
+	}
 	const FString bodyPath = TEXT("/Game/CharacterOverlay/Materials/Material_Instance/MI_Fresnel");
 	UMaterialInterface* body = LoadObject<UMaterialInterface>(nullptr, *bodyPath, nullptr, LOAD_NoWarn);
 	if (!body) return 1;
@@ -209,11 +214,12 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 			const auto& parts = Field<TArray<FName>>(feedback, TEXT("PerfectBodyParts"));
 			if (bStellar && (!parts.Contains(TEXT("HEAD")) || !parts.Contains(TEXT("NECK")))) return 1;
 		}
-		const FString perfectPath = root + variant + TEXT("/M_PerfectDodge") + suffix;
+		const FString montageSuffix = bStellar ? TEXT("_B_Root_Stellar") : TEXT("");
+		const FString perfectPath = root + variant + TEXT("/M_PerfectDodge") + montageSuffix;
 		UAnimMontage* perfect = LoadObject<UAnimMontage>(nullptr, *perfectPath, nullptr, LOAD_NoWarn);
 		if (!perfect && bApply)
 		{
-			UAnimMontage* dodge = LoadObject<UAnimMontage>(nullptr, *(root + variant + TEXT("/M_Dodge") + suffix));
+			UAnimMontage* dodge = LoadObject<UAnimMontage>(nullptr, *(root + variant + TEXT("/M_Dodge") + montageSuffix));
 			perfect = Copy(dodge, perfectPath);
 			if (!perfect) return 1;
 			perfect->Notifies.Reset();
@@ -270,17 +276,9 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 		else if (!found || found->Montage != perfect || found->ReactionExecutorKey != UCReaction_PerfectDodge::StaticClass()) return 1;
 		if (bStellar)
 		{
-			const FString sequencePath = TEXT("/Game/03_Animation/Sword/Stellar/DashAttack/A_CounterRush_Locked");
+			const FString sequencePath = TEXT("/Game/03_Animation/Counter/CounterRush_Locked");
 			UAnimSequence* sequence = LoadObject<UAnimSequence>(nullptr, *sequencePath, nullptr, LOAD_NoWarn);
-			if (!sequence && bApply)
-			{
-				sequence = Copy(LoadObject<UAnimSequence>(nullptr, TEXT("/Game/03_Animation/Sword/Stellar/DashAttack/Attack_Sprint_Anim_Stellar")), sequencePath);
-				if (!sequence) return 1;
-				sequence->bEnableRootMotion = false;
-				sequence->bForceRootLock = true;
-				sequence->RootMotionRootLock = ERootMotionRootLock::AnimFirstFrame;
-				if (!DodgeAssets::Save(sequence)) return 1;
-			}
+			// Source was deliberately removed during asset consolidation. Never recreate stale paths.
 			if (!sequence || !sequence->bForceRootLock || sequence->bEnableRootMotion) return 1;
 			// Dedicated playback owns all gameplay notifies on the montage, not the source sequence.
 			if (bApply && !sequence->Notifies.IsEmpty())
