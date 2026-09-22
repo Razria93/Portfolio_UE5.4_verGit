@@ -14,6 +14,8 @@
 #include "EdGraph/EdGraphPin.h"
 #include "Engine/TimelineTemplate.h"
 #include "NiagaraSystem.h"
+#include "NiagaraEmitter.h"
+#include "NiagaraRendererProperties.h"
 
 UCDodgePresentationAuditCommandlet::UCDodgePresentationAuditCommandlet()
 {
@@ -119,6 +121,16 @@ int32 UCDodgePresentationAuditCommandlet::Main(const FString& Params)
 		UNiagaraSystem* system = LoadObject<UNiagaraSystem>(nullptr, path);
 		if (!system) return 1;
 		UE_LOG(LogTemp, Display, TEXT("Niagara %s"), path);
+		for (const FNiagaraEmitterHandle& handle : system->GetEmitterHandles())
+		{
+			const FVersionedNiagaraEmitterData* data = handle.GetEmitterData();
+			if (!data) continue;
+			UE_LOG(LogTemp, Display, TEXT(" Emitter %s Enabled=%d LocalSpace=%d SimTarget=%d"),
+				*handle.GetName().ToString(), handle.GetIsEnabled(), data->bLocalSpace, int32(data->SimTarget));
+			for (const UNiagaraRendererProperties* renderer : data->GetRenderers())
+				if (renderer) UE_LOG(LogTemp, Display, TEXT("  Renderer %s Enabled=%d"),
+					*renderer->GetClass()->GetName(), renderer->GetIsEnabled());
+		}
 		TArray<FNiagaraVariable> parameters;
 		system->GetExposedParameters().GetParameters(parameters);
 		for (const FNiagaraVariable& parameter : parameters)

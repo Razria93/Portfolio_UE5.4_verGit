@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "Sound/SoundBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -243,15 +244,16 @@ void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
 void UCReactionFeedbackComponent::BeginRushPresentation(uint64 InSerial)
 {
 	RestoreRushPresentation();
-	if (!InSerial || !IsValid(OwnerCharacter_Injected) || !OwnerCharacter_Injected->IsLocallyControlled()
-		|| !FMath::IsFinite(RushFOVOffset) || RushFOVOffset <= 0.f
-		|| !FMath::IsFinite(RushFOVBlendIn) || RushFOVBlendIn <= 0.f
-		|| !FMath::IsFinite(RushFOVBlendOut) || RushFOVBlendOut <= 0.f) return;
-	RushCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
-	if (!RushCamera.IsValid()) return;
+	if (!InSerial || !IsValid(OwnerCharacter_Injected)) return;
 	RushPresentationSerial = InSerial;
-	RushBaseFOV = RushLastFOV = RushCamera->FieldOfView;
 	RushLastRealTime = FPlatformTime::Seconds();
+	if (OwnerCharacter_Injected->IsLocallyControlled() && FMath::IsFinite(RushFOVOffset) && RushFOVOffset > 0.f
+		&& FMath::IsFinite(RushFOVBlendIn) && RushFOVBlendIn > 0.f
+		&& FMath::IsFinite(RushFOVBlendOut) && RushFOVBlendOut > 0.f)
+	{
+		RushCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
+		if (RushCamera.IsValid()) RushBaseFOV = RushLastFOV = RushCamera->FieldOfView;
+	}
 }
 
 void UCReactionFeedbackComponent::UpdateRushPresentation(uint64 InSerial, float InMovementRatio)
@@ -262,32 +264,68 @@ void UCReactionFeedbackComponent::UpdateRushPresentation(uint64 InSerial, float 
 
 void UCReactionFeedbackComponent::EndRushPresentation(uint64 InSerial)
 {
-	if (!InSerial || InSerial != RushPresentationSerial) return;
+	if (!InSerial || InSerial != RushPresentationSerial || bRushPresentationReleased) return;
 	RushMotionWeight = 0.f;
 	bRushPresentationReleased = true;
+	RushReleasedAt = FPlatformTime::Seconds();
+	if (IsValid(RushVFXComponent))
+	{
+		RushVFXComponent->Deactivate();
+		// Residual particles remain at the rush endpoint, not on the follow-up attack.
+		RushVFXComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	}
+	bRushVFXEmitting = false;
 }
 
 void UCReactionFeedbackComponent::TickRushPresentation(double InNow)
 {
 	if (!RushPresentationSerial) return;
-	if (!RushCamera.IsValid() || !FMath::IsNearlyEqual(RushCamera->FieldOfView, RushLastFOV))
+	const float threshold = FMath::IsFinite(RushVFXMovementThreshold) ? FMath::Clamp(RushVFXMovementThreshold, 0.f, 1.f) : 1.f;
+	const bool moving = !bRushPresentationReleased && RushMotionWeight > threshold;
+	if (moving && !IsValid(RushVFXComponent) && IsValid(RushMovementVFX) && IsValid(OwnerCharacter_Injected)
+		&& GetNetMode() != NM_DedicatedServer && FMath::IsFinite(RushVFXScale) && RushVFXScale > 0.f && !RushVFXOffset.ContainsNaN())
+	{
+		// One owned component, separate from the weapon's attack trail. Never spawn for zero travel.
+		RushVFXComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(RushMovementVFX,
+			OwnerCharacter_Injected->GetRootComponent(), NAME_None, RushVFXOffset, FRotator::ZeroRotator,
+			FVector(RushVFXScale), EAttachLocation::KeepRelativeOffset, false, ENCPoolMethod::None, false);
+	}
+	if (IsValid(RushVFXComponent) && moving != bRushVFXEmitting)
+	{
+		if (moving) RushVFXComponent->Activate(true);
+		else RushVFXComponent->Deactivate();
+		bRushVFXEmitting = moving;
+	}
+	const float tail = FMath::IsFinite(RushVFXTail) ? FMath::Clamp(RushVFXTail, 0.f, 2.f) : 0.f;
+	if (bRushPresentationReleased && InNow - RushReleasedAt >= tail && IsValid(RushVFXComponent))
+	{
+		RushVFXComponent->DestroyComponent();
+		RushVFXComponent = nullptr;
+		bRushVFXEmitting = false;
+	}
+	if (RushCamera.IsValid() && !FMath::IsNearlyEqual(RushCamera->FieldOfView, RushLastFOV))
 	{
 		// A different camera writer wins; never restore over its new value.
-		RestoreRushPresentation();
-		return;
+		RushCamera.Reset();
 	}
 	const float elapsed = float(FMath::Max(0., InNow - RushLastRealTime));
 	RushLastRealTime = InNow;
-	const float blend = RushMotionWeight > RushFOVWeight ? RushFOVBlendIn : RushFOVBlendOut;
+	const float configuredBlend = RushMotionWeight > RushFOVWeight ? RushFOVBlendIn : RushFOVBlendOut;
+	const float blend = FMath::IsFinite(configuredBlend) ? configuredBlend : .12f;
 	RushFOVWeight = FMath::FInterpConstantTo(RushFOVWeight, RushMotionWeight, elapsed, 1.f / FMath::Max(.001f, blend));
 	const float smooth = RushFOVWeight * RushFOVWeight * (3.f - 2.f * RushFOVWeight);
-	RushLastFOV = FMath::Clamp(RushBaseFOV + FMath::Clamp(RushFOVOffset, 0.f, 20.f) * smooth, 5.f, 170.f);
-	RushCamera->SetFieldOfView(RushLastFOV);
-	if (bRushPresentationReleased && RushFOVWeight <= KINDA_SMALL_NUMBER) RestoreRushPresentation();
+	const float offset = FMath::IsFinite(RushFOVOffset) ? FMath::Clamp(RushFOVOffset, 0.f, 20.f) : 0.f;
+	RushLastFOV = FMath::Clamp(RushBaseFOV + offset * smooth, 5.f, 170.f);
+	if (RushCamera.IsValid()) RushCamera->SetFieldOfView(RushLastFOV);
+	if (bRushPresentationReleased && RushFOVWeight <= KINDA_SMALL_NUMBER && !IsValid(RushVFXComponent)) RestoreRushPresentation();
 }
 
 void UCReactionFeedbackComponent::RestoreRushPresentation()
 {
+	if (IsValid(RushVFXComponent)) RushVFXComponent->DestroyComponent();
+	RushVFXComponent = nullptr;
+	bRushVFXEmitting = false;
+	RushReleasedAt = 0.;
 	if (RushCamera.IsValid() && FMath::IsNearlyEqual(RushCamera->FieldOfView, RushLastFOV))
 		RushCamera->SetFieldOfView(RushBaseFOV);
 	RushCamera.Reset();

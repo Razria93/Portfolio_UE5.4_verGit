@@ -6,6 +6,7 @@
 #include "Action/CAction_CounterRush.h"
 #include "Reaction/CReaction_PerfectDodge.h"
 #include "Component/CReactionFeedbackComponent.h"
+#include "NiagaraComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
@@ -577,6 +578,26 @@ bool FCounterRushFOVTest::RunTest(const FString& Parameters)
 	feedback->TickRushPresentation(feedback->RushLastRealTime + 1.);
 	feedback->InitializeReferences(f.References);
 	TestEqual(TEXT("Owned FOV restored on reinitialization"), camera->FieldOfView, 77.f);
+	feedback->RushFOVOffset = 0.f;
+	feedback->BeginRushPresentation(44);
+	TestEqual(TEXT("VFX lifetime does not require FOV"), feedback->RushPresentationSerial, uint64(44));
+	TestFalse(TEXT("FOV disabled independently"), feedback->RushCamera.IsValid());
+	auto* ownedVFX = NewObject<UNiagaraComponent>(f.Player);
+	ownedVFX->SetupAttachment(f.Player->GetRootComponent());
+	feedback->RushVFXComponent = ownedVFX;
+	feedback->EndRushPresentation(44);
+	TestNull(TEXT("VFX tail detaches from follow-up attack movement"), ownedVFX->GetAttachParent());
+	const double released = feedback->RushReleasedAt;
+	feedback->EndRushPresentation(44);
+	TestEqual(TEXT("Repeated end does not extend tail"), feedback->RushReleasedAt, released);
+	feedback->TickRushPresentation(released + .1);
+	TestNotNull(TEXT("Owned VFX retained within tail budget"), feedback->RushVFXComponent);
+	feedback->TickRushPresentation(released + .3);
+	TestNull(TEXT("Owned VFX removed after tail budget"), feedback->RushVFXComponent);
+	feedback->BeginRushPresentation(45);
+	feedback->RushVFXComponent = NewObject<UNiagaraComponent>(f.Player);
+	feedback->InitializeReferences(f.References);
+	TestNull(TEXT("Reinitialization clears VFX immediately"), feedback->RushVFXComponent);
 	return true;
 }
 

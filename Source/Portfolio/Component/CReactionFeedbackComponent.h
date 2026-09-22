@@ -71,6 +71,20 @@ private:
 	float RushFOVBlendIn = .04f;
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush", meta = (ClampMin = "0.001", Units = "s"))
 	float RushFOVBlendOut = .12f;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush")
+	class UNiagaraSystem* RushMovementVFX = nullptr;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush")
+	FVector RushVFXOffset = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush", meta = (ClampMin = "0.01"))
+	float RushVFXScale = 1.f;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush", meta = (ClampMin = "0", ClampMax = "1"))
+	float RushVFXMovementThreshold = .05f;
+	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|CounterRush", meta = (ClampMin = "0", ClampMax = "2", Units = "s"))
+	float RushVFXTail = .2f;
+	UPROPERTY(Transient)
+	class UNiagaraComponent* RushVFXComponent = nullptr;
+	bool bRushVFXEmitting = false;
+	double RushReleasedAt = 0.;
 	TWeakObjectPtr<class UCameraComponent> RushCamera;
 	uint64 RushPresentationSerial = 0;
 	float RushBaseFOV = 0.f;
