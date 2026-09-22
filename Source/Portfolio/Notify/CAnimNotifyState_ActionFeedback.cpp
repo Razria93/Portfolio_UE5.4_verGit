@@ -18,7 +18,7 @@ void UCAnimNotifyState_ActionFeedback::NotifyBegin(USkeletalMeshComponent* MeshC
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	actionComp->HandleActionFeedbackWindowBegin(TriggerKey);
 }
@@ -28,7 +28,7 @@ void UCAnimNotifyState_ActionFeedback::NotifyEnd(USkeletalMeshComponent* MeshCom
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	actionComp->HandleActionFeedbackWindowEnd(TriggerKey);
 }

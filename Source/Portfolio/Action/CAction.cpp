@@ -170,6 +170,7 @@ bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSeri
 
 	if (IsValid(ActionComp_Injected))
 		ActionComp_Injected->HandleApplyActionStarted(this, actionGeneration);
+	if (!bIsActive || (IsValid(ActionComp_Injected) && ActionComp_Injected->GetActiveActionGeneration() != actionGeneration)) return false;
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
 
@@ -315,6 +316,7 @@ void UCAction::HandleActionStop(EActionStopReason InStopReason)
 
 void UCAction::ClearRuntime()
 {
+	ActiveMontageInstanceId = INDEX_NONE;
 	bIsActive = false;
 
 	ActiveDataKey_Cached = FActionDataKey();
@@ -363,6 +365,9 @@ bool UCAction::PlayMontage(const FActionData& InData)
 	}
 
 	FActionComponentDebug::RecordActionMontagePlayedForAudit(OwnerCharacter_Injected, this, InData, duration);
+	UAnimInstance* playbackAnim = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
+	const FAnimMontageInstance* playbackInstance = playbackAnim ? playbackAnim->GetActiveInstanceForMontage(InData.Montage) : nullptr;
+	ActiveMontageInstanceId = playbackInstance ? playbackInstance->GetInstanceID() : INDEX_NONE;
 
 	if (!InData.StartSectionName.IsNone())
 	{

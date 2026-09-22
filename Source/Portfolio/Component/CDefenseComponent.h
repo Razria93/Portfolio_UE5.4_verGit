@@ -4,6 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CDefenseTuningTypes.h"
+#include "Type/CCombatDamageTypes.h"
+#include "Type/CHealthTypes.h"
 #include "Type/CObservableOverlayTypes.h"
 #include "Interface/ObservableOverlayPolicy.h"
 #include "CDefenseComponent.generated.h"
@@ -23,9 +25,40 @@ private:
 	UPROPERTY(Transient)
 	class UCMovementComponent* MovementComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCActionComponent* ActionComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCHealthComponent* HealthComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCReactionComponent* ReactionComp_Injected = nullptr;
+
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Defense|Guard")
 	FDefenseGuardTuning GuardTuning;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Defense|Dodge")
+	FDefenseDodgeTuning DodgeTuning;
+
+	// Ownership is checked against both the action generation and montage instance.
+	uint64 DodgeGeneration = 0;
+	int32 DodgeMontageInstanceId = INDEX_NONE;
+	TWeakObjectPtr<class UAnimMontage> DodgeMontage;
+	bool bPerfectConsumed = false;
+	uint64 PendingPerfectSerial = 0;
+	uint64 PendingPerfectDodgeGeneration = 0;
+	uint64 PerfectGeneration = 0;
+	int32 PerfectMontageInstanceId = INDEX_NONE;
+	TWeakObjectPtr<UAnimMontage> PerfectMontage;
+	TWeakObjectPtr<AActor> PendingPerfectTarget;
+	TWeakObjectPtr<AActor> CounterTarget;
+	TWeakObjectPtr<AActor> PerfectAttacker;
+	TWeakObjectPtr<UCHealthComponent> CounterTargetHealth;
+	FDelegateHandle CounterTargetDeathHandle;
+	uint64 CounterSerial = 0;
+	double CounterExpiresAt = 0.;
+	bool bCounterTransition = false;
 
 private:
 	UPROPERTY(Transient)
@@ -47,6 +80,10 @@ public:
 	// Component Reference
 	void InitializeReferences(const FCharacterComponentReferences& InReferences);
 
+protected:
+	// Component Lifecycle
+	void EndPlay(const EEndPlayReason::Type InEndPlayReason) override;
+
 private:
 	bool ValidateRequiredComponentReferences() const;
 
@@ -60,6 +97,34 @@ public:
 	FORCEINLINE bool HasGuardOverlay() const { return bIsGuardingPose || bCanGuard || bCanParry; }
 	FORCEINLINE bool HasGuardRuntimeState() const { return !bCanStartGuard || bWantsGuarding || HasGuardOverlay(); }
 	FORCEINLINE float GetGuardDamageTakenMultiplier() const { return GuardTuning.GuardDamageTakenMultiplier; }
+	bool CanDodge() const;
+	bool IsPerfectDodgeActive() const;
+	bool CanStartPerfectDodge(uint64 InResultSerial) const;
+	bool CanCommitPerfectDodge(uint64 InResultSerial) const;
+	AActor* GetCounterRushTarget() const;
+	uint64 GetCounterRushSerial() const;
+	AActor* GetPerfectDodgeAttacker() const { return PerfectGeneration != 0 ? PerfectAttacker.Get() : nullptr; }
+
+public:
+	// Dodge Execution Ownership
+	void BeginDodgeExecution(uint64 InGeneration, UAnimMontage* InMontage);
+	void EndDodgeExecution(uint64 InGeneration);
+	void ClearDodgeState();
+	EDamageDefenseOutcome ResolveDodgeContact();
+	void PreparePerfectDodge(uint64 InResultSerial, AActor* InAttacker = nullptr);
+	void FinishPerfectDodgeRequest(uint64 InResultSerial);
+	void BeginPerfectDodgeExecution(uint64 InGeneration, UAnimMontage* InMontage, uint64 InResultSerial);
+	void EndPerfectDodgeExecution(uint64 InGeneration, bool bCompleted = false);
+	bool BeginCounterRushTransition();
+	void EndCounterRushTransition();
+	bool ConsumeCounterRush(uint64 InSerial);
+	void ClearCounterRush();
+
+private:
+	bool TryGetDodgePosition(float& OutPosition) const;
+	void HandleOwnerHealthChanged();
+	void HandleOwnerDeadStateChanged(EDeadState InPrevious, EDeadState InCurrent);
+	void HandleCounterTargetDeadStateChanged(EDeadState InPrevious, EDeadState InCurrent);
 
 public:
 	// Overlay Policy

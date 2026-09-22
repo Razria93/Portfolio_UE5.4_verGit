@@ -317,6 +317,13 @@ bool UCCombatSignalSourceComponent::ValidateContext(FCombatSignalSourceContext& 
 
 bool UCCombatSignalSourceComponent::CanSendCombatSignal(FCombatSignalSourceContext& InOutCombatSignalSourceContext) const
 {
+	if (!DamagedTargetContainer.Contains(InOutCombatSignalSourceContext.HitWindowKey))
+	{
+		InOutCombatSignalSourceContext.bAccepted = false;
+		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::ClosedHitWindow;
+		return false;
+	}
+
 	const FOverlapContext& overlapContext = InOutCombatSignalSourceContext.HitContext.OverlapContext;
 
 	AActor* myOwner = OwnerCharacter_Injected;
@@ -408,9 +415,18 @@ void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSource
 {
 	FCombatCollisionProfilingCounters::RecordCombatSignal();
 
-	InOutCombatSignalSourceContext.CommittedDamage = SendDamageToTarget(InOutCombatSignalSourceContext);
+	const FCombatSignalHitWindowKey hitWindowKey = InOutCombatSignalSourceContext.HitWindowKey;
+	const TWeakObjectPtr<AActor> target = InOutCombatSignalSourceContext.TargetActor;
+	PendingTargetContainer.FindOrAdd(hitWindowKey).Add(target);
+	FDamageDeliveryReceipt receipt;
+	InOutCombatSignalSourceContext.CommittedDamage = SendDamageToTarget(InOutCombatSignalSourceContext, receipt);
+	if (auto* pendingTargets = PendingTargetContainer.Find(hitWindowKey))
+	{
+		pendingTargets->Remove(target);
+		if (pendingTargets->IsEmpty()) PendingTargetContainer.Remove(hitWindowKey);
+	}
 
-	if (InOutCombatSignalSourceContext.CommittedDamage <= 0.f)
+	if (!receipt.bAccepted && InOutCombatSignalSourceContext.CommittedDamage <= 0.f)
 	{
 		InOutCombatSignalSourceContext.bAccepted = false;
 		InOutCombatSignalSourceContext.RejectReason = ECombatSignalSourceRejectReason::CommitFailed;
@@ -423,12 +439,13 @@ void UCCombatSignalSourceComponent::CommitCombatSignalSource(FCombatSignalSource
 	CacheDamagedTargetInWindow(InOutCombatSignalSourceContext);
 }
 
-float UCCombatSignalSourceComponent::SendDamageToTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext) const
+float UCCombatSignalSourceComponent::SendDamageToTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext, FDamageDeliveryReceipt& OutReceipt) const
 {
 	if (!IsValid(InCombatSignalSourceContext.TargetActor) || !IsValid(InCombatSignalSourceContext.DamageCauser) || !IsValid(InCombatSignalSourceContext.Instigator))
 		return 0.f;
 
 	FDefaultDamageEvent damageEvent;
+	damageEvent.DeliveryReceipt = &OutReceipt;
 
 	damageEvent.SourceActor = InCombatSignalSourceContext.SourceActor;
 	damageEvent.TargetActor = InCombatSignalSourceContext.TargetActor;
@@ -482,8 +499,9 @@ void UCCombatSignalSourceComponent::CacheDamagedTargetInWindow(const FCombatSign
 	AActor* targetActor = InCombatSignalSourceContext.TargetActor;
 	if (!IsValid(targetActor)) return;
 
-	auto& damagedTargets = DamagedTargetContainer.FindOrAdd(InCombatSignalSourceContext.HitWindowKey);
-	damagedTargets.Add(targetActor);
+	// A synchronous receiver callback can close the window. Do not recreate it.
+	if (auto* damagedTargets = DamagedTargetContainer.Find(InCombatSignalSourceContext.HitWindowKey))
+		damagedTargets->Add(targetActor);
 }
 
 // Hit Helper
@@ -551,6 +569,11 @@ AController* UCCombatSignalSourceComponent::ResolveInstigatorController(AActor* 
 
 bool UCCombatSignalSourceComponent::IsDuplicateHit(const FCombatSignalSourceContext& InCombatSignalSourceContext) const
 {
+	if (const auto* pendingTargets = PendingTargetContainer.Find(InCombatSignalSourceContext.HitWindowKey))
+	{
+		if (pendingTargets->Contains(TWeakObjectPtr<AActor>(InCombatSignalSourceContext.TargetActor))) return true;
+	}
+
 	const TSet<TWeakObjectPtr<AActor>>* foundTargets = DamagedTargetContainer.Find(InCombatSignalSourceContext.HitWindowKey);
 
 	if (!foundTargets) return false;

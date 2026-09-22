@@ -28,6 +28,7 @@ enum class ECombatSignalSourceRejectReason : uint8
 	SelfTarget,
 	DuplicateHitInWindow,
 	FriendlyTarget,
+	ClosedHitWindow,
 };
 
 // Payload

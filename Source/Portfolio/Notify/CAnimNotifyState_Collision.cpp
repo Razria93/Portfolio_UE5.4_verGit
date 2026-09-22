@@ -19,7 +19,7 @@ void UCAnimNotifyState_Collision::NotifyBegin(USkeletalMeshComponent* MeshComp, 
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	FCombatCollisionProfilingCounters::RecordCollisionNotifyBegin();
 
@@ -31,7 +31,7 @@ void UCAnimNotifyState_Collision::NotifyEnd(USkeletalMeshComponent* MeshComp, UA
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	FCombatCollisionProfilingCounters::RecordCollisionNotifyEnd();
 

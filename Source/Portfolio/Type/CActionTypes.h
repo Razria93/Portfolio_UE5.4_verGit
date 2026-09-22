@@ -23,7 +23,8 @@ enum class EActionType : uint8
 
 	All,
 
-	Max,
+	CounterRush = 10,
+	Max = 9,
 };
 
 UENUM(BlueprintType)

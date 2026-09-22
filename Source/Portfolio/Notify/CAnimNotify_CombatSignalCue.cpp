@@ -17,7 +17,7 @@ void UCAnimNotify_CombatSignalCue::Notify(USkeletalMeshComponent* MeshComp, UAni
 	Super::Notify(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	if (CueTag.IsNone())
 	{

@@ -31,8 +31,9 @@ enum class EReactionType : uint8
 	Dead,
 
 	All,		// Wildcard
+	PerfectDodge = 15,
 
-	Max,		// Sentinel
+	Max = 14,	// Preserve existing serialized sentinel; not an element count.
 };
 
 UENUM(BlueprintType)

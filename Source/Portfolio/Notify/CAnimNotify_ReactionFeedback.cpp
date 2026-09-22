@@ -18,7 +18,7 @@ void UCAnimNotify_ReactionFeedback::Notify(USkeletalMeshComponent* MeshComp, UAn
 	Super::Notify(MeshComp, Animation, EventReference);
 
 	UCReactionComponent* reactionComp = GetReactionComponent(MeshComp);
-	if (!CanProcessReactionNotify(reactionComp)) return;
+	if (!CanProcessReactionNotify(reactionComp, EventReference)) return;
 
 	reactionComp->HandleReactionFeedback(TriggerKey);
 }

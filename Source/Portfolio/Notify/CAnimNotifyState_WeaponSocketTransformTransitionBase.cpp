@@ -19,7 +19,7 @@ void UCAnimNotifyState_WeaponSocketTransformTransitionBase::NotifyBegin(USkeleta
 	if (!IsValid(MeshComp) || !IsConfigurationValid()) return;
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
 	if (!IsValid(ownerCharacter)) return;
@@ -90,7 +90,7 @@ void UCAnimNotifyState_WeaponSocketTransformTransitionBase::NotifyEnd(USkeletalM
 
 	if (UCActionComponent* actionComp = GetActionComponent(MeshComp))
 	{
-		if (CanProcessActionNotify(actionComp))
+		if (CanProcessActionNotify(actionComp, EventReference))
 		{
 			actionComp->HandleActionNotifyCommand(CompletionCommand);
 		}

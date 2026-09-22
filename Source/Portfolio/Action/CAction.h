@@ -25,6 +25,7 @@ protected:
 
 protected:
 	uint32 Serial_CurrentPlay = 0;
+	int32 ActiveMontageInstanceId = INDEX_NONE;
 	uint32 CachedSerial_ActivePlay = 0;
 
 protected:
@@ -74,6 +75,7 @@ public:
 public:
 	const FActionDataKey& GetActiveDataKey() const { return ActiveDataKey_Cached; }
 	const FActionData& GetActiveData() const { return ActiveData_Cached; }
+	int32 GetActiveMontageInstanceId() const { return ActiveMontageInstanceId; }
 
 public:
 	// Resolve

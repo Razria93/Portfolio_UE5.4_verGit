@@ -74,6 +74,9 @@ private:
 	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -102,6 +105,7 @@ public:
 	// Query
 	FORCEINLINE bool IsActiveReactionType(EReactionType InType) const { return ActiveReactionType == InType; }
 	bool IsActive() const;
+	uint64 GetActiveReactionGeneration() const { return ActiveReactionGeneration; }
 
 	EReactionType GetActiveReactionType() const;
 	bool GetActiveReactionData(FReactionData& OutData) const;
@@ -123,6 +127,7 @@ public:
 
 public:
 	// Execution Result Hooks
+	void HandleApplyReactionStarted(const UCReaction* InReaction, uint64 InReactionGeneration);
 	void HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason);
 
 public:

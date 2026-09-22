@@ -19,4 +19,5 @@ public:
 public:
 	// Intervention
 	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
+	bool AllowIntervention(const FExecutionInterventionQuery& InQuery) const override;
 };

@@ -10,6 +10,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundBase.h"
+#include "Camera/CameraComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Component/CHealthComponent.h"
+#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
 
 // Helper
 namespace
@@ -25,12 +29,15 @@ namespace
 
 UCReactionFeedbackComponent::UCReactionFeedbackComponent()
 {
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 // Component Reference
 
 void UCReactionFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	ClearPerfectDodgePresentation();
+	LastPerfectResultSerial = 0;
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 
 	ValidateRequiredComponentReferences();
@@ -75,6 +82,81 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 
 void UCReactionFeedbackComponent::ClearRuntimeFeedback()
 {
+	// Success cues use their own lifetimes, not the reaction's immunity lifetime.
+}
+
+void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, uint64 InResultSerial)
+{
+	if (!IsValid(OwnerCharacter_Injected) || InResultSerial == 0 || InResultSerial == LastPerfectResultSerial) return;
+	ClearPerfectDodgePresentation();
+	LastPerfectResultSerial = InResultSerial;
+	if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
+		PerfectSlowSerial = subsystem->RequestPerfectDodgeSlow(OwnerCharacter_Injected, InAttacker, PerfectSlowDuration, PerfectSlowDilation);
+	const double now = FPlatformTime::Seconds();
+	if (IsValid(PerfectBodyMaterial) && FMath::IsFinite(PerfectBodyDuration) && PerfectBodyDuration > 0.f)
+	{
+		PreviousOverlay = OwnerCharacter_Injected->GetMesh()->GetOverlayMaterial();
+		OwnerCharacter_Injected->GetMesh()->SetOverlayMaterial(PerfectBodyMaterial);
+		bOwnsBody = true;
+		BodyExpiresAt = now + PerfectBodyDuration;
+	}
+	if (OwnerCharacter_Injected->IsLocallyControlled() && FMath::IsFinite(PerfectScreenDuration) && PerfectScreenDuration > 0.f)
+	{
+		PerfectCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
+		if (PerfectCamera.IsValid())
+		{
+			auto& settings = PerfectCamera->PostProcessSettings;
+			PreviousVignette = settings.VignetteIntensity;
+			bPreviousVignetteOverride = settings.bOverride_VignetteIntensity;
+			settings.bOverride_VignetteIntensity = true;
+			settings.VignetteIntensity = 0.85f;
+			ScreenExpiresAt = now + PerfectScreenDuration;
+		}
+	}
+}
+
+void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick InTickType, FActorComponentTickFunction* InTickFunction)
+{
+	Super::TickComponent(InDeltaTime, InTickType, InTickFunction);
+	const UCHealthComponent* health = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->FindComponentByClass<UCHealthComponent>() : nullptr;
+	if (!IsValid(health) || !health->IsAlive()) { ClearPerfectDodgePresentation(); return; }
+	const double now = FPlatformTime::Seconds();
+	if (bOwnsBody && now >= BodyExpiresAt) RestorePerfectBody();
+	if (PerfectCamera.IsValid() && now >= ScreenExpiresAt) RestorePerfectScreen();
+}
+
+void UCReactionFeedbackComponent::RestorePerfectBody()
+{
+	if (bOwnsBody && IsValid(OwnerCharacter_Injected) && OwnerCharacter_Injected->GetMesh()->GetOverlayMaterial() == PerfectBodyMaterial)
+		OwnerCharacter_Injected->GetMesh()->SetOverlayMaterial(PreviousOverlay);
+	bOwnsBody = false;
+	PreviousOverlay = nullptr;
+}
+
+void UCReactionFeedbackComponent::RestorePerfectScreen()
+{
+	if (PerfectCamera.IsValid() && FMath::IsNearlyEqual(PerfectCamera->PostProcessSettings.VignetteIntensity, 0.85f))
+	{
+		PerfectCamera->PostProcessSettings.VignetteIntensity = PreviousVignette;
+		PerfectCamera->PostProcessSettings.bOverride_VignetteIntensity = bPreviousVignetteOverride;
+	}
+	PerfectCamera.Reset();
+}
+
+void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
+{
+	RestorePerfectBody();
+	RestorePerfectScreen();
+	if (PerfectSlowSerial != 0)
+		if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
+			subsystem->CancelPerfectDodgeSlow(PerfectSlowSerial);
+	PerfectSlowSerial = 0;
+}
+
+void UCReactionFeedbackComponent::EndPlay(const EEndPlayReason::Type InReason)
+{
+	ClearPerfectDodgePresentation();
+	Super::EndPlay(InReason);
 }
 
 // Query

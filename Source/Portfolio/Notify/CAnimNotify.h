@@ -8,5 +8,6 @@ UCLASS(Abstract)
 class PORTFOLIO_API UCAnimNotify : public UAnimNotify
 {
 	GENERATED_BODY()
-
+public:
+	void BranchingPointNotify(FBranchingPointNotifyPayload& InPayload) override;
 };

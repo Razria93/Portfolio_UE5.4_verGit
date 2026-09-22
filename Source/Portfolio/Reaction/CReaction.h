@@ -26,6 +26,7 @@ protected:
 
 protected:
 	uint32 Serial_CurrentPlay = 0;		// Serial of Current Play Reaction
+	int32 ActiveMontageInstanceId = INDEX_NONE;
 	uint32 CachedSerial_ActivePlay = 0;	// Cached Serial of Active Play Reaction
 
 protected:
@@ -69,6 +70,7 @@ public:
 public:
 	const FReactionDataKey& GetActiveDataKey() const { return ActiveDataKey_Cached; }
 	const FReactionData& GetActiveData() const { return ActiveData_Cached; }
+	int32 GetActiveMontageInstanceId() const { return ActiveMontageInstanceId; }
 
 public:
 	// Decision

@@ -86,6 +86,9 @@ private:
 	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)

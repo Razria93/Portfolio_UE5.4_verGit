@@ -91,6 +91,9 @@ public:
 	FDamageSpecKey DamageSpecKey = FDamageSpecKey();
 
 	UPROPERTY(Transient)
+	FDamageSpec DamageSpec;
+
+	UPROPERTY(Transient)
 	bool bAccepted = true;
 
 	UPROPERTY(Transient)
