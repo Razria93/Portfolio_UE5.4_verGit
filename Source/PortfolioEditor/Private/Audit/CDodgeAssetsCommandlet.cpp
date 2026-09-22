@@ -11,6 +11,7 @@
 #include "Notify/CAnimNotify_CompleteAction.h"
 #include "Notify/CAnimNotify_CompleteReaction.h"
 #include "Notify/CAnimNotify_PerfectDodgePresentation.h"
+#include "Notify/CAnimNotify_WeaponGlow.h"
 #include "Notify/CAnimNotifyState_HitContext.h"
 #include "Notify/CAnimNotifyState_Collision.h"
 #include "Notify/CAnimNotifyState_ActionFeedback.h"
@@ -91,6 +92,90 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 {
 	using namespace DodgeAssets;
 	const bool bApply = FParse::Param(*Params, TEXT("Apply"));
+	// Resolve the BP's actual montage references: user-renamed assets are authoritative.
+	if (FParse::Param(*Params, TEXT("WeaponGlowOnly")))
+	{
+		TMap<UAnimMontage*, bool> montages;
+		for (const FString suffix : {FString(), FString(TEXT("_Stellar"))})
+		{
+			auto* bp = LoadObject<UBlueprint>(nullptr, *(TEXT("/Game/01_Character/01_Player/BP_CPlayer") + suffix));
+			auto* cdo = bp && bp->GeneratedClass ? Cast<AActor>(bp->GeneratedClass->GetDefaultObject()) : nullptr;
+			if (!cdo) return 1;
+			auto* reactions = cdo->FindComponentByClass<UCReactionComponent>();
+			auto* actions = cdo->FindComponentByClass<UCActionComponent>();
+			if (!reactions || !actions) return 1;
+			for (const auto& row : Field<TArray<FReactionData>>(reactions, TEXT("ReactionDatas")))
+				if (row.ReactionDataKey.ReactionType == EReactionType::PerfectDodge && row.Montage) montages.Add(row.Montage, false);
+			for (const auto& row : Field<TArray<FActionData>>(actions, TEXT("ActionDatas")))
+				if (row.ActionDataKey.ActionType == EActionType::CounterRush && row.Montage) montages.Add(row.Montage, true);
+		}
+		if (montages.IsEmpty()) return 1;
+		for (const auto& pair : montages)
+		{
+			auto* montage = pair.Key;
+			const bool rush = pair.Value;
+			float complete = montage->GetPlayLength();
+			float collisionEnd = -1.f;
+			for (const auto& event : montage->Notifies)
+			{
+				UE_LOG(LogTemp, Display, TEXT("GlowAudit %s time=%.3f end=%.3f notify=%s"), *montage->GetPathName(), event.GetTime(), event.GetEndTriggerTime(), *GetNameSafe(event.Notify ? static_cast<UObject*>(event.Notify.Get()) : static_cast<UObject*>(event.NotifyStateClass.Get())));
+				if (rush ? bool(Cast<UCAnimNotify_CompleteAction>(event.Notify)) : bool(Cast<UCAnimNotify_CompleteReaction>(event.Notify))) complete = FMath::Min(complete, event.GetTime());
+				if (Cast<UCAnimNotifyState_Collision>(event.NotifyStateClass)) collisionEnd = FMath::Max(collisionEnd, event.GetEndTriggerTime());
+			}
+			if (complete <= .03f) return 1;
+			const float end = rush && collisionEnd > 0.f ? FMath::Min(collisionEnd, complete - .01f) : complete - .01f;
+			bool changed = false;
+			for (EWeaponGlowCue cue : {EWeaponGlowCue::Start, EWeaponGlowCue::End})
+			{
+				if (rush && cue == EWeaponGlowCue::Start) continue; // Keep transferred playback and original deadline.
+				int32 count = 0;
+				for (const auto& event : montage->Notifies)
+					if (auto* notify = Cast<UCAnimNotify_WeaponGlow>(event.Notify); notify && notify->Cue == cue)
+					{
+						if (notify->bCounterRush != rush) return 1;
+						++count;
+					}
+				if (count > 1) return 1;
+				if (!count && bApply)
+				{
+					auto* notify = NewObject<UCAnimNotify_WeaponGlow>(montage);
+					notify->Cue = cue;
+					notify->bCounterRush = rush;
+					auto& event = montage->Notifies.AddDefaulted_GetRef();
+					event.Notify = notify;
+					event.NotifyName = FName(*notify->GetNotifyName());
+					event.Link(montage, cue == EWeaponGlowCue::Start ? .01f : end);
+					event.TriggerWeightThreshold = 0.f;
+					changed = true;
+				}
+				if (!count && !bApply && FParse::Param(*Params, TEXT("Verify"))) return 1;
+			}
+			UE_LOG(LogTemp, Display, TEXT("GlowMontage %s rush=%d length=%.3f plannedEnd=%.3f changed=%d"), *montage->GetPathName(), rush, montage->GetPlayLength(), end, changed);
+			if (changed)
+			{
+				montage->RefreshCacheData();
+				if (!Save(montage)) return 1;
+			}
+		}
+		return 0;
+	}
+	// Narrow authoring path: preserve all other user-edited BP and montage settings.
+	if (FParse::Param(*Params, TEXT("HairOnly")))
+	{
+		UBlueprint* bp = LoadObject<UBlueprint>(nullptr, TEXT("/Game/01_Character/01_Player/BP_CPlayer_Stellar"));
+		AActor* cdo = bp && bp->GeneratedClass ? Cast<AActor>(bp->GeneratedClass->GetDefaultObject()) : nullptr;
+		auto* feedback = cdo ? cdo->FindComponentByClass<UCReactionFeedbackComponent>() : nullptr;
+		if (!feedback) return 1;
+		auto& parts = Field<TArray<FName>>(feedback, TEXT("PerfectBodyParts"));
+		if (bApply)
+		{
+			parts.AddUnique(TEXT("BANG"));
+			parts.AddUnique(TEXT("HAIR"));
+			if (!DodgeAssets::Save(bp)) return 1;
+		}
+		for (const FName part : parts) UE_LOG(LogTemp, Display, TEXT("PerfectBodyPart=%s"), *part.ToString());
+		return parts.Contains(TEXT("BANG")) && parts.Contains(TEXT("HAIR")) ? 0 : 1;
+	}
 	const FString bodyPath = TEXT("/Game/CharacterOverlay/Materials/Material_Instance/MI_Fresnel");
 	UMaterialInterface* body = LoadObject<UMaterialInterface>(nullptr, *bodyPath, nullptr, LOAD_NoWarn);
 	if (!body) return 1;
@@ -112,8 +197,11 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 		if (bApply)
 		{
 			Field<UMaterialInterface*>(feedback, TEXT("CounterWeaponMaterial")) = body;
-			Field<TArray<FName>>(feedback, TEXT("PerfectBodyParts")) = bStellar
-				? TArray<FName>{TEXT("HEAD"), TEXT("NECK")} : TArray<FName>{};
+			if (bStellar)
+			{
+				auto& parts = Field<TArray<FName>>(feedback, TEXT("PerfectBodyParts"));
+				for (FName part : {FName(TEXT("HEAD")), FName(TEXT("NECK")), FName(TEXT("BANG")), FName(TEXT("HAIR"))}) parts.AddUnique(part);
+			}
 		}
 		else
 		{

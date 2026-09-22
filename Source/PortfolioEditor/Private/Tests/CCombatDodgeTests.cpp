@@ -5,6 +5,8 @@
 #include "Action/CAction_Dodge.h"
 #include "Action/CAction_CounterRush.h"
 #include "Reaction/CReaction_PerfectDodge.h"
+#include "Notify/CAnimNotify_PerfectDodgePresentation.h"
+#include "Notify/CAnimNotify_WeaponGlow.h"
 #include "Component/CReactionFeedbackComponent.h"
 #include "NiagaraComponent.h"
 #include "Component/CActionComponent.h"
@@ -326,8 +328,12 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestNull(TEXT("Counter connection not open at start"), f.Defense->GetCounterRushTarget());
 	TestTrue(TEXT("Presentation includes preparation before input opens"), f.Defense->IsCounterRushPresentationPending(f.LastPacket.ResultSerial));
 	TestTrue(TEXT("Success starts body envelope"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("BodyEnvelopeState")).bRunning);
-	TestTrue(TEXT("Success sustains weapon independently"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bSustain);
+	TestFalse(TEXT("Success does not auto-start weapon"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bRunning);
 	const uint64 perfectGeneration = f.References.ReactionComponent->GetActiveReactionGeneration();
+	feedback->StartWeaponGlow(false, perfectGeneration, 1.f, .08f, .18f, 8.f);
+	TestTrue(TEXT("Point Start sustains weapon"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bSustain);
+	feedback->EndWeaponGlow(false, perfectGeneration + 1, 0.f);
+	TestFalse(TEXT("Stale End ignored"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
 	f.Defense->EndDodgeExecution(dodgeGeneration);
 	TestTrue(TEXT("Old dodge cleanup preserves perfect immunity"), f.Defense->IsPerfectDodgeActive());
 	f.Player->GetMesh()->GetAnimInstance()->Montage_SetPosition(data.Montage, 0.9f);
@@ -338,6 +344,7 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Later contact is evasion, not new success"), f.LastPacket.Result.DefenseOutcome == EDamageDefenseOutcome::Dodge);
 	TestEqual(TEXT("No restart on contact"), f.References.ReactionComponent->GetActiveReactionGeneration(), perfectGeneration);
 	f.References.ReactionComponent->GetActiveReactionExecutor()->Complete();
+	TestTrue(TEXT("Completion without End releases glow"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
 	TestFalse(TEXT("Completion clears immunity"), f.Defense->IsPerfectDodgeActive());
 	TestTrue(TEXT("Completion grants real-time grace"), f.Defense->GetCounterRushTarget() == f.Attacker);
 	f.Attacker->SetActorLocation(FVector(1000.f, 0.f, 0.f));
@@ -371,9 +378,13 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Rush does not retarget after commit"), rush->GetRushPlan().Target.Equals(committedPlan.Target));
 	TestEqual(TEXT("Actual rush consumes once"), f.Defense->GetCounterRushSerial(), uint64(0));
 	TestFalse(TEXT("Consumed opportunity no longer pending"), f.Defense->IsCounterRushPresentationPending(opportunity));
-	TestFalse(TEXT("Consumption preserves weapon envelope"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
+	feedback->StartWeaponGlow(true, f.Actions->GetActiveActionGeneration(), 1.f, .08f, .18f, 8.f);
 	f.Actions->HandleActionCollisionWindowEnd();
-	TestTrue(TEXT("Collision end releases glow even without a hit"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
+	TestFalse(TEXT("Collision end does not release authored glow"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
+	feedback->EndWeaponGlow(false, perfectGeneration, 0.f);
+	TestFalse(TEXT("Old reaction End cannot release rush glow"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
+	feedback->EndWeaponGlow(true, f.Actions->GetActiveActionGeneration(), .12f);
+	TestTrue(TEXT("Point End releases weapon"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bReleased);
 	TestFalse(TEXT("Rush inherits no invulnerability"), f.Defense->CanDodge() || f.Defense->IsPerfectDodgeActive());
 	TestFalse(TEXT("Repeated request cannot reuse success"), f.Actions->ApplyActionDecision(rushResult));
 	f.Actions->CancelActiveActionForSystem();
@@ -389,6 +400,78 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("Failed reaction never retroactively applies damage"), f.Target->RequestCombatDamageTarget(10.f, damage, f.Controller, f.Attacker), 0.f);
 	TestFalse(TEXT("Failed reaction leaves no immunity"), f.Defense->IsPerfectDodgeActive());
 	TestFalse(TEXT("Failed reaction leaves no pending authorization"), f.Defense->CanStartPerfectDodge(f.LastPacket.ResultSerial));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWeaponGlowOwnershipTest, "Portfolio.Combat.Presentation.WeaponGlowOwnership",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FWeaponGlowOwnershipTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatDodgeTest;
+	FFixture f;
+	auto* feedback = f.References.ReactionFeedbackComponent;
+	feedback->InitializeReferences(f.References);
+	feedback->CounterWeaponMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/CharacterOverlay/Materials/Material_Instance/MI_Fresnel"));
+	UClass* weaponClass = LoadClass<ACWeaponActor>(nullptr, TEXT("/Game/06_Weapon/BP_CWeaponActor_Sword.BP_CWeaponActor_Sword_C"));
+	if (!TestNotNull(TEXT("Weapon class"), weaponClass) || !TestNotNull(TEXT("Material"), feedback->CounterWeaponMaterial)) return false;
+	Field<ACWeaponActor*>(f.References.WeaponComponent, TEXT("WeaponActor")) = f.World->SpawnActor<ACWeaponActor>(weaponClass);
+	FReactionData data;
+	data.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+	data.ReactionDataKey.ReactionType = EReactionType::PerfectDodge;
+	data.ReactionExecutorKey = UCReaction_PerfectDodge::StaticClass();
+	data.Montage = DuplicateObject<UAnimMontage>(f.Montage, GetTransientPackage());
+	Field<TMap<FReactionDataKey, FReactionData>>(f.References.ReactionComponent, TEXT("ReactionDataMap")).Add(data.ReactionDataKey, data);
+	Field<FDefenseDodgeTuning>(f.Defense, TEXT("DodgeTuning")).PerfectEnd = .18f;
+	TestTrue(TEXT("Dodge starts"), f.Actions->ApplyActionDecision(f.MakeStart()));
+	f.Target->RequestCombatDamageTarget(10.f, f.Damage(), f.Controller, f.Attacker);
+	const uint64 reactionGeneration = f.References.ReactionComponent->GetActiveReactionGeneration();
+	feedback->StartWeaponGlow(false, reactionGeneration, .7f, .08f, .18f, 8.f);
+	TestTrue(TEXT("Glow started"), feedback->WeaponEnvelopeState.bRunning);
+	const double deadline = feedback->WeaponSafetyDeadline;
+	feedback->StartWeaponGlow(false, reactionGeneration, .7f, .08f, .18f, 100.f);
+	TestEqual(TEXT("Repeated Start cannot extend deadline"), feedback->WeaponSafetyDeadline, deadline);
+	f.Player->GetMesh()->GetAnimInstance()->Montage_SetPosition(data.Montage, .9f);
+	const uint64 serial = f.Defense->GetCounterRushSerial();
+	feedback->BeginWeaponGlowTransfer(serial);
+	f.References.ReactionComponent->GetActiveReactionExecutor()->Complete();
+	TestFalse(TEXT("Pending handoff survives old reaction cleanup"), feedback->WeaponEnvelopeState.bReleased);
+	auto* rush = NewObject<UCAction_CounterRush>(f.Actions);
+	rush->InitializeReferences(f.References);
+	FActionExecutionResult result = f.MakeStart();
+	result.ResolvedContext.ActionDataKey.ActionType = EActionType::CounterRush;
+	result.ResolvedContext.ActionExecutor = rush;
+	result.ResolvedContext.ActionData.ActionDataKey = result.ResolvedContext.ActionDataKey;
+	result.ResolvedContext.ActionData.ActionExecutorKey = rush->GetClass();
+	TestTrue(TEXT("Committed rush transfers glow"), f.Actions->ApplyActionDecision(result));
+	TestTrue(TEXT("Action owns transferred glow"), feedback->bWeaponTransferredToAttack);
+	TestFalse(TEXT("Handoff did not release"), feedback->WeaponEnvelopeState.bReleased);
+	TestEqual(TEXT("Handoff preserves safety deadline"), feedback->WeaponSafetyDeadline, deadline);
+	feedback->EndWeaponGlow(false, reactionGeneration, 0.f);
+	TestFalse(TEXT("Late reaction End ignored"), feedback->WeaponEnvelopeState.bReleased);
+	f.Actions->CancelActiveActionForSystem();
+	TestTrue(TEXT("Rush cancellation releases"), feedback->WeaponEnvelopeState.bReleased);
+	TestEqual(TEXT("Cancellation clears safety deadline"), feedback->WeaponSafetyDeadline, 0.);
+	// Exercise timeout deterministically without sleeping or depending on game time dilation.
+	TestTrue(TEXT("Next dodge"), f.Actions->ApplyActionDecision(f.MakeStart()));
+	f.Target->RequestCombatDamageTarget(10.f, f.Damage(), f.Controller, f.Attacker);
+	const uint64 next = f.References.ReactionComponent->GetActiveReactionGeneration();
+	feedback->StartWeaponGlow(false, next, 1.f, 0.f, 0.f, 8.f);
+	feedback->WeaponSafetyDeadline = FPlatformTime::Seconds() - 1.;
+	feedback->TickComponent(0.f, LEVELTICK_All, nullptr);
+	TestFalse(TEXT("Missing End times out and restores"), feedback->WeaponEnvelopeState.bRunning);
+	feedback->StartWeaponGlow(false, next, 1.f, 0.f, .18f, 8.f);
+	feedback->BeginWeaponGlowTransfer(feedback->WeaponOpportunitySerial);
+	feedback->EndWeaponGlowOwner(false, next);
+	feedback->FinishWeaponGlowTransfer();
+	TestTrue(TEXT("Failed handoff releases ended owner"), feedback->WeaponEnvelopeState.bReleased);
+	feedback->RestoreCounterWeapon();
+	feedback->StartWeaponGlow(false, next, 1.f, 0.f, .18f, 8.f);
+	feedback->EndWeaponGlow(false, next, .25f);
+	TestEqual(TEXT("Explicit End clears watchdog"), feedback->WeaponSafetyDeadline, 0.);
+	TestEqual(TEXT("End chooses fade duration"), feedback->WeaponEnvelopeState.Profile.FadeOut, .25f);
+	Field<ACWeaponActor*>(f.References.WeaponComponent, TEXT("WeaponActor")) = nullptr;
+	feedback->TickComponent(0.f, LEVELTICK_All, nullptr);
+	TestFalse(TEXT("Unequip restores immediately"), feedback->WeaponEnvelopeState.bRunning);
 	return true;
 }
 
@@ -470,7 +553,16 @@ bool FDodgeAuthoredPlaybackTest::RunTest(const FString& Parameters)
 		Field<FCombatPresentationEnvelopeState>(f.References.ReactionFeedbackComponent, TEXT("ScreenEnvelopeState")).bRunning);
 	TestEqual(TEXT("Success itself does not start slow before Notify"), f.Player->CustomTimeDilation, 1.f);
 	f.Controller->Possess(f.Player);
-	anim->AdvanceWeightedProbe(.04f);
+	float presentationTime = 0.f;
+	int32 presentationCount = 0;
+	for (const auto& event : data.Montage->Notifies)
+		if (Cast<UCAnimNotify_PerfectDodgePresentation>(event.Notify))
+		{
+			presentationTime = FMath::Max(presentationTime, event.GetTime());
+			++presentationCount;
+		}
+	TestEqual(TEXT("Authored slow and vignette markers exist"), presentationCount, 2);
+	anim->AdvanceWeightedProbe(presentationTime + .02f);
 	TestTrue(TEXT("Authored point Notify starts vignette"),
 		Field<FCombatPresentationEnvelopeState>(f.References.ReactionFeedbackComponent, TEXT("ScreenEnvelopeState")).bRunning);
 	FPlatformProcess::Sleep(.04f);

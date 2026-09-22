@@ -1,4 +1,5 @@
 #include "Component/CActionComponent.h"
+#include "Component/CReactionFeedbackComponent.h"
 #include "Misc/ScopeExit.h"
 #include "Action/CAction_CounterRush.h"
 
@@ -337,8 +338,11 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 
 	const bool bCounterRush = InResult.ResolvedContext.ActionDataKey.ActionType == EActionType::CounterRush;
 	if (bCounterRush && (!IsValid(DefenseComp_Injected) || !DefenseComp_Injected->BeginCounterRushTransition())) return false;
+	auto* glowFeedback = bCounterRush ? OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>() : nullptr;
+	if (glowFeedback) glowFeedback->BeginWeaponGlowTransfer(DefenseComp_Injected->GetCounterRushSerial());
 	ON_SCOPE_EXIT
 	{
+		if (glowFeedback) glowFeedback->FinishWeaponGlowTransfer();
 		if (bCounterRush && IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndCounterRushTransition();
 	};
 	switch (InResult.ApplyMode)
@@ -660,8 +664,6 @@ void UCActionComponent::HandleActionCollisionWindowBegin(FName InCollisionName)
 
 void UCActionComponent::HandleActionCollisionWindowEnd()
 {
-	if (auto* rush = Cast<UCAction_CounterRush>(GetActiveActionExecutor()))
-		rush->EndCounterAttackPresentation();
 	if (!IsValid(WeaponComp_Injected))
 	{
 		FActionComponentDebug::RecordActionNotifyIgnoredForAudit(OwnerCharacter_Injected, nullptr, TEXT("CollisionWindowEnd"), NAME_None, TEXT("InvalidWeaponComponent"));
@@ -1088,6 +1090,9 @@ void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& In
 
 void UCActionComponent::ClearActiveActionContext()
 {
+	if (IsValid(OwnerCharacter_Injected))
+		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+			feedback->EndWeaponGlowOwner(true, ActiveActionGeneration);
 	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndDodgeExecution(ActiveActionGeneration);
 	ActiveActionGeneration = 0;
 

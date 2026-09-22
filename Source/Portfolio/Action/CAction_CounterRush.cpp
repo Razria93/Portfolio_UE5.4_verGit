@@ -131,19 +131,15 @@ void UCAction_CounterRush::Tick(float InDeltaTime)
 	}
 }
 
-void UCAction_CounterRush::EndCounterAttackPresentation()
-{
-	if (IsValid(OwnerCharacter_Injected))
-		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
-			feedback->ReleaseCounterWeapon(OpportunitySerial);
-}
-
 void UCAction_CounterRush::CleanupRuntimeEffects()
 {
 	if (IsValid(OwnerCharacter_Injected))
 		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+		{
 			feedback->EndRushPresentation(OpportunitySerial);
-	EndCounterAttackPresentation();
+			// Missing End marker / cancellation fallback, not an attack collision-window cue.
+			feedback->ReleaseCounterWeapon(OpportunitySerial);
+		}
 	if (bRushMovementActive) RushDebug.End(OwnerCharacter_Injected, TEXT("ActionCleanup"));
 	bRushMovementActive = false;
 	if (RushSource.IsValid() && IsValid(OwnerCharacter_Injected))

@@ -13,6 +13,7 @@ class PORTFOLIO_API UCReactionFeedbackComponent : public UActorComponent
 {
 	GENERATED_BODY()
 	friend class FCounterRushFOVTest;
+	friend class FWeaponGlowOwnershipTest;
 
 public:
 	UCReactionFeedbackComponent();
@@ -28,11 +29,9 @@ private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
-	// Body and weapon are success cues; slow/screen are authored as point Notifies.
+	// Body is a success cue; weapon/slow/screen are authored as point Notifies.
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
 	FCombatPresentationEnvelope PerfectBodyEnvelope;
-	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
-	FCombatPresentationEnvelope CounterWeaponEnvelope;
 	// Native mesh plus explicitly selected modular parts (name or tag).
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
 	TArray<FName> PerfectBodyParts;
@@ -55,6 +54,11 @@ private:
 	TWeakObjectPtr<class ACWeaponActor> GlowWeapon;
 	uint64 WeaponOpportunitySerial = 0;
 	bool bWeaponTransferredToAttack = false;
+	uint64 WeaponOwnerGeneration = 0;
+	uint64 PendingWeaponTransfer = 0;
+	bool bWeaponOwnerEnded = false;
+	double WeaponSafetyDeadline = 0.;
+	float WeaponPeakWeight = 1.f;
 	TWeakObjectPtr<class UCameraComponent> PerfectCamera;
 	float PreviousVignette = 0.f;
 	bool bPreviousVignetteOverride = false;
@@ -108,6 +112,11 @@ public:
 	void PlayPerfectDodgeSuccess(AActor* InAttacker, uint64 InResultSerial);
 	void TransferCounterWeaponToAttack(uint64 InOpportunitySerial);
 	void ReleaseCounterWeapon(uint64 InOpportunitySerial);
+	void StartWeaponGlow(bool bInAction, uint64 InGeneration, float InPeak, float InFadeIn, float InFadeOut, float InSafetySeconds);
+	void EndWeaponGlow(bool bInAction, uint64 InGeneration, float InFadeOut);
+	void EndWeaponGlowOwner(bool bInAction, uint64 InGeneration);
+	void BeginWeaponGlowTransfer(uint64 InOpportunitySerial);
+	void FinishWeaponGlowTransfer();
 	void StartPerfectDodgeSlow(const FCombatPresentationEnvelope& InEnvelope, float InDilation, bool bInPlayer, bool bInAttacker);
 	void StartPerfectDodgeVignette(const FCombatPresentationEnvelope& InEnvelope, float InPeakIntensity);
 	void BeginRushPresentation(uint64 InSerial);

@@ -15,6 +15,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Component/CHealthComponent.h"
 #include "Component/CDefenseComponent.h"
+#include "Component/CActionComponent.h"
+#include "Component/CReactionComponent.h"
 #include "Component/CWeaponComponent.h"
 #include "Weapon/CWeaponActor.h"
 #include "System/Combat/CWorldSubsystem_CombatFeedback.h"
@@ -109,15 +111,6 @@ void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, ui
 				|| (!PerfectBodyPartTag.IsNone() && part->ComponentHasTag(PerfectBodyPartTag)))) parts.AddUnique(part);
 		BodyOverlay.Start(this, parts, PerfectBodyMaterial, GlowWeightParameter);
 	}
-	const auto* weaponComp = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
-	GlowWeapon = weaponComp ? weaponComp->GetWeaponActor() : nullptr;
-	if (GlowWeapon.IsValid() && IsValid(CounterWeaponMaterial) && WeaponEnvelopeState.Start(CounterWeaponEnvelope, now, true))
-	{
-		TArray<UMeshComponent*> parts;
-		GlowWeapon->GetComponents(parts);
-		if (WeaponOverlay.Start(this, parts, CounterWeaponMaterial, GlowWeightParameter)) WeaponOpportunitySerial = InResultSerial;
-		else RestoreCounterWeapon();
-	}
 }
 
 void UCReactionFeedbackComponent::StartPerfectDodgeSlow(const FCombatPresentationEnvelope& InEnvelope,
@@ -160,14 +153,16 @@ void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick In
 	if (WeaponOpportunitySerial != 0)
 	{
 		const auto* weaponComp = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
-		const auto* defense = OwnerCharacter_Injected->FindComponentByClass<UCDefenseComponent>();
 		if (!GlowWeapon.IsValid() || !weaponComp || weaponComp->GetWeaponActor() != GlowWeapon.Get())
 			RestoreCounterWeapon();
 		else
 		{
-			if (!bWeaponTransferredToAttack && (!defense || !defense->IsCounterRushPresentationPending(WeaponOpportunitySerial)))
-				ReleaseCounterWeapon(WeaponOpportunitySerial);
-			WeaponOverlay.SetWeight(WeaponEnvelopeState.Evaluate(now));
+			if (WeaponSafetyDeadline > 0. && now >= WeaponSafetyDeadline)
+			{
+				WeaponSafetyDeadline = 0.;
+				WeaponEnvelopeState.Release(now);
+			}
+			WeaponOverlay.SetWeight(WeaponEnvelopeState.Evaluate(now) * WeaponPeakWeight);
 			if (WeaponEnvelopeState.IsFinished(now)) RestoreCounterWeapon();
 		}
 	}
@@ -197,14 +192,83 @@ void UCReactionFeedbackComponent::RestorePerfectBody()
 
 void UCReactionFeedbackComponent::TransferCounterWeaponToAttack(uint64 InOpportunitySerial)
 {
-	if (InOpportunitySerial != 0 && WeaponOpportunitySerial == InOpportunitySerial && !WeaponEnvelopeState.bReleased)
+	const auto* action = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->FindComponentByClass<UCActionComponent>() : nullptr;
+	if (InOpportunitySerial != 0 && PendingWeaponTransfer == InOpportunitySerial
+		&& WeaponOpportunitySerial == InOpportunitySerial && !WeaponEnvelopeState.bReleased
+		&& action && action->IsActiveActionType(EActionType::CounterRush))
+	{
 		bWeaponTransferredToAttack = true;
+		WeaponOwnerGeneration = action->GetActiveActionGeneration();
+		bWeaponOwnerEnded = false;
+	}
 }
 
 void UCReactionFeedbackComponent::ReleaseCounterWeapon(uint64 InOpportunitySerial)
 {
 	if (InOpportunitySerial != 0 && WeaponOpportunitySerial == InOpportunitySerial)
+	{
+		WeaponSafetyDeadline = 0.;
 		WeaponEnvelopeState.Release(FPlatformTime::Seconds());
+	}
+}
+
+void UCReactionFeedbackComponent::StartWeaponGlow(bool bInAction, uint64 InGeneration, float InPeak,
+	float InFadeIn, float InFadeOut, float InSafetySeconds)
+{
+	if (!IsValid(OwnerCharacter_Injected) || InGeneration == 0 || !FMath::IsFinite(InPeak) || InPeak < 0.f || InPeak > 1.f
+		|| !FMath::IsFinite(InSafetySeconds) || InSafetySeconds <= 0.f) return;
+	const auto* action = OwnerCharacter_Injected->FindComponentByClass<UCActionComponent>();
+	const auto* reaction = OwnerCharacter_Injected->FindComponentByClass<UCReactionComponent>();
+	if (bInAction ? (!action || !action->IsActiveActionType(EActionType::CounterRush) || action->GetActiveActionGeneration() != InGeneration)
+		: (!reaction || !reaction->IsActiveReactionType(EReactionType::PerfectDodge) || reaction->GetActiveReactionGeneration() != InGeneration)) return;
+	FCombatPresentationEnvelope profile;
+	profile.FadeIn = InFadeIn;
+	profile.FadeOut = InFadeOut;
+	if (!profile.IsValid() || !IsValid(CounterWeaponMaterial) || LastPerfectResultSerial == 0) return;
+	// Repeated Start in the same execution never extends the safety deadline.
+	if (WeaponOpportunitySerial && WeaponOwnerGeneration == InGeneration && bWeaponTransferredToAttack == bInAction) return;
+	RestoreCounterWeapon();
+	const auto* weapon = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
+	GlowWeapon = weapon ? weapon->GetWeaponActor() : nullptr;
+	if (!GlowWeapon.IsValid()) return;
+	TArray<UMeshComponent*> parts;
+	GlowWeapon->GetComponents(parts);
+	const double now = FPlatformTime::Seconds();
+	if (!WeaponEnvelopeState.Start(profile, now, true) || !WeaponOverlay.Start(this, parts, CounterWeaponMaterial, GlowWeightParameter))
+	{ RestoreCounterWeapon(); return; }
+	WeaponOpportunitySerial = LastPerfectResultSerial;
+	WeaponOwnerGeneration = InGeneration;
+	bWeaponTransferredToAttack = bInAction;
+	WeaponPeakWeight = InPeak;
+	WeaponSafetyDeadline = now + InSafetySeconds;
+}
+
+void UCReactionFeedbackComponent::EndWeaponGlow(bool bInAction, uint64 InGeneration, float InFadeOut)
+{
+	if (!WeaponOpportunitySerial || WeaponOwnerGeneration != InGeneration || bWeaponTransferredToAttack != bInAction
+		|| !FMath::IsFinite(InFadeOut) || InFadeOut < 0.f || WeaponEnvelopeState.bReleased) return;
+	WeaponEnvelopeState.Profile.FadeOut = InFadeOut;
+	ReleaseCounterWeapon(WeaponOpportunitySerial);
+}
+
+void UCReactionFeedbackComponent::EndWeaponGlowOwner(bool bInAction, uint64 InGeneration)
+{
+	if (!WeaponOpportunitySerial || WeaponOwnerGeneration != InGeneration || bWeaponTransferredToAttack != bInAction) return;
+	bWeaponOwnerEnded = true;
+	if (!bInAction && PendingWeaponTransfer == WeaponOpportunitySerial) return;
+	ReleaseCounterWeapon(WeaponOpportunitySerial);
+}
+
+void UCReactionFeedbackComponent::BeginWeaponGlowTransfer(uint64 InOpportunitySerial)
+{
+	if (WeaponOpportunitySerial == InOpportunitySerial && !bWeaponTransferredToAttack && !WeaponEnvelopeState.bReleased)
+		PendingWeaponTransfer = InOpportunitySerial;
+}
+
+void UCReactionFeedbackComponent::FinishWeaponGlowTransfer()
+{
+	PendingWeaponTransfer = 0;
+	if (bWeaponOwnerEnded) ReleaseCounterWeapon(WeaponOpportunitySerial);
 }
 
 void UCReactionFeedbackComponent::RestoreCounterWeapon()
@@ -214,6 +278,10 @@ void UCReactionFeedbackComponent::RestoreCounterWeapon()
 	GlowWeapon.Reset();
 	WeaponOpportunitySerial = 0;
 	bWeaponTransferredToAttack = false;
+	WeaponOwnerGeneration = PendingWeaponTransfer = 0;
+	bWeaponOwnerEnded = false;
+	WeaponSafetyDeadline = 0.;
+	WeaponPeakWeight = 1.f;
 }
 
 void UCReactionFeedbackComponent::RestorePerfectScreen()
