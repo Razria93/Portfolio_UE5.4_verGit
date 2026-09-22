@@ -9,6 +9,11 @@
 #include "Materials/MaterialInstance.h"
 #include "UObject/UnrealType.h"
 #include "GameFramework/Actor.h"
+#include "EdGraph/EdGraph.h"
+#include "EdGraph/EdGraphNode.h"
+#include "EdGraph/EdGraphPin.h"
+#include "Engine/TimelineTemplate.h"
+#include "NiagaraSystem.h"
 
 UCDodgePresentationAuditCommandlet::UCDodgePresentationAuditCommandlet()
 {
@@ -52,6 +57,38 @@ int32 UCDodgePresentationAuditCommandlet::Main(const FString& Params)
 		UBlueprint* bp = LoadObject<UBlueprint>(nullptr, path);
 		if (!bp || !bp->SimpleConstructionScript) return 1;
 		UE_LOG(LogTemp, Display, TEXT("Blueprint %s"), path);
+		TArray<UEdGraph*> graphs;
+		bp->GetAllGraphs(graphs);
+		for (const UEdGraph* graph : graphs)
+		{
+			UE_LOG(LogTemp, Display, TEXT("Graph %s"), *graph->GetName());
+			for (const UEdGraphNode* node : graph->Nodes)
+			{
+				if (!node) continue;
+				UE_LOG(LogTemp, Display, TEXT("Node %s Class=%s Title=%s"), *node->GetName(),
+					*node->GetClass()->GetName(), *node->GetNodeTitle(ENodeTitleType::ListView).ToString().Replace(TEXT("\n"), TEXT(" ")));
+				for (const UEdGraphPin* pin : node->Pins)
+				{
+					if (!pin) continue;
+					UE_LOG(LogTemp, Display, TEXT(" Pin %s Dir=%d Default=%s Object=%s"), *pin->PinName.ToString(), int32(pin->Direction),
+						*pin->DefaultValue, *GetPathNameSafe(pin->DefaultObject));
+					for (const UEdGraphPin* link : pin->LinkedTo)
+						if (link) UE_LOG(LogTemp, Display, TEXT("  Link %s.%s"), *GetNameSafe(link->GetOwningNode()), *link->PinName.ToString());
+				}
+			}
+		}
+		for (UTimelineTemplate* timeline : bp->Timelines)
+		{
+			if (!timeline) continue;
+			UE_LOG(LogTemp, Display, TEXT("Timeline %s Length=%f Loop=%d"), *timeline->GetName(), timeline->TimelineLength, timeline->bLoop);
+			for (TFieldIterator<FProperty> it(timeline->GetClass()); it; ++it)
+			{
+				if (!it->GetName().Contains(TEXT("Tracks"))) continue;
+				FString value;
+				it->ExportText_InContainer(0, value, timeline, timeline, timeline, PPF_None);
+				UE_LOG(LogTemp, Display, TEXT(" TimelineTracks %s=%s"), *it->GetName(), *value);
+			}
+		}
 		if (const AActor* cdo = bp->GeneratedClass ? Cast<AActor>(bp->GeneratedClass->GetDefaultObject()) : nullptr)
 		{
 			TArray<UMeshComponent*> meshes;
@@ -73,6 +110,19 @@ int32 UCDodgePresentationAuditCommandlet::Main(const FString& Params)
 			for (int32 i = 0; i < mesh->GetNumMaterials(); ++i)
 				UE_LOG(LogTemp, Display, TEXT("  Material[%d]=%s"), i, *GetPathNameSafe(mesh->GetMaterial(i)));
 		}
+	}
+	for (const TCHAR* path : {
+		TEXT("/Game/07_FX/VFX/SwordTrailVFX/Niagara/NS_Trail_Tech"),
+		TEXT("/Game/07_FX/VFX/SwordTrailVFX/Niagara/NS_Trail_Water"),
+		TEXT("/Game/07_FX/VFX/CombatVFX/HealPositive/NS/Vfx_SpeedUp") })
+	{
+		UNiagaraSystem* system = LoadObject<UNiagaraSystem>(nullptr, path);
+		if (!system) return 1;
+		UE_LOG(LogTemp, Display, TEXT("Niagara %s"), path);
+		TArray<FNiagaraVariable> parameters;
+		system->GetExposedParameters().GetParameters(parameters);
+		for (const FNiagaraVariable& parameter : parameters)
+			UE_LOG(LogTemp, Display, TEXT(" UserParameter %s Type=%s"), *parameter.GetName().ToString(), *parameter.GetType().GetName());
 	}
 	return 0;
 }

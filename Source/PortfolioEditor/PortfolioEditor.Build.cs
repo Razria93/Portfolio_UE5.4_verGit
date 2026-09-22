@@ -12,6 +12,7 @@ public class PortfolioEditor : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"Portfolio",
+			"Niagara",
 			"AnimationModifiers",
 			"AnimationBlueprintLibrary",
 			"UMG",
