@@ -75,6 +75,12 @@ struct FHUDActionViewData
 	EHUDActionState Dodge = EHUDActionState::Unavailable;
 
 	UPROPERTY(BlueprintReadOnly)
+	EHUDActionState CounterRush = EHUDActionState::Unavailable;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bPerfectDodgeActive = false;
+
+	UPROPERTY(BlueprintReadOnly)
 	EHUDActionState Execution = EHUDActionState::Unavailable;
 
 	UPROPERTY(BlueprintReadOnly)
@@ -84,6 +90,8 @@ struct FHUDActionViewData
 	{
 		return Guard == Other.Guard
 			&& Dodge == Other.Dodge
+			&& CounterRush == Other.CounterRush
+			&& bPerfectDodgeActive == Other.bPerfectDodgeActive
 			&& Execution == Other.Execution
 			&& bParrySuccess == Other.bParrySuccess;
 	}

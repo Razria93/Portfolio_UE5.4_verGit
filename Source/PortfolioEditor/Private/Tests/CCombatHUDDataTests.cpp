@@ -241,6 +241,7 @@ bool FHUDWidgetLifecycleTest::RunTest(const FString& Parameters)
 		FHUDActionViewData actions;
 		actions.Guard = EHUDActionState::Active;
 		actions.Dodge = EHUDActionState::Ready;
+		actions.CounterRush = EHUDActionState::Ready;
 		actions.Execution = EHUDActionState::Ready;
 		actions.bParrySuccess = true;
 		widget->ApplyActionViewData(actions);
@@ -262,7 +263,7 @@ bool FHUDWidgetLifecycleTest::RunTest(const FString& Parameters)
 			TestEqual(TEXT("Parry highlight takes priority over active guard"), widget->GuardImage->GetColorAndOpacity(), FLinearColor(1.f, 0.9f, 0.4f, 1.f));
 			TestEqual(TEXT("Dodge ready uses normal ink"), widget->DodgeImage->GetColorAndOpacity(), FLinearColor(0.9f, 0.91f, 0.86f, 1.f));
 			TestEqual(TEXT("Execution ready uses gold"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(1.f, 0.85f, 0.38f, 1.f));
-			TestEqual(TEXT("Counter remains pending"), widget->CounterImage->GetColorAndOpacity(), FLinearColor(0.30f, 0.36f, 0.39f, 0.55f));
+			TestEqual(TEXT("Counter readiness survives reconstruction"), widget->CounterImage->GetColorAndOpacity(), FLinearColor(0.9f, 0.91f, 0.86f, 1.f));
 			if (pass > 0) TestTrue(TEXT("New action image replaces previous reference"), widget->GuardImage.Get() != previousGuard.Get());
 			previousGuard = widget->GuardImage;
 
