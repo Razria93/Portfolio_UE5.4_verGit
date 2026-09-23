@@ -59,6 +59,9 @@ private:
 	uint64 CounterSerial = 0;
 	double CounterExpiresAt = 0.;
 	bool bCounterTransition = false;
+	uint64 ReservedCounterSerial = 0;
+	uint64 ReservedPerfectGeneration = 0;
+	bool bCounterOpportunityOpen = false;
 
 private:
 	UPROPERTY(Transient)
@@ -119,6 +122,8 @@ public:
 	void EndPerfectDodgeExecution(uint64 InGeneration, bool bCompleted = false);
 	bool BeginCounterRushTransition();
 	void EndCounterRushTransition();
+	// Point markers may only mutate the current PerfectDodge montage instance.
+	bool SetCounterOpportunityWindow(bool bOpen, uint64 InGeneration, int32 InMontageInstanceId);
 	bool ConsumeCounterRush(uint64 InSerial);
 	void ClearCounterRush();
 

@@ -116,6 +116,9 @@ private:
 	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
+
 public:
 	// Event
 	FActionTypeChanged OnActionTypeChanged;

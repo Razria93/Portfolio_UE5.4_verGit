@@ -16,6 +16,8 @@ private:
 	class UCDefenseComponent* DefenseComp_Injected = nullptr;
 	UPROPERTY(Transient)
 	class UCMovementComponent* MovementComp_Injected = nullptr;
+	UPROPERTY(Transient)
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
 	TSharedPtr<struct FRootMotionSource_ConstantForce> RushSource;
 	uint64 OpportunitySerial = 0;
 	FVector TargetLocation = FVector::ZeroVector;
@@ -30,7 +32,7 @@ public:
 	FExecutionDecisionResult ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const override;
 	bool WantIntervention(const FExecutionInterventionQuery& InQuery) const override;
 	bool Start(const FActionData& InData, uint32 InActionRequestSerial = 0) override;
-	void CommitStarted();
+	void CommitStarted() override;
 	const FCounterRushPlan& GetRushPlan() const { return RushPlan; }
 	void Tick(float InDeltaTime) override;
 

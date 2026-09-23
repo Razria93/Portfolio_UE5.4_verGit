@@ -35,11 +35,15 @@ struct FDefenseDodgeTuning
 	UPROPERTY(EditAnywhere, Category = "Dodge", meta = (ClampMin = "0.0", Units = "s"))
 	float PerfectEnd = 0.18f;
 
-	UPROPERTY(EditAnywhere, Category = "CounterRush", meta = (ClampMin = "0.0", Units = "s"))
+	// Opt-in migration: montage point markers own eligibility; no post-montage grace.
+	UPROPERTY(EditAnywhere, Category = "CounterRush")
+	bool bUseMontageCounterWindow = false;
+
+	UPROPERTY(EditAnywhere, Category = "CounterRush", meta = (ClampMin = "0.0", Units = "s", EditCondition = "!bUseMontageCounterWindow"))
 	float CounterConnectStart = 0.45f;
 
 	// Real seconds after successful reaction completion (not montage seconds).
-	UPROPERTY(EditAnywhere, Category = "CounterRush", meta = (ClampMin = "0.0", Units = "s"))
+	UPROPERTY(EditAnywhere, Category = "CounterRush", meta = (ClampMin = "0.0", Units = "s", EditCondition = "!bUseMontageCounterWindow"))
 	float CounterGraceSeconds = 0.4f;
 
 	UPROPERTY(EditAnywhere, Category = "CounterRush", meta = (ClampMin = "0.0", Units = "cm"))

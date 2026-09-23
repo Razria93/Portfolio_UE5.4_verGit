@@ -5,10 +5,52 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "HAL/PlatformProcess.h"
+#include "HAL/IConsoleManager.h"
+#include "Misc/OutputDevice.h"
+#include "Misc/OutputDeviceRedirector.h"
+#include "Misc/ScopeLock.h"
 #include <limits>
 
 namespace CombatTimeEffectsTest
 {
+	struct FHitStopAuditCapture : FOutputDevice
+	{
+		IConsoleVariable* Audit = IConsoleManager::Get().FindConsoleVariable(TEXT("Portfolio.Debug.FeedbackAudit"));
+		int32 Previous = 0;
+		FCriticalSection Mutex;
+		TArray<FString> Events;
+		FHitStopAuditCapture()
+		{
+			if (Audit) { Previous = Audit->GetInt(); Audit->Set(1, ECVF_SetByCode); }
+			if (GLog) GLog->AddOutputDevice(this);
+		}
+		~FHitStopAuditCapture()
+		{
+			if (GLog) GLog->RemoveOutputDevice(this);
+			if (Audit) Audit->Set(Previous, ECVF_SetByCode);
+		}
+		void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const FName& Category) override
+		{
+			if (FCString::Strstr(Message, TEXT("[CombatFeedback|SharedDispatch|HitStop")))
+			{
+				FScopeLock lock(&Mutex);
+				Events.Add(Message);
+			}
+		}
+		TArray<FString> Snapshot()
+		{
+			// The engine may dispatch output on its primary logging thread after UE_LOG returns.
+			// Drain synchronously before observing; do not hold Mutex across the drain.
+			if (GLog) GLog->FlushThreadedLogs();
+			FScopeLock lock(&Mutex);
+			return Events;
+		}
+		int32 Count(const TCHAR* Text)
+		{
+			return Snapshot().FilterByPredicate([Text](const FString& Event) { return Event.Contains(Text); }).Num();
+		}
+	};
+
 	struct FFixture
 	{
 		UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
@@ -71,6 +113,46 @@ bool FCombatTimeEffectsOverlapTest::RunTest(const FString& Parameters)
 	f.Feedback->CancelPerfectDodgeSlow(second);
 	TestEqual(TEXT("Player original non-unit baseline restored"), f.Player->CustomTimeDilation, .8f);
 	TestEqual(TEXT("Attacker distinct baseline restored"), f.Attacker->CustomTimeDilation, .6f);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCombatHitStopAuditTest, "Portfolio.Combat.TimeEffects.HitStopAudit",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCombatHitStopAuditTest::RunTest(const FString& Parameters)
+{
+	CombatTimeEffectsTest::FFixture f;
+	CombatTimeEffectsTest::FHitStopAuditCapture capture;
+	if (!TestNotNull(TEXT("Audit CVar exists"), capture.Audit) || !TestNotNull(TEXT("Feedback subsystem"), f.Feedback)) return false;
+	FHitStopRequest request;
+	request.SourceActor = f.Player;
+	request.HitStopAudience = EFeedbackAudience::Source;
+	request.HitStopDuration = .1f;
+	request.HitStopDilation = .1f;
+	f.Feedback->RequestHitStop(request);
+	TestEqual(TEXT("Valid request recorded once"), capture.Count(TEXT("HitStopRequested]")), 1);
+	TestEqual(TEXT("Accepted application recorded once"), capture.Count(TEXT("HitStopApplied]")), 1);
+	const TArray<FString> initialEvents = capture.Snapshot();
+	TestTrue(TEXT("Request precedes application"), initialEvents.Num() == 2
+		&& initialEvents[0].Contains(TEXT("HitStopRequested]")) && initialEvents[1].Contains(TEXT("HitStopApplied]")));
+	f.Feedback->Tick(0.f);
+	f.AdvanceGame(.2f);
+	const uint64 slow = f.Feedback->RequestPerfectDodgeSlow(f.Player, nullptr, 1.f, .2f);
+	f.Feedback->CancelPerfectDodgeSlow(slow);
+	TestEqual(TEXT("Ticks, expiry and slow do not repeat HitStop audit"), capture.Snapshot().Num(), 2);
+	request.HitStopDuration = std::numeric_limits<float>::quiet_NaN();
+	f.Feedback->RequestHitStop(request);
+	request.HitStopDuration = .1f;
+	request.HitStopDilation = std::numeric_limits<float>::infinity();
+	f.Feedback->RequestHitStop(request);
+	request.HitStopDilation = .1f;
+	request.SourceActor = nullptr;
+	f.Feedback->RequestHitStop(request);
+	TestEqual(TEXT("Each invalid request rejected once"), capture.Count(TEXT("HitStopRejected]")), 3);
+	TestEqual(TEXT("Nonfinite duration reason"), capture.Count(TEXT("Reason=InvalidDuration")), 1);
+	TestEqual(TEXT("Nonfinite dilation reason"), capture.Count(TEXT("Reason=InvalidDilation")), 1);
+	TestEqual(TEXT("Missing actor reason"), capture.Count(TEXT("Reason=InvalidActor")), 1);
+	TestEqual(TEXT("Rejected requests never applied"), capture.Count(TEXT("HitStopApplied]")), 1);
+	TestEqual(TEXT("Invalid requests leave restored baseline"), f.Player->CustomTimeDilation, .8f);
 	return true;
 }
 

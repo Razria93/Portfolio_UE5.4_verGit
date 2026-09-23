@@ -220,10 +220,13 @@ void UCDefenseComponent::BeginPerfectDodgeExecution(uint64 InGeneration, UAnimMo
 void UCDefenseComponent::EndPerfectDodgeExecution(uint64 InGeneration, bool bCompleted)
 {
 	if (InGeneration == 0 || PerfectGeneration != InGeneration) return;
-	if (bCompleted || bCounterTransition)
+	if (bCounterTransition && ReservedCounterSerial != 0 && ReservedCounterSerial == CounterSerial)
+		CounterExpiresAt = 0.; // Scoped handoff, never dependent on an input grace timer.
+	else if (bCompleted && !DodgeTuning.bUseMontageCounterWindow && FMath::IsFinite(DodgeTuning.CounterGraceSeconds))
 		CounterExpiresAt = FPlatformTime::Seconds() + FMath::Max(0.f, DodgeTuning.CounterGraceSeconds);
 	else
 		ClearCounterRush();
+	bCounterOpportunityOpen = false;
 	PerfectGeneration = 0;
 	PerfectMontageInstanceId = INDEX_NONE;
 	PerfectMontage.Reset();
@@ -241,15 +244,18 @@ AActor* UCDefenseComponent::GetCounterRushTarget() const
 	if (!FMath::IsFinite(DodgeTuning.CounterMaxDistance) || DodgeTuning.CounterMaxDistance <= 0.f
 		|| FVector::DistSquared(target->GetActorLocation(), OwnerCharacter_Injected->GetActorLocation())
 			> FMath::Square(DodgeTuning.CounterMaxDistance)) return nullptr;
+	if (bCounterTransition && ReservedCounterSerial != 0 && ReservedCounterSerial == CounterSerial)
+		return target;
 	if (PerfectGeneration != 0)
 	{
 		if (!IsPerfectDodgeActive()) return nullptr;
+		if (DodgeTuning.bUseMontageCounterWindow) return bCounterOpportunityOpen ? target : nullptr;
 		UAnimInstance* anim = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
 		const FAnimMontageInstance* instance = anim ? anim->GetMontageInstanceForID(PerfectMontageInstanceId) : nullptr;
 		if (!instance || !FMath::IsFinite(DodgeTuning.CounterConnectStart)
 			|| instance->GetPosition() < DodgeTuning.CounterConnectStart) return nullptr;
 	}
-	else if (CounterExpiresAt <= FPlatformTime::Seconds()) return nullptr;
+	else if (DodgeTuning.bUseMontageCounterWindow || CounterExpiresAt <= FPlatformTime::Seconds()) return nullptr;
 	return target;
 }
 
@@ -263,6 +269,7 @@ bool UCDefenseComponent::IsCounterRushPresentationPending(uint64 InSerial) const
 	if (InSerial == 0 || CounterSerial != InSerial || !CounterTarget.IsValid()
 		|| CounterTarget->IsActorBeingDestroyed() || !CounterTargetHealth.IsValid() || !CounterTargetHealth->IsAlive()
 		|| !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+	if (bCounterTransition && ReservedCounterSerial == InSerial) return true;
 	return PerfectGeneration != 0 ? IsPerfectDodgeActive() : CounterExpiresAt > FPlatformTime::Seconds();
 }
 
@@ -270,12 +277,29 @@ bool UCDefenseComponent::BeginCounterRushTransition()
 {
 	if (bCounterTransition || !GetCounterRushTarget()) return false;
 	bCounterTransition = true;
+	ReservedCounterSerial = CounterSerial;
+	ReservedPerfectGeneration = PerfectGeneration;
 	return true;
 }
 
 void UCDefenseComponent::EndCounterRushTransition()
 {
+	const bool bStoppedReservedReaction = ReservedPerfectGeneration != 0 && PerfectGeneration == 0;
 	bCounterTransition = false;
+	ReservedCounterSerial = 0;
+	ReservedPerfectGeneration = 0;
+	// A failed handoff after stopping the reaction must not leave a reusable ticket.
+	// A failed attempt originating in legacy completion grace retains its original expiry.
+	if (bStoppedReservedReaction) ClearCounterRush();
+}
+
+bool UCDefenseComponent::SetCounterOpportunityWindow(bool bOpen, uint64 InGeneration, int32 InMontageInstanceId)
+{
+	if (!DodgeTuning.bUseMontageCounterWindow || InGeneration == 0 || InGeneration != PerfectGeneration
+		|| InMontageInstanceId == INDEX_NONE || InMontageInstanceId != PerfectMontageInstanceId
+		|| !IsPerfectDodgeActive() || bCounterTransition) return false;
+	bCounterOpportunityOpen = bOpen;
+	return true;
 }
 
 bool UCDefenseComponent::ConsumeCounterRush(uint64 InSerial)
@@ -294,6 +318,9 @@ void UCDefenseComponent::ClearCounterRush()
 	CounterSerial = 0;
 	CounterExpiresAt = 0.;
 	bCounterTransition = false;
+	ReservedCounterSerial = 0;
+	ReservedPerfectGeneration = 0;
+	bCounterOpportunityOpen = false;
 }
 
 bool UCDefenseComponent::IsPerfectDodgeActive() const

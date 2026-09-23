@@ -7,6 +7,8 @@
 #include "Reaction/CReaction_PerfectDodge.h"
 #include "Notify/CAnimNotify_PerfectDodgePresentation.h"
 #include "Notify/CAnimNotify_WeaponGlow.h"
+#include "Notify/CAnimNotify_CounterOpportunity.h"
+#include "Animation/ActiveMontageInstanceScope.h"
 #include "Notify/CAnimNotifyState_DodgeWindow.h"
 #include "Component/CReactionFeedbackComponent.h"
 #include "NiagaraComponent.h"
@@ -615,7 +617,20 @@ bool FDodgeAuthoredPlaybackTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("Authored completion clears perfect immunity"), f.Defense->IsPerfectDodgeActive());
 	TestNotNull(TEXT("Authored completion grants opportunity"), f.Defense->GetCounterRushTarget());
 	USkeletalMesh* stellar = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/01_Character/Asset/StellarGirlCeleste/Mesh/SK_Celeste_01"));
-	UAnimMontage* rushMontage = LoadObject<UAnimMontage>(nullptr, TEXT("/Game/04_Montage/Dodge/Stellar/M_CounterRush_Stellar"));
+	UClass* playerClass = LoadClass<ACPlayer>(nullptr, TEXT("/Game/01_Character/01_Player/BP_CPlayer_Stellar.BP_CPlayer_Stellar_C"));
+	ACPlayer* playerDefaults = playerClass ? Cast<ACPlayer>(playerClass->GetDefaultObject()) : nullptr;
+	UCActionComponent* authoredActions = playerDefaults ? playerDefaults->FindComponentByClass<UCActionComponent>() : nullptr;
+	if (!TestNotNull(TEXT("Authored action configuration"), authoredActions)) return false;
+	UAnimMontage* rushMontage = nullptr;
+	for (const FActionData& entry : Field<TArray<FActionData>>(authoredActions, TEXT("ActionDatas")))
+	{
+		if (entry.ActionDataKey.ActionType == EActionType::CounterRush
+			&& entry.ActionExecutorKey && entry.ActionExecutorKey->IsChildOf(UCAction_CounterRush::StaticClass()))
+		{
+			rushMontage = entry.Montage;
+			break;
+		}
+	}
 	if (!TestNotNull(TEXT("Stellar fixture mesh"), stellar) || !TestNotNull(TEXT("Authored rush montage"), rushMontage)) return false;
 	f.Player->GetMesh()->SetSkeletalMesh(stellar);
 	f.Player->GetMesh()->InitAnim(true);
@@ -797,6 +812,67 @@ bool FCounterRushMovementTest::RunTest(const FString& Parameters)
 			TestTrue(TEXT("Blocked displacement below planned travel"), actual < plan.TravelDistance - 10.f);
 		}
 		else TestTrue(TEXT("Open movement reaches capped endpoint without drift"), FMath::IsNearlyEqual(actual, plan.TravelDistance, 2.f));
+	}
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCounterOpportunityOwnershipTest, "Portfolio.Combat.Dodge.CounterOpportunityOwnership",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FCounterOpportunityOwnershipTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatDodgeTest;
+	for (const bool authored : { false, true })
+	for (const bool consume : { false, true })
+	{
+		FFixture f;
+		auto& tuning = Field<FDefenseDodgeTuning>(f.Defense, TEXT("DodgeTuning"));
+		tuning.PerfectEnd = .18f;
+		tuning.CounterGraceSeconds = 0.f;
+		tuning.bUseMontageCounterWindow = authored;
+		FReactionData data;
+		data.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+		data.ReactionDataKey.ReactionType = EReactionType::PerfectDodge;
+		data.ReactionExecutorKey = UCReaction_PerfectDodge::StaticClass();
+		data.Montage = DuplicateObject<UAnimMontage>(f.Montage, GetTransientPackage());
+		Field<TMap<FReactionDataKey, FReactionData>>(f.References.ReactionComponent, TEXT("ReactionDataMap")).Add(data.ReactionDataKey, data);
+		TestTrue(TEXT("Dodge begins"), f.Actions->ApplyActionDecision(f.MakeStart()));
+		f.Target->RequestCombatDamageTarget(10.f, f.Damage(), f.Controller, f.Attacker);
+		auto* reaction = f.References.ReactionComponent->GetActiveReactionExecutor();
+		if (!TestNotNull(TEXT("Perfect reaction"), reaction)) return false;
+		const uint64 generation = f.References.ReactionComponent->GetActiveReactionGeneration();
+		const int32 instance = reaction->GetActiveMontageInstanceId();
+		f.Player->GetMesh()->GetAnimInstance()->Montage_SetPosition(data.Montage, .9f);
+		if (authored)
+		{
+			TestNull(TEXT("Numeric threshold cannot open authored opportunity"), f.Defense->GetCounterRushTarget());
+			TestFalse(TEXT("Old generation rejected"), f.Defense->SetCounterOpportunityWindow(true, generation + 1, instance));
+			TestFalse(TEXT("Old instance rejected"), f.Defense->SetCounterOpportunityWindow(true, generation, instance + 1));
+			TestTrue(TEXT("Open current opportunity"), f.Defense->SetCounterOpportunityWindow(true, generation, instance));
+			TestTrue(TEXT("Close current opportunity"), f.Defense->SetCounterOpportunityWindow(false, generation, instance));
+			TestNull(TEXT("Closed opportunity unavailable"), f.Defense->GetCounterRushTarget());
+			auto* marker = NewObject<UCAnimNotify_CounterOpportunity>();
+			FAnimNotifyEventReference stale;
+			stale.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(instance + 1);
+			marker->Notify(f.Player->GetMesh(), data.Montage, stale);
+			TestNull(TEXT("Stale point marker cannot reopen"), f.Defense->GetCounterRushTarget());
+			FAnimNotifyEventReference current;
+			current.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(instance);
+			marker->Notify(f.Player->GetMesh(), data.Montage, current);
+			TestNotNull(TEXT("Current point marker opens"), f.Defense->GetCounterRushTarget());
+		}
+		const uint64 serial = f.Defense->GetCounterRushSerial();
+		TestTrue(TEXT("Opportunity exists"), serial != 0);
+		TestTrue(TEXT("Reserve before interruption"), f.Defense->BeginCounterRushTransition());
+		TestFalse(TEXT("Nested reservation rejected"), f.Defense->BeginCounterRushTransition());
+		reaction->Stop(EReactionStopReason::Interrupted);
+		TestEqual(TEXT("Zero grace preserves authorized handoff"), f.Defense->GetCounterRushSerial(), serial);
+		if (consume)
+		{
+			TestTrue(TEXT("Reserved opportunity consumed"), f.Defense->ConsumeCounterRush(serial));
+			TestFalse(TEXT("Cannot consume twice"), f.Defense->ConsumeCounterRush(serial));
+		}
+		f.Defense->EndCounterRushTransition();
+		TestNull(TEXT("Nothing leaks after transaction"), f.Defense->GetCounterRushTarget());
+		TestFalse(TEXT("Expired owner cannot reopen"), f.Defense->SetCounterOpportunityWindow(true, generation, instance));
 	}
 	return true;
 }

@@ -4,6 +4,9 @@
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
+#include "Component/CDefenseComponent.h"
+#include "Notify/CAnimNotify_CounterOpportunity.h"
+#include "MontageSectionPath.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpressionConstant3Vector.h"
 #include "Materials/MaterialExpressionFresnel.h"
@@ -23,6 +26,11 @@
 #include "Misc/PackageName.h"
 #include "UObject/SavePackage.h"
 #include "UObject/UnrealType.h"
+#include "Engine/SkeletalMesh.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "Animation/Skeleton.h"
+#include "NiagaraSystem.h"
+#include "Components/SkeletalMeshComponent.h"
 
 namespace DodgeAssets
 {
@@ -92,6 +100,185 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 {
 	using namespace DodgeAssets;
 	const bool bApply = FParse::Param(*Params, TEXT("Apply"));
+	if (FParse::Param(*Params, TEXT("CounterOpportunityWindow")))
+	{
+		const bool bVerify = FParse::Param(*Params, TEXT("Verify"));
+		if (bApply && bVerify) return 1;
+		auto* bp = LoadObject<UBlueprint>(nullptr, TEXT("/Game/01_Character/01_Player/BP_CPlayer_Stellar"));
+		auto* cdo = bp && bp->GeneratedClass ? Cast<AActor>(bp->GeneratedClass->GetDefaultObject()) : nullptr;
+		auto* reactions = cdo ? cdo->FindComponentByClass<UCReactionComponent>() : nullptr;
+		auto* defense = cdo ? cdo->FindComponentByClass<UCDefenseComponent>() : nullptr;
+		if (!reactions || !defense) return 1;
+		auto& tuning = Field<FDefenseDodgeTuning>(defense, TEXT("DodgeTuning"));
+		TMap<UAnimMontage*, float> missingOpens;
+		int32 rows = 0;
+		// Preflight every configured path before changing any object or saving any package.
+		for (const auto& row : Field<TArray<FReactionData>>(reactions, TEXT("ReactionDatas")))
+		{
+			if (row.ReactionDataKey.ReactionType != EReactionType::PerfectDodge) continue;
+			++rows;
+			auto* montage = row.Montage;
+			if (!montage) return 1;
+			const auto path = ExecutionMontageAudit::BuildSectionPath(montage, row.StartSectionName, row.PlayRate);
+			if (!path.Error.IsEmpty() || !path.HasLinearTimeline())
+			{
+				UE_LOG(LogTemp, Error, TEXT("CounterOpportunity: %s requires manual section-path review."), *montage->GetPathName());
+				return 1;
+			}
+			float terminal = montage->GetPlayLength();
+			for (const auto& event : montage->Notifies)
+				if (path.ContainsTime(montage, event.GetTime()) && Cast<UCAnimNotify_CompleteReaction>(event.Notify))
+					terminal = FMath::Min(terminal, event.GetTime());
+			int32 opens = 0;
+			float opening = tuning.CounterConnectStart;
+			for (const auto& event : montage->Notifies)
+			{
+				const auto* notify = Cast<UCAnimNotify_CounterOpportunity>(event.Notify);
+				if (!notify) continue;
+				if (!FMath::IsFinite(event.GetTime()) || event.GetTime() < 0.f || event.GetTime() >= terminal
+					|| !path.ContainsTime(montage, event.GetTime())) return 1;
+				if (notify->bOpen) { ++opens; opening = event.GetTime(); }
+			}
+			if (opens > 1 || !FMath::IsFinite(opening) || opening < 0.f || opening >= terminal
+				|| !path.ContainsTime(montage, opening))
+			{
+				UE_LOG(LogTemp, Error, TEXT("CounterOpportunity: %s opening %.3f must be reachable before completion %.3f."), *montage->GetPathName(), opening, terminal);
+				return 1;
+			}
+			for (const auto& event : montage->Notifies)
+				if (const auto* notify = Cast<UCAnimNotify_CounterOpportunity>(event.Notify); notify && !notify->bOpen && event.GetTime() <= opening) return 1;
+			if (!opens) missingOpens.Add(montage, opening);
+			UE_LOG(LogTemp, Display, TEXT("CounterOpportunity: %s open=%.3f existing=%d terminal=%.3f"), *montage->GetPathName(), opening, opens, terminal);
+		}
+		if (!rows) return 1;
+		if (bVerify) return tuning.bUseMontageCounterWindow && missingOpens.IsEmpty() ? 0 : 1;
+		if (!bApply) return 0;
+		for (const auto& pair : missingOpens)
+		{
+			auto* notify = NewObject<UCAnimNotify_CounterOpportunity>(pair.Key);
+			notify->bOpen = true;
+			auto& event = pair.Key->Notifies.AddDefaulted_GetRef();
+			event.Notify = notify;
+			event.NotifyName = FName(*notify->GetNotifyName());
+			event.Link(pair.Key, pair.Value);
+			event.TriggerWeightThreshold = 0.f;
+			pair.Key->RefreshCacheData();
+			if (!DodgeAssets::Save(pair.Key)) return 1;
+		}
+		// Enable only after every required marker has been persisted successfully.
+		if (!tuning.bUseMontageCounterWindow)
+		{
+			tuning.bUseMontageCounterWindow = true;
+			if (!DodgeAssets::Save(bp)) return 1;
+		}
+		return 0;
+	}
+	// Narrow, explicit migration. Does not touch montage, Niagara or combo settings.
+	if (FParse::Param(*Params, TEXT("CounterTrailAttachment")))
+	{
+		auto* mesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/06_Weapon/Asset/SciFi_Sword/scifi_sword"));
+		auto* data = LoadObject<UWeaponTrailDataAsset>(nullptr, TEXT("/Game/09_DataAsset/DA_WeaponTrail_SciFiSword"));
+		if (!mesh || !mesh->GetSkeleton() || !data) return 1;
+		auto* skeleton = mesh->GetSkeleton();
+		auto* current = data->TrailDefinitions.FindByPredicate([](const FWeaponTrailDefinition& D) { return D.TriggerKey == TEXT("CounterRush_Trail"); });
+		// Validation follows current authoring, not the source asset used by the migration.
+		if (!bApply)
+		{
+			if (!current || current->NiagaraSystems.IsEmpty()) return 1;
+			if (current->RelativeLocation.ContainsNaN() || current->RelativeRotation.ContainsNaN()
+				|| (current->bAttachToSocket && (current->AttachmentSocket.IsNone() || !mesh->FindSocket(current->AttachmentSocket))))
+			{
+				UE_LOG(LogTemp, Error, TEXT("CounterTrail: invalid attachment socket or relative transform."));
+				return 1;
+			}
+			if (current->bOverrideRibbonWidth && (current->RibbonWidthParameter.IsNone()
+				|| !FMath::IsFinite(current->RibbonWidth) || current->RibbonWidth <= 0.f)) return 1;
+			for (UNiagaraSystem* system : current->NiagaraSystems)
+			{
+				if (!system) return 1;
+				if (current->bOverrideRibbonWidth)
+				{
+					TArray<FNiagaraVariable> parameters;
+					system->GetExposedParameters().GetParameters(parameters);
+					if (!parameters.ContainsByPredicate([current](const FNiagaraVariable& Parameter)
+						{ return Parameter.GetName() == current->RibbonWidthParameter && Parameter.GetType() == FNiagaraTypeDefinition::GetFloatDef(); }))
+					{
+						UE_LOG(LogTemp, Error, TEXT("CounterTrail: %s requires exposed float %s."), *system->GetPathName(), *current->RibbonWidthParameter.ToString());
+						return 1;
+					}
+				}
+			}
+			UE_LOG(LogTemp, Display, TEXT("CounterTrail: current systems, attachment and width settings verified (read-only)."));
+			return 0;
+		}
+		// This is a one-time Scifi migration; it must never reset arbitrary current art settings.
+		const auto* start = mesh->FindSocket(TEXT("TrailStart"));
+		const auto* end = mesh->FindSocket(TEXT("TrailEnd"));
+		auto* entry = data->TrailDefinitions.FindByPredicate([](const FWeaponTrailDefinition& D) { return D.TriggerKey == TEXT("CounterRush_Trail"); });
+		if (!start || !end || start->BoneName != end->BoneName || !entry
+			|| entry->NiagaraSystems.Num() != 1 || !entry->NiagaraSystems[0]
+			|| entry->NiagaraSystems[0]->GetName() != TEXT("NS_SlashTrail_Scifi_Sample")) return 1;
+		const FVector span = end->RelativeLocation - start->RelativeLocation;
+		if (span.IsNearlyZero()) return 1;
+		const auto& ref = mesh->GetRefSkeleton();
+		int32 bone = ref.FindBoneIndex(start->BoneName);
+		if (bone == INDEX_NONE) return 1;
+		FTransform boneToMesh = ref.GetRefBonePose()[bone];
+		while ((bone = ref.GetParentIndex(bone)) != INDEX_NONE)
+			boneToMesh = boneToMesh * ref.GetRefBonePose()[bone];
+		// Clip the existing guide span to the mesh bounds; preserve the original sockets.
+		const FBox bounds = mesh->GetBounds().GetBox();
+		const FVector startMesh = boneToMesh.TransformPosition(start->RelativeLocation);
+		const FVector spanMesh = boneToMesh.TransformVector(span);
+		double endFraction = 1.;
+		for (int32 axis = 0; axis < 3; ++axis)
+		{
+			if (FMath::Abs(spanMesh[axis]) > SMALL_NUMBER)
+			{
+				const double edge = spanMesh[axis] > 0 ? bounds.Max[axis] : bounds.Min[axis];
+				endFraction = FMath::Min(endFraction, (edge - startMesh[axis]) / spanMesh[axis]);
+			}
+		}
+		if (endFraction <= 0.) return 1;
+		const FVector fittedSpan = span * endFraction;
+		const FVector center = start->RelativeLocation + fittedSpan * .5;
+		auto* weaponClass = LoadClass<AActor>(nullptr, TEXT("/Game/06_Weapon/BP_CWeaponActor_SciFi_Sword.BP_CWeaponActor_SciFi_Sword_C"));
+		auto* weaponDefault = weaponClass ? weaponClass->GetDefaultObject<AActor>() : nullptr;
+		auto* weaponMesh = weaponDefault ? weaponDefault->FindComponentByClass<USkeletalMeshComponent>() : nullptr;
+		if (!weaponMesh) return 1;
+		const float fittedWidth = (boneToMesh.TransformVector(fittedSpan) * weaponMesh->GetRelativeScale3D()).Size();
+		UE_LOG(LogTemp, Display, TEXT("CounterTrail fitted width=%f default mesh scale=%s"), fittedWidth, *weaponMesh->GetRelativeScale3D().ToString());
+		UE_LOG(LogTemp, Display, TEXT("CounterTrail reference: start=%s end=%s center=%s meshBounds=%s"),
+			*boneToMesh.TransformPosition(start->RelativeLocation).ToString(),
+			*boneToMesh.TransformPosition(end->RelativeLocation).ToString(),
+			*boneToMesh.TransformPosition(center).ToString(), *mesh->GetBounds().BoxExtent.ToString());
+		auto* socket = skeleton->FindSocket(TEXT("FX_CounterTrail"));
+		if (bApply)
+		{
+			// Preserve a socket already authored by the user.
+			if (!socket)
+			{
+				socket = NewObject<USkeletalMeshSocket>(skeleton, NAME_None, RF_Transactional);
+				socket->SocketName = TEXT("FX_CounterTrail");
+				socket->BoneName = start->BoneName;
+				socket->RelativeLocation = center;
+				socket->RelativeRotation = FRotationMatrix::MakeFromZ(span).Rotator();
+				socket->RelativeScale = FVector::OneVector;
+				skeleton->Sockets.Add(socket);
+				if (!DodgeAssets::Save(skeleton)) return 1;
+			}
+			entry->bAttachToSocket = true;
+			entry->AttachmentSocket = socket->SocketName;
+			entry->RelativeLocation = FVector::ZeroVector;
+			entry->RelativeRotation = FRotator::ZeroRotator;
+			entry->bOverrideRibbonWidth = true;
+			entry->RibbonWidth = fittedWidth;
+			if (!DodgeAssets::Save(data)) return 1;
+		}
+		if (FParse::Param(*Params, TEXT("Verify")) && (!socket || !entry->bAttachToSocket
+			|| entry->AttachmentSocket != TEXT("FX_CounterTrail"))) return 1;
+		return 0;
+	}
 	// Resolve the BP's actual montage references: user-renamed assets are authoritative.
 	if (FParse::Param(*Params, TEXT("WeaponGlowOnly")))
 	{
@@ -154,7 +341,7 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 			if (changed)
 			{
 				montage->RefreshCacheData();
-				if (!Save(montage)) return 1;
+				if (!DodgeAssets::Save(montage)) return 1;
 			}
 		}
 		return 0;

@@ -94,6 +94,8 @@ protected:
 public:
 	// Lifecycle
 	virtual bool Start(const FActionData& InData, uint32 InActionRequestSerial = 0);
+	// Called once after montage/execution ownership is committed. May stop this execution.
+	virtual void CommitStarted() {}
 	virtual void Interrupt(const FExecutionInterventionDirective& InDirective);
 	virtual void Stop(EActionStopReason InStopReason);
 	virtual void Complete();

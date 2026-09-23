@@ -171,6 +171,8 @@ bool UCAction::Start(const FActionData& InData, const uint32 InActionRequestSeri
 	if (IsValid(ActionComp_Injected))
 		ActionComp_Injected->HandleApplyActionStarted(this, actionGeneration);
 	if (!bIsActive || (IsValid(ActionComp_Injected) && ActionComp_Injected->GetActiveActionGeneration() != actionGeneration)) return false;
+	CommitStarted();
+	if (!bIsActive || (IsValid(ActionComp_Injected) && ActionComp_Injected->GetActiveActionGeneration() != actionGeneration)) return false;
 
 	const FActionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EActionFeedbackTiming::Start);
 

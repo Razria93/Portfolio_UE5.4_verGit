@@ -4,7 +4,9 @@ bool FCounterRushTuning::IsValid() const
 {
 	return FMath::IsFinite(Duration) && Duration > 0.f
 		&& FMath::IsFinite(MaxTravelDistance) && MaxTravelDistance >= 0.f
-		&& FMath::IsFinite(ExtraGap) && ExtraGap >= 0.f;
+		&& FMath::IsFinite(ExtraGap) && ExtraGap >= 0.f
+		&& FMath::IsFinite(FacingMaxDistance) && FacingMaxDistance > 0.f
+		&& FMath::IsFinite(FacingMaxAngle) && FacingMaxAngle > 0.f && FacingMaxAngle <= 180.f;
 }
 
 FCounterRushPlan FCounterRushPlan::Build(const FVector& InOrigin, const FVector& InTarget,

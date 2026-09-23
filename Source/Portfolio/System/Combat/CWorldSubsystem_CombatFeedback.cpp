@@ -67,8 +67,16 @@ void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDura
 
 void UCWorldSubsystem_CombatFeedback::AddTimeEffect(AActor* InActor, float InDuration, float InDilation, bool bRealTime, uint64 InSerial)
 {
-	if (!IsValid(InActor) || !GetWorld() || !FMath::IsFinite(InDuration) || InDuration <= 0.f
-		|| !FMath::IsFinite(InDilation) || InDilation < 0.f || InDilation > 1.f) return;
+	const bool bHitStop = !bRealTime && InSerial == 0;
+	const TCHAR* rejection = !IsValid(InActor) ? TEXT("InvalidActor")
+		: !GetWorld() ? TEXT("InvalidWorld")
+		: (!FMath::IsFinite(InDuration) || InDuration <= 0.f) ? TEXT("InvalidDuration")
+		: (!FMath::IsFinite(InDilation) || InDilation < 0.f || InDilation > 1.f) ? TEXT("InvalidDilation") : nullptr;
+	if (rejection)
+	{
+		if (bHitStop) FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, rejection);
+		return;
+	}
 	RefreshTimeEffects();
 	FActorTimeEffects* state = ActorTimeEffects.Find(InActor);
 	if (!state)
@@ -83,6 +91,8 @@ void UCWorldSubsystem_CombatFeedback::AddTimeEffect(AActor* InActor, float InDur
 	effect.OwnerSerial = InSerial;
 	state->Effects.Add(effect);
 	RefreshTimeEffects();
+	// Emit once per accepted request, not once per refresh/tick. Slow leases are not HitStop requests.
+	if (bHitStop) FCombatFeedbackDebug::RecordCombatFeedbackHitStopAppliedForAudit(InActor, InDuration, InDilation);
 }
 
 uint64 UCWorldSubsystem_CombatFeedback::RequestPerfectDodgeSlow(AActor* InPlayer, AActor* InAttacker, float InDuration, float InDilation)

@@ -15,6 +15,7 @@ void UCAction_CounterRush::InitializeReferences(const FCharacterComponentReferen
 	Super::InitializeReferences(InReferences);
 	DefenseComp_Injected = InReferences.DefenseComponent;
 	MovementComp_Injected = InReferences.MovementComponent;
+	ReactionFeedbackComp_Injected = InReferences.ReactionFeedbackComponent;
 }
 
 FExecutionDecisionResult UCAction_CounterRush::ResolveExecutionDecision(const FExecutionDecisionQuery& InQuery) const
@@ -95,16 +96,19 @@ void UCAction_CounterRush::CommitStarted()
 	}
 	if (IsValid(MovementComp_Injected))
 	{
-		MovementComp_Injected->TryFaceTarget(TargetLocation, 600.f, 180.f);
+		const TCHAR* reason = TEXT("None");
+		if (!MovementComp_Injected->TryFaceTarget(TargetLocation, ActiveRushTuning.FacingMaxDistance, ActiveRushTuning.FacingMaxAngle, &reason))
+			UE_LOG(LogTemp, Verbose, TEXT("CounterRush facing skipped: %s (max distance %.2f, max angle %.2f)"),
+				reason, ActiveRushTuning.FacingMaxDistance, ActiveRushTuning.FacingMaxAngle);
 	}
-	if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
-		feedback->TransferCounterWeaponToAttack(OpportunitySerial);
+	if (IsValid(ReactionFeedbackComp_Injected))
+		ReactionFeedbackComp_Injected->TransferCounterWeaponToAttack(OpportunitySerial);
 	RushDebug.Begin(OwnerCharacter_Injected, RushPlan, OpportunitySerial, ActiveRushTuning.Duration);
 	bRushMovementActive = RushSource.IsValid();
 	LastPresentationLocation = OwnerCharacter_Injected->GetActorLocation();
 	if (bRushMovementActive)
-		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
-			feedback->BeginRushPresentation(OpportunitySerial);
+		if (IsValid(ReactionFeedbackComp_Injected))
+			ReactionFeedbackComp_Injected->BeginRushPresentation(OpportunitySerial);
 	if (!bRushMovementActive) RushDebug.End(OwnerCharacter_Injected, TEXT("NoTravelNeeded"));
 }
 
@@ -117,8 +121,8 @@ void UCAction_CounterRush::Tick(float InDeltaTime)
 	const float expected = RushPlan.TravelDistance / ActiveRushTuning.Duration * InDeltaTime;
 	const float actual = float(FMath::Max(0., FVector::DotProduct(location - LastPresentationLocation, RushPlan.Direction)));
 	LastPresentationLocation = location;
-	if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
-		feedback->UpdateRushPresentation(OpportunitySerial, expected > KINDA_SMALL_NUMBER ? actual / expected : 0.f);
+	if (IsValid(ReactionFeedbackComp_Injected))
+		ReactionFeedbackComp_Injected->UpdateRushPresentation(OpportunitySerial, expected > KINDA_SMALL_NUMBER ? actual / expected : 0.f);
 	auto* movement = OwnerCharacter_Injected->GetCharacterMovement();
 	if (!RushSource.IsValid() || !movement || RushSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished)
 		|| movement->GetRootMotionSourceByID(RushSource->LocalID) != RushSource)
@@ -126,19 +130,19 @@ void UCAction_CounterRush::Tick(float InDeltaTime)
 		const bool ended = RushSource.IsValid() && RushSource->Status.HasFlag(ERootMotionSourceStatusFlags::Finished);
 		RushDebug.End(OwnerCharacter_Injected, ended ? TEXT("SourceFinished") : TEXT("SourceRemoved"));
 		bRushMovementActive = false;
-		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
-			feedback->EndRushPresentation(OpportunitySerial);
+		if (IsValid(ReactionFeedbackComp_Injected))
+			ReactionFeedbackComp_Injected->EndRushPresentation(OpportunitySerial);
 	}
 }
 
 void UCAction_CounterRush::CleanupRuntimeEffects()
 {
 	if (IsValid(OwnerCharacter_Injected))
-		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
+		if (IsValid(ReactionFeedbackComp_Injected))
 		{
-			feedback->EndRushPresentation(OpportunitySerial);
+			ReactionFeedbackComp_Injected->EndRushPresentation(OpportunitySerial);
 			// Missing End marker / cancellation fallback, not an attack collision-window cue.
-			feedback->ReleaseCounterWeapon(OpportunitySerial);
+			ReactionFeedbackComp_Injected->ReleaseCounterWeapon(OpportunitySerial);
 		}
 	if (bRushMovementActive) RushDebug.End(OwnerCharacter_Injected, TEXT("ActionCleanup"));
 	bRushMovementActive = false;

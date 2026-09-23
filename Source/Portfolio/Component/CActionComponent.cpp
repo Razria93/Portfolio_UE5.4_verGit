@@ -1,7 +1,6 @@
 #include "Component/CActionComponent.h"
 #include "Component/CReactionFeedbackComponent.h"
 #include "Misc/ScopeExit.h"
-#include "Action/CAction_CounterRush.h"
 
 #include "ProjectGlobal.h"
 
@@ -65,6 +64,7 @@ void UCActionComponent::InitializeReferences(const FCharacterComponentReferences
 	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
 	ActionFeedbackComp_Injected = InReferences.ActionFeedbackComponent;
+	ReactionFeedbackComp_Injected = InReferences.ReactionFeedbackComponent;
 
 	ClearPendingStartFacing();
 
@@ -338,7 +338,7 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 
 	const bool bCounterRush = InResult.ResolvedContext.ActionDataKey.ActionType == EActionType::CounterRush;
 	if (bCounterRush && (!IsValid(DefenseComp_Injected) || !DefenseComp_Injected->BeginCounterRushTransition())) return false;
-	auto* glowFeedback = bCounterRush ? OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>() : nullptr;
+	auto* glowFeedback = bCounterRush ? ReactionFeedbackComp_Injected : nullptr;
 	if (glowFeedback) glowFeedback->BeginWeaponGlowTransfer(DefenseComp_Injected->GetCounterRushSerial());
 	ON_SCOPE_EXIT
 	{
@@ -434,10 +434,6 @@ void UCActionComponent::HandleApplyActionStarted(const UCAction* InAction, const
 
 	if (ActiveActionType == EActionType::Dodge && IsValid(DefenseComp_Injected))
 		DefenseComp_Injected->BeginDodgeExecution(InActionGeneration, ActiveActionData.Montage);
-	if (ActiveActionType == EActionType::CounterRush)
-	{
-		if (UCAction_CounterRush* rush = Cast<UCAction_CounterRush>(ActiveActionExecutor)) rush->CommitStarted();
-	}
 
 	ClearPendingStartFacing();
 
@@ -826,6 +822,7 @@ FCharacterComponentReferences UCActionComponent::BuildActionExecutorReferences()
 	references.WeaponComponent = WeaponComp_Injected;
 	references.ActionComponent = this;
 	references.ActionFeedbackComponent = ActionFeedbackComp_Injected;
+	references.ReactionFeedbackComponent = ReactionFeedbackComp_Injected;
 	references.DefenseComponent = DefenseComp_Injected;
 	references.MovementComponent = MovementComp_Injected;
 
@@ -1090,9 +1087,8 @@ void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& In
 
 void UCActionComponent::ClearActiveActionContext()
 {
-	if (IsValid(OwnerCharacter_Injected))
-		if (auto* feedback = OwnerCharacter_Injected->FindComponentByClass<UCReactionFeedbackComponent>())
-			feedback->EndWeaponGlowOwner(true, ActiveActionGeneration);
+	if (IsValid(ReactionFeedbackComp_Injected))
+		ReactionFeedbackComp_Injected->EndWeaponGlowOwner(true, ActiveActionGeneration);
 	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndDodgeExecution(ActiveActionGeneration);
 	ActiveActionGeneration = 0;
 

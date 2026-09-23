@@ -13,6 +13,11 @@ struct PORTFOLIO_API FCounterRushTuning
 	float MaxTravelDistance = 450.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CounterRush", meta = (ClampMin = "0", Units = "cm"))
 	float ExtraGap = 30.f;
+	// Independent authored facing limits; increasing travel/eligibility does not implicitly rotate farther.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CounterRush|Facing", meta = (ClampMin = "0.01", Units = "cm"))
+	float FacingMaxDistance = 600.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CounterRush|Facing", meta = (ClampMin = "0.01", ClampMax = "180", Units = "deg"))
+	float FacingMaxAngle = 180.f;
 	bool IsValid() const;
 };
 
