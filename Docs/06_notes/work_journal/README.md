@@ -1,5 +1,7 @@
 # Work Journal Notes
 
+최근: [브랜치 감사](evidence/CombatDodge_Branch_Audit_20260923.md) → [감사 후 보완 Review 05](evidence/Dodge_Review_05_Audit_Refinement.md) · [현재 저작 가이드](../N_CounterRush_Current_Authoring.md)
+
 이 폴더는 브랜치 작업 중 구조 결정이 바뀌는 지점과 논의 흐름을 기록한다.
 
 작업일지는 매일 기록하는 로그가 아니라, 하나의 논점에서 출발해 설계 방향이 바뀌거나 책임 경계가 확정되는 단위로 작성한다.

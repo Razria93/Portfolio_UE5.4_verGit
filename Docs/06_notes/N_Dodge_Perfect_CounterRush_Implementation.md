@@ -1,5 +1,7 @@
 # 일반 회피 · 저스트 회피 · 카운터 러시 구현 및 검증 노트
 
+> 2026-09-23 후속: 현재 설정·검증 명령은 [카운터 저작 가이드](N_CounterRush_Current_Authoring.md)를 참고한다. 아래 초기 경로·bootstrap·검증 수치는 당시 기록이다.
+
 > 2026-09-22: `dodge-review-01`은 초기 구현의 1차 사용자 검토 기준점이다. 연출 개선 완료본이 아니다. [협업 검토](work_journal/J02_Dodge_Perfect_CounterRush_AI_Review.md)와 [이번 검증·촬영 준비 기록](work_journal/evidence/Dodge_Review_01_Baseline.md)을 함께 본다. 아래 2026-09-21 검증 표는 당시 기록으로 유지한다.
 
 ## 1) 목적과 범위
