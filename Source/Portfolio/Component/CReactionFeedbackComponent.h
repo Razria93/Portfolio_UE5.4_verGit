@@ -14,6 +14,7 @@ class PORTFOLIO_API UCReactionFeedbackComponent : public UActorComponent
 	GENERATED_BODY()
 	friend class FCounterRushFOVTest;
 	friend class FWeaponGlowOwnershipTest;
+	friend class FBodyGlowOwnershipTest;
 
 public:
 	UCReactionFeedbackComponent();
@@ -29,8 +30,8 @@ private:
 	UPROPERTY(Transient)
 	class ACharacter* OwnerCharacter_Injected = nullptr;
 
-	// Body is a success cue; weapon/slow/screen are authored as point Notifies.
-	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
+	// Serialized migration input only. Runtime timing is authored by Body Glow point notifies.
+	UPROPERTY()
 	FCombatPresentationEnvelope PerfectBodyEnvelope;
 	// Native mesh plus explicitly selected modular parts (name or tag).
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
@@ -47,6 +48,12 @@ private:
 	FCombatOverlayPlayback WeaponOverlay;
 	UPROPERTY(Transient)
 	FCombatPresentationEnvelopeState BodyEnvelopeState;
+	uint64 BodyOwnerGeneration = 0;
+	int32 BodyOwnerMontageInstanceId = INDEX_NONE;
+	uint64 LastBodyStartGeneration = 0;
+	int32 LastBodyStartMontageInstanceId = INDEX_NONE;
+	double BodySafetyDeadline = 0.;
+	float BodyPeakWeight = 1.f;
 	UPROPERTY(Transient)
 	FCombatPresentationEnvelopeState WeaponEnvelopeState;
 	UPROPERTY(EditAnywhere, Category = "ReactionFeedback|PerfectDodge")
@@ -110,6 +117,9 @@ public:
 	void PlayFeedback(const FReactionFeedbackRequest& InReactionFeedbackRequest);
 	void ClearRuntimeFeedback();
 	void PlayPerfectDodgeSuccess(AActor* InAttacker, uint64 InResultSerial);
+	void StartBodyGlow(uint64 InGeneration, int32 InMontageInstanceId, float InPeak, float InFadeIn, float InFadeOut, float InSafetySeconds);
+	void EndBodyGlow(uint64 InGeneration, int32 InMontageInstanceId, float InFadeOut);
+	void EndBodyGlowOwner(uint64 InGeneration);
 	void TransferCounterWeaponToAttack(uint64 InOpportunitySerial);
 	void ReleaseCounterWeapon(uint64 InOpportunitySerial);
 	void StartWeaponGlow(bool bInAction, uint64 InGeneration, float InPeak, float InFadeIn, float InFadeOut, float InSafetySeconds);

@@ -6,6 +6,7 @@
 #include "Component/CReactionFeedbackComponent.h"
 #include "Component/CDefenseComponent.h"
 #include "Notify/CAnimNotify_CounterOpportunity.h"
+#include "Notify/CAnimNotify_BodyGlow.h"
 #include "MontageSectionPath.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpressionConstant3Vector.h"
@@ -100,6 +101,102 @@ int32 UCDodgeAssetsCommandlet::Main(const FString& Params)
 {
 	using namespace DodgeAssets;
 	const bool bApply = FParse::Param(*Params, TEXT("Apply"));
+	if (FParse::Param(*Params, TEXT("BodyGlowPoints")))
+	{
+		const bool bVerify = FParse::Param(*Params, TEXT("Verify"));
+		if (bApply && bVerify) return 1;
+		float requestedStart = .01f, requestedEnd = .3f;
+		const bool hasStart = FParse::Value(*Params, TEXT("StartTime="), requestedStart);
+		const bool hasEnd = FParse::Value(*Params, TEXT("EndTime="), requestedEnd);
+		auto* bp = LoadObject<UBlueprint>(nullptr, TEXT("/Game/01_Character/01_Player/BP_CPlayer_Stellar"));
+		auto* cdo = bp && bp->GeneratedClass ? Cast<AActor>(bp->GeneratedClass->GetDefaultObject()) : nullptr;
+		auto* reactions = cdo ? cdo->FindComponentByClass<UCReactionComponent>() : nullptr;
+		auto* feedback = cdo ? cdo->FindComponentByClass<UCReactionFeedbackComponent>() : nullptr;
+		if (!reactions || !feedback) return 1;
+		const auto& legacy = Field<FCombatPresentationEnvelope>(feedback, TEXT("PerfectBodyEnvelope"));
+		if (!legacy.IsValid()) return 1;
+		UE_LOG(LogTemp, Display, TEXT("BodyGlow legacy REAL seconds: delay=%.3f in=%.3f hold=%.3f out=%.3f. Do not copy hold into montage seconds."),
+			legacy.Delay, legacy.FadeIn, legacy.Hold, legacy.FadeOut);
+		struct FPointPlan { UAnimMontage* Montage; float Start; float End; bool AddStart; bool AddEnd; };
+		TArray<FPointPlan> plans;
+		TSet<UAnimMontage*> seen;
+		for (const auto& row : Field<TArray<FReactionData>>(reactions, TEXT("ReactionDatas")))
+		{
+			if (row.ReactionDataKey.ReactionType != EReactionType::PerfectDodge) continue;
+			auto* montage = row.Montage;
+			if (!montage) return 1;
+			const auto path = ExecutionMontageAudit::BuildSectionPath(montage, row.StartSectionName, row.PlayRate);
+			if (!path.Error.IsEmpty() || !path.HasLinearTimeline()) return 1;
+			float terminal = montage->GetPlayLength();
+			for (const auto& event : montage->Notifies)
+			{
+				UE_LOG(LogTemp, Display, TEXT("BodyGlow current %s time=%.3f end=%.3f class=%s reachable=%d playRate=%.3f"),
+					*montage->GetPathName(), event.GetTime(), event.GetEndTriggerTime(),
+					*GetNameSafe(event.Notify ? event.Notify->GetClass() : (event.NotifyStateClass ? event.NotifyStateClass->GetClass() : nullptr)),
+					path.ContainsTime(montage, event.GetTime()), row.PlayRate * montage->RateScale);
+				if (!path.ContainsTime(montage, event.GetTime())) continue;
+				if (Cast<UCAnimNotify_CompleteReaction>(event.Notify)) terminal = FMath::Min(terminal, event.GetTime());
+				if (const auto* slow = Cast<UCAnimNotify_PerfectDodgePresentation>(event.Notify); slow && slow->Cue == EPerfectDodgePresentationCue::Slow)
+					UE_LOG(LogTemp, Display, TEXT("BodyGlow slow context %s montageTime=%.3f player=%d dilation=%.3f realEnvelope=%.3f/%.3f/%.3f/%.3f playRate=%.3f"),
+						*montage->GetPathName(), event.GetTime(), slow->bAffectPlayer, slow->SlowDilation,
+						slow->Envelope.Delay, slow->Envelope.FadeIn, slow->Envelope.Hold, slow->Envelope.FadeOut, row.PlayRate * montage->RateScale);
+			}
+			FPointPlan plan{montage, requestedStart, requestedEnd, true, true};
+			for (const auto& event : montage->Notifies)
+			{
+				const auto* notify = Cast<UCAnimNotify_BodyGlow>(event.Notify);
+				if (!notify) continue;
+				if (!FMath::IsFinite(notify->PeakWeight) || notify->PeakWeight < 0.f || notify->PeakWeight > 1.f
+					|| !FMath::IsFinite(notify->FadeIn) || notify->FadeIn < 0.f
+					|| !FMath::IsFinite(notify->FadeOut) || notify->FadeOut < 0.f
+					|| !FMath::IsFinite(notify->SafetyTimeout) || notify->SafetyTimeout <= 0.f) return 1;
+				bool& absent = notify->bStart ? plan.AddStart : plan.AddEnd;
+				if (!absent) return 1;
+				absent = false;
+				(notify->bStart ? plan.Start : plan.End) = event.GetTime();
+			}
+			if (!FMath::IsFinite(plan.Start) || !FMath::IsFinite(plan.End) || plan.Start <= 0.f
+				|| plan.End <= plan.Start || plan.End >= terminal
+				|| !path.ContainsTime(montage, plan.Start) || !path.ContainsTime(montage, plan.End))
+			{
+				UE_LOG(LogTemp, Error, TEXT("BodyGlow: %s requires reachable 0 < Start < End < completion %.3f."), *montage->GetPathName(), terminal);
+				return 1;
+			}
+			if ((plan.AddStart || plan.AddEnd) && (bVerify || (bApply && (!hasStart || !hasEnd))))
+			{
+				UE_LOG(LogTemp, Error, TEXT("BodyGlow: missing points; Apply requires explicit -StartTime= and -EndTime= after reviewing slow context."));
+				return 1;
+			}
+			UE_LOG(LogTemp, Display, TEXT("BodyGlow plan %s Start=%.3f End=%.3f add=%d/%d%s"), *montage->GetPathName(), plan.Start, plan.End,
+				plan.AddStart, plan.AddEnd, (!hasStart || !hasEnd) ? TEXT(" (missing argument defaults are preview only)") : TEXT(""));
+			if (!seen.Contains(montage)) { plans.Add(plan); seen.Add(montage); }
+		}
+		if (plans.IsEmpty()) return 1;
+		if (!bApply) return 0;
+		// All current montage paths have passed preflight. Only add missing points; never retime user points.
+		for (const auto& plan : plans)
+		{
+			if (!plan.AddStart && !plan.AddEnd) continue;
+			for (bool start : {true, false})
+			{
+				if (!(start ? plan.AddStart : plan.AddEnd)) continue;
+				auto* notify = NewObject<UCAnimNotify_BodyGlow>(plan.Montage);
+				notify->bStart = start;
+				notify->PeakWeight = 1.f;
+				notify->FadeIn = legacy.FadeIn;
+				notify->FadeOut = legacy.FadeOut;
+				notify->SafetyTimeout = 8.f;
+				auto& event = plan.Montage->Notifies.AddDefaulted_GetRef();
+				event.Notify = notify;
+				event.NotifyName = FName(*notify->GetNotifyName());
+				event.Link(plan.Montage, start ? plan.Start : plan.End);
+				event.TriggerWeightThreshold = 0.f;
+			}
+			plan.Montage->RefreshCacheData();
+			if (!DodgeAssets::Save(plan.Montage)) return 1;
+		}
+		return 0;
+	}
 	if (FParse::Param(*Params, TEXT("CounterOpportunityWindow")))
 	{
 		const bool bVerify = FParse::Param(*Params, TEXT("Verify"));

@@ -17,6 +17,7 @@
 #include "Component/CDefenseComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Reaction/CReaction.h"
 #include "Component/CWeaponComponent.h"
 #include "Weapon/CWeaponActor.h"
 #include "System/Combat/CWorldSubsystem_CombatFeedback.h"
@@ -46,6 +47,8 @@ void UCReactionFeedbackComponent::InitializeReferences(const FCharacterComponent
 {
 	ClearPerfectDodgePresentation();
 	LastPerfectResultSerial = 0;
+	LastBodyStartGeneration = 0;
+	LastBodyStartMontageInstanceId = INDEX_NONE;
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 
 	ValidateRequiredComponentReferences();
@@ -99,8 +102,29 @@ void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, ui
 	ClearPerfectDodgePresentation();
 	LastPerfectResultSerial = InResultSerial;
 	PerfectAttacker = InAttacker;
+	// Body glow is started exclusively by authored point notifies.
+}
+
+void UCReactionFeedbackComponent::StartBodyGlow(uint64 InGeneration, int32 InMontageInstanceId,
+	float InPeak, float InFadeIn, float InFadeOut, float InSafetySeconds)
+{
+	if (!IsValid(OwnerCharacter_Injected) || InGeneration == 0 || InMontageInstanceId == INDEX_NONE
+		|| !FMath::IsFinite(InPeak) || InPeak < 0.f || InPeak > 1.f
+		|| !FMath::IsFinite(InSafetySeconds) || InSafetySeconds <= 0.f) return;
+	const auto* health = OwnerCharacter_Injected->FindComponentByClass<UCHealthComponent>();
+	const auto* reaction = OwnerCharacter_Injected->FindComponentByClass<UCReactionComponent>();
+	const auto* executor = reaction ? reaction->GetActiveReactionExecutor() : nullptr;
+	if (!health || !health->IsAlive() || !reaction || !reaction->IsActiveReactionType(EReactionType::PerfectDodge)
+		|| reaction->GetActiveReactionGeneration() != InGeneration || !IsValid(executor)
+		|| executor->GetActiveMontageInstanceId() != InMontageInstanceId) return;
+	if (LastBodyStartGeneration == InGeneration && LastBodyStartMontageInstanceId == InMontageInstanceId) return;
+	FCombatPresentationEnvelope profile;
+	profile.FadeIn = InFadeIn;
+	profile.FadeOut = InFadeOut;
+	if (!profile.IsValid() || !IsValid(PerfectBodyMaterial)) return;
+	RestorePerfectBody();
 	const double now = FPlatformTime::Seconds();
-	if (IsValid(PerfectBodyMaterial) && BodyEnvelopeState.Start(PerfectBodyEnvelope, now))
+	if (BodyEnvelopeState.Start(profile, now, true))
 	{
 		TArray<UMeshComponent*> parts;
 		parts.Add(OwnerCharacter_Injected->GetMesh());
@@ -109,8 +133,29 @@ void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, ui
 		for (USkeletalMeshComponent* part : candidates)
 			if (part->GetSkinnedAsset() && (PerfectBodyParts.Contains(part->GetFName())
 				|| (!PerfectBodyPartTag.IsNone() && part->ComponentHasTag(PerfectBodyPartTag)))) parts.AddUnique(part);
-		BodyOverlay.Start(this, parts, PerfectBodyMaterial, GlowWeightParameter);
+		if (!BodyOverlay.Start(this, parts, PerfectBodyMaterial, GlowWeightParameter))
+		{ RestorePerfectBody(); return; }
+		BodyOwnerGeneration = LastBodyStartGeneration = InGeneration;
+		BodyOwnerMontageInstanceId = LastBodyStartMontageInstanceId = InMontageInstanceId;
+		BodyPeakWeight = InPeak;
+		BodySafetyDeadline = now + InSafetySeconds;
 	}
+}
+
+void UCReactionFeedbackComponent::EndBodyGlow(uint64 InGeneration, int32 InMontageInstanceId, float InFadeOut)
+{
+	if (!BodyOwnerGeneration || BodyOwnerGeneration != InGeneration || BodyOwnerMontageInstanceId != InMontageInstanceId
+		|| !FMath::IsFinite(InFadeOut) || InFadeOut < 0.f || BodyEnvelopeState.bReleased) return;
+	BodyEnvelopeState.Profile.FadeOut = InFadeOut;
+	EndBodyGlowOwner(InGeneration);
+}
+
+void UCReactionFeedbackComponent::EndBodyGlowOwner(uint64 InGeneration)
+{
+	if (!InGeneration || BodyOwnerGeneration != InGeneration) return;
+	BodySafetyDeadline = 0.;
+	BodyEnvelopeState.Release(FPlatformTime::Seconds());
+	if (BodyEnvelopeState.Profile.FadeOut <= 0.f) RestorePerfectBody();
 }
 
 void UCReactionFeedbackComponent::StartPerfectDodgeSlow(const FCombatPresentationEnvelope& InEnvelope,
@@ -147,7 +192,17 @@ void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick In
 	const UCHealthComponent* health = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->FindComponentByClass<UCHealthComponent>() : nullptr;
 	if (!IsValid(health) || !health->IsAlive()) { ClearPerfectDodgePresentation(); return; }
 	const double now = FPlatformTime::Seconds();
-	BodyOverlay.SetWeight(BodyEnvelopeState.Evaluate(now));
+	if (BodyOwnerGeneration && !BodyEnvelopeState.bReleased)
+	{
+		const auto* reaction = OwnerCharacter_Injected->FindComponentByClass<UCReactionComponent>();
+		const auto* executor = reaction ? reaction->GetActiveReactionExecutor() : nullptr;
+		if ((BodySafetyDeadline > 0. && now >= BodySafetyDeadline) || !reaction
+			|| !reaction->IsActiveReactionType(EReactionType::PerfectDodge)
+			|| reaction->GetActiveReactionGeneration() != BodyOwnerGeneration || !IsValid(executor)
+			|| executor->GetActiveMontageInstanceId() != BodyOwnerMontageInstanceId)
+			EndBodyGlowOwner(BodyOwnerGeneration);
+	}
+	BodyOverlay.SetWeight(BodyPeakWeight * BodyEnvelopeState.Evaluate(now));
 	TickRushPresentation(now);
 	if (BodyEnvelopeState.IsFinished(now)) RestorePerfectBody();
 	if (WeaponOpportunitySerial != 0)
@@ -188,6 +243,10 @@ void UCReactionFeedbackComponent::RestorePerfectBody()
 {
 	BodyOverlay.Restore();
 	BodyEnvelopeState.Reset();
+	BodyOwnerGeneration = 0;
+	BodyOwnerMontageInstanceId = INDEX_NONE;
+	BodySafetyDeadline = 0.;
+	BodyPeakWeight = 1.f;
 }
 
 void UCReactionFeedbackComponent::TransferCounterWeaponToAttack(uint64 InOpportunitySerial)

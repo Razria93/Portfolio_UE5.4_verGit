@@ -7,6 +7,7 @@
 #include "Reaction/CReaction_PerfectDodge.h"
 #include "Notify/CAnimNotify_PerfectDodgePresentation.h"
 #include "Notify/CAnimNotify_WeaponGlow.h"
+#include "Notify/CAnimNotify_BodyGlow.h"
 #include "Notify/CAnimNotify_CounterOpportunity.h"
 #include "Animation/ActiveMontageInstanceScope.h"
 #include "Notify/CAnimNotifyState_DodgeWindow.h"
@@ -370,7 +371,7 @@ bool FPerfectDodgeLifecycleTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Actual success reaction owns immunity"), f.Defense->IsPerfectDodgeActive());
 	TestNull(TEXT("Counter connection not open at start"), f.Defense->GetCounterRushTarget());
 	TestTrue(TEXT("Presentation includes preparation before input opens"), f.Defense->IsCounterRushPresentationPending(f.LastPacket.ResultSerial));
-	TestTrue(TEXT("Success starts body envelope"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("BodyEnvelopeState")).bRunning);
+	TestFalse(TEXT("Success waits for body Start marker"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("BodyEnvelopeState")).bRunning);
 	TestFalse(TEXT("Success does not auto-start weapon"), Field<FCombatPresentationEnvelopeState>(feedback, TEXT("WeaponEnvelopeState")).bRunning);
 	const uint64 perfectGeneration = f.References.ReactionComponent->GetActiveReactionGeneration();
 	feedback->StartWeaponGlow(false, perfectGeneration, 1.f, .08f, .18f, 8.f);
@@ -873,6 +874,132 @@ bool FCounterOpportunityOwnershipTest::RunTest(const FString& Parameters)
 		f.Defense->EndCounterRushTransition();
 		TestNull(TEXT("Nothing leaks after transaction"), f.Defense->GetCounterRushTarget());
 		TestFalse(TEXT("Expired owner cannot reopen"), f.Defense->SetCounterOpportunityWindow(true, generation, instance));
+	}
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBodyGlowOwnershipTest, "Portfolio.Combat.Presentation.BodyGlowOwnership",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FBodyGlowOwnershipTest::RunTest(const FString& Parameters)
+{
+	using namespace CombatDodgeTest;
+	for (int32 scenario = 0; scenario < 6; ++scenario)
+	{
+		FFixture f;
+		if (!TestNotNull(TEXT("Fixture montage"), f.Montage)) return false;
+		auto* feedback = f.References.ReactionFeedbackComponent;
+		feedback->InitializeReferences(f.References);
+		auto* glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/CharacterOverlay/Materials/Material_Instance/MI_Fresnel"));
+		if (!TestNotNull(TEXT("Body glow material"), glow)) return false;
+		feedback->PerfectBodyMaterial = feedback->CounterWeaponMaterial = glow;
+		Field<FDefenseDodgeTuning>(f.Defense, TEXT("DodgeTuning")).PerfectEnd = .18f;
+		FReactionData data;
+		data.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
+		data.ReactionDataKey.ReactionType = EReactionType::PerfectDodge;
+		data.ReactionExecutorKey = UCReaction_PerfectDodge::StaticClass();
+		data.Montage = DuplicateObject<UAnimMontage>(f.Montage, GetTransientPackage());
+		Field<TMap<FReactionDataKey, FReactionData>>(f.References.ReactionComponent, TEXT("ReactionDataMap")).Add(data.ReactionDataKey, data);
+		TestTrue(TEXT("Dodge begins"), f.Actions->ApplyActionDecision(f.MakeStart()));
+		f.Target->RequestCombatDamageTarget(10.f, f.Damage(), f.Controller, f.Attacker);
+		auto* reaction = f.References.ReactionComponent->GetActiveReactionExecutor();
+		if (!TestNotNull(TEXT("Perfect reaction owns body cue"), reaction)) return false;
+		const uint64 generation = f.References.ReactionComponent->GetActiveReactionGeneration();
+		const int32 instance = reaction->GetActiveMontageInstanceId();
+		TestFalse(TEXT("Success alone does not start body"), feedback->BodyEnvelopeState.bRunning);
+		auto* marker = NewObject<UCAnimNotify_BodyGlow>();
+		marker->FadeIn = 2.f;
+		marker->FadeOut = .25f;
+		marker->PeakWeight = .6f;
+		marker->SafetyTimeout = 8.f;
+		FAnimNotifyEventReference stale;
+		stale.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(instance + 1);
+		marker->Notify(f.Player->GetMesh(), data.Montage, stale);
+		TestFalse(TEXT("Stale montage Start rejected"), feedback->BodyEnvelopeState.bRunning);
+		FAnimNotifyEventReference current;
+		current.AddContextData<UE::Anim::FAnimNotifyMontageInstanceContext>(instance);
+		marker->Notify(f.Player->GetMesh(), data.Montage, current);
+		TestTrue(TEXT("Current Start sustains body"), feedback->BodyEnvelopeState.bRunning && feedback->BodyEnvelopeState.bSustain);
+		TestEqual(TEXT("Marker peak applied"), feedback->BodyPeakWeight, .6f);
+		const double deadline = feedback->BodySafetyDeadline;
+		const double started = feedback->BodyEnvelopeState.StartedAt;
+		marker->Notify(f.Player->GetMesh(), data.Montage, current);
+		TestEqual(TEXT("Duplicate Start preserves watchdog"), feedback->BodySafetyDeadline, deadline);
+		TestEqual(TEXT("Duplicate Start preserves fade"), feedback->BodyEnvelopeState.StartedAt, started);
+		feedback->EndBodyGlow(generation + 1, instance, 0.f);
+		feedback->EndBodyGlow(generation, instance + 1, 0.f);
+		TestFalse(TEXT("Stale End cannot release current body"), feedback->BodyEnvelopeState.bReleased);
+		if (scenario == 0)
+		{
+			feedback->BodyEnvelopeState.StartedAt = FPlatformTime::Seconds() - 1.;
+			marker->bStart = false;
+			marker->Notify(f.Player->GetMesh(), data.Montage, current);
+			TestTrue(TEXT("Point End releases partial fade"), feedback->BodyEnvelopeState.bReleased);
+			TestTrue(TEXT("Release begins at current weight, not full peak"), FMath::IsNearlyEqual(feedback->BodyEnvelopeState.ReleasedWeight, .5f, .02f));
+			TestEqual(TEXT("End clears safety deadline"), feedback->BodySafetyDeadline, 0.);
+			marker->bStart = true;
+			marker->Notify(f.Player->GetMesh(), data.Montage, current);
+			TestTrue(TEXT("Duplicate Start cannot undo release"), feedback->BodyEnvelopeState.bReleased);
+			feedback->BodyEnvelopeState.ReleasedAt = FPlatformTime::Seconds() - 1.;
+			feedback->TickComponent(0.f, LEVELTICK_All, nullptr);
+			TestNull(TEXT("Fade restores original empty overlay"), f.Player->GetMesh()->GetOverlayMaterial());
+			marker->Notify(f.Player->GetMesh(), data.Montage, current);
+			TestFalse(TEXT("Same execution cannot restart completed cue"), feedback->BodyEnvelopeState.bRunning);
+		}
+		else if (scenario == 1)
+		{
+			feedback->BodyEnvelopeState.Profile.FadeOut = 0.f;
+			feedback->BodySafetyDeadline = FPlatformTime::Seconds() - 1.;
+			feedback->TickComponent(0.f, LEVELTICK_All, nullptr);
+			TestFalse(TEXT("Missing End expires and restores"), feedback->BodyEnvelopeState.bRunning);
+			marker->Notify(f.Player->GetMesh(), data.Montage, current);
+			TestFalse(TEXT("Timeout cannot be rearmed by duplicate marker"), feedback->BodyEnvelopeState.bRunning);
+		}
+		else if (scenario == 2)
+		{
+			f.References.ReactionComponent->CancelActiveReactionForSystem();
+			TestTrue(TEXT("Reaction cancellation releases body"), feedback->BodyEnvelopeState.bReleased);
+			TestTrue(TEXT("Successor dodge begins"), f.Actions->ApplyActionDecision(f.MakeStart()));
+			f.Target->RequestCombatDamageTarget(10.f, f.Damage(), f.Controller, f.Attacker);
+			auto* successor = f.References.ReactionComponent->GetActiveReactionExecutor();
+			if (!TestNotNull(TEXT("Successor perfect reaction"), successor)) return false;
+			const uint64 nextGeneration = f.References.ReactionComponent->GetActiveReactionGeneration();
+			const int32 nextInstance = successor->GetActiveMontageInstanceId();
+			feedback->StartBodyGlow(nextGeneration, nextInstance, 1.f, .08f, .22f, 8.f);
+			TestTrue(TEXT("New execution can start after old owner ended"), feedback->BodyEnvelopeState.bRunning);
+			feedback->EndBodyGlow(generation, instance, 0.f);
+			feedback->EndBodyGlowOwner(generation);
+			TestFalse(TEXT("Old owner End cannot release successor"), feedback->BodyEnvelopeState.bReleased);
+			TestEqual(TEXT("Successor retains ownership"), feedback->BodyOwnerGeneration, nextGeneration);
+		}
+		else if (scenario == 3)
+		{
+			UClass* weaponClass = LoadClass<ACWeaponActor>(nullptr, TEXT("/Game/06_Weapon/BP_CWeaponActor_Sword.BP_CWeaponActor_Sword_C"));
+			if (!TestNotNull(TEXT("Weapon class for transfer"), weaponClass)) return false;
+			Field<ACWeaponActor*>(f.References.WeaponComponent, TEXT("WeaponActor")) = f.World->SpawnActor<ACWeaponActor>(weaponClass);
+			feedback->StartWeaponGlow(false, generation, 1.f, .08f, .18f, 8.f);
+			feedback->BeginWeaponGlowTransfer(f.LastPacket.ResultSerial);
+			reaction->Complete();
+			TestTrue(TEXT("Counter handoff releases body owner"), feedback->BodyEnvelopeState.bReleased);
+			TestFalse(TEXT("Counter handoff preserves weapon independently"), feedback->WeaponEnvelopeState.bReleased);
+			feedback->FinishWeaponGlowTransfer();
+		}
+		else if (scenario == 4)
+		{
+			f.References.HealthComponent->TryKill();
+			feedback->TickComponent(0.f, LEVELTICK_All, nullptr);
+			TestFalse(TEXT("Death clears body immediately"), feedback->BodyEnvelopeState.bRunning);
+			TestNull(TEXT("Death restores mesh overlay"), f.Player->GetMesh()->GetOverlayMaterial());
+		}
+		else
+		{
+			// The isolated fixture does not begin the world; establish the native component lifecycle first.
+			if (!feedback->IsRegistered()) feedback->RegisterComponent();
+			feedback->RegisterAllComponentTickFunctions(true);
+			feedback->BeginPlay();
+			feedback->EndPlay(EEndPlayReason::Destroyed);
+			TestFalse(TEXT("EndPlay clears body"), feedback->BodyEnvelopeState.bRunning);
+			TestEqual(TEXT("EndPlay clears body watchdog"), feedback->BodySafetyDeadline, 0.);
+			TestNull(TEXT("EndPlay restores mesh overlay"), f.Player->GetMesh()->GetOverlayMaterial());
+		}
 	}
 	return true;
 }

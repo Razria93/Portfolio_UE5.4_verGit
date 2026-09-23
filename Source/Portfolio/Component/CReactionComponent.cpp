@@ -950,6 +950,8 @@ void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionConte
 void UCReactionComponent::ClearActiveReactionContext(const TCHAR* InReason)
 {
 	if (IsValid(ReactionFeedbackComp_Injected))
+		ReactionFeedbackComp_Injected->EndBodyGlowOwner(ActiveReactionGeneration);
+	if (IsValid(ReactionFeedbackComp_Injected))
 		ReactionFeedbackComp_Injected->EndWeaponGlowOwner(false, ActiveReactionGeneration);
 	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndPerfectDodgeExecution(ActiveReactionGeneration);
 	StopReactionKnockback(ActiveReactionGeneration, InReason);
