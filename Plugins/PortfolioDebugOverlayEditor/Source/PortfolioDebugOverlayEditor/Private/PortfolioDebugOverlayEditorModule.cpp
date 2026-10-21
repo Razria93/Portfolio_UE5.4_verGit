@@ -1,6 +1,7 @@
 #include "PortfolioDebugOverlayEditorModule.h"
 
 #include "SPortfolioDebugOverlayEditorWidget.h"
+#include "FPortfolioDebugOverlayEditorPIEControl.h"
 
 #include "Framework/Commands/UIAction.h"
 #include "Framework/Docking/TabManager.h"
@@ -22,6 +23,7 @@ namespace
 
 void FPortfolioDebugOverlayEditorModule::StartupModule()
 {
+	PortfolioDebugOverlayEditorPIEControl::Initialize();
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
 		DebugOverlayTabName,
 		FOnSpawnTab::CreateRaw(this, &FPortfolioDebugOverlayEditorModule::SpawnDebugOverlayTab))
@@ -34,6 +36,7 @@ void FPortfolioDebugOverlayEditorModule::StartupModule()
 
 void FPortfolioDebugOverlayEditorModule::ShutdownModule()
 {
+	PortfolioDebugOverlayEditorPIEControl::Shutdown();
 	UToolMenus::UnRegisterStartupCallback(this);
 	UToolMenus::UnregisterOwner(this);
 

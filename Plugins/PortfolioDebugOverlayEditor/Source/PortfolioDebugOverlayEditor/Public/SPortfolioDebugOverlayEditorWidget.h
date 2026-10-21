@@ -17,6 +17,9 @@ public:
 private:
 	TMap<FString, TArray<TSharedPtr<FString>>> EnumOptionsByCVar;
 	FText LastFocusCommandStatus;
+	FText LastEventLogCommandStatus;
+	TSharedRef<SWidget> MakeEventLogActionsSection();
+	TSharedRef<SWidget> MakePIEPreparationSection();
 
 	void InitializeEnumOptions();
 	TSharedRef<SWidget> MakeRegisteredSettingsSections();

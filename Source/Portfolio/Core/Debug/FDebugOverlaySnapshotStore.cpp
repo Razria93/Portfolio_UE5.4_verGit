@@ -6,12 +6,22 @@
 #include "Type/CCombatSignalTargetTypes.h"
 
 #include "AIController.h"
+#include "Engine/World.h"
+#include "HAL/IConsoleManager.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 
 #if !UE_BUILD_SHIPPING
 namespace
 {
+	FAutoConsoleCommandWithWorld GClearDebugOverlayEventLogCommand(
+		TEXT("Portfolio.DebugOverlay.ClearEventLog"),
+		TEXT("Clear world and actor event logs in the current world. Keep capture settings, focus and diagnostic snapshots."),
+		FConsoleCommandWithWorldDelegate::CreateLambda([](UWorld* InWorld)
+		{
+			FDebugOverlaySnapshotStore::ClearEventLog(InWorld);
+		}));
+
 	void PruneInvalidAIActorSummaries(DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore& InStore)
 	{
 		for (auto it = InStore.LastAIByPawn.CreateIterator(); it; ++it)
@@ -449,6 +459,21 @@ TArray<FDebugOverlayEventEntry> FDebugOverlaySnapshotStore::GetRecentEventsForAc
 	return EventRingAccess::GetRecentEventsForActorCopyFromStore(*store, InMaxEvents, DebugOverlaySnapshotStoreInternals::EventStoreCapacity, InFilter, InActor, true);
 #else
 	return TArray<FDebugOverlayEventEntry>();
+#endif
+}
+
+void FDebugOverlaySnapshotStore::ClearEventLog(const UObject* InWorldContextObject)
+{
+#if !UE_BUILD_SHIPPING
+	DebugOverlaySnapshotStoreInternals::FDebugOverlayWorldStore* store = StoreLifecycle::FindStore(InWorldContextObject);
+	if (!store) return;
+
+	store->EventRing.Reset();
+	store->EventHistoryByActor.Reset();
+	store->Snapshot.RecentEvents.Reset();
+	store->NextEventIndex = 0;
+	store->EventCount = 0;
+	store->EventWriteSerial = 0;
 #endif
 }
 

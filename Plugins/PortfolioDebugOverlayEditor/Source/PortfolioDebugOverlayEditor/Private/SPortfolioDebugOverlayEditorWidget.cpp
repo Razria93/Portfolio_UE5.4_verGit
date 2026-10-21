@@ -2,6 +2,7 @@
 
 #include "FPortfolioDebugOverlayEditorCVarAccess.h"
 #include "FPortfolioDebugOverlayEditorFocusCommandBridge.h"
+#include "FPortfolioDebugOverlayEditorPIEControl.h"
 
 #include "Core/Debug/FDebugOverlaySettingsRegistry.h"
 
@@ -22,11 +23,13 @@
 
 namespace CVarAccess = PortfolioDebugOverlayEditorCVarAccess;
 namespace FocusCommandBridge = PortfolioDebugOverlayEditorFocusCommandBridge;
+namespace PIEControl = PortfolioDebugOverlayEditorPIEControl;
 
 void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 {
 	InitializeEnumOptions();
 	LastFocusCommandStatus = LOCTEXT("FocusCommandNotRun", "Last Command: None");
+	LastEventLogCommandStatus = LOCTEXT("EventLogCommandNotRun", "Last Command: None");
 
 	ChildSlot
 	[
@@ -47,13 +50,23 @@ void SPortfolioDebugOverlayEditorWidget::Construct(const FArguments& InArgs)
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				[
-					MakeRegisteredSettingsSections()
+					MakePIEPreparationSection()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					MakeEventLogActionsSection()
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					MakeFocusActionsSection()
 				]
 				+ SVerticalBox::Slot()
 				.AutoHeight()
 				.Padding(0.f, 0.f, 0.f, 12.f)
 				[
-					MakeFocusActionsSection()
+					MakeRegisteredSettingsSections()
 				]
 			]
 		]
@@ -108,6 +121,16 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeRegisteredSettingsSe
 		.Padding(definition.ParentGateCVarName.IsEmpty() ? 0.f : 16.f, 0.f, 0.f, 0.f)
 		[
 			MakeRegisteredSettingRow(definition)
+		];
+	}
+
+	if (InCategory.Id == FName(TEXT("Patrol")))
+	{
+		settingsBox->AddSlot().AutoHeight().HAlign(HAlign_Left).Padding(0.f, 6.f)
+		[
+			SNew(SButton).Text(LOCTEXT("ClearPatrolTrail", "Clear Patrol Trail"))
+			.ToolTipText(LOCTEXT("ClearPatrolTrailHelp", "Clear only the current PIE patrol movement history. Keep Focus and Event Log."))
+			.OnClicked_Lambda([this]() { LastEventLogCommandStatus = FocusCommandBridge::ExecuteClearPatrolTrailCommand(); return FReply::Handled(); })
 		];
 	}
 
@@ -394,6 +417,69 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeSectionCard(const FT
 			]
 			+ SVerticalBox::Slot().AutoHeight()[InContent]
 		];
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakePIEPreparationSection()
+{
+	return MakeTopLevelSection(
+		LOCTEXT("PIEPreparationTitle", "Capture Preparation"),
+		LOCTEXT("PIEPreparationDescription", "Start PIE paused, adjust settings and Focus, then resume. Initialization still runs. In-process PIE/SIE only."),
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 8.f)
+		[
+			SNew(SCheckBox)
+			.IsChecked_Lambda([]() { return PIEControl::GetStartPaused() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked; })
+			.OnCheckStateChanged_Lambda([](ECheckBoxState State) { PIEControl::SetStartPaused(State == ECheckBoxState::Checked); })
+			.ToolTipText(LOCTEXT("StartPausedTooltip", "Applies to the next Play session. Preserved until the editor closes; not saved to config."))
+			[ SNew(STextBlock).Text(LOCTEXT("StartPausedLabel", "Start PIE Paused")) ]
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 12.f)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth()
+			[
+				SNew(SButton).Text(LOCTEXT("PausePIEButton", "Pause PIE"))
+				.IsEnabled_Lambda([]() { return PIEControl::HasSession() && !PIEControl::IsPaused(); })
+				.OnClicked_Lambda([]() { PIEControl::Pause(); return FReply::Handled(); })
+			]
+			+ SHorizontalBox::Slot().AutoWidth().Padding(8.f, 0.f)
+			[
+				SNew(SButton).Text(LOCTEXT("ResumePIEButton", "Resume PIE"))
+				.IsEnabled_Lambda([]() { return PIEControl::IsPaused(); })
+				.OnClicked_Lambda([]() { PIEControl::Resume(); return FReply::Handled(); })
+			]
+			+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center).Padding(8.f, 0.f)
+			[
+				SNew(STextBlock).Text_Lambda([]()
+				{
+					if (!PIEControl::HasSession()) return LOCTEXT("PIEStopped", "PIE: Not running");
+					return PIEControl::IsPaused() ? LOCTEXT("PIEPaused", "PIE: Paused") : LOCTEXT("PIERunning", "PIE: Running");
+				})
+			]
+		]);
+}
+
+TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeEventLogActionsSection()
+{
+	return MakeTopLevelSection(
+		LOCTEXT("EventLogActionsTitle", "Event Log Actions"),
+		LOCTEXT("EventLogActionsDescription", "Clear recorded events before a take. Capture settings and Focus are preserved."),
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Left)
+		[
+			SNew(SButton)
+			.Text(LOCTEXT("ClearEventLogButton", "Clear Event Log"))
+			.ToolTipText(LOCTEXT("ClearEventLogTooltip", "Clears World and Focused Enemy event history in PIE. New events continue to be captured when Capture Enabled is on. Does not clear Output Log."))
+			.OnClicked_Lambda([this]()
+			{
+				LastEventLogCommandStatus = FocusCommandBridge::ExecuteClearEventLogCommand();
+				return FReply::Handled();
+			})
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 6.f, 0.f, 12.f)
+		[
+			SNew(STextBlock).Text_Lambda([this]() { return LastEventLogCommandStatus; })
+		]);
 }
 
 TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeFocusActionsSection()
