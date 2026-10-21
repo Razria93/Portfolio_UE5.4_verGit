@@ -59,7 +59,9 @@ const TArray<FDebugOverlaySettingsCategory>& FDebugOverlaySettingsRegistry::GetC
 		{ TEXT("Facing"), TEXT("Combat Target Facing Display Options"), TEXT("Facing runtime diagnostics, transition capture, and audit logging.") },
 		{ TEXT("ExecutionSession"), TEXT("Execution Session Display Options"), TEXT("Execution Session diagnostics and world visualization.") },
 		{ TEXT("CombatParticipation"), TEXT("Combat Participation Display Options"), TEXT("Combat participation diagnostics and world visualization.") },
+		{ TEXT("Patrol"), TEXT("Patrol Display Options"), TEXT("Configured points and actual movement of the focused Enemy. Trail capture is independent of HUD visibility.") },
 		{ TEXT("Focus"), TEXT("Focus Settings"), TEXT("Settings used by Debug Overlay focus selection.") },
+		{ TEXT("Investigate"), TEXT("Search Display Options"), TEXT("Last seen anchor, observed search goals and actual search trail. Requires visible custom HUD.") },
 		{ TEXT("WeaponPresentation"), TEXT("Weapon Presentation"), TEXT("Socket transition, pivot, restoration and actual Trail anchors.") },
 		{ TEXT("Feedback"), TEXT("Feedback Evidence"), TEXT("Recent requests, matching/rejection and VFX component creation. Trail state is read live.") },
 		{ TEXT("Diagnostics"), TEXT("Diagnostic Logging"), TEXT("Output Log diagnostics independent from HUD visibility and event capture.") },
@@ -157,7 +159,20 @@ const TArray<FDebugOverlaySettingDefinition>& FDebugOverlaySettingsRegistry::Get
 		result.Add(MakeBool(TEXT("Diagnostics"), TEXT("Portfolio.Debug.AttackFacingAudit"), TEXT("Attack Facing Audit Log"), TEXT("Write attack start facing outcomes to the Output Log."), TEXT("0")));
 		result.Add(MakeBool(TEXT("Diagnostics"), TEXT("Portfolio.Debug.ExecutionSessionAudit"), TEXT("Execution Session Audit Log"), TEXT("Write Execution Session input, start validation, and lifecycle diagnostics to the Output Log."), TEXT("0")));
 
+		result.Add(MakeBool(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.Enabled"), TEXT("Patrol Enabled"), TEXT("Enable focused Enemy patrol diagnostics. Disabling clears history."), TEXT("0")));
+		result.Add(MakeBool(TEXT("Investigate"), TEXT("Portfolio.DebugOverlay.Investigate.Enabled"), TEXT("Search Enabled"), TEXT("Orange last seen anchor; purple observed search goals and actual movement. Does not draw all EQS candidates."), TEXT("0")));
+		result.Add(MakeFloat(TEXT("Investigate"), TEXT("Portfolio.DebugOverlay.Investigate.TextScale"), TEXT("Search Label Scale"), TEXT("World-space search label scale."), TEXT("1.3"), 0.5f, 3.f));
+		result.Add(MakeBool(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.DrawPoints"), TEXT("Patrol Points"), TEXT("Draw P0, P1 and other configured indices."), TEXT("1"), TEXT("Portfolio.DebugOverlay.Patrol.Enabled")));
+		result.Add(MakeBool(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.DrawLinks"), TEXT("Configured Order"), TEXT("Dashed point order; not a navigation route. No links for Random."), TEXT("0"), TEXT("Portfolio.DebugOverlay.Patrol.Enabled")));
+		result.Add(MakeBool(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.DrawTarget"), TEXT("Current Patrol Target"), TEXT("Highlight the active MoveTo destination and show patrol status."), TEXT("1"), TEXT("Portfolio.DebugOverlay.Patrol.Enabled")));
+		result.Add(MakeBool(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.RecordTrail"), TEXT("Record Patrol Trail"), TEXT("Sample actual PatrolLocation MoveTo movement, independent of event capture."), TEXT("0"), TEXT("Portfolio.DebugOverlay.Patrol.Enabled")));
+		result.Add(MakeBool(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.DrawTrail"), TEXT("Show Patrol Trail"), TEXT("Show recorded movement without changing collection."), TEXT("1"), TEXT("Portfolio.DebugOverlay.Patrol.Enabled")));
+		result.Add(MakeFloat(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.SampleInterval"), TEXT("Sample Interval (s)"), TEXT("Bounded patrol trail history."), TEXT("0.1"), 0.02f, 1.f));
+		result.Add(MakeFloat(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.MinDistance"), TEXT("Minimum Sample Distance (cm)"), TEXT("Bounded patrol trail history."), TEXT("10"), 1.f, 100.f));
+		result.Add(MakeFloat(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.RetainSeconds"), TEXT("Trail Retention (s)"), TEXT("Bounded patrol trail history."), TEXT("60"), 1.f, 300.f));
+		result.Add(MakeInt(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.MaxPoints"), TEXT("Maximum Trail Points"), TEXT("Bounded patrol trail history."), TEXT("600"), 2.f, 3000.f));
 
+		result.Add(MakeBool(TEXT("Patrol"), TEXT("Portfolio.DebugOverlay.Patrol.DrawAcceptance"), TEXT("Acceptance / Move End"), TEXT("Show base acceptance radius (not capsule-inclusive), radius flags and actual move end distance/result."), TEXT("0"), TEXT("Portfolio.DebugOverlay.Patrol.Enabled")));
 
 		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.Enabled"), TEXT("Weapon Diagnostics"), TEXT("Capture weapon transitions and last results."), TEXT("0")));
 		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.Player.WeaponPresentation.Enabled"), TEXT("Player Weapon"), TEXT("Requires Player section enabled."), TEXT("0")));
