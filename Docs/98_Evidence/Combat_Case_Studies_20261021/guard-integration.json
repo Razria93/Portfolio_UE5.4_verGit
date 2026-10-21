@@ -1,0 +1,176 @@
+[
+  {
+    "take": "run08",
+    "log": {
+      "source": "stellar_guard_integration_20261021/evidence/c41066b2ebeab7e5_take_run_08.log",
+      "sha256": "c41066b2ebeab7e5faacf11425a93b58ce50cf5825ce781d8dc353b86b7d3997",
+      "bytes": 325035
+    },
+    "checks": {
+      "decision_during_guardout": true,
+      "guardout_had_cleanup_request": true,
+      "cleanup_after_interruption_accepted": true,
+      "real_hit_montage": true,
+      "hit_recovery": true,
+      "next_guard_started": true,
+      "next_guard_hold": true,
+      "final_recovery": true,
+      "take_complete": true
+    },
+    "pass": true,
+    "selected_events": [
+      {
+        "event": "1 INPUT initial Guard EActionRequestResultType::Started",
+        "world": 16.080863,
+        "video_seconds": 5.4801506,
+        "frame": "frame_000317.jpg",
+        "frame_world": 16.080863494,
+        "log_line": 1696
+      },
+      {
+        "event": "2 CHECK initial GuardHold established",
+        "world": 18.084981,
+        "video_seconds": 7.486112901,
+        "frame": "frame_000433.jpg",
+        "frame_world": 18.084980894,
+        "log_line": 1705
+      },
+      {
+        "event": "4 INPUT release Guard EActionRequestResultType::Started",
+        "world": 22.192579,
+        "video_seconds": 11.594745901,
+        "frame": "frame_000644.jpg",
+        "frame_world": 22.192578793,
+        "log_line": 1740
+      },
+      {
+        "event": "5 CHECK real Hit HPDelta=300.0 SawGuardOut=1",
+        "world": 22.268409,
+        "video_seconds": 11.673879697999999,
+        "frame": "frame_000648.jpg",
+        "frame_world": 22.268408593,
+        "log_line": 1760
+      },
+      {
+        "event": "6 CHECK recovery Restored=1 InitialSpeed=600.0 CurrentSpeed=600.0",
+        "world": 23.484166,
+        "video_seconds": 12.8867643,
+        "frame": "frame_000711.jpg",
+        "frame_world": 23.484166194,
+        "log_line": 1769
+      },
+      {
+        "event": "6 INPUT next Guard Result=EActionRequestResultType::Started ActiveGuardIn=1",
+        "world": 23.484166,
+        "video_seconds": 12.8867643,
+        "frame": "frame_000711.jpg",
+        "frame_world": 23.484166194,
+        "log_line": 1776
+      },
+      {
+        "event": "7 CHECK next GuardHold=1",
+        "world": 24.998946,
+        "video_seconds": 14.401190199,
+        "frame": "frame_000791.jpg",
+        "frame_world": 24.998946194,
+        "log_line": 1789
+      },
+      {
+        "event": "8 CHECK final recovery=1",
+        "world": 27.006978,
+        "video_seconds": 16.371728901,
+        "frame": "frame_000896.jpg",
+        "frame_world": 26.970524993,
+        "log_line": 1803
+      }
+    ],
+    "audio_listened": false
+  },
+  {
+    "take": "sprint-nohold10",
+    "log": {
+      "source": "stellar_guard_integration_20261021/evidence/3c26a7d3268b38ce_take_sprint_nohold_10.log",
+      "sha256": "3c26a7d3268b38ce21b4d6098af6c5dd5ebbeb19e8455b77860ca0ce9760d7c5",
+      "bytes": 326308
+    },
+    "checks": {
+      "decision_during_guardout": true,
+      "guardout_had_cleanup_request": true,
+      "cleanup_after_interruption_accepted": true,
+      "real_hit_montage": true,
+      "hit_recovery": true,
+      "next_guard_started": true,
+      "next_guard_hold": true,
+      "final_recovery": true,
+      "take_complete": true
+    },
+    "pass": true,
+    "selected_events": [
+      {
+        "event": "1 INPUT initial Guard EActionRequestResultType::Started",
+        "world": 15.854065,
+        "video_seconds": 5.4580671,
+        "frame": "frame_000327.jpg",
+        "frame_world": 15.854064506,
+        "log_line": 1700
+      },
+      {
+        "event": "2 CHECK initial GuardHold established",
+        "world": 17.854078,
+        "video_seconds": 7.464929901,
+        "frame": "frame_000447.jpg",
+        "frame_world": 17.854077805,
+        "log_line": 1709
+      },
+      {
+        "event": "4 INPUT release Guard EActionRequestResultType::Started",
+        "world": 21.968045,
+        "video_seconds": 11.583082702,
+        "frame": "frame_000687.jpg",
+        "frame_world": 21.968044903,
+        "log_line": 1745
+      },
+      {
+        "event": "5 CHECK real Hit HPDelta=300.0 SawGuardOut=1",
+        "world": 22.03649,
+        "video_seconds": 11.655871201,
+        "frame": "frame_000691.jpg",
+        "frame_world": 22.036490303,
+        "log_line": 1765
+      },
+      {
+        "event": "6 CHECK recovery Restored=1 InitialSpeed=800.0 ExpectedSpeed=600.0 CurrentSpeed=600.0",
+        "world": 23.25626,
+        "video_seconds": 12.871425099000001,
+        "frame": "frame_000761.jpg",
+        "frame_world": 23.256259903,
+        "log_line": 1774
+      },
+      {
+        "event": "6 INPUT next Guard Result=EActionRequestResultType::Started ActiveGuardIn=1",
+        "world": 23.25626,
+        "video_seconds": 12.871425099000001,
+        "frame": "frame_000761.jpg",
+        "frame_world": 23.256259903,
+        "log_line": 1781
+      },
+      {
+        "event": "7 CHECK next GuardHold=1",
+        "world": 24.771865,
+        "video_seconds": 14.3852215,
+        "frame": "frame_000851.jpg",
+        "frame_world": 24.771864504,
+        "log_line": 1794
+      },
+      {
+        "event": "8 CHECK final recovery=1",
+        "world": 26.777482,
+        "video_seconds": 16.358830999,
+        "frame": "frame_000968.jpg",
+        "frame_world": 26.744091403,
+        "log_line": 1808
+      }
+    ],
+    "audio_listened": false
+  }
+]

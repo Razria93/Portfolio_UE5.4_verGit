@@ -8,6 +8,10 @@
 
 | 알고 싶은 내용 | 먼저 읽기 | 다음 단계 |
 | --- | --- | --- |
+| 가드 종료 중 피격 누락 | [문제·해결·코드](03_Issue_Analysis_Report/I09_Guard_Cleanup_Case_Study.md) | [검증 결과와 적용 범위](98_Evidence/Combat_Case_Studies_20261021/README.md) |
+| 피격 근거 TTL 시작 시점 | [문제·해결·코드](03_Issue_Analysis_Report/I10_HitReactive_TTL_Case_Study.md) | [검증 결과와 적용 범위](98_Evidence/Combat_Case_Studies_20261021/README.md) |
+| AI Perception 대상 필터링 | [문제·해결·코드](03_Issue_Analysis_Report/I11_AI_Perception_Case_Study.md) | [검증 결과와 적용 범위](98_Evidence/Combat_Case_Studies_20261021/README.md) |
+| 최신 영상과 외부 공개 주소 | [14개 영상 목록](07_Portfolio_Documents/Portfolio_Production/Video_Catalog.md) | 파일 버전·번호 변경·공개 URL 상태 |
 | 공격과 피격의 실행 전환 | [공통 실행 정책 — S37](05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md) | 문서의 코드 링크 → 증거 상태와 표현 제한 |
 | 공통 타깃과 Enemy 참여 | [타깃 구조 — S33](05_System_Architecture/S33_UE5_Portfolio_System_Architecture.md) | [참여 정책 — S34](05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md) → 구현·수동 검증 항목 |
 | 두 Actor의 처형 협업 | [처형 세션 — S36](05_System_Architecture/S36_UE5_Portfolio_Execution_Collaboration_Architecture.md) | 시작·취소·결과 확정 → 관련 코드와 회귀 항목 |
@@ -28,8 +32,9 @@
 
 - 구현 존재, 자동 검사, 사용자 PIE 확인, 제출용 화면·영상 확보는 서로 다른 상태입니다. 각 문서의 기준일·커밋·한계를 함께 확인합니다.
 - 웹 포트폴리오는 제출본이고, 후속 구현은 시스템 문서에 추가될 수 있습니다. 현재 구조는 시스템 인덱스의 현행 문서에서 확인합니다.
-- S37은 제출용 전환 캡처 대기, S36은 결과별 회귀·캡처 보완 상태를 명시합니다. 문서 링크가 있다는 이유로 모든 동작이 검증 완료된 것은 아닙니다.
-- [영상 Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119)는 업로드 예정 안내입니다. 현재 화면 자료는 웹 포트폴리오에서 확인할 수 있습니다.
+- S37의 작성 당시 전환 캡처 대기 기록과 후속 가드 통합 근거를 구분합니다. S36은 결과별 회귀·캡처 보완 상태를 명시합니다. 문서 링크가 있다는 이유로 모든 동작이 검증 완료된 것은 아닙니다.
+- 영상은 [최신 목록](07_Portfolio_Documents/Portfolio_Production/Video_Catalog.md)을 기준으로 읽습니다. 기존 13개 URL은 접근 가능하지만 최신 제작본과의 내용 일치는 별도 확인 대상입니다. TTL 공개본 37초와 최신 재촬영본 38.8초를 구분합니다.
+- PPT 제작 과정의 22페이지 로컬 최신본과 웹의 23페이지 HTML은 다른 산출물입니다. PPT를 갱신했다고 웹·YouTube도 갱신된 것은 아닙니다.
 
 <details>
 <summary>개발 기록·문서 유지 관리</summary>

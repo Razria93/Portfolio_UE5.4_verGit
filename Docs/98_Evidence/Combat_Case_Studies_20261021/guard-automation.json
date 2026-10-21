@@ -1,0 +1,170 @@
+{
+  "final": {
+    "original": {
+      "source": "stellar_guard_validation_20261021/evidence/1d13337256d70366_index.json",
+      "sha256": "1d13337256d703660b0c4c30fed1e4756c53b409359384e1d303e61c5036a0ce",
+      "bytes": 11363
+    },
+    "reportCreatedOn": "2026.10.21-12.14.39",
+    "succeeded": 3,
+    "succeededWithWarnings": 0,
+    "failed": 0,
+    "notRun": 0,
+    "tests": [
+      {
+        "name": "PortfolioVerification.Guard.HitSnapshotAfterInterruption",
+        "state": "Success",
+        "events": [
+          {
+            "type": "Info",
+            "message": "[GuardHitSnapshot] SnapshotRuntime=1 AfterInterruptRuntime=0 Handlings=1 Applied=1 FinalSpeed=620 MontagePlayed=0"
+          }
+        ]
+      },
+      {
+        "name": "PortfolioVerification.Guard.OverlayScopeAndRestore",
+        "state": "Success",
+        "events": [
+          {
+            "type": "Info",
+            "message": "[GuardOverlayScope] Phase=1 Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardOverlayScope] Phase=2 Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          }
+        ]
+      },
+      {
+        "name": "PortfolioVerification.Guard.RepeatedCleanupAndMovement",
+        "state": "Success",
+        "events": [
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=1 Phase=0 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=2 Phase=0 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=3 Phase=0 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=4 Phase=1 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=5 Phase=1 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=6 Phase=1 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=7 Phase=2 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=8 Phase=2 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=9 Phase=2 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=10 Phase=3 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=11 Phase=3 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=12 Phase=3 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=13 Phase=0 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=14 Phase=0 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=15 Phase=0 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=16 Phase=1 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=17 Phase=1 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=18 Phase=1 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=19 Phase=2 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=20 Phase=2 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=21 Phase=2 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=22 Phase=3 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=23 Phase=3 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          },
+          {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=24 Phase=3 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620"
+          }
+        ]
+      }
+    ]
+  },
+  "negative_control": {
+    "original": {
+      "source": "stellar_guard_validation_20261021/evidence/0df00d1e212e1f16_index.json",
+      "sha256": "0df00d1e212e1f16ff76707a3d3521c7d378a1b07d26fa1244f42748e677c3d9",
+      "bytes": 1957
+    },
+    "reportCreatedOn": "2026.10.21-12.13.26",
+    "succeeded": 0,
+    "succeededWithWarnings": 0,
+    "failed": 1,
+    "notRun": 0,
+    "tests": [
+      {
+        "name": "PortfolioVerification.Guard.HitSnapshotAfterInterruption",
+        "state": "Fail",
+        "events": [
+          {
+            "type": "Error",
+            "message": "Expected 'Snapshot cleanup remains accepted after interruption' to be true."
+          },
+          {
+            "type": "Info",
+            "message": "[GuardHitSnapshot] SnapshotRuntime=1 AfterInterruptRuntime=0 Handlings=1 Applied=0 FinalSpeed=620 MontagePlayed=0"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,551 @@
+{
+  "collected_on": "2026-10-21",
+  "description": "Hashes of source materials inspected for this documentation update. Raw logs/media remain outside this repository; published extracts identify their sources.",
+  "sources": [
+    {
+      "source": "stellar_guard_validation_20261021/evidence/1d13337256d70366_index.json",
+      "sha256": "1d13337256d703660b0c4c30fed1e4756c53b409359384e1d303e61c5036a0ce",
+      "bytes": 11363
+    },
+    {
+      "source": "stellar_guard_validation_20261021/evidence/0df00d1e212e1f16_index.json",
+      "sha256": "0df00d1e212e1f16ff76707a3d3521c7d378a1b07d26fa1244f42748e677c3d9",
+      "bytes": 1957
+    },
+    {
+      "source": "stellar_ttl_boundary_validation_20261021/evidence/8c5d548ece4321c7_index.json",
+      "sha256": "8c5d548ece4321c7e5d0735b9cd593256676e4978f0f9adbff3c166c7b899dad",
+      "bytes": 17796
+    },
+    {
+      "source": "stellar_ttl_boundary_validation_20261021/evidence/7f5e276ead6bf110_index.json",
+      "sha256": "7f5e276ead6bf110bfe00582827a7125c6289a75700dd03676af0e6dba23d491",
+      "bytes": 7150
+    },
+    {
+      "source": "stellar_guard_validation_20261021/evidence/ad8db4b984201d4b____24_______.csv",
+      "sha256": "ad8db4b984201d4bbe0e48afd85a9f8be2e725ff3441034c62db96d6875ea4e6",
+      "bytes": 596
+    },
+    {
+      "source": "stellar_guard_validation_20261021/evidence/0c69c94bf57a8f53_GuardBoundaryTests.cpp",
+      "sha256": "0c69c94bf57a8f53acade460e8b00ac065297dbbd4af9c6a07d8438049a5a561",
+      "bytes": 10776
+    },
+    {
+      "source": "stellar_guard_validation_20261021/evidence/20d6dba3c098b600_negative_control.patch",
+      "sha256": "20d6dba3c098b60051875ab5ebbb8abcb2f4949a09ff0372bce7610be80fe946",
+      "bytes": 372
+    },
+    {
+      "source": "stellar_ttl_boundary_validation_20261021/evidence/3605178079e65130_______.csv",
+      "sha256": "3605178079e65130e96b5ffd9045240ac2bc785206a3c230830e63bb0abd2a3a",
+      "bytes": 3346
+    },
+    {
+      "source": "stellar_ttl_boundary_validation_20261021/evidence/44e2eb07bdd69c9b_TTLBoundaryTests.cpp",
+      "sha256": "44e2eb07bdd69c9b045c3764ac480c2d0e6bc561deae24e82d6ce358bd1621fe",
+      "bytes": 15423
+    },
+    {
+      "source": "stellar_ttl_boundary_validation_20261021/evidence/534bf215206dc98f_synthetic_serial_guard_removal.diff",
+      "sha256": "534bf215206dc98f3dc8504f2130fc916e4af1fdf362458309ce80f7ff30648c",
+      "bytes": 548
+    },
+    {
+      "source": "stellar_guard_integration_20261021/evidence/fa5fab0d755cd99f_qa.json",
+      "sha256": "fa5fab0d755cd99f784f322c178a7c49490d5e0f0b74e16fe265b15f5837545f",
+      "bytes": 3165
+    },
+    {
+      "source": "stellar_guard_integration_20261021/evidence/c41066b2ebeab7e5_take_run_08.log",
+      "sha256": "c41066b2ebeab7e5faacf11425a93b58ce50cf5825ce781d8dc353b86b7d3997",
+      "bytes": 325035
+    },
+    {
+      "source": "stellar_guard_integration_20261021/evidence/0c52f04cf35d8a62_qa.json",
+      "sha256": "0c52f04cf35d8a621c795a52f9174be7de0c38d215e26688f7fd3ff79ad3117c",
+      "bytes": 3200
+    },
+    {
+      "source": "stellar_guard_integration_20261021/evidence/3c26a7d3268b38ce_take_sprint_nohold_10.log",
+      "sha256": "3c26a7d3268b38ce21b4d6098af6c5dd5ebbeb19e8455b77860ca0ce9760d7c5",
+      "bytes": 326308
+    },
+    {
+      "source": "stellar_guard_integration_20261021/evidence/a983a722329fd853_take_sprint_09.log",
+      "sha256": "a983a722329fd853f58c137b7441811c038bcbffb4366bffa4e4df23604932e0",
+      "bytes": 315228
+    },
+    {
+      "source": "stellar_ttl_original_environment_20261021/evidence/measurements.json",
+      "sha256": "a0aec244d850e6201afb1eb25c46a39887308781d5958e6db35310d9ba841768",
+      "bytes": 537196
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R01_measurement_20261002_100823_347/results.json",
+      "sha256": "4ffaa0a7daddd8ff5411e9e8e00ca8340c97bf4a24a5b6560098b6f05c1c05ee",
+      "bytes": 42664
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R01_measurement_20261002_100823_347/summary.json",
+      "sha256": "388cf7f8e09f00ec5408119f54a6c3cce5a6472001050c5a53f639d7a5ad1966",
+      "bytes": 1139
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R01_measurement_20261002_100823_347/conditions.json",
+      "sha256": "62f060b519e272c9156f7cf8f8c4952d01f4f8aea64935011ff2773499ac34c0",
+      "bytes": 1135
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R01_measurement_20261002_100823_347/capture.csv",
+      "sha256": "a9df1ca33f83f8f209fa5643d5a73fa5dce2ce522c3c690a3c8acffd09df67ee",
+      "bytes": 6412136
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R01_measurement_20261002_100823_347/runtime.log",
+      "sha256": "15afa3332571e98a689c55a18fad87dfbabf81603a5abeb284b134964c9eaead",
+      "bytes": 318538
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R02_measurement_20261002_100922_233/results.json",
+      "sha256": "72509d4c75f7113c043f246d9ef57ecbff831e18c3e5321f40fce10423f1231f",
+      "bytes": 42744
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R02_measurement_20261002_100922_233/summary.json",
+      "sha256": "bdfb1e5120dca059b0807d76055329ad88f1569044bb9ef495dcf6e7480a2604",
+      "bytes": 1139
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R02_measurement_20261002_100922_233/conditions.json",
+      "sha256": "0522124fcc076c0d69c716758d65a0c07a230db66bd38ee08be707103126149a",
+      "bytes": 1135
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R02_measurement_20261002_100922_233/capture.csv",
+      "sha256": "3f3d0dd5aecd98a7679fc1bf290522e772d5bd63602e2cb876493e044a224004",
+      "bytes": 6428768
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R02_measurement_20261002_100922_233/runtime.log",
+      "sha256": "3e3a3096f88671cda24afe8ff30836bd401a49d7f7fdf60848351d053107c99f",
+      "bytes": 318729
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R03_measurement_20261002_101219_496/results.json",
+      "sha256": "de5a3c7c883cf6176dc9846506b0d57c8c21a971706256fcf2a339e6e9ec917c",
+      "bytes": 42757
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R03_measurement_20261002_101219_496/summary.json",
+      "sha256": "e4d36799331117f2f8223531e95c206d211e83d91dc191d1fbd5949e5722b84d",
+      "bytes": 1138
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R03_measurement_20261002_101219_496/conditions.json",
+      "sha256": "deed024670626fc6c3d4ffa7abe7045359858b7a5210dac6ad0e1f4d067933f8",
+      "bytes": 1135
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R03_measurement_20261002_101219_496/capture.csv",
+      "sha256": "35dd787069662eb1934b5b8ab09beab1622e4708b98c13b4b037a83c07cc1817",
+      "bytes": 6425279
+    },
+    {
+      "source": "pcap/runs/N040_after_Formal40_R03_measurement_20261002_101219_496/runtime.log",
+      "sha256": "b7d7c86ee3860490f6793b8d187184476e27fb7d4ace491dad8bed4635d4eb96",
+      "bytes": 318538
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R01_measurement_20261002_100724_450/results.json",
+      "sha256": "6283234e0e9782ebef60a8992a26b06942209b8660922cab2e6f8b51fac7a875",
+      "bytes": 42835
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R01_measurement_20261002_100724_450/summary.json",
+      "sha256": "e1a2ae3d5b3ff6e99c6d96c5f4f238ed030dd7bac74a9b822e51e1ea8b47f2b4",
+      "bytes": 1137
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R01_measurement_20261002_100724_450/conditions.json",
+      "sha256": "f77dc24c6bb24f91c7532572eac3f809c4a3e6b7c5ccba562bf8ab2e92b147a5",
+      "bytes": 1136
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R01_measurement_20261002_100724_450/capture.csv",
+      "sha256": "ebe96138e3e6273df772e31cde90744e113909adbdeb58a3bb2f12bc5bc17a27",
+      "bytes": 6401621
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R01_measurement_20261002_100724_450/runtime.log",
+      "sha256": "5b000f53264b4b33225a3150242968ae16b834179561e092a88641ad85329860",
+      "bytes": 318924
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R02_measurement_20261002_101021_214/results.json",
+      "sha256": "ed6e0a0a4abaa3a6e68fc4b2d4475d5f2eeee08c1879b9ebaa27b644685a83c2",
+      "bytes": 42839
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R02_measurement_20261002_101021_214/summary.json",
+      "sha256": "4aa9ecacce6059b50de142ed043ad614b33cb730a3debc241a019b10834c0044",
+      "bytes": 1140
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R02_measurement_20261002_101021_214/conditions.json",
+      "sha256": "89d17d8d96acc36702bd51495f3fc499caa596384fbb3beed469a379f95bd797",
+      "bytes": 1136
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R02_measurement_20261002_101021_214/capture.csv",
+      "sha256": "5c8af971b0ce1d4edc5bc31d7a00a608efb8209c064f1f4287d10d63fa3ab647",
+      "bytes": 6350791
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R02_measurement_20261002_101021_214/runtime.log",
+      "sha256": "ef2e18a408f3aec767d762b58b76c5fe020890102aad09aca232d134a5688d6e",
+      "bytes": 318924
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R03_measurement_20261002_101120_325/results.json",
+      "sha256": "ef2b9f6a18611ae1cefff31b53bd75d053bf9932dd27bc1e47c9bbb768194ebc",
+      "bytes": 42835
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R03_measurement_20261002_101120_325/summary.json",
+      "sha256": "4fe520b436398271e010ba4f373fa1f58ddda52578d4b3bc2cee4bbf3f5a140c",
+      "bytes": 1140
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R03_measurement_20261002_101120_325/conditions.json",
+      "sha256": "a43324fafcd64c97a666ab72aed060e20cfb9b1795a76909ecd18b6f36c16ec6",
+      "bytes": 1136
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R03_measurement_20261002_101120_325/capture.csv",
+      "sha256": "2e8900fe8d7384d46be0ef69f23ee42225e2ecb2106f7e161bbe7edf1f5161f8",
+      "bytes": 6389320
+    },
+    {
+      "source": "pcap/runs/N040_before_Formal40_R03_measurement_20261002_101120_325/runtime.log",
+      "sha256": "35ff58d5cb089e811336af1628ce6f84007c6166659dc4e8bb6374f830dbf138",
+      "bytes": 318924
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R01_measurement_20261002_095343_946/results.json",
+      "sha256": "c8cf1b13453e227e8cffe99ae0870788b3a10b24526492fad8e2361d69f7ebff",
+      "bytes": 83619
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R01_measurement_20261002_095343_946/summary.json",
+      "sha256": "c3e7fee010863ede28c9816b60cd7b72884ce70d26fd69284fca1056e1a6c7ab",
+      "bytes": 1138
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R01_measurement_20261002_095343_946/conditions.json",
+      "sha256": "3d9630d8dd04465848320ec2e9800ab7f670c38163ff15af470f678b370046e5",
+      "bytes": 1135
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R01_measurement_20261002_095343_946/capture.csv",
+      "sha256": "a831916af2cdbcbcebcd55357b45d8ebcebcc3dd70a629cb72b79d0f3a7e6c97",
+      "bytes": 6426967
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R01_measurement_20261002_095343_946/runtime.log",
+      "sha256": "bd525eeba4936686924a2219374297f096e51ba703c7d1e4fa6e3bbc9111d803",
+      "bytes": 351786
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R02_measurement_20261002_095442_801/results.json",
+      "sha256": "7495cd20fe7cb77cab49bde274e1a7c55172538352c1a0e85e5c2a7fa4e6063d",
+      "bytes": 83614
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R02_measurement_20261002_095442_801/summary.json",
+      "sha256": "e77b624700528ae2ff5dddb4238458ad2a110ce2abae3484548b08cf47ba9294",
+      "bytes": 1136
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R02_measurement_20261002_095442_801/conditions.json",
+      "sha256": "c42a19bb03b15cdaafe9f4ae85cca3c85e54912e76e7689817a3d333afa3e7a8",
+      "bytes": 1135
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R02_measurement_20261002_095442_801/capture.csv",
+      "sha256": "60cd8ea326192c68b7915d13338fd85683e28a6a9459dd654b838efa7330e2d9",
+      "bytes": 6426425
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R02_measurement_20261002_095442_801/runtime.log",
+      "sha256": "351022dd6dfc58ffa6a8d338584489fbfeebc91c46081fe920df87af90f4efe5",
+      "bytes": 351787
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R03_measurement_20261002_095740_112/results.json",
+      "sha256": "bc1975087cf1919999311da3bdae6341d54b4668a4dfc27ebb9d7451b56d37b5",
+      "bytes": 83544
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R03_measurement_20261002_095740_112/summary.json",
+      "sha256": "c0d22b34f625a20c6f6d7ba8bf9183f1f0cc383ced0220a80423c1b87bd7221e",
+      "bytes": 1138
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R03_measurement_20261002_095740_112/conditions.json",
+      "sha256": "db70e13402cbaa084ff551cd0494a8e0745be86fe9a09d832c226a2c1e9d262d",
+      "bytes": 1135
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R03_measurement_20261002_095740_112/capture.csv",
+      "sha256": "17dc4eb3016b678bbe8f9436669049e83a2117d66b3c4c6e6729423ee8be6593",
+      "bytes": 6459108
+    },
+    {
+      "source": "pcap/runs/N080_after_Formal80_R03_measurement_20261002_095740_112/runtime.log",
+      "sha256": "60f35ecf6f6907523ee26199870d7ec671f472a864183e6ed2d25b680ab3c4fa",
+      "bytes": 351805
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R01_measurement_20261002_095245_022/results.json",
+      "sha256": "fbed9a3feb5baf73a09bbef13db4f2e7e8cf83bb29bfbb86d2c39263a3e2c33d",
+      "bytes": 83576
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R01_measurement_20261002_095245_022/summary.json",
+      "sha256": "65d33b7b972757827ce298cebdfd03005353cdf96c3175d032831280c40cc80b",
+      "bytes": 1130
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R01_measurement_20261002_095245_022/conditions.json",
+      "sha256": "5db36d698f66fb0a218987def23454c8c51c6f6cda966a5f8630d4c69496ad04",
+      "bytes": 1136
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R01_measurement_20261002_095245_022/capture.csv",
+      "sha256": "fe73e7452380ade908f4072fac31e3839ff05568bcfecef8ea55272ea6980c60",
+      "bytes": 6371006
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R01_measurement_20261002_095245_022/runtime.log",
+      "sha256": "6c8ded1143aa65238cdfaf30577d29964875802a4781cc0557a7e518781cc953",
+      "bytes": 352333
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R02_measurement_20261002_095541_815/results.json",
+      "sha256": "2062495d0f4496ca55734069f09ae7551ddfdb3129bc9e668664d9723050cd47",
+      "bytes": 83580
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R02_measurement_20261002_095541_815/summary.json",
+      "sha256": "b2cc1e10233270d963f41445cf6a913f0a0ab25117c3fbe59e1b53dd329fa5e4",
+      "bytes": 1140
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R02_measurement_20261002_095541_815/conditions.json",
+      "sha256": "c986ba5c13c6cb33b60678ea68bb811401a839290db6431e072d5d5065186085",
+      "bytes": 1136
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R02_measurement_20261002_095541_815/capture.csv",
+      "sha256": "114db205f58eada92c9b4a3795ff963c17acb9c6bf62a91e28b04a4f432f3412",
+      "bytes": 6372938
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R02_measurement_20261002_095541_815/runtime.log",
+      "sha256": "ac42674d8492a9670c60029fd7efb7bda2a9e99a798c3e0b03b891180022c7ab",
+      "bytes": 352331
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R03_measurement_20261002_095640_844/results.json",
+      "sha256": "b7198ca5ea3bce6bdaaa82dd42809f8a7101e89a0881da3a823f9eb3242cff92",
+      "bytes": 83423
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R03_measurement_20261002_095640_844/summary.json",
+      "sha256": "348680f7b27feebbac556b79a203e2b069a555bdc2fb528bf1e14c810b403978",
+      "bytes": 1140
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R03_measurement_20261002_095640_844/conditions.json",
+      "sha256": "72bad4580a1542ea041a278659709ce0ed2fdf83c65156bf166bca61ddbf8b5b",
+      "bytes": 1136
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R03_measurement_20261002_095640_844/capture.csv",
+      "sha256": "2ceb1a01d92f884f973a92c90191dfbc76e7210ef8a0766ae8ee2b6104d58719",
+      "bytes": 6384110
+    },
+    {
+      "source": "pcap/runs/N080_before_Formal80_R03_measurement_20261002_095640_844/runtime.log",
+      "sha256": "8e74222a068643337bfce573311de0c6f23f3e223e6939f3111974d87541e684",
+      "bytes": 352332
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R01_measurement_20261002_102249_016/results.json",
+      "sha256": "3c8a74043a768db14ccaf8a1280248d7f2f58eb38cf57f5c046a50f49681f390",
+      "bytes": 124676
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R01_measurement_20261002_102249_016/summary.json",
+      "sha256": "d4bc5fb3a52b6c67897ebf5fc60e09e9ffbc3adc6fdf409c332b63737063fe5b",
+      "bytes": 1139
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R01_measurement_20261002_102249_016/conditions.json",
+      "sha256": "02586ae9792cbc6d96fc58afd0538d02c8e9e9d025350c248608f59219a8f333",
+      "bytes": 1200
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R01_measurement_20261002_102249_016/capture.csv",
+      "sha256": "229f9e8573f5d498374ae6ceb8d821ebde7a122f6be73225aba25bead7631902",
+      "bytes": 5560144
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R01_measurement_20261002_102249_016/runtime.log",
+      "sha256": "e81e6196f285f80d94199ec1c835dc53f7320eb067d204c311d53e05fdc6a4eb",
+      "bytes": 384836
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R02_measurement_20261002_102347_885/results.json",
+      "sha256": "ee29cad35ffbe1b53e316142f70375f569b8407895356a4e89d7974cd426a943",
+      "bytes": 124581
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R02_measurement_20261002_102347_885/summary.json",
+      "sha256": "180c10542ff26249e29f8d9c2df1faf2dbb909d37b57317b01ea137b29d2468e",
+      "bytes": 1139
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R02_measurement_20261002_102347_885/conditions.json",
+      "sha256": "87c325c1e9639e15213487443b3870c0b207d8d903ecf02bf0c356456182dfab",
+      "bytes": 1200
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R02_measurement_20261002_102347_885/capture.csv",
+      "sha256": "16d2ddb861e2576b1e8492837fe8360767868ef7fd463f03b98483ee88a39eeb",
+      "bytes": 5644246
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R02_measurement_20261002_102347_885/runtime.log",
+      "sha256": "016593296185746491e6bb436355ed31643b7c226b2d310a6a96a851ea2e4654",
+      "bytes": 384840
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R03_measurement_20261002_102645_108/results.json",
+      "sha256": "6146a6f16f0ce8545adab251b9f4bb40df43f48b24be5f04f07365c2944164b5",
+      "bytes": 124435
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R03_measurement_20261002_102645_108/summary.json",
+      "sha256": "85a701f9d1f233c8768cde6fd746af774fe79784d310ab49901ada45a3be515f",
+      "bytes": 1141
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R03_measurement_20261002_102645_108/conditions.json",
+      "sha256": "14f9077cd485edd394b1860311f8025df9684078912390170672aef5b57ac8db",
+      "bytes": 1200
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R03_measurement_20261002_102645_108/capture.csv",
+      "sha256": "a32df22a8dd450bcb4f2f46c64b856ad6b2b76f9cf1c83a8e9046011c92451d4",
+      "bytes": 5672880
+    },
+    {
+      "source": "pcap/runs/N120_after_Formal120_R03_measurement_20261002_102645_108/runtime.log",
+      "sha256": "52144d6d002db147fc98283b2c23ee806112b2cd0642fd4423050c4574636b59",
+      "bytes": 384840
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R01_measurement_20261002_102150_223/results.json",
+      "sha256": "6744a8e768fb28a62e0dd9ae298cbb2e193b7133bea5ecb8cffeefcd51c70e0b",
+      "bytes": 124784
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R01_measurement_20261002_102150_223/summary.json",
+      "sha256": "bdbd2ebcdb564923b6ce654d14fe324fbd84efc2bafdccd0db39532a44726073",
+      "bytes": 1146
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R01_measurement_20261002_102150_223/conditions.json",
+      "sha256": "546c0a03e51726af7d72c3681ff071bd5414d3c53f2c7e58983dbe0b1f93621a",
+      "bytes": 1201
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R01_measurement_20261002_102150_223/capture.csv",
+      "sha256": "563e7555cede1c8d9bdbc57a3aae91aabf4860c938c1e18916d628253198b00e",
+      "bytes": 5929652
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R01_measurement_20261002_102150_223/runtime.log",
+      "sha256": "418a966bea1120634eef92ec4cb1af13c974226c1b2c7154debf19349f0ed2d0",
+      "bytes": 386961
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R02_measurement_20261002_102446_873/results.json",
+      "sha256": "e2b8fb64ec258241221f656f27dd2df0e88c2ad1543790d734b8b9eb44222248",
+      "bytes": 124864
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R02_measurement_20261002_102446_873/summary.json",
+      "sha256": "c38d310b4614e62601043130c947b433548a9a33b4cdd2288bb834d8618eff48",
+      "bytes": 1146
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R02_measurement_20261002_102446_873/conditions.json",
+      "sha256": "60338808fa385858a1d8304cbfc070e8fcef980f7c72f0f6f6dd2631274132a6",
+      "bytes": 1201
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R02_measurement_20261002_102446_873/capture.csv",
+      "sha256": "4f08d6bb427dcc4537d05d5226f0d62abd8a0f2b8a6d2e4add2eb5db07d07c15",
+      "bytes": 5903874
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R02_measurement_20261002_102446_873/runtime.log",
+      "sha256": "c61ffa843024263761774497c04dcad0eb32136fa46d40ca95f6c67aa1be8d81",
+      "bytes": 386750
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R03_measurement_20261002_102546_013/results.json",
+      "sha256": "691f86889d1dfd9e2955800039051faa0ff4315c6287aaeccfacb930a86f12dc",
+      "bytes": 124789
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R03_measurement_20261002_102546_013/summary.json",
+      "sha256": "6bc5ed65bc50517d3b51d06ea700f97e15e2e84aba0b7392b902b589723ba747",
+      "bytes": 1149
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R03_measurement_20261002_102546_013/conditions.json",
+      "sha256": "a54aa0a15c3bfca9bb7c9f27857aa1d957ed9f1a881ccbe513342f8e651f32e1",
+      "bytes": 1201
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R03_measurement_20261002_102546_013/capture.csv",
+      "sha256": "f7690af765350c01d1cdaa6418a6be8fbd3442eb8f828e478445ca2cbdb9d27e",
+      "bytes": 5936405
+    },
+    {
+      "source": "pcap/runs/N120_before_Formal120_R03_measurement_20261002_102546_013/runtime.log",
+      "sha256": "9c66b4d2b56f9abb333f0755d8347aed7796046212d24d595dba5c432afdf710",
+      "bytes": 386943
+    },
+    {
+      "source": "stellar_guard_validation_20261021/evidence/7ed2af19386dc762_snapshot_manifest.json",
+      "sha256": "7ed2af19386dc76272fa68e8859260b1f479d4adb9bb1cdc4c77089de49b03a1",
+      "bytes": 197950
+    },
+    {
+      "source": "stellar_submission_alignment_20261021/영상_번호_길이_연결표.json",
+      "sha256": "808e32310c18f82f28981bfda6d483d85f37699f3609162dfc3506c4af5c9768",
+      "bytes": 10863
+    },
+    {
+      "source": "stellar_ttl_portfolio_20261021/render/verification.json",
+      "sha256": "f18a86c0e6484aad774a68b09869a3604e21a947c6a4a6d8945e43e24f43bb46",
+      "bytes": 2390
+    }
+  ]
+}

@@ -2,12 +2,14 @@
 
 이 폴더는 `Project Stellar` 제출 포트폴리오의 원본, 제작 기록, 캡처·다이어그램을 관리한다.
 
+최신 사례·영상 안내: [가드·TTL·AI 사례](../../03_Issue_Analysis_Report/00_Issue_Analysis_Report_Index.md) · [영상 버전·공개 상태](Video_Catalog.md). PPT 제작 과정의 최신 로컬 문서는 22페이지이며, 아래 웹 제출 HTML 23페이지와 갱신 경로가 다릅니다.
+
 ## Current canonical artifacts
 
 | Role | Canonical item | Policy |
 | --- | --- | --- |
 | Live web portfolio | [GitHub Pages](https://razria93.github.io/Portfolio_UE5.4_verGit/) | 현재 제출 HTML과 Assets를 공개하는 배포본입니다. |
-| Gameplay video | [Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119) | 영상 업로드 전 안내 허브이며, 업로드 후 같은 링크에서 재생·타임스탬프를 관리합니다. |
+| Gameplay video | [영상 목록·공개 상태](Video_Catalog.md) | 최신 제작본 14개와 기존 외부 URL 13개를 구분합니다. Issue #119는 과거 준비 기록이며 최신 공개 상태를 대신하지 않습니다. |
 | Submitted document source | [염동섭_UE5_Portfolio_Project_Stellar.html](염동섭_UE5_Portfolio_Project_Stellar.html) | 현재 제출 기준 HTML. 23개의 보이는 페이지를 가진다. |
 | Visual assets | [Assets/](Assets/) | HTML의 상대 경로로 참조되는 캡처·다이어그램 원본이다. |
 | Generated PDF | `output/pdf/UE5_Portfolio_Project_Stellar.pdf` | HTML에서 생성하는 산출물이며 Git 원본으로 추적하지 않는다. |

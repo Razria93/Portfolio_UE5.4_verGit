@@ -9,9 +9,11 @@
 현행 코드 구조와 제출용 런타임 캡처의 확보 상태를 구분합니다.
 
 
-> 상태: **현행 코드 기준 확정 / 제출용 전환 캡처 대기**  
+> 작성 당시 상태: **현행 코드 기준 확정 / 제출용 전환 캡처 대기**
 > 작성일: 2026-09-06  
 > 근거 감사: `Docs/07_Portfolio_Documents/Portfolio_Production/26_Combat_Interaction_Code_Document_Concordance_Audit (KR).md`
+
+**2026-10-21 후속 근거:** [가드 종료 중 실제 피격 전환](../03_Issue_Analysis_Report/I09_Guard_Cleanup_Case_Study.md)에 경계 자동화와 실제 충돌 통합 기록이 추가됐습니다. [영상 목록](../07_Portfolio_Documents/Portfolio_Production/Video_Catalog.md)의 최신 02는 실행 결정·중단·전환 설명 영상이며 공개 주소는 미확보입니다. 아래의 기존 증거 표는 작성 당시 상태로 보존하며, 이 후속 자료가 모든 전환·terminal 경로의 검증 완료를 뜻하지는 않습니다.
 
 ---
 

@@ -2,11 +2,11 @@
 
 Player와 Enemy의 공통 전투 실행 구조를 중심으로, 타깃 관리와 두 Actor의 처형 협업을 구현한 3인칭 액션 RPG 개인 프로젝트입니다. 전투 상태를 관찰하는 런타임 디버그 도구와 구현·문제 해결·검증 자료를 함께 제공합니다.
 
-[화면으로 보기](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [핵심 구현](#combat-systems) · [문제 해결](#problem-solving) · [코드 읽기](#code-guide) · [전체 문서](Docs/00_Documentation_Index.md)
+[화면으로 보기](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [영상 목록·공개 상태](Docs/07_Portfolio_Documents/Portfolio_Production/Video_Catalog.md) · [핵심 구현](#combat-systems) · [문제 해결](#problem-solving) · [코드 읽기](#code-guide) · [전체 문서](Docs/00_Documentation_Index.md)
 
 ![Project Stellar 전투 장면과 Action·Reaction·Target·Facing 상태를 관찰하는 Debug Overlay](Docs/07_Portfolio_Documents/Portfolio_Production/Assets/Captures/p01_hero_combat.jpg)
 
-전투 결과와 실행 상태를 함께 관찰하는 화면입니다. [웹 포트폴리오](https://razria93.github.io/Portfolio_UE5.4_verGit/)에서 대표 장면과 설명을 볼 수 있습니다. 게임플레이 영상은 [업로드 예정](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119)입니다.
+전투 결과와 실행 상태를 함께 관찰하는 화면입니다. [웹 포트폴리오](https://razria93.github.io/Portfolio_UE5.4_verGit/)에서 대표 장면과 설명을 볼 수 있습니다. 기존 설명 영상은 [가드](https://youtu.be/wm57Nbvs8OI) · [TTL 이전 버전](https://youtu.be/3wiZNXvtokM) · [AI 개선](https://youtu.be/fGTAndeuBo8)에서 볼 수 있습니다. **최신 TTL 재촬영본은 38.8초이며, 공개된 37초 영상과 다릅니다.** [영상 목록](Docs/07_Portfolio_Documents/Portfolio_Production/Video_Catalog.md)에서 최신 제작본과 외부 링크의 상태를 구분합니다.
 
 ## 개발 정보와 기여 범위
 
@@ -59,13 +59,15 @@ Player와 Enemy의 공통 전투 실행 구조를 중심으로, 타깃 관리와
 
 ## 대표 문제 해결
 
-| 사례 | 문제와 해결 방향 | 설명·코드·검증으로 이동 |
+| 사례 | 문제 → 해결 → 확인 결과 | 상세 설명과 근거 |
 | --- | --- | --- |
-| **무기 Socket·Pivot** | 새 무기의 장탈착 이격과 회전 기준 문제를 해결하기 위해 캐릭터 소켓 전환과 손잡이 기준 회전을 분리했습니다. Mesh·Collision·FX가 같은 표현 계층에서 움직입니다. | [문제 분석 — I04](Docs/03_Issue_Analysis_Report/I04_UE5_Portfolio_Issue_Analysis_Report.md) → [좌표계와 구조 — S39](Docs/05_System_Architecture/S39_UE5_Portfolio_Weapon_Presentation_Pivot_Architecture.md) |
-| **Montage 종료 설정** | 자연 재생 종료가 잘못된 Complete 설정을 가리던 문제를 추적했습니다. 실행 완료를 명시적으로 처리하고 설정 감사 도구를 보완했습니다. | [문제 분석 — I06](Docs/03_Issue_Analysis_Report/I06_UE5_Portfolio_Issue_Analysis_Report.md) → [수정·검증 기록 — F08](Docs/04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md) |
-| **넉백·공격 시작 방향 보정** | 실제 실행 시작과 이동 적용을 연결하고, 이전 실행의 종료가 새 이동을 정리하지 않도록 소유권과 실행 세대를 구분했습니다. | [구현·코드 지도·검증 범위](Docs/07_Portfolio_Documents/Portfolio_Production/37_Gameplay_Knockback_and_Facing_Review_Guide.md) |
+| **가드 종료 중 피격 누락** | GuardOut 중단 뒤 이미 정리된 상태를 다시 정리하려다 Hit가 거부됨 → 반복 정리를 수락하도록 변경 → 경계 자동화 3개 테스트와 실제 충돌 후 Hit·다음 가드 복귀 확인 | [원인·코드·검증 범위](Docs/03_Issue_Analysis_Report/I09_Guard_Cleanup_Case_Study.md) |
+| **피격 근거 TTL** | 피격 동작 중 공격자 정보 만료 → Reaction 종료부터 TTL 계산, ResultSerial로 오래된 종료 차단 → 4그룹·19시나리오 관찰. **파괴된 공격자의 Pending 잔여는 후속 보완 필요** | [재촬영·시리얼 검증·남은 문제](Docs/03_Issue_Analysis_Report/I10_HitReactive_TTL_Case_Study.md) |
+| **AI Perception 개선** | 불필요한 인지 대상 유입 → Team Attitude·Sight 필터 조정 → 18회 반복 측정. 120개체 첫 인지 p95 중앙값 **20.816→1.053초**, Perception **1.2582→0.1199ms** | [환경·18회 결과·기능 보존 범위](Docs/03_Issue_Analysis_Report/I11_AI_Perception_Case_Study.md) |
 
-I04의 구현·사용자 PIE 확인, I06의 감사·테스트·사용자 PIE 확인, 넉백·방향 보정의 자동 검사와 수동 확인은 각각 해당 문서의 기준 시점과 범위에 한정됩니다. 측정하지 않은 성능 개선이나 모든 상황의 동작 보장으로 확대하지 않습니다.
+가드·TTL의 최신 검증은 2026-10-21 로컬 스냅샷, TTL 영상은 10월 1일 보존 환경, AI 측정은 10월 2일 기준입니다. 로컬 스냅샷과 저장소 전체 소스는 다르므로 **이 PR 전체의 테스트 통과로 해석하지 않습니다.** [검증 근거와 코드 대조](Docs/98_Evidence/Combat_Case_Studies_20261021/README.md)에 적용 범위를 기록했습니다. AI의 전체 프레임 시간은 개선되지 않았으며 FPS 개선으로 확대하지 않습니다.
+
+추가 사례: [무기 Socket·Pivot](Docs/03_Issue_Analysis_Report/I04_UE5_Portfolio_Issue_Analysis_Report.md) · [Montage 종료 설정](Docs/03_Issue_Analysis_Report/I06_UE5_Portfolio_Issue_Analysis_Report.md) · [넉백·공격 방향 보정](Docs/07_Portfolio_Documents/Portfolio_Production/37_Gameplay_Knockback_and_Facing_Review_Guide.md).
 
 ## 런타임 관찰과 개발 도구
 
@@ -89,6 +91,9 @@ Overlay는 읽기 전용 상태 관찰을 담당합니다. Inspector의 unused �
 | 실행 판단 → 적용 | [실행 타입](Source/Portfolio/Type/CExecutionTypes.h) → [Action Orchestrator](Source/Portfolio/Component/CActionOrchestratorComponent.cpp) | [Action Component](Source/Portfolio/Component/CActionComponent.cpp), [Reaction Orchestrator](Source/Portfolio/Component/CReactionOrchestratorComponent.cpp) |
 | 타깃 → 참여 배정 → AI 반영 | [Combat Target](Source/Portfolio/Component/CCombatTargetComponent.cpp) → [참여 배정](Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp) | [Enemy 참여 Component](Source/Portfolio/Component/CEnemyCombatParticipationComponent.cpp) |
 | 처형 시작 → 확정·취소 | [Execution Collaboration](Source/Portfolio/Component/CExecutionCollaborationComponent.cpp) | [Balance](Source/Portfolio/Component/CBalanceComponent.cpp), [Combat Signal Target](Source/Portfolio/Component/CCombatSignalTargetComponent.cpp) |
+| 가드 정리 → 피격 실행 | [Defense](Source/Portfolio/Component/CDefenseComponent.cpp) → [Reaction Orchestrator](Source/Portfolio/Component/CReactionOrchestratorComponent.cpp) | [가드 사례](Docs/03_Issue_Analysis_Report/I09_Guard_Cleanup_Case_Study.md) |
+| 피격 수락 → TTL 시작 | [EnemyHitReactive](Source/Portfolio/Component/CEnemyHitReactiveComponent.cpp) → [참여 배정](Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp) | [TTL 사례](Docs/03_Issue_Analysis_Report/I10_HitReactive_TTL_Case_Study.md) |
+| 인지 대상 → 필터 설정 | [AI Controller](Source/Portfolio/Controller/CAIController.cpp) | [AI 측정 사례](Docs/03_Issue_Analysis_Report/I11_AI_Perception_Case_Study.md) |
 | 무기 표현 → 복구 | [Weapon Actor](Source/Portfolio/Weapon/CWeaponActor.cpp) | [Weapon Component](Source/Portfolio/Component/CWeaponComponent.cpp) |
 
 ## 로컬 실행과 확인 범위
@@ -104,7 +109,8 @@ Overlay는 읽기 전용 상태 관찰을 담당합니다. Inspector의 unused �
 
 - [목적별 문서 안내](Docs/00_Documentation_Index.md): 전투 구조, 문제 해결, 코드·검증 경로
 - [문제 해결 사례 전체](Docs/03_Issue_Analysis_Report/00_Issue_Analysis_Report_Index.md): 에셋 통합과 실행 문제의 분석 기록
-- [검증 근거 목록](Docs/98_Evidence/Stellar_Asset_Integration/README.md): 구현·감사·사용자 확인의 근거와 한계
+- [가드·TTL·AI 검증 근거](Docs/98_Evidence/Combat_Case_Studies_20261021/README.md): 검사 결과·CSV·원본 해시와 한계
+- [에셋 통합 검증 근거 목록](Docs/98_Evidence/Stellar_Asset_Integration/README.md): 구현·감사·사용자 확인의 근거와 한계
 - [플러그인 포트폴리오](https://github.com/Razria93/Plugin_Portfolio_UE5.4): 독립 에디터 도구의 설계·검증
 - [그래픽스 학습·구현 기록](https://github.com/Razria93/Graphics_Study_Archive): 렌더링 원리와 결과 비교
 
