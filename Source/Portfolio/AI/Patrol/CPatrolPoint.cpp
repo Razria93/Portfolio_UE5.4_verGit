@@ -20,6 +20,7 @@ ACPatrolPoint::ACPatrolPoint()
 	check(TextRenderComp);
 
 	TextRenderComp->SetupAttachment(rootComp);
+	TextRenderComp->SetHiddenInGame(true); // Runtime indices are drawn by the Patrol debug overlay.
 
 	TextRenderComp->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
 	TextRenderComp->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextBottom);

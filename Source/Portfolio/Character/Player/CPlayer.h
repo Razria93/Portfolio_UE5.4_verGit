@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/Debug/FCaptureCamera.h"
 #include "GameFramework/Character.h"
 #include "Interface/TargetContextProvider.h"
 #include "Interface/CombatResultReceiver.h"
@@ -17,6 +18,8 @@ class PORTFOLIO_API ACPlayer : public ACharacter, public ITargetContextProvider,
 
 public:
 	ACPlayer();
+	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
+	bool TryGetCaptureTrackingBaseView(FVector& OutLocation, FRotator& OutRotation) const;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Priority")
@@ -101,6 +104,12 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+	// Capture framing state never changes gameplay camera component settings.
+	FCaptureCameraState CaptureCameraState;
+	FVector CaptureTrackingBaseLocation = FVector::ZeroVector;
+	FRotator CaptureTrackingBaseRotation = FRotator::ZeroRotator;
+	bool bHasCaptureTrackingBaseView = false;
+
 	// Setup
 	void ApplyCharacterSetup();
 	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);

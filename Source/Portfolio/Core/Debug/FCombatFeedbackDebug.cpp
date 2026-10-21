@@ -1,4 +1,5 @@
 #include "Core/Debug/FCombatFeedbackDebug.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
 
 #include "Core/Debug/FLog.h"
 
@@ -85,6 +86,7 @@ bool FCombatFeedbackDebug::ShouldAuditCombatFeedback()
 
 void FCombatFeedbackDebug::RecordActionFeedbackRequestAcceptedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FActionFeedbackRequest& InRequest)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Action"), TEXT("Request"), FormatActionFeedbackRequest(InRequest));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -96,6 +98,7 @@ void FCombatFeedbackDebug::RecordActionFeedbackRequestAcceptedForAudit(const AAc
 
 void FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FActionFeedbackRequest& InRequest, const TCHAR* InChannel, int32 InMatchCount)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Action"), InChannel, FString::Printf(TEXT("Matched=%d"), InMatchCount));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -109,6 +112,7 @@ void FCombatFeedbackDebug::RecordActionFeedbackChannelMatchedForAudit(const AAct
 
 void FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InChannel, const UObject* InAsset, const TCHAR* InEvent)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Action"), InChannel, FString::Printf(TEXT("Requested %s | %s"), InEvent, *GetNameSafe(InAsset)));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -122,6 +126,7 @@ void FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(const 
 
 void FCombatFeedbackDebug::RecordActionFeedbackRequestRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FActionFeedbackRequest& InRequest, const TCHAR* InReason)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Action"), TEXT("Request"), FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -134,6 +139,7 @@ void FCombatFeedbackDebug::RecordActionFeedbackRequestRejectedForAudit(const AAc
 
 void FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FActionFeedbackRequest& InRequest, const TCHAR* InChannel, const TCHAR* InReason, int32 InMatchCount)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Action"), InChannel, FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -148,6 +154,7 @@ void FCombatFeedbackDebug::RecordActionFeedbackChannelRejectedForAudit(const AAc
 
 void FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InChannel, const UObject* InAsset, const TCHAR* InReason)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Action"), InChannel, FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -163,6 +170,7 @@ void FCombatFeedbackDebug::RecordActionFeedbackPresentationRejectedForAudit(cons
 
 void FCombatFeedbackDebug::RecordReactionFeedbackRequestAcceptedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FReactionFeedbackRequest& InRequest)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Reaction"), TEXT("Request"), FormatReactionFeedbackRequest(InRequest));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -174,6 +182,7 @@ void FCombatFeedbackDebug::RecordReactionFeedbackRequestAcceptedForAudit(const A
 
 void FCombatFeedbackDebug::RecordReactionFeedbackChannelMatchedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FReactionFeedbackRequest& InRequest, const TCHAR* InChannel, int32 InMatchCount)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Reaction"), InChannel, FString::Printf(TEXT("Matched=%d"), InMatchCount));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -187,6 +196,7 @@ void FCombatFeedbackDebug::RecordReactionFeedbackChannelMatchedForAudit(const AA
 
 void FCombatFeedbackDebug::RecordReactionFeedbackPresentationPlayedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InChannel, const UObject* InAsset, const TCHAR* InEvent)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Reaction"), InChannel, FString::Printf(TEXT("Requested %s | %s"), InEvent, *GetNameSafe(InAsset)));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -200,6 +210,7 @@ void FCombatFeedbackDebug::RecordReactionFeedbackPresentationPlayedForAudit(cons
 
 void FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FReactionFeedbackRequest& InRequest, const TCHAR* InReason)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Reaction"), TEXT("Request"), FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -212,6 +223,7 @@ void FCombatFeedbackDebug::RecordReactionFeedbackRequestRejectedForAudit(const A
 
 void FCombatFeedbackDebug::RecordReactionFeedbackChannelRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FReactionFeedbackRequest& InRequest, const TCHAR* InChannel, const TCHAR* InReason, int32 InMatchCount)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Reaction"), InChannel, FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -226,6 +238,7 @@ void FCombatFeedbackDebug::RecordReactionFeedbackChannelRejectedForAudit(const A
 
 void FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InChannel, const UObject* InAsset, const TCHAR* InReason)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Reaction"), InChannel, FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -241,6 +254,7 @@ void FCombatFeedbackDebug::RecordReactionFeedbackPresentationRejectedForAudit(co
 
 void FCombatFeedbackDebug::RecordHitFeedbackRequestAcceptedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FCombatSignalTargetPacket& InPacket)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Hit"), TEXT("Request"), FormatHitFeedbackPacket(InPacket));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -252,6 +266,7 @@ void FCombatFeedbackDebug::RecordHitFeedbackRequestAcceptedForAudit(const AActor
 
 void FCombatFeedbackDebug::RecordHitFeedbackPresentationRequestedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FCombatSignalTargetPacket& InPacket, const TCHAR* InChannel)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Hit"), InChannel, TEXT("Requested"));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -264,6 +279,7 @@ void FCombatFeedbackDebug::RecordHitFeedbackPresentationRequestedForAudit(const 
 
 void FCombatFeedbackDebug::RecordHitFeedbackPresentationPlayedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InChannel, const UObject* InAsset, const TCHAR* InEvent)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Hit"), InChannel, FString::Printf(TEXT("Requested %s | %s"), InEvent, *GetNameSafe(InAsset)));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -277,6 +293,7 @@ void FCombatFeedbackDebug::RecordHitFeedbackPresentationPlayedForAudit(const AAc
 
 void FCombatFeedbackDebug::RecordHitFeedbackRequestRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FCombatSignalTargetPacket& InPacket, const TCHAR* InReason)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Hit"), TEXT("Request"), FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -289,6 +306,7 @@ void FCombatFeedbackDebug::RecordHitFeedbackRequestRejectedForAudit(const AActor
 
 void FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const FCombatSignalTargetPacket& InPacket, const TCHAR* InChannel, const TCHAR* InReason)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Hit"), InChannel, FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(
@@ -302,6 +320,7 @@ void FCombatFeedbackDebug::RecordHitFeedbackPresentationRejectedForAudit(const A
 
 void FCombatFeedbackDebug::RecordHitFeedbackAssetRejectedForAudit(const AActor* InOwnerActor, const UObject* InComponent, const TCHAR* InChannel, const UObject* InAsset, const TCHAR* InReason)
 {
+	if (FWeaponPresentationDebug::IsFeedbackEnabled()) FWeaponPresentationDebug::Feedback(InOwnerActor, TEXT("Hit"), InChannel, FString::Printf(TEXT("Rejected: %s"), InReason));
 	if (!ShouldAuditCombatFeedback()) return;
 
 	FLog::Log(FString::Printf(

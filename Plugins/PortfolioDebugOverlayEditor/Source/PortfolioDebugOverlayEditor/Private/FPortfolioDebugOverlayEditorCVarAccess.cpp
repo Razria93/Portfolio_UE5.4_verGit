@@ -17,7 +17,7 @@ bool PortfolioDebugOverlayEditorCVarAccess::GetBool(const TCHAR* InName)
 
 void PortfolioDebugOverlayEditorCVarAccess::SetBool(const TCHAR* InName, const bool bInValue)
 {
-	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(bInValue ? 1 : 0, ECVF_SetByCode);
+	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(bInValue ? 1 : 0, ECVF_SetByConsole);
 }
 
 int32 PortfolioDebugOverlayEditorCVarAccess::GetInt(const TCHAR* InName)
@@ -28,7 +28,7 @@ int32 PortfolioDebugOverlayEditorCVarAccess::GetInt(const TCHAR* InName)
 
 void PortfolioDebugOverlayEditorCVarAccess::SetInt(const TCHAR* InName, const int32 InValue)
 {
-	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(InValue, ECVF_SetByCode);
+	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(InValue, ECVF_SetByConsole);
 }
 
 float PortfolioDebugOverlayEditorCVarAccess::GetFloat(const TCHAR* InName)
@@ -39,7 +39,7 @@ float PortfolioDebugOverlayEditorCVarAccess::GetFloat(const TCHAR* InName)
 
 void PortfolioDebugOverlayEditorCVarAccess::SetFloat(const TCHAR* InName, const float InValue)
 {
-	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(InValue, ECVF_SetByCode);
+	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(InValue, ECVF_SetByConsole);
 }
 
 FString PortfolioDebugOverlayEditorCVarAccess::GetString(const TCHAR* InName)
@@ -50,7 +50,7 @@ FString PortfolioDebugOverlayEditorCVarAccess::GetString(const TCHAR* InName)
 
 void PortfolioDebugOverlayEditorCVarAccess::SetString(const TCHAR* InName, const FString& InValue)
 {
-	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(*InValue, ECVF_SetByCode);
+	if (IConsoleVariable* consoleVariable = FindCVar(InName)) consoleVariable->Set(*InValue, ECVF_SetByConsole);
 }
 
 FText PortfolioDebugOverlayEditorCVarAccess::GetAvailabilityText(const TCHAR* InName)

@@ -1,4 +1,7 @@
 #include "Core/Debug/CDebugOverlayHUD.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
+#include "Core/Debug/CPatrolDebugSubsystem.h"
+#include "Core/Debug/FInvestigateDebug.h"
 
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
@@ -192,6 +195,8 @@ void ACDebugOverlayHUD::DrawHUD()
 	FTargetingDebug::DrawWorldDebug(world, owningPlayerController);
 	FMovementDebug::DrawWorldDebug(world, playerPawn, playerLocomotionSnapshot);
 	FCombatParticipationDebug::DrawWorldDebug(world, combatParticipationSnapshot);
+	if (auto* PatrolDebug = world->GetSubsystem<UCPatrolDebugSubsystem>()) PatrolDebug->Draw(focusedEnemy);
+	FInvestigateDebug::Draw(world, focusedEnemy);
 	FBalanceDebug::DrawWorldDebug(world, focusedEnemy, balanceCollapseSnapshot);
 	FExecutionCollaborationDebug::DrawWorldDebug(world, playerExecutionCollaborationSnapshot);
 	FCombatKnockbackDebug::DrawWorldDebug(world, playerPawn);
@@ -222,6 +227,8 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, playerExecutionSession, balanceCollapse, combatTargetFacing, enemyExecutionSession, combatParticipation, panelVisibility);
 	FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
+	FWeaponPresentationDebug::AppendAndDraw(playerPawn, false, textPanels.MainPanel);
+	if (focusedEnemy != playerPawn) FWeaponPresentationDebug::AppendAndDraw(focusedEnemy, true, textPanels.MainPanel);
 	if (!panelVisibility.bShowEventLogPanel)
 	{
 		textPanels.EventLogPanel.Lines.Reset();

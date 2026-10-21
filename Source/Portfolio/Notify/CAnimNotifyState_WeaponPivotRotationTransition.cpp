@@ -1,4 +1,5 @@
 #include "Notify/CAnimNotifyState_WeaponPivotRotationTransition.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
 
 #include "Component/CActionComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -41,6 +42,7 @@ void UCAnimNotifyState_WeaponPivotRotationTransition::NotifyBegin(USkeletalMeshC
 	runtimeState.TransitionHandle = transitionHandle;
 	runtimeState.ElapsedTime = 0.f;
 	runtimeState.TotalDuration = FMath::Max(0.f, TotalDuration);
+	FWeaponPresentationDebug::NotifyTime(weaponComp, EWeaponDebugChannel::Pivot, transitionHandle, 0.f, runtimeState.TotalDuration, TEXT("Begin"));
 }
 
 void UCAnimNotifyState_WeaponPivotRotationTransition::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
@@ -61,6 +63,9 @@ void UCAnimNotifyState_WeaponPivotRotationTransition::NotifyTick(USkeletalMeshCo
 		runtimeState->ElapsedTime + FMath::Max(0.f, FrameDeltaTime),
 		0.f,
 		runtimeState->TotalDuration);
+
+	const TCHAR* debugPhase = TEXT("Transition");
+	FWeaponPresentationDebug::NotifyTime(weaponComp, EWeaponDebugChannel::Pivot, runtimeState->TransitionHandle, runtimeState->ElapsedTime, runtimeState->TotalDuration, debugPhase);
 
 	if (!UpdateTransition(weaponComp, runtimeState->TransitionHandle, CalculateAlpha(runtimeState->ElapsedTime, runtimeState->TotalDuration)))
 	{

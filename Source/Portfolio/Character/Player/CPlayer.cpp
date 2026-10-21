@@ -154,6 +154,53 @@ void ACPlayer::HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDead
 		ReactionComponent->CancelActiveReactionForSystem();
 }
 
+// Capture framing is applied only to the output POV. Lock assist continues to
+// consume the unframed view, so the camera offset cannot feed back into movement yaw.
+void ACPlayer::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
+{
+	Super::CalcCamera(DeltaTime, OutResult);
+#if !UE_BUILD_SHIPPING
+	CaptureTrackingBaseLocation = OutResult.Location;
+	CaptureTrackingBaseRotation = OutResult.Rotation;
+	bHasCaptureTrackingBaseView = true;
+	TOptional<FVector> targetLocation;
+	if (IsValid(CombatTargetComponent))
+	{
+		const FCombatTargetSnapshot snapshot = CombatTargetComponent->GetCombatTargetSnapshot();
+		if (IsValid(snapshot.TargetActor)) targetLocation = snapshot.TargetActor->GetActorLocation();
+	}
+	const FVector pivot = IsValid(SpringArmComponent)
+		? SpringArmComponent->GetComponentLocation() + SpringArmComponent->TargetOffset : GetActorLocation();
+	FCaptureCamera::Apply(FCaptureCamera::ReadSettings(), CaptureCameraState, GetActorLocation(), pivot,
+		targetLocation, DeltaTime, OutResult, GetWorld(), this,
+		IsValid(SpringArmComponent) && SpringArmComponent->bDoCollisionTest,
+		IsValid(SpringArmComponent) ? SpringArmComponent->ProbeSize : 12.f,
+		IsValid(SpringArmComponent) ? SpringArmComponent->ProbeChannel.GetValue() : ECC_Camera);
+#endif
+}
+
+bool ACPlayer::TryGetCaptureTrackingBaseView(FVector& OutLocation, FRotator& OutRotation) const
+{
+#if !UE_BUILD_SHIPPING
+	if (FCaptureCamera::ReadSettings().bEnabled || CaptureCameraState.IsTransitioning())
+	{
+		if (bHasCaptureTrackingBaseView)
+		{
+			OutLocation = CaptureTrackingBaseLocation;
+			OutRotation = CaptureTrackingBaseRotation;
+			return true;
+		}
+		if (IsValid(CameraComponent))
+		{
+			OutLocation = CameraComponent->GetComponentLocation();
+			OutRotation = CameraComponent->GetComponentRotation();
+			return true;
+		}
+	}
+#endif
+	return false;
+}
+
 // Setup
 
 void ACPlayer::ApplyCharacterSetup()

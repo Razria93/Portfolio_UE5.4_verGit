@@ -8,5 +8,7 @@ namespace PortfolioDebugOverlayEditorFocusCommandBridge
 	FText ExecuteSelectRecentCombatFocusCommand();
 	FText ExecuteSelectPlayerTargetFocusCommand();
 	FText ExecuteClearFocusCommand();
+	FText ExecuteClearEventLogCommand();
+	FText ExecuteClearPatrolTrailCommand();
 	FText ExecuteSelectOutlinerFocusCommand();
 }

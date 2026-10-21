@@ -20,6 +20,7 @@ UCLASS()
 class PORTFOLIO_API ACWeaponActor : public AActor, public IHitContextProvider
 {
 	GENERATED_BODY()
+	friend class FWeaponPresentationDebug;
 
 public:
 	ACWeaponActor();

@@ -14,6 +14,7 @@ UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PORTFOLIO_API UCWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
+	friend class FWeaponPresentationDebug;
 
 public:
 	UCWeaponComponent();
@@ -143,7 +144,7 @@ public:
 	// Weapon Presentation - Pivot Rotation Override
 	bool BeginWeaponPivotRotationOverride(const FWeaponPivotRotationSpec& InRotationSpec, uint32& OutOverrideHandle);
 	bool UpdateWeaponPivotRotationOverride(uint32 InOverrideHandle, float InAlpha);
-	void EndWeaponPivotRotationOverride(uint32 InOverrideHandle);
+	void EndWeaponPivotRotationOverride(uint32 InOverrideHandle, const TCHAR* InDebugReason = TEXT("Released: BaseRestored"));
 
 public:
 	// Equip / Unequip Commit

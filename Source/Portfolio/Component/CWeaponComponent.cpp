@@ -1,4 +1,5 @@
 #include "Component/CWeaponComponent.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
 
 #include "ProjectGlobal.h"
 
@@ -113,6 +114,9 @@ bool UCWeaponComponent::EndWeaponActionPoseScope(uint32 InScopeHandle)
 	const FName baselineSocketName = ActionPoseScopeState.BaselineSocketName;
 	const FQuat baselinePivotRotation = ActionPoseScopeState.BaselinePivotRotation;
 
+	if (SocketTransformTransitionState.ActiveHandle) FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Socket, TEXT("ScopeEnded"));
+	if (PivotRotationTransitionState.ActiveHandle) FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Pivot, TEXT("ScopeEnded"));
+	if (PivotRotationOverrideState.ActiveHandle) FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Override, TEXT("ScopeEnded"));
 	// Invalidate first so late NotifyEnd callbacks cannot mutate the next action.
 	ActionPoseScopeState.ActiveHandle = 0;
 	ClearWeaponSocketTransformTransition(false);
@@ -129,6 +133,7 @@ bool UCWeaponComponent::EndWeaponActionPoseScope(uint32 InScopeHandle)
 		ApplyWeaponPivotRotation();
 	}
 
+	FWeaponPresentationDebug::ScopeRestored(this, InScopeHandle, baselineSocketName, baselinePivotRotation, bCanRestoreScopedActor, ActionPoseScopeState.bHasSocketBaseline);
 	ResetWeaponActionPoseScope();
 	return true;
 }
@@ -181,7 +186,9 @@ bool UCWeaponComponent::UpdateWeaponSocketTransformTransition(uint32 InTransitio
 	FTransform blendedWorldTransform;
 	blendedWorldTransform.Blend(sourceWorldTransform, targetWorldTransform, FMath::Clamp(InAlpha, 0.f, 1.f));
 
-	return WeaponActor->SetActorRootWorldTransform(blendedWorldTransform);
+	const bool bApplied = WeaponActor->SetActorRootWorldTransform(blendedWorldTransform);
+	if (bApplied) FWeaponPresentationDebug::Update(this, EWeaponDebugChannel::Socket, InAlpha);
+	return bApplied;
 }
 
 bool UCWeaponComponent::CompleteWeaponSocketTransformTransition(uint32 InTransitionHandle)
@@ -191,6 +198,7 @@ bool UCWeaponComponent::CompleteWeaponSocketTransformTransition(uint32 InTransit
 	if (!IsValid(WeaponActor)) return false;
 
 	const bool bAttached = WeaponActor->AttachToOwnerSocket(SocketTransformTransitionState.TargetSocketName);
+	FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Socket, bAttached ? TEXT("Completed: TargetAttached") : TEXT("Failed: TargetAttach"));
 	ClearWeaponSocketTransformTransition(false);
 	return bAttached;
 }
@@ -209,8 +217,8 @@ bool UCWeaponComponent::BeginWeaponPivotRotationTransition(const FWeaponPivotRot
 {
 	OutTransitionHandle = 0;
 
-	if (ActionPoseScopeState.ActiveHandle == 0 || !InRotationSpec.IsValid()) return false;
-	if (!IsValid(WeaponActor) || !WeaponActor->HasValidPivot()) return false;
+	if (ActionPoseScopeState.ActiveHandle == 0 || !InRotationSpec.IsValid()) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Pivot, TEXT("NoScopeOrInvalidRotationSpec"));
+	if (!IsValid(WeaponActor) || !WeaponActor->HasValidPivot()) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Pivot, TEXT("WeaponOrPivotUnavailable"));
 
 	if (PivotRotationTransitionState.ActiveHandle != 0)
 	{
@@ -218,7 +226,7 @@ bool UCWeaponComponent::BeginWeaponPivotRotationTransition(const FWeaponPivotRot
 			TEXT("[Weapon|PivotRotationTransitionRejected] Reason=AnotherTransitionAlreadyActive | Owner=%s | ActiveHandle=%u"),
 			*GetNameSafe(GetOwner()),
 			PivotRotationTransitionState.ActiveHandle);
-		return false;
+		return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Pivot, TEXT("BeginFailed: BusyOrApply"));
 	}
 
 	PivotRotationTransitionState.SourceRotation = CommittedPivotRotation;
@@ -235,10 +243,11 @@ bool UCWeaponComponent::BeginWeaponPivotRotationTransition(const FWeaponPivotRot
 	if (!ApplyWeaponPivotRotation())
 	{
 		ClearWeaponPivotRotationTransitionState();
-		return false;
+		return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Pivot, TEXT("BeginFailed: BusyOrApply"));
 	}
 
 	OutTransitionHandle = PivotRotationTransitionState.ActiveHandle;
+	FWeaponPresentationDebug::Begin(this, EWeaponDebugChannel::Pivot);
 	return true;
 }
 
@@ -248,7 +257,9 @@ bool UCWeaponComponent::UpdateWeaponPivotRotationTransition(uint32 InTransitionH
 	if (PivotRotationTransitionState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationTransitionState.ActionPoseScopeHandle)) return false;
 
 	PivotRotationTransitionState.CurrentRotation = PivotRotationTransitionState.RotationSpec.Evaluate(PivotRotationTransitionState.SourceRotation, InAlpha);
-	return ApplyWeaponPivotRotation();
+	const bool bApplied = ApplyWeaponPivotRotation();
+	if (bApplied) FWeaponPresentationDebug::Update(this, EWeaponDebugChannel::Pivot, InAlpha);
+	return bApplied;
 }
 
 bool UCWeaponComponent::CompleteWeaponPivotRotationTransition(uint32 InTransitionHandle)
@@ -258,7 +269,9 @@ bool UCWeaponComponent::CompleteWeaponPivotRotationTransition(uint32 InTransitio
 
 	CommittedPivotRotation = PivotRotationTransitionState.RotationSpec.Evaluate(PivotRotationTransitionState.SourceRotation, 1.f);
 	ClearWeaponPivotRotationTransitionState();
-	return ApplyWeaponPivotRotation();
+	const bool bApplied = ApplyWeaponPivotRotation();
+	FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Pivot, bApplied ? TEXT("Completed: Committed") : TEXT("Failed: Apply"));
+	return bApplied;
 }
 
 void UCWeaponComponent::CancelWeaponPivotRotationTransition(uint32 InTransitionHandle)
@@ -267,7 +280,8 @@ void UCWeaponComponent::CancelWeaponPivotRotationTransition(uint32 InTransitionH
 	if (PivotRotationTransitionState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationTransitionState.ActionPoseScopeHandle)) return;
 
 	ClearWeaponPivotRotationTransitionState();
-	ApplyWeaponPivotRotation();
+	const bool bApplied = ApplyWeaponPivotRotation();
+	FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Pivot, bApplied ? TEXT("Cancelled: CommittedRestored") : TEXT("Cancelled: RestoreFailed"));
 }
 
 // Weapon Presentation - Pivot Rotation Override
@@ -276,8 +290,8 @@ bool UCWeaponComponent::BeginWeaponPivotRotationOverride(const FWeaponPivotRotat
 {
 	OutOverrideHandle = 0;
 
-	if (ActionPoseScopeState.ActiveHandle == 0 || !InRotationSpec.IsValid()) return false;
-	if (!IsValid(WeaponActor) || !WeaponActor->HasValidPivot()) return false;
+	if (ActionPoseScopeState.ActiveHandle == 0 || !InRotationSpec.IsValid()) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Override, TEXT("NoScopeOrInvalidRotationSpec"));
+	if (!IsValid(WeaponActor) || !WeaponActor->HasValidPivot()) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Override, TEXT("WeaponOrPivotUnavailable"));
 
 	if (PivotRotationOverrideState.ActiveHandle != 0)
 	{
@@ -285,7 +299,7 @@ bool UCWeaponComponent::BeginWeaponPivotRotationOverride(const FWeaponPivotRotat
 			TEXT("[Weapon|PivotRotationOverrideRejected] Reason=AnotherOverrideAlreadyActive | Owner=%s | ActiveHandle=%u"),
 			*GetNameSafe(GetOwner()),
 			PivotRotationOverrideState.ActiveHandle);
-		return false;
+		return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Override, TEXT("BeginFailed: BusyOrApply"));
 	}
 
 	PivotRotationOverrideState.TemporaryRotationOffset = FQuat::Identity;
@@ -301,10 +315,11 @@ bool UCWeaponComponent::BeginWeaponPivotRotationOverride(const FWeaponPivotRotat
 	if (!ApplyWeaponPivotRotation())
 	{
 		ClearWeaponPivotRotationOverrideState();
-		return false;
+		return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Override, TEXT("BeginFailed: BusyOrApply"));
 	}
 
 	OutOverrideHandle = PivotRotationOverrideState.ActiveHandle;
+	FWeaponPresentationDebug::Begin(this, EWeaponDebugChannel::Override);
 	return true;
 }
 
@@ -314,16 +329,19 @@ bool UCWeaponComponent::UpdateWeaponPivotRotationOverride(uint32 InOverrideHandl
 	if (PivotRotationOverrideState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationOverrideState.ActionPoseScopeHandle)) return false;
 
 	PivotRotationOverrideState.TemporaryRotationOffset = PivotRotationOverrideState.RotationSpec.Evaluate(FQuat::Identity, InAlpha);
-	return ApplyWeaponPivotRotation();
+	const bool bApplied = ApplyWeaponPivotRotation();
+	if (bApplied) FWeaponPresentationDebug::Update(this, EWeaponDebugChannel::Override, InAlpha);
+	return bApplied;
 }
 
-void UCWeaponComponent::EndWeaponPivotRotationOverride(uint32 InOverrideHandle)
+void UCWeaponComponent::EndWeaponPivotRotationOverride(uint32 InOverrideHandle, const TCHAR* InDebugReason)
 {
 	if (InOverrideHandle == 0 || InOverrideHandle != PivotRotationOverrideState.ActiveHandle) return;
 	if (PivotRotationOverrideState.ActionPoseScopeHandle == 0 || !IsWeaponActionPoseScopeActive(PivotRotationOverrideState.ActionPoseScopeHandle)) return;
 
 	ClearWeaponPivotRotationOverrideState();
-	ApplyWeaponPivotRotation();
+	const bool bApplied = ApplyWeaponPivotRotation();
+	FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Override, bApplied ? InDebugReason : TEXT("Released: RestoreFailed"));
 }
 
 // Equip / Unequip Commit
@@ -421,6 +439,8 @@ void UCWeaponComponent::FinishWeaponDissolve()
 void UCWeaponComponent::ClearWeaponRuntimeState()
 {
 	ClearWeaponSocketTransformTransition(true);
+	if (PivotRotationTransitionState.ActiveHandle) FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Pivot, TEXT("RuntimeCleared"));
+	if (PivotRotationOverrideState.ActiveHandle) FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Override, TEXT("RuntimeCleared"));
 	ClearWeaponPivotRuntimeEffects();
 	ClearWeaponCombatContext();
 
@@ -544,7 +564,7 @@ bool UCWeaponComponent::BeginWeaponSocketTransformTransitionInternal(uint32 InAc
 {
 	OutTransitionHandle = 0;
 
-	if (!IsValid(WeaponActor) || InTargetSocketName.IsNone()) return false;
+	if (!IsValid(WeaponActor) || InTargetSocketName.IsNone()) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Socket, TEXT("InvalidWeaponOrTarget"));
 
 	if (SocketTransformTransitionState.ActiveHandle != 0)
 	{
@@ -552,14 +572,14 @@ bool UCWeaponComponent::BeginWeaponSocketTransformTransitionInternal(uint32 InAc
 			TEXT("[Weapon|SocketTransformTransitionRejected] Reason=AnotherTransitionAlreadyActive | Owner=%s | ActiveHandle=%u"),
 			*GetNameSafe(GetOwner()),
 			SocketTransformTransitionState.ActiveHandle);
-		return false;
+		return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Socket, TEXT("BeginFailed: BusyOrApply"));
 	}
 
 	FName sourceSocketName;
 	FTransform unusedTargetWorldTransform;
-	if (!WeaponActor->GetCurrentOwnerSocketName(sourceSocketName)) return false;
-	if (!InExpectedSourceSocketName.IsNone() && sourceSocketName != InExpectedSourceSocketName) return false;
-	if (!WeaponActor->GetOwnerSocketWorldTransform(InTargetSocketName, unusedTargetWorldTransform)) return false;
+	if (!WeaponActor->GetCurrentOwnerSocketName(sourceSocketName)) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Socket, TEXT("SourceSocketUnavailable"));
+	if (!InExpectedSourceSocketName.IsNone() && sourceSocketName != InExpectedSourceSocketName) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Socket, TEXT("SourceSocketMismatch"));
+	if (!WeaponActor->GetOwnerSocketWorldTransform(InTargetSocketName, unusedTargetWorldTransform)) return FWeaponPresentationDebug::Reject(this, EWeaponDebugChannel::Socket, TEXT("TargetSocketUnavailable"));
 
 	SocketTransformTransitionState.SourceSocketName = sourceSocketName;
 	SocketTransformTransitionState.TargetSocketName = InTargetSocketName;
@@ -572,6 +592,7 @@ bool UCWeaponComponent::BeginWeaponSocketTransformTransitionInternal(uint32 InAc
 	}
 
 	OutTransitionHandle = SocketTransformTransitionState.ActiveHandle;
+	FWeaponPresentationDebug::Begin(this, EWeaponDebugChannel::Socket);
 	return true;
 }
 
@@ -587,6 +608,14 @@ bool UCWeaponComponent::ClearWeaponSocketTransformTransition(bool bRestoreSource
 		WeaponActor->AttachToOwnerSocket(SocketTransformTransitionState.SourceSocketName);
 	}
 
+	if (bRestoreSourceSocket)
+	{
+		FName actualSocket;
+		const bool bRestored = IsValid(WeaponActor) && WeaponActor->GetCurrentOwnerSocketName(actualSocket)
+			&& actualSocket == SocketTransformTransitionState.SourceSocketName
+			&& WeaponActor->GetRootComponent()->GetRelativeTransform().Equals(FTransform::Identity, .01f);
+		FWeaponPresentationDebug::End(this, EWeaponDebugChannel::Socket, bRestored ? TEXT("Cancelled: SourceRestored") : TEXT("Cancelled: RestoreFailed"));
+	}
 	SocketTransformTransitionState.SourceSocketName = NAME_None;
 	SocketTransformTransitionState.TargetSocketName = NAME_None;
 	SocketTransformTransitionState.ActiveHandle = 0;

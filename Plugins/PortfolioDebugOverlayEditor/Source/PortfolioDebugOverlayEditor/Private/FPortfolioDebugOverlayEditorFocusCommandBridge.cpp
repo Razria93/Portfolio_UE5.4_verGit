@@ -119,4 +119,16 @@ FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteSelectOutlinerFocusC
 		FText::Format(LOCTEXT("SelectOutlinerFocusSent", "Last Command: SelectOutlinerFocus | Actor: {0}"), FText::FromString(actorName)));
 }
 
+FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteClearEventLogCommand()
+{
+	return ExecuteDebugOverlayFocusCommand(
+		TEXT("Portfolio.DebugOverlay.ClearEventLog"),
+		LOCTEXT("ClearEventLogSent", "Last Command: Clear Event Log"));
+}
+
+FText PortfolioDebugOverlayEditorFocusCommandBridge::ExecuteClearPatrolTrailCommand()
+{
+	return ExecuteDebugOverlayFocusCommand(TEXT("Portfolio.DebugOverlay.Patrol.ClearTrail"), LOCTEXT("ClearPatrolTrailSent", "Last Command: Clear Patrol Trail"));
+}
+
 #undef LOCTEXT_NAMESPACE

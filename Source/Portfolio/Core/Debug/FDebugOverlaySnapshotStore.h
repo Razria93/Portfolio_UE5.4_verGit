@@ -62,6 +62,8 @@ public:
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter);
 	static TArray<FDebugOverlayEventEntry> GetRecentEventsForActorCopy(const UObject* InWorldContextObject, int32 InMaxEvents, const FString& InFilter, const AActor* InActor);
+	// Clears both world and actor event histories; preserves settings and diagnostic snapshots.
+	static void ClearEventLog(const UObject* InWorldContextObject);
 	static void RemoveActorDebugData(const UObject* InWorldContextObject, const AActor* InActor);
 
 	// ===== Snapshot Query API =====
