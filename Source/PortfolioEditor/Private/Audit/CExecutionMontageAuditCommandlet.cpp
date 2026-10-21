@@ -258,9 +258,11 @@ namespace ExecutionMontageAudit
 
 	bool IsPathUnderRoot(const FString& PackageFilename, const TArray<FString>& RootDirectories)
 	{
+		FString fullPath = FPaths::ConvertRelativePathToFull(PackageFilename);
+		FPaths::NormalizeFilename(fullPath);
 		for (const FString& RootDirectory : RootDirectories)
 		{
-			if (PackageFilename.StartsWith(RootDirectory, ESearchCase::IgnoreCase)) return true;
+			if (fullPath.StartsWith(RootDirectory + TEXT("/"), ESearchCase::IgnoreCase)) return true;
 		}
 		return false;
 	}
@@ -567,7 +569,8 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 	using namespace ExecutionMontageAudit;
 
 	FString RootsParameter;
-	FParse::Value(*Params, TEXT("Roots="), RootsParameter);
+	// Commas delimit roots, not the command-line value itself.
+	FParse::Value(*Params, TEXT("Roots="), RootsParameter, false);
 	if (RootsParameter.IsEmpty())
 	{
 		RootsParameter = TEXT("/Game");
@@ -591,7 +594,13 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 		}
 
 		FString RootDirectory = FPackageName::LongPackageNameToFilename(LongPackageRoot);
+		RootDirectory = FPaths::ConvertRelativePathToFull(RootDirectory);
 		FPaths::NormalizeDirectoryName(RootDirectory);
+		if (!IFileManager::Get().DirectoryExists(*RootDirectory))
+		{
+			UE_LOG(LogTemp, Error, TEXT("[ExecutionMontageAudit] Root directory does not exist: %s"), *RootDirectory);
+			return 2;
+		}
 		RootDirectories.Add(RootDirectory);
 	}
 
@@ -602,6 +611,11 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 	}
 	PackageFiles.Sort();
 	PackageFiles.SetNum(Algo::Unique(PackageFiles));
+	if (PackageFiles.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ExecutionMontageAudit] No packages found. Check Roots; empty scans are not verification."));
+		return 2;
+	}
 
 	TArray<FString> CsvLines;
 	CsvLines.Add(CsvHeader);
@@ -645,6 +659,12 @@ int32 UCExecutionMontageAuditCommandlet::Main(const FString& Params)
 			}
 			return true;
 		});
+	}
+
+	if (LoadedPackageCount == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ExecutionMontageAudit] No packages loaded; empty scans are not verification."));
+		return 2;
 	}
 
 	TArray<FString> InventoryCsvLines;
