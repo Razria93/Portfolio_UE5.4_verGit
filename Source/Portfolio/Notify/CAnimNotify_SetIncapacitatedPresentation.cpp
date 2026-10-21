@@ -35,7 +35,7 @@ void UCAnimNotify_SetIncapacitatedPresentation::Notify(USkeletalMeshComponent* M
 				IsValid(reactionComp) ? *UEnum::GetValueAsString(reactionComp->GetActiveReactionType()) : TEXT("Invalid")));
 	}
 
-	if (!CanProcessReactionNotify(reactionComp))
+	if (!CanProcessReactionNotify(reactionComp, EventReference))
 	{
 		if (IsValid(balanceComp))
 		{

@@ -7,6 +7,7 @@
 #include "Type/CActionOrchestrationTypes.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCharacterSetupTypes.h"
+#include "Type/CHealthTypes.h"
 #include "CPlayer.generated.h"
 
 UCLASS()
@@ -102,6 +103,7 @@ protected:
 private:
 	// Setup
 	void ApplyCharacterSetup();
+	void HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState);
 
 private:
 	// Component Reference

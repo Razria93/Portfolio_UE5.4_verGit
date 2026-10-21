@@ -9,7 +9,18 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "Sound/SoundBase.h"
+#include "Camera/CameraComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
+#include "Component/CActionComponent.h"
+#include "Component/CReactionComponent.h"
+#include "Reaction/CReaction.h"
+#include "Component/CWeaponComponent.h"
+#include "Weapon/CWeaponActor.h"
+#include "System/Combat/CWorldSubsystem_CombatFeedback.h"
 
 // Helper
 namespace
@@ -25,12 +36,19 @@ namespace
 
 UCReactionFeedbackComponent::UCReactionFeedbackComponent()
 {
+	PrimaryComponentTick.bCanEverTick = true;
+	PerfectBodyEnvelope.Hold = .4f;
+	PerfectBodyEnvelope.FadeOut = .22f;
 }
 
 // Component Reference
 
 void UCReactionFeedbackComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	ClearPerfectDodgePresentation();
+	LastPerfectResultSerial = 0;
+	LastBodyStartGeneration = 0;
+	LastBodyStartMontageInstanceId = INDEX_NONE;
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 
 	ValidateRequiredComponentReferences();
@@ -75,6 +93,378 @@ void UCReactionFeedbackComponent::PlayFeedback(const FReactionFeedbackRequest& I
 
 void UCReactionFeedbackComponent::ClearRuntimeFeedback()
 {
+	// Success cues use their own lifetimes, not the reaction's immunity lifetime.
+}
+
+void UCReactionFeedbackComponent::PlayPerfectDodgeSuccess(AActor* InAttacker, uint64 InResultSerial)
+{
+	if (!IsValid(OwnerCharacter_Injected) || InResultSerial == 0 || InResultSerial == LastPerfectResultSerial) return;
+	ClearPerfectDodgePresentation();
+	LastPerfectResultSerial = InResultSerial;
+	PerfectAttacker = InAttacker;
+	// Body glow is started exclusively by authored point notifies.
+}
+
+void UCReactionFeedbackComponent::StartBodyGlow(uint64 InGeneration, int32 InMontageInstanceId,
+	float InPeak, float InFadeIn, float InFadeOut, float InSafetySeconds)
+{
+	if (!IsValid(OwnerCharacter_Injected) || InGeneration == 0 || InMontageInstanceId == INDEX_NONE
+		|| !FMath::IsFinite(InPeak) || InPeak < 0.f || InPeak > 1.f
+		|| !FMath::IsFinite(InSafetySeconds) || InSafetySeconds <= 0.f) return;
+	const auto* health = OwnerCharacter_Injected->FindComponentByClass<UCHealthComponent>();
+	const auto* reaction = OwnerCharacter_Injected->FindComponentByClass<UCReactionComponent>();
+	const auto* executor = reaction ? reaction->GetActiveReactionExecutor() : nullptr;
+	if (!health || !health->IsAlive() || !reaction || !reaction->IsActiveReactionType(EReactionType::PerfectDodge)
+		|| reaction->GetActiveReactionGeneration() != InGeneration || !IsValid(executor)
+		|| executor->GetActiveMontageInstanceId() != InMontageInstanceId) return;
+	if (LastBodyStartGeneration == InGeneration && LastBodyStartMontageInstanceId == InMontageInstanceId) return;
+	FCombatPresentationEnvelope profile;
+	profile.FadeIn = InFadeIn;
+	profile.FadeOut = InFadeOut;
+	if (!profile.IsValid() || !IsValid(PerfectBodyMaterial)) return;
+	RestorePerfectBody();
+	const double now = FPlatformTime::Seconds();
+	if (BodyEnvelopeState.Start(profile, now, true))
+	{
+		TArray<UMeshComponent*> parts;
+		parts.Add(OwnerCharacter_Injected->GetMesh());
+		TArray<USkeletalMeshComponent*> candidates;
+		OwnerCharacter_Injected->GetComponents(candidates);
+		for (USkeletalMeshComponent* part : candidates)
+			if (part->GetSkinnedAsset() && (PerfectBodyParts.Contains(part->GetFName())
+				|| (!PerfectBodyPartTag.IsNone() && part->ComponentHasTag(PerfectBodyPartTag)))) parts.AddUnique(part);
+		if (!BodyOverlay.Start(this, parts, PerfectBodyMaterial, GlowWeightParameter))
+		{ RestorePerfectBody(); return; }
+		BodyOwnerGeneration = LastBodyStartGeneration = InGeneration;
+		BodyOwnerMontageInstanceId = LastBodyStartMontageInstanceId = InMontageInstanceId;
+		BodyPeakWeight = InPeak;
+		BodySafetyDeadline = now + InSafetySeconds;
+	}
+}
+
+void UCReactionFeedbackComponent::EndBodyGlow(uint64 InGeneration, int32 InMontageInstanceId, float InFadeOut)
+{
+	if (!BodyOwnerGeneration || BodyOwnerGeneration != InGeneration || BodyOwnerMontageInstanceId != InMontageInstanceId
+		|| !FMath::IsFinite(InFadeOut) || InFadeOut < 0.f || BodyEnvelopeState.bReleased) return;
+	BodyEnvelopeState.Profile.FadeOut = InFadeOut;
+	EndBodyGlowOwner(InGeneration);
+}
+
+void UCReactionFeedbackComponent::EndBodyGlowOwner(uint64 InGeneration)
+{
+	if (!InGeneration || BodyOwnerGeneration != InGeneration) return;
+	BodySafetyDeadline = 0.;
+	BodyEnvelopeState.Release(FPlatformTime::Seconds());
+	if (BodyEnvelopeState.Profile.FadeOut <= 0.f) RestorePerfectBody();
+}
+
+void UCReactionFeedbackComponent::StartPerfectDodgeSlow(const FCombatPresentationEnvelope& InEnvelope,
+	float InDilation, bool bInPlayer, bool bInAttacker)
+{
+	if (!IsValid(OwnerCharacter_Injected) || !InEnvelope.IsValid() || InEnvelope.Duration() <= 0.
+		|| !FMath::IsFinite(InDilation) || InDilation < 0.f || InDilation > 1.f || (!bInPlayer && !bInAttacker)) return;
+	if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
+	{
+		subsystem->CancelPerfectDodgeSlow(PerfectSlowSerial);
+		PerfectSlowSerial = subsystem->RequestPerfectDodgeSlow(bInPlayer ? OwnerCharacter_Injected : nullptr,
+			bInAttacker ? PerfectAttacker.Get() : nullptr, InEnvelope, InDilation);
+	}
+}
+
+void UCReactionFeedbackComponent::StartPerfectDodgeVignette(const FCombatPresentationEnvelope& InEnvelope, float InPeakIntensity)
+{
+	if (!IsValid(OwnerCharacter_Injected) || !OwnerCharacter_Injected->IsLocallyControlled()
+		|| !InEnvelope.IsValid() || InEnvelope.Duration() <= 0. || !FMath::IsFinite(InPeakIntensity)) return;
+	RestorePerfectScreen();
+	PerfectCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
+	if (!PerfectCamera.IsValid()) return;
+	auto& settings = PerfectCamera->PostProcessSettings;
+	PreviousVignette = LastWrittenVignette = settings.VignetteIntensity;
+	bPreviousVignetteOverride = settings.bOverride_VignetteIntensity;
+	PeakVignette = FMath::Clamp(InPeakIntensity, 0.f, 1.f);
+	settings.bOverride_VignetteIntensity = true;
+	ScreenEnvelopeState.Start(InEnvelope, FPlatformTime::Seconds());
+}
+
+void UCReactionFeedbackComponent::TickComponent(float InDeltaTime, ELevelTick InTickType, FActorComponentTickFunction* InTickFunction)
+{
+	Super::TickComponent(InDeltaTime, InTickType, InTickFunction);
+	const UCHealthComponent* health = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->FindComponentByClass<UCHealthComponent>() : nullptr;
+	if (!IsValid(health) || !health->IsAlive()) { ClearPerfectDodgePresentation(); return; }
+	const double now = FPlatformTime::Seconds();
+	if (BodyOwnerGeneration && !BodyEnvelopeState.bReleased)
+	{
+		const auto* reaction = OwnerCharacter_Injected->FindComponentByClass<UCReactionComponent>();
+		const auto* executor = reaction ? reaction->GetActiveReactionExecutor() : nullptr;
+		if ((BodySafetyDeadline > 0. && now >= BodySafetyDeadline) || !reaction
+			|| !reaction->IsActiveReactionType(EReactionType::PerfectDodge)
+			|| reaction->GetActiveReactionGeneration() != BodyOwnerGeneration || !IsValid(executor)
+			|| executor->GetActiveMontageInstanceId() != BodyOwnerMontageInstanceId)
+			EndBodyGlowOwner(BodyOwnerGeneration);
+	}
+	BodyOverlay.SetWeight(BodyPeakWeight * BodyEnvelopeState.Evaluate(now));
+	TickRushPresentation(now);
+	if (BodyEnvelopeState.IsFinished(now)) RestorePerfectBody();
+	if (WeaponOpportunitySerial != 0)
+	{
+		const auto* weaponComp = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
+		if (!GlowWeapon.IsValid() || !weaponComp || weaponComp->GetWeaponActor() != GlowWeapon.Get())
+			RestoreCounterWeapon();
+		else
+		{
+			if (WeaponSafetyDeadline > 0. && now >= WeaponSafetyDeadline)
+			{
+				WeaponSafetyDeadline = 0.;
+				WeaponEnvelopeState.Release(now);
+			}
+			WeaponOverlay.SetWeight(WeaponEnvelopeState.Evaluate(now) * WeaponPeakWeight);
+			if (WeaponEnvelopeState.IsFinished(now)) RestoreCounterWeapon();
+		}
+	}
+	if (PerfectCamera.IsValid())
+	{
+		auto& settings = PerfectCamera->PostProcessSettings;
+		if (!settings.bOverride_VignetteIntensity || !FMath::IsNearlyEqual(settings.VignetteIntensity, LastWrittenVignette))
+		{
+			// An external camera effect took ownership. Stop writing rather than fighting it.
+			PerfectCamera.Reset();
+			ScreenEnvelopeState.Reset();
+		}
+		else if (ScreenEnvelopeState.IsFinished(now)) RestorePerfectScreen();
+		else
+		{
+			LastWrittenVignette = FMath::Lerp(PreviousVignette, PeakVignette, ScreenEnvelopeState.Evaluate(now));
+			settings.VignetteIntensity = LastWrittenVignette;
+		}
+	}
+}
+
+void UCReactionFeedbackComponent::RestorePerfectBody()
+{
+	BodyOverlay.Restore();
+	BodyEnvelopeState.Reset();
+	BodyOwnerGeneration = 0;
+	BodyOwnerMontageInstanceId = INDEX_NONE;
+	BodySafetyDeadline = 0.;
+	BodyPeakWeight = 1.f;
+}
+
+void UCReactionFeedbackComponent::TransferCounterWeaponToAttack(uint64 InOpportunitySerial)
+{
+	const auto* action = IsValid(OwnerCharacter_Injected) ? OwnerCharacter_Injected->FindComponentByClass<UCActionComponent>() : nullptr;
+	if (InOpportunitySerial != 0 && PendingWeaponTransfer == InOpportunitySerial
+		&& WeaponOpportunitySerial == InOpportunitySerial && !WeaponEnvelopeState.bReleased
+		&& action && action->IsActiveActionType(EActionType::CounterRush))
+	{
+		bWeaponTransferredToAttack = true;
+		WeaponOwnerGeneration = action->GetActiveActionGeneration();
+		bWeaponOwnerEnded = false;
+	}
+}
+
+void UCReactionFeedbackComponent::ReleaseCounterWeapon(uint64 InOpportunitySerial)
+{
+	if (InOpportunitySerial != 0 && WeaponOpportunitySerial == InOpportunitySerial)
+	{
+		WeaponSafetyDeadline = 0.;
+		WeaponEnvelopeState.Release(FPlatformTime::Seconds());
+	}
+}
+
+void UCReactionFeedbackComponent::StartWeaponGlow(bool bInAction, uint64 InGeneration, float InPeak,
+	float InFadeIn, float InFadeOut, float InSafetySeconds)
+{
+	if (!IsValid(OwnerCharacter_Injected) || InGeneration == 0 || !FMath::IsFinite(InPeak) || InPeak < 0.f || InPeak > 1.f
+		|| !FMath::IsFinite(InSafetySeconds) || InSafetySeconds <= 0.f) return;
+	const auto* action = OwnerCharacter_Injected->FindComponentByClass<UCActionComponent>();
+	const auto* reaction = OwnerCharacter_Injected->FindComponentByClass<UCReactionComponent>();
+	if (bInAction ? (!action || !action->IsActiveActionType(EActionType::CounterRush) || action->GetActiveActionGeneration() != InGeneration)
+		: (!reaction || !reaction->IsActiveReactionType(EReactionType::PerfectDodge) || reaction->GetActiveReactionGeneration() != InGeneration)) return;
+	FCombatPresentationEnvelope profile;
+	profile.FadeIn = InFadeIn;
+	profile.FadeOut = InFadeOut;
+	if (!profile.IsValid() || !IsValid(CounterWeaponMaterial) || LastPerfectResultSerial == 0) return;
+	// Repeated Start in the same execution never extends the safety deadline.
+	if (WeaponOpportunitySerial && WeaponOwnerGeneration == InGeneration && bWeaponTransferredToAttack == bInAction) return;
+	RestoreCounterWeapon();
+	const auto* weapon = OwnerCharacter_Injected->FindComponentByClass<UCWeaponComponent>();
+	GlowWeapon = weapon ? weapon->GetWeaponActor() : nullptr;
+	if (!GlowWeapon.IsValid()) return;
+	TArray<UMeshComponent*> parts;
+	GlowWeapon->GetComponents(parts);
+	const double now = FPlatformTime::Seconds();
+	if (!WeaponEnvelopeState.Start(profile, now, true) || !WeaponOverlay.Start(this, parts, CounterWeaponMaterial, GlowWeightParameter))
+	{ RestoreCounterWeapon(); return; }
+	WeaponOpportunitySerial = LastPerfectResultSerial;
+	WeaponOwnerGeneration = InGeneration;
+	bWeaponTransferredToAttack = bInAction;
+	WeaponPeakWeight = InPeak;
+	WeaponSafetyDeadline = now + InSafetySeconds;
+}
+
+void UCReactionFeedbackComponent::EndWeaponGlow(bool bInAction, uint64 InGeneration, float InFadeOut)
+{
+	if (!WeaponOpportunitySerial || WeaponOwnerGeneration != InGeneration || bWeaponTransferredToAttack != bInAction
+		|| !FMath::IsFinite(InFadeOut) || InFadeOut < 0.f || WeaponEnvelopeState.bReleased) return;
+	WeaponEnvelopeState.Profile.FadeOut = InFadeOut;
+	ReleaseCounterWeapon(WeaponOpportunitySerial);
+}
+
+void UCReactionFeedbackComponent::EndWeaponGlowOwner(bool bInAction, uint64 InGeneration)
+{
+	if (!WeaponOpportunitySerial || WeaponOwnerGeneration != InGeneration || bWeaponTransferredToAttack != bInAction) return;
+	bWeaponOwnerEnded = true;
+	if (!bInAction && PendingWeaponTransfer == WeaponOpportunitySerial) return;
+	ReleaseCounterWeapon(WeaponOpportunitySerial);
+}
+
+void UCReactionFeedbackComponent::BeginWeaponGlowTransfer(uint64 InOpportunitySerial)
+{
+	if (WeaponOpportunitySerial == InOpportunitySerial && !bWeaponTransferredToAttack && !WeaponEnvelopeState.bReleased)
+		PendingWeaponTransfer = InOpportunitySerial;
+}
+
+void UCReactionFeedbackComponent::FinishWeaponGlowTransfer()
+{
+	PendingWeaponTransfer = 0;
+	if (bWeaponOwnerEnded) ReleaseCounterWeapon(WeaponOpportunitySerial);
+}
+
+void UCReactionFeedbackComponent::RestoreCounterWeapon()
+{
+	WeaponOverlay.Restore();
+	WeaponEnvelopeState.Reset();
+	GlowWeapon.Reset();
+	WeaponOpportunitySerial = 0;
+	bWeaponTransferredToAttack = false;
+	WeaponOwnerGeneration = PendingWeaponTransfer = 0;
+	bWeaponOwnerEnded = false;
+	WeaponSafetyDeadline = 0.;
+	WeaponPeakWeight = 1.f;
+}
+
+void UCReactionFeedbackComponent::RestorePerfectScreen()
+{
+	if (PerfectCamera.IsValid() && PerfectCamera->PostProcessSettings.bOverride_VignetteIntensity
+		&& FMath::IsNearlyEqual(PerfectCamera->PostProcessSettings.VignetteIntensity, LastWrittenVignette))
+	{
+		PerfectCamera->PostProcessSettings.VignetteIntensity = PreviousVignette;
+		PerfectCamera->PostProcessSettings.bOverride_VignetteIntensity = bPreviousVignetteOverride;
+	}
+	PerfectCamera.Reset();
+	ScreenEnvelopeState.Reset();
+}
+
+void UCReactionFeedbackComponent::ClearPerfectDodgePresentation()
+{
+	RestoreRushPresentation();
+	RestorePerfectBody();
+	RestoreCounterWeapon();
+	RestorePerfectScreen();
+	if (PerfectSlowSerial != 0)
+		if (auto* subsystem = GetWorld() ? GetWorld()->GetSubsystem<UCWorldSubsystem_CombatFeedback>() : nullptr)
+			subsystem->CancelPerfectDodgeSlow(PerfectSlowSerial);
+	PerfectSlowSerial = 0;
+	PerfectAttacker.Reset();
+}
+
+void UCReactionFeedbackComponent::BeginRushPresentation(uint64 InSerial)
+{
+	RestoreRushPresentation();
+	if (!InSerial || !IsValid(OwnerCharacter_Injected)) return;
+	RushPresentationSerial = InSerial;
+	RushLastRealTime = FPlatformTime::Seconds();
+	if (OwnerCharacter_Injected->IsLocallyControlled() && FMath::IsFinite(RushFOVOffset) && RushFOVOffset > 0.f
+		&& FMath::IsFinite(RushFOVBlendIn) && RushFOVBlendIn > 0.f
+		&& FMath::IsFinite(RushFOVBlendOut) && RushFOVBlendOut > 0.f)
+	{
+		RushCamera = OwnerCharacter_Injected->FindComponentByClass<UCameraComponent>();
+		if (RushCamera.IsValid()) RushBaseFOV = RushLastFOV = RushCamera->FieldOfView;
+	}
+}
+
+void UCReactionFeedbackComponent::UpdateRushPresentation(uint64 InSerial, float InMovementRatio)
+{
+	if (InSerial && InSerial == RushPresentationSerial && !bRushPresentationReleased)
+		RushMotionWeight = FMath::IsFinite(InMovementRatio) ? FMath::Clamp(InMovementRatio, 0.f, 1.f) : 0.f;
+}
+
+void UCReactionFeedbackComponent::EndRushPresentation(uint64 InSerial)
+{
+	if (!InSerial || InSerial != RushPresentationSerial || bRushPresentationReleased) return;
+	RushMotionWeight = 0.f;
+	bRushPresentationReleased = true;
+	RushReleasedAt = FPlatformTime::Seconds();
+	if (IsValid(RushVFXComponent))
+	{
+		RushVFXComponent->Deactivate();
+		// Residual particles remain at the rush endpoint, not on the follow-up attack.
+		RushVFXComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	}
+	bRushVFXEmitting = false;
+}
+
+void UCReactionFeedbackComponent::TickRushPresentation(double InNow)
+{
+	if (!RushPresentationSerial) return;
+	const float threshold = FMath::IsFinite(RushVFXMovementThreshold) ? FMath::Clamp(RushVFXMovementThreshold, 0.f, 1.f) : 1.f;
+	const bool moving = !bRushPresentationReleased && RushMotionWeight > threshold;
+	if (moving && !IsValid(RushVFXComponent) && IsValid(RushMovementVFX) && IsValid(OwnerCharacter_Injected)
+		&& GetNetMode() != NM_DedicatedServer && FMath::IsFinite(RushVFXScale) && RushVFXScale > 0.f && !RushVFXOffset.ContainsNaN())
+	{
+		// One owned component, separate from the weapon's attack trail. Never spawn for zero travel.
+		RushVFXComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(RushMovementVFX,
+			OwnerCharacter_Injected->GetRootComponent(), NAME_None, RushVFXOffset, FRotator::ZeroRotator,
+			FVector(RushVFXScale), EAttachLocation::KeepRelativeOffset, false, ENCPoolMethod::None, false);
+	}
+	if (IsValid(RushVFXComponent) && moving != bRushVFXEmitting)
+	{
+		if (moving) RushVFXComponent->Activate(true);
+		else RushVFXComponent->Deactivate();
+		bRushVFXEmitting = moving;
+	}
+	const float tail = FMath::IsFinite(RushVFXTail) ? FMath::Clamp(RushVFXTail, 0.f, 2.f) : 0.f;
+	if (bRushPresentationReleased && InNow - RushReleasedAt >= tail && IsValid(RushVFXComponent))
+	{
+		RushVFXComponent->DestroyComponent();
+		RushVFXComponent = nullptr;
+		bRushVFXEmitting = false;
+	}
+	if (RushCamera.IsValid() && !FMath::IsNearlyEqual(RushCamera->FieldOfView, RushLastFOV))
+	{
+		// A different camera writer wins; never restore over its new value.
+		RushCamera.Reset();
+	}
+	const float elapsed = float(FMath::Max(0., InNow - RushLastRealTime));
+	RushLastRealTime = InNow;
+	const float configuredBlend = RushMotionWeight > RushFOVWeight ? RushFOVBlendIn : RushFOVBlendOut;
+	const float blend = FMath::IsFinite(configuredBlend) ? configuredBlend : .12f;
+	RushFOVWeight = FMath::FInterpConstantTo(RushFOVWeight, RushMotionWeight, elapsed, 1.f / FMath::Max(.001f, blend));
+	const float smooth = RushFOVWeight * RushFOVWeight * (3.f - 2.f * RushFOVWeight);
+	const float offset = FMath::IsFinite(RushFOVOffset) ? FMath::Clamp(RushFOVOffset, 0.f, 20.f) : 0.f;
+	RushLastFOV = FMath::Clamp(RushBaseFOV + offset * smooth, 5.f, 170.f);
+	if (RushCamera.IsValid()) RushCamera->SetFieldOfView(RushLastFOV);
+	if (bRushPresentationReleased && RushFOVWeight <= KINDA_SMALL_NUMBER && !IsValid(RushVFXComponent)) RestoreRushPresentation();
+}
+
+void UCReactionFeedbackComponent::RestoreRushPresentation()
+{
+	if (IsValid(RushVFXComponent)) RushVFXComponent->DestroyComponent();
+	RushVFXComponent = nullptr;
+	bRushVFXEmitting = false;
+	RushReleasedAt = 0.;
+	if (RushCamera.IsValid() && FMath::IsNearlyEqual(RushCamera->FieldOfView, RushLastFOV))
+		RushCamera->SetFieldOfView(RushBaseFOV);
+	RushCamera.Reset();
+	RushPresentationSerial = 0;
+	RushMotionWeight = RushFOVWeight = 0.f;
+	bRushPresentationReleased = false;
+}
+
+void UCReactionFeedbackComponent::EndPlay(const EEndPlayReason::Type InReason)
+{
+	ClearPerfectDodgePresentation();
+	Super::EndPlay(InReason);
 }
 
 // Query

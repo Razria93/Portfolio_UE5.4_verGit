@@ -10,6 +10,7 @@
 #include "Component/CExecutionCollaborationComponent.h"
 #include "Component/CActionComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Action/CAction.h"
 #include "Reaction/CReaction.h"
@@ -34,6 +35,7 @@ void UCActionOrchestratorComponent::InitializeReferences(const FCharacterCompone
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	ActionComp_Injected = InReferences.ActionComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
+	DefenseComp_Injected = InReferences.DefenseComponent;
 
 	ValidateRequiredComponentReferences();
 }
@@ -385,6 +387,18 @@ bool UCActionOrchestratorComponent::ResolveCombatActionCandidate(const FCombatAc
 	{
 	case ECombatActionIntent::ComboAttack:
 	{
+		FActionDataKey rushKey;
+		rushKey.ActionType = EActionType::CounterRush;
+		rushKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
+		FActionExecutionContext rushContext;
+		if (InIncomingRequest.IntentEvent == EActionIntentEvent::Started
+			&& IsValid(DefenseComp_Injected) && DefenseComp_Injected->GetCounterRushTarget()
+			&& ActionComp_Injected->FindPreparedActionContext(rushKey, rushContext))
+		{
+			incomingCandidate.ActionDataKey.ActionType = EActionType::CounterRush;
+			incomingCandidate.ActionDataKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
+			break;
+		}
 		incomingCandidate.ActionDataKey.ActionType = EActionType::ComboAttack;
 		incomingCandidate.ActionDataKey.ActionIndex = ActionComp_Injected->IsActiveActionType(EActionType::ComboAttack)
 			? ActionComp_Injected->GetActiveActionIndex() + CActionIndexConstants::NextSequentialActionOffset

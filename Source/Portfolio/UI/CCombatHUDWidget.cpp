@@ -37,6 +37,7 @@ namespace
 	const FLinearColor ActionActive(0.4f, 0.95f, 1.f, 1.f);
 	const FLinearColor ExecutionReady(1.f, 0.85f, 0.38f, 1.f);
 	const FLinearColor ParrySuccess(1.f, 0.9f, 0.4f, 1.f);
+	const FLinearColor PerfectDodgeActive(1.f, 0.18f, 0.28f, 1.f);
 
 	FLinearColor ResolveActionTint(EHUDActionState State, const FLinearColor& ReadyColor = Ink)
 	{
@@ -456,10 +457,11 @@ void UCCombatHUDWidget::UpdateActionPresentation()
 		GuardImage->SetColorAndOpacity(ViewData.Actions.bParrySuccess ? ParrySuccess : ResolveActionTint(ViewData.Actions.Guard));
 
 	if (DodgeImage)
-		DodgeImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.Dodge));
+		DodgeImage->SetColorAndOpacity(ViewData.Actions.bPerfectDodgeActive
+			? PerfectDodgeActive : ResolveActionTint(ViewData.Actions.Dodge));
 
 	if (CounterImage)
-		CounterImage->SetColorAndOpacity(ResolveActionTint(EHUDActionState::Unimplemented));
+		CounterImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.CounterRush));
 
 	if (ExecutionImage)
 		ExecutionImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.Execution, ExecutionReady));

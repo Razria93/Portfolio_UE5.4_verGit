@@ -139,15 +139,18 @@ bool UCReaction::Start(const FReactionData& InData)
 	ActiveMontage_Cached = InData.Montage;
 	LastStopReason_Cached = EReactionStopReason::None;
 	bIsActive = true;
+	const uint64 reactionGeneration = IsValid(ReactionComp_Injected) ? ReactionComp_Injected->GetActiveReactionGeneration() : 0;
 
 	if (!PlayMontage(InData))
 	{
-		ClearRuntime();
+		if (!IsValid(ReactionComp_Injected) || ReactionComp_Injected->GetActiveReactionGeneration() == reactionGeneration)
+			ClearRuntime();
 		return false;
 	}
 
 	// Playback may have ended this execution through a callback.
 	if (!bIsActive) return false;
+	if (IsValid(ReactionComp_Injected) && ReactionComp_Injected->GetActiveReactionGeneration() != reactionGeneration) return false;
 
 	if (!BindMontageEndDelegate())
 	{
@@ -156,6 +159,8 @@ bool UCReaction::Start(const FReactionData& InData)
 		return false;
 	}
 
+	if (IsValid(ReactionComp_Injected)) ReactionComp_Injected->HandleApplyReactionStarted(this, reactionGeneration);
+	if (!bIsActive || (IsValid(ReactionComp_Injected) && ReactionComp_Injected->GetActiveReactionGeneration() != reactionGeneration)) return false;
 	const FReactionFeedbackRequest feedbackRequest = BuildFeedbackRequest(EReactionFeedbackTiming::Start);
 	PlayFeedbackRequest(feedbackRequest);
 	FReactionComponentDebug::RecordReactionExecutorStartedForAudit(OwnerCharacter_Injected, this, ActiveData_Cached);
@@ -277,6 +282,7 @@ void UCReaction::HandleReactionStop(EReactionStopReason InStopReason)
 
 void UCReaction::ClearRuntime()
 {
+	ActiveMontageInstanceId = INDEX_NONE;
 	bIsActive = false;
 
 	ActiveDataKey_Cached = FReactionDataKey();
@@ -318,6 +324,9 @@ bool UCReaction::PlayMontage(const FReactionData& InData)
 	}
 
 	FReactionComponentDebug::RecordReactionMontagePlayedForAudit(OwnerCharacter_Injected, this, InData, duration);
+	UAnimInstance* playbackAnim = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
+	const FAnimMontageInstance* playbackInstance = playbackAnim ? playbackAnim->GetActiveInstanceForMontage(InData.Montage) : nullptr;
+	ActiveMontageInstanceId = playbackInstance ? playbackInstance->GetInstanceID() : INDEX_NONE;
 
 	if (!InData.StartSectionName.IsNone())
 	{

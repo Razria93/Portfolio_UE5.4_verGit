@@ -18,7 +18,7 @@ protected:
 	EReactionType TriggerReactionType = EReactionType::All;
 
 protected:
-	bool CanProcessReactionNotify(const class UCReactionComponent* InReactionComp) const;
+	bool CanProcessReactionNotify(const class UCReactionComponent* InReactionComp, const FAnimNotifyEventReference& InReference) const;
 
 protected:
 	class UCReactionComponent* GetReactionComponent(USkeletalMeshComponent* InMeshComp) const;

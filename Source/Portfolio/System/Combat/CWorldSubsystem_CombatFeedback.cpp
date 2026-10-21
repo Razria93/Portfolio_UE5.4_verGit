@@ -62,77 +62,128 @@ void UCWorldSubsystem_CombatFeedback::RequestCameraShake(const FCameraShakeReque
 
 void UCWorldSubsystem_CombatFeedback::ApplyHitStop(AActor* InActor, float InDuration, float InDilation)
 {
-	if (!IsValid(InActor))
-	{
-		FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, TEXT("InvalidActor"));
-		return;
-	}
-	if (InDuration <= 0.f)
-	{
-		FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, TEXT("InvalidDuration"));
-		return;
-	}
-
-	const TWeakObjectPtr<AActor> actorKey(InActor);
-
-	if (!CachedTimeDilationMap.Contains(actorKey))
-	{
-		CachedTimeDilationMap.Add(actorKey, InActor->CustomTimeDilation);
-	}
-
-	// Apply slowdown to the requested actor.
-	InActor->CustomTimeDilation = InDilation;
-	FCombatFeedbackDebug::RecordCombatFeedbackHitStopAppliedForAudit(InActor, InDuration, InDilation);
-
-	if (FTimerHandle* existingHandle = ActiveHitStopMap.Find(actorKey))
-	{
-		GetWorld()->GetTimerManager().ClearTimer(*existingHandle);
-	}
-
-	FTimerHandle handle;
-	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &UCWorldSubsystem_CombatFeedback::RestoreHitStop, actorKey);
-
-	GetWorld()->GetTimerManager().SetTimer(handle, delegate, InDuration, false);
-	ActiveHitStopMap.Add(actorKey, handle);
+	AddTimeEffect(InActor, InDuration, InDilation, false, 0);
 }
 
-void UCWorldSubsystem_CombatFeedback::RestoreHitStop(TWeakObjectPtr<AActor> InActorKey)
+void UCWorldSubsystem_CombatFeedback::AddTimeEffect(AActor* InActor, float InDuration, float InDilation, bool bRealTime, uint64 InSerial)
 {
-	AActor* InActor = InActorKey.Get();
-	if (IsValid(InActor))
+	const bool bHitStop = !bRealTime && InSerial == 0;
+	const TCHAR* rejection = !IsValid(InActor) ? TEXT("InvalidActor")
+		: !GetWorld() ? TEXT("InvalidWorld")
+		: (!FMath::IsFinite(InDuration) || InDuration <= 0.f) ? TEXT("InvalidDuration")
+		: (!FMath::IsFinite(InDilation) || InDilation < 0.f || InDilation > 1.f) ? TEXT("InvalidDilation") : nullptr;
+	if (rejection)
 	{
-		const float* cachedDilation = CachedTimeDilationMap.Find(InActorKey);
-		InActor->CustomTimeDilation = cachedDilation ? *cachedDilation : 1.f;
+		if (bHitStop) FCombatFeedbackDebug::RecordCombatFeedbackHitStopRejectedForAudit(InActor, InDuration, InDilation, rejection);
+		return;
 	}
+	RefreshTimeEffects();
+	FActorTimeEffects* state = ActorTimeEffects.Find(InActor);
+	if (!state)
+	{
+		state = &ActorTimeEffects.Add(InActor);
+		state->Baseline = InActor->CustomTimeDilation;
+	}
+	FTimeEffect effect;
+	effect.Dilation = InDilation;
+	effect.ExpiresAt = (bRealTime ? FPlatformTime::Seconds() : GetWorld()->GetTimeSeconds()) + InDuration;
+	effect.bRealTime = bRealTime;
+	effect.OwnerSerial = InSerial;
+	state->Effects.Add(effect);
+	RefreshTimeEffects();
+	// Emit once per accepted request, not once per refresh/tick. Slow leases are not HitStop requests.
+	if (bHitStop) FCombatFeedbackDebug::RecordCombatFeedbackHitStopAppliedForAudit(InActor, InDuration, InDilation);
+}
 
-	// Restore runtime records for the requested actor.
-	ActiveHitStopMap.Remove(InActorKey);
-	CachedTimeDilationMap.Remove(InActorKey);
+uint64 UCWorldSubsystem_CombatFeedback::RequestPerfectDodgeSlow(AActor* InPlayer, AActor* InAttacker, float InDuration, float InDilation)
+{
+	const uint64 serial = ++NextSlowSerial;
+	AddTimeEffect(InPlayer, InDuration, InDilation, true, serial);
+	if (InAttacker != InPlayer) AddTimeEffect(InAttacker, InDuration, InDilation, true, serial);
+	return serial;
+}
+
+void UCWorldSubsystem_CombatFeedback::CancelPerfectDodgeSlow(uint64 InSerial)
+{
+	if (InSerial == 0) return;
+	for (auto& pair : ActorTimeEffects)
+		pair.Value.Effects.RemoveAll([InSerial](const FTimeEffect& InEffect) { return InEffect.OwnerSerial == InSerial; });
+	RefreshTimeEffects();
+}
+
+uint64 UCWorldSubsystem_CombatFeedback::RequestPerfectDodgeSlow(AActor* InPlayer, AActor* InAttacker,
+	const FCombatPresentationEnvelope& InEnvelope, float InDilation)
+{
+	if (!InEnvelope.IsValid() || InEnvelope.Duration() <= 0. || !FMath::IsFinite(InDilation)
+		|| InDilation < 0.f || InDilation > 1.f || (!IsValid(InPlayer) && !IsValid(InAttacker))) return 0;
+	const uint64 serial = ++NextSlowSerial;
+	AddEnvelopeTimeEffect(InPlayer, InEnvelope, InDilation, serial);
+	if (InAttacker != InPlayer) AddEnvelopeTimeEffect(InAttacker, InEnvelope, InDilation, serial);
+	return serial;
+}
+
+void UCWorldSubsystem_CombatFeedback::AddEnvelopeTimeEffect(AActor* InActor,
+	const FCombatPresentationEnvelope& InEnvelope, float InDilation, uint64 InSerial)
+{
+	if (!IsValid(InActor) || !GetWorld()) return;
+	RefreshTimeEffects();
+	FActorTimeEffects* state = ActorTimeEffects.Find(InActor);
+	if (!state)
+	{
+		state = &ActorTimeEffects.Add(InActor);
+		state->Baseline = InActor->CustomTimeDilation;
+	}
+	FTimeEffect effect;
+	effect.Dilation = InDilation;
+	effect.bRealTime = effect.bEnvelope = true;
+	effect.OwnerSerial = InSerial;
+	const double now = FPlatformTime::Seconds();
+	effect.ExpiresAt = now + InEnvelope.Duration();
+	effect.Envelope.Start(InEnvelope, now);
+	effect.CurveKeepAlive.Reset(InEnvelope.BlendCurve);
+	state->Effects.Add(MoveTemp(effect));
+	RefreshTimeEffects();
+}
+
+void UCWorldSubsystem_CombatFeedback::Tick(float InDeltaTime)
+{
+	RefreshTimeEffects();
+}
+
+void UCWorldSubsystem_CombatFeedback::RefreshTimeEffects()
+{
+	const double realNow = FPlatformTime::Seconds();
+	const double gameNow = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.;
+	for (auto it = ActorTimeEffects.CreateIterator(); it; ++it)
+	{
+		AActor* actor = it.Key().Get();
+		if (!IsValid(actor)) { it.RemoveCurrent(); continue; }
+		FActorTimeEffects& state = it.Value();
+		state.Effects.RemoveAll([realNow, gameNow](const FTimeEffect& InEffect)
+		{
+			return InEffect.ExpiresAt <= (InEffect.bRealTime ? realNow : gameNow);
+		});
+		float dilation = state.Baseline;
+		for (const FTimeEffect& effect : state.Effects)
+		{
+			const float requested = effect.bEnvelope
+				? FMath::Lerp(state.Baseline, FMath::Min(state.Baseline, effect.Dilation), effect.Envelope.Evaluate(realNow))
+				: effect.Dilation;
+			dilation = FMath::Min(dilation, requested);
+		}
+		actor->CustomTimeDilation = dilation;
+		if (state.Effects.IsEmpty()) it.RemoveCurrent();
+	}
 }
 
 void UCWorldSubsystem_CombatFeedback::ClearHitStop()
 {
-	if (UWorld* world = GetWorld())
-	{
-		FTimerManager& timerManager = world->GetTimerManager();
-
-		for (const TPair<TWeakObjectPtr<AActor>, FTimerHandle>& pair : ActiveHitStopMap)
-		{
-			FTimerHandle timerHandle = pair.Value;
-			timerManager.ClearTimer(timerHandle);
-		}
-	}
-
-	for (const TPair<TWeakObjectPtr<AActor>, float>& pair : CachedTimeDilationMap)
+	for (const auto& pair : ActorTimeEffects)
 	{
 		AActor* actor = pair.Key.Get();
-		if (!IsValid(actor)) continue;
-
-		actor->CustomTimeDilation = pair.Value;
+		if (IsValid(actor)) actor->CustomTimeDilation = pair.Value.Baseline;
 	}
-
-	ActiveHitStopMap.Reset();
-	CachedTimeDilationMap.Reset();
+	ActorTimeEffects.Reset();
 }
 
 // Camera Shake

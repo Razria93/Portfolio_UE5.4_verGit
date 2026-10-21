@@ -8,6 +8,7 @@
 #include "Type/CActionOrchestrationTypes.h"
 #include "Type/CObservableOverlayTypes.h"
 #include "Type/CExecutionTypes.h"
+#include "Type/CCounterRushTypes.h"
 #include "CActionComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FActionTypeChanged, class ACharacter*, InOwnerCharacter, EActionType, InPrevActionType, EActionType, InNewActionType);
@@ -27,6 +28,12 @@ private:
 	// Data Configuration
 	UPROPERTY(EditAnywhere, Category = "Action|Data")
 	TArray<FActionData> ActionDatas;
+	// Exposed on the character BP, even when the executor uses a native class.
+	UPROPERTY(EditAnywhere, Category = "Action|CounterRush")
+	FCounterRushTuning CounterRushTuning;
+
+public:
+	const FCounterRushTuning& GetCounterRushTuning() const { return CounterRushTuning; }
 
 private:
 	// Runtime Map
@@ -86,6 +93,9 @@ private:
 	class UCHealthComponent* HealthComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
 	class UCObservableOverlayComponent* ObservableOverlayComp_Injected = nullptr;
 
 	UPROPERTY(Transient)
@@ -105,6 +115,9 @@ private:
 
 	UPROPERTY(Transient)
 	class UCActionFeedbackComponent* ActionFeedbackComp_Injected = nullptr;
+
+	UPROPERTY(Transient)
+	class UCReactionFeedbackComponent* ReactionFeedbackComp_Injected = nullptr;
 
 public:
 	// Event

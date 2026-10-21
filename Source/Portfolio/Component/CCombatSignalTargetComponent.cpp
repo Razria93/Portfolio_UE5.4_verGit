@@ -243,8 +243,15 @@ float UCCombatSignalTargetComponent::HandleDefaultDamageEvent(float DamageAmount
 	const FCombatSignalTargetPacket combatSignalTargetPacket = BuildPacket(combatSignalTargetPayload, combatSignalTargetContext, committedResult);
 
 	// Notify: publish target outcome to reaction, feedback, and source-side result receivers.
+	if (committedResult.DefenseOutcome == EDamageDefenseOutcome::PerfectDodge && IsValid(DefenseComp_Injected))
+		DefenseComp_Injected->PreparePerfectDodge(combatSignalTargetPacket.ResultSerial, InDefaultDamageEvent.SourceActor);
+	if (InDefaultDamageEvent.DeliveryReceipt)
+		InDefaultDamageEvent.DeliveryReceipt->bAccepted = committedResult.bAccepted;
+
 	OnCombatSignalTargetAccepted.Broadcast(combatSignalTargetPacket);
 	DispatchAcceptedCombatResult(combatSignalTargetPacket);
+	if (committedResult.DefenseOutcome == EDamageDefenseOutcome::PerfectDodge && IsValid(DefenseComp_Injected))
+		DefenseComp_Injected->FinishPerfectDodgeRequest(combatSignalTargetPacket.ResultSerial);
 	DispatchCombatResultToReceiver(combatSignalTargetPacket);
 
 	FCombatSignalDebug::RecordTargetAcceptedForAudit(combatSignalTargetPacket);
@@ -498,6 +505,7 @@ FCombatSignalTargetContext UCCombatSignalTargetComponent::BuildContext(const FCo
 
 	combatSignalTargetContext.HitImpactContext = InCombatSignalTargetPayload.HitImpactContext;
 	combatSignalTargetContext.DamageSpecKey = InCombatSignalTargetPayload.DamageSpecKey;
+	combatSignalTargetContext.DamageSpec = InCombatSignalTargetPayload.DamageSpec;
 
 	combatSignalTargetContext.RequestedDamage = InCombatSignalTargetPayload.RequestedDamage;
 
@@ -565,8 +573,24 @@ bool UCCombatSignalTargetComponent::CanReceiveCombatSignal(FCombatSignalTargetCo
 		return true;
 	}
 
+	// Evasion consumes contact without disabling collision or committing HP loss.
+	if (InOutCombatSignalTargetContext.DamageSpec.bCanDodge
+		&& IsValid(DefenseComp_Injected))
+	{
+		const EDamageDefenseOutcome outcome = DefenseComp_Injected->ResolveDodgeContact();
+		if (outcome != EDamageDefenseOutcome::None)
+		{
+		InOutCombatSignalTargetContext.bAccepted = true;
+		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
+		InOutCombatSignalTargetContext.DefenseOutcome = outcome;
+		InOutCombatSignalTargetContext.bShouldCommitDamage = false;
+		return true;
+		}
+	}
+
 	// Gate: parry window intercepts incoming damage before damage commit.
-	if (IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanParry())
+	if (InOutCombatSignalTargetContext.DamageSpec.bCanParry
+		&& IsValid(DefenseComp_Injected) && DefenseComp_Injected->CanParry())
 	{
 		InOutCombatSignalTargetContext.bAccepted = true;
 		InOutCombatSignalTargetContext.RejectReason = ECombatSignalTargetRejectReason::None;
@@ -618,6 +642,8 @@ float UCCombatSignalTargetComponent::ComputeMitigatedDamage(FCombatSignalTargetC
 	float mitigatedDamage = requestedDamage;
 
 	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::Normal
+		&& InOutCombatSignalTargetContext.DefenseOutcome == EDamageDefenseOutcome::None
+		&& InOutCombatSignalTargetContext.DamageSpec.bCanGuard
 		&& IsValid(DefenseComp_Injected)
 		&& DefenseComp_Injected->CanGuard())
 	{
@@ -661,6 +687,12 @@ void UCCombatSignalTargetComponent::ResolveDamageReactionOutcome(FCombatSignalTa
 
 	if (InOutCombatSignalTargetContext.ExternalInputPolicy == EExternalCombatInputPolicy::DamageOnly)
 	{
+		return;
+	}
+
+	if (InOutCombatSignalTargetContext.DefenseOutcome == EDamageDefenseOutcome::PerfectDodge)
+	{
+		InOutCombatSignalTargetContext.ReactionOutcome = EDamageReactionOutcome::PerfectDodge;
 		return;
 	}
 

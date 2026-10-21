@@ -21,7 +21,7 @@ void UCAnimNotify_SwitchToGuard::Notify(USkeletalMeshComponent* MeshComp, UAnimS
 	Super::Notify(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::SwitchToGuard);
 }

@@ -16,7 +16,7 @@ void UCAnimNotify_CommitExecution::Notify(USkeletalMeshComponent* MeshComp, UAni
 	Super::Notify(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::CommitExecution);
 }

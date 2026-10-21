@@ -15,7 +15,7 @@ FString UCAnimNotify_ResetBalanceLifecycle::GetNotifyName_Implementation() const
 void UCAnimNotify_ResetBalanceLifecycle::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	UCReactionComponent* reactionComp = GetReactionComponent(MeshComp);
-	if (!CanProcessReactionNotify(reactionComp)) return;
+	if (!CanProcessReactionNotify(reactionComp, EventReference)) return;
 
 	reactionComp->HandleReactionNotifyCommand(EReactionNotifyCommand::ResetBalance);
 }

@@ -19,7 +19,7 @@ void UCAnimNotifyState_WeaponPivotRotationOverride::NotifyBegin(USkeletalMeshCom
 	if (!IsValid(MeshComp) || !IsConfigurationValid()) return;
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	ACharacter* ownerCharacter = Cast<ACharacter>(MeshComp->GetOwner());
 	if (!IsValid(ownerCharacter)) return;

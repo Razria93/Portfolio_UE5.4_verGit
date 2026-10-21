@@ -1,4 +1,5 @@
 #include "Component/CReactionComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Core/Debug/FCombatKnockbackDebug.h"
 
 #include "ProjectGlobal.h"
@@ -33,6 +34,8 @@ UCReactionComponent::UCReactionComponent()
 
 void UCReactionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndPerfectDodgeExecution(ActiveReactionGeneration);
+	DefenseComp_Injected = InReferences.DefenseComponent;
 	StopReactionKnockback(ActiveReactionGeneration);
 
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
@@ -57,6 +60,7 @@ void UCReactionComponent::BeginPlay()
 
 void UCReactionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndPerfectDodgeExecution(ActiveReactionGeneration);
 	UninitializeReactionRuntime();
 
 	Super::EndPlay(EndPlayReason);
@@ -270,6 +274,18 @@ bool UCReactionComponent::CancelActiveReactionForSystem()
 }
 
 // Execution Result Hooks
+
+void UCReactionComponent::HandleApplyReactionStarted(const UCReaction* InReaction, uint64 InReactionGeneration)
+{
+	if (!IsActiveReactionGeneration(InReactionGeneration) || InReaction != ActiveReactionExecutor
+		|| !IsValid(InReaction) || !InReaction->IsActive()) return;
+	if (ActiveReactionType == EReactionType::PerfectDodge && IsValid(DefenseComp_Injected))
+	{
+		DefenseComp_Injected->BeginPerfectDodgeExecution(InReactionGeneration, ActiveReactionData.Montage, ActiveReactionContext.CombatSignalResultSerial);
+		if (DefenseComp_Injected->IsPerfectDodgeActive() && IsValid(ReactionFeedbackComp_Injected))
+			ReactionFeedbackComp_Injected->PlayPerfectDodgeSuccess(DefenseComp_Injected->GetPerfectDodgeAttacker(), ActiveReactionContext.CombatSignalResultSerial);
+	}
+}
 
 void UCReactionComponent::HandleApplyReactionFinished(const UCReaction* InReaction, EReactionFinishReason InFinishReason)
 {
@@ -592,6 +608,7 @@ FCharacterComponentReferences UCReactionComponent::BuildReactionExecutorReferenc
 	references.OwnerCharacter = OwnerCharacter_Injected;
 	references.ReactionComponent = this;
 	references.ReactionFeedbackComponent = ReactionFeedbackComp_Injected;
+	references.DefenseComponent = DefenseComp_Injected;
 
 	return references;
 }
@@ -873,6 +890,8 @@ bool UCReactionComponent::InterruptActiveReaction(const FExecutionInterventionDi
 bool UCReactionComponent::EndActiveReaction(EReactionFinishReason InFinishReason)
 {
 	if (!IsActive()) return true;
+	if (IsValid(DefenseComp_Injected))
+		DefenseComp_Injected->EndPerfectDodgeExecution(ActiveReactionGeneration, InFinishReason == EReactionFinishReason::Completed);
 
 	const FReactionData activeData = ActiveReactionData;
 	const FReactionExecutionContext activeContext = ActiveReactionContext;
@@ -930,6 +949,11 @@ void UCReactionComponent::SetActiveReactionContext(const FReactionExecutionConte
 
 void UCReactionComponent::ClearActiveReactionContext(const TCHAR* InReason)
 {
+	if (IsValid(ReactionFeedbackComp_Injected))
+		ReactionFeedbackComp_Injected->EndBodyGlowOwner(ActiveReactionGeneration);
+	if (IsValid(ReactionFeedbackComp_Injected))
+		ReactionFeedbackComp_Injected->EndWeaponGlowOwner(false, ActiveReactionGeneration);
+	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndPerfectDodgeExecution(ActiveReactionGeneration);
 	StopReactionKnockback(ActiveReactionGeneration, InReason);
 	
 	++ActiveReactionGeneration;

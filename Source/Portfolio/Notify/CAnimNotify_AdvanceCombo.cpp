@@ -19,7 +19,7 @@ void UCAnimNotify_AdvanceCombo::Notify(USkeletalMeshComponent* MeshComp, UAnimSe
 	Super::Notify(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::ConsumeChain);
 }
