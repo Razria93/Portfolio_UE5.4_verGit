@@ -165,6 +165,10 @@ void UCTargetLockAssistComponent::UpdateCameraTracking(float DeltaTime)
 	FVector viewLocation = FVector::ZeroVector;
 	FRotator viewRotation = FRotator::ZeroRotator;
 	OwnerPlayerController_Injected->GetPlayerViewPoint(viewLocation, viewRotation);
+	if (const ACPlayer* player = ControlledPlayer.Get())
+	{
+		player->TryGetCaptureTrackingBaseView(viewLocation, viewRotation);
+	}
 
 	const FVector targetFocusLocation = currentTarget->GetActorLocation() + TargetLockAssistTuning.TargetFocusOffset;
 	const FVector directionToTarget = targetFocusLocation - viewLocation;

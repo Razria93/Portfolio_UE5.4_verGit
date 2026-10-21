@@ -3,6 +3,7 @@
 #include "ProjectGlobal.h"
 
 #include "Character/Enemy/CEnemy.h"
+#include "Character/Player/CPlayer.h"
 #include "Component/CCombatTargetComponent.h"
 #include "Component/CHealthComponent.h"
 
@@ -245,6 +246,10 @@ bool UCPlayerTargetSelectionComponent::BuildTargetEvaluation(const ACEnemy* InTa
 
 	FRotator viewRotation = FRotator::ZeroRotator;
 	OwnerPlayerController_Injected->GetPlayerViewPoint(OutEvaluation.ViewLocation, viewRotation);
+	if (const ACPlayer* player = Cast<ACPlayer>(OwnerPlayerController_Injected->GetPawn()))
+	{
+		player->TryGetCaptureTrackingBaseView(OutEvaluation.ViewLocation, viewRotation);
+	}
 
 	OutEvaluation.ViewForward = viewRotation.Vector();
 	OutEvaluation.MaxTargetDistance = TargetingTuning.MaxTargetDistance;
