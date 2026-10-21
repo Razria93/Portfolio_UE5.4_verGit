@@ -60,6 +60,8 @@ const TArray<FDebugOverlaySettingsCategory>& FDebugOverlaySettingsRegistry::GetC
 		{ TEXT("ExecutionSession"), TEXT("Execution Session Display Options"), TEXT("Execution Session diagnostics and world visualization.") },
 		{ TEXT("CombatParticipation"), TEXT("Combat Participation Display Options"), TEXT("Combat participation diagnostics and world visualization.") },
 		{ TEXT("Focus"), TEXT("Focus Settings"), TEXT("Settings used by Debug Overlay focus selection.") },
+		{ TEXT("WeaponPresentation"), TEXT("Weapon Presentation"), TEXT("Socket transition, pivot, restoration and actual Trail anchors.") },
+		{ TEXT("Feedback"), TEXT("Feedback Evidence"), TEXT("Recent requests, matching/rejection and VFX component creation. Trail state is read live.") },
 		{ TEXT("Diagnostics"), TEXT("Diagnostic Logging"), TEXT("Output Log diagnostics independent from HUD visibility and event capture.") },
 	};
 
@@ -154,6 +156,26 @@ const TArray<FDebugOverlaySettingDefinition>& FDebugOverlaySettingsRegistry::Get
 		result.Add(MakeBool(TEXT("Diagnostics"), TEXT("Portfolio.Debug.KnockbackAudit"), TEXT("Knockback Audit Log"), TEXT("Write Knockback outcomes to the Output Log."), TEXT("0")));
 		result.Add(MakeBool(TEXT("Diagnostics"), TEXT("Portfolio.Debug.AttackFacingAudit"), TEXT("Attack Facing Audit Log"), TEXT("Write attack start facing outcomes to the Output Log."), TEXT("0")));
 		result.Add(MakeBool(TEXT("Diagnostics"), TEXT("Portfolio.Debug.ExecutionSessionAudit"), TEXT("Execution Session Audit Log"), TEXT("Write Execution Session input, start validation, and lifecycle diagnostics to the Output Log."), TEXT("0")));
+
+
+
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.Enabled"), TEXT("Weapon Diagnostics"), TEXT("Capture weapon transitions and last results."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.Player.WeaponPresentation.Enabled"), TEXT("Player Weapon"), TEXT("Requires Player section enabled."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.Enemy.WeaponPresentation.Enabled"), TEXT("Enemy Weapon"), TEXT("Requires Enemy section enabled; follows current debug focus."), TEXT("0")));
+		result.Add(MakeInt(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.PresentationMode"), TEXT("Presentation Mode"), TEXT("0 legacy, 1 compact socket, 2 compact pivot override, 3 feedback only. No gameplay changes."), TEXT("0"), 0.f, 3.f));
+		result.Add(MakeInt(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.SocketPair"), TEXT("Socket Pair"), TEXT("0 automatic/current; 1 authored Holster/Hand; 2 Hand_R_Sword/Hand_L_Sword. Only existing live socket transforms are shown. Bright Attached is used only outside an active transition."), TEXT("0"), 0.f, 2.f));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.PivotDrawX"), TEXT("Compact Pivot X Axis"), TEXT("Optional short actual X axis in mode 2. Main comparison is actual Y versus rest Y0."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.HideInactiveTrail"), TEXT("Hide Inactive Trail Anchors"), TEXT("Hide inactive or invisible Trail anchors without changing component state."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.DrawSockets"), TEXT("Socket Markers"), TEXT("Active: blue source and orange target. Inactive: orange current attachment only. White actual root; missing sockets omitted."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.DrawPivot"), TEXT("Pivot Axes"), TEXT("Legacy: RGB axes and grey rest axes. Mode 2: actual center/Y, rest Y0, white Origin; coincident centers share a label. Rest follows the live weapon root."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.DrawTrailAnchor"), TEXT("Trail Anchors"), TEXT("Green active and visible, grey inactive, red invalid attachment."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.DrawHistory"), TEXT("Weapon Root History"), TEXT("Actual root samples; not blade collision history."), TEXT("0")));
+		result.Add(MakeBool(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.DrawForeground"), TEXT("Foreground Geometry"), TEXT("Draw through geometry."), TEXT("0")));
+		result.Add(MakeBool(TEXT("Feedback"), TEXT("Portfolio.DebugOverlay.Feedback.Enabled"), TEXT("Feedback Diagnostics"), TEXT("Capture new evidence independently from Output Log audit."), TEXT("0")));
+		result.Add(MakeBool(TEXT("Feedback"), TEXT("Portfolio.DebugOverlay.Player.Feedback.Enabled"), TEXT("Player Feedback"), TEXT("Requires Player section enabled."), TEXT("0")));
+		result.Add(MakeBool(TEXT("Feedback"), TEXT("Portfolio.DebugOverlay.Enemy.Feedback.Enabled"), TEXT("Enemy Feedback"), TEXT("Requires Enemy section enabled; follows debug focus."), TEXT("0")));
+		result.Add(MakeFloat(TEXT("WeaponPresentation"), TEXT("Portfolio.DebugOverlay.WeaponPresentation.RetainSeconds"), TEXT("Result Retention (s)"), TEXT("Last weapon results and recent feedback age in world seconds."), TEXT("2"), 0.f, 10.f));
+		result.Add(MakeBool(TEXT("Diagnostics"), TEXT("Portfolio.Debug.WeaponPresentationAudit"), TEXT("Weapon Presentation Audit"), TEXT("Begin, end, rejection and restoration logs; no per-frame logging."), TEXT("0")));
 
 		return result;
 	}();

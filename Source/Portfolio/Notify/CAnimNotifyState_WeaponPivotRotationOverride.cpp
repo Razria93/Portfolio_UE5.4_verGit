@@ -1,4 +1,5 @@
 #include "Notify/CAnimNotifyState_WeaponPivotRotationOverride.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
 
 #include "Component/CActionComponent.h"
 #include "Component/CWeaponComponent.h"
@@ -41,6 +42,7 @@ void UCAnimNotifyState_WeaponPivotRotationOverride::NotifyBegin(USkeletalMeshCom
 	runtimeState.OverrideHandle = overrideHandle;
 	runtimeState.ElapsedTime = 0.f;
 	runtimeState.TotalDuration = FMath::Max(0.f, TotalDuration);
+	FWeaponPresentationDebug::NotifyTime(weaponComp, EWeaponDebugChannel::Override, overrideHandle, 0.f, runtimeState.TotalDuration, TEXT("Begin"));
 }
 
 void UCAnimNotifyState_WeaponPivotRotationOverride::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
@@ -61,6 +63,13 @@ void UCAnimNotifyState_WeaponPivotRotationOverride::NotifyTick(USkeletalMeshComp
 		runtimeState->ElapsedTime + FMath::Max(0.f, FrameDeltaTime),
 		0.f,
 		runtimeState->TotalDuration);
+
+	float debugIn = FMath::Max(0.f, BlendInDuration), debugOut = FMath::Max(0.f, BlendOutDuration);
+	const float debugTotal = debugIn + debugOut;
+	if (debugTotal > runtimeState->TotalDuration && debugTotal > KINDA_SMALL_NUMBER)
+	{ const float scale = runtimeState->TotalDuration / debugTotal; debugIn *= scale; debugOut *= scale; }
+	const TCHAR* debugPhase = runtimeState->ElapsedTime < debugIn ? TEXT("BlendIn") : runtimeState->ElapsedTime > runtimeState->TotalDuration - debugOut ? TEXT("BlendOut") : TEXT("Hold");
+	FWeaponPresentationDebug::NotifyTime(weaponComp, EWeaponDebugChannel::Override, runtimeState->OverrideHandle, runtimeState->ElapsedTime, runtimeState->TotalDuration, debugPhase);
 
 	if (!UpdateTransition(weaponComp, runtimeState->OverrideHandle, CalculateAlpha(runtimeState->ElapsedTime, runtimeState->TotalDuration)))
 	{
@@ -109,14 +118,14 @@ void UCAnimNotifyState_WeaponPivotRotationOverride::CompleteTransition(UCWeaponC
 {
 	if (!IsValid(InWeaponComp) || InTransitionHandle == 0) return;
 
-	InWeaponComp->EndWeaponPivotRotationOverride(InTransitionHandle);
+	InWeaponComp->EndWeaponPivotRotationOverride(InTransitionHandle, TEXT("NotifyCompleted: BaseRestored"));
 }
 
 void UCAnimNotifyState_WeaponPivotRotationOverride::CancelTransition(UCWeaponComponent* InWeaponComp, uint32 InTransitionHandle) const
 {
 	if (!IsValid(InWeaponComp) || InTransitionHandle == 0) return;
 
-	InWeaponComp->EndWeaponPivotRotationOverride(InTransitionHandle);
+	InWeaponComp->EndWeaponPivotRotationOverride(InTransitionHandle, TEXT("NotifyCancelled: BaseRestored"));
 }
 
 FWeaponPivotRotationSpec UCAnimNotifyState_WeaponPivotRotationOverride::BuildRotationSpec() const

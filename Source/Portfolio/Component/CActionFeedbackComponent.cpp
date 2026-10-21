@@ -1,4 +1,6 @@
 #include "Component/CActionFeedbackComponent.h"
+#include "NiagaraComponent.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
 
 #include "ProjectGlobal.h"
 
@@ -284,7 +286,7 @@ void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InAc
 		FCombatFeedbackProfiling::RecordActionVFX();
 		FCombatFeedbackDebug::RecordActionFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), InActionVFXFeedbackData.VFX, TEXT("SpawnOnce"));
 
-		UNiagaraFunctionLibrary::SpawnSystemAttached(
+		UNiagaraComponent* spawned = UNiagaraFunctionLibrary::SpawnSystemAttached(
 			InActionVFXFeedbackData.VFX,
 			OwnerCharacter_Injected->GetMesh(),
 			InActionVFXFeedbackData.SocketName,
@@ -294,6 +296,7 @@ void UCActionFeedbackComponent::PlayActionVFX(const FActionVFXFeedbackData& InAc
 			EAttachLocation::KeepRelativeOffset,
 			true,
 			ENCPoolMethod::None);
+		FWeaponPresentationDebug::SpawnResult(OwnerCharacter_Injected, TEXT("Action"), InActionVFXFeedbackData.VFX, spawned);
 
 		return;
 	}

@@ -1,4 +1,6 @@
 #include "Component/CHitFeedbackComponent.h"
+#include "NiagaraComponent.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
 
 #include "ProjectGlobal.h"
 
@@ -112,7 +114,8 @@ void UCHitFeedbackComponent::PlayHitVFX(const FCombatSignalTargetPacket& InComba
 	FCombatFeedbackProfiling::RecordHitVFX();
 	FCombatFeedbackDebug::RecordHitFeedbackPresentationPlayedForAudit(OwnerCharacter_Injected, this, TEXT("VFX"), HitVFX, TEXT("Spawn"));
 
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
+	UNiagaraComponent* spawned = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, location, rotation);
+	FWeaponPresentationDebug::SpawnResult(OwnerCharacter_Injected, TEXT("Hit"), HitVFX, spawned);
 }
 
 void UCHitFeedbackComponent::PlayHitSFX(const FCombatSignalTargetPacket& InCombatSignalTargetPacket)

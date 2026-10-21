@@ -1,4 +1,5 @@
 #include "Core/Debug/CDebugOverlayHUD.h"
+#include "Core/Debug/FWeaponPresentationDebug.h"
 
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CPlayerTargetSelectionComponent.h"
@@ -222,6 +223,8 @@ void ACDebugOverlayHUD::DrawHUD()
 
 	const FDebugOverlayViewData viewData = FDebugOverlayViewDataBuilder::Build(world, GetOwningPawn(), focusedEnemy, enemyFocus, playerTargeting, playerLocomotion, playerExecutionSession, balanceCollapse, combatTargetFacing, enemyExecutionSession, combatParticipation, panelVisibility);
 	FDebugOverlayTextPanels textPanels = FDebugOverlayTextFormatter::Format(viewData);
+	FWeaponPresentationDebug::AppendAndDraw(playerPawn, false, textPanels.MainPanel);
+	if (focusedEnemy != playerPawn) FWeaponPresentationDebug::AppendAndDraw(focusedEnemy, true, textPanels.MainPanel);
 	if (!panelVisibility.bShowEventLogPanel)
 	{
 		textPanels.EventLogPanel.Lines.Reset();
