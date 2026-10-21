@@ -1,5 +1,14 @@
 # UE5 Portfolio Issue Analysis Report
 
+## 이 사례에서 확인할 것
+
+새 무기의 장착 위치와 회전 기준이 맞지 않는 문제를, **캐릭터 소켓 전환과 무기 내부 Pivot 회전을 분리**해 해결한 사례입니다. 손잡이 기준으로 Mesh·Collision·FX를 함께 변환하고, 임시 손 전환의 복구와 영구 장착 확정의 책임을 나눕니다.
+
+[좌표계·설계 — S39](../05_System_Architecture/S39_UE5_Portfolio_Weapon_Presentation_Pivot_Architecture.md) · [Pivot 구현](../../Source/Portfolio/Weapon/CWeaponActor.cpp) · [소켓 전환·복구 구현](../../Source/Portfolio/Component/CWeaponComponent.cpp) · [검증 근거 E02–E04·E08](../98_Evidence/Stellar_Asset_Integration/README.md)
+
+구현과 사용자 PIE 확인을 근거로 합니다. 당시 Before 영상과 시각 개선량 측정은 없으며, 아래 검증 한계를 유지합니다.
+
+
 ## 제목
 
 **I04: 무기 규격 차이를 흡수하는 Socket·Pivot 계층**
@@ -49,3 +58,7 @@ Animation Editor의 Preview Asset은 Weapon Blueprint의 보정을 그대로 재
 - [F08 종료 계약 보완](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)
 
 ---
+
+---
+
+[다른 문제 해결 사례](00_Issue_Analysis_Report_Index.md) · [대표 README로 돌아가기](../../README.md#problem-solving)

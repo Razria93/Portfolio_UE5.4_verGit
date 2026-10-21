@@ -1,88 +1,120 @@
-# Project Stellar — UE5.4 C++ Game Programmer Portfolio
+# Project Stellar — UE5.4 C++ 액션 RPG
 
-`Project Stellar`는 Player와 Enemy가 공유하는 Action / Reaction 실행 구조를 설계하고, 런타임 관찰·검증과 Editor 도구화까지 연결한 Unreal Engine 5.4 3인칭 Action RPG 포트폴리오입니다.
+Player와 Enemy의 공통 전투 실행 구조를 중심으로, 타깃 관리와 두 Actor의 처형 협업을 구현한 3인칭 액션 RPG 개인 프로젝트입니다. 전투 상태를 관찰하는 런타임 디버그 도구와 구현·문제 해결·검증 자료를 함께 제공합니다.
 
-[Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [Gameplay Video — 업로드 예정](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119) · [Portfolio Production Docs](Docs/07_Portfolio_Documents/Portfolio_Production/README.md) · [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md)
+[화면으로 보기](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [핵심 구현](#combat-systems) · [문제 해결](#problem-solving) · [코드 읽기](#code-guide) · [전체 문서](Docs/00_Documentation_Index.md)
 
-![Project Stellar의 전투 장면. Runtime Debug Overlay와 Editor 제어 화면으로 전투 실행 상태를 함께 관찰한다.](Docs/07_Portfolio_Documents/Portfolio_Production/Assets/Captures/p01_hero_combat.jpg)
+![Project Stellar 전투 장면과 Action·Reaction·Target·Facing 상태를 관찰하는 Debug Overlay](Docs/07_Portfolio_Documents/Portfolio_Production/Assets/Captures/p01_hero_combat.jpg)
 
-> 대표 검증 장면 — 전투 실행 중 Action·Reaction·Target·Facing 상태와 이벤트 기록을 같은 화면에서 대조합니다. 구현 결과를 실시간으로 관찰·검증하는 흐름을 이 포트폴리오의 중심 주제로 삼았습니다. 영상은 [Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119)에 업로드 예정입니다.
+전투 결과와 실행 상태를 함께 관찰하는 화면입니다. [웹 포트폴리오](https://razria93.github.io/Portfolio_UE5.4_verGit/)에서 대표 장면과 설명을 볼 수 있습니다. 게임플레이 영상은 [업로드 예정](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119)입니다.
 
-## Project facts
+## 개발 정보와 기여 범위
 
 | 항목 | 내용 |
 | --- | --- |
-| 프로젝트 | UE5.4 기반 3인칭 Action RPG, Project Stellar |
 | 기간 / 인원 | 2025.12 ~ 현재 / 1인 개발 |
 | 역할 | C++ Game Programmer |
-| 직접 기여 | 전투 실행 구조, Enemy AI 참여·관찰, Runtime Debug Overlay, Editor Tooling의 설계·구현·검증 |
-| Engine / Language | Unreal Engine 5.4 / C++ · Blueprint |
-| 개발 환경 | Windows PC / Visual Studio 2022 |
+| 환경 | Unreal Engine 5.4 / C++ · Blueprint / Windows / Visual Studio 2022 |
+| 직접 설계·구현 | Action/Reaction 실행 정책, 공통 Combat Target, Enemy 전투 참여, 처형 협업, Runtime Debug Overlay, Editor Tooling |
+| 에셋 통합 작업 | 캐릭터 리타게팅, 무기 Socket·Pivot·Trail 연동, Montage 설정과 종료 흐름 정리 |
+| 외부 에셋 활용 | 캐릭터·무기·환경 에셋을 활용했습니다. 원본 아트 제작과 코드·설정·통합 기여를 구분하며, 상세 범위는 [에셋 통합 기록](Docs/07_Portfolio_Documents/Stellar_Asset_Integration/README.md)에 정리했습니다. |
 
-## 핵심 강점
+**추천 열람 순서:** 대표 화면 → 아래 전투 시스템 중 관심 항목 → 문제 해결 사례 → 해당 코드와 검증 자료. 각 설명에서 상세 문서로 직접 이동할 수 있습니다.
 
-| 공유 실행 구조 | 런타임 관찰·검증 | 에디터 도구화 |
-| --- | --- | --- |
-| 요청 수락, 실행 관계, 적용 방식을 분리해 Player와 AI가 같은 실행 계약을 사용합니다. | Focus 대상의 상태와 실행 문맥을 Overlay·Event Log·CSV 근거로 확인합니다. | 반복되는 관찰·참조 조사·Root Motion 변환을 Editor 경로로 정리합니다. |
+<a id="combat-systems"></a>
 
-## 핵심 기술 사례
+## 핵심 전투 시스템
 
 ### 1. Action / Reaction 실행 정책
 
-**문제**: 새 요청이 현재 실행과 공존·연속·개입 중 어떤 관계인지 정하지 않으면, 다음 실행 시점과 기존 실행의 정리 책임이 모호해집니다.
+공격·연속 행동·피격이 겹칠 때, 새 요청의 수락 여부와 기존 실행을 정리할 책임을 분리했습니다. Player와 Enemy가 같은 실행 정책을 사용하며, Action과 Reaction은 각자의 Orchestrator와 실행 객체를 유지합니다.
 
-**판단과 구현**: `Decision → Relationship → Apply`를 분리하고, `Independent / Sequential / Exclusive` 관계를 각각 `Start / Reserve / Intervene`으로 적용합니다. 거부·무시 경로도 별도로 유지합니다.
+- **판단:** 실행 가능 여부(Decision), 현재 실행과의 관계(Relationship), 실제 적용(Apply)을 단계별로 구분합니다.
+- **적용:** 실행이 없으면 시작하고, Action 연속 실행은 예약하며, 배타적 개입은 기존 실행을 중단한 뒤 시작합니다. Reaction은 연속 예약을 지원하지 않습니다.
+- **확인 범위:** 현행 코드 구조를 문서화했습니다. 모든 전환·종료 경로의 제출용 런타임 캡처가 완료됐다는 의미는 아닙니다.
 
-**근거**: [Intervention Policy 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#intervention-policy) · [Action Orchestrator 코드](Source/Portfolio/Component/CActionOrchestratorComponent.cpp) · [실행 타입 정의](Source/Portfolio/Type/CExecutionTypes.h)
+[설계와 근거 범위 — S37](Docs/05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md) · [Action Orchestrator](Source/Portfolio/Component/CActionOrchestratorComponent.cpp) · [Reaction Orchestrator](Source/Portfolio/Component/CReactionOrchestratorComponent.cpp)
 
-### 2. Focus 기반 Runtime Debug Overlay
+### 2. 공통 타깃 관리와 Enemy 전투 참여
 
-**문제**: 전투 중 분산된 Actor 상태와 실행 문맥을 같은 기준으로 대조하지 못하면, 결과 화면만으로는 원인을 확인하기 어렵습니다.
+전투 대상의 상태는 Combat Target에 모으고, Enemy가 전투에 참여할지는 별도 정책으로 결정합니다. 인지·피격 정보의 유효 기간과 참여 결과를 연결해, 오래된 정보가 뒤늦게 현재 타깃을 바꾸지 않도록 처리합니다.
 
-**판단과 구현**: Focus된 Actor의 전투·이동·실행 세션 상태와 Event Log를 읽기 전용 ViewData로 조립해 HUD에 표시합니다. Editor Panel은 session-only CVar 설정과 PIE Focus 요청만 연결하며 게임플레이 상태를 변경하지 않습니다.
+- **타깃 관리:** 대상과 Revision을 함께 확인해 지연된 요청·해제와 현재 대상 변경을 구분합니다.
+- **참여 정책:** 유효한 인지·피격 근거를 바탕으로 None / Observe / Alert / Engage를 배정하고, 결과를 Target·Facing·Blackboard·Intent에 반영합니다.
+- **확인 범위:** S33·S34에 구현 및 정적·PIE 검증 상태와 수동 확인 항목을 기록했습니다.
 
-**근거**: [Runtime Debug 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#runtime-debug) · [Overlay Editor 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#overlay-editor-plugin) · [HUD 코드](Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp)
+[타깃 구조 — S33](Docs/05_System_Architecture/S33_UE5_Portfolio_System_Architecture.md) · [참여 정책 — S34](Docs/05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md) · [타깃 코드](Source/Portfolio/Component/CCombatTargetComponent.cpp) · [참여 배정 코드](Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp)
 
-### 3. 조사·복구 경로를 갖는 Editor Tooling
+### 3. 두 Actor의 처형 협업
 
-**문제**: Asset 관계 조사와 Root Motion 변환은 결과만 남기거나 원본을 바로 변경하면 후속 검토와 복구가 어려워집니다.
+공격자와 대상이 하나의 처형 세션을 공유하도록 구성했습니다. 각 Actor 내부의 Action/Reaction 실행과, 두 Actor 사이의 예약·취소·결과 확정을 분리했습니다.
 
-**판단과 구현**: Asset Reference Inspector는 Dependencies / Referencers Tree와 unused **검토 후보**를 CSV로 기록합니다. Root Motion Tool은 Apply 전 Track을 검증·백업하고 Revert에서 복구합니다.
+- **시작:** 타깃과 처형 기회를 확인하고, 대상 Reaction과 공격자 Action을 연결합니다.
+- **결과:** 대상이 Standard / Lethal 결과를 결정합니다. Commit 이전 취소와 이후 결과 확정을 구분하고, 회복 또는 사망 연출로 이어갑니다.
+- **확인 범위:** 구현과 에셋 설정이 반영되어 있으며 결과별 회귀 검증·제출용 캡처는 보완 중입니다. 네트워크 동기화는 범위 밖입니다.
 
-**근거**: [Asset Inspector 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#asset-inspector) · [Root Motion Tool 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#root-motion-tool) · [Inspector 코드](Plugins/AssetReferenceInspector/Source/AssetReferenceInspector/Private/UI/SAssetReferenceInspectorWidget.cpp) · [Root Motion 코드](Source/PortfolioEditor/Private/Animation/CAnimModifier_TransferBodyMotionToRoot.cpp)
+[처형 협업과 검증 항목 — S36](Docs/05_System_Architecture/S36_UE5_Portfolio_Execution_Collaboration_Architecture.md) · [협업 코드](Source/Portfolio/Component/CExecutionCollaborationComponent.cpp) · [피해·결과 판정 경계 — S38](Docs/05_System_Architecture/S38_UE5_Portfolio_Combat_Signal_Architecture.md)
 
-## 결과와 검증 자료
+<a id="problem-solving"></a>
 
-- [Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/): 현재 제출 기준인 23페이지 HTML의 웹 배포본
-- [Gameplay Video Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119): 대표 영상 업로드 예정. 업로드 후 같은 Issue에서 영상·타임스탬프를 관리
-- [Portfolio Production](Docs/07_Portfolio_Documents/Portfolio_Production/README.md): 제출 HTML 원본, 이미지 Assets, publish 규칙
-- [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md): 현재 구조와 기술 판단의 문서 색인
+## 대표 문제 해결
 
-## Run locally
+| 사례 | 문제와 해결 방향 | 설명·코드·검증으로 이동 |
+| --- | --- | --- |
+| **무기 Socket·Pivot** | 새 무기의 장탈착 이격과 회전 기준 문제를 해결하기 위해 캐릭터 소켓 전환과 손잡이 기준 회전을 분리했습니다. Mesh·Collision·FX가 같은 표현 계층에서 움직입니다. | [문제 분석 — I04](Docs/03_Issue_Analysis_Report/I04_UE5_Portfolio_Issue_Analysis_Report.md) → [좌표계와 구조 — S39](Docs/05_System_Architecture/S39_UE5_Portfolio_Weapon_Presentation_Pivot_Architecture.md) |
+| **Montage 종료 설정** | 자연 재생 종료가 잘못된 Complete 설정을 가리던 문제를 추적했습니다. 실행 완료를 명시적으로 처리하고 설정 감사 도구를 보완했습니다. | [문제 분석 — I06](Docs/03_Issue_Analysis_Report/I06_UE5_Portfolio_Issue_Analysis_Report.md) → [수정·검증 기록 — F08](Docs/04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md) |
+| **넉백·공격 시작 방향 보정** | 실제 실행 시작과 이동 적용을 연결하고, 이전 실행의 종료가 새 이동을 정리하지 않도록 소유권과 실행 세대를 구분했습니다. | [구현·코드 지도·검증 범위](Docs/07_Portfolio_Documents/Portfolio_Production/37_Gameplay_Knockback_and_Facing_Review_Guide.md) |
 
-1. Unreal Engine **5.4**와 Visual Studio 2022 C++ 개발 환경을 준비합니다.
-2. `Portfolio.uproject`를 열고 필요 시 Visual Studio project files를 생성합니다.
-3. `PortfolioEditor | Win64 | Development`로 빌드합니다.
-4. Editor에서 `TestRoom`을 열어 Player / Enemy 전투와 Debug Overlay 흐름을 확인합니다.
+I04의 구현·사용자 PIE 확인, I06의 감사·테스트·사용자 PIE 확인, 넉백·방향 보정의 자동 검사와 수동 확인은 각각 해당 문서의 기준 시점과 범위에 한정됩니다. 측정하지 않은 성능 개선이나 모든 상황의 동작 보장으로 확대하지 않습니다.
 
-포함된 Editor 플러그인은 `PortfolioDebugOverlayEditor`, `AssetReferenceInspector`입니다. 결과 확인은 [Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/)와 영상 안내를 우선으로 하며, 로컬 실행은 코드·도구 구조를 더 깊게 검토하기 위한 경로입니다.
+## 런타임 관찰과 개발 도구
 
-## Repository scope
+| 도구 | 사용 목적 | 자료 |
+| --- | --- | --- |
+| Runtime Debug Overlay | Focus 대상의 전투·이동·실행 상태와 Event Log를 함께 확인 | [화면과 설명](https://razria93.github.io/Portfolio_UE5.4_verGit/#runtime-debug) · [HUD 코드](Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp) |
+| Overlay Editor Panel | session-only CVar와 PIE Focus를 연결해 관찰 대상을 조정 | [Editor 연동 설명](https://razria93.github.io/Portfolio_UE5.4_verGit/#overlay-editor-plugin) |
+| Asset Reference Inspector | 에셋 Dependencies / Referencers를 조사하고 검토 후보와 CSV를 제공 | [스텔라 적용 기록](Docs/03_Issue_Analysis_Report/I08_UE5_Portfolio_Issue_Analysis_Report.md) · [플러그인 프로젝트](https://github.com/Razria93/Plugin_Portfolio_UE5.4) |
+| Root Motion Tool | 변환 전 Track 검증·백업과 Revert 복구 | [설명](https://razria93.github.io/Portfolio_UE5.4_verGit/#root-motion-tool) · [구현](Source/PortfolioEditor/Private/Animation/CAnimModifier_TransferBodyMotionToRoot.cpp) |
 
-- **공개 범위**: `Source/`, `Config/`, `Plugins/`, `Docs/` 및 프로젝트 구성을 검토하는 데 필요한 파일
-- **Unreal binary assets**: 새 `.uasset`, `.umap`은 forward-only Git LFS 정책으로 추적하며, 기존 이력은 변환하지 않습니다.
-- **생성·개인 환경 파일**: `Binaries/`, `Build/`, `DerivedDataCache/`, `Intermediate/`, `Saved/`, `.vs/`, `output/` 및 로컬 프로파일링 캡처는 저장소에서 제외합니다.
-- **외부 에셋**: 외부 에셋의 재배포 권한은 개별 라이선스로 확인해야 하며, 이 README는 해당 에셋에 별도 라이선스를 부여하지 않습니다.
+Overlay는 읽기 전용 상태 관찰을 담당합니다. Inspector의 unused 표시는 삭제 가능 판정이 아닌 검토 후보이며, 스텔라 적용 기록에서 확인한 범위와 도구 전체 기능은 구분합니다.
 
-## Documentation status
+<a id="code-guide"></a>
 
-현재 제출 기준은 `Portfolio_Production`의 23페이지 HTML과 GitHub Pages입니다. PF00–PF07은 이전 포트폴리오 설계 기록으로 보존합니다.
+## 코드 읽기 안내
 
-- [Current submitted portfolio source and publication guide](Docs/07_Portfolio_Documents/Portfolio_Production/README.md)
-- [Evidence ledger and documentation maintenance TODO](Docs/01_Work_List/Documentation_Maintenance_TODO.md)
-- [Legacy technical notes (PF00–PF07)](Docs/07_Portfolio_Documents/00_Portfolio_Document_Index.md)
+관심 있는 시스템의 한 행부터 읽으면 됩니다. 시스템별 상세 설명은 [현재 시스템 구조 안내](Docs/05_System_Architecture/00_System_Architecture_Index.md)에서 확인할 수 있습니다.
 
-## Next evidence update
+| 관심 주제 | 먼저 읽을 코드 | 이어서 볼 코드 |
+| --- | --- | --- |
+| 실행 판단 → 적용 | [실행 타입](Source/Portfolio/Type/CExecutionTypes.h) → [Action Orchestrator](Source/Portfolio/Component/CActionOrchestratorComponent.cpp) | [Action Component](Source/Portfolio/Component/CActionComponent.cpp), [Reaction Orchestrator](Source/Portfolio/Component/CReactionOrchestratorComponent.cpp) |
+| 타깃 → 참여 배정 → AI 반영 | [Combat Target](Source/Portfolio/Component/CCombatTargetComponent.cpp) → [참여 배정](Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp) | [Enemy 참여 Component](Source/Portfolio/Component/CEnemyCombatParticipationComponent.cpp) |
+| 처형 시작 → 확정·취소 | [Execution Collaboration](Source/Portfolio/Component/CExecutionCollaborationComponent.cpp) | [Balance](Source/Portfolio/Component/CBalanceComponent.cpp), [Combat Signal Target](Source/Portfolio/Component/CCombatSignalTargetComponent.cpp) |
+| 무기 표현 → 복구 | [Weapon Actor](Source/Portfolio/Weapon/CWeaponActor.cpp) | [Weapon Component](Source/Portfolio/Component/CWeaponComponent.cpp) |
 
-- Gameplay Video 촬영·업로드 후 Issue #119에 타임스탬프와 장면 설명을 추가합니다.
-- DataAsset authoring, Counter / Boss pattern, AI pattern·Runtime LOD의 검증 범위를 후속 확장합니다.
+## 로컬 실행과 확인 범위
+
+1. Unreal Engine **5.4**, Visual Studio 2022 C++ 개발 환경과 Git LFS를 준비합니다.
+2. 저장소를 clone하고 저장소 루트에서 `git lfs pull`로 LFS 에셋을 받습니다.
+3. `Portfolio.uproject`의 Visual Studio project files를 생성하고 `PortfolioEditor | Win64 | Development`로 빌드합니다.
+4. Editor에서 `Content/00_UnitTest/TestRoom`을 열어 Player / Enemy 전투와 Debug Overlay를 확인합니다.
+
+기존 빌드·자동 검사·PIE 결과는 각 기술 문서에 기준 커밋과 함께 기록되어 있습니다. [넉백·방향 보정 검토 가이드](Docs/07_Portfolio_Documents/Portfolio_Production/37_Gameplay_Knockback_and_Facing_Review_Guide.md)에는 실행 명령, 검사 결과, 미확인 조건이 있습니다. 해당 결과는 모든 애니메이션 조합이나 패키징 환경의 검증을 포함하지 않습니다.
+
+## 상세 문서와 관련 프로젝트
+
+- [목적별 문서 안내](Docs/00_Documentation_Index.md): 전투 구조, 문제 해결, 코드·검증 경로
+- [문제 해결 사례 전체](Docs/03_Issue_Analysis_Report/00_Issue_Analysis_Report_Index.md): 에셋 통합과 실행 문제의 분석 기록
+- [검증 근거 목록](Docs/98_Evidence/Stellar_Asset_Integration/README.md): 구현·감사·사용자 확인의 근거와 한계
+- [플러그인 포트폴리오](https://github.com/Razria93/Plugin_Portfolio_UE5.4): 독립 에디터 도구의 설계·검증
+- [그래픽스 학습·구현 기록](https://github.com/Razria93/Graphics_Study_Archive): 렌더링 원리와 결과 비교
+
+<details>
+<summary>저장소 범위와 문서 유지 관리</summary>
+
+- 코드·설정·플러그인·문서와 프로젝트 구성 파일을 제공합니다. 새 `.uasset`, `.umap`은 forward-only Git LFS 정책으로 추적하며 기존 이력은 변환하지 않습니다.
+- `Binaries/`, `Build/`, `DerivedDataCache/`, `Intermediate/`, `Saved/`, `.vs/`, `output/` 및 로컬 프로파일링 캡처는 제외합니다.
+- 외부 에셋의 재배포 권한은 개별 라이선스로 확인해야 하며, 이 README는 해당 에셋에 별도 라이선스를 부여하지 않습니다.
+- 웹 포트폴리오의 원본·배포 규칙은 [Portfolio Production](Docs/07_Portfolio_Documents/Portfolio_Production/README.md)에 있습니다. 웹 제출본과 후속 구현 문서는 갱신 시점이 다를 수 있으므로 현재 코드 구조는 연결된 시스템 문서를 기준으로 확인합니다.
+- PF00–PF07은 [이전 포트폴리오 설계 기록](Docs/07_Portfolio_Documents/00_Portfolio_Document_Index.md)입니다. 남은 자료 보강은 [문서 유지 관리 목록](Docs/01_Work_List/Documentation_Maintenance_TODO.md)에서 관리합니다.
+
+</details>
