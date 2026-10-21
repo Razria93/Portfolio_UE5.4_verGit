@@ -90,9 +90,11 @@ void FInvestigateDebug::Draw(UWorld* World, const ACEnemy* Enemy)
 	if (Searching) R.LastActiveTime = Now;
 	if (!R.bHasSearch || (!Searching && Now - R.LastActiveTime > 5)) return;
 	const float Scale = FMath::Clamp(TextScale.GetValueOnGameThread(), 0.5f, 3.f);
-	const FVector AnchorFoot = R.Anchor - FVector(0,0,HalfHeight) + FVector(0,0,10);
-	DrawDebugCircle(World, AnchorFoot, 35, 32, AnchorColor, false, 0, 0, 2, FVector::ForwardVector, FVector::RightVector, false);
-	DrawDebugString(World, AnchorFoot + FVector(0,0,65), TEXT("Last Seen"), nullptr, AnchorColor, 0, true, Scale);
+	// LastKnownLocation can be a projected navigation point or a target actor position.
+	// Preserve its source height; the observing enemy's capsule is unrelated to it.
+	const FVector AnchorMarker = R.Anchor + FVector(0,0,10);
+	DrawDebugCircle(World, AnchorMarker, 35, 32, AnchorColor, false, 0, 0, 2, FVector::ForwardVector, FVector::RightVector, false);
+	DrawDebugString(World, AnchorMarker + FVector(0,0,65), TEXT("Last Seen"), nullptr, AnchorColor, 0, true, Scale);
 	for (int32 I=0; I<R.Goals.Num(); ++I)
 	{
 		const FVector P = R.Goals[I] + FVector(0,0,10);
