@@ -1,6 +1,7 @@
 #include "Notify/CAnimNotify_ActionBase.h"
 
 #include "ProjectGlobal.h"
+#include "Notify/CCombatNotifyOwnership.h"
 
 #include "Component/CActionComponent.h"
 #include "Core/Debug/FAnimNotifyDebug.h"
@@ -11,10 +12,11 @@ UCAnimNotify_ActionBase::UCAnimNotify_ActionBase()
 {
 }
 
-bool UCAnimNotify_ActionBase::CanProcessActionNotify(const UCActionComponent* InActionComp) const
+bool UCAnimNotify_ActionBase::CanProcessActionNotify(const UCActionComponent* InActionComp, const FAnimNotifyEventReference& InReference) const
 {
 	if (!IsValid(InActionComp)) return false;
 	if (!InActionComp->IsActive()) return false;
+	if (!CCombatNotifyOwnership::AllowsAction(InActionComp, InReference)) return false;
 
 	if (TriggerActionType == EActionType::None || TriggerActionType == EActionType::Max)
 	{

@@ -218,6 +218,8 @@ bool UCReactionOrchestratorComponent::ResolveDamageReactionCandidate(const FDama
 
 	OutIncomingCandidate.ReactionDataKey.DamageSpecKey = InIncomingRequest.CombatSignalTargetPacket.Result.DamageSpecKey;
 	OutIncomingCandidate.ReactionDataKey.MatchMode = EReactionDataMatchMode::DamageSpec;
+	if (reactionType == EReactionType::PerfectDodge)
+		OutIncomingCandidate.ReactionDataKey.MatchMode = EReactionDataMatchMode::Global;
 	OutIncomingCandidate.ReactionDataKey.ReactionType = reactionType;
 	OutIncomingCandidate.CombatSignalResultSerial = InIncomingRequest.CombatSignalTargetPacket.ResultSerial;
 	OutIncomingCandidate.Knockback = InIncomingRequest.CombatSignalTargetPacket.Context.Knockback;
@@ -231,6 +233,7 @@ EReactionType UCReactionOrchestratorComponent::ResolveDamageReactionType(const E
 	case EDamageReactionOutcome::Hit: return EReactionType::Hit;
 	case EDamageReactionOutcome::BlockHit: return EReactionType::BlockHit;
 	case EDamageReactionOutcome::Parry: return EReactionType::Parry;
+	case EDamageReactionOutcome::PerfectDodge: return EReactionType::PerfectDodge;
 	case EDamageReactionOutcome::CollapseHit: return EReactionType::CollapseHit;
 	case EDamageReactionOutcome::Dead: return EReactionType::Dead;
 	default: return EReactionType::None;

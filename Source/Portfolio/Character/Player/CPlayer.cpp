@@ -126,11 +126,32 @@ void ACPlayer::PostInitializeComponents()
 void ACPlayer::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (IsValid(HealthComponent))
+	{
+		HealthComponent->OnDeadStateChanged.AddUObject(this, &ACPlayer::HandleOwnerDeadStateChanged);
+		HandleOwnerDeadStateChanged(EDeadState::Alive, HealthComponent->GetDeadState());
+	}
 }
 
 void ACPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (IsValid(HealthComponent))
+		HealthComponent->OnDeadStateChanged.RemoveAll(this);
+
 	Super::EndPlay(EndPlayReason);
+}
+
+void ACPlayer::HandleOwnerDeadStateChanged(EDeadState InPreviousDeadState, EDeadState InNewDeadState)
+{
+	if (InNewDeadState != EDeadState::Dead) return;
+
+	// Death must end attack collision and rush movement even when no death reaction is configured.
+	if (IsValid(ActionComponent))
+		ActionComponent->CancelActiveActionForSystem();
+
+	if (IsValid(ReactionComponent) && ReactionComponent->GetActiveReactionType() == EReactionType::PerfectDodge)
+		ReactionComponent->CancelActiveReactionForSystem();
 }
 
 // Setup

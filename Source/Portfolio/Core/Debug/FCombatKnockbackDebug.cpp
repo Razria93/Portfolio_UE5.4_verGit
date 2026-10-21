@@ -11,11 +11,11 @@
 #if !UE_BUILD_SHIPPING
 namespace
 {
-	TAutoConsoleVariable<int32> Enabled(TEXT("Portfolio.DebugOverlay.Knockback.Enabled"), 0, TEXT("Observe knockback diagnostics."));
-	TAutoConsoleVariable<int32> DrawWorld(TEXT("Portfolio.DebugOverlay.Knockback.DrawWorld"), 1, TEXT("Draw knockback intent and displacement."));
-	TAutoConsoleVariable<float> DrawDuration(TEXT("Portfolio.DebugOverlay.Knockback.DrawDuration"), 2.f, TEXT("Seconds to retain ended knockback geometry (0-10)."));
-	TAutoConsoleVariable<int32> DrawForeground(TEXT("Portfolio.DebugOverlay.Knockback.DrawForeground"), 0, TEXT("Draw over world geometry for visibility."));
-	TAutoConsoleVariable<int32> Audit(TEXT("Portfolio.Debug.KnockbackAudit"), 0, TEXT("Write knockback transitions to Output Log."));
+	TAutoConsoleVariable<int32> KnockbackEnabled(TEXT("Portfolio.DebugOverlay.Knockback.Enabled"), 0, TEXT("Observe knockback diagnostics."));
+	TAutoConsoleVariable<int32> KnockbackDrawWorld(TEXT("Portfolio.DebugOverlay.Knockback.DrawWorld"), 1, TEXT("Draw knockback intent and displacement."));
+	TAutoConsoleVariable<float> KnockbackDrawDuration(TEXT("Portfolio.DebugOverlay.Knockback.DrawDuration"), 2.f, TEXT("Seconds to retain ended knockback geometry (0-10)."));
+	TAutoConsoleVariable<int32> KnockbackDrawForeground(TEXT("Portfolio.DebugOverlay.Knockback.DrawForeground"), 0, TEXT("Draw over world geometry for visibility."));
+	TAutoConsoleVariable<int32> KnockbackAudit(TEXT("Portfolio.Debug.KnockbackAudit"), 0, TEXT("Write knockback transitions to Output Log."));
 
 	void Publish(const AActor* Actor, const FCombatKnockbackDebugRecord& Record)
 	{
@@ -23,12 +23,12 @@ namespace
 		FCombatKnockbackDebugHistory previous;
 		if (Record.Generation != 0 && FDebugOverlaySnapshotStore::TryGetKnockbackDiagnostic(Actor, previous) && Record.Generation < previous.LatestGeneration) return;
 		if (FCombatKnockbackDebug::IsEnabled()) FDebugOverlaySnapshotStore::RecordKnockbackDiagnostic(Actor, Record);
-		if (!FDebugOverlaySnapshotStore::IsCollecting() && Audit.GetValueOnGameThread() == 0) return;
+		if (!FDebugOverlaySnapshotStore::IsCollecting() && KnockbackAudit.GetValueOnGameThread() == 0) return;
 		const FString summary = FString::Printf(TEXT("Owner=%s | Stage=%s | Reason=%s | ReactionGeneration=%llu | Speed=%.1f | Duration=%.3f"),
 			*GetNameSafe(Actor), *Record.Stage.ToString(), *Record.Reason.ToString(), Record.Generation, Record.Context.Spec.Speed, Record.Context.Spec.Duration);
 		if (FCombatKnockbackDebug::IsEnabled())
 			FDebugOverlaySnapshotStore::AddEvent(Actor, TEXT("Knockback"), Record.Result.ToString(), GetNameSafe(Actor), GetNameSafe(Record.OtherActor.Get()), GetNameSafe(Actor), summary, Actor, Record.OtherActor.Get(), Actor);
-		if (Audit.GetValueOnGameThread() != 0) UE_LOG(LogTemp, Log, TEXT("[Knockback|%s] %s"), *Record.Result.ToString(), *summary);
+		if (KnockbackAudit.GetValueOnGameThread() != 0) UE_LOG(LogTemp, Log, TEXT("[Knockback|%s] %s"), *Record.Result.ToString(), *summary);
 	}
 }
 #endif
@@ -37,7 +37,7 @@ namespace
 bool FCombatKnockbackDebug::IsEnabled()
 {
 #if !UE_BUILD_SHIPPING
-	return Enabled.GetValueOnGameThread() != 0;
+	return KnockbackEnabled.GetValueOnGameThread() != 0;
 #else
 	return false;
 #endif
@@ -95,14 +95,14 @@ TArray<FString> FCombatKnockbackDebug::BuildOverlayLines(const AActor* InActor)
 void FCombatKnockbackDebug::DrawWorldDebug(UWorld* InWorld, const AActor* InActor)
 {
 #if !UE_BUILD_SHIPPING
-	if (!IsEnabled() || DrawWorld.GetValueOnGameThread() == 0 || !IsValid(InWorld) || !IsValid(InActor)) return;
+	if (!IsEnabled() || KnockbackDrawWorld.GetValueOnGameThread() == 0 || !IsValid(InWorld) || !IsValid(InActor)) return;
 	FCombatKnockbackDebugHistory history;
 	if (!FDebugOverlaySnapshotStore::TryGetKnockbackDiagnostic(InActor, history) || !history.Motion.bHasGeometry) return;
 	const auto& record = history.Motion;
 	const auto* movement = InActor->FindComponentByClass<UCMovementComponent>();
 	const bool active = movement && movement->IsKnockbackActive() && movement->KnockbackOwnerSerial == record.Generation;
-	if (!active && InWorld->GetTimeSeconds() - record.WorldTime > FMath::Clamp(DrawDuration.GetValueOnGameThread(), 0.f, 10.f)) return;
-	const uint8 depth = DrawForeground.GetValueOnGameThread() != 0 ? SDPG_Foreground : SDPG_World;
+	if (!active && InWorld->GetTimeSeconds() - record.WorldTime > FMath::Clamp(KnockbackDrawDuration.GetValueOnGameThread(), 0.f, 10.f)) return;
+	const uint8 depth = KnockbackDrawForeground.GetValueOnGameThread() != 0 ? SDPG_Foreground : SDPG_World;
 	const FVector origin = record.DrawOrigin;
 	const FVector intended = origin + record.Context.Direction * record.Context.Spec.Speed * record.Context.Spec.Duration;
 	const FVector actual = active ? CombatMotionDebugDraw::FootAnchor(InActor, InActor->GetActorLocation()) : record.DrawEnd;
@@ -120,7 +120,7 @@ void FCombatKnockbackDebug::Record(const AActor* InActor, const TCHAR* InStage, 
 	const FCombatKnockbackContext& InContext, uint64 InGeneration, const AActor* InOtherActor)
 {
 #if !UE_BUILD_SHIPPING
-	if ((!IsEnabled() && Audit.GetValueOnGameThread() == 0) || !IsValid(InActor)) return;
+	if ((!IsEnabled() && KnockbackAudit.GetValueOnGameThread() == 0) || !IsValid(InActor)) return;
 	if (InContext.Spec.Speed == 0.f && InContext.Spec.Duration == 0.f) return;
 	FCombatKnockbackDebugRecord record;
 	record.Stage = InStage; record.Result = InResult; record.Reason = InReason;
@@ -134,7 +134,7 @@ void FCombatKnockbackDebug::Record(const AActor* InActor, const TCHAR* InStage, 
 void FCombatKnockbackDebug::RecordStarted(const UCMovementComponent* InMovement, const FCombatKnockbackContext& InContext)
 {
 #if !UE_BUILD_SHIPPING
-	if ((!IsEnabled() && Audit.GetValueOnGameThread() == 0) || !InMovement || !InMovement->KnockbackSource.IsValid()) return;
+	if ((!IsEnabled() && KnockbackAudit.GetValueOnGameThread() == 0) || !InMovement || !InMovement->KnockbackSource.IsValid()) return;
 	const auto* actor = InMovement->GetOwner();
 	if (!IsValid(actor)) return;
 	FCombatKnockbackDebugRecord record;
@@ -152,7 +152,7 @@ void FCombatKnockbackDebug::RecordStarted(const UCMovementComponent* InMovement,
 void FCombatKnockbackDebug::RecordStopped(const UCMovementComponent* InMovement, const TCHAR* InReason)
 {
 #if !UE_BUILD_SHIPPING
-	if ((!IsEnabled() && Audit.GetValueOnGameThread() == 0) || !InMovement || !InMovement->KnockbackSource.IsValid()) return;
+	if ((!IsEnabled() && KnockbackAudit.GetValueOnGameThread() == 0) || !InMovement || !InMovement->KnockbackSource.IsValid()) return;
 	const auto* actor = InMovement->GetOwner();
 	if (!IsValid(actor)) return;
 	FCombatKnockbackDebugHistory history;

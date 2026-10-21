@@ -250,6 +250,14 @@ void UCCombatHUDPresenterComponent::RefreshActions()
 		{
 			next.Guard = ActionOrchestrator->QueryCombatActionAvailability(ECombatActionIntent::Guard, reason) ? EHUDActionState::Ready : EHUDActionState::Unavailable;
 			next.Dodge = ActionOrchestrator->QueryCombatActionAvailability(ECombatActionIntent::Dodge, reason) ? EHUDActionState::Ready : EHUDActionState::Unavailable;
+
+			FActionDataKey counterKey;
+			counterKey.ActionType = EActionType::CounterRush;
+			counterKey.ActionIndex = CActionIndexConstants::FirstActionIndex;
+			// The prepared-action query also rejects characters with no rush data.
+			// It evaluates readiness without consuming the successful-dodge opportunity.
+			next.CounterRush = ActionOrchestrator->QueryPreparedActionAvailability(counterKey, true, reason)
+				? EHUDActionState::Ready : EHUDActionState::Unavailable;
 		}
 
 		const bool bExternalInputAllowed = !Execution.IsValid() || Execution->GetExternalCombatInputPolicy() == EExternalCombatInputPolicy::Normal;
@@ -259,6 +267,13 @@ void UCCombatHUDPresenterComponent::RefreshActions()
 
 		if (bExternalInputAllowed && Actions.IsValid() && Actions->IsActiveActionType(EActionType::Dodge))
 			next.Dodge = EHUDActionState::Active;
+
+		next.bPerfectDodgeActive = bExternalInputAllowed && Defense.IsValid() && Defense->IsPerfectDodgeActive();
+		if (next.bPerfectDodgeActive)
+			next.Dodge = EHUDActionState::Active;
+
+		if (bExternalInputAllowed && Actions.IsValid() && Actions->IsActiveActionType(EActionType::CounterRush))
+			next.CounterRush = EHUDActionState::Active;
 
 		if (Execution.IsValid())
 		{

@@ -18,8 +18,10 @@ enum class EDamageDefenseOutcome : uint8
 
 	Guard,
 	Parry,
+	Dodge = 4,
+	PerfectDodge = 5,
 
-	Max,
+	Max = 3, // Preserve the existing serialized sentinel; not an element count.
 };
 
 UENUM(BlueprintType)
@@ -32,8 +34,9 @@ enum class EDamageReactionOutcome : uint8
 	Parry,
 	CollapseHit,
 	Dead,
+	PerfectDodge = 7,
 
-	Max,
+	Max = 6,
 };
 
 // Key / Identifier
@@ -101,6 +104,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	FCombatKnockbackSpec Knockback;
 
+	UPROPERTY(EditAnywhere, Category = "Defense")
+	bool bCanGuard = true;
+
+	UPROPERTY(EditAnywhere, Category = "Defense")
+	bool bCanParry = true;
+
+	UPROPERTY(EditAnywhere, Category = "Defense")
+	bool bCanDodge = true;
+
 public:
 	FDamageSpec() = default;
 };
@@ -118,6 +130,14 @@ public:
 
 public:
 	FDamageRequestAmount() = default;
+};
+
+// Result
+
+// Synchronous TakeDamage delivery receipt. Acceptance is independent of HP loss.
+struct FDamageDeliveryReceipt
+{
+	bool bAccepted = false;
 };
 
 // Packet
@@ -151,6 +171,9 @@ public:
 
 public:
 	FDefaultDamageEvent() = default;
+
+	// Borrowed for the synchronous call only; never retained in packets or runtime state.
+	FDamageDeliveryReceipt* DeliveryReceipt = nullptr;
 
 public:
 	virtual int32 GetTypeID() const override { return ClassID; }

@@ -21,7 +21,7 @@ protected:
 	int32 TriggerActionIndex = INDEX_NONE;
 
 protected:
-	bool CanProcessActionNotify(const class UCActionComponent* InActionComp) const;
+	bool CanProcessActionNotify(const class UCActionComponent* InActionComp, const FAnimNotifyEventReference& InReference) const;
 
 protected:
 	class UCActionComponent* GetActionComponent(USkeletalMeshComponent* InMeshComp) const;

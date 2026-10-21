@@ -769,6 +769,7 @@ void ACWeaponActor::CreateTrailComponents()
 
 			AddInstanceComponent(trailComponent);
 			trailComponent->RegisterComponent();
+			trailComponent->ConfigureAttachment(WeaponMeshComponent, definition);
 
 			SetTrailComponentActive(trailComponent, false);
 			trailComponents.Add(trailComponent);
@@ -808,6 +809,12 @@ void ACWeaponActor::SetTrailComponentActive(UWeaponTrailComponent* InTrailCompon
 
 	if (bEnable)
 	{
+		if (!InTrailComponent->IsTrailAttachmentValid())
+		{
+			InTrailComponent->Deactivate();
+			InTrailComponent->SetVisibility(false);
+			return;
+		}
 		InTrailComponent->SetVisibility(true);
 		InTrailComponent->Activate(true);
 		return;

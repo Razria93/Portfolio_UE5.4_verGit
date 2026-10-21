@@ -3,7 +3,16 @@
 #include "ProjectGlobal.h"
 
 #include "Component/CMovementComponent.h"
+#include "Component/CActionComponent.h"
+#include "Component/CHealthComponent.h"
+#include "Component/CReactionComponent.h"
+#include "Reaction/CReaction.h"
+#include "Action/CAction.h"
+#include "Notify/CAnimNotifyState_DodgeWindow.h"
 
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 
 UCDefenseComponent::UCDefenseComponent()
@@ -15,11 +24,320 @@ UCDefenseComponent::UCDefenseComponent()
 
 void UCDefenseComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	if (IsValid(HealthComp_Injected)) HealthComp_Injected->OnDeadStateChanged.RemoveAll(this);
+	if (IsValid(HealthComp_Injected)) HealthComp_Injected->OnHealthValuesChanged.RemoveAll(this);
+	ClearDodgeState();
+	ClearCounterRush();
+	PendingPerfectTarget.Reset();
 	OwnerCharacter_Injected = InReferences.OwnerCharacter;
 	MovementComp_Injected = InReferences.MovementComponent;
+	ActionComp_Injected = InReferences.ActionComponent;
+	HealthComp_Injected = InReferences.HealthComponent;
+	if (IsValid(HealthComp_Injected))
+	{
+		HealthComp_Injected->OnHealthValuesChanged.AddUObject(this, &UCDefenseComponent::HandleOwnerHealthChanged);
+		HealthComp_Injected->OnDeadStateChanged.AddUObject(this, &UCDefenseComponent::HandleOwnerDeadStateChanged);
+	}
+	ReactionComp_Injected = InReferences.ReactionComponent;
+	PendingPerfectSerial = 0;
+	PendingPerfectDodgeGeneration = 0;
+	EndPerfectDodgeExecution(PerfectGeneration);
 
 	ValidateRequiredComponentReferences();
 }
+
+// Component Lifecycle
+
+void UCDefenseComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
+{
+	if (IsValid(HealthComp_Injected)) HealthComp_Injected->OnDeadStateChanged.RemoveAll(this);
+	if (IsValid(HealthComp_Injected)) HealthComp_Injected->OnHealthValuesChanged.RemoveAll(this);
+	ClearDodgeState();
+	ClearCounterRush();
+	FinishPerfectDodgeRequest(PendingPerfectSerial);
+	EndPerfectDodgeExecution(PerfectGeneration);
+	Super::EndPlay(InEndPlayReason);
+}
+
+void UCDefenseComponent::HandleOwnerHealthChanged()
+{
+	if (IsValid(HealthComp_Injected) && HealthComp_Injected->IsAlive()) return;
+	ClearDodgeState();
+	FinishPerfectDodgeRequest(PendingPerfectSerial);
+	EndPerfectDodgeExecution(PerfectGeneration);
+	ClearCounterRush();
+}
+
+void UCDefenseComponent::HandleOwnerDeadStateChanged(EDeadState InPrevious, EDeadState InCurrent)
+{
+	if (InCurrent != EDeadState::Dead) return;
+	ClearDodgeState();
+	FinishPerfectDodgeRequest(PendingPerfectSerial);
+	EndPerfectDodgeExecution(PerfectGeneration);
+	ClearCounterRush();
+}
+
+void UCDefenseComponent::HandleCounterTargetDeadStateChanged(EDeadState InPrevious, EDeadState InCurrent)
+{
+	if (InCurrent == EDeadState::Dead) ClearCounterRush();
+}
+
+// Dodge Execution Ownership
+
+void UCDefenseComponent::BeginDodgeExecution(uint64 InGeneration, UAnimMontage* InMontage)
+{
+	// Repeated startup notification must not re-arm the one-shot success window.
+	if (InGeneration != 0 && DodgeGeneration == InGeneration) return;
+	if (!IsValid(ActionComp_Injected) || InGeneration == 0
+		|| ActionComp_Injected->GetActiveActionGeneration() != InGeneration
+		|| !ActionComp_Injected->IsActiveActionType(EActionType::Dodge)
+		|| !IsValid(OwnerCharacter_Injected) || !IsValid(InMontage)) return;
+
+	UAnimInstance* animInstance = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
+	FAnimMontageInstance* montageInstance = animInstance ? animInstance->GetActiveInstanceForMontage(InMontage) : nullptr;
+	if (!montageInstance || !montageInstance->IsPlaying()) return;
+
+	DodgeGeneration = InGeneration;
+	DodgeMontageInstanceId = montageInstance->GetInstanceID();
+	DodgeMontage = InMontage;
+	bPerfectConsumed = false;
+}
+
+void UCDefenseComponent::EndDodgeExecution(uint64 InGeneration)
+{
+	if (InGeneration != 0 && DodgeGeneration == InGeneration) ClearDodgeState();
+}
+
+void UCDefenseComponent::ClearDodgeState()
+{
+	DodgeGeneration = 0;
+	DodgeMontageInstanceId = INDEX_NONE;
+	DodgeMontage.Reset();
+	bPerfectConsumed = false;
+}
+
+bool UCDefenseComponent::TryGetDodgePosition(float& OutPosition) const
+{
+	OutPosition = 0.f;
+	if (DodgeGeneration == 0 || !DodgeMontage.IsValid()
+		|| !IsValid(OwnerCharacter_Injected) || OwnerCharacter_Injected->IsActorBeingDestroyed()
+		|| !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()
+		|| !IsValid(ActionComp_Injected)
+		|| ActionComp_Injected->GetActiveActionGeneration() != DodgeGeneration
+		|| !ActionComp_Injected->IsActiveActionType(EActionType::Dodge)) return false;
+
+	const UCAction* executor = ActionComp_Injected->GetActiveActionExecutor();
+	if (!IsValid(executor) || !executor->IsActive()) return false;
+	UAnimInstance* animInstance = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
+	const FAnimMontageInstance* montageInstance = animInstance ? animInstance->GetActiveInstanceForMontage(DodgeMontage.Get()) : nullptr;
+	if (!montageInstance || !montageInstance->IsPlaying()
+		|| montageInstance->GetInstanceID() != DodgeMontageInstanceId) return false;
+	OutPosition = montageInstance->GetPosition();
+	return true;
+}
+
+bool UCDefenseComponent::CanDodge() const
+{
+	float position;
+	return TryGetDodgePosition(position) && (DodgeTuning.bUseMontageWindows
+		? UCAnimNotifyState_DodgeWindow::Contains(DodgeMontage.Get(), EDodgeWindowKind::Invulnerability, position)
+		: DodgeTuning.ContainsInvulnerabilityPosition(position));
+}
+
+EDamageDefenseOutcome UCDefenseComponent::ResolveDodgeContact()
+{
+	if (IsPerfectDodgeActive()) return EDamageDefenseOutcome::Dodge;
+	float position;
+	if (!TryGetDodgePosition(position) || !(DodgeTuning.bUseMontageWindows
+		? UCAnimNotifyState_DodgeWindow::Contains(DodgeMontage.Get(), EDodgeWindowKind::Invulnerability, position)
+		: DodgeTuning.ContainsInvulnerabilityPosition(position)))
+		return EDamageDefenseOutcome::None;
+	if (!bPerfectConsumed && (DodgeTuning.bUseMontageWindows
+		? UCAnimNotifyState_DodgeWindow::Contains(DodgeMontage.Get(), EDodgeWindowKind::Perfect, position)
+		: DodgeTuning.ContainsPerfectPosition(position)))
+	{
+		bPerfectConsumed = true;
+		return EDamageDefenseOutcome::PerfectDodge;
+	}
+	return EDamageDefenseOutcome::Dodge;
+}
+
+void UCDefenseComponent::PreparePerfectDodge(uint64 InResultSerial, AActor* InAttacker)
+{
+	if (InResultSerial == 0 || !bPerfectConsumed || !CanDodge()) return;
+	PendingPerfectSerial = InResultSerial;
+	PendingPerfectDodgeGeneration = DodgeGeneration;
+	PendingPerfectTarget = InAttacker;
+}
+
+bool UCDefenseComponent::CanStartPerfectDodge(uint64 InResultSerial) const
+{
+	return InResultSerial != 0 && PendingPerfectSerial == InResultSerial
+		&& PendingPerfectDodgeGeneration != 0 && DodgeGeneration == PendingPerfectDodgeGeneration
+		&& CanDodge();
+}
+
+void UCDefenseComponent::FinishPerfectDodgeRequest(uint64 InResultSerial)
+{
+	if (PendingPerfectSerial != InResultSerial) return;
+	PendingPerfectSerial = 0;
+	PendingPerfectDodgeGeneration = 0;
+	PendingPerfectTarget.Reset();
+}
+
+bool UCDefenseComponent::CanCommitPerfectDodge(uint64 InResultSerial) const
+{
+	return InResultSerial != 0 && PendingPerfectSerial == InResultSerial
+		&& IsValid(OwnerCharacter_Injected) && !OwnerCharacter_Injected->IsActorBeingDestroyed()
+		&& IsValid(HealthComp_Injected) && HealthComp_Injected->IsAlive();
+}
+
+void UCDefenseComponent::BeginPerfectDodgeExecution(uint64 InGeneration, UAnimMontage* InMontage, uint64 InResultSerial)
+{
+	if (InGeneration == 0 || !CanCommitPerfectDodge(InResultSerial)
+		|| !IsValid(ReactionComp_Injected) || ReactionComp_Injected->GetActiveReactionGeneration() != InGeneration
+		|| !ReactionComp_Injected->IsActiveReactionType(EReactionType::PerfectDodge)
+		|| !IsValid(OwnerCharacter_Injected) || !IsValid(InMontage)) return;
+	UAnimInstance* anim = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
+	FAnimMontageInstance* instance = anim ? anim->GetActiveInstanceForMontage(InMontage) : nullptr;
+	if (!instance || !instance->IsPlaying()) return;
+	PerfectGeneration = InGeneration;
+	PerfectMontageInstanceId = instance->GetInstanceID();
+	PerfectMontage = InMontage;
+	PerfectAttacker = PendingPerfectTarget;
+	ClearCounterRush();
+	UCHealthComponent* targetHealth = PendingPerfectTarget.IsValid() ? PendingPerfectTarget->FindComponentByClass<UCHealthComponent>() : nullptr;
+	if (IsValid(targetHealth) && targetHealth->IsAlive())
+	{
+		CounterTarget = PendingPerfectTarget;
+		CounterTargetHealth = targetHealth;
+		CounterTargetDeathHandle = targetHealth->OnDeadStateChanged.AddUObject(this, &UCDefenseComponent::HandleCounterTargetDeadStateChanged);
+		CounterSerial = InResultSerial;
+	}
+	FinishPerfectDodgeRequest(InResultSerial);
+}
+
+void UCDefenseComponent::EndPerfectDodgeExecution(uint64 InGeneration, bool bCompleted)
+{
+	if (InGeneration == 0 || PerfectGeneration != InGeneration) return;
+	if (bCounterTransition && ReservedCounterSerial != 0 && ReservedCounterSerial == CounterSerial)
+		CounterExpiresAt = 0.; // Scoped handoff, never dependent on an input grace timer.
+	else if (bCompleted && !DodgeTuning.bUseMontageCounterWindow && FMath::IsFinite(DodgeTuning.CounterGraceSeconds))
+		CounterExpiresAt = FPlatformTime::Seconds() + FMath::Max(0.f, DodgeTuning.CounterGraceSeconds);
+	else
+		ClearCounterRush();
+	bCounterOpportunityOpen = false;
+	PerfectGeneration = 0;
+	PerfectMontageInstanceId = INDEX_NONE;
+	PerfectMontage.Reset();
+	PerfectAttacker.Reset();
+}
+
+AActor* UCDefenseComponent::GetCounterRushTarget() const
+{
+	AActor* target = CounterTarget.Get();
+	if (CounterSerial == 0 || !IsValid(target) || target->IsActorBeingDestroyed()
+		|| !IsValid(OwnerCharacter_Injected) || OwnerCharacter_Injected->IsActorBeingDestroyed()
+		|| !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return nullptr;
+	const UCHealthComponent* targetHealth = target->FindComponentByClass<UCHealthComponent>();
+	if (!IsValid(targetHealth) || !targetHealth->IsAlive()) return nullptr;
+	if (!FMath::IsFinite(DodgeTuning.CounterMaxDistance) || DodgeTuning.CounterMaxDistance <= 0.f
+		|| FVector::DistSquared(target->GetActorLocation(), OwnerCharacter_Injected->GetActorLocation())
+			> FMath::Square(DodgeTuning.CounterMaxDistance)) return nullptr;
+	if (bCounterTransition && ReservedCounterSerial != 0 && ReservedCounterSerial == CounterSerial)
+		return target;
+	if (PerfectGeneration != 0)
+	{
+		if (!IsPerfectDodgeActive()) return nullptr;
+		if (DodgeTuning.bUseMontageCounterWindow) return bCounterOpportunityOpen ? target : nullptr;
+		UAnimInstance* anim = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
+		const FAnimMontageInstance* instance = anim ? anim->GetMontageInstanceForID(PerfectMontageInstanceId) : nullptr;
+		if (!instance || !FMath::IsFinite(DodgeTuning.CounterConnectStart)
+			|| instance->GetPosition() < DodgeTuning.CounterConnectStart) return nullptr;
+	}
+	else if (DodgeTuning.bUseMontageCounterWindow || CounterExpiresAt <= FPlatformTime::Seconds()) return nullptr;
+	return target;
+}
+
+uint64 UCDefenseComponent::GetCounterRushSerial() const
+{
+	return GetCounterRushTarget() ? CounterSerial : 0;
+}
+
+bool UCDefenseComponent::IsCounterRushPresentationPending(uint64 InSerial) const
+{
+	if (InSerial == 0 || CounterSerial != InSerial || !CounterTarget.IsValid()
+		|| CounterTarget->IsActorBeingDestroyed() || !CounterTargetHealth.IsValid() || !CounterTargetHealth->IsAlive()
+		|| !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()) return false;
+	if (bCounterTransition && ReservedCounterSerial == InSerial) return true;
+	return PerfectGeneration != 0 ? IsPerfectDodgeActive() : CounterExpiresAt > FPlatformTime::Seconds();
+}
+
+bool UCDefenseComponent::BeginCounterRushTransition()
+{
+	if (bCounterTransition || !GetCounterRushTarget()) return false;
+	bCounterTransition = true;
+	ReservedCounterSerial = CounterSerial;
+	ReservedPerfectGeneration = PerfectGeneration;
+	return true;
+}
+
+void UCDefenseComponent::EndCounterRushTransition()
+{
+	const bool bStoppedReservedReaction = ReservedPerfectGeneration != 0 && PerfectGeneration == 0;
+	bCounterTransition = false;
+	ReservedCounterSerial = 0;
+	ReservedPerfectGeneration = 0;
+	// A failed handoff after stopping the reaction must not leave a reusable ticket.
+	// A failed attempt originating in legacy completion grace retains its original expiry.
+	if (bStoppedReservedReaction) ClearCounterRush();
+}
+
+bool UCDefenseComponent::SetCounterOpportunityWindow(bool bOpen, uint64 InGeneration, int32 InMontageInstanceId)
+{
+	if (!DodgeTuning.bUseMontageCounterWindow || InGeneration == 0 || InGeneration != PerfectGeneration
+		|| InMontageInstanceId == INDEX_NONE || InMontageInstanceId != PerfectMontageInstanceId
+		|| !IsPerfectDodgeActive() || bCounterTransition) return false;
+	bCounterOpportunityOpen = bOpen;
+	return true;
+}
+
+bool UCDefenseComponent::ConsumeCounterRush(uint64 InSerial)
+{
+	if (InSerial == 0 || InSerial != GetCounterRushSerial()) return false;
+	ClearCounterRush();
+	return true;
+}
+
+void UCDefenseComponent::ClearCounterRush()
+{
+	if (CounterTargetHealth.IsValid()) CounterTargetHealth->OnDeadStateChanged.Remove(CounterTargetDeathHandle);
+	CounterTargetDeathHandle.Reset();
+	CounterTargetHealth.Reset();
+	CounterTarget.Reset();
+	CounterSerial = 0;
+	CounterExpiresAt = 0.;
+	bCounterTransition = false;
+	ReservedCounterSerial = 0;
+	ReservedPerfectGeneration = 0;
+	bCounterOpportunityOpen = false;
+}
+
+bool UCDefenseComponent::IsPerfectDodgeActive() const
+{
+	if (PerfectGeneration == 0 || !PerfectMontage.IsValid()
+		|| !IsValid(OwnerCharacter_Injected) || OwnerCharacter_Injected->IsActorBeingDestroyed()
+		|| !IsValid(HealthComp_Injected) || !HealthComp_Injected->IsAlive()
+		|| !IsValid(ReactionComp_Injected) || ReactionComp_Injected->GetActiveReactionGeneration() != PerfectGeneration
+		|| !ReactionComp_Injected->IsActiveReactionType(EReactionType::PerfectDodge)) return false;
+	const UCReaction* executor = ReactionComp_Injected->GetActiveReactionExecutor();
+	if (!IsValid(executor) || !executor->IsActive()) return false;
+	UAnimInstance* anim = OwnerCharacter_Injected->GetMesh()->GetAnimInstance();
+	const FAnimMontageInstance* instance = anim ? anim->GetMontageInstanceForID(PerfectMontageInstanceId) : nullptr;
+	return instance && instance->IsPlaying();
+}
+
+// Component Reference Validation
 
 bool UCDefenseComponent::ValidateRequiredComponentReferences() const
 {
@@ -39,7 +357,7 @@ bool UCDefenseComponent::ValidateRequiredComponentReferences() const
 	return bValid;
 }
 
-// Overlay Policy
+	// Overlay Policy
 void UCDefenseComponent::WriteOverlaySnapshot(FObservableOverlaySnapshot& OutSnapshot) const
 {
 	OutSnapshot.Guard.bCanStartGuard = bCanStartGuard;

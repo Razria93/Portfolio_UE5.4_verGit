@@ -20,4 +20,11 @@ class UCMontageProbeAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 public:
 	void AdvanceProbe(float DeltaTime) { Montage_Advance(DeltaTime); TriggerAnimNotifies(DeltaTime); }
+	void AdvanceWeightedProbe(float DeltaTime)
+	{
+		NotifyQueue.AnimNotifies.Reset();
+		Montage_UpdateWeight(DeltaTime);
+		Montage_Advance(DeltaTime);
+		TriggerAnimNotifies(DeltaTime);
+	}
 };

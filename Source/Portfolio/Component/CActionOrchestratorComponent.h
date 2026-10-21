@@ -45,6 +45,9 @@ private:
 	UPROPERTY(Transient)
 	class UCReactionComponent* ReactionComp_Injected = nullptr;
 
+	UPROPERTY(Transient)
+	class UCDefenseComponent* DefenseComp_Injected = nullptr;
+
 private:
 	UPROPERTY(Transient)
 	TArray<FDeferredActionCandidate> DeferredActionCandidates;

@@ -18,7 +18,7 @@ void UCAnimNotifyState_HitContext::NotifyBegin(USkeletalMeshComponent* MeshComp,
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::PushHitContext);
 }
@@ -28,7 +28,7 @@ void UCAnimNotifyState_HitContext::NotifyEnd(USkeletalMeshComponent* MeshComp, U
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 
 	UCActionComponent* actionComp = GetActionComponent(MeshComp);
-	if (!CanProcessActionNotify(actionComp)) return;
+	if (!CanProcessActionNotify(actionComp, EventReference)) return;
 
 	actionComp->HandleActionNotifyCommand(EActionNotifyCommand::ClearHitContext);
 }

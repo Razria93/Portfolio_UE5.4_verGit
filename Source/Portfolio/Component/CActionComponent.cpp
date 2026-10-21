@@ -1,4 +1,6 @@
 #include "Component/CActionComponent.h"
+#include "Component/CReactionFeedbackComponent.h"
+#include "Misc/ScopeExit.h"
 
 #include "ProjectGlobal.h"
 
@@ -6,6 +8,7 @@
 #include "Component/CWeaponComponent.h"
 #include "Component/CStateComponent.h"
 #include "Component/CHealthComponent.h"
+#include "Component/CDefenseComponent.h"
 #include "Component/CObservableOverlayComponent.h"
 #include "Component/CCombatTargetComponent.h"
 #include "Component/CExecutionCollaborationComponent.h"
@@ -41,6 +44,7 @@ UCActionComponent::UCActionComponent()
 
 void UCActionComponent::InitializeReferences(const FCharacterComponentReferences& InReferences)
 {
+	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndDodgeExecution(ActiveActionGeneration);
 	ClearPendingStartFacing();
 	ActiveActionGeneration = 0;
 
@@ -52,6 +56,7 @@ void UCActionComponent::InitializeReferences(const FCharacterComponentReferences
 	WeaponComp_Injected = InReferences.WeaponComponent;
 	StateComp_Injected = InReferences.StateComponent;
 	HealthComp_Injected = InReferences.HealthComponent;
+	DefenseComp_Injected = InReferences.DefenseComponent;
 	ObservableOverlayComp_Injected = InReferences.ObservableOverlayComponent;
 	CombatTargetComp_Injected = InReferences.CombatTargetComponent;
 	ExecutionCollaborationComp_Injected = InReferences.ExecutionCollaborationComponent;
@@ -59,6 +64,7 @@ void UCActionComponent::InitializeReferences(const FCharacterComponentReferences
 	ActionOrchestratorComp_Injected = InReferences.ActionOrchestratorComponent;
 	ReactionComp_Injected = InReferences.ReactionComponent;
 	ActionFeedbackComp_Injected = InReferences.ActionFeedbackComponent;
+	ReactionFeedbackComp_Injected = InReferences.ReactionFeedbackComponent;
 
 	ClearPendingStartFacing();
 
@@ -79,6 +85,7 @@ void UCActionComponent::BeginPlay()
 
 void UCActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndDodgeExecution(ActiveActionGeneration);
 	ActiveActionGeneration = 0;
 	ClearPendingStartFacing();
 
@@ -329,6 +336,15 @@ bool UCActionComponent::ApplyActionDecision(const FActionExecutionResult& InResu
 		return false;
 	}
 
+	const bool bCounterRush = InResult.ResolvedContext.ActionDataKey.ActionType == EActionType::CounterRush;
+	if (bCounterRush && (!IsValid(DefenseComp_Injected) || !DefenseComp_Injected->BeginCounterRushTransition())) return false;
+	auto* glowFeedback = bCounterRush ? ReactionFeedbackComp_Injected : nullptr;
+	if (glowFeedback) glowFeedback->BeginWeaponGlowTransfer(DefenseComp_Injected->GetCounterRushSerial());
+	ON_SCOPE_EXIT
+	{
+		if (glowFeedback) glowFeedback->FinishWeaponGlowTransfer();
+		if (bCounterRush && IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndCounterRushTransition();
+	};
 	switch (InResult.ApplyMode)
 	{
 	case EExecutionApplyMode::Start:
@@ -415,6 +431,9 @@ void UCActionComponent::HandleApplyActionStarted(const UCAction* InAction, const
 {
 	if (!IsActive() || !IsValid(InAction) || !InAction->IsActive()) return;
 	if (InAction != ActiveActionExecutor || InActionGeneration == 0 || InActionGeneration != ActiveActionGeneration) return;
+
+	if (ActiveActionType == EActionType::Dodge && IsValid(DefenseComp_Injected))
+		DefenseComp_Injected->BeginDodgeExecution(InActionGeneration, ActiveActionData.Montage);
 
 	ClearPendingStartFacing();
 
@@ -803,6 +822,9 @@ FCharacterComponentReferences UCActionComponent::BuildActionExecutorReferences()
 	references.WeaponComponent = WeaponComp_Injected;
 	references.ActionComponent = this;
 	references.ActionFeedbackComponent = ActionFeedbackComp_Injected;
+	references.ReactionFeedbackComponent = ReactionFeedbackComp_Injected;
+	references.DefenseComponent = DefenseComp_Injected;
+	references.MovementComponent = MovementComp_Injected;
 
 	return references;
 }
@@ -1065,6 +1087,9 @@ void UCActionComponent::SetActiveActionContext(const FActionExecutionContext& In
 
 void UCActionComponent::ClearActiveActionContext()
 {
+	if (IsValid(ReactionFeedbackComp_Injected))
+		ReactionFeedbackComp_Injected->EndWeaponGlowOwner(true, ActiveActionGeneration);
+	if (IsValid(DefenseComp_Injected)) DefenseComp_Injected->EndDodgeExecution(ActiveActionGeneration);
 	ActiveActionGeneration = 0;
 
 	ClearPendingStartFacing();

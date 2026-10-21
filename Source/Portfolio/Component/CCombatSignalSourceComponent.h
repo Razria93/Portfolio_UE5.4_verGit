@@ -23,6 +23,7 @@ private:
 
 private:
 	TMap<FCombatSignalHitWindowKey, TSet<TWeakObjectPtr<AActor>>> DamagedTargetContainer;
+	TMap<FCombatSignalHitWindowKey, TSet<TWeakObjectPtr<AActor>>> PendingTargetContainer;
 
 private:
 	UPROPERTY(Transient)
@@ -73,7 +74,7 @@ private:
 private:
 	// Send
 	void CommitCombatSignalSource(FCombatSignalSourceContext& InOutCombatSignalSourceContext);
-	float SendDamageToTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext) const;
+	float SendDamageToTarget(const FCombatSignalSourceContext& InCombatSignalSourceContext, FDamageDeliveryReceipt& OutReceipt) const;
 	bool SendCueSignal(const FCombatSignal& InCombatSignal) const;
 
 private:
