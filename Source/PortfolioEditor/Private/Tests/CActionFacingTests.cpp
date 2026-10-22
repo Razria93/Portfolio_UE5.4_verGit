@@ -10,6 +10,8 @@
 #include "Animation/AnimMontage.h"
 #include "Character/Player/CPlayer.h"
 #include "Component/CActionComponent.h"
+#include "Component/CEnemyCombatTargetFacingComponent.h"
+#include "Controller/CAIController.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
 #include "Component/CBalanceComponent.h"
@@ -27,6 +29,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "TimerManager.h"
 #include <limits>
 
 namespace ActionFacingTest
@@ -109,6 +112,114 @@ namespace ActionFacingTest
 			static_cast<UActorComponent*>(Action)->TickComponent(1.f / 60.f, LEVELTICK_All, &Action->PrimaryComponentTick);
 		}
 	};
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEnemyAttackFacingPolicyTest, "Portfolio.Combat.ActionFacing.EnemyAttackPolicy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEnemyAttackFacingPolicyTest::RunTest(const FString&)
+{
+	ActionFacingTest::FFixture f;
+	AAIController* ai = f.World->SpawnActor<AAIController>();
+	ai->Possess(f.Player);
+	UCEnemyCombatTargetFacingComponent* facing = NewObject<UCEnemyCombatTargetFacingComponent>(f.Player);
+	// The player fixture has no enemy balance component; supply the required dependency.
+	f.References.BalanceComponent = NewObject<UCBalanceComponent>(f.Player);
+	facing->InitializeReferences(f.References);
+	facing->SetAIController(ai);
+	TestEqual(TEXT("Idle enemy policy tracks target"), facing->GetRuntimeSnapshot().PolicyState, EEnemyCombatTargetFacingPolicyState::Tracking);
+	TestTrue(TEXT("Start attack"), f.Action->ApplyActionDecision(f.Result(80)));
+	facing->SetAIController(ai);
+	f.Tick();
+	TestEqual(TEXT("Attack uses fixed facing"), f.Movement->GetCurrentMovementRotationMode(), EMovementRotationMode::FixedFacing);
+	TestNull(TEXT("Attack clears persistent gameplay focus"), ai->GetFocusActorForPriority(EAIFocusPriority::Gameplay));
+	const double yaw = f.Player->GetActorRotation().Yaw;
+	f.Target->SetActorLocation(FVector(0.f, 300.f, 0.f));
+	f.Tick();
+	TestEqual(TEXT("Later target movement does not repeat start correction"), f.Player->GetActorRotation().Yaw, yaw);
+	f.Action->CancelActiveActionForSystem();
+	facing->SetAIController(ai);
+	TestEqual(TEXT("Formal attack exit restores tracking"), facing->GetRuntimeSnapshot().PolicyState, EEnemyCombatTargetFacingPolicyState::Tracking);
+	TestTrue(TEXT("Second attack"), f.Action->ApplyActionDecision(f.Result(81)));
+	facing->SetAIController(ai);
+	f.CombatTarget->RequestClearCombatTarget(ECombatTargetChangeReason::ManualClear);
+	TestEqual(TEXT("Target removal preserves current hit facing"), f.Movement->GetCurrentMovementRotationMode(), EMovementRotationMode::FixedFacing);
+	f.Action->CancelActiveActionForSystem();
+	facing->SetAIController(ai);
+	TestEqual(TEXT("No target after exit restores movement facing"), f.Movement->GetCurrentMovementRotationMode(), EMovementRotationMode::OrientToMovement);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FActionFacingAISightGateTest, "Portfolio.Combat.ActionFacing.AISightGate",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FActionFacingAISightGateTest::RunTest(const FString&)
+{
+	ActionFacingTest::FFixture f;
+	ACAIController* ai = f.World->SpawnActor<ACAIController>();
+	ai->Possess(f.Player);
+	TestTrue(TEXT("Start with remembered target identity"), f.Action->ApplyActionDecision(f.Result(82)));
+	f.Tick();
+	TestEqual(TEXT("Unobserved target cannot supply live position for correction"), f.Player->GetActorRotation().Yaw, 0.0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReactionSightFacingTest, "Portfolio.Combat.ActionFacing.ReactionSightLoss",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FReactionSightFacingTest::RunTest(const FString&)
+{
+	using namespace ActionFacingTest;
+	// Isolate the facing policy; real reaction playback is covered by the PIE fixture.
+	for (int32 scenario = 0; scenario < 5; ++scenario)
+	{
+		FFixture f;
+		ACAIController* ai = f.World->SpawnActor<ACAIController>();
+		ai->Possess(f.Player);
+		f.References.BalanceComponent = NewObject<UCBalanceComponent>(f.Player);
+		UCEnemyCombatTargetFacingComponent* facing = NewObject<UCEnemyCombatTargetFacingComponent>(f.Player);
+		facing->InitializeReferences(f.References);
+		auto& perception = Field<TMap<AActor*, FPerceptionTargetContext>>(ai, TEXT("PerceptionTargetContextMap"));
+		auto& sight = perception.FindOrAdd(f.Target);
+		sight.TargetActor = f.Target; sight.bHasLOS = true;
+		facing->SetAIController(ai);
+		UCReactionComponent* reaction = f.References.ReactionComponent;
+		Field<EReactionType>(reaction, TEXT("ActiveReactionType")) = EReactionType::Hit;
+		f.Movement->SetMovementRotationMode(EMovementRotationMode::FixedFacing);
+		sight.bHasLOS = false;
+		facing->SetAIController(ai);
+		auto snapshot = facing->GetRuntimeSnapshot();
+		TestNull(TEXT("Sight loss immediately clears hidden actor focus"), snapshot.GameplayFocusActor);
+		TestEqual(TEXT("Sight loss preserves active reaction rotation"), snapshot.RotationMode, EMovementRotationMode::FixedFacing);
+		TestEqual(TEXT("Snapshot reports reaction priority over missing sight"), snapshot.PolicyState, EEnemyCombatTargetFacingPolicyState::HoldForReaction);
+		TestTrue(TEXT("Reaction completion will synchronize facing"), snapshot.bDeferredSyncPending);
+		TestEqual(TEXT("Debug focus directive requests clearing"), snapshot.ExpectedFocusDirective, EEnemyCombatTargetFacingFocusDirective::ClearGameplayFocus);
+		TestEqual(TEXT("Debug rotation directive preserves rotation"), snapshot.ExpectedRotationDirective, EEnemyCombatTargetFacingRotationDirective::HoldCurrentRotation);
+		if (scenario == 1)
+		{
+			sight.bHasLOS = true; facing->SetAIController(ai);
+			TestEqual(TEXT("Reacquisition cannot overwrite reaction rotation"), f.Movement->GetCurrentMovementRotationMode(), EMovementRotationMode::FixedFacing);
+			TestNull(TEXT("Reacquisition waits before restoring focus"), ai->GetFocusActorForPriority(EAIFocusPriority::Gameplay));
+		}
+		if (scenario == 2) f.CombatTarget->RequestClearCombatTarget(ECombatTargetChangeReason::ManualClear);
+		if (scenario == 3)
+		{
+			Field<EBalanceLifecycleState>(f.References.BalanceComponent, TEXT("BalanceLifecycleState")) = EBalanceLifecycleState::CollapseLoopActive;
+			facing->SetAIController(ai);
+		}
+		if (scenario == 4) f.References.HealthComponent->TakeDamage(1000.f);
+		if (scenario >= 2)
+		{
+			TestEqual(TEXT("Target removal, Balance and death override reaction deferral"), f.Movement->GetCurrentMovementRotationMode(), EMovementRotationMode::OrientToMovement);
+			TestFalse(TEXT("Safety override cancels pending sync"), facing->GetRuntimeSnapshot().bDeferredSyncPending);
+		}
+		Field<EReactionType>(reaction, TEXT("ActiveReactionType")) = EReactionType::None;
+		FReactionExecutionLifecycleEvent event;
+		event.EventType = EReactionExecutionLifecycleEventType::Completed;
+		reaction->OnReactionExecutionLifecycleEvent.Broadcast(event);
+		f.World->GetTimerManager().Tick(1.f / 60.f);
+		TestEqual(TEXT("Completion applies current sensory policy"), f.Movement->GetCurrentMovementRotationMode(), scenario == 1 ? EMovementRotationMode::ControllerDesired : EMovementRotationMode::OrientToMovement);
+		TestFalse(TEXT("Completion consumes pending sync"), facing->GetRuntimeSnapshot().bDeferredSyncPending);
+		TestEqual(TEXT("Completion restores focus only when sight was reacquired"), ai->GetFocusActorForPriority(EAIFocusPriority::Gameplay), scenario == 1 ? static_cast<AActor*>(f.Target) : nullptr);
+	}
+	return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FActionFacingLifecycleTest, "Portfolio.Combat.ActionFacing.Lifecycle",

@@ -18,6 +18,8 @@ enum class EEnemyCombatTargetFacingPolicyState : uint8
 	SuppressedBalance,
 	NoCombatTarget,
 	NoAIController,
+	NoCurrentSight,
+	HoldForAttack,
 };
 
 enum class EEnemyCombatTargetFacingFocusDirective : uint8
@@ -34,6 +36,7 @@ enum class EEnemyCombatTargetFacingRotationDirective : uint8
 	ControllerDesired,
 	OrientToMovement,
 	HoldCurrentRotation,
+	FixedFacing,
 };
 
 struct FEnemyCombatTargetFacingRuntimeSnapshot

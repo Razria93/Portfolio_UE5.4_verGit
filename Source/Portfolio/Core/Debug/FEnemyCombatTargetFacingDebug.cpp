@@ -30,11 +30,13 @@ namespace
 		switch (InPolicyState)
 		{
 		case EEnemyCombatTargetFacingPolicyState::Tracking: return TEXT("Tracking");
+		case EEnemyCombatTargetFacingPolicyState::HoldForAttack: return TEXT("HoldForAttack");
 		case EEnemyCombatTargetFacingPolicyState::HoldForReaction: return TEXT("HoldForReaction");
 		case EEnemyCombatTargetFacingPolicyState::SuppressedDead: return TEXT("Suppressed(Dead)");
 		case EEnemyCombatTargetFacingPolicyState::SuppressedBalance: return TEXT("Suppressed(Balance)");
 		case EEnemyCombatTargetFacingPolicyState::NoCombatTarget: return TEXT("NoCombatTarget");
 		case EEnemyCombatTargetFacingPolicyState::NoAIController: return TEXT("NoAIController");
+		case EEnemyCombatTargetFacingPolicyState::NoCurrentSight: return TEXT("NoCurrentSight");
 		case EEnemyCombatTargetFacingPolicyState::Uninitialized:
 		default: return TEXT("Uninitialized");
 		}
@@ -76,6 +78,7 @@ namespace
 		switch (InDirective)
 		{
 		case EEnemyCombatTargetFacingRotationDirective::ControllerDesired: return TEXT("ControllerDesired");
+		case EEnemyCombatTargetFacingRotationDirective::FixedFacing: return TEXT("FixedFacing");
 		case EEnemyCombatTargetFacingRotationDirective::OrientToMovement: return TEXT("OrientToMovement");
 		case EEnemyCombatTargetFacingRotationDirective::HoldCurrentRotation: return TEXT("HoldCurrentRotation");
 		case EEnemyCombatTargetFacingRotationDirective::None:
@@ -109,7 +112,8 @@ namespace
 			: !IsValid(InRuntime.GameplayFocusActor);
 		const bool bRotationMatches = bShouldTrack
 			? InRuntime.RotationMode == EMovementRotationMode::ControllerDesired
-			: InRuntime.RotationMode == EMovementRotationMode::OrientToMovement;
+			: InRuntime.RotationMode == (InRuntime.PolicyState == EEnemyCombatTargetFacingPolicyState::HoldForAttack
+				? EMovementRotationMode::FixedFacing : EMovementRotationMode::OrientToMovement);
 
 		if (bFocusMatches && bRotationMatches) return TEXT("OK");
 		if (!bFocusMatches && !bRotationMatches) return TEXT("Mismatch: Focus + Rotation");
