@@ -8,6 +8,15 @@
 
 > 대표 검증 장면 — 전투 실행 중 Action·Reaction·Target·Facing 상태와 이벤트 기록을 같은 화면에서 대조합니다. 구현 결과를 실시간으로 관찰·검증하는 흐름을 이 포트폴리오의 중심 주제로 삼았습니다. 영상은 [Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119)에 업로드 예정입니다.
 
+## 현재 자료 안내
+
+2026-10-23, PR #133 병합 main `aeb9e7ed` 기준으로 재현·관찰·HUD 문서를 정리했습니다. 저장소의 23페이지 HTML과 과거 초안의 19페이지 PPT 계획은 별도 자료입니다. 최신 PPT 원본·새 PDF 공개 위치는 미확인이고, Issue #119는 조회 시 영상 업로드 예정 상태입니다. 현재 공개 Pages의 내용·접근은 이번 도구에서 확인하지 못했습니다.
+
+- [남은 구현과 제출 준비](Docs/07_Portfolio_Documents/Portfolio_Production/stellar_portfolio_completion_checklist.md)
+- [영상 근거 제작 가이드](Docs/07_Portfolio_Documents/Portfolio_Production/stellar_video_evidence_guide.md)
+- [디버그 촬영 설정](Docs/07_Portfolio_Documents/Portfolio_Production/stellar_capture_presets.md)
+- [순찰 전용 재현 장면](Docs/06_notes/N_Patrol_Replay_Scene.md)
+
 ## Project facts
 
 | 항목 | 내용 |
@@ -53,7 +62,7 @@
 
 ## 결과와 검증 자료
 
-- [Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/): 현재 제출 기준인 23페이지 HTML의 웹 배포본
+- [Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/): 추적 중인 23페이지 HTML의 배포 경로. 최신 공개 내용 확인은 별도
 - [Gameplay Video Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119): 대표 영상 업로드 예정. 업로드 후 같은 Issue에서 영상·타임스탬프를 관리
 - [Portfolio Production](Docs/07_Portfolio_Documents/Portfolio_Production/README.md): 제출 HTML 원본, 이미지 Assets, publish 규칙
 - [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md): 현재 구조와 기술 판단의 문서 색인
@@ -76,7 +85,7 @@
 
 ## Documentation status
 
-현재 제출 기준은 `Portfolio_Production`의 23페이지 HTML과 GitHub Pages입니다. PF00–PF07은 이전 포트폴리오 설계 기록으로 보존합니다.
+추적 HTML 원본과 배포 규칙은 `Portfolio_Production`에서 관리합니다. 과거 PPT 편집 계획과 최종 제출·공개 상태는 해당 폴더의 자료 상태 안내를 따릅니다. PF00–PF07은 이전 포트폴리오 설계 기록으로 보존합니다.
 
 - [Current submitted portfolio source and publication guide](Docs/07_Portfolio_Documents/Portfolio_Production/README.md)
 - [Evidence ledger and documentation maintenance TODO](Docs/01_Work_List/Documentation_Maintenance_TODO.md)
@@ -85,4 +94,5 @@
 ## Next evidence update
 
 - Gameplay Video 촬영·업로드 후 Issue #119에 타임스탬프와 장면 설명을 추가합니다.
-- DataAsset authoring, Counter / Boss pattern, AI pattern·Runtime LOD의 검증 범위를 후속 확장합니다.
+- HUD 샘플 자원 연동과 보스전은 별도 신규 기능 범위로 구성합니다. 기존 회피·처형 HUD·순찰 및 녹화 도구를 신규 구현으로 다시 집계하지 않습니다.
+- 과거 40·80·120명 18회 측정 집계는 당시 조건의 자료로 선별하며 현재 main 재측정 결과로 표시하지 않습니다.
