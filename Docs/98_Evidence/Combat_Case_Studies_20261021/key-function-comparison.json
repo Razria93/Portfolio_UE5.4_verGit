@@ -1,0 +1,132 @@
+[
+  {
+    "path": "Source/Portfolio/Component/CDefenseComponent.cpp",
+    "function": "CanApplyOverlayHandling",
+    "snapshot": {
+      "start_line": 432,
+      "text": "bool UCDefenseComponent::CanApplyOverlayHandling(EObservableOverlayHandling InHandling) const\n{\n\tswitch (InHandling)\n\t{\n\tcase EObservableOverlayHandling::None:\n\t\treturn true;\n\n\tcase EObservableOverlayHandling::ClearGuardState:\n\t\treturn true;\n\n\tcase EObservableOverlayHandling::ClearGuardOverlay:\n\t\treturn true;\n\n\tdefault:\n\t\treturn false;\n\t}\n}"
+    },
+    "repository": {
+      "start_line": 114,
+      "text": "bool UCDefenseComponent::CanApplyOverlayHandling(EObservableOverlayHandling InHandling) const\n{\n\tswitch (InHandling)\n\t{\n\tcase EObservableOverlayHandling::None:\n\t\treturn true;\n\n\tcase EObservableOverlayHandling::ClearGuardState:\n\t\treturn true;\n\n\tcase EObservableOverlayHandling::ClearGuardOverlay:\n\t\treturn true;\n\n\tdefault:\n\t\treturn false;\n\t}\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CDefenseComponent.cpp",
+    "function": "ClearGuardState",
+    "snapshot": {
+      "start_line": 535,
+      "text": "void UCDefenseComponent::ClearGuardState()\n{\n\tAllowGuardStart();\n\tEndGuardIntent();\n\n\tEndGuardPose();\n\tCloseGuardWindow();\n\tCloseParryWindow();\n\n\tClearMovementGaitOverride();\n}"
+    },
+    "repository": {
+      "start_line": 217,
+      "text": "void UCDefenseComponent::ClearGuardState()\n{\n\tAllowGuardStart();\n\tEndGuardIntent();\n\n\tEndGuardPose();\n\tCloseGuardWindow();\n\tCloseParryWindow();\n\n\tClearMovementGaitOverride();\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CDefenseComponent.cpp",
+    "function": "ClearGuardOverlay",
+    "snapshot": {
+      "start_line": 547,
+      "text": "void UCDefenseComponent::ClearGuardOverlay()\n{\n\tEndGuardPose();\n\tCloseGuardWindow();\n\tCloseParryWindow();\n\n\tClearMovementGaitOverride();\n}"
+    },
+    "repository": {
+      "start_line": 229,
+      "text": "void UCDefenseComponent::ClearGuardOverlay()\n{\n\tEndGuardPose();\n\tCloseGuardWindow();\n\tCloseParryWindow();\n\n\tClearMovementGaitOverride();\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CEnemyHitReactiveComponent.cpp",
+    "function": "HandleCombatSignalTargetAccepted",
+    "snapshot": {
+      "start_line": 86,
+      "text": "void UCEnemyHitReactiveComponent::HandleCombatSignalTargetAccepted(const FCombatSignalTargetPacket& InPacket)\n{\n\tif (InPacket.ResultSerial == 0 || InPacket.ResultSerial <= LastAcceptedResultSerial) return;\n\tLastAcceptedResultSerial = InPacket.ResultSerial;\n\n\tif (!IsEligibleHitReactiveResult(InPacket)) return;\n\n\tAActor* combatantTarget = ResolveCombatantTarget(InPacket);\n\tif (!IsValid(combatantTarget)) return;\n\n\tFCombatParticipationEvidenceContext evidenceContext;\n\tconst ITargetContextProvider* targetProvider = Cast<ITargetContextProvider>(combatantTarget);\n\tif (!targetProvider) return;\n\n\tevidenceContext.TargetPriority = targetProvider->GetTargetPriority();\n\tevidenceContext.DistanceToTarget = FVector::Dist(OwnerCharacter_Injected->GetActorLocation(), combatantTarget->GetActorLocation());\n\tevidenceContext.ObservedTargetLocation = combatantTarget->GetActorLocation();\n\tevidenceContext.ObservedTargetVelocity = combatantTarget->GetVelocity();\n\tevidenceContext.bHasTargetObservation = true;\n\n\tPendingCombatantTargetByResultSerial.Add(InPacket.ResultSerial, combatantTarget);\n\tCombatParticipationComp_Injected->ReportHitReactiveEvidence(combatantTarget, evidenceContext, InPacket.ResultSerial);\n}"
+    },
+    "repository": {
+      "start_line": 86,
+      "text": "void UCEnemyHitReactiveComponent::HandleCombatSignalTargetAccepted(const FCombatSignalTargetPacket& InPacket)\n{\n\tif (InPacket.ResultSerial == 0 || InPacket.ResultSerial <= LastAcceptedResultSerial) return;\n\tLastAcceptedResultSerial = InPacket.ResultSerial;\n\n\tif (!IsEligibleHitReactiveResult(InPacket)) return;\n\n\tAActor* combatantTarget = ResolveCombatantTarget(InPacket);\n\tif (!IsValid(combatantTarget)) return;\n\n\tFCombatParticipationEvidenceContext evidenceContext;\n\tconst ITargetContextProvider* targetProvider = Cast<ITargetContextProvider>(combatantTarget);\n\tif (!targetProvider) return;\n\n\tevidenceContext.TargetPriority = targetProvider->GetTargetPriority();\n\tevidenceContext.DistanceToTarget = FVector::Dist(OwnerCharacter_Injected->GetActorLocation(), combatantTarget->GetActorLocation());\n\tevidenceContext.ObservedTargetLocation = combatantTarget->GetActorLocation();\n\tevidenceContext.ObservedTargetVelocity = combatantTarget->GetVelocity();\n\tevidenceContext.bHasTargetObservation = true;\n\n\tPendingCombatantTargetByResultSerial.Add(InPacket.ResultSerial, combatantTarget);\n\tCombatParticipationComp_Injected->ReportHitReactiveEvidence(combatantTarget, evidenceContext, InPacket.ResultSerial);\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CEnemyHitReactiveComponent.cpp",
+    "function": "HandleCombatSignalTargetReactionResolved",
+    "snapshot": {
+      "start_line": 110,
+      "text": "void UCEnemyHitReactiveComponent::HandleCombatSignalTargetReactionResolved(const FCombatSignalTargetPacket& InPacket, const FReactionRequestResult& InResult)\n{\n\tTWeakObjectPtr<AActor>* combatantTarget = PendingCombatantTargetByResultSerial.Find(InPacket.ResultSerial);\n\tif (!combatantTarget || !combatantTarget->IsValid()) return;\n\n\tif (InResult.IsAccepted()) return;\n\n\tCombatParticipationComp_Injected->StartHitReactiveEvidencePostReactionTTL(combatantTarget->Get(), InPacket.ResultSerial);\n\tPendingCombatantTargetByResultSerial.Remove(InPacket.ResultSerial);\n}"
+    },
+    "repository": {
+      "start_line": 110,
+      "text": "void UCEnemyHitReactiveComponent::HandleCombatSignalTargetReactionResolved(const FCombatSignalTargetPacket& InPacket, const FReactionRequestResult& InResult)\n{\n\tTWeakObjectPtr<AActor>* combatantTarget = PendingCombatantTargetByResultSerial.Find(InPacket.ResultSerial);\n\tif (!combatantTarget || !combatantTarget->IsValid()) return;\n\n\tif (InResult.IsAccepted()) return;\n\n\tCombatParticipationComp_Injected->StartHitReactiveEvidencePostReactionTTL(combatantTarget->Get(), InPacket.ResultSerial);\n\tPendingCombatantTargetByResultSerial.Remove(InPacket.ResultSerial);\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CEnemyHitReactiveComponent.cpp",
+    "function": "HandleReactionExecutionLifecycleEvent",
+    "snapshot": {
+      "start_line": 121,
+      "text": "void UCEnemyHitReactiveComponent::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)\n{\n\tif (InEvent.EventType != EReactionExecutionLifecycleEventType::Completed\n\t\t&& InEvent.EventType != EReactionExecutionLifecycleEventType::Interrupted\n\t\t&& InEvent.EventType != EReactionExecutionLifecycleEventType::Ignored) return;\n\n\tconst uint64 resultSerial = InEvent.Context.CombatSignalResultSerial;\n\n\tTWeakObjectPtr<AActor>* combatantTarget = PendingCombatantTargetByResultSerial.Find(resultSerial);\n\tif (!combatantTarget || !combatantTarget->IsValid()) return;\n\n\tCombatParticipationComp_Injected->StartHitReactiveEvidencePostReactionTTL(combatantTarget->Get(), resultSerial);\n\tPendingCombatantTargetByResultSerial.Remove(resultSerial);\n}"
+    },
+    "repository": {
+      "start_line": 121,
+      "text": "void UCEnemyHitReactiveComponent::HandleReactionExecutionLifecycleEvent(const FReactionExecutionLifecycleEvent& InEvent)\n{\n\tif (InEvent.EventType != EReactionExecutionLifecycleEventType::Completed\n\t\t&& InEvent.EventType != EReactionExecutionLifecycleEventType::Interrupted\n\t\t&& InEvent.EventType != EReactionExecutionLifecycleEventType::Ignored) return;\n\n\tconst uint64 resultSerial = InEvent.Context.CombatSignalResultSerial;\n\n\tTWeakObjectPtr<AActor>* combatantTarget = PendingCombatantTargetByResultSerial.Find(resultSerial);\n\tif (!combatantTarget || !combatantTarget->IsValid()) return;\n\n\tCombatParticipationComp_Injected->StartHitReactiveEvidencePostReactionTTL(combatantTarget->Get(), resultSerial);\n\tPendingCombatantTargetByResultSerial.Remove(resultSerial);\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CEnemyHitReactiveComponent.cpp",
+    "function": "UnbindCombatSignalTarget",
+    "snapshot": {
+      "start_line": 71,
+      "text": "void UCEnemyHitReactiveComponent::UnbindCombatSignalTarget()\n{\n\tif (!IsValid(CombatSignalTargetComp_Injected)) return;\n\n\tCombatSignalTargetComp_Injected->OnCombatSignalTargetAccepted.RemoveAll(this);\n\tCombatSignalTargetComp_Injected->OnCombatSignalTargetReactionResolved.RemoveAll(this);\n\n\tif (IsValid(ReactionComp_Injected))\n\t{\n\t\tReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);\n\t}\n\n\tPendingCombatantTargetByResultSerial.Reset();\n}"
+    },
+    "repository": {
+      "start_line": 71,
+      "text": "void UCEnemyHitReactiveComponent::UnbindCombatSignalTarget()\n{\n\tif (!IsValid(CombatSignalTargetComp_Injected)) return;\n\n\tCombatSignalTargetComp_Injected->OnCombatSignalTargetAccepted.RemoveAll(this);\n\tCombatSignalTargetComp_Injected->OnCombatSignalTargetReactionResolved.RemoveAll(this);\n\n\tif (IsValid(ReactionComp_Injected))\n\t{\n\t\tReactionComp_Injected->OnReactionExecutionLifecycleEvent.RemoveAll(this);\n\t}\n\n\tPendingCombatantTargetByResultSerial.Reset();\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CEnemyCombatParticipationComponent.cpp",
+    "function": "ReportHitReactiveEvidence",
+    "snapshot": {
+      "start_line": 77,
+      "text": "void UCEnemyCombatParticipationComponent::ReportHitReactiveEvidence(AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, const uint64 InResultSerial)\n{\n\tif (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;\n\n\tAIController_Injected->CancelInvestigateForNewCombatEvidence();\n\n\tif (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())\n\t{\n\t\tsubsystem->ReportHitReactiveEvidence(AIController_Injected, InTarget, InContext, InResultSerial);\n\t}\n}"
+    },
+    "repository": {
+      "start_line": 77,
+      "text": "void UCEnemyCombatParticipationComponent::ReportHitReactiveEvidence(AActor* InTarget, const FCombatParticipationEvidenceContext& InContext, const uint64 InResultSerial)\n{\n\tif (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;\n\n\tAIController_Injected->CancelInvestigateForNewCombatEvidence();\n\n\tif (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())\n\t{\n\t\tsubsystem->ReportHitReactiveEvidence(AIController_Injected, InTarget, InContext, InResultSerial);\n\t}\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/Component/CEnemyCombatParticipationComponent.cpp",
+    "function": "StartHitReactiveEvidencePostReactionTTL",
+    "snapshot": {
+      "start_line": 91,
+      "text": "void UCEnemyCombatParticipationComponent::StartHitReactiveEvidencePostReactionTTL(AActor* InTarget, const uint64 InResultSerial)\n{\n\tif (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;\n\n\tif (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())\n\t{\n\t\tsubsystem->StartHitReactiveEvidencePostReactionTTL(AIController_Injected, InTarget, InResultSerial);\n\t}\n}"
+    },
+    "repository": {
+      "start_line": 91,
+      "text": "void UCEnemyCombatParticipationComponent::StartHitReactiveEvidencePostReactionTTL(AActor* InTarget, const uint64 InResultSerial)\n{\n\tif (!IsValid(AIController_Injected) || !IsValid(InTarget) || InResultSerial == 0) return;\n\n\tif (UCWorldSubsystem_CombatParticipation* subsystem = GetParticipationSubsystem())\n\t{\n\t\tsubsystem->StartHitReactiveEvidencePostReactionTTL(AIController_Injected, InTarget, InResultSerial);\n\t}\n}"
+    },
+    "equal": true
+  },
+  {
+    "path": "Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp",
+    "function": "StartHitReactiveEvidencePostReactionTTL",
+    "snapshot": {
+      "start_line": 225,
+      "text": "void UCWorldSubsystem_CombatParticipation::StartHitReactiveEvidencePostReactionTTL(ACAIController* InParticipant, AActor* InTarget, const uint64 InResultSerial)\n{\n\tif (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;\n\n\tFCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });\n\tif (!evidence || evidence->HitReactiveResultSerial != InResultSerial) return;\n\n\tconst UWorld* world = GetWorld();\n\tif (!IsValid(world)) return;\n\n\tevidence->HitReactiveExpireTimeSeconds = world->GetTimeSeconds() + GetHitReactivePostReactionTTL();\n\tevidence->bHasStartedHitReactivePostReactionTTL = true;\n\n\tRebuildAssignments();\n}"
+    },
+    "repository": {
+      "start_line": 225,
+      "text": "void UCWorldSubsystem_CombatParticipation::StartHitReactiveEvidencePostReactionTTL(ACAIController* InParticipant, AActor* InTarget, const uint64 InResultSerial)\n{\n\tif (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;\n\n\tFCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });\n\tif (!evidence || evidence->HitReactiveResultSerial != InResultSerial) return;\n\n\tconst UWorld* world = GetWorld();\n\tif (!IsValid(world)) return;\n\n\tevidence->HitReactiveExpireTimeSeconds = world->GetTimeSeconds() + GetHitReactivePostReactionTTL();\n\tevidence->bHasStartedHitReactivePostReactionTTL = true;\n\n\tRebuildAssignments();\n}"
+    },
+    "equal": true
+  }
+]

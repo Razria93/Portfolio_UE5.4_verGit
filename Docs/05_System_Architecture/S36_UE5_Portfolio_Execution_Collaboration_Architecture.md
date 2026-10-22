@@ -1,5 +1,14 @@
 # S36. Execution Collaboration Architecture
 
+## 열람 안내
+
+공격자와 대상의 처형 시작·취소·결과 확정을 설명합니다. 먼저 책임 분리와 예약 흐름을 읽고 Standard / Lethal의 후속 생명주기를 비교하세요.
+
+[처형 협업 구현](../../Source/Portfolio/Component/CExecutionCollaborationComponent.cpp) · [Balance 구현](../../Source/Portfolio/Component/CBalanceComponent.cpp) · [단일 Actor 실행 전환 — S37](S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md)
+
+구현·에셋 반영과 결과별 회귀·제출 캡처 확보는 구분합니다. 아래 상태와 범위 설명을 기준으로 읽습니다.
+
+
 > 상태: R08 Execution Collaboration의 현재 구현 계약. C++, Action/Reaction data, Montage Notify,
 > AnimBP pose, Standard/Lethal authored pair가 이 문서의 계약으로 반영됐다. 세부 outcome별 회귀
 > 검증과 제출용 증적 캡처는 계속 보완한다.
@@ -467,3 +476,7 @@ Pair Source Commit
 포트폴리오에서는 "프레임 단위 완전 동시 실행"이라고 표현하지 않는다. `양측 Reserved → Active → Commit → terminal 또는 Release`라는 코드 확인 계약으로 제한한다.
 
 9p는 Pair의 게임플레이 결과와 Runtime data를 보여 주고, 신규 15p는 위 책임·상태·시퀀스 구조를 설명한다. 두 페이지는 같은 구조를 반복하지 않는다.
+
+---
+
+[시스템 구조 안내](00_System_Architecture_Index.md) · [목적별 문서 안내](../00_Documentation_Index.md) · [대표 README로 돌아가기](../../README.md#combat-systems)

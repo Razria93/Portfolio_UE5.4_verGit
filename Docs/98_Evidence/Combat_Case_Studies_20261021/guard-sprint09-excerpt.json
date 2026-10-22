@@ -1,0 +1,30 @@
+{
+  "original": {
+    "source": "stellar_guard_integration_20261021/evidence/a983a722329fd853_take_sprint_09.log",
+    "sha256": "a983a722329fd853f58c137b7441811c038bcbffb4366bffa4e4df23604932e0",
+    "bytes": 315228
+  },
+  "note": "Sprint key was not held. Expecting restoration to 800 was incorrect; this failure is preserved.",
+  "lines": [
+    {
+      "line": 1675,
+      "text": "[2026.10.21-05.17.13:071][698]LogStructure02Capture: Display: [Capture02] Mode=parry World=10.382442 Shot=0.000000 Phase=0 START; playrate/action data unchanged; optional execution observer is view-target only; recorder must already run"
+    },
+    {
+      "line": 1705,
+      "text": "[2026.10.21-05.17.20:523][146]LogStructure02Capture: Display: [Capture02] Mode=parry World=17.894752 Shot=7.512310 Phase=2 CHECK initial GuardHold established"
+    },
+    {
+      "line": 1760,
+      "text": "[2026.10.21-05.17.24:716][387]LogStructure02Capture: Display: [Capture02] Mode=parry World=22.085793 Shot=11.703351 Phase=5 CHECK real Hit HPDelta=300.0 SawGuardOut=1"
+    },
+    {
+      "line": 1769,
+      "text": "[2026.10.21-05.17.25:936][452]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.307709 Shot=12.925267 Phase=6 CHECK recovery Restored=0 InitialSpeed=800.0 CurrentSpeed=600.0"
+    },
+    {
+      "line": 1770,
+      "text": "[2026.10.21-05.17.25:936][452]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.307709 Shot=12.925267 Phase=6 FAIL recovery mismatch"
+    }
+  ]
+}

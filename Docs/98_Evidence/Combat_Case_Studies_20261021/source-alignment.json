@@ -1,0 +1,2982 @@
+{
+  "repository_base": "35891fca9272669f2853448635c077f9ad0e3e9a",
+  "normalization": "UTF-8 BOM removed; CRLF to LF. Byte hashes retained separately.",
+  "files": [
+    {
+      "path": "Source/Portfolio/Action/CAction.cpp",
+      "snapshot_sha256": "14180ba3874ffe31f725be7c155c398c7b180c734e0e4cfbd7ef95f2f700fc3c",
+      "checkout_sha256": "20f487c0a0c3702d6a5f52045e7b34813a5fbbd1eb52721633ca53f466737026",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction.h",
+      "snapshot_sha256": "fa1264efbb60beb07462bba321fb0eeb6eabc7bd9d0732c0d1688f926c0b34f5",
+      "checkout_sha256": "364fd4f7b9d4b795a4bd87cbc2b9d4bcd66bf63c3a1a3701fddca60de41da07d",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_ComboAttack.cpp",
+      "snapshot_sha256": "6242a64dcd4b0c551f5208430494908600d8ce20984da714f3572e5bcd0a9704",
+      "checkout_sha256": "6242a64dcd4b0c551f5208430494908600d8ce20984da714f3572e5bcd0a9704",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_ComboAttack.h",
+      "snapshot_sha256": "fef680bf17942e39b6be201c770f2e86e931c3bd89f6da8399599e3162121f14",
+      "checkout_sha256": "fef680bf17942e39b6be201c770f2e86e931c3bd89f6da8399599e3162121f14",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_CounterRush.cpp",
+      "snapshot_sha256": "5c2f36820c6ede987799ab3830ab76972c0da53d07ffe671098b9aaec56c6470",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_CounterRush.h",
+      "snapshot_sha256": "b9a9082d0dca576d167e65bcfe42ab9fe95e5dd429df8e6d502821c95af0a5e7",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Dodge.cpp",
+      "snapshot_sha256": "efb5495ab81e04df39729fb517a824036999eb2b3467333b13804424838e7097",
+      "checkout_sha256": "bc0308e8399ef3212106fc55329ac9e3287fbdd034719be933934aa80944c50b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Dodge.h",
+      "snapshot_sha256": "247c549a6a3abc5e72195102a87ec8b4c9db1b4e2114f0b4b2ae42cabe010428",
+      "checkout_sha256": "02e05153f6eb1fc5b4fdcd6dd440805f746c859632ff8ef58f0468eb15693648",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Equip.cpp",
+      "snapshot_sha256": "d181261cdc27de7a52216ce1150a85b4b46035f5cbcf48bb854d7f6a5b49682f",
+      "checkout_sha256": "d181261cdc27de7a52216ce1150a85b4b46035f5cbcf48bb854d7f6a5b49682f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Equip.h",
+      "snapshot_sha256": "8452f7096fa68d61c77d05f31c774ac8e71944490fb446034934f49dd81be799",
+      "checkout_sha256": "8452f7096fa68d61c77d05f31c774ac8e71944490fb446034934f49dd81be799",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Execution.cpp",
+      "snapshot_sha256": "7ff566b1fa33dedfeaf387d246f49b2d8c9f6e05d2baf1fee07eed6b603e10d3",
+      "checkout_sha256": "7ff566b1fa33dedfeaf387d246f49b2d8c9f6e05d2baf1fee07eed6b603e10d3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Execution.h",
+      "snapshot_sha256": "8238195a48c0419903727e1cf1fee7f525432d1a37334bc982c4d38a02779f28",
+      "checkout_sha256": "8238195a48c0419903727e1cf1fee7f525432d1a37334bc982c4d38a02779f28",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Guard.cpp",
+      "snapshot_sha256": "0fea0034c043b45a60fc5df6a7bdd8df936943612a88c2200be8c49d561af782",
+      "checkout_sha256": "0fea0034c043b45a60fc5df6a7bdd8df936943612a88c2200be8c49d561af782",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Guard.h",
+      "snapshot_sha256": "fa876b6674f7737798c4d752a00549d6fbc53d6e6ce21bc4e3fed9f7a9cf0275",
+      "checkout_sha256": "fa876b6674f7737798c4d752a00549d6fbc53d6e6ce21bc4e3fed9f7a9cf0275",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Unequip.cpp",
+      "snapshot_sha256": "8fd73ac341a4fc171259e14b27ba1ee0c2d6049140b1f620a75b691a22b785fe",
+      "checkout_sha256": "8fd73ac341a4fc171259e14b27ba1ee0c2d6049140b1f620a75b691a22b785fe",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Action/CAction_Unequip.h",
+      "snapshot_sha256": "15283f656d440bb89ac9c33d15e6b49a4805a32fb697b02d03ae9c8df44726f4",
+      "checkout_sha256": "15283f656d440bb89ac9c33d15e6b49a4805a32fb697b02d03ae9c8df44726f4",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_CanMove.cpp",
+      "snapshot_sha256": "7f9e0e8ff344f5ffadc965686de4a5c9ca2438709eb4892e7bf94170ee434590",
+      "checkout_sha256": "7f9e0e8ff344f5ffadc965686de4a5c9ca2438709eb4892e7bf94170ee434590",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_CanMove.h",
+      "snapshot_sha256": "55b4f415502410df9aeefdb72e5332e97bce4bdaaa1c4c3890bc71a9fadd0007",
+      "checkout_sha256": "55b4f415502410df9aeefdb72e5332e97bce4bdaaa1c4c3890bc71a9fadd0007",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_HasCombatTarget.cpp",
+      "snapshot_sha256": "333638849c79b335f62b4eba961ea8e20c170ee954a87530958f5f14c617271a",
+      "checkout_sha256": "333638849c79b335f62b4eba961ea8e20c170ee954a87530958f5f14c617271a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_HasCombatTarget.h",
+      "snapshot_sha256": "1717cd083c912b786d0292f7b3134b77d6f6da26537d5d358f8a00c3e54b0349",
+      "checkout_sha256": "1717cd083c912b786d0292f7b3134b77d6f6da26537d5d358f8a00c3e54b0349",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_HasCombatTargetWithLOS.cpp",
+      "snapshot_sha256": "ceb0fdc17131b9c0da0e678744d403cba376d8fc78c9669e47f46cb176120636",
+      "checkout_sha256": "ec0336b1df9b259f63bd4622d12977abc2f2f5a8d0538fa0b971f07a5b5cf100",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_HasCombatTargetWithLOS.h",
+      "snapshot_sha256": "2777f06476030d66a0f5c1e1950d9c8e0b8544de673da6b94bb4208e1e4d8f7e",
+      "checkout_sha256": "2777f06476030d66a0f5c1e1950d9c8e0b8544de673da6b94bb4208e1e4d8f7e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_HasValidTarget.cpp",
+      "snapshot_sha256": "839caf9e07f554afbca2574847a0b460384b99b80aa0e60d9c706f28d8f39436",
+      "checkout_sha256": "839caf9e07f554afbca2574847a0b460384b99b80aa0e60d9c706f28d8f39436",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Decorator/CBTDecorator_HasValidTarget.h",
+      "snapshot_sha256": "8efcbd00ae72f48f938978a150c570c4e7a117f0f33275c0443e7dc34b8c52cb",
+      "checkout_sha256": "8efcbd00ae72f48f938978a150c570c4e7a117f0f33275c0443e7dc34b8c52cb",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.cpp",
+      "snapshot_sha256": "47de6c39b177eec155bcc8eaf5e55af6502b41697824b5f89ac7e1da2aef92c1",
+      "checkout_sha256": "9ba68b2563d6bdab3c31dce150cf0caf49a805dafb751e69be7afcb719d9688f",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIContext.h",
+      "snapshot_sha256": "c28cefb0074d9a27ecc62e2b77049aeb244641ec05e41dccb3416d9367a5a8c3",
+      "checkout_sha256": "c28cefb0074d9a27ecc62e2b77049aeb244641ec05e41dccb3416d9367a5a8c3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.cpp",
+      "snapshot_sha256": "ebacf44adb7c607c0907ddd2bc19dfecbdcb06846e47bdbee82c65e9e1ffb155",
+      "checkout_sha256": "ebacf44adb7c607c0907ddd2bc19dfecbdcb06846e47bdbee82c65e9e1ffb155",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateAIIntentState.h",
+      "snapshot_sha256": "b27221b6ca13a05555cbba5f4107cba71e5c712a3ce55500006c6f1dd773374d",
+      "checkout_sha256": "b27221b6ca13a05555cbba5f4107cba71e5c712a3ce55500006c6f1dd773374d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.cpp",
+      "snapshot_sha256": "7ba65a9a00af197a3249fc73590074619e6b62748340ba3c9036ad9f01a820e4",
+      "checkout_sha256": "0f8111d9c658522ffa0c013a8803a4766436d69f07fa99049a05d679448d2be9",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateEngageContext.h",
+      "snapshot_sha256": "117d75869d60fe932589e2792db11657f0ac4ee4ab65a29ea5bd0a2e6dfca03b",
+      "checkout_sha256": "117d75869d60fe932589e2792db11657f0ac4ee4ab65a29ea5bd0a2e6dfca03b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.cpp",
+      "snapshot_sha256": "2202cebf2f94cb8b8ac07e5d0526b33353fbfc8a10d42a9a1e1107530e0493ba",
+      "checkout_sha256": "2202cebf2f94cb8b8ac07e5d0526b33353fbfc8a10d42a9a1e1107530e0493ba",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTService_UpdateInvestigateContext.h",
+      "snapshot_sha256": "95e4ed3eb815806f68427603c64070b135c7cab63eb9224c57a18d6fe6807d60",
+      "checkout_sha256": "95e4ed3eb815806f68427603c64070b135c7cab63eb9224c57a18d6fe6807d60",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTServiceIntervalHelper.cpp",
+      "snapshot_sha256": "541e68da6d6eb79ba321877cd0d7938d63784df308d9db10eea7d1c196196007",
+      "checkout_sha256": "541e68da6d6eb79ba321877cd0d7938d63784df308d9db10eea7d1c196196007",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Service/CBTServiceIntervalHelper.h",
+      "snapshot_sha256": "1b05394a3f3232328bfca0727ed27dee9cbeba767192ae00e9cbaa91ad828518",
+      "checkout_sha256": "1b05394a3f3232328bfca0727ed27dee9cbeba767192ae00e9cbaa91ad828518",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_AdvanceInvestigateIndex.cpp",
+      "snapshot_sha256": "b2e983281287c61b2964c1bb529307bda241953f68aa7b37dd210421380679e3",
+      "checkout_sha256": "b2e983281287c61b2964c1bb529307bda241953f68aa7b37dd210421380679e3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_AdvanceInvestigateIndex.h",
+      "snapshot_sha256": "8bd5d423a0de830c94f840550ff2b4ec6fdf6acaf3603f9169e37e3c2e2be590",
+      "checkout_sha256": "8bd5d423a0de830c94f840550ff2b4ec6fdf6acaf3603f9169e37e3c2e2be590",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_ClearFocus.cpp",
+      "snapshot_sha256": "c1e77e32f670c7c413f105f9badb43dcd2f6f85666001667dba76846ac76c225",
+      "checkout_sha256": "c1e77e32f670c7c413f105f9badb43dcd2f6f85666001667dba76846ac76c225",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_ClearFocus.h",
+      "snapshot_sha256": "1b4ea402ff7ee0a08863c4df242f8b781bef801063113f78bec9d9f907046843",
+      "checkout_sha256": "1b4ea402ff7ee0a08863c4df242f8b781bef801063113f78bec9d9f907046843",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_EndInvestigate.cpp",
+      "snapshot_sha256": "400af4e5a88252a1c8b3a01c3d568509949d541f16c57a94bc64c56d41436ec2",
+      "checkout_sha256": "400af4e5a88252a1c8b3a01c3d568509949d541f16c57a94bc64c56d41436ec2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_EndInvestigate.h",
+      "snapshot_sha256": "7a5507344910ae218e4986aedd74bb68638092844a0e0a137aba83e4e2ae79de",
+      "checkout_sha256": "7a5507344910ae218e4986aedd74bb68638092844a0e0a137aba83e4e2ae79de",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_RequestMovementIntent.cpp",
+      "snapshot_sha256": "a39afb130d36ff1294b475ac1e2f24baaf02ccda502a37fcce0b55c0bef915c4",
+      "checkout_sha256": "a39afb130d36ff1294b475ac1e2f24baaf02ccda502a37fcce0b55c0bef915c4",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_RequestMovementIntent.h",
+      "snapshot_sha256": "f7ffc434f340754ac21f894ca688498f7348c0b0ba0b1e60ae48c3a8e260aa31",
+      "checkout_sha256": "f7ffc434f340754ac21f894ca688498f7348c0b0ba0b1e60ae48c3a8e260aa31",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_SelectAlertPoint.cpp",
+      "snapshot_sha256": "9b2760d60c949deca45963fade5ec1ad156e1e6cd8fcd93e485b1fcb93a5a825",
+      "checkout_sha256": "9b2760d60c949deca45963fade5ec1ad156e1e6cd8fcd93e485b1fcb93a5a825",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_SelectAlertPoint.h",
+      "snapshot_sha256": "f874b9de9fccbe3bb818a0ec6c8887d7f50079c3f3452679762cc23a4f3046df",
+      "checkout_sha256": "f874b9de9fccbe3bb818a0ec6c8887d7f50079c3f3452679762cc23a4f3046df",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_SelectPatrolPoint.cpp",
+      "snapshot_sha256": "064164f490565c05b2ff3328e0eb39593561d76cd5bd05c7667f5f1c25f14945",
+      "checkout_sha256": "9f73e7d40883f5bad34f04f5dfaf26c0545400fde036345b7fc752bc1018d0aa",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_SelectPatrolPoint.h",
+      "snapshot_sha256": "e4788088acfa1b239c475556adf3b40918814a0e3ae6b3ead1dfc635e2e2f31d",
+      "checkout_sha256": "e4788088acfa1b239c475556adf3b40918814a0e3ae6b3ead1dfc635e2e2f31d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartCombatAction.cpp",
+      "snapshot_sha256": "eb07ac77684482e2756b70dcbeedc50387ddbbcfa4da9415385f7dc07df72271",
+      "checkout_sha256": "eb07ac77684482e2756b70dcbeedc50387ddbbcfa4da9415385f7dc07df72271",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartCombatAction.h",
+      "snapshot_sha256": "bdca173bd33d204d4299e4399973d5e2d3d6904b8c1c3575817241f1befbfb77",
+      "checkout_sha256": "bdca173bd33d204d4299e4399973d5e2d3d6904b8c1c3575817241f1befbfb77",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartInvestigate.cpp",
+      "snapshot_sha256": "d87f279d4914cfb3bde55b315128c78253c76c2f6cc09831921e9f51edda94c5",
+      "checkout_sha256": "d87f279d4914cfb3bde55b315128c78253c76c2f6cc09831921e9f51edda94c5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartInvestigate.h",
+      "snapshot_sha256": "a3574582ce938280d83fdb72f44394af23bbde94e7de0e9a6404e3ff1a5044d7",
+      "checkout_sha256": "a3574582ce938280d83fdb72f44394af23bbde94e7de0e9a6404e3ff1a5044d7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartReaction.cpp",
+      "snapshot_sha256": "edd7607818997bd5ba1e9e17d46115738cede7c23b4fdc0d42dfdf24e5601cf5",
+      "checkout_sha256": "edd7607818997bd5ba1e9e17d46115738cede7c23b4fdc0d42dfdf24e5601cf5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StartReaction.h",
+      "snapshot_sha256": "f13c376cfce931c54e6b838e0897d589372447eb58dcde4620fae63dddb62861",
+      "checkout_sha256": "f13c376cfce931c54e6b838e0897d589372447eb58dcde4620fae63dddb62861",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StayDead.cpp",
+      "snapshot_sha256": "d52d4c5e440452b78629567771ef7a2ea751c8063a5feea2088b070a0d0dcfd9",
+      "checkout_sha256": "d52d4c5e440452b78629567771ef7a2ea751c8063a5feea2088b070a0d0dcfd9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_StayDead.h",
+      "snapshot_sha256": "a0862c400558901fef651c64e981f1aa81090bfeb1bfe9bee194020138905815",
+      "checkout_sha256": "a0862c400558901fef651c64e981f1aa81090bfeb1bfe9bee194020138905815",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_WaitEndCombatAction.cpp",
+      "snapshot_sha256": "c72f2cbf402eb2ea1bf8102b8713be821983071f3ddf097d5e435114ef57c53d",
+      "checkout_sha256": "c72f2cbf402eb2ea1bf8102b8713be821983071f3ddf097d5e435114ef57c53d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_WaitEndCombatAction.h",
+      "snapshot_sha256": "6cc9d105552c55e83ac9a6a28e9296d1bb023393282691a9f8d6d077c3163f48",
+      "checkout_sha256": "6cc9d105552c55e83ac9a6a28e9296d1bb023393282691a9f8d6d077c3163f48",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_WaitEndReaction.cpp",
+      "snapshot_sha256": "99cce852be5c612f86478a39aa4350fdf9fbae100931bb00a0766af6b085b6b4",
+      "checkout_sha256": "99cce852be5c612f86478a39aa4350fdf9fbae100931bb00a0766af6b085b6b4",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/BehaviorTree/Task/CBTTask_WaitEndReaction.h",
+      "snapshot_sha256": "03c992a473b010e05cc4fc51483226921695c5daf7fedc93d70844c6ac16126c",
+      "checkout_sha256": "03c992a473b010e05cc4fc51483226921695c5daf7fedc93d70844c6ac16126c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Blackboard/CAIBlackboardValueHelper.h",
+      "snapshot_sha256": "9ffbdf426f568ef5f19858a809860db12dcedc28c3292d723f28254649b7bf87",
+      "checkout_sha256": "9ffbdf426f568ef5f19858a809860db12dcedc28c3292d723f28254649b7bf87",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Blackboard/CAIKey.h",
+      "snapshot_sha256": "0fb2d1d97970f9edc572bda4b2d4e16cff949ff17f9178ad156f4fc293f8e6af",
+      "checkout_sha256": "0fb2d1d97970f9edc572bda4b2d4e16cff949ff17f9178ad156f4fc293f8e6af",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Blackboard/CAIKeyFactory.h",
+      "snapshot_sha256": "34a9e0c072de2e854cfb7a57cd6cbfbea20843948b24555a0340d349412eef2f",
+      "checkout_sha256": "34a9e0c072de2e854cfb7a57cd6cbfbea20843948b24555a0340d349412eef2f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Blackboard/CAIKeyRegistry.h",
+      "snapshot_sha256": "551984487c4d6ec85de67fab7e5a31d0a325a828e63fb69257838a2ea9c61be6",
+      "checkout_sha256": "551984487c4d6ec85de67fab7e5a31d0a325a828e63fb69257838a2ea9c61be6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Blackboard/CAIKeyTypes.h",
+      "snapshot_sha256": "12f52bce538baf804e4bf668d305acd51dc32d7e754f8e82291687f035b4d122",
+      "checkout_sha256": "12f52bce538baf804e4bf668d305acd51dc32d7e754f8e82291687f035b4d122",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Patrol/CPatrolPath.cpp",
+      "snapshot_sha256": "cc58415047ac7be6c1bf3d6562c575d979fd73553108ec1ec25ef2c581e199f2",
+      "checkout_sha256": "cc58415047ac7be6c1bf3d6562c575d979fd73553108ec1ec25ef2c581e199f2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Patrol/CPatrolPath.h",
+      "snapshot_sha256": "28691100a5306b29500d68ac5d1d7f11d23de8077247f8ab91b34968c547e9a9",
+      "checkout_sha256": "28691100a5306b29500d68ac5d1d7f11d23de8077247f8ab91b34968c547e9a9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/Patrol/CPatrolPoint.cpp",
+      "snapshot_sha256": "eaf58712756c1bead600728746360aad890668df5500bef4d1b09f0a6dad9674",
+      "checkout_sha256": "2bd101849486077d92d4c192a2dcc10f112ede7882611946e259298062b5f1e0",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/AI/Patrol/CPatrolPoint.h",
+      "snapshot_sha256": "b68a610a006a6caeccd26343e6382e23a25063090addd6914acf7d92fe93ecf1",
+      "checkout_sha256": "b68a610a006a6caeccd26343e6382e23a25063090addd6914acf7d92fe93ecf1",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.cpp",
+      "snapshot_sha256": "1e3b105c3b222f86f5f6ac431574d28fe95a16ff56cb65dd205c38136ea23dbc",
+      "checkout_sha256": "1e3b105c3b222f86f5f6ac431574d28fe95a16ff56cb65dd205c38136ea23dbc",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.h",
+      "snapshot_sha256": "c37deb776b0e897d365b87b37c7471fe0c0165ebf8ac9f1a571f670c57b1f146",
+      "checkout_sha256": "c37deb776b0e897d365b87b37c7471fe0c0165ebf8ac9f1a571f670c57b1f146",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.cpp",
+      "snapshot_sha256": "fdfcdb56151a7459b0859e684937e7cf783b039f58dee2e1b440abf86af904b3",
+      "checkout_sha256": "fdfcdb56151a7459b0859e684937e7cf783b039f58dee2e1b440abf86af904b3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.h",
+      "snapshot_sha256": "ab65ed6d172bbdc36f68ef8623e688b42a608b915043fea1e9456c0fa12994bd",
+      "checkout_sha256": "ab65ed6d172bbdc36f68ef8623e688b42a608b915043fea1e9456c0fa12994bd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIRuntimeLODTierResolver.cpp",
+      "snapshot_sha256": "cb09e6b52179d0f84cb57e355afbde21c2ecb38761f07f747f92f6a4a89f9a2c",
+      "checkout_sha256": "cb09e6b52179d0f84cb57e355afbde21c2ecb38761f07f747f92f6a4a89f9a2c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIRuntimeLODTierResolver.h",
+      "snapshot_sha256": "7fc17caec296cab66260d550c45df7cf3e2beda4035c45ea6cc54e65d9a38f56",
+      "checkout_sha256": "7fc17caec296cab66260d550c45df7cf3e2beda4035c45ea6cc54e65d9a38f56",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIStateRuntimeLODPolicy.cpp",
+      "snapshot_sha256": "8f7b907a73a363591435925f421b107da0c4bd9d9d4516d1f1f6404b108319d2",
+      "checkout_sha256": "8f7b907a73a363591435925f421b107da0c4bd9d9d4516d1f1f6404b108319d2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h",
+      "snapshot_sha256": "47af3e0e2cfa8fca093213aa7d3852d826faaf12ab4041056f88ea18ed2ce880",
+      "checkout_sha256": "47af3e0e2cfa8fca093213aa7d3852d826faaf12ab4041056f88ea18ed2ce880",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Character/CAnimInstance.cpp",
+      "snapshot_sha256": "aaf22b98b9aa7808f362770fdc6608d53dcfb6b25889c1accdb8b1d1f90a7a74",
+      "checkout_sha256": "aaf22b98b9aa7808f362770fdc6608d53dcfb6b25889c1accdb8b1d1f90a7a74",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Character/CAnimInstance.h",
+      "snapshot_sha256": "2fb4284ebf1cc12fea218cf5b3c7a7a5f30a5e7619b8380683e24b5250f28b8e",
+      "checkout_sha256": "2fb4284ebf1cc12fea218cf5b3c7a7a5f30a5e7619b8380683e24b5250f28b8e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Character/Enemy/CEnemy.cpp",
+      "snapshot_sha256": "994fcc3b546486587961db27864c7f4770948b05e2940b558206aa968d593e27",
+      "checkout_sha256": "ecc2d55635ac0da1caa542bd4c0a33ffbc9de7b05075db3cf9a7023011040295",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Character/Enemy/CEnemy.h",
+      "snapshot_sha256": "2846b36b1609e2d7fc4177852328f740ed637eaa3204e8e2c70fc8c1b193ed97",
+      "checkout_sha256": "2846b36b1609e2d7fc4177852328f740ed637eaa3204e8e2c70fc8c1b193ed97",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Character/Player/CPlayer.cpp",
+      "snapshot_sha256": "8cc793386796e40c82d5d717e2525eb4c65ef42d5bbc5987e8d0e843cd559050",
+      "checkout_sha256": "9286ba1cdd726990f2d73e3cb5c73d9cb01149a1da3405a82f3b1aeef7f2e94b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Character/Player/CPlayer.h",
+      "snapshot_sha256": "2b3d6a06400b1bce1b05d4ca98259b13725be06974344eb0221008debcc4863b",
+      "checkout_sha256": "897a30eaf9af85d6a831a48dcea426a51a45a74511ba1d81078512cf01e111dd",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CActionComponent.cpp",
+      "snapshot_sha256": "671b9c0de0f64caadfda0202d7a03de5f1438a7ca8d734d22580c27cfb313c1f",
+      "checkout_sha256": "19e1513d9d49bb75651eb09ff9a7b4700c38253805bd3fea1249a09d099f83dd",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CActionComponent.h",
+      "snapshot_sha256": "edeaeaad29b2b379475607da61ced93e70ea25d5dd347916e7e4189bedd4f0c9",
+      "checkout_sha256": "f0b7db12fbf743e097c14be089a5faa4ac276735bb0aa7eb82d8274efd860853",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CActionFeedbackComponent.cpp",
+      "snapshot_sha256": "627f1658988f1df747e24195ccd6a8f74eeb6a839f59adce93b628e13fecd76a",
+      "checkout_sha256": "03bb4fc53500fa7683feb9a32ea72f84757d1f43b0662c777dff575215cf85fe",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CActionFeedbackComponent.h",
+      "snapshot_sha256": "8b4f154a1c3880f3e1962ada916da7f1f0f6d52fe76197c3eb05ed753cad9e52",
+      "checkout_sha256": "8b4f154a1c3880f3e1962ada916da7f1f0f6d52fe76197c3eb05ed753cad9e52",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CActionOrchestratorComponent.cpp",
+      "snapshot_sha256": "880aba019fe1a01c8b2150b349460adfb04bd284c863279231cde30083b5bab1",
+      "checkout_sha256": "d5525dde027586e85e85b5712ea6ed6a03cb600978c3cb615c62511d28fb2f30",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CActionOrchestratorComponent.h",
+      "snapshot_sha256": "9f1aebc886677d7f41d51af8d15bd775641ff41fde3786652ba332fbd5d7840c",
+      "checkout_sha256": "398019c100c17e315a32f558421aa6681f56473f2f346327c80f371fc71a90d5",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CBalanceComponent.cpp",
+      "snapshot_sha256": "c6b6b3b99a480a309b7475b620996c66e31f8274221f534727ca132c2759fbdb",
+      "checkout_sha256": "c6b6b3b99a480a309b7475b620996c66e31f8274221f534727ca132c2759fbdb",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CBalanceComponent.h",
+      "snapshot_sha256": "a0b5eb3a0c8726344554dc4ce7f6b03ca2e6f7e2f696a4fea1c3f87f42609175",
+      "checkout_sha256": "a0b5eb3a0c8726344554dc4ce7f6b03ca2e6f7e2f696a4fea1c3f87f42609175",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CCharacterFeedbackComponent.cpp",
+      "snapshot_sha256": "808bf79ebf084783aa43a7c18dc8d441f4edabfe578c403f30ec4b4093db056b",
+      "checkout_sha256": "808bf79ebf084783aa43a7c18dc8d441f4edabfe578c403f30ec4b4093db056b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CCharacterFeedbackComponent.h",
+      "snapshot_sha256": "30bd45a722a711871cccfa517b80d1474395c2277e5e80669e6310173b58100c",
+      "checkout_sha256": "30bd45a722a711871cccfa517b80d1474395c2277e5e80669e6310173b58100c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatHUDPresenterComponent.cpp",
+      "snapshot_sha256": "e68a62e7d534ef31ce135d198835493bcb6367774be326f2df8c926ce30f45fd",
+      "checkout_sha256": "4840badabc408be087de1aa3df8a30a5525d84fac192f0298fa32fca84a4b755",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatHUDPresenterComponent.h",
+      "snapshot_sha256": "a3a123190707a5bbde732391a8e432e606605a985e197689e8a83661214d4d4b",
+      "checkout_sha256": "d48e9d7e75e08bff343e346aecb33a09e1cfb8a31b0e3b14b9e6d39644bee3fa",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatSignalSourceComponent.cpp",
+      "snapshot_sha256": "f632c6d7b7eeb553e7193a0ccc875491dbdef7311af2b93ed057698cababf37a",
+      "checkout_sha256": "ac3daa474d8dad2a416c726c7c735f2bf6af43ff8888754a2dfc78e3a99cbbd4",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatSignalSourceComponent.h",
+      "snapshot_sha256": "8541efac239e7cb9ab8ef4df1daf2c1635b0315b1a4222ed9918d267bd5496e4",
+      "checkout_sha256": "bbba35e70cfe20a8e8f40d4c804ccd8ee881078f8a657555623e0816f2bd6c81",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatSignalTargetComponent.cpp",
+      "snapshot_sha256": "59024848eba15ba41fcfd9582a9bf23c1d87bf3a6a75846e5860d00efc076f1a",
+      "checkout_sha256": "58dc3e7f5a0a40f582d9eaf0fa02ca567e8a79150de35ac2ab90b82d4f7685dd",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatSignalTargetComponent.h",
+      "snapshot_sha256": "742ce89508d0d3d3445139848a73862e2ef2e2f0e91cbe445c02f7b3036b32be",
+      "checkout_sha256": "742ce89508d0d3d3445139848a73862e2ef2e2f0e91cbe445c02f7b3036b32be",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatTargetComponent.cpp",
+      "snapshot_sha256": "739420466e67152e45a048c73365020ff1c2f7bea422acf6705560c55281cf9e",
+      "checkout_sha256": "739420466e67152e45a048c73365020ff1c2f7bea422acf6705560c55281cf9e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CCombatTargetComponent.h",
+      "snapshot_sha256": "9bda618e5fa4914ef58c81de54355e9ec797841c6ae9c06cbfb4fd1547207e13",
+      "checkout_sha256": "9bda618e5fa4914ef58c81de54355e9ec797841c6ae9c06cbfb4fd1547207e13",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CDefenseComponent.cpp",
+      "snapshot_sha256": "cce27e0b7d531693ffd2df7492f03d28f513b488b006d5efdeaecdaa9f45b83c",
+      "checkout_sha256": "cc508f77e763de111e951b1e599d00453d1a2a78963232a058edd1e41a0f2723",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CDefenseComponent.h",
+      "snapshot_sha256": "dca6b1607c7320f4e82aab3f21c318a177d6ad4c43f7dbacd9a67aa8d930d904",
+      "checkout_sha256": "f12b0e8ff90853836204f4447a08c481cc439a02e7988ddd20f88e8a166260aa",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CEnemyCombatParticipationComponent.cpp",
+      "snapshot_sha256": "30ca45cab298c6019f0e844eddd2d4da5cd915d35e018cd8904268a975364f4a",
+      "checkout_sha256": "940b2943f68ce63e566a4de980f8e62e0dec5f423b7f78c1b9db97d2bc5de811",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CEnemyCombatParticipationComponent.h",
+      "snapshot_sha256": "bb0e569a496845ebf4aa667ab7be4b8b03ab7649b6ff678c0fbe96108b851d89",
+      "checkout_sha256": "bb0e569a496845ebf4aa667ab7be4b8b03ab7649b6ff678c0fbe96108b851d89",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CEnemyCombatTargetFacingComponent.cpp",
+      "snapshot_sha256": "0679f5618389236348eafd4a1cdda2dc48c1f0457d8c0bdcbf21e76e198efb69",
+      "checkout_sha256": "6eee89f863cc1df95280db1f8fa538a5aeb6da753b9782d5bbc78da33d5ac812",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CEnemyCombatTargetFacingComponent.h",
+      "snapshot_sha256": "422b73828fd9d21fb14229638f8287ea1a8f3d98542c6cc20182dc1b034e84f4",
+      "checkout_sha256": "422b73828fd9d21fb14229638f8287ea1a8f3d98542c6cc20182dc1b034e84f4",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CEnemyHitReactiveComponent.cpp",
+      "snapshot_sha256": "97ef70e11e960f0eb089c5dac30ea26af9ee1e92ffe296edc9dd5a8689d088c0",
+      "checkout_sha256": "97ef70e11e960f0eb089c5dac30ea26af9ee1e92ffe296edc9dd5a8689d088c0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CEnemyHitReactiveComponent.h",
+      "snapshot_sha256": "f7daf5dd9d2863a2bacdc79865b666d9fe8ea5822b765e573e635cbbfda71119",
+      "checkout_sha256": "f7daf5dd9d2863a2bacdc79865b666d9fe8ea5822b765e573e635cbbfda71119",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CExecutionCollaborationComponent.cpp",
+      "snapshot_sha256": "0a3c2f9d0989e6d0e239e47a9ace538efec7b1568418a422d65040b41cf92309",
+      "checkout_sha256": "0b863494746a109282e69eeadf9521a5e07743191651a96bc5daec85f5f21c69",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CExecutionCollaborationComponent.h",
+      "snapshot_sha256": "e145df494c84185deba5cd4d5b157eae34345d9349cc302e2f5b6b3c8c0edf94",
+      "checkout_sha256": "3c776957f783f9194e63afbb195343e92f3aa0a38e0aad4119263e411e39c17c",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CHealthComponent.cpp",
+      "snapshot_sha256": "21c08c62a1a17ef6bebd5bc3bc001824c211930c1648da2f6beaca48f1bdb5d0",
+      "checkout_sha256": "21c08c62a1a17ef6bebd5bc3bc001824c211930c1648da2f6beaca48f1bdb5d0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CHealthComponent.h",
+      "snapshot_sha256": "64c4a474cbf48e09306ef1cbd095e05ae0916e95cb3898c57a792cd86b48fd96",
+      "checkout_sha256": "64c4a474cbf48e09306ef1cbd095e05ae0916e95cb3898c57a792cd86b48fd96",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CHitFeedbackComponent.cpp",
+      "snapshot_sha256": "54aea4695074bf321aa03ff57113373867d6eb9b54b912ef70faf81838782c3b",
+      "checkout_sha256": "50fe9e70d7c9522e936f10ef786063e159d54c78e874bc6ce4bd61a557d43724",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CHitFeedbackComponent.h",
+      "snapshot_sha256": "a11da1694dfc8cfadd5be1a9e13ae2f4a3144cc10c5fb442b4819a020bddb4f8",
+      "checkout_sha256": "a11da1694dfc8cfadd5be1a9e13ae2f4a3144cc10c5fb442b4819a020bddb4f8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CMovementComponent.cpp",
+      "snapshot_sha256": "57ecbeb46cb88719444a65510a722d99d36cbebaae3a706bfb53879682f7dad3",
+      "checkout_sha256": "57ecbeb46cb88719444a65510a722d99d36cbebaae3a706bfb53879682f7dad3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CMovementComponent.h",
+      "snapshot_sha256": "74492cbc6f0719d6f5ced924c79f75f7add968153919b3ce54f1b3d2337446cd",
+      "checkout_sha256": "74492cbc6f0719d6f5ced924c79f75f7add968153919b3ce54f1b3d2337446cd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CObservableOverlayComponent.cpp",
+      "snapshot_sha256": "a7beae6821b27818460a05aa572a7d34562ca5234da486f438bcaddf93c5f948",
+      "checkout_sha256": "a7beae6821b27818460a05aa572a7d34562ca5234da486f438bcaddf93c5f948",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CObservableOverlayComponent.h",
+      "snapshot_sha256": "e3e5de626924b69ed8d76787e74cb59f0ed675be0d33227b7439df1d6f8f7918",
+      "checkout_sha256": "e3e5de626924b69ed8d76787e74cb59f0ed675be0d33227b7439df1d6f8f7918",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CPlayerFeedbackComponent.cpp",
+      "snapshot_sha256": "31741128c8c9b7f3dc266ac96e5406c5c91044611aa80d5bba627d970fae6e32",
+      "checkout_sha256": "31741128c8c9b7f3dc266ac96e5406c5c91044611aa80d5bba627d970fae6e32",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CPlayerFeedbackComponent.h",
+      "snapshot_sha256": "5d9bf99f30cdef5ac67591339482f518f361dc5acb105db91b9c1940a1924898",
+      "checkout_sha256": "5d9bf99f30cdef5ac67591339482f518f361dc5acb105db91b9c1940a1924898",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CPlayerTargetSelectionComponent.cpp",
+      "snapshot_sha256": "ee936d8874cd6c6b8989546f3a6dcd9c25e2ccefdc9e681baef6dafb6a55ebb9",
+      "checkout_sha256": "fc302f7195865bee03597afd650074e18dc7ba20093e886bfd25d44a719a1e3d",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CPlayerTargetSelectionComponent.h",
+      "snapshot_sha256": "70ad2a9879e934ab3531884bf9f752a176306191e78d9bb5b3388fbf051b151b",
+      "checkout_sha256": "70ad2a9879e934ab3531884bf9f752a176306191e78d9bb5b3388fbf051b151b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CReactionComponent.cpp",
+      "snapshot_sha256": "2fb1323f06e84e1b2475b6a43524fb7525cc524d224680981590938c98e2e5ac",
+      "checkout_sha256": "25c35bbfb73e009caa64c076d97beae8de20dff5b8e430ba93f1781c6c7fb020",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CReactionComponent.h",
+      "snapshot_sha256": "074fd6076c4a49ef352b2e430016af7793c423cf4635f73bc90df4af60f2096b",
+      "checkout_sha256": "94aa96912fa1abb4cb43eecb275fc80627822cd6d935f48a70fc9309cb9aacf9",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CReactionFeedbackComponent.cpp",
+      "snapshot_sha256": "b7fa225ed573da15930bbbd67e09d4ec9adbf61ce7f645c1759019f695109da2",
+      "checkout_sha256": "cf733fdf9328f198523325a918d9061b0bbb7e95ed33078702450c7fa23ee2a6",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CReactionFeedbackComponent.h",
+      "snapshot_sha256": "34dc75f3273293f57d7d7a3f3ca15349b539278311f45d81846d64c4dc0c8cd4",
+      "checkout_sha256": "0e58f0846c3596974288e25d1f152071a4c25030c920272e7c7a63cb7e3320d2",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CReactionOrchestratorComponent.cpp",
+      "snapshot_sha256": "34ba270feeefdc7ef232e5c866f2d8d395ab0c1715a3f9160ac71a09289b0146",
+      "checkout_sha256": "eb9a403412479eb1a85cc0306c30ddee1270319ec53b2693fa97878f6d473e05",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CReactionOrchestratorComponent.h",
+      "snapshot_sha256": "1d5a1578daa3634c1df60f45431daa1506c7c7bf09243a669f76389f26a1b9b8",
+      "checkout_sha256": "1d5a1578daa3634c1df60f45431daa1506c7c7bf09243a669f76389f26a1b9b8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CStateComponent.cpp",
+      "snapshot_sha256": "cfd4faf2061906e0a7f7ab9e5c0e6dd9af7b2acea6ef8ccfd540957458cc7f16",
+      "checkout_sha256": "cfd4faf2061906e0a7f7ab9e5c0e6dd9af7b2acea6ef8ccfd540957458cc7f16",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CStateComponent.h",
+      "snapshot_sha256": "b3fdd9f697c866a50ef5a691cd04f0aa56d13ebd32d7d50a08bd91ed35dcdacd",
+      "checkout_sha256": "b3fdd9f697c866a50ef5a691cd04f0aa56d13ebd32d7d50a08bd91ed35dcdacd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CTargetHUDPresenterComponent.cpp",
+      "snapshot_sha256": "16fd55f2e4427e3f660fa568ce6b55c6f73f4ab2a690138b37ca19eeb8406292",
+      "checkout_sha256": "16fd55f2e4427e3f660fa568ce6b55c6f73f4ab2a690138b37ca19eeb8406292",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CTargetHUDPresenterComponent.h",
+      "snapshot_sha256": "b9f42fd821b84062e9de8bb0d0749958e28ebce3a498c00dbd3a9e5f466cefd0",
+      "checkout_sha256": "b9f42fd821b84062e9de8bb0d0749958e28ebce3a498c00dbd3a9e5f466cefd0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CTargetLockAssistComponent.cpp",
+      "snapshot_sha256": "59464922a5882b100d535b74d795e6541d454bd88badbecc1a2cfe7b8757296d",
+      "checkout_sha256": "7b57d5112c539000d15faf997aab48fad6820c6ab8e9e2296b4c73e5eecedf0b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CTargetLockAssistComponent.h",
+      "snapshot_sha256": "8a2f5e8912ee2c39e01cf4d8c20b2f32e7086888e6b6f599925c0b2bd8b6e17e",
+      "checkout_sha256": "8a2f5e8912ee2c39e01cf4d8c20b2f32e7086888e6b6f599925c0b2bd8b6e17e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Component/CWeaponComponent.cpp",
+      "snapshot_sha256": "75c5f4da396f5c87776de928b36020ffadae8dd20b881d86ca4a3897c4d64d95",
+      "checkout_sha256": "69e9ebeb90453ef8de5744830a318ca82ffc8f8cf8ebd2e254d3de0bd23f12d2",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CWeaponComponent.h",
+      "snapshot_sha256": "4f5dd224a5961fe38486bac4ae81d09773bf9813ddd8797996aa6a3c08bbe691",
+      "checkout_sha256": "6af057a0175668782b27127a3c570b7ed2b72fe6ca7d0762d9e504204bafdf2a",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CWeaponTrailComponent.cpp",
+      "snapshot_sha256": "9dca8e9790c55d57e3a5ba104dc4f2cef0b9e3cc12ec0bddd0f4f815ada6559a",
+      "checkout_sha256": "d2cc498d58a17357bfa6e3b96dc57050a20c5b349cf79659a8948fe7526cdb52",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Component/CWeaponTrailComponent.h",
+      "snapshot_sha256": "0a840923fedd9d4926de26d73ff7039014d869f5449a208722784038889cfa6f",
+      "checkout_sha256": "006fd31af0b87334c88a3e7d30e93c5f9fe6a01d3b30ca787d64cd31af4fd6ed",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Controller/CAIController.cpp",
+      "snapshot_sha256": "9c23382133eae1a107dacb711d9e7b809f603cd04d84f0beb153112aba3e2c8e",
+      "checkout_sha256": "7c3a31cd3ebc6e3282b4d50994c4981109968d99db8948c9289a93a885476e23",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Controller/CAIController.h",
+      "snapshot_sha256": "30920ebf661f8484b513419073cc2defa9e31f93e2cbefb2d1f7b6cd39f96c05",
+      "checkout_sha256": "2af5a8b035236808f2f5b95ed411a957fd1b14dc8630ee82e6b0a34a67471997",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Controller/CPlayerController.cpp",
+      "snapshot_sha256": "c6dcf6d40f6fdde8495ed2ab77811776512faf639db98762724a1344acff871e",
+      "checkout_sha256": "c6dcf6d40f6fdde8495ed2ab77811776512faf639db98762724a1344acff871e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Controller/CPlayerController.h",
+      "snapshot_sha256": "07b2abe0511cd99502b87cfd7cd5337bb5e679c3aa9154f9bfa1e864aa7be27b",
+      "checkout_sha256": "07b2abe0511cd99502b87cfd7cd5337bb5e679c3aa9154f9bfa1e864aa7be27b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.cpp",
+      "snapshot_sha256": "f4352f039e47226edb7bd3f24884dac078eb9cab48bd27202c03951116db0150",
+      "checkout_sha256": "f4352f039e47226edb7bd3f24884dac078eb9cab48bd27202c03951116db0150",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CDebugOverlayFocusComponent.h",
+      "snapshot_sha256": "8a36c87ef7ab4872afa2e07b600094e479a8aadb75ecdc2fdb38131a89fdaa9b",
+      "checkout_sha256": "8a36c87ef7ab4872afa2e07b600094e479a8aadb75ecdc2fdb38131a89fdaa9b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CDebugOverlayGameMode.cpp",
+      "snapshot_sha256": "217cfe2ad0f5458b00b7af56f9214bd76925f22c22491e4aa667e2eb60920d39",
+      "checkout_sha256": "217cfe2ad0f5458b00b7af56f9214bd76925f22c22491e4aa667e2eb60920d39",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CDebugOverlayGameMode.h",
+      "snapshot_sha256": "0839240e12b99f4466d45b25e4deb510fd222da8fa11f89f18cba30598464d2e",
+      "checkout_sha256": "0839240e12b99f4466d45b25e4deb510fd222da8fa11f89f18cba30598464d2e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp",
+      "snapshot_sha256": "437b50d163e05f9eebd74bea775d6005aa5158c4e3aae09c52f42d7654145aa4",
+      "checkout_sha256": "514d4de0638161e7c872fe96f839d1eebcab9d8f2076bda57cb1a8911673a018",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CDebugOverlayHUD.h",
+      "snapshot_sha256": "8f0c06ba7ebc9a3ac0a12ca3b6e131f547f30e0725e92f7a7272825466d2b54b",
+      "checkout_sha256": "8f0c06ba7ebc9a3ac0a12ca3b6e131f547f30e0725e92f7a7272825466d2b54b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CPatrolDebugSubsystem.cpp",
+      "snapshot_sha256": "cee41e10ff478c2f74e61077330d60db9510c38f28846fcc2f46f998e0a94dfe",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/CPatrolDebugSubsystem.h",
+      "snapshot_sha256": "c0c1ebb48b88f4e4e46f6ed5b7059320a3c67f525320d25bd77227e883002907",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FActionComponentDebug.cpp",
+      "snapshot_sha256": "aec1a0664ef2912ca974d4c56973681f6febfd96a76ab8e844fb715aeceab276",
+      "checkout_sha256": "aec1a0664ef2912ca974d4c56973681f6febfd96a76ab8e844fb715aeceab276",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FActionComponentDebug.h",
+      "snapshot_sha256": "ce46dc4cb26ca615caaed8e7ef975d922d4cfdc665f3a9a3e3788bc87a536d5c",
+      "checkout_sha256": "ce46dc4cb26ca615caaed8e7ef975d922d4cfdc665f3a9a3e3788bc87a536d5c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FActionFacingDebug.cpp",
+      "snapshot_sha256": "e96500d89701a1a7949219fb9495fda4bdda7c81839bca0cc4e3d2b9a4173b2e",
+      "checkout_sha256": "e96500d89701a1a7949219fb9495fda4bdda7c81839bca0cc4e3d2b9a4173b2e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FActionFacingDebug.h",
+      "snapshot_sha256": "077c0ba9b3bf1cadb1f36fc01773bab0418a3b9d19452130ed51cecdec05eb00",
+      "checkout_sha256": "077c0ba9b3bf1cadb1f36fc01773bab0418a3b9d19452130ed51cecdec05eb00",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FAICombatBTDebug.cpp",
+      "snapshot_sha256": "fc807b5fac9a6250eafe45f7353694d74faad5e61f841414e0a2b92583c211e2",
+      "checkout_sha256": "fc807b5fac9a6250eafe45f7353694d74faad5e61f841414e0a2b92583c211e2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FAICombatBTDebug.h",
+      "snapshot_sha256": "1b75d11841843773f4e1877403979eb63f5aaeaa1419a3fc48df6c493f5573b4",
+      "checkout_sha256": "1b75d11841843773f4e1877403979eb63f5aaeaa1419a3fc48df6c493f5573b4",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FAIPerceptionDebug.cpp",
+      "snapshot_sha256": "fbdb167dedaf88aec65be2d87a6bf5af3f24a51eeb1ad08664de1bd13d7a8a67",
+      "checkout_sha256": "fbdb167dedaf88aec65be2d87a6bf5af3f24a51eeb1ad08664de1bd13d7a8a67",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FAIPerceptionDebug.h",
+      "snapshot_sha256": "715a4087b3172ac1a98d50f1e4f0fa0f6c7d52a77da7d174f32c8f1f9681ca10",
+      "checkout_sha256": "715a4087b3172ac1a98d50f1e4f0fa0f6c7d52a77da7d174f32c8f1f9681ca10",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FAIPerceptionDebugTypes.h",
+      "snapshot_sha256": "b409289c44ce2ec0748544bc647bb6cb2be73721e3ccc59f50769dac93455fb9",
+      "checkout_sha256": "b409289c44ce2ec0748544bc647bb6cb2be73721e3ccc59f50769dac93455fb9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FAnimNotifyDebug.cpp",
+      "snapshot_sha256": "2702a54cfd5cce5085e42861e06e2391486c308204ba09db22eff46f5fe7d193",
+      "checkout_sha256": "2702a54cfd5cce5085e42861e06e2391486c308204ba09db22eff46f5fe7d193",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FAnimNotifyDebug.h",
+      "snapshot_sha256": "bcaacd6b8f35f2cb2179c25b5263d0b65f6eb306203d1c133601643bbdfdc73c",
+      "checkout_sha256": "bcaacd6b8f35f2cb2179c25b5263d0b65f6eb306203d1c133601643bbdfdc73c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FBalanceDebug.cpp",
+      "snapshot_sha256": "10b0e0ffca58b8f69be3dd266a81dce2627032cacbe763a7478824e026be87a3",
+      "checkout_sha256": "10b0e0ffca58b8f69be3dd266a81dce2627032cacbe763a7478824e026be87a3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FBalanceDebug.h",
+      "snapshot_sha256": "61c0cf6fb34c97e4838585eb47368c0b29948f269eb66c7bbe554433db96db03",
+      "checkout_sha256": "61c0cf6fb34c97e4838585eb47368c0b29948f269eb66c7bbe554433db96db03",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCaptureCamera.cpp",
+      "snapshot_sha256": "cbdd851b124f13e94e885c469b977b2f58379552bd873a9183282293b841d0c8",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCaptureCamera.h",
+      "snapshot_sha256": "0cbcff33ec041ee6729824adeec9929587bd40bb71b10d0cbfd1c5a700787d67",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatCounterRushDebug.cpp",
+      "snapshot_sha256": "0bb38d44a0429f463c335c8c94bee0362b6d4520a6a78c309a5a0967d47a2795",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatCounterRushDebug.h",
+      "snapshot_sha256": "9b30b7ee5f20d45b57c1e18af651c12c7fe283521d65e9586b04bd54bbea8a57",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatEngageDebug.cpp",
+      "snapshot_sha256": "cc0f8da10d6542e02549d470bf97694c675739d713e1a7f4d10a8d817f22e70e",
+      "checkout_sha256": "cc0f8da10d6542e02549d470bf97694c675739d713e1a7f4d10a8d817f22e70e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatEngageDebug.h",
+      "snapshot_sha256": "f6eb9a5b8ede32c60370b7670ddcc1aa66069fb18203eae1872b6ebc75bd32a5",
+      "checkout_sha256": "f6eb9a5b8ede32c60370b7670ddcc1aa66069fb18203eae1872b6ebc75bd32a5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatEngageDebugTypes.h",
+      "snapshot_sha256": "1e286657018aa141842951d2a0a16185e45698b962987adf254dd3af2474676b",
+      "checkout_sha256": "1e286657018aa141842951d2a0a16185e45698b962987adf254dd3af2474676b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatFeedbackDebug.cpp",
+      "snapshot_sha256": "7cadb613553931888ad5d21d41c15da965aa2d302cc07d2c5d5318e931d19d1f",
+      "checkout_sha256": "2f2255e529095122add37b1b65b9cf6a7aa844c5fdf119f81c1389f3f20cb204",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatFeedbackDebug.h",
+      "snapshot_sha256": "c819b86407e67fdd16c0c60dca135fbdd68004d7e9e5bc4ef162a1de7342ba3b",
+      "checkout_sha256": "c819b86407e67fdd16c0c60dca135fbdd68004d7e9e5bc4ef162a1de7342ba3b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatKnockbackDebug.cpp",
+      "snapshot_sha256": "8f088a1c0099608c311614d3ddb4c6df916bc6f3e4776fd0877e2e9d74de21de",
+      "checkout_sha256": "be014bb5db384d3022b0271f0ae15112266ff917441686cdb3c630edb0f1b412",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatKnockbackDebug.h",
+      "snapshot_sha256": "b2a876c918b75cdb57d3025271a240271f9a389bb8c880130ed83a4be57a967a",
+      "checkout_sha256": "b2a876c918b75cdb57d3025271a240271f9a389bb8c880130ed83a4be57a967a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatMotionDebugDraw.h",
+      "snapshot_sha256": "038cb7c6466f396dbd083d7c4565291954eb687d92b269c103aea13313a43b54",
+      "checkout_sha256": "038cb7c6466f396dbd083d7c4565291954eb687d92b269c103aea13313a43b54",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatMotionDebugTypes.h",
+      "snapshot_sha256": "ab2acf06c1be7af71a80806d5d1e4ee1efa6a54449ae251e7bfb41f4a2ecea71",
+      "checkout_sha256": "ab2acf06c1be7af71a80806d5d1e4ee1efa6a54449ae251e7bfb41f4a2ecea71",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatParticipationDebug.cpp",
+      "snapshot_sha256": "4b4ee58241b996ab2ed386c17a4db4cecb0d36a70f5328e187d9c72bcaf1d897",
+      "checkout_sha256": "4b4ee58241b996ab2ed386c17a4db4cecb0d36a70f5328e187d9c72bcaf1d897",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatParticipationDebug.h",
+      "snapshot_sha256": "452b641c4c569aeeacfce5ceb072edfb753a1a0bed83094dd94836b9a7dc9c08",
+      "checkout_sha256": "452b641c4c569aeeacfce5ceb072edfb753a1a0bed83094dd94836b9a7dc9c08",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatResultDebug.cpp",
+      "snapshot_sha256": "7f991c270682041ede620e167704710379f8cba7e996b7d473c1a5d533954711",
+      "checkout_sha256": "7f991c270682041ede620e167704710379f8cba7e996b7d473c1a5d533954711",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatResultDebug.h",
+      "snapshot_sha256": "ec69c600b4d85b4cea95be2c93757a8b976982a07e0566432974d2bb9e5c2966",
+      "checkout_sha256": "ec69c600b4d85b4cea95be2c93757a8b976982a07e0566432974d2bb9e5c2966",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatSignalDebug.cpp",
+      "snapshot_sha256": "51fcf4ffdc44c19cde94c5edc0f63b9faca0165858e7616a98357484d5dc9316",
+      "checkout_sha256": "51fcf4ffdc44c19cde94c5edc0f63b9faca0165858e7616a98357484d5dc9316",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FCombatSignalDebug.h",
+      "snapshot_sha256": "72b296b433dc578318ccdd4427c2f06da5a50efcf1727e86533ff8f4f5e25190",
+      "checkout_sha256": "72b296b433dc578318ccdd4427c2f06da5a50efcf1727e86533ff8f4f5e25190",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FComponentReferenceDebug.cpp",
+      "snapshot_sha256": "4918337f4a84fce129288160f9e1ca911c8deb455b8114e9a411a45eb75c5950",
+      "checkout_sha256": "4918337f4a84fce129288160f9e1ca911c8deb455b8114e9a411a45eb75c5950",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FComponentReferenceDebug.h",
+      "snapshot_sha256": "66b0657d5ffb8f22185925abf63e48c73e72d2305144b0c21ff4c5eec9eaac85",
+      "checkout_sha256": "66b0657d5ffb8f22185925abf63e48c73e72d2305144b0c21ff4c5eec9eaac85",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FComponentReferenceHelper.h",
+      "snapshot_sha256": "a5f1b3bd61099119a67f11a63ea017fdebb6a1c97214fd3f30380b7f9e163b0c",
+      "checkout_sha256": "a5f1b3bd61099119a67f11a63ea017fdebb6a1c97214fd3f30380b7f9e163b0c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDeathLifecycleDebug.cpp",
+      "snapshot_sha256": "53884b5f799f21603fd8f671a9d79956e6f4995e0c1cc31b3deb4211fa8520bd",
+      "checkout_sha256": "53884b5f799f21603fd8f671a9d79956e6f4995e0c1cc31b3deb4211fa8520bd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDeathLifecycleDebug.h",
+      "snapshot_sha256": "0b71fb7ea9c975af3795b8bec444225431a8d1d4bcec8d299e182c8f686e2e32",
+      "checkout_sha256": "0b71fb7ea9c975af3795b8bec444225431a8d1d4bcec8d299e182c8f686e2e32",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayCanvasRenderer.cpp",
+      "snapshot_sha256": "67449690b7bb1ff2ef7639ee993eea13f19234470bf2834d6b77c89a89d539f5",
+      "checkout_sha256": "67449690b7bb1ff2ef7639ee993eea13f19234470bf2834d6b77c89a89d539f5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayCanvasRenderer.h",
+      "snapshot_sha256": "1340de4b476604bde17f00814996fa323e47e51b9da81e6d2e13c50550c0aec6",
+      "checkout_sha256": "1340de4b476604bde17f00814996fa323e47e51b9da81e6d2e13c50550c0aec6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayDisplayConfig.cpp",
+      "snapshot_sha256": "8dda057409f2945eb7f21646b8ab72121b9b1dc2a36f94d1ca0f7499fa8f30cb",
+      "checkout_sha256": "8dda057409f2945eb7f21646b8ab72121b9b1dc2a36f94d1ca0f7499fa8f30cb",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayDisplayConfig.h",
+      "snapshot_sha256": "066fd8186aab0e1ffcafb9bf9f31beb48d3934051d16a8327ee90d5d42b9872c",
+      "checkout_sha256": "066fd8186aab0e1ffcafb9bf9f31beb48d3934051d16a8327ee90d5d42b9872c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayEventCategory.h",
+      "snapshot_sha256": "88bc6698870d8e247c017217525413a8e126fb6c0ef43367a80a93ff5e098681",
+      "checkout_sha256": "88bc6698870d8e247c017217525413a8e126fb6c0ef43367a80a93ff5e098681",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayFocusLogHelper.cpp",
+      "snapshot_sha256": "43f843bed576b1febe939b5edf7100d1f6447b35cc6c27edc2607972f3a6035a",
+      "checkout_sha256": "43f843bed576b1febe939b5edf7100d1f6447b35cc6c27edc2607972f3a6035a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayFocusLogHelper.h",
+      "snapshot_sha256": "b7f0c85e96a9b38553164431aff303bf61dd8a715418086848499a81007e93f6",
+      "checkout_sha256": "b7f0c85e96a9b38553164431aff303bf61dd8a715418086848499a81007e93f6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayFocusResolver.cpp",
+      "snapshot_sha256": "70ef29db6f6aac85bb0e762f90a371f20df0d017def98c3dbaeb9f8aa6a63ac5",
+      "checkout_sha256": "70ef29db6f6aac85bb0e762f90a371f20df0d017def98c3dbaeb9f8aa6a63ac5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayFocusResolver.h",
+      "snapshot_sha256": "d414a834755e3235bdab80064d2da9de6068e2ef59b24dc8e9b7a2330d06bd85",
+      "checkout_sha256": "d414a834755e3235bdab80064d2da9de6068e2ef59b24dc8e9b7a2330d06bd85",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayFocusRuntimeHelper.cpp",
+      "snapshot_sha256": "e76df4f778ed6360b51d6fef9226438dd7894cf1128d4aa9d9f5dad04ba19095",
+      "checkout_sha256": "e76df4f778ed6360b51d6fef9226438dd7894cf1128d4aa9d9f5dad04ba19095",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayFocusRuntimeHelper.h",
+      "snapshot_sha256": "f5b7fc5a4c2a8704f166155c6cf4fb78ea84d7bd24e7aca7d9343c2fb1dd3532",
+      "checkout_sha256": "f5b7fc5a4c2a8704f166155c6cf4fb78ea84d7bd24e7aca7d9343c2fb1dd3532",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayFocusTypes.h",
+      "snapshot_sha256": "e2d41b3ce8012344791c3af94317512c6c987ba77a0b3e9e4c27628a709f208a",
+      "checkout_sha256": "e2d41b3ce8012344791c3af94317512c6c987ba77a0b3e9e4c27628a709f208a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySettingsRegistry.cpp",
+      "snapshot_sha256": "45b17d288a17ad271acd0ebf22df1e459fd148ccd984ac2709556b3aedb4d9ca",
+      "checkout_sha256": "843900eff886f5154945d7e82bc51c2e71c6d9349daee3b0a9d3eba1765b9210",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySettingsRegistry.h",
+      "snapshot_sha256": "aa8a8f6e4288c6be14af93763d4294c4e22ce2efa7f67e0861f6f97c21900be5",
+      "checkout_sha256": "aa8a8f6e4288c6be14af93763d4294c4e22ce2efa7f67e0861f6f97c21900be5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.cpp",
+      "snapshot_sha256": "f3c856e4e2ba00911b3c134cadb91e3293c41aafee1bb2c52c438316e1ef5ad9",
+      "checkout_sha256": "1c1784a23ae31bbf79391b8238b25087978850bc6128bf4b3e52528ad46cb45f",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStore.h",
+      "snapshot_sha256": "f51e74af0e7c6ff674a98ae79deb857eaa2b1a140503a036bcafb996ec828272",
+      "checkout_sha256": "585728861701507347f2c252d10b3a2658525f7145e134f92d86d1151e86ba5d",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStoreCombatMotion.cpp",
+      "snapshot_sha256": "314d771c95865c11ed508884cbdcea5fbc6e7abe4083a6b7bea88e4d474a15f7",
+      "checkout_sha256": "314d771c95865c11ed508884cbdcea5fbc6e7abe4083a6b7bea88e4d474a15f7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStoreFilterPolicy.cpp",
+      "snapshot_sha256": "80a29d09c2da95155bcb55657d67f1d4bdebf3e9b2762939d2d26bf0a7deebcd",
+      "checkout_sha256": "80a29d09c2da95155bcb55657d67f1d4bdebf3e9b2762939d2d26bf0a7deebcd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStoreInternals.h",
+      "snapshot_sha256": "6dab16d62957d5159c337833d2616429a11c8db2a8f1eb05ca7f1b58055f6e01",
+      "checkout_sha256": "6dab16d62957d5159c337833d2616429a11c8db2a8f1eb05ca7f1b58055f6e01",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStoreLifecycle.cpp",
+      "snapshot_sha256": "7f505f03af1d10853da59c9afa65de5226f895a77fbd8356f4b16aa0d26bb13c",
+      "checkout_sha256": "7f505f03af1d10853da59c9afa65de5226f895a77fbd8356f4b16aa0d26bb13c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStoreRecordBuilder.cpp",
+      "snapshot_sha256": "33d2ea9ec0a24c44c3759312a0213bcef82d05576b6a6dd65fa896a73c3de583",
+      "checkout_sha256": "33d2ea9ec0a24c44c3759312a0213bcef82d05576b6a6dd65fa896a73c3de583",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotStoreRingAccess.cpp",
+      "snapshot_sha256": "0f84b07a0d0ead0b4213123cfc0954cb037f78e81331c79c3a4bd3d653778284",
+      "checkout_sha256": "0f84b07a0d0ead0b4213123cfc0954cb037f78e81331c79c3a4bd3d653778284",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlaySnapshotTypes.h",
+      "snapshot_sha256": "ec4ad2dc1c91fa0ea9c36b8f6b79794f65aaa6dd0006c38b39ab0cbc5d8d984a",
+      "checkout_sha256": "ec4ad2dc1c91fa0ea9c36b8f6b79794f65aaa6dd0006c38b39ab0cbc5d8d984a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayTextFormatter.cpp",
+      "snapshot_sha256": "2197f8ff5a35db4a747673c637650f5cf8f110404e51559fbd13e37530c9ffe3",
+      "checkout_sha256": "2197f8ff5a35db4a747673c637650f5cf8f110404e51559fbd13e37530c9ffe3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayTextFormatter.h",
+      "snapshot_sha256": "57542ed80a61ae2db962bc8ea6f231f1bb115e0c21e62a8b4b63ced4dd3daab2",
+      "checkout_sha256": "57542ed80a61ae2db962bc8ea6f231f1bb115e0c21e62a8b4b63ced4dd3daab2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayTextPanelTypes.h",
+      "snapshot_sha256": "42a0a7e8488a24146dd60fd13ec10dc351bda800dff82ef7fa41798f6a594588",
+      "checkout_sha256": "42a0a7e8488a24146dd60fd13ec10dc351bda800dff82ef7fa41798f6a594588",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayViewDataBuilder.cpp",
+      "snapshot_sha256": "3b4dc1e4bc91971d07d151e04921ea6078d2d88a595146bde25692762822e1a1",
+      "checkout_sha256": "3b4dc1e4bc91971d07d151e04921ea6078d2d88a595146bde25692762822e1a1",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayViewDataBuilder.h",
+      "snapshot_sha256": "4536385c2e75281262a1bf8c8e7f65bad0db74fd544cda4864d09f7800b0e4de",
+      "checkout_sha256": "4536385c2e75281262a1bf8c8e7f65bad0db74fd544cda4864d09f7800b0e4de",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FDebugOverlayViewDataTypes.h",
+      "snapshot_sha256": "6a7b7c33e382df9979282fb61bb9eba67c9c6236756db7efb76da1417ca5d609",
+      "checkout_sha256": "6a7b7c33e382df9979282fb61bb9eba67c9c6236756db7efb76da1417ca5d609",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FEnemyCombatTargetFacingDebug.cpp",
+      "snapshot_sha256": "a8c99929f78db8807ffbbd7e450d279171410c7925207409619f41b4f1789d89",
+      "checkout_sha256": "851ddf1aa2536eab401a2f0eca230e5bde9a9585e0b9f930cb1e098990cc9513",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FEnemyCombatTargetFacingDebug.h",
+      "snapshot_sha256": "b4207ba067bb1ee01e3b306cf99a29bdf5b4a9aa6f8b1467dfd0dda4d8f41a84",
+      "checkout_sha256": "b4207ba067bb1ee01e3b306cf99a29bdf5b4a9aa6f8b1467dfd0dda4d8f41a84",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FExecutionCollaborationDebug.cpp",
+      "snapshot_sha256": "3e273a154e55d0ceb1f7ca958a7b0af2da07019e8ddc128bf56f83d240878a59",
+      "checkout_sha256": "3e273a154e55d0ceb1f7ca958a7b0af2da07019e8ddc128bf56f83d240878a59",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FExecutionCollaborationDebug.h",
+      "snapshot_sha256": "5f13f0474fffd87602aad5efb7887f92a32cbb3e74e6443d35a2168b94024cea",
+      "checkout_sha256": "5f13f0474fffd87602aad5efb7887f92a32cbb3e74e6443d35a2168b94024cea",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FExecutionOrchestratorDebug.cpp",
+      "snapshot_sha256": "183fe93e3374b8391ed528583b491da866713e5d65d1f00f2df407666db0b8ad",
+      "checkout_sha256": "183fe93e3374b8391ed528583b491da866713e5d65d1f00f2df407666db0b8ad",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FExecutionOrchestratorDebug.h",
+      "snapshot_sha256": "05953c5740072567081d7bac40f0b3c6d9390d0ec00b1139f305e7eb9757905b",
+      "checkout_sha256": "05953c5740072567081d7bac40f0b3c6d9390d0ec00b1139f305e7eb9757905b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FInvestigateDebug.cpp",
+      "snapshot_sha256": "52051f87d401c28488e79fc43b8b984f426dc5d4ddf2a57a9b37d5a8d7f8a51e",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FInvestigateDebug.h",
+      "snapshot_sha256": "7caf5e4e470d8c4a79a675681ea7bf0679dd1b95b1cd82f3082e5938b62065af",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FLog.cpp",
+      "snapshot_sha256": "b854171e57aac725fe20331b2ef0c5e53110015d39c13ab41746a696abeef13a",
+      "checkout_sha256": "b854171e57aac725fe20331b2ef0c5e53110015d39c13ab41746a696abeef13a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FLog.h",
+      "snapshot_sha256": "507b3fcc7a20b2b62213256af2a1eddd6f20bbca23c852cbf27030acbd286dbe",
+      "checkout_sha256": "507b3fcc7a20b2b62213256af2a1eddd6f20bbca23c852cbf27030acbd286dbe",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FMovementDebug.cpp",
+      "snapshot_sha256": "5b173592bf67b4cd2056e9f95436ec63ecb589fd0bed2c324c44fb54ae80f243",
+      "checkout_sha256": "5b173592bf67b4cd2056e9f95436ec63ecb589fd0bed2c324c44fb54ae80f243",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FMovementDebug.h",
+      "snapshot_sha256": "f8316bf86f860f277a217f8f9d8630d13bacd41c406894976c88228dec354038",
+      "checkout_sha256": "f8316bf86f860f277a217f8f9d8630d13bacd41c406894976c88228dec354038",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FObservableOverlayDebug.cpp",
+      "snapshot_sha256": "39b996433140ff3bda93b61dc3f38512e4d9145f1db20e5fab350eddf2010a9f",
+      "checkout_sha256": "39b996433140ff3bda93b61dc3f38512e4d9145f1db20e5fab350eddf2010a9f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FObservableOverlayDebug.h",
+      "snapshot_sha256": "f658c989f2c7a00fad614c650f297e4acc81ea238659d7f79cf66626638dee57",
+      "checkout_sha256": "f658c989f2c7a00fad614c650f297e4acc81ea238659d7f79cf66626638dee57",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FReactionComponentDebug.cpp",
+      "snapshot_sha256": "c09d7c363a1e8cf0cde695e5028be530e6215b6bc8f8d5335385f8485bbd9ab7",
+      "checkout_sha256": "c09d7c363a1e8cf0cde695e5028be530e6215b6bc8f8d5335385f8485bbd9ab7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FReactionComponentDebug.h",
+      "snapshot_sha256": "7e42456200ec886a07ea51b48e35c35a475083551dc3e95829f1affac49636ee",
+      "checkout_sha256": "7e42456200ec886a07ea51b48e35c35a475083551dc3e95829f1affac49636ee",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FReferenceValidation.h",
+      "snapshot_sha256": "b55638fa8dfe5e3b3da3cc8ec8650338fb7799ceacd876340284565ed9f532a1",
+      "checkout_sha256": "b55638fa8dfe5e3b3da3cc8ec8650338fb7799ceacd876340284565ed9f532a1",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FTargetingDebug.cpp",
+      "snapshot_sha256": "146eef62a2c50e25e9eb6ab022d03cdb7855afe064121618503bea216561fbbd",
+      "checkout_sha256": "146eef62a2c50e25e9eb6ab022d03cdb7855afe064121618503bea216561fbbd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FTargetingDebug.h",
+      "snapshot_sha256": "340fed8d1187845f85f2e475bf1cf34df1afca676336a323151894a568b21d05",
+      "checkout_sha256": "340fed8d1187845f85f2e475bf1cf34df1afca676336a323151894a568b21d05",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FWeaponPresentationDebug.cpp",
+      "snapshot_sha256": "ef639cdef515983cec6934360370ca7a57c3a796181dc433045f12cb53a920fe",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Debug/FWeaponPresentationDebug.h",
+      "snapshot_sha256": "77e7bb1612c8f460e751dbd1830049695e4c6543457b4879ceb3a0d5b0586e92",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIAnimationProfiling.cpp",
+      "snapshot_sha256": "8587d1604a14be51e47828a409b9a4f2470f28ee67b3266c866083b934ae865a",
+      "checkout_sha256": "8587d1604a14be51e47828a409b9a4f2470f28ee67b3266c866083b934ae865a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIAnimationProfiling.h",
+      "snapshot_sha256": "bb9d9f22e6411b1b5248db391c1885dece2e545ce2e82c5aea590d3bdceea8ca",
+      "checkout_sha256": "bb9d9f22e6411b1b5248db391c1885dece2e545ce2e82c5aea590d3bdceea8ca",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIBehaviorTreeProfiling.cpp",
+      "snapshot_sha256": "541db62b2c070a6ce45e508497b3d31fbc06f47a1d61f3d1a91f8f2b46852191",
+      "checkout_sha256": "541db62b2c070a6ce45e508497b3d31fbc06f47a1d61f3d1a91f8f2b46852191",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIBehaviorTreeProfiling.h",
+      "snapshot_sha256": "56e1c1e317e4ce1c7196cf2b2e3c40c984ded6d01f0118dd91e35356509c017d",
+      "checkout_sha256": "56e1c1e317e4ce1c7196cf2b2e3c40c984ded6d01f0118dd91e35356509c017d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIPerceptionProfiling.cpp",
+      "snapshot_sha256": "fe7dd85a0a0e0fc07fed28e2b868f09cfb523c8becd345a5f5c9c49f5795b9fd",
+      "checkout_sha256": "fe7dd85a0a0e0fc07fed28e2b868f09cfb523c8becd345a5f5c9c49f5795b9fd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIPerceptionProfiling.h",
+      "snapshot_sha256": "49c617b1c825ee2fc377eaa80ee1150b0978a32eb5012d19b0afbbf32b92867f",
+      "checkout_sha256": "49c617b1c825ee2fc377eaa80ee1150b0978a32eb5012d19b0afbbf32b92867f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIStateRuntimeLODProfiling.cpp",
+      "snapshot_sha256": "da6229327e2955ef2bfef314acb19be3a90624f981656666dde1ea07974c16aa",
+      "checkout_sha256": "da6229327e2955ef2bfef314acb19be3a90624f981656666dde1ea07974c16aa",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CAIStateRuntimeLODProfiling.h",
+      "snapshot_sha256": "007c4bafb55a5944947de536e2e9b2295f2c1f1534d1751293da96f9dbc41b3c",
+      "checkout_sha256": "007c4bafb55a5944947de536e2e9b2295f2c1f1534d1751293da96f9dbc41b3c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CCombatCollisionProfiling.cpp",
+      "snapshot_sha256": "8ce532f5a53745eaa205c1848b9e6954d32fe6a44593aaf67dede64884353430",
+      "checkout_sha256": "8ce532f5a53745eaa205c1848b9e6954d32fe6a44593aaf67dede64884353430",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CCombatCollisionProfiling.h",
+      "snapshot_sha256": "311e0fd693a8b906abee98238bf9202ab2ec842292035a22306173acdc3ad727",
+      "checkout_sha256": "311e0fd693a8b906abee98238bf9202ab2ec842292035a22306173acdc3ad727",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CCombatCollisionProfilingCounters.cpp",
+      "snapshot_sha256": "20a460ab40e9a1619d8e8d4d851edc77ce2ec045024e90906c9ae6fbc424a7c2",
+      "checkout_sha256": "20a460ab40e9a1619d8e8d4d851edc77ce2ec045024e90906c9ae6fbc424a7c2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CCombatCollisionProfilingCounters.h",
+      "snapshot_sha256": "561989e0b5586b18c906e3e0e75cce1228eedc0678f2cc8fe01632b0047231fd",
+      "checkout_sha256": "561989e0b5586b18c906e3e0e75cce1228eedc0678f2cc8fe01632b0047231fd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CCombatFeedbackProfiling.cpp",
+      "snapshot_sha256": "223b8b2cac856d94166847e18a1954d9238bbd40be48f4000a4b948becdabe0c",
+      "checkout_sha256": "223b8b2cac856d94166847e18a1954d9238bbd40be48f4000a4b948becdabe0c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Core/Profiling/CCombatFeedbackProfiling.h",
+      "snapshot_sha256": "c827483c97a7e49b04079a32c29d5c5c44a920d57381ff71cbad21a8173dfacd",
+      "checkout_sha256": "c827483c97a7e49b04079a32c29d5c5c44a920d57381ff71cbad21a8173dfacd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/DataAsset/CWeaponTrailDataAsset.cpp",
+      "snapshot_sha256": "d11a8349f1cf838362b6fe9424dc111c3bf390c8597add66d7a0af80782623e6",
+      "checkout_sha256": "d11a8349f1cf838362b6fe9424dc111c3bf390c8597add66d7a0af80782623e6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/DataAsset/CWeaponTrailDataAsset.h",
+      "snapshot_sha256": "0702a9abbbd9d2b0b4e8d2052fe6d3998ca3ed7080879a6766bdbb73c236bdff",
+      "checkout_sha256": "b4f34a7a3193cbfef59f1f2f0eb89fe352cb327ce79e9ca8a38b425e9468f5ef",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Interface/CombatResultReceiver.cpp",
+      "snapshot_sha256": "b8f041cbb1e21bbcc9f8e8180ce7205f9906ade53aaf1e6dd86be7b009733d29",
+      "checkout_sha256": "b8f041cbb1e21bbcc9f8e8180ce7205f9906ade53aaf1e6dd86be7b009733d29",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Interface/CombatResultReceiver.h",
+      "snapshot_sha256": "6f44a1faf11045e3182bfe2f238fb51f846ad183f0744e9fa0c1174a03d91caf",
+      "checkout_sha256": "6f44a1faf11045e3182bfe2f238fb51f846ad183f0744e9fa0c1174a03d91caf",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Interface/HitContextProvider.cpp",
+      "snapshot_sha256": "220d29e3173d401d4c079e50d7dfe6cccd4202c6bec162efc9547617c83f51d5",
+      "checkout_sha256": "220d29e3173d401d4c079e50d7dfe6cccd4202c6bec162efc9547617c83f51d5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Interface/HitContextProvider.h",
+      "snapshot_sha256": "fec888131e3f95abde52ff6d61f9ecb5420a79813c4335db095f43ea04f4916d",
+      "checkout_sha256": "fec888131e3f95abde52ff6d61f9ecb5420a79813c4335db095f43ea04f4916d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Interface/ObservableOverlayPolicy.cpp",
+      "snapshot_sha256": "288e5562461cbf0dfe9de777756aa525dd657fea58156594817ab194e9a611f0",
+      "checkout_sha256": "288e5562461cbf0dfe9de777756aa525dd657fea58156594817ab194e9a611f0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Interface/ObservableOverlayPolicy.h",
+      "snapshot_sha256": "7514e47543ef1e40c610445e01eb76596e061bd408582635b59bb0f8931fd26e",
+      "checkout_sha256": "7514e47543ef1e40c610445e01eb76596e061bd408582635b59bb0f8931fd26e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Interface/TargetContextProvider.cpp",
+      "snapshot_sha256": "397c2f32663e678e90098539fe60d4eb7238eaedfff4575ee508d5ac3cb17d94",
+      "checkout_sha256": "397c2f32663e678e90098539fe60d4eb7238eaedfff4575ee508d5ac3cb17d94",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Interface/TargetContextProvider.h",
+      "snapshot_sha256": "ede2f74e428d07e92eed7c6123eadc219891e88a8266d78cd17d3578f3bb44b1",
+      "checkout_sha256": "ede2f74e428d07e92eed7c6123eadc219891e88a8266d78cd17d3578f3bb44b1",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify.cpp",
+      "snapshot_sha256": "b19718dc165087ee1bcee76a1c3c386669dde944a56e3b83e528d099f3881873",
+      "checkout_sha256": "462542eeb29b6092ad74d1c7320d516edaebecbe3dedec3f241a5ea9b4086282",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify.h",
+      "snapshot_sha256": "65ed04677609ad9a3f3837dfe11d153e4e07a0b0950e02b4ac1d03cc959159ab",
+      "checkout_sha256": "aac6dc424d8f3ad7beb9d74712df327d3a49421f52972cdacad70d5d73a55b8e",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ActionBase.cpp",
+      "snapshot_sha256": "f6db738af5da324c249b3d6497cafaca8e6a2cfc0e7d96f01c5e318c8652fe6b",
+      "checkout_sha256": "7280b8e6894793b47f5b22b303300e634340ccb65529cd71a7201e13b536f75f",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ActionBase.h",
+      "snapshot_sha256": "df10175c992754bf1ea11f65f10497e88facceede8f1b3cd81d3f899ce4f6eed",
+      "checkout_sha256": "b6772a65f6459016871dd882a0cf237993c0c3b4d6ad2f7462032a356a539bde",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ActionFeedback.cpp",
+      "snapshot_sha256": "b0368e8c4598bffae7ee64d79acb162ca0daf8e10c2a628dce09967e339c2f4f",
+      "checkout_sha256": "a58c30e0b066dc2115704827f8720c58d24a3cf108600cee7182a1526d7bf9ea",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ActionFeedback.h",
+      "snapshot_sha256": "214374d673ac6fbaeb1ebd613c88e2ab86afd87ddb67751da5135ef020ba991b",
+      "checkout_sha256": "214374d673ac6fbaeb1ebd613c88e2ab86afd87ddb67751da5135ef020ba991b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_AdvanceCombo.cpp",
+      "snapshot_sha256": "c219e62f1b14132e5a11452405d668a3fe82986e7ef65eab529ee5359366b513",
+      "checkout_sha256": "9b6d3313765bf4a6fbf28991198269009be419af49f102b141f421d7bc0e7209",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_AdvanceCombo.h",
+      "snapshot_sha256": "ba5b131dc5293f6b331e433d88481c86a7b11538bec32a535d8f73fb9ef5068e",
+      "checkout_sha256": "ba5b131dc5293f6b331e433d88481c86a7b11538bec32a535d8f73fb9ef5068e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_AllowGuardStart.cpp",
+      "snapshot_sha256": "4ca4a8b60380515a953c5f3cfe908c86e69467165e7c5da79620f461e7b8b3d7",
+      "checkout_sha256": "9e2de6a2596937f39da76389adc6a2a7f1b23112a68072aeedb24998df3554ab",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_AllowGuardStart.h",
+      "snapshot_sha256": "e6c805619c7dc360f94040862cef03c6c1cd0271b326a8339ca46886e0eeb373",
+      "checkout_sha256": "e6c805619c7dc360f94040862cef03c6c1cd0271b326a8339ca46886e0eeb373",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_BodyGlow.cpp",
+      "snapshot_sha256": "84e1ca6e1bf3b7bb1471b7176d346dd642e2220b44946a92439305d0b9654689",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_BodyGlow.h",
+      "snapshot_sha256": "35a888a576a97d9393b15a65c5d8e93c521bdf212c682ec5d98c54d9fa88031a",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CombatSignalCue.cpp",
+      "snapshot_sha256": "74b78c97bc5bfc6cb8dab76b29ae7c25f878eed7482fec777ff2c78eae1c7593",
+      "checkout_sha256": "8a0c27a480859b44acd0461ccb0a2e5befae6093802a8243fb315c8fb9a8d214",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CombatSignalCue.h",
+      "snapshot_sha256": "fbe760e48df32b67fd22999e9418dc72eb4fc0fd0b606a0bf7c5cd4c626339e7",
+      "checkout_sha256": "fbe760e48df32b67fd22999e9418dc72eb4fc0fd0b606a0bf7c5cd4c626339e7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CommitExecution.cpp",
+      "snapshot_sha256": "e080ae2130bcdcfbdfa1ad7374a27d7e05b877657578759d8a4cc32c21bd73ee",
+      "checkout_sha256": "307c06de88767c3d3c2555ad162d9ffb4331948a4f17a2da8d78b8845f1e9a67",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CommitExecution.h",
+      "snapshot_sha256": "2ce6c4c3f5e3901b22f4170feefc54e39b82363021b24ac738d302880203b8f3",
+      "checkout_sha256": "2ce6c4c3f5e3901b22f4170feefc54e39b82363021b24ac738d302880203b8f3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CompleteAction.cpp",
+      "snapshot_sha256": "21e61ed236c64da111418500ee228a20c4e6bb731f5da24fd93a8d0ed407eaa9",
+      "checkout_sha256": "88e472e8144a608d094726d26ebf864147f25678fd113a341c2c849b1f3c3568",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CompleteAction.h",
+      "snapshot_sha256": "8370554e9e67bff2fb0e0c81a7dda8cb05a5a09309b427cec0347188b2a3e77c",
+      "checkout_sha256": "8370554e9e67bff2fb0e0c81a7dda8cb05a5a09309b427cec0347188b2a3e77c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CompleteReaction.cpp",
+      "snapshot_sha256": "b73b3e5c62b9eaa301a07f2834f59d7de4c24ea9afa1370a5d11b2bb721a547e",
+      "checkout_sha256": "944ba7d4e252c664fc79f2a025749bf5e3c9f0ef8767874bc0cdaf633d19fd3b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CompleteReaction.h",
+      "snapshot_sha256": "dba65c1c13155761547804a770dbab18fc2d4bd7157c59b8673456e36567a6d1",
+      "checkout_sha256": "dba65c1c13155761547804a770dbab18fc2d4bd7157c59b8673456e36567a6d1",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CounterOpportunity.cpp",
+      "snapshot_sha256": "d434da5e16fbe842eef959c2389a56e90d0ffa2bc79e02c7c03af03c27460b6c",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_CounterOpportunity.h",
+      "snapshot_sha256": "66a434b76b9aa6c042f37cae61bc714c6d7dd91f86b3e12ed1e73bf669392ede",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_PerfectDodgePresentation.cpp",
+      "snapshot_sha256": "958fcbb5d51136a0c8ea88f0b9def67e9183e36f7065611a7813b217d8883c4b",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_PerfectDodgePresentation.h",
+      "snapshot_sha256": "ba75acd2430adc452f60ea3a0d0bae06d04fde28b75b452bd4c0f2d0e1b15c95",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ReactionBase.cpp",
+      "snapshot_sha256": "694be91f5aa0a599a0d47af03b8d7829b025f330f176485f02ded2216da21247",
+      "checkout_sha256": "52d28a99f6b73c87967620fb3460255fd2373c5b34c7c28f19e41a0ea0918e8e",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ReactionBase.h",
+      "snapshot_sha256": "f188a397909d79f11c3434812fd04ee40000a0222b35e852dca93f0e818f7503",
+      "checkout_sha256": "87949f3d12736aa62200180fbec5138cd42d712d33c80d3bc29b3ccdceaba7da",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ReactionFeedback.cpp",
+      "snapshot_sha256": "5af3771b32302cd6d937ca0e846313731581fd2bbd2f7fa10d997455cf961adb",
+      "checkout_sha256": "a517aa4e76317337a2ba34266b9dce4169455a8c4291f0a013388a03032e225b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ReactionFeedback.h",
+      "snapshot_sha256": "6e1e37b9099b5bbaa7b7189f1df1f68d0b4e2c78dd5207249488c55bad02f8a2",
+      "checkout_sha256": "6e1e37b9099b5bbaa7b7189f1df1f68d0b4e2c78dd5207249488c55bad02f8a2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ResetBalanceLifecycle.cpp",
+      "snapshot_sha256": "9fb5c40ccd6ff249bbcc1fbfd28717d49e34708db10c5e0fac48ae09ee97a610",
+      "checkout_sha256": "185fe624064330735500b1149bc21d5dfce0ec9c29227a77bc9c0eeedba3f507",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_ResetBalanceLifecycle.h",
+      "snapshot_sha256": "cb541938fc289ad25af3250a7429ea61aa216b60093296df50cb35289072fc2e",
+      "checkout_sha256": "cb541938fc289ad25af3250a7429ea61aa216b60093296df50cb35289072fc2e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_SetIncapacitatedPresentation.cpp",
+      "snapshot_sha256": "1c73112baeb990f3ebc2e217ac5d2a1b2b3e93fced15d45cef067d3ecd84fcad",
+      "checkout_sha256": "d9df254e6f8719639f29669b6aed3a3577f8370137a2dd86c6ae6c886a2aad74",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_SetIncapacitatedPresentation.h",
+      "snapshot_sha256": "2e66df597a7f67bcde8fc1d62e7de2cb1185f3d56818132da6fec8a176060ed7",
+      "checkout_sha256": "2e66df597a7f67bcde8fc1d62e7de2cb1185f3d56818132da6fec8a176060ed7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_SwitchToGuard.cpp",
+      "snapshot_sha256": "03aaf11881661dbcf2fa03251c01eba0fb6b790503c0442e65ebff664fb7b817",
+      "checkout_sha256": "c519469f1586174fa1a19d1c0afd5f782da3084a213e23b46e2e1c78f0cb56c2",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_SwitchToGuard.h",
+      "snapshot_sha256": "36545134079f3216a7b97b46de20352cb5aa46087a9e7e014debda7f28812d87",
+      "checkout_sha256": "36545134079f3216a7b97b46de20352cb5aa46087a9e7e014debda7f28812d87",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_WeaponGlow.cpp",
+      "snapshot_sha256": "a60fe6cda2b0ad0413d02cc088957b1e1b468aa1bcf32c86954f789b8e2abae5",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotify_WeaponGlow.h",
+      "snapshot_sha256": "d77aeb985987618288d4f883b4c785f168062edcc407b5176d240ad58186bb39",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState.cpp",
+      "snapshot_sha256": "0d581618028c0ec9c2068a06996b7fb837944741df838a8d3e7c27ed0a0dfae8",
+      "checkout_sha256": "a56ea2747e3b685b6453273e500b1592a3ffaaadb0b08cecaf69955d5cfbf206",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState.h",
+      "snapshot_sha256": "eda4dc798b131f0f62c81467e8bbf2ca5cf0c5ef67f2e03d811364c298a813ce",
+      "checkout_sha256": "98e8f5080085258c0a862f84b57b59a7456116afb6e7fcecde73795ab65629cf",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ActionBase.cpp",
+      "snapshot_sha256": "e94747872fe8c0e09c1a3919a5eae5b423c5d7ff8adabb8196792c0af71d3361",
+      "checkout_sha256": "86676dba9d6380c3e9299620618703375bebeace52d045e386787deee633b69a",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ActionBase.h",
+      "snapshot_sha256": "5d824eb2c32a6760eaf1a2f9c9f0b7d6d6a686295ad8825ea977b57ab4df3952",
+      "checkout_sha256": "506394240344b59ad5aac3aca4d3fca3bc349a9ba47fb4eecad5aadfc14d5658",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ActionFeedback.cpp",
+      "snapshot_sha256": "9507a7a86bd988bc6bd3d8364df218b375cdf23db046733b9b94d01f54ea7086",
+      "checkout_sha256": "53d4fff1d403f7f643107d483823284ca65ed5911fb2286ca86c6ee909b2ad33",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ActionFeedback.h",
+      "snapshot_sha256": "1584e02ac861ef8f831b86630759ab8e66b74f13f4e4b3c17b349bccfee104be",
+      "checkout_sha256": "1584e02ac861ef8f831b86630759ab8e66b74f13f4e4b3c17b349bccfee104be",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ChainWindow.cpp",
+      "snapshot_sha256": "d8539cd1a84cffe39a8c51d9f2014f9fd0cb5ae9ab58852d66f21cdea5667757",
+      "checkout_sha256": "3a7bbff0c05fd1f62689220df5164bbac315910a28265509826f693884a1e6f7",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ChainWindow.h",
+      "snapshot_sha256": "539f7de456fe15d4a42e98063d3e62110f077020e442a52f38a96ea83b963464",
+      "checkout_sha256": "539f7de456fe15d4a42e98063d3e62110f077020e442a52f38a96ea83b963464",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_Collision.cpp",
+      "snapshot_sha256": "54762a42cf77c52d6ef8f78e0424e1ccd648db8e121cae9e851f9de308c80ad3",
+      "checkout_sha256": "4c795b8ee83aa77313b5c33fd97bd21689df6920a41b6812994be942cabe0561",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_Collision.h",
+      "snapshot_sha256": "6e9327f23893675821bf1e12a23c6a2b462e6476078dd23fa7a61749ec388a24",
+      "checkout_sha256": "6e9327f23893675821bf1e12a23c6a2b462e6476078dd23fa7a61749ec388a24",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_DodgeWindow.cpp",
+      "snapshot_sha256": "df6e34772f236dee9534f02e2b82218c87840b359b1588655763afc38bc8991a",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_DodgeWindow.h",
+      "snapshot_sha256": "e98db1bda618c00597c5a17054bcee72cccdc9ae371bf1dadbc532b2555b94be",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_EquipSocketTransformTransition.cpp",
+      "snapshot_sha256": "0c1ec09061e0ca63c47582630c00b5a979dd3b45e5446679e29ff77fc59c8adc",
+      "checkout_sha256": "0c1ec09061e0ca63c47582630c00b5a979dd3b45e5446679e29ff77fc59c8adc",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_EquipSocketTransformTransition.h",
+      "snapshot_sha256": "58b1e367de5b5e4b47b10ed8506db8218bec58c506362475a26cd3944cbb27b9",
+      "checkout_sha256": "58b1e367de5b5e4b47b10ed8506db8218bec58c506362475a26cd3944cbb27b9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ExecutionInterventionWindow.cpp",
+      "snapshot_sha256": "9b6d3d280047fb9ade14dfed100fc899a005f4552e486c129df59b3eb03ecc12",
+      "checkout_sha256": "9b6d3d280047fb9ade14dfed100fc899a005f4552e486c129df59b3eb03ecc12",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ExecutionInterventionWindow.h",
+      "snapshot_sha256": "25f0af12ddb06bdb9acacab5684b7e4933dbdaa22fa606c96ddd396b225216bf",
+      "checkout_sha256": "25f0af12ddb06bdb9acacab5684b7e4933dbdaa22fa606c96ddd396b225216bf",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_HitContext.cpp",
+      "snapshot_sha256": "42a5545ec43b039dc6626758985c50c28396a9ebe033b63b04358e0e42db616a",
+      "checkout_sha256": "e26a07f973d546e5c779f867e6d1643c9a34d2fb1d32d5db9f5e622fcad4f699",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_HitContext.h",
+      "snapshot_sha256": "3384ad1dd3550c6352d41f0136189fd45b0a4233ff32471fb70e0ec17ac959a9",
+      "checkout_sha256": "3384ad1dd3550c6352d41f0136189fd45b0a4233ff32471fb70e0ec17ac959a9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ReactionBase.cpp",
+      "snapshot_sha256": "7158e221dace61d8553e60ec26f796817250e079d369b6e6777a9070fbff178e",
+      "checkout_sha256": "cf46a92a5bfa825b356ae67c7147c20ca27ab7755e562817e49f5e87ff21e8ec",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ReactionBase.h",
+      "snapshot_sha256": "bc8d72ef10acd869d76f3effbb9a6b594a08e075f223a7b5d1f1150c7b5dba52",
+      "checkout_sha256": "1685c77bf47855ab892c488ade4c026cafc8d7bf162991f0ccf8826f8793354e",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ReactionFeedback.cpp",
+      "snapshot_sha256": "96e6363e43e533b5ecf78f24819c43f26faf2d662a991628c37bff888c89a74e",
+      "checkout_sha256": "6108674c71f51e11ecd2184bd087390f6aecdf82e13df3f57f351f6e407f5ad7",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_ReactionFeedback.h",
+      "snapshot_sha256": "2b8ed6cc939fb48275759685de44a5aadd003fb550e6f09b34164748423e4878",
+      "checkout_sha256": "2b8ed6cc939fb48275759685de44a5aadd003fb550e6f09b34164748423e4878",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_UnequipSocketTransformTransition.cpp",
+      "snapshot_sha256": "618bfab0af9c089db9497fd9cf35db5cffc04fa15b74500fe848a62c8fddfb28",
+      "checkout_sha256": "618bfab0af9c089db9497fd9cf35db5cffc04fa15b74500fe848a62c8fddfb28",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_UnequipSocketTransformTransition.h",
+      "snapshot_sha256": "0ae1f6d4fafd05324b7e47bd6205d04ca9ec6389546a9d98eaf23d33219cd16c",
+      "checkout_sha256": "0ae1f6d4fafd05324b7e47bd6205d04ca9ec6389546a9d98eaf23d33219cd16c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponPivotRotationOverride.cpp",
+      "snapshot_sha256": "ab5b61264520b73e111eb8365558db3486980384ec034883fe719432accece5f",
+      "checkout_sha256": "4b539946ac3fb5f1f4423c4e3a6e6ce35f0cad10baf10a2d20fc0a8e2d520fa3",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponPivotRotationOverride.h",
+      "snapshot_sha256": "7e00985cb40526ebd55e7da7ef37f2971d05da228bf358878ff6ec07839b4371",
+      "checkout_sha256": "7e00985cb40526ebd55e7da7ef37f2971d05da228bf358878ff6ec07839b4371",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponPivotRotationTransition.cpp",
+      "snapshot_sha256": "f6be8b615194142a3f6f6010e6cbd7ea212b78f39890e481146716a152e4827a",
+      "checkout_sha256": "4e5d92c4cf53e1e17ce9cc53dacb4cd2feffa22b7f76e6663f5687dee88ee08a",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponPivotRotationTransition.h",
+      "snapshot_sha256": "44c311a9b7370c445694a8b2f44934483080abef5944e661583e45763b3141f2",
+      "checkout_sha256": "44c311a9b7370c445694a8b2f44934483080abef5944e661583e45763b3141f2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponSocketTransformTransition.cpp",
+      "snapshot_sha256": "573d5f647f009d96add5ef2384c8504292b3f175a9a6145344ce5369c260bd42",
+      "checkout_sha256": "573d5f647f009d96add5ef2384c8504292b3f175a9a6145344ce5369c260bd42",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponSocketTransformTransition.h",
+      "snapshot_sha256": "8f26368b418b24c13ad6b022327a2a24b79b9ad295ffad36dcb025c5a9bbdda7",
+      "checkout_sha256": "8f26368b418b24c13ad6b022327a2a24b79b9ad295ffad36dcb025c5a9bbdda7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponSocketTransformTransitionBase.cpp",
+      "snapshot_sha256": "18208e4ed85bfafcafaa7fbe8ffd1b9730d6b707b223497606bbd1571ff866bd",
+      "checkout_sha256": "ce4a9d4b0660e133dbfb713178567627b63289f6dfdbac56dda052584b50c53b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CAnimNotifyState_WeaponSocketTransformTransitionBase.h",
+      "snapshot_sha256": "411cc9e25ae824b116143799f911cb45676db02abc317b63b01228d459bd2f28",
+      "checkout_sha256": "411cc9e25ae824b116143799f911cb45676db02abc317b63b01228d459bd2f28",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Notify/CCombatNotifyOwnership.cpp",
+      "snapshot_sha256": "1dfe80b8b07f29329246c376dd00f118c396ef7dbb86187f55c965104f17f417",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Notify/CCombatNotifyOwnership.h",
+      "snapshot_sha256": "b142b17fa5587144bc4dbbafbb5577aa41649ebb0a452e0ec5686370aceca28e",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Portfolio.Build.cs",
+      "snapshot_sha256": "0485fcfa1146f911d8e3cce122a07e9d4470bc8582f2bf35e81fe9418c3d1206",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Portfolio.cpp",
+      "snapshot_sha256": "657f6e16cd2deceec2bb82aeae33edbb4f0a2fcdea6b10d585740b50703fe851",
+      "checkout_sha256": "657f6e16cd2deceec2bb82aeae33edbb4f0a2fcdea6b10d585740b50703fe851",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Portfolio.h",
+      "snapshot_sha256": "bfa5f34fa3fb37a7bce87d8f7a7486db2b3f3c0d278f9b3613998ca9b5cc6390",
+      "checkout_sha256": "bfa5f34fa3fb37a7bce87d8f7a7486db2b3f3c0d278f9b3613998ca9b5cc6390",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/ProjectGlobal.h",
+      "snapshot_sha256": "45835152b480420b81a2f127da08e50e536f0cd412abbf60cceecf1496a0b990",
+      "checkout_sha256": "45835152b480420b81a2f127da08e50e536f0cd412abbf60cceecf1496a0b990",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction.cpp",
+      "snapshot_sha256": "d4c730d6a8380791ea614599ee5b5642703e9437050169fc8f69468bdada8762",
+      "checkout_sha256": "a75d9289703bcb9c48afe2c7658232dd280e23ec8a073fb500a759af5c442a86",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction.h",
+      "snapshot_sha256": "38b92b8ef6cdda8537718db60f224b054783432b468b6d1b7eb49af3e0a5aa02",
+      "checkout_sha256": "30d08f5a58c53c832888a454022633198cd4c87c3975237a5fc169140e05ad2e",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_BlockHit.cpp",
+      "snapshot_sha256": "bcae217625a0b16ab567220b7729d36e5a17126d5956b955c92eee667893e6b7",
+      "checkout_sha256": "bcae217625a0b16ab567220b7729d36e5a17126d5956b955c92eee667893e6b7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_BlockHit.h",
+      "snapshot_sha256": "2a0e7a4a9176daeccbdbaf17cbf177628e47717457032d752996ad77b8f4427a",
+      "checkout_sha256": "2a0e7a4a9176daeccbdbaf17cbf177628e47717457032d752996ad77b8f4427a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_CollapseHit.cpp",
+      "snapshot_sha256": "a967ff3ea9f6423e370acac43d77fe53749afd1762af06a2bcbf7eebf66cdea5",
+      "checkout_sha256": "a967ff3ea9f6423e370acac43d77fe53749afd1762af06a2bcbf7eebf66cdea5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_CollapseHit.h",
+      "snapshot_sha256": "a702f15a5210a223a0742df49034e55189ceaaf31793b28aba308deaabda7960",
+      "checkout_sha256": "a702f15a5210a223a0742df49034e55189ceaaf31793b28aba308deaabda7960",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_CollapseIn.cpp",
+      "snapshot_sha256": "38cdcd43f3bca593660594ed55a67b077b99905dc0b7a036f07c9503443a0777",
+      "checkout_sha256": "38cdcd43f3bca593660594ed55a67b077b99905dc0b7a036f07c9503443a0777",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_CollapseIn.h",
+      "snapshot_sha256": "593d87bc1c2b2a43f939a123e1ca867dc2617ba71e79017dec15176aa0e7b124",
+      "checkout_sha256": "593d87bc1c2b2a43f939a123e1ca867dc2617ba71e79017dec15176aa0e7b124",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_CollapseOut.cpp",
+      "snapshot_sha256": "d0570bb4e794798322ed425290e38d32beed7b73fcdb76d6ea283d825e9f9a8d",
+      "checkout_sha256": "d0570bb4e794798322ed425290e38d32beed7b73fcdb76d6ea283d825e9f9a8d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_CollapseOut.h",
+      "snapshot_sha256": "fbf0e0648b26b627f1635e1a7375c67317936f3369957d04fa3cd02c7fc39fa8",
+      "checkout_sha256": "fbf0e0648b26b627f1635e1a7375c67317936f3369957d04fa3cd02c7fc39fa8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Dead.cpp",
+      "snapshot_sha256": "9534cd360161ef168d7565adb480a99df38f80fa5ef7722d89ce9bd6b18a6269",
+      "checkout_sha256": "9534cd360161ef168d7565adb480a99df38f80fa5ef7722d89ce9bd6b18a6269",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Dead.h",
+      "snapshot_sha256": "d890cf86f1944fed742f58d5bab705663f7d834d451c4d87d99066c5a260cf9e",
+      "checkout_sha256": "d890cf86f1944fed742f58d5bab705663f7d834d451c4d87d99066c5a260cf9e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Execution.cpp",
+      "snapshot_sha256": "d74b9b7c566eb4dc02570f609bd2dbf6758732de2f8dda023bb1a07b0926991e",
+      "checkout_sha256": "d74b9b7c566eb4dc02570f609bd2dbf6758732de2f8dda023bb1a07b0926991e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Execution.h",
+      "snapshot_sha256": "7caa0a61dd61baff119b53bb86d8266c07f9ca46fa574073ceaaa7c030a2f368",
+      "checkout_sha256": "7caa0a61dd61baff119b53bb86d8266c07f9ca46fa574073ceaaa7c030a2f368",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_ExecutionRecovery.cpp",
+      "snapshot_sha256": "3d8c9772ed7d7745737c0397c6c17d415835dc96450a5cb54a530442fffb65a8",
+      "checkout_sha256": "3d8c9772ed7d7745737c0397c6c17d415835dc96450a5cb54a530442fffb65a8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_ExecutionRecovery.h",
+      "snapshot_sha256": "016b7961499b6f3cf2f9f5677629780cde14a853052051474f3adcc5c13de4fa",
+      "checkout_sha256": "016b7961499b6f3cf2f9f5677629780cde14a853052051474f3adcc5c13de4fa",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Hit.cpp",
+      "snapshot_sha256": "c3f893401f53f6070f8e3d6743f21d2b0e07d6628df255365e87e4a8e0618913",
+      "checkout_sha256": "c3f893401f53f6070f8e3d6743f21d2b0e07d6628df255365e87e4a8e0618913",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Hit.h",
+      "snapshot_sha256": "c7f56ccf08ef0160221b60f0a352f679261f940bb577ec6f546ba443584daf63",
+      "checkout_sha256": "c7f56ccf08ef0160221b60f0a352f679261f940bb577ec6f546ba443584daf63",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Parry.cpp",
+      "snapshot_sha256": "f650d93594c25ecd56feadbfdc2a8591c200a6ff8597d3b60e8182f40c39393e",
+      "checkout_sha256": "f650d93594c25ecd56feadbfdc2a8591c200a6ff8597d3b60e8182f40c39393e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Parry.h",
+      "snapshot_sha256": "ec967ca0a4af1183f89170bca20d6afc39edcc6c314f0b8de4d0e4e1b0e351b8",
+      "checkout_sha256": "ec967ca0a4af1183f89170bca20d6afc39edcc6c314f0b8de4d0e4e1b0e351b8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_PerfectDodge.cpp",
+      "snapshot_sha256": "d701564861a1099f1121bb04612d9cd04ba7a5fdd0a27c6b0514a7b56869db32",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_PerfectDodge.h",
+      "snapshot_sha256": "54f11393368b20ca503c4f29cd5ce8af3d93a468a32438953bfb8277c03ebcd6",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Stagger.cpp",
+      "snapshot_sha256": "cd5144f27dc3305185de7fd37e36395a44ecc10d17ee514338a2a2e7614912a4",
+      "checkout_sha256": "cd5144f27dc3305185de7fd37e36395a44ecc10d17ee514338a2a2e7614912a4",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Reaction/CReaction_Stagger.h",
+      "snapshot_sha256": "b79230de0a47db4ef718140563122bd9ec09474ecce9cb5ce18ae50720974ae0",
+      "checkout_sha256": "b79230de0a47db4ef718140563122bd9ec09474ecce9cb5ce18ae50720974ae0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/System/Combat/CWorldSubsystem_CombatFeedback.cpp",
+      "snapshot_sha256": "12c56d3d28374519ca67ed51e31ae1d774ab52ec8a9cf8872930c1bb0c381b12",
+      "checkout_sha256": "ffeb6613ce9681f18aebd7110db0260d3c53d364da70bdbf96b9a9f617f2379a",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/System/Combat/CWorldSubsystem_CombatFeedback.h",
+      "snapshot_sha256": "a3daa2ab829296df4747439c24b71e88139e3d9e6251d284a9d988dee65904b2",
+      "checkout_sha256": "288054819fc5be1086ff3faa1d16d294f9e82864b52657dacd58a5dedf4e0829",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp",
+      "snapshot_sha256": "ab319134e8c9b1fe49bb126e6a8dd4d0bbcfce07c312021dc3b2a09e4551a7b3",
+      "checkout_sha256": "778b3095450d23a55606fbb8b67a6d0f1c653a2a9f58702adaeaba5c660b492a",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.h",
+      "snapshot_sha256": "dde056cb55b1f57aeb597123da6e426d3f472045fa0e80b35c7fabbf4ccdd4fc",
+      "checkout_sha256": "4a42bba8b3eab12b7e1e914abd52f0f3d880f76cd467ea20876b8f72547e25d0",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Tests/CAIObservedTargetTests.cpp",
+      "snapshot_sha256": "77f78cc8a87114fa71dba979227796bcad784e0ad98f03fa55ac58b78d2671c6",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Tests/CPatrolDebugTests.cpp",
+      "snapshot_sha256": "af6328a69d3af3f00dd72dd56d0787e56960ac00869637d9ee4bf8559f7c88c7",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionDataTypes.cpp",
+      "snapshot_sha256": "5668deb267b79047f5911cd12983e8a6131555f4dbfb72ae16f9d70257235614",
+      "checkout_sha256": "5668deb267b79047f5911cd12983e8a6131555f4dbfb72ae16f9d70257235614",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionDataTypes.h",
+      "snapshot_sha256": "d137f57eb36843ae9830e627b20587167c49c7a7bfc139862fe869216188b915",
+      "checkout_sha256": "d137f57eb36843ae9830e627b20587167c49c7a7bfc139862fe869216188b915",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionFeedbackTypes.cpp",
+      "snapshot_sha256": "d332a3157b9a94378af1104a3db566a470386165e796cc261579f466f42969c7",
+      "checkout_sha256": "d332a3157b9a94378af1104a3db566a470386165e796cc261579f466f42969c7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionFeedbackTypes.h",
+      "snapshot_sha256": "d29d6a087ae422820da70d496f9170b9935ccd034dac655bf7686a8f426ce15c",
+      "checkout_sha256": "d29d6a087ae422820da70d496f9170b9935ccd034dac655bf7686a8f426ce15c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionKeyTypes.cpp",
+      "snapshot_sha256": "5d6a7bd95638bb70513f1bd66ff378b1f122d140d5f2497370463a51056070a0",
+      "checkout_sha256": "5d6a7bd95638bb70513f1bd66ff378b1f122d140d5f2497370463a51056070a0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionKeyTypes.h",
+      "snapshot_sha256": "ff1bb615ff578853c4ba2c06f8004b22d6cc67e784be0ad5cc316774ade395cb",
+      "checkout_sha256": "ff1bb615ff578853c4ba2c06f8004b22d6cc67e784be0ad5cc316774ade395cb",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionOrchestrationTypes.cpp",
+      "snapshot_sha256": "67c9dababeffc2d89d7a19e43182627929599f633c9977ed559fc0b449db8a3a",
+      "checkout_sha256": "67c9dababeffc2d89d7a19e43182627929599f633c9977ed559fc0b449db8a3a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionOrchestrationTypes.h",
+      "snapshot_sha256": "eb24c41a6f6996079d59af589b61621add8593a546b43487a295b3074f4d494f",
+      "checkout_sha256": "eb24c41a6f6996079d59af589b61621add8593a546b43487a295b3074f4d494f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionTypes.cpp",
+      "snapshot_sha256": "c092c10c1b06804639a6321d22314d31ecc9aa8d2b0820398c1db35e05300be5",
+      "checkout_sha256": "c092c10c1b06804639a6321d22314d31ecc9aa8d2b0820398c1db35e05300be5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CActionTypes.h",
+      "snapshot_sha256": "1b58e922461f9da66dde42cf18d2ce623fb8337dd106f2119ba4e971d90f19c6",
+      "checkout_sha256": "badef94f1069c192615410ba90544f1cd4c67fcabfae51c3bc2cf5ad3b6cdb47",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CAIBehaviorTreeTypes.h",
+      "snapshot_sha256": "53f5b10b91e2cc72fb7c05605379aa7d7e9a22f757bbfca2ebdbc573a8509f95",
+      "checkout_sha256": "53f5b10b91e2cc72fb7c05605379aa7d7e9a22f757bbfca2ebdbc573a8509f95",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CAIPerceptionSetupTypes.h",
+      "snapshot_sha256": "9425a1a48353e9a21885595cb25def5479f35f10eeabf62a6cacd34970fd139a",
+      "checkout_sha256": "9425a1a48353e9a21885595cb25def5479f35f10eeabf62a6cacd34970fd139a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CAITypes.cpp",
+      "snapshot_sha256": "ffe054f525da2f3f7773cf44c9c960f58a3377b7464b986d900e77cc01718aeb",
+      "checkout_sha256": "ffe054f525da2f3f7773cf44c9c960f58a3377b7464b986d900e77cc01718aeb",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CAITypes.h",
+      "snapshot_sha256": "9c442354e8ca6a51294ea451aefb8ba4413fbb5ec046a1a5c3ef7aa795e9a9f9",
+      "checkout_sha256": "9c442354e8ca6a51294ea451aefb8ba4413fbb5ec046a1a5c3ef7aa795e9a9f9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CBalanceTypes.cpp",
+      "snapshot_sha256": "019417048e503175ccac9d9d063a0c67835ef6a1094c6919012c53541199adf1",
+      "checkout_sha256": "019417048e503175ccac9d9d063a0c67835ef6a1094c6919012c53541199adf1",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CBalanceTypes.h",
+      "snapshot_sha256": "6da5b54ff0808a531d8f814d25f920c828568fcf239a2df61a8ca8dbf63d25fa",
+      "checkout_sha256": "6da5b54ff0808a531d8f814d25f920c828568fcf239a2df61a8ca8dbf63d25fa",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCharacterComponentReferenceTypes.h",
+      "snapshot_sha256": "999fad52607c8fb778d66b38502e2a6f76c186f4a1865b26139d4b3060a861ca",
+      "checkout_sha256": "999fad52607c8fb778d66b38502e2a6f76c186f4a1865b26139d4b3060a861ca",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCharacterFeedbackTypes.h",
+      "snapshot_sha256": "2a83cab6f9081bedba42725d9c560663c117bfa5c1ed286a98eac12b95888489",
+      "checkout_sha256": "2a83cab6f9081bedba42725d9c560663c117bfa5c1ed286a98eac12b95888489",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCharacterSetupTypes.h",
+      "snapshot_sha256": "1662b33cfb217c3accadb38dc5146754235a7abdfcf41ce12fa76b46af4e4a4c",
+      "checkout_sha256": "1662b33cfb217c3accadb38dc5146754235a7abdfcf41ce12fa76b46af4e4a4c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatDamageTypes.cpp",
+      "snapshot_sha256": "0f8ca7fc16c1b6b265008bfbaf59a4c5b7dcd565b5d29381ee3e094b9b42b65c",
+      "checkout_sha256": "0f8ca7fc16c1b6b265008bfbaf59a4c5b7dcd565b5d29381ee3e094b9b42b65c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatDamageTypes.h",
+      "snapshot_sha256": "0ee33c372eba473554e41e605c8f5667772e0147d1897864ad6ab097bb87707e",
+      "checkout_sha256": "5c922c88525252ea160e854dafc9822061f892214f4c4549155e19b6c1d00539",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatFeedbackTypes.cpp",
+      "snapshot_sha256": "4315c8edcfbdbf8b848863670b09d8eb42e7b3d4cc92ce9df0c439fe73355d4b",
+      "checkout_sha256": "4315c8edcfbdbf8b848863670b09d8eb42e7b3d4cc92ce9df0c439fe73355d4b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatFeedbackTypes.h",
+      "snapshot_sha256": "633aacbf1597acf9f51ada3aac833d3d04c8136818d0a6d53da9f2c654e08dee",
+      "checkout_sha256": "633aacbf1597acf9f51ada3aac833d3d04c8136818d0a6d53da9f2c654e08dee",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatHitTypes.cpp",
+      "snapshot_sha256": "99bda60a2b90eebd83cfedf26a78e90439f8afb32824b74c6a1892be49f79449",
+      "checkout_sha256": "99bda60a2b90eebd83cfedf26a78e90439f8afb32824b74c6a1892be49f79449",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatHitTypes.h",
+      "snapshot_sha256": "c4f998ae3abbb52a4fbab03c0bd50cf9e5bfb7b458a0bb032f80f1788268ece6",
+      "checkout_sha256": "c4f998ae3abbb52a4fbab03c0bd50cf9e5bfb7b458a0bb032f80f1788268ece6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatHUDTypes.h",
+      "snapshot_sha256": "e1a670bdba458dd313a6db5845cf7ec635e887a42b52f16bd76dabf62ea64f06",
+      "checkout_sha256": "eed52e5d2b63818387b872c52e5f9c8e8792a72f6d3682202d34a06a338abef5",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatKnockbackTypes.h",
+      "snapshot_sha256": "e08f726b3e34d1ef6de084bda4eceead703d5100a9a581561a069602f02c0bf9",
+      "checkout_sha256": "e08f726b3e34d1ef6de084bda4eceead703d5100a9a581561a069602f02c0bf9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatOverlayPlayback.cpp",
+      "snapshot_sha256": "78c3364c4cde09613e70fcf30a50c94bc59c3a0d57f3f31901defb105eab016a",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatOverlayPlayback.h",
+      "snapshot_sha256": "a218a65f28dae44b5696d6436aa24e7cf6aa70806430588dabfd9612d2ec6302",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatParticipationTypes.h",
+      "snapshot_sha256": "6cf8af1c46da7fea50e8f14076b06fd3a205136b7c3790d5914283b1e9a164f8",
+      "checkout_sha256": "6cf8af1c46da7fea50e8f14076b06fd3a205136b7c3790d5914283b1e9a164f8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatPresentationEnvelope.cpp",
+      "snapshot_sha256": "56c2fc71eddb89e93136ae407e7c1d168b9ab351efb072518b881aa1ef164c0f",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatPresentationEnvelope.h",
+      "snapshot_sha256": "98c9c8d8866f7e8cf101c98e6e91dddd1c6c9d25250a74d40928409e1df64847",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatResultTypes.cpp",
+      "snapshot_sha256": "a70a66c7938bfd9dafb3a8b80410f2f35a884321f4e32755d62f91c1711e5581",
+      "checkout_sha256": "a70a66c7938bfd9dafb3a8b80410f2f35a884321f4e32755d62f91c1711e5581",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatResultTypes.h",
+      "snapshot_sha256": "a4f94fc6d2068e4ef1123d791b7e4b8af3dadded24ceb7b6b12d182a7245953d",
+      "checkout_sha256": "a4f94fc6d2068e4ef1123d791b7e4b8af3dadded24ceb7b6b12d182a7245953d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatSignalSourceTypes.cpp",
+      "snapshot_sha256": "171a6668dd124dc30e9480667c3bd6bcec305273211e992ae97d414ff52b6d54",
+      "checkout_sha256": "171a6668dd124dc30e9480667c3bd6bcec305273211e992ae97d414ff52b6d54",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatSignalSourceTypes.h",
+      "snapshot_sha256": "836e8ea986b59fa0bf27359075744213700de6e4a4aa29314f2833a4550ede22",
+      "checkout_sha256": "b3a968ba075ca067abb9e26effa183d654af93d499b13402df605b375f281ffd",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatSignalTargetTypes.cpp",
+      "snapshot_sha256": "2ec7d69ee19ba15bd71c9ae9e57391ec78bb49037a9ff763b489db9235a95f8c",
+      "checkout_sha256": "2ec7d69ee19ba15bd71c9ae9e57391ec78bb49037a9ff763b489db9235a95f8c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatSignalTargetTypes.h",
+      "snapshot_sha256": "23629c4bb287316cd03afa9155388f9379188ca9c00afc4dbe984e5486d6f8fb",
+      "checkout_sha256": "fb58229262565d12fe9d17039acb803aa2648addfb6163377c0963a082af6cc5",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatSignalTypes.cpp",
+      "snapshot_sha256": "f535550f10a65709b8eae04bade2c6a6985c0024d2fb111177c745feeeeaeaa7",
+      "checkout_sha256": "f535550f10a65709b8eae04bade2c6a6985c0024d2fb111177c745feeeeaeaa7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatSignalTypes.h",
+      "snapshot_sha256": "a29af02a24f5fd304a52ac7ea0d2f42754349e26e388744edbb04bcdd55caa9f",
+      "checkout_sha256": "a29af02a24f5fd304a52ac7ea0d2f42754349e26e388744edbb04bcdd55caa9f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCombatTargetTypes.h",
+      "snapshot_sha256": "0d05662519d802aac573cc28eee8bd61ebc6cf6781f825f82bee13af8ac3e6e7",
+      "checkout_sha256": "0d05662519d802aac573cc28eee8bd61ebc6cf6781f825f82bee13af8ac3e6e7",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CCounterRushTypes.cpp",
+      "snapshot_sha256": "9be1c63adaea14ea6a3aac3fccc04b858e328e30c8e136efc732cbfdf62553da",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CCounterRushTypes.h",
+      "snapshot_sha256": "42e6f9c49a2b8998ae7eb772ef54dcdfd02e80bd0be681ee1cd54f2198be7629",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CDefenseTuningTypes.h",
+      "snapshot_sha256": "67e67595fefba0a05c3f5a42593f0519bd6600e6e2278f6941a01159b506dda4",
+      "checkout_sha256": "65ee1395f4385f85e330915999d19d3ca408bf5811b6a671eee07c38db77ac68",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CEnemyAIConfigTypes.h",
+      "snapshot_sha256": "9c234237423f8fac8dfbdb63dc79eb41284e0a82df4740522e0b80ff2e2b923e",
+      "checkout_sha256": "9c234237423f8fac8dfbdb63dc79eb41284e0a82df4740522e0b80ff2e2b923e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CEnemyCombatTargetFacingTypes.h",
+      "snapshot_sha256": "4bdabb16ebde78e4895390f0c3a32e7112ee5cdf6051d783c8e49f4e768f74f6",
+      "checkout_sha256": "9225bcdad4f6fde22108ed0122782dd12036e434397721cf8394ea90ca09d70b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CEngageAssignmentTypes.cpp",
+      "snapshot_sha256": "2e1d8e0362a30381836fbfe8c8769e7979efb1d7cdb50cbb95c4be95d4bc2163",
+      "checkout_sha256": "2e1d8e0362a30381836fbfe8c8769e7979efb1d7cdb50cbb95c4be95d4bc2163",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CEngageAssignmentTypes.h",
+      "snapshot_sha256": "7a5431f5005434e2b20028c594cdd0884bed2babd3b7b1d1db857aa8c6e450cd",
+      "checkout_sha256": "7a5431f5005434e2b20028c594cdd0884bed2babd3b7b1d1db857aa8c6e450cd",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CExecutionCollaborationTypes.h",
+      "snapshot_sha256": "63b454afd0f3067308b8976c30396860dd3afbd5ab042ad20ddfdd9aee79ee89",
+      "checkout_sha256": "63b454afd0f3067308b8976c30396860dd3afbd5ab042ad20ddfdd9aee79ee89",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CExecutionRuleTypes.cpp",
+      "snapshot_sha256": "8e7d1a562fe2cf81c109c3dffe8e31096145a75173d343a84fd45d97dc90d389",
+      "checkout_sha256": "8e7d1a562fe2cf81c109c3dffe8e31096145a75173d343a84fd45d97dc90d389",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CExecutionRuleTypes.h",
+      "snapshot_sha256": "41177a74de9f574d0beb2ab784f82168c655c09077af8e89444dd4c1218c4f7a",
+      "checkout_sha256": "41177a74de9f574d0beb2ab784f82168c655c09077af8e89444dd4c1218c4f7a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CExecutionTypes.cpp",
+      "snapshot_sha256": "f17df0a228ca5f5ee506c1531b301a8b491127d5381c1c803272266c89f39247",
+      "checkout_sha256": "f17df0a228ca5f5ee506c1531b301a8b491127d5381c1c803272266c89f39247",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CExecutionTypes.h",
+      "snapshot_sha256": "f7ed55d355aec25bc8ca1868034d2a5e1808325f8b682ece944a65373e5084d2",
+      "checkout_sha256": "f7ed55d355aec25bc8ca1868034d2a5e1808325f8b682ece944a65373e5084d2",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CHealthTypes.cpp",
+      "snapshot_sha256": "649703e42dc21267f56e26ea7e46eb9b554e34b55cf09aa00458e635eb632d46",
+      "checkout_sha256": "649703e42dc21267f56e26ea7e46eb9b554e34b55cf09aa00458e635eb632d46",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CHealthTypes.h",
+      "snapshot_sha256": "d76fb178536125f997748b677cf61645db6405cba726eac31d7eac00f027b97a",
+      "checkout_sha256": "d76fb178536125f997748b677cf61645db6405cba726eac31d7eac00f027b97a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CMovementTypes.cpp",
+      "snapshot_sha256": "309ce1016a063ffe8d5877d4230ad00076f677814d5904e2114751fae76ef28b",
+      "checkout_sha256": "309ce1016a063ffe8d5877d4230ad00076f677814d5904e2114751fae76ef28b",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CMovementTypes.h",
+      "snapshot_sha256": "9d9e40d07349d996549586603b4ade8172b74630bcf991b7cf99c1c0da7fcf9c",
+      "checkout_sha256": "9d9e40d07349d996549586603b4ade8172b74630bcf991b7cf99c1c0da7fcf9c",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CObservableOverlayTypes.cpp",
+      "snapshot_sha256": "25a5a1b8fe9a3370c2a1869d04befa458f2221f7a5d1a72c102408d645b57677",
+      "checkout_sha256": "25a5a1b8fe9a3370c2a1869d04befa458f2221f7a5d1a72c102408d645b57677",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CObservableOverlayTypes.h",
+      "snapshot_sha256": "502ff8b1a40deafef9a02f67ce18fc09c938e16e2b760e3c226f38ab4fd84727",
+      "checkout_sha256": "502ff8b1a40deafef9a02f67ce18fc09c938e16e2b760e3c226f38ab4fd84727",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionDataTypes.cpp",
+      "snapshot_sha256": "a4104412654e9924c264a389d58b6ad7fbb76e04cde1ef5c9e9a1f6d628843fe",
+      "checkout_sha256": "a4104412654e9924c264a389d58b6ad7fbb76e04cde1ef5c9e9a1f6d628843fe",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionDataTypes.h",
+      "snapshot_sha256": "ed43c2088b262810942d3b26f1d88ee0e0eeba08368e1330b5454107b5a9e9ca",
+      "checkout_sha256": "ed43c2088b262810942d3b26f1d88ee0e0eeba08368e1330b5454107b5a9e9ca",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionFeedbackTypes.cpp",
+      "snapshot_sha256": "41337c2a6f67132170cd53b2412280eaa6fc24ec43eabcbc95ca08a0096ce1e8",
+      "checkout_sha256": "41337c2a6f67132170cd53b2412280eaa6fc24ec43eabcbc95ca08a0096ce1e8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionFeedbackTypes.h",
+      "snapshot_sha256": "855b61e5463a50ef24331868b8e211e167ad4a4fe2d2ac383d3a49f1aae7ad78",
+      "checkout_sha256": "855b61e5463a50ef24331868b8e211e167ad4a4fe2d2ac383d3a49f1aae7ad78",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionKeyTypes.cpp",
+      "snapshot_sha256": "13a7673d85869eccbef06d0dcdb8dd56e1cd912cd568ffac0d30ac99e2fbaba6",
+      "checkout_sha256": "13a7673d85869eccbef06d0dcdb8dd56e1cd912cd568ffac0d30ac99e2fbaba6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionKeyTypes.h",
+      "snapshot_sha256": "7c69e41b7f71e9859cbe4db06caa353738bccf9e99659b0804abfd589e117fca",
+      "checkout_sha256": "7c69e41b7f71e9859cbe4db06caa353738bccf9e99659b0804abfd589e117fca",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionOrchestrationTypes.cpp",
+      "snapshot_sha256": "946eb562b7bda8f02f4862d3bc536238a62a7b5a4a5fa5d2674d1ce3cb4ac1c0",
+      "checkout_sha256": "946eb562b7bda8f02f4862d3bc536238a62a7b5a4a5fa5d2674d1ce3cb4ac1c0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionOrchestrationTypes.h",
+      "snapshot_sha256": "ab5fa2d9e6fcc0e5163458ce118c8f9333e5a6761907a502b1265cfa1fc5b11d",
+      "checkout_sha256": "ab5fa2d9e6fcc0e5163458ce118c8f9333e5a6761907a502b1265cfa1fc5b11d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionTypes.cpp",
+      "snapshot_sha256": "765f51fda87dfddfe30c8cb2591130d734d719064855fb4135f8c23d00cd0973",
+      "checkout_sha256": "765f51fda87dfddfe30c8cb2591130d734d719064855fb4135f8c23d00cd0973",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CReactionTypes.h",
+      "snapshot_sha256": "8e793502756c8d80f6757ef67a6a34b8dcd80500cd1c5cc46adb1ec907504649",
+      "checkout_sha256": "c002874a7777f4240c515986f5931655652a5fa72a53bdc1b0cfcd30569e142a",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Type/CStateTypes.cpp",
+      "snapshot_sha256": "aff18109dfc9a63a1332a2b552042d85d2d79cf386323107ad0b454ebbb9bbcb",
+      "checkout_sha256": "aff18109dfc9a63a1332a2b552042d85d2d79cf386323107ad0b454ebbb9bbcb",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CStateTypes.h",
+      "snapshot_sha256": "1b9237816bca2e2cfd6967d920a226160784100b82a75274acbdef4faf5f8d6e",
+      "checkout_sha256": "1b9237816bca2e2cfd6967d920a226160784100b82a75274acbdef4faf5f8d6e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CTargetingTypes.cpp",
+      "snapshot_sha256": "6a05ca00f4d301fe2583670f12834c7c7539dfb82d9b777bcc9a51d69d0b9597",
+      "checkout_sha256": "6a05ca00f4d301fe2583670f12834c7c7539dfb82d9b777bcc9a51d69d0b9597",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CTargetingTypes.h",
+      "snapshot_sha256": "074412c20acccecaa9cf248cd5d2e19ff4f9bd48e64e48fa10da6f26686abf08",
+      "checkout_sha256": "074412c20acccecaa9cf248cd5d2e19ff4f9bd48e64e48fa10da6f26686abf08",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CWeaponPresentationTypes.h",
+      "snapshot_sha256": "1dc0c9496cbef421a635cd6dc1042e86a3e819f2d741fc00713b1e9fe86c55f9",
+      "checkout_sha256": "1dc0c9496cbef421a635cd6dc1042e86a3e819f2d741fc00713b1e9fe86c55f9",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CWeaponTypes.cpp",
+      "snapshot_sha256": "5e96cdf0ea903056de57dc14a420d8c7a215d6e2821a5ec09015e0a0e29896b0",
+      "checkout_sha256": "5e96cdf0ea903056de57dc14a420d8c7a215d6e2821a5ec09015e0a0e29896b0",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/CWeaponTypes.h",
+      "snapshot_sha256": "fc97199a63d4b46f2f58c4682b4d237663a5ef0b6905c219a0c8041d2dbaef81",
+      "checkout_sha256": "fc97199a63d4b46f2f58c4682b4d237663a5ef0b6905c219a0c8041d2dbaef81",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Type/DamageEventId.h",
+      "snapshot_sha256": "13382f5db335132db67f5d0696e1d4522508dcb460de5b20e6939fb708a604a6",
+      "checkout_sha256": "13382f5db335132db67f5d0696e1d4522508dcb460de5b20e6939fb708a604a6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/UI/CCombatHUDGaugeLayout.h",
+      "snapshot_sha256": "5bc705def6291e207e3b888a8e56f685140aae778728a80cbca967f25c09d08d",
+      "checkout_sha256": "5bc705def6291e207e3b888a8e56f685140aae778728a80cbca967f25c09d08d",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/UI/CCombatHUDWidget.cpp",
+      "snapshot_sha256": "da62b96d390dbda0e24f32661bfa8cb9b24ed8bffc21509c581980aa1a5b3f34",
+      "checkout_sha256": "c870ad91857d6082708875a4248c77631bdc121ae7723c45365d624153ed250b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/UI/CCombatHUDWidget.h",
+      "snapshot_sha256": "0fd891d6dbbc4090ee75c2d50ef56ec41a0a69034138d61af6bd24382a9004d6",
+      "checkout_sha256": "9d2e3237dc19d916ae88f32bbcc6656f8d94aae07e618edde532810fe3649aa6",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/UI/CPixelAlignedGaugeImage.cpp",
+      "snapshot_sha256": "c2488a73a8b2d081250d9cbd73d6b23bd12bc16ea5f5b832225d4a6ebfc2051f",
+      "checkout_sha256": "c2488a73a8b2d081250d9cbd73d6b23bd12bc16ea5f5b832225d4a6ebfc2051f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/UI/CPixelAlignedGaugeImage.h",
+      "snapshot_sha256": "35d12c7cfe8eff790f792ce4ac36d769a874fe1a301e45a2475c071ad3ae54a5",
+      "checkout_sha256": "35d12c7cfe8eff790f792ce4ac36d769a874fe1a301e45a2475c071ad3ae54a5",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/UI/CTargetHUDWidget.cpp",
+      "snapshot_sha256": "1024935108b77ece70bfe86ca81e6dea72be1fadfdb5b22260e05a9530cb3be3",
+      "checkout_sha256": "1024935108b77ece70bfe86ca81e6dea72be1fadfdb5b22260e05a9530cb3be3",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/UI/CTargetHUDWidget.h",
+      "snapshot_sha256": "2492942a18e197d44386692b219380221cff368e731dfac7f5c0d4fa3f277bc8",
+      "checkout_sha256": "2492942a18e197d44386692b219380221cff368e731dfac7f5c0d4fa3f277bc8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/Portfolio/Weapon/CWeaponActor.cpp",
+      "snapshot_sha256": "9eac461aacef1d55d8ed33440f9cc11e6e869c29867c80c4811c355e0c861918",
+      "checkout_sha256": "4734263bc54fc51a8f150ae85d2742f56480680601ed08fe1d783ad90f17589f",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio/Weapon/CWeaponActor.h",
+      "snapshot_sha256": "19068204db7fc2e64ab315d71ba23bda9aea48f0a389501eaf6ec8c6b45ad6d9",
+      "checkout_sha256": "ac51f89c32748b1d70e2d6de6b346cd170182c8e1bf4c12a240f74f111ac2006",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/Portfolio.Target.cs",
+      "snapshot_sha256": "5fa15d9b1856da17d071e7279c9f9da61fdf22d2f14b7c3f1e4cbd40c5d52237",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/PortfolioEditor.Build.cs",
+      "snapshot_sha256": "312d0ea13fab73bfe8dd96462428143f781d46f036826957b46925e35c406b4e",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Animation/CAnimModifier_TransferBodyMotionToRoot.cpp",
+      "snapshot_sha256": "1809a9d943b0ca2e91ac67ac6c44b6959388453f82125156108940314c3e4a02",
+      "checkout_sha256": "1809a9d943b0ca2e91ac67ac6c44b6959388453f82125156108940314c3e4a02",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Audit/CCombatHUDAssetsCommandlet.cpp",
+      "snapshot_sha256": "b55cb06489547711603cb876edf46277409112a225db6d77e8748ffa8f807846",
+      "checkout_sha256": "ed7f767e407b076509dc9b1ecf55eb4ed8b5bc8c048d4e928e13150772e02433",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Audit/CDodgeAssetsCommandlet.cpp",
+      "snapshot_sha256": "bdadc0aae6a3d983a46919bc444b1b94bb8b27d0fc63e0c26989df94c6184fa4",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Audit/CDodgePresentationAuditCommandlet.cpp",
+      "snapshot_sha256": "503adffe86cd680ae8293584fe782097db0c304476e60219bac4fe72c945305a",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Audit/CExecutionMontageAuditCommandlet.cpp",
+      "snapshot_sha256": "ddb449da9b09950769ab8053eee5bc7c9643001bef24c0cd0e822f95cc9c7637",
+      "checkout_sha256": "6bc684300df47acfed1a5fca7e6419a5f00852a255df228ddbc1dba6c90659db",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Audit/CWeaponPresentationAuditCommandlet.cpp",
+      "snapshot_sha256": "423519cf2cede564a43795ec802d79ad447187c5719fc6fd16cbef8f810e004a",
+      "checkout_sha256": "423519cf2cede564a43795ec802d79ad447187c5719fc6fd16cbef8f810e004a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Audit/MontageSectionPath.h",
+      "snapshot_sha256": "7532c0cf3228816b75fd19c066fb7aa81f8f74e7aba6d8aa62c3d3e0f3666571",
+      "checkout_sha256": "7532c0cf3228816b75fd19c066fb7aa81f8f74e7aba6d8aa62c3d3e0f3666571",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Capture/CStructure02CaptureHarness.cpp",
+      "snapshot_sha256": "f8d510e9f8dcc240a9e55546c9c8fc0adec7e897e65ef04d033be1d9ad4f7e16",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Capture/CStructure09AsyncReadback.h",
+      "snapshot_sha256": "261761cf9ab344fc867d4438bd725bcbe8085d11e5b220ec4f20d55afa3880d6",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Capture/CStructure09CaptureHarness.cpp",
+      "snapshot_sha256": "084bf9958e6bd4a9179db6f1f73bef21df2fda187c98c79aec2efa9ad5ce636d",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Capture/CStructure09ViewportCapture.cpp",
+      "snapshot_sha256": "b35b97be264002fbaeeb525a8414a86dcee95b6077b7da6ae158a28fae9d1052",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Capture/CStructure10CaptureHarness.cpp",
+      "snapshot_sha256": "dfe3166806e3d1b5cc7b8b78ffd5e97454086b3dad4f9ffb0a77933608ee5d56",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/PortfolioEditorModule.cpp",
+      "snapshot_sha256": "75687a62a3a67ddbba317351af1ea42926a38dcba878ccb3961cd1480de6c027",
+      "checkout_sha256": "75687a62a3a67ddbba317351af1ea42926a38dcba878ccb3961cd1480de6c027",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CActionFacingProbe.h",
+      "snapshot_sha256": "dd87c74efe04d3a290585b7c30183ffaf2c66fa86087d54d8bef3236d39db61e",
+      "checkout_sha256": "dd87c74efe04d3a290585b7c30183ffaf2c66fa86087d54d8bef3236d39db61e",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CActionFacingTests.cpp",
+      "snapshot_sha256": "09156e11c4dedb871d443cf6e838be1bf9a478ceb4060c0548ee9710e6835189",
+      "checkout_sha256": "d4bb757d7583b3a79121537627d107aac5ec2c11a310c11e1a71dcf46e53995b",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CBalanceLifecycleBoundaryTests.cpp",
+      "snapshot_sha256": "96e35ecfd25a0f387d48810ba3d5034d746eaf06ed9ea3108596bafb74b260c8",
+      "checkout_sha256": "96e35ecfd25a0f387d48810ba3d5034d746eaf06ed9ea3108596bafb74b260c8",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CBalanceRuntimeResetTests.cpp",
+      "snapshot_sha256": "deac51ad318722f6c5e552016bde714be6ec7cbf2b7cd5b77e6062cb3023b872",
+      "checkout_sha256": "deac51ad318722f6c5e552016bde714be6ec7cbf2b7cd5b77e6062cb3023b872",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCaptureCameraTests.cpp",
+      "snapshot_sha256": "d83cd1c178d86aa7851adbecea574a135d4e696da9cdec9ff9029cea5ad3b101",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatDodgeTests.cpp",
+      "snapshot_sha256": "6d0bce406f03b36868b5981fb07692c4a65aa94fccace7e83c32ecc3d6ba3ee8",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatHUDActionTests.cpp",
+      "snapshot_sha256": "fc8d673eafd82bc92e3ad6d569a9f2203b275fef3aeb478b6a084e5e46573a7a",
+      "checkout_sha256": "4a06da6b695f01b1da9557d9f4aaadde1f84d7c5071a56ea3d49c03f9ef0c6cd",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatHUDDataTests.cpp",
+      "snapshot_sha256": "e0d48879a2091a5c41e1519530579598af44d9a036b650e0bd78cdd62b39c465",
+      "checkout_sha256": "ee2d92e8df06dc4bcabce40d7ed77d3d077b0282f46b747b27ef61d9f6040a58",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatKnockbackProbe.h",
+      "snapshot_sha256": "047f1fc8df8fc48bd7081e8890712f47f8181ce93675eb4e2d0a91dfceab5aa6",
+      "checkout_sha256": "047f1fc8df8fc48bd7081e8890712f47f8181ce93675eb4e2d0a91dfceab5aa6",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatKnockbackTests.cpp",
+      "snapshot_sha256": "458d95b2b772b64ac167689196184916a3bbbc1fe43267be406c73f582bafb37",
+      "checkout_sha256": "458d95b2b772b64ac167689196184916a3bbbc1fe43267be406c73f582bafb37",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatMotionDebugTests.cpp",
+      "snapshot_sha256": "78e08b70e024f26dfb2ed7b87156b5155e69da4fb6cc792424d8da1b940b582f",
+      "checkout_sha256": "78e08b70e024f26dfb2ed7b87156b5155e69da4fb6cc792424d8da1b940b582f",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatMotionPresentationTests.cpp",
+      "snapshot_sha256": "6fefd3ea6dc4a67d5014726995f30dfb5e1922beaef348bd895755da9c79ec9a",
+      "checkout_sha256": "6fefd3ea6dc4a67d5014726995f30dfb5e1922beaef348bd895755da9c79ec9a",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatNotifyOwnershipTests.cpp",
+      "snapshot_sha256": "58e7b67c489e34b7d5cb78d58ad89a56a946a4dd13410bc40078fe169d5f60c3",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatOverlayPlaybackTests.cpp",
+      "snapshot_sha256": "48f5a14cd94c5db95b26b785ffda6250ad0f4cfdaa2e077528e6320f3cfae756",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatPresentationEnvelopeTests.cpp",
+      "snapshot_sha256": "4b848a41c588d89f43f394ee571c987ba6e13746f4bb1d9933d20288e7ca5303",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCombatTimeEffectsTests.cpp",
+      "snapshot_sha256": "2d2b9f27ceed1f1b2b525f30eefe4b0cb08b8e8ea89160d4145d3805c8b84fcb",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CCounterRushPlanTests.cpp",
+      "snapshot_sha256": "b6e73d2e066c4088ae54ce17c956797351427f5c7f056e41f1a0250a109286b0",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CDebugOverlayEventLogTests.cpp",
+      "snapshot_sha256": "edfc021b77f39624997a75942badcc5f32ab46da344d2931ef8a184f9853565a",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CMontageNotifyProbe.h",
+      "snapshot_sha256": "81b4a4c473e3a603961a203715ecfe13e03f1f92b8893f3c6e8cc17262b43ef9",
+      "checkout_sha256": "65e7fd2538e5bd43116218bed6809305ed003a01df17a4c236d2e1cc3983c9d6",
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CMontageSectionPathTests.cpp",
+      "snapshot_sha256": "69edc4e3bc7831b040710423fb29d900b38e74f19a781c519241d55a4d768380",
+      "checkout_sha256": "69edc4e3bc7831b040710423fb29d900b38e74f19a781c519241d55a4d768380",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CMontageStartDeliveryTests.cpp",
+      "snapshot_sha256": "2bd18f2c899841582b8c3199fdd1b63de7fde01ca1adf274bd21dd577b547e00",
+      "checkout_sha256": "2bd18f2c899841582b8c3199fdd1b63de7fde01ca1adf274bd21dd577b547e00",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CWeaponPresentationDebugTests.cpp",
+      "snapshot_sha256": "61f1beb96493777b3672476abb603cc3caebc7053d913cacc11188f1ae21c04e",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CWeaponPresentationTypesTests.cpp",
+      "snapshot_sha256": "f84c29258f6bbc72bbed77cbaa9fd18edc865ab6c225306206db8368f6144394",
+      "checkout_sha256": "f84c29258f6bbc72bbed77cbaa9fd18edc865ab6c225306206db8368f6144394",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Private/Tests/CWeaponTrailAlignmentTests.cpp",
+      "snapshot_sha256": "8cd8e68ab3d82ce251ccc56f6fae2708c7d1f311d0f61026be5a0f92766d43da",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Public/Animation/CAnimModifier_TransferBodyMotionToRoot.h",
+      "snapshot_sha256": "f1d78b1ad00fc1324fbc59b2e889ef87eaa0a17371f96b85936ea007a8a092bb",
+      "checkout_sha256": "f1d78b1ad00fc1324fbc59b2e889ef87eaa0a17371f96b85936ea007a8a092bb",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Public/Audit/CCombatHUDAssetsCommandlet.h",
+      "snapshot_sha256": "eaf82c0b25b89d2b3f1a357ca32363d83d3163bf909f65ce0988c413e68839ba",
+      "checkout_sha256": "eaf82c0b25b89d2b3f1a357ca32363d83d3163bf909f65ce0988c413e68839ba",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Public/Audit/CDodgeAssetsCommandlet.h",
+      "snapshot_sha256": "b30f4fecf5d297422763356a5a9382694d4b5b53a81eab08ef7c301f73585ad3",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Public/Audit/CDodgePresentationAuditCommandlet.h",
+      "snapshot_sha256": "4ec5a364e1b3b65fd7e9b3cd95f3a086c161c9986860e1c793f1a95bde7a4da1",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    },
+    {
+      "path": "Source/PortfolioEditor/Public/Audit/CExecutionMontageAuditCommandlet.h",
+      "snapshot_sha256": "f528c5a87e005191af4da5965231e638e82427ac4b45d913900553d196ff5faf",
+      "checkout_sha256": "f528c5a87e005191af4da5965231e638e82427ac4b45d913900553d196ff5faf",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor/Public/Audit/CWeaponPresentationAuditCommandlet.h",
+      "snapshot_sha256": "ecd30da6b827e7a917cef95148c71672c3461e0bf443f58e802ab9d337fdaa40",
+      "checkout_sha256": "ecd30da6b827e7a917cef95148c71672c3461e0bf443f58e802ab9d337fdaa40",
+      "normalized_text_equal": true
+    },
+    {
+      "path": "Source/PortfolioEditor.Target.cs",
+      "snapshot_sha256": "7f307465005b37abb64e264a3f3b05ba0c4cdb2501e0c0ef84a2064c52bcf5d9",
+      "checkout_sha256": null,
+      "normalized_text_equal": false
+    }
+  ]
+}

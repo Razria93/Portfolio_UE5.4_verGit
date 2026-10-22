@@ -1,5 +1,12 @@
 # S39. Weapon Pivot and Socket Transition Architecture
 
+## 열람 안내
+
+무기 장착 좌표와 손잡이 기준 회전을 분리하는 구조입니다. 발생한 문제부터 보려면 [I04 사례](../03_Issue_Analysis_Report/I04_UE5_Portfolio_Issue_Analysis_Report.md)를 먼저 읽으세요.
+
+[Pivot 구현](../../Source/Portfolio/Weapon/CWeaponActor.cpp) · [소켓 전환·복구 구현](../../Source/Portfolio/Component/CWeaponComponent.cpp) · [구현·검증 근거](../98_Evidence/Stellar_Asset_Integration/README.md)
+
+
 > 상태: **현행 코드 계약**
 > 갱신일: 2026-09-15
 > 대상: `ACWeaponActor`, `UCWeaponComponent`, Weapon Transform Notify State
@@ -316,3 +323,7 @@ SignedAngleDegrees = -160  ; 반대 방향은 +160
 ```powershell
 UnrealEditor-Cmd.exe Portfolio.uproject -run=CWeaponPresentationAudit -Roots=/Game -Output="Audits/WeaponPresentationAudit.csv" -unattended -nop4 -nosplash -stdout -FullStdOutLogOutput
 ```
+
+---
+
+[시스템 구조 안내](00_System_Architecture_Index.md) · [목적별 문서 안내](../00_Documentation_Index.md) · [대표 README로 돌아가기](../../README.md#combat-systems)

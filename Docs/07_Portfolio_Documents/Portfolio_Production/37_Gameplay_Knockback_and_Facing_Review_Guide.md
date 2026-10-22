@@ -1,5 +1,14 @@
 # 넉백·공격 시작 방향 보정 통합 검토 가이드
 
+## 이 문서에서 확인할 것
+
+일반 Hit 넉백과 콤보 시작 방향 보정을 기존 전투·이동 구조에 연결한 사례입니다. **실제 실행 시작 후 이동을 적용하고, 해당 실행이 소유한 이동만 정리하는 경계**를 중심으로 읽습니다.
+
+- 구현 흐름: [넉백](35_Gameplay_Combat_Knockback_Implementation.md), [공격 시작 방향 보정](36_Gameplay_Attack_Start_Facing.md)
+- 주요 코드: [Reaction Component](../../../Source/Portfolio/Component/CReactionComponent.cpp), [Action Component](../../../Source/Portfolio/Component/CActionComponent.cpp), [Movement Component](../../../Source/Portfolio/Component/CMovementComponent.cpp)
+- 근거: 아래 파일별 코드 지도와 검증 결과·재현 절차. 자동 검사와 사용자 PIE, 아직 확인하지 않은 조합을 구분합니다.
+
+
 ## 1. 기준과 열람 순서
 
 - 기준일: 2026-09-21. 브랜치: `feat/combat-knockback`, 분기 기준: `d4012433`.
@@ -121,3 +130,7 @@ $enginePath = 'C:/Program Files/Epic Games/UE_5.4/Engine'
 | 이 문서를 포함한 문서 커밋 | 35/36 최신화, 통합 가이드, 탐색 링크 및 S38의 연결 설명 |
 
 SciFiMap은 사용자의 요청대로 커밋하지 않았다. 이번 준비 시 이미 Git 수정 목록에 없었으며 에이전트가 되돌리거나 저장하지 않았다. 플레이어 BP의 세부 속성 차이는 바이너리 diff로 완전 검증하지 않았고 사용자 저장본을 그대로 커밋했다. 푸시·PR·머지는 수행하지 않는다.
+
+---
+
+[다른 문제 해결 사례](../../03_Issue_Analysis_Report/00_Issue_Analysis_Report_Index.md) · [문서 안내](../../00_Documentation_Index.md) · [대표 README로 돌아가기](../../../README.md#problem-solving)

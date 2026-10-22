@@ -1,6 +1,16 @@
 # S34. Combat Participation 정책
 
-> 상태: Evidence 중심 참여 구조 구현 및 정적·PIE 최종 검증 완료.
+## 열람 안내
+
+인지·피격 정보의 유효 기간이 Enemy 참여 배정과 해제로 이어지는 정책을 설명합니다. 타깃 상태 자체는 [S33](S33_UE5_Portfolio_System_Architecture.md)에서 확인합니다.
+
+[참여 배정 구현](../../Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp) · [Enemy 반영 구현](../../Source/Portfolio/Component/CEnemyCombatParticipationComponent.cpp)
+
+아래 기존 구현·정적·PIE 검증 상태와 정책별 조건을 함께 확인합니다.
+
+
+> 기존 기록의 상태: Evidence 중심 참여 구조 구현 및 당시 정적·PIE 검증 완료.
+> **2026-10-21 후속 확인:** [TTL 사례](../03_Issue_Analysis_Report/I10_HitReactive_TTL_Case_Study.md)에 시리얼 보호 검사와 파괴된 공격자의 Pending 잔여 문제를 추가했습니다. 아래의 완료 표시는 당시 범위에 한정하며 최신 파괴·종료 경로 전체가 해결됐다는 뜻은 아닙니다.
 
 ## 1. 핵심 모델
 
@@ -274,3 +284,7 @@ immediate invalidation producer가 된다.
 | `git diff --check` | 통과 | 문서 및 Pair validity 보완 뒤 whitespace error 없음. |
 | TestRoom PIE matrix | 통과 | §9의 runtime/BT/Blackboard/UAsset 시나리오를 수동 확인했다. A/B Target에서는 기존 PlayerDummy Pair의 Engage/Alert Assignment를 유지하고 Player Pair는 unassigned candidate로 남아 Participant당 하나의 Assignment를 유지했다. 마지막 Evidence 종료 뒤 다른 Target Assignment가 있으면 stale Investigate도 시작하지 않았다. |
 | AIPerf Baseline compatibility | 통과 | `BB_AIPerf_Default`의 Combat Participation key를 동기화하고 Focus 의존성과 stale BT 값을 정리했다. Baseline 40Enemy headless load와 PIE에서 ensure·stale 값 없이 상태 전이를 확인했다. |
+
+---
+
+[시스템 구조 안내](00_System_Architecture_Index.md) · [목적별 문서 안내](../00_Documentation_Index.md) · [대표 README로 돌아가기](../../README.md#combat-systems)

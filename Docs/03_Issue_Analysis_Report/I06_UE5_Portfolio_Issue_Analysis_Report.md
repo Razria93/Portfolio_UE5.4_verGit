@@ -1,5 +1,14 @@
 # UE5 Portfolio Issue Analysis Report
 
+## 이 사례에서 확인할 것
+
+Montage의 자연 종료가 잘못된 Complete 설정을 가리던 문제를 추적한 사례입니다. **애니메이션 재생 종료 관찰과 게임 실행 완료를 분리**하고, 실행 역할·Type·Index·Section 경로를 검사하도록 감사 도구를 보완했습니다.
+
+[Action 종료 구현](../../Source/Portfolio/Action/CAction.cpp) · [Reaction 종료 구현](../../Source/Portfolio/Reaction/CReaction.cpp) · [Montage 감사 도구](../../Source/PortfolioEditor/Private/Audit/CExecutionMontageAuditCommandlet.cpp) · [최종 수정·검증 — F08](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)
+
+기존 감사·테스트·사용자 PIE 확인의 범위를 설명합니다. 정적 감사 성공은 모든 동적 참조와 실제 Notify 전달을 보장하지 않습니다. 후속 Section 검토 결과는 F08을 기준으로 읽습니다.
+
+
 > PR #122 후속 검증: Section 경로 감사를 추가하고 Parry 두 에셋의 없는 `Start` 연결을 `None`으로 정리했다. HitReact는 연속 순방향 경로와 Complete 순서가 정상이라 수정하지 않았다. 최종 재감사 0/0 및 테스트 결과는 [F08](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)의 Section 검토 후 마감 결과를 참조한다. 일반 time-zero Notify의 재생 호출 내 동기 전달은 엔진 기반 테스트에서 재현되지 않아 런타임 시작 구조는 변경하지 않았다.
 
 ## 제목
@@ -51,3 +60,7 @@ Montage가 끝났다는 엔진 관측과 게임 실행이 완료됐다는 상태
 - [F08 종료 계약 보완](../04-02_Fix_Pull_Request/F08_UE5_Portfolio_Pull_Request_Fix.md)
 
 ---
+
+---
+
+[다른 문제 해결 사례](00_Issue_Analysis_Report_Index.md) · [대표 README로 돌아가기](../../README.md#problem-solving)

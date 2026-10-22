@@ -1,0 +1,542 @@
+[
+  {
+    "run": "N040_after_Formal40_R01_measurement_20261002_100823_347",
+    "count": 40,
+    "mode": "after",
+    "completed": 40,
+    "latency_p95_seconds": 0.7436561584472656,
+    "ai_perception_p95_ms": 0.0509,
+    "frame_time_p95_ms": 17.6546,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2041,
+    "excluded_unmarked_frames": 289,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "78C01A4BE579D5CE93D83F0FEA37159128DCAF10995202FD6A9CFB4969985120"
+  },
+  {
+    "run": "N040_after_Formal40_R02_measurement_20261002_100922_233",
+    "count": 40,
+    "mode": "after",
+    "completed": 40,
+    "latency_p95_seconds": 0.7445974349975586,
+    "ai_perception_p95_ms": 0.0517,
+    "frame_time_p95_ms": 17.7157,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2041,
+    "excluded_unmarked_frames": 289,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "78C01A4BE579D5CE93D83F0FEA37159128DCAF10995202FD6A9CFB4969985120"
+  },
+  {
+    "run": "N040_after_Formal40_R03_measurement_20261002_101219_496",
+    "count": 40,
+    "mode": "after",
+    "completed": 40,
+    "latency_p95_seconds": 0.7441616058349609,
+    "ai_perception_p95_ms": 0.0545,
+    "frame_time_p95_ms": 17.7116,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2041,
+    "excluded_unmarked_frames": 289,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "78C01A4BE579D5CE93D83F0FEA37159128DCAF10995202FD6A9CFB4969985120"
+  },
+  {
+    "run": "N040_before_Formal40_R01_measurement_20261002_100724_450",
+    "count": 40,
+    "mode": "before",
+    "completed": 40,
+    "latency_p95_seconds": 5.059511661529541,
+    "ai_perception_p95_ms": 0.289,
+    "frame_time_p95_ms": 17.6276,
+    "raw_actors_p95": 40,
+    "invalid_providers_p95": 39,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2041,
+    "excluded_unmarked_frames": 285,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "78C01A4BE579D5CE93D83F0FEA37159128DCAF10995202FD6A9CFB4969985120"
+  },
+  {
+    "run": "N040_before_Formal40_R02_measurement_20261002_101021_214",
+    "count": 40,
+    "mode": "before",
+    "completed": 40,
+    "latency_p95_seconds": 5.062214374542236,
+    "ai_perception_p95_ms": 0.2922,
+    "frame_time_p95_ms": 17.8068,
+    "raw_actors_p95": 40,
+    "invalid_providers_p95": 39,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2040,
+    "excluded_unmarked_frames": 289,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "78C01A4BE579D5CE93D83F0FEA37159128DCAF10995202FD6A9CFB4969985120"
+  },
+  {
+    "run": "N040_before_Formal40_R03_measurement_20261002_101120_325",
+    "count": 40,
+    "mode": "before",
+    "completed": 40,
+    "latency_p95_seconds": 5.057631015777588,
+    "ai_perception_p95_ms": 0.2915,
+    "frame_time_p95_ms": 17.6966,
+    "raw_actors_p95": 40,
+    "invalid_providers_p95": 39,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2041,
+    "excluded_unmarked_frames": 289,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "78C01A4BE579D5CE93D83F0FEA37159128DCAF10995202FD6A9CFB4969985120"
+  },
+  {
+    "run": "N080_after_Formal80_R01_measurement_20261002_095343_946",
+    "count": 80,
+    "mode": "after",
+    "completed": 80,
+    "latency_p95_seconds": 0.9297885894775391,
+    "ai_perception_p95_ms": 0.0843,
+    "frame_time_p95_ms": 17.3885,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2038,
+    "excluded_unmarked_frames": 289,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "FB894E41050BAD12C68986DC576D96512E4493E6950894D3BB02F754A6BC3DE2"
+  },
+  {
+    "run": "N080_after_Formal80_R02_measurement_20261002_095442_801",
+    "count": 80,
+    "mode": "after",
+    "completed": 80,
+    "latency_p95_seconds": 0.9041943550109863,
+    "ai_perception_p95_ms": 0.0859,
+    "frame_time_p95_ms": 17.3549,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2040,
+    "excluded_unmarked_frames": 287,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "FB894E41050BAD12C68986DC576D96512E4493E6950894D3BB02F754A6BC3DE2"
+  },
+  {
+    "run": "N080_after_Formal80_R03_measurement_20261002_095740_112",
+    "count": 80,
+    "mode": "after",
+    "completed": 80,
+    "latency_p95_seconds": 0.9079108238220215,
+    "ai_perception_p95_ms": 0.0906,
+    "frame_time_p95_ms": 17.363,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2039,
+    "excluded_unmarked_frames": 289,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "FB894E41050BAD12C68986DC576D96512E4493E6950894D3BB02F754A6BC3DE2"
+  },
+  {
+    "run": "N080_before_Formal80_R01_measurement_20261002_095245_022",
+    "count": 80,
+    "mode": "before",
+    "completed": 80,
+    "latency_p95_seconds": 9.643599510192871,
+    "ai_perception_p95_ms": 0.7695,
+    "frame_time_p95_ms": 17.5269,
+    "raw_actors_p95": 80,
+    "invalid_providers_p95": 79,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2040,
+    "excluded_unmarked_frames": 284,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "FB894E41050BAD12C68986DC576D96512E4493E6950894D3BB02F754A6BC3DE2"
+  },
+  {
+    "run": "N080_before_Formal80_R02_measurement_20261002_095541_815",
+    "count": 80,
+    "mode": "before",
+    "completed": 80,
+    "latency_p95_seconds": 9.637531280517578,
+    "ai_perception_p95_ms": 0.7646,
+    "frame_time_p95_ms": 17.5358,
+    "raw_actors_p95": 80,
+    "invalid_providers_p95": 79,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2040,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "FB894E41050BAD12C68986DC576D96512E4493E6950894D3BB02F754A6BC3DE2"
+  },
+  {
+    "run": "N080_before_Formal80_R03_measurement_20261002_095640_844",
+    "count": 80,
+    "mode": "before",
+    "completed": 80,
+    "latency_p95_seconds": 9.629924774169922,
+    "ai_perception_p95_ms": 0.7753,
+    "frame_time_p95_ms": 17.418,
+    "raw_actors_p95": 80,
+    "invalid_providers_p95": 79,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 2039,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "FB894E41050BAD12C68986DC576D96512E4493E6950894D3BB02F754A6BC3DE2"
+  },
+  {
+    "run": "N120_after_Formal120_R01_measurement_20261002_102249_016",
+    "count": 120,
+    "mode": "after",
+    "completed": 120,
+    "latency_p95_seconds": 1.0527276992797852,
+    "ai_perception_p95_ms": 0.1222,
+    "frame_time_p95_ms": 22.1079,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 1705,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "25E5BF7D219E0AD7FE1AEE229BFCC7F2CB957DB0092B3A04EF6AC1251EBF860F"
+  },
+  {
+    "run": "N120_after_Formal120_R02_measurement_20261002_102347_885",
+    "count": 120,
+    "mode": "after",
+    "completed": 120,
+    "latency_p95_seconds": 1.067061424255371,
+    "ai_perception_p95_ms": 0.1199,
+    "frame_time_p95_ms": 21.1009,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 1740,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "25E5BF7D219E0AD7FE1AEE229BFCC7F2CB957DB0092B3A04EF6AC1251EBF860F"
+  },
+  {
+    "run": "N120_after_Formal120_R03_measurement_20261002_102645_108",
+    "count": 120,
+    "mode": "after",
+    "completed": 120,
+    "latency_p95_seconds": 1.0485548973083496,
+    "ai_perception_p95_ms": 0.1153,
+    "frame_time_p95_ms": 20.9108,
+    "raw_actors_p95": 1,
+    "invalid_providers_p95": 0,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 1750,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_commit": "42aaef31db521218a399fc2eb0a55f31676cf56e",
+    "instrumentation_sha256": "25E5BF7D219E0AD7FE1AEE229BFCC7F2CB957DB0092B3A04EF6AC1251EBF860F"
+  },
+  {
+    "run": "N120_before_Formal120_R01_measurement_20261002_102150_223",
+    "count": 120,
+    "mode": "before",
+    "completed": 120,
+    "latency_p95_seconds": 20.799898147583008,
+    "ai_perception_p95_ms": 1.2676,
+    "frame_time_p95_ms": 20.4134,
+    "raw_actors_p95": 111,
+    "invalid_providers_p95": 110,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 1916,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "25E5BF7D219E0AD7FE1AEE229BFCC7F2CB957DB0092B3A04EF6AC1251EBF860F"
+  },
+  {
+    "run": "N120_before_Formal120_R02_measurement_20261002_102446_873",
+    "count": 120,
+    "mode": "before",
+    "completed": 120,
+    "latency_p95_seconds": 20.82509994506836,
+    "ai_perception_p95_ms": 1.2582,
+    "frame_time_p95_ms": 20.7926,
+    "raw_actors_p95": 110,
+    "invalid_providers_p95": 109,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 1907,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "25E5BF7D219E0AD7FE1AEE229BFCC7F2CB957DB0092B3A04EF6AC1251EBF860F"
+  },
+  {
+    "run": "N120_before_Formal120_R03_measurement_20261002_102546_013",
+    "count": 120,
+    "mode": "before",
+    "completed": 120,
+    "latency_p95_seconds": 20.816225051879883,
+    "ai_perception_p95_ms": 1.2448,
+    "frame_time_p95_ms": 20.7365,
+    "raw_actors_p95": 111,
+    "invalid_providers_p95": 110,
+    "max_target_map_p95": 1,
+    "valid_providers_min": 1,
+    "valid_providers_max": 1,
+    "max_target_map_min": 1,
+    "max_target_map_max": 1,
+    "kept_frames": 1919,
+    "excluded_unmarked_frames": 288,
+    "skipped_csv_rows": 0,
+    "summary_match": true,
+    "validation_errors": [],
+    "sight_settings": [
+      [
+        true,
+        false,
+        true
+      ]
+    ],
+    "source_commit": "c9088f0f1fb7cdd26b118ca3dc09f7cd4c9bc884",
+    "instrumentation_sha256": "25E5BF7D219E0AD7FE1AEE229BFCC7F2CB957DB0092B3A04EF6AC1251EBF860F"
+  }
+]

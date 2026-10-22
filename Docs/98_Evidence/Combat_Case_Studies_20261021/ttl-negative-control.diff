@@ -1,0 +1,19 @@
+--- current
++++ synthetic_defect
+@@ -227,7 +227,7 @@
+ 	if (!IsValid(InParticipant) || !IsValid(InTarget) || InResultSerial == 0) return;
+
+ 
+
+ 	FCombatParticipationEvidence* evidence = EvidenceRegistry.Find(FCombatParticipationEvidenceKey{ InParticipant, ECombatParticipationSource::HitReactive, InTarget });
+
+-	if (!evidence || evidence->HitReactiveResultSerial != InResultSerial) return;
+
++	if (!evidence) return; // INTENTIONAL TEST DEFECT: serial guard removed
+
+ 
+
+ 	const UWorld* world = GetWorld();
+
+ 	if (!IsValid(world)) return;
+

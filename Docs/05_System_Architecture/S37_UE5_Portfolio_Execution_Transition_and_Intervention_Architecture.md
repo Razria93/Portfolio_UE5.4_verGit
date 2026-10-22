@@ -1,8 +1,19 @@
 # S37. Execution Transition & Intervention Architecture
 
-> 상태: **현행 코드 기준 확정 / 제출용 전환 캡처 대기**  
+## 열람 안내
+
+공격·피격이 겹칠 때 실행 수락, 예약·개입, 기존 실행 정리를 나누는 구조입니다. 책임 경계 → 공통 전환 계약 → Lifecycle → 증거 상태 순서로 읽으면 됩니다.
+
+[공통 실행 타입](../../Source/Portfolio/Type/CExecutionTypes.h) · [Action Orchestrator](../../Source/Portfolio/Component/CActionOrchestratorComponent.cpp) · [Reaction Orchestrator](../../Source/Portfolio/Component/CReactionOrchestratorComponent.cpp) · [종료 설정 문제 사례 — I06](../03_Issue_Analysis_Report/I06_UE5_Portfolio_Issue_Analysis_Report.md)
+
+현행 코드 구조와 제출용 런타임 캡처의 확보 상태를 구분합니다.
+
+
+> 작성 당시 상태: **현행 코드 기준 확정 / 제출용 전환 캡처 대기**
 > 작성일: 2026-09-06  
 > 근거 감사: `Docs/07_Portfolio_Documents/Portfolio_Production/26_Combat_Interaction_Code_Document_Concordance_Audit (KR).md`
+
+**2026-10-21 후속 근거:** [가드 종료 중 실제 피격 전환](../03_Issue_Analysis_Report/I09_Guard_Cleanup_Case_Study.md)에 경계 자동화와 실제 충돌 통합 기록이 추가됐습니다. [영상 목록](../07_Portfolio_Documents/Portfolio_Production/Video_Catalog.md)의 최신 02는 실행 결정·중단·전환 설명 영상이며 공개 주소는 미확보입니다. 아래의 기존 증거 표는 작성 당시 상태로 보존하며, 이 후속 자료가 모든 전환·terminal 경로의 검증 완료를 뜻하지는 않습니다.
 
 ---
 
@@ -183,3 +194,7 @@ B10은 Notify End 또는 feedback end에 의존하던 Trail·Collision·Hit Cont
 | 12p | Want/Allow·Priority·Timing Gate를 B09 사례로 검증 | Action 중 HitReaction, HitReaction 중 새 HitReaction, Dead 예외 범위 |
 
 11p와 12p는 하나의 구조 리팩터링의 구조·정책 페이지다.
+
+---
+
+[시스템 구조 안내](00_System_Architecture_Index.md) · [목적별 문서 안내](../00_Documentation_Index.md) · [대표 README로 돌아가기](../../README.md#combat-systems)

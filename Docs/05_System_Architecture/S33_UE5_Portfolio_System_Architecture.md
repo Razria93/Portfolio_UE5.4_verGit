@@ -1,5 +1,14 @@
 # S33 공통 Combat Target Kernel 및 의사결정 통합 설계
 
+## 열람 안내
+
+전투 대상과 Revision의 공통 관리부터 읽고, Enemy 참여 배정은 [S34](S34_UE5_Portfolio_Combat_Participation_Policy.md)로 이어집니다.
+
+[타깃 구현](../../Source/Portfolio/Component/CCombatTargetComponent.cpp) · [Enemy 참여 구현](../../Source/Portfolio/Component/CEnemyCombatParticipationComponent.cpp)
+
+본문의 구현 단계·수동 검증 시나리오·과거 메모를 구분해 읽습니다.
+
+
 ## 0. 문서 목적과 상태
 
 이 문서는 Player와 Enemy가 공통으로 사용하는 **전투 대상(Combat Target)의 단일 진실 공급원**과 그 주변 의사결정 계층을 정의한다.
@@ -935,3 +944,7 @@ Combat Signal Source Target 해석
 8. Destroy·EndPlay·stale·이전 callback 경계가 안전한가?
 
 이 체크리스트를 만족하는 한, 후보 수집과 전투 정책은 Player와 Enemy의 필요에 맞게 독립적으로 확장할 수 있다.
+
+---
+
+[시스템 구조 안내](00_System_Architecture_Index.md) · [목적별 문서 안내](../00_Documentation_Index.md) · [대표 README로 돌아가기](../../README.md#combat-systems)

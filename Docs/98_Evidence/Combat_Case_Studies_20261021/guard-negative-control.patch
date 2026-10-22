@@ -1,0 +1,27 @@
+--- current snapshot
++++ reconstructed acceptance-only negative control
+@@ -437,10 +437,10 @@
+ 		return true;
+
+ 
+
+ 	case EObservableOverlayHandling::ClearGuardState:
+
+-		return true;
+
++		return HasGuardRuntimeState();
+
+ 
+
+ 	case EObservableOverlayHandling::ClearGuardOverlay:
+
+-		return true;
+
++		return HasGuardOverlay();
+
+ 
+
+ 	default:
+
+ 		return false;
+
