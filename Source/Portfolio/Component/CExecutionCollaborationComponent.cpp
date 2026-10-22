@@ -102,9 +102,16 @@ EExternalCombatInputPolicy UCExecutionCollaborationComponent::GetExternalCombatI
 
 bool UCExecutionCollaborationComponent::QueryCombatExecutionAvailability(EExecutionAvailabilityBlock& OutBlock) const
 {
+	EExecutionOutcomePolicy outcome;
+	return QueryCombatExecutionAvailability(OutBlock, outcome);
+}
+
+bool UCExecutionCollaborationComponent::QueryCombatExecutionAvailability(EExecutionAvailabilityBlock& OutBlock, EExecutionOutcomePolicy& OutOutcome) const
+{
 	FExecutionStartEvaluation evaluation;
 	const bool bAvailable = EvaluateExecutionStart(evaluation);
 	OutBlock = evaluation.Block;
+	OutOutcome = bAvailable ? evaluation.OutcomePolicy : EExecutionOutcomePolicy::None;
 	return bAvailable;
 }
 
@@ -443,6 +450,7 @@ bool UCExecutionCollaborationComponent::EvaluateExecutionStart(FExecutionStartEv
 		return false;
 	}
 
+	OutEvaluation.OutcomePolicy = outcome;
 	return true;
 }
 
