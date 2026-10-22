@@ -1,6 +1,6 @@
 # PIE 재현 시나리오 실행과 완료 판정
 
-Project Stellar · UE 5.4.4 · 2026-10-22
+Project Stellar · UE 5.4.4 · 2026-10-23
 
 ## 목적과 범위
 
@@ -88,11 +88,75 @@ Portfolio.DebugOverlay.EventLog.Visible 1
 
 패링의 `Structure02GuardDelay`는 적 공격 시작 관찰부터 Guard 입력까지의 지연(초)이며 기본값은 **0.75초**다. 재현 입력만 바꾸며 공격·Guard 에셋, 판정 코드, 몽타주 재생 속도는 바꾸지 않는다. 다른 공격·장면·프레임 조건에서는 다시 검증한다.
 
-기존 0.65초 입력은 패링 창의 끝에 너무 가까웠다. 현재 Guard-In은 몽타주 0.45초에서 시작하고 0.616667초의 SwitchToGuard에서 패링 창을 닫으므로 약 167ms의 여유가 있다. 적 공격은 실제 0.5배 재생으로 충돌이 약 0.8초 이후에 도착한다. HUD 수집·표시를 켠 20fps 상한 PIE에서는 Guard 입력 200ms 뒤 충돌이 관찰돼 BlockHit와 HP 150 감소가 발생했다. HUD 자체의 전투 상태 변경 결함으로 판단하지 않는다. 기존 실패 프레임도 BlockHit와 HP 4850을 보여준다.
+PR #132 검증 당시 공용 RateScale 1.0·적 첫 공격 PlayRate 0.5 기준에서 기존 0.65초 입력은 패링 창의 끝에 너무 가까웠다. Guard-In은 몽타주 0.45초에서 시작하고 0.616667초의 SwitchToGuard에서 패링 창을 닫으므로 약 167ms의 여유가 있다. 적 공격은 실제 0.5배 재생으로 충돌이 약 0.8초 이후에 도착한다. HUD 수집·표시를 켠 20fps 상한 PIE에서는 Guard 입력 200ms 뒤 충돌이 관찰돼 BlockHit와 HP 150 감소가 발생했다. HUD 자체의 전투 상태 변경 결함으로 판단하지 않는다. 기존 실패 프레임도 BlockHit와 HP 4850을 보여준다.
 
 최종 0.75초 기본값에서 실제 PIE 패링을 8회 확인했다: HUD 켬/60fps 상한 3회, HUD 끔/60fps 상한 2회, HUD 켬/30fps 상한 1회, HUD 켬/20fps 상한 2회. 모두 실제 Parry, HP 5000 유지, 적 Balance 1, Guard 해제와 정상 export를 확인했다. 녹화 요청은 30fps이며 게임 FPS 상한은 실제 고정 프레임률을 보장하지 않는다. 동일 최종 코드에 0.65초만 명시한 20fps 대조 실행에서는 다시 실패하고 Guard가 정리됐다.
 
-이 값은 현재 에셋·임시 적 배치의 재현용 설정이다. 임의의 프레임 정지·저사양·다른 공격·모든 옵션 조합에서 성공을 보장하지 않으며, 실제 Parry를 관찰하지 못하면 기존 실패 판정을 유지한다. 반복 성공을 위해 자동 재시도하거나 실패 표식을 숨기지 않는다.
+이 0.75초 값은 공용 RateScale 1.0·적 첫 공격 PlayRate 0.5·당시 임시 적 배치의 재현용 설정이다. 임의의 프레임 정지·저사양·다른 공격·모든 옵션 조합에서 성공을 보장하지 않으며, 실제 Parry를 관찰하지 못하면 기존 실패 판정을 유지한다. 반복 성공을 위해 자동 재시도하거나 실패 표식을 숨기지 않는다.
+
+### G5-C1 적 전용 속도 후보 재현
+
+최종 G5-C1은 공용 `M_Attack_Sword_0`의 RateScale을 기준값 **1.0**으로 유지하고, `BP_CEnemy`의 `ComboAttack` 인덱스 0 **PlayRate만 0.5→0.35**로 변경한다. 공용 몽타주를 0.7로 변경했던 선행 후보는 기존 `BP_CPlayer`에도 영향을 주므로 복원했다. 두 플레이어 BP와 공용 몽타주는 main과 동일하며, 다른 적 액션 데이터도 유지한다.
+
+`Structure02GuardDelay` 기본 0.75초는 적 PlayRate 0.5 기준용이다. **최종 적 후보 0.35에는 실행 인수 `-Structure02GuardDelay=1.07`을 명시한다.** 콘솔 프리셋 CVar나 `warmupSeconds`가 아니다. 이 인수는 자동 Guard 입력 시점만 바꾸며 패링 판정·Guard 창을 변경하지 않는다.
+
+별도 에디터 프로세스 PowerShell 예시다. 경로 자리표시자는 실제 경로로 바꾸고 새 출력 경로를 사용한다. 프리셋은 RecordFPS 30, t.MaxFPS 60, CaptureEnabled/HUDVisible/EventLog.Visible 1이다.
+
+```powershell
+& 'C:/Program Files/Epic Games/UE_5.4/Engine/Binaries/Win64/UnrealEditor.exe' `
+  '<workspace>/Portfolio.uproject' '/Game/SciFi/SciFiMap' `
+  '-Structure02Mode=parry' '-Structure02Output=<new-output>/take' `
+  '-Structure02Preset=<preset.txt>' '-Structure02GuardDelay=1.07' `
+  '-Structure02Width=1280' '-Structure02Height=720' `
+  '-Structure02IsolateActors' '-RenderOffscreen' `
+  '-unattended' '-nop4' '-nosplash' '-NoLiveCoding' '-NoAutoSave'
+```
+
+2026-10-23 최종 적 전용 후보에서 기존 재현 도구를 실행했다. 아래는 분리본 검증 기록이며 PR 게시·병합 상태와 구분한다.
+
+| 적 첫 공격 데이터 | GuardDelay | 조건 | 실제 PIE 결과 |
+|---|---:|---|---|
+| 기준 PlayRate 0.5 | 0.75초 | 정상 | 실제 Parry·완료·정상 export |
+| 기준 PlayRate 0.5 | 0.75초 | 단일 120ms | Parry 미관찰·실패 판정·성공 마커 없음 |
+| 기준 PlayRate 0.5 | 0.75초 | 단일 200ms | Parry 미관찰·실패 판정·성공 마커 없음 |
+| 후보 PlayRate 0.35 | 1.07초 | 정상 | 실제 Parry·완료·정상 export |
+| 후보 PlayRate 0.35 | 1.07초 | 단일 120ms | 실제 Parry·완료·정상 export |
+| 후보 PlayRate 0.35 | 1.07초 | 단일 200ms | Parry 미관찰·실패 판정·성공 마커 없음 |
+| 후보 PlayRate 0.35 | 기본 0.75초 | 정상 실패 대조 | Parry 미관찰·실패 판정·성공 마커 없음 |
+
+성공은 `VERIFIED_REAL_PARRY`, HP 5000·Balance 1, `TAKE_COMPLETE`, `<output>.succeeded.txt`의 `scenario=complete`·`export=verified`로 확인한다. 종료 코드 0만으로 대신하지 않는다. 실패 조건에 자동 재시도·입력 보정·판정창 확대를 적용하지 않았다.
+
+패링 지연은 첫 몽타주 위치 0.38 이상·0.4 미만을 관찰한 뒤 단일 시뮬레이션 간격을 120ms/200ms로 주고 기존 시간 설정으로 복구한 시험이다. 정상 실행은 실제 프레임 간격을 사용한다. 이 임시 지연 도구는 제품에서 제거했다. 측정한 지점·배치·입력값의 결과이며 다른 프레임 정지 위치나 모든 FPS 조합의 보장은 아니다.
+
+### 콤보 충돌창과 플레이어 불변성
+
+콤보 전환 전에 이전 충돌창을 닫고, 종료 콜백에서 액션이 취소·교체되면 이전 전환을 중단한다. 지연된 이전 인덱스 NotifyEnd 차단과 같은 창의 중복 타격 방어를 유지한다.
+
+공용 RateScale 1.0을 유지한 채 적 데이터 PlayRate 0.5·0.35 각각에서 정상 1/60초 시뮬레이션, 첫 몽타주 위치 0.515 이상 첫 샘플 뒤 단일 120ms·200ms를 비교했다. 여섯 실제 BT/PIE 조건 모두 창 ID 0·1·2, 확정 피해 300·500·700, 최종 HP 3500이었다. 고정 시뮬레이션 간격은 벽시계 60fps 보장이 아니다.
+
+두 적 데이터 구성에서 `BP_CPlayer`와 `BP_CPlayer_Stellar`를 각각 실제 PIE에 생성하여 기본 입력 API로 첫 공격을 실행했다. 기존 BP_CPlayer는 PlayRate 1.0 × RateScale 1.0, BP_CPlayer_Stellar는 PlayRate 1.0 × RateScale 0.8을 유지했고, 몽타주 진행·충돌창·완료 기록이 동일했다. 에셋 해시도 main과 일치한다. 이는 이번 적 속도 변경에 대한 불변성 검사이며 모든 플레이어 행동의 전수 시험은 아니다.
+
+두 구성에서 기본 Unity 빌드·전체 자동화 102개·에셋 감사가 통과했다. 회귀 테스트 `Portfolio.Combat.ComboCollision.Transition`과 `Portfolio.Combat.ComboCollision.ReentrantClose`는 충돌창·전환·취소·실행 교체 경계를 검사한다. 실제 명중은 별도 BT/PIE로 확인했으며 Capture09/10 완료 판정을 명중 횟수 판정으로 바꾸지 않았다.
+
+### G5-C1 커밋 경계 재검증
+
+2026-10-23 C1(충돌창 코드·테스트 3개, 기준 적 PlayRate 0.5)과 C2(적 BP 추가, PlayRate 0.35)를 각각 실제 파일 경계로 구성했다. 두 경계 모두 기본 Unity/Adaptive Unity Editor 빌드·전체 자동화 102개(일반 100, 기존 경고 동반 2)·CDodgeAssets Verify·몽타주 감사 오류 0을 확인했다. 임시 PIE 관찰 도구를 제거한 뒤 각 경계의 기본 빌드도 다시 통과했다. 같은 102개 테스트의 반복 실행이다.
+
+각 경계에서 실제 BT 콤보의 정상·120ms·200ms 조건을 다시 실행했고 모두 창 ID 0·1·2, 피해 300·500·700, 최종 HP 3500이었다. 두 플레이어의 첫 공격 기록도 경계 간 동등했다. 콤보와 패링의 지연 적용 위치·시간 조건은 위 선행 검증과 동일한 절차를 사용했다.
+
+| 경계·조건 | GuardDelay | 실제 PIE 결과 |
+|---|---:|---|
+| C1-parry-normal | 0.75초 | 실제 Parry·완료·정상 export |
+| C1-parry-hitch120 | 0.75초 | Parry 미관찰·실패 판정·성공 마커 없음 |
+| C1-parry-hitch200 | 0.75초 | Parry 미관찰·실패 판정·성공 마커 없음 |
+| C2-parry-normal | 1.07초 | 실제 Parry·완료·정상 export |
+| C2-parry-hitch120 | 1.07초 | 실제 Parry·완료·정상 export |
+| C2-parry-hitch200 | 1.07초 | Parry 미관찰·실패 판정·성공 마커 없음 |
+| C2-parry-default075 | 0.75초 | Parry 미관찰·실패 판정·성공 마커 없음 |
+
+위 표는 이번 경계별 각 조건 1회 기록이다. 선행 표의 실패·성공 이력을 대체하지 않는다. 실제 프레임 간격과 지연 진입 위치에는 실행별 차이가 있으므로 단일 성공을 지연 내성 개선으로 단정하지 않는다. 실패 원인의 완전한 분리, 모든 지연 위치·FPS·다수 적·장시간 플레이는 미검증이다. 패링 판정창·기본 입력값을 수정하거나 실패를 숨기기 위한 재시도를 하지 않았다.
+
+C3는 이 결과를 반영하는 문서 2개만 더한다. 실행 코드·에셋은 C2와 동일하므로 실제 PIE 근거는 C2 결과를 적용하며, 문서 경계에서 빌드·자동화·에셋·문서 링크를 별도로 확인한다. 커밋·PR 게시·병합 완료를 뜻하지 않는다.
 
 기존 SciFiMap에서는 순찰 경로 전제조건이 충족되지 않아 `NoPatrolPath` 실패를 확인했다. 공용 맵은 유지하며, 순찰에는 별도의 `/Game/00_UnitTest/PatrolReplay/L_PatrolReplay`를 사용한다. 장면 구성·실행 인자·실제 Loop/Reverse BT 이동 검증은 [순찰 전용 재현 장면](N_Patrol_Replay_Scene.md)을 따른다. 현재 `patrol` 촬영기는 32초 경과로 종료하므로 성공 표식만으로 지점 도착을 입증하지 않는다. 순찰→전투→수색→복귀 전체 전환은 이 장면의 순찰 이동 검증과 구분한다.
 
