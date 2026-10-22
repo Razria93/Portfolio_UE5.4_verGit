@@ -33,6 +33,12 @@ Presenter는 매 프레임 후반(`PostUpdateWork`)에 가드·닷지·카운터
 HUD 클래스 기본값의 `Combat HUD|Style`에서 `ExecutionIcon`과 `LethalExecutionIcon`을 교체할 수 있다.
 즉사 텍스처 미지정 시 기존 아이콘으로 대체하고, 사용 불가 상태에서는 기존 아이콘을 표시한다.
 
+## 현재 자원 연동 범위 (2026-10-23 정적 대조)
+
+PR #133 병합 main `aeb9e7ed`의 Presenter·Widget 소스 기준으로 Player/Target HP와 Target Balance는 실제 값에 연결되어 있다. Player BU·BE·SH와 Target SH는 `WITH_EDITOR` 및 샘플 표시 옵션에 따른 표시이며 아이템 수량은 임시 표시다. 실제 자원의 공급·소비·대상 변경·사망/재시작 갱신은 별도 구현·검증 대상이다. 샘플 게이지를 실제 연동 완료의 근거로 사용하지 않는다.
+
+카운터 러시와 퍼펙트 닷지의 위 설명 및 아래 G4 실제 PIE·C1–C4 검증 기록을 유지한다. 과거 기록의 날짜·기준 SHA·결과는 이번 문서 정리의 새 실행 결과가 아니다. [영상 근거 가이드](../../Docs/07_Portfolio_Documents/Portfolio_Production/stellar_video_evidence_guide.md)에서 촬영·공개 상태를 별도로 관리한다.
+
 ## 즉사 체력 강조
 
 적 체력바의 남은 HP 칸만 즉사 체력 조건에서 붉게 표시한다. HUD에 별도 체력 임계값은 두지 않고

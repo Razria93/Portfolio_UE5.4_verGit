@@ -1,12 +1,14 @@
 # Combat HUD source resources
 
-Current implementation and closure (2026-09-20): [branch record](../../Docs/07_Portfolio_Documents/Portfolio_Production/34_Gameplay_Combat_HUD_Branch_Closure.md). User PIE review is confirmed. The prompt history below includes earlier concepts; the retained action icon selection is documented in [ActionSelection](Icons/ActionSelection.md). GuardBreak is a reserved asset, not a connected gameplay state.
+Historical implementation and closure (2026-09-20): [branch record](../../Docs/07_Portfolio_Documents/Portfolio_Production/34_Gameplay_Combat_HUD_Branch_Closure.md). User PIE review is confirmed. The prompt history below includes earlier concepts; the retained action icon selection is documented in [ActionSelection](Icons/ActionSelection.md). GuardBreak is a reserved asset, not a connected gameplay state.
 
 Generated raster icons: built-in imagegen, 2026-09-18. Original pictograms, not extracted game textures. Transparent RGBA originals retained; imported UI textures capped at 256px. PIE approval does not imply readability testing on every platform and resolution.
 
 Fonts: Oxanium (Regular/Medium), Noto Sans CJK KR (Regular); accompanying OFL licenses apply. Composite fonts use Noto as fallback. Source fonts retained for reproducible import.
 
 Official sources: [Oxanium fonts](https://github.com/sevmeyer/oxanium/tree/master/fonts/ttf), [Oxanium license](https://github.com/sevmeyer/oxanium/blob/master/OFL.txt), [Noto Korean face](https://github.com/notofonts/noto-cjk/blob/main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf), [Noto license](https://github.com/notofonts/noto-cjk/blob/main/Sans/LICENSE).
+
+Current integration scope (main `aeb9e7ed`, documentation review 2026-10-23): [Action state integration](ActionStateIntegration.md). It preserves the 2026-10-22 G4 PIE and boundary validation records and distinguishes live HP/Balance from editor resource samples. Those historical runs are not new validation of this documentation change.
 
 ## Prompts
 
