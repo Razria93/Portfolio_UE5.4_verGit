@@ -3,7 +3,13 @@
 > 목적: 제출 이후 문서의 내용 보완·증거 보강·조회성 유지 작업을 한 곳에서 추적한다.
 > 기준: 이 목록은 구현 완료를 주장하지 않는다. 상태 변경은 코드·캡처·로그 또는 문서 검토 근거를 확인한 뒤에만 수행한다.
 
-## P0 — Submission status synchronization
+## 현재 구현·근거 자료 정리 (2026-10-23)
+
+PR #133 병합 main `aeb9e7ed` 기준의 [작업 목록](../07_Portfolio_Documents/Portfolio_Production/stellar_portfolio_completion_checklist.md), [영상 근거 가이드](../07_Portfolio_Documents/Portfolio_Production/stellar_video_evidence_guide.md), [촬영 설정](../07_Portfolio_Documents/Portfolio_Production/stellar_capture_presets.md)을 따른다. 선행 구현과 당시 검증 기록을 보존하고, 신규 자원 연동·보스전 및 최종 영상·자료 공개를 분리한다.
+
+아래 23페이지·p.20~23·80명 단회 측정 항목은 기존 HTML의 유지보수 기록이다. 과거 19페이지 PPT 계획의 최신 파일·페이지 대응은 미확인이다. 원본 output의 40/80/120명 집계 JSON 4개와 18개 실행 항목은 확인했지만 원시 CSV 재계산이나 현재 main 재측정을 수행하지 않았다. 아래 역사적 항목을 일괄 완료로 바꾸지 않는다.
+
+## P0 — 기존 HTML 제출 상태 동기화
 
 - [ ] `Portfolio_Evidence_Capture_Ledger`와 `00_Portfolio_Page_Spec_Index`의 제출 상태를 23페이지 기준으로 재판정한다.
   - 상태: Needs Review
@@ -29,7 +35,7 @@
 - [ ] 대표 Gameplay Video를 Issue #119에 업로드하고 Evidence Ledger를 갱신한다.
   - 상태: Needs Capture
   - 대상: p.1 Cover, `Docs/98_Evidence/Portfolio_Evidence_Capture_Ledger (KR).md`
-  - 근거: Gameplay Video 링크는 준비됐지만 20~30초 HUD 없는 대표 플레이 영상은 아직 확정되지 않았다.
+  - 근거: Gameplay Video 링크는 준비됐지만 대표 플레이 영상의 편집·공개 링크는 아직 확정되지 않았다. 2026-10-23 Issue #119 조회에서도 업로드 예정이었다. 새 촬영은 일반 HUD를 유지하고 디버그 출력만 숨기는 구성을 우선한다.
   - 다음 작업: clean gameplay 영상을 업로드하고 Issue 링크·상태를 `Ready`로 갱신한다.
 
 - [ ] p.4~p.10의 기존 캡처가 각 페이지의 핵심 주장을 실제로 증명하는지 재검토한다.
