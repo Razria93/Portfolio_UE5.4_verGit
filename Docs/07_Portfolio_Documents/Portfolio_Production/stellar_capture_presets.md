@@ -139,6 +139,14 @@ Portfolio.Debug.ReactionComponentAudit 1
 
 Scope는 World, Filter는 All을 유지한다. FocusedEnemy만 사용하면 Player 쪽 반응 기록을 놓칠 수 있다. 화면에는 Player HP·패링 반응과 Enemy 균형을 남긴다. 균형 내부 누적값 증가와 HUD 남은 값 감소를 구분한다.
 
+### G5-C1 적 전용 속도 후보의 자동 패링 입력
+
+최종 후보는 공용 공격 몽타주 RateScale 1.0을 유지하고 적의 첫 ComboAttack PlayRate만 0.35로 조정한다. 두 플레이어의 몽타주·공격 배율은 유지한다. 후보 자동 패링은 별도 프로세스 실행 인수 `-Structure02GuardDelay=1.07`을 명시한다. CVar 프리셋에 넣지 않는다. 적 PlayRate 0.5 기준은 기본 0.75초를 사용한다.
+
+2026-10-23 SciFiMap 격리 PIE, 요청 1280×720·실제 녹화 1920×1080, RecordFPS 30·t.MaxFPS 60, 이벤트 수집·표시 켬에서 기준 0.75초와 후보 1.07초의 실제 Parry·정상 export를 확인했다. 후보 기본 0.75초는 실패 대조였다. 단일 120/200ms 패링 시험 결과와 구체적 지연 위치는 [PIE 재현 시나리오](../../06_notes/N_Portfolio_Replay_Scenarios.md)의 G5-C1 항목을 따른다. 모든 프레임 지연에 대한 성공 보장이 아니며 실제 Parry·완료·내보내기 근거로 판정한다. 분리본 검증 기록을 PR 게시·병합 완료로 해석하지 않는다.
+
+C1·C2 실제 파일 경계에서 기본 빌드·102개 자동화·에셋 감사와 콤보·플레이어·패링 PIE를 다시 실행했다. 경계별 패링 결과는 [PIE 재현 시나리오](../../06_notes/N_Portfolio_Replay_Scenarios.md)의 커밋 경계 재검증 표를 따른다. 선행 실패 이력과 조건당 1회·지연 시점 차이의 한계를 유지한다.
+
 ## Interrupt 공격 중단
 
 ```text

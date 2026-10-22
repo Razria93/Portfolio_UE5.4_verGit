@@ -32,6 +32,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
+#include "Weapon/CWeaponActor.h"
+#include "Notify/CAnimNotifyState_Collision.h"
 #include <limits>
 
 namespace ActionFacingTest
@@ -114,6 +116,114 @@ namespace ActionFacingTest
 			static_cast<UActorComponent*>(Action)->TickComponent(1.f / 60.f, LEVELTICK_All, &Action->PrimaryComponentTick);
 		}
 	};
+}
+
+namespace ActionFacingTest
+{
+	ACWeaponActor* AddCollisionWeapon(FFixture& F)
+	{
+		FActorSpawnParameters spawn;
+		spawn.bDeferConstruction = true;
+		auto* weapon = F.World->SpawnActor<ACWeaponActor>(spawn);
+		// This collision-only fixture has no visual mesh or authored grip socket.
+		weapon->PivotSocketName = NAME_None;
+		weapon->FinishSpawning(FTransform::Identity);
+		weapon->SetOwner(F.Player);
+		weapon->InitializeReferences(F.References);
+		F.References.CombatSignalSourceComponent->InitializeReferences(F.References);
+		auto* box = NewObject<UBoxComponent>(weapon);
+		box->SetCollisionResponseToAllChannels(ECR_Ignore);
+		Field<TArray<UShapeComponent*>>(weapon, TEXT("Collisions_Cached")).Add(box);
+		Field<ACWeaponActor*>(F.References.WeaponComponent, TEXT("WeaponActor")) = weapon;
+		Field<EWeaponType>(F.References.WeaponComponent, TEXT("CurrentWeaponType")) = EWeaponType::Sword;
+		return weapon;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FComboCollisionTransitionTest, "Portfolio.Combat.ComboCollision.Transition",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FComboCollisionTransitionTest::RunTest(const FString&)
+{
+	using namespace ActionFacingTest;
+	// Cover a delayed end, an end already delivered, and failed next-step playback.
+	for (int32 mode = 0; mode < 3; ++mode)
+	{
+		FFixture f;
+		auto* weapon = AddCollisionWeapon(f);
+		TestTrue(TEXT("Initial combo starts"), f.Action->ApplyActionDecision(f.Result(1)));
+		f.Action->HandleActionCollisionWindowBegin(NAME_None);
+		const int32 previousWindow = weapon->GetCurrentHitWindowId();
+		TestTrue(TEXT("Previous window is open"), weapon->IsHitWindowOpened());
+		f.Probe->ConsumeChain();
+		TestTrue(TEXT("Rejected consume without reservation preserves current window"), weapon->IsHitWindowOpened());
+		if (mode == 1) f.Action->HandleActionCollisionWindowEnd();
+		f.Probe->OpenReserveChainWindow();
+		auto next = f.Result(2, 1); next.ApplyMode = EExecutionApplyMode::Reserve;
+		TestTrue(TEXT("Next step reserved"), f.Action->ApplyActionDecision(next));
+		bool played = false;
+		f.Probe->bFailPlayback = mode == 2;
+		f.Probe->DuringPlayback = [&]()
+		{
+			played = true;
+			TestFalse(TEXT("Previous collision closed before next playback"), weapon->IsHitWindowOpened());
+			TestEqual(TEXT("Next index published before playback notifies"), f.Action->GetActiveActionIndex(), 1);
+			f.Action->HandleActionCollisionWindowBegin(NAME_None);
+			TestEqual(TEXT("New step gets a distinct hit window"), weapon->GetCurrentHitWindowId(), previousWindow + 1);
+		};
+		f.Probe->ConsumeChain();
+		TestTrue(TEXT("Next playback was attempted"), played);
+		if (mode == 2)
+		{
+			TestFalse(TEXT("Failed playback ends the execution"), f.Action->IsActive());
+			TestFalse(TEXT("Failed playback cleans the newly opened window"), weapon->IsHitWindowOpened());
+		}
+		else
+		{
+			auto* staleEnd = NewObject<UCAnimNotifyState_Collision>();
+			Field<int32>(staleEnd, TEXT("TriggerActionIndex")) = 0;
+			staleEnd->NotifyEnd(f.Player->GetMesh(), nullptr, FAnimNotifyEventReference());
+			TestTrue(TEXT("Late old-index end cannot close the new window"), weapon->IsHitWindowOpened());
+			const int32 nextWindow = weapon->GetCurrentHitWindowId();
+			f.Action->HandleActionCollisionWindowBegin(NAME_None);
+			TestEqual(TEXT("Repeated begin within one step keeps its deduplication window"), weapon->GetCurrentHitWindowId(), nextWindow);
+			f.Action->CancelActiveActionForSystem();
+			TestFalse(TEXT("Cancellation closes the active window"), weapon->IsHitWindowOpened());
+		}
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FComboCollisionReentryTest, "Portfolio.Combat.ComboCollision.ReentrantClose",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FComboCollisionReentryTest::RunTest(const FString&)
+{
+	using namespace ActionFacingTest;
+	for (bool replace : { false, true })
+	{
+		FFixture f;
+		auto* weapon = AddCollisionWeapon(f);
+		TestTrue(TEXT("Initial combo starts"), f.Action->ApplyActionDecision(f.Result(1)));
+		f.Action->HandleActionCollisionWindowBegin(NAME_None);
+		f.Probe->OpenReserveChainWindow();
+		auto next = f.Result(2, 1); next.ApplyMode = EExecutionApplyMode::Reserve;
+		TestTrue(TEXT("Next step reserved"), f.Action->ApplyActionDecision(next));
+		bool closed = false;
+		f.Probe->DuringCollisionClosed = [&]()
+		{
+			closed = true;
+			f.Action->CancelActiveActionForSystem();
+			if (replace) TestTrue(TEXT("Close callback replaces the execution"), f.Action->ApplyActionDecision(f.Result(3, 5)));
+		};
+		weapon->OnWeaponActorCollisionDisabled.AddDynamic(f.Probe, &UCActionFacingProbe::HandleCollisionClosed);
+		f.Probe->ConsumeChain();
+		TestTrue(TEXT("Close callback ran"), closed);
+		TestFalse(TEXT("Old collision is closed"), weapon->IsHitWindowOpened());
+		if (replace) TestEqual(TEXT("Old chain cannot overwrite the replacement"), f.Action->GetActiveActionIndex(), 5);
+		else TestFalse(TEXT("Old chain cannot revive a cancelled execution"), f.Action->IsActive());
+		weapon->OnWeaponActorCollisionDisabled.RemoveDynamic(f.Probe, &UCActionFacingProbe::HandleCollisionClosed);
+		f.Action->CancelActiveActionForSystem();
+	}
+	return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEnemyAttackFacingPolicyTest, "Portfolio.Combat.ActionFacing.EnemyAttackPolicy",
