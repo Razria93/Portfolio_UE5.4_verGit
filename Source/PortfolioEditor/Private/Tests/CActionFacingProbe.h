@@ -24,6 +24,10 @@ public:
 	bool bFailBinding = false;
 	bool bCompleteDuringPlayback = false;
 	TFunction<void()> DuringPlayback;
+	TFunction<void()> DuringCollisionClosed;
+
+	UFUNCTION()
+	void HandleCollisionClosed() { if (DuringCollisionClosed) DuringCollisionClosed(); }
 
 protected:
 	bool PlayMontage(const FActionData& InData) override

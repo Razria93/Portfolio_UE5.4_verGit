@@ -134,6 +134,16 @@ void UCAction_ComboAttack::ConsumeChain()
 		return;
 	}
 
+	// End the previous hit window before publishing the next action index. A late
+	// NotifyEnd may be rejected once the chain has advanced to another index.
+	const uint64 previousGeneration = ActionComp_Injected->GetActiveActionGeneration();
+	if (IsValid(WeaponComp_Injected)) WeaponComp_Injected->CloseCollisionWindow();
+
+	// Closing collision broadcasts synchronously; do not resume a replaced execution.
+	if (!IsValid(ActionComp_Injected)
+		|| ActionComp_Injected->GetActiveActionGeneration() != previousGeneration
+		|| !CanConsumeChain(nextData)) return;
+
 	ReservingChainData = FActionData();
 	ReservingChainActionRequestSerial = 0;
 	bHasReservingChain = false;
