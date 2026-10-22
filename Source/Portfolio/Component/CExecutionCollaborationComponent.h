@@ -21,6 +21,7 @@ class PORTFOLIO_API UCExecutionCollaborationComponent : public UActorComponent
 	GENERATED_BODY()
 
 	friend class FBalanceLifecycleBoundaryTest;
+	friend class FHUDLethalHealthPresenterTest;
 
 public:
 	// Construction
@@ -96,12 +97,15 @@ protected:
 public:
 	// Query
 	bool HasActiveExecutionSession() const;
+	// Target health policy only; does not imply an executable opportunity or reserve it.
+	bool IsInLethalExecutionHealthRange() const { return CanResolveLethalExecutionOutcome(); }
 
 	EExecutionCollaborationState GetExecutionCollaborationState() const { return CollaborationState; }
 	FExecutionCollaborationRuntimeSnapshot GetExecutionCollaborationRuntimeSnapshot() const;
 	EExternalCombatInputPolicy GetExternalCombatInputPolicy() const;
 
 	bool QueryCombatExecutionAvailability(EExecutionAvailabilityBlock& OutBlock) const;
+	bool QueryCombatExecutionAvailability(EExecutionAvailabilityBlock& OutBlock, EExecutionOutcomePolicy& OutOutcome) const;
 	bool BuildSourceExecutionStartGeometrySnapshot(FExecutionStartGeometrySnapshot& OutSnapshot) const;
 
 	// Source Request
@@ -118,6 +122,7 @@ private:
 	struct FExecutionStartEvaluation
 	{
 		EExecutionAvailabilityBlock Block = EExecutionAvailabilityBlock::None;
+		EExecutionOutcomePolicy OutcomePolicy = EExecutionOutcomePolicy::None;
 		FCombatTargetSnapshot TargetSnapshot;
 		UCExecutionCollaborationComponent* Target = nullptr;
 		float StandardExecutionDamage = 0.f;

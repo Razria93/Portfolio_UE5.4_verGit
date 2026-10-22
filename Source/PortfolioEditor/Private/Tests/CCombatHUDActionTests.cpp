@@ -221,6 +221,26 @@ bool FHUDExecutionAvailabilityTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Rejected decision preserves opportunity"), balance->IsExecutionOpportunityAvailable());
 	Field<ACharacter*>(prepared.ActionExecutor, TEXT("OwnerCharacter_Injected")) = source;
 	for (int32 i = 0; i < 50; ++i) TestTrue(TEXT("Valid opportunity is ready"), execution->QueryCombatExecutionAvailability(block));
+	EExecutionOutcomePolicy preview = EExecutionOutcomePolicy::None;
+	TestTrue(TEXT("Standard preview available"), execution->QueryCombatExecutionAvailability(block, preview));
+	TestTrue(TEXT("Preview uses standard policy"), preview == EExecutionOutcomePolicy::Standard);
+	auto* targetExecution = Comp<UCExecutionCollaborationComponent>(target);
+	Field<EExecutionLethalCondition>(targetExecution, TEXT("LethalCondition")) = EExecutionLethalCondition::HealthRatio;
+	Field<float>(targetExecution, TEXT("LethalHealthRatio")) = .25f;
+	target->GetHealthComp()->TakeDamage(75.f);
+	TestFalse(TEXT("Lethal condition alone cannot bypass missing data"), execution->QueryCombatExecutionAvailability(block, preview));
+	TestTrue(TEXT("Rejected preview clears previous kind"), preview == EExecutionOutcomePolicy::None);
+	Prepare(source, EActionType::Execution, CExecutionActionIndex::Lethal, UCAction_Execution::StaticClass());
+	FReactionData lethalData = data;
+	lethalData.ReactionDataKey.ReactionType = EReactionType::ExecutionLethal;
+	Field<TMap<FReactionDataKey, FReactionData>>(reactions, TEXT("ReactionDataMap")).Add(lethalData.ReactionDataKey, lethalData);
+	TestTrue(TEXT("Lethal preview available at threshold"), execution->QueryCombatExecutionAvailability(block, preview));
+	TestTrue(TEXT("Preview uses lethal policy"), preview == EExecutionOutcomePolicy::Lethal);
+	target->GetHealthComp()->TakeHeal(1.f);
+	TestTrue(TEXT("Healed target still offers execution"), execution->QueryCombatExecutionAvailability(block, preview));
+	TestTrue(TEXT("Policy returns to standard above threshold"), preview == EExecutionOutcomePolicy::Standard);
+	target->GetHealthComp()->TakeHeal(74.f);
+	Field<EExecutionLethalCondition>(targetExecution, TEXT("LethalCondition")) = EExecutionLethalCondition::Disabled;
 	TestTrue(TEXT("Successful query clears previous block reason"), block == EExecutionAvailabilityBlock::None);
 	TestFalse(TEXT("Query never starts source session"), execution->HasActiveExecutionSession());
 	TestFalse(TEXT("Query never starts target session"), Comp<UCExecutionCollaborationComponent>(target)->HasActiveExecutionSession());
@@ -349,6 +369,71 @@ bool FHUDExecutionReferenceBindingTest::RunTest(const FString& Parameters)
 
 	execution->InitializeReferences(FCharacterComponentReferences());
 	CheckBindings(replacement, false);
+	world->DestroyWorld(false);
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHUDLethalHealthPresenterTest, "Portfolio.UI.CombatHUD.LethalHealthPresenter",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FHUDLethalHealthPresenterTest::RunTest(const FString& Parameters)
+{
+	using namespace HUDActionTest;
+	UWorld* world = UWorld::CreateWorld(EWorldType::Game, false);
+	ACPlayer* player = world->SpawnActor<ACPlayer>();
+	ACPlayer* target = world->SpawnActor<ACPlayer>();
+	ACPlayer* other = world->SpawnActor<ACPlayer>();
+	for (ACPlayer* actor : { player, target, other })
+		actor->GetHealthComp()->InitializeHealth(100.f, 100.f, EMaxHPUpdatePolicy::ClampCurrent);
+	auto* execution = Comp<UCExecutionCollaborationComponent>(target);
+	execution->InitializeReferences(References(target));
+	execution->LethalCondition = EExecutionLethalCondition::HealthRatio;
+	execution->LethalHealthRatio = .25f;
+	auto* presenter = NewObject<UCCombatHUDPresenterComponent>(player);
+	presenter->RegisterComponent();
+	player->GetCombatTargetComp()->RequestSetCombatTarget(target, ECombatTargetChangeReason::PlayerSelection);
+	presenter->SetControlledPlayer(player);
+	auto tick = [&]() { static_cast<UActorComponent*>(presenter)->TickComponent(.016f, LEVELTICK_All, nullptr); };
+	target->GetHealthComp()->TakeDamage(74.f);
+	TestFalse(TEXT("Above threshold is not lethal health"), presenter->GetViewData().bTargetLethalHealth);
+	target->GetHealthComp()->TakeDamage(1.f);
+	TestTrue(TEXT("Exact threshold updates via health event"), presenter->GetViewData().bTargetLethalHealth);
+	TestTrue(TEXT("Health hint does not grant execution"), presenter->GetViewData().Actions.Execution == EHUDActionState::Unavailable);
+	target->GetHealthComp()->TakeDamage(1.f);
+	TestTrue(TEXT("Below threshold remains highlighted"), presenter->GetViewData().bTargetLethalHealth);
+	target->GetHealthComp()->TakeHeal(2.f);
+	TestFalse(TEXT("Healing above threshold clears hint"), presenter->GetViewData().bTargetLethalHealth);
+
+	// Seed a valid target-side session: presentation must use the committed policy.
+	execution->ActiveContext.SessionId.SourceActor = player;
+	execution->ActiveContext.SessionId.Serial = 1;
+	execution->ActiveContext.TargetSnapshot.TargetActor = target;
+	execution->ActiveContext.TargetSnapshot.Revision = 1;
+	execution->ActiveContext.OpportunityReservation.SessionId = execution->ActiveContext.SessionId;
+	execution->ActiveContext.OpportunityReservation.BalanceLifecycleSerial = 1;
+	execution->ActiveContext.OutcomePolicy = EExecutionOutcomePolicy::Lethal;
+	execution->CollaborationState = EExecutionCollaborationState::Committed;
+	tick();
+	TestTrue(TEXT("Active lethal session holds highlight above threshold"), presenter->GetViewData().bTargetLethalHealth);
+	execution->ActiveContext.OutcomePolicy = EExecutionOutcomePolicy::Standard;
+	target->GetHealthComp()->TakeDamage(2.f);
+	TestFalse(TEXT("Active standard session does not switch kind as HP drops"), presenter->GetViewData().bTargetLethalHealth);
+	execution->CollaborationState = EExecutionCollaborationState::None;
+	execution->ActiveContext = FExecutionCollaborationContext();
+	tick();
+	TestTrue(TEXT("After session return to health policy"), presenter->GetViewData().bTargetLethalHealth);
+	execution->LethalCondition = EExecutionLethalCondition::Disabled;
+	tick();
+	TestFalse(TEXT("Disabled lethal policy ignores low HP"), presenter->GetViewData().bTargetLethalHealth);
+	execution->LethalCondition = EExecutionLethalCondition::HealthRatio;
+	tick();
+	player->GetCombatTargetComp()->RequestSetCombatTarget(other, ECombatTargetChangeReason::PlayerSelection);
+	TestFalse(TEXT("New target resets hint"), presenter->GetViewData().bTargetLethalHealth);
+	player->GetCombatTargetComp()->RequestSetCombatTarget(target, ECombatTargetChangeReason::PlayerSelection);
+	TestTrue(TEXT("Returning target reads its own policy"), presenter->GetViewData().bTargetLethalHealth);
+	target->GetHealthComp()->TryKill();
+	TestFalse(TEXT("Dead target hidden"), presenter->GetViewData().bHasTarget);
+	TestFalse(TEXT("Death clears hint"), presenter->GetViewData().bTargetLethalHealth);
+	presenter->SetControlledPlayer(nullptr);
+	TestFalse(TEXT("Unpossess clears hint"), presenter->GetViewData().bTargetLethalHealth);
 	world->DestroyWorld(false);
 	return true;
 }

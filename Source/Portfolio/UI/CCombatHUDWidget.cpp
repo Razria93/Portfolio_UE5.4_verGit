@@ -35,7 +35,6 @@ namespace
 	// Action Colors
 	const FLinearColor ActionUnavailable(0.48f, 0.52f, 0.54f, 0.45f);
 	const FLinearColor ActionActive(0.4f, 0.95f, 1.f, 1.f);
-	const FLinearColor ExecutionReady(1.f, 0.85f, 0.38f, 1.f);
 	const FLinearColor ParrySuccess(1.f, 0.9f, 0.4f, 1.f);
 	const FLinearColor PerfectDodgeActive(1.f, 0.18f, 0.28f, 1.f);
 
@@ -117,6 +116,8 @@ UCCombatHUDWidget::UCCombatHUDWidget(const FObjectInitializer& ObjectInitializer
 
 	static ConstructorHelpers::FObjectFinder<UTexture2D> execution(TEXT("/Game/08_UI/CombatHUD/T_HUDActionExecution"));
 	ExecutionIcon = execution.Object;
+	static ConstructorHelpers::FObjectFinder<UTexture2D> lethalExecution(TEXT("/Game/08_UI/CombatHUD/T_HUDActionExecutionLethal"));
+	LethalExecutionIcon = lethalExecution.Object;
 
 	static ConstructorHelpers::FObjectFinder<UTexture2D> guardBreak(TEXT("/Game/08_UI/CombatHUD/T_HUDActionGuardBreak"));
 	GuardBreakIcon = guardBreak.Object;
@@ -144,7 +145,9 @@ TSharedRef<SWidget> UCCombatHUDWidget::RebuildWidget()
 
 void UCCombatHUDWidget::ApplyViewData(const FCombatHUDViewData& Data)
 {
+	const bool resetTint = !Data.bHasTarget || !ViewData.bHasTarget || Data.TargetRevision != ViewData.TargetRevision;
 	ViewData = Data;
+	UpdateTargetHealthTintGoal(resetTint);
 
 	UpdatePresentation();
 }
@@ -181,6 +184,46 @@ void UCCombatHUDWidget::ResetWidgetRuntime()
 
 	PlayerHealthColumns = -1;
 	LastPlayerMaximum = -1.f;
+	UpdateTargetHealthTintGoal(true);
+}
+
+void UCCombatHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	AdvanceTargetHealthTint(InDeltaTime);
+}
+
+void UCCombatHUDWidget::UpdateTargetHealthTintGoal(bool bReset)
+{
+	const FLinearColor goal = ViewData.bHasTarget && bEnableLethalHealthTint && ViewData.bTargetLethalHealth
+		? LethalHealthTint : Ink;
+	if (bReset || LethalHealthTintBlendTime <= 0.f)
+	{
+		TargetHealthTintStart = TargetHealthTintCurrent = TargetHealthTintGoal = goal;
+		TargetHealthTintElapsed = 0.f;
+	}
+	else if (goal != TargetHealthTintGoal)
+	{
+		TargetHealthTintStart = TargetHealthTintCurrent;
+		TargetHealthTintGoal = goal;
+		TargetHealthTintElapsed = 0.f;
+	}
+}
+
+void UCCombatHUDWidget::AdvanceTargetHealthTint(float DeltaTime)
+{
+	if (TargetHealthTintCurrent == TargetHealthTintGoal) return;
+	TargetHealthTintElapsed += FMath::Max(0.f, DeltaTime);
+	const float t = LethalHealthTintBlendTime > 0.f ? FMath::Clamp(TargetHealthTintElapsed / LethalHealthTintBlendTime, 0.f, 1.f) : 1.f;
+	const float smooth = t * t * (3.f - 2.f * t);
+	TargetHealthTintCurrent = t >= 1.f ? TargetHealthTintGoal : FMath::Lerp(TargetHealthTintStart, TargetHealthTintGoal, smooth);
+	PaintTargetHealthTint();
+}
+
+void UCCombatHUDWidget::PaintTargetHealthTint()
+{
+	// Only foreground HP cells; empty backgrounds, shields and balance are untouched.
+	for (UImage* cell : TargetCells) cell->SetColorAndOpacity(TargetHealthTintCurrent);
 }
 
 // Widget Construction
@@ -447,6 +490,7 @@ void UCCombatHUDWidget::UpdateTargetPresentation()
 	TargetHealthValue->SetText(ViewData.TargetHealth.GetValueText());
 
 	PaintHealth(TargetCells, ViewData.TargetHealth);
+	PaintTargetHealthTint();
 
 	UpdateTargetBalancePresentation();
 }
@@ -464,7 +508,15 @@ void UCCombatHUDWidget::UpdateActionPresentation()
 		CounterImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.CounterRush));
 
 	if (ExecutionImage)
-		ExecutionImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.Execution, ExecutionReady));
+	{
+		const bool bShowOutcome = ViewData.Actions.Execution == EHUDActionState::Ready
+			|| ViewData.Actions.Execution == EHUDActionState::Active;
+		UTexture2D* icon = bShowOutcome && ViewData.Actions.ExecutionOutcome == EExecutionOutcomePolicy::Lethal
+			&& LethalExecutionIcon ? LethalExecutionIcon.Get() : ExecutionIcon.Get();
+		if (ExecutionImage->GetBrush().GetResourceObject() != icon)
+			ExecutionImage->SetBrushFromTexture(icon);
+		ExecutionImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.Execution));
+	}
 }
 
 // Resource Presentation

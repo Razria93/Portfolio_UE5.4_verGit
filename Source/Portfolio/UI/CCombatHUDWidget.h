@@ -17,12 +17,23 @@ class PORTFOLIO_API UCCombatHUDWidget : public UUserWidget
 	GENERATED_BODY()
 
 	friend class FHUDWidgetLifecycleTest;
+	friend class FHUDExecutionIconTest;
+	friend class FHUDLethalHealthTintTest;
 
 public:
 	// Construction
 	UCCombatHUDWidget(const FObjectInitializer& ObjectInitializer);
 
 protected:
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style|Lethal Health")
+	bool bEnableLethalHealthTint = true;
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style|Lethal Health", meta=(EditCondition="bEnableLethalHealthTint"))
+	FLinearColor LethalHealthTint = FLinearColor(0.8f, 0.18f, 0.16f, 1.f);
+
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style|Lethal Health", meta=(ClampMin="0.0", Units="s", EditCondition="bEnableLethalHealthTint"))
+	float LethalHealthTintBlendTime = 0.15f;
+
 	// Preview Config
 	// Samples
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Preview")
@@ -54,6 +65,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
 	TObjectPtr<UTexture2D> ExecutionIcon;
+
+	// Standard/unavailable retain ExecutionIcon. Missing lethal art falls back to it.
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
+	TObjectPtr<UTexture2D> LethalExecutionIcon;
 
 	// Action State Icons
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
@@ -115,10 +130,15 @@ private:
 	// Player Health Presentation Cache
 	int32 PlayerHealthColumns = -1;
 	float LastPlayerMaximum = -1.f;
+	FLinearColor TargetHealthTintCurrent;
+	FLinearColor TargetHealthTintStart;
+	FLinearColor TargetHealthTintGoal;
+	float TargetHealthTintElapsed = 0.f;
 
 protected:
 	// Widget Lifecycle
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 public:
 	// Query
@@ -161,6 +181,9 @@ private:
 	// Resource Presentation
 	void RefreshPlayerHealthLayout();
 	void UpdateTargetBalancePresentation();
+	void UpdateTargetHealthTintGoal(bool bReset);
+	void AdvanceTargetHealthTint(float DeltaTime);
+	void PaintTargetHealthTint();
 
 private:
 	// Widget Construction Helpers

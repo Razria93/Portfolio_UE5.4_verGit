@@ -92,6 +92,7 @@ void UCCombatHUDPresenterComponent::TickComponent(float DeltaTime, ELevelTick Ti
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	RefreshActions();
+	RefreshTargetLethalHealth();
 }
 
 // Player Reference Cache
@@ -158,6 +159,7 @@ void UCCombatHUDPresenterComponent::RefreshTarget()
 			Target = next;
 			TargetHealth = next->FindComponentByClass<UCHealthComponent>();
 			TargetBalance = next->FindComponentByClass<UCBalanceComponent>();
+			TargetExecution = next->FindComponentByClass<UCExecutionCollaborationComponent>();
 
 			next->OnEndPlay.AddUniqueDynamic(this, &ThisClass::HandleTargetEndPlay);
 
@@ -190,6 +192,11 @@ void UCCombatHUDPresenterComponent::UnbindTarget()
 	Target.Reset();
 	TargetHealth.Reset();
 	TargetBalance.Reset();
+	TargetExecution.Reset();
+	// Also reset presentation when switching controlled pawns with equal target revisions.
+	ViewData.bHasTarget = false;
+	ViewData.bTargetLethalHealth = false;
+	if (Widget) Widget->ApplyViewData(ViewData);
 }
 
 // Presentation Runtime
@@ -223,6 +230,7 @@ void UCCombatHUDPresenterComponent::RefreshView()
 		if (ViewData.bHasTarget)
 		{
 			ViewData.TargetHealth = ReadHealth(TargetHealth.Get());
+			ViewData.bTargetLethalHealth = ReadTargetLethalHealth();
 
 			const ACEnemy* enemy = Cast<ACEnemy>(Target.Get());
 			ViewData.TargetName = enemy && !enemy->GetCombatHUDDisplayName().IsEmpty() ? enemy->GetCombatHUDDisplayName() : NSLOCTEXT("CombatHUD", "Target", "TARGET");
@@ -238,6 +246,24 @@ void UCCombatHUDPresenterComponent::RefreshView()
 	if (Widget) Widget->ApplyViewData(ViewData);
 
 	RefreshActions();
+}
+
+bool UCCombatHUDPresenterComponent::ReadTargetLethalHealth() const
+{
+	if (!ViewData.bHasTarget || !TargetExecution.IsValid()) return false;
+	const FExecutionCollaborationRuntimeSnapshot session = TargetExecution->GetExecutionCollaborationRuntimeSnapshot();
+	if (session.bHasActiveSession && !session.bIsSourceRole)
+		return session.CollaborationContext.OutcomePolicy == EExecutionOutcomePolicy::Lethal;
+	return TargetExecution->IsInLethalExecutionHealthRange();
+}
+
+void UCCombatHUDPresenterComponent::RefreshTargetLethalHealth()
+{
+	// Session/policy can change without a health event. Only publish changed hints.
+	const bool lethal = ReadTargetLethalHealth();
+	if (ViewData.bTargetLethalHealth == lethal) return;
+	ViewData.bTargetLethalHealth = lethal;
+	if (Widget) Widget->ApplyViewData(ViewData);
 }
 
 void UCCombatHUDPresenterComponent::RefreshActions()
@@ -281,8 +307,12 @@ void UCCombatHUDPresenterComponent::RefreshActions()
 
 			EExecutionAvailabilityBlock block;
 			if (session.bHasActiveSession && session.bIsSourceRole)
+			{
 				next.Execution = EHUDActionState::Active;
-			else if (LockAssist.IsValid() && LockAssist->IsTargetLockActive() && Execution->QueryCombatExecutionAvailability(block))
+				next.ExecutionOutcome = session.CollaborationContext.OutcomePolicy;
+			}
+			else if (LockAssist.IsValid() && LockAssist->IsTargetLockActive()
+				&& Execution->QueryCombatExecutionAvailability(block, next.ExecutionOutcome))
 				next.Execution = EHUDActionState::Ready;
 		}
 

@@ -37,3 +37,40 @@ Prompt: Edit the guard base without moving or resizing it. Apply the reference's
 single broad zigzag tear, with two large directional reversals, asymmetric width,
 an open top notch and a tapered bottom. Preserve the exterior silhouette and
 padding; flat white icon on transparent background, no extra elements.
+
+## Lethal execution (2026-09-27)
+
+`ActionExecutionLethal.png` is a new white angular skull on transparent RGBA,
+generated with built-in imagegen. Standard execution retains the existing sword
+icon. The native HUD defaults bind the new texture
+`/Game/08_UI/CombatHUD/T_HUDActionExecutionLethal`; the creation commandlet imports
+it with the same UI settings above. No pulse, enlargement or lethal-only tint.
+
+Prompt: Create one game combat HUD icon texture: LETHAL EXECUTION represented by
+a single angular front-facing skull. Flat pure white solid silhouette, two large
+transparent angular eye sockets, tiny triangular transparent nose, simplified
+squared jaw with just two tooth gaps. Clean minimalist futuristic combat
+pictogram, readable at 32 pixels. Centered square composition, skull occupies
+65 percent of canvas width and 72 percent of height, even clear padding.
+Genuinely transparent RGBA background. No circle, no badge, no text, no sword,
+no crossbones, no glow, no shadows, no gradients, no texture, no black filled
+background. This will be tinted white or cyan by game UI. Output one transparent
+PNG asset.
+
+Validation (2026-10-22, G4 based on main `1e02c8a5`): default Unity
+PortfolioEditor Win64 Development build and all 93 Portfolio automation tests
+passed, including all 15 CombatHUD tests. Existing warning-only tests: 2.
+Actual rendered PIE verified Standard/Lethal readiness and active icons,
+interruption/death cleanup, and the separate low-health hint. UI-inclusive
+screenshots show the existing sword and new skull at their actual HUD size.
+The texture loads with UI compression, UI LOD group and no mipmaps. Existing
+assets were not resaved. See `../ActionStateIntegration.md` for fixture limits.
+
+Boundary revalidation (2026-10-22): cumulative C1/C2/C3/C4 snapshots passed
+default Unity builds, all 90/91/93/93 Portfolio tests, and the dodge/montage
+asset audits. The new texture and source PNG enter together in C2, where the
+ExecutionIcons test first runs. Final rendered PIE repeated all six scenarios
+with 99 behavior and 34 capture assertions passing (17 UI-inclusive images).
+After temporary instrumentation removal, the default Unity build and all 93
+tests passed again. No production code or asset changed during this validation;
+only these result documents were updated after execution.

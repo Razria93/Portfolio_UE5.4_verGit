@@ -68,7 +68,7 @@ int32 UCCombatHUDAssetsCommandlet::Main(const FString& Params)
 	if (!regular || !medium || !korean || !Font(TEXT("F_HUDLabel"), regular, korean) || !Font(TEXT("F_HUDName"), medium, korean)) return 1;
 	const TCHAR* names[] = { TEXT("Vial"),
 		TEXT("ActionRush"), TEXT("ActionGuard"), TEXT("ActionDodge"), TEXT("ActionCounter"),
-		TEXT("ActionExecution"), TEXT("ActionGuardBreak") };
+		TEXT("ActionExecution"), TEXT("ActionExecutionLethal"), TEXT("ActionGuardBreak") };
 	for (const TCHAR* name : names)
 	{
 		const FString assetName = FString(TEXT("T_HUD")) + name;
