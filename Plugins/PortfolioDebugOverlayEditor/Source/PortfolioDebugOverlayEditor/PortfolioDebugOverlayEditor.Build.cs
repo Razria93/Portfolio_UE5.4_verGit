@@ -21,7 +21,10 @@ public class PortfolioDebugOverlayEditor : ModuleRules
 			"Slate",
 			"SlateCore",
 			"ToolMenus",
-			"UnrealEd"
+			"UnrealEd",
+			"UMG",
+			"RenderCore",
+			"RHI"
 		});
 	}
 }

@@ -199,6 +199,7 @@ TSharedRef<SWidget> SPortfolioDebugOverlayEditorWidget::MakeBoolSettingRow(const
 		.Padding(12.f, 0.f)
 		[
 			SNew(SCheckBox)
+			.Tag(FName(*cvarName))
 			.IsEnabled_Lambda([cvarName, parentGate]()
 			{
 				return CVarAccess::FindCVar(*cvarName)
