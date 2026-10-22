@@ -62,6 +62,7 @@ void UCDefenseComponent::EndPlay(const EEndPlayReason::Type InEndPlayReason)
 void UCDefenseComponent::HandleOwnerHealthChanged()
 {
 	if (IsValid(HealthComp_Injected) && HealthComp_Injected->IsAlive()) return;
+	ClearGuardState();
 	ClearDodgeState();
 	FinishPerfectDodgeRequest(PendingPerfectSerial);
 	EndPerfectDodgeExecution(PerfectGeneration);
@@ -71,6 +72,7 @@ void UCDefenseComponent::HandleOwnerHealthChanged()
 void UCDefenseComponent::HandleOwnerDeadStateChanged(EDeadState InPrevious, EDeadState InCurrent)
 {
 	if (InCurrent != EDeadState::Dead) return;
+	ClearGuardState();
 	ClearDodgeState();
 	FinishPerfectDodgeRequest(PendingPerfectSerial);
 	EndPerfectDodgeExecution(PerfectGeneration);

@@ -199,7 +199,16 @@ FActionRequestResult UCActionOrchestratorComponent::RequestCombatAction(const FC
 	if (!ResolveCombatActionCandidate(InIncomingRequest, incomingCandidate, rejectReason))
 		return BuildActionRequestResult(EActionRequestResultType::Rejected, rejectReason, InIncomingRequest.ActionRequestSerial);
 
-	return ProcessActionCandidate(incomingCandidate);
+	const FActionRequestResult result = ProcessActionCandidate(incomingCandidate);
+	if (InIncomingRequest.IntentType == ECombatActionIntent::Guard
+		&& InIncomingRequest.IntentEvent == EActionIntentEvent::Completed
+		&& !result.IsAccepted())
+	{
+		// An exclusive action may reject GuardOut, but must not strand released guard state.
+		// Accepted/deferred GuardOut keeps its normal GuardIn/BlockHit completion path.
+		ActionComp_Injected->ApplyOverlayEvent(FObservableOverlayEventContext(EObservableOverlayEventType::GuardLifecycleInterrupted));
+	}
+	return result;
 }
 
 FActionRequestResult UCActionOrchestratorComponent::RequestExecutionAction(const FExecutionActionRequest& InIncomingRequest)
