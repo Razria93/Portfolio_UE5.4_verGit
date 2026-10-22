@@ -490,4 +490,59 @@ bool FHUDExecutionIconTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Target kind can return to standard"), widget->ExecutionImage->GetBrush().GetResourceObject() == widget->ExecutionIcon);
 	return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHUDLethalHealthTintTest, "Portfolio.UI.CombatHUD.LethalHealthTint",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FHUDLethalHealthTintTest::RunTest(const FString& Parameters)
+{
+	UCCombatHUDWidget* widget = NewObject<UCCombatHUDWidget>();
+	widget->Initialize();
+	widget->TakeWidget();
+	FCombatHUDViewData data;
+	data.bHasPlayer = data.bHasTarget = true;
+	data.TargetRevision = 1;
+	data.TargetHealth.Availability = data.PlayerHealth.Availability = EHUDResourceAvailability::Available;
+	data.TargetHealth.Maximum = data.PlayerHealth.Maximum = 100.f;
+	data.TargetHealth.Current = data.PlayerHealth.Current = 25.f;
+	widget->ApplyViewData(data);
+	const FLinearColor normal(.9f, .91f, .86f, 1.f);
+	TestEqual(TEXT("Initially normal"), widget->TargetCells[0]->GetColorAndOpacity(), normal);
+	data.bTargetLethalHealth = true;
+	widget->ApplyViewData(data);
+	TestEqual(TEXT("Transition starts without jump"), widget->TargetCells[0]->GetColorAndOpacity(), normal);
+	widget->NativeTick(FGeometry(), .075f);
+	const FLinearColor middle = widget->TargetCells[0]->GetColorAndOpacity();
+	TestTrue(TEXT("Halfway smoothly blended"), middle.Equals(FMath::Lerp(normal, widget->LethalHealthTint, .5f)));
+	widget->ApplyViewData(data);
+	widget->NativeTick(FGeometry(), .075f);
+	TestEqual(TEXT("Repeated health refresh does not restart fade"), widget->TargetCells[0]->GetColorAndOpacity(), widget->LethalHealthTint);
+	TestEqual(TEXT("Player health not tinted"), widget->PlayerCells[0]->GetColorAndOpacity(), normal);
+	data.bTargetLethalHealth = false;
+	widget->ApplyViewData(data);
+	widget->NativeTick(FGeometry(), .075f);
+	const FLinearColor returning = widget->TargetCells[0]->GetColorAndOpacity();
+	data.bTargetLethalHealth = true;
+	widget->ApplyViewData(data);
+	TestEqual(TEXT("Reversal starts at current color"), widget->TargetCells[0]->GetColorAndOpacity(), returning);
+	widget->NativeTick(FGeometry(), .15f);
+	data.bTargetLethalHealth = false;
+	++data.TargetRevision;
+	widget->ApplyViewData(data);
+	TestEqual(TEXT("New target does not inherit red"), widget->TargetCells[0]->GetColorAndOpacity(), normal);
+	widget->bEnableLethalHealthTint = false;
+	data.bTargetLethalHealth = true;
+	widget->ApplyViewData(data);
+	widget->NativeTick(FGeometry(), 1.f);
+	TestEqual(TEXT("Disabled style stays normal"), widget->TargetCells[0]->GetColorAndOpacity(), normal);
+	widget->bEnableLethalHealthTint = true;
+	widget->LethalHealthTintBlendTime = 0.f;
+	widget->ApplyViewData(data);
+	TestEqual(TEXT("Zero blend is immediate"), widget->TargetCells[0]->GetColorAndOpacity(), widget->LethalHealthTint);
+	data.bHasTarget = false;
+	widget->ApplyViewData(data);
+	TestEqual(TEXT("Target loss resets color"), widget->TargetCells[0]->GetColorAndOpacity(), normal);
+	TestTrue(TEXT("Target loss hides panel"), widget->TargetPanel->GetVisibility() == ESlateVisibility::Collapsed);
+	widget->RebuildWidget();
+	TestEqual(TEXT("Rebuild has no stale tint"), widget->TargetCells[0]->GetColorAndOpacity(), normal);
+	return true;
+}
 #endif

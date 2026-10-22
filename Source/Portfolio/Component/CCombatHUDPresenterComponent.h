@@ -62,6 +62,7 @@ private:
 	TWeakObjectPtr<AActor> Target;
 	TWeakObjectPtr<UCHealthComponent> TargetHealth;
 	TWeakObjectPtr<UCBalanceComponent> TargetBalance;
+	TWeakObjectPtr<UCExecutionCollaborationComponent> TargetExecution;
 
 private:
 	// Runtime Widget
@@ -112,6 +113,8 @@ private:
 	// View Synchronization
 	void RefreshView();
 	void RefreshActions();
+	bool ReadTargetLethalHealth() const;
+	void RefreshTargetLethalHealth();
 
 private:
 	// Event Handlers

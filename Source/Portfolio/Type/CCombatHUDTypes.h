@@ -127,6 +127,10 @@ struct FCombatHUDViewData
 	UPROPERTY(BlueprintReadOnly)
 	FHUDResourceViewData TargetHealth;
 
+	// Health-policy hint, independent of source execution availability.
+	UPROPERTY(BlueprintReadOnly)
+	bool bTargetLethalHealth = false;
+
 	UPROPERTY(BlueprintReadOnly)
 	int32 BalanceRemaining = 0;
 

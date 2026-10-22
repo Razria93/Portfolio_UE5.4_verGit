@@ -21,6 +21,7 @@ class PORTFOLIO_API UCExecutionCollaborationComponent : public UActorComponent
 	GENERATED_BODY()
 
 	friend class FBalanceLifecycleBoundaryTest;
+	friend class FHUDLethalHealthPresenterTest;
 
 public:
 	// Construction
@@ -96,6 +97,8 @@ protected:
 public:
 	// Query
 	bool HasActiveExecutionSession() const;
+	// Target health policy only; does not imply an executable opportunity or reserve it.
+	bool IsInLethalExecutionHealthRange() const { return CanResolveLethalExecutionOutcome(); }
 
 	EExecutionCollaborationState GetExecutionCollaborationState() const { return CollaborationState; }
 	FExecutionCollaborationRuntimeSnapshot GetExecutionCollaborationRuntimeSnapshot() const;
