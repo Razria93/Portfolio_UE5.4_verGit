@@ -6,6 +6,7 @@
 #include "Controller/CAIController.h"
 #include "Character/Enemy/CEnemy.h"
 #include "Component/CBalanceComponent.h"
+#include "Component/CMovementComponent.h"
 #include "Core/Profiling/CAIBehaviorTreeProfiling.h"
 #include "Type/CStateTypes.h"
 #include "Type/CHealthTypes.h"
@@ -93,7 +94,15 @@ EAIIntentState UCBTService_UpdateAIIntentState::DecideNextAIIntentState(UBlackbo
 	// Participation is the authority for Enemy combat intent. Perception only owns the no-participation fallback.
 	if (!bHasCombatParticipation)
 	{
-		if (bUseInvestigate && (bShouldInvestigate || bIsInvestigating)) return EAIIntentState::Investigate;
+		if (bUseInvestigate && (bShouldInvestigate || bIsInvestigating))
+		{
+			// Keep an unconsumed request out of the search tree while movement is
+			// temporarily blocked (e.g. Equip); its fallback would otherwise end it.
+			const APawn* pawn = IsValid(InAIController) ? InAIController->GetPawn() : nullptr;
+			const UCMovementComponent* movement = IsValid(pawn) ? pawn->FindComponentByClass<UCMovementComponent>() : nullptr;
+			if (!bIsInvestigating && (!IsValid(movement) || !movement->CanAcceptMovementIntent())) return EAIIntentState::Idle;
+			return EAIIntentState::Investigate;
+		}
 		return EAIIntentState::Idle;
 	}
 

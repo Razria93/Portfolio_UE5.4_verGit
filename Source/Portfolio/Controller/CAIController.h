@@ -51,6 +51,16 @@ private:
 	FPerceptionCandidateAuditState PerceptionCandidateAuditState;
 	FBlackboardEngageLatencyAuditState BlackboardEngageLatencyAuditState;
 
+	UPROPERTY(Transient)
+	TWeakObjectPtr<AActor> InvestigatedObservationTarget;
+	UPROPERTY(Transient)
+	float InvestigatedObservationTime = -1.f;
+	UPROPERTY(Transient)
+	FVector InvestigatedObservationLocation = FVector::ZeroVector;
+	bool TryGetCurrentSightSample(const AActor* InTarget, FVector& OutLocation) const;
+	void BeginInvestigateFromObservation(AActor* InTarget, const struct FCombatParticipationLastKnownTargetContext& InObservation);
+	friend class FAIObservedTargetTest;
+
 public:
 	ACAIController();
 
@@ -112,6 +122,10 @@ public:
 	bool TryGetPerceptionEvidenceLifetimeDebug(const class AActor* InTarget, bool& OutHasLOS, float& OutMemoryRemainingSeconds) const;
 	void HandleCombatParticipationEvidenceExhausted(const struct FCombatParticipationEvidenceExhaustedEvent& InEvent);
 	void CancelInvestigateForNewCombatEvidence();
+	bool HasCurrentSightOf(const AActor* InTarget) const;
+	bool TryGetTargetObservationLocation(const AActor* InTarget, FVector& OutLocation) const;
+	// Remembering identity does not authorize actor-based movement or combat.
+	bool RefreshCombatTargetObservation(AActor* InTarget);
 
 public:
 	// Runtime LOD Snapshot

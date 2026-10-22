@@ -20,6 +20,7 @@ protected:
 
 private:
 	// Intent Decision
+	friend class FAIInvestigateReadinessTest;
 	EAIIntentState DecideNextAIIntentState(UBlackboardComponent* InBlackboardComp, class AAIController* InAIController, float InCurrentTime);
 	bool ChangeAIIntentState(UBlackboardComponent* InBlackboardComp, EAIIntentState InNextAIIntentState);
 

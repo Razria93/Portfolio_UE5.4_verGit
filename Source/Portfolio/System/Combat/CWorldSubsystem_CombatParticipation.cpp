@@ -617,7 +617,9 @@ void UCWorldSubsystem_CombatParticipation::BuildParticipationCandidates(TArray<F
 		candidate.TargetPriority = FMath::Min(candidate.TargetPriority, evidence.Context.TargetPriority);
 
 		const APawn* participantPawn = evidence.Participant->GetPawn();
-		candidate.DistanceToTarget = IsValid(participantPawn) ? FVector::Dist(participantPawn->GetActorLocation(), evidence.TargetActor->GetActorLocation()) : evidence.Context.DistanceToTarget;
+		FCombatParticipationLastKnownTargetContext observation;
+		candidate.DistanceToTarget = IsValid(participantPawn) && TryGetLastKnownTargetContext(evidence.Participant, evidence.TargetActor, observation)
+			? FVector::Dist(participantPawn->GetActorLocation(), observation.LastKnownLocation) : evidence.Context.DistanceToTarget;
 
 		candidate.bHasPerceptionEvidence |= evidence.Source == ECombatParticipationSource::Perception;
 		candidate.bHasHitReactiveEvidence |= evidence.Source == ECombatParticipationSource::HitReactive;
@@ -888,6 +890,17 @@ bool UCWorldSubsystem_CombatParticipation::HasActiveEvidenceForParticipationPair
 	}
 
 	return false;
+}
+
+bool UCWorldSubsystem_CombatParticipation::TryGetLastKnownTargetContext(const ACAIController* InParticipant, const AActor* InTarget, FCombatParticipationLastKnownTargetContext& OutContext) const
+{
+	OutContext = FCombatParticipationLastKnownTargetContext();
+	if (!IsValid(InParticipant) || !IsValid(InTarget)) return false;
+	const FCombatParticipationPairKey key{ const_cast<ACAIController*>(InParticipant), const_cast<AActor*>(InTarget) };
+	const FCombatParticipationLastKnownTargetContext* context = LastKnownTargetContextByParticipationPair.Find(key);
+	if (!context || !context->bHasObservation) return false;
+	OutContext = *context;
+	return true;
 }
 
 void UCWorldSubsystem_CombatParticipation::UpdateLastKnownTargetContextFromEvidence(const FCombatParticipationEvidence& InEvidence)

@@ -3,6 +3,7 @@
 #include "ProjectGlobal.h"
 
 #include "AI/Blackboard/CAIKey.h"
+#include "Controller/CAIController.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -16,5 +17,7 @@ bool UCBTDecorator_HasCombatTargetWithLOS::CalculateRawConditionValue(UBehaviorT
 	if (!HasCombatTarget(OwnerComp)) return false;
 
 	const UBlackboardComponent* blackboardComp = OwnerComp.GetBlackboardComponent();
-	return IsValid(blackboardComp) && blackboardComp->GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
+	const ACAIController* controller = Cast<ACAIController>(OwnerComp.GetAIOwner());
+	const AActor* target = blackboardComp ? Cast<AActor>(blackboardComp->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName)) : nullptr;
+	return controller && controller->HasCurrentSightOf(target);
 }

@@ -99,6 +99,9 @@ EContextBuildResult UCBTService_UpdateEngageContext::BuildEngageContext(APawn* I
 	}
 
 	const FCombatParticipationAppliedSnapshot appliedSnapshot = participationComp->GetAppliedSnapshot();
+	FCombatTargetSnapshot sensedTarget;
+	int32 sensedAssignmentRevision = 0;
+	if (!participationComp->TryGetCurrentEngageAssignment(sensedTarget, sensedAssignmentRevision)) return EContextBuildResult::NoData;
 	const FCombatTargetSnapshot combatTargetSnapshot = combatTargetComp->GetCombatTargetSnapshot();
 	if (!appliedSnapshot.IsAssigned() || appliedSnapshot.CombatRole != ECombatRole::Engage
 		|| appliedSnapshot.TargetActor != combatTargetSnapshot.TargetActor
