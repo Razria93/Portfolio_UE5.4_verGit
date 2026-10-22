@@ -49,4 +49,6 @@ Project Stellar · 2026-10-23 · 기준 main `aeb9e7ed` (PR #133 병합)
 
 현재 main의 참여 상한은 Base 2 / Extra 3 / 전체 5 / Alert 6 / Observe 12이며 CVar 도움말과 일치한다. 보존본의 1 / 2 / 3 / 1 / 1 튜닝은 이번 문서 범위에 포함하지 않는다. 과거 사진의 역할 수와 실제 촬영 세션 조회값을 구분한다.
 
-기존 [G4 검증 기록](../../../Resources/CombatHUD/ActionStateIntegration.md)의 2026-10-22 실행 결과는 보존한다. 과거 사용 안내와 검증 결과를 삭제하거나 새 실행으로 바꾸지 않는다. 이번 작업은 문서 8개만 수정하며 코드·에셋·자료 업로드·커밋·PR 생성은 수행하지 않는다.
+기존 [G4 검증 기록](../../../Resources/CombatHUD/ActionStateIntegration.md)의 2026-10-22 실행 결과는 보존한다. 과거 사용 안내와 검증 결과를 삭제하거나 새 실행으로 바꾸지 않는다. 이번 작업의 변경 범위는 문서 8개이며 코드·에셋 변경과 자료 업로드는 포함하지 않는다.
+
+2026-10-23에 최초 C1·C2·C3 영문 커밋을 `docs/portfolio-evidence` 브랜치에 게시하고 [PR #134](https://github.com/Razria93/Portfolio_UE5.4_verGit/pull/134)를 생성했다. 후속 문서 수정과 리뷰·병합 상태는 해당 PR에서 확인한다.
