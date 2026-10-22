@@ -403,14 +403,8 @@ void ACAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 	RecordPerceptionTargetContextMapSizeForAudit();
 	if (!data.bHasLOS)
 	{
-		UBlackboardComponent* blackboard = GetBlackboardComponent();
-		if (blackboard && blackboard->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName) == Actor)
-		{
-			// Abort the actor-following path immediately, before the next BT service tick.
-			blackboard->ClearValue(CAIKey::CombatTarget::Actor.KeyName);
-			StopMovement();
-			RefreshCombatTargetObservation(Actor);
-		}
+		HandleTargetSightLost(Actor);
+		return;
 	}
 	if (IsValid(enemy) && IsValid(enemy->GetEnemyCombatTargetFacingComp()))
 	{
@@ -497,8 +491,7 @@ bool ACAIController::TryGetCurrentSightSample(const AActor* InTarget, FVector& O
 	if (!info || !info->LastSensedStimuli.IsValidIndex(sightID)) return false;
 	const FAIStimulus& sample = info->LastSensedStimuli[sightID];
 	if (!sample.WasSuccessfullySensed() || !FAISystem::IsValidLocation(sample.StimulusLocation)) return false;
-	// A cached LOS flag can outlive the latest sight query. Never sample a live
-	// actor transform between that query and its queued sight-loss callback.
+	// Read the stored observation, never a live transform between sight updates.
 	OutLocation = sample.StimulusLocation;
 	return true;
 }
@@ -507,7 +500,25 @@ bool ACAIController::HasCurrentSightOf(const AActor* InTarget) const
 {
 	if (!IsValid(InTarget) || bPerceptionDisabledForProfiling) return false;
 	const FPerceptionTargetContext* context = PerceptionTargetContextMap.Find(const_cast<AActor*>(InTarget));
-	return context && context->HasTarget() && context->bHasLOS;
+	FVector observedLocation;
+	return context && context->HasTarget() && context->bHasLOS
+		&& TryGetCurrentSightSample(InTarget, observedLocation);
+}
+
+void ACAIController::HandleTargetSightLost(AActor* InTarget)
+{
+	UBlackboardComponent* blackboard = GetBlackboardComponent();
+	if (blackboard && blackboard->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName) == InTarget)
+	{
+		blackboard->ClearValue(CAIKey::CombatTarget::Actor.KeyName);
+		StopMovement();
+		RefreshCombatTargetObservation(InTarget);
+	}
+	ACEnemy* enemy = Cast<ACEnemy>(GetPawn());
+	if (IsValid(enemy) && IsValid(enemy->GetEnemyCombatTargetFacingComp()))
+	{
+		enemy->GetEnemyCombatTargetFacingComp()->SetAIController(this);
+	}
 }
 
 bool ACAIController::TryGetTargetObservationLocation(const AActor* InTarget, FVector& OutLocation) const
@@ -619,7 +630,14 @@ void ACAIController::UpdatePerceptionTargetContextMap()
 			if (!provider) continue;
 
 			FVector observedLocation;
-			if (!TryGetCurrentSightSample(data.TargetActor, observedLocation)) continue;
+			if (!TryGetCurrentSightSample(data.TargetActor, observedLocation))
+			{
+				// Engine expiry can invalidate the sample without a changed-value callback.
+				// Reconcile once, preserving the last observation and reaction ownership.
+				data.bHasLOS = false;
+				HandleTargetSightLost(actorKey);
+				continue;
+			}
 			data.TargetPriority = provider->GetTargetPriority();
 			data.LastSeenTime = nowTime;
 			data.LastKnownLocation = observedLocation;

@@ -139,3 +139,16 @@ BT_Default의 State_Router 마지막 자식에 무조건 실행 가능한 Fallba
 - 공격 중 타깃 이동에 따른 최대 Yaw 변화 0도, 계측한 D1 사망 후 추가 이동·타격 0, P2-A 앵커 표식 Z+10cm를 확인했다.
 - 임시 PIE 하네스와 추가 NavigationSystem 의존성은 제거했다. 결과 수치 기록 후 코드·에셋은 C4 검증본과 동일하며, G3 에셋은 리뷰 전 해시를 유지한다. 원본 104개 변경과 두 보존본은 그대로 유지한다.
 - 최종 미커밋 범위는 C1 12파일, C2 8파일, C3 1파일, C4 2파일이다. 커밋·PR 생성은 수행하지 않았다. Shipping/Cook, 네트워크, 성능 및 사용자 수동 보스전 완주는 별도 검증 범위다.
+
+
+## PR #129 P2 — 실패·만료 Sight 샘플과 LOS 캐시 정합성
+
+`HasCurrentSightOf`는 캐시 LOS와 실제 Perception Sight 샘플의 성공 여부를 함께 확인한다. 주기 감각 갱신에서 실패·만료·누락 샘플이 확인되면 캐시 LOS를 false로 정리하고, 기존 시야 상실 콜백과 같은 액터 BB·이동·Focus 정리 경로를 호출한다. 마지막 관측 위치는 보존하며 리액션 회전 유예와 공격 중 FixedFacing 정책은 유지한다. 에셋·AI 튜닝은 변경하지 않는다.
+
+UE 5.4.4의 일반 실패 자극은 ProcessStimuli 안에서 저장 상태 변경과 콜백 Broadcast가 동기 실행된다. 반면 AgeStimuli는 저장 샘플을 MarkExpired한 후 처리 큐에 등록한다. Sight의 변경 시 알림 조건에서는 이미 false가 된 저장 상태와 만료 자극의 비교가 같아 콜백이 생략될 수 있다. 따라서 이번 보완의 근거는 모든 일반 콜백이 비동기라는 가정이 아니라, 실제 샘플과 콜백 캐시의 불일치다.
+
+새 `Portfolio.AI.ObservedTarget.FailedAndExpiredSightSamples` 회귀는 정상 실패 콜백, 콜백을 의도적으로 받지 않은 실패 샘플, 엔진 AgeStimuli 만료를 구분한다. RegisterStimulus/ProcessStimuli/AgeStimuli로 실제 감각 저장소를 갱신하며, 이전 구현에서는 시야 승인·캐시 정리·액터 BB·수색 요청 등 13개 판정이 실패하고 수정 후 통과했다. 기존 리액션 정책 테스트도 AI 시스템과 실제 성공 샘플을 초기화하도록 보완했다.
+
+기본 Unity Editor 빌드와 전체 Portfolio 자동화 90개(성공 88·기존 경고 동반 성공 2), CDodgeAssets Verify 및 MontageAudit를 재검증한다. PIE는 실제 SciFiMap/BP/AnimBP/BT에서 실행하며, 실패·만료 경계는 런타임 감각 API로 결정적으로 주입한다. 실패 케이스는 해당 콜백만 일시 분리하고, 만료는 AgeStimuli를 호출한다. 자연 감각 재발견, 실제 공격의 시작 보정 차단, 리액션 회전 보존을 확인한다. 임시 계측 코드와 의존성은 검증 후 제거하며 에셋을 저장하지 않는다.
+
+실제 PIE 재검증 통과: boundary-pie-r2 3조건/54판정, g3-pie 4조건/31판정, reaction-pie 3조건/38판정, d1-pie 17조건/518판정, p2a-pie 4조건/60판정.

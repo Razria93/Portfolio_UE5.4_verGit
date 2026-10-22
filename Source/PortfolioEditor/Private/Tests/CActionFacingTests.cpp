@@ -12,6 +12,8 @@
 #include "Component/CActionComponent.h"
 #include "Component/CEnemyCombatTargetFacingComponent.h"
 #include "Controller/CAIController.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISense_Sight.h"
 #include "Component/CActionFeedbackComponent.h"
 #include "Component/CActionOrchestratorComponent.h"
 #include "Component/CBalanceComponent.h"
@@ -171,6 +173,7 @@ bool FReactionSightFacingTest::RunTest(const FString&)
 	for (int32 scenario = 0; scenario < 5; ++scenario)
 	{
 		FFixture f;
+		f.World->CreateAISystem();
 		ACAIController* ai = f.World->SpawnActor<ACAIController>();
 		ai->Possess(f.Player);
 		f.References.BalanceComponent = NewObject<UCBalanceComponent>(f.Player);
@@ -179,6 +182,10 @@ bool FReactionSightFacingTest::RunTest(const FString&)
 		auto& perception = Field<TMap<AActor*, FPerceptionTargetContext>>(ai, TEXT("PerceptionTargetContextMap"));
 		auto& sight = perception.FindOrAdd(f.Target);
 		sight.TargetActor = f.Target; sight.bHasLOS = true;
+		// A cache entry alone no longer authorizes sight; seed engine stimulus storage.
+		auto* perceptionComponent = ai->FindComponentByClass<UAIPerceptionComponent>();
+		perceptionComponent->RegisterStimulus(f.Target, FAIStimulus(*GetDefault<UAISense_Sight>(), 1.f, f.Target->GetActorLocation(), f.Player->GetActorLocation()));
+		perceptionComponent->ProcessStimuli();
 		facing->SetAIController(ai);
 		UCReactionComponent* reaction = f.References.ReactionComponent;
 		Field<EReactionType>(reaction, TEXT("ActiveReactionType")) = EReactionType::Hit;

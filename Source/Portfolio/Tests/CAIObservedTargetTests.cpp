@@ -120,6 +120,71 @@ bool FAIObservedTargetTest::RunTest(const FString& Parameters)
 	world->DestroyWorld(false);
 	return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAISightSampleBoundaryTest, "Portfolio.AI.ObservedTarget.FailedAndExpiredSightSamples",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FAISightSampleBoundaryTest::RunTest(const FString&)
+{
+	TGuardValue<bool> allowScriptExecution(GAllowActorScriptExecutionInEditor, true);
+	// Exercise engine stimulus storage, including expiry without a loss callback.
+	// Scenario 1 deliberately withholds the callback to test cache reconciliation.
+	for (int32 scenario = 0; scenario < 3; ++scenario)
+	{
+		UWorld* world = UWorld::CreateWorld(EWorldType::Game, false);
+		world->CreateAISystem();
+		ACAIController* controller = world->SpawnActor<ACAIController>();
+		ACPlayer* target = world->SpawnActorDeferred<ACPlayer>(ACPlayer::StaticClass(), FTransform::Identity);
+		UBlackboardData* data = LoadObject<UBlackboardData>(nullptr, TEXT("/Game/02_Controller/02_Enemy/AI/Blackboard/BB_Default.BB_Default"));
+		UBlackboardComponent* bb = nullptr;
+		if (!TestTrue(TEXT("Boundary blackboard initialized"), data && controller->UseBlackboard(data, bb))) { world->DestroyWorld(false); return false; }
+		bb->SetValueAsBool(CAIKey::Investigate::bUseInvestigate.KeyName, true);
+		auto* perception = controller->AIPerceptionComp;
+		perception->OnTargetPerceptionUpdated.AddUniqueDynamic(controller, &ACAIController::OnTargetPerceptionUpdated);
+		const FVector observed(200,300,90);
+		FAIStimulus success(*GetDefault<UAISense_Sight>(), 1.f, observed, FVector::ZeroVector);
+		perception->RegisterStimulus(target, success);
+		perception->ProcessStimuli();
+		if (!TestTrue(TEXT("Native success callback populated target context"), controller->PerceptionTargetContextMap.Contains(target))) { world->DestroyWorld(false); return false; }
+		TestTrue(TEXT("Native success callback authorizes current sight"), controller->HasCurrentSightOf(target));
+		auto* participation = world->GetSubsystem<UCWorldSubsystem_CombatParticipation>();
+		FCombatParticipationEvidenceContext evidence;
+		evidence.bHasTargetObservation = true; evidence.ObservedTargetLocation = observed;
+		participation->ReportEvidence(controller, ECombatParticipationSource::Perception, target, evidence);
+		bb->SetValueAsObject(CAIKey::CombatTarget::Actor.KeyName, target);
+		target->SetActorLocation(FVector(9000,-8000,90));
+		if (scenario == 2)
+		{
+			TestTrue(TEXT("Engine ages the successful sample past MaxAge"), perception->AgeStimuli(controller->PerceptionSetup.MaxAge + 1.f));
+			TestTrue(TEXT("Expiry initially leaves callback cache unchanged"), controller->PerceptionTargetContextMap.FindChecked(target).bHasLOS);
+			TestFalse(TEXT("Expired sample denies sight before queued processing"), controller->HasCurrentSightOf(target));
+			perception->ProcessStimuli();
+		}
+		else
+		{
+			if (scenario == 1) perception->OnTargetPerceptionUpdated.RemoveDynamic(controller, &ACAIController::OnTargetPerceptionUpdated);
+			FAIStimulus failure(*GetDefault<UAISense_Sight>(), 0.f, observed, FVector::ZeroVector, FAIStimulus::SensingFailed);
+			perception->RegisterStimulus(target, failure);
+			perception->ProcessStimuli();
+			if (scenario == 1) TestTrue(TEXT("Withheld failure callback leaves cached LOS true"), controller->PerceptionTargetContextMap.FindChecked(target).bHasLOS);
+			else TestFalse(TEXT("Normal failure callback synchronizes cached LOS"), controller->PerceptionTargetContextMap.FindChecked(target).bHasLOS);
+		}
+		FVector sample;
+		TestFalse(TEXT("Engine storage no longer supplies current sight"), controller->TryGetCurrentSightSample(target, sample));
+		TestFalse(TEXT("Failed or expired sample denies actor authorization"), controller->HasCurrentSightOf(target));
+		controller->UpdatePerceptionTargetContextMap();
+		TestFalse(TEXT("Periodic refresh reconciles stale LOS"), controller->PerceptionTargetContextMap.FindChecked(target).bHasLOS);
+		TestNull(TEXT("Reconciliation clears actor-following blackboard"), bb->GetValueAsObject(CAIKey::CombatTarget::Actor.KeyName));
+		TestFalse(TEXT("No hidden combat projection"), controller->RefreshCombatTargetObservation(target));
+		TestTrue(TEXT("Lost sight requests observation-based investigation"), bb->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName));
+		TestEqual(TEXT("Investigation retains sensed anchor"), bb->GetValueAsVector(CAIKey::Perception::LastKnownLocation.KeyName), observed);
+		perception->OnTargetPerceptionUpdated.AddUniqueDynamic(controller, &ACAIController::OnTargetPerceptionUpdated);
+		perception->RegisterStimulus(target, success); perception->ProcessStimuli();
+		TestTrue(TEXT("New success restores current sight after failure or expiry"), controller->HasCurrentSightOf(target));
+		TestTrue(TEXT("New success restores combat projection"), controller->RefreshCombatTargetObservation(target));
+		world->DestroyWorld(false);
+	}
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAIInvestigateReadinessTest, "Portfolio.AI.ObservedTarget.InvestigateWaitsForMovement",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FAIInvestigateReadinessTest::RunTest(const FString&)

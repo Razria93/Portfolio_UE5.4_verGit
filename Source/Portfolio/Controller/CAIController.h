@@ -58,8 +58,10 @@ private:
 	UPROPERTY(Transient)
 	FVector InvestigatedObservationLocation = FVector::ZeroVector;
 	bool TryGetCurrentSightSample(const AActor* InTarget, FVector& OutLocation) const;
+	void HandleTargetSightLost(AActor* InTarget);
 	void BeginInvestigateFromObservation(AActor* InTarget, const struct FCombatParticipationLastKnownTargetContext& InObservation);
 	friend class FAIObservedTargetTest;
+	friend class FAISightSampleBoundaryTest;
 
 public:
 	ACAIController();
