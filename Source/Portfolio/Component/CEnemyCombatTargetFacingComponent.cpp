@@ -7,6 +7,7 @@
 #include "Component/CHealthComponent.h"
 #include "Component/CMovementComponent.h"
 #include "Component/CReactionComponent.h"
+#include "Component/CActionComponent.h"
 #include "Type/CCharacterComponentReferenceTypes.h"
 #include "Type/CCombatTargetTypes.h"
 #include "Type/CHealthTypes.h"
@@ -14,18 +15,26 @@
 #include "Core/Debug/FEnemyCombatTargetFacingDebug.h"
 
 #include "AIController.h"
+#include "Controller/CAIController.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "TimerManager.h"
 
 namespace
 {
+	bool IsComboAttackActive(const AActor* Owner)
+	{
+		const UCActionComponent* action = IsValid(Owner) ? Owner->FindComponentByClass<UCActionComponent>() : nullptr;
+		return IsValid(action) && action->IsActive() && action->GetActiveActionType() == EActionType::ComboAttack;
+	}
+
 	EEnemyCombatTargetFacingFocusDirective ResolveExpectedFocusDirective(const TCHAR* InDecision)
 	{
 		const FString decision = InDecision ? InDecision : TEXT("");
 		if (decision == TEXT("AppliedTargetFacing")) return EEnemyCombatTargetFacingFocusDirective::SetCombatTarget;
 		if (decision == TEXT("BoundFromOwner")) return EEnemyCombatTargetFacingFocusDirective::HoldCurrentFocus;
 		if (decision == TEXT("OwnerControllerMissing")) return EEnemyCombatTargetFacingFocusDirective::ClearGameplayFocus;
+		if (decision == TEXT("DeferredForReactionNoSight")) return EEnemyCombatTargetFacingFocusDirective::ClearGameplayFocus;
 		if (decision.Contains(TEXT("Deferred"))) return EEnemyCombatTargetFacingFocusDirective::HoldCurrentFocus;
 		if (decision == TEXT("ExternalGameplayFocusCleared")) return EEnemyCombatTargetFacingFocusDirective::ClearGameplayFocus;
 		if (decision == TEXT("NoPendingSync") || decision == TEXT("StillDeferredForReaction")) return EEnemyCombatTargetFacingFocusDirective::HoldCurrentFocus;
@@ -36,6 +45,7 @@ namespace
 	{
 		const FString decision = InDecision ? InDecision : TEXT("");
 		if (decision == TEXT("AppliedTargetFacing")) return EEnemyCombatTargetFacingRotationDirective::ControllerDesired;
+		if (decision == TEXT("HoldForAttack")) return EEnemyCombatTargetFacingRotationDirective::FixedFacing;
 		if (decision == TEXT("BoundFromOwner") || decision == TEXT("OwnerControllerMissing")) return EEnemyCombatTargetFacingRotationDirective::HoldCurrentRotation;
 		if (decision.Contains(TEXT("Deferred")) || decision == TEXT("NoPendingSync") || decision == TEXT("StillDeferredForReaction"))
 		{
@@ -175,6 +185,10 @@ FEnemyCombatTargetFacingRuntimeSnapshot UCEnemyCombatTargetFacingComponent::GetR
 	{
 		snapshot.PolicyState = EEnemyCombatTargetFacingPolicyState::SuppressedBalance;
 	}
+	else if (IsComboAttackActive(GetOwner()) && !snapshot.bIsReactionActive)
+	{
+		snapshot.PolicyState = EEnemyCombatTargetFacingPolicyState::HoldForAttack;
+	}
 	else if (!IsValid(snapshot.CombatTargetActor))
 	{
 		snapshot.PolicyState = EEnemyCombatTargetFacingPolicyState::NoCombatTarget;
@@ -186,6 +200,11 @@ FEnemyCombatTargetFacingRuntimeSnapshot UCEnemyCombatTargetFacingComponent::GetR
 	else if (snapshot.bIsReactionActive && snapshot.bDeferredSyncPending)
 	{
 		snapshot.PolicyState = EEnemyCombatTargetFacingPolicyState::HoldForReaction;
+	}
+	else if (const ACAIController* sensoryController = Cast<ACAIController>(snapshot.BoundAIController);
+		sensoryController && !sensoryController->HasCurrentSightOf(snapshot.CombatTargetActor))
+	{
+		snapshot.PolicyState = EEnemyCombatTargetFacingPolicyState::NoCurrentSight;
 	}
 	else
 	{
@@ -430,6 +449,19 @@ void UCEnemyCombatTargetFacingComponent::ApplyCombatTargetFacing(const FCombatTa
 		return;
 	}
 
+	// Action start-facing owns the one-shot correction. Keep the current hit's facing
+	// fixed even if sight or target identity is lost; never follow a hidden actor.
+	// An active reaction retains its existing rotation policy.
+	if (IsComboAttackActive(GetOwner()) && !ShouldDeferCombatTargetFacingForReaction())
+	{
+		CancelDeferredCombatTargetFacingSync();
+		bDeferredCombatTargetFacingSyncPending = false;
+		if (IsValid(AIController_Bound)) AIController_Bound->ClearFocus(EAIFocusPriority::Gameplay);
+		if (IsValid(MovementComponent_Injected)) MovementComponent_Injected->SetMovementRotationMode(EMovementRotationMode::FixedFacing);
+		RecordCombatTargetFacingDecision(InEvent, TEXT("HoldForAttack"), previousRotationMode, previousGameplayFocusActor);
+		return;
+	}
+
 	// Target removal is safety-critical. It must never be delayed by an active reaction,
 	// otherwise the AI can retain an obsolete gameplay focus through a death reaction.
 	if (!IsValid(InSnapshot.TargetActor))
@@ -437,6 +469,22 @@ void UCEnemyCombatTargetFacingComponent::ApplyCombatTargetFacing(const FCombatTa
 		CancelDeferredCombatTargetFacingSync();
 		bDeferredCombatTargetFacingSyncPending = false;
 		ClearCombatTargetFacing(InEvent, TEXT("NoCombatTarget"));
+		return;
+	}
+	const ACAIController* sensoryController = Cast<ACAIController>(AIController_Bound);
+	if (sensoryController && !sensoryController->HasCurrentSightOf(InSnapshot.TargetActor))
+	{
+		if (ShouldDeferCombatTargetFacingForReaction())
+		{
+			// Stop following the hidden actor without taking rotation from the reaction.
+			AIController_Bound->ClearFocus(EAIFocusPriority::Gameplay);
+			bDeferredCombatTargetFacingSyncPending = true;
+			RecordCombatTargetFacingDecision(InEvent, TEXT("DeferredForReactionNoSight"), previousRotationMode, previousGameplayFocusActor);
+			return;
+		}
+		CancelDeferredCombatTargetFacingSync();
+		bDeferredCombatTargetFacingSyncPending = false;
+		ClearCombatTargetFacing(InEvent, TEXT("TargetNotCurrentlySensed"));
 		return;
 	}
 

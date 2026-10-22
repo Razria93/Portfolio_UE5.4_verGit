@@ -660,6 +660,12 @@ void ACEnemy::OnActionTypeChanged(ACharacter* InOwnerCharacter, EActionType InPr
 	{
 		ReleaseCombatActionAuthority();
 	}
+	// Remove persistent focus during a hit and restore the sensory-facing policy
+	// on every formal completion/interruption, independently of BT branch timing.
+	if (IsValid(EnemyCombatTargetFacingComponent))
+	{
+		EnemyCombatTargetFacingComponent->SetAIController(aiController);
+	}
 }
 
 void ACEnemy::OnActionEvent(ACharacter* InOwnerCharacter, EActionType InActionType, int32 InActionIndex, const uint32 InActionRequestSerial, EActionEventType InActionEventType)

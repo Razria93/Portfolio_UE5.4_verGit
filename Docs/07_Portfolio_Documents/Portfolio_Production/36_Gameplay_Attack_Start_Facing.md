@@ -101,3 +101,54 @@ Stellar AnimBP는 `RootMotionFromMontagesOnly`이고 플레이어 SpringArm은 P
 6. 실제 충돌 Notify/HitStop/블렌딩을 포함한 콤보 연결의 타격감은 PIE에서 확인한다. 해당 조합과 Enemy AI Focus의 시각적 체감은 자동 테스트로 완료했다고 간주하지 않는다.
 
 소스·테스트·플레이어 BP는 위 커밋으로 분리했다. 푸시·PR 생성·머지는 수행하지 않았다.
+
+## 2026-10-08 Enemy 공격 회전 정책 보완
+
+위 최초 구현 기록과 달리, Enemy는 ComboAttack 실행 중 Gameplay Focus를 해제하고 FixedFacing을 사용한다. 공통 시작 보정은 각 타 시작 시 한 번만 적용하고, 이후 플레이어 이동을 지속 추적하지 않는다. 타깃/시야 상실도 현재 타의 고정 방향을 해제하지 않는다. 정식 Action 종료·중단 시 감각 상태에 따라 추적 또는 이동 방향 회전으로 복귀한다. 사망·Balance 억제와 Reaction 회전 소유권은 기존 우선순위를 유지한다.
+
+ACAIController가 소유한 캐릭터의 시작 보정은 실행 직전 현재 시야도 확인한다. 감각 기억에 타깃 객체가 남아 있어도 숨은 대상의 실제 위치로 보정하지 않는다. 플레이어 시작 보정 규칙은 그대로 유지한다.
+
+BT_Default의 State_Router 마지막 자식에 무조건 실행 가능한 Fallback_ReevaluateIntent(Wait 0.2초, 편차 0)를 둔다. 공격 중 시야 상실로 Engage 진입 조건이 무효화되어도 상위 서비스가 다음 상태를 평가할 실행 시간을 확보한다. 다음 상태 선택은 기존 UpdateAIIntentState가 담당한다.
+
+공격 정상 종료는 Complete Notify가 담당한다. CAction::OnMontageEnd의 자연 종료/예상하지 못한 중단 처리는 관찰 로그이며 자동 Complete 폴백으로 바꾸지 않는다. 재현된 Engage 정지는 Complete 누락이 아니라 정상 종료 후 상태 분기 공백이었다.
+
+
+## 2026-10-22 G3 AI 핵심 분리 검증
+
+- 기준은 D1과 P2-A가 머지된 main `c413528c`이다. 참여 인원, 시야 거리, BT_Engage 공격 빈도, 순찰 도착 반경, EQS 범위/선택 방식은 main 설정을 유지한다.
+- BP_CEnemy는 ComboAttack 0/1/2의 `bFaceCombatTargetOnStart`만 활성화한다. 세 공격의 기존 몽타주 참조와 CharacterMovement의 MaxStepHeight는 유지한다.
+- 실제 PIE에서 감지 갱신 사이에 플레이어를 시야 밖으로 이동시키자 마지막 관측 위치가 숨은 액터 좌표로 바뀌는 문제가 재현되었다. 감지 콜백은 `FAIStimulus::StimulusLocation`, 주기적 갱신은 Perception에 저장된 현재 Sight 샘플을 사용하도록 보완했다. 같은 조건의 PIE와 지연된 감지 샘플 회귀 테스트로 확인한다.
+- G3 자동화 검증에는 관측 위치 유지·재발견·동일 기억 재수색 방지와 AI 공격 방향 정책·시야 게이트가 포함된다. 에디터 테스트가 네이티브 AIController를 생성하므로 PortfolioEditor에 AIModule의 명시적 private 의존성을 추가한다.
+- PIE 검증은 실제 SciFiMap과 BP/AnimBP/BT를 실행하고 임시 액터 배치와 시점별 행동 요청으로 조건을 재현한다. 수동 보스전 전체 플레이를 검증했다는 의미는 아니다. 임시 검증 코드는 최종 변경에 포함하지 않는다.
+- 에셋 회귀 검증은 BT의 Dead/HitReact 직렬화 값과 native enum의 일치, 무조건 fallback 연결, ComboAttack 0/1/2의 방향 옵션·유효한 몽타주 유지를 확인한다.
+
+## G3 리뷰 후 경계 조건 보완
+
+리액션 실행 중 현재 시야를 잃었을 때는 숨은 타깃의 Gameplay Focus만 즉시 해제한다. 회전 모드는 리액션 동안 유지하고 종료·중단 시 현재 감각 상태로 다시 동기화한다. 종료 전에 재발견해도 리액션이 끝날 때까지 추적 회전을 복구하지 않는다. 사망·Balance 억제·타깃 제거의 기존 안전 정리는 이 유예보다 우선한다. 관찰 스냅샷은 이 상태를 `HoldForReaction`으로, Focus 지시는 해제, 회전 지시는 유지로 표시한다.
+
+기존 G3 PIE에서 사용한 `bShouldInvestigate || bIsInvestigating` 판정은 수색 요청만으로 통과할 수 있었다. 강화한 실제 BT 검증에서는 Equip 중 이동이 잠긴 상태로 수색에 진입하면 `BT_Investigate` fallback이 요청을 지워 버리는 조건을 재현했다. `UpdateAIIntentState`는 아직 시작하지 않은 수색을 이동 가능 시점까지 Idle에서 기다리게 한다. 대기 중 요청과 관측 앵커를 유지하며, 이동이 풀리면 기존 수색 트리로 진입한다. 이미 실행 중인 수색과 사망·리액션·Balance 우선순위는 유지한다. BT 에셋과 이동·감각·EQS 튜닝 수치는 바꾸지 않는다.
+
+수색 검증은 요청 여부와 실제 실행을 구분한다. 실제 `bIsInvestigating` 전환, 활성 `BT_Investigate`/MoveTo 노드, 관측 앵커를 향한 경로 목적지, 캐릭터 변위 및 재발견 후 중단을 함께 확인한다. 리액션 PIE는 실제 피해 경로와 기존 피격 몽타주를 사용하되 감각 이벤트를 관찰할 시간을 확보하기 위해 해당 런타임 몽타주의 재생 속도만 일시 조정한다. 검증용 배치·계측 코드는 에셋으로 저장하거나 최종 소스에 포함하지 않는다.
+
+## G3 리뷰 보완 최종 검증 결과
+
+- C1~C4 누적 경계에서 기본 Unity 활성·Adaptive Unity 비활성의 PortfolioEditor Win64 Development 빌드, 전체 Portfolio 자동화, CDodgeAssets Verify, CExecutionMontageAudit를 각각 통과했다.
+- 자동화 통과 수: C1 85개, C2 88개, C3 88개, C4 89개. 최종 89개 중 성공 87개·경고 동반 성공 2개, 실패·미실행 0개다. 기존 머티리얼 참조 누락과 cleanup 관련 경고를 성공과 구분한다.
+- 실제 PIE: G3 4조건 31개, 리액션 경계 3조건 38개, D1 17조건 518개, P2-A 4조건 60개 판정 통과.
+- native 수색은 StartInvestigate 상태 전환, BT_Investigate의 MoveTo, 관측 앵커와 수평 오차 0cm인 경로 목적지, 100cm 초과 변위 및 재발견 후 하위 트리 이탈까지 확인했다. EQS 전체 경유점 완주나 수색 시간 소진 전체를 검증했다는 뜻은 아니다.
+- 공격 중 타깃 이동에 따른 최대 Yaw 변화 0도, 계측한 D1 사망 후 추가 이동·타격 0, P2-A 앵커 표식 Z+10cm를 확인했다.
+- 임시 PIE 하네스와 추가 NavigationSystem 의존성은 제거했다. 결과 수치 기록 후 코드·에셋은 C4 검증본과 동일하며, G3 에셋은 리뷰 전 해시를 유지한다. 원본 104개 변경과 두 보존본은 그대로 유지한다.
+- 최종 미커밋 범위는 C1 12파일, C2 8파일, C3 1파일, C4 2파일이다. 커밋·PR 생성은 수행하지 않았다. Shipping/Cook, 네트워크, 성능 및 사용자 수동 보스전 완주는 별도 검증 범위다.
+
+
+## PR #129 P2 — 실패·만료 Sight 샘플과 LOS 캐시 정합성
+
+`HasCurrentSightOf`는 캐시 LOS와 실제 Perception Sight 샘플의 성공 여부를 함께 확인한다. 주기 감각 갱신에서 실패·만료·누락 샘플이 확인되면 캐시 LOS를 false로 정리하고, 기존 시야 상실 콜백과 같은 액터 BB·이동·Focus 정리 경로를 호출한다. 마지막 관측 위치는 보존하며 리액션 회전 유예와 공격 중 FixedFacing 정책은 유지한다. 에셋·AI 튜닝은 변경하지 않는다.
+
+UE 5.4.4의 일반 실패 자극은 ProcessStimuli 안에서 저장 상태 변경과 콜백 Broadcast가 동기 실행된다. 반면 AgeStimuli는 저장 샘플을 MarkExpired한 후 처리 큐에 등록한다. Sight의 변경 시 알림 조건에서는 이미 false가 된 저장 상태와 만료 자극의 비교가 같아 콜백이 생략될 수 있다. 따라서 이번 보완의 근거는 모든 일반 콜백이 비동기라는 가정이 아니라, 실제 샘플과 콜백 캐시의 불일치다.
+
+새 `Portfolio.AI.ObservedTarget.FailedAndExpiredSightSamples` 회귀는 정상 실패 콜백, 콜백을 의도적으로 받지 않은 실패 샘플, 엔진 AgeStimuli 만료를 구분한다. RegisterStimulus/ProcessStimuli/AgeStimuli로 실제 감각 저장소를 갱신하며, 이전 구현에서는 시야 승인·캐시 정리·액터 BB·수색 요청 등 13개 판정이 실패하고 수정 후 통과했다. 기존 리액션 정책 테스트도 AI 시스템과 실제 성공 샘플을 초기화하도록 보완했다.
+
+기본 Unity Editor 빌드와 전체 Portfolio 자동화 90개(성공 88·기존 경고 동반 성공 2), CDodgeAssets Verify 및 MontageAudit를 재검증한다. PIE는 실제 SciFiMap/BP/AnimBP/BT에서 실행하며, 실패·만료 경계는 런타임 감각 API로 결정적으로 주입한다. 실패 케이스는 해당 콜백만 일시 분리하고, 만료는 AgeStimuli를 호출한다. 자연 감각 재발견, 실제 공격의 시작 보정 차단, 리액션 회전 보존을 확인한다. 임시 계측 코드와 의존성은 검증 후 제거하며 에셋을 저장하지 않는다.
+
+실제 PIE 재검증 통과: boundary-pie-r2 3조건/54판정, g3-pie 4조건/31판정, reaction-pie 3조건/38판정, d1-pie 17조건/518판정, p2a-pie 4조건/60판정.

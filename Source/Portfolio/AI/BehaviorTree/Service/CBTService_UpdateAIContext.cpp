@@ -194,6 +194,10 @@ EContextBuildResult UCBTService_UpdateAIContext::BuildCombatTargetContext(APawn*
 	if (!appliedSnapshot.bIsApplied) return EContextBuildResult::NoData;
 	if (appliedSnapshot.TargetActor != combatTargetSnapshot.TargetActor) return EContextBuildResult::NoData;
 	if (appliedSnapshot.CombatTargetRevision != combatTargetSnapshot.Revision) return EContextBuildResult::NoData;
+	ACAIController* controller = Cast<ACAIController>(InOwnerPawn->GetController());
+	// Assignment retains identity during sensory memory; the BT actor projection is
+	// only usable while sensed. Otherwise existing Investigate moves to a snapshot.
+	if (!controller || !controller->RefreshCombatTargetObservation(appliedSnapshot.TargetActor)) return EContextBuildResult::NoData;
 
 	OutAIContext.CombatParticipation.CombatTargetActor = appliedSnapshot.TargetActor;
 	OutAIContext.CombatParticipation.CombatTargetRevision = appliedSnapshot.CombatTargetRevision;
@@ -237,7 +241,9 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 	bool bInAlertRange = InBlackboardComp->GetValueAsBool(CAIKey::Alert::bInAlertRange.KeyName);
 
 	FVector ownerLocation = InOwnerPawn->GetActorLocation();
-	FVector targetLocation = rangeTarget->GetActorLocation();
+	FVector targetLocation;
+	const ACAIController* controller = Cast<ACAIController>(InOwnerPawn->GetController());
+	if (!controller || !controller->TryGetTargetObservationLocation(rangeTarget, targetLocation)) return EContextBuildResult::NoData;
 
 	float distanceToTarget = FVector::Dist(ownerLocation, targetLocation);
 
@@ -255,7 +261,7 @@ EContextBuildResult UCBTService_UpdateAIContext::ComputeAlertRangeContext(APawn*
 
 	InOutAIContext.TargetRange.TargetActor = rangeTarget;
 	InOutAIContext.TargetRange.DistanceToTarget = distanceToTarget;
-	InOutAIContext.TargetRange.bInAlertRange = bInAlertRange;
+	InOutAIContext.TargetRange.bInAlertRange = bInAlertRange && controller->HasCurrentSightOf(rangeTarget);
 
 	return EContextBuildResult::Success;
 }
@@ -326,6 +332,11 @@ void UCBTService_UpdateAIContext::UpdatePerceptionContext(UBlackboardComponent* 
 	CAIBlackboardValueHelper::SetObjectIfChanged(InBlackboardComp, CAIKey::Perception::PerceivedTargetActor.KeyName, InAIContext.Perception.TargetActor);
 	CAIBlackboardValueHelper::SetIntIfChanged(InBlackboardComp, CAIKey::Perception::PerceivedTargetPriority.KeyName, InAIContext.Perception.TargetPriority);
 	CAIBlackboardValueHelper::SetBoolIfChanged(InBlackboardComp, CAIKey::Perception::bHasLOS.KeyName, InAIContext.Perception.bHasLOS);
+	// An unseen candidate's cached sight sample must not overwrite an active
+	// investigation anchor (possibly supplied by a newer hit observation).
+	if (!InAIContext.Perception.bHasLOS &&
+		(InBlackboardComp->GetValueAsBool(CAIKey::Investigate::bShouldInvestigate.KeyName)
+		|| InBlackboardComp->GetValueAsBool(CAIKey::Investigate::bIsInvestigating.KeyName))) return;
 	CAIBlackboardValueHelper::SetFloatIfChanged(InBlackboardComp, CAIKey::Perception::LastSeenTime.KeyName, InAIContext.Perception.LastSeenTime);
 	CAIBlackboardValueHelper::SetVectorIfChanged(InBlackboardComp, CAIKey::Perception::LastKnownLocation.KeyName, InAIContext.Perception.LastKnownLocation);
 }

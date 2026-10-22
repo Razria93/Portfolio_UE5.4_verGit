@@ -31,6 +31,7 @@
 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Controller/CAIController.h"
 
 // Construction
 
@@ -1131,6 +1132,10 @@ void UCActionComponent::ApplyPendingStartFacing()
 
 	if (!IsValid(target) || target->IsActorBeingDestroyed() || target == OwnerCharacter_Injected) { skip(TEXT("TargetUnavailable")); return; }
 	if (!IsValid(CombatTargetComp_Injected) || CombatTargetComp_Injected->GetCombatTargetActor() != target) { skip(TEXT("TargetChanged")); return; }
+	// AI target identity can survive as memory after sight loss. Never read that
+	// actor's live location for an attack correction without current sight.
+	if (const ACAIController* aiController = Cast<ACAIController>(OwnerCharacter_Injected->GetController());
+		aiController && !aiController->HasCurrentSightOf(target)) { skip(TEXT("TargetNotCurrentlySensed")); return; }
 
 	const UCHealthComponent* targetHealth = target->FindComponentByClass<UCHealthComponent>();
 	if (IsValid(targetHealth) && !targetHealth->IsAlive()) { skip(TEXT("TargetDead")); return; }

@@ -135,6 +135,7 @@ bool UCEnemyCombatParticipationComponent::TryGetCurrentEngageAssignment(FCombatT
 	OutAssignmentRevision = 0;
 
 	if (!AppliedSnapshot.IsAssigned() || AppliedSnapshot.CombatRole != ECombatRole::Engage) return false;
+	if (!IsValid(AIController_Injected) || !AIController_Injected->HasCurrentSightOf(AppliedSnapshot.TargetActor)) return false;
 	if (!IsValid(CombatTargetComponent_Injected)) return false;
 
 	const FCombatTargetSnapshot currentSnapshot = CombatTargetComponent_Injected->GetCombatTargetSnapshot();

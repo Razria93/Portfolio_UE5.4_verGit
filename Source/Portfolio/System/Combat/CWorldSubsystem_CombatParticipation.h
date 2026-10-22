@@ -126,6 +126,7 @@ public:
 	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;
 	bool HasActiveEvidenceForParticipationPair(const class ACAIController* InParticipant, const class AActor* InTarget) const;
 	FCombatParticipationDebugSnapshot BuildDebugSnapshot() const;
+	bool TryGetLastKnownTargetContext(const ACAIController* InParticipant, const AActor* InTarget, FCombatParticipationLastKnownTargetContext& OutContext) const;
 
 	// Assignment Lock
 	bool AcquireAssignmentLock(class ACAIController* InParticipant, const FCombatParticipationAssignmentLock& InAssignmentLock);

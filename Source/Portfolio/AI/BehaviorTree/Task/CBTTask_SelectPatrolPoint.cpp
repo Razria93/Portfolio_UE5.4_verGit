@@ -51,16 +51,19 @@ EBTNodeResult::Type UCBTTask_SelectPatrolPoint::ExecuteTask(UBehaviorTreeCompone
 
 	case EPatrolMode::Loop:
 	{
-		if (currentIndex < 0) currentIndex = 0;
-
-		nextIndex = (currentIndex + 1) % count;
+		nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % count;
 
 		break;
 	}
 
 	case EPatrolMode::Reverse:
 	{
-		if (currentIndex < 0) currentIndex = 0;
+		if (currentIndex < 0)
+		{
+			nextIndex = 0;
+			bPatrolReverse = false;
+			break;
+		}
 
 		nextIndex = bPatrolReverse ? currentIndex - 1 : currentIndex + 1;
 

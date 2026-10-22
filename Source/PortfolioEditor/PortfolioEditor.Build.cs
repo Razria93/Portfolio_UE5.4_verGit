@@ -21,5 +21,8 @@ public class PortfolioEditor : ModuleRules
 			"RenderCore",
 			"RHI",
 		});
+
+		// Editor regression tests instantiate native AI controllers.
+		PrivateDependencyModuleNames.Add("AIModule");
 	}
 }
