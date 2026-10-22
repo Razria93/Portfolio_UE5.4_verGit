@@ -24,5 +24,6 @@ public class PortfolioEditor : ModuleRules
 
 		// Editor regression tests instantiate native AI controllers.
 		PrivateDependencyModuleNames.Add("AIModule");
+		PrivateDependencyModuleNames.AddRange(new string[] { "MovieSceneCapture", "ImageWrapper", "Slate", "AudioMixer" });
 	}
 }
