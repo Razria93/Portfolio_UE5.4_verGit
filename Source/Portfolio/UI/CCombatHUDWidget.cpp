@@ -35,7 +35,6 @@ namespace
 	// Action Colors
 	const FLinearColor ActionUnavailable(0.48f, 0.52f, 0.54f, 0.45f);
 	const FLinearColor ActionActive(0.4f, 0.95f, 1.f, 1.f);
-	const FLinearColor ExecutionReady(1.f, 0.85f, 0.38f, 1.f);
 	const FLinearColor ParrySuccess(1.f, 0.9f, 0.4f, 1.f);
 	const FLinearColor PerfectDodgeActive(1.f, 0.18f, 0.28f, 1.f);
 
@@ -117,6 +116,8 @@ UCCombatHUDWidget::UCCombatHUDWidget(const FObjectInitializer& ObjectInitializer
 
 	static ConstructorHelpers::FObjectFinder<UTexture2D> execution(TEXT("/Game/08_UI/CombatHUD/T_HUDActionExecution"));
 	ExecutionIcon = execution.Object;
+	static ConstructorHelpers::FObjectFinder<UTexture2D> lethalExecution(TEXT("/Game/08_UI/CombatHUD/T_HUDActionExecutionLethal"));
+	LethalExecutionIcon = lethalExecution.Object;
 
 	static ConstructorHelpers::FObjectFinder<UTexture2D> guardBreak(TEXT("/Game/08_UI/CombatHUD/T_HUDActionGuardBreak"));
 	GuardBreakIcon = guardBreak.Object;
@@ -464,7 +465,15 @@ void UCCombatHUDWidget::UpdateActionPresentation()
 		CounterImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.CounterRush));
 
 	if (ExecutionImage)
-		ExecutionImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.Execution, ExecutionReady));
+	{
+		const bool bShowOutcome = ViewData.Actions.Execution == EHUDActionState::Ready
+			|| ViewData.Actions.Execution == EHUDActionState::Active;
+		UTexture2D* icon = bShowOutcome && ViewData.Actions.ExecutionOutcome == EExecutionOutcomePolicy::Lethal
+			&& LethalExecutionIcon ? LethalExecutionIcon.Get() : ExecutionIcon.Get();
+		if (ExecutionImage->GetBrush().GetResourceObject() != icon)
+			ExecutionImage->SetBrushFromTexture(icon);
+		ExecutionImage->SetColorAndOpacity(ResolveActionTint(ViewData.Actions.Execution));
+	}
 }
 
 // Resource Presentation

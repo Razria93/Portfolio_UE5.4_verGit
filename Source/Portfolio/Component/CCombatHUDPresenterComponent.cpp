@@ -281,8 +281,12 @@ void UCCombatHUDPresenterComponent::RefreshActions()
 
 			EExecutionAvailabilityBlock block;
 			if (session.bHasActiveSession && session.bIsSourceRole)
+			{
 				next.Execution = EHUDActionState::Active;
-			else if (LockAssist.IsValid() && LockAssist->IsTargetLockActive() && Execution->QueryCombatExecutionAvailability(block))
+				next.ExecutionOutcome = session.CollaborationContext.OutcomePolicy;
+			}
+			else if (LockAssist.IsValid() && LockAssist->IsTargetLockActive()
+				&& Execution->QueryCombatExecutionAvailability(block, next.ExecutionOutcome))
 				next.Execution = EHUDActionState::Ready;
 		}
 

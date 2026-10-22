@@ -5,6 +5,7 @@
 #include "Type/CCombatHUDTypes.h"
 #include "Type/CCombatResultTypes.h"
 #include "Engine/World.h"
+#include "Engine/Texture2D.h"
 #include "UI/CCombatHUDWidget.h"
 #include "UI/CCombatHUDGaugeLayout.h"
 #include "Blueprint/WidgetTree.h"
@@ -177,7 +178,7 @@ bool FHUDWidgetConstructionTest::RunTest(const FString& Parameters)
 		if (!resource) return;
 		if (resource->GetName() == TEXT("T_HUDActionGuard")) TestEqual(TEXT("Ready guard opaque"), image->GetColorAndOpacity().A, 1.f);
 		if (resource->GetName() == TEXT("T_HUDActionCounter")) TestTrue(TEXT("Counter stays pending"), image->GetColorAndOpacity().A < 1.f);
-		if (resource->GetName() == TEXT("T_HUDActionExecution")) TestEqual(TEXT("Ready execution highlighted"), image->GetColorAndOpacity(), FLinearColor(1.f, 0.85f, 0.38f, 1.f));
+		if (resource->GetName() == TEXT("T_HUDActionExecution")) TestEqual(TEXT("Ready execution uses normal ink"), image->GetColorAndOpacity(), FLinearColor(0.9f, 0.91f, 0.86f, 1.f));
 	});
 	int32 partialAfterActionUpdate = 0;
 	widget->WidgetTree->ForEachWidget([&](UWidget* child) {
@@ -262,7 +263,7 @@ bool FHUDWidgetLifecycleTest::RunTest(const FString& Parameters)
 			TestEqual(TEXT("Target name retained"), widget->TargetName->GetText().ToString(), FString(TEXT("REBUILD TARGET")));
 			TestEqual(TEXT("Parry highlight takes priority over active guard"), widget->GuardImage->GetColorAndOpacity(), FLinearColor(1.f, 0.9f, 0.4f, 1.f));
 			TestEqual(TEXT("Dodge ready uses normal ink"), widget->DodgeImage->GetColorAndOpacity(), FLinearColor(0.9f, 0.91f, 0.86f, 1.f));
-			TestEqual(TEXT("Execution ready uses gold"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(1.f, 0.85f, 0.38f, 1.f));
+			TestEqual(TEXT("Execution ready uses normal ink"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(0.9f, 0.91f, 0.86f, 1.f));
 			TestEqual(TEXT("Counter readiness survives reconstruction"), widget->CounterImage->GetColorAndOpacity(), FLinearColor(0.9f, 0.91f, 0.86f, 1.f));
 			if (pass > 0) TestTrue(TEXT("New action image replaces previous reference"), widget->GuardImage.Get() != previousGuard.Get());
 			previousGuard = widget->GuardImage;
@@ -446,6 +447,47 @@ bool FHUDPresenterLifecycleTest::RunTest(const FString& Parameters)
 	player->OnEndPlay.Broadcast(player, EEndPlayReason::Destroyed);
 	TestFalse(TEXT("Player EndPlay clears HUD"), presenter->GetViewData().bHasPlayer);
 	world->DestroyWorld(false);
+	return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHUDExecutionIconTest, "Portfolio.UI.CombatHUD.ExecutionIcons",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FHUDExecutionIconTest::RunTest(const FString& Parameters)
+{
+	UCCombatHUDWidget* widget = NewObject<UCCombatHUDWidget>();
+	TestNotNull(TEXT("Default standard texture is connected"), widget->ExecutionIcon.Get());
+	TestNotNull(TEXT("Default lethal texture is connected"), widget->LethalExecutionIcon.Get());
+	TestTrue(TEXT("Default execution textures are distinct"), widget->ExecutionIcon != widget->LethalExecutionIcon);
+	widget->ExecutionIcon = NewObject<UTexture2D>(widget);
+	widget->LethalExecutionIcon = NewObject<UTexture2D>(widget);
+	widget->Initialize();
+	widget->TakeWidget();
+	if (!TestNotNull(TEXT("Execution image"), widget->ExecutionImage.Get())) return false;
+	FHUDActionViewData standard;
+	standard.Execution = EHUDActionState::Ready;
+	standard.ExecutionOutcome = EExecutionOutcomePolicy::Standard;
+	FHUDActionViewData lethal = standard;
+	lethal.ExecutionOutcome = EExecutionOutcomePolicy::Lethal;
+	TestFalse(TEXT("Kind-only change invalidates view equality"), standard == lethal);
+	widget->ApplyActionViewData(standard);
+	TestTrue(TEXT("Standard ready uses original icon"), widget->ExecutionImage->GetBrush().GetResourceObject() == widget->ExecutionIcon);
+	TestEqual(TEXT("Standard ready is white"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(.9f, .91f, .86f, 1.f));
+	widget->ApplyActionViewData(lethal);
+	TestTrue(TEXT("Lethal ready uses dedicated icon"), widget->ExecutionImage->GetBrush().GetResourceObject() == widget->LethalExecutionIcon);
+	TestEqual(TEXT("Lethal ready is also white"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(.9f, .91f, .86f, 1.f));
+	lethal.Execution = EHUDActionState::Active;
+	widget->ApplyActionViewData(lethal);
+	TestTrue(TEXT("Active preserves lethal icon"), widget->ExecutionImage->GetBrush().GetResourceObject() == widget->LethalExecutionIcon);
+	TestEqual(TEXT("Active execution is cyan"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(.4f, .95f, 1.f, 1.f));
+	lethal.Execution = EHUDActionState::Unavailable;
+	widget->ApplyActionViewData(lethal);
+	TestTrue(TEXT("Unavailable hides even a stale lethal kind"), widget->ExecutionImage->GetBrush().GetResourceObject() == widget->ExecutionIcon);
+	TestEqual(TEXT("Unavailable execution is grey"), widget->ExecutionImage->GetColorAndOpacity(), FLinearColor(.48f, .52f, .54f, .45f));
+	widget->LethalExecutionIcon = nullptr;
+	lethal.Execution = EHUDActionState::Ready;
+	widget->ApplyActionViewData(lethal);
+	TestTrue(TEXT("Missing lethal art falls back safely"), widget->ExecutionImage->GetBrush().GetResourceObject() == widget->ExecutionIcon);
+	widget->ApplyActionViewData(standard);
+	TestTrue(TEXT("Target kind can return to standard"), widget->ExecutionImage->GetBrush().GetResourceObject() == widget->ExecutionIcon);
 	return true;
 }
 #endif

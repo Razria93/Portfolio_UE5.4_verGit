@@ -17,6 +17,7 @@ class PORTFOLIO_API UCCombatHUDWidget : public UUserWidget
 	GENERATED_BODY()
 
 	friend class FHUDWidgetLifecycleTest;
+	friend class FHUDExecutionIconTest;
 
 public:
 	// Construction
@@ -54,6 +55,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
 	TObjectPtr<UTexture2D> ExecutionIcon;
+
+	// Standard/unavailable retain ExecutionIcon. Missing lethal art falls back to it.
+	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")
+	TObjectPtr<UTexture2D> LethalExecutionIcon;
 
 	// Action State Icons
 	UPROPERTY(EditDefaultsOnly, Category="Combat HUD|Style")

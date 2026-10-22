@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Type/CExecutionCollaborationTypes.h"
 #include "CCombatHUDTypes.generated.h"
 
 UENUM(BlueprintType)
@@ -84,6 +85,9 @@ struct FHUDActionViewData
 	EHUDActionState Execution = EHUDActionState::Unavailable;
 
 	UPROPERTY(BlueprintReadOnly)
+	EExecutionOutcomePolicy ExecutionOutcome = EExecutionOutcomePolicy::None;
+
+	UPROPERTY(BlueprintReadOnly)
 	bool bParrySuccess = false;
 
 	bool operator==(const FHUDActionViewData& Other) const
@@ -93,6 +97,7 @@ struct FHUDActionViewData
 			&& CounterRush == Other.CounterRush
 			&& bPerfectDodgeActive == Other.bPerfectDodgeActive
 			&& Execution == Other.Execution
+			&& ExecutionOutcome == Other.ExecutionOutcome
 			&& bParrySuccess == Other.bParrySuccess;
 	}
 };
