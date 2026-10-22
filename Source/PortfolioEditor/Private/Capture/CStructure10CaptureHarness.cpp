@@ -1,6 +1,7 @@
 // Editor-only, transient capture fixture. No animation, Notify or action data edits.
 #include "CoreMinimal.h"
 #include "CReplayCompletion.h"
+#include "CReplayOutcomeObserver.h"
 #include "CRecordingLifecycle.h"
 #include "Core/Debug/FDebugOverlayFocusRuntimeHelper.h"
 #include "DrawDebugHelpers.h"
@@ -60,6 +61,7 @@ struct FSession
     TWeakObjectPtr<UWorld> World;
     TWeakObjectPtr<ACPlayer> Player;
     TWeakObjectPtr<ACEnemy> Fixture;
+    TStrongObjectPtr<UCReplayOutcomeObserver> OutcomeObserver;
     TWeakObjectPtr<ACEnemy> Second;
     int32 DebugStep = 0;
     double DebugEpoch = 0;
@@ -143,6 +145,7 @@ static void Stop(bool bWorldCleanup = false)
     Session->Log(bWorldCleanup ? TEXT("STOP WorldCleanup") : TEXT("STOP CompletedOrManual"));
     if (Session->World.IsValid()) Session->World->GetTimerManager().ClearTimer(Session->Timer);
     FWorldDelegates::OnWorldCleanup.Remove(Session->Cleanup);
+    if (Session->OutcomeObserver.IsValid()) Session->OutcomeObserver->Unbind();
     if (!bWorldCleanup && Session->ObserverCamera.IsValid())
     {
         // Restore only a view target still owned by this fixture. Never rotate the
@@ -295,6 +298,16 @@ static bool CreateFixture()
             if (Other == Enemy) continue;
             Other->SetActorHiddenInGame(true);
             Other->SetActorEnableCollision(false);
+            // Spawned weapons are independent actors; hiding the pawn is not enough.
+            TArray<AActor*> Attached;
+            Other->GetAttachedActors(Attached, true, true);
+            for (TActorIterator<AActor> Owned(S.World.Get()); Owned; ++Owned)
+                if (Owned->GetOwner() == Other) Attached.AddUnique(*Owned);
+            for (AActor* Child : Attached)
+            {
+                Child->SetActorHiddenInGame(true);
+                Child->SetActorEnableCollision(false);
+            }
             if (AAIController* OtherAI = Cast<AAIController>(Other->GetController()))
             {
                 OtherAI->StopMovement();
@@ -369,6 +382,8 @@ static bool CreateFixture()
             Health->GetCurrentHP(), Health->GetMaxHP(), *GetNameSafe(Focus->GetDebugOverlayFocusActor()),
             *Focus->GetDebugOverlayFocusDriverText(), *Focus->GetDebugOverlayFocusSourceText()));
     }
+    S.OutcomeObserver.Reset(NewObject<UCReplayOutcomeObserver>(GetTransientPackage()));
+    if (!S.OutcomeObserver->Bind(Player, Enemy)) { S.Log(TEXT("FAIL OutcomeObserverMissingComponents")); return false; }
     return StartExecutionObserver();
 }
 
@@ -707,9 +722,16 @@ static void Tick()
     if (S.Stage == 5 && Now >= S.Deadline && !A->IsActive())
     {
         S.bUnequippedObserved = W->GetCurrentWeaponType() == EWeaponType::Unarmed;
-        const FString GoalError = PortfolioReplay::ValidateScenarioGoal(S.Mode, S.bEquippedObserved, S.bUnequippedObserved, S.MaxObservedComboIndex);
+        const FString GoalError = PortfolioReplay::ValidateScenarioGoal(S.Mode, S.bEquippedObserved, S.bUnequippedObserved, S.MaxObservedComboIndex,
+            S.OutcomeObserver.IsValid() ? S.OutcomeObserver->Outcome : PortfolioReplay::FScenarioOutcome());
         if (!GoalError.IsEmpty()) { S.Log(TEXT("FAIL ") + GoalError); Stop(); return; }
         S.Log(FString::Printf(TEXT("GOAL_VERIFIED Equipped=%d Unequipped=%d MaxComboIndex=%d"), S.bEquippedObserved, S.bUnequippedObserved, S.MaxObservedComboIndex));
+        if (S.OutcomeObserver.IsValid())
+        {
+            const auto& O = S.OutcomeObserver->Outcome;
+            S.Log(FString::Printf(TEXT("OUTCOME_VERIFIED Hits=%d Commit=%d SourceComplete=%d TargetComplete=%d Interrupted=%d"),
+                O.AcceptedDamageHits, O.bExecutionCommitted, O.bSourceCompleted, O.bTargetCompleted, O.bExecutionInterrupted));
+        }
         S.Log(TEXT("TAKE_COMPLETE; stop recorder at/before subsequent fixture cleanup"));
         bTakeCompleted = true;
         if (GEngine) GEngine->Exec(World, TEXT("Portfolio.Capture09.RecordStop"));

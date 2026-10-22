@@ -7,13 +7,29 @@
 
 namespace PortfolioReplay
 {
+struct FScenarioOutcome
+{
+    int32 AcceptedDamageHits = 0;
+    bool bExecutionCommitted = false;
+    bool bSourceCompleted = false;
+    bool bTargetCompleted = false;
+    bool bExecutionInterrupted = false;
+};
+
 // Record the requested gameplay goal separately from recorder file completion.
-inline FString ValidateScenarioGoal(const FString& Mode, bool bEquipped, bool bUnequipped, int32 MaxComboIndex)
+inline FString ValidateScenarioGoal(const FString& Mode, bool bEquipped, bool bUnequipped, int32 MaxComboIndex, const FScenarioOutcome& Outcome = FScenarioOutcome())
 {
     if (Mode == TEXT("equip") && (!bEquipped || !bUnequipped)) return TEXT("EquipmentTransitionNotObserved");
     const int32 RequiredHits = Mode == TEXT("combo2") ? 2 :
         ((Mode == TEXT("combo") || Mode == TEXT("combo3")) ? 3 : 0);
     if (RequiredHits > 0 && MaxComboIndex < RequiredHits - 1) return TEXT("ComboGoalNotReached");
+    if (Mode == TEXT("hit") && Outcome.AcceptedDamageHits <= 0) return TEXT("HitNotObserved");
+    if (Mode == TEXT("execution"))
+    {
+        if (Outcome.bExecutionInterrupted) return TEXT("ExecutionInterrupted");
+        if (!Outcome.bExecutionCommitted || !Outcome.bSourceCompleted || !Outcome.bTargetCompleted)
+            return TEXT("ExecutionCompletionNotObserved");
+    }
     return FString();
 }
 

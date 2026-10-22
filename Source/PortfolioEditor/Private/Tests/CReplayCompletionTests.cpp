@@ -44,7 +44,22 @@ bool FReplayScenarioGoalTest::RunTest(const FString&)
     }
     TestFalse(TEXT("First hit alone is not combo2"), ValidateScenarioGoal(TEXT("combo2"), false, false, 0).IsEmpty());
     TestTrue(TEXT("Second combo action observed"), ValidateScenarioGoal(TEXT("combo2"), false, false, 1).IsEmpty());
-    TestTrue(TEXT("Execution uses its own session path, not a combo goal"), ValidateScenarioGoal(TEXT("execution"), false, false, -1).IsEmpty());
+    PortfolioReplay::FScenarioOutcome O;
+    auto Goal = [&](const TCHAR* Mode) { return ValidateScenarioGoal(Mode, false, false, 3, O).IsEmpty(); };
+    TestFalse(TEXT("A complete combo without damage is not a hit take"), Goal(TEXT("hit")));
+    O.AcceptedDamageHits = 1;
+    TestTrue(TEXT("Accepted damage from the player to the fixture proves a hit"), Goal(TEXT("hit")));
+    TestFalse(TEXT("Idle or cancelled execution is not completed execution"), Goal(TEXT("execution")));
+    O.bSourceCompleted = O.bTargetCompleted = true;
+    TestFalse(TEXT("Terminals without a commit fail"), Goal(TEXT("execution")));
+    O.bExecutionCommitted = true;
+    TestTrue(TEXT("Committed execution with both normal terminals succeeds"), Goal(TEXT("execution")));
+    O.bSourceCompleted = false;
+    TestFalse(TEXT("Commit without source completion fails"), Goal(TEXT("execution")));
+    O.bSourceCompleted = true; O.bTargetCompleted = false;
+    TestFalse(TEXT("Commit without target completion fails"), Goal(TEXT("execution")));
+    O.bTargetCompleted = true; O.bExecutionInterrupted = true;
+    TestFalse(TEXT("An interrupted take cannot become successful later"), Goal(TEXT("execution")));
     return true;
 }
 #endif
