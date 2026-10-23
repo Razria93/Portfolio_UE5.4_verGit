@@ -26,6 +26,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BrainComponent.h"
 #include "NavigationSystem.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "HAL/IConsoleManager.h"
 
 namespace
@@ -73,6 +74,48 @@ ACAIController::ACAIController()
 	check(AIPerceptionComp);
 
 	InitializeSightConfig();
+}
+
+FAIRequestID ACAIController::RequestMove(const FAIMoveRequest& MoveRequest, FNavPathSharedPtr Path)
+{
+	// Super can synchronously finish the previous request. Capture the new context afterwards.
+	const FAIRequestID request = Super::RequestMove(MoveRequest, Path);
+	ParticipationMoveRequest = request;
+	ParticipationMoveTarget.Reset();
+	ParticipationMoveRevision = 0;
+	if (request.IsValid() && GetWorld())
+	{
+		if (const auto* participation = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatParticipation>())
+		{
+			const auto assignment = participation->GetAssignment(this);
+			if (assignment.CombatRole == ECombatRole::Engage)
+			{
+				ParticipationMoveTarget = assignment.TargetActor;
+				ParticipationMoveRevision = assignment.AssignmentRevision;
+			}
+		}
+	}
+	return request;
+}
+
+void ACAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+	if (RequestID.IsValid() && RequestID == ParticipationMoveRequest)
+	{
+		const auto target = ParticipationMoveTarget;
+		const int32 revision = ParticipationMoveRevision;
+		ParticipationMoveRequest = FAIRequestID::InvalidRequest;
+		ParticipationMoveTarget.Reset();
+		if (GetWorld() && IsValid(GetPawn()))
+		{
+			if (auto* participation = GetWorld()->GetSubsystem<UCWorldSubsystem_CombatParticipation>())
+			{
+				participation->ReportEngageMoveResult(this, target.Get(), revision,
+					Result.Code == EPathFollowingResult::Blocked, GetPawn()->GetActorLocation());
+			}
+		}
+	}
+	Super::OnMoveCompleted(RequestID, Result);
 }
 
 void ACAIController::BeginPlay()

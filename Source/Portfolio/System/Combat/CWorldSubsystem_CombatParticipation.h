@@ -89,6 +89,19 @@ private:
 	TMap<class ACAIController*, FEngageAssignmentContext> AssignmentByParticipant;
 
 private:
+	struct FBlockedEngageState
+	{
+		TWeakObjectPtr<AActor> Target;
+		int32 Revision = 0;
+		int32 Failures = 0;
+		FVector LastLocation = FVector::ZeroVector;
+		float LastFailureTime = 0.f;
+		float RetryAfter = 0.f;
+	};
+	TMap<TWeakObjectPtr<ACAIController>, FBlockedEngageState> BlockedEngageByParticipant;
+	void PruneBlockedEngageState();
+	bool IsEngageRetryDelayed(ACAIController* InParticipant, AActor* InTarget) const;
+
 	// Assignment Lock State
 	TMap<class ACAIController*, FCombatParticipationAssignmentLock> AssignmentLockByParticipant;
 
@@ -121,6 +134,9 @@ public:
 	void SetParticipationSuppressed(class ACAIController* InParticipant, bool bSuppressed);
 	void SoftReleaseParticipationForParticipant(class ACAIController* InParticipant);
 	void HardReleaseParticipationForParticipant(class ACAIController* InParticipant);
+
+	// Request-scoped native path completion; reassignment is deferred to the next rebuild.
+	void ReportEngageMoveResult(ACAIController* InParticipant, AActor* InTarget, int32 InRevision, bool bBlocked, const FVector& InLocation);
 
 	// Query
 	FEngageAssignmentContext GetAssignment(const class ACAIController* InCAIController) const;

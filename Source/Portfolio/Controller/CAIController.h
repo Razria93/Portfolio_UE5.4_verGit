@@ -65,6 +65,14 @@ private:
 
 public:
 	ACAIController();
+	FAIRequestID RequestMove(const FAIMoveRequest& MoveRequest, FNavPathSharedPtr Path) override;
+	void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
+
+private:
+	FAIRequestID ParticipationMoveRequest;
+	TWeakObjectPtr<AActor> ParticipationMoveTarget;
+	int32 ParticipationMoveRevision = 0;
+
 
 protected:
 	// Lifecycle
