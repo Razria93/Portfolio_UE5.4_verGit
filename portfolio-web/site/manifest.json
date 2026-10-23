@@ -1,0 +1,464 @@
+{
+  "version": "stellar-portfolio-20261023-v41",
+  "repository": "Razria93/Portfolio_UE5.4_verGit",
+  "base_url": "https://razria93.github.io/Portfolio_UE5.4_verGit/",
+  "source_deck_sha256": "ae8bbde246de58f741ad76336358b2209078c974d15155a81b6e94809c7ef30f",
+  "main_video_count": 14,
+  "supplementary_video_count": 1,
+  "document_count": 9,
+  "videos": [
+    {
+      "id": "general-hit",
+      "number": "01",
+      "title": "일반 타격",
+      "description": "공격 실행부터 충돌 판정과 피격 반응까지 연결되는 흐름입니다.",
+      "pages": [
+        14,
+        15
+      ],
+      "asset": "stellar-general-hit-20261023.mp4",
+      "path": "media/stellar-general-hit-20261023.mp4",
+      "viewer": "videos/general-hit/",
+      "sha256": "8bc941768455b358acebcd6e81a4717f7aa7de7d1abdcff7ccad1cdfb4a6580f",
+      "bytes": 16661263,
+      "seconds": 62.0,
+      "supplementary": false
+    },
+    {
+      "id": "execution-transition",
+      "number": "02",
+      "title": "실행 결정·중단·전환",
+      "description": "실행 요청을 판단하고 기존 실행의 중단과 전환을 적용하는 구조입니다.",
+      "pages": [
+        18,
+        19
+      ],
+      "asset": "stellar-execution-transition-20261023.mp4",
+      "path": "media/stellar-execution-transition-20261023.mp4",
+      "viewer": "videos/execution-transition/",
+      "sha256": "a6a5ec7acff4a83eae24f57ca810bf0dbfae64bbd0a5c2372b20dd0f15ac7c67",
+      "bytes": 13404176,
+      "seconds": 68.45,
+      "supplementary": false
+    },
+    {
+      "id": "guard-parry",
+      "number": "03",
+      "title": "가드·패링",
+      "description": "가드와 패링의 피해 판정 및 반응을 확인합니다.",
+      "pages": [
+        16,
+        17
+      ],
+      "asset": "stellar-guard-parry-20261023.mp4",
+      "path": "media/stellar-guard-parry-20261023.mp4",
+      "viewer": "videos/guard-parry/",
+      "sha256": "17d2b3677590776136c9c1a65119ccc725ac68814dfc51c8adcfe8457c0337fd",
+      "bytes": 17556320,
+      "seconds": 73.45,
+      "supplementary": false
+    },
+    {
+      "id": "dodge-counter",
+      "number": "04",
+      "title": "회피와 카운터 러시",
+      "description": "일반 회피와 퍼펙트 회피 이후 카운터 러시를 보여줍니다.",
+      "pages": [
+        4
+      ],
+      "asset": "stellar-dodge-counter-20261023.mp4",
+      "path": "media/stellar-dodge-counter-20261023.mp4",
+      "viewer": "videos/dodge-counter/",
+      "sha256": "31bc0297bb66e428745cc639d952bc74003656c33e087cd9cd4f3ad19628fc60",
+      "bytes": 22692160,
+      "seconds": 59.2,
+      "supplementary": false
+    },
+    {
+      "id": "balance-execution",
+      "number": "05",
+      "title": "균형 붕괴와 처형",
+      "description": "균형 붕괴 이후 처형으로 이어지는 플레이와 처리 흐름입니다.",
+      "pages": [
+        4
+      ],
+      "asset": "stellar-balance-execution-20261023.mp4",
+      "path": "media/stellar-balance-execution-20261023.mp4",
+      "viewer": "videos/balance-execution/",
+      "sha256": "b40e5ba14595a361a8694708c62f952e07318a274780aaf60f5c3f9d6224ac3f",
+      "bytes": 34205367,
+      "seconds": 89.4,
+      "supplementary": false
+    },
+    {
+      "id": "combat-participation",
+      "number": "06",
+      "title": "다수 적 전투 참여",
+      "description": "같은 플레이어를 대상으로 여러 적이 전투에 참여하는 모습을 확인합니다.",
+      "pages": [
+        4,
+        20,
+        21
+      ],
+      "asset": "stellar-combat-participation-20261023.mp4",
+      "path": "media/stellar-combat-participation-20261023.mp4",
+      "viewer": "videos/combat-participation/",
+      "sha256": "3166bb31787fe1f81475cb1dc1146613d716f9a599102f6ef14d07478ffce4f1",
+      "bytes": 47335397,
+      "seconds": 113.05,
+      "supplementary": false
+    },
+    {
+      "id": "ai-behavior",
+      "number": "07",
+      "title": "AI 행동",
+      "description": "무력화·소멸을 포함한 AI 행동과 상태 전환을 설명합니다.",
+      "pages": [
+        21
+      ],
+      "asset": "stellar-ai-behavior-20261023.mp4",
+      "path": "media/stellar-ai-behavior-20261023.mp4",
+      "viewer": "videos/ai-behavior/",
+      "sha256": "3131ca3b25017463e9c38bb594997683a19598dddc1749d5700ff3d1a2730ed2",
+      "bytes": 185074029,
+      "seconds": 312.71666666666664,
+      "supplementary": false
+    },
+    {
+      "id": "direction-knockback",
+      "number": "08",
+      "title": "공격 방향과 넉백",
+      "description": "공격 방향 보정과 넉백의 플레이 사례 및 처리 구조입니다.",
+      "pages": [
+        23
+      ],
+      "asset": "stellar-direction-knockback-20261023.mp4",
+      "path": "media/stellar-direction-knockback-20261023.mp4",
+      "viewer": "videos/direction-knockback/",
+      "sha256": "303968a3a208caa9c92e8dbe0fc896b2bcae9c3825956fd4ca3a0882059cce56",
+      "bytes": 185492119,
+      "seconds": 141.8,
+      "supplementary": false
+    },
+    {
+      "id": "weapon-socket-pivot",
+      "number": "09A",
+      "title": "무기 소켓·피벗",
+      "description": "무기 부착 소켓과 피벗의 적용 및 복원을 설명합니다.",
+      "pages": [
+        4
+      ],
+      "asset": "stellar-weapon-socket-pivot-20261023.mp4",
+      "path": "media/stellar-weapon-socket-pivot-20261023.mp4",
+      "viewer": "videos/weapon-socket-pivot/",
+      "sha256": "ddd94832e92fa90353c9c1d2b9267eddbd4b009afcfcdf08f71af81dd35e858b",
+      "bytes": 143558728,
+      "seconds": 88.81666666666666,
+      "supplementary": false
+    },
+    {
+      "id": "combat-feedback",
+      "number": "09B",
+      "title": "전투 피드백 구조",
+      "description": "저스트 회피의 발광·복원, 화면 피드백과 사망 연출을 설명합니다.",
+      "pages": [
+        4
+      ],
+      "asset": "stellar-combat-feedback-20261023.mp4",
+      "path": "media/stellar-combat-feedback-20261023.mp4",
+      "viewer": "videos/combat-feedback/",
+      "sha256": "2d83d8b0facda640ad352a8b04b75fb129d016c194bc4cb172a1e5d58e5f1df4",
+      "bytes": 30884585,
+      "seconds": 80.25,
+      "supplementary": false
+    },
+    {
+      "id": "debug-overlay",
+      "number": "10",
+      "title": "디버그 도구",
+      "description": "전투 상태와 이벤트를 화면 패널 및 월드 도형으로 관찰합니다.",
+      "pages": [
+        22,
+        23
+      ],
+      "asset": "stellar-debug-overlay-20261023.mp4",
+      "path": "media/stellar-debug-overlay-20261023.mp4",
+      "viewer": "videos/debug-overlay/",
+      "sha256": "cd7c8619eb9dd88b3a588f4c7b2cb52b835561423f223c4d9506392bcf310e53",
+      "bytes": 51925218,
+      "seconds": 78.0,
+      "supplementary": false
+    },
+    {
+      "id": "guard-hit-transition",
+      "number": "11",
+      "title": "가드 종료 중 피격 전환",
+      "description": "가드 종료 중 피격 반응이 누락되던 문제와 실행 전환을 설명합니다.",
+      "pages": [
+        11,
+        12
+      ],
+      "asset": "stellar-guard-hit-transition-20261023.mp4",
+      "path": "media/stellar-guard-hit-transition-20261023.mp4",
+      "viewer": "videos/guard-hit-transition/",
+      "sha256": "2481d577b5f8e87e1ed42b9d5e2c208736438e91983365688dae85e28b5c9798",
+      "bytes": 4759269,
+      "seconds": 27.96666666666667,
+      "supplementary": false
+    },
+    {
+      "id": "hit-target-ttl",
+      "number": "12",
+      "title": "피격 기반 교전·TTL",
+      "description": "피격 반응 종료 후 추적을 유지하기 위한 TTL 처리 사례입니다.",
+      "pages": [
+        8,
+        9,
+        10
+      ],
+      "asset": "stellar-hit-target-ttl-20261023.mp4",
+      "path": "media/stellar-hit-target-ttl-20261023.mp4",
+      "viewer": "videos/hit-target-ttl/",
+      "sha256": "777b8b6ad6f5428d7e2a11bbc1b6e58f1956074194ba2c54431ea39bf95af434",
+      "bytes": 4829032,
+      "seconds": 35.8,
+      "supplementary": false
+    },
+    {
+      "id": "ai-perception",
+      "number": "13",
+      "title": "AI 인지 지연",
+      "description": "적 인식 지연의 수정 전후를 보여주는 시연입니다. 반복 측정의 상세 조건은 검증 문서에서 확인할 수 있습니다.",
+      "pages": [
+        5,
+        6,
+        7
+      ],
+      "asset": "stellar-ai-perception-20261023.mp4",
+      "path": "media/stellar-ai-perception-20261023.mp4",
+      "viewer": "videos/ai-perception/",
+      "sha256": "abdbca17aeaa22441cec498f48d3a21814282da4ef1778d4dd673b7a13aeab4b",
+      "bytes": 14164509,
+      "seconds": 74.0,
+      "supplementary": false
+    },
+    {
+      "id": "guard-pie",
+      "number": "보충",
+      "title": "가드 종료·피격·재진입 PIE",
+      "description": "자동 반복 검사와 구분되는 실제 PIE의 가드 종료·피격·재진입 기록입니다.",
+      "pages": [
+        13
+      ],
+      "asset": "stellar-guard-pie-20261023.mp4",
+      "path": "media/stellar-guard-pie-20261023.mp4",
+      "viewer": "videos/guard-pie/",
+      "sha256": "9fabc985e4fc22a39cbd8827320985426a996d64bc8e4339c679468707800f78",
+      "bytes": 13756854,
+      "seconds": 16.37,
+      "supplementary": true
+    }
+  ],
+  "documents": [
+    {
+      "title": "Project Stellar 자료 안내",
+      "path": "docs/stellar_resource_catalog_20261021/index.html"
+    },
+    {
+      "title": "외부 에셋 출처 및 구현 범위",
+      "path": "docs/stellar_resource_catalog_20261021/assets.html"
+    },
+    {
+      "title": "구현 구조 상세",
+      "path": "docs/stellar_resource_catalog_20261021/structure.html"
+    },
+    {
+      "title": "출처 확인 기준과 기여 구분",
+      "path": "docs/stellar_asset_matching_20261022/final_review.html"
+    },
+    {
+      "title": "에셋 가공과 원본 연결 사례",
+      "path": "docs/stellar_asset_matching_20261022/index.html"
+    },
+    {
+      "title": "프로젝트 에셋명과 공식 상품명",
+      "path": "docs/stellar_asset_matching_20261022/product_links.html"
+    },
+    {
+      "title": "감지 대상을 줄인 뒤에도 모든 AI가 플레이어를 인식했습니다",
+      "path": "docs/stellar_troubleshooting_verification_20261022/ai.html"
+    },
+    {
+      "title": "최신 피격의 종료를 기준으로 TTL이 시작됩니다",
+      "path": "docs/stellar_troubleshooting_verification_20261022/ttl.html"
+    },
+    {
+      "title": "가드 종료 중 피격부터 다음 가드까지 이어집니다",
+      "path": "docs/stellar_troubleshooting_verification_20261022/guard.html"
+    }
+  ],
+  "portfolio": [
+    {
+      "path": "portfolio/files/project-stellar-20261023-v41.pdf",
+      "sha256": "3023fd976e83a829d30267d9ea5c2748163cfe2cbf00242c88b2b38accccdacf",
+      "bytes": 2745775
+    },
+    {
+      "path": "portfolio/files/project-stellar-20261023-v41.pptx",
+      "sha256": "e7226269545ca806e9f5f46f2949bb8aada40ab4c26bb1f8174918189980378d",
+      "bytes": 36768698
+    }
+  ],
+  "supporting_files": [
+    {
+      "path": "docs/stellar_asset_matching_20261022/document.css",
+      "sha256": "fc00b0a84e7c043d868279156899a3cbf83d7811a6ee8dcbe9c05f0b632d81f4",
+      "bytes": 8138
+    },
+    {
+      "path": "docs/stellar_asset_matching_20261022/final_review.html",
+      "sha256": "05bcf8fcc2ad4deb848b90908dd1d7a24a1f29f9e28f27d31f899e2e86ac0976",
+      "bytes": 4777
+    },
+    {
+      "path": "docs/stellar_asset_matching_20261022/index.html",
+      "sha256": "8ff127d69ffc44c92463db62cd43e756865541f0cac98fa2cff506f214dce84e",
+      "bytes": 7405
+    },
+    {
+      "path": "docs/stellar_asset_matching_20261022/portfolio-public.css",
+      "sha256": "2c2f6fccc4121e03b8777a2fa385a3c2fe1084b0493ab901558c4c2672e7771a",
+      "bytes": 8040
+    },
+    {
+      "path": "docs/stellar_asset_matching_20261022/product_links.html",
+      "sha256": "10ecf43995802d7193b165eb91323a7bb29b03599f561873d5e0eb0eed035ddd",
+      "bytes": 9706
+    },
+    {
+      "path": "docs/stellar_resource_catalog_20261021/assets.html",
+      "sha256": "4fa5fac22fdd25e13f829cf8b51f0b2f5b5e9ec8d44f7c32f02663e583f925f5",
+      "bytes": 16857
+    },
+    {
+      "path": "docs/stellar_resource_catalog_20261021/document.css",
+      "sha256": "fc00b0a84e7c043d868279156899a3cbf83d7811a6ee8dcbe9c05f0b632d81f4",
+      "bytes": 8138
+    },
+    {
+      "path": "docs/stellar_resource_catalog_20261021/index.html",
+      "sha256": "4b792585cae2a008b65a5fed34872a14a1172a876ea3c7038a68a49a74ac92e5",
+      "bytes": 3893
+    },
+    {
+      "path": "docs/stellar_resource_catalog_20261021/portfolio-public.css",
+      "sha256": "2c2f6fccc4121e03b8777a2fa385a3c2fe1084b0493ab901558c4c2672e7771a",
+      "bytes": 8040
+    },
+    {
+      "path": "docs/stellar_resource_catalog_20261021/structure.html",
+      "sha256": "b5833946e32225ab5cea5b95071d473dff220f1c3fa59a98424385696c0b7dc4",
+      "bytes": 77803
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/ai.html",
+      "sha256": "44eb3bf1a1b805346694d4a1323c08b18816e7db4e5e3b826059ecb7bb5d7c51",
+      "bytes": 6303
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/assets/document.css",
+      "sha256": "fc00b0a84e7c043d868279156899a3cbf83d7811a6ee8dcbe9c05f0b632d81f4",
+      "bytes": 8138
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_18_runs.json",
+      "sha256": "1c1b3ae5db395d12965da3bf7ab2bfde2522d92ee81bcc9d8a21d18f46ba9d64",
+      "bytes": 12058
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_aggregates.json",
+      "sha256": "b17f794a6d59312164d2e7a02f1f674456388ba060d37fa4f978560fb12db9e9",
+      "bytes": 4167
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_environment.json",
+      "sha256": "44b5e8200ca0e8cacdbc901b33cb360e4852ece3d97e496ca38fa32c1a2a47d0",
+      "bytes": 13968
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_placement_camera.json",
+      "sha256": "849ecf4903c182022e74ab77e0da348787f7e209ab13d9c1570b65ec7f868aff",
+      "bytes": 1468
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_24_conditions.csv",
+      "sha256": "ad8db4b984201d4bbe0e48afd85a9f8be2e725ff3441034c62db96d6875ea4e6",
+      "bytes": 596
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_hit.jpg",
+      "sha256": "92785afe0728d1c03a909bfe88f829cc74b575325c9c722d0e8c5c6d5eb9827b",
+      "bytes": 455621
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_out.jpg",
+      "sha256": "78001da59b0d7de6dbe41524365777a0cf355d7ebd20cfcb6e7743e814eedcdc",
+      "bytes": 529639
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_pie_checks.json",
+      "sha256": "fa5fab0d755cd99f784f322c178a7c49490d5e0f0b74e16fe265b15f5837545f",
+      "bytes": 3165
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_pie_events.json",
+      "sha256": "f61d31b8483cb31e4a05fecb4d3bdf2acb4657c4a964f54db05b0c58d1b67b0f",
+      "bytes": 28922
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_tests.json",
+      "sha256": "87caeedec2eee53fbc30379c35469b20c19f0159a0a770954f47749915d83567",
+      "bytes": 11371
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_after_diagnostic.jpg",
+      "sha256": "9a693f00d92ed36dc7bc73710b1de033e5aef75d5156aa84c2d1f7382e637004",
+      "bytes": 187187
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_before_diagnostic.jpg",
+      "sha256": "5c359320a6fe61e6c0ce94d0ed75acd233fab506c137a7061bda5a98a1989f33",
+      "bytes": 186751
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_candidate_tests.json",
+      "sha256": "d0a9104359c507bbb992d49c6c6ee64454bbb0f5866c59798ea6e39efe21fb07",
+      "bytes": 22106
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_events.csv",
+      "sha256": "3605178079e65130e96b5ffd9045240ac2bc785206a3c230830e63bb0abd2a3a",
+      "bytes": 3346
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_tests.json",
+      "sha256": "096ee09a7cb3d4d2de8634576deb1af0c90be2b3c527f8bfcc1072ec22b1de74",
+      "bytes": 18120
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/guard.html",
+      "sha256": "609fab3835d985350d25ae281d8bc1deb40bd9f753c432434c1b886cb80d1b54",
+      "bytes": 7166
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/preview/overview_current.png",
+      "sha256": "567d696d610955692ead8dab7bdb0c5cad2f8f97010f24599958978f0dfdaea7",
+      "bytes": 64307
+    },
+    {
+      "path": "docs/stellar_troubleshooting_verification_20261022/ttl.html",
+      "sha256": "74ffd910485d1b60d01814fcbbf508bf6f824f061147fc67661bd0b414a31aff",
+      "bytes": 6685
+    }
+  ]
+}

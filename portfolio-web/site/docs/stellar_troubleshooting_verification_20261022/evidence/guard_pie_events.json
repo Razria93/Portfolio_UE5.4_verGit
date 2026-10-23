@@ -1,0 +1,342 @@
+[
+  {
+    "line": 1418,
+    "text": "[2026.10.21-05.15.51:884][146]Custom_FLog: Display: [Movement|Component|GaitApplied] Owner=BP_CPlayer_Stellar_C_0 | Component=Movement | Gait=EMovementGait::Run | Speed=600.000"
+  },
+  {
+    "line": 1675,
+    "text": "[2026.10.21-05.16.02:395][746]LogStructure02Capture: Display: [Capture02] Mode=parry World=10.551753 Shot=0.000000 Phase=0 START; playrate/action data unchanged; optional execution observer is view-target only; recorder must already run"
+  },
+  {
+    "line": 1676,
+    "text": "[2026.10.21-05.16.02:397][747]LogStructure02Capture: Display: [Capture02] Mode=parry World=10.617785 Shot=0.066032 Phase=0 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Idle Index=-1 Gen=0 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Idle HP=5000.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1679,
+    "text": "[2026.10.21-05.16.05:347][918]Custom_FLog: Display: [Action|Executor|MontagePlayed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Equip_0 | Duration=1.667 | ActionType=EActionType::Equip | ActionIndex=0 | ExecutorKey=CAction_Equip | Montage=AS_Combat_Idle_Start_Stellar_N_Montage | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1680,
+    "text": "[2026.10.21-05.16.05:347][918]Custom_FLog: Display: [Action|Executor|Started] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Equip_0 | ActionType=EActionType::Equip | ActionIndex=0 | ExecutorKey=CAction_Equip | Montage=AS_Combat_Idle_Start_Stellar_N_Montage | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1681,
+    "text": "[2026.10.21-05.16.05:347][918]Custom_FLog: Display: [Action|Component|StartApplied] Owner=BP_CPlayer_Stellar_C_0 | Decision=EExecutionDecision::Accept | Relationship=EExecutionRelationship::Independent | ApplyMode=EExecutionApplyMode::Start | RejectReason=EActionRequestRejectReason::None | ActionType=EActionType::Equip | ActionIndex=0"
+  },
+  {
+    "line": 1683,
+    "text": "[2026.10.21-05.16.05:347][918]LogStructure02Capture: Display: [Capture02] Mode=parry World=13.568076 Shot=3.016323 Phase=1 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Equip Index=0 Gen=1 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Action HP=5000.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=AS_Combat_Idle_Start_Stellar_N_Montage Playing=1"
+  },
+  {
+    "line": 1684,
+    "text": "[2026.10.21-05.16.06:776][  1]LogStructure02Capture: Display: [Capture02] Mode=parry World=14.997571 Shot=4.445818 Phase=1 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Equip Index=0 Gen=1 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Action HP=5000.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1686,
+    "text": "[2026.10.21-05.16.06:983][ 13]Custom_FLog: Display: [Action|Executor|Completed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Equip_0 | ActionType=EActionType::Equip | ActionIndex=0 | ExecutorKey=CAction_Equip | Montage=AS_Combat_Idle_Start_Stellar_N_Montage | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1687,
+    "text": "[2026.10.21-05.16.06:983][ 13]LogStructure02Capture: Display: [Capture02] Mode=parry World=15.203973 Shot=4.652220 Phase=1 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::None Index=-1 Gen=0 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Idle HP=5000.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1688,
+    "text": "[2026.10.21-05.16.07:017][ 15]Custom_FLog: Display: [Action|Executor|MontageIgnored] Reason=StaleMontageEnd | Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Equip_0 | Montage=AS_Combat_Idle_Start_Stellar_N_Montage | Serial=1 | ActiveSerial=1"
+  },
+  {
+    "line": 1689,
+    "text": "[2026.10.21-05.16.07:861][ 64]Custom_FLog: Display: [Movement|Component|GaitApplied] Owner=BP_CPlayer_Stellar_C_0 | Component=Movement | Gait=EMovementGait::Run | Speed=600.000"
+  },
+  {
+    "line": 1691,
+    "text": "[2026.10.21-05.16.07:861][ 64]Custom_FLog: Display: [Action|Executor|MontagePlayed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Duration=0.833 | ActionType=EActionType::Guard | ActionIndex=1 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sword_Start_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1692,
+    "text": "[2026.10.21-05.16.07:861][ 64]Custom_FLog: Display: [Action|Executor|Started] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=1 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sword_Start_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1693,
+    "text": "[2026.10.21-05.16.07:861][ 64]Custom_FLog: Display: [Movement|Component|GaitApplied] Owner=BP_CPlayer_Stellar_C_0 | Component=Movement | Gait=EMovementGait::Walk | Speed=400.000"
+  },
+  {
+    "line": 1694,
+    "text": "[2026.10.21-05.16.07:861][ 64]Custom_FLog: Display: [Action|Component|StartApplied] Owner=BP_CPlayer_Stellar_C_0 | Decision=EExecutionDecision::Accept | Relationship=EExecutionRelationship::Independent | ApplyMode=EExecutionApplyMode::Start | RejectReason=EActionRequestRejectReason::None | ActionType=EActionType::Guard | ActionIndex=1"
+  },
+  {
+    "line": 1696,
+    "text": "[2026.10.21-05.16.07:861][ 64]LogStructure02Capture: Display: [Capture02] Mode=parry World=16.080863 Shot=5.529110 Phase=1 INPUT initial Guard EActionRequestResultType::Started"
+  },
+  {
+    "line": 1697,
+    "text": "[2026.10.21-05.16.07:877][ 65]LogStructure02Capture: Display: [Capture02] Mode=parry World=16.097709 Shot=5.545956 Phase=2 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=1 Gen=2 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Action HP=5000.0 Wants=1 Pose=1 Guard=0 Parry=1 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=M_GuardIdle_Sword_Start_Stellar Playing=1"
+  },
+  {
+    "line": 1698,
+    "text": "[2026.10.21-05.16.08:030][ 74]LogStructure02Capture: Display: [Capture02] Mode=parry World=16.250595 Shot=5.698842 Phase=2 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=1 Gen=2 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Action HP=5000.0 Wants=1 Pose=1 Guard=1 Parry=0 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=M_GuardIdle_Sword_Start_Stellar Playing=1"
+  },
+  {
+    "line": 1699,
+    "text": "[2026.10.21-05.16.08:047][ 75]LogStructure02Capture: Display: [Capture02] Mode=parry World=16.267306 Shot=5.715553 Phase=2 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=1 Gen=2 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Action HP=5000.0 Wants=1 Pose=1 Guard=1 Parry=0 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1701,
+    "text": "[2026.10.21-05.16.08:236][ 86]Custom_FLog: Display: [Action|Executor|Completed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=1 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sword_Start_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1703,
+    "text": "[2026.10.21-05.16.08:237][ 86]LogStructure02Capture: Display: [Capture02] Mode=parry World=16.457508 Shot=5.905754 Phase=2 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::None Index=-1 Gen=0 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Idle HP=5000.0 Wants=1 Pose=1 Guard=1 Parry=0 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1704,
+    "text": "[2026.10.21-05.16.08:253][ 87]Custom_FLog: Display: [Action|Executor|MontageIgnored] Reason=StaleMontageEnd | Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Montage=M_GuardIdle_Sword_Start_Stellar | Serial=1 | ActiveSerial=1"
+  },
+  {
+    "line": 1705,
+    "text": "[2026.10.21-05.16.09:865][180]LogStructure02Capture: Display: [Capture02] Mode=parry World=18.084981 Shot=7.533228 Phase=2 CHECK initial GuardHold established"
+  },
+  {
+    "line": 1713,
+    "text": "[2026.10.21-05.16.09:868][180]LogStructure02Capture: Display: [Capture02] Mode=parry World=18.084981 Shot=7.533228 Phase=2 FIXTURE Controller=BP_CAIController_C_1 ControllerClass=BP_CAIController_C DefaultAIClass=BP_CAIController_C"
+  },
+  {
+    "line": 1716,
+    "text": "[2026.10.21-05.16.09:868][180]LogStructure02Capture: Display: [Capture02] Mode=parry World=18.084981 Shot=7.533228 Phase=2 ISOLATED BACKGROUND RemovedBackgroundEnemies=1; disposable PIE world only; release participation slots"
+  },
+  {
+    "line": 1717,
+    "text": "[2026.10.21-05.16.09:870][180]LogStructure02Capture: Display: [Capture02] Mode=parry World=18.084981 Shot=7.533228 Phase=2 FIXTURE ONLY: HP=200.0/200.0; AI runs normally; DebugFocus=BP_CEnemy_C_0 Driver=PlayerTargetLive Source=FocusComponent.PlayerTargetFocus; actual weapon collision will produce Hit"
+  },
+  {
+    "line": 1718,
+    "text": "[2026.10.21-05.16.09:870][180]LogStructure02Capture: Display: [Capture02] Mode=parry World=18.084981 Shot=7.533228 Phase=3 AI_DIAGNOSTIC Controller=BP_CAIController_C_1 BrainRunning=1 BB=BlackboardComponent Target=None Perceived=None LOS=0 Role=0 Intent=0 CanCombat=0 Distance=0.0"
+  },
+  {
+    "line": 1723,
+    "text": "[2026.10.21-05.16.11:869][283]LogStructure02Capture: Display: [Capture02] Mode=parry World=20.090121 Shot=9.538368 Phase=3 AI_DIAGNOSTIC Controller=BP_CAIController_C_1 BrainRunning=1 BB=BlackboardComponent Target=BP_CPlayer_Stellar_C_0 Perceived=BP_CPlayer_Stellar_C_0 LOS=1 Role=1 Intent=6 CanCombat=0 Distance=135.0"
+  },
+  {
+    "line": 1729,
+    "text": "[2026.10.21-05.16.12:868][336]LogStructure02Capture: Display: [Capture02] Mode=parry World=21.088058 Shot=10.536305 Phase=3 FIXTURE public AI combat request (scenario-selected attack, not autonomous BT selection) Result=EActionRequestResultType::Started Reject=EActionRequestRejectReason::None"
+  },
+  {
+    "line": 1730,
+    "text": "[2026.10.21-05.16.12:868][336]LogStructure02Capture: Display: [Capture02] Mode=parry World=21.088058 Shot=10.536305 Phase=4 OBSERVED enemy real ComboAttack start"
+  },
+  {
+    "line": 1735,
+    "text": "[2026.10.21-05.16.13:972][392]Custom_FLog: Display: [Action|Executor|MontagePlayed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Duration=0.556 | ActionType=EActionType::Guard | ActionIndex=2 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sowrd_End_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1736,
+    "text": "[2026.10.21-05.16.13:972][392]Custom_FLog: Display: [Action|Executor|Started] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=2 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sowrd_End_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1737,
+    "text": "[2026.10.21-05.16.13:972][392]Custom_FLog: Display: [Movement|Component|GaitApplied] Owner=BP_CPlayer_Stellar_C_0 | Component=Movement | Gait=EMovementGait::Run | Speed=600.000"
+  },
+  {
+    "line": 1738,
+    "text": "[2026.10.21-05.16.13:972][392]Custom_FLog: Display: [Action|Component|StartApplied] Owner=BP_CPlayer_Stellar_C_0 | Decision=EExecutionDecision::Accept | Relationship=EExecutionRelationship::Independent | ApplyMode=EExecutionApplyMode::Start | RejectReason=EActionRequestRejectReason::None | ActionType=EActionType::Guard | ActionIndex=2"
+  },
+  {
+    "line": 1740,
+    "text": "[2026.10.21-05.16.13:972][392]LogStructure02Capture: Display: [Capture02] Mode=parry World=22.192579 Shot=11.640826 Phase=4 INPUT release Guard EActionRequestResultType::Started"
+  },
+  {
+    "line": 1741,
+    "text": "[2026.10.21-05.16.13:972][392]LogStructure02Capture: Display: [Capture02] Mode=parry World=22.192579 Shot=11.640826 Phase=5 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=2 Gen=3 Reaction=EReactionType::Idle RGen=0 State=EExecutionState::Action HP=5000.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=0 Gait=EMovementGait::Run Speed=600.0 Montage=M_GuardIdle_Sowrd_End_Stellar Playing=1"
+  },
+  {
+    "line": 1745,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Reaction|Component|DataResolved] Owner=BP_CPlayer_Stellar_C_0 | CandidateIndex=3 | Request=MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::Sword | ActionType=EActionType::ComboAttack | ActionIndex=0 | Resolved=MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::All | ActionType=EActionType::All | ActionIndex=-1 | ExecutorKey=CReaction_Hit | Montage=M_HitReact_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1746,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Reaction|Orchestrator|DecisionResolved] Owner=BP_CPlayer_Stellar_C_0 | Decision=EExecutionDecision::Accept | Relationship=EExecutionRelationship::Exclusive | ApplyMode=EExecutionApplyMode::Intervene | RejectReason=EReactionRequestRejectReason::None | RequiresIntervention=true | Overlay=EObservableOverlayHandling::ClearGuardState | MatchMode=DamageSpec ReactionType=EReactionType::Hit ReactionIndex=-1 | WeaponType=EWeaponType::Sword ActionType=EActionType::ComboAttack ActionIndex=0"
+  },
+  {
+    "line": 1747,
+    "text": "[2026.10.21-05.16.14:049][396]LogTemp: Display: [GuardIntegrationDecision] World=22.268409 Owner=BP_CPlayer_Stellar_C_0 Stage=Entry Mode=EExecutionApplyMode::Intervene ActiveAction=EActionType::Guard Index=2 Handlings=1 Runtime=1 CanStart=0"
+  },
+  {
+    "line": 1749,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Action|Executor|EActionFinishReason::Interrupted] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=2 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sowrd_End_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1750,
+    "text": "[2026.10.21-05.16.14:049][396]LogTemp: Display: [GuardIntegrationDecision] World=22.268409 Owner=BP_CPlayer_Stellar_C_0 Stage=BeforeOverlayCleanup Mode=EExecutionApplyMode::Intervene ActiveAction=EActionType::None Index=-1 Handlings=1 Runtime=0 CanStart=1"
+  },
+  {
+    "line": 1751,
+    "text": "[2026.10.21-05.16.14:049][396]LogTemp: Display: [GuardIntegrationDecision] World=22.268409 Owner=BP_CPlayer_Stellar_C_0 Stage=OverlayCleanupAccepted Mode=EExecutionApplyMode::Intervene ActiveAction=EActionType::None Index=-1 Handlings=1 Runtime=0 CanStart=1"
+  },
+  {
+    "line": 1752,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Reaction|Executor|MontagePlayed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CReaction_Hit_0 | Duration=1.133 | MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::All | ActionType=EActionType::All | ActionIndex=-1 | ExecutorKey=CReaction_Hit | Montage=M_HitReact_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1753,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Reaction|Executor|Started] Owner=BP_CPlayer_Stellar_C_0 | Executor=CReaction_Hit_0 | MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::All | ActionType=EActionType::All | ActionIndex=-1 | ExecutorKey=CReaction_Hit | Montage=M_HitReact_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1754,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Reaction|Component|StartAccepted] Owner=BP_CPlayer_Stellar_C_0 | MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::Sword | ActionType=EActionType::ComboAttack | ActionIndex=0 | Executor=CReaction_Hit_0"
+  },
+  {
+    "line": 1755,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Reaction|Component|InterveneApplied] Owner=BP_CPlayer_Stellar_C_0 | Decision=EExecutionDecision::Accept | Relationship=EExecutionRelationship::Exclusive | ApplyMode=EExecutionApplyMode::Intervene | RejectReason=EReactionRequestRejectReason::None | MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::Sword | ActionType=EActionType::ComboAttack | ActionIndex=0"
+  },
+  {
+    "line": 1756,
+    "text": "[2026.10.21-05.16.14:049][396]Custom_FLog: Display: [Reaction|Orchestrator|RequestResult] Owner=BP_CPlayer_Stellar_C_0 | Result=EReactionRequestResultType::Intervened | RejectReason=EReactionRequestRejectReason::None"
+  },
+  {
+    "line": 1759,
+    "text": "[2026.10.21-05.16.14:050][396]LogStructure02Capture: Display: [Capture02] Mode=parry World=22.268409 Shot=11.716655 Phase=5 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::None Index=-1 Gen=0 Reaction=EReactionType::Hit RGen=1 State=EExecutionState::Reaction HP=4700.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=M_HitReact_Stellar Playing=1"
+  },
+  {
+    "line": 1760,
+    "text": "[2026.10.21-05.16.14:050][396]LogStructure02Capture: Display: [Capture02] Mode=parry World=22.268409 Shot=11.716655 Phase=5 CHECK real Hit HPDelta=300.0 SawGuardOut=1"
+  },
+  {
+    "line": 1761,
+    "text": "[2026.10.21-05.16.14:368][412]Custom_FLog: Display: [Action|Component|AllowInterventionWindowBeginIgnored] Reason=NoActiveExecutor | Owner=BP_CPlayer_Stellar_C_0 | Executor=None | Key=Dodge"
+  },
+  {
+    "line": 1762,
+    "text": "[2026.10.21-05.16.14:426][415]Custom_FLog: Display: [Action|Executor|MontageIgnored] Reason=StaleMontageEnd | Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Montage=M_GuardIdle_Sowrd_End_Stellar | Serial=2 | ActiveSerial=2"
+  },
+  {
+    "line": 1764,
+    "text": "[2026.10.21-05.16.14:709][430]Custom_FLog: Display: [Action|Component|AllowInterventionWindowEndIgnored] Reason=NoActiveExecutor | Owner=BP_CPlayer_Stellar_C_0 | Executor=None | Key=Dodge"
+  },
+  {
+    "line": 1765,
+    "text": "[2026.10.21-05.16.14:804][435]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.024568 Shot=12.472815 Phase=6 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::None Index=-1 Gen=0 Reaction=EReactionType::Hit RGen=1 State=EExecutionState::Reaction HP=4700.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1766,
+    "text": "[2026.10.21-05.16.15:263][459]Custom_FLog: Display: [Reaction|Executor|Completed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CReaction_Hit_0 | MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::All | ActionType=EActionType::All | ActionIndex=-1 | ExecutorKey=CReaction_Hit | Montage=M_HitReact_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1767,
+    "text": "[2026.10.21-05.16.15:263][459]Custom_FLog: Display: [Reaction|Component|EndAccepted] Owner=BP_CPlayer_Stellar_C_0 | MatchMode=DamageSpec | ReactionType=EReactionType::Hit | ReactionIndex=-1 | WeaponType=EWeaponType::Sword | ActionType=EActionType::ComboAttack | ActionIndex=0 | Executor=CReaction_Hit_0"
+  },
+  {
+    "line": 1768,
+    "text": "[2026.10.21-05.16.15:263][459]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.484166 Shot=12.932413 Phase=6 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::None Index=-1 Gen=0 Reaction=EReactionType::None RGen=2 State=EExecutionState::Idle HP=4700.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1769,
+    "text": "[2026.10.21-05.16.15:263][459]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.484166 Shot=12.932413 Phase=6 CHECK recovery Restored=1 InitialSpeed=600.0 CurrentSpeed=600.0"
+  },
+  {
+    "line": 1771,
+    "text": "[2026.10.21-05.16.15:263][459]Custom_FLog: Display: [Action|Executor|MontagePlayed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Duration=0.833 | ActionType=EActionType::Guard | ActionIndex=1 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sword_Start_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1772,
+    "text": "[2026.10.21-05.16.15:263][459]Custom_FLog: Display: [Action|Executor|Started] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=1 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sword_Start_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1773,
+    "text": "[2026.10.21-05.16.15:263][459]Custom_FLog: Display: [Movement|Component|GaitApplied] Owner=BP_CPlayer_Stellar_C_0 | Component=Movement | Gait=EMovementGait::Walk | Speed=400.000"
+  },
+  {
+    "line": 1774,
+    "text": "[2026.10.21-05.16.15:263][459]Custom_FLog: Display: [Action|Component|StartApplied] Owner=BP_CPlayer_Stellar_C_0 | Decision=EExecutionDecision::Accept | Relationship=EExecutionRelationship::Independent | ApplyMode=EExecutionApplyMode::Start | RejectReason=EActionRequestRejectReason::None | ActionType=EActionType::Guard | ActionIndex=1"
+  },
+  {
+    "line": 1776,
+    "text": "[2026.10.21-05.16.15:264][459]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.484166 Shot=12.932413 Phase=6 INPUT next Guard Result=EActionRequestResultType::Started ActiveGuardIn=1"
+  },
+  {
+    "line": 1777,
+    "text": "[2026.10.21-05.16.15:264][459]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.484166 Shot=12.932413 Phase=7 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=1 Gen=4 Reaction=EReactionType::None RGen=2 State=EExecutionState::Action HP=4700.0 Wants=1 Pose=1 Guard=0 Parry=1 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=M_GuardIdle_Sword_Start_Stellar Playing=1"
+  },
+  {
+    "line": 1778,
+    "text": "[2026.10.21-05.16.15:377][465]Custom_FLog: Display: [Reaction|Executor|MontageIgnored] Reason=StaleMontageEnd | Owner=BP_CPlayer_Stellar_C_0 | Executor=CReaction_Hit_0 | Montage=M_HitReact_Stellar | Serial=1 | ActiveSerial=1"
+  },
+  {
+    "line": 1779,
+    "text": "[2026.10.21-05.16.15:433][468]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.654192 Shot=13.102439 Phase=7 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=1 Gen=4 Reaction=EReactionType::None RGen=2 State=EExecutionState::Action HP=4700.0 Wants=1 Pose=1 Guard=1 Parry=0 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=M_GuardIdle_Sword_Start_Stellar Playing=1"
+  },
+  {
+    "line": 1780,
+    "text": "[2026.10.21-05.16.15:452][469]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.672665 Shot=13.120912 Phase=7 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=1 Gen=4 Reaction=EReactionType::None RGen=2 State=EExecutionState::Action HP=4700.0 Wants=1 Pose=1 Guard=1 Parry=0 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1782,
+    "text": "[2026.10.21-05.16.15:644][479]Custom_FLog: Display: [Action|Executor|Completed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=1 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sword_Start_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1784,
+    "text": "[2026.10.21-05.16.15:644][479]LogStructure02Capture: Display: [Capture02] Mode=parry World=23.864812 Shot=13.313059 Phase=7 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::None Index=-1 Gen=0 Reaction=EReactionType::None RGen=2 State=EExecutionState::Idle HP=4700.0 Wants=1 Pose=1 Guard=1 Parry=0 CanStart=0 Gait=EMovementGait::Walk Speed=400.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1785,
+    "text": "[2026.10.21-05.16.15:663][480]Custom_FLog: Display: [Action|Executor|MontageIgnored] Reason=StaleMontageEnd | Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Montage=M_GuardIdle_Sword_Start_Stellar | Serial=3 | ActiveSerial=3"
+  },
+  {
+    "line": 1789,
+    "text": "[2026.10.21-05.16.16:778][539]LogStructure02Capture: Display: [Capture02] Mode=parry World=24.998946 Shot=14.447193 Phase=7 CHECK next GuardHold=1"
+  },
+  {
+    "line": 1791,
+    "text": "[2026.10.21-05.16.16:778][539]Custom_FLog: Display: [Action|Executor|MontagePlayed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Duration=0.556 | ActionType=EActionType::Guard | ActionIndex=2 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sowrd_End_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1792,
+    "text": "[2026.10.21-05.16.16:778][539]Custom_FLog: Display: [Action|Executor|Started] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=2 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sowrd_End_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1793,
+    "text": "[2026.10.21-05.16.16:778][539]Custom_FLog: Display: [Movement|Component|GaitApplied] Owner=BP_CPlayer_Stellar_C_0 | Component=Movement | Gait=EMovementGait::Run | Speed=600.000"
+  },
+  {
+    "line": 1794,
+    "text": "[2026.10.21-05.16.16:778][539]Custom_FLog: Display: [Action|Component|StartApplied] Owner=BP_CPlayer_Stellar_C_0 | Decision=EExecutionDecision::Accept | Relationship=EExecutionRelationship::Independent | ApplyMode=EExecutionApplyMode::Start | RejectReason=EActionRequestRejectReason::None | ActionType=EActionType::Guard | ActionIndex=2"
+  },
+  {
+    "line": 1796,
+    "text": "[2026.10.21-05.16.16:778][539]LogStructure02Capture: Display: [Capture02] Mode=parry World=24.998946 Shot=14.447193 Phase=8 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=2 Gen=5 Reaction=EReactionType::None RGen=2 State=EExecutionState::Action HP=4700.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=0 Gait=EMovementGait::Run Speed=600.0 Montage=M_GuardIdle_Sowrd_End_Stellar Playing=1"
+  },
+  {
+    "line": 1797,
+    "text": "[2026.10.21-05.16.16:947][548]LogStructure02Capture: Display: [Capture02] Mode=parry World=25.168337 Shot=14.616584 Phase=8 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=2 Gen=5 Reaction=EReactionType::None RGen=2 State=EExecutionState::Action HP=4700.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=M_GuardIdle_Sowrd_End_Stellar Playing=1"
+  },
+  {
+    "line": 1798,
+    "text": "[2026.10.21-05.16.17:102][556]LogStructure02Capture: Display: [Capture02] Mode=parry World=25.321870 Shot=14.770116 Phase=8 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::Guard Index=2 Gen=5 Reaction=EReactionType::None RGen=2 State=EExecutionState::Action HP=4700.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1800,
+    "text": "[2026.10.21-05.16.17:314][567]Custom_FLog: Display: [Action|Executor|Completed] Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | ActionType=EActionType::Guard | ActionIndex=2 | ExecutorKey=CAction_Guard | Montage=M_GuardIdle_Sowrd_End_Stellar | Priority=-1 | CanMove=false"
+  },
+  {
+    "line": 1801,
+    "text": "[2026.10.21-05.16.17:314][567]LogStructure02Capture: Display: [Capture02] Mode=parry World=25.534474 Shot=14.982720 Phase=8 GUARD_OBSERVE Player=BP_CPlayer_Stellar_C_0 Action=EActionType::None Index=-1 Gen=0 Reaction=EReactionType::None RGen=2 State=EExecutionState::Idle HP=4700.0 Wants=0 Pose=0 Guard=0 Parry=0 CanStart=1 Gait=EMovementGait::Run Speed=600.0 Montage=None Playing=0"
+  },
+  {
+    "line": 1802,
+    "text": "[2026.10.21-05.16.17:351][569]Custom_FLog: Display: [Action|Executor|MontageIgnored] Reason=StaleMontageEnd | Owner=BP_CPlayer_Stellar_C_0 | Executor=CAction_Guard_1 | Montage=M_GuardIdle_Sowrd_End_Stellar | Serial=4 | ActiveSerial=4"
+  },
+  {
+    "line": 1803,
+    "text": "[2026.10.21-05.16.18:787][646]LogStructure02Capture: Display: [Capture02] Mode=parry World=27.006978 Shot=16.455225 Phase=8 CHECK final recovery=1"
+  },
+  {
+    "line": 1804,
+    "text": "[2026.10.21-05.16.18:787][646]LogStructure02Capture: Display: [Capture02] Mode=parry World=27.006978 Shot=16.455225 Phase=8 TAKE_COMPLETE real GuardOut-Hit candidate; verify decision-time GuardOut and overlay cleanup from trace"
+  },
+  {
+    "line": 1807,
+    "text": "[2026.10.21-05.16.18:821][646]LogStructure02Capture: Display: [Capture02] Mode=parry World=27.006978 Shot=16.455225 Phase=8 STOP CompletedOrManual"
+  },
+  {
+    "line": 1810,
+    "text": "[2026.10.21-05.16.18:832][647]Custom_FLog: Display: [Movement|Component|GaitApplied] Owner=BP_CPlayer_Stellar_C_0 | Component=Movement | Gait=EMovementGait::Run | Speed=600.000"
+  }
+]

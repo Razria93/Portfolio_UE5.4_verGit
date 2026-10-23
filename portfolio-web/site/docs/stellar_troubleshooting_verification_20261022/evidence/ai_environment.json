@@ -1,0 +1,452 @@
+[
+  {
+    "run": "N040_after_Formal40_R01_measurement_20261002_100823_347",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.08.24:420][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.08.25:795][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N040_after_Formal40_R02_measurement_20261002_100922_233",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.09.23:307][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.09.24:686][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N040_after_Formal40_R03_measurement_20261002_101219_496",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.12.20:565][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.12.21:979][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N040_before_Formal40_R01_measurement_20261002_100724_450",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.07.25:602][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.07.27:044][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N040_before_Formal40_R02_measurement_20261002_101021_214",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.10.22:268][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.10.23:654][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N040_before_Formal40_R03_measurement_20261002_101120_325",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.11.21:382][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.11.22:777][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N080_after_Formal80_R01_measurement_20261002_095343_946",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-00.53.45:055][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-00.53.46:481][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N080_after_Formal80_R02_measurement_20261002_095442_801",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-00.54.43:908][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-00.54.45:290][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N080_after_Formal80_R03_measurement_20261002_095740_112",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-00.57.41:161][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-00.57.42:502][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N080_before_Formal80_R01_measurement_20261002_095245_022",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-00.52.46:097][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-00.52.47:470][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N080_before_Formal80_R02_measurement_20261002_095541_815",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-00.55.42:921][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-00.55.44:290][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N080_before_Formal80_R03_measurement_20261002_095640_844",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-00.56.41:897][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-00.56.43:268][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N120_after_Formal120_R01_measurement_20261002_102249_016",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.22.50:087][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.22.51:446][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N120_after_Formal120_R02_measurement_20261002_102347_885",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.23.48:943][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.23.50:316][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N120_after_Formal120_R03_measurement_20261002_102645_108",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.26.46:162][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.26.47:583][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N120_before_Formal120_R01_measurement_20261002_102150_223",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.21.51:300][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.21.52:662][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N120_before_Formal120_R02_measurement_20261002_102446_873",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.24.47:918][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.24.49:334][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  },
+  {
+    "run": "N120_before_Formal120_R03_measurement_20261002_102546_013",
+    "environment": [
+      {
+        "line": 278,
+        "text": "LogInit: Engine Version: 5.4.4-35576357+++UE5+Release-5.4"
+      },
+      {
+        "line": 281,
+        "text": "LogInit: OS: Windows 11 (25H2) [10.0.26200.9457] (), CPU: AMD Ryzen 9 7950X3D 16-Core Processor          , GPU: NVIDIA GeForce RTX 4070 Ti"
+      },
+      {
+        "line": 285,
+        "text": "LogInit: Build Configuration: Development"
+      },
+      {
+        "line": 600,
+        "text": "[2026.10.02-01.25.47:100][  0]LogRHI: Using Default RHI: D3D12"
+      },
+      {
+        "line": 668,
+        "text": "[2026.10.02-01.25.48:444][  0]LogRHI: Using Default RHI: D3D12"
+      }
+    ]
+  }
+]

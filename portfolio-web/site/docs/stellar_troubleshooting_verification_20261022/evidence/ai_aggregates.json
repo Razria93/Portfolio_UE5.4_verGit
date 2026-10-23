@@ -1,0 +1,212 @@
+[
+  {
+    "count": 40,
+    "mode": "before",
+    "runs": 3,
+    "latency_p95_seconds": {
+      "median": 5.059511661529541,
+      "min": 5.057631015777588,
+      "max": 5.062214374542236
+    },
+    "ai_perception_p95_ms": {
+      "median": 0.2915,
+      "min": 0.289,
+      "max": 0.2922
+    },
+    "frame_time_p95_ms": {
+      "median": 17.6966,
+      "min": 17.6276,
+      "max": 17.8068
+    },
+    "raw_actors_p95": {
+      "median": 40,
+      "min": 40,
+      "max": 40
+    },
+    "invalid_providers_p95": {
+      "median": 39,
+      "min": 39,
+      "max": 39
+    },
+    "max_target_map_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    }
+  },
+  {
+    "count": 40,
+    "mode": "after",
+    "runs": 3,
+    "latency_p95_seconds": {
+      "median": 0.7441616058349609,
+      "min": 0.7436561584472656,
+      "max": 0.7445974349975586
+    },
+    "ai_perception_p95_ms": {
+      "median": 0.0517,
+      "min": 0.0509,
+      "max": 0.0545
+    },
+    "frame_time_p95_ms": {
+      "median": 17.7116,
+      "min": 17.6546,
+      "max": 17.7157
+    },
+    "raw_actors_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    },
+    "invalid_providers_p95": {
+      "median": 0,
+      "min": 0,
+      "max": 0
+    },
+    "max_target_map_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    }
+  },
+  {
+    "count": 80,
+    "mode": "before",
+    "runs": 3,
+    "latency_p95_seconds": {
+      "median": 9.637531280517578,
+      "min": 9.629924774169922,
+      "max": 9.643599510192871
+    },
+    "ai_perception_p95_ms": {
+      "median": 0.7695,
+      "min": 0.7646,
+      "max": 0.7753
+    },
+    "frame_time_p95_ms": {
+      "median": 17.5269,
+      "min": 17.418,
+      "max": 17.5358
+    },
+    "raw_actors_p95": {
+      "median": 80,
+      "min": 80,
+      "max": 80
+    },
+    "invalid_providers_p95": {
+      "median": 79,
+      "min": 79,
+      "max": 79
+    },
+    "max_target_map_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    }
+  },
+  {
+    "count": 80,
+    "mode": "after",
+    "runs": 3,
+    "latency_p95_seconds": {
+      "median": 0.9079108238220215,
+      "min": 0.9041943550109863,
+      "max": 0.9297885894775391
+    },
+    "ai_perception_p95_ms": {
+      "median": 0.0859,
+      "min": 0.0843,
+      "max": 0.0906
+    },
+    "frame_time_p95_ms": {
+      "median": 17.363,
+      "min": 17.3549,
+      "max": 17.3885
+    },
+    "raw_actors_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    },
+    "invalid_providers_p95": {
+      "median": 0,
+      "min": 0,
+      "max": 0
+    },
+    "max_target_map_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    }
+  },
+  {
+    "count": 120,
+    "mode": "before",
+    "runs": 3,
+    "latency_p95_seconds": {
+      "median": 20.816225051879883,
+      "min": 20.799898147583008,
+      "max": 20.82509994506836
+    },
+    "ai_perception_p95_ms": {
+      "median": 1.2582,
+      "min": 1.2448,
+      "max": 1.2676
+    },
+    "frame_time_p95_ms": {
+      "median": 20.7365,
+      "min": 20.4134,
+      "max": 20.7926
+    },
+    "raw_actors_p95": {
+      "median": 111,
+      "min": 110,
+      "max": 111
+    },
+    "invalid_providers_p95": {
+      "median": 110,
+      "min": 109,
+      "max": 110
+    },
+    "max_target_map_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    }
+  },
+  {
+    "count": 120,
+    "mode": "after",
+    "runs": 3,
+    "latency_p95_seconds": {
+      "median": 1.0527276992797852,
+      "min": 1.0485548973083496,
+      "max": 1.067061424255371
+    },
+    "ai_perception_p95_ms": {
+      "median": 0.1199,
+      "min": 0.1153,
+      "max": 0.1222
+    },
+    "frame_time_p95_ms": {
+      "median": 21.1009,
+      "min": 20.9108,
+      "max": 22.1079
+    },
+    "raw_actors_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    },
+    "invalid_providers_p95": {
+      "median": 0,
+      "min": 0,
+      "max": 0
+    },
+    "max_target_map_p95": {
+      "median": 1,
+      "min": 1,
+      "max": 1
+    }
+  }
+]

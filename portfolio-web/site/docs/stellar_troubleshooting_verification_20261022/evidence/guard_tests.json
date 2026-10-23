@@ -1,0 +1,322 @@
+{
+  "reportCreatedOn": "2026.10.21-12.14.39",
+  "succeeded": 3,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "PortfolioVerification.Guard.HitSnapshotAfterInterruption",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardHitSnapshot] SnapshotRuntime=1 AfterInterruptRuntime=0 Handlings=1 Applied=1 FinalSpeed=620 MontagePlayed=0",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        }
+      ]
+    },
+    {
+      "name": "PortfolioVerification.Guard.OverlayScopeAndRestore",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardOverlayScope] Phase=1 Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardOverlayScope] Phase=2 Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        }
+      ]
+    },
+    {
+      "name": "PortfolioVerification.Guard.RepeatedCleanupAndMovement",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=1 Phase=0 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=2 Phase=0 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=3 Phase=0 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=4 Phase=1 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=5 Phase=1 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=6 Phase=1 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=7 Phase=2 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=8 Phase=2 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=9 Phase=2 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=10 Phase=3 Terminal=0 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=11 Phase=3 Terminal=1 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=12 Phase=3 Terminal=2 Baseline=Run Repeats=25 FinalRuntime=0 FinalSpeed=420",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=13 Phase=0 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=14 Phase=0 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=15 Phase=0 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=16 Phase=1 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=17 Phase=1 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=18 Phase=1 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=19 Phase=2 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=20 Phase=2 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=21 Phase=2 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=22 Phase=3 Terminal=0 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=23 Phase=3 Terminal=1 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[GuardBoundary] Case=24 Phase=3 Terminal=2 Baseline=Sprint Repeats=25 FinalRuntime=0 FinalSpeed=620",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-03.14.39"
+        }
+      ]
+    }
+  ]
+}

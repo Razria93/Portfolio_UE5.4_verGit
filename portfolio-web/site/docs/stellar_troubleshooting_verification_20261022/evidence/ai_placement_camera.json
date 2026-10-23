@@ -1,0 +1,38 @@
+[
+  {
+    "count": 40,
+    "identical_within_count": true,
+    "runs": [
+      "N040_after_Formal40_R01_measurement_20261002_100823_347",
+      "N040_after_Formal40_R02_measurement_20261002_100922_233",
+      "N040_after_Formal40_R03_measurement_20261002_101219_496",
+      "N040_before_Formal40_R01_measurement_20261002_100724_450",
+      "N040_before_Formal40_R02_measurement_20261002_101021_214",
+      "N040_before_Formal40_R03_measurement_20261002_101120_325"
+    ]
+  },
+  {
+    "count": 80,
+    "identical_within_count": true,
+    "runs": [
+      "N080_after_Formal80_R01_measurement_20261002_095343_946",
+      "N080_after_Formal80_R02_measurement_20261002_095442_801",
+      "N080_after_Formal80_R03_measurement_20261002_095740_112",
+      "N080_before_Formal80_R01_measurement_20261002_095245_022",
+      "N080_before_Formal80_R02_measurement_20261002_095541_815",
+      "N080_before_Formal80_R03_measurement_20261002_095640_844"
+    ]
+  },
+  {
+    "count": 120,
+    "identical_within_count": true,
+    "runs": [
+      "N120_after_Formal120_R01_measurement_20261002_102249_016",
+      "N120_after_Formal120_R02_measurement_20261002_102347_885",
+      "N120_after_Formal120_R03_measurement_20261002_102645_108",
+      "N120_before_Formal120_R01_measurement_20261002_102150_223",
+      "N120_before_Formal120_R02_measurement_20261002_102446_873",
+      "N120_before_Formal120_R03_measurement_20261002_102546_013"
+    ]
+  }
+]

@@ -1,0 +1,543 @@
+{
+  "reportCreatedOn": "2026.10.21-17.36.22",
+  "succeeded": 5,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "PortfolioVerification.TTL.CleanupAndNativeLifecycle",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C1_destroy_without_callback Stage=destroy_no_callback Time=0.0000 Pending=0 Registry=1 ASerial=1 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C2_shared_attacker Stage=other_attacker_preserved Time=0.0000 Pending=0 Registry=1 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=3 BStarted=1 BExpiry=1.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C3_repeat_destroy Stage=eight_destroy_no_callbacks Time=0.0000 Pending=0 Registry=8 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C4_signal_ends_first Stage=signal_destroyed_then_hit_end Time=0.0000 Pending=0 Registry=1 ASerial=1 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C5_target_endplay Stage=target_removed_from_world Time=0.0000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C6_owner_destroy Stage=native_owner_destroy Time=0.2000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C7_owner_death Stage=native_health_death Time=0.0000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-C8_unbind_target Stage=component_then_attacker_end Time=0.0000 Pending=0 Registry=1 ASerial=1 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        }
+      ]
+    },
+    {
+      "name": "PortfolioVerification.TTL.CrossAttackerOrdering",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_A_then_B Stage=two_attackers Time=0.0000 Pending=2 Registry=2 ASerial=10 AStarted=0 AExpiry=0.0000 BSerial=11 BStarted=0 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_A_then_B Stage=first_end Time=0.2000 Pending=1 Registry=2 ASerial=10 AStarted=1 AExpiry=1.2000 BSerial=11 BStarted=0 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_A_then_B Stage=second_end Time=0.5000 Pending=0 Registry=2 ASerial=10 AStarted=1 AExpiry=1.2000 BSerial=11 BStarted=1 BExpiry=1.5000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_A_then_B Stage=independent_expiry Time=1.2500 Pending=0 Registry=2 ASerial=10 AStarted=1 AExpiry=1.2000 BSerial=11 BStarted=1 BExpiry=1.5000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_B_then_A Stage=two_attackers Time=0.0000 Pending=2 Registry=2 ASerial=10 AStarted=0 AExpiry=0.0000 BSerial=11 BStarted=0 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_B_then_A Stage=first_end Time=0.2000 Pending=1 Registry=2 ASerial=10 AStarted=0 AExpiry=0.0000 BSerial=11 BStarted=1 BExpiry=1.2000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_B_then_A Stage=second_end Time=0.5000 Pending=0 Registry=2 ASerial=10 AStarted=1 AExpiry=1.5000 BSerial=11 BStarted=1 BExpiry=1.2000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B2_B_then_A Stage=independent_expiry Time=1.2500 Pending=0 Registry=2 ASerial=10 AStarted=1 AExpiry=1.5000 BSerial=11 BStarted=1 BExpiry=1.2000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        }
+      ]
+    },
+    {
+      "name": "PortfolioVerification.TTL.InvalidActorAndTeardown",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_attacker_destroyed Stage=after_destroy_callback Time=0.2000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLFinding] AttackerDestroyed PendingAfterCallback=0",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_attacker_destroyed Stage=after_component_end Time=0.2000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_attacker_dead Stage=dead_attacker Time=0.2000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_owner_release Stage=owner_death_public_release Time=0.0000 Pending=1 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_owner_release Stage=late_event_after_death Time=0.0000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLFinding] HitComponentEnd Registry=1",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_hit_component_end Stage=hit_component_only_ended Time=0.0000 Pending=0 Registry=1 ASerial=1 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_hit_component_end Stage=participation_teardown Time=0.0000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B4_repeated_destroy Stage=eight_destroys_after_two_seconds Time=2.4000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLFinding] RepeatedDestroyedAttackers Count=8 Pending=0",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        }
+      ]
+    },
+    {
+      "name": "PortfolioVerification.TTL.SameAttackerSerialAndDuplicate",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_old_first Stage=S2_accepted Time=0.2000 Pending=2 Registry=1 ASerial=2 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_old_first Stage=old_end_does_not_start_S2 Time=0.2000 Pending=1 Registry=1 ASerial=2 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_old_first Stage=S2_end Time=0.5000 Pending=0 Registry=1 ASerial=2 AStarted=1 AExpiry=1.5000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_old_first Stage=duplicate_callbacks Time=0.7000 Pending=0 Registry=1 ASerial=2 AStarted=1 AExpiry=1.5000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_old_first Stage=expired Time=1.6000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_new_first Stage=S2_accepted Time=0.2000 Pending=2 Registry=1 ASerial=2 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_new_first Stage=S2_end Time=0.5000 Pending=1 Registry=1 ASerial=2 AStarted=1 AExpiry=1.5000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_new_first Stage=duplicate_callbacks Time=0.7000 Pending=0 Registry=1 ASerial=2 AStarted=1 AExpiry=1.5000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_new_first Stage=expired Time=1.6000 Pending=0 Registry=0 ASerial=0 AStarted=1 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B1_new_hit_redefers Stage=old_timer_reset_by_new_hit Time=0.3000 Pending=1 Registry=1 ASerial=2 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        }
+      ]
+    },
+    {
+      "name": "PortfolioVerification.TTL.TerminalAndRequestPaths",
+      "state": "Success",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_terminal_2 Stage=terminal Time=0.2000 Pending=0 Registry=1 ASerial=1 AStarted=1 AExpiry=1.2000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_terminal_3 Stage=terminal Time=0.2000 Pending=0 Registry=1 ASerial=1 AStarted=1 AExpiry=1.2000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_terminal_4 Stage=terminal Time=0.2000 Pending=0 Registry=1 ASerial=1 AStarted=1 AExpiry=1.2000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_request_0 Stage=request_resolved Time=0.2000 Pending=0 Registry=1 ASerial=1 AStarted=1 AExpiry=1.2000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_request_1 Stage=request_resolved Time=0.2000 Pending=0 Registry=1 ASerial=1 AStarted=1 AExpiry=1.2000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_request_2 Stage=request_resolved Time=0.2000 Pending=0 Registry=1 ASerial=1 AStarted=1 AExpiry=1.2000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_request_3 Stage=request_resolved Time=0.2000 Pending=1 Registry=1 ASerial=1 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_request_4 Stage=request_resolved Time=0.2000 Pending=1 Registry=1 ASerial=1 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "[TTLBoundary] Case=T-B3_unrelated Stage=unrelated_ignored Time=0.0000 Pending=1 Registry=1 ASerial=1 AStarted=0 AExpiry=0.0000 BSerial=0 BStarted=1 BExpiry=0.0000",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.21-08.36.22"
+        }
+      ]
+    }
+  ]
+}

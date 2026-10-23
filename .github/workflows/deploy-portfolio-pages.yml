@@ -7,6 +7,7 @@ on:
       - 'Docs/07_Portfolio_Documents/Portfolio_Production/**'
       - 'Scripts/Publish/Publish-PortfolioDocument.ps1'
       - '.github/workflows/deploy-portfolio-pages.yml'
+      - 'portfolio-web/**'
   workflow_dispatch:
 
 permissions:
@@ -22,23 +23,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout publication sources
         uses: actions/checkout@v4
-
+        with:
+          sparse-checkout: |
+            Docs/07_Portfolio_Documents/Portfolio_Production
+            Scripts/Publish
+            portfolio-web
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
-
-      - name: Build static portfolio package
+      - name: Preserve previous static portfolio
         shell: pwsh
         run: ./Scripts/Publish/Publish-PortfolioDocument.ps1 -Destination output/portfolio-pages
-
+      - name: Assemble current documents and verified release media
+        run: python3 portfolio-web/assemble_site.py --destination output/portfolio-pages
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: output/portfolio-pages
-
   deploy:
     needs: build
     runs-on: ubuntu-latest

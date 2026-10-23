@@ -1,0 +1,115 @@
+{
+  "tag": "stellar-portfolio-20261023-v41",
+  "archive": {
+    "asset": "stellar-documents-20261023-v41.zip",
+    "sha256": "92395330d76a3ae1a3b90f9ed21107c583b3b4a0b611faef8deb2a4d832189c7",
+    "bytes": 41554673
+  },
+  "videos": [
+    {
+      "id": "general-hit",
+      "asset": "stellar-general-hit-20261023.mp4",
+      "path": "media/stellar-general-hit-20261023.mp4",
+      "sha256": "8bc941768455b358acebcd6e81a4717f7aa7de7d1abdcff7ccad1cdfb4a6580f",
+      "bytes": 16661263
+    },
+    {
+      "id": "execution-transition",
+      "asset": "stellar-execution-transition-20261023.mp4",
+      "path": "media/stellar-execution-transition-20261023.mp4",
+      "sha256": "a6a5ec7acff4a83eae24f57ca810bf0dbfae64bbd0a5c2372b20dd0f15ac7c67",
+      "bytes": 13404176
+    },
+    {
+      "id": "guard-parry",
+      "asset": "stellar-guard-parry-20261023.mp4",
+      "path": "media/stellar-guard-parry-20261023.mp4",
+      "sha256": "17d2b3677590776136c9c1a65119ccc725ac68814dfc51c8adcfe8457c0337fd",
+      "bytes": 17556320
+    },
+    {
+      "id": "dodge-counter",
+      "asset": "stellar-dodge-counter-20261023.mp4",
+      "path": "media/stellar-dodge-counter-20261023.mp4",
+      "sha256": "31bc0297bb66e428745cc639d952bc74003656c33e087cd9cd4f3ad19628fc60",
+      "bytes": 22692160
+    },
+    {
+      "id": "balance-execution",
+      "asset": "stellar-balance-execution-20261023.mp4",
+      "path": "media/stellar-balance-execution-20261023.mp4",
+      "sha256": "b40e5ba14595a361a8694708c62f952e07318a274780aaf60f5c3f9d6224ac3f",
+      "bytes": 34205367
+    },
+    {
+      "id": "combat-participation",
+      "asset": "stellar-combat-participation-20261023.mp4",
+      "path": "media/stellar-combat-participation-20261023.mp4",
+      "sha256": "3166bb31787fe1f81475cb1dc1146613d716f9a599102f6ef14d07478ffce4f1",
+      "bytes": 47335397
+    },
+    {
+      "id": "ai-behavior",
+      "asset": "stellar-ai-behavior-20261023.mp4",
+      "path": "media/stellar-ai-behavior-20261023.mp4",
+      "sha256": "3131ca3b25017463e9c38bb594997683a19598dddc1749d5700ff3d1a2730ed2",
+      "bytes": 185074029
+    },
+    {
+      "id": "direction-knockback",
+      "asset": "stellar-direction-knockback-20261023.mp4",
+      "path": "media/stellar-direction-knockback-20261023.mp4",
+      "sha256": "303968a3a208caa9c92e8dbe0fc896b2bcae9c3825956fd4ca3a0882059cce56",
+      "bytes": 185492119
+    },
+    {
+      "id": "weapon-socket-pivot",
+      "asset": "stellar-weapon-socket-pivot-20261023.mp4",
+      "path": "media/stellar-weapon-socket-pivot-20261023.mp4",
+      "sha256": "ddd94832e92fa90353c9c1d2b9267eddbd4b009afcfcdf08f71af81dd35e858b",
+      "bytes": 143558728
+    },
+    {
+      "id": "combat-feedback",
+      "asset": "stellar-combat-feedback-20261023.mp4",
+      "path": "media/stellar-combat-feedback-20261023.mp4",
+      "sha256": "2d83d8b0facda640ad352a8b04b75fb129d016c194bc4cb172a1e5d58e5f1df4",
+      "bytes": 30884585
+    },
+    {
+      "id": "debug-overlay",
+      "asset": "stellar-debug-overlay-20261023.mp4",
+      "path": "media/stellar-debug-overlay-20261023.mp4",
+      "sha256": "cd7c8619eb9dd88b3a588f4c7b2cb52b835561423f223c4d9506392bcf310e53",
+      "bytes": 51925218
+    },
+    {
+      "id": "guard-hit-transition",
+      "asset": "stellar-guard-hit-transition-20261023.mp4",
+      "path": "media/stellar-guard-hit-transition-20261023.mp4",
+      "sha256": "2481d577b5f8e87e1ed42b9d5e2c208736438e91983365688dae85e28b5c9798",
+      "bytes": 4759269
+    },
+    {
+      "id": "hit-target-ttl",
+      "asset": "stellar-hit-target-ttl-20261023.mp4",
+      "path": "media/stellar-hit-target-ttl-20261023.mp4",
+      "sha256": "777b8b6ad6f5428d7e2a11bbc1b6e58f1956074194ba2c54431ea39bf95af434",
+      "bytes": 4829032
+    },
+    {
+      "id": "ai-perception",
+      "asset": "stellar-ai-perception-20261023.mp4",
+      "path": "media/stellar-ai-perception-20261023.mp4",
+      "sha256": "abdbca17aeaa22441cec498f48d3a21814282da4ef1778d4dd673b7a13aeab4b",
+      "bytes": 14164509
+    },
+    {
+      "id": "guard-pie",
+      "asset": "stellar-guard-pie-20261023.mp4",
+      "path": "media/stellar-guard-pie-20261023.mp4",
+      "sha256": "9fabc985e4fc22a39cbd8827320985426a996d64bc8e4339c679468707800f78",
+      "bytes": 13756854
+    }
+  ]
+}
