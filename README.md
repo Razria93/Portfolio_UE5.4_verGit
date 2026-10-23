@@ -1,5 +1,8 @@
 # Project Stellar — UE5.4 C++ Game Programmer Portfolio
 
+> **통합 게임 클라이언트 포트폴리오**: [자료 안내](https://razria93.github.io/Portfolio_UE5.4_verGit/portfolio/) · [PDF 62쪽](https://razria93.github.io/Portfolio_UE5.4_verGit/portfolio/files/yeom-dongseop-game-client-portfolio-20261023.pdf) — Project Stellar · Asset Reference Inspector · Graphics Study Archive
+
+
 `Project Stellar`는 Player와 Enemy가 공유하는 Action / Reaction 실행 구조를 설계하고, 런타임 관찰·검증과 Editor 도구화까지 연결한 Unreal Engine 5.4 3인칭 Action RPG 포트폴리오입니다.
 
 [Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [Portfolio Production Docs](Docs/07_Portfolio_Documents/Portfolio_Production/README.md) · [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md)

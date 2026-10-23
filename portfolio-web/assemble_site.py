@@ -41,6 +41,15 @@ def main():
             src=download(item);target=(dest/item['path']).resolve();assert target.is_relative_to(dest)
             target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,target)
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:list(pool.map(copy_video,manifest['videos']))
+    unified_path=root/'unified-release.json'
+    if unified_path.exists():
+        unified=json.loads(unified_path.read_text('utf-8'))
+        target=(dest/unified['path']).resolve();assert target.is_relative_to(dest)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        url='https://github.com/Razria93/Portfolio_UE5.4_verGit/releases/download/'+unified['tag']+'/'+unified['asset']
+        with urllib.request.urlopen(url,timeout=120) as response,target.open('wb') as f:shutil.copyfileobj(response,f)
+        assert target.stat().st_size==unified['bytes'] and digest(target)==unified['sha256']
+        assert target.stat().st_size<10_000_000,'Submission PDF exceeds 10MB'
     total=sum(p.stat().st_size for p in dest.rglob('*') if p.is_file())
     assert total<1_000_000_000,f'Pages package is too large: {total}'
     print(f'Pages package ready: {len(manifest["videos"])} videos; {total} bytes',flush=True)
