@@ -312,8 +312,8 @@
   "supporting_files": [
     {
       "path": "docs/stellar_asset_matching_20261022/document.css",
-      "sha256": "fc00b0a84e7c043d868279156899a3cbf83d7811a6ee8dcbe9c05f0b632d81f4",
-      "bytes": 8138
+      "sha256": "5afa333f62632b23138947f37a32e946bd58becb5a1045cf25b3abfb12889fdc",
+      "bytes": 8076
     },
     {
       "path": "docs/stellar_asset_matching_20261022/final_review.html",
@@ -327,8 +327,8 @@
     },
     {
       "path": "docs/stellar_asset_matching_20261022/portfolio-public.css",
-      "sha256": "2c2f6fccc4121e03b8777a2fa385a3c2fe1084b0493ab901558c4c2672e7771a",
-      "bytes": 8040
+      "sha256": "025f4db3e4a5c01b64adfa8450571b138cc71e69e3834aa7ec08218c6382ab53",
+      "bytes": 7961
     },
     {
       "path": "docs/stellar_asset_matching_20261022/product_links.html",
@@ -337,13 +337,13 @@
     },
     {
       "path": "docs/stellar_resource_catalog_20261021/assets.html",
-      "sha256": "4fa5fac22fdd25e13f829cf8b51f0b2f5b5e9ec8d44f7c32f02663e583f925f5",
-      "bytes": 16857
+      "sha256": "d844a2d593b1f86deb78ba645f53463abcfdcd2e9e14ba9fb225b9f3add99f7d",
+      "bytes": 16845
     },
     {
       "path": "docs/stellar_resource_catalog_20261021/document.css",
-      "sha256": "fc00b0a84e7c043d868279156899a3cbf83d7811a6ee8dcbe9c05f0b632d81f4",
-      "bytes": 8138
+      "sha256": "5afa333f62632b23138947f37a32e946bd58becb5a1045cf25b3abfb12889fdc",
+      "bytes": 8076
     },
     {
       "path": "docs/stellar_resource_catalog_20261021/index.html",
@@ -352,48 +352,48 @@
     },
     {
       "path": "docs/stellar_resource_catalog_20261021/portfolio-public.css",
-      "sha256": "2c2f6fccc4121e03b8777a2fa385a3c2fe1084b0493ab901558c4c2672e7771a",
-      "bytes": 8040
+      "sha256": "025f4db3e4a5c01b64adfa8450571b138cc71e69e3834aa7ec08218c6382ab53",
+      "bytes": 7961
     },
     {
       "path": "docs/stellar_resource_catalog_20261021/structure.html",
-      "sha256": "b5833946e32225ab5cea5b95071d473dff220f1c3fa59a98424385696c0b7dc4",
-      "bytes": 77803
+      "sha256": "68ade622eff02ff882d0a06ad2ae26dfa29eec0ad9ba02bd5b0b2e9c77ef2545",
+      "bytes": 77541
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/ai.html",
-      "sha256": "44eb3bf1a1b805346694d4a1323c08b18816e7db4e5e3b826059ecb7bb5d7c51",
-      "bytes": 6303
+      "sha256": "2d0eb2d99f88910d81a1010e3826c2ade354ef694dd50cb68cc593728afec689",
+      "bytes": 6301
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/assets/document.css",
-      "sha256": "fc00b0a84e7c043d868279156899a3cbf83d7811a6ee8dcbe9c05f0b632d81f4",
-      "bytes": 8138
+      "sha256": "5afa333f62632b23138947f37a32e946bd58becb5a1045cf25b3abfb12889fdc",
+      "bytes": 8076
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_18_runs.json",
-      "sha256": "1c1b3ae5db395d12965da3bf7ab2bfde2522d92ee81bcc9d8a21d18f46ba9d64",
-      "bytes": 12058
+      "sha256": "e7f5960d6e525539091579dbc47ac162b03109d5d23f3b9c414e7c40745ec899",
+      "bytes": 11715
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_aggregates.json",
-      "sha256": "b17f794a6d59312164d2e7a02f1f674456388ba060d37fa4f978560fb12db9e9",
-      "bytes": 4167
+      "sha256": "dbbb40ca2f5af71ba079ebe6b493e097179f191bee7dd25f22dbf17e21d71fad",
+      "bytes": 3956
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_environment.json",
-      "sha256": "44b5e8200ca0e8cacdbc901b33cb360e4852ece3d97e496ca38fa32c1a2a47d0",
-      "bytes": 13968
+      "sha256": "5487c6a1dbbd72cc92d562403b8dee8a1f89b546827f0ee012a7e674226d6a1f",
+      "bytes": 13517
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ai_placement_camera.json",
-      "sha256": "849ecf4903c182022e74ab77e0da348787f7e209ab13d9c1570b65ec7f868aff",
-      "bytes": 1468
+      "sha256": "d4e2059297390fbefaa2f248c6a32b9a3f82921025628a0a68afb6f199052516",
+      "bytes": 1431
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_24_conditions.csv",
-      "sha256": "ad8db4b984201d4bbe0e48afd85a9f8be2e725ff3441034c62db96d6875ea4e6",
-      "bytes": 596
+      "sha256": "8451de55cf4a295d0d54a81049a70984a3e9054e88af0b105912c31ad62b51c3",
+      "bytes": 571
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_hit.jpg",
@@ -407,18 +407,18 @@
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_pie_checks.json",
-      "sha256": "fa5fab0d755cd99f784f322c178a7c49490d5e0f0b74e16fe265b15f5837545f",
-      "bytes": 3165
+      "sha256": "1a24132e04f05c82ba2371d126737311315843cfe6092d70a8e636446234cea1",
+      "bytes": 3064
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_pie_events.json",
-      "sha256": "f61d31b8483cb31e4a05fecb4d3bdf2acb4657c4a964f54db05b0c58d1b67b0f",
-      "bytes": 28922
+      "sha256": "4fef954afa1a819a475e7908ab79ab31c2cccec55a18451bb8b4eecbcb008ff8",
+      "bytes": 28581
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/guard_tests.json",
-      "sha256": "87caeedec2eee53fbc30379c35469b20c19f0159a0a770954f47749915d83567",
-      "bytes": 11371
+      "sha256": "4709687482981d09aa0f1fe0db447e813d352003460ff397f2b0f54c7a2eaa6a",
+      "bytes": 11050
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_after_diagnostic.jpg",
@@ -432,23 +432,23 @@
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_candidate_tests.json",
-      "sha256": "d0a9104359c507bbb992d49c6c6ee64454bbb0f5866c59798ea6e39efe21fb07",
-      "bytes": 22106
+      "sha256": "7aaf7814afd0f7da7624575578c8a7e4d2e35d1bcec3b1419e9a6aaabd756314",
+      "bytes": 21564
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_events.csv",
-      "sha256": "3605178079e65130e96b5ffd9045240ac2bc785206a3c230830e63bb0abd2a3a",
-      "bytes": 3346
+      "sha256": "0dd6634fa202bca3e4e2d7c576e7b7eff75d6c7e7b05a238e19807b087f56b41",
+      "bytes": 3310
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/evidence/ttl_tests.json",
-      "sha256": "096ee09a7cb3d4d2de8634576deb1af0c90be2b3c527f8bfcc1072ec22b1de74",
-      "bytes": 18120
+      "sha256": "49825c7b342062d557a7fd933289e1e0c2e9a0033da0d6dcce37e22c0ed4b432",
+      "bytes": 17672
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/guard.html",
-      "sha256": "609fab3835d985350d25ae281d8bc1deb40bd9f753c432434c1b886cb80d1b54",
-      "bytes": 7166
+      "sha256": "f8657c7acd458c89eec9570ff8208fc13e6416b8555756e31bf6d81a0220f534",
+      "bytes": 7164
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/preview/overview_current.png",
@@ -457,8 +457,8 @@
     },
     {
       "path": "docs/stellar_troubleshooting_verification_20261022/ttl.html",
-      "sha256": "74ffd910485d1b60d01814fcbbf508bf6f824f061147fc67661bd0b414a31aff",
-      "bytes": 6685
+      "sha256": "67960bc6557b1b35eae705c458e4d41978ad5d2c788904c52683f6e72da3aba1",
+      "bytes": 6683
     }
   ]
 }
