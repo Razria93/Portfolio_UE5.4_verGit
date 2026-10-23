@@ -24,7 +24,7 @@
     const walker = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
-      node.nodeValue = node.nodeValue.replace(/(\d+(?:\s*[–~·-]\s*\d+)*)(?=\s*(?:쪽|페이지))/g,
+      node.nodeValue = node.nodeValue.replace('관련 PPT', '관련 PDF').replace(/(\d+(?:\s*[–~·,-]\s*\d+)*)(?=\s*(?:쪽|페이지))/g,
         group => group.replace(/\d+/g, n => String(Number(n) > 1 ? Number(n) + p.offset : 2)));
     }
   }
