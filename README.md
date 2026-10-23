@@ -2,15 +2,15 @@
 
 `Project Stellar`는 Player와 Enemy가 공유하는 Action / Reaction 실행 구조를 설계하고, 런타임 관찰·검증과 Editor 도구화까지 연결한 Unreal Engine 5.4 3인칭 Action RPG 포트폴리오입니다.
 
-[Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [Gameplay Video — 업로드 예정](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119) · [Portfolio Production Docs](Docs/07_Portfolio_Documents/Portfolio_Production/README.md) · [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md)
+[Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [Portfolio Production Docs](Docs/07_Portfolio_Documents/Portfolio_Production/README.md) · [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md)
 
 ![Project Stellar의 전투 장면. Runtime Debug Overlay와 Editor 제어 화면으로 전투 실행 상태를 함께 관찰한다.](Docs/07_Portfolio_Documents/Portfolio_Production/Assets/Captures/p01_hero_combat.jpg)
 
-> 대표 검증 장면 — 전투 실행 중 Action·Reaction·Target·Facing 상태와 이벤트 기록을 같은 화면에서 대조합니다. 구현 결과를 실시간으로 관찰·검증하는 흐름을 이 포트폴리오의 중심 주제로 삼았습니다. 영상은 [Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119)에 업로드 예정입니다.
+> 대표 검증 장면 — 전투 실행 중 Action·Reaction·Target·Facing 상태와 이벤트 기록을 같은 화면에서 대조합니다. 구현 결과를 실시간으로 관찰·검증하는 흐름을 이 포트폴리오의 중심 주제로 삼았습니다. [영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/)에서 본편 14개와 별도 가드 PIE를 확인할 수 있습니다.
 
 ## 현재 자료 안내
 
-2026-10-23, PR #133 병합 main `aeb9e7ed` 기준으로 재현·관찰·HUD 문서를 정리했습니다. 저장소의 23페이지 HTML과 과거 초안의 19페이지 PPT 계획은 별도 자료입니다. 최신 PPT 원본·새 PDF 공개 위치는 미확인이고, Issue #119는 조회 시 영상 업로드 예정 상태입니다. 현재 공개 Pages의 내용·접근은 이번 도구에서 확인하지 못했습니다.
+2026-10-23 제출 자료는 [23쪽 PDF](https://razria93.github.io/Portfolio_UE5.4_verGit/portfolio/files/project-stellar-20261023-v41.pdf)와 [PowerPoint](https://razria93.github.io/Portfolio_UE5.4_verGit/portfolio/files/project-stellar-20261023-v41.pptx), 영상 15개 및 공개 문서 9개로 구성됩니다. [자료 대응표](https://razria93.github.io/Portfolio_UE5.4_verGit/catalog.html)에서 관련 페이지와 근거를 찾을 수 있습니다. 검증 결과는 각 자료의 기록 시점과 조건을 따르며, 현재 main 전체의 재검증 결과를 뜻하지 않습니다. 기존 HTML 자료는 [이전 웹 포트폴리오](https://razria93.github.io/Portfolio_UE5.4_verGit/legacy-portfolio.html)에 보존합니다.
 
 - [남은 구현과 제출 준비](Docs/07_Portfolio_Documents/Portfolio_Production/stellar_portfolio_completion_checklist.md)
 - [영상 근거 제작 가이드](Docs/07_Portfolio_Documents/Portfolio_Production/stellar_video_evidence_guide.md)
@@ -42,7 +42,7 @@
 
 **판단과 구현**: `Decision → Relationship → Apply`를 분리하고, `Independent / Sequential / Exclusive` 관계를 각각 `Start / Reserve / Intervene`으로 적용합니다. 거부·무시 경로도 별도로 유지합니다.
 
-**근거**: [Intervention Policy 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#intervention-policy) · [Action Orchestrator 코드](Source/Portfolio/Component/CActionOrchestratorComponent.cpp) · [실행 타입 정의](Source/Portfolio/Type/CExecutionTypes.h)
+**근거**: [Intervention Policy 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/legacy-portfolio.html#intervention-policy) · [Action Orchestrator 코드](Source/Portfolio/Component/CActionOrchestratorComponent.cpp) · [실행 타입 정의](Source/Portfolio/Type/CExecutionTypes.h)
 
 ### 2. Focus 기반 Runtime Debug Overlay
 
@@ -50,7 +50,7 @@
 
 **판단과 구현**: Focus된 Actor의 전투·이동·실행 세션 상태와 Event Log를 읽기 전용 ViewData로 조립해 HUD에 표시합니다. Editor Panel은 session-only CVar 설정과 PIE Focus 요청만 연결하며 게임플레이 상태를 변경하지 않습니다.
 
-**근거**: [Runtime Debug 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#runtime-debug) · [Overlay Editor 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#overlay-editor-plugin) · [HUD 코드](Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp)
+**근거**: [Runtime Debug 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/legacy-portfolio.html#runtime-debug) · [Overlay Editor 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/legacy-portfolio.html#overlay-editor-plugin) · [HUD 코드](Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp)
 
 ### 3. 조사·복구 경로를 갖는 Editor Tooling
 
@@ -58,12 +58,12 @@
 
 **판단과 구현**: Asset Reference Inspector는 Dependencies / Referencers Tree와 unused **검토 후보**를 CSV로 기록합니다. Root Motion Tool은 Apply 전 Track을 검증·백업하고 Revert에서 복구합니다.
 
-**근거**: [Asset Inspector 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#asset-inspector) · [Root Motion Tool 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/#root-motion-tool) · [Inspector 코드](Plugins/AssetReferenceInspector/Source/AssetReferenceInspector/Private/UI/SAssetReferenceInspectorWidget.cpp) · [Root Motion 코드](Source/PortfolioEditor/Private/Animation/CAnimModifier_TransferBodyMotionToRoot.cpp)
+**근거**: [Asset Inspector 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/legacy-portfolio.html#asset-inspector) · [Root Motion Tool 상세](https://razria93.github.io/Portfolio_UE5.4_verGit/legacy-portfolio.html#root-motion-tool) · [Inspector 코드](Plugins/AssetReferenceInspector/Source/AssetReferenceInspector/Private/UI/SAssetReferenceInspectorWidget.cpp) · [Root Motion 코드](Source/PortfolioEditor/Private/Animation/CAnimModifier_TransferBodyMotionToRoot.cpp)
 
 ## 결과와 검증 자료
 
-- [Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/): 추적 중인 23페이지 HTML의 배포 경로. 최신 공개 내용 확인은 별도
-- [Gameplay Video Issue #119](https://github.com/Razria93/Portfolio_UE5.4_verGit/issues/119): 대표 영상 업로드 예정. 업로드 후 같은 Issue에서 영상·타임스탬프를 관리
+- [Web Portfolio](https://razria93.github.io/Portfolio_UE5.4_verGit/): 제출 PDF·영상·구현 설명·검증 근거의 공개 진입점
+- [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/): 본편 14개와 별도 가드 PIE 1개
 - [Portfolio Production](Docs/07_Portfolio_Documents/Portfolio_Production/README.md): 제출 HTML 원본, 이미지 Assets, publish 규칙
 - [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md): 현재 구조와 기술 판단의 문서 색인
 
@@ -85,7 +85,7 @@
 
 ## Documentation status
 
-추적 HTML 원본과 배포 규칙은 `Portfolio_Production`에서 관리합니다. 과거 PPT 편집 계획과 최종 제출·공개 상태는 해당 폴더의 자료 상태 안내를 따릅니다. PF00–PF07은 이전 포트폴리오 설계 기록으로 보존합니다.
+제출 자료의 HTML·CSS·대응표·배포 규칙은 [portfolio-web](portfolio-web/README.md)에서 관리합니다. 영상과 문서 바이너리는 버전별 Release에 보존하고 Pages로 제공합니다. `Portfolio_Production` 및 PF00–PF07은 기존 제작·설계 기록으로 보존합니다.
 
 - [Current submitted portfolio source and publication guide](Docs/07_Portfolio_Documents/Portfolio_Production/README.md)
 - [Evidence ledger and documentation maintenance TODO](Docs/01_Work_List/Documentation_Maintenance_TODO.md)
@@ -93,6 +93,6 @@
 
 ## Next evidence update
 
-- Gameplay Video 촬영·업로드 후 Issue #119에 타임스탬프와 장면 설명을 추가합니다.
+- 영상 교체 시 버전별 Release와 `portfolio-web/release-manifest.json`, 공개 대응표를 함께 갱신합니다.
 - HUD 샘플 자원 연동과 보스전은 별도 신규 기능 범위로 구성합니다. 기존 회피·처형 HUD·순찰 및 녹화 도구를 신규 구현으로 다시 집계하지 않습니다.
 - 과거 40·80·120명 18회 측정 집계는 당시 조건의 자료로 선별하며 현재 main 재측정 결과로 표시하지 않습니다.
