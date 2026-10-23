@@ -20,23 +20,30 @@
   const isPdf = url => /\.pdf$/i.test(url.pathname);
   const projectPdf = url => isPdf(url) && /(?:project-stellar-|plugin-portfolio-|graphics-portfolio-)/i.test(url.pathname);
   const pageLike = url => /\/$|\.html?$/i.test(url.pathname) || !url.pathname.split('/').pop().includes('.');
+  function remapLabel(a, p) {
+    const walker = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      node.nodeValue = node.nodeValue.replace(/(\d+(?:\s*[–~·-]\s*\d+)*)(?=\s*(?:쪽|페이지))/g,
+        group => group.replace(/\d+/g, n => String(Number(n) > 1 ? Number(n) + p.offset : 2)));
+    }
+  }
   if (active) {
     document.querySelectorAll('a[href]').forEach(a => {
       const raw = a.getAttribute('href');
-      if (!raw || raw.startsWith('#')) return;
+      if (!raw) return;
+      if (raw.startsWith('#')) { remapLabel(a, projectFor(current)); return; }
       let url; try { url = new URL(raw, location.href); } catch { return; }
       if (owned(url) && projectPdf(url)) {
         const p = projectFor(url); const found = /(?:^#|&)page=(\d+)/.exec(url.hash);
         const old = found ? Number(found[1]) : 0;
         const target = old > 1 && old <= p.count ? old + p.offset : page;
         a.href = pdf + '#page=' + target;
-        const label = a.textContent;
-        if (/\d/.test(label) && /쪽|페이지/.test(label)) {
-          a.textContent = label.replace(/(\d+(?:\s*[–~·-]\s*\d+)*)(?=\s*(?:쪽|페이지))/g,
-            group => group.replace(/\d+/g, number => String(Number(number) > 1 ? Number(number) + p.offset : 2)));
-        }
+        if (found) remapLabel(a, p);
+        else if (/\d+\s*쪽/.test(a.textContent)) a.textContent = '통합 포트폴리오 PDF · 62쪽';
         a.title = '통합 포트폴리오 ' + target + '쪽';
       } else if (owned(url) && pageLike(url)) {
+        remapLabel(a, projectFor(url));
         if (!url.searchParams.has('portfolio_page')) url.searchParams.set('portfolio_page', String(page));
         a.href = url.href;
       } else if (/^https?:$/.test(url.protocol) && url.hostname === 'github.com') {
