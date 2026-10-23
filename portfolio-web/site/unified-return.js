@@ -53,7 +53,7 @@
   }
   if (document.getElementById('unified-portfolio-navigation')) return;
   const style = document.createElement('style');
-  style.textContent = '#unified-portfolio-navigation{position:sticky;top:0;z-index:1000;background:#102333;color:#eff7fa;border-bottom:1px solid #416070;font:14px/1.6 "Malgun Gothic",sans-serif;padding:10px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;gap:10px 24px;flex-wrap:wrap;box-sizing:border-box}#unified-portfolio-navigation a{color:#85dcd4;text-decoration:underline;text-underline-offset:4px;word-break:keep-all}#unified-portfolio-navigation span{font-size:12px;color:#bed1db}';
+  style.textContent = '#unified-portfolio-navigation{position:sticky;top:0;margin:0;max-width:none;width:100%;z-index:1000;background:#102333;color:#eff7fa;border-bottom:1px solid #416070;font:14px/1.6 "Malgun Gothic",sans-serif;padding:10px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;gap:10px 24px;flex-wrap:wrap;box-sizing:border-box}#unified-portfolio-navigation a{background:transparent;border:0;border-radius:0;padding:0;color:#85dcd4;text-decoration:underline;text-underline-offset:4px;word-break:keep-all}#unified-portfolio-navigation span{font-size:12px;color:#bed1db}';
   document.head.append(style);
   const bar = document.createElement('nav'); bar.id = 'unified-portfolio-navigation';bar.setAttribute('aria-label','통합 포트폴리오 이동');
   const home = document.createElement('a');home.href=hub;home.textContent='통합 포트폴리오 안내';bar.append(home);
