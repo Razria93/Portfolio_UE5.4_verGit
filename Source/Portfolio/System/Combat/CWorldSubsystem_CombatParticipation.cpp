@@ -7,6 +7,7 @@
 #include "ProjectGlobal.h"
 
 #include "Controller/CAIController.h"
+#include "Component/CActionComponent.h"
 #include "Core/Debug/FCombatEngageDebug.h"
 #include "Core/Profiling/CCombatCollisionProfilingCounters.h"
 #include "Core/Profiling/CCombatFeedbackProfiling.h"
@@ -275,6 +276,7 @@ void UCWorldSubsystem_CombatParticipation::SoftReleaseParticipationForParticipan
 {
 	if (!IsValid(InParticipant)) return;
 
+	BlockedEngageByParticipant.Remove(InParticipant);
 	bool bChanged = false;
 	for (auto iterator = EvidenceRegistry.CreateIterator(); iterator; ++iterator)
 	{
@@ -296,6 +298,7 @@ void UCWorldSubsystem_CombatParticipation::HardReleaseParticipationForParticipan
 {
 	if (!IsValid(InParticipant)) return;
 
+	BlockedEngageByParticipant.Remove(InParticipant);
 	bool bRemovedState = false;
 	SuppressedParticipants.Remove(InParticipant);
 
@@ -316,6 +319,60 @@ void UCWorldSubsystem_CombatParticipation::HardReleaseParticipationForParticipan
 	UnbindUnusedTargetLifecycleBindings();
 
 	if (bRemovedState) RebuildAssignments();
+}
+
+// Repeated blocked Engage movement yields the slot without changing evidence or caps.
+void UCWorldSubsystem_CombatParticipation::ReportEngageMoveResult(ACAIController* InParticipant, AActor* InTarget, const int32 InRevision, const bool bBlocked, const FVector& InLocation)
+{
+	const auto assignment = GetAssignment(InParticipant);
+	if (!IsCombatParticipationPairValid(InParticipant, InTarget)
+		|| assignment.CombatRole != ECombatRole::Engage || assignment.TargetActor != InTarget
+		|| assignment.AssignmentRevision != InRevision) return;
+
+	const auto* action = IsValid(InParticipant->GetPawn()) ? InParticipant->GetPawn()->FindComponentByClass<UCActionComponent>() : nullptr;
+	if (!bBlocked || IsAssignmentLockActive(InParticipant, assignment) || (action && action->IsActive()))
+	{
+		BlockedEngageByParticipant.Remove(InParticipant);
+		return;
+	}
+	const float now = GetWorld()->GetTimeSeconds();
+	auto& state = BlockedEngageByParticipant.FindOrAdd(InParticipant);
+	if (state.Target.Get() != InTarget || state.Revision != InRevision
+		|| now - state.LastFailureTime > 15.f || FVector::DistSquared2D(state.LastLocation, InLocation) > FMath::Square(10.f))
+	{
+		state = FBlockedEngageState();
+	}
+	state.Target = InTarget;
+	state.Revision = InRevision;
+	state.LastLocation = InLocation;
+	state.LastFailureTime = now;
+	if (++state.Failures >= 2) state.RetryAfter = now + 5.f;
+}
+
+bool UCWorldSubsystem_CombatParticipation::IsEngageRetryDelayed(ACAIController* InParticipant, AActor* InTarget) const
+{
+	const auto* state = BlockedEngageByParticipant.Find(InParticipant);
+	return state && state->Target.Get() == InTarget && GetWorld()->GetTimeSeconds() < state->RetryAfter;
+}
+
+void UCWorldSubsystem_CombatParticipation::PruneBlockedEngageState()
+{
+	const float now = GetWorld()->GetTimeSeconds();
+	for (auto it = BlockedEngageByParticipant.CreateIterator(); it; ++it)
+	{
+		auto* participant = it.Key().Get();
+		const auto& state = it.Value();
+		const auto assignment = GetAssignment(participant);
+		const auto* action = IsValid(participant) && IsValid(participant->GetPawn()) ? participant->GetPawn()->FindComponentByClass<UCActionComponent>() : nullptr;
+		if (!IsCombatParticipationPairValid(participant, state.Target.Get())
+			|| !HasActiveEvidenceForParticipationPair(participant, state.Target.Get())
+			|| IsAssignmentLockActive(participant, assignment) || (action && action->IsActive())
+			|| (state.RetryAfter > 0.f ? now >= state.RetryAfter :
+				(assignment.AssignmentRevision != state.Revision || now - state.LastFailureTime > 15.f)))
+		{
+			it.RemoveCurrent();
+		}
+	}
 }
 
 // Query
@@ -452,6 +509,7 @@ bool UCWorldSubsystem_CombatParticipation::AcquireAssignmentLock(ACAIController*
 	FCombatParticipationAssignmentLock assignmentLock = InAssignmentLock;
 	assignmentLock.ExpireTimeSeconds = world->GetTimeSeconds() + GetCombatParticipationAssignmentLockTimeout();
 	AssignmentLockByParticipant.Add(InParticipant, assignmentLock);
+	BlockedEngageByParticipant.Remove(InParticipant);
 	BindParticipationTargetLifecycle(assignmentLock.TargetActor);
 	return true;
 }
@@ -477,6 +535,7 @@ void UCWorldSubsystem_CombatParticipation::RebuildAssignments()
 	++AssignmentRebuildId;
 	PruneInactiveEvidence();
 	PruneInactiveAssignmentLocks();
+	PruneBlockedEngageState();
 	UnbindUnusedTargetLifecycleBindings();
 
 	// Delay assignment rebuild until warmup has completed.
@@ -1022,7 +1081,7 @@ bool UCWorldSubsystem_CombatParticipation::CanAssignCandidateAtRole(const FComba
 
 bool UCWorldSubsystem_CombatParticipation::TryBuildEngageAssignment(const FCombatParticipationCandidate& InCandidate, FEngageAssignmentContext& OutAssignment, const TMap<AActor*, FEngageAssignmentSlotState>& InSlotState) const
 {
-	if (!IsValid(InCandidate.TargetActor)) return false;
+	if (!IsValid(InCandidate.TargetActor) || IsEngageRetryDelayed(InCandidate.Participant, InCandidate.TargetActor)) return false;
 
 	const FEngageAssignmentSlotState* slotState = InSlotState.Find(InCandidate.TargetActor);
 	const FEngageAssignmentSlotState emptySlotState;
@@ -1266,6 +1325,7 @@ void UCWorldSubsystem_CombatParticipation::ClearCombatParticipationRuntimeState(
 	PendingEvidenceExhaustedEvents.Reset();
 	SuppressedParticipants.Reset();
 	AssignmentLockByParticipant.Reset();
+	BlockedEngageByParticipant.Reset();
 	for (AActor* targetActor : TargetEndPlayBindings)
 	{
 		if (IsValid(targetActor)) targetActor->OnEndPlay.RemoveDynamic(this, &UCWorldSubsystem_CombatParticipation::HandleTargetEndPlay);
