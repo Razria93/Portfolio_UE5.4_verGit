@@ -102,6 +102,12 @@ AND Distance(Target 현재 위치, HitReactiveEvidenceAnchorLocation)
 lock 해제 뒤에는 현재 live Evidence만으로 다시 allocator를 실행하므로, 기존 Extra admission은
 독립적으로 유지되지 않는다.
 
+### 반복 Blocked 이동의 Engage 재선정
+
+G3-T1 로컬 변경은 native Move 요청의 ID·표적·배정 revision이 일치하는 완료 결과를 사용한다. 동일 배정에서 15초 안에 2회 연속 Blocked이고 실패 지점 사이 2D 진척이 10cm 이하이면, 다음 rebuild에서 해당 Participant×Target의 Engage 진입을 5초 유예한다. 기존 후보 순서와 Base/Extra/Total 상한·live HitReactive 자격으로 대기자를 재선정한다. Evidence와 충돌 설정은 유지한다.
+
+성공/취소 등 다른 완료 결과, 진척, 오래된 실패는 연속성을 초기화한다. 활성 액션·assignment lock은 보호하고, 표적/revision이 다른 결과는 무시한다. lock 취득과 soft/hard release는 실패 기록을 지운다. 근거 소멸·사망 시 정리하며 대체자가 없어도 유예 만료 후 재시도할 수 있다. 이 복구는 경로 통과나 공격 성공을 보장하지 않는다. 실측 결과와 기존 실패는 [참여 상한 검증 기록](../06_notes/N_AI_Participation_Caps_Validation.md)의 마지막 절을 참고한다.
+
 ### 4.1 Runtime tuning과 반영 지연
 
 | 항목 | 소유자 | 기본값 | 계약 |
@@ -114,6 +120,8 @@ lock 해제 뒤에는 현재 live Evidence만으로 다시 allocator를 실행�
 | Perception memory | `FPerceptionSetup::TargetMemoryTimeout` | 3초 | LOS 상실 뒤 Perception Evidence 수명. Source 설정값이다. |
 | allocator rebuild interval | `FEngageAssignmentTuning::RebuildInterval` | 0.1초 | 일반 Evidence report/withdraw가 Assignment에 반영되는 최대 주기 |
 | assignment warmup | `Portfolio.AI.RuntimeLOD.EngageAssignmentWarmupTime` | 0초 | 첫 allocator rebuild 지연. 기본 비활성화 |
+
+G3-T1의 현재 채택 범위는 검증한 C1 재선정 복구와 관련 문서다. 기본 상한 `2 / 3 / 5 / 6 / 12`와 도움말은 main과 동일하게 유지한다. 축소 후보 `1 / 2 / 3 / 1 / 1`은 별도 보존하고 이번 변경에서 제외했다. 역할 배정 상한은 실제 동시 공격 수와 다르다. 복구 검증과 보류 후보의 실패·한계는 [재선정·상한 비교 검증 기록](../06_notes/N_AI_Participation_Caps_Validation.md)을 참고하며 아래 과거 검증표는 당시 조건을 보존한다.
 
 일반 Perception/HitReactive Evidence report와 source withdraw는 다음 periodic rebuild에서 Assignment를
 재평가한다. TTL 시작, Action lock 해제·만료, soft/hard release는 즉시 rebuild를 요청한다.
