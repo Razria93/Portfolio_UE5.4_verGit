@@ -1,6 +1,7 @@
 // Editor-only, transient capture fixture. No animation, Notify or action data edits.
 #include "CoreMinimal.h"
 #include "CReplayCompletion.h"
+#include "CParryReplayObserver.h"
 #include "Framework/Application/SlateApplication.h"
 #include "RenderingThread.h"
 #include "Components/CapsuleComponent.h"
@@ -65,6 +66,8 @@ struct FSession
     FTimerHandle Timer;
     FDelegateHandle Cleanup;
     FDelegateHandle FinishAfterSlate;
+    TStrongObjectPtr<UCParryReplayObserver> ParryObserver;
+    float GuardDelay = .75f;
     FString Mode;
     FString PreviousSnapshot;
     double Started = 0.0;
@@ -107,6 +110,7 @@ struct FSession
 static TUniquePtr<FSession> Session;
 static bool bUnattendedFinished = false;
 static bool bTakeCompleted = false;
+static FString LastParryDiagnostic;
 
 static void ReleaseOwnedGuard()
 {
@@ -133,6 +137,12 @@ static void Stop(bool bWorldCleanup = false)
 {
     if (!Session) return;
     bUnattendedFinished = true;
+    if (Session->ParryObserver.IsValid())
+    {
+        LastParryDiagnostic = Session->ParryObserver->Describe();
+        Session->Log(TEXT("DIAGNOSTIC ") + LastParryDiagnostic);
+        Session->ParryObserver->Unbind();
+    }
     if (!bWorldCleanup) ReleaseOwnedGuard();
     if (FSlateApplication::IsInitialized()) FSlateApplication::Get().OnPostTick().Remove(Session->FinishAfterSlate);
     Session->Log(bWorldCleanup ? TEXT("STOP WorldCleanup") : TEXT("STOP CompletedOrManual"));
@@ -327,6 +337,8 @@ static bool CreateFixture()
             Health->GetCurrentHP(), Health->GetMaxHP(), *GetNameSafe(Focus->GetDebugOverlayFocusActor()),
             *Focus->GetDebugOverlayFocusDriverText(), *Focus->GetDebugOverlayFocusSourceText()));
     }
+    S.ParryObserver.Reset(NewObject<UCParryReplayObserver>());
+    if (!S.ParryObserver->Bind(Enemy, Player)) { S.Log(TEXT("FAIL ParryObserverUnavailable")); return false; }
     return StartExecutionObserver();
 }
 
@@ -345,6 +357,7 @@ static void Tick()
     auto* R=P->FindComponentByClass<UCReactionComponent>();
     auto* H=P->FindComponentByClass<UCHealthComponent>();
     S.Observe();
+    if (S.ParryObserver.IsValid()) S.ParryObserver->Sample();
     if(Now-S.Started>25) {S.Log(TEXT("FAIL no verified parry within take"));Stop();return;}
     if(S.Stage==0 && Now>=S.Deadline) {
         P->HandleEquipmentAction(EEquipmentActionIntent::Equip);
@@ -355,12 +368,11 @@ static void Tick()
         S.Stage=2;S.Log(TEXT("WAIT genuine enemy ComboAttack"));return;
     }
     if(S.Stage==2 && S.Fixture.IsValid() && S.Fixture->GetActionComp()->IsActiveActionType(EActionType::ComboAttack)) {
-        // The authored Guard-In section starts at 0.45s and switches to Guard at
-        // 0.616667s (about 167ms of Parry). A 0.65s input sits at that window's
-        // closing edge when the enemy's half-rate collision begins near 0.8s.
-        // Keep the replay input inside the window across the verified frame rates.
-        // This changes only the fixture input, never action data or montage speed.
+        // Legacy 0.75s remains explicit; the current 0.35 enemy requires 1.07s.
+        // Record the supplied condition without retiming input or changing combat.
         float Delay=.75f; FParse::Value(FCommandLine::Get(),TEXT("Structure02GuardDelay="),Delay);
+        if (!FMath::IsFinite(Delay) || Delay < 0) { S.Log(TEXT("FAIL InvalidGuardDelay")); Stop(); return; }
+        S.GuardDelay = Delay;
         S.Deadline=Now+Delay;S.Stage=3;S.Log(TEXT("OBSERVED enemy attack start"));return;
     }
     if(S.Stage==3 && Now>=S.Deadline) {
@@ -368,12 +380,14 @@ static void Tick()
         if (!Defense || Defense->WantsGuarding()) { S.Log(TEXT("FAIL GuardInputAlreadyOwnedOrUnavailable")); Stop(); return; }
         // The request applies input intent even when the action candidate is rejected.
         S.bOwnsGuardInput = true;
+        S.ParryObserver->RecordInput(Now, S.GuardDelay);
         auto Result=P->HandleCombatAction(ECombatActionIntent::Guard);
         S.Log(TEXT("INPUT Guard ")+UEnum::GetValueAsString(Result.ResultType));
         if (!Result.IsAccepted()) { S.Log(TEXT("FAIL GuardRequestRejected")); Stop(); return; }
         S.Stage=4;S.Deadline=Now+3;return;
     }
-    if(S.Stage==4 && R && R->GetActiveReactionType()==EReactionType::Parry) {
+    if(S.Stage==4 && R && R->GetActiveReactionType()==EReactionType::Parry
+        && S.ParryObserver.IsValid() && S.ParryObserver->CanComplete()) {
         auto* B=S.Fixture->FindComponentByClass<UCBalanceComponent>();
         S.Log(FString::Printf(TEXT("VERIFIED_REAL_PARRY HP=%.1f Balance=%d"),H->GetCurrentHP(),B->GetCurrentBalanceCount()));
         // Stop subsequent AI requests only after the real impact. Current montages finish normally.
@@ -381,7 +395,7 @@ static void Tick()
         ReleaseOwnedGuard();
         S.Stage=5;S.Deadline=Now+3;return;
     }
-    if(S.Stage==4 && Now>=S.Deadline){S.Log(TEXT("FAIL guard did not produce Parry"));Stop();return;}
+    if(S.Stage==4 && Now>=S.Deadline){S.Log(TEXT("FAIL guard did not produce Parry; ") + S.ParryObserver->Describe());Stop();return;}
     if(S.Stage==5 && Now>=S.Deadline) {
         // The recorder requests the next Slate frame from the core ticker.
         // Stopping from this world timer can cancel that unsubmitted request.
@@ -425,6 +439,7 @@ static void Start(const TArray<FString>& Args, UWorld* World)
     Stop();
     bUnattendedFinished = false;
     bTakeCompleted = false;
+    LastParryDiagnostic.Reset();
     Session = MakeUnique<FSession>();
     Session->World = World;
     Session->Player = Player;
@@ -508,8 +523,10 @@ struct FAutoRunner
         bStarted = true;
         bUnattendedFinished = true;
         FinishedAt = FPlatformTime::Seconds();
-        const FString Report = FString::Printf(TEXT("FAILED\nMode=%s\nOutput=%s\nReason=%s\nElapsed=%.3f\nNo successful take is claimed.\n"),
-            *Mode, *Output, *Reason, FinishedAt - RunnerStarted);
+        const FString Diagnostic = Session && Session->ParryObserver.IsValid()
+            ? Session->ParryObserver->Describe() : LastParryDiagnostic;
+        const FString Report = FString::Printf(TEXT("FAILED\nMode=%s\nOutput=%s\nReason=%s\nDiagnostic=%s\nElapsed=%.3f\nNo successful take is claimed.\n"),
+            *Mode, *Output, *Reason, *Diagnostic, FinishedAt - RunnerStarted);
         UE_LOG(LogStructure02Capture, Error, TEXT("[Capture02Auto] FAILED %s"), *Reason);
         // Use a sibling marker, so a failed initialization does not make an empty
         // capture directory which the recorder later mistakes for an existing take.
@@ -627,7 +644,7 @@ struct FAutoRunner
         if (GEditor->PlayWorld || Now - EndRequestedAt < 1.0) return true;
         FString ExportSummary;
         FFileHelper::LoadFileToString(ExportSummary, *(Output / TEXT("record_done.txt")));
-        if (!FFileHelper::SaveStringToFile(FString(TEXT("SUCCESS\nscenario=complete\nexport=verified\n")) + ExportSummary, *(Output + TEXT(".succeeded.txt"))))
+        if (!FFileHelper::SaveStringToFile(FString(TEXT("SUCCESS\nscenario=complete\nexport=verified\nDiagnostic=")) + LastParryDiagnostic + TEXT("\n") + ExportSummary, *(Output + TEXT(".succeeded.txt"))))
         {
             Fail(TEXT("SuccessMarkerWriteFailed"));
             return true;
