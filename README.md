@@ -2,7 +2,7 @@
 
 가드·패링·회피와 다수 적 전투를 구현한 UE5.4 기반 근접 액션 프로젝트입니다. 전투 실행·판정·반응을 연결하고, 적의 인식과 전투 참여를 다룹니다.
 
-[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [통합 포트폴리오](https://razria93.github.io/)
+[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [로컬 실행](#local-run)
 
 ![실제 플레이 중 Player가 Enemy의 공격을 패링하는 장면](https://razria93.github.io/site/assets/stellar-cover-parry.png)
 
@@ -18,18 +18,21 @@
 | [실행 결정·중단·전환](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/execution-transition/) | 약 1분 9초 | 기존 실행의 중단·정리와 다음 반응 시작 |
 | [다수 적 전투 참여](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/combat-participation/) | 약 1분 53초 | 같은 대상을 둔 적들의 교전·경계·관찰 역할 |
 
-문제 해결 영상은 아래 해당 사례에서 바로 열 수 있습니다. [전체 영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/)
+문제 해결 영상은 아래 해당 사례에서 바로 열 수 있습니다.
+
+[전체 영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/)
 
 ## 프로젝트 개요
 
 | 항목 | 내용 |
 | --- | --- |
 | 프로젝트 | UE5.4 기반 3인칭 Action RPG, Project Stellar |
-| 기간 / 규모 | 2025.12 시작 · 개발 진행 중 / 1인 개발 · AI 협업 |
+| 개발 기간 | 2025.12 시작 · 개발 진행 중 |
+| 개발 형태 | 1인 개발 · AI 협업 |
 | 분야 | C++ Game Programmer · 게임플레이·전투·AI |
 | 핵심 기능 | 콤보·가드·패링·회피·반격·처형, 공격·피격에 따른 실행·반응 전환, 다수 적 전투 역할 배정 |
 | 구현 범위 | 전투·AI·피드백·HUD·디버그 도구, 외부 에셋 가공·설정과 게임플레이 통합 |
-| Engine / Language | Unreal Engine 5.4 / C++ · Blueprint |
+| 주요 기술 | Unreal Engine 5.4 / C++ · Blueprint |
 | 개발 환경 | Windows PC / Visual Studio 2022 |
 
 ## 작업 범위·기여
@@ -116,8 +119,11 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 - [프로젝트 안내](https://razria93.github.io/site/stellar.html): 대표 구현·문제 해결·출처·상세 검증 문서
 - [통합 PDF · 62쪽, 스텔라 3–24쪽](https://razria93.github.io/files/pdf/combined-review.pdf#page=3): 프로젝트별 개별 표지를 제외해 묶은 통합본
 - [영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/): 본편 14개와 별도 가드 PIE 1개
+- [통합 포트폴리오](https://razria93.github.io/): 세 프로젝트 안내와 통합 자료
 - [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md): 구조와 기술 판단의 문서 색인
 - [실행 타입 정의](Source/Portfolio/Type/CExecutionTypes.h): 실행 판단·결과에 사용하는 타입
+
+<a id="local-run"></a>
 
 ## 로컬 실행
 
