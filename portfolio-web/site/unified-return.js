@@ -1,8 +1,8 @@
 (() => {
   'use strict';
   const root = 'https://razria93.github.io/Portfolio_UE5.4_verGit/';
-  const hub = root + 'portfolio/';
-  const pdf = root + 'portfolio/files/yeom-dongseop-game-client-portfolio-20261023.pdf';
+  const hub = 'https://razria93.github.io/';
+  const pdf = 'https://razria93.github.io/files/pdf/combined-review.pdf';
   const current = new URL(location.href);
   const value = current.searchParams.get('portfolio_page');
   const page = /^\d+$/.test(value || '') ? Number(value) : 0;
@@ -13,12 +13,14 @@
     Graphics_Study_Archive: {offset: 37, count: 25}
   };
   function projectFor(url) {
-    const key = url.pathname.split('/')[1].replaceAll('.', '_');
+    const filename = url.pathname.split('/').pop();
+    const currentFiles = {'stellar-review.pdf':'Portfolio_UE5_4_verGit','plugin-review.pdf':'Plugin_Portfolio_UE5_4','graphics-review.pdf':'Graphics_Study_Archive'};
+    const key = currentFiles[filename] || (url.pathname.split('/')[1] || '').replaceAll('.', '_');
     return projects[key];
   }
   function owned(url) { return url.hostname === 'razria93.github.io' && !!projectFor(url); }
   const isPdf = url => /\.pdf$/i.test(url.pathname);
-  const projectPdf = url => isPdf(url) && /(?:project-stellar-|plugin-portfolio-|graphics-portfolio-)/i.test(url.pathname);
+  const projectPdf = url => isPdf(url) && /(?:project-stellar-|plugin-portfolio-|graphics-portfolio-|stellar-review|plugin-review|graphics-review)/i.test(url.pathname);
   const pageLike = url => /\/$|\.html?$/i.test(url.pathname) || !url.pathname.split('/').pop().includes('.');
   function remapLabel(a, p) {
     const walker = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
@@ -31,7 +33,7 @@
   if (active) {
     document.querySelectorAll('a[href]').forEach(a => {
       const raw = a.getAttribute('href');
-      if (!raw) return;
+      if (!raw || a.getAttribute('data-preserve-version') === 'true') return;
       if (raw.startsWith('#')) { remapLabel(a, projectFor(current)); return; }
       let url; try { url = new URL(raw, location.href); } catch { return; }
       if (owned(url) && projectPdf(url)) {

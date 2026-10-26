@@ -2,7 +2,7 @@
 
 가드·패링·회피와 다수 적 전투를 구현한 UE5.4 기반 근접 액션 프로젝트입니다. 전투 실행·판정·반응을 연결하고, 적의 인식과 전투 참여를 다룹니다.
 
-[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [로컬 실행](#local-run)
+[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [로컬 실행](#local-run)
 
 ![실제 플레이 중 Player가 Enemy의 공격을 패링하는 장면](https://razria93.github.io/site/assets/stellar-cover-parry.png)
 
@@ -70,9 +70,9 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 
 | 사례 | 핵심 결과 | 자료 | 영상 |
 | --- | --- | --- | --- |
-| 인식 지연<br>개선 | 같은 편 Enemy를 Sight 감지 단계에서 제외.<br>120마리 최초 유효 대상 인식 지연 p95: 20.816초 → 1.053초 | [PDF 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5)<br>[조건·한계](#인식-지연-개선) | [인식 지연<br>비교](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/ai-perception/) |
-| 피격 후<br>타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산.<br>늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8)<br>[조건·한계](#피격-후-타깃-유지) | [타깃 유지<br>시연](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) |
-| 가드 종료 중<br>피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락.<br>피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11)<br>[조건·한계](#가드-종료-중-피격-전환) | [가드 피격<br>전환](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) |
+| 인식 지연<br>개선 | 같은 편 Enemy를 Sight 감지 단계에서 제외.<br>120마리 최초 유효 대상 인식 지연 p95: 20.816초 → 1.053초 | [PDF 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5)<br>[조건·한계](#인식-지연-개선) | [지연 비교<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/ai-perception/) |
+| 피격 후<br>타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산.<br>늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8)<br>[조건·한계](#피격-후-타깃-유지) | [타깃 유지<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) |
+| 가드 종료 중<br>피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락.<br>피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11)<br>[조건·한계](#가드-종료-중-피격-전환) | [피격 전환<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) |
 
 각 결과는 아래 사례별 조건과 한계 안에서 해석합니다.
 
@@ -94,12 +94,16 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 - 엔진·실행 환경: UE 5.4.4 · Windows 11 · D3D12 · Development
 - 하드웨어: Ryzen 9 7950X3D · RTX 4070 Ti
 
+[측정 조건·결과](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/ai.html)
+
 ### 피격 후 타깃 유지
 
 - 자동 검사 NullRHI 4그룹·19시나리오와 실제 Tracking 전환 시연을 구분.
 - 수정 전은 정책 복원 시연이며 당시 바이너리가 아님.
 - 기록 유지와 현재 타깃 선택은 별개.
 - 공격자 소멸 후 대기 기록 정리 보완안은 원본 미반영.
+
+[TTL 자동 검사·확인 범위](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/ttl.html#boundary)
 
 ### 가드 종료 중 피격 전환
 
@@ -113,6 +117,8 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 - 피해량: 기존 시연 **20**, 해당 검증 **300**
 - 요청 실행: 재현 코드에서 실행
 - 확인 범위: **기본 이동 속도 설정의 복원**을 확인했으며, 달리기 동작 재개를 확인한 검사는 아님
+
+[가드 정리 자동 검사·확인 범위](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/guard.html#repeat)
 
 [별도 PIE 기록 · 가드 종료·피격·재진입](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-pie/): 위 자동 반복 검사와 구분되는 실제 PIE 기록입니다.
 
@@ -130,7 +136,9 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 
 ## 로컬 실행
 
-### 저장소·에셋 준비
+### 저장소·환경 준비
+
+Unreal Engine **5.4**와 Visual Studio 2022 C++ 개발 환경을 준비합니다.
 
 Git과 Git LFS를 설치한 뒤 아래 명령으로 저장소를 받습니다. 이미 받은 저장소가 있다면 해당 폴더에서 `git lfs pull`을 실행합니다. `.uasset`·`.umap`은 Git LFS 추적 대상이므로 프로젝트를 열기 전에 실제 에셋 파일을 내려받아야 합니다.
 
@@ -145,10 +153,15 @@ git lfs pull
 
 ### 에디터에서 실행
 
-1. Unreal Engine **5.4**와 Visual Studio 2022 C++ 개발 환경을 준비합니다.
-2. `Portfolio.uproject`를 열고 필요 시 Visual Studio project files를 생성합니다.
-3. `PortfolioEditor | Win64 | Development`로 빌드합니다.
-4. Editor에서 `TestRoom`을 열어 Player / Enemy 전투와 Debug Overlay 흐름을 확인합니다.
+1. `Portfolio.uproject`를 열고 필요 시 Visual Studio project files를 생성합니다.
+2. `PortfolioEditor | Win64 | Development`로 빌드합니다.
+3. Editor에서 `TestRoom`을 엽니다.
+4. **Play(PIE)**를 눌러 플레이를 시작합니다.
+
+### 실행 후 확인
+
+1. Player / Enemy 전투 동작을 확인합니다.
+2. Debug Overlay에서 전투·실행 상태를 확인합니다.
 
 포함된 Editor 플러그인은 `PortfolioDebugOverlayEditor`, `AssetReferenceInspector`입니다. 결과 확인은 [Web Portfolio](https://razria93.github.io/site/stellar.html)와 영상 안내를 우선으로 하며, 로컬 실행은 코드·도구 구조를 더 깊게 검토하기 위한 경로입니다.
 
