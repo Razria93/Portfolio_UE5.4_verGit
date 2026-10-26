@@ -8,6 +8,18 @@
 
 *실제 플레이 · 패링 장면. 전투·AI 시연과 검증 조건은 프로젝트 안내에서 확인할 수 있습니다.*
 
+## 대표 영상
+
+전투 동작과 실행 처리, 다수 적의 역할을 살펴볼 수 있는 세 영상입니다.
+
+| 영상 | 길이 | 확인할 내용 |
+| --- | --- | --- |
+| [가드·패링](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-parry/) | 약 1분 14초 | 방어 판정과 양측의 후속 반응 |
+| [실행 결정·중단·전환](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/execution-transition/) | 약 1분 9초 | 기존 실행의 중단·정리와 다음 반응 시작 |
+| [다수 적 전투 참여](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/combat-participation/) | 약 1분 53초 | 같은 대상을 둔 적들의 교전·경계·관찰 역할 |
+
+문제 해결 영상은 아래 해당 사례에서 바로 열 수 있습니다. [전체 영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/)
+
 ## 프로젝트 개요
 
 | 항목 | 내용 |
@@ -51,9 +63,9 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 
 | 사례 | 핵심 결과 | 자료 |
 | --- | --- | --- |
-| 인식 지연 개선 | 같은 편 Enemy를 Sight 감지 단계에서 제외. 120마리 최초 유효 대상 인식 지연 p95: 20.816초 → 1.053초 | [PDF 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5) |
-| 피격 후 타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산. 늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8) |
-| 가드 종료 중 피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락. 피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11) |
+| 인식 지연 개선 | 같은 편 Enemy를 Sight 감지 단계에서 제외. 120마리 최초 유효 대상 인식 지연 p95: 20.816초 → 1.053초 | [PDF 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5) · [인식 지연 비교 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/ai-perception/) |
+| 피격 후 타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산. 늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8) · [타깃 유지 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) |
+| 가드 종료 중 피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락. 피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11) · [가드 피격 전환 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) |
 
 각 결과는 아래 사례별 조건과 한계 안에서 해석합니다.
 
@@ -94,6 +106,8 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 - 피해량: 기존 시연 **20**, 해당 검증 **300**
 - 요청 실행: 재현 코드에서 실행
 - 확인 범위: **기본 이동 속도 설정의 복원**을 확인했으며, 달리기 동작 재개를 확인한 검사는 아님
+
+[별도 PIE 기록 · 가드 종료·피격·재진입](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-pie/): 위 자동 반복 검사와 구분되는 실제 PIE 기록입니다.
 
 > 각 결과는 기록 당시의 조건에 해당하며, 현재 main 전체를 재검증한 결과는 아닙니다.
 
