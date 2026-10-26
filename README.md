@@ -156,7 +156,7 @@ git lfs pull
 1. `Portfolio.uproject`를 열고 필요 시 Visual Studio project files를 생성합니다.
 2. `PortfolioEditor | Win64 | Development`로 빌드합니다.
 3. Editor에서 `TestRoom`을 엽니다.
-4. **Play(PIE)**를 눌러 플레이를 시작합니다.
+4. **Play(PIE)** 버튼을 눌러 플레이를 시작합니다.
 
 ### 실행 후 확인
 
