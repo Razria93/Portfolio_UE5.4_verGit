@@ -2,38 +2,40 @@
 
 가드·패링·회피와 다수 적 전투를 구현한 UE5.4 기반 근접 액션 프로젝트입니다. 전투 실행·판정·반응을 연결하고, 적의 인식과 전투 참여를 다룹니다.
 
-[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [로컬 실행](#local-run)
+[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [로컬 실행](#local-run)
 
 ![실제 플레이 중 Player가 Enemy의 공격을 패링하는 장면](https://razria93.github.io/site/assets/stellar-cover-parry.png)
 
 *실제 플레이 · 패링 장면. 전투·AI 시연과 검증 조건은 프로젝트 안내에서 확인할 수 있습니다.*
 
-## 대표 영상
+<a id="대표-영상"></a>
+
+## 대표 화면·시연
 
 전투 동작과 실행 처리, 다수 적의 역할을 살펴볼 수 있는 세 영상입니다.
 
 | 영상 | 길이 | 확인할 내용 |
 | --- | --- | --- |
-| [가드·패링](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-parry/) | 약 1분 14초 | 방어 판정과 양측의 후속 반응 |
 | [실행 결정·중단·전환](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/execution-transition/) | 약 1분 9초 | 기존 실행의 중단·정리와 다음 반응 시작 |
+| [가드·패링](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-parry/) | 약 1분 14초 | 방어 판정과 양측의 후속 반응 |
 | [다수 적 전투 참여](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/combat-participation/) | 약 1분 53초 | 같은 대상을 둔 적들의 교전·경계·관찰 역할 |
 
 문제 해결 영상은 아래 해당 사례에서 바로 열 수 있습니다.
 
-[전체 영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/)
+[전체 영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/): 본편 14개와 별도 가드 PIE 1개
 
 ## 프로젝트 개요
 
 | 항목 | 내용 |
 | --- | --- |
 | 프로젝트 | UE5.4 기반 3인칭 Action RPG, Project Stellar |
-| 개발 기간 | 2025.12 시작 · 개발 진행 중 |
-| 개발 형태 | 1인 개발 · AI 협업 |
+| 기간 | 2025.12 시작 · 개발 진행 중 |
+| 형태 | 1인 개발 · AI 협업 |
 | 분야 | C++ Game Programmer · 게임플레이·전투·AI |
-| 핵심 기능 | 콤보·가드·패링·회피·반격·처형, 공격·피격에 따른 실행·반응 전환, 다수 적 전투 역할 배정 |
-| 구현 범위 | 전투·AI·피드백·HUD·디버그 도구, 외부 에셋 가공·설정과 게임플레이 통합 |
-| 주요 기술 | Unreal Engine 5.4 / C++ · Blueprint |
-| 개발 환경 | Windows PC / Visual Studio 2022 |
+| 기능 | 콤보·가드·패링·회피·반격·처형, 공격·피격에 따른 실행·반응 전환, 다수 적 전투 역할 배정 |
+| 범위 | 전투·AI·피드백·HUD·디버그 도구, 외부 에셋 가공·설정과 게임플레이 통합 |
+| 기술 | Unreal Engine 5.4 / C++ · Blueprint |
+| 환경 | Windows PC / Visual Studio 2022 |
 
 ## 작업 범위·기여
 
@@ -48,7 +50,9 @@
 
 공격 중 피격됐을 때 반응의 중단 요구와 현재 공격의 중단 허용을 함께 확인합니다. 중단 조건을 충족하면 기존 공격의 충돌·트레일·실행 정보를 정리한 뒤 피격 반응을 시작합니다. 개별 피드백은 각자의 종료 기준을 따릅니다.
 
-[플레이 사례·처리 구조 · PDF 16–17쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=16) · [실행 전환 구조 설명](Docs/05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md) · [공격 실행 판단 코드](Source/Portfolio/Component/CActionOrchestratorComponent.cpp)
+[플레이 사례·처리 구조 · PDF 16–17쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=16) · [당시 실행 전환 구조 설명](Docs/05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md) · [중단·전환 판단 코드](Source/Portfolio/Component/CReactionOrchestratorComponent.cpp#L607) · [피격 반응 실행 코드](Source/Portfolio/Component/CReactionComponent.cpp#L173)
+
+구조 문서는 당시 설계 기록이며, 현재 공개 시연은 위 PDF와 대표 영상에서 확인합니다.
 
 ### 다수 적 전투 역할 배정
 
@@ -64,11 +68,11 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 
 ## 문제 해결
 
-| 사례 | 핵심 결과 | 자료 |
-| --- | --- | --- |
-| 인식 지연 개선 | 같은 편 Enemy를 Sight 감지 단계에서 제외. 120마리 최초 유효 대상 인식 지연 p95: 20.816초 → 1.053초 | [PDF 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5) · [인식 지연 비교 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/ai-perception/) |
-| 피격 후 타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산. 늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8) · [타깃 유지 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) |
-| 가드 종료 중 피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락. 피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11) · [가드 피격 전환 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) |
+| 사례 | 핵심 결과 | 자료 | 영상 |
+| --- | --- | --- | --- |
+| 인식 지연<br>개선 | 같은 편 Enemy를 Sight 감지 단계에서 제외.<br>120마리 최초 유효 대상 인식 지연 p95: 20.816초 → 1.053초 | [PDF 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5)<br>[조건·한계](#인식-지연-개선) | [인식 지연<br>비교](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/ai-perception/) |
+| 피격 후<br>타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산.<br>늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8)<br>[조건·한계](#피격-후-타깃-유지) | [타깃 유지<br>시연](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) |
+| 가드 종료 중<br>피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락.<br>피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11)<br>[조건·한계](#가드-종료-중-피격-전환) | [가드 피격<br>전환](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) |
 
 각 결과는 아래 사례별 조건과 한계 안에서 해석합니다.
 
@@ -118,7 +122,6 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 
 - [프로젝트 안내](https://razria93.github.io/site/stellar.html): 대표 구현·문제 해결·출처·상세 검증 문서
 - [통합 PDF · 62쪽, 스텔라 3–24쪽](https://razria93.github.io/files/pdf/combined-review.pdf#page=3): 프로젝트별 개별 표지를 제외해 묶은 통합본
-- [영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/): 본편 14개와 별도 가드 PIE 1개
 - [통합 포트폴리오](https://razria93.github.io/): 세 프로젝트 안내와 통합 자료
 - [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md): 구조와 기술 판단의 문서 색인
 - [실행 타입 정의](Source/Portfolio/Type/CExecutionTypes.h): 실행 판단·결과에 사용하는 타입
@@ -148,6 +151,17 @@ git lfs pull
 4. Editor에서 `TestRoom`을 열어 Player / Enemy 전투와 Debug Overlay 흐름을 확인합니다.
 
 포함된 Editor 플러그인은 `PortfolioDebugOverlayEditor`, `AssetReferenceInspector`입니다. 결과 확인은 [Web Portfolio](https://razria93.github.io/site/stellar.html)와 영상 안내를 우선으로 하며, 로컬 실행은 코드·도구 구조를 더 깊게 검토하기 위한 경로입니다.
+
+## 저장소 구조
+
+| 경로 | 역할 |
+| --- | --- |
+| [Source/Portfolio](Source/Portfolio/) | 전투·AI·런타임 디버그 구현 |
+| [Source/PortfolioEditor](Source/PortfolioEditor/) | Root Motion 등 에디터 확장 |
+| [Plugins](Plugins/) | Asset Reference Inspector·Debug Overlay Editor |
+| [Config](Config/) · [Portfolio.uproject](Portfolio.uproject) | 프로젝트 설정과 실행 진입점 |
+| [Docs](Docs/) | 설계·작업 기록·검증 근거 |
+| [portfolio-web](portfolio-web/README.md) | 공개 자료 구성·배포 안내 |
 
 ## 저장소 공개 범위
 
