@@ -1,0 +1,205 @@
+Source: Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_AlertCap_Comparison_Plan.md
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: e03ab3e5292b5977afb44110eea1a2adcfdc64f0ad417fce2e0a28220a39d753
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 19-34 ---
+19: ## CVar
+20: 
+21: ```text
+22: Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap
+23: Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap
+24: ```
+25: 
+26: 기본값:
+27: 
+28: ```text
+29: EngageCap 2
+30: AlertCap 6
+31: ```
+32: 
+33: `AlertCap 40` 측정에서는 EngageCap은 그대로 2로 유지하고 AlertCap만 40으로 변경한다.
+34: 
+
+--- lines 96-275 ---
+96: ## 40 Enemy 측정 결과
+97: 
+98: 측정 파일:
+99: 
+100: ```text
+101: AlertCap 6  : Profile(20260710_100333).csv
+102: AlertCap 40 : Profile(20260710_100515).csv
+103: ```
+104: 
+105: 로그 확인:
+106: 
+107: ```text
+108: GC Event: none
+109: EngageAssignmentRebuildSummary: provided log에 포함되지 않음
+110: ```
+111: 
+112: 제공된 log에는 `EngageAssignmentRebuildSummary`가 포함되지 않았다. 따라서 FinalEngage / FinalAlert 확정 수는 log summary 근거가 아니라, 측정 시 지정한 CVar와 사용자의 관찰 조건을 기준으로 해석한다.
+113: 
+114: ### 40 Enemy 비교표
+115: 
+116: | Metric | AlertCap 6 | AlertCap 40 | Delta |
+117: | --- | ---: | ---: | ---: |
+118: | Capture Duration | 37.11s | 36.55s | -0.56s |
+119: | Analysis Window | 31.12s | 30.57s | -0.55s |
+120: | Frame p95 | 12.0038ms | 13.0781ms | +1.0743ms |
+121: | Game p95 | 11.5967ms | 13.1117ms | +1.5150ms |
+122: | GPU p95 | 10.3942ms | 9.6148ms | -0.7794ms |
+123: | RenderThread p95 | 0.1215ms | 0.1167ms | -0.0048ms |
+124: | BT Tick p95 | 0.2110ms | 0.1970ms | -0.0140ms |
+125: | AIPerception p95 | 0.0846ms | 0.0731ms | -0.0115ms |
+126: | CharacterMovement p95 | 0.5394ms | 1.3609ms | +0.8215ms |
+127: | BT_UpdateAIContext p95 | 0.1451ms | 0.1390ms | -0.0061ms |
+128: | BT_UpdateAIIntentState p95 | 0.0233ms | 0.0424ms | +0.0191ms |
+129: | BT_UpdateEngageContext p95 | 0.0023ms | 0.0069ms | +0.0046ms |
+130: | CombatEngage Tick p95 | 0.0147ms | 0.0154ms | +0.0007ms |
+131: | CombatEngage Rebuild p95 | 0.0141ms | 0.0150ms | +0.0009ms |
+132: | AnimationParallelEvaluation p95 | 3.4510ms | 3.8304ms | +0.3794ms |
+133: | DrawCalls p95 | 827 | 831 | +4 |
+134: | PrimitivesDrawn p95 | 3247714 | 2971918 | -275796 |
+135: 
+136: ### 40 Enemy 호출 수 비교
+137: 
+138: | Counter | AlertCap 6 | AlertCap 40 | Delta |
+139: | --- | ---: | ---: | ---: |
+140: | AIContext Count | 11640 | 11600 | -40 |
+141: | AIIntent Count | 6040 | 5920 | -120 |
+142: | EngageContext Count | 580 | 576 | -4 |
+143: | AIContext Default Interval Count | 11640 | 11600 | -40 |
+144: | AIIntent Default Interval Count | 6040 | 5920 | -120 |
+145: 
+146: ### 40 Enemy Actor / Tick 확인
+147: 
+148: | Metric | AlertCap 6 | AlertCap 40 | Delta |
+149: | --- | ---: | ---: | ---: |
+150: | ActorCount/CEnemy | 80 | 80 | 0 |
+151: | ActorCount/CAIController | 40 | 40 | 0 |
+152: | ActorCount/CWeaponActor | 41 | 41 | 0 |
+153: | ActorCount/TotalActorCount | 316 | 316 | 0 |
+154: | Ticks/CEnemy | 40 | 40 | 0 |
+155: | Ticks/CAIController | 40 | 40 | 0 |
+156: | Ticks/BehaviorTreeComponent | 40 | 40 | 0 |
+157: | Ticks/CharacterMovementComponent | 41 | 41 | 0 |
+158: | Ticks/PathFollowingComponent | 41 | 41 | 0 |
+159: 
+160: ## 40 Enemy 해석
+161: 
+162: 40 Enemy에서는 `AlertCap 40`에서 `CharacterMovement p95`가 가장 크게 증가했다.
+163: 
+164: ```text
+165: 0.5394ms -> 1.3609ms
+166: +0.8215ms
+167: ```
+168: 
+169: Frame / Game p95도 함께 증가했다.
+170: 
+171: ```text
+172: Frame p95: 12.0038ms -> 13.0781ms
+173: Game p95 : 11.5967ms -> 13.1117ms
+174: ```
+175: 
+176: 반면 BT Tick p95와 AIContext p95는 증가하지 않았고, 호출 수는 측정 window 차이 수준에서 오히려 소폭 감소했다. 따라서 40 Enemy 결과의 핵심은 BT 호출 수 증가가 아니라 Alert 후보 증가에 따른 movement / animation work 증가다.
+177: 
+178: ## 80 Enemy 측정 결과
+179: 
+180: 측정 파일:
+181: 
+182: ```text
+183: AlertCap 6  : Profile(20260710_100737).csv
+184: AlertCap 40 : Profile(20260710_100921).csv
+185: ```
+186: 
+187: 로그 확인:
+188: 
+189: ```text
+190: GC Event: none
+191: EngageAssignmentRebuildSummary: provided log에 포함되지 않음
+192: ```
+193: 
+194: ### 80 Enemy 비교표
+195: 
+196: | Metric | AlertCap 6 | AlertCap 40 | Delta |
+197: | --- | ---: | ---: | ---: |
+198: | Capture Duration | 37.07s | 36.99s | -0.08s |
+199: | Analysis Window | 31.09s | 31.00s | -0.09s |
+200: | Frame p95 | 17.5270ms | 19.1846ms | +1.6576ms |
+201: | Game p95 | 17.5329ms | 19.1422ms | +1.6093ms |
+202: | GPU p95 | 11.3695ms | 11.0659ms | -0.3036ms |
+203: | RenderThread p95 | 0.1122ms | 0.1171ms | +0.0049ms |
+204: | BT Tick p95 | 0.4167ms | 0.4014ms | -0.0153ms |
+205: | AIPerception p95 | 0.1069ms | 0.1093ms | +0.0024ms |
+206: | CharacterMovement p95 | 0.8072ms | 1.6427ms | +0.8355ms |
+207: | BT_UpdateAIContext p95 | 0.2837ms | 0.2764ms | -0.0073ms |
+208: | BT_UpdateAIIntentState p95 | 0.0786ms | 0.0807ms | +0.0021ms |
+209: | BT_UpdateEngageContext p95 | 0.0073ms | 0.0071ms | -0.0002ms |
+210: | CombatEngage Tick p95 | 0.0208ms | 0.0240ms | +0.0032ms |
+211: | CombatEngage Rebuild p95 | 0.0203ms | 0.0236ms | +0.0033ms |
+212: | AnimationParallelEvaluation p95 | 5.8641ms | 6.3521ms | +0.4880ms |
+213: | DrawCalls p95 | 1348 | 1345 | -3 |
+214: | PrimitivesDrawn p95 | 5246078 | 5152326 | -93752 |
+215: 
+216: ### 80 Enemy 호출 수 비교
+217: 
+218: | Counter | AlertCap 6 | AlertCap 40 | Delta |
+219: | --- | ---: | ---: | ---: |
+220: | AIContext Count | 22640 | 23120 | +480 |
+221: | AIIntent Count | 11920 | 11840 | -80 |
+222: | EngageContext Count | 566 | 576 | +10 |
+223: | AIContext Default Interval Count | 22640 | 23120 | +480 |
+224: | AIIntent Default Interval Count | 11920 | 11840 | -80 |
+225: 
+226: ### 80 Enemy Actor / Tick 확인
+227: 
+228: | Metric | AlertCap 6 | AlertCap 40 | Delta |
+229: | --- | ---: | ---: | ---: |
+230: | ActorCount/CEnemy | 160 | 160 | 0 |
+231: | ActorCount/CAIController | 80 | 80 | 0 |
+232: | ActorCount/CWeaponActor | 81 | 81 | 0 |
+233: | ActorCount/TotalActorCount | 476 | 476 | 0 |
+234: | Ticks/CEnemy | 80 | 80 | 0 |
+235: | Ticks/CAIController | 80 | 80 | 0 |
+236: | Ticks/BehaviorTreeComponent | 80 | 80 | 0 |
+237: | Ticks/CharacterMovementComponent | 81 | 81 | 0 |
+238: | Ticks/PathFollowingComponent | 81 | 81 | 0 |
+239: 
+240: ## 80 Enemy 해석
+241: 
+242: 80 Enemy에서도 40 Enemy와 같은 경향이 유지됐다.
+243: 
+244: `AlertCap 40`에서 가장 크게 증가한 축은 `CharacterMovement p95`다.
+245: 
+246: ```text
+247: 0.8072ms -> 1.6427ms
+248: +0.8355ms
+249: ```
+250: 
+251: Frame / Game p95도 함께 증가했다.
+252: 
+253: ```text
+254: Frame p95: 17.5270ms -> 19.1846ms
+255: Game p95 : 17.5329ms -> 19.1422ms
+256: ```
+257: 
+258: BT Tick p95와 AIContext p95는 증가하지 않았다. 호출 수는 AIContext Count만 소폭 증가했고, AIIntent Count는 오히려 소폭 감소했다. 따라서 80 Enemy에서도 주된 차이는 BT service 호출 수가 아니라 Alert 대상 증가에 따른 movement / animation work다.
+259: 
+260: Actor / Tick count는 고정되어 있으므로, 이번 비교는 객체 수 차이가 아니라 assignment cap이 실제 행동 후보 수를 조절한 결과로 본다.
+261: 
+262: ## 최종 결론
+263: 
+264: 40 / 80 Enemy 모두에서 `AlertCap 40`은 `AlertCap 6`보다 `CharacterMovement p95`를 크게 증가시켰다.
+265: 
+266: ```text
+267: 40 Enemy: 0.5394ms -> 1.3609ms (+0.8215ms)
+268: 80 Enemy: 0.8072ms -> 1.6427ms (+0.8355ms)
+269: ```
+270: 
+271: Frame / Game p95도 두 조건 모두 `AlertCap 40`에서 증가했다.
+272: 
+273: 따라서 Alert assignment cap은 Runtime LOD v1에서 유지할 가치가 있는 핵심 정책으로 본다. 효과의 본질은 BT Tick 자체를 크게 줄이는 것이 아니라, Alert movement 후보와 그에 딸린 CharacterMovement / animation work를 제한하는 것이다.
+274: 
+275: 후속 작업에서는 이 cap을 고정한 상태에서 Observe / Aware 상태 분리 또는 Collision / Feedback 축 측정으로 넘어간다.
+

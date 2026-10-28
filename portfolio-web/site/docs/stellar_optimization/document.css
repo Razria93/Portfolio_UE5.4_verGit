@@ -1,0 +1,62 @@
+/* common-document-style 1.0.0 — approved 2026-10-22 */
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#edf1f5;color:#172d40;font:16px/1.75 "Malgun Gothic",sans-serif}header{padding:60px max(calc((100vw - 1120px)/2),28px) 42px;background:#102333;color:#f4f8fb}.eyebrow{font-size:13px;letter-spacing:2px;color:#85dcd4}h1{font-size:38px;line-height:1.35;margin:14px 0}h2{font-size:27px;line-height:1.4;margin:10px 0 18px}h3{font-size:21px}.lead{font-size:24px;font-weight:bold;color:#82e6ba}nav{max-width:1120px;margin:22px auto;display:flex;gap:12px;flex-wrap:wrap}nav a{padding:7px 14px;background:white;border-radius:8px;text-decoration:none}a{color:#075e98;overflow-wrap:anywhere}section,.notice{max-width:1120px;margin:24px auto;padding:30px;background:white;border-radius:12px;border:1px solid #dce4eb}.notice{background:#fff7e7;border-color:#ecd7a6}p{margin:12px 0}code{background:#edf3f7;border-radius:4px;padding:2px 5px;font-size:14px;word-break:break-all}.tag{background:#ddf6e9;color:#176d4a;font-weight:bold;font-size:13px;padding:4px 10px;border-radius:4px}video{width:100%;max-height:690px;margin:16px 0;background:#101923;border-radius:6px}.caption,.small,figcaption{font-size:13px;color:#5d7284}.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}figure{margin:12px 0}img{width:100%;border-radius:5px}table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}th,td{border-bottom:1px solid #dbe4eb;padding:10px;text-align:left;vertical-align:top}th{background:#edf4f8}.tablewrap{overflow-x:auto}summary{cursor:pointer;font-weight:bold;padding:12px;background:#edf3f7;border-radius:5px}details{margin:18px 0}li{margin:8px 0}footer{max-width:1120px;margin:30px auto 60px;color:#61768a;font-size:13px}@media(max-width:800px){section,.notice,nav{margin:18px 12px}section{padding:20px}.gallery{grid-template-columns:1fr}h1{font-size:29px}h2{font-size:23px}}
+.tag.failed{background:#fbe5e5;color:#9d2828}.tag.partial,.tag.unverified{background:#fff0d2;color:#805100}.tag.observed{background:#e4edf9;color:#28598c}p,li,figcaption{overflow-wrap:anywhere}.skip{position:absolute;left:12px;top:-100px;background:white;padding:8px}.skip:focus{top:8px}a:focus-visible,summary:focus-visible,video:focus-visible{outline:3px solid #138b88;outline-offset:3px}@media print{body{background:white}section{break-inside:avoid;border:1px solid #aaa}nav,video,.skip{display:none}header{background:white;color:#172d40}.eyebrow,.lead{color:#172d40}}
+
+main{min-width:0}header>p{max-width:1120px}header .lead{font-size:21px}h2{color:#172d40}pre{margin:16px 0;padding:18px 20px;background:#edf3f7;border-radius:6px;font:14px/1.7 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;overflow-x:auto}pre code{padding:0}video{display:block;height:auto}img{display:block;height:auto}.gallery:has(>figure:only-child){grid-template-columns:1fr}.note{padding:18px 20px;background:#fff7e7;border:1px solid #ecd7a6;border-radius:8px}.tablewrap{max-width:100%}.tablewrap table{min-width:600px}th{font-weight:700}td a{white-space:normal}header h1{color:#f4f8fb}header p{color:#d9e5ec}header .lead{color:#82e6ba}header .eyebrow{color:#85dcd4}section>:first-child{margin-top:0}section>:last-child{margin-bottom:0}section h2:not(:first-child){margin-top:12px}footer{padding:0 12px}nav a{line-height:1.6}
+@media(max-width:800px){header{padding:36px 20px 28px}header .lead{font-size:18px}section,.notice{padding:20px}pre{padding:14px;font-size:13px}footer{margin:24px 12px 40px}video{margin:14px 0}h1{overflow-wrap:anywhere}}
+
+
+/* Shared typography by content role; content order and evidence remain unchanged. */
+header{padding-top:44px;padding-bottom:36px}
+header .report-title{font:700 38px/1.35 "Malgun Gothic",sans-serif;color:#f4f8fb;margin:12px 0 18px;letter-spacing:0}
+header .report-intro,header .report-intro.lead{font:400 18px/1.8 "Malgun Gothic",sans-serif;color:#d9e5ec;margin:0 0 14px;letter-spacing:0}
+header .report-meta,header .report-meta.eyebrow{font:400 13px/1.75 "Malgun Gothic",sans-serif;color:#85dcd4;letter-spacing:.2px}
+header p.report-meta{margin:14px 0 0}
+header .report-intro>.report-meta{display:block;margin:0 0 10px}
+section .section-title{font:700 27px/1.4 "Malgun Gothic",sans-serif;color:#172d40;margin:0 0 18px;letter-spacing:0}
+section .tag+.section-title{margin-top:12px}
+section .body-copy{font:400 16px/1.8 "Malgun Gothic",sans-serif;color:#172d40;margin:12px 0}
+section .body-label{font:700 15px/1.8 "Malgun Gothic",sans-serif;color:#075e73}
+section .evidence-link{font:400 14px/1.7 "Malgun Gothic",sans-serif;color:#075e98;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+section .evidence-links{margin:16px 0 0;line-height:1.9}
+section .caption,section .small,section figcaption{font:400 13px/1.75 "Malgun Gothic",sans-serif;color:#5d7284}
+@media(max-width:800px){header{padding-top:32px;padding-bottom:28px}header .report-title{font-size:29px}header .report-intro,header .report-intro.lead{font-size:17px}section .section-title{font-size:23px}}
+
+
+/* Common header and section navigation, shared by both verification reports. */
+header{padding:40px max(calc((100% - 1120px)/2),28px) 32px}
+header .report-meta.eyebrow{display:block;margin:0;line-height:23px}
+header .report-title{margin:14px 0 18px;word-break:keep-all;overflow-wrap:break-word}
+header .report-intro{margin:0;line-height:1.8;word-break:keep-all}
+header .verification-conditions{display:grid;grid-template-columns:72px 1fr;gap:4px 16px;margin:20px 0 0;padding-top:16px;border-top:1px solid #344957;font-size:13px;line-height:1.75;color:#d9e5ec}
+.verification-conditions dt{color:#85dcd4;font-weight:700}.verification-conditions dd{margin:0;word-break:keep-all}
+nav.report-index{max-width:1120px;margin:24px auto;display:block}
+.report-index h2{font-size:14px;line-height:24px;margin:0 0 10px;color:#5d7284}
+.index-items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.index-items a{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 14px;border:1px solid #dce4eb;border-radius:8px;font-size:14px;line-height:1.6;word-break:keep-all}
+.index-items a span{color:#138b88;font-size:12px;font-weight:bold;flex:none}
+.notice{font-size:14px;line-height:1.8;padding:20px 24px;margin:24px auto}
+[id]{scroll-margin-top:20px}
+@media(max-width:800px){header{padding:30px 20px 28px}header .report-title{font-size:29px}header .report-intro{font-size:17px}.index-items{grid-template-columns:repeat(2,minmax(0,1fr))}nav.report-index{margin:20px 12px}.notice{margin:20px 12px;padding:18px 20px}header .verification-conditions{grid-template-columns:64px 1fr;gap:6px 10px}}
+
+
+/* Korean prose wraps at word boundaries; only code and literal URLs may split. */
+main, main p, main li, main figcaption, main a, main th, main td,
+main h2, main h3, main summary, footer, footer p, footer a {
+  word-break:keep-all; overflow-wrap:normal;
+}
+main pre, main code, main kbd, main samp, main .literal-url,
+footer code, footer .literal-url {
+  word-break:normal; overflow-wrap:anywhere;
+}
+
+/* Generic semantic components; approved header/card metrics above stay unchanged. */
+.code-block{margin:24px 0}.code-block h3{font-size:18px;color:#075e73;margin:0 0 10px}
+.code-block pre{margin:16px 0}.code-block .evidence-links{margin-top:16px}
+.syntax code{background:transparent}.syntax .k,.syntax .kt,.syntax .kd{color:#005fc5}
+.syntax .nf,.syntax .nc{color:#7950a0}.syntax .s,.syntax .s1,.syntax .s2{color:#a63d24}
+.syntax .m,.syntax .mi,.syntax .mf{color:#9b5d00}.syntax .c,.syntax .c1,.syntax .cm{color:#54745a}
+.role-user{color:#138b88;font-weight:700}.role-codex{color:#b95a19;font-weight:700}
+@media print{header{background:white!important;color:#172d40!important;padding:20px 0}
+header .report-title,header .report-intro,header .report-meta,.verification-conditions{color:#172d40!important}
+nav.report-index,.skip{display:none}section{break-inside:auto}h2,h3{break-after:avoid}figure,tr,pre{break-inside:avoid}}

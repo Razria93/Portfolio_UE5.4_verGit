@@ -1,0 +1,45 @@
+Source: Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Combat_Feedback_Presentation_Measurement_Plan.md
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: 81d64b436ca6799c86d15e5e8dce490753f6e7cd4cb3692645a723f9f03049c8
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 169-206 ---
+169: ## 결과
+170: 
+171: 대표 측정:
+172: 
+173: | Enemy | Case | CVar | CSV |
+174: | ---: | --- | ---: | --- |
+175: | 40 | FeedbackBaseline | 0 | `Profile(20260711_191545).csv` |
+176: | 40 | FeedbackDisabled | 1 | `Profile(20260711_191931).csv` |
+177: | 80 | FeedbackBaseline | 0 | `Profile(20260711_193111).csv` |
+178: | 80 | FeedbackDisabled | 1 | `Profile(20260711_193802).csv` |
+179: 
+180: `Profile(20260711_192806).csv`는 80 Enemy baseline 계열이지만 action feedback counter가 대표 baseline보다 한 사이클 더 들어간 형태라 최종 대표값에서 제외한다.
+181: 
+182: ### Frame / Game 비교
+183: 
+184: | Enemy | Case | Frame p95 | Game p95 | GPU p95 | CharacterMovement p95 | BT Tick p95 |
+185: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+186: | 40 | Baseline | 12.4115ms | 12.3616ms | 10.4383ms | 0.5052ms | 0.2125ms |
+187: | 40 | Disabled | 12.2223ms | 12.2703ms | 10.0552ms | 0.5309ms | 0.2104ms |
+188: | 80 | Baseline | 17.9264ms | 17.8648ms | 11.3880ms | 0.7770ms | 0.4195ms |
+189: | 80 | Disabled | 18.3894ms | 18.4272ms | 10.9936ms | 0.9020ms | 0.4174ms |
+190: 
+191: ### Feedback counter 비교
+192: 
+193: | Enemy | Case | Request | Skipped | Trail | TrailClear | VFX | SFX |
+194: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+195: | 40 | Baseline | 104 | 0 | 22 | 12 | 20 | 34 |
+196: | 40 | Disabled | 102 | 102 | 0 | 6 | 0 | 0 |
+197: | 80 | Baseline | 104 | 0 | 22 | 12 | 20 | 34 |
+198: | 80 | Disabled | 104 | 104 | 0 | 6 | 0 | 0 |
+199: 
+200: ### 해석
+201: 
+202: - `DisableEnemyCombatFeedback 1`에서 `ActionFeedback_Skipped`가 request 수와 동일하게 증가하고 `Trail / VFX / SFX`가 0으로 떨어졌다.
+203: - `TrailClear`는 action cleanup에서 trail off를 보장하는 정리 호출이므로 presentation 실행 수로 보지 않는다.
+204: - Player가 맞아서 Player component에서 실행되는 `HitFeedback / HitStop`은 유지된다.
+205: - 40 / 80 Enemy 모두에서 feedback presentation 제거가 Frame / Game p95를 유의미하게 낮추지는 않았다.
+206: - 따라서 `Combat Feedback Presentation`은 Runtime LOD v1의 핵심 병목 축이 아니라, 최하위 representation 단계에서 선택적으로 줄일 수 있는 후보로 둔다.
+

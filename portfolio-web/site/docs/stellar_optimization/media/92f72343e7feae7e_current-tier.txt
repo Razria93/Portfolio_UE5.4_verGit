@@ -1,0 +1,50 @@
+Source: Source/Portfolio/AI/RuntimeLOD/CAIRuntimeLODTierResolver.cpp
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: cb09e6b52179d0f84cb57e355afbde21c2ecb38761f07f747f92f6a4a89f9a2c
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 27-69 ---
+27: 
+28: FAIRuntimeLODTierContext FAIRuntimeLODTierResolver::BuildContext(const UBlackboardComponent& InBlackboardComp)
+29: {
+30: 	FAIRuntimeLODTierContext context;
+31: 	context.AIIntentState = static_cast<EAIIntentState>(InBlackboardComp.GetValueAsEnum(CAIKey::State::AIIntentState.KeyName));
+32: 	context.CombatRole = static_cast<ECombatRole>(InBlackboardComp.GetValueAsEnum(CAIKey::CombatParticipation::State.KeyName));
+33: 
+34: 	const AActor* targetActor = Cast<AActor>(InBlackboardComp.GetValueAsObject(CAIKey::Perception::PerceivedTargetActor.KeyName));
+35: 	const bool bHasLOS = InBlackboardComp.GetValueAsBool(CAIKey::Perception::bHasLOS.KeyName);
+36: 	context.bHasTargetAwareness = IsValid(targetActor) || bHasLOS;
+37: 
+38: 	return context;
+39: }
+40: 
+41: // Tier Resolve
+42: 
+43: EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const UBlackboardComponent& InBlackboardComp)
+44: {
+45: 	return ResolveTier(BuildContext(InBlackboardComp));
+46: }
+47: 
+48: EAIRuntimeLODTier FAIRuntimeLODTierResolver::ResolveTier(const FAIRuntimeLODTierContext& InContext)
+49: {
+50: 	if (InContext.bDormantCandidate) return EAIRuntimeLODTier::Dormant;
+51: 	if (IsAlwaysCombatCriticalIntentState(InContext.AIIntentState)) return EAIRuntimeLODTier::CombatCritical;
+52: 
+53: 	switch (InContext.CombatRole)
+54: 	{
+55: 	case ECombatRole::Engage:
+56: 		return EAIRuntimeLODTier::CombatCritical;
+57: 
+58: 	case ECombatRole::Alert:
+59: 		return EAIRuntimeLODTier::CombatSupport;
+60: 
+61: 	case ECombatRole::Observe:
+62: 		return EAIRuntimeLODTier::Awareness;
+63: 
+64: 	case ECombatRole::None:
+65: 	default:
+66: 		return InContext.bHasTargetAwareness ? EAIRuntimeLODTier::Awareness : EAIRuntimeLODTier::Background;
+67: 	}
+68: }
+69: 
+

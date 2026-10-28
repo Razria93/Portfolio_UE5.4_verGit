@@ -1,0 +1,144 @@
+{
+  "measurements": [
+    {
+      "capture": "Profile(20260710_100333).csv",
+      "enemy_count": 40,
+      "alert_cap": 6,
+      "engage_cap": 2,
+      "source_sha256": "31049cf595b6e0482b9502f61afc0929af74c20ad6eaa3f22fc8e8626a18a668",
+      "numeric_extract": "alert-40-cap6.csv",
+      "extract_sha256": "9475f277130b976b6435afa4b6bbcb5745d2a5ddc87afaf1c7cd02f492a4ca49",
+      "duration_seconds": 37.10816949999988,
+      "frames": 3404
+    },
+    {
+      "capture": "Profile(20260710_100515).csv",
+      "enemy_count": 40,
+      "alert_cap": 40,
+      "engage_cap": 2,
+      "source_sha256": "9784a82ff436d6f0428fd0cbe4e70104def1ae7905ad3eddc79f1a8c7b092456",
+      "numeric_extract": "alert-40-cap40.csv",
+      "extract_sha256": "4d276ae55d2a4fbc177e987cb05c3bdccf0742fd8c811f26ed3634e89a7aac71",
+      "duration_seconds": 36.550939399999926,
+      "frames": 3124
+    },
+    {
+      "capture": "Profile(20260710_100737).csv",
+      "enemy_count": 80,
+      "alert_cap": 6,
+      "engage_cap": 2,
+      "source_sha256": "0c1d8ed6319115cef9246d847f4b99356c31b7f5baf18862fb22efb9aeb8deb3",
+      "numeric_extract": "alert-80-cap6.csv",
+      "extract_sha256": "fba184e09b983d3a4b055b5e7124643d6322db6c8c3f5e35708eafee2da68a84",
+      "duration_seconds": 37.067778799999985,
+      "frames": 2295
+    },
+    {
+      "capture": "Profile(20260710_100921).csv",
+      "enemy_count": 80,
+      "alert_cap": 40,
+      "engage_cap": 2,
+      "source_sha256": "ca916aef9a2455b09cdffdd93fe15efbadbb45c3e9ae59f7e345beef7f89170b",
+      "numeric_extract": "alert-80-cap40.csv",
+      "extract_sha256": "893d1cfa6a8213fec59dbbd46fedb4402e441ccdb30f15df2501833d75063dd6",
+      "duration_seconds": 36.99299169999998,
+      "frames": 2121
+    }
+  ],
+  "reported_values_source": "alert.txt",
+  "method": "Metric columns extracted without changing numeric values. elapsed_seconds is cumulative FrameTime / 1000. Recalculation trims the first and last 3 seconds and uses linear interpolated p95. Historical slide values remain the original report values.",
+  "recalculation": [
+    {
+      "name": "Profile(20260710_100333).csv",
+      "references": [
+        "Docs\\07_Profiling\\AI_Performance\\CSV_Evidence_Manifest.md",
+        "Docs\\07_Profiling\\AI_Performance\\Runtime_LOD\\AI_AlertCap_Comparison_Plan.md"
+      ],
+      "available": true,
+      "sha256": "31049cf595b6e0482b9502f61afc0929af74c20ad6eaa3f22fc8e8626a18a668",
+      "duration_s": 37.10816949999988,
+      "frames": 3404,
+      "trimmed_frames": 2836,
+      "p95": {
+        "FrameTime": 12.002975000000001,
+        "GameThreadTime": 11.5907,
+        "GPUTime": 10.390075,
+        "Exclusive/GameThread/CharacterMovement": 0.538575,
+        "Exclusive/GameThread/BehaviorTreeTick": 0.210625,
+        "Exclusive/GameThread/Animation": 2.0804,
+        "Exclusive/GameThread/AIPerception": 0.0846
+      },
+      "log_available": true,
+      "gc_event_lines": []
+    },
+    {
+      "name": "Profile(20260710_100515).csv",
+      "references": [
+        "Docs\\07_Profiling\\AI_Performance\\CSV_Evidence_Manifest.md",
+        "Docs\\07_Profiling\\AI_Performance\\Runtime_LOD\\AI_AlertCap_Comparison_Plan.md"
+      ],
+      "available": true,
+      "sha256": "9784a82ff436d6f0428fd0cbe4e70104def1ae7905ad3eddc79f1a8c7b092456",
+      "duration_s": 36.550939399999926,
+      "frames": 3124,
+      "trimmed_frames": 2605,
+      "p95": {
+        "FrameTime": 13.07796,
+        "GameThreadTime": 13.109959999999997,
+        "GPUTime": 9.61472,
+        "Exclusive/GameThread/CharacterMovement": 1.3607799999999999,
+        "Exclusive/GameThread/BehaviorTreeTick": 0.19698,
+        "Exclusive/GameThread/Animation": 2.00108,
+        "Exclusive/GameThread/AIPerception": 0.0731
+      },
+      "log_available": true,
+      "gc_event_lines": []
+    },
+    {
+      "name": "Profile(20260710_100737).csv",
+      "references": [
+        "Docs\\07_Profiling\\AI_Performance\\CSV_Evidence_Manifest.md",
+        "Docs\\07_Profiling\\AI_Performance\\Runtime_LOD\\AI_AlertCap_Comparison_Plan.md"
+      ],
+      "available": true,
+      "sha256": "0c1d8ed6319115cef9246d847f4b99356c31b7f5baf18862fb22efb9aeb8deb3",
+      "duration_s": 37.067778799999985,
+      "frames": 2295,
+      "trimmed_frames": 1887,
+      "p95": {
+        "FrameTime": 17.52583,
+        "GameThreadTime": 17.53236,
+        "GPUTime": 11.3695,
+        "Exclusive/GameThread/CharacterMovement": 0.80717,
+        "Exclusive/GameThread/BehaviorTreeTick": 0.41667,
+        "Exclusive/GameThread/Animation": 3.7308399999999997,
+        "Exclusive/GameThread/AIPerception": 0.10686999999999998
+      },
+      "log_available": true,
+      "gc_event_lines": []
+    },
+    {
+      "name": "Profile(20260710_100921).csv",
+      "references": [
+        "Docs\\07_Profiling\\AI_Performance\\CSV_Evidence_Manifest.md",
+        "Docs\\07_Profiling\\AI_Performance\\Runtime_LOD\\AI_AlertCap_Comparison_Plan.md"
+      ],
+      "available": true,
+      "sha256": "ca916aef9a2455b09cdffdd93fe15efbadbb45c3e9ae59f7e345beef7f89170b",
+      "duration_s": 36.99299169999998,
+      "frames": 2121,
+      "trimmed_frames": 1745,
+      "p95": {
+        "FrameTime": 19.18168,
+        "GameThreadTime": 19.14192,
+        "GPUTime": 11.06518,
+        "Exclusive/GameThread/CharacterMovement": 1.6426,
+        "Exclusive/GameThread/BehaviorTreeTick": 0.4010599999999999,
+        "Exclusive/GameThread/Animation": 3.71246,
+        "Exclusive/GameThread/AIPerception": 0.1093
+      },
+      "log_available": true,
+      "gc_event_lines": []
+    }
+  ]
+}

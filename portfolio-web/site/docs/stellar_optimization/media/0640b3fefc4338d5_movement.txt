@@ -1,0 +1,137 @@
+Source: Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Movement_Nav_LOD_Measurement_Plan.md
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: 9fdf07cc24af53dc2c0800102dfcb03d8af3f9cdb4187a57076c7249c4ed225d
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 325-454 ---
+325: ## 40 Enemy 측정 결과
+326: 
+327: 공통 조건:
+328: 
+329: ```text
+330: Map: MAP_AIPerf_MovementNav_40Enemy
+331: Capture Duration: 약 36초
+332: Analysis Window: first 3s / last 3s trimmed, middle 30s used
+333: Log State: -noailogging
+334: PIE: F11 fullscreen
+335: Camera: fixed camera
+336: EnemyMeshMode 0
+337: EnemyAnimationMode 0
+338: DisableEnemyWeaponActor 0
+339: DisableEnemyPerception 0
+340: PerceptionCandidateAudit 0
+341: BlackboardEngageLatencyAudit 0
+342: CanMoveDecoratorAudit 0
+343: ```
+344: 
+345: 원본 CSV:
+346: 
+347: ```text
+348: MV00: Profile(20260707_134355).csv
+349: MV01: Profile(20260707_134714).csv
+350: MV02: Profile(20260707_134915).csv
+351: ```
+352: 
+353: 측정 결과:
+354: 
+355: | Case | EnemyMovementMode | 상태 | 시간 | Frame p95 | Game p95 | CharacterMovement p95 | CMovement Tick p95 | PathFollowing Tick p95 | BT Tick p95 | AIContext p95 | Animation p95 | AnimParallel p95 | DrawCalls avg | 판정 |
+356: | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+357: | MV00 | 0 | MovementBaseline | 37.15s | 13.1964ms | 13.1588ms | 1.2187ms | 41 | 41 | 0.3102ms | 0.1634ms | 2.0188ms | 3.9907ms | 796.7 | 기준 |
+358: | MV01 | 1 | MovementStateRefreshDisabled | 37.91s | 12.8934ms | 12.8905ms | 1.3356ms | 1 | 41 | 0.2998ms | 0.1619ms | 2.0482ms | 3.5350ms | 791.0 | 제한 효과 |
+359: | MV02 | 2 | BlockMovementIntent | 37.27s | 10.9037ms | 10.6373ms | 0.4026ms | 41 | 41 | 0.2732ms | 0.1690ms | 2.1513ms | 3.3163ms | 718.0 | 유효 |
+360: 
+361: 측정 해석:
+362: 
+363: ```text
+364: MovementStateRefreshDisabled는 CMovementComponent tick을 41 -> 1 수준으로 줄였다.
+365: 하지만 Frame / GameThread p95 개선은 약 0.3ms 수준이고, CharacterMovement p95는 오히려 소폭 증가했다.
+366: 따라서 UCMovementComponent의 speed / direction / falling state refresh는 40 Enemy 조건에서 주요 병목으로 보기 어렵다.
+367: PIE 관측상 Mode 1에서는 Perception / BT 판단 / Alert Spread는 유지되지만 movement state cache가 갱신되지 않아 Alert Spread 중에도 이동 locomotion으로 전환되지 않고 Idle Locomotion으로 표현된다.
+368: 따라서 Mode 1은 성능 이득이 제한적이고 representation도 깨뜨리므로 Runtime LOD 후보에서 제외한다.
+369: 
+370: BlockMovementIntent는 Frame p95를 13.1964ms -> 10.9037ms, Game p95를 13.1588ms -> 10.6373ms로 줄였다.
+371: CharacterMovement p95도 1.2187ms -> 0.4026ms로 크게 줄었다.
+372: 따라서 실제 이동 요청 / CharacterMovement / nav movement 흐름은 유효한 비용 축으로 본다.
+373: 
+374: BlockMovementIntent에서도 PathFollowingComponent tick count는 41로 유지된다.
+375: 따라서 현재 제어는 component tick 자체를 제거한 것이 아니라, movement intent와 active movement를 막아 실제 이동 처리 비용을 낮춘 것으로 해석한다.
+376: 
+377: ActorCount/CEnemy는 80으로 기록되지만 CAIController 40, CWeaponActor 41로 보아 40 Enemy PIE 조건으로 해석한다.
+378: ```
+379: 
+380: ## 80 Enemy 측정 결과
+381: 
+382: 공통 조건:
+383: 
+384: ```text
+385: Map: MAP_AIPerf_MovementNav_80Enemy
+386: Capture Duration: 약 36초
+387: Analysis Window: first 3s / last 3s trimmed, middle 30s used
+388: Log State: -noailogging
+389: PIE: F11 fullscreen
+390: Camera: fixed camera
+391: EnemyMeshMode 0
+392: EnemyAnimationMode 0
+393: AnimationRefreshAudit 0
+394: DisableEnemyWeaponActor 0
+395: DisableEnemyPerception 0
+396: PerceptionCandidateAudit 0
+397: BlackboardEngageLatencyAudit 0
+398: CanMoveDecoratorAudit 0
+399: ```
+400: 
+401: 원본 CSV:
+402: 
+403: ```text
+404: MV03: Profile(20260707_141109).csv
+405: MV04: Profile(20260707_141359).csv
+406: MV05: Profile(20260707_141911).csv
+407: ```
+408: 
+409: 측정 결과:
+410: 
+411: | Case | EnemyMovementMode | 상태 | 시간 | Frame p95 | Game p95 | CharacterMovement p95 | CMovement Tick p95 | PathFollowing Tick p95 | BT Tick p95 | AIContext p95 | Animation p95 | AnimParallel p95 | DrawCalls avg | 판정 |
+412: | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+413: | MV03 | 0 | MovementBaseline | 37.12s | 20.0551ms | 20.0078ms | 2.5264ms | 81 | 81 | 0.5079ms | 0.2708ms | 3.3888ms | 6.4413ms | 1313.5 | 기준 |
+414: | MV04 | 1 | MovementStateRefreshDisabled | 37.20s | 20.6420ms | 20.6332ms | 2.6630ms | 1 | 81 | 0.5176ms | 0.2767ms | 3.5096ms | 5.9473ms | 1312.9 | 효과 없음 |
+415: | MV05 | 2 | BlockMovementIntent | 37.19s | 16.9774ms | 17.0193ms | 0.8254ms | 81 | 81 | 0.4289ms | 0.2596ms | 4.5242ms | 5.7582ms | 1240.7 | 유효 |
+416: 
+417: 측정 해석:
+418: 
+419: ```text
+420: MovementStateRefreshDisabled는 CMovementComponent tick을 81 -> 1 수준으로 줄였다.
+421: 하지만 Frame / GameThread / CharacterMovement p95는 개선되지 않았고 오히려 소폭 증가했다.
+422: 따라서 UCMovementComponent의 speed / direction / falling state refresh는 80 Enemy 조건에서도 주요 병목으로 보기 어렵다.
+423: 40 Enemy와 동일하게 Mode 1은 실제 이동 요청과 BT 판단은 유지하지만 locomotion parameter가 최신화되지 않아 representation을 깨뜨린다.
+424: 따라서 Mode 1은 비용 분리 측정 결과로만 남기고 Runtime LOD 적용 후보에서 제외한다.
+425: 
+426: BlockMovementIntent는 Frame p95를 20.0551ms -> 16.9774ms, Game p95를 20.0078ms -> 17.0193ms로 줄였다.
+427: CharacterMovement p95도 2.5264ms -> 0.8254ms로 크게 줄었다.
+428: 따라서 실제 이동 요청 / CharacterMovement / nav movement 흐름은 80 Enemy 조건에서도 유효한 비용 축으로 본다.
+429: 
+430: BlockMovementIntent에서도 CharacterMovementComponent / PathFollowingComponent tick count는 81로 유지된다.
+431: 따라서 현재 제어는 component tick 자체를 제거한 것이 아니라, movement intent와 active movement를 막아 실제 이동 처리 비용을 낮춘 것으로 해석한다.
+432: 
+433: Mode 2에서 Animation p95는 증가했지만, 이 측정축의 직접 대상은 movement / nav 비용이다.
+434: Animation 변화는 movement 상태 변화에 따른 부수 효과로 보고, animation 최적화 결론으로 사용하지 않는다.
+435: PIE 관측상 Mode 2는 실제 이동을 차단한다.
+436: 가까운 Enemy는 이동하지 않아도 Engage 유효 거리 안에 있으면 Attack을 계속 시도할 수 있다.
+437: 따라서 Mode 2를 그대로 Runtime LOD로 적용하려면 이동은 막히고 combat 판단은 유지되는 불일치가 생길 수 있다.
+438: 후속 설계에서는 movement block을 직접 적용하지 않고 combat relevance / Engage gate / movement budget과 함께 다룬다.
+439: ```
+440: 
+441: ## 종합 결론
+442: 
+443: ```text
+444: 40 / 80 Enemy 모두 MovementMode 1은 CMovementComponent tick count를 줄였지만 Frame / GameThread p95 개선으로 이어지지 않았다.
+445: 또한 Alert Spread 중 locomotion representation이 Idle Locomotion으로 남아 표현 품질을 깨뜨린다.
+446: 따라서 Mode 1은 현재 조건의 주요 병목 축이 아니며 Runtime LOD 후보에서 제외한다.
+447: 
+448: 40 / 80 Enemy 모두 MovementMode 2는 CharacterMovement p95와 Frame / GameThread p95를 함께 줄였다.
+449: 따라서 Movement / Nav 최적화는 state refresh tick을 줄이는 방향보다, far / non-combat enemy의 active movement 빈도나 movement intent 자체를 줄이는 방향이 더 타당하다.
+450: 
+451: 다만 Mode 2는 gameplay state를 크게 바꾸고, Engage 유효 거리 안의 Enemy가 이동 없이 Attack을 시도할 수 있다.
+452: 따라서 그대로 Runtime LOD로 적용하기보다, distance / combat relevance 기반으로 movement update interval, path request 빈도, active movement budget, Engage / Attack gate를 함께 조정하는 방식으로 설계한다.
+453: ```
+454: 
+

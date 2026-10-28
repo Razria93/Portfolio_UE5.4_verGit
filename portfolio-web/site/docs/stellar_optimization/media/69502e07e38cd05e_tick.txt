@@ -1,0 +1,85 @@
+Source: Docs/07_Profiling/AI_Performance/Runtime_LOD/AI_Enemy_Actor_Tick_Audit_Plan.md
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: 72d9597d0a4bf5cb2ce0c4da3d0d904c74eaecbd1497f0763072112edf2a89e8
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 30-48 ---
+30: ## 제어 CVar
+31: 
+32: ```text
+33: Portfolio.AI.RuntimeLOD.EnemyActorTickMode
+34: ```
+35: 
+36: | Mode | 이름 | 제어 내용 | 목적 |
+37: | ---: | --- | --- | --- |
+38: | 0 | Default | 기본 tick 유지 | baseline |
+39: | 1 | EnemyActorTickDisabled | `ACEnemy::Tick` 비활성화 | Enemy actor-level polling tick 비용 분리 |
+40: 
+41: 현재 구현 범위는 Mode 1까지다.
+42: 
+43: 주의:
+44: 
+45: - Mode 1은 `ACEnemy::Tick` 자체를 끄므로 PIE 중 CVar를 1에서 0으로 되돌리는 runtime restore 검증에는 적합하지 않다.
+46: - 정규 측정은 PIE 시작 전 CVar를 설정한 뒤 진행한다.
+47: - Mode 1은 `CActionComponent`, `CMovementComponent`, `CharacterMovementComponent`, `BehaviorTreeComponent`, `SkeletalMeshComponent` tick을 끄지 않는다.
+48: - 측정 명칭, CVar, 전용 측정 맵 에셋명을 `EnemyActorTick` 기준으로 정리했다.
+
+--- lines 101-157 ---
+101: ## 40 Enemy 결과
+102: 
+103: | Set | Mode | Frame p95 | Game p95 | TickActors p95 | CharacterMovement p95 | Animation p95 | BT Tick p95 | CEnemy Tick |
+104: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+105: | 40 R1 | 0 | 11.9250ms | 10.8108ms | 1.4724ms | 0.5084ms | 1.9996ms | 0.2198ms | 40 |
+106: | 40 R1 | 1 | 12.0640ms | 11.0778ms | 1.4959ms | 0.5112ms | 2.0839ms | 0.2195ms | missing |
+107: | 40 R2 | 0 | 11.9344ms | 11.0786ms | 1.5314ms | 0.5191ms | 2.1083ms | 0.2191ms | 40 |
+108: | 40 R2 | 1 | 11.9257ms | 11.1269ms | 1.4990ms | 0.5449ms | 2.1380ms | 0.2232ms | missing |
+109: 
+110: 40 Enemy에서는 Mode 1에서 `Ticks/CEnemy`가 사라진다. 즉 `ACEnemy::Tick` 비활성화는 정상 적용됐다.
+111: 
+112: 하지만 `FrameTime`, `GameThreadTime`, `TickActors`는 개선되지 않았다. `BT Tick`은 거의 동일하며, `CharacterMovement`와 `Animation` 쪽 변동이 더 크게 보인다.
+113: 
+114: ## 80 Enemy 결과
+115: 
+116: | Set | Mode | Frame p95 | Game p95 | TickActors p95 | CharacterMovement p95 | Animation p95 | BT Tick p95 | CEnemy Tick |
+117: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+118: | 80 R1 | 0 | 17.8866ms | 17.8446ms | 2.9108ms | 0.9470ms | 4.0210ms | 0.4111ms | 80 |
+119: | 80 R1 | 1 | 17.1558ms | 17.1629ms | 2.7634ms | 0.9095ms | 3.8622ms | 0.4075ms | missing |
+120: | 80 R2 | 0 | 16.7917ms | 16.7457ms | 2.7682ms | 0.8442ms | 3.7991ms | 0.4129ms | 80 |
+121: | 80 R2 | 1 | 17.2328ms | 17.1904ms | 2.7561ms | 0.9052ms | 3.9476ms | 0.4171ms | missing |
+122: | 80 R3 | 0 | 19.1129ms | 19.1179ms | 3.0502ms | 0.9456ms | 4.3873ms | 0.4273ms | 80 |
+123: | 80 R3 | 1 | 17.6868ms | 17.7054ms | 2.9069ms | 0.9464ms | 4.1182ms | 0.4171ms | missing |
+124: 
+125: 80 Enemy에서도 Mode 1은 `Ticks/CEnemy`를 제거한다.
+126: 
+127: 다만 Frame / Game p95 개선은 반복 측정에서 안정적으로 재현되지 않았다.
+128: 
+129: - R1: Mode 1이 좋아 보인다.
+130: - R2: Mode 1이 오히려 나빠 보인다.
+131: - R3: Mode 1이 좋아 보이지만 Mode 0의 Animation / GameThread가 크게 튄다.
+132: 
+133: 따라서 80 Enemy에서도 `ACEnemy::Tick` 제거만으로 안정적인 frame 개선이 있다고 결론내리기 어렵다.
+134: 
+135: ## 해석
+136: 
+137: `EnemyActorTickMode 1`은 기능적으로 성공했다.
+138: 
+139: ```text
+140: Mode 0: Ticks/CEnemy = 40 또는 80
+141: Mode 1: Ticks/CEnemy = missing
+142: ```
+143: 
+144: 하지만 성능 병목으로 보기는 어렵다.
+145: 
+146: ```text
+147: BT Tick은 반복 측정에서 비교적 안정적이다.
+148: Frame / GameThread 변동은 CharacterMovement와 Animation 변동을 더 크게 따라간다.
+149: TickActors p95 감소폭은 작고, Frame / Game p95 개선으로 안정적으로 이어지지 않는다.
+150: ```
+151: 
+152: 즉 이번 측정의 결론은 다음과 같다.
+153: 
+154: ```text
+155: ACEnemy actor tick 제거는 제거 가능한 polling tick 검증으로는 의미가 있다.
+156: 하지만 현재 Runtime LOD 성능 병목의 본체는 아니다.
+157: 후속 분석은 Movement와 Animation을 독립적으로 통제하는 환경에서 진행해야 한다.
+

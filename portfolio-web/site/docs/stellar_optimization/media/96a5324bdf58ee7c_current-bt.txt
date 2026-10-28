@@ -1,0 +1,100 @@
+Source: Source/Portfolio/AI/BehaviorTree/Service/CBTServiceIntervalHelper.cpp
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: 541e68da6d6eb79ba321877cd0d7938d63784df308d9db10eea7d1c196196007
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 14-40 ---
+14: 	enum class EBTServiceIntervalMode : int32
+15: 	{
+16: 		Default = 0,
+17: 		Reduced = 1,
+18: 		AggressiveReduced = 2,
+19: 	};
+20: 
+21: 	constexpr int32 ToBTServiceIntervalModeValue(EBTServiceIntervalMode InMode)
+22: 	{
+23: 		return static_cast<int32>(InMode);
+24: 	}
+25: 
+26: 	// Console Variable
+27: 	TAutoConsoleVariable<int32> CVarBTUpdateIntervalMode(
+28: 		TEXT("Portfolio.AI.RuntimeLOD.BTUpdateIntervalMode"),
+29: 		ToBTServiceIntervalModeValue(EBTServiceIntervalMode::Default),
+30: 		TEXT("Controls AI BT service update interval Runtime LOD mode. 0: default, 1: reduced, 2: aggressive reduced."),
+31: 		ECVF_Default);
+32: 
+33: 	// Interval Defaults
+34: 	constexpr float DefaultAIContextInterval = 0.1f;
+35: 	constexpr float DefaultAIIntentStateInterval = 0.2f;
+36: 	constexpr float ReducedAIIntentStateInterval = 0.3f;
+37: 	constexpr float AggressiveAIIntentStateInterval = 0.5f;
+38: 	constexpr float DefaultEngageContextInterval = 0.1f;
+39: 	constexpr float DefaultInvestigateContextInterval = 0.1f;
+40: 	constexpr float DefaultRandomDeviation = 0.0f;
+
+--- lines 80-127 ---
+80: 	// Interval Preset Selection
+81: 	EBTServiceIntervalPreset SelectIntervalPreset(EBTServiceIntervalMode InMode, EAIRuntimeLODTier InTier)
+82: 	{
+83: 		switch (InMode)
+84: 		{
+85: 		case EBTServiceIntervalMode::Default:
+86: 			switch (InTier)
+87: 			{
+88: 			case EAIRuntimeLODTier::CombatCritical:
+89: 			case EAIRuntimeLODTier::CombatSupport:
+90: 			case EAIRuntimeLODTier::Awareness:
+91: 			case EAIRuntimeLODTier::Background:
+92: 			case EAIRuntimeLODTier::Dormant:
+93: 			default:
+94: 				return EBTServiceIntervalPreset::Default;
+95: 			}
+96: 
+97: 		case EBTServiceIntervalMode::Reduced:
+98: 			switch (InTier)
+99: 			{
+100: 			case EAIRuntimeLODTier::CombatCritical:
+101: 				return EBTServiceIntervalPreset::Default;
+102: 
+103: 			case EAIRuntimeLODTier::CombatSupport:
+104: 			case EAIRuntimeLODTier::Awareness:
+105: 			case EAIRuntimeLODTier::Background:
+106: 			case EAIRuntimeLODTier::Dormant:
+107: 			default:
+108: 				return EBTServiceIntervalPreset::Reduced;
+109: 			}
+110: 
+111: 		case EBTServiceIntervalMode::AggressiveReduced:
+112: 		default:
+113: 			switch (InTier)
+114: 			{
+115: 			case EAIRuntimeLODTier::CombatCritical:
+116: 				return EBTServiceIntervalPreset::Default;
+117: 
+118: 			case EAIRuntimeLODTier::CombatSupport:
+119: 				return EBTServiceIntervalPreset::Reduced;
+120: 
+121: 			case EAIRuntimeLODTier::Awareness:
+122: 			case EAIRuntimeLODTier::Background:
+123: 			case EAIRuntimeLODTier::Dormant:
+124: 			default:
+125: 				return EBTServiceIntervalPreset::Aggressive;
+126: 			}
+127: 		}
+
+--- lines 201-214 ---
+201: float CBTServiceIntervalHelper::GetAIContextInterval(const UBehaviorTreeComponent& /*InOwnerComp*/)
+202: {
+203: 	return GetDefaultAIContextInterval();
+204: }
+205: 
+206: float CBTServiceIntervalHelper::GetAIIntentStateInterval(const UBehaviorTreeComponent& InOwnerComp)
+207: {
+208: 	return SelectAIIntentStateInterval(InOwnerComp);
+209: }
+210: 
+211: float CBTServiceIntervalHelper::GetEngageContextInterval()
+212: {
+213: 	return GetDefaultEngageContextInterval();
+214: }
+

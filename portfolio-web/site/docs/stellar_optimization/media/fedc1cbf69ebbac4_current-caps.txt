@@ -1,0 +1,44 @@
+Source: Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: ab319134e8c9b1fe49bb126e6a8dd4d0bbcfce07c312021dc3b2a09e4551a7b3
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 20-56 ---
+20: namespace
+21: {
+22: 	TAutoConsoleVariable<float> CVarEngageAssignmentWarmupTime(
+23: 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentWarmupTime"),
+24: 		0.0f,
+25: 		TEXT("Delays the first CombatEngage assignment rebuild until request candidates are warmed up. 0: disabled."),
+26: 		ECVF_Default);
+27: 
+28: 	TAutoConsoleVariable<int32> CVarEngageAssignmentEngageCap(
+29: 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentEngageCap"),
+30: 		1,
+31: 		TEXT("Controls the GeneralBase Engage cap per target for AI Runtime LOD assignment. Default: 2."),
+32: 		ECVF_Default);
+33: 
+34: 	TAutoConsoleVariable<int32> CVarEngageAssignmentHitReactiveExtraCap(
+35: 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentHitReactiveExtraCap"),
+36: 		2,
+37: 		TEXT("Controls the HitReactiveExtra Engage cap per target. Default: 3."),
+38: 		ECVF_Default);
+39: 
+40: 	TAutoConsoleVariable<int32> CVarEngageAssignmentTotalCap(
+41: 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentTotalCap"),
+42: 		3,
+43: 		TEXT("Controls the total Engage cap per target across GeneralBase and HitReactiveExtra. Default: 5."),
+44: 		ECVF_Default);
+45: 
+46: 	TAutoConsoleVariable<int32> CVarEngageAssignmentAlertCap(
+47: 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentAlertCap"),
+48: 		1,
+49: 		TEXT("Controls max Alert assignees per target for AI Runtime LOD assignment. Default: 6."),
+50: 		ECVF_Default);
+51: 
+52: 	TAutoConsoleVariable<int32> CVarEngageAssignmentObserveCap(
+53: 		TEXT("Portfolio.AI.RuntimeLOD.EngageAssignmentObserveCap"),
+54: 		1,
+55: 		TEXT("Controls max Observe assignees per target for AI Runtime LOD assignment. Default: 12."),
+56: 		ECVF_Default);
+

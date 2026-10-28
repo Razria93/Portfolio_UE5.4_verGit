@@ -1,0 +1,149 @@
+Source: Docs/07_Profiling/AI_Performance/Runtime_LOD/Enemy_Mesh_Runtime_LOD_Measurements.md
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: 2f186ee33d5f4c8201fc104afe0bd187780c4d74cd1c4d8517eb52ef37642005
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 91-155 ---
+91: ## Mode 정의
+92: 
+93: ```text
+94: Portfolio.AI.RuntimeLOD.EnemyMeshMode 0
+95: -> VisibleDefault
+96: -> ACEnemy SkeletalMesh visibility on
+97: -> 기존 pose update 설정 복구
+98: 
+99: Portfolio.AI.RuntimeLOD.EnemyMeshMode 1
+100: -> HiddenKeepPose
+101: -> ACEnemy SkeletalMesh visibility off
+102: -> pose / bone / socket update 유지
+103: 
+104: Portfolio.AI.RuntimeLOD.EnemyMeshMode 2
+105: -> HiddenAllowPoseSkip
+106: -> ACEnemy SkeletalMesh visibility off
+107: -> visibility 기반 pose skip 허용
+108: ```
+109: 
+110: Mode 2 측정 기준:
+111: 
+112: ```text
+113: Mode 2는 gameplay-safe Runtime LOD 후보가 아니라 animation / pose update 비용을 분리하기 위한 측정축이다.
+114: PIE 실행 중 Mode 0 또는 Mode 1에서 Mode 2로 전환하면 전환 시점의 pose / socket state가 남아 결과가 오염된다.
+115: Mode 2 측정은 PIE 실행 전 CVar를 Mode 2로 고정한 뒤 시작한다.
+116: Render Coverage 조건에서만 정규 비교에 사용한다.
+117: Gameplay Stress 조건에서는 montage / socket / notify 흐름을 깨뜨릴 수 있으므로 정규 측정에서 제외한다.
+118: ```
+119: 
+120: ---
+121: 
+122: ## Summary Table
+123: 
+124: ### Gameplay Stress
+125: 
+126: | Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Weapon Socket Follow | Note |
+127: | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+128: | M00 | `Profile(20260703_143400).csv` | 40 | 0 VisibleDefault | 3.861s-33.861s | 12.6880ms | 12.7354ms | 8.4217ms | 0.1110ms | 2.0121ms | 0.3067ms | 0.1252ms | 572 | 4,181,001 | 82 | 정상 기준 | Mode 0 comparison baseline |
+129: | M01 | `Profile(20260703_144556).csv` | 40 | 1 HiddenKeepPose | 3.989s-33.989s | 12.3922ms | 12.4150ms | 7.3382ms | 0.1998ms | 1.9191ms | 0.3057ms | 0.1233ms | 377.7 | 377,250 | 82 | 유지 | Mesh hidden, weapon animation path maintained |
+130: | M02 | - | 40 | 2 HiddenAllowPoseSkip | - | - | - | - | - | - | - | - | - | - | - | 깨짐 | Gameplay unsafe. 정규 성능 측정 제외 |
+131: | M03 | `Profile(20260703_161310).csv` | 80 | 0 VisibleDefault | 4.261s-34.261s | 21.2578ms | 21.2928ms | 9.3746ms | 0.1776ms | 3.7646ms | 0.5091ms | 0.2852ms | 583 | 3,771,918 | 162 | 정상 기준 | 80 Enemy Mode 0 comparison baseline |
+132: | M04 | `Profile(20260703_161605).csv` | 80 | 1 HiddenKeepPose | 3.660s-33.660s | 21.7991ms | 21.7849ms | 8.5164ms | 0.1654ms | 3.7889ms | 0.5141ms | 0.2845ms | 389 | 380,366 | 162 | 유지 | Render cost reduced, GameThread still over 60fps budget |
+133: 
+134: ### Render Coverage
+135: 
+136: | Case | CSV | Enemy | Mode | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | SkeletalMesh Tick | Note |
+137: | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+138: | R00 | `Profile(20260703_184111).csv` | 40 | 0 VisibleDefault | 3.713s-33.713s | 9.9527ms | 9.3059ms | 7.1942ms | 0.0741ms | 1.7608ms | - | 0.0022ms | 555 | 3,275,424 | 40 | Render coverage baseline. AI / BT / WeaponActor 제거 확인 |
+139: | R01 | `Profile(20260703_184341).csv` | 40 | 1 HiddenKeepPose | 3.697s-33.697s | 9.3213ms | 8.7718ms | 5.9211ms | 0.0628ms | 1.6742ms | - | 0.0018ms | 194 | 34,960 | 40 | Mesh hidden render coverage comparison |
+140: | R04 | `Profile(20260703_210823).csv` | 40 | 2 HiddenAllowPoseSkip | 3.800s-33.800s | 8.8687ms | 6.0611ms | 5.8075ms | 0.0556ms | 0.0577ms | - | 0.0018ms | 193 | 34,976 | 40 | PIE 실행 전 Mode 2 고정. pose update isolation 측정 |
+141: | R02 | `Profile(20260703_184650).csv` | 80 | 0 VisibleDefault | 3.532s-33.532s | 13.6320ms | 13.6657ms | 7.9463ms | 0.0838ms | 3.7604ms | - | 0.0019ms | 916 | 5,400,982 | 80 | 80 Enemy render coverage baseline |
+142: | R03 | `Profile(20260703_185330).csv` | 80 | 1 HiddenKeepPose | 3.600s-33.600s | 12.0643ms | 12.1393ms | 5.8511ms | 0.0548ms | 2.8188ms | - | 0.0018ms | 194 | 35,062 | 80 | 80 Enemy mesh hidden render coverage comparison |
+143: | R05 | `Profile(20260703_202949).csv` | 80 | 2 HiddenAllowPoseSkip | 3.716s-33.716s | 8.9149ms | 6.9307ms | 5.9291ms | 0.0559ms | 0.0933ms | - | 0.0018ms | 194 | 34,980 | 80 | PIE 실행 전 Mode 2 고정. pose update isolation 측정 |
+144: 
+145: ### WeaponActor Isolation
+146: 
+147: | Case | CSV | Enemy | DisableEnemyWeaponActor | Window | Frame p95 | Game p95 | GPU p95 | Render p95 | Animation p95 | BT Tick p95 | AIPerception p95 | DrawCalls p95 | Primitives p95 | CWeaponActor p95 | TotalActor p95 | SkeletalMesh Tick | Note |
+148: | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+149: | W00 | `Profile(20260704_202112).csv` | 40 | 0 | 3s trim | 10.8848ms | 9.8752ms | 7.1903ms | 0.0757ms | 1.8961ms | 0.1308ms | 0.1306ms | 733 | 3,353,510 | 41 | 339 | 80 | Enemy WeaponActor 생성 기준 |
+150: | W01 | `Profile(20260704_202317).csv` | 40 | 1 | 3s trim | 9.8752ms | 9.2505ms | 7.0476ms | 0.0718ms | 1.5954ms | 0.1265ms | 0.1187ms | 573 | 3,276,896 | 0 | 299 | 40 | Enemy WeaponActor 생성 차단 |
+151: | W02 | `Profile(20260704_210051).csv` | 80 | 0 | 3s trim | 16.8035ms | 16.7116ms | 8.0555ms | 0.2060ms | 4.0316ms | 0.2720ms | 0.4109ms | 1,258 | 6,051,648 | 81 | 499 | 160 | 80 Enemy WeaponActor 생성 기준 |
+152: | W03 | `Profile(20260704_205212).csv` | 80 | 1 | 3s trim | 14.8267ms | 14.8160ms | 7.8513ms | 0.1011ms | 3.5294ms | 0.2493ms | 0.2526ms | 936 | 5,908,798 | 0 | 419 | 80 | 80 Enemy WeaponActor 생성 차단 |
+153: 
+154: ---
+155: 
+
+--- lines 257-331 ---
+257: -> Movement decision / PathFollowing / CharacterMovement 비용을 분리한다.
+258: -> 위치와 path를 바꾸는 gameplay 축이므로 Representation LOD와 분리해 판단한다.
+259: ```
+260: 
+261: WeaponActor Isolation 40 Enemy 1차 측정 결과:
+262: 
+263: ```text
+264: DisableEnemyWeaponActor 0 -> 1
+265: 
+266: ActorCount/CWeaponActor p95: 41 -> 0
+267: ActorCount/TotalActorCount p95: 339 -> 299
+268: Ticks/SkeletalMeshComponent p95: 80 -> 40
+269: RHI/DrawCalls p95: 733 -> 573
+270: RHI/PrimitivesDrawn p95: 3,353,510 -> 3,276,896
+271: 
+272: FrameTime p95: 10.8848ms -> 9.8752ms
+273: GameThreadTime p95: 9.8752ms -> 9.2505ms
+274: GPUTime p95: 7.1903ms -> 7.0476ms
+275: Animation p95: 1.8961ms -> 1.5954ms
+276: ```
+277: 
+278: 해석:
+279: 
+280: ```text
+281: Enemy WeaponActor 제거 CVar는 정상 적용됐다.
+282: ActorCount/CWeaponActor가 0으로 떨어지고, TotalActorCount와 SkeletalMeshComponent tick도 함께 감소했다.
+283: Frame / GameThread / Animation / DrawCalls가 함께 낮아져 WeaponActor는 Object Management와 Representation 양쪽에 비용이 있는 축으로 본다.
+284: GPU p95 감소폭은 제한적이므로, 이 측정만으로 WeaponActor가 GPU 병목의 핵심이라고 보지는 않는다.
+285: ```
+286: 
+287: 주의:
+288: 
+289: ```text
+290: ActorCount/CEnemy는 81로 기록됐지만 Ticks/CEnemy, Ticks/BehaviorTreeComponent, Ticks/CAIController는 40으로 유지됐다.
+291: 따라서 실제 runtime 측정 대상은 40 Enemy로 해석한다.
+292: ActorCount/CEnemy는 PIE / editor world count가 섞일 수 있으므로 active Enemy 수 판단에는 Tick count를 우선한다.
+293: 해당 기준은 Docs/07_Profiling/CSV_Analysis_Guide.md를 따른다.
+294: ```
+295: 
+296: WeaponActor Isolation 80 Enemy 측정 결과:
+297: 
+298: ```text
+299: DisableEnemyWeaponActor 0 -> 1
+300: 
+301: ActorCount/CWeaponActor p95: 81 -> 0
+302: ActorCount/TotalActorCount p95: 499 -> 419
+303: Ticks/SkeletalMeshComponent p95: 160 -> 80
+304: RHI/DrawCalls p95: 1,258 -> 936
+305: RHI/PrimitivesDrawn p95: 6,051,648 -> 5,908,798
+306: 
+307: FrameTime p95: 16.8035ms -> 14.8267ms
+308: GameThreadTime p95: 16.7116ms -> 14.8160ms
+309: GPUTime p95: 8.0555ms -> 7.8513ms
+310: Animation p95: 4.0316ms -> 3.5294ms
+311: ```
+312: 
+313: 해석:
+314: 
+315: ```text
+316: 80 Enemy에서도 Enemy WeaponActor 제거 CVar는 정상 적용됐다.
+317: CWeaponActor가 81에서 0으로 떨어지고, TotalActorCount와 SkeletalMeshComponent tick도 80개 감소했다.
+318: DrawCalls와 Primitives도 감소했으므로 WeaponActor는 80 Enemy 규모에서도 actor / component / representation 비용을 만든다.
+319: GC 이벤트가 없는 On 재측정 기준에서도 FrameTime p95와 GameThreadTime p95가 함께 감소했다.
+320: Animation p95 감소폭이 비교적 커서 WeaponActor 제거는 animation / skeletal component update 비용에도 영향을 준다.
+321: 다만 GPU p95 감소폭은 제한적이므로, WeaponActor는 GPU 병목보다 actor / component / animation update 비용 축으로 해석한다.
+322: 80 Enemy 기준에서도 WeaponActor 제거는 유효한 Object Management 최적화 후보지만, 실제 gameplay 적용은 combat-capable 단계와 weapon dependency를 함께 고려해야 한다.
+323: ```
+324: 
+325: 주의:
+326: 
+327: ```text
+328: 이전 80 Enemy 측정은 Frame p95 차이가 작아 해석이 애매했으므로 재측정했다.
+329: W02 / W03 대표값은 둘 다 capture 로그에 GC 이벤트가 기록되지 않은 측정값을 사용한다.
+330: p99 / max는 여전히 일시적 outlier 영향을 받을 수 있으므로 보조 지표로만 본다.
+331: ```
+

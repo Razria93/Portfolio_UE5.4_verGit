@@ -5,12 +5,13 @@
   const pdf = 'https://razria93.github.io/files/pdf/combined-review.pdf';
   const current = new URL(location.href);
   const value = current.searchParams.get('portfolio_page');
-  const page = /^\d+$/.test(value || '') ? Number(value) : 0;
-  const active = page >= 1 && page <= 62;
+  const incoming = /^\d+$/.test(value || '') ? Number(value) : 0;
+  const page = current.searchParams.get('portfolio_version') === '20261028' ? incoming : (incoming >= 23 ? incoming + 1 : incoming);
+  const active = page >= 1 && page <= 63;
   const projects = {
-    Portfolio_UE5_4_verGit: {offset: 1, count: 23},
-    Plugin_Portfolio_UE5_4: {offset: 23, count: 15},
-    Graphics_Study_Archive: {offset: 37, count: 25}
+    Portfolio_UE5_4_verGit: {offset: 1, count: 24},
+    Plugin_Portfolio_UE5_4: {offset: 24, count: 15},
+    Graphics_Study_Archive: {offset: 38, count: 25}
   };
   function projectFor(url) {
     const filename = url.pathname.split('/').pop();
@@ -22,12 +23,13 @@
   const isPdf = url => /\.pdf$/i.test(url.pathname);
   const projectPdf = url => isPdf(url) && /(?:project-stellar-|plugin-portfolio-|graphics-portfolio-|stellar-review|plugin-review|graphics-review)/i.test(url.pathname);
   const pageLike = url => /\/$|\.html?$/i.test(url.pathname) || !url.pathname.split('/').pop().includes('.');
-  function remapLabel(a, p) {
+  function remapLabel(a, p, legacy = p && p.offset === 1) {
+    if (!p) return;
     const walker = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
       node.nodeValue = node.nodeValue.replace('관련 PPT', '관련 PDF').replace(/(\d+(?:\s*[–~·,-]\s*\d+)*)(?=\s*(?:쪽|페이지))/g,
-        group => group.replace(/\d+/g, n => String(Number(n) > 1 ? Number(n) + p.offset : 2)));
+        group => group.replace(/\d+/g, n => String(Number(n) > 1 ? Number(n) + p.offset + (legacy && Number(n) >= 22 ? 1 : 0) : 2)));
     }
   }
   if (active) {
@@ -39,14 +41,16 @@
       if (owned(url) && projectPdf(url)) {
         const p = projectFor(url); const found = /(?:^#|&)page=(\d+)/.exec(url.hash);
         const old = found ? Number(found[1]) : 0;
-        const target = old > 1 && old <= p.count ? old + p.offset : page;
+        const adjusted = p.offset === 1 && /project-stellar-20261023/.test(url.pathname) && old >= 22 ? old + 1 : old;
+        const target = old > 1 && adjusted <= p.count ? adjusted + p.offset : page;
         a.href = pdf + '#page=' + target;
-        if (found) remapLabel(a, p);
-        else if (/\d+\s*쪽/.test(a.textContent)) a.textContent = '통합 포트폴리오 PDF · 62쪽';
+        if (found) remapLabel(a, p, p.offset === 1 && /project-stellar-20261023/.test(url.pathname));
+        else if (/\d+\s*쪽/.test(a.textContent)) a.textContent = '통합 포트폴리오 PDF · 63쪽';
         a.title = '통합 포트폴리오 ' + target + '쪽';
       } else if (owned(url) && pageLike(url)) {
         remapLabel(a, projectFor(url));
         if (!url.searchParams.has('portfolio_page')) url.searchParams.set('portfolio_page', String(page));
+        url.searchParams.set('portfolio_version', '20261028');
         a.href = url.href;
       } else if (/^https?:$/.test(url.protocol) && url.hostname === 'github.com') {
         a.target = '_blank'; a.rel = 'noopener noreferrer';
@@ -59,7 +63,7 @@
   document.head.append(style);
   const bar = document.createElement('nav'); bar.id = 'unified-portfolio-navigation';bar.setAttribute('aria-label','통합 포트폴리오 이동');
   const home = document.createElement('a');home.href=hub;home.textContent='통합 포트폴리오 안내';bar.append(home);
-  const back = document.createElement('a');back.href=pdf+(active?'#page='+page:'#page=2');back.textContent=active?'통합 PDF '+page+'쪽으로 돌아가기':'통합 PDF · 62쪽';bar.append(back);
+  const back = document.createElement('a');back.href=pdf+(active?'#page='+page:'#page=2');back.textContent=active?'통합 PDF '+page+'쪽으로 돌아가기':'통합 PDF · 63쪽';bar.append(back);
   if (active) { const info=document.createElement('span');info.textContent='관련 영상·문서·원본 근거';bar.append(info); }
   document.body.prepend(bar);
 })();

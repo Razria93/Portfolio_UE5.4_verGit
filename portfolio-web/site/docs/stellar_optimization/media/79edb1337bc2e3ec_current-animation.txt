@@ -1,0 +1,90 @@
+Source: Source/Portfolio/AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.cpp
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: 1e3b105c3b222f86f5f6ac431574d28fe95a16ff56cb65dd205c38136ea23dbc
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 1-83 ---
+1: #include "AI/RuntimeLOD/CAIAnimationRuntimeLODPolicy.h"
+2: 
+3: #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
+4: #include "Character/Enemy/CEnemy.h"
+5: #include "Controller/CAIController.h"
+6: 
+7: #include "GameFramework/Pawn.h"
+8: #include "HAL/IConsoleManager.h"
+9: 
+10: namespace
+11: {
+12: 	enum class EAIAnimationRuntimeLODMode : int32
+13: 	{
+14: 		DefaultRefresh = 0,
+15: 		ReducedParameterRefresh = 1,
+16: 	};
+17: 
+18: 	constexpr int32 ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode InMode)
+19: 	{
+20: 		return static_cast<int32>(InMode);
+21: 	}
+22: 
+23: 	TAutoConsoleVariable<int32> CVarEnemyAnimationMode(
+24: 		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationMode"),
+25: 		ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh),
+26: 		TEXT("Controls ACEnemy animation runtime LOD mode. 0: default refresh, 1: reduced parameter refresh."),
+27: 		ECVF_Default);
+28: 
+29: 	TAutoConsoleVariable<float> CVarEnemyAnimationReducedRefreshInterval(
+30: 		TEXT("Portfolio.AI.RuntimeLOD.EnemyAnimationReducedRefreshInterval"),
+31: 		0.1f,
+32: 		TEXT("Refresh interval for ACEnemy reduced animation parameter mode."),
+33: 		ECVF_Default);
+34: 
+35: }
+36: 
+37: int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode()
+38: {
+39: 	return FMath::Clamp(
+40: 		CVarEnemyAnimationMode.GetValueOnGameThread(),
+41: 		ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh),
+42: 		ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::ReducedParameterRefresh));
+43: }
+44: 
+45: int32 FAIAnimationRuntimeLODPolicy::GetEnemyAnimationMode(const AActor* InOwner)
+46: {
+47: 	if (FAIStateRuntimeLODPolicy::ShouldUseStateBasedPolicy())
+48: 	{
+49: 		return GetStateBasedAnimationMode(InOwner);
+50: 	}
+51: 
+52: 	return GetEnemyAnimationMode();
+53: }
+54: 
+55: bool FAIAnimationRuntimeLODPolicy::IsEnemyAnimationRuntimeLODTarget(const AActor* InOwner)
+56: {
+57: 	return IsValid(InOwner) && InOwner->IsA<ACEnemy>();
+58: }
+59: 
+60: float FAIAnimationRuntimeLODPolicy::GetReducedAnimationRefreshInterval()
+61: {
+62: 	return FMath::Max(CVarEnemyAnimationReducedRefreshInterval.GetValueOnGameThread(), KINDA_SMALL_NUMBER);
+63: }
+64: 
+65: int32 FAIAnimationRuntimeLODPolicy::GetStateBasedAnimationMode(const AActor* InOwner)
+66: {
+67: 	const APawn* ownerPawn = Cast<APawn>(InOwner);
+68: 	const ACAIController* aiController = IsValid(ownerPawn) ? Cast<ACAIController>(ownerPawn->GetController()) : nullptr;
+69: 	if (!IsValid(aiController)) return ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh);
+70: 
+71: 	switch (aiController->GetCurrentRuntimeLODTier())
+72: 	{
+73: 	case EAIRuntimeLODTier::Awareness:
+74: 	case EAIRuntimeLODTier::Background:
+75: 	case EAIRuntimeLODTier::Dormant:
+76: 		return ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::ReducedParameterRefresh);
+77: 
+78: 	case EAIRuntimeLODTier::CombatCritical:
+79: 	case EAIRuntimeLODTier::CombatSupport:
+80: 	default:
+81: 		return ToAnimationRuntimeLODModeValue(EAIAnimationRuntimeLODMode::DefaultRefresh);
+82: 	}
+83: }
+

@@ -1,0 +1,83 @@
+Source: Source/Portfolio/AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.cpp
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: fdfcdb56151a7459b0859e684937e7cf783b039f58dee2e1b440abf86af904b3
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 1-76 ---
+1: #include "AI/RuntimeLOD/CAIMovementRuntimeLODPolicy.h"
+2: 
+3: #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
+4: #include "Controller/CAIController.h"
+5: #include "Character/Enemy/CEnemy.h"
+6: 
+7: #include "GameFramework/Pawn.h"
+8: #include "HAL/IConsoleManager.h"
+9: 
+10: namespace
+11: {
+12: 	enum class EAIMovementRuntimeLODMode : int32
+13: 	{
+14: 		Default = 0,
+15: 		BlockMovementIntent = 1,
+16: 	};
+17: 
+18: 	constexpr int32 ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode InMode)
+19: 	{
+20: 		return static_cast<int32>(InMode);
+21: 	}
+22: 
+23: 	TAutoConsoleVariable<int32> CVarAIRuntimeLODEnemyMovementMode(
+24: 		TEXT("Portfolio.AI.RuntimeLOD.EnemyMovementMode"),
+25: 		ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default),
+26: 		TEXT("Controls ACEnemy movement runtime LOD mode. 0: default, 1: block movement intent."),
+27: 		ECVF_Default);
+28: }
+29: 
+30: int32 FAIMovementRuntimeLODPolicy::GetEnemyMovementMode()
+31: {
+32: 	return FMath::Clamp(
+33: 		CVarAIRuntimeLODEnemyMovementMode.GetValueOnGameThread(),
+34: 		ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default),
+35: 		ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::BlockMovementIntent));
+36: }
+37: 
+38: int32 FAIMovementRuntimeLODPolicy::GetEnemyMovementMode(const AActor* InOwner)
+39: {
+40: 	if (FAIStateRuntimeLODPolicy::ShouldUseStateBasedPolicy())
+41: 	{
+42: 		return GetStateBasedMovementMode(InOwner);
+43: 	}
+44: 
+45: 	return GetEnemyMovementMode();
+46: }
+47: 
+48: bool FAIMovementRuntimeLODPolicy::IsEnemyMovementRuntimeLODTarget(const AActor* InOwner)
+49: {
+50: 	return IsValid(InOwner) && InOwner->IsA<ACEnemy>();
+51: }
+52: 
+53: bool FAIMovementRuntimeLODPolicy::ShouldBlockMovementIntent(int32 InMovementMode)
+54: {
+55: 	return InMovementMode == ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::BlockMovementIntent);
+56: }
+57: 
+58: int32 FAIMovementRuntimeLODPolicy::GetStateBasedMovementMode(const AActor* InOwner)
+59: {
+60: 	const APawn* ownerPawn = Cast<APawn>(InOwner);
+61: 	const ACAIController* aiController = IsValid(ownerPawn) ? Cast<ACAIController>(ownerPawn->GetController()) : nullptr;
+62: 	if (!IsValid(aiController)) return ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default);
+63: 
+64: 	switch (aiController->GetCurrentRuntimeLODTier())
+65: 	{
+66: 	case EAIRuntimeLODTier::Awareness:
+67: 	case EAIRuntimeLODTier::Dormant:
+68: 		return ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::BlockMovementIntent);
+69: 
+70: 	case EAIRuntimeLODTier::CombatCritical:
+71: 	case EAIRuntimeLODTier::CombatSupport:
+72: 	case EAIRuntimeLODTier::Background:
+73: 	default:
+74: 		return ToMovementRuntimeLODModeValue(EAIMovementRuntimeLODMode::Default);
+75: 	}
+76: }
+

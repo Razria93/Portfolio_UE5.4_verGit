@@ -1,0 +1,43 @@
+Source: Source/Portfolio/AI/RuntimeLOD/CAIStateRuntimeLODPolicy.cpp
+Source review: 2026-10-27 / unchanged on 2026-10-28
+Original SHA256: 8f7b907a73a363591435925f421b107da0c4bd9d9d4516d1f1f6404b108319d2
+This is a read-only excerpt of existing evidence, not a new runtime verification.
+
+--- lines 1-36 ---
+1: #include "AI/RuntimeLOD/CAIStateRuntimeLODPolicy.h"
+2: 
+3: #include "HAL/IConsoleManager.h"
+4: 
+5: namespace
+6: {
+7: 	enum class EAIStateRuntimeLODPolicyMode : int32
+8: 	{
+9: 		PerSystem = 0,
+10: 		StateBased = 1,
+11: 	};
+12: 
+13: 	constexpr int32 ToStateRuntimeLODPolicyModeValue(EAIStateRuntimeLODPolicyMode InMode)
+14: 	{
+15: 		return static_cast<int32>(InMode);
+16: 	}
+17: 
+18: 	TAutoConsoleVariable<int32> CVarAIStateRuntimeLODPolicyMode(
+19: 		TEXT("Portfolio.AI.RuntimeLOD.StatePolicyMode"),
+20: 		ToStateRuntimeLODPolicyModeValue(EAIStateRuntimeLODPolicyMode::PerSystem),
+21: 		TEXT("Controls AI Runtime LOD policy source. 0: per-system Runtime LOD CVar modes, 1: state-based Runtime LOD tier snapshot."),
+22: 		ECVF_Default);
+23: }
+24: 
+25: int32 FAIStateRuntimeLODPolicy::GetStatePolicyMode()
+26: {
+27: 	return FMath::Clamp(
+28: 		CVarAIStateRuntimeLODPolicyMode.GetValueOnGameThread(),
+29: 		ToStateRuntimeLODPolicyModeValue(EAIStateRuntimeLODPolicyMode::PerSystem),
+30: 		ToStateRuntimeLODPolicyModeValue(EAIStateRuntimeLODPolicyMode::StateBased));
+31: }
+32: 
+33: bool FAIStateRuntimeLODPolicy::ShouldUseStateBasedPolicy()
+34: {
+35: 	return GetStatePolicyMode() == ToStateRuntimeLODPolicyModeValue(EAIStateRuntimeLODPolicyMode::StateBased);
+36: }
+
