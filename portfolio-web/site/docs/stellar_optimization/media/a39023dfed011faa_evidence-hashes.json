@@ -1,0 +1,46 @@
+[
+  {
+    "file": "160-L0.png",
+    "sha256": "1d02048f625da56d05140b6540c5e0383cadbdafaac10a06fad91e12b9d13b30"
+  },
+  {
+    "file": "160-U0.png",
+    "sha256": "42c9112d34eeaaa8cadc1b005b110dc9d4870a3345e9427e3cfe28ff23bfc0a6"
+  },
+  {
+    "file": "CAIRuntimeLODTierResolver.cpp",
+    "sha256": "cb09e6b52179d0f84cb57e355afbde21c2ecb38761f07f747f92f6a4a89f9a2c"
+  },
+  {
+    "file": "CBTServiceIntervalHelper.cpp",
+    "sha256": "541e68da6d6eb79ba321877cd0d7938d63784df308d9db10eea7d1c196196007"
+  },
+  {
+    "file": "CWorldSubsystem_CombatParticipation.cpp",
+    "sha256": "ab319134e8c9b1fe49bb126e6a8dd4d0bbcfce07c312021dc3b2a09e4551a7b3"
+  },
+  {
+    "file": "fixture.json",
+    "sha256": "b96da11eeb00167213e426717304fe65c69352e7818548dbf8683bd6ff8d2268"
+  },
+  {
+    "file": "functional.json",
+    "sha256": "19c9afc564944db532dce54c499450781058cf72d1b91e37588fa0bbbafb1696"
+  },
+  {
+    "file": "results.json",
+    "sha256": "73be42148b784262e236593d1713b6e82131555b45bafb7bb0308c58d0d5cd8e"
+  },
+  {
+    "file": "run-order.json",
+    "sha256": "0dd06147b1f3d0f5cc8b3098ad44b8948e402bfb945fc29fff546bb21b30f972"
+  },
+  {
+    "file": "runs.csv",
+    "sha256": "af6a7f23f07c2b92845c82bbdd2dc26a7bd0e100e7a8463c88933a80aa7d9245"
+  },
+  {
+    "file": "settings.json",
+    "sha256": "10f41a7a4423d88f986efe5999399ca83699fa03d968169bd611ffcb1af8587e"
+  }
+]

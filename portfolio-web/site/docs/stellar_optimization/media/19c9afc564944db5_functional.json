@@ -1,0 +1,1658 @@
+[
+  {
+    "tag": "N160_U0_R1_A1",
+    "mean_roles": {
+      "2": 157.99999999999784,
+      "1": 2.000000000000004
+    },
+    "mean_tiers": {
+      "1": 157.99999999999784,
+      "0": 2.000000000000004
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L0_R1_A1",
+    "mean_roles": {
+      "0": 151.99999999998997,
+      "2": 6.000000000000007,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "2": 151.99999999998997,
+      "1": 6.000000000000007,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U1_R1_A1",
+    "mean_roles": {
+      "2": 157.9999999999909,
+      "1": 2.0000000000000004
+    },
+    "mean_tiers": {
+      "1": 157.9999999999909,
+      "0": 2.0000000000000004
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L1_R1_A1",
+    "mean_roles": {
+      "0": 152.0000000000054,
+      "2": 5.999999999999987,
+      "1": 1.9999999999999978
+    },
+    "mean_tiers": {
+      "2": 152.0000000000054,
+      "1": 5.999999999999987,
+      "0": 1.9999999999999978
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U2_R1_A1",
+    "mean_roles": {
+      "2": 158.00000000000384,
+      "1": 1.9999999999999976
+    },
+    "mean_tiers": {
+      "1": 158.00000000000384,
+      "0": 1.9999999999999976
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L2_R1_A1",
+    "mean_roles": {
+      "0": 151.99999999998573,
+      "2": 6.000000000000012,
+      "1": 1.9999999999999987
+    },
+    "mean_tiers": {
+      "2": 151.99999999998573,
+      "1": 6.000000000000012,
+      "0": 1.9999999999999987
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U0_R1_A1",
+    "mean_roles": {
+      "2": 77.9999999999979,
+      "1": 1.9999999999999942
+    },
+    "mean_tiers": {
+      "1": 77.9999999999979,
+      "0": 1.9999999999999942
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 28,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L0_R1_A1",
+    "mean_roles": {
+      "0": 72.00000000000323,
+      "2": 6.000000000000012,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "2": 72.00000000000323,
+      "1": 6.000000000000012,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U1_R1_A1",
+    "mean_roles": {
+      "2": 78.00000000000412,
+      "1": 1.999999999999997
+    },
+    "mean_tiers": {
+      "1": 78.00000000000412,
+      "0": 1.999999999999997
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L1_R1_A1",
+    "mean_roles": {
+      "0": 72.00000000000136,
+      "2": 5.999999999999999,
+      "1": 1.9999999999999971
+    },
+    "mean_tiers": {
+      "2": 72.00000000000136,
+      "1": 5.999999999999999,
+      "0": 1.9999999999999971
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U2_R1_A1",
+    "mean_roles": {
+      "2": 77.9999999999997,
+      "1": 1.9999999999999987
+    },
+    "mean_tiers": {
+      "1": 77.9999999999997,
+      "0": 1.9999999999999987
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4690,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L2_R1_A1",
+    "mean_roles": {
+      "0": 71.99999999999712,
+      "2": 6.000000000000054,
+      "1": 2.000000000000002
+    },
+    "mean_tiers": {
+      "2": 71.99999999999712,
+      "1": 6.000000000000054,
+      "0": 2.000000000000002
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U0_R1_A1",
+    "mean_roles": {
+      "2": 38.0000000000001,
+      "1": 2.0000000000000018
+    },
+    "mean_tiers": {
+      "1": 38.0000000000001,
+      "0": 2.0000000000000018
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L0_R1_A1",
+    "mean_roles": {
+      "0": 31.999999999999602,
+      "2": 6.0,
+      "1": 2.0000000000000013
+    },
+    "mean_tiers": {
+      "2": 31.999999999999602,
+      "1": 6.0,
+      "0": 2.0000000000000013
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U1_R1_A1",
+    "mean_roles": {
+      "2": 37.99999999999951,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "1": 37.99999999999951,
+      "0": 2.0
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L1_R1_A1",
+    "mean_roles": {
+      "0": 31.999999999999783,
+      "2": 5.9999999999999805,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "2": 31.999999999999783,
+      "1": 5.9999999999999805,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U2_R1_A1",
+    "mean_roles": {
+      "2": 38.00000000000036,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "1": 38.00000000000036,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L2_R1_A1",
+    "mean_roles": {
+      "0": 32.000000000000384,
+      "2": 5.999999999999982,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "2": 32.000000000000384,
+      "1": 5.999999999999982,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U0_R1_A1",
+    "mean_roles": {
+      "2": 118.00000000000287,
+      "1": 2.000000000000002
+    },
+    "mean_tiers": {
+      "1": 118.00000000000287,
+      "0": 2.000000000000002
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L0_R1_A1",
+    "mean_roles": {
+      "0": 112.00000000000429,
+      "2": 5.999999999999961,
+      "1": 1.9999999999999976
+    },
+    "mean_tiers": {
+      "2": 112.00000000000429,
+      "1": 5.999999999999961,
+      "0": 1.9999999999999976
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U1_R1_A1",
+    "mean_roles": {
+      "2": 118.00000000000287,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "1": 118.00000000000287,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L1_R1_A1",
+    "mean_roles": {
+      "0": 111.99999999999092,
+      "2": 6.000000000000011,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "2": 111.99999999999092,
+      "1": 6.000000000000011,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U2_R1_A1",
+    "mean_roles": {
+      "2": 117.99999999999461,
+      "1": 2.0000000000000027
+    },
+    "mean_tiers": {
+      "1": 117.99999999999461,
+      "0": 2.0000000000000027
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L2_R1_A1",
+    "mean_roles": {
+      "0": 112.00000000000558,
+      "2": 5.999999999999984,
+      "1": 1.999999999999999
+    },
+    "mean_tiers": {
+      "2": 112.00000000000558,
+      "1": 5.999999999999984,
+      "0": 1.999999999999999
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L2_R2_A1",
+    "mean_roles": {
+      "0": 31.999999999999858,
+      "2": 6.000000000000023,
+      "1": 2.000000000000004
+    },
+    "mean_tiers": {
+      "2": 31.999999999999858,
+      "1": 6.000000000000023,
+      "0": 2.000000000000004
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U2_R2_A1",
+    "mean_roles": {
+      "2": 37.99999999999945,
+      "1": 1.9999999999999971
+    },
+    "mean_tiers": {
+      "1": 37.99999999999945,
+      "0": 1.9999999999999971
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L1_R2_A1",
+    "mean_roles": {
+      "0": 31.999999999999567,
+      "2": 6.000000000000007,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "2": 31.999999999999567,
+      "1": 6.000000000000007,
+      "0": 2.0
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U1_R2_A1",
+    "mean_roles": {
+      "2": 38.00000000000017,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "1": 38.00000000000017,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L0_R2_A1",
+    "mean_roles": {
+      "0": 31.999999999999766,
+      "2": 6.000000000000013,
+      "1": 2.0000000000000018
+    },
+    "mean_tiers": {
+      "2": 31.999999999999766,
+      "1": 6.000000000000013,
+      "0": 2.0000000000000018
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U0_R2_A1",
+    "mean_roles": {
+      "2": 38.0000000000005,
+      "1": 2.0000000000000027
+    },
+    "mean_tiers": {
+      "1": 38.0000000000005,
+      "0": 2.0000000000000027
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L2_R2_A1",
+    "mean_roles": {
+      "0": 111.99999999999187,
+      "2": 6.000000000000013,
+      "1": 1.9999999999999996
+    },
+    "mean_tiers": {
+      "2": 111.99999999999187,
+      "1": 6.000000000000013,
+      "0": 1.9999999999999996
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U2_R2_A1",
+    "mean_roles": {
+      "2": 118.00000000000773,
+      "1": 1.9999999999999982
+    },
+    "mean_tiers": {
+      "1": 118.00000000000773,
+      "0": 1.9999999999999982
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L1_R2_A1",
+    "mean_roles": {
+      "0": 112.00000000000169,
+      "2": 5.999999999999973,
+      "1": 1.9999999999999987
+    },
+    "mean_tiers": {
+      "2": 112.00000000000169,
+      "1": 5.999999999999973,
+      "0": 1.9999999999999987
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U1_R2_A1",
+    "mean_roles": {
+      "2": 118.00000000000608,
+      "1": 1.9999999999999996
+    },
+    "mean_tiers": {
+      "1": 118.00000000000608,
+      "0": 1.9999999999999996
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L0_R2_A1",
+    "mean_roles": {
+      "0": 112.0000000000052,
+      "2": 5.999999999999998,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "2": 112.0000000000052,
+      "1": 5.999999999999998,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U0_R2_A1",
+    "mean_roles": {
+      "2": 117.9999999999981,
+      "1": 2.000000000000003
+    },
+    "mean_tiers": {
+      "1": 117.9999999999981,
+      "0": 2.000000000000003
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L2_R2_A1",
+    "mean_roles": {
+      "0": 151.99999999999872,
+      "2": 5.999999999999998,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "2": 151.99999999999872,
+      "1": 5.999999999999998,
+      "0": 2.0
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 24,
+    "attack_completed": 8,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U2_R2_A1",
+    "mean_roles": {
+      "2": 157.9999999999899,
+      "1": 2.0000000000000018
+    },
+    "mean_tiers": {
+      "1": 157.9999999999899,
+      "0": 2.0000000000000018
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L1_R2_A1",
+    "mean_roles": {
+      "0": 151.999999999996,
+      "2": 6.000000000000031,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "2": 151.999999999996,
+      "1": 6.000000000000031,
+      "0": 2.0
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U1_R2_A1",
+    "mean_roles": {
+      "2": 157.9999999999858,
+      "1": 2.000000000000002
+    },
+    "mean_tiers": {
+      "1": 157.9999999999858,
+      "0": 2.000000000000002
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L0_R2_A1",
+    "mean_roles": {
+      "0": 151.99999999999733,
+      "2": 6.000000000000005,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "2": 151.99999999999733,
+      "1": 6.000000000000005,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U0_R2_A1",
+    "mean_roles": {
+      "2": 158.00000000000009,
+      "1": 2.0000000000000004
+    },
+    "mean_tiers": {
+      "1": 158.00000000000009,
+      "0": 2.0000000000000004
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L2_R2_A1",
+    "mean_roles": {
+      "0": 71.99999999999952,
+      "2": 5.999999999999968,
+      "1": 1.9999999999999982
+    },
+    "mean_tiers": {
+      "2": 71.99999999999952,
+      "1": 5.999999999999968,
+      "0": 1.9999999999999982
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U2_R2_A1",
+    "mean_roles": {
+      "2": 78.00000000000125,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "1": 78.00000000000125,
+      "0": 2.0
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L1_R2_A1",
+    "mean_roles": {
+      "0": 71.99999999999991,
+      "2": 5.999999999999998,
+      "1": 2.0000000000000004
+    },
+    "mean_tiers": {
+      "2": 71.99999999999991,
+      "1": 5.999999999999998,
+      "0": 2.0000000000000004
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U1_R2_A1",
+    "mean_roles": {
+      "2": 77.99999999999952,
+      "1": 2.0000000000000027
+    },
+    "mean_tiers": {
+      "1": 77.99999999999952,
+      "0": 2.0000000000000027
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L0_R2_A1",
+    "mean_roles": {
+      "0": 72.00000000000067,
+      "2": 6.0,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "2": 72.00000000000067,
+      "1": 6.0,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U0_R2_A1",
+    "mean_roles": {
+      "2": 77.999999999999,
+      "1": 1.9999999999999951
+    },
+    "mean_tiers": {
+      "1": 77.999999999999,
+      "0": 1.9999999999999951
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U1_R3_A1",
+    "mean_roles": {
+      "2": 117.99999999997881,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "1": 117.99999999997881,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L1_R3_A1",
+    "mean_roles": {
+      "0": 111.99999999999679,
+      "2": 5.999999999999974,
+      "1": 1.9999999999999987
+    },
+    "mean_tiers": {
+      "2": 111.99999999999679,
+      "1": 5.999999999999974,
+      "0": 1.9999999999999987
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L2_R3_A1",
+    "mean_roles": {
+      "0": 112.00000000000506,
+      "2": 6.000000000000018,
+      "1": 2.000000000000003
+    },
+    "mean_tiers": {
+      "2": 112.00000000000506,
+      "1": 6.000000000000018,
+      "0": 2.000000000000003
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U2_R3_A1",
+    "mean_roles": {
+      "2": 117.99999999999987,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "1": 117.99999999999987,
+      "0": 2.0
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_U0_R3_A1",
+    "mean_roles": {
+      "2": 118.00000000000146,
+      "1": 1.999999999999999
+    },
+    "mean_tiers": {
+      "1": 118.00000000000146,
+      "0": 1.999999999999999
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 120.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 118,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N120_L0_R3_A1",
+    "mean_roles": {
+      "0": 111.99999999999034,
+      "2": 5.999999999999978,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "2": 111.99999999999034,
+      "1": 5.999999999999978,
+      "0": 2.0
+    },
+    "min_steady_sight": 120,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 120,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U1_R3_A1",
+    "mean_roles": {
+      "2": 38.000000000000526,
+      "1": 2.000000000000002
+    },
+    "mean_tiers": {
+      "1": 38.000000000000526,
+      "0": 2.000000000000002
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L1_R3_A1",
+    "mean_roles": {
+      "0": 31.999999999998693,
+      "2": 6.000000000000017,
+      "1": 2.0000000000000036
+    },
+    "mean_tiers": {
+      "2": 31.999999999998693,
+      "1": 6.000000000000017,
+      "0": 2.0000000000000036
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L2_R3_A1",
+    "mean_roles": {
+      "0": 31.999999999999737,
+      "2": 5.999999999999985,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "2": 31.999999999999737,
+      "1": 5.999999999999985,
+      "0": 2.0
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U2_R3_A1",
+    "mean_roles": {
+      "2": 38.000000000000945,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "1": 38.000000000000945,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_U0_R3_A1",
+    "mean_roles": {
+      "2": 37.999999999999886,
+      "1": 1.9999999999999971
+    },
+    "mean_tiers": {
+      "1": 37.999999999999886,
+      "0": 1.9999999999999971
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 40.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 38,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N40_L0_R3_A1",
+    "mean_roles": {
+      "0": 32.00000000000006,
+      "2": 6.0000000000000036,
+      "1": 2.0000000000000013
+    },
+    "mean_tiers": {
+      "2": 32.00000000000006,
+      "1": 6.0000000000000036,
+      "0": 2.0000000000000013
+    },
+    "min_steady_sight": 40,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 40,
+    "unique_moving": 6,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U1_R3_A1",
+    "mean_roles": {
+      "2": 77.99999999999854,
+      "1": 2.000000000000002
+    },
+    "mean_tiers": {
+      "1": 77.99999999999854,
+      "0": 2.000000000000002
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L1_R3_A1",
+    "mean_roles": {
+      "0": 72.00000000000043,
+      "2": 6.000000000000025,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "2": 72.00000000000043,
+      "1": 6.000000000000025,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L2_R3_A1",
+    "mean_roles": {
+      "0": 71.99999999999926,
+      "2": 5.999999999999984,
+      "1": 1.999999999999999
+    },
+    "mean_tiers": {
+      "2": 71.99999999999926,
+      "1": 5.999999999999984,
+      "0": 1.999999999999999
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U2_R3_A1",
+    "mean_roles": {
+      "2": 78.00000000000131,
+      "1": 2.0
+    },
+    "mean_tiers": {
+      "1": 78.00000000000131,
+      "0": 2.0
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4690,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_U0_R3_A1",
+    "mean_roles": {
+      "2": 78.00000000000088,
+      "1": 1.9999999999999976
+    },
+    "mean_tiers": {
+      "1": 78.00000000000088,
+      "0": 1.9999999999999976
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 80.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 78,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N80_L0_R3_A1",
+    "mean_roles": {
+      "0": 72.00000000000105,
+      "2": 6.000000000000001,
+      "1": 1.9999999999999993
+    },
+    "mean_tiers": {
+      "2": 72.00000000000105,
+      "1": 6.000000000000001,
+      "0": 1.9999999999999993
+    },
+    "min_steady_sight": 80,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 80,
+    "unique_moving": 6,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U1_R3_A1",
+    "mean_roles": {
+      "2": 157.99999999999272,
+      "1": 1.9999999999999982
+    },
+    "mean_tiers": {
+      "1": 157.99999999999272,
+      "0": 1.9999999999999982
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L1_R3_A1",
+    "mean_roles": {
+      "0": 152.0000000000014,
+      "2": 5.999999999999963,
+      "1": 1.999999999999994
+    },
+    "mean_tiers": {
+      "2": 152.0000000000014,
+      "1": 5.999999999999963,
+      "0": 1.999999999999994
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4670,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L2_R3_A1",
+    "mean_roles": {
+      "0": 152.0000000000175,
+      "2": 6.000000000000011,
+      "1": 1.9999999999999987
+    },
+    "mean_tiers": {
+      "2": 152.0000000000175,
+      "1": 6.000000000000011,
+      "0": 1.9999999999999987
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U2_R3_A1",
+    "mean_roles": {
+      "2": 158.00000000001194,
+      "1": 1.9999999999999982
+    },
+    "mean_tiers": {
+      "1": 158.00000000001194,
+      "0": 1.9999999999999982
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_U0_R3_A1",
+    "mean_roles": {
+      "2": 158.00000000003928,
+      "1": 2.000000000000001
+    },
+    "mean_tiers": {
+      "1": 158.00000000003928,
+      "0": 2.000000000000001
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 160.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 158,
+    "attack_started": 24,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4690,
+      5000
+    ],
+    "technical_errors": []
+  },
+  {
+    "tag": "N160_L0_R3_A1",
+    "mean_roles": {
+      "0": 151.99999999999852,
+      "2": 6.000000000000014,
+      "1": 2.0000000000000027
+    },
+    "mean_tiers": {
+      "2": 151.99999999999852,
+      "1": 6.000000000000014,
+      "0": 2.0000000000000027
+    },
+    "min_steady_sight": 160,
+    "min_assigned_target_count": 8.0,
+    "minimum_fully_visible_enemies": 160,
+    "unique_moving": 6,
+    "attack_started": 26,
+    "attack_completed": 10,
+    "player_hp_range": [
+      4640,
+      5000
+    ],
+    "technical_errors": []
+  }
+]

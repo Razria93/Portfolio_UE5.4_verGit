@@ -1,69 +1,47 @@
 (() => {
   'use strict';
-  const root = 'https://razria93.github.io/Portfolio_UE5.4_verGit/';
-  const hub = 'https://razria93.github.io/';
-  const pdf = 'https://razria93.github.io/files/pdf/combined-review.pdf';
-  const current = new URL(location.href);
-  const value = current.searchParams.get('portfolio_page');
-  const incoming = /^\d+$/.test(value || '') ? Number(value) : 0;
-  const page = current.searchParams.get('portfolio_version') === '20261028' ? incoming : (incoming >= 23 ? incoming + 1 : incoming);
-  const active = page >= 1 && page <= 63;
-  const projects = {
-    Portfolio_UE5_4_verGit: {offset: 1, count: 24},
-    Plugin_Portfolio_UE5_4: {offset: 24, count: 15},
-    Graphics_Study_Archive: {offset: 38, count: 25}
-  };
-  function projectFor(url) {
-    const filename = url.pathname.split('/').pop();
-    const currentFiles = {'stellar-review.pdf':'Portfolio_UE5_4_verGit','plugin-review.pdf':'Plugin_Portfolio_UE5_4','graphics-review.pdf':'Graphics_Study_Archive'};
-    const key = currentFiles[filename] || (url.pathname.split('/')[1] || '').replaceAll('.', '_');
-    return projects[key];
-  }
-  function owned(url) { return url.hostname === 'razria93.github.io' && !!projectFor(url); }
-  const isPdf = url => /\.pdf$/i.test(url.pathname);
-  const projectPdf = url => isPdf(url) && /(?:project-stellar-|plugin-portfolio-|graphics-portfolio-|stellar-review|plugin-review|graphics-review)/i.test(url.pathname);
-  const pageLike = url => /\/$|\.html?$/i.test(url.pathname) || !url.pathname.split('/').pop().includes('.');
-  function remapLabel(a, p, legacy = p && p.offset === 1) {
-    if (!p) return;
-    const walker = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
-    let node;
-    while ((node = walker.nextNode())) {
-      node.nodeValue = node.nodeValue.replace('관련 PPT', '관련 PDF').replace(/(\d+(?:\s*[–~·,-]\s*\d+)*)(?=\s*(?:쪽|페이지))/g,
-        group => group.replace(/\d+/g, n => String(Number(n) > 1 ? Number(n) + p.offset + (legacy && Number(n) >= 22 ? 1 : 0) : 2)));
+  const VERSION='20261029', root='https://razria93.github.io/';
+  const defs={combined:{file:'combined-review.pdf',count:65},stellar:{file:'stellar-review.pdf',count:26},plugin:{file:'plugin-review.pdf',count:15},graphics:{file:'graphics-review.pdf',count:25}};
+  function remap(doc,page,version){
+    if(version===VERSION)return page;
+    if(doc==='combined'){
+      if(version!=='20261028' && page>=23)page++;
+      return page<=8?page:page===23?9:page<=22?page+3:page+2;
     }
+    if(doc==='stellar'){
+      if(version!=='20261028' && page>=22)page++;
+      return page<=7?page:page===22?8:page<=21?page+3:page+2;
+    }
+    return page;
   }
-  if (active) {
-    document.querySelectorAll('a[href]').forEach(a => {
-      const raw = a.getAttribute('href');
-      if (!raw || a.getAttribute('data-preserve-version') === 'true') return;
-      if (raw.startsWith('#')) { remapLabel(a, projectFor(current)); return; }
-      let url; try { url = new URL(raw, location.href); } catch { return; }
-      if (owned(url) && projectPdf(url)) {
-        const p = projectFor(url); const found = /(?:^#|&)page=(\d+)/.exec(url.hash);
-        const old = found ? Number(found[1]) : 0;
-        const adjusted = p.offset === 1 && /project-stellar-20261023/.test(url.pathname) && old >= 22 ? old + 1 : old;
-        const target = old > 1 && adjusted <= p.count ? adjusted + p.offset : page;
-        a.href = pdf + '#page=' + target;
-        if (found) remapLabel(a, p, p.offset === 1 && /project-stellar-20261023/.test(url.pathname));
-        else if (/\d+\s*쪽/.test(a.textContent)) a.textContent = '통합 포트폴리오 PDF · 63쪽';
-        a.title = '통합 포트폴리오 ' + target + '쪽';
-      } else if (owned(url) && pageLike(url)) {
-        remapLabel(a, projectFor(url));
-        if (!url.searchParams.has('portfolio_page')) url.searchParams.set('portfolio_page', String(page));
-        url.searchParams.set('portfolio_version', '20261028');
-        a.href = url.href;
-      } else if (/^https?:$/.test(url.protocol) && url.hostname === 'github.com') {
-        a.target = '_blank'; a.rel = 'noopener noreferrer';
-      }
-    });
+  function fallback(path){
+    if(/stellar_optimization|ai-participation-performance/.test(path))return 9;
+    if(/ai-perception|\/ai\.html/.test(path))return 6;
+    if(/hit-target-ttl|\/ttl\.html/.test(path))return 12;
+    if(/guard-hit-transition|\/guard\.html/.test(path))return 15;
+    return 2;
   }
-  if (document.getElementById('unified-portfolio-navigation')) return;
-  const style = document.createElement('style');
-  style.textContent = '#unified-portfolio-navigation{position:sticky;top:0;margin:0;max-width:none;width:100%;z-index:1000;background:#102333;color:#eff7fa;border-bottom:1px solid #416070;font:14px/1.6 "Malgun Gothic",sans-serif;padding:10px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;gap:10px 24px;flex-wrap:wrap;box-sizing:border-box}#unified-portfolio-navigation a{background:transparent;border:0;border-radius:0;padding:0;color:#85dcd4;text-decoration:underline;text-underline-offset:4px;word-break:keep-all}#unified-portfolio-navigation span{font-size:12px;color:#bed1db}';
+  const here=new URL(location.href), q=here.searchParams;
+  const doc=defs[q.get('portfolio_doc')]?q.get('portfolio_doc'):'combined';
+  const incoming=Number(q.get('portfolio_page'));
+  const defaultPage=fallback(here.pathname);
+  const mapped=Number.isInteger(incoming)&&incoming>0?remap(doc,incoming,q.get('portfolio_version')):(doc==='stellar'&&defaultPage>2?defaultPage-1:defaultPage);
+  const page=mapped>=1&&mapped<=defs[doc].count?mapped:2;
+  const context={doc,page,version:VERSION};
+  window.StellarPortfolioNavigation={remap,context};
+  const owned=u=>u.hostname==='razria93.github.io';
+  document.querySelectorAll('a[href]').forEach(a=>{
+    const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||a.dataset.preserveVersion==='true')return;
+    let u;try{u=new URL(raw,location.href);}catch{return;}
+    if(!owned(u))return;
+    const isPage=/\/$|\.html?$/i.test(u.pathname)||!u.pathname.split('/').pop().includes('.');
+    if(isPage){u.searchParams.set('portfolio_doc',doc);u.searchParams.set('portfolio_page',String(page));u.searchParams.set('portfolio_version',VERSION);a.href=u.href;}
+  });
+  if(document.getElementById('unified-portfolio-navigation'))return;
+  const style=document.createElement('style');
+  style.textContent='#unified-portfolio-navigation{position:relative;max-width:none;margin:0;box-sizing:border-box;width:100%;border:0;border-radius:0;background:#102333;color:#eff7fa;padding:12px max(20px,calc((100% - 1120px)/2));display:flex;flex-wrap:wrap;gap:8px 24px;font:14px/1.7 "Malgun Gothic",sans-serif}#unified-portfolio-navigation a{display:inline;background:none;border:0;border-radius:0;box-shadow:none;padding:0;color:#85dcd4;text-decoration:underline;text-underline-offset:4px}';
   document.head.append(style);
-  const bar = document.createElement('nav'); bar.id = 'unified-portfolio-navigation';bar.setAttribute('aria-label','통합 포트폴리오 이동');
-  const home = document.createElement('a');home.href=hub;home.textContent='통합 포트폴리오 안내';bar.append(home);
-  const back = document.createElement('a');back.href=pdf+(active?'#page='+page:'#page=2');back.textContent=active?'통합 PDF '+page+'쪽으로 돌아가기':'통합 PDF · 63쪽';bar.append(back);
-  if (active) { const info=document.createElement('span');info.textContent='관련 영상·문서·원본 근거';bar.append(info); }
-  document.body.prepend(bar);
+  const nav=document.createElement('nav');nav.id='unified-portfolio-navigation';nav.setAttribute('aria-label','포트폴리오 복귀');
+  const back=document.createElement('a');back.href=root+'files/pdf/'+defs[doc].file+'#page='+page;back.textContent=(doc==='combined'?'통합 PDF':doc==='stellar'?'스텔라 PDF':doc==='plugin'?'플러그인 PDF':'그래픽스 PDF')+' '+page+'쪽으로 돌아가기';
+  const home=document.createElement('a');home.href=root;home.textContent='전체 포트폴리오';nav.append(back,home);document.body.prepend(nav);
 })();

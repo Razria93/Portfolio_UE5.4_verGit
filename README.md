@@ -2,7 +2,7 @@
 
 가드·패링·회피와 다수 적 전투를 구현한 UE5.4 기반 근접 액션 프로젝트입니다. 전투 실행·판정·반응을 연결하고, 적의 인식과 전투 참여를 다룹니다.
 
-[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [로컬 실행](#local-run)
+[프로젝트 안내](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF · 26쪽](https://razria93.github.io/files/pdf/stellar-review.pdf) · [플레이·구현·검증 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/) · [로컬 실행](#local-run)
 
 ![실제 플레이 중 Player가 Enemy의 공격을 패링하는 장면](https://razria93.github.io/site/assets/stellar-cover-parry.png)
 
@@ -50,7 +50,7 @@
 
 공격 중 피격됐을 때 반응의 중단 요구와 현재 공격의 중단 허용을 함께 확인합니다. 중단 조건을 충족하면 기존 공격의 충돌·트레일·실행 정보를 정리한 뒤 피격 반응을 시작합니다. 개별 피드백은 각자의 종료 기준을 따릅니다.
 
-[플레이 사례·처리 구조 · PDF 16–17쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=16) · [당시 실행 전환 구조 설명](Docs/05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md) · [중단·전환 판단 코드](Source/Portfolio/Component/CReactionOrchestratorComponent.cpp#L607) · [피격 반응 실행 코드](Source/Portfolio/Component/CReactionComponent.cpp#L173)
+[플레이 사례·처리 구조 · PDF 19–20쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=19) · [당시 실행 전환 구조 설명](Docs/05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md) · [중단·전환 판단 코드](Source/Portfolio/Component/CReactionOrchestratorComponent.cpp#L607) · [피격 반응 실행 코드](Source/Portfolio/Component/CReactionComponent.cpp#L173)
 
 구조 문서는 당시 설계 기록이며, 현재 공개 시연은 위 PDF와 대표 영상에서 확인합니다.
 
@@ -58,21 +58,22 @@
 
 대상별 인식·피격 근거와 참여 상한으로 교전·경계·관찰 역할을 배정합니다. 참여 근거 수집 → 역할 배정 → 개별 AI 행동 결정으로 나뉘며, 역할을 배정받았다는 사실이 즉시 공격 실행을 뜻하지는 않습니다. 각 AI는 현재 실행 상태와 거리를 확인해 행동을 결정합니다.
 
-[플레이 사례·설계 이유 · PDF 20–21쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=20) · [전투 참여·역할 배정 정책](Docs/05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md)
+[플레이 사례·설계 이유 · PDF 23–24쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=23) · [전투 참여·역할 배정 정책](Docs/05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md)
 
 ### 런타임 관찰과 에디터 도구
 
 Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 관찰합니다. Editor Panel은 session-only CVar 설정과 PIE Focus 요청을 연결하며 게임플레이 상태를 변경하지 않습니다. Asset Reference Inspector와 Root Motion Tool의 세부 구조는 하단 기술 문서에 보존합니다.
 
-[디버그 도구 · PDF 22–23쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=22) · [디버그 HUD 구현 코드](Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp)
+[디버그 도구 · PDF 25–26쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=25) · [디버그 HUD 구현 코드](Source/Portfolio/Core/Debug/CDebugOverlayHUD.cpp)
 
 ## 문제 해결
 
 | 사례 | 핵심 결과 | 자료 | 영상 |
 | --- | --- | --- | --- |
 | 인식 지연<br>개선 | 같은 편 Enemy를 Sight 감지 단계에서 제외.<br>120마리 최초 유효 대상 인식 지연 p95: 20.816초 → 1.053초 | [PDF 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5)<br>[조건·한계](#인식-지연-개선) | [지연 비교<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/ai-perception/) |
-| 피격 후<br>타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산.<br>늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8)<br>[조건·한계](#피격-후-타깃-유지) | [타깃 유지<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) |
-| 가드 종료 중<br>피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락.<br>피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11)<br>[조건·한계](#가드-종료-중-피격-전환) | [피격 전환<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) |
+| 다수 AI<br>처리 비용 | 참여 제한: 160마리 Frame p95 22.3505 → 16.8966ms.<br>별도 갱신 비교: 행동 판단 호출 764 → 329.25회/초 | [PDF 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8)<br>[조건·반복·동작 근거](https://razria93.github.io/site/evidence/Portfolio_UE5.4_verGit/docs/stellar_optimization/index.html) | [실행 화면·로그](https://razria93.github.io/site/evidence/Portfolio_UE5.4_verGit/docs/stellar_optimization/index.html#behavior) |
+| 피격 후<br>타깃 유지 | 마지막 피격 반응 종료 후 기록 유지 시간을 계산.<br>늦거나 중복된 종료 알림과 공격자별 만료 확인 | [PDF 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11)<br>[조건·한계](#피격-후-타깃-유지) | [타깃 유지<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) |
+| 가드 종료 중<br>피격 전환 | 이미 비워진 가드 상태의 정리 요청도 수락.<br>피격 반응·기본 이동 속도 설정 복원·다음 가드 실행 확인 | [PDF 14–16쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=14)<br>[조건·한계](#가드-종료-중-피격-전환) | [피격 전환<br>영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) |
 
 각 결과는 아래 사례별 조건과 한계 안에서 해석합니다.
 
@@ -95,6 +96,17 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 - 하드웨어: Ryzen 9 7950X3D · RTX 4070 Ti
 
 [측정 조건·결과](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/ai.html)
+
+### 다수 AI 처리 비용
+
+- 2026.10.29, 40·80·120·160마리 × 6조건 × 3회, 정식72회.
+- 동일 실행 파일·배치·중앙 플레이어·캡슐 반경10, 준비10초 + 측정40초, 녹화 없이 수집.
+- 참여 제한 비교는 Engage2를 유지하고 나머지 Alert에서 Alert6·나머지None으로 변경했습니다. 같은 갱신 설정에서 80~160마리 Frame p95가 약14~24% 줄었고 40마리 차이는 작았습니다.
+- 참여 제한을 고정한 갱신 설정 비교에서는 UpdateAIIntentState 호출이 약53~57% 감소했습니다. 추가 Frame 개선은 작고 반복 범위가 겹쳐 별도로 해석합니다.
+- 역할·시야 인식·이동 발생·공격·피해를 확인했습니다. 밀집 배치의 저속·겹침 구간이 있으며 모든 전투 상황의 반응성을 보증하지 않습니다.
+- 수치는 실험 설정의 통제 비교이며 공개 main의 기본 설정 전체를 검증한 결과와 구분합니다.
+
+[측정 조건·실행별 결과·관련 소스](https://razria93.github.io/site/evidence/Portfolio_UE5.4_verGit/docs/stellar_optimization/index.html)
 
 ### 피격 후 타깃 유지
 
@@ -127,7 +139,7 @@ Focus 대상의 전투·이동·실행 상태를 Debug Overlay와 Event Log로 �
 ## 관련 자료
 
 - [프로젝트 안내](https://razria93.github.io/site/stellar.html): 대표 구현·문제 해결·출처·상세 검증 문서
-- [통합 PDF · 62쪽, 스텔라 3–24쪽](https://razria93.github.io/files/pdf/combined-review.pdf#page=3): 프로젝트별 개별 표지를 제외해 묶은 통합본
+- [통합 PDF · 65쪽, 스텔라 3–27쪽](https://razria93.github.io/files/pdf/combined-review.pdf#page=3): 프로젝트별 개별 표지를 제외해 묶은 통합본
 - [통합 포트폴리오](https://razria93.github.io/): 세 프로젝트 안내와 통합 자료
 - [System Architecture](Docs/05_System_Architecture/00_System_Architecture_Index.md): 구조와 기술 판단의 문서 색인
 - [실행 타입 정의](Source/Portfolio/Type/CExecutionTypes.h): 실행 판단·결과에 사용하는 타입
