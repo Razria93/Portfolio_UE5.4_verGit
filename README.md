@@ -1,8 +1,8 @@
 # Project Stellar
 
-전투 실행·판정·반응을 연결하고, 다수 적의 인식과 전투 참여를 다루는 UE5.4 근접 액션 프로젝트입니다.
+보스 패턴별 방어와 다수 적의 전투 참여를 구현한 UE5.4 근접 액션 프로젝트입니다.
 
-[프로젝트 웹 페이지](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF](https://razria93.github.io/files/pdf/stellar-review.pdf) · [시연·검증 영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/)
+[프로젝트 웹 페이지](https://razria93.github.io/site/stellar.html) · [프로젝트 PDF](https://razria93.github.io/files/pdf/stellar-review.pdf) · [시연·검증 영상 목록](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/index.html)
 
 [개요](#overview) · [기여](#contribution) · [주요 기능](#features) · [핵심 구현](#implementation) · [문제 해결](#troubleshooting) · [검증·한계](#verification) · [실행 방법](#getting-started)
 
@@ -12,6 +12,8 @@
 
 <a id="project-stellar--ue54-근접-액션-프로젝트"></a>
 <a id="overview"></a>
+
+[Annihilator 보스전 하이라이트 · 1분 5초](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/annihilator-boss/index.html)
 
 ## 프로젝트 개요
 
@@ -49,13 +51,13 @@
 
 | 기능 | 확인할 내용 | 시연·PDF |
 | --- | --- | --- |
-| 가드·패링 | 방어 결과와 양측의 후속 반응 | [프로젝트 PDF · 21–22쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=21) · [시연 영상 · 약 1분 14초](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-parry/) |
-| 회피·카운터 러시 | 일반·퍼펙트 회피와 반격의 연결 | [프로젝트 PDF · 플레이 범위 · 4쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=4) · [시연 영상 · 약 59초](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/dodge-counter/) |
-| 균형 붕괴·처형 | 균형 누적, 처형 기회와 양측 실행 | [프로젝트 PDF · 플레이 범위 · 4쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=4) · [시연 영상 · 약 1분 29초](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/balance-execution/) |
-| 실행 중단·반응 전환 | 기존 실행의 중단·정리 후 새 반응 시작 | [프로젝트 PDF · 19–20쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=19) · [시연 영상 · 약 1분 9초](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/execution-transition/) |
-| 다수 적 전투 참여 | 교전·경계·관찰 역할과 실제 행동 구분 | [프로젝트 PDF · 23–24쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=23) · [시연 영상 · 약 1분 53초](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/combat-participation/) |
+| 가드·패링 | 방어 결과와 양측의 후속 반응 | [프로젝트 PDF · 23–24쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=23) · [시연 영상 · 약 1분 14초](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/guard-parry/index.html) |
+| 회피·카운터 러시 | 일반·퍼펙트 회피와 반격의 연결 | [시연 영상 · 약 59초](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/dodge-counter/index.html) |
+| 균형 붕괴·처형 | 균형 누적, 처형 기회와 양측 실행 | [보스전 구현 · 5쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5) · [시연 영상 · 약 1분 29초](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/balance-execution/index.html) |
+| 실행 중단·반응 전환 | 기존 실행의 중단·정리 후 새 반응 시작 | [프로젝트 PDF · 21–22쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=21) · [시연 영상 · 약 1분 9초](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/execution-transition/index.html) |
+| 다수 적 전투 참여 | 교전·경계·관찰 역할과 실제 행동 구분 | [프로젝트 PDF · 25–26쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=25) · [시연 영상 · 약 1분 53초](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/combat-participation/index.html) |
 
-[전체 영상 목록](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/)은 본편 14개와 별도 가드 PIE 1개로 구성됩니다. 개별 영상은 당시 조건의 기록이며 현재 main 전체의 재검증을 뜻하지 않습니다.
+[전체 영상 목록](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/index.html)은 본편 15개와 별도 가드 PIE 1개로 구성됩니다. 개별 영상은 당시 조건의 기록이며 현재 main 전체의 재검증을 뜻하지 않습니다.
 
 <a id="implementation"></a>
 
@@ -81,7 +83,7 @@
 
 **조건·한계:** 지원하지 않는 피해 이벤트나 유효하지 않은 입력은 거절합니다. 수신 조건·방어 결과에 따라 수락되지 않을 수 있으며, 피해 판정이 곧 반응 실행을 뜻하지 않습니다. 이 요약은 일반 타격 경로를 중심으로 하며 처형·타이밍 신호 전체를 대체하지 않습니다.
 
-**관련 자료:** [프로젝트 PDF · 17–18쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=17) · [일반 타격 시연 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/general-hit/) · [구현 구조 상세](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#I01) · [피격자 처리 코드](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Source/Portfolio/Component/CCombatSignalTargetComponent.cpp#L171-L267)
+**관련 자료:** [프로젝트 PDF · 19–20쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=19) · [일반 타격 시연 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/general-hit/index.html) · [구현 구조 상세](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#I01) · [피격자 처리 코드](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Source/Portfolio/Component/CCombatSignalTargetComponent.cpp#L171-L267)
 
 <a id="전투-실행반응-전환"></a>
 
@@ -99,7 +101,7 @@
 
 **조건·한계:** Action과 Reaction 정책은 같지 않습니다. Reaction은 순차 실행을 지원하지 않으며 Dodge Action은 리액션 중 요청을 거절합니다. Dead Reaction은 별도 강제 개입 경로입니다. 일회성 Niagara·효과음·성공 연출의 수명은 실행 자원 정리와 구분합니다.
 
-**관련 자료:** [프로젝트 PDF · 19–20쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=19) · [실행 전환 시연 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/execution-transition/) · [실행 구조 상세](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#execution) · [당시 설계 문서](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Docs/05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md)
+**관련 자료:** [프로젝트 PDF · 21–22쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=21) · [실행 전환 시연 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/execution-transition/index.html) · [실행 구조 상세](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#execution) · [당시 설계 문서](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Docs/05_System_Architecture/S37_UE5_Portfolio_Execution_Transition_and_Intervention_Architecture.md)
 
 <a id="다수-적-전투-역할-배정"></a>
 
@@ -117,7 +119,7 @@
 
 **조건·한계:** 피격 근거의 유지·만료와 현재 타깃 선택, 이후 Investigate 행동 전환을 구분합니다. 역할을 배정받았다는 사실이 즉시 공격한다는 뜻은 아닙니다. 인원·상한 값은 연결된 정책과 해당 시연 조건을 따르며 임의의 최대 처리 성능을 주장하지 않습니다.
 
-**관련 자료:** [프로젝트 PDF · 23–24쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=23) · [전투 참여 시연 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/combat-participation/) · [참여 구조 상세](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#I08) · [참여 정책](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Docs/05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md)
+**관련 자료:** [프로젝트 PDF · 25–26쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=25) · [전투 참여 시연 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/combat-participation/index.html) · [참여 구조 상세](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#I08) · [참여 정책](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Docs/05_System_Architecture/S34_UE5_Portfolio_Combat_Participation_Policy.md)
 
 <a id="런타임-관찰과-에디터-도구"></a>
 참여 수와 갱신 정책의 비용은 [다수 AI 처리 비용 개선](#optimization)의 별도 통제 실험에서 확인했습니다. 기존 역할 배정 시연의 설정과 구분합니다.
@@ -138,7 +140,7 @@
 
 **조건·한계:** 최근 사건과 현재 Actor 상태가 같은 시점의 실행을 나타내지는 않을 수 있습니다. 참조 조사용 Asset Reference Inspector와 Track 검증·백업·Revert를 지원하는 Root Motion Tool은 별도 에디터 지원 경로입니다. 모션·에셋 자체의 제작과 가공·도구 구현을 구분합니다.
 
-**관련 자료:** [프로젝트 PDF · 25–26쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=25) · [디버그 도구 시연 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/debug-overlay/) · [관찰 도구 구조](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#tools) · [추가 기술·개발 문서](Docs/Portfolio/technical-notes.md)
+**관련 자료:** [프로젝트 PDF · 27–28쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=27) · [디버그 도구 시연 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/debug-overlay/index.html) · [관찰 도구 구조](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#tools) · [추가 기술·개발 문서](Docs/Portfolio/technical-notes.md)
 
 [전체 구현 구조 보기](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_resource_catalog_20261021/structure.html#overview)
 
@@ -166,7 +168,7 @@
 
 **조건·한계:** 2026.10.02, UE 5.4.4·Windows 11·D3D12·Development, Ryzen 9 7950X3D·RTX 4070 Ti. 40·80·120마리, 전후 각 3회·회당 40초·녹화 없이 측정했습니다. 개체 수별 동일 배치·카메라 조건이며 **해당 측정에서 전체 프레임 p95는 개선되지 않았습니다**. 당시 측정 결과를 현재 main 성능으로 확대하지 않습니다.
 
-**관련 자료:** [프로젝트 PDF · 5–7쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=5) · [AI 인지 지연 비교 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/ai-perception/) · [측정 조건·전체 결과](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/ai.html)
+**관련 자료:** [프로젝트 PDF · 7–9쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=7) · [AI 인지 지연 비교 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/ai-perception/index.html) · [측정 조건·전체 결과](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/ai.html)
 
 <a id="optimization"></a>
 
@@ -191,7 +193,7 @@
 
 역할·인지·이동 발생·공격·피해는 시험 범위에서 확인했습니다. 42/72회에 Alert 저속 이동 구간과 밀집 배치의 메시 겹침이 있었고 기존 Niagara 오류도 남았습니다. 새 상세 Trace는 수집하지 않았으며 자연스러운 군중 회피나 모든 전투 상황을 검증한 결과가 아닙니다. 공개 main과 실험본은 기본 설정·일부 이동 실패 대응이 달라 **현재 공개 빌드의 기본 성능으로 일반화하지 않습니다.** 기존 인식 지연 사례와 이번 결과를 합산하지 않습니다.
 
-**관련 자료:** [프로젝트 PDF · 8–10쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=8) · [측정·검증 자료](https://razria93.github.io/site/evidence/Portfolio_UE5.4_verGit/docs/stellar_optimization/index.html)
+**관련 자료:** [프로젝트 PDF · 10–12쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=10) · [측정·검증 자료](https://razria93.github.io/site/evidence/Portfolio_UE5.4_verGit/docs/stellar_optimization/index.html)
 
 <a id="피격-후-타깃-유지"></a>
 
@@ -213,7 +215,7 @@
 
 **조건·한계:** 수정 전 영상은 정책 복원 시연이며 당시 바이너리가 아닙니다. 기록 유지와 현재 타깃 선택은 별개이고, 후속 Investigate는 비교에서 제외했습니다. 공격자 소멸 후 대기 기록 정리 보완안은 원본 미반영입니다. 위 결과는 보존된 검증 기록이며 이번 README 작업에서 자동 검사나 PIE를 다시 실행하지 않았습니다.
 
-**관련 자료:** [프로젝트 PDF · 11–13쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=11) · [타깃 유지 시연 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/hit-target-ttl/) · [검증 기록·경계 조건](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/ttl.html#boundary) · [TTL 시작 코드](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp#L226-L240)
+**관련 자료:** [프로젝트 PDF · 13–15쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=13) · [타깃 유지 시연 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/hit-target-ttl/index.html) · [검증 기록·경계 조건](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/ttl.html#boundary) · [TTL 시작 코드](https://github.com/Razria93/Portfolio_UE5.4_verGit/blob/0e0132ac12280ee02eac45dd9068b85ef8f4a745/Source/Portfolio/System/Combat/CWorldSubsystem_CombatParticipation.cpp#L226-L240)
 
 ### 가드 종료 중 피격 전환
 
@@ -232,7 +234,7 @@
 
 **조건·한계:** 요청은 재현 코드에서 실행했고, 600회는 실제 전투 횟수가 아닙니다. 실제 PIE의 Run 600과 자동 검사의 Run 420·Sprint 620, 기존 시연 피해 20과 검증 피해 300을 구분합니다. 복원은 기본 이동 속도 설정의 복원이며 달리기 동작 재개를 확인한 검사가 아닙니다. Sprint 유지·800 복원·수동 PIE 이펙트 동등성은 미확인입니다.
 
-**관련 자료:** [프로젝트 PDF · 14–16쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=14) · [가드 피격 전환 시연 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-hit-transition/) · [별도 가드 PIE 영상](https://razria93.github.io/Portfolio_UE5.4_verGit/videos/guard-pie/) · [자동 검사·확인 범위](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/guard.html#repeat)
+**관련 자료:** [프로젝트 PDF · 16–18쪽](https://razria93.github.io/files/pdf/stellar-review.pdf#page=16) · [가드 피격 전환 시연 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/guard-hit-transition/index.html) · [별도 가드 PIE 영상](https://razria93.github.io/site/source-records/Portfolio_UE5.4_verGit/videos/guard-pie/index.html) · [자동 검사·확인 범위](https://razria93.github.io/site/details/Portfolio_UE5.4_verGit/docs/stellar_troubleshooting_verification_20261022/guard.html#repeat)
 
 <a id="검증-조건한계"></a>
 <a id="사례별-검증-조건결과한계"></a>
