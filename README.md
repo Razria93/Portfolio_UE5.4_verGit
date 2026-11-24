@@ -6,9 +6,9 @@
 
 [개요](#overview) · [기여](#contribution) · [주요 기능](#features) · [핵심 구현](#implementation) · [문제 해결](#troubleshooting) · [검증·한계](#verification) · [실행 방법](#getting-started)
 
-![실제 플레이 중 적의 공격을 패링하는 장면](assets/representative.png)
+![Project Stellar 실제 플레이 중 플레이어와 Annihilator의 교전 장면](https://razria93.github.io/site/assets/stellar-annihilator-cover.jpg)
 
-*실제 플레이 · 패링 장면. 전투·AI 동작과 검증 조건은 연결 자료에서 확인합니다.*
+*실제 플레이 · Annihilator 보스전.*
 
 <a id="project-stellar--ue54-근접-액션-프로젝트"></a>
 <a id="overview"></a>
